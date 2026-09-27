@@ -74,7 +74,7 @@ export function DepartureSheetModal({
   };
 
   const content = (
-      <div className="space-y-4 font-sans text-[var(--lkv-primary)]">
+      <div className="space-y-4 font-sans text-[color:var(--lkv-text-primary)]">
         {/* En-tête de la Fiche : statut, destination, sentier */}
         <div className="space-y-1">
           <div className="flex items-center gap-1.5 text-[10.5px] font-mono font-bold uppercase tracking-wider text-[var(--lkv-text-muted)]">
@@ -95,7 +95,7 @@ export function DepartureSheetModal({
                   : 'Prêt pour le départ'}
             </span>
           </div>
-          <p className="text-xl font-display font-bold leading-tight text-[var(--lkv-primary)]">
+          <p className="text-xl font-display font-bold leading-tight text-[color:var(--lkv-text-primary)]">
             {depart.destination}
           </p>
           {depart.trail && (
@@ -115,7 +115,7 @@ export function DepartureSheetModal({
               <Icon name="calendar" size={12} />
               <span>Date</span>
             </div>
-            <p className="text-xs font-bold text-[var(--lkv-primary)] truncate">{dateLabel}</p>
+            <p className="text-xs font-bold text-[color:var(--lkv-text-primary)] truncate">{dateLabel}</p>
           </div>
 
           <div className="p-3 rounded-2xl bg-white/70 border border-black/5 space-y-0.5">
@@ -123,7 +123,7 @@ export function DepartureSheetModal({
               <Icon name="backpack" size={12} />
               <span>Poids total</span>
             </div>
-            <p className="text-xs font-mono font-bold text-[var(--lkv-primary)]">
+            <p className="text-xs font-mono font-bold text-[color:var(--lkv-text-primary)]">
               {formatWeight(depart.totalPackWeightG)}{' '}
               <span className="text-[10px] text-[var(--lkv-text-muted)] font-normal font-sans">
                 (base {formatWeight(depart.baseWeightG)})
@@ -136,7 +136,7 @@ export function DepartureSheetModal({
               <Icon name="droplets" size={12} />
               <span>Vivres</span>
             </div>
-            <p className="text-xs font-bold text-[var(--lkv-primary)]">
+            <p className="text-xs font-bold text-[color:var(--lkv-text-primary)]">
               {depart.durationDays}j autonomie
             </p>
           </div>
@@ -146,7 +146,7 @@ export function DepartureSheetModal({
               <Icon name="thermometer" size={12} />
               <span>Météo J-1</span>
             </div>
-            <p className="text-xs font-mono font-bold text-[var(--lkv-primary)]">
+            <p className="text-xs font-mono font-bold text-[color:var(--lkv-text-primary)]">
               {weather ? `${weather.current.tempC}°C` : 'Non disponible'}
             </p>
           </div>
@@ -160,7 +160,7 @@ export function DepartureSheetModal({
               <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-danger)]">
                 Contact de sécurité ICE
               </p>
-              <p className="text-xs font-mono font-bold text-[var(--lkv-primary)] truncate">
+              <p className="text-xs font-mono font-bold text-[color:var(--lkv-text-primary)] truncate">
                 {depart.emergencyContact || 'Non renseigné'}
               </p>
             </div>
@@ -183,7 +183,7 @@ export function DepartureSheetModal({
             {vitalItems.map((item) => (
               <div
                 key={item.id ?? item.name}
-                className="flex items-center gap-1.5 text-xs text-[var(--lkv-primary)] p-1 truncate"
+                className="flex items-center gap-1.5 text-xs text-[color:var(--lkv-text-primary)] p-1 truncate"
               >
                 <Icon
                   name="check"

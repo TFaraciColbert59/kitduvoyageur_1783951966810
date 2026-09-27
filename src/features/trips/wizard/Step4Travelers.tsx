@@ -46,7 +46,7 @@ export function Step4Travelers({
   return (
     <div className="space-y-[var(--space-6)]">
       <div>
-        <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--lkv-secondary)]">
+        <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--lkv-secondary-ink)]">
           <Icon name="users" size={14} />
           <span>Étape 4 sur 5</span>
         </div>
@@ -184,7 +184,7 @@ export function Step4Travelers({
 
       {/* Info calcul de sac */}
       <Card tone="sage" className="flex items-center gap-[var(--space-2)]">
-        <Icon name="info" size={16} className="shrink-0 text-[color:var(--lkv-secondary)]" />
+        <Icon name="info" size={16} className="shrink-0 text-[color:var(--lkv-secondary-ink)]" />
         <span className="text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)]">
           Le moteur ajustera la liste de matériel : les tentes et réchauds sont partagés, tandis que
           les duvets et vêtements sont comptés individuellement.

@@ -102,7 +102,7 @@ export const AudioPlayerBubble: React.FC<AudioPlayerBubbleProps> = ({ audioUrl, 
       <div className="flex flex-1 flex-col gap-[var(--space-1)]">
         <div className="flex items-center justify-between text-[length:var(--lkv-text-caption-2)] font-semibold opacity-90">
           <span className="flex items-center gap-[var(--space-1)]">
-            <Icon name="mic" className="size-3 text-[color:var(--lkv-secondary)]" aria-hidden="true" />
+            <Icon name="mic" className="size-3 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
             Note vocale
           </span>
           <span className="font-mono">

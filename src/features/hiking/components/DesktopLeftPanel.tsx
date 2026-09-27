@@ -44,18 +44,18 @@ export default function DesktopLeftPanel({
             Progression
           </span>
           <span className="font-mono text-[10px] text-[color:var(--lkv-ink-300)] tracking-wide">
-            <em className="font-serif italic font-normal text-[color:var(--lkv-primary)] text-xs">{elapsedTimeStr}</em> écoulées
+            <em className="font-serif italic font-normal text-[color:var(--lkv-text-primary)] text-xs">{elapsedTimeStr}</em> écoulées
           </span>
         </div>
 
         <div className="flex justify-between items-baseline mb-2">
-          <div className="text-2xl font-medium tracking-tight text-[color:var(--lkv-primary)]">
+          <div className="text-2xl font-medium tracking-tight text-[color:var(--lkv-text-primary)]">
             {distanceKm.toFixed(1)}
-            <em className="font-serif italic font-normal text-sm text-[color:var(--lkv-primary)] ml-0.5">
+            <em className="font-serif italic font-normal text-sm text-[color:var(--lkv-text-primary)] ml-0.5">
               / {totalDistanceKm.toFixed(1)} km
             </em>
           </div>
-          <div className="font-mono text-[11px] font-semibold text-[color:var(--lkv-primary)] tracking-wide px-2 py-0.5 bg-[color:var(--lkv-forest-100)]/40 rounded">
+          <div className="font-mono text-[11px] font-semibold text-[color:var(--lkv-text-primary)] tracking-wide px-2 py-0.5 bg-[color:var(--lkv-forest-100)]/40 rounded">
             {Math.round(pct)} %
           </div>
         </div>
@@ -128,17 +128,17 @@ export default function DesktopLeftPanel({
               <div className="flex-1 min-w-0 pt-0.5">
                 <div
                   className={`text-xs font-medium leading-tight ${
-                    wp.status === 'future' ? 'text-[color:var(--lkv-text-muted)]' : 'text-[color:var(--lkv-primary)]'
+                    wp.status === 'future' ? 'text-[color:var(--lkv-text-muted)]' : 'text-[color:var(--lkv-text-primary)]'
                   }`}
                 >
                   {wp.name}{' '}
                   {wp.italicPart && (
-                    <em className="font-serif italic font-normal text-[color:var(--lkv-primary)]">{wp.italicPart}</em>
+                    <em className="font-serif italic font-normal text-[color:var(--lkv-text-primary)]">{wp.italicPart}</em>
                   )}
                 </div>
                 <div
                   className={`font-mono text-[10px] tracking-wide mt-0.5 ${
-                    wp.status === 'current' ? 'text-[color:var(--lkv-primary)] font-semibold' : 'text-[color:var(--lkv-text-muted)]'
+                    wp.status === 'current' ? 'text-[color:var(--lkv-text-primary)] font-semibold' : 'text-[color:var(--lkv-text-muted)]'
                   }`}
                 >
                   {wp.meta}

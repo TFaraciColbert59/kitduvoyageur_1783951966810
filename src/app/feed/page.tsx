@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import { Badge, Button, Card, EmptyState, Spinner, Tabs } from '@/components/ui';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -51,16 +51,16 @@ export default function FeedPage() {
         <Header />
       </div>
 
-      <MobilePageShell>
+      <AppShell>
         <main className="min-h-screen">
           <div className="pt-16 md:pt-0 lg:pt-18">
             <section className="relative overflow-hidden bg-[color:var(--lkv-primary)] px-[var(--space-4)] py-[var(--space-12)] text-[color:var(--lkv-text-inverted)]">
               <div className="relative mx-auto max-w-7xl">
                 <div className="mb-[var(--space-4)] flex items-center gap-[var(--space-2)]">
-                  <Badge tone="sage" className="border-[color:var(--lkv-forest-500)]/30 bg-[color:var(--lkv-secondary)]/30 text-[color:var(--lkv-forest-300)] uppercase">
+                  <Badge tone="sage" className="border-[color:var(--lkv-forest-500)]/30 bg-[color:var(--lkv-secondary)]/30 text-[color:var(--lkv-forest-100)] uppercase">
                     COMMUNAUTÉ
                   </Badge>
-                  <span className="font-mono text-[length:var(--lkv-text-caption)] text-white/50">CARNETS DE VOYAGE</span>
+                  <span className="font-mono text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-secondary)]">CARNETS DE VOYAGE</span>
                 </div>
                 <div className="flex flex-col justify-between gap-[var(--space-6)] lg:flex-row lg:items-end">
                   <div>
@@ -160,7 +160,7 @@ export default function FeedPage() {
             <Footer />
           </div>
         </main>
-      </MobilePageShell>
+      </AppShell>
     </>
   );
 }

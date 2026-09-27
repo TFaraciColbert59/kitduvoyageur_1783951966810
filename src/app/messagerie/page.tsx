@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Header from '@/components/Header';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
 import { MessageInbox } from '@/features/messaging/components/MessageInbox';
 import { useKeyboardInset } from '@/features/messaging/hooks/useKeyboardInset';
@@ -60,7 +60,7 @@ export default function MessageriePage() {
         dans son header sticky (cf. .msg-safe-top). videoBackground={false} :
         le chat est opaque plein écran, la vidéo de fond serait un coût pur.
       */}
-      <MobilePageShell safeTop={false} hasBottomNav={!hasActiveConv} videoBackground={false}>
+      <AppShell safeTop={false} hasBottomNav={!hasActiveConv} videoBackground={false}>
         <main
           className="relative z-10 flex w-full flex-1 flex-col items-center justify-center overflow-hidden md:px-6 md:pb-2 md:pt-2"
         >
@@ -103,7 +103,7 @@ export default function MessageriePage() {
             />
           )}
         </main>
-      </MobilePageShell>
+      </AppShell>
     </div>
   );
 }

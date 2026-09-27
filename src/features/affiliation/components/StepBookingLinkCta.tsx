@@ -52,7 +52,7 @@ export function StepBookingLinkCta({
       title={`Suggestion partenaire — recherche : ${booking.searchTerms}`}
       className={`flex min-h-[var(--lkv-touch-min)] w-full items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-3)] py-[var(--space-2)] text-left backdrop-blur-[var(--blur-md)] transition-transform active:scale-[var(--motion-press-scale)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] motion-reduce:transition-none ${className}`}
     >
-      <CategoryIcon size={14} className="shrink-0 text-[var(--lkv-primary)]" aria-hidden="true" />
+      <CategoryIcon size={14} className="shrink-0 text-[color:var(--lkv-text-primary)]" aria-hidden="true" />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[11.5px] font-bold text-[var(--lkv-text-primary)]">
           {booking.label}

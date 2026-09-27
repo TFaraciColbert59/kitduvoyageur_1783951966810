@@ -72,9 +72,9 @@ export default function GPXImportExportModal({
         )}
 
         {/* Upload GPX Button Box */}
-        <div className="p-5 border-2 border-dashed border-[color:var(--lkv-primary)]/30 bg-[color:var(--stone-100)] rounded-[var(--lkv-radius-sm)] text-center space-y-2">
+        <div className="p-5 border-2 border-dashed border-[color:var(--lkv-primary)]/30 bg-[color:var(--lkv-surface-muted)] rounded-[var(--lkv-radius-sm)] text-center space-y-2">
           <span className="text-3xl block">📥</span>
-          <div className="text-xs font-bold text-[color:var(--lkv-primary)]">Importer un fichier GPX</div>
+          <div className="text-xs font-bold text-[color:var(--lkv-text-primary)]">Importer un fichier GPX</div>
           <p className="text-[10px] font-mono text-[color:var(--lkv-text-muted)]">
             Compatible Visorando, AllTrails, Komoot & Garmin
           </p>
@@ -88,7 +88,7 @@ export default function GPXImportExportModal({
         {positions.length > 0 && (
           <button
             onClick={handleExportGPX}
-            className="w-full min-h-[44px] py-3 bg-[color:var(--lkv-forest-50)] border border-[color:var(--lkv-forest-200)] text-[color:var(--lkv-primary)] font-bold text-xs rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-transform cursor-pointer"
+            className="w-full min-h-[44px] py-3 bg-[color:var(--lkv-forest-50)] border border-[color:var(--lkv-forest-200)] text-[color:var(--lkv-text-primary)] font-bold text-xs rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-transform cursor-pointer"
           >
             <span>📤</span>
             Exporter la trace actuelle ({positions.length} points GPS)

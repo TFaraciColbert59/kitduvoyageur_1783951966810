@@ -38,7 +38,7 @@ export function TripAffiliateSection({
       >
         <div className="flex flex-col justify-between gap-[var(--space-2)] border-b border-[color:var(--lkv-border-subtle)] pb-[var(--space-4)] sm:flex-row sm:items-center">
           <div>
-            <span className="flex items-center gap-[var(--space-1)] text-[length:var(--lkv-text-caption)] font-bold uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-secondary)]">
+            <span className="flex items-center gap-[var(--space-1)] text-[length:var(--lkv-text-caption)] font-bold uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-secondary-ink)]">
               <Icon name="compass" className="h-3.5 w-3.5" />
               Réservations & Préparation Logistique
             </span>

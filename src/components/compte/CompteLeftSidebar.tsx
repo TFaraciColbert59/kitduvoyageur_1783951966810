@@ -64,9 +64,9 @@ export default function CompteLeftSidebar({
             />
           </div>
           <div className="min-w-0 flex-1">
-            <h4 className="font-display font-bold text-xs sm:text-sm text-[color:var(--lkv-primary)] truncate leading-tight">
+            <h4 className="font-display font-bold text-xs sm:text-sm text-[color:var(--lkv-text-primary)] truncate leading-tight">
               {profile.first_name}{' '}
-              <span className="font-serif italic font-normal text-[color:var(--lkv-secondary)]">{profile.last_name}</span>
+              <span className="font-serif italic font-normal text-[color:var(--lkv-secondary-ink)]">{profile.last_name}</span>
             </h4>
             <p className="text-[10px] font-mono text-[color:var(--lkv-text-muted)] truncate mt-0.5">
               {handle}

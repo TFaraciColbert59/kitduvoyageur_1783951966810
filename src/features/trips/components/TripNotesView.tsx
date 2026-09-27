@@ -164,7 +164,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
             <Icon
               name="book-open"
               size={14}
-              className="shrink-0 text-[color:var(--lkv-secondary)]"
+              className="shrink-0 text-[color:var(--lkv-secondary-ink)]"
               aria-hidden="true"
             />
             Carnet en création
@@ -284,7 +284,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
       {/* Liste des notes */}
       {filteredNotes.length === 0 ? (
         <EmptyState
-          icon={<Icon name="book-open" size={36} className="text-[color:var(--lkv-secondary)]/40" />}
+          icon={<Icon name="book-open" size={36} className="text-[color:var(--lkv-secondary-ink)]/40" />}
           title="Aucune note enregistrée"
           description={
             canEdit

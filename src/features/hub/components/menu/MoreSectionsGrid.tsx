@@ -47,7 +47,7 @@ export function MoreSectionsGrid({ cells, moreCells, fitRows }: MoreSectionsGrid
         <span className="text-sm font-semibold text-[var(--lkv-text-primary)]">
           Plus de sections
         </span>
-        <span className="ml-auto rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[10px] font-bold text-[var(--lkv-primary)]">
+        <span className="ml-auto rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[10px] font-bold text-[color:var(--lkv-text-primary)]">
           {moreCells.length}
         </span>
       </Button>

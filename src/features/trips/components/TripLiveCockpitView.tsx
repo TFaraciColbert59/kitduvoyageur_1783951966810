@@ -279,7 +279,7 @@ export function TripLiveCockpitView({
                   <Icon
                     name="navigation"
                     size={13}
-                    className={isSunMode ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-primary)]'}
+                    className={isSunMode ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-primary)]'}
                   />
                   <span>Distance</span>
                 </div>
@@ -297,7 +297,7 @@ export function TripLiveCockpitView({
                   <Icon
                     name="mountain"
                     size={13}
-                    className={isSunMode ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-primary)]'}
+                    className={isSunMode ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-primary)]'}
                   />
                   <span>Dénivelé +</span>
                 </div>
@@ -315,7 +315,7 @@ export function TripLiveCockpitView({
                   <Icon
                     name="mountain"
                     size={13}
-                    className={isSunMode ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-primary)]'}
+                    className={isSunMode ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-primary)]'}
                   />
                   <span>Dénivelé -</span>
                 </div>
@@ -333,7 +333,7 @@ export function TripLiveCockpitView({
                   <Icon
                     name="home"
                     size={13}
-                    className={isSunMode ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-primary)]'}
+                    className={isSunMode ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-primary)]'}
                   />
                   <span>Hébergement</span>
                 </div>

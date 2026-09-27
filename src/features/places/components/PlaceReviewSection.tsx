@@ -215,7 +215,7 @@ export function PlaceReviewSection({
                 id="field-proof"
                 checked={hasFieldProof}
                 onChange={(e) => setHasFieldProof(e.target.checked)}
-                className="mt-1 h-4 w-4 rounded text-[color:var(--lkv-primary)] focus:ring-[color:var(--lkv-focus-ring)]"
+                className="mt-1 h-4 w-4 rounded text-[color:var(--lkv-text-primary)] focus:ring-[color:var(--lkv-focus-ring)]"
               />
               <label htmlFor="field-proof" className="cursor-pointer text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-secondary)]">
                 <strong className="block font-semibold text-[color:var(--lkv-text-primary)]">
@@ -286,7 +286,7 @@ export function PlaceReviewSection({
 
                   {rev.has_field_proof && (
                     <Badge tone="sage" className="gap-1">
-                      <Icon name="shield-check" className="h-3.5 w-3.5 text-[color:var(--lkv-primary)]" />
+                      <Icon name="shield-check" className="h-3.5 w-3.5 text-[color:var(--lkv-text-primary)]" />
                       Preuve terrain certifiée
                     </Badge>
                   )}

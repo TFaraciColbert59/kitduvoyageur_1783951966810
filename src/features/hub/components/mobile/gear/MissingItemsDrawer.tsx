@@ -66,7 +66,7 @@ export function MissingItemsDrawer({
                   <span
                     className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] ${
                       row.state === 'shipping'
-                        ? 'bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]'
+                        ? 'bg-[var(--lkv-primary)]/10 text-[color:var(--lkv-text-primary)]'
                         : row.state === 'in_cart'
                           ? 'bg-[var(--lkv-sky-100)] text-[var(--lkv-sky-700)]'
                           : 'bg-black/5 text-[var(--lkv-text-primary)]'

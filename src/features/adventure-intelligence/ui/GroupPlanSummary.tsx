@@ -78,7 +78,7 @@ export function GroupPlanSummary({
           </h3>
         </div>
         {plan ? (
-          <span className="shrink-0 rounded-full bg-[var(--lkv-primary-subtle)] px-2.5 py-1 text-[11px] font-semibold text-[var(--lkv-primary)]">
+          <span className="shrink-0 rounded-full bg-[var(--lkv-primary-subtle)] px-2.5 py-1 text-[11px] font-semibold text-[color:var(--lkv-text-primary)]">
             {plan.memberCount} membre{plan.memberCount > 1 ? 's' : ''}
           </span>
         ) : null}
@@ -108,7 +108,7 @@ export function GroupPlanSummary({
           </p>
           <a
             href="/tarifs"
-            className="mt-2 inline-flex min-h-[44px] items-center text-[13px] font-semibold text-[var(--lkv-primary)] underline-offset-2 active:opacity-70"
+            className="mt-2 inline-flex min-h-[44px] items-center text-[13px] font-semibold text-[color:var(--lkv-text-primary)] underline-offset-2 active:opacity-70"
           >
             Voir les plans →
           </a>

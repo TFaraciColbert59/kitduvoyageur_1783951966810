@@ -7,7 +7,7 @@ import Icon from '@/components/ui/AppIcon';
 import { useChat } from '@/lib/hooks/useChat';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import { Badge, Button, Card, Chip, EmptyState, IconButton, Modal, Skeleton, Tabs } from '@/components/ui';
 
 interface GearItem {
@@ -224,7 +224,7 @@ function ReportDetailModal({ report, onClose }: { report: PastReport; onClose: (
         </div>
         <div className="grid grid-cols-3 gap-[var(--space-3)]">
           <Card variant="compact" className="text-center">
-            <p className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-primary)]">{report.score}</p>
+            <p className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">{report.score}</p>
             <p className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">Score</p>
           </Card>
           {report.budget_estimated ? (
@@ -478,7 +478,7 @@ export default function RapportExpeditionPage() {
                 { label: 'Expéditions', value: reports.length.toString(), icon: 'MapIcon', color: 'text-[color:var(--lkv-info)]' },
                 { label: 'Score moyen', value: reports.length > 0 ? `${avgScore}/100` : '—', icon: 'TrophyIcon', color: 'text-[color:var(--lkv-warning)]' },
                 { label: 'Budget total', value: totalBudgetDelta !== 0 ? `${totalBudgetDelta > 0 ? '+' : ''}${totalBudgetDelta}€` : '—', icon: 'BanknotesIcon', color: totalBudgetDelta > 0 ? 'text-[color:var(--lkv-danger)]' : 'text-[color:var(--lkv-success)]' },
-                { label: 'Équipements', value: userGear.length > 0 ? `${(totalWeight / 1000).toFixed(1)} kg` : '—', icon: 'ArchiveBoxIcon', color: 'text-[color:var(--lkv-primary)]' },
+                { label: 'Équipements', value: userGear.length > 0 ? `${(totalWeight / 1000).toFixed(1)} kg` : '—', icon: 'ArchiveBoxIcon', color: 'text-[color:var(--lkv-text-primary)]' },
               ].map((stat) => (
                 <div key={stat.label} className="bg-white/5 border border-white/8 rounded-[var(--lkv-radius-md)] p-4">
                   <div className="flex items-center gap-2 mb-2">
@@ -513,7 +513,7 @@ export default function RapportExpeditionPage() {
           <section className="px-4 py-6">
             <div className="max-w-5xl mx-auto">
               {savedSuccess && (
-                <div className="mb-4 flex items-center gap-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-success)]/30 bg-[color:var(--lkv-success-bg)] px-4 py-3 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-primary)]">
+                <div className="mb-4 flex items-center gap-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-success)]/30 bg-[color:var(--lkv-success-bg)] px-4 py-3 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)]">
                   <Icon name="CheckCircleIcon" size={16} variant="outline" />
                   Rapport créé avec succès ! +75 points fidélité gagnés.
                 </div>
@@ -719,7 +719,7 @@ export default function RapportExpeditionPage() {
 
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           {/* Hero */}
           <div className="border-b border-[color:var(--lkv-border-subtle)] p-[var(--space-4)]">
             <div className="mb-[10px] flex w-fit items-center gap-[6px] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[10px] py-1">
@@ -844,7 +844,7 @@ export default function RapportExpeditionPage() {
                       <div className="flex items-center justify-between px-[var(--space-3)] py-[10px]">
                         <div className="flex items-center gap-[var(--space-2)]">
                           <div className="flex h-7 w-7 items-center justify-center rounded-[var(--lkv-radius-xs)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn">
-                            <span className="text-[12px] font-bold text-[color:var(--lkv-primary)]">{report.score}</span>
+                            <span className="text-[12px] font-bold text-[color:var(--lkv-text-primary)]">{report.score}</span>
                           </div>
                           <span className="text-[10px] text-[color:var(--lkv-text-muted)]">Score</span>
                         </div>
@@ -882,7 +882,7 @@ export default function RapportExpeditionPage() {
                     ✨
                   </div>
                   <div className="flex-1">
-                    <p className="m-0 text-[13px] font-semibold text-[color:var(--lkv-primary)]">Analyse IA</p>
+                    <p className="m-0 text-[13px] font-semibold text-[color:var(--lkv-text-primary)]">Analyse IA</p>
                     <p className="m-0 mt-px text-[10px] text-[color:var(--lkv-text-muted)]">Gemini · Analyse personnalisée</p>
                   </div>
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[color:var(--lkv-success)]" aria-hidden="true" />
@@ -892,15 +892,15 @@ export default function RapportExpeditionPage() {
                 <div className="border-b border-[color:var(--lkv-border-subtle)] p-[var(--space-3)]">
                   <div className="grid grid-cols-3 gap-[var(--space-2)]">
                     <div className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-2)] text-center">
-                      <p className="mb-0.5 font-mono text-[16px] font-bold text-[color:var(--lkv-primary)]">{reports.length}</p>
+                      <p className="mb-0.5 font-mono text-[16px] font-bold text-[color:var(--lkv-text-primary)]">{reports.length}</p>
                       <p className="m-0 text-[9px] text-[color:var(--lkv-text-muted)]">Expéditions</p>
                     </div>
                     <div className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-2)] text-center">
-                      <p className="mb-0.5 font-mono text-[16px] font-bold text-[color:var(--lkv-primary)]">{avgScore > 0 ? `${avgScore}/100` : '—'}</p>
+                      <p className="mb-0.5 font-mono text-[16px] font-bold text-[color:var(--lkv-text-primary)]">{avgScore > 0 ? `${avgScore}/100` : '—'}</p>
                       <p className="m-0 text-[9px] text-[color:var(--lkv-text-muted)]">Score</p>
                     </div>
                     <div className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-2)] text-center">
-                      <p className="mb-0.5 font-mono text-[16px] font-bold text-[color:var(--lkv-primary)]">{userGear.length}</p>
+                      <p className="mb-0.5 font-mono text-[16px] font-bold text-[color:var(--lkv-text-primary)]">{userGear.length}</p>
                       <p className="m-0 text-[9px] text-[color:var(--lkv-text-muted)]">Équipements</p>
                     </div>
                   </div>
@@ -920,7 +920,7 @@ export default function RapportExpeditionPage() {
                           className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--lkv-radius-xs)] text-[10px] ${
                             msg.role === 'user'
                               ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]'
-                              : 'bg-[color:var(--btn-tint)]  text-[color:var(--lkv-primary)]'
+                              : 'bg-[color:var(--btn-tint)]  text-[color:var(--lkv-text-primary)]'
                           }`}
                           aria-hidden="true"
                         >
@@ -930,7 +930,7 @@ export default function RapportExpeditionPage() {
                           className={`max-w-[75%] rounded-[var(--lkv-radius-sm)] px-[var(--space-3)] py-[var(--space-2)] text-[12px] leading-[var(--leading-snug)] ${
                             msg.role === 'user'
                               ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]'
-                              : 'bg-[color:var(--stone-100)] text-[color:var(--lkv-primary)]'
+                              : 'bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-text-primary)]'
                           }`}
                         >
                           {msg.content}
@@ -939,8 +939,8 @@ export default function RapportExpeditionPage() {
                     ))}
                     {isLoading && (
                       <div className="flex gap-[var(--space-2)]">
-                        <div className="flex h-6 w-6 items-center justify-center rounded-[var(--lkv-radius-xs)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[10px] text-[color:var(--lkv-primary)]" aria-hidden="true">AI</div>
-                        <div className="flex items-center gap-[3px] rounded-[var(--lkv-radius-sm)] bg-[color:var(--stone-100)] px-[var(--space-3)] py-[var(--space-2)]" role="status" aria-label="Analyse en cours">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-[var(--lkv-radius-xs)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[10px] text-[color:var(--lkv-text-primary)]" aria-hidden="true">AI</div>
+                        <div className="flex items-center gap-[3px] rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[var(--space-2)]" role="status" aria-label="Analyse en cours">
                           <span className="h-[5px] w-[5px] animate-pulse rounded-full bg-[color:var(--lkv-primary)]" />
                           <span className="h-[5px] w-[5px] animate-pulse rounded-full bg-[color:var(--lkv-primary)]" />
                           <span className="h-[5px] w-[5px] animate-pulse rounded-full bg-[color:var(--lkv-primary)]" />
@@ -960,7 +960,7 @@ export default function RapportExpeditionPage() {
                       onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
                       placeholder="Posez une question..."
                       aria-label="Votre question à l'analyse IA"
-                      className="min-h-[var(--lkv-touch-min)] flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border-subtle)] bg-[color:var(--stone-100)] px-[var(--space-3)] py-[10px] text-[12px] text-[color:var(--lkv-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+                      className="min-h-[var(--lkv-touch-min)] flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[10px] text-[12px] text-[color:var(--lkv-text-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
                     />
                     <IconButton
                       onClick={handleSend}
@@ -985,7 +985,7 @@ export default function RapportExpeditionPage() {
 
           {/* Footer spacer */}
           <div className="h-[calc(var(--nav-height)+var(--space-6)+var(--safe-bottom))]" />
-        </MobilePageShell>
+        </AppShell>
       </div>
 
       {/* Modals (shown on both views) */}

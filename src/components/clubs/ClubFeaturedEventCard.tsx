@@ -38,7 +38,7 @@ export default function ClubFeaturedEventCard({
   const progressPercent = Math.min(100, Math.round((currentParticipants / maxParticipants) * 100));
 
   return (
-    <Card className="relative space-y-[var(--space-3)] overflow-hidden p-[var(--space-4)] transition-all duration-[var(--motion-control-duration)]">
+    <Card className="relative space-y-[var(--space-3)] overflow-hidden p-[var(--space-4)] transition-all [transition-duration:var(--motion-control-duration)]">
       <div className="flex items-start gap-[var(--space-3)]">
         <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-[var(--lkv-radius-2xl)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
           <span className="text-[length:var(--lkv-text-caption-2)] font-bold uppercase leading-none tracking-wider text-[color:var(--glass-label)]">

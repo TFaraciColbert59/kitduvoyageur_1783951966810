@@ -8,7 +8,7 @@ import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import { Button, Card } from '@/components/ui';
 
 const FIELD_CLASS =
@@ -132,9 +132,9 @@ export default function InscriptionPage() {
 
       {/* MOBILE */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <div className="p-[var(--space-4)]">{content}</div>
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

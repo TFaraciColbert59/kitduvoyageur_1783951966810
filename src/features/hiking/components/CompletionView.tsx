@@ -226,7 +226,7 @@ export default function CompletionView({
           className="w-full py-4 bg-[color:var(--lkv-forest-200)] text-[color:var(--lkv-forest-950)] font-semibold text-sm rounded-2xl  flex items-center justify-between px-5 transition-transform active:scale-98"
         >
           <span>
-            Voir mon <em className="font-serif italic font-normal text-[color:var(--lkv-primary)]">aventure</em>
+            Voir mon <em className="font-serif italic font-normal text-[color:var(--lkv-text-primary)]">aventure</em>
           </span>
           <span className="flex items-center gap-2">
             <span className="font-mono text-[11px] opacity-75 uppercase">CARNET GÉNÉRÉ</span>

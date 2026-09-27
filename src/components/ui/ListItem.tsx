@@ -64,7 +64,7 @@ export function ListItem({
       onKeyDown={handleKeyDown}
       className={cn(
         'flex min-h-[var(--control-height-md)] w-full items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] px-[var(--space-3)] py-[var(--space-2)]',
-        'text-left transition-colors duration-[var(--motion-press-duration)] ease-[var(--motion-ease-standard)] motion-reduce:transition-none',
+        'text-left transition-colors [transition-duration:var(--motion-press-duration)] [transition-timing-function:var(--motion-ease-standard)] motion-reduce:transition-none',
         actionable &&
           'cursor-pointer hover:bg-[color:var(--lkv-hover-surface)] active:bg-[color:var(--lkv-hover-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]',
         selected && 'bg-[color:var(--lkv-hover-surface)]',

@@ -149,7 +149,7 @@ export async function GearSection({
 
             <Link
               href={kitAtelierHref}
-              className="inline-flex min-h-[44px] items-center px-3 -mx-1 text-xs font-semibold text-[var(--lkv-primary)] hover:bg-white/40 rounded-xl transition-colors"
+              className="inline-flex min-h-[44px] items-center px-3 -mx-1 text-xs font-semibold text-[color:var(--lkv-text-primary)] hover:bg-white/40 rounded-xl transition-colors"
             >
               Ouvrir l&apos;atelier kits
             </Link>
@@ -161,7 +161,7 @@ export async function GearSection({
             </p>
             <Link
               href={kitAtelierHref}
-              className="inline-flex min-h-[44px] items-center px-3 -mx-1 text-xs font-semibold text-[var(--lkv-primary)] hover:bg-white/40 rounded-xl transition-colors"
+              className="inline-flex min-h-[44px] items-center px-3 -mx-1 text-xs font-semibold text-[color:var(--lkv-text-primary)] hover:bg-white/40 rounded-xl transition-colors"
             >
               Créer un kit dans l&apos;atelier
             </Link>

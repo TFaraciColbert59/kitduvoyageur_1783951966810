@@ -98,9 +98,9 @@ const LAST_LOCATION_STORAGE_KEY = 'lkdv_last_location';
 
 // Liens-actions stylés comme `Button variant="secondary"` (pas de `<button>` imbriqué).
 const LINK_PILL =
-  'inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespace-nowrap rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-4)] font-semibold text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)] transition-transform duration-[var(--motion-press-duration)] active:scale-[var(--motion-press-scale)] hover:bg-[color:var(--lkv-hover-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+  'inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespace-nowrap rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-4)] font-semibold text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)] transition-transform [transition-duration:var(--motion-press-duration)] active:scale-[var(--motion-press-scale)] hover:bg-[color:var(--lkv-hover-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
 const LINK_ICON =
-  'inline-flex h-[var(--control-height-md)] w-[var(--control-height-md)] shrink-0 select-none items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)] transition-transform duration-[var(--motion-press-duration)] active:scale-[var(--motion-press-scale)] hover:bg-[color:var(--lkv-hover-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+  'inline-flex h-[var(--control-height-md)] w-[var(--control-height-md)] shrink-0 select-none items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)] transition-transform [transition-duration:var(--motion-press-duration)] active:scale-[var(--motion-press-scale)] hover:bg-[color:var(--lkv-hover-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
 
 function rememberLastLocation(lat: number, lng: number): void {
   try {
@@ -590,8 +590,8 @@ export default function ExplorerClient({
                   href={link.href}
                   className={`relative select-none rounded-full px-3.5 py-1.5 text-[length:var(--lkv-text-caption)] font-semibold transition-colors ${
                     isActive
-                      ? 'text-[color:var(--lkv-primary)]'
-                      : 'text-[color:var(--lkv-text-secondary)]/70 hover:bg-[color:var(--lkv-hover-surface)] hover:text-[color:var(--lkv-primary)]'
+                      ? 'text-[color:var(--lkv-text-primary)]'
+                      : 'text-[color:var(--lkv-text-secondary)]/70 hover:bg-[color:var(--lkv-hover-surface)] hover:text-[color:var(--lkv-text-primary)]'
                   }`}
                 >
                   {isActive && (
@@ -603,7 +603,7 @@ export default function ExplorerClient({
                   )}
                   <span
                     className={`relative z-10 transition-colors ${
-                      isActive ? 'font-extrabold text-[color:var(--lkv-primary)]' : 'hover:text-[color:var(--lkv-primary)]'
+                      isActive ? 'font-extrabold text-[color:var(--lkv-text-primary)]' : 'hover:text-[color:var(--lkv-text-primary)]'
                     }`}
                   >
                     {link.label}
@@ -728,7 +728,7 @@ export default function ExplorerClient({
               <Card variant="featured" className="space-y-3 rounded-r-none p-4">
                 <div className="flex items-center justify-between border-b border-[color:var(--lkv-border)] pb-2">
                   <div className="flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-secondary)]">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-secondary-ink)]">
                       <SlidersHorizontalAnimated size={15} />
                     </div>
                     <div>
@@ -890,7 +890,7 @@ export default function ExplorerClient({
                 </h4>
                 <div className="flex items-center gap-2 font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">
                   <span className="flex items-center gap-1 font-semibold">
-                    <Navigation size={9.5} className="text-[color:var(--lkv-primary)]" />
+                    <Navigation size={9.5} className="text-[color:var(--lkv-text-primary)]" />
                     {formatDistance(selectedTrail.distance_km)}
                   </span>
                   <span aria-hidden="true" className="text-[color:var(--lkv-text-muted)]/40">·</span>

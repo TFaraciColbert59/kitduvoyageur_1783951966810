@@ -50,7 +50,7 @@ export function IconButton({
       data-size={size}
       className={cn(
         'inline-flex shrink-0 select-none items-center justify-center rounded-full',
-        'touch-manipulation transition-transform duration-[var(--motion-press-duration)] ease-[var(--motion-ease-standard)]',
+        'touch-manipulation transition-transform [transition-duration:var(--motion-press-duration)] [transition-timing-function:var(--motion-ease-standard)]',
         'active:scale-[var(--motion-press-scale)] motion-reduce:transition-none',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]',
         'disabled:pointer-events-none disabled:opacity-[var(--opacity-disabled)]',

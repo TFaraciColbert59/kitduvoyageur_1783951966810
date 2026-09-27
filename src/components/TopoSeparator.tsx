@@ -6,7 +6,7 @@ interface TopoSeparatorProps {
   className?: string;
 }
 
-export default function TopoSeparator({ inverted = false, color = 'var(--stone-200)', className = '' }: TopoSeparatorProps) {
+export default function TopoSeparator({ inverted = false, color = 'var(--lkv-border)', className = '' }: TopoSeparatorProps) {
   return (
     <div className={`topo-separator ${className}`} aria-hidden="true">
       <svg

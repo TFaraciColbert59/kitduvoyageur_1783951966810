@@ -31,7 +31,7 @@ export default function CountryLoading() {
       {/* Spinner */}
       <div className="absolute inset-x-0 top-[38vh] flex flex-col items-center gap-2">
         <Spinner size="lg" tone="inverted" label="Chargement des pays" />
-        <span className="text-[11px] font-mono font-bold text-[color:var(--lkv-surface)]">Chargement des pays…</span>
+        <span className="text-[11px] font-mono font-bold text-[color:var(--lkv-text-primary)]">Chargement des pays…</span>
       </div>
 
       {/* Continents strip skeleton */}

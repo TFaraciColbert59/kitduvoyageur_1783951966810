@@ -5,9 +5,14 @@ import { MapPinOff } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
 export interface HubRoutePoint {
+  id?: string;
   lat: number;
   lon: number;
   label: string;
+  category?: string | null;
+  description?: string | null;
+  visited?: boolean;
+  stepId?: string | null;
   color: string;
 }
 

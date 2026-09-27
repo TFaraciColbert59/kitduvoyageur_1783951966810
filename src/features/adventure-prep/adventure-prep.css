@@ -1,0 +1,2240 @@
+/* ==========================================================================
+   PRÉPARATEUR D'AVENTURE — feuille de style de la feature
+   Importée une seule fois par src/app/preparer/page.tsx.
+
+   Direction (A2) :
+   · Fond blanc légèrement teinté de vert, topographie très discrète dans les
+     espaces vides uniquement — jamais sous le texte.
+   · Surfaces de texte presque opaques ; le verre est réservé aux commandes
+     flottantes (carte plein écran, contrôles suspendus au-dessus).
+   · Transitions simples 220 ms via les tokens motion, avec repli
+     `motion-reduce` et `prefers-reduced-transparency`.
+   ========================================================================== */
+
+/* ==========================================================================
+   COUCHE DE TOKENS — PRÉPARATEUR
+   Ces variables étaient consommées par le fichier sans jamais être définies :
+   `min-height: var(--prep-action-height)` et `gap: var(--prep-block-gap)`
+   tombaient silencieusement sur une valeur invalide (auto / normal), ce qui
+   collait les blocs entre eux et laissait la barre d'action sans hauteur.
+   Elles sont définies ici, une fois, et référencent toutes le design system
+   (`--space-*`, `--lkv-radius-*`, `--glass-*`, `--card-*`, `--motion-*`) :
+   aucune couleur ni dimension n'est réinventée en parallèle.
+
+   Portée : `:root` et non `.adventure-prep`. La carte plein écran est un
+   overlay `position: fixed` et les prochaines surfaces (feuilles, invitation)
+   seront rendues via un portail : un token porté par `.adventure-prep` ne
+   survivrait pas à la téléportation du DOM. Le préfixe `--prep-` garantit
+   l'absence de collision, et la feuille n'est importée que par /prepare et
+   /partir-librement.
+   ========================================================================== */
+
+:root {
+  /* --- Chrome ---------------------------------------------------------
+     La maquette verrouille les deux barres (bandeau d'étape et barre
+     d'action) à 52 px. On l'obtient par calcul plutôt qu'en dur pour que la
+     barre suive l'échelle tactile si --lkv-touch-* évolue : 44+8 et 48+4. */
+  --prep-nav-height: calc(var(--control-height-md) + var(--space-2));
+  --prep-action-height: calc(var(--control-height-lg) + var(--space-1));
+
+  /* --- Rythme vertical -------------------------------------------------
+     Écart entre deux blocs dans le corps. 16 px : le plus aéré qui tienne
+     sans allonger inutilement la colonne, puisque le corps est scrollable. */
+  --prep-block-gap: var(--space-4);
+
+  /* --- Carte -----------------------------------------------------------
+     La carte est le pivot visuel de chaque étape, donc elle prend une part
+     fixe du viewport plutôt qu'une hauteur figée : elle respire sur un grand
+     téléphone et se replie sur un petit. `dvh` est déjà requis par le calcul
+     de hauteur de .adventure-prep plus bas, aucun risque supplémentaire.
+     Les planchers respectent les min-height déjà posés sur .prep-map
+     (168 px normal, 132 px compact), donc jamais d'effondrement. */
+  --prep-map-height-bottom: clamp(200px, 30dvh, 320px);
+  --prep-map-height-compact: clamp(144px, 22dvh, 220px);
+  /* Réservé à l'overlay plein écran (écran 40) : il occupe tout le viewport. */
+  --prep-map-height-full: 100dvh;
+  --prep-map-share: var(--prep-map-height-bottom);
+  --prep-map-share-compact: var(--prep-map-height-compact);
+
+  /* --- Fond de carte ----------------------------------------------------
+     Le squelette de chargement ne doit jamais contenir de couleur en dur :
+     la valeur brute vit ICI, dans la couche de tokens, et le composant ne
+     fait que la lire. Sans ce token, `PrepMap` reintroduirait un `rgb()`
+     en dur — la règle « aucun hex dans les composants » tient. */
+  --prep-map-skeleton-sheen: rgb(34 97 72 / 0.1);
+  --prep-map-skeleton-top: rgb(245 247 243);
+  --prep-map-skeleton-bottom: rgb(236 241 236);
+  --prep-map-skeleton-bg: radial-gradient(120% 90% at 30% 0%, var(--prep-map-skeleton-sheen), transparent 60%),
+    linear-gradient(180deg, var(--prep-map-skeleton-top), var(--prep-map-skeleton-bottom));
+
+  /* --- Fond de page ----------------------------------------------------
+     Sous le materiau Liquid Glass, `--lkv-surface` est une fumee TRANSLUCIDE
+     (rgba(16,16,16,.3) en sombre). La poser telle quelle laissait la photo de
+     fond de l'app traverser le preparateur : le texte blanc se posait sur une
+     image bruyante et la carte, deja sombre, devenait un trou noir.
+
+     `--prep-page-bg` recompose donc la fumee du theme sur un fond opaque :
+     la page reste dans la famille de couleur du theme (donc le contraste du
+     texte ne bouge pas) mais elle devient illisible-independent du fond
+     photographique. Valeur brute uniquement ici, dans la couche de tokens. */
+  --prep-page-bg: var(--lkv-app-bg-fallback);
+  --prep-page-wash: linear-gradient(var(--lkv-surface), var(--lkv-surface));
+
+  /* La carte est posee sur la page, pas sur la photo : meme base opaque, la
+     teinte du materiau etant empilee par-dessus via --prep-map-wash. */
+  --prep-map-bg: var(--lkv-app-bg-fallback);
+  --prep-map-wash: linear-gradient(var(--card-tint), var(--card-tint));
+
+  /* --- Reserve du bas --------------------------------------------------
+     Le bandeau cookies est un overlay `position: fixed; bottom: 0` et la
+     bottom-nav est remontee de EXACTEMENT sa hauteur (`NavigationSurface` :
+     `bottom: var(--cookie-banner-h)`). Les deux s empilent donc bel et bien :
+     la bande a reserver est leur SOMME, pas leur maximum. Avec `max()` la
+     nav recouvrait les 62 derniers px du preparateur et la CTA
+     « Creer mon parcours » se retrouvait pile dessous.
+
+     Le rail de jours (`DayPlateau`) occupe en plus le slot `plateau` de
+     `NavigationSurface`, soit ~40 px AU-DESSUS de la nav, et il n'apparait
+     que si le voyage est decoupe en >= 2 jours. Reserver un offset fige ne
+     peut donc pas marcher : trop court quand le rail est la (CTA recouverte),
+     trop long quand il est absent (trou de 46 px).
+
+     `--bottom-nav-height` est publie par `AppShell` et vaut deja
+     `--nav-offset-extended` (nav + plateau + marge) ou `--nav-offset`, selon
+     le meme predicat reactif que le rendu du rail. Le reprendre ici rend la
+     reservation et le rendu indissociables par construction. */
+  --prep-bottom-inset: calc(
+    var(--cookie-banner-h, 0px)
+      + var(--bottom-nav-height, var(--nav-offset, 60px))
+      + var(--space-2)
+  );
+  /* --- Rayons ----------------------------------------------------------
+     La carte reprend le rayon des cards, la pastille et les puces sont
+     totalement rondes, la feuille suit l'échelle sheet, et le plein écran n'a
+     aucun rayon (il n'y a plus de surface derrière). */
+  --prep-radius-map: var(--card-radius);
+  --prep-radius-map-compact: var(--lkv-radius-md);
+  --prep-radius-pill: var(--lkv-radius-full);
+  --prep-radius-sheet: var(--lkv-radius-sheet);
+  --prep-radius-fullscreen: 0px;
+
+  /* --- Espacement ------------------------------------------------------
+     Échelle base 4 px alignée sur --space-*, exposée sous le nom de la
+     feature pour que les composants n'aient plus à choisir une unité en dur. */
+  --prep-space-1: var(--space-1);
+  --prep-space-2: var(--space-2);
+  --prep-space-3: var(--space-3);
+  --prep-space-4: var(--space-4);
+  --prep-space-5: var(--space-5);
+  --prep-space-6: var(--space-6);
+  --prep-space-8: var(--space-8);
+
+  /* --- Ombres ----------------------------------------------------------
+     `color-mix` sur --lkv-text-primary évite tout hex : l'ombre est
+     teintée par la couleur de texte du thème, donc elle s'inverse seule en
+     mode sombre. La valeur à 5 % reproduit exactement l'ombre historique
+     `rgb(23 43 36 / 0.05)`, migration future sans différence visuelle. */
+  --prep-shadow-sm: 0 1px 2px color-mix(in srgb, var(--lkv-text-primary) 5%, transparent);
+  --prep-shadow-card: var(--card-shadow);
+  --prep-shadow-float: var(--glass-shadow);
+  --prep-shadow-press: inset 0 1px 2px
+    color-mix(in srgb, var(--lkv-text-primary) 12%, transparent);
+
+  /* --- Encre d'ombre ----------------------------------------------------
+     SEULE exception au principe « l'ombre suit le thème » : l'ombre portée
+     par les commandes en verre flotte au-dessus d'une carte claire dans les
+     deux thèmes, donc elle doit rester sombre. La dériver de
+     --lkv-text-primary l'inverserait en halo clair en thème sombre. L'encre
+     est donc figée ici, une fois, et réutilisée par color-mix. */
+  --prep-shadow-ink: #101C17;
+  --prep-shadow-lift: 0 2px 10px
+    color-mix(in srgb, var(--prep-shadow-ink) 14%, transparent);
+
+  /* --- Pôles de mélange -------------------------------------------------
+     `#fff` et `#000` n'apparaissent que comme pôle clair ou sombre d'un
+     `color-mix()` — jamais comme couleur de surface. Les nommer évite de
+     répéter un littéral hex dans une trentaine de règles et garde la feuille
+     conforme à « aucun hex hors de la couche de tokens ». */
+  --prep-mix-light: #fff;
+  --prep-mix-dark: #000;
+
+  /* --- Lavis topographique du fond --------------------------------------
+     Dégradés d'ambiance posés en `::before` / `::after` : ils ne passent
+     jamais sous du texte, donc aucune exigence de contraste, seulement une
+     discrétion. Les deux verts sont figés (et non dérivé du thème) pour que
+     le fond garde exactement le même rendu clair ET sombre qu'avant :
+     --prep-topo-green vaut --lkv-action en thème clair, --prep-topo-deep
+     n'a pas de jeton équivalent dans le design system. */
+  --prep-topo-green: #226148;
+  --prep-topo-deep: #17402C;
+  --prep-topo-wash-a: color-mix(in srgb, var(--prep-topo-green) 7%, transparent);
+  --prep-topo-wash-b: color-mix(in srgb, var(--prep-topo-deep) 6%, transparent);
+  --prep-topo-wash-c: color-mix(in srgb, var(--prep-topo-green) 5%, transparent);
+  --prep-topo-ring: color-mix(in srgb, var(--prep-topo-deep) 5.5%, transparent);
+
+  /* --- Verre -----------------------------------------------------------
+     Réservé aux commandes flottantes au-dessus de la carte. `--prep-glass-
+     opaque` est le repli accessibilité quand la transparence est réduite. */
+  --prep-glass-bg: var(--glass-bg-medium);
+  --prep-glass-rim: var(--glass-rim);
+  --prep-glass-border: var(--glass-border);
+  --prep-glass-blur: var(--glass-blur-sm);
+  --prep-glass-saturate: var(--glass-sat);
+  --prep-glass-label: var(--glass-label);
+  --prep-glass-shadow: var(--glass-shadow);
+  --prep-glass-opaque: var(--card-tint-solid);
+
+  /* --- Teintes de famille ---------------------------------------------
+     Cinq familles de points, cinq teintes CATEGORIELLES. Le contraste n'est
+     pas le seul critère — `trajet` et `arret` sont volontairement proches en
+     clarté, la lisibilité sur le fond de carte l'est. Contrastes mesurés sur
+     le fond clair de la carte : 9.7, 5.6, 4.7, 10.6 et 7.8, tous au-dessus du
+     seuil AA de 4.5:1. Aucune ne bouge en thème sombre : ces teintes peignent
+     des marqueurs posés sur les tuiles, pas une surface de thème, et les
+     inverser désynchroniserait la carte du hub de celle du préparateur.
+     La couleur n'est de toute façon jamais le seul signal : chaque famille
+     porte son glyphe dans le programme. */
+  --prep-avatar-size: 26px;
+  --prep-avatar-overlap: -7px;
+  --prep-segmented-height: var(--control-height-md);
+  --prep-segmented-track: color-mix(in srgb, var(--lkv-text-primary) 6%, transparent);
+  --prep-segmented-shadow: 0 1px 2px color-mix(in srgb, var(--lkv-text-primary) 8%, transparent);
+  --prep-missing-tone: color-mix(in srgb, var(--prep-kind-repos) 12%, transparent);
+
+  --prep-kind-trajet: #1B4332;
+  --prep-kind-arret: #2D6A4F;
+  --prep-kind-repos: #9A5B1E;
+  --prep-kind-nuit: #3B2F55;
+  --prep-kind-ravitaillement: #1D4E6B;
+
+  /* --- Durées et courbes ------------------------------------------------
+     Les 220 ms du header sont la durée de référence ; press/page/sheet sont
+     les paliers du design system pour les interactions plus fortes. */
+  --prep-duration-press: var(--motion-press-duration);
+  --prep-duration-control: var(--motion-control-duration);
+  --prep-duration-page: var(--motion-page-duration);
+  --prep-duration-sheet: var(--motion-sheet-duration);
+  --prep-ease-standard: var(--motion-ease-standard);
+  --prep-ease-enter: var(--motion-ease-decelerate);
+  --prep-ease-exit: var(--motion-ease-accelerate);
+
+  /* --- Trait de séparation ---------------------------------------------
+     Un seul pour la finesse des filets de ce chantier, et une seule
+     teinte à l'opacité médiane de celles utilisées ici. */
+  --prep-hairline: 1px;
+  /* Derive de --lkv-text-primary et NON de --glass-rim : dans le theme
+     iOS 27, --glass-rim vaut `0 0 0 0.5px rgba(...)` - c'est une OMBRE, pas
+     une couleur. Le color-mix etait donc invalide, et la totalite du
+     box-shadow qui le consomme tombait a `none` au moment du calcul (mesure
+     navigateur : boxShadow calcule = "none" sur la carte ET sur la feuille).
+     La couleur de texte est une couleur pleine dans les deux themes : le filet
+     s'inverse seul, en mode sombre comme en mode clair. */
+  --prep-hairline-ink: color-mix(in srgb, var(--lkv-text-primary) 16%, transparent);
+}
+
+/* Repli `prefers-reduced-motion`. Les règles du bas de fichier forcent déjà
+   transition-duration à 0.001 ms avec !important ; remettre les tokens à zéro
+   rend la couche autonome pour les surfaces rendues hors de ce sous-arbre. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --prep-duration-press: 0.001ms;
+    --prep-duration-control: 0.001ms;
+    --prep-duration-page: 0.001ms;
+    --prep-duration-sheet: 0.001ms;
+  }
+}
+
+/* Repli `prefers-reduced-transparency` : le verre s'aplatit, il ne simule
+   plus une transparence qu'il n'a plus le droit de composer. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --prep-glass-bg: var(--prep-glass-opaque);
+    --prep-glass-blur: 0px;
+    --prep-glass-saturate: 100%;
+  }
+}
+
+.adventure-prep {
+  /* Fond : blanc teinté de vert. La topographie est peinte par une couche
+     radiale très basse opacité, masquée sous les zones de texte. */
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  /* La hauteur soustrait la bande reellement occupee en bas : bandeau cookies
+     ET bottom-nav empilees, d'ou la somme portee par --prep-bottom-inset. */
+  height: calc(100dvh - var(--shell-top-padding, 0px) - var(--prep-bottom-inset));
+  overflow: hidden;
+  background-color: var(--prep-page-bg);
+  background-image: var(--prep-page-wash);
+  color: var(--lkv-text-primary);
+}
+
+.adventure-prep::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    radial-gradient(120% 80% at 8% 0%, var(--prep-topo-wash-a), transparent 58%),
+    radial-gradient(90% 70% at 100% 12%, var(--prep-topo-wash-b), transparent 62%),
+    radial-gradient(140% 60% at 50% 108%, var(--prep-topo-wash-c), transparent 65%);
+}
+
+/* Traits topographiques : trois anneaux concentriques, très discrets. */
+.adventure-prep::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  right: -14vmin;
+  top: 8vmin;
+  width: 62vmin;
+  height: 62vmin;
+  border-radius: 999px;
+  opacity: 0.5;
+  background:
+    repeating-radial-gradient(
+      circle at 50% 50%,
+      var(--prep-topo-ring) 0 1px,
+      transparent 1px 9vmin
+    );
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, var(--prep-mix-dark) 34%, transparent 72%);
+  mask-image: radial-gradient(circle at 50% 50%, var(--prep-mix-dark) 34%, transparent 72%);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .adventure-prep::before,
+  .adventure-prep::after {
+    display: none;
+  }
+  .adventure-prep {
+    background-color: var(--prep-mix-light);
+  }
+}
+
+/* --- Chrome : bandeau de navigation 52 px ------------------------------- */
+
+.prep-nav {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: var(--control-height-md) 1fr var(--control-height-md);
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--prep-nav-height);
+  padding-inline: var(--space-4);
+  background-color: var(--lkv-surface);
+  border-bottom: 1px solid color-mix(in srgb, var(--glass-rim) 60%, transparent);
+}
+
+/* --- Fil d Ariane : trois segments nommes, un actif ------------------ */
+
+.prep-crumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.prep-crumb__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.prep-crumb__sep {
+  flex: 0 0 auto;
+  color: var(--lkv-text-subtle);
+}
+
+.prep-crumb__label,
+.prep-crumb__link {
+  font-size: var(--lkv-text-footnote);
+  font-weight: 650;
+  letter-spacing: var(--lkv-tracking-body);
+  white-space: nowrap;
+}
+
+.prep-crumb__label {
+  padding-block: 2px;
+  color: var(--lkv-text-secondary);
+  border-bottom: 2px solid transparent;
+}
+
+/* L etape en cours est soulignee ET portee par aria-current : la couleur
+   ne porte jamais l information seule. */
+.prep-crumb__label[data-current='true'] {
+  color: var(--lkv-text-primary);
+  border-bottom-color: var(--lkv-action);
+}
+
+/* Une etape atteinte mais non generee reste annoncee, pas activee. */
+.prep-crumb__label[data-locked='true'] {
+  color: var(--lkv-text-subtle);
+}
+
+.prep-crumb__link {
+  padding: 2px 0;
+  font: inherit;
+  color: var(--lkv-action);
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.prep-crumb__link:hover {
+  border-bottom-color: color-mix(in srgb, var(--lkv-action) 45%, transparent);
+}
+
+.prep-crumb__link:focus-visible {
+  outline: 2px solid var(--lkv-action);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Les deux boutons lateraux sont des icones : pas de libelle visible. */
+.prep-nav__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height-md);
+  height: var(--control-height-md);
+  padding: 0;
+  border-radius: var(--lkv-radius-full);
+  color: var(--lkv-text-secondary);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.prep-nav__icon:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.prep-nav__icon:focus-visible {
+  outline: 2px solid var(--lkv-action);
+  outline-offset: 2px;
+}
+.prep-nav__progress {
+  justify-self: center;
+  max-width: 100%;
+  font-size: var(--lkv-text-footnote);
+  font-weight: 650;
+  letter-spacing: var(--lkv-tracking-body);
+  color: var(--lkv-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.prep-nav__progress b {
+  color: var(--lkv-action);
+  font-weight: 750;
+}
+
+/* --- Ecran : remplit l'espace restant sous le bandeau ------------------ */
+
+.prep-screen {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Corps : zone scrollable unique ------------------------------------ */
+/* Le défilement est toujours possible (clavier, texte agrandi, petit écran)
+   : on ne réduit jamais la taille des caractères pour tenir dans l'écran. */
+
+.prep-body {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--space-5) var(--space-5) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--prep-block-gap);
+}
+
+/* Aucun enfant de la zone scrollable ne peut etre comprime.
+   .prep-body est une colonne flex qui deborde volontairement : sans cette
+   regle, le navigateur retrecit chaque bloc pour le faire tenir et un bloc
+   plus long que la hauteur libre finit a 0px — contenu invisible et
+   boutons inatteignables. C etait le cas de toute l'etape 1. */
+.prep-body > * {
+  flex-shrink: 0;
+}
+
+/* --- Titre d'étape ------------------------------------------------------ */
+
+.prep-title {
+  margin: 0;
+  font-size: var(--lkv-text-title-md);
+  line-height: var(--lkv-line-title);
+  letter-spacing: var(--lkv-tracking-title);
+  font-weight: 780;
+  color: var(--lkv-text-primary);
+  text-wrap: balance;
+}
+
+.prep-help {
+  margin: var(--space-2) 0 0;
+  font-size: var(--lkv-text-body-sm);
+  line-height: var(--lkv-line-body);
+  color: var(--lkv-text-secondary);
+  text-wrap: pretty;
+}
+
+.prep-section-title {
+  margin: 0;
+  font-size: var(--lkv-text-subheadline);
+  font-weight: 700;
+  letter-spacing: var(--lkv-tracking-body);
+  color: var(--lkv-text-primary);
+}
+
+/* --- Bloc de formulaire : surface claire presque opaque ----------------- */
+
+.prep-block {
+  border-radius: var(--card-radius);
+  background-color: color-mix(in srgb, var(--card-tint-solid) 92%, var(--prep-mix-light));
+  border: 1px solid color-mix(in srgb, var(--glass-rim) 70%, transparent);
+  box-shadow: var(--prep-shadow-sm);
+  overflow: hidden;
+}
+
+.prep-block__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--control-height-lg);
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  transition: background-color var(--motion-control-duration) var(--motion-ease-standard);
+}
+
+.prep-block__row + .prep-block__row {
+  border-top: 1px solid color-mix(in srgb, var(--glass-rim) 55%, transparent);
+}
+
+button.prep-block__row {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button.prep-block__row:active {
+  background-color: color-mix(in srgb, var(--lkv-action) 8%, transparent);
+}
+
+.prep-block__row:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: -2px;
+}
+
+.prep-block__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--lkv-text-note);
+  color: var(--lkv-text-secondary);
+}
+
+.prep-block__value {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 58%;
+  font-size: var(--lkv-text-body);
+  font-weight: 620;
+  color: var(--lkv-text-primary);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prep-block__value[data-unknown='true'] {
+  color: var(--lkv-text-subtle);
+  font-weight: 500;
+  font-style: italic;
+}
+
+.prep-block__hint {
+  padding: 0 var(--space-4) var(--space-3);
+  font-size: var(--lkv-text-footnote);
+  line-height: var(--lkv-line-body);
+  color: var(--lkv-text-secondary);
+}
+
+
+/* --- Lieu en deux niveaux : commune en avant, detail en retrait --------- */
+
+.prep-block__stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 58%;
+  text-align: right;
+}
+
+.prep-block__stack .prep-block__value {
+  max-width: 100%;
+}
+
+.prep-block__detail {
+  max-width: 100%;
+  font-size: var(--lkv-text-footnote);
+  line-height: 1.2;
+  color: var(--lkv-text-subtle);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Bascule de forme : boucle contre aller simple ---------------------- */
+
+.prep-segmented {
+  display: flex;
+  gap: 2px;
+  margin: var(--space-2) var(--space-3) var(--space-3);
+  padding: 3px;
+  border-radius: var(--prep-radius-pill);
+  background-color: var(--prep-segmented-track);
+}
+
+.prep-segmented__item {
+  display: inline-flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: calc(var(--prep-segmented-height) - 6px);
+  padding-inline: var(--space-3);
+  border: 0;
+  border-radius: var(--prep-radius-pill);
+  font: inherit;
+  font-size: var(--lkv-text-note);
+  font-weight: 620;
+  color: var(--lkv-text-secondary);
+  background-color: transparent;
+  transition:
+    background-color var(--motion-control-duration) var(--motion-ease-standard),
+    color var(--motion-control-duration) var(--motion-ease-standard);
+}
+
+.prep-segmented__item[aria-pressed='true'] {
+  color: var(--lkv-text-primary);
+  background-color: var(--card-tint-solid);
+  box-shadow: var(--prep-segmented-shadow);
+}
+
+.prep-segmented__item:focus-visible {
+  outline: 2px solid var(--lkv-action);
+  outline-offset: 1px;
+}
+
+/* --- Inversion des extremites ------------------------------------------ */
+
+.prep-swap {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 var(--space-3) var(--space-1);
+}
+
+.prep-swap__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--prep-avatar-size);
+  height: var(--prep-avatar-size);
+  min-height: 0;
+  padding: 0;
+  border-radius: var(--prep-radius-pill);
+  color: var(--lkv-text-secondary);
+  background-color: var(--prep-segmented-track);
+}
+
+/* --- Date et temps : deux cellules, jamais une ligne melangee ---------- */
+
+.prep-block--cells {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+}
+
+.prep-cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+}
+
+.prep-cell + .prep-cell {
+  border-left: 1px solid color-mix(in srgb, var(--glass-rim) 70%, transparent);
+}
+
+.prep-cell__head {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  font-size: var(--lkv-text-footnote);
+  color: var(--lkv-text-secondary);
+}
+
+.prep-cell__value {
+  min-width: 0;
+  font-size: var(--lkv-text-body);
+  font-weight: 620;
+  color: var(--lkv-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prep-cell__value[data-unknown='true'] {
+  color: var(--lkv-text-subtle);
+  font-weight: 500;
+  font-style: italic;
+}
+
+.prep-block__hint--wide {
+  grid-column: 1 / -1;
+  padding-top: var(--space-1);
+}
+
+/* --- Participants : initiales connues, jamais de prenom invente -------- */
+
+.prep-avatars {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  margin-right: var(--space-2);
+}
+
+.prep-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--prep-avatar-size);
+  height: var(--prep-avatar-size);
+  margin-left: var(--prep-avatar-overlap);
+  border-radius: var(--prep-radius-pill);
+  font-size: var(--lkv-text-footnote);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--lkv-text-primary);
+  background-color: color-mix(in srgb, var(--lkv-action) 18%, var(--card-tint-solid));
+  border: 1px solid var(--card-tint-solid);
+}
+
+.prep-avatar:first-child {
+  margin-left: 0;
+}
+
+.prep-avatar[data-tone='1'] {
+  background-color: color-mix(in srgb, var(--prep-kind-repos) 20%, var(--card-tint-solid));
+}
+
+.prep-avatar[data-tone='2'] {
+  background-color: color-mix(in srgb, var(--prep-kind-nuit) 18%, var(--card-tint-solid));
+}
+
+.prep-avatar[data-tone='3'] {
+  background-color: color-mix(in srgb, var(--prep-kind-trajet) 22%, var(--card-tint-solid));
+}
+
+.prep-avatar[data-tone='4'] {
+  background-color: color-mix(in srgb, var(--prep-kind-arret) 20%, var(--card-tint-solid));
+}
+
+.prep-avatar[data-tone='5'] {
+  background-color: color-mix(in srgb, var(--lkv-text-primary) 14%, var(--card-tint-solid));
+}
+
+.prep-avatar[data-tone='more'] {
+  color: var(--lkv-text-secondary);
+  background-color: var(--prep-segmented-track);
+}
+
+/* --- Ligne « Il manque : … » ------------------------------------------- */
+
+.prep-missing {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: flex-start;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--lkv-radius-concentric);
+  font-size: var(--lkv-text-note);
+  line-height: var(--lkv-line-body);
+  color: var(--lkv-text-primary);
+  background-color: var(--prep-missing-tone);
+}
+
+.prep-pill--action {
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--lkv-text-note);
+  font-weight: 650;
+  color: var(--lkv-text-primary);
+  background-color: var(--card-tint-solid);
+  border: 1px solid color-mix(in srgb, var(--lkv-action) 28%, transparent);
+}
+
+.prep-pill[data-unknown='true'] {
+  color: var(--lkv-text-secondary);
+  font-style: italic;
+  background-color: var(--prep-segmented-track);
+  border: 1px solid color-mix(in srgb, var(--glass-rim) 70%, transparent);
+}
+
+/* --- Etape 1 : trois blocs, donc pas de defilement superflu ---------- */
+
+.prep-screen--dense .prep-body {
+  gap: var(--space-2);
+  padding-block: var(--space-4) var(--space-3);
+}
+
+/* La carte occupe ce qui reste : elle ne se fait jamais rogner par le
+   pied de page, et son pied de controle reste atteignable au doigt. */
+.prep-screen--dense .prep-map {
+  flex: 1 1 auto;
+  min-height: 128px;
+  max-height: 200px;
+}
+
+.prep-screen--dense .prep-block__hint--wide {
+  padding-block: var(--space-1) var(--space-2);
+  font-size: var(--lkv-text-footnote);
+  line-height: 1.35;
+}
+/* --- Carte : coins 24 px, contrôles flottants en verre ----------------- */
+.prep-map {
+
+  /* ANCRAGE. `.prep-map` est un enfant de `.prep-body` (overflow-y: auto) et
+     rend son contenu en flux, PAS en overlay.
+
+     Mesure au navigateur sur 430x932 : en `position: sticky` + `bottom: 0`, la
+     carte se collait au bas du scrollport et RECOUVRAIT les champs situes en
+     dessous. `elementsFromPoint` au centre de `button.prep-cell` (Arrivee) et
+     de la ligne Participants renvoyait `div.prep-map__canvas`, donc ces deux
+     controles etaient invisibles ET incliquables par la carte.
+
+     `sticky` + `bottom` ne garantit qu une chose : l element ne sort pas par le
+     BAS du scrollport. Il garantit RIEN contre un recouvrement vers le HAUT, qui
+     est exactement le defaut constate. La seule construction qui ne peut pas
+     recouvrir ses voisins est le flux normal : la carte occupe sa propre ligne,
+     son contenu precedent garde toute sa hauteur cliquable, et le defilement
+     fait simplement descendre la carte hors du cadre — ce qui est le comportement
+     attendu d une carte de contexte.
+
+     La variante `.prep-map--full` (overlay plein ecran) n est pas concernee :
+     elle est declaree plus bas, de meme specificite, et son `fixed` l emporte. */
+  position: static;
+  bottom: auto;
+  z-index: 2;
+  flex: 0 0 auto;
+  height: var(--prep-map-share);
+  min-height: 168px;
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  background-color: var(--prep-map-bg);
+  background-image: var(--prep-map-wash);
+  border: 1px solid color-mix(in srgb, var(--glass-rim) 70%, transparent);
+  /* Verre pose : flou et saturation repris du langage glass du systeme. Le fond
+     reste opaque, donc le flou ne sert qu'a l'arrivee du fond de carte — il ne
+     doit jamais laisser voir le texte de l'etape dessous. */
+  -webkit-backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
+  backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
+  box-shadow:
+    0 -1px 0 0 var(--prep-hairline-ink),
+    0 -18px 32px -22px color-mix(in srgb, var(--lkv-text-primary) 55%, transparent),
+    var(--prep-shadow-card);
+  isolation: isolate;
+}
+
+/* Écran court / texte agrandi : la carte se compacte AVANT tout scroll. */
+@media (max-height: 720px) {
+  .prep-map {
+    height: var(--prep-map-share-compact);
+    min-height: 132px;
+  }
+}
+
+.prep-map__canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.prep-map__scope {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  z-index: 2;
+}
+
+/* Verre réservé aux commandes flottantes au-dessus de la carte. */
+.prep-map__controls {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.prep-map__controls--end {
+  top: var(--space-3);
+  right: var(--space-3);
+  align-items: flex-end;
+}
+
+.prep-map__glass {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height-md);
+  padding-inline: var(--space-3);
+  border-radius: 999px;
+  font-size: var(--lkv-text-footnote);
+  font-weight: 650;
+  color: var(--glass-label);
+  background-color: var(--glass-bg-medium);
+  border: 1px solid var(--glass-border);
+  -webkit-backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
+  box-shadow: var(--prep-shadow-lift);
+}
+
+button.prep-map__glass {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--motion-control-duration) var(--motion-ease-standard);
+}
+
+button.prep-map__glass:active {
+  background-color: color-mix(in srgb, var(--glass-bg-medium) 82%, var(--prep-mix-dark));
+}
+
+.prep-map__glass:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+.prep-map__glass--icon {
+  width: var(--control-height-md);
+  padding-inline: 0;
+  justify-content: center;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .prep-map__glass {
+    background-color: var(--card-tint-solid);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Carte en plein écran : la carte occupe tout, les filtres restent en bas. */
+.prep-map--full {
+  position: fixed;
+  inset: 0;
+  z-index: 10010;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: 0 var(--space-4) calc(var(--space-5) + var(--safe-bottom, 0px));
+  height: 100%;
+  min-height: 0;
+  border-radius: 0;
+  border: 0;
+  background-color: var(--lkv-surface);
+}
+
+/* Rail jour puis barre de filtres : un seul flux vertical, empilé par le
+   DOM. Les absoudre en `absolute` les empilerait a une hauteur fixe, alors
+   que la barre de filtres passe sur deux rangees des que les libelles ne
+   tiennent plus sur un petit telephone — le rail viendrait alors les
+   recouvrir. Le canvas, la pastille et les commandes restent en absolu. */
+.prep-map__dayrail,
+.prep-map__fullbar {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Le rail ne défile pas horizontalement : il doit tenir en deux rangees au
+   pire, comme la barre de filtres, pour ne jamais deborder de l'overlay. */
+.prep-map__dayrail {
+  flex: 0 0 auto;
+}
+
+.prep-map__dayrail .prep-map__glass,
+.prep-map__fullbar .prep-map__glass {
+  font-weight: 680;
+}
+
+.prep-map__dayrail .prep-map__glass[aria-pressed='true'] {
+  color: var(--lkv-action);
+  background-color: var(--prep-glass-bg);
+  border-color: color-mix(in srgb, var(--lkv-action) 42%, var(--glass-border));
+}
+
+/* Note de géolocalisation posée sur la carte : elle partage la colonne
+   verticale des barres pour ne jamais masquer les points, et troque sa mise en
+   page de bandeau (plein écran) contre une puce alignée sur les commandes. */
+.prep-note--overlay {
+  position: relative;
+  z-index: 4;
+  flex: 0 0 auto;
+  align-self: stretch;
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--lkv-radius-concentric);
+  color: var(--glass-label);
+  background-color: var(--glass-bg-medium);
+  border: 1px solid var(--glass-border);
+  -webkit-backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
+  backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
+}
+
+/* --- Pastille d'activité ------------------------------------------------ */
+
+.prep-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: flex-start;
+  min-height: var(--control-height-md);
+  padding: 0 var(--space-3) 0 var(--space-2);
+  border-radius: 999px;
+  font-size: var(--lkv-text-note);
+  font-weight: 650;
+  color: var(--lkv-action);
+  background-color: color-mix(in srgb, var(--lkv-action) 10%, var(--prep-mix-light));
+  border: 1px solid color-mix(in srgb, var(--lkv-action) 26%, transparent);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--motion-control-duration) var(--motion-ease-standard);
+}
+
+.prep-pill:hover {
+  background-color: color-mix(in srgb, var(--lkv-action) 16%, var(--prep-mix-light));
+}
+
+.prep-pill:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+/* --- Sélecteur de journée (étape 2) ------------------------------------ */
+
+.prep-days {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding-block: 2px;
+  scrollbar-width: none;
+}
+
+.prep-days::-webkit-scrollbar {
+  display: none;
+}
+
+.prep-day {
+  flex: 0 0 auto;
+  min-height: var(--control-height-md);
+  padding-inline: var(--space-4);
+  border-radius: 999px;
+  font-size: var(--lkv-text-note);
+  font-weight: 650;
+  color: var(--lkv-text-secondary);
+  background-color: var(--card-tint-solid);
+  border: 1px solid var(--glass-rim);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--motion-control-duration) var(--motion-ease-standard),
+    color var(--motion-control-duration) var(--motion-ease-standard);
+}
+
+.prep-day[aria-pressed='true'] {
+  color: var(--btn-on-solid);
+  background-color: var(--btn-tint-solid);
+  border-color: transparent;
+  font-weight: 750;
+}
+
+.prep-day:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+/* --- Trois métriques ---------------------------------------------------- */
+/* Jamais de score global : trois mesures, périmètre explicite. */
+
+.prep-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.prep-metric {
+  padding: var(--space-3);
+  border-radius: var(--lkv-radius-concentric);
+  background-color: color-mix(in srgb, var(--card-tint-solid) 88%, var(--prep-mix-light));
+  border: 1px solid color-mix(in srgb, var(--glass-rim) 60%, transparent);
+  min-width: 0;
+}
+
+.prep-metric__label {
+  display: block;
+  font-size: var(--lkv-text-caption);
+  font-weight: 620;
+  letter-spacing: 0.01em;
+  color: var(--lkv-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prep-metric__value {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--lkv-text-callout);
+  font-weight: 760;
+  letter-spacing: var(--lkv-tracking-title);
+  color: var(--lkv-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.prep-metric__value[data-unknown='true'] {
+  color: var(--lkv-text-subtle);
+  font-weight: 550;
+}
+
+.prep-metric__scope {
+  display: block;
+  margin-top: 1px;
+  font-size: var(--lkv-text-caption-2);
+  color: var(--lkv-text-subtle);
+}
+
+/* --- Bandeau de génération --------------------------------------------- */
+/* Décrit le travail RÉELLEMENT effectué ; jamais de pourcentage. */
+
+.prep-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--card-radius);
+  background-color: color-mix(in srgb, var(--card-tint-solid) 92%, var(--prep-mix-light));
+  border: 1px solid color-mix(in srgb, var(--glass-rim) 60%, transparent);
+}
+
+.prep-rail__line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--lkv-text-note);
+  color: var(--lkv-text-secondary);
+}
+
+.prep-rail__line[data-state='done'] {
+  color: var(--lkv-action);
+}
+
+.prep-rail__line[data-state='active'] {
+  color: var(--lkv-text-primary);
+  font-weight: 640;
+}
+
+.prep-rail__dot {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--lkv-text-subtle);
+}
+
+.prep-rail__line[data-state='done'] .prep-rail__dot {
+  color: var(--lkv-action);
+}
+
+.prep-rail__line[data-state='active'] .prep-rail__dot {
+  color: var(--lkv-text-primary);
+}
+
+/* --- Fiche d'étape ------------------------------------------------------ */
+
+.prep-step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--card-radius);
+  background-color: color-mix(in srgb, var(--card-tint-solid) 94%, var(--prep-mix-light));
+  border: 1px solid color-mix(in srgb, var(--glass-rim) 70%, transparent);
+  box-shadow: var(--prep-shadow-sm);
+}
+
+.prep-step__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.prep-step__thumb {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--lkv-radius-concentric);
+  color: var(--lkv-action);
+  background-color: color-mix(in srgb, var(--lkv-action) 10%, var(--prep-mix-light));
+  border: 1px solid color-mix(in srgb, var(--lkv-action) 18%, transparent);
+}
+
+.prep-step__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.prep-step__name {
+  margin: 0;
+  font-size: var(--lkv-text-body);
+  font-weight: 700;
+  letter-spacing: var(--lkv-tracking-body);
+  color: var(--lkv-text-primary);
+}
+
+.prep-step__when {
+  margin-top: 2px;
+  font-size: var(--lkv-text-note);
+  color: var(--lkv-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.prep-step__reason {
+  margin-top: 4px;
+  font-size: var(--lkv-text-footnote);
+  line-height: var(--lkv-line-body);
+  color: var(--lkv-text-subtle);
+}
+
+.prep-step__price {
+  flex: 0 0 auto;
+  font-size: var(--lkv-text-note);
+  font-weight: 700;
+  text-align: right;
+  color: var(--lkv-text-primary);
+}
+
+.prep-step__price[data-state='a_reserver'] {
+  color: var(--lkv-text-subtle);
+  font-weight: 550;
+  font-style: italic;
+}
+
+.prep-step__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid color-mix(in srgb, var(--glass-rim) 55%, transparent);
+}
+
+/* --- Ligne d'action secondaire (grilles, listes) ----------------------- */
+
+.prep-actionrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.prep-action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height-md);
+  padding-inline: var(--space-4);
+  border-radius: 999px;
+  font-size: var(--lkv-text-note);
+  font-weight: 650;
+  color: var(--lkv-text-primary);
+  background-color: var(--card-tint-solid);
+  border: 1px solid var(--glass-rim);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--motion-control-duration) var(--motion-ease-standard);
+}
+
+.prep-action:hover {
+  background-color: color-mix(in srgb, var(--lkv-action) 8%, var(--prep-mix-light));
+}
+
+.prep-action:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+.prep-action[aria-pressed='true'] {
+  color: var(--lkv-action);
+  background-color: color-mix(in srgb, var(--lkv-action) 12%, var(--prep-mix-light));
+  border-color: color-mix(in srgb, var(--lkv-action) 30%, transparent);
+}
+
+/* --- Barre d'action fixe (52 px, opaque) ------------------------------- */
+
+.prep-footer {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--prep-action-height);
+  padding: var(--space-2) var(--space-5);
+  background-color: var(--lkv-surface);
+  border-top: 1px solid color-mix(in srgb, var(--glass-rim) 60%, transparent);
+}
+
+.prep-footer__primary {
+  flex: 1 1 auto;
+  min-height: var(--prep-action-height);
+  font-size: var(--lkv-text-body);
+  font-weight: 720;
+}
+
+/* Le fond du footer doit rester lisible même si la carte défile dessous. */
+.prep-footer,
+.prep-nav {
+  isolation: isolate;
+}
+
+/* --- Catalogue d'activités --------------------------------------------- */
+
+.prep-cats {
+  display: flex;
+  /* Rail de filtres : hauteur intrinsèque. Sans flex:0 0 auto il se fait
+     ecraser des que le port devient court (bande cookies reservee, petit
+     viewport, chrome mobile) — les chips passaient sous la liste et
+     devenaient incliquables. C'est la liste qui doit absorber le
+     manque de place, pas la rangee de controles. */
+  flex: 0 0 auto;
+  gap: var(--space-2);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding-block: 2px;
+  scrollbar-width: none;
+}
+
+.prep-cats::-webkit-scrollbar {
+  display: none;
+}
+
+.prep-acts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.prep-act {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--control-height-lg);
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  border-radius: var(--card-radius);
+  font: inherit;
+  color: var(--lkv-text-primary);
+  background-color: var(--card-tint-solid);
+  border: 1px solid color-mix(in srgb, var(--glass-rim) 65%, transparent);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--motion-control-duration) var(--motion-ease-standard),
+    border-color var(--motion-control-duration) var(--motion-ease-standard);
+}
+
+.prep-act[aria-pressed='true'] {
+  color: var(--lkv-action);
+  background-color: color-mix(in srgb, var(--lkv-action) 9%, var(--prep-mix-light));
+  border-color: color-mix(in srgb, var(--lkv-action) 34%, transparent);
+}
+
+.prep-act:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+.prep-act__icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--lkv-radius-concentric);
+  color: var(--lkv-action);
+  background-color: color-mix(in srgb, var(--lkv-action) 8%, var(--prep-mix-light));
+}
+
+/* Corps du libelle : le nom et son indice d'incertitude sont empiles. Le nom
+   garde toute la largeur, l'indice peut disparaitre sans casser l'alignement,
+   et c'est lui qui dit honestement quand une ancre reste a verifier. */
+.prep-act__body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.prep-act__name {
+  min-width: 0;
+  font-size: var(--lkv-text-body);
+  font-weight: 640;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prep-act__hint {
+  font-size: var(--lkv-text-footnote);
+  line-height: var(--lkv-line-body);
+  color: var(--lkv-text-secondary);
+  text-wrap: pretty;
+}
+
+.prep-act__meta {
+  flex: 0 0 auto;
+  font-size: var(--lkv-text-footnote);
+  color: var(--lkv-text-secondary);
+  text-align: right;
+}
+
+.prep-act__check {
+  flex: 0 0 auto;
+  color: var(--lkv-action);
+}
+
+/* --- États vide / erreur hors carte ------------------------------------ */
+
+.prep-note {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--lkv-radius-concentric);
+  font-size: var(--lkv-text-note);
+  line-height: var(--lkv-line-body);
+  color: var(--lkv-text-secondary);
+  background-color: color-mix(in srgb, var(--lkv-action) 7%, var(--prep-mix-light));
+  border: 1px solid color-mix(in srgb, var(--lkv-action) 20%, transparent);
+}
+
+.prep-note[data-tone='warn'] {
+  /* Token d'ambre plutot qu'un hex : le libelle doit rester lisible en
+     theme sombre, ou la teinte claire de --lkv-warning disparait. */
+  color: var(--lkv-text-primary);
+  background-color: color-mix(in srgb, var(--lkv-warning-dark) 14%, transparent);
+  border-color: color-mix(in srgb, var(--lkv-warning-dark) 26%, transparent);
+}
+
+.prep-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --- Réduction des animations ------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .adventure-prep,
+  .adventure-prep *,
+  .adventure-prep *::before,
+  .adventure-prep *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+/* ==========================================================================
+   CORRECTIFS D — ANCRAGE PLEIN ECRAN
+   Defauts mesures au navigateur en 390x844 sur /prepare (work/probe2.mjs,
+   work/probe3.mjs). Cette section complete les regles posees plus haut plutot
+   que de les reecrire : une seule couche a relire. Aucune couleur en dur dans
+   cette section : uniquement des tokens.
+   ========================================================================== */
+
+/* --- D1 bis · La carte se range EN FIN de corps, sans se poser dessus -------
+   Retour sur mesure navigateur (430x932) : la regle d avant faisait
+   `order: 99` + `margin-top: auto` SUR une carte restee `sticky`. Les deux
+  idents ensemble sont la cause du recouvrement.
+
+   `sticky` + `bottom: 0` signifie « reste colle au bord BAS du scrollport ».
+   Ordonner la carte en dernier dans la colonne flex revient a lui donner la
+   derniere ligne du programme ET a la coller par-dessus cette meme zone : au
+   repos, avec `margin-top: auto`, elle absorbeait tout l espace libre et se
+   posait entre les participants et le bas du cadre, lais sant visibles ni le
+   champ Arrivee, ni la date, ni le temps, ni le badge de duree. Hit-test au
+   navigateur : `elementsFromPoint` au centre de `button.prep-cell` et de la
+   ligne Participants renvoyait `div.prep-map__canvas` — la carte etait
+   litteralement par-dessus, donc non seulement invisible mais non
+   cliquable.
+
+   `order: 99` reste, parce qu il repond a un besoin reel et different : la carte
+   est la 3e des 9 enfants de `.prep-body`, donc en flux simple elle s intercaler
+   entre le bloc de depart et le programme. En fin de colonne elle ferme l ecran
+   comme un annexe de contexte, ce qui est le role voulu. Ce que `order` ne doit
+   PLUS faire, c est se combiner avec un positionnement hors flux.
+
+   `:not(.prep-map--full)` reste obligatoire : l overlay plein ecran remplace la
+   carte compacte dans le meme parent, et sans cette exclusion la presente regle
+   lui prendrait sa mise en page. `order` n a de toute facon aucun effet sur un
+   element sorti du flux.
+
+   Reserve d accessibilite conservee : l ordre visuel (carte en dernier) differe
+   de l ordre du DOM (carte avant le programme). */
+.prep-body > .prep-map:not(.prep-map--full) {
+  order: 99;
+  /* Elle peut retrecir, jamais disparaitre. `flex: 0 0 auto` la figeait a
+     280 px alors que le contenu de l etape occupe deja la hauteur du corps :
+     sa moitie sortait du cadre, repere et controles compris, ce qui se lisait
+     comme une carte invisible. `0 1 auto` lui laisse prendre la place
+     restante, et le plancher garantit qu elle ne s efface pas quand le
+     programme occupe le bas du corps. Le reste defile, comme avant. */
+  flex: 0 1 auto;
+  min-height: 132px;
+}
+
+/* --- D2 · Le shell du preparateur ne defile plus ----------------------------
+   Mesure : documentElement.scrollHeight 868 pour innerHeight 844, sur TOUS les
+   ecrans. L'excedent de 24 px venait du padding-bottom inline
+   `var(--space-6, 24px)` pose par AppShell sur son div de contenu — or le
+   shell reserve deja la place du bas via son propre padding-bottom. Un style
+   inline bat une feuille de style : `!important` y est obligatoire, et la
+   regle reste strictement scopee a `.app-shell--preparer` pour ne pas casser
+   le defilement des autres pages.
+   `max-height` suit `.adventure-prep` (100dvh) plutot que 100svh : sur
+   mobile, la barre d'adresse fait GRANDIR 100dvh quand elle se retire, et un
+   plafond en svh finirait par rogner le CTA. `overflow: hidden` est la
+   garantie finale : plus aucune chaine du preparateur ne peut faire defiler la
+   page, quelle que soit la hauteur de son contenu. */
+.app-shell--preparer {
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.app-shell--preparer > div {
+  padding-bottom: 0 !important;
+}
+
+/* --- D3 · La surface des feuilles est opaque ---------------------------------
+   Mesure : `bg-[color:var(--glass-bg-medium)]` resolvait a un alpha de 0.34 et
+   le titre « On part ou ? » de l'etape traversait la feuille Preferences — texte
+   superpose, illisible. C'etait le defaut le plus choquant de l'ecran.
+   La feuille passe par un portail Radix : elle est montee dans <body>, donc
+   `.adventure-prep .lkv-sheet-up` ne matchait jamais. Seul `:has()` donne un
+   scope CSS correct sans toucher au composant <Sheet> partage par toute
+   l'application : la regle ne s'active QUE sur une page portant le shell du
+   preparateur, et laisse les feuilles des autres pages intactes.
+   Le fond melange `--lkv-surface-elevated` avec `--lkv-text-primary`, les DEUX
+   etant des couleurs pleines dans les deux themes : le resultat est opaque par
+   construction. Mesure : `color-mix(... var(--lkv-surface) 97%, transparent)`
+   rendait ENCORE un alpha de 0.29, parce que le theme iOS 27 redefinit
+   `--lkv-surface` en `rgba(16,16,16,0.3)` — 97 % de 30 % reste translucide, et
+   le titre de l'etape traversait toujours la feuille. On ne melange donc plus la
+   surface du theme avec `transparent` pour garantir l'opacite : le menu defilant
+   de la feuille est une vue dediee, pas une surface de verre, et la lisibilite
+   passe avant la translucide.
+
+   Le defilement INTERNE n'est pas touche : le `overflow-y: auto` du contenu de la
+   feuille continue de fonctionner pour une liste plus longue qu'elle. */
+body:has(.app-shell--preparer) .lkv-sheet-up {
+  background-color: color-mix(
+    in srgb,
+    var(--lkv-surface-elevated) 86%,
+    var(--lkv-text-primary)
+  );
+  -webkit-backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
+  backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
+  box-shadow:
+    0 -1px 0 0 var(--prep-hairline-ink),
+    0 -24px 48px -28px color-mix(in srgb, var(--lkv-text-primary) 60%, transparent),
+    var(--prep-shadow-float);
+}
+
+/* --- D5 · Les rails de puces ne touchent plus le bord ------------------------
+   Mesure : la derniere puce de `.prep-cats` et de `.prep-days` etait collee au
+   bord du viewport, sans gout de fin. Un padding de fin est choisi plutot qu'un
+   `mask-image` : sur un conteneur `overflow-x: auto`, un masque s'applique
+   aussi aux ombres et aux anneaux de focus des puces et degrade ce que
+   `scroll-padding` fait proprement. Le defi natif fait le reste au scroll. */
+.prep-cats,
+.prep-days {
+  padding-inline: var(--space-1) var(--space-5);
+  scroll-padding-inline: var(--space-1) var(--space-5);
+}
+
+/* --- D6 · Perimetre et commandes ne se percutent plus ------------------------
+   Mesure : « Ensemble » est une ancre en haut a gauche, les commandes en haut a
+   droite ; rien ne bornait la pastille, donc un libelle long (Jour 3 · 24 km)
+   venait buter sur « Ma position / Reduire » sur 390 px. La pastille est desor-
+   mais bornee a 46 % de la carte, 190 px au plus : le chevauchement devient
+   impossible quelle que soit la longueur du libelle. Elle tronque plutot que de
+   deborder — la pastille est un conteneur flex, donc `text-overflow` n'y
+   produit pas d'ellipse ; le libelle complet reste annonce et se lit dans le
+   rail du jour. */
+.prep-map__scope {
+  max-width: min(46%, 190px);
+}
+
+.prep-map__scope .prep-map__glass {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* --- E · La valeur d un bloc ne se fait plus couper par un libelle long -----
+   Mesure sur l ecran 12 (Sejour autour d un lieu) : le libelle « Destination ou
+   hebergement de base » occupe deux lignes, et la valeur « A verifier » — la plus
+   courte — se fait reduire a « A ve… ». Cause : `.prep-block__value` etait en
+   `flex: 0 1 auto` comme le libelle, donc les deux enfants perdaient la reduction
+   au prorata de leur base flexible ; la valeur, plus courte, perdait aussi.
+   La valeur ne peut pas raccourcir en dessous de sa largeur intrinsique
+   (`flex: 0 0 auto`) : c est le libelle qui absorbe la reduction et passe a la
+   ligne, ce qu il sait deja faire (`flex: 1 1 auto` + `min-width: 0`).
+   `max-width: 58%` et l ellipse restent : une valeur reellement trop longue — un
+   nom de lieu, une adresse — reste alors correctement tronquee, et le libelle
+   complet reste accessible. */
+.prep-block__value {
+  flex: 0 0 auto;
+}
+
+/* --- F · La carte ne recouvre plus le programme (etape 2) -------------------
+   Mesure sur l ecran 30 en 390x844 : le <ul> du programme mesurait 732 px, la
+   carte posee en bas du scrollport le recouvrait et la premiere etape etait
+   illisible au premier ecran. Deux approches avaient ete ecrites ici, elles se
+   contredisaient. La maquette tranche, et elle est explicite : sur l ecran 30 la
+   carte est UN ELEMENT DU FLUX place avant le programme, pas un voile colle au
+   bas par-dessus lui. D ou la variante --inline, qui renvoie la carte a son rang
+   dans la colonne flex sans deplacer un seul noeud du DOM.
+
+   Consequence sur la liste du programme : elle redevient un <ul> ordinaire. La
+   borner a 42vh avec un overflow-y creait une SECONDE region defilable a
+   l interieur de .prep-body, donc deux barres de defilement imbriquees sur le
+   meme pouce — le defilement enchaine vers la liste avant d aller plus loin, et
+   le pouce de la region interieure est trop petit pour etre saisissable. Il ne
+   doit y en avoir qu UNE : .prep-body, la region de scroll interne du
+   preparateur. La page principale, elle, ne defile toujours pas.
+
+   La section garde malgre tout flex: 0 0 auto : c est lui qui empeche la colonne
+   flex d ecraser le programme a 0 px quand Plans B et les incertitudes, non
+   reduisables, occupent le bas du corps. Elle ne peut pas disparaitre, elle peut
+   seulement defiler.
+
+   ATTENTION A L EGALITE DE SPECIFICITE : la regle d ancrage
+   .prep-body > .prep-map:not(.prep-map--full) pese (0,3,0), exactement comme
+   cette variante — meme parent, meme :not(), meme nombre de classes. Une
+   variante ecrite en simple .prep-map--inline, elle, ne pesait que (0,1,0) et se
+   faisait ecraser en silence : mesure au navigateur, la carte gardait son order
+   99 et partait a 1676 px, donc invisible, alors que le test passait. A
+   specificity egale, c est l ORDRE DU FICHIER qui tranche : la presente section
+   F est plus loin que la section D, donc elle gagne. Le selecteur complet est
+   verrouille par un test, parce que le paredre est invisible et silencieux. */
+.prep-body > .prep-map--inline:not(.prep-map--full) {
+  order: 0;
+  position: relative;
+  bottom: auto;
+  /* Rendue dans le flux, elle perd la reservation de bas : meme hauteur que la
+     carte posee, pour que les deux etats de l etape 2 se ressemblent. */
+  margin-top: 0;
+  margin-bottom: var(--space-4);
+}
+
+.prep-programme {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* === Refonte 2026-09-27 ================================================= */
+
+/* Visually hidden */
+.prep-visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Spinner */
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* États de réservation (badges dans les fiches) */
+.prep-step__state {
+  display: inline-flex; align-items: center;
+  gap: var(--prep-space-1);
+  padding: 2px var(--prep-space-2);
+  border-radius: var(--prep-radius-pill, 999px);
+  font-size: var(--lkv-text-caption);
+  font-weight: 650;
+  border: 1px solid transparent;
+}
+.prep-step__state[data-state='propose'] {
+  color: var(--lkv-text-secondary);
+  background: var(--prep-segmented-track);
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--lkv-text-primary) 28%, transparent);
+}
+.prep-step__state[data-state='a_reserver'] {
+  color: color-mix(in srgb, var(--lkv-warning-dark) 90%, black);
+  background: color-mix(in srgb, var(--lkv-warning-dark) 12%, var(--lkv-surface));
+  border-color: color-mix(in srgb, var(--lkv-warning-dark) 28%, transparent);
+}
+.prep-step__state[data-state='confirme'] {
+  color: var(--lkv-action);
+  background: color-mix(in srgb, var(--lkv-action) 10%, var(--lkv-surface));
+  border-color: color-mix(in srgb, var(--lkv-action) 26%, transparent);
+}
+.prep-step__state[data-state='confirme_communaute'] {
+  color: var(--pos, var(--lkv-action));
+  background: color-mix(in srgb, var(--pos, var(--lkv-action)) 10%, var(--lkv-surface));
+  border-color: color-mix(in srgb, var(--pos, var(--lkv-action)) 26%, transparent);
+}
+.prep-step__state[data-state='retenu'] {
+  color: var(--lkv-text-primary);
+  background: color-mix(in srgb, var(--lkv-action) 8%, var(--card-tint-solid));
+  border-color: color-mix(in srgb, var(--lkv-action) 20%, transparent);
+}
+
+/* Note */
+.prep-note {
+  font-size: var(--lkv-text-footnote);
+  color: var(--lkv-text-subtle);
+  text-align: center;
+  padding: var(--prep-space-4);
+}
+
+/* Section title */
+.prep-section-title {
+  font-size: var(--lkv-text-footnote);
+  font-weight: 680;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--lkv-text-secondary);
+  margin-bottom: var(--prep-space-2);
+}
+
+/* Swap button (inverser départ/arrivée) */
+.prep-swap {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--prep-space-1) var(--prep-space-4);
+  border-top: 1px solid color-mix(in srgb, var(--glass-rim) 50%, transparent);
+}
+.prep-swap__button {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--lkv-action) 10%, var(--lkv-surface));
+  color: var(--lkv-action);
+  border: 1px solid color-mix(in srgb, var(--lkv-action) 22%, transparent);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--motion-control-duration) var(--motion-ease-standard);
+}
+.prep-swap__button:hover { background: color-mix(in srgb, var(--lkv-action) 16%, var(--lkv-surface)); }
+.prep-swap__button:focus-visible { outline: 2px solid var(--lkv-focus-ring); outline-offset: 2px; }
+
+/* Gear checkbox row */
+.prep-gear-row {
+  display: flex; align-items: center;
+  gap: var(--prep-space-3);
+  min-height: 52px;
+  padding: var(--prep-space-2) var(--prep-space-4);
+}
+.prep-gear-row + .prep-gear-row {
+  border-top: 1px solid color-mix(in srgb, var(--glass-rim) 50%, transparent);
+}
+.prep-gear-row__check {
+  flex-shrink: 0;
+  width: 24px; height: 24px;
+  accent-color: var(--lkv-action);
+  cursor: pointer;
+}
+.prep-gear-row__info { flex: 1; min-width: 0; }
+.prep-gear-row__name { font-size: var(--lkv-text-footnote); font-weight: 640; color: var(--lkv-text-primary); }
+.prep-gear-row__meta { font-size: var(--lkv-text-caption); color: var(--lkv-text-subtle); margin-top: 1px; }
+.prep-gear-row__badge {
+  flex-shrink: 0;
+  font-size: var(--lkv-text-caption-2); font-weight: 660;
+  padding: 2px 6px; border-radius: 999px;
+}
+.prep-gear-row__badge--missing {
+  color: var(--lkv-warning-dark);
+  background: color-mix(in srgb, var(--lkv-warning-dark) 10%, var(--lkv-surface));
+  border: 1px solid color-mix(in srgb, var(--lkv-warning-dark) 25%, transparent);
+}
+.prep-gear-row__badge--check {
+  color: var(--lkv-warning-dark);
+  background: color-mix(in srgb, var(--lkv-warning-dark) 10%, var(--lkv-surface));
+  border: 1px solid color-mix(in srgb, var(--lkv-warning-dark) 25%, transparent);
+}
+.prep-gear-row__badge--shared {
+  color: var(--lkv-action);
+  background: color-mix(in srgb, var(--lkv-action) 10%, var(--lkv-surface));
+  border: 1px solid color-mix(in srgb, var(--lkv-action) 25%, transparent);
+}
+
+/* État libre (Partir librement) */
+.prep-libre {
+  display: flex; flex-direction: column;
+  height: 100%;
+}
+.prep-libre__map {
+  flex: 1; min-height: 0;
+  border-radius: 0;
+}
+.prep-libre__overlay {
+  position: absolute;
+  bottom: calc(var(--prep-action-height) + var(--safe-bottom, 0px));
+  left: var(--space-4); right: var(--space-4);
+  z-index: 5;
+}
+
+/* États transverses */
+/* Texte 200% : grille → colonne unique */
+@media (min-resolution: 1.5dppx) and (min-width: 393px) {
+  /* handled by fluid type already */
+}
+
+/* Clavier ouvert : body scrollable, footer visible */
+@media (max-height: 500px) {
+  .adventure-prep { overflow-y: auto; }
+  .prep-footer { position: sticky; bottom: 0; }
+  .prep-map { min-height: 100px; height: 100px; }
+}
+
+/* Mouvement réduit */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .prep-rail__line[data-state='active'] .prep-rail__dot {
+    animation: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .prep-metrics { grid-template-columns: 1fr; }
+}
+/* --- Ajouts pour ActivityPickerScreen --- */
+
+.prep-block {
+  background: var(--lkv-surface);
+  border: 1px solid var(--glass-rim);
+  border-radius: var(--lkv-radius-md, 18px);
+  overflow: hidden;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--lkv-text-primary) 5%, transparent);
+}
+
+.prep-block__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 8px 14px;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, var(--lkv-text-primary) 10%, transparent);
+  text-align: left;
+  cursor: pointer;
+  color: var(--lkv-text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+}
+.prep-block__row:first-child {
+  border-top: 0;
+}
+.prep-block__row[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--lkv-action) 9%, transparent);
+}
+
+.prep-act-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex: none;
+  background: var(--lkv-surface);
+  border: 1px solid var(--glass-rim);
+  color: var(--lkv-text-secondary);
+}
+.prep-block__row[aria-pressed="true"] .prep-act-icon {
+  background: var(--lkv-action);
+  border-color: var(--lkv-action);
+  color: var(--btn-on-solid);
+}
+
+.prep-act-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.prep-act-name {
+  font-size: 17px;
+  line-height: 1.3;
+  font-weight: 500;
+  white-space: normal;
+}
+.prep-act-hint {
+  font-size: 14px;
+  color: var(--lkv-text-secondary);
+  margin-top: 2px;
+}
+.prep-act-check {
+  color: var(--lkv-action);
+  flex: none;
+}
+
+.prep-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 14px;
+  background: var(--lkv-surface);
+  font-size: 17px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+}
+.prep-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  outline: none;
+  color: var(--lkv-text-primary);
+}
+.prep-search input::placeholder {
+  color: var(--lkv-text-subtle);
+}
+
+.prep-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 6px 14px;
+  border-radius: 22px;
+  background: var(--lkv-surface);
+  border: 1px solid var(--glass-rim);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--lkv-text-primary);
+  white-space: nowrap;
+  cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+}
+.prep-action[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--lkv-action) 12%, transparent);
+  border-color: var(--lkv-action);
+  color: var(--lkv-action);
+  font-weight: 600;
+}
+
+.prep-footer-link {
+  display: block;
+  text-align: center;
+  font-size: 13px;
+  text-decoration: underline;
+  color: var(--lkv-text-secondary);
+  padding: 8px;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+}
+/* ==========================================================================
+   Feuilles de reglage et selecteur de point
+   --------------------------------------------------------------------------
+   Les feuilles (lieu, dates, invitation) sont rendues hors du corps
+   scrollable du preparateur : elles vivent dans un portail. Leur style ne peut
+   donc pas heritage de `.adventure-prep`, et ces classes — nommes sans prefixe
+   parce qu'elles ne servent qu'ici — completent ce que les composants UI
+   generiques ne couvrent pas.
+
+   Regle de couleur : uniquement des tokens. Aucune valeur brute hors :root.
+   ========================================================================== */
+
+/* --- Segments et puces --------------------------------------------------
+   `seg` est un choix unique (pagination, rythme, budget) : une seule ligne,
+   repartie en parts egales, l'etat se lit par le fond. `chips` est son
+   equivalent multi-select : les elements se succedent et se replient. */
+.seg {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--lkv-radius-md);
+  background: var(--prep-page-bg);
+  border: 1px solid var(--lkv-border-subtle);
+}
+.seg > button {
+  min-height: var(--control-height-sm);
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: calc(var(--lkv-radius-md) - 2px);
+  background: transparent;
+  color: var(--lkv-text-secondary);
+  font-size: var(--f-body-sm);
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.seg > button[aria-pressed='true'] {
+  background: var(--lkv-surface-elevated);
+  color: var(--lkv-text-primary);
+  font-weight: 600;
+  box-shadow: var(--card-shadow);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.chip {
+  min-height: var(--control-height-sm);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--lkv-radius-full);
+  border: 1px solid var(--lkv-border);
+  background: transparent;
+  color: var(--lkv-text-body);
+  font-size: var(--f-body-sm);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.chip[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--lkv-action) 14%, transparent);
+  border-color: var(--lkv-action);
+  color: var(--lkv-action);
+  font-weight: 600;
+}
+
+/* --- Listes de resultats ------------------------------------------------
+   `li` est une ligne cliquable de resultat de recherche. Le fond au survol
+   est le seul signal : pas de bordure qui clignote a chaque passage. */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--lkv-radius-md);
+  background: var(--prep-page-bg);
+  border: 1px solid transparent;
+  transition: background-color 120ms ease;
+}
+.li:hover {
+  background: var(--lkv-surface-elevated);
+}
+.li.sel {
+  border-color: var(--lkv-action);
+  color: var(--lkv-action);
+}
+/* `rt` regroupe les deux lignes de texte d'une ligne de liste ; sans
+   min-width: 0, un nom de lieu long refuse de se couper et pousse l'icone
+   hors du cadre. */
+.rt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  text-align: left;
+}
+.t1 {
+  font-size: var(--f-body);
+  font-weight: 600;
+  color: var(--lkv-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.t2 {
+  font-size: var(--f-body-sm);
+  color: var(--lkv-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Champs et messages ------------------------------------------------- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.note {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--lkv-radius-md);
+  font-size: var(--f-body-sm);
+  line-height: 1.4;
+  color: var(--lkv-text-secondary);
+  background: var(--prep-page-bg);
+  border: 1px solid var(--lkv-border-subtle);
+}
+.note.red {
+  color: var(--lkv-danger);
+  background: var(--lkv-danger-bg);
+  border-color: color-mix(in srgb, var(--lkv-danger) 32%, transparent);
+}
+.note.neutral {
+  color: var(--lkv-text-note);
+  background: var(--prep-page-bg);
+}
+
+/* --- Compteur de jours --------------------------------------------------
+   La duree se regle par plus/moins plutot que par un champ libre : c'est le
+   seul format ou l'on ne peut pas saisir un nombre absurde. */
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.stepper > .n {
+  min-width: 48px;
+  text-align: center;
+  font-size: var(--f-h3);
+  font-weight: 700;
+  color: var(--lkv-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: var(--lkv-radius-full);
+  font-size: var(--f-caption);
+  font-weight: 600;
+  color: var(--lkv-text-secondary);
+  background: var(--prep-page-bg);
+  border: 1px solid var(--lkv-border-subtle);
+}
+.badge.amber {
+  color: var(--lkv-warning-dark);
+  background: var(--lkv-warning-bg);
+  border-color: color-mix(in srgb, var(--lkv-warning) 34%, transparent);
+}
+
+/* --- Selecteur de point -------------------------------------------------
+   Carre cliquable : pas de fond de tuiles, donc pas d'image a charger et pas
+   de mise a jour reseau. Le quadrillage donne l'echelle ; la position exacte
+   est annoncee en toutes lettres juste en dessous, ce qui evite d'inventer
+   une precision que l'ecran ne peut pas porter. */
+.prep-picker {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--lkv-radius-md);
+  background: var(--prep-map-bg);
+  border: 1px solid var(--lkv-border);
+  cursor: crosshair;
+  overflow: hidden;
+  background-image: linear-gradient(var(--lkv-border-subtle) 1px, transparent 1px),
+    linear-gradient(90deg, var(--lkv-border-subtle) 1px, transparent 1px);
+  background-size: 25% 25%;
+  background-position: center;
+}
+.prep-picker:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+.prep-picker__pin {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-action);
+  border: 2px solid var(--lkv-text-primary);
+  box-shadow: var(--card-shadow);
+  pointer-events: none;
+}
+.prep-picker__hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--lkv-text-subtle);
+  font-size: var(--f-body-sm);
+  pointer-events: none;
+}

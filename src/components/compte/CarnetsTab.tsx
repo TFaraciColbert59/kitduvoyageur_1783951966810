@@ -241,7 +241,7 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
   const StatPill = ({ label, value, sub }: { label: string; value: string | number; sub?: string }) => (
     <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-5 flex flex-col gap-1">
       <p className="text-[10px] font-mono uppercase tracking-widest text-[color:var(--lkv-text-muted)]">{label}</p>
-      <p className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-primary)] leading-none">{value}</p>
+      <p className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-text-primary)] leading-none">{value}</p>
       {sub && <p className="text-[11px] text-[color:var(--lkv-text-muted)] font-medium mt-0.5">{sub}</p>}
     </div>
   );
@@ -268,8 +268,8 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
       {/* ── Section Header ── */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b border-[color:var(--lkv-primary)]/5 pb-5">
         <div>
-          <h2 className="font-display font-bold text-3xl sm:text-4xl text-[color:var(--lkv-primary)] tracking-tight">
-            Carnets <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">de route</span>
+          <h2 className="font-display font-bold text-3xl sm:text-4xl text-[color:var(--lkv-text-primary)] tracking-tight">
+            Carnets <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600-ink)]">de route</span>
           </h2>
           <p className="text-xs text-[color:var(--lkv-text-muted)] mt-1 font-mono">
             {published.length} récits publiés · {fmtNum(totalViews)} lectures · {totalLikes} mentions j'aime
@@ -308,8 +308,8 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
         <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)] p-5 sm:p-6 space-y-5">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
-              <h3 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">
-                Récits <span className="font-serif italic font-normal text-[color:var(--lkv-secondary)]">publiés</span>
+              <h3 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-text-primary)]">
+                Récits <span className="font-serif italic font-normal text-[color:var(--lkv-secondary-ink)]">publiés</span>
               </h3>
               <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Visibles par les membres de la communauté</p>
             </div>
@@ -352,8 +352,8 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
           <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)] p-5 sm:p-6 space-y-4">
             <div className="flex justify-between items-center">
               <div>
-                <h3 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">
-                  Brouillons <span className="font-serif italic font-normal text-[color:var(--lkv-secondary)]">en cours</span>
+                <h3 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-text-primary)]">
+                  Brouillons <span className="font-serif italic font-normal text-[color:var(--lkv-secondary-ink)]">en cours</span>
                 </h3>
                 <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Privés — vous seul pouvez les voir</p>
               </div>
@@ -381,8 +381,8 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
           {/* ── Rythme de publication ── */}
           <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)] p-5 space-y-3.5">
             <div>
-              <h3 className="font-display font-bold text-base text-[color:var(--lkv-primary)]">
-                Rythme <span className="font-serif italic font-normal text-[color:var(--lkv-secondary)]">de publication</span>
+              <h3 className="font-display font-bold text-base text-[color:var(--lkv-text-primary)]">
+                Rythme <span className="font-serif italic font-normal text-[color:var(--lkv-secondary-ink)]">de publication</span>
               </h3>
               <p className="text-[11px] text-[color:var(--lkv-text-muted)]">Activité sur 12 mois</p>
             </div>
@@ -403,11 +403,11 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
                       }`}
                       style={{ height: `${h}px` }}
                     />
-                    <span className={`text-[8px] font-mono ${m.current ? 'font-bold text-[color:var(--lkv-primary)]' : 'text-[color:var(--lkv-text-muted)]'}`}>
+                    <span className={`text-[8px] font-mono ${m.current ? 'font-bold text-[color:var(--lkv-text-primary)]' : 'text-[color:var(--lkv-text-muted)]'}`}>
                       {m.short}
                     </span>
                     {m.count > 0 && (
-                      <span className="absolute -top-4 text-[9px] font-mono font-bold text-[color:var(--lkv-primary)] opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span className="absolute -top-4 text-[9px] font-mono font-bold text-[color:var(--lkv-text-primary)] opacity-0 group-hover:opacity-100 transition-opacity">
                         {m.count}
                       </span>
                     )}
@@ -420,8 +420,8 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
           {/* ── Lecteurs fidèles ── */}
           <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)] p-5 space-y-3.5">
             <div>
-              <h3 className="font-display font-bold text-base text-[color:var(--lkv-primary)]">
-                Lecteurs <span className="font-serif italic font-normal text-[color:var(--lkv-secondary)]">fidèles</span>
+              <h3 className="font-display font-bold text-base text-[color:var(--lkv-text-primary)]">
+                Lecteurs <span className="font-serif italic font-normal text-[color:var(--lkv-secondary-ink)]">fidèles</span>
               </h3>
               <p className="text-[11px] text-[color:var(--lkv-text-muted)]">Membres les plus engagés</p>
             </div>
@@ -437,7 +437,7 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
                         {f.full_name.charAt(0)}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-[color:var(--lkv-primary)] truncate">{f.full_name}</p>
+                        <p className="text-xs font-bold text-[color:var(--lkv-text-primary)] truncate">{f.full_name}</p>
                         <p className="text-[9.5px] text-[color:var(--lkv-text-muted)] truncate">{f.location || 'Alpes françaises'}</p>
                       </div>
                     </div>
@@ -502,7 +502,7 @@ function CarnetCard({ carnet, isNew }: { carnet: CarnetDB; isNew: boolean }) {
 
       {/* Stats footer */}
       <div className="px-4 py-3 flex items-center justify-between text-xs font-mono font-bold text-[color:var(--lkv-text-muted)]">
-        <span className="flex items-center gap-1.5 text-[color:var(--lkv-secondary)]">
+        <span className="flex items-center gap-1.5 text-[color:var(--lkv-secondary-ink)]">
           <Icon name="HeartIcon" size={13} />
           {fmtNum(carnet.likes_count || 0)}
         </span>
@@ -544,7 +544,7 @@ function DraftRow({
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h5 className="font-600 text-sm text-[color:var(--lkv-primary)] truncate group-hover:text-[color:var(--lkv-primary)] transition-colors">
+              <h5 className="font-600 text-sm text-[color:var(--lkv-text-primary)] truncate group-hover:text-[color:var(--lkv-text-primary)] transition-colors">
                 {draft.title || 'Brouillon sans titre'}
               </h5>
               <p className="text-[11px] text-[color:var(--lkv-text-muted)] mt-0.5">

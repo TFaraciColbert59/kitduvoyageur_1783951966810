@@ -127,7 +127,7 @@ function getRarityColor(rarity: string) {
   switch (rarity?.toLowerCase()) {
     case 'légendaire': return 'text-[color:var(--lkv-warning)]';
     case 'épique': return 'text-[color:var(--lkv-info)]';
-    case 'rare': return 'text-[color:var(--lkv-secondary)]';
+    case 'rare': return 'text-[color:var(--lkv-secondary-ink)]';
     default: return 'text-[color:var(--lkv-text-muted)]';
   }
 }
@@ -486,7 +486,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start mb-1">
-                      <h4 className="font-bold text-[color:var(--lkv-primary)] text-sm truncate">{badge.name}</h4>
+                      <h4 className="font-bold text-[color:var(--lkv-text-primary)] text-sm truncate">{badge.name}</h4>
                       <span className={`text-[10px] font-mono tracking-wide px-2 py-0.5 rounded-full bg-white/60 border border-[color:var(--lkv-primary)]/10 ${getRarityColor(badge.rarity)}`}>{badge.rarity}</span>
                     </div>
                     <p className="text-xs text-[color:var(--lkv-text-muted)] mb-3 line-clamp-2">{badge.description}</p>
@@ -506,13 +506,13 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
 
                     <div className="mt-3 pt-2.5 border-t border-[color:var(--lkv-primary)]/5 flex justify-between items-center text-[10px] font-bold">
                       {badge.is_unlocked ? (
-                        <span className="text-[color:var(--lkv-secondary)]">✅ Débloqué</span>
+                        <span className="text-[color:var(--lkv-secondary-ink)]">✅ Débloqué</span>
                       ) : badge.percentage > 0 ? (
                         <span className="text-[color:var(--lkv-warning)]">🔄 En progression</span>
                       ) : (
                         <span className="text-[color:var(--lkv-text-muted)]">🔒 Verrouillé</span>
                       )}
-                      <span className="text-[color:var(--lkv-primary)] font-mono">+{badge.points_reward} pts</span>
+                      <span className="text-[color:var(--lkv-text-primary)] font-mono">+{badge.points_reward} pts</span>
                     </div>
                   </div>
                 </div>
@@ -545,7 +545,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
 
   return (
     <>
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative pb-20 font-sans text-[color:var(--lkv-primary)]">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative pb-20 font-sans text-[color:var(--lkv-text-primary)]">
         {/* ════════════════ MAIN COLUMN ════════════════ */}
         <div className="lg:col-span-8 space-y-8">
           {/* ── Header ── */}
@@ -556,8 +556,8 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                   Partage de Valeur LKDV
                 </span>
               </div>
-              <h2 className="font-display font-bold text-3xl sm:text-4xl text-[color:var(--lkv-primary)] tracking-tight">
-                Gains <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">&amp; Récompenses</span>
+              <h2 className="font-display font-bold text-3xl sm:text-4xl text-[color:var(--lkv-text-primary)] tracking-tight">
+                Gains <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600-ink)]">&amp; Récompenses</span>
               </h2>
               <p className="text-xs text-[color:var(--lkv-text-muted)] mt-1 max-w-xl">
                 Gagnez des points grâce à vos carnets, likes et participations, et convertissez vos points en argent réel par virement bancaire ou PayPal.
@@ -583,7 +583,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-4 flex flex-col justify-between">
               <p className="text-[10px] font-mono tracking-widest text-[color:var(--lkv-text-muted)] uppercase font-bold">Points actifs</p>
-              <p className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-2xl sm:text-3xl text-[color:var(--lkv-primary)] mt-1">
+              <p className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-2xl sm:text-3xl text-[color:var(--lkv-text-primary)] mt-1">
                 {currentPoints} <span className="text-xs font-normal font-mono text-[color:var(--lkv-text-muted)]">PTS</span>
               </p>
               <p className="text-[10px] text-[color:var(--lkv-text-muted)] mt-0.5 font-mono">Niveau {currentLevel.num} · {currentLevel.name}</p>
@@ -591,24 +591,24 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
 
             <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-4 flex flex-col justify-between">
               <p className="text-[10px] font-mono tracking-widest text-[color:var(--lkv-text-muted)] uppercase font-bold">Indice Confiance</p>
-              <p className="text-sm font-bold text-[color:var(--lkv-primary)] mt-2 truncate">
+              <p className="text-sm font-bold text-[color:var(--lkv-text-primary)] mt-2 truncate">
                 {getTrustLabel(trustScore)}
               </p>
               <p className="text-[10px] text-[color:var(--lkv-text-muted)] mt-0.5 font-mono">Score : {trustScore}/100</p>
             </div>
 
             <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-4 flex flex-col justify-between relative overflow-hidden">
-              <div className="absolute right-2 top-2 text-[color:var(--lkv-primary)]/10 text-3xl font-bold font-mono">€</div>
-              <p className="text-[10px] font-mono tracking-widest text-[color:var(--lkv-primary)] uppercase font-bold">Solde Disponible</p>
-              <p className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-2xl sm:text-3xl text-[color:var(--lkv-primary)] mt-1">
+              <div className="absolute right-2 top-2 text-[color:var(--lkv-text-primary)]/10 text-3xl font-bold font-mono">€</div>
+              <p className="text-[10px] font-mono tracking-widest text-[color:var(--lkv-text-primary)] uppercase font-bold">Solde Disponible</p>
+              <p className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-2xl sm:text-3xl text-[color:var(--lkv-text-primary)] mt-1">
                 {availableCash.toFixed(2)} €
               </p>
-              <p className="text-[10px] text-[color:var(--lkv-secondary)] mt-0.5 font-mono font-bold">Prêt au virement</p>
+              <p className="text-[10px] text-[color:var(--lkv-secondary-ink)] mt-0.5 font-mono font-bold">Prêt au virement</p>
             </div>
 
             <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-4 flex flex-col justify-between">
               <p className="text-[10px] font-mono tracking-widest text-[color:var(--lkv-text-muted)] uppercase font-bold">En cours de virement</p>
-              <p className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-2xl sm:text-3xl text-[color:var(--lkv-primary)]/70 mt-1">
+              <p className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-2xl sm:text-3xl text-[color:var(--lkv-text-primary)]/70 mt-1">
                 {pendingCash.toFixed(2)} €
               </p>
               <p className="text-[10px] text-[color:var(--lkv-text-muted)] mt-0.5 font-mono">Traitement sous 5j</p>
@@ -669,8 +669,8 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
           <div id="retrait-section" className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 sm:p-8 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[color:var(--lkv-primary)]/5 pb-4 gap-2">
               <div>
-                <h3 className="font-display font-bold text-[color:var(--lkv-primary)] text-lg flex items-center gap-2">
-                  <Icon name="CurrencyEuroIcon" size={20} className="text-[color:var(--lkv-primary)]" />
+                <h3 className="font-display font-bold text-[color:var(--lkv-text-primary)] text-lg flex items-center gap-2">
+                  <Icon name="CurrencyEuroIcon" size={20} className="text-[color:var(--lkv-text-primary)]" />
                   Demande de virement de vos gains
                 </h3>
                 <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">
@@ -679,7 +679,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
               </div>
               <div className="text-right">
                 <span className="text-[10px] font-mono text-[color:var(--lkv-text-muted)] uppercase block">Disponible</span>
-                <span className="font-mono font-bold text-xl text-[color:var(--lkv-primary)]">{availableCash.toFixed(2)} €</span>
+                <span className="font-mono font-bold text-xl text-[color:var(--lkv-text-primary)]">{availableCash.toFixed(2)} €</span>
               </div>
             </div>
 
@@ -691,7 +691,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
             )}
 
             {withdrawSuccess && (
-              <div className="p-4 bg-[color:var(--lkv-secondary)]/10 border border-[color:var(--lkv-secondary)]/20 text-[color:var(--lkv-primary)] rounded-[var(--lkv-radius-md)] text-xs flex gap-2 items-center">
+              <div className="p-4 bg-[color:var(--lkv-secondary)]/10 border border-[color:var(--lkv-secondary)]/20 text-[color:var(--lkv-text-primary)] rounded-[var(--lkv-radius-md)] text-xs flex gap-2 items-center">
                 <span className="text-base">✅</span>
                 <span>{withdrawSuccess}</span>
               </div>
@@ -699,7 +699,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
 
             <form onSubmit={handleWithdrawSubmit} className="space-y-5">
               <div>
-                <label htmlFor="amount" className="block text-xs font-mono font-bold text-[color:var(--lkv-primary)] mb-1.5 uppercase tracking-wider">
+                <label htmlFor="amount" className="block text-xs font-mono font-bold text-[color:var(--lkv-text-primary)] mb-1.5 uppercase tracking-wider">
                   Montant à retirer (€)
                 </label>
                 <div className="relative rounded-[var(--lkv-radius-md)] max-w-md">
@@ -710,7 +710,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                     id="amount"
                     value={withdrawAmount}
                     onChange={(e) => setWithdrawAmount(e.target.value)}
-                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full pr-14"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full pr-14"
                     placeholder={`Min. ${minThreshold.toFixed(2)}`}
                     required
                   />
@@ -724,7 +724,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
               </div>
 
               <div>
-                <label className="block text-xs font-mono font-bold text-[color:var(--lkv-primary)] mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-mono font-bold text-[color:var(--lkv-text-primary)] mb-1.5 uppercase tracking-wider">
                   Mode de versement
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md">
@@ -757,7 +757,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
               {paymentProvider === 'bank_transfer' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-5">
                   <div>
-                    <label htmlFor="iban" className="block text-[11px] text-[color:var(--lkv-primary)] mb-1 font-bold font-mono">
+                    <label htmlFor="iban" className="block text-[11px] text-[color:var(--lkv-text-primary)] mb-1 font-bold font-mono">
                       IBAN
                     </label>
                     <input
@@ -766,12 +766,12 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                       value={iban}
                       onChange={(e) => setIban(e.target.value)}
                       placeholder="FR76 3000 6000 0123 4567 8901 234"
-                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full font-mono text-xs"
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full font-mono text-xs"
                       required
                     />
                   </div>
                   <div>
-                    <label htmlFor="bic" className="block text-[11px] text-[color:var(--lkv-primary)] mb-1 font-bold font-mono">
+                    <label htmlFor="bic" className="block text-[11px] text-[color:var(--lkv-text-primary)] mb-1 font-bold font-mono">
                       BIC / SWIFT
                     </label>
                     <input
@@ -780,7 +780,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                       value={bic}
                       onChange={(e) => setBic(e.target.value)}
                       placeholder="BNPAFRPPXXX"
-                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full font-mono text-xs"
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full font-mono text-xs"
                       required
                     />
                   </div>
@@ -789,7 +789,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
 
               {paymentProvider === 'paypal' && (
                 <div className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-5">
-                  <label htmlFor="paypalEmail" className="block text-[11px] text-[color:var(--lkv-primary)] mb-1 font-bold font-mono">
+                  <label htmlFor="paypalEmail" className="block text-[11px] text-[color:var(--lkv-text-primary)] mb-1 font-bold font-mono">
                     Adresse email du compte PayPal
                   </label>
                   <input
@@ -798,7 +798,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                     value={paypalEmail}
                     onChange={(e) => setPaypalEmail(e.target.value)}
                     placeholder="votre-email@domaine.com"
-                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full max-w-md font-mono text-xs"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full max-w-md font-mono text-xs"
                     required
                   />
                 </div>
@@ -823,8 +823,8 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
             {/* Withdrawals Table */}
             <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 space-y-4">
               <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/5 pb-3">
-                <h3 className="font-display font-bold text-[color:var(--lkv-primary)] text-sm flex items-center gap-1.5">
-                  <Icon name="CurrencyEuroIcon" size={16} className="text-[color:var(--lkv-primary)]" />
+                <h3 className="font-display font-bold text-[color:var(--lkv-text-primary)] text-sm flex items-center gap-1.5">
+                  <Icon name="CurrencyEuroIcon" size={16} className="text-[color:var(--lkv-text-primary)]" />
                   Demandes de virements
                 </h3>
                 <span className="text-[10px] font-mono text-[color:var(--lkv-text-muted)]">{withdrawals.length} demandes</span>
@@ -848,7 +848,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                     <tbody className="divide-y divide-[color:var(--lkv-primary)]/5">
                       {withdrawals.map((w) => (
                         <tr key={w.id} className="hover:bg-white/40 transition-colors">
-                          <td className="p-2.5 font-bold font-mono text-[color:var(--lkv-primary)]">{w.amount.toFixed(2)} €</td>
+                          <td className="p-2.5 font-bold font-mono text-[color:var(--lkv-text-primary)]">{w.amount.toFixed(2)} €</td>
                           <td className="p-2.5 text-[color:var(--lkv-text-muted)] font-mono text-[10px]">
                             {w.payment_provider === 'bank_transfer' ? 'Banque' : 'PayPal'}
                           </td>
@@ -871,8 +871,8 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
             {/* Points Transactions Ledger */}
             <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 space-y-4">
               <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/5 pb-3">
-                <h3 className="font-display font-bold text-[color:var(--lkv-primary)] text-sm flex items-center gap-1.5">
-                  <Icon name="ClipboardDocumentListIcon" size={16} className="text-[color:var(--lkv-primary)]" />
+                <h3 className="font-display font-bold text-[color:var(--lkv-text-primary)] text-sm flex items-center gap-1.5">
+                  <Icon name="ClipboardDocumentListIcon" size={16} className="text-[color:var(--lkv-text-primary)]" />
                   Historique des gains
                 </h3>
                 <span className="text-[10px] font-mono text-[color:var(--lkv-text-muted)]">{transactions.length} entrées</span>
@@ -895,8 +895,8 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                     <tbody className="divide-y divide-[color:var(--lkv-primary)]/5">
                       {transactions.map((tx) => (
                         <tr key={tx.id} className="hover:bg-white/40 transition-colors">
-                          <td className="p-2.5 text-[color:var(--lkv-primary)] font-semibold">{translateTxType(tx.transaction_type)}</td>
-                          <td className={`p-2.5 text-right font-mono font-bold ${tx.points >= 0 ? 'text-[color:var(--lkv-secondary)]' : 'text-[color:var(--lkv-danger)]'}`}>
+                          <td className="p-2.5 text-[color:var(--lkv-text-primary)] font-semibold">{translateTxType(tx.transaction_type)}</td>
+                          <td className={`p-2.5 text-right font-mono font-bold ${tx.points >= 0 ? 'text-[color:var(--lkv-secondary-ink)]' : 'text-[color:var(--lkv-danger)]'}`}>
                             {tx.points >= 0 ? `+${tx.points}` : tx.points} PTS
                           </td>
                           <td className="p-2.5 text-right text-[color:var(--lkv-text-muted)] font-mono text-[10px]">
@@ -915,8 +915,8 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
           <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 sm:p-8 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[color:var(--lkv-primary)]/5 pb-4">
               <div>
-                <h3 className="font-display font-bold text-xl text-[color:var(--lkv-primary)]">
-                  Vos <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">badges &amp; exploits</span>
+                <h3 className="font-display font-bold text-xl text-[color:var(--lkv-text-primary)]">
+                  Vos <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600-ink)]">badges &amp; exploits</span>
                 </h3>
                 <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">
                   {unlockedBadges.length} badges gagnés sur {totalBadges}. Chaque étape débloque des points d'activité.
@@ -944,7 +944,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                   className={`rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] flex flex-col items-center justify-center p-3.5 transition-all ${ badge.is_unlocked ? '' : 'opacity-50 grayscale' }`}
                 >
                   <span className="text-2xl mb-1.5">{badge.is_unlocked ? '🏆' : '🔒'}</span>
-                  <span className="text-[11px] font-bold text-[color:var(--lkv-primary)] text-center leading-tight mb-1 truncate w-full">{badge.name}</span>
+                  <span className="text-[11px] font-bold text-[color:var(--lkv-text-primary)] text-center leading-tight mb-1 truncate w-full">{badge.name}</span>
                   <span className={`text-[9px] font-mono tracking-wide ${getRarityColor(badge.rarity)}`}>
                     +{badge.points_reward} pts
                   </span>
@@ -965,8 +965,8 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
           {/* ── Échelle des niveaux ── */}
           <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 space-y-4">
             <div>
-              <h4 className="font-display font-bold text-[color:var(--lkv-primary)] text-base">
-                Échelle <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">des niveaux</span>
+              <h4 className="font-display font-bold text-[color:var(--lkv-text-primary)] text-base">
+                Échelle <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600-ink)]">des niveaux</span>
               </h4>
               <p className="text-[11px] text-[color:var(--lkv-text-muted)]">
                 Le chemin depuis Curieux jusqu&apos;à Ambassadeur.
@@ -988,7 +988,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                         isCurrent
                           ? 'bg-white/20 text-[color:var(--lkv-text-primary)]'
                           : isPassed
-                          ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)]'
+                          ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]'
                           : 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] text-[color:var(--lkv-text-muted)]'
                       }`}
                     >
@@ -996,7 +996,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-center">
-                        <p className={`font-bold text-xs ${isCurrent ? 'text-white' : 'text-[color:var(--lkv-primary)]'}`}>{lvl.name}</p>
+                        <p className={`font-bold text-xs ${isCurrent ? 'text-white' : 'text-[color:var(--lkv-text-primary)]'}`}>{lvl.name}</p>
                         <span className={`text-[10px] font-mono ${isCurrent ? 'text-[color:var(--sage-300)]' : 'text-[color:var(--lkv-text-muted)]'}`}>
                           {lvl.min === 4000 ? '4 000+ pts' : `${lvl.min} - ${lvl.max} pts`}
                         </span>
@@ -1007,7 +1007,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                         </p>
                       )}
                       {isPassed && (
-                        <p className="text-[10px] text-[color:var(--lkv-secondary)] font-bold mt-0.5 flex items-center gap-1">
+                        <p className="text-[10px] text-[color:var(--lkv-secondary-ink)] font-bold mt-0.5 flex items-center gap-1">
                           <Icon name="CheckIcon" size={11} />
                           Niveau atteint
                         </p>
@@ -1021,19 +1021,19 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
 
           {/* ── Guide & Règles de rémunération ── */}
           <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 space-y-4">
-            <h4 className="font-display font-bold text-[color:var(--lkv-primary)] text-base flex items-center gap-1.5">
-              <Icon name="BookOpenIcon" size={18} className="text-[color:var(--lkv-primary)]" />
+            <h4 className="font-display font-bold text-[color:var(--lkv-text-primary)] text-base flex items-center gap-1.5">
+              <Icon name="BookOpenIcon" size={18} className="text-[color:var(--lkv-text-primary)]" />
               Règles et Fonctionnement
             </h4>
             <div className="text-[11px] text-[color:var(--lkv-text-muted)] space-y-3 leading-relaxed">
               <p>
-                <strong className="text-[color:var(--lkv-primary)]">1. Économie Solvable :</strong> La valeur du point est adossée aux revenus réels générés par la plateforme. Plus la communauté grandit, plus le pool de récompenses distribué augmente.
+                <strong className="text-[color:var(--lkv-text-primary)]">1. Économie Solvable :</strong> La valeur du point est adossée aux revenus réels générés par la plateforme. Plus la communauté grandit, plus le pool de récompenses distribué augmente.
               </p>
               <p>
-                <strong className="text-[color:var(--lkv-primary)]">2. Qualité du Contenu :</strong> Les carnets détaillés, photos et commentaires utiles reçoivent des multiplicateurs de points. Les messages génériques (&quot;super&quot;, &quot;cool&quot;) sont filtrés.
+                <strong className="text-[color:var(--lkv-text-primary)]">2. Qualité du Contenu :</strong> Les carnets détaillés, photos et commentaires utiles reçoivent des multiplicateurs de points. Les messages génériques (&quot;super&quot;, &quot;cool&quot;) sont filtrés.
               </p>
               <p>
-                <strong className="text-[color:var(--lkv-primary)]">3. Délais de Virement :</strong> Les virements sont vérifiés et émis par notre équipe sous 5 jours ouvrés par virement SEPA ou PayPal.
+                <strong className="text-[color:var(--lkv-text-primary)]">3. Délais de Virement :</strong> Les virements sont vérifiés et émis par notre équipe sous 5 jours ouvrés par virement SEPA ou PayPal.
               </p>
             </div>
           </div>

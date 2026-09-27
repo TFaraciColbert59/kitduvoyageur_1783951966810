@@ -69,7 +69,7 @@ export function MoveStepModal({
                       className={`flex h-9 w-9 items-center justify-center rounded-full text-[length:var(--lkv-text-caption-2)] font-bold ${
                         isCurrent
                           ? 'bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]'
-                          : 'border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)]  text-[color:var(--lkv-primary)]'
+                          : 'border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)]  text-[color:var(--lkv-text-primary)]'
                       }`}
                     >
                       J{dayNum}
@@ -93,7 +93,7 @@ export function MoveStepModal({
                       <Icon
                         name="arrow-right"
                         size={16}
-                        className="shrink-0 text-[color:var(--lkv-primary)]"
+                        className="shrink-0 text-[color:var(--lkv-text-primary)]"
                       />
                     ) : undefined
                   }

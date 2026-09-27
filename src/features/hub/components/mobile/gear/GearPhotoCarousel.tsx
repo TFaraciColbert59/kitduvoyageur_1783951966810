@@ -107,7 +107,7 @@ export function GearPhotoCarousel({ cards, onSelect, heading = 'Équipement du s
               ) : (
                 <span className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[var(--lkv-forest-100)] to-[var(--lkv-forest-50)]">
                   <span
-                    className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/70 text-2xl font-extrabold text-[var(--lkv-primary)] ring-1 ring-white/70"
+                    className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/70 text-2xl font-extrabold text-[color:var(--lkv-text-primary)] ring-1 ring-white/70"
                     aria-hidden="true"
                   >
                     {card.name.slice(0, 1).toUpperCase()}
@@ -130,7 +130,7 @@ export function GearPhotoCarousel({ cards, onSelect, heading = 'Équipement du s
               </span>
 
               {card.isPacked && (
-                <span className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold text-[var(--lkv-primary)] shadow-2xs">
+                <span className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold text-[color:var(--lkv-text-primary)] shadow-2xs">
                   <Check size={11} aria-hidden="true" />
                   Prêt
                 </span>

@@ -30,7 +30,7 @@ export function EditorialBlockCard({ block, className }: { block: SectionBlock; 
   return (
     <article className={cn('glass rounded-[var(--lkv-radius-lg)] p-5 border border-white/50 shadow-xs space-y-3', className)}>
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-secondary)]">
+        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-secondary-ink)]">
           {label}
         </span>
         {freshness ? (
@@ -52,7 +52,7 @@ export function EditorialBlockCard({ block, className }: { block: SectionBlock; 
               href={source.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono text-[color:var(--lkv-primary)] hover:text-[color:var(--lkv-secondary)]"
+              className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono text-[color:var(--lkv-text-primary)] hover:text-[color:var(--lkv-secondary-ink)]"
             >
               {source.title} ↗
             </a>

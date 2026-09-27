@@ -19,9 +19,9 @@ function getWeatherIcon(code: number, size = 16) {
   if (code <= 2)
     return <Icon name="cloud-sun" size={size} className="text-[var(--lkv-warning)]/80" aria-hidden="true" />;
   if (code === 3)
-    return <Icon name="cloud" size={size} className="text-[var(--stone-500)]" aria-hidden="true" />;
+    return <Icon name="cloud" size={size} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />;
   if (code <= 48)
-    return <Icon name="cloud-fog" size={size} className="text-[var(--stone-400)]" aria-hidden="true" />;
+    return <Icon name="cloud-fog" size={size} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />;
   if (code <= 57)
     return <Icon name="cloud-drizzle" size={size} className="text-[var(--lkv-info)]" aria-hidden="true" />;
   if (code <= 67)
@@ -55,7 +55,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
           <div className="space-y-0.5 min-w-0">
             <h2
               id="weather-heading"
-              className="text-xs sm:text-[13px] font-bold text-[var(--lkv-primary)] flex items-center gap-2"
+              className="text-xs sm:text-[13px] font-bold text-[color:var(--lkv-text-primary)] flex items-center gap-2"
             >
               <Icon
                 name="thermometer"
@@ -71,7 +71,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
           <div className="flex items-center gap-2 bg-white/50 px-2.5 py-1 rounded-xl border border-white/60 shadow-2xs shrink-0">
             {getWeatherIcon(weather.current.weathercode, 18)}
             <div className="text-right">
-              <div className="text-sm sm:text-base font-mono font-bold text-[var(--lkv-primary)] leading-none">
+              <div className="text-sm sm:text-base font-mono font-bold text-[color:var(--lkv-text-primary)] leading-none">
                 {weather.current.tempC}°C
               </div>
               <div className="text-[9px] text-[var(--lkv-text-muted)] mt-0.5">
@@ -94,13 +94,13 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
                   : 'bg-white/25 border border-white/30'
               )}
             >
-              <p className="text-[10px] font-semibold text-[var(--lkv-primary)] truncate">
+              <p className="text-[10px] font-semibold text-[color:var(--lkv-text-primary)] truncate">
                 {idx === 0 ? 'Aujourd’hui' : day.day}
               </p>
               <div className="flex justify-center py-0.5">
                 {getWeatherIcon(day.weathercode, 16)}
               </div>
-              <div className="text-[10.5px] font-mono font-bold text-[var(--lkv-primary)]">
+              <div className="text-[10.5px] font-mono font-bold text-[color:var(--lkv-text-primary)]">
                 {day.tempMaxC}°{' '}
                 <span className="text-[9.5px] text-[var(--lkv-text-muted)] font-normal">
                   {day.tempMinC}°
@@ -121,7 +121,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
               <Icon name="sunrise" size={10} className="text-[var(--lkv-warning)]" />
               <span>Lever</span>
             </span>
-            <span className="font-mono font-bold text-[var(--lkv-primary)] text-[11px] my-auto">
+            <span className="font-mono font-bold text-[color:var(--lkv-text-primary)] text-[11px] my-auto">
               {sunriseTime}
             </span>
           </div>
@@ -131,7 +131,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
               <Icon name="sunset" size={10} className="text-[var(--lkv-warning)]" />
               <span>Coucher</span>
             </span>
-            <span className="font-mono font-bold text-[var(--lkv-primary)] text-[11px] my-auto">
+            <span className="font-mono font-bold text-[color:var(--lkv-text-primary)] text-[11px] my-auto">
               {sunsetTime}
             </span>
           </div>
@@ -141,7 +141,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
               <Icon name="sun" size={10} className="text-[var(--lkv-forest-700)]" />
               <span>Jour</span>
             </span>
-            <span className="font-mono font-bold text-[var(--lkv-primary)] text-[11px] my-auto">
+            <span className="font-mono font-bold text-[color:var(--lkv-text-primary)] text-[11px] my-auto">
               {daylightHours}
             </span>
           </div>
@@ -155,7 +155,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
               >
                 <p className="text-[9px] font-mono text-[var(--lkv-text-muted)]">{cell.hour}</p>
                 <div className="flex justify-center">{getWeatherIcon(cell.weathercode, 14)}</div>
-                <p className="text-[10.5px] font-mono font-bold text-[var(--lkv-primary)]">
+                <p className="text-[10.5px] font-mono font-bold text-[color:var(--lkv-text-primary)]">
                   {cell.tempC}°
                 </p>
               </div>

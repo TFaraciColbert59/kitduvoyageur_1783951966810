@@ -163,7 +163,7 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
   };
 
   return (
-    <Card className="relative overflow-hidden p-[var(--space-4)] transition-all duration-[var(--motion-control-duration)] sm:p-[var(--space-6)]">
+    <Card className="relative overflow-hidden p-[var(--space-4)] transition-all [transition-duration:var(--motion-control-duration)] sm:p-[var(--space-6)]">
       <div className="mb-[var(--space-3)] flex items-start justify-between">
         <div>
           <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-title-sm)]">

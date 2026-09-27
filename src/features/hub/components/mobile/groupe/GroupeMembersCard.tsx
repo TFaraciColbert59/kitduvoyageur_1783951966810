@@ -56,7 +56,7 @@ export function GroupeMembersCard({ members, pending, inviteCode, onManage }: Gr
           {members.map((member) => (
             <li key={member.userId} className="flex min-h-[44px] items-center gap-3">
               <span
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-xs font-bold text-[var(--lkv-primary)]"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-xs font-bold text-[color:var(--lkv-text-primary)]"
                 aria-hidden="true"
               >
                 {member.name.slice(0, 1).toUpperCase()}
@@ -106,7 +106,7 @@ export function GroupeMembersCard({ members, pending, inviteCode, onManage }: Gr
 
         {inviteCode && (
           <div className="mt-2 flex items-center gap-3 border-t border-black/5 pt-2.5">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/70 text-[var(--lkv-secondary)]">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/70 text-[var(--lkv-secondary-ink)]">
               <Users size={14} aria-hidden="true" />
             </span>
             <span className="min-w-0 flex-1">

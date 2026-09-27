@@ -34,7 +34,7 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
       {/* Top Header Row inside Hero */}
       <div className="relative z-[var(--z-dropdown)] flex items-center justify-between gap-4">
         {/* Badge Pill — pill verre */}
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/85 backdrop-blur-md border border-white/60 text-[10px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-primary)] shadow-sm">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/85 backdrop-blur-md border border-white/60 text-[10px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-text-primary)] shadow-sm">
           <span className="w-2 h-2 rounded-full bg-[color:var(--lkv-warning)]" />
           <span>{profile.role_badge}</span>
         </div>
@@ -111,17 +111,17 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
 
               {/* Meta tags */}
               <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] font-mono text-[color:var(--lkv-text-muted)]">
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/5 font-sans font-medium text-xs text-[color:var(--lkv-forest-600)]">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/5 font-sans font-medium text-xs text-[color:var(--lkv-forest-600-ink)]">
                   <Icon name="MapPinIcon" size={12} className="text-[color:var(--lkv-warning-dark)]" />
                   {profile.location}
                 </span>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/5 font-sans font-medium text-xs text-[color:var(--lkv-forest-600)]">
-                  <Icon name="CalendarIcon" size={12} className="text-[color:var(--lkv-secondary)]" />
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/5 font-sans font-medium text-xs text-[color:var(--lkv-forest-600-ink)]">
+                  <Icon name="CalendarIcon" size={12} className="text-[color:var(--lkv-secondary-ink)]" />
                   {profile.tenure}
                 </span>
                 <Link
                   href="/profil"
-                  className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-[color:var(--lkv-secondary)]/10 border border-[color:var(--lkv-secondary)]/20 hover:bg-[color:var(--lkv-secondary)]/20 transition-colors text-xs font-bold text-[color:var(--lkv-primary)] cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-[color:var(--lkv-secondary)]/10 border border-[color:var(--lkv-secondary)]/20 hover:bg-[color:var(--lkv-secondary)]/20 transition-colors text-xs font-bold text-[color:var(--lkv-text-primary)] cursor-pointer"
                   title="Trust Score de confiance certifié LKDV"
                 >
                   <span>🛡️</span>

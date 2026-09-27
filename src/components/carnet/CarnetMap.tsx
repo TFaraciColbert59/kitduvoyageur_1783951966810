@@ -211,7 +211,7 @@ export default function CarnetMap({
         </div>
       </div>
 
-      <div className="relative h-[360px] w-full overflow-hidden bg-[color:var(--stone-200)]">
+      <div className="relative h-[360px] w-full overflow-hidden bg-[color:var(--lkv-surface-muted)]">
         <div ref={containerRef} className="h-full w-full" />
         {mapLoaded && !hasRoute && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">

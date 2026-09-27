@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
@@ -6,7 +6,6 @@ import { AutoGenTripView } from './AutoGenTripView';
 import type { Proposal } from '@/features/trips/schemas/autoGen.schema';
 import type { TripBrief } from '@/features/trips/schemas/autoGen.schema';
 import { createTripFromAutogenIntent } from '@/features/trips/server/createTripFromAutogenIntent';
-import { tripSectionHref } from '../../registry/tripSectionRegistry';
 import { useActiveAdventure } from '@/features/hub/context/ActiveAdventureContext';
 import { Card, Spinner } from '@/components/ui';
 
@@ -98,7 +97,7 @@ export function AutoGenTripCreateView({ initialBriefInput = '' }: AutoGenTripCre
           title: res.title,
         });
         startTransition(() => {
-          router.push(tripSectionHref(res.slug, 'overview'));
+          router.push('/prepare');
           router.refresh();
         });
         return;

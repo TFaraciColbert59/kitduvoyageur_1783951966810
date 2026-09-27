@@ -260,6 +260,27 @@ describe('selectSortieMoment', () => {
     expect(moment.dPlus).toBe(900);
   });
 
+  it('live : routePois expose tous les POI géolocalisés du voyage, pas seulement ceux du jour', () => {
+    const trip = mkTrip({
+      steps,
+      pois: [
+        mkPoi({ id: 'p1', step_id: 's1', name: "Point d'eau", latitude: 45.89, longitude: 6.79 }),
+        mkPoi({ id: 'p2', step_id: 's3', name: 'Sommet du jour 2', latitude: 45.82, longitude: 6.72 }),
+        mkPoi({ id: 'p3', step_id: null, name: 'Point contextualisé', latitude: 45.83, longitude: 6.74 }),
+        mkPoi({ id: 'p4', step_id: 's3', name: 'POI sans coordonnées', latitude: null, longitude: null }),
+      ],
+    });
+
+    const moment = selectSortieMoment({
+      trip,
+      context: { phase: 'live', dayIndex: 1, totalDays: 2, daysUntil: 0 },
+      now: NOW,
+    });
+
+    expect(moment.pois.map((poi) => poi.id)).toEqual(['p1']);
+    expect(moment.routePois.map((poi) => poi.id)).toEqual(['p1', 'p2', 'p3']);
+  });
+
   it('prépare : J-x, première étape mise en avant, trace complète', () => {
     const moment = selectSortieMoment({
       trip: mkTrip({ steps }),
@@ -289,6 +310,23 @@ describe('selectSortieMoment', () => {
     expect(moment.badge).toBe('Bilan');
     expect(moment.note?.id).toBe('n2');
     expect(moment.highlightCoords).toHaveLength(0);
+  });
+
+  it('recount : routePois conserve tous les POI géolocalisés du bilan', () => {
+    const moment = selectSortieMoment({
+      trip: mkTrip({
+        steps,
+        pois: [
+          mkPoi({ id: 'p1', step_id: 's1', name: 'Départ', latitude: 45.89, longitude: 6.79 }),
+          mkPoi({ id: 'p2', step_id: 's3', name: 'Arrivée', latitude: 45.82, longitude: 6.72 }),
+          mkPoi({ id: 'p3', step_id: 's2', name: 'Invalide', latitude: 45.9, longitude: null }),
+        ],
+      }),
+      context: { phase: 'recount', dayIndex: null, totalDays: 2, daysUntil: 0 },
+      now: NOW,
+    });
+
+    expect(moment.routePois.map((poi) => poi.id)).toEqual(['p1', 'p2']);
   });
 
   it('aucune coordonnée : trace vide (pas de tracé synthétique)', () => {

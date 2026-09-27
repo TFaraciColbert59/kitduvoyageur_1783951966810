@@ -155,8 +155,8 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
     return renderShell(
       'Lignée de kit',
       <div className="py-8 text-center">
-        <p className="text-[color:var(--lkv-primary)]">⚠️ {error ?? 'Kit introuvable'}</p>
-        <button onClick={close} className="mt-4 w-full rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn py-3 text-sm font-semibold text-[color:var(--lkv-surface)]">
+        <p className="text-[color:var(--lkv-text-primary)]">⚠️ {error ?? 'Kit introuvable'}</p>
+        <button onClick={close} className="mt-4 w-full rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn py-3 text-sm font-semibold text-[color:var(--lkv-text-primary)]">
           Fermer
         </button>
       </div>
@@ -188,7 +188,7 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
           </div>
           {kit.parent_name && (
             <p className="mt-2 text-[13px] text-[color:var(--lkv-text-muted)]">
-              Issu de <em className="font-serif italic text-[color:var(--lkv-primary)]">{kit.parent_name}</em>
+              Issu de <em className="font-serif italic text-[color:var(--lkv-text-primary)]">{kit.parent_name}</em>
             </p>
           )}
         </div>
@@ -200,11 +200,11 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
 
         {/* État terrain */}
         <div className="rounded-2xl border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-4">
-          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[color:var(--lkv-primary)]">
+          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[color:var(--lkv-text-primary)]">
             Épreuve du terrain
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-display text-[26px] font-semibold text-[color:var(--lkv-primary)]">
+            <span className="font-display text-[26px] font-semibold text-[color:var(--lkv-text-primary)]">
               {fieldKm > 0 ? `${fieldKm.toLocaleString('fr-FR')} km` : '—'}
             </span>
             <span className="text-[12px] text-[color:var(--lkv-text-muted)]">
@@ -220,7 +220,7 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
             )}
           </div>
           {showScore && trust && (
-            <div className="mt-3 grid grid-cols-2 gap-2 text-[12px] text-[color:var(--lkv-primary)]">
+            <div className="mt-3 grid grid-cols-2 gap-2 text-[12px] text-[color:var(--lkv-text-primary)]">
               <div>
                 <div className="font-mono text-[10px] uppercase opacity-70">Endurance</div>
                 <div className="font-semibold">{trust.endurance_score.toFixed(2)}</div>
@@ -236,7 +236,7 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
         {/* Conservation par item */}
         {hasItems ? (
           <div>
-            <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[color:var(--lkv-primary)]">
+            <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[color:var(--lkv-text-primary)]">
               Ce que la lignée garde
             </div>
             <div className="flex flex-col gap-2">
@@ -244,9 +244,9 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
                 const rate = survivalRate(row.kept_count, row.dropped_count);
                 return (
                   <div key={row.item_key} className="flex items-center justify-between text-[13px]">
-                    <span className="text-[color:var(--lkv-primary)]">{row.item_key.slice(0, 28)}</span>
+                    <span className="text-[color:var(--lkv-text-primary)]">{row.item_key.slice(0, 28)}</span>
                     {rate != null && (
-                      <span className="font-mono text-[11px] text-[color:var(--lkv-primary)]">
+                      <span className="font-mono text-[11px] text-[color:var(--lkv-text-primary)]">
                         {conservationPhrase(rate)}
                       </span>
                     )}
@@ -263,7 +263,7 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
 
         {best && best.total_pairs > 0 && (
           <p className="text-[12px] text-[color:var(--lkv-text-muted)]">
-            Le plus conservé : <em className="font-serif italic text-[color:var(--lkv-primary)]">{best.item_key.slice(0, 32)}</em> —{' '}
+            Le plus conservé : <em className="font-serif italic text-[color:var(--lkv-text-primary)]">{best.item_key.slice(0, 32)}</em> —{' '}
             {conservationPhrase(survivalRate(best.kept_count, best.dropped_count) ?? 0)}
           </p>
         )}
@@ -272,21 +272,21 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
         <div className="mt-2 grid grid-cols-3 gap-2">
           <button
             onClick={carryKit}
-            className="rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-2 py-2.5 text-[12px] font-semibold text-[color:var(--lkv-surface)]"
+            className="rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-2 py-2.5 text-[12px] font-semibold text-[color:var(--lkv-text-primary)]"
           >
             Emporter
           </button>
           <button
             onClick={forkKit}
             disabled={busy}
-            className="rounded-xl border border-[color:var(--lkv-border)] px-2 py-2.5 text-[12px] font-medium text-[color:var(--lkv-primary)]"
+            className="rounded-xl border border-[color:var(--lkv-border)] px-2 py-2.5 text-[12px] font-medium text-[color:var(--lkv-text-primary)]"
           >
             {busy ? '…' : 'Forker'}
           </button>
           <button
             onClick={shareKit}
             disabled={busy}
-            className="rounded-xl border border-[color:var(--lkv-border)] px-2 py-2.5 text-[12px] font-medium text-[color:var(--lkv-primary)]"
+            className="rounded-xl border border-[color:var(--lkv-border)] px-2 py-2.5 text-[12px] font-medium text-[color:var(--lkv-text-primary)]"
           >
             {busy ? '…' : 'Envoyer'}
           </button>

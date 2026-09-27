@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import { Badge, Button, Card, EmptyState, Modal, SearchField, Tabs, type BadgeTone } from '@/components/ui';
 import ProductCard from '@/components/produit/ProductCard';
 
@@ -164,7 +164,7 @@ function MakeOfferModal({ item, onClose }: { item: OccasionItem; onClose: () => 
           <Card variant="compact" className="mb-[var(--space-4)] p-[var(--space-3)]">
             <p className="mb-0.5 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">Article</p>
             <p className="text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">{item.title}</p>
-            <p className="text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-secondary)]">{item.price} € (prix affiché)</p>
+            <p className="text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-secondary-ink)]">{item.price} € (prix affiché)</p>
           </Card>
           <div className="mb-[var(--space-4)]">
             <label htmlFor="offer-amount" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-muted)]">Votre offre (€)</label>
@@ -187,7 +187,7 @@ function MakeOfferModal({ item, onClose }: { item: OccasionItem; onClose: () => 
       ) : (
         <div className="py-[var(--space-6)] text-center">
           <div className="mx-auto mb-[var(--space-4)] flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--btn-tint)]">
-            <Icon name="CheckIcon" size={28} className="text-[color:var(--lkv-secondary)]" />
+            <Icon name="CheckIcon" size={28} className="text-[color:var(--lkv-secondary-ink)]" />
           </div>
           <h3 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">Offre envoyée !</h3>
           <p className="mb-[var(--space-6)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-muted)]">Le vendeur vous répondra rapidement.</p>
@@ -217,7 +217,7 @@ function ContactModal({ item, onClose }: { item: OccasionItem; onClose: () => vo
           <Card variant="compact" className="mb-[var(--space-4)] p-[var(--space-3)]">
             <p className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-muted)]">Annonce</p>
             <p className="text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">{item.title}</p>
-            <p className="text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-secondary)]">{item.price}€</p>
+            <p className="text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-secondary-ink)]">{item.price}€</p>
           </Card>
           <label htmlFor="contact-message" className="mb-[var(--space-2)] block text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]">Votre message</label>
           <textarea id="contact-message" className={`${FIELD_CLASS} resize-none`} rows={4} value={message} onChange={(e) => setMessage(e.target.value)} />
@@ -231,7 +231,7 @@ function ContactModal({ item, onClose }: { item: OccasionItem; onClose: () => vo
       ) : (
         <div className="py-[var(--space-6)] text-center">
           <div className="mx-auto mb-[var(--space-4)] flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--btn-tint)]">
-            <Icon name="CheckIcon" size={28} className="text-[color:var(--lkv-secondary)]" />
+            <Icon name="CheckIcon" size={28} className="text-[color:var(--lkv-secondary-ink)]" />
           </div>
           <h3 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">Message envoyé !</h3>
           <p className="mb-[var(--space-6)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-muted)]">{item.seller.split(' ')[0]} vous répondra par email.</p>
@@ -350,7 +350,7 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
                 <span className="font-mono text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">{item.price}€</span>
                 {item.originalPrice > 0 && <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)] line-through">{item.originalPrice}€</span>}
               </div>
-              {item.negotiable && <p className="mt-0.5 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-secondary)]">Prix négociable — offres acceptées</p>}
+              {item.negotiable && <p className="mt-0.5 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-secondary-ink)]">Prix négociable — offres acceptées</p>}
             </div>
             <div className="flex flex-wrap justify-end gap-[var(--space-2)]">
               {item.negotiable && (
@@ -396,7 +396,7 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
           <Card variant="compact" className="p-[var(--space-4)]">
             <h3 className="mb-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">Vendeur</h3>
             <div className="flex items-center gap-[var(--space-3)]">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-secondary-subtle)] text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-secondary)]">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-secondary-subtle)] text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-secondary-ink)]">
                 {item.sellerAvatar}
               </div>
               <div className="flex-1">
@@ -415,7 +415,7 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
             <Card tone="sage" className="p-[var(--space-4)]">
               {receiptConfirmed ? (
                 <div className="flex items-center gap-[var(--space-3)]">
-                  <Icon name="CheckCircleIcon" size={20} variant="outline" className="flex-shrink-0 text-[color:var(--lkv-secondary)]" />
+                  <Icon name="CheckCircleIcon" size={20} variant="outline" className="flex-shrink-0 text-[color:var(--lkv-secondary-ink)]" />
                   <div>
                     <p className="text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">Réception confirmée !</p>
                     <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">L&apos;article a été ajouté à votre inventaire. Le vendeur sera payé dans 48h.</p>
@@ -546,7 +546,7 @@ export default function OccasionPage() {
   const statsRow = (
     <div className="grid max-w-sm grid-cols-3 gap-[var(--space-3)]">
       <Card variant="compact" className="p-[var(--space-3)] text-center">
-        <p className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-secondary)]">{listings.length}</p>
+        <p className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-secondary-ink)]">{listings.length}</p>
         <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Annonces actives</p>
       </Card>
       <Card variant="compact" className="p-[var(--space-3)] text-center">
@@ -640,10 +640,10 @@ export default function OccasionPage() {
               <div className="mx-auto max-w-7xl">
                 <div className="mb-[var(--space-3)] flex items-center gap-[var(--space-3)]">
                   <div className="flex h-10 w-10 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-secondary-subtle)]">
-                    <Icon name="TagIcon" size={22} variant="outline" className="text-[color:var(--lkv-secondary)]" />
+                    <Icon name="TagIcon" size={22} variant="outline" className="text-[color:var(--lkv-secondary-ink)]" />
                   </div>
                   <div>
-                    <p className="font-mono text-[length:var(--lkv-text-caption)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-secondary)]">Marketplace · Seconde main</p>
+                    <p className="font-mono text-[length:var(--lkv-text-caption)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-secondary-ink)]">Marketplace · Seconde main</p>
                     <h1 className="font-display text-[length:var(--lkv-text-title-sm)] font-extrabold tracking-[var(--lkv-tracking-title)]">Matériel d&apos;Occasion</h1>
                   </div>
                 </div>
@@ -721,7 +721,7 @@ export default function OccasionPage() {
                         price={`${item.price}€`}
                         aside={
                           <>
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--lkv-primary-subtle)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-primary)]">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--lkv-primary-subtle)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
                               {item.sellerAvatar}
                             </span>
                             <span className="text-right">
@@ -764,7 +764,7 @@ export default function OccasionPage() {
 
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <div className="min-h-screen bg-transparent">
             <div className="px-[var(--space-4)] pb-[var(--space-4)] pt-[var(--space-4)]">
               <div className="mb-[var(--space-4)] flex items-center gap-[var(--space-3)]">
@@ -832,7 +832,7 @@ export default function OccasionPage() {
                         price={`${item.price}€`}
                         aside={
                           <>
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--lkv-primary-subtle)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-primary)]">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--lkv-primary-subtle)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
                               {item.sellerAvatar}
                             </span>
                             <span className="text-right">
@@ -868,7 +868,7 @@ export default function OccasionPage() {
               </Button>
             </div>
           </div>
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

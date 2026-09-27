@@ -85,7 +85,7 @@ const ACCESS_LINKS: AccessLink[] = [
   {
     label: 'Configurateur',
     hint: 'Générez un kit adapté à votre sortie',
-    href: '/ai-configurator',
+    href: '/prepare?tab=equipement',
     Icon: SlidersHorizontal,
   },
   {
@@ -179,7 +179,7 @@ function MaterielSurface({ summary }: { summary: MaterielSummary }) {
         actions={
           <Link
             href={HREFS.kits}
-            className="rounded-lg text-xs font-bold text-[var(--lkv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+            className="rounded-lg text-xs font-bold text-[color:var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
           >
             Tous les kits →
           </Link>
@@ -251,7 +251,7 @@ function MaterielSurface({ summary }: { summary: MaterielSummary }) {
           </ul>
         ) : (
           <p className="flex items-center gap-2 text-sm text-[var(--lkv-text-secondary)]">
-            <Sparkles size={15} className="shrink-0 text-[var(--lkv-secondary)]" aria-hidden="true" />
+            <Sparkles size={15} className="shrink-0 text-[var(--lkv-secondary-ink)]" aria-hidden="true" />
             {hasInventory
               ? 'Rien à préparer pour l’instant : aucune alerte, checklist ou prêt en attente.'
               : 'Rien à préparer pour l’instant. Ajoutez un équipement pour activer le suivi.'}
@@ -284,7 +284,7 @@ function MaterielSurface({ summary }: { summary: MaterielSummary }) {
                   <ListItem
                     as="div"
                     leading={
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/70 text-[var(--lkv-primary)]">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/70 text-[color:var(--lkv-text-primary)]">
                         <Icon size={16} aria-hidden="true" />
                       </span>
                     }

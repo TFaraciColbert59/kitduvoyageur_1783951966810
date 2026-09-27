@@ -19,7 +19,7 @@ export interface GroupeCriticalPathProps {
 
 function dueMeta(daysLeft: number | null): { label: string; className: string } {
   if (daysLeft === null) {
-    return { label: 'Sans date', className: 'bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]' };
+    return { label: 'Sans date', className: 'bg-[var(--lkv-primary)]/10 text-[color:var(--lkv-text-primary)]' };
   }
   if (daysLeft < 0) {
     return {
@@ -31,9 +31,9 @@ function dueMeta(daysLeft: number | null): { label: string; className: string } 
     return { label: 'Aujourd’hui', className: 'bg-[var(--lkv-primary)] text-white' };
   }
   if (daysLeft === 1) {
-    return { label: 'Demain', className: 'bg-[var(--lkv-primary)]/15 text-[var(--lkv-primary)]' };
+    return { label: 'Demain', className: 'bg-[var(--lkv-primary)]/15 text-[color:var(--lkv-text-primary)]' };
   }
-  return { label: `J-${daysLeft}`, className: 'bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]' };
+  return { label: `J-${daysLeft}`, className: 'bg-[var(--lkv-primary)]/10 text-[color:var(--lkv-text-primary)]' };
 }
 
 export function GroupeCriticalPath({

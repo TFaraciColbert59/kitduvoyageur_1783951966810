@@ -18,13 +18,13 @@ export default function ProchainVoyageCard({ voyage, compact = false }: Prochain
     return (
       <Card className="w-full p-6 font-sans flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 relative overflow-hidden">
         <div className="space-y-2 max-w-xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[color:var(--lkv-secondary)]/10 border border-[color:var(--lkv-secondary)]/20 text-[color:var(--lkv-primary)] text-[10px] font-mono font-bold uppercase tracking-widest">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[color:var(--lkv-secondary)]/10 border border-[color:var(--lkv-secondary)]/20 text-[color:var(--lkv-text-primary)] text-[10px] font-mono font-bold uppercase tracking-widest">
             <span className="w-2 h-2 rounded-full bg-[color:var(--lkv-secondary)]" />
             <span>EXPÉDITIONS & GROUPES</span>
           </div>
 
-          <h3 className="font-display font-bold text-xl sm:text-2xl text-[color:var(--lkv-primary)] tracking-tight">
-            Préparez votre <span className="font-serif italic font-normal text-[color:var(--lkv-secondary)]">prochaine aventure</span>
+          <h3 className="font-display font-bold text-xl sm:text-2xl text-[color:var(--lkv-text-primary)] tracking-tight">
+            Préparez votre <span className="font-serif italic font-normal text-[color:var(--lkv-secondary-ink)]">prochaine aventure</span>
           </h3>
 
           <p className="text-xs sm:text-sm text-[color:var(--lkv-text-muted)] leading-relaxed">

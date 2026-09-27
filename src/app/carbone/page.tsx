@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import { Button, Card, Chip } from '@/components/ui';
 
 const TRANSPORT_EMISSIONS: Record<string, number> = { 'avion-court': 255, 'avion-long': 195, train: 14, voiture: 171, bus: 89 };
@@ -169,13 +169,13 @@ export default function CarbonePage() {
 
       {/* MOBILE — même charte, mêmes champs, mêmes tokens */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <div className="p-[var(--space-4)]">
             <p className="mb-1 font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.14em] text-[color:var(--lkv-text-secondary)]">Bilan carbone voyage</p>
-            <h1 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-primary)]">Bilan carbone</h1>
+            <h1 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">Bilan carbone</h1>
             <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">Calculez l&apos;impact CO₂ de votre voyage.</p>
             <Card variant="standard" className="mb-[var(--space-4)] p-[var(--space-4)]">
-              <h2 className="mb-[var(--space-3)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-primary)]">Paramètres du voyage</h2>
+              <h2 className="mb-[var(--space-3)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">Paramètres du voyage</h2>
               <div className="flex flex-col gap-[var(--space-4)]">
                 <ParamsBasics trip={trip} setTrip={setTripState} idPrefix="carbone-mobile" />
                 <ParamsDetails trip={trip} setTrip={setTripState} idPrefix="carbone-mobile" toggleActivity={toggleActivity} />
@@ -183,7 +183,7 @@ export default function CarbonePage() {
             </Card>
             <Card variant="standard" className="p-[var(--space-4)] text-center">
               <p className="mb-1 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Bilan carbone estimé</p>
-              <p className="font-mono text-[32px] font-bold text-[color:var(--lkv-primary)]" aria-live="polite">{emissions.total}</p>
+              <p className="font-mono text-[32px] font-bold text-[color:var(--lkv-text-primary)]" aria-live="polite">{emissions.total}</p>
               <p className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">tonnes CO₂e / personne</p>
             </Card>
             {selectedProject && (
@@ -192,7 +192,7 @@ export default function CarbonePage() {
               </Button>
             )}
           </div>
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

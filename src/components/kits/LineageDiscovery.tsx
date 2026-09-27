@@ -59,7 +59,7 @@ export default function LineageDiscovery() {
     <section className="flex flex-col gap-5">
       {items.length > 0 && (
         <div>
-          <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--lkv-primary)]">
+          <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--lkv-text-primary)]">
             Ce qui revient du terrain
           </div>
           <div className="flex flex-wrap gap-2">
@@ -68,7 +68,7 @@ export default function LineageDiscovery() {
               return (
                 <span
                   key={i.item_key}
-                  className="rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-3 py-1.5 text-[12px] text-[color:var(--lkv-primary)]"
+                  className="rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-3 py-1.5 text-[12px] text-[color:var(--lkv-text-primary)]"
                   title={i.item_key}
                 >
                   {conservationPhrase(rate)} · {i.item_key.slice(0, 24)}
@@ -81,7 +81,7 @@ export default function LineageDiscovery() {
 
       {lineages.length > 0 && (
         <div>
-          <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--lkv-primary)]">
+          <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--lkv-text-primary)]">
             Lignées endurantes
           </div>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -92,12 +92,12 @@ export default function LineageDiscovery() {
                 onClick={() => openKit(l.kit_id, 'discovery')}
                 className="rounded-2xl border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-3.5 text-left transition-colors hover:border-[color:var(--lkv-primary)]/40"
               >
-                <div className="truncate text-[14px] font-medium text-[color:var(--lkv-primary)]">
+                <div className="truncate text-[14px] font-medium text-[color:var(--lkv-text-primary)]">
                   {l.kit_name}
                 </div>
                 <div className="mt-1 flex items-center justify-between font-mono text-[11px] text-[color:var(--lkv-text-muted)]">
                   <span>{l.sessions_count} sorties terrain</span>
-                  <span className="text-[color:var(--lkv-primary)]">Endurance {l.endurance_score.toFixed(2)}</span>
+                  <span className="text-[color:var(--lkv-text-primary)]">Endurance {l.endurance_score.toFixed(2)}</span>
                 </div>
               </button>
             ))}

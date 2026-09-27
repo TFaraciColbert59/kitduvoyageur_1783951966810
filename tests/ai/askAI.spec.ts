@@ -11,6 +11,8 @@ const { providerCompleteMock, getCachedMock, setCachedMock, consumeQuotaMock, ge
 
 vi.mock('@/lib/ai/providers', () => ({
   getProvider: getProviderMock,
+  modelNameFor: (_provider: unknown, tier: string) =>
+    tier === 'heavy' ? 'ultra-model-id' : 'nano-model-id',
   modelFor: (tier: string) => (tier === 'heavy' ? 'ultra-model-id' : 'nano-model-id'),
 }));
 

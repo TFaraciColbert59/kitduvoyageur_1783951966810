@@ -225,7 +225,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
   });
 
   return (
-    <div className="space-y-8 pb-16 font-sans text-[color:var(--lkv-primary)]">
+    <div className="space-y-8 pb-16 font-sans text-[color:var(--lkv-text-primary)]">
       {/* Toast Notification */}
       {toast && (
         <div className="fixed bottom-[calc(var(--nav-offset)+var(--space-4))] right-[var(--space-4)] z-[var(--z-toast)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] px-5 py-3 rounded-full flex items-center gap-3 text-sm font-semibold border border-white/20 shadow-lg animate-fade-in">
@@ -237,8 +237,8 @@ export default function ClubsTab({ profile }: { profile?: any }) {
       {/* Header Info Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[color:var(--lkv-primary)]/5 pb-5">
         <div>
-          <h2 className="text-3xl sm:text-4xl font-display font-bold tracking-tight text-[color:var(--lkv-primary)]">
-            Vos <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">clubs &amp; communautés</span>
+          <h2 className="text-3xl sm:text-4xl font-display font-bold tracking-tight text-[color:var(--lkv-text-primary)]">
+            Vos <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600-ink)]">clubs &amp; communautés</span>
           </h2>
           <p className="text-xs text-[color:var(--lkv-text-muted)] mt-1 font-mono">
             {clubs.length} communautés actives · 1 rôle admin · 615 membres connectés · 12 sorties ce mois
@@ -267,17 +267,17 @@ export default function ClubsTab({ profile }: { profile?: any }) {
         <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-5 flex flex-col justify-between">
           <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)] mb-1">CLUBS REJOINTS</p>
           <div className="flex items-baseline gap-2">
-            <span className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-primary)]">{clubs.length}</span>
+            <span className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-text-primary)]">{clubs.length}</span>
           </div>
-          <p className="text-xs text-[color:var(--lkv-text-muted)] mt-2 font-mono">Depuis 2023 · <span className="text-[color:var(--lkv-primary)] font-semibold">1 admin</span></p>
+          <p className="text-xs text-[color:var(--lkv-text-muted)] mt-2 font-mono">Depuis 2023 · <span className="text-[color:var(--lkv-text-primary)] font-semibold">1 admin</span></p>
         </div>
 
         <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-5 flex flex-col justify-between">
           <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)] mb-1">SORTIES PARTAGÉES</p>
           <div className="flex items-baseline gap-2">
-            <span className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-primary)]">28</span>
+            <span className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-text-primary)]">28</span>
           </div>
-          <p className="text-xs text-[color:var(--lkv-secondary)] mt-2 font-semibold flex items-center gap-1 font-mono">
+          <p className="text-xs text-[color:var(--lkv-secondary-ink)] mt-2 font-semibold flex items-center gap-1 font-mono">
             <span>↑ 12 sorties</span> <span className="text-[color:var(--lkv-text-muted)] font-normal">cette année</span>
           </p>
         </div>
@@ -285,7 +285,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
         <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-5 flex flex-col justify-between">
           <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)] mb-1">MEMBRES CONNECTÉS</p>
           <div className="flex items-baseline gap-2">
-            <span className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-primary)]">615</span>
+            <span className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-text-primary)]">615</span>
           </div>
           <p className="text-xs text-[color:var(--lkv-text-muted)] mt-2 font-mono">Réseau des {clubs.length} clubs</p>
         </div>
@@ -293,11 +293,11 @@ export default function ClubsTab({ profile }: { profile?: any }) {
         <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-5 flex flex-col justify-between">
           <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)] mb-1">NOUVEAUTÉS</p>
           <div className="flex items-baseline gap-1.5">
-            <span className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-primary)]">7</span>
-            <span className="text-sm font-serif italic text-[color:var(--lkv-forest-600)]">alertes</span>
+            <span className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-text-primary)]">7</span>
+            <span className="text-sm font-serif italic text-[color:var(--lkv-forest-600-ink)]">alertes</span>
           </div>
           <p className="text-xs text-[color:var(--lkv-text-muted)] mt-2 font-mono">
-            <span className="text-[color:var(--lkv-primary)] font-bold">3 non lus</span> · {invitations.length} invitations
+            <span className="text-[color:var(--lkv-text-primary)] font-bold">3 non lus</span> · {invitations.length} invitations
           </p>
         </div>
       </div>
@@ -382,8 +382,8 @@ export default function ClubsTab({ profile }: { profile?: any }) {
         <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)] p-5 sm:p-6 space-y-5">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
-              <h3 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">
-                Vos <span className="font-serif italic font-normal text-[color:var(--lkv-secondary)]">communautés</span>
+              <h3 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-text-primary)]">
+                Vos <span className="font-serif italic font-normal text-[color:var(--lkv-secondary-ink)]">communautés</span>
               </h3>
               <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Clubs dont vous êtes membre ou responsable</p>
             </div>
@@ -418,7 +418,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-sm text-[color:var(--lkv-primary)] truncate group-hover:text-[color:var(--lkv-secondary)] transition-colors">
+                      <h4 className="font-bold text-sm text-[color:var(--lkv-text-primary)] truncate group-hover:text-[color:var(--lkv-secondary-ink)] transition-colors">
                         {club.name}
                       </h4>
                       {club.role === 'admin' && (
@@ -449,8 +449,8 @@ export default function ClubsTab({ profile }: { profile?: any }) {
           {/* Invitations en attente */}
           <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)] p-5 space-y-3.5">
             <div>
-              <h3 className="text-base font-display font-bold text-[color:var(--lkv-primary)]">
-                Invitations <span className="font-serif italic font-normal text-[color:var(--lkv-secondary)]">en attente</span>
+              <h3 className="text-base font-display font-bold text-[color:var(--lkv-text-primary)]">
+                Invitations <span className="font-serif italic font-normal text-[color:var(--lkv-secondary-ink)]">en attente</span>
               </h3>
               <p className="text-[11px] text-[color:var(--lkv-text-muted)]">
                 {invitations.length} clubs vous invitent à rejoindre.
@@ -466,11 +466,11 @@ export default function ClubsTab({ profile }: { profile?: any }) {
                 {invitations.map((inv) => (
                   <div key={inv.id} className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-3 space-y-2 border border-white/40">
                     <div>
-                      <h4 className="font-display font-bold text-xs text-[color:var(--lkv-primary)]">
+                      <h4 className="font-display font-bold text-xs text-[color:var(--lkv-text-primary)]">
                         {inv.clubName}
                       </h4>
                       <p className="text-[10px] text-[color:var(--lkv-text-muted)] font-mono mt-0.5">
-                        {inv.category} · {inv.membersCount} membres. Par <span className="font-bold text-[color:var(--lkv-primary)]">{inv.invitedBy}</span>
+                        {inv.category} · {inv.membersCount} membres. Par <span className="font-bold text-[color:var(--lkv-text-primary)]">{inv.invitedBy}</span>
                       </p>
                     </div>
 
@@ -501,7 +501,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
           {/* À découvrir */}
           <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)] p-5 space-y-3.5">
             <div>
-              <h3 className="text-base font-display font-bold text-[color:var(--lkv-primary)]">
+              <h3 className="text-base font-display font-bold text-[color:var(--lkv-text-primary)]">
                 À découvrir
               </h3>
               <p className="text-[11px] text-[color:var(--lkv-text-muted)]">
@@ -517,7 +517,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
                       <Image src={disc.imageUrl || '/assets/images/no_image.png'} alt={disc.name} fill className="object-cover" />
                     </div>
                     <div className="min-w-0">
-                      <h4 className="font-bold text-xs text-[color:var(--lkv-primary)] truncate">
+                      <h4 className="font-bold text-xs text-[color:var(--lkv-text-primary)] truncate">
                         {disc.name}
                       </h4>
                       <p className="text-[9.5px] text-[color:var(--lkv-text-muted)] font-mono truncate">
@@ -541,7 +541,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
 
             <Link
               href="/clubs"
-              className="block text-center text-[11px] font-bold text-[color:var(--lkv-secondary)] hover:text-[color:var(--lkv-primary)] pt-2 border-t border-[color:var(--lkv-primary)]/5 transition-colors"
+              className="block text-center text-[11px] font-bold text-[color:var(--lkv-secondary-ink)] hover:text-[color:var(--lkv-text-primary)] pt-2 border-t border-[color:var(--lkv-primary)]/5 transition-colors"
             >
               Voir l&apos;annuaire complet →
             </Link>

@@ -173,8 +173,8 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b border-[color:var(--lkv-primary)]/5 pb-5">
         <div>
-          <h2 className="font-display font-bold text-3xl sm:text-4xl text-[color:var(--lkv-primary)] tracking-tight">
-            Tous vos <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">groupes &amp; sorties</span>
+          <h2 className="font-display font-bold text-3xl sm:text-4xl text-[color:var(--lkv-text-primary)] tracking-tight">
+            Tous vos <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600-ink)]">groupes &amp; sorties</span>
           </h2>
           <p className="text-xs text-[color:var(--lkv-text-muted)] mt-1 font-mono">
             42 sorties enregistrées · 2 584 km cumulés · 148 000 m de D+
@@ -205,10 +205,10 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
         <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-5 flex flex-col justify-between">
           <span className="text-[10px] font-mono tracking-widest text-[color:var(--lkv-text-muted)] uppercase mb-2">DISTANCE 2026</span>
           <div className="flex items-baseline gap-1 mb-1">
-            <span className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-primary)]">786</span>
+            <span className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-text-primary)]">786</span>
             <span className="text-sm font-bold text-[color:var(--lkv-text-muted)] font-mono">km</span>
           </div>
-          <p className="text-[10px] text-[color:var(--lkv-secondary)] font-semibold flex items-center gap-1">
+          <p className="text-[10px] text-[color:var(--lkv-secondary-ink)] font-semibold flex items-center gap-1">
             <Icon name="ArrowTrendingUpIcon" size={12} />
             <span>+15% vs 2025 · 89% objectif annuel</span>
           </p>
@@ -217,7 +217,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
         <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-5 flex flex-col justify-between">
           <span className="text-[10px] font-mono tracking-widest text-[color:var(--lkv-text-muted)] uppercase mb-2">DÉNIVELÉ POSITIF</span>
           <div className="flex items-baseline gap-1 mb-1">
-            <span className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-primary)]">32,4</span>
+            <span className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-text-primary)]">32,4</span>
             <span className="text-sm font-bold text-[color:var(--lkv-text-muted)] font-mono">km D+</span>
           </div>
           <p className="text-[10px] text-[color:var(--lkv-text-muted)] font-mono">
@@ -228,7 +228,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
         <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-5 flex flex-col justify-between">
           <span className="text-[10px] font-mono tracking-widest text-[color:var(--lkv-text-muted)] uppercase mb-2">NUITS EN REFUGE</span>
           <div className="flex items-baseline gap-1 mb-1">
-            <span className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-primary)]">28</span>
+            <span className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-text-primary)]">28</span>
             <span className="text-sm font-bold text-[color:var(--lkv-text-muted)] font-mono">nuits</span>
           </div>
           <p className="text-[10px] text-[color:var(--lkv-text-muted)] font-mono">
@@ -239,10 +239,10 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
         <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-5 flex flex-col justify-between">
           <span className="text-[10px] font-mono tracking-widest text-[color:var(--lkv-text-muted)] uppercase mb-2">CO₂ ÉCONOMISÉ</span>
           <div className="flex items-baseline gap-1 mb-1">
-            <span className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-primary)]">142</span>
+            <span className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-text-primary)]">142</span>
             <span className="text-sm font-bold text-[color:var(--lkv-text-muted)] font-mono">kg</span>
           </div>
-          <p className="text-[10px] text-[color:var(--lkv-forest-600)] font-medium">
+          <p className="text-[10px] text-[color:var(--lkv-forest-600-ink)] font-medium">
             Équivalent mobilité douce vs avion
           </p>
         </div>
@@ -254,8 +254,8 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
         <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)] p-5 sm:p-6 space-y-5">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h3 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">
-                Activité <span className="font-serif italic font-normal text-[color:var(--lkv-secondary)]">2026</span>
+              <h3 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-text-primary)]">
+                Activité <span className="font-serif italic font-normal text-[color:var(--lkv-secondary-ink)]">2026</span>
               </h3>
               <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">
                 42 sorties réparties sur l'année · pic d'activité en septembre &amp; octobre
@@ -311,7 +311,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
                   </div>
                   <span className="text-[9px] font-mono font-bold text-[color:var(--lkv-text-muted)]">{month.label}</span>
                   {month.val > 0 && (
-                    <span className="absolute -top-3 text-[9px] font-mono font-bold text-[color:var(--lkv-primary)] opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="absolute -top-3 text-[9px] font-mono font-bold text-[color:var(--lkv-text-primary)] opacity-0 group-hover:opacity-100 transition-opacity">
                       {month.val}
                     </span>
                   )}
@@ -325,8 +325,8 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
         <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)] p-5 sm:p-6 space-y-5">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h3 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">
-                Historique <span className="font-serif italic font-normal text-[color:var(--lkv-secondary)]">des sorties</span>
+              <h3 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-text-primary)]">
+                Historique <span className="font-serif italic font-normal text-[color:var(--lkv-secondary-ink)]">des sorties</span>
               </h3>
             </div>
             <div className="text-[11px] text-[color:var(--lkv-text-muted)] font-mono">
@@ -373,7 +373,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
                   className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer hover:bg-[color:var(--lkv-hover-surface)] transition-all border border-white/40 group"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="relative w-14 h-14 rounded-[var(--lkv-radius-md)] overflow-hidden shrink-0 border border-white bg-[color:var(--stone-200)]">
+                    <div className="relative w-14 h-14 rounded-[var(--lkv-radius-md)] overflow-hidden shrink-0 border border-white bg-[color:var(--lkv-surface-muted)]">
                       <Image
                         src={av.image_url}
                         alt={av.title}
@@ -383,7 +383,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
                       />
                     </div>
                     <div className="min-w-0">
-                      <h4 className="font-bold text-sm text-[color:var(--lkv-primary)] truncate group-hover:text-[color:var(--lkv-secondary)] transition-colors">
+                      <h4 className="font-bold text-sm text-[color:var(--lkv-text-primary)] truncate group-hover:text-[color:var(--lkv-secondary-ink)] transition-colors">
                         {av.title}
                       </h4>
                       <p className="text-[11px] text-[color:var(--lkv-text-muted)] font-mono mt-0.5">
@@ -397,7 +397,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
 
                   <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto shrink-0 border-t sm:border-t-0 border-[color:var(--lkv-primary)]/5 pt-2 sm:pt-0">
                     <div className="text-right">
-                      <div className="font-mono font-bold text-xs text-[color:var(--lkv-primary)]">{av.distance}</div>
+                      <div className="font-mono font-bold text-xs text-[color:var(--lkv-text-primary)]">{av.distance}</div>
                       <div className="text-[10px] text-[color:var(--lkv-text-muted)] font-mono">{av.elevation}</div>
                     </div>
 
@@ -410,7 +410,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
                         {av.status}
                       </span>
 
-                      <div className="w-7 h-7 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] flex items-center justify-center text-[color:var(--lkv-text-muted)] group-hover:text-[color:var(--lkv-primary)] group-hover:brightness-[1.05] transition-colors">
+                      <div className="w-7 h-7 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] flex items-center justify-center text-[color:var(--lkv-text-muted)] group-hover:text-[color:var(--lkv-text-primary)] group-hover:brightness-[1.05] transition-colors">
                         <Icon name="ArrowRightIcon" size={12} />
                       </div>
                     </div>

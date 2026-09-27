@@ -33,7 +33,7 @@ export default function HomePage() {
       
       {/* ── DESKTOP & DIRECT VIEW ── */}
       <div>
-        <div className="min-h-screen bg-transparent font-sans text-[var(--lkv-primary)]">
+        <div className="min-h-screen bg-transparent font-sans text-[color:var(--lkv-text-primary)]">
           <Header />
           <ResumeActiveTripCard />
           
@@ -58,7 +58,7 @@ export default function HomePage() {
                 </p>
                  <div className="flex flex-col sm:flex-row items-center gap-3 mb-6 min-[360px]:gap-4 min-[360px]:mb-8 sm:mb-14">
 
-                  <Link href="/ai-configurator" className="inline-flex w-full sm:w-auto">
+                  <Link href="/prepare?tab=equipement" className="inline-flex w-full sm:w-auto">
                     <Button
                       variant="primary"
                       size="lg"
@@ -100,26 +100,26 @@ export default function HomePage() {
 
                 >
                   <div className="relative z-10">
-                    <p className="text-[10px] font-mono tracking-widest text-[var(--lkv-primary)] font-bold uppercase mb-1">ESPACE DE RÉSERVE</p>
-                     <h3 className="text-xl font-bold text-[var(--lkv-primary)] mb-4 sm:mb-6">Cabane du Grand Vaneau</h3>
+                    <p className="text-[10px] font-mono tracking-widest text-[color:var(--lkv-text-primary)] font-bold uppercase mb-1">ESPACE DE RÉSERVE</p>
+                     <h3 className="text-xl font-bold text-[color:var(--lkv-text-primary)] mb-4 sm:mb-6">Cabane du Grand Vaneau</h3>
 
                     
                      <div className="flex items-center gap-4 mb-4 sm:mb-8">
 
                       <Card variant="compact" className="flex-1 border-white/60 shadow-xs dark:border-white/10">
                         <p className="text-[10px] uppercase tracking-widest text-[var(--lkv-text-primary)] font-semibold mb-0.5">Arrivée</p>
-                        <p className="text-sm font-bold text-[var(--lkv-primary)]">Ven. 24 sept.</p>
+                        <p className="text-sm font-bold text-[color:var(--lkv-text-primary)]">Ven. 24 sept.</p>
                       </Card>
                       <Card variant="compact" className="flex-1 border-white/60 shadow-xs dark:border-white/10">
                         <p className="text-[10px] uppercase tracking-widest text-[var(--lkv-text-primary)] font-semibold mb-0.5">Départ</p>
-                        <p className="text-sm font-bold text-[var(--lkv-primary)]">Lun. 27 sept.</p>
+                        <p className="text-sm font-bold text-[color:var(--lkv-text-primary)]">Lun. 27 sept.</p>
                       </Card>
                     </div>
 
                      <div className="flex items-end justify-between mb-2 sm:mb-6">
 
                       <div>
-                        <span className="text-2xl font-bold text-[var(--lkv-primary)]">248 €</span>
+                        <span className="text-2xl font-bold text-[color:var(--lkv-text-primary)]">248 €</span>
                         <span className="text-[var(--lkv-text-muted)] text-xs font-medium"> / nuit</span>
                       </div>
                       <span className="text-xs text-[var(--lkv-text-muted)] font-medium">Taxes comprises</span>
@@ -142,7 +142,7 @@ export default function HomePage() {
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
                 <h2 className="text-4xl md:text-5xl font-semibold text-[var(--lkv-text-primary)] leading-[1.1]">
                   Trois façons<br />
-                  <span className="font-serif italic text-[var(--lkv-primary)] font-normal">de se perdre.</span>
+                  <span className="font-serif italic text-[color:var(--lkv-text-primary)] font-normal">de se perdre.</span>
                 </h2>
                  <p className="text-[var(--lkv-text-primary)] text-sm max-w-sm uppercase font-mono tracking-wide leading-relaxed">
 
@@ -290,7 +290,7 @@ export default function HomePage() {
           <section className="py-24 px-4 bg-transparent">
             <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row items-center gap-16">
               <div className="flex-1 w-full">
-                <div className="relative rounded-[var(--lkv-radius-lg)] overflow-hidden aspect-square bg-[var(--stone-200)]">
+                <div className="relative rounded-[var(--lkv-radius-lg)] overflow-hidden aspect-square bg-[color:var(--lkv-surface-muted)]">
                   <Image
                     src="https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=1000&q=80"
                     alt="Sac à dos en toile cirée"
@@ -309,7 +309,7 @@ export default function HomePage() {
               <div className="flex-1 max-w-md">
                 <p className="text-[10px] font-mono tracking-widest uppercase text-[var(--lkv-text-secondary)] mb-6">LE SAC ESSENTIEL</p>
                 <h2 className="text-4xl md:text-5xl font-semibold text-[var(--lkv-text-primary)] leading-[1.1] mb-6">
-                  45 L, <span className="font-serif italic text-[var(--lkv-primary)] font-normal">toile cirée</span>,<br/>
+                  45 L, <span className="font-serif italic text-[color:var(--lkv-text-primary)] font-normal">toile cirée</span>,<br/>
                   rien de superflu.
                 </h2>
                 <p className="text-[var(--lkv-text-secondary)] text-sm leading-relaxed mb-10">

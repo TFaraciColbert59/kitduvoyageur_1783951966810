@@ -197,25 +197,29 @@ describe('fix round 3 — régressions', () => {
        completedRouteCount: 1,
        liveVerified: true,
      });
-     const valid = coreApi.buildCampaignAuditReport({
-       findings: [{
-           routeId: 'accueil',
-           path: '/',
-           measured: true,
-         nodes: [{ id: 'pass-node', selector: '#pass-node', ratio: 4.5, threshold: 4.5, status: 'pass' }],
-         counts: { pass: 99, contrast_fail: 0, unknown: 0, occluded: 0 },
-       }],
-       errors: [],
-       expectedRouteCount: 1,
+    const valid = coreApi.buildCampaignAuditReport({
+        findings: [{
+            routeId: 'accueil',
+            path: '/',
+            measured: true,
+          nodes: [{ id: 'pass-node', selector: '#pass-node', ratio: 4.5, threshold: 4.5, status: 'pass' }],
+          counts: { pass: 99, contrast_fail: 0, unknown: 0, occluded: 0 },
+          measurementState: 'default',
+          scrollY: 0,
+          overlayOpen: false,
+        }],
+        errors: [],
+        expectedRouteCount: 1,
+        completedRouteCount: 1,
         expectedRouteIds: ['accueil'],
         expectedRoutePaths: [{ routeId: 'accueil', path: '/' }],
         expectedOutcomes: [],
-       expectedOutcomeDefinitions: [],
+        expectedOutcomeDefinitions: [],
          manifestCoverageComplete: true,
+         stateEvidenceComplete: true,
          coverageComplete: true,
-         completedRouteCount: 1,
          liveVerified: true,
-     });
+    });
 
       expect(sparse.liveEvidence).toBe(false);
      expect(sparse.totals).toMatchObject({ pass: 0, unknown: 0 });
@@ -245,10 +249,18 @@ describe('fix round 3 — régressions', () => {
          nodes: [],
        },
      };
-     const measured = {
-       normal: { id: 'normal', path: '/compte', measured: true, nodes: [{ id: 'pass-node', selector: '#pass-node', ratio: 4.5, threshold: 4.5, status: 'pass' }] },
-       expected: expectedOnly.expected,
-     };
+    const measured = {
+        normal: {
+          id: 'normal',
+          path: '/compte',
+          measured: true,
+          nodes: [{ id: 'pass-node', selector: '#pass-node', ratio: 4.5, threshold: 4.5, status: 'pass' }],
+          measurementState: 'default',
+          scrollY: 0,
+          overlayOpen: false,
+        },
+        expected: expectedOnly.expected,
+      };
      const sparse = summarizeFullContrastEvidence(expectedOnly, expectedRoutes);
      const complete = summarizeFullContrastEvidence(measured, expectedRoutes);
 
@@ -289,20 +301,29 @@ describe('fix round 3 — régressions', () => {
        status: 404,
        reason: 'expected_404',
      };
-     const base = {
-       findings: [{ routeId: 'normal', path: '/compte', measured: true, nodes: [{ id: 'pass-node', selector: '#pass-node', ratio: 4.5, threshold: 4.5, status: 'pass' }] }],
-       errors: [],
-       expectedRouteCount: 2,
-       expectedRouteIds: ['normal', 'expected'],
-       expectedRoutePaths: [
-         { routeId: 'normal', path: '/compte' },
-         { routeId: 'expected', path: '/dev/glass' },
-       ],
-       expectedOutcomeDefinitions: [definition],
-         manifestCoverageComplete: true,
-         coverageComplete: true,
-         liveVerified: true,
-     };
+    const base = {
+        findings: [{
+          routeId: 'normal',
+          path: '/compte',
+          measured: true,
+          nodes: [{ id: 'pass-node', selector: '#pass-node', ratio: 4.5, threshold: 4.5, status: 'pass' }],
+          measurementState: 'default',
+          scrollY: 0,
+          overlayOpen: false,
+        }],
+        errors: [],
+        expectedRouteCount: 2,
+        expectedRouteIds: ['normal', 'expected'],
+        expectedRoutePaths: [
+          { routeId: 'normal', path: '/compte' },
+          { routeId: 'expected', path: '/dev/glass' },
+        ],
+        expectedOutcomeDefinitions: [definition],
+          manifestCoverageComplete: true,
+          stateEvidenceComplete: true,
+          coverageComplete: true,
+          liveVerified: true,
+    };
      const valid = coreApi.buildCampaignAuditReport({ ...base, expectedOutcomes: [expectedOutcome] });
      const wrongOutcome = coreApi.buildCampaignAuditReport({
        ...base,

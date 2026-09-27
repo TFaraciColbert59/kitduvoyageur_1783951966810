@@ -131,7 +131,9 @@ describe('routes API progression — session et périmètre P1', () => {
   it('POST /api/progression/challenge/replace sans session → 401 unauthorized', async () => {
     mockedCreateClient.mockResolvedValue(sessionClient(null));
 
-    const response = await challengePOST();
+    const response = await challengePOST(
+      new NextRequest('http://localhost/api/progression/challenge/replace', { method: 'POST' })
+    );
 
     expect(response.status).toBe(401);
     expect(await response.json()).toEqual({ success: false, error: 'unauthorized' });

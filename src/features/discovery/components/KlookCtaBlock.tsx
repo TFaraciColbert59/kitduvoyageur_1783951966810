@@ -27,7 +27,7 @@ export function KlookCtaBlock({ block, className }: KlookCtaBlockProps) {
       )}
     >
       <div className="min-w-0 space-y-1.5">
-        <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-secondary)]">
+        <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-secondary-ink)]">
           Sélection partenaire · Klook
         </span>
         <h3 className="font-display text-[length:var(--lkv-text-body)] font-bold leading-snug text-[color:var(--lkv-text-primary)]">

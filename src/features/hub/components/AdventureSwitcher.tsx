@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import * as Cmd from 'cmdk';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Compass, Package, Users } from 'lucide-react';
+import { Compass } from 'lucide-react';
 import { Sheet } from '@/components/ui/Sheet';
 import { zIndex } from '@/lib/ui/zIndex';
 import { useActiveAdventure } from '../context/ActiveAdventureContext';
@@ -19,6 +19,7 @@ import {
   resolveAdventureHref,
   shouldToggleSwitcher,
   type AdventureEntry,
+  type TripEntry,
 } from '../context/adventureLists';
 
 /** Viewport mobile réactif (matchMedia — jamais window.innerWidth éphémère). */
@@ -44,8 +45,8 @@ function useIsMobileViewport(): boolean {
  * la palette desktop était clippée dans la sidebar). Échelle z-index :
  * overlays 10000 / contenu 10001, au-dessus de la tab bar (9999).
  *
- * Liste groupée par nature (Mon matériel / Mes voyages / Mes groupes) avec
- * recherche, suggestion IA, restauration de la dernière section, rechargement.
+ * Liste unique des activités à préparer, avec recherche, sélection active,
+ * restauration de la dernière section et rechargement.
  */
 export function AdventureSwitcher({
   forceOpenSignal = 0,
@@ -61,12 +62,10 @@ export function AdventureSwitcher({
   const {
     activeAdventure,
     setActiveAdventure,
-    setActiveAdventureByKey,
     clearActiveAdventure,
     isCurrentAdventure,
     groups,
     reloadAdventures,
-    suggestion,
     getLastSection,
     isPending,
   } = useActiveAdventure();
@@ -153,13 +152,6 @@ export function AdventureSwitcher({
 
   const filtered = useMemo(() => filterAdventures(groups, query), [groups, query]);
 
-  // Suggestion IA déterministe (non restrictive : la liste complète reste affichée).
-  const suggestedEntry: AdventureEntry | null = useMemo(() => {
-    if (!suggestion || query.trim()) return null;
-    const all: AdventureEntry[] = [...groups.possession, ...groups.sorties, ...groups.collectifs];
-    return all.find((e) => adventureKey(e) === suggestion.key) ?? null;
-  }, [suggestion, groups, query]);
-
   const closeAll = useCallback(() => {
     setOpen(false);
     setSheetOpen(false);
@@ -179,26 +171,15 @@ export function AdventureSwitcher({
   );
 
   const activate = useCallback(
-    async (entry: AdventureEntry): Promise<void> => {
+    async (entry: TripEntry): Promise<void> => {
       setSwitchError(false);
       triggerHaptic('selection');
-      let ok: boolean;
-      if (entry.nature === 'possession') {
-        ok = await setActiveAdventure({ nature: 'possession' });
-      } else if (entry.nature === 'sortie') {
-        ok = await setActiveAdventure({
-          nature: 'sortie',
-          id: entry.id,
-          slug: entry.slug,
-          title: entry.title,
-        });
-      } else {
-        ok = await setActiveAdventure({
-          nature: 'collectif',
-          id: entry.id,
-          title: entry.title,
-        });
-      }
+      const ok = await setActiveAdventure({
+        nature: 'sortie',
+        id: entry.id,
+        slug: entry.slug,
+        title: entry.title,
+      });
       if (!ok) {
         // Échec (offline / serveur) : le dialog reste ouvert, l'optimisme a été
         // annulé par le contexte — on l'affiche au lieu d'un "rien ne se passe".
@@ -209,45 +190,16 @@ export function AdventureSwitcher({
     },
     [goToAdventure, setActiveAdventure, triggerHaptic]
   );
-  const activateByKey = useCallback(
-    async (key: string) => {
-      setSwitchError(false);
-      const ok = await setActiveAdventureByKey(key);
-      if (!ok) {
-        setSwitchError(true);
-        return;
-      }
-      const all: AdventureEntry[] = [...groups.possession, ...groups.sorties, ...groups.collectifs];
-      const entry = all.find((e) => adventureKey(e) === key);
-      if (entry) goToAdventure(entry);
-    },
-    [goToAdventure, groups, setActiveAdventureByKey]
-  );
 
-  const entrySubtitle = (entry: AdventureEntry): string => {
-    if (entry.nature === 'possession') {
-      return `${entry.itemsCount} objet(s) · ${entry.alertsCount} alerte(s)`;
-    }
-    if (entry.nature === 'sortie') {
-      const bits = [entry.status, entry.primary_activity].filter(Boolean);
-      return bits.join(' · ') || 'Voyage';
-    }
-    return entry.subtitle;
+  const entrySubtitle = (entry: TripEntry): string => {
+    const bits = [entry.status, entry.primary_activity].filter(Boolean);
+    return bits.join(' · ') || 'Activité';
   };
 
-  const renderEntry = (entry: AdventureEntry) => {
+  const renderEntry = (entry: TripEntry) => {
     const key = adventureKey(entry);
-    const isCurrent =
-      isCurrentAdventure(key) ||
-      (activeAdventure?.nature === 'possession' && entry.nature === 'possession');
-    const Icon =
-      entry.nature === 'possession' ? Package : entry.nature === 'sortie' ? Compass : Users;
-    const value =
-      entry.nature === 'possession'
-        ? 'mon materiel possession inventaire'
-        : entry.nature === 'sortie'
-          ? `${entry.title} ${entry.status ?? ''} ${entry.primary_activity ?? ''}`
-          : `${entry.title} ${entry.subtitle}`;
+    const isCurrent = isCurrentAdventure(key);
+    const value = `${entry.title} ${entry.status ?? ''} ${entry.primary_activity ?? ''}`;
     return (
       <Cmd.CommandItem
         key={key}
@@ -255,10 +207,14 @@ export function AdventureSwitcher({
         onSelect={() => activate(entry)}
         className="flex items-center gap-2 px-3 py-2.5 rounded-[var(--lkv-radius-md)] text-left cursor-pointer aria-selected:bg-white/40 aria-selected:text-[var(--lkv-text-primary)]"
       >
-        <Icon size={14} className="shrink-0 text-[var(--lkv-text-secondary)]" aria-hidden="true" />
+        <Compass
+          size={14}
+          className="shrink-0 text-[var(--lkv-text-secondary)]"
+          aria-hidden="true"
+        />
         <span className="flex-1 min-w-0">
           <span className="block text-sm font-semibold text-[var(--lkv-text-primary)] truncate">
-            {entry.nature === 'possession' ? 'Mon matériel' : entry.title}
+            {entry.title}
           </span>
           <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)] truncate">
             {entrySubtitle(entry)}
@@ -268,7 +224,7 @@ export function AdventureSwitcher({
           <Icon
             name="check"
             size={14}
-            className="shrink-0 text-[var(--lkv-secondary)]"
+            className="shrink-0 text-[var(--lkv-secondary-ink)]"
             aria-hidden="true"
           />
         )}
@@ -283,7 +239,7 @@ export function AdventureSwitcher({
   const GROUP_HEADING_CLASS =
     '[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-[0.14em] [&_[cmdk-group-heading]]:text-[var(--lkv-text-muted)]';
 
-  const renderGroup = (title: string, entries: AdventureEntry[], emptyLabel: string) => (
+  const renderGroup = (title: string, entries: TripEntry[], emptyLabel: string) => (
     <Cmd.CommandGroup heading={`${title} · ${entries.length}`} className={GROUP_HEADING_CLASS}>
       {entries.length === 0 ? (
         <p className="px-3 py-2 text-xs text-[var(--lkv-text-muted)]">{emptyLabel}</p>
@@ -302,12 +258,13 @@ export function AdventureSwitcher({
           role="alert"
         >
           <Icon name="alert-triangle" size={11} aria-hidden="true" />
-          Impossible de changer d&apos;aventure — vérifiez la connexion puis réessayez.
+          Impossible de changer d’activité — vérifiez la connexion puis réessayez.
         </p>
       )}
       <div className="flex items-center justify-between px-2 pb-1">
         {activeAdventure ? (
-          <Button variant="secondary"
+          <Button
+            variant="secondary"
             type="button"
             onClick={() => {
               clearActiveAdventure();
@@ -316,16 +273,17 @@ export function AdventureSwitcher({
             disabled={isPending}
             className="!min-h-[44px] !px-3 !py-1 !text-[10.5px] font-semibold !text-[var(--lkv-danger)] cursor-pointer disabled:opacity-50"
           >
-            Détacher l&apos;aventure active
+            Détacher l’activité active
           </Button>
         ) : (
-          <span className="text-[10.5px] text-[var(--lkv-text-muted)]">Aucune aventure active</span>
+          <span className="text-[10.5px] text-[var(--lkv-text-muted)]">Aucune activité active</span>
         )}
-        <Button variant="secondary"
+        <Button
+          variant="secondary"
           type="button"
           onClick={() => reloadAdventures()}
           className="!min-h-[44px] !px-3 !py-1 inline-flex items-center gap-1 !text-[10.5px] font-semibold cursor-pointer"
-          aria-label="Recharger la liste des aventures"
+          aria-label="Recharger la liste des activités"
         >
           <Icon name="refresh-cw" size={11} />
           Recharger
@@ -349,59 +307,31 @@ export function AdventureSwitcher({
         <Cmd.CommandInput
           value={query}
           onValueChange={setQuery}
-          placeholder="Rechercher (matériel, voyage, groupe)…"
+          placeholder="Rechercher une activité…"
           autoFocus
           className="w-full bg-transparent outline-none font-body text-[15px] text-[color:var(--label)] placeholder:text-[color:var(--label-tertiary)]"
-          aria-label="Rechercher une aventure"
+          aria-label="Rechercher une activité"
         />
       </div>
       <Cmd.CommandEmpty className="px-3 py-4 text-xs text-[color:var(--label-tertiary)]">
-        Aucune aventure ne correspond à « {query} ».
+        Aucune activité ne correspond à « {query} ».
       </Cmd.CommandEmpty>
       <Cmd.CommandList className="mt-1 flex flex-col gap-1 max-h-[340px] overflow-y-auto no-scrollbar">
-        {suggestedEntry && suggestion && (
-          <Cmd.CommandGroup heading="Suggestion" className={GROUP_HEADING_CLASS}>
-            <Cmd.CommandItem
-              key={`suggest-${adventureKey(suggestedEntry)}`}
-              value={`suggestion ${suggestion.reason}`}
-              onSelect={() => activateByKey(suggestion.key)}
-              className="flex items-center gap-2 px-3 py-2.5 rounded-[var(--lkv-radius-md)] text-left cursor-pointer aria-selected:bg-white/40 aria-selected:text-[var(--lkv-text-primary)]"
-            >
-              <Icon
-                name="sparkles"
-                size={14}
-                className="shrink-0 text-[var(--lkv-text-secondary)]"
-                aria-hidden="true"
-              />
-              <span className="flex-1 min-w-0">
-                <span className="block text-sm font-semibold text-[var(--lkv-text-primary)] truncate">
-                  {suggestedEntry.nature === 'possession' ? 'Mon matériel' : suggestedEntry.title}
-                </span>
-                <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)] truncate">
-                  {suggestion.reason}
-                </span>
-              </span>
-            </Cmd.CommandItem>
-          </Cmd.CommandGroup>
-        )}
-        {renderGroup('Mon matériel', filtered.possession, 'Aucun matériel.')}
-        {renderGroup('Mes voyages', filtered.sorties, 'Aucun voyage pour cette recherche.')}
-        {renderGroup('Mes groupes', filtered.collectifs, 'Aucun groupe pour cette recherche.')}
+        {renderGroup('Mes activités', filtered.sorties, 'Aucune activité pour cette recherche.')}
       </Cmd.CommandList>
       {footer}
     </Cmd.CommandRoot>
   );
 
   const triggerLabel =
-    !activeAdventure || activeAdventure.nature === 'possession'
-      ? 'Mon matériel'
-      : activeAdventure.title;
+    activeAdventure?.nature === 'sortie' ? activeAdventure.title : 'Changer d’activité';
 
   return (
     <>
       {!hideTrigger && (
         <div className="hidden md:block">
-          <Button variant="secondary"
+          <Button
+            variant="secondary"
             type="button"
             onClick={() => {
               if (!isMobile) setOpen((v) => !v);
@@ -409,7 +339,7 @@ export function AdventureSwitcher({
             className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
             aria-haspopup="dialog"
             aria-expanded={open}
-            title="Changer d'aventure (Ctrl/Cmd+K ou J)"
+            title="Changer d'activité (Ctrl/Cmd+K ou J)"
           >
             <Icon name="compass" size={14} aria-hidden="true" />
             <span className="max-w-[160px] truncate hidden sm:inline">{triggerLabel}</span>
@@ -433,7 +363,7 @@ export function AdventureSwitcher({
               style={{ zIndex: zIndex.modal }}
             />
             <Dialog.Content
-              aria-label="Changer d'aventure"
+              aria-label="Changer d'activité"
               onClick={(e) => e.stopPropagation()}
               style={{ zIndex: zIndex.modal }}
               className="fixed left-1/2 top-20 -translate-x-1/2 w-[min(520px,92vw)] rounded-[var(--lkv-radius-card)] shadow-lg border border-white/40 overflow-hidden"
@@ -448,7 +378,8 @@ export function AdventureSwitcher({
 
       {!hideTrigger && (
         <div className="md:hidden min-w-0">
-          <Button variant="secondary"
+          <Button
+            variant="secondary"
             type="button"
             onClick={() => {
               if (variant === 'mobile' && isMobile) setSheetOpen(true);
@@ -469,7 +400,7 @@ export function AdventureSwitcher({
           setSheetOpen(v);
           if (!v) setSwitchError(false);
         }}
-        title="Changer d'aventure"
+        title="Changer d'activité"
       >
         <div className="glass p-2 rounded-[var(--lkv-radius-card)]">{listContent(false)}</div>
       </Sheet>

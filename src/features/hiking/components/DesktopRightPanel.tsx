@@ -120,7 +120,7 @@ export default function DesktopRightPanel({
             <div className="font-mono text-[9px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] leading-none">
               Durée
             </div>
-            <div className="text-xl font-medium tracking-tight text-[color:var(--lkv-primary)] mt-1.5 leading-none">
+            <div className="text-xl font-medium tracking-tight text-[color:var(--lkv-text-primary)] mt-1.5 leading-none">
               {formatDuration(durationSeconds)}
             </div>
             <div className="font-mono text-[9px] text-[color:var(--lkv-text-muted)] tracking-wide mt-1.5">
@@ -133,9 +133,9 @@ export default function DesktopRightPanel({
             <div className="font-mono text-[9px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] leading-none">
               Vitesse actuelle
             </div>
-            <div className="text-xl font-medium tracking-tight text-[color:var(--lkv-primary)] mt-1.5 leading-none">
+            <div className="text-xl font-medium tracking-tight text-[color:var(--lkv-text-primary)] mt-1.5 leading-none">
               {currentSpeedKmH.toFixed(1)}
-              <em className="font-serif italic font-normal text-xs text-[color:var(--lkv-primary)] ml-0.5">km/h</em>
+              <em className="font-serif italic font-normal text-xs text-[color:var(--lkv-text-primary)] ml-0.5">km/h</em>
             </div>
             <div className="font-mono text-[9px] text-[color:var(--lkv-text-muted)] tracking-wide mt-1.5">
               VITESSE DU MOMENT
@@ -147,9 +147,9 @@ export default function DesktopRightPanel({
             <div className="font-mono text-[9px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] leading-none">
               D+ · dénivelé
             </div>
-            <div className="text-xl font-medium tracking-tight text-[color:var(--lkv-primary)] mt-1.5 leading-none">
+            <div className="text-xl font-medium tracking-tight text-[color:var(--lkv-text-primary)] mt-1.5 leading-none">
               +{elevationGainM != null ? Math.round(elevationGainM) : '—'}
-              <em className="font-serif italic font-normal text-xs text-[color:var(--lkv-primary)] ml-0.5">m</em>
+              <em className="font-serif italic font-normal text-xs text-[color:var(--lkv-text-primary)] ml-0.5">m</em>
             </div>
             <div className="font-mono text-[9px] text-[color:var(--lkv-text-muted)] tracking-wide mt-1.5">
               DÉNIVELÉ CUMULÉ
@@ -161,9 +161,9 @@ export default function DesktopRightPanel({
             <div className="font-mono text-[9px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] leading-none">
               D− · dénivelé
             </div>
-            <div className="text-xl font-medium tracking-tight text-[color:var(--lkv-primary)] mt-1.5 leading-none">
+            <div className="text-xl font-medium tracking-tight text-[color:var(--lkv-text-primary)] mt-1.5 leading-none">
               −{elevationLossM != null ? Math.round(elevationLossM) : '—'}
-              <em className="font-serif italic font-normal text-xs text-[color:var(--lkv-primary)] ml-0.5">m</em>
+              <em className="font-serif italic font-normal text-xs text-[color:var(--lkv-text-primary)] ml-0.5">m</em>
             </div>
             <div className="font-mono text-[9px] text-[color:var(--lkv-text-muted)] tracking-wide mt-1.5">
               DÉNIVELÉ NÉGATIF
@@ -176,9 +176,9 @@ export default function DesktopRightPanel({
       <div className="bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] backdrop-blur-[var(--glass-blur-sm)] border border-[color:var(--lkv-primary)]/07 rounded-2xl shadow-xl overflow-hidden p-4 space-y-3">
         <div className="flex justify-between items-baseline">
           <span className="text-[11px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-semibold">
-            Copilote <em className="font-serif italic text-[color:var(--lkv-primary)] font-normal">LKDV IA</em>
+            Copilote <em className="font-serif italic text-[color:var(--lkv-text-primary)] font-normal">LKDV IA</em>
           </span>
-          <span className="font-mono text-[10px] text-[color:var(--lkv-primary)] tracking-wide font-semibold">
+          <span className="font-mono text-[10px] text-[color:var(--lkv-text-primary)] tracking-wide font-semibold">
             ● EN LIGNE
           </span>
         </div>
@@ -187,8 +187,8 @@ export default function DesktopRightPanel({
         <div className="flex items-center gap-3 py-1">
           <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[color:var(--lkv-primary)] via-[color:var(--lkv-forest-200)] to-[color:var(--lkv-forest-50)] shadow-lg animate-pulse flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-[color:var(--lkv-primary)]">
-              Prêt à <em className="font-serif italic text-[color:var(--lkv-primary)] font-normal">répondre</em>
+            <div className="text-sm font-medium text-[color:var(--lkv-text-primary)]">
+              Prêt à <em className="font-serif italic text-[color:var(--lkv-text-primary)] font-normal">répondre</em>
             </div>
             <div className="font-mono text-[9px] text-[color:var(--lkv-text-muted)] tracking-wider mt-0.5 truncate">
               EN DIRECT · {distanceKm != null ? `${distanceKm.toFixed(1)} KM` : 'GPS EN RECHERCHE'} · {(weatherCondition || '').toUpperCase()}
@@ -204,7 +204,7 @@ export default function DesktopRightPanel({
               className={`p-2.5 rounded-xl text-xs leading-relaxed ${
                 msg.sender === 'user'
                   ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] ml-auto max-w-[85%]'
-                  : 'bg-[color:var(--btn-tint)]  text-[color:var(--lkv-primary)]'
+                  : 'bg-[color:var(--btn-tint)]  text-[color:var(--lkv-text-primary)]'
               }`}
             >
               {msg.text}
@@ -212,7 +212,7 @@ export default function DesktopRightPanel({
               {msg.sender === 'ai' && idx === 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {remainingDistanceKm != null && remainingDistanceKm > 0 && (
-                    <span className="px-2 py-0.5 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/06 rounded-full font-mono text-[9px] text-[color:var(--lkv-primary)] inline-flex items-center gap-1">
+                    <span className="px-2 py-0.5 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/06 rounded-full font-mono text-[9px] text-[color:var(--lkv-text-primary)] inline-flex items-center gap-1">
                       <svg className="w-2.5 h-2.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
                         <path d="M4 21l16-8L4 5v6l10 2-10 2z" />
                       </svg>
@@ -220,7 +220,7 @@ export default function DesktopRightPanel({
                     </span>
                   )}
                   {elevationGainM != null && elevationGainM > 0 && (
-                    <span className="px-2 py-0.5 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/06 rounded-full font-mono text-[9px] text-[color:var(--lkv-primary)] inline-flex items-center gap-1">
+                    <span className="px-2 py-0.5 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/06 rounded-full font-mono text-[9px] text-[color:var(--lkv-text-primary)] inline-flex items-center gap-1">
                       <svg className="w-2.5 h-2.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
                         <path d="M4 20l6-12 4 6 4-2 2 8" />
                       </svg>
@@ -228,7 +228,7 @@ export default function DesktopRightPanel({
                     </span>
                   )}
                   {weatherCondition && (
-                    <span className="px-2 py-0.5 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/06 rounded-full font-mono text-[9px] text-[color:var(--lkv-primary)] inline-flex items-center gap-1">
+                    <span className="px-2 py-0.5 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/06 rounded-full font-mono text-[9px] text-[color:var(--lkv-text-primary)] inline-flex items-center gap-1">
                       <svg className="w-2.5 h-2.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="9" />
                         <path d="M12 7v5l3 2" />
@@ -265,14 +265,14 @@ export default function DesktopRightPanel({
             e.preventDefault();
             handleSendQuestion(inputText);
           }}
-          className="mt-2 p-1.5 pl-3.5 bg-[color:var(--stone-100)] rounded-full flex items-center gap-2"
+          className="mt-2 p-1.5 pl-3.5 bg-[color:var(--lkv-surface-muted)] rounded-full flex items-center gap-2"
         >
           <input
             type="text"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             placeholder="Posez votre question…"
-            className="flex-1 bg-transparent text-xs text-[color:var(--lkv-primary)] placeholder-[color:var(--lkv-text-muted)] focus:outline-none"
+            className="flex-1 bg-transparent text-xs text-[color:var(--lkv-text-primary)] placeholder-[color:var(--lkv-text-muted)] focus:outline-none"
           />
           <button
             type="submit"

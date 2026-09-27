@@ -156,7 +156,7 @@ export default function OrientationCard({ mode = 'collect', onSaved, onPasser }:
   return (
     <Card variant="featured" className="p-5 sm:p-6">
       <p className="font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.18em] text-[color:var(--lkv-text-muted)] mb-1">Ta pratique</p>
-      <h3 className="font-display font-bold text-[color:var(--lkv-primary)] text-lg tracking-tight mb-1">
+      <h3 className="font-display font-bold text-[color:var(--lkv-text-primary)] text-lg tracking-tight mb-1">
         Comment tu marches ?
       </h3>
       <p className="text-sm text-[color:var(--lkv-text-muted)] mb-5">
@@ -203,7 +203,7 @@ export default function OrientationCard({ mode = 'collect', onSaved, onPasser }:
           </div>
 
           {saved && (
-            <p className="text-sm text-[color:var(--lkv-forest-600)] font-medium" role="status" aria-live="polite">
+            <p className="text-sm text-[color:var(--lkv-forest-600-ink)] font-medium" role="status" aria-live="polite">
               ✓ {saved}
             </p>
           )}

@@ -268,7 +268,7 @@ export function ChecklistMobileExperience({ tripId, daysUntilStart, items }: Che
                   aria-label={`${done ? 'Décocher' : 'Cocher'} ${item.label}`}
                   leading={
                     done ? (
-                      <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-[var(--lkv-primary)]" aria-hidden="true" />
+                      <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-[color:var(--lkv-text-primary)]" aria-hidden="true" />
                     ) : (
                       <Circle size={18} className="mt-0.5 shrink-0 text-[var(--lkv-text-primary)]/30" aria-hidden="true" />
                     )

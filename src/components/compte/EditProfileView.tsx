@@ -235,7 +235,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
   };
 
   return (
-    <div className="min-h-screen bg-[color:var(--stone-50)]/80 pb-28 font-sans text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--blur-lg)]">
+    <div className="min-h-screen bg-[color:var(--lkv-surface-paper)]/80 pb-28 font-sans text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--blur-lg)]">
       {/* 1. TOP STICKY NAVBAR — desktop uniquement */}
       <header className="lkv-material-header sticky top-0 z-[var(--z-sticky)] hidden items-center justify-between border-b border-[color:var(--lkv-primary)]/5 px-4 py-3.5 sm:px-8 md:flex">
         <div className="flex items-center gap-4">
@@ -243,8 +243,8 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
             <Icon name="ArrowLeftIcon" size={14} />
             <span>Mon compte</span>
           </Link>
-          <span className="text-[color:var(--lkv-primary)]/10">|</span>
-          <span className="text-xs font-mono font-bold text-[color:var(--lkv-primary)] uppercase tracking-wider">Modifier mon profil</span>
+          <span className="text-[color:var(--lkv-text-primary)]/10">|</span>
+          <span className="text-xs font-mono font-bold text-[color:var(--lkv-text-primary)] uppercase tracking-wider">Modifier mon profil</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -272,9 +272,9 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
         <div className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-widest text-[color:var(--lkv-text-muted)] uppercase font-bold mb-2">
           — ÉDITION PROFIL · {form.firstName} {form.lastName}
         </div>
-        <h1 className="font-display font-bold text-3xl sm:text-4xl text-[color:var(--lkv-primary)] tracking-tight mb-2">
+        <h1 className="font-display font-bold text-3xl sm:text-4xl text-[color:var(--lkv-text-primary)] tracking-tight mb-2">
           Racontez qui vous êtes, <br className="hidden sm:inline" />
-          <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">et où vous allez.</span>
+          <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600-ink)]">et où vous allez.</span>
         </h1>
         <p className="text-xs sm:text-sm text-[color:var(--lkv-text-muted)] max-w-2xl leading-relaxed">
           Votre profil apparaît sur vos carnets, dans les clubs et à côté de vos aventures. Prenez le temps — les meilleures histoires ont de bons auteurs.
@@ -307,7 +307,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
           <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 sm:p-8 space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[color:var(--lkv-primary)]/5">
               <div>
-                <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">Identité publique</h2>
+                <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-text-primary)]">Identité publique</h2>
                 <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Nom, avatar, couverture. Ce que la communauté voit en premier.</p>
               </div>
               <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[length:var(--lkv-text-caption-2)] font-mono">
@@ -365,7 +365,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                   </label>
                 </div>
                 <div className="mb-2">
-                  <h3 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">{form.firstName} {form.lastName}</h3>
+                  <h3 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-text-primary)]">{form.firstName} {form.lastName}</h3>
                   <p className="text-xs text-[color:var(--lkv-text-muted)] font-mono">Membre depuis mars 2023 · 12 carnets publiés</p>
                 </div>
               </div>
@@ -406,7 +406,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                       }}
                       aria-invalid={Boolean(errors.firstName)}
                       aria-describedby={errors.firstName ? 'profil-firstName-erreur' : undefined}
-                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                     />
                     {errors.firstName && <p id="profil-firstName-erreur" role="alert" aria-live="assertive" className="mt-1.5 text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-danger-dark)]">{errors.firstName}</p>}
                   </div>
@@ -423,7 +423,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                       }}
                       aria-invalid={Boolean(errors.lastName)}
                       aria-describedby={errors.lastName ? 'profil-lastName-erreur' : undefined}
-                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                     />
                     {errors.lastName && <p id="profil-lastName-erreur" role="alert" aria-live="assertive" className="mt-1.5 text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-danger-dark)]">{errors.lastName}</p>}
                   </div>
@@ -442,13 +442,13 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                       autoComplete="nickname"
                       value={form.publicName}
                       onChange={(e) => setField('publicName', e.target.value)}
-                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                     />
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <label htmlFor="profil-username" className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block font-bold">Nom d’utilisateur *</label>
-                      <span className="text-[length:var(--lkv-text-caption-2)] font-mono text-[color:var(--lkv-secondary)] font-bold" aria-hidden="true">✓ Disponible</span>
+                      <span className="text-[length:var(--lkv-text-caption-2)] font-mono text-[color:var(--lkv-secondary-ink)] font-bold" aria-hidden="true">✓ Disponible</span>
                     </div>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-mono text-[color:var(--lkv-text-muted)]" aria-hidden="true">@</span>
@@ -460,7 +460,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                         onChange={(e) => setField('username', e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
                         aria-invalid={Boolean(errors.username)}
                         aria-describedby={errors.username ? 'profil-username-erreur' : undefined}
-                        className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full pl-8"
+                        className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full pl-8"
                       />
                     </div>
                     {errors.username && <p id="profil-username-erreur" role="alert" aria-live="assertive" className="mt-1.5 text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-danger-dark)]">{errors.username}</p>}
@@ -484,7 +484,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                       value={form.shortBio}
                       onChange={(e) => setField('shortBio', e.target.value)}
                       placeholder="Randonneuse babillarde & Cannelle. Je marche pour retrouver le silence..."
-                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full font-serif italic"
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full font-serif italic"
                     />
                   </div>
 
@@ -500,7 +500,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                       value={form.bio}
                       onChange={(e) => setField('bio', e.target.value)}
                       placeholder="Racontez vos expéditions, vos massifs favoris et votre approche de la randonnée..."
-                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full leading-relaxed resize-none font-serif italic"
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full leading-relaxed resize-none font-serif italic"
                     />
                   </div>
                 </div>
@@ -537,7 +537,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                       placeholder="Ex: Grenoble, Isère"
                       aria-invalid={Boolean(errors.city)}
                       aria-describedby={errors.city ? 'profil-city-erreur' : undefined}
-                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full pl-9"
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full pl-9"
                     />
                   </div>
                   {errors.city && <p id="profil-city-erreur" role="alert" aria-live="assertive" className="mt-1.5 text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-danger-dark)]">{errors.city}</p>}
@@ -550,7 +550,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                     value={form.country}
                     autoComplete="country-name"
                     onChange={(e) => setField('country', e.target.value)}
-                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   >
                     <option value="France">France</option>
                     <option value="Suisse">Suisse</option>
@@ -595,7 +595,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                   id="profil-timezone"
                   value={form.timezone}
                   onChange={(e) => setField('timezone', e.target.value)}
-                  className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full text-xs font-semibold"
+                  className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full text-xs font-semibold"
                 >
                   <option value="Europe/Paris (UTC+01:00)">Europe / Paris (UTC+01:00)</option>
                   <option value="Europe/London (UTC+00:00)">Europe / London (UTC+00:00)</option>
@@ -696,7 +696,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                   value={form.avgDistance}
                   onChange={(e) => setField('avgDistance', e.target.value)}
                   placeholder="18 km"
-                  className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full text-xs font-mono font-bold"
+                  className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full text-xs font-mono font-bold"
                 />
               </div>
 
@@ -709,7 +709,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                   value={form.avgElevation}
                   onChange={(e) => setField('avgElevation', e.target.value)}
                   placeholder="1200 m D+"
-                  className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full text-xs font-mono font-bold"
+                  className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full text-xs font-mono font-bold"
                 />
               </div>
 
@@ -722,7 +722,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                   value={form.pace}
                   onChange={(e) => setField('pace', e.target.value)}
                   placeholder="3.5 à 4 km/h"
-                  className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full text-xs font-mono font-bold"
+                  className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full text-xs font-mono font-bold"
                 />
               </div>
               </div>

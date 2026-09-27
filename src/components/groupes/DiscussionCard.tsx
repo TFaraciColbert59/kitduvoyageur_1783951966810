@@ -194,7 +194,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
   const totalMessages = discussions.length;
 
   return (
-    <Card className="flex h-[600px] flex-col p-[var(--space-6)] transition-all duration-[var(--motion-control-duration)]">
+    <Card className="flex h-[600px] flex-col p-[var(--space-6)] transition-all [transition-duration:var(--motion-control-duration)]">
       <div className="mb-[var(--space-2)] flex shrink-0 items-start justify-between">
         <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
           Discussion <span className="font-serif italic font-normal text-[color:var(--lkv-text-primary)]">du voyage</span>

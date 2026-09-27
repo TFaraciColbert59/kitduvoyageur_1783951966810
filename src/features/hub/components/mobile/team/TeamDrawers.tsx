@@ -10,7 +10,7 @@ import { carnetRoleLabel, dogLoadView, formatJoinDate, personInitials, teamRoleL
 import { GroupeDrawer } from '../groupe/GroupeDrawer';
 
 const ROLE_TONES: Record<string, string> = {
-  guide: 'bg-[var(--lkv-primary)]/12 text-[var(--lkv-primary)]',
+  guide: 'bg-[var(--lkv-primary)]/12 text-[color:var(--lkv-text-primary)]',
   medic: 'bg-[var(--lkv-danger)]/10 text-[var(--lkv-danger)]',
   member: 'bg-[var(--sage-50)] text-[var(--sage-700)]',
 };
@@ -69,7 +69,7 @@ export function TeamMembersDrawer({
             </p>
           )}
           {inviteSuccess && (
-            <p className="glass rounded-xl p-2.5 text-xs text-[var(--lkv-primary)]" role="status">
+            <p className="glass rounded-xl p-2.5 text-xs text-[color:var(--lkv-text-primary)]" role="status">
               {inviteSuccess}
             </p>
           )}
@@ -131,7 +131,7 @@ export function TeamMembersDrawer({
                     {formatJoinDate(member.joinedAt)}
                   </span>
                 </span>
-                <Badge tone="stone" className="shrink-0 bg-[var(--lkv-primary)]/10 px-2.5 py-1 uppercase tracking-[0.08em] text-[var(--lkv-primary)]">
+                <Badge tone="stone" className="shrink-0 bg-[var(--lkv-primary)]/10 px-2.5 py-1 uppercase tracking-[0.08em] text-[color:var(--lkv-text-primary)]">
                   {teamRoleLabel(member.role as never) || member.role}
                 </Badge>
               </div>

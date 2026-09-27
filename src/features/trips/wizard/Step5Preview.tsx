@@ -124,7 +124,7 @@ export function Step5Preview({
   return (
     <div className="space-y-[var(--space-6)]">
       <div>
-        <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--lkv-secondary)]">
+        <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--lkv-secondary-ink)]">
           <Icon name="sparkles" size={14} />
           <span>Étape 5 sur 5 — Aperçu complet</span>
         </div>
@@ -238,7 +238,7 @@ export function Step5Preview({
                 <div className="flex shrink-0 items-center gap-[var(--space-4)] self-start text-[length:var(--lkv-text-footnote)] font-medium text-[color:var(--lkv-text-muted)] sm:self-center">
                   {step.distance_km ? (
                     <span className="flex items-center gap-[var(--space-1)]">
-                      <Icon name="footprints" size={14} className="text-[color:var(--lkv-secondary)]" />
+                      <Icon name="footprints" size={14} className="text-[color:var(--lkv-secondary-ink)]" />
                       {step.distance_km} km
                     </span>
                   ) : null}

@@ -66,7 +66,7 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
   return (
     <Card className="flex h-full min-h-0 flex-col space-y-[var(--space-2)] p-[var(--space-3)]">
       <div className="flex items-center justify-between">
-        <h3 className="flex items-center gap-[var(--space-2)] font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-primary)]">
+        <h3 className="flex items-center gap-[var(--space-2)] font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
           <Icon name="route" size={13} aria-hidden="true" />
           Déroulé du jour
         </h3>

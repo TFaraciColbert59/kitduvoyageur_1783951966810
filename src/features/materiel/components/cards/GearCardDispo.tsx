@@ -30,7 +30,7 @@ export function GearCardDispo({ data, className }: { data: DispoData; className?
           <div className="space-y-0.5 min-w-0 flex-1">
             <h2
               id="dispo-title"
-              className="text-[12px] sm:text-[18px] font-display font-bold text-[var(--lkv-primary)] leading-tight truncate"
+              className="text-[12px] sm:text-[18px] font-display font-bold text-[color:var(--lkv-text-primary)] leading-tight truncate"
             >
               Dispo parc
             </h2>
@@ -38,8 +38,8 @@ export function GearCardDispo({ data, className }: { data: DispoData; className?
 
           <div className="flex items-center gap-1 shrink-0">
             <div className="glass-sub-card px-1.5 py-0.5 flex items-center gap-0.5">
-              <Icon name="check-circle2" size={10} className="text-[var(--lkv-primary)]" />
-              <span className="text-[11px] sm:text-[14px] font-mono font-bold text-[var(--lkv-primary)]">
+              <Icon name="check-circle2" size={10} className="text-[color:var(--lkv-text-primary)]" />
+              <span className="text-[11px] sm:text-[14px] font-mono font-bold text-[color:var(--lkv-text-primary)]">
                 {available}
               </span>
             </div>
@@ -54,9 +54,9 @@ export function GearCardDispo({ data, className }: { data: DispoData; className?
 
         {/* Progress Bar */}
         <div className="space-y-0.5 sm:space-y-1">
-          <div className="flex items-center justify-between text-[9.5px] sm:text-xs font-semibold text-[var(--lkv-primary-soft)]">
+          <div className="flex items-center justify-between text-[9.5px] sm:text-xs font-semibold text-[color:var(--lkv-text-secondary)]">
             <span>Dispo</span>
-            <span className="font-mono text-[var(--lkv-primary)]">{availablePct}%</span>
+            <span className="font-mono text-[color:var(--lkv-text-primary)]">{availablePct}%</span>
           </div>
           <ProgressBar value={availablePct} label="Équipement disponible" tone={tone} />
         </div>

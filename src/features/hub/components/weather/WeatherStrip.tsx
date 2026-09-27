@@ -61,7 +61,7 @@ export function WeatherStrip({
     return (
       <div className="glass bg-[color:var(--card-tint-solid)] backdrop-blur-lg rounded-2xl p-2" {...liveMask}>
         <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--glass-bg-medium)] border border-white/70 text-[var(--lkv-secondary)]">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--glass-bg-medium)] border border-white/70 text-[var(--lkv-secondary-ink)]">
             <CurrentIcon size={16} aria-hidden="true" />
           </span>
           <div className="min-w-0">
@@ -87,7 +87,7 @@ export function WeatherStrip({
                   </p>
                   <Icon
                     size={11}
-                    className="my-0.5 text-[var(--lkv-secondary)]"
+                    className="my-0.5 text-[var(--lkv-secondary-ink)]"
                     aria-hidden="true"
                   />
                   <p className="text-[9px] font-bold text-[var(--lkv-text-primary)] leading-none">
@@ -105,7 +105,7 @@ export function WeatherStrip({
   return (
     <div className="glass bg-[color:var(--card-tint-solid)] rounded-xl px-3 py-2" {...liveMask}>
       <div className="flex items-center gap-2.5">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--glass-bg-medium)] border border-white/70 text-[var(--lkv-secondary)]">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--glass-bg-medium)] border border-white/70 text-[var(--lkv-secondary-ink)]">
           <CurrentIcon size={18} aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
@@ -136,7 +136,7 @@ export function WeatherStrip({
                 </p>
                 <Icon
                   size={14}
-                  className="mx-auto my-0.5 text-[var(--lkv-secondary)]"
+                  className="mx-auto my-0.5 text-[var(--lkv-secondary-ink)]"
                   aria-hidden="true"
                 />
                 <p className="text-[10px] font-bold text-[var(--lkv-text-primary)] leading-none">

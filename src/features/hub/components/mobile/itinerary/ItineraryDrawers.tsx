@@ -46,7 +46,7 @@ export const POI_CATEGORY_LABELS: Record<string, string> = {
 };
 
 function TransportIcon({ mode }: { mode: string | null | undefined }) {
-  const className = 'text-[var(--lkv-primary)]';
+  const className = 'text-[color:var(--lkv-text-primary)]';
   switch (mode) {
     case 'plane':
     case 'flight':
@@ -217,7 +217,7 @@ export function ItineraryStepDrawer({
       {step && (
         <div className="space-y-4">
           <div className="glass-sub-card space-y-2 rounded-2xl p-3.5">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--lkv-primary)]">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[color:var(--lkv-text-primary)]">
               <TransportIcon mode={step.transport_mode} />
               {transportLabel(step.transport_mode)}
               {formatStepTime(step.start_time) && <span>· {formatStepTime(step.start_time)}</span>}
@@ -568,7 +568,7 @@ export function ItineraryPoiFormDrawer({
     <GroupeDrawer open={open} onOpenChange={onOpenChange} title="Nouveau point d'intérêt" width={440}>
       <form onSubmit={submit} className="space-y-3">
         {coords && (
-          <p className="flex items-center gap-1.5 rounded-xl bg-[var(--lkv-primary)]/10 px-3 py-2 text-[11px] font-semibold tabular-nums text-[var(--lkv-primary)]">
+          <p className="flex items-center gap-1.5 rounded-xl bg-[var(--lkv-primary)]/10 px-3 py-2 text-[11px] font-semibold tabular-nums text-[color:var(--lkv-text-primary)]">
             <MapPin size={13} aria-hidden="true" />
             {coords.lat.toFixed(5)}, {coords.lon.toFixed(5)}
           </p>
@@ -652,7 +652,7 @@ export function ItineraryPoiDetailDrawer({
       {poi && (
         <div className="space-y-4">
           <div className="glass-sub-card space-y-2 rounded-2xl p-3.5">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--lkv-primary)]">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[color:var(--lkv-text-primary)]">
               <MapPin size={12} aria-hidden="true" />
               {POI_CATEGORY_LABELS[poi.category ?? 'other'] ?? 'Autre'}
             </span>
@@ -765,7 +765,7 @@ export function ItineraryItemsDrawer({
             return (
               <li key={item.id} className="glass-sub-card flex items-center gap-3 rounded-2xl p-3">
                 <span
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-[color:var(--lkv-text-primary)]"
                   aria-hidden="true"
                 >
                   <Backpack size={15} />

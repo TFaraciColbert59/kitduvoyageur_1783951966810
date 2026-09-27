@@ -17,7 +17,7 @@ export default function CommunityHeroOverview({
   return (
     <Card variant="featured" className="flex flex-col items-center justify-between gap-[var(--space-4)] md:flex-row">
       <div>
-        <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-primary)]">
+        <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
           Le Camp de Base
         </h2>
         <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">

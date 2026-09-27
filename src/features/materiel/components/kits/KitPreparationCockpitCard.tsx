@@ -57,7 +57,7 @@ function SvgDonut({ pct }: { pct: number }) {
         />
       </svg>
       <span
-        className="absolute inset-0 flex items-center justify-center font-display font-bold text-[9px] md:text-[10px] text-[var(--lkv-primary)]"
+        className="absolute inset-0 flex items-center justify-center font-display font-bold text-[9px] md:text-[10px] text-[color:var(--lkv-text-primary)]"
         aria-hidden="true"
       >
         {Math.round(pct)}%
@@ -81,7 +81,7 @@ export function KitPreparationCockpitCard({ kit }: Props) {
   return (
     <Card as="article" tone="sage" ariaLabelledBy="prep-title" className="p-2.5 sm:p-3 flex flex-col items-center justify-between text-center h-full min-h-0">
       <div className="w-full flex items-center justify-center pr-8 md:pr-10 shrink-0 mb-0.5">
-        <p className="truncate text-[10px] md:text-xs font-semibold text-[var(--lkv-primary)] font-body text-center">
+        <p className="truncate text-[10px] md:text-xs font-semibold text-[color:var(--lkv-text-primary)] font-body text-center">
           Statut · Préparation
         </p>
       </div>
@@ -94,17 +94,17 @@ export function KitPreparationCockpitCard({ kit }: Props) {
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, ease: EASE_DECELERATE }}
-            className="text-[11px] font-bold text-[var(--lkv-primary)] truncate leading-tight"
+            className="text-[11px] font-bold text-[color:var(--lkv-text-primary)] truncate leading-tight"
           >
             {readyCount} prêt(s)
           </motion.span>
-          <span className={`text-[9px] truncate leading-tight ${isComplete ? 'text-[var(--lkv-primary-soft)] font-semibold' : 'text-[var(--lkv-text-muted)]'}`}>
+          <span className={`text-[9px] truncate leading-tight ${isComplete ? 'text-[color:var(--lkv-text-secondary)] font-semibold' : 'text-[var(--lkv-text-muted)]'}`}>
             {pendingCount > 0 ? `${pendingCount} en commande` : 'Kit complet ✓'}
           </span>
         </div>
       </div>
 
-      <div className="text-[8px] md:text-[9px] font-semibold uppercase tracking-wider text-[var(--lkv-primary-soft)] text-center shrink-0">
+      <div className="text-[8px] md:text-[9px] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-secondary)] text-center shrink-0">
         {readyCount}/{items.length} équipement(s)
       </div>
     </Card>

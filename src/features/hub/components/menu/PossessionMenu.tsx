@@ -330,12 +330,8 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
       </div>
 
       <MobileAdventureHub
-        action={
-          <>
-            <NextActionCard actions={nextActions} variant="compact" />
-            <ProgressionCompactCard />
-          </>
-        }
+        statusSlot={<NextActionCard actions={nextActions} variant="compact" />}
+        progressionSlot={<ProgressionCompactCard variant="drawer" />}
         tiles={mobileTiles}
         chips={mobileChips}
       >

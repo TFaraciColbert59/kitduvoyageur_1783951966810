@@ -229,7 +229,7 @@ export default function ClubDiscussionCard({
     : safeDiscussions;
 
   return (
-    <Card className="flex h-[640px] flex-col p-[var(--space-6)] transition-all duration-[var(--motion-control-duration)]">
+    <Card className="flex h-[640px] flex-col p-[var(--space-6)] transition-all [transition-duration:var(--motion-control-duration)]">
       <div className="mb-[var(--space-4)] flex shrink-0 items-center justify-between">
         <div>
           <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">

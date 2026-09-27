@@ -79,7 +79,7 @@ export function TemplateStore({ kits = [] }: { kits: PublicKit[] }) {
     >
       {/* En-tête compact */}
       <div className="flex items-center justify-between gap-1 pr-7 md:pr-14 shrink-0">
-        <p className="truncate text-[10px] md:text-sm font-semibold text-[var(--lkv-primary)] font-body">
+        <p className="truncate text-[10px] md:text-sm font-semibold text-[color:var(--lkv-text-primary)] font-body">
           <span className="sm:hidden">Modèles</span>
           <span className="hidden sm:inline">Modèles Communautaires</span>
         </p>
@@ -95,7 +95,7 @@ export function TemplateStore({ kits = [] }: { kits: PublicKit[] }) {
 
       <h3
         id="templates-title"
-        className="font-display font-bold text-[var(--lkv-primary)] text-[11px] sm:text-[13px] md:text-[16px] leading-tight truncate shrink-0 mt-0.5"
+        className="font-display font-bold text-[color:var(--lkv-text-primary)] text-[11px] sm:text-[13px] md:text-[16px] leading-tight truncate shrink-0 mt-0.5"
       >
         Partagés par les voyageurs
       </h3>
@@ -120,7 +120,7 @@ export function TemplateStore({ kits = [] }: { kits: PublicKit[] }) {
               className="rounded-lg border border-[color:var(--lkv-border-subtle)] p-1 sm:p-1.5"
             >
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-[var(--lkv-primary)] truncate leading-tight text-[10px] sm:text-[11px]">
+                <p className="font-semibold text-[color:var(--lkv-text-primary)] truncate leading-tight text-[10px] sm:text-[11px]">
                   {k.name}
                 </p>
                 <div className="flex items-center gap-1 text-[8px] sm:text-[9px] font-mono text-[var(--lkv-text-muted)]">
@@ -138,7 +138,7 @@ export function TemplateStore({ kits = [] }: { kits: PublicKit[] }) {
                 aria-label={`Importer le kit ${k.name}`}
                 className={`h-6 w-6 shrink-0 ${
                   isJustImported
-                    ? 'bg-[var(--lkv-primary-soft)]/20 text-[var(--lkv-primary-soft)]'
+                    ? 'bg-[var(--lkv-primary-soft)]/20 text-[color:var(--lkv-text-secondary)]'
                     : isImporting
                       ? 'bg-white/10 text-[var(--lkv-text-muted)]'
                       : ''
@@ -164,10 +164,10 @@ export function TemplateStore({ kits = [] }: { kits: PublicKit[] }) {
 
       {/* Capsule inférieure */}
       <Card variant="compact" className="flex shrink-0 items-center justify-between px-2 py-1 text-[10px]">
-        <span className="text-[8px] sm:text-[9px] font-semibold uppercase tracking-wider text-[var(--lkv-primary-soft)] truncate">
+        <span className="text-[8px] sm:text-[9px] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-secondary)] truncate">
           Communauté
         </span>
-        <span className="text-[8.5px] sm:text-[9px] font-bold text-[var(--lkv-primary)] shrink-0">
+        <span className="text-[8.5px] sm:text-[9px] font-bold text-[color:var(--lkv-text-primary)] shrink-0">
           1 clic · Import
         </span>
       </Card>

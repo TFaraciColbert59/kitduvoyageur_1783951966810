@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -15,10 +15,13 @@ const codeExtensions = ['.js', '.mjs', '.cjs', '.ts', '.mts', '.tsx', '.py', '.p
 const excludedCodeFiles = new Set([
   'src/features/materiel/components/DemoLoginButton.tsx',
 ]);
+// `git ls-files` liste aussi les fichiers supprimes non encore commités
+// (ex. l’ancienne page /progression) : on ne scanne que ce qui existe.
 const allTrackedCodeFiles = execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' })
   .split(/\r?\n/)
   .filter((file) => codeExtensions.some((extension) => file.endsWith(extension)))
-  .filter((file) => !file.startsWith('docs/'));
+  .filter((file) => !file.startsWith('docs/'))
+  .filter((file) => existsSync(path.join(root, file)));
 const trackedCodeFiles = allTrackedCodeFiles.filter((file) => !excludedCodeFiles.has(file));
 
 function source(relativePath: string) {

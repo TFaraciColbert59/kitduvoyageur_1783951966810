@@ -70,16 +70,16 @@ export default async function LieuxPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
         {/* Header de la Page */}
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)] text-xs font-bold uppercase tracking-wider">
-            <Icon name="compass" className="w-3.5 h-3.5 text-[color:var(--lkv-secondary)]" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] text-xs font-bold uppercase tracking-wider">
+            <Icon name="compass" className="w-3.5 h-3.5 text-[color:var(--lkv-secondary-ink)]" />
             Communauté & Topos Outdoor
           </div>
 
-          <h1 className="text-2xl sm:text-4xl font-black text-stone-900 tracking-tight">
+          <h1 className="text-2xl sm:text-4xl font-black text-[color:var(--lkv-text-primary)] tracking-tight">
             Lieux & Refuges d’Altitude
           </h1>
 
-          <p className="text-sm sm:text-base text-stone-600 max-w-2xl leading-relaxed">
+          <p className="text-sm sm:text-base text-[color:var(--lkv-text-secondary)] max-w-2xl leading-relaxed">
             Refuges gardés, zones de bivouac réglementées, sources d’eau et cols remarquables. Notes
             bayésiennes certifiées par les retours terrain de randonneurs autonomes.
           </p>

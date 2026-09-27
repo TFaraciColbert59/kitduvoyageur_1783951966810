@@ -320,7 +320,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
 
           {dayPlan.length === 0 ? (
             <EmptyState
-              icon={<Icon name="credit-card" size={32} className="text-[color:var(--lkv-secondary)]" />}
+              icon={<Icon name="credit-card" size={32} className="text-[color:var(--lkv-secondary-ink)]" />}
               title="Aucune dépense"
               description="Ajoutez des dépenses prévues à venir, ou enregistrez les dépenses réelles au fil du voyage."
               actionLabel={canManage ? 'Enregistrer une dépense' : undefined}
@@ -488,7 +488,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
             <Card className="space-y-[var(--space-3)]">
               <div className="flex items-center justify-between border-b border-[color:var(--lkv-border-subtle)] pb-[var(--space-2)]">
                 <h4 className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
-                  <Icon name="trending-up" size={16} className="text-[color:var(--lkv-secondary)]" />
+                  <Icon name="trending-up" size={16} className="text-[color:var(--lkv-secondary-ink)]" />
                   <span>Règlements de compte optimaux</span>
                 </h4>
                 <span className="text-[11px] text-[color:var(--lkv-text-secondary)]">
@@ -519,7 +519,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
                         <Icon
                           name="arrow-right"
                           size={14}
-                          className="shrink-0 text-[color:var(--lkv-secondary)]"
+                          className="shrink-0 text-[color:var(--lkv-secondary-ink)]"
                         />
                         <span className="font-semibold text-[color:var(--lkv-text-primary)]">
                           {s.toName}

@@ -155,7 +155,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
         <Icon
           name="shield-check"
           size={14}
-          className="shrink-0 text-[color:var(--lkv-secondary)]"
+          className="shrink-0 text-[color:var(--lkv-secondary-ink)]"
           aria-hidden="true"
         />
         <span>Chiffrés, jamais exposés aux visiteurs anonymes.</span>
@@ -164,7 +164,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
       {/* Bloc « Documents nécessaires » : sous-ensemble requis, importance-first */}
       {trip.documents.length === 0 ? (
         <EmptyState
-          icon={<Icon name="file-check" size={32} className="text-[color:var(--lkv-secondary)]" />}
+          icon={<Icon name="file-check" size={32} className="text-[color:var(--lkv-secondary-ink)]" />}
           title="Aucun document attaché"
           description="Attachez vos billets d'avion, réservations de refuges, assurances et passeports pour les garder accessibles partout."
           actionLabel={canEdit ? 'Attacher un document' : undefined}
@@ -179,7 +179,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                   <Icon
                     name="shield-check"
                     size={14}
-                    className="shrink-0 text-[color:var(--lkv-secondary)]"
+                    className="shrink-0 text-[color:var(--lkv-secondary-ink)]"
                     aria-hidden="true"
                   />
                   Documents nécessaires

@@ -977,7 +977,7 @@ export default function KitConfiguratorWizard({
                     <div key={item.id} className="flex items-center justify-between gap-2 py-0.5">
                       <div className="flex items-center gap-1.5 truncate">
                         <span className="w-3.5 h-3.5 rounded-full border border-[var(--lkv-text-primary)]/30 bg-[color:var(--btn-tint)] shrink-0" />
-                        <span className="truncate text-[var(--lkv-primary-soft)]">{item.name}</span>
+                        <span className="truncate text-[color:var(--lkv-text-secondary)]">{item.name}</span>
                       </div>
                       <span className="font-mono text-[var(--lkv-text-primary)] font-semibold shrink-0 text-xs">{item.priceEur} €</span>
                     </div>

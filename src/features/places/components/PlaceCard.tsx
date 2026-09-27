@@ -29,7 +29,7 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
             {/* Header badges */}
             <div className="mb-[var(--space-3)] flex items-center justify-between gap-2">
               <Badge tone="sage" className="gap-1.5">
-                <CategoryIcon className="h-3.5 w-3.5 text-[color:var(--lkv-primary)]" />
+                <CategoryIcon className="h-3.5 w-3.5 text-[color:var(--lkv-text-primary)]" />
                 {categoryLabel}
               </Badge>
 
@@ -47,7 +47,7 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
             </h3>
 
             <div className="mb-[var(--space-3)] flex items-center gap-1 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
-              <Icon name="map-pin" className="h-3.5 w-3.5 shrink-0 text-[color:var(--lkv-primary)]" />
+              <Icon name="map-pin" className="h-3.5 w-3.5 shrink-0 text-[color:var(--lkv-text-primary)]" />
               <span className="truncate">
                 {place.city ? `${place.city}, ` : ''}
                 {place.region || place.country_code}
@@ -89,7 +89,7 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
 
             {place.is_verified && (
               <Badge tone="sage" className="gap-1">
-                <Icon name="check-circle2" className="h-3 w-3 text-[color:var(--lkv-primary)]" />
+                <Icon name="check-circle2" className="h-3 w-3 text-[color:var(--lkv-text-primary)]" />
                 Vérifié
               </Badge>
             )}
@@ -110,7 +110,7 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
               onAddToTrip(place);
             }}
           >
-            <Icon name="plus" className="h-4 w-4 text-[color:var(--lkv-primary)]" />
+            <Icon name="plus" className="h-4 w-4 text-[color:var(--lkv-text-primary)]" />
             Ajouter à mon voyage
           </Button>
         </div>

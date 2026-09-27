@@ -60,7 +60,7 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
         {/* Metriques cles */}
         <div className="mt-[var(--space-6)] grid grid-cols-2 gap-[var(--space-4)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-4)] sm:grid-cols-4">
           <div className="flex items-center gap-[var(--space-2)]">
-            <Icon name="map-pin" size={16} className="text-[color:var(--lkv-secondary)]" />
+            <Icon name="map-pin" size={16} className="text-[color:var(--lkv-secondary-ink)]" />
             <div>
               <div className="text-[10px] uppercase text-[color:var(--lkv-text-muted)]">Destination</div>
               <div className="text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
@@ -70,7 +70,7 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
           </div>
 
           <div className="flex items-center gap-[var(--space-2)]">
-            <Icon name="calendar" size={16} className="text-[color:var(--lkv-secondary)]" />
+            <Icon name="calendar" size={16} className="text-[color:var(--lkv-secondary-ink)]" />
             <div>
               <div className="text-[10px] uppercase text-[color:var(--lkv-text-muted)]">Dates</div>
               <div className="text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
@@ -81,7 +81,7 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
           </div>
 
           <div className="flex items-center gap-[var(--space-2)]">
-            <Icon name="users" size={16} className="text-[color:var(--lkv-secondary)]" />
+            <Icon name="users" size={16} className="text-[color:var(--lkv-secondary-ink)]" />
             <div>
               <div className="text-[10px] uppercase text-[color:var(--lkv-text-muted)]">Equipe</div>
               <div className="text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
@@ -91,7 +91,7 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
           </div>
 
           <div className="flex items-center gap-[var(--space-2)]">
-            <Icon name="shield" size={16} className="text-[color:var(--lkv-secondary)]" />
+            <Icon name="shield" size={16} className="text-[color:var(--lkv-secondary-ink)]" />
             <div>
               <div className="text-[10px] uppercase text-[color:var(--lkv-text-muted)]">
                 Activite & Niveau

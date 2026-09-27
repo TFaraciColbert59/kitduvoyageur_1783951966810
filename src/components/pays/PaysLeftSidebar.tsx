@@ -67,7 +67,7 @@ export default function PaysLeftSidebar({
   ];
 
   return (
-    <aside className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass p-3.5 text-[color:var(--lkv-primary)] font-sans overflow-hidden select-none">
+    <aside className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass p-3.5 text-[color:var(--lkv-text-primary)] font-sans overflow-hidden select-none">
       {/* ── 1. ZONE HAUTE FIXE (Identité du Pays & Actions Rapides) ── */}
       <div className="shrink-0 space-y-2.5">
         {/* Country Mini Header */}
@@ -76,7 +76,7 @@ export default function PaysLeftSidebar({
             <CountryFlag code={country.code} name={country.nom} size="lg" className="rounded-lg shadow-sm" />
           </div>
           <div className="min-w-0 flex-1">
-            <h4 className="font-display font-bold text-xs sm:text-sm text-[color:var(--lkv-primary)] truncate leading-tight">
+            <h4 className="font-display font-bold text-xs sm:text-sm text-[color:var(--lkv-text-primary)] truncate leading-tight">
               {country.nom}
             </h4>
             {country.nom_en && country.nom_en.toLowerCase() !== country.nom.toLowerCase() && (
@@ -85,7 +85,7 @@ export default function PaysLeftSidebar({
               </span>
             )}
             <div className="flex items-center gap-1.5 mt-1">
-              <span className="glass-pill !px-1.5 !py-0.5 text-[8.5px] font-mono font-bold text-[color:var(--lkv-primary)]">
+              <span className="glass-pill !px-1.5 !py-0.5 text-[8.5px] font-mono font-bold text-[color:var(--lkv-text-primary)]">
                 {country.code}{country.iso_a3 ? ` · ${country.iso_a3}` : ''}
               </span>
               <span className="text-[9.5px] text-[color:var(--lkv-text-secondary)] truncate">
@@ -98,7 +98,7 @@ export default function PaysLeftSidebar({
         {/* Quick action buttons */}
         <div className="grid grid-cols-2 gap-1.5">
           <Link
-            href={`/ai-configurator?country=${country.code}`}
+            href={`/prepare?tab=equipement&country=${country.code}`}
             className="glass-capsule-btn primary text-[10.5px] font-bold !py-1.5 !px-2 flex items-center justify-center gap-1 shadow-none cursor-pointer text-center"
           >
             <span>Créer mon kit</span>
@@ -142,7 +142,7 @@ export default function PaysLeftSidebar({
       <div className="shrink-0 pt-2 border-t border-[color:var(--lkv-primary)]/5 space-y-1.5">
         <Link
           href="/explorer"
-          className="w-full glass-sub-card text-xs font-semibold text-[color:var(--lkv-primary-soft)] p-2 flex items-center justify-between hover:bg-[color:var(--lkv-hover-surface)] transition-colors cursor-pointer"
+          className="w-full glass-sub-card text-xs font-semibold text-[color:var(--lkv-text-secondary)] p-2 flex items-center justify-between hover:bg-[color:var(--lkv-hover-surface)] transition-colors cursor-pointer"
         >
           <span className="flex items-center gap-1.5">
             <span>←</span>

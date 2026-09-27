@@ -82,7 +82,7 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
   };
 
   return (
-    <Card className="relative p-[var(--space-6)] transition-all duration-[var(--motion-control-duration)]">
+    <Card className="relative p-[var(--space-6)] transition-all [transition-duration:var(--motion-control-duration)]">
       <div className="mb-[var(--space-2)] flex items-start justify-between">
         <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
           Dépenses <span className="font-serif italic font-normal text-[color:var(--lkv-text-primary)]">du voyage</span>

@@ -12,14 +12,14 @@ interface PaysCommunauteViewProps {
 
 export default function PaysCommunauteView({ country }: PaysCommunauteViewProps) {
   return (
-    <div className="space-y-6 font-sans text-[color:var(--lkv-primary)]">
+    <div className="space-y-6 font-sans text-[color:var(--lkv-text-primary)]">
       {/* Header */}
       <div className="border-b border-[color:var(--lkv-primary)]/5 pb-4">
-        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-secondary)] block mb-0.5">
+        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-secondary-ink)] block mb-0.5">
           ÉCHANGES &amp; RETOURS D'EXPÉDITION
         </span>
-        <h2 className="font-display font-bold text-2xl sm:text-3xl text-[color:var(--lkv-primary)]">
-          Communauté &amp; <span className="font-serif italic font-normal text-[color:var(--lkv-secondary)]">carnets</span>
+        <h2 className="font-display font-bold text-2xl sm:text-3xl text-[color:var(--lkv-text-primary)]">
+          Communauté &amp; <span className="font-serif italic font-normal text-[color:var(--lkv-secondary-ink)]">carnets</span>
         </h2>
         <p className="text-xs text-[color:var(--lkv-text-secondary)] mt-1 font-mono">
           Posez vos questions aux voyageurs sur place, rejoignez des clubs et lisez les récits vécus.

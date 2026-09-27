@@ -30,7 +30,7 @@ export default function PaysHeroOverview({
   const heroImg = country.hero_image_url || country.destinations?.[0]?.image_url;
 
   return (
-    <div className="space-y-4 font-sans text-[color:var(--lkv-primary)]">
+    <div className="space-y-4 font-sans text-[color:var(--lkv-text-primary)]">
       {/* 1. HERO PAYS UNIFIÉ — PURE LIQUID GLASS */}
       <div className="glass p-5 sm:p-6 overflow-hidden">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-5">
@@ -38,10 +38,10 @@ export default function PaysHeroOverview({
             {/* Meta Tags Row */}
             <div className="flex flex-wrap items-center gap-2">
               <CountryFlag code={country.code} name={country.nom} size="md" className="rounded-md shadow-xs" />
-              <span className="glass-pill text-[9.5px] font-mono font-bold text-[color:var(--lkv-primary)]">
+              <span className="glass-pill text-[9.5px] font-mono font-bold text-[color:var(--lkv-text-primary)]">
                 {country.code}{country.iso_a3 ? ` · ${country.iso_a3}` : ''}
               </span>
-              <span className="glass-pill text-[9.5px] font-mono font-bold text-[color:var(--lkv-primary)]">
+              <span className="glass-pill text-[9.5px] font-mono font-bold text-[color:var(--lkv-text-primary)]">
                 📍 {country.region} · {country.continent}
               </span>
             </div>
@@ -49,7 +49,7 @@ export default function PaysHeroOverview({
             {/* Title & Slogan */}
             <div>
               <div className="flex flex-wrap items-baseline gap-2">
-                <h1 className="font-display font-bold text-3xl sm:text-4xl text-[color:var(--lkv-primary)] tracking-tight leading-tight">
+                <h1 className="font-display font-bold text-3xl sm:text-4xl text-[color:var(--lkv-text-primary)] tracking-tight leading-tight">
                   {country.nom}
                 </h1>
                 {country.nom_en && country.nom_en.toLowerCase() !== country.nom.toLowerCase() && (
@@ -73,7 +73,7 @@ export default function PaysHeroOverview({
             {/* Actions */}
             <div className="flex flex-wrap items-center gap-2.5 pt-2">
               <Link
-                href={`/ai-configurator?country=${country.code}`}
+                href={`/prepare?tab=equipement&country=${country.code}`}
                 className="glass-capsule-btn primary text-xs font-bold !py-2 !px-4"
               >
                 <Icon name="SparklesIcon" size={14} />
@@ -109,7 +109,7 @@ export default function PaysHeroOverview({
                 <span className="text-[10px] font-mono font-bold tracking-wider uppercase drop-shadow-xs">
                   {country.nom} · Terrains
                 </span>
-                <span className="glass-pill !bg-white/85 text-[color:var(--lkv-primary)] text-[8.5px] font-mono font-bold !py-0.5 !px-1.5">
+                <span className="glass-pill !bg-white/85 text-[color:var(--lkv-text-primary)] text-[8.5px] font-mono font-bold !py-0.5 !px-1.5">
                   Panorama
                 </span>
               </div>
@@ -124,7 +124,7 @@ export default function PaysHeroOverview({
               <span className="text-[9px] font-mono font-bold text-[color:var(--lkv-text-secondary)] tracking-widest uppercase block">
                 {s.label}
               </span>
-              <div className="font-mono font-bold text-base sm:text-lg text-[color:var(--lkv-primary)] leading-none">
+              <div className="font-mono font-bold text-base sm:text-lg text-[color:var(--lkv-text-primary)] leading-none">
                 {s.val} {s.unit && <span className="text-xs font-normal text-[color:var(--lkv-text-secondary)]">{s.unit}</span>}
               </div>
               <span className="text-[10px] text-[color:var(--lkv-text-secondary)] block truncate">
@@ -144,15 +144,15 @@ export default function PaysHeroOverview({
             : 'lg:col-span-12'
         } glass p-6 space-y-4`}>
           <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-secondary)] block mb-1">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-secondary-ink)] block mb-1">
               Édition LKDV
             </span>
-            <h3 className="font-display font-bold text-xl text-[color:var(--lkv-primary)]">
+            <h3 className="font-display font-bold text-xl text-[color:var(--lkv-text-primary)]">
               {country.presentation_titre}
             </h3>
           </div>
 
-          <div className="space-y-3 text-xs sm:text-sm text-[color:var(--lkv-primary-soft)] leading-relaxed">
+          <div className="space-y-3 text-xs sm:text-sm text-[color:var(--lkv-text-secondary)] leading-relaxed">
             {country.presentation_paragraphes.map((p, i) => (
               <p key={i}>{p}</p>
             ))}
@@ -160,7 +160,7 @@ export default function PaysHeroOverview({
 
           {country.citation_texte && (
             <div className="glass-sub-card p-4 border-l-4 border-[color:var(--lkv-warning-dark)] mt-4 space-y-1">
-              <p className="font-serif italic text-xs sm:text-sm text-[color:var(--lkv-primary)] leading-snug">
+              <p className="font-serif italic text-xs sm:text-sm text-[color:var(--lkv-text-primary)] leading-snug">
                 « {country.citation_texte} »
               </p>
               {country.citation_auteur && (
@@ -176,10 +176,10 @@ export default function PaysHeroOverview({
         {country.points_interet_carte && country.points_interet_carte.length > 0 && (
         <div className={`lg:col-span-5 glass p-6 space-y-4`}>
           <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-secondary)] block mb-1">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-secondary-ink)] block mb-1">
               Géographie
             </span>
-            <h3 className="font-display font-bold text-lg text-[color:var(--lkv-primary)]">
+            <h3 className="font-display font-bold text-lg text-[color:var(--lkv-text-primary)]">
               Repères &amp; Relief
             </h3>
           </div>
@@ -210,7 +210,7 @@ export default function PaysHeroOverview({
                 style={{ top: pt.top, left: pt.left }}
               >
                 <span className={`w-2.5 h-2.5 rounded-full ${pt.isCapital ? 'bg-[color:var(--lkv-warning-dark)] ring-4 ring-[color:var(--lkv-warning-dark)]/20 animate-pulse' : 'bg-[color:var(--lkv-primary)] ring-2 ring-white'}`} />
-                <span className="text-[9px] font-mono font-bold bg-white/90 px-1.5 py-0.5 rounded shadow-2xs text-[color:var(--lkv-primary)] whitespace-nowrap opacity-90 group-hover:opacity-100">
+                <span className="text-[9px] font-mono font-bold bg-white/90 px-1.5 py-0.5 rounded shadow-2xs text-[color:var(--lkv-text-primary)] whitespace-nowrap opacity-90 group-hover:opacity-100">
                   {pt.nom}
                 </span>
               </div>
@@ -228,18 +228,18 @@ export default function PaysHeroOverview({
       {/* 4. HIGHLIGHTS / POINTS FORTS */}
       {country.highlights && country.highlights.length > 0 && (
       <div className="space-y-3">
-        <h3 className="font-display font-bold text-lg text-[color:var(--lkv-primary)]">
-          Points forts <span className="font-serif italic font-normal text-[color:var(--lkv-secondary)]">du voyage</span>
+        <h3 className="font-display font-bold text-lg text-[color:var(--lkv-text-primary)]">
+          Points forts <span className="font-serif italic font-normal text-[color:var(--lkv-secondary-ink)]">du voyage</span>
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {country.highlights.map((h, i) => (
             <div key={i} className="glass p-4 space-y-2 hover:border-[color:var(--lkv-secondary)]/30 transition-colors">
-              <div className="w-8 h-8 rounded-xl bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-secondary)] flex items-center justify-center">
+              <div className="w-8 h-8 rounded-xl bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-secondary-ink)] flex items-center justify-center">
                 <Icon name="SparklesIcon" size={16} />
               </div>
-              <h4 className="font-bold text-sm text-[color:var(--lkv-primary)]">
-                {h.titre} <span className="font-serif italic font-normal text-[color:var(--lkv-secondary)]">{h.sous_titre}</span>
+              <h4 className="font-bold text-sm text-[color:var(--lkv-text-primary)]">
+                {h.titre} <span className="font-serif italic font-normal text-[color:var(--lkv-secondary-ink)]">{h.sous_titre}</span>
               </h4>
               <p className="text-xs text-[color:var(--lkv-text-secondary)] leading-relaxed">
                 {h.description}

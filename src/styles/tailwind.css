@@ -744,7 +744,7 @@
   ::view-transition-new(root) { animation: none; }
 }
 
-/* Mobile bottom bar padding — géré par MobilePageShell */
+/* Mobile bottom bar padding — géré par AppShell */
 
 /* ── Remove all scrollbars across PC & Mobile ── */
 * {

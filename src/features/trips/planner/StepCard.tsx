@@ -91,7 +91,7 @@ export function StepCard({
       <div className="flex items-start justify-between gap-[var(--space-3)]">
         {/* En-tête de l'étape & Titre */}
         <div className="flex min-w-0 flex-1 items-start gap-[var(--space-3)]">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)]">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
             <TransportIcon className="h-5 w-5" />
           </div>
 
@@ -101,7 +101,7 @@ export function StepCard({
               {llmStep && <LlmSuggestionBadge />}
               {step.location_name && (
                 <span className="flex max-w-[200px] items-center gap-[var(--space-1)] truncate text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
-                  <Icon name="map-pin" size={14} className="shrink-0 text-[color:var(--lkv-primary)]" />
+                  <Icon name="map-pin" size={14} className="shrink-0 text-[color:var(--lkv-text-primary)]" />
                   {step.location_name}
                 </span>
               )}
@@ -133,7 +133,7 @@ export function StepCard({
                   <Icon
                     name="bed-double"
                     size={14}
-                    className="shrink-0 text-[color:var(--lkv-primary)]"
+                    className="shrink-0 text-[color:var(--lkv-text-primary)]"
                   />
                   {step.accommodation_name}
                 </Badge>

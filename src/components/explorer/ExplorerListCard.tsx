@@ -64,7 +64,7 @@ export default function ExplorerListCard({ trail, isSelected, onClick }: Props) 
             {trail.name}
           </h3>
           <p className="mt-0.5 flex items-center gap-1 truncate text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-muted)]">
-            <Icon name="map-pin" size={9.5} className="shrink-0 text-[color:var(--lkv-primary)]/80" />
+            <Icon name="map-pin" size={9.5} className="shrink-0 text-[color:var(--lkv-text-primary)]/80" />
             <span>{trail.terrain_type || trail.network || 'Massif Alpin'}</span>
           </p>
         </div>

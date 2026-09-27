@@ -12,7 +12,7 @@ export interface PageProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 /* Conteneur de page canonique — neutre, sans shell ni design final.
- * S'utilise à l'intérieur d'AppShell / MobilePageShell ou seul. */
+ * S'utilise à l'intérieur d'AppShell ou seul. */
 const WIDTH: Record<PageWidth, string> = {
   full: 'w-full',
   content: 'mx-auto w-full max-w-5xl',

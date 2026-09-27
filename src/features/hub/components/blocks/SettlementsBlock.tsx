@@ -32,7 +32,7 @@ export function SettlementsBlock({ trip, slug }: { trip: TripFull; slug: string 
         </h2>
         <a
           href={hubSectionHref(ref, 'budget')}
-          className="text-xs font-semibold text-[var(--lkv-primary)] hover:underline min-h-[44px] inline-flex items-center"
+          className="text-xs font-semibold text-[color:var(--lkv-text-primary)] hover:underline min-h-[44px] inline-flex items-center"
         >
           Voir le budget →
         </a>

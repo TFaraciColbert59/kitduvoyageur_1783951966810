@@ -163,12 +163,30 @@ export function resolvePackFile(name: string): string | undefined {
 }
 
 /**
+ * Noms « Heroicons » encore utilisés par le code **et** par les données en base
+ * (badges `badge_id` → `iconMap` de `queries-compte.ts`), mais absents du jeu
+ * `@heroicons/react`. Sans cette table ils retombaient sur le placeholder ✦.
+ * Chaque alias pointe vers un glyphe SF équivalent déjà généré depuis Phosphor.
+ * Source : `scripts/icons/build-heroicons-map.mjs` échoue bruyamment si l'un
+ * d'eux sort du pack — ne pas retirer une entrée sans migrer les données.
+ */
+const LEGACY_GLYPH_ALIASES: Record<string, string> = {
+  GlobeIcon: 'globe',
+  LeafIcon: 'leaf',
+  LockIcon: 'lock',
+  MountainIcon: 'mountain',
+};
+
+/**
  * Resolve any name to a mask asset path relative to `/icons/`.
- * Order: PNG pack (legacy Heroicon names) → SF-inspired SVG pack (kebab tokens).
+ * Order: PNG pack (legacy Heroicon names) → alias table → SF SVG pack (kebab).
  */
 export function resolveMaskFile(name: string, variant: 'outline' | 'solid' = 'outline'): string | undefined {
   const png = resolvePackFile(name);
   if (png) return png;
+
+  const alias = LEGACY_GLYPH_ALIASES[name];
+  if (alias && SVG_MASK_ICON_NAMES.has(alias)) return `sf/${alias}.svg`;
 
   const solidName = variant === 'solid' ? `${name}-fill` : name;
   if (SVG_MASK_ICON_NAMES.has(solidName)) return `sf/${solidName}.svg`;

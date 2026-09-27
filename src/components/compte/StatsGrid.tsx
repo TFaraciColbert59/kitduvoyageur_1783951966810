@@ -45,10 +45,10 @@ export default function StatsGrid({ stats }: StatsGridProps) {
             {item.label}
           </span>
           <div className="space-y-0.5">
-            <span className="font-mono font-bold text-xl sm:text-2xl text-[color:var(--lkv-primary)] block">
+            <span className="font-mono font-bold text-xl sm:text-2xl text-[color:var(--lkv-text-primary)] block">
               {item.value}
             </span>
-            <span className={`text-[11px] font-medium block ${item.positive ? 'text-[color:var(--lkv-secondary)]' : 'text-[color:var(--lkv-text-muted)]'}`}>
+            <span className={`text-[11px] font-medium block ${item.positive ? 'text-[color:var(--lkv-secondary-ink)]' : 'text-[color:var(--lkv-text-muted)]'}`}>
               {item.sub}
             </span>
           </div>

@@ -2,17 +2,51 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 
+/** En dessous de cette largeur, l’app se lit comme sur un téléphone. */
+export const MOBILE_VIEWPORT_MAX = 768;
+
+export interface CursorSignals {
+  hasTouch: boolean;
+  isCoarsePointer: boolean;
+  viewportWidth: number;
+}
+
+/**
+ * Le curseur personnalise n’a de sens ni au doigt, ni dans une fenetre etroite.
+ * Sans cette regle, une fenetre de bureau redimensionnee en largeur de
+ * telephone garde un anneau flottant par-dessus le bouton principal.
+ *
+ * Regle pure, testee sans DOM : la decision ne depend que de ces trois signaux.
+ */
+export function shouldHideCustomCursor({
+  hasTouch,
+  isCoarsePointer,
+  viewportWidth,
+}: CursorSignals): boolean {
+  return hasTouch || isCoarsePointer || viewportWidth <= MOBILE_VIEWPORT_MAX;
+}
+
+function readCursorSignals(): CursorSignals {
+  if (typeof window === 'undefined') {
+    return { hasTouch: true, isCoarsePointer: true, viewportWidth: 0 };
+  }
+  return {
+    hasTouch: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
+    isCoarsePointer: window.matchMedia('(hover: none) and (pointer: coarse)').matches,
+    viewportWidth: window.innerWidth,
+  };
+}
+
 export function useIsTouchDevice() {
-  const [isTouch, setIsTouch] = useState(true); // true par défaut = safe (pas de curseur tant qu'on sait pas)
+  // true par defaut : rien ne s affiche tant que la mesure n’est pas faite.
+  const [hidden, setHidden] = useState(true);
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    setIsTouch(
-      'ontouchstart' in window ||
-      navigator.maxTouchPoints > 0 ||
-      window.matchMedia('(hover: none) and (pointer: coarse)').matches
-    );
+    const measure = () => setHidden(shouldHideCustomCursor(readCursorSignals()));
+    measure();
+    window.addEventListener('resize', measure, { passive: true });
+    return () => window.removeEventListener('resize', measure);
   }, []);
-  return isTouch;
+  return hidden;
 }
 
 export function ConditionalCursor() {

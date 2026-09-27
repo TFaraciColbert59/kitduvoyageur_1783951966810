@@ -84,7 +84,7 @@ export default function ReportSheet({
     >
       {submitted ? (
         <div className="flex flex-col items-center gap-[var(--space-3)] py-[var(--space-10)] text-center">
-          <div className="flex size-12 items-center justify-center rounded-full bg-[color:var(--lkv-success-bg)] text-[color:var(--lkv-primary)]">
+          <div className="flex size-12 items-center justify-center rounded-full bg-[color:var(--lkv-success-bg)] text-[color:var(--lkv-text-primary)]">
             <Icon name="CheckCircleIcon" size={28} />
           </div>
           <h4 className="text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">

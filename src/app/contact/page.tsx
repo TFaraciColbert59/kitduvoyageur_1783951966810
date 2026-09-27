@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import { Button, Card } from '@/components/ui';
 
 const FIELD_CLASS =
@@ -43,12 +43,12 @@ export default function ContactPage() {
         <a key={c.href} href={c.href} className="block no-underline">
           <Card variant="interactive" className="flex items-start gap-[var(--space-4)] p-[var(--space-4)]">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--glass-bg-medium)]">
-              <Icon name={c.icon} size={18} className="text-[color:var(--lkv-secondary)]" variant="outline" />
+              <Icon name={c.icon} size={18} className="text-[color:var(--lkv-secondary-ink)]" variant="outline" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-primary)]">{c.title}</p>
+              <p className="text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">{c.title}</p>
               <p className="mb-1 text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-secondary)]">{c.desc}</p>
-              <p className="truncate font-mono text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-secondary)]">{c.value}</p>
+              <p className="truncate font-mono text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-secondary-ink)]">{c.value}</p>
             </div>
             <Icon name="ArrowTopRightOnSquareIcon" size={14} className="mt-1 shrink-0 text-[color:var(--lkv-text-secondary)]" variant="outline" />
           </Card>
@@ -60,9 +60,9 @@ export default function ContactPage() {
   const successCard = (
     <Card variant="standard" className="flex flex-col items-center px-[var(--space-6)] py-[var(--space-12)] text-center">
       <div className="mb-[var(--space-4)] flex h-14 w-14 items-center justify-center rounded-full bg-[color:var(--lkv-secondary)]/15">
-        <Icon name="CheckCircleIcon" size={28} className="text-[color:var(--lkv-secondary)]" variant="outline" />
+        <Icon name="CheckCircleIcon" size={28} className="text-[color:var(--lkv-secondary-ink)]" variant="outline" />
       </div>
-      <h3 className="mb-[var(--space-2)] font-semibold text-[color:var(--lkv-primary)]">Message envoyé !</h3>
+      <h3 className="mb-[var(--space-2)] font-semibold text-[color:var(--lkv-text-primary)]">Message envoyé !</h3>
       <p className="max-w-xs text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-secondary)]">Nous vous répondrons sous 48 heures ouvrées.</p>
       <Button variant="secondary" className="mt-[var(--space-6)]" onClick={reset}>
         Envoyer un autre message
@@ -115,17 +115,17 @@ export default function ContactPage() {
         <div className="mx-auto flex h-full w-full max-w-5xl flex-col gap-[var(--space-5)] px-[var(--space-6)] pb-[var(--space-6)]">
           <div className="shrink-0">
             <p className="mb-2 font-mono text-[length:var(--lkv-text-caption-1)] uppercase tracking-widest text-[color:var(--sage-100)]">Support &amp; Contact</p>
-            <h1 className="mb-2 font-display text-[length:var(--lkv-text-title-lg)] font-bold tracking-tight text-[color:var(--lkv-surface)]">Contactez-nous</h1>
+            <h1 className="mb-2 font-display text-[length:var(--lkv-text-title-lg)] font-bold tracking-tight text-[color:var(--lkv-text-primary)]">Contactez-nous</h1>
             <p className="max-w-xl text-[length:var(--lkv-text-footnote)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-forest-100)]">Notre équipe répond sous 48 heures ouvrées.</p>
           </div>
 
           <div className="grid min-h-0 flex-1 grid-cols-1 content-start gap-[var(--space-6)] overflow-y-auto pb-2 pr-1 lg:grid-cols-2">
             <div className="flex flex-col gap-[var(--space-3)]">
-              <h2 className="text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-surface)]">Nos équipes</h2>
+              <h2 className="text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">Nos équipes</h2>
               {contactsList}
             </div>
             <div>
-              <h2 className="mb-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-surface)]">Envoyer un message</h2>
+              <h2 className="mb-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">Envoyer un message</h2>
               {submitted ? successCard : messageForm}
             </div>
           </div>
@@ -137,7 +137,7 @@ export default function ContactPage() {
   const mobileContent = (
     <div className="p-[var(--space-4)]">
       <p className="mb-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.14em] text-[color:var(--sage-100)]">Support &amp; Contact</p>
-      <h1 className="mb-[var(--space-2)] font-display text-[24px] font-extrabold text-[color:var(--lkv-surface)]">Contactez-nous</h1>
+      <h1 className="mb-[var(--space-2)] font-display text-[24px] font-extrabold text-[color:var(--lkv-text-primary)]">Contactez-nous</h1>
       <p className="mb-[var(--space-6)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-forest-100)]">Notre équipe répond sous 48 heures ouvrées.</p>
       <div className="mb-[var(--space-6)]">{contactsList}</div>
       {submitted ? successCard : messageForm}
@@ -148,7 +148,7 @@ export default function ContactPage() {
     <>
       <div className="hidden md:block">{desktopContent}</div>
       <div className="block md:hidden">
-        <MobilePageShell>{mobileContent}</MobilePageShell>
+        <AppShell>{mobileContent}</AppShell>
       </div>
     </>
   );

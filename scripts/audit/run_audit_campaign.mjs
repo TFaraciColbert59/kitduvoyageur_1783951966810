@@ -636,11 +636,12 @@ async function run() {
     .filter((route) => !routeExpectationFor(route.path))
     .map((route) => route.id);
   const observedMeasuredRouteIds = [...new Set(contrastFindings.map((finding) => finding.routeId))];
-   const stateEvidenceComplete = contrastFindings.every((finding) => (
-     finding.measurementState === 'default'
-     && finding.scrollY === 0
-     && finding.overlayOpen === false
-   ));
+   const stateEvidenceComplete = safeFindings.length > 0
+     && safeFindings.every((finding) => (
+       finding?.measurementState === 'default'
+       && finding?.scrollY === 0
+       && finding?.overlayOpen === false
+     ));
    const manifestRouteIds = [...new Set(manifest.map((capture) => capture.routeId))];
   const expectedManifestKeys = new Set(expectedMeasuredRouteIds.flatMap((routeId) => (
     VIEWPORTS.flatMap((viewport) => ['dark', 'light'].flatMap((theme) => [

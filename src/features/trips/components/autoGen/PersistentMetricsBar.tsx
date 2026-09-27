@@ -83,7 +83,7 @@ export const PersistentMetricsBar: React.FC<PersistentMetricsBarProps> = ({
               className={`rounded-[var(--lkv-radius-sm)] p-[var(--space-2)] ${
                 isWeightOverflow
                   ? 'bg-[color:var(--lkv-warning)]/15 text-[color:var(--lkv-warning)]'
-                  : 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)]'
+                  : 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]'
               }`}
             >
               <Icon name="weight" size={16} />

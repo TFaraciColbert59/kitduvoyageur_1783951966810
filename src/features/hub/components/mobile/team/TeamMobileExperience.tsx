@@ -25,7 +25,7 @@ export interface TeamMobileExperienceProps {
 }
 
 const CARNET_ROLE_TONES: Record<string, string> = {
-  guide: 'bg-[var(--lkv-primary)]/12 text-[var(--lkv-primary)]',
+  guide: 'bg-[var(--lkv-primary)]/12 text-[color:var(--lkv-text-primary)]',
   medic: 'bg-[var(--lkv-danger)]/10 text-[var(--lkv-danger)]',
   member: 'bg-[var(--sage-50)] text-[var(--sage-700)]',
 };
@@ -245,7 +245,7 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
                 <span className="w-full truncate text-[12px] font-bold text-[var(--lkv-text-primary)]">
                   {member.name}
                 </span>
-                <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--lkv-primary)]">
+                <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[color:var(--lkv-text-primary)]">
                   {teamRoleLabel(member.role as never) || member.role}
                 </span>
                 <MemberProfileBadges
@@ -399,7 +399,7 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
                     <span
                       className={`text-[10.5px] font-bold ${
                         dog.isCarryingPack
-                          ? 'text-[var(--lkv-primary)]'
+                          ? 'text-[color:var(--lkv-text-primary)]'
                           : 'text-[var(--lkv-text-primary)]/75'
                       }`}
                     >

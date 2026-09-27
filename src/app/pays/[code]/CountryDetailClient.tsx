@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import { CountryDetail } from '@/lib/countryDetails';
 import AppShellDesktop from '@/components/shell/AppShellDesktop';
 import PaysLeftSidebar, { PaysSection } from '@/components/pays/PaysLeftSidebar';
@@ -84,9 +84,9 @@ export default function CountryDetailClient({ country, klookBlock }: CountryDeta
   return (
     <AppShellDesktop
       mobileSlot={
-        <MobilePageShell videoBackground={true}>
+        <AppShell videoBackground={true}>
           <MobileCountryDetailView country={country} flagEmoji={flagEmoji} klookBlock={klookBlock} />
-        </MobilePageShell>
+        </AppShell>
       }
       sidebarLeft={
         <PaysLeftSidebar

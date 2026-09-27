@@ -56,7 +56,7 @@ export default function TerrainReportsList({
       <Card variant="compact" className="px-6 py-8">
         <EmptyState
           compact
-          icon={<Icon name="check-circle" size={22} className="text-[color:var(--lkv-primary)]" aria-hidden="true" />}
+          icon={<Icon name="check-circle" size={22} className="text-[color:var(--lkv-text-primary)]" aria-hidden="true" />}
           title="Aucun signalement récent"
           description="Le sentier est calme autour de vous."
         />

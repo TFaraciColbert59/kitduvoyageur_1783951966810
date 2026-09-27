@@ -25,11 +25,11 @@ export function KitsActiveCockpitCard({ kit }: Props) {
       className="p-3 md:p-4 flex flex-col justify-between h-full min-h-0"
     >
       <div className="flex items-center justify-between gap-1.5 pr-12 md:pr-14 shrink-0">
-        <p className="truncate text-[10px] md:text-sm font-semibold text-[var(--lkv-primary)] font-body">
+        <p className="truncate text-[10px] md:text-sm font-semibold text-[color:var(--lkv-text-primary)] font-body">
           Mon Kit Actif
         </p>
         <span
-          className="shrink-0 px-1.5 py-0.5 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] text-[9px] md:text-[10px] font-bold"
+          className="shrink-0 px-1.5 py-0.5 rounded-full bg-[var(--lkv-primary)]/10 text-[color:var(--lkv-text-primary)] text-[9px] md:text-[10px] font-bold"
           aria-label={`${items.length} articles dans ce kit`}
         >
           {items.length} art.
@@ -38,7 +38,7 @@ export function KitsActiveCockpitCard({ kit }: Props) {
 
       <h3
         id="active-kit-title"
-        className="font-display font-bold text-[var(--lkv-primary)] text-[13px] md:text-[16px] leading-tight truncate shrink-0 mt-0.5"
+        className="font-display font-bold text-[color:var(--lkv-text-primary)] text-[13px] md:text-[16px] leading-tight truncate shrink-0 mt-0.5"
       >
         {kit?.name ?? 'Mon Kit'}
       </h3>
@@ -80,7 +80,7 @@ export function KitsActiveCockpitCard({ kit }: Props) {
                       className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-md border ${
                         isUnowned
                           ? 'border-white/30 bg-white/5 text-[var(--lkv-text-muted)]'
-                          : 'bg-[var(--lkv-primary)]/10 border-[var(--lkv-primary)]/20 text-[var(--lkv-primary)]'
+                          : 'bg-[var(--lkv-primary)]/10 border-[var(--lkv-primary)]/20 text-[color:var(--lkv-text-primary)]'
                       }`}
                       aria-hidden="true"
                     >
@@ -92,7 +92,7 @@ export function KitsActiveCockpitCard({ kit }: Props) {
                     </span>
                   }
                   title={
-                    <span className={isUnowned ? 'italic text-[var(--lkv-text-muted)]' : 'font-semibold text-[var(--lkv-primary)]'}>
+                    <span className={isUnowned ? 'italic text-[var(--lkv-text-muted)]' : 'font-semibold text-[color:var(--lkv-text-primary)]'}>
                       {item.name}
                     </span>
                   }
@@ -117,7 +117,7 @@ export function KitsActiveCockpitCard({ kit }: Props) {
 
       {/* Capsule inférieure Poids Total */}
       <Card variant="compact" className="flex shrink-0 items-center justify-between px-2.5 py-1.5 text-[11px]">
-        <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-primary-soft)]">
+        <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]">
           Poids total
         </span>
         <motion.span
@@ -125,7 +125,7 @@ export function KitsActiveCockpitCard({ kit }: Props) {
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, ease: EASE_DECELERATE }}
-          className="font-mono font-bold text-[var(--lkv-primary)]"
+          className="font-mono font-bold text-[color:var(--lkv-text-primary)]"
           aria-label={`Poids total : ${weightKg} kg`}
         >
           {weightKg} kg

@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import Icon from '@/components/ui/Icon';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import Link from 'next/link';
 import { Card, PageHeader } from '@/components/ui';
 import { FlaskConical, Mountain, Users } from 'lucide-react';
@@ -93,9 +93,9 @@ export default function ManifestePage() {
                   tone="sage"
                   className="p-6 flex flex-col gap-4"
                 >
-                  <principe.icone size={22} className="text-[color:var(--lkv-primary)]" aria-hidden />
-                  <h2 className="font-display font-bold text-xl text-[color:var(--lkv-primary)]">{principe.nom}</h2>
-                  <p className="text-sm text-[color:var(--lkv-primary-soft)] leading-relaxed">{principe.description}</p>
+                  <principe.icone size={22} className="text-[color:var(--lkv-text-primary)]" aria-hidden />
+                  <h2 className="font-display font-bold text-xl text-[color:var(--lkv-text-primary)]">{principe.nom}</h2>
+                  <p className="text-sm text-[color:var(--lkv-text-secondary)] leading-relaxed">{principe.description}</p>
                 </Card>
               ))}
             </div>
@@ -117,7 +117,7 @@ export default function ManifestePage() {
 
       {/* ── MOBILE (COCKPIT LIQUID GLASS) ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <div className="px-3 pt-3 pb-24 flex flex-col gap-4">
             <PageHeader
               variant="large"
@@ -134,12 +134,12 @@ export default function ManifestePage() {
                   className="p-4 flex flex-col gap-3"
                 >
                   <div className="flex items-center gap-2">
-                    <principe.icone size={18} className="text-[color:var(--lkv-primary)]" aria-hidden />
-                    <h2 className="font-display font-bold text-[17px] text-[color:var(--lkv-primary)]">
+                    <principe.icone size={18} className="text-[color:var(--lkv-text-primary)]" aria-hidden />
+                    <h2 className="font-display font-bold text-[17px] text-[color:var(--lkv-text-primary)]">
                       {principe.nom}
                     </h2>
                   </div>
-                  <p className="text-xs text-[color:var(--lkv-primary-soft)] leading-relaxed">{principe.description}</p>
+                  <p className="text-xs text-[color:var(--lkv-text-secondary)] leading-relaxed">{principe.description}</p>
                 </Card>
               ))}
             </div>
@@ -155,7 +155,7 @@ export default function ManifestePage() {
               </Link>
             </div>
           </div>
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

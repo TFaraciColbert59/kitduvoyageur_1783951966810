@@ -66,7 +66,7 @@ export default function SignatureVisibilityControl() {
   return (
     <Card variant="featured" className="p-5">
       <p className="font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.18em] text-[color:var(--lkv-text-muted)] mb-1">Ton empreinte</p>
-      <h3 className="font-display font-bold text-[color:var(--lkv-primary)] text-lg tracking-tight mb-2">
+      <h3 className="font-display font-bold text-[color:var(--lkv-text-primary)] text-lg tracking-tight mb-2">
         Qui peut voir ta trace ?
       </h3>
       <p className="text-sm text-[color:var(--lkv-text-muted)] mb-4">
@@ -97,7 +97,7 @@ export default function SignatureVisibilityControl() {
         </p>
       )}
       {saved && (
-        <p className="text-xs text-[color:var(--lkv-forest-600)] font-medium mt-2" role="status" aria-live="polite">
+        <p className="text-xs text-[color:var(--lkv-forest-600-ink)] font-medium mt-2" role="status" aria-live="polite">
           ✓ Préférence enregistrée
         </p>
       )}

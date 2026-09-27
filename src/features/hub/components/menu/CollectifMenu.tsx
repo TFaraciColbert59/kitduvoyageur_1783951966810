@@ -208,12 +208,8 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
       </div>
 
       <MobileAdventureHub
-        action={
-          <>
-            <NextActionCard actions={nextActions} variant="compact" />
-            <ProgressionCompactCard />
-          </>
-        }
+        statusSlot={<NextActionCard actions={nextActions} variant="compact" />}
+        progressionSlot={<ProgressionCompactCard variant="drawer" />}
         tiles={mobileTiles}
         chips={mobileChips}
       >

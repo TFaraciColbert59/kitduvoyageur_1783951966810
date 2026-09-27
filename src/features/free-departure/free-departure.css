@@ -1,0 +1,561 @@
+/**
+ * « Partir librement » — materiau des trois ecrans (60 / 61 / 62).
+ *
+ * Ce fichier ne REFAIT PAS le design system : il l'etend. Tout ce qui existe
+ * deja dans `adventure-prep.css` (`.prep-screen`, `.prep-body`, `.prep-map`,
+ * `.prep-metrics`, `.prep-act`, `.prep-footer`) est reutilise tel quel, et
+ * seules les briques propres au retour libre sont declarees ici.
+ *
+ * Regle de couleur : aucune teinte en dur. Tout passe par `--prep-*`,
+ * `--lkv-*`, `--g*` ou `--glass-*`, pour que le mode sombre et les tokens
+ * du hub restent les seules sources de verite.
+ */
+
+/* --- Structure plein ecran ------------------------------------------- */
+
+.free-screen {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.free-body {
+  /* Aucune page qui defile : l'ecran est une colonne, et c'est la carte qui
+     occupe le bas. Les details longs passent par une feuille dediee. */
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--prep-block-gap);
+  padding: var(--space-4) var(--space-5) var(--space-4);
+  overflow: hidden;
+}
+
+.free-body > * {
+  flex-shrink: 0;
+}
+
+/* La carte est le SEUL element qui s'adapte a la hauteur restante.
+   Defaut reproduit en 390x844 : le corps mesurait 843px de contenu pour 708px
+   de place, et comme `overflow: hidden` ne fait pas defiler — il COUPE — le
+   bas de l'ecran disparaitait silencieusement. On rend donc la carte
+   compressible, avec un plancher assez bas pour qu'elle tienne toujours sur
+   le plus petit telephone et un plafond pour qu'elle ne domine pas le hub. */
+.free-body > .prep-map {
+  flex: 1 1 auto;
+  min-height: 5.5rem;
+  max-height: 22rem;
+}
+
+/* --- En-tete : un titre, une fermeture ------------------------------- */
+
+.free-top {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: var(--control-height-md);
+  flex: 0 0 auto;
+}
+
+/* Titre optiquement centre, bouton de fermeture toujours au meme coin.
+   `justify-content` ne suffit pas : le bouton est un enfant du flux, donc
+   l'espacement libre ne se partage pas a parts egales de part et d'autre du
+   texte — selon l'ordre du DOM, le titre derivait a gauche ou a droite. On
+   sort donc le bouton du flux et on le pose. L'ecran 61, qui n'a pas de
+   bouton, garde son identite d'icone a gauche. */
+.free-top:has(.free-close) {
+  justify-content: center;
+  padding-inline: calc(var(--control-height-md) + var(--space-2));
+}
+
+.free-top__title {
+  min-width: 0;
+  text-align: center;
+  font-size: var(--lkv-text-body-sm);
+  font-weight: 680;
+  color: var(--lkv-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.free-top__icon {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--lkv-text-primary);
+}
+
+.free-close {
+  position: absolute;
+  inset-inline-end: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height-md);
+  height: var(--control-height-md);
+  border-radius: var(--lkv-radius-full);
+  color: var(--lkv-text-primary);
+  background-color: var(--glass-bg-medium);
+  border: 1px solid var(--glass-border);
+  -webkit-backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--motion-control-duration) var(--motion-ease-standard);
+}
+
+.free-close:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+/* --- Titres ---------------------------------------------------------- */
+
+.free-h1 {
+  margin: 0;
+  font-size: var(--lkv-text-title-lg, var(--lkv-text-title-md));
+  line-height: var(--lkv-line-title);
+  letter-spacing: var(--lkv-tracking-title);
+  font-weight: 780;
+  color: var(--lkv-text-primary);
+  text-wrap: balance;
+}
+
+.free-sub {
+  margin: 0;
+  font-size: var(--lkv-text-body-sm);
+  line-height: var(--lkv-line-body);
+  color: var(--lkv-text-secondary);
+  text-wrap: pretty;
+}
+
+/* --- Le chrono : l'element dominant de l'ecran 61 --------------------- */
+
+.free-clock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+}
+
+.free-clock__label {
+  font-size: var(--lkv-text-footnote);
+  font-weight: 650;
+  color: var(--lkv-text-secondary);
+}
+
+.free-clock__value {
+    /* Le chrono domine l'ecran : aucune echelle de texte ne rend 1:12:48 aussi
+     lisible d'un coup d'oeil, on part donc d'une mesure d'ecran. */
+  font-size: clamp(3rem, 15vw, 4.5rem);
+  line-height: 1;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: var(--lkv-text-primary);
+}
+
+.free-screen[data-paused='true'] .free-clock__value {
+  color: var(--lkv-text-secondary);
+}
+
+/* --- Les deux modes de l'ecran 60 (cartes radio) --------------------- */
+
+.free-modes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.free-mode {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--control-height-lg);
+  padding: var(--space-3);
+  text-align: left;
+  font: inherit;
+  border-radius: var(--card-radius);
+  color: var(--lkv-text-primary);
+  background-color: var(--card-tint-solid);
+  border: 1px solid color-mix(in srgb, var(--glass-rim) 65%, transparent);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--motion-control-duration) var(--motion-ease-standard),
+    border-color var(--motion-control-duration) var(--motion-ease-standard);
+}
+
+.free-mode[aria-pressed='true'] {
+  background-color: color-mix(in srgb, var(--lkv-action) 9%, var(--card-tint-solid));
+  border-color: color-mix(in srgb, var(--lkv-action) 34%, transparent);
+}
+
+.free-mode:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+.free-mode__icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height-md);
+  height: var(--control-height-md);
+  border-radius: var(--lkv-radius-concentric);
+  color: var(--lkv-action);
+  background-color: color-mix(in srgb, var(--lkv-action) 12%, transparent);
+}
+
+.free-mode__body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.free-mode__title {
+  font-size: var(--lkv-text-body);
+  font-weight: 680;
+}
+
+.free-mode__hint,
+.free-mode__chosen {
+  font-size: var(--lkv-text-footnote);
+  line-height: 1.35;
+  color: var(--lkv-text-secondary);
+}
+
+.free-mode__chosen {
+  color: var(--lkv-action);
+  font-weight: 650;
+}
+
+/* --- Carte d'information (localisation, GPS) -------------------------- */
+
+.free-info {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--card-radius);
+  color: var(--lkv-text-primary);
+  background-color: color-mix(in srgb, var(--lkv-action) 7%, var(--card-tint-solid));
+  border: 1px solid color-mix(in srgb, var(--lkv-action) 20%, transparent);
+}
+
+.free-info__icon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--lkv-action);
+}
+
+.free-info__title {
+  margin: 0;
+  font-size: var(--lkv-text-body-sm);
+  font-weight: 680;
+  line-height: var(--lkv-line-body);
+}
+
+.free-info__text {
+  margin: var(--space-1) 0 0;
+  font-size: var(--lkv-text-note);
+  line-height: var(--lkv-line-body);
+  color: var(--lkv-text-secondary);
+  text-wrap: pretty;
+}
+
+.free-info[data-tone='warn'] {
+  background-color: color-mix(in srgb, var(--lkv-warning-dark) 14%, transparent);
+  border-color: color-mix(in srgb, var(--lkv-warning-dark) 26%, transparent);
+}
+
+/* --- La proposition d'activite (ecran 62) ----------------------------- */
+
+.free-proposal {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--card-radius);
+  background-color: var(--card-tint-solid);
+  border: 1px solid color-mix(in srgb, var(--glass-rim) 65%, transparent);
+}
+
+.free-proposal__icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height-lg);
+  height: var(--control-height-lg);
+  border-radius: var(--lkv-radius-concentric);
+  color: var(--lkv-action);
+  background-color: color-mix(in srgb, var(--lkv-action) 12%, transparent);
+}
+
+.free-proposal__body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.free-proposal__title {
+  font-size: var(--lkv-text-body);
+  font-weight: 700;
+  color: var(--lkv-text-primary);
+}
+
+.free-proposal__why {
+  font-size: var(--lkv-text-footnote);
+  line-height: 1.35;
+  color: var(--lkv-text-secondary);
+  text-wrap: pretty;
+}
+
+/**
+ * Pastille « Proposition ».
+ *
+ * Elle n'est pas decorative : c'est elle qui distingue, en un coup d'oeil, une
+ * deduction de l'IA d'un fait enregistre. D'ou une teinte d'ambre et non le
+ * vert de l'action, qui signifierait « confirme ».
+ */
+.free-badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  border-radius: 999px;
+  font-size: var(--lkv-text-footnote);
+  font-weight: 700;
+  color: var(--lkv-text-primary);
+  background-color: color-mix(in srgb, var(--lkv-warning-dark) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--lkv-warning-dark) 32%, transparent);
+}
+
+.free-badge[data-confidence='incertaine'] {
+  border-style: dashed;
+}
+
+/* --- Vie privee (ecran 62) -------------------------------------------- */
+
+.free-privacy {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--card-radius);
+  background-color: var(--card-tint-solid);
+  border: 1px solid color-mix(in srgb, var(--glass-rim) 65%, transparent);
+  overflow: hidden;
+}
+
+.free-privacy__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+}
+
+.free-privacy__row + .free-privacy__row {
+  border-top: 1px solid color-mix(in srgb, var(--glass-rim) 45%, transparent);
+}
+
+.free-privacy__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Raison de l'indisponibilite : subordonnee a l'etat, elle ne le
+   remplace pas. Elle repond a la seule question qui compte — « puis-je
+   resoudre ca ? » — et la reponse est parfois « non ». */
+.free-privacy__reason {
+  font-size: var(--lkv-text-caption);
+  line-height: var(--lkv-line-body);
+  color: var(--lkv-text-subtle);
+  text-wrap: pretty;
+}
+
+.free-privacy__label {
+  font-size: var(--lkv-text-body-sm);
+  font-weight: 650;
+  color: var(--lkv-text-primary);
+}
+
+.free-privacy__hint {
+  font-size: var(--lkv-text-footnote);
+  line-height: 1.35;
+  color: var(--lkv-text-secondary);
+  text-wrap: pretty;
+}
+
+.free-privacy__row[data-disabled='true'] .free-privacy__label {
+  color: var(--lkv-text-secondary);
+}
+
+/* --- Actions en bas --------------------------------------------------- */
+
+.free-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--prep-action-height);
+}
+
+.free-actions--stack {
+  flex-direction: column-reverse;
+  align-items: stretch;
+}
+
+/* --- Etat de pause : annonce, pas seulement une couleur ---------------- */
+
+.free-paused {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: center;
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  border-radius: 999px;
+  font-size: var(--lkv-text-footnote);
+  font-weight: 700;
+  color: var(--lkv-text-primary);
+  background-color: color-mix(in srgb, var(--lkv-warning-dark) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--lkv-warning-dark) 30%, transparent);
+}
+
+/* --- Mesures (ecrans 61 et 62) ----------------------------------------- */
+
+/* La maquette 60/61/62 place la valeur AU-DESSUS du libelle : c'est ce qui
+   rend un chrono lisible d'un coup d'oeil. On redeclare donc ces trois
+   classes ici plutot que d'hériter de `.prep-metric`, dont l'ordre est
+   libelle-puis-valeur pour les écrans de parcours. */
+.free-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.free-metric {
+  min-width: 0;
+  padding: var(--space-3);
+  border-radius: var(--lkv-radius-concentric);
+  background-color: var(--card-tint-solid);
+  border: 1px solid color-mix(in srgb, var(--glass-rim) 60%, transparent);
+}
+
+.free-metric__value {
+  display: block;
+  font-size: var(--lkv-text-callout);
+  font-weight: 760;
+  letter-spacing: var(--lkv-tracking-title);
+  color: var(--lkv-text-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Une mesure absente n'est pas un zero : elle se dit, elle ne s'invente pas. */
+.free-metric__value[data-unknown='true'] {
+  color: var(--lkv-text-subtle);
+  font-weight: 550;
+}
+
+.free-metric__label {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--lkv-text-caption);
+  font-weight: 620;
+  letter-spacing: 0.01em;
+  color: var(--lkv-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Choix manuel retenu (ecran 60) ---------------------------------- */
+
+.free-chosen {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--prep-radius-sheet);
+  background-color: color-mix(in srgb, var(--card-tint-solid) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--glass-rim) 50%, transparent);
+}
+
+.free-chosen__note {
+  margin: 0;
+  font-size: var(--lkv-text-footnote);
+  line-height: 1.35;
+  color: var(--lkv-text-secondary);
+  text-wrap: pretty;
+}
+
+/* Revenir en arriere est une action, pas une mention : elle reste atteignable
+   au clavier et garde la meme cible tactile que le reste de l'ecran. */
+.free-chosen__undo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: 0 0 auto;
+  min-height: var(--lkv-touch-min);
+  padding: 0 var(--space-2);
+  border-radius: var(--lkv-radius-full);
+  font-size: var(--lkv-text-footnote);
+  font-weight: 680;
+  color: var(--lkv-action);
+  background-color: transparent;
+  border: 1px solid color-mix(in srgb, var(--lkv-action) 34%, transparent);
+  transition: background-color var(--prep-duration-press) var(--prep-ease-standard);
+}
+
+.free-chosen__undo:hover {
+  background-color: color-mix(in srgb, var(--lkv-action) 9%, transparent);
+}
+
+.free-chosen__undo:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+/* --- La barre d onglets s efface par la structure, pas par un signal ------
+   Mesure : sur les ecrans 60 et 61, la barre d onglets restait posee sur le
+   parcours — son overlay fixe captait les appuis destines a « Demarrer » et a
+   « Terminer ». Elle est montee en client-only, un tick apres nos ecrans : un
+   signal envoye au montage arrive donc avant que son ecouteur existe et se perd.
+   Le contournement (rejouer le signal 4 fois sur 860 ms) dnsait, mais laissait
+   une restauration a tenir a la main.
+
+   `:has()` retire la course ET la restauration : la regle vaut tant qu un ecran
+   du retour libre est dans le DOM, et cesse d elle-meme quand il en sort. Le
+   retour est donc structurel, pas_conditionnel — plus rien a maintenir.
+
+   Les trois etats (60 avant, 61 pendant, 62 apres) portent la classe racine
+   `.free-departure` : une seule regle couvre les trois, sans liste a tenir a jour.
+   Pas de couleur en dur ici : uniquement des selecteurs. */
+body:has(.free-departure) .lkv-nav-surface {
+  display: none;
+}

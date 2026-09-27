@@ -62,7 +62,7 @@ export default function CommentItem({
 
   const profileId = comment.author_id || comment.author?.id;
   const authorBlock = (
-    <div className="mt-[var(--space-1)] flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-primary)]">
+    <div className="mt-[var(--space-1)] flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
       {comment.author?.avatar_url ? (
         <img src={comment.author.avatar_url} alt={comment.author?.full_name || 'Utilisateur'} className="size-full object-cover" />
       ) : comment.author?.full_name?.charAt(0) || 'V'}
@@ -197,7 +197,7 @@ export default function CommentItem({
         {/* Comment Header */}
         <div className="mb-[var(--space-1)] flex items-center justify-between gap-[var(--space-2)]">
           {profileId ? (
-            <Link href={`/profil/${profileId}`} className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] transition-colors hover:text-[color:var(--lkv-primary)]">
+            <Link href={`/profil/${profileId}`} className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] transition-colors hover:text-[color:var(--lkv-text-primary)]">
               {comment.author?.full_name || 'Voyageur'}
             </Link>
           ) : (

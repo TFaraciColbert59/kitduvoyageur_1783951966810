@@ -21,7 +21,8 @@ export const dynamic = 'force-dynamic';
  */
 export default function HubLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>      <Suspense fallback={<HubLoading />}>
+    <>
+      <Suspense fallback={<HubLoading />}>
         <HubLayoutAsync>{children}</HubLayoutAsync>
       </Suspense>
     </>

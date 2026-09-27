@@ -4,6 +4,9 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import {
   buildStepBookingLink,
   buildBookingByStepId,
+  buildPoiBookingLink,
+  buildBookingByPoiId,
+  resolveBookingByPoiId,
   resolveBookingByStepId,
   resolveStepBookingLink,
 } from '@/features/affiliation/engine/stepBookingLink';
@@ -87,14 +90,20 @@ describe('buildStepBookingLink (pur — jamais d’URL, filtrage par catégorie)
     expect(link?.searchTerms).toBe('Chamonix-Mont-Blanc');
   });
 
-  it('sinon null (marche, voiture, bateau, étape vide)', () => {
+  it('marche et étape vide → null (rien à réserver)', () => {
     expect(buildStepBookingLink({ transportMode: 'foot', dayNumber: 2 }, CONTEXT)).toBeNull();
-    expect(buildStepBookingLink({ transportMode: 'car', dayNumber: 2 }, CONTEXT)).toBeNull();
-    expect(buildStepBookingLink({ transportMode: 'boat', dayNumber: 2 }, CONTEXT)).toBeNull();
     expect(buildStepBookingLink({ dayNumber: 2 }, CONTEXT)).toBeNull();
     expect(
       buildStepBookingLink({ accommodationName: '   ', transportMode: null, dayNumber: 2 }, CONTEXT)
     ).toBeNull();
+  });
+
+  it('voiture, bus, bateau, vélo → catégorie transport (louer un moyen de locomotion)', () => {
+    for (const mode of ['car', 'bus', 'boat', 'bike', 'other'] as const) {
+      const link = buildStepBookingLink({ transportMode: mode, dayNumber: 2 }, CONTEXT);
+      expect(link?.category).toBe('transport');
+      expect(link?.label).toContain('Chamonix-Mont-Blanc');
+    }
   });
 
   it('ne construit jamais d’URL brute (l’engine la construit au rendu)', () => {
@@ -305,5 +314,87 @@ describe('ItineraryDayTimeline — lien de réservation par étape', () => {
     );
 
     expect(html).not.toContain('/go/');
+  });
+});
+
+describe('buildPoiBookingLink (preparateur : restos, refuges, campings)', () => {
+  it('restaurant (categorie food) -> activite, recherche nom + destination', () => {
+    const link = buildPoiBookingLink(
+      { id: 'poi-1', name: 'La Table du Col', category: 'food', latitude: 45.9, longitude: 6.8 },
+      CONTEXT
+    );
+
+    expect(link?.category).toBe('activity');
+    expect(link?.label).toContain('La Table du Col');
+    expect(link?.searchTerms).toBe('La Table du Col Chamonix-Mont-Blanc');
+  });
+
+  it('refuge et camping -> hebergement (nuitees reservables)', () => {
+    expect(
+      buildPoiBookingLink({ id: 'p1', name: 'Refuge du Gouter', category: 'refuge' }, CONTEXT)?.category
+    ).toBe('hotel');
+    expect(
+      buildPoiBookingLink({ id: 'p2', name: 'Camping du Lac', category: 'camp' }, CONTEXT)?.category
+    ).toBe('hotel');
+  });
+
+  it('eau, sommet, panorama, col, autre -> null (rien a reserver)', () => {
+    for (const category of ['water', 'summit', 'viewpoint', 'pass', 'other', null, undefined]) {
+      expect(buildPoiBookingLink({ id: 'p', name: 'Point', category }, CONTEXT)).toBeNull();
+    }
+  });
+
+  it('synonymes de restaurant (francais) -> activite', () => {
+    expect(
+      buildPoiBookingLink({ id: 'p', name: 'Auberge', category: 'restaurant' }, CONTEXT)?.category
+    ).toBe('activity');
+  });
+
+  it('poi sans nom -> jamais d invention', () => {
+    expect(buildPoiBookingLink({ id: 'p', name: '   ', category: 'food' }, CONTEXT)).toBeNull();
+  });
+});
+
+describe('buildBookingByPoiId / resolveBookingByPoiId (index et resolution serveur)', () => {
+  const restaurantLink = makeLink({
+    id: 'link-activity',
+    slug: 'getyourguide-chamonix',
+    category: 'activity',
+    destination_name: 'Chamonix-Mont-Blanc',
+    title: 'Activites & tables',
+  });
+  const hotelLink = makeLink({
+    id: 'link-hotel',
+    slug: 'booking-chamonix-hotel',
+    destination_name: 'Chamonix-Mont-Blanc',
+  });
+
+  it('indexe par id et omet les POI sans reservation', () => {
+    const map = buildBookingByPoiId(
+      [
+        { id: 'poi-food', name: 'La Table du Col', category: 'food' },
+        { id: 'poi-water', name: 'Source', category: 'water' },
+        { id: 'poi-refuge', name: 'Refuge du Gouter', category: 'refuge' },
+      ],
+      CONTEXT
+    );
+
+    expect(Object.keys(map)).toEqual(['poi-food', 'poi-refuge']);
+    expect(map['poi-food']?.category).toBe('activity');
+    expect(map['poi-refuge']?.category).toBe('hotel');
+  });
+
+  it('resolution : slug du partenaire actif, categorie = filtre dur', () => {
+    const map = resolveBookingByPoiId(
+      [
+        { id: 'poi-food', name: 'La Table du Col', category: 'food' },
+        { id: 'poi-refuge', name: 'Refuge du Gouter', category: 'refuge' },
+      ],
+      [restaurantLink, hotelLink],
+      CONTEXT
+    );
+
+    expect(map['poi-food']?.slug).toBe('getyourguide-chamonix');
+    expect(map['poi-refuge']?.slug).toBe('booking-chamonix-hotel');
   });
 });

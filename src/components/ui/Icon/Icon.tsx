@@ -1,14 +1,14 @@
 'use client';
 
 import React from 'react';
-import * as HeroIcons from '@heroicons/react/24/outline';
-import * as HeroIconsSolid from '@heroicons/react/24/solid';
-
+import { HERO_OUTLINE, HERO_SOLID } from './heroicons.generated';
 import { resolveMaskFile } from './registry';
 import type { IconGlyphProps, IconProps } from './types';
 
-const heroOutline = HeroIcons as Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>>;
-const heroSolid = HeroIconsSolid as Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>>;
+// Table de correspondance statique : le bundler élague les ~648 modules du
+// jeu complet qui ne sont pas listés dans le fichier généré.
+const heroOutline = HERO_OUTLINE;
+const heroSolid = HERO_SOLID;
 
 function resolveHeroComponent(
   name: string,

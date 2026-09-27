@@ -45,7 +45,7 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
           <div className="space-y-0.5">
             <h2
               id="depart-title"
-              className="text-[18px] sm:text-[32px] leading-tight font-display font-bold tracking-tight text-[var(--lkv-primary)]"
+              className="text-[18px] sm:text-[32px] leading-tight font-display font-bold tracking-tight text-[color:var(--lkv-text-primary)]"
             >
               {data.destination}
             </h2>
@@ -71,7 +71,7 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
         {/* Live Countdown in Frosted Capsule */}
         <div className="glass-sub-card p-2 sm:p-3.5 flex items-center justify-between gap-2 sm:gap-4">
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/40 shadow-2xs border border-white/60 flex items-center justify-center text-[var(--lkv-primary)] shrink-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/40 shadow-2xs border border-white/60 flex items-center justify-center text-[color:var(--lkv-text-primary)] shrink-0">
               <Clock size={15} className="sm:hidden" />
               <Clock size={18} className="hidden sm:block" />
             </div>
@@ -79,7 +79,7 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
               <span className="text-[9.5px] sm:text-[11px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)]">
                 Départ dans
               </span>
-              <div className="text-[17px] sm:text-[28px] font-mono font-bold leading-tight text-[var(--lkv-primary)]">
+              <div className="text-[17px] sm:text-[28px] font-mono font-bold leading-tight text-[color:var(--lkv-text-primary)]">
                 <CountdownLive target={data.startsAt} />
               </div>
             </div>
@@ -89,7 +89,7 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
               <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)]">
                 Poids du kit
               </span>
-              <div className="flex items-center gap-1.5 text-[18px] font-mono font-bold text-[var(--lkv-primary)]">
+              <div className="flex items-center gap-1.5 text-[18px] font-mono font-bold text-[color:var(--lkv-text-primary)]">
                 <Icon name="backpack" size={16} />
                 <span>{data.totalWeightKg} kg</span>
               </div>
@@ -99,9 +99,9 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
 
         {/* Progress & Quick Metrics */}
         <div className="space-y-1 sm:space-y-2">
-          <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-[var(--lkv-primary-soft)]">
+          <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-[color:var(--lkv-text-secondary)]">
             <span>Progression du pack</span>
-            <span className="font-mono text-[var(--lkv-primary)]">{data.readinessPct}%</span>
+            <span className="font-mono text-[color:var(--lkv-text-primary)]">{data.readinessPct}%</span>
           </div>
           <ProgressBar
             value={data.readinessPct}

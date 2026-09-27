@@ -27,7 +27,7 @@ const LINK_PILL = [
   'inline-flex min-h-[36px] flex-1 select-none items-center justify-center whitespace-nowrap rounded-full',
   'border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-4)]',
   'text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--card-content)] no-underline',
-  'transition-transform duration-[var(--motion-press-duration)] active:scale-[var(--motion-press-scale)]',
+  'transition-transform [transition-duration:var(--motion-press-duration)] active:scale-[var(--motion-press-scale)]',
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]',
 ].join(' ');
 
@@ -125,7 +125,7 @@ export default function ExplorerMobileHikeCarousel({
       {/* ── TOP FLOATING PILL (Mode Switch & Counter) ── */}
       <div className="pointer-events-auto mb-1.5 flex items-center justify-between px-3.5">
         <Badge tone="stone" className="gap-1.5">
-          <Icon name="map-pin" size={12} className="text-[color:var(--lkv-primary)]" />
+          <Icon name="map-pin" size={12} className="text-[color:var(--lkv-text-primary)]" />
           <span>{count} randonnées</span>
         </Badge>
 
@@ -197,7 +197,7 @@ export default function ExplorerMobileHikeCarousel({
                   {/* Metrics Row */}
                   <div className="flex items-center gap-2 font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">
                     <span className="flex items-center gap-0.5 font-semibold">
-                      <Navigation size={9} className="text-[color:var(--lkv-primary)]" />
+                      <Navigation size={9} className="text-[color:var(--lkv-text-primary)]" />
                       {formatDistance(trail.distance_km)}
                     </span>
                     <span aria-hidden="true" className="opacity-40">·</span>

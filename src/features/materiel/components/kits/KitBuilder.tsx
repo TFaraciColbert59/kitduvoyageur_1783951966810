@@ -541,7 +541,7 @@ export function KitBuilder({
       <IconButton
         variant="glass"
         onClick={() => setShowAi(!showAi)}
-        className="absolute right-8 top-1.5 z-[var(--z-dropdown)] h-6 w-6 text-[var(--lkv-primary)] md:right-11 md:top-2 md:h-8 md:w-8"
+        className="absolute right-8 top-1.5 z-[var(--z-dropdown)] h-6 w-6 text-[color:var(--lkv-text-primary)] md:right-11 md:top-2 md:h-8 md:w-8"
         aria-label={showAi ? 'Fermer l’assistant IA' : 'Ouvrir l’assistant IA'}
       >
         <Icon name="sparkles" size={12} className="md:hidden" aria-hidden="true" />
@@ -551,12 +551,12 @@ export function KitBuilder({
       {/* En-tête compact */}
       <div className="flex items-center justify-between gap-2 pr-16 md:pr-20 shrink-0">
         <div className="flex items-center gap-2 min-w-0">
-          <p className="truncate text-[10px] md:text-xs font-semibold text-[var(--lkv-primary)] font-body">
+          <p className="truncate text-[10px] md:text-xs font-semibold text-[color:var(--lkv-text-primary)] font-body">
             Assembleur & IA
           </p>
           <h3
             id="kit-builder-title"
-            className="font-display font-bold text-[var(--lkv-primary)] text-[13px] md:text-[15px] leading-tight truncate"
+            className="font-display font-bold text-[color:var(--lkv-text-primary)] text-[13px] md:text-[15px] leading-tight truncate"
           >
             Créer un kit sur-mesure
           </h3>
@@ -578,7 +578,7 @@ export function KitBuilder({
                 value={aiGoal}
                 onChange={(e) => setAiGoal(e.target.value)}
                 placeholder="Objectif d’optimisation (ex: Alléger le sac, Randonnée 3j)"
-                className="h-6 flex-1 rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-2 text-[10px] text-[var(--lkv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+                className="h-6 flex-1 rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-2 text-[10px] text-[color:var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
               />
               <Button
                 size="sm"
@@ -603,13 +603,13 @@ export function KitBuilder({
                     </Badge>
                   </div>
                   {aiResult.co2_kg_saved_estimate > 0 && (
-                    <span className="text-[9px] font-mono text-[var(--lkv-primary-soft)]">
+                    <span className="text-[9px] font-mono text-[color:var(--lkv-text-secondary)]">
                       -{aiResult.co2_kg_saved_estimate}kg CO₂
                     </span>
                   )}
                 </div>
 
-                <p className="text-[9px] text-[var(--lkv-primary)] leading-relaxed">
+                <p className="text-[9px] text-[color:var(--lkv-text-primary)] leading-relaxed">
                   {aiResult.analysis}
                 </p>
 
@@ -641,7 +641,7 @@ export function KitBuilder({
                     {aiResult.replacements.map((rep, i) => (
                       <div
                         key={`rep-${i}`}
-                        className="flex items-center justify-between gap-1 text-[9px] text-[var(--lkv-primary-soft)]"
+                        className="flex items-center justify-between gap-1 text-[9px] text-[color:var(--lkv-text-secondary)]"
                       >
                         <span className="truncate">
                           💡 Remplacer <b>{rep.item}</b> par <i>{rep.with}</i>
@@ -670,7 +670,7 @@ export function KitBuilder({
       <div className="flex-1 min-h-[220px] md:min-h-[280px] max-h-[380px] md:max-h-[440px] grid grid-cols-1 md:grid-cols-12 gap-2 content-stretch">
         {/* ÉCRAN 1 (Gauche, 8 colonnes) : Catalogue Fusionné en Colonnes de 3 */}
         <div className="md:col-span-8 flex flex-col min-h-0 gap-1 overflow-y-auto no-scrollbar pr-0.5">
-          <div className="flex items-center justify-between px-1 text-[9px] font-bold text-[var(--lkv-primary-soft)] shrink-0">
+          <div className="flex items-center justify-between px-1 text-[9px] font-bold text-[color:var(--lkv-text-secondary)] shrink-0">
             <span>Matériel disponible ({filteredCatalog.length})</span>
             <span className="text-[var(--lkv-text-muted)]">{selectedCategory}</span>
           </div>
@@ -714,13 +714,13 @@ export function KitBuilder({
                           </div>
 
                           <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-[var(--lkv-primary)] truncate leading-tight text-[10.5px]">
+                            <p className="font-semibold text-[color:var(--lkv-text-primary)] truncate leading-tight text-[10.5px]">
                               {item.name}
                             </p>
                             <div className="flex items-center gap-1 text-[8px]">
                               {item.isFromShop ? (
                                 <>
-                                  <span className="text-[var(--lkv-primary)] font-bold">
+                                  <span className="text-[color:var(--lkv-text-primary)] font-bold">
                                     🛒 Boutique
                                   </span>
                                   <span className="text-[var(--lkv-text-muted)]">
@@ -729,7 +729,7 @@ export function KitBuilder({
                                 </>
                               ) : (
                                 <>
-                                  <span className="text-[var(--lkv-primary-soft)] font-medium">
+                                  <span className="text-[color:var(--lkv-text-secondary)] font-medium">
                                     Inventaire
                                   </span>
                                   <span className="text-[var(--lkv-text-muted)]">
@@ -769,14 +769,14 @@ export function KitBuilder({
 
         {/* ÉCRAN 2 (Droite, 4 colonnes) : Deuxième écran "Kit en cours" */}
         <div className="md:col-span-4 flex flex-col min-h-0 gap-1 pl-0 md:pl-1 md:border-l border-white/15">
-          <div className="flex items-center justify-between px-1 text-[9px] font-bold text-[var(--lkv-primary)] shrink-0">
+          <div className="flex items-center justify-between px-1 text-[9px] font-bold text-[color:var(--lkv-text-primary)] shrink-0">
             <span>Kit en cours ({kitItems.length})</span>
             <motion.span
               key={totalWeightG}
               initial={{ opacity: 0, y: -3 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2, ease: EASE_DECELERATE }}
-              className="font-mono font-bold text-[var(--lkv-primary)]"
+              className="font-mono font-bold text-[color:var(--lkv-text-primary)]"
             >
               {(totalWeightG / 1000).toFixed(2)} kg
             </motion.span>
@@ -819,13 +819,13 @@ export function KitBuilder({
                       />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-[var(--lkv-primary)] truncate leading-tight">
+                      <p className="font-semibold text-[color:var(--lkv-text-primary)] truncate leading-tight">
                         {item.name}
                       </p>
                       <div className="flex items-center gap-1 text-[8.5px] text-[var(--lkv-text-muted)]">
                         <span>{item.weight_g}g</span>
                         {item.isFromShop && (
-                          <span className="text-[var(--lkv-primary)] font-bold">
+                          <span className="text-[color:var(--lkv-text-primary)] font-bold">
                             · 🛒 À commander
                           </span>
                         )}
@@ -853,14 +853,14 @@ export function KitBuilder({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Nom du kit (ex: Bivouac 3j)"
-          className="h-7 min-w-[100px] flex-1 rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-3 text-[10.5px] text-[var(--lkv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+          className="h-7 min-w-[100px] flex-1 rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-3 text-[10.5px] text-[color:var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
         />
         <div className="relative shrink-0">
           <select
             value={season}
             onChange={(e) => setSeason(e.target.value)}
             aria-label="Filtrer par saison"
-            className="h-7 cursor-pointer appearance-none rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] py-0 pl-2.5 pr-6 text-[10px] font-bold text-[var(--lkv-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+            className="h-7 cursor-pointer appearance-none rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] py-0 pl-2.5 pr-6 text-[10px] font-bold text-[color:var(--lkv-text-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
           >
             <option value="toute_saison">🌿 Toutes saisons</option>
             <option value="ete">☀️ Été</option>
@@ -870,7 +870,7 @@ export function KitBuilder({
           </select>
           <ChevronDown
             size={10}
-            className="absolute right-2 top-2.5 pointer-events-none text-[var(--lkv-primary)]"
+            className="absolute right-2 top-2.5 pointer-events-none text-[color:var(--lkv-text-primary)]"
           />
         </div>
         <Button

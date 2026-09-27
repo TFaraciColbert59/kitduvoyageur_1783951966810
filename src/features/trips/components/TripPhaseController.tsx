@@ -96,7 +96,7 @@ export function TripPhaseController({
                   title="Phase actuelle du voyage"
                   className={`absolute right-1.5 top-1.5 z-10 flex h-2 w-2 rounded-full sm:right-2.5 sm:top-2 ${
                     isSelected
-                      ? 'bg-[color:var(--lkv-accent)]'
+                      ? 'bg-[color:var(--lkv-text-primary)]'
                       : 'bg-[color:var(--lkv-success)] ring-2 ring-white'
                   }`}
                 />

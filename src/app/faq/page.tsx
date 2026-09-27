@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import { Button, Card, Chip } from '@/components/ui';
 
 interface FAQItem {
@@ -79,7 +79,7 @@ function FAQAccordion({ items }: { items: FAQItem[] }) {
             type="button"
             onClick={() => setOpen(open === i ? null : i)}
             aria-expanded={open === i}
-            className="flex min-h-[var(--lkv-touch-min)] w-full items-center justify-between gap-[var(--space-3)] px-[var(--space-4)] py-[10px] text-left text-[color:var(--lkv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+            className="flex min-h-[var(--lkv-touch-min)] w-full items-center justify-between gap-[var(--space-3)] px-[var(--space-4)] py-[10px] text-left text-[color:var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
           >
             <span className="text-[length:var(--lkv-text-body-sm)] font-medium">{item.q}</span>
             <Icon name="ChevronDownIcon" size={16} variant="outline" className={`shrink-0 transition-transform duration-200 ${open === i ? 'rotate-180' : ''}`} />
@@ -111,10 +111,10 @@ function FAQContent({ mobile = false }: { mobile?: boolean }) {
   const helpCard = (
     <Card variant="standard" className="flex flex-col items-center gap-[var(--space-4)] p-[var(--space-5)] text-center sm:flex-row sm:text-left">
       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--glass-bg-medium)]">
-        <Icon name="ChatBubbleLeftRightIcon" size={22} className="text-[color:var(--lkv-secondary)]" variant="outline" />
+        <Icon name="ChatBubbleLeftRightIcon" size={22} className="text-[color:var(--lkv-secondary-ink)]" variant="outline" />
       </div>
       <div className="flex-1">
-        <p className="font-semibold text-[color:var(--lkv-primary)]">Vous n&apos;avez pas trouvé votre réponse ?</p>
+        <p className="font-semibold text-[color:var(--lkv-text-primary)]">Vous n&apos;avez pas trouvé votre réponse ?</p>
         <p className="text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-secondary)]">Notre équipe répond sous 48 heures ouvrées.</p>
       </div>
       <Link href="/contact">
@@ -129,7 +129,7 @@ function FAQContent({ mobile = false }: { mobile?: boolean }) {
     return (
       <div className="p-[var(--space-4)]">
         <p className="mb-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.14em] text-[color:var(--sage-100)]">Centre d&apos;aide</p>
-        <h1 className="mb-[var(--space-2)] font-display text-[24px] font-extrabold text-[color:var(--lkv-surface)]">Questions fréquentes</h1>
+        <h1 className="mb-[var(--space-2)] font-display text-[24px] font-extrabold text-[color:var(--lkv-text-primary)]">Questions fréquentes</h1>
         <p className="mb-[var(--space-5)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-forest-100)]">Trouvez rapidement une réponse à votre question.</p>
         {categories}
         <FAQAccordion items={FAQ_DATA[activeCategory].items} />
@@ -145,7 +145,7 @@ function FAQContent({ mobile = false }: { mobile?: boolean }) {
         <div className="mx-auto flex h-full w-full max-w-4xl flex-col gap-[var(--space-5)] px-[var(--space-6)] pb-[var(--space-6)]">
           <div className="shrink-0">
             <p className="mb-2 font-mono text-[length:var(--lkv-text-caption-1)] uppercase tracking-widest text-[color:var(--sage-100)]">Centre d&apos;aide</p>
-            <h1 className="mb-2 font-display text-[length:var(--lkv-text-title-lg)] font-bold tracking-tight text-[color:var(--lkv-surface)]">Questions fréquentes</h1>
+            <h1 className="mb-2 font-display text-[length:var(--lkv-text-title-lg)] font-bold tracking-tight text-[color:var(--lkv-text-primary)]">Questions fréquentes</h1>
             <p className="max-w-xl text-[length:var(--lkv-text-footnote)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-forest-100)]">
               Trouvez rapidement une réponse à votre question. Si vous ne trouvez pas ce que vous cherchez,{' '}
               <Link href="/contact" className="font-medium text-[color:var(--lkv-forest-200)] underline">contactez-nous</Link>.
@@ -182,9 +182,9 @@ export default function FAQPage() {
 
       {/* MOBILE */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <FAQContent mobile />
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

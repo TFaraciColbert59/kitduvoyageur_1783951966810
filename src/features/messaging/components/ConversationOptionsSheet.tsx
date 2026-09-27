@@ -208,7 +208,7 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
             className="min-h-[52px]"
             leading={
               isMuted ? (
-                <Icon name="bell" className="size-5 text-[color:var(--lkv-secondary)]" aria-hidden="true" />
+                <Icon name="bell" className="size-5 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
               ) : (
                 <Icon name="bell-off" className="size-5 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />
               )
@@ -216,7 +216,7 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
             title={isMuted ? 'Réactiver les notifications' : 'Masquer les notifications'}
             trailing={
               isMuted ? (
-                <Icon name="check" className="size-5 text-[color:var(--lkv-secondary)]" aria-hidden="true" />
+                <Icon name="check" className="size-5 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
               ) : undefined
             }
           />
@@ -230,7 +230,7 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
             title={isArchived ? 'Désarchiver la conversation' : 'Archiver la conversation'}
             trailing={
               isArchived ? (
-                <Icon name="check" className="size-5 text-[color:var(--lkv-secondary)]" aria-hidden="true" />
+                <Icon name="check" className="size-5 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
               ) : undefined
             }
           />

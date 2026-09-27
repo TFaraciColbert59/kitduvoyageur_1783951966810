@@ -201,7 +201,7 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
   };
 
   return (
-    <Card className="p-[var(--space-6)] transition-all duration-[var(--motion-control-duration)]">
+    <Card className="p-[var(--space-6)] transition-all [transition-duration:var(--motion-control-duration)]">
       <div className="mb-[var(--space-2)] flex items-start justify-between">
         <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
           Décisions <span className="font-serif italic font-normal text-[color:var(--lkv-text-primary)]">en cours</span>

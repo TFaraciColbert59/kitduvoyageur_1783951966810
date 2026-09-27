@@ -153,7 +153,7 @@
   --lkv-border-subtle: rgba(23, 43, 36, 0.07);
   --lkv-border-strong: rgba(23, 43, 36, 0.52);
 
-  /* ── 3. Statuts et Alertes Terrain (0 #E4501C) ───────────── */
+  /* ── 3. Statuts et Alertes Terrain (palette hors orange designer) ───────────── */
   --lkv-success: #3D6038;
   --lkv-success-bg: #E1EBDE;
   --lkv-warning: #C89A3B;
@@ -204,8 +204,12 @@
      Police système pour le corps/UI (adaptation documentée vs dossier) ;
      Manrope reste la police de marque pour les titres. */
   /* Phase 2 — SF Pro d'abord (iOS), Manrope conservée pour la marque. */
-  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, system-ui, sans-serif;
+  /* SF Pro d'abord (pile systeme Apple, donc identique a iOS/macOS), puis
+     Inter qui en est le substitut metrique le plus proche sur les autres OS.
+     Segoe UI n arrive qu en dernier recours : c est la seule raison pour
+     laquelle l UI ne ressemblait pas a Apple sur Windows. */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', var(--font-inter, 'Inter'), 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', var(--font-inter, 'Inter'), 'Segoe UI', Roboto, system-ui, sans-serif;
   --font-brand: 'Manrope', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
   --font-body: var(--font-sans);
@@ -221,6 +225,8 @@
   --lkv-text-body-sm: 0.9375rem;
   --lkv-text-headline: 1.0625rem;
   --lkv-text-title-sm: 1.375rem;
+  --lkv-text-title-md: 1.75rem;
+  --lkv-text-note: 0.875rem;
   --lkv-text-title-lg: 2.125rem;
   --lkv-text-title-xl: 2.5rem;
   --lkv-line-body: 1.4;
@@ -375,8 +381,15 @@
   --header-height: 44px;
   --header-height-large: 96px;
   --page-top-inset: calc(var(--safe-top) + var(--space-2));
-  --page-bottom-inset: calc(var(--nav-offset) + var(--space-4));
-  --page-bottom-inset-extended: calc(var(--nav-offset-extended) + var(--space-4));
+  /* --cookie-banner-h est publie par <CookieConsentBanner> (0px sinon) :
+     la bande occupee par la banniere est rendue aux pages sans qu'elles
+     aient a la connaitre.
+     max() et NON une addition : la bande MESUREE part du sommet du panneau,
+     elle contient donc deja la bottom-nav (panneau remonte de --nav-offset).
+     Additionner --nav-offset reservait deux fois la nav. Memantique que
+     AppShell (src/components/shell/AppShell.tsx). */
+  --page-bottom-inset: calc(max(var(--nav-offset), var(--cookie-banner-h, 0px)) + var(--space-4));
+  --page-bottom-inset-extended: calc(max(var(--nav-offset-extended), var(--cookie-banner-h, 0px)) + var(--space-4));
   --page-bottom-inset-bare: calc(var(--safe-bottom) + var(--space-4));
   --overlay-inset-top: var(--safe-top);
   --overlay-inset-bottom: var(--safe-bottom);
@@ -777,7 +790,6 @@
   --z-alert: 700;
 
   /* Dimensions de navigation & compensation de scroll */
-  --nav-height: 56px;
   --tabbar-h: 72px;
   --subbar-h: 48px;
   --content-pb: calc(var(--tabbar-h) + var(--safe-bottom, 24px) + 28px);
@@ -1032,3 +1044,20 @@ button.g2,
 }
 
 .glass { --lkv-text-secondary: var(--glass-text-secondary); }
+
+/* ==========================================================================
+   PRÉPARATEUR D'AVENTURE — gabarit d'écran (/prepare)
+   Trois étapes plein écran : Destination · Parcours · Départ.
+   Le verre reste réservé aux commandes flottantes ; les surfaces de texte
+   sont presque opaques pour garantir la lisibilité (cf. A2).
+   ========================================================================== */
+:root {
+  /* Chrome de l'écran : bandeau de navigation et barre d'action. */
+  --prep-nav-height: 52px;
+  --prep-action-height: 52px;
+  /* Part du corps occupée par la carte. Se compacte avant tout scroll. */
+  --prep-map-share: 40%;
+  --prep-map-share-compact: 24%;
+  /* Écart entre les trois blocs d'une étape (plage 12–16 px). */
+  --prep-block-gap: 14px;
+}

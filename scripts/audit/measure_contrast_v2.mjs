@@ -348,14 +348,18 @@ export async function extractTextElements(page) {
   });
 }
 
+export function isCanonicalMeasurementReady(doc) {
+  if (doc?.readyState === 'loading') return false;
+  const root = doc?.querySelector?.('main') || doc?.body;
+  const text = root?.innerText || '';
+  return text.trim().length > 80
+    && !/Connexion requise|Chargement|Initialisation/i.test(text);
+}
+
+const CANONICAL_READY_PREDICATE = `(${isCanonicalMeasurementReady.toString()})(document)`;
+
 export async function readCanonicalMeasurementState(page) {
-  await page.waitForFunction(() => {
-    if (document.readyState === 'loading') return false;
-    const root = document.querySelector('main') || document.body;
-    const text = root?.innerText || '';
-    return !/Connexion requise|Chargement|Initialisation/i.test(text)
-      && document.querySelectorAll('[data-audit-id]').length > 0;
-  }, undefined, { timeout: 15000 });
+  await page.waitForFunction(CANONICAL_READY_PREDICATE, undefined, { timeout: 15000 });
   return page.evaluate(() => ({
     scrollY: window.scrollY,
     overlayOpen: [...document.querySelectorAll('[role="dialog"], dialog, [aria-modal="true"]')]
@@ -662,6 +666,9 @@ export function summarizeFullContrastEvidence(summary = {}, expectedRoutes = ROU
       if (expectation) return expectedNavigationEvidenceComplete(entry, expectation);
       return entry.expected !== true
         && entry.measured === true
+        && entry.measurementState === 'default'
+        && entry.scrollY === 0
+        && entry.overlayOpen === false
         && Array.isArray(entry.nodes)
         && entry.nodes.length > 0;
     });

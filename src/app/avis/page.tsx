@@ -9,7 +9,7 @@ import { Button, Card, IconButton, Modal, Tabs } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useAuth } from '@/contexts/AuthContext';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 
 interface Review {
   id: string;
@@ -41,7 +41,7 @@ const FALLBACK_REVIEWS: Review[] = [
 function StarRating({ rating, size = 14 }: { rating: number; size?: number }) {
   return (
     <div className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map((star) => <Icon key={star} name="StarIcon" size={size} className={star <= rating ? 'text-[color:var(--lkv-warning)] fill-[color:var(--lkv-warning)]' : 'text-[color:var(--stone-300)] fill-[color:var(--stone-300)]'} />)}
+      {[1, 2, 3, 4, 5].map((star) => <Icon key={star} name="StarIcon" size={size} className={star <= rating ? 'text-[color:var(--lkv-warning)] fill-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-subtle)] fill-[color:var(--lkv-text-subtle)]'} />)}
     </div>
   );
 }
@@ -63,18 +63,18 @@ function ReviewCard({ review, onHelpful }: { review: Review; onHelpful: (id: str
           <div className="flex items-center gap-2 flex-wrap">
             <Link
               href={review.user_id ? `/profil/${review.user_id}` : '/communaute'}
-              className="font-semibold text-[color:var(--lkv-primary)] text-sm hover:underline cursor-pointer"
+              className="font-semibold text-[color:var(--lkv-text-primary)] text-sm hover:underline cursor-pointer"
             >
               {authorName}
             </Link>
-            {review.verified && <span className="flex items-center gap-1 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-primary-soft)]"><Icon name="CheckBadgeIcon" size={12} className="text-[color:var(--lkv-secondary)]" />Achat vérifié</span>}
+            {review.verified && <span className="flex items-center gap-1 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]"><Icon name="CheckBadgeIcon" size={12} className="text-[color:var(--lkv-secondary-ink)]" />Achat vérifié</span>}
           </div>
           <div className="flex items-center gap-2 mt-0.5"><StarRating rating={review.rating} size={12} /><span className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">{new Date(review.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span></div>
         </div>
       </div>
-      <div className="flex items-center gap-2 mb-3"><span className={`${type.color} text-[length:var(--lkv-text-caption-2)]`}>{type.label}</span><span className="text-xs text-[color:var(--lkv-text-secondary)]">sur</span><span className="text-xs font-semibold text-[color:var(--lkv-primary)] truncate">{review.target_name}</span></div>
-      <h4 className="font-display font-bold text-[color:var(--lkv-primary)] text-sm mb-2">{review.title}</h4>
-      <p className="text-sm text-[color:var(--lkv-primary-soft)] leading-relaxed flex-1">{review.comment}</p>
+      <div className="flex items-center gap-2 mb-3"><span className={`${type.color} text-[length:var(--lkv-text-caption-2)]`}>{type.label}</span><span className="text-xs text-[color:var(--lkv-text-secondary)]">sur</span><span className="text-xs font-semibold text-[color:var(--lkv-text-primary)] truncate">{review.target_name}</span></div>
+      <h4 className="font-display font-bold text-[color:var(--lkv-text-primary)] text-sm mb-2">{review.title}</h4>
+      <p className="text-sm text-[color:var(--lkv-text-secondary)] leading-relaxed flex-1">{review.comment}</p>
       <div className="mt-[var(--space-4)] flex items-center justify-between border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-3)]">
         <Button
           size="sm"
@@ -171,7 +171,7 @@ function WriteReviewModal({ onClose, onSubmit, initialType }: { onClose: () => v
                   onClick={() => setRating(star)}
                   className="bg-transparent"
                 >
-                  <Icon name="StarIcon" size={24} className={star <= (hovered || rating) ? 'text-[color:var(--lkv-warning)] fill-[color:var(--lkv-warning)]' : 'text-[color:var(--stone-300)] fill-[color:var(--stone-300)]'} />
+                  <Icon name="StarIcon" size={24} className={star <= (hovered || rating) ? 'text-[color:var(--lkv-warning)] fill-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-subtle)] fill-[color:var(--lkv-text-subtle)]'} />
                 </IconButton>
               ))}
             </div>
@@ -216,9 +216,9 @@ function WriteReviewModal({ onClose, onSubmit, initialType }: { onClose: () => v
       ) : (
         <div className="py-[var(--space-8)] text-center">
           <div className="mx-auto mb-[var(--space-4)] flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--btn-tint)]">
-            <Icon name="CheckIcon" size={28} className="text-[color:var(--lkv-primary)]" />
+            <Icon name="CheckIcon" size={28} className="text-[color:var(--lkv-text-primary)]" />
           </div>
-          <h3 className="mb-[var(--space-2)] text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-primary)]">Avis publié !</h3>
+          <h3 className="mb-[var(--space-2)] text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">Avis publié !</h3>
           <Button onClick={onClose}>Fermer</Button>
         </div>
       )}
@@ -316,7 +316,7 @@ export default function AvisPage() {
             ) : filtered.length === 0 ? (
               <div className="text-center py-16 text-[color:var(--lkv-forest-100)]">
                 <Icon name="StarIcon" size={40} className="mx-auto mb-3 opacity-30" />
-                <p className="font-display font-bold text-[color:var(--lkv-surface)] mb-1">Aucun avis pour l&apos;instant</p>
+                <p className="font-display font-bold text-[color:var(--lkv-text-primary)] mb-1">Aucun avis pour l&apos;instant</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">{filtered.map((review) => <ReviewCard key={review.id} review={review} onHelpful={handleHelpful} />)}</div>
@@ -329,7 +329,7 @@ export default function AvisPage() {
 
       {/* MOBILE */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <div className="p-[var(--space-4)]">
             <p className="mb-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.14em] text-[color:var(--lkv-text-secondary)]">AVIS &amp; ÉVALUATIONS</p>
             <h1 className="mb-[var(--space-2)] font-display text-[24px] font-extrabold text-[color:var(--glass-label)]">Les avis de la communauté</h1>
@@ -381,7 +381,7 @@ export default function AvisPage() {
               </div>
             )}
           </div>
-        </MobilePageShell>
+        </AppShell>
 
         {showWriteModal && <WriteReviewModal onClose={() => setShowWriteModal(false)} onSubmit={handleSubmitReview} initialType={activeFilter === 'tous' ? 'produit' : activeFilter} />}
       </div>

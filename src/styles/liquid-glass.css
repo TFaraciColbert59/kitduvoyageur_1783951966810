@@ -1150,3 +1150,33 @@
    les ombres arbitraires hors primitives ; valeurs = tokens --glass-*). */
 .lkv-rim-inset { box-shadow: var(--glass-depth-inset); }
 .lkv-rim-btn { box-shadow: var(--btn-rim); }
+
+/* Le chrome mobile garde un repère clavier visible au-dessus du matériau. */
+.lkv-nav-tab:focus-visible,
+.lkv-nav-surface button:focus-visible {
+  outline: 2px solid var(--glass-focus-outline);
+  outline-offset: -3px;
+  border-radius: var(--lkv-radius-nav);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkv-nav-surface {
+    transition: none !important;
+  }
+
+  .lkv-nav-loading-dot {
+    animation: none !important;
+  }
+
+  .lkv-nav-surface[data-hidden="true"] {
+    transform: none !important;
+    visibility: hidden !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .lkv-nav-tab:focus-visible,
+  .lkv-nav-surface button:focus-visible {
+    outline-color: Highlight;
+  }
+}

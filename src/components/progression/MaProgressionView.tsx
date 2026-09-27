@@ -20,6 +20,7 @@ import {
 interface MaProgressionViewProps {
   initialProfile?: UserProgressionProfile;
   compact?: boolean;
+  presentation?: 'page' | 'drawer';
 }
 
 type TFn = LocaleContextValue['t'];
@@ -104,11 +105,31 @@ function ProgressionSection({
   title,
   summary,
   children,
+  forceOpen = false,
 }: {
   title: string;
   summary: string;
   children: React.ReactNode;
+  forceOpen?: boolean;
 }) {
+  const body = <div className="border-t border-black/5 p-4 pt-3 sm:p-5 sm:pt-3">{children}</div>;
+
+  if (forceOpen) {
+    return (
+      <section className="glass overflow-hidden rounded-3xl border border-white/70 shadow-sm">
+        <div className="flex min-h-[44px] items-center gap-3 p-4 sm:p-5">
+          <span className="min-w-0">
+            <span className="block font-display text-base font-bold text-[var(--lkv-text-primary)]">
+              {title}
+            </span>
+            <span className="mt-0.5 block text-xs text-[var(--lkv-text-secondary)]">{summary}</span>
+          </span>
+        </div>
+        {body}
+      </section>
+    );
+  }
+
   return (
     <details className="glass group rounded-3xl border border-white/70 shadow-sm">
       <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 rounded-3xl p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] sm:p-5 [&::-webkit-details-marker]:hidden">
@@ -137,7 +158,7 @@ function StatBlock({ label, value }: { label: string; value: string }) {
       <span className="block font-mono text-[10px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)]">
         {label}
       </span>
-      <span className="font-mono text-lg font-extrabold tabular-nums text-[var(--lkv-primary)]">
+      <span className="font-mono text-lg font-extrabold tabular-nums text-[color:var(--lkv-text-primary)]">
         {value}
       </span>
     </div>
@@ -155,7 +176,7 @@ function SummaryChip({
 }) {
   return (
     <div className="flex min-w-0 max-w-full items-center gap-2 rounded-2xl border border-white/80 bg-white/60 px-3 py-2">
-      <span className="shrink-0 text-[var(--lkv-secondary)]" aria-hidden="true">
+      <span className="shrink-0 text-[var(--lkv-secondary-ink)]" aria-hidden="true">
         {icon}
       </span>
       <span className="min-w-0">
@@ -170,7 +191,12 @@ function SummaryChip({
   );
 }
 
-export default function MaProgressionView({ initialProfile, compact = false }: MaProgressionViewProps) {
+export default function MaProgressionView({
+  initialProfile,
+  compact = false,
+  presentation = 'page',
+}: MaProgressionViewProps) {
+  const isDrawer = presentation === 'drawer';
   const { triggerHaptic } = useHapticFeedback();
   const { t, locale } = useTranslation();
   const [profile, setProfile] = useState<UserProgressionProfile | null>(initialProfile || null);
@@ -395,7 +421,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
             <div className="w-14 h-14 rounded-2xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] flex items-center justify-center mx-auto mb-4 shadow-md">
               <Trophy size={28} className="text-sand-200" />
             </div>
-            <h2 className="font-display font-bold text-2xl text-[var(--lkv-primary)] mb-2">
+            <h2 className="font-display font-bold text-2xl text-[color:var(--lkv-text-primary)] mb-2">
               Votre Cordée & Progression
             </h2>
             <p className="text-sm text-[var(--lkv-text-muted)] max-w-md mx-auto mb-6 leading-relaxed">
@@ -455,7 +481,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
 
   return (
     <div
-      className={`w-full space-y-4 font-sans text-[var(--lkv-text-primary)] ${compact ? '' : 'sm:space-y-5'}`}
+      className={`w-full font-sans text-[var(--lkv-text-primary)] ${isDrawer ? 'hub-progression-drawer space-y-3' : `space-y-4 ${compact ? '' : 'sm:space-y-5'}`}`}
     >
       {/* ── (a) EN-TÊTE COMPACT : Points cumulés, points de saison, niveau + titre ── */}
       <section className="glass relative overflow-hidden rounded-3xl border border-white/70 p-4 shadow-sm sm:p-5">
@@ -477,17 +503,21 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
               )}
             </div>
             <div className="min-w-0">
-              <h1 className="truncate font-display text-xl font-extrabold tracking-tight text-[var(--lkv-text-primary)] sm:text-2xl">
-                {hasData
-                  ? profile.level.title ?? `${t('progression.level')} ${profile.level.level}`
-                  : t('progression.title')}
-              </h1>
-              <p className="text-xs font-medium text-[var(--lkv-text-secondary)]">
-                {hasData
-                  ? `${t('progression.level')} ${profile.level.level}`
-                  : t('progression.noData')}
-                {hasData && profile.displayName ? ` · ${profile.displayName}` : ''}
-              </p>
+              {!isDrawer ? (
+                <>
+                  <h1 className="truncate font-display text-xl font-extrabold tracking-tight text-[var(--lkv-text-primary)] sm:text-2xl">
+                    {hasData
+                      ? profile.level.title ?? `${t('progression.level')} ${profile.level.level}`
+                      : t('progression.title')}
+                  </h1>
+                  <p className="text-xs font-medium text-[var(--lkv-text-secondary)]">
+                    {hasData
+                      ? `${t('progression.level')} ${profile.level.level}`
+                      : t('progression.noData')}
+                    {hasData && profile.displayName ? ` · ${profile.displayName}` : ''}
+                  </p>
+                </>
+              ) : null}
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -562,7 +592,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
             >
               <span
                 aria-hidden="true"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[var(--lkv-primary)] shadow-sm"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-sm"
               >
                 <Icon name={data.icon} size={15} />
               </span>
@@ -571,7 +601,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
                   <span className="truncate text-xs font-bold text-[var(--lkv-text-primary)]">
                     {t(SKILL_LABEL_KEYS[key])}
                   </span>
-                  <span className="font-mono text-xs font-bold text-[var(--lkv-primary)]">
+                  <span className="font-mono text-xs font-bold text-[color:var(--lkv-text-primary)]">
                     {hasData ? `${data.pct}%` : '—'}
                   </span>
                 </div>
@@ -636,6 +666,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
       {/* ── (c) SECTIONS DÉTAILLÉES — repliées par défaut ── */}
 
       <ProgressionSection
+        forceOpen={isDrawer}
         title={t('progression.leaderboard')}
         summary={
           leaderboard
@@ -685,7 +716,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
 
         {leaderboard?.communityForming && !leaderboard.territoryMissing && (
           <div className="mb-4 space-y-2 rounded-2xl border border-white/80 bg-white/70 p-4 text-center">
-            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--lkv-primary)]/10 text-lg text-[var(--lkv-primary)]">
+            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--lkv-primary)]/10 text-lg text-[color:var(--lkv-text-primary)]">
               🌱
             </div>
             <h4 className="text-sm font-bold text-[var(--lkv-text-primary)]">
@@ -725,7 +756,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
                       <span
                         className={`block truncate text-xs font-bold ${
                           isCurrentUser
-                            ? 'text-[var(--lkv-primary)]'
+                            ? 'text-[color:var(--lkv-text-primary)]'
                             : 'text-[var(--lkv-text-primary)]'
                         }`}
                       >
@@ -740,7 +771,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
                     </div>
                   </div>
                   <div className="shrink-0 text-right">
-                    <span className="block font-mono text-xs font-extrabold text-[var(--lkv-primary)] sm:text-sm">
+                    <span className="block font-mono text-xs font-extrabold text-[color:var(--lkv-text-primary)] sm:text-sm">
                       {formatNumber(entry.seasonPoints, {}, locale)} {t('progression.pointsShort')}
                     </span>
                     <span className="font-mono text-[9.5px] text-[var(--lkv-text-muted)]">
@@ -761,6 +792,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
       </ProgressionSection>
 
       <ProgressionSection
+        forceOpen={isDrawer}
         title={t('progression.challenges')}
         summary={
           challenge
@@ -803,7 +835,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
               />
             </div>
             {challenge.isCompleted && (
-              <p className="mt-2 text-xs font-semibold text-[var(--lkv-primary)]">
+              <p className="mt-2 text-xs font-semibold text-[color:var(--lkv-text-primary)]">
                 {t('progression.challengeCompleted')}
               </p>
             )}
@@ -847,6 +879,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
       </ProgressionSection>
 
       <ProgressionSection
+        forceOpen={isDrawer}
         title={t('progression.distinctions')}
         summary={
           distinctions.status === 'ready'
@@ -885,7 +918,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
                     aria-hidden="true"
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-lg shadow-sm"
                   >
-                    {distinction.icon ?? <Award size={16} className="text-[var(--lkv-secondary)]" />}
+                    {distinction.icon ?? <Award size={16} className="text-[var(--lkv-secondary-ink)]" />}
                   </span>
                   <span className="min-w-0">
                     <span className="block truncate text-xs font-bold text-[var(--lkv-text-primary)]">
@@ -905,6 +938,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
       </ProgressionSection>
 
       <ProgressionSection
+        forceOpen={isDrawer}
         title={t('progression.gainsHistory')}
         summary={
           gains.status === 'ready'
@@ -946,7 +980,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
                       </span>
                     )}
                   </span>
-                  <span className="shrink-0 font-mono text-xs font-extrabold text-[var(--lkv-primary)]">
+                  <span className="shrink-0 font-mono text-xs font-extrabold text-[color:var(--lkv-text-primary)]">
                     +{formatNumber(gain.points, {}, locale)} {t('progression.pointsShort')}
                   </span>
                 </li>
@@ -956,7 +990,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
         )}
         <Link
           href="/recompenses"
-          className="mt-3 inline-flex min-h-[44px] items-center text-xs font-bold text-[var(--lkv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+          className="mt-3 inline-flex min-h-[44px] items-center text-xs font-bold text-[color:var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
         >
           {t('progression.seeAllRewards')}
         </Link>

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -69,7 +69,7 @@ const SECTIONS: NavSection[] = [
     label: 'Compte & légal',
     items: [
       { label: "Rapport d'Expédition", icon: 'doc', href: '/rapport-expedition' },
-          { label: 'Rapport Kit', icon: 'bag', href: '/ai-configurator' },
+          { label: 'Rapport Kit', icon: 'bag', href: '/prepare?tab=equipement' },
       { label: 'Aide / FAQ', icon: 'heart', href: '/faq' },
       { label: 'Contact', icon: 'heart', href: '/contact' },
       { label: 'CGU', icon: 'lock', href: '/cgu' },
@@ -84,7 +84,7 @@ const SECTION_LABEL_CLASS =
   'px-[var(--space-5)] pb-[var(--space-2)] pt-[var(--space-4)] text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.04em] text-[color:var(--lkv-ink-300)]';
 
 const ITEM_CLASS =
-  'flex min-h-[var(--lkv-touch-min)] items-center gap-[var(--space-3)] px-[var(--space-5)] text-[length:var(--lkv-text-subheadline)] text-[color:var(--lkv-primary)] no-underline transition-colors hover:bg-[color:var(--lkv-hover-surface)]';
+  'flex min-h-[var(--lkv-touch-min)] items-center gap-[var(--space-3)] px-[var(--space-5)] text-[length:var(--lkv-text-subheadline)] text-[color:var(--lkv-text-primary)] no-underline transition-colors hover:bg-[color:var(--lkv-hover-surface)]';
 
 export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDrawerProps) {
   const pathname = usePathname();
@@ -204,7 +204,7 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                 <IconButton
                   onClick={onClose}
                   aria-label="Fermer le menu"
-                  className="absolute right-[var(--space-3)] top-[calc(var(--safe-top)+var(--space-3))] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[color:var(--lkv-primary)]"
+                  className="absolute right-[var(--space-3)] top-[calc(var(--safe-top)+var(--space-3))] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[color:var(--lkv-text-primary)]"
                 >
                   <LkvIcon name="close" size={14} />
                 </IconButton>
@@ -303,7 +303,7 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
               </nav>
 
               {/* Footer */}
-              <footer className="border-t border-[color:var(--lkv-border-subtle)] bg-[color:var(--stone-100)] px-[var(--space-4)] pb-[calc(var(--safe-bottom)+20px)] pt-[14px]">
+              <footer className="border-t border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-4)] pb-[calc(var(--safe-bottom)+20px)] pt-[14px]">
                 <Link
                   href="/abonnements"
                   onClick={onClose}
@@ -311,14 +311,14 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                 >
                   <LkvIcon name="star" size={20} />
                   <div>
-                    <div className="text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-primary)]">
+                    <div className="text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-text-primary)]">
                       Premium Voyageur
                     </div>
                     <div className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                       Débloquez toutes les fonctionnalités
                     </div>
                   </div>
-                  <LkvIcon name="arrow-right" size={16} className="text-[color:var(--lkv-primary)]" />
+                  <LkvIcon name="arrow-right" size={16} className="text-[color:var(--lkv-text-primary)]" />
                 </Link>
                 <div className="mt-[14px] text-center font-mono text-[10px] text-[color:var(--ink-300)]">
                   {version} · GRENOBLE · FR

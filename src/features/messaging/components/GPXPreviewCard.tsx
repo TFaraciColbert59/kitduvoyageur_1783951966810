@@ -186,7 +186,7 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
         </div>
       ) : error || !stats ? (
         <div className="flex items-center gap-[var(--space-1)] rounded-[var(--lkv-radius-sm)] border border-dashed border-[color:var(--lkv-border)] p-[var(--space-2)] text-[length:var(--lkv-text-caption)] opacity-80">
-          <Icon name="map-pin" className="size-3.5 shrink-0 text-[color:var(--lkv-secondary)]" aria-hidden="true" />
+          <Icon name="map-pin" className="size-3.5 shrink-0 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
           <span className="truncate">Tracé GPX prêt pour synchronisation hors-ligne.</span>
         </div>
       ) : (
@@ -221,7 +221,7 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
               <span className="block text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider opacity-70">
                 Dénivelé D+
               </span>
-              <span className="font-mono text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-secondary)]">+{stats.dPlus} m</span>
+              <span className="font-mono text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-secondary-ink)]">+{stats.dPlus} m</span>
             </div>
 
             <div className="rounded-[var(--lkv-radius-sm)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-1)]">

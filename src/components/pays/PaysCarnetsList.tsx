@@ -68,7 +68,7 @@ export default function PaysCarnetsList({ countryIso, countryName }: Props) {
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3 px-1">
         <div>
-          <h3 className="text-base font-bold font-display text-[color:var(--lkv-primary)] leading-tight">
+          <h3 className="text-base font-bold font-display text-[color:var(--lkv-text-primary)] leading-tight">
             Carnets d’expédition <em className="font-serif italic text-forest-800 font-normal">en {countryName}</em>
           </h3>
           <p className="text-[10px] text-[color:var(--lkv-text-secondary)]">Récits vécus, traces et retours de marcheurs.</p>
@@ -110,7 +110,7 @@ export default function PaysCarnetsList({ countryIso, countryName }: Props) {
                 </div>
 
                 <div>
-                  <h4 className="font-bold text-xs text-[color:var(--lkv-primary)] leading-snug line-clamp-2">
+                  <h4 className="font-bold text-xs text-[color:var(--lkv-text-primary)] leading-snug line-clamp-2">
                     {carnet.title}
                   </h4>
                 </div>
@@ -125,7 +125,7 @@ export default function PaysCarnetsList({ countryIso, countryName }: Props) {
                       carnet.author?.full_name?.charAt(0) || '👤'
                     )}
                   </div>
-                  <span className="font-medium text-[11px] text-[color:var(--lkv-primary)] truncate">
+                  <span className="font-medium text-[11px] text-[color:var(--lkv-text-primary)] truncate">
                     {carnet.author?.full_name || 'Voyageur'}
                   </span>
                 </div>
@@ -140,7 +140,7 @@ export default function PaysCarnetsList({ countryIso, countryName }: Props) {
       ) : (
         <div className="glass-sub-card p-5 text-center space-y-2">
           <span className="text-3xl block">📖</span>
-          <h4 className="font-bold text-xs text-[color:var(--lkv-primary)]">Aucun carnet publié en {countryName}</h4>
+          <h4 className="font-bold text-xs text-[color:var(--lkv-text-primary)]">Aucun carnet publié en {countryName}</h4>
           <p className="text-[11px] text-[color:var(--lkv-text-secondary)] max-w-xs mx-auto">
             Soyez le premier à partager votre trace et inspirer la communauté.
           </p>

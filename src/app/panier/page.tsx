@@ -10,7 +10,7 @@ import { lkvConfirm } from '@/components/ui/dialogs';
 import { getCart, updateQuantity, removeFromCart, getCartTotals, applyLoyaltyFree, removeLoyaltyFree, CartItem } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 
 const FIELD_CLASS =
   'w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
@@ -152,7 +152,7 @@ export default function PanierPage() {
               <>
                 <div className="mb-[var(--space-8)] flex flex-col justify-between gap-[var(--space-4)] md:flex-row md:items-end">
                   <h1 className="font-display text-[length:var(--lkv-text-title-lg)] font-extrabold text-[color:var(--lkv-text-primary)]">
-                    Votre <em className="font-normal italic text-[color:var(--lkv-secondary)]">panier.</em>
+                    Votre <em className="font-normal italic text-[color:var(--lkv-secondary-ink)]">panier.</em>
                   </h1>
                   <p className="text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]">
                     {totalItems} article{totalItems > 1 ? 's' : ''} · {totalWeightG >= 1000 ? `${(totalWeightG / 1000).toFixed(1).replace('.', ',')} kg` : `${totalWeightG} g`} · sous-total <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{totalPriceEur.toFixed(0)} €</span>
@@ -177,7 +177,7 @@ export default function PanierPage() {
                           <div className="flex items-start justify-between gap-[var(--space-4)]">
                             <div>
                               <p className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]">{item.category || 'PORTAGE'}</p>
-                              <Link href={`/produit/${item.slug}`} className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)] transition-colors hover:text-[color:var(--lkv-secondary)]">
+                              <Link href={`/produit/${item.slug}`} className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)] transition-colors hover:text-[color:var(--lkv-secondary-ink)]">
                                 {item.name.split(' ').map((word, i, arr) =>
                                   i >= arr.length - 2 ? <em key={i} className="ml-[var(--space-1)] font-normal italic text-[color:var(--lkv-text-secondary)]">{word}</em> : <span key={i} className="mr-[var(--space-1)]">{word}</span>
                                 )}
@@ -316,7 +316,7 @@ export default function PanierPage() {
 
       {/* ── MOBILE VIEW (scroll natif) ── */}
       <div className="block md:hidden">
-        <MobilePageShell background="transparent">
+        <AppShell background="transparent">
           {items.length === 0 ? (
             <EmptyState
               icon={<Icon name="ShoppingBagIcon" size={32} />}
@@ -331,7 +331,7 @@ export default function PanierPage() {
               <div className="border-b border-[color:var(--lkv-border)] px-[var(--space-4)] pb-[var(--space-4)] pt-[var(--space-3)]">
                 <h1 className="m-0 text-[length:var(--lkv-text-title-sm)] tracking-[var(--lkv-tracking-title)] text-[color:var(--lkv-text-primary)]">
                   {totalItems} pièce{totalItems > 1 ? 's' : ''}<br/>
-                  <em className="font-normal italic text-[color:var(--lkv-secondary)]">prêtes à partir.</em>
+                  <em className="font-normal italic text-[color:var(--lkv-secondary-ink)]">prêtes à partir.</em>
                 </h1>
                 <div className="mt-0.5 font-mono text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
                   MSA-CH-2026-047 · panier ouvert
@@ -418,7 +418,7 @@ export default function PanierPage() {
               {/* Footer spacer */}
             </>
           )}
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

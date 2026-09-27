@@ -31,14 +31,14 @@ export function GearCardForget({ data, className }: { data: ForgetData; classNam
           <div className="space-y-0.5 min-w-0 flex-1">
             <h2
               id="forget-title"
-              className="text-[12px] sm:text-[17px] font-display font-bold text-[var(--lkv-primary)] leading-tight truncate"
+              className="text-[12px] sm:text-[17px] font-display font-bold text-[color:var(--lkv-text-primary)] leading-tight truncate"
             >
               À emporter
             </h2>
           </div>
           <div className="text-right shrink-0">
             <span
-              className={`text-[17px] sm:text-[30px] font-mono font-bold leading-none ${data.forgetRemaining === 0 ? 'text-[var(--lkv-primary)]' : 'text-[var(--lkv-danger)]'}`}
+              className={`text-[17px] sm:text-[30px] font-mono font-bold leading-none ${data.forgetRemaining === 0 ? 'text-[color:var(--lkv-text-primary)]' : 'text-[var(--lkv-danger)]'}`}
             >
               {data.forgetRemaining}
             </span>
@@ -53,7 +53,7 @@ export function GearCardForget({ data, className }: { data: ForgetData; classNam
           {items.slice(0, 2).map((item, idx) => (
             <div
               key={idx}
-              className="flex items-center gap-1.5 px-0.5 py-0.2 rounded-lg text-[10px] sm:text-xs font-medium text-[var(--lkv-primary)]"
+              className="flex items-center gap-1.5 px-0.5 py-0.2 rounded-lg text-[10px] sm:text-xs font-medium text-[color:var(--lkv-text-primary)]"
             >
               <span
                 className={`glass-check-circle ${item.is_checked ? 'checked' : ''} !w-3.5 !h-3.5`}
@@ -61,7 +61,7 @@ export function GearCardForget({ data, className }: { data: ForgetData; classNam
                 {item.is_checked && <Icon name="check" size={8} strokeWidth={3} />}
               </span>
               <span
-                className={`flex-1 truncate ${item.is_checked ? 'line-through opacity-60 text-[var(--lkv-primary-soft)]' : ''}`}
+                className={`flex-1 truncate ${item.is_checked ? 'line-through opacity-60 text-[color:var(--lkv-text-secondary)]' : ''}`}
               >
                 {item.name}
               </span>
@@ -71,9 +71,9 @@ export function GearCardForget({ data, className }: { data: ForgetData; classNam
 
         {/* Progress Bar */}
         <div className="space-y-0.5 sm:space-y-1">
-          <div className="flex items-center justify-between text-[10px] sm:text-xs font-semibold text-[var(--lkv-primary-soft)]">
+          <div className="flex items-center justify-between text-[10px] sm:text-xs font-semibold text-[color:var(--lkv-text-secondary)]">
             <span>Complétude</span>
-            <span className="font-mono text-[var(--lkv-primary)]">{pct}%</span>
+            <span className="font-mono text-[color:var(--lkv-text-primary)]">{pct}%</span>
           </div>
           <ProgressBar
             value={pct}

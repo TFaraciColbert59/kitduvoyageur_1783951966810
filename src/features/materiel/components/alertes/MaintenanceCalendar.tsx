@@ -34,7 +34,7 @@ export function MaintenanceCalendar({ events }: { events: MaintenanceEvent[] }) 
         {cells.map((day, i) => (
           <div key={i} className={`h-8 flex items-center justify-center text-xs rounded-[var(--lkv-radius-sm)] ${day === null ? '' : 'bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset'}`}>
             {day !== null && (
-              byDay.has(day) ? <Badge tone="warn">{day}</Badge> : <span className="text-[color:var(--lkv-primary)]">{day}</span>
+              byDay.has(day) ? <Badge tone="warn">{day}</Badge> : <span className="text-[color:var(--lkv-text-primary)]">{day}</span>
             )}
           </div>
         ))}

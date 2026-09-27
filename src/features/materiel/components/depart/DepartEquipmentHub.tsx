@@ -563,7 +563,7 @@ export function DepartEquipmentHub({
                   <Boxes size={14} aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-xs sm:text-sm font-bold text-[var(--lkv-primary)] tracking-tight truncate">
+                  <h2 className="text-xs sm:text-sm font-bold text-[color:var(--lkv-text-primary)] tracking-tight truncate">
                     Parc Matériel & Équipements
                   </h2>
                 </div>
@@ -599,7 +599,7 @@ export function DepartEquipmentHub({
                     'h-7 w-7 rounded-lg',
                     viewMode === 'grid'
                       ? 'bg-[var(--lkv-primary)] text-white shadow-2xs'
-                      : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
+                      : 'text-[var(--lkv-text-muted)] hover:text-[color:var(--lkv-text-primary)]'
                   )}
                   title="Vue Grille 3 colonnes"
                   aria-label="Vue Grille"
@@ -614,7 +614,7 @@ export function DepartEquipmentHub({
                     'h-7 w-7 rounded-lg',
                     viewMode === 'list'
                       ? 'bg-[var(--lkv-primary)] text-white shadow-2xs'
-                      : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
+                      : 'text-[var(--lkv-text-muted)] hover:text-[color:var(--lkv-text-primary)]'
                   )}
                   title="Vue Liste compacte"
                   aria-label="Vue Liste"
@@ -698,8 +698,8 @@ export function DepartEquipmentHub({
                         item.isLent
                           ? 'bg-[var(--lkv-warning)]/10 border-[var(--lkv-warning)]/30 text-[var(--lkv-warning)]'
                           : isItemInBag
-                            ? 'bg-[var(--lkv-success)]/10 border-[var(--lkv-success)]/30 text-[var(--lkv-primary)]'
-                            : 'bg-white/85 border-white/80 text-[var(--lkv-primary)]'
+                            ? 'bg-[var(--lkv-success)]/10 border-[var(--lkv-success)]/30 text-[color:var(--lkv-text-primary)]'
+                            : 'bg-white/85 border-white/80 text-[color:var(--lkv-text-primary)]'
                       )}
                     >
                       {/* Image — cliquable uniquement si fiche produit opérationnelle */}
@@ -743,14 +743,14 @@ export function DepartEquipmentHub({
                           {targetUrl ? (
                             <Link
                               href={targetUrl}
-                              className="text-[11.5px] sm:text-xs font-bold text-[var(--lkv-primary)] hover:text-[var(--lkv-primary-hover)] transition-colors leading-snug line-clamp-1 block cursor-pointer"
+                              className="text-[11.5px] sm:text-xs font-bold text-[color:var(--lkv-text-primary)] hover:text-[var(--lkv-primary-hover)] transition-colors leading-snug line-clamp-1 block cursor-pointer"
                               title={item.name}
                             >
                               {item.name}
                             </Link>
                           ) : (
                             <span
-                              className="text-[11.5px] sm:text-xs font-bold text-[var(--lkv-primary)] leading-snug line-clamp-1 block"
+                              className="text-[11.5px] sm:text-xs font-bold text-[color:var(--lkv-text-primary)] leading-snug line-clamp-1 block"
                               title={item.name}
                             >
                               {item.name}
@@ -856,12 +856,12 @@ export function DepartEquipmentHub({
                             <Link
                               href={listTargetUrl}
                               title={item.name}
-                              className="text-xs font-bold text-[var(--lkv-primary)] truncate hover:text-[var(--lkv-primary-hover)] transition-colors block cursor-pointer"
+                              className="text-xs font-bold text-[color:var(--lkv-text-primary)] truncate hover:text-[var(--lkv-primary-hover)] transition-colors block cursor-pointer"
                             >
                               {item.name}
                             </Link>
                           ) : (
-                            <h4 className="text-xs font-bold text-[var(--lkv-primary)] truncate">
+                            <h4 className="text-xs font-bold text-[color:var(--lkv-text-primary)] truncate">
                               {item.name}
                             </h4>
                           )}
@@ -918,7 +918,7 @@ export function DepartEquipmentHub({
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                     placeholder="Ex: Tente Big Agnes Copper Spur 2P"
-                    className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-black/5 border border-black/10 text-[var(--lkv-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/30"
+                    className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-black/5 border border-black/10 text-[color:var(--lkv-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/30"
                     autoFocus
                   />
                 </div>
@@ -933,7 +933,7 @@ export function DepartEquipmentHub({
                       value={newBrand}
                       onChange={(e) => setNewBrand(e.target.value)}
                       placeholder="Ex: MSR, Sea to Summit..."
-                      className="w-full px-3 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[var(--lkv-primary)]"
+                      className="w-full px-3 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[color:var(--lkv-text-primary)]"
                     />
                   </div>
 
@@ -944,7 +944,7 @@ export function DepartEquipmentHub({
                     <select
                       value={newCategory}
                       onChange={(e) => setNewCategory(e.target.value)}
-                      className="w-full px-2.5 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[var(--lkv-primary)]"
+                      className="w-full px-2.5 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[color:var(--lkv-text-primary)]"
                     >
                       {CATEGORIES.filter((c) => c !== 'Toutes').map((c) => (
                         <option key={c} value={c}>
@@ -965,7 +965,7 @@ export function DepartEquipmentHub({
                       min={0}
                       value={newWeight}
                       onChange={(e) => setNewWeight(Number(e.target.value))}
-                      className="w-full px-2.5 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[var(--lkv-primary)]"
+                      className="w-full px-2.5 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[color:var(--lkv-text-primary)]"
                     />
                   </div>
 
@@ -976,7 +976,7 @@ export function DepartEquipmentHub({
                     <select
                       value={newCondition}
                       onChange={(e) => setNewCondition(e.target.value)}
-                      className="w-full px-2 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[var(--lkv-primary)]"
+                      className="w-full px-2 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[color:var(--lkv-text-primary)]"
                     >
                       <option value="neuf">Neuf</option>
                       <option value="tres_bon">Très bon</option>
@@ -996,7 +996,7 @@ export function DepartEquipmentHub({
                       value={newPriceEur}
                       onChange={(e) => setNewPriceEur(e.target.value ? Number(e.target.value) : '')}
                       placeholder="Ex: 180"
-                      className="w-full px-2.5 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[var(--lkv-primary)]"
+                      className="w-full px-2.5 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[color:var(--lkv-text-primary)]"
                     />
                   </div>
                 </div>
@@ -1037,7 +1037,7 @@ export function DepartEquipmentHub({
                     value={borrowerContact}
                     onChange={(e) => setBorrowerContact(e.target.value)}
                     placeholder="Ex: Thomas (+33 6 12 34 56 78)"
-                    className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-black/5 border border-black/10 text-[var(--lkv-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/30"
+                    className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-black/5 border border-black/10 text-[color:var(--lkv-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/30"
                     autoFocus
                   />
                 </div>
@@ -1050,7 +1050,7 @@ export function DepartEquipmentHub({
                     type="date"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[var(--lkv-primary)]"
+                    className="w-full px-3 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[color:var(--lkv-text-primary)]"
                   />
                 </div>
 

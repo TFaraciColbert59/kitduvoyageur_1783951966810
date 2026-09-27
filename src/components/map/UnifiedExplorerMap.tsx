@@ -9,6 +9,7 @@ import {
   setWorkerUrl,
   type GeoJSONSource,
   type MapLayerMouseEvent,
+  type MapMouseEvent,
 } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import Icon from '@/components/ui/Icon';
@@ -22,10 +23,17 @@ import {
   prefersReducedMotion,
   easeToTarget,
   flyToTarget,
+  syncGlobeInteractionHandlers,
 } from './engine/camera';
 import { resolveCountryName, resolveIsoA2 } from './engine/geo';
 import { registerAtlasMapImages } from './engine/icons';
 import { getPoiColor, getZoomTier, MAP_COLORS, type ZoomTier } from './engine/mapTheme';
+import { buildPoiTooltipModel, formatPoiStepLabel } from './engine/poiTooltip';
+import {
+  getPoiPopupPanCorrection,
+  getPoiPopupPanOffset,
+  type PoiPopupInsets,
+} from './engine/poiPopupPlacement';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { buildCountryDensityFC, buildRegionDensityFC } from './layers/densityLayers';
 import type { CountryDensityRow, RegionDensityCell } from './layers/densityLayers';
@@ -60,6 +68,12 @@ export interface UnifiedExplorerMapProps {
   selectedTrail?: MapTrail | null;
   onTrailClick?: (trail: MapTrail) => void;
   onPoiClick?: (poi: UnifiedPOI) => void;
+  /** POI courant — piloté par le Hub pour surligner le marqueur et ouvrir son tooltip. */
+  selectedPoiId?: string | null;
+  /** Fermeture du tooltip (croix, clic carte ou second tap). */
+  onPoiDismiss?: () => void;
+  /** Tap libre sur la carte (hors couche POI) — permet de poser un point. */
+  onMapClick?: (lat: number, lng: number) => void;
   userLocation?: [number, number] | null;
   onMapReady?: () => void;
   onLocationUpdate?: (loc: [number, number]) => void;
@@ -150,7 +164,7 @@ function buildTrailTrackFeature(trail: MapTrail | null | undefined) {
   };
 }
 
-function buildPoisFeatureCollection(pois: UnifiedPOI[]) {
+function buildPoisFeatureCollection(pois: UnifiedPOI[], selectedPoiId: string | null = null) {
   return {
     type: 'FeatureCollection' as const,
     features: pois
@@ -166,10 +180,55 @@ function buildPoisFeatureCollection(pois: UnifiedPOI[]) {
           name: poi.name,
           category: poi.category,
           altitude: poi.altitude_m ?? null,
+          description: poi.description ?? poi.details ?? '',
+          visited: poi.is_visited === true,
+          stepLabel: formatPoiStepLabel(poi.step_id),
+          verified: poi.is_verified === true,
           color: getPoiColor(poi.category),
+          selected: poi.id === selectedPoiId,
         },
       })),
   };
+}
+
+function resolvePoiPopupInsets(map: MapLibreMap, popupHeight: number): PoiPopupInsets {
+  const mapRect = map.getCanvas().getBoundingClientRect();
+  const card = map.getContainer().closest('.hub-map-card');
+  const rail = card?.querySelector('.hub-globe-poi-rail');
+  const panel = card?.querySelector('.hub-map-card__panel');
+
+  const top = rail instanceof HTMLElement
+    ? Math.max(16, rail.getBoundingClientRect().bottom - mapRect.top + 8)
+    : 16;
+  const panelBottomInset = panel instanceof HTMLElement
+    ? Math.max(16, mapRect.bottom - panel.getBoundingClientRect().top + 12)
+    : 16;
+  const maxBottomInset = Math.max(16, mapRect.height - top - popupHeight - 16);
+
+  return {
+    top,
+    right: 16,
+    bottom: Math.min(panelBottomInset, maxBottomInset),
+    left: 16,
+  };
+}
+
+function keepPoiPopupVisible(map: MapLibreMap, popup: Popup): void {
+  const element = popup.getElement();
+  if (!element) return;
+
+  const popupRect = element.getBoundingClientRect();
+  const correction = getPoiPopupPanCorrection(
+    map.getCanvas().getBoundingClientRect(),
+    popupRect,
+    resolvePoiPopupInsets(map, popupRect.height)
+  );
+  if (correction.x === 0 && correction.y === 0) return;
+
+  const panOffset = getPoiPopupPanOffset(correction);
+  map.panBy([panOffset.x, panOffset.y], {
+    duration: prefersReducedMotion() ? 0 : 240,
+  });
 }
 
 /**
@@ -180,39 +239,79 @@ function openPoiPopup(
   map: MapLibreMap,
   properties: Record<string, unknown>,
   coordinates: [number, number],
-  popupRef: React.MutableRefObject<Popup | null>
+  popupRef: React.MutableRefObject<Popup | null>,
+  onDismiss?: () => void
 ): void {
+  const model = buildPoiTooltipModel(properties);
   const container = document.createElement('div');
-  container.className = 'px-1 py-0.5 max-w-[220px]';
+  container.className = 'hub-map-poi-tooltip';
+  const color =
+    typeof properties.color === 'string' ? properties.color : 'rgba(255, 255, 255, 0.9)';
+  container.style.setProperty('--poi-color', color);
+
+  const header = document.createElement('div');
+  header.className = 'hub-map-poi-tooltip__header';
+
+  const glyph = document.createElement('span');
+  glyph.className = 'hub-map-poi-tooltip__glyph';
+  glyph.setAttribute('aria-hidden', 'true');
+  header.append(glyph);
 
   const title = document.createElement('p');
-  title.className = 'text-[13px] font-semibold text-[color:var(--lkv-text-primary)]';
-  title.textContent =
-    typeof properties.name === 'string' && properties.name ? properties.name : 'Point d’intérêt';
-  container.append(title);
+  title.className = 'hub-map-poi-tooltip__title';
+  title.textContent = model.title;
+  header.append(title);
+  container.append(header);
 
-  const parts: string[] = [];
-  if (typeof properties.category === 'string' && properties.category) parts.push(properties.category);
-  if (typeof properties.altitude === 'number' && Number.isFinite(properties.altitude)) {
-    parts.push(`${properties.altitude} m`);
-  }
-  if (parts.length > 0) {
-    const meta = document.createElement('p');
-    meta.className = 'text-[11px] text-[color:var(--lkv-text-muted)]';
-    meta.textContent = parts.join(' · ');
-    container.append(meta);
+  const meta = document.createElement('p');
+  meta.className = 'hub-map-poi-tooltip__meta';
+  meta.textContent = [model.categoryLabel, model.altitudeLabel].filter(Boolean).join(' · ');
+  container.append(meta);
+
+  if (model.description) {
+    const description = document.createElement('p');
+    description.className = 'hub-map-poi-tooltip__description';
+    description.textContent = model.description;
+    container.append(description);
   }
 
-  popupRef.current?.remove();
-  popupRef.current = new Popup({
+  if (model.badges.length > 0) {
+    const badges = document.createElement('div');
+    badges.className = 'hub-map-poi-tooltip__badges';
+    for (const label of model.badges) {
+      const badge = document.createElement('span');
+      badge.className = 'hub-map-poi-tooltip__badge';
+      badge.textContent = label;
+      badges.append(badge);
+    }
+    container.append(badges);
+  }
+
+  const previousPopup = popupRef.current;
+  popupRef.current = null;
+  previousPopup?.remove();
+
+  const safeInsets = resolvePoiPopupInsets(map, 176);
+  const popup = new Popup({
     closeButton: true,
     closeOnClick: true,
+    focusAfterOpen: false,
+    maxWidth: 'none',
     offset: 12,
-    className: 'atlas-poi-popup',
+    padding: safeInsets,
+    anchor: 'top',
+    className: 'atlas-poi-popup hub-map-poi-popup',
   })
     .setLngLat(coordinates)
     .setDOMContent(container)
     .addTo(map);
+  popupRef.current = popup;
+  keepPoiPopupVisible(map, popup);
+  popup.on('close', () => {
+    if (popupRef.current !== popup) return;
+    popupRef.current = null;
+    onDismiss?.();
+  });
 }
 
 export default function UnifiedExplorerMap({
@@ -222,6 +321,9 @@ export default function UnifiedExplorerMap({
   selectedTrail = null,
   onTrailClick,
   onPoiClick,
+  selectedPoiId = null,
+  onPoiDismiss,
+  onMapClick,
   userLocation,
   onMapReady,
   onLocationUpdate,
@@ -231,6 +333,7 @@ export default function UnifiedExplorerMap({
   regionDensity,
   memberPositions,
   safeControls = false,
+  compact = false,
 }: UnifiedExplorerMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   /** Racine du composant : porte `data-atlas-flying` pendant tout geste caméra. */
@@ -243,6 +346,8 @@ export default function UnifiedExplorerMap({
   const callbacksRef = useRef({
     onTrailClick,
     onPoiClick,
+    onPoiDismiss,
+    onMapClick,
     onMapReady,
     onLocationUpdate,
     onViewportChange,
@@ -271,6 +376,8 @@ export default function UnifiedExplorerMap({
   callbacksRef.current = {
     onTrailClick,
     onPoiClick,
+    onPoiDismiss,
+    onMapClick,
     onMapReady,
     onLocationUpdate,
     onViewportChange,
@@ -366,8 +473,8 @@ export default function UnifiedExplorerMap({
           minZoom: GLOBE_MIN_ZOOM,
           renderWorldCopies: false,
           attributionControl: false,
-          dragRotate: false,
-          pitchWithRotate: false,
+          dragRotate: true,
+          pitchWithRotate: true,
         });
       } catch (caught) {
         // Jamais de spinner infini : erreur journalisée avec contexte, UI débloquée.
@@ -511,6 +618,20 @@ export default function UnifiedExplorerMap({
             const id = event.features?.[0]?.properties?.id;
             const trail = trailsRef.current.find((t) => t.id === String(id));
             if (trail) callbacksRef.current.onTrailClick?.(trail);
+          });
+          // Tap libre sur la carte (pas sur un trail/POI) : latitude/longitude.
+          // Utile au preparateur pour poser un point a l'endroit touche.
+          instance.on('click', (event: MapMouseEvent) => {
+            const features = instance.queryRenderedFeatures(event.point, {
+              layers: ['atlas-trails-points'],
+            });
+            if (features.length > 0) return;
+            const handleMapClick = callbacksRef.current.onMapClick;
+            if (!handleMapClick) return;
+            const lng = event.lngLat.lng;
+            const lat = event.lngLat.lat;
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+            handleMapClick(lat, lng);
           });
           instance.on('mouseenter', 'atlas-trails-points', () => {
             instance.getCanvas().style.cursor = 'pointer';
@@ -707,6 +828,14 @@ export default function UnifiedExplorerMap({
     };
   }, [initialView.center, initialView.zoom]);
 
+  // Les gestures 3D suivent exactement le mode affiché : rotation/pitch actifs
+  // sur le globe, neutralisés en vue locale pour garder le nord stable.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    syncGlobeInteractionHandlers(map, viewMode);
+  }, [ready, viewMode]);
+
   // ── Synchronisation des sentiers (props → source GeoJSON) ───────────────────
   useEffect(() => {
     const map = mapRef.current;
@@ -784,7 +913,7 @@ export default function UnifiedExplorerMap({
     const map = mapRef.current;
     if (!map || !ready) return;
 
-    const data = buildPoisFeatureCollection(pois ?? []);
+    const data = buildPoisFeatureCollection(pois ?? [], selectedPoiId);
     const source = map.getSource('atlas-pois') as GeoJSONSource | undefined;
     if (source) {
       source.setData(data);
@@ -818,9 +947,21 @@ export default function UnifiedExplorerMap({
       filter: ['!', ['has', 'point_count']],
       paint: {
         'circle-color': ['get', 'color'],
-        'circle-radius': 5,
+        'circle-radius': ['case', ['==', ['get', 'selected'], true], 8, 6],
         'circle-stroke-color': MAP_COLORS.white,
-        'circle-stroke-width': 1.5,
+        'circle-stroke-width': ['case', ['==', ['get', 'selected'], true], 3.5, 2],
+      },
+    });
+    map.addLayer({
+      id: 'atlas-poi-selected-halo',
+      type: 'circle',
+      source: 'atlas-pois',
+      filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'selected'], true]],
+      paint: {
+        'circle-color': 'rgba(255, 255, 255, 0.16)',
+        'circle-radius': 13,
+        'circle-stroke-color': ['get', 'color'],
+        'circle-stroke-width': 3,
       },
     });
 
@@ -850,7 +991,13 @@ export default function UnifiedExplorerMap({
       const id = String(feature.properties?.id ?? '');
       const poi = poisRef.current.find((candidate) => candidate.id === id);
       const coordinates = feature.geometry.coordinates as [number, number];
-      openPoiPopup(map, (feature.properties ?? {}) as Record<string, unknown>, coordinates, poiPopupRef);
+      openPoiPopup(
+        map,
+        (feature.properties ?? {}) as Record<string, unknown>,
+        coordinates,
+        poiPopupRef,
+        callbacksRef.current.onPoiDismiss
+      );
       if (poi) callbacksRef.current.onPoiClick?.(poi);
     });
 
@@ -864,7 +1011,43 @@ export default function UnifiedExplorerMap({
       map.on('mouseenter', layer, setPointer);
       map.on('mouseleave', layer, clearPointer);
     }
-  }, [pois, ready]);
+  }, [pois, ready, selectedPoiId]);
+
+  // Le Hub pilote aussi la selection depuis ses chips : le tooltip doit donc
+  // s'ouvrir meme quand le tap initial ne vient pas de la couche MapLibre.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+
+    if (!selectedPoiId) {
+      const popup = poiPopupRef.current;
+      poiPopupRef.current = null;
+      popup?.remove();
+      return;
+    }
+
+    const poi = poisRef.current.find((candidate) => candidate.id === selectedPoiId);
+    if (!poi || !isValidLatLng(poi.lat, poi.lng)) return;
+
+    const properties: Record<string, unknown> = {
+      id: poi.id,
+      name: poi.name,
+      category: poi.category,
+      altitude: poi.altitude_m ?? null,
+      description: poi.description ?? poi.details ?? '',
+      visited: poi.is_visited === true,
+      stepLabel: formatPoiStepLabel(poi.step_id),
+      verified: poi.is_verified === true,
+      color: getPoiColor(poi.category),
+    };
+    openPoiPopup(
+      map,
+      properties,
+      [Number(poi.lng), Number(poi.lat)],
+      poiPopupRef,
+      callbacksRef.current.onPoiDismiss
+    );
+  }, [ready, selectedPoiId]);
 
   // ── Densités matérialisées : continent (pays) + région (geohash5) ───────────
   useEffect(() => {
@@ -1119,9 +1302,19 @@ export default function UnifiedExplorerMap({
   // Absente (desktop, zéro sentier) ⇒ 0px, positions historiques inchangées.
   // P1 — offsets canoniques via --nav-offset (= --safe-bottom + 60px) : pixels
   // identiques à safe+96, formule unique, jamais de calc ad hoc.
-  const bottomControlsOffset = safeControls
-    ? 'bottom-[calc(var(--nav-offset)+36px+var(--explorer-carousel-height,0px))]'
-    : 'bottom-4';
+  const bottomControlsOffset = compact
+    ? 'bottom-[calc(var(--safe-bottom)+10.5rem)]'
+    : safeControls
+      ? 'bottom-[calc(var(--nav-offset)+36px+var(--explorer-carousel-height,0px))]'
+      : 'bottom-4';
+  const rightControlsPosition = compact
+    ? 'right-[68px] top-[calc(var(--safe-top)+112px)]'
+    : `${bottomControlsOffset} right-14 md:right-3`;
+
+  const attributionPosition = compact
+    ? 'right-3 top-[calc(var(--safe-top)+174px)]'
+    : 'right-3 top-[calc(var(--safe-top)+16px)] md:right-auto md:left-1/2 md:-translate-x-1/2 md:bottom-[calc(var(--safe-bottom)+2px)] md:top-auto';
+
   const desktopTilesOffset = safeControls
     ? 'md:bottom-[calc(var(--nav-offset)+36px)]'
     : 'md:bottom-4';
@@ -1143,6 +1336,7 @@ export default function UnifiedExplorerMap({
       className="relative w-full h-full"
       data-testid="unified-explorer-map"
       data-atlas-ready={ready ? 'true' : 'false'}
+      data-atlas-compact={compact ? 'true' : 'false'}
     >
       <div ref={containerRef} className="absolute inset-0 w-full h-full" />
 
@@ -1159,24 +1353,27 @@ export default function UnifiedExplorerMap({
           ⚠️ Les classes `.glass-*` imposent leur `display` : les bascules
           responsives passent par des wrappers, jamais directement dessus. */}
 
-      {/* Action principale — mobile (centrée, seule au-dessus de la tab bar) */}
-      <div
-        className={`absolute left-1/2 -translate-x-1/2 ${bottomControlsOffset} z-[var(--z-fab)] md:hidden`}
-        data-atlas-primary-cta="mobile"
-      >
-        <Button
-          variant="secondary"
-          onClick={handleToggleGlobe}
-          className="min-h-[48px] px-4 shadow-lg"
-          aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
-          aria-pressed={viewMode === 'local'}
+      {/* Action principale — mobile Explorer uniquement. Le Hub compact garde
+          son rail globe en haut à droite, sans CTA central superposé. */}
+      {!compact && (
+        <div
+          className={`absolute left-1/2 -translate-x-1/2 ${bottomControlsOffset} z-[var(--z-fab)] md:hidden`}
+          data-atlas-primary-cta="mobile"
         >
-          <Icon name="compass" size={15} />
-          <span className="whitespace-nowrap text-[length:var(--lkv-text-caption)] font-bold">
-            {viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
-          </span>
-        </Button>
-      </div>
+          <Button
+            variant="secondary"
+            onClick={handleToggleGlobe}
+            className="min-h-[48px] px-4 shadow-lg"
+            aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
+            aria-pressed={viewMode === 'globe'}
+          >
+            <Icon name="compass" size={15} />
+            <span className="whitespace-nowrap text-[length:var(--lkv-text-caption)] font-bold">
+              {viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
+            </span>
+          </Button>
+        </div>
+      )}
 
       {/* Repli sans GPS — message non bloquant (la carte reste interactive).
           P1 — TOAST : formule de position UNIQUE via --nav-offset (les 2 autres
@@ -1185,7 +1382,7 @@ export default function UnifiedExplorerMap({
           (nav+100), jamais superposé. z-toast : jamais masqué. */}
       {globeNotice && (
         <div
-          className="absolute left-1/2 -translate-x-1/2 z-[var(--z-toast)] pointer-events-none w-max max-w-[calc(100vw-32px)] bottom-[calc(var(--nav-offset)+164px+var(--explorer-carousel-height,0px))]"
+          className={`absolute left-1/2 -translate-x-1/2 z-[var(--z-toast)] pointer-events-none w-max max-w-[calc(100vw-32px)] ${compact ? 'bottom-[calc(var(--safe-bottom)+15.5rem)]' : 'bottom-[calc(var(--nav-offset)+164px+var(--explorer-carousel-height,0px))]'}`}
           data-atlas-geoloc-notice="true"
           role="status"
           aria-live="polite"
@@ -1194,65 +1391,85 @@ export default function UnifiedExplorerMap({
         </div>
       )}
 
-      {/* Zoom (−/+) + recentrage : mobile = zoom seul ; desktop = colonne complète.
-          E1 — sur mobile la colonne est décalée de `right-14` pour rester à
-          gauche de l'onglet filtres fixe (`right-0 top-1/2`) : une fois
-          remontée au-dessus du carrousel, elle croise sa bande verticale. */}
+      {/* Contrôles cartographiques — Hub compact : rail horizontal entre les
+          poignées Points et État, sans recouvrement des tiroirs ni du panneau
+          bas ; Explorer : colonne de zoom historique. */}
       <div
-        className={`absolute right-14 md:right-3 ${bottomControlsOffset} z-[var(--z-fab)] flex flex-col gap-2`}
+        className={`absolute z-[var(--z-fab)] flex ${compact ? 'flex-row' : 'flex-col'} gap-2 ${rightControlsPosition}`}
         data-atlas-controls="right"
+        data-atlas-globe-rail={compact ? 'compact' : undefined}
       >
+        {compact ? (
+          <>
+            <IconButton
+              variant="glass"
+              size="lg"
+              onClick={handleToggleGlobe}
+              className="hub-map-rail-control shadow-lg"
+              aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
+              title={viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
+              aria-pressed={viewMode === 'globe'}
+            >
+              <Icon name="compass" size={19} />
+            </IconButton>
+            <span className="h-6 w-px self-center bg-white/30" aria-hidden="true" />
+          </>
+        ) : null}
+
         <IconButton
           variant="glass"
           size="lg"
           onClick={handleZoomIn}
-          className="shadow-lg"
+          className={compact ? 'hub-map-rail-control shadow-lg' : 'shadow-lg'}
           aria-label="Zoom avant"
           title="Zoom avant"
         >
-          <Icon name="plus" size={16} />
+          <Icon name="plus" size={17} />
         </IconButton>
         <IconButton
           variant="glass"
           size="lg"
           onClick={handleZoomOut}
-          className="shadow-lg"
+          className={compact ? 'hub-map-rail-control shadow-lg' : 'shadow-lg'}
           aria-label="Zoom arrière"
           title="Zoom arrière"
         >
-          <Icon name="minus" size={16} />
+          <Icon name="minus" size={17} />
         </IconButton>
-        <div className="hidden md:contents">
-          <IconButton
-            variant="glass"
-            size="lg"
-            onClick={handleRecenter}
-            className="shadow-lg"
-            aria-label="Me recentrer"
-            title="Me recentrer"
-          >
-            <Icon name="navigation" size={16} />
-          </IconButton>
-          <Button
-            variant="secondary"
-            onClick={handleToggleGlobe}
-            className="min-h-[44px] px-3 shadow-lg"
-            aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
-            title={viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
-            aria-pressed={viewMode === 'local'}
-          >
-            <Icon name="compass" size={14} />
-            <span className="whitespace-nowrap text-[length:var(--lkv-text-caption-2)] font-bold">
-              {viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
-            </span>
-          </Button>
-        </div>
+
+        {!compact && (
+          <div className="hidden md:contents">
+            <IconButton
+              variant="glass"
+              size="lg"
+              onClick={handleRecenter}
+              className="shadow-lg"
+              aria-label="Me recentrer"
+              title="Me recentrer"
+            >
+              <Icon name="navigation" size={16} />
+            </IconButton>
+            <Button
+              variant="secondary"
+              onClick={handleToggleGlobe}
+              className="min-h-[44px] px-3 shadow-lg"
+              aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
+              title={viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
+              aria-pressed={viewMode === 'globe'}
+            >
+              <Icon name="compass" size={14} />
+              <span className="whitespace-nowrap text-[length:var(--lkv-text-caption-2)] font-bold">
+                {viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
+              </span>
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Légende densité — desktop uniquement (simplicité mobile).
           P1 — formule UNIQUE via --nav-offset (nav+156 : au-dessus du badge
           live nav+100 et des tuiles nav+36, jamais superposée). */}
-      {viewport && viewport.zoom > 2.4 && viewport.zoom < 14.4 && (
+      {!compact && viewport && viewport.zoom > 2.4 && viewport.zoom < 14.4 && (
         <div
           className="hidden md:block absolute left-3 bottom-[calc(var(--nav-offset)+156px)] z-[var(--z-fab)] pointer-events-none"
           data-atlas-density-legend="true"
@@ -1264,6 +1481,7 @@ export default function UnifiedExplorerMap({
       )}
 
       {/* Fond de carte — mobile : icônes en haut à gauche ; desktop : libellés en bas à gauche */}
+      {!compact && (
       <div
         className={`absolute left-3 top-[calc(var(--safe-top)+10px)] md:top-auto ${desktopTilesOffset} z-[var(--z-fab)]`}
         data-atlas-controls="tiles"
@@ -1281,15 +1499,16 @@ export default function UnifiedExplorerMap({
           className="shadow-lg"
         />
       </div>
+      )}
 
       {/* Attribution légère (obligatoire pour les tuiles) — mobile : haut droite ; desktop : bas centre.
           P1 — compteur lisible : token caption-2 (11px), jamais text-[9px]. */}
-      <div className="pointer-events-none absolute right-3 top-[calc(var(--safe-top)+16px)] z-[var(--z-sticky)] rounded-full bg-[color:var(--card-tint-strong)] px-2 py-1 text-[length:var(--lkv-text-caption-2)] leading-none text-[color:var(--lkv-text-muted)] md:right-auto md:left-1/2 md:-translate-x-1/2 md:bottom-[calc(var(--safe-bottom)+2px)] md:top-auto">
+      <div className="pointer-events-none absolute z-[var(--z-sticky)] rounded-full bg-[color:var(--card-tint-strong)] px-2 py-1 text-[length:var(--lkv-text-caption-2)] leading-none text-[color:var(--lkv-text-muted)] ${attributionPosition}">
         © OpenStreetMap France · Esri
       </div>
 
       {/* Sélection pays (couche monde) — données réelles, jamais inventées. */}
-      {selectedCountry && (
+      {!compact && selectedCountry && (
         <div
           className="absolute left-3 top-[calc(var(--safe-top)+72px)] md:left-auto md:right-3 md:top-20 z-[var(--z-fab)] w-[236px]"
           data-atlas-country-card="true"

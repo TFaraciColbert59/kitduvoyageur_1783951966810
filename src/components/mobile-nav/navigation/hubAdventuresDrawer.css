@@ -1,0 +1,265 @@
+/**
+ * Tiroir « Tes aventures » (maquette 01-drawer).
+ *
+ * Matiere Liquid Glass iOS 27 — exclusively des tokens deja exposes par
+ * l'application. Aucune couleur en dur : ce fichier ne peut pas
+ * deriver la palette d'un theme.
+ */
+
+.had {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-bottom: var(--space-2);
+}
+
+/* --- Etat vide ------------------------------------------------------- */
+
+.had-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-4);
+  border-radius: var(--lkv-radius-card);
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border);
+  text-align: center;
+}
+
+.had-empty__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--lkv-radius-pill, 999px);
+  background: var(--lkv-primary-subtle);
+  color: var(--lkv-on-primary);
+}
+
+.had-empty__title {
+  margin: 0;
+  font-size: var(--lkv-text-body-lg);
+  font-weight: var(--lkv-weight-bold);
+  color: var(--lkv-text-primary);
+}
+
+.had-empty__hint {
+  margin: 0;
+  font-size: var(--lkv-text-body-sm);
+  line-height: var(--lkv-line-body);
+  color: var(--lkv-text-secondary);
+  text-wrap: balance;
+}
+
+/* --- Actions (avant la liste) ---------------------------------------- */
+
+.had-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.had-action {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--lkv-radius-card);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--motion-control-duration) var(--lkv-ease-standard),
+    background-color var(--motion-control-duration) var(--lkv-ease-standard);
+}
+
+.had-action:active {
+  transform: scale(0.985);
+}
+
+.had-action:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+.had-action--primary {
+  background: var(--lkv-primary);
+  color: var(--lkv-on-primary);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--elevation-2);
+}
+
+.had-action--secondary {
+  /* Materiau plein : `glass-bg-medium` laissait transparaitre la barre
+     d’onglets dans la derniere ligne du tiroir (lisibilite compromise). */
+  background: var(--glass-bg-strong);
+  color: var(--lkv-text-primary);
+  border: 1px solid var(--glass-border);
+}
+
+.had-action__lead {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--lkv-radius-pill, 999px);
+  background: var(--glass-sheen, var(--glass-bg-strong));
+  color: inherit;
+}
+
+.had-action--primary .had-action__lead {
+  background: var(--lkv-on-primary);
+  color: var(--lkv-primary);
+}
+
+.had-action__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.had-action__label {
+  font-size: var(--lkv-text-body-md);
+  font-weight: var(--lkv-weight-bold);
+  line-height: var(--lkv-line-body);
+}
+
+.had-action__description {
+  font-size: var(--lkv-text-body-xs);
+  line-height: var(--lkv-line-body);
+  opacity: 0.78;
+}
+
+.had-action__chevron {
+  flex: 0 0 auto;
+  opacity: 0.7;
+}
+
+/* --- Aventures existantes -------------------------------------------- */
+
+.had-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.had-list__heading {
+  margin: 0;
+  padding: 0 var(--space-1);
+  font-size: var(--lkv-text-body-xs);
+  font-weight: var(--lkv-weight-semibold, 600);
+  letter-spacing: var(--lkv-tracking-title, 0.01em);
+  text-transform: uppercase;
+  color: var(--lkv-text-muted);
+}
+
+.had-list__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.had-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--lkv-radius-md);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  color: var(--lkv-text-primary);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--motion-control-duration) var(--lkv-ease-standard);
+}
+
+.had-row:hover {
+  background: var(--lkv-hover-surface);
+}
+
+.had-row:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: -2px;
+}
+
+.had-row__lead {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--lkv-radius-pill, 999px);
+  background: var(--lkv-primary-subtle);
+  color: var(--lkv-on-primary);
+}
+
+.had-row__text {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.had-row__title {
+  font-size: var(--lkv-text-body-sm);
+  font-weight: var(--lkv-weight-semibold, 600);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.had-row__subtitle {
+  font-size: var(--lkv-text-body-xs);
+  color: var(--lkv-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.had-row__chevron {
+  flex: 0 0 auto;
+  color: var(--lkv-text-muted);
+}
+
+/* --- Barre d’onglets pendant le dialogue -------------------------------- */
+
+/* La barre (z 40) reste sous le Sheet (z 50) et se devine donc a travers le
+   verre : ses icones paraissent dans le tiroir. Tant que le dialogue est
+   ouvert on la sort de l’echelle visuelle. `opacity` et non `visibility` :
+   la barre reste focusable, et la restitution du focus (qui passe apres la
+   fermeture) dispose toujours de sa cible. */
+html[data-had-open='true'] .lkv-nav-surface {
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--motion-control-duration) var(--lkv-ease-standard),
+    opacity var(--motion-control-duration) var(--lkv-ease-standard),
+    visibility 0s linear var(--motion-control-duration);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .had-action,
+  .had-row {
+    transition: none;
+  }
+  .had-action:active {
+    transform: none;
+  }
+}

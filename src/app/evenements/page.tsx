@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import Icon from '@/components/ui/AppIcon';
 import AppImage from '@/components/ui/AppImage';
 import { Spinner } from '@/components/ui';
@@ -50,12 +50,15 @@ const typeConfig: Record<string, { color: string; label: string }> = {
   photo: { color: 'glass-pill pill-info', label: 'Photo' },
 };
 
-const mobileTypeColors: Record<string, string> = {
-  rando: 'var(--lkv-primary-soft)',
-  bushcraft: 'var(--lkv-text-secondary)',
-  vanlife: 'var(--lkv-warning-dark)',
-  alpinisme: 'var(--lkv-info)',
-  photo: 'var(--lkv-info)',
+// Fond translucide + encre de la MEME famille de teinte : les deux restent
+// apparies par construction, donc le contraste tient sur le verre sombre.
+// (Meme convention que --lkv-*-bg / --lkv-*, cf. liquid-ios27.css.)
+const mobileTypeColors: Record<string, { bg: string; ink: string }> = {
+  rando: { bg: 'var(--lkv-success-bg)', ink: 'var(--lkv-success)' },
+  bushcraft: { bg: 'var(--lkv-surface-muted)', ink: 'var(--lkv-text-secondary)' },
+  vanlife: { bg: 'var(--lkv-warning-bg)', ink: 'var(--lkv-warning)' },
+  alpinisme: { bg: 'var(--lkv-info-bg)', ink: 'var(--lkv-info)' },
+  photo: { bg: 'var(--lkv-info-bg)', ink: 'var(--lkv-info)' },
 };
 
 function TrustRing({ score, size = 36 }: { score: number; size?: number }) {
@@ -196,7 +199,7 @@ function EventDetailModal({
             <div className="p-4 glass-sub-card rounded-[var(--lkv-radius-md)]">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600">Places disponibles</p>
-                <span className={`text-xs font-700 ${spotsLeft <= 2 ? 'text-[color:var(--lkv-danger)]' : 'text-[color:var(--lkv-secondary)]'}`}>
+                <span className={`text-xs font-700 ${spotsLeft <= 2 ? 'text-[color:var(--lkv-danger)]' : 'text-[color:var(--lkv-secondary-ink)]'}`}>
                   {event.status === 'full' ? 'Complet' : `${spotsLeft} place${spotsLeft > 1 ? 's' : ''} restante${spotsLeft > 1 ? 's' : ''}`}
                 </span>
               </div>
@@ -424,7 +427,7 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
 function MobileEventCard({ event, onToggleRegister, onViewDetail }: { event: Event; onToggleRegister: (eventId: string, isRegistered: boolean) => void; onViewDetail: (event: Event) => void }) {
   const [registering, setRegistering] = useState(false);
   const spotsLeft = event.max_participants - event.current_participants;
-  const typeBg = mobileTypeColors[event.type] || 'var(--lkv-text-secondary)';
+  const typeTone = mobileTypeColors[event.type] || { bg: 'var(--lkv-surface-muted)', ink: 'var(--lkv-text-secondary)' };
 
   const formatDate = (d: string) => {
     const [_y, m, day] = d.split('-');
@@ -444,7 +447,7 @@ function MobileEventCard({ event, onToggleRegister, onViewDetail }: { event: Eve
         <AppImage src={event.cover_image || '/assets/images/no_image.png'} alt={event.cover_alt} fill sizes="100vw" className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
         <div className="absolute left-2 top-2 flex gap-1">
-          <span className="rounded-[var(--lkv-radius-xs)] px-2 py-0.5 text-[10px] font-bold text-[color:var(--lkv-text-inverted)]" style={{ background: typeBg }}>
+          <span className="rounded-[var(--lkv-radius-xs)] px-2 py-0.5 text-[10px] font-bold" style={{ background: typeTone.bg, color: typeTone.ink }}>
             {event.emoji} {typeConfig[event.type]?.label || event.type}
           </span>
           {event.status === 'full' && (
@@ -460,11 +463,11 @@ function MobileEventCard({ event, onToggleRegister, onViewDetail }: { event: Eve
         <div className="mb-2.5 flex gap-[var(--space-2)]">
           <div className="glass-sub-card flex-1 rounded-[var(--lkv-radius-xs)] p-[var(--space-2)]">
             <p className="m-0 mb-0.5 text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.05em] text-[color:var(--lkv-text-secondary)]">Date</p>
-            <p className="m-0 text-[13px] font-bold text-[color:var(--lkv-primary)]">{formatDate(event.event_date)}</p>
+            <p className="m-0 text-[13px] font-bold text-[color:var(--lkv-text-primary)]">{formatDate(event.event_date)}</p>
           </div>
           <div className="glass-sub-card flex-1 rounded-[var(--lkv-radius-xs)] p-[var(--space-2)]">
             <p className="m-0 mb-0.5 text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.05em] text-[color:var(--lkv-text-secondary)]">Places</p>
-            <p className="m-0 text-[13px] font-bold text-[color:var(--lkv-primary)]">{event.current_participants}/{event.max_participants}</p>
+            <p className="m-0 text-[13px] font-bold text-[color:var(--lkv-text-primary)]">{event.current_participants}/{event.max_participants}</p>
           </div>
         </div>
         <div className="flex gap-[var(--space-2)]">
@@ -678,7 +681,7 @@ export default function EvenementsPage() {
           <aside className="space-y-6">
             <div className="glass p-5">
               <h3 className="font-display font-700 text-foreground text-base mb-3 flex items-center gap-2">
-                <Icon name="ShieldCheckIcon" size={16} className="text-[color:var(--lkv-secondary)]" />
+                <Icon name="ShieldCheckIcon" size={16} className="text-[color:var(--lkv-secondary-ink)]" />
                 Trust Score & sécurité
               </h3>
               <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
@@ -686,7 +689,7 @@ export default function EvenementsPage() {
               </p>
               <div className="space-y-2">
                 {[
-                  { score: '90+', label: 'Ambassadeur — Organisateur confirmé', color: 'text-[color:var(--lkv-secondary)]' },
+                  { score: '90+', label: 'Ambassadeur — Organisateur confirmé', color: 'text-[color:var(--lkv-secondary-ink)]' },
                   { score: '75–89', label: 'Expert — Plusieurs sorties réussies', color: 'text-[var(--lkv-info)]' },
                   { score: '60–74', label: 'Confirmé — Premières sorties', color: 'text-[color:var(--lkv-warning-dark)]' },
                 ].map((s) => (
@@ -699,7 +702,7 @@ export default function EvenementsPage() {
             </div>
             <div className="glass p-5">
               <h3 className="font-display font-700 text-foreground text-base mb-3 flex items-center gap-2">
-                <Icon name="BanknotesIcon" size={16} className="text-[color:var(--lkv-secondary)]" />
+                <Icon name="BanknotesIcon" size={16} className="text-[color:var(--lkv-secondary-ink)]" />
                 Cagnotte intégrée
               </h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
@@ -718,7 +721,7 @@ export default function EvenementsPage() {
       <div className="relative mb-[var(--space-4)] overflow-hidden rounded-[var(--lkv-radius-sm)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-5)] text-[color:var(--lkv-text-primary)]">
         <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[rgba(23,64,44,0.30)]" />
         <div className="mb-[var(--space-2)] flex items-center gap-[var(--space-2)]">
-          <span className="rounded-[var(--lkv-radius-xs)] border border-[rgba(166,193,160,0.3)] bg-[rgba(166,193,160,0.2)] px-2 py-0.5 text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--sage-400)]">COMMUNAUTE</span>
+          <span className="rounded-[var(--lkv-radius-xs)] border border-[rgba(166,193,160,0.3)] bg-[rgba(166,193,160,0.2)] px-2 py-0.5 text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-forest-100)]">COMMUNAUTE</span>
           <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-white/50">EVENEMENTS</span>
         </div>
         <h1 className="mb-1 font-display text-[20px] font-extrabold text-[color:var(--lkv-text-inverted)]">
@@ -761,13 +764,13 @@ export default function EvenementsPage() {
       ) : filtered.length === 0 ? (
         <div className="py-10 text-center text-[color:var(--lkv-text-secondary)]">
           <p className="mb-[var(--space-2)] text-[36px]">📅</p>
-          <p className="mb-1 text-[16px] font-bold text-[color:var(--lkv-primary)]">Aucun evenement</p>
+          <p className="mb-1 text-[16px] font-bold text-[color:var(--lkv-text-primary)]">Aucun evenement</p>
           <p className="text-[13px]">Soyez le premier a organiser une sortie !</p>
         </div>
       ) : (
         <div>
           <div className="mb-[var(--space-3)] flex justify-between">
-            <h2 className="m-0 font-display text-[16px] font-bold text-[color:var(--lkv-primary)]">Prochaines sorties</h2>
+            <h2 className="m-0 font-display text-[16px] font-bold text-[color:var(--lkv-text-primary)]">Prochaines sorties</h2>
             <span className="text-[13px] text-[color:var(--lkv-text-secondary)]">{filtered.length} evenements</span>
           </div>
           {filtered.map((e) => <MobileEventCard key={e.id} event={e} onToggleRegister={handleToggleRegister} onViewDetail={(event) => setDetailEvent(event)} />)}
@@ -791,10 +794,10 @@ export default function EvenementsPage() {
 
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           {mobileContent}
           <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
-        </MobilePageShell>
+        </AppShell>
       </div>
 
       {/* Shared: Create event modal */}

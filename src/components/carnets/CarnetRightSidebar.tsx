@@ -78,7 +78,7 @@ export default function CarnetRightSidebar({
         </div>
       </Card>
 
-      <Card tone="sage" className="space-y-[var(--space-2)] p-[var(--space-3)] transition-all duration-[var(--motion-control-duration)]">
+      <Card tone="sage" className="space-y-[var(--space-2)] p-[var(--space-3)] transition-all [transition-duration:var(--motion-control-duration)]">
         <Badge className="font-mono uppercase tracking-widest">
           🎒 RETOUR D&apos;AVENTURE
         </Badge>

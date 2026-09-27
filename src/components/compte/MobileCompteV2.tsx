@@ -531,7 +531,7 @@ export default function MobileCompteV2() {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={avatarUrl} alt={fullName} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-2xl font-bold font-serif text-[color:var(--lkv-primary)]" >
+                    <span className="text-2xl font-bold font-serif text-[color:var(--lkv-text-primary)]" >
                       {firstName.charAt(0)}
                     </span>
                   )}
@@ -636,7 +636,7 @@ export default function MobileCompteV2() {
               )}
               <Link
                 href={`/profil/${user?.id}`}
-                className="font-bold hover:underline inline-flex items-center gap-1 transition-all text-[color:var(--lkv-primary)]"
+                className="font-bold hover:underline inline-flex items-center gap-1 transition-all text-[color:var(--lkv-text-primary)]"
                 
               >
                 <span>Page publique</span>
@@ -749,7 +749,7 @@ export default function MobileCompteV2() {
                   <path d="M12 5v14M5 12h14" />
                 </svg>
               </div>
-              <span className="text-[10px] font-bold text-[color:var(--lkv-primary)]" >
+              <span className="text-[10px] font-bold text-[color:var(--lkv-text-primary)]" >
                 Nouveau
               </span>
             </Link>
@@ -797,7 +797,7 @@ export default function MobileCompteV2() {
           {/* Synthèse du pack */}
           <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] p-4 rounded-3xl flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-[color:var(--lkv-primary)]" >
+              <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-[color:var(--lkv-text-primary)]" >
                 🎒 Mon Matériel de Randonnée
               </span>
               <h3 className="text-base font-bold text-[color:var(--lkv-text-primary)]" >
@@ -1004,7 +1004,7 @@ export default function MobileCompteV2() {
                     </div>
                     <div className="flex-1 flex flex-col justify-between py-0.5">
                       <div>
-                        <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-[color:var(--lkv-primary)]" >
+                        <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-[color:var(--lkv-text-primary)]" >
                           {c.kind === 'carnet' ? 'Récit d\'aventure' : 'Expédition'}
                         </span>
                         <h4 className="text-sm font-bold leading-tight mt-0.5 text-[color:var(--lkv-text-primary)]" >
@@ -1052,7 +1052,7 @@ export default function MobileCompteV2() {
           {/* Jauge de Points LKDV */}
           <div className="rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-4)]">
             <div className="mb-[var(--space-2)] flex justify-between font-mono text-[length:var(--lkv-text-caption)] font-semibold">
-              <span className="text-[color:var(--lkv-primary)]">{currentPoints.toLocaleString('fr-FR')} pts LKDV</span>
+              <span className="text-[color:var(--lkv-text-primary)]">{currentPoints.toLocaleString('fr-FR')} pts LKDV</span>
               <span className="text-[color:var(--lkv-text-muted)]">
                 {nextLevelPoints ? `Objectif : ${nextLevelPoints.toLocaleString('fr-FR')} pts` : 'Niveau Max'}
               </span>
@@ -1083,7 +1083,7 @@ export default function MobileCompteV2() {
                 </p>
               </div>
             </div>
-            <span className="font-mono text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-primary)]">
+            <span className="font-mono text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-text-primary)]">
               {trustScore}/100
             </span>
           </div>
@@ -1155,7 +1155,7 @@ export default function MobileCompteV2() {
                 <span className="text-base" aria-hidden="true">{item.icon}</span>
                 <span className="text-[length:var(--lkv-text-caption)] font-semibold">{item.label}</span>
               </span>
-              <span className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-primary)]/30">›</span>
+              <span className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]/30">›</span>
             </Link>
           ))}
 

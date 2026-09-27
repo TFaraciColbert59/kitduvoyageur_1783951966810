@@ -32,7 +32,7 @@ export default class ErrorBoundaryWrapper extends Component<Props, State> {
           <p className="mb-[var(--space-8)] text-[color:var(--lkv-forest-100)]">L'application a rencontré un problème inattendu.</p>
           <button
             onClick={() => window.location.reload()}
-            className="min-h-[var(--lkv-touch-min)] cursor-pointer rounded-[var(--lkv-radius-sm)] border-none bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-6)] py-3 font-semibold text-[color:var(--lkv-primary)]"
+            className="min-h-[var(--lkv-touch-min)] cursor-pointer rounded-[var(--lkv-radius-sm)] border-none bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-6)] py-3 font-semibold text-[color:var(--lkv-text-primary)]"
           >
             Réessayer
           </button>

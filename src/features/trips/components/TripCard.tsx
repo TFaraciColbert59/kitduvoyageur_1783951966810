@@ -60,7 +60,7 @@ export function TripCard({ trip, showRole = true }: TripCardProps) {
             <div className="flex items-center gap-1.5 flex-wrap">
               <TripBadge type="activity" value={trip.primary_activity} size="sm" />
               <TripBadge type="difficulty" value={trip.difficulty} size="sm" />
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-xs text-[var(--lkv-primary)] border border-white/60 shadow-2xs">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-xs text-[color:var(--lkv-text-primary)] border border-white/60 shadow-2xs">
                 {profileLabel}
               </span>
             </div>

@@ -196,7 +196,7 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
   });
 
   return (
-    <Card className="p-[var(--space-6)] transition-all duration-[var(--motion-control-duration)]">
+    <Card className="p-[var(--space-6)] transition-all [transition-duration:var(--motion-control-duration)]">
       <div className="mb-[var(--space-2)] flex items-start justify-between">
         <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
           Tâches <span className="font-serif font-normal italic text-[color:var(--lkv-text-primary)]">à faire</span>

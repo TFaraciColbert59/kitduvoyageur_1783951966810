@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useTransition, useCallback, useEffect, useMemo } from 'react';
 import { useActiveTrip } from '@/features/trips/context/ActiveTripContext';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   parseStoredAdventure,
   type ActiveAdventureData,
@@ -50,6 +51,10 @@ const ACTIVE_KEY = 'lkdv_active_adventure';
 const LAST_SECTION_KEY = 'lkdv_adventure_last_section';
 const ADVENTURES_CACHE_KEY = 'lkdv_hub_adventures_cache';
 
+export function adventureStorageKey(base: string, userId: string | null): string | null {
+  return userId ? `${base}:${userId}` : null;
+}
+
 const ActiveAdventureContext = createContext<ActiveAdventureContextValue | undefined>(undefined);
 
 export interface ActiveAdventureProviderProps {
@@ -69,10 +74,11 @@ const EMPTY_CACHE: AdventuresCache = {
   pendingInvites: 0,
 };
 
-function readLastSections(): Record<string, string> {
+function readLastSections(storageKey: string): Record<string, string> {
   try {
-    const raw = localStorage.getItem(LAST_SECTION_KEY);
-    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+    const raw = localStorage.getItem(storageKey);
+    const parsed: unknown = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, string> : {};
   } catch {
     return {};
   }
@@ -96,29 +102,48 @@ function dataToEntry(data: ActiveAdventureData): AdventureEntry {
 }
 
 export function ActiveAdventureProvider({ initialAdventure = null, children }: ActiveAdventureProviderProps) {
+  const { user, loading } = useAuth();
+  const userId = loading ? null : user?.id ?? null;
+  return <ActiveAdventureProviderForUser key={userId ?? 'no-auth'} userId={userId} initialAdventure={initialAdventure}>{children}</ActiveAdventureProviderForUser>;
+}
+
+function ActiveAdventureProviderForUser({ userId, initialAdventure, children }: ActiveAdventureProviderProps & { userId: string | null }) {
   const { userTrips, reloadUserTrips } = useActiveTrip();
-  const [activeAdventure, setActiveAdventureState] = useState<ActiveAdventureData | null>(initialAdventure);
+  const [activeAdventure, setActiveAdventureState] = useState<ActiveAdventureData | null>(null);
   const [cache, setCache] = useState<AdventuresCache>(EMPTY_CACHE);
   const [isPending, startTransition] = useTransition();
+  const mountedRef = React.useRef(true);
+  const initialSelectionResolved = React.useRef(false);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+  const activeKey = adventureStorageKey(ACTIVE_KEY, userId);
+  const cacheKey = adventureStorageKey(ADVENTURES_CACHE_KEY, userId);
+  const sectionsKey = adventureStorageKey(LAST_SECTION_KEY, userId);
 
   // Restauration au montage (le hub s'ouvre sur l'aventure, jamais une liste d'abord).
   useEffect(() => {
-    if (!initialAdventure) {
+    if (activeKey) {
       try {
-        const stored = localStorage.getItem(ACTIVE_KEY);
+        const stored = localStorage.getItem(activeKey);
         const parsed = parseStoredAdventure(stored);
         if (parsed) setActiveAdventureState(parsed);
       } catch {
         /* stockage indisponible */
       }
     }
-  }, [initialAdventure]);
+  }, [activeKey]);
 
   const reloadAdventures = useCallback(async (): Promise<void> => {
+    if (!userId || !cacheKey) return;
     await reloadUserTrips();
+    if (!mountedRef.current) return;
     try {
       const res = await fetch('/api/hub/adventures', { cache: 'no-store' });
+      if (!res.ok) throw new Error('Adventures unavailable');
       const data = await res.json();
+      if (!mountedRef.current) return;
       const next: AdventuresCache = {
         groups: Array.isArray(data?.groups) ? data.groups : [],
         possession: {
@@ -129,14 +154,21 @@ export function ActiveAdventureProvider({ initialAdventure = null, children }: A
         pendingInvites: Number(data?.pendingInvites ?? 0),
       };
       setCache(next);
+      if (!initialSelectionResolved.current && initialAdventure?.nature === 'collectif' && next.groups.some((group) => group.id === initialAdventure.id)) {
+        setActiveAdventureState((current) => current ?? initialAdventure);
+      } else if (!initialSelectionResolved.current && initialAdventure?.nature === 'possession') {
+        setActiveAdventureState((current) => current ?? initialAdventure);
+      }
+      if (initialAdventure?.nature !== 'sortie') initialSelectionResolved.current = true;
       try {
-        localStorage.setItem(ADVENTURES_CACHE_KEY, JSON.stringify({ at: Date.now(), ...next }));
+        localStorage.setItem(cacheKey, JSON.stringify({ at: Date.now(), ...next }));
       } catch {
         /* stockage indisponible */
       }
     } catch {
       try {
-        const cached = localStorage.getItem(ADVENTURES_CACHE_KEY);
+        if (!mountedRef.current) return;
+        const cached = localStorage.getItem(cacheKey);
         if (cached) {
           const parsed = JSON.parse(cached);
           setCache({
@@ -153,7 +185,15 @@ export function ActiveAdventureProvider({ initialAdventure = null, children }: A
         /* ignoré */
       }
     }
-  }, [reloadUserTrips]);
+  }, [userId, cacheKey, reloadUserTrips, initialAdventure]);
+
+  useEffect(() => {
+    if (!userId || initialSelectionResolved.current || initialAdventure?.nature !== 'sortie') return;
+    if (userTrips.some((trip) => trip.id === initialAdventure.id)) {
+      setActiveAdventureState((current) => current ?? initialAdventure);
+      initialSelectionResolved.current = true;
+    }
+  }, [userId, userTrips, initialAdventure]);
 
   useEffect(() => {
     reloadAdventures();
@@ -184,18 +224,20 @@ export function ActiveAdventureProvider({ initialAdventure = null, children }: A
     [userTrips, cache],
   );
 
-  const activeAdventureRef = React.useRef<ActiveAdventureData | null>(initialAdventure);
+  const activeAdventureRef = React.useRef<ActiveAdventureData | null>(null);
   useEffect(() => {
     activeAdventureRef.current = activeAdventure;
   }, [activeAdventure]);
 
   const persist = useCallback(async (data: ActiveAdventureData | null): Promise<boolean> => {
+    if (!activeKey || !mountedRef.current) return false;
+    initialSelectionResolved.current = true;
     const previous = activeAdventureRef.current;
     const applyLocal = (value: ActiveAdventureData | null) => {
       setActiveAdventureState(value);
       try {
-        if (value) localStorage.setItem(ACTIVE_KEY, JSON.stringify(value));
-        else localStorage.removeItem(ACTIVE_KEY);
+        if (value) localStorage.setItem(activeKey, JSON.stringify(value));
+        else localStorage.removeItem(activeKey);
       } catch {
         /* stockage indisponible */
       }
@@ -209,7 +251,7 @@ export function ActiveAdventureProvider({ initialAdventure = null, children }: A
       const done = (ok: boolean) => {
         if (settled) return;
         settled = true;
-        if (!ok) applyLocal(previous);
+        if (!ok && mountedRef.current) applyLocal(previous);
         resolve(ok);
       };
       const timer = setTimeout(() => done(false), 15000);
@@ -224,7 +266,7 @@ export function ActiveAdventureProvider({ initialAdventure = null, children }: A
         }
       });
     });
-  }, []);
+  }, [activeKey]);
 
   const setActiveAdventure = useCallback(
     (data: ActiveAdventureData) => persist(data),
@@ -256,22 +298,23 @@ export function ActiveAdventureProvider({ initialAdventure = null, children }: A
   );
 
   const getLastSection = useCallback((key: string): string | null => {
+    if (!sectionsKey) return null;
     try {
-      return readLastSections()[key] ?? null;
+      return readLastSections(sectionsKey)[key] ?? null;
     } catch {
       return null;
     }
-  }, []);
+  }, [sectionsKey]);
 
   const setLastSection = useCallback((key: string, sectionId: string) => {
+    if (!sectionsKey) return;
     try {
-      const map = readLastSections();
-      map[key] = sectionId;
-      localStorage.setItem(LAST_SECTION_KEY, JSON.stringify(map));
+      const map = { ...readLastSections(sectionsKey), [key]: sectionId };
+      localStorage.setItem(sectionsKey, JSON.stringify(map));
     } catch {
       /* ignoré */
     }
-  }, []);
+  }, [sectionsKey]);
 
   return (
     <ActiveAdventureContext.Provider

@@ -1,0 +1,265 @@
+import { describe, it, expect, vi } from 'vitest';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { DestinationStep } from '../components/DestinationStep';
+import {
+  canCreateStepOne,
+  stepOneMissingSummary,
+  stepOneProfile,
+  stepOneProfileIdFor,
+} from '../components/stepOneProfile';
+import { fullDraft, CHAMONIX, ARGENTIERE } from './fixtures';
+import type { AdventurePrepDraft } from '../types';
+
+/**
+ * Meme harnais que destination-screen.test.tsx : sous `renderToStaticMarkup`,
+ * zustand v5 sert l etat INITIAL. Le module du store est donc remplace par un
+ * selecteur pur - le composant est reellement execute, seule la source de
+ * donnees change.
+ */
+const state = vi.hoisted(() => ({ current: null as { draft: AdventurePrepDraft } | null }));
+
+vi.mock('../store/useAdventurePrepStore', () => {
+  const use = ((selector: (store: { draft: AdventurePrepDraft }) => unknown) =>
+    selector(state.current as { draft: AdventurePrepDraft })) as unknown as {
+    getState: () => unknown;
+  };
+  use.getState = () => state.current;
+  return { useAdventurePrepStore: use };
+});
+
+const noop = () => undefined;
+
+function render(draft: AdventurePrepDraft): string {
+  state.current = { draft };
+  return renderToStaticMarkup(React.createElement(DestinationStep, { onOpenSheet: noop }));
+}
+
+function visible(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+const RANDO = { primary: 'rando-journee', extra: [], nights: [] };
+const ROADTRIP = { primary: 'roadtrip', extra: [], nights: [] };
+const SEJOUR = { primary: 'city-break', extra: [], nights: [] };
+const LOCAL = { primary: 'kayak', extra: [], nights: [] };
+
+const CAL_EMPTY = {
+  startDate: null,
+  durationDays: null,
+  durationIsSuggested: false,
+  returnDate: null,
+};
+
+describe('S11 — le bon ecran pour la bonne aventure', () => {
+  it('S11-01: une randonnee garde l ecran trajet (10)', () => {
+    expect(stepOneProfileIdFor(RANDO)).toBe('trajet');
+  });
+
+  it('S11-02: un road trip bascule sur l ecran voyage (11)', () => {
+    expect(stepOneProfileIdFor(ROADTRIP)).toBe('voyage');
+  });
+
+  it('S11-03: un sejour autour d un lieu bascule sur l ecran sejour (12)', () => {
+    expect(stepOneProfileIdFor(SEJOUR)).toBe('sejour');
+  });
+
+  it('S11-04: une activite locale bascule sur l ecran local (13)', () => {
+    expect(stepOneProfileIdFor(LOCAL)).toBe('local');
+  });
+
+  it('S11-05: sans activite retenue, l ecran par defaut reste le trajet', () => {
+    expect(stepOneProfileIdFor({ primary: null, extra: [], nights: [] })).toBe('trajet');
+  });
+
+  it('S11-06: le profil se lit sur la principale seule, jamais sur les complements', () => {
+    expect(
+      stepOneProfileIdFor({ primary: 'rando-journee', extra: ['roadtrip'], nights: [] }),
+    ).toBe('trajet');
+  });
+});
+
+describe('S11 — les questions posees', () => {
+  it('S11-07: le trajet pose depart, arrivee, boucle et duree', () => {
+    const profile = stepOneProfile('trajet');
+    expect(profile.rows.map((row) => row.label)).toEqual(['Départ', 'Arrivée']);
+    expect(profile.showRouteShape).toBe(true);
+    expect(profile.cells.map((cell) => cell.label)).toEqual(['Date', 'Temps disponible']);
+  });
+
+  it('S11-08: le voyage pose une destination et un retour, jamais une boucle', () => {
+    const profile = stepOneProfile('voyage');
+    expect(profile.rows.map((row) => row.label)).toEqual(['Départ', 'Destination']);
+    expect(profile.showRouteShape).toBe(false);
+    expect(profile.cells.map((cell) => cell.label)).toEqual(['Départ', 'Retour ou durée']);
+  });
+
+  it('S11-09: le sejour pose un seul lieu de base et les deux dates', () => {
+    const profile = stepOneProfile('sejour');
+    expect(profile.rows).toHaveLength(1);
+    expect(profile.rows[0].label).toBe('Destination ou hébergement de base');
+    expect(profile.cells.map((cell) => cell.label)).toEqual(['Arrivée', 'Départ']);
+  });
+
+  it('S11-10: l activite locale pose un lieu de pratique et une duree indicative', () => {
+    const profile = stepOneProfile('local');
+    expect(profile.rows).toHaveLength(1);
+    expect(profile.rows[0].label).toBe('Lieu de pratique');
+    expect(profile.cells.map((cell) => cell.label)).toEqual(['Date', 'Durée indicative']);
+    expect(profile.cta).toBe('Préparer ma sortie');
+  });
+});
+
+describe('S11 — ce qui manque, sans question inutile', () => {
+  it('S11-11: le sejour ne demande pas de lieu de depart', () => {
+    const draft = fullDraft({
+      activities: SEJOUR,
+      route: { origin: null, destination: ARGENTIERE, shape: 'boucle' },
+    });
+    expect(stepOneMissingSummary(draft, 'sejour')).toBeNull();
+    expect(canCreateStepOne(draft, 'sejour')).toBe(true);
+  });
+
+  it('S11-12: l activite locale ne demande pas d arrivee', () => {
+    const draft = fullDraft({
+      activities: LOCAL,
+      route: { origin: CHAMONIX, destination: null, shape: 'boucle' },
+    });
+    expect(stepOneMissingSummary(draft, 'local')).toBeNull();
+    expect(canCreateStepOne(draft, 'local')).toBe(true);
+  });
+
+  it('S11-13: une boucle n exige pas d arrivee distincte sur un trajet', () => {
+    const draft = fullDraft({
+      activities: RANDO,
+      route: { origin: CHAMONIX, destination: null, shape: 'boucle' },
+    });
+    expect(stepOneMissingSummary(draft, 'trajet')).toBeNull();
+  });
+
+  it('S11-14: le voyage regroupe les deux dates sous un seul libelle', () => {
+    const draft = fullDraft({
+      activities: ROADTRIP,
+      route: { origin: CHAMONIX, destination: null, shape: 'boucle' },
+      calendar: CAL_EMPTY,
+    });
+    expect(stepOneMissingSummary(draft, 'voyage')).toBe('Il manque : destination, dates');
+  });
+
+  it('S11-15: le sejour resume ses deux dates en une seule ligne', () => {
+    const draft = fullDraft({
+      activities: SEJOUR,
+      route: { origin: null, destination: ARGENTIERE, shape: 'boucle' },
+      calendar: CAL_EMPTY,
+    });
+    expect(stepOneMissingSummary(draft, 'sejour')).toBe('Il manque : dates du séjour');
+  });
+
+  it('S11-16: l activite locale nomme la date et la duree', () => {
+    const draft = fullDraft({
+      activities: LOCAL,
+      route: { origin: CHAMONIX, destination: null, shape: 'boucle' },
+      calendar: CAL_EMPTY,
+    });
+    expect(stepOneMissingSummary(draft, 'local')).toBe('Il manque : date, durée');
+  });
+
+  it('S11-17: la date seule ne bloque jamais la generation', () => {
+    const draft = fullDraft({
+      activities: RANDO,
+      calendar: { startDate: null, durationDays: 2, durationIsSuggested: false, returnDate: null },
+    });
+    expect(canCreateStepOne(draft, 'trajet')).toBe(true);
+  });
+});
+
+describe('S11 — rendu des ecrans 10, 11, 12 et 13', () => {
+  it('S11-18: ecran 10 — l aide et la bascule de forme sont la', () => {
+    const text = visible(render(fullDraft({ activities: RANDO })));
+    expect(text).toContain('Boucle');
+    expect(text).toContain('Aller simple');
+    expect(text).toContain('Créer mon parcours');
+  });
+
+  it('S11-19: ecran 11 — un voyage ne propose ni boucle ni arrivee, mais une destination', () => {
+    const draft = fullDraft({
+      activities: ROADTRIP,
+      route: { origin: CHAMONIX, destination: ARGENTIERE, shape: 'aller_simple' },
+    });
+    const text = visible(render(draft));
+    expect(text).toContain('Destination');
+    expect(text).toContain('Retour ou durée');
+    expect(text).not.toContain('Aller simple');
+    expect(text).not.toContain('Inverser départ et arrivée');
+  });
+
+  it('S11-20: ecran 12 — un sejour ne demande qu un lieu de base', () => {
+    const draft = fullDraft({
+      activities: SEJOUR,
+      route: { origin: null, destination: ARGENTIERE, shape: 'aller_simple' },
+    });
+    const text = visible(render(draft));
+    expect(text).toContain('Destination ou hébergement de base');
+    expect(text).toContain('Arrivée');
+    expect(text).not.toContain('Boucle');
+  });
+
+  it('S11-21: ecran 13 — une activite locale se prepare avec son propre appel', () => {
+    const draft = fullDraft({
+      activities: LOCAL,
+      route: { origin: CHAMONIX, destination: null, shape: 'boucle' },
+    });
+    const text = visible(render(draft));
+    expect(text).toContain('Lieu de pratique');
+    expect(text).toContain('Durée indicative');
+    expect(text).toContain('Préparer ma sortie');
+    expect(text).not.toContain('Créer mon parcours');
+  });
+
+  it('S11-22: aucun ecran ne fabrique de date, de prix ou de distance', () => {
+    for (const activities of [RANDO, ROADTRIP, SEJOUR, LOCAL]) {
+      const text = visible(render(fullDraft({ activities })));
+      expect(text).not.toMatch(/\d+\s*€/);
+      expect(text).not.toMatch(/\d+\s*km\b/i);
+      expect(text).not.toMatch(/\d+\s*%/);
+    }
+  });
+  it('S11-26: un CTA bloque garde son libelle et se desactive', () => {
+    // Un libelle « Completer la destination » alors qu'il manque le depart et
+    // la date designait le mauvais champ. Le bouton garde donc son libelle, la
+    // ligne « Il manque : ... » juste au-dessus explique quoi corriger.
+    const partial = {
+      ...fullDraft({ activities: RANDO }),
+      route: { ...fullDraft({ activities: RANDO }).route, destination: null },
+    };
+    const text = visible(render(partial));
+    expect(stepOneProfileIdFor(RANDO)).toBe('trajet');
+    expect(canCreateStepOne(partial, 'trajet')).toBe(false);
+    expect(text).toContain('Créer mon parcours');
+    expect(text).not.toContain('Compléter');
+    expect(text).toContain('Il manque');
+  });
+  it('S11-27: l ecran local ne parle jamais de depart', () => {
+    // L'ecran 13 affiche « Lieu de pratique » et dit « Pas de trajet » :
+    // annoncer « Il manque : lieu de départ » serait une contradiction. Le
+    // resume nomme le champ tel que l'ecran l'affiche.
+    const base = fullDraft({ activities: LOCAL });
+    const sansLieu = { ...base, route: { ...base.route, origin: null } };
+    const sansRien = {
+      ...base,
+      route: { ...base.route, origin: null },
+      calendar: { ...base.calendar, startDate: null },
+    };
+    expect(stepOneMissingSummary(sansLieu, 'local')).toBe('Il manque : lieu de pratique');
+    expect(stepOneMissingSummary(sansRien, 'local')).toBe('Il manque : lieu de pratique, date');
+    expect(stepOneMissingSummary(sansRien, 'local')).not.toContain('depart');
+  });
+});

@@ -1,4 +1,5 @@
 import { imageHosts } from './image-hosts.config.mjs';
+import { buildRedirects } from './route-redirects.config.mjs';
 import bundleAnalyzer from '@next/bundle-analyzer';
 
 const withBundleAnalyzer = bundleAnalyzer({
@@ -12,11 +13,8 @@ const nextConfig = {
   distDir: process.env.DIST_DIR || '.next',
   compress: true,
 
-  // Dev-only : l'indicateur « N » flotte au-dessus de l'UI mobile (bouton retour,
-  // recherche). En bas à droite il ne masque plus le chrome de l'app.
-  devIndicators: {
-    position: 'bottom-right',
-  },
+  // L'aperçu local doit laisser la navigation mobile entièrement utilisable.
+  devIndicators: false,
 
   typescript: {
     ignoreBuildErrors: false,
@@ -90,69 +88,13 @@ const nextConfig = {
   },
 
   async redirects() {
-    return [
-      // H-AUTO-43 : /groupes reste CANONIQUE (recette Tony H-AUTO-40 — la
-      // section groupe du hub pointe vers /groupes, /equipages si équipage).
-      // L'ancien 301 /groupes → /equipages créait une chaîne de redirections
-      // et cassait la nav communauté (tab "Groupes").
-      {
-        source: '/voyage-ia',
-        destination: '/voyages/nouveau',
-        permanent: true,
-      },
-      {
-        source: '/mon-kit',
-        destination: '/explorer',
-        permanent: true,
-      },
-      {
-        source: '/inventaire',
-        destination: '/explorer',
-        permanent: true,
-      },
-      {
-        source: '/shop',
-        destination: '/explorer',
-        permanent: true,
-      },
-      {
-        source: '/catalogue/:path*',
-        destination: '/explorer',
-        permanent: true,
-      },
-      {
-        source: '/configurateur',
-        destination: '/ai-configurator',
-        permanent: true,
-      },
-      {
-        source: '/ateliers',
-        destination: '/explorer',
-        permanent: false,
-      },
-      {
-        source: '/presse',
-        destination: '/contact',
-        permanent: false,
-      },
-      {
-        source: '/confidentialite',
-        destination: '/politique-confidentialite',
-        permanent: true,
-      },
-      {
-        source: '/carte',
-        destination: '/explorer',
-        permanent: true,
-      },
-      {
-        // ATLAS — « Earth » retiré : la racine /pays (globe) est remplacée par
-        // l'explorateur unifié. Les fiches /pays/[code] restent servies.
-        source: '/pays',
-        destination: '/explorer',
-        permanent: false,
-      },
-    ];
+    // P6 : AUCUNE liste de 301 en dur. Tout est derive de la source unique
+    // src/constants/routeRegistry.json (via route-redirects.config.mjs).
+    // H-AUTO-43 : /groupes reste CANONIQUE — la section groupe du hub pointe
+    // vers /groupes. Le registre le porte en `kept`, jamais en redirection.
+    // La coherence du registre est verrouillee par
+    // tests/routing/no-broken-links.spec.ts.
+    return buildRedirects();
   },
 
   async headers() {

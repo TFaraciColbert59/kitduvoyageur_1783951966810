@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import Image from 'next/image';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
@@ -301,7 +301,7 @@ export default function AbonnementsPage() {
                 </div>
                 <div className="flex items-center justify-between border-t border-[color:var(--lkv-border)] pt-[var(--space-4)]">
                   <span className="text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-muted)]">Valeur totale estimée</span>
-                  <span className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-primary)]">
+                  <span className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">
                     ~{BOX_PREVIEWS[activeBox].totalValue}€
                   </span>
                 </div>
@@ -333,7 +333,7 @@ export default function AbonnementsPage() {
           </div>
           <div className="mt-[var(--space-6)] text-center">
             <p className="mb-[var(--space-3)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">Profil sélectionné : <span className="text-[color:var(--lkv-text-secondary)]">{PROFILES.find((p) => p.id === selectedProfile)?.label}</span></p>
-            <Link href="/ai-configurator" className={AI_LINK_CLASS}>
+            <Link href="/prepare?tab=equipement" className={AI_LINK_CLASS}>
               <Icon name="SparklesIcon" size={16} variant="outline" />
               Affiner mon profil avec l&apos;IA
             </Link>
@@ -358,9 +358,9 @@ export default function AbonnementsPage() {
 
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           {content}
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

@@ -100,6 +100,8 @@ export interface HubHikingContext {
   elevationLossM: number | null;
   durationMin: number | null;
   waterPointsCount: number;
+  /** Géométrie GeoJSON réelle du parcours (jamais synthétisée côté client). */
+  routeGeojson?: Record<string, unknown> | null;
   coords: { lat: number; lon: number } | null;
   weather: {
     current: { tempC: number; weathercode: number; precipPct: number };
@@ -445,12 +447,13 @@ async function loadHikingContext(
   let elevationLossM = stats.hasData ? stats.elevationLossM : null;
   let durationMin: number | null = null;
   let routeNavigable = false;
+  let routeGeojson: Record<string, unknown> | null = null;
 
   if (routeId) {
     const numericId = Number(routeId);
     if (Number.isFinite(numericId)) {
       try {
-        const [routeRes, metaRes, navigableRes] = await Promise.all([
+        const [routeRes, metaRes, navigableRes, geojsonRes] = await Promise.all([
           supabase.from('hiking_routes').select('id, name, distance_km').eq('id', numericId).maybeSingle(),
           supabase
             .from('trail_metadata')
@@ -461,12 +464,32 @@ async function loadHikingContext(
           // (non nulle, non vide, ≥ 2 points, valide). Toute erreur/RPC absente
           // reste false — jamais de navigation optimiste.
           supabase.rpc('phase3_route_navigable', { p_route_id: numericId }),
+          // La colonne geom est un WKB PostGIS hexadécimal : la lire via PostgREST
+          // ne produit pas du GeoJSON. La RPC existante convertit la géométrie
+          // avec ST_AsGeoJSON, exactement comme /api/hikes/[id] et l'Explorer.
+          supabase.rpc('get_route_geojson', { p_route_id: numericId }),
         ]);
-        const route = routeRes.data as { name?: string | null; distance_km?: number | null } | null;
+        const route = routeRes.data as {
+          name?: string | null;
+          distance_km?: number | null;
+        } | null;
         const tm = metaRes.data as { duration_hours?: number | null; elevation_gain?: number | null; elevation_loss?: number | null } | null;
         if (route) {
           routeName = route.name ?? null;
           if (route.distance_km != null) distanceKm = route.distance_km;
+          const rawGeojson = geojsonRes?.data;
+          if (!geojsonRes?.error && typeof rawGeojson === 'string') {
+            try {
+              const parsed = JSON.parse(rawGeojson) as unknown;
+              if (parsed && typeof parsed === 'object') {
+                routeGeojson = parsed as Record<string, unknown>;
+              }
+            } catch {
+              /* RPC inattendue : la carte retombera sur les étapes */
+            }
+          } else if (!geojsonRes?.error && rawGeojson && typeof rawGeojson === 'object') {
+            routeGeojson = rawGeojson as Record<string, unknown>;
+          }
         }
         if (tm) {
           if (tm.elevation_gain != null) elevationGainM = tm.elevation_gain;
@@ -518,9 +541,43 @@ async function loadHikingContext(
     elevationLossM,
     durationMin,
     waterPointsCount,
+    routeGeojson,
     coords,
     weather,
   };
+}
+
+/**
+ * Défaut intelligent : sans aventure choisie (pas de cookie), on ouvre sur le
+ * voyage le plus récent qui possède un parcours géolocalisé. Le hub affiche
+ * alors la carte globe + l'itinéraire réel + les POI éditables au lieu d'un
+ * tiroir « possession » générique. Un choix explicite (cookie) reste
+ * prioritaire : ce repli ne s'applique que stored === null.
+ */
+async function resolveDefaultSortie(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+): Promise<ActiveAdventureData | null> {
+  const { data } = await supabase
+    .from('trips')
+    .select('id, slug, title, trip_steps(latitude, longitude)')
+    .eq('user_id', userId)
+    .order('start_date', { ascending: false, nullsFirst: false })
+    .limit(8);
+  for (const row of (data ?? []) as Array<{
+    id: string;
+    slug: string | null;
+    title: string | null;
+    trip_steps?: Array<{ latitude: number | null; longitude: number | null }>;
+  }>) {
+    const hasGeo = (row.trip_steps ?? []).some(
+      (s) => s.latitude != null && s.longitude != null,
+    );
+    if (hasGeo && row.slug) {
+      return { nature: 'sortie', id: row.id, slug: row.slug, title: row.title ?? 'Voyage' };
+    }
+  }
+  return null;
 }
 
 export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
@@ -531,7 +588,12 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
     traceStage('auth.getUser', () => supabase.auth.getUser()),
     getActiveAdventure(),
   ]);
-  const adventure: ActiveAdventureData = stored ?? { nature: 'possession' };
+  // Sans aventure choisie (pas de cookie), on ouvre par défaut sur le voyage
+  // géolocalisé le plus récent : le hub montre alors la carte globe et
+  // l'itinéraire réel. Un choix explicite (cookie) reste prioritaire.
+  const defaultSortie =
+    !stored && user?.id ? await resolveDefaultSortie(supabase, user.id) : null;
+  const adventure: ActiveAdventureData = stored ?? defaultSortie ?? { nature: 'possession' };
 
   if (adventure.nature === 'sortie') {
     // P0-2 — Étage 2 parallélisé : loadLists (rail) et getTripBySlug (contenu)

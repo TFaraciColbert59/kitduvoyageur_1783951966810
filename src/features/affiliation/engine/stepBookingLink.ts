@@ -7,13 +7,19 @@
  * suivi `/go/<slug>` reste construite au rendu par les composants existants,
  * qui portent `rel="sponsored nofollow"`.
  *
- * Les restaurants sont volontairement exclus : aucun programme d'affiliation
- * associé (documenté dans la spec §4.4).
+ * Les restaurants ne sont pas exclus : un POI `food` produit une intention
+ * `activity` (catégorie partenaire déjà supportée), comme les refuges et
+ * campings qui produisent une intention `hotel`.
  */
 
 import type { AffiliateCategory, AffiliateLink } from '../types/affiliate.types';
 
-export type StepBookingCategory = 'hotel' | 'flight';
+/**
+ * Catégories de réservation produites par le moteur : hébergement, vols (avion
+ * ET train — le comparateur rail est le même), transport terrestre/maritime et
+ * activités (restaurants, visites). Les 4 existent dans `AffiliateCategory`.
+ */
+export type StepBookingCategory = 'hotel' | 'flight' | 'transport' | 'activity';
 
 /**
  * Intention de réservation affiliée générique (étape OU suggestion LLM) : la
@@ -47,6 +53,22 @@ export interface StepBookingContext {
 /** Modes de transport couverts par le comparateur vols/train (Aviasales). */
 const FLIGHT_TRANSPORT_MODES = new Set(['plane', 'train']);
 
+/**
+ * Modes couverts par le comparateur "transport" (location de voiture, bus,
+ * bateau, vélo). La catégorie `transport` existait dans le moteur
+ * d'affiliation mais n'était jamais produite : ces étapes étaient
+ * silencieusement ignorées. La marche reste exclue (rien à réserver).
+ */
+const TRANSPORT_MODES = new Set(['car', 'bus', 'boat', 'bike', 'other']);
+
+const TRANSPORT_LABELS: Record<string, string> = {
+  car: 'Voiture',
+  bus: 'Bus',
+  boat: 'Bateau',
+  bike: 'Vélo',
+  other: 'Transport',
+};
+
 function normalize(value: string | null | undefined): string {
   return (value ?? '').trim().replace(/\s+/g, ' ');
 }
@@ -55,6 +77,8 @@ function normalize(value: string | null | undefined): string {
  * Dérive une intention de réservation affiliée depuis une étape de voyage.
  * - `accommodation_name` → catégorie `hotel` (Booking), recherche hébergement + destination.
  * - `transport_mode` `plane` | `train` → catégorie `flight`, recherche destination.
+ * - `transport_mode` `car` | `bus` | `boat` | `bike` | `other` → catégorie
+ *   `transport` (location du moyen de locomotion), recherche destination.
  * - sinon `null` (rien à réserver, rien n'est inventé).
  */
 export function buildStepBookingLink(
@@ -79,6 +103,15 @@ export function buildStepBookingLink(
       category: 'flight',
       label: destination ? `${modeLabel} vers ${destination}` : modeLabel,
       searchTerms: destination,
+    };
+  }
+
+  if (TRANSPORT_MODES.has(mode)) {
+    const modeLabel = TRANSPORT_LABELS[mode] ?? 'Transport';
+    return {
+      category: 'transport',
+      label: destination ? `${modeLabel} — ${destination}` : modeLabel,
+      searchTerms: [modeLabel, destination].filter(Boolean).join(' '),
     };
   }
 
@@ -223,6 +256,116 @@ export function resolveBookingByStepId(
     });
     if (resolved) {
       out[step.id] = resolved;
+    }
+  }
+
+  return out;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Préparateur de voyage — intentions de réservationderivées des POI (trip_pois)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface PoiBookingInput {
+  id?: string | null;
+  name: string;
+  category?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
+/** Catégories de POI qui se réservent (table trip_pois + vocabulaire libre). */
+const POI_FOOD_CATEGORIES = new Set(['food', 'restaurant', 'resto', 'table', 'repas', 'diner']);
+const POI_STAY_CATEGORIES = new Set(['refuge', 'camp', 'camping', 'gite', 'gîte', 'hut', 'bivouac']);
+
+function poiKey(category: string | null | undefined): string {
+  return normalize(category).toLowerCase();
+}
+
+/**
+ * Dérive une intention de réservation affiliée depuis un POINT D'INTÉRÊT.
+ * - `food` (restaurants) → catégorie `activity`.
+ * - `refuge` | `camp` → catégorie `hotel` (nuitées).
+ * - eau, sommet, panorama, col, autre → `null` (rien à réserver).
+ *
+ * Complète `buildStepBookingLink` : l'étape porte la nuit ET le trajet, le POI
+ * porte le resto, le refuge, la fontaine, le point de vue. Le préparateur
+ * affiche les deux, jamais le même objet deux fois.
+ */
+export function buildPoiBookingLink(
+  poi: PoiBookingInput,
+  context: StepBookingContext
+): StepBookingSuggestion | null {
+  const name = normalize(poi.name);
+  if (!name) return null;
+
+  const destination = normalize(context.destinationName);
+  const key = poiKey(poi.category);
+
+  if (POI_STAY_CATEGORIES.has(key)) {
+    return {
+      category: 'hotel',
+      label: `Hébergement — ${name}`,
+      searchTerms: [name, destination].filter(Boolean).join(' '),
+    };
+  }
+
+  if (POI_FOOD_CATEGORIES.has(key)) {
+    return {
+      category: 'activity',
+      label: `Table — ${name}`,
+      searchTerms: [name, destination].filter(Boolean).join(' '),
+    };
+  }
+
+  return null;
+}
+
+export interface PoiBookingSource extends PoiBookingInput {
+  id: string;
+}
+
+/** Indexe les intentions de réservation par id de POI. */
+export function buildBookingByPoiId(
+  pois: readonly PoiBookingSource[],
+  context: StepBookingContext
+): Record<string, StepBookingSuggestion> {
+  const out: Record<string, StepBookingSuggestion> = {};
+
+  for (const poi of pois) {
+    const suggestion = buildPoiBookingLink(poi, context);
+    if (suggestion) {
+      out[poi.id] = suggestion;
+    }
+  }
+
+  return out;
+}
+
+export interface ResolvedPoiBookingSource extends PoiBookingSource {
+  locationName?: string | null;
+}
+
+/**
+ * Carte `bookingByPoiId` résolue côté serveur (loader du préparateur) : chaque
+ * POI réservable porte le slug exact du lien partenaire à rendre.
+ */
+export function resolveBookingByPoiId(
+  pois: readonly ResolvedPoiBookingSource[],
+  candidates: readonly AffiliateLink[],
+  context: StepBookingContext
+): Record<string, ResolvedStepBookingLink> {
+  const out: Record<string, ResolvedStepBookingLink> = {};
+
+  for (const poi of pois) {
+    const booking = buildPoiBookingLink(poi, context);
+    if (!booking) continue;
+    const resolved = resolveStepBookingLink(booking, candidates, {
+      ...context,
+      stepLocationName: poi.locationName,
+    });
+    if (resolved) {
+      out[poi.id] = resolved;
     }
   }
 

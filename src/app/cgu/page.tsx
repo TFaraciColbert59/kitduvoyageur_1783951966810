@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
@@ -121,20 +121,20 @@ function CGUSections() {
 function MobileCGUSections() {
   const sectionClass = 'mb-[var(--space-6)]';
   const h2Class =
-    'mb-[var(--space-2)] border-b border-[color:var(--lkv-border-subtle)] pb-1.5 text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-primary)]';
+    'mb-[var(--space-2)] border-b border-[color:var(--lkv-border-subtle)] pb-1.5 text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]';
   const pClass =
-    'text-[length:var(--lkv-text-caption-1)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-primary)]/80';
-  const linkClass = 'text-[color:var(--lkv-primary)] underline';
+    'text-[length:var(--lkv-text-caption-1)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-primary)]/80';
+  const linkClass = 'text-[color:var(--lkv-text-primary)] underline';
 
   return (
     <div className="p-[var(--space-4)]">
-      <p className="mb-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.14em] text-[color:var(--lkv-primary)]">
+      <p className="mb-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.14em] text-[color:var(--lkv-text-primary)]">
         Conditions d&apos;utilisation
       </p>
-      <h1 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-title-lg)] font-extrabold text-[color:var(--lkv-primary)]">
+      <h1 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-title-lg)] font-extrabold text-[color:var(--lkv-text-primary)]">
         Conditions Générales d&apos;Utilisation
       </h1>
-      <p className="mb-[var(--space-6)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/50">
+      <p className="mb-[var(--space-6)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]/50">
         En vigueur au 1er juillet 2026
       </p>
 
@@ -175,9 +175,9 @@ function MobileCGUSections() {
 
       <div className="mt-[var(--space-6)] flex flex-wrap gap-[var(--space-2)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-4)]">
         <Link href="/cgv" className={linkClass}>CGV</Link>
-        <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/20">·</span>
+        <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]/20">·</span>
         <Link href="/politique-confidentialite" className={linkClass}>Confidentialité</Link>
-        <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/20">·</span>
+        <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]/20">·</span>
         <Link href="/mentions-legales" className={linkClass}>Mentions légales</Link>
       </div>
     </div>
@@ -229,9 +229,9 @@ export default function CGUPage() {
 
       {/* MOBILE */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <MobileCGUSections />
-        </MobilePageShell>
+        </AppShell>
         
       </div>
     </>

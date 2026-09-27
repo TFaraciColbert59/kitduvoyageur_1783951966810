@@ -30,7 +30,7 @@ export default function CommandesCard({ commandes }: CommandesCardProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[color:var(--lkv-primary)]/5 pb-4">
         <div>
-          <h3 className="font-display font-bold text-2xl text-[color:var(--lkv-primary)] tracking-tight">
+          <h3 className="font-display font-bold text-2xl text-[color:var(--lkv-text-primary)] tracking-tight">
             Commandes <span className="font-serif italic font-normal">& abonnements</span>
           </h3>
           <p className="text-xs font-mono text-[color:var(--lkv-text-muted)] mt-0.5">
@@ -38,12 +38,12 @@ export default function CommandesCard({ commandes }: CommandesCardProps) {
           </p>
         </div>
 
-        <Link href="/compte/commandes" className="text-xs font-bold text-[color:var(--lkv-forest-600)] hover:text-[color:var(--lkv-primary)] transition-colors">
+        <Link href="/compte/commandes" className="text-xs font-bold text-[color:var(--lkv-forest-600-ink)] hover:text-[color:var(--lkv-text-primary)] transition-colors">
           Historique complet →
         </Link>
       </div>
 
-      <p className="text-xs text-[color:var(--lkv-forest-600)]/70 leading-relaxed">
+      <p className="text-xs text-[color:var(--lkv-forest-600-ink)]/70 leading-relaxed">
         Les dernières commandes passées sur la boutique, plus l'état de votre abonnement premium.
       </p>
 
@@ -65,11 +65,11 @@ export default function CommandesCard({ commandes }: CommandesCardProps) {
                 />
               </div>
               <div className="min-w-0">
-                <h4 className="font-bold text-sm sm:text-base text-[color:var(--lkv-primary)] truncate">
+                <h4 className="font-bold text-sm sm:text-base text-[color:var(--lkv-text-primary)] truncate">
                   {item.product_name}
                 </h4>
-                <p className="text-xs font-mono text-[color:var(--lkv-forest-600)]/60 mt-0.5">
-                  {item.order_number} · <span className="font-bold text-[color:var(--lkv-primary)]">{item.price}</span>
+                <p className="text-xs font-mono text-[color:var(--lkv-forest-600-ink)]/60 mt-0.5">
+                  {item.order_number} · <span className="font-bold text-[color:var(--lkv-text-primary)]">{item.price}</span>
                 </p>
               </div>
             </div>
