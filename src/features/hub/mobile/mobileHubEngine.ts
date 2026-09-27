@@ -37,6 +37,7 @@ import {
 import { tripSwitchHref } from '@/features/trips/registry/tripSectionRegistry';
 import { getCanonicalTripSteps } from '@/features/trips/hooks/useTripCounters';
 import { getTripDistance } from '@/features/trips/hooks/useTripDistance';
+import { addCivilDays, formatCivilDayIndex } from '@/lib/dates/tripDates';
 import type {
   Trip,
   TripFull,
@@ -84,6 +85,13 @@ export interface SortieContext {
   dayIndex: number | null;
   totalDays: number | null;
   daysUntil: number | null;
+  /**
+   * Focus jour choisi dans le plateau de la bottom bar (1..totalDays, ou null
+   * pour la vue globale). PRIORITAIRE sur `dayIndex` : `dayIndex` est
+   * temporel (« aujourd'hui »), `focusDay` est un choix explicite de
+   * l'utilisateur qui doit prévaloir dans toutes les phases.
+   */
+  focusDay?: number | null;
 }
 
 export interface SortieSectionBadges {
@@ -347,11 +355,58 @@ export function buildSortieInfoChips(args: {
   return chips;
 }
 
+export interface SortieDayScope {
+  day: number;
+  totalDays: number | null;
+  stepsCount: number;
+  totalKm: number;
+  dPlus: number;
+}
+
+/**
+ * Chips re-cedes sur le jour focalise.
+ *
+ * Seules les trois grandeurs MESUREES en distance changent (distance, etapes,
+ * denivele) : la meteo, le lieu, le depense et l'equipement restent des
+ * informations de voyage, pas du jour — les recopier serait un mensonge. Le
+ * decompte reste global lui aussi (il date le depart, pas le jour).
+ *
+ * Fonction pure et non destructive : la liste d'origine n'est jamais modifiee
+ * (les chips serveur restent intactes pour la vue globale).
+ */
+export function scopeSortieChipsToDay(
+  chips: readonly MobileInfoChip[],
+  scope: SortieDayScope
+): MobileInfoChip[] {
+  return chips.map((chip) => {
+    if (chip.key === 'distance') {
+      return {
+        ...chip,
+        value: scope.totalKm > 0 ? `${formatKm(scope.totalKm)} km` : '—',
+        label: 'Distance du jour',
+      };
+    }
+    if (chip.key === 'steps') {
+      return { ...chip, value: String(scope.stepsCount), label: 'Étapes du jour' };
+    }
+    if (chip.key === 'elevation') {
+      return {
+        ...chip,
+        value: scope.dPlus > 0 ? `+${scope.dPlus.toLocaleString('fr-FR')} m` : '—',
+        label: 'Dénivelé du jour',
+      };
+    }
+    return chip;
+  });
+}
+
 export interface SortieMoment {
   eyebrow: string;
   badge: string;
   dateLabel: string | null;
   title: string;
+  /** Jour focalise (plateau bottom bar) ou null = vue globale du voyage. */
+  focusDay: number | null;
   distanceKm: number;
   dPlus: number;
   dMinus: number;
@@ -434,6 +489,79 @@ function localIsoOf(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+/** Jour focalisable : entier >= 1 (0, null, NaN et negatifs sont rejetes). */
+function isFocusDay(value: number | null | undefined): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 1;
+}
+
+function checkpointDateIso(checkpoint: TripSafetyCheckpoint): string | null {
+  if (!checkpoint.scheduled_at) return null;
+  const parsed = new Date(checkpoint.scheduled_at);
+  return Number.isNaN(parsed.getTime())
+    ? checkpoint.scheduled_at.slice(0, 10)
+    : localIsoOf(parsed);
+}
+
+function earliestCheckpoint(checkpoints: TripSafetyCheckpoint[]): TripSafetyCheckpoint | null {
+  return [...checkpoints].sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at))[0] ?? null;
+}
+
+/**
+ * Moment focalise sur UN jour : memes informations que la vue globale
+ * (distance, denivele, etapes, POI, hebergement, controle, note) mais
+ * mesurees sur ce seul jour.
+ *
+ * Le point critique est `routeCoords` / `routePois` : ils sont STRICTEMENT
+ * limites au jour. Sans cela la carte continuerait d'afficher le trace
+ * complet du voyage alors que le panneau annonce le jour 2 — exactement
+ * l'incoherence que le focus jour supprime.
+ */
+function buildDayFocusedMoment(args: {
+  trip: TripFull;
+  allSteps: TripStep[];
+  day: number;
+  totalDays: number | null;
+}): SortieMoment {
+  const { trip, allSteps, day, totalDays } = args;
+  const daySteps = allSteps.filter((step) => step.day_number === day);
+  const dayStepIds = new Set(daySteps.map((step) => step.id));
+  const dayMetrics = getTripDistance(daySteps);
+  const dayCoords = dedupeCoords(
+    daySteps.map(stepCoords).filter((coord): coord is [number, number] => coord !== null)
+  );
+  const dayPois = (trip.pois ?? []).filter(
+    (poi) => poi.step_id != null && dayStepIds.has(poi.step_id)
+  );
+  const pending = (trip.safety_checkpoints ?? []).filter(
+    (checkpoint) => checkpoint.status !== 'checked'
+  );
+  const dayIso = trip.start_date ? addCivilDays(trip.start_date, day - 1) : null;
+  const sameDay = dayIso
+    ? pending.filter((checkpoint) => checkpointDateIso(checkpoint) === dayIso)
+    : [];
+  const checkpoint = earliestCheckpoint(sameDay.length > 0 ? sameDay : pending);
+
+  return {
+    eyebrow: 'Journee',
+    badge: totalDays ? `Jour ${day}/${totalDays}` : `Jour ${day}`,
+    dateLabel: formatCivilDayIndex(trip.start_date, day, { weekday: 'short' }),
+    title: daySteps[0]?.title ?? `Jour ${day}`,
+    focusDay: day,
+    distanceKm: dayMetrics.totalKm,
+    dPlus: dayMetrics.dPlus,
+    dMinus: dayMetrics.dMinus,
+    stepCount: daySteps.length,
+    pois: dayPois,
+    routePois: dayPois.filter(hasValidPoiCoords),
+    accommodation: daySteps.find((step) => step.accommodation_name)?.accommodation_name ?? null,
+    checkpoint,
+    note: (trip.notes ?? []).find((entry) => entry.day_number === day) ?? null,
+    routeCoords: dayCoords,
+    highlightCoords: dayCoords,
+    highlightSteps: daySteps,
+  };
+}
+
 export function selectSortieMoment(args: {
   trip: TripFull;
   context: SortieContext;
@@ -449,6 +577,19 @@ export function selectSortieMoment(args: {
   const totals = getTripDistance(trip.steps);
   const routePois = (trip.pois ?? []).filter(hasValidPoiCoords);
 
+  // Focus jour : prioritaire sur la phase. Le plateau de la bottom bar est un
+  // choix explicite de l'utilisateur — il doit gagner meme en preparation ou
+  // en bilan, sinon le rail afficherait « J2 » pendant que la carte montre le
+  // voyage entier.
+  if (isFocusDay(context.focusDay)) {
+    return buildDayFocusedMoment({
+      trip,
+      allSteps,
+      day: context.focusDay,
+      totalDays: context.totalDays,
+    });
+  }
+
   if (context.phase === 'live') {
     const day = context.dayIndex ?? 1;
     const daySteps = allSteps.filter((s) => s.day_number === day);
@@ -458,16 +599,9 @@ export function selectSortieMoment(args: {
       .filter((c): c is [number, number] => c !== null);
     const dayStepIds = new Set(daySteps.map((s) => s.id));
     const today = localTodayIso(now);
-    const checkpointDateIso = (c: TripSafetyCheckpoint): string | null => {
-      if (!c.scheduled_at) return null;
-      const parsed = new Date(c.scheduled_at);
-      return Number.isNaN(parsed.getTime()) ? c.scheduled_at.slice(0, 10) : localIsoOf(parsed);
-    };
     const checkpoints = (trip.safety_checkpoints ?? []).filter((c) => c.status !== 'checked');
     const checkpoint =
-      checkpoints.find((c) => checkpointDateIso(c) === today) ??
-      [...checkpoints].sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at))[0] ??
-      null;
+      checkpoints.find((c) => checkpointDateIso(c) === today) ?? earliestCheckpoint(checkpoints);
     const note = (trip.notes ?? []).find((n) => n.day_number === day) ?? null;
 
     return {
@@ -475,6 +609,7 @@ export function selectSortieMoment(args: {
       badge: `Jour ${day}${context.totalDays ? `/${context.totalDays}` : ''}`,
       dateLabel: now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
       title: daySteps[0]?.title ?? `Étape ${day}`,
+      focusDay: null,
       distanceKm: dayDistance.totalKm,
       dPlus: dayDistance.dPlus,
       dMinus: dayDistance.dMinus,
@@ -499,6 +634,7 @@ export function selectSortieMoment(args: {
       badge: 'Bilan',
       dateLabel: shortDate(trip.end_date),
       title: trip.title,
+      focusDay: null,
       distanceKm: totals.totalKm,
       dPlus: totals.dPlus,
       dMinus: totals.dMinus,
@@ -522,6 +658,7 @@ export function selectSortieMoment(args: {
     badge: context.daysUntil != null ? `J-${context.daysUntil}` : 'À venir',
     dateLabel: shortDate(trip.start_date),
     title: first?.title ?? 'Départ',
+    focusDay: null,
     distanceKm: totals.totalKm,
     dPlus: totals.dPlus,
     dMinus: totals.dMinus,

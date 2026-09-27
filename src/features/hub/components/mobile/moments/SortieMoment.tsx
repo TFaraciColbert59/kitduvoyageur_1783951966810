@@ -1,3 +1,5 @@
+'use client';
+
 import type { ReactNode } from 'react';
 import {
   BedDouble,
@@ -18,6 +20,7 @@ import {
 import { HUB_HOME_HREF, hubSectionHref, type HubAdventureRef } from '../../../registry/hubSectionRegistry';
 import { estimateHikeDurationMin, formatHikeDuration } from '../../../engine/activityTypes';
 import { decideHikingNavigation } from '../../../engine/hikingNavigation';
+import { useDayFocusStore } from '@/components/mobile-nav/dayFocusStore';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import type { HubHikingContext } from '../../../server/getHubAdventureData';
 
@@ -40,7 +43,16 @@ function MomentRow({ icon: Icon, label, value }: { icon: LucideIcon; label: stri
 }
 
 export function SortieMoment({ trip, context, hiking, fillViewport = false }: SortieMomentProps) {
-  const moment = selectSortieMoment({ trip, context });
+  // Focus jour (plateau de la bottom bar). Le store n'est jamais persiste et
+  // demarre vide cote serveur comme cote client : le premier rendu reste donc
+  // identique des deux cotes (vue globale), puis la selection s'applique.
+  const focusDay = useDayFocusStore((state) => state.selectedDay);
+  const scopedContext = focusDay == null ? context : { ...context, focusDay };
+  const moment = selectSortieMoment({ trip, context: scopedContext });
+  // Un focus jour et la phase live partagent le meme panneau : meme grille
+  // d'information, seule l'origine du jour change (choix de l'utilisateur
+  // dans le rail vs. jour en cours de la phase temporelle).
+  const isDayView = moment.focusDay != null || context.phase === 'live';
   const ref: HubAdventureRef = { nature: 'sortie', slug: trip.slug };
 
   const points = moment.routePois
@@ -76,7 +88,7 @@ export function SortieMoment({ trip, context, hiking, fillViewport = false }: So
   const navigation = decideHikingNavigation(hiking ?? null);
   const hasRoute = Boolean(hiking?.routeId);
   const cta =
-    context.phase === 'live'
+    isDayView
       ? { href: hubSectionHref(ref, 'itinerary'), label: 'Voir l’itinéraire' }
       : context.phase === 'recount'
         ? { href: `${HUB_HOME_HREF}?phase=recount`, label: 'Voir le bilan' }
@@ -85,14 +97,16 @@ export function SortieMoment({ trip, context, hiking, fillViewport = false }: So
           : { href: hubSectionHref(ref, 'itinerary'), label: 'Voir l’itinéraire' };
 
   const sheetTitle =
-    context.phase === 'live'
-      ? `Étape du jour — ${moment.title}`
+    isDayView
+      ? moment.focusDay != null
+        ? `Jour ${moment.focusDay} — ${moment.title}`
+        : `Étape du jour — ${moment.title}`
       : context.phase === 'recount'
         ? 'Bilan de l’expédition'
         : 'Départ de l’expédition';
 
   let panel: ReactNode;
-  if (context.phase === 'live') {
+  if (isDayView) {
     panel = (
       <>
         <div className="flex items-end justify-between gap-3">
@@ -117,7 +131,14 @@ export function SortieMoment({ trip, context, hiking, fillViewport = false }: So
         </div>
 
         {moment.routePois.length > 0 && (
-          <ul className="mt-2.5 flex gap-1.5 overflow-x-auto" aria-label="Tous les points d’intérêt du voyage">
+          <ul
+            className="mt-2.5 flex gap-1.5 overflow-x-auto"
+            aria-label={
+              moment.focusDay != null
+                ? `Points d’intérêt du jour ${moment.focusDay}`
+                : 'Tous les points d’intérêt du voyage'
+            }
+          >
             {moment.routePois.map((p) => {
               const meta = poiCategoryMeta(p.category, p.name);
               return (
@@ -254,7 +275,10 @@ export function SortieMoment({ trip, context, hiking, fillViewport = false }: So
       badge={moment.badge}
       dateLabel={moment.dateLabel}
       routeCoords={moment.routeCoords}
-      routeGeojson={hiking?.routeGeojson ?? null}
+      // Focus jour : la geometrie du parcours lie est celle du VOYAGE entier.
+      // La garder repeindrait le voyage complet sur la carte du jour — on ne
+      // transmet donc que le trace du jour (`moment.routeCoords`).
+      routeGeojson={moment.focusDay != null ? null : hiking?.routeGeojson ?? null}
       highlightCoords={moment.highlightCoords}
       points={points}
       panel={panel}

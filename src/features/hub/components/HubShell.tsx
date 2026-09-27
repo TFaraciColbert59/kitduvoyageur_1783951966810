@@ -23,9 +23,11 @@ import type { TripSectionId } from '@/features/trips/engine/tripProfileEngine';
 import { PrimaryActionWidget } from '@/features/trips/components/widgets/PrimaryActionWidget';
 import { useHubStore } from '../stores/useHubStore';
 import { useHubLiveSensors } from '../hooks/useHubLiveSensors';
+import { useDayFocusPublisher } from '../hooks/useDayFocusPublisher';
 import { pageViewPayload, useHubTelemetry } from '../hooks/useHubTelemetry';
 import { useAndroidHubBackNav } from '../hooks/useAndroidHubBackNav';
 import { AdventureSwitcher } from './AdventureSwitcher';
+import { HubAdventuresDrawer } from '@/components/mobile-nav/navigation/HubAdventuresDrawer';
 import { NaturePill } from './NaturePill';
 import { NatureSwitcherSheet } from './NatureSwitcherSheet';
 import {
@@ -115,18 +117,19 @@ export function HubShell({
   // de contenu (NaturePill/Switcher masqués là uniquement).
   const isItinerarySection = activeSection === 'itinerary' && adventure.nature === 'sortie';
   // H6.1 — le sélecteur mobile reste piloté par signal (retour Android).
-  const [switcherSignal, setSwitcherSignal] = useState(0);
+  // H6.1 — `hub:open-switcher` (appui long Hub + retour materiel Android)
+  // est desormais consomme par HubAdventuresDrawer, monte plus bas AVANT
+  // l'AdventureSwitcher : un seul dialog Radix modal a la fois. L'ancien
+  // switcher reste atteignable au clavier (Ctrl/Cmd+K ou J) et publie donc
+  // toujours son etat ici — le retour materiel ferme le bon dialogue.
   const [switcherOpen, setSwitcherOpen] = useState(false);
   useEffect(() => {
-    const onOpen = () => setSwitcherSignal((n) => n + 1);
     const onState = (e: Event) => {
       const open = (e as CustomEvent<{ open: boolean }>).detail?.open ?? false;
       setSwitcherOpen(open);
     };
-    window.addEventListener('hub:open-switcher', onOpen);
     window.addEventListener('hub:switcher-state', onState);
     return () => {
-      window.removeEventListener('hub:open-switcher', onOpen);
       window.removeEventListener('hub:switcher-state', onState);
     };
   }, []);
@@ -210,6 +213,12 @@ export function HubShell({
 
   useHubLiveSensors(isTrekActive);
 
+  // Alimente le rail jour de la bottom bar (plateau sous la barre) avec les
+  // journees reelles du voyage actif. Montee ici, au plus pres des donnees :
+  // la barre de navigation vit dans un autre arbre React (app/layout) et ne
+  // connait pas le voyage.
+  useDayFocusPublisher(adventure.nature === 'sortie' ? trip : null);
+
   useAndroidHubBackNav(activeSection, switcherOpen);
 
   const networkStatus = <HubNetworkStatus />;
@@ -259,6 +268,10 @@ export function HubShell({
 
   return (
     <>
+      {/* Maquette 01-drawer — appui long sur l'onglet Hub. Monte AVANT
+          l'AdventureSwitcher pour consommer le signal one-shot hors hub. */}
+      <HubAdventuresDrawer />
+
       {/* T10 — un seul pont realtime du voyage actif pour TOUTE la surface hub
           (racine + sections) : le rail et les reveals le consomment. */}
       <ActivityLiveBridge tripId={adventure.nature === 'sortie' ? adventure.id : null} />
@@ -276,7 +289,7 @@ export function HubShell({
             }
           >
             <div className="hidden">
-              <AdventureSwitcher forceOpenSignal={switcherSignal} variant="mobile" hideTrigger />
+              <AdventureSwitcher variant="mobile" hideTrigger />
             </div>
             {isItinerarySection && itineraryAdventureCockpit ? (
               <div className="mb-4">{itineraryAdventureCockpit}</div>
@@ -296,7 +309,7 @@ export function HubShell({
           <NaturePill nature={displayNature} open={pillOpen} onOpenSwitcher={() => setPillOpen(true)} />
         </div>
       )}
-      <AdventureSwitcher forceOpenSignal={switcherSignal} variant="desktop" hideTrigger />
+      <AdventureSwitcher variant="desktop" hideTrigger />
       {isItinerarySection && itineraryAdventureCockpit ? (
         <div className="mb-3">{itineraryAdventureCockpit}</div>
       ) : null}

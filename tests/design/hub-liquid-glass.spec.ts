@@ -310,7 +310,9 @@ describe('Hub — tiroirs lateraux mobile', () => {
     expect(hubAdventureData).toContain("supabase.rpc('get_route_geojson', { p_route_id: numericId })");
     expect(hubAdventureData).not.toContain("select('id, name, distance_km, geom')");
     expect(hubAdventureData).toContain('routeGeojson');
-    expect(sortieMoment).toContain('routeGeojson={hiking?.routeGeojson ?? null}');
+    // La geometrie du voyage reste transmise, mais neutralisee en focus jour :
+    // la carte du jour ne doit jamais repeindre le trace du voyage entier.
+    expect(sortieMoment).toContain('routeGeojson={moment.focusDay != null ? null : hiking?.routeGeojson ?? null}');
     expect(hubGlobeMap).toContain('routeGeojson?: Record<string, unknown> | null');
     expect(hubGlobeMap).toContain('sanitizeGeoJSON(routeGeojson)');
     expect(hubGlobeMap).not.toContain('unifiedPois.slice(0, 6)');

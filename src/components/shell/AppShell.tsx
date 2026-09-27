@@ -4,6 +4,10 @@ import React from 'react';
 import { usePathname } from 'next/navigation';
 import CompteBackground from '@/components/compte/CompteBackground';
 import { hasExtendedNav } from '@/components/mobile-nav/destinationRegistry';
+import {
+  hasDayFocusPlateau,
+  useDayFocusStore,
+} from '@/components/mobile-nav/dayFocusStore';
 
 export interface AppShellProps {
   children?: React.ReactNode;
@@ -63,10 +67,17 @@ export default function AppShell({
   // de routes dupliquée ici.
   const hasUpperExtension = hasExtendedNav(pathname);
 
+  // Plateau jour : present des que le voyage actif est decoupe en >= 2
+  // journees. Meme fonction pure que WebNavigationBar : les deux etant
+  // dans des arbres React distincts, elle est le seul contrat possible
+  // entre la reservation d'ici et le rendu de la-bas.
+  const dayFocusDays = useDayFocusStore((state) => state.days);
+  const hasDayPlateau = hasDayFocusPlateau(pathname, dayFocusDays);
+
   // Offsets canoniques (tokens.css) : plus aucune valeur 80/68/52 locale.
   const bottomNavHeight = !hasBottomNav
     ? 'var(--page-bottom-inset-bare)'
-    : hasUpperExtension
+    : hasUpperExtension || hasDayPlateau
     ? 'var(--nav-offset-extended)'
     : 'var(--nav-offset)';
 
