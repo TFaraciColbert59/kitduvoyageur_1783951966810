@@ -14,7 +14,7 @@ import CarnetHubCard from '@/components/carnets/CarnetHubCard';
 import CommunityStoriesBar from '@/components/communaute/CommunityStoriesBar';
 import CommunityLeftSidebar from '@/components/communaute/CommunityLeftSidebar';
 import CommunityRightSidebar from '@/components/communaute/CommunityRightSidebar';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import MobileCommunityHub from '@/components/communaute/MobileCommunityHub';
 import CommunityPostCard from '@/components/communaute/CommunityPostCard';
 import LineageDiscovery from '@/components/kits/LineageDiscovery';
@@ -230,7 +230,7 @@ function CommunautePageContent() {
   }, [clubs, clubFilterTab, clubSearchQuery]);
 
   return (
-    <div className="relative min-h-screen font-sans text-[color:var(--lkv-primary)] selection:bg-[color:var(--lkv-primary)]/10 md:h-dvh md:overflow-hidden">
+    <div className="relative min-h-screen font-sans text-[color:var(--lkv-text-primary)] selection:bg-[color:var(--lkv-primary)]/10 md:h-dvh md:overflow-hidden">
       {/* Background immersif végétal / canopée */}
       <CompteBackground />
 
@@ -240,7 +240,7 @@ function CommunautePageContent() {
       <div className="block min-h-screen md:hidden">
         {/* safeTop=false: MobileCommunityHeader embarque son propre header sticky
             (safe-area top gérée par le composant, cf. MobileCommunityHeader.tsx) */}
-        <MobilePageShell videoBackground={true} safeTop={false}>
+        <AppShell videoBackground={true} safeTop={false}>
           <MobileCommunityHub
             posts={posts}
             carnets={filteredCarnets}
@@ -255,7 +255,7 @@ function CommunautePageContent() {
             joinedEventIds={joinedEventIds}
             onJoinEvent={handleJoinEvent}
           />
-        </MobilePageShell>
+        </AppShell>
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════
@@ -311,7 +311,7 @@ function CommunautePageContent() {
               {activeTab === 'fil' && (
                 <div className="space-y-[var(--space-4)]">
                   <div className="flex items-center justify-between px-1">
-                    <h3 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-primary)]">
+                    <h3 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
                       Derniers échos des sentiers
                     </h3>
                     <Badge tone="stone" className="font-mono">
@@ -450,7 +450,7 @@ function CommunautePageContent() {
                             </div>
                             <div className="flex flex-1 flex-col justify-between space-y-[var(--space-2)] p-[var(--space-4)]">
                               <div>
-                                <h3 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-primary)] transition-colors">
+                                <h3 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)] transition-colors">
                                   {clubName}
                                 </h3>
                                 {clubDesc && (
@@ -488,7 +488,7 @@ function CommunautePageContent() {
                 <div className="space-y-[var(--space-4)]">
                   <div className="flex items-center justify-between gap-[var(--space-3)]">
                     <div>
-                      <h3 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-primary)]">
+                      <h3 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
                         Expéditions en formation
                       </h3>
                       <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
@@ -523,7 +523,7 @@ function CommunautePageContent() {
                                 </Badge>
                               )}
                             </div>
-                            <h4 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-primary)] transition-colors">
+                            <h4 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)] transition-colors">
                               {grp.name}
                             </h4>
                             {grp.description && (
@@ -558,7 +558,7 @@ function CommunautePageContent() {
                 <div className="space-y-[var(--space-4)]">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-primary)]">
+                      <h3 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
                         Calendrier des Sorties Collectives
                       </h3>
                       <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
@@ -583,7 +583,7 @@ function CommunautePageContent() {
                               </span>
                             )}
                           </div>
-                          <h4 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-primary)]">
+                          <h4 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
                             {ev.title}
                           </h4>
                           <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
@@ -593,7 +593,7 @@ function CommunautePageContent() {
                         </div>
 
                         <div className="flex items-center justify-between gap-[var(--space-3)] border-t border-[color:var(--lkv-border)] pt-[var(--space-2)] sm:justify-end sm:border-t-0 sm:pt-0">
-                          <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-primary)]">
+                          <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
                             {ev.participants}{ev.maxParticipants > 0 ? `/${ev.maxParticipants}` : ''} inscrits
                           </span>
                           <Button
@@ -628,7 +628,7 @@ function CommunautePageContent() {
                   <Card className="space-y-[var(--space-3)]">
                     <div className="flex items-center gap-[var(--space-2)]">
                       <span className="text-xl">💡</span>
-                      <h3 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-primary)]">
+                      <h3 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
                         Entraide &amp; Questions Terrain
                       </h3>
                     </div>

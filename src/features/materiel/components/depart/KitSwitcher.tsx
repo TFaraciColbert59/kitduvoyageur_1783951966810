@@ -69,8 +69,8 @@ export function KitSwitcher({ kits, currentId }: KitSwitcherProps) {
                   className={cn(
                     'h-auto w-full justify-start whitespace-normal rounded-none px-3.5 py-2 text-left text-xs font-medium',
                     kit.id === currentId
-                      ? 'bg-[var(--lkv-hover-surface)] font-semibold text-[var(--lkv-primary)]'
-                      : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
+                      ? 'bg-[var(--lkv-hover-surface)] font-semibold text-[color:var(--lkv-text-primary)]'
+                      : 'text-[var(--lkv-text-muted)] hover:text-[color:var(--lkv-text-primary)]'
                   )}
                 >
                   {cleanKitName(kit.name)}

@@ -16,7 +16,7 @@ export default function GlobalError({
           <Card variant="standard" className="w-full max-w-md space-y-[var(--space-6)] p-8 text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[var(--lkv-radius-control)] bg-[color:var(--glass-bg-medium)]">
               <svg
-                className="h-8 w-8 text-[color:var(--lkv-primary)]"
+                className="h-8 w-8 text-[color:var(--lkv-text-primary)]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -30,7 +30,7 @@ export default function GlobalError({
                 />
               </svg>
             </div>
-            <h2 className="font-serif text-[length:var(--lkv-text-title-lg)] font-bold text-[color:var(--lkv-primary)]">
+            <h2 className="font-serif text-[length:var(--lkv-text-title-lg)] font-bold text-[color:var(--lkv-text-primary)]">
               Erreur Critique
             </h2>
             <p className="text-[color:var(--lkv-text-muted)]">

@@ -207,7 +207,7 @@ export default function NouveauGroupePage() {
   ];
 
   return (
-    <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-transparent font-sans text-[var(--lkv-primary)] relative flex flex-col">
+    <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-transparent font-sans text-[color:var(--lkv-text-primary)] relative flex flex-col">
       <CompteBackground />
       <Header />
 
@@ -223,7 +223,7 @@ export default function NouveauGroupePage() {
               <div className="min-w-0 flex-1">
                 <h4 className="truncate font-display text-[length:var(--lkv-text-caption)] font-bold leading-tight text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-subheadline)]">
                   Nouvelle{' '}
-                  <span className="font-serif text-[length:var(--lkv-text-caption)] font-normal italic text-[color:var(--lkv-secondary)]">
+                  <span className="font-serif text-[length:var(--lkv-text-caption)] font-normal italic text-[color:var(--lkv-secondary-ink)]">
                     Expédition
                   </span>
                 </h4>

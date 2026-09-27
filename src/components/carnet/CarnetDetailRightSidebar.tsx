@@ -81,7 +81,7 @@ export default function CarnetDetailRightSidebar({
         </div>
       </Card>
 
-      <Card tone="warn" className="space-y-[var(--space-2)] p-[var(--space-3)] transition-all duration-[var(--motion-control-duration)]">
+      <Card tone="warn" className="space-y-[var(--space-2)] p-[var(--space-3)] transition-all [transition-duration:var(--motion-control-duration)]">
         <Badge tone="warn" className="font-mono font-bold uppercase tracking-widest">
           🎒 SOUVENIR &amp; MATÉRIEL
         </Badge>

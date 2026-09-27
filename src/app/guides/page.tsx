@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import { Card, InsetGroupedList, InsetGroupedItem } from '@/components/ui';
 import Link from 'next/link';
 
@@ -39,7 +39,7 @@ export default function GuidesPage() {
               <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-[color:var(--lkv-forest-100)] mb-2">
                 GUIDES &amp; CHECKLISTS
               </p>
-              <h1 className="font-display font-bold text-3xl tracking-tight text-[color:var(--lkv-surface)]">
+              <h1 className="font-display font-bold text-3xl tracking-tight text-[color:var(--lkv-text-primary)]">
                 Guides de voyage
               </h1>
               <p className="mt-1.5 text-sm text-[color:var(--lkv-forest-100)] max-w-2xl">
@@ -71,7 +71,7 @@ export default function GuidesPage() {
 
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <div className="p-[var(--space-4)]">
             <h1 className="mb-[var(--space-2)] font-display text-[24px] font-extrabold text-[color:var(--glass-label)]">
               Guides de voyage
@@ -91,7 +91,7 @@ export default function GuidesPage() {
               ))}
             </InsetGroupedList>
           </div>
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

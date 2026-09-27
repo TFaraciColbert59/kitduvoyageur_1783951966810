@@ -14,10 +14,9 @@ import { requestCarnetPublicationAward } from '@/lib/progression-award-requests'
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useAuth } from '@/contexts/AuthContext';
 import CommentItem from '@/components/communaute/CommentItem';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import MobileCarnetsHub from '@/components/carnets/MobileCarnetsHub';
 import CompteBackground from '@/components/compte/CompteBackground';
-import { MarbleZone } from '@/components/glass/MarbleZone';
 import { SkeletonCarnetCard } from '@/components/ui/Skeleton';
 import {
   Badge,
@@ -867,7 +866,6 @@ export default function CarnetsPage() {
       <div className="hidden md:block">
         <div className="relative flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-transparent font-sans text-[color:var(--lkv-text-primary)]">
           <CompteBackground />
-          <MarbleZone />
           <Header />
           <main className="mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 gap-[var(--space-5)] overflow-hidden px-[var(--space-4)] pb-[var(--space-4)] pt-24 sm:px-[var(--space-6)] lg:px-[var(--space-8)]">
             <div className="h-full w-[230px] shrink-0 overflow-hidden">
@@ -956,7 +954,7 @@ export default function CarnetsPage() {
       </div>
 
       <div className="relative block min-h-screen font-sans text-[color:var(--lkv-text-primary)] md:hidden">
-        <MobilePageShell videoBackground={true} background="transparent">
+        <AppShell videoBackground={true} background="transparent">
           <MobileCarnetsHub
             carnets={carnets}
             myCarnets={user ? carnets.filter(c => c.author_id === user.id) : []}
@@ -980,7 +978,7 @@ export default function CarnetsPage() {
             }}
             onRefresh={loadCarnets}
           />
-        </MobilePageShell>
+        </AppShell>
       </div>
 
       <CarnetModal

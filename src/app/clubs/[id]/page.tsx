@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import Icon from '@/components/ui/AppIcon';
 import CompteBackground from '@/components/compte/CompteBackground';
 import CommentsSheet, { CommentData } from '@/components/social/CommentsSheet';
@@ -820,7 +820,7 @@ export default function ClubDetailPage() {
       </div>
 
       <div className="block md:hidden">
-        <MobilePageShell safeTop={false} videoBackground={false} background="transparent">
+        <AppShell safeTop={false} videoBackground={false} background="transparent">
           <MobileClubDetailView
             club={club}
             topics={topics}
@@ -836,7 +836,7 @@ export default function ClubDetailPage() {
             onCreateGroup={handleCreateClubGroup}
             onRefresh={loadData}
           />
-        </MobilePageShell>
+        </AppShell>
       </div>
 
       <CommentsSheet

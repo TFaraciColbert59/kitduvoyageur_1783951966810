@@ -20,11 +20,11 @@ export default function BadgesCard({ badges, trustScore = 50 }: BadgesCardProps)
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-[color:var(--lkv-secondary)] animate-pulse" />
-          <h3 className="font-display font-bold text-xs text-[color:var(--lkv-primary)]">Badges &amp; Jalons</h3>
+          <h3 className="font-display font-bold text-xs text-[color:var(--lkv-text-primary)]">Badges &amp; Jalons</h3>
         </div>
         <Link
           href="/profil"
-          className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[9px] font-mono font-bold text-[color:var(--lkv-primary)] hover:text-[color:var(--lkv-secondary)] transition-colors"
+          className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[9px] font-mono font-bold text-[color:var(--lkv-text-primary)] hover:text-[color:var(--lkv-secondary-ink)] transition-colors"
           title="Trust Score LKDV"
         >
           🛡️ {trustScore}/100
@@ -38,14 +38,14 @@ export default function BadgesCard({ badges, trustScore = 50 }: BadgesCardProps)
             key={b.id}
             className={`flex flex-col items-center justify-center p-1.5 rounded-xl border transition-all text-center group cursor-pointer ${
               b.earned
-                ? 'bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] border-[color:var(--glass-border)] text-[color:var(--lkv-primary)] shadow-2xs hover:border-[color:var(--lkv-secondary)]/40'
+                ? 'bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] border-[color:var(--glass-border)] text-[color:var(--lkv-text-primary)] shadow-2xs hover:border-[color:var(--lkv-secondary)]/40'
                 : 'bg-[color:var(--glass-bg-medium)]  border-[color:var(--glass-border)] text-[color:var(--lkv-text-muted)]/50 grayscale hover:grayscale-0'
             }`}
             title={b.title}
           >
             <div
               className={`w-6 h-6 rounded-lg flex items-center justify-center mb-1 transition-transform group-hover:scale-105 ${
-                b.earned ? 'bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-secondary)]' : 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-muted)]/40'
+                b.earned ? 'bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-secondary-ink)]' : 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-muted)]/40'
               }`}
             >
               <Icon name={b.icon_name} size={13} />
@@ -60,7 +60,7 @@ export default function BadgesCard({ badges, trustScore = 50 }: BadgesCardProps)
       {/* Footer link */}
       <div className="flex items-center justify-between text-[9.5px] font-mono pt-1 border-t border-[color:var(--lkv-primary)]/5">
         <span className="text-[color:var(--lkv-text-muted)]">{earnedCount}/{badges.length || 32} débloqués</span>
-        <Link href="/recompenses" className="text-[color:var(--lkv-secondary)] hover:text-[color:var(--lkv-primary)] font-bold">
+        <Link href="/recompenses" className="text-[color:var(--lkv-secondary-ink)] hover:text-[color:var(--lkv-text-primary)] font-bold">
           Voir tout →
         </Link>
       </div>

@@ -33,7 +33,7 @@ export default function MesAventuresCard({ aventures }: MesAventuresCardProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[color:var(--lkv-primary)]/5 pb-4">
         <div>
-          <h3 className="font-display font-bold text-2xl text-[color:var(--lkv-primary)] tracking-tight">
+          <h3 className="font-display font-bold text-2xl text-[color:var(--lkv-text-primary)] tracking-tight">
             Mes <span className="font-serif italic font-normal">groupes</span>
           </h3>
           <p className="text-xs font-mono text-[color:var(--lkv-text-muted)] mt-0.5">
@@ -56,20 +56,20 @@ export default function MesAventuresCard({ aventures }: MesAventuresCardProps) {
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
               aria-label="Filtrer par année"
-              className="min-h-[var(--control-height-sm)] rounded-full border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-1.5 text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] cursor-pointer"
+              className="min-h-[var(--control-height-sm)] rounded-full border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-1.5 text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] cursor-pointer"
             >
               <option value="2026">2026</option>
               <option value="2025">2025</option>
               <option value="2024">2024</option>
             </select>
           </div>
-          <Link href="/compte?tab=aventures" className="text-xs font-bold text-[color:var(--lkv-forest-600)] hover:text-[color:var(--lkv-primary)] transition-colors whitespace-nowrap">
+          <Link href="/compte?tab=aventures" className="text-xs font-bold text-[color:var(--lkv-forest-600-ink)] hover:text-[color:var(--lkv-text-primary)] transition-colors whitespace-nowrap">
             Tout voir →
           </Link>
         </div>
       </div>
 
-      <p className="text-xs text-[color:var(--lkv-forest-600)]/70 leading-relaxed">
+      <p className="text-xs text-[color:var(--lkv-forest-600-ink)]/70 leading-relaxed">
         Vos derniers voyages, du plus récent au plus ancien. Cliquez pour retrouver la trace GPX et les photos.
       </p>
 
@@ -92,13 +92,13 @@ export default function MesAventuresCard({ aventures }: MesAventuresCardProps) {
                 />
               </div>
               <div className="min-w-0">
-                <h4 className="font-bold text-base text-[color:var(--lkv-primary)] truncate group-hover:text-[color:var(--lkv-forest-600)] transition-colors">
+                <h4 className="font-bold text-base text-[color:var(--lkv-text-primary)] truncate group-hover:text-[color:var(--lkv-forest-600-ink)] transition-colors">
                   {item.title}
                 </h4>
-                <p className="text-xs text-[color:var(--lkv-forest-600)]/60 font-medium mt-0.5 truncate">
+                <p className="text-xs text-[color:var(--lkv-forest-600-ink)]/60 font-medium mt-0.5 truncate">
                   {item.date_detail}
                 </p>
-                <div className="flex items-center gap-2 mt-1 font-mono text-[11px] font-bold text-[color:var(--lkv-forest-600)]/70">
+                <div className="flex items-center gap-2 mt-1 font-mono text-[11px] font-bold text-[color:var(--lkv-forest-600-ink)]/70">
                   <span>{item.distance}</span>
                   <span>•</span>
                   <span>{item.elevation}</span>

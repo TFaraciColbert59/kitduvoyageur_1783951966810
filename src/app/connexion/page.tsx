@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { trackEvent } from '@/lib/analytics';
 import { createClient } from '@/lib/supabase/client';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import { Button } from '@/components/ui';
 import { useTranslation } from '@/lib/i18n/context';
 
@@ -132,7 +132,7 @@ function AuthForm() {
                   setConfirmationSent(false);
                   setForgotPasswordOpen(false);
                 }}
-                className={`flex-1 rounded-[var(--lkv-radius-control)] py-2.5 text-[length:var(--lkv-text-footnote)] font-semibold transition-colors duration-[var(--motion-control-duration)] ${
+                className={`flex-1 rounded-[var(--lkv-radius-control)] py-2.5 text-[length:var(--lkv-text-footnote)] font-semibold transition-colors [transition-duration:var(--motion-control-duration)] ${
                   isActive
                     ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1'
                     : 'text-[color:var(--lkv-text-muted)] hover:text-[color:var(--lkv-text-primary)]'
@@ -319,9 +319,9 @@ export default function AuthPage() {
 
       {/* MOBILE */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <Suspense fallback={<div />}><AuthForm /></Suspense>
-        </MobilePageShell>
+        </AppShell>
         
       </div>
     </>

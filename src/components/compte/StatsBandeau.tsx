@@ -25,10 +25,10 @@ export default function StatsBandeau({ profile }: StatsBandeauProps) {
               </div>
               <div className="min-w-0">
                 <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[color:var(--lkv-text-muted)] block">Niveau actuel</span>
-                <h4 className="font-bold text-sm sm:text-base text-[color:var(--lkv-primary)] truncate">{level.title}</h4>
+                <h4 className="font-bold text-sm sm:text-base text-[color:var(--lkv-text-primary)] truncate">{level.title}</h4>
               </div>
             </div>
-            <span className="font-mono font-bold text-[color:var(--lkv-secondary)] text-xs sm:text-sm shrink-0">
+            <span className="font-mono font-bold text-[color:var(--lkv-secondary-ink)] text-xs sm:text-sm shrink-0">
               {level.current_pts} / {level.max_pts} pts
             </span>
           </div>
@@ -52,28 +52,28 @@ export default function StatsBandeau({ profile }: StatsBandeauProps) {
         <div className="lg:w-3/5 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center sm:text-left divide-y sm:divide-y-0 sm:divide-x divide-[color:var(--lkv-primary)]/10 pt-2 lg:pt-0">
 
           <div className="flex flex-col items-center sm:items-start sm:pl-4 first:pl-0">
-            <span className="font-mono font-bold text-2xl sm:text-3xl text-[color:var(--lkv-primary)]">{stats.sorties}</span>
+            <span className="font-mono font-bold text-2xl sm:text-3xl text-[color:var(--lkv-text-primary)]">{stats.sorties}</span>
             <span className="text-[10px] font-mono font-bold text-[color:var(--lkv-text-muted)] tracking-wider uppercase mt-0.5">
               AVENTURES FAITES
             </span>
           </div>
 
           <div className="flex flex-col items-center sm:items-start sm:pl-4 pt-2 sm:pt-0">
-            <span className="font-mono font-bold text-2xl sm:text-3xl text-[color:var(--lkv-secondary)]">{stats.carnets}</span>
+            <span className="font-mono font-bold text-2xl sm:text-3xl text-[color:var(--lkv-secondary-ink)]">{stats.carnets}</span>
             <span className="text-[10px] font-mono font-bold text-[color:var(--lkv-text-muted)] tracking-wider uppercase mt-0.5">
               RÉCITS PUBLIÉS
             </span>
           </div>
 
           <div className="flex flex-col items-center sm:items-start sm:pl-4 pt-2 sm:pt-0">
-            <span className="font-mono font-bold text-2xl sm:text-3xl text-[color:var(--lkv-primary)]">{stats.clubs}</span>
+            <span className="font-mono font-bold text-2xl sm:text-3xl text-[color:var(--lkv-text-primary)]">{stats.clubs}</span>
             <span className="text-[10px] font-mono font-bold text-[color:var(--lkv-text-muted)] tracking-wider uppercase mt-0.5">
               COMMUNAUTÉS
             </span>
           </div>
 
           <div className="flex flex-col items-center sm:items-start sm:pl-4 pt-2 sm:pt-0">
-            <span className="font-mono font-bold text-2xl sm:text-3xl text-[color:var(--lkv-secondary)]">
+            <span className="font-mono font-bold text-2xl sm:text-3xl text-[color:var(--lkv-secondary-ink)]">
               {stats.km_this_year} <span className="text-xs font-normal">km</span>
             </span>
             <span className="text-[10px] font-mono font-bold text-[color:var(--lkv-text-muted)] tracking-wider uppercase mt-0.5">

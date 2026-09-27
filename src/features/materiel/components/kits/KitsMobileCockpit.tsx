@@ -59,7 +59,7 @@ export function KitsMobileCockpit({
                     transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                   />
                 )}
-                <span className={`relative z-10 ${isActive ? 'text-[var(--lkv-primary)] font-extrabold' : 'text-[var(--lkv-primary-soft)]/70'}`}>
+                <span className={`relative z-10 ${isActive ? 'text-[color:var(--lkv-text-primary)] font-extrabold' : 'text-[color:var(--lkv-text-secondary)]/70'}`}>
                   {tab.label}
                 </span>
               </button>

@@ -60,7 +60,7 @@ export const GlassSurface = forwardRef<HTMLElement, GlassSurfaceProps>(function 
       className={clsx(
         levelClass,
         RADIUS_MAP[defaultRadius],
-        'relative transition-all duration-[var(--dur-fast)] ease-[var(--ease-glass)]',
+        'relative transition-all [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-glass)]',
         interactive &&
           'cursor-pointer active:scale-[0.98] select-none hover:shadow-lg active:brightness-105',
         className

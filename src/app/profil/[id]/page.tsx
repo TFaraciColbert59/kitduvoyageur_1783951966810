@@ -12,8 +12,7 @@ import MesClubsCard from '@/components/compte/MesClubsCard';
 import BadgesCard from '@/components/compte/BadgesCard';
 import ConstanceCard from '@/components/compte/ConstanceCard';
 import CompteBackground from '@/components/compte/CompteBackground';
-import { MarbleZone } from '@/components/glass/MarbleZone';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import PublicMobileProfileView from '@/components/profile/PublicMobileProfileView';
 import { EmptyState, LoadingState } from '@/components/ui';
 import {
@@ -114,9 +113,8 @@ export default function PublicProfilePage() {
     <>
       {/* DESKTOP */}
       <div className="hidden md:block">
-        <div className="min-h-screen bg-transparent text-[var(--lkv-primary)] selection:bg-[color:var(--lkv-primary)]/20 font-sans relative">
+        <div className="min-h-screen bg-transparent text-[color:var(--lkv-text-primary)] selection:bg-[color:var(--lkv-primary)]/20 font-sans relative">
           <CompteBackground />
-          <MarbleZone />
           <Header />
           
           <main className="pt-24 pb-16">
@@ -125,15 +123,15 @@ export default function PublicProfilePage() {
               {/* Top Navigation & Status */}
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2 text-xs font-semibold text-[var(--lkv-text-muted)]">
-                  <Link href="/" className="hover:text-[var(--lkv-primary)] transition-colors">Accueil</Link>
+                  <Link href="/" className="hover:text-[color:var(--lkv-text-primary)] transition-colors">Accueil</Link>
                   <span>›</span>
-                  <Link href="/communaute" className="hover:text-[var(--lkv-primary)] transition-colors">Communauté</Link>
+                  <Link href="/communaute" className="hover:text-[color:var(--lkv-text-primary)] transition-colors">Communauté</Link>
                   <span>›</span>
-                  <span className="text-[var(--lkv-primary)] font-bold">Profil de {profile.first_name}</span>
+                  <span className="text-[color:var(--lkv-text-primary)] font-bold">Profil de {profile.first_name}</span>
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <span className="px-3 py-1 bg-[color:var(--lkv-success-bg)] text-[color:var(--lkv-primary)] rounded-full text-xs font-bold border border-[color:var(--lkv-secondary)]/40 flex items-center gap-1.5">
+                  <span className="px-3 py-1 bg-[color:var(--lkv-success-bg)] text-[color:var(--lkv-text-primary)] rounded-full text-xs font-bold border border-[color:var(--lkv-secondary)]/40 flex items-center gap-1.5">
                     <span>✓</span> Profil vérifié
                   </span>
                 </div>
@@ -201,7 +199,7 @@ export default function PublicProfilePage() {
       <div className="block md:hidden">
         {/* safeTop=false: PublicMobileProfileView embarque son propre header sticky (PublicMobileProfileView.tsx:67)
             qui calcule pt-[max(10px,var(--safe-top))] */}
-        <MobilePageShell safeTop={false} background="transparent">
+        <AppShell safeTop={false} background="transparent">
           <PublicMobileProfileView
             profile={profile as any}
             carnets={carnets as any}
@@ -222,7 +220,7 @@ export default function PublicProfilePage() {
               <span>{toast}</span>
             </div>
           )}
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

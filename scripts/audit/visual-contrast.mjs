@@ -8,6 +8,12 @@
  *   - texte courant < 4,5:1
  *   - grand texte / éléments non textuels < 3:1
  *
+ * Formats de couleur acceptés : #hex, rgb()/rgba() en syntaxe historique
+ * (virgules) comme moderne (espaces + « / alpha »), canaux contraints à 0–255
+ * et alpha à 0–1. Les var() sont résolus récursivement et les calc()
+ * numériques évalués, de sorte que les tokens à intensité de verre variable
+ * sont mesurés à leur valeur réelle plutôt que rejetés.
+ *
  * Usage : node scripts/audit/visual-contrast.mjs [--json]
  * Aucune dépendance externe.
  */
@@ -47,14 +53,158 @@ function rawToken(name, mode) {
   return value;
 }
 
-/** Résout les var() imbriqués. */
+/** Découpe sur un séparateur situé au niveau de parenthèses le plus externe. */
+function splitTopLevel(input, separator) {
+  const parts = [];
+  let depth = 0;
+  let current = '';
+  for (const char of input) {
+    if (char === '(') depth += 1;
+    else if (char === ')') depth -= 1;
+    if (char === separator && depth === 0) {
+      parts.push(current);
+      current = '';
+      continue;
+    }
+    current += char;
+  }
+  parts.push(current);
+  return parts;
+}
+
+/** Résout récursivement tous les var(--nom[, repli]) d'une valeur. */
+function resolveVars(value, mode, seen) {
+  let out = '';
+  let index = 0;
+  while (index < value.length) {
+    if (!value.startsWith('var(', index)) {
+      out += value[index];
+      index += 1;
+      continue;
+    }
+    let depth = 1;
+    let end = index + 4;
+    while (end < value.length && depth > 0) {
+      if (value[end] === '(') depth += 1;
+      else if (value[end] === ')') depth -= 1;
+      if (depth === 0) break;
+      end += 1;
+    }
+    if (depth !== 0) throw new Error(`var() non fermé dans « ${value} »`);
+    const parts = splitTopLevel(value.slice(index + 4, end), ',');
+    const name = parts[0].trim();
+    const fallback = parts.length > 1 ? parts[1].trim() : null;
+    if (!/^--[\w-]+$/.test(name)) throw new Error(`Nom de token invalide : « ${name} »`);
+    if (seen.has(name)) throw new Error(`Cycle de var() sur ${name}`);
+    let raw;
+    try {
+      raw = rawToken(name, mode);
+    } catch (error) {
+      if (fallback === null) throw error;
+      raw = fallback;
+    }
+    out += resolveVars(raw, mode, new Set([...seen, name]));
+    index = end + 1;
+  }
+  return out;
+}
+
+/** Résout les var() imbriqués d'un token. */
 function resolveValue(name, mode, seen = new Set()) {
-  const raw = rawToken(name, mode);
-  const varMatch = raw.match(/^var\(\s*(--[\w-]+)\s*\)$/);
-  if (!varMatch) return raw;
-  if (seen.has(varMatch[1])) throw new Error(`Cycle de var() sur ${varMatch[1]}`);
-  seen.add(varMatch[1]);
-  return resolveValue(varMatch[1], mode, seen);
+  const key = name.startsWith('--') ? name : `--${name}`;
+  if (seen.has(key)) throw new Error(`Cycle de var() sur ${key}`);
+  return resolveVars(rawToken(key, mode), mode, new Set([...seen, key]));
+}
+
+/**
+ * Évalue un calc() numérique : somme, produit, signe et parenthèses.
+ * Les unités (px, rem, …) sont ignorées — sans effet sur un canal de couleur.
+ * Toute autre construction est refusée, pour ne pas sous-estimer un contraste.
+ */
+function evaluateCalc(expression) {
+  const source = expression;
+  let position = 0;
+
+  function skipSpaces() {
+    while (position < source.length && /\s/.test(source[position])) position += 1;
+  }
+  function expect(char) {
+    skipSpaces();
+    if (source[position] !== char) {
+      throw new Error(`« ${char} » attendu dans calc(${expression})`);
+    }
+    position += 1;
+  }
+  function parseNumber() {
+    skipSpaces();
+    const match = /^(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?/i.exec(source.slice(position));
+    if (!match) throw new Error(`Nombre attendu dans calc(${expression})`);
+    position += match[0].length;
+    const unit = /^(?:px|rem|em|vw|vh|deg|turn)/i.exec(source.slice(position));
+    if (unit) position += unit[0].length;
+    return Number.parseFloat(match[0]);
+  }
+  function parseFactor() {
+    skipSpaces();
+    let sign = 1;
+    while (source[position] === '+' || source[position] === '-') {
+      if (source[position] === '-') sign = -sign;
+      position += 1;
+      skipSpaces();
+    }
+    if (source[position] === '(') {
+      position += 1;
+      const nested = parseExpression();
+      expect(')');
+      return sign * nested;
+    }
+    return sign * parseNumber();
+  }
+  function parseTerm() {
+    let left = parseFactor();
+    for (;;) {
+      skipSpaces();
+      const operator = source[position];
+      if (operator !== '*' && operator !== '/') return left;
+      position += 1;
+      const right = parseFactor();
+      if (operator === '/' && right === 0) {
+        throw new Error(`Division par zéro dans calc(${expression})`);
+      }
+      left = operator === '*' ? left * right : left / right;
+    }
+  }
+  function parseExpression() {
+    let value = parseTerm();
+    for (;;) {
+      skipSpaces();
+      const operator = source[position];
+      if (operator !== '+' && operator !== '-') return value;
+      position += 1;
+      const right = parseTerm();
+      value = operator === '+' ? value + right : value - right;
+    }
+  }
+
+  const result = parseExpression();
+  skipSpaces();
+  if (position !== source.length) {
+    throw new Error(`calc() non supporté : « ${expression} »`);
+  }
+  return result;
+}
+
+/** Évalue une composante de couleur : nombre nu ou calc(). */
+function evaluateNumber(value, label) {
+  if (value.includes('%')) {
+    throw new Error(`Couleur en pourcentage non supportée pour ${label} : « ${value} »`);
+  }
+  const calc = value.match(/^calc\(([\s\S]*)\)$/);
+  const number = calc ? evaluateCalc(calc[1]) : Number(value);
+  if (!Number.isFinite(number)) {
+    throw new Error(`Composante non numérique pour ${label} : « ${value} »`);
+  }
+  return number;
 }
 
 function parseColor(value, label) {
@@ -69,13 +219,50 @@ function parseColor(value, label) {
       a: 1,
     };
   }
-  const rgba = value.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+))?\s*\)$/);
-  if (rgba) {
-    return { r: +rgba[1], g: +rgba[2], b: +rgba[3], a: rgba[4] === undefined ? 1 : +rgba[4] };
+
+  // rgb()/rgba() : syntaxe historique (virgules) et moderne (espaces + « / alpha »).
+  // Le corps est capturé gloutonnement pour s'ancrer sur la parenthèse fermante
+  // externe ; les parenthèses internes (calc(), var()) restent intactes.
+  const fn = value.match(/^rgba?\(\s*([\s\S]*)\s*\)$/);
+  if (!fn) throw new Error(`Couleur non parsable pour ${label} : « ${value} »`);
+
+  const body = fn[1];
+  let channels;
+  let alpha;
+  if (body.includes(',')) {
+    const parts = body.split(',').map((part) => part.trim());
+    channels = parts.slice(0, 3);
+    alpha = parts.length > 3 ? parts[3] : null;
+  } else {
+    let depth = 0;
+    let slash = -1;
+    for (let i = 0; i < body.length; i += 1) {
+      if (body[i] === '(') depth += 1;
+      else if (body[i] === ')') depth -= 1;
+      else if (body[i] === '/' && depth === 0) {
+        slash = i;
+        break;
+      }
+    }
+    channels = (slash === -1 ? body : body.slice(0, slash)).trim().split(/\s+/);
+    alpha = slash === -1 ? null : body.slice(slash + 1).trim();
   }
-  throw new Error(`Couleur non parsable pour ${label} : « ${value} »`);
+  if (channels.length < 3) {
+    throw new Error(`Couleur incomplète pour ${label} : « ${value} »`);
+  }
+
+  const [r, g, b] = channels.slice(0, 3).map((part) => evaluateNumber(part, label));
+  const a = alpha === null ? 1 : evaluateNumber(alpha, label);
+  if ([r, g, b].some((channel) => channel < 0 || channel > 255)) {
+    throw new Error(`Canal hors bornes 0–255 pour ${label} : « ${value} »`);
+  }
+  if (a < 0 || a > 1) {
+    throw new Error(`Alpha hors bornes 0–1 pour ${label} : « ${value} »`);
+  }
+  return { r, g, b, a };
 }
 
+/** Résout puis décompose un token de couleur. Point d'entrée unique du module. */
 function tokenColor(name, mode) {
   return parseColor(resolveValue(name, mode), `--${name} (${mode})`);
 }

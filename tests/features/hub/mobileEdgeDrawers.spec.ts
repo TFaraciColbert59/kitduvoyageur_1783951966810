@@ -5,7 +5,7 @@ const mobileHub = readFileSync('src/features/hub/components/mobile/MobileAdventu
 const shell = readFileSync('src/features/hub/components/HubShell.tsx', 'utf8');
 const edgeDrawer = readFileSync('src/features/hub/components/mobile/HubEdgeDrawer.tsx', 'utf8');
 const sortieMenu = readFileSync('src/features/hub/components/menu/SortieMenu.tsx', 'utf8');
-const liquidCss = readFileSync('src/features/hub/components/hub-liquid.css', 'utf8');
+const liquidCss = readFileSync('src/styles/liquid-ios27.css', 'utf8');
 
 describe('Hub mobile — trois tiroirs cohérents', () => {
   it('place Points en haut, État au milieu et Cockpit en bas', () => {

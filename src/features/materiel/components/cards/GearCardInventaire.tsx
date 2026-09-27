@@ -32,13 +32,13 @@ export function GearCardInventaire({
           <div className="space-y-1">
             <h2
               id="inv-title"
-              className="text-[20px] font-display font-bold text-[var(--lkv-primary)]"
+              className="text-[20px] font-display font-bold text-[color:var(--lkv-text-primary)]"
             >
               Inventaire
             </h2>
           </div>
           <div className="text-right">
-            <span className="text-[36px] font-mono font-bold leading-none text-[var(--lkv-primary)]">
+            <span className="text-[36px] font-mono font-bold leading-none text-[color:var(--lkv-text-primary)]">
               {data.count}
             </span>
             <span className="block text-[10.5px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)]">
@@ -50,14 +50,14 @@ export function GearCardInventaire({
         {/* Condition Split Cards */}
         <div className="grid grid-cols-2 gap-2">
           <div className="glass-sub-card p-2.5 flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-white/[0.08] border border-white/25 flex items-center justify-center text-[var(--lkv-primary)] flex-shrink-0 shadow-inner">
+            <div className="w-7 h-7 rounded-full bg-white/[0.08] border border-white/25 flex items-center justify-center text-[color:var(--lkv-text-primary)] flex-shrink-0 shadow-inner">
               <Icon name="check-circle2" size={15} />
             </div>
             <div className="truncate">
               <span className="block text-[10px] uppercase font-semibold text-[var(--lkv-text-muted)]">
                 En bon état
               </span>
-              <span className="text-[13px] font-mono font-bold text-[var(--lkv-primary)]">
+              <span className="text-[13px] font-mono font-bold text-[color:var(--lkv-text-primary)]">
                 {goodItems}
               </span>
             </div>
@@ -70,7 +70,7 @@ export function GearCardInventaire({
               <span className="block text-[10px] uppercase font-semibold text-[var(--lkv-text-muted)]">
                 En commande
               </span>
-              <span className="text-[13px] font-mono font-bold text-[var(--lkv-primary-soft)]">
+              <span className="text-[13px] font-mono font-bold text-[color:var(--lkv-text-secondary)]">
                 {data.orderedCount || 0}
               </span>
             </div>
@@ -79,9 +79,9 @@ export function GearCardInventaire({
 
         {/* Good Condition Progress Bar */}
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-xs font-semibold text-[var(--lkv-primary-soft)]">
+          <div className="flex items-center justify-between text-xs font-semibold text-[color:var(--lkv-text-secondary)]">
             <span>Santé de l&apos;inventaire</span>
-            <span className="font-mono text-[var(--lkv-primary)]">{data.goodConditionPct}%</span>
+            <span className="font-mono text-[color:var(--lkv-text-primary)]">{data.goodConditionPct}%</span>
           </div>
           <ProgressBar
             value={data.goodConditionPct}

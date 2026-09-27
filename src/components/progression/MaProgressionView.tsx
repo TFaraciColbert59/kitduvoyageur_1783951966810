@@ -158,7 +158,7 @@ function StatBlock({ label, value }: { label: string; value: string }) {
       <span className="block font-mono text-[10px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)]">
         {label}
       </span>
-      <span className="font-mono text-lg font-extrabold tabular-nums text-[var(--lkv-primary)]">
+      <span className="font-mono text-lg font-extrabold tabular-nums text-[color:var(--lkv-text-primary)]">
         {value}
       </span>
     </div>
@@ -176,7 +176,7 @@ function SummaryChip({
 }) {
   return (
     <div className="flex min-w-0 max-w-full items-center gap-2 rounded-2xl border border-white/80 bg-white/60 px-3 py-2">
-      <span className="shrink-0 text-[var(--lkv-secondary)]" aria-hidden="true">
+      <span className="shrink-0 text-[var(--lkv-secondary-ink)]" aria-hidden="true">
         {icon}
       </span>
       <span className="min-w-0">
@@ -421,7 +421,7 @@ export default function MaProgressionView({
             <div className="w-14 h-14 rounded-2xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] flex items-center justify-center mx-auto mb-4 shadow-md">
               <Trophy size={28} className="text-sand-200" />
             </div>
-            <h2 className="font-display font-bold text-2xl text-[var(--lkv-primary)] mb-2">
+            <h2 className="font-display font-bold text-2xl text-[color:var(--lkv-text-primary)] mb-2">
               Votre Cordée & Progression
             </h2>
             <p className="text-sm text-[var(--lkv-text-muted)] max-w-md mx-auto mb-6 leading-relaxed">
@@ -592,7 +592,7 @@ export default function MaProgressionView({
             >
               <span
                 aria-hidden="true"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[var(--lkv-primary)] shadow-sm"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-sm"
               >
                 <Icon name={data.icon} size={15} />
               </span>
@@ -601,7 +601,7 @@ export default function MaProgressionView({
                   <span className="truncate text-xs font-bold text-[var(--lkv-text-primary)]">
                     {t(SKILL_LABEL_KEYS[key])}
                   </span>
-                  <span className="font-mono text-xs font-bold text-[var(--lkv-primary)]">
+                  <span className="font-mono text-xs font-bold text-[color:var(--lkv-text-primary)]">
                     {hasData ? `${data.pct}%` : '—'}
                   </span>
                 </div>
@@ -716,7 +716,7 @@ export default function MaProgressionView({
 
         {leaderboard?.communityForming && !leaderboard.territoryMissing && (
           <div className="mb-4 space-y-2 rounded-2xl border border-white/80 bg-white/70 p-4 text-center">
-            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--lkv-primary)]/10 text-lg text-[var(--lkv-primary)]">
+            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--lkv-primary)]/10 text-lg text-[color:var(--lkv-text-primary)]">
               🌱
             </div>
             <h4 className="text-sm font-bold text-[var(--lkv-text-primary)]">
@@ -756,7 +756,7 @@ export default function MaProgressionView({
                       <span
                         className={`block truncate text-xs font-bold ${
                           isCurrentUser
-                            ? 'text-[var(--lkv-primary)]'
+                            ? 'text-[color:var(--lkv-text-primary)]'
                             : 'text-[var(--lkv-text-primary)]'
                         }`}
                       >
@@ -771,7 +771,7 @@ export default function MaProgressionView({
                     </div>
                   </div>
                   <div className="shrink-0 text-right">
-                    <span className="block font-mono text-xs font-extrabold text-[var(--lkv-primary)] sm:text-sm">
+                    <span className="block font-mono text-xs font-extrabold text-[color:var(--lkv-text-primary)] sm:text-sm">
                       {formatNumber(entry.seasonPoints, {}, locale)} {t('progression.pointsShort')}
                     </span>
                     <span className="font-mono text-[9.5px] text-[var(--lkv-text-muted)]">
@@ -835,7 +835,7 @@ export default function MaProgressionView({
               />
             </div>
             {challenge.isCompleted && (
-              <p className="mt-2 text-xs font-semibold text-[var(--lkv-primary)]">
+              <p className="mt-2 text-xs font-semibold text-[color:var(--lkv-text-primary)]">
                 {t('progression.challengeCompleted')}
               </p>
             )}
@@ -918,7 +918,7 @@ export default function MaProgressionView({
                     aria-hidden="true"
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-lg shadow-sm"
                   >
-                    {distinction.icon ?? <Award size={16} className="text-[var(--lkv-secondary)]" />}
+                    {distinction.icon ?? <Award size={16} className="text-[var(--lkv-secondary-ink)]" />}
                   </span>
                   <span className="min-w-0">
                     <span className="block truncate text-xs font-bold text-[var(--lkv-text-primary)]">
@@ -980,7 +980,7 @@ export default function MaProgressionView({
                       </span>
                     )}
                   </span>
-                  <span className="shrink-0 font-mono text-xs font-extrabold text-[var(--lkv-primary)]">
+                  <span className="shrink-0 font-mono text-xs font-extrabold text-[color:var(--lkv-text-primary)]">
                     +{formatNumber(gain.points, {}, locale)} {t('progression.pointsShort')}
                   </span>
                 </li>
@@ -990,7 +990,7 @@ export default function MaProgressionView({
         )}
         <Link
           href="/recompenses"
-          className="mt-3 inline-flex min-h-[44px] items-center text-xs font-bold text-[var(--lkv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+          className="mt-3 inline-flex min-h-[44px] items-center text-xs font-bold text-[color:var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
         >
           {t('progression.seeAllRewards')}
         </Link>

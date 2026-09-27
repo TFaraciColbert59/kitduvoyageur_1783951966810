@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import { Chip, EmptyState } from '@/components/ui';
 
 export default function CreateursPage() {
@@ -30,17 +30,17 @@ export default function CreateursPage() {
 
       {/* MOBILE */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <div className="p-[var(--space-4)]">
-            <h1 className="mb-[var(--space-2)] text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-primary)]">Espace Créateurs</h1>
-            <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/60">Guides, photographes et créateurs vérifiés.</p>
+            <h1 className="mb-[var(--space-2)] text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">Espace Créateurs</h1>
+            <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]/60">Guides, photographes et créateurs vérifiés.</p>
             <div className="mb-[var(--space-4)] flex flex-wrap gap-[var(--space-2)]">
               <Chip selected={activeTab === 'produits'} onClick={() => setActiveTab('produits')}>Catalogue</Chip>
               <Chip selected={activeTab === 'créateurs'} onClick={() => setActiveTab('créateurs')}>Créateurs</Chip>
             </div>
             <EmptyState title="Contenu à venir" description="L'espace créateurs sera disponible prochainement." />
           </div>
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

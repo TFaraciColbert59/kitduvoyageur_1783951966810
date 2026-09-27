@@ -70,7 +70,7 @@ export function PossessionMoment({ summary }: { summary: MaterielSummary }) {
         </>
       ) : (
         <div className="flex items-center gap-3 py-1">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-primary)]">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-text-primary)]">
             <CalendarDays size={22} aria-hidden="true" />
           </span>
           <div>

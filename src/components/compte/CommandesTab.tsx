@@ -406,14 +406,14 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
   // ─────────────────────────────────────────
   return (
     <>
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pb-16 font-sans text-[color:var(--lkv-primary)]">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pb-16 font-sans text-[color:var(--lkv-text-primary)]">
         {/* ════════════════ MAIN COLUMN ════════════════ */}
         <div className="lg:col-span-8 space-y-8">
           {/* ── Header ── */}
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-[color:var(--lkv-primary)]/5 pb-5">
             <div>
-              <h2 className="font-display font-bold text-3xl sm:text-4xl text-[color:var(--lkv-primary)] tracking-tight">
-                Commandes <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">&amp; abonnements</span>
+              <h2 className="font-display font-bold text-3xl sm:text-4xl text-[color:var(--lkv-text-primary)] tracking-tight">
+                Commandes <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600-ink)]">&amp; abonnements</span>
               </h2>
               <p className="text-xs text-[color:var(--lkv-text-muted)] mt-1 font-mono">
                 {enrichedOrders.length} commandes depuis 2023 · {activeOrders.length} en cours · 1 abonnement premium actif · {fmtPrice(totalCumule)}&nbsp;€ cumulés
@@ -458,7 +458,7 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
           {activeOrders.length === 0 && enrichedOrders.length > 0 && (
             <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)] p-8 text-center space-y-2">
               <p className="text-3xl">📦</p>
-              <h4 className="font-display font-bold text-[color:var(--lkv-primary)] text-lg">Aucune commande en cours</h4>
+              <h4 className="font-display font-bold text-[color:var(--lkv-text-primary)] text-lg">Aucune commande en cours</h4>
               <p className="text-xs text-[color:var(--lkv-text-muted)]">Toutes vos commandes ont été livrées.</p>
             </div>
           )}
@@ -467,8 +467,8 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
           <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 sm:p-7 space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[color:var(--lkv-primary)]/5 pb-4">
               <div>
-                <h3 className="font-display font-bold text-xl text-[color:var(--lkv-primary)]">
-                  Historique <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">{historyYear !== 'Toutes' ? historyYear : ''}</span>
+                <h3 className="font-display font-bold text-xl text-[color:var(--lkv-text-primary)]">
+                  Historique <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600-ink)]">{historyYear !== 'Toutes' ? historyYear : ''}</span>
                 </h3>
                 <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">
                   Vos commandes livrées cette année.
@@ -568,8 +568,8 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
           {/* ── Adresses de livraison ── */}
           <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 space-y-4">
             <div>
-              <h4 className="font-display font-bold text-[color:var(--lkv-primary)] text-lg">
-                Adresses <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">de livraison</span>
+              <h4 className="font-display font-bold text-[color:var(--lkv-text-primary)] text-lg">
+                Adresses <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600-ink)]">de livraison</span>
               </h4>
               <p className="text-[11px] text-[color:var(--lkv-text-muted)]">
                 {addresses.length} adresse{addresses.length !== 1 ? 's' : ''} enregistrée{addresses.length !== 1 ? 's' : ''}
@@ -583,14 +583,14 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
                   className={`rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-4 transition-all ${ addr.isDefault ? 'border-[color:var(--lkv-primary)]/30 bg-white/60' : '' }`}
                 >
                   <div className="flex items-start justify-between mb-1">
-                    <span className="font-bold text-sm text-[color:var(--lkv-primary)]">{addr.label}</span>
+                    <span className="font-bold text-sm text-[color:var(--lkv-text-primary)]">{addr.label}</span>
                     {addr.isDefault && (
                       <Badge className="border-transparent bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] text-[9px] font-mono font-bold uppercase tracking-wider">
                         défaut
                       </Badge>
                     )}
                   </div>
-                  <p className="text-xs text-[color:var(--lkv-primary)] font-semibold">{addr.name}</p>
+                  <p className="text-xs text-[color:var(--lkv-text-primary)] font-semibold">{addr.name}</p>
                   <p className="text-xs text-[color:var(--lkv-text-muted)]">{addr.street}</p>
                   {addr.city && <p className="text-xs text-[color:var(--lkv-text-muted)]">{addr.city}</p>}
                   <div className="flex items-center gap-3 mt-3 pt-2 border-t border-[color:var(--lkv-primary)]/5">
@@ -653,8 +653,8 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
           {/* ── Moyens de paiement ── */}
           <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 space-y-4">
             <div>
-              <h4 className="font-display font-bold text-[color:var(--lkv-primary)] text-lg">
-                Moyens <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">de paiement</span>
+              <h4 className="font-display font-bold text-[color:var(--lkv-text-primary)] text-lg">
+                Moyens <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600-ink)]">de paiement</span>
               </h4>
               <p className="text-[11px] text-[color:var(--lkv-text-muted)]">
                 {cards.length} carte{cards.length !== 1 ? 's' : ''} enregistrée{cards.length !== 1 ? 's' : ''}
@@ -751,7 +751,7 @@ function StatPill({ label, value, sub }: { label: string; value: string | number
   return (
     <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-5 flex flex-col gap-1">
       <p className="text-[10px] font-mono uppercase tracking-widest text-[color:var(--lkv-text-muted)]">{label}</p>
-      <p className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-primary)] leading-none">{value}</p>
+      <p className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-text-primary)] leading-none">{value}</p>
       {sub && <p className="text-[11px] text-[color:var(--lkv-text-muted)] font-medium mt-0.5">{sub}</p>}
     </div>
   );
@@ -788,7 +788,7 @@ function ActiveOrderCard({
       {/* Order header */}
       <div className="px-6 py-4 flex items-center justify-between border-b border-[color:var(--lkv-primary)]/5 bg-white/40">
         <div className="flex items-center gap-3">
-          <span className="text-xs font-mono font-bold text-[color:var(--lkv-primary)]">{order.order_number}</span>
+          <span className="text-xs font-mono font-bold text-[color:var(--lkv-text-primary)]">{order.order_number}</span>
           <span className="text-[color:var(--lkv-text-muted)]/40">·</span>
           <span className="text-xs text-[color:var(--lkv-text-muted)] font-mono">Passée le {formatDate(order.created_at)}</span>
         </div>
@@ -813,7 +813,7 @@ function ActiveOrderCard({
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-[color:var(--lkv-primary)] truncate">{item.name}</p>
+                  <p className="text-sm font-bold text-[color:var(--lkv-text-primary)] truncate">{item.name}</p>
                   <p className="text-[11px] text-[color:var(--lkv-text-muted)] font-mono">
                     {item.size && `Taille ${item.size} · `}
                     {item.color && `${item.color} · `}
@@ -821,7 +821,7 @@ function ActiveOrderCard({
                     {!item.size && !item.color && !item.sku && `Qté: ${item.quantity}`}
                   </p>
                 </div>
-                <p className="font-mono font-bold text-sm text-[color:var(--lkv-primary)] shrink-0">{fmtPrice(item.unit_price_eur)} €</p>
+                <p className="font-mono font-bold text-sm text-[color:var(--lkv-text-primary)] shrink-0">{fmtPrice(item.unit_price_eur)} €</p>
               </div>
             ))}
             {remainingCount > 0 && (
@@ -833,21 +833,21 @@ function ActiveOrderCard({
           <div className="sm:w-52 sm:border-l sm:border-[color:var(--lkv-primary)]/5 sm:pl-5 space-y-2 text-xs">
             <div className="flex justify-between font-mono">
               <span className="text-[color:var(--lkv-text-muted)]">Sous-total</span>
-              <span className="font-bold text-[color:var(--lkv-primary)]">{fmtPrice(Number(order.subtotal_eur))} €</span>
+              <span className="font-bold text-[color:var(--lkv-text-primary)]">{fmtPrice(Number(order.subtotal_eur))} €</span>
             </div>
             <div className="flex justify-between font-mono">
               <span className="text-[color:var(--lkv-text-muted)]">Livraison</span>
-              <span className="font-bold text-[color:var(--lkv-primary)]">{Number(order.shipping_eur) === 0 ? 'Offerte' : fmtPrice(Number(order.shipping_eur)) + ' €'}</span>
+              <span className="font-bold text-[color:var(--lkv-text-primary)]">{Number(order.shipping_eur) === 0 ? 'Offerte' : fmtPrice(Number(order.shipping_eur)) + ' €'}</span>
             </div>
             {fidDiscount > 0 && (
               <div className="flex justify-between font-mono">
                 <span className="text-[color:var(--lkv-text-muted)]">Fidélité Guide (-15%)</span>
-                <span className="font-bold text-[color:var(--lkv-secondary)]">-{fmtPrice(fidDiscount)} €</span>
+                <span className="font-bold text-[color:var(--lkv-secondary-ink)]">-{fmtPrice(fidDiscount)} €</span>
               </div>
             )}
             <div className="flex justify-between pt-2 border-t border-[color:var(--lkv-primary)]/10 font-mono">
-              <span className="font-bold text-[color:var(--lkv-primary)]">Total</span>
-              <span className="font-bold text-base text-[color:var(--lkv-primary)]">{fmtPrice(Number(order.total_eur))} €</span>
+              <span className="font-bold text-[color:var(--lkv-text-primary)]">Total</span>
+              <span className="font-bold text-base text-[color:var(--lkv-text-primary)]">{fmtPrice(Number(order.total_eur))} €</span>
             </div>
           </div>
         </div>
@@ -878,7 +878,7 @@ function ActiveOrderCard({
                     <span className="text-[10px] font-mono">{i + 1}</span>
                   )}
                 </div>
-                <span className={`text-[10px] font-bold mt-1.5 ${isDone ? 'text-[color:var(--lkv-primary)]' : 'text-[color:var(--lkv-text-muted)]'}`}>
+                <span className={`text-[10px] font-bold mt-1.5 ${isDone ? 'text-[color:var(--lkv-text-primary)]' : 'text-[color:var(--lkv-text-muted)]'}`}>
                   {step}
                 </span>
                 <span className="text-[9px] text-[color:var(--lkv-text-muted)] font-mono">{stepDates[i]}</span>
@@ -937,7 +937,7 @@ function HistoryOrderRow({
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold text-[color:var(--lkv-primary)] truncate">
+        <p className="text-sm font-bold text-[color:var(--lkv-text-primary)] truncate">
           {firstItem?.name || 'Commande'}
           {itemCount > 1 && <span className="text-[color:var(--lkv-text-muted)] font-normal font-mono"> +{itemCount - 1}</span>}
         </p>
@@ -948,7 +948,7 @@ function HistoryOrderRow({
       </div>
 
       {/* Price */}
-      <span className="font-mono font-bold text-sm text-[color:var(--lkv-primary)] shrink-0">{fmtPrice(Number(order.total_eur))} €</span>
+      <span className="font-mono font-bold text-sm text-[color:var(--lkv-text-primary)] shrink-0">{fmtPrice(Number(order.total_eur))} €</span>
 
       {/* Status */}
       <Badge tone={statusInfo.tone}>
@@ -1029,7 +1029,7 @@ function AddressModal({
               placeholder="ex: Bureau, Maison de vacances..."
               value={formData.label}
               onChange={(e) => setFormData({ ...formData, label: e.target.value })}
-              className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+              className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
             />
           </div>
           <div>
@@ -1040,7 +1040,7 @@ function AddressModal({
               placeholder="Prénom Nom"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+              className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
             />
           </div>
           <div>
@@ -1051,7 +1051,7 @@ function AddressModal({
               placeholder="Numéro, rue, bâtiment..."
               value={formData.street}
               onChange={(e) => setFormData({ ...formData, street: e.target.value })}
-              className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+              className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
             />
           </div>
           <div>
@@ -1062,7 +1062,7 @@ function AddressModal({
               placeholder="75000 Paris"
               value={formData.city}
               onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-              className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+              className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
             />
           </div>
 
@@ -1146,7 +1146,7 @@ function CardModal({
               placeholder="1234567890123456"
               value={formData.number}
               onChange={(e) => setFormData({ ...formData, number: e.target.value.replace(/\D/g, '') })}
-              className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full font-mono"
+              className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full font-mono"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -1159,7 +1159,7 @@ function CardModal({
                 maxLength={5}
                 value={formData.expiry}
                 onChange={(e) => setFormData({ ...formData, expiry: e.target.value })}
-                className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full font-mono"
+                className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full font-mono"
               />
             </div>
             <div>
@@ -1169,7 +1169,7 @@ function CardModal({
                 type="text"
                 placeholder="123"
                 maxLength={4}
-                className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full font-mono"
+                className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full font-mono"
               />
             </div>
           </div>
@@ -1181,7 +1181,7 @@ function CardModal({
               placeholder="Prénom Nom"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full uppercase"
+              className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full uppercase"
             />
           </div>
 

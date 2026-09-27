@@ -147,7 +147,7 @@ export function AdventureHubSection({
                     <Icon
                       name="check-circle"
                       size={16}
-                      className="shrink-0 text-[var(--lkv-secondary)]"
+                      className="shrink-0 text-[var(--lkv-secondary-ink)]"
                       aria-hidden="true"
                     />
                     <span className="flex-1">{decision.label}</span>
@@ -179,7 +179,7 @@ export function AdventureHubSection({
                 <Icon
                   name={section.icon}
                   size={16}
-                  className="text-[var(--lkv-secondary)]"
+                  className="text-[var(--lkv-secondary-ink)]"
                   aria-hidden="true"
                 />
                 <span className="text-[13px] font-medium text-[var(--lkv-text-primary)]">

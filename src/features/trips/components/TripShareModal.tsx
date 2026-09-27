@@ -151,7 +151,7 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
           <Icon
             name="shield-alert"
             size={16}
-            className="mt-0.5 shrink-0 text-[color:var(--lkv-secondary)]"
+            className="mt-0.5 shrink-0 text-[color:var(--lkv-secondary-ink)]"
           />
           <span>
             <strong>Sécurité des documents :</strong> Les pièces sensibles (passeports,
@@ -167,7 +167,7 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               download={`${trip.slug}.gpx`}
               className={EXPORT_LINK_CLASS}
             >
-              <Icon name="download" size={15} className="text-[color:var(--lkv-secondary)]" />
+              <Icon name="download" size={15} className="text-[color:var(--lkv-secondary-ink)]" />
               <span>Trace GPX 1.1</span>
             </a>
 
@@ -177,7 +177,7 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               rel="noopener noreferrer"
               className={`${EXPORT_LINK_CLASS} w-full`}
             >
-              <Icon name="printer" size={15} className="text-[color:var(--lkv-secondary)]" />
+              <Icon name="printer" size={15} className="text-[color:var(--lkv-secondary-ink)]" />
               <span>Feuille de Route / PDF</span>
             </a>
           </div>

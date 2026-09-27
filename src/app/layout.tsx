@@ -6,6 +6,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import '@/styles/tokens.css';
 import '@/styles/tailwind.css';
 import '@/styles/liquid-glass.css';
+import '@/styles/liquid-ios27.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
@@ -182,9 +183,14 @@ export default async function RootLayout({
   const organizationSchema = getOrganizationSchema(siteUrl);
   const websiteSchema = getWebsiteSchema(siteUrl);
 
+  // Materiau Liquid Glass iOS 27 : l'attribut data-liquid-ios27 est pose UNE seule
+  // fois sur <html>, ici, pour TOUTES les routes. Le retirer = opting-out du
+  // materiau. Aucun autre portillon n'existe dans les feuilles de style.
+
   return (
     <html
       lang={locale}
+      data-liquid-ios27=""
       suppressHydrationWarning
       className={`${manrope.variable} ${ibmPlexMono.variable} ${inter.variable}`}
     >

@@ -125,7 +125,7 @@ export function ExportMobileExperience({ trip, stats, budgetSummary }: ExportMob
         </div>
 
         {notice && (
-          <p role="status" className="mt-2 text-center text-[11px] font-semibold text-[var(--lkv-primary)]">
+          <p role="status" className="mt-2 text-center text-[11px] font-semibold text-[color:var(--lkv-text-primary)]">
             {notice}
           </p>
         )}
@@ -156,13 +156,13 @@ export function ExportMobileExperience({ trip, stats, budgetSummary }: ExportMob
                 <ListItem
                   as="div"
                   leading={
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-[12px] font-extrabold text-[var(--lkv-primary)]">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-[12px] font-extrabold text-[color:var(--lkv-text-primary)]">
                       J{day.day}
                     </span>
                   }
                   title={
                     <span className="flex items-center gap-1.5">
-                      <CalendarDays size={12} className="shrink-0 text-[var(--lkv-secondary)]" aria-hidden="true" />
+                      <CalendarDays size={12} className="shrink-0 text-[var(--lkv-secondary-ink)]" aria-hidden="true" />
                       <span className="truncate">{day.dateLabel ?? `Jour ${day.day}`}</span>
                     </span>
                   }
@@ -199,7 +199,7 @@ export function ExportMobileExperience({ trip, stats, budgetSummary }: ExportMob
               href={card.href}
               className="glass flex h-[8.5rem] w-[10.5rem] flex-col rounded-[var(--lkv-radius-lg)] p-3 transition-transform active:scale-[0.97]"
             >
-              <span className="w-fit rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-[var(--lkv-primary)]">
+              <span className="w-fit rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-[color:var(--lkv-text-primary)]">
                 {card.label}
               </span>
               <span className="mt-2 font-display text-lg font-extrabold tabular-nums text-[var(--lkv-text-primary)]">

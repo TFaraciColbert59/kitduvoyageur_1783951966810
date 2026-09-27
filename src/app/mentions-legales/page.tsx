@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
@@ -13,14 +13,14 @@ export const metadata = {
 
 function MobileMLContent() {
   const s = 'mb-[var(--space-6)]';
-  const h2 = 'mb-[var(--space-2)] border-b border-[color:var(--lkv-border-subtle)] pb-1.5 text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-primary)]';
-  const p = 'text-[length:var(--lkv-text-caption-1)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-primary)]/80';
-  const link = 'text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)] underline';
+  const h2 = 'mb-[var(--space-2)] border-b border-[color:var(--lkv-border-subtle)] pb-1.5 text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]';
+  const p = 'text-[length:var(--lkv-text-caption-1)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-primary)]/80';
+  const link = 'text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)] underline';
   return (
     <div className="p-[var(--space-4)]">
-      <p className="mb-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.14em] text-[color:var(--lkv-primary)]">Informations légales</p>
-      <h1 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-title-lg)] font-extrabold text-[color:var(--lkv-primary)]">Mentions légales</h1>
-      <p className="mb-[var(--space-6)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/50">Conformément à la loi LCEN n° 2004-575 du 21 juin 2004</p>
+      <p className="mb-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.14em] text-[color:var(--lkv-text-primary)]">Informations légales</p>
+      <h1 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-title-lg)] font-extrabold text-[color:var(--lkv-text-primary)]">Mentions légales</h1>
+      <p className="mb-[var(--space-6)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]/50">Conformément à la loi LCEN n° 2004-575 du 21 juin 2004</p>
 
       <section className={s}><h2 className={h2}>1. Éditeur du site</h2>
         <p className={p}><strong>Le Kit du Voyageur</strong> (SAS) — Capital : 10 000€ — Siège : 1 Rue de la Paix, 75001 Paris — SIRET : 123 456 789 00010 — RCS Paris B 123 456 789 — Email : <a href="mailto:contact@lekitduvoyageur.fr" className={link}>contact@lekitduvoyageur.fr</a></p>
@@ -34,11 +34,11 @@ function MobileMLContent() {
 
       <div className="flex flex-wrap gap-[var(--space-2)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-4)]">
         <Link href="/politique-confidentialite" className={link}>Confidentialité</Link>
-        <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/20">·</span>
+        <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]/20">·</span>
         <Link href="/cgu" className={link}>CGU</Link>
-        <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/20">·</span>
+        <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]/20">·</span>
         <Link href="/cgv" className={link}>CGV</Link>
-        <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/20">·</span>
+        <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]/20">·</span>
         <Link href="/cookies" className={link}>Cookies</Link>
       </div>
     </div>
@@ -112,9 +112,9 @@ export default function MentionsLegalesPage() {
 
       {/* MOBILE */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <MobileMLContent />
-        </MobilePageShell>
+        </AppShell>
         
       </div>
     </>

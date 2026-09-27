@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import AppShellDesktop from '@/components/shell/AppShellDesktop';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import { applyLKDVStatusBarTheme } from '@/lib/native/status-bar';
 import { useActiveAdventure } from '../context/ActiveAdventureContext';
 import { adventureKey, type AdventureEntry } from '../context/adventureLists';
@@ -40,7 +40,6 @@ import { HubNetworkStatus } from './HubNetworkStatus';
 import { HubEdgeDrawer } from './mobile/HubEdgeDrawer';
 import { HubRealtimeRefresh } from './HubRealtimeRefresh';
 import { ActivityLiveBridge } from './live/ActivityLiveBridge';
-import { MarbleZone } from '@/components/glass/MarbleZone';
 import type { HubUserTripLite } from '../server/getHubAdventureData';
 
 export interface HubShellProps {
@@ -260,8 +259,6 @@ export function HubShell({
 
   return (
     <>
-      {isHubRoot && <span className="hub-liquid-root" hidden aria-hidden="true" />}
-      <MarbleZone />
       {/* T10 — un seul pont realtime du voyage actif pour TOUTE la surface hub
           (racine + sections) : le rail et les reveals le consomment. */}
       <ActivityLiveBridge tripId={adventure.nature === 'sortie' ? adventure.id : null} />
@@ -269,7 +266,7 @@ export function HubShell({
       sidebarLeft={sidebarLeft}
       sidebarRight={sidebarRight}
       mobileSlot={
-        <MobilePageShell safeTop={true} hasBottomNav={true}>
+        <AppShell safeTop={true} hasBottomNav={true}>
           {realtime}
           <div
             className={
@@ -291,7 +288,7 @@ export function HubShell({
               {adventureIntelligence}
             </HubEdgeDrawer>
           ) : null}
-        </MobilePageShell>
+        </AppShell>
       }
     >
       {!isItinerarySection && (

@@ -169,7 +169,7 @@ export function ProgressionCompactCard({
         <span className="flex items-center gap-3">
           <span
             aria-hidden="true"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[var(--lkv-primary)]"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[color:var(--lkv-text-primary)]"
           >
             <Trophy size={16} />
           </span>

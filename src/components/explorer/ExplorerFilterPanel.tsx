@@ -157,7 +157,7 @@ export default function ExplorerFilterPanel({
         <div className="flex items-center justify-between">
           <span className={sectionLabel}>Points d'intérêt & Équipements</span>
           {activePoiCategories.length > 0 && (
-            <span className="text-[length:var(--lkv-text-caption-2)] font-mono text-[color:var(--lkv-secondary)] font-bold">
+            <span className="text-[length:var(--lkv-text-caption-2)] font-mono text-[color:var(--lkv-secondary-ink)] font-bold">
               {activePoiCategories.length} sélectionné{activePoiCategories.length > 1 ? 's' : ''}
             </span>
           )}

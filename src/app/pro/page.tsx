@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 
 const PRO_PLANS = [
   { id: 'guide', name: 'Guide Indépendant', price: 29, period: 'mois', description: 'Pour les guides de montagne et accompagnateurs indépendants', features: ['Tarifs pro -15%', 'Commandes groupées jusqu\'à 10', 'Facturation professionnelle', 'Support prioritaire'], highlighted: false },
@@ -50,9 +50,9 @@ export default function B2BPage() {
 
       {/* MOBILE */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <div className="p-[var(--space-4)]">
-            <h1 className="mb-[var(--space-4)] text-[20px] font-extrabold text-[color:var(--lkv-primary)]">Espace Pro B2B</h1>
+            <h1 className="mb-[var(--space-4)] text-[20px] font-extrabold text-[color:var(--lkv-text-primary)]">Espace Pro B2B</h1>
             <p className="mb-[var(--space-5)] text-[13px] text-[color:var(--lkv-text-secondary)]">Tarifs préférentiels pour les professionnels.</p>
             <div className="mb-[var(--space-5)] flex gap-[var(--space-2)]">
               <button onClick={() => setActiveTab('plans')} className={`glass-capsule-btn ${activeTab === 'plans' ? 'primary' : ''}`}>Offres</button>
@@ -60,16 +60,16 @@ export default function B2BPage() {
             </div>
             {activeTab === 'plans' && PRO_PLANS.map((plan) => (
               <div key={plan.id} className="glass mb-[var(--space-3)] rounded-[var(--lkv-radius-sm)] p-[var(--space-4)]">
-                <h3 className="mb-1 text-[16px] font-bold text-[color:var(--lkv-primary)]">{plan.name}</h3>
+                <h3 className="mb-1 text-[16px] font-bold text-[color:var(--lkv-text-primary)]">{plan.name}</h3>
                 <p className="mb-[var(--space-2)] text-[13px] text-[color:var(--lkv-text-muted)]">{plan.description}</p>
-                <p className="mb-[var(--space-3)] text-[28px] font-extrabold text-[color:var(--lkv-primary)]">{plan.price}€<span className="text-[13px] font-normal">/{plan.period}</span></p>
+                <p className="mb-[var(--space-3)] text-[28px] font-extrabold text-[color:var(--lkv-text-primary)]">{plan.price}€<span className="text-[13px] font-normal">/{plan.period}</span></p>
                 <ul className="mb-[var(--space-3)]">{plan.features.map((f) => <li key={f} className="py-0.5 text-[13px] text-[color:var(--lkv-text-secondary)]">✓ {f}</li>)}</ul>
                 <button onClick={() => setShowContactModal(true)} className="glass-capsule-btn primary w-full">Choisir cette offre</button>
               </div>
             ))}
             <button onClick={() => setShowContactModal(true)} className="glass-capsule-btn primary w-full">Demander un accès pro</button>
           </div>
-        </MobilePageShell>
+        </AppShell>
         
 
         {showContactModal && (

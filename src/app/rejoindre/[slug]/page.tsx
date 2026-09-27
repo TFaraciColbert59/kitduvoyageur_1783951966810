@@ -34,7 +34,7 @@ function HonestUnavailable() {
       </section>
       <Link
         href="/hub"
-        className="glass-capsule-btn inline-flex min-h-[44px] items-center justify-center !py-3 text-sm font-bold text-[var(--lkv-primary)]"
+        className="glass-capsule-btn inline-flex min-h-[44px] items-center justify-center !py-3 text-sm font-bold text-[color:var(--lkv-text-primary)]"
       >
         Retour au hub
       </Link>

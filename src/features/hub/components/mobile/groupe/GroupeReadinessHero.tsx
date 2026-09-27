@@ -93,7 +93,7 @@ export function GroupeReadinessHero({
           {memberNames.slice(0, 4).map((name, index) => (
             <span
               key={`${name}-${index}`}
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-[10px] font-bold uppercase text-[var(--lkv-primary)] ring-2 ring-white"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-[10px] font-bold uppercase text-[color:var(--lkv-text-primary)] ring-2 ring-white"
             >
               {name.slice(0, 1)}
             </span>

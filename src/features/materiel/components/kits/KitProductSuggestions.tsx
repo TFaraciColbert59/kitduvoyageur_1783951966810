@@ -164,12 +164,12 @@ export function KitProductSuggestions({ products = [] }: { products?: ProductSug
           <Eyebrow>Boutique & Recommandations</Eyebrow>
           <h3
             id="suggestions-title"
-            className="font-display font-bold text-[20px] text-[var(--lkv-primary)] mt-0.5"
+            className="font-display font-bold text-[20px] text-[color:var(--lkv-text-primary)] mt-0.5"
           >
             Matériel recommandé pour vos kits
           </h3>
         </div>
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--lkv-primary)] bg-[var(--lkv-primary)]/08 px-3 py-1 rounded-full border border-[var(--lkv-primary)]/15">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-[color:var(--lkv-text-primary)] bg-[var(--lkv-primary)]/08 px-3 py-1 rounded-full border border-[var(--lkv-primary)]/15">
           <Icon name="sparkles" size={13} />
           <span>Sélection Expert</span>
         </div>
@@ -190,7 +190,7 @@ export function KitProductSuggestions({ products = [] }: { products?: ProductSug
               className={`px-3 py-1 rounded-full text-xs font-bold transition-all shrink-0 ${
                 isActive
                   ? 'bg-[var(--lkv-primary)] text-white '
-                  : 'bg-white/[0.08] text-[var(--lkv-primary-soft)] hover:bg-white/20 border border-white/20'
+                  : 'bg-white/[0.08] text-[color:var(--lkv-text-secondary)] hover:bg-white/20 border border-white/20'
               }`}
             >
               {cat}
@@ -225,14 +225,14 @@ export function KitProductSuggestions({ products = [] }: { products?: ProductSug
                   )}
                 </div>
 
-                <p className="font-semibold text-xs text-[var(--lkv-primary)] line-clamp-2 leading-tight group-hover:text-[var(--lkv-primary-soft)] transition-colors">
+                <p className="font-semibold text-xs text-[color:var(--lkv-text-primary)] line-clamp-2 leading-tight group-hover:text-[color:var(--lkv-text-secondary)] transition-colors">
                   {prod.name}
                 </p>
               </Link>
 
               <div className="pt-1 border-t border-white/15 flex flex-col gap-1.5">
                 <div className="flex items-center justify-between text-[11px] font-mono">
-                  <span className="font-bold text-[var(--lkv-primary)]">
+                  <span className="font-bold text-[color:var(--lkv-text-primary)]">
                     {prod.priceEur.toFixed(2)} €
                   </span>
                   <span className="text-[var(--lkv-text-muted)]">

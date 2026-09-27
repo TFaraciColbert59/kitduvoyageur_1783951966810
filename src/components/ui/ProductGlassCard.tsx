@@ -6,7 +6,7 @@ export function ProductGlassCard({
 }: { name: string; imageUrl: string; price: string; sponsored?: boolean; href: string }) {
   return (
     <a href={href} className="glass interactive block w-[168px] shrink-0 p-3" aria-label={`${name}, ${price}`}>
-      <div className="relative h-[120px] w-full rounded-[var(--r-md)] overflow-hidden bg-stone-100">
+      <div className="relative h-[120px] w-full rounded-[var(--r-md)] overflow-hidden bg-[color:var(--lkv-surface-paper)]">
         <Image src={imageUrl} alt={name} fill sizes="168px" className="object-cover" />
       </div>
       <p className="mt-2 text-sm font-medium text-[color:var(--label)] line-clamp-2">{name}</p>

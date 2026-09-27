@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import MobileClubsHub from '@/components/clubs/MobileClubsHub';
 import CompteBackground from '@/components/compte/CompteBackground';
 import Icon from '@/components/ui/AppIcon';
@@ -193,7 +193,7 @@ function ClubFormModal({
             />
           </div>
           <div className="flex-1">
-            <label htmlFor="club-form-name" className={LABEL_CLASS}>Nom du club <span className="text-[color:var(--lkv-secondary)]">*</span></label>
+            <label htmlFor="club-form-name" className={LABEL_CLASS}>Nom du club <span className="text-[color:var(--lkv-secondary-ink)]">*</span></label>
             <input
               id="club-form-name"
               className={FIELD_CLASS}
@@ -549,7 +549,7 @@ function ClubDetailModal({
                   {club.is_member && (
                     <Card className="space-y-[var(--space-4)]">
                       <div className="flex items-center gap-[var(--space-3)]">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--lkv-secondary)]/10 text-[color:var(--lkv-secondary)]">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--lkv-secondary)]/10 text-[color:var(--lkv-secondary-ink)]">
                           <Icon name="PencilIcon" size={14} aria-hidden="true" />
                         </span>
                         <h3 className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Lancer une discussion</h3>
@@ -594,7 +594,7 @@ function ClubDetailModal({
                             <div className="mb-[var(--space-2)] flex flex-wrap items-center gap-[var(--space-2)]">
                               {topic.is_pinned && <Badge>📌 ÉPINGLÉ</Badge>}
                               {topic.is_announcement && <Badge tone="warn">📢 ANNONCE</Badge>}
-                              <h4 className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] transition-colors group-hover:text-[color:var(--lkv-secondary)]">{topic.title}</h4>
+                              <h4 className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] transition-colors group-hover:text-[color:var(--lkv-secondary-ink)]">{topic.title}</h4>
                             </div>
                             {topic.content && <p className="mb-[var(--space-4)] line-clamp-2 text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-muted)]">{topic.content}</p>}
                             <div className="flex items-center gap-[var(--space-4)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-muted)]">
@@ -617,7 +617,7 @@ function ClubDetailModal({
                                 onClick={() => handlePinTopic(topic)}
                                 aria-label={topic.is_pinned ? 'Désépingler la discussion' : 'Épingler la discussion'}
                               >
-                                <Icon name="bookmark" size={15} className={topic.is_pinned ? 'text-[color:var(--lkv-secondary)]' : 'text-[color:var(--lkv-text-muted)]'} aria-hidden="true" />
+                                <Icon name="bookmark" size={15} className={topic.is_pinned ? 'text-[color:var(--lkv-secondary-ink)]' : 'text-[color:var(--lkv-text-muted)]'} aria-hidden="true" />
                               </IconButton>
                               <IconButton
                                 variant="ghost"
@@ -643,7 +643,7 @@ function ClubDetailModal({
                     <Card key={m.id} className="flex flex-col gap-[var(--space-3)]">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-[var(--space-3)]">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--lkv-secondary)]/10 text-[length:var(--lkv-text-subheadline)] font-extrabold text-[color:var(--lkv-secondary)]" aria-hidden>
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--lkv-secondary)]/10 text-[length:var(--lkv-text-subheadline)] font-extrabold text-[color:var(--lkv-secondary-ink)]" aria-hidden>
                             {m.user?.full_name?.[0] ?? '?'}
                           </div>
                           <div>
@@ -733,7 +733,7 @@ function ClubDetailModal({
                   {isAdmin && (
                     <Card className="space-y-[var(--space-4)]">
                       <div className="flex items-center gap-[var(--space-3)]">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--lkv-secondary)]/10 text-[color:var(--lkv-secondary)]">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--lkv-secondary)]/10 text-[color:var(--lkv-secondary-ink)]">
                           <Icon name="CalendarIcon" size={14} aria-hidden="true" />
                         </span>
                         <h3 className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Planifier un événement</h3>
@@ -777,7 +777,7 @@ function ClubDetailModal({
                         <Card variant="compact" className="flex min-w-[100px] flex-col items-center justify-center">
                           {ev.event_date ? (
                             <>
-                              <span className="text-[length:var(--lkv-text-caption)] font-extrabold uppercase text-[color:var(--lkv-secondary)]">{new Date(ev.event_date).toLocaleDateString('fr-FR', { month: 'short' })}</span>
+                              <span className="text-[length:var(--lkv-text-caption)] font-extrabold uppercase text-[color:var(--lkv-secondary-ink)]">{new Date(ev.event_date).toLocaleDateString('fr-FR', { month: 'short' })}</span>
                               <span className="text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">{new Date(ev.event_date).getDate()}</span>
                             </>
                           ) : (
@@ -889,7 +889,7 @@ function ClubCard({
       href={`/clubs/${club.slug}`}
       className="group relative block h-full"
     >
-      <Card className="relative flex h-full flex-col overflow-hidden transition-all duration-[var(--motion-control-duration)] group-hover:shadow-elevation-2">
+      <Card className="relative flex h-full flex-col overflow-hidden transition-all [transition-duration:var(--motion-control-duration)] group-hover:shadow-elevation-2">
         <div aria-hidden className={`pointer-events-none absolute -right-32 -top-32 h-64 w-64 rounded-full bg-gradient-to-br ${normalizeCover(club.cover_color)} opacity-20 blur-[80px] transition-opacity duration-500 group-hover:opacity-40`} />
 
         <div className="relative z-10 flex h-full flex-col">
@@ -922,7 +922,7 @@ function ClubCard({
                 </div>
               )}
               {club.is_member && (
-                <span className="rounded-full border border-[color:var(--lkv-secondary)]/30 bg-[color:var(--lkv-secondary)]/20 p-[var(--space-2)] text-[color:var(--lkv-secondary)]" title="Vous êtes membre">
+                <span className="rounded-full border border-[color:var(--lkv-secondary)]/30 bg-[color:var(--lkv-secondary)]/20 p-[var(--space-2)] text-[color:var(--lkv-secondary-ink)]" title="Vous êtes membre">
                   <Icon name="CheckIcon" size={14} aria-hidden="true" />
                 </span>
               )}
@@ -941,7 +941,7 @@ function ClubCard({
                 </Badge>
               )}
             </div>
-            <h3 className="flex items-center gap-[var(--space-2)] font-display text-[length:var(--lkv-text-subheadline)] font-extrabold leading-tight text-[color:var(--lkv-text-primary)] transition-colors group-hover:text-[color:var(--lkv-secondary)]">
+            <h3 className="flex items-center gap-[var(--space-2)] font-display text-[length:var(--lkv-text-subheadline)] font-extrabold leading-tight text-[color:var(--lkv-text-primary)] transition-colors group-hover:text-[color:var(--lkv-secondary-ink)]">
               {club.name}
               {club.is_verified && <Icon name="CheckBadgeIcon" size={18} className="text-[color:var(--lkv-info)]" aria-hidden="true" />}
             </h3>
@@ -1260,7 +1260,7 @@ export default function ClubsPage() {
       </div>
 
       <div className="relative block min-h-screen font-sans text-[color:var(--lkv-text-primary)] md:hidden">
-        <MobilePageShell videoBackground={true} background="transparent">
+        <AppShell videoBackground={true} background="transparent">
           <MobileClubsHub
             clubs={clubs}
             myClubs={clubs.filter(c => c.is_member)}
@@ -1280,7 +1280,7 @@ export default function ClubsPage() {
             }}
             onRefresh={loadClubs}
           />
-        </MobilePageShell>
+        </AppShell>
       </div>
 
       <ClubFormModal
@@ -1313,7 +1313,7 @@ export default function ClubsPage() {
       {toast && (
         // P2 — offset UNIQUE via token : jamais sous la bottom bar.
         <div className="fixed bottom-[calc(var(--nav-offset)+var(--space-4))] left-1/2 z-[var(--z-toast)] flex max-w-[calc(100vw-32px)] -translate-x-1/2 items-center gap-[var(--space-3)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-[var(--space-8)] py-[var(--space-4)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-4">
-          <Icon name="CheckCircleIcon" size={18} className="text-[color:var(--lkv-secondary)]" aria-hidden="true" />
+          <Icon name="CheckCircleIcon" size={18} className="text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
           {toast}
         </div>
       )}

@@ -42,7 +42,7 @@ export function Chip({
   const actionOnly = interactive && !selectable;
 
   const classes = cn(
-    'inline-flex touch-manipulation select-none items-center justify-center gap-[6px] rounded-full px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-medium transition-all duration-[var(--motion-control-duration)]',
+    'inline-flex touch-manipulation select-none items-center justify-center gap-[6px] rounded-full px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-medium transition-all [transition-duration:var(--motion-control-duration)]',
     actionOnly ? 'min-h-[var(--lkv-touch-min)]' : 'min-h-[var(--control-height-xs)]',
     interactive &&
       'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] motion-reduce:transition-none',

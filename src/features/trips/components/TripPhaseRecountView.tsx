@@ -42,7 +42,7 @@ export function TripPhaseRecountView({ trip }: TripPhaseRecountViewProps) {
               <Icon name="sparkles" size={24} />
             </div>
             <div>
-              <span className="text-[length:var(--lkv-text-footnote)] font-bold uppercase tracking-wider text-[color:var(--lkv-secondary)]">
+              <span className="text-[length:var(--lkv-text-footnote)] font-bold uppercase tracking-wider text-[color:var(--lkv-secondary-ink)]">
                 Phase Raconter · Retour d’Expédition
               </span>
               <h2 className="mt-0.5 text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">

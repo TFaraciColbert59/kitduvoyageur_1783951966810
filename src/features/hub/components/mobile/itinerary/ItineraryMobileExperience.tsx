@@ -614,7 +614,7 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
         <div
           role={toast.kind === 'error' ? 'alert' : 'status'}
           className={`glass fixed bottom-24 left-1/2 z-[var(--z-toast)] w-[min(22rem,calc(100vw-2rem))] -translate-x-1/2 rounded-2xl p-3 text-center text-xs font-semibold shadow-lg ${
-            toast.kind === 'error' ? 'text-[var(--lkv-danger)]' : 'text-[var(--lkv-primary)]'
+            toast.kind === 'error' ? 'text-[var(--lkv-danger)]' : 'text-[color:var(--lkv-text-primary)]'
           }`}
         >
           {toast.message}

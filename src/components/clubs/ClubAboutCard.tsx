@@ -26,7 +26,7 @@ export default function ClubAboutCard({ club }: ClubAboutCardProps) {
     : '2024';
 
   return (
-    <Card className="space-y-[var(--space-3)] p-[var(--space-4)] transition-all duration-[var(--motion-control-duration)]">
+    <Card className="space-y-[var(--space-3)] p-[var(--space-4)] transition-all [transition-duration:var(--motion-control-duration)]">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-[var(--space-2)]">
           <span className="text-[length:var(--lkv-text-caption)]" aria-hidden>ℹ️</span>

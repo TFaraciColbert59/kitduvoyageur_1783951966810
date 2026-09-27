@@ -70,7 +70,7 @@
     "coverage:pipeline": "tsx scripts/coverage/pipeline.ts",
     "icons:build": "node scripts/icons/build-sprite.mjs",
     "icons:codemod": "node scripts/icons/codemod-lucide-to-icon.mjs",
-    "prebuild": "node scripts/icons/build-sprite.mjs && node scripts/atlas/copy-maplibre-worker.mjs",
+    "prebuild": "node scripts/icons/build-sprite.mjs && node scripts/icons/build-heroicons-map.mjs && node scripts/atlas/copy-maplibre-worker.mjs",
     "test:a11y": "playwright test --config=playwright.a11y.config.ts",
     "audit:contrast": "node scripts/audit/visual-contrast.mjs",
     "visual:sheet": "node scripts/visual/contact-sheet.mjs",
@@ -178,5 +178,8 @@
     "hyperid": {
       "uuid": "11.1.1"
     }
-  }
+  },
+  "sideEffects": [
+    "**/*.css"
+  ]
 }

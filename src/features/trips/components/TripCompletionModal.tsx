@@ -149,7 +149,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
         {/* Métriques d'aventure */}
         <div className="grid grid-cols-2 gap-[var(--space-3)] sm:grid-cols-4">
           <Card variant="compact" className="text-center">
-            <Icon name="navigation" size={18} className="mx-auto mb-1 text-[color:var(--lkv-primary)]" />
+            <Icon name="navigation" size={18} className="mx-auto mb-1 text-[color:var(--lkv-text-primary)]" />
             <div className="text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
               {metrics.totalKm} km
             </div>
@@ -157,7 +157,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
           </Card>
 
           <Card variant="compact" className="text-center">
-            <Icon name="mountain" size={18} className="mx-auto mb-1 text-[color:var(--lkv-primary)]" />
+            <Icon name="mountain" size={18} className="mx-auto mb-1 text-[color:var(--lkv-text-primary)]" />
             <div className="text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
               +{metrics.totalElevationGainM} m
             </div>
@@ -165,7 +165,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
           </Card>
 
           <Card variant="compact" className="text-center">
-            <Icon name="package" size={18} className="mx-auto mb-1 text-[color:var(--lkv-primary)]" />
+            <Icon name="package" size={18} className="mx-auto mb-1 text-[color:var(--lkv-text-primary)]" />
             <div className="text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
               {metrics.packedWeightKg} kg
             </div>
@@ -175,7 +175,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
           </Card>
 
           <Card variant="compact" className="text-center">
-            <Icon name="award" size={18} className="mx-auto mb-1 text-[color:var(--lkv-primary)]" />
+            <Icon name="award" size={18} className="mx-auto mb-1 text-[color:var(--lkv-text-primary)]" />
             <div className="text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
               {metrics.durationDays} jours
             </div>

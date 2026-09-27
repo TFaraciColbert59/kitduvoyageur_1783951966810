@@ -45,7 +45,7 @@ export default function HeroVoyage({ data, groupId, inviteCode, onOpenChat }: He
   };
 
   return (
-    <div className="relative flex flex-col justify-between gap-[var(--space-6)] overflow-hidden rounded-[var(--lkv-radius-card)] border border-[color:var(--glass-border)] bg-gradient-to-br from-[color:var(--lkv-primary)]/95 via-[color:var(--lkv-primary)]/85 to-[color:var(--lkv-forest-600)]/90 p-[var(--space-8)] text-[color:var(--stone-50)] sm:p-[var(--space-10)] md:flex-row md:items-end">
+    <div className="relative flex flex-col justify-between gap-[var(--space-6)] overflow-hidden rounded-[var(--lkv-radius-card)] border border-[color:var(--glass-border)] bg-gradient-to-br from-[color:var(--lkv-primary)]/95 via-[color:var(--lkv-primary)]/85 to-[color:var(--lkv-forest-600)]/90 p-[var(--space-8)] text-[color:var(--lkv-text-primary)] sm:p-[var(--space-10)] md:flex-row md:items-end">
       <div aria-hidden className="pointer-events-none absolute right-0 top-0 h-[40rem] w-[40rem] rounded-full bg-[color:var(--lkv-text-inverted)] opacity-5 blur-[100px]" />
 
       <div className="relative z-10 max-w-2xl">

@@ -140,7 +140,7 @@ export function AdventureCockpit({
           </h2>
           <p className="mt-0.5 text-[13px] text-[var(--lkv-text-secondary)]">{view.hero.subtitle}</p>
         </div>
-        <span className="shrink-0 rounded-full bg-[var(--lkv-primary-subtle)] px-2.5 py-1 text-[11px] font-semibold text-[var(--lkv-primary)]">
+        <span className="shrink-0 rounded-full bg-[var(--lkv-primary-subtle)] px-2.5 py-1 text-[11px] font-semibold text-[color:var(--lkv-text-primary)]">
           {view.hero.status}
         </span>
       </header>
@@ -321,7 +321,7 @@ export function AdventureCockpit({
               <button
                 type="button"
                 onClick={onRecalculate}
-                className="min-h-[44px] rounded-full px-3 text-[12px] font-semibold text-[var(--lkv-primary)] active:opacity-70"
+                className="min-h-[44px] rounded-full px-3 text-[12px] font-semibold text-[color:var(--lkv-text-primary)] active:opacity-70"
               >
                 Recalculer
               </button>

@@ -43,7 +43,7 @@ export function KitsGrid({ kits, onSelect }: Props) {
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div>
           <Eyebrow>Kit Actif</Eyebrow>
-          <h2 className="font-display font-bold text-[20px] sm:text-[24px] text-[var(--lkv-primary)] mt-0.5">
+          <h2 className="font-display font-bold text-[20px] sm:text-[24px] text-[color:var(--lkv-text-primary)] mt-0.5">
             {currentKit.name}
           </h2>
         </div>
@@ -58,7 +58,7 @@ export function KitsGrid({ kits, onSelect }: Props) {
                 onSelect?.(e.target.value);
               }}
               aria-label="Sélectionner le kit affiché"
-              className="glass-input py-1 px-2.5 text-xs text-[var(--lkv-primary)] font-semibold"
+              className="glass-input py-1 px-2.5 text-xs text-[color:var(--lkv-text-primary)] font-semibold"
             >
               {activeKits.map((k) => (
                 <option key={k.id} value={k.id}>
@@ -71,7 +71,7 @@ export function KitsGrid({ kits, onSelect }: Props) {
       </div>
 
       {currentKit.description && (
-        <p className="text-xs sm:text-sm text-[var(--lkv-primary-soft)] leading-relaxed">
+        <p className="text-xs sm:text-sm text-[color:var(--lkv-text-secondary)] leading-relaxed">
           {currentKit.description}
         </p>
       )}
@@ -82,7 +82,7 @@ export function KitsGrid({ kits, onSelect }: Props) {
           <span className="text-[10px] uppercase font-bold text-[var(--lkv-text-muted)]">
             Poids
           </span>
-          <p className="font-mono font-bold text-xs sm:text-sm text-[var(--lkv-primary)]">
+          <p className="font-mono font-bold text-xs sm:text-sm text-[color:var(--lkv-text-primary)]">
             {(currentKit.total_weight_g / 1000).toFixed(1)} kg
           </p>
         </div>
@@ -90,7 +90,7 @@ export function KitsGrid({ kits, onSelect }: Props) {
           <span className="text-[10px] uppercase font-bold text-[var(--lkv-text-muted)]">
             Articles
           </span>
-          <p className="font-mono font-bold text-xs sm:text-sm text-[var(--lkv-primary)]">
+          <p className="font-mono font-bold text-xs sm:text-sm text-[color:var(--lkv-text-primary)]">
             {currentKit.item_count}
           </p>
         </div>
@@ -98,7 +98,7 @@ export function KitsGrid({ kits, onSelect }: Props) {
           <span className="text-[10px] uppercase font-bold text-[var(--lkv-text-muted)]">
             Complétude
           </span>
-          <p className="font-mono font-bold text-xs sm:text-sm text-[var(--lkv-primary)]">
+          <p className="font-mono font-bold text-xs sm:text-sm text-[color:var(--lkv-text-primary)]">
             {completionPct}%
           </p>
         </div>
@@ -114,7 +114,7 @@ export function KitsGrid({ kits, onSelect }: Props) {
 
       {/* Liste des articles du kit (avec état grisé pour les non reçus) */}
       <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between text-xs font-bold text-[var(--lkv-primary-soft)]">
+        <div className="flex items-center justify-between text-xs font-bold text-[color:var(--lkv-text-secondary)]">
           <span>Composition du kit ({currentKit.items.length})</span>
           <span className="text-[11px] text-[var(--lkv-text-muted)]">
             {currentKit.season ? `Saison : ${currentKit.season}` : ''}
@@ -143,7 +143,7 @@ export function KitsGrid({ kits, onSelect }: Props) {
                       className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 border ${
                         isUnowned
                           ? 'border-white/30 bg-white/5 text-[var(--lkv-text-muted)]'
-                          : 'bg-[var(--lkv-primary)]/10 border-[var(--lkv-primary)]/20 text-[var(--lkv-primary)]'
+                          : 'bg-[var(--lkv-primary)]/10 border-[var(--lkv-primary)]/20 text-[color:var(--lkv-text-primary)]'
                       }`}
                     >
                       {isUnowned ? (
@@ -157,7 +157,7 @@ export function KitsGrid({ kits, onSelect }: Props) {
                         className={`text-xs font-semibold truncate ${
                           isUnowned
                             ? 'text-[var(--lkv-text-muted)] italic line-through'
-                            : 'text-[var(--lkv-primary)]'
+                            : 'text-[color:var(--lkv-text-primary)]'
                         }`}
                       >
                         {item.name}
@@ -170,7 +170,7 @@ export function KitsGrid({ kits, onSelect }: Props) {
                   </div>
 
                   {isUnowned && (
-                    <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] border border-[var(--lkv-primary)]/20 flex items-center gap-1">
+                    <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-[var(--lkv-primary)]/10 text-[color:var(--lkv-text-primary)] border border-[var(--lkv-primary)]/20 flex items-center gap-1">
                       <ShoppingBag size={9} />
                       En commande
                     </span>

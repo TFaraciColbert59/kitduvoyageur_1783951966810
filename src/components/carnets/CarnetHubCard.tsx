@@ -129,7 +129,7 @@ export default function CarnetHubCard({
       href={carnetHref}
       className="group relative block h-full"
     >
-      <Card className="flex h-full flex-col overflow-hidden p-0 transition-transform duration-[var(--motion-control-duration)] group-hover:-translate-y-1 group-hover:shadow-elevation-3 motion-reduce:transition-none">
+      <Card className="flex h-full flex-col overflow-hidden p-0 transition-transform [transition-duration:var(--motion-control-duration)] group-hover:-translate-y-1 group-hover:shadow-elevation-3 motion-reduce:transition-none">
         <div className="relative aspect-[16/10] w-full overflow-hidden bg-[color:var(--btn-tint)]">
           {coverUrl ? (
             <SmartImage

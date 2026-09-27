@@ -11,7 +11,7 @@ function chipClasses(tone: MobileInfoChip['tone']): string {
     return 'border border-[var(--lkv-danger)]/20 bg-[var(--lkv-danger)]/10 text-[var(--lkv-danger)]';
   }
   if (tone === 'accent') {
-    return 'border border-[var(--lkv-primary)]/15 bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]';
+    return 'border border-[var(--lkv-primary)]/15 bg-[var(--lkv-primary)]/10 text-[color:var(--lkv-text-primary)]';
   }
   return 'glass-sub-card bg-[color:var(--glass-bg-medium)] bg-[color:var(--card-tint-solid)] text-[var(--lkv-text-primary)]';
 }

@@ -13,7 +13,7 @@ export function AvailabilityGauge({ availableCount, total }: { availableCount: n
   return (
     <div className="relative h-[72px] w-[72px]" role="img" aria-label={`${availableCount} sur ${total} objets disponibles`}>
       <svg viewBox="0 0 72 72" className="h-full w-full -rotate-90">
-        <circle cx="36" cy="36" r="32" fill="none" stroke="var(--stone-200)" strokeWidth="8" />
+        <circle cx="36" cy="36" r="32" fill="none" stroke="var(--lkv-border)" strokeWidth="8" />
         <motion.circle
           cx="36" cy="36" r="32" fill="none" stroke="var(--sage-500)" strokeWidth="8"
           strokeDasharray={2 * Math.PI * 32}

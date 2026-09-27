@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import { Button, Card, Section, Switch } from '@/components/ui';
 import { getStoredConsent, storeConsent } from '@/lib/cookieConsent';
 
@@ -168,7 +168,7 @@ export default function CookiesPage() {
           Email :{' '}
           <a
             href="mailto:dpo@lekitduvoyageur.fr"
-            className="text-[color:var(--lkv-primary)] underline"
+            className="text-[color:var(--lkv-text-primary)] underline"
           >
             dpo@lekitduvoyageur.fr
           </a>
@@ -179,19 +179,19 @@ export default function CookiesPage() {
 
   const legalNav = (
     <div className="flex flex-wrap gap-[var(--space-3)] border-t border-[color:var(--lkv-border)] pt-[var(--space-5)]">
-      <Link href="/politique-confidentialite" className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)] hover:underline">
+      <Link href="/politique-confidentialite" className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)] hover:underline">
         Politique de confidentialité
       </Link>
       <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">·</span>
-      <Link href="/mentions-legales" className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)] hover:underline">
+      <Link href="/mentions-legales" className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)] hover:underline">
         Mentions légales
       </Link>
       <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">·</span>
-      <Link href="/cgu" className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)] hover:underline">
+      <Link href="/cgu" className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)] hover:underline">
         CGU
       </Link>
       <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">·</span>
-      <Link href="/cgv" className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)] hover:underline">
+      <Link href="/cgv" className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)] hover:underline">
         CGV
       </Link>
     </div>
@@ -201,7 +201,7 @@ export default function CookiesPage() {
     <div className="min-h-screen bg-background text-foreground">
       <Header />
       <main className="mx-auto max-w-3xl px-4 pb-16 pt-28 sm:px-6 lg:px-8">
-        <p className="mb-3 font-mono text-[length:var(--lkv-text-caption-1)] uppercase tracking-widest text-[color:var(--lkv-primary)]">
+        <p className="mb-3 font-mono text-[length:var(--lkv-text-caption-1)] uppercase tracking-widest text-[color:var(--lkv-text-primary)]">
           Cookies &amp; Traceurs
         </p>
         <h1 className="mb-2 font-display text-[length:var(--lkv-text-title-lg)] font-extrabold text-[color:var(--lkv-text-primary)]">
@@ -224,10 +224,10 @@ export default function CookiesPage() {
 
   const mobileContent = (
     <div className="p-[var(--space-4)]">
-      <p className="mb-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.14em] text-[color:var(--lkv-primary)]">
+      <p className="mb-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.14em] text-[color:var(--lkv-text-primary)]">
         Cookies &amp; Traceurs
       </p>
-      <h1 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-title-lg)] font-extrabold text-[color:var(--lkv-primary)]">
+      <h1 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-title-lg)] font-extrabold text-[color:var(--lkv-text-primary)]">
         Politique de gestion des cookies
       </h1>
       <p className="mb-[var(--space-6)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
@@ -246,7 +246,7 @@ export default function CookiesPage() {
 
       {/* MOBILE */}
       <div className="block md:hidden">
-        <MobilePageShell>{mobileContent}</MobilePageShell>
+        <AppShell>{mobileContent}</AppShell>
       </div>
     </>
   );

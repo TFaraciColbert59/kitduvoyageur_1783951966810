@@ -52,7 +52,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
           className="shrink-0"
           aria-label="Ajouter une story"
           icon={
-            <span className="flex size-7 items-center justify-center rounded-full border border-dashed border-[color:var(--lkv-border-strong)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-primary)]">
+            <span className="flex size-7 items-center justify-center rounded-full border border-dashed border-[color:var(--lkv-border-strong)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
               +
             </span>
           }

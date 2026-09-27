@@ -22,11 +22,11 @@ export default function ConstanceCard({ constance }: ConstanceCardProps) {
   ];
 
   return (
-    <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] p-3.5 space-y-2.5 rounded-2xl text-[color:var(--lkv-primary)] font-sans">
+    <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] p-3.5 space-y-2.5 rounded-2xl text-[color:var(--lkv-text-primary)] font-sans">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <h3 className="font-display font-bold text-xs text-[color:var(--lkv-primary)]">Constance &amp; Rythme</h3>
+          <h3 className="font-display font-bold text-xs text-[color:var(--lkv-text-primary)]">Constance &amp; Rythme</h3>
         </div>
         <Badge tone="warn" className="text-[9px] font-mono font-bold">
           🔥 6 sem.
@@ -69,7 +69,7 @@ export default function ConstanceCard({ constance }: ConstanceCardProps) {
             ? `${days[activeDayIndex].label}: ${days[activeDayIndex].count} sortie(s)`
             : '3 sorties cette semaine'}
         </span>
-        <span className="text-[color:var(--lkv-secondary)] font-bold">Objectif atteint ✓</span>
+        <span className="text-[color:var(--lkv-secondary-ink)] font-bold">Objectif atteint ✓</span>
       </div>
     </div>
   );

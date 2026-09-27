@@ -128,7 +128,7 @@ export function Step3StylePace({
   return (
     <div className="space-y-[var(--space-6)]">
       <div>
-        <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--lkv-secondary)]">
+        <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--lkv-secondary-ink)]">
           <Icon name="compass" size={14} />
           <span>Étape 3 sur 5</span>
         </div>

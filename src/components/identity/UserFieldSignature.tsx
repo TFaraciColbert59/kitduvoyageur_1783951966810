@@ -71,7 +71,7 @@ export default function UserFieldSignature({ userId, sealSize = 40, ariaLabel }:
   return (
     <span className="inline-flex items-center gap-[var(--space-2)]">
       <FieldSeal userId={userId} signature={state.sig} size={sealSize} ariaLabel={ariaLabel} />
-      <span className="text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-forest-600)]">{state.text}</span>
+      <span className="text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-forest-600-ink)]">{state.text}</span>
     </span>
   );
 }

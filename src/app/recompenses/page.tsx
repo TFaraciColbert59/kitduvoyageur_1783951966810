@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import Icon from '@/components/ui/AppIcon';
 import { newId } from '@/lib/uuid';
 import { createClient } from '@/lib/supabase/client';
@@ -445,7 +445,7 @@ export default function RecompensesPage() {
                       value={iban}
                       onChange={(e) => setIban(e.target.value)}
                       placeholder="FR76 3000 6000 0123 4567 8901 234"
-                      className="block w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] text-[length:var(--lkv-text-caption-2)] px-3 py-2 text-[color:var(--lkv-primary)] focus:outline-none focus:ring-1 focus:ring-[color:var(--lkv-primary)] bg-[color:var(--lkv-field-bg)]"
+                      className="block w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] text-[length:var(--lkv-text-caption-2)] px-3 py-2 text-[color:var(--lkv-text-primary)] focus:outline-none focus:ring-1 focus:ring-[color:var(--lkv-primary)] bg-[color:var(--lkv-field-bg)]"
                       required
                     />
                   </div>
@@ -457,7 +457,7 @@ export default function RecompensesPage() {
                       value={bic}
                       onChange={(e) => setBic(e.target.value)}
                       placeholder="BCDEFR2X"
-                      className="block w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] text-[length:var(--lkv-text-caption-2)] px-3 py-2 text-[color:var(--lkv-primary)] focus:outline-none focus:ring-1 focus:ring-[color:var(--lkv-primary)] bg-[color:var(--lkv-field-bg)]"
+                      className="block w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] text-[length:var(--lkv-text-caption-2)] px-3 py-2 text-[color:var(--lkv-text-primary)] focus:outline-none focus:ring-1 focus:ring-[color:var(--lkv-primary)] bg-[color:var(--lkv-field-bg)]"
                       required
                     />
                   </div>
@@ -473,7 +473,7 @@ export default function RecompensesPage() {
                     value={paypalEmail}
                     onChange={(e) => setPaypalEmail(e.target.value)}
                     placeholder="nom@exemple.com"
-                    className="block w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] text-[length:var(--lkv-text-caption-2)] px-3 py-2 text-[color:var(--lkv-primary)] focus:outline-none focus:ring-1 focus:ring-[color:var(--lkv-primary)] bg-[color:var(--lkv-field-bg)]"
+                    className="block w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] text-[length:var(--lkv-text-caption-2)] px-3 py-2 text-[color:var(--lkv-text-primary)] focus:outline-none focus:ring-1 focus:ring-[color:var(--lkv-primary)] bg-[color:var(--lkv-field-bg)]"
                     required
                   />
                 </div>
@@ -498,8 +498,8 @@ export default function RecompensesPage() {
 
           {/* Guide Section */}
           <div className="glass lg:col-span-5 rounded-[var(--lkv-radius-sm)] p-6  space-y-4">
-            <h3 className="font-display font-800 text-[color:var(--lkv-primary)] text-sm tracking-tight flex items-center gap-1.5">
-              <Icon name="BookOpenIcon" size={18} className="text-[color:var(--lkv-primary)]" />
+            <h3 className="font-display font-800 text-[color:var(--lkv-text-primary)] text-sm tracking-tight flex items-center gap-1.5">
+              <Icon name="BookOpenIcon" size={18} className="text-[color:var(--lkv-text-primary)]" />
               Règles et Fonctionnement
             </h3>
             <div className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)] space-y-3 leading-relaxed">
@@ -607,11 +607,11 @@ export default function RecompensesPage() {
     <div className="min-h-screen bg-transparent text-[color:var(--lkv-text-primary)] selection:bg-white/20 font-sans">
       {/* Mobile Shell */}
       <div className="block md:hidden">
-        <MobilePageShell background="transparent">
+        <AppShell background="transparent">
           <div className="pt-4 pb-20">
             {pageContent(true)}
           </div>
-        </MobilePageShell>
+        </AppShell>
       </div>
 
       {/* Desktop view */}

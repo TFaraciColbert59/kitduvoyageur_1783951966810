@@ -103,13 +103,13 @@ export const AutoGenTripView: React.FC<AutoGenTripViewProps> = ({
         {/* Journal de compromis (Tradeoffs Log) */}
         {tradeoffsLog.length > 0 && (
           <Card tone="sage" className="space-y-[var(--space-1)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)]">
-            <div className="mb-1 flex items-center gap-[var(--space-2)] font-semibold text-[color:var(--lkv-primary-soft)]">
+            <div className="mb-1 flex items-center gap-[var(--space-2)] font-semibold text-[color:var(--lkv-text-secondary)]">
               <Icon name="sparkles" size={16} />
               <span>Optimisations & Compromis Déterministes Appliqués :</span>
             </div>
             {tradeoffsLog.map((log, idx) => (
               <div key={idx} className="flex items-start gap-[var(--space-2)] pl-1">
-                <span className="font-bold text-[color:var(--lkv-secondary)]">•</span>
+                <span className="font-bold text-[color:var(--lkv-secondary-ink)]">•</span>
                 <span>{log}</span>
               </div>
             ))}

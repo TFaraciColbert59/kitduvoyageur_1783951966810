@@ -62,7 +62,7 @@ export function SosFloatingButton({ safetyHref }: SosFloatingButtonProps) {
             onClick={() => triggerHaptic('selection')}
             className="glass-sub-card flex items-center gap-4 rounded-2xl p-4 active:scale-[0.98] transition-transform"
           >
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[var(--lkv-primary)] shrink-0">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shrink-0">
               <Icon name="shield" size={22} aria-hidden="true" />
             </span>
             <span>

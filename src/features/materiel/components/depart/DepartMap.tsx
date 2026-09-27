@@ -200,7 +200,7 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
         <EmptyState
           compact
           icon={
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/60 bg-white/40 text-[var(--lkv-primary)]">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/60 bg-white/40 text-[color:var(--lkv-text-primary)]">
               <Compass size={20} />
             </span>
           }
@@ -256,7 +256,7 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
       <div className="px-4 py-2.5 border-b border-black/5 flex items-center justify-between gap-2 bg-white/40 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <Icon name="map-pin" size={14} className="text-[var(--lkv-primary-hover)] shrink-0" />
-          <span className="text-xs font-bold text-[var(--lkv-primary)] truncate">{trail.name}</span>
+          <span className="text-xs font-bold text-[color:var(--lkv-text-primary)] truncate">{trail.name}</span>
           {trail.distance_km !== null && (
             <span className="text-[11px] font-mono font-semibold text-[var(--lkv-text-muted)] shrink-0 bg-white/50 px-1.5 py-0.2 rounded-md">
               {formatDistanceKm(trail.distance_km)}
@@ -269,12 +269,12 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
           <IconButton
             variant="glass"
             onClick={handleDownloadGPX}
-            className="text-[var(--lkv-primary)]"
+            className="text-[color:var(--lkv-text-primary)]"
             title="Exporter le tracé"
             aria-label="Exporter le tracé"
           >
             {isOfflineSaved ? (
-              <Icon name="check" size={14} className="text-[var(--lkv-forest-600)]" />
+              <Icon name="check" size={14} className="text-[var(--lkv-forest-600-ink)]" />
             ) : (
               <DownloadAnimated size={14} />
             )}
@@ -283,7 +283,7 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
             <IconButton
               variant="glass"
               onClick={() => setIsFullscreen((v) => !v)}
-              className="text-[var(--lkv-primary)]"
+              className="text-[color:var(--lkv-text-primary)]"
               title={isFullscreen ? 'Réduire' : 'Plein écran'}
               aria-label={
                 isFullscreen ? 'Quitter le mode plein écran' : 'Afficher la carte en plein écran'
@@ -316,7 +316,7 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
           <IconButton
             variant="glass"
             onClick={handleRecenter}
-            className="text-[var(--lkv-primary)] shadow-md"
+            className="text-[color:var(--lkv-text-primary)] shadow-md"
             title="Recentrer le tracé"
             aria-label="Recentrer le tracé"
           >
@@ -325,7 +325,7 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
           <IconButton
             variant="glass"
             onClick={() => setShowTilePicker((v) => !v)}
-            className="text-[var(--lkv-primary)] shadow-md"
+            className="text-[color:var(--lkv-text-primary)] shadow-md"
             title="Changer de fond de carte"
             aria-label="Changer de fond de carte"
             aria-expanded={showTilePicker}
@@ -336,7 +336,7 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
 
         {/* Sélecteur de tuiles */}
         {showTilePicker && (
-          <div className="absolute right-14 top-2.5 z-[var(--z-drawer)] flex flex-col gap-1 rounded-2xl border border-black/10 bg-white/95 p-1.5 text-[11px] font-semibold text-[var(--lkv-primary)] shadow-xl">
+          <div className="absolute right-14 top-2.5 z-[var(--z-drawer)] flex flex-col gap-1 rounded-2xl border border-black/10 bg-white/95 p-1.5 text-[11px] font-semibold text-[color:var(--lkv-text-primary)] shadow-xl">
             <Chip
               selected={tileMode === 'topo'}
               onClick={() => handleTileChange('topo')}

@@ -54,7 +54,7 @@ export function HubMobileSectionsSheet({
         className="glass-capsule-btn flex items-center gap-1.5 min-h-[48px] px-3.5 text-xs font-semibold cursor-pointer shadow-sm active:scale-95 transition-transform"
         aria-label="Ouvrir les sections du hub"
       >
-        <Icon name="layers" size={14} className="text-[var(--lkv-secondary)]" />
+        <Icon name="layers" size={14} className="text-[var(--lkv-secondary-ink)]" />
         <span>Sections</span>
         <span className="text-[10px] font-bold tabular-nums px-1.5 py-0.2 rounded-full bg-black/5 text-[var(--lkv-text-secondary)]">
           {sections.length}

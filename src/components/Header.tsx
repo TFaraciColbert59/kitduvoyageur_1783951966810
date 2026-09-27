@@ -1,7 +1,7 @@
 'use client';
 
 import Icon from '@/components/ui/Icon';
-import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import LkvIcon from '@/components/ui/LkvIcon';
@@ -10,6 +10,7 @@ import GlobalSearchModal from '@/components/ui/GlobalSearchModal';
 import { createClient } from '@/lib/supabase/client';
 import { useCartCount } from '@/hooks/useCartCount';
 import { useConversations } from '@/features/messaging/hooks/useConversations';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 const NAV_LINKS = [
   { label: 'Explorer', href: '/explorer' },
@@ -20,13 +21,15 @@ const NAV_LINKS = [
 export default function Header() {
   const pathname = usePathname();
   const { user } = useAuth();
-  const [mounted, setMounted] = useState(false);
+  // Le header n'existe qu'en desktop (`hidden md:block`) : on n'active les effets
+  // coûteux (realtime Supabase, listeners, mesures) que lorsqu'il est visible.
+  const isDesktop = useMediaQuery('(min-width: 768px)');
 
   // P1-3 (fin) — pilule de navigation : position/ largeur mesurées sur l'item
   // actif (glissement CSS), remplace le layoutId framer-motion.
   const navRef = useRef<HTMLElement>(null);
   const [pill, setPill] = useState<{ left: number; width: number } | null>(null);
-  useLayoutEffect(() => {
+  const measurePill = useCallback(() => {
     const nav = navRef.current;
     if (!nav) return;
     const active = nav.querySelector('[data-nav-active="true"]') as HTMLElement | null;
@@ -36,31 +39,48 @@ export default function Header() {
     }
     const navRect = nav.getBoundingClientRect();
     const rect = active.getBoundingClientRect();
-    setPill({ left: rect.left - navRect.left, width: rect.width });
-  }, [pathname, user]);
+    const left = rect.left - navRect.left;
+    const width = rect.width;
+    // Sans bail-out, chaque frame alloue un objet neuf et re-rend tout le
+    // Header a 60 fps pendant un drag-resize, meme si la mesure n'a pas bouge.
+    setPill((prev) =>
+      prev && Math.abs(prev.left - left) < 0.5 && Math.abs(prev.width - width) < 0.5
+        ? prev
+        : { left, width }
+    );
+  }, []);
+
+  // Mesure initiale non conditionnée : la pilule doit être placée au 1er paint.
+  useLayoutEffect(() => {
+    measurePill();
+  }, [measurePill, pathname, user]);
+
   useEffect(() => {
+    if (!isDesktop) return;
+    let frame = 0;
+    // Un seul layout par frame : le resize peut tirer à plus de 100 événements/s.
     const onResize = () => {
-      const nav = navRef.current;
-      if (!nav) return;
-      const active = nav.querySelector('[data-nav-active="true"]') as HTMLElement | null;
-      if (!active) return;
-      const navRect = nav.getBoundingClientRect();
-      const rect = active.getBoundingClientRect();
-      setPill({ left: rect.left - navRect.left, width: rect.width });
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(measurePill);
     };
     window.addEventListener('resize', onResize);
     // Les polices décalent les libellés : re-mesure après chargement.
-    document.fonts?.ready.then(onResize).catch(() => {});
-    return () => window.removeEventListener('resize', onResize);
-  }, [pathname, user]);
+    document.fonts?.ready.then(measurePill).catch(() => {});
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', onResize);
+    };
+  }, [isDesktop, measurePill]);
   const [searchOpen, setSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const cartCount = useCartCount();
-  const { totalUnread: unreadMessagesCount } = useConversations(user?.id);
+  // Aucun canal realtime messagerie quand le header est masqué (mobile).
+  const { totalUnread: unreadMessagesCount } = useConversations(isDesktop ? user?.id : undefined);
 
   useEffect(() => {
-    if (!user) {
+    // Invisible en mobile : on évite une requête + un canal realtime pour rien.
+    if (!user || !isDesktop) {
       setUnreadCount(0);
       return;
     }
@@ -98,18 +118,20 @@ export default function Header() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, isDesktop]);
 
   useEffect(() => {
-    setMounted(true);
+    if (!isDesktop) return;
 
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
+    // État initial juste si la page est déjà scrollée (rechargement, ancre).
+    handleScroll();
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isDesktop]);
 
   return (
     <>
@@ -181,8 +203,8 @@ export default function Header() {
                     <span
                       className={`relative z-10 transition-colors ${
                         isActive
-                          ? 'text-[color:var(--lkv-primary)] font-extrabold'
-                          : 'text-[color:var(--lkv-primary-soft)]/80 hover:text-[color:var(--lkv-primary)]'
+                          ? 'text-[color:var(--lkv-text-primary)] font-extrabold'
+                          : 'text-[color:var(--lkv-text-secondary)]/80 hover:text-[color:var(--lkv-text-primary)]'
                       }`}
                     >
                       {link.label}
@@ -198,7 +220,7 @@ export default function Header() {
                 {/* Panier */}
                 <Link
                   href="/panier"
-                  className="w-7 h-7 rounded-full hover:bg-white/30 text-[color:var(--lkv-primary)] active:opacity-70 transition-colors flex items-center justify-center relative cursor-pointer touch-manipulation"
+                  className="w-7 h-7 rounded-full hover:bg-white/30 text-[color:var(--lkv-text-primary)] active:opacity-70 transition-colors flex items-center justify-center relative cursor-pointer touch-manipulation"
                   aria-label="Panier"
                   title={
                     cartCount > 0
@@ -218,7 +240,7 @@ export default function Header() {
                 {/* Notifications Button — hub alertes (D4) */}
                 <Link
                   href="/hub/alertes"
-                  className="w-7 h-7 rounded-full hover:bg-white/30 text-[color:var(--lkv-primary)] active:opacity-70 transition-colors flex items-center justify-center cursor-pointer touch-manipulation relative"
+                  className="w-7 h-7 rounded-full hover:bg-white/30 text-[color:var(--lkv-text-primary)] active:opacity-70 transition-colors flex items-center justify-center cursor-pointer touch-manipulation relative"
                   aria-label="Notifications"
                   title={
                     unreadCount > 0
@@ -238,7 +260,7 @@ export default function Header() {
                 {/* Messagerie Button */}
                 <Link
                   href="/messagerie"
-                  className="w-7 h-7 rounded-full hover:bg-white/30 text-[color:var(--lkv-primary)] active:opacity-70 transition-colors flex items-center justify-center cursor-pointer touch-manipulation relative"
+                  className="w-7 h-7 rounded-full hover:bg-white/30 text-[color:var(--lkv-text-primary)] active:opacity-70 transition-colors flex items-center justify-center cursor-pointer touch-manipulation relative"
                   aria-label="Messagerie"
                   title={
                     unreadMessagesCount > 0
@@ -258,7 +280,7 @@ export default function Header() {
                 {/* Recherche Button */}
                 <button
                   onClick={() => setSearchOpen(true)}
-                  className="w-7 h-7 rounded-full hover:bg-white/30 text-[color:var(--lkv-primary)] active:opacity-70 transition-colors flex items-center justify-center cursor-pointer touch-manipulation"
+                  className="w-7 h-7 rounded-full hover:bg-white/30 text-[color:var(--lkv-text-primary)] active:opacity-70 transition-colors flex items-center justify-center cursor-pointer touch-manipulation"
                   aria-label="Rechercher sur tout le site"
                   title="Rechercher sur tout le site"
                 >

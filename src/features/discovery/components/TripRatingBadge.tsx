@@ -48,10 +48,10 @@ export function TripRatingBadge({
         />
       ) : null}
       {safeRating != null ? (
-        <span className="font-mono text-xs font-bold text-[color:var(--lkv-primary)]">{safeRating.toFixed(1)}</span>
+        <span className="font-mono text-xs font-bold text-[color:var(--lkv-on-light)]">{safeRating.toFixed(1)}</span>
       ) : null}
       {safeReviewCount != null ? (
-        <span className="text-[10.5px] font-mono text-[color:var(--lkv-text-muted)]">
+        <span className="text-[10.5px] font-mono text-[color:var(--lkv-on-light-muted)]">
           ({safeReviewCount.toLocaleString('fr-FR')} avis)
         </span>
       ) : null}

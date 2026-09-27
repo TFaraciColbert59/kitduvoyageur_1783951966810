@@ -36,7 +36,7 @@ export function MissingSideTrigger({ progressPct, missingCount, onOpen }: Missin
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={offset}
-            className="transition-[stroke-dashoffset] duration-500 ease-[var(--ease-glass)]"
+            className="transition-[stroke-dashoffset] duration-500 [transition-timing-function:var(--ease-glass)]"
           />
         </svg>
       </IconButton>

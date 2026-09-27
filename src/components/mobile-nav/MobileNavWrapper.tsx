@@ -24,6 +24,11 @@ export default function MobileNavWrapper() {
     pathname?.startsWith('/connexion') ||
     pathname?.startsWith('/inscription') ||
     pathname?.startsWith('/checkout') ||
+    // Préparateur : le flux occupe tout l'écran, la barre d'onglets y
+    // ajouterait un second point de sortie au milieu du parcours.
+    // Égalité stricte : '/preparer-randonnee' et '/preparer-sentier'
+    // partagent le préfixe '/prepare' mais gardent leur navigation.
+    pathname === '/prepare' ||
     pathname?.startsWith('/communaute/publier');
 
   if (isNoNavRoute) {

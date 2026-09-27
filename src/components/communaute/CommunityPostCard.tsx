@@ -691,7 +691,7 @@ export default function CommunityPostCard({
             type="button"
             variant="ghost"
             size="sm"
-            className="ml-[var(--space-1)] text-[length:var(--lkv-text-subheadline)] font-semibold text-[color:var(--lkv-primary)]"
+            className="ml-[var(--space-1)] text-[length:var(--lkv-text-subheadline)] font-semibold text-[color:var(--lkv-text-primary)]"
             onClick={() => setIsContentExpanded(true)}
           >
             Afficher plus
@@ -702,7 +702,7 @@ export default function CommunityPostCard({
             type="button"
             variant="ghost"
             size="sm"
-            className="ml-[var(--space-1)] text-[length:var(--lkv-text-subheadline)] font-semibold text-[color:var(--lkv-primary)]"
+            className="ml-[var(--space-1)] text-[length:var(--lkv-text-subheadline)] font-semibold text-[color:var(--lkv-text-primary)]"
             onClick={() => setIsContentExpanded(false)}
           >
             Afficher moins

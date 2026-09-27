@@ -37,7 +37,7 @@ export default function CarnetVerticalTabs({
           <div className="min-w-0 flex-1">
             <h4 className="truncate font-display text-[length:var(--lkv-text-caption)] font-bold leading-tight text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-subheadline)]">
               Carnets{' '}
-              <span className="font-serif text-[length:var(--lkv-text-caption)] font-normal italic text-[color:var(--lkv-secondary)]">
+              <span className="font-serif text-[length:var(--lkv-text-caption)] font-normal italic text-[color:var(--lkv-secondary-ink)]">
                 LKDV
               </span>
             </h4>

@@ -803,5 +803,10 @@
     "lucide": "Zap",
     "name": "zap",
     "slug": "lightning"
+  },
+  {
+    "lucide": "Leaf",
+    "name": "leaf",
+    "slug": "leaf"
   }
 ]

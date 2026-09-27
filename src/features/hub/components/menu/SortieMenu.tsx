@@ -530,7 +530,7 @@ export function SortieMenu({
                       </span>
                     )}
                     {t.packed ? (
-                      <span className="absolute right-1 top-1 inline-flex items-center gap-0.5 rounded-full bg-white/95 px-1.5 py-0.5 text-[8px] font-bold text-[var(--lkv-primary)] shadow-2xs">
+                      <span className="absolute right-1 top-1 inline-flex items-center gap-0.5 rounded-full bg-white/95 px-1.5 py-0.5 text-[8px] font-bold text-[color:var(--lkv-text-primary)] shadow-2xs">
                         ✓ Prêt
                       </span>
                     ) : (
@@ -898,7 +898,7 @@ export function SortieMenu({
                   <span className="flex min-w-0 items-center gap-1 truncate font-bold text-[var(--lkv-text-primary)]">
                     <WeatherIcon
                       size={12}
-                      className="shrink-0 text-[var(--lkv-secondary)]"
+                      className="shrink-0 text-[var(--lkv-secondary-ink)]"
                       aria-hidden="true"
                     />
                     <span className="truncate">
@@ -951,7 +951,7 @@ export function SortieMenu({
               <p className="text-xs font-bold text-[var(--lkv-text-primary)]">Rang & Défis</p>
               <p className="text-[11px] text-[var(--lkv-text-secondary)]">Classement local</p>
             </div>
-            <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 font-mono text-[11px] font-bold text-[var(--lkv-primary)]">
+            <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 font-mono text-[11px] font-bold text-[color:var(--lkv-text-primary)]">
               Voir →
             </span>
           </div>

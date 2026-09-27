@@ -88,6 +88,7 @@ export const SVG_MASK_ICON_NAMES = new Set<string>([
   'info',
   'key-round',
   'layers',
+  'leaf',
   'link',
   'lock',
   'log-out',

@@ -287,7 +287,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                             </>
                           ) : mem.role === 'admin' ? (
                             <>
-                              <Icon name="shield" className="size-2.5 text-[color:var(--lkv-secondary)]" aria-hidden="true" /> Admin
+                              <Icon name="shield" className="size-2.5 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" /> Admin
                             </>
                           ) : (
                             <>

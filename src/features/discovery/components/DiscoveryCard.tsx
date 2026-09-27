@@ -65,7 +65,7 @@ export function DiscoveryCard({ item }: DiscoveryCardProps) {
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 text-[color:var(--lkv-text-muted)]">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[color:var(--card-tint-strong)] shadow-2xs backdrop-blur-[var(--blur-md)]">
-              <Icon name="mountain" size={16} className="text-[color:var(--lkv-primary)]" />
+              <Icon name="mountain" size={16} className="text-[color:var(--lkv-text-primary)]" />
             </div>
             <span className="font-mono text-[9.5px] uppercase tracking-wider">Sans photo</span>
           </div>
@@ -93,7 +93,7 @@ export function DiscoveryCard({ item }: DiscoveryCardProps) {
                 href={linkUrl}
                 target="_blank"
                 rel={rel}
-                className="transition-colors hover:text-[color:var(--lkv-secondary)]"
+                className="transition-colors hover:text-[color:var(--lkv-secondary-ink)]"
               >
                 {item.name}
               </a>
@@ -103,7 +103,7 @@ export function DiscoveryCard({ item }: DiscoveryCardProps) {
           </h4>
           {location ? (
             <p className="flex items-center gap-1 truncate font-mono text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
-              <Icon name="map-pin" size={12} className="shrink-0 text-[color:var(--lkv-secondary)]" />
+              <Icon name="map-pin" size={12} className="shrink-0 text-[color:var(--lkv-secondary-ink)]" />
               <span className="truncate">{location}</span>
             </p>
           ) : null}
@@ -139,7 +139,7 @@ export function DiscoveryCard({ item }: DiscoveryCardProps) {
             )}
             {price ? (
               <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
-                dès <span className="font-bold text-[color:var(--lkv-secondary)]">{price}</span>
+                dès <span className="font-bold text-[color:var(--lkv-secondary-ink)]">{price}</span>
               </span>
             ) : null}
             {duration ? (

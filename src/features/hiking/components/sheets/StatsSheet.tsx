@@ -58,7 +58,7 @@ export default function StatsSheet({
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="w-full max-w-md bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[color:var(--lkv-primary)] rounded-t-[34px] pt-3 pb-10 px-4  max-h-[85vh] overflow-y-auto space-y-5"
+        className="w-full max-w-md bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[color:var(--lkv-text-primary)] rounded-t-[34px] pt-3 pb-10 px-4  max-h-[85vh] overflow-y-auto space-y-5"
       >
         {/* Grabber */}
         <div className="w-10 h-1 bg-[color:var(--lkv-primary)]/14 rounded-full mx-auto" />
@@ -67,7 +67,7 @@ export default function StatsSheet({
         <div className="flex items-center justify-between px-2">
           <div>
             <h2 className="text-2xl font-medium tracking-tight">
-              Statistiques <em className="font-serif italic text-[color:var(--lkv-primary)]">en direct</em>
+              Statistiques <em className="font-serif italic text-[color:var(--lkv-text-primary)]">en direct</em>
             </h2>
             <p className="text-[11px] font-mono text-[color:var(--lkv-text-muted)] tracking-wider mt-0.5">
               RANDONNÉE EN COURS
@@ -75,7 +75,7 @@ export default function StatsSheet({
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-[color:var(--stone-200)] flex items-center justify-center text-[color:var(--lkv-text-muted)] hover:text-[color:var(--lkv-primary)]"
+            className="w-8 h-8 rounded-full bg-[color:var(--lkv-surface-muted)] flex items-center justify-center text-[color:var(--lkv-text-muted)] hover:text-[color:var(--lkv-text-primary)]"
           >
             ✕
           </button>
@@ -92,13 +92,13 @@ export default function StatsSheet({
         {/* 4 Stat Cells Grid */}
         <div className="grid grid-cols-2 gap-2.5">
           {/* Distance */}
-          <div className="p-3.5 bg-[color:var(--stone-100)] rounded-2xl">
+          <div className="p-3.5 bg-[color:var(--lkv-surface-muted)] rounded-2xl">
             <div className="font-mono text-[9px] uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
               Distance
             </div>
             <div className="text-2xl font-medium tracking-tight mt-1">
               {distanceKm != null ? `${distanceKm.toFixed(1)}` : '—'}{' '}
-              <em className="font-serif italic font-normal text-sm text-[color:var(--lkv-primary)]">
+              <em className="font-serif italic font-normal text-sm text-[color:var(--lkv-text-primary)]">
                 {hasRoute ? `/ ${Number(routeTotalKm).toFixed(1)} km` : 'km'}
               </em>
             </div>
@@ -110,7 +110,7 @@ export default function StatsSheet({
           </div>
 
           {/* Durée */}
-          <div className="p-3.5 bg-[color:var(--stone-100)] rounded-2xl">
+          <div className="p-3.5 bg-[color:var(--lkv-surface-muted)] rounded-2xl">
             <div className="font-mono text-[9px] uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
               Durée
             </div>
@@ -121,13 +121,13 @@ export default function StatsSheet({
           </div>
 
           {/* Allure */}
-          <div className="p-3.5 bg-[color:var(--stone-100)] rounded-2xl">
+          <div className="p-3.5 bg-[color:var(--lkv-surface-muted)] rounded-2xl">
             <div className="font-mono text-[9px] uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
               Allure moyenne
             </div>
             <div className="text-2xl font-medium tracking-tight mt-1">
               {formatPace(paceMinPerKm)}{' '}
-              <em className="font-serif italic font-normal text-sm text-[color:var(--lkv-primary)]">/km</em>
+              <em className="font-serif italic font-normal text-sm text-[color:var(--lkv-text-primary)]">/km</em>
             </div>
             <div className="text-[10px] font-mono text-[color:var(--lkv-primary-hover)] mt-1">
               {averageSpeedKmH != null && averageSpeedKmH > 0

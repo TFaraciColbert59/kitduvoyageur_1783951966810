@@ -80,10 +80,10 @@ export default function DesktopMapOverlay({
             {activeGuideTurn.turn.turnType.includes('droite') ? '↱' : activeGuideTurn.turn.turnType.includes('gauche') ? '↰' : '↑'}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-mono text-[10px] tracking-widest uppercase font-semibold text-[color:var(--lkv-primary)] leading-none">
+            <div className="font-mono text-[10px] tracking-widest uppercase font-semibold text-[color:var(--lkv-text-primary)] leading-none">
               Prochain virage · Dans {Math.round(activeGuideTurn.distanceRemainingM)} m
             </div>
-            <div className="text-base font-bold tracking-tight text-[color:var(--lkv-primary)] mt-1 truncate">
+            <div className="text-base font-bold tracking-tight text-[color:var(--lkv-text-primary)] mt-1 truncate">
               {activeGuideTurn.turn.instructionText}
             </div>
           </div>
@@ -101,10 +101,10 @@ export default function DesktopMapOverlay({
             <span className="absolute -inset-1 rounded-2xl border-2 border-[color:var(--lkv-primary)] opacity-25 animate-ping pointer-events-none" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-mono text-[10px] tracking-widest uppercase font-semibold text-[color:var(--lkv-primary)] leading-none">
+            <div className="font-mono text-[10px] tracking-widest uppercase font-semibold text-[color:var(--lkv-text-primary)] leading-none">
               Prochain point · Dans {Math.round(activeGuidePoi.distanceRemainingM)} m
             </div>
-            <div className="text-base font-bold tracking-tight text-[color:var(--lkv-primary)] mt-1 truncate">
+            <div className="text-base font-bold tracking-tight text-[color:var(--lkv-text-primary)] mt-1 truncate">
               {activeGuidePoi.name}
             </div>
           </div>

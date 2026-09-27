@@ -90,7 +90,7 @@ export default function SmartImage({
       style={aspectRatio ? { aspectRatio } : undefined}
     >
       {isLoading && (
-        <div className="absolute inset-0 bg-[color:var(--stone-200)]/60 backdrop-blur-xs animate-pulse z-10" />
+        <div className="absolute inset-0 bg-[color:var(--lkv-surface-muted)]/60 backdrop-blur-xs animate-pulse z-10" />
       )}
       <img
         ref={imgRef}

@@ -12,7 +12,7 @@ import { Step3StylePace } from './Step3StylePace';
 import { Step4Travelers } from './Step4Travelers';
 import { Step5Preview } from './Step5Preview';
 import AppShellDesktop from '@/components/shell/AppShellDesktop';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import { Button, Card, Spinner, StepIndicator } from '@/components/ui';
 import { MapPin, Calendar, Compass, Users, Eye } from 'lucide-react';
 
@@ -178,7 +178,7 @@ export function TripWizard() {
                 <div
                   className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[length:var(--lkv-text-caption-2)] font-bold ${
                     isCurrent
-                      ? 'bg-white text-[color:var(--lkv-primary)]'
+                      ? 'bg-white text-[color:var(--lkv-text-primary)]'
                       : isDone
                         ? 'bg-[color:var(--lkv-success)] text-[color:var(--lkv-text-inverted)]'
                         : 'border border-[color:var(--lkv-border)] bg-white/40 text-[color:var(--sage-400)]'
@@ -282,7 +282,7 @@ export function TripWizard() {
       sidebarLeft={renderSidebarLeft()}
       sidebarRight={renderSidebarRight()}
       mobileSlot={
-        <MobilePageShell safeTop={true} hasBottomNav={false} className="pb-24">
+        <AppShell safeTop={true} hasBottomNav={false} className="pb-24">
           <div className="mx-auto max-w-4xl px-4 py-4">
             <StepIndicator
               currentStep={state.step}
@@ -295,7 +295,7 @@ export function TripWizard() {
               {renderNavControls(true)}
             </Card>
           </div>
-        </MobilePageShell>
+        </AppShell>
       }
     >
       <div className="space-y-4">

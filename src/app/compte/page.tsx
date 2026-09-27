@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { CompteBackground } from '@/components/compte/CompteBackground';
-import { MarbleZone } from '@/components/glass/MarbleZone';
 import { EmptyState, LoadingState } from '@/components/ui';
 import HeroProfil from '@/components/compte/HeroProfil';
 import StatsBandeau from '@/components/compte/StatsBandeau';
@@ -21,7 +20,6 @@ import ParametresCompteCard from '@/components/compte/ParametresCompteCard';
 import EditProfileModal from '@/components/compte/EditProfileModal';
 import MobileCompteV2 from '@/components/compte/MobileCompteV2';
 import CompteFooter from '@/components/compte/CompteFooter';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import AppShell from '@/components/shell/AppShell';
 import dynamic from 'next/dynamic';
 
@@ -175,15 +173,14 @@ export default function ComptePage() {
     <div className="min-h-screen md:h-dvh md:overflow-hidden text-[var(--lkv-text-primary)] selection:bg-[var(--lkv-primary)]/10 font-sans relative">
       {/* Background immersif végétal */}
       <CompteBackground />
-      <MarbleZone />
 
       {/* Mobile-only app-like view */}
       <div className="block md:hidden min-h-screen">
         {/* safeTop=false: MobileCompteV2 embarque son propre header sticky (MobileCompteV2.tsx:460)
             qui calcule pt-[calc(max(var(--safe-top),10px)+6px)] */}
-        <MobilePageShell safeTop={false} background="transparent">
+        <AppShell safeTop={false} background="transparent">
           <MobileCompteV2 />
-        </MobilePageShell>
+        </AppShell>
       </div>
 
       {/* Desktop view (md and above) — 3-column Fullscreen Cockpit */}

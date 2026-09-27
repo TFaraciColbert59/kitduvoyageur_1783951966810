@@ -74,7 +74,7 @@ export function ReportPlaceModal({ placeId, placeName, isOpen, onClose }: Report
 
         {success ? (
           <div className="py-[var(--space-4)] text-center">
-            <div className="mx-auto mb-[var(--space-3)] flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--lkv-success-bg)] text-[color:var(--lkv-primary)]">
+            <div className="mx-auto mb-[var(--space-3)] flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--lkv-success-bg)] text-[color:var(--lkv-text-primary)]">
               <Icon name="check-circle2" className="h-6 w-6" />
             </div>
             <h3 className="mb-[var(--space-1)] text-[length:var(--lkv-text-body)] font-bold text-[color:var(--lkv-text-primary)]">

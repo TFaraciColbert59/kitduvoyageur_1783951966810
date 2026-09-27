@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import AppImage from '@/components/ui/AppImage';
 import { Card } from '@/components/ui';
 import type { BlogPost } from './page';
@@ -59,7 +59,7 @@ function NewsletterForm({ idPrefix }: { idPrefix: string }) {
           id={`${inputId}-msg`}
           role={status === 'error' ? 'alert' : 'status'}
           aria-live={status === 'error' ? 'assertive' : 'polite'}
-          className={`mt-3 text-[length:var(--lkv-text-caption)] font-semibold ${status === 'error' ? 'text-[color:var(--lkv-danger-dark)]' : 'text-[color:var(--lkv-secondary)]'}`}
+          className={`mt-3 text-[length:var(--lkv-text-caption)] font-semibold ${status === 'error' ? 'text-[color:var(--lkv-danger-dark)]' : 'text-[color:var(--lkv-secondary-ink)]'}`}
         >
           {status === 'error' ? 'Indiquez une adresse email valide.' : 'Merci ! À très vite dans votre boîte mail.'}
         </p>
@@ -129,19 +129,19 @@ function FeaturedCard({ post }: { post: BlogPost }) {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
           <div className="absolute top-4 left-4">
-            <span className="inline-block px-2 py-0.5 rounded-sm text-[length:var(--lkv-text-caption-2)] font-mono font-bold tracking-widest uppercase text-[color:var(--lkv-primary)] bg-[color:var(--lkv-surface-paper)]/95 border border-[color:var(--glass-border)] ">
+            <span className="inline-block px-2 py-0.5 rounded-sm text-[length:var(--lkv-text-caption-2)] font-mono font-bold tracking-widest uppercase text-[color:var(--lkv-text-primary)] bg-[color:var(--lkv-surface-paper)]/95 border border-[color:var(--glass-border)] ">
               ⭐ À la une
             </span>
           </div>
           <div className="absolute bottom-4 left-4 right-4">
             <div className="bg-[color:var(--lkv-surface-paper)]/95 border border-[color:var(--glass-border)] rounded-sm px-3 py-2.5 ">
-              <span className="inline-block px-2 py-0.5 rounded-full text-[length:var(--lkv-text-caption-2)] font-mono bg-[rgba(91,127,85,0.14)] text-[color:var(--lkv-primary-soft)] border border-[rgba(91,127,85,0.30)] mb-2">
+              <span className="inline-block px-2 py-0.5 rounded-full text-[length:var(--lkv-text-caption-2)] font-mono bg-[rgba(91,127,85,0.14)] text-[color:var(--lkv-text-secondary)] border border-[rgba(91,127,85,0.30)] mb-2">
                 {post.category}
               </span>
-              <h2 className="font-display font-bold text-xl md:text-2xl leading-tight text-[color:var(--lkv-primary)] mb-1.5 group-hover:text-[color:var(--lkv-primary-soft)] transition-colors">
+              <h2 className="font-display font-bold text-xl md:text-2xl leading-tight text-[color:var(--lkv-text-primary)] mb-1.5 group-hover:text-[color:var(--lkv-text-secondary)] transition-colors">
                 {post.title}
               </h2>
-              <p className="text-[color:var(--lkv-primary-soft)] text-sm line-clamp-2 mb-2">{post.excerpt}</p>
+              <p className="text-[color:var(--lkv-text-secondary)] text-sm line-clamp-2 mb-2">{post.excerpt}</p>
               <div className="flex items-center gap-3 text-[11px] font-mono text-[color:var(--lkv-text-secondary)]">
                 <span>{post.author}</span>
                 <span>·</span>
@@ -171,13 +171,13 @@ function PostCard({ post }: { post: BlogPost }) {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           <div className="absolute top-3 left-3">
-            <span className="inline-block px-2 py-0.5 rounded-sm text-[length:var(--lkv-text-caption-2)] font-mono text-[color:var(--lkv-primary)] bg-[color:var(--lkv-surface-paper)]/95 border border-[color:var(--glass-border)] ">
+            <span className="inline-block px-2 py-0.5 rounded-sm text-[length:var(--lkv-text-caption-2)] font-mono text-[color:var(--lkv-text-primary)] bg-[color:var(--lkv-surface-paper)]/95 border border-[color:var(--glass-border)] ">
               {post.category}
             </span>
           </div>
         </div>
         <div className="p-4 flex flex-col flex-1">
-          <h3 className="font-display font-bold text-[color:var(--lkv-primary)] text-base leading-tight mb-2 group-hover:text-[color:var(--lkv-primary-soft)] transition-colors line-clamp-2">
+          <h3 className="font-display font-bold text-[color:var(--lkv-text-primary)] text-base leading-tight mb-2 group-hover:text-[color:var(--lkv-text-secondary)] transition-colors line-clamp-2">
             {post.title}
           </h3>
           <p className="text-[color:var(--lkv-text-secondary)] text-sm line-clamp-3 mb-4 flex-1">{post.excerpt}</p>
@@ -203,23 +203,23 @@ function MobilePostCard({ post }: { post: BlogPost }) {
     <Link href={`/guides/${post.slug}`} className="block no-underline">
       <article className="glass mb-[var(--space-3)] overflow-hidden">
         <div className="flex gap-[var(--space-3)] p-[var(--space-3)]">
-          <div className="relative h-[90px] w-20 shrink-0 overflow-hidden rounded-[var(--lkv-radius-xs)] bg-[color:var(--stone-200)]">
+          <div className="relative h-[90px] w-20 shrink-0 overflow-hidden rounded-[var(--lkv-radius-xs)] bg-[color:var(--lkv-surface-muted)]">
             {post.image && (
               <AppImage src={post.image} alt={post.image_alt} fill sizes="80px" className="object-cover" />
             )}
           </div>
           <div className="min-w-0 flex-1">
             <div className="mb-1 flex items-center gap-1.5">
-              <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-primary)]">
+              <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
                 {post.category}
               </span>
               {post.featured && (
-                <span className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-1.5 py-px text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-primary)]">
+                <span className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-1.5 py-px text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-primary)]">
                   A la une
                 </span>
               )}
             </div>
-            <h3 className="m-0 line-clamp-2 text-[14px] font-bold leading-[1.3] text-[color:var(--lkv-primary)]">
+            <h3 className="m-0 line-clamp-2 text-[14px] font-bold leading-[1.3] text-[color:var(--lkv-text-primary)]">
               {post.title}
             </h3>
             <p className="m-0 mt-1 line-clamp-2 text-[12px] leading-[1.4] text-[color:var(--lkv-text-secondary)]">
@@ -241,7 +241,7 @@ function MobileFeaturedCard({ post }: { post: BlogPost }) {
   return (
     <Link href={`/guides/${post.slug}`} className="mb-[var(--space-4)] block no-underline">
       <article className="glass overflow-hidden">
-        <div className="relative h-[180px] overflow-hidden bg-[color:var(--stone-200)]">
+        <div className="relative h-[180px] overflow-hidden bg-[color:var(--lkv-surface-muted)]">
           {post.image && (
             <AppImage src={post.image} alt={post.image_alt} fill sizes="100vw" className="object-cover" />
           )}
@@ -252,7 +252,7 @@ function MobileFeaturedCard({ post }: { post: BlogPost }) {
             </span>
           </div>
           <div className="absolute bottom-3 left-3 right-3">
-            <span className="rounded-[var(--lkv-radius-xs)] border border-[color:var(--glass-border)] bg-[color:var(--lkv-surface-paper)]/90 px-1.5 py-0.5 font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-primary)]">
+            <span className="rounded-[var(--lkv-radius-xs)] border border-[color:var(--glass-border)] bg-[color:var(--lkv-surface-paper)]/90 px-1.5 py-0.5 font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-primary)]">
               {post.category}
             </span>
             <h3 className="mb-0.5 mt-1.5 font-display text-[16px] font-extrabold leading-[1.2] text-[color:var(--lkv-text-inverted)]">
@@ -291,7 +291,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
         <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-[color:var(--lkv-forest-100)] mb-2">
           BLOG — {posts.length} ARTICLES
         </p>
-        <h1 className="font-display font-bold text-3xl tracking-tight text-[color:var(--lkv-surface)]">
+        <h1 className="font-display font-bold text-3xl tracking-tight text-[color:var(--lkv-text-primary)]">
           Conseils &amp; guides
         </h1>
         <p className="mt-1.5 text-sm text-[color:var(--lkv-forest-100)] max-w-2xl">
@@ -308,7 +308,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
       {/* Featured posts */}
       {featured.length > 0 && activeCategory === 'Tous' && !searchQuery && (
         <div className="mb-10">
-          <h2 className="font-display font-bold text-xl text-[color:var(--lkv-surface)] mb-4">
+          <h2 className="font-display font-bold text-xl text-[color:var(--lkv-text-primary)] mb-4">
             À la une
           </h2>
           <div className={`grid gap-6 ${featured.length >= 2 ? 'md:grid-cols-2' : 'md:grid-cols-1 max-w-2xl'}`}>
@@ -323,7 +323,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
       {filtered.length === 0 ? (
         <div className="text-center py-16">
           <p className="text-4xl mb-4">📝</p>
-          <h3 className="font-display font-bold text-xl text-[color:var(--lkv-surface)] mb-2">Aucun article trouvé</h3>
+          <h3 className="font-display font-bold text-xl text-[color:var(--lkv-text-primary)] mb-2">Aucun article trouvé</h3>
           <p className="text-[color:var(--lkv-forest-100)] mb-6">Essayez une autre catégorie ou un autre terme de recherche.</p>
           <button onClick={() => { setActiveCategory('Tous'); setSearchQuery(''); }} className="glass-capsule-btn primary">
             Voir tous les articles
@@ -333,11 +333,11 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
         <>
           {(activeCategory !== 'Tous' || searchQuery) && (
             <p className="font-mono text-sm text-[color:var(--lkv-forest-100)] mb-6">
-              <span className="font-bold text-[color:var(--lkv-surface)]">{filtered.length}</span> article{filtered.length > 1 ? 's' : ''}
+              <span className="font-bold text-[color:var(--lkv-text-primary)]">{filtered.length}</span> article{filtered.length > 1 ? 's' : ''}
             </p>
           )}
           {(!searchQuery && activeCategory === 'Tous') && nonFeaturedFiltered.length > 0 && (
-            <h2 className="font-display font-bold text-xl text-[color:var(--lkv-surface)] mb-4">
+            <h2 className="font-display font-bold text-xl text-[color:var(--lkv-text-primary)] mb-4">
               Tous les articles
             </h2>
           )}
@@ -352,7 +352,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
       {/* Newsletter CTA (mutualisée desk/mobile — label visible comme `contact`) */}
       <div className="glass-sub-card mt-10 p-8 text-center">
         <p className="text-3xl mb-3" aria-hidden="true">📬</p>
-        <h3 className="font-display font-bold text-xl text-[color:var(--lkv-primary)] mb-2">
+        <h3 className="font-display font-bold text-xl text-[color:var(--lkv-text-primary)] mb-2">
           Restez informé
         </h3>
         <p className="text-[color:var(--lkv-text-secondary)] text-sm mb-5 max-w-md mx-auto">
@@ -370,7 +370,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
         <p className="mb-1 font-mono text-[11px] uppercase tracking-[0.14em] text-[color:var(--sage-100)]">
           BLOG — {posts.length} ARTICLES
         </p>
-        <h1 className="m-0 font-display text-[22px] font-extrabold text-[color:var(--lkv-surface)]">
+        <h1 className="m-0 font-display text-[22px] font-extrabold text-[color:var(--lkv-text-primary)]">
           Conseils & Guides
         </h1>
         <p className="mt-1.5 text-[13px] leading-normal text-[color:var(--lkv-forest-100)]">
@@ -387,7 +387,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
       {/* Featured */}
       {featured.length > 0 && activeCategory === 'Tous' && !searchQuery && (
         <div className="mb-[var(--space-5)]">
-          <h2 className="mb-[var(--space-3)] font-display text-[16px] font-bold text-[color:var(--lkv-surface)]">
+          <h2 className="mb-[var(--space-3)] font-display text-[16px] font-bold text-[color:var(--lkv-text-primary)]">
             A la une
           </h2>
           {featured.slice(0, 1).map((post) => (
@@ -400,7 +400,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
       {filtered.length === 0 ? (
         <div className="py-10 text-center">
           <p className="mb-[var(--space-2)] text-[32px]">📝</p>
-          <p className="mb-1 text-[16px] font-bold text-[color:var(--lkv-surface)]">Aucun article trouve</p>
+          <p className="mb-1 text-[16px] font-bold text-[color:var(--lkv-text-primary)]">Aucun article trouve</p>
           <p className="mb-[var(--space-4)] text-[13px] text-[color:var(--lkv-forest-100)]">Essayez une autre categorie ou un autre terme de recherche.</p>
           <button onClick={() => { setActiveCategory('Tous'); setSearchQuery(''); }}
             className="glass-capsule-btn primary px-6 py-2.5 text-[13px] min-h-[var(--lkv-touch-min)]">
@@ -411,11 +411,11 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
         <>
           {(activeCategory !== 'Tous' || searchQuery) && (
             <p className="mb-[var(--space-3)] font-mono text-[13px] text-[color:var(--lkv-forest-100)]">
-              <strong className="text-[color:var(--lkv-surface)]">{filtered.length}</strong> article{filtered.length > 1 ? 's' : ''}
+              <strong className="text-[color:var(--lkv-text-primary)]">{filtered.length}</strong> article{filtered.length > 1 ? 's' : ''}
             </p>
           )}
           {(!searchQuery && activeCategory === 'Tous') && nonFeaturedFiltered.length > 0 && (
-            <h2 className="mb-[var(--space-3)] font-display text-[16px] font-bold text-[color:var(--lkv-surface)]">
+            <h2 className="mb-[var(--space-3)] font-display text-[16px] font-bold text-[color:var(--lkv-text-primary)]">
               Tous les articles
             </h2>
           )}
@@ -430,7 +430,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
       {/* Newsletter (mutualisée desk/mobile — label visible comme `contact`) */}
       <div className="glass mt-[var(--space-6)] p-[var(--space-5)] text-center">
         <p className="mb-[var(--space-2)] text-[28px]" aria-hidden="true">📬</p>
-        <h3 className="mb-[var(--space-2)] font-display text-[16px] font-bold text-[color:var(--lkv-primary)]">
+        <h3 className="mb-[var(--space-2)] font-display text-[16px] font-bold text-[color:var(--lkv-text-primary)]">
           Restez informé
         </h3>
         <p className="mb-[var(--space-4)] text-[13px] leading-normal text-[color:var(--lkv-text-secondary)]">
@@ -456,9 +456,9 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
 
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           {mobileContent}
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

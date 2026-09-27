@@ -49,7 +49,7 @@ function ScoreBar({ value }: { value: number }) {
 function StatPill({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <Card variant="compact" className="flex flex-col items-center justify-center gap-0.5 text-center">
-      <div className="text-[color:var(--lkv-primary)]">{icon}</div>
+      <div className="text-[color:var(--lkv-text-primary)]">{icon}</div>
       <span className="text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-muted)]">
         {label}
       </span>
@@ -163,7 +163,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
           <div className="absolute bottom-3 left-3.5 right-3.5">
             <Card className="rounded-[var(--lkv-radius-md)] px-3.5 py-2.5 shadow-xs">
               <p className="mb-0.5 flex items-center gap-1 text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]">
-                <Icon name="map-pin" size={11} className="text-[color:var(--lkv-primary)]" />
+                <Icon name="map-pin" size={11} className="text-[color:var(--lkv-text-primary)]" />
                 <span>{trail.network || trail.terrain_type || 'Massif Alpin'}</span>
               </p>
               <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold leading-tight text-[color:var(--lkv-text-primary)] line-clamp-2">
@@ -225,7 +225,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
           {/* AI Description / Insights */}
           <Card variant="compact" className="flex flex-col gap-2 p-3.5">
             <div className="flex items-center gap-1.5 text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-muted)]">
-              <Icon name="sparkles" size={13} className="text-[color:var(--lkv-primary)]" />
+              <Icon name="sparkles" size={13} className="text-[color:var(--lkv-text-primary)]" />
               <span>Guide & Points d'intérêt</span>
             </div>
             <p className="text-[length:var(--lkv-text-body-sm)] font-normal leading-relaxed text-[color:var(--lkv-text-secondary)]">
@@ -237,7 +237,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
           {/* Offline Storage Card */}
           <Card variant="compact" className="flex items-center justify-between gap-3 p-3">
             <div className="flex min-w-0 items-center gap-2.5">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)]">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
                 {isOfflineAvailable ? <Icon name="check" size={16} /> : <Download size={16} />}
               </div>
               <div className="min-w-0">

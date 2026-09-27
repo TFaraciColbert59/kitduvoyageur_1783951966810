@@ -225,6 +225,8 @@
   --lkv-text-body-sm: 0.9375rem;
   --lkv-text-headline: 1.0625rem;
   --lkv-text-title-sm: 1.375rem;
+  --lkv-text-title-md: 1.75rem;
+  --lkv-text-note: 0.875rem;
   --lkv-text-title-lg: 2.125rem;
   --lkv-text-title-xl: 2.5rem;
   --lkv-line-body: 1.4;
@@ -379,8 +381,15 @@
   --header-height: 44px;
   --header-height-large: 96px;
   --page-top-inset: calc(var(--safe-top) + var(--space-2));
-  --page-bottom-inset: calc(var(--nav-offset) + var(--space-4));
-  --page-bottom-inset-extended: calc(var(--nav-offset-extended) + var(--space-4));
+  /* --cookie-banner-h est publie par <CookieConsentBanner> (0px sinon) :
+     la bande occupee par la banniere est rendue aux pages sans qu'elles
+     aient a la connaitre.
+     max() et NON une addition : la bande MESUREE part du sommet du panneau,
+     elle contient donc deja la bottom-nav (panneau remonte de --nav-offset).
+     Additionner --nav-offset reservait deux fois la nav. Memantique que
+     AppShell (src/components/shell/AppShell.tsx). */
+  --page-bottom-inset: calc(max(var(--nav-offset), var(--cookie-banner-h, 0px)) + var(--space-4));
+  --page-bottom-inset-extended: calc(max(var(--nav-offset-extended), var(--cookie-banner-h, 0px)) + var(--space-4));
   --page-bottom-inset-bare: calc(var(--safe-bottom) + var(--space-4));
   --overlay-inset-top: var(--safe-top);
   --overlay-inset-bottom: var(--safe-bottom);
@@ -1035,3 +1044,20 @@ button.g2,
 }
 
 .glass { --lkv-text-secondary: var(--glass-text-secondary); }
+
+/* ==========================================================================
+   PRÉPARATEUR D'AVENTURE — gabarit d'écran (/prepare)
+   Trois étapes plein écran : Destination · Parcours · Départ.
+   Le verre reste réservé aux commandes flottantes ; les surfaces de texte
+   sont presque opaques pour garantir la lisibilité (cf. A2).
+   ========================================================================== */
+:root {
+  /* Chrome de l'écran : bandeau de navigation et barre d'action. */
+  --prep-nav-height: 52px;
+  --prep-action-height: 52px;
+  /* Part du corps occupée par la carte. Se compacte avant tout scroll. */
+  --prep-map-share: 40%;
+  --prep-map-share-compact: 24%;
+  /* Écart entre les trois blocs d'une étape (plage 12–16 px). */
+  --prep-block-gap: 14px;
+}

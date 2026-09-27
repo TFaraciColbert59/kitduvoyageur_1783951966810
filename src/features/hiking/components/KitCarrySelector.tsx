@@ -87,13 +87,13 @@ export default function KitCarrySelector({ kitId, onSelect, disabled }: KitCarry
         <div className="mt-2 flex items-center justify-between gap-2">
           <button
             onClick={() => openKit(kitId, 'cockpit')}
-            className="flex-1 py-1.5 rounded-lg text-[11px] font-medium text-[color:var(--lkv-primary)] hover:bg-[color:var(--btn-tint)] transition-colors"
+            className="flex-1 py-1.5 rounded-lg text-[11px] font-medium text-[color:var(--lkv-text-primary)] hover:bg-[color:var(--btn-tint)] transition-colors"
           >
             Voir la fiche →
           </button>
           <button
             onClick={() => onSelect(null)}
-            className="flex-1 py-1.5 rounded-lg text-[11px] font-medium text-[color:var(--lkv-text-muted)] hover:text-[color:var(--lkv-primary)] transition-colors"
+            className="flex-1 py-1.5 rounded-lg text-[11px] font-medium text-[color:var(--lkv-text-muted)] hover:text-[color:var(--lkv-text-primary)] transition-colors"
           >
             Retirer le kit
           </button>

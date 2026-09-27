@@ -31,14 +31,14 @@ export function GearCardAlertes({ data, className }: { data: AlertesData; classN
           <div className="space-y-0.5">
             <h2
               id="alertes-title"
-              className="text-[13px] sm:text-[20px] font-display font-bold text-[var(--lkv-primary)] leading-tight truncate"
+              className="text-[13px] sm:text-[20px] font-display font-bold text-[color:var(--lkv-text-primary)] leading-tight truncate"
             >
               Alertes
             </h2>
           </div>
           <div className="text-right shrink-0">
             <span
-              className={`text-[18px] sm:text-[36px] font-mono font-bold leading-none ${data.count > 0 ? (data.criticalCount > 0 ? 'text-[var(--lkv-danger)]' : 'text-[var(--lkv-warning)]') : 'text-[var(--lkv-primary)]'}`}
+              className={`text-[18px] sm:text-[36px] font-mono font-bold leading-none ${data.count > 0 ? (data.criticalCount > 0 ? 'text-[var(--lkv-danger)]' : 'text-[var(--lkv-warning)]') : 'text-[color:var(--lkv-text-primary)]'}`}
             >
               {data.count}
             </span>
@@ -75,9 +75,9 @@ export function GearCardAlertes({ data, className }: { data: AlertesData; classN
 
         {/* Progress Bar */}
         <div className="space-y-0.5 sm:space-y-1">
-          <div className="flex items-center justify-between text-[10px] sm:text-xs font-semibold text-[var(--lkv-primary-soft)]">
+          <div className="flex items-center justify-between text-[10px] sm:text-xs font-semibold text-[color:var(--lkv-text-secondary)]">
             <span>Fiabilité</span>
-            <span className="font-mono text-[var(--lkv-primary)]">{data.reliabilityScore}%</span>
+            <span className="font-mono text-[color:var(--lkv-text-primary)]">{data.reliabilityScore}%</span>
           </div>
           <ProgressBar value={data.reliabilityScore} label="Score de fiabilité" tone={tone} />
         </div>

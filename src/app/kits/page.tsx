@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import Icon from '@/components/ui/Icon';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import Link from 'next/link';
 import { Button, Card, PageHeader } from '@/components/ui';
 
@@ -137,7 +137,7 @@ export default function KitsPage() {
 
       {/* ── MOBILE (COCKPIT LIQUID GLASS) ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <div className="px-4 pt-3 pb-24 flex flex-col gap-4">
             <PageHeader
               variant="large"
@@ -177,7 +177,7 @@ export default function KitsPage() {
               ))}
             </div>
           </div>
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import TopoSeparator from '@/components/TopoSeparator';
 import { Badge, Card } from '@/components/ui';
 
@@ -277,7 +277,7 @@ export default function OutilsPage() {
                 ))}
               </div>
             </div>
-            <TopoSeparator color="var(--stone-200)" />
+            <TopoSeparator color="var(--lkv-border)" />
           </section>
 
           {/* Tools Grid */}
@@ -349,7 +349,7 @@ export default function OutilsPage() {
               </Link>
             </div>
           </section>
-          <TopoSeparator color="var(--stone-200)" />
+          <TopoSeparator color="var(--lkv-border)" />
 
           <Footer />
         </div>
@@ -357,7 +357,7 @@ export default function OutilsPage() {
 
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <div className="p-[var(--space-4)]">
             {/* Mobile Hero */}
             <div className="mb-[var(--space-6)]">
@@ -393,7 +393,7 @@ export default function OutilsPage() {
               ))}
             </div>
           </div>
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

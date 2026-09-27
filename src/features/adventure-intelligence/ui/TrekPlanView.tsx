@@ -96,7 +96,7 @@ export function TrekPlanView({
           </h3>
         </div>
         {plan && plan.daily.length > 0 ? (
-          <span className="shrink-0 rounded-full bg-[var(--lkv-primary-subtle)] px-2.5 py-1 text-[11px] font-semibold text-[var(--lkv-primary)]">
+          <span className="shrink-0 rounded-full bg-[var(--lkv-primary-subtle)] px-2.5 py-1 text-[11px] font-semibold text-[color:var(--lkv-text-primary)]">
             {plan.daily.length} jour{plan.daily.length > 1 ? 's' : ''}
           </span>
         ) : null}
@@ -121,7 +121,7 @@ export function TrekPlanView({
           </p>
           <a
             href="/tarifs"
-            className="mt-2 inline-flex min-h-[44px] items-center text-[13px] font-semibold text-[var(--lkv-primary)] underline-offset-2 active:opacity-70"
+            className="mt-2 inline-flex min-h-[44px] items-center text-[13px] font-semibold text-[color:var(--lkv-text-primary)] underline-offset-2 active:opacity-70"
           >
             Voir les plans →
           </a>

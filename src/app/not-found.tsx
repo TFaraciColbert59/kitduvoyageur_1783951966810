@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import { Button, Card } from '@/components/ui';
 
 const POPULAR_PAGES = [
@@ -39,7 +39,7 @@ export default function NotFound() {
         suppressHydrationWarning
       />
 
-      <MobilePageShell background="transparent">
+      <AppShell background="transparent">
         <div className="flex min-h-[calc(100dvh-120px)] flex-col items-center justify-center px-[var(--space-5)] py-[var(--space-10)] text-center">
           <Card variant="featured" className="w-full max-w-sm p-6 md:max-w-md md:p-8">
             <span
@@ -105,7 +105,7 @@ export default function NotFound() {
             </div>
           </Card>
         </div>
-      </MobilePageShell>
+      </AppShell>
     </>
   );
 }

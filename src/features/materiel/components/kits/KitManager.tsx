@@ -92,26 +92,26 @@ export function KitManager({ kits, inventory }: { kits: KitListItem[]; inventory
       <Modal open={open} onOpenChange={setOpen} title={editing ? 'Modifier le kit' : 'Nouveau kit'}>
         <div className="flex flex-col gap-3.5">
           <label className="flex flex-col gap-1 text-xs sm:text-sm">
-            <span className="font-semibold text-[var(--lkv-primary-soft)]">Nom *</span>
+            <span className="font-semibold text-[color:var(--lkv-text-secondary)]">Nom *</span>
             <input className={FIELD_CLASS} value={name} onChange={(e) => setName(e.target.value)} />
           </label>
           <label className="flex flex-col gap-1 text-xs sm:text-sm">
-            <span className="font-semibold text-[var(--lkv-primary-soft)]">Saison</span>
+            <span className="font-semibold text-[color:var(--lkv-text-secondary)]">Saison</span>
             <select className={FIELD_CLASS} value={season} onChange={(e) => setSeason(e.target.value)}>
               {SEASONS.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </label>
           <label className="flex flex-col gap-1 text-xs sm:text-sm">
-            <span className="font-semibold text-[var(--lkv-primary-soft)]">Description</span>
+            <span className="font-semibold text-[color:var(--lkv-text-secondary)]">Description</span>
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} className={FIELD_CLASS} rows={2} />
           </label>
           <div>
-            <p className="mb-1.5 text-xs font-semibold text-[var(--lkv-primary-soft)] sm:text-sm">Articles ({selectedItems.size})</p>
+            <p className="mb-1.5 text-xs font-semibold text-[color:var(--lkv-text-secondary)] sm:text-sm">Articles ({selectedItems.size})</p>
             <ul className="flex max-h-64 flex-col gap-1.5 overflow-y-auto">
               {inventory.map((i) => (
                 <li key={i.id}>
                   <Card variant="compact" className="p-2">
-                    <label className="flex cursor-pointer items-center gap-2 text-xs text-[var(--lkv-primary)] sm:text-sm">
+                    <label className="flex cursor-pointer items-center gap-2 text-xs text-[color:var(--lkv-text-primary)] sm:text-sm">
                       <input className="rounded border-[color:var(--lkv-border)]" type="checkbox" checked={selectedItems.has(i.id)} onChange={() => toggleItem(i.id)} />
                       <span className="truncate">{i.name}</span>
                     </label>

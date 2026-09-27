@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -465,9 +465,9 @@ export default function FidelitePage() {
 
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           {pageContent}
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

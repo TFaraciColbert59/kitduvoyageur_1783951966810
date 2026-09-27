@@ -25,9 +25,9 @@ export function PaysWeatherCard({
         className={cn('glass rounded-[var(--lkv-radius-lg)] p-5 border border-white/50 shadow-xs animate-pulse space-y-3', className)}
         aria-hidden="true"
       >
-        <div className="h-3 w-28 rounded-full bg-[color:var(--stone-200)]/80" />
-        <div className="h-8 w-24 rounded-lg bg-[color:var(--stone-200)]/70" />
-        <div className="h-3 w-40 rounded-full bg-[color:var(--stone-200)]/60" />
+        <div className="h-3 w-28 rounded-full bg-[color:var(--lkv-surface-muted)]/80" />
+        <div className="h-8 w-24 rounded-lg bg-[color:var(--lkv-surface-muted)]/70" />
+        <div className="h-3 w-40 rounded-full bg-[color:var(--lkv-surface-muted)]/60" />
       </div>
     );
   }
@@ -44,17 +44,17 @@ export function PaysWeatherCard({
       className={cn('glass rounded-[var(--lkv-radius-lg)] p-5 border border-white/50 shadow-xs space-y-2', className)}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-secondary)]">
+        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-secondary-ink)]">
           Météo actuelle
         </span>
         <span className="text-[9.5px] font-mono text-[color:var(--lkv-text-secondary)]">Open-Meteo</span>
       </div>
 
       <div className="flex items-baseline gap-3">
-        <span className="font-mono font-extrabold text-3xl text-[color:var(--lkv-primary)]">
+        <span className="font-mono font-extrabold text-3xl text-[color:var(--lkv-text-primary)]">
           {current.temperatureC}°C
         </span>
-        <span className="text-sm font-bold text-[color:var(--lkv-primary)]">{current.condition}</span>
+        <span className="text-sm font-bold text-[color:var(--lkv-text-primary)]">{current.condition}</span>
       </div>
 
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10.5px] font-mono text-[color:var(--lkv-text-secondary)]">

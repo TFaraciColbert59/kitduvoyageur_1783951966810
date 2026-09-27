@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card, Spinner } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
@@ -94,7 +94,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
     <div className="max-w-[820px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 text-center">
       <div className="py-16 glass rounded-xl">
         <Icon name="BookOpenIcon" size={48} className="mx-auto mb-4 text-[color:var(--lkv-text-secondary)]" variant="outline" />
-        <h1 className="font-display font-bold text-2xl text-[color:var(--lkv-primary)] mb-3">
+        <h1 className="font-display font-bold text-2xl text-[color:var(--lkv-text-primary)] mb-3">
           Guide introuvable
         </h1>
         <p className="text-[color:var(--lkv-text-secondary)] mb-6">Ce guide n&apos;existe pas ou a été supprimé.</p>
@@ -114,11 +114,11 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
       <div className="glass rounded-xl p-6 sm:p-10">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-xs text-[color:var(--lkv-text-secondary)] mb-6">
-        <Link href="/" className="hover:text-[color:var(--lkv-primary)] transition-colors">Accueil</Link>
+        <Link href="/" className="hover:text-[color:var(--lkv-text-primary)] transition-colors">Accueil</Link>
         <Icon name="ChevronRightIcon" size={12} variant="outline" />
-        <Link href="/guides" className="hover:text-[color:var(--lkv-primary)] transition-colors">Guides</Link>
+        <Link href="/guides" className="hover:text-[color:var(--lkv-text-primary)] transition-colors">Guides</Link>
         <Icon name="ChevronRightIcon" size={12} variant="outline" />
-        <span className="text-[color:var(--lkv-primary)] truncate">{guide.title}</span>
+        <span className="text-[color:var(--lkv-text-primary)] truncate">{guide.title}</span>
       </nav>
 
       {/* Meta badges */}
@@ -142,12 +142,12 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
       </div>
 
       {/* Title */}
-      <h1 className="font-display font-bold text-3xl md:text-4xl text-[color:var(--lkv-primary)] mb-4 leading-tight">
+      <h1 className="font-display font-bold text-3xl md:text-4xl text-[color:var(--lkv-text-primary)] mb-4 leading-tight">
         {guide.title}
       </h1>
 
       {/* Excerpt */}
-      <p className="text-[color:var(--lkv-primary-soft)] text-lg leading-relaxed mb-8">{guide.excerpt}</p>
+      <p className="text-[color:var(--lkv-text-secondary)] text-lg leading-relaxed mb-8">{guide.excerpt}</p>
 
       {/* Hero image */}
       {guide.image && (
@@ -164,7 +164,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
           <Icon name="UserCircleIcon" size={20} variant="outline" />
         </div>
         <div>
-          <p className="text-sm font-medium text-[color:var(--lkv-primary)]">{guide.author?.full_name ?? 'Équipe Le Kit du Voyageur'}</p>
+          <p className="text-sm font-medium text-[color:var(--lkv-text-primary)]">{guide.author?.full_name ?? 'Équipe Le Kit du Voyageur'}</p>
           <p className="text-xs text-[color:var(--lkv-text-secondary)]">
             Publié le {new Date(guide.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
@@ -173,17 +173,17 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
 
       {/* Content */}
       {guide.content ? (
-        <div className="prose prose-sm max-w-none text-[color:var(--lkv-primary-soft)] leading-relaxed" dangerouslySetInnerHTML={{ __html: guide.content }} />
+        <div className="prose prose-sm max-w-none text-[color:var(--lkv-text-secondary)] leading-relaxed" dangerouslySetInnerHTML={{ __html: guide.content }} />
       ) : (
-        <div className="space-y-6 text-[color:var(--lkv-primary-soft)] leading-relaxed">
+        <div className="space-y-6 text-[color:var(--lkv-text-secondary)] leading-relaxed">
           <p>
-            Ce guide complet vous accompagne dans la préparation de votre aventure en <strong className="text-[color:var(--lkv-primary)]">{guide.destination}</strong>.
+            Ce guide complet vous accompagne dans la préparation de votre aventure en <strong className="text-[color:var(--lkv-text-primary)]">{guide.destination}</strong>.
             Retrouvez tous les conseils essentiels pour partir bien équipé et en toute sécurité.
           </p>
           <div className="glass-sub-card p-5">
             <div className="flex items-center gap-2 mb-3">
-              <Icon name="SparklesIcon" size={16} className="text-[color:var(--lkv-secondary)]" variant="outline" />
-              <span className="font-semibold text-[color:var(--lkv-primary)] text-sm">Configurez votre kit pour {guide.destination}</span>
+              <Icon name="SparklesIcon" size={16} className="text-[color:var(--lkv-secondary-ink)]" variant="outline" />
+              <span className="font-semibold text-[color:var(--lkv-text-primary)] text-sm">Configurez votre kit pour {guide.destination}</span>
             </div>
             <p className="text-sm text-[color:var(--lkv-text-secondary)] mb-4">
               Utilisez notre configurateur IA pour obtenir une liste d&apos;équipement personnalisée pour cette destination.
@@ -214,7 +214,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
       <div className="mt-10">
         <Link
           href="/guides"
-          className="inline-flex items-center gap-2 text-sm text-[color:var(--lkv-text-secondary)] hover:text-[color:var(--lkv-primary)] transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-[color:var(--lkv-text-secondary)] hover:text-[color:var(--lkv-text-primary)] transition-colors"
         >
           <Icon name="ArrowLeftIcon" size={14} variant="outline" />
           Retour aux guides
@@ -234,7 +234,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
   const mobileNotFound = (
     <div className="p-[var(--space-4)] pt-[60px] text-center">
       <p className="mb-[var(--space-3)] text-[40px]" aria-hidden="true">📖</p>
-      <h1 className="mb-[var(--space-2)] font-display text-[20px] font-extrabold text-[color:var(--lkv-primary)]">
+      <h1 className="mb-[var(--space-2)] font-display text-[20px] font-extrabold text-[color:var(--lkv-text-primary)]">
         Guide introuvable
       </h1>
       <p className="mb-[var(--space-6)] text-[14px] text-[color:var(--lkv-text-secondary)]">Ce guide n&apos;existe pas ou a été supprimé.</p>
@@ -253,7 +253,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
         <span aria-hidden="true">/</span>
         <Link href="/guides" className="text-[color:var(--lkv-text-secondary)] no-underline">Guides</Link>
         <span aria-hidden="true">/</span>
-        <span className="overflow-hidden text-ellipsis text-[color:var(--lkv-primary)]">{guide.title}</span>
+        <span className="overflow-hidden text-ellipsis text-[color:var(--lkv-text-primary)]">{guide.title}</span>
       </nav>
 
       {/* Badges */}
@@ -264,26 +264,26 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
         {guide.destination && <Badge className="font-mono">{guide.destination}</Badge>}
       </div>
 
-      <h1 className="mb-[var(--space-2)] font-display text-[22px] font-extrabold leading-[var(--leading-tight)] text-[color:var(--lkv-primary)]">
+      <h1 className="mb-[var(--space-2)] font-display text-[22px] font-extrabold leading-[var(--leading-tight)] text-[color:var(--lkv-text-primary)]">
         {guide.title}
       </h1>
 
-      <p className="mb-[var(--space-4)] text-[14px] leading-[var(--leading-relaxed)] text-[color:var(--lkv-primary-soft)]">{guide.excerpt}</p>
+      <p className="mb-[var(--space-4)] text-[14px] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-secondary)]">{guide.excerpt}</p>
 
       {/* Image */}
       {guide.image && (
-        <div className="relative mb-[var(--space-4)] h-[200px] overflow-hidden rounded-[var(--lkv-radius-sm)] bg-[color:var(--stone-200)]">
+        <div className="relative mb-[var(--space-4)] h-[200px] overflow-hidden rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-surface-muted)]">
           <img src={guide.image} alt={guide.alt} className="h-full w-full object-cover" />
         </div>
       )}
 
       {/* Author */}
       <div className="mb-[var(--space-4)] flex items-center gap-[10px] border-b border-[color:var(--lkv-border-subtle)] pb-[var(--space-4)]">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[14px] text-[color:var(--lkv-primary)]" aria-hidden="true">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[14px] text-[color:var(--lkv-text-primary)]" aria-hidden="true">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </div>
         <div>
-          <p className="m-0 text-[13px] font-semibold text-[color:var(--lkv-primary)]">{guide.author?.full_name ?? 'Équipe Le Kit du Voyageur'}</p>
+          <p className="m-0 text-[13px] font-semibold text-[color:var(--lkv-text-primary)]">{guide.author?.full_name ?? 'Équipe Le Kit du Voyageur'}</p>
           <p className="m-0 text-[11px] text-[color:var(--lkv-text-secondary)]">
             Publié le {new Date(guide.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
@@ -291,7 +291,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
       </div>
 
       {/* Content */}
-      <div className="text-[14px] leading-[1.7] text-[color:var(--lkv-primary)]">
+      <div className="text-[14px] leading-[1.7] text-[color:var(--lkv-text-primary)]">
         {guide.content ? (
           <div dangerouslySetInnerHTML={{ __html: guide.content }} />
         ) : (
@@ -301,7 +301,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
               Retrouvez tous les conseils essentiels pour partir bien équipé et en toute sécurité.
             </p>
             <Card variant="compact" className="mt-[var(--space-4)] p-[var(--space-4)]">
-              <p className="mb-[var(--space-2)] text-[14px] font-semibold text-[color:var(--lkv-primary)]">
+              <p className="mb-[var(--space-2)] text-[14px] font-semibold text-[color:var(--lkv-text-primary)]">
                 Configurez votre kit pour {guide.destination}
               </p>
               <p className="mb-[var(--space-3)] text-[13px] text-[color:var(--lkv-text-secondary)]">
@@ -326,7 +326,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
 
       {/* Back link */}
       <div className="mt-[var(--space-6)]">
-        <Link href="/guides" className="inline-flex items-center gap-[6px] text-[13px] text-[color:var(--lkv-text-secondary)] no-underline hover:text-[color:var(--lkv-primary)]">
+        <Link href="/guides" className="inline-flex items-center gap-[6px] text-[13px] text-[color:var(--lkv-text-secondary)] no-underline hover:text-[color:var(--lkv-text-primary)]">
           ← Retour aux guides
         </Link>
       </div>
@@ -347,9 +347,9 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
 
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           {loading ? mobileLoading : notFoundState || !guide ? mobileNotFound : mobileDetail}
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

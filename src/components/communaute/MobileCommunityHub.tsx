@@ -225,7 +225,7 @@ export default function MobileCommunityHub({
                           </p>
                         )}
                         {c.category && (
-                          <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-secondary)]">
+                          <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-secondary-ink)]">
                             📍 {c.category}
                           </span>
                         )}

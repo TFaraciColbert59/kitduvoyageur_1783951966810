@@ -28,7 +28,7 @@ const GLASS = 'lkv-glass';
 
 const VARIANT: Record<CardVariant, string> = {
   standard: `${GLASS} rounded-[var(--lkv-radius-card)] p-[var(--space-5)]`,
-  interactive: `${GLASS} rounded-[var(--lkv-radius-card)] p-[var(--space-5)] cursor-pointer transition-transform duration-[var(--motion-control-duration)] ease-[var(--motion-ease-standard)] hover:brightness-[1.04] active:scale-[0.99] motion-reduce:transition-none`,
+  interactive: `${GLASS} rounded-[var(--lkv-radius-card)] p-[var(--space-5)] cursor-pointer transition-transform [transition-duration:var(--motion-control-duration)] [transition-timing-function:var(--motion-ease-standard)] hover:brightness-[1.04] active:scale-[0.99] motion-reduce:transition-none`,
   featured: `${GLASS} rounded-[var(--lkv-radius-card)] p-[var(--space-5)] shadow-[var(--elevation-3)]`,
   compact: `${GLASS} rounded-[var(--lkv-radius-md)] p-[var(--space-3)]`,
 };

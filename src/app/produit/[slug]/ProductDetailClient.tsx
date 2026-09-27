@@ -14,7 +14,7 @@ import { addToCart } from '@/lib/cart';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEquipment } from '@/hooks/useEquipment';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import ProductBuyBar from '@/components/produit/ProductBuyBar';
 import { cleanItemName } from '@/lib/cleanItemName';
 
@@ -230,7 +230,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
     { id: 'moutarde', color: 'var(--lkv-warning)' },
     { id: 'noir', color: 'var(--lkv-text-primary)' },
     { id: 'bleu', color: 'var(--lkv-info)' },
-    { id: 'terre', color: 'var(--stone-600)' },
+    { id: 'terre', color: 'var(--lkv-text-muted)' },
   ];
 
   return (
@@ -578,7 +578,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
       {/* ── MOBILE VIEW ── */}
       <div className="block md:hidden">
-        <MobilePageShell background="transparent">
+        <AppShell background="transparent">
           <div className="px-[var(--space-4)] pt-[var(--space-2)]">
             <PageHeader
               variant="inline"
@@ -761,7 +761,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
               }, qty);
             }}
           />
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

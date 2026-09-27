@@ -165,7 +165,7 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
         <span className="flex items-center gap-1.5">
           {note.is_pinned && <Pin size={12} aria-hidden="true" />}
           {note.day_number != null && (
-            <Badge tone="stone" className="bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[var(--lkv-primary)]">
+            <Badge tone="stone" className="bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[color:var(--lkv-text-primary)]">
               Jour {note.day_number}
             </Badge>
           )}
@@ -230,7 +230,7 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
                 : 'Aucune note pour le moment.'}
             </p>
             {pinned.length > 0 && (
-              <p className="flex items-center gap-1 text-[11px] font-semibold text-[var(--lkv-primary)]">
+              <p className="flex items-center gap-1 text-[11px] font-semibold text-[color:var(--lkv-text-primary)]">
                 <Pin size={11} aria-hidden="true" />
                 {pinned.length} note{pinned.length > 1 ? 's' : ''} épinglée{pinned.length > 1 ? 's' : ''}
               </p>
@@ -360,7 +360,7 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
           <div className="space-y-4">
             <div className="glass-sub-card flex flex-wrap items-center gap-2 rounded-2xl p-3">
               {selected.day_number != null && (
-                <Badge tone="stone" className="bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[var(--lkv-primary)]">
+                <Badge tone="stone" className="bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[color:var(--lkv-text-primary)]">
                   Jour {selected.day_number}
                 </Badge>
               )}

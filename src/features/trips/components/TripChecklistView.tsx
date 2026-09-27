@@ -343,7 +343,7 @@ export function TripChecklistView({ tripId, daysUntilStart, items }: TripCheckli
                     leading={
                       <span className="mt-0.5 shrink-0">
                         {isChecked ? (
-                          <Icon name="check-circle2" size={20} className="text-[color:var(--lkv-primary)]" />
+                          <Icon name="check-circle2" size={20} className="text-[color:var(--lkv-text-primary)]" />
                         ) : (
                           <Icon
                             name="circle"
@@ -383,7 +383,7 @@ export function TripChecklistView({ tripId, daysUntilStart, items }: TripCheckli
       {/* Barre de progression */}
       <Card tone="sage">
         <div className="mb-[var(--space-2)] flex items-center justify-between gap-[var(--space-4)]">
-          <Icon name="shield-check" size={20} className="text-[color:var(--lkv-primary)]" aria-hidden="true" />
+          <Icon name="shield-check" size={20} className="text-[color:var(--lkv-text-primary)]" aria-hidden="true" />
           <div className="text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
             {doneCount} / {totalCount} ({progress}%)
           </div>

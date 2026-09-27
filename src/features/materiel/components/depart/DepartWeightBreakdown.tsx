@@ -34,7 +34,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   Sécurité: 'var(--lkv-danger)',
   Hygiène: 'var(--lkv-secondary)',
   Électronique: 'var(--lkv-info)',
-  Autre: 'var(--stone-600)',
+  Autre: 'var(--lkv-text-muted)',
 };
 
 export function DepartWeightBreakdown({
@@ -80,7 +80,7 @@ export function DepartWeightBreakdown({
             <Icon name="scale" size={18} />
           </div>
           <div>
-            <h3 className="text-xs sm:text-sm font-bold text-[var(--lkv-primary)]">
+            <h3 className="text-xs sm:text-sm font-bold text-[color:var(--lkv-text-primary)]">
               Analyse du poids & Décision
             </h3>
             <span className="text-[11px] text-[var(--lkv-text-muted)]">
@@ -90,7 +90,7 @@ export function DepartWeightBreakdown({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs sm:text-sm font-mono font-bold text-[var(--lkv-primary)]">
+          <span className="text-xs sm:text-sm font-mono font-bold text-[color:var(--lkv-text-primary)]">
             {formatWeight(totalCarriedG)}
           </span>
           <motion.div
@@ -108,7 +108,7 @@ export function DepartWeightBreakdown({
           <span className="block text-[8.5px] font-mono font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] sm:text-[9.5px]">
             Poids de base
           </span>
-          <span className="block text-xs font-mono font-bold text-[var(--lkv-primary)] sm:text-sm">
+          <span className="block text-xs font-mono font-bold text-[color:var(--lkv-text-primary)] sm:text-sm">
             {formatWeight(effectiveBaseG)}
           </span>
         </Card>
@@ -117,7 +117,7 @@ export function DepartWeightBreakdown({
           <span className="block text-[8.5px] font-mono font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] sm:text-[9.5px]">
             Consommables
           </span>
-          <span className="block text-xs font-mono font-bold text-[var(--lkv-primary)] sm:text-sm">
+          <span className="block text-xs font-mono font-bold text-[color:var(--lkv-text-primary)] sm:text-sm">
             {formatWeight(consumablesWeightG)}
           </span>
         </Card>
@@ -126,7 +126,7 @@ export function DepartWeightBreakdown({
           <span className="block text-[8.5px] font-mono font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] sm:text-[9.5px]">
             Porté sur soi
           </span>
-          <span className="block text-xs font-mono font-bold text-[var(--lkv-primary)] sm:text-sm">
+          <span className="block text-xs font-mono font-bold text-[color:var(--lkv-text-primary)] sm:text-sm">
             {formatWeight(wornWeightG)}
           </span>
         </Card>
@@ -136,7 +136,7 @@ export function DepartWeightBreakdown({
       <div className="space-y-1.5 pt-1">
         <div className="flex items-center justify-between text-[10.5px]">
           <span className="text-[var(--lkv-text-muted)] font-medium">Échelle de portage :</span>
-          <span className="font-bold text-[var(--lkv-primary)]">
+          <span className="font-bold text-[color:var(--lkv-text-primary)]">
             {effectiveBaseG < 5000
               ? 'Ultraléger (< 5 kg)'
               : effectiveBaseG < 9000
@@ -178,7 +178,7 @@ export function DepartWeightBreakdown({
                         className="h-2 w-2 shrink-0 rounded-full"
                         style={{ backgroundColor: color }}
                       />
-                      <span className="truncate text-[11px] font-medium text-[var(--lkv-primary)]">
+                      <span className="truncate text-[11px] font-medium text-[color:var(--lkv-text-primary)]">
                         {item.category}
                       </span>
                     </div>

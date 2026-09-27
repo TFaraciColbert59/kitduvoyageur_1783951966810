@@ -17,7 +17,7 @@ Façade unique : `import { … } from '@/design'`.
 
 1. Une page ne code jamais une couleur, un rayon, une ombre, un blur ou un z-index en dur : elle consomme un token ou une primitive.
 2. Les nouvelles primitives vont dans `src/components/ui/` et sont exportées par `@/design`.
-3. `AppShell` / `MobilePageShell` reste le shell canonique mobile (safe areas, bottom nav).
+3. `AppShell` est le shell canonique mobile (safe areas, bottom nav).
 4. Aucune feature ne définit son propre design global : elle compose les primitives.
 
 ## Migration progressive (Phase 2)

@@ -29,7 +29,7 @@ const StatsSheet = dynamic(() => import('./sheets/StatsSheet'), {
   ssr: false,
   loading: () => (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" role="status" aria-live="polite">
-      <div className="w-full max-w-md rounded-t-[34px] bg-[color:var(--glass-bg-medium)] p-6 text-[color:var(--lkv-primary)]">
+      <div className="w-full max-w-md rounded-t-[34px] bg-[color:var(--glass-bg-medium)] p-6 text-[color:var(--lkv-text-primary)]">
         Chargement des statistiques…
       </div>
     </div>
@@ -353,7 +353,7 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
   const showCompletionScreen = isCompleted || hikingStore.state === 'COMPLETED';
 
   return (
-    <div className="w-full h-[100dvh] relative overflow-hidden bg-[color:var(--stone-200)] text-[color:var(--lkv-primary)] select-none font-sans">
+    <div className="w-full h-[100dvh] relative overflow-hidden bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-text-primary)] select-none font-sans">
       <div className="relative w-full h-full overflow-hidden bg-transparent">
           {showCompletionScreen ? (
             <CompletionView
@@ -490,7 +490,7 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
                       🏁
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-[color:var(--lkv-primary)]">Terminer la randonnée ?</h3>
+                      <h3 className="text-lg font-bold text-[color:var(--lkv-text-primary)]">Terminer la randonnée ?</h3>
                       <p className="text-xs text-[color:var(--lkv-text-muted)] mt-1.5 leading-relaxed">
                         Votre session sera finalisée et votre carnet d'expédition sera automatiquement généré à partir des données réelles.
                       </p>
@@ -498,7 +498,7 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
                     <div className="flex gap-2.5 pt-2">
                       <button
                         onClick={() => setShowStopModal(false)}
-                        className="flex-1 py-3 px-4 rounded-xl border border-[color:var(--lkv-border)] text-xs font-semibold text-[color:var(--lkv-primary)] hover:bg-[color:var(--btn-tint)] transition-colors"
+                        className="flex-1 py-3 px-4 rounded-xl border border-[color:var(--lkv-border)] text-xs font-semibold text-[color:var(--lkv-text-primary)] hover:bg-[color:var(--btn-tint)] transition-colors"
                       >
                         Annuler
                       </button>
@@ -610,11 +610,11 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
               {routeIdParam && !hikingStore.isActive && geoPermissionState === 'prompt' && (
                 <div className="fixed inset-0 z-[var(--z-emergency)] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
                   <div className="bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset rounded-[var(--lkv-radius-sm)] max-w-md w-full p-6 text-center space-y-4">
-                    <div className="w-16 h-16 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] text-[color:var(--lkv-primary)] flex items-center justify-center mx-auto text-2xl ">
+                    <div className="w-16 h-16 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] text-[color:var(--lkv-text-primary)] flex items-center justify-center mx-auto text-2xl ">
                       📍
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-[color:var(--lkv-primary)]">
+                      <h3 className="text-lg font-bold text-[color:var(--lkv-text-primary)]">
                         Géolocalisation requise
                       </h3>
                       <p className="text-xs text-[color:var(--lkv-text-secondary)] mt-2 leading-relaxed">
@@ -640,7 +640,7 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
                       ⚠️
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-[color:var(--lkv-primary)]">
+                      <h3 className="text-lg font-bold text-[color:var(--lkv-text-primary)]">
                         Accès à la position refusé
                       </h3>
                       <p className="text-xs text-[color:var(--lkv-text-secondary)] mt-2 leading-relaxed">

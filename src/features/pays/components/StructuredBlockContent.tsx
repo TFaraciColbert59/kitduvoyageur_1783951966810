@@ -6,7 +6,7 @@ function Pill({ children, tone = 'neutral' }: { children: React.ReactNode; tone?
   return (
     <span
       className={`glass-pill !px-2 !py-0.5 text-[9px] font-mono font-bold uppercase ${
-        tone === 'sage' ? 'text-[color:var(--lkv-secondary)]' : 'text-[color:var(--lkv-primary)]'
+        tone === 'sage' ? 'text-[color:var(--lkv-secondary-ink)]' : 'text-[color:var(--lkv-text-primary)]'
       }`}
     >
       {children}
@@ -31,7 +31,7 @@ export function StructuredBlockContent({ block }: { block: SectionBlock }) {
             className="rounded-2xl border border-white/60 bg-white/70 p-4 space-y-1.5"
           >
             <div className="flex items-center justify-between gap-2">
-              <h4 className="font-display font-bold text-sm text-[color:var(--lkv-primary)]">{spot.nom}</h4>
+              <h4 className="font-display font-bold text-sm text-[color:var(--lkv-text-primary)]">{spot.nom}</h4>
               {spot.type_outdoor ? <Pill tone="sage">{spot.type_outdoor}</Pill> : null}
             </div>
             {spot.localisation ? (
@@ -50,14 +50,14 @@ export function StructuredBlockContent({ block }: { block: SectionBlock }) {
         {structured.items.map((itineraire, index) => (
           <div key={`${itineraire.nom}-${index}`} className="rounded-2xl border border-white/60 bg-white/70 p-4 space-y-2">
             <div className="flex flex-wrap items-center gap-1.5">
-              <h4 className="font-display font-bold text-sm text-[color:var(--lkv-primary)] mr-1">{itineraire.nom}</h4>
+              <h4 className="font-display font-bold text-sm text-[color:var(--lkv-text-primary)] mr-1">{itineraire.nom}</h4>
               <Pill>{itineraire.duree_jours} j</Pill>
               {itineraire.denivele_positif_m ? <Pill>±{itineraire.denivele_positif_m} m</Pill> : null}
               {itineraire.difficulte ? <Pill tone="sage">{itineraire.difficulte}</Pill> : null}
             </div>
             <p className="text-xs text-[color:var(--lkv-text-secondary)] leading-relaxed">{itineraire.description}</p>
             {itineraire.etapes && itineraire.etapes.length > 0 ? (
-              <ol className="mt-1 space-y-1 list-decimal list-inside text-[11px] text-[color:var(--lkv-primary-soft)]">
+              <ol className="mt-1 space-y-1 list-decimal list-inside text-[11px] text-[color:var(--lkv-text-secondary)]">
                 {itineraire.etapes.map((etape, stepIndex) => (
                   <li key={stepIndex}>{etape}</li>
                 ))}
@@ -75,12 +75,12 @@ export function StructuredBlockContent({ block }: { block: SectionBlock }) {
         {structured.items.map((item, index) => (
           <div key={`${item.activite}-${index}`} className="rounded-2xl border border-white/60 bg-white/70 p-4 space-y-1.5">
             <div className="flex items-center justify-between gap-2">
-              <h4 className="font-display font-bold text-sm text-[color:var(--lkv-primary)]">{item.activite}</h4>
+              <h4 className="font-display font-bold text-sm text-[color:var(--lkv-text-primary)]">{item.activite}</h4>
               {item.niveau ? <Pill tone="sage">{item.niveau}</Pill> : null}
             </div>
             <p className="text-xs text-[color:var(--lkv-text-secondary)] leading-relaxed">{item.facteurs}</p>
-            <p className="text-xs text-[color:var(--lkv-primary-soft)] leading-relaxed">
-              <strong className="font-bold text-[color:var(--lkv-primary)]">Conseil.</strong> {item.conseils}
+            <p className="text-xs text-[color:var(--lkv-text-secondary)] leading-relaxed">
+              <strong className="font-bold text-[color:var(--lkv-text-primary)]">Conseil.</strong> {item.conseils}
             </p>
           </div>
         ))}
@@ -93,7 +93,7 @@ export function StructuredBlockContent({ block }: { block: SectionBlock }) {
       {structured.items.map((item, index) => (
         <div key={`${item.activite}-${index}`} className="rounded-2xl border border-white/60 bg-white/70 p-4 space-y-1.5">
           <div className="flex items-center justify-between gap-2">
-            <h4 className="font-display font-bold text-sm text-[color:var(--lkv-primary)]">{item.activite}</h4>
+            <h4 className="font-display font-bold text-sm text-[color:var(--lkv-text-primary)]">{item.activite}</h4>
             {item.mois_favorables ? <Pill tone="sage">{item.mois_favorables}</Pill> : null}
           </div>
           <p className="text-xs text-[color:var(--lkv-text-secondary)] leading-relaxed">{item.conditions}</p>

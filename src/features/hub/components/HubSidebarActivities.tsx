@@ -27,7 +27,7 @@ export function HubSidebarActivities({ trips, activeSlug = null }: HubSidebarAct
   if (trips.length === 0) {
     return (
       <div className="flex h-full min-h-48 flex-col items-center justify-center px-4 text-center">
-        <span className="mb-3 flex size-12 items-center justify-center rounded-2xl bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]">
+        <span className="mb-3 flex size-12 items-center justify-center rounded-2xl bg-[var(--lkv-primary)]/10 text-[color:var(--lkv-text-primary)]">
           <Icon name="compass" size={23} aria-hidden="true" />
         </span>
         <p className="text-sm font-semibold text-[var(--lkv-text-primary)]">Vos aventures, au même endroit</p>

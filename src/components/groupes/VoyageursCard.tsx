@@ -260,7 +260,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
   };
 
   return (
-    <Card className="space-y-[var(--space-2)] p-[var(--space-3)] transition-all duration-[var(--motion-control-duration)]">
+    <Card className="space-y-[var(--space-2)] p-[var(--space-3)] transition-all [transition-duration:var(--motion-control-duration)]">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
           Voyageurs ({travelers.length})

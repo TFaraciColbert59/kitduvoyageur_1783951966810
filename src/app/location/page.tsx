@@ -6,7 +6,7 @@ import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import { Badge, Button, Card, EmptyState, Modal, SearchField, Tabs, type BadgeTone } from '@/components/ui';
 import ProductCard from '@/components/produit/ProductCard';
 
@@ -310,7 +310,7 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
                     <p className="text-[length:var(--lkv-text-body-sm)] font-medium text-[color:var(--lkv-text-primary)]">{days} jour{days > 1 ? 's' : ''} de location</p>
                     <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">+ {listing.deposit}€ de caution (remboursée)</p>
                   </div>
-                  <p className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-primary)]">{totalPrice}€</p>
+                  <p className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">{totalPrice}€</p>
                 </div>
               )}
             </div>
@@ -329,7 +329,7 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
           <Card variant="compact" className="p-[var(--space-4)]">
             <h3 className="mb-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">Propriétaire</h3>
             <div className="flex items-center gap-[var(--space-3)]">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-secondary-subtle)] text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-secondary)]">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-secondary-subtle)] text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-secondary-ink)]">
                 {listing.ownerAvatar}
               </div>
               <div className="flex-1">
@@ -337,8 +337,8 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
                 <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">{listing.location}</p>
               </div>
               <Badge tone="sage" className="gap-[var(--space-1)]">
-                <Icon name="ShieldCheckIcon" size={12} className="text-[color:var(--lkv-primary)]" />
-                <span className="font-bold text-[color:var(--lkv-primary)]">{listing.ownerTrustScore}%</span>
+                <Icon name="ShieldCheckIcon" size={12} className="text-[color:var(--lkv-text-primary)]" />
+                <span className="font-bold text-[color:var(--lkv-text-primary)]">{listing.ownerTrustScore}%</span>
               </Badge>
             </div>
           </Card>
@@ -356,7 +356,7 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
 
           <Link
             href={`/produit/${listing.slug}?type=location`}
-            className="flex w-full items-center justify-center gap-[var(--space-1)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-secondary)] py-[var(--space-2)] text-[length:var(--lkv-text-body-sm)] font-medium text-[color:var(--lkv-primary)] transition-colors hover:bg-[color:var(--lkv-primary-subtle)]"
+            className="flex w-full items-center justify-center gap-[var(--space-1)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-secondary)] py-[var(--space-2)] text-[length:var(--lkv-text-body-sm)] font-medium text-[color:var(--lkv-text-primary)] transition-colors hover:bg-[color:var(--lkv-primary-subtle)]"
           >
             <Icon name="ArrowTopRightOnSquareIcon" size={14} variant="outline" />
             Voir la fiche location complète
@@ -409,7 +409,7 @@ function RentalCard({ listing, onClick }: { listing: RentalListing; onClick: () 
             {listing.location}
           </span>
           <span className="flex items-center gap-[var(--space-1)]">
-            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[color:var(--lkv-secondary-subtle)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-secondary)]">
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[color:var(--lkv-secondary-subtle)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-secondary-ink)]">
               {listing.ownerAvatar}
             </span>
             {listing.owner}
@@ -517,7 +517,7 @@ export default function LocationPage() {
   const statsRow = (
     <div className="grid max-w-sm grid-cols-3 gap-[var(--space-3)]">
       <Card variant="compact" className="p-[var(--space-3)] text-center">
-        <p className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-secondary)]">{listings.length}</p>
+        <p className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-secondary-ink)]">{listings.length}</p>
         <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Articles disponibles</p>
       </Card>
       <Card variant="compact" className="p-[var(--space-3)] text-center">
@@ -608,10 +608,10 @@ export default function LocationPage() {
               <div className="mx-auto max-w-7xl">
                 <div className="mb-[var(--space-3)] flex items-center gap-[var(--space-3)]">
                   <div className="flex h-10 w-10 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-secondary-subtle)]">
-                    <Icon name="CalendarDaysIcon" size={22} variant="outline" className="text-[color:var(--lkv-secondary)]" />
+                    <Icon name="CalendarDaysIcon" size={22} variant="outline" className="text-[color:var(--lkv-secondary-ink)]" />
                   </div>
                   <div>
-                    <p className="font-mono text-[length:var(--lkv-text-caption)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-secondary)]">Phase 3 · Marketplace</p>
+                    <p className="font-mono text-[length:var(--lkv-text-caption)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-secondary-ink)]">Phase 3 · Marketplace</p>
                     <h1 className="font-display text-[length:var(--lkv-text-title-sm)] font-extrabold tracking-[var(--lkv-tracking-title)]">Location de Matériel</h1>
                   </div>
                 </div>
@@ -671,7 +671,7 @@ export default function LocationPage() {
 
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <div className="px-[var(--space-4)] pb-[var(--space-4)] pt-[var(--space-4)]">
             {/* Header */}
             <div className="mb-[var(--space-4)] flex items-center gap-[var(--space-3)]">
@@ -727,7 +727,7 @@ export default function LocationPage() {
               + Proposer du matériel
             </Button>
           </div>
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

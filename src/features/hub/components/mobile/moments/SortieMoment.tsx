@@ -32,7 +32,7 @@ export interface SortieMomentProps {
 function MomentRow({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
   return (
     <li className="flex items-center gap-2 text-[11.5px]">
-      <Icon size={13} className="shrink-0 text-[var(--lkv-secondary)]" aria-hidden="true" />
+      <Icon size={13} className="shrink-0 text-[var(--lkv-secondary-ink)]" aria-hidden="true" />
       <span className="shrink-0 font-medium text-[var(--lkv-text-secondary)]">{label}</span>
       <span className="ml-auto min-w-0 truncate font-bold text-[var(--lkv-text-primary)]">{value}</span>
     </li>

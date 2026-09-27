@@ -89,11 +89,11 @@ export default function ElevationProfileChart({
   };
 
   return (
-    <div className="bg-[color:var(--stone-100)] rounded-2xl p-4 border border-[color:var(--lkv-primary)]/10 space-y-3">
+    <div className="bg-[color:var(--lkv-surface-muted)] rounded-2xl p-4 border border-[color:var(--lkv-primary)]/10 space-y-3">
       {/* Header & Badges */}
       <div className="flex items-center justify-between">
         <div>
-          <h4 className="text-xs font-bold text-[color:var(--lkv-primary)] uppercase tracking-wider flex items-center gap-1.5 font-mono">
+          <h4 className="text-xs font-bold text-[color:var(--lkv-text-primary)] uppercase tracking-wider flex items-center gap-1.5 font-mono">
             <span>📈 Profil d'Altitudes</span>
           </h4>
           <p className="text-[10px] font-mono text-[color:var(--lkv-text-secondary)]">
@@ -101,7 +101,7 @@ export default function ElevationProfileChart({
           </p>
         </div>
         <div className="flex items-center gap-2 text-[10px] font-mono font-bold">
-          <span className="bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)] px-2 py-0.5 rounded-full">
+          <span className="bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] px-2 py-0.5 rounded-full">
             ▲ +{totalElevationGainM}m
           </span>
           <span className="bg-sand-500/10 text-sand-800 px-2 py-0.5 rounded-full">

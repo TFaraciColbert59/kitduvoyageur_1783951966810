@@ -14,13 +14,13 @@ export function KitsKpiBar({ kpi }: { kpi: KitsKpi }) {
     <section aria-label="Indicateurs clés">
       <Card tone="sage" className="p-3.5 sm:p-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-[var(--lkv-primary)]/10 border border-[var(--lkv-primary)]/20 flex items-center justify-center text-[var(--lkv-primary)]">
+          <div className="w-10 h-10 rounded-2xl bg-[var(--lkv-primary)]/10 border border-[var(--lkv-primary)]/20 flex items-center justify-center text-[color:var(--lkv-text-primary)]">
             <Icon name="package" size={20} />
           </div>
           <div>
             <Eyebrow>Matériel préparé</Eyebrow>
             <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="font-display font-bold text-lg sm:text-xl text-[var(--lkv-primary)]">
+              <span className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-text-primary)]">
                 {kpi.active} {kpi.active > 1 ? 'kits prêts' : 'kit prêt'}
               </span>
             </div>
@@ -32,7 +32,7 @@ export function KitsKpiBar({ kpi }: { kpi: KitsKpi }) {
             <span className="text-[10px] uppercase font-bold text-[var(--lkv-text-muted)] block">
               Poids cumulé
             </span>
-            <span className="font-mono font-bold text-base sm:text-lg text-[var(--lkv-primary)]">
+            <span className="font-mono font-bold text-base sm:text-lg text-[color:var(--lkv-text-primary)]">
               {(kpi.totalWeightG / 1000).toFixed(1)} kg
             </span>
           </div>

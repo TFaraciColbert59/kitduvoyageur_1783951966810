@@ -65,7 +65,7 @@ export function DiscoverySection({
     >
       <div className="flex flex-col items-start justify-between gap-2 border-b border-[color:var(--lkv-border)] pb-3 sm:flex-row sm:items-end">
         <div>
-          <span className="mb-0.5 block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-secondary)]">
+          <span className="mb-0.5 block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-secondary-ink)]">
             {isViator ? 'Sélection partenaire · Viator' : 'Sélection Tripadvisor'}
           </span>
           <h3 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">{title}</h3>
@@ -89,7 +89,7 @@ export function DiscoverySection({
                   href={data?.attribution.sourceUrl || 'https://www.viator.com/'}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-display text-[length:var(--lkv-text-footnote)] font-extrabold leading-none text-[color:var(--lkv-text-primary)] no-underline transition-colors hover:text-[color:var(--lkv-secondary)]"
+                  className="font-display text-[length:var(--lkv-text-footnote)] font-extrabold leading-none text-[color:var(--lkv-text-primary)] no-underline transition-colors hover:text-[color:var(--lkv-secondary-ink)]"
                 >
                   Viator
                 </a>

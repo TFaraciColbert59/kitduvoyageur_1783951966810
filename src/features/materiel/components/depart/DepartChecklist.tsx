@@ -482,7 +482,7 @@ export function DepartChecklist({
       role="complementary"
       aria-label="Checklist du Sac en Direct"
       className={cn(
-        'relative h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[var(--lkv-radius-lg)] p-3.5 text-[var(--lkv-primary)] font-sans overflow-hidden border border-white/40 shadow-sm select-none',
+        'relative h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[var(--lkv-radius-lg)] p-3.5 text-[color:var(--lkv-text-primary)] font-sans overflow-hidden border border-white/40 shadow-sm select-none',
         className
       )}
     >
@@ -497,11 +497,11 @@ export function DepartChecklist({
             />
             <h2
               id="depart-checklist-heading"
-              className="text-xs sm:text-[13px] font-bold text-[var(--lkv-primary)] truncate"
+              className="text-xs sm:text-[13px] font-bold text-[color:var(--lkv-text-primary)] truncate"
             >
               Checklist du Sac en Direct
             </h2>
-            <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] shrink-0">
+            <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full bg-[var(--lkv-primary)]/10 text-[color:var(--lkv-text-primary)] shrink-0">
               {done}/{total} prêts
             </span>
           </div>
@@ -534,7 +534,7 @@ export function DepartChecklist({
                 'h-6 w-6 rounded-lg shadow-2xs',
                 isSpeaking
                   ? 'bg-[var(--lkv-primary-hover)] text-white animate-pulse'
-                  : 'bg-[color:var(--card-tint-strong)] text-[var(--lkv-primary)] hover:brightness-[1.05]'
+                  : 'bg-[color:var(--card-tint-strong)] text-[color:var(--lkv-text-primary)] hover:brightness-[1.05]'
               )}
               title={isSpeaking ? 'Arrêter la lecture' : 'Lire les articles restants à voix haute'}
               aria-label={
@@ -610,10 +610,10 @@ export function DepartChecklist({
                     'w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-2xl transition-colors text-left cursor-pointer',
                     'focus-visible:outline-2 focus-visible:outline-[var(--lkv-primary)]',
                     allDone
-                      ? 'bg-black/4 text-[var(--lkv-primary)]/80 hover:bg-black/6'
+                      ? 'bg-black/4 text-[color:var(--lkv-text-primary)]/80 hover:bg-black/6'
                       : isFoodWater
-                        ? 'bg-[var(--lkv-success)]/10 text-[var(--lkv-primary)] font-semibold border border-[var(--lkv-success)]/20 shadow-2xs'
-                        : 'bg-white/50 text-[var(--lkv-primary)] font-semibold shadow-2xs'
+                        ? 'bg-[var(--lkv-success)]/10 text-[color:var(--lkv-text-primary)] font-semibold border border-[var(--lkv-success)]/20 shadow-2xs'
+                        : 'bg-white/50 text-[color:var(--lkv-text-primary)] font-semibold shadow-2xs'
                   )}
                   aria-expanded={isOpen}
                   aria-controls={`checklist-cat-${group.name}`}
@@ -647,7 +647,7 @@ export function DepartChecklist({
                       className={cn(
                         'text-[10.5px] font-mono tabular-nums px-1.5 py-0.5 rounded-md font-semibold',
                         allDone
-                          ? 'bg-[var(--lkv-secondary)]/15 text-[var(--lkv-primary)]'
+                          ? 'bg-[var(--lkv-secondary)]/15 text-[color:var(--lkv-text-primary)]'
                           : 'bg-black/5 text-[var(--lkv-text-muted)]'
                       )}
                     >
@@ -763,7 +763,7 @@ export function DepartChecklist({
                                           'text-xs sm:text-[13px] font-medium leading-snug',
                                           item.is_checked
                                             ? 'line-through text-[var(--lkv-text-muted)]/90 decoration-[var(--lkv-text-muted)]/70'
-                                            : 'text-[var(--lkv-primary)] font-semibold'
+                                            : 'text-[color:var(--lkv-text-primary)] font-semibold'
                                         )}
                                       >
                                         {item.name}
@@ -798,19 +798,19 @@ export function DepartChecklist({
                                         size="sm"
                                         onClick={() => handleQuantityChange(item, -1)}
                                         disabled={qty <= 1}
-                                        className="h-6 w-6 rounded-md text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]"
+                                        className="h-6 w-6 rounded-md text-[var(--lkv-text-muted)] hover:text-[color:var(--lkv-text-primary)]"
                                         title="Diminuer la quantité"
                                         aria-label={`Diminuer la quantité de ${item.name}`}
                                       >
                                         -
                                       </IconButton>
-                                      <span className="px-1 font-bold text-[11px] text-[var(--lkv-primary)]">
+                                      <span className="px-1 font-bold text-[11px] text-[color:var(--lkv-text-primary)]">
                                         {qty}
                                       </span>
                                       <IconButton
                                         size="sm"
                                         onClick={() => handleQuantityChange(item, 1)}
-                                        className="h-6 w-6 rounded-md text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]"
+                                        className="h-6 w-6 rounded-md text-[var(--lkv-text-muted)] hover:text-[color:var(--lkv-text-primary)]"
                                         title="Augmenter la quantité"
                                         aria-label={`Augmenter la quantité de ${item.name}`}
                                       >
@@ -839,7 +839,7 @@ export function DepartChecklist({
                                   {!item.is_checked && (
                                     <Link
                                       href={`/boutique?q=${encodeURIComponent(item.name)}`}
-                                      className="p-1 rounded-lg text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] hover:bg-black/5"
+                                      className="p-1 rounded-lg text-[var(--lkv-text-muted)] hover:text-[color:var(--lkv-text-primary)] hover:bg-black/5"
                                       title="Voir dans la boutique LKDV"
                                     >
                                       <ShoppingBag size={12} />
@@ -906,7 +906,7 @@ export function DepartChecklist({
                     value={newItemName}
                     onChange={(e) => setNewItemName(e.target.value)}
                     placeholder="Ex: Couteau pliant, Lampe frontale..."
-                    className="w-full px-3 py-2 rounded-xl text-xs bg-black/5 border border-black/10 focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/40 text-[var(--lkv-primary)]"
+                    className="w-full px-3 py-2 rounded-xl text-xs bg-black/5 border border-black/10 focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/40 text-[color:var(--lkv-text-primary)]"
                     autoFocus
                   />
                 </div>
@@ -919,7 +919,7 @@ export function DepartChecklist({
                     <select
                       value={newItemCategory}
                       onChange={(e) => setNewItemCategory(e.target.value)}
-                      className="w-full px-2.5 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[var(--lkv-primary)]"
+                      className="w-full px-2.5 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[color:var(--lkv-text-primary)]"
                     >
                       {CATEGORIES.map((c) => (
                         <option key={c} value={c}>
@@ -939,13 +939,13 @@ export function DepartChecklist({
                       max={20000}
                       value={newItemWeight}
                       onChange={(e) => setNewItemWeight(Number(e.target.value))}
-                      className="w-full px-3 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[var(--lkv-primary)]"
+                      className="w-full px-3 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[color:var(--lkv-text-primary)]"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2 pt-1">
-                  <label className="flex items-center gap-2 text-xs font-medium text-[var(--lkv-primary)] cursor-pointer">
+                  <label className="flex items-center gap-2 text-xs font-medium text-[color:var(--lkv-text-primary)] cursor-pointer">
                     <input
                       type="checkbox"
                       checked={newItemVital}
@@ -955,7 +955,7 @@ export function DepartChecklist({
                     <span>Classer comme équipement vital</span>
                   </label>
 
-                  <label className="flex items-center gap-2 text-xs font-medium text-[var(--lkv-primary)] cursor-pointer">
+                  <label className="flex items-center gap-2 text-xs font-medium text-[color:var(--lkv-text-primary)] cursor-pointer">
                     <input
                       type="checkbox"
                       checked={newItemAddToInv}

@@ -9,7 +9,7 @@ import { Badge, Button, Card, Divider, LoadingState } from '@/components/ui';
 import { getCart, getCartTotals, clearCart, CartItem } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 
 type Step = 'livraison' | 'paiement' | 'confirmation';
 type PaymentMethod = 'card' | 'paypal' | 'apple_pay' | 'google_pay' | 'virement';
@@ -345,7 +345,7 @@ export default function CheckoutPage() {
           <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
             {step !== 'confirmation' && (
               <h1 className="mb-[var(--space-8)] font-display text-[length:var(--lkv-text-title-lg)] font-extrabold text-[color:var(--lkv-text-primary)]">
-                Presque <em className="font-normal italic text-[color:var(--lkv-secondary)]">parti.</em>
+                Presque <em className="font-normal italic text-[color:var(--lkv-secondary-ink)]">parti.</em>
               </h1>
             )}
 
@@ -633,7 +633,7 @@ export default function CheckoutPage() {
                   /* ── STEP 3: Confirmation ── */
                   <Card className="flex h-full min-h-[420px] flex-col items-center justify-center p-[var(--space-12)] text-center">
                     <div className="mb-[var(--space-6)] flex h-20 w-20 items-center justify-center rounded-full bg-[color:var(--lkv-success-bg)]">
-                      <Icon name="CheckIcon" size={32} className="text-[color:var(--lkv-primary)]" />
+                      <Icon name="CheckIcon" size={32} className="text-[color:var(--lkv-text-primary)]" />
                     </div>
                     <h2 className="mb-[var(--space-4)] font-display text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">Commande confirmée.</h2>
                     <p className="mb-[var(--space-2)] text-[color:var(--lkv-text-muted)]">
@@ -727,7 +727,7 @@ export default function CheckoutPage() {
 
       {/* ── MOBILE VIEW (scroll natif) ── */}
       <div className="block md:hidden">
-        <MobilePageShell background="transparent" hasBottomNav={false}>
+        <AppShell background="transparent" hasBottomNav={false}>
           <div className="px-[var(--space-4)] pb-[var(--space-5)] pt-[var(--space-3)]">
             <div className="mb-[var(--space-4)] flex gap-[6px]">
               {[0, 1, 2, 3].map(i => (
@@ -736,7 +736,7 @@ export default function CheckoutPage() {
             </div>
             <div className="text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-caps)] text-[color:var(--lkv-text-muted)]">Étape 3 sur 4 · Paiement</div>
             <h1 className="m-0 text-[length:var(--lkv-text-title-sm)] tracking-[var(--lkv-tracking-title)] text-[color:var(--lkv-text-primary)]">
-              Un dernier <em className="font-normal italic text-[color:var(--lkv-secondary)]">geste.</em>
+              Un dernier <em className="font-normal italic text-[color:var(--lkv-secondary-ink)]">geste.</em>
             </h1>
           </div>
 
@@ -846,7 +846,7 @@ export default function CheckoutPage() {
               Payer {formatPriceEur(grandTotal)}
             </Button>
           </Card>
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

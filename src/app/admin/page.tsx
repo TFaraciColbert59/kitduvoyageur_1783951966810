@@ -7,7 +7,7 @@ import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 type AdminSection =
@@ -255,7 +255,7 @@ function OverviewSection() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs text-white/70 truncate">{p.name}</span>
-                    <span className="font-mono text-xs text-[color:var(--lkv-primary)] ml-2" style={{ fontFamily: 'var(--font-mono)' }}>{p.price_eur}€</span>
+                    <span className="font-mono text-xs text-[color:var(--lkv-text-primary)] ml-2" style={{ fontFamily: 'var(--font-mono)' }}>{p.price_eur}€</span>
                   </div>
                   <div className="h-1 bg-white/8 rounded-full overflow-hidden">
                     <div className="h-full bg-[color:var(--lkv-primary)] rounded-full" style={{ width: `${Math.max(20, 100 - i * 18)}%` }} />
@@ -309,7 +309,7 @@ function ProductsSection() {
     <div className="space-y-4">
       <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-6 text-center">
         <div className="w-12 h-12 rounded-2xl bg-[color:var(--lkv-primary)]/15 flex items-center justify-center mx-auto mb-4">
-          <Icon name="ArchiveBoxIcon" size={22} variant="outline" className="text-[color:var(--lkv-primary)]" />
+          <Icon name="ArchiveBoxIcon" size={22} variant="outline" className="text-[color:var(--lkv-text-primary)]" />
         </div>
         <h3 className="font-semibold text-white mb-2">Gestion complète des produits</h3>
         <p className="text-sm text-white/40 mb-5 max-w-sm mx-auto">
@@ -565,7 +565,7 @@ function UsersSection() {
                     <td className="px-4 py-3">
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/60">{u.loyalty_level}</span>
                     </td>
-                    <td className="px-4 py-3 font-mono text-[color:var(--lkv-primary)]" style={{ fontFamily: 'var(--font-mono)' }}>{u.trust_score}</td>
+                    <td className="px-4 py-3 font-mono text-[color:var(--lkv-text-primary)]" style={{ fontFamily: 'var(--font-mono)' }}>{u.trust_score}</td>
                     <td className="px-4 py-3 text-white/35">{new Date(u.created_at).toLocaleDateString('fr-FR')}</td>
                   </tr>
                 ))
@@ -642,7 +642,7 @@ function ToolboxSection() {
       {tools.map(tool => (
         <div key={tool.id} className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-4 flex items-center gap-4">
           <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${tool.active ? 'bg-[color:var(--lkv-primary)]/15' : 'bg-white/5'}`}>
-            <Icon name="WrenchScrewdriverIcon" size={16} variant="outline" className={tool.active ? 'text-[color:var(--lkv-primary)]' : 'text-white/25'} />
+            <Icon name="WrenchScrewdriverIcon" size={16} variant="outline" className={tool.active ? 'text-[color:var(--lkv-text-primary)]' : 'text-white/25'} />
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-white/80">{tool.name}</p>
@@ -818,7 +818,7 @@ function ConfiguratorSection() {
           { label: 'Config → Achat', value: '34.2%', icon: 'ShoppingBagIcon' },
         ].map(kpi => (
           <div key={kpi.label} className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-4">
-            <Icon name={kpi.icon as string} size={16} variant="outline" className="text-[color:var(--lkv-primary)] mb-2" />
+            <Icon name={kpi.icon as string} size={16} variant="outline" className="text-[color:var(--lkv-text-primary)] mb-2" />
             <div className="font-mono text-xl font-700 text-white" style={{ fontFamily: 'var(--font-mono)' }}>{kpi.value}</div>
             <div className="text-xs text-white/40 mt-0.5">{kpi.label}</div>
           </div>
@@ -883,7 +883,7 @@ function KitsSection() {
                 <td className="px-4 py-3 text-white/80 font-medium">{k.name}</td>
                 <td className="px-4 py-3 font-mono text-white/50" style={{ fontFamily: 'var(--font-mono)' }}>{k.products}</td>
                 <td className="px-4 py-3 font-mono text-white/50" style={{ fontFamily: 'var(--font-mono)' }}>{(k.weight / 1000).toFixed(1)} kg</td>
-                <td className="px-4 py-3 font-mono font-700 text-[color:var(--lkv-primary)]" style={{ fontFamily: 'var(--font-mono)' }}>{k.price}€</td>
+                <td className="px-4 py-3 font-mono font-700 text-[color:var(--lkv-text-primary)]" style={{ fontFamily: 'var(--font-mono)' }}>{k.price}€</td>
                 <td className="px-4 py-3">
                   <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${STATUS_COLORS[k.status]}`}>{k.status}</span>
                 </td>
@@ -1501,7 +1501,7 @@ export default function AdminPage() {
                         onClick={() => setActiveSection(item.id)}
                         className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-medium transition-all ${
                           activeSection === item.id
-                            ? 'bg-[color:var(--lkv-primary)]/15 text-[color:var(--lkv-primary)]'
+                            ? 'bg-[color:var(--lkv-primary)]/15 text-[color:var(--lkv-text-primary)]'
                             : 'text-white/45 hover:text-white hover:bg-white/6'
                         }`}
                         title={sidebarCollapsed ? item.label : undefined}
@@ -1567,7 +1567,7 @@ export default function AdminPage() {
                     <span className="text-[10px] font-mono text-white/30" style={{ fontFamily: 'var(--font-mono)' }}>Live</span>
                   </div>
                   <div className="w-7 h-7 rounded-lg bg-[color:var(--lkv-primary)]/20 flex items-center justify-center">
-                    <span className="text-[10px] font-mono font-700 text-[color:var(--lkv-primary)]" style={{ fontFamily: 'var(--font-mono)' }}>JA</span>
+                    <span className="text-[10px] font-mono font-700 text-[color:var(--lkv-text-primary)]" style={{ fontFamily: 'var(--font-mono)' }}>JA</span>
                   </div>
                 </>
               }
@@ -1595,7 +1595,7 @@ export default function AdminPage() {
 
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <PageHeader
             sticky
             transparent
@@ -1671,7 +1671,7 @@ export default function AdminPage() {
 
           {/* Footer spacer */}
           <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

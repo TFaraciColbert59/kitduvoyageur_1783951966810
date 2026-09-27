@@ -202,7 +202,7 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
             <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--lkv-text-primary)]/60">
               Valides
             </p>
-            <p className="mt-1 font-display text-lg font-extrabold tabular-nums text-[var(--lkv-primary)]">
+            <p className="mt-1 font-display text-lg font-extrabold tabular-nums text-[color:var(--lkv-text-primary)]">
               {view.valid}
             </p>
           </li>

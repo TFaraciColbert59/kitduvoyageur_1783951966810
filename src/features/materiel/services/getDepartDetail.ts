@@ -580,7 +580,7 @@ export async function getDepartDetail(id?: string | null, selectedRouteId?: stri
     const participants: Participant[] = (parts ?? []).map((p, i) => ({
       name: p.name,
       initial: p.name.charAt(0).toUpperCase(),
-      color: ['var(--lkv-secondary)', 'var(--lkv-info)', 'var(--lkv-warning)', 'var(--stone-600)', 'var(--lkv-danger)'][i % 5],
+      color: ['var(--lkv-secondary)', 'var(--lkv-info)', 'var(--lkv-warning)', 'var(--lkv-text-muted)', 'var(--lkv-danger)'][i % 5],
     }));
 
     const emergency = (parts ?? []).find((p) => p.is_emergency_contact)?.contact ?? null;

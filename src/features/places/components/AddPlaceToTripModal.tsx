@@ -91,7 +91,7 @@ export function AddPlaceToTripModal({
 
           {/* Modal Header */}
           <div className="mb-[var(--space-5)] pr-8">
-            <span className="text-[length:var(--lkv-text-caption-1)] font-bold uppercase tracking-wider text-[color:var(--lkv-secondary)]">
+            <span className="text-[length:var(--lkv-text-caption-1)] font-bold uppercase tracking-wider text-[color:var(--lkv-secondary-ink)]">
               Intégration d’Itinéraire
             </span>
             <h2 className="mt-1 font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
@@ -106,7 +106,7 @@ export function AddPlaceToTripModal({
           {/* Success State */}
           {successResult ? (
             <div className="py-[var(--space-4)] text-center">
-              <div className="mx-auto mb-[var(--space-3)] flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--lkv-success-bg)] text-[color:var(--lkv-primary)]">
+              <div className="mx-auto mb-[var(--space-3)] flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--lkv-success-bg)] text-[color:var(--lkv-text-primary)]">
                 <Icon name="check-circle2" className="h-6 w-6" />
               </div>
               <h3 className="mb-[var(--space-1)] text-[length:var(--lkv-text-body)] font-bold text-[color:var(--lkv-text-primary)]">

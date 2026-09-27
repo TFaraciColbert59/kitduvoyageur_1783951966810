@@ -108,7 +108,7 @@ export function KitsCockpit({ kits = [], inventory = [], publicKits = [], produc
       {/* Header unique et interactif avec sélecteur de kit */}
       <div className="shrink-0 flex items-center justify-between gap-1.5 px-0 pt-0.5 pb-1">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-          <span className="font-display font-semibold text-xs sm:text-[13px] text-[var(--lkv-primary)] shrink-0">
+          <span className="font-display font-semibold text-xs sm:text-[13px] text-[color:var(--lkv-text-primary)] shrink-0">
             Kit géré :
           </span>
           {activeKits.length > 0 ? (
@@ -116,7 +116,7 @@ export function KitsCockpit({ kits = [], inventory = [], publicKits = [], produc
               value={primaryKit?.id ?? ''}
               onChange={(e) => setSelectedKitId(e.target.value)}
               aria-label="Sélectionner le kit à gérer"
-              className="h-7 max-w-[170px] cursor-pointer truncate rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-2.5 py-0 text-[11px] font-bold text-[var(--lkv-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] sm:max-w-[260px] sm:text-xs"
+              className="h-7 max-w-[170px] cursor-pointer truncate rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-2.5 py-0 text-[11px] font-bold text-[color:var(--lkv-text-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] sm:max-w-[260px] sm:text-xs"
             >
               {activeKits.map((k) => (
                 <option key={k.id} value={k.id}>
@@ -240,7 +240,7 @@ function DraggableCard({
       <IconButton
         variant="glass"
         onPointerDown={(e) => controls.start(e)}
-        className="absolute right-1.5 top-1.5 z-[var(--z-sticky)] h-6 w-6 cursor-grab touch-none text-[var(--lkv-primary)] md:right-2 md:top-2 md:h-8 md:w-8"
+        className="absolute right-1.5 top-1.5 z-[var(--z-sticky)] h-6 w-6 cursor-grab touch-none text-[color:var(--lkv-text-primary)] md:right-2 md:top-2 md:h-8 md:w-8"
         aria-label={`Déplacer le widget ${LABEL[id] ?? id}`}
       >
         <Icon name="grip-vertical" size={12} className="md:hidden" aria-hidden="true" />

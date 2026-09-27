@@ -60,7 +60,7 @@ export default function CopilotSheet({
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="w-full max-w-md bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[color:var(--lkv-primary)] rounded-t-[34px] pt-3 pb-10 px-4  max-h-[85vh] overflow-y-auto space-y-4"
+        className="w-full max-w-md bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[color:var(--lkv-text-primary)] rounded-t-[34px] pt-3 pb-10 px-4  max-h-[85vh] overflow-y-auto space-y-4"
       >
         {/* Grabber */}
         <div className="w-10 h-1 bg-[color:var(--lkv-primary)]/14 rounded-full mx-auto" />
@@ -69,7 +69,7 @@ export default function CopilotSheet({
         <div className="text-center">
           <div className="w-18 h-18 rounded-full mx-auto bg-gradient-to-br from-[color:var(--lkv-forest-50)] via-[color:var(--sage-400)] to-[color:var(--lkv-primary)]  animate-pulse relative border-2 border-white/40" />
           <h2 className="text-xl font-medium tracking-tight mt-2">
-            Copilote <em className="font-serif italic text-[color:var(--lkv-primary)]">{routeName || 'de randonnée'}</em>
+            Copilote <em className="font-serif italic text-[color:var(--lkv-text-primary)]">{routeName || 'de randonnée'}</em>
           </h2>
           <p className="text-[11px] font-mono text-[color:var(--lkv-text-muted)] tracking-wider mt-0.5">
             INFORMATIONS BASÉES SUR VOS DONNÉES RÉELLES
@@ -84,7 +84,7 @@ export default function CopilotSheet({
               className={`p-3 rounded-2xl text-xs leading-relaxed max-w-[85%] ${
                 m.sender === 'me'
                   ? 'ml-auto bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] rounded-br-xs'
-                  : 'mr-auto bg-[color:var(--lkv-forest-50)] text-[color:var(--lkv-primary)] border border-[color:var(--sage-400)]/40 rounded-bl-xs'
+                  : 'mr-auto bg-[color:var(--lkv-forest-50)] text-[color:var(--lkv-text-primary)] border border-[color:var(--sage-400)]/40 rounded-bl-xs'
               }`}
             >
               {m.text}
@@ -106,7 +106,7 @@ export default function CopilotSheet({
               <button
                 key={q}
                 onClick={() => handleAskQuick(q)}
-                className="px-3 py-1.5 rounded-full text-[11px] font-medium bg-[color:var(--stone-100)] text-[color:var(--lkv-primary)] hover:bg-[color:var(--stone-200)] border border-[color:var(--lkv-primary)]/06 active:scale-95 transition-transform"
+                className="px-3 py-1.5 rounded-full text-[11px] font-medium bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-text-primary)] hover:bg-[color:var(--lkv-surface-muted)] border border-[color:var(--lkv-primary)]/06 active:scale-95 transition-transform"
               >
                 {q}
               </button>

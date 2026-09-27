@@ -124,13 +124,13 @@ export function TripNetworkStatus({
       <div
         className={cn(
           'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium',
-          'bg-[var(--lkv-secondary)]/10 text-[var(--lkv-secondary)] border border-[var(--lkv-secondary)]/30 shadow-sm',
+          'bg-[var(--lkv-secondary)]/10 text-[var(--lkv-secondary-ink)] border border-[var(--lkv-secondary)]/30 shadow-sm',
           'animate-in fade-in',
           className
         )}
         role="status"
       >
-        <Icon name="check" className="w-3.5 h-3.5 text-[var(--lkv-secondary)]" aria-hidden="true" />
+        <Icon name="check" className="w-3.5 h-3.5 text-[var(--lkv-secondary-ink)]" aria-hidden="true" />
         <span>Synchronisé</span>
       </div>
     );
@@ -146,7 +146,7 @@ export function TripNetworkStatus({
       role="status"
       title="Toutes les données sont synchronisées"
     >
-      <Icon name="cloud" className="w-3.5 h-3.5 text-[var(--lkv-secondary)]" aria-hidden="true" />
+      <Icon name="cloud" className="w-3.5 h-3.5 text-[var(--lkv-secondary-ink)]" aria-hidden="true" />
       <span>À jour</span>
     </div>
   );

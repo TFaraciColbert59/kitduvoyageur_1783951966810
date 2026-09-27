@@ -86,7 +86,7 @@ function VariablePanel() {
   return (
     <section className="glass rounded-3xl overflow-hidden">
       <div className="px-5 pt-5 pb-3">
-        <p className="text-[10px] font-mono font-bold tracking-[0.18em] uppercase text-[color:var(--lkv-primary)]">0 · Variables — change ici, tout le site change</p>
+        <p className="text-[10px] font-mono font-bold tracking-[0.18em] uppercase text-[color:var(--lkv-text-primary)]">0 · Variables — change ici, tout le site change</p>
         <p className="text-[12px] text-[color:var(--lkv-text-secondary)] mt-1">
           Curseurs <b>--btn-*</b> (boutons) et <b>--card-*</b> (cards) écrits sur <code>:root</code> : classes CSS <b>et</b> composants React de tout le site suivent en direct.
         </p>
@@ -216,7 +216,7 @@ function Section({ title, hint, children, photo = false }: {
 
 export default function StyleShowcase() {
   return (
-    <main className="min-h-screen bg-[color:var(--lkv-surface)] px-4 py-8 text-[color:var(--lkv-primary)] selection:bg-[color:var(--lkv-primary)]/10 font-sans">
+    <main className="min-h-screen bg-[color:var(--lkv-surface)] px-4 py-8 text-[color:var(--lkv-text-primary)] selection:bg-[color:var(--lkv-primary)]/10 font-sans">
       <div className="max-w-[720px] mx-auto space-y-4">
         <header className="px-1">
           <p className="text-[10px] font-mono font-bold tracking-[0.18em] uppercase text-[color:var(--lkv-text-secondary)]">LKDV · planche de style</p>

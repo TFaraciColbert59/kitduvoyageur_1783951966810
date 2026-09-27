@@ -25,7 +25,7 @@ export function MemberBagResources({ members }: MemberBagResourcesProps) {
               />
             ) : (
               <span
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-sm font-bold text-[var(--lkv-primary)] ring-2 ring-white"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-sm font-bold text-[color:var(--lkv-text-primary)] ring-2 ring-white"
                 aria-hidden="true"
               >
                 {member.name.slice(0, 1).toUpperCase()}

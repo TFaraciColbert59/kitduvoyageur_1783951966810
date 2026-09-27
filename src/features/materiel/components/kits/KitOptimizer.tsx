@@ -68,13 +68,13 @@ export function KitOptimizer({ kits }: { kits: KitListItem[] }) {
   return (
     <Card as="article" tone="sage" ariaLabelledBy="optimizer-title" className="p-4 sm:p-5">
       <Eyebrow>Optimiseur IA</Eyebrow>
-      <h3 id="optimizer-title" className="font-display font-bold text-[20px] text-[var(--lkv-primary)] mt-0.5 mb-3">Optimisation intelligente</h3>
+      <h3 id="optimizer-title" className="font-display font-bold text-[20px] text-[color:var(--lkv-text-primary)] mt-0.5 mb-3">Optimisation intelligente</h3>
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
         <select
           value={kitId}
           onChange={(e) => setKitId(e.target.value)}
           aria-label="Kit à optimiser"
-          className="min-h-[var(--control-height-md)] min-w-[140px] flex-1 rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-xs text-[var(--lkv-primary)] sm:text-sm"
+          className="min-h-[var(--control-height-md)] min-w-[140px] flex-1 rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-xs text-[color:var(--lkv-text-primary)] sm:text-sm"
         >
           {active.map((k) => <option key={k.id} value={k.id}>{k.name}</option>)}
         </select>
@@ -83,7 +83,7 @@ export function KitOptimizer({ kits }: { kits: KitListItem[] }) {
           onChange={(e) => setGoal(e.target.value)}
           placeholder="Objectif (ex: alléger le kit)"
           aria-label="Objectif d'optimisation"
-          className="min-h-[var(--control-height-md)] min-w-[140px] flex-1 rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-xs text-[var(--lkv-primary)] sm:text-sm"
+          className="min-h-[var(--control-height-md)] min-w-[140px] flex-1 rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-xs text-[color:var(--lkv-text-primary)] sm:text-sm"
         />
         <Button
           onClick={run}
@@ -103,8 +103,8 @@ export function KitOptimizer({ kits }: { kits: KitListItem[] }) {
             <Badge tone="sage">Score {result.score ?? diff.score}/100</Badge>
             <Badge tone="info">{(diff.beforeG / 1000).toFixed(1)} → {(diff.afterG / 1000).toFixed(1)} kg</Badge>
           </div>
-          <p className="text-xs sm:text-sm text-[var(--lkv-primary)] leading-relaxed">{result.analysis}</p>
-          {diffSummary(diff).map((s) => <p key={s} className="text-xs text-[var(--lkv-primary-soft)] font-medium">{s}</p>)}
+          <p className="text-xs sm:text-sm text-[color:var(--lkv-text-primary)] leading-relaxed">{result.analysis}</p>
+          {diffSummary(diff).map((s) => <p key={s} className="text-xs text-[color:var(--lkv-text-secondary)] font-medium">{s}</p>)}
         </Card>
       )}
     </Card>

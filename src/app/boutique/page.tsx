@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import Icon from '@/components/ui/Icon';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import Link from 'next/link';
 import { Card, PageHeader } from '@/components/ui';
 import { Backpack, Recycle, KeyRound } from 'lucide-react';
@@ -95,8 +95,8 @@ export default function BoutiquePage() {
                   className="flex flex-col justify-between gap-[var(--space-4)] p-[var(--space-6)]"
                 >
                   <div className="space-y-[var(--space-2)]">
-                    <rayon.icone size={22} className="text-[color:var(--lkv-primary)]" aria-hidden />
-                    <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-primary)]">{rayon.nom}</h2>
+                    <rayon.icone size={22} className="text-[color:var(--lkv-text-primary)]" aria-hidden />
+                    <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">{rayon.nom}</h2>
                     <p className="text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-secondary)]">{rayon.description}</p>
                   </div>
 
@@ -116,7 +116,7 @@ export default function BoutiquePage() {
 
       {/* ── MOBILE (COCKPIT LIQUID GLASS) ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <div className="flex flex-col gap-[var(--space-4)] px-[var(--space-3)] pb-24 pt-[var(--space-3)]">
             <PageHeader variant="large" title="La boutique" />
 
@@ -135,8 +135,8 @@ export default function BoutiquePage() {
                   className="flex flex-col gap-[var(--space-3)] p-[var(--space-4)]"
                 >
                   <div className="flex items-center gap-[var(--space-2)]">
-                    <rayon.icone size={18} className="text-[color:var(--lkv-primary)]" aria-hidden />
-                    <h2 className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-primary)]">
+                    <rayon.icone size={18} className="text-[color:var(--lkv-text-primary)]" aria-hidden />
+                    <h2 className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">
                       {rayon.nom}
                     </h2>
                   </div>
@@ -152,7 +152,7 @@ export default function BoutiquePage() {
               ))}
             </div>
           </div>
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

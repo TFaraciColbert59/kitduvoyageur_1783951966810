@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
@@ -13,14 +13,14 @@ export const metadata = {
 
 function MobilePCContent() {
   const s = 'mb-[var(--space-6)]';
-  const h2 = 'mb-[var(--space-2)] border-b border-[color:var(--lkv-border-subtle)] pb-1.5 text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-primary)]';
-  const p = 'text-[length:var(--lkv-text-caption-1)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-primary)]/80';
-  const link = 'text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)] underline';
+  const h2 = 'mb-[var(--space-2)] border-b border-[color:var(--lkv-border-subtle)] pb-1.5 text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]';
+  const p = 'text-[length:var(--lkv-text-caption-1)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-primary)]/80';
+  const link = 'text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)] underline';
   return (
     <div className="p-[var(--space-4)]">
-      <p className="mb-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.14em] text-[color:var(--lkv-primary)]">RGPD · Données personnelles</p>
-      <h1 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-title-lg)] font-extrabold text-[color:var(--lkv-primary)]">Politique de confidentialité</h1>
-      <p className="mb-[var(--space-6)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/50">Conformément au RGPD (UE) 2016/679 et à la loi Informatique et Libertés</p>
+      <p className="mb-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.14em] text-[color:var(--lkv-text-primary)]">RGPD · Données personnelles</p>
+      <h1 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-title-lg)] font-extrabold text-[color:var(--lkv-text-primary)]">Politique de confidentialité</h1>
+      <p className="mb-[var(--space-6)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]/50">Conformément au RGPD (UE) 2016/679 et à la loi Informatique et Libertés</p>
 
       <section className={s}><h2 className={h2}>1. Responsable du traitement</h2><p className={p}>Le Kit du Voyageur (SAS). DPO : <a href="mailto:dpo@lekitduvoyageur.fr" className={link}>dpo@lekitduvoyageur.fr</a></p></section>
       <section className={s}><h2 className={h2}>2. Données collectées</h2><p className={p}>Nous collectons : données d&apos;identification (nom, email), données de navigation (IP anonymisée), données de transaction (historique commandes), données de profil (préférences voyage), données générées par l&apos;IA. Aucune donnée sensible (Art. 9 RGPD) n&apos;est collectée.</p></section>
@@ -34,11 +34,11 @@ function MobilePCContent() {
 
       <div className="flex flex-wrap gap-[var(--space-2)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-4)]">
         <Link href="/mentions-legales" className={link}>Mentions légales</Link>
-        <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/20">·</span>
+        <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]/20">·</span>
         <Link href="/cgu" className={link}>CGU</Link>
-        <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/20">·</span>
+        <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]/20">·</span>
         <Link href="/cgv" className={link}>CGV</Link>
-        <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/20">·</span>
+        <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]/20">·</span>
         <Link href="/cookies" className={link}>Cookies</Link>
       </div>
     </div>
@@ -125,9 +125,9 @@ export default function PolitiqueConfidentialitePage() {
 
       {/* MOBILE */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <MobilePCContent />
-        </MobilePageShell>
+        </AppShell>
         
       </div>
     </>

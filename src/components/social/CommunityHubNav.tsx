@@ -98,8 +98,8 @@ export default function CommunityHubNav({
                 <span
                   className={`rounded-full px-1.5 py-0.5 font-mono text-[length:var(--lkv-text-caption-2)] ${
                     isActive
-                      ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)]'
-                      : 'bg-[color:var(--lkv-secondary)]/10 text-[color:var(--lkv-secondary)]'
+                      ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]'
+                      : 'bg-[color:var(--lkv-secondary)]/10 text-[color:var(--lkv-secondary-ink)]'
                   }`}
                 >
                   {badge}

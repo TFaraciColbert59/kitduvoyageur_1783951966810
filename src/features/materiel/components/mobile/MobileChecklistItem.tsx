@@ -128,7 +128,7 @@ export function MobileChecklistItem({
         >
           <span
             className={cn(
-              'text-[13.5px] font-bold tracking-tight text-[var(--lkv-primary)] truncate leading-snug',
+              'text-[13.5px] font-bold tracking-tight text-[color:var(--lkv-text-primary)] truncate leading-snug',
               item.is_checked &&
                 'line-through text-[var(--lkv-text-muted)] decoration-[var(--lkv-text-muted)]/60 font-medium'
             )}

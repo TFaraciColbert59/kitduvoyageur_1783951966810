@@ -159,7 +159,7 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
             />
           ) : (
             <Card className="flex h-full w-full flex-col items-center justify-center p-[var(--space-8)] text-center">
-              <div className="mb-[var(--space-4)] flex size-20 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)]">
+              <div className="mb-[var(--space-4)] flex size-20 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
                 <Icon name="send" className="size-10" aria-hidden="true" />
               </div>
               <h3 className="text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">

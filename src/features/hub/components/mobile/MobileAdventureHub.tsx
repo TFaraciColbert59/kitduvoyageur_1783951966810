@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { SectionCarousel } from './SectionCarousel';
 import { InfoChipsRow } from './InfoChipsRow';
 import { HubEdgeDrawer } from './HubEdgeDrawer';
+import { HubPrepareEntry } from './HubPrepareEntry';
 import ProgressionCompactCard from '@/components/progression/ProgressionCompactCard';
 import type { MobileInfoChip, MobileSectionTile } from '../../mobile/mobileHubEngine';
 
@@ -49,6 +50,7 @@ export function MobileAdventureHub({
       ) : null}
       <SectionCarousel tiles={tiles} />
       <InfoChipsRow chips={chips} />
+      <HubPrepareEntry />
       <div className={fill ? 'flex min-h-0 flex-1 flex-col' : undefined}>{children}</div>
     </div>
   );

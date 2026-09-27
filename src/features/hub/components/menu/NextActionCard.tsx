@@ -114,7 +114,7 @@ export function NextActionCard({ actions, checklist, variant = 'default' }: Next
             compact ? 'h-9 w-9' : 'h-11 w-11'
           } ${
             isAllClear
-              ? 'text-[var(--lkv-secondary)]'
+              ? 'text-[var(--lkv-secondary-ink)]'
               : 'text-[color:var(--lkv-text-primary)]'
           }`}
         >

@@ -5,7 +5,11 @@ describe('CHANTIER X7 — CONFLIT DE BAS D\'ÉCRAN MOBILE ET HIÉRARCHIE Z-INDEX
   it('AppShell injecte la variable CSS canonique --bottom-nav-height', () => {
     const appShell = fs.readFileSync('src/components/shell/AppShell.tsx', 'utf-8');
     expect(appShell).toContain("['--bottom-nav-height' as any]: bottomNavHeight");
-    expect(appShell).toContain("paddingBottom: 'var(--bottom-nav-height)'");
+    // Le renvoi bottom reserve la navigation ET le bandeau cookies : c'est le
+    // max(...) qui garantit qu'aucun des deux ne masque l'autre.
+    expect(appShell).toContain(
+      "paddingBottom: 'max(var(--bottom-nav-height), var(--cookie-banner-h, 0px))'",
+    );
   });
 
   it('PersistentMetricsBar se cale au-dessus de --bottom-nav-height sur la couche z-fab sans écraser la navigation', () => {

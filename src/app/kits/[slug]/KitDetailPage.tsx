@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import WeightGauge from '@/components/WeightGauge';
 import TopoSeparator from '@/components/TopoSeparator';
 import Icon from '@/components/ui/AppIcon';
@@ -163,9 +163,9 @@ export default function KitDetailPage() {
 
         {/* ── MOBILE ── */}
         <div className="block md:hidden">
-          <MobilePageShell>
+          <AppShell>
             <LoadingState label="Chargement du kit…" className="min-h-[50dvh]" />
-          </MobilePageShell>
+          </AppShell>
         </div>
       </>
     );
@@ -202,7 +202,7 @@ export default function KitDetailPage() {
 
         {/* ── MOBILE ── */}
         <div className="block md:hidden">
-          <MobilePageShell>
+          <AppShell>
             <div className="px-3 pt-20">
               <EmptyState
                 icon={
@@ -218,7 +218,7 @@ export default function KitDetailPage() {
                 actionHref="/kits"
               />
             </div>
-          </MobilePageShell>
+          </AppShell>
         </div>
       </>
     );
@@ -423,7 +423,7 @@ export default function KitDetailPage() {
 
       {/* ── MOBILE (COCKPIT LIQUID GLASS) ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <div className="flex flex-col gap-3.5 px-3 pb-24 pt-3">
             <PageHeader
               variant="inline"
@@ -570,7 +570,7 @@ export default function KitDetailPage() {
               </div>
             </Card>
           </div>
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

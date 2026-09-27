@@ -23,7 +23,7 @@ export function ActivityIdentityBar({ nature, name, phaseLabel, daysUntil }: Act
   const Icon: LucideIcon = ICONS[nature];
   return (
     <div className="flex items-center gap-2.5 px-1 py-0.5">
-      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] ring-1 ring-[var(--lkv-primary)]/20 shrink-0">
+      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-[color:var(--lkv-text-primary)] ring-1 ring-[var(--lkv-primary)]/20 shrink-0">
         <Icon size={13} aria-hidden="true" />
       </span>
       <p className="min-w-0 truncate text-lg font-serif-lkv italic leading-snug text-[var(--card-content)]">{name}</p>

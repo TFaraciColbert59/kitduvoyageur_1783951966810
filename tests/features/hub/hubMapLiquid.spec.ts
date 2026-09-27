@@ -16,7 +16,7 @@ const unifiedExplorerMap = readFileSync(
   'utf8'
 );
 const hubLiquid = readFileSync(
-  path.join(ROOT, 'src/features/hub/components/hub-liquid.css'),
+  path.join(ROOT, 'src/styles/liquid-ios27.css'),
   'utf8'
 );
 const sharedPath = path.join(
@@ -38,7 +38,7 @@ describe('HubGlobeMap — feuille Liquid Glass partagée', () => {
     expect(shared).toContain('.hub-map-rail-control {');
   });
 
-  it('hub-liquid.css ne duplique plus les styles POI partagés', () => {
+  it('liquid-ios27.css ne duplique plus les styles POI partagés', () => {
     expect(hubLiquid).not.toContain('.hub-globe-poi-chip');
     expect(hubLiquid).not.toContain('.hub-map-poi-tooltip');
     expect(hubLiquid).not.toContain('.hub-globe-map {');

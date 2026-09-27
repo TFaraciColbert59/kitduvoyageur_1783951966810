@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import Button from '@/components/ui/Button';
 
 export default function CommunauteProPage() {
@@ -60,7 +60,7 @@ export default function CommunauteProPage() {
 
       {/* MOBILE */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <div className="px-4 py-6 space-y-6">
             <div>
               <span className="inline-block px-3 py-1 text-[11px] font-semibold tracking-wide uppercase rounded-full bg-[var(--g2-bg)] text-[var(--glass-secondary)] border border-[var(--glass-rim)] mb-2">
@@ -99,7 +99,7 @@ export default function CommunauteProPage() {
               )}
             </div>
           </div>
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

@@ -1218,7 +1218,7 @@ export default function AdminProductsManager() {
                               setSelectedIds(new Set());
                             }
                           }}
-                          className="rounded border-white/30 bg-transparent text-[color:var(--lkv-primary-soft)] focus:ring-0"
+                          className="rounded border-white/30 bg-transparent text-[color:var(--lkv-text-secondary)] focus:ring-0"
                         />
                       </th>
                       <th className="p-3.5 w-14">Image</th>
@@ -1267,7 +1267,7 @@ export default function AdminProductsManager() {
                     {loading ? (
                       <tr>
                         <td colSpan={9} className="p-12 text-center text-white/40">
-                          <Icon name="ArrowPathIcon" size={24} className="animate-spin mx-auto mb-2 text-[color:var(--lkv-primary-soft)]" />
+                          <Icon name="ArrowPathIcon" size={24} className="animate-spin mx-auto mb-2 text-[color:var(--lkv-text-secondary)]" />
                           Chargement des produits en cours...
                         </td>
                       </tr>
@@ -1303,7 +1303,7 @@ export default function AdminProductsManager() {
                                     return next;
                                   });
                                 }}
-                                className="rounded border-white/30 bg-transparent text-[color:var(--lkv-primary-soft)] focus:ring-0"
+                                className="rounded border-white/30 bg-transparent text-[color:var(--lkv-text-secondary)] focus:ring-0"
                               />
                             </td>
 
@@ -1727,7 +1727,7 @@ export default function AdminProductsManager() {
                         type="checkbox"
                         checked={editingProduct.is_active ?? true}
                         onChange={e => setEditingProduct(p => ({ ...p, is_active: e.target.checked }))}
-                        className="rounded border-white/30 bg-transparent text-[color:var(--lkv-primary-soft)] focus:ring-0 w-4 h-4"
+                        className="rounded border-white/30 bg-transparent text-[color:var(--lkv-text-secondary)] focus:ring-0 w-4 h-4"
                       />
                       <span className="text-xs font-semibold text-white">Produit actif et visible en boutique</span>
                     </label>
@@ -1736,7 +1736,7 @@ export default function AdminProductsManager() {
                         type="checkbox"
                         checked={editingProduct.cabin_compatible ?? false}
                         onChange={e => setEditingProduct(p => ({ ...p, cabin_compatible: e.target.checked }))}
-                        className="rounded border-white/30 bg-transparent text-[color:var(--lkv-primary-soft)] focus:ring-0 w-4 h-4"
+                        className="rounded border-white/30 bg-transparent text-[color:var(--lkv-text-secondary)] focus:ring-0 w-4 h-4"
                       />
                       <span className="text-xs text-white/80">Format compatible bagage cabine avion</span>
                     </label>
@@ -2327,7 +2327,7 @@ export default function AdminProductsManager() {
                         type="checkbox"
                         checked={editingProduct.available_europe ?? true}
                         onChange={e => setEditingProduct(p => ({ ...p, available_europe: e.target.checked }))}
-                        className="rounded text-[color:var(--lkv-primary-soft)]"
+                        className="rounded text-[color:var(--lkv-text-secondary)]"
                       />
                       <span className="text-xs text-white">Livraison Europe</span>
                     </label>
@@ -2336,7 +2336,7 @@ export default function AdminProductsManager() {
                         type="checkbox"
                         checked={editingProduct.available_usa ?? false}
                         onChange={e => setEditingProduct(p => ({ ...p, available_usa: e.target.checked }))}
-                        className="rounded text-[color:var(--lkv-primary-soft)]"
+                        className="rounded text-[color:var(--lkv-text-secondary)]"
                       />
                       <span className="text-xs text-white">Livraison USA</span>
                     </label>

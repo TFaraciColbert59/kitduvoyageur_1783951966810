@@ -166,7 +166,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
             </Badge>
           ) : (
             <span className="flex items-center text-[11px] text-[color:var(--lkv-text-muted)]">
-              <Icon name="shield-check" size={14} className="mr-1 text-[color:var(--lkv-secondary)]" />
+              <Icon name="shield-check" size={14} className="mr-1 text-[color:var(--lkv-secondary-ink)]" />
               {PROVENANCE_LABELS[currentItem.provenance?.source] || currentItem.provenance?.source}
               {currentItem.provenance?.sourceRef && ` · ${currentItem.provenance.sourceRef}`}
             </span>
@@ -241,7 +241,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
           variant="secondary"
           onClick={handleVoiceEdit}
           aria-label="Ajuster par commande vocale"
-          icon={<Icon name="mic" size={14} className="text-[color:var(--lkv-secondary)]" />}
+          icon={<Icon name="mic" size={14} className="text-[color:var(--lkv-secondary-ink)]" />}
         >
           Ajuster
         </Button>

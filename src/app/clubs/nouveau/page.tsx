@@ -1,4 +1,4 @@
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import CreateClubView from '@/components/clubs/CreateClubView';
 
 export const metadata = {
@@ -16,9 +16,9 @@ export default function CreateClubPage() {
 
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <CreateClubView />
-        </MobilePageShell>
+        </AppShell>
         
       </div>
     </>

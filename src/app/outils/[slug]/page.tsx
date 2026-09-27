@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import WeightGauge from '@/components/WeightGauge';
 
 
@@ -1107,13 +1107,13 @@ export default function OutilSlugPage() {
 
         {/* ── MOBILE ── */}
         <div className="block md:hidden">
-          <MobilePageShell>
+          <AppShell>
             <div className="p-[var(--space-4)] pt-20 text-center">
               <p className="mb-[var(--space-4)] text-[40px]">🔧</p>
               <h1 className="mb-[var(--space-3)] text-[20px] font-bold text-[color:var(--glass-label)]">Outil introuvable</h1>
               <Link href="/outils" className="inline-block rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-6 py-3 text-[14px] font-bold text-[color:var(--lkv-text-primary)] no-underline">← Retour aux outils</Link>
             </div>
-          </MobilePageShell>
+          </AppShell>
           
         </div>
       </>
@@ -1182,7 +1182,7 @@ export default function OutilSlugPage() {
 
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <div className="p-[var(--space-4)]">
             {/* Tool Header */}
             <div className="mb-[var(--space-5)]">
@@ -1222,7 +1222,7 @@ export default function OutilSlugPage() {
               </div>
             </div>
           </div>
-        </MobilePageShell>
+        </AppShell>
         
       </div>
     </>

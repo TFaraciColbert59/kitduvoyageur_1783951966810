@@ -96,7 +96,7 @@ export default function QuickReportSheet({
                   <Icon
                     name={display.icon}
                     size={20}
-                    className="text-[color:var(--lkv-primary)]"
+                    className="text-[color:var(--lkv-text-primary)]"
                     aria-hidden="true"
                   />
                   <span className="text-[length:var(--lkv-text-body-sm)] font-medium">
@@ -125,7 +125,7 @@ export default function QuickReportSheet({
                     {SEVERITY_LABELS[severity]}
                   </span>
                   {state.severity === severity && (
-                    <Icon name="check" size={16} className="text-[color:var(--lkv-primary)]" aria-hidden="true" />
+                    <Icon name="check" size={16} className="text-[color:var(--lkv-text-primary)]" aria-hidden="true" />
                   )}
                 </Button>
               </li>

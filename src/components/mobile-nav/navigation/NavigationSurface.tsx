@@ -33,7 +33,11 @@ export default function NavigationSurface({
           position: 'fixed',
           left: 0,
           right: 0,
-          bottom: 0,
+          // La surface est un overlay fixe : elle doit aussi se lever au-dessus
+          // de la banniere cookie (qui occupe le meme bord, via --cookie-banner-h
+          // publie par <CookieConsentBanner>). Sans ce decalage la sous-nav de
+          // fin de flux passe sous la banniere et devient incliquable.
+          bottom: 'var(--cookie-banner-h, 0px)',
           zIndex: zIndex.nav,
           pointerEvents: 'none',
           paddingBottom: opticalNavigation
@@ -113,7 +117,11 @@ export default function NavigationSurface({
         position: 'fixed',
         left: 0,
         right: 0,
-        bottom: 0,
+        // La surface est un overlay fixe : elle doit aussi se lever au-dessus
+        // de la banniere cookie (qui occupe le meme bord, via --cookie-banner-h
+        // publie par <CookieConsentBanner>). Sans ce decalage la sous-nav de
+        // fin de flux passe sous la banniere et devient incliquable.
+        bottom: 'var(--cookie-banner-h, 0px)',
         zIndex: zIndex.nav,
         pointerEvents: 'none',
         touchAction: 'manipulation',

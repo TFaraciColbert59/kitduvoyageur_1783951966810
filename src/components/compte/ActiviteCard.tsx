@@ -21,7 +21,7 @@ export default function ActiviteCard({ activites }: ActiviteCardProps) {
         );
       case 'badge':
         return (
-          <div className="w-5.5 h-5.5 rounded-full bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-secondary)] flex items-center justify-center shrink-0">
+          <div className="w-5.5 h-5.5 rounded-full bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-secondary-ink)] flex items-center justify-center shrink-0">
             <Icon name="SparklesIcon" size={11} />
           </div>
         );
@@ -39,7 +39,7 @@ export default function ActiviteCard({ activites }: ActiviteCardProps) {
         );
       default:
         return (
-          <div className="w-5.5 h-5.5 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)] flex items-center justify-center shrink-0">
+          <div className="w-5.5 h-5.5 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] flex items-center justify-center shrink-0">
             <Icon name="UserIcon" size={11} />
           </div>
         );
@@ -50,8 +50,8 @@ export default function ActiviteCard({ activites }: ActiviteCardProps) {
     <Card variant="featured" className="p-3.5 space-y-2.5 font-sans">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="font-display font-bold text-xs text-[color:var(--lkv-primary)]">Activité récente</h3>
-        <Link href="/compte?tab=aventures" className="text-[9.5px] font-mono font-bold text-[color:var(--lkv-secondary)] hover:text-[color:var(--lkv-primary)]">
+        <h3 className="font-display font-bold text-xs text-[color:var(--lkv-text-primary)]">Activité récente</h3>
+        <Link href="/compte?tab=aventures" className="text-[9.5px] font-mono font-bold text-[color:var(--lkv-secondary-ink)] hover:text-[color:var(--lkv-text-primary)]">
           Tout →
         </Link>
       </div>

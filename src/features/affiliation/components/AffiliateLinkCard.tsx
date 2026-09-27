@@ -59,7 +59,7 @@ export function AffiliateLinkCard({ link, tripId }: AffiliateLinkCardProps) {
       <div>
         <div className="mb-[var(--space-3)] flex items-center justify-between gap-[var(--space-2)]">
           <Badge tone="sage" className="gap-[var(--space-1)]">
-            <CategoryIcon className="h-3 w-3 text-[color:var(--lkv-secondary)]" aria-hidden="true" />
+            <CategoryIcon className="h-3 w-3 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
             {categoryLabel}
           </Badge>
 

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import Icon from '@/components/ui/AppIcon';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import { Button, Tabs } from '@/components/ui';
 
 const FILTERS = [
@@ -72,7 +72,7 @@ export default function EntraidePage() {
 
       {/* MOBILE — scroll natif */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <div className="p-[var(--space-4)]">
             <h1 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--glass-label)]">Entraide</h1>
             <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-secondary)]">Réseau d&apos;entraide géolocalisé.</p>
@@ -87,7 +87,7 @@ export default function EntraidePage() {
               Lancer un appel
             </Button>
           </div>
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

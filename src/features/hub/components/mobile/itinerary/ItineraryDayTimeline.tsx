@@ -37,7 +37,7 @@ export interface ItineraryDayTimelineProps {
 }
 
 function TransportIcon({ mode }: { mode: string | null | undefined }) {
-  const className = 'text-[var(--lkv-primary)]';
+  const className = 'text-[color:var(--lkv-text-primary)]';
   switch (mode) {
     case 'plane':
     case 'flight':
@@ -97,7 +97,7 @@ export function ItineraryDayTimeline({
                 className={`rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums ${
                   time
                     ? 'bg-[var(--lkv-primary)] text-white'
-                    : 'bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]'
+                    : 'bg-[var(--lkv-primary)]/10 text-[color:var(--lkv-text-primary)]'
                 }`}
               >
                 {time ?? '—'}
@@ -130,7 +130,7 @@ export function ItineraryDayTimeline({
                       className="mb-1 !justify-start !rounded-[var(--lkv-radius-lg)] !p-3 !whitespace-normal text-left"
                     >
                       <span className="flex w-full items-center gap-2">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-[var(--lkv-primary)]">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-[color:var(--lkv-text-primary)]">
                           <TransportIcon mode={step.transport_mode} />
                           {transportLabel(step.transport_mode)}
                         </span>

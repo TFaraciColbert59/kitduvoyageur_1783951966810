@@ -20,7 +20,7 @@ export default function MesCarnetsCard({ carnets }: MesCarnetsCardProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[color:var(--lkv-primary)]/5 pb-4">
         <div>
-          <h3 className="font-display font-bold text-2xl text-[color:var(--lkv-primary)] tracking-tight">
+          <h3 className="font-display font-bold text-2xl text-[color:var(--lkv-text-primary)] tracking-tight">
             Mes <span className="font-serif italic font-normal">carnets</span> publiés
           </h3>
           <p className="text-xs font-mono text-[color:var(--lkv-text-muted)] mt-0.5">
@@ -29,7 +29,7 @@ export default function MesCarnetsCard({ carnets }: MesCarnetsCardProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link href="/carnets" className="text-xs font-bold text-[color:var(--lkv-forest-600)] hover:text-[color:var(--lkv-primary)] transition-colors">
+          <Link href="/carnets" className="text-xs font-bold text-[color:var(--lkv-forest-600-ink)] hover:text-[color:var(--lkv-text-primary)] transition-colors">
             Brouillons
           </Link>
           <Link
@@ -42,7 +42,7 @@ export default function MesCarnetsCard({ carnets }: MesCarnetsCardProps) {
         </div>
       </div>
 
-      <p className="text-xs text-[color:var(--lkv-forest-600)]/70 leading-relaxed">
+      <p className="text-xs text-[color:var(--lkv-forest-600-ink)]/70 leading-relaxed">
         Vos publications visibles par la communauté. Un carnet peut aussi rester privé, en cours d'édition.
       </p>
 
@@ -79,22 +79,22 @@ export default function MesCarnetsCard({ carnets }: MesCarnetsCardProps) {
 
               {/* Title Content */}
               <div className="p-4">
-                <h4 className="font-bold text-base text-[color:var(--lkv-primary)] line-clamp-2 group-hover:text-[color:var(--lkv-forest-600)] transition-colors">
+                <h4 className="font-bold text-base text-[color:var(--lkv-text-primary)] line-clamp-2 group-hover:text-[color:var(--lkv-forest-600-ink)] transition-colors">
                   {item.title}
                 </h4>
               </div>
             </div>
 
             {/* Footer Stats */}
-            <div className="p-4 pt-0 border-t border-[color:var(--lkv-primary)]/5 mt-2 flex items-center justify-between text-xs font-mono font-bold text-[color:var(--lkv-forest-600)]/70">
+            <div className="p-4 pt-0 border-t border-[color:var(--lkv-primary)]/5 mt-2 flex items-center justify-between text-xs font-mono font-bold text-[color:var(--lkv-forest-600-ink)]/70">
               {item.status === 'Publié' ? (
                 <div className="flex items-center gap-3 w-full justify-between pt-2">
-                  <span className="flex items-center gap-1"><Icon name="HeartIcon" size={14} className="text-[color:var(--lkv-secondary)]" /> {item.likes}</span>
+                  <span className="flex items-center gap-1"><Icon name="HeartIcon" size={14} className="text-[color:var(--lkv-secondary-ink)]" /> {item.likes}</span>
                   <span className="flex items-center gap-1"><Icon name="EyeIcon" size={14} className="text-[color:var(--lkv-text-muted)]" /> {item.views}</span>
                   <span className="flex items-center gap-1"><Icon name="ChatBubbleLeftIcon" size={14} className="text-[color:var(--lkv-info)]" /> {item.comments}</span>
                 </div>
               ) : (
-                <div className="flex items-center justify-between w-full pt-2 text-[color:var(--lkv-forest-600)]/60">
+                <div className="flex items-center justify-between w-full pt-2 text-[color:var(--lkv-forest-600-ink)]/60">
                   <span>{item.edit_status}</span>
                   <span>{item.draft_detail}</span>
                 </div>

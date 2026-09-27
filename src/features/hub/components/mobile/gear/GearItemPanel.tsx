@@ -26,14 +26,14 @@ export function GearItemPanel({ card, tripSlug, open, onOpenChange, busy, onTogg
             ) : (
               <span className="flex h-full items-center justify-center bg-gradient-to-br from-[var(--lkv-forest-100)] to-[var(--lkv-forest-50)]">
                 <span
-                  className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/70 text-2xl font-extrabold text-[var(--lkv-primary)] ring-1 ring-white/70"
+                  className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/70 text-2xl font-extrabold text-[color:var(--lkv-text-primary)] ring-1 ring-white/70"
                   aria-hidden="true"
                 >
                   {card.name.slice(0, 1).toUpperCase()}
                 </span>
               </span>
             )}
-            <span className="glass-sub-card absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--lkv-primary)]">
+            <span className="glass-sub-card absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[color:var(--lkv-text-primary)]">
               {card.categoryLabel}
             </span>
           </div>

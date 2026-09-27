@@ -66,7 +66,7 @@ export function KitsKpiCockpitCard({
       className="p-2 sm:p-3 flex flex-col justify-between h-full min-h-0"
     >
       <div className="flex items-center justify-between gap-1 pr-7 md:pr-14 shrink-0 mb-1">
-        <p className="truncate text-[10px] md:text-xs font-semibold text-[var(--lkv-primary)] font-body">
+        <p className="truncate text-[10px] md:text-xs font-semibold text-[color:var(--lkv-text-primary)] font-body">
           <span className="sm:hidden">Indicateurs</span>
           <span className="hidden sm:inline">Indicateurs · Kits</span>
         </p>
@@ -90,16 +90,16 @@ export function KitsKpiCockpitCard({
           >
             <Card variant="compact" className="flex h-full flex-col justify-center gap-0.2 p-1 sm:p-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-[7.5px] sm:text-[8.5px] md:text-[9px] font-semibold uppercase tracking-wide text-[var(--lkv-primary-soft)] truncate">
+              <span className="text-[7.5px] sm:text-[8.5px] md:text-[9px] font-semibold uppercase tracking-wide text-[color:var(--lkv-text-secondary)] truncate">
                 {t.label}
               </span>
-              <span className="text-[var(--lkv-primary)]/60 shrink-0">{t.icon}</span>
+              <span className="text-[color:var(--lkv-text-primary)]/60 shrink-0">{t.icon}</span>
             </div>
             <span className="flex items-baseline gap-0.5 mt-0.5">
-              <span className="font-display font-bold text-[12px] sm:text-[14px] md:text-[16px] text-[var(--lkv-primary)] tabular-nums leading-none">
+              <span className="font-display font-bold text-[12px] sm:text-[14px] md:text-[16px] text-[color:var(--lkv-text-primary)] tabular-nums leading-none">
                 {t.value}
               </span>
-              <span className="text-[7.5px] sm:text-[8.5px] md:text-[9px] text-[var(--lkv-primary-soft)] font-medium">
+              <span className="text-[7.5px] sm:text-[8.5px] md:text-[9px] text-[color:var(--lkv-text-secondary)] font-medium">
                 {t.unit}
               </span>
             </span>

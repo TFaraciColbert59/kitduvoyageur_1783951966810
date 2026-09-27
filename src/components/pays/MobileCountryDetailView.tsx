@@ -299,7 +299,7 @@ export default function MobileCountryDetailView({
                               href={src.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono text-[color:var(--glass-label)] hover:text-white"
+                              className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono text-[color:var(--glass-label-tertiary)] hover:text-[color:var(--glass-label)]"
                             >
                               {src.label} ↗
                             </a>
@@ -314,13 +314,13 @@ export default function MobileCountryDetailView({
                 {country.destinations && country.destinations.length > 0 && (
                   <div className="space-y-2 pt-1">
                     <div className="flex items-center justify-between px-1">
-                      <h4 className="font-display font-bold text-xs text-[color:var(--lkv-primary)] uppercase tracking-wider">
+                      <h4 className="font-display font-bold text-xs text-[color:var(--lkv-text-primary)] uppercase tracking-wider">
                         Incontournables en bref
                       </h4>
                       <button
                         type="button"
                         onClick={() => handleSectionSwitch('destinations')}
-                        className="text-[10.5px] font-bold text-[color:var(--lkv-secondary)] hover:text-[color:var(--lkv-primary)]"
+                        className="text-[10.5px] font-bold text-[color:var(--lkv-secondary-ink)] hover:text-[color:var(--lkv-text-primary)]"
                       >
                         Tout voir ({country.destinations.length}) →
                       </button>
@@ -346,7 +346,7 @@ export default function MobileCountryDetailView({
                             </span>
                           </div>
                           <div className="p-2.5">
-                            <h5 className="font-bold text-xs text-[color:var(--lkv-primary)] truncate">{d.titre}</h5>
+                            <h5 className="font-bold text-xs text-[color:var(--lkv-text-primary)] truncate">{d.titre}</h5>
                             {d.titre_em && (
                               <p className="font-serif italic text-[10.5px] text-[color:var(--lkv-text-secondary)] truncate">
                                 {d.titre_em}
@@ -407,7 +407,7 @@ export default function MobileCountryDetailView({
             {activeSection === 'culture' && (
               <div className="space-y-3">
                 <div className="px-1">
-                  <h3 className="font-display font-bold text-sm text-[color:var(--lkv-primary)] uppercase tracking-wider">
+                  <h3 className="font-display font-bold text-sm text-[color:var(--lkv-text-primary)] uppercase tracking-wider">
                     Culture &amp; Société
                   </h3>
                   <p className="text-[10.5px] text-[color:var(--lkv-text-secondary)]">
@@ -423,7 +423,7 @@ export default function MobileCountryDetailView({
             {activeSection === 'gastronomie' && (
               <div className="space-y-3">
                 <div className="px-1">
-                  <h3 className="font-display font-bold text-sm text-[color:var(--lkv-primary)] uppercase tracking-wider">
+                  <h3 className="font-display font-bold text-sm text-[color:var(--lkv-text-primary)] uppercase tracking-wider">
                     Gastronomie & Restaurants
                   </h3>
                   <p className="text-[10.5px] text-[color:var(--lkv-text-secondary)]">
@@ -447,7 +447,7 @@ export default function MobileCountryDetailView({
             {activeSection === 'hebergements' && (
               <div className="space-y-3">
                 <div className="px-1">
-                  <h3 className="font-display font-bold text-sm text-[color:var(--lkv-primary)] uppercase tracking-wider">
+                  <h3 className="font-display font-bold text-sm text-[color:var(--lkv-text-primary)] uppercase tracking-wider">
                     Hébergements
                   </h3>
                   <p className="text-[10.5px] text-[color:var(--lkv-text-secondary)]">
@@ -474,10 +474,10 @@ export default function MobileCountryDetailView({
                 {country.meteo && (
                 <div className="glass p-4 space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="glass-pill text-[9.5px] font-mono font-bold text-[color:var(--lkv-secondary)]">
+                    <span className="glass-pill text-[9.5px] font-mono font-bold text-[color:var(--lkv-secondary-ink)]">
                       ⛅ Météo en direct · {country.meteo.ville}
                     </span>
-                    <span className="inline-flex items-center gap-1.5 text-[9.5px] font-mono text-[color:var(--lkv-secondary)] font-bold">
+                    <span className="inline-flex items-center gap-1.5 text-[9.5px] font-mono text-[color:var(--lkv-secondary-ink)] font-bold">
                       <span className="w-2 h-2 rounded-full bg-[color:var(--lkv-secondary)] animate-pulse" />
                       Live
                     </span>
@@ -485,10 +485,10 @@ export default function MobileCountryDetailView({
 
                   <div className="flex items-center justify-between pt-0.5">
                     <div>
-                      <div className="font-mono font-extrabold text-3xl text-[color:var(--lkv-primary)]">
+                      <div className="font-mono font-extrabold text-3xl text-[color:var(--lkv-text-primary)]">
                         {country.meteo.temperature_actuelle}°C
                       </div>
-                      <p className="text-xs font-bold text-[color:var(--lkv-primary)] mt-0.5">
+                      <p className="text-xs font-bold text-[color:var(--lkv-text-primary)] mt-0.5">
                         {country.meteo.conditions}
                       </p>
                     </div>
@@ -510,7 +510,7 @@ export default function MobileCountryDetailView({
             {activeSection === 'communaute' && (
               <div className="space-y-3">
                 <div className="px-1">
-                  <h3 className="font-display font-bold text-sm text-[color:var(--lkv-primary)] uppercase tracking-wider">
+                  <h3 className="font-display font-bold text-sm text-[color:var(--lkv-text-primary)] uppercase tracking-wider">
                     Communauté & Expéditions
                   </h3>
                   <p className="text-[10.5px] text-[color:var(--lkv-text-secondary)]">
@@ -532,7 +532,7 @@ export default function MobileCountryDetailView({
         <div className="glass p-4 sm:p-5 space-y-2 mt-4">
           <div className="flex items-center gap-2">
             <span className="text-xl">🎒</span>
-            <h4 className="font-display font-bold text-sm text-[color:var(--lkv-primary)]">
+            <h4 className="font-display font-bold text-sm text-[color:var(--lkv-text-primary)]">
               Composer votre aventure {country.nom}
             </h4>
           </div>

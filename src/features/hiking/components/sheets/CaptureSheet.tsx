@@ -78,7 +78,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="w-full max-w-md bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[color:var(--lkv-primary)] rounded-t-[34px] pt-3 pb-10 px-4  max-h-[85vh] overflow-y-auto space-y-5"
+        className="w-full max-w-md bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[color:var(--lkv-text-primary)] rounded-t-[34px] pt-3 pb-10 px-4  max-h-[85vh] overflow-y-auto space-y-5"
       >
         {/* Grabber */}
         <div className="w-10 h-1 bg-[color:var(--lkv-primary)]/14 rounded-full mx-auto" />
@@ -87,7 +87,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
         <div className="flex items-center justify-between px-2">
           <div>
             <h2 className="text-2xl font-medium tracking-tight">
-              Capturer <em className="font-serif italic text-[color:var(--lkv-primary)]">un souvenir</em>
+              Capturer <em className="font-serif italic text-[color:var(--lkv-text-primary)]">un souvenir</em>
             </h2>
             <p className="text-[11px] font-mono text-[color:var(--lkv-text-muted)] tracking-wider mt-0.5">
               AUTO-TAGGING GPS · REPO-CARD
@@ -95,7 +95,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-[color:var(--stone-200)] flex items-center justify-center text-[color:var(--lkv-text-muted)] hover:text-[color:var(--lkv-primary)]"
+            className="w-8 h-8 rounded-full bg-[color:var(--lkv-surface-muted)] flex items-center justify-center text-[color:var(--lkv-text-muted)] hover:text-[color:var(--lkv-text-primary)]"
           >
             ✕
           </button>
@@ -115,7 +115,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
 
           <button
             onClick={() => videoInputRef.current?.click()}
-            className="aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 p-1 transition-transform active:scale-95  bg-[color:var(--stone-100)] text-[color:var(--lkv-primary)]"
+            className="aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 p-1 transition-transform active:scale-95  bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-text-primary)]"
           >
             <span className="text-xl leading-none">🎥</span>
             <span className="text-[9px] font-mono font-semibold tracking-wider uppercase text-center leading-none">
@@ -126,7 +126,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
           <button
             onClick={() => setNoteMode('NOTE')}
             className={`aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 p-1 transition-transform active:scale-95  ${
-              noteMode === 'NOTE' ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]' : 'bg-[color:var(--stone-100)] text-[color:var(--lkv-primary)]'
+              noteMode === 'NOTE' ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]' : 'bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-text-primary)]'
             }`}
           >
             <span className="text-xl leading-none">📝</span>
@@ -150,8 +150,8 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
 
         {/* Note / Moment Dialog Form */}
         {noteMode && (
-          <div className="p-3.5 bg-[color:var(--stone-100)] rounded-2xl border border-[color:var(--lkv-border)] space-y-2.5 animate-in fade-in duration-200">
-            <div className="flex justify-between items-center text-xs font-semibold text-[color:var(--lkv-primary)]">
+          <div className="p-3.5 bg-[color:var(--lkv-surface-muted)] rounded-2xl border border-[color:var(--lkv-border)] space-y-2.5 animate-in fade-in duration-200">
+            <div className="flex justify-between items-center text-xs font-semibold text-[color:var(--lkv-text-primary)]">
               <span>{noteMode === 'NOTE' ? '📝 Ajouter une note terrain' : '✨ Enregistrer un moment fort'}</span>
               <button onClick={() => setNoteMode(null)} className="text-[color:var(--lkv-text-muted)] text-xs">Annuler</button>
             </div>
@@ -180,8 +180,8 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
             📌
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-medium text-[color:var(--lkv-primary)]">
-              Horodatage & GPS <em className="font-serif italic text-[color:var(--lkv-primary)]">en direct</em>
+            <div className="text-xs font-medium text-[color:var(--lkv-text-primary)]">
+              Horodatage & GPS <em className="font-serif italic text-[color:var(--lkv-text-primary)]">en direct</em>
             </div>
             <div className="text-[10px] font-mono text-[color:var(--lkv-primary-hover)] tracking-wider mt-0.5 truncate">
               {userLoc ? `Position: ${userLoc[0].toFixed(4)}°, ${userLoc[1].toFixed(4)}°` : 'Position GPS en attente…'}
@@ -206,7 +206,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
                 <div key={cap.id} className="p-3 bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] rounded-xl flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2 truncate">
                     <span>{cap.type === 'PHOTO' ? '📸' : cap.type === 'VIDEO' ? '🎥' : cap.type === 'NOTE' ? '📝' : '✨'}</span>
-                    <span className="font-medium text-[color:var(--lkv-primary)] truncate">{cap.text || cap.type}</span>
+                    <span className="font-medium text-[color:var(--lkv-text-primary)] truncate">{cap.text || cap.type}</span>
                   </div>
                   <span className="text-[10px] font-mono text-[color:var(--lkv-text-muted)] flex-shrink-0 ml-2">{cap.timestamp}</span>
                 </div>

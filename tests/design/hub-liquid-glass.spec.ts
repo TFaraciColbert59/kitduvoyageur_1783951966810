@@ -10,7 +10,7 @@ const webNavigationBar = readFileSync(
   'utf8',
 );
 const tabItem = readFileSync('src/components/mobile-nav/navigation/TabItem.tsx', 'utf8');
-const hubLiquid = readFileSync('src/features/hub/components/hub-liquid.css', 'utf8');
+const hubLiquid = readFileSync('src/styles/liquid-ios27.css', 'utf8');
 const hubMapLiquid = readFileSync(
   'src/features/hub/components/mobile/hub-map-liquid.css',
   'utf8',

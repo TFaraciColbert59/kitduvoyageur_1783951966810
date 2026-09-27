@@ -29,8 +29,8 @@ export function SectionCarousel({ tiles, label = 'Sections de l’aventure' }: S
                   <span
                     className={`absolute right-2.5 top-2.5 rounded-full px-2 py-0.5 text-[9.5px] font-bold tabular-nums ${
                       tile.accent
-                        ? 'bg-[var(--lkv-primary)]/15 text-[var(--lkv-primary)]'
-                        : 'bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]'
+                        ? 'bg-[var(--lkv-primary)]/15 text-[color:var(--lkv-text-primary)]'
+                        : 'bg-[var(--lkv-primary)]/10 text-[color:var(--lkv-text-primary)]'
                     }`}
                   >
                     {tile.badge}

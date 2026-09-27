@@ -224,7 +224,7 @@ export function AdventureSwitcher({
           <Icon
             name="check"
             size={14}
-            className="shrink-0 text-[var(--lkv-secondary)]"
+            className="shrink-0 text-[var(--lkv-secondary-ink)]"
             aria-hidden="true"
           />
         )}

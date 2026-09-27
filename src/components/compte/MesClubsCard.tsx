@@ -17,7 +17,7 @@ export default function MesClubsCard({ clubs }: MesClubsCardProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[color:var(--lkv-primary)]/5 pb-4">
         <div>
-          <h3 className="font-display font-bold text-2xl text-[color:var(--lkv-primary)] tracking-tight">
+          <h3 className="font-display font-bold text-2xl text-[color:var(--lkv-text-primary)] tracking-tight">
             Mes <span className="font-serif italic font-normal">clubs</span>
           </h3>
           <p className="text-xs font-mono text-[color:var(--lkv-text-muted)] mt-0.5">
@@ -25,12 +25,12 @@ export default function MesClubsCard({ clubs }: MesClubsCardProps) {
           </p>
         </div>
 
-        <Link href="/clubs" className="text-xs font-bold text-[color:var(--lkv-forest-600)] hover:text-[color:var(--lkv-primary)] transition-colors">
+        <Link href="/clubs" className="text-xs font-bold text-[color:var(--lkv-forest-600-ink)] hover:text-[color:var(--lkv-text-primary)] transition-colors">
           Explorer l'annuaire →
         </Link>
       </div>
 
-      <p className="text-xs text-[color:var(--lkv-forest-600)]/70 leading-relaxed">
+      <p className="text-xs text-[color:var(--lkv-forest-600-ink)]/70 leading-relaxed">
         Vos communautés régulières. Ouvrez un club pour voir les prochaines sorties et le fil du groupe.
       </p>
 
@@ -53,7 +53,7 @@ export default function MesClubsCard({ clubs }: MesClubsCardProps) {
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h4 className="font-bold text-base text-[color:var(--lkv-primary)] truncate">
+                  <h4 className="font-bold text-base text-[color:var(--lkv-text-primary)] truncate">
                     {club.name}
                   </h4>
                   {club.role === 'Admin' ? (
@@ -66,7 +66,7 @@ export default function MesClubsCard({ clubs }: MesClubsCardProps) {
                     </Badge>
                   )}
                 </div>
-                <p className="text-xs text-[color:var(--lkv-forest-600)]/60 font-medium mt-0.5 truncate">
+                <p className="text-xs text-[color:var(--lkv-forest-600-ink)]/60 font-medium mt-0.5 truncate">
                   {club.detail}
                 </p>
               </div>

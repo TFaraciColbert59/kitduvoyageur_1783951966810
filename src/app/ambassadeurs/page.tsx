@@ -36,8 +36,8 @@ export default function AmbassadeursPage() {
       <div className="block md:hidden">
         <AppShell>
           <div className="p-[var(--space-4)]">
-            <h1 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-primary)]">Ambassadeurs</h1>
-            <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/60">Partagez votre passion, gagnez des commissions.</p>
+            <h1 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">Ambassadeurs</h1>
+            <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]/60">Partagez votre passion, gagnez des commissions.</p>
             <div className="mb-[var(--space-4)] flex flex-wrap gap-[var(--space-2)]">
               <Chip selected={activeTab === 'programme'} onClick={() => setActiveTab('programme')}>Programme</Chip>
               <Chip selected={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')}>Dashboard</Chip>

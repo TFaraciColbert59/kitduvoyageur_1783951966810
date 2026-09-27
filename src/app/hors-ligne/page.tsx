@@ -160,7 +160,7 @@ export default function HorsLignePage() {
               <div className="flex border-t border-[color:var(--lkv-border)]">
                 <Link
                   href={`/randonnee-active?routeId=${route.routeId}`}
-                  className="flex-1 py-[var(--space-3)] text-center text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-primary)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
+                  className="flex-1 py-[var(--space-3)] text-center text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
                 >
                   🥾 Démarrer
                 </Link>

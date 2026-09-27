@@ -303,7 +303,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
   ];
 
   return (
-    <div className="space-y-8 font-sans text-[color:var(--lkv-primary)]">
+    <div className="space-y-8 font-sans text-[color:var(--lkv-text-primary)]">
       {/* Hidden File Input for Real Photo Upload */}
       <input
         type="file"
@@ -316,8 +316,8 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
       {/* 1. Header Block */}
       <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-[color:var(--lkv-primary)] font-display tracking-tight">
-            Réglages <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">du compte.</span>
+          <h2 className="text-2xl sm:text-3xl font-bold text-[color:var(--lkv-text-primary)] font-display tracking-tight">
+            Réglages <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600-ink)]">du compte.</span>
           </h2>
           <p className="text-xs sm:text-sm text-[color:var(--lkv-text-muted)] mt-1 max-w-2xl leading-relaxed">
             Gérez vos informations personnelles, vos préférences de notification, votre sécurité et vos caractéristiques d'aventure.
@@ -351,7 +351,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
               <Image src={avatarUrl || '/assets/images/no_image.png'} alt={firstName} fill className="object-cover" />
             </div>
             <div className="min-w-0">
-              <span className="font-bold text-[color:var(--lkv-primary)] text-xs block truncate">
+              <span className="font-bold text-[color:var(--lkv-text-primary)] text-xs block truncate">
                 {firstName} {lastName}
               </span>
               <span className="text-[11px] text-[color:var(--lkv-text-muted)] font-mono truncate block">{username}</span>
@@ -393,8 +393,8 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
             <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 lg:p-8 space-y-6">
               <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/5 pb-4">
                 <div>
-                  <h3 className="text-xl font-bold text-[color:var(--lkv-primary)] font-display">
-                    Profil <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">&amp; identité</span>
+                  <h3 className="text-xl font-bold text-[color:var(--lkv-text-primary)] font-display">
+                    Profil <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600-ink)]">&amp; identité</span>
                   </h3>
                   <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">
                     Informations visibles sur votre profil et dans le réseau des voyageurs.
@@ -449,7 +449,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       setFirstName(e.target.value);
                       markDirty();
                     }}
-                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   />
                 </div>
 
@@ -462,7 +462,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       setLastName(e.target.value);
                       markDirty();
                     }}
-                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   />
                 </div>
 
@@ -477,7 +477,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                         setUsername(`@${e.target.value}`);
                         markDirty();
                       }}
-                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full pl-8"
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full pl-8"
                     />
                   </div>
                 </div>
@@ -490,7 +490,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       setPronouns(e.target.value);
                       markDirty();
                     }}
-                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   >
                     <option value="Elle / her">Elle / her</option>
                     <option value="Il / him">Il / him</option>
@@ -508,7 +508,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       markDirty();
                     }}
                     rows={3}
-                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full resize-none font-serif italic"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full resize-none font-serif italic"
                   />
                 </div>
 
@@ -521,7 +521,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       setLocation(e.target.value);
                       markDirty();
                     }}
-                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   />
                 </div>
 
@@ -533,7 +533,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       setPrimaryActivity(e.target.value);
                       markDirty();
                     }}
-                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   >
                     <option value="Randonnée & Bivouac (GR, alpages)">Randonnée & Bivouac (GR, alpages)</option>
                     <option value="Alpinisme & Hivernal">Alpinisme & Hivernal</option>
@@ -550,8 +550,8 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
             <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 lg:p-8 space-y-6">
               <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/5 pb-4">
                 <div>
-                  <h3 className="text-xl font-bold text-[color:var(--lkv-primary)] font-display">
-                    Notifications <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">&amp; rappels</span>
+                  <h3 className="text-xl font-bold text-[color:var(--lkv-text-primary)] font-display">
+                    Notifications <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600-ink)]">&amp; rappels</span>
                   </h3>
                   <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">
                     Choisissez où et quand être notifié (Application, Email, SMS).
@@ -642,8 +642,8 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
             <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 lg:p-8 space-y-6">
               <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/5 pb-4">
                 <div>
-                  <h3 className="text-xl font-bold text-[color:var(--lkv-primary)] font-display">
-                    Confidentialité <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">&amp; visibilité</span>
+                  <h3 className="text-xl font-bold text-[color:var(--lkv-text-primary)] font-display">
+                    Confidentialité <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600-ink)]">&amp; visibilité</span>
                   </h3>
                   <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">
                     Contrôlez la visibilité de votre profil, de vos sorties et de votre matériel.
@@ -757,8 +757,8 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
             <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 lg:p-8 space-y-6">
               <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/5 pb-4">
                 <div>
-                  <h3 className="text-xl font-bold text-[color:var(--lkv-primary)] font-display">
-                    Langue <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">&amp; région</span>
+                  <h3 className="text-xl font-bold text-[color:var(--lkv-text-primary)] font-display">
+                    Langue <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600-ink)]">&amp; région</span>
                   </h3>
                   <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">
                     Paramétrez la langue d'affichage, les unités et la devise.
@@ -807,7 +807,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       setUnitSystem(e.target.value);
                       markDirty();
                     }}
-                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   >
                     <option value="metric">Métrique (m, km, kg, g)</option>
                     <option value="imperial">Impérial (ft, mi, lbs, oz)</option>
@@ -822,7 +822,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       setCurrency(e.target.value);
                       markDirty();
                     }}
-                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   >
                     <option value="EUR">Euro (€ EUR)</option>
                     <option value="USD">US Dollar ($ USD)</option>
@@ -839,7 +839,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       setTimezone(e.target.value);
                       markDirty();
                     }}
-                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   >
                     <option value="Europe/Paris">Europe/Paris (UTC+1)</option>
                     <option value="Europe/London">Europe/London (UTC+0)</option>
@@ -855,7 +855,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       setFirstDayOfWeek(e.target.value);
                       markDirty();
                     }}
-                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   >
                     <option value="monday">Lundi</option>
                     <option value="sunday">Dimanche</option>
@@ -903,8 +903,8 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
             <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 lg:p-8 space-y-6">
               <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/5 pb-4">
                 <div>
-                  <h3 className="text-xl font-bold text-[color:var(--lkv-primary)] font-display">
-                    Sécurité <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">&amp; sessions</span>
+                  <h3 className="text-xl font-bold text-[color:var(--lkv-text-primary)] font-display">
+                    Sécurité <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600-ink)]">&amp; sessions</span>
                   </h3>
                   <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">
                     Protégez votre compte, modifiez votre mot de passe et gérez vos connexions actives.
@@ -926,7 +926,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       setEmail(e.target.value);
                       markDirty();
                     }}
-                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   />
                 </div>
 
@@ -938,7 +938,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="••••••••••••"
-                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                     />
                   </div>
 
@@ -949,7 +949,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••••••"
-                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                     />
                   </div>
                 </div>
@@ -961,7 +961,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                 )}
 
                 {passwordSuccess && (
-                  <p className="text-xs font-bold text-[color:var(--lkv-secondary)] bg-[color:var(--lkv-secondary)]/10 p-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-secondary)]/20">
+                  <p className="text-xs font-bold text-[color:var(--lkv-secondary-ink)] bg-[color:var(--lkv-secondary)]/10 p-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-secondary)]/20">
                     ✓ {passwordSuccess}
                   </p>
                 )}
@@ -1014,7 +1014,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
               {/* Active Sessions List */}
               <div className="pt-4 border-t border-[color:var(--lkv-primary)]/5 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-[color:var(--lkv-primary)] text-xs sm:text-sm">Sessions actives</h4>
+                  <h4 className="font-bold text-[color:var(--lkv-text-primary)] text-xs sm:text-sm">Sessions actives</h4>
                   {activeSessions.length > 1 && (
                     <Button variant="destructive" size="sm" onClick={handleDisconnectAllOthers}>
                       Se déconnecter de tous les autres appareils
@@ -1029,12 +1029,12 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       className="p-3.5 rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] flex items-center justify-between gap-3 text-xs"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn flex items-center justify-center text-[color:var(--lkv-primary)]">
+                        <div className="w-8 h-8 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn flex items-center justify-center text-[color:var(--lkv-text-primary)]">
                           💻
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-[color:var(--lkv-primary)]">{sess.device}</span>
+                            <span className="font-bold text-[color:var(--lkv-text-primary)]">{sess.device}</span>
                             {sess.isCurrent && (
                               <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[9px]">
                                 CET APPAREIL
@@ -1073,7 +1073,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
             <div className="space-y-4 pt-2">
               <div className="p-4 rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h4 className="font-bold text-[color:var(--lkv-primary)] text-xs sm:text-sm">Mettre le compte en pause</h4>
+                  <h4 className="font-bold text-[color:var(--lkv-text-primary)] text-xs sm:text-sm">Mettre le compte en pause</h4>
                   <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">
                     Désactive temporairement votre profil sans tout supprimer. Vos données restent conservées.
                   </p>
@@ -1196,7 +1196,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
           onChange={(e) => setDeleteConfirmationText(e.target.value)}
           placeholder="SUPPRIMER"
           aria-label="Confirmation de suppression"
-          className="mt-[var(--space-3)] min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] font-mono text-[length:var(--lkv-text-body-sm)] font-bold uppercase text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)]"
+          className="mt-[var(--space-3)] min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] font-mono text-[length:var(--lkv-text-body-sm)] font-bold uppercase text-[color:var(--lkv-text-primary)] outline-none transition-colors [transition-duration:var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)]"
         />
       </Modal>
     </div>

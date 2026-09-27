@@ -40,7 +40,7 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
             <Eyebrow>Suivi & Vigilance</Eyebrow>
             <h2
               id="suivi-title"
-              className="text-[20px] sm:text-[22px] font-display font-bold text-[var(--lkv-primary)]"
+              className="text-[20px] sm:text-[22px] font-display font-bold text-[color:var(--lkv-text-primary)]"
             >
               Diagnostic, Prêts & Checklist
             </h2>
@@ -73,17 +73,17 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
                 <span className="text-[9px] uppercase font-bold text-[var(--lkv-text-muted)] tracking-wider">
                   Diagnostic
                 </span>
-                <p className="text-[13px] font-bold text-[var(--lkv-primary)] leading-tight mt-0.5">
+                <p className="text-[13px] font-bold text-[color:var(--lkv-text-primary)] leading-tight mt-0.5">
                   Santé & Alertes
                 </p>
               </div>
-              <span className="font-mono text-lg font-bold text-[var(--lkv-primary)]">
+              <span className="font-mono text-lg font-bold text-[color:var(--lkv-text-primary)]">
                 {alertes.reliabilityScore}%
               </span>
             </div>
 
             <div className="space-y-1">
-              <div className="flex justify-between text-[10px] text-[var(--lkv-primary-soft)] font-medium">
+              <div className="flex justify-between text-[10px] text-[color:var(--lkv-text-secondary)] font-medium">
                 <span>Fiabilité</span>
                 <span>{alertes.count} alerte(s)</span>
               </div>
@@ -96,7 +96,7 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
 
             <Link
               href="/hub/alertes"
-              className="flex items-center justify-between text-[10.5px] font-bold text-[var(--lkv-primary)] hover:text-[var(--lkv-primary-soft)] pt-1 border-t border-white/10"
+              className="flex items-center justify-between text-[10.5px] font-bold text-[color:var(--lkv-text-primary)] hover:text-[color:var(--lkv-text-secondary)] pt-1 border-t border-white/10"
             >
               <span>Voir diagnostic</span>
               <Icon name="arrow-right" size={12} />
@@ -110,17 +110,17 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
                 <span className="text-[9px] uppercase font-bold text-[var(--lkv-text-muted)] tracking-wider">
                   Parc & Prêts
                 </span>
-                <p className="text-[13px] font-bold text-[var(--lkv-primary)] leading-tight mt-0.5">
+                <p className="text-[13px] font-bold text-[color:var(--lkv-text-primary)] leading-tight mt-0.5">
                   Disponibilité
                 </p>
               </div>
-              <span className="font-mono text-lg font-bold text-[var(--lkv-primary)]">
+              <span className="font-mono text-lg font-bold text-[color:var(--lkv-text-primary)]">
                 {availablePct}%
               </span>
             </div>
 
             <div className="space-y-1">
-              <div className="flex justify-between text-[10px] text-[var(--lkv-primary-soft)] font-medium">
+              <div className="flex justify-between text-[10px] text-[color:var(--lkv-text-secondary)] font-medium">
                 <span>{available} dispo(s)</span>
                 <span>{dispo.unavailableCount} en prêt</span>
               </div>
@@ -133,7 +133,7 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
 
             <Link
               href="/hub/disponibilite"
-              className="flex items-center justify-between text-[10.5px] font-bold text-[var(--lkv-primary)] hover:text-[var(--lkv-primary-soft)] pt-1 border-t border-white/10"
+              className="flex items-center justify-between text-[10.5px] font-bold text-[color:var(--lkv-text-primary)] hover:text-[color:var(--lkv-text-secondary)] pt-1 border-t border-white/10"
             >
               <span>Gérer les prêts</span>
               <Icon name="arrow-right" size={12} />
@@ -147,17 +147,17 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
                 <span className="text-[9px] uppercase font-bold text-[var(--lkv-text-muted)] tracking-wider">
                   Départ
                 </span>
-                <p className="text-[13px] font-bold text-[var(--lkv-primary)] leading-tight mt-0.5">
+                <p className="text-[13px] font-bold text-[color:var(--lkv-text-primary)] leading-tight mt-0.5">
                   À ne pas oublier
                 </p>
               </div>
-              <span className="font-mono text-lg font-bold text-[var(--lkv-primary)]">
+              <span className="font-mono text-lg font-bold text-[color:var(--lkv-text-primary)]">
                 {forgetPct}%
               </span>
             </div>
 
             <div className="space-y-1">
-              <div className="flex justify-between text-[10px] text-[var(--lkv-primary-soft)] font-medium">
+              <div className="flex justify-between text-[10px] text-[color:var(--lkv-text-secondary)] font-medium">
                 <span>
                   {forget.checkedItems}/{forget.totalItems} vérifié(s)
                 </span>
@@ -172,7 +172,7 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
 
             <Link
               href="/hub/oublis"
-              className="flex items-center justify-between text-[10.5px] font-bold text-[var(--lkv-primary)] hover:text-[var(--lkv-primary-soft)] pt-1 border-t border-white/10"
+              className="flex items-center justify-between text-[10.5px] font-bold text-[color:var(--lkv-text-primary)] hover:text-[color:var(--lkv-text-secondary)] pt-1 border-t border-white/10"
             >
               <span>Ouvrir checklist</span>
               <Icon name="arrow-right" size={12} />

@@ -5,7 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import { useChat } from '@/lib/hooks/useChat';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import { Button, Card } from '@/components/ui';
 import { useActiveTrip } from '@/features/trips/context/ActiveTripContext';
 
@@ -64,9 +64,9 @@ export default function CopilotePage() {
 
       {/* MOBILE */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <div className="p-[var(--space-4)]">
-            <h1 className="mb-[var(--space-2)] text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-primary)]">Copilote IA</h1>
+            <h1 className="mb-[var(--space-2)] text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">Copilote IA</h1>
             <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">Assistant d&apos;expédition intelligent.</p>
             <Card variant="standard" className="mb-[var(--space-3)] min-h-[200px] p-[var(--space-4)]" aria-live="polite">
               {messages.map((msg, i) => (
@@ -89,7 +89,7 @@ export default function CopilotePage() {
                   <div
                     className={`max-w-[80%] rounded-[var(--lkv-radius-sm)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption-1)] ${
                       msg.role === 'assistant'
-                        ? 'bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[color:var(--lkv-primary)]'
+                        ? 'bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[color:var(--lkv-text-primary)]'
                         : 'bg-[color:var(--btn-tint)]  text-[color:var(--lkv-text-primary)]'
                     }`}
                   >
@@ -118,7 +118,7 @@ export default function CopilotePage() {
               </Button>
             </div>
           </div>
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

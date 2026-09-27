@@ -103,7 +103,7 @@ export default function CommunityRightSidebar({ clubs = [], events = [] }: Commu
                 <div className="flex min-w-0 items-center gap-[var(--space-2)]">
                   <span className="shrink-0 text-base">{club.emoji || '🏕️'}</span>
                   <div className="min-w-0">
-                    <div className="truncate text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] transition-colors group-hover:text-[color:var(--lkv-primary)]">
+                    <div className="truncate text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] transition-colors group-hover:text-[color:var(--lkv-text-primary)]">
                       {club.name}
                     </div>
                     {club.category && (

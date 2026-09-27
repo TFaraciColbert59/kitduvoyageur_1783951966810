@@ -6,7 +6,7 @@ import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import { EmptyState } from '@/components/ui';
 
 export default function ExpertsPage() {
@@ -31,13 +31,13 @@ export default function ExpertsPage() {
 
       {/* MOBILE */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <div className="p-[var(--space-4)]">
-            <h1 className="mb-[var(--space-2)] text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-primary)]">Experts</h1>
-            <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/60">Consultez des guides certifiés.</p>
+            <h1 className="mb-[var(--space-2)] text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">Experts</h1>
+            <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]/60">Consultez des guides certifiés.</p>
             <EmptyState title="Contenu à venir" description="Le réseau d'experts sera disponible prochainement." />
           </div>
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

@@ -249,7 +249,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
   };
 
   return (
-    <Card className="p-[var(--space-4)] transition-all duration-[var(--motion-control-duration)] sm:p-[var(--space-6)]">
+    <Card className="p-[var(--space-4)] transition-all [transition-duration:var(--motion-control-duration)] sm:p-[var(--space-6)]">
       <div className="mb-[var(--space-4)] flex flex-col gap-[var(--space-2)]">
         <div className="flex items-center justify-between">
           <div>

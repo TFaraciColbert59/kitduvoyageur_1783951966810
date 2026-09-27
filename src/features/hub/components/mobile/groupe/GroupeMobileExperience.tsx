@@ -547,7 +547,7 @@ export function GroupeMobileExperience({
                 className={`w-fit rounded-full px-2 py-0.5 text-[10px] font-bold ${
                   expense.settled
                     ? 'bg-[var(--sage-50)] text-[var(--sage-700)]'
-                    : 'bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]'
+                    : 'bg-[var(--lkv-primary)]/10 text-[color:var(--lkv-text-primary)]'
                 }`}
               >
                 {expense.settled ? 'Réglée' : 'En attente'}
@@ -597,7 +597,7 @@ export function GroupeMobileExperience({
                     mine ? 'glass border-2 border-[var(--lkv-primary)]/35' : 'glass'
                   }`}
                 >
-                  <span className="w-fit rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold text-[var(--lkv-primary)]">
+                  <span className="w-fit rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold text-[color:var(--lkv-text-primary)]">
                     {item.category || 'Divers'}
                   </span>
                   <p className="mt-2 line-clamp-2 text-[12.5px] font-bold leading-snug text-[var(--lkv-text-primary)]">
@@ -709,7 +709,7 @@ export function GroupeMobileExperience({
           <li key={member.user_id} className="shrink-0 snap-start">
             <div className="glass flex h-[8rem] w-[8.75rem] flex-col items-center justify-center gap-1.5 rounded-[var(--lkv-radius-lg)] p-3 text-center">
               <span
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-sm font-bold text-[var(--lkv-primary)]"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-sm font-bold text-[color:var(--lkv-text-primary)]"
                 aria-hidden="true"
               >
                 {(member.name ?? '?').slice(0, 1).toUpperCase()}

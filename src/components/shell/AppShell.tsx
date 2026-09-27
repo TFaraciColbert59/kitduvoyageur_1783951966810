@@ -43,8 +43,9 @@ export interface AppShellProps {
  * 3. safeTop=false uniquement si la page a un header sticky maison qui gère déjà
  *    le safe-area — ET documenté avec un commentaire JSX.
  *
- * Migration : MobilePageShell reste en service pour les pages existantes.
- * AppShell est le composant cible pour toutes les nouvelles pages.
+ * AppShell est l'unique shell de page de l'application : safe areas, header, zone
+ * de scroll et reservation de la navigation. Toute page — ancienne ou nouvelle —
+ * passe par ici.
  */
 export default function AppShell({
   children,
@@ -80,15 +81,20 @@ export default function AppShell({
       className={`app-shell mobile-page-shell lkv-shell ${containerBgClass} ${className}`}
       style={{
         ['--bottom-nav-height' as any]: bottomNavHeight,
-        ['--content-pb' as any]: `calc(${bottomNavHeight} + var(--space-6, 24px))`,
+        ['--content-pb' as any]: `max(${bottomNavHeight}, var(--cookie-banner-h, 0px)) + var(--space-6, 24px)`,
         ['--shell-top-padding' as any]: safeTop ? 'var(--page-top-inset)' : '0px',
         ...(containerBgStyle ? { background: containerBgStyle } : {}),
         position: 'relative',
         paddingTop: safeTop ? 'var(--page-top-inset)' : '0px',
         // Le shell réserve la place de la navigation (offset canonique) + marge de sécurité (OBS-G01) ;
         // bottomExtra se cale au-dessus via --bottom-nav-height.
-        paddingBottom: 'var(--bottom-nav-height)',
-        scrollPaddingBottom: 'var(--bottom-nav-height)',
+        // --cookie-banner-h vient de <CookieConsentBanner> (0px sinon) : sans
+        // lui, la banniere cookie (overlay fixe) recouvre la sous-nav de fin
+        // de flux et la rend incliquable.
+        // max() : sans banniere c'est la nav qui reserve ; avec banniere c'est
+        // la bande, qui contient deja la nav (sinon on reserverait deux fois).
+        paddingBottom: 'max(var(--bottom-nav-height), var(--cookie-banner-h, 0px))',
+        scrollPaddingBottom: 'max(var(--bottom-nav-height), var(--cookie-banner-h, 0px))',
       }}
     >
       {/* Skip Link pour navigation clavier et lecteurs d'écran (WCAG AA 2.4.1) */}

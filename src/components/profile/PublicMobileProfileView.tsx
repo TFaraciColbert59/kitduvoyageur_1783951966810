@@ -119,7 +119,7 @@ export default function PublicMobileProfileView({
                       fallbackIcon={<Icon name="user" size={22} />}
                     />
                   ) : (
-                    <span className="text-2xl font-bold font-serif text-[color:var(--lkv-primary)]">
+                    <span className="text-2xl font-bold font-serif text-[color:var(--lkv-text-primary)]">
                       {profile.first_name?.charAt(0) || 'V'}
                     </span>
                   )}
@@ -137,7 +137,7 @@ export default function PublicMobileProfileView({
                 }}
                 className="h-auto flex-col gap-0 py-1.5"
               >
-                <span className="text-lg font-bold tracking-tight leading-none text-[color:var(--lkv-primary)]">
+                <span className="text-lg font-bold tracking-tight leading-none text-[color:var(--lkv-text-primary)]">
                   {carnetsCount}
                 </span>
                 <span className="text-[11px] mt-1 font-medium text-[color:var(--lkv-text-muted)]">
@@ -154,7 +154,7 @@ export default function PublicMobileProfileView({
                 }}
                 className="h-auto flex-col gap-0 py-1.5"
               >
-                <span className="text-lg font-bold tracking-tight leading-none text-[color:var(--lkv-primary)]">
+                <span className="text-lg font-bold tracking-tight leading-none text-[color:var(--lkv-text-primary)]">
                   {sortiesCount || clubsCount}
                 </span>
                 <span className="text-[11px] mt-1 font-medium text-[color:var(--lkv-text-muted)]">
@@ -163,7 +163,7 @@ export default function PublicMobileProfileView({
               </Button>
 
               <div className="flex flex-col items-center py-1.5">
-                <span className="text-lg font-bold tracking-tight leading-none text-[color:var(--lkv-primary)]">
+                <span className="text-lg font-bold tracking-tight leading-none text-[color:var(--lkv-text-primary)]">
                   {badges.length}
                 </span>
                 <span className="text-[11px] mt-1 font-medium text-[color:var(--lkv-text-muted)]">
@@ -175,7 +175,7 @@ export default function PublicMobileProfileView({
 
           <div className="space-y-1">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <h2 className="text-[19px] font-display font-bold tracking-tight text-[color:var(--lkv-primary)]">
+              <h2 className="text-[19px] font-display font-bold tracking-tight text-[color:var(--lkv-text-primary)]">
                 {fullName}
               </h2>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="var(--lkv-primary)" aria-hidden="true">
@@ -197,7 +197,7 @@ export default function PublicMobileProfileView({
             </p>
 
             {profile.bio && (
-              <p className="text-sm font-serif italic leading-snug pt-1 text-[color:var(--lkv-primary)]">
+              <p className="text-sm font-serif italic leading-snug pt-1 text-[color:var(--lkv-text-primary)]">
                 {profile.bio}
               </p>
             )}
@@ -267,7 +267,7 @@ export default function PublicMobileProfileView({
                       />
                     </div>
                   </div>
-                  <span className="text-[10px] font-bold truncate w-full text-center text-[color:var(--lkv-primary)]">
+                  <span className="text-[10px] font-bold truncate w-full text-center text-[color:var(--lkv-text-primary)]">
                     {h.label}
                   </span>
                 </Link>
@@ -347,7 +347,7 @@ export default function PublicMobileProfileView({
             <div className="flex items-center gap-3">
               <span className="text-3xl" aria-hidden="true">🛡️</span>
               <div>
-                <h3 className="text-sm font-bold text-[color:var(--lkv-primary)]">
+                <h3 className="text-sm font-bold text-[color:var(--lkv-text-primary)]">
                   Indice de Confiance Voyageur
                 </h3>
                 <p className="text-xs text-[color:var(--lkv-text-muted)]">
@@ -355,7 +355,7 @@ export default function PublicMobileProfileView({
                 </p>
               </div>
             </div>
-            <span className="font-mono text-base font-bold text-[color:var(--lkv-primary)]">
+            <span className="font-mono text-base font-bold text-[color:var(--lkv-text-primary)]">
               {trustScore}/100
             </span>
           </Card>
@@ -369,7 +369,7 @@ export default function PublicMobileProfileView({
               badges.map((b) => (
                 <Card key={b.id} variant="featured" className="p-3 text-center">
                   <span className="text-2xl" aria-hidden="true">🏅</span>
-                  <p className="text-[11px] font-bold mt-1 text-[color:var(--lkv-primary)] truncate">
+                  <p className="text-[11px] font-bold mt-1 text-[color:var(--lkv-text-primary)] truncate">
                     {b.title}
                   </p>
                   <p className="text-[9px] text-[color:var(--lkv-text-muted)] truncate">
@@ -404,7 +404,7 @@ export default function PublicMobileProfileView({
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-bold text-[color:var(--lkv-primary)] truncate">{club.name}</h4>
+                    <h4 className="text-xs font-bold text-[color:var(--lkv-text-primary)] truncate">{club.name}</h4>
                     <p className="text-[11px] text-[color:var(--lkv-text-muted)] truncate">📍 {club.detail || 'Outdoor Club'}</p>
                   </div>
                   <Badge tone="stone" className="text-[10px]">
@@ -470,10 +470,10 @@ export default function PublicMobileProfileView({
                     </div>
                     <div className="flex-1 flex flex-col justify-between py-0.5">
                       <div>
-                        <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-[color:var(--lkv-primary)]">
+                        <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-[color:var(--lkv-text-primary)]">
                           Carnet d&apos;aventure
                         </span>
-                        <h4 className="text-sm font-bold leading-tight mt-0.5 text-[color:var(--lkv-primary)]">
+                        <h4 className="text-sm font-bold leading-tight mt-0.5 text-[color:var(--lkv-text-primary)]">
                           {c.title}
                         </h4>
                         <p className="text-xs mt-0.5 font-medium text-[color:var(--lkv-text-muted)]">
@@ -505,7 +505,7 @@ export default function PublicMobileProfileView({
                     <ListItem
                       key={item.id}
                       leading={
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)]">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
                           <Icon name={ACTIVITY_ICONS[item.icon_type] ?? 'compass'} size={14} />
                         </span>
                       }

@@ -15,7 +15,7 @@ import RandonneesSouvenirCard from '@/components/carnet/RandonneesSouvenirCard';
 import CarnetDetailVerticalTabs from '@/components/carnet/CarnetDetailVerticalTabs';
 import CarnetDetailRightSidebar from '@/components/carnet/CarnetDetailRightSidebar';
 import SpeciesIdentifier from '@/components/carnet/SpeciesIdentifier';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import MobileCarnetDetailView from '@/components/carnet/MobileCarnetDetailView';
 import type { CarnetData } from '@/lib/mock/carnet-chartreuse';
 import { Badge } from '@/components/ui';
@@ -190,7 +190,7 @@ export default function CarnetView({ data }: CarnetViewProps) {
       </div>
 
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <MobileCarnetDetailView
             data={data}
             moments={moments}
@@ -203,7 +203,7 @@ export default function CarnetView({ data }: CarnetViewProps) {
             distVal={distVal}
             elevVal={elevVal}
           />
-        </MobilePageShell>
+        </AppShell>
       </div>
     </>
   );

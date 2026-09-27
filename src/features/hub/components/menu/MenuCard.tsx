@@ -66,7 +66,7 @@ export function MenuCard({
             <p
               className={`text-[11px] font-medium uppercase tracking-[0.14em] leading-tight ${
                 tone === 'accent'
-                  ? 'text-[var(--lkv-primary)]'
+                  ? 'text-[color:var(--lkv-text-primary)]'
                   : 'text-[var(--lkv-text-secondary)]'
               }`}
             >

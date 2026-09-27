@@ -50,7 +50,7 @@ export default function PaysClubsList({ countryIso, countryName }: Props) {
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3 px-1">
         <div>
-          <h3 className="text-base font-bold font-display text-[color:var(--lkv-primary)] leading-tight">
+          <h3 className="text-base font-bold font-display text-[color:var(--lkv-text-primary)] leading-tight">
             Clubs outdoor <em className="font-serif italic text-forest-800 font-normal">en {countryName}</em>
           </h3>
           <p className="text-[10px] text-[color:var(--lkv-text-secondary)]">Communautés locales et sorties collectives.</p>
@@ -90,7 +90,7 @@ export default function PaysClubsList({ countryIso, countryName }: Props) {
                   )}
                 </div>
 
-                <h4 className="font-bold text-xs text-[color:var(--lkv-primary)] mb-0.5 truncate group-hover:text-[color:var(--lkv-primary)]">
+                <h4 className="font-bold text-xs text-[color:var(--lkv-text-primary)] mb-0.5 truncate group-hover:text-[color:var(--lkv-text-primary)]">
                   {club.name}
                 </h4>
                 <p className="text-[color:var(--lkv-text-secondary)] text-[11px] line-clamp-2 leading-relaxed">
@@ -99,7 +99,7 @@ export default function PaysClubsList({ countryIso, countryName }: Props) {
               </div>
 
               <div className="flex items-center justify-between text-[10px] font-mono text-[color:var(--lkv-text-secondary)] pt-2 border-t border-[color:var(--lkv-primary)]/10">
-                <span className="bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-2 py-0.5 rounded-md font-bold text-[color:var(--lkv-primary)]">
+                <span className="bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-2 py-0.5 rounded-md font-bold text-[color:var(--lkv-text-primary)]">
                   {club.members_count || 0} membres
                 </span>
                 {club.active_this_month > 0 && (
@@ -115,7 +115,7 @@ export default function PaysClubsList({ countryIso, countryName }: Props) {
       ) : (
         <div className="glass-sub-card p-5 text-center space-y-2">
           <span className="text-3xl block">🏔️</span>
-          <h4 className="font-bold text-xs text-[color:var(--lkv-primary)]">Aucun club dédié à {countryName}</h4>
+          <h4 className="font-bold text-xs text-[color:var(--lkv-text-primary)]">Aucun club dédié à {countryName}</h4>
           <p className="text-[11px] text-[color:var(--lkv-text-secondary)] max-w-xs mx-auto">
             Rejoignez les clubs régionaux ou fondez votre communauté.
           </p>
