@@ -76,13 +76,16 @@
      `--prep-page-bg` recompose donc la fumee du theme sur un fond opaque :
      la page reste dans la famille de couleur du theme (donc le contraste du
      texte ne bouge pas) mais elle devient illisible-independent du fond
-     photographique. Valeur brute uniquement ici, dans la couche de tokens. */
-  --prep-page-bg: var(--lkv-app-bg-fallback);
+     photographique. Valeur brute uniquement ici, dans la couche de tokens. Le
+     noir de repli du theme (#0b0d12) etait trop profond : la page se
+     lisait comme un trou. On le remonte en ardoise, sans quitter la famille
+     sombre — le texte blanc garde un contraste de ~18:1. */
+  --prep-page-bg: #151821;
   --prep-page-wash: linear-gradient(var(--lkv-surface), var(--lkv-surface));
 
   /* La carte est posee sur la page, pas sur la photo : meme base opaque, la
      teinte du materiau etant empilee par-dessus via --prep-map-wash. */
-  --prep-map-bg: var(--lkv-app-bg-fallback);
+  --prep-map-bg: #151821;
   --prep-map-wash: linear-gradient(var(--card-tint), var(--card-tint));
 
   /* --- Reserve du bas --------------------------------------------------
@@ -2098,9 +2101,19 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   padding: var(--space-2) var(--space-3);
   border-radius: var(--lkv-radius-md);
   background: var(--prep-page-bg);
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
   border: 1px solid transparent;
   transition: background-color 120ms ease;
 }
+.li:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: -2px;
+}
+
 .li:hover {
   background: var(--lkv-surface-elevated);
 }

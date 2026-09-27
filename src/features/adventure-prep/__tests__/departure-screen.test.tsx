@@ -22,6 +22,15 @@ vi.mock('../store/useAdventurePrepStore', () => {
   return { useAdventurePrepStore: use };
 });
 
+/**
+ * `DepartureStep` redirige vers /hub apres un enregistrement reussi : il
+ * consomme donc `useRouter`, qui exige un contexte applicatif absent de
+ * `renderToStaticMarkup`. Meme harnais que offline-prep.test.tsx : seul le
+ * contexte de navigation est remplace, le composant reste reellement execute.
+ */
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: () => undefined }),
+}));
 function render(draft: AdventurePrepDraft): string {
   state.current = { draft };
   return renderToStaticMarkup(React.createElement(DepartureStep, { onOpenSheet: () => undefined }));

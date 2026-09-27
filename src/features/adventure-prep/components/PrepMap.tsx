@@ -582,81 +582,6 @@ function useOverlayLifecycle(
   }, [open, onClose, container]);
 }
 
-/* --- Les deux états d'affichage --------------------------------------------- */
-
-function MapSVG({ routeCoords, points, onPointClick }: { routeCoords: Array<[number, number]>, points: readonly PrepMapPoint[], onPointClick?: (id: string) => void }) {
-  if (routeCoords.length === 0 && points.length === 0) return null;
-
-  // En mode « boucle », l'arrivee vaut « retour au depart » : la liste de
-  // coordonnees ne contient donc qu'UN point. La polyligne exigeant deux
-  // points, le SVG sortait totalement vide — une carte de 280 px de haut
-  // parfaitement noire, sans aucun repere. On dessine donc les extremites
-  // du trajet comme des marqueurs : une seule entree donne le depart, deux
-  // donnent les deux bouts du trait. C'est ce que la carte doit montrer
-  // dans les deux cas.
-  const endpoints = [
-    routeCoords.length > 1 ? { key: 'route-start', c: routeCoords[0] } : null,
-    routeCoords.length > 1 ? { key: 'route-end', c: routeCoords[routeCoords.length - 1] } : null,
-    routeCoords.length === 1 ? { key: 'route-only', c: routeCoords[0] } : null,
-  ].filter(Boolean) as Array<{ key: string; c: [number, number] }>;
-  const allX = [...routeCoords.map(c => c[0]), ...points.map(p => p.lon)];
-  const allY = [...routeCoords.map(c => c[1]), ...points.map(p => p.lat)];
-  const minX = Math.min(...allX); const maxX = Math.max(...allX);
-  const minY = Math.min(...allY); const maxY = Math.max(...allY);
-  const width = Math.max(maxX - minX, 100) + 100;
-  const height = Math.max(maxY - minY, 100) + 100;
-  const transformX = (x: number) => x - minX + 50;
-  const transformY = (y: number) => y - minY + 50;
-
-  const getMarkerStyle = (p: PrepMapPoint) => {
-    switch (p.category) {
-      case 'arret': return { fill: 'var(--prep-kind-arret)', stroke: 'white', strokeWidth: 2.5, r: 14 };
-      case 'nuit': return { fill: 'var(--prep-kind-nuit)', rx: 9, ry: 9, width: 32, height: 32 };
-      case 'ravitaillement': return { fill: 'var(--prep-kind-ravitaillement)', rx: 9, ry: 9, width: 32, height: 32 };
-      default: return { fill: 'var(--prep-map-skeleton-bg)', r: 14 };
-    }
-  };
-
-  const getIconName = (p: PrepMapPoint) => {
-    switch (p.category) {
-      case 'ravitaillement': return 'utensils';
-      case 'nuit': return 'bed';
-      default: return null;
-    }
-  };
-
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: '100%' }}>
-      {routeCoords.length > 1 && (
-        <polyline
-          points={routeCoords.map(c => `${transformX(c[0])},${transformY(c[1])}`).join(' ')}
-          fill="none" stroke="var(--lkv-action)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"
-        />
-      )}
-      {endpoints.map((e) => (
-        <g key={e.key} transform={`translate(${transformX(e.c[0])}, ${transformY(e.c[1])})`}>
-          <circle cx={0} cy={0} r={11} fill="var(--lkv-action)" stroke="white" strokeWidth={2.5} />
-          <circle cx={0} cy={0} r={4} fill="white" />
-        </g>
-      ))}
-      {points.map(p => {
-        const x = transformX(p.lon); const y = transformY(p.lat);
-        const isSquare = ['ravitaillement', 'nuit'].includes(p.category || '');
-        const iconName = getIconName(p);
-        return (
-          <g key={p.id} transform={`translate(${x}, ${y})`} onClick={() => onPointClick?.(p.id)} style={{ cursor: 'pointer' }}>
-            {isSquare ? <rect x={-16} y={-16} {...getMarkerStyle(p)} /> : <circle cx={0} cy={0} {...getMarkerStyle(p)} />}
-            {iconName ? (
-              <g transform="translate(-8, -8)"><foreignObject width="16" height="16"><Icon name={iconName} size={16} /></foreignObject></g>
-            ) : (
-              <text x={0} y={5} textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">{(p as any).number || ''}</text>
-            )}
-          </g>
-        );
-      })}
-    </svg>
-  );
-}
 
 function MapCanvas({
   name,
@@ -673,26 +598,26 @@ function MapCanvas({
   readonly points: readonly PrepMapPoint[];
   readonly recenterKey: number;
 }) {
-  const coords = useMemo(
-    () => (position ? [...routeCoords, position] : routeCoords),
-    [routeCoords, position]
-  );
+  const coords = useMemo(() => {
+    const known = position ? [...routeCoords, position] : routeCoords;
+    // Une seule extremite connue ne suffit pas a HubGlobeMap : il exige deux
+    // coordonnees distinctes pour construire une ligne, et affichait donc son
+    // etat vide pendant tout le moment ou l on choisit encore le second point.
+    // On duplique le point unique pour que la carte s affiche des le premier
+    // point pose. Aucun trace dessine : la carte se centre dessus.
+    if (known.length !== 1) return known;
+    return [known[0], known[0]];
+  }, [routeCoords, position]);
   
-  const mapLibreAvailable = typeof window !== 'undefined' && (window as any).maplibregl;
-
   return (
     <div className="prep-map__canvas">
-      {mapLibreAvailable ? (
-        <HubGlobeMap
-          key={`prep-map-${recenterKey}`}
-          name={name}
-          routeCoords={coords}
-          highlightCoords={highlightCoords}
-          points={points as unknown as HubRoutePoint[]}
-        />
-      ) : (
-        <MapSVG routeCoords={coords} points={points} />
-      )}
+      <HubGlobeMap
+        key={`prep-map-${recenterKey}`}
+        name={name}
+        routeCoords={coords}
+        highlightCoords={highlightCoords}
+        points={points as unknown as HubRoutePoint[]}
+      />
     </div>
   );
 }

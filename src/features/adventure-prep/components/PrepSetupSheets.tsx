@@ -190,13 +190,13 @@ function PlaceRow({
   const { place } = candidate;
   const where = [place.country, candidate.context].filter(Boolean).join(' · ');
   return (
-    <div className={`li ${selected ? 'sel' : ''}`} onClick={onSelect} style={{ cursor: 'pointer' }}>
+    <button type="button" className={`li ${selected ? 'sel' : ''}`} onClick={onSelect} aria-pressed={selected}>
       <div className="rt">
         <div className="t1">{place.name}</div>
         <div className="t2">{where}</div>
       </div>
       {selected ? <Icon name="check" size={16} /> : null}
-    </div>
+    </button>
   );
 }
 

@@ -55,14 +55,15 @@ interface BlockRowProps {
   parts: PlaceParts | null;
   text?: string;
   unknown?: boolean;
-  onClick: () => void;
+  onClick?: () => void;
+  disabled?: boolean;
   children?: React.ReactNode;
 }
 
-function BlockRow({ label, icon, parts, text, unknown, onClick, children }: BlockRowProps) {
+function BlockRow({ label, icon, parts, text, unknown, onClick, disabled, children }: BlockRowProps) {
   const isUnknown = unknown ?? parts === null;
   return (
-    <button type="button" className="prep-block__row" onClick={onClick}>
+    <button type="button" className="prep-block__row" onClick={onClick} disabled={disabled} aria-disabled={disabled || undefined}>
       <Icon name={icon} size={18} aria-hidden="true" />
       <span className="prep-block__label">{label}</span>
       <span className="prep-block__stack">
@@ -72,7 +73,7 @@ function BlockRow({ label, icon, parts, text, unknown, onClick, children }: Bloc
         {parts?.secondary ? <span className="prep-block__detail">{parts.secondary}</span> : null}
       </span>
       {children}
-      <Icon name="chevron-right" size={18} aria-hidden="true" />
+      {disabled ? null : <Icon name="chevron-right" size={18} aria-hidden="true" />}
     </button>
   );
 }
@@ -82,7 +83,8 @@ interface CellProps {
   icon: string;
   value: string;
   unknown?: boolean;
-  onClick: () => void;
+  onClick?: () => void;
+  disabled?: boolean;
   children?: React.ReactNode;
 }
 
@@ -216,7 +218,7 @@ export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
                   icon="refresh-cw"
                   parts={null}
                   text="Retour au départ"
-                  onClick={() => onOpenSheet('place', null, 'destination')}
+                  disabled
                 />
               );
             }
@@ -308,3 +310,4 @@ export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
 }
 
 export default DestinationStep;
+

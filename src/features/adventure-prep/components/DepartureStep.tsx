@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/Icon';
 import { Button } from '@/components/ui';
 import { useAdventurePrepStore } from '../store/useAdventurePrepStore';
@@ -11,6 +12,7 @@ import { mealNeeds, uncoveredMeals, waterNeeds } from '../engine/consumables';
 import { knownGaps } from '../engine/itinerary';
 import { bookWeightLabel, gearToVerifyCount, plural } from '../engine/labels';
 import type { AdventurePrepDraft, GearNeed, PlaceRef } from '../types';
+import { blockersBeforeSave, buildAdventureGenerateRequest } from '../adventureRequest';
 import { PrepMap } from './PrepMap';
 import type { PrepSheetId } from './PrepSheets';
 
@@ -78,22 +80,77 @@ export function DepartureStep({ onOpenSheet }: DepartureStepProps) {
   const draft = useAdventurePrepStore((state) => state.draft);
   const syncGear = useAdventurePrepStore((state) => state.syncGear);
   const [save, setSave] = useState<'idle' | 'saving' | 'saved'>('idle');
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const router = useRouter();
+  // L abort est partage : un demontage ou une deuxieme tentative doit annuler
+  // la premiere, sinon un plan arrive apres le depart de l ecran.
+  const abort = useRef<AbortController | null>(null);
+  // Cle d idempotence : une par tentative. Si la reponse se perd, le reessai
+  // rejoue la MEME requete et la route renvoie le plan deja cree au lieu d en
+  // fabriquer un second.
+  const idempotencyKey = useRef<string | null>(null);
 
   useEffect(() => {
     syncGear();
   }, [syncGear, draft.activities.primary, draft.activities.nights.length]);
 
   useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current);
+    abort.current?.abort();
   }, []);
 
-  const saveAdventure = useCallback(() => {
+  const saveAdventure = useCallback(async () => {
     if (save === 'saving') return;
-    setSave('saving');
-    timer.current = setTimeout(() => setSave('saved'), 400);
-  }, [save]);
+    const blockers = blockersBeforeSave(draft);
+    if (blockers.length > 0) {
+      setSaveError(`Il manque ${blockers.join(', ')} avant d enregistrer ton aventure.`);
+      return;
+    }
 
+    setSaveError(null);
+    setSave('saving');
+
+    const controller = new AbortController();
+    abort.current = controller;
+    idempotencyKey.current = idempotencyKey.current ?? crypto.randomUUID();
+
+    try {
+      const response = await fetch('/api/adventure/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': idempotencyKey.current,
+        },
+        body: JSON.stringify(buildAdventureGenerateRequest(draft)),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        // Le detail technique reste cote serveur : l ecran ne montre qu une
+        // phrase actionnable, jamais un code HTTP ni une charge utile brute.
+        setSave('idle');
+        setSaveError(
+          response.status === 401
+            ? 'Connecte-toi pour enregistrer ton aventure, puis reessaie.'
+            : 'Ton aventure n a pas pu etre enregistree. Reessaie dans un instant.'
+        );
+        return;
+      }
+
+      const payload = (await response.json()) as { planId?: string };
+      if (!payload.planId) {
+        setSave('idle');
+        setSaveError('Le parcours a ete enregistre sans identifiant. Verifie ton hub.');
+        return;
+      }
+
+      setSave('saved');
+      router.push('/hub');
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      setSave('idle');
+      setSaveError('Impossible de joindre le serveur. Verifie ta connexion, puis reessaie.');
+    }
+  }, [draft, router, save]);
   const activity = activityById(draft.activities.primary);
   const title = draft.coverName ?? 'Ton aventure';
   
@@ -227,6 +284,11 @@ export function DepartureStep({ onOpenSheet }: DepartureStepProps) {
       </div>
       
       <div className="prep-footer">
+        {saveError ? (
+          <p className="prep-missing" role="alert" style={{ margin: 0, width: '100%' }}>
+            {saveError}
+          </p>
+        ) : null}
         <Button
           variant="primary"
           size="lg"
