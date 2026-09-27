@@ -1,0 +1,359 @@
+/**
+ * Préparateur d'aventure — contrats de domaine.
+ *
+ * Trois étapes plein écran : Destination · Parcours · Départ.
+ *
+ * Règles non negociables encodees ici :
+ * 1. Aucune donnee inventee. Prix, disponibilite et lieux sont toujours
+ *    `null` + un etat de confiance quand l'information est inconnue.
+ * 2. Une decision dominante par ecran, pas de score global de preparation.
+ * 3. Tout est immuable : les moteurs purs renvoient toujours de nouveaux objets.
+ */
+
+/* ------------------------------------------------------------------ */
+/* Etapes                                                              */
+/* ------------------------------------------------------------------ */
+
+export type PrepStepId = 'destination' | 'itinerary' | 'departure';
+
+/** Progression en mots simples, jamais en jargon de pipeline. */
+export const PREP_STEPS: readonly PrepStepId[] = ['destination', 'itinerary', 'departure'];
+
+export const PREP_STEP_LABELS: Readonly<Record<PrepStepId, string>> = {
+  destination: 'Destination',
+  itinerary: 'Parcours',
+  departure: 'Départ',
+};
+
+/* ------------------------------------------------------------------ */
+/* Catalogue d'activites                                               */
+/* ------------------------------------------------------------------ */
+
+export type ActivityCategoryId =
+  | 'a_pied'
+  | 'a_velo'
+  | 'eau'
+  | 'neige_montagne'
+  | 'voyage_sejour'
+  | 'autres_sports';
+
+export interface ActivityCategory {
+  id: ActivityCategoryId;
+  label: string;
+  icon: string;
+}
+
+/** Contexte de metrique dominant : pilote les trois metriques de l'etape 2. */
+export type MetricsContext = 'terrain' | 'sejour' | 'voyage';
+
+export interface ActivityDef {
+  id: string;
+  label: string;
+  category: ActivityCategoryId;
+  icon: string;
+  keywords: readonly string[];
+  metrics: MetricsContext;
+  /** Activite principale possible dans le catalogue. */
+  canBePrimary: boolean;
+  /** Peut aussi s'ajouter comme nuit (bivouac). */
+  canBeAddedNight: boolean;
+  /** Se combine avec d'autres activites (un voyage peut contenir plusieurs). */
+  combinable: boolean;
+  /** Duree conseillee, uniquement une suggestion affichee comme telle. */
+  suggestedDurationHours: number;
+}
+
+export interface ActivitySelection {
+  primary: string | null;
+  extra: readonly string[];
+  /** Nuits ajoutees (bivouac) : ni le lieu ni la date ne sont inventes. */
+  nights: readonly string[];
+}
+
+/* ------------------------------------------------------------------ */
+/* Confiance                                                           */
+/* ------------------------------------------------------------------ */
+
+/** Trois etats, toujours explicites a l'ecran. */
+export type BookingState = 'propose' | 'a_reserver' | 'confirme';
+
+export const BOOKING_STATE_LABELS: Readonly<Record<BookingState, string>> = {
+  propose: 'Proposé',
+  a_reserver: 'À réserver',
+  confirme: 'Confirmé',
+};
+
+/** Prix : jamais invente. `amount === null` signifie « à vérifier ». */
+export interface MoneyValue {
+  amount: number | null;
+  currency: 'EUR';
+  state: BookingState;
+}
+
+export const PRICE_TO_CHECK: MoneyValue = { amount: null, currency: 'EUR', state: 'a_reserver' };
+
+/* ------------------------------------------------------------------ */
+/* Etape 1 — On part ou ?                                             */
+/* ------------------------------------------------------------------ */
+
+export interface PlaceRef {
+  id: string;
+  name: string;
+  country: string;
+  lat: number;
+  lon: number;
+}
+
+export type RouteShape = 'boucle' | 'aller_simple';
+
+export interface RouteBlock {
+  origin: PlaceRef | null;
+  destination: PlaceRef | null;
+  shape: RouteShape;
+}
+
+export interface CalendarBlock {
+  /** ISO `YYYY-MM-DD`. `null` = inconnu, affiche « à choisir ». */
+  startDate: string | null;
+  durationDays: number | null;
+  /** Vrai quand la duree vient d'une proposition, pas d'une preference connue. */
+  durationIsSuggested: boolean;
+  returnDate: string | null;
+}
+
+export type GroupMode = 'solo' | 'groupe';
+
+export interface GroupBlock {
+  mode: GroupMode;
+  adults: number;
+  children: number;
+  hasPets: boolean;
+  knownMembers: readonly string[];
+}
+
+export type Pace = 'tranquille' | 'normal' | 'rapide';
+export type BudgetLevel = 'economique' | 'modere' | 'confort';
+export type TransportPreference = 'peigne' | 'train' | 'voiture' | 'avion' | 'mixte';
+
+export interface PreferencesBlock {
+  budgetPerPerson: number | null;
+  budgetLevel: BudgetLevel;
+  pace: Pace;
+  transport: TransportPreference;
+  interests: readonly string[];
+  accessibilityNeeds: readonly string[];
+}
+
+/* ------------------------------------------------------------------ */
+/* Etape 2 — Voici ton aventure                                        */
+/* ------------------------------------------------------------------ */
+
+export type ItineraryStepKind = 'trajet' | 'arret' | 'repos' | 'nuit' | 'ravitaillement';
+
+export interface ItineraryStep {
+  id: string;
+  day: number;
+  order: number;
+  kind: ItineraryStepKind;
+  title: string;
+  placeName: string | null;
+  /** Heure indicative « 08:30 », jamais une reservation. */
+  startTime: string | null;
+  durationMin: number | null;
+  /** Raison courte du choix : proximite, preference, ravitaillement… */
+  reason: string | null;
+  price: MoneyValue;
+  state: BookingState;
+  /** « À conserver » : bloque l'etape lors d'une nouvelle proposition. */
+  kept: boolean;
+  icon: string;
+  lat: number | null;
+  lon: number | null;
+  /** Tag optionnel : rattache un ravitaillement a un repas precis. */
+  mealSlot?: MealSlot | null;
+}
+
+export interface DayTotals {
+  distanceKm: number | null;
+  movingMin: number | null;
+  elevGainM: number | null;
+  elevLossM: number | null;
+}
+
+export interface ItineraryModel {
+  days: number;
+  steps: readonly ItineraryStep[];
+  totals: DayTotals;
+  perDay: readonly DayTotals[];
+  /** Contexte qui a determine les trois metriques affichees. */
+  metricsContext: MetricsContext;
+  budgetPerPerson: MoneyValue;
+  activityCount: number;
+  /** Points de repli calcules (pluie, fermeture, retard…). */
+  contingencies: readonly Contingency[];
+}
+
+/** Ajuster : cinq reglages(exprimes simplement) + une phrase libre. */
+export type AdjustmentId =
+  | 'moins_cher'
+  | 'moins_de_transport'
+  | 'plus_de_nature'
+  | 'plus_tranquille'
+  | 'plus_de_decouvertes';
+
+export interface AdjustmentPreview {
+  id: AdjustmentId;
+  /** Effet explique en mots, jamais un pourcentage invente. */
+  impact: string;
+  /** Etapes conservees ou confirmees : jamais deplacees silencieusement. */
+  preservedStepIds: readonly string[];
+  changedStepIds: readonly string[];
+}
+
+/* ------------------------------------------------------------------ */
+/* Etape 3 — Tout est pret ?                                          */
+/* ------------------------------------------------------------------ */
+
+export type GearCategory =
+  | 'shelter'
+  | 'sleep'
+  | 'cook'
+  | 'clothing'
+  | 'water'
+  | 'safety'
+  | 'navigation'
+  | 'misc';
+
+export interface GearNeed {
+  id: string;
+  name: string;
+  category: GearCategory;
+  quantity: number;
+  vital: boolean;
+  requiredFor: readonly string[];
+  /** `null` = personne designee, le partage reste « a confirmer ». */
+  ownerId: string | null;
+  /** `null` = poids inconnu, jamais un zero par defaut. */
+  weightGrams: number | null;
+  /** Toujours `false` a la creation : possede ne veut pas dire prepare. */
+  packed: boolean;
+}
+
+export interface WaterNeed {
+  stepId: string;
+  litersPerPerson: number | null;
+  /** Fiabilite du point de ravitaillement suivant. */
+  confidence: 'fiable' | 'incertaine';
+  refillPlaceName: string | null;
+  alternativePlaceName: string | null;
+}
+
+/** Repas d'une journee : jamais de menu invente, seulement un besoin. */
+export type MealSlot = 'petit_dejeuner' | 'dejeuner' | 'diner';
+
+export const MEAL_SLOT_LABELS: Readonly<Record<MealSlot, string>> = {
+  petit_dejeuner: 'Petit-déjeuner',
+  dejeuner: 'Déjeuner',
+  diner: 'Dîner',
+};
+
+export interface MealNeed {
+  day: number;
+  slot: 'petit_dejeuner' | 'dejeuner' | 'diner';
+  coveredByStepId: string | null;
+  label: string;
+}
+
+export interface DepartureMetrics {
+  gearToVerify: number;
+  /** Possession inconnue != absent : les deux sont distingues. */
+  missing: readonly { name: string; ownership: 'inconnu' | 'absent' }[];
+  packWeightGrams: number | null;
+  packWeightHasGaps: boolean;
+  water: WaterNeed[];
+  meals: MealNeed[];
+  confirmedParticipants: number;
+  invitedParticipants: number;
+  /** Effectif prevu utilise par les calculs (confirme + invite). */
+  plannedParticipants: number;
+  budgetEstimated: MoneyValue;
+  budgetCommitted: number;
+  budgetRemaining: MoneyValue;
+  /** Verifications concretes. Jamais un score de securite. */
+  openPoints: readonly string[];
+}
+
+/* ------------------------------------------------------------------ */
+/* Generation                                                          */
+/* ------------------------------------------------------------------ */
+
+export type GenerationPhaseId =
+  | 'recherche_parcours'
+  | 'verification_etapes'
+  | 'disponibilites'
+  | 'synthese';
+
+export interface GenerationPhase {
+  id: GenerationPhaseId;
+  label: string;
+  done: boolean;
+}
+
+export type GenerationStatus = 'idle' | 'en_cours' | 'interrompu' | 'echec' | 'termine';
+
+export interface GenerationState {
+  status: GenerationStatus;
+  phases: readonly GenerationPhase[];
+  /** Resultats deja produits : conserves apres « Arreter » ou un echec. */
+  steps: readonly ItineraryStep[];
+  days: number;
+  /** Erreur honnete, jamais de detail technique suppose. */
+  error: string | null;
+}
+
+/* ------------------------------------------------------------------ */
+/* Robustesse                                                          */
+/* ------------------------------------------------------------------ */
+
+export type ContingencyKind =
+  | 'pluie'
+  | 'fermeture'
+  | 'retard'
+  | 'hebergement_indisponible'
+  | 'hors_ligne'
+  | 'ia_indisponible'
+  | 'offre_absente';
+
+export interface Contingency {
+  kind: ContingencyKind;
+  trigger: string;
+  action: string;
+  affectedStepIds: readonly string[];
+  prepared: boolean;
+}
+
+/* ------------------------------------------------------------------ */
+/* Brouillon autosave                                                  */
+/* ------------------------------------------------------------------ */
+
+export interface AdventurePrepDraft {
+  /** Incremente a chaque sauvegarde : sert de version de reprise. */
+  version: number;
+  activities: ActivitySelection;
+  route: RouteBlock;
+  calendar: CalendarBlock;
+  group: GroupBlock;
+  preferences: PreferencesBlock;
+  generation: GenerationState;
+  itinerary: ItineraryModel | null;
+  gear: readonly GearNeed[];
+  packedGearIds: readonly string[];
+  currentStep: PrepStepId;
+  /** Nom personnalise de l aventures ; ull = nom propose par defaut. */
+  coverName: string | null;
+  /** Etapes deja terminees, accessibles au toucher. */
+  completedSteps: readonly PrepStepId[];
+  updatedAt: number | null;
+}
+
+

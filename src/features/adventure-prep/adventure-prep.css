@@ -1,0 +1,819 @@
+/* ==========================================================================
+   PRÉPARATEUR D'AVENTURE — feuille de style de la feature
+   Importée une seule fois par src/app/preparer/page.tsx.
+
+   Direction (A2) :
+   · Fond blanc légèrement teinté de vert, topographie très discrète dans les
+     espaces vides uniquement — jamais sous le texte.
+   · Surfaces de texte presque opaques ; le verre est réservé aux commandes
+     flottantes (carte plein écran, contrôles suspendus au-dessus).
+   · Transitions simples 220 ms via les tokens motion, avec repli
+     `motion-reduce` et `prefers-reduced-transparency`.
+   ========================================================================== */
+
+.adventure-prep {
+  /* Fond : blanc teinté de vert. La topographie est peinte par une couche
+     radiale très basse opacité, masquée sous les zones de texte. */
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  /* La hauteur doit soustraire EXACTEMENT la bande que l'AppShell reserve
+     (AppShell.tsx) : max(--bottom-nav-height, --cookie-banner-h). Ne
+     soustraire que --bottom-nav-height laissait le footer passer sous la
+     bannique cookies, qui est un overlay fixe — la barre d'action
+     "Continuer" devenait incliquable sur /prepare. */
+  height: calc(
+    100dvh - var(--shell-top-padding, 0px) -
+      max(var(--bottom-nav-height, 0px), var(--cookie-banner-h, 0px))
+  );
+  overflow: hidden;
+  background-color: var(--lkv-surface);
+  color: var(--lkv-text-primary);
+}
+
+.adventure-prep::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    radial-gradient(120% 80% at 8% 0%, rgb(34 97 72 / 0.07), transparent 58%),
+    radial-gradient(90% 70% at 100% 12%, rgb(23 64 44 / 0.06), transparent 62%),
+    radial-gradient(140% 60% at 50% 108%, rgb(34 97 72 / 0.05), transparent 65%);
+}
+
+/* Traits topographiques : trois anneaux concentriques, très discrets. */
+.adventure-prep::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  right: -14vmin;
+  top: 8vmin;
+  width: 62vmin;
+  height: 62vmin;
+  border-radius: 999px;
+  opacity: 0.5;
+  background:
+    repeating-radial-gradient(
+      circle at 50% 50%,
+      rgb(23 64 44 / 0.055) 0 1px,
+      transparent 1px 9vmin
+    );
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 34%, transparent 72%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 34%, transparent 72%);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .adventure-prep::before,
+  .adventure-prep::after {
+    display: none;
+  }
+  .adventure-prep {
+    background-color: #fff;
+  }
+}
+
+/* --- Chrome : bandeau de navigation 52 px ------------------------------- */
+
+.prep-nav {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: var(--control-height-md) 1fr var(--control-height-md);
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--prep-nav-height);
+  padding-inline: var(--space-4);
+  background-color: var(--lkv-surface);
+  border-bottom: 1px solid color-mix(in srgb, var(--glass-rim) 60%, transparent);
+}
+
+.prep-nav__progress {
+  justify-self: center;
+  max-width: 100%;
+  font-size: var(--lkv-text-footnote);
+  font-weight: 650;
+  letter-spacing: var(--lkv-tracking-body);
+  color: var(--lkv-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.prep-nav__progress b {
+  color: var(--lkv-action);
+  font-weight: 750;
+}
+
+/* --- Ecran : remplit l'espace restant sous le bandeau ------------------ */
+
+.prep-screen {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Corps : zone scrollable unique ------------------------------------ */
+/* Le défilement est toujours possible (clavier, texte agrandi, petit écran)
+   : on ne réduit jamais la taille des caractères pour tenir dans l'écran. */
+
+.prep-body {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--space-5) var(--space-5) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--prep-block-gap);
+}
+
+/* --- Titre d'étape ------------------------------------------------------ */
+
+.prep-title {
+  margin: 0;
+  font-size: var(--lkv-text-title-md);
+  line-height: var(--lkv-line-title);
+  letter-spacing: var(--lkv-tracking-title);
+  font-weight: 780;
+  color: var(--lkv-text-primary);
+  text-wrap: balance;
+}
+
+.prep-help {
+  margin: var(--space-2) 0 0;
+  font-size: var(--lkv-text-body-sm);
+  line-height: var(--lkv-line-body);
+  color: var(--lkv-text-secondary);
+  text-wrap: pretty;
+}
+
+.prep-section-title {
+  margin: 0;
+  font-size: var(--lkv-text-subheadline);
+  font-weight: 700;
+  letter-spacing: var(--lkv-tracking-body);
+  color: var(--lkv-text-primary);
+}
+
+/* --- Bloc de formulaire : surface claire presque opaque ----------------- */
+
+.prep-block {
+  border-radius: var(--card-radius);
+  background-color: color-mix(in srgb, var(--card-tint-solid) 92%, #fff);
+  border: 1px solid color-mix(in srgb, var(--glass-rim) 70%, transparent);
+  box-shadow: 0 1px 2px rgb(23 43 36 / 0.05);
+  overflow: hidden;
+}
+
+.prep-block__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--control-height-lg);
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  transition: background-color var(--motion-control-duration) var(--motion-ease-standard);
+}
+
+.prep-block__row + .prep-block__row {
+  border-top: 1px solid color-mix(in srgb, var(--glass-rim) 55%, transparent);
+}
+
+button.prep-block__row {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button.prep-block__row:active {
+  background-color: color-mix(in srgb, var(--lkv-action) 8%, transparent);
+}
+
+.prep-block__row:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: -2px;
+}
+
+.prep-block__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--lkv-text-note);
+  color: var(--lkv-text-secondary);
+}
+
+.prep-block__value {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 58%;
+  font-size: var(--lkv-text-body);
+  font-weight: 620;
+  color: var(--lkv-text-primary);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prep-block__value[data-unknown='true'] {
+  color: var(--lkv-text-subtle);
+  font-weight: 500;
+  font-style: italic;
+}
+
+.prep-block__hint {
+  padding: 0 var(--space-4) var(--space-3);
+  font-size: var(--lkv-text-footnote);
+  line-height: var(--lkv-line-body);
+  color: var(--lkv-text-secondary);
+}
+
+/* --- Carte : coins 24 px, contrôles flottants en verre ----------------- */
+
+.prep-map {
+  position: relative;
+  flex: 0 0 auto;
+  height: var(--prep-map-share);
+  min-height: 168px;
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  background-color: color-mix(in srgb, var(--card-tint) 70%, var(--lkv-surface));
+  border: 1px solid color-mix(in srgb, var(--glass-rim) 70%, transparent);
+  isolation: isolate;
+}
+
+/* Écran court / texte agrandi : la carte se compacte AVANT tout scroll. */
+@media (max-height: 720px) {
+  .prep-map {
+    height: var(--prep-map-share-compact);
+    min-height: 132px;
+  }
+}
+
+.prep-map__canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.prep-map__scope {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  z-index: 2;
+}
+
+/* Verre réservé aux commandes flottantes au-dessus de la carte. */
+.prep-map__controls {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.prep-map__controls--end {
+  top: var(--space-3);
+  right: var(--space-3);
+  align-items: flex-end;
+}
+
+.prep-map__glass {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height-md);
+  padding-inline: var(--space-3);
+  border-radius: 999px;
+  font-size: var(--lkv-text-footnote);
+  font-weight: 650;
+  color: var(--glass-label);
+  background-color: var(--glass-bg-medium);
+  border: 1px solid var(--glass-border);
+  -webkit-backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
+  box-shadow: 0 2px 10px rgb(16 28 23 / 0.14);
+}
+
+button.prep-map__glass {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--motion-control-duration) var(--motion-ease-standard);
+}
+
+button.prep-map__glass:active {
+  background-color: color-mix(in srgb, var(--glass-bg-medium) 82%, #000);
+}
+
+.prep-map__glass:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+.prep-map__glass--icon {
+  width: var(--control-height-md);
+  padding-inline: 0;
+  justify-content: center;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .prep-map__glass {
+    background-color: var(--card-tint-solid);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Carte en plein écran : la carte occupe tout, les filtres restent en bas. */
+.prep-map--full {
+  position: fixed;
+  inset: 0;
+  z-index: 10010;
+  height: 100%;
+  min-height: 0;
+  border-radius: 0;
+  border: 0;
+  background-color: var(--lkv-surface);
+}
+
+.prep-map__fullbar {
+  position: absolute;
+  z-index: 4;
+  left: var(--space-4);
+  right: var(--space-4);
+  bottom: calc(var(--space-5) + var(--safe-bottom, 0px));
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* --- Pastille d'activité ------------------------------------------------ */
+
+.prep-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: flex-start;
+  min-height: var(--control-height-md);
+  padding: 0 var(--space-3) 0 var(--space-2);
+  border-radius: 999px;
+  font-size: var(--lkv-text-note);
+  font-weight: 650;
+  color: var(--lkv-action);
+  background-color: color-mix(in srgb, var(--lkv-action) 10%, #fff);
+  border: 1px solid color-mix(in srgb, var(--lkv-action) 26%, transparent);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--motion-control-duration) var(--motion-ease-standard);
+}
+
+.prep-pill:hover {
+  background-color: color-mix(in srgb, var(--lkv-action) 16%, #fff);
+}
+
+.prep-pill:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+/* --- Sélecteur de journée (étape 2) ------------------------------------ */
+
+.prep-days {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding-block: 2px;
+  scrollbar-width: none;
+}
+
+.prep-days::-webkit-scrollbar {
+  display: none;
+}
+
+.prep-day {
+  flex: 0 0 auto;
+  min-height: var(--control-height-md);
+  padding-inline: var(--space-4);
+  border-radius: 999px;
+  font-size: var(--lkv-text-note);
+  font-weight: 650;
+  color: var(--lkv-text-secondary);
+  background-color: color-mix(in srgb, var(--card-tint-solid) 80%, #fff);
+  border: 1px solid var(--glass-rim);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--motion-control-duration) var(--motion-ease-standard),
+    color var(--motion-control-duration) var(--motion-ease-standard);
+}
+
+.prep-day[aria-pressed='true'] {
+  color: var(--btn-on-solid);
+  background-color: var(--btn-tint-solid);
+  border-color: transparent;
+  font-weight: 750;
+}
+
+.prep-day:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+/* --- Trois métriques ---------------------------------------------------- */
+/* Jamais de score global : trois mesures, périmètre explicite. */
+
+.prep-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.prep-metric {
+  padding: var(--space-3);
+  border-radius: var(--lkv-radius-concentric);
+  background-color: color-mix(in srgb, var(--card-tint-solid) 88%, #fff);
+  border: 1px solid color-mix(in srgb, var(--glass-rim) 60%, transparent);
+  min-width: 0;
+}
+
+.prep-metric__label {
+  display: block;
+  font-size: var(--lkv-text-caption);
+  font-weight: 620;
+  letter-spacing: 0.01em;
+  color: var(--lkv-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prep-metric__value {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--lkv-text-callout);
+  font-weight: 760;
+  letter-spacing: var(--lkv-tracking-title);
+  color: var(--lkv-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.prep-metric__value[data-unknown='true'] {
+  color: var(--lkv-text-subtle);
+  font-weight: 550;
+}
+
+.prep-metric__scope {
+  display: block;
+  margin-top: 1px;
+  font-size: var(--lkv-text-caption-2);
+  color: var(--lkv-text-subtle);
+}
+
+/* --- Bandeau de génération --------------------------------------------- */
+/* Décrit le travail RÉELLEMENT effectué ; jamais de pourcentage. */
+
+.prep-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--card-radius);
+  background-color: color-mix(in srgb, var(--card-tint-solid) 92%, #fff);
+  border: 1px solid color-mix(in srgb, var(--glass-rim) 60%, transparent);
+}
+
+.prep-rail__line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--lkv-text-note);
+  color: var(--lkv-text-secondary);
+}
+
+.prep-rail__line[data-state='done'] {
+  color: var(--lkv-action);
+}
+
+.prep-rail__line[data-state='active'] {
+  color: var(--lkv-text-primary);
+  font-weight: 640;
+}
+
+.prep-rail__dot {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--lkv-text-subtle);
+}
+
+.prep-rail__line[data-state='done'] .prep-rail__dot {
+  color: var(--lkv-action);
+}
+
+.prep-rail__line[data-state='active'] .prep-rail__dot {
+  color: var(--lkv-text-primary);
+}
+
+/* --- Fiche d'étape ------------------------------------------------------ */
+
+.prep-step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--card-radius);
+  background-color: color-mix(in srgb, var(--card-tint-solid) 94%, #fff);
+  border: 1px solid color-mix(in srgb, var(--glass-rim) 70%, transparent);
+  box-shadow: 0 1px 2px rgb(23 43 36 / 0.05);
+}
+
+.prep-step__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.prep-step__thumb {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--lkv-radius-concentric);
+  color: var(--lkv-action);
+  background-color: color-mix(in srgb, var(--lkv-action) 10%, #fff);
+  border: 1px solid color-mix(in srgb, var(--lkv-action) 18%, transparent);
+}
+
+.prep-step__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.prep-step__name {
+  margin: 0;
+  font-size: var(--lkv-text-body);
+  font-weight: 700;
+  letter-spacing: var(--lkv-tracking-body);
+  color: var(--lkv-text-primary);
+}
+
+.prep-step__when {
+  margin-top: 2px;
+  font-size: var(--lkv-text-note);
+  color: var(--lkv-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.prep-step__reason {
+  margin-top: 4px;
+  font-size: var(--lkv-text-footnote);
+  line-height: var(--lkv-line-body);
+  color: var(--lkv-text-subtle);
+}
+
+.prep-step__price {
+  flex: 0 0 auto;
+  font-size: var(--lkv-text-note);
+  font-weight: 700;
+  text-align: right;
+  color: var(--lkv-text-primary);
+}
+
+.prep-step__price[data-state='a_reserver'] {
+  color: var(--lkv-text-subtle);
+  font-weight: 550;
+  font-style: italic;
+}
+
+.prep-step__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid color-mix(in srgb, var(--glass-rim) 55%, transparent);
+}
+
+/* --- Ligne d'action secondaire (grilles, listes) ----------------------- */
+
+.prep-actionrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.prep-action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height-md);
+  padding-inline: var(--space-4);
+  border-radius: 999px;
+  font-size: var(--lkv-text-note);
+  font-weight: 650;
+  color: var(--lkv-text-primary);
+  background-color: color-mix(in srgb, var(--card-tint-solid) 84%, #fff);
+  border: 1px solid var(--glass-rim);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--motion-control-duration) var(--motion-ease-standard);
+}
+
+.prep-action:hover {
+  background-color: color-mix(in srgb, var(--lkv-action) 8%, #fff);
+}
+
+.prep-action:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+.prep-action[aria-pressed='true'] {
+  color: var(--lkv-action);
+  background-color: color-mix(in srgb, var(--lkv-action) 12%, #fff);
+  border-color: color-mix(in srgb, var(--lkv-action) 30%, transparent);
+}
+
+/* --- Barre d'action fixe (52 px, opaque) ------------------------------- */
+
+.prep-footer {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--prep-action-height);
+  padding: var(--space-2) var(--space-5);
+  background-color: var(--lkv-surface);
+  border-top: 1px solid color-mix(in srgb, var(--glass-rim) 60%, transparent);
+}
+
+.prep-footer__primary {
+  flex: 1 1 auto;
+  min-height: var(--prep-action-height);
+  font-size: var(--lkv-text-body);
+  font-weight: 720;
+}
+
+/* Le fond du footer doit rester lisible même si la carte défile dessous. */
+.prep-footer,
+.prep-nav {
+  isolation: isolate;
+}
+
+/* --- Catalogue d'activités --------------------------------------------- */
+
+.prep-cats {
+  display: flex;
+  /* Rail de filtres : hauteur intrinsèque. Sans flex:0 0 auto il se fait
+     ecraser des que le port devient court (bande cookies reservee, petit
+     viewport, chrome mobile) — les chips passaient sous la liste et
+     devenaient incliquables. C'est la liste qui doit absorber le
+     manque de place, pas la rangee de controles. */
+  flex: 0 0 auto;
+  gap: var(--space-2);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding-block: 2px;
+  scrollbar-width: none;
+}
+
+.prep-cats::-webkit-scrollbar {
+  display: none;
+}
+
+.prep-acts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.prep-act {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--control-height-lg);
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  border-radius: var(--card-radius);
+  font: inherit;
+  color: var(--lkv-text-primary);
+  background-color: color-mix(in srgb, var(--card-tint-solid) 90%, #fff);
+  border: 1px solid color-mix(in srgb, var(--glass-rim) 65%, transparent);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--motion-control-duration) var(--motion-ease-standard),
+    border-color var(--motion-control-duration) var(--motion-ease-standard);
+}
+
+.prep-act[aria-pressed='true'] {
+  color: var(--lkv-action);
+  background-color: color-mix(in srgb, var(--lkv-action) 9%, #fff);
+  border-color: color-mix(in srgb, var(--lkv-action) 34%, transparent);
+}
+
+.prep-act:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+.prep-act__icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--lkv-radius-concentric);
+  color: var(--lkv-action);
+  background-color: color-mix(in srgb, var(--lkv-action) 8%, #fff);
+}
+
+.prep-act__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--lkv-text-body);
+  font-weight: 640;
+}
+
+.prep-act__meta {
+  flex: 0 0 auto;
+  font-size: var(--lkv-text-footnote);
+  color: var(--lkv-text-secondary);
+  text-align: right;
+}
+
+.prep-act__check {
+  flex: 0 0 auto;
+  color: var(--lkv-action);
+}
+
+/* --- États vide / erreur hors carte ------------------------------------ */
+
+.prep-note {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--lkv-radius-concentric);
+  font-size: var(--lkv-text-note);
+  line-height: var(--lkv-line-body);
+  color: var(--lkv-text-secondary);
+  background-color: color-mix(in srgb, var(--lkv-action) 7%, #fff);
+  border: 1px solid color-mix(in srgb, var(--lkv-action) 20%, transparent);
+}
+
+.prep-note[data-tone='warn'] {
+  color: var(--lkv-text-primary);
+  background-color: color-mix(in srgb, #B45309 9%, #fff);
+  border-color: color-mix(in srgb, #B45309 26%, transparent);
+}
+
+.prep-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --- Réduction des animations ------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .adventure-prep,
+  .adventure-prep *,
+  .adventure-prep *::before,
+  .adventure-prep *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
