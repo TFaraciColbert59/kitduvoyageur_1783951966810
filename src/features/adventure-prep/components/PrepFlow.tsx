@@ -9,7 +9,7 @@ import { ActivityPickerScreen } from './ActivityPickerScreen';
 import { DestinationStep } from './DestinationStep';
 import { ItineraryStepScreen } from './ItineraryStep';
 import { DepartureStep } from './DepartureStep';
-import { PrepSheets, type PrepSheetId } from './PrepSheets';
+import { PrepSheets, type PrepPlaceField, type PrepSheetId } from './PrepSheets';
 
 /**
  * Orchestrateur du parcours — le seul endroit qui sait quel écran est visible.
@@ -22,20 +22,28 @@ export function PrepFlow() {
   const draft = useAdventurePrepStore((state) => state.draft);
   const [sheet, setSheet] = useState<PrepSheetId | null>(null);
   const [focusStepId, setFocusStepId] = useState<string | null>(null);
+  const [placeField, setPlaceField] = useState<PrepPlaceField | null>(null);
   const [mounted, setMounted] = useState(false);
 
   // Le brouillon est relu depuis localStorage : le premier rendu doit montrer
   // la même chose que le serveur, sinon React signale un écart d'hydratation.
   useEffect(() => setMounted(true), []);
 
-  const openSheet = useCallback((next: PrepSheetId, focus?: string | null) => {
-    setFocusStepId(focus ?? null);
-    setSheet(next);
-  }, []);
+  // `placeField` porte l extremite demandee : sans elle, la vue lieu deduisait
+  // l extremite et cliquer « Depart » editait l arrivee.
+  const openSheet = useCallback(
+    (next: PrepSheetId, focus?: string | null, field?: PrepPlaceField | null) => {
+      setFocusStepId(focus ?? null);
+      setPlaceField(field ?? null);
+      setSheet(next);
+    },
+    [],
+  );
 
   const closeSheet = useCallback(() => {
     setSheet(null);
     setFocusStepId(null);
+    setPlaceField(null);
   }, []);
 
   // Une reprise peut pointer une étape fermée : on recule plutôt que d'afficher
@@ -69,6 +77,7 @@ export function PrepFlow() {
         sheet={sheet}
         onClose={closeSheet}
         focusStepId={focusStepId}
+        placeField={placeField}
         onOpenSheet={openSheet}
       />
     </>

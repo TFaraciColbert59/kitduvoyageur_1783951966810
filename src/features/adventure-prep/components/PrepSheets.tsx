@@ -3,7 +3,15 @@
 import React from 'react';
 import { Sheet } from '@/components/ui';
 import { useAdventurePrepStore } from '../store/useAdventurePrepStore';
-import { PlaceSheet, CalendarSheet, GroupSheet, PreferencesSheet, CoverageSheet, ParticipantsSheet } from './PrepSetupSheets';
+import {
+  PlaceSheet,
+  CalendarSheet,
+  GroupSheet,
+  PreferencesSheet,
+  CoverageSheet,
+  ParticipantsSheet,
+  type PrepPlaceField,
+} from './PrepSetupSheets';
 import { StepSheet, StepsSheet, AdjustSheet, AddStepSheet } from './PrepItinerarySheets';
 import { GearSheet, ConsumablesSheet } from './PrepGearSheets';
 import { PrepInviteScreen, type InviteUrlBuilder } from './PrepInviteScreen';
@@ -30,13 +38,23 @@ export type PrepSheetId =
   | 'consumables'
   | 'invite';
 
+// Le type est declare la ou il est consomme (la vue lieu) puis re-exporte ici
+// pour que les ecrans n importent que le routeur de sheets.
+export type { PrepPlaceField };
+
 export interface PrepSheetsProps {
   sheet: PrepSheetId | null;
   onClose: () => void;
   /** Étape ciblée par la vue « step ». */
   focusStepId?: string | null;
+  /** Extremite demandee par la ligne cliquee (Depart / Arrivee). */
+  placeField?: PrepPlaceField | null;
   /** Permet a une vue d en ouvrir une autre (Participants -> Inviter). */
-  onOpenSheet?: (id: PrepSheetId) => void;
+  onOpenSheet?: (
+    id: PrepSheetId,
+    focusStepId?: string | null,
+    placeField?: PrepPlaceField | null,
+  ) => void;
 }
 
 const TITLES: Readonly<Record<PrepSheetId, string>> = {
@@ -68,6 +86,7 @@ export function PrepSheets({
   sheet,
   onClose,
   focusStepId = null,
+  placeField = null,
   onOpenSheet,
 }: PrepSheetsProps) {
   const draft = useAdventurePrepStore((state) => state.draft);
@@ -89,7 +108,7 @@ export function PrepSheets({
       detent="large"
       dragToDismiss
     >
-      {sheet === 'place' && <PlaceSheet draft={draft} actions={actions} onClose={onClose} />}
+      {sheet === 'place' && <PlaceSheet draft={draft} actions={actions} onClose={onClose} field={placeField} />}
       {sheet === 'calendar' && <CalendarSheet draft={draft} actions={actions} onClose={onClose} />}
       {sheet === 'group' && <GroupSheet draft={draft} actions={actions} onClose={onClose} />}
       {sheet === 'preferences' && (

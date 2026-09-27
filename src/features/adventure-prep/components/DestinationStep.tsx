@@ -32,10 +32,14 @@ import type {
   RouteShape,
 } from '../types';
 import PrepMap from './PrepMap';
-import type { PrepSheetId } from './PrepSheets';
+import type { PrepPlaceField, PrepSheetId } from './PrepSheets';
 
 export interface DestinationStepProps {
-  onOpenSheet: (sheet: PrepSheetId, focusStepId?: string | null) => void;
+  onOpenSheet: (
+    sheet: PrepSheetId,
+    focusStepId?: string | null,
+    placeField?: PrepPlaceField | null,
+  ) => void;
 }
 
 function placeCoords(place: PlaceRef | null): [number, number] | null {
@@ -212,7 +216,7 @@ export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
                   icon="refresh-cw"
                   parts={null}
                   text="Retour au départ"
-                  onClick={() => onOpenSheet('place')}
+                  onClick={() => onOpenSheet('place', null, 'destination')}
                 />
               );
             }
@@ -222,7 +226,7 @@ export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
                 label={row.label}
                 icon={row.icon}
                 parts={partsFor(row.field)}
-                onClick={() => onOpenSheet('place')}
+                onClick={() => onOpenSheet('place', null, row.field)}
               />
             );
           })}

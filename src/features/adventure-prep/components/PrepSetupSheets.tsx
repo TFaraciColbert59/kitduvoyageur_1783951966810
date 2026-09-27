@@ -25,6 +25,15 @@ export interface PrepSheetProps {
   onClose: () => void;
 }
 
+/**
+ * Extremite du trajet que la vue « place » edite.
+ *
+ * Indispensable : sans elle, la vue deduisait l extremite de `origin === null`
+ * et editait donc l arrivee des la premiere fois que le depart etait choisi.
+ * Cliquer « Depart » modifiait silencieusement l arrivee.
+ */
+export type PrepPlaceField = 'origin' | 'destination';
+
 const BUDGET_LEVELS: readonly { id: BudgetLevel; label: string }[] = [
   { id: 'economique', label: 'Économe' },
   { id: 'modere', label: 'Modéré' },
@@ -343,7 +352,7 @@ function MapPicker({ centre, picked, onPick, onCancel }: MapPickerProps) {
   );
 }
 
-export function PlaceSheet({ draft, actions, onClose }: PrepSheetProps) {
+export function PlaceSheet({ draft, actions, onClose, field }: PrepSheetProps & { field?: PrepPlaceField | null }) {
 
   const recent = useLocalPlaces();
   const [query, setQuery] = useState('');
@@ -354,7 +363,9 @@ export function PlaceSheet({ draft, actions, onClose }: PrepSheetProps) {
   const [picking, setPicking] = useState(false);
   const [picked, setPicked] = useState<PickedPoint | null>(null);
 
-  const target = draft.route.origin === null ? 'origin' : 'destination';
+  // `field` vient de la ligne cliquee. Le repli ne sert que si la vue est
+  // ouverte sans contexte (deep link, test) : alors on deduit comme avant.
+  const target: PrepPlaceField = field ?? (draft.route.origin === null ? 'origin' : 'destination');
   const isOrigin = target === 'origin';
   const current = isOrigin ? draft.route.origin : draft.route.destination;
 
