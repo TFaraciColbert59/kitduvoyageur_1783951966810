@@ -34,6 +34,15 @@ export function formatNumber(value: number): string {
     : value.toLocaleString('fr-FR', { maximumFractionDigits: 1 });
 }
 
+/**
+ * Une unité qui s'accorde avec la valeur : « 1 jour », jamais « 1 jours ».
+ * Les unités qui ne se comptent pas (« km », « m », « € ») restent intactes.
+ */
+export function countableUnit(unit: string, value: number): string {
+  if (Math.abs(value - 1) > 1e-9) return unit;
+  return unit.endsWith('s') ? unit.slice(0, -1) : unit;
+}
+
 /** Valeur formatée d'une mesure, ou la formulation « à vérifier ». */
 export function withUnit(value: number | null, unit: string, digits = 0): string {
   if (value === null || !Number.isFinite(value)) return A_VERIFIER;

@@ -1,4 +1,4 @@
-import { A_VERIFIER, formatNumber, withUnit } from './trust';
+import { A_VERIFIER, countableUnit, formatNumber, withUnit } from './trust';
 import type { ItineraryModel, MetricsContext } from '../types';
 
 export type PrepMetricId = 'distance' | 'denivele' | 'duree' | 'nuitees' | 'budget';
@@ -72,7 +72,8 @@ export function metricsFor(
 ): PrepMetric[] {
   return ORDER[model.metricsContext].map((id) => {
     const value = raw(model, scope, id, day);
-    const unit = scope === 'jour' && (id === 'duree' || id === 'nuitees') ? 'jour' : UNITS[id];
+    const base = scope === 'jour' && (id === 'duree' || id === 'nuitees') ? 'jour' : UNITS[id];
+    const unit = value === null ? base : countableUnit(base, value);
     return {
       id,
       label: LABELS[id],

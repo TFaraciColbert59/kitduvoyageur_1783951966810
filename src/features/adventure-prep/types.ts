@@ -75,13 +75,21 @@ export interface ActivitySelection {
 /* ------------------------------------------------------------------ */
 
 /** Trois etats, toujours explicites a l'ecran. */
-export type BookingState = 'propose' | 'a_reserver' | 'confirme';
+export type BookingState = 'propose' | 'a_reserver' | 'confirme' | 'confirme_communaute';
 
 export const BOOKING_STATE_LABELS: Readonly<Record<BookingState, string>> = {
   propose: 'Proposé',
   a_reserver: 'À réserver',
   confirme: 'Confirmé',
+  confirme_communaute: 'Confirmé par la communauté',
 };
+
+/**
+ * Les états qui engagent l'utilisateur, distincts de ceux que rapportent les
+ * autres : l'écran doit pouvoir les différencier, sinon « onSuppose » se lit
+ * comme « c'est sûr ».
+ */
+export const SELF_CONFIRMED_STATES: readonly BookingState[] = ['confirme'];
 
 /** Prix : jamais invente. `amount === null` signifie « à vérifier ». */
 export interface MoneyValue {
@@ -91,6 +99,23 @@ export interface MoneyValue {
 }
 
 export const PRICE_TO_CHECK: MoneyValue = { amount: null, currency: 'EUR', state: 'a_reserver' };
+
+/**
+ * Detail d'un prix affiche dans la fiche d'une etape.
+ *
+ * Une seule valeur `MoneyValue` ne suffit pas : une nuit affiche « par nuit »,
+ * une place de transport « par personne », et l'utilisateur veut toujours lire
+ * le total de son groupe. `isEstimate` separe ce qui est verifie de ce qui ne
+ * l'est pas — une estimation doit porter la mention, jamais un chiffre nu.
+ */
+export interface PriceBreakdown {
+  /** « par nuit », « par personne »… `null` quand l'unite n'a pas de sens. */
+  unitLabel: string | null;
+  perUnit: MoneyValue;
+  perPerson: MoneyValue;
+  groupTotal: MoneyValue;
+  isEstimate: boolean;
+}
 
 /* ------------------------------------------------------------------ */
 /* Etape 1 — On part ou ?                                             */
@@ -171,6 +196,12 @@ export interface ItineraryStep {
   lon: number | null;
   /** Tag optionnel : rattache un ravitaillement a un repas precis. */
   mealSlot?: MealSlot | null;
+  /**
+   * Detail du prix quand il est connu : par unite, par personne, total groupe.
+   * `null` ou absent = « a verifier », jamais une ligne vide qui ferait croire
+   * que le prix a ete oublie plutot que non verifie.
+   */
+  priceBreakdown?: PriceBreakdown | null;
 }
 
 export interface DayTotals {
@@ -309,6 +340,12 @@ export interface GenerationState {
   days: number;
   /** Erreur honnete, jamais de detail technique suppose. */
   error: string | null;
+  /**
+   * Phrase a afficher alors que le parcours EST pret : le parcours a pu etre
+   * construit sur les regles parce que l'IA ne repondait pas. Sans elle, un
+   * repli silencieux ferait croire a un enrichissement qui n'a pas eu lieu.
+   */
+  notice: string | null;
 }
 
 /* ------------------------------------------------------------------ */

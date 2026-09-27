@@ -82,3 +82,34 @@ describe('trois metriques par contexte', () => {
   });
 });
 
+
+describe('accord des unites comptables', () => {
+  const oneDay = () =>
+    modelWith({
+      calendar: { startDate: '2026-07-11', durationDays: 1, durationIsSuggested: true, returnDate: '2026-07-11' },
+    });
+
+  it('ecrit « 1 jour » et jamais « 1 jours »', () => {
+    const duree = metricsFor(oneDay(), 'aventure').find((m) => m.id === 'duree');
+    expect(duree?.value).toBe(1);
+    expect(duree?.formatted).toBe('1 jour');
+  });
+
+  it('conserve le pluriel au-dela de 1', () => {
+    const duree = metricsFor(sejour(), 'aventure').find((m) => m.id === 'duree');
+    expect(duree?.formatted).toBe('3 jours');
+  });
+
+  it('accorda les nuitees sur le meme principe', () => {
+    const uneNuitee = modelWith({
+      activities: { primary: 'snowboard-sejour', extra: [], nights: [] },
+      calendar: { startDate: '2026-07-11', durationDays: 1, durationIsSuggested: false, returnDate: '2026-07-11' },
+    });
+    expect(metricsFor(uneNuitee, 'aventure').find((m) => m.id === 'nuitees')?.formatted).toBe('1 jour');
+  });
+
+  it('laisse les unites non comptables intactes', () => {
+    const budget = metricsFor(sejour(), 'aventure').find((m) => m.id === 'budget');
+    expect(budget?.unit).toBe('€');
+  });
+});

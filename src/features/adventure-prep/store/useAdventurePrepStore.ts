@@ -11,6 +11,7 @@ import {
   interruptGeneration,
   markPhaseDone,
   resumeGeneration,
+  setGenerationNotice,
   setPartial,
   startGeneration,
 } from '../engine/generation';
@@ -24,6 +25,7 @@ import type {
   GenerationPhaseId,
   GroupBlock,
   ItineraryStepKind,
+  ItineraryModel,
   MealSlot,
   PreferencesBlock,
   PrepStepId,
@@ -57,6 +59,13 @@ export interface AdventurePrepActions {
   stopGeneration: () => void;
   failGenerationRun: (message: string) => void;
   endGeneration: () => void;
+  /**
+   * Depose le parcours reellement produit, quel que soit le moteur qui l'a
+   * construit, et la phrase qui dit si l'enrichissement a eu lieu. Les regles
+   * et l'IA passent donc par le meme point d'entree : l'ecran ne connait pas le
+   * moteur, il affiche ce qu'il a recu.
+   */
+  applyGenerated: (itinerary: ItineraryModel, notice: string | null) => void;
   addStepToDay: (day: number, kind: ItineraryStepKind, step: StepDraft) => void;
   keepStep: (stepId: string, kept: boolean) => void;
   linkMeal: (stepId: string, slot: MealSlot | null) => void;
@@ -128,6 +137,14 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
             return itinerary
               ? draftActions.setItinerary(withGeneration, itinerary)
               : withGeneration;
+          }),
+        applyGenerated: (itinerary, notice) =>
+          patch((draft) => {
+            const finished = draftActions.setGeneration(
+              draft,
+              setGenerationNotice(finishGeneration(draft.generation), notice),
+            );
+            return draftActions.setItinerary(finished, itinerary);
           }),
         addStepToDay: (day, kind, step) =>
           patch((draft) => draftActions.addItineraryStep(draft, day, kind, step)),

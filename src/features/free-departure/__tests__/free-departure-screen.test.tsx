@@ -1,17 +1,22 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { FreeDepartureScreen } from '../components/FreeDepartureScreen';
 import { activityById } from '@/features/adventure-prep/catalog';
-import type { ActivityGuess } from '../engine/activityGuess';
 import type { LocationPermission } from '../engine/location';
 
 /**
- * zustand v5 sert le `getServerSnapshot` — l'etat INITIAL — pendant
- * `renderToStaticMarkup`. Injecter un etat via `setState` n'aurait donc
- * aucun effet. On remplace le store par un selecteur pur : le composant
- * under-test est reellement execute, seule la source de donnees change.
+ * La carte est un chunk MapLibre : elle n'a rien a faire dans un rendu HTML
+ * statique. On la remplace par un marqueur pour que le test porte sur le
+ * TEXTE de l'ecran — ce que l'utilisateur lit — et non sur la bibliotheque de
+ * rendu de la carte.
  */
+vi.mock('../components/FreeTraceMap', () => ({
+  FreeTraceMap: ({ pillLabel }: { pillLabel: string }) => (
+    <div data-testid="carte">{pillLabel}</div>
+  ),
+}));
+
 const state = vi.hoisted(() => ({ current: { activityId: null as string | null } }));
 
 vi.mock('../store/useFreeDepartureStore', () => {
@@ -26,135 +31,121 @@ const HANDOFF = {
   onStart: () => undefined,
   onClose: () => undefined,
   onPickActivity: () => undefined,
+  onUseAutoDetection: () => undefined,
 };
 
-/** Une proposition plausible, telle que `guessActivity` la produirait. */
-function guess(): ActivityGuess {
-  return {
-    activityId: 'course',
-    label: activityById('course')?.label ?? 'Course',
-    icon: 'footprints',
-    because: 'vitesse moyenne 10 km/h, sur 1 h 20, 13,3 km',
-    confidence: 'proposee',
-  };
-}
-
-function render(options: { guess?: ActivityGuess | null; permission?: LocationPermission } = {}) {
-  state.current = { activityId: null };
-  return renderToStaticMarkup(
-    React.createElement(FreeDepartureScreen, {
-      guess: options.guess === undefined ? null : options.guess,
-      permission: options.permission ?? 'inconnue',
-      ...HANDOFF,
-    })
-  );
-}
-
-/**
- * Texte reellement affiche, balises et attributs retires.
- *
- * Les regles produit portent sur ce que l'utilisateur LIT, pas sur les noms de
- * classes : les garder dans l'assertion rendrait le test fragile et faux.
- */
+/** Texte reellement affiche : balises et attributs retires. */
 function visible(html: string): string {
   return html
     .replace(/<[^>]*>/g, ' ')
     .replace(/&quot;/g, '"')
     .replace(/&#x27;|&#39;/g, "'")
     .replace(/&amp;/g, '&')
-    .replace(/&eacute;/g, 'é')
-    .replace(/&rsquo;/g, '’')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
-function pick(activityId: string | null): string {
-  state.current = { activityId };
+function render(permission: LocationPermission = 'inconnue') {
+  state.current = { activityId: null };
   return renderToStaticMarkup(
-    React.createElement(FreeDepartureScreen, {
-      guess: null,
-      permission: 'inconnue',
-      ...HANDOFF,
-    })
+    React.createElement(FreeDepartureScreen, { permission, ...HANDOFF })
   );
 }
 
-describe('FreeDepartureScreen — ecran de depart libre (A11)', () => {
-  it('FREE-S01: annonce qu’aucun itineraire n’est a preparer', () => {
+function renderManual(activityId: string) {
+  state.current = { activityId };
+  return renderToStaticMarkup(
+    React.createElement(FreeDepartureScreen, { permission: 'inconnue', ...HANDOFF })
+  );
+}
+
+describe('60-libre-avant — ecran « Pret a partir ? »', () => {
+  it('FREE-A01: reprend le titre et la promesse de la maquette', () => {
     const text = visible(render());
-    expect(text).toContain('Aucun itinéraire à préparer');
     expect(text).toContain('Partir librement');
+    expect(text).toContain('Prêt à partir ?');
+    expect(text).toContain('Aucun itinéraire : tu marches, on enregistre.');
   });
 
-  it('FREE-S02: sans mesure, l’ecran DIT qu’il ne sait pas plutot que deviner', () => {
+  it('FREE-A02: propose exactement les deux modes de la maquette', () => {
     const text = visible(render());
     expect(text).toContain('Détection automatique');
-    expect(text).toContain('Activité à identifier');
-    // Aucune activite n'est inventee tant qu'aucune mesure n'existe.
-    expect(text).not.toContain(activityById('rando-journee')?.label ?? '@@absent');
+    expect(text).toContain('L’activité est proposée à la fin, tu confirmes');
+    expect(text).toContain('Je choisis l’activité');
+    expect(text).toContain('Randonnée, vélo, kayak…');
   });
 
-  it('FREE-S03: une proposition est affichee AVEC sa justification', () => {
-    const text = visible(render({ guess: guess() }));
-    expect(text).toContain(activityById('course')?.label ?? '@@absent');
-    expect(text).toContain('vitesse moyenne 10 km/h');
+  it('FREE-A03: la detection automatique est le mode par defaut', () => {
+    const html = render();
+    expect(html).toContain('aria-pressed="true"');
+    expect(html).toContain('data-mode="auto"');
   });
 
-  it('FREE-S04: un choix manuel n’est jamais ecrase par la proposition', () => {
-    state.current = { activityId: 'rando-journee' };
-    const html = renderToStaticMarkup(
-      React.createElement(FreeDepartureScreen, {
-        guess: guess(),
-        permission: 'inconnue',
-        ...HANDOFF,
-      })
-    );
-    const text = visible(html);
-    expect(text).toContain(activityById('rando-journee')?.label ?? '@@absent');
+  it('FREE-A04: un choix manuel remplace la detection et nomme l’activite', () => {
+    const text = visible(renderManual('rando-journee'));
+    const label = activityById('rando-journee')?.label ?? '@@absent';
+    expect(text).toContain(label);
     expect(text).toContain('Activité choisie par toi');
-    expect(text).not.toContain('Proposition d’après');
   });
 
-  it('FREE-S05: revenir a l’automatique reaffiche « à identifier »', () => {
-    expect(visible(pick(null))).toContain('Activité à identifier');
+  it('FREE-A05: le retour a l’automatique est possible', () => {
+    expect(visible(renderManual('rando-journee'))).toContain('Revenir à la détection');
   });
 
-  it('FREE-S06: l’usage de la localisation est explique AVANT la demande', () => {
+  it('FREE-A06: l’usage de la position est explique AVANT toute demande', () => {
     const text = visible(render());
-    expect(text).toContain('La position sert uniquement à enregistrer ta trace');
-    expect(text).toContain('Rien n’est envoyé ni partagé');
-    expect(text).toContain('Localisation non activée');
+    expect(text).toContain('Ta position sert à tracer ton parcours');
+    expect(text).toContain('Uniquement pendant l’activité');
+    expect(text).toContain('rien n’est partagé sans ton accord');
   });
 
-  it('FREE-S07: un refus est explique sans jamais bloquer le depart', () => {
-    const text = visible(render({ permission: 'refusee' }));
-    expect(text).toContain('Localisation refusée');
-    expect(text).toContain('Tu pars sans trace ni distance');
-    // Le refus est une information, pas une porte : le depart reste la.
+  it('FREE-A07: la carte d’avant-depart porte la pastille « Autour de moi »', () => {
+    expect(render()).toContain('Autour de moi');
+  });
+
+  it('FREE-A08: l’action dominante est unique et explicite', () => {
+    const text = visible(render());
     expect(text).toContain('Démarrer');
+    // Une seule action primaire : pas de second « Continuer » ambigu.
+    expect(text.match(/Démarrer/g) ?? []).toHaveLength(1);
   });
 
-  it('FREE-S08: « Demarrer » reste disponible quel que soit l’etat de localisation', () => {
-    for (const permission of ['inconnue', 'accordee', 'refusee', 'indisponible'] as const) {
-      expect(visible(render({ permission })), permission).toContain('Démarrer');
-    }
-  });
-
-  it('FREE-S09: une panne GPS n’est jamais presentee comme un refus', () => {
-    const text = visible(render({ permission: 'indisponible' }));
-    expect(text).toContain('indisponible sur cet appareil');
-    expect(text).not.toContain('Tu pars sans trace ni distance');
-  });
-
-  it('FREE-S10: le depart libre n’est jamais chiffre (A9)', () => {
-    const text = visible(render({ guess: guess(), permission: 'accordee' }));
-    // Ni pourcentage, ni note sur 100, ni score : l'ecran n'a pas de note.
+  it('FREE-A09: aucun score, aucune note, aucun pourcentage', () => {
+    const text = visible(render());
     expect(text).not.toMatch(/\d+\s*%/);
     expect(text).not.toMatch(/\d+\s*\/\s*100/);
     expect(text).not.toMatch(/score|note\s*\/\s*\d|sur\s*100/i);
   });
 
-  it('FREE-S11: n’utilise jamais env(safe-area-inset) en page', () => {
+  it('FREE-A10: un refus est explique sans jamais bloquer le depart', () => {
+    const text = visible(render('refusee'));
+    expect(text).toContain('Localisation refusée');
+    expect(text).toContain('sans trace ni distance');
+    expect(text).toContain('Démarrer');
+  });
+
+  it('FREE-A11: une panne GPS n’est jamais presentee comme un refus', () => {
+    const text = visible(render('indisponible'));
+    expect(text).toContain('indisponible sur cet appareil');
+    expect(text).not.toContain('sans trace ni distance');
+  });
+
+  it('FREE-A12: « Demarrer » reste disponible quel que soit l’etat de localisation', () => {
+    for (const permission of ['inconnue', 'accordee', 'refusee', 'indisponible'] as const) {
+      expect(visible(render(permission)), permission).toContain('Démarrer');
+    }
+  });
+
+  it('FREE-A13: la fermeture vers le hub reste atteignable au clavier', () => {
+    const html = render();
+    expect(html).toContain('aria-label="Revenir au hub"');
+  });
+
+  it('FREE-A14: n’utilise jamais env(safe-area-inset) en page', () => {
     expect(render()).not.toContain('safe-area-inset');
+  });
+
+  it('FREE-A15: le choix manuel passe par un dialogue, pas par un ecran empile', () => {
+    expect(render()).toContain('aria-haspopup="dialog"');
   });
 });

@@ -1,58 +1,74 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getHikingSnapshot, useHikingActions } from '@/features/hiking/hooks/useHikingStore';
-import { guessActivity } from '../engine/activityGuess';
+import { useHikingStore } from '@/features/hiking/hooks/useHikingStore';
+import { buildSummary, toTracePoints } from '../engine/freeSession';
+import { buildSummaryView, resolveLiveView } from '../engine/freeFlow';
 import { permissionFromGeolocationError, type LocationPermission } from '../engine/location';
-import type { ActivityGuess } from '../engine/activityGuess';
+import type { FreePrivacyId } from '../engine/privacy';
 import { useFreeDepartureStore } from '../store/useFreeDepartureStore';
 import { FreeDepartureScreen } from './FreeDepartureScreen';
+import { FreeLiveScreen } from './FreeLiveScreen';
+import { FreeSummaryScreen } from './FreeSummaryScreen';
 
 /**
- * « Partir librement » — le point de depart, branche sur le cockpit existant.
+ * « Partir librement » — la machine a trois etats (60 → 61 → 62).
  *
- * On ne reecrit PAS un second traceur : la session est celle de
- * `useHikingStore` / `/randonnee-active`, demarree sans `routeId` (« Suivi
- * libre »). Cette vue ne fait que la partie qui n'existait pas : dire ce que
- * l'app fera de la position, et demarrer au bon moment.
+ * On n'ecrit pas un second traceur : la session est celle de `useHikingStore`,
+ * demarree sans `routeId` (« Suivi libre »). Cette vue ne fait que ce qui
+ * manquait — dire ce que l'app fera de la position avant de la demander, la
+ * demander au bon moment, et figer les mesures a l'arret.
+ *
+ * Elle lit le traceur *vivant* parce que l'ecran 61 affiche un chrono : c'est
+ * le seul des trois etats qui a besoin d'un flux, et il s'affiche seul. Les
+ * ecrans 60 et 62 ne s'y abonnent pas — ils n'ont rien d'un flux a montrer.
  */
+
+/** Le suivi n'enregistrera rien : on le dit, avec la raison, sur l'ecran 61. */
+function trackingNoteFor(permission: LocationPermission, tracking: boolean): string | null {
+  if (tracking) return null;
+  if (permission === 'refusee') {
+    return 'Tu as refusé la localisation : le chrono tourne, mais aucune trace n’est enregistrée.';
+  }
+  if (permission === 'indisponible') {
+    return 'Aucun GPS exploitable sur cet appareil : le chrono tourne, sans trace.';
+  }
+  return 'Le GPS ne répond pas encore : le chrono tourne, la trace reprendra dès qu’il répondra.';
+}
+
 export function FreeDepartureView() {
   const router = useRouter();
-  // Actions seules : l'ecran ne *affiche* aucune mesure vivante, il n'a donc
-  // aucune raison de se re-rendre a chaque point GPS.
-  const hiking = useHikingActions();
-  const activityId = useFreeDepartureStore((state) => state.activityId);
-  const setActivity = useFreeDepartureStore((state) => state.setActivity);
-  const [permission, setPermission] = useState<LocationPermission>('inconnue');
-  const [guess, setGuess] = useState<ActivityGuess | null>(null);
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-    // Un choix manuel prime sur toute proposition : on ne l'ecrase pas.
-    if (activityId !== null) {
-      setGuess(null);
-      return;
-    }
-    // UNE lecture ponctuelle du traceur. Ecouter le flux GPS ferait re-rendre
-    // tout l'ecran environ une fois par seconde pour une valeur qui, sur un
-    // ecran d'avant-depart, ne change pas.
-    const hike = getHikingSnapshot();
-    setGuess(
-      guessActivity({
-        distanceKm: hike.positions.length > 1 ? hike.distanceKm : null,
-        durationSeconds: hike.durationSeconds,
-        averageSpeedKmH: hike.averageSpeedKmH > 0 ? hike.averageSpeedKmH : null,
-        elevationGainM: hike.elevationGainM,
-      })
-    );
-  }, [activityId]);
+  const phase = useFreeDepartureStore((state) => state.phase);
+  const activityId = useFreeDepartureStore((state) => state.activityId);
+  const confirmed = useFreeDepartureStore((state) => state.confirmed);
+  const permission = useFreeDepartureStore((state) => state.permission);
+  const finishedAt = useFreeDepartureStore((state) => state.finishedAt);
+  const summary = useFreeDepartureStore((state) => state.summary);
+  const keepTrace = useFreeDepartureStore((state) => state.keepTrace);
+  const shareWithGroup = useFreeDepartureStore((state) => state.shareWithGroup);
+  const groupSize = useFreeDepartureStore((state) => state.groupSize);
+  const setPhase = useFreeDepartureStore((state) => state.setPhase);
+  const setActivity = useFreeDepartureStore((state) => state.setActivity);
+  const setPermission = useFreeDepartureStore((state) => state.setPermission);
+  const confirmActivity = useFreeDepartureStore((state) => state.confirmActivity);
+  const markFinished = useFreeDepartureStore((state) => state.markFinished);
+  const setKeepTrace = useFreeDepartureStore((state) => state.setKeepTrace);
+  const setShareWithGroup = useFreeDepartureStore((state) => state.setShareWithGroup);
+
+  const tracking = useHikingStore();
+
+  useEffect(() => setMounted(true), []);
+
+
 
   /**
-   * L'autorisation n'est demandee qu'ici, au clic sur « Demarrer ». On lit
-   * l'etat courant sans declencher la boite systeme : un refus de l'utilisateur
-   * doit rester un refus, pas une relance a chaque visite.
+   * L'autorisation n'est demandee qu'ici, au clic sur « Demarrer », et
+   * seulement si elle n'a jamais ete accordee. Un refus de l'utilisateur doit
+   * rester un refus : on ne relance pas la boite systeme a chaque visite, et
+   * l'ecran 60 continue de s'afficher avec la consequence expliquee.
    */
   const requestPermission = useCallback(() => {
     if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
@@ -67,7 +83,7 @@ export function FreeDepartureView() {
           else if (result.state === 'granted') setPermission('accordee');
         })
         .catch(() => {
-          /* Permissions API indisponible : on laisse l'etat inconnu. */
+          /* Permissions API indisponible : l'etat reste inconnu. */
         });
     }
     // Un appel reel au GPS declenche la boite du navigateur si necessaire.
@@ -76,17 +92,99 @@ export function FreeDepartureView() {
       (error) => setPermission(permissionFromGeolocationError(error?.code)),
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
     );
-  }, []);
+  }, [setPermission]);
 
   /** Demarrage sans itineraire : le cockpit affiche « Suivi libre ». */
   const handleStart = useCallback(() => {
-    void hiking.startHike(undefined, null, null);
-    router.push('/randonnee-active');
-  }, [hiking, router]);
+    void tracking.startHike(undefined, null, null);
+    setPhase('pendant');
+  }, [setPhase, tracking]);
+
+  const handlePause = useCallback(() => tracking.pauseHike(), [tracking]);
+  const handleResume = useCallback(() => tracking.resumeHike(), [tracking]);
+
+  /**
+   * Arret : on fige les mesures AVANT d'arreter le traceur, sinon le dernier
+   * point GPS n'entre pas dans le resume. Le store bascule en « apres ».
+   */
+  const handleFinish = useCallback(() => {
+    const trace = toTracePoints(tracking.positions);
+    markFinished(
+      buildSummary({
+        distanceKm: tracking.distanceKm,
+        durationSeconds: tracking.durationSeconds,
+        averageSpeedKmH: tracking.averageSpeedKmH,
+        elevationGainM: tracking.elevationGainM,
+        positions: trace,
+        endedAt: Date.now(),
+      })
+    );
+    void tracking.stopHike();
+  }, [markFinished, tracking]);
 
   const handleClose = useCallback(() => router.push('/hub'), [router]);
 
-  const handlePickActivity = useCallback((next: string | null) => setActivity(next), [setActivity]);
+  /** `null` = retour a la detection automatique. */
+  const handlePickActivity = useCallback(
+    (next: string | null) => {
+      if (next === null) setActivity(null);
+      else confirmActivity(next);
+    },
+    [confirmActivity, setActivity]
+  );
+
+  const handleTogglePrivacy = useCallback(
+    (id: FreePrivacyId, checked: boolean) => {
+      if (id === 'trace') setKeepTrace(checked);
+      else setShareWithGroup(checked);
+    },
+    [setKeepTrace, setShareWithGroup]
+  );
+
+  const live = useMemo(
+    () =>
+      resolveLiveView({
+        distanceKm: tracking.distanceKm,
+        durationSeconds: tracking.durationSeconds,
+        averageSpeedKmH: tracking.averageSpeedKmH,
+        elevationGainM: tracking.elevationGainM,
+        positions: toTracePoints(tracking.positions),
+        paused: tracking.isPaused,
+        activityId,
+        // Sans point et sans droit accorde, rien ne s'enregistrera : on le
+        // dit sur l'ecran plutot que de laisser croire a une trace.
+        canTrack:
+          permission === 'accordee' || (permission === 'inconnue' && tracking.positions.length > 0),
+        trackingNote: trackingNoteFor(permission, tracking.positions.length > 0),
+      }),
+    [activityId, permission, tracking]
+  );
+
+  const after = useMemo(
+    () =>
+      buildSummaryView({
+        phase,
+        activityId,
+        confirmed,
+        permission,
+        finishedAt,
+        summary,
+        keepTrace,
+        shareWithGroup,
+        groupSize,
+      }),
+    [
+      activityId,
+      confirmed,
+      finishedAt,
+      groupSize,
+      keepTrace,
+      permission,
+      phase,
+      shareWithGroup,
+      summary,
+    ]
+  );
 
   if (!mounted) {
     return (
@@ -98,16 +196,51 @@ export function FreeDepartureView() {
     );
   }
 
+  if (phase === 'pendant') {
+    return (
+      <FreeLiveScreen
+        {...live}
+        onPause={handlePause}
+        onResume={handleResume}
+        onFinish={handleFinish}
+      />
+    );
+  }
+
+  if (phase === 'apres') {
+    return (
+      <FreeSummaryScreen
+        label={after.label}
+        activityIcon={after.activityIcon}
+        isGuess={after.isGuess}
+        justification={after.justification}
+        guessConfidence={after.guessConfidence}
+        unknownReason={after.unknownReason}
+        duration={after.duration}
+        distance={after.distance}
+        elevation={after.elevation}
+        trace={after.trace}
+        privacy={after.privacy}
+        onTogglePrivacy={handleTogglePrivacy}
+        onPickActivity={handlePickActivity}
+        onClose={handleClose}
+        currentActivityId={activityId}
+      />
+    );
+  }
+
   return (
     <FreeDepartureScreen
-      guess={guess}
       permission={permission}
       onRequestPermission={requestPermission}
       onStart={handleStart}
       onClose={handleClose}
       onPickActivity={handlePickActivity}
+      onUseAutoDetection={() => setActivity(null)}
     />
   );
 }
 
 export default FreeDepartureView;
+
+

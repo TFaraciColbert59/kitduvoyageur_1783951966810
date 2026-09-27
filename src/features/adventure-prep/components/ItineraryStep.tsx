@@ -3,16 +3,19 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '@/components/ui/Icon';
 import { Button } from '@/components/ui';
+import { useDayFocusStore } from '@/components/mobile-nav/dayFocusStore';
+import { fetchItineraryProposal } from '@/app/prepare/actions';
 import { activityById } from '../catalog';
 import { metricsFor } from '../engine/metrics';
-import { buildItinerary, daySteps, knownGaps } from '../engine/itinerary';
+import { daySteps, knownGaps } from '../engine/itinerary';
+import { runItineraryGeneration } from '../engine/itineraryPhases';
 import { minutesLabel } from '../engine/labels';
 import { A_VERIFIER, moneyLabel, stateLabel } from '../engine/trust';
+import { usePrepDayFocusPublisher } from '../hooks/usePrepDayFocusPublisher';
 import { useAdventurePrepStore } from '../store/useAdventurePrepStore';
 import type {
   AdventurePrepDraft,
   GenerationPhase,
-  GenerationPhaseId,
   ItineraryModel,
   ItineraryStep as ItineraryStepModel,
   ItineraryStepKind,
@@ -25,16 +28,12 @@ export interface ItineraryStepScreenProps {
   onOpenSheet: (sheet: PrepSheetId, focusStepId?: string | null) => void;
 }
 
-/** Delai entre deux phases. Un travail reel, jamais une animation d'attente. */
-const PHASE_DELAY = 450;
-
-/** L'ordre execute, phase par phase. Aucune n'est cochee a la construction. */
-const GENERATION_SEQUENCE: readonly GenerationPhaseId[] = [
-  'recherche_parcours',
-  'verification_etapes',
-  'disponibilites',
-  'synthese',
-];
+/**
+ * Rien a construire : la generation s'arrete sur cette phrase plutot que de
+ * laisser un rail a moitie coche. Le besoin est nomme, pas suppose.
+ */
+const BLOCKED_MESSAGE =
+  "Il manque une activité ou une durée pour construire le parcours. Tu peux arrêter ici, ou revenir à l’étape précédente.";
 
 const STEP_ICONS: Readonly<Record<ItineraryStepKind, string>> = {
   trajet: 'route',
@@ -99,8 +98,8 @@ function routeCoords(draft: AdventurePrepDraft): Array<[number, number]> {
 }
 
 /** Points du programme : une entree par etape reellement localisee. */
-function mapPoints(model: ItineraryModel): PrepMapPoint[] {
-  return model.steps.flatMap((step) => {
+function mapPoints(steps: readonly ItineraryStepModel[]): PrepMapPoint[] {
+  return steps.flatMap((step) => {
     if (step.lat === null || step.lon === null) return [];
     if (!Number.isFinite(step.lat) || !Number.isFinite(step.lon)) return [];
     return [
@@ -115,6 +114,26 @@ function mapPoints(model: ItineraryModel): PrepMapPoint[] {
       },
     ];
   });
+}
+
+/**
+ * Trace d'une seule journee.
+ *
+ * Le focus jour doit repeindre la carte avec LE JOUR et rien d'autre : garder
+ * le voyage entier donnerait l'impression qu'il faut refaire tout le trajet
+ * alors qu'on ne regarde qu'une partie du programme. On ne conserve que les
+ * etapes localisees de ce jour, dans l'ordre.
+ */
+function dayRouteCoords(steps: readonly ItineraryStepModel[]): Array<[number, number]> {
+  const coords: Array<[number, number]> = [];
+  for (const step of steps) {
+    if (step.lat === null || step.lon === null) continue;
+    if (!Number.isFinite(step.lat) || !Number.isFinite(step.lon)) continue;
+    const last = coords[coords.length - 1];
+    if (last && last[0] === step.lat && last[1] === step.lon) continue;
+    coords.push([step.lat, step.lon]);
+  }
+  return coords;
 }
 
 /** Programme de l'ensemble : jour, puis ordre dans la journee. */
@@ -223,6 +242,69 @@ function ProducedStep({ step }: { step: ItineraryStepModel }) {
 /* Ecran                                                               */
 /* ------------------------------------------------------------------ */
 
+function FocusedStepView({
+  program,
+  onOpenSheet,
+}: {
+  program: ItineraryStepModel[];
+  onOpenSheet: (sheet: PrepSheetId, focusStepId?: string | null) => void;
+}) {
+  const [focusedId, setFocusedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handler = (e: CustomEvent<{ stepId: string }>) => setFocusedId(e.detail.stepId);
+    window.addEventListener('prep:focus-step', handler as any);
+    return () => window.removeEventListener('prep:focus-step', handler as any);
+  }, []);
+
+  const step = program.find((s) => s.id === focusedId) || program[0];
+  if (!step) return null;
+
+  return (
+    <div className="prep-step">
+      <div className="prep-step__head">
+        <span className="prep-step__thumb" aria-hidden="true">
+          <Icon name={stepIcon(step)} size={22} />
+        </span>
+        <div className="prep-step__body">
+          <h3 className="prep-step__name" style={AS_BLOCK}>{step.title}</h3>
+          <div className="prep-step__when" style={AS_BLOCK}>{whenLabel(step)}</div>
+          {step.reason && (
+            <div className="prep-step__reason" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+              {step.reason}
+            </div>
+          )}
+        </div>
+        <div className="prep-step__price" data-state={step.price.state}>
+          {moneyLabel(step.price)}
+        </div>
+      </div>
+      <div className="prep-step__actions">
+        <Button variant="secondary" size="sm" onClick={() => onOpenSheet('step', step.id)}>
+          Détails
+        </Button>
+        <Button variant="secondary" size="sm" onClick={() => {}} icon={<Icon name="refresh-cw" size={16} />}>
+          Remplacer
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          aria-pressed={step.kept}
+          onClick={() => useAdventurePrepStore.getState().keepStep(step.id, !step.kept)}
+        >
+          {step.kept ? (
+            <>
+              <Icon name="check" size={16} /> À conserver
+            </>
+          ) : (
+            'À conserver'
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 /**
  * Etape 2 — Parcours : une seule decision a l'ecran (A6).
  *
@@ -233,85 +315,78 @@ function ProducedStep({ step }: { step: ItineraryStepModel }) {
  */
 export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
   const draft = useAdventurePrepStore((state) => state.draft);
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [blocked, setBlocked] = useState(false);
 
-  const runTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const phaseIndex = useRef(0);
+  // Focus jour : source unique dans le store module, partage avec la bottom bar.
+  // L'ecran n'invente donc jamais son propre « jour » : il lit ce que le rail
+  // affiche, ce qui garantit que la carte, les metriques et le programme
+  // parlent tous du meme perimetre.
+  const focusDay = useDayFocusStore((state) => state.selectedDay);
+  const selectFocusDay = useDayFocusStore((state) => state.selectDay);
+  usePrepDayFocusPublisher(draft);
 
-  const clearRun = useCallback(() => {
-    if (runTimer.current !== null) {
-      clearTimeout(runTimer.current);
-      runTimer.current = null;
-    }
-  }, []);
+  const runAbort = useRef<AbortController | null>(null);
 
-  // Un seul minuteur, rearme apres chaque phase. Au demontage il est purge :
-  // aucune ecriture d'etat n'arrive apres la disparition de l'ecran.
-  useEffect(() => clearRun, [clearRun]);
-
-  const runPhase = useCallback(
-    function phase(): void {
-      runTimer.current = null;
-      const index = phaseIndex.current;
-      const current = GENERATION_SEQUENCE[index];
-      if (!current) return;
-
-      const store = useAdventurePrepStore.getState();
-
-      // Rien a construire : la sequence ne progresse pas et l'ecran le dit.
-      if (index === 0 && !buildItinerary(store.draft)) {
-        setBlocked(true);
-        return;
-      }
-
-      store.markPhase(current);
-
-      if (index === 0) {
-        store.proposeItinerary();
-        store.pushGenerated(store.draft.calendar.durationDays ?? 0);
-      }
-
-      if (index === GENERATION_SEQUENCE.length - 1) {
-        store.endGeneration();
-        store.completeStep('itinerary');
-        return;
-      }
-
-      phaseIndex.current = index + 1;
-      runTimer.current = setTimeout(phase, PHASE_DELAY);
+  // Au demontage, l'appel reseau en cours est coupe : aucune ecriture d'etat
+  // n'arrive apres la disparition de l'ecran et le store n'est pas laisse
+  // bloque en « en cours ».
+  useEffect(
+    () => () => {
+      runAbort.current?.abort();
     },
     [],
   );
 
-  const startRun = useCallback(
-    (mode: 'start' | 'resume') => {
-      clearRun();
-      phaseIndex.current = 0;
-      setBlocked(false);
-      const store = useAdventurePrepStore.getState();
-      if (mode === 'start') store.startGenerationRun();
-      else store.continueGeneration();
-      runTimer.current = setTimeout(runPhase, PHASE_DELAY);
-    },
-    [clearRun, runPhase],
-  );
+  /**
+   * Lance la construction reelle du parcours.
+   *
+   * Le rail ne coche plus des phases a intervalle fixe :
+   * `runItineraryGeneration` signale chaque phase APRES son propre travail
+   * (appel reseau, verification, classement des reservations, assemblage).
+   * Quand l'IA ne repond pas ou propose quelque chose d'incoherent, le moteur
+   * replie sur les regles et l'ecran affiche pourquoi.
+   */
+  const startRun = useCallback(async (mode: 'start' | 'resume') => {
+    runAbort.current?.abort();
+    const controller = new AbortController();
+    runAbort.current = controller;
+    setBlocked(false);
+
+    const store = useAdventurePrepStore.getState();
+    if (mode === 'start') store.startGenerationRun();
+    else store.continueGeneration();
+
+    const outcome = await runItineraryGeneration(
+      store.draft,
+      controller.signal,
+      (draftToBuild) => fetchItineraryProposal(draftToBuild),
+      (phase) => useAdventurePrepStore.getState().markPhase(phase),
+    );
+    if (controller.signal.aborted) return;
+
+    const next = useAdventurePrepStore.getState();
+    if (!outcome.model) {
+      setBlocked(true);
+      next.failGenerationRun(BLOCKED_MESSAGE);
+      return;
+    }
+    next.applyGenerated(outcome.model, outcome.message);
+    next.completeStep('itinerary');
+  }, []);
 
   const stopRun = useCallback(() => {
-    clearRun();
-    phaseIndex.current = 0;
+    runAbort.current?.abort();
+    runAbort.current = null;
     useAdventurePrepStore.getState().stopGeneration();
-  }, [clearRun]);
+  }, []);
 
   const model = draft.itinerary;
   const generation = draft.generation;
   const activity = activityById(draft.activities.primary);
-  const coords = useMemo(() => routeCoords(draft), [draft]);
-  const points = useMemo(() => (model ? mapPoints(model) : []), [model]);
   const gaps = useMemo(() => (model ? knownGaps(model) : []), [model]);
 
   // `null` = Ensemble. Un jour hors borne retombe sur l'ensemble.
-  const activeDay = model && selectedDay !== null && selectedDay <= model.days ? selectedDay : null;
+  const activeDay = model && focusDay !== null && focusDay <= model.days ? focusDay : null;
   const metrics = useMemo(
     () =>
       model ? metricsFor(model, activeDay === null ? 'aventure' : 'jour', activeDay ?? undefined) : [],
@@ -321,6 +396,13 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
     if (!model) return [];
     return activeDay === null ? allSteps(model) : daySteps(model, activeDay);
   }, [model, activeDay]);
+
+  // La carte suit le focus : trace du jour seul des qu'un jour est selectionne.
+  const coords = useMemo(() => {
+    if (activeDay !== null && model) return dayRouteCoords(daySteps(model, activeDay));
+    return routeCoords(draft);
+  }, [activeDay, draft, model]);
+  const points = useMemo(() => mapPoints(program), [program]);
 
   const goToDeparture = useCallback(() => {
     const store = useAdventurePrepStore.getState();
@@ -337,260 +419,143 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
 
   const openStep = useCallback((stepId: string) => onOpenSheet('step', stepId), [onOpenSheet]);
 
-  /* --- Etat 2 : la generation est en cours ---------------------------- */
-  if (!model && generation.status === 'en_cours') {
-    return (
-      <div className="prep-screen">
-        <div className="prep-body">
-          <h1 className="prep-title">On construit ton parcours</h1>
-          <p className="prep-help">
-            Chaque étape est travaillée dans l&apos;ordre. Rien n&apos;est coché avant
-            d&apos;avoir vraiment été fait.
-          </p>
-          <GenerationRail phases={generation.phases} />
-          {blocked ? (
-            <p className="prep-note" data-tone="warn" role="status">
-              {A_VERIFIER} : il manque une activité ou une durée pour construire le parcours. Tu
-              peux arrêter ici, ou revenir à l&apos;étape précédente.
-            </p>
-          ) : null}
-        </div>
-        <div className="prep-footer">
-          <Button
-            variant="secondary"
-            size="lg"
-            className="prep-footer__primary"
-            onClick={stopRun}
-            icon={<Icon name="x" size={18} aria-hidden="true" />}
-          >
-            Arrêter
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  /* --- Rendering -------------------------------------------------------- */
 
-  /* --- Etat 3 : interrompue ou en echec ------------------------------ */
-  if (!model && (generation.status === 'interrompu' || generation.status === 'echec')) {
-    const produced = generation.steps;
-    return (
-      <div className="prep-screen">
-        <div className="prep-body">
-          <h1 className="prep-title">Reprise du parcours</h1>
-          <p className="prep-help">
-            Rien de ce qui a été produit n&apos;est perdu. Tu peux repartir du même point ou
-            continuer avec ce qui existe déjà.
-          </p>
-          {generation.error ? (
-            <p className="prep-note" data-tone="warn" role="status">
-              {generation.error}
-            </p>
-          ) : null}
-          <GenerationRail phases={generation.phases} />
-          {produced.length > 0 ? (
-            <section
-              aria-labelledby="prep-deja-produit"
-              style={{ display: 'grid', gap: 'var(--space-3)' }}
-            >
-              <h2 className="prep-section-title" id="prep-deja-produit">
-                Déjà produit
-              </h2>
-              <ul style={PLAIN_LIST}>
-                {produced.map((step) => (
-                  <li key={step.id}>
-                    <ProducedStep step={step} />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-        </div>
-        <div className="prep-footer">
-          <div className="prep-actionrow">
-            <Button
-              variant="secondary"
-              size="md"
-              onClick={() => startRun('resume')}
-              icon={<Icon name="refresh-cw" size={16} aria-hidden="true" />}
-            >
-              Réessayer
-            </Button>
-            <Button
-              variant="primary"
-              size="lg"
-              className="prep-footer__primary"
-              onClick={keepWhatExists}
-              iconPosition="trailing"
-              icon={<Icon name="arrow-right" size={18} aria-hidden="true" />}
-            >
-              Continuer avec les éléments disponibles
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  /* --- Etat 4 : l'itineraire est pret --------------------------------- */
-  if (model) {
-    return (
-      <div className="prep-screen">
-        <div className="prep-body">
-          <h1 className="prep-title">Ton parcours</h1>
-          <p className="prep-help">
-            {activity
-              ? `${activity.label} · ${model.days} jour${model.days > 1 ? 's' : ''}`
-              : 'Programme proposé · durées, lieux et prix restent à vérifier'}
-          </p>
-
-          <PrepMap
-            name="Ton parcours"
-            routeCoords={coords}
-            points={points}
-            scopeLabel="Ensemble"
-            filterCategories={MAP_CATEGORIES}
-          />
-
-          <div className="prep-days" role="group" aria-label="Périmètre du programme">
-            <button
-              type="button"
-              className="prep-day"
-              aria-pressed={activeDay === null}
-              onClick={() => setSelectedDay(null)}
-            >
-              Ensemble
-            </button>
-            {Array.from({ length: model.days }, (_, index) => index + 1).map((day) => (
-              <button
-                key={day}
-                type="button"
-                className="prep-day"
-                aria-pressed={activeDay === day}
-                onClick={() => setSelectedDay(day)}
-              >
-                Jour {day}
-              </button>
-            ))}
-          </div>
-
-          <div className="prep-metrics">
-            {metrics.map((metric) => (
-              <div key={metric.id} className="prep-metric">
-                <span className="prep-metric__label">{metric.label}</span>
-                <span
-                  className="prep-metric__value"
-                  data-unknown={metric.state === 'a_verifier' ? 'true' : undefined}
-                >
-                  {metric.formatted}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <section aria-labelledby="prep-programme" style={{ display: 'grid', gap: 'var(--space-3)' }}>
-            <h2 className="prep-section-title" id="prep-programme">
-              {activeDay === null ? 'Programme complet' : `Jour ${activeDay}`}
-            </h2>
-            {program.length === 0 ? (
-              <p className="prep-note">Aucune étape dans ce périmètre pour l&apos;instant.</p>
-            ) : (
-              <ul style={PLAIN_LIST}>
-                {program.map((step) => (
-                  <li key={step.id}>
-                    <StepCard step={step} onOpen={openStep} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          {model.contingencies.length > 0 ? (
-            <section aria-labelledby="prep-plans-b" style={{ display: 'grid', gap: 'var(--space-2)' }}>
-              <h2 className="prep-section-title" id="prep-plans-b">
-                Plans B
-              </h2>
-              {model.contingencies.map((contingency) => (
-                <details className="prep-note" key={contingency.kind}>
-                  <summary>{contingency.trigger}</summary>
-                  <p style={{ margin: 'var(--space-2) 0 0' }}>{contingency.action}</p>
-                </details>
-              ))}
-            </section>
-          ) : null}
-
-          {gaps.length > 0 ? (
-            <section aria-labelledby="prep-gaps" style={{ display: 'grid', gap: 'var(--space-2)' }}>
-              <h2 className="prep-section-title" id="prep-gaps">
-                Ce que l&apos;app ne sait pas
-              </h2>
-              {gaps.map((gap) => (
-                <p className="prep-note" key={gap.id}>
-                  {gap.label}
-                </p>
-              ))}
-            </section>
-          ) : null}
-        </div>
-
-        <div className="prep-footer">
-          <div className="prep-actionrow">
-            <Button
-              variant="secondary"
-              size="md"
-              onClick={() => onOpenSheet('adjust')}
-              icon={<Icon name="refresh-cw" size={16} aria-hidden="true" />}
-            >
-              Ajuster
-            </Button>
-            <Button
-              variant="secondary"
-              size="md"
-              onClick={() => onOpenSheet('steps')}
-              icon={<Icon name="check-square" size={16} aria-hidden="true" />}
-            >
-              Étapes
-            </Button>
-            <Button
-              variant="secondary"
-              size="md"
-              onClick={() => onOpenSheet('add')}
-              icon={<Icon name="plus" size={16} aria-hidden="true" />}
-            >
-              Ajouter
-            </Button>
-          </div>
-          <Button
-            variant="primary"
-            size="lg"
-            className="prep-footer__primary"
-            onClick={goToDeparture}
-            iconPosition="trailing"
-            icon={<Icon name="arrow-right" size={18} aria-hidden="true" />}
-          >
-            Vers le départ
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  /* --- Etat 1 : point de depart --------------------------------------- */
   return (
     <div className="prep-screen">
       <div className="prep-body">
-        <h1 className="prep-title">Voilà ton aventure</h1>
-        <p className="prep-help">
-          {activity
-            ? `${activity.label} · départ de ${draft.route.origin?.name ?? 'point à vérifier'}`
-            : 'Ton parcours se construit ici : départ, étapes, nuits et retours.'}
-        </p>
+        <button type="button" className="prep-pill" onClick={() => onOpenSheet('coverage')}>
+          <Icon name={activity?.icon || 'sparkles'} size={16} />
+          <span style={{ marginLeft: 8 }}>{activity?.label || 'Activité inconnue'}</span>
+          {model && generation.notice && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginLeft: 8 }}>
+              <Icon name="wand" size={16} />
+              {generation.notice}
+            </span>
+          )}
+        </button>
 
-        <PrepMap name="Ton parcours" routeCoords={coords} scopeLabel="Ensemble" />
+        {!model && (
+          <p className="prep-help" style={{ textAlign: 'center', color: 'var(--lkv-text-subtle)', margin: 'var(--space-2) 0' }}>
+            Distances, durées et prix restent À vérifier.
+          </p>
+        )}
 
-        <p className="prep-note">
-          Le parcours est proposé à partir de ce que tu as saisi. Les distances, les durées et
-          les prix restent « À vérifier » tant qu&apos;aucune source ne les fournit.
-        </p>
+        {!model && generation.status === 'en_cours' && (
+          <div className="prep-rail" aria-live="polite">
+            {generation.phases.map((phase, index, arr) => {
+              const active = !phase.done && (index === 0 || arr[index - 1].done);
+              return (
+                <div key={phase.id} className="prep-rail__line" data-state={active ? 'active' : phase.done ? 'done' : 'pending'}>
+                  <span className="prep-rail__dot" aria-hidden="true">
+                    <Icon name={phase.done ? 'check' : active ? 'loader-2' : 'circle'} size={20} className={active ? 'spin' : ''} />
+                  </span>
+                  <span>{phase.label}</span>
+                </div>
+              );
+            })}
+            <Button variant="secondary" size="sm" onClick={stopRun} icon={<Icon name="x" size={16} />}>
+              Arrêter
+            </Button>
+          </div>
+        )}
+
+        {!model && (generation.status === 'interrompu' || generation.status === 'echec') && (
+          <div className="prep-block" style={{ padding: 'var(--space-4)' }}>
+            <p className="prep-note" data-tone="warn" role="status" style={{ marginBottom: 'var(--space-3)' }}>
+              {generation.error || BLOCKED_MESSAGE}
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+              <Button variant="primary" size="md" onClick={() => startRun('resume')} icon={<Icon name="refresh-cw" size={16} />}>
+                Reprise du parcours
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => startRun('resume')}>
+                Continuer avec les éléments disponibles
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {model && (
+          <>
+            <div className="prep-metrics">
+              {metrics.map((metric) => (
+                <div key={metric.id} className="prep-metric">
+                  <span className="prep-metric__label">{metric.label}</span>
+                  <span className="prep-metric__value" data-unknown={metric.state === 'a_verifier' ? 'true' : undefined}>
+                    {metric.formatted}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {model.days > 1 && (
+              <div className="prep-days" role="group" aria-label="Périmètre du programme">
+                <button
+                  type="button"
+                  className="prep-day"
+                  aria-pressed={activeDay === null}
+                  onClick={() => selectFocusDay(null)}
+                >
+                  Tout
+                </button>
+                {Array.from({ length: model.days }, (_, index) => index + 1).map((day) => (
+                  <button
+                    key={day}
+                    type="button"
+                    className="prep-day"
+                    aria-pressed={activeDay === day}
+                    onClick={() => selectFocusDay(day)}
+                  >
+                    Jour {day}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="prep-programme">
+              <div className="prep-programme__list">
+                <div style={{ fontWeight: 700, fontSize: 'var(--f-body)', color: 'var(--lkv-text-primary)', marginBottom: 8 }}>
+                  {activeDay === null ? 'Jour 1' : `Jour ${activeDay}`}
+                </div>
+                {program.map((item) => (
+                  <div key={item.id} style={{ display: 'none' }}>{item.title}</div>
+                ))}
+              </div>
+            </div>
+
+            {program.length > 0 && <FocusedStepView program={program} onOpenSheet={onOpenSheet} />}
+
+            <div className="prep-actionrow">
+              <Button variant="secondary" size="md" onClick={() => onOpenSheet('adjust')} icon={<Icon name="sliders" size={18} />}>
+                Ajuster
+              </Button>
+              <Button variant="secondary" size="md" onClick={() => onOpenSheet('steps')} icon={<Icon name="list" size={18} />}>
+                Étapes
+              </Button>
+              <Button variant="secondary" size="md" onClick={() => onOpenSheet('add')} icon={<Icon name="plus" size={18} />}>
+                Ajouter
+              </Button>
+            </div>
+          </>
+        )}
+
+        {!model && generation.status !== 'en_cours' && generation.status !== 'echec' && (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 'var(--space-4) 0' }}>
+            <Button variant="primary" size="lg" onClick={() => void startRun('start')} icon={<Icon name="sparkles" size={18} />}>
+              Générer mon parcours
+            </Button>
+          </div>
+        )}
+
+        <PrepMap
+          className="prep-map--inline"
+          name="Ton parcours"
+          routeCoords={coords}
+          points={points}
+          scopeLabel={activeDay === null ? 'Ensemble' : `Jour ${activeDay}`}
+          filterCategories={MAP_CATEGORIES}
+        />
       </div>
 
       <div className="prep-footer">
@@ -598,10 +563,12 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
           variant="primary"
           size="lg"
           className="prep-footer__primary"
-          onClick={() => startRun('start')}
-          icon={<Icon name="sparkles" size={18} aria-hidden="true" />}
+          disabled={!model}
+          onClick={goToDeparture}
+          iconPosition="trailing"
+          icon={<Icon name="arrow-right" size={18} aria-hidden="true" />}
         >
-          Générer mon parcours
+          Vers le départ
         </Button>
       </div>
     </div>

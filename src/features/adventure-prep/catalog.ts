@@ -255,14 +255,14 @@ const DEFS: readonly ActivityDef[] = [
 
   {
     id: 'ski-alpin',
-    label: 'Ski de randonnée',
+    label: 'Ski en haute montagne',
     category: 'neige_montagne',
     icon: 'mountain',
     keywords: ['ski', 'randonnée', 'montagne', 'traversée', 'altitude'],
     metrics: 'terrain',
     canBePrimary: true,
-    canBeAddedNight: true,
-    combinable: false,
+    canBeAddedNight: false,
+    combinable: true,
     suggestedDurationHours: 8,
   },
   {

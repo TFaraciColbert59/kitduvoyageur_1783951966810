@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import AppShell from '@/components/shell/AppShell';
-import FreeDepartureView from '@/features/free-departure/components/FreeDepartureView';
+import PartirLibrementView from '@/features/adventure-prep/components/PartirLibrementView';
 import '@/features/adventure-prep/adventure-prep.css';
+import '@/features/free-departure/free-departure.css';
 
 /**
  * « Partir librement » — demarrage sans itineraire (A3 / A11).
@@ -23,7 +24,8 @@ export const metadata: Metadata = {
 export default function PartirLibrementPage() {
   return (
     <AppShell hasBottomNav={false} videoBackground={false} className="app-shell--preparer">
-      <FreeDepartureView />
+      <PartirLibrementView />
     </AppShell>
   );
 }
+

@@ -128,7 +128,8 @@ describe('DestinationStep — parcours et dates', () => {
   it('DEST-06: annonce les préférences saisies', () => {
     const text = visible(render(DestinationStep, fullDraft()));
     expect(text).toContain('Préférences');
-    expect(text).toContain('2 personnes');
+    // Maquette 10 : l'effectif se lit « N adultes », pas « N personnes ».
+    expect(text).toContain('2 adultes');
   });
 
   it('DEST-07: ne propose ni distance, ni prix, ni pourcentage', () => {

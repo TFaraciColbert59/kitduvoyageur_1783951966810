@@ -1,5 +1,21 @@
-import { MEAL_SLOT_LABELS, type ItineraryModel, type MealNeed, type MealSlot, type WaterNeed } from '../types';
+import {
+  MEAL_SLOT_LABELS,
+  type ItineraryModel,
+  type ItineraryStep,
+  type MealNeed,
+  type MealSlot,
+  type WaterNeed,
+} from '../types';
 import { daySteps } from './itinerary';
+
+/**
+ * Un ravitaillement n est fiable que lorsqu il a ete verifie : par la personne
+ * ou par la communaute. Une proposition non confirmee reste incertaine, car
+ * l'app ne doit pas promettre un point d eau qu'aucune source n'atteste.
+ */
+function isVerifiedRefill(step: ItineraryStep): boolean {
+  return step.state === 'confirme' || step.state === 'confirme_communaute';
+}
 
 const SLOTS: readonly MealSlot[] = ['petit_dejeuner', 'dejeuner', 'diner'];
 
@@ -14,11 +30,13 @@ export function waterNeeds(model: ItineraryModel | null): WaterNeed[] {
     const steps = daySteps(model, day);
     if (steps.length === 0) continue;
     const anchor = steps[0];
-    const refill = steps.find((step) => step.kind === 'ravitaillement');
+    const candidates = steps.filter((step) => step.kind === 'ravitaillement');
+    // Le ravitaillement verifie l'emporte toujours sur une proposition non confirmee.
+    const refill = candidates.find(isVerifiedRefill) ?? candidates[0] ?? null;
     needs.push({
       stepId: anchor.id,
       litersPerPerson: null,
-      confidence: refill ? 'fiable' : 'incertaine',
+      confidence: refill && isVerifiedRefill(refill) ? 'fiable' : 'incertaine',
       refillPlaceName: refill ? refill.placeName : null,
       alternativePlaceName: null,
     });

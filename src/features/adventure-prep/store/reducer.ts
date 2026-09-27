@@ -33,6 +33,7 @@ import {
 } from '../engine/generation';
 import { resolvedGear } from '../engine/gear';
 import { emptyDraft } from '../engine/emptyDraft';
+import { suggestDuration } from '../engine/calendar';
 
 /** Chaque mutation renvoie un nouveau brouillon et bumps la version de reprise. */
 function commit(draft: AdventurePrepDraft, patch: Partial<AdventurePrepDraft>): AdventurePrepDraft {
@@ -51,7 +52,7 @@ export const draftActions = {
   }),
 
   setActivities: (draft: AdventurePrepDraft, activities: ActivitySelection): AdventurePrepDraft =>
-    commit(draft, { activities, itinerary: null }),
+    suggestDuration(commit(draft, { activities, itinerary: null })),
 
   setRoute: (draft: AdventurePrepDraft, route: RouteBlock): AdventurePrepDraft =>
     commit(draft, { route, itinerary: null }),
@@ -151,3 +152,4 @@ export const draftActions = {
     return commit(draft, { gear: resolvedGear(draft) });
   },
 };
+

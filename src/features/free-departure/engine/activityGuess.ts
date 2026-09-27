@@ -1,5 +1,5 @@
 /**
- * « Partir librement » — reconnaissance d'activite (A11).
+ * « Partir librement » — reconnaissance d'activite (ecrans 61 / 62).
  *
  * Regle non negociable : rien n'est invente. On ne propose une activite que si
  * les mesures la distinguent reellement d'une autre. En cas de doute ou
@@ -49,6 +49,52 @@ function fmtKm(km: number): string {
 }
 
 /**
+ * Qualificatifs de catalogue, pas d'activite.
+ *
+ * Le catalogue nomme une ENTREE, pas une sortie : « Randonnee a la journee »
+ * se distingue de « Randonnee avec nuit de refuge » parce que les deux lignes
+ * sont voisines dans une liste. Un en-tete d'ecran n'a pas ce probleme — une
+ * seule activite est a l'ecran, et rien ne peut lui etre confondu — mais
+ * « Randonnee a la journee » y prend deux fois plus de place que necessaire.
+ *
+ * D'ou la regle : on retire le qualificatif, jamais le nom.
+ *
+ * La liste est fermee et explicite, et c'est volontaire. Un raccourcissement
+ * plus general finirait par transformer « Ski de randonnee » en « Ski » ou
+ * « Nuit en bivouac » en « Nuit » : deux erreurs qui disent autre chose que
+ * l'activite reellement faite.
+ */
+const QUALIFIERS: readonly string[] = [
+  ' à la journée',
+  ' à la semaine',
+  ' à la nuit',
+  ' avec nuit',
+  ' en mer',
+  ' en ville',
+  ' en avion',
+  ' en montagne',
+  ' autonome',
+  ' de voyage',
+];
+
+/** En dessous de cette longueur, on ne coupe pas : « En » seul n'est pas un nom. */
+const MIN_HEAD_LENGTH = 3;
+
+/**
+ * Nom d'activite affiche pendant et apres la sortie.
+ *
+ * Les noms sans qualificatif ne bougent pas : « Trail », « Course », « Kayak »,
+ * « Alpinisme » et « Bikepacking » sont deja courts et exacts.
+ */
+export function shortActivityLabel(label: string): string {
+  for (const qualifier of QUALIFIERS) {
+    const at = label.indexOf(qualifier);
+    if (at >= MIN_HEAD_LENGTH) return label.slice(0, at);
+  }
+  return label;
+}
+
+/**
  * Proposition d'activite a partir des seules mesures disponibles.
  *
  * On raisonne par bandes de vitesse moyenne : c'est le seul critere qui
@@ -80,7 +126,9 @@ export function guessActivity(signals: FreeSessionSignals): ActivityGuess | null
 
   return {
     activityId: def.id,
-    label: def.label,
+    // Nom court : l'ecran 61 et 62 n'affichent qu'une seule activite, et le
+    // qualificatif de catalogue n'y apporte rien.
+    label: shortActivityLabel(def.label),
     icon: def.icon,
     because: reasons.join(', '),
     confidence: band.confidence,
@@ -108,7 +156,6 @@ function resolveBand(speed: number): Band | null {
   if (speed < 8) return { activityId: 'trail', confidence: 'incertaine' };
   if (speed < 11.5) return { activityId: 'course', confidence: 'proposee' };
   if (speed < 14) return { activityId: 'course', confidence: 'incertaine' };
-  if (speed < 25) return { activityId: 'velo-route', confidence: 'proposee' };
   if (speed <= 45) return { activityId: 'velo-route', confidence: 'proposee' };
   // Au-dela, la mesure est suspecte (bug de traceur, saut d'axe) :
   // on ne propose rien plutot qu'une idee fausse.

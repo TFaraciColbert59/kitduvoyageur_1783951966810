@@ -26,10 +26,28 @@ describe('eau et repas', () => {
     for (const need of waterNeeds(built)) expect(ids.has(need.stepId)).toBe(true);
   });
 
-  it('passe a « fiable » des qu\'un point de ravitaillement existe', () => {
+  it('reste incertaine tant que le ravitaillement n est pas verifie', () => {
     const built = addStep(model(), 2, 'ravitaillement', { title: 'Ravitaillement' });
     const jour2 = waterNeeds(built).find((w) => w.stepId.startsWith('d2'));
+    expect(jour2?.confidence).toBe('incertaine');
+  });
+
+  it('passe a fiable sur un ravitaillement confirme par la communaute', () => {
+    const built = addStep(model(), 2, 'ravitaillement', {
+      title: 'Ravitaillement',
+      state: 'confirme_communaute',
+    });
+    const jour2 = waterNeeds(built).find((w) => w.stepId.startsWith('d2'));
     expect(jour2?.confidence).toBe('fiable');
+  });
+
+  it('passe a fiable sur un ravitaillement confirme par la personne', () => {
+    const built = addStep(model(), 3, 'ravitaillement', {
+      title: 'Ravitaillement',
+      state: 'confirme',
+    });
+    const jour3 = waterNeeds(built).find((w) => w.stepId.startsWith('d3'));
+    expect(jour3?.confidence).toBe('fiable');
   });
 
   it('n\'invente jamais de point de rechange', () => {

@@ -10,6 +10,7 @@ import {
   type MoneyValue,
   type RouteShape,
 } from '../types';
+import { proposedStops } from './proposedStops';
 import { buildContingencies } from './resilience';
 
 const ICONS: Record<ItineraryStepKind, string> = {
@@ -120,12 +121,8 @@ export function buildItinerary(draft: AdventurePrepDraft): ItineraryModel | null
             : PRICE_TO_CHECK,
       });
     }
-    const pause = day < days && draft.preferences.pace !== 'rapide';
-    if (pause) {
-      push(day, 'repos', {
-        title: draft.preferences.pace === 'tranquille' ? 'Pause longue' : 'Pause',
-        reason: 'Pause proposée pour garder un rythme tranquille',
-      });
+    for (const stop of proposedStops(draft, day, days)) {
+      push(day, stop.kind, stop);
     }
     if (day < days) {
       push(day, 'nuit', {
@@ -184,8 +181,8 @@ function withSteps(model: ItineraryModel, steps: readonly ItineraryStep[]): Itin
   return { ...model, steps: [...steps] };
 }
 
-/** Reordonne les `order` d'une journee apres insertion ou suppression. */
-function renumber(steps: readonly ItineraryStep[]): ItineraryStep[] {
+/** Reordonne les `order` d'une journee apres insertion, suppression ou import IA. */
+export function renumberByDay(steps: readonly ItineraryStep[]): ItineraryStep[] {
   const counters = new Map<number, number>();
   return [...steps]
     .sort((a, b) => a.day - b.day || a.order - b.order)
@@ -210,7 +207,7 @@ export function addStep(
     kind,
     draft,
   );
-  return withSteps(model, renumber([...model.steps, step]));
+  return withSteps(model, renumberByDay([...model.steps, step]));
 }
 
 export function setStepKept(model: ItineraryModel, stepId: string, kept: boolean): ItineraryModel {
@@ -234,7 +231,7 @@ export function setStepMealSlot(
 export function removeStep(model: ItineraryModel, stepId: string): ItineraryModel {
   return withSteps(
     model,
-    renumber(model.steps.filter((step) => step.id !== stepId)),
+    renumberByDay(model.steps.filter((step) => step.id !== stepId)),
   );
 }
 

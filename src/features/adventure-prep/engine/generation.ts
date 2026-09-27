@@ -22,7 +22,7 @@ function phases(done: GenerationPhaseId[] = []): GenerationPhase[] {
 }
 
 export function initialGeneration(): GenerationState {
-  return { status: 'idle', phases: phases(), steps: [], days: 0, error: null };
+  return { status: 'idle', phases: phases(), steps: [], days: 0, error: null, notice: null };
 }
 
 export interface GenerationProgress {
@@ -46,7 +46,7 @@ export function generationProgress(state: GenerationState): GenerationProgress {
 }
 
 export function startGeneration(_previous: GenerationState): GenerationState {
-  return { status: 'en_cours', phases: phases(), steps: [], days: 0, error: null };
+  return { status: 'en_cours', phases: phases(), steps: [], days: 0, error: null, notice: null };
 }
 
 export function resumeGeneration(state: GenerationState): GenerationState {
@@ -79,6 +79,17 @@ export function interruptGeneration(state: GenerationState): GenerationState {
 
 export function failGeneration(state: GenerationState, error: string): GenerationState {
   return { ...state, status: 'echec', error };
+}
+
+/**
+ * Phrase d'etat a confirmer une fois le parcours construit.
+ *
+ * Elle survit a une reprise et au changement d'ecran : l'utilisateur qui revient
+ * sur le parcours doit encore lire pourquoi il n'a pas ete enrichi, sinon la
+ * notice n'a aucun effet.
+ */
+export function setGenerationNotice(state: GenerationState, notice: string | null): GenerationState {
+  return state.notice === notice ? state : { ...state, notice };
 }
 
 export function finishGeneration(state: GenerationState): GenerationState {

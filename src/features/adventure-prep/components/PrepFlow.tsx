@@ -65,7 +65,12 @@ export function PrepFlow() {
         {!picking && step === 'departure' && <DepartureStep onOpenSheet={openSheet} />}
       </AdventurePrepShell>
 
-      <PrepSheets sheet={sheet} onClose={closeSheet} focusStepId={focusStepId} />
+      <PrepSheets
+        sheet={sheet}
+        onClose={closeSheet}
+        focusStepId={focusStepId}
+        onOpenSheet={openSheet}
+      />
     </>
   );
 }
