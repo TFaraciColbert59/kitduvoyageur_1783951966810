@@ -83,6 +83,32 @@
   --prep-page-bg: #151821;
   --prep-page-wash: linear-gradient(var(--lkv-surface), var(--lkv-surface));
 
+  /* --- Fond des tiroirs (feuilles) -------------------------------------
+     Les tiroirs du preparateur etaient illisibles : blanc sur blanc. La
+     regle D3 (plus bas) composait leur fond avec
+     `color-mix(--lkv-surface-elevated, --lkv-text-primary)`. Or ces deux
+     variables n'ont PAS la meme polarite dans ce scope : le preparateur
+     force un texte blanc (polarite claire) dans un theme `light` dont la
+     surface elevee est aussi blanche. Melange blanc + blanc = blanc pur,
+     et le texte blanc disparait (contraste 1:1, mesure par CDP).
+
+     On sort donc la couleur du melange et on la pose en dur dans les
+     TOKENS, comme --prep-page-bg : un ardoise fonce de la meme famille que
+     la page, opaque, qui ne depend ni du theme ni de la polarite du texte.
+     Le texte blanc garde ~16:1 de contraste. Seule la COULEUR change, le
+     translucide (backdrop-filter) de D3 est conserve. */
+  --prep-sheet-bg: #1c202b;
+
+  /* Surface elevee reellement sombre pour le preparateur : la variable
+     --lkv-surface-elevated du theme `light` est blanche, donc toute pastille
+     ou pastille survolee devenait invisible sur le fond sombre. */
+  --prep-surface-elevated: #262b38;
+
+  /* Encre posee sur une action pleine (jour selectionne du calendrier) : la
+     couleur d'action du preparateur est claire, l'encre doit donc etre sombre
+     pour rester lisible. */
+  --prep-on-action: #0b0d12;
+
   /* La carte est posee sur la page, pas sur la photo : meme base opaque, la
      teinte du materiau etant empilee par-dessus via --prep-map-wash. */
   --prep-map-bg: #151821;
@@ -1576,6 +1602,21 @@ button.prep-map__glass:active {
   overflow: hidden;
 }
 
+/* Les deux memes variables n'ont pas la meme polarite dans le preparateur : il
+   force un texte blanc (polarite claire) dans un theme `light` dont la surface
+   elevee est blanche. Tout composant qui pose son fond sur
+   `--lkv-surface-elevated` (pastille de segment, survol de ligne de liste,
+   bouton du calendrier) devenait donc blanc SUR BLANC ou gris sans contraste.
+
+   Le revoquement est pose sur `body:has(.app-shell--preparer)` et NON sur
+   `.app-shell--preparer` : `Sheet` passe par `Dialog.Portal` et se monte dans
+   `document.body`, donc les tiroirs sont des FRERES de l'app-shell, pas des
+   descendants. Une variable posee sur l'app-shell ne les atteint pas ; posee
+   sur le body (via :has), elle cascade vers tous les sheets portaled. */
+body:has(.app-shell--preparer) {
+  --lkv-surface-elevated: var(--prep-surface-elevated);
+}
+
 .app-shell--preparer > div {
   padding-bottom: 0 !important;
 }
@@ -1602,11 +1643,7 @@ button.prep-map__glass:active {
    Le defilement INTERNE n'est pas touche : le `overflow-y: auto` du contenu de la
    feuille continue de fonctionner pour une liste plus longue qu'elle. */
 body:has(.app-shell--preparer) .lkv-sheet-up {
-  background-color: color-mix(
-    in srgb,
-    var(--lkv-surface-elevated) 86%,
-    var(--lkv-text-primary)
-  );
+  background-color: var(--prep-sheet-bg);
   -webkit-backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
   backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
   box-shadow:
@@ -2250,4 +2287,108 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   color: var(--lkv-text-subtle);
   font-size: var(--f-body-sm);
   pointer-events: none;
+}
+
+/* --- D6 · Calendrier mensuel Liquid Glass ---------------------------------
+   L'<input type="date"> natif est stylable ni sur iOS ni sur le webkit du
+   repo : il affichait un widget systeme gris clair, illisible sur la feuille
+   sombre, et un tiroir quasi vide. Ce calendrier est construit a partir des
+   memes tokens que le reste du preparateur (meme famille ardoise que
+   --prep-sheet-bg), donc il se lit comme le reste et suit le theme.
+
+   La grille calcule 6 semaines depuis le lundi precedent le 1er du mois
+   (lundi = 1re colonne, convention FR). Le passe est desactive via `min`, la
+   selection est pleine, la plage depart->retour est teintee, et le jour
+   courant a un anneau (quand il n'est pas lui-meme selectionne). */
+
+.prepcal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--lkv-radius-lg);
+  background: var(--prep-sheet-bg);
+  border: 1px solid var(--prep-hairline-ink);
+  box-shadow: var(--prep-shadow-float);
+}
+.prepcal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.prepcal__month {
+  font-size: var(--f-body-md);
+  font-weight: 600;
+  color: var(--lkv-text-primary);
+}
+.prepcal__nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--lkv-text-secondary);
+  background: var(--lkv-surface-elevated);
+  border: 1px solid var(--lkv-border-subtle);
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.prepcal__nav:hover:not(:disabled) {
+  background: var(--lkv-hover-surface);
+  color: var(--lkv-text-primary);
+}
+.prepcal__nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.prepcal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.prepcal__weekday {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  font-size: var(--f-caption-sm, 11px);
+  font-weight: 600;
+  color: var(--lkv-text-muted);
+}
+.prepcal__day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  font-size: var(--f-body-sm);
+  font-weight: 500;
+  color: var(--lkv-text-primary);
+  transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+.prepcal__day:hover:not(:disabled):not(.is-selected) {
+  background: var(--lkv-hover-surface);
+}
+.prepcal__day.is-outside {
+  color: var(--lkv-text-muted);
+  opacity: 0.45;
+}
+.prepcal__day:disabled {
+  color: var(--lkv-text-muted);
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.prepcal__day.is-range {
+  background: color-mix(in srgb, var(--lkv-action) 22%, transparent);
+  border-radius: var(--lkv-radius-md);
+}
+.prepcal__day.is-today {
+  box-shadow: inset 0 0 0 1.5px var(--lkv-focus-ring);
+}
+.prepcal__day.is-selected {
+  background: var(--lkv-action);
+  color: var(--prep-on-action);
+  font-weight: 700;
+  box-shadow: var(--card-shadow);
 }

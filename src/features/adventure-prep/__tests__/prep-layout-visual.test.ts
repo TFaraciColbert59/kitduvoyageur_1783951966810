@@ -214,16 +214,20 @@ describe('D3 — la surface des feuilles est opaque', () => {
     expect(sheet!.selector).toMatch(/^body:has\(\.app-shell--preparer\)\s+\.lkv-sheet-up$/);
   });
 
-  it("le fond est OPAQUE : il melange un token toujours opaque", () => {
-    // Mesure : `color-mix(... var(--lkv-surface) 97%, transparent)` rendait un
-    // alpha de 0.29 - le theme iOS 27 redefinit --lkv-surface en
-    // `rgba(16,16,16,0.3)`, donc 97 % de 30 % reste translucide et le titre de
-    // l'etape traversait toujours la feuille. Il faut melanger avec un token
-    // OPAQUE pour que le resultat le soit : --lkv-text-primary est une couleur
-    // pleine dans les deux themes, --lkv-surface-elevated aussi.
+
+  it("le fond est OPAQUE et lisible : un token sombre dedie, pas un melange", () => {
+    // Mesure : la feuille composait son fond avec
+    // `color-mix(--lkv-surface-elevated 86%, --lkv-text-primary)`. Or ces deux
+    // variables n'ont PAS la meme polarite dans le preparateur : il force un
+    // texte blanc (polarite claire) dans un theme `light` dont la surface
+    // elevee est blanche. Melange blanc + blanc = blanc pur, et le texte blanc
+    // disparaissait (contraste 1:1, mesure via CDP). Le fond doit venir d'un
+    // token OPAQUE et SOMBRE dedie (--prep-sheet-bg), pas d'un melange de deux
+    // tokens de polarite opposee.
     const bg = declarations(sheet?.body ?? '').get('background-color') ?? '';
-    expect(bg).toMatch(/color-mix\(/);
-    expect(bg).toMatch(/var\(--lkv-text-primary\)|var\(--lkv-surface-elevated\)/);
+    expect(bg).toBe('var(--prep-sheet-bg)');
+    const tokens = css;
+    expect(tokens).toMatch(/--prep-sheet-bg:\s*#[0-9a-fA-F]{3,8};/);
   });
 
   it('le verre est conserve : flou et saturation restent poses', () => {

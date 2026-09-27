@@ -13,7 +13,7 @@ export { LoadingState, type LoadingStateProps } from './LoadingState';
 export { SearchField, type SearchFieldProps } from './SearchField';
 export { FloatingPageControls, type FloatingPageControlsProps } from './FloatingPageControls';
 export { Switch, type SwitchProps } from './Switch';
-export { Sheet, type SheetProps } from './Sheet';
+export { Sheet, type SheetProps, type SheetDetent } from './Sheet';
 export { Badge, type BadgeTone } from './Badge';
 export { EmptyState, ErrorState, type EmptyStateProps, type ErrorStateProps } from './EmptyState';
 export { Chip, type ChipTone, type ChipProps } from './Chip';

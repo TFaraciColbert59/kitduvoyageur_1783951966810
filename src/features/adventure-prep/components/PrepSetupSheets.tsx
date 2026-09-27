@@ -18,6 +18,7 @@ import { buildGearNeeds, gearGaps, packWeight } from '../engine/gear';
 import { mealNeeds, uncoveredMeals, waterNeeds } from '../engine/consumables';
 import { geocodeMessage, useGeocode } from '../hooks/useGeocode';
 import { placeCandidates, type PlaceCandidate } from '../placeCandidates';
+import { PrepCalendar } from './PrepCalendar';
 
 export interface PrepSheetProps {
   draft: AdventurePrepDraft;
@@ -516,6 +517,9 @@ export function CalendarSheet({ draft, actions, onClose }: PrepSheetProps) {
 
   const days = Number(duration);
   const suggested = draft.calendar.durationIsSuggested;
+  // Date de retour effective : depart + duree - 1. C'est la valeur affichee
+  // par le second calendrier et la borne `rangeEnd` de la plage mise en valeur.
+  const returnIso = startDate && days ? isoPlusDays(startDate, Math.max(0, days - 1)) : '';
 
   const apply = () => {
     actions.setCalendar({
@@ -530,12 +534,7 @@ export function CalendarSheet({ draft, actions, onClose }: PrepSheetProps) {
   return (
     <div>
       <Section title="Date de départ">
-        <input
-          type="date"
-          className="field"
-          value={startDate}
-          onChange={(event) => setStartDate(event.target.value)}
-        />
+        <PrepCalendar value={startDate} onChange={setStartDate} />
       </Section>
 
       <Section title="Durée">
@@ -555,15 +554,14 @@ export function CalendarSheet({ draft, actions, onClose }: PrepSheetProps) {
             </button>
           </div>
         ) : (
-          <input
-            type="date"
-            className="field"
-            style={{ marginTop: '16px' }}
-            value={startDate && days ? isoPlusDays(startDate, Math.max(0, days - 1)) : ''}
-            onChange={(e) => {
-              if (startDate && e.target.value) {
+          <PrepCalendar
+            value={returnIso}
+            min={startDate || undefined}
+            rangeEnd={startDate || null}
+            onChange={(iso) => {
+              if (startDate && iso) {
                 const start = new Date(startDate);
-                const end = new Date(e.target.value);
+                const end = new Date(iso);
                 const diffTime = Math.abs(end.getTime() - start.getTime());
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
                 setDuration(String(diffDays));

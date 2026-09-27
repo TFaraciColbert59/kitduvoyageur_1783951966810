@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Sheet } from '@/components/ui';
+import { Sheet, type SheetDetent } from '@/components/ui';
 import { useAdventurePrepStore } from '../store/useAdventurePrepStore';
 import {
   PlaceSheet,
@@ -74,6 +74,30 @@ const TITLES: Readonly<Record<PrepSheetId, string>> = {
 };
 
 /**
+ * Hauteur de chaque tiroir. Un ecran = UNE decision dominante : la plupart
+ * n'ont qu'un champ ou une courte liste, et un detent `large` (90dvh) les
+ * laissait « presque vides » (grand tiroir, deux lignes de contenu). `auto`
+ * laisse le panneau epouser son contenu, plafonne a 90dvh par `.lkv-sheet-up`,
+ * et defile en interne quand la liste est vraiment longue. On ne garde `large`
+ * que pour les ecrans riches par nature (itineraire, equipement, invitation).
+ */
+const DETENT: Readonly<Record<PrepSheetId, SheetDetent>> = {
+  place: 'auto',
+  calendar: 'auto',
+  group: 'auto',
+  preferences: 'auto',
+  coverage: 'auto',
+  participants: 'large',
+  step: 'large',
+  steps: 'large',
+  adjust: 'large',
+  add: 'auto',
+  gear: 'large',
+  consumables: 'large',
+  invite: 'auto',
+};
+
+/**
  * Le jeton signe ne porte pas les droits : il est emis une seule fois, les
  * 4 permissions restent cote client (cf. PrepInviteScreen). L adaptateur
  * ignore donc `permissions` plutot que de les encoder dans un jeton qui
@@ -105,7 +129,7 @@ export function PrepSheets({
         if (!open) onClose();
       }}
       title={sheet ? TITLES[sheet] : ''}
-      detent="large"
+      detent={sheet ? DETENT[sheet] : 'auto'}
       dragToDismiss
     >
       {sheet === 'place' && <PlaceSheet draft={draft} actions={actions} onClose={onClose} field={placeField} />}
