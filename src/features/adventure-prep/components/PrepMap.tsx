@@ -583,6 +583,15 @@ function useOverlayLifecycle(
 }
 
 
+/**
+ * Cadre par defaut quand aucun point n est connu : centre France.
+ *
+ * Meme valeur et meme raison que le selecteur de lieu de ce feature
+ * (`PICKER_FALLBACK`). Sert uniquement a cadrer la carte : aucun trait n est
+ * dessine, aucune extremite n est affichee, donc aucune donnee n est inventee.
+ */
+const DEFAULT_MAP_VIEW: [number, number] = [46.6, 2.45];
+
 function MapCanvas({
   name,
   routeCoords,
@@ -600,13 +609,21 @@ function MapCanvas({
 }) {
   const coords = useMemo(() => {
     const known = position ? [...routeCoords, position] : routeCoords;
-    // Une seule extremite connue ne suffit pas a HubGlobeMap : il exige deux
-    // coordonnees distinctes pour construire une ligne, et affichait donc son
-    // etat vide pendant tout le moment ou l on choisit encore le second point.
-    // On duplique le point unique pour que la carte s affiche des le premier
-    // point pose. Aucun trace dessine : la carte se centre dessus.
-    if (known.length !== 1) return known;
-    return [known[0], known[0]];
+    // HubGlobeMap rend `null` des qu il n a pas deux coordonnees a afficher,
+    // ce qui laissait un cadre NOIR sans carte : lePreparateur apparaitrait
+    // mort avant meme le premier point. On lui fournit donc toujours deux
+    // coordonnees.
+    //
+    // 0 point  -> centre France (M_DEFAULT_MAP_VIEW), meme convention que le
+    //              selecteur de lieu du meme feature ;
+    // 1 point  -> on duplique, la carte se centre dessus sans tracer de ligne ;
+    // 2 et plus -> les coordonnees reelles, trace intact.
+    //
+    // Le centre France n invente aucune donnee de trajet : c est un cadrage,
+    // pas une extremite. Aucun point, aucun trace, aucun discours.
+    if (known.length === 0) return [DEFAULT_MAP_VIEW, DEFAULT_MAP_VIEW];
+    if (known.length === 1) return [known[0], known[0]];
+    return known;
   }, [routeCoords, position]);
   
   return (

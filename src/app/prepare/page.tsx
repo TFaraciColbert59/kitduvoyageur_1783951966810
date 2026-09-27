@@ -56,8 +56,13 @@ export default async function PreparatorPage({
 
   // Court-circuit avant toute lecture : l'ecran ignore ces donnees, inutile
   // de payer une requete Supabase pour l'afficher.
+  // `?apercu` est une porte de developpement : toute valeur non vide l'ouvre.
+  // La comparer a la seule chaine 'aventure' faisait retomber `?apercu` nu
+  // dans le preparateur detaille, et c'est exactement le « j'ai l'ancienne
+  // version de /prepare » : le lien tape a la main nouvrait pas le meme ecran
+  // que le lien du hub. La porte reste fermee en production.
   const wantsNewFlow =
-    NEW_FLOW_VALUES.has(nouvelle ?? '') || (isPreviewable && apercu === 'aventure');
+    NEW_FLOW_VALUES.has(nouvelle ?? '') || (isPreviewable && Boolean(apercu));
   if (wantsNewFlow) return <AdventurePrepScreen />;
 
   const data = await getPreparatorData();
