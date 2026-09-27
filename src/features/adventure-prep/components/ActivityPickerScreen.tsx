@@ -293,13 +293,6 @@ export function ActivityPickerScreen({ onOpenSheet: _onOpenSheet }: ActivityPick
           >
             {ACTIVITY_CATEGORIES.map((item) => {
               const active = item.id === categoryId;
-              let iconName = 'grid-2x2';
-              if (item.id === 'a_pied') iconName = 'footprints';
-              if (item.id === 'a_velo') iconName = 'bike';
-              if (item.id === 'eau') iconName = 'waves';
-              if (item.id === 'neige_montagne') iconName = 'mountain-snow';
-              if (item.id === 'voyage_sejour') iconName = 'plane';
-
               return (
                 <button
                   key={item.id}
@@ -307,7 +300,7 @@ export function ActivityPickerScreen({ onOpenSheet: _onOpenSheet }: ActivityPick
                   aria-pressed={active}
                   onClick={() => setCategoryId(item.id)}
                 >
-                  <Icon name={iconName} size={16} />
+                  <Icon name={item.icon} size={16} />
                   {item.label}
                 </button>
               );

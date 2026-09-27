@@ -51,7 +51,7 @@ export const PREPARE_ACTION: DrawerAction = {
   id: 'prepare',
   label: 'Préparer une activité',
   description: 'Trois réponses suffisent : on construit tout le reste.',
-  href: '/prepare',
+  href: '/prepare?nouvelle=1',
   icon: 'route',
   variant: 'primary',
 };

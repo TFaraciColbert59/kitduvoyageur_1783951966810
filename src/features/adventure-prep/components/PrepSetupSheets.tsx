@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import Icon from '@/components/ui/Icon';
 import { Button, Chip, SearchField, Switch } from '@/components/ui';
 import { A_VERIFIER } from '../engine/trust';
@@ -101,7 +101,7 @@ function ChipRow<T extends string>({
   onChange: (next: T) => void;
 }) {
   return (
-    <div className="seg tap">
+    <div className="seg">
       {options.map((option) => (
         <button
           key={option.id}
@@ -191,11 +191,168 @@ function PlaceRow({
   );
 }
 
+/* --- Choix d'un point sur la carte -------------------------------------- */
+
+/**
+ * Demi-etendue du carre de selection, en degres, de chaque cote du centre.
+ *
+ * 0.18 deg vaut environ 20 km : c'est la portee utile pour trancher entre deux
+ * communes voisines quand le lieu connu n'est pas un point precis. Assez large
+ * pour etre tolerant au doigt, assez etroit pour rester utile.
+ */
+const PICKER_HALF_SPAN_DEG = 0.18;
+
+/** Centre par defaut : la France, quand aucun point n'est encore connu. */
+const PICKER_FALLBACK = { lat: 46.6, lon: 2.45 } as const;
+
+/** Arrondi lisible : cinq decimales valent environ 1 m, on s'arrete la. */
+function round5(value: number): number {
+  return Math.round(value * 1e5) / 1e5;
+}
+
+function formatCoord(value: number, positive: string, negative: string): string {
+  const hemisphere = value >= 0 ? positive : negative;
+  return `${Math.abs(value).toFixed(5)}° ${hemisphere}`;
+}
+
+export interface PickedPoint {
+  readonly lat: number;
+  readonly lon: number;
+  readonly name: string;
+}
+
+interface MapPickerProps {
+  /** Centre propose : le lieu deja choisi, sinon l'autre extremite du trajet. */
+  readonly centre: { readonly lat: number; readonly lon: number } | null;
+  readonly picked: PickedPoint | null;
+  readonly onPick: (point: PickedPoint) => void;
+  readonly onCancel: () => void;
+}
+
+/**
+ * Selecteur de point cliquable.
+ *
+ * Pourquoi pas une vraie carte : la carte du preparateur (`PrepMap`) est un
+ * schema vectoriel, sans fond de tuiles ni projection cliquable. Y brancher un
+ * point poserait des coordonnees sur une image qui ne sait pas ou elle se
+ * trouve. Ce selecteur, lui, mesure exactement ce qui est annonce : un clic
+ * donne un couple latitude/longitude affiche, que la personne peut relire et
+ * affiner. Aucune adresse n est inventee — le point porte le nom que la
+ * personne donne, sinon une formule explicite.
+ *
+ * Le clic est resolu en pourcentage du carre puis reconverti : la coordonnee
+ * ne depend donc pas de la taille reelle du composant, seulement de sa
+ * proportion, ce qui la rend stable entre le compact et le plein ecran.
+ */
+function MapPicker({ centre, picked, onPick, onCancel }: MapPickerProps) {
+  const origin = centre ?? PICKER_FALLBACK;
+  const [name, setName] = useState(picked?.name ?? '');
+  // Le point pose vit ICI, pas chez le parent. Poser un point et valider sont
+  // deux gestes : le clic doit pouvoir etre repris ou deplace sans ecraser le
+  // lieu deja retenu. C'etait `onPick` qui partait au clic, donc la premiere
+  // touche appliquait le lieu ET fermait la feuille — le bouton « Utiliser ce
+  // point » restait ensuite bloque, faute de point a valider.
+  const [point, setPoint] = useState<{ lat: number; lon: number } | null>(
+    picked === null ? null : { lat: picked.lat, lon: picked.lon },
+  );
+  const ref = useRef<HTMLDivElement>(null);
+
+  const pickAt = (clientX: number, clientY: number) => {
+    const box = ref.current?.getBoundingClientRect();
+    if (!box || box.width === 0 || box.height === 0) return;
+    // 0 au bord gauche/haut, 1 au bord droit/bas. On borne : un clic tape
+    // juste dehors ne doit pas produire une coordonnee hors du carre.
+    const ratioX = Math.min(1, Math.max(0, (clientX - box.left) / box.width));
+    const ratioY = Math.min(1, Math.max(0, (clientY - box.top) / box.height));
+    setPoint({
+      lat: round5(origin.lat + (0.5 - ratioY) * PICKER_HALF_SPAN_DEG * 2),
+      lon: round5(origin.lon + (ratioX - 0.5) * PICKER_HALF_SPAN_DEG * 2),
+    });
+  };
+
+  // Position du point courant, en pourcentage, pour le repere affiche.
+  const markerX =
+    point === null ? null : ((point.lon - origin.lon) / (PICKER_HALF_SPAN_DEG * 2) + 0.5) * 100;
+  const markerY =
+    point === null ? null : ((origin.lat - point.lat) / (PICKER_HALF_SPAN_DEG * 2) + 0.5) * 100;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div
+        ref={ref}
+        role="button"
+        tabIndex={0}
+        aria-label="Toucher la carte pour choisir un point"
+        onClick={(event) => pickAt(event.clientX, event.clientY)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            const box = ref.current?.getBoundingClientRect();
+            if (box) pickAt(box.left + box.width / 2, box.top + box.height / 2);
+          }
+        }}
+        className="prep-picker"
+      >
+        {markerX !== null && markerY !== null ? (
+          <span
+            className="prep-picker__pin"
+            style={{ left: `${markerX}%`, top: `${markerY}%` }}
+            aria-hidden="true"
+          />
+        ) : (
+          <span className="prep-picker__hint" aria-hidden="true">
+            Touche pour placer le point
+          </span>
+        )}
+      </div>
+
+      {point ? (
+        <p className="note neutral" style={{ margin: 0 }}>
+          {formatCoord(point.lat, 'N', 'S')} · {formatCoord(point.lon, 'E', 'O')}
+        </p>
+      ) : null}
+
+      <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <span className="t2">Nom du point (facultatif)</span>
+        <SearchField
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          placeholder="Ex. Le col"
+          aria-label="Nom du point choisi"
+          onClear={() => setName('')}
+        />
+      </label>
+
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <Button variant="secondary" onClick={onCancel} style={{ flex: 1 }}>
+          Annuler
+        </Button>
+        <Button
+          variant="primary"
+          style={{ flex: 1 }}
+          disabled={point === null}
+          onClick={() => {
+            if (!point) return;
+            onPick({ ...point, name: name.trim() });
+          }}
+        >
+          Utiliser ce point
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function PlaceSheet({ draft, actions, onClose }: PrepSheetProps) {
+
   const recent = useLocalPlaces();
   const [query, setQuery] = useState('');
   const [locating, setLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Recherche et selection sur la carte sont deux gestes distincts : melanges,
+  // ils se marchent dessus. `picking` bascule d'un mode a l'autre.
+  const [picking, setPicking] = useState(false);
+  const [picked, setPicked] = useState<PickedPoint | null>(null);
 
   const target = draft.route.origin === null ? 'origin' : 'destination';
   const isOrigin = target === 'origin';
@@ -245,6 +402,30 @@ export function PlaceSheet({ draft, actions, onClose }: PrepSheetProps) {
     );
   };
 
+  // Centre propose au selecteur : le lieu deja retenu, sinon l autre extremite
+  // du trajet. Choisir l arrivee en dernier n impose donc pas de repartir de
+  // zero, et un aller simple reste lisible depuis son depart.
+  const pickerCentre = useMemo<{ readonly lat: number; readonly lon: number } | null>(() => {
+    if (current) return { lat: current.lat, lon: current.lon };
+    const other = isOrigin ? draft.route.destination : draft.route.origin;
+    return other ? { lat: other.lat, lon: other.lon } : null;
+  }, [current, isOrigin, draft.route.destination, draft.route.origin]);
+
+  const applyPicked = (point: PickedPoint) => {
+    setPicking(false);
+    setPicked(null);
+    apply({
+      id: `point-${point.lat.toFixed(4)}-${point.lon.toFixed(4)}`,
+      // Sans nom saisi, on dit exactement ce qu on a : des coordonnees. Jamais
+      // une adresse devinee, qui se lirait comme une verification alors que
+      // personne ne l a faite.
+      name: point.name || `Point ${formatCoord(point.lat, 'N', 'S')} ${formatCoord(point.lon, 'E', 'O')}`,
+      country: '',
+      lat: point.lat,
+      lon: point.lon,
+    });
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div style={{ display: 'flex', gap: '8px' }}>
@@ -262,10 +443,22 @@ export function PlaceSheet({ draft, actions, onClose }: PrepSheetProps) {
         <Button variant="secondary" onClick={useMyPosition} loading={locating} style={{ flex: 1 }}>
           <Icon name="navigation" size={18} /> Ma position
         </Button>
-        <Button variant="secondary" onClick={() => {}} style={{ flex: 1 }}>
+        <Button variant="secondary" onClick={() => setPicking(true)} style={{ flex: 1 }}>
           <Icon name="map" size={18} /> Choisir sur la carte
         </Button>
       </div>
+
+      {picking ? (
+        <MapPicker
+          centre={pickerCentre}
+          picked={picked}
+          onPick={applyPicked}
+          onCancel={() => {
+            setPicking(false);
+            setPicked(null);
+          }}
+        />
+      ) : null}
 
       {error && <div className="note red">{error}</div>}
 

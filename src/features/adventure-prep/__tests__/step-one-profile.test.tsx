@@ -90,7 +90,6 @@ describe('S11 — le bon ecran pour la bonne aventure', () => {
 describe('S11 — les questions posees', () => {
   it('S11-07: le trajet pose depart, arrivee, boucle et duree', () => {
     const profile = stepOneProfile('trajet');
-    expect(profile.help).toBe('Trois réponses suffisent, le reste peut attendre.');
     expect(profile.rows.map((row) => row.label)).toEqual(['Départ', 'Arrivée']);
     expect(profile.showRouteShape).toBe(true);
     expect(profile.cells.map((cell) => cell.label)).toEqual(['Date', 'Temps disponible']);
@@ -98,7 +97,6 @@ describe('S11 — les questions posees', () => {
 
   it('S11-08: le voyage pose une destination et un retour, jamais une boucle', () => {
     const profile = stepOneProfile('voyage');
-    expect(profile.help).toBe('Où tu pars, où tu vas, et quand.');
     expect(profile.rows.map((row) => row.label)).toEqual(['Départ', 'Destination']);
     expect(profile.showRouteShape).toBe(false);
     expect(profile.cells.map((cell) => cell.label)).toEqual(['Départ', 'Retour ou durée']);
@@ -106,7 +104,6 @@ describe('S11 — les questions posees', () => {
 
   it('S11-09: le sejour pose un seul lieu de base et les deux dates', () => {
     const profile = stepOneProfile('sejour');
-    expect(profile.help).toBe('Un lieu de base, et tes dates sur place.');
     expect(profile.rows).toHaveLength(1);
     expect(profile.rows[0].label).toBe('Destination ou hébergement de base');
     expect(profile.cells.map((cell) => cell.label)).toEqual(['Arrivée', 'Départ']);
@@ -114,7 +111,6 @@ describe('S11 — les questions posees', () => {
 
   it('S11-10: l activite locale pose un lieu de pratique et une duree indicative', () => {
     const profile = stepOneProfile('local');
-    expect(profile.help).toBe('Pas de trajet : juste où, quand et avec qui.');
     expect(profile.rows).toHaveLength(1);
     expect(profile.rows[0].label).toBe('Lieu de pratique');
     expect(profile.cells.map((cell) => cell.label)).toEqual(['Date', 'Durée indicative']);
@@ -188,7 +184,6 @@ describe('S11 — ce qui manque, sans question inutile', () => {
 describe('S11 — rendu des ecrans 10, 11, 12 et 13', () => {
   it('S11-18: ecran 10 — l aide et la bascule de forme sont la', () => {
     const text = visible(render(fullDraft({ activities: RANDO })));
-    expect(text).toContain('Trois réponses suffisent');
     expect(text).toContain('Boucle');
     expect(text).toContain('Aller simple');
     expect(text).toContain('Créer mon parcours');
@@ -200,7 +195,6 @@ describe('S11 — rendu des ecrans 10, 11, 12 et 13', () => {
       route: { origin: CHAMONIX, destination: ARGENTIERE, shape: 'aller_simple' },
     });
     const text = visible(render(draft));
-    expect(text).toContain('Où tu pars, où tu vas, et quand.');
     expect(text).toContain('Destination');
     expect(text).toContain('Retour ou durée');
     expect(text).not.toContain('Aller simple');
@@ -213,7 +207,6 @@ describe('S11 — rendu des ecrans 10, 11, 12 et 13', () => {
       route: { origin: null, destination: ARGENTIERE, shape: 'aller_simple' },
     });
     const text = visible(render(draft));
-    expect(text).toContain('Un lieu de base, et tes dates sur place.');
     expect(text).toContain('Destination ou hébergement de base');
     expect(text).toContain('Arrivée');
     expect(text).not.toContain('Boucle');
@@ -225,7 +218,6 @@ describe('S11 — rendu des ecrans 10, 11, 12 et 13', () => {
       route: { origin: CHAMONIX, destination: null, shape: 'boucle' },
     });
     const text = visible(render(draft));
-    expect(text).toContain('Pas de trajet : juste où, quand et avec qui.');
     expect(text).toContain('Lieu de pratique');
     expect(text).toContain('Durée indicative');
     expect(text).toContain('Préparer ma sortie');

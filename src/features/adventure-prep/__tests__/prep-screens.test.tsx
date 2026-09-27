@@ -125,9 +125,12 @@ describe('DestinationStep — parcours et dates', () => {
     expect(text).toContain('À vérifier');
   });
 
-  it('DEST-06: annonce les préférences saisies', () => {
+  it('DEST-06: l effectif se lit en adultes, sans pastille de preferences', () => {
     const text = visible(render(DestinationStep, fullDraft()));
-    expect(text).toContain('Préférences');
+    // La pastille « Préférences » a ete retiree avec le bandeau titre : elle
+    // occupait une ligne entiere pour recapituler ce que le bouton du bandeau
+    // d'etapes ouvre deja. Ce qui compte ici, c'est l'effectif.
+    expect(text).not.toContain('Préférences');
     // Maquette 10 : l'effectif se lit « N adultes », pas « N personnes ».
     expect(text).toContain('2 adultes');
   });

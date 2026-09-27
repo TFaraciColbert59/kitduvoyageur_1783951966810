@@ -69,8 +69,6 @@ export interface StepOneCell {
 
 export interface StepOneProfile {
   id: StepOneProfileId;
-  /** Phrase d'aide sous le titre : une seule, courte, propre a l'ecran. */
-  help: string;
   /** Une ligne sur un sejour ou une sortie locale, deux sur un trajet. */
   rows: readonly StepOneRow[];
   /** Le lieu unique des profils sejour et local ; `null` quand il y en a deux. */
@@ -85,7 +83,6 @@ export interface StepOneProfile {
 const PROFILES: Readonly<Record<StepOneProfileId, StepOneProfile>> = {
   trajet: {
     id: 'trajet',
-    help: 'Trois réponses suffisent, le reste peut attendre.',
     rows: [
       { field: 'origin', label: 'Départ', icon: 'map-pin' },
       { field: 'destination', label: 'Arrivée', icon: 'flag' },
@@ -100,7 +97,6 @@ const PROFILES: Readonly<Record<StepOneProfileId, StepOneProfile>> = {
   },
   voyage: {
     id: 'voyage',
-    help: 'Où tu pars, où tu vas, et quand.',
     rows: [
       { field: 'origin', label: 'Départ', icon: 'map-pin' },
       { field: 'destination', label: 'Destination', icon: 'flag' },
@@ -115,7 +111,6 @@ const PROFILES: Readonly<Record<StepOneProfileId, StepOneProfile>> = {
   },
   sejour: {
     id: 'sejour',
-    help: 'Un lieu de base, et tes dates sur place.',
     rows: [
       { field: 'destination', label: 'Destination ou hébergement de base', icon: 'bed-double' },
     ],
@@ -129,7 +124,6 @@ const PROFILES: Readonly<Record<StepOneProfileId, StepOneProfile>> = {
   },
   local: {
     id: 'local',
-    help: 'Pas de trajet : juste où, quand et avec qui.',
     rows: [{ field: 'origin', label: 'Lieu de pratique', icon: 'map-pin' }],
     singlePlace: 'origin',
     showRouteShape: false,

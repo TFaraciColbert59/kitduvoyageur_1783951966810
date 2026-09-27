@@ -34,15 +34,20 @@ function visible(html: string): string {
     .replace(/&#x2F;/g, '/')
     .replace(/\s+/g, ' ')
     .trim();
-}
 
-describe('Écran 10 — Étape 1 : le titre et l’aide', () => {
-  it('D10-01: le titre reprend la maquette au mot près', () => {
-    expect(visible(render(fullDraft()))).toContain('On part où ?');
+}
+describe('Écran 10 — le bandeau titre a ete retire', () => {
+  // Le bloc « On part où ? » + promesse + pastilles d'activite et de
+  // preferences a ete supprime de l'ecran : il se superposait au contenu et
+  // prenait la place des decisions reelles. Ces tests verrouillent son
+  // absence, pour qu'un retour involontaire soit visible.
+  it('D10-01: le titre ne rend plus aucun texte', () => {
+    const text = visible(render(fullDraft()));
+    expect(text).not.toContain('On part où');
   });
 
-  it('D10-02: la promesse tient en une ligne', () => {
-    expect(visible(render(fullDraft()))).toContain('Trois réponses suffisent, le reste peut attendre.');
+  it('D10-02: la promesse n est plus annoncee', () => {
+    expect(visible(render(fullDraft()))).not.toContain('Trois réponses suffisent');
   });
 });
 
@@ -148,13 +153,15 @@ describe('Écran 10 — ce qu’il reste à saisir', () => {
 });
 
 describe('Écran 10 — accès aux réglages', () => {
-  it('D10-16: les préférences sont ouvrables depuis la pastille', () => {
+  // La pastille de preferences a disparu avec le bandeau titre. Le seul point
+  // d'entree est desormais le bouton du bandeau d'etapes (PrepNav), present
+  // sur les trois etapes — c'est ce que D10-16 verifie.
+  it('D10-16: la pastille de preferences ne rend plus dans le corps', () => {
     const html = render(fullDraft());
-    expect(html).toContain('Préférences');
-    expect(html).toContain('prep-pill--action');
+    expect(html).not.toContain('prep-pill--action');
   });
 
-  it('D10-17: les préférences restent annoncées en toutes lettres', () => {
+  it('D10-17: le resume des preferences ne se lit plus dans le corps', () => {
     const text = visible(
       render(
         fullDraft({
@@ -169,9 +176,7 @@ describe('Écran 10 — accès aux réglages', () => {
         }),
       ),
     );
-    expect(text).toContain('Tranquille');
-    expect(text).toContain('Modéré');
-    expect(text).toContain('Train');
+    expect(text).not.toContain('Tranquille · Modéré · Train');
   });
 });
 

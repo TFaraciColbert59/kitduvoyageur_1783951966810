@@ -81,50 +81,54 @@ function fixSection(withComments = false): string {
   return withComments ? section : section.replace(/\/\*[\s\S]*?\*\//g, ' ');
 }
 
-describe('D1 — la carte reste ancree en bas pendant le defilement', () => {
+describe('D1 — la carte est dans le flux, jamais posee par-dessus', () => {
   const map = rule('.prep-map');
 
-  it('la carte compacte est en position sticky, ancree en bas', () => {
-    // Reproduit : .prep-map est un enfant de .prep-body (overflow-y auto).
-    // sticky + bottom empeche la carte de sortir PAR LE BAS ; a lui seul il ne
-    // suffit pas (voir le test du `order` juste apres).
+  it('la carte compacte ne sort plus du flux', () => {
+    // Mesure navigateur (430x932) : en `position: sticky` + `bottom: 0`, la
+    // carte se collait au bas du scrollport et RECOUVRAIT Arrivee, Date,
+    // Temps, Participants et le badge de duree. `elementsFromPoint` au centre
+    // de `button.prep-cell` et de la ligne Participants renvoyait
+    // `div.prep-map__canvas` — donc non seulement illisible, mais incliquable
+    // par la carte. La seule construction qui ne peut pas recouvrir ses
+    // voisins est le flux normal.
     const d = declarations(map?.body ?? '');
-    expect(d.get('position')).toBe('sticky');
-    expect(d.get('bottom')).toBe('0');
+    expect(d.get('position')).toBe('static');
+    expect(d.get('bottom')).toBe('auto');
   });
 
-  it('la carte est le DERNIER element flexible du corps scrollable', () => {
-    // Mesure : sticky + bottom ne garantit qu'une chose - l'element ne sort pas
-    // par le bas du scrollport. A l'etape 2 la carte est la 3e des 9 enfants de
-    // .prep-body : le contenu du programme (rail des jours, sections) se trouve
-    // SOUS elle, donc le defilement la faisait sortir par le HAUT (mesure :
-    // bottom 427 au repos, 79 apres defilement). La seule correction CSS
-    // possible sans toucher aux .tsx : `order` la renvoie en fin de flux, la ou
-    // sticky-bottom la colle reellement au bas de l'ecran et la libere quand
-    // l'on atteint la fin du programme.
+  it('la carte est le DERNIER element du corps scrollable', () => {
+    // `order` reste : la carte est la 3e des 9 enfants de `.prep-body`, donc
+    // en flux simple elle s'intercalerait entre le bloc de depart et le
+    // programme. En fin de colonne elle ferme l'ecran comme un annexe de
+    // contexte. Ce que `order` ne doit PLUS faire, c'est se combiner avec un
+    // positionnement hors flux.
     const last = lastRule('.prep-body > .prep-map:not(.prep-map--full)');
     expect(last).toBeDefined();
     expect(declarations(last!.body).get('order')).toBe('99');
-    // `order` ne regit que le cas debordant. Programme plus court que la zone
-    // visible => l'espace libre se distribuait sous la carte et elle flottait
-    // 212 px au-dessus du bas (mesure : bottom 548 pour un bas de zone a 760).
-    // Une marge haute `auto` absorbe cet espace et la repose en bas ; des que le
-    // contenu deborde elle vaut 0, donc `sticky` n'est pas gene.
-    expect(declarations(last!.body).get('margin-top')).toBe('auto');
+  });
+
+  it("la regle d'ancrage ne repousse plus la carte vers le bas", () => {
+    // `margin-top: auto` absorbeait tout l'espace libre du corps flex, donc la
+    // carte se posait au milieu du cadre et flottait 212 px au-dessus du bas
+    // (mesure : bottom 548 pour un bas de zone a 760). En flux, l'espace se
+    // distribue normalement et la carte garde sa place dans le programme.
+    const last = lastRule('.prep-body > .prep-map:not(.prep-map--full)');
+    expect(declarations(last!.body).get('margin-top')).toBeUndefined();
   });
 
   it("l'overlay plein ecran reste hors de la regle d'ancrage", () => {
     // .prep-map--full est rendu A LA PLACE de la carte compacte, donc c'est
     // lui aussi un enfant direct de .prep-body : sans le `:not()`, la regle
-    // d'ancrage (plus specifique que `.prep-map--full`) lui volerait son
-    // `position: fixed` et le plein ecran ne couvrirait plus le viewport.
+    // d'ancrage (plus specifique que `.prep-map--full`) lui volerait sa mise
+    // en page et le plein ecran ne couvrirait plus le viewport.
     const last = lastRule('.prep-body > .prep-map:not(.prep-map--full)');
     expect(last?.selector).toBe('.prep-body > .prep-map:not(.prep-map--full)');
   });
 
   it("l'overlay plein ecran n'est PAS concerne et garde son fixed", () => {
     // .prep-map--full partage la classe .prep-map : sans cette garantie, la
-    // carte plein ecran heriterait du sticky et ne couvrirait plus le
+    // carte plein ecran heriterait du flux et ne couvrirait plus le
     // viewport. La regle --full doit rester declaree APRES la regle .prep-map.
     const order = rules().findIndex((r) => r.selector === '.prep-map');
     const fullOrder = rules().findIndex((r) => r.selector === '.prep-map--full');
@@ -132,12 +136,21 @@ describe('D1 — la carte reste ancree en bas pendant le defilement', () => {
     expect(declarations(rule('.prep-map--full')?.body ?? '').get('position')).toBe('fixed');
   });
 
-  it('la carte posee se peint au-dessus du contenu qu’elle recouvre', () => {
+  it('la carte garde un fond opaque, jamais translucide', () => {
+    // `--lkv-surface` vaut `rgba(16,16,16,0.3)` dans le theme iOS 27 : la
+    // carte laissait donc traverser la photo d'arriere-plan et devenait un
+    // trou noir au-dessus d'un texte clair. Elle recompose sa teinte sur un
+    // fond opaque via `--prep-map-bg`.
+    const d = declarations(map?.body ?? '');
+    expect(d.get('background-color')).toBe('var(--prep-map-bg)');
+  });
+
+  it('la carte se peint au-dessus de ses voisins de flux', () => {
     const d = declarations(map?.body ?? '');
     expect(Number(d.get('z-index'))).toBeGreaterThanOrEqual(2);
   });
 
-  it('la carte posee a une ombre et un lisere de verre', () => {
+  it('la carte a une ombre et un lisere de verre', () => {
     const d = declarations(map?.body ?? '');
     expect(d.get('box-shadow') ?? '').not.toBe('');
     expect(d.get('border') ?? d.get('border-top') ?? '').not.toBe('');

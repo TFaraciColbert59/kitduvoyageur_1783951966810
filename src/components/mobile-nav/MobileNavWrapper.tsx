@@ -24,11 +24,14 @@ export default function MobileNavWrapper() {
     pathname?.startsWith('/connexion') ||
     pathname?.startsWith('/inscription') ||
     pathname?.startsWith('/checkout') ||
-    // Préparateur : le flux occupe tout l'écran, la barre d'onglets y
-    // ajouterait un second point de sortie au milieu du parcours.
-    // Égalité stricte : '/preparer-randonnee' et '/preparer-sentier'
-    // partagent le préfixe '/prepare' mais gardent leur navigation.
-    pathname === '/prepare' ||
+    // '/prepare' n'est PLUS dans cette liste : le preparateur d'aventure doit
+    // garder la barre d'onglets. Elle en etait retiree parce que le flux
+    // occupe tout l'ecran, mais l'effet reel etait l'inverse de l'intention —
+    // aucun moyen de quitter l'ecran, puisque AppShell ne rend que la
+    // reservation de place et jamais la barre elle-meme. Voir
+    // AdventurePrepScreen.
+    // Égalité stricte conservee pour les autres routes '/prepare*' :
+    // '/preparer-randonnee' et '/preparer-sentier' gardent leur navigation.
     pathname?.startsWith('/communaute/publier');
 
   if (isNoNavRoute) {

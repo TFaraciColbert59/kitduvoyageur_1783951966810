@@ -67,6 +67,47 @@
   --prep-map-skeleton-bg: radial-gradient(120% 90% at 30% 0%, var(--prep-map-skeleton-sheen), transparent 60%),
     linear-gradient(180deg, var(--prep-map-skeleton-top), var(--prep-map-skeleton-bottom));
 
+  /* --- Fond de page ----------------------------------------------------
+     Sous le materiau Liquid Glass, `--lkv-surface` est une fumee TRANSLUCIDE
+     (rgba(16,16,16,.3) en sombre). La poser telle quelle laissait la photo de
+     fond de l'app traverser le preparateur : le texte blanc se posait sur une
+     image bruyante et la carte, deja sombre, devenait un trou noir.
+
+     `--prep-page-bg` recompose donc la fumee du theme sur un fond opaque :
+     la page reste dans la famille de couleur du theme (donc le contraste du
+     texte ne bouge pas) mais elle devient illisible-independent du fond
+     photographique. Valeur brute uniquement ici, dans la couche de tokens. */
+  --prep-page-bg: var(--lkv-app-bg-fallback);
+  --prep-page-wash: linear-gradient(var(--lkv-surface), var(--lkv-surface));
+
+  /* La carte est posee sur la page, pas sur la photo : meme base opaque, la
+     teinte du materiau etant empilee par-dessus via --prep-map-wash. */
+  --prep-map-bg: var(--lkv-app-bg-fallback);
+  --prep-map-wash: linear-gradient(var(--card-tint), var(--card-tint));
+
+  /* --- Reserve du bas --------------------------------------------------
+     Le bandeau cookies est un overlay `position: fixed; bottom: 0` et la
+     bottom-nav est remontee de EXACTEMENT sa hauteur (`NavigationSurface` :
+     `bottom: var(--cookie-banner-h)`). Les deux s empilent donc bel et bien :
+     la bande a reserver est leur SOMME, pas leur maximum. Avec `max()` la
+     nav recouvrait les 62 derniers px du preparateur et la CTA
+     « Creer mon parcours » se retrouvait pile dessous.
+
+     Le rail de jours (`DayPlateau`) occupe en plus le slot `plateau` de
+     `NavigationSurface`, soit ~40 px AU-DESSUS de la nav, et il n'apparait
+     que si le voyage est decoupe en >= 2 jours. Reserver un offset fige ne
+     peut donc pas marcher : trop court quand le rail est la (CTA recouverte),
+     trop long quand il est absent (trou de 46 px).
+
+     `--bottom-nav-height` est publie par `AppShell` et vaut deja
+     `--nav-offset-extended` (nav + plateau + marge) ou `--nav-offset`, selon
+     le meme predicat reactif que le rendu du rail. Le reprendre ici rend la
+     reservation et le rendu indissociables par construction. */
+  --prep-bottom-inset: calc(
+    var(--cookie-banner-h, 0px)
+      + var(--bottom-nav-height, var(--nav-offset, 60px))
+      + var(--space-2)
+  );
   /* --- Rayons ----------------------------------------------------------
      La carte reprend le rayon des cards, la pastille et les puces sont
      totalement rondes, la feuille suit l'échelle sheet, et le plein écran n'a
@@ -221,17 +262,12 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  /* La hauteur doit soustraire EXACTEMENT la bande que l'AppShell reserve
-     (AppShell.tsx) : max(--bottom-nav-height, --cookie-banner-h). Ne
-     soustraire que --bottom-nav-height laissait le footer passer sous la
-     bannique cookies, qui est un overlay fixe — la barre d'action
-     "Continuer" devenait incliquable sur /prepare. */
-  height: calc(
-    100dvh - var(--shell-top-padding, 0px) -
-      max(var(--bottom-nav-height, 0px), var(--cookie-banner-h, 0px))
-  );
+  /* La hauteur soustrait la bande reellement occupee en bas : bandeau cookies
+     ET bottom-nav empilees, d'ou la somme portee par --prep-bottom-inset. */
+  height: calc(100dvh - var(--shell-top-padding, 0px) - var(--prep-bottom-inset));
   overflow: hidden;
-  background-color: var(--lkv-surface);
+  background-color: var(--prep-page-bg);
+  background-image: var(--prep-page-wash);
   color: var(--lkv-text-primary);
 }
 
@@ -801,33 +837,37 @@ button.prep-block__row:active {
   line-height: 1.35;
 }
 /* --- Carte : coins 24 px, contrôles flottants en verre ----------------- */
-
 .prep-map {
-  /* ANCRAGE BAS. `.prep-map` est un enfant de `.prep-body` (overflow-y: auto) :
-     en flux normal la carte sortait du viewport des que l'etape s'allongeait,
-     alors qu'elle est le pivot de l'ecran. En `sticky` + `bottom`, elle reste
-     POSEE au-dessus du CTA pendant tout le defilement, et se libere seule quand
-     son emplacement naturel redevient visible. Le lisere haut et l'ombre portee
-     vers le haut disent qu'elle est posee, pas flottee dans le flux.
 
-     ATTENTION - `sticky` + `bottom` ne garantit qu'une seule chose : l'element
-     ne sort pas par le BAS du scrollport. A l'etape 2 la carte est la 3e des 9
-     enfants de `.prep-body`, donc le programme se trouvait sous elle et le
-     defilement la faisait sortir par le HAUT. C'est la regle `order` du bloc
-     des correctifs d'ancrage, en fin de ce fichier, qui la renvoie en fin de
-     flux ; les deux ne doivent jamais etre separees.
+  /* ANCRAGE. `.prep-map` est un enfant de `.prep-body` (overflow-y: auto) et
+     rend son contenu en flux, PAS en overlay.
 
-     La variante `.prep-map--full` (overlay plein ecran) n'est pas concernee :
-     elle est declaree plus bas, de meme specificite, et son `fixed` l'emporte. */
-  position: sticky;
-  bottom: 0;
+     Mesure au navigateur sur 430x932 : en `position: sticky` + `bottom: 0`, la
+     carte se collait au bas du scrollport et RECOUVRAIT les champs situes en
+     dessous. `elementsFromPoint` au centre de `button.prep-cell` (Arrivee) et
+     de la ligne Participants renvoyait `div.prep-map__canvas`, donc ces deux
+     controles etaient invisibles ET incliquables par la carte.
+
+     `sticky` + `bottom` ne garantit qu une chose : l element ne sort pas par le
+     BAS du scrollport. Il garantit RIEN contre un recouvrement vers le HAUT, qui
+     est exactement le defaut constate. La seule construction qui ne peut pas
+     recouvrir ses voisins est le flux normal : la carte occupe sa propre ligne,
+     son contenu precedent garde toute sa hauteur cliquable, et le defilement
+     fait simplement descendre la carte hors du cadre — ce qui est le comportement
+     attendu d une carte de contexte.
+
+     La variante `.prep-map--full` (overlay plein ecran) n est pas concernee :
+     elle est declaree plus bas, de meme specificite, et son `fixed` l emporte. */
+  position: static;
+  bottom: auto;
   z-index: 2;
   flex: 0 0 auto;
   height: var(--prep-map-share);
   min-height: 168px;
   border-radius: var(--card-radius);
   overflow: hidden;
-  background-color: color-mix(in srgb, var(--card-tint) 70%, var(--lkv-surface));
+  background-color: var(--prep-map-bg);
+  background-image: var(--prep-map-wash);
   border: 1px solid color-mix(in srgb, var(--glass-rim) 70%, transparent);
   /* Verre pose : flou et saturation repris du langage glass du systeme. Le fond
      reste opaque, donc le flou ne sert qu'a l'arrivee du fond de carte — il ne
@@ -1474,45 +1514,45 @@ button.prep-map__glass:active {
    cette section : uniquement des tokens.
    ========================================================================== */
 
-/* --- D1 bis · La carte est le dernier element du corps scrollable ---------
-   C'est LA piece qui manquait a l'ancrage. `position: sticky` + `bottom: 0`
-   n'interdit qu'une seule sortie : celle par le BAS du scrollport. Mesure sur
-   l'etape 2 (390x844) : la carte etait la 3e des 9 enfants de `.prep-body`, le
-   programme se trouvait donc sous elle — au repos son bas etait a 427 px, apres
-   defilement il etait passe a 79 px, c'est-a-dire sorti par le HAUT. Le defaut
-   est structurel : il ne se corrige pas avec un `z-index`.
+/* --- D1 bis · La carte se range EN FIN de corps, sans se poser dessus -------
+   Retour sur mesure navigateur (430x932) : la regle d avant faisait
+   `order: 99` + `margin-top: auto` SUR une carte restee `sticky`. Les deux
+  idents ensemble sont la cause du recouvrement.
 
-   `.prep-body` est une colonne flex, donc `order` renvoie la carte en fin de
-   flux sans deplacer un seul noeud du DOM — les `.tsx` restent intouches, et
-   c'est la seule correction CSS possible ici. Son emplacement naturel devient
-   la fin du programme : `sticky` la colle alors au bas de la zone visible
-   pendant tout le defilement et la libere seule quand l'on atteint la fin —
-   donc rien du programme n'est masque et le CTA reste atteignable.
+   `sticky` + `bottom: 0` signifie « reste colle au bord BAS du scrollport ».
+   Ordonner la carte en dernier dans la colonne flex revient a lui donner la
+   derniere ligne du programme ET a la coller par-dessus cette meme zone : au
+   repos, avec `margin-top: auto`, elle absorbeait tout l espace libre et se
+   posait entre les participants et le bas du cadre, lais sant visibles ni le
+   champ Arrivee, ni la date, ni le temps, ni le badge de duree. Hit-test au
+   navigateur : `elementsFromPoint` au centre de `button.prep-cell` et de la
+   ligne Participants renvoyait `div.prep-map__canvas` — la carte etait
+   litteralement par-dessus, donc non seulement invisible mais non
+   cliquable.
 
-   `order` ne regit que le cas ou le programme DEBORDE. Quand il est plus
-   court que la zone visible, l'espace libre se distribuait sous la carte et
-   elle flottait au milieu du cadre au lieu d'etre posee en bas : mesure au
-   repos sur l'etape 2, son bas etait a 548 px pour un bas de zone visible a
-   760 px, soit 212 px de vide. En colonne flex, une marge haute `auto`
-   absorbe exactement cet espace libre et repose la carte sur le bas du
-   padding box ; des que le contenu deborde il n'y a plus d'espace libre, elle
-   vaut 0, et l'ancrage de `sticky` n'est donc pas gene. Les deux declarations
-   couvrent les deux etats, et aucune n'empiete sur le pied de page, qui reste
-   hors du corps scrollable.
+   `order: 99` reste, parce qu il repond a un besoin reel et different : la carte
+   est la 3e des 9 enfants de `.prep-body`, donc en flux simple elle s intercaler
+   entre le bloc de depart et le programme. En fin de colonne elle ferme l ecran
+   comme un annexe de contexte, ce qui est le role voulu. Ce que `order` ne doit
+   PLUS faire, c est se combiner avec un positionnement hors flux.
 
-   `:not(.prep-map--full)` est obligatoire : l'overlay plein ecran remplace la
-   carte compacte dans le meme parent, et sans cette exclusion la presente regle,
-   plus specifique que `.prep-map--full`, lui prendrait son `position: fixed`.
-   `order` n'a de toute facon aucun effet sur un element sorti du flux.
+   `:not(.prep-map--full)` reste obligatoire : l overlay plein ecran remplace la
+   carte compacte dans le meme parent, et sans cette exclusion la presente regle
+   lui prendrait sa mise en page. `order` n a de toute facon aucun effet sur un
+   element sorti du flux.
 
-   Reserve d'accessibilite : l'ordre visuel (carte en dernier) differe de l'ordre
-   du DOM (carte avant le programme). Les commandes de la carte — « Agrandir »,
-   « Recentrer » — restent donc annoncees avant le rail des jours. C'est un
-   arbitrage acceptable ici, mais il tient a cette regle : depose la carte dans
-   le flux cote composants, la regle deviendrait inutile. */
+   Reserve d accessibilite conservee : l ordre visuel (carte en dernier) differe
+   de l ordre du DOM (carte avant le programme). */
 .prep-body > .prep-map:not(.prep-map--full) {
   order: 99;
-  margin-top: auto;
+  /* Elle peut retrecir, jamais disparaitre. `flex: 0 0 auto` la figeait a
+     280 px alors que le contenu de l etape occupe deja la hauteur du corps :
+     sa moitie sortait du cadre, repere et controles compris, ce qui se lisait
+     comme une carte invisible. `0 1 auto` lui laisse prendre la place
+     restante, et le plancher garantit qu elle ne s efface pas quand le
+     programme occupe le bas du corps. Le reste defile, comme avant. */
+  flex: 0 1 auto;
+  min-height: 132px;
 }
 
 /* --- D2 · Le shell du preparateur ne defile plus ----------------------------
@@ -1971,4 +2011,230 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   border: 0;
   width: 100%;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+}
+/* ==========================================================================
+   Feuilles de reglage et selecteur de point
+   --------------------------------------------------------------------------
+   Les feuilles (lieu, dates, invitation) sont rendues hors du corps
+   scrollable du preparateur : elles vivent dans un portail. Leur style ne peut
+   donc pas heritage de `.adventure-prep`, et ces classes — nommes sans prefixe
+   parce qu'elles ne servent qu'ici — completent ce que les composants UI
+   generiques ne couvrent pas.
+
+   Regle de couleur : uniquement des tokens. Aucune valeur brute hors :root.
+   ========================================================================== */
+
+/* --- Segments et puces --------------------------------------------------
+   `seg` est un choix unique (pagination, rythme, budget) : une seule ligne,
+   repartie en parts egales, l'etat se lit par le fond. `chips` est son
+   equivalent multi-select : les elements se succedent et se replient. */
+.seg {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--lkv-radius-md);
+  background: var(--prep-page-bg);
+  border: 1px solid var(--lkv-border-subtle);
+}
+.seg > button {
+  min-height: var(--control-height-sm);
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: calc(var(--lkv-radius-md) - 2px);
+  background: transparent;
+  color: var(--lkv-text-secondary);
+  font-size: var(--f-body-sm);
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.seg > button[aria-pressed='true'] {
+  background: var(--lkv-surface-elevated);
+  color: var(--lkv-text-primary);
+  font-weight: 600;
+  box-shadow: var(--card-shadow);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.chip {
+  min-height: var(--control-height-sm);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--lkv-radius-full);
+  border: 1px solid var(--lkv-border);
+  background: transparent;
+  color: var(--lkv-text-body);
+  font-size: var(--f-body-sm);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.chip[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--lkv-action) 14%, transparent);
+  border-color: var(--lkv-action);
+  color: var(--lkv-action);
+  font-weight: 600;
+}
+
+/* --- Listes de resultats ------------------------------------------------
+   `li` est une ligne cliquable de resultat de recherche. Le fond au survol
+   est le seul signal : pas de bordure qui clignote a chaque passage. */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--lkv-radius-md);
+  background: var(--prep-page-bg);
+  border: 1px solid transparent;
+  transition: background-color 120ms ease;
+}
+.li:hover {
+  background: var(--lkv-surface-elevated);
+}
+.li.sel {
+  border-color: var(--lkv-action);
+  color: var(--lkv-action);
+}
+/* `rt` regroupe les deux lignes de texte d'une ligne de liste ; sans
+   min-width: 0, un nom de lieu long refuse de se couper et pousse l'icone
+   hors du cadre. */
+.rt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  text-align: left;
+}
+.t1 {
+  font-size: var(--f-body);
+  font-weight: 600;
+  color: var(--lkv-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.t2 {
+  font-size: var(--f-body-sm);
+  color: var(--lkv-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Champs et messages ------------------------------------------------- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.note {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--lkv-radius-md);
+  font-size: var(--f-body-sm);
+  line-height: 1.4;
+  color: var(--lkv-text-secondary);
+  background: var(--prep-page-bg);
+  border: 1px solid var(--lkv-border-subtle);
+}
+.note.red {
+  color: var(--lkv-danger);
+  background: var(--lkv-danger-bg);
+  border-color: color-mix(in srgb, var(--lkv-danger) 32%, transparent);
+}
+.note.neutral {
+  color: var(--lkv-text-note);
+  background: var(--prep-page-bg);
+}
+
+/* --- Compteur de jours --------------------------------------------------
+   La duree se regle par plus/moins plutot que par un champ libre : c'est le
+   seul format ou l'on ne peut pas saisir un nombre absurde. */
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.stepper > .n {
+  min-width: 48px;
+  text-align: center;
+  font-size: var(--f-h3);
+  font-weight: 700;
+  color: var(--lkv-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: var(--lkv-radius-full);
+  font-size: var(--f-caption);
+  font-weight: 600;
+  color: var(--lkv-text-secondary);
+  background: var(--prep-page-bg);
+  border: 1px solid var(--lkv-border-subtle);
+}
+.badge.amber {
+  color: var(--lkv-warning-dark);
+  background: var(--lkv-warning-bg);
+  border-color: color-mix(in srgb, var(--lkv-warning) 34%, transparent);
+}
+
+/* --- Selecteur de point -------------------------------------------------
+   Carre cliquable : pas de fond de tuiles, donc pas d'image a charger et pas
+   de mise a jour reseau. Le quadrillage donne l'echelle ; la position exacte
+   est annoncee en toutes lettres juste en dessous, ce qui evite d'inventer
+   une precision que l'ecran ne peut pas porter. */
+.prep-picker {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--lkv-radius-md);
+  background: var(--prep-map-bg);
+  border: 1px solid var(--lkv-border);
+  cursor: crosshair;
+  overflow: hidden;
+  background-image: linear-gradient(var(--lkv-border-subtle) 1px, transparent 1px),
+    linear-gradient(90deg, var(--lkv-border-subtle) 1px, transparent 1px);
+  background-size: 25% 25%;
+  background-position: center;
+}
+.prep-picker:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+.prep-picker__pin {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-action);
+  border: 2px solid var(--lkv-text-primary);
+  box-shadow: var(--card-shadow);
+  pointer-events: none;
+}
+.prep-picker__hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--lkv-text-subtle);
+  font-size: var(--f-body-sm);
+  pointer-events: none;
 }

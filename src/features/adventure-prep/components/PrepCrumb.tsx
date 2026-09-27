@@ -110,9 +110,21 @@ export interface PrepNavProps {
   draft: AdventurePrepDraft;
   onOpenStep: (step: PrepStepId) => void;
   onClose: () => void;
+  /**
+   * Ouvre la feuille des preferences.
+   *
+   * Pourquoi ici et plus dans le corps de l etape 1 : le bandeau titre +
+   * promesse + pastilles de l ecran « On part ou ? » a ete retire. Ces
+   * pastilles etaient le SEUL point d entree vers les preferences (budget,
+   * rythme, transport, centres d interet) — les supprimer sans remplacement
+   * aurait rendu ces donnees inatteignables sur les trois etapes. Le bandeau,
+   * lui, existe deja sur chaque etape : la fonction survit a la suppression du
+   * decor.
+   */
+  onOpenPreferences?: () => void;
 }
 
-export function PrepNav({ step, draft, onOpenStep, onClose }: PrepNavProps) {
+export function PrepNav({ step, draft, onOpenStep, onClose, onOpenPreferences }: PrepNavProps) {
   const position = PREP_STEPS.indexOf(step);
   const previous = position > 0 ? PREP_STEPS[position - 1] : undefined;
   const canGoBack = previous !== undefined && canOpenStep(draft, previous);
@@ -185,6 +197,32 @@ export function PrepNav({ step, draft, onOpenStep, onClose }: PrepNavProps) {
       >
         <Icon name="x" size={20} aria-hidden="true" />
       </button>
+
+      {onOpenPreferences ? (
+        <button
+          type="button"
+          className="prep-nav__icon"
+          style={{
+            flex: 'none',
+            width: 44,
+            height: 44,
+            borderRadius: '50%',
+            display: 'grid',
+            placeItems: 'center',
+            background: 'var(--prep-glass-bg)',
+            WebkitBackdropFilter: 'var(--prep-glass-blur)',
+            backdropFilter: 'var(--prep-glass-blur)',
+            boxShadow: 'var(--prep-glass-shadow)',
+            border: '0.5px solid var(--prep-glass-border)',
+            color: 'var(--lkv-text-primary)',
+            cursor: 'pointer',
+          }}
+          onClick={onOpenPreferences}
+          aria-label="Ouvrir les préférences du trajet"
+        >
+          <Icon name="filter" size={20} aria-hidden="true" />
+        </button>
+      ) : null}
     </nav>
   );
 }

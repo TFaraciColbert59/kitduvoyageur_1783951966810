@@ -3,7 +3,7 @@
 import React, { useCallback, useMemo } from 'react';
 import Icon from '@/components/ui/Icon';
 import { Button } from '@/components/ui';
-import { activityById, selectedActivities } from '../catalog';
+import { activityById } from '../catalog';
 import { A_VERIFIER } from '../engine/trust';
 import {
   canSwapEnds,
@@ -124,11 +124,6 @@ export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
   const missing = stepOneMissingSummary(draft, profileId);
   const isLoop = route.shape === 'boucle';
 
-  const primaryActivity: ActivityDef | null = useMemo(
-    () => activityById(activities.primary),
-    [activities.primary],
-  );
-
   const loopReturn = isLoop && profileId === 'trajet';
 
   const partsFor = useCallback(
@@ -185,56 +180,10 @@ export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
     goToStep('itinerary');
   }, []);
 
-  const activePreferences = useMemo(() => {
-    const parts = [];
-    if (preferences.budgetLevel === 'economique') parts.push('Économe');
-    else if (preferences.budgetLevel === 'modere') parts.push('Modéré');
-    else if (preferences.budgetLevel === 'confort') parts.push('Confort');
-    
-    if (preferences.pace === 'tranquille') parts.push('Tranquille');
-    else if (preferences.pace === 'normal') parts.push('Normal');
-    else if (preferences.pace === 'rapide') parts.push('Rapide');
-    
-    if (preferences.transport === 'peigne') parts.push('À pied');
-    else if (preferences.transport === 'train') parts.push('Train');
-    else if (preferences.transport === 'voiture') parts.push('Voiture');
-    else if (preferences.transport === 'avion') parts.push('Avion');
-    else if (preferences.transport === 'mixte') parts.push('Mixte');
-    
-    return parts.join(' · ');
-  }, [preferences]);
 
   return (
     <div className="prep-screen">
       <div className="prep-body">
-        <h1 className="prep-title">On part où&nbsp;?</h1>
-        <p className="prep-help">{profile.help}</p>
-        
-        <div className="prep-actionrow" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
-          {primaryActivity ? (
-            <span className="pill">
-              <Icon name={primaryActivity.icon} size={16} aria-hidden="true" />
-              {primaryActivity.label}
-            </span>
-          ) : (
-            <span className="pill" data-unknown="true">
-              <Icon name="compass" size={16} aria-hidden="true" />
-              Activité à choisir
-            </span>
-          )}
-          <button
-            type="button"
-            className="prep-pill prep-pill--action"
-            onClick={() => onOpenSheet('preferences')}
-            style={{ borderRadius: '99px', padding: '0 12px', height: '32px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}
-          >
-            <Icon name="filter" size={16} aria-hidden="true" />
-            {activePreferences ? (
-              <span className="prep-visually-hidden">Préférences: </span>
-            ) : null}
-            {activePreferences ? activePreferences : 'Préférences'}
-          </button>
-        </div>
 
         <div className="prep-block">
           {profile.showRouteShape ? (

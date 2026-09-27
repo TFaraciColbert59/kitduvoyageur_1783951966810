@@ -586,6 +586,19 @@ function useOverlayLifecycle(
 
 function MapSVG({ routeCoords, points, onPointClick }: { routeCoords: Array<[number, number]>, points: readonly PrepMapPoint[], onPointClick?: (id: string) => void }) {
   if (routeCoords.length === 0 && points.length === 0) return null;
+
+  // En mode « boucle », l'arrivee vaut « retour au depart » : la liste de
+  // coordonnees ne contient donc qu'UN point. La polyligne exigeant deux
+  // points, le SVG sortait totalement vide — une carte de 280 px de haut
+  // parfaitement noire, sans aucun repere. On dessine donc les extremites
+  // du trajet comme des marqueurs : une seule entree donne le depart, deux
+  // donnent les deux bouts du trait. C'est ce que la carte doit montrer
+  // dans les deux cas.
+  const endpoints = [
+    routeCoords.length > 1 ? { key: 'route-start', c: routeCoords[0] } : null,
+    routeCoords.length > 1 ? { key: 'route-end', c: routeCoords[routeCoords.length - 1] } : null,
+    routeCoords.length === 1 ? { key: 'route-only', c: routeCoords[0] } : null,
+  ].filter(Boolean) as Array<{ key: string; c: [number, number] }>;
   const allX = [...routeCoords.map(c => c[0]), ...points.map(p => p.lon)];
   const allY = [...routeCoords.map(c => c[1]), ...points.map(p => p.lat)];
   const minX = Math.min(...allX); const maxX = Math.max(...allX);
@@ -620,6 +633,12 @@ function MapSVG({ routeCoords, points, onPointClick }: { routeCoords: Array<[num
           fill="none" stroke="var(--lkv-action)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"
         />
       )}
+      {endpoints.map((e) => (
+        <g key={e.key} transform={`translate(${transformX(e.c[0])}, ${transformY(e.c[1])})`}>
+          <circle cx={0} cy={0} r={11} fill="var(--lkv-action)" stroke="white" strokeWidth={2.5} />
+          <circle cx={0} cy={0} r={4} fill="white" />
+        </g>
+      ))}
       {points.map(p => {
         const x = transformX(p.lon); const y = transformY(p.lat);
         const isSquare = ['ravitaillement', 'nuit'].includes(p.category || '');

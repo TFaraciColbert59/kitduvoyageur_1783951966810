@@ -245,10 +245,13 @@ function CompletedSteps({ draft, onOpenStep }: CompletedStepsProps) {
 /**
  * Cadre commun des trois étapes (A1).
  *
- * Plein écran, barre de navigation basse masquée (la route rend
- * `AppShell hasBottomNav={false}`), bandeau de 52 px : retour à gauche,
- * progression en mots simples au centre, fermeture à droite. Fermer
- * enregistre le brouillon — il est déjà persisté à chaque mutation.
+ * Plein ecran, bandeau de 52 px : retour a gauche, progression en mots
+ * simples au centre, preferences puis fermeture a droite. Fermer enregistre le
+ * brouillon — il est deja persiste a chaque mutation.
+ *
+ * La barre d onglets basse, elle, reste visible : MobileNavWrapper ne masque
+ * plus /prepare et la route rend AppShell hasBottomNav, donc la reservation
+ * --bottom-nav-height vaut exactement la hauteur reelle de la barre.
  *
  * Sous la barre d'etape, le bandeau hors-ligne ne s'affiche que si
  * l'application degrade reellement. Il occupe une bande de flux (`flex: 0 0
@@ -285,6 +288,7 @@ function CompletedSteps({ draft, onOpenStep }: CompletedStepsProps) {
           draft={draft}
                   onOpenStep={goToStep}
           onClose={() => router.push('/hub')}
+          onOpenPreferences={() => onOpenSheet('preferences')}
         />
 
         <PrepOfflineNotice online={online} readiness={offlineValue.readiness} />
