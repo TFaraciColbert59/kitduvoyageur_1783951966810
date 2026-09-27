@@ -49,6 +49,14 @@ html[data-liquid-ios27] {
   --lkv-text-primary: var(--hub-white);
   --lkv-text-secondary: var(--hub-white-secondary);
   --lkv-text-muted: var(--hub-white-tertiary);
+  /* Les deux derniers crans de l'echelle etaient absents du portillon : sous
+     html[data-liquid-ios27], tout ce qui lisait --lkv-text-subtle ou
+     --lkv-secondary retombait sur les valeurs SOMBRES du theme clair
+     (#526158, #5B7F55) alors que le texte porteur est blanc. Mesure : un
+     libelle tertiaire a 2.1:1 sur la photo, donc invisible. On complete
+     l'echelle ici plutot que de corriger chaque composant un par un. */
+  --lkv-text-subtle: rgba(255, 255, 255, 0.46);
+  --lkv-secondary: rgba(255, 255, 255, 0.71);
 
   /* Materiau Apple : quasi-noir #101010 + voile blanc 4 % en plus-lighter. */
   --hub-glass-base: #101010;

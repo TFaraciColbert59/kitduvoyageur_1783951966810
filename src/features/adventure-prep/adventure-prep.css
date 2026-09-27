@@ -68,20 +68,40 @@
     linear-gradient(180deg, var(--prep-map-skeleton-top), var(--prep-map-skeleton-bottom));
 
   /* --- Fond de page ----------------------------------------------------
-     Sous le materiau Liquid Glass, `--lkv-surface` est une fumee TRANSLUCIDE
-     (rgba(16,16,16,.3) en sombre). La poser telle quelle laissait la photo de
-     fond de l'app traverser le preparateur : le texte blanc se posait sur une
-     image bruyante et la carte, deja sombre, devenait un trou noir.
+     Le preparateur a longtemps ete peint sur un aplat sombre opaque : la photo
+     de l'app n'y apparait pas et la page se lisait comme un trou noir des que
+     l'on sortait du hub.
 
-     `--prep-page-bg` recompose donc la fumee du theme sur un fond opaque :
-     la page reste dans la famille de couleur du theme (donc le contraste du
-     texte ne bouge pas) mais elle devient illisible-independent du fond
-     photographique. Valeur brute uniquement ici, dans la couche de tokens. Le
-     noir de repli du theme (#0b0d12) etait trop profond : la page se
-     lisait comme un trou. On le remonte en ardoise, sans quitter la famille
-     sombre — le texte blanc garde un contraste de ~18:1. */
-  --prep-page-bg: #151821;
-  --prep-page-wash: linear-gradient(var(--lkv-surface), var(--lkv-surface));
+     Il reprend desormais le decor du reste de l'app : la meme photo
+     (`--lkv-app-bg-image-*`) et le meme voile de lisibilite degrade que
+     `.lkv-app-background` sous `html[data-liquid-ios27]`. Reprendre ce voile
+     au lieu d'inventer une densite est ce qui garantit le meme contrat de
+     contraste partout : dense en haut et en bas, ou vit le chrome, plus clair
+     au centre pour que la photo respire.
+
+     Par-dessus, un voile vert CLAIR et leger (`--prep-page-veil`) : c'est la
+     teinte demandee, et il ne porte aucun texte, donc aucune exigence de
+     contraste propre -- seulement de ne pas ecraser la photo. Valeurs brutes
+     uniquement ici, dans la couche de tokens. */
+  --prep-page-bg: #0b0d12;
+  --prep-page-veil: rgb(203 233 212 / 0.16);
+  --prep-page-scrim:
+    linear-gradient(
+      180deg,
+      rgba(9, 11, 14, 0.62) 0%,
+      rgba(9, 11, 14, 0.46) 22%,
+      rgba(9, 11, 14, 0.3) 52%,
+      rgba(9, 11, 14, 0.4) 74%,
+      rgba(9, 11, 14, 0.6) 100%
+    );
+  --prep-page-wash:
+    linear-gradient(var(--prep-page-veil), var(--prep-page-veil)),
+    var(--prep-page-scrim),
+    var(--lkv-app-bg-image-portrait);
+  --prep-page-wash-landscape:
+    linear-gradient(var(--prep-page-veil), var(--prep-page-veil)),
+    var(--prep-page-scrim),
+    var(--lkv-app-bg-image-landscape);
 
   /* --- Fond des tiroirs (feuilles) -------------------------------------
      Les tiroirs du preparateur etaient illisibles : blanc sur blanc. La
@@ -204,7 +224,13 @@
   /* --- Verre -----------------------------------------------------------
      Réservé aux commandes flottantes au-dessus de la carte. `--prep-glass-
      opaque` est le repli accessibilité quand la transparence est réduite. */
-  --prep-glass-bg: var(--glass-bg-medium);
+  /* Densifie pour le preparateur. --glass-bg-medium vaut rgba(16,16,16,0.34)
+     : assez sombre au-dessus de la photo (ou le voile de lisibilite est dense),
+     mais transparent au-dessus de la CARTE, qui est claire. Les controles
+     suspendus (Zone, Agrandir, Recentrer) y etaient donc du blanc sur du clair,
+     a 2.47:1 mesure. On garde la translucidite -- le fond continue de se
+     deviner -- mais on assez de matiere pour que le blanc tienne 4.5:1. */
+  --prep-glass-bg: rgba(14, 18, 16, 0.68);
   --prep-glass-rim: var(--glass-rim);
   --prep-glass-border: var(--glass-border);
   --prep-glass-blur: var(--glass-blur-sm);
@@ -212,6 +238,26 @@
   --prep-glass-label: var(--glass-label);
   --prep-glass-shadow: var(--glass-shadow);
   --prep-glass-opaque: var(--card-tint-solid);
+
+  /* --- Materiau des panneaux poses sur la photo ------------------------
+     Le hub pose ses panneaux avec `blur() saturate() brightness()` (voir
+     `.hub-content-material` dans liquid-ios27.css). C'est ce flou qui fait le
+     travail : il moyenne la photo en une base sombre lisse, et `saturate`
+     densifie les verts au lieu de les laiter. Sans lui, un panneau a 30 %
+     d'opacite laissait passer la photo NETTE -- le ciel doré et la brume
+     passaient sous le texte blanc et le rendaient illisible, alors que la
+     meme opacite sur le hub restait parfaitement lisible.
+
+     Le preparateur reprenait la couleur du hub sans son filtre : d'ou un
+     rendu « photo brute sous du texte blanc » qui n'existait nulle part
+     ailleurs dans l'app. On rejoue donc le materiau du hub, et on pose la
+     meme densite de base sur les panneaux du preparateur.
+
+     Valeurs brutes uniquement ici, dans la couche de tokens. */
+  --prep-panel-bg: rgb(16 16 16 / 0.42);
+  --prep-panel-blur: 22px;
+  --prep-panel-saturate: 200%;
+  --prep-panel-brightness: 1.04;
 
   /* --- Teintes de famille ---------------------------------------------
      Cinq familles de points, cinq teintes CATEGORIELLES. Le contraste n'est
@@ -296,8 +342,43 @@
   height: calc(100dvh - var(--shell-top-padding, 0px) - var(--prep-bottom-inset));
   overflow: hidden;
   background-color: var(--prep-page-bg);
+  /* Meme cadrage que `.lkv-app-background` : la photo couvre la surface, centree
+     et fixee, pour que le decor du preparateur soit le decor de l'app. */
   background-image: var(--prep-page-wash);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   color: var(--lkv-text-primary);
+}
+
+/* Paysage : l'app bascule sur la photo large des que l'ecran est plus large
+   que haut. Le preparateur suit exactement le meme basculement. */
+@media (min-aspect-ratio: 1 / 1) {
+  .adventure-prep {
+    background-image: var(--prep-page-wash-landscape);
+  }
+}
+
+/* --- Materiau pose sur la photo ------------------------------------------
+   Toutes les surfaces du preparateur qui ne sont pas la carte. Elles
+   partagent le meme materiau que le hub : meme densite de base, meme flou,
+   meme saturation. C'est ce qui garantit qu'un texte blanc garde le meme
+   contraste ici et sur le hub, quelle que soit la zone de photo qu'il
+   traverse.
+
+   `background-color` est en `!important` : plusieurs blocs du preparateur
+   portent un `backgroundColor: 'var(--surface')` en style inline (voir
+   DepartureStep), qui sinon l'emporterait sur la classe. Le materiau est une
+   invariant de page, il doit gagner contre un echappement ponctuel. */
+.prep-nav,
+.prep-block,
+.prep-footer {
+  background-color: var(--prep-panel-bg) !important;
+  -webkit-backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
 }
 
 .adventure-prep::before {
@@ -955,7 +1036,10 @@ button.prep-block__row:active {
   font-size: var(--lkv-text-footnote);
   font-weight: 650;
   color: var(--glass-label);
-  background-color: var(--glass-bg-medium);
+  /* Passe par le token du preparateur, pas par --glass-bg-medium direct :
+     les controles flottants du preparateur sont poses sur la CARTE, qui est
+     claire, alors que le token generique est regle pour la photo. */
+  background-color: var(--prep-glass-bg);
   border: 1px solid var(--glass-border);
   -webkit-backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
   backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
@@ -1051,7 +1135,10 @@ button.prep-map__glass:active {
   padding: var(--space-2) var(--space-3);
   border-radius: var(--lkv-radius-concentric);
   color: var(--glass-label);
-  background-color: var(--glass-bg-medium);
+  /* Passe par le token du preparateur, pas par --glass-bg-medium direct :
+     les controles flottants du preparateur sont poses sur la CARTE, qui est
+     claire, alors que le token generique est regle pour la photo. */
+  background-color: var(--prep-glass-bg);
   border: 1px solid var(--glass-border);
   -webkit-backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
   backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
@@ -2239,8 +2326,10 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   border: 1px solid var(--lkv-border-subtle);
 }
 .badge.amber {
+  /* Le fond ambre tres clair lavait le texte : on le melange a l'encre sombre
+     du preparateur, ce qui remonte le contraste du libelle clair. */
   color: var(--lkv-warning-dark);
-  background: var(--lkv-warning-bg);
+  background: color-mix(in srgb, var(--lkv-warning) 18%, var(--prep-on-action));
   border-color: color-mix(in srgb, var(--lkv-warning) 34%, transparent);
 }
 
