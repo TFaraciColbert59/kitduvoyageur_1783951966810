@@ -273,7 +273,7 @@ export function PrepInviteScreen({
             <img src={coverImageUrl} alt="" style={{ width: 52, height: 52, borderRadius: 14, objectFit: 'cover' }} />
           ) : (
             <div style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: 'var(--green-tint)', color: 'var(--green-ink)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="photo" size={24} aria-hidden="true" />
+              <Icon name="image-off" size={24} aria-hidden="true" />
               <span className="prep-visually-hidden">Aucune image de couverture</span>
             </div>
           )}

@@ -429,7 +429,7 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
           <span style={{ marginLeft: 8 }}>{activity?.label || 'Activité inconnue'}</span>
           {model && generation.notice && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginLeft: 8 }}>
-              <Icon name="wand" size={16} />
+              <Icon name="sparkles" size={16} />
               {generation.notice}
             </span>
           )}
@@ -527,10 +527,10 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
             {program.length > 0 && <FocusedStepView program={program} onOpenSheet={onOpenSheet} />}
 
             <div className="prep-actionrow">
-              <Button variant="secondary" size="md" onClick={() => onOpenSheet('adjust')} icon={<Icon name="sliders" size={18} />}>
+              <Button variant="secondary" size="md" onClick={() => onOpenSheet('adjust')} icon={<Icon name="Cog6ToothIcon" size={18} />}>
                 Ajuster
               </Button>
-              <Button variant="secondary" size="md" onClick={() => onOpenSheet('steps')} icon={<Icon name="list" size={18} />}>
+              <Button variant="secondary" size="md" onClick={() => onOpenSheet('steps')} icon={<Icon name="clipboard-list" size={18} />}>
                 Étapes
               </Button>
               <Button variant="secondary" size="md" onClick={() => onOpenSheet('add')} icon={<Icon name="plus" size={18} />}>
