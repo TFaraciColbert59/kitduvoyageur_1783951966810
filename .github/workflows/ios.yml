@@ -16,6 +16,12 @@ jobs:
     runs-on: macos-latest
     env:
       NODE_OPTIONS: '--max-old-space-size=8192'
+      # Origine de l app servie par le WebView. Le secret prime ; a defaut on
+      # retombe sur la variable de depot, puis sur le domaine de production
+      # publie. Sans aucune des trois, verify_capacitor_server.mjs echoue
+      # volontairement : mieux vaut aucun IPA qu un IPA qui affiche un
+      # ecran de connexion au serveur.
+      CAPACITOR_SERVER_URL: ${{ secrets.CAPACITOR_SERVER_URL || vars.CAPACITOR_SERVER_URL || 'https://kitduvoyageur-1783951966810-ruddy.vercel.app' }}
 
     steps:
       - name: Checkout
@@ -37,21 +43,15 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaS1idWlsZC1wbGFjZWhvbGRlciIsInJvbGUiOiJhbm9uIiwiaWF0IjowfQ.cGxhY2Vob2xkZXI' }}
 
       - name: Mask Capacitor server URL in logs
-        run: echo "::add-mask::${{ secrets.CAPACITOR_SERVER_URL }}"
+        run: echo "::add-mask::${{ env.CAPACITOR_SERVER_URL }}"
 
       - name: Validate Capacitor server URL
-        env:
-          CAPACITOR_SERVER_URL: ${{ secrets.CAPACITOR_SERVER_URL }}
         run: node scripts/verify/verify_capacitor_server.mjs
 
       - name: Capacitor sync
-        env:
-          CAPACITOR_SERVER_URL: ${{ secrets.CAPACITOR_SERVER_URL }}
         run: npx cap sync ios
 
       - name: Verify embedded Capacitor configuration
-        env:
-          CAPACITOR_SERVER_URL: ${{ secrets.CAPACITOR_SERVER_URL }}
         run: node scripts/verify/verify_capacitor_server.mjs ios/App/App/capacitor.config.json --config-only
 
       - name: List Xcode schemes
