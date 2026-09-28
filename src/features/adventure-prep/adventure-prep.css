@@ -207,6 +207,16 @@
      sous le verre a chaque fin de defilement. Verrouille par le test
      `prep-scroll-lip-an9`. */
   --prep-scroll-lip-h: 20px;
+  /* P0.27 · dissolution du bas de la zone scrollable. La langue de verre
+     ci-dessus dit la continuation mais ne peut pas empecher une coupe : son
+     masque est transparent en haut, la ou vivent les milieux de lettres, donc
+     un glyphe tranche par overflow-y reste tranche. Mesure navigateur
+     393x852, DScale 3, etape 3, generation reelle 2 jours : la ligne des
+     mesures du jour 2 etait coupee nette a 667, en plein milieu des glyphes.
+     32 px > 20 px de langue : le fondu porte la ligne entiere. Doit rester
+     SOUS la reserve basse du corps (test DISS-04), sinon le dernier bloc
+     arrive estompe a chaque fin de defilement. */
+  --prep-scroll-fade-h: 32px;
   /* --- Rayons ----------------------------------------------------------
      La carte reprend le rayon des cards, la pastille et les puces sont
      totalement rondes, la feuille suit l'échelle sheet, et le plein écran n'a
@@ -691,7 +701,27 @@
   overflow-y: auto;
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
-  padding: var(--space-5) var(--space-5) var(--space-6);
+  /* La dissolution du bas (P0.27). Le corps se termine net, et le glyphe
+     qui sortait de la zone visible etait tranche en plein milieu, la
+     langue de verre du pied ne faisant que le laisser deviner. Ici le
+     contenu s efface AVANT la coupe : la lecture dit qu il y a encore
+     quelque chose en dessous, et rien n est coupe. La langue de verre
+     garde la matiere, le masque donne la dissolution. */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 calc(100% - var(--prep-scroll-fade-h)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 calc(100% - var(--prep-scroll-fade-h)),
+    transparent 100%
+  );
+  /* La reserve basse doit valoir le fondu PLUS la respiration habituelle,
+     sans quoi le dernier bloc du parcours se retrouve dans la zone estompee
+     a chaque arrivee en bas de liste. */
+  padding: var(--space-5) var(--space-5)
+    calc(var(--space-6) + var(--prep-scroll-fade-h));
   display: flex;
   flex-direction: column;
   gap: var(--prep-block-gap);

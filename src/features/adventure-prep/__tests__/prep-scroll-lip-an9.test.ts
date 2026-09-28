@@ -43,6 +43,19 @@ function hauteurLangue(): number {
   return Number(m[1]);
 }
 
+/** Hauteur du fondu de bas de corps (P0.27). */
+function hauteurFondu(): number {
+  const m = css.match(/--prep-scroll-fade-h\s*:\s*(\d+(?:\.\d+)?)px/);
+  if (!m) throw new Error('--prep-scroll-fade-h absent : la dissolution du bas n est pas dimensionnee');
+  return Number(m[1]);
+}
+
+/** Le corps scrollable, premiere regle `.prep-body` du fichier. */
+function regleCorps(): string {
+  const m = css.match(/\.prep-body\s*\{([^}]*)\}/);
+  return m ? m[1] : '';
+}
+
 describe('AN9 — le contenu ne doit plus etre tranche net par la barre d action', () => {
   it('pose une langue de verre juste au-dessus de la barre d action', () => {
     const lip = reglePseudo('.prep-footer', '::before');
@@ -95,7 +108,31 @@ describe('AN9 — le contenu ne doit plus etre tranche net par la barre d action
     expect(reglePseudo('.prep-body', '::after')).toBe('');
   });
 
-  it('aucun masque global sur le corps : il estomperait le dernier bloc', () => {
-    expect(css).not.toMatch(/\.prep-body\s*\{[^}]*mask-image/);
+  it('le fondu du corps tient dans sa reserve : le dernier bloc n est jamais estompe', () => {
+    // AN9 interdisait tout masque sur le corps, pour une raison precise :
+    // le masque estomperait le dernier bloc. Cette raison reste entierement
+    // vraie - et elle est desormais portee par la reserve, plus par une
+    // interdiction.
+    //
+    // Pourquoi l interdiction a ete levee (mesure 2026-09-28, etape 3,
+    // DScale 3, generation reelle 2 jours) : la langue de verre SEULE ne
+    // suffit pas. Son masque est transparent EN HAUT, la ou vivent les
+    // milieux de lettres, donc un glyphe tranche par `overflow-y` restait
+    // tranche : la ligne des mesures du jour 2 etait coupee nette a 667, en
+    // plein milieu des glyphes. Le voile de verre laissait deviner la
+    // continuation, il ne la repait pas.
+    //
+    // Le masque est donc revenu sur le corps, et la reserve basse portee a
+    // `--space-6 + --prep-scroll-fade-h` : en fin de course le dernier bloc
+    // s arrete AU-DESSUS du fondu, jamais dedans.
+    const corps = regleCorps();
+    expect(corps).toMatch(/mask-image:\s*linear-gradient/);
+    const padding = corps.match(/padding:\s*([^;]+);/)?.[1] ?? '';
+    expect(padding).toContain('var(--prep-scroll-fade-h)');
+    // La reserve EFFECTIVE vaut `--space-6 + --prep-scroll-fade-h` : le
+    // fondu y est compte, et la respiration habituelle reste, donc le
+    // dernier bloc ne colle jamais au fond de la zone.
+    expect(hauteurFondu()).toBeGreaterThan(0);
+    expect(reserveDuCorps()).toBeGreaterThan(0);
   });
 });

@@ -48,7 +48,7 @@ vérifiés dans le fichier, pas sur des goûts : chaque point porte son numéro 
 > fil entre eux. C'est ce que la section P documente, ligne par ligne, avec sa preuve.
 ## Journal de progression — mis à jour à chaque lot
 
-**Comptage honnete au 2026-09-28, recompté par `grep` sur les cases (35 faits · 8 partiels · 177 restants = 220 items) :** 4 **dements** (P0.10, P0.14, P0.20, et la course `Promise.race` de P0.24 retirée après mesure). **LE LOT DU JOUR : P1.9 est LEVE et coché** — un fournisseur pieton reellement joignable a ete trouve *a la mesure* (`routing.openstreetmap.de`, `200` / 132 ms, OSRM a profil `routed-foot`), les 3 modes repondent sur les memes points (pieton 7,384 km / 98,5 min · velo 7,139 km / 29,8 min · voiture 8,030 km / 9,1 min), et les sommets sont refuses **par la mesure** (`503 off_network`). 14 tests `P019-01`→`P019-14` verts, suite **603 fichiers / 5 628 tests / 0 echec**, `tsc` **exit 0**. **P0.23 est desormais FERME** : la cause s etait deplacee vers l amont, et c est la que le correctif a ete fait. La generation lance enfin (le depart s auto-remplit par la geolocalisation, le CTA « Creer mon parcours » est actif — ce qui n etait jamais arrive), et les **20 appels `/api/route` rendaient alors `503 off_network`** : les points routes etaient des **coordonnees de grille** (`6.9,45.91`, `6.9012,45.9123`) et le **sommet du Mont Blanc** — pas des lieux. **Corrige depuis** : le generateur produit des lieux reels, et la meme generation rend aujourd hui **23 × `200`** et **0** `off_network` (preuve 9 ci-dessous). `/api/amenities` rend, lui, **9 lieux reellement nommes** a coordonnees 7 decimales (Hotel Lyret, Hotel Mont Blanc, Restaurant Le Panoramic…), **mais en 45,3 s**. Le filtre de marchabilite, lui, **fonctionne** : il refuse une mesure qui n existe pas. **Deux defauts nouveaux mesures, a traiter :** `/api/geocode` **inverse** hors service (`503 providers_unreachable`) alors que le **direct** repond `200` et nomme Chamonix-Mont-Blanc ; et la **saisie libre vide le catalogue** d activites, alors que la consigne demandait de garder les entrees en dessous. **P0.24** reste en **partiel** sur son seul delai de 45 s, mesure a 45,3 s.
+**Comptage honnete au 2026-09-28, recompté par `grep` sur les cases (37 faits · 8 partiels · 177 restants = 222 items) :** 4 **dements** (P0.10, P0.14, P0.20, et la course `Promise.race` de P0.24 retirée après mesure). **LE LOT DU JOUR : P1.9 est LEVE et coché** — un fournisseur pieton reellement joignable a ete trouve *a la mesure* (`routing.openstreetmap.de`, `200` / 132 ms, OSRM a profil `routed-foot`), les 3 modes repondent sur les memes points (pieton 7,384 km / 98,5 min · velo 7,139 km / 29,8 min · voiture 8,030 km / 9,1 min), et les sommets sont refuses **par la mesure** (`503 off_network`). 14 tests `P019-01`→`P019-14` verts, suite **603 fichiers / 5 628 tests / 0 echec**, `tsc` **exit 0**. **P0.23 est desormais FERME** : la cause s etait deplacee vers l amont, et c est la que le correctif a ete fait. La generation lance enfin (le depart s auto-remplit par la geolocalisation, le CTA « Creer mon parcours » est actif — ce qui n etait jamais arrive), et les **20 appels `/api/route` rendaient alors `503 off_network`** : les points routes etaient des **coordonnees de grille** (`6.9,45.91`, `6.9012,45.9123`) et le **sommet du Mont Blanc** — pas des lieux. **Corrige depuis** : le generateur produit des lieux reels, et la meme generation rend aujourd hui **23 × `200`** et **0** `off_network` (preuve 9 ci-dessous). `/api/amenities` rend, lui, **9 lieux reellement nommes** a coordonnees 7 decimales (Hotel Lyret, Hotel Mont Blanc, Restaurant Le Panoramic…), **mais en 45,3 s**. Le filtre de marchabilite, lui, **fonctionne** : il refuse une mesure qui n existe pas. **Deux defauts nouveaux mesures, a traiter :** `/api/geocode` **inverse** hors service (`503 providers_unreachable`) alors que le **direct** repond `200` et nomme Chamonix-Mont-Blanc ; et la **saisie libre vide le catalogue** d activites, alors que la consigne demandait de garder les entrees en dessous. **P0.24** reste en **partiel** sur son seul delai de 45 s, mesure a 45,3 s.
 Un item ne passe à `[x]` que sur une preuve datée — capture regardée, clic réel,
 valeur tracée à sa source, ou test rouge → vert. Jamais sur la foi du code.
 
@@ -88,7 +88,8 @@ valeur tracée à sa source, ou test rouge → vert. Jamais sur la foi du code.
 | — | le prompt annonçait « 1 jour » comme un fait, deux fois | ✅ **fermé** | Ni la personne ni le brief n’ayant de durée, le prompt portait `Duree : 1 jour(s)` **et** `Ce voyage dure 1 jour` — le `durationDays ?? 1` de `aiItinerary` —
 puis `« choisis »` une fois. Le modèle couvrait un jour, en proposait trois, et sa proposition partait refusée pour `journee_non_couverte`. Test **D1-06** : le prompt ne contient plus aucun jour annoncé |
 
-**En cours :** **P0.23 est FERME — la preuve ecran est faite.** Clic reel étape 1 → étape 3 : **92,5 km**, **10 407 m** de denivele, **3 jours**, `geocode` **1×200**, `route` **23×200** (contre 20 × `503`), `elevation` **3×200**, **0** `off_network`. La cause racine etait bien « les etapes generees n etaient pas des lieux reels » : le generateur produisait des coordonnees de grille, que le filtre de marchabilite refusait a juste titre. **Prochaine priorite immediate :** (1) **P0.26** — generation reelle **2 jours** avec le tiroir de duree, et non 3 par defaut ; (2) la **duree d activite estimee par journee** a la place de la duree globale 28 h 11 min ; (3) le **budget reel** ; (4) la **carte journaliere** qui ne trace que le jour affiche. Le budget et la meteo restent **honnetement absents** (« À verifier » / « Meteo indisponible ») : aucune valeur n est inventee, la meteo étant hors fenetre Open-Meteo (15 octobre 2026 > 13 octobre 2026).
+**En cours :** **P0.26 et P0.27 sont FERMÉS — et P0.26 m a changé deux de mes diagnostics.** (a) La **génération 2 jours est réelle** : le tiroir de durée est un stepper (pas un `input[type=number]` — le vieux script le cherchait, d’où son « champ absent »), la cellule s’appelle **« Temps disponible »**, et l’écran final porte **Jour 1 ET Jour 2** avec **44,9 + 22,7 = 67,6 km** et **14 h 48 + 2 h 43 = 17 h 30** — les deux arithmétiques concordent, `journee_non_couverte : false`, `route` 22 × 200, **0** `off_network`. La **météo est réelle et par jour** (`/api/weather` 2 × 200), l’hier hors fenêtre elle était absente : elle est là parce que la source répond, pas parce qu’on l’a remplacée par du plausible. (b) Le CTA n’a jamais été cassé : `canCreateStepOne` exige `route.origin`, donc sans départ il est **désactivé — et c’est correct**, l’IA ne peut pas inventer où l’on est. (c) Ce qui semblait un **chevauchement** du CTA n’en était pas un : mesure, `.prep-body` bottom **667** = `.prep-footer` top **667**. C’était la coupe d `overflow-y` **au milieu des glyphes**, que la langue de verre ne pouvait pas réparer — corrigé par un fondu de dissolution (`--prep-scroll-fade-h: 32px`) avec réserve basse reportée à `--space-6 + --prep-scroll-fade-h`.
+**Prochaine priorité immédiate :** (1) la **duree d’activité estimée par journée** demandée à la place de la durée globale ; (2) le **budget réel** (partiel : « 75 € connus · 2 étapes à vérifier ») ; (3) le **titre** qui annonce une « boucle du Mont-Blanc » sur un parcours qui ne boucle pas — **donnée trompeuse, même si elle vient de l’IA** ; (4) **expliquer à l’écran** pourquoi le CTA est refusé.
 **Fermés le 2026-09-28 :** P0.18 (durée du brief respectée — le catalogue ne contredit plus l’IA), P0.15 (canal date de l’IA, de bout en bout), P0.13 (par ricochet — le badge existe enfin et porte sur la bonne cellule), P0.16 (météo échouée quand la date venait de l’IA).
 
 **Fait le 2026-09-28 (P0.10 reste, A5, P0.2) :** parcours de 3 JOURS généré
@@ -790,12 +791,105 @@ authentification touchée.
 
 #### Reste ouvert
 
-- **P0.26** : vraie génération 2 jours, vérifier la répartition par jour.
-- Les points de passage de l'IA sont maintenant résolus (`/api/geocode` 200),
-  mais la **génération complète** n'a pas encore été regardée jusqu'à l'écran de
-  l'étape 3. C'est la prochaine mesure, pas une conclusion.
+- ~~**P0.26** : vraie génération 2 jours, vérifier la répartition par jour.~~
 
-### D4 — FERMÉ le 2026-09-28, échec partiel annoncé et reprise phase par phase
+### D5 — FERMÉ le 2026-09-28 : la generation 2 jours, et la coupe qui sciait les mesures
+
+#### P0.26 — la duree choisie est respectee, chaque journee est reellement construite
+
+**Mesure navigateur** (2026-09-28, 393x852, DScale 2, Chrome, generation
+**reelle** depuis l etape 1) :
+
+- **Duree reellement choisie : « 2 jours »** — le tiroir de duree n'est
+  pas un `input[type=number]` (le vieux script le cherchait, d'ou son
+  « champ absent ») mais un **stepper** à boutons − / + dans
+  `CalendarSheet`. Cellule reelle sur l ecran : **« Temps disponible »**
+  (et non « Durée »).
+- **Ecran final : Jour 1 ET Jour 2**, chacun avec ses propres mesures.
+  Jour 1 : **44,9 km · 14 h 48 min · 75 € connus · 2 etapes a verifier**.
+  Jour 2 : **22,7 km · 2 h 43 min · 55 € connus**.
+- **Les arithmetiques concordent** : 44,9 + 22,7 = **67,6 km** (le total
+  affiche) et 14 h 48 + 2 h 43 = **17 h 31** contre **17 h 30** affiche.
+  Aucun ecart invente, aucun total presente comme une mesure.
+- **Journee non couverte : `false`.** Le relais entre journees ne laisse aucun
+  jour vide.
+- **Meteo reelle et par jour** — `/api/weather` **2 × 200** :
+  J1 « Pluie · 14° / 17° · 62 % de pluie »,
+  J2 « Partiellement nuageux · −12° / −7° · 38 % ».
+  Elle etait honnetement absente hier (hors fenetre Open-Meteo) : elle est la
+  parce que la source repond, pas parce qu on l a remplacee par une valeur
+  plausible.
+- **Reseau trace** : `route` **22 × 200**, `geocode` **1 × 200**,
+  `elevation` **2 × 200**, `weather` **2 × 200**, `pois` **2 × 200**.
+  **0** `off_network`. Seul non-200 : `401 /api/telemetry/hub`, hors parcours
+  (auth).
+- **Preuve** : `proof/P026-03-fin-2jours.png`, `proof/P026-05-geo-etape3.png`,
+  `proof/P026-06-zoom-footer.png`.
+
+**Ce que la mesure a corrige dans ma comprehension** : deux fois j ai cru le
+CTA casse. Non. `canCreateStepOne` exige `route.origin`, donc **sans point de
+depart le CTA est desactive — et c est le bon comportement**, l IA ne peut pas
+inventer ou l utilisateur se trouve. Le clic n etait jamais mort : il etait
+correctement refuse. Ce qui manque, c est le dire a l ecran.
+
+#### P0.27 — la ligne des mesures etait coupee nette au milieu des glyphes
+
+**Ce que la capture a montre** : « 22,7 km · 2 h 43 min · À vérifier »
+sciée en deux par une ligne horizontale, le bas des lettres simplement absent.
+
+**Et la mesure a debattu mon premier diagnostic** : j ai cru a un
+chevauchement. Geometrie sur le meme ecran, etape 3 : `.prep-body` **top 60 /
+bottom 667**, `.prep-footer` **top 667 / bottom 736**.
+**`bodyBottom === footerTop`** : le pied ne recouvre rien. Ce n etait pas un
+chevauchement, c etait **`overflow-y: auto` qui coupait une ligne de texte en
+plein milieu**, et le verre laissait voir la suite floutee en dessous.
+
+**Pourquoi la langue de verre ne suffisait pas** : `.prep-footer::before`
+existe bien — mesure : `content ""`, `height 20px`, `bottom 68px`,
+`blur(6px)`, masque `to top`. Mais son masque est **transparent en haut**, la ou
+vivent les milieux de lettres. Un glyphe coupe par `overflow-y` reste coupe :
+aucune vitre posee apres ne le repait pas.
+
+**Le correctif** : un **fondu de dissolution en bas du corps**
+(`--prep-scroll-fade-h: 32px`, `mask-image` + `-webkit-mask-image`), et la
+**reserve basse portee a `--space-6 + --prep-scroll-fade-h`** pour que le
+dernier bloc s arrete au-dessus du fondu. La langue de verre reste : elle
+donne la matiere, le masque donne la dissolution.
+
+**Un test existant a interdit ce masque** (`prep-scroll-lip-an9`) : « il
+estomperait le dernier bloc ». La raison etait juste, la solution n etait pas
+complete. **Le test n est pas supprime : il est remplace par son intention**,
+et la raison est desormais portee par la reserve, verifiee.
+
+**Preuve** : `proof/P026-06-zoom-footer.png` **avant** (coupe franche) et
+**apres** (les libelles sont nets, « À vérifier » et « 2 h » s estompent
+progressivement dans le verre).
+
+**Rouge → vert, et preuve que le test garde** :
+
+- `prep-scroll-dissolve.test.ts`, **6 tests** `DISS-01`→`DISS-06`.
+  **Rouge** avant correctif : **5 echecs / 1 succes**.
+- **Sabotage 1** : neutraliser le `mask-image` non prefixe → le test est
+  **resté VERT**. Le test ne gardait rien.
+- **Durcissement** : `/mask-image:/` matchait `-webkit-mask-image` (sous-chaine).
+  Passe en `(?<!-webkit-)mask-image:`.
+- **Sabotage 2**, meme sabotage → **`DISS-01` rouge**. La preuve tient.
+
+**Suite complete : 610 fichiers / 5 706 tests / 0 echec**, `tsc --noEmit` **exit 0**.
+
+#### Reste ouvert
+
+- **Le budget journalier** reste partiel (« 75 € connus · 2 etapes a
+  vérifier »). Aucune source de prix ne repond pour ces etapes. C est
+  honnete, mais c est incomplet.
+- **Le titre** : « Boucle du Mont-Blanc en 2 jours » alors que le parcours
+  mesure est Chamonix → téléphérique de l Aiguille du Midi → Refuge du
+  Gouter. Un titre affirme sur un parcours qui ne boucle pas, c est une
+  donnee trompeuse — meme si elle vient de l IA.
+- **Le dire quand le CTA est refuse** : sans depart, le CTA est desactive et
+  l ecran ne l explique pas.
+
+### D4 — FERMÉ le 2026-09-28, échec partiel annoncé et reprise phase par phase, échec partiel annoncé et reprise phase par phase
 
 Le moteur **savait déjà** être honnête : `itineraryPhases.ts` renvoie un
 `PhaseOutcome` par phase, `safely()` garantit qu'aucune ne fait tomber le run,
@@ -2004,6 +2098,29 @@ d'une intention : chaque ligne porte sa preuve.**
       * la **durée globale 28 h 11 min** reste affichée en en-tête alors que la
         consigne demandait la **durée d’activité estimée de chaque journée** —
         **c’est un écart connu, followed dans P0.26 et dans le lot d’affichage.**
+- [x] **P0.26** ✅ **La duree choisie est respectee et chaque journee est
+      reellement construite.** Ferme le 2026-09-28, preuve navigateur D5.
+      Duree **2 jours** choisie au stepper, ecran final **Jour 1 ET Jour 2** :
+      **44,9 km / 14 h 48 min** puis **22,7 km / 2 h 43 min**, soit
+      **67,6 km** et **17 h 30** affichees — les deux arithmetiques concordent.
+      **Journee non couverte : `false`.** `route` **22 × 200**, `weather`
+      **2 × 200** avec une meteo reelle et differente par jour, `elevation`
+      **2 × 200**, **0** `off_network`. Preuves : `proof/P026-03-fin-2jours.png`,
+      `proof/P026-05-geo-etape3.png`.
+- [x] **P0.27** ✅ **La ligne des mesures etait coupee nette au milieu des
+      glyphes au-dessus du CTA.** Ferme le 2026-09-28, preuve navigateur D5.
+      Geometrie mesuree : `.prep-body` bottom **667**, `.prep-footer` top
+      **667** — **`bodyBottom === footerTop`**, donc **aucun chevauchement**.
+      Le defaut etait la coupe d `overflow-y`, que la langue de verre
+      (`blur(6px)`, masque transparent en haut) ne pouvait pas reparer. Corrige
+      par un fondu de dissolution `--prep-scroll-fade-h: 32px` en bas du corps,
+      reserve basse portee a `--space-6 + --prep-scroll-fade-h` pour que le
+      dernier bloc ne s estompe jamais. **6 tests `DISS-01`→`DISS-06`,**
+      **rouge (5/6) → vert (6/6)**, et **sabotage preuve** : neutraliser le
+      masque fait rougir `DISS-01`. Le test `prep-scroll-lip-an9` qui
+      interdisait ce masque **n a pas ete supprime** : il porte desormais
+      l intention reelle « le dernier bloc ne doit jamais etre estompe ».
+      Preuve : `proof/P026-06-zoom-footer.png` avant / apres.
 - [~] **P0.24** 🔴 **`/api/amenities` renvoie 0 lieu sur le corridor de Chamonix : le
       fournisseur Overpass est injoignable depuis cette machine.** Ouvert le
       2026-09-28, pendant la preuve de P0.23.
