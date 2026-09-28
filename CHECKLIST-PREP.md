@@ -48,7 +48,7 @@ vérifiés dans le fichier, pas sur des goûts : chaque point porte son numéro 
 > fil entre eux. C'est ce que la section P documente, ligne par ligne, avec sa preuve.
 ## Journal de progression — mis à jour à chaque lot
 
-**Comptage honnete au 2026-09-28 :** 16 faits · 3 partiels · 185 restants.
+**Comptage honnete au 2026-09-28 :** 18 faits · 3 partiels · 183 restants.
 Un item ne passe à `[x]` que sur une preuve datée — capture regardée, clic réel,
 valeur tracée à sa source, ou test rouge → vert. Jamais sur la foi du code.
 
@@ -60,12 +60,20 @@ valeur tracée à sa source, ou test rouge → vert. Jamais sur la foi du code.
 | **P0.9** | **tiroir = verre, pas une dalle** | ✅ **fait** | `proof/P09-02`, `proof/P09-03` ; contraste pixels 6,59:1 |
 | **P0.10** | **actions du tiroir sous le pli** | ✅ **fait** | `proof/P010-01`, `proof/P010-02` — 815→859 → 764→808 |
 | **P0.10** | **barre de jours vs « Vers le départ »** | ⚠ **à vérifier** | étape 2/3 pas encore capturée |
-| P0.11 | titre étape 2 : deux titres dans une pastille | ⚠ à faire | — |
+| **P0.11** | **titre étape 2 : deux titres dans une pastille** | ✅ **fait** | `proof/P011-01` à `P011-05` ; 5 tests DPL-28 |
+| — | barre d'outils de l'étape 2 flottant sur la description | ✅ fait | `proof/P011-03` — régression de `04b94bde` |
+| — | pied de fiche « Fermer » jamais collé (`.prep-footer`) | ✅ fait | `proof/P011-05` — mesuré `position: sticky` |
 | A3 | fil d’étapes, seul élément de la barre haute | ⚠ à faire | — |
 | D1 | départ facultatif, CTA au strict nécessaire | ⚠ à faire | — |
 | D2 | rail de familles déborde, « Neige » coupée | ⚠ à faire | `proof/A-01` |
 
-**En cours :** lots P0.10 (reste), P0.11, A3, D1, D2, puis détail étape 2 et réécriture étape 1.
+**En cours :** lots P0.10 (reste), A3, D1, D2, puis détail étape 2 et réécriture étape 1.
+
+**Fait le 2026-09-28 (P0.11) :** la génération réelle tourne de bout en bout —
+Argentière → 56,3 km · 4 304 m de dénivelé · 2 h 39 min · météo réelle
+« Partiellement nuageux 9°/22° · 10 % de pluie » · 4 étapes (Argentière,
+Plan de l'Aiguille, Lac Blanc, Charpoua). **P0.2 (météo orpheline) est donc
+re-vivifié : le service est appelé et affiché.** Reste à le cocher en section P.
 
 **Vu de l’ecran, pas du code :** la barre `prep-body` défile bien sous le pied de page
 (24 px de garde au fond, mesuré) — la liste des activités de l’étape 1 n’est **pas**
@@ -511,10 +519,21 @@ d'une intention : chaque ligne porte sa preuve.**
       ❌ **Barre de jours vs « Vers le départ » : PAS ENCORE VÉRIFIÉ** — l’étape 2/3
       n’a pas encore été capturée avec la pastille de jours en place.
 
-- [ ] **P0.11** 🟠 **Le titre de l'étape 2 est un bug de mise en page.** Dans une seule
+- [x] **P0.11** 🟠 **Le titre de l'étape 2 est un bug de mise en page.** Dans une seule
       pastille de verre cohabitent « Randonnée à la journée » **et** « Parcours construit
       sur tes critères — l'enrichissement est indisponible. », tous deux centrés et
       repliés. Un titre, un sous-titre, deux lignes.
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-28.** La pastille portait l'icône de
+      l'activité, le titre, PUIS une seconde icône sparkles et la notice : les
+      deux textes se repliaient l'un contre l'autre sur 3 et 4 lignes, deux
+      icônes pour deux fois le même rôle (`proof/P010-10`).
+      La pastille ne garde plus que le titre, sur une ligne, une seule icône ;
+      la notice est devenue un sous-titre sur son PROPRE verre. Et ce
+      sous-titre a mesuré 46 % de blanc (`--lkv-text-subtle` =
+      `rgba(255,255,255,0.46)`) posé sur les neiges claires de la photo :
+      le texte existait sans être lisible. D'où son verre et son encre pleine.
+      **Preuve test :** `itinerary-title-pill.test.tsx` DPL-28, 5 tests rouges
+      avant correctif, 5 verts après. Captures `proof/P011-01` à `P011-05`.
 - [ ] **P0.12** 🟡 **Glyphes manquants.** « Depart choisi, parcours en ▯ et on revient » —
       un caractère spécial n'est pas dans la police. Et l'en-tête du jour 3 affiche
       « JOUR » **sans le 3**.
