@@ -124,6 +124,20 @@ export function __resetGeoCache(): void {
   cache.clear();
 }
 
+/**
+ * Reserve aux tests : remet a zero l horloge de cadence Nominatim.
+ *
+ * Cette horloge est un etat de MODULE, VOLONTAIREMENT partage par tous les
+ * appelants : c est elle qui tient la promesse faite a OSM. Un test qui veut
+ * mesurer l espacement des appels doit donc pouvoir la replacer, sinon il
+ * herite de l empreinte du test qui a precede et ne mesure plus rien.
+ * Elle n influence jamais le comportement en production, seulement la vitesse
+ * et l independance des tests.
+ */
+export function __resetNominatimCadence(): void {
+  nominatimLastAt = 0;
+}
+
 /** Renvoie des coordonnees valides, ou `null`. Ne complete jamais une valeur. */
 function readLatLon(lat: unknown, lon: unknown): { lat: number; lon: number } | null {
   if (typeof lat !== 'number' || typeof lon !== 'number') return null;
@@ -203,6 +217,11 @@ const NOMINATIM_TOWN_TYPES = new Set<string>([
   'commune',
 ]);
 
+/** OSM classe par `type` ET par `addresstype` : l'un des deux suffit. */
+function isNominatimTown(value: unknown): boolean {
+  return typeof value === 'string' && NOMINATIM_TOWN_TYPES.has(value.trim().toLowerCase());
+}
+
 export function normalizeNominatim(payload: RawNominatim[]): GeocodeMatch[] {
   const rows = Array.isArray(payload) ? payload : [];
   const out: GeocodeMatch[] = [];
@@ -225,10 +244,13 @@ export function normalizeNominatim(payload: RawNominatim[]): GeocodeMatch[] {
       lat,
       lon,
       provider: 'nominatim',
-      precision: NOMINATIM_TOWN_TYPES.has([
-        row.type ?? '',
-        row.addresstype ?? '',
-      ].join(','))
+      // Un des DEUX niveaux suffit, et c'est chacun separement qu'il faut
+      // tester. Mesure du 2026-09-28 : la ligne jointait `type` et
+      // `addresstype` par une virgule pour n'en chercher qu'un, donc
+      // `'city,city'` — jamais present dans le set. Toute commune Nominatim
+      // sortait donc `inexact` et s'affichait comme une simple piste a
+      // confirmer, alors que c'etait une ancre de voyage fiable.
+      precision: isNominatimTown(row.type) || isNominatimTown(row.addresstype)
         ? 'commune'
         : 'inexact',
     });
