@@ -690,6 +690,36 @@ Suite complète : **608 fichiers / 5686 tests / 0 échec**, `tsc --noEmit` 0.
 parce que j'ai édité des fichiers pendant son exécution. Pas un défaut du code —
 relancée sans édition concurrente, verte. À ne pas compter comme unsuccès.
 
+#### D3-4 — Génération complète : elle va jusqu'au bout
+
+Mesure navigateur, 393×852, clic réel, attente de la fin de la génération
+(**63 s**) — `proof/D3-36-fin-generation.png` (regardée) :
+
+| | Mesuré |
+|---|---|
+| étape atteinte | « Préparation », rail `destination=done itinerary=done` |
+| distance totale | **92,5 km** (23 appels `/api/route` réels, tous 200) |
+| dénivelé | 10 407 m (3 appels `/api/elevation` 200) |
+| jours | **J1 jeu. 15 oct. · J2 ven. 16 oct. · J3 sam. 17 oct.** |
+| budget / personne | **« À vérifier »** — pas de valeur inventée |
+| échecs annoncés | bandeau « Échec : Météo des jours de ton aventure » + **Réessayer** |
+| bandeau de jours | « Tout 92.5 km » + J1/J2/J3 en pastilles |
+| CTA final | « Enregistrer mon aventure », lisible, non superposé |
+
+`/api/geocode` : **200**. C'est le trou D3-3 qui est refermé.
+
+**La météo n'est PAS un bug, et le garde-fou a raison de tenir.** Open-Meteo
+répond `400 — Parameter 'start_date' is out of allowed range from 2026-06-27
+to 2026-10-13`. Le parcours commence le 15 octobre, soit 2 jours après la fin
+de fenêtre. Aucune donnée météo n'existe donc pour ces jours — et inventer une
+température serait exactement le mensonge que ce projet refuse. Le service
+reste `null`, l'écran affiche « Météo indisponible », le bandeau nomme la phase
+en échec et propose « Réessayer ». **C'est le comportement correct**, et il ne
+doit pas être « corrigé » en inventant une valeur.
+
+À vérifier plus tard : quand la fenetre glissante du fournisseur aura depasse le 15 octobre,
+la météo devrait arriver seule, sans changer une ligne.
+
 #### Reste ouvert
 
 - **P0.26** : vraie génération 2 jours, vérifier la répartition par jour.
