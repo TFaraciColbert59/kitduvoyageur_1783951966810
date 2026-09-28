@@ -53,7 +53,7 @@ vérifiés dans le fichier, pas sur des goûts : chaque point porte son numéro 
 ### Lot 2026-09-29 (matin) — reprise sur terrain propre
 
 **Comptage au début du lot : 108 faits / 37 partiels / 81 restants = 226 items.**
-Ferme dans ce lot : **L0.2**. Reste **109 / 37 / 80 = 226**.
+Fermes dans ce lot : **L0.2**, **L0.4**, **A5**, **L6.5**. Reste **112 / 36 / 78 = 226**.
 
 - **L0.2 — la durée d'une journée affichait son index.** Le correctif était déjà
   en place depuis `50cf64f2` / `835ecf81`, mais **rien ne le prouvait** : rien
@@ -79,6 +79,12 @@ Ferme dans ce lot : **L0.2**. Reste **109 / 37 / 80 = 226**.
   checklist le disait : *« il manque ~15 lignes de test, pas de code »*.
   **Morsant** : `focusedDayNumbers` en `return all` (la liste ignore le jour
   choisi) ⇒ `P0.28-4` tombe, `expected 2 to be 1`. Restauration 16/16.
+- **L6.5 — « Enregistrer mon aventure » ne redirigeait pas vers le hub.**
+  Prouvé par `INT-16` / `INT-17` : refus ⇒ 0 fetch + la raison affichée ;
+  succès ⇒ 1 fetch `/api/adventure/commit`, corps vérifié, redirection `/hub`,
+  confirmation. **Morsant** : redirection divertie ⇒ `INT-17` tombe, avec
+  l’argument attendu `/hub` affiché dans le diff. Restauration 11/11.
+
 
 **Règle qu'il faut se réappliquer à chaque item `[ ]` déjà corrigé dans le
 code** : un correctif sans test n'est pas un item fait, c'est un item qui
@@ -1718,7 +1724,21 @@ Ces points sont **hors de portée d'une capture d'écran** : à tester au doigt.
 - [ ] **L6.2** Long-press sur la carte = ajouter un point de passage
 - [ ] **L6.3** Recalcul du tracé + distances après ajout d'un point
 - [ ] **L6.4** Écran de génération intermédiaire et ses phases
-- [ ] **L6.5** « Enregistrer mon aventure » → redirection Hub
+- [x] **L6.5** **FERME le 2026-09-29 sur test a morsant.** « Enregistrer mon
+      aventure » part bien sur `/api/adventure/commit` avec le plan courant
+      (activities + etapes) dans le corps, et une reponse portant un `tripId`
+      redirige vers `/hub` (`DepartureStep.tsx:228`). L ecran confirme ensuite
+      l enregistrement.
+      **Preuve** : `INT-16` (le refus ne part sur **aucun** fetch et affiche la
+      raison) et `INT-17` (le succes part sur **1** fetch, corps verifie,
+      redirection, confirmation) dans `interactions2.test.tsx` — **11/11 verts**.
+      Le test ne se contente pas d affirmer : il controle l URL, le JSON du
+      corps, la destination et l retour, donc un composant no-op le ferait
+      echouer.
+      **Morsant** : redirection divertie vers `/hub-ROGNE-SABOTAGE` ⇒ `INT-17`
+      tombe sur `une reponse avec tripId doit emmener au hub`, avec l argument
+      attendu affiche. Restauration ⇒ 11/11, `DepartureStep.tsx` identique a
+      HEAD. « Enregistrer mon aventure » → redirection Hub
 - [ ] **L6.6** Le sélecteur de jours se met-il à jour sur les 3 pages ? (A5)
 ---
 
