@@ -42,7 +42,7 @@ describe('missingFields — ce qu’il reste à saisir', () => {
 
   it('DM-04: l’arrivée signalee reste non bloquante meme en aller simple', () => {
     const draft = fullDraft({
-      calendar: { startDate: '2026-07-11', durationDays: 2, durationIsSuggested: false, returnDate: null },
+      calendar: { startDate: '2026-07-11', durationDays: 2, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null },
       route: { origin: CHAMONIX, destination: null, shape: 'aller_simple' },
     });
     expect(missingFields(draft).map((field) => field.key)).toContain('destination');
@@ -51,10 +51,10 @@ describe('missingFields — ce qu’il reste à saisir', () => {
 
   it('DM-05: une durée nulle ou négative compte comme manquante', () => {
     const zero = fullDraft({
-      calendar: { startDate: '2026-07-11', durationDays: 0, durationIsSuggested: false, returnDate: null },
+      calendar: { startDate: '2026-07-11', durationDays: 0, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null },
     });
     const negative = fullDraft({
-      calendar: { startDate: '2026-07-11', durationDays: -3, durationIsSuggested: false, returnDate: null },
+      calendar: { startDate: '2026-07-11', durationDays: -3, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null },
     });
     expect(missingFields(zero).map((f) => f.key)).toContain('duration');
     expect(missingFields(negative).map((f) => f.key)).toContain('duration');
@@ -73,14 +73,14 @@ describe('canCreateItinerary — la generations a un sens', () => {
 
   it('DM-08: faux sans duree', () => {
     const draft = fullDraft({
-      calendar: { startDate: '2026-07-11', durationDays: null, durationIsSuggested: false, returnDate: null },
+      calendar: { startDate: '2026-07-11', durationDays: null, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null },
     });
     expect(canCreateItinerary(draft)).toBe(false);
   });
 
   it('DM-09: la date manquante n’empêche PAS de générer', () => {
     const draft = fullDraft({
-      calendar: { startDate: null, durationDays: 3, durationIsSuggested: false, returnDate: null },
+      calendar: { startDate: null, durationDays: 3, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null },
     });
     expect(canCreateItinerary(draft)).toBe(true);
     expect(missingFields(draft).map((f) => f.key)).toContain('startDate');
@@ -90,7 +90,7 @@ describe('canCreateItinerary — la generations a un sens', () => {
 describe('missingSummary — la ligne d’alerte', () => {
   it('DM-10: énumère les libellés, sans compteur', () => {
     const draft = fullDraft({
-      calendar: { startDate: null, durationDays: null, durationIsSuggested: false, returnDate: null },
+      calendar: { startDate: null, durationDays: null, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null },
     });
     expect(missingSummary(draft)).toBe('Il manque : date, temps disponible');
   });

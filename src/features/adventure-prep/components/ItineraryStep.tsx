@@ -12,7 +12,12 @@ import type { DayWeather } from '../engine/weather';
 import { weatherParts } from '../engine/weather';
 import { runItineraryGeneration } from '../engine/itineraryPhases';
 import { browserMeasurementRunners } from '../browserMeasurements';
-import { anchorsOf, loadPlaceInventoryFor, resolvePlacesFor, warmAmenitiesFor } from '../placeSource';
+import {
+  anchorsOf,
+  loadPlaceInventoryFor,
+  resolvePlacesFor,
+  warmAmenitiesFor,
+} from '../placeSource';
 import { shouldLaunchGeneration } from '../engine/stepTransition';
 import { minutesLabel, programTitle } from '../engine/labels';
 import { A_VERIFIER, moneyLabel, stateLabel } from '../engine/trust';
@@ -38,7 +43,7 @@ export interface ItineraryStepScreenProps {
  * laisser un rail a moitie coche. Le besoin est nomme, pas suppose.
  */
 const BLOCKED_MESSAGE =
-  "Il manque une activité ou une durée pour construire le parcours. Tu peux arrêter ici, ou revenir à l’étape précédente.";
+  'Il manque une activité ou une durée pour construire le parcours. Tu peux arrêter ici, ou revenir à l’étape précédente.';
 
 const STEP_ICONS: Readonly<Record<ItineraryStepKind, string>> = {
   trajet: 'route',
@@ -49,13 +54,7 @@ const STEP_ICONS: Readonly<Record<ItineraryStepKind, string>> = {
 };
 
 /** Familles affichees par la carte : tout le parcours, sans exception. */
-const MAP_CATEGORIES: readonly string[] = [
-  'trajet',
-  'arret',
-  'repos',
-  'nuit',
-  'ravitaillement',
-];
+const MAP_CATEGORIES: readonly string[] = ['trajet', 'arret', 'repos', 'nuit', 'ravitaillement'];
 
 /** Les classes de `.prep-step` visent du texte de bloc : on leve le inline. */
 const AS_BLOCK: React.CSSProperties = { display: 'block' };
@@ -176,9 +175,7 @@ function GenerationRail({ phases }: { phases: readonly GenerationPhase[] }) {
           </span>
           <span>
             {phase.label}
-            <span className="prep-visually-hidden">
-              {phase.done ? ' — fait' : ' — en attente'}
-            </span>
+            <span className="prep-visually-hidden">{phase.done ? ' — fait' : ' — en attente'}</span>
           </span>
         </div>
       ))}
@@ -279,10 +276,22 @@ function FocusedStepView({
           <Icon name={stepIcon(step)} size={22} />
         </span>
         <div className="prep-step__body">
-          <h3 className="prep-step__name" style={AS_BLOCK}>{step.title}</h3>
-          <div className="prep-step__when" style={AS_BLOCK}>{whenLabel(step)}</div>
+          <h3 className="prep-step__name" style={AS_BLOCK}>
+            {step.title}
+          </h3>
+          <div className="prep-step__when" style={AS_BLOCK}>
+            {whenLabel(step)}
+          </div>
           {step.reason && (
-            <div className="prep-step__reason" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            <div
+              className="prep-step__reason"
+              style={{
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+              }}
+            >
               {step.reason}
             </div>
           )}
@@ -295,7 +304,12 @@ function FocusedStepView({
         <Button variant="secondary" size="sm" onClick={() => onOpenSheet('step', step.id)}>
           Détails
         </Button>
-        <Button variant="secondary" size="sm" onClick={() => {}} icon={<Icon name="refresh-cw" size={16} />}>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => {}}
+          icon={<Icon name="refresh-cw" size={16} />}
+        >
           Remplacer
         </Button>
         <Button
@@ -351,7 +365,7 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
       runAbort.current?.abort();
       runAbort.current = null;
     },
-    [],
+    []
   );
 
   /**
@@ -386,7 +400,7 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
         loadPlaceInventoryFor(),
         (draftToBuild, signal) => {
           void warmAmenitiesFor(anchorsOf(draftToBuild), fetch, signal);
-        },
+        }
       );
       // Un run coupe n ecrit rien : l ecran a disparu ou un autre run l a remplace.
       if (controller.signal.aborted) return;
@@ -397,14 +411,15 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
         next.failGenerationRun(BLOCKED_MESSAGE);
         return;
       }
-      next.applyGenerated(outcome.model, outcome.message, outcome.failure);
+      next.applyGenerated(outcome);
       next.completeStep('itinerary');
     } finally {
       // La reference est liberee dans TOUS les cas : un ecran qui remonte
       // apres un run termine ne doit pas se croire encore vivant, sinon il
       // refuserait de relancer une generation orpheline.
       if (runAbort.current === controller) runAbort.current = null;
-    }  }, []);
+    }
+  }, []);
 
   /**
    * L'ecran 1 ne construit rien : il passe la main. La generation demarre
@@ -417,7 +432,12 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
    * l'ecran du store.
    */
   useEffect(() => {
-    if (!shouldLaunchGeneration(useAdventurePrepStore.getState().draft, { live: runAbort.current !== null })) return;
+    if (
+      !shouldLaunchGeneration(useAdventurePrepStore.getState().draft, {
+        live: runAbort.current !== null,
+      })
+    )
+      return;
     void startRun('start');
   }, [startRun]);
 
@@ -436,8 +456,10 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
   const activeDay = model && focusDay !== null && focusDay <= model.days ? focusDay : null;
   const metrics = useMemo(
     () =>
-      model ? metricsFor(model, activeDay === null ? 'aventure' : 'jour', activeDay ?? undefined) : [],
-    [model, activeDay],
+      model
+        ? metricsFor(model, activeDay === null ? 'aventure' : 'jour', activeDay ?? undefined)
+        : [],
+    [model, activeDay]
   );
   const program = useMemo(() => {
     if (!model) return [];
@@ -479,13 +501,26 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
             qui reste a confirmer. */}
         <button type="button" className="prep-pill" onClick={() => onOpenSheet('coverage')}>
           <Icon name={activity?.icon || 'sparkles'} size={16} />
-          <span className="prep-pill__label">{programTitle(activity?.label ?? null, draft.brief)}</span>
+          <span className="prep-pill__label">
+            {programTitle(activity?.label ?? null, draft.brief)}
+          </span>
         </button>
 
         {model && generation.notice && <p className="prep-notice">{generation.notice}</p>}
 
-        {!model && (
-          <p className="prep-help" style={{ textAlign: 'center', color: 'var(--lkv-text-subtle)', margin: 'var(--space-2) 0' }}>
+        {/* D1-C : ce texte ne nomme aucune distance reelle, il ne parle que
+            d attendu. Pendant la generation il etait coupe par le haut et
+            masque par la carte des phases (proof/D1-00, D1-10) : on ne l affiche
+            que lorsqu il y a bel et bien des valeurs a verifier. */}
+        {!model && generation.status !== 'en_cours' && (
+          <p
+            className="prep-help"
+            style={{
+              textAlign: 'center',
+              color: 'var(--lkv-text-subtle)',
+              margin: 'var(--space-2) 0',
+            }}
+          >
             Distances, durées et prix restent À vérifier.
           </p>
         )}
@@ -495,15 +530,28 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
             {generation.phases.map((phase, index, arr) => {
               const active = !phase.done && (index === 0 || arr[index - 1].done);
               return (
-                <div key={phase.id} className="prep-rail__line" data-state={active ? 'active' : phase.done ? 'done' : 'pending'}>
+                <div
+                  key={phase.id}
+                  className="prep-rail__line"
+                  data-state={active ? 'active' : phase.done ? 'done' : 'pending'}
+                >
                   <span className="prep-rail__dot" aria-hidden="true">
-                    <Icon name={phase.done ? 'check' : active ? 'loader-2' : 'circle'} size={20} className={active ? 'spin' : ''} />
+                    <Icon
+                      name={phase.done ? 'check' : active ? 'loader-2' : 'circle'}
+                      size={20}
+                      className={active ? 'spin' : ''}
+                    />
                   </span>
                   <span>{phase.label}</span>
                 </div>
               );
             })}
-            <Button variant="secondary" size="sm" onClick={stopRun} icon={<Icon name="x" size={16} />}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={stopRun}
+              icon={<Icon name="x" size={16} />}
+            >
               Arrêter
             </Button>
           </div>
@@ -511,11 +559,21 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
 
         {!model && (generation.status === 'interrompu' || generation.status === 'echec') && (
           <div className="prep-block" style={{ padding: 'var(--space-4)' }}>
-            <p className="prep-note" data-tone="warn" role="status" style={{ marginBottom: 'var(--space-3)' }}>
+            <p
+              className="prep-note"
+              data-tone="warn"
+              role="status"
+              style={{ marginBottom: 'var(--space-3)' }}
+            >
               {generation.error || BLOCKED_MESSAGE}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-              <Button variant="primary" size="md" onClick={() => startRun('resume')} icon={<Icon name="refresh-cw" size={16} />}>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => startRun('resume')}
+                icon={<Icon name="refresh-cw" size={16} />}
+              >
                 Reprise du parcours
               </Button>
               <Button variant="secondary" size="sm" onClick={() => startRun('resume')}>
@@ -531,9 +589,13 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
               {metrics.map((metric) => (
                 <div key={metric.id} className="prep-metric">
                   <span className="prep-metric__label">{metric.label}</span>
-                  <span className="prep-metric__value" data-unknown={metric.state === 'a_verifier' ? 'true' : undefined}>
+                  <span
+                    className="prep-metric__value"
+                    data-unknown={metric.state === 'a_verifier' ? 'true' : undefined}
+                  >
                     {metric.formatted}
                   </span>
+                  {metric.note ? <span className="prep-metric__note">{metric.note}</span> : null}
                 </div>
               ))}
             </div>
@@ -604,13 +666,28 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
             {program.length > 0 && <FocusedStepView program={program} onOpenSheet={onOpenSheet} />}
 
             <div className="prep-actionrow">
-              <Button variant="secondary" size="md" onClick={() => onOpenSheet('adjust')} icon={<Icon name="Cog6ToothIcon" size={18} />}>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => onOpenSheet('adjust')}
+                icon={<Icon name="Cog6ToothIcon" size={18} />}
+              >
                 Ajuster
               </Button>
-              <Button variant="secondary" size="md" onClick={() => onOpenSheet('steps')} icon={<Icon name="clipboard-list" size={18} />}>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => onOpenSheet('steps')}
+                icon={<Icon name="clipboard-list" size={18} />}
+              >
                 Étapes
               </Button>
-              <Button variant="secondary" size="md" onClick={() => onOpenSheet('add')} icon={<Icon name="plus" size={18} />}>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => onOpenSheet('add')}
+                icon={<Icon name="plus" size={18} />}
+              >
                 Ajouter
               </Button>
             </div>
@@ -619,42 +696,62 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
 
         {!model && generation.status !== 'en_cours' && generation.status !== 'echec' && (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 'var(--space-4) 0' }}>
-            <Button variant="primary" size="lg" onClick={() => void startRun('start')} icon={<Icon name="sparkles" size={18} />}>
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={() => void startRun('start')}
+              icon={<Icon name="sparkles" size={18} />}
+            >
               Générer mon parcours
             </Button>
           </div>
         )}
 
-        <PrepMap
-          className="prep-map--inline"
-          name="Ton parcours"
-          routeCoords={coords}
-          points={points}
-          scopeLabel={activeDay === null ? 'Ensemble' : `Jour ${activeDay}`}
-          filterCategories={MAP_CATEGORIES}
-          onLongPress={(lat, lon) =>
-            useAdventurePrepStore.getState().addWaypoint({ lat, lon }, activeDay ?? 1)
-          }
-        />
-        <p className="prep-maphint">
-          Maintiens appuyé sur la carte pour poser un point de passage : le trajet
-          et les distances se recalculent aussitôt.
-        </p>
+        {/* D1-D : sans itineraire, la carte montrait « Ensemble / Agrandir /
+            Recentrer » et promettait qu un appui long poserait un point de
+            passage qui FAIT EVOLUER LE TRAJET. Il n y avait pas de trajet a
+            faire evoluer. Meme carte, meme promesse, que l itineraire existe. */}
+        {model && (
+          <>
+            <PrepMap
+              className="prep-map--inline"
+              name="Ton parcours"
+              routeCoords={coords}
+              points={points}
+              scopeLabel={activeDay === null ? 'Ensemble' : `Jour ${activeDay}`}
+              filterCategories={MAP_CATEGORIES}
+              onLongPress={(lat, lon) =>
+                useAdventurePrepStore.getState().addWaypoint({ lat, lon }, activeDay ?? 1)
+              }
+            />
+            <p className="prep-maphint">
+              Maintiens appuyé sur la carte pour poser un point de passage : le trajet et les
+              distances se recalculent aussitôt.
+            </p>
+          </>
+        )}
       </div>
 
-      <div className="prep-footer">
-        <Button
-          variant="primary"
-          size="lg"
-          className="prep-footer__primary"
-          disabled={!model}
-          onClick={goToDeparture}
-          iconPosition="trailing"
-          icon={<Icon name="arrow-right" size={18} aria-hidden="true" />}
-        >
-          Vers le départ
-        </Button>
-      </div>
+      {/* D1-A : ce pied de page rendait un bouton blanc, plein, « Vers le depart »,
+          avec disabled et pointer-events none : un bouton MORT peint comme un
+          bouton VIVANT (mesure : opacity 1, data-variant primary). Pendant la
+          generation, « Arreter » — seul reellement actionnable — suffit : le
+          pied disparait au lieu de mentir. Le footer n existe plus non plus,
+          pour ne pas reserver une place vide sous le rail. */}
+      {model && (
+        <div className="prep-footer">
+          <Button
+            variant="primary"
+            size="lg"
+            className="prep-footer__primary"
+            onClick={goToDeparture}
+            iconPosition="trailing"
+            icon={<Icon name="arrow-right" size={18} aria-hidden="true" />}
+          >
+            Vers le départ
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

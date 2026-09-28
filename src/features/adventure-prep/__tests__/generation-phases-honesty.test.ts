@@ -36,6 +36,7 @@ function step(overrides: Partial<DraftedStep> = {}): DraftedStep {
 
 function drafted(overrides: Partial<DraftedItinerary> = {}): DraftedItinerary {
   return {
+    title: null,
     days: 2,
     steps: [step({ day: 1, kind: 'trajet', title: 'Depart de Chamonix' }), step({ day: 2, kind: 'nuit' })],
     hypotheses: [],
@@ -130,7 +131,7 @@ describe('phases de generation honne tes', () => {
     const run = runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: await gate, failure: null }),
+      async () => ({ drafted: await gate, failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
       onPhase,
       NO_MEASUREMENTS,
     );
@@ -147,7 +148,7 @@ describe('phases de generation honne tes', () => {
     await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: drafted(), failure: null }),
+      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
       onPhase,
       NO_MEASUREMENTS,
     );
@@ -180,7 +181,7 @@ describe('phases de generation honne tes', () => {
       new AbortController().signal,
       async () => {
         order.push('travail-ia');
-        return { drafted: drafted(), failure: null };
+        return { drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null};
       },
       (phase) => order.push(`coche-${phase}`),
       runners,
@@ -220,7 +221,7 @@ describe('phases de generation honne tes', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       controller.signal,
-      async () => ({ drafted: drafted(), failure: null }),
+      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
       onPhase,
       runners,
     );
@@ -234,7 +235,7 @@ describe('phases de generation honne tes', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: drafted(), failure: null }),
+      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
       onPhase,
       {
         trace: async () => {
@@ -262,7 +263,7 @@ describe('phases de generation honne tes', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: drafted(), failure: null }),
+      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
       () => {},
       spies,
     );
@@ -277,7 +278,7 @@ describe('phases de generation honne tes', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: null, failure: null }),
+      async () => ({ drafted: null, failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
       () => {},
       spies,
     );
@@ -290,7 +291,7 @@ describe('phases de generation honne tes', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: drafted(), failure: null }),
+      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
       () => {},
     );
     expect(outcome.model?.totals.distanceKm).toBeNull();
@@ -320,7 +321,7 @@ describe('assemblage des mesureurs', () => {
     const start = runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: drafted(), failure: null }),
+      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
       () => {},
       runners,
     );
@@ -340,7 +341,7 @@ describe('cause reelle de la degradation — PH-01 a PH-05', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       signal(),
-      async () => ({ drafted: null, failure: 'delai_depasse' }),
+      async () => ({ drafted: null, failure: 'delai_depasse' , suggestedStartDate: null, suggestedDurationDays: null}),
       () => {},
       NO_MEASUREMENTS,
     );
@@ -352,7 +353,7 @@ describe('cause reelle de la degradation — PH-01 a PH-05', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       signal(),
-      async () => ({ drafted: null, failure: 'delai_depasse' }),
+      async () => ({ drafted: null, failure: 'delai_depasse' , suggestedStartDate: null, suggestedDurationDays: null}),
       () => {},
       NO_MEASUREMENTS,
     );
@@ -378,7 +379,7 @@ describe('cause reelle de la degradation — PH-01 a PH-05', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       signal(),
-      async () => ({ drafted: drafted(), failure: null }),
+      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
       () => {},
       NO_MEASUREMENTS,
     );
@@ -390,7 +391,7 @@ describe('cause reelle de la degradation — PH-01 a PH-05', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       signal(),
-      async () => ({ drafted: null, failure: null }),
+      async () => ({ drafted: null, failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
       () => {},
       NO_MEASUREMENTS,
     );
@@ -414,7 +415,7 @@ describe('P0.3 : un echec de phase reste un echec de phase', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: drafted(), failure: null }),
+      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
       () => {},
       runners,
     );
@@ -442,7 +443,7 @@ describe('P0.3 : un echec de phase reste un echec de phase', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: drafted(), failure: null }),
+      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
       () => {},
       runners,
       {},
@@ -471,7 +472,7 @@ describe('P0.3 : un echec de phase reste un echec de phase', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: drafted(), failure: null }),
+      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
       () => {},
       runners,
       {},
@@ -488,7 +489,7 @@ describe('P0.3 : un echec de phase reste un echec de phase', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: null, failure: null }),
+      async () => ({ drafted: null, failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
       () => {},
       NO_MEASUREMENTS,
     );
@@ -505,6 +506,8 @@ describe('P0.3 : un echec de phase reste un echec de phase', () => {
       message: null,
       rejectedReason: null,
       failure: null,
+      suggestedStartDate: null,
+      suggestedDurationDays: null,
       phases: [],
       infeasible: [],
       toVerify: [],
@@ -529,7 +532,7 @@ describe('P0.3 : reprise d UNE SEULE phase', () => {
     const first = await runItineraryGeneration(
       draft,
       new AbortController().signal,
-      async () => ({ drafted: drafted(), failure: null }),
+      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
       () => {},
       failing(),
     );

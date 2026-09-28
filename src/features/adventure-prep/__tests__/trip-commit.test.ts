@@ -22,6 +22,7 @@ describe('buildTripCommit — preparation de la persistance', () => {
           startDate: '2026-07-11',
           durationDays: null,
           durationIsSuggested: false,
+          startDateIsSuggested: false,
           returnDate: null,
         },
       }),

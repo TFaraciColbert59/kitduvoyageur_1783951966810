@@ -161,7 +161,9 @@ export function buildItinerary(draft: AdventurePrepDraft): ItineraryModel | null
     }
   }
 
+  // Le repli regles n invente AUCUN nom : pas de modele, pas de titre.
   const model: ItineraryModel = {
+    title: null,
     days,
     steps,
     totals: { ...EMPTY_TOTALS },

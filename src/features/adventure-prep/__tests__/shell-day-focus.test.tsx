@@ -25,12 +25,13 @@ import { PREP_STEPS, type AdventurePrepDraft, type PrepStepId } from '../types';
 
 /* --- Le publisher est observe, pas reimplemente ------------------------ */
 
-const published = vi.hoisted(() => ({ calls: [] as unknown[] }));
+const published = vi.hoisted(() => ({ calls: [] as unknown[], focusable: [] as boolean[] }));
 
 vi.mock('../hooks/usePrepDayFocusPublisher', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../hooks/usePrepDayFocusPublisher')>()),
-  usePrepDayFocusPublisher: (draft: unknown) => {
+  usePrepDayFocusPublisher: (draft: unknown, focusable: boolean) => {
     published.calls.push(draft);
+    published.focusable.push(focusable);
   },
 }));
 
@@ -71,6 +72,7 @@ function jours(draft: AdventurePrepDraft): DayFocusDay[] {
 
 beforeEach(() => {
   published.calls.length = 0;
+  published.focusable.length = 0;
   useDayFocusStore.getState().clear();
 });
 
@@ -131,5 +133,29 @@ describe('Selecteur de jours — une seule source de verite', () => {
     useDayFocusStore.getState().publishDays([]);
     expect(useDayFocusStore.getState().days).toEqual([]);
     expect(useDayFocusStore.getState().selectedDay).toBeNull();
+  });
+});
+
+describe('Selecteur de jours — l etape 1 ne rend pas un controle mort', () => {
+  it('SH-DAY-06: l etape 1 se declare NON focalisable, les etapes 2 et 3 focalisables', () => {
+    const draft = avecParcours();
+    for (const step of PREP_STEPS) monter(step, draft);
+    const parEtape = Object.fromEntries(
+      PREP_STEPS.map((step, index) => [step, published.focusable[index]]),
+    ) as Record<PrepStepId, boolean>;
+    // L etape 1 ne montre aucun jour du parcours : un rail y serait un
+    // controle qui repond mais ne change rien a l ecran.
+    expect(parEtape.destination).toBe(false);
+    expect(parEtape.itinerary).toBe(true);
+    expect(parEtape.departure).toBe(true);
+  });
+
+  it('SH-DAY-07: la selection de jour survive au passage par l etape 1', () => {
+    const draft = avecParcours();
+    useDayFocusStore.getState().publishDays(jours(draft));
+    useDayFocusStore.getState().selectDay(2);
+    monter('destination', draft); // etape 1 : rail masque
+    monter('itinerary', draft); // retour a l etape 2
+    expect(useDayFocusStore.getState().selectedDay).toBe(2);
   });
 });

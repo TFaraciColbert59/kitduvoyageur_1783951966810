@@ -35,6 +35,7 @@ function step(overrides: Partial<DraftedStep> = {}): DraftedStep {
 
 function drafted(overrides: Partial<DraftedItinerary> = {}): DraftedItinerary {
   return {
+    title: null,
     days: 2,
     steps: [step({ day: 1, kind: 'trajet', title: 'Depart de Chamonix' }), step({ day: 2, kind: 'nuit' })],
     hypotheses: [],
@@ -43,7 +44,7 @@ function drafted(overrides: Partial<DraftedItinerary> = {}): DraftedItinerary {
 }
 
 const toDomain = (draftedSteps: DraftedStep[]): ItineraryStep[] =>
-  materializeSteps({ days: 2, steps: draftedSteps, hypotheses: [] }, 2);
+  materializeSteps({ title: null, days: 2, steps: draftedSteps, hypotheses: [] }, 2);
 
 describe('extraction de la reponse brute du modele', () => {
   it('lit un JSON nu, un bloc markdown et du texte autour', () => {
@@ -205,7 +206,7 @@ describe('rail de generation : une phase cochee est une phase terminee', () => {
     const phases: GenerationPhaseId[] = [];
     const onPhase: PhaseReporter = (phase) => phases.push(phase);
 
-    const run = runItineraryGeneration(fullDraft(), new AbortController().signal, async () => ({ drafted: await gate, failure: null }), onPhase);
+    const run = runItineraryGeneration(fullDraft(), new AbortController().signal, async () => ({ drafted: await gate, failure: null , suggestedStartDate: null, suggestedDurationDays: null}), onPhase);
     await Promise.resolve();
     // L appel reseau est en vol : rien n est coche, meme pas la phase 1
     // qui n a pas encore rendu la main.
@@ -229,7 +230,7 @@ describe('rail de generation : une phase cochee est une phase terminee', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: null, failure: null }),
+      async () => ({ drafted: null, failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
       (phase) => phases.push(phase),
     );
 
@@ -255,7 +256,13 @@ describe('rail de generation : une phase cochee est une phase terminee', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: drafted({ steps: [step({ title: 'Nuit — 80 EUR' })] }), failure: null }),
+      async () => ({
+        drafted: drafted({ steps: [step({ title: 'Nuit — 80 EUR' })] }),
+        failure: null,
+        suggestedStartDate: null,
+
+        suggestedDurationDays: null,
+      }),
       () => {},
     );
 
@@ -268,7 +275,7 @@ describe('rail de generation : une phase cochee est une phase terminee', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => ({ drafted: drafted(), failure: null }),
+      async () => ({ drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null}),
       () => {},
     );
 
@@ -289,7 +296,7 @@ describe('rail de generation : une phase cochee est une phase terminee', () => {
       controller.signal,
       async () => {
         controller.abort();
-        return { drafted: drafted(), failure: null };
+        return { drafted: drafted(), failure: null , suggestedStartDate: null, suggestedDurationDays: null};
       },
       (phase) => phases.push(phase),
     );
@@ -306,7 +313,7 @@ describe('assemblage du modele', () => {
       step({ day: 1, kind: 'repos' }),
       step({ day: 2, kind: 'nuit' }),
     ]);
-    const model = assembleModel(fullDraft(), { days: 2, steps: [], hypotheses: [] }, steps);
+    const model = assembleModel(fullDraft(), { title: null, days: 2, steps: [], hypotheses: [] }, steps);
     expect(model.steps.map((item) => [item.day, item.order])).toEqual([
       [1, 0],
       [1, 1],

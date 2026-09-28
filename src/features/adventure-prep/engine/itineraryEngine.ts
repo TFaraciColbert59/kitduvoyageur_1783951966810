@@ -134,6 +134,8 @@ export interface DraftedStep {
 }
 
 export interface DraftedItinerary {
+  /** Etiquette du parcours, ou `null` quand le modele n en a pas propose. */
+  title: string | null;
   days: number;
   steps: readonly DraftedStep[];
   hypotheses: readonly string[];
@@ -143,7 +145,31 @@ export type RejectionReason =
   | 'chevauchement_horaire'
   | 'affirmation_non_sourcee'
   | 'aucune_etape'
-  | 'journee_non_couverte';
+  | 'journee_non_couverte'
+  | 'brief_non_honore'
+  | 'programme_absent';
+
+/**
+ * Ce que la personne a DEMANDE, pour autant que ce soit lisible sans elle.
+ *
+ * `briefDays` vient de `briefRequestedDays` et vaut `null` quand le brief est
+ * muet : l absence d information ne produit donc jamais un refus. Seul une
+ * CONTRADICTION mesuree peut faire tomber une proposition.
+ */
+export interface DraftedExpectations {
+  /** Nombre de jours nommes dans le brief, ou `null` si le brief n en nomme aucun. */
+  readonly briefDays?: number | null;
+}
+
+/**
+ * Une etape « programme » : quelque chose que la personne FAIT, par opposition a
+ * une etape de transport. Un trajet reste un trajet — mais un parcours entier
+ * qui ne contient que du transport ne decrit aucune sortie, et l ecran le
+ * presente pourtant comme un voyage complet.
+ */
+function isProgrammeStep(kind: DraftedStep['kind']): boolean {
+  return kind !== 'trajet';
+}
 
 export interface ValidationOutcome {
   ok: boolean;
@@ -158,6 +184,8 @@ const REJECTION_MESSAGES: Readonly<Record<RejectionReason, string>> = {
   affirmation_non_sourcee: 'une proposition affirme un prix ou une disponibilite non verifiee',
   aucune_etape: 'aucune etape exploitable n a ete proposee',
   journee_non_couverte: 'au moins une journee n a recu aucune etape',
+  brief_non_honore: 'le parcours livre dure moins de jours que le brief en demande',
+  programme_absent: 'aucune etape de programme : uniquement du transport',
 };
 
 function reject(reason: RejectionReason, offending: readonly string[] = []): ValidationOutcome {
@@ -174,7 +202,10 @@ function reject(reason: RejectionReason, offending: readonly string[] = []): Val
  * Regle unique : en cas de doute, on refuse. Le repli regles est meilleur
  * qu'un parcours qui affiche un prix invente comme s'il etait verifie.
  */
-export function validateDrafted(drafted: DraftedItinerary): ValidationOutcome {
+export function validateDrafted(
+  drafted: DraftedItinerary,
+  expectations: DraftedExpectations = {},
+): ValidationOutcome {
   if (drafted.steps.length === 0) return reject('aucune_etape');
 
   const offending: string[] = [];
@@ -211,6 +242,39 @@ export function validateDrafted(drafted: DraftedItinerary): ValidationOutcome {
     if (!covered.has(day)) missing.push(day);
   }
   if (missing.length > 0) return reject('journee_non_couverte', missing.map(String));
+
+  // Le brief FACE au plan — P0.18.
+  //
+  // Mesure du 2026-09-28, generation reelle : « Week-end de randonnee au
+  // depart de Chamonix, refuge la premiere nuit » a produit 1 jour et une seule
+  // etape, de nature `trajet`. Les quatre garde-fous ci-dessus passent : un
+  // trajet ne chevauche rien, n affirme aucun prix, et couvre sa journee. C est
+  // exactement le trou qu ils laissaient — ils verifient la FORME du parcours,
+  // jamais qu il soit celui demande.
+  //
+  // Ces deux gardes ne cherchent pas a etre severes : elles ne lisent que ce
+  // qui est ecrit et ne refusent que sur une contradiction mesuree. Un brief
+  // muet (`briefDays === null`) ne peut rien faire tomber.
+  const briefDays = expectations.briefDays ?? null;
+  if (briefDays !== null) {
+    // On compte les journees REELLEMENT couvertes, pas `drafted.days` : une
+    // reponse peut declarer trois jours et n en couvrir qu un.
+    const coveredDays = new Set(drafted.steps.map((step) => step.day)).size;
+    if (coveredDays < briefDays) {
+      return reject('brief_non_honore', [
+        `brief: ${briefDays} jour(s)`,
+        `plan: ${coveredDays} jour(s)`,
+      ]);
+    }
+  }
+
+  // Un plan entierement compose de transport ne decrit aucune sortie. La regle
+  // porte sur l ENSEMBLE, pas sur chaque journee : un jour d arrivee qui ne
+  // contient qu un trajet est normal, un voyage entier qui ne contient que ca ne
+  // l est pas.
+  if (!drafted.steps.some((step) => isProgrammeStep(step.kind))) {
+    return reject('programme_absent', drafted.steps.map((step) => step.title));
+  }
 
   return { ok: true, reason: null, detail: null, offending: [] };
 }

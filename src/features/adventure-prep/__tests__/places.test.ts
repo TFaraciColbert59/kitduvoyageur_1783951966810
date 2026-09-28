@@ -111,7 +111,7 @@ describe('compatibilite avec le type d etape', () => {
 describe('attribution', () => {
   function model(): ItineraryModel {
     const built = buildItinerary(
-      fullDraft({ calendar: { startDate: '2026-07-11', durationDays: 2, durationIsSuggested: false, returnDate: null } }),
+      fullDraft({ calendar: { startDate: '2026-07-11', durationDays: 2, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null } }),
     );
     if (!built) throw new Error('modele attendu');
     return built;
@@ -168,13 +168,36 @@ describe('attribution', () => {
 });
 
 describe('budget par journee', () => {
-  it('ne vaut un total que si toutes les etapes de la journee ont un prix', () => {
+  it('ne presente jamais une somme partielle comme un total complet', () => {
     const built = buildItinerary(fullDraft());
     if (!built) throw new Error('modele attendu');
     const steps = built.steps.map((step, index) =>
       index === 0 ? { ...step, price: { amount: 40, currency: 'EUR' as const, state: 'propose' as const } } : step,
     );
-    expect(dayBudget({ ...built, steps }, 1)).toBeNull();
+    const budget = dayBudget({ ...built, steps }, 1);
+    // La somme connue reste lisible...
+    expect(budget.known).toBe(40);
+    // ...mais elle n est jamais presentee comme le total du jour.
+    expect(budget.unknownCount).toBeGreaterThan(0);
+    expect(budget.complete).toBe(false);
+  });
+
+  it('compte les etapes sans prix et ne les invente pas', () => {
+    const built = buildItinerary(fullDraft());
+    if (!built) throw new Error('modele attendu');
+    const steps = built.steps.map((step, index) =>
+      index === 0 ? { ...step, price: { amount: 40, currency: 'EUR' as const, state: 'propose' as const } } : step,
+    );
+    const dayOne = steps.filter((step) => step.day === 1);
+    const unknownCount = dayOne.filter((step) => step.price.amount === null).length;
+    expect(dayBudget({ ...built, steps }, 1).unknownCount).toBe(unknownCount);
+  });
+
+  it('un jour entierement depourvu de prix ne presente aucune somme', () => {
+    const built = buildItinerary(fullDraft());
+    if (!built) throw new Error('modele attendu');
+    expect(dayBudget(built, 1).known).toBe(0);
+    expect(dayBudget(built, 1).none).toBe(true);
   });
 
   it('additionne les prix connus quand toute la journee est pricee', () => {
@@ -184,6 +207,15 @@ describe('budget par journee', () => {
     const steps = built.steps.map((step) => ({ ...step, price: priced }));
     const dayOneSteps = built.steps.filter((step) => step.day === 1).length;
     expect(dayOneSteps).toBeGreaterThan(0);
-    expect(dayBudget({ ...built, steps }, 1)).toBe(10 * dayOneSteps);
+    const budget = dayBudget({ ...built, steps }, 1);
+    expect(budget.known).toBe(10 * dayOneSteps);
+    expect(budget.complete).toBe(true);
+    expect(budget.unknownCount).toBe(0);
+  });
+
+  it('un jour sans etape ne vaut pas zero euros', () => {
+    const built = buildItinerary(fullDraft());
+    if (!built) throw new Error('modele attendu');
+    expect(dayBudget(built, 99).none).toBe(true);
   });
 });

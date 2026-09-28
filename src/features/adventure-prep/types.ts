@@ -34,12 +34,7 @@ export const PREP_STEP_LABELS: Readonly<Record<PrepStepId, string>> = {
 /* ------------------------------------------------------------------ */
 
 export type ActivityCategoryId =
-  | 'a_pied'
-  | 'a_velo'
-  | 'eau'
-  | 'neige_montagne'
-  | 'voyage_sejour'
-  | 'autres_sports';
+  'a_pied' | 'a_velo' | 'eau' | 'neige_montagne' | 'voyage_sejour' | 'autres_sports';
 
 export interface ActivityCategory {
   id: ActivityCategoryId;
@@ -155,6 +150,14 @@ export interface RouteBlock {
 export interface CalendarBlock {
   /** ISO `YYYY-MM-DD`. `null` = inconnu, affiche « à choisir ». */
   startDate: string | null;
+  /**
+   * Vrai quand la date vient d une proposition, pas d un choix connu.
+   *
+   * Sans ce drapeau, une date posee par l IA se lirait comme un fait : rien
+   * ne dirait qu on peut la changer. C est le miroir de `durationIsSuggested`
+   * pour la date, et il disparait des que la personne ouvre le calendrier.
+   */
+  startDateIsSuggested: boolean;
   durationDays: number | null;
   /** Vrai quand la duree vient d'une proposition, pas d'une preference connue. */
   durationIsSuggested: boolean;
@@ -220,9 +223,13 @@ export interface ItineraryStep {
 }
 
 export interface DayTotals {
-  /** Distance ROUTIERE mesuree, jamais une distance a vol d'oiseau. */
+  /**
+   * Distance mesuree sur le reseau du mode de deplacement reel, jamais une
+   * distance a vol d'oiseau. Un trajet de marche annonce en 12 min de voiture
+   * etait le defaut le plus grave du preparateur (P0.22).
+   */
   distanceKm: number | null;
-  /** Temps de conduite reel. */
+  /** Temps de deplacement mesure sur ce meme reseau, jamais un temps estime. */
   movingMin: number | null;
   /**
    * Duree d'activite du jour : la somme des durees REELLEMENT connues de ses
@@ -235,6 +242,12 @@ export interface DayTotals {
 }
 
 export interface ItineraryModel {
+  /**
+   * Etiquette du parcours, PROPOSEE PAR LE MODELE. `null` quand rien n a ete
+   * propose (repli regles, ou modele muet) : l ecran affiche alors son libelle
+   * neutre plutot que d inventer un nom.
+   */
+  title: string | null;
   days: number;
   steps: readonly ItineraryStep[];
   /**
@@ -291,14 +304,7 @@ export interface AdjustmentPreview {
 /* ------------------------------------------------------------------ */
 
 export type GearCategory =
-  | 'shelter'
-  | 'sleep'
-  | 'cook'
-  | 'clothing'
-  | 'water'
-  | 'safety'
-  | 'navigation'
-  | 'misc';
+  'shelter' | 'sleep' | 'cook' | 'clothing' | 'water' | 'safety' | 'navigation' | 'misc';
 
 export interface GearNeed {
   id: string;
@@ -378,6 +384,23 @@ export interface GenerationPhase {
   done: boolean;
 }
 
+/**
+ * Le verdict REEL d'une phase, tel que le moteur le rend.
+ *
+ * Distinct de 'done', qui veut dire « cette phase a ete atteinte », pas
+ * « elle a livre ». Une phase atteinte puis tombee est donc 'done' ET
+ * echouee : confondre les deux ferait afficher 7/7 alors que le kilometrage
+ * n'existe pas.
+ */
+export interface GenerationPhaseVerdict {
+  readonly id: GenerationPhaseId;
+  readonly status: 'reussie' | 'echoue' | 'inverifiable';
+  /** Raison motivee, prete a etre lue. Jamais de detail technique. */
+  readonly reason: string | null;
+  /** Cette phase se rejoue-t-elle seule, sans reconstruire le parcours ? */
+  readonly retryable: boolean;
+}
+
 export type GenerationStatus = 'idle' | 'en_cours' | 'interrompu' | 'echec' | 'termine';
 
 export interface GenerationState {
@@ -403,6 +426,14 @@ export interface GenerationState {
    * cause.
    */
   failure: AIFailureReason | null;
+  /**
+   * Les verdicts REELS rendus par le moteur, phase par phase.
+   *
+   * Vides tant qu'aucune generation ne s'est achevee, et absents sur un
+   * brouillon enregistre avant leur existence : l'absence se lit comme une
+   * absence, jamais comme un echec.
+   */
+  outcomes: readonly GenerationPhaseVerdict[];
 }
 
 /**
@@ -422,8 +453,33 @@ export interface GenerationState {
  * phase a designer = pas de bouton — plutot qu un bouton qui ne rejouerait rien.
  */
 export function failedGenerationPhase(generation: GenerationState): GenerationPhase | null {
+  // Le verdict du moteur prime : c'est lui qui sait si la phase a livre. Un
+  // parcours affiche peut etre complet ET degradé — refuser de designer une
+  // phase dans ce cas laissait l'ecran plein de « A verifier » sans nom ni
+  // action, alors que le moteur avait mesure la panne.
+  const tombee = (generation.outcomes ?? []).find(
+    (verdict) => verdict.status !== 'reussie' && verdict.retryable
+  );
+  if (tombee) {
+    const connue = generation.phases.find((phase) => phase.id === tombee.id);
+    if (connue) return { ...connue, done: false };
+  }
+  // Repli historique : une generation declaree en echec sans verdict engine.
   if (generation.status !== 'echec') return null;
   return generation.phases.find((phase) => !phase.done) ?? null;
+}
+
+/**
+ * La raison a afficher quand une phase n'a rien livre.
+ *
+ * Le verdict du moteur parle en premier : il dit CE qui n'a pas abouti. L'erreur
+ * de generation ne sert que de repli, pour une generation declaree en echec sans
+ * verdict. Sans cette distinction, un parcours degrade affichait un bandeau
+ * « Échec » sans jamais dire pourquoi.
+ */
+export function failedGenerationReason(generation: GenerationState): string | null {
+  const tombee = (generation.outcomes ?? []).find((verdict) => verdict.status !== 'reussie');
+  return tombee?.reason ?? generation.error;
 }
 
 /* ------------------------------------------------------------------ */
@@ -474,5 +530,3 @@ export interface AdventurePrepDraft {
   completedSteps: readonly PrepStepId[];
   updatedAt: number | null;
 }
-
-

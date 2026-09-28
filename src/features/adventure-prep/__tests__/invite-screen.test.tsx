@@ -258,6 +258,7 @@ describe('Donnees derivees — effectif et dates', () => {
         startDate: null,
         durationDays: 3,
         durationIsSuggested: false,
+        startDateIsSuggested: false,
         returnDate: null,
       }),
     ).toBe('À vérifier');

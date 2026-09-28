@@ -25,7 +25,11 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/lib/supabase/server', () => ({ createClient: mocks.createClient }));
 vi.mock('@/lib/rate-limit/routes', () => ({ enforceRateLimit: mocks.enforceRateLimit }));
 
-import { GET, sanitizeSearchTerm, toPublicUser } from '@/app/api/users/search/route';
+import { GET } from '@/app/api/users/search/route';
+// Les deux fonctions pures vivent HORS de la route : Next.js interdit a un
+// `route.ts` d exporter autre chose que son handler. Ce bloc verifie donc
+// qu elles restent justes apres le deplacement, pas seulement compilees.
+import { sanitizeSearchTerm, toPublicUser } from '@/lib/users/publicUser';
 
 const USER_ID = 'user-1';
 const BASE = 'http://localhost/api/users/search';

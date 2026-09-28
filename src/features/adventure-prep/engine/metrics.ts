@@ -11,6 +11,13 @@ export interface PrepMetric {
   unit: string;
   state: 'connue' | 'a_verifier';
   formatted: string;
+  /**
+   * Precision quand la valeur est partielle : « 2 étapes à vérifier ».
+   *
+   * Elle n existe que pour le budget d une journee, seule mesure ou une
+   * partie reelle est connue ET affichable sans pretendre au total.
+   */
+  note?: string;
 }
 
 export type MetricScope = 'jour' | 'aventure';
@@ -86,16 +93,45 @@ function raw(
     case 'nuitees':
       return scope === 'jour' ? dayNights(model, day) : model.days;
     case 'budget':
-      if (scope === 'jour' && day !== undefined) return dayBudget(model, day);
+      if (scope === 'jour' && day !== undefined) {
+        const budget = dayBudget(model, day);
+        return budget.none ? null : budget.known;
+      }
       return model.budgetPerPerson.amount;
     default:
       return null;
   }
 }
 
-function format(id: PrepMetricId, value: number | null, unit: string): string {
+function format(id: PrepMetricId, value: number | null, unit: string, note?: string): string {
+  if (id === 'budget' && value !== null && note !== undefined) {
+    // La somme connue, et le mot qui empeche de la lire comme le total du
+    // jour. Le detail part sur une ligne en dessous, portee par `note` :
+    // inline il tronquait la tuile sur un telephone.
+    return `${withUnit(value, unit, 0)} connus`;
+  }
   if (id === 'duree') return formatMinutes(value);
   return withUnit(value, unit, id === 'budget' ? 0 : 1);
+}
+
+/**
+ * Budget partiel d une journee : la somme reelle, et le nombre de prix qu il
+ * reste a confirmer.
+ *
+ * La note disparait des que la journee est entierement pricee — dans ce cas la
+ * valeur affichee EST le total, et une precision serait un bruit. Si aucun
+ * prix n est connu, il n y a rien a preciser : l ecran affiche « a verifier ».
+ */
+function budgetNoteFor(
+  model: ItineraryModel,
+  scope: MetricScope,
+  id: PrepMetricId,
+  day: number | undefined,
+): string | undefined {
+  if (id !== 'budget' || scope !== 'jour' || day === undefined) return undefined;
+  const budget = dayBudget(model, day);
+  if (budget.none || budget.unknownCount === 0) return undefined;
+  return `${budget.unknownCount} \u00e9tape${budget.unknownCount > 1 ? 's' : ''} \u00e0 v\u00e9rifier`;
 }
 
 /** Les trois mesures de la carte d une journee, dans l ordre de lecture. */
@@ -109,13 +145,15 @@ function build(
 ): PrepMetric {
   const value = raw(model, scope, id, day);
   const unit = value === null ? UNITS[id] : countableUnit(UNITS[id], value);
+  const note = budgetNoteFor(model, scope, id, day);
   return {
     id,
     label: LABELS[id],
     value,
     unit,
     state: value === null ? ('a_verifier' as const) : ('connue' as const),
-    formatted: format(id, value, unit),
+    formatted: format(id, value, unit, note),
+    ...(note === undefined ? {} : { note }),
   };
 }
 

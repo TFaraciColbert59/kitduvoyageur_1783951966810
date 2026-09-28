@@ -5,7 +5,11 @@
 // rate limit, forme de reponse). Aucun secret : les deux fournisseurs sont
 // libres et sans cle.
 import { NextRequest, NextResponse } from 'next/server';
-import { MAX_ROUTE_POINTS, routeThrough } from '@/features/adventure-prep/routingService';
+import {
+  isTravelMode,
+  MAX_ROUTE_POINTS,
+  routeAttempt,
+} from '@/features/adventure-prep/routingService';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { clientIpFromHeaders } from '@/lib/rate-limit';
 
@@ -29,8 +33,9 @@ interface RoutePoint {
 }
 
 /**
- * `points` = suite de `lon,lat` separees par des points-virgules. La liste
- * blanche de cles interdit toute derivation d'URL cote fournisseur.
+ * `points` = suite de `lon,lat` separees par des points-virgules. `mode` =
+ * `pieton` | `velo` | `voiture`. La liste blanche de cles interdit toute
+ * derivation d'URL cote fournisseur.
  */
 function readPoints(raw: string | null): RoutePoint[] | null {
   if (!raw) return null;
@@ -53,7 +58,7 @@ export async function GET(request: NextRequest) {
   if (limited) return limited;
 
   const params = request.nextUrl.searchParams;
-  const unknownKeys = [...params.keys()].filter((key) => key !== 'points');
+  const unknownKeys = [...params.keys()].filter((key) => key !== 'points' && key !== 'mode');
   if (unknownKeys.length > 0) {
     return NextResponse.json(
       { status: 'invalid', legs: [], reason: 'unknown_parameter' },
@@ -68,15 +73,34 @@ export async function GET(request: NextRequest) {
       { status: 400 },
     );
   }
-
-  const legs = await routeThrough(points, request.signal);
-  if (!legs) {
-    // Panne ou reponse malformee : « indisponible », jamais « 0 km ».
+  // Un mode inconnu n'est PAS remplace par un defaut : c'est exactement ce
+  // defaut silencieux qui affichait des kilometres de voiture pour une
+  // randonnee. On refuse, et l'appelant garde son « a verifier ».
+  const mode = params.get('mode');
+  if (!isTravelMode(mode)) {
     return NextResponse.json(
-      { status: 'unavailable', legs: [] },
+      { status: 'invalid', legs: [], reason: 'mode_expected' },
+      { status: 400 },
+    );
+  }
+
+  const attempt = await routeAttempt(points, mode, request.signal);
+  if (!attempt.legs) {
+    // Panne, reponse malformee, ou LIEU HORS RESEAU : « indisponible », jamais
+    // « 0 km ». La raison est公开发 : sans elle, un sommet a 4 000 m et une
+    // panne du fournisseur se repondaient par le meme corps vide, et l'appelant
+    // ne pouvait ni les distinguer, ni ecarter un lieu qui n'est pas
+    // atteignable a pied. `off_network` est une MESURE du garde-fou
+    // d'arrivee ; `provider_unavailable` n engage rien sur le lieu.
+    return NextResponse.json(
+      {
+        status: 'unavailable',
+        legs: [],
+        reason: attempt.reason ?? 'provider_unavailable',
+      },
       { status: 503, headers: { 'Cache-Control': 'no-store' } },
     );
   }
 
-  return NextResponse.json({ status: 'ok', legs }, { status: 200, headers: CACHE });
+  return NextResponse.json({ status: 'ok', legs: attempt.legs }, { status: 200, headers: CACHE });
 }

@@ -44,6 +44,7 @@ const EMPTY = {
 
 function model(steps: readonly ItineraryStep[], days = 1, notes: ItineraryModel['notes'] = []): ItineraryModel {
   return {
+    title: null,
     days,
     steps,
     notes,
@@ -126,6 +127,8 @@ function promptFor(availablePlaces: { name: string; category: string }[]) {
     destinationLabel: 'Argentiere',
     startDateLabel: '2026-07-11',
     durationDays: 3,
+    durationChosenByUser: true,
+    briefDays: null,
     partySize: 2,
     pace: 'normal',
     loop: false,
@@ -185,7 +188,7 @@ describe('P3.3 - le schema IA ne porte aucune coordonnee', () => {
       durationMin: 60,
       reason: null,
     } satisfies Omit<DraftedStep, 'lat' | 'lon'>;
-    const out = materializeSteps({ days: 1, steps: [drafted as DraftedStep], hypotheses: [] }, 1);
+    const out = materializeSteps({ title: null, days: 1, steps: [drafted as DraftedStep], hypotheses: [] }, 1);
     expect(out.every((s) => s.lat === null && s.lon === null)).toBe(true);
   });
 });

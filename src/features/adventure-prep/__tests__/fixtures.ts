@@ -22,6 +22,7 @@ const BASE = {
   route: { origin: CHAMONIX, destination: ARGENTIERE, shape: 'aller_simple' as const },
   calendar: {
     startDate: '2026-07-11',
+    startDateIsSuggested: false,
     durationDays: 3,
     durationIsSuggested: false,
     returnDate: '2026-07-13',

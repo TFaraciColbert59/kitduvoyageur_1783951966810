@@ -135,7 +135,7 @@ describe('DepartureStep — écran de départ', () => {
   it('DEPART-07: signale une date de départ manquante', () => {
     const html = render(
       fullDraft({
-        calendar: { startDate: null, durationDays: 3, durationIsSuggested: false, returnDate: null },
+        calendar: { startDate: null, durationDays: 3, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null },
       }),
     );
     expect(html).toContain('Date de départ à vérifier');

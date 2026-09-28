@@ -73,7 +73,7 @@ describe('saveAdventure — le bouton qui cree reellement le voyage', () => {
 
   it('refuse SANS appeler le serveur quand une donnee manque', async () => {
     const post = vi.fn();
-    const outcome = await saveAdventure(ready({ calendar: { startDate: null, durationDays: 3, durationIsSuggested: false, returnDate: null } }), { post });
+    const outcome = await saveAdventure(ready({ calendar: { startDate: null, durationDays: 3, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null } }), { post });
     expect(post).not.toHaveBeenCalled();
     expect(outcome.status).toBe('rejected');
     expect(outcome).toHaveProperty('message', expect.stringContaining('date'));

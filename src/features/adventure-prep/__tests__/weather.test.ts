@@ -178,6 +178,7 @@ describe('P0.2 : meteo du programme, par journee', () => {
         startDate: null,
         durationDays: 2,
         durationIsSuggested: true,
+        startDateIsSuggested: false,
         returnDate: null,
       },
     });
@@ -198,7 +199,7 @@ describe('P0.2 : meteo du programme, par journee', () => {
 
   it('BR-2 : sans date, la mesure ne part pas du tout — aucun appel, aucune date fantome', async () => {
     const draft = fullDraft({
-      calendar: { startDate: null, durationDays: 2, durationIsSuggested: true, returnDate: null },
+      calendar: { startDate: null, durationDays: 2, durationIsSuggested: true, startDateIsSuggested: false, returnDate: null },
     });
     const model = buildItinerary(draft);
     if (!model) throw new Error('modele attendu');

@@ -34,7 +34,6 @@ function visible(html: string): string {
     .replace(/&#x2F;/g, '/')
     .replace(/\s+/g, ' ')
     .trim();
-
 }
 describe('Écran 10 — le bandeau titre a ete retire', () => {
   // Le bloc « On part où ? » + promesse + pastilles d'activite et de
@@ -71,7 +70,13 @@ describe('Écran 10 — les trois blocs', () => {
   it('D10-05: le lieu affiche sa commune puis son détail', () => {
     const draft = fullDraft({
       route: {
-        origin: { id: 't', name: 'Trélon, Place Jean Jaurès', country: 'France', lat: 50.2, lon: 3.8 },
+        origin: {
+          id: 't',
+          name: 'Trélon, Place Jean Jaurès',
+          country: 'France',
+          lat: 50.2,
+          lon: 3.8,
+        },
         destination: ARGENTIERE,
         shape: 'aller_simple',
       },
@@ -118,7 +123,13 @@ describe('Écran 10 — la forme se déduit, elle ne se choisit pas', () => {
 describe('Écran 10 — participants', () => {
   it('D10-10: les initiales connues sont affichées', () => {
     const draft = fullDraft({
-      group: { mode: 'groupe', adults: 4, children: 0, hasPets: false, knownMembers: ['Camille', 'Léo', 'Inès', 'Karim'] },
+      group: {
+        mode: 'groupe',
+        adults: 4,
+        children: 0,
+        hasPets: false,
+        knownMembers: ['Camille', 'Léo', 'Inès', 'Karim'],
+      },
     });
     const html = render(draft);
     expect(html).toContain('C');
@@ -196,7 +207,13 @@ describe('Écran 10 — libellé et valeur ne se chevauchent jamais', () => {
     // Le groupe d avatars est un enfant de plus dans la meme ligne flex : sans
     // `flex: 0 0 auto` il recupere la largeur que la valeur laisse.
     const draft = fullDraft({
-      group: { mode: 'groupe', adults: 3, children: 1, hasPets: false, knownMembers: ['Camille', 'Léo'] },
+      group: {
+        mode: 'groupe',
+        adults: 3,
+        children: 1,
+        hasPets: false,
+        knownMembers: ['Camille', 'Léo'],
+      },
     });
     const html = render(draft);
     const avatars = html.match(/<span class="prep-avatars"([^>]*)>/);
@@ -209,11 +226,22 @@ describe('Écran 10 — ce qu’il reste à saisir', () => {
     expect(visible(render(fullDraft()))).not.toContain('Il manque');
   });
 
-  it('D10-14: elle nomme exactement ce qui manque', () => {
+  it('D10-14: elle nomme exactement ce qui BLOQUE, et rien d autre', () => {
+    // AN7 : cette assertion encodait le defaut. Date et temps disponible
+    // etaient melanges dans une seule liste, donc le seul vrai bloqueur
+    // paraissait au meme titre qu un champ que l IA tranche toute seule.
     const draft = fullDraft({
-      calendar: { startDate: null, durationDays: null, durationIsSuggested: false, returnDate: null },
+      calendar: {
+        startDate: null,
+        durationDays: null,
+        durationIsSuggested: false,
+        startDateIsSuggested: false,
+        returnDate: null,
+      },
     });
-    expect(visible(render(draft))).toContain('Il manque : date, temps disponible');
+    const text = visible(render(draft));
+    expect(text).toContain('Il manque : temps disponible');
+    expect(text).not.toContain('L’IA complètera');
   });
 
   it('D10-15: le bouton reste bloqué tant qu’un champ bloquant manque', () => {
@@ -243,8 +271,8 @@ describe('Écran 10 — accès aux réglages', () => {
             interests: ['paysage'],
             accessibilityNeeds: [],
           },
-        }),
-      ),
+        })
+      )
     );
     expect(text).not.toContain('Tranquille · Modéré · Train');
   });
@@ -262,18 +290,27 @@ describe('Écran 10 — carte et appel', () => {
     expect(text).toContain('Créer mon parcours');
   });
 
-  it('D10-20: une duree suggeree n est jamais affichee comme un nombre', () => {
+  it('D10-20: une duree suggeree affiche son nombre ET sa provenance', () => {
+    // AN6 : cette assertion encodait l autre moitie du defaut. Cacher le
+    // nombre derriere la formulation d absence faisait de la cellule une
+    // donnee absente, alors qu une proposition REELLE du moteur attendait
+    // d etre validee : cul de sac visuel, pas honnetete. Le nombre revient,
+    // la pastille dit qui l a propose.
     const html = render(
       fullDraft({
-        calendar: { startDate: '2026-07-11', durationDays: 3, durationIsSuggested: true, returnDate: null },
-      }),
+        calendar: {
+          startDate: '2026-07-11',
+          durationDays: 3,
+          durationIsSuggested: true,
+          startDateIsSuggested: false,
+          returnDate: null,
+        },
+      })
     );
-    // La duree du catalogue n appartient a aucune aventure reelle. La qualifier
-    // ne suffit pas : tant qu elle n est pas choisie, c est une donnee
-    // absente, et une donnee absente se dit « a verifier ».
-    expect(html).toContain('À vérifier');
-    expect(html).not.toContain('3 jours');
-    expect(html).toMatch(/prep-cell__value[^>]*data-unknown="true"/);
+    expect(html).toContain('3 jours');
+    expect(html).toContain('data-suggested="true"');
+    // La provenance reste lisible dans le rendu, pas seulement dans le code.
+    expect(html).toContain('Durée proposée · modifiable');
   });
 
   it('D10-20b: une duree reellement choisie reste affichee', () => {
@@ -282,9 +319,15 @@ describe('Écran 10 — carte et appel', () => {
     const text = visible(
       render(
         fullDraft({
-          calendar: { startDate: '2026-07-11', durationDays: 3, durationIsSuggested: false, returnDate: null },
-        }),
-      ),
+          calendar: {
+            startDate: '2026-07-11',
+            durationDays: 3,
+            durationIsSuggested: false,
+            startDateIsSuggested: false,
+            returnDate: null,
+          },
+        })
+      )
     );
     expect(text).toContain('3 jours');
   });
@@ -293,11 +336,22 @@ describe('Écran 10 — carte et appel', () => {
     const text = visible(
       render(
         fullDraft({
-          calendar: { startDate: '2026-07-11', durationDays: 3, durationIsSuggested: true, returnDate: null },
-        }),
-      ),
+          calendar: {
+            startDate: '2026-07-11',
+            durationDays: 3,
+            durationIsSuggested: true,
+            startDateIsSuggested: false,
+            returnDate: null,
+          },
+        })
+      )
     );
-    expect(text).toContain('préciser');
+    // La pastille nomme sa SOURCE au lieu de qualifier un manque : c est
+    // une aide, pas une donnee absente, et « à préciser » la
+    // faisait lire comme telle. P0.15 l a renommee et l a rattachee a la cellule.
+    expect(text).toContain('Durée proposée · modifiable');
+    expect(text).not.toContain('à préciser');
+    expect(text).toContain('modifiable');
   });
 
   it('D10-21: aucune distance, aucun prix, aucun pourcentage avant calcul', () => {

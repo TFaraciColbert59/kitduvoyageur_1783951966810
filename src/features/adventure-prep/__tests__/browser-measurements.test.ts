@@ -64,13 +64,23 @@ describe('P0.2 - la requete de routage', () => {
     const query = routeQuery([
       { lat: 45.923, lon: 6.869 },
       { lat: 45.984, lon: 6.926 },
-    ]);
-    expect(query).toBe('/api/route?points=6.869,45.923;6.926,45.984');
+    ], 'pieton');
+    expect(query).toBe('/api/route?points=6.869,45.923;6.926,45.984&mode=pieton');
   });
 
   it('P0.2-02 refuse un seul point, ou des coordonnees absentes', () => {
-    expect(routeQuery([{ lat: 45.923, lon: 6.869 }])).toBeNull();
-    expect(routeQuery([{ lat: Number.NaN, lon: 6.869 }, { lat: 45.9, lon: 6.8 }])).toBeNull();
+    expect(routeQuery([{ lat: 45.923, lon: 6.869 }], 'pieton')).toBeNull();
+    expect(routeQuery([{ lat: Number.NaN, lon: 6.869 }, { lat: 45.9, lon: 6.8 }], 'pieton')).toBeNull();
+  });
+
+  it('P0.22-01 un mode inconnu ne produit aucune URL plutot qu un defaut', () => {
+    const points = [
+      { lat: 45.923, lon: 6.869 },
+      { lat: 45.984, lon: 6.926 },
+    ];
+    expect(routeQuery(points, 'driving' as never)).toBeNull();
+    expect(routeQuery(points, '' as never)).toBeNull();
+    expect(routeQuery(points, undefined as never)).toBeNull();
   });
 });
 
@@ -153,10 +163,11 @@ describe('P0.2 - les dependances injectees dans l ecran', () => {
     const legs = await deps.route([
       { lat: 45.923, lon: 6.869 },
       { lat: 45.95, lon: 6.9 },
-    ]);
+    ], 'pieton');
     expect(legs).toHaveLength(1);
     const firstCall = fetchImpl.mock.calls[0] as unknown as [string];
     expect(String(firstCall[0])).toContain('/api/route?points=');
+    expect(String(firstCall[0])).toContain('&mode=pieton');
   });
 
   it('P0.2-10 une panne reseau rend null, jamais zero', async () => {
@@ -165,7 +176,7 @@ describe('P0.2 - les dependances injectees dans l ecran', () => {
     const legs = await deps.route([
       { lat: 45.923, lon: 6.869 },
       { lat: 45.95, lon: 6.9 },
-    ]);
+    ], 'pieton');
     expect(legs).toBeNull();
   });
 
@@ -180,6 +191,7 @@ describe('P0.2 - les dependances injectees dans l ecran', () => {
         startDate: '2026-07-11',
         durationDays: 2,
         durationIsSuggested: false,
+        startDateIsSuggested: false,
         returnDate: '2026-07-12',
       },
     });

@@ -83,6 +83,7 @@ const draft: AdventurePrepDraft = fullDraft({
     startDate: '2026-07-11',
     durationDays: 2,
     durationIsSuggested: false,
+    startDateIsSuggested: false,
     returnDate: '2026-07-12',
   },
 });
@@ -118,7 +119,7 @@ async function run(resolvePlaces: Resolver, measure = NO_MEASUREMENTS) {
   const outcome = await runItineraryGeneration(
     draft,
     new AbortController().signal,
-    async () => ({ drafted: null, failure: 'provider_indisponible' as const }),
+    async () => ({ drafted: null, failure: 'provider_indisponible' as const , suggestedStartDate: null, suggestedDurationDays: null}),
     (phase) => announced.push(phase),
     measure,
     {},
@@ -183,7 +184,7 @@ describe('P0.1 - la phase LIEUX', () => {
     const outcome = await runItineraryGeneration(
       draftThreeDays,
       new AbortController().signal,
-      async () => ({ drafted: null, failure: 'provider_indisponible' as const }),
+      async () => ({ drafted: null, failure: 'provider_indisponible' as const , suggestedStartDate: null, suggestedDurationDays: null}),
       (phase) => announced.push(phase),
       FAKE_ROUTE,
       {},

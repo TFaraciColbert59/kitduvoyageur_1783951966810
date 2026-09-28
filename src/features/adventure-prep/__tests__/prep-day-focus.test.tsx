@@ -202,6 +202,54 @@ describe('store focus jour — surface prepare', () => {
     useDayFocusStore.getState().selectDay(9);
     expect(useDayFocusStore.getState().selectedDay).toBeNull();
   });
+
+  it('PREP-DF19: un ecran sans contenu focalisable masque le plateau, sans le purger', () => {
+    const days = [dayEntry({ day: 1 }), dayEntry({ day: 2 })];
+    withDays(days);
+    useDayFocusStore.getState().selectDay(2);
+
+    // L etape 1 (« Creations ») ne montre aucun jour du parcours : y afficher
+    // un rail, c'est un controle mort — le meme symptome que « le selecteur de
+    // jours ne se met pas a jour sur toutes les pages ».
+    useDayFocusStore.getState().setFocusable(false);
+    expect(hasDayFocusPlateau('/prepare', useDayFocusStore.getState().days)).toBe(true);
+    expect(selectDayFocusPlateau(useDayFocusStore.getState(), '/prepare')).toBe(false);
+
+    // Le masquage est VISUEL, pas une purge : la selection doit survivre au
+    // passage par l etape 1, sinon le retour a l etape 2 perd le jour choisi.
+    expect(useDayFocusStore.getState().days).toEqual(days);
+    expect(useDayFocusStore.getState().selectedDay).toBe(2);
+
+    useDayFocusStore.getState().setFocusable(true);
+    expect(selectDayFocusPlateau(useDayFocusStore.getState(), '/prepare')).toBe(true);
+    expect(useDayFocusStore.getState().selectedDay).toBe(2);
+  });
+
+  it('PREP-DF20: focusable est vrai par defaut — une surface muette ne le desactive pas', () => {
+    const days = [dayEntry({ day: 1 }), dayEntry({ day: 2 })];
+    expect(hasDayFocusPlateau('/prepare', days)).toBe(true);
+    expect(hasDayFocusPlateau('/prepare', days, true)).toBe(true);
+    expect(hasDayFocusPlateau('/prepare', days, false)).toBe(false);
+    // Le hub n a pas de notion de focusabilite : il ne doit jamais s auto
+    // interdire le rail par defaut.
+    expect(hasDayFocusPlateau('/hub', days, false)).toBe(false);
+  });
+
+  it('PREP-DF21: le rendu et la reservation lisent le MEME flag', () => {
+    withDays([dayEntry({ day: 1 }), dayEntry({ day: 2 })]);
+    useDayFocusStore.getState().setFocusable(false);
+    // Les deux arbres React (barre et shell) consomment ce selecteur : s il
+    // renvoie la meme valeur des deux cotes, la reservation ne peut pas
+    // diverger du rendu.
+    const parSelecteur = selectDayFocusPlateau(useDayFocusStore.getState(), '/prepare');
+    const parFonction = hasDayFocusPlateau(
+      '/prepare',
+      useDayFocusStore.getState().days,
+      useDayFocusStore.getState().focusable,
+    );
+    expect(parSelecteur).toBe(parFonction);
+    expect(parSelecteur).toBe(false);
+  });
 });
 
 describe('usePrepDayFocusPublisher — garde-fous de source', () => {

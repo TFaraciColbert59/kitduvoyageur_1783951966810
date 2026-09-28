@@ -1,8 +1,4 @@
-import {
-  PREP_STEPS,
-  type AdventurePrepDraft,
-  type PrepStepId,
-} from '../types';
+import { PREP_STEPS, type AdventurePrepDraft, type PrepStepId } from '../types';
 
 export function stepPosition(id: PrepStepId): number {
   return PREP_STEPS.indexOf(id) + 1;
@@ -31,6 +27,22 @@ export function isStepSatisfied(draft: AdventurePrepDraft, id: PrepStepId): bool
   }
   if (id === 'itinerary') return draft.itinerary !== null;
   return false;
+}
+
+/**
+ * L etape a-t-elle quelque chose a_montrer ?
+ *
+ * Reponse differente de isStepSatisfied, qui repond a « les reponses sont-elles
+ * saisies ? ». Le recapitulatif de l etape 3 ne possede aucune reponse
+ * propre : il est DERIVE de l itineraire. Comme isStepSatisfied renvoie false
+ * en permanence pour departure, le rail peignait un lien vert (canOpenStep) que
+ * le comportement refusait (isStepSatisfied) - un segment qui a l air
+ * cliquable et qui n epondait pas. Une seule predicate pour la peinture ET
+ * pour le clic rend ce mensonge impossible par construction.
+ */
+export function hasStepContent(draft: AdventurePrepDraft, id: PrepStepId): boolean {
+  if (id === 'departure') return draft.itinerary !== null;
+  return isStepSatisfied(draft, id);
 }
 
 export function canOpenStep(draft: AdventurePrepDraft, id: PrepStepId): boolean {

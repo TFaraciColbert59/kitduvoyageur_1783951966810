@@ -57,7 +57,7 @@ function draftStep(overrides: Partial<DraftedStep> = {}): DraftedStep {
 }
 
 function drafted(overrides: Partial<DraftedItinerary> = {}): DraftedItinerary {
-  return { days: 1, steps: [draftStep()], hypotheses: [], ...overrides };
+  return { title: null, days: 1, steps: [draftStep()], hypotheses: [], ...overrides };
 }
 
 async function verdictFor(
@@ -227,6 +227,8 @@ describe('P0.4 — faisabilite avant affichage', () => {
             steps: [draftStep({ title: 'Plongée autonome' }), draftStep({ day: 1, title: 'Départ de Chamonix' })],
           }),
           failure: null,
+          suggestedStartDate: null,
+          suggestedDurationDays: null,
         }),
       () => {},
       NO_MEASUREMENTS,
@@ -242,7 +244,12 @@ describe('P0.4 — faisabilite avant affichage', () => {
     const outcome = await runItineraryGeneration(
       draftWithChildren(),
       new AbortController().signal,
-      async () => ({ drafted: drafted({ steps: [draftStep({ title: 'Plongée autonome' })] }), failure: null }),
+      async () => ({
+        drafted: drafted({ steps: [draftStep({ title: 'Plongée autonome' })] }),
+        failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
+      }),
       () => {},
       NO_MEASUREMENTS,
     );

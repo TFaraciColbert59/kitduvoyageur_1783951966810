@@ -12,14 +12,12 @@ import {
   interruptGeneration,
   markPhaseDone,
   resumeGeneration,
-  setGenerationFailure,
-  setGenerationNotice,
   setPartial,
   startGeneration,
 } from '../engine/generation';
 import { PREP_DRAFT_VERSION } from '../engine/emptyDraft';
 import { draftActions } from './reducer';
-import type { PhaseRetry } from '../engine/itineraryPhases';
+import type { GenerationOutcome, PhaseRetry } from '../engine/itineraryPhases';
 import type { AIFailureReason } from '@/lib/ai/providers/types';
 import type {
   ActivitySelection,
@@ -82,15 +80,14 @@ export interface AdventurePrepActions {
   applyPhaseRetry: (retry: PhaseRetry) => void;
   /**
    * Depose le parcours reellement produit, quel que soit le moteur qui l'a
-   * construit, et la phrase qui dit si l'enrichissement a eu lieu. Les regles
-   * et l'IA passent donc par le meme point d'entree : l'ecran ne connait pas le
-   * moteur, il affiche ce qu'il a recu.
+   * construit, la phrase qui dit si l'enrichissement a eu lieu, ET les verdicts
+   * de phase. Les regles et l'IA passent donc par le meme point d'entree :
+   * l'ecran ne connait pas le moteur, il affiche ce qu'il a recu.
+   *
+   * Les verdicts ne sont pas optionnels : sans eux, une phase tombee devient
+   * invisible et l'utilisateur lit des « A verifier » sans cause ni reessai.
    */
-  applyGenerated: (
-    itinerary: ItineraryModel,
-    notice: string | null,
-    failure: AIFailureReason | null,
-  ) => void;
+  applyGenerated: (outcome: GenerationOutcome) => void;
   addStepToDay: (day: number, kind: ItineraryStepKind, step: StepDraft) => void;
   /**
    * Pose un point de passage a la position indiquee sur la carte.
@@ -126,7 +123,10 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
         hydrated: false,
         markHydrated: () => set({ hydrated: true }),
         startNewAdventure: () =>
-          set({ adventureId: newAdventureId(), draft: { ...emptyDraft(), version: PREP_DRAFT_VERSION } }),
+          set({
+            adventureId: newAdventureId(),
+            draft: { ...emptyDraft(), version: PREP_DRAFT_VERSION },
+          }),
         setActivities: (value) => patch((draft) => draftActions.setActivities(draft, value)),
         dismissPicker: () => patch((draft) => draftActions.dismissPicker(draft)),
         setRoute: (value) => patch((draft) => draftActions.setRoute(draft, value)),
@@ -161,9 +161,13 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
             return draftActions.setGeneration(draft, setPartial(draft.generation, steps, days));
           }),
         stopGeneration: () =>
-          patch((draft) => draftActions.setGeneration(draft, interruptGeneration(draft.generation))),
+          patch((draft) =>
+            draftActions.setGeneration(draft, interruptGeneration(draft.generation))
+          ),
         failGenerationRun: (message) =>
-          patch((draft) => draftActions.setGeneration(draft, failGeneration(draft.generation, message))),
+          patch((draft) =>
+            draftActions.setGeneration(draft, failGeneration(draft.generation, message))
+          ),
         endGeneration: () =>
           patch((draft) => {
             const itinerary = buildItinerary(draft);
@@ -174,26 +178,15 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
               : withGeneration;
           }),
         retryPhase: (id) => patch((draft) => draftActions.retryPhase(draft, id)),
-        applyPhaseRetry: (retry) =>
-          patch((draft) => draftActions.applyPhaseRetry(draft, retry)),
-        applyGenerated: (itinerary, notice, failure) =>
-          patch((draft) => {
-            const finished = setGenerationFailure(
-              setGenerationNotice(finishGeneration(draft.generation), notice),
-              failure,
-            );
-            return draftActions.setItinerary(draftActions.setGeneration(draft, finished), itinerary);
-          }),
+        applyPhaseRetry: (retry) => patch((draft) => draftActions.applyPhaseRetry(draft, retry)),
+        applyGenerated: (outcome) => patch((draft) => draftActions.applyGenerated(draft, outcome)),
         addStepToDay: (day, kind, step) =>
           patch((draft) => draftActions.addItineraryStep(draft, day, kind, step)),
         addWaypoint: (coord, day) =>
           patch((draft) =>
             draft.itinerary
-              ? draftActions.updateItinerary(
-                  draft,
-                  insertWaypoint(draft.itinerary, coord, day),
-                )
-              : draft,
+              ? draftActions.updateItinerary(draft, insertWaypoint(draft.itinerary, coord, day))
+              : draft
           ),
         keepStep: (stepId, kept) =>
           patch((draft) => draftActions.setItineraryKept(draft, stepId, kept)),
@@ -218,16 +211,15 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
       onRehydrateStorage: () => (state) => {
         state?.markHydrated();
       },
-    },
-  ),
+    }
+  )
 );
 
 /** Selecteur de draft : la route n'abonne que l'ecran qui en a besoin. */
 export const usePrepDraft = (): AdventurePrepDraft => useAdventurePrepStore((state) => state.draft);
 
-export const usePrepAction = <T,>(
-  select: (store: AdventurePrepStore) => T,
-): T => useAdventurePrepStore(select);
+export const usePrepAction = <T>(select: (store: AdventurePrepStore) => T): T =>
+  useAdventurePrepStore(select);
 
 /** Acces hors React (tests, gestionnaires d'evenements). */
 export const prepStore = {

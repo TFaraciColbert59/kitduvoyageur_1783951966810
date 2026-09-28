@@ -9,6 +9,8 @@ import {
   type StrictItineraryOutput,
 } from '@/lib/ai/features/itinerary';
 import { activityById } from '../catalog';
+import { acceptedSuggestedStartDate, todayIso } from './calendar';
+import { acceptSuggestedDurationDays, briefRequestedDays } from './briefDays';
 import { shouldRetryAfterFailure } from './aiFailure';
 import {
   assembleModel,
@@ -67,6 +69,22 @@ function knownPlaces(draft: AdventurePrepDraft) {
     .map((place) => ({ name: place.name, lat: place.lat as number | null, lon: place.lon as number | null }));
 }
 
+/**
+ * Etiquette du parcours, normalisee comme tous les libelles affiches.
+ *
+ * Le schema borne deja la longueur, mais une reponse peut contourner le schema
+ * : on reborne ici plutot que de faire confiance a l appelant. Une etiquette
+ * vide n est pas une etiquette : elle devient `null`, jamais une chaine vide
+ * qui s afficherait comme un titre casse a l ecran.
+ */
+function sanitizeItineraryTitle(value: string | null | undefined): string | null {
+  if (typeof value !== 'string') return null;
+  const collapsed = value.replace(/\s+/g, ' ').trim();
+  if (collapsed === '') return null;
+  const capped = collapsed.length > 80 ? `${collapsed.slice(0, 79)}…` : collapsed;
+  return frenchTypography(capped);
+}
+
 function toDrafted(output: StrictItineraryOutput, days: number): DraftedItinerary {
   const steps: DraftedStep[] = output.steps
     .filter((step) => step.day >= 1 && step.day <= days)
@@ -84,6 +102,7 @@ function toDrafted(output: StrictItineraryOutput, days: number): DraftedItinerar
       reason: step.reason === null ? null : frenchTypography(step.reason),
     }));
   return {
+    title: sanitizeItineraryTitle(output.title),
     days,
     steps,
     hypotheses: output.hypotheses.map((hypothese) => frenchTypography(hypothese)),
@@ -109,11 +128,28 @@ const MAX_ATTEMPTS = 2;
 export const requestDraftedItinerary: ProposalFetcher = async (draft, signal, availablePlaces) => {
   const origin = draft.route.origin;
   // Sans depart choisi, aucune requete ne part : le repli regles construit seul.
-  if (!origin) return { drafted: null, failure: null };
-  const days = Math.max(1, Math.trunc(draft.calendar.durationDays ?? 1));
+  if (!origin) return { drafted: null, failure: null, suggestedStartDate: null, suggestedDurationDays: null };
+  // La duree que le plan DOIT couvrir — P0.18.
+  //
+  // Avant, elle venait du calendrier seul : aucune date choisie donc 1 jour, et
+  // le brief « week-end » se heurtait a un « Duree : 1 jour(s) » que le modele
+  // ne pouvait pas contredire sans disobedience. On distingue donc trois cas :
+  // la personne a choisi (fait), le brief en nomme une (demande explicite), ou
+  // rien n est dit (c est a l IA, qui tranchera sur sa propre proposition).
+  const calendarDays = Math.max(1, Math.trunc(draft.calendar.durationDays ?? 1));
+  const durationChosenByUser = draft.calendar.durationDays !== null && !draft.calendar.durationIsSuggested;
+  const briefDays = briefRequestedDays(draft.brief);
+  const days = durationChosenByUser ? calendarDays : Math.max(briefDays ?? 1, 1);
   const activity = activityById(draft.activities.primary ?? '');
 
+  // UN seul jour pour les deux verifications. Le prompt annonce au modele la
+  // date a partir de laquelle il peut proposer, et le garde-fou refuse sur la
+  // meme reference : si les deux divergeaient, le modele proposerait un jour que
+  // le garde-fou renverrait en null, sans un mot.
+  const today = todayIso();
+
   const { system, prompt } = buildItineraryPrompt({
+    todayIso: today,
     activityLabel: activity?.label ?? 'activite libre',
     originLabel: origin.name,
     destinationLabel: draft.route.destination?.name ?? origin.name,
@@ -126,6 +162,8 @@ export const requestDraftedItinerary: ProposalFetcher = async (draft, signal, av
     knownPlaces: knownPlaces(draft),
     availablePlaces,
     brief: draft.brief,
+    durationChosenByUser,
+    briefDays,
   });
 
   // Le prompt est bati ailleurs, sans accents. On ne le modifie pas : on
@@ -136,7 +174,7 @@ export const requestDraftedItinerary: ProposalFetcher = async (draft, signal, av
   const demande = frenchTypography(prompt);
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
-    if (signal.aborted) return { drafted: null, failure: null };
+    if (signal.aborted) return { drafted: null, failure: null, suggestedStartDate: null, suggestedDurationDays: null };
 
     const response = await askAI({
       feature: 'itinerary',
@@ -149,7 +187,7 @@ export const requestDraftedItinerary: ProposalFetcher = async (draft, signal, av
 
     // Un run coupe ne produit rien : mieux vaut aucun resultat qu'un resultat
     // que personne ne lira.
-    if (signal.aborted) return { drafted: null, failure: null };
+    if (signal.aborted) return { drafted: null, failure: null, suggestedStartDate: null, suggestedDurationDays: null };
 
     // Le fallback du registre renvoie un JSON vide : c'est le signal fiable que
     // l'appel n'a pas abouti, sans avoir a deviner depuis le contenu. La cause
@@ -158,7 +196,7 @@ export const requestDraftedItinerary: ProposalFetcher = async (draft, signal, av
     if (response.degraded || response.provider === 'fallback') {
       const failure = response.failureReason ?? 'provider_indisponible';
       if (!shouldRetryAfterFailure(failure) || attempt === MAX_ATTEMPTS) {
-        return { drafted: null, failure };
+        return { drafted: null, failure, suggestedStartDate: null, suggestedDurationDays: null };
       }
       continue;
     }
@@ -173,15 +211,38 @@ export const requestDraftedItinerary: ProposalFetcher = async (draft, signal, av
     if (!parsed.success) {
       // Le modele a REPONDU : repasser la meme demande ne changerait rien au
       // schema, et couteuse un appel de plus pour un resultat identique.
-      return { drafted: null, failure: 'reponse_invalide' };
+      return { drafted: null, failure: 'reponse_invalide', suggestedStartDate: null, suggestedDurationDays: null };
     }
 
-    const drafted = toDrafted(parsed.data, days);
-    if (drafted.steps.length > 0) return { drafted, failure: null };
-    return { drafted: null, failure: 'reponse_invalide' };
+    // La duree proposee par le modele elle-meme. Elle compte des lors qu elle
+    // n est pas imposee : sans elle, `toDrafted` filtrerait les journees 2 et
+    // suivantes du plan sur une duree de 1 — le modele aurait fait son travail
+    // et le depot l aurait jete, sans un mot a l ecran.
+    const proposedDurationDays = acceptSuggestedDurationDays(parsed.data.suggestedDurationDays);
+    const effectiveDays = durationChosenByUser
+      ? days
+      : Math.max(days, proposedDurationDays ?? 0);
+
+    const drafted = toDrafted(parsed.data, effectiveDays);
+    if (drafted.steps.length === 0) {
+      return { drafted: null, failure: 'reponse_invalide', suggestedStartDate: null, suggestedDurationDays: null };
+    }
+    // Le serveur est SEUL juge du « passe » : `acceptedSuggestedStartDate` lit
+    // SON jour, celui de la machine qui repond. Une date passee ou mal formee
+    // devient donc `null` ici, et l ecran garde son « a verifier » plutot que
+    // d afficher une date que personne n'a verifiee.
+    return {
+      drafted,
+      failure: null,
+      suggestedStartDate: acceptedSuggestedStartDate(parsed.data.suggestedStartDate, today),
+      // Meme traitement que la date : une duree hors bornes devient `null`, et
+      // l ecran garde alors son « a verifier » plutot qu un nombre plausible
+      // que personne n a verifie.
+      suggestedDurationDays: durationChosenByUser ? null : proposedDurationDays,
+    };
   }
 
-  return { drafted: null, failure: 'provider_indisponible' };
+  return { drafted: null, failure: 'provider_indisponible', suggestedStartDate: null, suggestedDurationDays: null };
 };
 
 /**

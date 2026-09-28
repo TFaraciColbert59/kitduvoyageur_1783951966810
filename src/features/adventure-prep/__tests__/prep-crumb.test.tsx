@@ -3,6 +3,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { PrepCrumb, type PrepNavProps } from '../components/PrepCrumb';
 import { fullDraft } from './fixtures';
+import { buildItinerary } from '../engine/itinerary';
 import type { AdventurePrepDraft, PrepStepId } from '../types';
 
 /*
@@ -58,9 +59,23 @@ describe('Rail d etapes - contenu', () => {
   });
 
   it('CR-04: chaque segment porte exactement un état : actif, terminé ou verrouillé', () => {
-    const html = crumb('departure', fullDraft({ completedSteps: ['destination', 'itinerary'] }));
+    // Un etat « atteint » sans itineraire n existe pas : l etape 3 se peint
+    // d apres ce qu elle affiche, donc il lui faut un itineraire reel.
+    const base = fullDraft({ completedSteps: ['destination', 'itinerary'] });
+    const html = crumb('departure', { ...base, itinerary: buildItinerary(base) });
     const states = [...html.matchAll(/data-state="([a-z_]+)"/g)].map((match) => match[1]);
     expect(states).toEqual(['done', 'done', 'active']);
+  });
+
+  it('CR-04b: un segment painted vert est un segment qui a du contenu', () => {
+    // Le rail peint « done » depuis hasStepContent : vert et souligne veut
+    // dire « atteignable », jamais « dans les Entrées de couleur seules ».
+    const base = fullDraft({ completedSteps: ['destination', 'itinerary'] });
+    const avecItineraire = { ...base, itinerary: buildItinerary(base) };
+    const states = [...crumb('destination', avecItineraire).matchAll(/data-state="([a-z_]+)"/g)];
+    expect(states.map((m) => m[1])).toEqual(['active', 'done', 'done']);
+    const sansItineraire = [...crumb('destination', base).matchAll(/data-state="([a-z_]+)"/g)];
+    expect(sansItineraire.map((m) => m[1])).toEqual(['active', 'locked', 'locked']);
   });
 
   it('CR-05: une étape terminée est signalée sans être activée', () => {
@@ -84,7 +99,11 @@ describe('Rail d etapes - contenu', () => {
 });
 
 describe('Rail d etapes - absence de commande', () => {
-  it('CR-08: le rail ne rend AUCUN bouton, quelle que soit l’étape', () => {
+  it('CR-08: sans navigation, le rail ne rend AUCUN bouton, quelle que soit l’étape', () => {
+    // Ce test couvre le rail INERTE (pas de onOpenStep), pas le rail navigable :
+    // le contrat de ce dernier est verifie dans step-rail-nav-an1.test.tsx.
+    // Il reste vrai - et il compte : une prop de navigation doit etre
+    // explicite, jamais deduite.
     for (const step of ['destination', 'itinerary', 'departure'] as const) {
       const html = crumb(step, fullDraft({ completedSteps: ['destination', 'itinerary'] }));
       expect(html).not.toContain('<button');

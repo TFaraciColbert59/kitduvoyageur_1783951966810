@@ -75,6 +75,7 @@ const UNKNOWN = {
 
 function modelOf(days: number, steps: readonly ItineraryStep[]): ItineraryModel {
   return {
+    title: null,
     days,
     steps,
     totals: { distanceKm: 63, movingMin: 300, activityMin: 600, elevGainM: 1203, elevLossM: 900 },

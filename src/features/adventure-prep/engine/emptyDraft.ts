@@ -11,7 +11,13 @@ export function emptyDraft(): AdventurePrepDraft {
     brief: null,
     pickerDismissed: false,
     route: { origin: null, destination: null, shape: 'boucle' },
-    calendar: { startDate: null, durationDays: null, durationIsSuggested: false, returnDate: null },
+    calendar: {
+      startDate: null,
+      startDateIsSuggested: false,
+      durationDays: null,
+      durationIsSuggested: false,
+      returnDate: null,
+    },
     group: { mode: 'solo', adults: 1, children: 0, hasPets: false, knownMembers: [] },
     preferences: {
       budgetPerPerson: null,

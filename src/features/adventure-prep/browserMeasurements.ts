@@ -14,8 +14,8 @@
  */
 
 import { measurementRunners, type MeasurementRunners } from './engine/measurements';
-import type { GeoPoint, RouteLeg, RoutingDeps } from './engine/routing';
-import { MAX_ROUTE_POINTS } from './routingService';
+import type { GeoPoint, RouteLeg, RoutingDeps, TravelMode } from './engine/routing';
+import { isTravelMode, MAX_ROUTE_POINTS } from './routingService';
 import { fetchWeatherThroughApi } from './weatherClient';
 
 const ROUTE_ENDPOINT = '/api/route';
@@ -45,13 +45,16 @@ function isFinitePoint(point: GeoPoint): boolean {
 
 /**
  * L URL de la route, ou `null` quand la requete n a pas de sens.
- * La liste blanche de `/api/route` n attend que `points` : on n invente rien.
+ * La liste blanche de `/api/route` n attend que `points` et `mode` : on
+ * n invente rien. Un mode invalide ne retombe sur aucun defaut, il ne produit
+ * pas d'URL.
  */
-export function routeQuery(points: readonly GeoPoint[]): string | null {
+export function routeQuery(points: readonly GeoPoint[], mode: TravelMode): string | null {
+  if (!isTravelMode(mode)) return null;
   if (points.length < 2 || points.length > MAX_ROUTE_POINTS) return null;
   if (!points.every(isFinitePoint)) return null;
   const key = points.map((point) => `${round6(point.lon)},${round6(point.lat)}`).join(';');
-  return `${ROUTE_ENDPOINT}?points=${key}`;
+  return `${ROUTE_ENDPOINT}?points=${key}&mode=${mode}`;
 }
 
 function readGeometry(raw: unknown): RouteLeg['geometry'] | null {
@@ -184,11 +187,11 @@ export function stitchLegs(batches: readonly (readonly RouteLeg[])[]): RouteLeg[
  */
 export function browserRoutingDeps(fetchImpl: Fetcher = fetch): RoutingDeps {
   return {
-    route: async (points, signal) => {
+    route: async (points, mode, signal) => {
       const windows = splitForProvider(points, MAX_ROUTE_POINTS);
       const batches: RouteLeg[][] = [];
       for (const window of windows) {
-        const query = routeQuery(window);
+        const query = routeQuery(window, mode);
         if (!query) return null;
         let response: Response;
         try {

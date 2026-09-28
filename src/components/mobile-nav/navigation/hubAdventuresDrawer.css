@@ -40,7 +40,7 @@
 
 .had-empty__title {
   margin: 0;
-  font-size: var(--lkv-text-body-lg);
+  font-size: var(--lkv-text-headline);
   font-weight: var(--lkv-weight-bold);
   color: var(--lkv-text-primary);
 }
@@ -74,8 +74,8 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition:
-    transform var(--motion-control-duration) var(--lkv-ease-standard),
-    background-color var(--motion-control-duration) var(--lkv-ease-standard);
+    transform var(--motion-control-duration) var(--motion-ease-standard),
+    background-color var(--motion-control-duration) var(--motion-ease-standard);
 }
 
 .had-action:active {
@@ -128,13 +128,13 @@
 }
 
 .had-action__label {
-  font-size: var(--lkv-text-body-md);
+  font-size: var(--lkv-text-subheadline);
   font-weight: var(--lkv-weight-bold);
   line-height: var(--lkv-line-body);
 }
 
 .had-action__description {
-  font-size: var(--lkv-text-body-xs);
+  font-size: var(--lkv-text-caption);
   line-height: var(--lkv-line-body);
   opacity: 0.78;
 }
@@ -155,7 +155,7 @@
 .had-list__heading {
   margin: 0;
   padding: 0 var(--space-1);
-  font-size: var(--lkv-text-body-xs);
+  font-size: var(--lkv-text-caption);
   font-weight: var(--lkv-weight-semibold, 600);
   letter-spacing: var(--lkv-tracking-title, 0.01em);
   text-transform: uppercase;
@@ -186,7 +186,7 @@
   color: var(--lkv-text-primary);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background-color var(--motion-control-duration) var(--lkv-ease-standard);
+  transition: background-color var(--motion-control-duration) var(--motion-ease-standard);
 }
 
 .had-row:hover {
@@ -226,7 +226,7 @@
 }
 
 .had-row__subtitle {
-  font-size: var(--lkv-text-body-xs);
+  font-size: var(--lkv-text-caption);
   color: var(--lkv-text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -249,8 +249,8 @@ html[data-had-open='true'] .lkv-nav-surface {
   opacity: 0;
   pointer-events: none;
   transition:
-    transform var(--motion-control-duration) var(--lkv-ease-standard),
-    opacity var(--motion-control-duration) var(--lkv-ease-standard),
+    transform var(--motion-control-duration) var(--motion-ease-standard),
+    opacity var(--motion-control-duration) var(--motion-ease-standard),
     visibility 0s linear var(--motion-control-duration);
 }
 

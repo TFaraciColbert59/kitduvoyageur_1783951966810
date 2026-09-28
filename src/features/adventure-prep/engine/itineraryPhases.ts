@@ -12,6 +12,8 @@ import {
 } from './itineraryEngine';
 import { describeAiFailure } from './aiFailure';
 import { dateRange, type DayWeather } from './weather';
+import { suggestStartDate } from './calendar';
+import { briefRequestedDays } from './briefDays';
 import type { AIFailureReason } from '@/lib/ai/providers/types';
 import type {
   AdventurePrepDraft,
@@ -43,6 +45,22 @@ import type { PlaceInventory } from './places';
  */
 export interface ProposalResult {
   drafted: DraftedItinerary | null;
+  /**
+   * Date de depart conseillee par le proposeur, au format AAAA-MM-JJ.
+   *
+   * Elle ne vaut PAS une date : elle ne vaut que si `acceptedSuggestedStartDate`
+   * l'a acceptee cote serveur. `null` signifie « aucune proposition », et
+   * l'ecran garde alors son « a verifier » plutot que d'inventer une date.
+   */
+  suggestedStartDate: string | null;
+  /**
+   * Duree en jours que le proposeur conseille, deja validee par le serveur.
+   *
+   * Miroir de `suggestedStartDate` : elle ne vaut que si
+   * `acceptSuggestedDurationDays` l'a acceptee, et `null` signifie « aucune
+   * proposition » — l'ecran garde alors la duree qu'il avait.
+   */
+  suggestedDurationDays: number | null;
   /** Cause reelle du repli, remontee jusqu'a l'ecran. `null` = rien n'a degrade. */
   failure: AIFailureReason | null;
 }
@@ -101,6 +119,21 @@ export interface GenerationOutcome {
   rejectedReason: RejectionReason | null;
   /** Cause reelle du repli, remontee jusqu'a l'ecran. `null` = rien n'a degrade. */
   failure: AIFailureReason | null;
+  /**
+   * Date de depart que le proposeur conseille, deja validee par le serveur.
+   *
+   * Elle ne modifie le brouillon qu'au moment ou le resultat est APPLIQUE :
+   * `null` laisse la cellule date exactement comme l'utilisateur l'a laissee.
+   */
+  suggestedStartDate: string | null;
+  /**
+   * Duree conseillee par le proposeur, deja validee.
+   *
+   * Comme la date, elle ne modifie le brouillon qu'au moment ou le resultat
+   * est APPLIQUE : `null` laisse la duree exactement comme la personne l'a
+   * laissee.
+   */
+  suggestedDurationDays: number | null;
   /**
    * Ce que chaque phase a REELLEMENT livre.
    *
@@ -228,6 +261,7 @@ export function assembleModel(
 ): ItineraryModel {
   const days = drafted.days;
   const model: ItineraryModel = {
+    title: drafted.title,
     days,
     steps: renumberByDay([...steps]),
     totals: { ...EMPTY_TOTALS },
@@ -294,7 +328,7 @@ function phaseOutcome(id: GenerationPhaseId, status: PhaseStatus, reason: string
  * laquelle on lui annonce. Chacune nomme ce qui n'a pas abouti, et — surtout —
  * ne laisse fuir ni nom de fournisseur, ni code HTTP, ni trace d exception.
  */
-const PHASE_RAISED: Readonly<Record<GenerationPhaseId, string>> = {
+export const PHASE_RAISED: Readonly<Record<GenerationPhaseId, string>> = {
   recherche_parcours:
     'La recherche du parcours n’a pas abouti. Le parcours affiché reste celui construit par les règles.',
   verification_etapes: 'La vérification des étapes n’a pas abouti sur cette proposition.',
@@ -306,7 +340,7 @@ const PHASE_RAISED: Readonly<Record<GenerationPhaseId, string>> = {
 };
 
 /** Le travail a abouti, sans valeur : on ne sait pas, ce n’est pas une panne. */
-const PHASE_NO_VALUE: Readonly<Record<GenerationPhaseId, string>> = {
+export const PHASE_NO_VALUE: Readonly<Record<GenerationPhaseId, string>> = {
   recherche_parcours:
     'Aucune proposition de parcours n’a été retenue : le parcours affiché reste celui construit par les règles.',
   verification_etapes: 'La vérification des étapes n’a rien trouvé à signaler.',
@@ -326,6 +360,8 @@ function abortedOutcome(): GenerationOutcome {
     message: null,
     rejectedReason: null,
     failure: null,
+    suggestedStartDate: null,
+    suggestedDurationDays: null,
     phases: [],
     infeasible: [],
     toVerify: [],
@@ -405,6 +441,13 @@ export async function runItineraryGeneration(
   // proposition », jamais une exception qui casserait l'ecran de preparation.
   let drafted: DraftedItinerary | null = null;
   let failure: AIFailureReason | null = null;
+  // La date proposee ne quitte JAMAIS le proposeur sans avoir ete acceptee par
+  // `acceptedSuggestedStartDate` : une date passee, ou mal formee, ne doit pas
+  // atteindre l'ecran sous couvert d'une suggestion de l'IA.
+  let suggestedStartDate: string | null = null;
+  // Meme discipline que la date : la duree ne quitte le proposeur qu'apres
+  // avoir ete acceptee par `acceptSuggestedDurationDays`.
+  let suggestedDurationDays: number | null = null;
   // L inventaire se charge AVANT la redaction, jamais apres : c est lui qui
   // dit au proposeur ce qui existe. Le charger apres reviendrait a lui envoyer
   // un parcours deja ecrit hors des lieux du corridor.
@@ -421,6 +464,8 @@ export async function runItineraryGeneration(
     const proposal = await fetchProposal(draft, signal, inventory);
     drafted = proposal.drafted;
     failure = proposal.failure;
+    suggestedStartDate = proposal.suggestedStartDate;
+    suggestedDurationDays = proposal.suggestedDurationDays;
   } catch {
     // Un proposeur qui leve est une frontiere reseau tombee, pas une annulation :
     // le parcours doit quand meme etre construit par les regles, et la cause
@@ -448,7 +493,10 @@ export async function runItineraryGeneration(
 
   if (drafted !== null) {
     // 2. Verification des etapes — invariants metier, sur les donnees reelles.
-    const verdict = validateDrafted(drafted);
+    // Le brief est lu ICI, au moment de la confrontation, et nowhere else : le
+    // garde-fou ne recoit que ce qu il peut mesurer. Un brief muet passe `null`
+    // et ne peut donc rien faire tomber (P0.18).
+    const verdict = validateDrafted(drafted, { briefDays: briefRequestedDays(draft.brief) });
     onPhase('verification_etapes');
     phases.push(
       verdict.ok
@@ -498,7 +546,7 @@ export async function runItineraryGeneration(
     // lorsqu on ne sait rien, jamais quand on sait pourquoi.
     message = model ? describeAiFailure(failure) ?? AI_ENRICHMENT_UNAVAILABLE : null;
     if (signal.aborted) {
-      return { model: null, engineId, degraded, message: null, rejectedReason, failure, phases, infeasible, toVerify };
+      return { model: null, engineId, degraded, message: null, rejectedReason, failure, suggestedStartDate, suggestedDurationDays, phases, infeasible, toVerify };
     }
     onPhase('verification_etapes');
     onPhase('disponibilites');
@@ -509,7 +557,7 @@ export async function runItineraryGeneration(
     );
   }
   if (signal.aborted || !model) {
-    return { model: null, engineId, degraded, message: null, rejectedReason, failure, phases, infeasible, toVerify };
+    return { model: null, engineId, degraded, message: null, rejectedReason, failure, suggestedStartDate, suggestedDurationDays, phases, infeasible, toVerify };
   }
 
   // 4 bis. Les LIEUX, avant toute mesure. Le moteur assemble des etapes sans
@@ -522,7 +570,7 @@ export async function runItineraryGeneration(
   model = placed.model;
   phases.push(placed.outcome);
   if (signal.aborted) {
-    return { model: null, engineId, degraded, message: null, rejectedReason, failure, phases, infeasible, toVerify };
+    return { model: null, engineId, degraded, message: null, rejectedReason, failure, suggestedStartDate, suggestedDurationDays, phases, infeasible, toVerify };
   }
   onPhase('lieux');
 
@@ -541,25 +589,35 @@ export async function runItineraryGeneration(
   model = traced.model;
   phases.push(traced.outcome);
   if (signal.aborted) {
-    return { model: null, engineId, degraded, message: null, rejectedReason, failure, phases, infeasible, toVerify };
+    return { model: null, engineId, degraded, message: null, rejectedReason, failure, suggestedStartDate, suggestedDurationDays, phases, infeasible, toVerify };
   }
   onPhase('trace');
 
   // 6. Meteo des dates reelles. Un fournisseur muet laisse la journee a null.
-  const measured = await safely('meteo', measure.weather, draft, model, signal, (m) =>
+  //
+  // La meteo se mesure sur `dated`, pas sur `draft`. Quand personne n'a choisi
+  // de date, la seule date dont on dispose est celle que l'IA vient de
+  // proposer : sans elle `dateRange(null, jours)` ne rend rien, aucune prevision
+  // n'est demandee, et la phase echoue sur un bandeau « Echec : meteo » alors
+  // meme que le parcours est complet. La date retenue ici est exactement celle
+  // que `applyGenerated` deposera ensuite dans le brouillon : meme source,
+  // meme reference, donc la mesure et l'affichage ne peuvent pas diverger. Une
+  // date saisie a la main laisse `dated` identique a `draft` : rien ne bouge.
+  const dated = suggestStartDate(draft, suggestedStartDate);
+  const measured = await safely('meteo', measure.weather, dated, model, signal, (m) =>
     m.weather.length === m.days && m.days > 0 && m.weather.some((day) => day !== null),
   );
   model = measured.model;
   phases.push(measured.outcome);
   if (signal.aborted) {
-    return { model: null, engineId, degraded, message: null, rejectedReason, failure, phases, infeasible, toVerify };
+    return { model: null, engineId, degraded, message: null, rejectedReason, failure, suggestedStartDate, suggestedDurationDays, phases, infeasible, toVerify };
   }
   onPhase('meteo');
 
   // 7. Mise en forme finale.
   onPhase('synthese');
   phases.push(phaseOutcome('synthese', 'reussie', null));
-  return { model, engineId, degraded, message, rejectedReason, failure, phases, infeasible, toVerify };
+  return { model, engineId, degraded, message, rejectedReason, failure, suggestedStartDate, suggestedDurationDays, phases, infeasible, toVerify };
 }
 
 
@@ -819,6 +877,33 @@ export async function retryGenerationPhase(
     };
   }
 
+  // lieux : la SEULE reprise qui rattache des positions SANS redemander un
+  // parcours. Elle est aussi la seule qui doive rejouer la CONTINUITE apres
+  // coup, puisque ce sont les positions qui viennent de changer.
+  //
+  // Cette branche existe parce que son absence etait un defaut MESURE : sans
+  // elle, `lieux` tombait dans le filet de `recherche_parcours` ci-dessous et
+  // relanca une generation complete. Un clic « Reessayer » remplacait alors le
+  // parcours affiche par une proposition neuve — cinq etapes devenues deux,
+  // les etapes que la personne vient d ajuster, supprimees sans un mot. Rejouer
+  // « les lieux » signifie « rattacher des points a CE parcours », pas « demander
+  // un autre voyage a l IA ».
+  if (phase === 'lieux') {
+    if (!deps.resolvePlaces) {
+      return { phase, model, outcome: failed(phase, PHASE_RAISED.lieux) };
+    }
+    // Le meme juge que la generation : une phase livre un modele sans
+    // position n est pas une panne, c'est une absence. Les deux se rejouent,
+    // ils ne se racontent pas de la meme facon.
+    const placed = await safely('lieux', deps.resolvePlaces, draft, model, signal, (m) =>
+      m.steps.some((step) => step.lat !== null && step.lon !== null),
+    );
+    return {
+      phase,
+      model: enforceDayContinuity(placed.model, draft),
+      outcome: placed.outcome,
+    };
+  }
   // recherche_parcours : la seule reprise qui replace un modele entier.
   if (!deps.fetchProposal) {
     return { phase, model, outcome: failed(phase, PHASE_RAISED.recherche_parcours) };

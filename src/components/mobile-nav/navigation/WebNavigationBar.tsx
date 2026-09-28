@@ -50,7 +50,11 @@ function WebNavigationBar() {
   // AppShell. Meme fonction pure des deux cotes : la reservation et le
   // rendu ne peuvent pas diverger.
   const dayFocusDays = useDayFocusStore((state) => state.days);
-  const showDayPlateau = hasDayFocusPlateau(pathname, dayFocusDays);
+  const dayFocusable = useDayFocusStore((state) => state.focusable);
+  // `focusable` : un ecran qui n affiche aucun jour (l etape 1 du
+  // preparateur) ne doit pas rendre le rail — ce serait un controle qui
+  // repond sans rien changer a l ecran.
+  const showDayPlateau = hasDayFocusPlateau(pathname, dayFocusDays, dayFocusable);
   // Meme predicat que le rendu du plateau, evalue par la fonction partagee :
   // c est lui qui alimente la reservation publiee plus bas. Doublon
   // volontaire et sans risque, la fonction etant pure.

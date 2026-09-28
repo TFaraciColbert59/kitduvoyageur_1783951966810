@@ -34,6 +34,8 @@ function prompt(availablePlaces: readonly { name: string; category: string }[] |
     destinationLabel: 'Argentiere',
     startDateLabel: '11/07/2026',
     durationDays: 3,
+    durationChosenByUser: true,
+    briefDays: null,
     partySize: 2,
     pace: 'tranquille',
     loop: false,
@@ -86,7 +88,7 @@ describe('l inventaire est charge par la generation, pas par le prompt seul', ()
       async (_draft, _signal, availablePlaces) => {
         seen.order.push('proposition');
         seen.inventory = availablePlaces;
-        return { drafted: null, failure: 'provider_indisponible' as const };
+        return { drafted: null, failure: 'provider_indisponible' as const , suggestedStartDate: null, suggestedDurationDays: null};
       },
       () => seen.order.push('phase'),
       undefined,

@@ -46,6 +46,7 @@ function model(over: Partial<ItineraryModel> = {}): ItineraryModel {
   const days = over.days ?? 3;
   const zero = { distanceKm: 10, movingMin: 20, activityMin: 120, elevGainM: 300, elevLossM: 280 };
   return {
+    title: null,
     days,
     steps: [],
     totals: zero,

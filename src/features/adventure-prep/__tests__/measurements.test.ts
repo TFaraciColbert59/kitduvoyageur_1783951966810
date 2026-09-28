@@ -30,6 +30,7 @@ import {
   type GeoPoint,
   type RouteLeg,
   type RoutingDeps,
+  type TravelMode,
 } from '../engine/routing';
 import { buildItinerary } from '../engine/itinerary';
 import type { DayWeather } from '../engine/weather';
@@ -60,7 +61,7 @@ function draftOf(
 ): AdventurePrepDraft {
   return fullDraft({
     ...overrides,
-    calendar: { startDate, durationDays: days, durationIsSuggested: false, returnDate: null },
+    calendar: { startDate, durationDays: days, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null },
   });
 }
 
@@ -276,7 +277,10 @@ describe('mesure complete', () => {
     );
     const located = out.steps.filter((step) => step.lat !== null).sort((a, b) => a.order - b.order);
     expect(located[located.length - 1].durationMin).toBe(9);
-    expect(located[0].durationMin).toBeNull();
+    // Point de depart de journee : on y commence, le trajet vers ce point est
+    // nul. Ce `null` etait le defaut N2 — il rendait « a verifier » toute la
+    // duree d'activite, puisque chaque journee a une etape sans duree.
+    expect(located[0].durationMin).toBe(0);
   });
 
   it('mesure chaque journee separement, avec sa distance et son temps', async () => {
@@ -368,7 +372,11 @@ describe('mesure complete', () => {
     const controller = new AbortController();
     controller.abort();
     // Un fetch reel rejette des qu il recoit un signal avorte.
-    const route = vi.fn(async (_points: readonly GeoPoint[], signal?: AbortSignal) => {
+    const route = vi.fn(async (
+      _points: readonly GeoPoint[],
+      _mode: TravelMode,
+      signal?: AbortSignal,
+    ) => {
       if (signal?.aborted) throw new Error('requete annulee');
       return null;
     });
@@ -399,7 +407,9 @@ describe('mesure complete', () => {
     );
 
     expect(weather).toHaveBeenCalledWith([START], controller.signal, ANCRE_CHAMONIX);
-    expect(route).toHaveBeenCalledWith(expect.any(Array), controller.signal);
+    // P0.22 : le mode est transmis AVANT le signal. Il n'est plus derivable
+    // cote navigateur, et c'est lui qui dit au routeur quel reseau mesurer.
+    expect(route).toHaveBeenCalledWith(expect.any(Array), 'pieton', controller.signal);
   });
 
   it('aucun repli silencieux : une aventure muete reste entierement a verifier', async () => {

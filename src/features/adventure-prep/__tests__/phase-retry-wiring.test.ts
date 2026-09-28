@@ -60,6 +60,7 @@ describe('P0.3 - le bouton Reessayer est branche', () => {
       new AbortController().signal,
       async () => ({
         drafted: {
+          title: null,
           days: 2,
           steps: [
             { day: 1, kind: 'nuit', title: 'Nuit', placeName: null, startTime: null, durationMin: null, reason: null, lat: null, lon: null },
@@ -68,6 +69,8 @@ describe('P0.3 - le bouton Reessayer est branche', () => {
           hypotheses: [],
         },
         failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
       }),
       () => {},
       undefined,
@@ -90,6 +93,7 @@ describe('P0.3 - le bouton Reessayer est branche', () => {
       new AbortController().signal,
       async () => ({
         drafted: {
+          title: null,
           days: 1,
           steps: [
             { day: 1, kind: 'nuit', title: 'Nuit', placeName: null, startTime: null, durationMin: null, reason: null, lat: null, lon: null },
@@ -97,6 +101,8 @@ describe('P0.3 - le bouton Reessayer est branche', () => {
           hypotheses: [],
         },
         failure: null,
+        suggestedStartDate: null,
+        suggestedDurationDays: null,
       }),
       () => {},
     );
@@ -110,6 +116,7 @@ describe('P0.3 - le bouton Reessayer est branche', () => {
       {
         fetchProposal: async () => ({
           drafted: {
+            title: null,
             days: 1,
             steps: [
               { day: 1, kind: 'nuit', title: 'Nuit', placeName: null, startTime: null, durationMin: null, reason: null, lat: null, lon: null },
@@ -117,6 +124,8 @@ describe('P0.3 - le bouton Reessayer est branche', () => {
             hypotheses: [],
           },
           failure: null,
+          suggestedStartDate: null,
+          suggestedDurationDays: null,
         }),
         resolvePlaces: async (d, next) =>
           assignPlaces(next, CANDIDATES, d.route.origin, d.route.destination),

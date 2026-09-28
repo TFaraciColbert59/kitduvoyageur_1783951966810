@@ -56,6 +56,7 @@ const CAL_EMPTY = {
   startDate: null,
   durationDays: null,
   durationIsSuggested: false,
+  startDateIsSuggested: false,
   returnDate: null,
 };
 
@@ -81,9 +82,9 @@ describe('S11 — le bon ecran pour la bonne aventure', () => {
   });
 
   it('S11-06: le profil se lit sur la principale seule, jamais sur les complements', () => {
-    expect(
-      stepOneProfileIdFor({ primary: 'rando-journee', extra: ['roadtrip'], nights: [] }),
-    ).toBe('trajet');
+    expect(stepOneProfileIdFor({ primary: 'rando-journee', extra: ['roadtrip'], nights: [] })).toBe(
+      'trajet'
+    );
   });
 });
 
@@ -192,7 +193,7 @@ describe('S11 — ce qui manque, sans question inutile', () => {
   it('S11-17: la date seule ne bloque jamais la generation', () => {
     const draft = fullDraft({
       activities: RANDO,
-      calendar: { startDate: null, durationDays: 2, durationIsSuggested: false, returnDate: null },
+      calendar: { startDate: null, durationDays: 2, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null },
     });
     expect(canCreateStepOne(draft, 'trajet')).toBe(true);
   });
@@ -254,8 +255,9 @@ describe('S11 — rendu des ecrans 10, 11, 12 et 13', () => {
   });
   it('S11-26: une arrivee manquante ne bloque pas — l’IA choisit la boucle', () => {
     // L'arrivee est une aide, pas une condition : sans elle le parcours reboucle
-    // depuis le depart. Le CTA reste actif et la ligne « Il manque » signale
-    // seulement ce que l'IA tranchera toute seule.
+    // depuis le depart. Le CTA reste actif. AN7 : l arrivee ne s annonce plus
+    // comme un MANQUE — ce mot ne nomme plus que les seuls bloqueurs — mais
+    // comme ce que l IA complete. C est vrai, et ca se lit d un coup d oeil.
     const base = fullDraft({ activities: RANDO });
     const partial = { ...base, route: { ...base.route, destination: null } };
     const text = visible(render(partial));
@@ -263,7 +265,8 @@ describe('S11 — rendu des ecrans 10, 11, 12 et 13', () => {
     expect(canCreateStepOne(partial, 'trajet')).toBe(true);
     expect(text).toContain('Créer mon parcours');
     expect(text).not.toContain('Compléter');
-    expect(text).toContain('Il manque');
+    expect(text).not.toContain('Il manque');
+    expect(text).toContain('L’IA complètera');
     expect(text).toContain('lieu d’arrivée');
   });
   it('S11-27: l ecran local ne parle jamais de depart', () => {

@@ -15,6 +15,10 @@ const tabBar = readFileSync('src/components/mobile-nav/navigation/WebNavigationB
 const navigationSurface = readFileSync('src/components/mobile-nav/navigation/NavigationSurface.tsx', 'utf8');
 const registry = readFileSync('src/components/mobile-nav/destinationRegistry.ts', 'utf8');
 const navigationBar = readFileSync('src/components/mobile-nav/NavigationBar.tsx', 'utf8');
+const bottomNavReservation = readFileSync(
+  'src/components/mobile-nav/navigation/bottom-nav-reservation.ts',
+  'utf8',
+);
 
 function walk(dir: string, acc: string[] = []): string[] {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -37,13 +41,37 @@ describe('LOT 2 — safe areas et offsets : source unique', () => {
     expect(tokens).toContain('--header-height: 44px;');
   });
 
-  it('AppShell consomme les offsets par tokens (plus de 80/112/68px locaux)', () => {
-    expect(appShell).toContain("'var(--nav-offset)'");
-    expect(appShell).toContain("'var(--nav-offset-extended)'");
-    expect(appShell).toContain("'var(--page-bottom-inset-bare)'");
+  /**
+   * La reservation basse a change de forme : les trois offsets canoniques ne sont
+   * plus ecrits dans AppShell, ils sont choisis par une fonction pure
+   * (`bottomNavHeightToken`) que le rendu ET la reservation evaluent de leurs
+   * deux cotes. C est plus strict qu avant — le shell ne peut plus choisir un
+   * decalage, il ne peut que demander. Ce test verrouille donc la CHAINE
+   * entiere, pas seulement son dernier maillon :
+   *
+   *   tokens.css  ->  bottomNavHeightToken()  ->  --bottom-nav-height  ->  AppShell
+   *
+   * Un decalage en pixels reintroduit quelque part fait toujours echouer le test.
+   */
+  it('la reservation basse vient des tokens, jamais de pixels locaux', () => {
+    // 1. AppShell ne decide plus : il delegue a la source unique.
+    expect(appShell).toContain('bottomNavHeightToken');
+    // 2. La source unique rend bien les trois offsets canoniques.
+    expect(bottomNavReservation).toContain("return 'var(--page-bottom-inset-bare)'");
+    expect(bottomNavReservation).toContain("'var(--nav-offset-extended)'");
+    expect(bottomNavReservation).toContain("'var(--nav-offset)'");
+    // 3. Le shell publie cette reservation et s en sert pour la paddasse.
+    expect(appShell).toContain("['--bottom-nav-height' as any]: bottomNavHeight");
     expect(appShell).toContain("'var(--page-top-inset)'");
-    expect(appShell).not.toContain('80px + env(safe-area-inset-bottom');
-    expect(appShell).not.toContain('112px + env(safe-area-inset-bottom');
+    // 4. Les tokens existe bien en amont, sinon la chaine ne veut rien dire.
+    expect(tokens).toContain('--nav-offset: calc(var(--nav-height) + var(--safe-bottom));');
+    expect(tokens).toContain('--nav-offset-extended:');
+    expect(tokens).toContain('--page-bottom-inset:');
+    // 5. Et le defaut interdit reste interdit, dans les deux fichiers.
+    for (const source of [appShell, bottomNavReservation]) {
+      expect(source).not.toContain('80px + env(safe-area-inset-bottom');
+      expect(source).not.toContain('112px + env(safe-area-inset-bottom');
+    }
   });
 
   it('le shell applique la classe canonique .lkv-shell (viewport svh/dvh)', () => {

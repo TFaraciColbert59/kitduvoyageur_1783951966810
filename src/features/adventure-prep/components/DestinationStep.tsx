@@ -17,9 +17,10 @@ import {
 } from '../engine/destinationModel';
 import {
   canCreateStepOne,
-  stepOneMissingSummary,
+  stepOneMissing,
   stepOneProfile,
   stepOneProfileIdFor,
+  stepOneReadySummary,
   type StepOneCell,
   type StepOneRow,
 } from './stepOneProfile';
@@ -32,7 +33,7 @@ export interface DestinationStepProps {
   onOpenSheet: (
     sheet: PrepSheetId,
     focusStepId?: string | null,
-    placeField?: PrepPlaceField | null,
+    placeField?: PrepPlaceField | null
   ) => void;
 }
 
@@ -75,15 +76,32 @@ const STACK_STYLE: React.CSSProperties = {
 
 const AVATARS_STYLE: React.CSSProperties = { flex: '0 0 auto' };
 
-function BlockRow({ label, icon, parts, text, unknown, onClick, disabled, children }: BlockRowProps) {
+function BlockRow({
+  label,
+  icon,
+  parts,
+  text,
+  unknown,
+  onClick,
+  disabled,
+  children,
+}: BlockRowProps) {
   const isUnknown = unknown ?? parts === null;
   return (
-    <button type="button" className="prep-block__row" onClick={onClick} disabled={disabled} aria-disabled={disabled || undefined}>
+    <button
+      type="button"
+      className="prep-block__row"
+      onClick={onClick}
+      disabled={disabled}
+      aria-disabled={disabled || undefined}
+    >
       <Icon name={icon} size={18} aria-hidden="true" />
-      <span className="prep-block__label" style={LABEL_STYLE}>{label}</span>
+      <span className="prep-block__label" style={LABEL_STYLE}>
+        {label}
+      </span>
       <span className="prep-block__stack" style={STACK_STYLE}>
         <span className="prep-block__value" data-unknown={isUnknown}>
-          {parts ? parts.primary : text ?? A_VERIFIER}
+          {parts ? parts.primary : (text ?? A_VERIFIER)}
         </span>
         {parts?.secondary ? <span className="prep-block__detail">{parts.secondary}</span> : null}
       </span>
@@ -98,19 +116,24 @@ interface CellProps {
   icon: string;
   value: string;
   unknown?: boolean;
+  suggested?: boolean;
   onClick?: () => void;
   disabled?: boolean;
   children?: React.ReactNode;
 }
 
-function Cell({ label, icon, value, unknown, onClick, children }: CellProps) {
+function Cell({ label, icon, value, unknown, suggested, onClick, children }: CellProps) {
   return (
     <button type="button" className="prep-cell" onClick={onClick}>
       <span className="prep-cell__head">
         <Icon name={icon} size={16} aria-hidden="true" />
         {label}
       </span>
-      <span className="prep-cell__value" data-unknown={unknown ?? value === A_VERIFIER}>
+      <span
+        className="prep-cell__value"
+        data-unknown={unknown ?? value === A_VERIFIER}
+        data-suggested={suggested || undefined}
+      >
         {value}
       </span>
       {children}
@@ -130,7 +153,11 @@ function AvatarRow({ group }: { group: GroupBlock }) {
           {avatar.initials}
         </span>
       ))}
-      {overflow > 0 ? <span className="prep-avatar" data-tone="more">+{overflow}</span> : null}
+      {overflow > 0 ? (
+        <span className="prep-avatar" data-tone="more">
+          +{overflow}
+        </span>
+      ) : null}
     </span>
   );
 }
@@ -147,31 +174,34 @@ export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
   const profileId = useMemo(() => stepOneProfileIdFor(activities), [activities]);
   const profile = stepOneProfile(profileId);
   const ready = canCreateStepOne(draft, profileId);
-  const missing = stepOneMissingSummary(draft, profileId);
+  // AN7 : le manque se dit en deux temps. Un bloqueur arrete, un facultatif
+  // non, l IA le tranche. La ligne unique annoncait un arret qui n avait pas
+  // lieu sous un CTA actif.
+  const gap = stepOneMissing(draft, profileId);
+  const readyNote = stepOneReadySummary(draft, profileId);
   // Un sejour ou une sortie locale n ont qu un seul lieu : rien a inverser.
   const swappable = profile.singlePlace === null && canSwapEnds(draft);
 
   const partsFor = useCallback(
     (field: StepOneRow['field']): PlaceParts | null =>
       field === 'origin' ? placeParts(route.origin) : placeParts(route.destination),
-    [route.origin, route.destination],
+    [route.origin, route.destination]
   );
   /**
-   * Valeur d'une cellule du bloc calendrier.
+   * Valeur d une cellule du bloc calendrier.
    *
-   * Une duree qui n'est venue que d'une proposition n'est pas une duree : le
-   * catalogue en propose une pour demarrer la generation, personne ne l'a
-   * mesuree. Tant que la personne ne l'a pas choisie, l'ecran affiche la
-   * formulation d'absence — « a verifier » — et non le nombre. Une duree
-   * reellement saisie, elle, s'affiche telle quelle.
+   * AN6 : une duree proposee par le moteur est un VRAI nombre, pas une
+   * absence. La cacher derriere la formulation d absence creait un cul de
+   * sac : la cellule paraissait invalide alors qu une proposition modifiable
+   * attendait juste d etre validee. Le nombre s affiche, la pastille dit
+   * qui l a propose. Une date, elle, reste une absence tant qu elle manque.
    */
   const valueFor = useCallback(
     (cell: StepOneCell): string => {
       if (cell.field === 'startDate') return shortDateLabel(calendar.startDate);
-      if (calendar.durationIsSuggested) return A_VERIFIER;
       return daysLabel(calendar.durationDays);
     },
-    [calendar.startDate, calendar.durationDays, calendar.durationIsSuggested],
+    [calendar.startDate, calendar.durationDays]
   );
 
   const swapEnds = useCallback(() => {
@@ -193,11 +223,9 @@ export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
     goToStep('itinerary');
   }, []);
 
-
   return (
     <div className="prep-screen">
       <div className="prep-body">
-
         <div className="prep-block prep-brief">
           <label className="prep-brief__label" htmlFor="prep-brief-input">
             <Icon name="sparkles" size={16} aria-hidden="true" />
@@ -249,20 +277,36 @@ export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
         </div>
 
         <div className="prep-block prep-block--cells">
-          {profile.cells.map((cell) => (
-            <Cell
-              key={cell.field}
-              label={cell.label}
-              icon={cell.icon}
-              value={valueFor(cell)}
-              onClick={() => onOpenSheet('calendar')}
-            />
-          ))}
-          {calendar.durationIsSuggested ? (
-            <div style={{ padding: '0 var(--space-4) var(--space-3)', gridColumn: '1 / -1' }}>
-              <span className="badge badge--suggestion">Durée à préciser · modifiable</span>
-            </div>
-          ) : null}
+          {profile.cells.map((cell) => {
+            // Chaque cellule nomme SA proposition. Un badge unique sous le bloc
+            // disait « propose par l’IA » des que la seule duree l etait :
+            // l’ecran annoncait alors une date qui n’avait pas ete proposee, et la
+            // personne ne pouvait plus dire quel champ attendre. Le badge vit
+            // donc dans la cellule, sur la cellule a cote de la valeur qu il
+            // decrit.
+            const suggested =
+              cell.field === 'startDate'
+                ? calendar.startDateIsSuggested
+                : calendar.durationIsSuggested;
+            return (
+              <Cell
+                key={cell.field}
+                label={cell.label}
+                icon={cell.icon}
+                value={valueFor(cell)}
+                suggested={suggested}
+                onClick={() => onOpenSheet('calendar')}
+              >
+                {suggested ? (
+                  <span className="badge badge--suggestion prep-cell__badge">
+                    {cell.field === 'startDate'
+                      ? 'Date proposée par l’IA · modifiable'
+                      : 'Durée proposée · modifiable'}
+                  </span>
+                ) : null}
+              </Cell>
+            );
+          })}
         </div>
 
         <div className="prep-block">
@@ -277,13 +321,25 @@ export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
           </BlockRow>
         </div>
 
-        {missing ? (
-          <p className="prep-missing" role="status" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--ink-2)' }}>
+        {gap.blocking.length > 0 ? (
+          <p
+            className="prep-missing"
+            role="status"
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--ink-2)' }}
+          >
             <Icon name="alert-triangle" size={15} aria-hidden="true" />
-            {missing}
+            {`Il manque : ${gap.blocking.join(', ')}`}
+          </p>
+        ) : readyNote ? (
+          <p
+            className="prep-missing prep-missing--ready"
+            role="status"
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--ink-2)' }}
+          >
+            <Icon name="sparkles" size={15} aria-hidden="true" />
+            {readyNote}
           </p>
         ) : null}
-
       </div>
 
       <div className="prep-footer">
@@ -303,4 +359,3 @@ export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
 }
 
 export default DestinationStep;
-

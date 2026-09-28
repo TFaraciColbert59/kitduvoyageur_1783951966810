@@ -3,6 +3,7 @@ import type {
   AdventurePrepDraft,
   GenerationPhase,
   GenerationPhaseId,
+  GenerationPhaseVerdict,
   GenerationState,
   ItineraryStep,
 } from '../types';
@@ -31,7 +32,50 @@ function phases(done: GenerationPhaseId[] = []): GenerationPhase[] {
 }
 
 export function initialGeneration(): GenerationState {
-  return { status: 'idle', phases: phases(), steps: [], days: 0, error: null, notice: null, failure: null };
+  return {
+    status: 'idle',
+    phases: phases(),
+    steps: [],
+    days: 0,
+    error: null,
+    notice: null,
+    failure: null,
+    outcomes: [],
+  };
+}
+
+/**
+ * Depose les verdicts REELS rendus par le moteur.
+ *
+ * Ces verdicts sont la seule source de verite sur une phase tombee : le courseur
+ * les rend depuis le premier jour, et `phaseHealth` sait deja les resumer, mais
+ * ils s'arretaient a la frontiere du runner. Un parcours degrade sans verdict
+ * depose se lisait comme un parcours reussi, et l'ecran affichait des « A
+ * verifier » sans jamais nommer la panne.
+ *
+ * La fonction ne trie ni ne complete : elle conserve ce que le moteur a rendu,
+ * dans son ordre. Un verdict absent reste absent.
+ */
+export function setPhaseOutcomes(
+  state: GenerationState,
+  outcomes: readonly GenerationPhaseVerdict[]
+): GenerationState {
+  return { ...state, outcomes: [...outcomes] };
+}
+
+/**
+ * Ouvre une phase a la reprise : son verdict devient PERIME.
+ *
+ * Le verdict decrit un etat passe. Le garder afficherait « Échec : calcul des
+ * distances » pendant que la reprise travaille, alors que l'ecran serait en
+ * train de reparer exactement cela.
+ */
+export function clearPhaseOutcome(
+  state: GenerationState,
+  phase: GenerationPhaseId
+): GenerationState {
+  if (!(state.outcomes ?? []).some((verdict) => verdict.id === phase)) return state;
+  return { ...state, outcomes: state.outcomes.filter((verdict) => verdict.id !== phase) };
 }
 
 export interface GenerationProgress {
@@ -55,7 +99,16 @@ export function generationProgress(state: GenerationState): GenerationProgress {
 }
 
 export function startGeneration(_previous: GenerationState): GenerationState {
-  return { status: 'en_cours', phases: phases(), steps: [], days: 0, error: null, notice: null, failure: null };
+  return {
+    status: 'en_cours',
+    phases: phases(),
+    steps: [],
+    days: 0,
+    error: null,
+    notice: null,
+    failure: null,
+    outcomes: [],
+  };
 }
 
 export function resumeGeneration(state: GenerationState): GenerationState {
@@ -77,7 +130,7 @@ export function markPhaseDone(state: GenerationState, id: GenerationPhaseId): Ge
 export function setPartial(
   state: GenerationState,
   steps: readonly ItineraryStep[],
-  days: number,
+  days: number
 ): GenerationState {
   return { ...state, steps: [...steps], days: Math.max(0, Math.trunc(days)) };
 }
@@ -97,7 +150,10 @@ export function failGeneration(state: GenerationState, error: string): Generatio
  * sur le parcours doit encore lire pourquoi il n'a pas ete enrichi, sinon la
  * notice n'a aucun effet.
  */
-export function setGenerationNotice(state: GenerationState, notice: string | null): GenerationState {
+export function setGenerationNotice(
+  state: GenerationState,
+  notice: string | null
+): GenerationState {
   return state.notice === notice ? state : { ...state, notice };
 }
 
@@ -110,7 +166,7 @@ export function setGenerationNotice(state: GenerationState, notice: string | nul
  */
 export function setGenerationFailure(
   state: GenerationState,
-  failure: AIFailureReason | null,
+  failure: AIFailureReason | null
 ): GenerationState {
   return state.failure === failure ? state : { ...state, failure };
 }

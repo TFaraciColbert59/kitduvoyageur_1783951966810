@@ -71,7 +71,7 @@ describe('proposition de parcours', () => {
   it('utilise la duree choisie par la personne, jamais une duree inventee', () => {
     expect(model().days).toBe(3);
     const long = buildItinerary(
-      fullDraft({ calendar: { startDate: '2026-07-11', durationDays: 6, durationIsSuggested: true, returnDate: '2026-07-16' } }),
+      fullDraft({ calendar: { startDate: '2026-07-11', durationDays: 6, durationIsSuggested: true, startDateIsSuggested: false, returnDate: '2026-07-16' } }),
     );
     expect(long?.days).toBe(6);
   });

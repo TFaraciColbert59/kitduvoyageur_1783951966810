@@ -8,6 +8,8 @@ const base = {
   destinationLabel: 'Chamonix',
   startDateLabel: '2026-07-11',
   durationDays: 2,
+  durationChosenByUser: true,
+  briefDays: null,
   partySize: 2,
   pace: 'modere',
   loop: true,

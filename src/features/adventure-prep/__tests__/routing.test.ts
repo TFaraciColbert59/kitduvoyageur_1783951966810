@@ -29,7 +29,7 @@ function leg(distanceKm: number, durationMin: number): RouteLeg {
 
 /** Modele de `days` journees dont chaque etape porte des coordonnees. */
 function locatedModel(days: number) {
-  const built = buildItinerary(fullDraft({ calendar: { startDate: '2026-07-11', durationDays: days, durationIsSuggested: false, returnDate: null } }));
+  const built = buildItinerary(fullDraft({ calendar: { startDate: '2026-07-11', durationDays: days, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null } }));
   if (!built) throw new Error('modele attendu');
   const steps = built.steps.map((step, index) =>
     index % 2 === 0 ? { ...step, lat: A.lat, lon: A.lon } : { ...step, lat: B.lat, lon: B.lon },
@@ -112,7 +112,11 @@ describe('orchestration', () => {
     expect(out.totals.distanceKm).toBeCloseTo(4 * legs, 2);
     expect(out.totals.movingMin).toBe(9 * legs);
     expect(located[located.length - 1].durationMin).toBe(9);
-    expect(located[0].durationMin).toBeNull();
+    // La premiere etape etait `null` jusqu au correctif N2 : c etait le
+    // defaut, pas le contrat. On y commence, donc le trajet vers ce point est
+    // nul — et comme `activityMin` exige TOUTES les durees du jour, ce `null`
+    // rendait « a verifier » chaque journee et chaque total.
+    expect(located[0].durationMin).toBe(0);
   });
 });
 
@@ -177,6 +181,49 @@ describe('application au modele', () => {
       route: async () => null,
       elevation: async () => null,
     });
+    expect(out.perDay[0].activityMin).toBeNull();
+    expect(out.totals.activityMin).toBeNull();
+  });
+
+  it('la premiere etape du jour porte ZERO minute de deplacement — un fait, pas un trou', async () => {
+    // Le defaut reel (N2) : le routeur ne mesure un troncon QUE vers les etapes
+    // qui ont une arrivee. La PREMIERE etape de chaque jour n en a pas, par
+    // construction : on y commence. Sa duree restait donc `null`, et comme
+    // `activityMin` exige TOUTES les durees du jour, la journee entiere — et le
+    // total — restaient « a verifier » sur chaque parcours reellement genere.
+    const model = locatedModel(2);
+    // N points donnent N-1 troncons : la derniere arrivee porte le trajet,
+    // le point de depart du chainon n en porte aucun.
+    const out = await routeItinerary(model, {
+      route: async (points) => points.slice(1).map(() => leg(12, 30)),
+      elevation: async () => null,
+    });
+
+    // Premiere etape SITUEE de chaque journee : c est le point de depart du
+    // chainon, celui vers lequel aucun troncon n existe.
+    const premieres = [1, 2].map(
+      (day) =>
+        out.steps
+          .filter((step) => step.day === day)
+          .sort((a, b) => a.order - b.order)[0],
+    );
+    for (const step of premieres) {
+      expect(step).toBeDefined();
+      expect(step?.durationMin).toBe(0);
+    }
+
+    // Les journees routees redevenant toutes connues, la duree redevient un
+    // nombre REEL : la somme des deplacements mesures.
+    for (const day of out.perDay) expect(day.activityMin).not.toBeNull();
+    expect(out.totals.activityMin).not.toBeNull();
+    expect(out.totals.activityMin).toBe(out.totals.movingMin);
+  });
+
+  it('une journee NON routee laisse sa premiere etape a verifier — zero ne vaut que prouve', async () => {
+    // Le zero de la premiere etape est un fait du routage. Sans reponse du
+    // routeur, rien n est prouve : on ne comble pas.
+    const model = locatedModel(1);
+    const out = await routeItinerary(model, { route: async () => null, elevation: async () => null });
     expect(out.perDay[0].activityMin).toBeNull();
     expect(out.totals.activityMin).toBeNull();
   });

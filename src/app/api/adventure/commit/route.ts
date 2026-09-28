@@ -78,6 +78,7 @@ const draftSchema = z.object({
   }),
   calendar: z.object({
     startDate: z.string().nullable(),
+    startDateIsSuggested: z.boolean(),
     durationDays: z.number().nullable(),
     durationIsSuggested: z.boolean(),
     returnDate: z.string().nullable(),

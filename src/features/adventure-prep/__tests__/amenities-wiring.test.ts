@@ -26,7 +26,7 @@ describe('AM-W — le rechauffement court AVANT la redaction', () => {
       controller.signal,
       async () => {
         ordre.push('redaction');
-        return { drafted: null, failure: 'provider_indisponible' };
+        return { drafted: null, failure: 'provider_indisponible' , suggestedStartDate: null, suggestedDurationDays: null};
       },
       () => {},
       undefined,
@@ -47,7 +47,7 @@ describe('AM-W — le rechauffement court AVANT la redaction', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       controller.signal,
-      async () => ({ drafted: null, failure: 'provider_indisponible' }),
+      async () => ({ drafted: null, failure: 'provider_indisponible' , suggestedStartDate: null, suggestedDurationDays: null}),
       () => {},
     );
     expect(outcome.model).toBeTruthy();

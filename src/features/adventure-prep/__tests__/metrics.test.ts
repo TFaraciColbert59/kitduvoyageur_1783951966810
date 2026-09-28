@@ -52,6 +52,24 @@ function withStepPrices(
 const pick = (model: ItineraryModel, scope: 'jour' | 'aventure', id: string, day?: number) =>
   metricsFor(model, scope, day).find((metric) => metric.id === id);
 
+/**
+ * Ne price que les `priced` premieres etapes du jour 1. Les autres gardent
+ * `PRICE_TO_CHECK` : c est la situation reelle d une journee ou la base ne
+ *connait qu une partie des prix.
+ */
+function partialDay(model: ItineraryModel, priced = 1): ItineraryModel {
+  let left = priced;
+  return {
+    ...model,
+    steps: model.steps.map((step) => {
+      if (step.day !== 1) return step;
+      if (left <= 0) return { ...step, price: PRICE_TO_CHECK };
+      left -= 1;
+      return { ...step, price: euros(40) };
+    }),
+  };
+}
+
 describe('trois metriques par contexte', () => {
   it('affiche exactement trois metriques, toujours les memes par contexte', () => {
     expect(metricsFor(terrain(), 'aventure').map((m) => m.id)).toEqual([
@@ -100,6 +118,59 @@ describe('trois metriques par contexte', () => {
     const aventure = metricsFor(sejour(), 'aventure')[0];
     expect(jour.id).toBe('nuitees');
     expect(aventure.id).toBe('nuitees');
+  });
+
+  describe('budget partiel d une journee', () => {
+    it('annonce la somme des seules etapes pricees, et le reste', () => {
+      const base = voyage();
+      const dayOne = base.steps.filter((step) => step.day === 1).length;
+      expect(dayOne).toBeGreaterThan(1);
+      const model = partialDay(base, 1);
+      const budget = pick(model, 'jour', 'budget', 1);
+      if (!budget) throw new Error('budget attendu');
+      // La somme reelle des 40 € de l unique etape pricee...
+      expect(budget.formatted).toContain('40');
+      // ...et le compte exact de ce qui reste a verifier.
+      expect(budget.formatted).toContain('connus');
+      expect(budget.note).toBe(`${dayOne - 1} étapes à vérifier`);
+      expect(budget.formatted).toBe('40 € connus');
+    });
+
+    it('accole le pluriel quand plusieurs etapes du jour manquent de prix', () => {
+      const base = voyage();
+      const dayOne = base.steps.filter((step) => step.day === 1).length;
+      expect(dayOne).toBeGreaterThan(2);
+      const model = partialDay(base, dayOne - 2);
+      const budget = pick(model, 'jour', 'budget', 1);
+      if (!budget) throw new Error('budget attendu');
+      expect(budget.note).toBe('2 étapes à vérifier');
+      expect(budget.note).toMatch(/étapes à vérifier$/);
+    });
+
+    it('accole le singulier quand il ne manque qu un prix', () => {
+      const base = voyage();
+      const dayOne = base.steps.filter((step) => step.day === 1).length;
+      const model = partialDay(base, dayOne - 1);
+      const budget = pick(model, 'jour', 'budget', 1);
+      if (!budget) throw new Error('budget attendu');
+      expect(budget.note).toBe('1 étape à vérifier');
+    });
+
+    it('une journee entierement pricee naffiche ni « connus » ni precision', () => {
+      const model = withStepPrices(voyage(), 25, 1);
+      const budget = pick(model, 'jour', 'budget', 1);
+      if (!budget) throw new Error('budget attendu');
+      expect(budget.note).toBeUndefined();
+      expect(budget.formatted).not.toContain('connus');
+      expect(budget.formatted).toMatch(/^\d+ €$/);
+    });
+
+    it('aucun prix connu ne vaut « a verifier », pas 0 €', () => {
+      const budget = pick(voyage(), 'jour', 'budget', 1);
+      expect(budget?.value).toBeNull();
+      expect(budget?.formatted).toBe(A_VERIFIER);
+      expect(budget?.note).toBeUndefined();
+    });
   });
 
   it('utilise les totaux du jour selectionne', () => {
@@ -214,13 +285,13 @@ describe('accord des unites comptables', () => {
   const oneDay = () =>
     modelWith({
       activities: { primary: 'snowboard-sejour', extra: [], nights: [] },
-      calendar: { startDate: '2026-07-11', durationDays: 1, durationIsSuggested: true, returnDate: '2026-07-11' },
+      calendar: { startDate: '2026-07-11', durationDays: 1, durationIsSuggested: true, startDateIsSuggested: false, returnDate: '2026-07-11' },
     });
 
   it('ecrit « 1 jour » et jamais « 1 jours »', () => {
     const uneNuit = modelWith({
       activities: { primary: 'snowboard-sejour', extra: [], nights: [] },
-      calendar: { startDate: '2026-07-11', durationDays: 2, durationIsSuggested: false, returnDate: '2026-07-12' },
+      calendar: { startDate: '2026-07-11', durationDays: 2, durationIsSuggested: false, startDateIsSuggested: false, returnDate: '2026-07-12' },
     });
     const nuitees = pick(uneNuit, 'jour', 'nuitees', 1);
     expect(nuitees?.value).toBe(1);
@@ -230,7 +301,7 @@ describe('accord des unites comptables', () => {
   it('une journee sans etape nuit vaut zero, pas son index', () => {
     const sansNuit = modelWith({
       activities: { primary: 'snowboard-sejour', extra: [], nights: [] },
-      calendar: { startDate: '2026-07-11', durationDays: 2, durationIsSuggested: false, returnDate: '2026-07-12' },
+      calendar: { startDate: '2026-07-11', durationDays: 2, durationIsSuggested: false, startDateIsSuggested: false, returnDate: '2026-07-12' },
     });
     const nuitees = pick(sansNuit, 'jour', 'nuitees', 2);
     expect(nuitees?.value).toBe(0);
@@ -249,7 +320,7 @@ describe('accord des unites comptables', () => {
   it('accorda les nuitees sur le meme principe', () => {
     const uneNuitee = modelWith({
       activities: { primary: 'snowboard-sejour', extra: [], nights: [] },
-      calendar: { startDate: '2026-07-11', durationDays: 1, durationIsSuggested: false, returnDate: '2026-07-11' },
+      calendar: { startDate: '2026-07-11', durationDays: 1, durationIsSuggested: false, startDateIsSuggested: false, returnDate: '2026-07-11' },
     });
     expect(pick(uneNuitee, 'aventure', 'nuitees')?.formatted).toBe('1 jour');
   });

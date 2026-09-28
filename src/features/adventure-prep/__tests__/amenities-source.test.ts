@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
   buildOverpassQuery,
   normalizeOverpass,
+  normalizePhoton,
   fetchAmenitiesNear,
   __resetAmenityCache,
   MAX_AMENITY_SPAN_DEG,
+  PHOTON_QUERIES,
 } from '@/lib/queries/amenities';
 
 // AM-01 : le corridor Chamonix Argentiere ne contient dans la base projet que
@@ -178,10 +180,11 @@ describe('fetchAmenitiesNear — contrat reseau', () => {
 
     await fetchAmenitiesNear(box, fake);
     await fetchAmenitiesNear(box, fake);
-    // Les miroirs courent en parallele : le premier appel en sollicite les
-    // trois, le second ZERO. Ce qui compte est que rien ne repart au
-    // fournisseur, pas le nombre d appels du premier.
-    expect(appels).toBe(3);
+    // Les deux sources courent EN PARALLELE : le premier appel sollicite les
+    // trois miroirs ET les trois familles du repli, soit 6 requetes ; le
+    // second ZERO. Ce qui compte est que rien ne repart au fournisseur, pas
+    // le nombre d appels du premier.
+    expect(appels).toBe(6);
   });
 
   // AM-16 : mesure live du 2026-09-28. Le miroir principal a repondu 504
@@ -204,7 +207,8 @@ describe('fetchAmenitiesNear — contrat reseau', () => {
 
     const rows = await fetchAmenitiesNear(box, fake);
     expect(rows.map((r) => r.name)).toEqual(['Miroir']);
-    expect(vues.length).toBe(3);
+    // Trois miroirs + les trois requetes du repli concurrent.
+    expect(vues.length).toBe(6);
   });
 
   it('AM-17 : si tous les miroirs tombent, la liste reste vide sans lever', async () => {
@@ -254,5 +258,156 @@ describe('fetchAmenitiesNear — contrat reseau', () => {
       })) as unknown as typeof fetch;
 
     await expect(fetchAmenitiesNear(box, fake)).resolves.toEqual([]);
+  });
+});
+
+function featureHotel() {
+  return {
+    type: 'Feature',
+    geometry: { type: 'Point', coordinates: [6.8694, 45.9237] },
+    properties: {
+      name: 'Hotel Mont-Blanc',
+      osm_key: 'tourism',
+      osm_value: 'hotel',
+      city: 'Chamonix-Mont-Blanc',
+      country: 'France',
+    },
+  };
+}
+
+// AM-20 a AM-26 : REPLI PHOTON. Mesure live du 2026-09-28, depuis cette
+// machine : les TROIS miroirs Overpass du banc sont injoignables (2 x
+// ConnectTimeoutError a 10,7 s, 1 timeout a 60 s). Promise.any laisse donc
+// la requete attendre le plein delai de 45 s avant de rendre [], et le
+// parcours se vide de tous ses repas, hebergements et commerces.
+//
+// Photon (komoot), DEJA utilise par le geocodage du projet, repond en 1,5 a
+// 2,5 s depuis cette machine et rend de vrais lieux francais nommes. Il ne
+// remplace pas Overpass : il bouche le trou quand Overpass est muet, et
+// Overpass garde la main quand il repond.
+describe('normalizePhoton - repli amenites', () => {
+  const feature = (props: Record<string, unknown>, coords: [number, number]) => ({
+    type: 'Feature',
+    geometry: { type: 'Point', coordinates: coords },
+    properties: props,
+  });
+
+  it('AM-20 : classe restaurant et cafe en food', () => {
+    const out = normalizePhoton({
+      features: [
+        feature({ name: 'Albert 1er', osm_key: 'amenity', osm_value: 'restaurant', city: 'Chamonix-Mont-Blanc' }, [6.8694, 45.9237]),
+        feature({ name: 'Bar des Glaciers', osm_key: 'amenity', osm_value: 'cafe' }, [6.87, 45.924]),
+      ],
+    });
+    expect(out.map((r) => [r.name, r.category])).toEqual([
+      ['Albert 1er', 'food'],
+      ['Bar des Glaciers', 'food'],
+    ]);
+  });
+
+  it('AM-21 : classe hotel et gite en stay', () => {
+    const out = normalizePhoton({
+      features: [
+        feature({ name: 'Hotel Mont-Blanc', osm_key: 'tourism', osm_value: 'hotel' }, [6.87, 45.92]),
+        feature({ name: 'Refuge du Gouter', osm_key: 'tourism', osm_value: 'alpine_hut' }, [6.84, 45.84]),
+      ],
+    });
+    expect(out.every((r) => r.category === 'stay')).toBe(true);
+  });
+
+  it('AM-22 : classe les commerces en poi', () => {
+    const out = normalizePhoton({
+      features: [feature({ name: 'Le Fournil', osm_key: 'shop', osm_value: 'bakery' }, [6.87, 45.92])],
+    });
+    expect(out[0].category).toBe('poi');
+  });
+
+  it('AM-23 : ecarte un lieu sans nom, non verifiable donc non affichable', () => {
+    const out = normalizePhoton({
+      features: [
+        feature({ osm_key: 'amenity', osm_value: 'restaurant' }, [6.87, 45.92]),
+        feature({ name: '   ', osm_key: 'amenity', osm_value: 'cafe' }, [6.87, 45.92]),
+      ],
+    });
+    expect(out).toEqual([]);
+  });
+
+  it('AM-24 : refuse une position absente plutot que de la deviner', () => {
+    const out = normalizePhoton({
+      features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [] }, properties: { name: 'Sans position', osm_key: 'amenity', osm_value: 'restaurant' } }],
+    });
+    expect(out).toEqual([]);
+  });
+
+  it('AM-25 : dedoublonne par nom et position', () => {
+    const out = normalizePhoton({
+      features: [
+        feature({ name: 'Le Fournil', osm_key: 'shop', osm_value: 'bakery' }, [6.87, 45.92]),
+        feature({ name: 'Le Fournil', osm_key: 'amenity', osm_value: 'cafe' }, [6.87, 45.92]),
+      ],
+    });
+    expect(out).toHaveLength(1);
+  });
+
+  it('AM-26 : un corps sans features est vide, pas une exception', () => {
+    expect(normalizePhoton({})).toEqual([]);
+    expect(normalizePhoton(null)).toEqual([]);
+    expect(normalizePhoton({ features: 'nope' })).toEqual([]);
+  });
+});
+
+// AM-27 : le VRAI contrat de P0.24. Les trois miroirs Overpass sont morts,
+// donc le repli doit produire de vrais lieux. Sans ce test, le parcours peut
+// repasser a [] et personne ne le voit : les 503 de l etape 2 seraient
+// alors interpretes comme un probleme de routage.
+describe('fetchAmenitiesNear - repli quand Overpass est muet', () => {
+  const box = { minLat: 45.8, maxLat: 46.05, minLng: 6.7, maxLng: 7.2 };
+
+  it('AM-27 : Overpass muet, Photon prend le relais et rend des lieux', async () => {
+    __resetAmenityCache();
+    const fake = (async (url: string) => {
+      if (url.includes('overpass')) throw new Error('miroir muet');
+      return new Response(JSON.stringify({ features: [featureHotel()] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }) as unknown as typeof fetch;
+    const rows = await fetchAmenitiesNear(box, fake);
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows[0].name).toBe('Hotel Mont-Blanc');
+  });
+
+  it('AM-28 : quand Overpass repond, il garde la main meme si Photon repond aussi', async () => {
+    __resetAmenityCache();
+    const fake = (async (url: string) => {
+      if (url.includes('photon')) {
+        return new Response(JSON.stringify({ features: [featureHotel()] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      return new Response(
+        JSON.stringify({ elements: [{ lat: 45.9, lon: 6.87, tags: { name: 'Via Overpass', amenity: 'bar' } }] }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      );
+    }) as unknown as typeof fetch;
+    const rows = await fetchAmenitiesNear(box, fake);
+    // Le repli court en parallele, donc il EST sollicite, mais sa reponse
+    // est ecartee : Overpass est la source la plus complete, donc c'est elle
+    // qui doit gagner quand les deux repondent.
+    expect(rows.map((r) => r.name)).toEqual(['Via Overpass']);
+  });
+
+  it('AM-29 : si les DEUX sources sont muettes, la liste reste vide sans lever', async () => {
+    __resetAmenityCache();
+    const fake = (async () => { throw new Error('reseau mort'); }) as unknown as typeof fetch;
+    await expect(fetchAmenitiesNear(box, fake)).resolves.toEqual([]);
+  });
+
+  it('AM-30 : le repli interroge bien les trois familles attendues', () => {
+    expect(PHOTON_QUERIES.length).toBeGreaterThanOrEqual(3);
+    expect(PHOTON_QUERIES.some((q) => q.includes('restaurant'))).toBe(true);
+    expect(PHOTON_QUERIES.some((q) => q.includes('hotel'))).toBe(true);
+    expect(PHOTON_QUERIES.some((q) => q.includes('shop') || q.includes('supermarket'))).toBe(true);
   });
 });

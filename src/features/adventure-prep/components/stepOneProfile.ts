@@ -146,7 +146,7 @@ export type StepOneFieldKey = 'activity' | 'origin' | 'destination' | 'startDate
  */
 export function stepOneAskedFields(
   draft: AdventurePrepDraft,
-  id: StepOneProfileId,
+  id: StepOneProfileId
 ): readonly StepOneFieldKey[] {
   const profile = PROFILES[id];
   const asked: StepOneFieldKey[] = ['activity'];
@@ -211,7 +211,7 @@ const PROFILE_LABELS: Readonly<
  */
 export function stepOneMissingSummary(
   draft: AdventurePrepDraft,
-  id: StepOneProfileId,
+  id: StepOneProfileId
 ): string | null {
   const asked = stepOneAskedFields(draft, id);
   const labels: string[] = [];
@@ -232,8 +232,48 @@ export function stepOneMissingSummary(
  */
 const BLOCKING: ReadonlySet<StepOneFieldKey> = new Set<StepOneFieldKey>(['origin', 'duration']);
 
+/**
+ * Repartition des champs manquants entre ce qui BLOQUE et ce que l IA prend.
+ *
+ * AN7 : la ligne unique melangeait les deux. L ecran annoncait un arret la ou
+ * le CTA etait actif, et l utilisateur ne pouvait plus savoir ce qu il avait a
+ * corriger. On mesure une fois, on presente deux fois.
+ */
+export interface StepOneMissing {
+  /** Sans au moins un de ces champs, la generation n a pas de sens. */
+  blocking: string[];
+  /** Facultatifs : l IA les tranche (date, arrivee, activite du catalogue). */
+  optional: string[];
+}
+
+export function stepOneMissing(draft: AdventurePrepDraft, id: StepOneProfileId): StepOneMissing {
+  const asked = stepOneAskedFields(draft, id);
+  const blocking: string[] = [];
+  const optional: string[] = [];
+  for (const field of asked) {
+    if (!isMissing(draft, field)) continue;
+    const label = PROFILE_LABELS[id][field] ?? DEFAULT_LABELS[field];
+    const bucket = BLOCKING.has(field) ? blocking : optional;
+    if (!bucket.includes(label)) bucket.push(label);
+  }
+  return { blocking, optional };
+}
+
+/** Le CTA est actif exactement quand aucun bloqueur ne reste. */
 export function canCreateStepOne(draft: AdventurePrepDraft, id: StepOneProfileId): boolean {
-  return stepOneAskedFields(draft, id).every(
-    (field) => BLOCKING.has(field) === false || !isMissing(draft, field),
-  );
+  return stepOneMissing(draft, id).blocking.length === 0;
+}
+
+/**
+ * Ce que l IA.complete toute seule. Annonce quand le CTA est actif, JAMAIS
+ * quand il ne l est pas : promettre un complement alors qu un bloqueur subsiste
+ * est precisement la confusion que AN7 supprime.
+ */
+export function stepOneReadySummary(
+  draft: AdventurePrepDraft,
+  id: StepOneProfileId
+): string | null {
+  const { blocking, optional } = stepOneMissing(draft, id);
+  if (blocking.length > 0 || optional.length === 0) return null;
+  return `L’IA complètera : ${optional.join(', ')}`;
 }

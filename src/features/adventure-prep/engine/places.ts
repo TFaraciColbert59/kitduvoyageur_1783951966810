@@ -163,6 +163,118 @@ export function normalizePlaceName(value: string): string {
 const MIN_MATCH = 4;
 
 /**
+ * Les articles francais, et eux seuls.
+ *
+ * Le redacteur ecrit « refuge Grands Mulets » ; la source reelle ecrit
+ * « Refuge des Grands Mulets ». Ces deux noms designent le meme refuge, et les
+ * mettre en equivalence n invente rien : c est une regle de correspondance,
+ * comme l accent ou la casse. Les mots-lieux ne sont pas concernes.
+ */
+const ARTICLES: ReadonlySet<string> = new Set([
+  'le', 'la', 'les', 'un', 'une', 'des', 'du', 'de', 'd', 'l', 'au', 'aux',
+]);
+
+/**
+ * Le nom comparable, ARTICLES RETIRES.
+ *
+ * Passe par `normalizePlaceName` : un seul etat d entrees, donc une seule
+ * definition de « comparable ». Retirer un article ne peut qu elargir
+ * l appariement, jamais le restreindre.
+ */
+export function normalizePlaceKey(value: string): string {
+  return normalizePlaceName(value)
+    .split(' ')
+    .filter((mot) => !ARTICLES.has(mot))
+    .join(' ');
+}
+
+/**
+ * Sous cette longueur, un mot ne prouve rien.
+ *
+ * Mesure sur le massif de Chamonix : "Aiguille du Midi" et "Aiguille des
+ * Glaciers" partagent "aiguille" et designent deux sommets differents. Un mot
+ * long ne suffit donc pas a prouver qu on parle du meme lieu ; il en faut deux.
+ */
+const SIGNIFICANT_WORD = 4;
+
+/**
+ * Le pluriel seul ne distingue pas un lieu.
+ *
+ * Le redacteur ecrit "Grand Mulets" la ou le geocodeur repond "Refuge des
+ * Grands Mulets" : c est le meme refuge, a une lettre pres. On retire donc le
+ * `s` final, mais seulement au-dela de quatre lettres, sans quoi "midi", "pic",
+ * "lac" et "tour" se videraient de leur fin et Fincheraient par designer le
+ * meme sommet.
+ */
+function sansPluriel(mot: string): string {
+  return mot.length > SIGNIFICANT_WORD && mot.endsWith('s') ? mot.slice(0, -1) : mot;
+}
+
+/**
+ * Les mots d un nom qui portent assez de sens pour prouver une identite.
+ *
+ * Les articles sont deja retires en amont, donc il ne reste que des mots
+ * pleins. Le pluriel est rabattu, parce que "grands" et "grand" nomment la
+ * meme chose.
+ */
+function motsSignificatifs(cle: string): ReadonlySet<string> {
+  const mots = cle
+    .split(' ')
+    .filter((mot) => mot.length >= SIGNIFICANT_WORD)
+    .map(sansPluriel);
+  return new Set(mots);
+}
+
+/**
+ * Le nombre de mots significatifs que deux noms partagent, ou 0.
+ *
+ * Le seuil de DEUX est ce qui distingue cette passe des precedentes : un seul
+ * mot commun prouve une famille de noms, pas un lieu. Deux prouveront que
+ * "Grand Mulets" et "Refuge des Grands Mulets" designent le meme refuge.
+ */
+function motsCommuns(cibleKey: string, nomKey: string): number {
+  const a = motsSignificatifs(cibleKey);
+  const b = motsSignificatifs(nomKey);
+  // Un seul des deux cotes etant pauvre en mots, l accord ne prouve rien.
+  if (a.size < 2 || b.size < 2) return 0;
+  let commun = 0;
+  for (const mot of a) if (b.has(mot)) commun += 1;
+  return commun;
+}
+
+/**
+ * Le lieu partage au moins DEUX mots significatifs avec l etape, ou `null`.
+ *
+ * Cinquieme et derniere passe, celle qui rapporte le plus de succes : sans elle,
+ * « Grand Mulets » ne trouvait pas « Refuge des Grands Mulets » — les deux
+ * noms ne se contiennent pas, ne s'egalent pas, et l etape restait donc sans
+ * position, donc sans chaine a router, donc sans kilometre.
+ *
+ * Elle ne peut qu AJOUTER une correspondance la ou les quatre precedentes ont
+ * rendu `null`, jamais en déplacer une : elle ne s'execute qu' apres elles.
+ * Le plus long nom gagne, comme dans toutes les autres passes : c'est le lieu
+ * le plus precis, donc le moins d'inference.
+ */
+function meilleurParMotsCommuns(
+  candidates: readonly PlaceCandidate[],
+  cibleKey: string,
+): PlaceCandidate | null {
+  let best: PlaceCandidate | null = null;
+  let bestLength = 0;
+  for (const candidate of candidates) {
+    const nomKey = normalizePlaceKey(candidate.name);
+    if (nomKey.length < MIN_MATCH) continue;
+    if (motsCommuns(cibleKey, nomKey) < 2) continue;
+    const longueur = normalizePlaceName(candidate.name).length;
+    if (longueur > bestLength) {
+      best = candidate;
+      bestLength = longueur;
+    }
+  }
+  return best;
+}
+
+/**
  * Le lieu REEL que l etape cite, ou `null`.
  *
  * L egalite exacte passe d abord : « Lac Blanc » designe Lac Blanc, et non
@@ -193,7 +305,30 @@ export function matchNamedPlace(
       bestLength = nom.length;
     }
   }
-  return best;
+  if (best !== null) return best;
+
+  // Les deux passes ci-dessus comparent des noms ou un article manque a
+  // l un des deux. C est le cas du redacteur ET celui du geocodeur, qui
+  // renvoie « Refuge des Grands Mulets » la ou le modele ecrivait « refuge
+  // Grands Mulets ». Sans ce passage, le lieu reste introuvable alors que les
+  // deux noms designent la meme montagne.
+  const cibleKey = normalizePlaceKey(text);
+  if (cibleKey.length < MIN_MATCH) return null;
+
+  for (const candidate of candidates) {
+    if (normalizePlaceKey(candidate.name) === cibleKey) return candidate;
+  }
+
+  for (const candidate of candidates) {
+    const nomKey = normalizePlaceKey(candidate.name);
+    if (nomKey.length < MIN_MATCH) continue;
+    if (cibleKey.includes(nomKey) && nomKey.length > bestLength) {
+      best = candidate;
+      bestLength = nomKey.length;
+    }
+  }
+  if (best !== null) return best;
+  return meilleurParMotsCommuns(candidates, cibleKey);
 }
 
 /**
@@ -383,15 +518,52 @@ function demoteOrphans(model: ItineraryModel): ItineraryModel {
  * prix connu, le total serait une somme partielle presentee comme le budget
  * du jour — ce que l'utilisateur lirait comme un nombre fiable.
  */
-export function dayBudget(model: ItineraryModel, day: number): number | null {
+/**
+ * Budget d une journee, DECOMPOSE.
+ *
+ * Le contrat est honnete par construction : `known` ne contient que des prix
+ * reellement ports par une etape, et `unknownCount` dit combien d etapes du
+ * jour en restent a verifier. L ecran peut donc afficher
+ * « 75 € connus · 3 étapes à vérifier » — ce qui est un fait — au lieu
+ * d effacer l information, ou pire, de presenter une somme partielle comme
+ * le total du jour.
+ */
+export interface DayBudget {
+  /** Somme des seuls prix connus, a l arrondi centime. */
+  known: number;
+  /** Étapes du jour dont le prix n est pas connu. */
+  unknownCount: number;
+  /** Étapes du jour qui portent un prix. */
+  pricedCount: number;
+  /** Vrai quand toutes les etapes ont un prix : `known` est alors le total. */
+  complete: boolean;
+  /** Vrai quand aucune etape n a de prix : il n y a rien a presenter. */
+  none: boolean;
+}
+
+export function dayBudget(model: ItineraryModel, day: number): DayBudget {
   const steps = model.steps.filter((step) => step.day === day);
-  if (steps.length === 0) return null;
-  let total = 0;
-  for (const step of steps) {
-    if (step.price.amount === null) return null;
-    total += step.price.amount;
+  if (steps.length === 0) {
+    return { known: 0, unknownCount: 0, pricedCount: 0, complete: false, none: true };
   }
-  return Math.round(total * 100) / 100;
+  let known = 0;
+  let unknownCount = 0;
+  let pricedCount = 0;
+  for (const step of steps) {
+    if (step.price.amount === null) {
+      unknownCount += 1;
+    } else {
+      pricedCount += 1;
+      known += step.price.amount;
+    }
+  }
+  return {
+    known: Math.round(known * 100) / 100,
+    unknownCount,
+    pricedCount,
+    complete: unknownCount === 0,
+    none: pricedCount === 0,
+  };
 }
 
 export { PRICE_TO_CHECK };

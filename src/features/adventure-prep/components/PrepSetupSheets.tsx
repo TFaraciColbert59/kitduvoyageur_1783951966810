@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Icon from '@/components/ui/Icon';
 import { Button, SearchField, Switch } from '@/components/ui';
 import { getCurrentGeoPosition, type GeoCoordinates } from '@/lib/native/geolocation';
+import type { PublicUser } from '@/lib/users/publicUser';
 import {
   buildReverseGeocodeUrl,
   myPositionToPlace,
@@ -389,14 +390,6 @@ export function useDefaultOrigin(enabled: boolean) {
 /* Personnes — la liste d'amis et la recherche, lues dans la base       */
 /* ------------------------------------------------------------------ */
 
-export interface PublicUser {
-  readonly id: string;
-  readonly fullName: string;
-  readonly avatarUrl: string | null;
-  readonly location: string | null;
-  readonly trustScore: number | null;
-}
-
 function readString(value: unknown): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null;
 }
@@ -646,6 +639,45 @@ function formatCoord(value: number, positive: string, negative: string): string 
   return `${Math.abs(value).toFixed(5)}° ${hemisphere}`;
 }
 
+export interface PickerCaption {
+  /** Ce qui se lit en tete : le nom du lieu quand on l'a, sinon la position. */
+  readonly label: string;
+  /** La position exacte, quand le nom occupe deja la tete. */
+  readonly detail: string | null;
+}
+
+/**
+ * AN5 — la legende du point, sous la carte du tiroir Lieu.
+ *
+ * Defaut corrige (constate le 2026-09-28) : la carte affichait la position
+ * seule, meme quand le lieu portait un nom. Choisir « Chamonix-Mont-Blanc »
+ * laissait lire « 45.92375° N · 6.86933° E » : des nombres a la place du nom
+ * choisi, donc plus rien pour verifier d'un coup d'oeil ce qu'on a retenu.
+ *
+ * Regle : le NOM vient toujours en tete des qu'il existe. La position ne
+ * disparaît pas pour autant — elle descend en second, parce qu'elle reste une
+ * information vraie et precise. Et rien n'est invente pour la remplacer :
+ * un point sans nom garde la position comme unique fait, ce qui est
+ * exactement ce qu'on sait de lui.
+ *
+ * `place` n'est jamaisMelange a un point pose : en mode pose le marqueur est
+ * neuf, et lui attribuer le nom de l'ancien lieu afficherait un nom qui ne
+ * designe pas le point. D'ou le `null` passe par l'ecran en mode interactif.
+ */
+export function pickerPlaceCaption(
+  place: PlaceRef | null,
+  marker: { readonly lat: number; readonly lon: number } | null,
+  interactive: boolean,
+  typedName = '',
+): PickerCaption | null {
+  if (marker === null) return null;
+  const position = `${formatCoord(marker.lat, 'N', 'S')} · ${formatCoord(marker.lon, 'E', 'O')}`;
+  const name = interactive ? typedName.trim() : (place?.name ?? '').trim();
+  if (name.length === 0) return { label: position, detail: null };
+  const country = (place?.country ?? '').trim();
+  return { label: country.length > 0 ? `${name} · ${country}` : name, detail: position };
+}
+
 // Les deux extremites du trace affiche par la carte du tiroir.
 // `HubGlobeMap` ne rend rien sans deux points distincts : on lui donne le
 // centre et, s il existe, le point pose. Sans point pose, un second point a
@@ -738,6 +770,16 @@ function MiniMap({ centre, shown, interactive, onPick, onCancel }: MiniMapProps)
           },
         ];
 
+  // En lecture, la legende suit le lieu retenu ; en pose, elle suit le point
+  // que la personne vient de poser. `shown` n'est donc pas passe en mode
+  // interactif : son nom ne designerait pas le nouveau point.
+  const caption = pickerPlaceCaption(
+    interactive ? null : shown,
+    marker,
+    interactive,
+    name,
+  );
+
   return (
     <div ref={wrapRef} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       <div
@@ -754,10 +796,13 @@ function MiniMap({ centre, shown, interactive, onPick, onCancel }: MiniMapProps)
         />
       </div>
 
-      {marker !== null ? (
-        <p className="note neutral" style={{ margin: 0 }}>
-          {formatCoord(marker.lat, 'N', 'S')} · {formatCoord(marker.lon, 'E', 'O')}
-        </p>
+      {caption !== null ? (
+        <div className="prep-picker__caption">
+          <span className="prep-picker__caption-label">{caption.label}</span>
+          {caption.detail !== null ? (
+            <span className="prep-picker__caption-detail">{caption.detail}</span>
+          ) : null}
+        </div>
       ) : null}
 
       {marker === null ? (
@@ -1079,8 +1124,13 @@ export function CalendarSheet({ draft, actions, onClose }: PrepSheetProps) {
 
   const apply = () => {
     const totalDays = Number.isFinite(days) && days >= 1 ? Math.round(days) : null;
+    // Ouvrir ce tiroir et valider, c'est un choix de la personne : les deux
+    // drapeaux retombent a `false`. Le badge « propose par l'IA » disparait
+    // donc des que la main reprend la main, sans qu'aucune autre piece ait a
+    // savoir qu'une proposition avait existe.
     actions.setCalendar({
       startDate: startDate || null,
+      startDateIsSuggested: false,
       durationDays: totalDays,
       durationIsSuggested: false,
       returnDate: keepReturnDate(draft.calendar.returnDate, startDate || null, totalDays),

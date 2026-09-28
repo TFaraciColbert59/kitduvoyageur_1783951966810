@@ -1,6 +1,11 @@
 import { describeAiFailure } from './aiFailure';
 import type { AIFailureReason } from '@/lib/ai/providers/types';
-import type { Contingency, GenerationPhaseId, ItineraryModel } from '../types';
+import type {
+  Contingency,
+  GenerationPhaseId,
+  GenerationPhaseVerdict,
+  ItineraryModel,
+} from '../types';
 
 /* ------------------------------------------------------------------ */
 /* Hors ligne - ecran transverse 70                                   */
@@ -113,7 +118,7 @@ function buildSummary(count: number): string {
 function aiUnavailableReason(
   online: boolean,
   aiEnabled: boolean,
-  failure: AIFailureReason | null,
+  failure: AIFailureReason | null
 ): string {
   // Une cause CONNUE prime toujours : elle est plus precise que les deux
   // hypotheses generales ci-dessous, et elle est la seule vraie.
@@ -273,18 +278,21 @@ export type PhaseStatus =
   /** Le travail a abouti, mais sans valeur : on ne sait pas, ce n est pas une panne. */
   | 'inverifiable';
 
-export interface PhaseOutcome {
-  readonly id: GenerationPhaseId;
-  readonly status: PhaseStatus;
-  /**
-   * Raison MOTIVEE, prete a afficher telle quelle. Jamais de detail technique :
-   * ni nom de fournisseur, ni code HTTP, ni trace d exception. Une raison qui
-   * contient un `503` ou un nom de variable est une raison que personne ne lit.
-   */
-  readonly reason: string | null;
-  /** Cette phase se rejoue-t-elle seule, sans reconstruire tout le parcours ? */
-  readonly retryable: boolean;
-}
+/**
+ * Ce que chaque phase a REELLEMENT livre, et pourquoi elle n'a rien livre.
+ *
+ * La raison est MOTIVEE, prete a afficher telle quelle : jamais de detail
+ * technique, ni nom de fournisseur, ni code HTTP, ni trace d exception. Une
+ * raison qui contient un `503` ou un nom de variable est une raison que
+ * personne ne lit.
+ *
+ * Le verdict est DEFINI par les types du domaine, pas ici.
+ *
+ * Un seul type pour ce que le moteur produit et ce que le store conserve : deux
+ * declarations identiques finiraient par diverger, et c'est precisement ce
+ * desaccord qui faisait disparaitre le bandeau.
+ */
+export type PhaseOutcome = GenerationPhaseVerdict;
 
 /** Les six phases sont rejouables une par une : chacune a un runner dedie. */
 const RETRYABLE: ReadonlySet<string> = new Set<string>(PHASE_IDS);
@@ -374,11 +382,6 @@ export function phaseHealth(outcome: {
 }
 
 /** La raison a afficher pour une phase, ou `null` quand elle a reussi. */
-export function phaseReason(
-  health: PhaseHealth,
-  id: GenerationPhaseId,
-): string | null {
+export function phaseReason(health: PhaseHealth, id: GenerationPhaseId): string | null {
   return health.phases.find((phase) => phase.id === id)?.reason ?? null;
 }
-
-

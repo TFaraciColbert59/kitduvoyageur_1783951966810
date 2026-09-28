@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAdventurePrepStore } from '../store/useAdventurePrepStore';
 import { canOpenStep, firstUnsatisfiedStep, isPicking } from '../engine/steps';
+import { staleDraftNotice, todayCivilIso } from '../engine/staleDraft';
 import type { PrepStepId } from '../types';
 import type { PhaseRetryDeps } from '../engine/itineraryPhases';
 import { fetchItineraryProposal } from '@/app/prepare/actions';
@@ -13,6 +14,7 @@ import { ActivityPickerScreen } from './ActivityPickerScreen';
 import { DestinationStep } from './DestinationStep';
 import { ItineraryStepScreen } from './ItineraryStep';
 import { DepartureStep } from './DepartureStep';
+import { StaleDraftBanner } from './StaleDraftBanner';
 import { PrepSheets, type PrepPlaceField, type PrepSheetId } from './PrepSheets';
 
 /**
@@ -24,14 +26,22 @@ import { PrepSheets, type PrepPlaceField, type PrepSheetId } from './PrepSheets'
  */
 export function PrepFlow() {
   const draft = useAdventurePrepStore((state) => state.draft);
+  const startNewAdventure = useAdventurePrepStore((state) => state.startNewAdventure);
   const [sheet, setSheet] = useState<PrepSheetId | null>(null);
   const [focusStepId, setFocusStepId] = useState<string | null>(null);
   const [placeField, setPlaceField] = useState<PrepPlaceField | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [today, setToday] = useState<string | null>(null);
 
   // Le brouillon est relu depuis localStorage : le premier rendu doit montrer
   // la même chose que le serveur, sinon React signale un écart d'hydratation.
-  useEffect(() => setMounted(true), []);
+  // La date du jour n est lue qu apres le montage. Avant, le serveur ne peut
+  // pas la connaitre, et une alerte de perimption rendue des le premier
+  // rendu serait un ecart d hydratation.
+  useEffect(() => {
+    setMounted(true);
+    setToday(todayCivilIso(new Date()));
+  }, []);
 
   // `placeField` porte l extremite demandee : sans elle, la vue lieu deduisait
   // l extremite et cliquer « Depart » editait l arrivee.
@@ -57,6 +67,13 @@ export function PrepFlow() {
     : firstUnsatisfiedStep(draft);
 
   const picking = isPicking(draft);
+
+  // RecALCUL A CHAQUE CHANGEMENT DE BROUILLON : si la personne remet une
+  // date a venir, le bandeau disparait de lui-meme. Aucune fois a dire.
+  const staleNotice = useMemo(
+    () => (today === null ? null : staleDraftNotice(draft, today)),
+    [draft, today],
+  );
 
   // Les dependances de REPRISE, construites une seule fois.
   //
@@ -99,6 +116,7 @@ export function PrepFlow() {
         picking={picking}
         phaseRetryDeps={phaseRetryDeps}
       >
+        <StaleDraftBanner notice={staleNotice} onReset={startNewAdventure} />
         {picking && <ActivityPickerScreen onOpenSheet={openSheet} />}
         {!picking && step === 'destination' && <DestinationStep onOpenSheet={openSheet} />}
         {!picking && step === 'itinerary' && <ItineraryStepScreen onOpenSheet={openSheet} />}

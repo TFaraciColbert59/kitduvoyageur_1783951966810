@@ -1,23 +1,59 @@
 /**
  * Routage reel du preparateur.
  *
- * Regle inviolable : une distance affichee est une distance ROUTIERE mesuree,
- * ou `null`. Le vol d'oiseau n'est jamais presente comme une distance de
- * parcours, et une panne du routeur ne devient jamais « 0 km ».
+ * Regle inviolable : une distance affichee est une distance MESUREE sur le
+ * reseau du mode de deplacement reel, ou `null`. Le vol d'oiseau n'est jamais
+ * presente comme une distance de parcours, et une panne du routeur ne devient
+ * jamais « 0 km ».
  *
- * Deux fournisseurs libres, sans cle, appeler cote navigateur via /api/route :
- *   - OSRM       : distance, duree et geometrie du trace sur le reseau routier ;
+ * P0.22 : le profil etait fige sur le reseau routier. Un trajet de marche
+ * etait donc annonce en 12 min de voiture — 2 h 07 mesurees a pied sur les
+ * MEMES points. Le mode n'est plus une option d'affichage : c'est une entree
+ * du calcul, et il remonte jusqu'a la query du fournisseur.
+ *
+ * Trois fournisseurs libres, sans cle, appeler cote navigateur via /api/route :
+ *   - OSRM       : reseau routier, pour `voiture` ;
+ *   - Valhalla    : pieton et velo, sur le graphe pedestre ;
  *   - Open-Meteo : altitude reelle de chaque point du trace, donc le denivele.
  *
  * Ce module separe strictement le calcul pur (testable, deterministe) de
  * l'appel reseau (injecte), pour que la logique reste verifiable hors ligne.
  */
 
-import type { ItineraryModel, ItineraryStep } from '../types';
+import type { ItineraryModel, ItineraryStep, MetricsContext } from '../types';
 
 export interface GeoPoint {
   readonly lat: number;
   readonly lon: number;
+}
+
+/**
+ * Mode de deplacement reellement mesure.
+ *
+ * Ces trois valeurs sont le SEUL vocabulaire du routage. Un profil qui n'est
+ * pas dans cette liste n'est pas un mode, c'est une faute de frappe : il doit
+ * etre refuse, jamais remplace par un defaut silencieux, car un defaut
+ * silencieux afficherait encore des kilometres de voiture.
+ */
+export type TravelMode = 'pieton' | 'velo' | 'voiture';
+
+export const TRAVEL_MODES: readonly TravelMode[] = ['pieton', 'velo', 'voiture'];
+
+/**
+ * Le mode de mesure deduit du contexte du parcours.
+ *
+ * `terrain` et `sejour` sont des parcours ou l'on se deplace sur place : ils
+ * sont donc mesures sur le graphe pedestre. `voyage` est un trajet d'un point a
+ * un autre : il est mesure sur le reseau routier.
+ *
+ * Limite CONNUE et assumee : `velo` est accepte partout (contrat, route,
+ * routeur, tests) mais pas encore produit ici, parce que le modele ne porte que
+ * `metricsContext` et non la selection d'activites. Un parcours velo est donc
+ * mesure comme un parcours pieton : moins faux qu'en voiture, encore faux.
+ * Le reste est trace dans la checklist, pas ici.
+ */
+export function travelModeFor(context: MetricsContext): TravelMode {
+  return context === 'voyage' ? 'voiture' : 'pieton';
 }
 
 /** Un troncon tel que renvoye par OSRM : la mesure, jamais une estimation. */
@@ -26,6 +62,14 @@ export interface RouteLeg {
   readonly durationMin: number;
   /** Trace reel, au format OSRM : `[lon, lat]`. */
   readonly geometry: readonly (readonly [number, number])[];
+  /**
+   * Denivele positif, en metres, quand le fournisseur sait le mesurer.
+   *
+   * Facultatif parce que tous les fournisseurs ne le savent pas : OSRM et
+   * Valhalla ne le donnent pas, seul BRouter — moteur de randonnee — expose un
+   * denivele reel. `undefined` veut dire « non mesure », jamais « plat ».
+   */
+  readonly ascentM?: number;
 }
 
 /** Ce qu'une journee sait reellement de son trajet. */
@@ -43,12 +87,30 @@ export interface RoutingResolution {
   readonly perDay: readonly (DayRoute | null)[];
   /** Troncon d'arrivee de chaque etape situee, pour le detail de la fiche. */
   readonly legByStepId: Readonly<Record<string, RouteLeg>>;
+  /**
+   * Etapes situees vers lesquelles AUCUN deplacement n'existe : la premiere
+   * de chaque journee routee. On y commence, donc le trajet vers ce point est
+   * nul — un fait du chainon, pas une donnee manquante.
+   *
+   * Sans ce registre, la premiere etape de chaque jour gardait `durationMin`
+   * a `null`, alors que `activityMin` n'accepte une valeur que si TOUTES les
+   * etapes du jour en ont une : la journee entiere et le total restaient donc
+   * « a verifier » sur chaque parcours reellement genere.
+   */
+  readonly zeroTravelStepIds?: ReadonlySet<string>;
 }
 
 /** Collaborateurs injectes : le reseau se teste avec des doublures. */
 export interface RoutingDeps {
-  /** Trace des points dans l'ordre ; `null` quand la source ne repond pas. */
-  route: (points: readonly GeoPoint[], signal?: AbortSignal) => Promise<RouteLeg[] | null>;
+  /**
+   * Trace des points dans l'ordre, sur le reseau du mode demande ; `null`
+   * quand la source ne repond pas, ou quand son trace n'atteint pas le lieu.
+   */
+  route: (
+    points: readonly GeoPoint[],
+    mode: TravelMode,
+    signal?: AbortSignal,
+  ) => Promise<RouteLeg[] | null>;
   /** Altitude reelle, alignee sur les points ; `null` si la source echoue. */
   elevation: (
     points: readonly (readonly [number, number])[],
@@ -178,9 +240,13 @@ export function applyRouting(
     };
   });
 
+  const zeroTravel = resolution.zeroTravelStepIds ?? new Set<string>();
   const steps = model.steps.map((step) => {
     const leg = resolution.legByStepId[step.id];
-    if (!leg) return step;
+    // Un point de depart de journee ne se rejoint pas : sa duree de trajet
+    // vaut zero, et c'est mesure — pas suppose. Absent du registre (journee non
+    // routee), l etape reste a verifier.
+    if (!leg) return zeroTravel.has(step.id) ? { ...step, durationMin: 0 } : step;
     return { ...step, durationMin: leg.durationMin };
   });
 
@@ -292,10 +358,14 @@ export async function routeItinerary(
   deps: RoutingDeps,
   signal?: AbortSignal,
 ): Promise<ItineraryModel> {
+  // Le mode se deduit UNE fois pour tout le parcours : c'est la meme
+  // intention de deplacement du premier au dernier jour.
+  const mode = travelModeFor(model.metricsContext);
   const chains = dayChains(model);
   const ids = stepIdsByDay(model);
   const perDay: (DayRoute | null)[] = [];
   const legByStepId: Record<string, RouteLeg> = {};
+  const zeroTravelStepIds = new Set<string>();
 
   for (let index = 0; index < chains.length; index += 1) {
     const chain = chains[index];
@@ -317,11 +387,14 @@ export async function routeItinerary(
       // portaient une donnee reellement mesuree — le preparateur affichait
       // alors « a verifier » sur un total dont toutes les journees avaient
       // repondu. Un jour NON mesure, lui, reste `null` : rien n est invente.
-      perDay.push(
-        chain.length === 1 && allLocated && complete
-          ? { distanceKm: 0, durationMin: 0, geometry: [], elevGainM: 0, elevLossM: 0 }
-          : null,
-      );
+      if (chain.length === 1 && allLocated && complete) {
+        // Journee PROUVEE sans deplacement : la distance nulle est mesuree, et
+        // son unique etape n a donc rien a trajetner non plus.
+        perDay.push({ distanceKm: 0, durationMin: 0, geometry: [], elevGainM: 0, elevLossM: 0 });
+        zeroTravelStepIds.add(chain[0].stepId);
+      } else {
+        perDay.push(null);
+      }
       continue;
     }
 
@@ -330,6 +403,7 @@ export async function routeItinerary(
     // un troncon de longueur nulle.
     const legs = await deps.route(
       chain.map((node) => node.point),
+      mode,
       signal,
     );
     if (!legs || legs.length === 0) {
@@ -343,6 +417,9 @@ export async function routeItinerary(
     // duree routiere mesuree. Les points repetes ayant ete retires, l index
     // suit directement la chaine.
     const dayIds = chain.map((node) => node.stepId);
+    // Le point de depart du chainon ne se rejoint pas depuis un point
+    // precedent : on y commence. Le routage etant reussi, ce zero est PROUVE.
+    if (dayIds[0]) zeroTravelStepIds.add(dayIds[0]);
     legs.forEach((leg, legIndex) => {
       const stepId = dayIds[legIndex + 1];
       if (stepId) legByStepId[stepId] = leg;
@@ -360,5 +437,5 @@ export async function routeItinerary(
     });
   }
 
-  return applyActivityDurations(applyRouting(model, { perDay, legByStepId }));
+  return applyActivityDurations(applyRouting(model, { perDay, legByStepId, zeroTravelStepIds }));
 }

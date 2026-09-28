@@ -166,8 +166,40 @@ export function DepartureStep({ onOpenSheet }: DepartureStepProps) {
       if (!controller.signal.aborted) abort.current = null;
     }
   }, [draft, router, save]);
+/**
+ * Titre affiche de l aventure, du plus certain au moins certain.
+ *
+ * 1. le nom saisi par la personne ;
+ * 2. le titre propose par le modele lors de la generation reelle ;
+ * 3. un libelle neutre, qui ne pretend pas etre une donnee.
+ */
+function coverTitle(draft: AdventurePrepDraft): string {
+  const saisi = draft.coverName?.trim();
+  if (saisi) return saisi;
+  const propose = draft.itinerary?.title?.trim();
+  if (propose) return propose;
+  return 'Ton aventure';
+}
+
+/**
+ * Ligne d aide sous le titre.
+ *
+ * Elle ne renvoie JAMAIS « A verifier » en bloc : chaque partie est ajoutee
+ * seulement si elle est connue. Une duree connue reste donc lue meme quand
+ * l activite ne l a pas ete.
+ */
+function coverSubtitle(draft: AdventurePrepDraft): string {
+  const parts: string[] = [];
   const activity = activityById(draft.activities.primary);
-  const title = draft.coverName ?? 'Ton aventure';
+  if (activity) parts.push(activity.label);
+  const days = draft.calendar.durationDays;
+  if (days !== null && Number.isFinite(days)) parts.push(`${days} jour${days === 1 ? '' : 's'}`);
+  if (parts.length === 0) return A_VERIFIER;
+  return parts.join(' · ');
+}
+
+  const activity = activityById(draft.activities.primary);
+  const title = coverTitle(draft);
   
   const gear = resolvedGear(draft);
   const weight = packWeight(gear);
@@ -205,7 +237,7 @@ export function DepartureStep({ onOpenSheet }: DepartureStepProps) {
               {title}
             </h1>
             <div style={{ fontSize: 'var(--f-sec)', color: 'var(--lkv-text-secondary)', marginTop: 2 }}>
-              {activity ? `${activity.label} · ${draft.calendar.durationDays ?? A_VERIFIER} jour${draft.calendar.durationDays === 1 ? '' : 's'}` : A_VERIFIER}
+              {coverSubtitle(draft)}
             </div>
           </div>
           <Button
@@ -231,6 +263,9 @@ export function DepartureStep({ onOpenSheet }: DepartureStepProps) {
                   >
                     {metric.formatted}
                   </span>
+                            {metric.note ? (
+                              <span className="prep-metric__note">{metric.note}</span>
+                            ) : null}
                 </div>
               ))}
             </div>
@@ -265,6 +300,9 @@ export function DepartureStep({ onOpenSheet }: DepartureStepProps) {
                             >
                               {metric.formatted}
                             </span>
+                            {metric.note ? (
+                              <span className="prep-metric__note">{metric.note}</span>
+                            ) : null}
                           </div>
                         ))}
                     </div>

@@ -19,7 +19,8 @@
  * doublons : `Lac Blanc` servait a la fois de ravitaillement et d'arret.
  */
 
-import { assignPlaces, toCandidate, type PlaceCandidate, type PlaceInventory } from './engine/places';
+import { assignPlaces, matchNamedPlace, normalizePlaceName, toCandidate, type PlaceCandidate, type PlaceInventory } from './engine/places';
+import { geocodeCandidateFor, type GeocodeMatch } from './engine/placeGeocode';
 import type { PlaceInventoryLoader, PlaceResolver } from './engine/itineraryPhases';
 import type { AdventurePrepDraft, ItineraryModel } from './types';
 
@@ -32,6 +33,19 @@ const ENDPOINT = '/api/pois';
 // est donc trop courte pour trois jours, et le dernier jour se vide. Les
 // amenites OSM replenissent ce spectre avec des lieux REELS.
 const AMENITIES_ENDPOINT = '/api/amenities';
+
+// La marchabilite se mesure sur le reseau de PIETON, toujours : c est le seul qui
+// dit si un lieu est atteignable sans voiture. Le mode du trajet ne suffit pas,
+// on peut chercher des lieux autour d un trajet en voiture.
+const ROUTE_ENDPOINT = '/api/route';
+const GEOCODE_ENDPOINT = '/api/geocode';
+
+/**
+ * Combien de lieux on verifie par lot. Au-dela, on ne demande pas plus : on
+ * ne veut pas inonder un service gratuit, ni retarder la generation de
+ * plusieurs minutes sur un itineraire de dix jours.
+ */
+const WALK_CHECK_BATCH = 24;
 
 /** Marge autour du trajet, en degres : de quoi couvrir les detoures. */
 const MARGIN_DEG = 0.12;
@@ -86,6 +100,153 @@ export function bboxForTrip(points: readonly { lat: number; lon: number }[]): Pl
 }
 
 /** La boite n est utile que si elle ne couvre pas un autre hemisphere. */
+/**
+ * Ce qu une sonde `/api/route` permet reellement d affirmer sur un lieu.
+ *
+ * `mesuree` : le fournisseur a repondu, et sa trace existe.
+ * `hors_reseau` : le fournisseur a repondu, et sa trace n arrive pas au lieu.
+ * `inconnue` : le fournisseur n a rien dit d exploitable.
+ *
+ * Ces trois etats etaient condenses en un seul booleen. C est ce losange, et
+ * lui seul, qui a fait naitre P0.25 : un sommet et un hotel etaient tous deux
+ * `provider_unavailable`, donc tous deux « joignables », donc tous deux
+ * acceptes comme position mesuree.
+ */
+export type WalkReachability = 'mesuree' | 'hors_reseau' | 'inconnue';
+
+/**
+ * Duree pendant laquelle une panne de fournisseur est tenue pour acquise.
+ *
+ * Mesure le 2026-09-28 : 36 sondes a 8 s de timeout = 64,8 s cumules pour un
+ * resultat qui ne peut pas changer. La panne est donc retenue, mais pas
+ * eternalement : au-dela de cette fenetre on reprobe, parce qu un cache sans
+ * expiration servirait une panne de mars pendant des mois.
+ */
+export const PAUSE_FOURNISSEUR_MS = 30_000;
+
+let fournisseurTombeJusqua = 0;
+
+/** Reserve aux tests : oublie la panne memorisee. */
+export function __resetWalkabilityMemo(): void {
+  fournisseurTombeJusqua = 0;
+}
+
+/**
+ * Un lieu est-il ATTEIGNABLE a pied depuis l ancre du trajet ?
+ *
+ * On ne le devine pas. `/api/route` en mode `pieton` applique le meme
+ * garde-fou d arrivee que tout le reste : si la trace ne finit pas au lieu
+ * demande, le serveur repond 503 `off_network`. C est une MESURE, et la
+ * seule qui autorise a ecarter un lieu.
+ *
+ * `provider_unavailable` et les erreurs reseau, eux, ne disent RIEN du lieu.
+ * La reponse est donc `inconnue`, et c est aux deux appelants de trancher :
+ * l inventaire garde le nom, la position, non. Voir `keepWalkableFrom` et
+ * `keepMeasuredFrom`.
+ */
+async function reachabilityFrom(
+  anchor: { lat: number; lon: number },
+  candidate: PlaceCandidate,
+  fetchImpl: Fetcher,
+  signal?: AbortSignal,
+): Promise<WalkReachability> {
+  // Une panne deja vue ne se reprobe pas : c est la difference entre 8 s et
+  // 64,8 s d attente sur le meme ecran.
+  if (Date.now() < fournisseurTombeJusqua) return 'inconnue';
+  try {
+    const params = new URLSearchParams({
+      points: `${round4(candidate.lon)},${round4(candidate.lat)};${round4(anchor.lon)},${round4(anchor.lat)}`,
+      mode: 'pieton',
+    });
+    const response = await fetchImpl(`${ROUTE_ENDPOINT}?${params.toString()}`, {
+      signal,
+      headers: { Accept: 'application/json' },
+    });
+    if (response.ok) return 'mesuree';
+    if (response.status !== 503) return 'inconnue';
+    const body = (await response.json()) as { reason?: unknown } | null;
+    if (body?.reason === 'off_network') return 'hors_reseau';
+    // Le fournisseur a repondu « je ne sais pas ». C est le SEUL cas ou la
+    // panne est retenue : un 500 ou une erreur reseau ne prouve rien sur
+    // l etat du service, seulement sur cette requete.
+    fournisseurTombeJusqua = Date.now() + PAUSE_FOURNISSEUR_MS;
+    return 'inconnue';
+  } catch {
+    return 'inconnue';
+  }
+}
+
+/** Les verdicts, par lots, dans l ordre des candidats. */
+async function probeReachability(
+  anchor: { lat: number; lon: number },
+  candidates: readonly PlaceCandidate[],
+  fetchImpl: Fetcher,
+  signal?: AbortSignal,
+): Promise<{ candidate: PlaceCandidate; reachability: WalkReachability }[]> {
+  const verdicts: { candidate: PlaceCandidate; reachability: WalkReachability }[] = [];
+  for (let index = 0; index < candidates.length; index += WALK_CHECK_BATCH) {
+    const lot = candidates.slice(index, index + WALK_CHECK_BATCH);
+    verdicts.push(
+      ...(await Promise.all(
+        lot.map(async (candidate) => ({
+          candidate,
+          reachability: await reachabilityFrom(anchor, candidate, fetchImpl, signal),
+        })),
+      )),
+    );
+  }
+  return verdicts;
+}
+
+/**
+ * Ne garde que les lieux que l on peut JOINRE A PIED, mesure.
+ *
+ * Par LOTS de 24, et tous les lots d un coup : la latence ajoutee est celle
+ * du lot le plus lent, pas la somme de chaque appel. Sans le plafond, une
+ * region qui rend 300 points inonderait un service gratuit.
+ *
+ * La liste garde son ordre d origine : le filtre ne fait que retirer.
+ *
+ * ECHEC OUVERT, et c est deliberé : c est le filtre de l INVENTAIRE lu par le
+ * proposeur. Une panne de Valhalla ne doit pas effacer les noms, sinon le
+ * proposeur ecrirait une journee a l aveugle. Un `inconnue` reste donc here.
+ */
+export async function keepWalkableFrom(
+  anchor: { lat: number; lon: number },
+  candidates: readonly PlaceCandidate[],
+  fetchImpl: Fetcher = fetch,
+  signal?: AbortSignal,
+): Promise<PlaceCandidate[]> {
+  const verdicts = await probeReachability(anchor, candidates, fetchImpl, signal);
+  return verdicts.filter((v) => v.reachability !== 'hors_reseau').map((v) => v.candidate);
+}
+
+/**
+ * Ne garde que les lieux dont la marche est REELLEMENT MESUREE.
+ *
+ * C est le filtre de la POSITION, celui qui alimente `assignPlaces`. La
+ * distinction avec `keepWalkableFrom` est le correctif de P0.25 :
+ *
+ * · l INVENTAIRE peut echouer ouvert — un nom non verifie est un nom, rien
+ *   de plus, et il ne produit aucune distance affichee ;
+ * · la POSITION, elle, ne peut pas echouer ouvert. Un lieu non mesure ne
+ *   recoit AUCUNE coordonnee, sinon l ecran affiche une distance « reelle »
+ *   vers un sommet que personne ne peut rejoindre a pied. Dans ce cas la
+ *   journee reste honnete : les etapes sans position affichent « a verifier ».
+ *
+ * C est aussi ce qui rend la panne visible au lieu de la maquiller : zero
+ * lieu mesure, donc zero distance inventee.
+ */
+export async function keepMeasuredFrom(
+  anchor: { lat: number; lon: number },
+  candidates: readonly PlaceCandidate[],
+  fetchImpl: Fetcher = fetch,
+  signal?: AbortSignal,
+): Promise<PlaceCandidate[]> {
+  const verdicts = await probeReachability(anchor, candidates, fetchImpl, signal);
+  return verdicts.filter((v) => v.reachability === 'mesuree').map((v) => v.candidate);
+}
+
 function isSane(box: PlaceBbox): boolean {
   return box.maxLat - box.minLat <= MAX_SPAN_DEG && box.maxLng - box.minLng <= MAX_SPAN_DEG;
 }
@@ -184,6 +345,12 @@ export function anchorsOf(draft: AdventurePrepDraft): { lat: number; lon: number
  * gout. L inventaire lu par le proposeur doit etre sur l ecran avant l appel
  * au modele ; s il attendait Overpass (5 a 25 s), la redaction demarrerait
  * apres, et le recouvrement annonce par le rechauffement n existerait pas.
+ *
+ * LE FILTRE DE MARCHABILITE S Y APPLIQUE AUSSI, et c est indispensable :
+ * c est CET inventaire que le modele lit. Sans le filtre, le modele voit Mont
+ * Blanc et l Aiguille du Midi, il les ecrit dans la journee, et le garde-fou
+ * d arrivee les refuse ensuite. Filtrer apres la redaction serait trop tard :
+ * le modele aurait deja ecrit.
  */
 export async function loadBasePlacesNear(
   points: readonly { lat: number; lon: number }[],
@@ -192,7 +359,10 @@ export async function loadBasePlacesNear(
 ): Promise<PlaceCandidate[]> {
   const query = placeQuery(bboxForTrip(points));
   if (!query) return [];
-  return fetchJson(query, fetchImpl, signal).then(readPlaceResponse);
+  const anchor = points[0];
+  const candidats = await fetchJson(query, fetchImpl, signal).then(readPlaceResponse);
+  if (!anchor || candidats.length === 0) return candidats;
+  return keepWalkableFrom(anchor, candidats, fetchImpl, signal);
 }
 
 /**
@@ -308,7 +478,16 @@ export async function searchPlacesNear(
   ]);
 
   // Une source muete ne doit jamais retirer ce que l autre a livre.
-  return [...lieux, ...amenites];
+  const tous = [...lieux, ...amenites];
+
+  // Puis on ne garde que ce qu on peut rejoindre a pied, MESURE. Sur le
+  // corridor de Chamonix, l inventaire est presque entierement compose de
+  // sommets et de refuges a plus de 3 000 m : hors reseau pieton, ils sont
+  // inatteignables, et le parcours proposait donc des etapes que personne ne
+  // pouvait rejoindre. Chaque etape tombait en « a verifier ».
+  const anchor = points[0];
+  if (!anchor || tous.length === 0) return tous;
+  return keepMeasuredFrom(anchor, tous, fetchImpl, signal);
 }
 
 /**
@@ -323,11 +502,109 @@ export async function searchPlacesNear(
  * Sans l'un des deux, on cherche autour du seul lieu connu ; sans aucun, on
  * ne demande rien plutot que de faire deviner une region a la base.
  */
+/**
+ * Les noms de lieu que l'inventaire local ne sait pas placer.
+ *
+ * Seul `placeName` est retenu, jamais `title` : un titre est de la prose
+ * (« Depart vers le refuge ») et la faire geocoder produirait un lieu qui
+ * n existe pas. Un nom cite, lui, est une intention de lieu, et c est
+ * exactement ce que le geocodeur sait placer.
+ */
+function missingPlaceNames(
+  model: ItineraryModel,
+  candidates: readonly PlaceCandidate[],
+): string[] {
+  const manquants: string[] = [];
+  const vus = new Set<string>();
+  for (const step of model.steps) {
+    const cite = step.placeName;
+    if (cite === null || cite.trim() === '') continue;
+    const cle = normalizePlaceName(cite);
+    if (vus.has(cle)) continue;
+    if (matchNamedPlace(candidates, cite) !== null) continue;
+    vus.add(cle);
+    manquants.push(cite);
+  }
+  return manquants;
+}
+
+/** La premiere correspondance du geocodeur, lue sans invention. */
+function readGeocodeMatch(payload: unknown): GeocodeMatch | null {
+  if (typeof payload !== 'object' || payload === null) return null;
+  const body = payload as { status?: unknown; matches?: unknown };
+  if (body.status !== 'ok' || !Array.isArray(body.matches)) return null;
+  for (const raw of body.matches) {
+    if (typeof raw !== 'object' || raw === null) continue;
+    const m = raw as {
+      id?: unknown; name?: unknown; lat?: unknown; lon?: unknown;
+      country?: unknown; precision?: unknown;
+    };
+    const name = typeof m.name === 'string' ? m.name.trim() : '';
+    const lat = typeof m.lat === 'number' ? m.lat : Number.NaN;
+    const lon = typeof m.lon === 'number' ? m.lon : Number.NaN;
+    if (name === '' || !Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+    return {
+      id: typeof m.id === 'string' && m.id !== '' ? m.id : `geo-${cleDeNom(name)}`,
+      name,
+      lat,
+      lon,
+      country: typeof m.country === 'string' ? m.country : null,
+      precision: typeof m.precision === 'string' ? m.precision : null,
+    };
+  }
+  return null;
+}
+
+function cleDeNom(name: string): string {
+  return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+/**
+ * Au-dela, on cesse de/geocoder : chaque appel est une requete de service
+ * gratuit, et un programme de dix etapes ne doit pas en用户的化领 dix fois le
+ * meme toponyme. Le refus est preferable a une attente qui n arrive pas.
+ */
+const GEOCODE_MAX_APPELS = 6;
+
+/**
+ * Les candidats que le geocodeur autorise pour ces noms, ou `[]`.
+ *
+ * Echec ouvert, comme le reste du module : une panne, un 500, un corps
+ * illisible rendent une liste vide. Le modele garde alors ses etapes sans
+ * position et l ecran affiche « a verifier » - jamais un lieu invente.
+ */
+async function geocodeCandidates(
+  names: readonly string[],
+  anchor: { lat: number; lon: number },
+  fetchImpl: Fetcher,
+  signal?: AbortSignal,
+): Promise<PlaceCandidate[]> {
+  const cibles = names.slice(0, GEOCODE_MAX_APPELS);
+  const resultats = await Promise.all(
+    cibles.map(async (name) => {
+      const params = new URLSearchParams({ q: name });
+      const payload = await fetchJson(`${GEOCODE_ENDPOINT}?${params.toString()}`, fetchImpl, signal);
+      if (payload === null) return null;
+      return geocodeCandidateFor(name, readGeocodeMatch(payload), anchor);
+    }),
+  );
+  return resultats.filter((candidat): candidat is PlaceCandidate => candidat !== null);
+}
 export function resolvePlacesFor(fetchImpl: Fetcher = fetch): PlaceResolver {
   return async (draft: AdventurePrepDraft, model: ItineraryModel, signal: AbortSignal) => {
     const anchors = anchorsOf(draft);
     if (anchors.length === 0) return model;
-    const candidates = await searchPlacesNear(anchors, fetchImpl, signal);
+    const base = await searchPlacesNear(anchors, fetchImpl, signal);
+    // Les noms que le depot ne sait pas placer sont demandes au geocodeur. La
+    // garde de distance vit dans geocodeCandidateFor : un sommet mal place
+    // a 45 km est refuse la, donc il ne peut pas finir sur la carte.
+    const geocodes = await geocodeCandidates(
+      missingPlaceNames(model, base),
+      anchors[0],
+      fetchImpl,
+      signal,
+    );
+    const candidates = [...base, ...geocodes];
     if (candidates.length === 0) return model;
     return assignPlaces(model, candidates, draft.route.origin, draft.route.destination);
   };

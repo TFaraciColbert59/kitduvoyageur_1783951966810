@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/Icon';
 import { Button } from '@/components/ui';
 import { useAdventurePrepStore } from '../store/useAdventurePrepStore';
-import { canOpenStep, progressOf } from '../engine/steps';
+import { progressOf } from '../engine/steps';
 import { usePrepDayFocusPublisher } from '../hooks/usePrepDayFocusPublisher';
 import {
   offlineReadiness,
@@ -16,6 +16,7 @@ import {
   PREP_STEPS,
   PREP_STEP_LABELS,
   failedGenerationPhase,
+  failedGenerationReason,
   type AdventurePrepDraft,
   type GenerationPhase,
   type GenerationPhaseId,
@@ -148,7 +149,9 @@ const NOTICE_BOX: React.CSSProperties = {
 /* La ligne unique. `listStyle: none` retire la puce natively dessinee. */
 const NOTICE_SUMMARY: React.CSSProperties = {
   display: 'flex',
-  alignItems: 'center',
+  // `flex-start` et non `center` : quand le titre passe à la ligne, l’icône
+  // et le bouton restent alignés sur la PREMIÈRE ligne du texte.
+  alignItems: 'flex-start',
   gap: 'var(--prep-space-2)',
   padding: 'var(--prep-space-2) var(--prep-space-4)',
   cursor: 'pointer',
@@ -156,13 +159,20 @@ const NOTICE_SUMMARY: React.CSSProperties = {
   minWidth: 0,
 };
 
-/* Le titre est coupe, jamais repousse : la ligne garde sa hauteur quoi qu'il arrive. */
+/**
+ * Le nom de la phase tombée doit se lire EN ENTIER.
+ *
+ * Mesuré sur `proof/D4-20` : la ligne unique coupait le titre en
+ * « Échec : Calcul des di… ». Un nom tronqué ne dit pas ce qui a échoué —
+ * donc le bandeau, qui ne porte que cette information, ne sert plus à rien.
+ * Le titre passe donc à la ligne plutôt que de disparaitre : une ligne de plus
+ * vaut mieux qu'une cause illisible.
+ */
 const NOTICE_HEADLINE: React.CSSProperties = {
   flex: '1 1 auto',
   minWidth: 0,
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
+  overflowWrap: 'anywhere',
+  lineHeight: 1.25,
   fontWeight: 640,
 };
 
@@ -245,7 +255,7 @@ export function prepNoticeHeadline({
  */
 export function noticeRetryHandler(
   onRetryPhase?: ((id: GenerationPhaseId) => void) | null,
-  failedPhase?: GenerationPhase | null,
+  failedPhase?: GenerationPhase | null
 ): (event: { preventDefault: () => void; stopPropagation: () => void }) => void {
   return (event) => {
     if (!onRetryPhase || !failedPhase) return;
@@ -340,7 +350,7 @@ export type PrepPhaseRunner = (
   draft: AdventurePrepDraft,
   model: ItineraryModel,
   phase: GenerationPhaseId,
-  deps: PhaseRetryDeps,
+  deps: PhaseRetryDeps
 ) => Promise<PhaseRetry>;
 
 /**
@@ -355,7 +365,7 @@ export async function runPrepPhaseRetry(
   draft: AdventurePrepDraft,
   model: ItineraryModel,
   phase: GenerationPhaseId,
-  deps: PhaseRetryDeps,
+  deps: PhaseRetryDeps
 ): Promise<PhaseRetry> {
   const moteur = await import('../engine/itineraryPhases');
   return moteur.retryGenerationPhase(draft, model, phase, deps);
@@ -389,7 +399,7 @@ export interface PrepPhaseRetryPort {
  *    lui en passer un fabrique serait exactement l'invention interdite.
  */
 export function createPrepPhaseRetry(
-  port: PrepPhaseRetryPort,
+  port: PrepPhaseRetryPort
 ): (phase: GenerationPhaseId) => Promise<PhaseRetry | null> {
   return async (phase) => {
     const draft = port.draft();
@@ -448,14 +458,11 @@ export interface AdventurePrepShellProps {
  * d'onglets basse, qui reste visible sur /prepare.
  */
 interface PrepNavActionsProps {
-  draft: AdventurePrepDraft;
-  onOpenStep: (step: PrepStepId) => void;
   onOpenPreferences: () => void;
   onGoHub: () => void;
 }
 
-function PrepNavActions({ draft, onOpenStep, onOpenPreferences, onGoHub }: PrepNavActionsProps) {
-  const done = PREP_STEPS.filter((id) => canOpenStep(draft, id) && draft.completedSteps.includes(id));
+export function PrepNavActions({ onOpenPreferences, onGoHub }: PrepNavActionsProps) {
   return (
     <div className="prep-visually-hidden" role="group" aria-label="Actions de la préparation">
       <button type="button" onClick={onGoHub}>
@@ -464,23 +471,18 @@ function PrepNavActions({ draft, onOpenStep, onOpenPreferences, onGoHub }: PrepN
       <button type="button" onClick={onOpenPreferences}>
         Ouvrir les préférences du trajet
       </button>
-      {done.map((id) => (
-        <button key={id} type="button" onClick={() => onOpenStep(id)}>
-          Revenir à {PREP_STEP_LABELS[id]}
-        </button>
-      ))}
     </div>
   );
 }
-
 
 /**
  * Cadre commun des trois étapes (A1).
  *
  * Plein ecran, bandeau de 52 px qui ne contient plus qu'un rail d'etapes :
- * la progression, et rien d'autre. Le retour a une etape atteinte, la
- * redirection vers le hub et la feuille des preferences sont rendus hors du
- * flux visuel par PrepNavActions — le bandeau informe, il ne pilote pas.
+ * la progression, et rien d'autre. Aucun bouton chromé — mais une
+ * étape ATTEINTE est un bouton invisible à l'oeil (voir PrepCrumb) :
+ * c'est par là qu'on revient en arriere. La redirection vers le hub et
+ * la feuille des preferences restent hors du flux visuel.
  *
  * La barre d onglets basse, elle, reste visible : MobileNavWrapper ne masque
  * plus /prepare et la route rend AppShell hasBottomNav, donc la reservation
@@ -489,7 +491,7 @@ function PrepNavActions({ draft, onOpenStep, onOpenPreferences, onGoHub }: PrepN
  * Sous la barre d'etape, le bandeau hors-ligne ne s'affiche que si
  * l'application degrade reellement. Il occupe une bande de flux (`flex: 0 0
  * auto`) : l'ecran enfant se reduit, le viewport ne scrolle jamais.
- */export function AdventurePrepShell({
+ */ export function AdventurePrepShell({
   step,
   onOpenSheet,
   children,
@@ -516,7 +518,7 @@ function PrepNavActions({ draft, onOpenStep, onOpenPreferences, onGoHub }: PrepN
   // page. Ici, l etat de jour selectionne est un SEUL etat partage, publie
   // depuis le cadre commun des trois ecrans — et jamais recalcule par l un
   // d eux.
-  usePrepDayFocusPublisher(draft);
+  usePrepDayFocusPublisher(draft, step !== 'destination');
 
   // Une seule identity : le bandeau et le contexte lisent le meme objet.
   //
@@ -530,18 +532,15 @@ function PrepNavActions({ draft, onOpenStep, onOpenPreferences, onGoHub }: PrepN
   // Desormais iEnabled dit la seule chose qu'il sait — ce que l'utilisateur a
   // choisi — et un echec de phase reste un echec de phase : visible, rejouable,
   // borne a la phase concernee.
-  const offlineValue = useMemo(
-    () => {
-      const readiness = offlineReadiness({
-        model: draft.itinerary,
-        online,
-        aiEnabled,
-        aiFailure: draft.generation.failure,
-      });
-      return createOfflinePrepValue(online, readiness);
-    },
-    [draft.itinerary, online, aiEnabled, draft.generation.failure],
-  );
+  const offlineValue = useMemo(() => {
+    const readiness = offlineReadiness({
+      model: draft.itinerary,
+      online,
+      aiEnabled,
+      aiFailure: draft.generation.failure,
+    });
+    return createOfflinePrepValue(online, readiness);
+  }, [draft.itinerary, online, aiEnabled, draft.generation.failure]);
 
   // La phase a rejouer, DERIVEE de l'etat de generation — jamais supposee.
   const failedPhase = failedGenerationPhase(draft.generation);
@@ -557,19 +556,19 @@ function PrepNavActions({ draft, onOpenStep, onOpenPreferences, onGoHub }: PrepN
         runPhase: runPrepPhaseRetry,
         deps: phaseRetryDeps,
       }),
-    [draft, retryPhaseInStore, applyPhaseRetry, phaseRetryDeps],
+    [draft, retryPhaseInStore, applyPhaseRetry, phaseRetryDeps]
   );
 
   return (
     <OfflinePrepContext.Provider value={offlineValue}>
       <div className="adventure-prep">
-        <PrepNav step={step} draft={draft} />
+        <PrepNav step={step} draft={draft} onOpenStep={goToStep} />
 
         <PrepOfflineNotice
           online={online}
           readiness={offlineValue.readiness}
           failedPhase={failedPhase}
-          failureReason={draft.generation.error}
+          failureReason={failedGenerationReason(draft.generation)}
           onRetryPhase={failedPhase ? retryPhase : null}
         />
 
@@ -577,8 +576,6 @@ function PrepNavActions({ draft, onOpenStep, onOpenPreferences, onGoHub }: PrepN
 
         {!picking && (
           <PrepNavActions
-            draft={draft}
-            onOpenStep={goToStep}
             onOpenPreferences={() => onOpenSheet('preferences')}
             onGoHub={() => router.push('/hub')}
           />

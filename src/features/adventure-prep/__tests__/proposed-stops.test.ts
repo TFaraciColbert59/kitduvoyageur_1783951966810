@@ -12,6 +12,7 @@ function outing(overrides: Parameters<typeof fullDraft>[0] = {}): ItineraryModel
       startDate: '2026-07-11',
       durationDays: 1,
       durationIsSuggested: true,
+      startDateIsSuggested: false,
       returnDate: '2026-07-11',
     },
     preferences: {
@@ -259,6 +260,7 @@ describe('parcours propose : une aventure peut combiner plusieurs activites', ()
         startDate: '2026-07-11',
         durationDays: 2,
         durationIsSuggested: false,
+        startDateIsSuggested: false,
         returnDate: '2026-07-12',
       },
       activities: { primary: 'rando-journee', extra: [], nights: ['bivouac'] },

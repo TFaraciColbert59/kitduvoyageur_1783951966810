@@ -19,6 +19,11 @@ function nav(step: PrepStepId, draft: AdventurePrepDraft): string {
   return renderToStaticMarkup(React.createElement(PrepNav, { step, draft }));
 }
 
+/** Le bandeau reellement monte par le shell : il recoit la navigation. */
+function navNav(step: PrepStepId, draft: AdventurePrepDraft): string {
+  return renderToStaticMarkup(React.createElement(PrepNav, { step, draft, onOpenStep: noop }));
+}
+
 /** Props d avant le nettoyage : doivent etre devenues inertes. */
 type LegacyPrepNavProps = PrepNavProps & {
   onOpenStep: () => void;
@@ -28,9 +33,7 @@ type LegacyPrepNavProps = PrepNavProps & {
 
 function legacyNav(step: PrepStepId, draft: AdventurePrepDraft): string {
   const props = { step, draft, onOpenStep: noop, onClose: noop, onOpenPreferences: noop };
-  return renderToStaticMarkup(
-    React.createElement(PrepNav, props as unknown as LegacyPrepNavProps),
-  );
+  return renderToStaticMarkup(React.createElement(PrepNav, props as unknown as LegacyPrepNavProps));
 }
 
 function visible(html: string): string {
@@ -97,10 +100,24 @@ describe('Bandeau haut — il ne reste que le rail', () => {
     expect(text).not.toContain('Étape 1 sur 3');
   });
 
-  it('NA-09: plus aucun bouton dans tout le bandeau haut', () => {
+  it('NA-09: le bandeau n expose que le rail, jamais un bouton de chrome', () => {
+    // Contrat MODIFIE le 2026-09-28 (AN1). Ce qui reste interdit : tout bouton
+    // dote d'un icone, d'un fond ou d'un libelle de commande - la demande
+    // utilisateur ("aucun bouton en haut de page") porte sur le CHROME, pas
+    // sur le fait qu'un libelle d'etape reponde au doigt. Mesure d avant : le
+    // seul retour vers une etape atteinte etait un bouton "Revenir a ..."
+    // dans un conteneur 1x1 px, donc hors de portee du doigt. Voir
+    // step-rail-nav-an1.test.tsx.
     for (const step of ['destination', 'itinerary', 'departure'] as const) {
-      const html = nav(step, fullDraft({ completedSteps: ['destination', 'itinerary'] }));
-      expect(html).not.toContain('<button');
+      const html = navNav(step, fullDraft({ completedSteps: ['destination', 'itinerary'] }));
+      // Aucune icone, aucun role=button, aucun titre de bouton de chrome.
+      expect(html).not.toContain('<svg');
+      expect(html).not.toMatch(/aria-label="Revenir en arri/);
+      // Et chaque bouton eventuel est un retour de rail, sans icone.
+      for (const m of html.matchAll(/<button([^>]*)>/g)) {
+        expect(m[1]).toContain('class="prep-crumb__link"');
+        expect(m[1]).toContain('data-step=');
+      }
     }
   });
 
@@ -140,16 +157,22 @@ describe('Bandeau haut — props retirées', () => {
     // Si une prop de commande etait encore requise, TypeScript refuserait
     // cet appel : la preuve est le type, la preuve supplementaire est le rendu.
     const html = renderToStaticMarkup(
-      React.createElement(PrepNav, { step: 'departure', draft: fullDraft() }),
+      React.createElement(PrepNav, { step: 'departure', draft: fullDraft() })
     );
     expect(html).toContain('En avant !');
   });
 
-  it('NA-16: un appelant ancien qui passe encore les callbacks n’obtient rien de plus', () => {
+  it('NA-16: un appelant ancien n’obtient que le rail, et rien de plus', () => {
+    // onOpenStep redevenu une vraie prop : c'est lui qui rend le retour
+    // tactile possible. onClose et onOpenPreferences, eux, restent inertes -
+    // la fleche, la croix et le bouton de filtres ne reviennent pas.
     const html = legacyNav('itinerary', fullDraft({ completedSteps: ['destination'] }));
-    expect(html).not.toContain('<button');
     expect(html).not.toContain('<svg');
-    expect(count(html, /aria-label="/g)).toBe(2); // le nav + le rail
+    expect(html).not.toContain('Revenir en arri');
+    expect(html).not.toContain('chevron-left');
+    expect(html).not.toContain('Ouvrir les pr');
+    // le nav + le rail + le nom accessible du bouton de retour
+    expect(count(html, /aria-label="/g)).toBe(3);
   });
 
   it('NA-17: le rail occupe toute la largeur du bandeau', () => {

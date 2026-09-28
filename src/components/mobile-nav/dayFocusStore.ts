@@ -65,8 +65,23 @@ export interface DayFocusState {
   days: DayFocusDay[];
   /** `null` = vue globale ; sinon 1..days.length. */
   selectedDay: number | null;
+  /**
+   * L ecran courant affiche-t-il un contenu focusable par jour ?
+   *
+   * Un rail de jours sur un ecran qui n en montre aucun est un CONTROLE MORT :
+   * il repond, `aria-selected` passe, et rien ne bouge a l ecran. C est
+   * exactement le symptome « le selecteur de jours ne se met pas a jour sur
+   * toutes les pages ». L etape 1 (« Creations ») n a aucun jour a
+   * surligner, donc elle publie `false`.
+   *
+   * Ce flag est VISUEL : il masque le rendu et la reservation, il ne purge ni
+   * les journees ni la selection — sinon revenir a l etape 2 perdrait le jour
+   * choisi. Il repasse a `true` par defaut et le hub ne le touche jamais.
+   */
+  focusable: boolean;
   publishDays: (days: DayFocusDay[]) => void;
   selectDay: (day: number | null) => void;
+  setFocusable: (focusable: boolean) => void;
   clear: () => void;
 }
 
@@ -95,9 +110,10 @@ export function isDayFocusReady(days: readonly DayFocusDay[]): boolean {
  */
 export function hasDayFocusPlateau(
   pathname: string | null | undefined,
-  days: readonly DayFocusDay[]
+  days: readonly DayFocusDay[],
+  focusable: boolean = true,
 ): boolean {
-  return isDayFocusSurfacePathname(pathname) && isDayFocusReady(days);
+  return isDayFocusSurfacePathname(pathname) && isDayFocusReady(days) && focusable;
 }
 
 function isValidDay(days: readonly DayFocusDay[], day: number | null): day is number {
@@ -107,6 +123,7 @@ function isValidDay(days: readonly DayFocusDay[], day: number | null): day is nu
 export const useDayFocusStore = create<DayFocusState>((set) => ({
   days: EMPTY,
   selectedDay: null,
+  focusable: true,
 
   publishDays: (days) =>
     set((state) => {
@@ -139,10 +156,13 @@ export const useDayFocusStore = create<DayFocusState>((set) => ({
       return { selectedDay: next };
     }),
 
-  clear: () => set({ days: EMPTY, selectedDay: null }),
+  setFocusable: (focusable) =>
+    set((state) => (state.focusable === focusable ? state : { focusable })),
+
+  clear: () => set({ days: EMPTY, selectedDay: null, focusable: true }),
 }));
 
 /** Selecteur : le plateau jour doit-il etre rendu/reserve ici ? */
 export function selectDayFocusPlateau(state: DayFocusState, pathname: string | null): boolean {
-  return hasDayFocusPlateau(pathname, state.days);
+  return hasDayFocusPlateau(pathname, state.days, state.focusable);
 }

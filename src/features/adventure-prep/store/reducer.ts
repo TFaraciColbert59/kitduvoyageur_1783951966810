@@ -23,19 +23,24 @@ import {
 } from '../engine/itinerary';
 import type { AdjustmentId } from '../types';
 import type { GenerationPhaseId, GenerationState } from '../types';
-import type { PhaseRetry } from '../engine/itineraryPhases';
+import type { GenerationOutcome, PhaseRetry } from '../engine/itineraryPhases';
 import {
+  clearPhaseOutcome,
   finishGeneration,
   interruptGeneration,
   markPhaseDone,
   resumeGeneration,
+  setGenerationFailure,
+  setGenerationNotice,
   setPartial,
+  setPhaseOutcomes,
   startGeneration,
   failGeneration,
 } from '../engine/generation';
 import { resolvedGear } from '../engine/gear';
 import { emptyDraft } from '../engine/emptyDraft';
-import { suggestDuration } from '../engine/calendar';
+import { suggestDuration, suggestStartDate } from '../engine/calendar';
+import { briefRequestedDays, suggestDurationDays } from '../engine/briefDays';
 
 /** Chaque mutation renvoie un nouveau brouillon et bumps la version de reprise. */
 function commit(draft: AdventurePrepDraft, patch: Partial<AdventurePrepDraft>): AdventurePrepDraft {
@@ -53,8 +58,18 @@ export const draftActions = {
     version: draft.version + 1,
   }),
 
-  setActivities: (draft: AdventurePrepDraft, activities: ActivitySelection): AdventurePrepDraft =>
-    suggestDuration(commit(draft, { activities, itinerary: null })),
+  setActivities: (draft: AdventurePrepDraft, activities: ActivitySelection): AdventurePrepDraft => {
+    const chosen = commit(draft, { activities, itinerary: null });
+    // Un brief qui NOMME une duree prime sur les heures du catalogue.
+    // Sans cette regle, choisir « randonnee avec nuit de refuge » (24 h)
+    // ecrivait 1 jour pendant que le brief demandait un week-end : l ecran
+    // affichait 1 jour, et le prompt en annoncait 2. Le meme parcours etait
+    // donc decrit deux fois, contradictoirement, avant meme la generation.
+    // Le brief muet laisse la main au catalogue — et `briefRequestedDays`
+    // renvoie `null` dans ce cas, jamais 1.
+    const asked = briefRequestedDays(draft.brief);
+    return asked === null ? suggestDuration(chosen) : suggestDurationDays(chosen, asked);
+  },
 
   // Partir sans activite du catalogue : le catalogue se ferme, l etape 1
   // reste ouverte sur le depart, la date et les participants.
@@ -89,7 +104,9 @@ export const draftActions = {
     commit(draft, { preferences }),
 
   setCoverName: (draft: AdventurePrepDraft, coverName: string | null): AdventurePrepDraft =>
-    commit(draft, { coverName: coverName && coverName.trim().length > 0 ? coverName.trim() : null }),
+    commit(draft, {
+      coverName: coverName && coverName.trim().length > 0 ? coverName.trim() : null,
+    }),
 
   /**
    * Seul passage possible vers une autre etape — et il est REFUSE tant que
@@ -159,12 +176,17 @@ export const draftActions = {
     const fallen = failedGenerationPhase(draft.generation);
     if (!fallen || fallen.id !== phase) return draft;
     return commit(draft, {
-      generation: {
-        ...draft.generation,
-        status: 'en_cours',
-        error: null,
-        phases: draft.generation.phases.map((p) => (p.id === phase ? { ...p, done: false } : p)),
-      },
+      // Le verdict de la phase devient PERIME : il decrit un etat passe, et le
+      // garder afficherait « Échec : … » pendant que la reprise travaille.
+      generation: clearPhaseOutcome(
+        {
+          ...draft.generation,
+          status: 'en_cours',
+          error: null,
+          phases: draft.generation.phases.map((p) => (p.id === phase ? { ...p, done: false } : p)),
+        },
+        phase
+      ),
     });
   },
 
@@ -185,25 +207,62 @@ export const draftActions = {
     const { phase, model, outcome } = retry;
     if (outcome.status !== 'reussie') {
       return commit(draft, {
-        generation: {
-          ...draft.generation,
-          status: 'echec',
-          error: outcome.reason ?? 'Cette étape de préparation n a pas abouti.',
-        },
+        generation: setPhaseOutcomes(
+          {
+            ...draft.generation,
+            status: 'echec',
+            error: outcome.reason ?? 'Cette étape de préparation n a pas abouti.',
+          },
+          [...(draft.generation.outcomes ?? []), outcome]
+        ),
       });
     }
     return commit(draft, {
       itinerary: model,
-      generation: {
-        ...markPhaseDone(draft.generation, phase),
-        status: 'termine',
-        error: null,
-      },
+      generation: setPhaseOutcomes(
+        {
+          ...markPhaseDone(clearPhaseOutcome(draft.generation, phase), phase),
+          status: 'termine',
+          error: null,
+        },
+        [...(draft.generation.outcomes ?? []), outcome]
+      ),
     });
   },
 
   setItinerary: (draft: AdventurePrepDraft, itinerary: ItineraryModel | null): AdventurePrepDraft =>
     commit(draft, { itinerary }),
+
+  /**
+   * Depose le resultat REEL d une generation terminee.
+   *
+   * Les regles et l'IA passent donc par le meme point d'entree : l'ecran ne
+   * connait pas le moteur, il affiche ce qu'il a recu — y compris les phases qui
+   * n'ont rien livre. Ces verdicts-la sont la seule chose qui permette au
+   * bandeau de nommer une panne et de proposer de la rejouer.
+   */
+  applyGenerated: (draft: AdventurePrepDraft, outcome: GenerationOutcome): AdventurePrepDraft => {
+    if (!outcome.model) return draft;
+    // La date proposee est APPLIQUEE ICI, et nulle part ailleurs : c est le
+    // seul moment ou le resultat d une generation devient l'etat affiche.
+    // `suggestStartDate` respecte lui-meme les deux garde-fous — une date
+    // saisie a la main n est jamais remplacee, une proposition non acceptee
+    // ne touche a rien — donc l appel est sur : il n a pas de branche a tester.
+    const dated = suggestStartDate(draft, outcome.suggestedStartDate);
+    // La duree suit exactement le meme chemin que la date (P0.18) : meme moment
+    // d application, memes garde-fous dans `suggestDurationDays`. Elle passe
+    // donc par la date plutot que par le brouillon d origine, sinon une date
+    // ET une duree proposees ensemble ne s appliqueraient que l une des deux.
+    const timed = suggestDurationDays(dated, outcome.suggestedDurationDays);
+    const generation = setPhaseOutcomes(
+      setGenerationFailure(
+        setGenerationNotice(finishGeneration(draft.generation), outcome.message),
+        outcome.failure
+      ),
+      outcome.phases
+    );
+    return commit(timed, { itinerary: outcome.model, generation });
+  },
 
   updateItinerary: (draft: AdventurePrepDraft, next: ItineraryModel): AdventurePrepDraft =>
     commit(draft, { itinerary: next }),
@@ -212,13 +271,17 @@ export const draftActions = {
     draft: AdventurePrepDraft,
     day: number,
     kind: ItineraryStepKind,
-    stepDraft: StepDraft,
+    stepDraft: StepDraft
   ): AdventurePrepDraft => {
     if (!draft.itinerary) return draft;
     return commit(draft, { itinerary: addStep(draft.itinerary, day, kind, stepDraft) });
   },
 
-  setItineraryKept: (draft: AdventurePrepDraft, stepId: string, kept: boolean): AdventurePrepDraft => {
+  setItineraryKept: (
+    draft: AdventurePrepDraft,
+    stepId: string,
+    kept: boolean
+  ): AdventurePrepDraft => {
     if (!draft.itinerary) return draft;
     return commit(draft, { itinerary: setStepKept(draft.itinerary, stepId, kept) });
   },
@@ -226,7 +289,7 @@ export const draftActions = {
   setItineraryMealSlot: (
     draft: AdventurePrepDraft,
     stepId: string,
-    mealSlot: MealSlot | null,
+    mealSlot: MealSlot | null
   ): AdventurePrepDraft => {
     if (!draft.itinerary) return draft;
     return commit(draft, { itinerary: setStepMealSlot(draft.itinerary, stepId, mealSlot) });
@@ -252,14 +315,20 @@ export const draftActions = {
     });
   },
 
-  setGearWeight: (draft: AdventurePrepDraft, gearId: string, grams: number | null): AdventurePrepDraft =>
+  setGearWeight: (
+    draft: AdventurePrepDraft,
+    gearId: string,
+    grams: number | null
+  ): AdventurePrepDraft =>
     commit(draft, {
-      gear: draft.gear.map((item) =>
-        item.id === gearId ? { ...item, weightGrams: grams } : item,
-      ),
+      gear: draft.gear.map((item) => (item.id === gearId ? { ...item, weightGrams: grams } : item)),
     }),
 
-  assignGear: (draft: AdventurePrepDraft, gearId: string, ownerId: string | null): AdventurePrepDraft =>
+  assignGear: (
+    draft: AdventurePrepDraft,
+    gearId: string,
+    ownerId: string | null
+  ): AdventurePrepDraft =>
     commit(draft, {
       gear: draft.gear.map((item) => (item.id === gearId ? { ...item, ownerId } : item)),
     }),
@@ -268,4 +337,3 @@ export const draftActions = {
     return commit(draft, { gear: resolvedGear(draft) });
   },
 };
-

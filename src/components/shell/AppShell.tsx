@@ -73,7 +73,11 @@ export default function AppShell({
   // dans des arbres React distincts, elle est le seul contrat possible
   // entre la reservation d'ici et le rendu de la-bas.
   const dayFocusDays = useDayFocusStore((state) => state.days);
-  const hasDayPlateau = hasDayFocusPlateau(pathname, dayFocusDays);
+  const dayFocusable = useDayFocusStore((state) => state.focusable);
+  // Meme predicat que le rendu, y compris le flag `focusable` : la reservation
+  // doit disparaitre EXACTEMENT quand le plateau disparait, sinon il reste un
+  // vide en bas de page sur l etape 1.
+  const hasDayPlateau = hasDayFocusPlateau(pathname, dayFocusDays, dayFocusable);
 
   // Offsets canoniques (tokens.css) : plus aucune valeur 80/68/52 locale.
   // La fonction est celle de la barre — le rendu du plateau et cette

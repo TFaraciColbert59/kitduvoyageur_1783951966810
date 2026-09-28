@@ -61,9 +61,18 @@ export function buildPrepDayFocusDays(draft: AdventurePrepDraft | null | undefin
  * Effet volontairement signature : le preparateur re-rend a chaque frappe dans
  * une feuille, et le modele garde la meme reference tant qu'il n'est pas
  * remplace. Sans garde, le plateau vibrerait pour rien.
+ *
+ * `focusable` dit si l'etape courante affiche un jour focusable. L'etape 1
+ * (`destination`) n'en affiche aucun : y publier le rail produirait un
+ * controle mort. Les journees restent publiees malgre tout - la selection du
+ * jour doit survivre au passage par l'etape 1.
  */
-export function usePrepDayFocusPublisher(draft: AdventurePrepDraft | null | undefined): void {
+export function usePrepDayFocusPublisher(
+  draft: AdventurePrepDraft | null | undefined,
+  focusable: boolean = true,
+): void {
   const publishDays = useDayFocusStore((state) => state.publishDays);
+  const setFocusable = useDayFocusStore((state) => state.setFocusable);
   const model = draft?.itinerary;
   const startDate = draft?.calendar.startDate;
   const days = useMemo(
@@ -81,4 +90,16 @@ export function usePrepDayFocusPublisher(draft: AdventurePrepDraft | null | unde
     // debut) : le store retombe alors sur la vue globale.
     publishDays(days);
   }, [days, publishDays, signature]);
+
+  // Le flag se pose meme a liste vide : c'est lui qui masque le rail, pas la
+  // publication. Effet separe du precedent pour que changer d'etape ne
+  // republie pas les journees.
+  useEffect(() => {
+    setFocusable(focusable);
+  }, [focusable, setFocusable]);
+
+  // Le hub n'a pas d'etape « sans contenu jour » : sans ce reset, quitter le
+  // preparateur en gardant `false` laisserait le hub SANS rail alors qu'il en
+  // affiche un.
+  useEffect(() => () => setFocusable(true), [setFocusable]);
 }

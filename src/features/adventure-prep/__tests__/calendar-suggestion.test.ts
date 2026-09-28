@@ -39,7 +39,7 @@ describe('suggestDuration', () => {
     const draft = {
       ...emptyDraft(),
       activities: { primary: 'rando-journee' as const, extra: [], nights: [] },
-      calendar: { startDate: null, durationDays: 5, durationIsSuggested: false, returnDate: null },
+      calendar: { startDate: null, durationDays: 5, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null },
     };
     expect(suggestDuration(draft).calendar.durationDays).toBe(5);
     expect(suggestDuration(draft).calendar.durationIsSuggested).toBe(false);
@@ -49,7 +49,7 @@ describe('suggestDuration', () => {
     const draft = {
       ...emptyDraft(),
       activities: { primary: 'rando-journee' as const, extra: [], nights: [] },
-      calendar: { startDate: null, durationDays: 1, durationIsSuggested: true, returnDate: null },
+      calendar: { startDate: null, durationDays: 1, durationIsSuggested: true, startDateIsSuggested: false, returnDate: null },
     };
     const next = suggestDuration({
       ...draft,
@@ -67,6 +67,7 @@ describe('suggestDuration', () => {
         startDate: '2026-07-11',
         durationDays: 1,
         durationIsSuggested: true,
+        startDateIsSuggested: false,
         returnDate: '2026-07-11',
       },
     };
@@ -88,7 +89,7 @@ describe('draftActions.setActivities', () => {
   it('suggestit la duree des la selection, ce qui deverrouille l etape 1', () => {
     const draft = fullDraft({
       activities: { primary: null, extra: [], nights: [] },
-      calendar: { startDate: null, durationDays: null, durationIsSuggested: false, returnDate: null },
+      calendar: { startDate: null, durationDays: null, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null },
     });
     const next = draftActions.setActivities(draft, {
       primary: 'rando-journee',
@@ -102,7 +103,7 @@ describe('draftActions.setActivities', () => {
   it('ne mute jamais le brouillon d origine', () => {
     const draft = fullDraft({
       activities: { primary: null, extra: [], nights: [] },
-      calendar: { startDate: null, durationDays: null, durationIsSuggested: false, returnDate: null },
+      calendar: { startDate: null, durationDays: null, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null },
     });
     const before = JSON.stringify(draft);
     draftActions.setActivities(draft, { primary: 'rando-journee', extra: [], nights: [] });

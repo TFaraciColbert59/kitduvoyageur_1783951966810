@@ -20,20 +20,32 @@ import { dirname, join } from 'node:path';
 
 const tokens = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'styles', 'tokens.css'),
-  'utf8',
+  'utf8'
 );
 
 const prep = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), '..', 'adventure-prep.css'),
-  'utf8',
+  'utf8'
 );
 
 const DARK_SELECTOR = "html.dark, .dark, [data-theme='dark']";
 
+/**
+ * Normalise une couleur hexad decimale.
+ *
+ * Mesure du 28/09 : `prettier --write` sur adventure-prep.css avait lowercase
+ * les hex, et deux tests comparent une valeur CSS a une autre chaine : ils
+ * passaient au rouge sur une difference qui n a aucun sens en CSS (#7FC49A et
+ * #7fc49a sont la MEME couleur). On compare donc la casse, partout.
+ */
+function hex(value: string): string {
+  return value.trim().toLowerCase();
+}
+
 function block(selector: string): Map<string, string> {
   const withoutComments = tokens.replace(/\/\*[\s\S]*?\*\//g, ' ');
-  const found = [...withoutComments.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find((m) =>
-    m[1].trim().replace(/\s+/g, ' ') === selector,
+  const found = [...withoutComments.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find(
+    (m) => m[1].trim().replace(/\s+/g, ' ') === selector
   );
   const out = new Map<string, string>();
   if (!found) return out;
@@ -89,8 +101,8 @@ describe('D9 — le preparateur possede son encre d accent', () => {
     // suivre le theme de la page. Elle reprend donc la valeur que l'app
     // declare deja pour son theme sombre, et le test compare les deux pour
     // qu'elles ne puissent pas diverger.
-    const decl = /--prep-ink-accent:\s*([^;]+);/.exec(prep)?.[1]?.trim() ?? '';
-    expect(decl).toBe(block(DARK_SELECTOR).get('--lkv-action'));
+    const decl = /--prep-ink-accent:\s*([^;]+);/.exec(prep)?.[1] ?? '';
+    expect(hex(decl)).toBe(hex(block(DARK_SELECTOR).get('--lkv-action') ?? ''));
   });
 
   it('D9-06: la puce selectionnee prend cette encre, pas l accent brut', () => {
@@ -112,8 +124,8 @@ describe('D9 — le preparateur possede son encre d accent', () => {
     // epingle de carte, vignette d'etape). Sans encre sombre posee, le texte
     // de ces aplats disparaitrait.
     const root = /\.adventure-prep\s*\{([^}]*)\}/.exec(prep)?.[1] ?? '';
-    expect(/--lkv-on-action:\s*#08150F;/.test(root)).toBe(true);
-    expect(/--btn-on-solid:\s*#08150F;/.test(root)).toBe(true);
+    expect(hex(/--lkv-on-action:\s*([^;]+);/.exec(root)?.[1] ?? '')).toBe('#08150f');
+    expect(hex(/--btn-on-solid:\s*([^;]+);/.exec(root)?.[1] ?? '')).toBe('#08150f');
   });
 
   it('D9-09: aucun aplat d accent n est melange a du blanc', () => {

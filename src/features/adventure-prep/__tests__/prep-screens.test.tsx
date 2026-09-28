@@ -97,7 +97,10 @@ describe('DestinationStep — parcours et dates', () => {
 
   it('DEST-03: sans arrivée, aucune inversion mais l’arrivée reste saisissable', () => {
     const text = visible(
-      render(DestinationStep, fullDraft({ route: { origin: CHAMONIX, destination: null, shape: 'boucle' } })),
+      render(
+        DestinationStep,
+        fullDraft({ route: { origin: CHAMONIX, destination: null, shape: 'boucle' } })
+      )
     );
     expect(text).not.toContain('Inverser départ et arrivée');
     expect(text).toContain('Arrivée');
@@ -108,28 +111,44 @@ describe('DestinationStep — parcours et dates', () => {
    * La qualification est un CONTRAT, pas une copie : le badge doit exister quand la
    * duree est suggeree et disparaitre quand elle est confirmee. Le libelle peut
    * changer, l honnnetete des donnees, elle, ne peut pas.
+   * AN6 a change ce qui est qualifie, pas le contrat : le nombre d une
+   * proposition est reel, c est sa SOURCE qui doit rester visible.
    */
   it('DEST-04: qualifie une durée suggérée au lieu de la laisser croire choisie', () => {
     const suggested = render(
       DestinationStep,
       fullDraft({
-        calendar: { startDate: '2026-07-11', durationDays: 3, durationIsSuggested: true, returnDate: null },
-      }),
+        calendar: {
+          startDate: '2026-07-11',
+          durationDays: 3,
+          durationIsSuggested: true,
+          startDateIsSuggested: false,
+          returnDate: null,
+        },
+      })
     );
     // Un badge de qualification est bien affiche...
     expect(suggested).toContain('badge--suggestion');
-    // ...et la duree suggeree porte le marqueur A_VERIFIER au lieu d un nombre.
-    expect(suggested).toContain('data-unknown="true"');
-    expect(visible(suggested)).not.toMatch(/\d+\s*jours?/);
+    // ...et la duree proposee porte son nombre ET son marqueur de provenance.
+    expect(suggested).toContain('data-suggested="true"');
+    expect(visible(suggested)).toMatch(/\d+\s*jours?/);
+    expect(suggested).not.toMatch(/prep-cell__value[^>]*data-unknown="true"/);
 
     // Reciproquement, une duree confirmee ne porte plus de badge : le bruit disparait.
     const confirmed = render(
       DestinationStep,
       fullDraft({
-        calendar: { startDate: '2026-07-11', durationDays: 3, durationIsSuggested: false, returnDate: '2026-07-13' },
-      }),
+        calendar: {
+          startDate: '2026-07-11',
+          durationDays: 3,
+          durationIsSuggested: false,
+          startDateIsSuggested: false,
+          returnDate: '2026-07-13',
+        },
+      })
     );
     expect(confirmed).not.toContain('badge--suggestion');
+    expect(confirmed).not.toContain('data-suggested="true"');
   });
 
   it('DEST-04b: une proposition ne porte pas la couleur d un avertissement', () => {
@@ -141,8 +160,14 @@ describe('DestinationStep — parcours et dates', () => {
     const suggested = render(
       DestinationStep,
       fullDraft({
-        calendar: { startDate: '2026-07-11', durationDays: 3, durationIsSuggested: true, returnDate: null },
-      }),
+        calendar: {
+          startDate: '2026-07-11',
+          durationDays: 3,
+          durationIsSuggested: true,
+          startDateIsSuggested: false,
+          returnDate: null,
+        },
+      })
     );
     expect(suggested).toContain('badge--suggestion');
     expect(suggested).not.toContain('badge amber');
@@ -153,9 +178,15 @@ describe('DestinationStep — parcours et dates', () => {
       render(
         DestinationStep,
         fullDraft({
-          calendar: { startDate: null, durationDays: 3, durationIsSuggested: false, returnDate: null },
-        }),
-      ),
+          calendar: {
+            startDate: null,
+            durationDays: 3,
+            durationIsSuggested: false,
+            startDateIsSuggested: false,
+            returnDate: null,
+          },
+        })
+      )
     );
     expect(text).toContain('À vérifier');
   });
@@ -204,7 +235,11 @@ describe('ItineraryStepScreen — construction du parcours', () => {
   it('ITIN-03: l’écran en attente ne publie aucun pourcentage', () => {
     const base = fullDraft();
     const text = visible(
-      render(ItineraryStepScreen, { ...base, itinerary: null, generation: { ...base.generation, status: 'en_cours' } }),
+      render(ItineraryStepScreen, {
+        ...base,
+        itinerary: null,
+        generation: { ...base.generation, status: 'en_cours' },
+      })
     );
     expect(text).not.toMatch(/\d+\s*%/);
     expect(text).not.toMatch(/\d+\s*\/\s*100/);
@@ -225,7 +260,11 @@ describe('ItineraryStepScreen — construction du parcours', () => {
   it('ITIN-06: un parcours interrompu reste reprenable', () => {
     const base = fullDraft();
     const text = visible(
-      render(ItineraryStepScreen, { ...base, itinerary: null, generation: { ...base.generation, status: 'interrompu' } }),
+      render(ItineraryStepScreen, {
+        ...base,
+        itinerary: null,
+        generation: { ...base.generation, status: 'interrompu' },
+      })
     );
     expect(text).toContain('Reprise du parcours');
     expect(text).toContain('Continuer avec les éléments disponibles');

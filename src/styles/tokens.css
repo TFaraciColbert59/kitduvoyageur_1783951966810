@@ -213,6 +213,10 @@
   --font-brand: 'Manrope', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
   --font-body: var(--font-sans);
+  /* next/font injecte la vraie Instrument Serif sur <html> (layout.tsx).
+     Ce repli existe pour le rendu hors.next — sans lui, la declaration
+     `font-family: var(--font-serif), ...` tombait entierement invalide. */
+  --font-serif: 'Instrument Serif', Georgia, serif;
 
   /* Phase 2 — échelle Dynamic Type iOS (large title 34, body 17, footnote 13).
      Valeurs en rem : le texte agrandi navigateur reste pris en charge. */
