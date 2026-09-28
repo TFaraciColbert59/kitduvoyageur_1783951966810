@@ -2171,6 +2171,62 @@ d'une intention : chaque ligne porte sa preuve.**
       Generated dit **« Boucle du Mont-Blanc en 2 jours »** alors que le
       parcours mesure fait 67 km ; et la note **« 3 etapes a verifier »** est
       **masquee par le CTA « Enregistrer mon aventure »** en bas de l etape 3.
+- [x] **P0.29** ✅ **Les tuiles de mesures, le rail de génération et 28 autres
+      filets n'avaient plus d'arête : `--glass-rim` est une OMBRE, pas une couleur.**
+      Fermé le 2026-09-28, preuve navigateur D5.
+      **Le symptôme.** La tuile 2 du bandeau de mesures présentait un « liseré
+      clair en haut et à gauche en plus de la bordure », lu comme une bordure
+      double.
+      **Ce que la mesure a dit — l'inverse du diagnostic.** `getComputedStyle` sur
+      les trois tuiles de l'étape 2 : `border: 0px none rgb(255, 255, 255)`. Elles
+      n'avaient **aucune** bordure. Le liseré vu n'était que le reflet interne
+      (`inset 0 1px 0 …` en haut, `inset 0 -1px 0 …` en bas) : le reflet seul,
+      sans l'arête. Une bordure absente se lit comme un registre décalé.
+      **Cause.** `border: 1px solid var(--prep-glass-rim)`, et `--prep-glass-rim:
+      var(--glass-rim)`. Or `--glass-rim` vaut `rgba(255,255,255,0.85)` dans le
+      `:root` historique et `rgba(241,245,241,0.20)` dans le thème sombre — mais
+      `0 0 0 0.5px rgba(0,0,0,0.55)` et `0 0 0 0.5px rgba(0,0,0,0.22)` dans les
+      deux thèmes **iOS 27**, qui sont ceux qui tournent. C'est une **couche de
+      `box-shadow`** — c'est ainsi que le hub la consomme (`tokens.css:969`) — et
+      non une couleur. Posée dans un `border`, elle rend la déclaration **invalide
+      au moment du calcul** : `border-style` retombe sur `none`, en silence, sans
+      erreur ni avertissement. Le même jeton marche dans un thème et casse dans
+      l'autre : de là un défaut quasi invisible, et une « bordure double » qui
+      n'en était pas une.
+      **Une convention existait déjà, et je l'ai d'abord contredite.**
+      `--prep-hairline` (la largeur, `1px`) et `--prep-hairline-ink` (l'encre,
+      `color-mix(in srgb, var(--lkv-text-primary) 16%, transparent)`) étaient déjà
+      définis, avec un commentaire qui décrivait **exactement** ce piège et la
+      mesure navigateur qui l'avait révélé. Mon premier jet a renommé un jeton
+      existant en `--prep-hairline` : collision détectée en relisant le diff, et
+      abandonnée au profit de la convention du dépôt.
+      **Correction.** Les 24 filets d'`adventure-prep.css` et les 7 de
+      `free-departure.css` — **31 au total** — posent désormais la paire
+      `var(--prep-hairline) solid var(--prep-hairline-ink)`, comme le promettait
+      déjà le commentaire du bloc de jetons (« un seul pour la finesse des filets
+      de ce chantier »). Les 11 `color-mix(… var(--glass-rim) …)` calibrés sur une
+      couleur qui n'existait plus en iOS 27 sont venus avec. `--prep-glass-rim`
+      est supprimé, avec le motif consigné à sa place pour qu'on ne le remette pas.
+      **Mesure après.** Sur les trois tuiles de l'étape 2 et sur le bandeau de
+      l'étape 3 : `1px solid color(srgb 1 1 1 / 0.16)`. Et le doute que j'avais sur
+      la visibilité — une encre dérivée du texte clair sur du verre sombre — était
+      infondé, mesuré : `--lkv-text-primary` vaut `#ffffff` sur le préparateur.
+      Preuve : `proof/P029-01-filets-etape2.png` (regardée), `proof/P029-02-filets-etape3.png`.
+      **Tests.** `prep-filets-verre.test.ts`, **6 tests**. Le test ne liste aucun
+      jeton autorisé : il **résout** chaque jeton dans tous les thèmes et refuse
+      qu'une bordure reçoive une valeur d'ombre — y compris dans un seul thème,
+      puisque c'est celui-là qui casse. **Rouge → vert sur deux sabotages :**
+      `--prep-hairline-ink: var(--glass-rim)` fait rougir **3 tests** ; une seule
+      bordure remise à `1px solid var(--glass-rim)` en fait rougir **2**.
+      Typecheck `tsc --noEmit` **exit 0**, suite complète **612 fichiers / 5 728
+      tests / 0 échec**.
+      **Trois erreurs de mesure ou de méthode, consignées pour qu'elles ne se
+      répètent pas.** (1) J'ai lu « bordure double » et cherché une règle CSS
+      dupliquée : la mesure disait `border-style: none`. (2) Ma première sonde a
+      balayé la CSSOM et n'a rien trouvé — c'est la sonde qui était fausse, pas
+      le CSS ; j'en suis revenu à un recensement depuis la source. (3) Mon test
+      initial classait `border-radius` comme une bordure, et `1px` comme une
+      ombre : les deux venaient de comparer des noms au lieu des valeurs.
 - [~] **P0.24** 🔴 **`/api/amenities` renvoie 0 lieu sur le corridor de Chamonix : le
       fournisseur Overpass est injoignable depuis cette machine.** Ouvert le
       2026-09-28, pendant la preuve de P0.23.

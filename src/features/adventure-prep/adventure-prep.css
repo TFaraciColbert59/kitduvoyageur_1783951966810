@@ -289,7 +289,11 @@
      a 2.47:1 mesure. On garde la translucidite -- le fond continue de se
      deviner -- mais on assez de matiere pour que le blanc tienne 4.5:1. */
   --prep-glass-bg: rgba(14, 18, 16, 0.68);
-  --prep-glass-rim: var(--glass-rim);
+  /* Ancien --prep-glass-rim : supprime. Il deleguait a --glass-rim, qui est une
+     OMBRE et non une couleur (cf. --prep-hairline-ink plus bas) : pose dans un
+     border, il le rendait invalide et la bordure disparut sans bruit. Les 24
+     filets du prepareur et les 7 de free-departure ne bordaient plus rien.
+     Tous posent desormais la paire --prep-hairline / --prep-hairline-ink. */
   --prep-glass-border: var(--glass-border);
   --prep-glass-blur: var(--glass-blur-sm);
   --prep-glass-saturate: var(--glass-sat);
@@ -536,7 +540,7 @@
   min-height: var(--prep-nav-height);
   padding-inline: var(--space-4);
   background-color: var(--lkv-surface);
-  border-bottom: 1px solid color-mix(in srgb, var(--glass-rim) 60%, transparent);
+  border-bottom: var(--prep-hairline) solid var(--prep-hairline-ink);
 }
 
 /* --- Fil d Ariane : trois segments nommes, un actif ------------------ */
@@ -770,7 +774,7 @@
 .prep-block {
   border-radius: var(--card-radius);
   background-color: color-mix(in srgb, var(--card-tint-solid) 92%, var(--prep-mix-light));
-  border: 1px solid color-mix(in srgb, var(--glass-rim) 70%, transparent);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
   box-shadow: var(--prep-shadow-sm);
   overflow: hidden;
 }
@@ -791,7 +795,7 @@
 }
 
 .prep-block__row + .prep-block__row {
-  border-top: 1px solid color-mix(in srgb, var(--glass-rim) 55%, transparent);
+  border-top: var(--prep-hairline) solid var(--prep-hairline-ink);
 }
 
 button.prep-block__row {
@@ -863,7 +867,7 @@ button.prep-block__row:active {
   line-height: var(--lkv-line-body);
   color: var(--lkv-text-primary);
   background-color: color-mix(in srgb, var(--lkv-text-primary) 5%, transparent);
-  border: 1px solid color-mix(in srgb, var(--glass-rim) 70%, transparent);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
   border-radius: calc(var(--card-radius) * 0.7);
   resize: vertical;
   transition:
@@ -1006,7 +1010,7 @@ button.prep-block__row:active {
 }
 
 .prep-cell + .prep-cell {
-  border-left: 1px solid color-mix(in srgb, var(--glass-rim) 70%, transparent);
+  border-left: var(--prep-hairline) solid var(--prep-hairline-ink);
 }
 
 .prep-cell__head {
@@ -1187,7 +1191,7 @@ button.prep-block__row:active {
   overflow: hidden;
   background-color: var(--prep-map-bg);
   background-image: var(--prep-map-wash);
-  border: 1px solid color-mix(in srgb, var(--glass-rim) 70%, transparent);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
   /* Verre pose : flou et saturation repris du langage glass du systeme. Le fond
      reste opaque, donc le flou ne sert qu'a l'arrivee du fond de carte — il ne
      doit jamais laisser voir le texte de l'etape dessous. */
@@ -1249,7 +1253,7 @@ button.prep-block__row:active {
      les controles flottants du preparateur sont poses sur la CARTE, qui est
      claire, alors que le token generique est regle pour la photo. */
   background-color: var(--prep-glass-bg);
-  border: 1px solid var(--glass-border);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
   -webkit-backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
   backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
   box-shadow: var(--prep-glass-material), var(--prep-shadow-lift);
@@ -1422,7 +1426,7 @@ button.prep-map__glass:active {
      les controles flottants du preparateur sont poses sur la CARTE, qui est
      claire, alors que le token generique est regle pour la photo. */
   background-color: var(--prep-glass-bg);
-  border: 1px solid var(--glass-border);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
   -webkit-backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
   backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
   box-shadow: var(--prep-glass-material);
@@ -1508,7 +1512,7 @@ button.prep-map__glass:active {
   font-weight: 650;
   color: var(--lkv-text-secondary);
   background-color: var(--card-tint-solid);
-  border: 1px solid var(--glass-rim);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition:
@@ -1549,7 +1553,7 @@ button.prep-map__glass:active {
     brightness(var(--prep-panel-brightness));
   backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
     brightness(var(--prep-panel-brightness));
-  border: 1px solid var(--prep-glass-rim);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
   box-shadow: var(--prep-glass-material);
   min-width: 0;
   /* La tuile se mesure elle-meme : la valeur s ajuste a sa largeur au lieu de prendre la taille du texte puis de casser sur deux lignes. */
@@ -1619,7 +1623,7 @@ button.prep-map__glass:active {
     brightness(var(--prep-panel-brightness));
   backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
     brightness(var(--prep-panel-brightness));
-  border: 1px solid var(--prep-glass-rim);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
   box-shadow: var(--prep-glass-material);
 }
 
@@ -1671,7 +1675,7 @@ button.prep-map__glass:active {
     brightness(var(--prep-panel-brightness));
   backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
     brightness(var(--prep-panel-brightness));
-  border: 1px solid var(--prep-glass-rim);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
   box-shadow: var(--prep-glass-material);
 }
 
@@ -1741,7 +1745,7 @@ button.prep-map__glass:active {
   align-items: center;
   gap: var(--space-2);
   padding-top: var(--space-3);
-  border-top: 1px solid color-mix(in srgb, var(--glass-rim) 55%, transparent);
+  border-top: var(--prep-hairline) solid var(--prep-hairline-ink);
 }
 
 /* --- Ligne d'action secondaire (grilles, listes) ----------------------- */
@@ -1784,7 +1788,7 @@ button.prep-map__glass:active {
   font-weight: 650;
   color: var(--lkv-text-primary);
   background-color: var(--card-tint-solid);
-  border: 1px solid var(--glass-rim);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: background-color var(--motion-control-duration) var(--motion-ease-standard);
@@ -1817,7 +1821,7 @@ button.prep-map__glass:active {
   min-height: var(--prep-action-height);
   padding: var(--space-2) var(--space-5);
   background-color: var(--lkv-surface);
-  border-top: 1px solid color-mix(in srgb, var(--glass-rim) 60%, transparent);
+  border-top: var(--prep-hairline) solid var(--prep-hairline-ink);
 }
 
 /* --- AN9 · La langue de verre au-dessus de la barre d'action ------------
@@ -1963,7 +1967,7 @@ button.prep-map__glass:active {
   backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
     brightness(var(--prep-panel-brightness));
   box-shadow: var(--prep-glass-material);
-  border: 1px solid color-mix(in srgb, var(--glass-rim) 65%, transparent);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition:
@@ -2375,7 +2379,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   display: flex;
   justify-content: flex-end;
   padding: var(--prep-space-1) var(--prep-space-4);
-  border-top: 1px solid color-mix(in srgb, var(--glass-rim) 50%, transparent);
+  border-top: var(--prep-hairline) solid var(--prep-hairline-ink);
 }
 .prep-swap__button {
   display: inline-flex;
@@ -2408,7 +2412,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   padding: var(--prep-space-2) var(--prep-space-4);
 }
 .prep-gear-row + .prep-gear-row {
-  border-top: 1px solid color-mix(in srgb, var(--glass-rim) 50%, transparent);
+  border-top: var(--prep-hairline) solid var(--prep-hairline-ink);
 }
 .prep-gear-row__check {
   flex-shrink: 0;
@@ -2517,7 +2521,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 
 .prep-block {
   background: var(--lkv-surface);
-  border: 1px solid var(--glass-rim);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
   border-radius: var(--lkv-radius-md, 18px);
   overflow: hidden;
   box-shadow: 0 1px 2px color-mix(in srgb, var(--lkv-text-primary) 5%, transparent);
@@ -2553,7 +2557,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   place-items: center;
   flex: none;
   background: var(--lkv-surface);
-  border: 1px solid var(--glass-rim);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
   color: var(--lkv-text-secondary);
 }
 .prep-block__row[aria-pressed='true'] .prep-act-icon {
@@ -2623,7 +2627,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   padding: 6px 14px;
   border-radius: 22px;
   background: var(--lkv-surface);
-  border: 1px solid var(--glass-rim);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
   font-size: 14px;
   font-weight: 500;
   color: var(--lkv-text-primary);
@@ -3063,7 +3067,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
     brightness(var(--prep-panel-brightness));
   backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
     brightness(var(--prep-panel-brightness));
-  border: 1px solid var(--prep-glass-rim);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
   box-shadow: var(--prep-glass-material);
 }
 
@@ -3084,8 +3088,8 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-2);
   padding-block: var(--space-1);
-  border-top: 1px solid var(--prep-glass-rim);
-  border-bottom: 1px solid var(--prep-glass-rim);
+  border-top: var(--prep-hairline) solid var(--prep-hairline-ink);
+  border-bottom: var(--prep-hairline) solid var(--prep-hairline-ink);
 }
 
 .prep-metric--jour {

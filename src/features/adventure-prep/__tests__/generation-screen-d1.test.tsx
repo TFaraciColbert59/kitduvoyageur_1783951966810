@@ -156,7 +156,7 @@ describe('D1-B - le rail est du verre, pas une dalle', () => {
     const rail = bloc('.prep-rail');
     expect(rail).toMatch(/backdrop-filter:/);
     expect(rail).toContain('var(--prep-panel-blur)');
-    expect(rail).toContain('var(--prep-glass-rim)');
+    expect(rail).toContain('var(--prep-hairline)');
     expect(rail).toContain('var(--prep-glass-material)');
   });
 
