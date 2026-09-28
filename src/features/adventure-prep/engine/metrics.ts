@@ -52,7 +52,10 @@ const LABELS: Readonly<Record<PrepMetricId, string>> = {
   denivele: 'Dénivelé',
   duree: 'Durée',
   nuitees: 'Nuitées',
-  budget: 'Budget / personne',
+  // « par personne » reste dit, mais en abrégé : la tuile est un conteneur
+  // inline-size d environ 96px sur 393px, et le libelle entier y finissait
+  // coupe par l ellipsis (« Budget / per… »). La valeur porte deja l unite.
+  budget: 'Budget / pers.',
 };
 
 const UNITS: Readonly<Record<PrepMetricId, string>> = {

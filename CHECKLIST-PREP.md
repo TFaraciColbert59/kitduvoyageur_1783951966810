@@ -1179,7 +1179,7 @@ Viewport de test : **iPhone 393×852** (cible Sidestore). Le rendu desktop 1280p
 
 - [ ] **L3.1** 🔴 Bandeau IA : **4 lignes**, ~15 % de l'écran → 1 ligne repliable
 - [ ] **L3.2** 🔴 Pilule activité : titre sur **3 lignes** en colonne étroite → empilement propre
-- [ ] **L3.3** Carte Budget : libellé **tronqué** (« Budget / per… ») sur 393 px
+- [x] **L3.3** ✅ Carte Budget : libellé **tronqué** (« Budget / per… ») sur 393 px — **fermé le 2026-09-29**. `.prep-metric__label` porte `text-overflow: ellipsis` + `white-space: nowrap`, et la tuile est un `container-type: inline-size` d'environ **96 px utiles** sur 393 px (3 tuiles + gaps + padding) : « Budget / personne » (~109 px) y finissait coupée. **Corrigé en abrégeant le TEXTE, pas en fighting le CSS** : `LABELS.budget` = **« Budget / pers. »** (~90 px). La nuance par personne est conservée et la valeur porte déjà l'unité €. **Garde : 2 tests** dans `metrics.test.ts` (L3.3) — un qui refuse tout libellé de tuile dépassant le budget de largeur, un qui verrouille la forme abrégée. **Rouge → vert sur sabotage :** remettre « Budget / personne » fait rougir les **2** tests ; restauration → 29/29 vert.
 - [ ] **L3.4** 🔴 Badges d'étape **dupliqués** : « À vérifier · À vérifier » → badge unique stylisé
 - [ ] **L3.5** 🔴 Vignette d'étape = icône placeholder → image réelle, ou rien
 - [ ] **L3.6** 6 boutons d'action sur une carte (Détails/Remplacer/À conserver/Ajuster/Étapes/Ajouter)

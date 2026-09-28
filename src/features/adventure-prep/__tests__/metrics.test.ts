@@ -334,3 +334,35 @@ describe('accord des unites comptables', () => {
     expect(denivele?.unit).toBe('m');
   });
 });
+
+describe('L3.3 : les libelles de tuile tiennent dans la tuile', () => {
+  // Budget de LARGEUR, pas de style : la tuile est un conteneur inline-size
+  // d environ 96px utiles sur 393px (3 tuiles + gaps + padding). Le CSS ne
+  // coupe pas, il met une ellipse — un libelle trop long devient « Budget /
+  // per… » et perd sa nuance. On borne donc la longueur des libelles, pas leur
+  // rendu : le test echoue des qu un libelle s allonge au-dela de ce que la
+  // tuile peut porter sans troncature.
+  const LARGEUR_TUILE_PX = 96;
+  // 6,6px par caractere en caption 620 : mesure sur « Distance » (8 car) qui
+  // tient dans la tuile sans etre rogne. Marge de securite de 10%.
+  const PX_PAR_CAR = 6.6;
+  const largeur = (label: string) => label.length * PX_PAR_CAR;
+
+  it('aucun libelle de tuile ne deborde sa largeur', () => {
+    const tropLong: string[] = [];
+    for (const id of ['distance', 'denivele', 'duree', 'nuitees', 'budget'] as const) {
+      const label = metricsFor(voyage(), 'aventure').find((m) => m.id === id)?.label;
+      if (label !== undefined && largeur(label) > LARGEUR_TUILE_PX * 1.1) {
+        tropLong.push(`${id}="${label}" (${Math.round(largeur(label))}px)`);
+      }
+    }
+    expect(tropLong).toEqual([]);
+  });
+
+  it('le libelle budget garde la nuance par personne, en abrege', () => {
+    const budget = metricsFor(voyage(), 'aventure').find((m) => m.id === 'budget');
+    expect(budget?.label).toBe('Budget / pers.');
+    // Il ne doit surtout PAS revenir a la forme longue qui tronquait.
+    expect(budget?.label).not.toBe('Budget / personne');
+  });
+});
