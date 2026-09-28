@@ -64,3 +64,18 @@ export function daysLabel(days: number | null): string {
 export function plural(count: number, singular: string, plural_?: string): string {
   return count <= 1 ? singular : (plural_ ?? `${singular}s`);
 }
+
+/**
+ * Titre du programme affiche en tete de l'etape 2.
+ *
+ * Avec une activite du catalogue, son libelle. Sans elle — « Partir librement »
+ * — le parcours vient de l invite libre : afficher « Activite inconnue » ou une
+ * pastille vide nommerait une absence comme si c etait un contenu. On montre
+ * donc la phrase reelle de la personne, raccourcie pour tenir dans la pastille.
+ */
+export function programTitle(primaryLabel: string | null, brief: string | null): string {
+  if (primaryLabel) return primaryLabel;
+  const phrase = brief?.trim() ?? '';
+  if (phrase === '') return 'Parcours sur mesure';
+  return phrase.length <= 48 ? phrase : `${phrase.slice(0, 47).trimEnd()}…`;
+}

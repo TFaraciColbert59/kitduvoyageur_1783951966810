@@ -243,7 +243,7 @@ export function assembleModel(
             currency: 'EUR',
             state: 'propose',
           },
-    activityCount: 1 + draft.activities.extra.length,
+    activityCount: (draft.activities.primary ? 1 : 0) + draft.activities.extra.length,
     contingencies: [],
   };
   return { ...model, contingencies: buildContingencies(model) };

@@ -1028,13 +1028,6 @@ button.prep-block__row:active {
   border: 1px solid color-mix(in srgb, var(--lkv-action) 28%, transparent);
 }
 
-.prep-pill[data-unknown='true'] {
-  color: var(--lkv-text-secondary);
-  font-style: italic;
-  background-color: var(--prep-segmented-track);
-  border: 1px solid color-mix(in srgb, var(--glass-rim) 70%, transparent);
-}
-
 /* --- Etape 1 : trois blocs, donc pas de defilement superflu ---------- */
 
 .prep-screen--dense .prep-body {

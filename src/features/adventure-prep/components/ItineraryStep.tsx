@@ -14,7 +14,7 @@ import { runItineraryGeneration } from '../engine/itineraryPhases';
 import { browserMeasurementRunners } from '../browserMeasurements';
 import { anchorsOf, loadPlaceInventoryFor, resolvePlacesFor, warmAmenitiesFor } from '../placeSource';
 import { shouldLaunchGeneration } from '../engine/stepTransition';
-import { minutesLabel } from '../engine/labels';
+import { minutesLabel, programTitle } from '../engine/labels';
 import { A_VERIFIER, moneyLabel, stateLabel } from '../engine/trust';
 import { usePrepDayFocusPublisher } from '../hooks/usePrepDayFocusPublisher';
 import { useAdventurePrepStore } from '../store/useAdventurePrepStore';
@@ -473,7 +473,7 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
       <div className="prep-body">
         <button type="button" className="prep-pill" onClick={() => onOpenSheet('coverage')}>
           <Icon name={activity?.icon || 'sparkles'} size={16} />
-          <span style={{ marginLeft: 8 }}>{activity?.label || 'Activité inconnue'}</span>
+          <span style={{ marginLeft: 8 }}>{programTitle(activity?.label ?? null, draft.brief)}</span>
           {model && generation.notice && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginLeft: 8 }}>
               <Icon name="sparkles" size={16} />

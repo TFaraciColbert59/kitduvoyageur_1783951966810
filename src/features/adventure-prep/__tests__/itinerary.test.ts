@@ -23,6 +23,39 @@ describe('proposition de parcours', () => {
     expect(buildItinerary(draftWithoutItineraryInput())).toBeNull();
   });
 
+  it('construit depuis l invite libre quand le catalogue a ete refuse', () => {
+    // « Partir librement » promet un parcours sans activite du catalogue. Sans
+    // cette porte, le bouton s activait puis la generation echouait sur place :
+    // un cul-de-sac. L invite libre est une saisie reelle, pas un defaut.
+    const draft = fullDraft({
+      activities: { primary: null, extra: [], nights: [] },
+      brief: 'Trois jours de randonnee autour de Chamonix, refuge puis retour',
+      pickerDismissed: true,
+    });
+    expect(isBuildable(draft)).toBe(true);
+    const built = buildItinerary(draft);
+    expect(built).not.toBeNull();
+    expect(built?.days).toBe(3);
+  });
+
+  it('ne construit rien sans activite ET sans invite libre', () => {
+    // Ni catalogue ni phrase : il n y a rien de reel sur quoi construire.
+    expect(isBuildable(draftWithoutItineraryInput())).toBe(false);
+  });
+
+  it('ne compte aucune activite quand aucune n a ete retenue', () => {
+    // Le compte est une donnee affichee : sans activite il doit valoir zero,
+    // pas « 1 » pour faire un rond.
+    const built = buildItinerary(
+      fullDraft({
+        activities: { primary: null, extra: [], nights: [] },
+        brief: 'Un sejour tranquille, on decide sur place',
+        pickerDismissed: true,
+      }),
+    );
+    expect(built?.activityCount).toBe(0);
+  });
+
   it('ne construit rien sans point de depart', () => {
     const draft = fullDraft();
     const sansDepart = { ...draft, route: { ...draft.route, origin: null } };

@@ -70,11 +70,21 @@ export function createStep(
 
 export function isBuildable(draft: AdventurePrepDraft): boolean {
   return (
-    !!draft.activities.primary &&
+    hasSomethingToBuildFrom(draft) &&
     !!draft.route.origin &&
     !!draft.calendar.durationDays &&
     draft.calendar.durationDays > 0
   );
+}
+
+/**
+ * Ce sur quoi le parcours peut etre bati. L activite du catalogue n est pas
+ * la seule porte : « Partir librement » laisse une invite libre, une saisie
+ * reelle de la personne. Sans elle, exiger le catalogue annulait la promesse
+ * du bouton et la generation echouait apres avoir ete lancee.
+ */
+function hasSomethingToBuildFrom(draft: AdventurePrepDraft): boolean {
+  return !!draft.activities.primary || (draft.brief !== null && draft.brief.trim() !== '');
 }
 
 function travelState(draft: AdventurePrepDraft): ItineraryStep['state'] {
@@ -168,7 +178,7 @@ export function buildItinerary(draft: AdventurePrepDraft): ItineraryModel | null
             currency: 'EUR',
             state: 'propose',
           },
-    activityCount: 1 + draft.activities.extra.length,
+    activityCount: (draft.activities.primary ? 1 : 0) + draft.activities.extra.length,
     contingencies: [],
   };
   return { ...model, contingencies: buildContingencies(model) };
