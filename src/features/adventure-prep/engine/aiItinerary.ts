@@ -82,8 +82,6 @@ function toDrafted(output: StrictItineraryOutput, days: number): DraftedItinerar
       startTime: sanitizeStartTime(step.startTime),
       durationMin: step.durationMin,
       reason: step.reason === null ? null : frenchTypography(step.reason),
-      lat: step.lat,
-      lon: step.lon,
     }));
   return {
     days,

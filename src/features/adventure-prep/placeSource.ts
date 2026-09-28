@@ -353,7 +353,12 @@ export function loadPlaceInventoryFor(fetchImpl: Fetcher = fetch): PlaceInventor
       const key = `${candidate.name.trim().toLowerCase()}|${candidate.lat.toFixed(4)}|${candidate.lon.toFixed(4)}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      inventory.push({ name: candidate.name, category: candidate.category });
+      inventory.push({
+        name: candidate.name,
+        category: candidate.category,
+        lat: candidate.lat,
+        lon: candidate.lon,
+      });
     }
     return inventory;
   };

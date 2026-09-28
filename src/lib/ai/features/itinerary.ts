@@ -58,8 +58,6 @@ const OUT_STEP_SCHEMA = z.object({
   startTime: z.string().trim().max(8).nullable(),
   durationMin: z.number().int().min(0).max(1440).nullable(),
   reason: z.string().trim().max(240).nullable(),
-  lat: z.number().min(-90).max(90).nullable(),
-  lon: z.number().min(-180).max(180).nullable(),
 });
 
 export const itineraryOutputSchema = z.object({
@@ -132,9 +130,7 @@ const OUTPUT_CONTRACT = [
   '      "placeName": "lieu reellement connu ou null",',
   '      "startTime": "HH:MM ou null",',
   '      "durationMin": 90,',
-  '      "reason": "pourquoi cette etape : proximite, confort, acces, ravitaillement",',
-  '      "lat": 50.1,',
-  '      "lon": 4.2',
+  '      "reason": "pourquoi cette etape : proximite, confort, acces, ravitaillement"',
   '    }',
   '  ],',
   '  "hypotheses": ["ce que tu as suppose et qui reste a confirmer"]',
@@ -172,10 +168,15 @@ const CONSIGNES = [
   '2. Tu ne fournis AUCUN prix, AUCUN tarif, AUCUNE disponibilite. Le schema ne contient volontairement aucun champ de prix : ne l invente pas dans un titre, une raison ou une hypothese.',
   '3. startTime au format HH:MM sur 24 h ; null si l heure est inconnue.',
   '4. reason explique le choix en une phrase courte et factuelle, jamais une publicite.',
-  '5. Les coordonnees ne servent que si elles sont STRICTEMENT issues du contexte fourni ; sinon null.',
-  '6. Reponds uniquement par le JSON, en francais, sans markdown ni commentaire.',
-  '7. Bornes : au plus 30 jours, 12 etapes par jour, 200 etapes au total.',
-  "8. Les creneaux d'une meme journee s'ENCHAINENT sans jamais se chevaucher :",
+  '5. Le schema ne contient AUCUNE coordonnee : tu ne peux pas en produire, meme',
+  '   recopie. Pour situer une etape, cite un lieu de l inventaire dans placeName.',
+  "   Un placeName qui ne figure pas dans l inventaire fait perdre la position de",
+  '   l etape : elle ne recevra ni distance, ni carte, ni altitude.',
+  '6. Ne propose jamais deux fois le meme lieu dans une meme journee : chaque journee',
+  '   se deroule comme une boucle, on passe, on continue.',
+  '7. Reponds uniquement par le JSON, en francais, sans markdown ni commentaire.',
+  '8. Bornes : au plus 30 jours, 12 etapes par jour, 200 etapes au total.',
+  "9. Les creneaux d'une meme journee s'ENCHAINENT sans jamais se chevaucher :",
   "   startTime de l'etape N + durationMin de l'etape N <= startTime de l'etape N+1.",
   "   Exemple correct : 08:00 + 120 min, puis 10:00 + 60 min, puis 11:00.",
   "   Exemple refuse (chevauchement) : 08:00 + 120 min, puis 10:30 + 60 min.",
@@ -222,7 +223,12 @@ export interface ItineraryPromptInput {
   // construit dedans au lieu de deviner.
   //
   // `undefined` ou vide : aucun inventaire, et le prompt le dit franchement.
-  availablePlaces?: readonly { name: string; category: string }[];
+  availablePlaces?: readonly {
+    name: string;
+    category: string;
+    lat?: number | null;
+    lon?: number | null;
+  }[];
   /** Invite libre de la personne. `null` quand elle n a rien ecrit. */
   brief: string | null;
 }
@@ -292,8 +298,13 @@ export function buildItineraryPrompt(input: ItineraryPromptInput): {
       ? input.availablePlaces
           .slice(0, 60)
           .map(
-            (place) =>
-              `- ${sanitizeScalar(place.name, 120)} (${sanitizeScalar(place.category, 40)})`,
+            (place) => {
+              const coords =
+                typeof place.lat === 'number' && typeof place.lon === 'number'
+                  ? ` [${place.lat.toFixed(4)}, ${place.lon.toFixed(4)}]`
+                  : '';
+              return `- ${sanitizeScalar(place.name, 120)} (${sanitizeScalar(place.category, 40)})${coords}`;
+            },
           )
           .join('\n')
       : null;
@@ -308,6 +319,8 @@ export function buildItineraryPrompt(input: ItineraryPromptInput): {
         inventory,
         'Utilise UNIQUEMENT ces lieux : un lieu absent de cette liste',
         "n existe pas pour ce parcours et ne doit jamais etre cite, meme «en passant par».",
+        'Les coordonnees entre crochets servent uniquement a ordonner le parcours',
+        'dans le bon sens : enchaîne des lieux voisins, jamais un aller simple.',
         '',
       ]
     : [

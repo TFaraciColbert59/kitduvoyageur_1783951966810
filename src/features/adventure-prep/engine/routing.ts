@@ -199,8 +199,24 @@ export function applyRouting(
 /* Orchestration                                                       */
 /* ------------------------------------------------------------------ */
 
-function dayChains(model: ItineraryModel): GeoPoint[][] {
-  const chains: GeoPoint[][] = Array.from({ length: model.days }, () => []);
+interface ChainNode {
+  readonly point: GeoPoint;
+  readonly stepId: string;
+}
+
+// Deux points a moins d un metre sont le meme point. Le seuil n est pas
+// arbitraire : la source de lieux travaille a 1e-4 de degres pres, soit
+// environ 11 metres. Un pas plus petit ne distingue pas deux lieux, et un
+// troncon de longueur nulle n a pas de route.
+function samePoint(a: GeoPoint, b: GeoPoint): boolean {
+  const metersLat = Math.abs(a.lat - b.lat) * 111_320;
+  const metersLon =
+    Math.abs(a.lon - b.lon) * 111_320 * Math.cos((a.lat * Math.PI) / 180);
+  return metersLat < 1 && metersLon < 1;
+}
+
+function dayChains(model: ItineraryModel): ChainNode[][] {
+  const chains: ChainNode[][] = Array.from({ length: model.days }, () => []);
   const byDay = new Map<number, ItineraryStep[]>();
   for (const step of model.steps) {
     const bucket = byDay.get(step.day);
@@ -209,10 +225,13 @@ function dayChains(model: ItineraryModel): GeoPoint[][] {
   }
   for (const [day, steps] of byDay) {
     if (day < 1 || day > model.days) continue;
-    const chain: GeoPoint[] = [];
+    const chain: ChainNode[] = [];
     for (const step of [...steps].sort((a, b) => a.order - b.order)) {
       const point = located(step);
-      if (point) chain.push(point);
+      if (!point) continue;
+      const previous = chain[chain.length - 1];
+      if (previous && samePoint(previous.point, point)) continue;
+      chain.push({ point, stepId: step.id });
     }
     chains[day - 1] = chain;
   }
@@ -306,7 +325,13 @@ export async function routeItinerary(
       continue;
     }
 
-    const legs = await deps.route(chain, signal);
+    // La chaine est deja dedoublonnee : le routeur ne recoit jamais deux
+    // points identiques a la suite, et donc ne peut pas repondre NoSegment sur
+    // un troncon de longueur nulle.
+    const legs = await deps.route(
+      chain.map((node) => node.point),
+      signal,
+    );
     if (!legs || legs.length === 0) {
       perDay.push(null);
       continue;
@@ -314,7 +339,10 @@ export async function routeItinerary(
 
     const totals = legTotals(legs);
     const geometry = legs.flatMap((leg) => [...leg.geometry]);
-    const dayIds = ids[index];
+    // Le troncon N aboutit sur le point N+1 : c est l etape qui porte la
+    // duree routiere mesuree. Les points repetes ayant ete retires, l index
+    // suit directement la chaine.
+    const dayIds = chain.map((node) => node.stepId);
     legs.forEach((leg, legIndex) => {
       const stepId = dayIds[legIndex + 1];
       if (stepId) legByStepId[stepId] = leg;

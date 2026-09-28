@@ -52,8 +52,6 @@ function draftStep(overrides: Partial<DraftedStep> = {}): DraftedStep {
     startTime: null,
     durationMin: null,
     reason: null,
-    lat: null,
-    lon: null,
     ...overrides,
   };
 }

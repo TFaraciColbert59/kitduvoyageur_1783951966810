@@ -46,6 +46,12 @@ export interface PlaceCandidate {
 export interface PlaceInventory {
   readonly name: string;
   readonly category: string;
+  // Position REELLE, quand la source la fournit. Elle n est jamais recopiee par
+  // le modele - le schema de sortie ne contient aucun champ de coordonnee -
+  // mais elle lui permet d ordonner le parcours du bon sens : sans elle, il
+  // enchainait un sommet et un hameau comme s ils etaient voisins.
+  readonly lat?: number | null;
+  readonly lon?: number | null;
 }
 
 const KNOWN_CATEGORIES = new Set([
@@ -137,6 +143,72 @@ export function kindCategories(kind: ItineraryStepKind): readonly string[] {
 const point = (candidate: PlaceCandidate): GeoPoint => ({ lat: candidate.lat, lon: candidate.lon });
 
 /**
+ * Nom comparable : casse, accents, apostrophes et ponctuation disparaissent.
+ *
+ * « Plan de l'Aiguille » et « plan de l aiguille » doivent designer le meme
+ * refuge. C est une regle de correspondance, pas une comparaison de chaines :
+ * une base reelle et une reponse de modele ne s ecriront jamais de meme facon.
+ */
+export function normalizePlaceName(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/['\u2018\u2019`]/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+/** En dessous de cette longueur, une correspondance n est pas un nom de lieu. */
+const MIN_MATCH = 4;
+
+/**
+ * Le lieu REEL que l etape cite, ou `null`.
+ *
+ * L egalite exacte passe d abord : « Lac Blanc » designe Lac Blanc, et non
+ * « Bivouac Lac Blanc ». L enclenchement ne vient qu ensuite, parce qu un
+ * redacteur ecrit volontiers « Refuge du Plan de l'Aiguille » en supprimant
+ * l article. Le plus long nom gagne : c est le lieu le plus precis, donc le
+ * moins d inference.
+ */
+export function matchNamedPlace(
+  candidates: readonly PlaceCandidate[],
+  text: string | null,
+): PlaceCandidate | null {
+  if (text === null || text.trim() === '') return null;
+  const cible = normalizePlaceName(text);
+  if (cible.length < MIN_MATCH) return null;
+
+  for (const candidate of candidates) {
+    if (normalizePlaceName(candidate.name) === cible) return candidate;
+  }
+
+  let best: PlaceCandidate | null = null;
+  let bestLength = 0;
+  for (const candidate of candidates) {
+    const nom = normalizePlaceName(candidate.name);
+    if (nom.length < MIN_MATCH) continue;
+    if (cible.includes(nom) && nom.length > bestLength) {
+      best = candidate;
+      bestLength = nom.length;
+    }
+  }
+  return best;
+}
+
+/**
+ * Une etape sans lieu Recoit AUCUNE position.
+ *
+ * Cette fonction existe parce que la confiance ne doit pas reposer sur une
+ * validation a posteriori : si aucune source reelle ne place l intention,
+ * aucune coordonnee ne doit subsister. Elle est aussi le seul endroit ou une
+ * position peut disparaitre, donc le seul a tester.
+ */
+function unlocated(step: ItineraryStep): ItineraryStep {
+  return { ...step, lat: null, lon: null };
+}
+
+/**
  * Place le point le plus proche ET compatible, par rapport au dernier point
  * connu. Le parcours avance : on ne revient pas en arriere chercher un refuge
  * deja depasse.
@@ -199,6 +271,15 @@ export function assignPlaces(
   const firstTrajetId = trajets[0]?.id ?? null;
   const lastTrajetId = trajets[trajets.length - 1]?.id ?? null;
 
+  // Le premier trajet de CHAQUE journee. Sur un voyage de trois jours, le
+  // modele ouvre chaque journee par un deplacement : sans ancrage, la
+  // deuxieme journee n aurait aucun point de depart, donc aucune distance.
+  const firstTrajetByDay = new Map<number, string>();
+  for (const step of ordered) {
+    if (step.kind !== 'trajet') continue;
+    if (!firstTrajetByDay.has(step.day)) firstTrajetByDay.set(step.day, step.id);
+  }
+
   const used = new Set<string>();
   let cursor: GeoPoint = origin
     ? { lat: origin.lat, lon: origin.lon }
@@ -207,12 +288,14 @@ export function assignPlaces(
 
   const steps = ordered.map((step) => {
     if (step.kind === 'trajet') {
-      if (step.id === firstTrajetId && origin) {
+      if (step.id === firstTrajetId) {
+        if (!origin) return unlocated(step);
         cursor = { lat: origin.lat, lon: origin.lon };
         hasCursor = true;
         return { ...step, placeName: origin.name, lat: origin.lat, lon: origin.lon };
       }
-      if (step.id === lastTrajetId && destination) {
+      if (step.id === lastTrajetId) {
+        if (!destination) return unlocated(step);
         return {
           ...step,
           placeName: destination.name,
@@ -220,12 +303,38 @@ export function assignPlaces(
           lon: destination.lon,
         };
       }
-      return step;
+      // Journee 2 et suivantes : on repart du point ou la journee precedente
+      // s est arretee. C est une continuite, pas une invention : le point vient
+      // lui-meme de la base ou de la personne.
+      if (firstTrajetByDay.get(step.day) === step.id && hasCursor) {
+        return { ...step, lat: cursor.lat, lon: cursor.lon };
+      }
+      return unlocated(step);
     }
 
-    if (!hasCursor) return step;
+    if (!hasCursor) return unlocated(step);
+
+    // Le lieu CITE prime sur le lieu le plus proche. Sans cela, un refuge
+    // demande a 8 km se voyait remplacer par un point de vue a 2 km, et le
+    // parcours affichait un autre nom que celui de l invitation.
+    const cited = step.placeName !== null && step.placeName.trim() !== '';
+    const named = matchNamedPlace(candidates, cited ? step.placeName : step.title);
+    if (named && !used.has(named.id)) {
+      used.add(named.id);
+      cursor = point(named);
+      return applyCandidate(step, named);
+    }
+    // Un lieu nomme que la base ne contient pas n est pas un lieu : aucune
+    // position ne peut lui etre donnee. Le rattacher au point le plus proche
+    // afficherait un autre nom que celui demande, et la distance mesuree ne
+    // serait celle de rien. L intention devient une note.
+    if (cited && named === null) return unlocated(step);
+    // Un lieu nomme et deja visite ne recoit pas la meme position deux fois :
+    // l intention est DEPLACEE vers un autre lieu real et compatible. Si la
+    // journee n en offre aucun, elle devient une note - honnete, et non un
+    // aller-retour au meme point qui ferait mentir la distance.
     const candidate = nearestCompatible(candidates, used, cursor, step.kind);
-    if (!candidate) return step;
+    if (!candidate) return unlocated(step);
     used.add(candidate.id);
     cursor = point(candidate);
     return applyCandidate(step, candidate);

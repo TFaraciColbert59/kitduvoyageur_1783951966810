@@ -131,8 +131,6 @@ export interface DraftedStep {
   startTime: string | null;
   durationMin: number | null;
   reason: string | null;
-  lat: number | null;
-  lon: number | null;
 }
 
 export interface DraftedItinerary {
@@ -251,8 +249,11 @@ export function materializeSteps(
     state: 'propose' as const,
     kept: false,
     icon: ICONS[step.kind],
-    lat: step.lat,
-    lon: step.lon,
+    // Aucune position ici, jamais. Le schema de sortie ne porte pas de
+    // coordonnee, donc la seule source de position est l inventaire REEL,
+    // branche plus tard par `assignPlaces`.
+    lat: null,
+    lon: null,
     mealSlot: null,
   }));
 }
