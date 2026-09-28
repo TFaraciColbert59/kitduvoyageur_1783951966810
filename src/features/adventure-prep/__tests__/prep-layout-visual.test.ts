@@ -351,13 +351,37 @@ describe('P0.10 - les actions du tiroir ne passent jamais sous le pli', () => {
   const d = (): Map<string, string> => declarations(lastRule('.prep-actionrow')?.body ?? '');
 
   it('la barre d actions est collee au bas de la feuille', () => {
-    expect(d().get('position') ?? '').toBe('sticky');
-    expect(d().get('bottom') ?? '').not.toBe('');
+    // Le collage est le propre du TIROIR. Il ne doit pas contaminer la
+    // barre d outils de l'etape 2, qui partageait le nom : collee au bas du
+    // corps defilant, elle passait SUR la description de l'etape (mesure
+    // 393x852 le 2026-09-28, `proof/P011-02`).
+    const sticky = declarations(lastRule('.prep-actionrow.prep-actionrow--sticky')?.body ?? '');
+    expect(sticky.get('position') ?? '').toBe('sticky');
+    expect(sticky.get('bottom') ?? '').not.toBe('');
   });
 
   it('la barre d actions est du verre, pour lire le contenu qui deroule dessous', () => {
     // Sans fond, le texte de la feuille passerait sous les boutons en derivant.
-    expect(d().get('background') ?? d().get('background-color') ?? '').not.toBe('');
+    const sticky = declarations(lastRule('.prep-actionrow.prep-actionrow--sticky')?.body ?? '');
+    expect(sticky.get('background') ?? sticky.get('background-color') ?? '').not.toBe('');
+  });
+
+  it('la barre d outils de l etape 2 ne flotte pas sur le contenu', () => {
+    // `.prep-actionrow` reste une simple rangee de boutons. Le collage vit
+    // dans le modificateur, reserve aux feuilles.
+    expect(d().get('position') ?? '').not.toBe('sticky');
+  });
+
+  it('le collage survit au pied de feuille, qui declare position: relative', () => {
+    /* Mesure au navigateur 393x852, fiche d offre ouverte le 2026-09-28 :
+       `.prep-footer` (position: relative) est declare APRES le modificateur,
+       a specificite egale, et le substituait. Le bouton « Fermer » n etait
+       donc jamais colle : il pouvait repasser sous le pli de la feuille. Le
+       modificateur doit donc vaincre `.prep-footer`, pas seulement
+       `.prep-actionrow`. */
+    const combined = rules().find((r) => r.selector.includes('.prep-actionrow.prep-actionrow--sticky'));
+    expect(combined).toBeDefined();
+    expect(declarations(combined!.body).get('position') ?? '').toBe('sticky');
   });
 });
 

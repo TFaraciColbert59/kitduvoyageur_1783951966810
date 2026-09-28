@@ -471,16 +471,18 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
   return (
     <div className="prep-screen">
       <div className="prep-body">
+        {/* Un titre, un sous-titre, deux lignes (P0.11). La notice tellingait
+            sa place DANS la pastille : les deux textes se repliaient l'un
+            contre l'autre sur trois ou quatre lignes, avec deux icones
+            sparkles pour deux fois le meme role. Elle est donc sortie de la
+            pastille sans perdre son sens : elle dit toujours honnetement ce
+            qui reste a confirmer. */}
         <button type="button" className="prep-pill" onClick={() => onOpenSheet('coverage')}>
           <Icon name={activity?.icon || 'sparkles'} size={16} />
-          <span style={{ marginLeft: 8 }}>{programTitle(activity?.label ?? null, draft.brief)}</span>
-          {model && generation.notice && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginLeft: 8 }}>
-              <Icon name="sparkles" size={16} />
-              {generation.notice}
-            </span>
-          )}
+          <span className="prep-pill__label">{programTitle(activity?.label ?? null, draft.brief)}</span>
         </button>
+
+        {model && generation.notice && <p className="prep-notice">{generation.notice}</p>}
 
         {!model && (
           <p className="prep-help" style={{ textAlign: 'center', color: 'var(--lkv-text-subtle)', margin: 'var(--space-2) 0' }}>

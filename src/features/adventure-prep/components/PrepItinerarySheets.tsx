@@ -802,7 +802,7 @@ function StepActions(props: { step: ItineraryStep; actions: AdventurePrepStore; 
 
         </div>
 
-        <div className="prep-actionrow">
+        <div className="prep-actionrow prep-actionrow--sticky">
 
           <Button variant="secondary" size="md" aria-pressed={step.kept} onClick={() => actions.keepStep(step.id, !step.kept)}>
 
@@ -841,7 +841,7 @@ function StepFooter(props: { href: string | null; partner: string; onClose: () =
   );
 
   return (
-    <div className="prep-footer prep-actionrow">
+    <div className="prep-footer prep-actionrow prep-actionrow--sticky">
       {href !== null ? (
         <div className="prep-actionrow">
           {openOffer('Voir l’offre ↗')}

@@ -90,7 +90,7 @@ function SheetActions({
   label?: string;
 }) {
   return (
-    <div className="prep-actionrow" style={{ marginTop: 16, justifyContent: 'flex-end', display: 'flex', gap: '8px' }}>
+    <div className="prep-actionrow prep-actionrow--sticky" style={{ marginTop: 16, justifyContent: 'flex-end', display: 'flex', gap: '8px' }}>
       <Button variant="ghost" size="md" onClick={onClose}>
         Annuler
       </Button>

@@ -144,6 +144,16 @@
      sous elle en s estompant, donc la feuille garde une lisiere nette. */
   --prep-actionrow-bg: linear-gradient(180deg, rgb(255 255 255 / 0) 0%, var(--prep-row-bg) 38%);
 
+  /* Sous-titre pose sur la photo (P0.11). Mesure au navigateur 393x852 :
+     `--lkv-text-subtle` y vaut rgba(255,255,255,0.46), donc 46 % de blanc
+     pose sur les neiges claires d une photo de montagne : le texte existait
+     sans etre lisible. Il lui faut son PROPRE materiau — un verre un peu
+     plus dense que la ligne de resultat, parce que du texte est plus
+     exigeant qu un nom de lieu — et une encre full opacity. */
+  --prep-notice-bg: rgb(18 22 30 / 0.46);
+  --prep-notice-edge: rgb(255 255 255 / 0.14);
+  --prep-notice-ink: rgb(255 255 255 / 0.92);
+
   /* Reflet de lumiere en tete de feuille de verre : c'est ce qui distingue une
      feuille d'une dalle. La lumiere tombe du haut et s'eteint vers le tiers
      superieur, comme sur une plaque de verre eclaircee par dessus. */
@@ -1299,6 +1309,7 @@ button.prep-map__glass:active {
   align-items: center;
   gap: var(--space-2);
   align-self: flex-start;
+  max-width: 100%;
   min-height: var(--control-height-md);
   padding: 0 var(--space-3) 0 var(--space-2);
   border-radius: 999px;
@@ -1319,6 +1330,32 @@ button.prep-map__glass:active {
 .prep-pill:focus-visible {
   outline: 2px solid var(--lkv-focus-ring);
   outline-offset: 2px;
+}
+
+/* Le titre tient sur UNE ligne. Sans ca, un libelle long repousse la pastille
+   sur deux lignes et la pastille cesse d'etre une pastille. */
+.prep-pill__label {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Le sous-titre du titre (P0.11) : une seule ligne de mieux, meme verre que la
+   pastille, mais sans bordure ni icone — c'est une precision, pas un bouton. */
+.prep-notice {
+  align-self: flex-start;
+  max-width: 100%;
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-lg, 14px);
+  background-color: var(--prep-notice-bg);
+  border: 1px solid var(--prep-notice-edge);
+  -webkit-backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
+  backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
+  font-size: var(--lkv-text-small);
+  line-height: 1.45;
+  color: var(--prep-notice-ink);
 }
 
 /* --- Sélecteur de journée (étape 2) ------------------------------------ */
@@ -1565,8 +1602,18 @@ button.prep-map__glass:active {
   gap: var(--space-2);
 }
 
-/* Barre d actions du tiroir, collee en bas : mesure 393x852, tiroir Quand tu pars, feuille 85 -> 852 (max-h 90dvh), corps scrollable 707/668, bouton Appliquer a top 815 / bottom 859 pour une fenetre de 852. Le bouton de validation sortait de l ecran des le premier rendu. */
-.prep-actionrow {
+/* Barre d actions du tiroir, collee en bas : mesure 393x852, tiroir Quand tu pars, feuille 85 -> 852 (max-h 90dvh), corps scrollable 707/668, bouton Appliquer a top 815 / bottom 859 pour une fenetre de 852. Le bouton de validation sortait de l ecran des le premier rendu.
+
+   Le collage vit dans un MODIFICATEUR, pas dans la classe de base. Collee
+   au bas du corps defilant de l etape 2, cette meme barre flottait par-dessus
+   la description de l etape. Une rangee d outils n a pas a etre collee :
+   seule la barre de VALIDATION d un tiroir doit l etre.
+
+   Le selecteur est volontairement double : `.prep-footer` pose aussi
+   `position: relative` et passe apres, a specificite egale, donc une
+   version a classe simple se laissait remplacer — mesure au navigateur le
+   2026-09-28, le bouton « Fermer » de la fiche d offre n etait pas colle. */
+.prep-actionrow.prep-actionrow--sticky {
   position: sticky;
   bottom: 0;
   z-index: 2;
