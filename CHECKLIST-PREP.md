@@ -66,7 +66,7 @@ valeur tracée à sa source, ou test rouge → vert. Jamais sur la foi du code.
 | A5 | sélecteur de jours sur les 3 pages | ⚠ **fait sur les étapes 2 et 3** | `proof/A5-01`, `A5-02` — reste l’étape 1 |
 | P0.2 | météo : le service est enfin appelé et affiché | ✅ **fait** | `proof/A5-02` — « Pluie 5°/7° · 70 % de pluie » |
 | A3 | fil d’étapes, seul élément de la barre haute | ⚠ à faire | — |
-| D1 | départ facultatif, CTA au strict nécessaire | ⚠ à faire | — |
+| **D1** | **CTA au strict nécessaire** | ⚠ **fermé, sauf le départ** | Le seul obstacle restant est `origin`, parce que le générateur rend une proposition **vide** sans lui — un CTA actif y serait un bouton mort. Mesuré : départ Chamonix + 200 `/api/geocode`, `ctaDisabled` **`true`→`false`**, `« Il manque : temps disponible »` → `« L’IA complètera : lieu d’arrivée, date, temps disponible »`. `proof/D1-12-live-cta.png` (regardée) |
 | D2 | rail de familles déborde, « Neige » coupée | ⚠ à faire | `proof/A-01` |
 | **P0.5** | **brouillon périmé resservi en silence** | ✅ **fait** | P05-01→03 regardées ; **21/21** tests, **5504/5504** verts, 	sc 0 |
 | **P0.14** | **pastille de suggestion : échelle + portée** | ✅ **fermé par la mesure** | 17 px → **12 px** ; 145×77 → **145×40** ; `align-self: flex-start`, dans sa cellule, aucun débordement. `proof/P014-04-badge-apres.png` (regardée) ; cause racine = P0.17 |
@@ -82,6 +82,11 @@ valeur tracée à sa source, ou test rouge → vert. Jamais sur la foi du code.
 | **P0.24** | **`/api/amenities` renvoyait 0 lieu : Overpass injoignable** | ⚠️ **repli livré, délai restant** | repli **Photon** (déjà dépendance du projet, sans clé) : `200` → **7 lieux réels**, 2 repas + 5 hôtels nommés à Chamonix / Les Houches, contre **0** avant · 9 tests AM-20→30 **rouge→vert**, **30/30** verts, tsc 0 · reste le délai de ~50 s |
 | **P0.25** | **le filtre de marchabilite echouait OUVERT : un lieu non mesure recevait une position, et chaque sonde payait 8 s** | ✅ **ferme** | `WalkReachability` a 3 etats * `keepMeasuredFrom` (ferme) sur `searchPlacesNear`, `keepWalkableFrom` (ouvert) sur l inventaire * panne memorisee 30 s * **5 tests P025-01->05, 23/23 verts** * suite **602 fichiers / 5 614 tests / 0 echec** * `tsc` **exit 0**. **La panne de fournisseur qu il suivait est desormais **LEVE par P1.9** (voir P1.9) |
 | **P1.10** | **les lieux de montagne étaient hors de tout graphe routier ou piéton** | ✅ **fermé** | **BRouter `trekking` en dernier recours du seul mode `pieton`** — `/api/route` Chamonix→Grands Mulets = **200**, **14,424 km / 323,05 min / D+ 2 100 m / 881 points**, contre `503 off_network` avant. Le **dénivelé positif réel** arrive enfin à l écran. Négatifs prouvés : `voiture` vers le refuge = `503`. **Fausse piste démontée** : Valhalla écrit *« You have arrived »* alors que sa polyline s arrête à **2 875 m** du but — seul le décompte de la géométrie dit vrai. **10 tests**, suite **1 644 / 0 échec**, tsc 0 |
+
+| **D1** | **« Créer mon parcours » mort avec deux lieux réels et rien d’autre** | ✅ **fermé** | Mesuré en 393×852 : Chamonix (géoloc, `/api/geocode` **200**) + aucun autre choix, et le CTA restait `disabled` sur `« Il manque : temps disponible »`. Cause : `BLOCKING` portait `duration` alors que toute la chaîne de choix existe déjà (P0.15 date · P0.18 durée). **8 tests D1-01→08**, dont **7 rouges** avant correctif ; **607 fichiers / 5 675 tests / 0 échec**, tsc 0 |
+| — | **deux tests qui ne prouvaient rien, pour la même raison** | ✅ **démontés** | `D10-15` affirmait « le bouton reste bloqué » en cherchant le **mot** `disabled` dans tout le markup : il matchait la classe Tailwind `disabled:pointer-events-none`, donc il passait avec un CTA **actif**. Même piège déjà-correct une fois en `E02-18`. Les deux lisent désormais l’**attribut**, classes retirées, et `D10-15` vérifie en plus le **contraire** — sans quoi il repasserait avec un gate mort |
+| — | le prompt annonçait « 1 jour » comme un fait, deux fois | ✅ **fermé** | Ni la personne ni le brief n’ayant de durée, le prompt portait `Duree : 1 jour(s)` **et** `Ce voyage dure 1 jour` — le `durationDays ?? 1` de `aiItinerary` —
+puis `« choisis »` une fois. Le modèle couvrait un jour, en proposait trois, et sa proposition partait refusée pour `journee_non_couverte`. Test **D1-06** : le prompt ne contient plus aucun jour annoncé |
 
 **En cours :** **P1.9 vient d etre leve ; le verrou s est deplace vers l amont de P0.23.** Le fournisseur de routage pietron repond enfin — c etait la cause racine bloquee depuis le debut. Ce qui reste ouvert n est plus « aucun fournisseur » mais « **les etapes generees ne sont pas des lieux reels** » : le generateur produit des coordonnees de grille, le filtre de marchabilite les refuse a juste titre, et l ecran affiche donc toujours « a verifier ». **L ordre de correction est impose par la mesure :** (1) faire produire au generateur des lieux **issus de la source reelle** `/api/amenities`, avec l affiliation demandee au dossier ; (2) sortir le **45,3 s** de `/api/amenities` du chemin critique ; (3) **ensuite seulement**, la preuve ecran de P0.23. **P0.22** reste en **partiel** : la chaine est prouvee des deux cotes, mais l ecran n a pas encore montre de duree de marche. **P0.24** reste en **partiel** sur son seul delai. **P0.19**, **P0.21**, **P0.20** restent en **partiel**.
 **Fermés le 2026-09-28 :** P0.18 (durée du brief respectée — le catalogue ne contredit plus l’IA), P0.15 (canal date de l’IA, de bout en bout), P0.13 (par ricochet — le badge existe enfin et porte sur la bonne cellule), P0.16 (météo échouée quand la date venait de l’IA).
@@ -600,6 +605,98 @@ remplacement échouait sans raison visible. Corrigé.
 **Tests : 10** (`generation-screen-d1.test.tsx`), dont D1-1 à D1-8 sur le
 composant rendu et D1-9 / D1-10 sur le CSS lu. Suite complète :
 **1443 / 1443 verts** (94 fichiers), `tsc --noEmit` exit 0.
+### D3 — « UN SEUL PRÉDICAT » + le géocode qui tombait — FERMÉS le 2026-09-28
+
+Deux fautes de fond, trouvées en mesurant un **clic réel** et non l'attribut du
+bouton. C'est le seul moyen : les deux defects étaient invisibles au code et
+invisibles au `disabled`.
+
+#### D3-1 — Le bouton était actif ET mort (trois prédicats divergents)
+
+| Où | Définition AVANT | Effet |
+|---|---|---|
+| `canCreateStepOne` (CTA) | strict nécessaire | bouton **actif** |
+| `isStepSatisfied('destination')` (rail, `completeStep`, `goToStep`) | + `durationDays > 0` | clic **sans effet** |
+| `isBuildable` (déclenchement génération) | + `durationDays > 0` | écran de génération **muet** |
+
+Mesure : CTA actif, ligne « L'IA complètera : lieu d'arrivée, date, temps
+disponible », et un clic qui ne changeait rien — même étape, 0 appel API, aucun
+écran de chargement. **Preuves :** `proof/D1-20-avant-clic.png` /
+`D1-21-apres-clic.png` (regardées, identiques).
+
+**Un seul prédicat, lu par tout** : `hasEngineMinimum(draft)`
+`engine/steps.ts` → `(!!activities.primary || pickerDismissed) && !!route.origin`.
+Le départ reste bloquant PARCE QUE `requestDraftedItinerary` ne lit que
+`route.origin` : sans lui il rend une proposition vide sans appeler le modèle.
+Tout le reste se complète et ne peut pas bloquer — `effectiveDays` étend le plan
+à la durée proposée, `suggestDurationDays` l'applique au calendrier, le repli
+règles fait un squelette d'un jour.
+
+**Preuve navigateur APRÈS :** `proof/D2-34-avant-clic.png` et
+`D2-35-apres-clic.png` (regardées) — clic → **étape 2 atteinte en 1,2 s**,
+rail `destination=done`, **écran de chargement visible** (les 6 étapes animées),
+`chargement: true`, puis **9 appels `/api/route` réels**. Le clic agit et la
+génération démarre.
+
+#### D3-2 — Le silence de la ligne « l'IA complètera »
+
+« Partir librement » ferme le catalogue : `isMissing('activity')` rendait alors
+`false` et la ligne n'annonçait plus rien, alors que le moteur travaille avec
+l'invite libre. L'écran passait de « il manque : … » à un **silence total**.
+Corrigé : l'activité est annoncée en `optional` dès qu'aucune n'est retenue.
+Rouge→vert **prouvé** : sans le patch, D2-10 échoue avec le symptôme exact —
+`expected 'lieu d'arrivée date temps disponible' to contain 'activité'`.
+
+#### D3-3 — P0.23 : le géocode tombait, et c'était NOTRE faute
+
+Mesuré sur l'endpoint, quatre appels reverse identiques :
+`AbortError 6 006 ms` · `200 4 322 ms` · `HTML 112 ms` · `HTML 96 ms`.
+Photon est lent **et** limité. Deux causes, deux corrections :
+
+1. **Un budget de temps par fournisseur, pas pour la cascade entière.** Un seul
+   `AbortController` était armé pour les deux : un fournisseur lent pouvait
+   interdire à un fournisseur rapide de répondre, et la cascade rendait
+   `unavailable` alors que la réponse était déjà partie.
+2. **Un fournisseur de repli réel : Nominatim.** Mesuré en parallèle pendant la
+   panne : `open-meteo 200/245ms` · `nominatim 200/172ms` ·
+   `nominatim reverse 200/106ms`, pendant que `photon 503 text/html 163ms`.
+   Nominatim est ajouté à l'**aller** comme à l'**inverse**, avec la cadence OSM
+   (1 appel/seconde, file d'attente, `User-Agent`) — sans quoi OSM bloque l'IP.
+
+| `/api/geocode?lat=45.9237&lon=6.8694` | Avant | Après |
+|---|---|---|
+| statut | **503** `providers_unreachable` | **200** |
+| délai | 5 183 ms | 2 575 ms |
+| contenu | `matches: []` | « Chamonix-Mont-Blanc », Haute-Savoie, position demandée |
+
+Mesuré aussi sur une coordonnée inédite (`45.9301,6.8802`) : **200**, 2 066 ms,
+même réponse correcte. Le garde-fou `off_network` / `providers_unreachable`
+n'a pas été assoupli : il reste `null` honnête quand aucun fournisseur ne
+répond.
+
+#### Un test qui affirmait l'ancien contrat
+
+`itinerary.test.ts` affirmait « sans durée choisie → `null` » : c'était le
+**troisième** endroit qui exigeait la durée. Inversé en garantie du nouveau
+contrat — sans durée on construit, avec au moins un jour d'activités.
+
+**Tests :** D2-08 (le 3ᵉ prédicat), D2-09 (le déclenchement au montage de
+l'étape 2), D2-10 (la ligne promet ce que le moteur fait) + adaptations de
+`step-transition`, `step-one-profile`, `step-one-missing-an7`,
+`destination-screen`, `activity-picker-screen`. `geocode-service` : 17/17.
+Suite complète : **608 fichiers / 5686 tests / 0 échec**, `tsc --noEmit` 0.
+
+**Détail honnête :** la suite a d'abord crashé (`Worker exited unexpectedly`)
+parce que j'ai édité des fichiers pendant son exécution. Pas un défaut du code —
+relancée sans édition concurrente, verte. À ne pas compter comme unsuccès.
+
+#### Reste ouvert
+
+- **P0.26** : vraie génération 2 jours, vérifier la répartition par jour.
+- Les points de passage de l'IA sont maintenant résolus (`/api/geocode` 200),
+  mais la **génération complète** n'a pas encore été regardée jusqu'à l'écran de
+  l'étape 3. C'est la prochaine mesure, pas une conclusion.
+
 ### D4 — FERMÉ le 2026-09-28, échec partiel annoncé et reprise phase par phase
 
 Le moteur **savait déjà** être honnête : `itineraryPhases.ts` renvoie un
