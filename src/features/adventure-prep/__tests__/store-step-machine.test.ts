@@ -12,10 +12,10 @@
 
 import { describe, it, expect } from 'vitest';
 import { draftActions } from '../store/reducer';
-import { canOpenStep, isStepSatisfied } from '../engine/steps';
+import { canOpenStep, isPicking, isStepSatisfied } from '../engine/steps';
 import { PREP_STEPS, type AdventurePrepDraft, type PrepStepId } from '../types';
 import { buildItinerary } from '../engine/itinerary';
-import { fullDraft } from './fixtures';
+import { draftWithoutItineraryInput, fullDraft } from './fixtures';
 
 /** Etape 1 incomplete : aucune origine, donc aucune etape 2 possible. */
 function sansOrigine(): AdventurePrepDraft {
@@ -128,5 +128,35 @@ describe('Machine d etats — invariant de bout en bout', () => {
         expect(resultat.completedSteps).not.toContain(etape);
       }
     }
+  });
+});
+
+describe('Machine d etats — partir librement', () => {
+  it('SM-12: le bouton « Partir librement » n est pas un no-op', () => {
+    // Le defaut signale au navigateur : « Partir librement » ne changeait
+    // rien. L etape 1 affichait « route picker » pour toujours, parce que le
+    // routeur ne demande qu une activite choisie. Or l activite est FACULTATIVE.
+    const vierge = draftWithoutItineraryInput();
+    expect(isPicking(vierge)).toBe(true);
+    const libre = draftActions.dismissPicker(vierge);
+    expect(libre.pickerDismissed).toBe(true);
+    expect(isPicking(libre)).toBe(false);
+  });
+
+  it('SM-13: partir librement rend l etape 1 satisfaite, comme un choix', () => {
+    // Meme contrat qu avec une activite : l invite libre suffit a laisser le
+    // catalogue derriere soi. Le depart et la duree restent, eux, exiges.
+    const libre = draftActions.dismissPicker(draftWithoutItineraryInput());
+    expect(isStepSatisfied(libre, 'destination')).toBe(true);
+    const valide = draftActions.completeStep(libre, 'destination');
+    expect(valide.currentStep).toBe('itinerary');
+  });
+
+  it('SM-14: partir librement ne dispense ni du depart ni de la duree', () => {
+    const sansDepart = draftActions.dismissPicker(
+      draftWithoutItineraryInput({ route: { origin: null, destination: null, shape: 'boucle' } }),
+    );
+    expect(isStepSatisfied(sansDepart, 'destination')).toBe(false);
+    expect(draftActions.goToStep(sansDepart, 'itinerary')).toBe(sansDepart);
   });
 });

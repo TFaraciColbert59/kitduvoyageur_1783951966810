@@ -47,6 +47,8 @@ export interface AdventurePrepActions {
   markHydrated: () => void;
   startNewAdventure: () => void;
   setActivities: (value: ActivitySelection) => void;
+  /** Partir sans activite du catalogue : l invite libre suffit. */
+  dismissPicker: () => void;
   setRoute: (value: RouteBlock) => void;
   /** Invite libre de l'etape 1 : ce que l'utilisateur veut, en toutes lettres. */
   setBrief: (value: string | null) => void;
@@ -126,6 +128,7 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
         startNewAdventure: () =>
           set({ adventureId: newAdventureId(), draft: { ...emptyDraft(), version: PREP_DRAFT_VERSION } }),
         setActivities: (value) => patch((draft) => draftActions.setActivities(draft, value)),
+        dismissPicker: () => patch((draft) => draftActions.dismissPicker(draft)),
         setRoute: (value) => patch((draft) => draftActions.setRoute(draft, value)),
         setBrief: (value) => patch((draft) => draftActions.setBrief(draft, value)),
         setCalendar: (value) => patch((draft) => draftActions.setCalendar(draft, value)),

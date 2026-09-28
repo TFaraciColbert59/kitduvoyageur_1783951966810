@@ -253,8 +253,10 @@ export function ActivityPickerScreen({ onOpenSheet: _onOpenSheet }: ActivityPick
   }, [selected, selection.extra, selection.nights, recentIds]);
 
   const handleSkip = useCallback(() => {
-    const { goToStep } = useAdventurePrepStore.getState();
-    goToStep('destination');
+    // Partir librement ne choisit pas d activite : sans cela le catalogue
+    // restait affiche, puisque le routeur ne s eclipse sur une activite.
+    const { dismissPicker } = useAdventurePrepStore.getState();
+    dismissPicker();
   }, []);
 
   const retainedCount = (selected ? 1 : 0) + selection.extra.length + selection.nights.length;

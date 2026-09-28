@@ -457,6 +457,8 @@ export interface AdventurePrepDraft {
   activities: ActivitySelection;
   /** Invite libre de l'etape 1 : ce que l'utilisateur veut, en toutes lettres. */
   brief: string | null;
+  /** L'utilisateur a choisi de partir sans activite du catalogue. */
+  pickerDismissed: boolean;
   route: RouteBlock;
   calendar: CalendarBlock;
   group: GroupBlock;

@@ -56,6 +56,11 @@ export const draftActions = {
   setActivities: (draft: AdventurePrepDraft, activities: ActivitySelection): AdventurePrepDraft =>
     suggestDuration(commit(draft, { activities, itinerary: null })),
 
+  // Partir sans activite du catalogue : le catalogue se ferme, l etape 1
+  // reste ouverte sur le depart, la date et les participants.
+  dismissPicker: (draft: AdventurePrepDraft): AdventurePrepDraft =>
+    commit(draft, { pickerDismissed: true }),
+
   /**
    * La forme du parcours n'est jamais saisie : elle est derivee des lieux
    * choisis. Une arrivee absente donne une boucle, une arrivee presente un

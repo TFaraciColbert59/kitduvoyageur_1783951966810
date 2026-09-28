@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAdventurePrepStore } from '../store/useAdventurePrepStore';
-import { canOpenStep, firstUnsatisfiedStep } from '../engine/steps';
+import { canOpenStep, firstUnsatisfiedStep, isPicking } from '../engine/steps';
 import type { PrepStepId } from '../types';
 import type { PhaseRetryDeps } from '../engine/itineraryPhases';
 import { fetchItineraryProposal } from '@/app/prepare/actions';
@@ -56,7 +56,7 @@ export function PrepFlow() {
     ? draft.currentStep
     : firstUnsatisfiedStep(draft);
 
-  const picking = draft.activities.primary === null;
+  const picking = isPicking(draft);
 
   // Les dependances de REPRISE, construites une seule fois.
   //

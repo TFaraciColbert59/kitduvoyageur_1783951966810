@@ -8,11 +8,22 @@ export function stepPosition(id: PrepStepId): number {
   return PREP_STEPS.indexOf(id) + 1;
 }
 
+/**
+ * Le catalogue d activites est-il encore a l ecran ?
+ *
+ * Choisir une activite suffit a le quitter, mais ce n est pas obligatoire :
+ * l invite libre et le bouton « Partir librement » valent aussi. Sans cela le
+ * bouton ne fermait jamais l ecran et le parcours demeurait bloque.
+ */
+export function isPicking(draft: AdventurePrepDraft): boolean {
+  return draft.activities.primary === null && !draft.pickerDismissed;
+}
+
 /** Une etape est satisfaite quand les reponses necessaires sont saisies. */
 export function isStepSatisfied(draft: AdventurePrepDraft, id: PrepStepId): boolean {
   if (id === 'destination') {
     return (
-      !!draft.activities.primary &&
+      (!!draft.activities.primary || draft.pickerDismissed) &&
       !!draft.route.origin &&
       !!draft.calendar.durationDays &&
       draft.calendar.durationDays > 0
