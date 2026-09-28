@@ -2283,8 +2283,31 @@ d'une intention : chaque ligne porte sa preuve.**
       elle échoue dans les deux cas. Cause mesurée : la fixture
       `futureTrip` porte `start_date: '2026-09-29'` = **aujourd'hui**, donc
       le voyage démarre et « Étape active » est correct ; c'est une bombe à
-      retardement basedate, pas un défaut du composant. **Consignée, pas
+      retardement a date fixe, pas un défaut du composant. **Consignée, pas
       masquée.**
+- [x] **Z18** ✅ **SUITE REMISE À ZÉRO ÉCHEC — `Z-D18-03` était une bombe à
+      retardement calendaire, pas une régression.**
+      Fermé le 2026-09-29. **Le symptôme.** `tests/trips/chantier-z1.spec.ts`
+      échouait sur « voyage futur n’affiche pas Étape active » — échec **déjà
+      constaté sur arbre propre** (mes 3 fichiers moteur stashés), donc
+      hors de mon lot.
+      **La cause mesurée, pas supposée.** La fixture `futureTrip` portait
+      `start_date: '2026-09-29'` — soit **exactement aujourd'hui**. Le
+      voyage démarrait donc légitimement, et « Étape active » était la
+      bonne réponse du composant. Le test n’avait aucun défaut de code à
+      à corriger : il était daté.
+      **Le correctif est dans la FIXTURE, pas dans le composant.** Un
+      helper `isoInDays(days)` rend les dates relatives à `now` :
+      `start_date: isoInDays(29)`, `end_date: isoInDays(29 + 28)` — la durée
+      de 29 jours est conservée, donc `total_days: 29` reste cohérent. Le
+      test redevient vert **maintenant et dans six mois**.
+      **Rouge → vert prouvé.** Figer la date sur `2026-09-29` fait
+      rougir le test ; la version relative le rend vert (13/13). Le test
+      échouait pour une raison de calendrier, sans qu’aucun code n’ait
+      bougé — le diagnostique « régression » était faux.
+      **Résultat : `tsc --noEmit` exit 0, suite complète
+      613 fichiers / 5 739 tests / 0 échec.** C’est le premier zéro échec
+      complet du chantier.
 - [~] **P0.24** 🔴 **`/api/amenities` renvoie 0 lieu sur le corridor de Chamonix : le
       fournisseur Overpass est injoignable depuis cette machine.** Ouvert le
       2026-09-28, pendant la preuve de P0.23.

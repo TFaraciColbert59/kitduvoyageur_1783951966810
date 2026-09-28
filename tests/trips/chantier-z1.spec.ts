@@ -27,6 +27,20 @@ import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
 import { extractTripBrief } from '@/features/trips/engine/tripBriefExtractor';
 import { generateTripGpx } from '@/features/trips/engine/exportEngine';
 
+/**
+ * Une date ISO decalee de `days` jours par rapport a maintenant.
+ *
+ * Les fixtures de voyage ne doivent jamais porter une date en dur : le jour
+ * ou la date inscrite devient le jour courant, le voyage « a venir » demarre
+ * et le composant affiche legitimement l etape active. Le test echoue alors
+ * pour une raison de calendrier, sans qu aucun code n ait bouge.
+ */
+function isoInDays(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 describe('CHANTIER Z — Phase Z1 : Neutralisation Immédiate des Risques', () => {
   // ==========================================================================
   // Z1.1 : Panneau de secours (D13)
@@ -260,8 +274,10 @@ describe('CHANTIER Z — Phase Z1 : Neutralisation Immédiate des Risques', () =
         description: null,
         destination_country_code: 'FR',
         destination_name: 'Vanoise',
-        start_date: '2026-09-29',
-        end_date: '2026-10-27',
+        // 29 jours dans le futur : le voyage n'a pas commence, donc le
+        // compte a rebours s'affiche et l'etape 1 n'est pas active.
+        start_date: isoInDays(29),
+        end_date: isoInDays(29 + 28),
         status: 'active',
         visibility: 'private',
         difficulty: 'moderate',
