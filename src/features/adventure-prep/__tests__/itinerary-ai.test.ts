@@ -125,6 +125,48 @@ describe('invariant horaire', () => {
   it('refuse une proposition vide', () => {
     expect(validateDrafted(drafted({ steps: [] })).reason).toBe('aucune_etape');
   });
+
+  // Mesure live du 2026-09-28 (393x852, `/prepare?nouvelle=1`, Chamonix ->
+  // Argentiere, 3 jours) : le modele a repondu avec UNE seule etape, le jour 1.
+  // L'ecapuchon affichait alors « Jour 2 » et « Jour 3 » VIDES sous un titre
+  // « 3 jours » et des tiles « a verifier » : le parcours complet n existait
+  // pas, et rien ne le signalait.
+  //
+  // Une reponse qui ne couvre pas chaque journee est INCOMPLETE, pas fausse :
+  // elle doit etre refusee pour que le repli regles prenne le relais. Ce
+  // repli ne fabrique aucune donnee — il ne propose qu une structure, tout
+  // chiffre non verifiable restant « a verifier ».
+  it('refuse une proposition qui ne couvre pas chaque journee', () => {
+    const incomplet = drafted({
+      days: 3,
+      steps: [step({ day: 1, kind: 'trajet', title: 'Chamonix-Mont-Blanc a Argentiere' })],
+    });
+    const verdict = validateDrafted(incomplet);
+    expect(verdict.ok).toBe(false);
+    expect(verdict.reason).toBe('journee_non_couverte');
+    expect(verdict.detail).toBeTruthy();
+  });
+
+  it('accepte une proposition qui couvre chaque journee', () => {
+    const complet = drafted({
+      days: 3,
+      steps: [
+        step({ day: 1, kind: 'trajet', title: 'Chamonix-Mont-Blanc a Argentiere' }),
+        step({ day: 2, kind: 'repos', title: 'Pause au col' }),
+        step({ day: 3, kind: 'trajet', title: 'Retour depuis Argentiere' }),
+      ],
+    });
+    expect(validateDrafted(complet).ok).toBe(true);
+  });
+
+  it('ne confond pas une journee hors borne avec une journee couverte', () => {
+    // Une etape du jour 4 pour un voyage de 3 jours ne couvre pas le jour 2.
+    const horsBorne = drafted({
+      days: 3,
+      steps: [step({ day: 1 }), step({ day: 4 }), step({ day: 4 })],
+    });
+    expect(validateDrafted(horsBorne).reason).toBe('journee_non_couverte');
+  });
 });
 
 describe('materialisation : aucun prix ne peut naitre du modele', () => {
@@ -165,11 +207,11 @@ describe('rail de generation : une phase cochee est une phase terminee', () => {
     const phases: GenerationPhaseId[] = [];
     const onPhase: PhaseReporter = (phase) => phases.push(phase);
 
-    const run = runItineraryGeneration(fullDraft(), new AbortController().signal, () => gate, onPhase);
+    const run = runItineraryGeneration(fullDraft(), new AbortController().signal, async () => ({ drafted: await gate, failure: null }), onPhase);
     await Promise.resolve();
-    // L appel reseau est en vol : rien n est encore coche, meme pas la phase 1
-    // qui vient d etre annoncee.
-    expect(phases).toEqual(['recherche_parcours']);
+    // L appel reseau est en vol : rien n est coche, meme pas la phase 1
+    // qui n a pas encore rendu la main.
+    expect(phases).toEqual([]);
 
     release();
     await run;
@@ -177,6 +219,9 @@ describe('rail de generation : une phase cochee est une phase terminee', () => {
       'recherche_parcours',
       'verification_etapes',
       'disponibilites',
+      'lieux',
+      'trace',
+      'meteo',
       'synthese',
     ]);
   });
@@ -186,11 +231,22 @@ describe('rail de generation : une phase cochee est une phase terminee', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => null,
+      async () => ({ drafted: null, failure: null }),
       (phase) => phases.push(phase),
     );
 
-    expect(phases).toEqual(['recherche_parcours']);
+    // La recherche a bien eu lieu, elle n a rien rapporte : elle est cochee. Le
+    // repli regles refait verification et disponibilites de son cote, et les
+    // mesures passent aussi par lui.
+    expect(phases).toEqual([
+      'recherche_parcours',
+      'verification_etapes',
+      'disponibilites',
+      'lieux',
+      'trace',
+      'meteo',
+      'synthese',
+    ]);
     expect(outcome.engineId).toBe('rules');
     expect(outcome.degraded).toBe(true);
     expect(outcome.message).toBe(AI_ENRICHMENT_UNAVAILABLE);
@@ -201,7 +257,7 @@ describe('rail de generation : une phase cochee est une phase terminee', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => drafted({ steps: [step({ title: 'Nuit — 80 EUR' })] }),
+      async () => ({ drafted: drafted({ steps: [step({ title: 'Nuit — 80 EUR' })] }), failure: null }),
       () => {},
     );
 
@@ -214,7 +270,7 @@ describe('rail de generation : une phase cochee est une phase terminee', () => {
     const outcome = await runItineraryGeneration(
       fullDraft(),
       new AbortController().signal,
-      async () => drafted(),
+      async () => ({ drafted: drafted(), failure: null }),
       () => {},
     );
 
@@ -229,16 +285,19 @@ describe('rail de generation : une phase cochee est une phase terminee', () => {
 
   it('une annulation en cours de route ne produit aucun parcours', async () => {
     const controller = new AbortController();
+    const phases: GenerationPhaseId[] = [];
     const outcome = await runItineraryGeneration(
       fullDraft(),
       controller.signal,
       async () => {
         controller.abort();
-        return drafted();
+        return { drafted: drafted(), failure: null };
       },
-      () => {},
+      (phase) => phases.push(phase),
     );
-    expect(outcome.model).not.toBeNull();
+    // Un parcours a moitie construit serait pire que pas de parcours du tout.
+    expect(outcome.model).toBeNull();
+    expect(phases).toEqual([]);
   });
 });
 

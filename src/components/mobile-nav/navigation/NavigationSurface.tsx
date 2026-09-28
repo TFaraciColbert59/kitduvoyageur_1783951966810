@@ -167,8 +167,8 @@ export default function NavigationSurface({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: opticalNavigation ? '0 12px' : '0 var(--space-2)',
-            gap: 'var(--space-1)',
+            padding: opticalNavigation ? '0 8px' : '0 var(--space-2)',
+            gap: 2,
             // M03 — le pan vertical de la page reste possible au-dessus de la
             // barre ; le plateau garde son propre `pan-x` pour faire défiler
             // les sous-onglets.
@@ -209,3 +209,4 @@ export default function NavigationSurface({
     </nav>
   );
 }
+

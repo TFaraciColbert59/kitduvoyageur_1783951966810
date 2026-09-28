@@ -8,25 +8,42 @@ import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { newId } from '@/lib/uuid';
 import { Kit } from '@/types/kit';
 
+/**
+ * Regle du module : aucune donnee n'est inventee.
+ *
+ * `shop_products` utilise 0 et la chaine vide comme sentinelles « non renseigne »
+ * (`brand TEXT NOT NULL DEFAULT ''`, `price_eur NUMERIC(10,2) NOT NULL DEFAULT 0`,
+ * `rating NUMERIC(3,1) NOT NULL DEFAULT 0`, `weight_g INTEGER NOT NULL DEFAULT 0`,
+ * `image TEXT NOT NULL DEFAULT ''`). Les remplacer par 4,8 / 12 avis / 10 en
+ * stock / 0 g / une photo generique transformerait un trou de donnee en
+ * mensonge affiche. Elles deviennent donc `null` ici, et l'appelant affiche
+ * « indisponible » ou « a verifier ».
+ *
+ * `stock` et `review_count` font exception : 0 y est une information reelle
+ * (rupture de stock, aucun avis), pas un trou.
+ */
+
+export type ProductEssentiality = 'indispensable' | 'recommande' | 'optionnel';
+
 export interface UnifiedProduct {
   id: string;
   slug: string;
   name: string;
-  brand: string;
-  category: string;
-  category_main?: string;
-  weight_g: number;
-  weight_grams?: number;
-  price_eur: number;
-  image: string;
-  image_alt?: string;
-  rating?: number;
-  review_count?: number;
-  essentiality?: 'indispensable' | 'recommande' | 'optionnel';
-  score_kdv?: number;
-  description?: string;
-  stock?: number;
-  is_active?: boolean;
+  brand: string | null;
+  category: string | null;
+  category_main?: string | null;
+  weight_g: number | null;
+  weight_grams?: number | null;
+  price_eur: number | null;
+  image: string | null;
+  image_alt?: string | null;
+  rating?: number | null;
+  review_count?: number | null;
+  essentiality?: ProductEssentiality | null;
+  score_kdv?: number | null;
+  description?: string | null;
+  stock?: number | null;
+  is_active?: boolean | null;
 }
 
 export interface UserEquipmentItem {
@@ -36,12 +53,12 @@ export interface UserEquipmentItem {
   brand?: string | null;
   model?: string | null;
   category: string;
-  weight_g: number;
+  weight_g: number | null;
   purchase_price?: number | null;
   purchase_date?: string | null;
   image?: string | null;
-  condition?: 'neuf' | 'excellent' | 'bon' | 'moyen' | 'usé' | 'à_réparer' | 'à_remplacer';
-  source?: 'achat' | 'kit' | 'manuel' | 'occasion' | 'catalogue';
+  condition?: 'neuf' | 'excellent' | 'bon' | 'moyen' | 'usé' | 'à_réparer' | 'à_remplacer' | null;
+  source?: 'achat' | 'kit' | 'manuel' | 'occasion' | 'catalogue' | null;
   product_id?: string | null;
   quantity?: number;
   notes?: string | null;
@@ -69,444 +86,201 @@ export interface UserEquipmentItem {
 const GUEST_GEAR_STORAGE_KEY = 'lkdv_guest_equipment';
 const GUEST_KITS_STORAGE_KEY = 'lkdv_guest_kits';
 
-export const FALLBACK_AUTHENTIC_PRODUCTS: UnifiedProduct[] = [
-  {
-    id: 'prod-osprey-farpoint-40',
-    slug: 'osprey-farpoint-40-achat',
-    name: 'Osprey Farpoint 40',
-    brand: 'Osprey',
-    category: 'Sacs à dos',
-    category_main: 'Sacs à dos',
-    weight_g: 1420,
-    price_eur: 179,
-    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80',
-    image_alt: 'Sac à dos Osprey Farpoint 40',
-    rating: 4.8,
-    review_count: 312,
-    essentiality: 'indispensable',
-    description: 'Le sac de voyage cabine par excellence, ultra polyvalent et confortable pour les treks et escapades.',
-    stock: 15,
-    is_active: true,
-  },
-  {
-    id: 'prod-osprey-atmos-65',
-    slug: 'osprey-atmos-ag-65-achat',
-    name: 'Osprey Atmos AG 65',
-    brand: 'Osprey',
-    category: 'Sacs à dos',
-    category_main: 'Sacs à dos',
-    weight_g: 2180,
-    price_eur: 349,
-    image: 'https://images.unsplash.com/photo-1622260614153-03223fb72052?w=600&q=80',
-    image_alt: 'Sac à dos Osprey Atmos AG 65',
-    rating: 4.9,
-    review_count: 198,
-    essentiality: 'recommande',
-    description: 'Portage lourd avec suspension Anti-Gravity 3D pour les grandes expéditions en autonomie.',
-    stock: 8,
-    is_active: true,
-  },
-  {
-    id: 'prod-msr-hubba-2p',
-    slug: 'msr-hubba-hubba-nx-2-achat',
-    name: 'MSR Hubba Hubba NX 2P',
-    brand: 'MSR',
-    category: 'Couchage',
-    category_main: 'Couchage',
-    weight_g: 1720,
-    price_eur: 549,
-    image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600&q=80',
-    image_alt: 'Tente MSR Hubba Hubba NX 2 places',
-    rating: 4.9,
-    review_count: 198,
-    essentiality: 'indispensable',
-    description: 'La tente autoportante ultralégère référence pour 2 personnes en 3 saisons.',
-    stock: 12,
-    is_active: true,
-  },
-  {
-    id: 'prod-sea-summit-spark-1',
-    slug: 'sea-to-summit-spark-sp1-achat',
-    name: 'Sea to Summit Spark SP1',
-    brand: 'Sea to Summit',
-    category: 'Couchage',
-    category_main: 'Couchage',
-    weight_g: 490,
-    price_eur: 299,
-    image: 'https://images.unsplash.com/photo-1445308394109-4ec2920981b1?w=600&q=80',
-    image_alt: 'Sac de couchage Sea to Summit Spark SP1',
-    rating: 4.7,
-    review_count: 156,
-    essentiality: 'indispensable',
-    description: 'Duvet d\'oie 850+ loft ultraléger pour bivouacs estivaux et fastpacking.',
-    stock: 10,
-    is_active: true,
-  },
-  {
-    id: 'prod-thermarest-neoair',
-    slug: 'thermarest-neoair-xlite-achat',
-    name: 'Therm-a-Rest NeoAir XLite',
-    brand: 'Therm-a-Rest',
-    category: 'Couchage',
-    category_main: 'Couchage',
-    weight_g: 340,
-    price_eur: 219,
-    image: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=600&q=80',
-    image_alt: 'Matelas gonflable Therm-a-Rest NeoAir XLite',
-    rating: 4.9,
-    review_count: 312,
-    essentiality: 'indispensable',
-    description: 'R-value 4.2 pour seulement 340g, isolation thermique et confort de couchage absolu.',
-    stock: 20,
-    is_active: true,
-  },
-  {
-    id: 'prod-patagonia-torrentshell',
-    slug: 'patagonia-torrentshell-3l-achat',
-    name: 'Patagonia Torrentshell 3L',
-    brand: 'Patagonia',
-    category: 'Vêtements',
-    category_main: 'Vêtements',
-    weight_g: 394,
-    price_eur: 179,
-    image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=600&q=80',
-    image_alt: 'Veste imperméable Patagonia Torrentshell 3L',
-    rating: 4.8,
-    review_count: 245,
-    essentiality: 'indispensable',
-    description: 'Membrane H2No Performance Standard 3 couches 100% nylon recyclé, imperméabilité durable.',
-    stock: 14,
-    is_active: true,
-  },
-  {
-    id: 'prod-petzl-actik',
-    slug: 'petzl-actik-core-achat',
-    name: 'Petzl Actik Core 450lm',
-    brand: 'Petzl',
-    category: 'Éclairage',
-    category_main: 'Éclairage',
-    weight_g: 85,
-    price_eur: 49,
-    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',
-    image_alt: 'Lampe frontale Petzl Actik Core',
-    rating: 4.6,
-    review_count: 423,
-    essentiality: 'indispensable',
-    description: 'Lampe frontale rechargeable 450 lumens multi-faisceaux avec éclairage rouge.',
-    stock: 25,
-    is_active: true,
-  },
-  {
-    id: 'prod-sawyer-mini',
-    slug: 'sawyer-mini-achat',
-    name: 'Filtre Sawyer Mini',
-    brand: 'Sawyer',
-    category: 'Hydratation',
-    category_main: 'Hydratation',
-    weight_g: 57,
-    price_eur: 39,
-    image: 'https://images.unsplash.com/photo-1527181152855-fc03fc7949c8?w=600&q=80',
-    image_alt: 'Filtre à eau Sawyer Mini',
-    rating: 4.8,
-    review_count: 389,
-    essentiality: 'indispensable',
-    description: 'Filtre 0.1 micron absolu, élimine 99.99999% des bactéries et protozoaires.',
-    stock: 30,
-    is_active: true,
-  },
-  {
-    id: 'prod-msr-pocketrocket-2',
-    slug: 'msr-pocketrocket-2-achat',
-    name: 'MSR PocketRocket 2',
-    brand: 'MSR',
-    category: 'Cuisine',
-    category_main: 'Cuisine',
-    weight_g: 73,
-    price_eur: 49,
-    image: 'https://images.unsplash.com/photo-1506084868230-bb9d95c24759?w=600&q=80',
-    image_alt: 'Réchaud gaz MSR PocketRocket 2',
-    rating: 4.9,
-    review_count: 278,
-    essentiality: 'indispensable',
-    description: 'Réchaud à gaz ultracompact et puissant (1L bouilli en 3.5 min).',
-    stock: 18,
-    is_active: true,
-  },
-  {
-    id: 'prod-garmin-inreach',
-    slug: 'garmin-inreach-mini-2-achat',
-    name: 'Garmin inReach Mini 2',
-    brand: 'Garmin',
-    category: 'Navigation',
-    category_main: 'Navigation',
-    weight_g: 100,
-    price_eur: 399,
-    image: 'https://images.unsplash.com/photo-1551524559-8af4e6624178?w=600&q=80',
-    image_alt: 'Balise satellite Garmin inReach Mini 2',
-    rating: 4.9,
-    review_count: 145,
-    essentiality: 'recommande',
-    description: 'Balise de communication satellite bidirectionnelle avec SOS interactif mondial 24/7.',
-    stock: 6,
-    is_active: true,
-  },
-  {
-    id: 'prod-opinel-n8',
-    slug: 'opinel-n8-inox-achat',
-    name: 'Couteau Opinel N°8 Inox',
-    brand: 'Opinel',
-    category: 'Autre',
-    category_main: 'Autre',
-    weight_g: 45,
-    price_eur: 14.5,
-    image: 'https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?w=600&q=80',
-    image_alt: 'Couteau de poche Opinel N°8 Inox',
-    rating: 4.9,
-    review_count: 512,
-    essentiality: 'indispensable',
-    description: 'Lame inox Sandvik 12C27 et manche en hêtre verni, virole de sécurité Virobloc.',
-    stock: 50,
-    is_active: true,
-  },
-  {
-    id: 'prod-care-plus-first-aid',
-    slug: 'care-plus-first-aid-kit-mountaineer-achat',
-    name: 'Trousse Care Plus Mountaineer',
-    brand: 'Care Plus',
-    category: 'Sécurité',
-    category_main: 'Sécurité',
-    weight_g: 450,
-    price_eur: 49.9,
-    image: 'https://images.unsplash.com/photo-1603398938378-e54eab446dde?w=600&q=80',
-    image_alt: 'Trousse de premiers secours Care Plus',
-    rating: 4.7,
-    review_count: 88,
-    essentiality: 'indispensable',
-    description: 'Kit de secours médical complet pour haute montagne et expéditions engagées.',
-    stock: 12,
-    is_active: true,
-  },
-  {
-    id: 'prod-anker-10000',
-    slug: 'anker-powercore-10000-achat',
-    name: 'Batterie Anker PowerCore 10 000',
-    brand: 'Anker',
-    category: 'Autre',
-    category_main: 'Autre',
-    weight_g: 180,
-    price_eur: 29.99,
-    image: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=600&q=80',
-    image_alt: 'Batterie externe Anker 10000mAh',
-    rating: 4.8,
-    review_count: 640,
-    essentiality: 'recommande',
-    description: 'Compacte et légère, charge rapide PowerIQ pour téléphones, montres et frontales.',
-    stock: 22,
-    is_active: true,
-  },
-];
+/** Prix/compte strictement positif, ou `null`. */
+export function normalizeShopPrice(value: unknown): number | null {
+  const parsed = typeof value === 'string' ? Number(value) : value;
+  if (typeof parsed !== 'number' || !Number.isFinite(parsed) || parsed <= 0) return null;
+  return parsed;
+}
 
-const INITIAL_AUTHENTIC_GUEST_EQUIPMENT: UserEquipmentItem[] = [
-  {
-    id: 'gear-osprey-40',
-    user_id: 'guest',
-    product_id: 'prod-osprey-farpoint-40',
-    name: 'Osprey Farpoint 40',
-    brand: 'Osprey',
-    category: 'Sacs & Portage',
-    weight_g: 1420,
-    purchase_price: 179,
-    condition: 'excellent',
-    source: 'achat',
-    usage_count: 24,
-    notes: 'Réglage dorsal ajusté. Housse de pluie rangée dans la poche inférieure.',
-    is_favorite: true,
-    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80',
-    ref_code: 'OSP-FP40-2024',
-  },
-  {
-    id: 'gear-msr-hubba',
-    user_id: 'guest',
-    product_id: 'prod-msr-hubba-2p',
-    name: 'MSR Hubba Hubba NX 2P',
-    brand: 'MSR',
-    category: 'Couchage & Tentes',
-    weight_g: 1720,
-    purchase_price: 549,
-    condition: 'excellent',
-    source: 'achat',
-    usage_count: 18,
-    notes: 'Double toit réimperméabilisé en mai. Arceaux DAC impeccables.',
-    is_favorite: true,
-    image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600&q=80',
-  },
-  {
-    id: 'gear-sea-summit-spark',
-    user_id: 'guest',
-    product_id: 'prod-sea-summit-spark-1',
-    name: 'Sea to Summit Spark SP1',
-    brand: 'Sea to Summit',
-    category: 'Couchage & Tentes',
-    weight_g: 490,
-    purchase_price: 299,
-    condition: 'excellent',
-    source: 'achat',
-    usage_count: 14,
-    notes: 'Duvet stocké non compressé dans son sac de rangement aéré.',
-    is_favorite: true,
-    image: 'https://images.unsplash.com/photo-1445308394109-4ec2920981b1?w=600&q=80',
-  },
-  {
-    id: 'gear-thermarest-neoair',
-    user_id: 'guest',
-    product_id: 'prod-thermarest-neoair',
-    name: 'Therm-a-Rest NeoAir XLite',
-    brand: 'Therm-a-Rest',
-    category: 'Couchage & Tentes',
-    weight_g: 340,
-    purchase_price: 219,
-    condition: 'bon',
-    source: 'achat',
-    usage_count: 32,
-    notes: 'Valve WingLock vérifiée. Kit rustines dans la pochette.',
-    image: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=600&q=80',
-  },
-  {
-    id: 'gear-patagonia-jacket',
-    user_id: 'guest',
-    product_id: 'prod-patagonia-torrentshell',
-    name: 'Patagonia Torrentshell 3L',
-    brand: 'Patagonia',
-    category: 'Vêtements & Vestes',
-    weight_g: 394,
-    purchase_price: 179,
-    condition: 'excellent',
-    source: 'achat',
-    usage_count: 16,
-    notes: 'Taille M. Traitement DWR Nikwax renouvelé.',
-    is_favorite: true,
-    image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=600&q=80',
-  },
-  {
-    id: 'gear-petzl-actik',
-    user_id: 'guest',
-    product_id: 'prod-petzl-actik',
-    name: 'Petzl Actik Core 450lm',
-    brand: 'Petzl',
-    category: 'Lampes & Éclairage',
-    weight_g: 85,
-    purchase_price: 49,
-    condition: 'bon',
-    source: 'achat',
-    usage_count: 45,
-    notes: 'Batterie Core rechargeable micro-USB. 34% de charge.',
-    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',
-  },
-  {
-    id: 'gear-sawyer-mini',
-    user_id: 'guest',
-    product_id: 'prod-sawyer-mini',
-    name: 'Filtre Sawyer Mini',
-    brand: 'Sawyer',
-    category: 'Eau & Filtres',
-    weight_g: 57,
-    purchase_price: 39,
-    condition: 'excellent',
-    source: 'achat',
-    usage_count: 22,
-    notes: 'Nettoyé à contre-courant après chaque sortie. Seringue incluse.',
-    image: 'https://images.unsplash.com/photo-1527181152855-fc03fc7949c8?w=600&q=80',
-  },
-  {
-    id: 'gear-msr-rechaud',
-    user_id: 'guest',
-    product_id: 'prod-msr-pocketrocket-2',
-    name: 'MSR PocketRocket 2',
-    brand: 'MSR',
-    category: 'Cuisine & Réchauds',
-    weight_g: 73,
-    purchase_price: 49,
-    condition: 'excellent',
-    source: 'achat',
-    usage_count: 28,
-    notes: 'Boîtier rigide de transport inclus.',
-    image: 'https://images.unsplash.com/photo-1506084868230-bb9d95c24759?w=600&q=80',
-  },
-  {
-    id: 'gear-garmin-inreach',
-    user_id: 'guest',
-    product_id: 'prod-garmin-inreach',
-    name: 'Garmin inReach Mini 2',
-    brand: 'Garmin',
-    category: 'Navigation & GPS',
-    weight_g: 100,
-    purchase_price: 399,
-    condition: 'neuf',
-    source: 'achat',
-    usage_count: 8,
-    notes: 'Abonnement satellite actif. Synchronisé avec l\'app Garmin Explore.',
-    is_favorite: true,
-    image: 'https://images.unsplash.com/photo-1551524559-8af4e6624178?w=600&q=80',
-  },
-  {
-    id: 'gear-opinel-8',
-    user_id: 'guest',
-    product_id: 'prod-opinel-n8',
-    name: 'Couteau Opinel N°8 Inox',
-    brand: 'Opinel',
-    category: 'Accessoires & Outils',
-    weight_g: 45,
-    purchase_price: 14.5,
-    condition: 'bon',
-    source: 'achat',
-    usage_count: 60,
-    notes: 'Lame affûtée.',
-    image: 'https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?w=600&q=80',
-  },
-  {
-    id: 'gear-careplus-kit',
-    user_id: 'guest',
-    product_id: 'prod-care-plus-first-aid',
-    name: 'Trousse Care Plus Mountaineer',
-    brand: 'Care Plus',
-    category: 'Sécurité & Soins',
-    weight_g: 450,
-    purchase_price: 49.9,
-    condition: 'excellent',
-    source: 'achat',
-    usage_count: 12,
-    notes: 'Date de péremption des pansements vérifiée le 12 août 2026.',
-    image: 'https://images.unsplash.com/photo-1603398938378-e54eab446dde?w=600&q=80',
-  },
-  {
-    id: 'gear-anker-powerbank',
-    user_id: 'guest',
-    product_id: 'prod-anker-10000',
-    name: 'Batterie Anker PowerCore 10 000',
-    brand: 'Anker',
-    category: 'Accessoires & Outils',
-    weight_g: 180,
-    purchase_price: 29.99,
-    condition: 'excellent',
-    source: 'achat',
-    usage_count: 35,
-    notes: 'Permet 2.5 recharges de smartphone et 4 recharges de frontale.',
-    image: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=600&q=80',
-  },
-];
+/** Poids strictement positif, ou `null`. Un article de 0 g n'existe pas. */
+export function normalizeShopWeight(value: unknown): number | null {
+  const parsed = normalizeShopPrice(value);
+  return parsed === null ? null : parsed;
+}
+
+/** Entier positif ou nul : 0 est une information reelle (stock, avis). */
+export function normalizeShopCount(value: unknown): number | null {
+  const parsed = typeof value === 'string' ? Number(value) : value;
+  if (typeof parsed !== 'number' || !Number.isFinite(parsed) || parsed < 0) return null;
+  return parsed;
+}
+
+/** Note sur 5 strictement positive, ou `null` si le schema porte la sentinelle 0. */
+export function normalizeShopRating(value: unknown): number | null {
+  const parsed = typeof value === 'string' ? Number(value) : value;
+  if (typeof parsed !== 'number' || !Number.isFinite(parsed) || parsed <= 0 || parsed > 5) {
+    return null;
+  }
+  return parsed;
+}
+
+/** Booleen lu tel quel, ou `null` si la colonne est absente. */
+function readBoolean(value: unknown): boolean | null {
+  return typeof value === 'boolean' ? value : null;
+}
+
+/** Chaine non vide apres trim, ou `null`. La chaine vide du schema reste vide. */
+export function normalizeShopText(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+/**
+ * Normalise `essentiality` vers l'union de types. Le schema stocke
+ * « Recommandé » / « Indispensable » / « Optionnel » : une valeur hors
+ * nomenclature est renvoyee `null` plutot que devinee.
+ */
+export function normalizeEssentiality(value: unknown): ProductEssentiality | null {
+  if (typeof value !== 'string') return null;
+  switch (value.trim().toLowerCase()) {
+    case 'indispensable':
+      return 'indispensable';
+    case 'recommandé':
+    case 'recommande':
+    case 'recommended':
+      return 'recommande';
+    case 'optionnel':
+    case 'optional':
+      return 'optionnel';
+    default:
+      return null;
+  }
+}
+
+export type AddToCartOutcome =
+  | {
+      ok: true;
+      item: CartItem;
+      /**
+       * Le poids reel de l'article est absent du catalogue. `item.weightG` vaut
+       * alors 0, qui est la sentinelle du schema — PAS une mesure. Tout total
+       * de poids calcule a partir de cet article (voir `totalWeightG` de
+       * `@/lib/cart`) est donc un minimum, pas un total : l'appelant doit
+       * afficher « poids a verifier » plutot que d'annoncer un poids.
+       */
+      weightKnown: boolean;
+    }
+  | { ok: false; reason: 'prix_inconnu' };
+
+/**
+ * Construit la ligne de panier d'un produit.
+ *
+ * `CartItem.priceEur` est requis et non nullable : un prix inconnu ne peut pas
+ * entrer au panier sous forme de 0 EUR, l'utilisateur commanderait un article
+ * « gratuit » qui ne l'est pas. Le refus est explicite et l'appelant decide
+ * quoi afficher.
+ *
+ * Pour `brand`, `category` et `image`, la chaine vide est la sentinelle « non
+ * renseigne » du schema (`TEXT NOT NULL DEFAULT ''`) et le type `CartItem` les
+ * rend obligatoires : on reutilise cette sentinelle plutot que d'inventer une
+ * marque, une categorie ou une image.
+ *
+ * Pour `weightG`, `CartItem.weightG` est `number` et hors de perimetre de
+ * modification : la sentinelle 0 du schema (`weight_g INTEGER DEFAULT 0`) est
+ * reprise, et `weightKnown` dit explicitement a l'appelant que ce 0 n'est pas
+ * une mesure. Un poids inconnu ne devient donc jamais un poids affiche.
+ */
+export function buildCartItemFromProduct(
+  product: Partial<UnifiedProduct> & { id: string; name: string },
+  quantity: number
+): AddToCartOutcome {
+  const priceEur = normalizeShopPrice(product.price_eur);
+  if (priceEur === null) return { ok: false, reason: 'prix_inconnu' };
+
+  const weightG = normalizeShopWeight(product.weight_g) ?? normalizeShopWeight(product.weight_grams);
+
+  return {
+    ok: true,
+    weightKnown: weightG !== null,
+    item: {
+      id: product.id,
+      slug: normalizeShopText(product.slug) ?? product.id,
+      name: product.name,
+      brand: normalizeShopText(product.brand) ?? '',
+      category: normalizeShopText(product.category_main) ?? normalizeShopText(product.category) ?? '',
+      priceEur,
+      weightG: weightG ?? 0,
+      image: normalizeShopText(product.image) ?? '',
+      imageAlt: normalizeShopText(product.image_alt) ?? product.name,
+      quantity,
+    },
+  };
+}
+
+/**
+ * Projette une ligne `shop_products` vers `UnifiedProduct` sans jamais combler
+ * un trou. Renvoie `null` si la ligne n'est pas exploitable (ni objet, pas
+ * d'identifiant ou pas de nom) plutot que de fabriquer une cle.
+ */
+export function mapShopProductRow(row: unknown): UnifiedProduct | null {
+  if (!row || typeof row !== 'object' || Array.isArray(row)) return null;
+  const record = row as Record<string, unknown>;
+
+  const id = normalizeShopText(record.id);
+  const name = normalizeShopText(record.name);
+  if (!id || !name) return null;
+
+  const categoryMain = normalizeShopText(record.category_main);
+  const category = normalizeShopText(record.category);
+
+  return {
+    id,
+    slug: normalizeShopText(record.slug) ?? id,
+    name,
+    brand: normalizeShopText(record.brand),
+    category: categoryMain ?? category,
+    category_main: categoryMain ?? category,
+    weight_g: normalizeShopWeight(record.weight_g) ?? normalizeShopWeight(record.weight_grams),
+    weight_grams: normalizeShopWeight(record.weight_grams),
+    price_eur: normalizeShopPrice(record.price_eur),
+    image: normalizeShopText(record.image),
+    image_alt: normalizeShopText(record.image_alt),
+    rating: normalizeShopRating(record.rating),
+    review_count: normalizeShopCount(record.review_count),
+    essentiality: normalizeEssentiality(record.essentiality),
+    score_kdv: normalizeShopCount(record.score_kdv),
+    description: normalizeShopText(record.description_why) ?? normalizeShopText(record.description),
+    stock: normalizeShopCount(record.stock),
+    is_active: readBoolean(record.is_active),
+  };
+}
+
+/**
+ * Lit l'inventaire local d'un visiteur non connecte.
+ *
+ * Renvoie une liste vide quand rien n'est stocke ou quand le JSON est
+ * inexploitable : aucun inventaire d'exemple n'est injecte. Une entree sans
+ * identifiant est ecartee plutot que d recevoir une cle fabriquee, sinon
+ * l'interface afficherait une ligne sans origine.
+ */
+export function readGuestGearPayload(raw: string | null): UserEquipmentItem[] {
+  if (!raw) return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(parsed)) return [];
+
+  return parsed.flatMap((entry) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return [];
+    const record = entry as Record<string, unknown>;
+    const id = normalizeShopText(record.id);
+    const name = normalizeShopText(record.name);
+    if (!id || !name) return [];
+    return [{ ...(entry as UserEquipmentItem), id, name }];
+  });
+}
 
 function getGuestGear(): UserEquipmentItem[] {
-  if (typeof window === 'undefined') return INITIAL_AUTHENTIC_GUEST_EQUIPMENT;
+  if (typeof window === 'undefined') return [];
   try {
-    const raw = localStorage.getItem(GUEST_GEAR_STORAGE_KEY);
-    if (!raw) {
-      saveGuestGear(INITIAL_AUTHENTIC_GUEST_EQUIPMENT);
-      return INITIAL_AUTHENTIC_GUEST_EQUIPMENT;
-    }
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_AUTHENTIC_GUEST_EQUIPMENT;
+    return readGuestGearPayload(localStorage.getItem(GUEST_GEAR_STORAGE_KEY));
   } catch {
-    return INITIAL_AUTHENTIC_GUEST_EQUIPMENT;
+    return [];
   }
 }
 
@@ -515,7 +289,7 @@ function saveGuestGear(items: UserEquipmentItem[]): void {
   try {
     localStorage.setItem(GUEST_GEAR_STORAGE_KEY, JSON.stringify(items));
   } catch {
-    // ignore
+    // Stockage indisponible : l'inventaire reste en memoire pour la session.
   }
 }
 
@@ -535,7 +309,7 @@ function saveGuestKits(kits: Kit[]): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(GUEST_KITS_STORAGE_KEY, JSON.stringify(kits));
-  } catch { /* ignore */ }
+  } catch { /* stockage indisponible */ }
 }
 
 export function useEquipment() {
@@ -543,8 +317,10 @@ export function useEquipment() {
   const { triggerHaptic } = useHapticFeedback();
   const supabase = useMemo(() => createClient(), []);
 
-  const [products, setProducts] = useState<UnifiedProduct[]>(FALLBACK_AUTHENTIC_PRODUCTS);
-  const [equipment, setEquipment] = useState<UserEquipmentItem[]>(INITIAL_AUTHENTIC_GUEST_EQUIPMENT);
+  // Etat initial vide : tant que la base n'a pas repondu, l'ecran affiche
+  // « chargement » puis « indisponible », jamais un catalogue d'exemple.
+  const [products, setProducts] = useState<UnifiedProduct[]>([]);
+  const [equipment, setEquipment] = useState<UserEquipmentItem[]>([]);
   const [kits, setKits] = useState<Kit[]>([]);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -560,38 +336,24 @@ export function useEquipment() {
     setLoading(true);
     setError(null);
     try {
-      // 1. Chargement réel depuis Supabase shop_products
+      // 1. Catalogue réel depuis Supabase `shop_products`
       const { data: prodData, error: prodErr } = await supabase
         .from('shop_products')
         .select('*')
         .order('name', { ascending: true });
 
-      if (!prodErr && prodData && prodData.length > 0) {
-        const formattedProducts: UnifiedProduct[] = prodData.map((p: any) => ({
-          id: p.id,
-          slug: p.slug || p.id,
-          name: p.name,
-          brand: p.brand || 'Le Kit du Voyageur',
-          category: p.category_main || p.category || 'Autre',
-          category_main: p.category_main || p.category,
-          weight_g: Number(p.weight_g || p.weight_grams || 0),
-          price_eur: Number(p.price_eur || 0),
-          image: p.image || 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80',
-          image_alt: p.image_alt || p.name,
-          rating: Number(p.rating || 4.8),
-          review_count: Number(p.review_count || 12),
-          essentiality: p.essentiality || 'recommande',
-          score_kdv: p.score_kdv,
-          description: p.description_why || p.description,
-          stock: p.stock ?? 10,
-          is_active: p.is_active !== false,
-        }));
-        setProducts(formattedProducts);
-      } else {
-        setProducts(FALLBACK_AUTHENTIC_PRODUCTS);
+      const formattedProducts = (prodData ?? [])
+        .map(mapShopProductRow)
+        .filter((row): row is UnifiedProduct => row !== null);
+      setProducts(formattedProducts);
+
+      if (prodErr) {
+        setError('Catalogue indisponible.');
       }
 
-      // 2. Chargement de l'équipement possédé
+      // 2. Équipement possédé. Un utilisateur connecté lit sa base : si elle ne
+      //    répond pas on affiche « indisponible », on ne substitue pas un
+      //    inventaire d'exemple ni celui d'un autre contexte.
       if (user && user.id) {
         const { data: gearData, error: gearErr } = await supabase
           .from('gear_items')
@@ -599,10 +361,11 @@ export function useEquipment() {
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
-        if (!gearErr && gearData && gearData.length > 0) {
+        if (!gearErr && gearData) {
           setEquipment(gearData as UserEquipmentItem[]);
         } else {
-          setEquipment(getGuestGear());
+          setEquipment([]);
+          if (gearErr) setError('Équipement indisponible.');
         }
 
         // Load kits for the user
@@ -610,7 +373,7 @@ export function useEquipment() {
           .from('kits')
           .select('*')
           .eq('user_id', user.id);
-        if (!kitErr && kitData && kitData.length > 0) {
+        if (!kitErr && kitData) {
           setKits(kitData as Kit[]);
         } else {
           setKits([]);
@@ -621,11 +384,13 @@ export function useEquipment() {
       }
 
       syncCart();
-    } catch (err: any) {
-      console.warn('Chargement fallback équipement:', err);
-      setProducts(FALLBACK_AUTHENTIC_PRODUCTS);
-      setEquipment(getGuestGear());
-      setKits(getGuestKits());
+    } catch {
+      // Aucune donnée n'a ete lue : on vide et on le dit plutot que d'afficher
+      // un repli qui ferait passer l'ecran pour complet.
+      setProducts([]);
+      setEquipment([]);
+      setKits([]);
+      setError('Équipement indisponible.');
     } finally {
       setLoading(false);
     }
@@ -698,30 +463,30 @@ export function useEquipment() {
     return cartItems.reduce((acc, item) => acc + item.quantity, 0);
   }, [cartItems]);
 
-  // Calcul du poids total possédé (en grammes)
+  // Poids total possédé. Ne somme que les poids connus : un article de poids
+  // inconnu ne vaut pas 0 g, il ne compte simplement pas.
   const totalPackWeight = useMemo(() => {
-    return equipment.reduce((acc, item) => acc + (Number(item.weight_g) || 0) * (item.quantity || 1), 0);
+    return equipment.reduce(
+      (acc, item) => acc + (normalizeShopWeight(item.weight_g) ?? 0) * (item.quantity ?? 1),
+      0
+    );
   }, [equipment]);
 
   // AJOUT AU PANIER (Action d'achat du catalogue)
   const addToCart = useCallback(
-    (product: Partial<UnifiedProduct> & { name: string; id: string }, quantity: number = 1) => {
+    (
+      product: Partial<UnifiedProduct> & { name: string; id: string },
+      quantity: number = 1
+    ): AddToCartOutcome => {
+      const outcome = buildCartItemFromProduct(product, quantity);
+      if (!outcome.ok) {
+        // Prix inconnu : on refuse l'ajout plutot que d'ecrire 0 EUR.
+        triggerHaptic('warning');
+        return outcome;
+      }
       triggerHaptic('selection');
-      const updated = addCartItem(
-        {
-          id: product.id,
-          slug: product.slug || product.id,
-          name: product.name,
-          brand: product.brand || 'Le Kit du Voyageur',
-          category: product.category_main || product.category || 'Équipement',
-          priceEur: Number(product.price_eur || 0),
-          weightG: Number(product.weight_g || product.weight_grams || 0),
-          image: product.image || 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80',
-          imageAlt: product.image_alt || product.name,
-        },
-        quantity
-      );
-      setCartItems(updated);
+      setCartItems(addCartItem(outcome.item, quantity));
+      return outcome;
     },
     [triggerHaptic]
   );
@@ -762,10 +527,14 @@ export function useEquipment() {
         brand: overrides?.brand || product.brand || null,
         model: overrides?.model || null,
         category: overrides?.category || product.category_main || product.category || 'Autre',
-        weight_g: overrides?.weight_g ?? product.weight_g ?? 0,
+        // Poids inconnu reste `null` : la colonne `gear_items.weight_g` est
+        // nullable, on ne substitue pas 0 g a un article non pese.
+        weight_g: overrides?.weight_g ?? product.weight_g ?? null,
         purchase_price: overrides?.purchase_price ?? product.price_eur ?? null,
         image: overrides?.image || product.image || null,
-        condition: overrides?.condition || 'excellent',
+        // Un article fraichement ajoute n'a pas d'etat verifie : aucune
+        // condition n'est affirmee. La colonne reste a son defaut base.
+        condition: overrides?.condition ?? null,
         source: overrides?.source || (product.id ? 'catalogue' : 'manuel'),
         quantity: overrides?.quantity || 1,
         notes: overrides?.notes || null,
@@ -801,7 +570,8 @@ export function useEquipment() {
               weight_g: newItem.weight_g,
               purchase_price: newItem.purchase_price,
               image: newItem.image,
-              condition: newItem.condition,
+              // `condition` est volontairement absent : la colonne est
+              // `NOT NULL DEFAULT 'bon'` et aucune condition n'a ete verifiee.
               source: newItem.source,
               quantity: newItem.quantity,
               notes: newItem.notes,
@@ -819,12 +589,12 @@ export function useEquipment() {
             .maybeSingle();
 
           if (insertErr) {
-            console.warn('Note insertion gear_items:', insertErr.message || insertErr);
+            console.warn('[useEquipment] insertion gear_items impossible', insertErr.message || insertErr);
           } else if (data) {
             setEquipment((prev) => [data as UserEquipmentItem, ...prev.filter((i) => i.id !== generatedId)]);
           }
         } catch (err) {
-          console.warn('Exception ajout gear_item:', err);
+          console.warn('[useEquipment] exception ajout gear_item', err);
         }
       }
     },
@@ -841,12 +611,12 @@ export function useEquipment() {
         const filtered = getGuestGear().filter((item) => item.id !== gearItemIdOrProductId && item.product_id !== gearItemIdOrProductId);
         saveGuestGear(filtered);
       }
-      
+
       if (user && user.id) {
         try {
           await supabase.from('gear_items').delete().eq('id', gearItemIdOrProductId).or(`product_id.eq.${gearItemIdOrProductId}`);
         } catch (err) {
-          console.warn('Erreur suppression gear_item:', err);
+          console.warn('[useEquipment] suppression gear_item impossible', err);
         }
       }
     },
@@ -865,7 +635,7 @@ export function useEquipment() {
         try {
           await supabase.from('gear_items').update(patch).eq('id', gearItemId).eq('user_id', user.id);
         } catch (err) {
-          console.warn('Erreur update gear_item:', err);
+          console.warn('[useEquipment] mise a jour gear_item impossible', err);
         }
       }
     },
@@ -877,7 +647,7 @@ export function useEquipment() {
     setKits((prev) => [...prev, kit]);
     if (!user) saveGuestKits([...kits, kit]);
     if (user && user.id) {
-      Promise.resolve(supabase.from('kits').insert({ ...kit, user_id: user.id })).catch((e: unknown) => console.warn('Kit insert error', e));
+      Promise.resolve(supabase.from('kits').insert({ ...kit, user_id: user.id })).catch((e: unknown) => console.warn('[useEquipment] insertion kit impossible', e));
     }
   }, [user, supabase, kits]);
 
@@ -885,7 +655,7 @@ export function useEquipment() {
     setKits((prev) => prev.map((k) => (k.id === updatedKit.id ? updatedKit : k)));
     if (!user) saveGuestKits(kits.map((k) => (k.id === updatedKit.id ? updatedKit : k)));
     if (user && user.id) {
-      Promise.resolve(supabase.from('kits').update(updatedKit).eq('id', updatedKit.id)).catch((e: unknown) => console.warn('Kit update error', e));
+      Promise.resolve(supabase.from('kits').update(updatedKit).eq('id', updatedKit.id)).catch((e: unknown) => console.warn('[useEquipment] mise a jour kit impossible', e));
     }
   }, [user, supabase, kits]);
 
@@ -893,7 +663,7 @@ export function useEquipment() {
     setKits((prev) => prev.filter((k) => k.id !== kitId));
     if (!user) saveGuestKits(kits.filter((k) => k.id !== kitId));
     if (user && user.id) {
-      Promise.resolve(supabase.from('kits').delete().eq('id', kitId)).catch((e: unknown) => console.warn('Kit delete error', e));
+      Promise.resolve(supabase.from('kits').delete().eq('id', kitId)).catch((e: unknown) => console.warn('[useEquipment] suppression kit impossible', e));
     }
   }, [user, supabase, kits]);
 

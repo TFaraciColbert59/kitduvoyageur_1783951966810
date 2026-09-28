@@ -24,6 +24,7 @@ const ICONS: Record<ItineraryStepKind, string> = {
 const EMPTY_TOTALS: DayTotals = {
   distanceKm: null,
   movingMin: null,
+  activityMin: null,
   elevGainM: null,
   elevLossM: null,
 };
@@ -154,6 +155,9 @@ export function buildItinerary(draft: AdventurePrepDraft): ItineraryModel | null
     steps,
     totals: { ...EMPTY_TOTALS },
     perDay: Array.from({ length: days }, () => ({ ...EMPTY_TOTALS })),
+    // La meteo n est pas une donnee du modele : elle se mesure plus tard, sur
+    // les dates reelles. Aucune n est encore connue ici.
+    weather: Array.from({ length: days }, () => null),
     metricsContext: metricsContextFor(draft.activities),
     budgetPerPerson:
       draft.preferences.budgetPerPerson === null
@@ -248,6 +252,13 @@ export function knownGaps(model: ItineraryModel): KnownGap[] {
   if (model.totals.elevGainM === null) gaps.push({ id: 'denivele', label: 'Dénivelé à vérifier' });
   if (model.steps.every((step) => step.price.amount === null)) {
     gaps.push({ id: 'prix', label: 'Prix à vérifier' });
+  }
+
+  // La meteo muette doit se voir. Sans date de depart, ou fournisseur sans
+  // reponse, aucune journee n est mesuree : le dire vaut mieux que laisser un
+  // vide que la personne lit comme « pas de pluie ce jour-la ».
+  if (model.days > 0 && model.weather.length === model.days && model.weather.every((day) => day === null)) {
+    gaps.push({ id: 'meteo', label: 'Météo à vérifier' });
   }
   return gaps;
 }

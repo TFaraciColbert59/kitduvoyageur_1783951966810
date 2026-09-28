@@ -10,9 +10,12 @@ import { A_VERIFIER } from '../engine/trust';
 import { packWeight, resolvedGear } from '../engine/gear';
 import { mealNeeds, uncoveredMeals, waterNeeds } from '../engine/consumables';
 import { knownGaps } from '../engine/itinerary';
+import { daySteps } from '../engine/itinerary';
+import { metricsFor } from '../engine/metrics';
+import { weatherParts } from '../engine/weather';
 import { bookWeightLabel, gearToVerifyCount, plural } from '../engine/labels';
-import type { AdventurePrepDraft, GearNeed, PlaceRef } from '../types';
-import { blockersBeforeSave, buildAdventureGenerateRequest } from '../adventureRequest';
+import type { AdventurePrepDraft, GearNeed, ItineraryModel, PlaceRef } from '../types';
+import { saveAdventure } from '../saveAdventure';
 import { PrepMap } from './PrepMap';
 import type { PrepSheetId } from './PrepSheets';
 
@@ -63,16 +66,25 @@ function openPointsOf(draft: AdventurePrepDraft, gear: readonly GearNeed[]): Ope
   return points;
 }
 
-function routeCoords(draft: AdventurePrepDraft): Array<[number, number]> {
+function routeCoords(draft: AdventurePrepDraft, model: ItineraryModel | null): Array<[number, number]> {
   const coords: Array<[number, number]> = [];
-  const push = (place: PlaceRef | null) => {
-    if (!place) return;
+  const push = (lat: number | null, lon: number | null) => {
+    if (lat === null || lon === null) return;
     const last = coords[coords.length - 1];
-    if (last && last[0] === place.lat && last[1] === place.lon) return;
-    coords.push([place.lat, place.lon]);
+    if (last && last[0] === lat && last[1] === lon) return;
+    coords.push([lat, lon]);
   };
-  push(draft.route.origin);
-  if (draft.route.shape === 'aller_simple') push(draft.route.destination);
+  // Le trace mesure prime : les etapes reellement situees, dans l ordre du
+  // parcours. Le couple departure/arrivee ne sert que de bornage quand le
+  // modele n a pas encore de geolocalisation.
+  if (model) {
+    const ordered = [...model.steps].sort((a, b) => a.day - b.day || a.order - b.order);
+    for (const step of ordered) push(step.lat, step.lon);
+  }
+  push(draft.route.origin?.lat ?? null, draft.route.origin?.lon ?? null);
+  if (draft.route.shape === 'aller_simple') {
+    push(draft.route.destination?.lat ?? null, draft.route.destination?.lon ?? null);
+  }
   return coords;
 }
 
@@ -85,10 +97,6 @@ export function DepartureStep({ onOpenSheet }: DepartureStepProps) {
   // L abort est partage : un demontage ou une deuxieme tentative doit annuler
   // la premiere, sinon un plan arrive apres le depart de l ecran.
   const abort = useRef<AbortController | null>(null);
-  // Cle d idempotence : une par tentative. Si la reponse se perd, le reessai
-  // rejoue la MEME requete et la route renvoie le plan deja cree au lieu d en
-  // fabriquer un second.
-  const idempotencyKey = useRef<string | null>(null);
 
   useEffect(() => {
     syncGear();
@@ -98,57 +106,46 @@ export function DepartureStep({ onOpenSheet }: DepartureStepProps) {
     abort.current?.abort();
   }, []);
 
-  const saveAdventure = useCallback(async () => {
+  // L identifiant de voyage vient de la reponse de la base. Tant qu il n
+  // est pas la, aucun depart vers le hub : une redirection sans ligne creee
+  // afficherait un hub vide, pire qu un echec visible.
+  const saveCurrentAdventure = useCallback(async () => {
     if (save === 'saving') return;
-    const blockers = blockersBeforeSave(draft);
-    if (blockers.length > 0) {
-      setSaveError(`Il manque ${blockers.join(', ')} avant d enregistrer ton aventure.`);
-      return;
-    }
 
     setSaveError(null);
     setSave('saving');
 
+    abort.current?.abort();
     const controller = new AbortController();
     abort.current = controller;
-    idempotencyKey.current = idempotencyKey.current ?? crypto.randomUUID();
 
     try {
-      const response = await fetch('/api/adventure/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Idempotency-Key': idempotencyKey.current,
+      const outcome = await saveAdventure(
+        draft,
+        {
+          post: (url, body, init) =>
+            fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+              ...(init.signal ? { signal: init.signal } : {}),
+            }),
         },
-        body: JSON.stringify(buildAdventureGenerateRequest(draft)),
-        signal: controller.signal,
-      });
+        controller.signal,
+      );
 
-      if (!response.ok) {
-        // Le detail technique reste cote serveur : l ecran ne montre qu une
-        // phrase actionnable, jamais un code HTTP ni une charge utile brute.
-        setSave('idle');
-        setSaveError(
-          response.status === 401
-            ? 'Connecte-toi pour enregistrer ton aventure, puis reessaie.'
-            : 'Ton aventure n a pas pu etre enregistree. Reessaie dans un instant.'
-        );
-        return;
-      }
+      if (controller.signal.aborted) return;
 
-      const payload = (await response.json()) as { planId?: string };
-      if (!payload.planId) {
+      if (outcome.status !== 'saved') {
         setSave('idle');
-        setSaveError('Le parcours a ete enregistre sans identifiant. Verifie ton hub.');
+        setSaveError(outcome.message);
         return;
       }
 
       setSave('saved');
       router.push('/hub');
-    } catch (error) {
-      if (controller.signal.aborted) return;
-      setSave('idle');
-      setSaveError('Impossible de joindre le serveur. Verifie ta connexion, puis reessaie.');
+    } finally {
+      if (!controller.signal.aborted) abort.current = null;
     }
   }, [draft, router, save]);
   const activity = activityById(draft.activities.primary);
@@ -167,6 +164,7 @@ export function DepartureStep({ onOpenSheet }: DepartureStepProps) {
   const headcount = draft.group.adults + draft.group.children;
   
   const points = openPointsOf(draft, gear);
+  const model = draft.itinerary;
 
   return (
     <div className="prep-screen">
@@ -202,6 +200,57 @@ export function DepartureStep({ onOpenSheet }: DepartureStepProps) {
           </Button>
         </div>
         
+        {model && (
+          <>
+            <div className="prep-metrics">
+              {metricsFor(model, 'aventure').map((metric) => (
+                <div key={metric.id} className="prep-metric">
+                  <span className="prep-metric__label">{metric.label}</span>
+                  <span
+                    className="prep-metric__value"
+                    data-unknown={metric.state === 'a_verifier' ? 'true' : undefined}
+                  >
+                    {metric.formatted}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="prep-programme">
+              <div className="prep-programme__list">
+                {Array.from({ length: model.days }, (_, index) => index + 1).map((day) => (
+                  <section key={day} className="prep-programme__day">
+                    <header className="prep-programme__dayhead">
+                      <span className="prep-programme__daylabel">Jour {day}</span>
+                      <span className="prep-programme__weather">
+                        {(() => {
+                          const parts = weatherParts(model.weather[day - 1] ?? null);
+                          return (
+                            <>
+                              <span className="prep-programme__sky">{parts.condition}</span>
+                              {parts.measures ? (
+                                <span className="prep-programme__measures">{parts.measures}</span>
+                              ) : null}
+                            </>
+                          );
+                        })()}
+                      </span>
+                    </header>
+                    <ul className="prep-programme__steps">
+                      {daySteps(model, day).map((item) => (
+                        <li key={item.id} className="prep-programme__step">
+                          <Icon name={item.icon || 'map-pin'} size={16} aria-hidden="true" />
+                          <span className="prep-programme__steptitle">{item.title}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
         {/* Blocs résumés */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--prep-block-gap)', marginBottom: 'var(--space-4)' }}>
           
@@ -278,7 +327,7 @@ export function DepartureStep({ onOpenSheet }: DepartureStepProps) {
         )}
         
         <div style={{ marginBottom: 'var(--space-4)' }}>
-          <PrepMap name={title} routeCoords={routeCoords(draft)} scopeLabel="Ensemble" />
+          <PrepMap name={title} routeCoords={routeCoords(draft, model)} scopeLabel="Ensemble" />
         </div>
         
       </div>
@@ -294,7 +343,7 @@ export function DepartureStep({ onOpenSheet }: DepartureStepProps) {
           size="lg"
           className="prep-footer__primary"
           loading={save === 'saving'}
-          onClick={saveAdventure}
+          onClick={saveCurrentAdventure}
           icon={save === 'saved' ? <Icon name="check" size={20} aria-hidden="true" /> : undefined}
           style={{ width: '100%' }}
         >

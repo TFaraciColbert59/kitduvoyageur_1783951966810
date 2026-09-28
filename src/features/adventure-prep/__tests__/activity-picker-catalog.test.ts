@@ -3,6 +3,7 @@ import {
   ACTIVITIES,
   ACTIVITY_CATEGORIES,
   activityById,
+  activityTemplateLabel,
   metricsContextFor,
   nightCandidates,
   primaryCandidates,
@@ -41,9 +42,16 @@ describe('CAT — les familles demandees sont couvertes', () => {
     }
   });
 
-  it('CAT-02: chaque activite declare une duree strictement positive', () => {
+  /**
+   * L ancien invariants « chaque activite declare une duree strictement
+   * positive » a ete remplace, pas supprime : la duree reste une donnee de
+   * travail pour la generation, mais elle ne doit plus etre PUBLIEE. Ce qui
+   * est verifie ici est l inverse de l ancien : ce que le catalogue montre ne
+   * contient aucun nombre.
+   */
+  it('CAT-02: aucune activite ne publie de duree affichee', () => {
     for (const activity of ACTIVITIES) {
-      expect(activity.suggestedDurationHours).toBeGreaterThan(0);
+      expect(activityTemplateLabel(activity.id)).not.toMatch(/[0-9]/);
     }
   });
 });

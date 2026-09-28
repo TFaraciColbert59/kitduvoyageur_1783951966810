@@ -1,9 +1,13 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAdventurePrepStore } from '../store/useAdventurePrepStore';
 import { canOpenStep, firstUnsatisfiedStep } from '../engine/steps';
 import type { PrepStepId } from '../types';
+import type { PhaseRetryDeps } from '../engine/itineraryPhases';
+import { fetchItineraryProposal } from '@/app/prepare/actions';
+import { browserMeasurementRunners } from '../browserMeasurements';
+import { loadPlaceInventoryFor, resolvePlacesFor } from '../placeSource';
 import { AdventurePrepShell } from './AdventurePrepShell';
 import { ActivityPickerScreen } from './ActivityPickerScreen';
 import { DestinationStep } from './DestinationStep';
@@ -54,6 +58,23 @@ export function PrepFlow() {
 
   const picking = draft.activities.primary === null;
 
+  // Les dependances de REPRISE, construites une seule fois.
+  //
+  // Sans elles, le bouton « Reessayer » ne pouvait rejouer aucune phase
+  // mesurable : le moteur recevait un objet vide, donc ni mesures, ni
+  // proposeur, ni resolveur. Le bandeau promettait une reprise et le clic
+  // echouait silencieusement. `useMemo` les fige pour que la dependance du
+  // `useCallback` du shell ne change pas a chaque rendu.
+  const phaseRetryDeps = useMemo<PhaseRetryDeps>(
+    () => ({
+      measure: browserMeasurementRunners(),
+      fetchProposal: (draftToBuild) => fetchItineraryProposal(draftToBuild),
+      resolvePlaces: resolvePlacesFor(),
+      loadInventory: loadPlaceInventoryFor(),
+    }),
+    [],
+  );
+
   if (!mounted) {
     return (
       <div className="adventure-prep">
@@ -66,7 +87,12 @@ export function PrepFlow() {
 
   return (
     <>
-      <AdventurePrepShell step={step} onOpenSheet={openSheet} picking={picking}>
+      <AdventurePrepShell
+        step={step}
+        onOpenSheet={openSheet}
+        picking={picking}
+        phaseRetryDeps={phaseRetryDeps}
+      >
         {picking && <ActivityPickerScreen onOpenSheet={openSheet} />}
         {!picking && step === 'destination' && <DestinationStep onOpenSheet={openSheet} />}
         {!picking && step === 'itinerary' && <ItineraryStepScreen onOpenSheet={openSheet} />}

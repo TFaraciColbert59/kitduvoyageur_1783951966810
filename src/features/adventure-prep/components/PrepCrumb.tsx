@@ -1,228 +1,149 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/ui/Icon';
 import { PREP_STEPS, PREP_STEP_LABELS, type PrepStepId } from '../types';
 import { canOpenStep } from '../engine/steps';
 import type { AdventurePrepDraft } from '../types';
 
+/* ------------------------------------------------------------------ */
+/* Rail d etapes                                                       */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Etat d un segment. Un seul, jamais deux : `active` pour l etape courante,
+ * `done` pour une etape atteinte, `locked` pour une etape qui ne l est pas
+ * encore. L etat est un `data-` ET une valeur de couleur : la couleur ne
+ * porte jamais l information seule.
+ */
+type SegmentState = 'active' | 'done' | 'locked';
+
+/**
+ * Aspect d un segment.
+ *
+ * Le soulignement fait la difference : epais et plein pour l etape courante,
+ * discret pour une etape terminee, absent pour une etape verrouillee. Trois
+ * etats restent donc distinguables sans la couleur, en contraste eleve comme
+ * en daltonisme.
+ *
+ * Le CSS porte deja `border-bottom: 2px solid transparent` sur
+ * `.prep-crumb__label` : on ne change que la couleur du trait, jamais son
+ * epaisseur, pour que la ligne du bas ne saute pas d un etat a l autre.
+ */
+const SEGMENT_LOOK: Readonly<Record<SegmentState, React.CSSProperties>> = {
+  active: {
+    color: 'var(--lkv-text-primary)',
+    borderBottomColor: 'var(--lkv-action)',
+    fontWeight: 720,
+  },
+  done: {
+    color: 'var(--lkv-action)',
+    borderBottomColor: 'color-mix(in srgb, var(--lkv-action) 34%, transparent)',
+    fontWeight: 640,
+  },
+  locked: {
+    color: 'var(--lkv-text-subtle)',
+    borderBottomColor: 'transparent',
+    fontWeight: 560,
+  },
+};
+
+/**
+ * Le rail occupe les trois colonnes du bandeau.
+ *
+ * La grille de `.prep-nav` garde deux colonnes d icone latérales ; sans cet
+ * etirement le rail se retrouverait cantonne a la largeur d une icone. Les
+ * colonnes restent vides et symetriques, ce qui centre le rail sans couche
+ * supplementaire.
+ */
+const CRUMB_BOX: React.CSSProperties = { gridColumn: '1 / -1' };
+
 export interface PrepCrumbProps {
   step: PrepStepId;
   draft: AdventurePrepDraft;
-  onOpenStep: (step: PrepStepId) => void;
 }
 
-export function PrepCrumb({ step, draft, onOpenStep }: PrepCrumbProps) {
+/**
+ * Fil d Ariane du preparateur : trois libelles, un etat par segment, rien
+ * d actionnable.
+ *
+ * Aucun bouton ici. Revenir en arriere, revenir au hub et ouvrir les
+ * preferences ne sont plus des affordances du bandeau : le bandeau informe,
+ * il ne pilote pas. Les capacites qu il portait restent accessibles — voir
+ * `PrepNavActions` dans `AdventurePrepShell` — et le tactile les retrouve par
+ * le bouton systeme et par la barre d onglets basse.
+ *
+ * Le draft reste une prop : il porte l etat `done` / `locked` de chaque
+ * segment. Le rail ne calcule rien, il lit.
+ */
+export function PrepCrumb({ step, draft }: PrepCrumbProps) {
   return (
-    <div
-      style={{
-        flex: 1,
-        minWidth: 0,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: 2,
-      }}
-      aria-live="polite"
-      aria-label="Étapes de la préparation"
-    >
+    <ol className="prep-crumb" style={CRUMB_BOX} aria-label="Étapes de la préparation">
       {PREP_STEPS.map((id, index) => {
         const isCurrent = id === step;
-        const reachable = canOpenStep(draft, id);
-        const isDone = reachable && !isCurrent;
-
-        const color = isCurrent
-          ? 'var(--lkv-text-primary)'
-          : isDone
-            ? 'var(--lkv-action)'
-            : 'var(--lkv-text-subtle)';
-        const fontWeight = isCurrent ? 720 : 400;
+        const state: SegmentState = isCurrent
+          ? 'active'
+          : canOpenStep(draft, id)
+            ? 'done'
+            : 'locked';
 
         return (
           <React.Fragment key={id}>
             {index > 0 && (
-              <span
-                style={{
-                  color: 'var(--line-ui, color-mix(in srgb, var(--lkv-text-primary) 20%, transparent))',
-                  fontSize: 13,
-                }}
-                aria-hidden="true"
-              >
-                {' · '}
-              </span>
+              <li className="prep-crumb__sep" aria-hidden="true">
+                ·
+              </li>
             )}
-            {isDone ? (
-              <button
-                type="button"
-                onClick={() => onOpenStep(id)}
-                style={{
-                  height: 44,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  padding: '0 6px',
-                  fontSize: 14,
-                  whiteSpace: 'nowrap',
-                  borderRadius: 10,
-                  fontFamily:
-                    "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif",
-                  color,
-                  fontWeight,
-                  cursor: 'pointer',
-                  background: 'transparent',
-                  border: 'none',
-                }}
-              >
-                {PREP_STEP_LABELS[id]}
-              </button>
-            ) : (
+            <li className="prep-crumb__item">
               <span
-                style={{
-                  height: 44,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  padding: '0 6px',
-                  fontSize: 14,
-                  whiteSpace: 'nowrap',
-                  borderRadius: 10,
-                  fontFamily:
-                    "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif",
-                  color,
-                  fontWeight,
-                }}
+                className="prep-crumb__label"
+                data-state={state}
                 data-current={isCurrent}
-                data-locked={!reachable && !isCurrent}
+                data-done={state === 'done'}
+                data-locked={state === 'locked'}
+                style={SEGMENT_LOOK[state]}
                 {...(isCurrent ? { 'aria-current': 'step' as const } : {})}
               >
                 {PREP_STEP_LABELS[id]}
               </span>
-            )}
+            </li>
           </React.Fragment>
         );
       })}
-    </div>
+    </ol>
   );
 }
 
+/* ------------------------------------------------------------------ */
+/* Bandeau haut                                                        */
+/* ------------------------------------------------------------------ */
+
+/** Seules ces deux props restent : le bandeau n'a plus d'action a transmettre. */
 export interface PrepNavProps {
   step: PrepStepId;
   draft: AdventurePrepDraft;
-  onOpenStep: (step: PrepStepId) => void;
-  onClose: () => void;
-  /**
-   * Ouvre la feuille des preferences.
-   *
-   * Pourquoi ici et plus dans le corps de l etape 1 : le bandeau titre +
-   * promesse + pastilles de l ecran « On part ou ? » a ete retire. Ces
-   * pastilles etaient le SEUL point d entree vers les preferences (budget,
-   * rythme, transport, centres d interet) — les supprimer sans remplacement
-   * aurait rendu ces donnees inatteignables sur les trois etapes. Le bandeau,
-   * lui, existe deja sur chaque etape : la fonction survit a la suppression du
-   * decor.
-   */
-  onOpenPreferences?: () => void;
 }
 
-export function PrepNav({ step, draft, onOpenStep, onClose, onOpenPreferences }: PrepNavProps) {
-  const position = PREP_STEPS.indexOf(step);
-  const previous = position > 0 ? PREP_STEPS[position - 1] : undefined;
-  const canGoBack = previous !== undefined && canOpenStep(draft, previous);
-
+/**
+ * Bandeau haut du preparateur : 52 px, verre, et rien d'autre qu'un rail.
+ *
+ * Ni fleche de retour, ni croix, ni bouton de filtres — c'est la demande
+ * explicite, et les tests `prep-crumb` / `prep-nav` la verifient sur le HTML
+ * rendu. Ce qui portait ces trois boutons n'a pas disparu : la navigation vers
+ * le hub, la feuille des preferences et le retour vers une etape atteinte sont
+ * rendus hors du flux visuel par le shell.
+ *
+ * La barre d onglets basse, elle, reste visible : MobileNavWrapper ne masque
+ * plus /prepare et la route rend AppShell hasBottomNav, donc la reservation
+ * `--bottom-nav-height` vaut exactement la hauteur reelle de la barre.
+ */
+export function PrepNav({ step, draft }: PrepNavProps) {
   return (
     <nav
-      style={{
-        flex: 'none',
-        height: 52,
-        minHeight: 52,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        padding: '0 12px',
-        position: 'relative',
-        zIndex: 20,
-      }}
+      className="prep-nav"
+      style={{ position: 'relative', zIndex: 20 }}
       aria-label="Progression de la préparation"
     >
-      <button
-        type="button"
-        className="prep-nav__icon"
-        style={{
-          flex: 'none',
-          width: 44,
-          height: 44,
-          borderRadius: '50%',
-          display: 'grid',
-          placeItems: 'center',
-          background: 'var(--prep-glass-bg)',
-          WebkitBackdropFilter: 'var(--prep-glass-blur)',
-          backdropFilter: 'var(--prep-glass-blur)',
-          boxShadow: 'var(--prep-glass-shadow)',
-          border: '0.5px solid var(--prep-glass-border)',
-          color: 'var(--lkv-text-primary)',
-          cursor: 'pointer',
-        }}
-        disabled={!canGoBack}
-        onClick={() => {
-          if (canGoBack && previous) {
-            onOpenStep(previous);
-          }
-        }}
-        aria-label="Revenir en arrière"
-      >
-        <Icon name="chevron-left" size={20} aria-hidden="true" />
-      </button>
-
-      <PrepCrumb step={step} draft={draft} onOpenStep={onOpenStep} />
-
-      <button
-        type="button"
-        style={{
-          flex: 'none',
-          width: 44,
-          height: 44,
-          borderRadius: '50%',
-          display: 'grid',
-          placeItems: 'center',
-          background: 'var(--prep-glass-bg)',
-          WebkitBackdropFilter: 'var(--prep-glass-blur)',
-          backdropFilter: 'var(--prep-glass-blur)',
-          boxShadow: 'var(--prep-glass-shadow)',
-          border: '0.5px solid var(--prep-glass-border)',
-          color: 'var(--lkv-text-primary)',
-          cursor: 'pointer',
-        }}
-        onClick={onClose}
-        aria-label="Fermer et revenir au hub"
-      >
-        <Icon name="x" size={20} aria-hidden="true" />
-      </button>
-
-      {onOpenPreferences ? (
-        <button
-          type="button"
-          className="prep-nav__icon"
-          style={{
-            flex: 'none',
-            width: 44,
-            height: 44,
-            borderRadius: '50%',
-            display: 'grid',
-            placeItems: 'center',
-            background: 'var(--prep-glass-bg)',
-            WebkitBackdropFilter: 'var(--prep-glass-blur)',
-            backdropFilter: 'var(--prep-glass-blur)',
-            boxShadow: 'var(--prep-glass-shadow)',
-            border: '0.5px solid var(--prep-glass-border)',
-            color: 'var(--lkv-text-primary)',
-            cursor: 'pointer',
-          }}
-          onClick={onOpenPreferences}
-          aria-label="Ouvrir les préférences du trajet"
-        >
-          <Icon name="filter" size={20} aria-hidden="true" />
-        </button>
-      ) : null}
+      <PrepCrumb step={step} draft={draft} />
     </nav>
   );
 }

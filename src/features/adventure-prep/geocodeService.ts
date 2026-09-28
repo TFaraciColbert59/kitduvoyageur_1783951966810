@@ -125,6 +125,7 @@ interface RawPhoton {
       country?: string;
       state?: string;
       city?: string;
+      county?: string;
       type?: string;
     };
   }> | null;
@@ -270,6 +271,104 @@ export async function geocodePlace(rawQuery: string): Promise<GeocodeResult> {
     : { status: 'unavailable', matches: [], provider: null };
   writeCache(key, result);
   return result;
+}
+
+/* ------------------------------------------------------------------ */
+/* Geocodage inverse : un point mesure, un nom de commune              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Resout le nom de la commune qui contient un point GPS. Sert a nommer la
+ * position reelle de la personne au lieu d ecrire « Ma position » partout.
+ *
+ * Regle de precision : seul Photon sait resoudre en inverse, et il repond
+ * TOUJOURS avec le centre de la commune trouvee, jamais le point demande. On
+ * garde donc le nom du fournisseur et les coordonnees mesurees : la position
+ * affichee reste la vraie, le nom est la commune la plus proche connue de
+ * l OSM.
+ */
+export async function reverseGeocodePlace(lat: unknown, lon: unknown): Promise<GeocodeResult> {
+  const point = readLatLon(lat, lon);
+  if (point === null) return { status: 'invalid', matches: [], provider: null };
+
+  const key = `rev:${point.lat.toFixed(4)}:${point.lon.toFixed(4)}`;
+  const cached = readCache(key);
+  if (cached) return cached;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const payload = await fetchJson(
+      `https://photon.komoot.io/reverse?lat=${point.lat}&lon=${point.lon}&limit=8&lang=fr`,
+      controller.signal,
+    );
+    const matches =
+      payload === null
+        ? []
+        : normalizePhotonReverse((payload ?? {}) as RawPhoton, point);
+    const result: GeocodeResult =
+      payload === null
+        ? { status: 'unavailable', matches: [], provider: null }
+        : matches.length === 0
+          ? { status: 'no_result', matches: [], provider: null }
+          : { status: 'ok', matches, provider: 'photon' };
+    writeCache(key, result);
+    return result;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Normalisation INVERSE, volontairement differente de l aller.
+ *
+ * En aller, le nom du fournisseur EST le lieu. En inverse il ne l est pas :
+ * Photon classe d abord le batiment le plus proche et le nomme. Ecrire ce nom
+ * ferait apparaitre « Archives municipales de Chamonix-Mont-Blanc » comme point
+ * de depart. On ne retient donc que la commune — le nom vient de la
+ * hierarchie administrative (`city`, puis `county`, puis `state`), et la
+ * position rendue est celle qui a ete demandee.
+ */
+export function normalizePhotonReverse(
+  payload: RawPhoton,
+  at: { lat: number; lon: number },
+): GeocodeMatch[] {
+  const rows = payload.features ?? [];
+  const out: GeocodeMatch[] = [];
+  const seen = new Set<string>();
+  for (const row of rows) {
+    const props = row.properties ?? {};
+    // Le nom de commune vient de l administration. En dernier recours, on
+    // accepte le nom du fournisseur SEULEMENT si la feature est elle-meme
+    // une division administrative : un batiment ne devient jamais un lieu.
+    const ownName = PHOTON_PLACE_TYPES.has(typeof props.type === 'string' ? props.type : '')
+      ? typeof props.name === 'string'
+        ? props.name.trim()
+        : ''
+      : '';
+    const commune = [props.city, props.county, props.state, ownName]
+      .map((value) => (typeof value === 'string' ? value.trim() : ''))
+      .find((value) => value.length > 0);
+    if (commune === undefined) continue;
+    const country = typeof props.country === 'string' ? props.country.trim() : '';
+    const context = typeof props.county === 'string' ? props.county.trim() : '';
+    const key = `${commune}|${country}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({
+      id: matchId(commune, country, at.lat, at.lon),
+      name: commune,
+      context,
+      country,
+      lat: at.lat,
+      lon: at.lon,
+      provider: 'photon',
+      // Le nom vient d une division administrative, jamais d un point pose au
+      // hasard : c est une ancre de voyage, pas un adornement du metre pres.
+      precision: 'commune',
+    });
+  }
+  return out;
 }
 
 

@@ -23,12 +23,28 @@ export interface AIRequest {
   plugins?: AIPluginConfig[]; // plugins OpenRouter optionnels (ex: web search)
 }
 
+/**
+ * Cause REELLE d'un repli, distincte de `degraded`.
+ *
+ * `degraded` dit QUOI il s'est passe ; ceci dit POURQUOI. Sans ce second
+ * champ, l'ecran n'a que deux phrases possibles — « assistant desactive » ou
+ * « service tombe » — et les deux sont fausses quand le provider a depasse son
+ * delai, ce qui est le cas le plus frequent en measurant.
+ */
+export type AIFailureReason =
+  | 'delai_depasse'
+  | 'quota_epuise'
+  | 'provider_indisponible'
+  | 'reponse_invalide';
+
 export interface AIResponse {
   text: string;
   model: string;
   degraded: boolean;
   cached: boolean;
   provider: string;
+  /** Renseignee UNIQUEMENT quand `degraded` est vrai. */
+  failureReason?: AIFailureReason;
 }
 
 export interface AIProvider {

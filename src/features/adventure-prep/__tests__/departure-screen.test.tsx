@@ -2,7 +2,11 @@ import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { DepartureStep } from '../components/DepartureStep';
-import { fullDraft, draftWithoutItineraryInput } from './fixtures';
+import { fullDraft, draftWithoutItineraryInput, CHAMONIX, ARGENTIERE } from './fixtures';
+import { buildItinerary } from '../engine/itinerary';
+import { assignPlaces, type PlaceCandidate } from '../engine/places';
+import { applyRouting, type RouteLeg, type RoutingResolution } from '../engine/routing';
+import { applyWeather } from '../engine/measurements';
 import type { AdventurePrepDraft } from '../types';
 
 /**
@@ -49,6 +53,43 @@ function visible(html: string): string {
     .replace(/&amp;/g, '&')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+// Les lieux REELS du corridor Chamonix - Argentiere, rendus par /api/pois.
+const CORRIDOR: PlaceCandidate[] = [
+  { id: 'o-gouter', name: 'Refuge du Gouter', category: 'refuge', lat: 45.8447, lon: 6.8427, description: null, region: null, country: 'France', pricePerNight: 75, phone: null, website: null, isVerifiable: true },
+  { id: 'o-merlet', name: 'Source du Merlet', category: 'water', lat: 45.8756, lon: 6.8234, description: null, region: null, country: 'France', pricePerNight: null, phone: null, website: null, isVerifiable: true },
+  { id: 'o-midi', name: 'Aiguille du Midi', category: 'viewpoint', lat: 45.879, lon: 6.8873, description: null, region: null, country: 'France', pricePerNight: null, phone: null, website: null, isVerifiable: true },
+  { id: 'o-plan', name: 'Refuge du Plan de l Aiguille', category: 'refuge', lat: 45.8934, lon: 6.8756, description: null, region: null, country: 'France', pricePerNight: 48, phone: null, website: null, isVerifiable: true },
+  { id: 'o-lac-blanc', name: 'Lac Blanc', category: 'water', lat: 45.9123, lon: 6.9012, description: null, region: null, country: 'France', pricePerNight: null, phone: null, website: null, isVerifiable: true },
+  { id: 'o-bossons', name: 'Torrent des Bossons', category: 'water', lat: 45.8567, lon: 6.8456, description: null, region: null, country: 'France', pricePerNight: null, phone: null, website: null, isVerifiable: true },
+];
+
+// Un parcours route et drape : l etat REEL dans lequel le recapitulatif
+// s affiche. Sur un modele nu aucune mesure n existe, et tout parait
+// « a verifier » par defaut : les tests ne prouveraient alors rien.
+function measuredDraft(overrides: Partial<AdventurePrepDraft> = {}): AdventurePrepDraft {
+  const draft = fullDraft(overrides);
+  const built = buildItinerary(draft);
+  if (!built) throw new Error('modele de regles absent');
+  const located = assignPlaces(built, CORRIDOR, CHAMONIX, ARGENTIERE);
+  const geometry = [[6.8, 45.9], [6.9, 45.95]] as unknown as RouteLeg['geometry'];
+  const resolution: RoutingResolution = {
+    perDay: located.perDay.map((_, index) => ({
+      distanceKm: 21,
+      durationMin: 150,
+      geometry,
+      elevGainM: 400 + index,
+      elevLossM: 380,
+    })),
+    legByStepId: {},
+  };
+  const dated = applyWeather(applyRouting(located, resolution), draft.calendar.startDate, [
+    { date: '2026-07-11', tMaxC: 21, tMinC: 9, precipMm: 0, precipProbPct: 10, windMaxKmh: 18, code: 2, label: 'Partiellement nuageux' },
+    { date: '2026-07-12', tMaxC: 18, tMinC: 7, precipMm: 4, precipProbPct: 60, windMaxKmh: 25, code: 61, label: 'Pluie faible' },
+    { date: '2026-07-13', tMaxC: 16, tMinC: 6, precipMm: 0, precipProbPct: 20, windMaxKmh: 30, code: 3, label: 'Ciel voilé' },
+  ]);
+  return { ...draft, itinerary: dated };
 }
 
 describe('DepartureStep — écran de départ', () => {
@@ -118,5 +159,34 @@ describe('DepartureStep — écran de départ', () => {
     // Le catalogue impose l'eau et la trousse : jamais « aucun équipement ».
     expect(html).toContain('Équipement');
     expect(html).not.toContain('Aucun équipement identifié');
+  });
+
+  it('DEPART-12: le récap publie la distance et le dénivelé MESURÉS', () => {
+    const text = visible(render(measuredDraft()));
+    // 21 km x 3 joursneees = 63 km routiers, 400+401+402 m de denivele.
+    expect(text).toContain('63 km');
+    expect(text).toContain('1 203 m');
+    expect(text).not.toContain('Distance à vérifier');
+  });
+
+  it('DEPART-13: le récap déroule le programme jour par jour', () => {
+    const text = visible(render(measuredDraft()));
+    expect(text).toContain('Jour 1');
+    expect(text).toContain('Jour 2');
+    expect(text).toContain('Jour 3');
+  });
+
+  it('DEPART-14: chaque jour affiche la météo mesurée de sa date', () => {
+    const text = visible(render(measuredDraft()));
+    expect(text).toContain('Partiellement nuageux');
+    expect(text).toContain('Pluie faible');
+  });
+
+  it('DEPART-15: sans mesure, le récap reste « à vérifier » et n’invente rien', () => {
+    // Le meme parcours, sans passage sur le reseau : la distance demeure
+    // inconnue et doit se lire comme telle, jamais 0 km.
+    const text = visible(render(fullDraft()));
+    expect(text).toContain('À vérifier');
+    expect(text).not.toMatch(/0\s*km/);
   });
 });

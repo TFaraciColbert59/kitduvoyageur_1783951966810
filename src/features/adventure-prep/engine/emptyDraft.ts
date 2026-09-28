@@ -8,6 +8,7 @@ export function emptyDraft(): AdventurePrepDraft {
   return {
     version: PREP_DRAFT_VERSION,
     activities: { primary: null, extra: [], nights: [] },
+    brief: null,
     route: { origin: null, destination: null, shape: 'boucle' },
     calendar: { startDate: null, durationDays: null, durationIsSuggested: false, returnDate: null },
     group: { mode: 'solo', adults: 1, children: 0, hasPets: false, knownMembers: [] },

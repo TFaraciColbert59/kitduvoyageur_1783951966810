@@ -82,28 +82,36 @@ describe('Écran 10 — les trois blocs', () => {
   });
 });
 
-describe('Écran 10 — forme du parcours', () => {
-  it('D10-06: la bascule boucle / aller simple est toujours visible', () => {
+describe('Écran 10 — la forme se déduit, elle ne se choisit pas', () => {
+  it('D10-06: aucune bascule boucle / aller simple n’est proposée', () => {
     const text = visible(render(fullDraft()));
-    expect(text).toContain('Boucle');
-    expect(text).toContain('Aller simple');
+    expect(text).not.toContain('Boucle');
+    expect(text).not.toContain('Aller simple');
+    expect(render(fullDraft())).not.toContain('aria-pressed="true"');
   });
 
-  it('D10-07: la forme choisie est annoncée', () => {
+  it('D10-06b: l’invite libre de l’IA ouvre l’écran, en haut', () => {
     const html = render(fullDraft());
-    expect(html).toContain('aria-pressed="true"');
+    expect(html).toContain('prep-brief__input');
+    expect(html.indexOf('prep-brief__input')).toBeLessThan(html.indexOf('prep-block__row'));
   });
 
   it('D10-08: le bouton d’inversion reste atteignable en aller simple', () => {
     expect(render(fullDraft())).toContain('Inverser départ et arrivée');
   });
 
-  it('D10-09: pas d’inversion sur une boucle', () => {
-    const text = visible(
-      render(fullDraft({ route: { origin: CHAMONIX, destination: null, shape: 'boucle' } })),
-    );
-    expect(text).toContain('Retour au départ');
+  it('D10-09: sans arrivée, l’arrivée reste offerte et modifiable', () => {
+    const draft = fullDraft({ route: { origin: CHAMONIX, destination: null, shape: 'boucle' } });
+    const text = visible(render(draft));
+    // Aucune inversion possible, mais l’utilisateur peut toujours designer
+    // une arrivee : c est lui qui tranche, pas une bascule imposee.
     expect(text).not.toContain('Inverser départ et arrivée');
+    expect(text).toContain('Arrivée');
+    expect(text).toContain('À vérifier');
+  });
+
+  it('D10-09b: la carte de zone ne fait plus partie de l’étape 1', () => {
+    expect(render(fullDraft())).not.toContain('scopeLabel="Zone"');
   });
 });
 
@@ -131,6 +139,68 @@ describe('Écran 10 — participants', () => {
       group: { mode: 'groupe', adults: 4, children: 0, hasPets: false, knownMembers: [] },
     });
     expect(visible(render(draft))).toContain('4 adultes');
+  });
+});
+
+/**
+ * Le chevauchement du libelle et de la valeur est un bug de GEOMETRIE, pas de
+ * donnee : il se produit quand la valeur est longue (« 3 personnes · 1
+ * adulte ») et que le libelle garde sa largeur intrinsique. Aucun navigateur
+ * ne peut etre observe ici — `renderToStaticMarkup` ne fait pas de mise en
+ * page — on verifie donc que la regle anti-chevauchement est portee par le
+ * TSX lui-meme, sous forme de style inline, et qu elle tient quelle que soit
+ * la longueur du libelle.
+ */
+describe('Écran 10 — libellé et valeur ne se chevauchent jamais', () => {
+  function labelStyle(html: string): string {
+    const tag = html.match(/<span class="prep-block__label"([^>]*)>/);
+    return tag?.[1] ?? '';
+  }
+
+  function stackStyle(html: string): string {
+    const tag = html.match(/<span class="prep-block__stack"([^>]*)>/);
+    return tag?.[1] ?? '';
+  }
+
+  it('D10-30: le libellé se tronque, il ne déborde jamais sur la valeur', () => {
+    const style = labelStyle(render(fullDraft()));
+    expect(style).toContain('min-width:0');
+    expect(style).toContain('white-space:nowrap');
+    expect(style).toContain('overflow:hidden');
+    expect(style).toContain('text-overflow:ellipsis');
+  });
+
+  it('D10-31: le libellé peut céder la place, la valeur garde la sienne', () => {
+    const label = labelStyle(render(fullDraft()));
+    const stack = stackStyle(render(fullDraft()));
+    // Le libellé est le seul element autorise a reduire. La valeur est portee
+    // par la pile, ecartee de la reduction : c elle qui porte la largeur du
+    // « 3 personnes · 1 adulte ».
+    expect(label).toMatch(/flex:0 1 auto/);
+    expect(stack).toMatch(/flex:0 0 auto/);
+  });
+
+  it('D10-32: un libellé très long ne peut pas non plus pousser la valeur', () => {
+    // Ecran 12 : « Destination ou hébergement de base » est le libellé le plus
+    // long du produit. C est lui qui chevauchait la valeur « À vérifier ».
+    const draft = fullDraft({
+      activities: { primary: 'city-break', extra: [], nights: [] },
+      route: { origin: null, destination: ARGENTIERE, shape: 'boucle' },
+    });
+    const html = render(draft);
+    expect(visible(html)).toContain('Destination ou hébergement de base');
+    expect(labelStyle(html)).toContain('min-width:0');
+  });
+
+  it('D10-33: les avatars ne rognent pas la place de la valeur', () => {
+    // Le groupe d avatars est un enfant de plus dans la meme ligne flex : sans
+    // `flex: 0 0 auto` il recupere la largeur que la valeur laisse.
+    const draft = fullDraft({
+      group: { mode: 'groupe', adults: 3, children: 1, hasPets: false, knownMembers: ['Camille', 'Léo'] },
+    });
+    const html = render(draft);
+    const avatars = html.match(/<span class="prep-avatars"([^>]*)>/);
+    expect(avatars?.[1] ?? '').toContain('flex:0 0 auto');
   });
 });
 
@@ -181,8 +251,10 @@ describe('Écran 10 — accès aux réglages', () => {
 });
 
 describe('Écran 10 — carte et appel', () => {
-  it('D10-18: la carte est présente et étiquetée', () => {
-    expect(render(fullDraft())).toContain('Zone');
+  it('D10-18: la carte a quitte l’etape 1, elle vit dans le tiroir Lieu', () => {
+    const html = render(fullDraft());
+    expect(html).not.toContain('Zone');
+    expect(html).not.toContain('prep-map');
   });
 
   it('D10-19: l’appel d’action crée le parcours', () => {
@@ -190,13 +262,42 @@ describe('Écran 10 — carte et appel', () => {
     expect(text).toContain('Créer mon parcours');
   });
 
-  it('D10-20: une durée suggérée est qualifiée, jamais présentée comme un choix', () => {
+  it('D10-20: une duree suggeree n est jamais affichee comme un nombre', () => {
     const html = render(
       fullDraft({
         calendar: { startDate: '2026-07-11', durationDays: 3, durationIsSuggested: true, returnDate: null },
       }),
     );
-    expect(html).toContain('durée suggérée');
+    // La duree du catalogue n appartient a aucune aventure reelle. La qualifier
+    // ne suffit pas : tant qu elle n est pas choisie, c est une donnee
+    // absente, et une donnee absente se dit « a verifier ».
+    expect(html).toContain('À vérifier');
+    expect(html).not.toContain('3 jours');
+    expect(html).toMatch(/prep-cell__value[^>]*data-unknown="true"/);
+  });
+
+  it('D10-20b: une duree reellement choisie reste affichee', () => {
+    // Le garde-fou ne doit pas casser le cas reel : une duree saisie par la
+    // personne est une information legitime.
+    const text = visible(
+      render(
+        fullDraft({
+          calendar: { startDate: '2026-07-11', durationDays: 3, durationIsSuggested: false, returnDate: null },
+        }),
+      ),
+    );
+    expect(text).toContain('3 jours');
+  });
+
+  it('D10-20c: la proposition est signalee sans etre chiffree', () => {
+    const text = visible(
+      render(
+        fullDraft({
+          calendar: { startDate: '2026-07-11', durationDays: 3, durationIsSuggested: true, returnDate: null },
+        }),
+      ),
+    );
+    expect(text).toContain('préciser');
   });
 
   it('D10-21: aucune distance, aucun prix, aucun pourcentage avant calcul', () => {

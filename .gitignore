@@ -101,3 +101,10 @@ tmp-probe-*.mjs
 
 # Captures QA locales (Playwright / debug) — jamais commisees.
 artifacts/
+
+# Scripts de verification visuelle locaux (viewport 393x852).
+# Ce sont des OUTILS de travail, pas du source : ils pilotent un navigateur
+# local, dependent d un serveur de dev et n ont aucun sens en production.
+# Sans cette regle, un `git add -A` les embarquerait dans l historique.
+verify-*.cjs
+diag-*.cjs

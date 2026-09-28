@@ -95,22 +95,57 @@ describe('DestinationStep — parcours et dates', () => {
     expect(render(DestinationStep, fullDraft())).toContain('Inverser départ et arrivée');
   });
 
-  it('DEST-03: la boucle renvoie au départ et n’offre pas d’inversion', () => {
+  it('DEST-03: sans arrivée, aucune inversion mais l’arrivée reste saisissable', () => {
     const text = visible(
       render(DestinationStep, fullDraft({ route: { origin: CHAMONIX, destination: null, shape: 'boucle' } })),
     );
-    expect(text).toContain('Retour au départ');
     expect(text).not.toContain('Inverser départ et arrivée');
+    expect(text).toContain('Arrivée');
+    expect(text).toContain('À vérifier');
   });
 
+  /**
+   * La qualification est un CONTRAT, pas une copie : le badge doit exister quand la
+   * duree est suggeree et disparaitre quand elle est confirmee. Le libelle peut
+   * changer, l honnnetete des donnees, elle, ne peut pas.
+   */
   it('DEST-04: qualifie une durée suggérée au lieu de la laisser croire choisie', () => {
-    const html = render(
+    const suggested = render(
       DestinationStep,
       fullDraft({
         calendar: { startDate: '2026-07-11', durationDays: 3, durationIsSuggested: true, returnDate: null },
       }),
     );
-    expect(html).toContain('durée suggérée');
+    // Un badge de qualification est bien affiche...
+    expect(suggested).toContain('badge--suggestion');
+    // ...et la duree suggeree porte le marqueur A_VERIFIER au lieu d un nombre.
+    expect(suggested).toContain('data-unknown="true"');
+    expect(visible(suggested)).not.toMatch(/\d+\s*jours?/);
+
+    // Reciproquement, une duree confirmee ne porte plus de badge : le bruit disparait.
+    const confirmed = render(
+      DestinationStep,
+      fullDraft({
+        calendar: { startDate: '2026-07-11', durationDays: 3, durationIsSuggested: false, returnDate: '2026-07-13' },
+      }),
+    );
+    expect(confirmed).not.toContain('badge--suggestion');
+  });
+
+  it('DEST-04b: une proposition ne porte pas la couleur d un avertissement', () => {
+    // Mesure : « Durée à préciser · modifiable » sortait en ambre, la couleur
+    // que toute l application reserve aux alertes. Rien n est en jeu ici : une
+    // duree suggeree est une aide, pas un danger. Lereuse d ambre apprend a la
+    // personne d ignorer la couleur, et la prochaine vraie alerte ne se lit
+    // plus. Le badge reste, il devient neutre.
+    const suggested = render(
+      DestinationStep,
+      fullDraft({
+        calendar: { startDate: '2026-07-11', durationDays: 3, durationIsSuggested: true, returnDate: null },
+      }),
+    );
+    expect(suggested).toContain('badge--suggestion');
+    expect(suggested).not.toContain('badge amber');
   });
 
   it('DEST-05: signale une date de départ manquante', () => {

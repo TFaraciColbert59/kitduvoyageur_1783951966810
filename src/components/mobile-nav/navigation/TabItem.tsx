@@ -183,7 +183,7 @@ const TabItem = memo(function TabItem({
         touchAction: 'manipulation',
         WebkitTapHighlightColor: 'transparent',
         flex: '1 1 0',
-        minWidth: 44,
+        minWidth: 0,
         maxWidth: optical ? 64 : 76,
         height: 'var(--nav-height)',
       }}
@@ -225,8 +225,12 @@ const TabItem = memo(function TabItem({
       </motion.span>
       {!optical ? (
         <span
-          className="relative z-[1] max-w-full truncate px-0.5 text-[10px] font-semibold leading-none"
-          style={{ color: isActive ? 'var(--glass-label)' : 'var(--glass-label-tertiary)' }}
+          className="relative z-[1] text-[10px] font-semibold leading-none"
+          style={{
+            whiteSpace: 'nowrap',
+            letterSpacing: '-0.01em',
+            color: isActive ? 'var(--glass-label)' : 'var(--glass-label-tertiary)',
+          }}
         >
           {destination.label.fr}
         </span>
@@ -237,3 +241,4 @@ const TabItem = memo(function TabItem({
 });
 
 export default TabItem;
+

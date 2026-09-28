@@ -215,15 +215,15 @@ describe('D3 — la surface des feuilles est opaque', () => {
   });
 
 
-  it("le fond est OPAQUE et lisible : un token sombre dedie, pas un melange", () => {
+  it("le fond vient d'un token sombre dedie, pas d'un melange", () => {
     // Mesure : la feuille composait son fond avec
     // `color-mix(--lkv-surface-elevated 86%, --lkv-text-primary)`. Or ces deux
     // variables n'ont PAS la meme polarite dans le preparateur : il force un
     // texte blanc (polarite claire) dans un theme `light` dont la surface
     // elevee est blanche. Melange blanc + blanc = blanc pur, et le texte blanc
     // disparaissait (contraste 1:1, mesure via CDP). Le fond doit venir d'un
-    // token OPAQUE et SOMBRE dedie (--prep-sheet-bg), pas d'un melange de deux
-    // tokens de polarite opposee.
+    // token SOMBRE dedie (--prep-sheet-bg), pas d'un melange de deux tokens de
+    // polarite opposee. Son alpha est regle par D7.
     const bg = declarations(sheet?.body ?? '').get('background-color') ?? '';
     expect(bg).toBe('var(--prep-sheet-bg)');
     const tokens = css;
@@ -242,6 +242,51 @@ describe('D3 — la surface des feuilles est opaque', () => {
     // inatteignable.
     const d = declarations(sheet?.body ?? '');
     expect(d.get('overflow') ?? '').not.toBe('hidden');
+  });
+});
+
+describe('D7 - le verre du tiroir est reel, pas annonce', () => {
+  const sheet = rules().find((r) => r.selector.includes(':has(') && r.selector.includes('.lkv-sheet-up'));
+
+  /** Alpha d'un hex 8 caracteres, ou null si le token n'en porte pas. */
+  function alphaOf(token: string): number | null {
+    const m = /^#[0-9a-f]{6}([0-9a-f]{2})$/i.exec(token.trim());
+    return m ? parseInt(m[1], 16) / 255 : null;
+  }
+
+  function sheetToken(): string {
+    return /--prep-sheet-bg:\s*(#[0-9a-fA-F]{3,8});/.exec(css)?.[1] ?? '';
+  }
+
+  it('le fond du tiroir laisse passer la page', () => {
+    // Mesure au navigateur, tiroir "Ou tu pars" ouvert sur /prepare : la
+    // feuille portait `backdrop-filter: blur(14px) saturate(1.8)` mais
+    // `--prep-sheet-bg` valait `#1c202b`, opaque a 100 %. Un flou pose derriere
+    // un aplat opaque ne montre rien : le tiroir s'affichait en dalle sombre
+    // alors que la demande "liquid glass" portait deja sur lui. Le token
+    // reste UN SEUL hex sombre - le melange de deux tokens de polarite
+    // opposee reste interdit, cf. D3 - mais il porte enfin un alpha.
+    const alpha = alphaOf(sheetToken());
+    expect(alpha).not.toBeNull();
+    expect(alpha as number).toBeLessThan(1);
+  });
+
+  it('le verre reste assez dense pour garder le texte lisible', () => {
+    // Le point de non-retour mesure par le passage precedent : sous ~0.55 le
+    // titre d'etape traversait la feuille. La plage verrouille les deux
+    // contraintes - translucide ET lisible - pour qu'une future retouche ne
+    // puisse pas traded l'une contre l'autre.
+    const alpha = alphaOf(sheetToken());
+    expect(alpha).not.toBeNull();
+    expect(alpha as number).toBeGreaterThanOrEqual(0.62);
+    expect(alpha as number).toBeLessThanOrEqual(0.86);
+  });
+
+  it('le flou ET la saturation restent poses : le verre ne suffit pas au fond', () => {
+    const d = declarations(sheet?.body ?? '');
+    const filter = d.get('backdrop-filter') ?? d.get('-webkit-backdrop-filter') ?? '';
+    expect(filter).toMatch(/blur\(/);
+    expect(filter).toMatch(/saturate\(/);
   });
 });
 
@@ -288,6 +333,64 @@ describe('D6 — perimetre et commandes ne se percutent plus', () => {
     const d = declarations(pill?.body ?? '');
     expect(d.get('overflow')).toBe('hidden');
     expect(d.get('white-space')).toBe('nowrap');
+  });
+});
+
+describe('D8 — aucun texte du preparateur ne repose sur un aplat clair', () => {
+  // Defaut REPRODUIT au navigateur en 393x852 : le message « Aucune activite du
+  // catalogue ne repond a cette description » sortait en rgba(255,255,255,.71)
+  // sur un fond srgb(.939,.957,.950), soit #F0F4F2. Contraste ≈ 1,2:1 :
+  // invisible. Cause : `.prep-note` melangeait --lkv-action a --prep-mix-light,
+  // et --prep-mix-light vaut #fff.
+  it('D8-01: .prep-note ne melange plus sa couleur a un blanc', () => {
+    const found = rule('.prep-note');
+    expect(found).toBeDefined();
+    const decl = declarations(found!.body);
+    expect(decl.get('background-color') ?? '').not.toContain('--prep-mix-light');
+  });
+
+  it('D8-02: .prep-note pose son fond sur le meme verre que les autres', () => {
+    const found = lastRule('.prep-note');
+    expect(found).toBeDefined();
+    const decl = declarations(found!.body);
+    expect(decl.get('background-color')).toBe('var(--prep-glass-bg)');
+  });
+
+  it('D8-03: le texte y reste lisible sur la photo', () => {
+    const found = lastRule('.prep-note');
+    expect(declarations(found!.body).get('color')).toBe('var(--glass-label)');
+  });
+});
+
+describe('D10 — l etat inactif et les bords de rail se lisent', () => {
+  // Mesure au navigateur en 393x852, sur /prepare?nouvelle=1 : le CTA
+  // « Continuer », inactif faute de selection, sortait en
+  // `color: rgb(16,16,16)` sur `background: rgba(245,245,247,0.92)` avec
+  // `opacity: 0.45` — le bouton clair de l'app, pose tel quel sur le verre
+  // sombre du preparateur. Le texte disparaitait dans un aplat grisatre.
+  it('D10-01: le CTA inactif garde une encre lisible', () => {
+    const found = rule('.prep-footer__primary:disabled');
+    expect(found).toBeDefined();
+    const decl = declarations(found!.body);
+    expect(decl.get('opacity')).toBe('1');
+    expect(decl.get('color')).toBe('var(--lkv-text-subtle)');
+  });
+
+  it('D10-02: le CTA inactif ne repose pas sur le bouton clair de l app', () => {
+    const found = rule('.prep-footer__primary:disabled');
+    expect(declarations(found!.body).get('background-color') ?? '').not.toContain('#fff');
+    expect(declarations(found!.body).get('background-color') ?? '').toContain('--prep-glass-bg');
+  });
+
+  // Mesure sur la meme page : la derniere puce du rail de familles etait coupee
+  // net au bord droit, sans gout de fin — « Neige » se lisait « Neig ». La
+  // note D5 avait ecarte le masque parce qu'il degrade ombres et anneaux de
+  // focus ; on le limite donc a l'arete droite, la ou il n'y a pas d'ombre
+  // portee a preserver.
+  it('D10-03: le rail de familles se fond au bord droit', () => {
+    const found = rule('.prep-cats');
+    const mask = declarations(found!.body).get('mask-image') ?? '';
+    expect(mask).toContain('linear-gradient');
   });
 });
 

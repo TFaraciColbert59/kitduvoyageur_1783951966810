@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { emptyDraft } from '../engine/emptyDraft';
+import { insertWaypoint, type MapCoord } from '../engine/dayNavigation';
 import { buildItinerary, type StepDraft } from '../engine/itinerary';
 import {
   failGeneration,
@@ -11,12 +12,15 @@ import {
   interruptGeneration,
   markPhaseDone,
   resumeGeneration,
+  setGenerationFailure,
   setGenerationNotice,
   setPartial,
   startGeneration,
 } from '../engine/generation';
 import { PREP_DRAFT_VERSION } from '../engine/emptyDraft';
 import { draftActions } from './reducer';
+import type { PhaseRetry } from '../engine/itineraryPhases';
+import type { AIFailureReason } from '@/lib/ai/providers/types';
 import type {
   ActivitySelection,
   AdventurePrepDraft,
@@ -44,6 +48,8 @@ export interface AdventurePrepActions {
   startNewAdventure: () => void;
   setActivities: (value: ActivitySelection) => void;
   setRoute: (value: RouteBlock) => void;
+  /** Invite libre de l'etape 1 : ce que l'utilisateur veut, en toutes lettres. */
+  setBrief: (value: string | null) => void;
   setCalendar: (value: CalendarBlock) => void;
   setGroup: (value: GroupBlock) => void;
   setPreferences: (value: PreferencesBlock) => void;
@@ -60,13 +66,38 @@ export interface AdventurePrepActions {
   failGenerationRun: (message: string) => void;
   endGeneration: () => void;
   /**
+   * Re-arme UNE phase de generation, et une seule.
+   *
+   * Refuse toute phase qui n est pas celle que l etat designe comme tombee,
+   * et ne coche rien : elle rend la phase « en attente », pas « reussie ».
+   */
+  retryPhase: (id: GenerationPhaseId) => void;
+  /**
+   * Depose le resultat reel d une reprise. Succes : phase cochee + modele depose.
+   * Echec : rien de coche, parcours d origine conserve, raison ecrite dans
+   * generation.error pour que le bandeau puisse la nommer.
+   */
+  applyPhaseRetry: (retry: PhaseRetry) => void;
+  /**
    * Depose le parcours reellement produit, quel que soit le moteur qui l'a
    * construit, et la phrase qui dit si l'enrichissement a eu lieu. Les regles
    * et l'IA passent donc par le meme point d'entree : l'ecran ne connait pas le
    * moteur, il affiche ce qu'il a recu.
    */
-  applyGenerated: (itinerary: ItineraryModel, notice: string | null) => void;
+  applyGenerated: (
+    itinerary: ItineraryModel,
+    notice: string | null,
+    failure: AIFailureReason | null,
+  ) => void;
   addStepToDay: (day: number, kind: ItineraryStepKind, step: StepDraft) => void;
+  /**
+   * Pose un point de passage a la position indiquee sur la carte.
+   *
+   * Passe par `insertWaypoint` et non par `applyGenerated` : un point pose par
+   * l'utilisateur n est pas une production de l IA, et la notice qui dit ce que
+   * l IA a propose doit survivre a cette edition.
+   */
+  addWaypoint: (coord: MapCoord, day: number) => void;
   keepStep: (stepId: string, kept: boolean) => void;
   linkMeal: (stepId: string, slot: MealSlot | null) => void;
   dropStep: (stepId: string) => void;
@@ -96,6 +127,7 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
           set({ adventureId: newAdventureId(), draft: { ...emptyDraft(), version: PREP_DRAFT_VERSION } }),
         setActivities: (value) => patch((draft) => draftActions.setActivities(draft, value)),
         setRoute: (value) => patch((draft) => draftActions.setRoute(draft, value)),
+        setBrief: (value) => patch((draft) => draftActions.setBrief(draft, value)),
         setCalendar: (value) => patch((draft) => draftActions.setCalendar(draft, value)),
         setGroup: (value) => patch((draft) => draftActions.setGroup(draft, value)),
         setPreferences: (value) => patch((draft) => draftActions.setPreferences(draft, value)),
@@ -138,16 +170,28 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
               ? draftActions.setItinerary(withGeneration, itinerary)
               : withGeneration;
           }),
-        applyGenerated: (itinerary, notice) =>
+        retryPhase: (id) => patch((draft) => draftActions.retryPhase(draft, id)),
+        applyPhaseRetry: (retry) =>
+          patch((draft) => draftActions.applyPhaseRetry(draft, retry)),
+        applyGenerated: (itinerary, notice, failure) =>
           patch((draft) => {
-            const finished = draftActions.setGeneration(
-              draft,
+            const finished = setGenerationFailure(
               setGenerationNotice(finishGeneration(draft.generation), notice),
+              failure,
             );
-            return draftActions.setItinerary(finished, itinerary);
+            return draftActions.setItinerary(draftActions.setGeneration(draft, finished), itinerary);
           }),
         addStepToDay: (day, kind, step) =>
           patch((draft) => draftActions.addItineraryStep(draft, day, kind, step)),
+        addWaypoint: (coord, day) =>
+          patch((draft) =>
+            draft.itinerary
+              ? draftActions.updateItinerary(
+                  draft,
+                  insertWaypoint(draft.itinerary, coord, day),
+                )
+              : draft,
+          ),
         keepStep: (stepId, kept) =>
           patch((draft) => draftActions.setItineraryKept(draft, stepId, kept)),
         linkMeal: (stepId, slot) =>

@@ -88,17 +88,16 @@ describe('S11 — le bon ecran pour la bonne aventure', () => {
 });
 
 describe('S11 — les questions posees', () => {
-  it('S11-07: le trajet pose depart, arrivee, boucle et duree', () => {
+  it('S11-07: le trajet pose depart, arrivee et duree, sans demander la forme', () => {
     const profile = stepOneProfile('trajet');
     expect(profile.rows.map((row) => row.label)).toEqual(['Départ', 'Arrivée']);
-    expect(profile.showRouteShape).toBe(true);
     expect(profile.cells.map((cell) => cell.label)).toEqual(['Date', 'Temps disponible']);
+    expect('showRouteShape' in profile).toBe(false);
   });
 
-  it('S11-08: le voyage pose une destination et un retour, jamais une boucle', () => {
+  it('S11-08: le voyage pose une destination et un retour', () => {
     const profile = stepOneProfile('voyage');
     expect(profile.rows.map((row) => row.label)).toEqual(['Départ', 'Destination']);
-    expect(profile.showRouteShape).toBe(false);
     expect(profile.cells.map((cell) => cell.label)).toEqual(['Départ', 'Retour ou durée']);
   });
 
@@ -137,12 +136,15 @@ describe('S11 — ce qui manque, sans question inutile', () => {
     expect(canCreateStepOne(draft, 'local')).toBe(true);
   });
 
-  it('S11-13: une boucle n exige pas d arrivee distincte sur un trajet', () => {
+  it('S11-13: l arrivee est signalee mais n exige pas d arrivee distincte', () => {
     const draft = fullDraft({
       activities: RANDO,
       route: { origin: CHAMONIX, destination: null, shape: 'boucle' },
     });
-    expect(stepOneMissingSummary(draft, 'trajet')).toBeNull();
+    // Elle est nommee pour que l utilisateur sache ce que l IA choisira, mais
+    // elle ne bloque jamais : le parcours devient une boucle.
+    expect(stepOneMissingSummary(draft, 'trajet')).toBe('Il manque : lieu d’arrivée');
+    expect(canCreateStepOne(draft, 'trajet')).toBe(true);
   });
 
   it('S11-14: le voyage regroupe les deux dates sous un seul libelle', () => {
@@ -182,14 +184,16 @@ describe('S11 — ce qui manque, sans question inutile', () => {
 });
 
 describe('S11 — rendu des ecrans 10, 11, 12 et 13', () => {
-  it('S11-18: ecran 10 — l aide et la bascule de forme sont la', () => {
-    const text = visible(render(fullDraft({ activities: RANDO })));
-    expect(text).toContain('Boucle');
-    expect(text).toContain('Aller simple');
+  it('S11-18: ecran 10 — l invite IA puis l appel, sans bascule de forme', () => {
+    const html = render(fullDraft({ activities: RANDO }));
+    const text = visible(html);
     expect(text).toContain('Créer mon parcours');
+    expect(text).not.toContain('Boucle');
+    expect(text).not.toContain('Aller simple');
+    expect(html).toContain('Qu’est-ce que tu as en tête ?');
   });
 
-  it('S11-19: ecran 11 — un voyage ne propose ni boucle ni arrivee, mais une destination', () => {
+  it('S11-19: ecran 11 — un voyage propose une destination, sans choisir de forme', () => {
     const draft = fullDraft({
       activities: ROADTRIP,
       route: { origin: CHAMONIX, destination: ARGENTIERE, shape: 'aller_simple' },
@@ -198,7 +202,8 @@ describe('S11 — rendu des ecrans 10, 11, 12 et 13', () => {
     expect(text).toContain('Destination');
     expect(text).toContain('Retour ou durée');
     expect(text).not.toContain('Aller simple');
-    expect(text).not.toContain('Inverser départ et arrivée');
+    // Tant que l'IA n'a rien fige, le sens du trajet reste inversable.
+    expect(text).toContain('Inverser départ et arrivée');
   });
 
   it('S11-20: ecran 12 — un sejour ne demande qu un lieu de base', () => {
@@ -232,20 +237,19 @@ describe('S11 — rendu des ecrans 10, 11, 12 et 13', () => {
       expect(text).not.toMatch(/\d+\s*%/);
     }
   });
-  it('S11-26: un CTA bloque garde son libelle et se desactive', () => {
-    // Un libelle « Completer la destination » alors qu'il manque le depart et
-    // la date designait le mauvais champ. Le bouton garde donc son libelle, la
-    // ligne « Il manque : ... » juste au-dessus explique quoi corriger.
-    const partial = {
-      ...fullDraft({ activities: RANDO }),
-      route: { ...fullDraft({ activities: RANDO }).route, destination: null },
-    };
+  it('S11-26: une arrivee manquante ne bloque pas — l’IA choisit la boucle', () => {
+    // L'arrivee est une aide, pas une condition : sans elle le parcours reboucle
+    // depuis le depart. Le CTA reste actif et la ligne « Il manque » signale
+    // seulement ce que l'IA tranchera toute seule.
+    const base = fullDraft({ activities: RANDO });
+    const partial = { ...base, route: { ...base.route, destination: null } };
     const text = visible(render(partial));
     expect(stepOneProfileIdFor(RANDO)).toBe('trajet');
-    expect(canCreateStepOne(partial, 'trajet')).toBe(false);
+    expect(canCreateStepOne(partial, 'trajet')).toBe(true);
     expect(text).toContain('Créer mon parcours');
     expect(text).not.toContain('Compléter');
     expect(text).toContain('Il manque');
+    expect(text).toContain('lieu d’arrivée');
   });
   it('S11-27: l ecran local ne parle jamais de depart', () => {
     // L'ecran 13 affiche « Lieu de pratique » et dit « Pas de trajet » :

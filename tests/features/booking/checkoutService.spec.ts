@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { CartContext } from '@/features/cart/server/cartService';
 import { startCheckout } from '@/features/booking/server/checkoutService';
+import { BookingProviderError } from '@/features/booking/server/bookingProviderErrors';
 import type { BookingCandidate } from '@/features/booking/server/bookingProviderTypes';
 import type { BookingStore } from '@/features/booking/server/bookingPersistence';
 
@@ -154,7 +155,57 @@ describe('startCheckout — orchestration', () => {
     expect(inserted[0].metadata).toMatchObject({ checkout_channel: 'external' });
   });
 
-  it("un candidat sans devise connue n'invente pas EUR", async () => {
+  it("un candidat sans devise connue n'invente pas EUR : rien n'est ecrit", async () => {
+    const { store, inserted } = fakeStore();
+    const addCartLine = vi.fn().mockResolvedValue({ created: true, deduplicated: false });
+    const checkoutUrl = vi.fn().mockResolvedValue({ mode: 'deeplink', url: null, bookingId: null });
+
+    await expect(
+      startCheckout(
+        {
+          store,
+          cart: CART,
+          userId: USER_ID,
+          tripId: TRIP_ID,
+          candidate: { ...candidate, currency: null },
+          checkoutUrl,
+        },
+        { addCartLine }
+      )
+    ).rejects.toBeInstanceOf(BookingProviderError);
+
+    // Aucune trace : pas de devise forcee en base, pas de ligne orpheline.
+    expect(inserted).toHaveLength(0);
+    expect(addCartLine).not.toHaveBeenCalled();
+    expect(checkoutUrl).not.toHaveBeenCalled();
+  });
+
+  it("un candidat sans montant connu n'ecrit pas 0 EUR : rien n'est ecrit", async () => {
+    const { store, inserted } = fakeStore();
+    const addCartLine = vi.fn().mockResolvedValue({ created: true, deduplicated: false });
+    const checkoutUrl = vi.fn().mockResolvedValue({ mode: 'deeplink', url: null, bookingId: null });
+
+    await expect(
+      startCheckout(
+        {
+          store,
+          cart: CART,
+          userId: USER_ID,
+          tripId: TRIP_ID,
+          candidate: { ...candidate, amount: null },
+          checkoutUrl,
+        },
+        { addCartLine }
+      )
+    ).rejects.toBeInstanceOf(BookingProviderError);
+
+    // Un 0 EUR ecrit serait indiscernable d'un vrai article gratuit.
+    expect(inserted).toHaveLength(0);
+    expect(addCartLine).not.toHaveBeenCalled();
+    expect(checkoutUrl).not.toHaveBeenCalled();
+  });
+
+  it('conserve la devise reelle quand elle est connue', async () => {
     const { store, inserted } = fakeStore();
     const addCartLine = vi.fn().mockResolvedValue({ created: true, deduplicated: false });
 
@@ -164,14 +215,14 @@ describe('startCheckout — orchestration', () => {
         cart: CART,
         userId: USER_ID,
         tripId: TRIP_ID,
-        candidate: { ...candidate, currency: null },
+        candidate: { ...candidate, currency: 'JPY' },
         checkoutUrl: async () => ({ mode: 'deeplink', url: null, bookingId: null }),
       },
       { addCartLine }
     );
 
-    expect(inserted[0].currency).toBe('EUR');
-    expect(inserted[0].metadata).toMatchObject({ currency_unknown: true });
+    expect(inserted[0].currency).toBe('JPY');
+    expect(inserted[0].metadata).not.toHaveProperty('currency_unknown');
   });
 
   it("l'echec du panier remonte apres avoir trace la reservation", async () => {

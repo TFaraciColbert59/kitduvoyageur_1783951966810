@@ -338,6 +338,38 @@ describe('Contexte — les enfants n’ont qu’une seule source de vérité', (
 function sansCommentaires(source: string): string {
   return source.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^[ \t]*\/\/.*$/gm, ' ');
 }
+
+/* ------------------------------------------------------------------ */
+/* Le bandeau ne doit pas inventer une cause                           */
+/* ------------------------------------------------------------------ */
+
+describe('le bandeau nomme la vraie cause — OFF-30 a OFF-32', () => {
+  it('OFF-30: un delai ne se presente pas comme un assistant desactive', () => {
+    const state = offlineReadiness({
+      model: model(),
+      online: true,
+      aiEnabled: false,
+      aiFailure: 'delai_depasse',
+    });
+    expect(state.unavailable[0]?.reason).toContain('temps');
+    expect(state.unavailable[0]?.reason).not.toContain('pas activ');
+  });
+
+  it('OFF-31: un quota ne se presente pas comme une panne du service', () => {
+    const state = offlineReadiness({
+      model: model(),
+      online: true,
+      aiEnabled: false,
+      aiFailure: 'quota_epuise',
+    });
+    expect(state.unavailable[0]?.reason).toContain('quotas');
+  });
+
+  it('OFF-32: sans cause connue, le bandeau ne pretend rien de plus', () => {
+    const state = offlineReadiness({ model: model(), online: true, aiEnabled: false });
+    expect(state.unavailable[0]?.reason).toContain('pas activ');
+  });
+});
 describe('Règles de code des fichiers', () => {
   it('OFF-21: aucun hex dans le moteur', () => {
     expect(ENGINE_SOURCE).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);

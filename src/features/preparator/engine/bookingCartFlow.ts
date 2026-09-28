@@ -22,11 +22,25 @@ export interface BookingCreatePayload {
   vertical: BookingVertical;
   provider: Exclude<BookingCandidate['provider'], 'unavailable'>;
   external_ref: string;
+  /**
+   * Volontairement `number` et non `number | null` : le schema
+   * `bookings.amount_eur numeric(12,2) NOT NULL DEFAULT 0` ne sait pas porter
+   * « inconnu ». Ecrire 0 pour un prix non connu produirait une ligne
+   * indiscernable d'un vrai article gratuit. Un prix inconnu est donc refuse,
+   * jamais converti en 0.
+   */
   amount_eur: number;
+  /**
+   * Idem : `bookings.currency text NOT NULL DEFAULT 'EUR'` avec
+   * `CHECK (currency ~ '^[A-Z]{3}$')`. Forcer EUR transformerait un prix en yens
+   * en prix en euros, sans aucune conversion. Une devise non confirmee est
+   * refusee.
+   */
   currency: string;
   status: 'pending';
   checkout_mode: 'deeplink' | 'acp';
-  metadata: Record<string, string | number | boolean>;
+  /** Les valeurs inconnues restent `null` : aucune chaine vide n'est fabriquee. */
+  metadata: Record<string, string | number | boolean | null>;
 }
 
 export interface BookingCartMetadata {
@@ -52,6 +66,8 @@ export interface AddOfferToTripCartResult {
 
 export class BookingCartFlowError extends Error {
   readonly code:
+    | 'booking_amount_unknown'
+    | 'booking_currency_unknown'
     | 'booking_create_failed'
     | 'booking_create_invalid'
     | 'bookings_lookup_failed'
@@ -71,6 +87,8 @@ export class BookingCartFlowError extends Error {
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+const MAX_AMOUNT_EUR = 10_000_000;
+
 function safeExternalUrl(value: string | null): string | null {
   if (!value) return null;
   try {
@@ -81,13 +99,19 @@ function safeExternalUrl(value: string | null): string | null {
   }
 }
 
-function boundedAmount(value: number | null): number {
-  if (value == null || !Number.isFinite(value) || value <= 0) return 0;
-  return Math.round(Math.min(value, 10_000_000) * 100) / 100;
+/**
+ * Montant strictement positif et fini, arrondi, ou `null` si le prix n'est pas
+ * connu. `0`, les negatifs, `NaN` et l'infini sont traites comme inconnus :
+ * aucun d'eux ne peut honnêtement designer un prix.
+ */
+function strictAmount(value: number | null): number | null {
+  if (value == null || !Number.isFinite(value) || value <= 0) return null;
+  return Math.round(Math.min(value, MAX_AMOUNT_EUR) * 100) / 100;
 }
 
-function normalizedCurrency(value: string | null): string {
-  return value && /^[A-Z]{3}$/.test(value) ? value : 'EUR';
+/** Code ISO 4217 a 3 majuscules, ou `null`. Jamais de repli sur 'EUR'. */
+function strictCurrency(value: string | null): string | null {
+  return value && /^[A-Z]{3}$/.test(value) ? value : null;
 }
 
 function referenceFragment(offer: BookingCandidate): string {
@@ -101,25 +125,50 @@ export function buildBookingExternalRef(tripId: string, offer: BookingCandidate)
   return `trip:${tripId}:${offer.provider}:${referenceFragment(offer)}`.slice(0, 255);
 }
 
+/**
+ * Construit le corps de création d'une réservation.
+ *
+ * Leve `booking_amount_unknown` / `booking_currency_unknown` plutôt que de produire
+ * un `amount_eur` a 0 ou une devise forcee : le schema ne peut pasporter « inconnu »
+ * et un 0 EUR persister est une donnee fausse, pas une donnee absente.
+ */
 export function buildBookingCreatePayload(
   tripId: string,
   offer: BookingCandidate
 ): BookingCreatePayload {
+  const amountEur = strictAmount(offer.amount);
+  if (amountEur === null) {
+    throw new BookingCartFlowError(
+      'booking_amount_unknown',
+      'Le prix de cette offre n’est pas connu : impossible d’enregistrer la réservation sans inventer un montant.',
+      { cause: { candidateId: offer.id, provider: offer.provider, amount: offer.amount } }
+    );
+  }
+
+  const currency = strictCurrency(offer.currency);
+  if (currency === null) {
+    throw new BookingCartFlowError(
+      'booking_currency_unknown',
+      'La devise de cette offre n’est pas confirmée : impossible d’enregistrer la réservation en inventant une devise.',
+      { cause: { candidateId: offer.id, provider: offer.provider, currency: offer.currency } }
+    );
+  }
+
   const deeplink = safeExternalUrl(offer.deeplink);
   return {
     vertical: offer.vertical,
     provider: offer.provider,
     external_ref: buildBookingExternalRef(tripId, offer),
-    amount_eur: boundedAmount(offer.amount),
-    currency: normalizedCurrency(offer.currency),
+    amount_eur: amountEur,
+    currency,
     status: 'pending',
     checkout_mode: offer.bookingKind === 'acp' ? 'acp' : 'deeplink',
     metadata: {
       title: offer.title,
-      description: offer.description ?? '',
+      description: offer.description,
       bookingKind: offer.bookingKind,
       requiresRevalidation: offer.requiresRevalidation,
-      providerReference: offer.providerReference ?? '',
+      providerReference: offer.providerReference,
       candidateId: offer.id,
       ...(deeplink ? { deeplink } : {}),
     },
@@ -167,8 +216,9 @@ function bookingIdFrom(payload: Record<string, unknown>): string | null {
 
 /**
  * Ajoute un candidat au panier du voyage :
- *  1. crée (ou retrouve) une réservation `pending` côté serveur ;
- *  2. passe son UUID au panier, qui résout seul le prix depuis `bookings`.
+ *  1. refuse le candidat si son prix ou sa devise sont inconnus (avant tout appel) ;
+ *  2. crée (ou retrouve) une réservation `pending` côté serveur ;
+ *  3. passe son UUID au panier, qui résout seul le prix depuis `bookings`.
  */
 export async function addOfferToTripCart(
   input: AddOfferToTripCartInput
@@ -243,6 +293,3 @@ export async function addOfferToTripCart(
     deduplicated: cartBody.deduplicated === true,
   };
 }
-
-
-

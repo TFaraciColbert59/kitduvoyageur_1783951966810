@@ -8,7 +8,12 @@ import { fetchItineraryProposal } from '@/app/prepare/actions';
 import { activityById } from '../catalog';
 import { metricsFor } from '../engine/metrics';
 import { daySteps, knownGaps } from '../engine/itinerary';
+import type { DayWeather } from '../engine/weather';
+import { weatherParts } from '../engine/weather';
 import { runItineraryGeneration } from '../engine/itineraryPhases';
+import { browserMeasurementRunners } from '../browserMeasurements';
+import { loadPlaceInventoryFor, resolvePlacesFor } from '../placeSource';
+import { shouldLaunchGeneration } from '../engine/stepTransition';
 import { minutesLabel } from '../engine/labels';
 import { A_VERIFIER, moneyLabel, stateLabel } from '../engine/trust';
 import { usePrepDayFocusPublisher } from '../hooks/usePrepDayFocusPublisher';
@@ -137,6 +142,13 @@ function dayRouteCoords(steps: readonly ItineraryStepModel[]): Array<[number, nu
 }
 
 /** Programme de l'ensemble : jour, puis ordre dans la journee. */
+/**
+ * La meteo d'un jour, ecrite telle qu'elle a ete mesuree.
+ *
+ * Un libelle manquant ne devient jamais un nombre : sans temperature, on rend
+ * le libelle SEUL. Ecrire « 0 ° » ou reuse la valeur d'un autre jour produirait
+ * une meteo fausse mais bien formatee, ce qui est le piege le plus tentant.
+ */
 function allSteps(model: ItineraryModel): ItineraryStepModel[] {
   return [...model.steps].sort((a, b) => a.day - b.day || a.order - b.order);
 }
@@ -330,9 +342,14 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
   // Au demontage, l'appel reseau en cours est coupe : aucune ecriture d'etat
   // n'arrive apres la disparition de l'ecran et le store n'est pas laisse
   // bloque en « en cours ».
+  // Au demontage, l'appel reseau en cours est coupe ET la reference est
+  // liberee : les deux vont ensemble. Sans la liberation, un remontage verrait
+  // un controleur encore present, croirait qu une generation lui survit, et
+  // refuserait de lancer celle qui manque.
   useEffect(
     () => () => {
       runAbort.current?.abort();
+      runAbort.current = null;
     },
     [],
   );
@@ -356,23 +373,50 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
     if (mode === 'start') store.startGenerationRun();
     else store.continueGeneration();
 
-    const outcome = await runItineraryGeneration(
-      store.draft,
-      controller.signal,
-      (draftToBuild) => fetchItineraryProposal(draftToBuild),
-      (phase) => useAdventurePrepStore.getState().markPhase(phase),
-    );
-    if (controller.signal.aborted) return;
+    try {
+      const outcome = await runItineraryGeneration(
+        store.draft,
+        controller.signal,
+        (draftToBuild, _signal, availablePlaces) =>
+          fetchItineraryProposal(draftToBuild, availablePlaces),
+        (phase) => useAdventurePrepStore.getState().markPhase(phase),
+        browserMeasurementRunners(),
+        {},
+        resolvePlacesFor(),
+        loadPlaceInventoryFor(),
+      );
+      // Un run coupe n ecrit rien : l ecran a disparu ou un autre run l a remplace.
+      if (controller.signal.aborted) return;
 
-    const next = useAdventurePrepStore.getState();
-    if (!outcome.model) {
-      setBlocked(true);
-      next.failGenerationRun(BLOCKED_MESSAGE);
-      return;
-    }
-    next.applyGenerated(outcome.model, outcome.message);
-    next.completeStep('itinerary');
-  }, []);
+      const next = useAdventurePrepStore.getState();
+      if (!outcome.model) {
+        setBlocked(true);
+        next.failGenerationRun(BLOCKED_MESSAGE);
+        return;
+      }
+      next.applyGenerated(outcome.model, outcome.message, outcome.failure);
+      next.completeStep('itinerary');
+    } finally {
+      // La reference est liberee dans TOUS les cas : un ecran qui remonte
+      // apres un run termine ne doit pas se croire encore vivant, sinon il
+      // refuserait de relancer une generation orpheline.
+      if (runAbort.current === controller) runAbort.current = null;
+    }  }, []);
+
+  /**
+   * L'ecran 1 ne construit rien : il passe la main. La generation demarre
+   * donc ici, une fois, et seulement s'il reste quelque chose a construire — la
+   * decision elle-meme est pure et vit dans le moteur.
+   *
+   * Le statut passe a « en cours » avant le premier await : un second montage
+   * (React StrictMode, remontee apres une fermeture) relit l'etat et ne relance
+   * rien. Aucun temoin local n'est necessaire, donc rien ne peut desynchroniser
+   * l'ecran du store.
+   */
+  useEffect(() => {
+    if (!shouldLaunchGeneration(useAdventurePrepStore.getState().draft, { live: runAbort.current !== null })) return;
+    void startRun('start');
+  }, [startRun]);
 
   const stopRun = useCallback(() => {
     runAbort.current?.abort();
@@ -513,13 +557,41 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
               </div>
             )}
 
+            {/* Le programme EST la liste visible des etapes. Une version parallele
+                « pour les tests » qui n'afficherait rien a l'ecran ne prouverait
+                rien et cacherait le parcours a l'utilisateur. */}
             <div className="prep-programme">
               <div className="prep-programme__list">
-                <div style={{ fontWeight: 700, fontSize: 'var(--f-body)', color: 'var(--lkv-text-primary)', marginBottom: 8 }}>
-                  {activeDay === null ? 'Jour 1' : `Jour ${activeDay}`}
-                </div>
-                {program.map((item) => (
-                  <div key={item.id} style={{ display: 'none' }}>{item.title}</div>
+                {(activeDay === null
+                  ? Array.from({ length: model.days }, (_, index) => index + 1)
+                  : [activeDay]
+                ).map((day) => (
+                  <section key={day} className="prep-programme__day">
+                    <header className="prep-programme__dayhead">
+                      <span className="prep-programme__daylabel">Jour {day}</span>
+                      <span className="prep-programme__weather">
+                        {(() => {
+                          const parts = weatherParts(model.weather[day - 1] ?? null);
+                          return (
+                            <>
+                              <span className="prep-programme__sky">{parts.condition}</span>
+                              {parts.measures ? (
+                                <span className="prep-programme__measures">{parts.measures}</span>
+                              ) : null}
+                            </>
+                          );
+                        })()}
+                      </span>
+                    </header>
+                    <ul className="prep-programme__steps">
+                      {daySteps(model, day).map((item) => (
+                        <li key={item.id} className="prep-programme__step">
+                          <Icon name={STEP_ICONS[item.kind]} size={16} aria-hidden="true" />
+                          <span className="prep-programme__steptitle">{item.title}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
                 ))}
               </div>
             </div>
@@ -555,7 +627,14 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
           points={points}
           scopeLabel={activeDay === null ? 'Ensemble' : `Jour ${activeDay}`}
           filterCategories={MAP_CATEGORIES}
+          onLongPress={(lat, lon) =>
+            useAdventurePrepStore.getState().addWaypoint({ lat, lon }, activeDay ?? 1)
+          }
         />
+        <p className="prep-maphint">
+          Maintiens appuyé sur la carte pour poser un point de passage : le trajet
+          et les distances se recalculent aussitôt.
+        </p>
       </div>
 
       <div className="prep-footer">

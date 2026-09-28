@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { geocodePlace, normalizeOpenMeteo, normalizePhoton, __resetGeoCache } from '../geocodeService';
+import {
+  geocodePlace,
+  reverseGeocodePlace,
+  normalizeOpenMeteo,
+  normalizePhoton,
+  __resetGeoCache,
+} from '../geocodeService';
 
 const OK = () => Promise.resolve({ ok: true, json: () => Promise.resolve({}) } as Response);
 
@@ -139,6 +145,109 @@ describe('geocodePlace', () => {
     await geocodePlace('Chamonix');
     await geocodePlace('chamonix');
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('geocodage inverse', () => {
+  it('R1: transforme un point en commune, avec son pays', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          features: [
+            {
+              geometry: { coordinates: [6.869, 45.923] },
+              properties: { name: 'Chamonix-Mont-Blanc', city: 'Chamonix-Mont-Blanc', country: 'France', state: 'Auvergne-Rhone-Alpes', type: 'city' },
+            },
+          ],
+        }),
+    } as Response);
+    const res = await reverseGeocodePlace(45.9237, 6.8694);
+    expect(res.status).toBe('ok');
+    expect(res.matches[0]).toMatchObject({ name: 'Chamonix-Mont-Blanc', country: 'France', precision: 'commune' });
+  });
+
+  it('R2: garde la position exacte, pas le centroid du fournisseur', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          features: [
+            {
+              geometry: { coordinates: [6.869, 45.923] },
+              properties: { name: 'Chamonix-Mont-Blanc', country: 'France', type: 'city' },
+            },
+          ],
+        }),
+    } as Response);
+    const res = await reverseGeocodePlace(45.9237, 6.8694);
+    // Le fournisseur rend le centre de la commune, pas le point demande : on
+    // rend le nom mais on conserve la position reellement mesuree.
+    expect(res.matches[0].lat).toBe(45.9237);
+    expect(res.matches[0].lon).toBe(6.8694);
+  });
+
+  it('R3: ne prend que la ligne de type commune', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          features: [
+            { geometry: { coordinates: [6.86, 45.92] }, properties: { name: 'Rue du Mont', country: 'France', type: 'street' } },
+            { geometry: { coordinates: [6.87, 45.93] }, properties: { name: 'Chamonix-Mont-Blanc', country: 'France', type: 'city' } },
+          ],
+        }),
+    } as Response);
+    const res = await reverseGeocodePlace(45.9237, 6.8694);
+    expect(res.matches.map((m) => m.name)).toEqual(['Chamonix-Mont-Blanc']);
+  });
+
+  it('R4: refuse une coordonnee hors bornes sans appeler le reseau', async () => {
+    expect((await reverseGeocodePlace(999, 0)).status).toBe('invalid');
+    expect((await reverseGeocodePlace(Number.NaN, 0)).status).toBe('invalid');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('R5: distingue reseau tombe et personne ne connait ce point', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ features: [] }),
+    } as Response);
+    expect((await reverseGeocodePlace(45.9, 6.8)).status).toBe('no_result');
+
+    __resetGeoCache();
+    fetchMock.mockRejectedValue(new Error('offline'));
+    expect((await reverseGeocodePlace(48.8, 2.2)).status).toBe('unavailable');
+  });
+
+  it('R6: annonce la commune, jamais le batiment le plus proche', async () => {
+    // Releve reel sur /api/geocode?lat=45.9237&lon=6.8694 : Photon en inverse
+    // rend d abord des batiments (« Archives municipales de Chamonix-Mont-
+    // Blanc », type `house`). Ecrire ce nom afficherait un monument public
+    // comme si c etait le point de depart. Le nom vient de la commune.
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          features: [
+            {
+              geometry: { coordinates: [6.869414, 45.9237221] },
+              properties: {
+                name: 'Archives municipales de Chamonix-Mont-Blanc',
+                type: 'house',
+                city: 'Chamonix-Mont-Blanc',
+                county: 'Haute-Savoie',
+                state: 'Auvergne-Rhone-Alpes',
+                country: 'France',
+              },
+            },
+          ],
+        }),
+    } as Response);
+    const res = await reverseGeocodePlace(45.9237, 6.8694);
+    expect(res.status).toBe('ok');
+    expect(res.matches[0].name).toBe('Chamonix-Mont-Blanc');
+    expect(res.matches[0].context).toBe('Haute-Savoie');
   });
 });
 

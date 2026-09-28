@@ -117,6 +117,34 @@ describe('proposition de parcours', () => {
     expect(JSON.stringify(gaps)).not.toContain('0 km');
   });
 
+  it('declare la meteo absente plutot que de laisser croire a un ciel connu', () => {
+    // startDate null, ou un fournisseur muet : aucune journee ne porte de
+    // meteo. L ecran doit le dire, sinon le silence passe pour une absence
+    // de pluie annoncee.
+    const built = model();
+    expect(built.weather.every((day) => day === null)).toBe(true);
+    expect(knownGaps(built).map((gap) => gap.id)).toContain('meteo');
+  });
+
+  it('ne reclame pas la meteo quand au moins une journee est reellement mesuree', () => {
+    const built = model();
+    const mesuree = {
+      ...built,
+      weather: [
+        { date: '2026-07-11', tMaxC: 24, tMinC: 11, precipMm: 0, precipProbPct: 5, windMaxKmh: 12, code: 1, label: 'Dégagé' },
+        null,
+        null,
+      ],
+    };
+    expect(knownGaps(mesuree).map((gap) => gap.id)).not.toContain('meteo');
+  });
+
+  it('ne reclame pas la meteo sur un modele sans aucune journee', () => {
+    const built = model();
+    const vide = { ...built, days: 0, weather: [] };
+    expect(knownGaps(vide).map((gap) => gap.id)).not.toContain('meteo');
+  });
+
   it('ne modifie jamais le modele d\'origine', () => {
     const avant = model();
     const copie = JSON.stringify(avant);

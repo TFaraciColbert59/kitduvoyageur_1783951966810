@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildContingencies } from '../engine/resilience';
+import { buildContingencies, phaseHealth } from '../engine/resilience';
+import { GENERATION_PHASES } from '../engine/generation';
 import { buildItinerary } from '../engine/itinerary';
 import type { ItineraryModel } from '../types';
 import { fullDraft } from './fixtures';
@@ -71,6 +72,21 @@ describe('plans B', () => {
     const a = buildContingencies(model());
     const b = buildContingencies(model());
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+  });
+});
+
+describe('chaque phase du rail porte un libelle oral', () => {
+  it("aucune phase ne sort avec son identifiant brut dans le bandeau", () => {
+    // La phase `lieux` a ete ajoutee au rail sans son libelle : le bandeau
+    // affichait alors « A rejouer : lieux. », de l'interne, lu par la
+    // personne. Le test parcourt le rail et interdit la fuite.
+    for (const phase of GENERATION_PHASES) {
+      const health = phaseHealth({
+        model: null,
+        phases: [{ id: phase.id, status: 'inverifiable', reason: 'rien a dire', retryable: true }],
+      });
+      expect(health.summary).not.toContain(phase.id);
+    }
   });
 });
 

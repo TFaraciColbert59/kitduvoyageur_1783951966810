@@ -18,7 +18,7 @@ describe('libelles de confiance', () => {
 
   it('formate une duree en minutes ou en heures', () => {
     expect(formatMinutes(45)).toBe('45 min');
-    expect(formatMinutes(90)).toBe('1 h 30');
+    expect(formatMinutes(90)).toBe('1 h 30 min');
     expect(formatMinutes(120)).toBe('2 h');
     expect(formatMinutes(null)).toBe(A_VERIFIER);
   });

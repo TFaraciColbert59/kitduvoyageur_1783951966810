@@ -8,6 +8,13 @@ import {
   useDayFocusStore,
   type DayFocusDay,
 } from '@/components/mobile-nav/dayFocusStore';
+import {
+  ARMED_TTL_MS,
+  LONG_PRESS_MS,
+  LONG_PRESS_SLOP_PX,
+  armedStillValid,
+  isLongPress,
+} from '../engine/mapLongPress';
 import { zIndex } from '@/lib/ui/zIndex';
 import { cn } from '@/lib/utils';
 import type { HubRoutePoint } from '@/features/hub/components/mobile/HubRouteMap';
@@ -58,6 +65,14 @@ export interface PrepMapProps {
   /** Familles de points proposées ; pilote les filtres du plein écran. */
   filterCategories?: readonly string[];
   hideExpand?: boolean;
+  /**
+   * Appui long sur la carte : poser un point de passage a cet endroit.
+   *
+   * Absente = la carte n accepte aucun geste de pose. Un tap simple ne pose
+   * RIEN : seule la lecture du programme passe par la carte, un tap qui ajoute
+   * un point rendrait le parcours ineditable par accident.
+   */
+  onLongPress?: (lat: number, lon: number) => void;
   className?: string;
 }
 
@@ -592,6 +607,104 @@ function useOverlayLifecycle(
  */
 const DEFAULT_MAP_VIEW: [number, number] = [46.6, 2.45];
 
+/**
+ * Appui long sur la carte — capture du geste, pas de la coordonnee.
+ *
+ * MapLibre ne livre une coordonnee qu au moment du clic, c est a dire apres le
+ * relachement du doigt. On ne peut donc pas transformer un appui long en point
+ * sans armement : on memorise que le geste vient d etre qualifie, puis on
+ * attribue le clic suivant — et lui seul — a un point de passage.
+ *
+ * Les ecouteurs sont natifs et captures en phase de capture : MapLibre
+ * appelle `stopPropagation` sur ses propres gestes de carte, et un gestionnaire
+ * React delegue au racine aurait-rate le maintien. `passive: true` garantit
+ * qu on n'introduit pas de delai de rendu sur le deplacement de la carte.
+ *
+ * L arme est un `ref`, pas un etat : elle vit entre le geste et le clic qui
+ * le confirme, deux evenements de la meme interaction. Un re-rendu ne doit
+ * jamais la faire perdre — ni la rendre permanente si le clic n arrive pas.
+ */
+function useMapLongPress(onLongPress: ((lat: number, lon: number) => void) | undefined) {
+  const surface = useRef<HTMLDivElement | null>(null);
+  const origin = useRef<{ x: number; y: number; at: number } | null>(null);
+  const movedPx = useRef(0);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const armedAt = useRef<number | null>(null);
+  const handler = useRef(onLongPress);
+  handler.current = onLongPress;
+
+  const disarm = useCallback(() => {
+    if (timer.current !== null) {
+      clearTimeout(timer.current);
+      timer.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    const node = surface.current;
+    if (!node) return undefined;
+
+    const stop = (e: TouchEvent) => {
+      const point = e.touches[0];
+      if (!point) return;
+      origin.current = { x: point.clientX, y: point.clientY, at: Date.now() };
+      movedPx.current = 0;
+      disarm();
+      timer.current = setTimeout(() => {
+        timer.current = null;
+        const start = origin.current;
+        if (!start) return;
+        if (isLongPress(Date.now() - start.at, movedPx.current)) {
+          armedAt.current = Date.now();
+        }
+      }, LONG_PRESS_MS);
+    };
+
+    const move = (e: TouchEvent) => {
+      const start = origin.current;
+      const point = e.touches[0];
+      if (!start || !point) return;
+      movedPx.current = Math.max(
+        movedPx.current,
+        Math.hypot(point.clientX - start.x, point.clientY - start.y),
+      );
+      // Des que le doigt quitte la zone de tolerance, c est un recadrage :
+      // on retire l arme pour qu aucun clic ne pose de point par surprise.
+      if (movedPx.current > LONG_PRESS_SLOP_PX) {
+        disarm();
+        armedAt.current = null;
+      }
+    };
+
+    const release = () => {
+      disarm();
+      origin.current = null;
+    };
+
+    node.addEventListener('touchstart', stop, { capture: true, passive: true });
+    node.addEventListener('touchmove', move, { capture: true, passive: true });
+    node.addEventListener('touchend', release, { capture: true, passive: true });
+    node.addEventListener('touchcancel', release, { capture: true, passive: true });
+    return () => {
+      node.removeEventListener('touchstart', stop, { capture: true });
+      node.removeEventListener('touchmove', move, { capture: true });
+      node.removeEventListener('touchend', release, { capture: true });
+      node.removeEventListener('touchcancel', release, { capture: true });
+      disarm();
+    };
+  }, [disarm]);
+
+  /** Le clic MapLibre, attribue ou refuse. Un tap nu ne fait rien. */
+  const onMapClick = useCallback((lat: number, lng: number) => {
+    const armed = armedAt.current;
+    armedAt.current = null;
+    if (armed === null || !armedStillValid(armed, Date.now())) return;
+    handler.current?.(lat, lng);
+  }, []);
+
+  return { surfaceRef: surface, onMapClick };
+}
+
 function MapCanvas({
   name,
   routeCoords,
@@ -599,6 +712,8 @@ function MapCanvas({
   highlightCoords,
   points,
   recenterKey,
+  onMapClick,
+  surfaceRef,
 }: {
   readonly name: string;
   readonly routeCoords: Array<[number, number]>;
@@ -606,6 +721,8 @@ function MapCanvas({
   readonly highlightCoords?: Array<[number, number]>;
   readonly points: readonly PrepMapPoint[];
   readonly recenterKey: number;
+  readonly onMapClick?: (lat: number, lng: number) => void;
+  readonly surfaceRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const coords = useMemo(() => {
     const known = position ? [...routeCoords, position] : routeCoords;
@@ -627,13 +744,14 @@ function MapCanvas({
   }, [routeCoords, position]);
   
   return (
-    <div className="prep-map__canvas">
+    <div className="prep-map__canvas" ref={surfaceRef}>
       <HubGlobeMap
         key={`prep-map-${recenterKey}`}
         name={name}
         routeCoords={coords}
         highlightCoords={highlightCoords}
         points={points as unknown as HubRoutePoint[]}
+        onMapClick={onMapClick}
       />
     </div>
   );
@@ -684,6 +802,8 @@ interface PrepMapSurfaceProps {
     readonly highlightCoords?: Array<[number, number]>;
     readonly points: readonly PrepMapPoint[];
     readonly recenterKey: number;
+    readonly onMapClick?: (lat: number, lng: number) => void;
+    readonly surfaceRef: React.RefObject<HTMLDivElement | null>;
   };
   readonly scopeLabel: string;
   readonly dayFocus: DayFocusSelection;
@@ -770,6 +890,7 @@ export function PrepMap({
   scopeLabel,
   filterCategories = DEFAULT_FILTERS,
   hideExpand = false,
+  onLongPress,
   className,
 }: PrepMapProps) {
   const [full, setFull] = useState(false);
@@ -778,6 +899,9 @@ export function PrepMap({
   const geolocation = useGeolocation();
   const dayFocus = useDayFocusSelection();
   const filters = useMapFilters(filterCategories, points);
+  // Le meme geste sert dans les deux etats (compact et plein ecran) : l appui
+  // long y pose un point de passage, et un tap simple n y fait rien.
+  const longPress = useMapLongPress(onLongPress);
   const closeFull = useCallback(() => setFull(false), []);
   useOverlayLifecycle(full, overlayRef, closeFull);
   const recenter = useCallback(() => setRecenterKey((key) => key + 1), []);
@@ -789,6 +913,8 @@ export function PrepMap({
     highlightCoords,
     points: filters.visiblePoints,
     recenterKey,
+    onMapClick: longPress.onMapClick,
+    surfaceRef: longPress.surfaceRef,
   };
 
   return (

@@ -44,11 +44,14 @@ describe('generation du parcours', () => {
     expect(state.phases.every((p) => p.done === false)).toBe(true);
   });
 
-  it('liste quatre phases avec des libelles en mots simples', () => {
+  it('liste les sept phases du parcours, des etapes jusqu a la mise en forme', () => {
     expect(GENERATION_PHASES.map((p) => p.id)).toEqual([
       'recherche_parcours',
       'verification_etapes',
       'disponibilites',
+      'lieux',
+      'trace',
+      'meteo',
       'synthese',
     ]);
     for (const phase of GENERATION_PHASES) {
@@ -62,7 +65,7 @@ describe('generation du parcours', () => {
     state = markPhaseDone(state, 'recherche_parcours');
     const progress = generationProgress(state);
     expect(progress.done).toBe(1);
-    expect(progress.total).toBe(4);
+    expect(progress.total).toBe(GENERATION_PHASES.length);
     expect(progress.currentLabel).toBe('Vérification des étapes');
     expect(JSON.stringify(progress)).not.toContain('%');
   });
@@ -105,7 +108,7 @@ describe('generation du parcours', () => {
     expect(state.status).toBe('termine');
     expect(state.days).toBe(3);
     expect(state.phases.every((p) => p.done)).toBe(true);
-    expect(generationProgress(state).done).toBe(4);
+    expect(generationProgress(state).done).toBe(GENERATION_PHASES.length);
   });
 
   it('ne propose pas de reprise quand rien n\'a ete produit', () => {

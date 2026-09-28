@@ -22,6 +22,7 @@ import { useNavigationBadges } from './useNavigationBadges';
 import { useNavigationPlateau } from './useNavigationPlateau';
 import { useProminentAction } from './ProminentAction';
 import { isHubSurfacePathname } from '@/features/hub/context/adventureLists';
+import BottomNavReservation from './BottomNavReservation';
 
 function WebNavigationBar() {
   const pathname = usePathname();
@@ -50,6 +51,10 @@ function WebNavigationBar() {
   // rendu ne peuvent pas diverger.
   const dayFocusDays = useDayFocusStore((state) => state.days);
   const showDayPlateau = hasDayFocusPlateau(pathname, dayFocusDays);
+  // Meme predicat que le rendu du plateau, evalue par la fonction partagee :
+  // c est lui qui alimente la reservation publiee plus bas. Doublon
+  // volontaire et sans risque, la fonction etant pure.
+  const hasDayPlateau = showDayPlateau;
 
   const plateauController = useNavigationPlateau(pathname);
   const { badgeFor } = useNavigationBadges();
@@ -123,35 +128,41 @@ function WebNavigationBar() {
   }
 
   return (
-    <NavigationSurface
-      label="Navigation principale"
-      hidden={plateauController.hiddenByEvent}
-      opticalNavigation={opticalNavigation}
-      plateau={
-        // Un seul plateau a la fois : le rail jour remplace le plateau
-        // de section quand il est actif (meme slot, meme geometrie).
-        <AnimatePresence>
-          {showDayPlateau ? (
-            <DayPlateau key="day-plateau" />
-          ) : hasUpperExtension ? (
-            <NavigationPlateau key="section-plateau" controller={plateauController} />
-          ) : null}
-        </AnimatePresence>
-      }
-    >
-      {DESTINATIONS.map((destination) => (
-        <TabItem
-          key={destination.id}
-          destination={destination}
-          isActive={activeDestinationId === destination.id}
-          prefetch={prefetchAllowed}
-          onPress={setPressedTab}
-          badge={badgeFor(destination)}
-          onLongPress={destination.id === 'adventures' ? openHubSwitcher : undefined}
-          optical={opticalNavigation}
-        />
-      ))}
-    </NavigationSurface>
+    <>
+      {/* Reservation basse publiee sur la racine du document : toute page
+          doit reserver la place du rail, meme hors de AppShell. Sur /prepare
+          le rail recouvrait le CTA final, la page lisant un repli trop court. */}
+      <BottomNavReservation hasUpperExtension={hasUpperExtension} hasDayPlateau={hasDayPlateau} />
+      <NavigationSurface
+        label="Navigation principale"
+        hidden={plateauController.hiddenByEvent}
+        opticalNavigation={opticalNavigation}
+        plateau={
+          // Un seul plateau a la fois : le rail jour remplace le plateau
+          // de section quand il est actif (meme slot, meme geometrie).
+          <AnimatePresence>
+            {showDayPlateau ? (
+              <DayPlateau key="day-plateau" />
+            ) : hasUpperExtension ? (
+              <NavigationPlateau key="section-plateau" controller={plateauController} />
+            ) : null}
+          </AnimatePresence>
+        }
+      >
+        {DESTINATIONS.map((destination) => (
+          <TabItem
+            key={destination.id}
+            destination={destination}
+            isActive={activeDestinationId === destination.id}
+            prefetch={prefetchAllowed}
+            onPress={setPressedTab}
+            badge={badgeFor(destination)}
+            onLongPress={destination.id === 'adventures' ? openHubSwitcher : undefined}
+            optical={opticalNavigation}
+          />
+        ))}
+      </NavigationSurface>
+    </>
   );
 }
 

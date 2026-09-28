@@ -10,6 +10,10 @@
  * 3. Tout est immuable : les moteurs purs renvoient toujours de nouveaux objets.
  */
 
+import type { AIFailureReason } from '@/lib/ai/providers/types';
+
+import type { DayWeather } from './engine/weather';
+
 /* ------------------------------------------------------------------ */
 /* Etapes                                                              */
 /* ------------------------------------------------------------------ */
@@ -20,9 +24,9 @@ export type PrepStepId = 'destination' | 'itinerary' | 'departure';
 export const PREP_STEPS: readonly PrepStepId[] = ['destination', 'itinerary', 'departure'];
 
 export const PREP_STEP_LABELS: Readonly<Record<PrepStepId, string>> = {
-  destination: 'Destination',
-  itinerary: 'Parcours',
-  departure: 'Départ',
+  destination: 'Créations',
+  itinerary: 'Préparation',
+  departure: 'En avant !',
 };
 
 /* ------------------------------------------------------------------ */
@@ -131,9 +135,20 @@ export interface PlaceRef {
 
 export type RouteShape = 'boucle' | 'aller_simple';
 
+/**
+ * La forme du parcours n'est plus un choix de l'utilisateur : elle se deduit
+ * des lieux. Un point de depart seul produit une boucle ; un depart et une
+ * arrivee distincts produisent un aller simple. On ne demande donc jamais
+ * « boucle ou aller simple » — on demande juste ou, et l'IA s'adapte.
+ */
+export function deriveRouteShape(route: Pick<RouteBlock, 'origin' | 'destination'>): RouteShape {
+  return route.destination !== null ? 'aller_simple' : 'boucle';
+}
+
 export interface RouteBlock {
   origin: PlaceRef | null;
   destination: PlaceRef | null;
+  /** Derive de origin/destination par `deriveRouteShape`, jamais saisi a la main. */
   shape: RouteShape;
 }
 
@@ -205,8 +220,16 @@ export interface ItineraryStep {
 }
 
 export interface DayTotals {
+  /** Distance ROUTIERE mesuree, jamais une distance a vol d'oiseau. */
   distanceKm: number | null;
+  /** Temps de conduite reel. */
   movingMin: number | null;
+  /**
+   * Duree d'activite du jour : la somme des durees REELLEMENT connues de ses
+   * etapes. `null` des qu'une seule est inconnue — jamais une somme partielle
+   * presentee comme le total de la journee.
+   */
+  activityMin: number | null;
   elevGainM: number | null;
   elevLossM: number | null;
 }
@@ -214,14 +237,36 @@ export interface DayTotals {
 export interface ItineraryModel {
   days: number;
   steps: readonly ItineraryStep[];
+  /**
+   * Intentions non rattachees a un lieu reel. Elles ne sont PAS des etapes :
+   * sans position elles ne peuvent recevoir ni distance, ni duree, ni prix.
+   * Les garder dans `steps` ferait passer toute la journee a « a verifier »
+   * alors que la base contient des lieux reels. La note garde la trace de ce
+   * que la personne a demande, sans jamais pretendre qu un lieu existe.
+   */
+  notes?: readonly DayNote[];
   totals: DayTotals;
   perDay: readonly DayTotals[];
+  /**
+   * Meteo REELLE, indexee comme `perDay` : index 0 = jour 1.
+   * `null` = le fournisseur ne couvre pas cette date, ou n a pas repondu.
+   * Jamais une valeur reportee d un autre jour, jamais une valeur par defaut.
+   */
+  weather: readonly (DayWeather | null)[];
   /** Contexte qui a determine les trois metriques affichees. */
   metricsContext: MetricsContext;
   budgetPerPerson: MoneyValue;
   activityCount: number;
   /** Points de repli calcules (pluie, fermeture, retard…). */
   contingencies: readonly Contingency[];
+}
+
+/** Intention de programme sans lieu : ni distance, ni duree, ni prix. */
+export interface DayNote {
+  readonly day: number;
+  readonly kind: ItineraryStepKind;
+  readonly title: string;
+  readonly reason: string | null;
 }
 
 /** Ajuster : cinq reglages(exprimes simplement) + une phrase libre. */
@@ -322,6 +367,9 @@ export type GenerationPhaseId =
   | 'recherche_parcours'
   | 'verification_etapes'
   | 'disponibilites'
+  | 'lieux'
+  | 'trace'
+  | 'meteo'
   | 'synthese';
 
 export interface GenerationPhase {
@@ -346,6 +394,36 @@ export interface GenerationState {
    * repli silencieux ferait croire a un enrichissement qui n'a pas eu lieu.
    */
   notice: string | null;
+  /**
+   * Cause REELLE de la degradation, quand elle est connue.
+   *
+   * `notice` est la phrase lisible, ceci la cause machine. Ils ne peuvent pas
+   * diverger : le bandeau et la notice lisent le meme etat, donc un seul peut
+   * mentir a la fois — et ne mentiront pas, car la phrase est produite par la
+   * cause.
+   */
+  failure: AIFailureReason | null;
+}
+
+/**
+ * La phase qu on peut rejouer seule, DERIVEE de l etat — jamais supposee.
+ *
+ * Pourquoi seulement sur `echec` : une generation `interrompu` l a ete arretee
+ * volontairement, et son parcours de reprise (« Reprendre ») n a rien a
+ * reparer. Confondre les deux afficherait un bouton « Reessayer » sur un
+ * choix de l utilisateur, et ferait croire qu une panne a eu lieu.
+ *
+ * Pourquoi la PREMIERE phase non livree : les phases sont ordonnees, donc la
+ * premiere qui n a rien rendu est celle dont l absence bloque la suite. Les
+ * phases suivantes ne sont pas « en echec », elles n ont pas ete atteintes.
+ *
+ * Pourquoi `null` quand toutes les phases ont livre : un echec enregistre apres
+ * coup, ou un etat incoherent, ne doit pas fabriquer une phase a rejouer. Pas de
+ * phase a designer = pas de bouton — plutot qu un bouton qui ne rejouerait rien.
+ */
+export function failedGenerationPhase(generation: GenerationState): GenerationPhase | null {
+  if (generation.status !== 'echec') return null;
+  return generation.phases.find((phase) => !phase.done) ?? null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -377,6 +455,8 @@ export interface AdventurePrepDraft {
   /** Incremente a chaque sauvegarde : sert de version de reprise. */
   version: number;
   activities: ActivitySelection;
+  /** Invite libre de l'etape 1 : ce que l'utilisateur veut, en toutes lettres. */
+  brief: string | null;
   route: RouteBlock;
   calendar: CalendarBlock;
   group: GroupBlock;

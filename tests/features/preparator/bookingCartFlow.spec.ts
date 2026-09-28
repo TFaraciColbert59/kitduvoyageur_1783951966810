@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   addOfferToTripCart,
+  BookingCartFlowError,
   buildBookingCreatePayload,
   buildCartMetadata,
   type BookingCartTransport,
@@ -24,6 +25,16 @@ const offer: BookingCandidate = {
   providerReference: 'rs-opaque-1',
   metadata: { apiKey: 'do-not-forward' },
 };
+
+/** Capture l'erreur levee, ou `null` si rien n'a leve. */
+function captureError(run: () => unknown): unknown {
+  try {
+    run();
+  } catch (error) {
+    return error;
+  }
+  return null;
+}
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -49,8 +60,41 @@ describe('buildBookingCreatePayload', () => {
     expect(payload.metadata).not.toHaveProperty('apiKey');
   });
 
-  it('accepte un prix absent sans inventer de montant', () => {
-    expect(buildBookingCreatePayload(TRIP, { ...offer, amount: null }).amount_eur).toBe(0);
+  it('refuse un prix absent plutot que d ecrire un montant a 0', () => {
+    // `bookings.amount_eur numeric(12,2) NOT NULL DEFAULT 0` : un 0 ecrit
+    // serait indiscernable d'un vrai article gratuit.
+    for (const amount of [null, 0, -5, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(() => buildBookingCreatePayload(TRIP, { ...offer, amount })).toThrowError(
+        BookingCartFlowError
+      );
+    }
+  });
+
+  it('refuse une devise non confirmee plutot que d ecrire EUR', () => {
+    for (const currency of [null, '', 'euro', 'EU']) {
+      expect(() => buildBookingCreatePayload(TRIP, { ...offer, currency })).toThrowError(
+        BookingCartFlowError
+      );
+    }
+  });
+
+  it('signale precisement quel champ est inconnu', () => {
+    const amountError = captureError(() =>
+      buildBookingCreatePayload(TRIP, { ...offer, amount: null })
+    );
+    expect(amountError).toBeInstanceOf(BookingCartFlowError);
+    expect((amountError as BookingCartFlowError).code).toBe('booking_amount_unknown');
+
+    const currencyError = captureError(() =>
+      buildBookingCreatePayload(TRIP, { ...offer, currency: null })
+    );
+    expect(currencyError).toBeInstanceOf(BookingCartFlowError);
+    expect((currencyError as BookingCartFlowError).code).toBe('booking_currency_unknown');
+  });
+
+  it('conserve la devise reelle quand elle est connue', () => {
+    const payload = buildBookingCreatePayload(TRIP, { ...offer, currency: 'JPY', amount: 100 });
+    expect(payload.currency).toBe('JPY');
   });
 });
 
@@ -72,6 +116,15 @@ describe('buildCartMetadata', () => {
 });
 
 describe('addOfferToTripCart', () => {
+  it("n'appelle aucun service quand le prix est inconnu", async () => {
+    const transport = vi.fn<BookingCartTransport>();
+
+    await expect(
+      addOfferToTripCart({ tripId: TRIP, offer: { ...offer, amount: null }, transport })
+    ).rejects.toMatchObject({ code: 'booking_amount_unknown' });
+    expect(transport).not.toHaveBeenCalled();
+  });
+
   it('crée la réservation puis ajoute la ligne au panier sans prix local', async () => {
     const transport = vi.fn<BookingCartTransport>()
       .mockResolvedValueOnce(jsonResponse({ success: true, data: { id: BOOKING } }, 201))

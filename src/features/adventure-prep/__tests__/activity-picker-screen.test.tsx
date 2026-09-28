@@ -214,11 +214,22 @@ describe('Ecran 02 — appel d action', () => {
 });
 
 describe('Ecran 02 — confiance', () => {
-  it('E02-20: aucune duree n est presentee comme une donnee verifiee', () => {
+  it('E02-20: aucune carte n affiche de duree, meme approchee', () => {
     const text = visible(render(draftWithoutItineraryInput()));
-    // La duree du catalogue est une suggestion : le mot « environ » l annonce.
-    expect(text).toContain('environ');
+    // Le catalogue ne publie plus de duree. « environ » ne rendait l invention
+    // que plausible : c etait une duree inexistante presentee comme une
+    // information. Elle disparait, et avec elle tout nombre sur la carte.
+    expect(text).not.toContain('environ');
+    expect(text).not.toMatch(/\d+\s*h(?:\s|$)/);
+    expect(text).not.toMatch(/\d+\s*jours?/);
     expect(text).not.toMatch(/\d+\s*€|\d+\s*km\b/i);
+  });
+
+  it('E02-20b: la carte affiche un gabarit de depart, sans chiffre', () => {
+    const text = visible(render(draftWithoutItineraryInput()));
+    expect(text).toContain('Gabarit : journée');
+    // Le gabarit ne se remplace pas par un nombre : c est la meme regle.
+    expect(text).not.toMatch(/Gabarit[^A-Za-z0-9]{0,3}\d/);
   });
 
   it('E02-21: aucune activite n est annoncee comme reservee', () => {
@@ -228,5 +239,50 @@ describe('Ecran 02 — confiance', () => {
 
   it('E02-22: l identifiant du catalogue reste resolu cote composant', () => {
     expect(activityById('rando-journee')?.label).toBe('Randonnée à la journée');
+  });
+});
+
+describe('Ecran 02 — l invite libre ouvre le premier ecran', () => {
+  const withBrief = (brief: string) =>
+    fullDraft({ brief, activities: { primary: null, extra: [], nights: [] } });
+
+  it('E02-30: l invite est presente, avec la meme invite que l etape 1', () => {
+    const html = render(draftWithoutItineraryInput());
+    expect(html).toContain('prep-brief__input');
+    expect(visible(html)).toContain('Qu’est-ce que tu as en tête ?');
+  });
+
+  it('E02-31: l invite est rendue AVANT le catalogue, pas apres', () => {
+    const html = render(draftWithoutItineraryInput());
+    const invite = html.indexOf('prep-brief__input');
+    const catalogue = html.indexOf('prep-cats');
+    // Les deux ancres doivent exister : sans cela, indexOf renvoie -1 et le
+    // test passerait sur une invite absente.
+    expect(invite).toBeGreaterThan(-1);
+    expect(catalogue).toBeGreaterThan(-1);
+    expect(invite).toBeLessThan(catalogue);
+  });
+
+  it('E02-32: l invite affiche ce que la personne a ecrit', () => {
+    expect(render(withBrief('refuge et lever de soleil'))).toContain('refuge et lever de soleil');
+  });
+
+  it('E02-33: le brief classe le catalogue reel', () => {
+    const names = cardNames(render(withBrief('je veux dormir en refuge')));
+    expect(names[0]).toBe('Randonnée avec nuit de refuge');
+  });
+
+  it('E02-34: un brief sans correspondance le dit, et ne retombe pas sur du bruit', () => {
+    const html = render(withBrief('zzzzqqq wwww'));
+    expect(visible(html)).toContain('Aucune activité du catalogue');
+    expect(cardNames(html)).toHaveLength(0);
+  });
+
+  it('E02-35: le brief ne fait pas de correction orthographique', () => {
+    // Mesure : le navigateur souligne en rouge chaque mot du brief. Ce texte
+    // est une idee en brouillon, pas un document : un correcteur qui la barre
+    // donne l impression que la saisie est fautive et mancha le verre.
+    const html = render(withBrief('refuge lever de soleil'));
+    expect(html).toContain('spellCheck="false"');
   });
 });

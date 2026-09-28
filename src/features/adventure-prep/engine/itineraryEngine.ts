@@ -141,7 +141,11 @@ export interface DraftedItinerary {
   hypotheses: readonly string[];
 }
 
-export type RejectionReason = 'chevauchement_horaire' | 'affirmation_non_sourcee' | 'aucune_etape';
+export type RejectionReason =
+  | 'chevauchement_horaire'
+  | 'affirmation_non_sourcee'
+  | 'aucune_etape'
+  | 'journee_non_couverte';
 
 export interface ValidationOutcome {
   ok: boolean;
@@ -155,6 +159,7 @@ const REJECTION_MESSAGES: Readonly<Record<RejectionReason, string>> = {
   chevauchement_horaire: 'deux etapes se chevauchent sur la meme journee',
   affirmation_non_sourcee: 'une proposition affirme un prix ou une disponibilite non verifiee',
   aucune_etape: 'aucune etape exploitable n a ete proposee',
+  journee_non_couverte: 'au moins une journee n a recu aucune etape',
 };
 
 function reject(reason: RejectionReason, offending: readonly string[] = []): ValidationOutcome {
@@ -195,6 +200,19 @@ export function validateDrafted(drafted: DraftedItinerary): ValidationOutcome {
   if (overlap) {
     return reject('chevauchement_horaire', [overlap[0].id, overlap[1].id]);
   }
+
+  // Couverture des journees, verifiee EN DERNIER : les regles de fond
+  // d abord (un prix invente, un chevauchement), la structure ensuite. Une
+  // reponse qui ne remplit pas chaque jour affiche un « Jour 3 » vide sous un
+  // titre « 3 jours » : le parcours annonce n existe pas. On refuse plutot
+  // que de laisser l ecupuchon mentir — le repli regles prend le relais, et il
+  // ne propose qu une structure, sans jamais fabriquer un chiffre.
+  const covered = new Set(drafted.steps.map((step) => step.day));
+  const missing: number[] = [];
+  for (let day = 1; day <= drafted.days; day += 1) {
+    if (!covered.has(day)) missing.push(day);
+  }
+  if (missing.length > 0) return reject('journee_non_couverte', missing.map(String));
 
   return { ok: true, reason: null, detail: null, offending: [] };
 }

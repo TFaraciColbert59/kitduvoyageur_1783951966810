@@ -26,6 +26,13 @@ import type {
  * orphelin que rien ne re reconcilie. Si l'echec survient apres l'insert, on
  * le laisse remonter tel quel — la reservation existe, c'est elle la source de
  * verite, et l'annuler serait pire que l'echec visible.
+ *
+ * Montant et devise : `bookings.amount_eur numeric(12,2) NOT NULL DEFAULT 0` et
+ * `bookings.currency text NOT NULL DEFAULT 'EUR'` avec `CHECK (currency ~ '^[A-Z]{3}$')`.
+ * Le schema ne peut pas porter la valeur « inconnu ». Ecrire 0 pour un prix
+ * non connu le rendrait indiscernable d'un vrai gratuit, et forcer EUR
+ * convertirait un prix en yens en prix en euros sans conversion. On refuse
+ * donc l'ecriture, et on le dit clairement a l'appelant.
  */
 
 export interface StartCheckoutInput {
@@ -78,26 +85,56 @@ function buildMetadata(
   };
 }
 
+/** Montant strictement positif et fini, ou `null`. Jamais 0. */
+function strictAmount(value: number | null): number | null {
+  if (value == null || !Number.isFinite(value) || value <= 0) return null;
+  return Math.round(Math.min(value, 10_000_000) * 100) / 100;
+}
+
+/** Code ISO 4217 a 3 majuscules, ou `null`. Jamais de repli sur 'EUR'. */
+function strictCurrency(value: string | null): string | null {
+  return value && /^[A-Z]{3}$/.test(value) ? value : null;
+}
+
 export async function startCheckout(
   input: StartCheckoutInput,
   deps: StartCheckoutDeps = {}
 ): Promise<CheckoutResult> {
   const { store, userId, tripId, candidate, campaign, metadata } = input;
 
+  // Le candidat est la seule source du montant et de la devise. Une valeur
+  // absente est un refus, pas une valeur a deviner.
+  const amountEur = strictAmount(candidate.amount);
+  if (amountEur === null) {
+    throw new BookingProviderError({
+      code: BOOKING_PROVIDER_ERROR_CODES.validation,
+      provider: candidate.provider,
+      message: 'Le prix de cette offre est inconnu : la réservation n’a pas été enregistrée.',
+      cause: { candidateId: candidate.id, amount: candidate.amount },
+    });
+  }
+
+  const currency = strictCurrency(candidate.currency);
+  if (currency === null) {
+    throw new BookingProviderError({
+      code: BOOKING_PROVIDER_ERROR_CODES.validation,
+      provider: candidate.provider,
+      message: 'La devise de cette offre n’est pas confirmée : la réservation n’a pas été enregistrée.',
+      cause: { candidateId: candidate.id, currency_unknown: true },
+    });
+  }
+
   const result = await input.checkoutUrl(candidate, { tripId, userId, campaign });
 
-  // Le candidat est la source du montant. Une devise non confirmee n'est pas
-  // devinée : on le signale dans les metadonnees plutot que d'ecrire EUR.
-  const currencyKnown = candidate.currency !== null;
   const payload: BookingCreateInput = bookingCreateSchema.parse({
     vertical: candidate.vertical,
     provider: candidate.provider,
     external_ref: candidate.providerReference ?? candidate.id,
-    amount_eur: candidate.amount ?? 0,
-    currency: currencyKnown ? candidate.currency : 'EUR',
+    amount_eur: amountEur,
+    currency,
     status: 'pending',
     checkout_mode: toStoredCheckoutMode(result.mode),
-    metadata: buildMetadata(candidate, result.mode, currencyKnown, campaign, metadata),
+    metadata: buildMetadata(candidate, result.mode, true, campaign, metadata),
   });
 
   const { data: booking, error } = await insertBooking(store, { tripId, userId, payload });

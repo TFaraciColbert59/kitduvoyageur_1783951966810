@@ -11,7 +11,6 @@ import {
   MAX_AVATARS,
   participantAvatars,
   placeParts,
-  ROUTE_SHAPE_OPTIONS,
   shortDateLabel,
   daysLabel,
   type PlaceParts,
@@ -25,13 +24,8 @@ import {
   type StepOneRow,
 } from './stepOneProfile';
 import { useAdventurePrepStore } from '../store/useAdventurePrepStore';
-import type {
-  ActivityDef,
-  GroupBlock,
-  PlaceRef,
-  RouteShape,
-} from '../types';
-import PrepMap from './PrepMap';
+import { useDefaultOrigin } from './PrepSetupSheets';
+import type { GroupBlock, PlaceRef } from '../types';
 import type { PrepPlaceField, PrepSheetId } from './PrepSheets';
 
 export interface DestinationStepProps {
@@ -40,13 +34,6 @@ export interface DestinationStepProps {
     focusStepId?: string | null,
     placeField?: PrepPlaceField | null,
   ) => void;
-}
-
-function placeCoords(place: PlaceRef | null): [number, number] | null {
-  if (!place) return null;
-  if (!Number.isFinite(place.lat) || !Number.isFinite(place.lon)) return null;
-  if (place.lat === 0 && place.lon === 0) return null;
-  return [place.lat, place.lon];
 }
 
 interface BlockRowProps {
@@ -60,13 +47,41 @@ interface BlockRowProps {
   children?: React.ReactNode;
 }
 
+/**
+ * Regle anti-chevauchement, portee par le TSX.
+ *
+ * Le CSS donne au libelle `flex: 1 1 auto` SANS `overflow: hidden` : le texte
+ * d'un element flex reduit deborde de sa boite et vient se peindre sur la
+ * valeur voisine. C est exactement ce que montrait la ligne « Participants »,
+ * ou « Participants » passait sur « 3 personnes · 1 ad… ».
+ *
+ * `adventure-prep.css` appartient a un autre agent : la correction est donc
+ * posee ici, en style inline, avec une regle qui tient quelle que soit la
+ * longueur du libelle. Le libelle est le seul element qui cede de la place ;
+ * la valeur et les avatars gardent la leur.
+ */
+const LABEL_STYLE: React.CSSProperties = {
+  flex: '0 1 auto',
+  minWidth: 0,
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+};
+
+const STACK_STYLE: React.CSSProperties = {
+  flex: '0 0 auto',
+  minWidth: 0,
+};
+
+const AVATARS_STYLE: React.CSSProperties = { flex: '0 0 auto' };
+
 function BlockRow({ label, icon, parts, text, unknown, onClick, disabled, children }: BlockRowProps) {
   const isUnknown = unknown ?? parts === null;
   return (
     <button type="button" className="prep-block__row" onClick={onClick} disabled={disabled} aria-disabled={disabled || undefined}>
       <Icon name={icon} size={18} aria-hidden="true" />
-      <span className="prep-block__label">{label}</span>
-      <span className="prep-block__stack">
+      <span className="prep-block__label" style={LABEL_STYLE}>{label}</span>
+      <span className="prep-block__stack" style={STACK_STYLE}>
         <span className="prep-block__value" data-unknown={isUnknown}>
           {parts ? parts.primary : text ?? A_VERIFIER}
         </span>
@@ -109,7 +124,7 @@ function AvatarRow({ group }: { group: GroupBlock }) {
   const shown = avatars.slice(0, MAX_AVATARS);
   const overflow = avatars.length - shown.length;
   return (
-    <span className="prep-avatars" aria-hidden="true">
+    <span className="prep-avatars" style={AVATARS_STYLE} aria-hidden="true">
       {shown.map((avatar) => (
         <span key={avatar.key} className="prep-avatar" data-tone={avatar.tone}>
           {avatar.initials}
@@ -122,42 +137,42 @@ function AvatarRow({ group }: { group: GroupBlock }) {
 
 export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
   const draft = useAdventurePrepStore((state) => state.draft);
-  const { activities, route, calendar, group, preferences } = draft;
+  const { activities, route, calendar, group } = draft;
+
+  // Depart par defaut : propose la ou la personne est, une seule fois, et
+  // seulement si elle n'a rien choisi. Le tiroir de lieux garde le meme point
+  // en tete de liste, avec le nom de la commune.
+  useDefaultOrigin(route.origin === null);
 
   const profileId = useMemo(() => stepOneProfileIdFor(activities), [activities]);
   const profile = stepOneProfile(profileId);
   const ready = canCreateStepOne(draft, profileId);
   const missing = stepOneMissingSummary(draft, profileId);
-  const isLoop = route.shape === 'boucle';
-
-  const loopReturn = isLoop && profileId === 'trajet';
+  // Un sejour ou une sortie locale n ont qu un seul lieu : rien a inverser.
+  const swappable = profile.singlePlace === null && canSwapEnds(draft);
 
   const partsFor = useCallback(
     (field: StepOneRow['field']): PlaceParts | null =>
       field === 'origin' ? placeParts(route.origin) : placeParts(route.destination),
     [route.origin, route.destination],
   );
-
+  /**
+   * Valeur d'une cellule du bloc calendrier.
+   *
+   * Une duree qui n'est venue que d'une proposition n'est pas une duree : le
+   * catalogue en propose une pour demarrer la generation, personne ne l'a
+   * mesuree. Tant que la personne ne l'a pas choisie, l'ecran affiche la
+   * formulation d'absence — « a verifier » — et non le nombre. Une duree
+   * reellement saisie, elle, s'affiche telle quelle.
+   */
   const valueFor = useCallback(
-    (cell: StepOneCell): string =>
-      cell.field === 'startDate' ? shortDateLabel(calendar.startDate) : daysLabel(calendar.durationDays),
-    [calendar.startDate, calendar.durationDays],
+    (cell: StepOneCell): string => {
+      if (cell.field === 'startDate') return shortDateLabel(calendar.startDate);
+      if (calendar.durationIsSuggested) return A_VERIFIER;
+      return daysLabel(calendar.durationDays);
+    },
+    [calendar.startDate, calendar.durationDays, calendar.durationIsSuggested],
   );
-
-  const routeCoords = useMemo<Array<[number, number]>>(() => {
-    const asked = new Set(profile.rows.map((row) => row.field));
-    const coords: Array<[number, number]> = [];
-    if (asked.has('origin')) {
-      const from = placeCoords(route.origin);
-      if (from) coords.push(from);
-    }
-    if (asked.has('destination') && !loopReturn) {
-      const to = placeCoords(route.destination);
-      const last = coords[coords.length - 1];
-      if (to && (last === undefined || to[0] !== last[0] || to[1] !== last[1])) coords.push(to);
-    }
-    return coords;
-  }, [profile.rows, route.origin, route.destination, loopReturn]);
 
   const swapEnds = useCallback(() => {
     useAdventurePrepStore.getState().setRoute({
@@ -167,21 +182,13 @@ export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
     });
   }, [route]);
 
-  const setShape = useCallback(
-    (shape: RouteShape) => {
-      const state = useAdventurePrepStore.getState();
-      if (shape === 'boucle') {
-        state.setRoute({ ...route, shape, destination: null });
-        return;
-      }
-      state.setRoute({ ...route, shape });
-    },
-    [route],
-  );
+  /** Invite libre : alimente la generation IA, elle n'est jamais obligatoire. */
+  const onBriefChange = useCallback((value: string) => {
+    useAdventurePrepStore.getState().setBrief(value);
+  }, []);
 
   const handleCreate = useCallback(() => {
-    const { proposeItinerary, completeStep, goToStep } = useAdventurePrepStore.getState();
-    proposeItinerary();
+    const { completeStep, goToStep } = useAdventurePrepStore.getState();
     completeStep('destination');
     goToStep('itinerary');
   }, []);
@@ -191,37 +198,28 @@ export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
     <div className="prep-screen">
       <div className="prep-body">
 
-        <div className="prep-block">
-          {profile.showRouteShape ? (
-            <div className="prep-segmented" role="group" aria-label="Forme du parcours">
-              {ROUTE_SHAPE_OPTIONS.map((option) => (
-                <button
-                  key={option.shape}
-                  type="button"
-                  className="prep-segmented__item"
-                  aria-pressed={route.shape === option.shape}
-                  onClick={() => setShape(option.shape)}
-                >
-                  <Icon name={option.icon} size={15} aria-hidden="true" />
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          ) : null}
+        <div className="prep-block prep-brief">
+          <label className="prep-brief__label" htmlFor="prep-brief-input">
+            <Icon name="sparkles" size={16} aria-hidden="true" />
+            <span>Qu’est-ce que tu as en tête ?</span>
+          </label>
+          <textarea
+            id="prep-brief-input"
+            className="prep-brief__input"
+            value={draft.brief ?? ''}
+            onChange={(event) => onBriefChange(event.target.value)}
+            placeholder="Une randonnée douce au bord d’un lac, avec un pique-nique au soleil, fin d’aprèm…"
+            rows={3}
+            maxLength={400}
+            enterKeyHint="done"
+          />
+          <p className="prep-brief__hint">
+            L’IA en tient compte pour tout générer. Tu resteras maître du parcours après.
+          </p>
+        </div>
 
+        <div className="prep-block">
           {profile.rows.map((row) => {
-            if (isLoop && row.field === 'destination') {
-              return (
-                <BlockRow
-                  key="destination"
-                  label="Arrivée"
-                  icon="refresh-cw"
-                  parts={null}
-                  text="Retour au départ"
-                  disabled
-                />
-              );
-            }
             return (
               <BlockRow
                 key={row.field}
@@ -233,7 +231,7 @@ export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
             );
           })}
 
-          {profile.showRouteShape && !isLoop && canSwapEnds(draft) ? (
+          {swappable ? (
             <span className="prep-swap">
               <Button
                 type="button"
@@ -262,7 +260,7 @@ export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
           ))}
           {calendar.durationIsSuggested ? (
             <div style={{ padding: '0 var(--space-4) var(--space-3)', gridColumn: '1 / -1' }}>
-              <span className="badge amber">C'est une durée suggérée · modifiable</span>
+              <span className="badge badge--suggestion">Durée à préciser · modifiable</span>
             </div>
           ) : null}
         </div>
@@ -286,11 +284,6 @@ export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
           </p>
         ) : null}
 
-        <PrepMap
-          name={route.origin ? route.origin.name : 'Zone'}
-          routeCoords={routeCoords}
-          scopeLabel="Zone"
-        />
       </div>
 
       <div className="prep-footer">

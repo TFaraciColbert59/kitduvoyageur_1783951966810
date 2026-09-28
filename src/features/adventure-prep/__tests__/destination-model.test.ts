@@ -9,10 +9,10 @@ import {
   missingSummary,
   participantAvatars,
   placeParts,
-  ROUTE_SHAPE_OPTIONS,
   shortDateLabel,
 } from '../engine/destinationModel';
 import { emptyDraft } from '../engine/emptyDraft';
+import { deriveRouteShape } from '../types';
 import { fullDraft, CHAMONIX, ARGENTIERE } from './fixtures';
 import type { AdventurePrepDraft } from '../types';
 
@@ -28,22 +28,25 @@ describe('missingFields — ce qu’il reste à saisir', () => {
     expect(missingFields(draft).map((field) => field.key)).toEqual([
       'activity',
       'origin',
+      'destination',
       'startDate',
       'duration',
     ]);
   });
 
-  it('DM-03: n’exige pas d’arrivée sur une boucle', () => {
+  it('DM-03: signale l’arrivée manquante sans jamais la poser en question', () => {
     const draft = fullDraft({ route: { origin: CHAMONIX, destination: null, shape: 'boucle' } });
-    expect(missingFields(draft).map((field) => field.key)).not.toContain('destination');
+    expect(missingFields(draft).map((field) => field.key)).toContain('destination');
+    expect(canCreateItinerary(draft)).toBe(true);
   });
 
-  it('DM-04: exige une arrivée distincte en aller simple', () => {
+  it('DM-04: l’arrivée signalee reste non bloquante meme en aller simple', () => {
     const draft = fullDraft({
       calendar: { startDate: '2026-07-11', durationDays: 2, durationIsSuggested: false, returnDate: null },
       route: { origin: CHAMONIX, destination: null, shape: 'aller_simple' },
     });
     expect(missingFields(draft).map((field) => field.key)).toContain('destination');
+    expect(canCreateItinerary(draft)).toBe(true);
   });
 
   it('DM-05: une durée nulle ou négative compte comme manquante', () => {
@@ -222,17 +225,22 @@ describe('participantAvatars — initiales et honnêteté', () => {
   });
 });
 
-describe('route shape — boucle contre aller simple', () => {
-  it('DM-29: les deux formes sont proposées, en boucle d’abord', () => {
-    expect(ROUTE_SHAPE_OPTIONS.map((o) => o.shape)).toEqual(['boucle', 'aller_simple']);
+describe('route shape — déduite, jamais saisie', () => {
+  it('DM-29: la forme se deduit des lieux choisis', () => {
+    expect(deriveRouteShape({ origin: CHAMONIX, destination: null })).toBe('boucle');
+    expect(deriveRouteShape({ origin: CHAMONIX, destination: ARGENTIERE })).toBe('aller_simple');
   });
 
-  it('DM-30: on n’inverse qu’un aller simple complet', () => {
+  it('DM-29b: une arrivee absente ne bloque pas la creation', () => {
+    const draft = fullDraft({ route: { origin: CHAMONIX, destination: null, shape: 'boucle' } });
+    expect(canCreateItinerary(draft)).toBe(true);
+    expect(missingSummary(draft)).toContain('arrivée');
+  });
+
+  it('DM-30: on n’inverse que si les deux bouts sont choisis', () => {
     expect(canSwapEnds(fullDraft())).toBe(true);
-    expect(canSwapEnds(fullDraft({ route: { ...fullDraft().route, shape: 'boucle' } }))).toBe(false);
-    expect(
-      canSwapEnds(fullDraft({ route: { origin: CHAMONIX, destination: null, shape: 'aller_simple' } })),
-    ).toBe(false);
+    expect(canSwapEnds(fullDraft({ route: { origin: CHAMONIX, destination: null, shape: 'boucle' } }))).toBe(false);
+    expect(canSwapEnds(fullDraft({ route: { origin: null, destination: ARGENTIERE, shape: 'aller_simple' } }))).toBe(false);
   });
 });
 

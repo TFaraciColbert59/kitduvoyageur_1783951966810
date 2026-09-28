@@ -73,8 +73,6 @@ export interface StepOneProfile {
   rows: readonly StepOneRow[];
   /** Le lieu unique des profils sejour et local ; `null` quand il y en a deux. */
   singlePlace: 'origin' | 'destination' | null;
-  /** Une boucle n'a de sens que sur un trajet : ailleurs la forme est imposée. */
-  showRouteShape: boolean;
   cells: readonly [StepOneCell, StepOneCell];
   /** Appel d'action quand tout est saisi. */
   cta: string;
@@ -88,7 +86,6 @@ const PROFILES: Readonly<Record<StepOneProfileId, StepOneProfile>> = {
       { field: 'destination', label: 'Arrivée', icon: 'flag' },
     ],
     singlePlace: null,
-    showRouteShape: true,
     cells: [
       { field: 'startDate', label: 'Date', icon: 'calendar' },
       { field: 'duration', label: 'Temps disponible', icon: 'clock' },
@@ -102,7 +99,6 @@ const PROFILES: Readonly<Record<StepOneProfileId, StepOneProfile>> = {
       { field: 'destination', label: 'Destination', icon: 'flag' },
     ],
     singlePlace: null,
-    showRouteShape: false,
     cells: [
       { field: 'startDate', label: 'Départ', icon: 'calendar' },
       { field: 'duration', label: 'Retour ou durée', icon: 'calendar' },
@@ -115,7 +111,6 @@ const PROFILES: Readonly<Record<StepOneProfileId, StepOneProfile>> = {
       { field: 'destination', label: 'Destination ou hébergement de base', icon: 'bed-double' },
     ],
     singlePlace: 'destination',
-    showRouteShape: false,
     cells: [
       { field: 'startDate', label: 'Arrivée', icon: 'calendar' },
       { field: 'duration', label: 'Départ', icon: 'calendar' },
@@ -126,7 +121,6 @@ const PROFILES: Readonly<Record<StepOneProfileId, StepOneProfile>> = {
     id: 'local',
     rows: [{ field: 'origin', label: 'Lieu de pratique', icon: 'map-pin' }],
     singlePlace: 'origin',
-    showRouteShape: false,
     cells: [
       { field: 'startDate', label: 'Date', icon: 'calendar' },
       { field: 'duration', label: 'Durée indicative', icon: 'droplet' },
@@ -156,13 +150,10 @@ export function stepOneAskedFields(
 ): readonly StepOneFieldKey[] {
   const profile = PROFILES[id];
   const asked: StepOneFieldKey[] = ['activity'];
-  for (const row of profile.rows) {
-    // Sur un trajet en boucle, le retour se derive du depart : une arrivee
-    // distincte n existe pas, donc elle n'est pas demandee.
-    const loopHasNoEnd = id === 'trajet' && draft.route.shape === 'boucle';
-    if (row.field === 'destination' && loopHasNoEnd) continue;
-    asked.push(row.field);
-  }
+  // L arrivee reste toujours une question posee : la forme du parcours s en
+  // deduit. Ne pas la demander reviendrait a demander « boucle ou aller
+  // simple », exactement ce que l utilisateur a refuse.
+  for (const row of profile.rows) asked.push(row.field);
   asked.push('startDate', 'duration');
   return asked;
 }
@@ -231,13 +222,14 @@ export function stepOneMissingSummary(
 }
 
 /**
- * Champs sans lesquels la generation n'a pas de sens. La date seule ne bloque
- * jamais : une aventure sans date reste realisable, elle se confirme plus tard.
+ * Champs sans lesquels la generation n'a pas de sens. Ni la date ni l arrivee
+ * ne bloquent : sans date l IA choisit le moment le plus opportun, sans
+ * arrivee le parcours est une boucle. Seuls l activite, le depart et le temps
+ * disponible sont vraiment requis.
  */
 const BLOCKING: ReadonlySet<StepOneFieldKey> = new Set<StepOneFieldKey>([
   'activity',
   'origin',
-  'destination',
   'duration',
 ]);
 

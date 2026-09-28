@@ -44,32 +44,32 @@ const INTEREST_STOPS: Readonly<Record<string, InterestStop>> = {
   nature: {
     kind: 'arret',
     title: 'Pause nature',
-    reason: 'Tu as coche « Nature » : un arret sur le trajet est propose',
+    reason: 'Tu as coché « Nature »\u00A0: un arrêt sur le trajet est proposé',
   },
   paysage: {
     kind: 'arret',
     title: 'Point de vue sur le parcours',
-    reason: 'Tu as coche « Paysage » : un point de vue est propose sur le trajet',
+    reason: 'Tu as coché « Paysage »\u00A0: un point de vue est proposé sur le trajet',
   },
   patrimoine: {
     kind: 'arret',
     title: 'Visite du patrimoine',
-    reason: 'Tu as coche « Patrimoine » : une visite est proposee sur le trajet',
+    reason: 'Tu as coché « Patrimoine »\u00A0: une visite est proposée sur le trajet',
   },
   photographie: {
     kind: 'arret',
-    title: 'Arret photo',
-    reason: 'Tu as coche « Photographie » : un arret est propose sur le trajet',
+    title: 'Arrêt photo',
+    reason: 'Tu as coché « Photographie »\u00A0: un arrêt est proposé sur le trajet',
   },
   eau: {
     kind: 'ravitaillement',
     title: 'Eau et ravitaillement',
-    reason: 'Tu as coche « Eau » : un point d eau est propose sur le parcours',
+    reason: 'Tu as coché « Eau »\u00A0: un point d\'eau est proposé sur le parcours',
   },
   gastronomie: {
     kind: 'ravitaillement',
     title: 'Repas au restaurant',
-    reason: 'Tu as coche « Gastronomie » : le repas est propose au restaurant',
+    reason: 'Tu as coché « Gastronomie »\u00A0: le repas est proposé au restaurant',
     mealSlot: 'dejeuner',
   },
 };
@@ -77,30 +77,42 @@ const INTEREST_STOPS: Readonly<Record<string, InterestStop>> = {
 const WATER: InterestStop = {
   kind: 'ravitaillement',
   title: 'Eau et ravitaillement',
-  reason: 'Une reserve d eau est necessaire sur le parcours — point a verifier',
+  reason: 'Une réserve d\'eau est nécessaire sur le parcours — point à vérifier',
+};
+
+/**
+ * L'eau des jours suivants. Meme besoin, une seule etape lisible : le titre
+ * change pour ne pas repeter « Eau et ravitaillement » un jour sur trois.
+ * Aucun point d'eau n'est promis ici : la raison reste « à vérifier ».
+ */
+const WATER_LATER: InterestStop = {
+  kind: 'ravitaillement',
+  title: 'Ravitaillement et eau',
+  reason:
+    'L\'eau accompagne le ravitaillement du jour au lieu d\'être une étape séparée\u00A0: le point reste à vérifier',
 };
 
 const VIEW: InterestStop = {
   kind: 'arret',
-  title: 'Point d interet sur le parcours',
-  reason: 'Un arret est propose sur le trajet — le lieu sera confirme sur la carte',
+  title: "Point d'intérêt sur le parcours",
+  reason: 'Un arrêt est proposé sur le trajet — le lieu sera confirmé sur la carte',
 };
 
 /** Le groupe ou le corps imposent des pauses, jamais seulement le rythme. */
 function restReason(draft: AdventurePrepDraft): string {
   const reasons: string[] = [];
   if (draft.preferences.accessibilityNeeds.length > 0) {
-    reasons.push('un besoin d accessibilite est declare');
+    reasons.push('un besoin d\'accessibilité est déclaré');
   }
   if (draft.group.children > 0) {
     reasons.push('des enfants participent');
   }
   if (reasons.length === 0) {
     return draft.preferences.pace === 'tranquille'
-      ? 'Pause longue proposee pour garder un rythme tranquille'
-      : 'Pause proposee pour garder un rythme tranquille';
+      ? 'Pause longue proposée pour garder un rythme tranquille'
+      : 'Pause proposée pour garder un rythme tranquille';
   }
-  return `Pause proposee car ${reasons.join(' et ')}`;
+  return `Pause proposée car ${reasons.join(' et ')}`;
 }
 
 function wantsRest(draft: AdventurePrepDraft): boolean {
@@ -134,7 +146,7 @@ function complementaryStops(draft: AdventurePrepDraft, day: number): ProposedSto
     {
       kind: 'arret',
       title: activity.label,
-      reason: `Tu as ajoute « ${activity.label} » : cette activite complete la journee`,
+      reason: `Tu as ajouté « ${activity.label} »\u00A0: cette activité complète la journée`,
     },
   ];
 }
@@ -157,12 +169,23 @@ export function proposedStops(
   const interest = interestStop(draft);
   const stops: ProposedStop[] = [];
 
-  // 1. L'eau, avant l'effort. L'interet « Eau » reprend la main sur le libelle.
-  stops.push(
-    interest && interest.kind === 'ravitaillement' && interest.title === WATER.title
-      ? { kind: interest.kind, title: interest.title, reason: interest.reason }
-      : { kind: WATER.kind, title: WATER.title, reason: WATER.reason },
-  );
+  // 1. L'eau, avant l'effort, et une seule fois. L'interet « Eau » reprend la
+  //    main sur le libelle du premier jour. Les jours suivants ne remettent pas
+  //    la meme ligne : l'eau y est fusionnee dans le ravitaillement du jour,
+  //    sinon le programme affiche « Eau et ravitaillement » un jour sur trois.
+  if (day === 1) {
+    stops.push(
+      interest && interest.kind === 'ravitaillement' && interest.title === WATER.title
+        ? { kind: interest.kind, title: interest.title, reason: interest.reason }
+        : { kind: WATER.kind, title: WATER.title, reason: WATER.reason },
+    );
+  } else {
+    stops.push({
+      kind: WATER_LATER.kind,
+      title: WATER_LATER.title,
+      reason: WATER_LATER.reason,
+    });
+  }
 
   // 2. L'arret porte l'interet declare, sinon une halte generique.
   if (interest && interest.kind === 'arret') {
@@ -191,7 +214,7 @@ export function proposedStops(
       : {
           kind: 'ravitaillement',
           title: 'Repas de midi',
-          reason: 'Repas a prevoir sur le parcours — lieu et prix a verifier',
+          reason: 'Repas à prévoir sur le parcours — lieu et prix à vérifier',
         };
   stops.push({
     kind: meal.kind,
@@ -204,8 +227,8 @@ export function proposedStops(
   if (day === days && days > 1) {
     stops.push({
       kind: 'ravitaillement',
-      title: 'Diner',
-      reason: 'Diner a prevoir le dernier soir — lieu et prix a verifier',
+      title: 'Dîner',
+      reason: 'Dîner à prévoir le dernier soir — lieu et prix à vérifier',
       mealSlot: 'diner',
     });
   }
@@ -214,8 +237,8 @@ export function proposedStops(
   if (day < days && draft.activities.nights.includes('bivouac') && activity) {
     stops.push({
       kind: 'arret',
-      title: 'Reperage du spot de bivouac',
-      reason: 'Tu as choisi le bivouac : l emplacement reste a trouver sur le terrain',
+      title: 'Repérage du spot de bivouac',
+      reason: 'Tu as choisi le bivouac\u00A0: l\'emplacement reste à trouver sur le terrain',
     });
   }
 

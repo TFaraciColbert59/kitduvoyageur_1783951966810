@@ -16,7 +16,6 @@ import type {
   AdventurePrepDraft,
   GroupBlock,
   PlaceRef,
-  RouteShape,
 } from '../types';
 
 /* ------------------------------------------------------------------ */
@@ -25,8 +24,9 @@ import type {
 
 /**
  * Champs necessaires pour lancer la generation, dans l'ordre ou l'utilisateur
- * les rencontre. `startDate` n'est PAS bloquant : une aventure sans date reste
- * realisable, la date se confirme plus tard dans le calendrier.
+ * les rencontre. `startDate` et `destination` ne sont PAS bloquants : sans date
+ * l'IA choisit le moment le plus opportun, sans arrivee le parcours est une boucle.
+ * Les deux restent signales pour que l'utilisateur sache ce que l'IA a decide a sa place.
  */
 export type MissingFieldKey =
   | 'activity'
@@ -53,7 +53,6 @@ const MISSING_LABELS: Readonly<Record<MissingFieldKey, string>> = {
 const BLOCKING_KEYS: ReadonlySet<MissingFieldKey> = new Set<MissingFieldKey>([
   'activity',
   'origin',
-  'destination',
   'duration',
 ]);
 
@@ -66,7 +65,7 @@ export function missingFields(draft: AdventurePrepDraft): readonly MissingField[
 
   if (!draft.activities.primary) found.push('activity');
   if (!draft.route.origin) found.push('origin');
-  if (draft.route.shape === 'aller_simple' && !draft.route.destination) found.push('destination');
+  if (!draft.route.destination) found.push('destination');
   if (draft.calendar.startDate === null) found.push('startDate');
   if (!draft.calendar.durationDays || draft.calendar.durationDays <= 0) found.push('duration');
 
@@ -93,20 +92,13 @@ export function missingSummary(draft: AdventurePrepDraft): string | null {
 /* Forme du parcours                                                   */
 /* ------------------------------------------------------------------ */
 
-export interface RouteShapeOption {
-  shape: RouteShape;
-  label: string;
-  icon: string;
-}
-
-export const ROUTE_SHAPE_OPTIONS: readonly RouteShapeOption[] = [
-  { shape: 'boucle', label: 'Boucle', icon: 'refresh-cw' },
-  { shape: 'aller_simple', label: 'Aller simple', icon: 'arrow-right' },
-];
-
+/**
+ * Aiguillage de forme : un aller simple a un sens, une boucle non. La forme
+ * elle-meme n est plus proposee : elle se deduit de la presence d une arrivee.
+ */
 /** Aiguillage de forme : un aller simple a un sens, une boucle non. */
 export function canSwapEnds(draft: AdventurePrepDraft): boolean {
-  return draft.route.shape === 'aller_simple' && draft.route.origin !== null && draft.route.destination !== null;
+  return draft.route.origin !== null && draft.route.destination !== null;
 }
 
 /* ------------------------------------------------------------------ */

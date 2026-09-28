@@ -1,4 +1,6 @@
-import type { Contingency, ItineraryModel } from '../types';
+import { describeAiFailure } from './aiFailure';
+import type { AIFailureReason } from '@/lib/ai/providers/types';
+import type { Contingency, GenerationPhaseId, ItineraryModel } from '../types';
 
 /* ------------------------------------------------------------------ */
 /* Hors ligne - ecran transverse 70                                   */
@@ -35,6 +37,15 @@ export interface OfflineReadinessInput {
   aiEnabled: boolean;
   /** Nombre d'etapes a compter ; par defaut, celui du modele. */
   stepsCount?: number;
+  /**
+   * Cause REELLE de la derniere degradation, quand elle est connue.
+   *
+   * Sans elle, le bandeau n'a que deux phrases possibles et les deux mentent
+   * des que la cause est un delai : il dirait « assistant desactive » pour un
+   * simple service lent, ce qui est la premiere impression trompeuse que
+   * l'utilisateur a signalee.
+   */
+  aiFailure?: AIFailureReason | null;
 }
 
 /**
@@ -99,20 +110,31 @@ function buildSummary(count: number): string {
  * choisir un. Le reseau est la cause PROCHE, l'assistant coupe une seconde
  * qu'aucune patience ne resoudra.
  */
-function aiUnavailableReason(online: boolean, aiEnabled: boolean): string {
+function aiUnavailableReason(
+  online: boolean,
+  aiEnabled: boolean,
+  failure: AIFailureReason | null,
+): string {
+  // Une cause CONNUE prime toujours : elle est plus precise que les deux
+  // hypotheses generales ci-dessous, et elle est la seule vraie.
+  if (failure) return describeAiFailure(failure) ?? REASON_IA_COUPE;
   if (!online && !aiEnabled) return `${REASON_AUCUN_RESEAU} ${REASON_IA_COUPE}`;
   if (!online) return REASON_AUCUN_RESEAU;
   return REASON_IA_COUPE;
 }
 
 /** Une entree, et seulement si l'action est reellement indisponible. */
-function unavailableActions({ online, aiEnabled }: OfflineReadinessInput): OfflineUnavailableAction[] {
+function unavailableActions({
+  online,
+  aiEnabled,
+  aiFailure = null,
+}: OfflineReadinessInput): OfflineUnavailableAction[] {
   if (online && aiEnabled) return [];
   return [
     {
       id: OFFLINE_ACTION.itineraireIA,
       label: LABEL_IA,
-      reason: aiUnavailableReason(online, aiEnabled),
+      reason: aiUnavailableReason(online, aiEnabled, aiFailure),
     },
   ];
 }
@@ -221,3 +243,142 @@ export function buildContingencies(model: ItineraryModel | null): ItineraryModel
 
   return list;
 }
+/* ------------------------------------------------------------------ */
+/* P0.3 — Une phase qui echoue n est pas une generation morte          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Les six phases, et rien d'autre.
+ *
+ * Cette liste est FERMEE : c est elle qui empeche une reprise de deriver vers
+ * une phase qui n existe pas, et qui permet a l ecran d afficher un bouton
+ * « Reessayer » uniquement sur des phases qui se rejouent vraiment.
+ */
+export const PHASE_IDS = [
+  'recherche_parcours',
+  'verification_etapes',
+  'disponibilites',
+  'lieux',
+  'trace',
+  'meteo',
+  'synthese',
+] as const;
+
+/** Une phase a-t-elle echoue au sens strict : le service ou le calcul a leve ? */
+export type PhaseStatus =
+  /** Le travail a rendu une valeur reelle. */
+  | 'reussie'
+  /** Le travail a leve, ou son resultat a ete refuse : il faut le rejouer. */
+  | 'echoue'
+  /** Le travail a abouti, mais sans valeur : on ne sait pas, ce n est pas une panne. */
+  | 'inverifiable';
+
+export interface PhaseOutcome {
+  readonly id: GenerationPhaseId;
+  readonly status: PhaseStatus;
+  /**
+   * Raison MOTIVEE, prete a afficher telle quelle. Jamais de detail technique :
+   * ni nom de fournisseur, ni code HTTP, ni trace d exception. Une raison qui
+   * contient un `503` ou un nom de variable est une raison que personne ne lit.
+   */
+  readonly reason: string | null;
+  /** Cette phase se rejoue-t-elle seule, sans reconstruire tout le parcours ? */
+  readonly retryable: boolean;
+}
+
+/** Les six phases sont rejouables une par une : chacune a un runner dedie. */
+const RETRYABLE: ReadonlySet<string> = new Set<string>(PHASE_IDS);
+
+export function isPhaseId(value: string): value is GenerationPhaseId {
+  return RETRYABLE.has(value);
+}
+
+export interface PhaseHealth {
+  readonly phases: readonly PhaseOutcome[];
+  /**
+   * Les phases qui n'ont PAS livre de resultat : `echoue` ET `inverifiable`.
+   *
+   * Les deux comptes : du point de vue de la personne, une journee sans meteo et
+   * un service tombe demandent la MEME action — reessayer. Les distinguer dans
+   * le code evite de les confondre dans le message.
+   */
+  readonly failed: readonly PhaseOutcome[];
+  /** Strictement celles qui ont LEVE : une panne, pas une absence. */
+  readonly broken: readonly PhaseOutcome[];
+  /** Les phases qu on peut rejouer seule par seule. */
+  readonly retryable: readonly GenerationPhaseId[];
+  /**
+   * `true` SEULEMENT quand aucun parcours n a pu etre produit.
+   *
+   * C'est LA distinction que le bandeau doit faire, et la seule : un `dead` a
+   * `true` a pour cause un parcours absent, jamais une mesure qui n'a pas
+   * abouti. Brancher le kill-switch sur une phase en echec eteindrait l'assistant
+   * pour un simple fournisseur meteo indisponible.
+   */
+  readonly dead: boolean;
+  /** `true` quand un parcours existe et reste affichable. */
+  readonly reusable: boolean;
+  /** Phrase pour le bandeau : ce qui reste, puis ce qui manque. */
+  readonly summary: string;
+}
+
+const SUMMARY_DEAD =
+  'Cette génération n’a rien produit : le parcours n’est pas disponible. Relance la génération.';
+const SUMMARY_OK = 'Le parcours est prêt et reste modifiable.';
+
+function buildPhaseSummary(dead: boolean, failed: readonly PhaseOutcome[]): string {
+  if (dead) return SUMMARY_DEAD;
+  if (failed.length === 0) return SUMMARY_OK;
+  const noms = failed.map((phase) => PHASE_LABELS[phase.id] ?? phase.id).join(', ');
+  return `Le parcours est prêt et reste modifiable. À rejouer : ${noms}.`;
+}
+
+/** Les libelles exacts du rail, reutilises pour nommer la phase a l oral. */
+const PHASE_LABELS: Readonly<Record<GenerationPhaseId, string>> = {
+  recherche_parcours: 'la recherche du parcours',
+  verification_etapes: 'la vérification des étapes',
+  disponibilites: 'les disponibilités',
+  lieux: 'la recherche des lieux r' + String.fromCharCode(233) + 'els',
+  trace: 'le calcul des distances',
+  meteo: 'la météo',
+  synthese: 'la mise en forme',
+};
+
+/**
+ * L'etat de sante de la generation, calcule SANS le shell.
+ *
+ * La fonction est pure et ne prend que le resultat de la generation : le
+ * bandeau n'a donc plus a reconstruire la logique du kill-switch, il lit un
+ * booleen. C'est ce qui rend la distinction « phase tombee » / « generation
+ * morte » impossible a inverser par erreur dans une ligne de JSX.
+ */
+export function phaseHealth(outcome: {
+  readonly model: ItineraryModel | null;
+  readonly phases?: readonly PhaseOutcome[];
+}): PhaseHealth {
+  const phases = outcome.phases ?? [];
+  const failed = phases.filter((phase) => phase.status !== 'reussie');
+  const broken = phases.filter((phase) => phase.status === 'echoue');
+  const dead = outcome.model === null;
+  return {
+    phases,
+    failed,
+    broken,
+    retryable: failed
+      .filter((phase) => phase.retryable && RETRYABLE.has(phase.id))
+      .map((phase) => phase.id),
+    dead,
+    reusable: !dead,
+    summary: buildPhaseSummary(dead, failed),
+  };
+}
+
+/** La raison a afficher pour une phase, ou `null` quand elle a reussi. */
+export function phaseReason(
+  health: PhaseHealth,
+  id: GenerationPhaseId,
+): string | null {
+  return health.phases.find((phase) => phase.id === id)?.reason ?? null;
+}
+
+

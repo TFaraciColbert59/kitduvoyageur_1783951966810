@@ -5,13 +5,13 @@
 // de reponse). Aucun secret ici non plus : les deux fournisseurs sont libres et
 // sans cle, donc rien a exposer au client.
 import { NextRequest, NextResponse } from 'next/server';
-import { geocodePlace } from '@/features/adventure-prep/geocodeService';
+import { geocodePlace, reverseGeocodePlace } from '@/features/adventure-prep/geocodeService';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { clientIpFromHeaders } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
-const ALLOWED_KEYS = ['q', 'limit'] as const;
+const ALLOWED_KEYS = ['q', 'limit', 'lat', 'lon'] as const;
 const CACHE = { 'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400' } as const;
 
 /**
@@ -42,6 +42,31 @@ export async function GET(request: NextRequest) {
   }
 
   const q = params.get('q') ?? '';
+  const lat = params.get('lat');
+  const lon = params.get('lon');
+
+  // Point inverse : `lat`/`lon` designent la position REELLE de la personne,
+  // et le service en rend le nom de commune. C'est ce qui permet d ecrire
+  // « Chamonix-Mont-Blanc » la ou l on est, au lieu d un « Ma position » vide.
+  if (lat !== null || lon !== null) {
+    const numeric = (raw: string | null): unknown => (raw === null ? Number.NaN : Number(raw));
+    const result = await reverseGeocodePlace(numeric(lat), numeric(lon));
+
+    if (result.status === 'invalid') {
+      return NextResponse.json(
+        { status: 'invalid', matches: [], reason: lat === null || lon === null ? 'lat_lon_pair_expected' : 'lat_lon_range_expected' },
+        { status: 400 },
+      );
+    }
+    if (result.status === 'unavailable') {
+      return NextResponse.json(
+        { status: 'unavailable', matches: [], reason: 'providers_unreachable' },
+        { status: 503, headers: { 'Cache-Control': 'no-store' } },
+      );
+    }
+    return NextResponse.json(result, { status: 200, headers: CACHE });
+  }
+
   if (q.length > 200) {
     return NextResponse.json(
       { status: 'invalid', matches: [], reason: 'query_too_long' },

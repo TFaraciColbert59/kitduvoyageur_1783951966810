@@ -29,6 +29,7 @@ import type { AdventurePrepDraft, DayTotals, ItineraryModel, ItineraryStep } fro
 const TOTALS: DayTotals = {
   distanceKm: 12.4,
   movingMin: 195,
+  activityMin: 330,
   elevGainM: 640,
   elevLossM: 610,
 };
@@ -36,6 +37,7 @@ const TOTALS: DayTotals = {
 const UNKNOWN_TOTALS: DayTotals = {
   distanceKm: null,
   movingMin: null,
+  activityMin: null,
   elevGainM: null,
   elevLossM: null,
 };

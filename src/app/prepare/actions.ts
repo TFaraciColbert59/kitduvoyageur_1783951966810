@@ -2,7 +2,8 @@
 
 import { createInviteToken } from '@/features/crews/lib/invitations';
 import { requestDraftedItinerary } from '@/features/adventure-prep/engine/aiItinerary';
-import type { DraftedItinerary } from '@/features/adventure-prep/engine/itineraryEngine';
+import type { ProposalResult } from '@/features/adventure-prep/engine/itineraryPhases';
+import type { PlaceInventory } from '@/features/adventure-prep/engine/places';
 import type { AdventurePrepDraft } from '@/features/adventure-prep/types';
 
 /**
@@ -20,10 +21,16 @@ import type { AdventurePrepDraft } from '@/features/adventure-prep/types';
  */
 export async function fetchItineraryProposal(
   draft: AdventurePrepDraft,
-): Promise<DraftedItinerary | null> {
+  availablePlaces?: readonly PlaceInventory[],
+): Promise<ProposalResult> {
   // Aucune erreur ne sort d'ici : le repli regles est une reponse valide, pas
   // une exception. `requestDraftedItinerary` degrade deja en `null`.
-  return requestDraftedItinerary(draft, new AbortController().signal);
+  // L inventaire est fourni par l ecran, pas relu ici : `/api/pois` est une
+  // route relative au navigateur, donc le serveur ne peut pas la rappeler, et
+  // une deuxieme lecture de la meme source risquerait de diverger de celle du
+  // resolveur. Il ne contient que des noms et des categories, donc il traverse
+  // la frontiere serveur sans rien reveler.
+  return requestDraftedItinerary(draft, new AbortController().signal, availablePlaces);
 }
 
 /* ------------------------------------------------------------------ */

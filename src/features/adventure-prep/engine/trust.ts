@@ -25,7 +25,10 @@ export function formatMinutes(minutes: number | null): string {
   if (minutes < 60) return `${Math.round(minutes)} min`;
   const hours = Math.floor(minutes / 60);
   const rest = Math.round(minutes % 60);
-  return rest === 0 ? `${hours} h` : `${hours} h ${String(rest).padStart(2, '0')}`;
+  // « 13 h 28 » sans unite se lit comme une valeur decimale. L' unite rend la
+  // mesure explicite sans allonger la ligne : c'est la tuile entiere qui la
+  // porte, pas le chiffre seul.
+  return rest === 0 ? `${hours} h` : `${hours} h ${String(rest).padStart(2, '0')} min`;
 }
 
 export function formatNumber(value: number): string {
@@ -39,8 +42,9 @@ export function formatNumber(value: number): string {
  * Les unités qui ne se comptent pas (« km », « m », « € ») restent intactes.
  */
 export function countableUnit(unit: string, value: number): string {
-  if (Math.abs(value - 1) > 1e-9) return unit;
-  return unit.endsWith('s') ? unit.slice(0, -1) : unit;
+  // En francais, zero prend le singulier : « 0 jour », comme « 1 jour ».
+  if (Math.abs(value) <= 1 + 1e-9) return unit.endsWith('s') ? unit.slice(0, -1) : unit;
+  return unit;
 }
 
 /** Valeur formatée d'une mesure, ou la formulation « à vérifier ». */

@@ -6,6 +6,12 @@
  *
  * Regle produit : le bivouac peut etre une activite principale OU une nuit
  * ajoutee a une autre aventure ; une aventure combine plusieurs activites.
+ *
+ * Regle de donnees : `suggestedDurationHours` est une valeur de TRAVAIL —
+ * elle donne un point de depart a la generation et separe l etape de
+ * generation, ou l utilisateur confirme ou corrige. Elle n est jamais publiee
+ * a l ecran. Ce que l ecran montre vient de `activityTemplateLabel()`, qui ne
+ * contient aucun nombre.
  */
 
 import type {
@@ -345,6 +351,56 @@ function normalize(value: string): string {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
+/** Mots outils de la phrase : ils ne distinguent aucune activite d une autre. */
+const STOP_WORDS = new Set([
+  'a', 'ai', 'aime', 'avec', 'au', 'aux', 'ce', 'ces', 'dans', 'de', 'des', 'du', 'elle',
+  'en', 'et', 'il', 'ils', 'je', 'la', 'le', 'les', 'leur', 'leurs', 'lui', 'ma', 'mais',
+  'me', 'mes', 'moi', 'mon', 'ne', 'nos', 'notre', 'nous', 'on', 'ou', 'par', 'pas', 'pour',
+  'quand', 'que', 'qui', 'sa', 'ses', 'sur', 'ta', 'te', 'tes', 'toi', 'ton', 'tu', 'un',
+  'une', 'vos', 'votre', 'vous', 'y',
+]);
+
+function briefTokens(brief: string): readonly string[] {
+  return normalize(brief)
+    .replace(/[^a-z0-9]+/g, ' ')
+    .split(' ')
+    .filter((word) => word.length > 2 && !STOP_WORDS.has(word));
+}
+
+/**
+ * Classe le catalogue reel selon la pertinence d'un brief libre.
+ *
+ * Le mot entier ne suffit pas : une phrase ne contient jamais le libelle d'une
+ * activite. On note donc chaque activite au nombre de mots du brief qu'elle
+ * porte reellement, et on ne garde que celles qui en portent au moins un.
+ *
+ * C'est une recherche, pas une proposition : rien n'est invente ici. Un brief
+ * qui ne parle d'aucune activite connue ne rend QUE cet echec — la liste
+ * reste vide plutot que de retomber sur un choix par defaut presente comme
+ * une correspondance. Le cas « pas de brief » rend tout le catalogue, qui est
+ * l'absence de tri, pas un resultat.
+ */
+export function rankActivitiesByBrief(brief: string): readonly ActivityDef[] {
+  const tokens = briefTokens(brief);
+  if (tokens.length === 0) return ACTIVITIES;
+  const scored = ACTIVITIES.map((activity) => {
+    const label = normalize(activity.label);
+    const rest = normalize([activity.category, ...activity.keywords].join(' '));
+    // Le libelle est le NOM de l activite : il prime sur la famille et les
+    // mots-cles. Dire « velo » doit donc placer le velo devant une randonnee
+    // qui partage seulement le mot « montagne ».
+    const score = tokens.reduce((total, word) => {
+      if (label.includes(word)) return total + 3;
+      if (rest.includes(word)) return total + 1;
+      return total;
+    }, 0);
+    return { activity, score };
+  }).filter((entry) => entry.score > 0);
+  return scored
+    .sort((a, b) => b.score - a.score)
+    .map((entry) => entry.activity);
+}
+
 /** Contexte de metrique retenu quand plusieurs activites sont combinees. */
 export function metricsContextFor(selection: ActivitySelection): 'terrain' | 'sejour' | 'voyage' {
   const ids = [selection.primary, ...selection.extra].filter((v): v is string => !!v);
@@ -369,3 +425,68 @@ export function selectedActivities(selection: ActivitySelection): readonly Activ
     .filter((activity): activity is ActivityDef => !!activity);
 }
 
+
+/* ------------------------------------------------------------------ */
+/* Gabarit de depart — la forme du sejour, jamais sa mesure            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Choisir un TYPE d aventure est legitime : l utilisateur dit ce qu il veut
+ * faire. Publier une DUREE ne l est pas. « 6 h environ » n a ete mesure par
+ * personne, sur aucune sortie : c est une invention presentee comme une
+ * information, et le mot « environ » ne la rendait pas plus vraie, seulement
+ * plus ronde.
+ *
+ * Le catalogue ne propose donc plus qu une FORME de sejour. Elle est deduite
+ * du type d aventure — une nuit de refuge implique une nuit, pas 24 h — et
+ * s affiche sans aucun chiffre, comme un point de depart a preciser.
+ */
+export type ActivityTemplate = 'journee' | 'nuit' | 'sejour' | 'trajet' | 'libre';
+
+const TEMPLATE_LABELS: Readonly<Record<ActivityTemplate, string>> = {
+  journee: 'Gabarit : journée',
+  nuit: 'Gabarit : avec une nuit',
+  sejour: 'Gabarit : séjour',
+  trajet: 'Gabarit : long trajet',
+  libre: 'Gabarit : à préciser',
+};
+
+/**
+ * Une entree par identifiant, pas un champ dans `ActivityDef` : `types.ts`
+ * appartient a un autre agent, et surtout le gabarit est une consequence du
+ * type — le meme module doit rester lisible d'un coup d'oeil.
+ */
+const TEMPLATE_BY_ID: Readonly<Record<string, ActivityTemplate>> = {
+  'rando-journee': 'journee',
+  'rando-refuge': 'nuit',
+  trail: 'journee',
+  course: 'journee',
+  'velo-route': 'journee',
+  gravel: 'journee',
+  bikepacking: 'sejour',
+  'canoe-journee': 'journee',
+  regate: 'journee',
+  'plongee-autonome': 'journee',
+  'ski-randonnee': 'nuit',
+  'snowboard-sejour': 'sejour',
+  alpinisme: 'sejour',
+  roadtrip: 'trajet',
+  'city-break': 'sejour',
+  'avion-long': 'trajet',
+  escalade: 'journee',
+  parapente: 'journee',
+  'ski-alpin': 'journee',
+  kayak: 'journee',
+  bivouac: 'nuit',
+};
+
+/** Gabarit d une aventure, ou `libre` quand on ne sait pas encore. */
+export function activityTemplate(id: string | null): ActivityTemplate {
+  if (!id) return 'libre';
+  return TEMPLATE_BY_ID[id] ?? 'libre';
+}
+
+/** Libelle affichable du gabarit. Jamais de chiffre, jamais de duree. */
+export function activityTemplateLabel(id: string | null): string {
+  return TEMPLATE_LABELS[activityTemplate(id)];
+}

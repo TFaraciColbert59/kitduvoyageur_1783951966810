@@ -1,3 +1,4 @@
+import type { AIFailureReason } from '@/lib/ai/providers/types';
 import type {
   AdventurePrepDraft,
   GenerationPhase,
@@ -7,13 +8,21 @@ import type {
 } from '../types';
 
 /**
- * Les quatre phases reellement executees, dans l'ordre. Elles decrivent un
+ * Les sept phases reellement executees, dans l'ordre. Elles decrivent un
  * travail reel, jamais une animation : aucune n'est cochee a la construction.
+ *
+ * `trace` et `meteo` mesurent ce que les regles ne peuvent pas inventer : le
+ * Kilometrage vient d OSRM sur le reseau routier, la meteo d Open-Meteo sur
+ * les dates reelles de l aventure. Un fournisseur muet laisse la phase
+ * cochee et la mesure a `null` — l'ecran affiche « a verifier ».
  */
 export const GENERATION_PHASES: readonly { id: GenerationPhaseId; label: string }[] = [
   { id: 'recherche_parcours', label: 'Recherche du parcours' },
   { id: 'verification_etapes', label: 'Vérification des étapes' },
   { id: 'disponibilites', label: 'Vérification des disponibilités' },
+  { id: 'lieux', label: 'Recherche des lieux réels' },
+  { id: 'trace', label: 'Calcul des distances sur le réseau' },
+  { id: 'meteo', label: 'Météo des jours de ton aventure' },
   { id: 'synthese', label: 'Mise en forme de ton aventure' },
 ];
 
@@ -22,7 +31,7 @@ function phases(done: GenerationPhaseId[] = []): GenerationPhase[] {
 }
 
 export function initialGeneration(): GenerationState {
-  return { status: 'idle', phases: phases(), steps: [], days: 0, error: null, notice: null };
+  return { status: 'idle', phases: phases(), steps: [], days: 0, error: null, notice: null, failure: null };
 }
 
 export interface GenerationProgress {
@@ -46,7 +55,7 @@ export function generationProgress(state: GenerationState): GenerationProgress {
 }
 
 export function startGeneration(_previous: GenerationState): GenerationState {
-  return { status: 'en_cours', phases: phases(), steps: [], days: 0, error: null, notice: null };
+  return { status: 'en_cours', phases: phases(), steps: [], days: 0, error: null, notice: null, failure: null };
 }
 
 export function resumeGeneration(state: GenerationState): GenerationState {
@@ -90,6 +99,20 @@ export function failGeneration(state: GenerationState, error: string): Generatio
  */
 export function setGenerationNotice(state: GenerationState, notice: string | null): GenerationState {
   return state.notice === notice ? state : { ...state, notice };
+}
+
+/**
+ * La cause, stockee a cote de la phrase.
+ *
+ * Elle vit dans le store — donc dans `localStorage` — parce que le bandeau de
+ * l'ecran suivant doit pouvoir nommer la meme cause que la notice, sans
+ * redemander le service qui vient de tomber.
+ */
+export function setGenerationFailure(
+  state: GenerationState,
+  failure: AIFailureReason | null,
+): GenerationState {
+  return state.failure === failure ? state : { ...state, failure };
 }
 
 export function finishGeneration(state: GenerationState): GenerationState {

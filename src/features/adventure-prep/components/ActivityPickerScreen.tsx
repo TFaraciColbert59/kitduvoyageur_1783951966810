@@ -3,7 +3,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Icon from '@/components/ui/Icon';
 import { Button } from '@/components/ui';
-import { ACTIVITY_CATEGORIES, activityById, primaryCandidates, searchActivities } from '../catalog';
+import {
+  ACTIVITY_CATEGORIES,
+  activityById,
+  activityTemplateLabel,
+  primaryCandidates,
+  rankActivitiesByBrief,
+  searchActivities,
+} from '../catalog';
 import { useAdventurePrepStore } from '../store/useAdventurePrepStore';
 import type { ActivityCategoryId, ActivityDef, ActivitySelection } from '../types';
 import type { PrepSheetId } from './PrepSheets';
@@ -44,11 +51,13 @@ function writeRecentIds(ids: readonly string[]): void {
   }
 }
 
-function durationLabel(hours: number): string {
-  if (hours < 24) return `${hours} h environ`;
-  const days = Math.round(hours / 24);
-  return `${days} ${days > 1 ? 'jours' : 'jour'} environ`;
-}
+/*
+ * Le catalogue ne publie plus de duree : `durationLabel` affichait « 6 h
+ * environ » sur chaque carte, une valeur qu'aucune sortie n'a jamais produite.
+ * Elle cede la place a `activityTemplateLabel()`, qui donne la FORME du sejour
+ * (« Gabarit : journée ») sans chiffre. La duree reste une donnee de travail
+ * du catalogue, jamais un texte d'ecran.
+ */
 
 function selectionCountLabel(count: number): string {
   return `${count} ${count > 1 ? 'activités retenues' : 'activité retenue'}`;
@@ -105,7 +114,7 @@ function ActivityRow({ activity, selected, stateLabel, onToggle }: ActivityRowPr
           <span className="prep-act__name" style={{ whiteSpace: 'normal', overflow: 'visible', textOverflow: 'clip' }}>
             {activity.label}
           </span>
-          <span className="prep-act__hint">{durationLabel(activity.suggestedDurationHours)}</span>
+          <span className="prep-act__hint">{activityTemplateLabel(activity.id)}</span>
         </span>
         <span className="prep-act__check" aria-hidden="true">
           {selected ? <Icon name="check" size={20} /> : null}
@@ -159,10 +168,24 @@ export function ActivityPickerScreen({ onOpenSheet: _onOpenSheet }: ActivityPick
     [],
   );
 
-  const visible = useMemo(
-    () => searchActivities(query, categoryId).filter((activity) => selectableIds.has(activity.id)),
-    [query, categoryId, selectableIds],
-  );
+  /**
+   * Ce que la liste affiche.
+   *
+   * Un mot recherche dans le catalogue l emporte : la recherche est une
+   * intention plus precise que la phrase. Sinon, c est l invite libre qui
+   * classe le catalogue REEL. Les deux ne proposes jamais une activite qui
+   * n existe pas dans le catalogue.
+   */
+  const visible = useMemo(() => {
+    const brief = (draft.brief ?? '').trim();
+    const pool =
+      query.trim().length > 0
+        ? searchActivities(query, categoryId)
+        : brief.length > 0
+          ? rankActivitiesByBrief(brief).filter((activity) => activity.category === categoryId)
+          : searchActivities('', categoryId);
+    return pool.filter((activity) => selectableIds.has(activity.id));
+  }, [query, categoryId, selectableIds, draft.brief]);
 
   const recentActivities = useMemo(
     () =>
@@ -206,6 +229,11 @@ export function ActivityPickerScreen({ onOpenSheet: _onOpenSheet }: ActivityPick
     }));
   }, []);
 
+  /** Invite libre : elle part dans le store, elle atteint la generation IA. */
+  const onBriefChange = useCallback((value: string) => {
+    useAdventurePrepStore.getState().setBrief(value);
+  }, []);
+
   const toggleExtra = useCallback((activity: ActivityDef) => {
     setSelection((current) => toggleComplement(current, activity));
   }, []);
@@ -237,6 +265,28 @@ export function ActivityPickerScreen({ onOpenSheet: _onOpenSheet }: ActivityPick
         <h1 className="prep-title" style={{ fontSize: 28, fontWeight: 700, margin: 0, color: 'var(--lkv-text-primary)' }}>
           Quelle aventure&nbsp;?
         </h1>
+
+        <div className="prep-block prep-brief">
+          <label className="prep-brief__label" htmlFor="prep-picker-brief">
+            <Icon name="sparkles" size={16} aria-hidden="true" />
+            <span>Qu’est-ce que tu as en tête ?</span>
+          </label>
+          <textarea
+            id="prep-picker-brief"
+            className="prep-brief__input"
+            value={draft.brief ?? ''}
+            onChange={(event) => onBriefChange(event.target.value)}
+            placeholder="Écris ce que tu imagines, l’IA s’en charge…"
+            rows={3}
+            maxLength={400}
+            enterKeyHint="done"
+            spellCheck={false}
+          />
+          <p className="prep-brief__hint">
+            L’IA en tient compte pour tout générer. Tu peux aussi partir d’une
+            activité du catalogue ci-dessous.
+          </p>
+        </div>
 
         <div className="prep-block prep-search">
           <Icon name="search" size={20} color="var(--lkv-text-secondary)" />
@@ -322,7 +372,9 @@ export function ActivityPickerScreen({ onOpenSheet: _onOpenSheet }: ActivityPick
           </ul>
         ) : (
           <p className="prep-note" style={{ fontSize: 14, color: 'var(--lkv-text-secondary)' }}>
-            Aucune activité ne correspond à cette recherche. Essaie un autre mot ou une autre catégorie.
+            {query.trim().length > 0
+              ? 'Aucune activité ne correspond à cette recherche. Essaie un autre mot ou une autre catégorie.'
+              : 'Aucune activité du catalogue ne répond à cette description. Change de catégorie, ou pars librement : l’IA s’en charge.'}
           </p>
         )}
 

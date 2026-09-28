@@ -8,6 +8,7 @@ import {
   hasDayFocusPlateau,
   useDayFocusStore,
 } from '@/components/mobile-nav/dayFocusStore';
+import { bottomNavHeightToken } from '@/components/mobile-nav/navigation/bottom-nav-reservation';
 
 export interface AppShellProps {
   children?: React.ReactNode;
@@ -75,11 +76,13 @@ export default function AppShell({
   const hasDayPlateau = hasDayFocusPlateau(pathname, dayFocusDays);
 
   // Offsets canoniques (tokens.css) : plus aucune valeur 80/68/52 locale.
-  const bottomNavHeight = !hasBottomNav
-    ? 'var(--page-bottom-inset-bare)'
-    : hasUpperExtension || hasDayPlateau
-    ? 'var(--nav-offset-extended)'
-    : 'var(--nav-offset)';
+  // La fonction est celle de la barre — le rendu du plateau et cette
+  // reservation ne peuvent donc pas diverger.
+  const bottomNavHeight = bottomNavHeightToken({
+    hasBottomNav,
+    hasUpperExtension,
+    hasDayPlateau,
+  });
 
   // TOILE UNIQUE : le fond applicatif (image marbrée) est global et fixe.
   // Le shell est transparent par défaut pour le laisser traverser sur toutes

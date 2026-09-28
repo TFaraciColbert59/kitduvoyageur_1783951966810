@@ -10,7 +10,8 @@ import type {
   PrepStepId,
   RouteBlock,
 } from '../types';
-import { PREP_STEPS } from '../types';
+import { PREP_STEPS, deriveRouteShape, failedGenerationPhase } from '../types';
+import { canOpenStep, isStepSatisfied } from '../engine/steps';
 import { applyAdjustment } from '../engine/adjustments';
 import {
   addStep,
@@ -22,6 +23,7 @@ import {
 } from '../engine/itinerary';
 import type { AdjustmentId } from '../types';
 import type { GenerationPhaseId, GenerationState } from '../types';
+import type { PhaseRetry } from '../engine/itineraryPhases';
 import {
   finishGeneration,
   interruptGeneration,
@@ -54,8 +56,23 @@ export const draftActions = {
   setActivities: (draft: AdventurePrepDraft, activities: ActivitySelection): AdventurePrepDraft =>
     suggestDuration(commit(draft, { activities, itinerary: null })),
 
+  /**
+   * La forme du parcours n'est jamais saisie : elle est derivee des lieux
+   * choisis. Une arrivee absente donne une boucle, une arrivee presente un
+   * aller simple. Toute valeur de `shape` recue de l'appelant est ecrasee.
+   */
   setRoute: (draft: AdventurePrepDraft, route: RouteBlock): AdventurePrepDraft =>
-    commit(draft, { route, itinerary: null }),
+    commit(draft, {
+      route: { ...route, shape: deriveRouteShape(route) },
+      itinerary: null,
+    }),
+
+  /** Invite libre de l'etape 1 : elle alimente la generation IA. */
+  setBrief: (draft: AdventurePrepDraft, brief: string | null): AdventurePrepDraft =>
+    commit(draft, {
+      brief: brief && brief.trim().length > 0 ? brief.trim() : null,
+      itinerary: null,
+    }),
 
   setCalendar: (draft: AdventurePrepDraft, calendar: CalendarBlock): AdventurePrepDraft =>
     commit(draft, { calendar, itinerary: null }),
@@ -69,10 +86,38 @@ export const draftActions = {
   setCoverName: (draft: AdventurePrepDraft, coverName: string | null): AdventurePrepDraft =>
     commit(draft, { coverName: coverName && coverName.trim().length > 0 ? coverName.trim() : null }),
 
-  goToStep: (draft: AdventurePrepDraft, currentStep: PrepStepId): AdventurePrepDraft =>
-    commit(draft, { currentStep }),
+  /**
+   * Seul passage possible vers une autre etape — et il est REFUSE tant que
+   * l etape precedente n est pas satisfaite.
+   *
+   * Le defaut : `currentStep` etait pose sans verification. Une fois
+   * `currentStep` incoherent, `completedSteps` ne suffisait plus a dire ce que
+   * l utilisateur avait REALLY valide : un aller-retour « Revenir a
+   * Preparation » pouvait laisser le parcours pointer l etape 3 sans que
+   * l etape 2 ait produit de parcours. Le store autorisait donc un etat que
+   * l ecran ne pouvait pas expliquer.
+   *
+   * On refuse au lieu de corriger apres coup : renvoyer le MEME objet, sans
+   * passer par `commit`, laisse `version` intacte — donc pas de re-rendu et
+   * pas d ecriture dans le brouillon autosave pour un saut qui n a pas eu
+   * lieu.
+   */
+  goToStep: (draft: AdventurePrepDraft, currentStep: PrepStepId): AdventurePrepDraft => {
+    if (currentStep === draft.currentStep) return draft;
+    if (!canOpenStep(draft, currentStep)) return draft;
+    return commit(draft, { currentStep });
+  },
 
+  /**
+   * Validation explicite d une etape, followed d avance d une seule.
+   *
+   * On refuse de valider une etape non satisfaite : sans ce garde, un ecran
+   * pouvait appeler `completeStep` par megarde et hop — l etape entrait dans
+   * `completedSteps` avec des reponses manquantes, ce qui rendait ensuite
+   * `canOpenStep` faux alors que l utilisateur croyait avoir valide.
+   */
   completeStep: (draft: AdventurePrepDraft, step: PrepStepId): AdventurePrepDraft => {
+    if (!isStepSatisfied(draft, step)) return draft;
     const completedSteps = draft.completedSteps.includes(step)
       ? draft.completedSteps
       : [...draft.completedSteps, step];
@@ -85,6 +130,72 @@ export const draftActions = {
 
   setGeneration: (draft: AdventurePrepDraft, generation: GenerationState): AdventurePrepDraft =>
     commit(draft, { generation }),
+
+  /**
+   * Re-arme UNE phase, et rien d autre.
+   *
+   * C est le seul geste autorise derriere un bouton « Reessayer ». Deux garde-fous
+   * tiennent l integrite de l etat :
+   *
+   * 1. Seule la phase REELLEMENT en echec est re-armee. Rejouer `trace` alors
+   *    que c est `meteo` qui a echoue lui ferait perdre des mesures deja acquises
+   *    pour rien. Le refus rend le MEME objet : `version` intacte, donc ni
+   *    re-rendu ni ecriture autosave pour une reprise qui n a pas eu lieu.
+   * 2. Aucune phase n est cochee, aucune etape n est ajoutee. Re-armee veut dire
+   *    « en attente », pas « reussie » : cocher ici produirait exactement le
+   *    mensonge que ce preparateur interdit — une coche sans travail derriere.
+   *
+   * `notice` et `failure` sont conserves : c est la derniere cause REELLEMENT
+   * observee, et elle reste vraie tant qu un resultat n est pas venu la
+   * remplacer. Les effacer au clic ferait disparaitre l information au moment
+   * ou l utilisateur cherche a comprendre.
+   */
+  retryPhase: (draft: AdventurePrepDraft, phase: GenerationPhaseId): AdventurePrepDraft => {
+    const fallen = failedGenerationPhase(draft.generation);
+    if (!fallen || fallen.id !== phase) return draft;
+    return commit(draft, {
+      generation: {
+        ...draft.generation,
+        status: 'en_cours',
+        error: null,
+        phases: draft.generation.phases.map((p) => (p.id === phase ? { ...p, done: false } : p)),
+      },
+    });
+  },
+
+  /**
+   * Depose le resultat REEL d une reprise de phase.
+   *
+   * Succes : la phase cochee est cochee, le modele renvoye par le moteur est
+   * depose tel quel, l erreur est effacee. Echec : RIEN n est coche, le parcours
+   * d origine est conserve intact — `retryGenerationPhase` garantit que le
+   * modele qu il rend est alors exactement celui qu il a recu, donc deposer un
+   * parcours a moitie reconstruit est impossible ici par construction.
+   *
+   * La raison de l echec est stockee dans `error`, qui est un texte libre honnete
+   * : elle vient du moteur, deja redigee pour etre lue. `failure` n est pas
+   * touche : c est la cause du service, pas le resultat de cette reprise.
+   */
+  applyPhaseRetry: (draft: AdventurePrepDraft, retry: PhaseRetry): AdventurePrepDraft => {
+    const { phase, model, outcome } = retry;
+    if (outcome.status !== 'reussie') {
+      return commit(draft, {
+        generation: {
+          ...draft.generation,
+          status: 'echec',
+          error: outcome.reason ?? 'Cette étape de préparation n a pas abouti.',
+        },
+      });
+    }
+    return commit(draft, {
+      itinerary: model,
+      generation: {
+        ...markPhaseDone(draft.generation, phase),
+        status: 'termine',
+        error: null,
+      },
+    });
+  },
 
   setItinerary: (draft: AdventurePrepDraft, itinerary: ItineraryModel | null): AdventurePrepDraft =>
     commit(draft, { itinerary }),

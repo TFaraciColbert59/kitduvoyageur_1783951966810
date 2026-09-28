@@ -832,6 +832,20 @@ html.dark, .dark, [data-theme='dark'] {
   --lkv-text-secondary: #EDF3EF;
   --lkv-text-muted: #CBD8D0;
   --lkv-text-subtle: #A8B8AF;
+  /* Encre d accent du theme sombre. Ce bloc redefinissait les encres de texte
+     et les encres de verre, mais laissait `--lkv-action` sur sa valeur du
+     theme clair (#226148) : mesure au navigateur en 393x852, la puce de filtre
+     selectionnee du preparateur sortait en rgb(34, 97, 72) sur le verre sombre,
+     soit 1,77:1. Les valeurs reprennent celles du bloc `.dark`, pour que
+     l'accent sombre n'ait qu'une definition. */
+  --lkv-action: #7FC49A;
+  --lkv-action-hover: #9AD4B1;
+  --lkv-action-soft: #24382C;
+  --lkv-action-rgb: 127, 196, 154;
+  /* Contenu pose sur un aplat d accent : sombre, sinon il disparait des que
+     l'accent devient clair. */
+  --lkv-on-action: #08150F;
+  --btn-on-solid: #08150F;
   --lkv-on-primary: #08150F;
   --lkv-on-primary-muted: #163B28;
 }

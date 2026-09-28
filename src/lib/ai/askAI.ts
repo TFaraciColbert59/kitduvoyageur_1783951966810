@@ -4,7 +4,7 @@ import { getProvider, modelNameFor } from './providers';
 import { getCached, setCached } from './responseStore';
 import { consumeQuota } from './quota';
 import { getFeature } from './features/registry';
-import type { AIRequest, AIResponse } from './providers/types';
+import { ProviderError, type AIRequest, type AIResponse, type AIFailureReason } from './providers/types';
 
 /**
  * POINT D'ENTRÉE UNIQUE du système IA LKDV — SERVEUR ONLY.
@@ -62,7 +62,10 @@ export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
   if (req.userId) {
     const allowed = await consumeQuota(req.userId, req.tier, req.feature, spec.maxPerUserPerDay);
     if (!allowed) {
-      return spec.fallbackResponse(req);
+      // La cause est attachee ICI : sans elle, l'appelant ne peut pas
+      // distinguer un quota epuise d'une panne, et afficher les deux comme une
+      // indisponibilite de service.
+      return { ...(await spec.fallbackResponse(req)), failureReason: 'quota_epuise' as AIFailureReason };
     }
   }
 
@@ -92,6 +95,10 @@ export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
       `[askAI] provider ${provider.name} en échec pour ${req.feature}:`,
       err instanceof Error ? err.message : err
     );
-    return spec.fallbackResponse(req);
+    // 504 = le provider a depasse son propre delai (cf. nvidia.ts). C'est le
+    // SEUL aleas transitoire de cette liste, et donc le seul qui se retente.
+    const failureReason: AIFailureReason =
+      err instanceof ProviderError && err.status === 504 ? 'delai_depasse' : 'provider_indisponible';
+    return { ...(await spec.fallbackResponse(req)), failureReason };
   }
 }
