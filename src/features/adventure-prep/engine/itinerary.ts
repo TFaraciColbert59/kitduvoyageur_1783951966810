@@ -146,10 +146,19 @@ export function buildItinerary(draft: AdventurePrepDraft): ItineraryModel | null
         state: 'a_reserver',
       });
     }
-    if (day === days && draft.route.shape === 'aller_simple' && destination) {
+    // Le retour vise l arrivee en aller simple, le DEPART en boucle.
+    //
+    // Ce n est pas un detail de forme : le motif du jour 1 ecrit deja « parcours
+    // en et on revient au point de depart ». Une boucle qui s arretait ailleurs
+    // contredisait cette phrase a l ecran, rendait faux un titre comme « Boucle
+    // du Mont-Blanc », et surtout ne comptait pas dans le kilometrage le retour
+    // reellement parcouru.
+    if (day === days) {
+      const retour = draft.route.shape === 'aller_simple' ? destination : origin;
+      if (!retour) continue;
       push(day, 'trajet', {
-        title: `Retour ${de(destination.name)}`,
-        placeName: destination.name,
+        title: `Retour ${de(retour.name)}`,
+        placeName: retour.name,
         reason: 'Retour : trajet et horaires à vérifier',
         state: travelState(draft),
         price:

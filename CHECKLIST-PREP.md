@@ -89,7 +89,7 @@ valeur tracée à sa source, ou test rouge → vert. Jamais sur la foi du code.
 puis `« choisis »` une fois. Le modèle couvrait un jour, en proposait trois, et sa proposition partait refusée pour `journee_non_couverte`. Test **D1-06** : le prompt ne contient plus aucun jour annoncé |
 
 **En cours :** **P0.26 et P0.27 sont FERMÉS — et P0.26 m a changé deux de mes diagnostics.** (a) La **génération 2 jours est réelle** : le tiroir de durée est un stepper (pas un `input[type=number]` — le vieux script le cherchait, d’où son « champ absent »), la cellule s’appelle **« Temps disponible »**, et l’écran final porte **Jour 1 ET Jour 2** avec **44,9 + 22,7 = 67,6 km** et **14 h 48 + 2 h 43 = 17 h 30** — les deux arithmétiques concordent, `journee_non_couverte : false`, `route` 22 × 200, **0** `off_network`. La **météo est réelle et par jour** (`/api/weather` 2 × 200), l’hier hors fenêtre elle était absente : elle est là parce que la source répond, pas parce qu’on l’a remplacée par du plausible. (b) Le CTA n’a jamais été cassé : `canCreateStepOne` exige `route.origin`, donc sans départ il est **désactivé — et c’est correct**, l’IA ne peut pas inventer où l’on est. (c) Ce qui semblait un **chevauchement** du CTA n’en était pas un : mesure, `.prep-body` bottom **667** = `.prep-footer` top **667**. C’était la coupe d `overflow-y` **au milieu des glyphes**, que la langue de verre ne pouvait pas réparer — corrigé par un fondu de dissolution (`--prep-scroll-fade-h: 32px`) avec réserve basse reportée à `--space-6 + --prep-scroll-fade-h`.
-**Prochaine priorité immédiate :** (1) la **duree d’activité estimée par journée** demandée à la place de la durée globale ; (2) le **budget réel** (partiel : « 75 € connus · 2 étapes à vérifier ») ; (3) le **titre** qui annonce une « boucle du Mont-Blanc » sur un parcours qui ne boucle pas — **donnée trompeuse, même si elle vient de l’IA** ; (4) **expliquer à l’écran** pourquoi le CTA est refusé.
+**Prochaine priorité immédiate :** (1) la **duree d’activité estimée par journée** demandée à la place de la durée globale ; (2) le **budget réel** (partiel : « 75 € connus · 2 étapes à vérifier ») ; (3) ~~le **titre** « boucle du Mont-Blanc »~~ **RÉSOLU le 2026-09-29 (A9)** — le parcours reboucle désormais pour de vrai (retour ancré sur l'origine, distance finale → 0,000 km) ; reste **Z-D18-03**, régression préexistante hors périmètre, consignée ; (4) **expliquer à l’écran** pourquoi le CTA est refusé.
 **Fermés le 2026-09-28 :** P0.18 (durée du brief respectée — le catalogue ne contredit plus l’IA), P0.15 (canal date de l’IA, de bout en bout), P0.13 (par ricochet — le badge existe enfin et porte sur la bonne cellule), P0.16 (météo échouée quand la date venait de l’IA).
 
 **Fait le 2026-09-28 (P0.10 reste, A5, P0.2) :** parcours de 3 JOURS généré
@@ -2227,6 +2227,64 @@ d'une intention : chaque ligne porte sa preuve.**
       le CSS ; j'en suis revenu à un recensement depuis la source. (3) Mon test
       initial classait `border-radius` comme une bordure, et `1px` comme une
       ombre : les deux venaient de comparer des noms au lieu des valeurs.
+- [x] **A9** ✅ **« Boucle du Mont-Blanc en 2 jours » : le titre promettait un
+      retour au départ que le programme ne faisait pas — la boucle existait à
+      l'écran, pas dans le tracé.**
+      Fermé le 2026-09-29, preuve navigateur + 9 tests de garde.
+      **Le symptôme.** L'IA promet « on revient au point de départ »
+      (`itinerary.ts:98`, `shapeLabel()`) et le motif du jour 1 l'affiche, mais
+      AUCUN des trois moteurs ne tenait la promesse : le kilométrage ignorait
+      le retour. Une donnée trompeuse, même si elle vient de l'IA.
+      **La cause, mesurée sur les trois moteurs — pas une, trois.** (1)
+      `engine/itinerary.ts` (buildItinerary) n'ajoutait une étape de retour
+      que pour `aller_simple`. (2) `engine/places.ts` (assignPlaces) visait
+      `destination` en retour ; en boucle `destination` est `null`, donc
+      l'étape de retour revenait SANS POSITION puis était SUPPRIMÉE par la
+      phase lieux. (3) `engine/continuity.ts` (versArrivee) ne corrigeait que
+      l'aller simple.
+      **Le correctif, un par moteur.** (1) La cible du retour est
+      `destination` en aller simple, **`origin` en boucle**. (2)
+      `assignPlaces` : `const cible = destination ?? origin` — l'étape de
+      retour est ancrée, donc conservée. (3) `versOrigine` ajouté à
+      `continuity.ts`, miroir exact de `versArrivee` (même seuil
+      `ARRIVEE_TOLERANCE_KM`), avec un helper `dernierSitue()` qui retombe
+      sur le dernier lieu connu si le dernier jour n'a aucune étape située.
+      **Preuve navigateur.** Pipeline réel sondé (buildItinerary → assignPlaces
+      → enforceDayContinuity) : le programme se termine sur `j2 trajet « Retour
+      de Chamonix »` ancré à **45.9237 / 6.8694**, **distance finale → origine
+      = 0,000 km**. Le retour est donc réellement mesuré par la phase tracé.
+      **Tests de garde.** `boucle-retour-origine.test.ts`, **9 tests** (A9-01..09)
+      — 3 groupes : la règle produit et tient la promesse (dont A9-04,
+      non-régression aller simple), la continuité ferme une boucle ouverte
+      (dont A9-06 pas de retour redondant, A9-07 jamais de retour vers
+      l'arrivée en boucle, A9-09 sans départ rien n'est inventé).
+      **Rouge → vert sur 4 sabotages** (`qa-local/sab9.cjs` +
+      `sabotage-9-backup.json`) : `itin`→A9-01 rouge, `plac`→A9-02 rouge,
+      `cont`→A9-05 + A9-08 rouges, `restore`→9/9 vert. **A9-02 a d'abord été
+      rendue NON VACUUSE** : sous sabotage, `assignPlaces` réduit le programme
+      au seul départ et l'ancienne assertion passait pour une mauvaise
+      raison.
+      **Trois erreurs de méthode, consignées.** (1) J'ai d'abord supposé
+      qu'un « décalage d'index » expliquait LR-06 ; la SONDE a montré
+      qu'avec des ordres par jour (le contrat réel) l'étape de retour arrive
+      bien en DERNIER — c'est la FIXTURE du test (ordres globaux) qui mentait,
+      pas le moteur. Le test a été corrigé pour être fidèle, pas le moteur pour
+      «satisfaire » le test. (2) EOL : `CHECKLIST-PREP.md` est **mixed**
+      (2 645 LF / 2 608 CRLF) — j'ai vérifié l'EOL de l'ancre avant chaque
+      édition, sans quoi `\r\n` casse l'ancre. (3) `LR-02` et `A8-06` ont
+      été **corrigés** (nouveaux nombres + assertions qui PINENT la règle :
+      LR-02 vérifie que le retour se referme sur CHAMONIX ; A8-06 vérifie
+      qu'aucune étape n'est ancrée sur ARGENTIERE) — pas simplement
+      incrémentés.
+      **Typecheck `tsc --noEmit` exit 0.** Suite complète : **612 fichiers /
+      5 736 tests / 1 échec** — `Z-D18-03` (`chantier-z1.spec.ts`,
+      `TripLiveCockpitView`), **régression préexistante et hors périmètre** :
+      vérifiée en solo ET sur arbre propre (mes 3 fichiers moteur stashés),
+      elle échoue dans les deux cas. Cause mesurée : la fixture
+      `futureTrip` porte `start_date: '2026-09-29'` = **aujourd'hui**, donc
+      le voyage démarre et « Étape active » est correct ; c'est une bombe à
+      retardement basedate, pas un défaut du composant. **Consignée, pas
+      masquée.**
 - [~] **P0.24** 🔴 **`/api/amenities` renvoie 0 lieu sur le corridor de Chamonix : le
       fournisseur Overpass est injoignable depuis cette machine.** Ouvert le
       2026-09-28, pendant la preuve de P0.23.

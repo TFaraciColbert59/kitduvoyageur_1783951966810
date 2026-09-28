@@ -336,11 +336,16 @@ describe('A8 — continuite du voyage', () => {
   });
 
   it('A8-06 : en boucle, aucun retour vers l arrivee n est invente', () => {
+    // La forme est « boucle » et l arrivee EST fixee (Argentiere) : la regle
+    // ne doit pour autant jamais y rapatrier le programme. Le retour, en
+    // boucle, vise le point de DEPART (Chamonix) — pas l arrivee.
     const fixed = enforceDayContinuity(
       modelOf(1, [stepOf('j1-nuit', 1, 0, 'nuit', 'Nuit au refuge', { lat: 45.8447, lon: 6.8427 }, 'Refuge du Gouter')]),
       draftOf({ route: { origin: CHAMONIX, destination: ARGENTIERE, shape: 'boucle' } }),
     );
-    expect(fixed.steps).toHaveLength(1);
+    // Aucune etape ancree sur l arrivee : la promesse tient.
+    expect(fixed.steps.some((s) => s.lat === ARGENTIERE.lat && s.lon === ARGENTIERE.lon)).toBe(false);
+    expect(fixed.steps.some((s) => s.placeName === ARGENTIERE.name)).toBe(false);
   });
 
   it('A8-07 : sans lieu de reference, rien n est invente', () => {

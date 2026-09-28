@@ -128,8 +128,11 @@ export function enforceDayContinuity(
     deplacees.add(day);
   }
 
-  // 2. En aller simple, la derniere journee se termine SUR l arrivee.
-  const retour = versArrivee(model, draft, steps);
+  // 2. La derniere journee se termine LA OU la forme l annonce : l arrivee
+  //    en aller simple, le point de depart en boucle.
+  const retour = draft.route.shape === 'boucle'
+    ? versOrigine(model, draft, steps)
+    : versArrivee(model, draft, steps);
   if (retour) {
     steps = [...steps, retour];
     deplacees.add(jours);
@@ -153,6 +156,60 @@ export function enforceDayContinuity(
  * n'est pas connue, ou que la derniere journee y est DEJA : on n'ajoute une
  * etape que lorsqu'il manque vraiment quelque chose.
  */
+/**
+ * Le retour au point de DEPART, quand la forme du voyage est une boucle.
+ *
+ * `versArrivee` ne corrige que l aller simple : une boucle pouvait donc se
+ * terminer n importe ou sans que rien ne le dise. Le titre propose par le
+ * modele — « Boucle du Mont-Blanc en 2 jours » — decrivait alors un parcours
+ * qui ne rebouclait pas, et le kilometrage ignorait le retour.
+ *
+ * Meme regle que pour l arrivee, meme seuil : rien n est invente, et un
+ * parcours deja revenu ne recoit pas d etape redondante.
+ */
+/** Le dernier lieu reellement connu du programme, quel que soit le jour. */
+function dernierSitue(
+  model: ItineraryModel,
+  steps: readonly ItineraryStep[],
+): ItineraryStep | null {
+  const jour = Math.max(0, Math.trunc(model.days));
+  for (let day = jour; day >= 1; day -= 1) {
+    const fin = finDeJournee({ ...model, steps }, day);
+    if (fin) return fin;
+  }
+  return null;
+}
+
+function versOrigine(
+  model: ItineraryModel,
+  draft: AdventurePrepDraft,
+  steps: readonly ItineraryStep[],
+): ItineraryStep | null {
+  if (draft.route.shape !== 'boucle') return null;
+  const origine = draft.route.origin;
+  if (!origine) return null;
+  const jour = Math.max(0, Math.trunc(model.days));
+  // Ou s arrete le voyage, reellement : la fin de la derniere journee si
+  // elle est situee, sinon le dernier lieu CONNU du parcours. Une journee
+  // entierement devoidee de position ne doit pas laisser la boucle ouverte
+  // au seul motif qu on ignore ou elle se terminait.
+  const derniere =
+    finDeJournee({ ...model, steps }, jour) ?? dernierSitue(model, steps);
+  const ici = positionOf(derniere);
+  if (!ici) return null;
+  if (haversineKm(ici, origine) <= ARRIVEE_TOLERANCE_KM) return null;
+  const freres = steps.filter((step) => step.day === jour);
+  const etape = createStep(`d${jour}-trajet-retour`, jour, freres.length, 'trajet', {
+    title: `Retour ${de(origine.name)}`,
+    placeName: origine.name,
+    reason: 'Retour : trajet et horaires à vérifier',
+    state: 'a_reserver',
+  });
+  // Le depart est un lieu REEL choisi par la personne : on l ancre comme on
+  // ancre l arrivee, sinon l etape ne recevrait ni distance ni meteo.
+  return { ...etape, lat: origine.lat, lon: origine.lon };
+}
+
 function versArrivee(
   model: ItineraryModel,
   draft: AdventurePrepDraft,

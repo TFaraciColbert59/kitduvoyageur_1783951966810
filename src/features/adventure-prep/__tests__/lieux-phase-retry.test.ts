@@ -58,9 +58,10 @@ const TITRES = [
 ] as const;
 
 /**
- * Le draft de la reproduction : une boucle, sans arrivee fixee — donc sans
- * etape de retour ajoutee par la continuite, et le nombre d etapes reste
- * comparable d un test a l autre.
+ * Le draft de la reproduction : une boucle, sans arrivee fixee. La continuite
+ * y ajoute donc une etape de retour au point de depart (le parcours fourni
+ * par le modele s y termine ailleurs), ce qui porte la sortie a 6 etapes :
+ * le compte reste stable et verifiable d un test a l autre.
  */
 const draft: AdventurePrepDraft = fullDraft({
   route: { origin: CHAMONIX, destination: null, shape: 'boucle' },
@@ -92,7 +93,9 @@ function modelSansPosition(): ItineraryModel {
       etape({
         id: `etape-${i}`,
         day: i < 3 ? 1 : 2,
-        order: i,
+        // Numerotation PAR JOURNEE, comme le vrai constructeur : l ordre
+        // global faisait diagnostic dans les tests de continuite.
+        order: TITRES.slice(0, i).filter((_, j) => (j < 3 ? 1 : 2) === (i < 3 ? 1 : 2)).length,
         title: titre,
         placeName: i === 0 || i === 4 ? 'Chamonix-Mont-Blanc' : 'Grands Mulets',
       }),
@@ -126,9 +129,19 @@ describe('retryGenerationPhase — la phase lieux', () => {
     const retry = await retryGenerationPhase(draft, modelSansPosition(), 'lieux', { resolvePlaces });
 
     expect(retry.outcome.status).toBe('reussie');
-    expect(retry.model.steps).toHaveLength(TITRES.length);
-    expect(retry.model.steps.map((s) => s.title)).toEqual([...TITRES]);
-    expect(retry.model.steps.every((s) => s.lat === 45.8666 && s.lon === 6.8613)).toBe(true);
+    // Les 5 etapes du modele + le retour que la continuite ajoute en boucle.
+    expect(retry.model.steps).toHaveLength(TITRES.length + 1);
+    expect(retry.model.steps.map((s) => s.title)).toEqual([...TITRES, 'Retour de Chamonix']);
+    // Les 5 etapes d origine restent la ou le resolveur les a posees...
+    expect(
+      retry.model.steps.slice(0, TITRES.length).every((s) => s.lat === 45.8666 && s.lon === 6.8613),
+    ).toBe(true);
+    // ...et le retour se referme SUR le depart reel, sinon la boucle
+    // resterait ouverte sur l ecran.
+    const retour = retry.model.steps[TITRES.length];
+    expect(retour.placeName).toBe('Chamonix');
+    expect(retour.lat).toBe(CHAMONIX.lat);
+    expect(retour.lon).toBe(CHAMONIX.lon);
   });
 
   /* --- LR-03..05 : les trois sorties honnetes -------------------------- */
@@ -187,5 +200,11 @@ describe('retryGenerationPhase — la phase lieux', () => {
     // au point de la veille telecoporterait des etapes que personne ne fait :
     // la continuite garantit le RATTACHEMENT, pas l egalite.
     expect(retry.model.steps[4].lat).toBe(46.2237);
+    // Et le parcours se referme sur le depart : la boucle promet un retour,
+    // elle doit se terminer LA.
+    const retour = retry.model.steps[5];
+    expect(retour.title).toBe('Retour de Chamonix');
+    expect(retour.lat).toBe(CHAMONIX.lat);
+    expect(retour.lon).toBe(CHAMONIX.lon);
   });
 });

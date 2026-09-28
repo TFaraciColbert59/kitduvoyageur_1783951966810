@@ -430,12 +430,19 @@ export function assignPlaces(
         return { ...step, placeName: origin.name, lat: origin.lat, lon: origin.lon };
       }
       if (step.id === lastTrajetId) {
-        if (!destination) return unlocated(step);
+        // Le dernier trajet vise l arrivee en aller simple, le DEPART en
+        // boucle : la regle que derivent deja route.shape et que pose
+        // buildItinerary. Sans ce choix, une boucle perdait son Retour — le
+        // destination etant null, cette etape revenait sans position, donc
+        // sans distance ni meteo, et le titre « Boucle du Mont-Blanc »
+        // restait une promesse que rien ne mesurait.
+        const cible = destination ?? origin;
+        if (!cible) return unlocated(step);
         return {
           ...step,
-          placeName: destination.name,
-          lat: destination.lat,
-          lon: destination.lon,
+          placeName: cible.name,
+          lat: cible.lat,
+          lon: cible.lon,
         };
       }
       // Journee 2 et suivantes : on repart du point ou la journee precedente
