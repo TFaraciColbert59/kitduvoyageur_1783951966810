@@ -46,6 +46,31 @@ vérifiés dans le fichier, pas sur des goûts : chaque point porte son numéro 
 > Autrement dit : **le problème n'est pas la quantité de données, c'est le raccordement.**
 > La base, les fournisseurs et la persistance sont solids ; le maillon qui manque est le
 > fil entre eux. C'est ce que la section P documente, ligne par ligne, avec sa preuve.
+## Journal de progression — mis à jour à chaque lot
+
+**Comptage honnete au 2026-09-28 :** 16 faits · 3 partiels · 185 restants.
+Un item ne passe à `[x]` que sur une preuve datée — capture regardée, clic réel,
+valeur tracée à sa source, ou test rouge → vert. Jamais sur la foi du code.
+
+| Lot | Item | Verdict | Preuve |
+|---|---|---|---|
+| C1 | double croix dans la recherche de lieu | ✅ fait | `proof/lot3-08` — une seule croix ; test DPL-27 |
+| — | geo refusé traité en faute (rouge) | ✅ fait | `proof/lot3-06` — note neutre ; tests DPL-24/25/26 |
+| — | parcours sans activité du catalogue | ✅ fait | parcours complet généré, 30,4 km / 6 h 07 |
+| **P0.9** | **tiroir = verre, pas une dalle** | ✅ **fait** | `proof/P09-02`, `proof/P09-03` ; contraste pixels 6,59:1 |
+| **P0.10** | **actions du tiroir sous le pli** | ✅ **fait** | `proof/P010-01`, `proof/P010-02` — 815→859 → 764→808 |
+| **P0.10** | **barre de jours vs « Vers le départ »** | ⚠ **à vérifier** | étape 2/3 pas encore capturée |
+| P0.11 | titre étape 2 : deux titres dans une pastille | ⚠ à faire | — |
+| A3 | fil d’étapes, seul élément de la barre haute | ⚠ à faire | — |
+| D1 | départ facultatif, CTA au strict nécessaire | ⚠ à faire | — |
+| D2 | rail de familles déborde, « Neige » coupée | ⚠ à faire | `proof/A-01` |
+
+**En cours :** lots P0.10 (reste), P0.11, A3, D1, D2, puis détail étape 2 et réécriture étape 1.
+
+**Vu de l’ecran, pas du code :** la barre `prep-body` défile bien sous le pied de page
+(24 px de garde au fond, mesuré) — la liste des activités de l’étape 1 n’est **pas**
+coupée. Le découpage净额 de la capture A-02 était un artefact de position, pas un défaut.
+
 ## 0 — Rectificatifs d'audit (à lire en premier)
 
 - [x] **R1** ~~`H1` était marqué « fait » : faux, `osrm` → 0 occurrence~~ → **DEVENU FAUX
@@ -461,12 +486,31 @@ d'une intention : chaque ligne porte sa preuve.**
       réapparaît **un jour sur trois**. Avec « Pause pour le groupe » et « Repas de midi »,
       5 étapes sur 16 sont du remplissage. Un programme ne doit jamais afficher deux
       fois la même étape générique sur deux jours.
-- [ ] **P0.9** 🟠 **Le tiroir n'est pas du tout en Liquid Glass.** Capturé en 393 :
-      panneau **bleu nuit plat**, lignes quasi noires, aucun reflet, aucune transparence
-      du contenu derrière. C'est un dialogue classique, pas du verre.
-- [ ] **P0.10** 🟠 **La barre de jours recouvre le bouton « Vers le départ ».**
-      Capturé : les pastilles `Tout · J1 · J2 · J3` passent **au-dessus** du bouton, qui
-      est lui-même à moitié mangé par la navigation basse. Trois couches se superposent.
+- [x] **P0.9** 🟠 ~~**Le tiroir n’est pas du tout en Liquid Glass.**~~ **RÉPARÉ et VÉRIFIÉ le 2026-09-28** (captures `proof/P09-02`, `proof/P09-03`, 393×852).
+      **Cause mesurée, pas devinée :** la feuille était déjà translucide (D7), mais `.li`,
+      `.note`, `.badge` et `.seg` prenaient tous `--prep-page-bg` (`#0b0d12`, **opaque**).
+      Posé sur du verre, un aplat opaque ne montre rien derrière : les lignes se lisaient
+      comme des trous noirs. La barre de recherche prenait `--lkv-surface`, seul jeton de
+      page du tiroir. **Correctif :** un token unique `--prep-row-bg` (blanc 6 %) +
+      `--prep-row-edge`, repris par les cinq surfaces, et un reflet `--prep-sheet-sheen`
+      en tête de feuille (dégradé 16 % → 0 sur 44 %). Un composant = un seul matériau.
+      **Preuve navigateur :** la page floutée traverse la feuille, et les lignes de
+      résultats (géocodage réel : *Argentière / France · Rhône-Alpes*) sont des cartes
+      de verre translucides. **Preuve contraste mesurée sur pixels rendus** (pas sur
+      tokens) : sous-titre **6,59:1**, titre **8,77:1** — au-dessus de 4,5:1.
+      `audit:contrast` → 42/42. Tests : 3 tests rouges d’abord (bloc P0.9), 39/39 verts après.
+
+- [~] **P0.10** 🟠 **La barre de jours recouvre le bouton « Vers le départ ».**
+      **Une moitié réparée le 2026-09-28, l’autre pas encore vérifiée.**
+      ✅ **Actions des tiroirs** — mesure 393×852, tiroir « Quand tu pars » : feuille
+      85→852 (`max-h 90dvh`), corps scrollable 707/668, bouton `Appliquer` à **top 815 /
+      bottom 859 pour une fenêtre de 852** : le bouton de validation sortait de l’écran dès le
+      premier rendu. `.prep-actionrow` est désormais `position: sticky; bottom: 0` sur son
+      propre verre. Recapture : `Appliquer` à **764→808**, entièrement visible ; le stepper
+      DURÉE remonte au-dessus en fin de défilement. Preuve : `proof/P010-01`, `proof/P010-02`.
+      ❌ **Barre de jours vs « Vers le départ » : PAS ENCORE VÉRIFIÉ** — l’étape 2/3
+      n’a pas encore été capturée avec la pastille de jours en place.
+
 - [ ] **P0.11** 🟠 **Le titre de l'étape 2 est un bug de mise en page.** Dans une seule
       pastille de verre cohabitent « Randonnée à la journée » **et** « Parcours construit
       sur tes critères — l'enrichissement est indisponible. », tous deux centrés et

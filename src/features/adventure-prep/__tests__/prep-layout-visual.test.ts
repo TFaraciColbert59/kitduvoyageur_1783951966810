@@ -340,6 +340,27 @@ describe('P0.9 - le contenu du tiroir est du verre, pas des trous noirs', () => 
   });
 });
 
+describe('P0.10 - les actions du tiroir ne passent jamais sous le pli', () => {
+  /* Mesure au navigateur, 393x852, tiroir "Quand tu pars" ouvert :
+     feuille 85 -> 852 (max-h 90dvh), corps scrollable 707/668, et le bouton
+     `Appliquer` measurait top 815 / bottom 859 pour une fenetre de 852 : le
+     bouton de VALIDATION sortait de l'ecran des le premier rendu. Il restait
+     atteignable en deroulant, mais une action principale ne se dedevine pas.
+     La barre d'actions est donc collee en bas de la feuille, sur son propre
+     materiare de verre : elle reste visible et le contenu deroule dessous. */
+  const d = (): Map<string, string> => declarations(lastRule('.prep-actionrow')?.body ?? '');
+
+  it('la barre d actions est collee au bas de la feuille', () => {
+    expect(d().get('position') ?? '').toBe('sticky');
+    expect(d().get('bottom') ?? '').not.toBe('');
+  });
+
+  it('la barre d actions est du verre, pour lire le contenu qui deroule dessous', () => {
+    // Sans fond, le texte de la feuille passerait sous les boutons en derivant.
+    expect(d().get('background') ?? d().get('background-color') ?? '').not.toBe('');
+  });
+});
+
 describe('D4 — le curseur flottant de bureau reste hors perimetre', () => {
   it('aucune regle ne cible le curseur flottant', () => {
     // Mesure : le curseur est monte par src/app/layout.tsx, donc HORS de la
