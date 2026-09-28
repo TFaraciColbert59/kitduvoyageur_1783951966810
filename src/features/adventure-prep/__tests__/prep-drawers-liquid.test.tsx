@@ -29,6 +29,7 @@ import {
   PlaceSheet,
   addMember,
   geoErrorMessage,
+  isGeoDenied,
   groupModeFrom,
   keepReturnDate,
   mergePositionCandidate,
@@ -264,6 +265,28 @@ describe('DPL — Lieu : la position reelle, sans invention', () => {
   it('DPL-16: un refus de geolocalisation est dit, jamais remplace par une position fausse', () => {
     expect(geoErrorMessage(new Error('Permission denied'))).toContain('Position');
     expect(geoErrorMessage(null)).toBeNull();
+  });
+
+  it('DPL-24: un refus de permission est un choix, pas une panne', () => {
+    // Refuser la localisation est un choix legitime. L afficher en bandeau rouge
+    // transformait une decision en faute, alors que la liste des lieux reste
+    // parfaitement utilisable juste en dessous.
+    expect(isGeoDenied({ code: 1 })).toBe(true);
+    expect(isGeoDenied({ code: 2 })).toBe(false);
+    expect(isGeoDenied(null)).toBe(false);
+    expect(isGeoDenied(new Error('boom'))).toBe(false);
+  });
+
+  it('DPL-25: le refus oriente vers le choix manuel, sans reproche', () => {
+    const message = geoErrorMessage({ code: 1 }) ?? '';
+    expect(message).not.toContain('refusée');
+    expect(message.toLowerCase()).toContain('liste');
+  });
+
+  it('DPL-26: une panne GPS reste, elle, signalee comme telle', () => {
+    // On ne banalise que le refus : une panne GPS, elle, merite un ton d erreur.
+    expect(geoErrorMessage({ code: 2 })).toContain('indisponible');
+    expect(geoErrorMessage({ code: 3 })).toContain('introuvable');
   });
 });
 

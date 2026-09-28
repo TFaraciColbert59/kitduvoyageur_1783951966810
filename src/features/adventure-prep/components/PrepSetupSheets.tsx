@@ -270,18 +270,24 @@ function geolocationCode(error: unknown): number | null {
 export function geoErrorMessage(error: unknown): string | null {
   if (error === null || error === undefined) return null;
   const code = geolocationCode(error);
-  if (code === 1) return 'Position refusée — autorise la localisation pour la retrouver.';
+  if (code === 1) return 'Position non activée — choisis ton lieu dans la liste ci-dessous.';
   if (code === 2) return 'Position indisponible — le GPS ne répond pas sur ce coup-là.';
   if (code === 3) return 'Position introuvable — trop de temps sans réponse, réessaie dehors.';
   const detail = error instanceof Error ? error.message.trim() : '';
   return detail ? `Position non obtenue — ${detail}.` : 'Position non obtenue — la localisation a échoué.';
 }
 
+// Le refus de permission n est pas une panne : c est une decision. Elle ne doit
+// donc pas s afficher en rouge, la liste des lieux juste en dessous fait le travail.
+export function isGeoDenied(error: unknown): boolean {
+  return geolocationCode(error) === 1;
+}
+
 /** Etat de la position reelle : lue a l'ouverture, relue sur demande. */
 function useMyPosition() {
   const [gps, setGps] = useState<GeoCoordinates | null>(null);
   const [commune, setCommune] = useState<CommuneName | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const [locating, setLocating] = useState(false);
 
   const read = useCallback(() => {
@@ -304,7 +310,7 @@ function useMyPosition() {
           .catch(() => setCommune(null));
       })
       .catch((cause: unknown) => {
-        setError(geoErrorMessage(cause) ?? 'Position non obtenue — la localisation a échoué.');
+        setError(cause);
       })
       .finally(() => {
         setLocating(false);
@@ -318,7 +324,16 @@ function useMyPosition() {
     read();
   }, [read]);
 
-  return { gps, commune, error, locating, read, place: gps === null ? null : myPositionToPlace(gps, commune) };
+  return {
+    gps,
+    commune,
+    error,
+    errorMessage: geoErrorMessage(error),
+    denied: isGeoDenied(error),
+    locating,
+    read,
+    place: gps === null ? null : myPositionToPlace(gps, commune),
+  };
 }
 
 /**
@@ -970,7 +985,11 @@ export function PlaceSheet({ draft, actions, onClose, field }: PrepSheetProps & 
         <span>{other ? (isOrigin ? 'Arrivée' : 'Départ') : 'Autre extrémité à choisir'}</span>
       </div>
 
-      {myPosition.error ? <div className="note red">{myPosition.error}</div> : null}
+      {myPosition.errorMessage ? (
+        <div className={myPosition.denied ? 'note neutral' : 'note red'}>
+          {myPosition.errorMessage}
+        </div>
+      ) : null}
 
       <div className="list">
         {list.map((candidate) => (
