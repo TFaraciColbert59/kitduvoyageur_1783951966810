@@ -752,6 +752,7 @@ function MapCanvas({
         highlightCoords={highlightCoords}
         points={points as unknown as HubRoutePoint[]}
         onMapClick={onMapClick}
+        hideBuiltInControls
       />
     </div>
   );

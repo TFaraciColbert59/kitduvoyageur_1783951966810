@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '@/components/ui/Icon';
 import { Button, SearchField, Switch } from '@/components/ui';
@@ -25,6 +26,15 @@ import { daysLabel } from '../engine/labels';
 import { geocodeMessage, useGeocode } from '../hooks/useGeocode';
 import { placeCandidates, type PlaceCandidate } from '../placeCandidates';
 import { PrepCalendar } from './PrepCalendar';
+import type { HubRoutePoint } from '@/features/hub/components/mobile/HubRouteMap';
+
+// La carte du tiroir de lieu est la VRAIE carte (celle du hub), pas un cadre
+// decoratif : le tiroir montait un div pose sur une grille CSS et inventait
+// ses coordonnees. MapLibre est un chunk lourd, charge apres montage.
+const HubGlobeMap = dynamic(
+  () => import('@/features/hub/components/mobile/HubGlobeMap').then((module) => module.default),
+  { ssr: false }
+);
 
 export interface PrepSheetProps {
   draft: AdventurePrepDraft;
@@ -601,7 +611,9 @@ function PeopleList({
  * 0.18 deg vaut environ 20 km : c'est la portee utile pour trancher entre deux
  * communes voisines quand le lieu connu n'est pas un point precis.
  */
-const PICKER_HALF_SPAN_DEG = 0.18;
+export function pickerSpanFor(zoomLevel: number): number {
+  return 0.18 / 2 ** Math.max(0, Math.min(2, Math.round(zoomLevel)));
+}
 
 /** Centre par defaut : la France, quand aucun point n'est encore connu. */
 const PICKER_FALLBACK = { lat: 46.6, lon: 2.45 } as const;
@@ -617,6 +629,23 @@ function round5(value: number): number {
 function formatCoord(value: number, positive: string, negative: string): string {
   const hemisphere = value >= 0 ? positive : negative;
   return `${Math.abs(value).toFixed(5)}° ${hemisphere}`;
+}
+
+// Les deux extremites du trace affiche par la carte du tiroir.
+// `HubGlobeMap` ne rend rien sans deux points distincts : on lui donne le
+// centre et, s il existe, le point pose. Sans point pose, un second point a
+// l echelle du perimetre cadre la bonne region sans inventer de destination.
+export function pickerRouteCoords(
+  centre: { readonly lat: number; readonly lon: number } | null,
+  picked: { readonly lat: number; readonly lon: number } | null
+): Array<[number, number]> {
+  const origin = centre ?? PICKER_FALLBACK;
+  const span = pickerSpanFor(0);
+  const end = picked ?? { lat: origin.lat + span, lon: origin.lon + span };
+  return [
+    [origin.lat, origin.lon],
+    [end.lat, end.lon],
+  ];
 }
 
 export interface PickedPoint {
@@ -651,10 +680,8 @@ interface MiniMapProps {
  * lieu et fermerait le tiroir.
  */
 function MiniMap({ centre, shown, interactive, onPick, onCancel }: MiniMapProps) {
-  const origin = centre ?? PICKER_FALLBACK;
   const [point, setPoint] = useState<{ lat: number; lon: number } | null>(null);
   const [name, setName] = useState('');
-  const ref = useRef<HTMLDivElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   // La carte est basse dans le tiroir : passer en mode pose sans la ramener a
@@ -665,17 +692,8 @@ function MiniMap({ centre, shown, interactive, onPick, onCancel }: MiniMapProps)
     wrapRef.current?.scrollIntoView({ block: 'nearest' });
   }, [interactive]);
 
-  const pickAt = (clientX: number, clientY: number) => {
-    const box = ref.current?.getBoundingClientRect();
-    if (!box || box.width === 0 || box.height === 0) return;
-    // 0 au bord gauche/haut, 1 au bord droit/bas. On borne : une touche juste
-    // dehors ne doit pas produire une coordonnee hors du carre.
-    const ratioX = Math.min(1, Math.max(0, (clientX - box.left) / box.width));
-    const ratioY = Math.min(1, Math.max(0, (clientY - box.top) / box.height));
-    setPoint({
-      lat: round5(origin.lat + (0.5 - ratioY) * PICKER_HALF_SPAN_DEG * 2),
-      lon: round5(origin.lon + (ratioX - 0.5) * PICKER_HALF_SPAN_DEG * 2),
-    });
+  const onMapClick = (lat: number, lon: number) => {
+    setPoint({ lat: round5(lat), lon: round5(lon) });
   };
 
   const marker = interactive
@@ -683,52 +701,55 @@ function MiniMap({ centre, shown, interactive, onPick, onCancel }: MiniMapProps)
     : shown === null || (shown.lat === 0 && shown.lon === 0)
       ? null
       : { lat: shown.lat, lon: shown.lon };
-  const markerX =
-    marker === null ? null : ((marker.lon - origin.lon) / (PICKER_HALF_SPAN_DEG * 2) + 0.5) * 100;
-  const markerY =
-    marker === null ? null : ((origin.lat - marker.lat) / (PICKER_HALF_SPAN_DEG * 2) + 0.5) * 100;
+  const routeCoords = pickerRouteCoords(centre, interactive ? point : marker);
+
+  // La carte doit afficher le point pose comme un repere : c est lui qui
+  // donne le retour visuel du clic, et il remplace la fausse epingle CSS.
+  const markerPoints: HubRoutePoint[] =
+    marker === null
+      ? []
+      : [
+          {
+            id: 'picker-point',
+            lat: marker.lat,
+            lon: marker.lon,
+            label: interactive
+              ? name.trim() === ''
+                ? 'Point choisi'
+                : name.trim()
+              : (shown?.name?.trim() ?? '') || 'Lieu retenu',
+            category: 'step',
+            color: '#1f7a4d',
+          },
+        ];
 
   return (
     <div ref={wrapRef} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       <div
-        ref={ref}
-        role={interactive ? 'button' : 'img'}
-        tabIndex={interactive ? 0 : -1}
-        aria-label={
-          interactive
-            ? 'Toucher la carte pour choisir un point'
-            : 'Carte du lieu retenu pour cette étape'
-        }
-        onClick={interactive ? (event) => pickAt(event.clientX, event.clientY) : undefined}
-        onKeyDown={
-          interactive
-            ? (event) => {
-                if (event.key !== 'Enter' && event.key !== ' ') return;
-                event.preventDefault();
-                const box = ref.current?.getBoundingClientRect();
-                if (box) pickAt(box.left + box.width / 2, box.top + box.height / 2);
-              }
-            : undefined
-        }
         className="prep-picker"
         style={{ height: MINI_MAP_HEIGHT, cursor: interactive ? 'crosshair' : 'default' }}
       >
-        {markerX !== null && markerY !== null ? (
-          <span
-            className="prep-picker__pin"
-            style={{ left: `${markerX}%`, top: `${markerY}%` }}
-            aria-hidden="true"
-          />
-        ) : (
-          <span className="prep-picker__hint" aria-hidden="true">
-            {interactive ? 'Touche pour placer le point' : 'Position à vérifier pour cette étape'}
-          </span>
-        )}
+        <HubGlobeMap
+          name={interactive ? 'Choix du point' : shown?.name || 'Lieu du trajet'}
+          routeCoords={routeCoords}
+          points={markerPoints}
+          onMapClick={interactive ? onMapClick : undefined}
+          hideBuiltInControls
+          className="prep-picker__map"
+        />
       </div>
 
       {marker !== null ? (
         <p className="note neutral" style={{ margin: 0 }}>
           {formatCoord(marker.lat, 'N', 'S')} · {formatCoord(marker.lon, 'E', 'O')}
+        </p>
+      ) : null}
+
+      {marker === null ? (
+        <p className="prep-picker__hint">
+          {interactive
+            ? 'Touche la carte pour placer le point'
+            : 'Position à vérifier pour cette étape'}
         </p>
       ) : null}
 

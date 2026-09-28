@@ -16,6 +16,12 @@ export interface HubGlobeMapProps {
   className?: string;
   /** Tap libre sur la carte : permet de poser un point (lat, lng). */
   onMapClick?: (lat: number, lng: number) => void;
+  /**
+   * L hote affiche ses propres controles en verre au-dessus de la carte.
+   * Le rail interne (globe, zoom, recentrage) doit alors ceder la place,
+   * sinon deux jeux se superposent au meme endroit.
+   */
+  hideBuiltInControls?: boolean;
 }
 
 /**
@@ -33,6 +39,7 @@ type HubUnifiedMapProps = {
   selectedPoiId?: string | null;
   onPoiDismiss?: () => void;
   onMapClick?: (lat: number, lng: number) => void;
+  hideBuiltInControls?: boolean;
 };
 
 const CATEGORY_BY_LABEL: Array<[RegExp, UnifiedPOI['category']]> = [
@@ -115,6 +122,7 @@ export function HubGlobeMap({
   points = [],
   className = '',
   onMapClick,
+  hideBuiltInControls = false,
 }: HubGlobeMapProps) {
   const [selectedPoiId, setSelectedPoiId] = useState<string | null>(null);
 
@@ -201,6 +209,7 @@ export function HubGlobeMap({
           selectedPoiId={selectedPoiId}
           onPoiDismiss={() => setSelectedPoiId(null)}
           onMapClick={onMapClick}
+          hideBuiltInControls={hideBuiltInControls}
         />
       ) : selectedTrail && !mapLoadFailed ? (
         <div className="hub-globe-map__loading" role="status" aria-live="polite">

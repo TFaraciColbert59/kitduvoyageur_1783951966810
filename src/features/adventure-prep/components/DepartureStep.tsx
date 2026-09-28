@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/Icon';
 import { Button } from '@/components/ui';
+import { useDayFocusStore } from '@/components/mobile-nav/dayFocusStore';
 import { useAdventurePrepStore } from '../store/useAdventurePrepStore';
 import { activityById } from '../catalog';
 import { A_VERIFIER } from '../engine/trust';
@@ -21,6 +22,19 @@ import type { PrepSheetId } from './PrepSheets';
 
 export interface DepartureStepProps {
   onOpenSheet: (sheet: PrepSheetId, focusStepId?: string | null) => void;
+}
+
+// Jours a rendre a l'ecran 3, apres application de la selection du plateau.
+//
+// Le rail J1/J2/J3 pilote le hub ET le preparateur : c'est le meme store. Sans
+// cette fonction, l'ecran 3 rendait les trois jours d'un bloc et l'onglet
+// restaait sans effet ici. La fonction est deliberement forgiving : une
+// selection hors borne (jour supprime, voyage raccourci entre deux rendus)
+// retombe sur la vue complete plutot que de laisser un ecran vide.
+export function focusedDayNumbers(totalDays: number, selectedDay: number | null): number[] {
+  const all = Array.from({ length: Math.max(1, Math.trunc(totalDays) || 0) }, (_, i) => i + 1);
+  if (selectedDay === null) return all;
+  return all.includes(selectedDay) ? [selectedDay] : all;
 }
 
 interface OpenPoint {
@@ -91,6 +105,9 @@ function routeCoords(draft: AdventurePrepDraft, model: ItineraryModel | null): A
 export function DepartureStep({ onOpenSheet }: DepartureStepProps) {
   const draft = useAdventurePrepStore((state) => state.draft);
   const syncGear = useAdventurePrepStore((state) => state.syncGear);
+  // Meme source de verite que le plateau jour du hub : l'onglet choisi plus
+  // haut pilote l'ecran 3, il ne decore pas.
+  const selectedDay = useDayFocusStore((state) => state.selectedDay);
   const [save, setSave] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
   const router = useRouter();
@@ -165,6 +182,7 @@ export function DepartureStep({ onOpenSheet }: DepartureStepProps) {
   
   const points = openPointsOf(draft, gear);
   const model = draft.itinerary;
+  const visibleDays = model === null ? [] : focusedDayNumbers(model.days, selectedDay);
 
   return (
     <div className="prep-screen">
@@ -218,7 +236,7 @@ export function DepartureStep({ onOpenSheet }: DepartureStepProps) {
 
             <div className="prep-programme">
               <div className="prep-programme__list">
-                {Array.from({ length: model.days }, (_, index) => index + 1).map((day) => (
+                {visibleDays.map((day) => (
                   <section key={day} className="prep-programme__day">
                     <header className="prep-programme__dayhead">
                       <span className="prep-programme__daylabel">Jour {day}</span>

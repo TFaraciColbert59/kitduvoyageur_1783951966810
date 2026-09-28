@@ -1221,6 +1221,25 @@ button.prep-map__glass:active {
   flex: 0 0 auto;
 }
 
+/* Trois jours + leurs mesures ne tiennent pas en une rangee sur 393px :
+   « J3 jeu. 1 oct. » etait coupe. Le rail defile plutot que tronquer. */
+@media (max-width: 30rem) {
+  .prep-map__dayrail,
+  .prep-map__fullbar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .prep-map__dayrail::-webkit-scrollbar,
+  .prep-map__fullbar::-webkit-scrollbar {
+    display: none;
+  }
+  .prep-map__dayrail > *,
+  .prep-map__fullbar > * {
+    flex: 0 0 auto;
+  }
+}
+
 .prep-map__dayrail .prep-map__glass,
 .prep-map__fullbar .prep-map__glass {
   font-weight: 680;
@@ -2495,48 +2514,34 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 }
 
 /* --- Selecteur de point -------------------------------------------------
-   Carre cliquable : pas de fond de tuiles, donc pas d'image a charger et pas
-   de mise a jour reseau. Le quadrillage donne l'echelle ; la position exacte
-   est annoncee en toutes lettres juste en dessous, ce qui evite d'inventer
-   une precision que l'ecran ne peut pas porter. */
+   La carte reelle du hub, en cadre bas (150px) : le tiroir de lieu montrait
+   un carre quadrille sans aucune tuile, et la position y etait inventee par
+   une projection homemade. Le clic est desormais resolu par MapLibre. */
 .prep-picker {
   position: relative;
   width: 100%;
-  aspect-ratio: 1;
   border-radius: var(--lkv-radius-md);
   background: var(--prep-map-bg);
   border: 1px solid var(--lkv-border);
   cursor: crosshair;
   overflow: hidden;
-  background-image: linear-gradient(var(--lkv-border-subtle) 1px, transparent 1px),
-    linear-gradient(90deg, var(--lkv-border-subtle) 1px, transparent 1px);
-  background-size: 25% 25%;
-  background-position: center;
 }
 .prep-picker:focus-visible {
   outline: 2px solid var(--lkv-focus-ring);
   outline-offset: 2px;
 }
-.prep-picker__pin {
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  margin: -8px 0 0 -8px;
-  border-radius: var(--lkv-radius-full);
-  background: var(--lkv-action);
-  border: 2px solid var(--lkv-text-primary);
-  box-shadow: var(--card-shadow);
-  pointer-events: none;
+
+/* La carte remplit le cadre : la carte du hub impose 20rem de hauteur
+   minimale, qui deborderait du tiroir de 150px. */
+.prep-picker__map {
+  min-height: 0;
+  height: 100%;
 }
+
 .prep-picker__hint {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  margin: 0;
   color: var(--lkv-text-subtle);
   font-size: var(--f-body-sm);
-  pointer-events: none;
 }
 
 /* --- D6 · Calendrier mensuel Liquid Glass ---------------------------------

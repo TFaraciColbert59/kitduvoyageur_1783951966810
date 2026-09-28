@@ -74,6 +74,14 @@ export interface UnifiedExplorerMapProps {
   onPoiDismiss?: () => void;
   /** Tap libre sur la carte (hors couche POI) — permet de poser un point. */
   onMapClick?: (lat: number, lng: number) => void;
+  /**
+   * Masque le rail de controles interne (globe, zoom, recentrage, fond).
+   *
+   * Le preparateur de voyage pose ses propres boutons en verre au-dessus de la
+   * carte : sans ce drapeau, deux jeux se superposent au meme endroit et la
+   * carte devient illisible. Un seul jeu, celui de l hote.
+   */
+  hideBuiltInControls?: boolean;
   userLocation?: [number, number] | null;
   onMapReady?: () => void;
   onLocationUpdate?: (loc: [number, number]) => void;
@@ -324,6 +332,7 @@ export default function UnifiedExplorerMap({
   selectedPoiId = null,
   onPoiDismiss,
   onMapClick,
+  hideBuiltInControls = false,
   userLocation,
   onMapReady,
   onLocationUpdate,
@@ -1394,6 +1403,7 @@ export default function UnifiedExplorerMap({
       {/* Contrôles cartographiques — Hub compact : rail horizontal entre les
           poignées Points et État, sans recouvrement des tiroirs ni du panneau
           bas ; Explorer : colonne de zoom historique. */}
+      {!hideBuiltInControls && (
       <div
         className={`absolute z-[var(--z-fab)] flex ${compact ? 'flex-row' : 'flex-col'} gap-2 ${rightControlsPosition}`}
         data-atlas-controls="right"
@@ -1465,6 +1475,7 @@ export default function UnifiedExplorerMap({
           </div>
         )}
       </div>
+      )}
 
       {/* Légende densité — desktop uniquement (simplicité mobile).
           P1 — formule UNIQUE via --nav-offset (nav+156 : au-dessus du badge
