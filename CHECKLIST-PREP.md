@@ -1623,7 +1623,19 @@ Viewport de test : **iPhone 393×852** (cible Sidestore). Le rendu desktop 1280p
       identique a HEAD apres restauration (`git diff` vide). 🔴 `metrics.ts:57` — la durée affiche l'index du jour. Cf. R5.
 - [ ] **L0.3** 🔴 Ligne **Participants** : le libellé et la valeur se **chevauchent**
       (« Participants » par-dessus « 3 personnes · 1 ad… »). Bug CSS net.
-- [ ] **L0.4** 🔴 Coordonnées brutes exposées comme nom de lieu :
+- [x] **L0.4** **FERME le 2026-09-29 sur test a morsant.** Un point pose ne
+      recoit plus de nom invente : ni « Point 50.64° N 03.06° E », ni aucune
+      adresse devinee. `pickedPlace` (`PrepSetupSheets.tsx:858`) laisse `name`
+      vide quand la personne n'en a saisi aucun, et la ligne se dit « Point sans
+      nom vérifié » avec les coordonnees en sous-titre explicite — une
+      coordonnee ne se lit pas comme un nom de lieu. Aucun pays n est devine
+      non plus (`country: ''`).
+      **Preuve** : 4 tests dans `prep-drawers-liquid.test.tsx` (DPL-07a/b/c,
+      DPL-09a/b — 60/60 verts dans le fichier).
+      **Morsant** : sabotage de `pickedPlace` qui forge
+      ``Point `${lat}° N ${lon}° E` `` quand le nom est vide ⇒ **DPL-07a
+      tombe** avec `"name": "Point 50.64° N ° E"` dans le diff. Restauration ⇒
+      60/60, fichier identique a HEAD. 🔴 Coordonnées brutes exposées comme nom de lieu :
       « Point 50.64175° N 03.06408° E » (et 50.6°N/3.06°E = Amsterdam, pas Bondues).
       Reverse-geocodage obligatoire, sinon ne pas afficher.
 
