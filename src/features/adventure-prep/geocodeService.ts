@@ -92,10 +92,30 @@ interface RawOpenMeteo {
   }> | null;
 }
 
+/**
+ * `feature_code` de type GeoNames : PCLI = pays independant, ADM0 = pays
+ * (premier niveau administratif). Tout le reste — PPL, PPLL, PPLA... — est
+ * une ville, un village ou un lieu nomme, donc une ancre de voyage valide.
+ */
+function isCountryLevel(featureCode: unknown): boolean {
+  if (typeof featureCode !== 'string') return false;
+  const code = featureCode.trim().toUpperCase();
+  return code === 'PCLI' || code === 'ADM0' || code === 'PCL' || code === 'ADM';
+}
+
 export function normalizeOpenMeteo(payload: RawOpenMeteo): GeocodeMatch[] {
   const rows = payload.results ?? [];
   const out: GeocodeMatch[] = [];
   for (const row of rows) {
+    // Un pays n est jamais une ancre de voyage : le preparateur route, il lui
+    // faut un point, pas une etiquette d etat. Open-Meteo classe ses niveaux
+    // dans `feature_code` (PCLI = pays, PPL = localite, PPLL = lieu nomme) et
+    // ne classe PAS la pertinence : une saisie tronquee fait remonter un pays
+    // a cote de localites reelles. On ecarte donc le niveau pays ici plutot
+    // que de laisser l utilisateur trancher un fauxChoix. Un resultat sans
+    // `feature_code` est conserve : le fournisseur peut evoluer, on ne veut pas
+    // alors effacer des localites.
+    if (isCountryLevel(row.feature_code)) continue;
     const name = typeof row.name === 'string' ? row.name.trim() : '';
     const point = readLatLon(row.latitude, row.longitude);
     if (name.length === 0 || point === null) continue;

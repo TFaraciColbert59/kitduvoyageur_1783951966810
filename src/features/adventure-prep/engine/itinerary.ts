@@ -12,6 +12,7 @@ import {
 } from '../types';
 import { proposedStops } from './proposedStops';
 import { buildContingencies } from './resilience';
+import { de } from './frenchText';
 
 const ICONS: Record<ItineraryStepKind, string> = {
   trajet: 'navigation',
@@ -131,14 +132,14 @@ export function buildItinerary(draft: AdventurePrepDraft): ItineraryModel | null
         reason: bivouac
           ? 'Nuit en bivouac : le spot reste à trouver'
           : primary
-            ? `Nuit pour ${primary.label.toLowerCase()} : hébergement à vérifier`
+            ? `Nuit ${de(primary.label.toLowerCase())} : hébergement à vérifier`
             : 'Hébergement à vérifier',
         state: 'a_reserver',
       });
     }
     if (day === days && draft.route.shape === 'aller_simple' && destination) {
       push(day, 'trajet', {
-        title: `Retour de ${destination.name}`,
+        title: `Retour ${de(destination.name)}`,
         placeName: destination.name,
         reason: 'Retour : trajet et horaires à vérifier',
         state: travelState(draft),
