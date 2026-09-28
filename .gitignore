@@ -118,3 +118,7 @@ proof/
 am.json
 amenities.json
 p0*.mjs
+
+# Harnais de mesure local (Playwright 393x852). Meme nature que les
+# scripts p0*.mjs : des outils qui pilotent un navigateur de dev.
+qa-local/
