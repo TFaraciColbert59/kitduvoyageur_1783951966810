@@ -53,7 +53,7 @@ vérifiés dans le fichier, pas sur des goûts : chaque point porte son numéro 
 ### Lot 2026-09-29 (matin) — reprise sur terrain propre
 
 **Comptage au début du lot : 108 faits / 37 partiels / 81 restants = 226 items.**
-Fermes dans ce lot : **L0.2**, **L0.4**, **A5**, **L6.5**. Reste **112 / 36 / 78 = 226**.
+Fermes dans ce lot : **L0.2**, **L0.4**, **A5**, **L6.5**, **L6.1**. Reste **113 / 36 / 77 = 226**.
 
 - **L0.2 — la durée d'une journée affichait son index.** Le correctif était déjà
   en place depuis `50cf64f2` / `835ecf81`, mais **rien ne le prouvait** : rien
@@ -84,6 +84,11 @@ Fermes dans ce lot : **L0.2**, **L0.4**, **A5**, **L6.5**. Reste **112 / 36 / 78
   succès ⇒ 1 fetch `/api/adventure/commit`, corps vérifié, redirection `/hub`,
   confirmation. **Morsant** : redirection divertie ⇒ `INT-17` tombe, avec
   l’argument attendu `/hub` affiché dans le diff. Restauration 11/11.
+- **L6.1 — le swipe ne changeait pas de jour.** Le hook est monté en jsdom avec
+  de vrais événements tactiles : un test de fonction pure ne prouverait pas que
+  le geste est *branché*. **Morsant** : `dayAfterSwipe` rendu inerte sur
+  « suivant » ⇒ **7 tests tombent**, dont `E6-02: balayer a droite affiche le
+  jour suivant` et le cas carte `E6-08`. Restauration 61/61.
 
 
 **Règle qu'il faut se réappliquer à chaque item `[ ]` déjà corrigé dans le
@@ -1720,7 +1725,21 @@ Viewport de test : **iPhone 393×852** (cible Sidestore). Le rendu desktop 1280p
 
 Ces points sont **hors de portée d'une capture d'écran** : à tester au doigt.
 
-- [ ] **L6.1** Swipe gauche/droite = jour précédent/suivant
+- [x] **L6.1** **FERME le 2026-09-29 sur test a morsant.** Balayer a droite
+      affiche le jour suivant, balayer a gauche le precedent. Le hook
+      `useDaySwipe` est cable sur `.prep-body` de l etape 2 et monte en **jsdom
+      avec de vrais evenements tactiles** — un test de fonction pure ne
+      prouverait pas que le geste est branche.
+      **Deux regles non negociables verifiees par les tests** : aucun
+      `preventDefault` (le programme du jour est une liste verticale, bloquer le
+      defilement casserait la lecture) et le swipe n est jamais le SEUL chemin
+      (le rail de jours reste rendu et focusable).
+      **Preuve** : `e6-swipe.test.tsx` 13/13 + `day-navigation.test.ts` — **61/61
+      verts** au total.
+      **Morsant** : `dayAfterSwipe` rendu inerte sur « suivant » ⇒ **7 tests
+      tombent**, dont `E6-02: balayer a droite affiche le jour suivant`,
+      `DAY-09/10/13/15b` et le cas carte `E6-08`. Restauration ⇒ 61/61,
+      `dayNavigation.ts` identique a HEAD. Swipe gauche/droite = jour précédent/suivant
 - [ ] **L6.2** Long-press sur la carte = ajouter un point de passage
 - [ ] **L6.3** Recalcul du tracé + distances après ajout d'un point
 - [ ] **L6.4** Écran de génération intermédiaire et ses phases
