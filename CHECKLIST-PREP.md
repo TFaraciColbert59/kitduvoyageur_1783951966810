@@ -70,6 +70,16 @@ Ferme dans ce lot : **L0.2**. Reste **109 / 37 / 80 = 226**.
   `expected 1 to be 420` — le symptôme d'origine. Restauration ⇒ 34/34, et
   `metrics.ts` identique à HEAD (`git diff` vide).
 
+- **L0.4 — un point sans nom ne recevait pas de nom inventé.** Corrigé dans le
+  code, mais jamais prouvé. **Morsant** : forger
+  ``Point `${lat}° N ${lon}° E` `` dans `pickedPlace` ⇒ `DPL-07a` tombe avec le
+  nom fabriqué visible dans le diff. Restauration 60/60, fichier identique à HEAD.
+- **A5 — le sélecteur de jours sur les 3 pages.** L'item traînait en `[~]`
+  « reste l'étape 1 », alors que P0.28 avait déjà fait le code et que la
+  checklist le disait : *« il manque ~15 lignes de test, pas de code »*.
+  **Morsant** : `focusedDayNumbers` en `return all` (la liste ignore le jour
+  choisi) ⇒ `P0.28-4` tombe, `expected 2 to be 1`. Restauration 16/16.
+
 **Règle qu'il faut se réappliquer à chaque item `[ ]` déjà corrigé dans le
 code** : un correctif sans test n'est pas un item fait, c'est un item qui
 peut revenir. Le grep du code ne remplace pas le morsant.
@@ -521,11 +531,20 @@ lecteur y voit un bug de rendu, pas du contenu qui continue.
       Une régression sur ce chemin ne rougirait aucun test. Il manque ~15 lignes de test,
       pas de code. Item non coché.
 
-- [~] A5 Le sélecteur de jours se met à jour sur les 3 pages — **fait sur les
-      étapes 2 et 3** le 2026-09-28 : un clic sur « J3 » dans la barre du bas
-      bascule le rail du haut, les métriques ET le programme, et la sélection
-      survit au passage à l’étape 3 (`proof/A5-01`, `A5-02`). **Reste l’étape 1.**
-
+- [x] A5 Le sélecteur de jours se met à jour sur les 3 pages — **FERME le
+      2026-09-29 sur test a morsant.** L item etait reste `[~]` faute de preuve
+      sur l etape 1, alors que le code y etait deja correct depuis P0.28 : la
+      checklist le disait elle-meme (« il manque ~15 lignes de test, pas de
+      code »).
+      **Ce qui est prouve, etape 1 comprise** : `DepartureStep` lit bien
+      `selectedDay` du `dayFocusStore`, et la liste du programme, la meteo et
+      les mesures empruntent le **meme** perimetre (`activeDayOrNull` +
+      `focusedDayNumbers`). Si les deux divergeaient, l ecran afficherait un jour
+      et compterait l autre -- c est exactement le defaut P0.28.
+      **Morsant** : sabotage de `focusedDayNumbers` (`return all`, donc la liste
+      ignore le jour choisi) ⇒ `P0.28-4` tombe avec `expected 2 to be 1`.
+      Restauration ⇒ 16/16, `DepartureStep.tsx` identique a HEAD.
+      Les etapes 2 et 3 restaient prouvees par `proof/A5-01` / `A5-02`.
 ## B — Étape 1 « Créations »
 
 - [x] B1 Invite IA en haut : texte libre → génère tout
