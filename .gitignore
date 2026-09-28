@@ -108,3 +108,13 @@ artifacts/
 # Sans cette regle, un `git add -A` les embarquerait dans l historique.
 verify-*.cjs
 diag-*.cjs
+
+# Working evidence for the /prepare campaign (P0.x, P1.x, ANx).
+# The checklist cites these captures by filename as the proof behind each
+# closed item, so they must stay on disk -- but at ~150 MB of PNG they are a
+# local artifact, not history. What is committed is the proof itself: the
+# dates, the measurements and the test names written in CHECKLIST-PREP.md.
+proof/
+am.json
+amenities.json
+p0*.mjs
