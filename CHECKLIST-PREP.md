@@ -720,6 +720,74 @@ doit pas être « corrigé » en inventant une valeur.
 À vérifier plus tard : quand la fenetre glissante du fournisseur aura depasse le 15 octobre,
 la météo devrait arriver seule, sans changer une ligne.
 
+#### D3-5 — Le repli Nominatim, enfin testé — et un bug découvert en route
+
+La correction de D3-3 **n'avait aucun test**. Écrire la parade sans la faire
+tenir ensuite, c'est la façon la plus rapide de la perdre. Ces 14 tests
+(`NOM-01`→`NOM-06`, `geocode-nominatim-fallback.test.ts`) rejouent chacune une
+panne réellement observée, et **le premier d'entre eux a trouvé un bug de
+production** que personne n'avait vu.
+
+**LE BUG TROUVÉ — et il était là depuis le début du repli.**
+`normalizeNominatim` classait la précision avec :
+
+```ts
+NOMINATIM_TOWN_TYPES.has([row.type ?? '', row.addresstype ?? ''].join(','))
+```
+
+Les deux niveaux étaient **joints par une virgule** pour n'en chercher qu'un, et
+le set ne contient que des mots seuls (`city`, `town`, `village`…). La ligne
+testait donc `'city,city'` — **jamais présent dans le set**.
+Conséquence mesurée : **toute** commune Nominatim était rendue `inexact`, donc
+présentée à la personne comme une simple *piste à confirmer* alors que c'était
+une ancre de voyage fiable. Chamonix-Mont-Blanc entière. Corrigé par
+`isNominatimTown()`, qui teste `type` **et** `addresstype` séparément.
+
+**Rouge → vert, les deux parades, preuve directe (pas sur la foi du code) :**
+
+| Test | Parade cassée volontairement | Résultat |
+|---|---|---|
+| `NOM-01` | `join(',')` restauré | **rouge** — `inexact` à la place de `commune` |
+| `NOM-06` | un seul `AbortController` pour toute la cascade | **rouge** — `aborted1: true` |
+
+Les deux redeviennent vertes après restauration. Un premier sabotage de `NOM-06`
+avait été **mal construit** : le contrôleur partagé était déclaré *dans* la
+boucle, donc recréé à chaque tour et le test passait quand même. Ce n'est qu'en
+corrigeant le sabotage que le test s'est révélé discriminant. **Un test qui ne
+rougit pas, c'est un test qui ne prouve rien** — y compris quand il est vert.
+
+**Les 6 contrats verrouillés :**
+
+- **NOM-01/01b** — Photon tombe, Nominatim répond : `status: ok`,
+  `provider: nominatim`, et Nominatim est *réellement* interrogé après Photon,
+  dans cet ordre ;
+- **NOM-02/02b** — le HTML de limitation de Photon (`503 text/html`, 112 ms,
+  mesuré) n'est pas pris pour une réponse, et le repli part quand même ;
+  `unavailable` et `no_result` ne se confondent jamais ;
+- **NOM-03/03b/03c** — l'inverse rend la **commune**, jamais le bâtiment (le
+  `name` de Nominatim en inverse est la **bibliothèque municipale** de
+  Chamonix : l'écrire afficherait un monument public comme point de départ), et
+  la position rendue reste celle **demandée** ; sans commune, `no_result` plutôt
+  qu'un nom qui ne désigne pas un lieu de voyage ;
+- **NOM-04/04b/04c** — `User-Agent` identifiant l'application sur les deux
+  chemins (aller **et** inverse), et **pas** de User-Agent OSM envoyé aux
+  fournisseurs tiers ;
+- **NOM-05/05b/05c** — deux appels Nominatim espacés d'au moins **1 000 ms**
+  (mesuré ; la politique OSM en impose 1 000), jamais de chevauchement, et un
+  échec ne casse pas la chaîne : l'appel suivant part quand même ;
+- **NOM-06** — chaque fournisseur a **son** minuteur, donc un fournisseur lent
+  n'interdit pas à un fournisseur rapide de répondre.
+
+**Revue de sécurité :** les imports côté client de `geocodeService` sont tous
+`import type` ; le module n'est atteint que par `src/app/api/geocode`. Le reset
+de cadence ajouté pour les tests **n'est donc pas** atteignable depuis le
+navigateur — sinon il permettrait de contourner la cadence OSM et de se faire
+bannir l'IP. Aucun secret, aucune surface réseau nouvelle, aucune
+authentification touchée.
+
+**14/14 verts**, `tsc --noEmit` **exit 0**, suite complète **613 fichiers /
+5 727 tests / 0 échec**.
+
 #### Reste ouvert
 
 - **P0.26** : vraie génération 2 jours, vérifier la répartition par jour.
