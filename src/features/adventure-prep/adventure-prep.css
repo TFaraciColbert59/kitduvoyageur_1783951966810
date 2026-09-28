@@ -2261,6 +2261,13 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   color: var(--lkv-text-subtle);
 }
 
+/* input[type=search] dessine sa propre croix, qui se collait a notre bouton Effacer. */
+.prep-search input::-webkit-search-cancel-button,
+.prep-search input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 .prep-action {
   display: inline-flex;
   align-items: center;

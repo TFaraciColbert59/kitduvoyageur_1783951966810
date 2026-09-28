@@ -51,6 +51,7 @@ import type { AdventurePrepStore } from '../store/useAdventurePrepStore';
 
 const COMPONENT = path.resolve(__dirname, '../components/PrepSetupSheets.tsx');
 const source = (): string => readFileSync(COMPONENT, 'utf8');
+const css = (): string => readFileSync(path.resolve(__dirname, '../adventure-prep.css'), 'utf8');
 
 /** Le store n'est jamais appele sous `renderToStaticMarkup` : un stub suffit. */
 const actions = {
@@ -287,6 +288,13 @@ describe('DPL — Lieu : la position reelle, sans invention', () => {
     // On ne banalise que le refus : une panne GPS, elle, merite un ton d erreur.
     expect(geoErrorMessage({ code: 2 })).toContain('indisponible');
     expect(geoErrorMessage({ code: 3 })).toContain('introuvable');
+  });
+
+  it('DPL-27: la recherche n affiche qu une seule croix', () => {
+    // `input[type=search]` dessine sa propre croix d effacement, qui vient
+    // se coller a la nôtre : deux X dans la meme barre, dont un que personne
+    // ne commande. La nôtre est un vrai bouton, donc la native s efface.
+    expect(css()).toContain('-webkit-search-cancel-button');
   });
 });
 
