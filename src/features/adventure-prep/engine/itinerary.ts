@@ -10,6 +10,7 @@ import {
   type MoneyValue,
   type RouteShape,
 } from '../types';
+import { hasEngineMinimum } from './steps';
 import { proposedStops } from './proposedStops';
 import { buildContingencies } from './resilience';
 import { de } from './frenchText';
@@ -68,23 +69,21 @@ export function createStep(
   };
 }
 
-export function isBuildable(draft: AdventurePrepDraft): boolean {
-  return (
-    hasSomethingToBuildFrom(draft) &&
-    !!draft.route.origin &&
-    !!draft.calendar.durationDays &&
-    draft.calendar.durationDays > 0
-  );
-}
-
 /**
- * Ce sur quoi le parcours peut etre bati. L activite du catalogue n est pas
- * la seule porte : « Partir librement » laisse une invite libre, une saisie
- * reelle de la personne. Sans elle, exiger le catalogue annulait la promesse
- * du bouton et la generation echouait apres avoir ete lancee.
+ * Le moteur peut-il construire un parcours ?
+ *
+ * meme predicate que le CTA et que le rail : `hasEngineMinimum`. La duree
+ * n y figure plus, et c etait le TROISIEME endroit qui exigeait la duree alors
+ * que toute la chaine existe deja — `effectiveDays` extend le plan a la duree
+ * proposee par le modele, `suggestDurationDays` l applique au calendrier, et
+ * le repli regles se contente d un squelette d un jour.
+ *
+ * Mesure du 2026-09-28 : le clic passait enfin a l etape 2, et l ecran
+ * n'affichait rien, sans appel reseau. `shouldLaunchGeneration` rendait false
+ * pour cause de duree — un ecran de generation qui ne demarre jamais.
  */
-function hasSomethingToBuildFrom(draft: AdventurePrepDraft): boolean {
-  return !!draft.activities.primary || (draft.brief !== null && draft.brief.trim() !== '');
+export function isBuildable(draft: AdventurePrepDraft): boolean {
+  return hasEngineMinimum(draft);
 }
 
 function travelState(draft: AdventurePrepDraft): ItineraryStep['state'] {

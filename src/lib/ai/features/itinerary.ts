@@ -238,13 +238,59 @@ const CONSIGNES = [
 // vides sous un titre « 3 jours » : un parcours annonce qui n existait pas.
 // Le nombre de jours est donc repris ici plutot que laisse a l interpretation,
 // parce qu une journee sans etape fait rejeter la proposition entiere.
-function coverageConsigne(durationDays: number): string {
-  const days = Math.max(1, Math.trunc(durationDays));
+/**
+ * La couverture exigee, ou son absence d exigence.
+ *
+ * La duree n'est un FAIT que si quelqu'un l'a posee. Tant qu'elle ne l'est
+ * pas, enoncer un nombre importerait un defaut de calcul comme une decision :
+ * le modele lisait « 1 jour » deux fois — ici et dans la ligne « Duree » — puis
+ * « choisis » plus bas. Il couvrait donc un jour en proposant trois, et sa
+ * proposition partait refusee pour journee_non_couverte, donc l'ecran
+ * tombait sur le repli regles. Le defaut de 1 jour vient de aiItinerary
+ * (durationDays ?? 1), il n'a jamais ete une intention.
+ *
+ * La ou la duree est un fait — choisie, ou nommee par le brief — la couverture
+ * s'y accroche, et le validateur la verifie de la meme facon.
+ */
+function coverageConsigne(
+  durationDays: number,
+  chosenByUser: boolean,
+  briefDays: number | null,
+): string {
+  const fact = chosenByUser ? Math.max(1, Math.trunc(durationDays)) : briefDays;
+  if (fact === null) {
+    return (
+      'Tu choisis la duree : chaque journee de 1 a la valeur que tu proposes ' +
+      'dans suggestedDurationDays doit comporter au moins une etape. Une ' +
+      'journee sans etape fait rejeter la proposition entiere, donc ne laisse ' +
+      'aucun jour vide.'
+    );
+  }
   return (
-    `Ce voyage dure ${days} jour(s) : chaque journee de 1 a ${days} doit comporter ` +
+    `Ce voyage dure ${fact} jour(s) : chaque journee de 1 a ${fact} doit comporter ` +
     'au moins une etape. Une journee sans etape fait rejeter la proposition ' +
     'entiere, donc ne laisse aucun jour vide.'
   );
+}
+
+/**
+ * La ligne « Duree » de « Ce que l'utilisateur a choisi ».
+ *
+ * Meme regle, meme raison : ecrire « 1 jour(s) » quand personne n'a choisi et
+ * que le brief n'en nomme aucune transforme une absence de reponse en fait
+ * annonce. La date pose la question de la meme facon (« pas encore choisie »),
+ * la duree doit la poser pareil.
+ */
+function dureeLigne(
+  durationDays: number,
+  chosenByUser: boolean,
+  briefDays: number | null,
+): string {
+  if (chosenByUser) return `- Duree : ${durationDays} jour(s)`;
+  if (briefDays !== null) {
+    return `- Duree : ${briefDays} jour(s) (demandee dans le souhait, pas choisie)`;
+  }
+  return '- Duree : pas choisie, a toi de la proposer';
 }
 
 export interface ItineraryPromptInput {
@@ -501,7 +547,7 @@ export function buildItineraryPrompt(input: ItineraryPromptInput): {
     `- Depart : ${sanitizeScalar(input.originLabel, 120)}`,
     `- Arrivee : ${sanitizeScalar(input.destinationLabel, 120)}`,
     `- Date : ${input.startDateLabel === null ? 'pas encore choisie' : sanitizeScalar(input.startDateLabel, 40)}`,
-    `- Duree : ${input.durationDays} jour(s)${input.durationChosenByUser ? '' : ' (non choisie par la personne)'}`,
+    dureeLigne(input.durationDays, input.durationChosenByUser, input.briefDays),
     `- Participants : ${input.partySize}`,
     `- Rythme : ${sanitizeScalar(input.pace, 40)}`,
     `- Parcours en boucle : ${input.loop ? 'oui' : 'non'}`,
@@ -517,7 +563,7 @@ export function buildItineraryPrompt(input: ItineraryPromptInput): {
     '',
     ...inventorySection,
     '## Couverture exigee',
-    coverageConsigne(input.durationDays),
+    coverageConsigne(input.durationDays, input.durationChosenByUser, input.briefDays),
     '',
     ...dateConsigne(input.startDateLabel ?? null, input.todayIso ?? null),
     '',

@@ -173,7 +173,7 @@ export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
 
   const profileId = useMemo(() => stepOneProfileIdFor(activities), [activities]);
   const profile = stepOneProfile(profileId);
-  const ready = canCreateStepOne(draft, profileId);
+  const ready = canCreateStepOne(draft);
   // AN7 : le manque se dit en deux temps. Un bloqueur arrete, un facultatif
   // non, l IA le tranche. La ligne unique annoncait un arret qui n avait pas
   // lieu sous un CTA actif.

@@ -62,10 +62,19 @@ describe('proposition de parcours', () => {
     expect(buildItinerary(sansDepart)).toBeNull();
   });
 
-  it('ne construit rien sans duree choisie', () => {
+  it('propose une journee quand la duree n a pas ete choisie', () => {
+    // AVANT : ce test affirmait « sans duree choisie → rien », et c etait
+    // TROISIEME definition divergente de « peut avancer ». La duree ne peut
+    // pas bloquer : `effectiveDays` étend le plan a la duree proposee par le
+    // modele, `suggestDurationDays` l applique au calendrier, et le repli
+    // regles fait un squelette d un jour. Refuser ici rendait le CTA mort.
     const draft = fullDraft();
     const sansDuree = { ...draft, calendar: { ...draft.calendar, durationDays: null } };
-    expect(buildItinerary(sansDuree)).toBeNull();
+    const built = buildItinerary(sansDuree);
+    expect(built).not.toBeNull();
+    expect(built?.days).toBeGreaterThan(0);
+    // Le nombre de jours vient du repli, jamais d une duree inventee.
+    expect(built?.days).toBeGreaterThanOrEqual(1);
   });
 
   it('utilise la duree choisie par la personne, jamais une duree inventee', () => {

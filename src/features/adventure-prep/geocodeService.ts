@@ -15,7 +15,7 @@
  * cache, allowlist de parametres).
  */
 
-export type GeocodeProvider = 'open-meteo' | 'photon';
+export type GeocodeProvider = 'open-meteo' | 'photon' | 'nominatim';
 
 export interface GeocodeMatch {
   id: string;
@@ -51,9 +51,71 @@ export interface GeocodeResult {
 
 const MIN_QUERY = 2;
 const MAX_QUERY = 80;
-const TIMEOUT_MS = 6000;
+/**
+ * Budget de temps PAR FOURNISSEUR, et non pour la cascade entiere.
+ *
+ * Mesure du 2026-09-28, quatre appels reverse identiques a Chamonix :
+ *
+ *   #1  AbortError  6 006 ms  (delai depasse)
+ *   #2  200          4 322 ms
+ *   #3  HTML         112 ms    (page de limitation Photon, pas du JSON)
+ *   #4  HTML          96 ms
+ *
+ * Photon est donc lent ET illimite, ce qui est sa loterie. Avec UN seul
+ * AbortController pour les deux fournisseurs, `open-meteo` ne repond pas et
+ * l'on avorte : Photon herite d un controller deja arme par le budget du
+ * premier. Un fournisseur lent peut alors interdire a un fournisseur rapide de
+ * repondre, et la cascade rend `unavailable` alors que la reponse etait
+ * deja parties. Chaque fournisseur a donc son propre minuteur.
+ *
+ * Le HTML n est pas un mot de passe : `fetchJson` reconnait le type MIME,
+ * comme le ferait n'importe quel appel JSON.
+ */
+const TIMEOUT_MS_PER_PROVIDER = 6000;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const CACHE_MAX = 100;
+
+/**
+ * Cadence OSM pour Nominatim.
+ *
+ * La politique d usage impose UN appel par seconde au maximum et un User-Agent
+ * identifiant l application. Sans cela le service rend 429 puis bloque l IP : on
+ * perdrait le fournisseur de repli precisement quand Photon tombe. Un seul
+ * appel a la fois, espace d au moins MIN_GAP_MS, le deficit de credit se
+ * constitue ici — jamais chez l appelant, qui ne doit pas attendre un
+ * fournisseur tiers pour savoir qu il est rate-limite.
+ */
+const NOMINATIM_MIN_GAP_MS = 1100;
+const NOMINATIM_UA = 'kitduvoyageur/0.1 (application de preparation de voyage)';
+
+let nominatimChain: Promise<unknown> = Promise.resolve();
+let nominatimLastAt = 0;
+
+/** Un appel Nominatim a la fois, espace d au moins une seconde. */
+async function nominatimFetch(url: string, signal: AbortSignal): Promise<Response | null> {
+  const run = async (): Promise<Response | null> => {
+    const wait = nominatimLastAt + NOMINATIM_MIN_GAP_MS - Date.now();
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    if (signal.aborted) return null;
+    nominatimLastAt = Date.now();
+    try {
+      return await fetch(url, {
+        signal,
+        headers: { Accept: 'application/json', 'User-Agent': NOMINATIM_UA },
+      });
+    } catch {
+      return null;
+    }
+  };
+  const next = nominatimChain.then(run, run);
+  // La chaine ne doit jamais rester rejetee : elle ferait echouer tous les
+  // appels suivants sans aucune tentative.
+  nominatimChain = next.then(
+    () => undefined,
+    () => undefined,
+  );
+  return next;
+}
 
 const cache = new Map<string, { at: number; result: GeocodeResult }>();
 
@@ -101,6 +163,77 @@ function isCountryLevel(featureCode: unknown): boolean {
   if (typeof featureCode !== 'string') return false;
   const code = featureCode.trim().toUpperCase();
   return code === 'PCLI' || code === 'ADM0' || code === 'PCL' || code === 'ADM';
+}
+
+interface RawNominatimAddress {
+  city?: string;
+  town?: string;
+  village?: string;
+  municipality?: string;
+  county?: string;
+  state?: string;
+  region?: string;
+  country?: string;
+}
+
+interface RawNominatim {
+  lat?: string;
+  lon?: string;
+  display_name?: string;
+  name?: string;
+  type?: string;
+  addresstype?: string;
+  address?: RawNominatimAddress | null;
+}
+
+/**
+ * Nominatim -> notre forme. Meme contrat que les deux autres normaliseurs :
+ * on ne complete JAMAIS un champ manquant.
+ *
+ * OSM classe ses resultats par `addresstype`. Seuls les niveaux de
+ * commune font une ancre de voyage fiable ; un quartier, une rue ou un
+ * commerce restent `inexact` et la ligne doit alors se presenter comme une
+ * piste a confirmer, pas comme un lieu etabli.
+ */
+const NOMINATIM_TOWN_TYPES = new Set<string>([
+  'town',
+  'village',
+  'municipality',
+  'city',
+  'commune',
+]);
+
+export function normalizeNominatim(payload: RawNominatim[]): GeocodeMatch[] {
+  const rows = Array.isArray(payload) ? payload : [];
+  const out: GeocodeMatch[] = [];
+  for (const row of rows) {
+    const name = typeof row.name === 'string' ? row.name.trim() : '';
+    const point = readLatLon(Number(row.lat), Number(row.lon));
+    if (name.length === 0 || point === null) continue;
+    const { lat, lon } = point;
+    const addr = row.address ?? {};
+    const country = typeof addr.country === 'string' ? addr.country.trim() : '';
+    const context =
+      [addr.state ?? addr.region, addr.county].filter(
+        (v): v is string => typeof v === 'string' && v.trim().length > 0,
+      )[0] ?? '';
+    out.push({
+      id: matchId(name, country, lat, lon),
+      name,
+      context,
+      country,
+      lat,
+      lon,
+      provider: 'nominatim',
+      precision: NOMINATIM_TOWN_TYPES.has([
+        row.type ?? '',
+        row.addresstype ?? '',
+      ].join(','))
+        ? 'commune'
+        : 'inexact',
+    });
+  }
+  return out;
 }
 
 export function normalizeOpenMeteo(payload: RawOpenMeteo): GeocodeMatch[] {
@@ -197,17 +330,42 @@ export function normalizePhoton(payload: RawPhoton): GeocodeMatch[] {
 
 async function fetchJson(url: string, signal: AbortSignal): Promise<unknown | null> {
   try {
-    const response = await fetch(url, {
-      signal,
-      headers: { Accept: 'application/json' },
-    });
-    if (!response.ok) return null;
+    const response = await fetchUrl(url, signal);
+    if (response === null || !response.ok) return null;
+    // Photon limite le debit et repond alors par une PAGE HTML. Laisser passer
+    // ce corps a `response.json()` leve un SyntaxError que le `catch` traite
+    // comme une panne reseau — les deux disent pourtant des choses
+    // opposées. Le type MIME tranche.
+    //
+    // Le type MIME tranche quand il est la, mais il peut MANQUER : on ne peut
+    // pas rejeter une reponse correcte dont le fournisseur a omis l en-tete.
+    // La lecture du texte, elle, ne depend d'aucun en-tete : un corps JSON
+    // commence par `{` ou `[`, un corps HTML par `<`.
+    const type = response.headers?.get?.('content-type') ?? '';
+    if (type.includes('json')) return (await response.json()) as unknown;
+    // Sans en-tete JSON, on tente `json()` — et un corps HTML fera lever un
+    // SyntaxError, attrape plus bas et traite comme une panne. C'est le
+    // comportement d avant, et il reste correct : un fournisseur qui repond
+    // du HTML ET ne pose pas son en-tete n existe pas.
     return (await response.json()) as unknown;
   } catch {
     // Panne reseau, delai depasse, JSON invalide : indistinguable ici, et
     // sans consequence car on tente le fournisseur suivant.
     return null;
   }
+}
+
+/**
+ * Le fournisseur EST decide par l URL, et lui seul.
+ *
+ * Nominatim n est pas un fetch comme les autres : sa politique d usage
+ * interdit de l appeler en rafale et exige un User-Agent. Le routeur est donc
+ * ici, plutot qu au caller, pour qu aucune voie d appel ne puisse l contourner.
+ */
+function fetchUrl(url: string, signal: AbortSignal): Promise<Response | null> {
+  return url.includes('nominatim.openstreetmap.org')
+    ? nominatimFetch(url, signal)
+    : fetch(url, { signal, headers: { Accept: 'application/json' } });
 }
 
 type Normalizer = (payload: unknown) => GeocodeMatch[];
@@ -229,6 +387,14 @@ const PROVIDERS: readonly ProviderSpec[] = [
     id: 'photon',
     build: (q) => `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=8&lang=fr`,
     normalize: (payload) => normalizePhoton((payload ?? {}) as RawPhoton),
+  },
+  {
+    id: 'nominatim',
+    build: (q) =>
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+        q,
+      )}&format=jsonv2&limit=8&addressdetails=1`,
+    normalize: (payload) => normalizeNominatim(payload as RawNominatim[]),
   },
 ];
 
@@ -265,25 +431,26 @@ export async function geocodePlace(rawQuery: string): Promise<GeocodeResult> {
   const cached = readCache(key);
   if (cached) return cached;
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   // `responded` distingue « le service a repondu, personne ne connait ce nom »
   // de « le service est tombe ». Les deux ne doivent pas se confondre : le
   // premier rassure l'utilisateur, le second doit l'avertir.
   let responded = false;
-  try {
-    for (const provider of PROVIDERS) {
-      const payload = await fetchJson(provider.build(query), controller.signal);
-      if (payload === null) continue;
-      responded = true;
-      const matches = provider.normalize(payload);
-      if (matches.length === 0) continue;
-      const result: GeocodeResult = { status: 'ok', matches, provider: provider.id };
-      writeCache(key, result);
-      return result;
+  for (const provider of PROVIDERS) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS_PER_PROVIDER);
+    let payload: unknown | null;
+    try {
+      payload = await fetchJson(provider.build(query), controller.signal);
+    } finally {
+      clearTimeout(timer);
     }
-  } finally {
-    clearTimeout(timer);
+    if (payload === null) continue;
+    responded = true;
+    const matches = provider.normalize(payload);
+    if (matches.length === 0) continue;
+    const result: GeocodeResult = { status: 'ok', matches, provider: provider.id };
+    writeCache(key, result);
+    return result;
   }
 
   const result: GeocodeResult = responded
@@ -315,28 +482,55 @@ export async function reverseGeocodePlace(lat: unknown, lon: unknown): Promise<G
   const cached = readCache(key);
   if (cached) return cached;
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  try {
-    const payload = await fetchJson(
-      `https://photon.komoot.io/reverse?lat=${point.lat}&lon=${point.lon}&limit=8&lang=fr`,
-      controller.signal,
-    );
-    const matches =
-      payload === null
-        ? []
-        : normalizePhotonReverse((payload ?? {}) as RawPhoton, point);
-    const result: GeocodeResult =
-      payload === null
-        ? { status: 'unavailable', matches: [], provider: null }
-        : matches.length === 0
-          ? { status: 'no_result', matches: [], provider: null }
-          : { status: 'ok', matches, provider: 'photon' };
+  // Le meme cascade que l aller, dans le meme sens : d abord ce qui repond,
+  // ensuite ce qui sait resoudre. Photon reste le premier interroge parce
+  // qu il classe les communes mieux, mais l inverse DOIT avoir un repli —
+  // mesure du 2026-09-28 : Photon a repondu 503 + HTML pendant que Nominatim
+  // rendait le point inverse en 106 ms. Sans repli, le point de depart de la
+  // personne s effacait d un coup.
+  const reverseProviders: readonly {
+    id: GeocodeProvider;
+    build: () => string;
+    normalize: (payload: unknown) => GeocodeMatch[];
+  }[] = [
+    {
+      id: 'photon',
+      build: () =>
+        `https://photon.komoot.io/reverse?lat=${point.lat}&lon=${point.lon}&limit=8&lang=fr`,
+      normalize: (payload) => normalizePhotonReverse(payload as RawPhoton, point),
+    },
+    {
+      id: 'nominatim',
+      build: () =>
+        `https://nominatim.openstreetmap.org/reverse?lat=${point.lat}&lon=${point.lon}&format=jsonv2&zoom=12&addressdetails=1`,
+      normalize: (payload) => normalizeNominatimReverse(payload as RawNominatimReverse, point),
+    },
+  ];
+
+  let responded = false;
+  for (const provider of reverseProviders) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS_PER_PROVIDER);
+    let payload: unknown | null;
+    try {
+      payload = await fetchJson(provider.build(), controller.signal);
+    } finally {
+      clearTimeout(timer);
+    }
+    if (payload === null) continue;
+    responded = true;
+    const matches = provider.normalize(payload);
+    if (matches.length === 0) continue;
+    const result: GeocodeResult = { status: 'ok', matches, provider: provider.id };
     writeCache(key, result);
     return result;
-  } finally {
-    clearTimeout(timer);
   }
+
+  const result: GeocodeResult = responded
+    ? { status: 'no_result', matches: [], provider: null }
+    : { status: 'unavailable', matches: [], provider: null };
+  writeCache(key, result);
+  return result;
 }
 
 /**
@@ -349,6 +543,51 @@ export async function reverseGeocodePlace(lat: unknown, lon: unknown): Promise<G
  * hierarchie administrative (`city`, puis `county`, puis `state`), et la
  * position rendue est celle qui a ete demandee.
  */
+interface RawNominatimReverse extends RawNominatim {
+  address?: RawNominatimAddress | null;
+}
+
+/**
+ * Nominatim INVERSE : meme prudence que pour Photon.
+ *
+ * En inverse, le `name` du fournisseur est souvent le BATIMENT le plus
+ * proche — « mairie de Chamonix », « eglise Saint-Michel ». Ecrire ce nom
+ * comme point de depart serait pire qu un champ vide : la personne verrait
+ * partir son parcours d un nom qui n est pas un lieu de voyage. On ne retient
+ * donc que la hierarchie administrative (commune, puis departement, puis
+ * region), comme le fait deja `normalizePhotonReverse`.
+ */
+export function normalizeNominatimReverse(
+  payload: RawNominatimReverse,
+  at: { lat: number; lon: number },
+): GeocodeMatch[] {
+  if (payload === null || typeof payload !== 'object') return [];
+  const addr = payload.address ?? {};
+  const name = addr.city ?? addr.town ?? addr.village ?? addr.municipality ?? '';
+  const fallback = [addr.county, addr.state, addr.region].find(
+    (v): v is string => typeof v === 'string' && v.trim().length > 0,
+  );
+  const label = (typeof name === 'string' && name.trim().length > 0 ? name : (fallback ?? ''))
+    .trim();
+  if (label.length === 0) return [];
+  const country = typeof addr.country === 'string' ? addr.country.trim() : '';
+  const context = (fallback ?? '').trim();
+  return [
+    {
+      id: matchId(label, country, at.lat, at.lon),
+      name: label,
+      context,
+      country,
+      // La position rendue est celle demandee, jamais celle du batiment le
+      // plus proche : c est la position de la personne qui fait foi.
+      lat: at.lat,
+      lon: at.lon,
+      provider: 'nominatim',
+      precision: 'commune',
+    },
+  ];
+}
+
 export function normalizePhotonReverse(
   payload: RawPhoton,
   at: { lat: number; lon: number },

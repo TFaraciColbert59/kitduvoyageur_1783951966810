@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { DestinationStep } from '../components/DestinationStep';
 import {
   canCreateStepOne,
+  stepOneMissing,
   stepOneMissingSummary,
   stepOneProfile,
   stepOneProfileIdFor,
@@ -102,11 +103,21 @@ describe('S11 — les questions posees', () => {
     expect(profile.cells.map((cell) => cell.label)).toEqual(['Départ', 'Retour ou durée']);
   });
 
-  it('S11-09: le sejour pose un seul lieu de base et les deux dates', () => {
+  it('S11-09: le sejour pose le depart, le lieu de base et les deux dates', () => {
+    // Un seul lieu suffisait a l affichage, pas a la generation :
+    // `requestDraftedItinerary` rend une proposition vide sans `route.origin`.
+    // Le sejour n affichant pas de depart, « Creer mon parcours » pouvait
+    // s activer et ne rien faire. La consigne demande de toute facon un point
+    // de depart OU d arrivee sur chaque ecran.
     const profile = stepOneProfile('sejour');
-    expect(profile.rows).toHaveLength(1);
-    expect(profile.rows[0].label).toBe('Destination ou hébergement de base');
+    expect(profile.rows.map((row) => row.label)).toEqual([
+      'Lieu de départ',
+      'Destination ou hébergement de base',
+    ]);
+    // « Lieu de depart » et non « Depart » : la cellule de retour porte deja
+    // ce mot, et deux « Depart » sur un meme ecran sont ambigus.
     expect(profile.cells.map((cell) => cell.label)).toEqual(['Arrivée', 'Départ']);
+    expect(profile.singlePlace).toBeNull();
   });
 
   it('S11-10: l activite locale pose un lieu de pratique et une duree indicative', () => {
@@ -119,13 +130,26 @@ describe('S11 — les questions posees', () => {
 });
 
 describe('S11 — ce qui manque, sans question inutile', () => {
-  it('S11-11: le sejour ne demande pas de lieu de depart', () => {
+  it('S11-11: le sejour sans depart est refuse, et il dit pourquoi', () => {
+    // AVANT : aucune question posee, donc aucune ligne, donc un CTA actif — et
+    // un clic sans effet, puisque le moteur n invente pas de depart. L ecran
+    // promettait un parcours que rien ne pouvait produire.
     const draft = fullDraft({
       activities: SEJOUR,
       route: { origin: null, destination: ARGENTIERE, shape: 'boucle' },
     });
-    expect(stepOneMissingSummary(draft, 'sejour')).toBeNull();
-    expect(canCreateStepOne(draft, 'sejour')).toBe(true);
+    expect(canCreateStepOne(draft)).toBe(false);
+    expect(stepOneMissing(draft, 'sejour').blocking).toEqual(['lieu de départ']);
+    expect(stepOneMissingSummary(draft, 'sejour')).toBe('Il manque : lieu de départ');
+  });
+
+  it('S11-11b: le sejour avec depart n affiche plus aucune arret', () => {
+    const draft = fullDraft({
+      activities: SEJOUR,
+      route: { origin: CHAMONIX, destination: ARGENTIERE, shape: 'boucle' },
+    });
+    expect(canCreateStepOne(draft)).toBe(true);
+    expect(stepOneMissing(draft, 'sejour').blocking).toEqual([]);
   });
 
   it('S11-28: partir librement permet de creer sans activite du catalogue', () => {
@@ -140,7 +164,7 @@ describe('S11 — ce qui manque, sans question inutile', () => {
     // Seule l arrivee reste signalee, comme pour n'importe quel parcours sans
     // arrivee : l activity n est plus une question posee.
     expect(stepOneMissingSummary(draft, 'trajet')).toBe('Il manque : lieu d’arrivée');
-    expect(canCreateStepOne(draft, 'trajet')).toBe(true);
+    expect(canCreateStepOne(draft)).toBe(true);
   });
 
   it('S11-12: l activite locale ne demande pas d arrivee', () => {
@@ -149,7 +173,7 @@ describe('S11 — ce qui manque, sans question inutile', () => {
       route: { origin: CHAMONIX, destination: null, shape: 'boucle' },
     });
     expect(stepOneMissingSummary(draft, 'local')).toBeNull();
-    expect(canCreateStepOne(draft, 'local')).toBe(true);
+    expect(canCreateStepOne(draft)).toBe(true);
   });
 
   it('S11-13: l arrivee est signalee mais n exige pas d arrivee distincte', () => {
@@ -160,7 +184,7 @@ describe('S11 — ce qui manque, sans question inutile', () => {
     // Elle est nommee pour que l utilisateur sache ce que l IA choisira, mais
     // elle ne bloque jamais : le parcours devient une boucle.
     expect(stepOneMissingSummary(draft, 'trajet')).toBe('Il manque : lieu d’arrivée');
-    expect(canCreateStepOne(draft, 'trajet')).toBe(true);
+    expect(canCreateStepOne(draft)).toBe(true);
   });
 
   it('S11-14: le voyage regroupe les deux dates sous un seul libelle', () => {
@@ -178,7 +202,11 @@ describe('S11 — ce qui manque, sans question inutile', () => {
       route: { origin: null, destination: ARGENTIERE, shape: 'boucle' },
       calendar: CAL_EMPTY,
     });
-    expect(stepOneMissingSummary(draft, 'sejour')).toBe('Il manque : dates du séjour');
+    // Le depart vient en tete parce qu il BLOQUE ; les deux dates sont
+    // regroupees et facultatives — l IA les propose si personne ne les pose.
+    expect(stepOneMissingSummary(draft, 'sejour')).toBe(
+      'Il manque : lieu de départ, dates du séjour',
+    );
   });
 
   it('S11-16: l activite locale nomme la date et la duree', () => {
@@ -195,7 +223,7 @@ describe('S11 — ce qui manque, sans question inutile', () => {
       activities: RANDO,
       calendar: { startDate: null, durationDays: 2, durationIsSuggested: false, startDateIsSuggested: false, returnDate: null },
     });
-    expect(canCreateStepOne(draft, 'trajet')).toBe(true);
+    expect(canCreateStepOne(draft)).toBe(true);
   });
 });
 
@@ -262,7 +290,7 @@ describe('S11 — rendu des ecrans 10, 11, 12 et 13', () => {
     const partial = { ...base, route: { ...base.route, destination: null } };
     const text = visible(render(partial));
     expect(stepOneProfileIdFor(RANDO)).toBe('trajet');
-    expect(canCreateStepOne(partial, 'trajet')).toBe(true);
+    expect(canCreateStepOne(partial)).toBe(true);
     expect(text).toContain('Créer mon parcours');
     expect(text).not.toContain('Compléter');
     expect(text).not.toContain('Il manque');

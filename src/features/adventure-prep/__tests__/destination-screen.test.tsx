@@ -227,10 +227,11 @@ describe('Écran 10 — ce qu’il reste à saisir', () => {
   });
 
   it('D10-14: elle nomme exactement ce qui BLOQUE, et rien d autre', () => {
-    // AN7 : cette assertion encodait le defaut. Date et temps disponible
-    // etaient melanges dans une seule liste, donc le seul vrai bloqueur
-    // paraissait au meme titre qu un champ que l IA tranche toute seule.
-    const draft = fullDraft({
+    // AN7 avait corrige cette assertion en gardant « temps disponible » dans
+    // les bloqueurs. D1 le retire a son tour : sans date ET sans duree, et avec
+    // le depart propose par la geolocalisation, il ne reste aucun obstacle.
+    const base = fullDraft();
+    const sansDateNiDuree = fullDraft({
       calendar: {
         startDate: null,
         durationDays: null,
@@ -239,14 +240,35 @@ describe('Écran 10 — ce qu’il reste à saisir', () => {
         returnDate: null,
       },
     });
-    const text = visible(render(draft));
-    expect(text).toContain('Il manque : temps disponible');
-    expect(text).not.toContain('L’IA complètera');
+    const complet = visible(render(sansDateNiDuree));
+    expect(complet).not.toContain('Il manque');
+    expect(complet).toContain('L’IA complètera : date, temps disponible');
+
+    // Le seul bloqueur restant, lui, se nomme — et n’annonce aucun complement.
+    const sansDepart = fullDraft({ route: { ...base.route, origin: null } });
+    const bloque = visible(render(sansDepart));
+    expect(bloque).toContain('Il manque : lieu de départ');
+    expect(bloque).not.toContain('L’IA complètera');
   });
 
   it('D10-15: le bouton reste bloqué tant qu’un champ bloquant manque', () => {
-    const draft = draftWithoutItineraryInput();
-    expect(render(draft)).toContain('disabled');
+    // « disabled » vit aussi dans les classes Tailwind du bouton
+    // (disabled:pointer-events-none) : chercher le mot dans tout le markup
+    // revient donc a prouver une classe, pas un bouton mort. Meme correctif
+    // que E02-18 — on retire les classes, on ne lit plus que l ATTRIBUT.
+    const bloque = (markup: string) => markup.replace(/class="[^"]*"/g, '').includes('disabled');
+
+    const base = fullDraft();
+    const sansDepart = draftWithoutItineraryInput({ route: { ...base.route, origin: null } });
+    expect(bloque(render(sansDepart))).toBe(true);
+    // L inverse, sur le meme ecran : des que le depart est la, plus rien ne
+    // bloque. Sans cette contre-mesure, le test passerait avec un gate mort.
+    // « Partir librement » fournit l intention que le catalogue n a pas fournie.
+    expect(bloque(render(draftWithoutItineraryInput({ pickerDismissed: true })))).toBe(false);
+    // Sans intention — ni activite choisie, ni « Partir librement » — le
+    // catalogue est encore ouvert et le parcours n a pas de sujet. D2-04
+    // verifie que ce cas-la reste bloque sur les quatre profils.
+    expect(bloque(render(draftWithoutItineraryInput()))).toBe(true);
   });
 });
 

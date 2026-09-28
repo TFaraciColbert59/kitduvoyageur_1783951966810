@@ -15,16 +15,32 @@ export function isPicking(draft: AdventurePrepDraft): boolean {
   return draft.activities.primary === null && !draft.pickerDismissed;
 }
 
+/**
+ * Le strict necessaire du MOTEUR — et lui seul.
+ *
+ * `requestDraftedItinerary` ne lit que deux choses : une INTENTION (une
+ * activite du catalogue, ou « Partir librement » qui la remplace) et
+ * `route.origin`. Sans depart il renvoie une proposition vide sans jamais
+ * appeler le modele : un bouton actif y deviendrait un bouton mort. Tout le
+ * reste se complete sans la personne — l arrivee deduit la forme du parcours,
+ * la date et la duree sont proposees puis badgees (P0.15, P0.18) — et ne peut
+ * donc pas bloquer.
+ *
+ * CE PREDICAT EST LE SEUL. Le CTA (`canCreateStepOne`), le rail
+ * (`isStepSatisfied`, `canOpenStep`, `stepCountDone`) et le clic
+ * (`completeStep`) le lisent tous. Deux definitions, et l ecran finit par
+ * promettre un clic que le comportement refuse — ce que la mesure du
+ * 2026-09-28 a vu : depart propose par la geolocalisation, aucune date, aucune
+ * duree, « Creer mon parcours » actif… et un clic qui ne changeait rien, sans
+ * meme appeler l'API.
+ */
+export function hasEngineMinimum(draft: AdventurePrepDraft): boolean {
+  return (!!draft.activities.primary || draft.pickerDismissed) && !!draft.route.origin;
+}
+
 /** Une etape est satisfaite quand les reponses necessaires sont saisies. */
 export function isStepSatisfied(draft: AdventurePrepDraft, id: PrepStepId): boolean {
-  if (id === 'destination') {
-    return (
-      (!!draft.activities.primary || draft.pickerDismissed) &&
-      !!draft.route.origin &&
-      !!draft.calendar.durationDays &&
-      draft.calendar.durationDays > 0
-    );
-  }
+  if (id === 'destination') return hasEngineMinimum(draft);
   if (id === 'itinerary') return draft.itinerary !== null;
   return false;
 }

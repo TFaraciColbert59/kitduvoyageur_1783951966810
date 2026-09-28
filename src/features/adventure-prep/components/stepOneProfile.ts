@@ -12,6 +12,7 @@
  */
 
 import { activityById } from '../catalog';
+import { hasEngineMinimum } from '../engine/steps';
 import type { AdventurePrepDraft, ActivitySelection } from '../types';
 
 /* ------------------------------------------------------------------ */
@@ -108,9 +109,10 @@ const PROFILES: Readonly<Record<StepOneProfileId, StepOneProfile>> = {
   sejour: {
     id: 'sejour',
     rows: [
+      { field: 'origin', label: 'Lieu de départ', icon: 'map-pin' },
       { field: 'destination', label: 'Destination ou hébergement de base', icon: 'bed-double' },
     ],
-    singlePlace: 'destination',
+    singlePlace: null,
     cells: [
       { field: 'startDate', label: 'Arrivée', icon: 'calendar' },
       { field: 'duration', label: 'Départ', icon: 'calendar' },
@@ -224,13 +226,47 @@ export function stepOneMissingSummary(
 }
 
 /**
- * Champs sans lesquels la generation n'a pas de sens. Ni la date ni l arrivee
- * ne bloquent : sans date l IA choisit le moment le plus opportun, sans
- * arrivee le parcours est une boucle. L activite du catalogue n bloque pas
- * non plus : « Partir librement » promet un parcours sans elle, et une invite
- * libre en tient lieu. Restent le depart et le temps disponible.
+ * Champs sans lesquels la generation n'a pas de sens : l INTENTION et le DEPART.
+ *
+ * Les deux sont lus par `hasEngineMinimum` (engine/steps.ts), qui est le seul
+ * verdict_shared par le CTA, le rail et le clic. Les lister ici ne les rend pas
+ * bloquants : `ENGINE_BLOCKING` reflete la condition du moteur, et
+ * `canCreateStepOne` appelle `blockedByEngine` — donc la liste ne peut pas
+ * diverger du comportement.
+ *
+ * Tous les autres ont un presoeur identifie, et c est
+ * precisement la difference entre « la personne ne peut pas avancer » et
+ * « l IA n'a pas encore tranche » :
+ *
+ *   - la DATE : proposee par l IA puis badgee (P0.15). Elle ne peut donc pas
+ *     etre exigee, sans quoi on refuserait un parcours qui existe deja ;
+ *   - l arrivee : son absence signifie une boucle, pas un trou ;
+ *   - l activite du catalogue : « Partir librement » promet un parcours sans
+ *     elle, et l invite libre en tient lieu (E02-18) ;
+ *   - la DUREE : lue dans le brief (P0.18), puis proposee par l IA a defaut de
+ *     choix. Toute la chaine existe — briefRequestedDays, suggestDurationDays,
+ *     effectiveDays qui etend le plan a la duree proposee, et le validateur
+ *     qui refuse une journee vide plutot que de l afficher. La bloquer
+ *     revenait a interdire un chemin deja construit.
+ *
+ * Mesure du 2026-09-28 qui a ouvert ce fichier : depart et arrivee reellement
+ * geocodes, le CTA « Creer mon parcours » restait mort, et les deux seules
+ * choses manquantes annoncees etaient « date » et « temps disponible » — dont
+ * aucune n'est un obstacle, puisque la consigne dit explicitement que le
+ * moment se choisit sans question.
+ *
+ * Le depart, lui, reste bloquant PARCE QUE le generateur n invente pas de
+ * point de depart : requestDraftedItinerary rend une proposition vide sans
+ * origin, donc un CTA actif deviendrait un bouton mort — exactement ce que
+ * AN7 interdit. Ce n'est pas une contrainte de formulaire, c'est une limite
+ * reelle du moteur — meme raison pour l INTENTION : sans activite ET sans
+ * « Partir librement », il n y a rien a quoi le modele repondre.
+ *
+ * En pratique withDefaultOrigin propose deja la position
+ * GPS de la personne : le champ ne reste vide que si la geolocalisation est
+ * refusee, et la ligne « Il manque : lieu de depart » dit alors quoi faire.
  */
-const BLOCKING: ReadonlySet<StepOneFieldKey> = new Set<StepOneFieldKey>(['origin', 'duration']);
+const ENGINE_BLOCKING: readonly StepOneFieldKey[] = ['activity', 'origin'];
 
 /**
  * Repartition des champs manquants entre ce qui BLOQUE et ce que l IA prend.
@@ -250,18 +286,56 @@ export function stepOneMissing(draft: AdventurePrepDraft, id: StepOneProfileId):
   const asked = stepOneAskedFields(draft, id);
   const blocking: string[] = [];
   const optional: string[] = [];
-  for (const field of asked) {
+  const labelOf = (field: StepOneFieldKey): string =>
+    PROFILE_LABELS[id][field] ?? DEFAULT_LABELS[field];
+
+  // Le MOTEUR d'abord, et MEME quand l ecran ne pose pas la question.
+  //
+  // Un sejour n'affichait pas de lieu de depart : le CTA pouvait donc s'activer
+  // sans depart, et le clic ne rien faire puisque `hasEngineMinimum` est faux.
+  // La regle : ce que le moteur exige est annonce, toujours ; ce que l ecran
+  // demande et que l IA tranchera est annonce aussi, mais en complement.
+  for (const field of ENGINE_BLOCKING) {
     if (!isMissing(draft, field)) continue;
-    const label = PROFILE_LABELS[id][field] ?? DEFAULT_LABELS[field];
-    const bucket = BLOCKING.has(field) ? blocking : optional;
-    if (!bucket.includes(label)) bucket.push(label);
+    const label = labelOf(field);
+    if (!blocking.includes(label)) blocking.push(label);
+  }
+  // L ACTIVITE quand le catalogue a ete ferme, meme quand l invitation libre
+  // tient lieu d'intention.
+  //
+  // Mesure du 2026-09-28 : avec « Partir librement » et un depart, le CTA
+  // devenait actif — et la ligne n'annonçait plus RIEN. Or le moteur fait
+  // working : `requestDraftedItinerary` lit l'invite libre et construit un
+  // parcours sans activite de catalogue. Sans cette ligne, l'ecran passe du
+  // silence « il manque : X » a un silence total, et rien n'explique pourquoi.
+  // C'est la meme faute que le bouton actif et mort, dans l'autre sens.
+  if (!draft.activities.primary && !optional.includes(labelOf('activity'))) {
+    optional.push(labelOf('activity'));
+  }
+
+  for (const field of asked) {
+    if (ENGINE_BLOCKING.includes(field)) continue;
+    if (!isMissing(draft, field)) continue;
+    const label = labelOf(field);
+    if (!optional.includes(label)) optional.push(label);
   }
   return { blocking, optional };
 }
 
-/** Le CTA est actif exactement quand aucun bloqueur ne reste. */
-export function canCreateStepOne(draft: AdventurePrepDraft, id: StepOneProfileId): boolean {
-  return stepOneMissing(draft, id).blocking.length === 0;
+/**
+ * Le CTA est actif exactement quand le moteur peut produire un parcours.
+ *
+ * `hasEngineMinimum` est la MEME condition que `isStepSatisfied(draft,
+ * 'destination')` : le rail, la peinture et le clic partagent donc un seul
+ * verdict. La liste `blocking` n'est plus qu'une maniere de NOMMER ce verdict
+ * a l'ecran ; c'est `blockedByEngine` qui decide.
+ */
+export function blockedByEngine(draft: AdventurePrepDraft): boolean {
+  return !hasEngineMinimum(draft);
+}
+
+export function canCreateStepOne(draft: AdventurePrepDraft): boolean {
+  return !blockedByEngine(draft);
 }
 
 /**

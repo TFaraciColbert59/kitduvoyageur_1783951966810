@@ -16,8 +16,8 @@ import type { AdventurePrepDraft } from '../types';
  *
  * Le defaut mesure sur 393x852 : un CTA **actif** (« Creer mon parcours »)
  * surmontait « Il manque : lieu d'arrivee, date » — deux champs que le moteur
- * lui-meme declare non bloquants (`BLOCKING` ne contient que `origin` et
- * `duration`). L'ecran annoncait donc un blocage inexistant, et l'utilisateur
+ * lui-meme declare non bloquants. L'ecran annoncait donc un blocage inexistant,
+ * et l'utilisateur
  * ne pouvait pas distinguer ce qui l'arretait de ce que l'IA completait.
  *
  * meme harnais que step-one-profile.test.tsx : sous `renderToStaticMarkup`,
@@ -81,11 +81,11 @@ describe('AN7 — le manque se dit blockers et facultatifs, jamais melanges', ()
   it('AN7-2: le CTA actif est exactement « aucun bloqueur »', () => {
     const complet = fullDraft();
     expect(stepOneMissing(complet, 'trajet').blocking).toEqual([]);
-    expect(canCreateStepOne(complet, 'trajet')).toBe(true);
+    expect(canCreateStepOne(complet)).toBe(true);
 
     const sansDepart = fullDraft({ route: { ...complet.route, origin: null } });
     expect(stepOneMissing(sansDepart, 'trajet').blocking.length).toBe(1);
-    expect(canCreateStepOne(sansDepart, 'trajet')).toBe(false);
+    expect(canCreateStepOne(sansDepart)).toBe(false);
   });
 
   it('AN7-3: tant qu un bloqueur existe, aucune promesse de complements', () => {
