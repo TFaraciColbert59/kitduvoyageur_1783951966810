@@ -161,7 +161,9 @@ export function stepOneAskedFields(
 function isMissing(draft: AdventurePrepDraft, field: StepOneFieldKey): boolean {
   switch (field) {
     case 'activity':
-      return !draft.activities.primary;
+      // « Partir librement » ferme le catalogue sans exiger d activity : une
+      // invite libre en tient lieu. La licenciaire ne doit pas ressurgir.
+      return !draft.activities.primary && !draft.pickerDismissed;
     case 'origin':
       return !draft.route.origin;
     case 'destination':
@@ -224,14 +226,11 @@ export function stepOneMissingSummary(
 /**
  * Champs sans lesquels la generation n'a pas de sens. Ni la date ni l arrivee
  * ne bloquent : sans date l IA choisit le moment le plus opportun, sans
- * arrivee le parcours est une boucle. Seuls l activite, le depart et le temps
- * disponible sont vraiment requis.
+ * arrivee le parcours est une boucle. L activite du catalogue n bloque pas
+ * non plus : « Partir librement » promet un parcours sans elle, et une invite
+ * libre en tient lieu. Restent le depart et le temps disponible.
  */
-const BLOCKING: ReadonlySet<StepOneFieldKey> = new Set<StepOneFieldKey>([
-  'activity',
-  'origin',
-  'duration',
-]);
+const BLOCKING: ReadonlySet<StepOneFieldKey> = new Set<StepOneFieldKey>(['origin', 'duration']);
 
 export function canCreateStepOne(draft: AdventurePrepDraft, id: StepOneProfileId): boolean {
   return stepOneAskedFields(draft, id).every(

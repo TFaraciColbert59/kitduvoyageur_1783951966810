@@ -127,6 +127,21 @@ describe('S11 — ce qui manque, sans question inutile', () => {
     expect(canCreateStepOne(draft, 'sejour')).toBe(true);
   });
 
+  it('S11-28: partir librement permet de creer sans activite du catalogue', () => {
+    // « Partir librement » laisse le catalogue sans exiger d activity. Si le
+    // bouton de creation continuait de la reclamer, le parcours promettait un
+    // choix libre et se terminait sur un « Il manque : activité ».
+    const draft = fullDraft({
+      activities: { primary: null, extra: [], nights: [] },
+      pickerDismissed: true,
+      route: { origin: CHAMONIX, destination: null, shape: 'boucle' },
+    });
+    // Seule l arrivee reste signalee, comme pour n'importe quel parcours sans
+    // arrivee : l activity n est plus une question posee.
+    expect(stepOneMissingSummary(draft, 'trajet')).toBe('Il manque : lieu d’arrivée');
+    expect(canCreateStepOne(draft, 'trajet')).toBe(true);
+  });
+
   it('S11-12: l activite locale ne demande pas d arrivee', () => {
     const draft = fullDraft({
       activities: LOCAL,
