@@ -66,11 +66,20 @@ export interface DeparturePreparationPlan {
     securityChecks: DepartureChecklistItem[];
     missingItems: DepartureChecklistItem[];
   };
+  /**
+   * Ce que le fournisseur a réellement relevé, ou `null`.
+   *
+   * Aucun de ces champs ne porte de repli : une température absente reste
+   * absente. C'est ce qui permet à l'écran d'écrire « non mesuré » au lieu
+   * d'afficher un nombre plausible.
+   */
   weatherSummary: {
-    tempMinMax: string;
-    condition: string;
-    rainRiskPct: number;
-    windKmh: number;
+    tempMinMax: string | null;
+    condition: string | null;
+    rainRiskPct: number | null;
+    windKmh: number | null;
+    /** Faux = personne n'a relevé cette sortie. */
+    measured: boolean;
     advice: string;
   };
 }
@@ -79,16 +88,29 @@ export interface DeparturePreparationPlan {
  * 1. Calcul précis des consommables selon durée, dénivelé et météo
  */
 export function calculateHikeConsumables(context: DepartureHikeContext): ConsumablesEstimate {
+  // Une durée absente est ESTIMÉE, et c'est annoncé comme tel : une
+  // estimation d'allure est un calcul, pas une mesure d'une grandeur météo.
   const duration = context.durationHours || Math.max(1, Math.round((context.distanceKm / 3.8) * 10) / 10);
+  // Le dénivelé absent vaut 0 ici sans fabriquer de nombre affiché : son seul
+  // usage est la comparaison `> 600` plus bas, ou 0 et « inconnu » donnent
+  // le même résultat. Aucune surface ne montre cette valeur.
   const elevation = context.elevationGain || 0;
-  const temp = context.weather?.tempC ?? 18;
-  const rawRain = context.weather?.precipitationProbability ?? 0;
-  const rainRisk = rawRain > 1 ? Math.min(100, Math.round(rawRain)) : Math.min(100, Math.round(rawRain * 100));
+  // Les trois mesures ci-dessous restent `null` quand personne n'a relevé.
+  // `null` se compare mal : `null < 12` vaut `true` en JavaScript, donc
+  // chaque seuil passe par un garde explicite plutôt que par `??`.
+  const temp = context.weather?.tempC ?? null;
+  const uv = context.weather?.uvIndex ?? null;
+  const rawRain = context.weather?.precipitationProbability ?? null;
+  const rainRisk = rawRain === null
+    ? null
+    : rawRain > 1
+      ? Math.min(100, Math.round(rawRain))
+      : Math.min(100, Math.round(rawRain * 100));
 
   // Calcul Eau : plafonné à la capacité physique d'un sac (1.5L à 3.0L max porté)
   let water = duration * 0.45;
   if (elevation > 600) water += 0.4;
-  if (temp > 24) water += 0.5;
+  if (temp !== null && temp > 24) water += 0.5;
 
   const hasRefills = context.hasWaterPoints || (context.waterPointsCount && context.waterPointsCount > 0);
   if (hasRefills) {
@@ -115,10 +137,12 @@ export function calculateHikeConsumables(context: DepartureHikeContext): Consuma
     foodMealsCount: meals,
     snacksCount: snacks,
     fuelGrams: fuel,
-    electrolytesRecommended: duration > 4 || temp > 25,
-    sunProtectionNeeded: temp > 20 || (context.weather?.uvIndex ?? 0) > 4,
-    warmLayerNeeded: temp < 12 || elevation > 1500,
-    rainProtectionNeeded: rainRisk > 25 || (context.weather?.isAlert ?? false),
+    electrolytesRecommended: duration > 4 || (temp !== null && temp > 25),
+    // Sans UV mesure, la protection solaire ne peut pas se déduire du vide :
+    // un indice à zéro transformerait « inconnu » en « indice nul ».
+    sunProtectionNeeded: (temp !== null && temp > 20) || (uv !== null && uv > 4),
+    warmLayerNeeded: (temp !== null && temp < 12) || elevation > 1500,
+    rainProtectionNeeded: (rainRisk !== null && rainRisk > 25) || (context.weather?.isAlert ?? false),
   };
 }
 
@@ -332,21 +356,34 @@ export function resolveDeparturePlan(
   const totalWeight = inPackReady.reduce((s, i) => s + i.weightG, 0) +
                       consumablesToPack.reduce((s, i) => s + i.weightG, 0);
 
-  // Synthèse Météo
-  const temp = context.weather?.tempC ?? 18;
-  const rawPrecip = context.weather?.precipitationProbability ?? 0;
-  const safeRainPct = rawPrecip > 1 ? Math.min(100, Math.round(rawPrecip)) : Math.min(100, Math.round(rawPrecip * 100));
+  // Synthèse météo : la mesure telle quelle, ou `null`.
+  // L'ancienne version affichait « 15 °C — 20 °C » et
+  // « Conditions dégagées » pour une sortie dont personne n avait
+  // rien relu. Sans relevé, l'écran doit le dire.
+  const temp = context.weather?.tempC ?? null;
+  const windKmh = context.weather?.windKmH ?? null;
+  const rawPrecip = context.weather?.precipitationProbability ?? null;
+  const safeRainPct = rawPrecip === null
+    ? null
+    : rawPrecip > 1
+      ? Math.min(100, Math.round(rawPrecip))
+      : Math.min(100, Math.round(rawPrecip * 100));
 
   const weatherSummary = {
-    tempMinMax: `${Math.round(temp - 3)}°C — ${Math.round(temp + 2)}°C`,
-    condition: context.weather?.condition || (consumables.rainProtectionNeeded ? 'Risque d\'averses' : 'Conditions dégagées'),
+    tempMinMax: temp === null
+      ? null
+      : `${Math.round(temp - 3)} °C — ${Math.round(temp + 2)} °C`,
+    condition: context.weather?.condition ?? null,
     rainRiskPct: safeRainPct,
-    windKmh: Math.round(context.weather?.windKmH ?? 15),
-    advice: consumables.rainProtectionNeeded
+    windKmh: windKmh === null ? null : Math.round(windKmh),
+    measured: temp !== null,
+    advice: temp === null
+      ? 'Météo non mesurée pour cette sortie : vérifiez les conditions avant de partir.'
+      : consumables.rainProtectionNeeded
       ? 'Prévoyez votre veste imperméable en haut de sac.'
       : consumables.warmLayerNeeded
       ? 'Températures fraîches : couche isolante recommandée.'
-      : 'Excellentes conditions prévues pour votre sortie.',
+      : 'Conditions mesurées favorables pour votre sortie.',
   };
 
   return {

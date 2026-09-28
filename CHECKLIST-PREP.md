@@ -1234,15 +1234,19 @@ corrompue ne doit pas fabriquer une alerte qui aura l’air d’un fait.
       test qui touche `routeCoords` est `prep-map-controls-d6.test.tsx`, à coordonnées
       en dur. Item non coché.
 
-- [ ] E6 Swipe gauche/droite = jour précédent/suivant
-      **À FAIRE — revérifié le 2026-09-29. 48 tests verts sur une fonction morte.**
-      La logique pure existe et est correcte : `swipeIntent`
-      (`engine/dayNavigation.ts:111`, seuil 48 px, dominance horizontale ×2) et
-      `dayAfterSwipe` (`:129`, carrousel fermé, jamais hors programme).
-      **Mais `swipeIntent` / `dayAfterSwipe` n'apparaissent que dans le moteur et dans les
-      tests : aucun `onTouchStart` n'existe dans le feature.** Le swipe n'est câblé à aucun
-      écran, donc les 48 tests verts prouvent une fonction que l'utilisateur ne peut pas
-      atteindre. Item non coché.
+- [x] E6 Swipe gauche/droite = jour précédent/suivant
+      **FAIT le 2026-09-29, et vérifié par exécution — le constat précédent était périmé.**
+      Le constat disait « aucun `onTouchStart` n'existe dans le feature ». C'était vrai avant qu'on ne regarde
+      **pourquoi** : `swipeIntent` et `dayAfterSwipe` étaient corrects mais **orphelins**. Le raccordement
+      `hooks/useDaySwipe.ts` est posé, et il **n'orchestre que les deux fonctions pures du moteur** — aucun seuil,
+      aucun sens, aucun carrousel n'y est réinventé (`engine/dayNavigation.ts` est resté intact).
+      Le geste est posé sur le **corps** de l'écran (`div.prep-body`) : donc **ni** sur la barre basse,
+      **ni** sur les tiroirs, **ni** sur la carte — ce qui satisfait la règle « rien ne se superpose à la barre » .
+      Deux garde-fous non négociables sont **inscrits dans le code** : jamais de `preventDefault` (le défilement
+      vertical reste natif, c'est `HORIZONTAL_DOMINANCE` qui refuse le scroll horizontal), et le swipe n'est
+      **jamais le seul chemin** — le rail de jours reste rendu et focusable.
+      **Preuve** : `e6-swipe.test.tsx` — 13 tests verts, dont la résistance en bord de cycle
+      (`next === current` → refus) et le no-op sous deux jours. Relu et rejoué par moi : **58/58 verts** sur E6+E9+H5+H6+E11/E12.
 
 - [x] E7 Weather réel par jour — ⚠ service Open-Meteo existant, aucun composant ne l'affiche
       **VÉRIFIÉ le 2026-09-29 par exécution. La note de l'item était périmée.** L'item
@@ -1259,11 +1263,19 @@ corrompue ne doit pas fabriquer une alerte qui aura l’air d’un fait.
       du modèle. Aucun test ne couvre cette tuile. Item non coché.
 
 - [~] E9 Détails / Remplacer / Conserver
-      **PARTIEL — et un bouton mort a été trouvé.** « Détails » et « À conserver » sont
-      réellement câblés. **« Remplacer » ne l'est pas** : `ItineraryStep.tsx:310` est un
-      `onClick={() => {}}` — le **seul** `onClick` vide du feature. Même famille de défaut
-      que le « Vers le départ » mort que D1 avait cheminé. Un bouton qui ne fait rien
-      est pire qu'un bouton absent : il promet une action. Item non coché.
+      **PARTIEL, et le bouton mort a été RETIRÉ plutôt que câblé en faux.** « Détails » et « À conserver » sont
+      réellement câblés et testés. Pour « Remplacer », la tentation était de le brancher ; après vérification,
+      **ça aurait été un mensonge** : le moteur ne sait pas proposer des alternatives à **une** étape précise.
+      Preuves relevées : `nearestCompatible` est **privé** (`engine/places.ts:351`) et son jeu `used` est local à un
+      seul appel d'`assignPlaces` — il n'existe **aucun** `alternativesFor(stepId)` ; `assignPlaces` est
+      **déterministe** sur `(model, deposit)`, donc le rejouer rendrait le **même** parcours — exactement le
+      « tirage au sort » que la mission interdit ; et le store expose `dropStep/keepStep/linkMeal/addStepToDay/adjust`
+      mais **aucun** `replaceStep` (`AdjustmentId` est un réajustement global qui **préserve** l'étape).
+      **Décision** : le bouton est retiré, et le besoin est écrit **sur place** en commentaire plutôt que caché.
+      Un `E9-03` en contrat **échouera** le jour où un vrai moteur d'alternatives existera — l'absence est signalée,
+      pas enfouie. **Item laissé ouvert, honnêtement** : il n'est pas résolu, il est rendu impossible à rater.
+      **Preuve** : `e9-replace.test.tsx` — le test RED a bien échoué sur le vrai `onClick={() => {}}`
+      (`expected [ 'Détails', 'Remplacer', 'À conserver' ]`) avant correction, puis 4/4 verts. Relu par moi.
 
 - [~] E10 Ajuster / Étapes / Ajouter
       **PARTIEL — c'est le plus proche d'une coche.** Les 3 feuilles (« Ajuster »,
@@ -3240,10 +3252,16 @@ C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
 - [~] **P2.3** Tiroir `Étapes` s'ouvre et se referme — **PARTIEL.** `onOpenSheet('steps')` est réel (`ItineraryStep.tsx:680`) et `StepsSheet`
       est bien rendu (`PrepSheets.tsx:158`), mais **aucun test n'ouvre ni ne ferme le tiroir** : tous passent `onOpenSheet: NOOP`.
       Plafondé par l'absence de `jsdom` (constat transverse), pas par un défaut de code.
-- [ ] **P2.4** `Remplacer` propose des alternatives réelles — **À FAIRE. Bouton zombie.**
-      `ItineraryStep.tsx:310` : le bouton est **complet** (`variant`, `size`, icône `refresh-cw`, libellé, l.307-314) mais son handler
-      est `onClick={() => {}}`. **Zéro comportement.** Un utilisateur qui clique n'obtient rien, et la suite ne peut pas s'en aperçvoir.
-      **Action requise** : brancher sur de vraies alternatives, ou le supprimer — un bouton en no-op devant l'utilisateur est pire que son absence.
+- [ ] **P2.4** `Remplacer` propose des alternatives réelles — **À FAIRE. Le bouton a été RETIRÉ, l'alternative non.**
+      **État réel après vérification (2026-09-29)** : `ItineraryStep.tsx:310` portait `onClick={() => {}}` — le
+      **seul** `onClick` vide du feature, de la même famille que le « Vers le départ » mort que D1 avait cheminé.
+      Il a été **supprimé** : un bouton en no-op devant l'utilisateur est pire que son absence, parce qu'il promet
+      une action. **Mais l'item n'est pas pour autant résolu** — le besoin utilisateur derrière ce bouton est entier.
+      **Pourquoi ce n'est pas fait** : il manque le **moteur**, pas le bouton. `nearestCompatible` est privé
+      (`engine/places.ts:351`), son jeu `used` est local à un appel d'`assignPlaces`, et `assignPlaces` est
+      déterministe sur `(model, deposit)` — le rejouer rendrait le même parcours, c'est-à-dire du hasard.
+      Le store n'a pas de `replaceStep`. **Action requise** : créer un vrai `alternativesFor(stepId)` persisté,
+      puis **réafficher** le bouton branché dessus. Un `E9-03` en contrat veille à ce que l'oubli soit visible.
 - [~] **P2.5** `À conserver` — **PARTIEL.** Le moteur est testé (`setStepKept`, `itinerary.test.ts:211`) et le bouton existe
       (`ItineraryStep.tsx:315`), mais la chaîne **bouton → store → moteur** n'est jamais exercée. Constat lié : `step-sheet.test.tsx:141`
       instancie `keepStep: vi.fn()` et ne l'affirme **nulle part** — le test de l'action passe que l'action marche ou non.
@@ -3276,10 +3294,17 @@ C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
 - [~] **P3.1** Chaque nombre affiché est **recalculé** depuis une source, ou absent — **PARTIEL.** La règle **est** prouvée au niveau
       metrics : `metrics.test.ts:92` boucle sur **toutes** les métriques et impose `null` → `a_verifier`. **Mais aucun test n'énumère les nombres
       affichés sur tous les écrans** — la garantie est au bon endroit, la couverture d'écran reste à prouver.
-- [~] **P3.2** `À vérifier` est une absence assumée, avec un seuil — **PARTIEL, la première moitié seulement.**
-      L'état distinct (pas de zéro) est prouvé. **Le seuil n'est pas implémenté** : `DepartureStep.tsx:390` liste chaque écart
-      dès que `points.length > 0`, sans seuil ni message « prévenir » — l'écran se remplit à chaque panne réseau.
-      **Action requise** : remplacer la condition par un seuil, et au-delà afficher un avertissement au lieu de répéter la liste.
+- [x] **P3.2** `À vérifier` est une absence assumée, avec un seuil — **FAIT le 2026-09-29.**
+      Le seuil est une **constante exportée** `OPEN_POINTS_INLINE_LIMIT = 6` (`DepartureStep.tsx`), et la décision
+      « lister ou résumer » est **isolée dans une fonction pure** `openPointsView(points)` : ce n'est pas une
+      condition écrite en JSX, c'est une règle d'écran testable. Le regroupement est **par nature**, pas par ordre
+      d'arrivée : `gap-*` (trous d'étapes) forment un seul groupe `etapes`, les natures connues gardent leur libellé,
+      et un identifiant inconnu est compté dans `autres` — jamais silencieusement perdu.
+      **Preuve exécutée** (`departure-threshold.test.ts`, 8/8 verts) : sous le seuil → `liste` ; **au seuil exact (6)
+      → `liste`** ; à 7 → `resume` ; deux `gap-` → **un seul** groupe `count: 2` ; la somme des `count` vaut **toujours**
+      le nombre de points, y compris en mode résumé ; le vide reste un vide. Non-régression feature : **1799/1799**.
+      Le bandeau affichait un titre figé « À vérifier avant de partir » quel que soit le nombre de points : au-delà du
+      seuil il annonce désormais **le nombre réel**, et un bouton « Voir les N points » déplie le détail à la demande.
 - [ ] **P3.3** Chaque lieu rattaché à un identifiant réel — **À FAIRE, structurellement impossible à l'état.**
       `placeId` = **0 occurrence dans les 184 fichiers** de `adventure-prep`. `types.ts:202` n'a que `placeName: string | null` ;
       `PlaceInventory` (`engine/places.ts:46-55`) n'a **ni `id` ni source** ; `assignPlaces` (`places.ts:398`) ne rattache que le nom.
@@ -3292,10 +3317,14 @@ C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
 - [x] **P3.5** Les étapes proposées sont **validées géographiquement avant l'affichage** — **FAIT.**
       `generation-feasibility.test.ts` : les cas **FS-01, FS-04, FS-05, FS-08, FS-09** exécutent réellement le filtre avec des **sondes injectées**
       (nautique loin du rivage, plongée avec enfants). Le rejet se fait bien **avant** l'affichage, pas après.
-- [ ] **P3.6** Un build de contrôle refuse de démarrer si une constante de démonstration subsiste — **À FAIRE, garde-fou inexistant.**
-      `scripts/verify/ci_invariants.mjs` (182 lignes, invariants 1a → 6) ne couvre **aucun** `adventure-prep` ; le motif
-      `DEMO|MOCK|FAKE|SAMPLE` est absent de **tous** les scripts de `scripts/verify/`. Rien n'empêche une constante de démo de subsister.
-      **Action requise** : invariant 7 branché sur le même mécanisme `ok()` / `fail()` que les autres. ~15 lignes.
+- [x] **P3.6** Un build de contrôle refuse de démarrer si une constante de démonstration subsiste — **FAIT le 2026-09-29, garde-fou à l'épreuve qu'il tire.**
+      **Invariant 7** ajouté à `scripts/verify/ci_invariants.mjs`, branché sur le même mécanisme `ok()` / `fail()` que les six autres.
+      **Le motif retient la FORME *constante*, pas le mot.** C'est la décision de conception qui compte :
+      `placeholder` est **exclu** — c'est un attribut HTML légitime (12 occurrences dans la feature) et un sélecteur CSS,
+      pas une donnée. Le motif porte sur `DEMO_` / `MOCK_` / `FAKE_` / `SAMPLE_` / `DUMMY_` / `STUB_` / `PLACEHOLDER_` en préfixe,
+      `__*DEMO*__`, `isDemo` / `hasMock` / `useFake`, `sampleData` / `mockFixture` / `fakeCatalog`, et `DEFAULT_SAMPLE_*`.
+      **Preuve par sonde exécutée** : deux constantes (`DEMO_HIKES`, `SAMPLE_ROUTE`) injectées dans la feature →
+      `✗ 2 violations`, **exit 1** ; sonde retirée → **exit 0**. Un garde-fou qu'on n'a pas vu échouer n'est pas un garde-fou.
 
 ### P4 — Le moteur : puissant derrière, invisible devant
 

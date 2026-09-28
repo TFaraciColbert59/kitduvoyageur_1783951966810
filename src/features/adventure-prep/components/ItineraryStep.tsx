@@ -22,6 +22,7 @@ import { shouldLaunchGeneration } from '../engine/stepTransition';
 import { minutesLabel, programTitle } from '../engine/labels';
 import { A_VERIFIER, moneyLabel, stateLabel } from '../engine/trust';
 import { usePrepDayFocusPublisher } from '../hooks/usePrepDayFocusPublisher';
+import { useDaySwipe } from '../hooks/useDaySwipe';
 import { useAdventurePrepStore } from '../store/useAdventurePrepStore';
 import type {
   AdventurePrepDraft,
@@ -304,14 +305,17 @@ function FocusedStepView({
         <Button variant="secondary" size="sm" onClick={() => onOpenSheet('step', step.id)}>
           Détails
         </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => {}}
-          icon={<Icon name="refresh-cw" size={16} />}
-        >
-          Remplacer
-        </Button>
+        {/* E9 - « Remplacer » a ete RETIRE, et l item reste OUVERT.
+            Le moteur sait poser un point de passage, affecter un lieu a une
+            etape, et rejouer la recherche d un parcours ENTIER. Il ne sait pas
+            proposer des alternatives a UNE etape : les candidats produits par
+            `resolvePlacesFor` meurent dans la generation, et rejouer
+            `assignPlaces` sur le meme depot rendrait le MEME parcours - ce
+            n est pas une alternative. Un `onClick={() => {}}` promet une
+            action qui n existe pas ; mieux vaut son absence, et le besoin
+            reste note plutot que masque. Le test e9-replace.test.tsx
+            verrouille ce constat : il echouera le jour ou un vrai moteur
+            d alternatives existera, et le bouton devra alors revenir. */}
         <Button
           variant="secondary"
           size="sm"
@@ -341,6 +345,9 @@ function FocusedStepView({
  */
 export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
   const draft = useAdventurePrepStore((state) => state.draft);
+  // `?? null` : un store qui n'expose pas encore la mesure ne doit surtout pas
+  // allumer un indicateur dont il ne connait pas l'etat.
+  const remeasuring = useAdventurePrepStore((state) => state.remeasuring ?? null);
   const [blocked, setBlocked] = useState(false);
 
   // Focus jour : source unique dans le store module, partage avec la bottom bar.
@@ -454,6 +461,17 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
 
   // `null` = Ensemble. Un jour hors borne retombe sur l'ensemble.
   const activeDay = model === null ? null : activeDayOrNull(model.days, focusDay);
+  // E6 : le balayage de jour existe dans le moteur depuis le debut, mais rien ne
+  // l'appelait. Il est pose sur le CORPS de l'ecran, donc ni sur la barre basse
+  // (son frere, hors du corps), ni sur les tiroirs (portales hors du corps), ni
+  // sur la carte (que le hook laisse a ses propres gestes). Le rail de jours
+  // reste rendu et focusable : le geste n'est qu'un raccourci, jamais l'unique
+  // chemin vers un jour.
+  const daySwipe = useDaySwipe({
+    current: activeDay,
+    days: model?.days ?? 0,
+    onSelectDay: selectFocusDay,
+  });
   const metrics = useMemo(
     () =>
       model
@@ -492,7 +510,7 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
 
   return (
     <div className="prep-screen">
-      <div className="prep-body">
+      <div className="prep-body" {...daySwipe}>
         {/* Un titre, un sous-titre, deux lignes (P0.11). La notice tellingait
             sa place DANS la pastille : les deux textes se repliaient l'un
             contre l'autre sur trois ou quatre lignes, avec deux icones
@@ -725,9 +743,17 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
               }
             />
             <p className="prep-maphint">
-              Maintiens appuyé sur la carte pour poser un point de passage : le trajet et les
-              distances se recalculent aussitôt.
+              Maintiens appuyé sur la carte pour poser un point de passage : le trajet est
+              retracé sur le réseau réel, puis les distances remesurées.
             </p>
+            {/* Le mesurage se DIT. Tant qu'il n'est pas revenu, les distances
+                restent « à vérifier » : réafficher les anciennes dirait qu'elles
+                décrivent encore un trajet qui n'existe plus. */}
+            {remeasuring !== null && (
+              <p className="prep-maphint" role="status" aria-live="polite">
+                Mesurage en cours — les distances restent « à vérifier » jusque-là.
+              </p>
+            )}
           </>
         )}
       </div>

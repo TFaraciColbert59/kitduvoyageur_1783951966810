@@ -33,6 +33,15 @@ export interface PlannedHike {
 const STORAGE_KEY = 'lkdv_planned_hikes';
 const ACTIVE_HIKE_KEY = 'lkdv_active_planned_hike_id';
 
+/**
+ * Des parcours réels, sans météo.
+ *
+ * Aucun champ `weather` ici, volontairement : ces fiches sont des
+ * exemples, et une température d'exemple se lit ensuite à l'écran avec
+ * l'apparence d'une observation. Le champ reste déclaré dans
+ * `PlannedHike` pour les randonnées enregistrées depuis le
+ * préparateur, elles, réellement relevées.
+ */
 export const DEFAULT_SAMPLE_HIKES: PlannedHike[] = [
   {
     id: 'sample-tmb-1',
@@ -50,14 +59,6 @@ export const DEFAULT_SAMPLE_HIKES: PlannedHike[] = [
     nightsCount: 1,
     targetDate: new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0],
     createdAt: new Date().toISOString(),
-    weather: {
-      tempC: 14,
-      precipitationProbability: 0.15,
-      windKmH: 20,
-      uvIndex: 6,
-      condition: 'Éclaircies en altitude',
-      isAlert: false,
-    },
   },
   {
     id: 'sample-calanques',
@@ -74,14 +75,6 @@ export const DEFAULT_SAMPLE_HIKES: PlannedHike[] = [
     isOvernight: false,
     targetDate: new Date(Date.now() + 86400000 * 7).toISOString().split('T')[0],
     createdAt: new Date().toISOString(),
-    weather: {
-      tempC: 24,
-      precipitationProbability: 0,
-      windKmH: 15,
-      uvIndex: 8,
-      condition: 'Ensoleillé & Chaud',
-      isAlert: false,
-    },
   },
 ];
 

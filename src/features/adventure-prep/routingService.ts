@@ -13,6 +13,7 @@
 import { haversineKm } from './engine/routing';
 import { TRAVEL_MODES } from './engine/routing';
 import type { RouteLeg, TravelMode } from './engine/routing';
+import type { RouteProvider } from './engine/provenance';
 
 /**
  * Deux serveurs OSRM, et pourquoi.
@@ -434,6 +435,17 @@ const OSRM_NO_ROUTE = 'NoRoute';
 export interface RouteAttempt {
   readonly legs: RouteLeg[] | null;
   readonly reason: RouteFailure | null;
+  /**
+   * Le moteur qui a REELLEMENT repondu, absent des qu il refuse.
+   *
+   * C est ce qui permet a l ecran de nommer la source d une distance
+   * au lieu de la deviner. Un refus n en porte pas : personne n a mesure,
+   * donc personne n a de source a nommer. Sans cette distinction, un
+   * repli Valhalla apres une panne OSRM serait affiche comme une mesure
+   * OSRM — une provenance inventee, soit le meme vice qu un repli de
+   * temperature code en dur.
+   */
+  readonly provider?: RouteProvider;
 }
 
 /**
@@ -470,7 +482,7 @@ export function normalizeValhallaRouteDetailed(
     if (!reaches(geometry[geometry.length - 1], to)) return { legs: null, reason: 'off_network' };
     legs.push({ distanceKm: km, durationMin: seconds / 60, geometry });
   }
-  return { legs, reason: null };
+  return { legs, reason: null, provider: 'valhalla' };
 }
 
 /** Forme historique : la trace, ou `null`. La raison reste dans `routeAttempt`. */
@@ -556,6 +568,7 @@ export function normalizeOsrmRouteDetailed(
   return {
     legs: measured.map((leg, index) => ({ ...leg, geometry: pieces[index] })),
     reason: null,
+    provider: 'osrm',
   };
 }
 
@@ -582,9 +595,9 @@ function mesureNumerique(value: unknown): number | null {
  * n est pas un ressort. Le refuge du Gouter en donne la mesure : BRouter y
  * aboutit a 870 m du lieu demande, et le parcours est refuse.
  *
- * Le provider est volontairement absent du resultat : ce qui interested
- * l appelant est la distance reelle, et nommer un moteur de calcul dans une
- * mesure n apporte rien a l utilisateur.
+ * Le provider nomme le moteur qui a repondu, pas celui qu on aurait
+ * aime interroger. C est ce que l appelant affiche a cote de la distance :
+ * nommer le moteur PREVU aurait ete nommer une source inventee.
  */
 export function normalizeBrouterLegDetailed(
   payload: unknown,
@@ -614,7 +627,7 @@ export function normalizeBrouterLegDetailed(
     geometry,
     ...(ascent !== null && ascent >= 0 ? { ascentM: ascent } : {}),
   };
-  return { legs: [leg], reason: null };
+  return { legs: [leg], reason: null, provider: 'brouter' };
 }
 
 /**

@@ -102,5 +102,11 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  return NextResponse.json({ status: 'ok', legs: attempt.legs }, { status: 200, headers: CACHE });
+  // `provider` nomme le moteur qui a repondu, pas celui qu on a vise : c'est
+  // ce que l'appelant affiche a cote de la distance. Un refus n'en porte pas,
+  // et le client n'invente donc jamais un nom de fournisseur.
+  return NextResponse.json(
+    { status: 'ok', legs: attempt.legs, provider: attempt.provider ?? null },
+    { status: 200, headers: CACHE },
+  );
 }

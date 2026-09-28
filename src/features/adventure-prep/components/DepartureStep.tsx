@@ -38,10 +38,74 @@ export function focusedDayNumbers(totalDays: number, selectedDay: number | null)
 }
 
 
-interface OpenPoint {
+export interface OpenPoint {
   id: string;
   label: string;
   sheet: PrepSheetId | null;
+}
+
+/**
+ * Au-dela de ce nombre de points ouverts, l ecran ne les repete plus un par un.
+ *
+ * La regle du projet : `null` honnete > donnee inventee. L inverse est aussi vrai
+ * pour l affichage : un bandeau qui repete douze fois la meme alerte cesse d etre
+ * une alerte, il devient du bruit. Au-dela du seuil, on PREVIENT et on regroupe ;
+ * en dessous, on nomme chaque point, parce que chacun se corrige d un clic.
+ */
+export const OPEN_POINTS_INLINE_LIMIT = 6;
+
+/** Regroupement par nature : l utilisateur voit ce qui manque, pas combien il manque. */
+const OPEN_POINT_GROUP: Readonly<Record<string, string>> = {
+  equipement: 'Equipement',
+  repas: 'Repas',
+  activite: 'Activite',
+  depart: 'Depart',
+  date: 'Date',
+  participants: 'Participants',
+};
+
+export type OpenPointsView =
+  | { mode: 'liste'; points: readonly OpenPoint[]; groupes: readonly OpenPointGroup[] }
+  | { mode: 'resume'; points: readonly OpenPoint[]; groupes: readonly OpenPointGroup[] };
+
+export interface OpenPointGroup {
+  cle: string;
+  label: string;
+  count: number;
+}
+
+function groupOf(point: OpenPoint): string {
+  if (point.id.startsWith('gap-')) return 'etapes';
+  return OPEN_POINT_GROUP[point.id] ? point.id : 'autres';
+}
+
+const GROUP_LABELS: Readonly<Record<string, string>> = {
+  ...OPEN_POINT_GROUP,
+  etapes: 'Etapes du programme',
+  autres: 'Autres points',
+};
+
+/**
+ * La decision, isolee de l affichage : sous le seuil on liste, au-dessus on resume.
+ * Exporte pour etre prouvee par test — c est une regle d ecran, elle merite
+ * un invariant, pas une lecture.
+ */
+export function openPointsView(points: readonly OpenPoint[]): OpenPointsView {
+  const counts = new Map<string, number>();
+  for (const point of points) {
+    const cle = groupOf(point);
+    counts.set(cle, (counts.get(cle) ?? 0) + 1);
+  }
+  const groupes: OpenPointGroup[] = [...counts.entries()].map(([cle, count]) => ({
+    cle,
+    label: GROUP_LABELS[cle] ?? cle,
+    count,
+  }));
+  return {
+    mode: points.length > OPEN_POINTS_INLINE_LIMIT ? 'resume' : 'liste',
+    points,
+    groupes,
+  };
 }
 
 function openPointsOf(draft: AdventurePrepDraft, gear: readonly GearNeed[]): OpenPoint[] {
@@ -214,6 +278,8 @@ function coverSubtitle(draft: AdventurePrepDraft): string {
   const headcount = draft.group.adults + draft.group.children;
   
   const points = openPointsOf(draft, gear);
+  const pointsView = openPointsView(points);
+  const [pointsExpanded, setPointsExpanded] = useState(false);
   const model = draft.itinerary;
   // Le bandeau et la liste doivent dire la MEME chose : c est la meme decision
   // de perimetre, donc le meme jour. Avant, la liste suivait le rail et le
@@ -388,16 +454,45 @@ function coverSubtitle(draft: AdventurePrepDraft): string {
         </div>
         
         {points.length > 0 && (
-          <div style={{ marginBottom: 'var(--space-4)', backgroundColor: 'var(--amber-bg)', padding: 'var(--space-3)', borderRadius: 'var(--card-radius)' }}>
+          <div className="prep-openpoints" style={{ marginBottom: 'var(--space-4)', backgroundColor: 'var(--amber-bg)', padding: 'var(--space-3)', borderRadius: 'var(--card-radius)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--amber-ink)', fontWeight: 600, marginBottom: 8 }}>
               <Icon name="alert-circle" size={20} />
-              <span>À vérifier avant de partir</span>
+              <span>
+                {pointsView.mode === 'resume'
+                  ? `${points.length} points à vérifier avant de partir`
+                  : 'À vérifier avant de partir'}
+              </span>
             </div>
-            <ul style={{ margin: 0, paddingLeft: 24, fontSize: 'var(--f-sec)', color: 'var(--amber-ink)' }}>
-              {points.map((p) => (
-                <li key={p.id} style={{ marginBottom: 4 }}>{p.label}</li>
-              ))}
-            </ul>
+            {pointsView.mode === 'resume' && !pointsExpanded ? (
+              <>
+                <ul
+                  className="prep-openpoints__groups"
+                  style={{ margin: 0, paddingLeft: 24, fontSize: 'var(--f-sec)', color: 'var(--amber-ink)' }}
+                >
+                  {pointsView.groupes.map((g) => (
+                    <li key={g.cle} style={{ marginBottom: 4 }}>{g.label} : {g.count} à régler</li>
+                  ))}
+                </ul>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPointsExpanded(true)}
+                  className="prep-openpoints__more"
+                  style={{ marginTop: 8, alignSelf: 'flex-start' }}
+                >
+                  Voir les {points.length} points
+                </Button>
+              </>
+            ) : (
+              <ul
+                className="prep-openpoints__list"
+                style={{ margin: 0, paddingLeft: 24, fontSize: 'var(--f-sec)', color: 'var(--amber-ink)' }}
+              >
+                {pointsView.points.map((p) => (
+                  <li key={p.id} style={{ marginBottom: 4 }}>{p.label}</li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
         

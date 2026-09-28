@@ -255,5 +255,26 @@ export function measurementRunners(deps: MeasurementDeps): MeasurementRunners {
   };
 }
 
+/**
+ * Enchaine les DEUX phases de mesure sur le meme signal.
+ *
+ * `measureItinerary` fait la meme chose a partir de dependances, mais l'ecran
+ * et le store recoivent des runners : c'est ce que `browserMeasurementRunners`
+ * produit. Un run coupe entre les deux phases s'arrete la : interroger la meteo
+ * d'un parcours dont le trace n'a jamais ete mesure reviendrait a afficher la
+ * meteo d'un trajet qui n'existe pas.
+ */
+export async function measureWithRunners(
+  draft: AdventurePrepDraft,
+  model: ItineraryModel,
+  runners: MeasurementRunners,
+  signal: AbortSignal,
+): Promise<ItineraryModel> {
+  if (signal.aborted) return model;
+  const traced = await runners.trace(draft, model, signal);
+  if (signal.aborted) return traced;
+  return runners.weather(draft, traced, signal);
+}
+
 /** Re-export pratique : le trace d une journee, pour la carte du jour. */
 export { applyRouting };

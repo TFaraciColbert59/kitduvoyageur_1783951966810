@@ -5,6 +5,8 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { emptyDraft } from '../engine/emptyDraft';
 import { insertWaypoint, type MapCoord } from '../engine/dayNavigation';
+import { measureWithRunners } from '../engine/measurements';
+import { browserMeasurementRunners } from '../browserMeasurements';
 import { buildItinerary, type StepDraft } from '../engine/itinerary';
 import {
   failGeneration,
@@ -34,11 +36,32 @@ import type {
   RouteBlock,
 } from '../types';
 
+/**
+ * Ce qui vient de changer de geometrie, et qui impose donc de remesurer.
+ *
+ * La raison n'est pas decorative : c'est elle que l'ecran annonce pendant le
+ * mesurage. Un indicateur sans cause serait un indicateur muet.
+ */
+export type RemeasureReason =
+  | 'manuel'
+  | 'point-de-passage'
+  | 'ajout-etape'
+  | 'suppression-etape'
+  | 'ajustement';
+
 export interface AdventurePrepState {
   adventureId: string;
   draft: AdventurePrepDraft;
   /** `true` une fois la reprise du brouillon terminee : evite tout ecart de rendu. */
   hydrated: boolean;
+  /**
+   * Mesurage en cours, et ce qui l'a declenche. `null` quand rien ne mesure.
+   *
+   * Un parcours edite porte, le temps de la remesure, des mesures qui
+   * decrivent un trace qui n'existe plus. L'ecran doit le dire plutot que
+   * d'afficher un chiffre qui n'a plus de trace derriere lui.
+   */
+  remeasuring: RemeasureReason | null;
 }
 
 export interface AdventurePrepActions {
@@ -88,19 +111,29 @@ export interface AdventurePrepActions {
    * invisible et l'utilisateur lit des « A verifier » sans cause ni reessai.
    */
   applyGenerated: (outcome: GenerationOutcome) => void;
-  addStepToDay: (day: number, kind: ItineraryStepKind, step: StepDraft) => void;
+  addStepToDay: (day: number, kind: ItineraryStepKind, step: StepDraft) => Promise<void>;
+  /**
+   * Remesure le parcours courant sur le reseau reel.
+   *
+   * Renvoie la promesse du run : un appelant peut attendre la mesure, l'ecran
+   * ne le fait pas. Un nouvel appel ANNULE le precedent et n'ecrit jamais a sa
+   * place — un resultat perime ne peut pas ecraser une mesure plus fraiche.
+   */
+  remeasure: (reason: RemeasureReason) => Promise<void>;
   /**
    * Pose un point de passage a la position indiquee sur la carte.
    *
    * Passe par `insertWaypoint` et non par `applyGenerated` : un point pose par
    * l'utilisateur n est pas une production de l IA, et la notice qui dit ce que
-   * l IA a propose doit survivre a cette edition.
+   * l IA a propose doit survivre a cette edition. La remesure, elle, ne
+   * demande pas la permission : le trace vient de changer.
    */
-  addWaypoint: (coord: MapCoord, day: number) => void;
+  addWaypoint: (coord: MapCoord, day: number) => Promise<void>;
+
   keepStep: (stepId: string, kept: boolean) => void;
   linkMeal: (stepId: string, slot: MealSlot | null) => void;
-  dropStep: (stepId: string) => void;
-  adjust: (id: AdjustmentId) => void;
+  dropStep: (stepId: string) => Promise<void>;
+  adjust: (id: AdjustmentId) => Promise<void>;
   setPacked: (gearId: string, packed: boolean) => void;
   setGearWeight: (gearId: string, grams: number | null) => void;
   assignGear: (gearId: string, ownerId: string | null) => void;
@@ -117,10 +150,33 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
     (set, get) => {
       const patch = (next: (draft: AdventurePrepDraft) => AdventurePrepDraft) =>
         set((state) => ({ draft: next(state.draft) }));
+
+      // Le controleur du remesurage en vol. Il vit dans la closure du createur
+      // et pas dans l'etat : il n'est ni affichable ni serialisable, et seul un
+      // module peut savoir qu'un run remplace le precedent.
+      let enCours: AbortController | null = null;
+
+      /**
+       * Remesure SEULEMENT si l'objet du parcours a change.
+       *
+       * L'egalite d'identite est le seul test possible : les moteurs du
+       * preparateur renvoient le meme objet quand ils n'ont rien change, et un
+       * nouveau objet des qu'ils ont change quelque chose. Sans cette question,
+       * un point refuse (coordonnee malhonnete) payerait un aller-retour reseau
+       * pour decrire un parcours identique.
+       */
+      const remesureSiChange = (
+        reason: RemeasureReason,
+        avant: ItineraryModel | null,
+      ): Promise<void> => {
+        if (get().draft.itinerary === avant) return Promise.resolve();
+        return get().remeasure(reason);
+      };
       return {
         adventureId: newAdventureId(),
         draft: emptyDraft(),
         hydrated: false,
+        remeasuring: null,
         markHydrated: () => set({ hydrated: true }),
         startNewAdventure: () =>
           set({
@@ -180,20 +236,69 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
         retryPhase: (id) => patch((draft) => draftActions.retryPhase(draft, id)),
         applyPhaseRetry: (retry) => patch((draft) => draftActions.applyPhaseRetry(draft, retry)),
         applyGenerated: (outcome) => patch((draft) => draftActions.applyGenerated(draft, outcome)),
-        addStepToDay: (day, kind, step) =>
-          patch((draft) => draftActions.addItineraryStep(draft, day, kind, step)),
-        addWaypoint: (coord, day) =>
+        remeasure: async (reason) => {
+          const { draft } = get();
+          const model = draft.itinerary;
+          // Sans parcours, il n y a rien a mesurer : ni depart, ni chaine, ni
+          // promesse a tenir devant l'utilisateur.
+          if (!model) return;
+
+          enCours?.abort();
+          const controller = new AbortController();
+          enCours = controller;
+          set({ remeasuring: reason });
+
+          try {
+            const mesure = await measureWithRunners(
+              draft,
+              model,
+              browserMeasurementRunners(),
+              controller.signal,
+            );
+            // Un run coupe n'ecrit rien : il a ete remplace, ou l'ecran a disparu.
+            if (controller.signal.aborted) return;
+            // Le parcours mesure n'est plus celui d'ecran : une edition plus
+            // recente a change la geometrie et programme deja la sienne. Ecrire
+            // ici reviendrait a faire passer un trace perime pour une mesure.
+            if (get().draft.itinerary !== model) return;
+            set((state) => ({ draft: draftActions.updateItinerary(state.draft, mesure) }));
+          } finally {
+            // Le drapeau ne retombe que si c'est ENCORE notre run. Sinon le
+            // suivant mesure toujours, et l'ecran doit continuer de le dire.
+            if (enCours === controller) {
+              enCours = null;
+              set({ remeasuring: null });
+            }
+          }
+        },
+        addStepToDay: (day, kind, step) => {
+          const avant = get().draft.itinerary;
+          patch((draft) => draftActions.addItineraryStep(draft, day, kind, step));
+          return remesureSiChange('ajout-etape', avant);
+        },
+        addWaypoint: (coord, day) => {
+          const avant = get().draft.itinerary;
           patch((draft) =>
             draft.itinerary
               ? draftActions.updateItinerary(draft, insertWaypoint(draft.itinerary, coord, day))
               : draft
-          ),
+          );
+          return remesureSiChange('point-de-passage', avant);
+        },
         keepStep: (stepId, kept) =>
           patch((draft) => draftActions.setItineraryKept(draft, stepId, kept)),
         linkMeal: (stepId, slot) =>
           patch((draft) => draftActions.setItineraryMealSlot(draft, stepId, slot)),
-        dropStep: (stepId) => patch((draft) => draftActions.removeItineraryStep(draft, stepId)),
-        adjust: (id) => patch((draft) => draftActions.applyAdjustment(draft, id)),
+        dropStep: (stepId) => {
+          const avant = get().draft.itinerary;
+          patch((draft) => draftActions.removeItineraryStep(draft, stepId));
+          return remesureSiChange('suppression-etape', avant);
+        },
+        adjust: (id) => {
+          const avant = get().draft.itinerary;
+          patch((draft) => draftActions.applyAdjustment(draft, id));
+          return remesureSiChange('ajustement', avant);
+        },
         setPacked: (gearId, packed) =>
           patch((draft) => draftActions.setPacked(draft, gearId, packed)),
         setGearWeight: (gearId, grams) =>

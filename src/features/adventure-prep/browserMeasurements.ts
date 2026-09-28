@@ -14,6 +14,7 @@
  */
 
 import { measurementRunners, type MeasurementRunners } from './engine/measurements';
+import type { RouteProvider } from './engine/provenance';
 import type { GeoPoint, RouteLeg, RoutingDeps, TravelMode } from './engine/routing';
 import { isTravelMode, MAX_ROUTE_POINTS } from './routingService';
 import { fetchWeatherThroughApi } from './weatherClient';
@@ -27,6 +28,30 @@ const ELEVATION_ENDPOINT = '/api/elevation';
 const MAX_ELEVATION_POINTS = 100;
 
 type Fetcher = typeof fetch;
+
+/**
+ * Ouvert chaque fois qu une reponse nomme le moteur qui a repondu.
+ *
+ * C est le seul endroit du navigateur ou la provenance d une distance est
+ * connue : `/api/route` l a mesuree, et personne d autre ne peut la
+ * reconstituer apres coup. L ecran s y abonne pour l afficher a cote du
+ * kilometre ; s il ne s y abonne pas, la mesure reste affichee sans nom,
+ * ce qui est l etat actuel du preparateur.
+ */
+export type RouteProviderListener = (provider: RouteProvider) => void;
+
+/**
+ * Le moteur nomme par `/api/route`, ou `null` quand la reponse n en nomme
+ * aucun — une reponse plus ancienne, ou un corps bricole. On ne devine
+ * jamais a partir du mode : le mode dit quel graphe on VISEE, pas lequel
+ * a repondu.
+ */
+export function readRouteProvider(payload: unknown): RouteProvider | null {
+  const body = payload as { provider?: unknown } | null;
+  const value = body?.provider;
+  if (value === 'osrm' || value === 'valhalla' || value === 'brouter') return value;
+  return null;
+}
 
 function round6(value: number): number {
   return Math.round(value * 1e6) / 1e6;
@@ -185,7 +210,10 @@ export function stitchLegs(batches: readonly (readonly RouteLeg[])[]): RouteLeg[
  * point par point, et `/api/elevation` n est pas interroge par le preparateur.
  * Le denivele reste donc `null` - affiche « a verifier » - plutot que simule.
  */
-export function browserRoutingDeps(fetchImpl: Fetcher = fetch): RoutingDeps {
+export function browserRoutingDeps(
+  fetchImpl: Fetcher = fetch,
+  onProvider?: RouteProviderListener,
+): RoutingDeps {
   return {
     route: async (points, mode, signal) => {
       const windows = splitForProvider(points, MAX_ROUTE_POINTS);
@@ -208,6 +236,11 @@ export function browserRoutingDeps(fetchImpl: Fetcher = fetch): RoutingDeps {
         }
         const legs = readRouteResponse(body, window.length);
         if (!legs) return null;
+        // La provenance se lit ICI, sur la reponse qui porte la mesure, et
+        // nulle part ailleurs : apres le collage des fenetres, la trace
+        // seule ne dit plus quel moteur l a produite.
+        const provider = readRouteProvider(body);
+        if (provider && onProvider) onProvider(provider);
         batches.push(legs);
       }
       const stitched = stitchLegs(batches);
@@ -247,8 +280,11 @@ export function browserRoutingDeps(fetchImpl: Fetcher = fetch): RoutingDeps {
  * une serie decalee est refusee entiere plutot que d attribuer a un jour la
  * meteo d un autre.
  */
-export function browserMeasurementRunners(fetchImpl: Fetcher = fetch): MeasurementRunners {
-  const routing = browserRoutingDeps(fetchImpl);
+export function browserMeasurementRunners(
+  fetchImpl: Fetcher = fetch,
+  onProvider?: RouteProviderListener,
+): MeasurementRunners {
+  const routing = browserRoutingDeps(fetchImpl, onProvider);
   return measurementRunners({
     route: routing,
     weather: async (dates, signal, anchor) => fetchWeatherThroughApi(anchor, dates, signal),
