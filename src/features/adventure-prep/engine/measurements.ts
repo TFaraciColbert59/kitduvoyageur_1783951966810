@@ -57,6 +57,34 @@ export function weatherAnchor(
 }
 
 /**
+ * L'ancre meteo de CHAQUE journee, indexee comme `perDay`.
+ *
+ * Une journee vit dans un lieu et un autre : interroger la meteo du depart
+ * pour les trois jours afficherait trois fois la meme prevision. Apres le
+ * premier jour, chaque jour est donc ancre sur sa premiere etape SITUEE, et
+ * seulement a defaut sur l'ancre du voyage. Sans aucun point de reference,
+ * l'element reste `null` : on ne demande rien plutot que de faire deviner.
+ */
+export function dayWeatherAnchors(
+  draft: AdventurePrepDraft,
+  model: ItineraryModel,
+): (WeatherAnchor | null)[] {
+  const fallback = weatherAnchor(draft, model);
+  return Array.from({ length: Math.max(0, Math.trunc(model.days)) }, (_vide, index) => {
+    // Le premier jour ne se discuss pas : on est encore au depart choisi, et
+    // c est la SEULE decision que l utilisateur a prise lui-meme. Lui preferer
+    // une etape du programme reviendrait a substituer une proposition a son
+    // choix.
+    if (index === 0) return fallback;
+    const first = model.steps.find(
+      (step) => step.day === index + 1 && step.lat !== null && step.lon !== null,
+    );
+    if (!first || first.lat === null || first.lon === null) return fallback;
+    return { lat: first.lat, lon: first.lon };
+  });
+}
+
+/**
  * Rattache la meteo mesuree au modele, jour par jour, sur les dates reelles.
  *
  * Un tableau de prevision incomplet est refuse en entier : aligner la serie
@@ -68,10 +96,89 @@ export function applyWeather(
   fetched: readonly DayWeather[] | null,
 ): ItineraryModel {
   if (!fetched || fetched.length !== model.days) return model;
+  return applyDayWeather(model, startDate, Array.from({ length: model.days }, () => fetched));
+}
+
+/**
+ * Rattache a chaque journee LA serie mesuree pour cette journee-la.
+ *
+ * `perDay[i]` est la reponse obtenue pour le jour i+1, ou `null` quand rien
+ * n'a ete mesure. Le rattachement se fait par DATE REELLE et jamais par rang
+ * dans le tableau : une serie reponse dans le desordre ne doit pas decaler
+ * les journees.
+ */
+export function applyDayWeather(
+  model: ItineraryModel,
+  startDate: string | null,
+  perDay: readonly (readonly DayWeather[] | null)[],
+): ItineraryModel {
   const dates = dateRange(startDate, model.days);
   if (!dates) return model;
-  const byDate = new Map(fetched.map((day) => [day.date, day]));
-  return { ...model, weather: dates.map((date) => byDate.get(date) ?? null) };
+  return {
+    ...model,
+    weather: dates.map((date, index) => {
+      const fetched = perDay[index] ?? null;
+      return fetched?.find((day) => day.date === date) ?? null;
+    }),
+  };
+}
+
+/** Une ancre, et les index des journees qu'elle couvre. */
+interface WeatherGroup {
+  readonly anchor: WeatherAnchor;
+  readonly days: readonly number[];
+}
+
+/**
+ * Regroupe les journees qui partagent la meme ancre.
+ *
+ * Trois journees au meme refuge ne doivent pas etre interrogees trois fois :
+ * une seule requete couvre les trois, et la reponse est partagee.
+ */
+function groupByAnchor(anchors: readonly (WeatherAnchor | null)[]): WeatherGroup[] {
+  const groups = new Map<string, WeatherGroup>();
+  for (const [index, anchor] of anchors.entries()) {
+    if (!anchor) continue;
+    const key = `${anchor.lat.toFixed(4)},${anchor.lon.toFixed(4)}`;
+    const dejaVu = groups.get(key);
+    groups.set(key, dejaVu ? { anchor, days: [...dejaVu.days, index] } : { anchor, days: [index] });
+  }
+  return [...groups.values()];
+}
+
+/**
+ * Interroge UNE FOIS chaque ancre distincte, puis reassemble par journee.
+ *
+ * Un groupe qui echoue n'entraine pas les autres : ses journees restent
+ * `null` — « meteo indisponible » — et les autres gardent leur mesure. C'est
+ * toute la difference entre une absence, que l'ecran assume, et une valeur
+ * empruntee a une autre journee, qui serait une invention.
+ */
+export async function measureDayWeather(
+  draft: AdventurePrepDraft,
+  model: ItineraryModel,
+  weather: WeatherFetcher,
+  signal?: AbortSignal,
+): Promise<ItineraryModel> {
+  const dates = dateRange(draft.calendar.startDate, model.days);
+  if (!dates) return model;
+  const perDay: (readonly DayWeather[] | null)[] = new Array(dates.length).fill(null);
+  for (const group of groupByAnchor(dayWeatherAnchors(draft, model))) {
+    if (signal?.aborted) break;
+    let fetched: readonly DayWeather[] | null = null;
+    try {
+      const aDemander = group.days
+        .map((index) => dates[index])
+        .filter((date): date is string => Boolean(date));
+      fetched = await weather(aDemander, signal, group.anchor);
+    } catch {
+      fetched = null;
+    }
+    if (!fetched) continue;
+    for (const index of group.days) perDay[index] = fetched;
+  }
+  if (signal?.aborted) return model;
+  return applyDayWeather(model, draft.calendar.startDate, perDay);
 }
 
 /**
@@ -97,20 +204,8 @@ export async function measureItinerary(
   }
   if (signal?.aborted) return routed;
 
-  // 2. Meteo des dates reelles, a l'ancre de l aventure.
-  const anchor = weatherAnchor(draft, routed);
-  const dates = anchor ? dateRange(draft.calendar.startDate, routed.days) : null;
-  if (!anchor || !dates || dates.length === 0) return routed;
-
-  let fetched: readonly DayWeather[] | null = null;
-  try {
-    fetched = await deps.weather(dates, signal, anchor);
-  } catch {
-    fetched = null;
-  }
-  if (signal?.aborted) return routed;
-
-  return applyWeather(routed, draft.calendar.startDate, fetched);
+  // 2. Meteo des dates reelles, a l ancre de CHAQUE journee.
+  return measureDayWeather(draft, routed, deps.weather, signal);
 }
 
 /* ------------------------------------------------------------------ */
@@ -155,16 +250,7 @@ export function measurementRunners(deps: MeasurementDeps): MeasurementRunners {
       }
     },
     weather: async (draft, model, signal) => {
-      const anchor = weatherAnchor(draft, model);
-      const dates = anchor ? dateRange(draft.calendar.startDate, model.days) : null;
-      if (!anchor || !dates || dates.length === 0) return model;
-      let fetched: readonly DayWeather[] | null = null;
-      try {
-        fetched = await deps.weather(dates, signal, anchor);
-      } catch {
-        fetched = null;
-      }
-      return applyWeather(model, draft.calendar.startDate, fetched);
+      return measureDayWeather(draft, model, deps.weather, signal);
     },
   };
 }

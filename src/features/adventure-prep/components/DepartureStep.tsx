@@ -12,7 +12,7 @@ import { packWeight, resolvedGear } from '../engine/gear';
 import { mealNeeds, uncoveredMeals, waterNeeds } from '../engine/consumables';
 import { knownGaps } from '../engine/itinerary';
 import { daySteps } from '../engine/itinerary';
-import { metricsFor } from '../engine/metrics';
+import { dayMetrics, metricsFor } from '../engine/metrics';
 import { weatherParts } from '../engine/weather';
 import { bookWeightLabel, gearToVerifyCount, plural } from '../engine/labels';
 import type { AdventurePrepDraft, GearNeed, ItineraryModel, PlaceRef } from '../types';
@@ -36,6 +36,7 @@ export function focusedDayNumbers(totalDays: number, selectedDay: number | null)
   if (selectedDay === null) return all;
   return all.includes(selectedDay) ? [selectedDay] : all;
 }
+
 
 interface OpenPoint {
   id: string;
@@ -254,6 +255,19 @@ export function DepartureStep({ onOpenSheet }: DepartureStepProps) {
                         })()}
                       </span>
                     </header>
+                    <div className="prep-programme__daymetrics">
+                      {dayMetrics(model, day).map((metric) => (
+                          <div key={metric.id} className="prep-metric prep-metric--jour">
+                            <span className="prep-metric__label">{metric.label}</span>
+                            <span
+                              className="prep-metric__value"
+                              data-unknown={metric.state === 'a_verifier' ? 'true' : undefined}
+                            >
+                              {metric.formatted}
+                            </span>
+                          </div>
+                        ))}
+                    </div>
                     <ul className="prep-programme__steps">
                       {daySteps(model, day).map((item) => (
                         <li key={item.id} className="prep-programme__step">

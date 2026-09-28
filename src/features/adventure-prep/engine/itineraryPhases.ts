@@ -1,6 +1,7 @@
 import { metricsContextFor } from '../catalog';
 import { buildContingencies, isPhaseId, PHASE_IDS, type PhaseOutcome, type PhaseStatus } from './resilience';
 import { renumberByDay } from './itinerary';
+import { enforceDayContinuity } from './continuity';
 import { NO_MEASUREMENTS, weatherAnchor, type MeasurementRunners, type WeatherAnchor } from './measurements';
 import { rulesItineraryEngine, findTimeOverlap, detectUnsourcedClaims } from './itineraryEngine';
 import {
@@ -524,6 +525,13 @@ export async function runItineraryGeneration(
     return { model: null, engineId, degraded, message: null, rejectedReason, failure, phases, infeasible, toVerify };
   }
   onPhase('lieux');
+
+  // 4 ter. La CONTINUITE, une fois les lieux accroches et AVANT tout
+  //       kilometrage. Rattacher une journee a la precedente change des
+  //       positions : mesure avant, l ecran afficherait un aller-retour que
+  //       personne n aura fait, et un kilometrage qui ne correspond a aucun
+  //       trajet reellement parcouru.
+  model = enforceDayContinuity(model, draft);
 
   // 5. Kilometrage routier et denivele, jour par jour. Un routeur muet laisse
   //    la mesure a null : elle n'est ni comptee a zero ni approchee.

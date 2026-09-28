@@ -23,7 +23,7 @@ const ORDER: Readonly<Record<MetricsContext, readonly PrepMetricId[]>> = {
 
 const LABELS: Readonly<Record<PrepMetricId, string>> = {
   distance: 'Distance',
-  denivele: 'Dénivelé +',
+  denivele: 'Dénivelé',
   duree: 'Durée',
   nuitees: 'Nuitées',
   budget: 'Budget / personne',
@@ -98,24 +98,48 @@ function format(id: PrepMetricId, value: number | null, unit: string): string {
   return withUnit(value, unit, id === 'budget' ? 0 : 1);
 }
 
+/** Les trois mesures de la carte d une journee, dans l ordre de lecture. */
+const JOUR_METRICS: readonly PrepMetricId[] = ['distance', 'duree', 'budget'];
+
+function build(
+  model: ItineraryModel,
+  scope: MetricScope,
+  id: PrepMetricId,
+  day: number | undefined,
+): PrepMetric {
+  const value = raw(model, scope, id, day);
+  const unit = value === null ? UNITS[id] : countableUnit(UNITS[id], value);
+  return {
+    id,
+    label: LABELS[id],
+    value,
+    unit,
+    state: value === null ? ('a_verifier' as const) : ('connue' as const),
+    formatted: format(id, value, unit),
+  };
+}
+
+/**
+ * Les trois mesures de la carte d un jour.
+ *
+ * Elles ne suivent PAS le contexte de l activite, contrairement au bandeau du
+ * haut. Ce bandeau choisit ce qui interessera le plus selon l activite ; la
+ * carte d une journee, elle, repond toujours a la meme question — ce qu on a
+ * franchi, ce que ca a occupe, ce que ca a coute. Un contexte « terrain »
+ * qui n'afficherait pas le budget au jour 2 alors qu'il l'affiche au jour 1
+ * ferait de la comparaison une illusion.
+ */
+export function dayMetrics(model: ItineraryModel, day: number): PrepMetric[] {
+  return JOUR_METRICS.map((id) => build(model, 'jour', id, day));
+}
+
 /** Les trois mesures de l'ecran, choisies par le contexte de l'activite. */
 export function metricsFor(
   model: ItineraryModel,
   scope: MetricScope,
   day?: number,
 ): PrepMetric[] {
-  return ORDER[model.metricsContext].map((id) => {
-    const value = raw(model, scope, id, day);
-    const unit = value === null ? UNITS[id] : countableUnit(UNITS[id], value);
-    return {
-      id,
-      label: LABELS[id],
-      value,
-      unit,
-      state: value === null ? ('a_verifier' as const) : ('connue' as const),
-      formatted: format(id, value, unit),
-    };
-  });
+  return ORDER[model.metricsContext].map((id) => build(model, scope, id, day));
 }
 
 export function metricValue(

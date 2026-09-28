@@ -189,4 +189,43 @@ describe('DepartureStep — écran de départ', () => {
     expect(text).toContain('À vérifier');
     expect(text).not.toMatch(/0\s*km/);
   });
+
+  it('DEPART-16: chaque jour affiche SA distance, et non celle du voyage', () => {
+    // Trois journees de longueurs DIFFERENTES : si l ecran repetait le total,
+    // 12 km et 30 km n apparaitraient nulle part ailleurs.
+    const draft = measuredDraft();
+    const parJour = [21, 12, 30];
+    const avecJours = {
+      ...draft,
+      itinerary: {
+        ...(draft.itinerary as NonNullable<typeof draft.itinerary>),
+        perDay: parJour.map((distanceKm) => ({
+          distanceKm,
+          movingMin: 120,
+          activityMin: 240,
+          elevGainM: 400,
+          elevLossM: 380,
+        })),
+      },
+    };
+    const text = visible(render(avecJours));
+    // Le total du voyage, en haut.
+    expect(text).toContain('63 km');
+    // Puis la distance de CHAQUE journee, dans sa carte.
+    expect(text).toContain('21 km');
+    expect(text).toContain('12 km');
+    expect(text).toContain('30 km');
+  });
+
+  it('DEPART-17: la carte d un jour porte ses trois mesures', () => {
+    const html = render(measuredDraft());
+    const cartes = html.split('prep-programme__day"').slice(1);
+    expect(cartes).toHaveLength(3);
+    for (const carte of cartes) {
+      expect(carte).toContain('prep-programme__daymetrics');
+      expect(carte).toContain('Distance');
+      expect(carte).toContain('Durée');
+      expect(carte).toContain('Budget');
+    }
+  });
 });

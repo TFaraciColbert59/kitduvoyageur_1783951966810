@@ -2689,6 +2689,37 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   min-width: 0;
 }
 
+/* Les trois mesures de la journee. A l interieur d une carte deja en verre,
+   une seconde couche de verre choisirait la legerete contre la lisibilite :
+   les tuiles restent nues, separees par un filet, et gardent exactement la
+   meme hierarchie de valeurs que le bandeau du voyage. */
+.prep-programme__daymetrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  padding-block: var(--space-1);
+  border-top: 1px solid var(--prep-glass-rim);
+  border-bottom: 1px solid var(--prep-glass-rim);
+}
+
+.prep-metric--jour {
+  padding: var(--space-1) 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.prep-metric--jour .prep-metric__label {
+  font-size: var(--lkv-text-caption-2);
+  font-weight: 560;
+}
+
+.prep-metric--jour .prep-metric__value {
+  font-size: min(var(--lkv-text-callout), 15cqi);
+}
+
 /* Assez large pour tenir « Jour 1 » et la meteo sur une ligne. En dessous, l empilement est le comportement assume : la meteo deborde de toute facon sur la largeur d un telephone. */
 @media (min-width: 480px) {
   .prep-programme__dayhead {

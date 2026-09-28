@@ -38,8 +38,15 @@ function premiereForme(nom: string): string {
   return nom.trim().replace(/^[\s\u0027\u2019-]+/, '');
 }
 
-// de(Argentiere) renvoie d Argentiere, de(Chamonix) renvoie de Chamonix.
-// Un nom deja elide n est pas re-elide (de L Argentiere). Un nom vide ne
+// L apostrophe francaise est TYPOGRAPHIQUE (U+2019), comme dans un vrai
+// ouvrage imprime. L esperluette se voit dans un titre d etape et se lit
+// comme une faute ; l esperluette est donc ecrite en echappement Unicode,
+// comme les voyelles ci-dessus, pour que la regle ne depende pas de
+// l encodage du fichier.
+const APOSTROPHE = '\u2019';
+
+// de(Argentiere) renvoie d’Argentiere, de(Chamonix) renvoie de Chamonix.
+// Un nom deja elide n est pas re-elide (de L’Argentiere). Un nom vide ne
 // laisse pas d article traignant.
 export function de(nom: string): string {
   const propre = premiereForme(nom);
@@ -48,5 +55,5 @@ export function de(nom: string): string {
   const aspire = H_ASPIRE.has(propre.slice(0, 3).toLowerCase());
   const elide = !aspire && (VOYELLE.test(propre) || H_MUET.test(propre));
 
-  return elide ? `d'${propre}` : `de ${propre}`;
+  return elide ? `d${APOSTROPHE}${propre}` : `de ${propre}`;
 }
