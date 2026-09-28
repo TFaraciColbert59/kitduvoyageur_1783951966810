@@ -12,7 +12,7 @@ import type { DayWeather } from '../engine/weather';
 import { weatherParts } from '../engine/weather';
 import { runItineraryGeneration } from '../engine/itineraryPhases';
 import { browserMeasurementRunners } from '../browserMeasurements';
-import { loadPlaceInventoryFor, resolvePlacesFor } from '../placeSource';
+import { anchorsOf, loadPlaceInventoryFor, resolvePlacesFor, warmAmenitiesFor } from '../placeSource';
 import { shouldLaunchGeneration } from '../engine/stepTransition';
 import { minutesLabel } from '../engine/labels';
 import { A_VERIFIER, moneyLabel, stateLabel } from '../engine/trust';
@@ -384,6 +384,9 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
         {},
         resolvePlacesFor(),
         loadPlaceInventoryFor(),
+        (draftToBuild, signal) => {
+          void warmAmenitiesFor(anchorsOf(draftToBuild), fetch, signal);
+        },
       );
       // Un run coupe n ecrit rien : l ecran a disparu ou un autre run l a remplace.
       if (controller.signal.aborted) return;

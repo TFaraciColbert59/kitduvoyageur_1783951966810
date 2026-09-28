@@ -67,6 +67,23 @@ export type PlaceInventoryLoader = (
 
 const NO_INVENTORY: PlaceInventoryLoader = async () => [];
 
+/**
+ * Prechauffage d une source de lieux LENTE, declenche AVANT l appel au modele.
+ *
+ * La source OSM/Overpass met 5 a 25 s. L attendre a un endroit du parcours
+ * allongerait la generation d autant. Le rechauffement demarre donc la requete
+ * SANS la resolvre, en parallele de la redaction ; la resolution des lieux, plus
+ * tard, vient consommer la promesse deja en cours.
+ *
+ * Le type renvoie `void` expressement : un rechauffement qui attendrait serait
+ * un bug de l appelant, pas un oubli de ce module. Aucune erreur n est attendue
+ * non plus : une source lente qui tombe ne doit rien faire echouer ici.
+ */
+export type PlaceWarmer = (draft: AdventurePrepDraft, signal: AbortSignal) => void;
+
+/** Le defaut ne lance RIEN : un test ou un rendu statique ne pretendent rien. */
+const NO_WARM: PlaceWarmer = () => {};
+
 export const AI_ENRICHMENT_UNAVAILABLE =
   "Parcours construit sur tes critères — l’enrichissement est indisponible.";
 
@@ -363,6 +380,7 @@ export async function runItineraryGeneration(
   feasibility: FeasibilityDeps = {},
   resolvePlaces: PlaceResolver = NO_PLACES,
   loadInventory: PlaceInventoryLoader = NO_INVENTORY,
+  warmPlaces: PlaceWarmer = NO_WARM,
 ): Promise<GenerationOutcome> {
   // Chaque phase note ce qu elle a REELLEMENT livre. Ce tableau est la seule
   // source de verite pour « phase tombee » vs « generation morte ».
@@ -370,6 +388,16 @@ export async function runItineraryGeneration(
   /** Les refus et les incertitudes accumules, dans l'ordre ou ils sont survenus. */
   const infeasible: FeasibilityFinding[] = [];
   const toVerify: FeasibilityFinding[] = [];
+  // Le rechauffement part EN PREMIER et n est JAMAIS attendu : c est la seule
+ // façon de faire cohabiter une source qui met 25 s et une redaction qui prend
+ // quelques secondes. Le mettre apres l inventeur retarderait d autant la
+ // lecture du modele, donc le jour 3 se viderait toujours.
+  try {
+    warmPlaces(draft, signal);
+  } catch {
+    // Un rechauffement qui leve n annule rien : la source lente est un
+    // supplement, son absence se traduirait par une liste de lieux plus courte.
+  }
   // 1. Recherche du parcours — la seule phase reseau du proposeur.
   // Le proposeur est une frontiere reseau : il peut rejeter pour une raison
   // que l'utilisateur n'a pas a connaitre. Toute rejection est un « pas de
@@ -664,6 +692,8 @@ export interface PhaseRetryDeps {
    */
   readonly resolvePlaces?: PlaceResolver;
   readonly loadInventory?: PlaceInventoryLoader;
+  /** Prechauffage de la source lente, a lancer avant la redaction. */
+  readonly warmPlaces?: PlaceWarmer;
 }
 
 export interface PhaseRetry {
@@ -794,6 +824,7 @@ export async function retryGenerationPhase(
     {},
     deps.resolvePlaces,
     deps.loadInventory,
+    deps.warmPlaces,
   );
   if (!outcome.model) {
     return { phase, model, outcome: failed(phase, PHASE_RAISED.recherche_parcours) };

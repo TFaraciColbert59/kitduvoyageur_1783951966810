@@ -7,7 +7,7 @@ import type { PrepStepId } from '../types';
 import type { PhaseRetryDeps } from '../engine/itineraryPhases';
 import { fetchItineraryProposal } from '@/app/prepare/actions';
 import { browserMeasurementRunners } from '../browserMeasurements';
-import { loadPlaceInventoryFor, resolvePlacesFor } from '../placeSource';
+import { anchorsOf, loadPlaceInventoryFor, resolvePlacesFor, warmAmenitiesFor } from '../placeSource';
 import { AdventurePrepShell } from './AdventurePrepShell';
 import { ActivityPickerScreen } from './ActivityPickerScreen';
 import { DestinationStep } from './DestinationStep';
@@ -71,6 +71,12 @@ export function PrepFlow() {
       fetchProposal: (draftToBuild) => fetchItineraryProposal(draftToBuild),
       resolvePlaces: resolvePlacesFor(),
       loadInventory: loadPlaceInventoryFor(),
+      // Le rechauffement ne se lit pas, il se constate : la source lente part
+      // ici, en parallele de la redaction, et le resolveur la consomme plus
+      // tard. `void` est volontaire - l attendre ici annulerait le recouvrement.
+      warmPlaces: (draftToBuild, signal) => {
+        void warmAmenitiesFor(anchorsOf(draftToBuild), fetch, signal);
+      },
     }),
     [],
   );
