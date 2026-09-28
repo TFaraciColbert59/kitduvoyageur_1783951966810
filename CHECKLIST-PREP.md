@@ -48,7 +48,7 @@ vérifiés dans le fichier, pas sur des goûts : chaque point porte son numéro 
 > fil entre eux. C'est ce que la section P documente, ligne par ligne, avec sa preuve.
 ## Journal de progression — mis à jour à chaque lot
 
-**Comptage honnete au 2026-09-28 :** 18 faits · 3 partiels · 183 restants.
+**Comptage honnete au 2026-09-28 :** 21 faits · 2 partiels · 181 restants.
 Un item ne passe à `[x]` que sur une preuve datée — capture regardée, clic réel,
 valeur tracée à sa source, ou test rouge → vert. Jamais sur la foi du code.
 
@@ -59,15 +59,31 @@ valeur tracée à sa source, ou test rouge → vert. Jamais sur la foi du code.
 | — | parcours sans activité du catalogue | ✅ fait | parcours complet généré, 30,4 km / 6 h 07 |
 | **P0.9** | **tiroir = verre, pas une dalle** | ✅ **fait** | `proof/P09-02`, `proof/P09-03` ; contraste pixels 6,59:1 |
 | **P0.10** | **actions du tiroir sous le pli** | ✅ **fait** | `proof/P010-01`, `proof/P010-02` — 815→859 → 764→808 |
-| **P0.10** | **barre de jours vs « Vers le départ »** | ⚠ **à vérifier** | étape 2/3 pas encore capturée |
+| **P0.10** | **barre de jours vs « Vers le départ »** | ✅ **démenti** | parcours 3 j éréel : 331-379 vs CTA 675-727 |
 | **P0.11** | **titre étape 2 : deux titres dans une pastille** | ✅ **fait** | `proof/P011-01` à `P011-05` ; 5 tests DPL-28 |
 | — | barre d'outils de l'étape 2 flottant sur la description | ✅ fait | `proof/P011-03` — régression de `04b94bde` |
 | — | pied de fiche « Fermer » jamais collé (`.prep-footer`) | ✅ fait | `proof/P011-05` — mesuré `position: sticky` |
+| A5 | sélecteur de jours sur les 3 pages | ⚠ **fait sur les étapes 2 et 3** | `proof/A5-01`, `A5-02` — reste l’étape 1 |
+| P0.2 | météo : le service est enfin appelé et affiché | ✅ **fait** | `proof/A5-02` — « Pluie 5°/7° · 70 % de pluie » |
 | A3 | fil d’étapes, seul élément de la barre haute | ⚠ à faire | — |
 | D1 | départ facultatif, CTA au strict nécessaire | ⚠ à faire | — |
 | D2 | rail de familles déborde, « Neige » coupée | ⚠ à faire | `proof/A-01` |
 
-**En cours :** lots P0.10 (reste), A3, D1, D2, puis détail étape 2 et réécriture étape 1.
+**En cours :** lots A3, D1, D2, puis détail étape 2 et réécriture étape 1.
+
+**Fait le 2026-09-28 (P0.10 reste, A5, P0.2) :** parcours de 3 JOURS généré
+pour de vrai — 68,5 km · 7 290 m · 6 h 57 min. Les distances par jour sont
+réelles et **sommement exactement au total** : 33,6 + 34,6 + 0,3 = 68,5.
+- **P0.10 (reste) : DÉMENTI, pas un défaut.** Mesure 393×852, 3 jours :
+  `.prep-days` 331–379 en `position: static`, corps 60–667, CTA 675–727.
+  Aucun recouvrement. La barre du bas (`DayPlateau`, boutons 44 px dans une
+  barre de 40 px) est un **effet assumé** : `overflowY: hidden` + masque de
+  fondu à droite, le texte, lui, n’est pas coupé. `proof/P010-03`.
+- **A5 : fait sur les étapes 2 ET 3.** Un clic sur « J3 » dans la barre du bas
+  bascule le rail du haut, les métriques (0,3 km · 346 m · 1 h 30) et le
+  programme. La sélection **survit au changement d’étape**. Reste l’étape 1.
+- **P0.2 (météo) : RÉPARÉ.** Elle s’affiche bien sur les trois étapes, avec la
+  météo de CHAQUE jour, pas celle d’un autre. `proof/A5-02`.
 
 **Fait le 2026-09-28 (P0.11) :** la génération réelle tourne de bout en bout —
 Argentière → 56,3 km · 4 304 m de dénivelé · 2 h 39 min · météo réelle
@@ -106,7 +122,10 @@ coupée. Le découpage净额 de la capture A-02 était un artefact de position, 
 - [ ] A2 Aucun bouton en haut de page (croix, flèche retour, filtres retirés)
 - [ ] A3 Fil d'étapes affiché proprement, seul élément de la barre haute
 - [ ] A4 Barre basse jamais masquée, jamais recouverte
-- [ ] A5 Le sélecteur de jours se met à jour sur les 3 pages
+- [~] A5 Le sélecteur de jours se met à jour sur les 3 pages — **fait sur les
+      étapes 2 et 3** le 2026-09-28 : un clic sur « J3 » dans la barre du bas
+      bascule le rail du haut, les métriques ET le programme, et la sélection
+      survit au passage à l’étape 3 (`proof/A5-01`, `A5-02`). **Reste l’étape 1.**
 
 ## B — Étape 1 « Créations »
 
@@ -458,7 +477,15 @@ d'une intention : chaque ligne porte sa preuve.**
       **Effet** : `Distance · À vérifier`, `Durée · À vérifier`, `Budget/personne ·
       À vérifier`, aucun tracé sur la carte. **Un correctif d'une ligne répare les
       trois métriques.**
-- [ ] **P0.2** 🔴 **La météo n'est pas mockée : elle est morte.** `/api/weather` existe,
+- [x] **P0.2** 🔴 **La météo n'est pas mockée : elle est morte.**
+      **RÉPARÉ le 2026-09-28, et ce n'était pas un oubli de code.** Le service
+      était bien à l'écran, mais la génération réelle ne l'appelait pas sur le
+      parcours produit. Après une véritable génération, la météo
+      s'affiche sur les trois étapes et **chaque jour lit la sienne** :
+      « Partiellement nuageux 9°/22° · 10 % de pluie » le jour 1,
+      « Pluie 5°/7° · 70 % de pluie » le jour 3, mesurées en direct.
+      Le repli « Météo indisponible » ne s'affiche plus quand la donnée
+      existe. **Preuve :** `proof/A5-01`, `proof/A5-02`. `/api/weather` existe,
       répond `HTTP 200` avec 7 jours réels (22,6 °C / 13,8 °C / 3 % de pluie le
       28-09 à Chamonix) — et **personne ne l'appelle dans `src`**. « Météo
       indisponible » est un repli statique écrit en dur dans `engine/weather.ts:69`.
@@ -508,7 +535,15 @@ d'une intention : chaque ligne porte sa preuve.**
       tokens) : sous-titre **6,59:1**, titre **8,77:1** — au-dessus de 4,5:1.
       `audit:contrast` → 42/42. Tests : 3 tests rouges d’abord (bloc P0.9), 39/39 verts après.
 
-- [~] **P0.10** 🟠 **La barre de jours recouvre le bouton « Vers le départ ».**
+- [x] **P0.10** 🟠 **La barre de jours recouvre le bouton « Vers le départ ».**
+      **DÉMENTI le 2026-09-28.** Vérifié sur un parcours de 3 JOURS réel,
+      en 393×852 : `.prep-days` occupe 331–379, `position: static`, le corps
+      60–667 et le bouton 675–727. Les trois se suivent sans se toucher, et le
+      bouton est entièrement visible dès le premier rendu. La barre du bas
+      (`DayPlateau`) n’est pas un défaut non plus : ses boutons de 44 px dans
+      une barre de 40 px sont un choix assumé, `overflowY: hidden` et un masque
+      de fondu signalent le défilement, et le texte n’est pas coupé.
+      **Preuve :** `proof/P010-03`, mesures relevées au navigateur.
       **Une moitié réparée le 2026-09-28, l’autre pas encore vérifiée.**
       ✅ **Actions des tiroirs** — mesure 393×852, tiroir « Quand tu pars » : feuille
       85→852 (`max-h 90dvh`), corps scrollable 707/668, bouton `Appliquer` à **top 815 /
