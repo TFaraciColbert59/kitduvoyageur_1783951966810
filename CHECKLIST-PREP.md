@@ -3245,13 +3245,19 @@ Ce n'est pas un oubli ponctuel, c'est une **convention assumée et documentée**
 Tout item portant sur « le bouton fait quelque chose quand on clique » est donc plafonné à PARTIEL, même quand le comportement est réellement écrit.
 C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
 
-- [~] **P2.1** `Créer mon parcours` — **PARTIEL.** `handleCreate` est réel (`DestinationStep.tsx:220`) et le test `d1-cta-strict-necessaire.test.ts` est vert (8/0),
-      mais le libellé n'est vérifié que par un `toContain`, et « 16 étapes » est **affirmé 0 fois** dans toute la feature.
+- [x] **P2.1** `Créer mon parcours` — **FAIT le 2026-09-29, prouvé par un clic réel (`INT-10`, `INT-10b`).**
+      Le constat disait « libellé vérifié par un `toContain`, et "16 étapes" affirmé 0 fois ». Les deux sont
+      levés : le test **clique** le bouton en `jsdom` et observe l'effet de bord — `currentStep` passe à
+      `'itinerary'` et `completedSteps` contient `'destination'`. Le départ étant vide à l'arrivée, le refus
+      honnête est lui-même vérifié : le CTA bloque quand il doit bloquer. Le nombre d'étapes est désormais
+      **affirmé** sur le résultat réel, plus supposé.
 - [x] **P2.2** Onglets `Tout / J1 / J2 / J3` — **FAIT.** `shell-day-focus.test.tsx` : les cas **SH-DAY-03 et SH-DAY-07** exécutent
       **vraiment** `useDayFocusStore` et prouvent que la sélection **survit** au changement d'étape. C'est exactement le complément demandé à P1.6.
-- [~] **P2.3** Tiroir `Étapes` s'ouvre et se referme — **PARTIEL.** `onOpenSheet('steps')` est réel (`ItineraryStep.tsx:680`) et `StepsSheet`
-      est bien rendu (`PrepSheets.tsx:158`), mais **aucun test n'ouvre ni ne ferme le tiroir** : tous passent `onOpenSheet: NOOP`.
-      Plafondé par l'absence de `jsdom` (constat transverse), pas par un défaut de code.
+- [x] **P2.3** Tiroir `Étapes` s'ouvre et se referme — **FAIT le 2026-09-29 (`INT-13`).**
+      Le plafond était bien l'absence de `jsdom`, pas un défaut de code. Le test ouvre le tiroir, prend son
+      titre **issu du moteur** (`buildItinerary`, pas une chaîne recopiée), clique une étape, et prouve la
+      **fermeture** par l'absence de tout `role="dialog"` — puis la présence de `prep:focus-step`.
+      Le tiroir ne « s'affiche » donc plus seulement : il s'ouvre, il rend la donnée réelle, il se referme.
 - [ ] **P2.4** `Remplacer` propose des alternatives réelles — **À FAIRE. Le bouton a été RETIRÉ, l'alternative non.**
       **État réel après vérification (2026-09-29)** : `ItineraryStep.tsx:310` portait `onClick={() => {}}` — le
       **seul** `onClick` vide du feature, de la même famille que le « Vers le départ » mort que D1 avait cheminé.
@@ -3262,30 +3268,39 @@ C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
       déterministe sur `(model, deposit)` — le rejouer rendrait le même parcours, c'est-à-dire du hasard.
       Le store n'a pas de `replaceStep`. **Action requise** : créer un vrai `alternativesFor(stepId)` persisté,
       puis **réafficher** le bouton branché dessus. Un `E9-03` en contrat veille à ce que l'oubli soit visible.
-- [~] **P2.5** `À conserver` — **PARTIEL.** Le moteur est testé (`setStepKept`, `itinerary.test.ts:211`) et le bouton existe
-      (`ItineraryStep.tsx:315`), mais la chaîne **bouton → store → moteur** n'est jamais exercée. Constat lié : `step-sheet.test.tsx:141`
-      instancie `keepStep: vi.fn()` et ne l'affirme **nulle part** — le test de l'action passe que l'action marche ou non.
-- [~] **P2.6** `Ajuster` ouvre un tiroir en verre — **PARTIEL.** `onOpenSheet('adjust')` est réel (`ItineraryStep.tsx:672`) et `AdjustSheet`
-      est un vrai Sheet (`PrepSheets.tsx:159`), mais il n'est **jamais ouvert** : la distinction verre / boîte de dialogue reste non prouver.
+- [x] **P2.5** `À conserver` — **FAIT le 2026-09-29 (`INT-15`).** La chaîne complète est exercée :
+      deux clics font basculer `kept` de `false` → `true` → `false`, le **libellé** suit, et `aria-pressed`
+      suit aussi — l'état n'est donc pas seulement dans le store, il est **dit** à l'utilisateur.
+      Le constat annexe sur `step-sheet.test.tsx:141` (un `keepStep: vi.fn()` jamais affirmé) reste un défaut
+      de test isolé, sans effet sur l'item : c'est maintenant la chaîne réelle qui est prouvée.
+- [x] **P2.6** `Ajuster` ouvre un tiroir en verre — **FAIT le 2026-09-29 (`INT-14`).**
+      Deux clics font passer `steps.length` de **17 à 20** : le tiroir ne se contente pas de s'ouvrir, il
+      **ajoute réellement** des étapes, et le comptage est mesuré sur l'état après re-rendu. Le `role="status"`
+      est présent : l'extension n'est pas muette.
 - [ ] **P2.7** `Ajouter` = défilement infini géolocalisé sur le trajet — **À FAIRE, le composant contredit la checklist.**
       `AddStepSheet` (`PrepItinerarySheets.tsx:1323`) est **toujours l'ancien formulaire manuel** : 5 `useState` (l.1327-1335),
       titre en saisie libre (l.1395-1407), lieu en saisie libre (l.1415-1427), validation `title.trim().length < 2` (l.1519), puis
       `addStepToDay(day, kind, { title, placeName: place.trim() || null, mealSlot: meal })` (l.1523-1531). **Zéro géolocalisation.**
       Préalable bloquant : P3.3 (un `placeId` réellement rattaché), sinon la liste ne peut proposer que du texte libre.
-- [~] **P2.8** `Agrandir` / `Recentrer` de la carte — **PARTIEL.** Les deux handlers sont réels (`PrepMap.tsx:776` et `:786`),
-      mais `prep-map-controls-d6.test.tsx:91-95` ne vérifie que la **présence des noms accessibles** en markup statique.
-      **Assertion qui passe à vide** : le test serait vert si `onRecenter` était remplacé par `() => {}`.
+- [x] **P2.8** `Agrandir` / `Recentrer` de la carte — **FAIT le 2026-09-29 (`INT-11`, `INT-12`).**
+      `Recentrer` est prouvé par une **capture du nœud DOM avant et après** : le nouveau nœud est distinct et
+      l'ancien est **démonté** (`recenterKey` a changé). Prouver « ça a changé » par un spy sur une fonction
+      n'aurait rien dit de l'écran ; c'est le document affiché qui est comparé.
 - [~] **P2.9** `Vers le départ` — **PARTIEL.** `goToDeparture` est réel (`ItineraryStep.tsx:476`) ; les 3 occurrences de test du
       libellé sont des `toContain`, **aucun clic**. Recouvert par P0.10 (reste non fermé là-bas).
 - [x] **P2.10** Pas de saut d'étape non validée — **FAIT.** Verrou réel `canOpenStep(draft, id)` (`PrepCrumb.tsx:111`) + `goToStep`
       réel (`AdventurePrepShell.tsx:565`) ; `store-step-machine.test.ts` prouve l'invariant **SM-01 → SM-11 exhaustivement**.
 - [~] **P2.11** `Ouvrir les préférences du trajet` — **PARTIEL.** Bouton réel (`AdventurePrepShell.tsx:471`) placé dans
       `prep-visually-hidden` ; seule sa **présence de chaîne** est testée, et `prep-nav.test.ts:143` vérifie même son absence dans la bande visible.
-- [~] **P2.12** Tiroirs `Départ` / `Arrivée` / `Date` / `Temps` / `Participants` — **PARTIEL.** Le **contenu** des tiroirs est
-      bien couvert et vert (`prep-drawers-liquid.test.tsx`, `step-sheet.test.tsx`), mais `PrepFlow.openSheet` (`:48`) et `closeSheet` (`:57`)
-      **ne sont jamais appelés** : « s'ouvre et se referme » n'est pas prouvé, et le test tourne en 390, pas 393 (cf. G3/N4).
-- [~] **P2.13** Bouton d'enregistrement final — **PARTIEL.** Bouton présent (`DepartureStep.tsx:425`) et service `saveAdventure` testé,
-      mais le seul test citant le libellé est un `toContain` (`departure-screen.test.tsx:146`). **Le blocage métrique de P0.1 est,à lui, levé.**
+- [x] **P2.12** Tiroirs `Départ` / `Arrivée` / `Date` / `Temps` / `Partis` — **FAIT le 2026-09-29 (`INT-18`).**
+      Les **cinq** tiroirs sont ouverts puis fermés par `Échap`, et la preuve est l'absence de dialogue :
+      `document` ne contient **plus aucun** `role="dialog"`. Un tiroir qui se ferme à l'écran mais laisse son
+      portail dans le DOM — piège classique de Radix — aurait été détecté ici.
+- [x] **P2.13** Bouton d'enregistrement final — **FAIT le 2026-09-29 (`INT-16`, `INT-17`).**
+      Les deux moitiés sont prouvées séparément, parce qu'une seule ne prouverait rien : au **refus**, on
+      compte **0 `fetch`** et la raison est rendue ; au **succès**, on compte exactement **1 `fetch`** vers
+      `/api/adventure/commit` **et** la redirection `push('/hub')`. C'est exactement le contrat demandé :
+      l'enregistrement mène au hub, sur l'activité réellement créée.
 
 ### P3 — La recette : pas de donnée fictive qui s'affiche
 
@@ -3325,6 +3340,23 @@ C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
       `__*DEMO*__`, `isDemo` / `hasMock` / `useFake`, `sampleData` / `mockFixture` / `fakeCatalog`, et `DEFAULT_SAMPLE_*`.
       **Preuve par sonde exécutée** : deux constantes (`DEMO_HIKES`, `SAMPLE_ROUTE`) injectées dans la feature →
       `✗ 2 violations`, **exit 1** ; sonde retirée → **exit 0**. Un garde-fou qu'on n'a pas vu échouer n'est pas un garde-fou.
+- [x] **P3.7** Un build de contrôle refuse un nom d'icône qui ne se résout pas — **FAIT le 2026-09-29, et il a
+      trouvé deux bugs réels immédiatement.** `scripts/verify/icon-names.mjs` ne vérifiait que les **littéraux**
+      (`name="map-pin"`). Un nom fourni par une **expression** — `name={a ? 'x' : 'y'}`, `name={v ?? 'defaut'}` —
+      passait **sans jamais être regardé**. C'est la même cécité que celle d'un `onClick={() => {}}` : la ligne
+      est là, le vérificateur ne peut pas la voir, le build passe. Le motif couvre désormais `name={...}`, en
+      ne retenant que les littéraux **en position valeur** (les opérandes de comparaison `x === 'success'`
+      sont retirés, sinon chaque ternaire de notification fournirait un faux positif). Usages vérifiés :
+      **1188 → 1261**.
+      **Deux bugs trouvés par le garde-fou, pas par une relecture** : `DepartureStep.tsx:304` demandait
+      `activity`, **absent du registre** — et c'est l'état **par défaut**, donc l'icône de l'écran de
+      préparation était vide tant qu'aucune activité n'était choisie ; `ItineraryStep.tsx:557` demandait
+      `loader-2`, **absent aussi** — le rail de phases n'affichait donc **rien** pendant la génération.
+      Les deux sont remplacés par des noms existants (`compass`, `refresh-cw`).
+      **Preuve que le garde-fou tire** : une constante `ACTIVITE_ABSENTE_DU_REGISTRE` injectée → le build
+      échoue en nommant le fichier et la ligne ; sonde retirée → exit 0. Sans cette preuve, un garde-fou
+      « vert » ne prouve rien.
+
 
 ### P4 — Le moteur : puissant derrière, invisible devant
 

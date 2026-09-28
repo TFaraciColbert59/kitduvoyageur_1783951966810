@@ -301,7 +301,7 @@ function coverSubtitle(draft: AdventurePrepDraft): string {
             color: 'var(--green-ink)',
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
-            <Icon name={activity?.icon ?? 'activity'} size={24} />
+            <Icon name={activity?.icon ?? 'compass'} size={24} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <h1 className="prep-title" style={{ fontSize: 'var(--f-body)', fontWeight: 700, margin: 0, lineHeight: 1.2 }}>

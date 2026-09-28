@@ -555,7 +555,7 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
                 >
                   <span className="prep-rail__dot" aria-hidden="true">
                     <Icon
-                      name={phase.done ? 'check' : active ? 'loader-2' : 'circle'}
+                      name={phase.done ? 'check' : active ? 'refresh-cw' : 'circle'}
                       size={20}
                       className={active ? 'spin' : ''}
                     />

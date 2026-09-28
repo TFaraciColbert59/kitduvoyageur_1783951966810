@@ -95,6 +95,43 @@ for (const file of walk(src)) {
   }
 }
 
+
+/**
+ * Les expressions `name={...}` : le trou aveugle du verificateur.
+ *
+ * `usageRe` ne voyait que les LITTERAUX (`name="map-pin"`). Un nom fourni par
+ * une expression — `name={a ? 'x' : 'y'}`, `name={v ?? 'defaut'}` — passait
+ * donc sans JAMAIS etre regarde, quel que soit son contenu. C'est la meme
+ * cecite que celle d'un `onClick={() => {}}` : la ligne est presente, le
+ * verificateur ne peut pas la voir, et le build passe.
+ *
+ * On extrait donc les litteraux EN POSITION VALEUR. Les operandes de
+ * comparaison (`x === 'success'`) ne sont PAS des noms d'icones : ils sont
+ * retires avant extraction, sinon chaque ternaire de notificationControllers
+ * fournirait un faux positif.
+ */
+const usageExprRe = /<(?:Icon|AppIcon|LkvIcon)\b[^>]*?\bname\s*=\s*\{([^}]*)\}/g;
+const COMPARISON = /(['"])(?:(?!\1).)*\1\s*(?:===|!==|==|!=)|(?:===|!==|==|!=)\s*(['"])(?:(?!\2).)*\2/g;
+
+for (const file of walk(src)) {
+  const content = fs.readFileSync(file, 'utf8');
+  if (!canonicalImportRe.test(content)) continue;
+  for (const m of content.matchAll(usageExprRe)) {
+    const line = content.slice(0, m.index).split(/\r?\n/).length;
+    const valueSide = m[1].replace(COMPARISON, ' ');
+    for (const lit of valueSide.matchAll(/'([^']+)'|"([^"]+)"/g)) {
+      const name = lit[1] ?? lit[2];
+      if (!name) continue;
+      total++;
+      const kind = resolves(name);
+      if (kind === 'hero-legacy') {
+        legacy.add(name);
+      } else if (!kind) {
+        failures.push(`${path.relative(root, file)}:${line} → "${name}" (dans name={...})`);
+      }
+    }
+  }
+}
 console.log(`=== VÉRIFICATION DES NOMS D'ICÔNES (${total} usages statiques) ===`);
 console.log(`  registry: ${pngKeys.size} glyphes pack, ${svgNames.size} SF-style, ${animatedNames.size} animés`);
 if (legacy.size > 0) {
