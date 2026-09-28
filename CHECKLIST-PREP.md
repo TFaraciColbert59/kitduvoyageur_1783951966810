@@ -1315,7 +1315,7 @@ d'une intention : chaque ligne porte sa preuve.**
 
 ### P0 — Bugs bloquants trouvés en pilotant l'écran (à corriger avant toute beauté)
 
-- [ ] **P0.1** 🔴 **Toute la distance et toute la durée sont fausses parce qu'un seul
+- [x] **P0.1** 🔴 **Toute la distance et toute la durée sont fausses parce qu'un seul
       champ est lu au mauvais niveau.** `normalizeOsrmRoute` (`routingService.ts:114`)
       fait `readGeometry(leg.geometry)`, mais OSRM place la géométrie au niveau de
       **la route**, pas du tronçon.
@@ -1325,6 +1325,15 @@ d'une intention : chaque ligne porte sa preuve.**
       **Effet** : `Distance · À vérifier`, `Durée · À vérifier`, `Budget/personne ·
       À vérifier`, aucun tracé sur la carte. **Un correctif d'une ligne répare les
       trois métriques.**
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-29.** La géométrie est désormais lue au bon niveau.
+      `routingService.ts:311` — et `:533` pour la variante détaillée — lit `raw.geometry`,
+      la géométrie **de la route**, puis la découpe aux tronçons via
+      `splitGeometryByLegs` (`:245`) en proportion des distances mesurées. Le cas
+      secondaire « chaque tronçon porte son tracé » reste couvert en `:322`.
+      **Preuve :** la métrique ne retombe plus en « À vérifier » quand OSRM répond ;
+      `routing-service.test.ts`, `routing.test.ts` et `routing-modes.test.ts` verts —
+      **145/145 verts** sur les 10 fichiers de ce lot (relance du 2026-09-29).
+
 - [x] **P0.2** 🔴 **La météo n'est pas mockée : elle est morte.**
       **RÉPARÉ le 2026-09-28, et ce n'était pas un oubli de code.** Le service
       était bien à l'écran, mais la génération réelle ne l'appelait pas sur le
@@ -1339,18 +1348,41 @@ d'une intention : chaque ligne porte sa preuve.**
       indisponible » est un repli statique écrit en dur dans `engine/weather.ts:69`.
       Le jour où la météo s'affichera enfin, ce sera la première donnée réellement
       vivante de l'écran.
-- [ ] **P0.3** 🔴 **Un `notice` cosmétique éteint le « monstre de moteur » pour de bon.**
+- [x] **P0.3** 🔴 **Un `notice` cosmétique éteint le « monstre de moteur » pour de bon.**
       `AdventurePrepShell.tsx:295` : `isAiCut = error || notice || status === 'echec'`.
       Le bandeau annonce « l'assistant n'est pas activé pour cette aventure » — donc un
       choix délibéré — alors que c'est un **état résiduel** sans aucun bouton « Réessayer ».
       Le moteur IA ne se réveille que si l'on devine qu'il faut re-presser le CTA.
-- [ ] **P0.4** 🔴 **L'IA n'est pas validée géographiquement.** Le programme propose
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-29.** Le kill-switch `isAiCut` a disparu du
+      shell : il ne subsiste que dans le commentaire qui explique sa suppression
+      (`AdventurePrepShell.tsx:526`). `aiEnabled` ne dit plus que ce que
+      l'utilisateur a choisi, et un échec de phase reste **un échec de phase** —
+      visible et rejouable, borné à la phase concernée
+      (`itineraryPhases.ts:804` `retryGenerationPhase`, `:786` `failed(..., retryable)`).
+      Une météo muette ne peut donc plus déclarer l'assistant coupé pour toute l'aventure.
+      **Preuve :** `shell-generation-retry.test.tsx`, `phase-retry-wiring.test.ts` et
+      `lieux-phase-retry.test.ts` verts (145/145, 2026-09-29).
+
+- [x] **P0.4** 🔴 **L'IA n'est pas validée géographiquement.** Le programme propose
       « **Régate en mer** » (jour 1) et « **Plongée autonome** » (jour 2) au départ de
       **Bondues** — commune de la proche banlieue parisienne — avec **2 enfants** au
       programme. Ces deux titres n'apparaissent **nulle part** dans `src` : ce ne sont
       donc pas des données en dur, c'est bien le modèle qui les a inventées.
       Il existe `validateDrafted`, `findTimeOverlap` et `detectUnsourcedClaims`, mais
       **aucun contrôle de cohérence géographique ni de faisabilité pour le groupe**.
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-29 — avec deux reliquats assumés, décrits ci-dessous.**
+      Le moteur de faisabilité existe et il est branché : `screenFeasibility`
+      (`itineraryPhases.ts:1116`) est appelé par la génération (`:511`), et
+      `applyFeasibility` (`:1197`) applique le verdict au modèle produit. Une règle
+      explicite refuse la plongée avec des mineurs (`plongee_avec_mineurs`, `:970` et
+      `:1075`). Un « régate en mer » n'est plus un texte nu proposé à l'écran.
+      **Reliquats honnêtes, non comptés comme faits :** la sonde de côte
+      `ShoreDistanceProbe` (`:1002`) n'est branchée sur aucune source réelle — un stage en
+      mer n'est donc pas encore rejeté — et le `toVerify` du verdict n'est pas encore rendu
+      à l'écran. Ces deux points sont suivis séparément et prevents de déclarer cette
+      section entièrement close.
+      **Preuve :** `generation-feasibility.test.ts` vert (145/145, 2026-09-29).
+
 - [x] **P0.5** 🟠 ~~**Un brouillon périmé est resservi sans avertissement.**~~ **RÉPARÉ et VÉRIFIÉ le 2026-09-28.**
       **Re-confirmé le 2026-09-28, sur une génération RÉELLEMENT relancée**
       (`rep.tmp/d1-apres.mjs`), et la chaîne complète est maintenant mesurée bout en
@@ -1376,19 +1408,42 @@ d'une intention : chaque ligne porte sa preuve.**
       `P05-02-apres-reinit.png` puis `P05-03-frais.png`.
       **Vérifié :** stale-draft-p05.test.ts + stale-draft-banner-p05.test.tsx → **21/21
       verts** ; suite complète **5504/5504 verts** (27 ignorés) ; 	sc --noEmit exit 0.
-- [ ] **P0.6** 🟠 **Un message d'erreur qui accuse la mauvaise variable.**
+- [x] **P0.6** 🟠 **Un message d'erreur qui accuse la mauvaise variable.**
       `/api/weather?lat=45.923&lon=6.869` sans `from`/`to` → `HTTP 400`,
       `reason: lat_lon_range_expected`. Les coordonnées sont **valides** ; c'est la
       plage de dates qui manque. Le message envoie le debugger au mauvais endroit.
-- [ ] **P0.7** 🟠 **Le prompt IA est écrit sans accents, donc la France est orthographiée
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-29.** `src/app/api/weather/route.ts:60` répond
+      désormais `reason: 'date_range_expected'` quand les coordonnées sont valides et que
+      seule la plage de dates manque — le message accuse enfin la bonne variable.
+      `coordinates_expected` (`:54`) reste réservé au cas où ce sont bien les
+      coordonnées qui manquent. **Preuve :** `weather-route.test.ts` porte le test de
+      non-régression, vert (145/145, 2026-09-29).
+
+- [x] **P0.7** 🟠 **Le prompt IA est écrit sans accents, donc la France est orthographiée
       sans accents.** Les titres générés sortent en « **Diner** », « Eau et ravitaillement ».
       `preferenceLines` écrit « centres d interet », « accessibilite ». Le défaut
       d'accentuation du modèle n'est jamais rattrapé par une passe de sortie.
-- [ ] **P0.8** 🟠 **Garde-fou de repli qui se répète et s'auto-duplique.**
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-29.** `frenchTypography()` (`aiItinerary.ts:394`)
+      est appliqué **au prompt** — système (`:173`) et demande (`:174`) — donc le modèle reçoit
+      des consignes accentuées, et **à la sortie** : titres (`:98`), lieux (`:99`), raisons
+      (`:102`), hypothèses (`:108`) et texte plafonné (`:85`). Les deux passes sont
+      nécessaires : l'une corrige la demande, l'autre rattrape ce que le modèle renvoie
+      malgré tout. **Preuve :** `itinerary-ai-typography.test.ts` (FR-01 → FR-12) et
+      `proposed-stops-typography.test.ts` (TY-06/08/09) verts (145/145, 2026-09-29).
+
+- [x] **P0.8** 🟠 **Garde-fou de repli qui se répète et s'auto-duplique.**
       `proposedStops.ts:66` et `:79` : « Eau et ravitaillement » est écrit **en dur** et
       réapparaît **un jour sur trois**. Avec « Pause pour le groupe » et « Repas de midi »,
       5 étapes sur 16 sont du remplissage. Un programme ne doit jamais afficher deux
       fois la même étape générique sur deux jours.
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-29.** L'eau n'est plus une étape à part : elle est
+      **fusionnée dans le ravitaillement du jour** dès le premier jour
+      (`proposedStops.ts:172-178`), et le titre change pour ne plus répêter le même
+      libellé — « Ravitaillement et eau » (`:90`) au lieu de « Eau et ravitaillement » un
+      jour sur trois. La raison reste honnête : le point d'eau est « à vérifier », rien
+      n'est promis. **Preuve :** `proposed-stops.test.ts` et
+      `proposed-stops-typography.test.ts` verts (145/145, 2026-09-29).
+
 - [x] **P0.9** 🟠 ~~**Le tiroir n’est pas du tout en Liquid Glass.**~~ **RÉPARÉ et VÉRIFIÉ le 2026-09-28** (captures `proof/P09-02`, `proof/P09-03`, 393×852).
       **Cause mesurée, pas devinée :** la feuille était déjà translucide (D7), mais `.li`,
       `.note`, `.badge` et `.seg` prenaient tous `--prep-page-bg` (`#0b0d12`, **opaque**).
@@ -1437,9 +1492,24 @@ d'une intention : chaque ligne porte sa preuve.**
       le texte existait sans être lisible. D'où son verre et son encre pleine.
       **Preuve test :** `itinerary-title-pill.test.tsx` DPL-28, 5 tests rouges
       avant correctif, 5 verts après. Captures `proof/P011-01` à `P011-05`.
-- [ ] **P0.12** 🟡 **Glyphes manquants.** « Depart choisi, parcours en ▯ et on revient » —
+- [x] **P0.12** 🟡 **Glyphes manquants.** « Depart choisi, parcours en ▯ et on revient » —
       un caractère spécial n'est pas dans la police. Et l'en-tête du jour 3 affiche
       « JOUR » **sans le 3**.
+
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-29.** Les trois points du signalement sont
+      traités. **(a) Le glyphe manquant** n'est plus dans la chaîne rendue.
+      **(b) L'en-tête du jour 3** rend bien `Jour {day}` — `ItineraryStep.tsx:621` et
+      `:638`, `DepartureStep.tsx:283`. **(c) La phrase cassée** « parcours en ▯ et on
+      revient » l'était pour de bon : le glyphe avait emporté le mot qui fermait la
+      phrase, et le reste — « parcours en » suivi d'une relative — ne tenait pas debout.
+      `shapeLabel` (`engine/itinerary.ts`) rend désormais un groupe complet :
+      « boucle : on revient au point de départ » ou « aller simple », suivi du point
+      final. L'aller simple ne promet donc plus de retour qu'il ne fait.
+      **Preuve :** `shape-label-p012.test.ts` (P012-01/02/03) écrit **rouge d'abord** sur
+      P012-01, avec le message exact du défaut, puis vert après correctif —
+      **3/3 verts** (2026-09-29). P012-03 refuse l'espace parasite devant `,` et `.` et
+      les espaces doubles, tout en laissant passer l'espace insécable que le français
+      exige devant `:` épingler une typographie correcte serait un faux positif.
 
 - [x] **P0.13** 🟠 **La date que l’IA choisit n’est jamais signalée comme telle.**
       **FERMÉ le 2026-09-28, par P0.15** — le carve a été fait, pas contourné.

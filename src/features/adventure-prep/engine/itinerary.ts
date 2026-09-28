@@ -94,8 +94,18 @@ function nightTitle(selection: AdventurePrepDraft['activities']): string {
   return selection.nights.includes('bivouac') ? 'Nuit en bivouac' : 'Nuit';
 }
 
+/**
+ * La forme du parcours, telle qu elle se lit dans la phrase du jour 1.
+ *
+ * Elle rend un groupe complet, pas un fragment : « parcours en « et on
+ * revient au point de départ » » n etait pas du francais, et le mot qui
+ * fermait la phrase avait disparu avec le glyphe manquant du signalement
+ * P0.12. Une forme se nomme, puis elle se explique.
+ */
 function shapeLabel(shape: RouteShape): string {
-  return shape === 'boucle' ? 'et on revient au point de départ' : 'aller simple';
+  return shape === 'boucle'
+    ? 'boucle : on revient au point de départ'
+    : 'aller simple';
 }
 
 /**
@@ -124,7 +134,7 @@ export function buildItinerary(draft: AdventurePrepDraft): ItineraryModel | null
       push(1, 'trajet', {
         title: `Départ de ${origin.name}`,
         placeName: origin.name,
-        reason: `Départ choisi, parcours en ${shapeLabel(draft.route.shape)}`,
+        reason: `Départ choisi, parcours en ${shapeLabel(draft.route.shape)}.`,
         state: travelState(draft),
         price:
           draft.preferences.transport === 'peigne'
