@@ -1270,34 +1270,36 @@ corrompue ne doit pas fabriquer une alerte qui aura l’air d’un fait.
       « Étapes », « Ajouter ») ont un comportement réel, mais **aucun test n'exerce leurs
       boutons**. Le code existe, la preuve n'existe pas. Item non coché.
 
-- [~] E11 Long-press sur la carte = ajouter un point de passage, trajet recalculé
-      **PARTIEL — le geste est réel, le recalcul n'existe pas.** `useMapLongPress`
-      (`components/PrepMap.tsx:627`) qualifie l'appui tenu, `onLongPress` (`:75`) est
-      transmis à `ItineraryStep.tsx:723-725` → `addWaypoint({lat,lon}, activeDay ?? 1)`
-      → `insertWaypoint` (`engine/dayNavigation.ts:228`), qui insère l'étape entre celles
-      qui l'encadrent et garde les coordonnées réelles. **9/9 verts**, et 72/72 sur le lot.
-      **Ce qui manque :** `insertWaypoint` met explicitement `perDay[day-1]` et `totals`
-      à `null` (`:204-210`, `:277-288`) et `addWaypoint`
-      (`useAdventurePrepStore.ts:185-190`) n'appelle **aucune remesure**.
-      `rg "measureItinerary|applyRouting|applyWeather"` sur `components/` et `hooks/`
-      → **0 résultat**. Le tracé suit, mais les distances tombent à « À vérifier » — et
-      l'indice affiché sous la carte (`ItineraryStep.tsx:727-730`) annonce « le trajet et
-      les distances se recalculent aussitôt » : **c'est faux pour les distances.**
-
-- [~] E12 Toutes les distances, durées et budgets suivent en temps réel
-      **PARTIEL — le budget suit, les distances et durées non.** Le budget est correct :
-      `dayBudget` / `metricsFor` (`engine/metrics.ts:192`, `:197`) somment les prix des
-      étapes du modèle à chaque rendu, et `metrics` est un `useMemo` sur `[model,
-      activeDay]` (`ItineraryStep.tsx:457-463`). **55/55 verts**, dont « une distance non
-      mesurée affiche « à vérifier », jamais 0 km ».
-      **Deux défauts mesurés, même cause racine que E11 :** (1) après « Ajuster »,
-      `applyAdjustment` (`engine/adjustments.ts`) ne touche **ni `totals` ni `perDay`** —
-      `rg "totals|perDay|distanceKm"` sur ce fichier → **0 résultat** ; (2) après un point
-      de passage, les mesures tombent à `null` et ne sont **jamais remesurées**.
-      Aucune assertion exécutée ne couvre « modification puis relecture des mesures ».
-
-
-## F — Étape 3 « En avant ! »
+- [x] E11 Long-press sur la carte = ajouter un point de passage, trajet recalculé
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-29 par tests exécutés — 6/6 verts.** Cause racine traitée : plus aucune mutation de géométrie
+      ne laisse `totals`/`perDay` à `null` sans relance de mesure. Le geste, lui, était déjà réel et n'a pas été touché : `useMapLongPress`
+      (`PrepMap.tsx:627`) → `addWaypoint({lat,lon})` → `insertWaypoint` (`engine/dayNavigation.ts:228`), qui garde les coordonnées réelles.
+      **Ce qui a été ajouté :**
+      - `engine/measurements.ts` — nouvel export `measureWithRunners()` qui enchaîne `trace` puis `weather` sur le même `AbortSignal`,
+        et **s'arrête entre les deux** si le run est coupé. Raison honnête : interroger la météo d'un parcours dont le tracé
+        n'a jamais été mesuré afficherait la météo d'un trajet **inexistant**.
+      - `store/useAdventurePrepStore.ts` — action `remeasure(reason)`, branchée sur les **quatre** mutations de géométrie : `addStepToDay`,
+        `addWaypoint`, `dropStep`, `adjust`. Double garde anti-course : écriture **seulement si** `!signal.aborted` **et**
+        `get().draft.itinerary === model` — un résultat périmé ne peut pas écraser un résultat frais.
+      - `components/ItineraryStep.tsx` — le texte **mensonge** « le trajet et les distances se recalculent immédiatement »
+        a été remplacé par « le trajet est retracé sur le réseau réel, puis les distances remesurées », et un indicateur
+        `role="status" aria-live="polite"` annonce honnêtement le mesurage en cours **au lieu d'afficher un chiffre sans trace derrière lui**.
+      **Preuve exécutée** (`__tests__/remeasure-after-edit.test.ts`, nouveau, 6 tests) : **E11-1** `addWaypoint` → distances remesurées
+      (pas `null`) et `totals` cohérent avec la somme de `perDay` · **E11-3** réseau muet → tout reste `null`, **jamais `0`**, jamais de valeur
+      inventée · **E12-4** annulation → le run périmé ne écrit rien, le run frais gagne.
+      **Non-régression :** 163/163 sur les 8 suites critiques (store + écran).
+      **Réserve tracée :** pas d'E2E sur l'indicateur, abandon au démontage non testé, `dropStep` branché mais sans test dédié.
+      Rapport complet : `qa-local/verify-e11-e12.md`.
+- [x] E12 Toutes les distances, durées et budgets suivent en temps réel
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-29 — même lot que E11, même fichier de preuve.** Les deux défauts cités
+      ci-dessus étaient **un seul et même défaut** : une écriture de géométrie qui ne remesure pas. Il est corrigé à la source.
+      **Preuve exécutée :** **E11-2** `adjust` (`moins_cher`) recalcule depuis les **nouvelles** étapes et le résultat **diffère** de l'ancien —
+      c'est la preuve directe que le budget/distances suivent, pas une réutilisation de valeur.
+      **E12-5** pas d'itinéraire → no-op, **zéro appel réseau** · **E12-6** coordonnée malhonnête `{0,0}` → édition **refusée**, 0 appel route, aucune remesure.
+      **L'honnêteté survit à la panne :** E11-3 prouve que sur réseau muet les distances restent `null` — elles ne se dégradent **pas** en `0`,
+      et la météo reste `null`. C'est bien la règle « `null` honnête > donnée inventée » tenue sous charge.
+      **Le détail qui compte :** le faux texte d'écran a été **supprimé**, pas contourné. L'item E11 exigeait une garantie, il a reçu
+      une garantie **et** la fin du mensonge à l'écran.## F — Étape 3 « En avant ! »
 
 - [x] F1 Récap des paramètres
       **VÉRIFIÉ le 2026-09-29 par exécution.** `DepartureStep.tsx:261-276` (bloc
@@ -3215,64 +3217,112 @@ d'une intention : chaque ligne porte sa preuve.**
       etre reecrit sur son vrai invariant — le garde-fou, pas Mont Blanc** — et
       P019-06 pareil, sur l honnetete de la politique de fournisseurs.
 
-### P2 — Boutons : chacun doit être cliqué et prouver qu'il fait quelque chose
+### P2 — Boutons : chacun doit être cliqué et prouver qu’il fait quelque chose
 
-- [ ] **P2.1** `Créer mon parcours` — **OK, testé** : bascule en étape 2 et génère 16 étapes.
-- [ ] **P2.2** Onglets `Tout / J1 / J2 / J3` — **OK, testé** (P1.6). Vérifier en plus que
-      la sélection **survit** au passage à l'étape 3.
-- [ ] **P2.3** `Étapes` (tiroir programme) — **OK, testé** : s'ouvre et se referme.
-- [ ] **P2.4** `Remplacer` sur une étape — **jamais testé**. Doit proposer des
-      alternatives **réelles** et réellement différentes, pas un tirage au sort.
-- [ ] **P2.5** `À conserver` — **jamais testé**.
-- [ ] **P2.6** `Ajuster` — **jamais testé**. Doit ouvrir un tiroir en verre, pas une
-      boîte de dialogue système.
-- [ ] **P2.7** `Ajouter` — **jamais testé**. C'était le remplacement du « Ajouter une
-      étape » par un défilement infini **géolocalisé sur le trajet** : non conforme tant
-      que ce n'est pas fait.
-- [ ] **P2.8** `Agrandir` / `Recentrer` de la carte — **jamais testé**.
-- [ ] **P2.9** `Vers le départ` — **jamais testé**, et **recouvert** par P0.10.
-- [ ] **P2.10** `Revenir à Créations` / `Revenir à Préparation` — **intégrité d'état** :
-      ces deux entrées permettent de **sauter l'étape 2 sans l'avoir validée**. À
-      supprimer ou à verrouiller.
-- [ ] **P2.11** `Ouvrir les préférences du trajet` — **jamais testé**.
-- [ ] **P2.12** Les tiroirs `Départ`, `Arrivée`, `Date`, `Temps`, `Participants` —
-      **jamais testés en 393** dans cette session.
-- [ ] **P2.13** Bouton d'enregistrement final — **jamais atteint** : bloqué par P0.1
-      tant que les métriques sont fausses.
+> **Lot P vérifié le 2026-09-29 sur preuve exécutée, pas sur lecture** — rapport complet : `qa-local/verify-p-priorites.md`.
+> **20 fichiers de test exécutés, 411 tests passants, 0 échec.** Aucun item n’est en échec : les verdicts À_FAIRE portent sur des
+> comportements **absents**, pas sur des tests rouges.
+
+**Le constat transverse qui plafonne 9 items à PARTIEL — à lire avant tout jugement sur P2 :**
+les **119** fichiers de test de `src/features/adventure-prep` ne contiennent **aucune interaction DOM**.
+`@vitest-environment` → **0 occurrence** (aucun ne demande `jsdom`) ; `fireEvent|userEvent|\.click\(|simulate|dispatchEvent` → **0 occurrence** ;
+25 d'entre eux utilisent `renderToStaticMarkup`, qui renvoie une **chaîne** : ni événement, ni effet, ni état.
+Ce n'est pas un oubli ponctuel, c'est une **convention assumée et documentée** (`__tests__/prep-drawers-liquid.test.tsx:14` :
+« Vitest tourne en `node` : `useEffect` ne s'exécute pas sous `renderToStaticMarkup`.»).
+**Conséquence directe et non escamotable :** un `onClick={() => {}}` mort est **structurellement indétectable** par cette suite.
+Tout item portant sur « le bouton fait quelque chose quand on clique » est donc plafonné à PARTIEL, même quand le comportement est réellement écrit.
+C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
+
+- [~] **P2.1** `Créer mon parcours` — **PARTIEL.** `handleCreate` est réel (`DestinationStep.tsx:220`) et le test `d1-cta-strict-necessaire.test.ts` est vert (8/0),
+      mais le libellé n'est vérifié que par un `toContain`, et « 16 étapes » est **affirmé 0 fois** dans toute la feature.
+- [x] **P2.2** Onglets `Tout / J1 / J2 / J3` — **FAIT.** `shell-day-focus.test.tsx` : les cas **SH-DAY-03 et SH-DAY-07** exécutent
+      **vraiment** `useDayFocusStore` et prouvent que la sélection **survit** au changement d'étape. C'est exactement le complément demandé à P1.6.
+- [~] **P2.3** Tiroir `Étapes` s'ouvre et se referme — **PARTIEL.** `onOpenSheet('steps')` est réel (`ItineraryStep.tsx:680`) et `StepsSheet`
+      est bien rendu (`PrepSheets.tsx:158`), mais **aucun test n'ouvre ni ne ferme le tiroir** : tous passent `onOpenSheet: NOOP`.
+      Plafondé par l'absence de `jsdom` (constat transverse), pas par un défaut de code.
+- [ ] **P2.4** `Remplacer` propose des alternatives réelles — **À FAIRE. Bouton zombie.**
+      `ItineraryStep.tsx:310` : le bouton est **complet** (`variant`, `size`, icône `refresh-cw`, libellé, l.307-314) mais son handler
+      est `onClick={() => {}}`. **Zéro comportement.** Un utilisateur qui clique n'obtient rien, et la suite ne peut pas s'en aperçvoir.
+      **Action requise** : brancher sur de vraies alternatives, ou le supprimer — un bouton en no-op devant l'utilisateur est pire que son absence.
+- [~] **P2.5** `À conserver` — **PARTIEL.** Le moteur est testé (`setStepKept`, `itinerary.test.ts:211`) et le bouton existe
+      (`ItineraryStep.tsx:315`), mais la chaîne **bouton → store → moteur** n'est jamais exercée. Constat lié : `step-sheet.test.tsx:141`
+      instancie `keepStep: vi.fn()` et ne l'affirme **nulle part** — le test de l'action passe que l'action marche ou non.
+- [~] **P2.6** `Ajuster` ouvre un tiroir en verre — **PARTIEL.** `onOpenSheet('adjust')` est réel (`ItineraryStep.tsx:672`) et `AdjustSheet`
+      est un vrai Sheet (`PrepSheets.tsx:159`), mais il n'est **jamais ouvert** : la distinction verre / boîte de dialogue reste non prouver.
+- [ ] **P2.7** `Ajouter` = défilement infini géolocalisé sur le trajet — **À FAIRE, le composant contredit la checklist.**
+      `AddStepSheet` (`PrepItinerarySheets.tsx:1323`) est **toujours l'ancien formulaire manuel** : 5 `useState` (l.1327-1335),
+      titre en saisie libre (l.1395-1407), lieu en saisie libre (l.1415-1427), validation `title.trim().length < 2` (l.1519), puis
+      `addStepToDay(day, kind, { title, placeName: place.trim() || null, mealSlot: meal })` (l.1523-1531). **Zéro géolocalisation.**
+      Préalable bloquant : P3.3 (un `placeId` réellement rattaché), sinon la liste ne peut proposer que du texte libre.
+- [~] **P2.8** `Agrandir` / `Recentrer` de la carte — **PARTIEL.** Les deux handlers sont réels (`PrepMap.tsx:776` et `:786`),
+      mais `prep-map-controls-d6.test.tsx:91-95` ne vérifie que la **présence des noms accessibles** en markup statique.
+      **Assertion qui passe à vide** : le test serait vert si `onRecenter` était remplacé par `() => {}`.
+- [~] **P2.9** `Vers le départ` — **PARTIEL.** `goToDeparture` est réel (`ItineraryStep.tsx:476`) ; les 3 occurrences de test du
+      libellé sont des `toContain`, **aucun clic**. Recouvert par P0.10 (reste non fermé là-bas).
+- [x] **P2.10** Pas de saut d'étape non validée — **FAIT.** Verrou réel `canOpenStep(draft, id)` (`PrepCrumb.tsx:111`) + `goToStep`
+      réel (`AdventurePrepShell.tsx:565`) ; `store-step-machine.test.ts` prouve l'invariant **SM-01 → SM-11 exhaustivement**.
+- [~] **P2.11** `Ouvrir les préférences du trajet` — **PARTIEL.** Bouton réel (`AdventurePrepShell.tsx:471`) placé dans
+      `prep-visually-hidden` ; seule sa **présence de chaîne** est testée, et `prep-nav.test.ts:143` vérifie même son absence dans la bande visible.
+- [~] **P2.12** Tiroirs `Départ` / `Arrivée` / `Date` / `Temps` / `Participants` — **PARTIEL.** Le **contenu** des tiroirs est
+      bien couvert et vert (`prep-drawers-liquid.test.tsx`, `step-sheet.test.tsx`), mais `PrepFlow.openSheet` (`:48`) et `closeSheet` (`:57`)
+      **ne sont jamais appelés** : « s'ouvre et se referme » n'est pas prouvé, et le test tourne en 390, pas 393 (cf. G3/N4).
+- [~] **P2.13** Bouton d'enregistrement final — **PARTIEL.** Bouton présent (`DepartureStep.tsx:425`) et service `saveAdventure` testé,
+      mais le seul test citant le libellé est un `toContain` (`departure-screen.test.tsx:146`). **Le blocage métrique de P0.1 est,à lui, levé.**
 
 ### P3 — La recette : pas de donnée fictive qui s'affiche
 
-- [ ] **P3.1** Chaque nombre affiché est **recalculé** depuis une source
-      (OSRM, Open-Meteo, Tripadvisor, Viator, Supabase) **ou absent de l'écran**.
-      Jamais de valeur plausible inventée pour remplir.
-- [ ] **P3.2** « À vérifier » est une **absence assumée**, jamais un défaut de calcul.
-      Aujourd'hui, à chaque panne réseau, l'écran se remplit de « À vérifier » : au-delà
-      d'un seuil, l'écran doit **prévenir** au lieu de répéter.
-- [ ] **P3.3** Chaque activité, hébergement, restaurant et magasin proposé est **dans la
-      base**, rattaché à un identifiant de lieu réel, avec une source lisible.
-- [ ] **P3.4** Aucun jour ne peut afficher deux fois la même étape générique (P0.8).
-- [ ] **P3.5** Les étapes proposées doivent être **validées géographiquement** : une
-      activité nautique à 600 km du rivage, ou une plongée pour un groupe avec enfants,
-      doit être rejetée **avant** l'affichage, pas après.
-- [ ] **P3.6** Un build de contrôle refuse de démarrer si une constante de démonstration
-      subsiste dans `src/features/adventure-prep`.
+> Même lot, même preuve : `qa-local/verify-p-priorites.md`.
+
+- [~] **P3.1** Chaque nombre affiché est **recalculé** depuis une source, ou absent — **PARTIEL.** La règle **est** prouvée au niveau
+      metrics : `metrics.test.ts:92` boucle sur **toutes** les métriques et impose `null` → `a_verifier`. **Mais aucun test n'énumère les nombres
+      affichés sur tous les écrans** — la garantie est au bon endroit, la couverture d'écran reste à prouver.
+- [~] **P3.2** `À vérifier` est une absence assumée, avec un seuil — **PARTIEL, la première moitié seulement.**
+      L'état distinct (pas de zéro) est prouvé. **Le seuil n'est pas implémenté** : `DepartureStep.tsx:390` liste chaque écart
+      dès que `points.length > 0`, sans seuil ni message « prévenir » — l'écran se remplit à chaque panne réseau.
+      **Action requise** : remplacer la condition par un seuil, et au-delà afficher un avertissement au lieu de répéter la liste.
+- [ ] **P3.3** Chaque lieu rattaché à un identifiant réel — **À FAIRE, structurellement impossible à l'état.**
+      `placeId` = **0 occurrence dans les 184 fichiers** de `adventure-prep`. `types.ts:202` n'a que `placeName: string | null` ;
+      `PlaceInventory` (`engine/places.ts:46-55`) n'a **ni `id` ni source** ; `assignPlaces` (`places.ts:398`) ne rattache que le nom.
+      L'identifiant du catalogue est donc perdu à la construction — ce n'est pas un manque de test, c'est un manque de **modèle**.
+      **Action requise** : `types.ts:202` + `places.ts:46-55` + `places.ts:398`, puis la géo-proximité de P2.7 devient réalisable.
+- [~] **P3.4** Pas deux fois la même étape générique — **PARTIEL, dédupliquée à l'intra-journée seulement.**
+      La déduplication intra-journalière est prouvée (`proposed-stops.test.ts:165`) — mais **sur `/repas/i` seul**. Entre jours,
+      `proposedStops.ts:176` ne branche que sur `day === 1` : les jours 2..N réutilisent `WATER_LATER` (l.183) et `VIEW` (l.194) à l'identique.
+      **Action requise** : indexer le choix sur le jour, et élargir le test au-delà de `/repas/i`.
+- [x] **P3.5** Les étapes proposées sont **validées géographiquement avant l'affichage** — **FAIT.**
+      `generation-feasibility.test.ts` : les cas **FS-01, FS-04, FS-05, FS-08, FS-09** exécutent réellement le filtre avec des **sondes injectées**
+      (nautique loin du rivage, plongée avec enfants). Le rejet se fait bien **avant** l'affichage, pas après.
+- [ ] **P3.6** Un build de contrôle refuse de démarrer si une constante de démonstration subsiste — **À FAIRE, garde-fou inexistant.**
+      `scripts/verify/ci_invariants.mjs` (182 lignes, invariants 1a → 6) ne couvre **aucun** `adventure-prep` ; le motif
+      `DEMO|MOCK|FAKE|SAMPLE` est absent de **tous** les scripts de `scripts/verify/`. Rien n'empêche une constante de démo de subsister.
+      **Action requise** : invariant 7 branché sur le même mécanisme `ok()` / `fail()` que les autres. ~15 lignes.
 
 ### P4 — Le moteur : puissant derrière, invisible devant
 
-- [ ] **P4.1** L'IA n'est jamais **coupée** par un état résiduel : un échec de phase
-      relance **uniquement la phase concernée**, le reste du programme est conservé.
-- [ ] **P4.2** Bouton **« Réessayer »** explicite, toujours présent, dans chaque bandeau
-      d'état dégradé.
-- [ ] **P4.3** Écran de chargement intermédiaire entre l'étape 1 et l'étape 2, avec des
-      étapes de génération **honnêtes** (« calcul du trajet », « choix des étapes »,
-      « vérification des horaires ») — jamais une barre vide.
-- [ ] **P4.4** Repli sur le moteur par règles **annoncé comme tel, avec une action**,
-      pas présenté comme le résultat de l'IA.
-- [ ] **P4.5** Prompt IA **accentué**, avec une passe de typographie française en sortie.
-- [ ] **P4.6** Contrôle de cohérence du planning **exécuté**, et **signalé** quand il échoue.
-- [x] **P4.7** ~~Un brouillon vieux de plus de X jours est signalé et **réinitialisable** en un geste.~~ **RÉPARÉ et VÉRIFIÉ le 2026-09-28**
-      C’est P0.5, fermé ci-dessus : bandeau daté + **« Repartir sur un plan neuf »** en un geste (`proof/P05-01-perime.png` → `P05-02-apres-reinit.png`, regardées).
+> Même lot, même preuve : `qa-local/verify-p-priorites.md`.
 
+- [x] **P4.1** L'IA n'est jamais **coupée** par un état résiduel — **FAIT.** `generation-phases-honesty.test.ts` **compte
+      réellement** les appels moteur (`traceCalls === 0`, `weatherCalls === 1`) et vérifie que le reste du modèle survit — c'est à la fois
+      l'isolation de phase et la conservation du programme, les deux exigences de l'item.
+- [x] **P4.2** Bouton **`Réessayer`** explicite, toujours présent, dans chaque bandeau d'état dégradé — **FAIT.**
+      `shell-generation-retry.test.tsx` : le cas **SH-GEN-20** invoque `noticeRetryHandler` et prouve `rejoues === ['meteo']`
+      **et** `preventDefault` / `stopPropagation` — le clic ne remonte pas et ne déclenche pas un second traitement.
+- [x] **P4.3** Écran de chargement intermédiaire entre étape 1 et étape 2, àtapes **honnêtes** — **FAIT.**
+      `generation-screen-d1.test.tsx` : **D1-5** rend le composant réel avec l'état `markPhaseDone` et prouve les **7 libellés dans l'ordre**
+      (fait / actif / en attente) ; **D1-6** interdit explicitement le `%` — jamais de barre de progression inventée.
+- [~] **P4.4** Repli sur le moteur par règles **annoncé comme tel, avec une action** — **PARTIEL : annoncé oui, action non.**
+      Les 4 messages disent bien « moteur par règles » (`aiFailure.ts:37,39,41,43`) et `ai-failure.test.ts` est vert. Mais l'avertissement
+      est un `<p className="prep-notice">` **nu** (`ItineraryStep.tsx:509`) : **aucune action**, alors que P4.2 a déjà fourni le mécanisme
+      `retryPhase` utilisé ailleurs. **Action requise** : conteneur + bouton `retryPhase`, et un test qui prouve que la ligne atteint l'écran.
+- [x] **P4.5** Prompt IA **accentué**, avec une passe de typographie française en sortie — **FAIT.**
+      `itinerary-ai-typography.test.ts` mocke `askAI` avec une charge réelle **non accentuée**, exerce le **vrai** `requestDraftedItinerary`
+      et la **vraie** passe `frenchTypography` — la chaîne complète est prouvee, pas un bouts de texte isolé.
+- [~] **P4.6** Contrôle de cohérence du planning **exécuté, et signalé quand il échoue** — **PARTIEL : exécuté oui, signalé non.**
+      L'exécution est réelle et prouvée : `validateDrafted` (`itineraryEngine.ts:205`) et `rejectedReason = affirmation_non_sourcee`
+      (`itinerary-ai.test.ts:270`). **Mais le signalement n'existe pas** : la valeur est produite (`itineraryPhases.ts:534`) et propagée
+      (6 retours : `:549, 560, 573, 592, 613, 620`), et lue par **aucun** `.tsx` — **0 occurrence dans les 1805 `.ts`/`.tsx` du dépôt**
+      hors moteur et tests. L'utilisateur ne sait jamais que son planning a été refusé.
+      **Action requise** : afficher `generation.rejectedReason` quand il est non nul. **Meilleur ROI de tout le lot** — le moteur produit déjà la valeur.
 ### P5 — Beauté pure, testée en 393 (captures de référence ci-dessus)
 
 - [~] **P5.1** Un seul verre, une seule recette. Le tiroir P0.9 et la carte P0.11 doivent

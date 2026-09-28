@@ -1401,6 +1401,18 @@ export function ParticipantsSheet({
         )}
       </Section>
 
+      {/* Le participants est lu ici ; les inviter se fait ailleurs. Ce bouton est le
+          seul passage du recap vers l invitation, et il ne doit pas etre un no-op :
+          onOpenInvite etait recu puis jamais lu. */}
+      {onOpenInvite ? (
+        <div className="row between" style={{ marginTop: 'var(--space-4)' }}>
+          <span>Inviter des personnes</span>
+          <button type="button" className="btn ghost" onClick={onOpenInvite}>
+            Inviter
+          </button>
+        </div>
+      ) : null}
+
       <SheetActions onClose={onClose} onApply={onClose} label="Fermer" />
     </div>
   );

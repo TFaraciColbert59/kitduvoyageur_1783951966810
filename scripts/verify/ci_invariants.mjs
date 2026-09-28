@@ -8,6 +8,8 @@
  * 3. Aucun compteur de partage (share_count, partages) dans l'UI
  * 4. Migration 20260903050000_kit_attributions.sql gelée (absente de toute liste active)
  * 5. Aucun fichier .env* stagé ni secret en dur (sk_live_, whsec_, service_role)
+ * 6. Tous les noms d’icônes résolus via le registre canonique
+ * 7. Aucune constante de démonstration dans le préparateur (src/features/adventure-prep)
  *
  * Usage : node scripts/verify/ci_invariants.mjs
  */
@@ -170,6 +172,62 @@ try {
   ok('Invariant 6 : Tous les noms d\'icônes canoniques sont résolus');
 } catch {
   fail('Invariant 6 : scripts/verify/icon-names.mjs a échoué');
+}
+
+// 7. AUCUNE CONSTANTE DE DÉMONSTRATION DANS LE PRÉPARATEUR
+//
+// Le préparateur est le seul écran dont les chiffres partent sur un réseau
+// public et une base Supabase. Une constante de démo qui y subsiste ne se voit pas
+// à la revue : elle se voit à l’écran, comme une distance vraie qui ne l’est pas.
+// D’où l’invariant 6, on ne retient pas `placeholder` : c’est un attribut HTML
+// légitime (et un sélecteur CSS), pas une donnée. On retient la forme
+// *constante* : un préfixe ou un suffixe de démo, là où le nom d’une variable dit
+// dès sa déclaration qu’elle ne sort pas d’un réseau.
+const DEMO_TOKEN = new RegExp(
+  [
+    '\\b(DEMO|MOCK|FAKE|SAMPLE|DUMMY|STUB|PLACEHOLDER)_(?=[A-Z0-9_])',
+    '\\b__[A-Z_]*(DEMO|MOCK|FAKE|SAMPLE|DUMMY)[A-Z_]*__\\b',
+    '\\b(is|has|use|should)(Demo|Mock|Fake|Sample|Dummy|Stub)\\b',
+    '\\b(demo|mock|fake|sample|dummy|stub)(Data|Fixture|Content|Value|Values|List|Lookup|Catalog)\\b',
+    '\\bDEFAULT_(DEMO|MOCK|FAKE|SAMPLE|DUMMY|STUB)_',
+  ].join('|'),
+  'i',
+);
+
+// Les tests ont le droit d’utiliser des doubles : c’est leur metier. On les exclut,
+// sinon on interdâit à la suite de prouver quoi que ce soit.
+function walkSource(dir) {
+  const out = [];
+  if (!fs.existsSync(dir)) return out;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name === '__tests__' || entry.name === 'node_modules') continue;
+      out.push(...walkSource(full));
+    } else if (/\.(ts|tsx|js|mjs|jsx)$/.test(entry.name)) {
+      out.push(full);
+    }
+  }
+  return out;
+}
+
+const prepDir = path.join(src, 'features', 'adventure-prep');
+const demoLeaks = [];
+for (const file of walkSource(prepDir)) {
+  const content = fs.readFileSync(file, 'utf8');
+  const lines = content.split(/\r?\n/);
+  lines.forEach((line, i) => {
+    // Une ligne de commentaire qui *signale* l’interdiction n’est pas une fuite.
+    const code = line.replace(/\/\/.*$/, '').replace(/\*.*$/, '');
+    if (DEMO_TOKEN.test(code)) {
+      demoLeaks.push(`${path.relative(root, file)}:${i + 1}`);
+    }
+  });
+}
+if (demoLeaks.length > 0) {
+  demoLeaks.forEach((f) => fail(`Constante de démonstration dans le préparateur : ${f}`));
+} else {
+  ok('Invariant 7 : Aucune constante de démonstration dans src/features/adventure-prep (hors __tests__)');
 }
 
 // RÉSULTAT GLOBAL
