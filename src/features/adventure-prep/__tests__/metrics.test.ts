@@ -366,3 +366,70 @@ describe('L3.3 : les libelles de tuile tiennent dans la tuile', () => {
     expect(budget?.label).not.toBe('Budget / personne');
   });
 });
+
+/* ---------------------------------------------------------------------------
+ * L0.2 — la duree d une journee ne doit JAMAIS etre l index du jour.
+ *
+ * Symptome d origine : sur la carte du jour 2, la tuile « Duree » affichait
+ * « 2 h ». C etait l index du jour lu comme une mesure d activite. Le nombre
+ * etait plausible, donc invisible a la relecture -- c est ce qui l a laisse
+ * passer.
+ *
+ * Le test fixe des durees par journee qui n ont AUCUN rapport avec leur index
+ * (jour 1 = 7 h, jour 2 = 25 min, jour 3 = 2 h 30). Ainsi, si l index se
+ * glisse quelque part, il ne peut pas tomber juste par hasard.
+ * ------------------------------------------------------------------------ */
+
+describe('L0.2 — la duree du jour est une mesure, pas son index', () => {
+  // 420 = 7 h, 25 = 25 min, 150 = 2 h 30. Aucun de ces nombres ne vaut son index.
+  const durees = [420, 25, 150] as const;
+
+  const model = (): ItineraryModel => withActivityMin(terrain(), durees);
+
+  it('chaque journee affiche SA duree, et pas son numero', () => {
+    const m = model();
+    for (const [index, minutes] of durees.entries()) {
+      const day = index + 1;
+      const duree = metricsFor(m, 'jour', day).find((x) => x.id === 'duree');
+      expect(duree?.value, `jour ${day}`).toBe(minutes);
+      // L index du jour, exprime en minutes : la valeur qui ne doit JAMAIS sortir.
+      expect(duree?.value, `jour ${day} ne doit pas valoir son index`).not.toBe(day);
+    }
+  });
+
+  it('une duree d activite nulle reste une mesure vaut zero', () => {
+    // Le jour 3 a ete replique a 0 min : c est un fait (« rien de prevu ce
+    // jour-la »), pas une donnee manquante. Le ne pas confondre avec null
+    // est exactement la frontiere que l item veut verrouiller.
+    const m = withActivityMin(terrain(), [0, 25, 150]);
+    const duree = metricsFor(m, 'jour', 1).find((x) => x.id === 'duree');
+    expect(duree?.value).toBe(0);
+    expect(duree?.state).toBe('connue');
+  });
+
+  it('une duree inconnue reste « a verifier », jamais 0 ni l index', () => {
+    const m = withActivityMin(terrain(), [null, 25, 150]);
+    const duree = metricsFor(m, 'jour', 1).find((x) => x.id === 'duree');
+    expect(duree?.value).toBeNull();
+    expect(duree?.state).toBe('a_verifier');
+    expect(duree?.formatted).toBe(A_VERIFIER);
+    // Le piege du lot H5 : un 0 de remplacement se lirait « 0 h », presente
+    // comme une mesure. Le 0 WMO « degage » est le meme genre de defaut.
+    expect(duree?.formatted).not.toBe('0 h');
+  });
+
+  it('le total de l aventure est la somme des journees, pas la derniere', () => {
+    const m = model();
+    const total = metricsFor(m, 'aventure').find((x) => x.id === 'duree');
+    // 595 min = 7 h + 25 min + 2 h 30. Ni 150 (dernier jour), ni 3 (jours).
+    expect(total?.value).toBe(595);
+    expect(total?.value).not.toBe(150);
+  });
+
+  it('une seule journee inconnue suffit a rendre le total « a verifier »', () => {
+    const m = withActivityMin(terrain(), [420, null, 150]);
+    const total = metricsFor(m, 'aventure').find((x) => x.id === 'duree');
+    expect(total?.value).toBeNull();
+    expect(total?.state).toBe('a_verifier');
+  });
+});

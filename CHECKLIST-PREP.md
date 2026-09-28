@@ -49,6 +49,30 @@ vérifiés dans le fichier, pas sur des goûts : chaque point porte son numéro 
 ## Journal de progression — mis à jour à chaque lot
 
 **Comptage honnete au 2026-09-28, recompté par `grep` sur les cases (38 faits · 8 partiels · 177 restants = 223 items) :** 4 **dements** (P0.10, P0.14, P0.20, et la course `Promise.race` de P0.24 retirée après mesure). **LE LOT DU JOUR : P1.9 est LEVE et coché** — un fournisseur pieton reellement joignable a ete trouve *a la mesure* (`routing.openstreetmap.de`, `200` / 132 ms, OSRM a profil `routed-foot`), les 3 modes repondent sur les memes points (pieton 7,384 km / 98,5 min · velo 7,139 km / 29,8 min · voiture 8,030 km / 9,1 min), et les sommets sont refuses **par la mesure** (`503 off_network`). 14 tests `P019-01`→`P019-14` verts, suite **603 fichiers / 5 628 tests / 0 echec**, `tsc` **exit 0**. **P0.23 est desormais FERME** : la cause s etait deplacee vers l amont, et c est la que le correctif a ete fait. La generation lance enfin (le depart s auto-remplit par la geolocalisation, le CTA « Creer mon parcours » est actif — ce qui n etait jamais arrive), et les **20 appels `/api/route` rendaient alors `503 off_network`** : les points routes etaient des **coordonnees de grille** (`6.9,45.91`, `6.9012,45.9123`) et le **sommet du Mont Blanc** — pas des lieux. **Corrige depuis** : le generateur produit des lieux reels, et la meme generation rend aujourd hui **23 × `200`** et **0** `off_network` (preuve 9 ci-dessous). `/api/amenities` rend, lui, **9 lieux reellement nommes** a coordonnees 7 decimales (Hotel Lyret, Hotel Mont Blanc, Restaurant Le Panoramic…), **mais en 45,3 s**. Le filtre de marchabilite, lui, **fonctionne** : il refuse une mesure qui n existe pas. **Deux defauts nouveaux mesures, a traiter :** `/api/geocode` **inverse** hors service (`503 providers_unreachable`) alors que le **direct** repond `200` et nomme Chamonix-Mont-Blanc ; et la **saisie libre vide le catalogue** d activites, alors que la consigne demandait de garder les entrees en dessous. **P0.24** reste en **partiel** sur son seul delai de 45 s, mesure a 45,3 s.
+
+### Lot 2026-09-29 (matin) — reprise sur terrain propre
+
+**Comptage au début du lot : 108 faits / 37 partiels / 81 restants = 226 items.**
+Ferme dans ce lot : **L0.2**. Reste **109 / 37 / 80 = 226**.
+
+- **L0.2 — la durée d'une journée affichait son index.** Le correctif était déjà
+  en place depuis `50cf64f2` / `835ecf81`, mais **rien ne le prouvait** : rien
+  n'empêchait la régression de revenir, et l'item est resté `[ ]` pendant ce
+  temps. Ce qui manque dans cette checklist, ce ne sont pas des correctifs, ce
+  sont des **preuves**.
+  **Preuve** : 5 tests dans `metrics.test.ts` (34/34 verts), durées fixées sans
+  rapport avec leur index (J1 = 420, J2 = 25, J3 = 150 min) pour que l'index ne
+  puisse pas tomber juste par hasard. Les deux frontières voisines sont
+  verrouillées en même temps : `0 min` reste une mesure **connue** (pas « à
+  vérifier »), et une seule journée inconnue rend le total « à vérifier » au
+  lieu de sommer une somme partielle.
+  **Morsant :** sabotage `activityMin` → `day!` ⇒ **3 tests tombent**, dont
+  `expected 1 to be 420` — le symptôme d'origine. Restauration ⇒ 34/34, et
+  `metrics.ts` identique à HEAD (`git diff` vide).
+
+**Règle qu'il faut se réappliquer à chaque item `[ ]` déjà corrigé dans le
+code** : un correctif sans test n'est pas un item fait, c'est un item qui
+peut revenir. Le grep du code ne remplace pas le morsant.
 Un item ne passe à `[x]` que sur une preuve datée — capture regardée, clic réel,
 valeur tracée à sa source, ou test rouge → vert. Jamais sur la foi du code.
 
@@ -1582,7 +1606,21 @@ Viewport de test : **iPhone 393×852** (cible Sidestore). Le rendu desktop 1280p
 
 - [ ] **L0.1** 🔴 CTA « Vers le départ » **coupé en deux** par le scroller + la barre basse
       (étape 2). Cause probable du « quand je clique, rien ne se passe ».
-- [ ] **L0.2** 🔴 `metrics.ts:57` — la durée affiche l'index du jour. Cf. R5.
+- [x] **L0.2** **FERME le 2026-09-29 sur test a morsant.** La tuile « Duree » d un jour
+      affiche desormais `perDay[].activityMin` -- la duree d activite reelle de la
+      journee -- et plus l index du jour. Le correctif etait deja en place
+      (`50cf64f2`, `835ecf81`) mais **n etait pas prouve** : rien ne l empéchait de
+      revenir.
+      **5 tests** dans `metrics.test.ts` (34/34 verts) verrouillent la frontiere,
+      avec des durees sans rapport avec leur index (J1 = 420, J2 = 25, J3 = 150)
+      pour que l index ne puisse pas tomber juste par hasard. Ils couvrent aussi
+      les deux voisins : 0 min = mesure connue (pas « a verifier »), et une
+      journee inconnue rend le total « a verifier » au lieu de sommer une somme
+      partielle.
+      **Morsant prouve** : sabotage `totals.activityMin` -> `day!` fait tomber
+      **3** des 5 tests, dont `expected 1 to be 420` -- precisement le symptome
+      d origine (« 2 h » sur le jour 2). Restauration -> 34/34. `metrics.ts` est
+      identique a HEAD apres restauration (`git diff` vide). 🔴 `metrics.ts:57` — la durée affiche l'index du jour. Cf. R5.
 - [ ] **L0.3** 🔴 Ligne **Participants** : le libellé et la valeur se **chevauchent**
       (« Participants » par-dessus « 3 personnes · 1 ad… »). Bug CSS net.
 - [ ] **L0.4** 🔴 Coordonnées brutes exposées comme nom de lieu :
