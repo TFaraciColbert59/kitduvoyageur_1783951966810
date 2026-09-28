@@ -448,21 +448,55 @@ lecteur y voit un bug de rendu, pas du contenu qui continue.
       (P0.1) est réparé depuis. Preuve : ci-dessus.
 - [x] **R3** `B2` : `<PrepMap>` était rendu `DestinationStep.tsx:289` → **0 occurrence**. Fait.
 - [x] **R4** `B3` : `ROUTE_SHAPE_OPTIONS` était rendu l.195,197,236 → **0 occurrence**. Fait.
-- [ ] **R5** `E4` : `engine/metrics.ts:57` renvoie `(day ?? 1)` → le jour 2 affiche
+- [x] **R5** `E4` : `engine/metrics.ts:57` renvoie `(day ?? 1)` → le jour 2 affiche
       « 2 jours » d'activité. C'est l'index du jour, pas une durée. **Bug visible.**
-- [ ] **R6** `E7` : **re-vérifié le 2026-09-27, inchangé.** `engine/weather.ts` et
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-29.** Le `(day ?? 1)` a disparu de
+      `engine/metrics.ts` : le jour 2 affiche désormais sa propre mesure, et non celle
+      du jour 1. **Preuve :** `metrics.test.ts` **29/29 verts**.
+
+- [x] **R6** `E7` : **re-vérifié le 2026-09-27, inchangé.** `engine/weather.ts` et
       `app/api/weather/` existent, mais **0 occurrence de weather/météo dans les `.tsx`
       de `features/adventure-prep/`**. Les 285 occurrences du dépôt sont hors périmètre
       (`DepartWeather`, `WeatherStrip`, `page.tsx`…). Service écrit, affichage absent.
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-29.** Le service existait, mais aucun composant ne
+      l'affichait : c'est bien ce que constatait l'item. La météo est désormais rendue
+      dans **les deux écrans** (74 occurrences du rendu), et P0.2 est également fermé.
+      **Preuve :** **27 tests verts** sur le lot météo.
+
 
 ---
 
 ## A — Structure et navigation
 
-- [ ] A1 Étapes renommées : `Créations` / `Préparation` / `En avant !`
-- [ ] A2 Aucun bouton en haut de page (croix, flèche retour, filtres retirés)
-- [ ] A3 Fil d'étapes affiché proprement, seul élément de la barre haute
-- [ ] A4 Barre basse jamais masquée, jamais recouverte
+- [x] A1 Étapes renommées : `Créations` / `Préparation` / `En avant !`
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `types.ts:26-30` porte les trois
+      libellés, et les trois écrans rendent le leur.
+      **Preuve :** `NA-01`, `NA-02`, `CR-01`. **175/175 verts** sur les 11 fichiers du
+      périmètre A/B.
+
+- [x] A2 Aucun bouton en haut de page (croix, flèche retour, filtres retirés)
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `PrepNav` ne rend plus que `PrepCrumb`.
+      **Réserve honnête :** les 2 boutons de `PrepNavActions` sont toujours dans le DOM,
+      neutralisés par `clip-path` via `.prep-visually-hidden` (`adventure-prep.css:2063-2074`).
+      Ils sont **invisibles à l'écran** mais restent traçables — et `AN1-11` le vérifie.
+      L'item est donc tenu au sens visible, pas au sens « zéro nœud ».
+      **Preuve :** `NA-09` → `NA-13`, `AN1-7`, `AN1-9`, `AN1-11`.
+
+- [x] A3 Fil d'étapes affiché proprement, seul élément de la barre haute
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `PrepCrumb.tsx:181-190` rend le fil
+      d'étapes, et le CSS `:548-637` le met en forme. **Preuve :** **43 tests** du
+      périmètre navigation, tous verts.
+
+- [~] A4 Barre basse jamais masquée, jamais recouverte
+      **PARTIEL — vérifié le 2026-09-29. La moitié « jamais recouverte » est prouvée ;
+      « jamais masquée » ne l'est pas.** Le code est **déjà correct** :
+      `MobileNavWrapper.tsx:23-35` a retiré `/prepare` de `isNoNavRoute`, et
+      `AdventurePrepScreen.tsx:23` transmet bien `hasBottomNav`.
+      **Ce qui manque :** `isNoNavRoute` n'apparaît dans **aucun** test. Le seul fichier
+      qui le mentionne est `shell-day-focus.test.tsx:11`, et uniquement dans un commentaire.
+      Une régression sur ce chemin ne rougirait aucun test. Il manque ~15 lignes de test,
+      pas de code. Item non coché.
+
 - [~] A5 Le sélecteur de jours se met à jour sur les 3 pages — **fait sur les
       étapes 2 et 3** le 2026-09-28 : un clic sur « J3 » dans la barre du bas
       bascule le rail du haut, les métriques ET le programme, et la sélection
@@ -473,27 +507,175 @@ lecteur y voit un bug de rendu, pas du contenu qui continue.
 - [x] B1 Invite IA en haut : texte libre → génère tout
 - [x] B2 Carte retirée de l'étape 1
 - [x] B3 Sélecteur boucle / aller simple retiré
-- [ ] B4 Départ **ou** arrivée, tous les deux optionnels
-- [ ] B5 Profils : trajet, voyage, séjour, local
-- [ ] B6 Phrase « Il manque : … » honnête
-- [ ] B7 CTA bloqué tant qu'il manque l'essentiel
+- [~] B4 Départ **ou** arrivée, tous les deux optionnels
+      **PARTIEL — vérifié le 2026-09-29, et l'item est en contradiction avec D1.**
+      L'**arrivée optionnelle** est tenue. Le **départ reste un bloqueur dur** :
+      `AN7-1` vérifie `blocking === ['lieu de départ']` et
+      `optional === ['lieu d'arrivée', 'date']`, et `AN7-2` vérifie
+      `canCreateStepOne(sansDepart) === false`.
+      Or D1 est fermé « **sauf le départ** » (ligne 69) : le générateur rend une
+      proposition *vide* sans `origin`. Les deux items ne peuvent pas être vrais en même
+      temps. **Arbitrage owner requis** : soit on débloque `origin` et le générateur doit
+      alors produire quelque chose, soit B4 est réécrit. Item non coché en attendant.
+
+- [x] B5 Profils : trajet, voyage, séjour, local
+      **VÉRIFIÉ le 2026-09-29 par exécution.** Les 4 profils existent et les 4 écrans
+      correspondants sont rendus. **Preuve :** `S11-01` → `S11-10`, `S11-18` → `S11-21`.
+
+- [x] B6 Phrase « Il manque : … » honnête
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `DestinationStep.tsx:324-342` compose la
+      phrase à partir de ce qui manque **réellement**, sans nommer d'élément déjà rempli.
+      **Preuve :** `AN7-5`, `AN7-6`, `AN7-7`.
+
+- [x] B7 CTA bloqué tant qu'il manque l'essentiel
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `disabled={!ready}` sur le CTA, et
+      `D10-15` asserte l'attribut **dans les deux sens** — actif quand l'essentiel est là,
+      inactif quand il manque. C'est la preuve forte : un simple `toBeDisabled` n'aurait
+      pas raté la régression inverse.
+
 
 ## C — Tiroirs (tous Liquid Glass iOS 27)
 
-- [ ] C1 Tiroir Lieu : icône boussole seule pour « Ma position »
-- [ ] C2 Tiroir Lieu : icône carte dans la barre de recherche, à droite
-- [ ] C3 Tiroir Lieu : position réelle par défaut
-- [ ] C4 Tiroir Lieu : carte basse avec le point choisi
-- [ ] C5 Tiroir Lieu : recherche géocodée réelle
-- [ ] C6 Tiroir Quand : un seul picker, départ **ou** arrivée
-- [ ] C7 Tiroir Quand : une seule date si l'arrivée n'est pas fixée
-- [ ] C8 Tiroir Quand : « je fixe une date de retour » retiré
-- [ ] C9 Tiroir Quand : heure de départ + durée
-- [ ] C10 Tiroir Qui : sélecteur solo / groupes retiré
-- [ ] C11 Tiroir Qui : liste d'amis réelle (BDD)
-- [ ] C12 Tiroir Qui : recherche de n'importe quel utilisateur
+- [x] C1 Tiroir Lieu : icône boussole seule pour « Ma position »
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `PrepSetupSheets.tsx:975-983` : bouton
+      `aria-label="Utiliser ma position"` dont l'unique enfant est
+      `<Icon name="compass" size={18} />` — aucun texte. Le glyphe est bien présent :
+      `Icon/registry.generated.ts:57` + `public/icons/sf/compass.svg` sur disque.
+      **Preuve :** `DPL-01: la boussole est une icône seule, sans le texte
+      « Ma position »` (avec `DPL-03`, `DPL-04`) — `prep-drawers-liquid.test.tsx`
+      **60/60 verts**.
+
+- [x] C2 Tiroir Lieu : icône carte dans la barre de recherche, à droite
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:1005-1014` :
+      `aria-label="Choisir un point sur la carte"`, enfant unique
+      `<Icon name="map" size={18} />`, et c'est le **dernier** enfant de `.prep-search`
+      (ouverte `:974`, fermée `:1015`) — donc à droite du champ. Glyphe présent :
+      `registry.generated.ts:97` + `public/icons/sf/map.svg`.
+      **Preuve :** `DPL-02`, et surtout `DPL-03: les deux icônes sont dans la barre de
+      recherche, boussole à gauche et carte à droite`, qui vérifie **l'ordre des index**
+      dans le HTML rendu — pas seulement leur présence. **60/60 verts**.
+
+- [x] C3 Tiroir Lieu : position réelle par défaut
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:288-338` : `useMyPosition` lit le GPS
+      à l'ouverture (`:324-326`) ; `:242-256` `mergePositionCandidate` place la position
+      en tête de liste ; câblé `:943`. Sur l'étape 1 le départ se remplit **seul** :
+      `DestinationStep.tsx:172` → `myPosition.ts:81-88` `withDefaultOrigin` — jamais
+      d'écrasement, et l'arrivée n'est jamais touchée.
+      **Preuve :** `DPL-10` → `DPL-15` (dont `DPL-13: la position passe en tête de liste,
+      une seule fois`) + `my-position.test.ts:81` qui vérifie que `destination` reste
+      `null`. **60/60 + 40/40 verts.**
+
+- [x] C4 Tiroir Lieu : carte basse avec le point choisi
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:630` `MINI_MAP_HEIGHT = 150`, composant
+      `MiniMap` `:729`, rendu `:1055-1061` **après** la liste `.list` (`:1039`) — donc
+      basse dans le tiroir. Ce n'est pas un cadre décoratif : c'est la vraie carte
+      MapLibre `HubGlobeMap` (`:789`, import dynamique `:35-38`) et le point choisi est
+      un vrai marqueur (`markerPoints` `:755-771`, alimenté par `shown = current`).
+      **Preuve :** `DPL-05: la carte courte est affichée dès l'ouverture, sans clic
+      préalable` (regex sur `height:\s*1[0-9]{2}px`) et `DPL-06b`. **60/60 + 8/8 verts.**
+
+- [~] C5 Tiroir Lieu : recherche géocodée réelle
+      **PARTIEL — vérifié le 2026-09-29.** Le géocodage est réel :
+      `useGeocode.ts:64` fait un vrai `fetch('/api/geocode?q=…')`, avec debounce 350 ms,
+      minimum 2 caractères, et des états honnêtes (`unavailable` n'est jamais un
+      silence). Le câblage dans le tiroir existe (`PrepSetupSheets.tsx:934`), et le
+      service est testé (`geocode-service.test.ts`, `geocode-nominatim-fallback.test.ts`,
+      `place-geocode-fallback.test.ts` — **103/103 verts**).
+      **Ce qui manque :** `use-geocode.test.ts` ne teste que `geocodeMessage`, jamais le
+      `fetch`, et **aucun test n'exerce le câblage tiroir → hook**. Un retour en arrière
+      du câblage laisserait la suite verte. Item non coché.
+
+- [x] C6 Tiroir Quand : un seul picker, départ **ou** arrivée
+      **VÉRIFIÉ le 2026-09-29 par exécution.** Une seule instance de `PlaceSheet` à
+      l'écran : `PrepSheets.tsx:135`. L'extrémité éditée est portée explicitement par
+      `placeField` (`PrepFlow.tsx:32,48-55,130`) puis `PrepSetupSheets.tsx:929-932`
+      (`target` / `isOrigin` / `current`). L'en-tête `:1029` affiche « Depart » ou
+      « Arrivee », l'autre extrémité n'est qu'un libellé en lecture seule (`:1030`).
+      **Preuve :** `DPL-06: la carte nomme l'extrémité éditable, départ et arrivée`.
+      **60/60 verts.**
+
+- [x] C7 Tiroir Quand : une seule date si l'arrivée n'est pas fixée
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:1116-1167` (`CalendarSheet`) : un seul
+      `<PrepCalendar>` (`:1144`) pour la date de départ, puis un stepper de durée
+      (`:1152-1160`). Aucun second calendrier, aucun champ « arrivée ».
+      **Preuve :** `DPL-30: il n'y a qu'un seul calendrier dans le tiroir` (compte
+      `aria-label="Calendrier"` === 1) et `DPL-33: la durée reste réglable, ce n'est pas un
+      second calendrier`. **60/60 verts.**
+
+- [x] C8 Tiroir Quand : « je fixe une date de retour » retiré
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `rg "date de retour"` sur
+      `src/features/adventure-prep` ne renvoie que le helper `keepReturnDate` (`:1106`)
+      et des commentaires : aucun libellé, aucun interrupteur. `CalendarSheet` ne
+      contient aucun switch. `returnDate` subsiste dans le modèle mais il est
+      **déduit**, plus saisi.
+      **Preuve :** `DPL-31: la date de retour à fixer a disparu, libellé et interrupteur
+      compris`, complété par `DPL-32: l'interrupteur animaux reste, lui est toujours
+      pertinent` — qui prouve qu'on a retiré **le bon** interrupteur. **60/60 verts.**
+
+- [~] C9 Tiroir Quand : heure de départ + durée
+      **PARTIEL — vérifié le 2026-09-29. Un des deux termes seulement est livré.**
+      La **durée** est là : `:1147-1162`, stepper `- / n / +` avec `daysLabel`,
+      preuves `DPL-33`, `DPL-100`, `DPL-101`, `DPL-102` (**60/60 verts**).
+      **L'heure de départ n'existe nulle part** : aucun `<input type="time">` dans
+      `CalendarSheet`, et le modèle ne la porte pas — `types.ts:153-164` (`CalendarBlock`
+      = `startDate`, `startDateIsSuggested`, `durationDays`, `durationIsSuggested`,
+      `returnDate`) n'a **aucun champ heure**. Le `startTime` qui existe (`types.ts:204`)
+      est porté par l'**étape d'itinéraire**, pas par le calendrier. Item non coché.
+
+- [x] C10 Tiroir Qui : sélecteur solo / groupes retiré
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:1173-1276` (`GroupSheet`) n'expose aucun
+      sélecteur de mode : le mode est **calculé** par `groupModeFrom` (`:542-548`) à
+      partir des effectifs et des invites, `:1191`.
+      **Preuve :** `DPL-50: le sélecteur solo ou groupe a disparu` (aucun texte « Solo »,
+      zéro `aria-pressed`), `DPL-51`, `DPL-52`, `DPL-53`. **60/60 verts.**
+
+- [x] C11 Tiroir Qui : liste d'amis réelle (BDD)
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:1181`
+      `usePeople(peopleRequestUrl('friends', null))` → `/api/users/search?scope=friends`,
+      consommé au rendu `:1249-1254`. URL construite `:442-447`, réponse lue telle quelle
+      `:409-428` — une panne reste une panne, **jamais une liste vide**
+      (`peopleErrorMessage` `:456-465`). La route est réelle :
+      `src/app/api/users/search/route.ts`.
+      **Preuve :** `DPL-90: la liste des amis demande le scope friends`, `DPL-92`,
+      `DPL-71`→`DPL-73` + `users-search-route.test.ts`. **60/60 + 40/40 verts.**
+
+- [x] C12 Tiroir Qui : recherche de n'importe quel utilisateur
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:1184`
+      `usePeople(term.length >= 2 ? peopleRequestUrl('all', term) : null)` →
+      `/api/users/search?scope=all&q=…` : n'importe quel profil public, pas seulement les
+      abonnements. Champ `:1234-1240`, résultats `:1241-1248`, liste d'amis maintenue
+      en dessous `:1249`.
+      **Preuve :** `DPL-91: la recherche libre demande le scope all et encode le terme`,
+      `DPL-54`, et la branche `scope=all` de `users-search-route.test.ts`.
+      **60/60 + 40/40 verts.**
+
 - [ ] C13 Tiroir Préférences : budget en pilules liquid glass (3 paliers)
-- [ ] C14 Hauteurs de tiroir adaptées au contenu, jamais à moitié vide
+      **À FAIRE — vérifié le 2026-09-29. Les deux moitiés de l'item manquent.**
+      Les 3 paliers existent bien (`PrepSetupSheets.tsx:55-59` : `economique` / `modere`
+      / `confort`), mais le rendu n'est **ni en pilules ni en verre**.
+      `PreferencesSheet` `:1290-1296` passe par `ChipRow`, qui produit `className="seg"`
+      (`:131`). La règle `.seg` (`adventure-prep.css:2678-2708`) est un **segmented
+      control** : `background: var(--prep-row-bg)`, c'est-à-dire `rgb(255 255 255 / 0.06)`
+      (`:135`) — un blanc plat à 6 %, **sans `backdrop-filter`, sans flou, sans jeton
+      `--prep-glass-*`**. La classe pilule `.chip` existe (`:2715-2735`,
+      `border-radius: var(--lkv-radius-full)`) mais n'est pas utilisée pour le budget, et
+      elle non plus n'est pas en verre. `prep-pill` (`:1437`) n'est employée que dans
+      `ItineraryStep.tsx:502` et `ActivityPickerScreen.tsx:137`.
+      **Zéro couverture :** `rg "PreferencesSheet" src/features/adventure-prep/__tests__`
+      ne renvoie **rien**. Aucun test dans tout le repo ne rend ce tiroir.
+
+- [~] C14 Hauteurs de tiroir adaptées au contenu, jamais à moitié vide
+      **PARTIEL — vérifié le 2026-09-29. L_exists mais n'est pas établi.** Le mécanisme est
+      là et délibéré : `PrepSheets.tsx:84-98` mappe `auto` sur `place`, `calendar`,
+      `group`, `preferences`, `coverage`, `add`, `invite`, et ne garde `large` que pour les
+      tiroirs riches par nature, le raisonnement étant écrit `:76-83`. Côté rendu :
+      `Sheet.tsx:24-28` (`auto: ''`, aucune hauteur imposée) et `:118`
+      `max-h-[90dvh] min-h-0 flex-1` — le panneau épouse son contenu et plafonne à 90 dvh.
+      **Ce qui manque :** `rg "detent" src --glob '*.test.*'` ne renvoie **aucune
+      occurrence dans tout le dépôt**. Aucun test, aucune mesure de hauteur réelle au
+      doigt. La règle du projet (lignes 52-53) interdit de cocher sur la foi du code.
+      Item non coché.
+
 
 ## D — Génération
 
@@ -537,6 +719,17 @@ lecteur y voit un bug de rendu, pas du contenu qui continue.
       publie pas d'étapes incrémentales, une carte qui se tracerait ici
       dessinerait du vide. Décision : ne pas afficher de carte qui ment. D3
       reste ouvert comme travail moteur, `setPartial` câblé = premier jalon.
+      **À FAIRE — revérifié le 2026-09-29. La case ne peut pas être cochée, et un
+      test exécuté interdit explicitement le comportement demandé.** `pushGenerated`
+      existe (`store/useAdventurePrepStore.ts:158`) mais n'a **aucun appelant** dans
+      `components/` ni dans `hooks/`. `generation.steps` n'est lu par aucun composant ; la
+      carte reste fermée par `{model && (...)}` (`ItineraryStep.tsx:714`) et le modèle
+      n'arrive qu'à la fin, via `applyGenerated` (`:414`).
+      **Le test `D1-3: n'affiche ni carte ni promesse de point de passage sans itinéraire`
+      prouve le contraire de cet item** : l'absence de carte pendant la génération est un
+      comportement **testé et voulu** ; `D1-7` date son retour *après coup*. Fermer D3 exige
+      donc de réécrire D1-3 — ce n'est pas un oubli de câblage, c'est un conflit d'exigence.
+
 - [x] D4 Échec partiel annoncé + reprise phase par phase — **fermé le 28-09.**
       Le moteur rendait déjà un verdict honnête par phase (`PhaseOutcome`,
       `safely()` dans `itineraryPhases.ts`) et `phaseHealth(outcome)` savait
@@ -544,7 +737,19 @@ lecteur y voit un bug de rendu, pas du contenu qui continue.
       et les verdicts étaient **jetés à la frontière**. Bandeau et bouton
       « Réessayer » ne pouvaient donc jamais s'atteindre. Aucun mock
       ajouté. `proof/D4-22/23`, 11 tests D4.
-- [ ] D5 IA seeded par le brief libre + statistiques des invités
+- [~] D5 IA seeded par le brief libre + statistiques des invités
+      **PARTIEL — vérifié le 2026-09-29.** La moitié **brief libre** est prouvée :
+      `aiItinerary.ts:164` passe `brief: draft.brief` au prompt, `:141` en dérive le
+      nombre de jours, et 10 tests l'exécutent — dont « le brief est recopié dans le
+      prompt, mot pour mot » et « la consigne de couverture est liée au nombre de jours
+      demandé ». **57/57 verts** sur les 4 fichiers du lot.
+      **La moitié « statistiques des invités » est câblée mais jamais testée** :
+      `aiItinerary.ts:43` `partySize = adults + children`, `:58-60` les lignes
+      animaux/enfants, et `- Participants : ${input.partySize}`
+      (`src/lib/ai/features/itinerary.ts:551`). Mais `rg "partySize|Participants"` dans les
+      tests ne trouve que des fixtures et deux libellés d'étape 1 — **aucun test ne prouve
+      que `draft.group` atteint le prompt**. Item non coché.
+
 
 ### D1 / D2 — FERMÉS le 2026-09-28, mesurés sur 393×852 pendant une VRAIE génération
 
@@ -1017,43 +1222,261 @@ corrompue ne doit pas fabriquer une alerte qui aura l’air d’un fait.
 - [x] E2 Distance totale + distance de chaque jour — idem E1, même réserve.
 - [x] **E3** ✅ **Budget par jour** — déjà fait et testé, l'item était en retard. `dayBudget(model, day)` somme les prix RÉELS des étapes de la journée ; quand une journée n'est que partiellement pricee, la tuile affiche la somme connue (« 40 € connus ») et la note compte exactement le reste (« N étapes à vérifier ») — jamais un total inventé. Test `metrics.test.ts:123` « budget partiel d'une journée ». **Limite honnête assumée** : le montant dépend des prix présents en BDD ; une étape sans prix reste « à vérifier », c'est voulu (règle `null` honnête > donnée plausible).
 - [x] **E4** ✅ **Durée d'activité estimée par jour** — déjà fait et testé, l'item était en retard. Le moteur `metrics.ts` expose `activityMin` par journée (`raw()` : scope `jour` → `totals.activityMin` du jour) ; `jour-focus-mesures.test.ts:125` « Jour 1 affiche la durée d'ACTIVITÉ du jour, pas le total » (15 h 09 min, relevé écran 2026-09-28) + « la durée du voyage reste la somme des jours » (16 h 09) + « une journée non mesurée reste à vérifier plutôt que 0 » ; `metrics.test.ts:194` prouve en plus qu'elle ne renvoie JAMAIS l'index du jour.
-- [ ] E5 Tracé du **jour sélectionné** uniquement sur la carte
+- [~] E5 Tracé du **jour sélectionné** uniquement sur la carte
+      **PARTIEL — l'implémentation est réelle et correcte, mais rien ne la prouve.**
+      `ItineraryStep.tsx:470-473` calcule `coords` via `dayRouteCoords(daySteps(model,
+      activeDay))` (`:131`, qui ne garde que les étapes localisées du jour) et le transmet
+      à la carte en `:719`. La portée est partagée avec les métriques via `measureScope`
+      (`engine/dayNavigation.ts:76`). **72/72 verts** sur le lot.
+      **Ce qui manque :** `dayRouteCoords` **n'est pas exporté**, donc non testable en
+      l'état ; et `jour-focus-carte.test.ts` porte un **nom trompeur** — ses 15 tests
+      portent sur le MiniMap du tiroir Lieu, pas sur le PrepMap de l'étape 2. Le seul
+      test qui touche `routeCoords` est `prep-map-controls-d6.test.tsx`, à coordonnées
+      en dur. Item non coché.
+
 - [ ] E6 Swipe gauche/droite = jour précédent/suivant
-- [ ] E7 Weather réel par jour — ⚠ service Open-Meteo existant, aucun composant ne l'affiche
-- [ ] E8 Cartes d'étape : image, horaire, durée, prix, badges de confiance
-- [ ] E9 Détails / Remplacer / Conserver
-- [ ] E10 Ajuster / Étapes / Ajouter
-- [ ] E11 Long-press sur la carte = ajouter un point de passage, trajet recalculé
-- [ ] E12 Toutes les distances, durées et budgets suivent en temps réel
+      **À FAIRE — revérifié le 2026-09-29. 48 tests verts sur une fonction morte.**
+      La logique pure existe et est correcte : `swipeIntent`
+      (`engine/dayNavigation.ts:111`, seuil 48 px, dominance horizontale ×2) et
+      `dayAfterSwipe` (`:129`, carrousel fermé, jamais hors programme).
+      **Mais `swipeIntent` / `dayAfterSwipe` n'apparaissent que dans le moteur et dans les
+      tests : aucun `onTouchStart` n'existe dans le feature.** Le swipe n'est câblé à aucun
+      écran, donc les 48 tests verts prouvent une fonction que l'utilisateur ne peut pas
+      atteindre. Item non coché.
+
+- [x] E7 Weather réel par jour — ⚠ service Open-Meteo existant, aucun composant ne l'affiche
+      **VÉRIFIÉ le 2026-09-29 par exécution. La note de l'item était périmée.** L'item
+      affirmait « aucun composant ne l'affiche » : c'était vrai au moment de l'écriture,
+      plus aujourd'hui. Le service était bon, l'affichage **par jour** existe
+      (`ItineraryStep.tsx:641`) et **4 tests l'exécutent** : `IT2-10` → `IT2-13`.
+      Chaque jour affiche SA météo, et le repli « à vérifier » reste honnête quand la
+      mesure manque.
+
+- [~] E8 Cartes d'étape : image, horaire, durée, prix, badges de confiance
+      **PARTIEL — vérifié le 2026-09-29.** L'horaire, la durée, le prix et les badges de
+      confiance sont là. **L'image manque entièrement** : le type `ItineraryStep` ne porte
+      **aucun champ image**, donc ce n'est pas un rendu manquant, c'est une donnée absente
+      du modèle. Aucun test ne couvre cette tuile. Item non coché.
+
+- [~] E9 Détails / Remplacer / Conserver
+      **PARTIEL — et un bouton mort a été trouvé.** « Détails » et « À conserver » sont
+      réellement câblés. **« Remplacer » ne l'est pas** : `ItineraryStep.tsx:310` est un
+      `onClick={() => {}}` — le **seul** `onClick` vide du feature. Même famille de défaut
+      que le « Vers le départ » mort que D1 avait cheminé. Un bouton qui ne fait rien
+      est pire qu'un bouton absent : il promet une action. Item non coché.
+
+- [~] E10 Ajuster / Étapes / Ajouter
+      **PARTIEL — c'est le plus proche d'une coche.** Les 3 feuilles (« Ajuster »,
+      « Étapes », « Ajouter ») ont un comportement réel, mais **aucun test n'exerce leurs
+      boutons**. Le code existe, la preuve n'existe pas. Item non coché.
+
+- [~] E11 Long-press sur la carte = ajouter un point de passage, trajet recalculé
+      **PARTIEL — le geste est réel, le recalcul n'existe pas.** `useMapLongPress`
+      (`components/PrepMap.tsx:627`) qualifie l'appui tenu, `onLongPress` (`:75`) est
+      transmis à `ItineraryStep.tsx:723-725` → `addWaypoint({lat,lon}, activeDay ?? 1)`
+      → `insertWaypoint` (`engine/dayNavigation.ts:228`), qui insère l'étape entre celles
+      qui l'encadrent et garde les coordonnées réelles. **9/9 verts**, et 72/72 sur le lot.
+      **Ce qui manque :** `insertWaypoint` met explicitement `perDay[day-1]` et `totals`
+      à `null` (`:204-210`, `:277-288`) et `addWaypoint`
+      (`useAdventurePrepStore.ts:185-190`) n'appelle **aucune remesure**.
+      `rg "measureItinerary|applyRouting|applyWeather"` sur `components/` et `hooks/`
+      → **0 résultat**. Le tracé suit, mais les distances tombent à « À vérifier » — et
+      l'indice affiché sous la carte (`ItineraryStep.tsx:727-730`) annonce « le trajet et
+      les distances se recalculent aussitôt » : **c'est faux pour les distances.**
+
+- [~] E12 Toutes les distances, durées et budgets suivent en temps réel
+      **PARTIEL — le budget suit, les distances et durées non.** Le budget est correct :
+      `dayBudget` / `metricsFor` (`engine/metrics.ts:192`, `:197`) somment les prix des
+      étapes du modèle à chaque rendu, et `metrics` est un `useMemo` sur `[model,
+      activeDay]` (`ItineraryStep.tsx:457-463`). **55/55 verts**, dont « une distance non
+      mesurée affiche « à vérifier », jamais 0 km ».
+      **Deux défauts mesurés, même cause racine que E11 :** (1) après « Ajuster »,
+      `applyAdjustment` (`engine/adjustments.ts`) ne touche **ni `totals` ni `perDay`** —
+      `rg "totals|perDay|distanceKm"` sur ce fichier → **0 résultat** ; (2) après un point
+      de passage, les mesures tombent à `null` et ne sont **jamais remesurées**.
+      Aucune assertion exécutée ne couvre « modification puis relecture des mesures ».
+
 
 ## F — Étape 3 « En avant ! »
 
-- [ ] F1 Récap des paramètres
-- [ ] F2 Équipement complet
-- [ ] F3 Eau et repas
-- [ ] F4 Participants
-- [ ] F5 Statistiques
-- [ ] F6 Météo
-- [ ] F7 Tiroir Équipement : onglets À vérifier / Manquant / Tout
-- [ ] F8 Tiroir Eau et repas : par segment / par journée
-- [ ] F9 Tiroir Participants : confirmés / invités / matériel partagé
-- [ ] F10 « Enregistrer mon aventure » → crée + redirige vers le Hub
+- [x] F1 Récap des paramètres
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `DepartureStep.tsx:261-276` (bloc
+      `prep-metrics`). **Preuve :** `DEPART-12: le récap publie la distance et le dénivelé
+      MESURÉS`, `DEPART-13`, `DEPART-15`, `DEPART-16`, `DEPART-17`.
+      `departure-screen.test.tsx` **17/17 verts**.
+
+- [x] F2 Équipement complet
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:332-346`, calcul `gearToVerifyCount` +
+      `bookWeightLabel` en `:204-209`. **Preuve :** `DEPART-03`, `DEPART-05: un sac vide ne
+      vaut pas 0 kg`, `DEPART-11: l'équipement dérive de l'activité`. **17/17 verts.**
+
+- [x] F3 Eau et repas
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:348-359`, source `uncoveredMeals(mealNeeds())`
+      en `:211`. **Preuve :** `DEPART-03`. **17/17 verts.**
+
+- [x] F4 Participants
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:361-387` (effectif + avatars des membres
+      connus). **Preuve :** `DEPART-03`. **17/17 verts.**
+
+- [x] F5 Statistiques
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:261-276` (`metricsFor` → distance / durée /
+      D+) et `:298-313` (`dayMetrics` par journée). **Preuve :** `DEPART-12`, `DEPART-16`,
+      `DEPART-17`. **17/17 verts.**
+
+- [x] F6 Météo
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:284-296`
+      (`weatherParts(model.weather[day - 1])` — condition et mesures par date).
+      **Preuve :** `DEPART-14: chaque jour affiche la météo mesurée de sa date` et
+      `DEPART-15: sans mesure, le récap reste « à vérifier » et n'invente rien`. **17/17.**
+
+- [~] F7 Tiroir Équipement : onglets À vérifier / Manquant / Tout
+      **PARTIEL — l'onglet « Manquant » ne peut rien afficher.** Les onglets existent :
+      `PrepGearSheets.tsx:19-25` (`À vérifier` / `Manquant` / `Tout`), rendu `:98-116`,
+      câblé `PrepSheets.tsx:161`. **Zéro test** : `rg -l "GearSheet" __tests__` → 0 fichier ;
+      `gear.test.ts` (10/10) ne teste que le **moteur**.
+      **Le défaut réel :** `getGearState` (`:40-46`) ne renvoie `'missing'` que si
+      `weightGrams` et `ownerId` sont définis **asymétriquement** — or `buildGearNeeds`
+      (`engine/gear.ts:93-103`) renvoie toujours `ownerId: null, weightGrams: null`, et l'UI
+      n'expose que `actions.setPacked` (`:164`). `setGearWeight` et `assignGear` existent
+      dans le store (`useAdventurePrepStore.ts:105-106`) mais sont appelés par **zéro
+      composant**. Un onglet qui ne peut rien montrer est une promesse vide. Item non coché.
+
+- [~] F8 Tiroir Eau et repas : par segment / par journée
+      **PARTIEL — le détail livré ne correspond pas à l'item.** Le tiroir existe :
+      `PrepGearSheets.tsx:195-261` (Eau `:201-231`, Repas `:233-258`), moteur
+      `consumables.ts:26-45` et `:48-64`.
+      **Quatre écarts mesurés :** (a) **« par segment » est faux** — `waterNeeds` boucle
+      `for (let day = 1; day <= model.days; day += 1)` (`consumables.ts:29`), soit **par
+      journée** ; le nom du test « pour chaque segment » décrit une intention que le code
+      ne tient pas. (b) `litersPerPerson: null` en dur (`:38`) → l'UI affiche toujours
+      « À vérifier L/pers. » (`PrepGearSheets.tsx:213`), aucun volume n'est jamais proposé.
+      (c) `alternativePlaceName: null` en dur (`:41`) → le bloc « Alternative »
+      (`:222-226`) est du **code mort**. (d) seuls les repas **non couverts** sont listés
+      (`uncoveredMeals`) : la différenciation « couverts / à prévoir » n'est pas tenue.
+
+- [~] F9 Tiroir Participants : confirmés / invités / matériel partagé
+      **PARTIEL — 1 exigence sur 3, et le bon composant n'est pas câblé.** Le composant
+      réellement monté est `PrepSetupSheets.tsx:1364-1407` (importé `PrepSheets.tsx:12`,
+      rendu `:142-149`). Il porte « Effectif » (`:1376-1383`) et « Matériel partagé »
+      (`:1385-1402`) — **ces deux-là sont tenus**.
+      **Ce qui manque :** « Confirmés » est réduit à un compte (« 2 déjà connu »,
+      `:1379-1381`), pas une liste de personnes ; et **« Invités » est absent** — la prop
+      `onOpenInvite` est déstructurée en `:1368` mais **jamais appelée**, donc la feuille
+      `invite` (`PrepSheets.tsx:163-165`) est **inatteignable** depuis ce tiroir.
+      **Aggravant :** un `ParticipantsSheet` plus complet existe dans
+      `PrepGearSheets.tsx:263-317` (« Membres confirmés » + « Inviter quelqu'un » /
+      « Copier le lien ») mais c'est du **code mort** — jamais importé.
+      Zéro test ne rend ce composant. Item non coché.
+
+- [~] F10 « Enregistrer mon aventure » → crée + redirige vers le Hub
+      **PARTIEL — la création est prouvée, la redirection ne l'est pas.**
+      **Création :** `DepartureStep.tsx:141-153` appelle `saveAdventure`
+      (`saveAdventure.ts:93-119`), qui POST vers `/api/adventure/commit` (`:31,107-111`).
+      **31 tests verts** (`save-adventure.test.ts` 13/13, `trip-commit.test.ts` 18/18).
+      **Redirection :** `router.push('/hub')` (`:164`) est correctement gardé par
+      `if (outcome.status !== 'saved') { ... return; }` (`:157-161`), donc jamais de
+      saut vers un hub vide — `saveAdventure.ts:48-57` exige un `tripId` non vide.
+      **Mais aucune preuve exécutée :** `departure-screen.test.tsx:35-37` mocke
+      `useRouter` avec `push: () => undefined` et rend via `renderToStaticMarkup` — aucun
+      clic n'est déclenché, donc `saveCurrentAdventure` n'est **jamais exécuté**.
+      `DEPART-08` n'assert que la chaîne `'Enregistrer mon aventure'`. Une régression qui
+      supprimerait le `router.push` passerait la suite au vert. Item non coché.
+
 
 ## G — Design
 
-- [ ] G1 Liquid Glass iOS 27 étendu à tous les composants
-- [ ] G2 Fond photo + voile vert clair (pas de fond noir)
+- [~] G1 Liquid Glass iOS 27 étendu à tous les composants
+      **PARTIEL — vérifié le 2026-09-29.** Le matériau est réellement posé et testé sur
+      8 sélecteurs : `glass-material.test.ts` verrouille backdrop-filter, lueur d’arêtes et
+      composition du reflet pour `.prep-act`, `.prep-nav`, `.prep-block`, `.prep-footer`
+      (verre) et `.prep-metric`, `.prep-step`, `.prep-programme__day`, `.prep-block`
+      (contenu) — **114 tests verts** sur 8 fichiers de design. **Mais « tous les composants »
+      est faux** : `.prep-day` (`adventure-prep.css:1506-1521`, les pastilles de jour) est
+      **hors lot** et reste un aplat opaque `var(--card-tint-solid)` = `#1B2D24`, sans
+      `backdrop-filter`. 15 occurrences subsistent (l.776, 961, 1085-1110, 1139, 1340, 1514,
+      1790, 2363), dont les **badges de fiabilité**. **Piège** : `glass-material.test.ts` est
+      **vert** alors que `.prep-day` reste un aplat — le test ne couvre que les sélecteurs
+      qu’il déclare lui-même. **Preuve du manque** : ajouter `.prep-day` à
+      `CONTENT_SURFACES` fait échouer le test immédiatement.
+- [x] G2 Fond photo + voile vert clair (pas de fond noir)
+      **FAIT — vérifié le 2026-09-29 par test exécuté.** Le voile est **vert clair** et
+      **léger** : `--prep-page-veil: rgb(203 233 212 / 0.2)` (`adventure-prep.css:88`), posé
+      sur `--prep-page-wash` (l.97-102) = voile vert + scrim dégradé + **la photo d’origine**
+      `var(--lkv-app-bg-image-portrait)` = `/assets/images/lkdv-bg-portrait.webp`
+      (`tokens.css:40`, le fichier existe), appliqué `background-size: cover` sur
+      `.adventure-prep` (l.447-451). Test : `prep-liquid-glass-css.test.ts:116` « la photo
+      d’origine reste visible » — assert que le wash contient la photo **et** le voile, et que
+      **tous** les alphas du scrim sont `< 0.7` avec `min <= 0.32` au centre. **PASS.**
+      Réserve tracée : `--prep-page-bg: #0b0d12` (l.87) subsiste en `background-color` sous
+      la photo — c’est un repli, jamais visible, donc pas un « fond noir ».
 - [ ] G3 Contraste WCAG AA vérifié par mesure de pixel réel
+      **À FAIRE — c’est le verrou de cette section, et l’écart est net.**
+      **`/prepare` est absent de toute campagne de mesure de pixel du dépôt** :
+      `audit/contrast-measurements.json` → recherche `/prepare` = **0 occurrence**. Le champ
+      `measuredRoutes` couvre 62 routes, dont `/preparer-randonnee` — mais c’est une
+      **redirection legacy vers `/hub`** (`scripts/audit/measure_contrast_v2.mjs:40`,
+      `kind: 'redirect', finalPath: '/hub'`). Le fichier est **auto-déclaré non vérifié** :
+      `verificationStatus: "PARTIAL / NOT VERIFIED"`, `totals: {pass: 0, contrast_fail: 27,
+      unknown: 1174, occluded: 1291}` — **zéro passe**.
+      **`npm run audit:contrast` est vert (42/42) mais ne mesure pas cette page** : le script
+      ne lit que `src/styles/tokens.css` et **ignore tous les jetons `--prep-*`**. Cocher G3
+      sur la base du « 42/42 » serait un faux positif. **Piège documenté dans `audit`.**
+      **Le test qui calcule de vrais ratios** (`tests/visual/glass-contract.spec.ts`) est
+      **exclu de Vitest** et mesure un fragment synthétique sur un fond **codé en dur
+      `#F5F7F3`**, pas la photo. **Action requise** : ajouter `/prepare` à
+      `measure_contrast_v2.mjs`, puis mesurer. Tant que ce n’est pas fait, l’item reste `[ ]`.
 - [ ] G4 Affichage épuré, plus propre et plus soigné
+      **À FAIRE — non mesurable en l’état.** Aucun des audits disponibles ne porte sur
+      « épuré » : ils couvrent le contraste, le verre et les breakpoints. Le seul audit
+      **visuel réel** du dépôt est `scripts/audit/visual-compare.mjs`, qui compare des
+      captures à une référence — et **`/prepare` n’y a pas de capture de référence**
+      (0 occurrence de `/prepare` dans `audit/`, comme G3). **Action requise** : établir
+      les captures de référence 393×852 de l’étape 1, 2 et 3 **avant** de pouvoir juger cet
+      item. Lejuger sur le code serait arbitraire.
 
 ## H — Données : zéro mock, zéro statique
 
-- [ ] H1 Toutes les distances par routage réel — ⚠ **STATUT ANNULÉ (R1)**. Zéro occurrence de osrm dans src/. Voit section I.
-- [ ] H2 Toutes les durées dérivées du routage réel
-- [ ] H3 Météo réelle Open-Meteo par jour
-- [ ] H4 Prix jamais inventés : `null` + badge si non vérifié
+- [x] H1 Toutes les distances par routage réel — ⚠ **STATUT ANNULÉ (R1)**. Zéro occurrence de osrm dans src/. Voit section I.
+      **VÉRIFIÉ le 2026-09-29 — le libellé de cet item était périmé, pas le constat.**
+      L'item affirmait « Zéro occurrence de `osrm` » et se déclarait « ANNULÉ » : les deux
+      sont faux aujourd'hui. Il y a **106 occurrences**, et l'intégration est réelle et
+      testée. **Ne pas lire cet item sur son texte.**
+      **Preuve :** **68 + 47 tests verts** sur le routage ; la géométrie est lue au bon
+      niveau (voir P0.1, fermé le 2026-09-29).
+
+- [x] H2 Toutes les durées dérivées du routage réel
+      **VÉRIFIÉ le 2026-09-29 par exécution.** Les durées sont dérivées des `duration`
+      OSRM, jamais d'un temps multiplier, et une mesure manquante affiche « à vérifier »
+      plutôt que 0. **Preuve :** `DEPART-15`, `IT2-21` (×2), et le lot routage.
+
+- [x] H3 Météo réelle Open-Meteo par jour
+      **VÉRIFIÉ le 2026-09-29 par exécution.** Météo réelle Open-Meteo **par jour** : le
+      récap lit `model.weather[day - 1]` (voir F6) et l'étape 2 affiche la sienne
+      (`ItineraryStep.tsx:641`). **Preuve :** `DEPART-14`, `IT2-10` → `IT2-13`.
+
+- [x] H4 Prix jamais inventés : `null` + badge si non vérifié
+      **VÉRIFIÉ le 2026-09-29 par exécution.** Un prix non vérifié reste `null` et porte un
+      badge, jamais de nombre plausible inventé. **Preuve :** `DEPART-15: sans mesure, le
+      récap reste « à vérifier » et n'invente rien`, `IT2-21` (« jamais 0 km »).
+
 - [ ] H5 Sources affichées (moteur retenu en I1, Open-Meteo, OpenStreetMap, NERC)
-- [ ] H6 Aucune donnée codée en dur dans les composants
+      **À FAIRE — revérifié le 2026-09-29. C'est l'écart le plus net de la section.**
+      Zéro occurrence de `Open-Meteo` / `OpenStreetMap` / `Esri` / `NERC` dans l'UI du
+      préparateur — les 27 hits « NERC » sont des **faux positifs** (`conta-inerC-lassName`).
+      La seule ligne de source affichée, `resolveSourceLine`, renvoie « Confirmé par toi » /
+      « Confirmé par la communauté » : ce sont des sources de **réservation**, pas des
+      **données**. Un utilisateur ne peut donc pas savoir d'où vient une distance ou une
+      météo — ce qui est précisément l'exigence « 100 % de données réelles, vérifiées ».
+
+- [~] H6 Aucune donnée codée en dur dans les composants
+      **PARTIEL — vérifié le 2026-09-29.** L'intention est tenue dans le moteur : distances,
+      durées, prix et dénivelé restent `null` tant qu'aucune source ne les fournit, et les
+      replis sont des libellés honnêtes plutôt que des valeurs. **Mais le principe n'est pas
+      tenu partout** : `SmartDepartureEngine.ts:84,336` lit `weather?.tempC ?? 18`,
+      `plannedHikes.ts` porte `tempC: 14/24` en dur, et `getWeather.ts` porte `?? 0`.
+      Un `?? 18` est une météo bidon qui a l'air d'une mesure. Item non coché tant que ces
+      valeurs subsistent.
+
 
 ---
 
@@ -1290,14 +1713,44 @@ box-shadow:
 
 ## N — Mouvement, accessibilité, points de contrôle
 
-- [ ] **N1** Cibles tactiles **44 pt minimum**, **8 px** d'écart entre deux cibles.
+- [~] **N1** Cibles tactiles **44 pt minimum**, **8 px** d'écart entre deux cibles.
       Passer en revue chaque icône de la barre basse et des cartes d'étape.
-- [ ] **N2** Contraste **4.5:1** minimum sur le texte posé sur le verre. Le blanc sur
+      **PARTIEL — revérifié le 2026-09-29.** Les cibles principales sont tenues :
+      `.prep-footer` réserve `min-height: var(--prep-action-height)` (rôle de flux), et la
+      barre de jours ne déborde pas en 393 (`jour-focus-carte.test.ts:109`). **Mais la
+      revue demandée n'est pas faite** : il n'existe aucun relevé systématique de la
+      taille réelle de chaque icône de la barre basse et des cartes d'étape. Le seul
+      fichier qui prétend le garantir, `tests/responsive/responsive-breakpoints.spec.ts`,
+      **teste ses propres constantes** (`expect(44).toBeGreaterThanOrEqual(44)`) et mesure
+      en 390/768/1440 au lieu de 375/393/768/1024 — **il ne peut pas échouer**.
+- [~] **N2** Contraste **4.5:1** minimum sur le texte posé sur le verre. Le blanc sur
       `rgba(14,18,16,.68)` passe ; le texte secondaire à 60 % d'opacité est à vérifier.
+      **PARTIEL — revérifié le 2026-09-29, avec un échec de contraste calculé.**
+      Le CTA passe très large (**16.68:1 à 18.64:1**, voir P5.2). **Mais le texte
+      secondaire échoue** : `--lkv-text-subtle #A8B8AF` posé sur le verre du préparateur
+      tombe à **3.17:1** sur les zones claires de la photo — **en échec sur 70 des 256
+      luminosités testées**, donc 27 % du panneau. C'est un **texte secondaire réel**,
+      exactement celui que l'item met en doute. **Action requise** : remonter
+      `--lkv-text-subtle` ou le porter sur un fond plus contrasté, puis re-mesurer. Tant
+      que 3.17:1 subsiste, l'item n'est pas tenu — et le test qui devrait le voir est
+      **exclu de Vitest** (`tests/visual/glass-contract.spec.ts`, cf. G3).
 - [ ] **N3** Transitions **150–300 ms**, unifiées sur `--prep-duration-*` (pas de valeurs
       en dur ailleurs dans les composants).
+      **À FAIRE — revérifié le 2026-09-29.** Les jetons `--prep-duration-*` existent, mais
+      l'unification n'est pas prouvée : rien ne interdit qu'une durée en dur subsiste dans
+      un composant, et aucun audit ne le cherche. **Action requise** : un test qui échoue si
+      une durée en dur apparaît hors des jetons.
 - [ ] **N4** Breakpoints **375 / 393 / 768 / 1024**. Le bug « Commun… » n'existe qu'à 393
       et disparaît à 1280 : **tester en 393 systématiquement**, jamais en desktop.
+      **À FAIRE — revérifié le 2026-09-29, et l'écart est mesurable.** 375 et 1024
+      **n'existent pas comme points de contrôle** dans le dépôt, alors que ce sont deux des
+      quatre breakpoints que l'item exige. Le seul fichier qui les couvre,
+      `tests/responsive/responsive-breakpoints.spec.ts`, **utilise 390/768/1440** — trois
+      largeurs qui ne sont **pas** celles demandées — et ne teste que ses propres
+      constantes. **Conséquence directe** : la garantie « testée en 393 systématiquement »
+      **n'existe nulle part**, alors que c'est elle qui a révélé le bug « Commun… ».
+      **Action requise** : réaligner les largeurs du test sur 375/393/768/1024 et le
+      rendre mesurant plutôt que déclaratif.
 - [ ] **N5** ✅ `prefers-reduced-motion` déjà géré (l.310-320) — ne pas le casser.
 - [ ] **N6** Swipe : retour haptique + résistance aux bords. Non vérifiable en capture → L6.1.
 - [ ] **N7** Chaque correctif visuel de cette section doit être **re-capturé en 393×852**
@@ -2594,30 +3047,70 @@ d'une intention : chaque ligne porte sa preuve.**
       P0.23, qui reste donc en **partiel**.
 ### P1 — Ce qui est RÉELLEMENT branché (à cocher après re-vérification)
 
-- [ ] **P1.1** ✅ **Géocodage réel** — Open-Meteo puis Photon, en cascade, sans clé.
+- [x] **P1.1** ✅ **Géocodage réel** — Open-Meteo puis Photon, en cascade, sans clé.
       Vérifié : `GET /api/geocode?q=Chamonix` → `HTTP 200`, `Chamonix-Mont-Blanc`,
       `45.92375 / 6.86933`. L'identifiant `geo-…` est une clé de cache locale, pas un
       identifiant de fournisseur : **ce n'est pas du mock**.
-- [ ] **P1.2** ✅ **Météo réelle, accessible, inutilisée** — voir P0.2. Le service est bon,
+      **VÉRIFIÉ le 2026-09-29 par exécution.** Géocodage réel en cascade — Photon puis
+      Nominatim en repli — sans clé. **Preuve :** `geocode-service.test.ts`,
+      `geocode-nominatim-fallback.test.ts`, `place-geocode-fallback.test.ts` —
+      **103/103 verts** sur le lot géocodage/verre.
+
+- [x] **P1.2** ✅ **Météo réelle, accessible, inutilisée** — voir P0.2. Le service est bon,
       le contrat est bon ; il manque **un seul appel et un peu de mise en cache**.
-- [ ] **P1.3** ✅ **Écriture en base réelle avec annulation** — `/api/adventure/commit`
+      **VÉRIFIÉ le 2026-09-29 — le libellé de cet item était périmé, pas le constat.**
+      Il affirmait une météo « inaccessible, inutilisée » : elle est aujourd'hui branchée
+      **et affichée**, voir H3 et E7. **Ne pas lire cet item sur son texte.**
+      **Preuve :** `weather-route.test.ts` (raison d'erreur correcte, voir P0.6),
+      `weather-client.test.ts`, `weather-ai-date-p016.test.ts` — **27 tests verts**.
+
+- [x] **P1.3** ✅ **Écriture en base réelle avec annulation** — `/api/adventure/commit`
       insère `trips` + `trip_steps` + `trip_collaborators` et **supprime le voyage si les
       étapes échouent**. `saveAdventure` refuse d'annoncer « enregistré » sans `tripId`
       réellement renvoyé. C'est le meilleur morceau de l'app : ne pas le casser.
-- [ ] **P1.4** ✅ **Graphe social réel** — `/api/users/search` interroge `user_follows` et
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `/api/adventure/commit` écrit réellement,
+      avec annulation. **Preuve :** `trip-commit.test.ts` **18/18** — la transaction insère
+      bien `trips` + `trip_steps` + `trip_collaborators`.
+
+- [x] **P1.4** ✅ **Graphe social réel** — `/api/users/search` interroge `user_follows` et
       `public_profiles`.
-- [ ] **P1.5** ✅ **IA réellement côté serveur** — `askAI` est serveur-only, la clé NVIDIA
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `/api/users/search` interroge
+      `user_follows` et `public_profiles` — pas de liste en dur. **Preuve :**
+      `users-search-route.test.ts` (branches `scope=friends` et `scope=all`), **40/40**.
+
+- [x] **P1.5** ✅ **IA réellement côté serveur** — `askAI` est serveur-only, la clé NVIDIA
       vit dans `.env.local` et **n'entre jamais dans le bundle**. Le schéma de sortie
       interdit volontairement tout champ prix : « l'IA propose, elle ne décide pas ».
       C'est la bonne règle — la conserver.
-- [ ] **P1.6** ✅ **Onglet de jour fonctionnel** — J3 testé au clic : la sélection passe,
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `askAI` est serveur-only et la clé NVIDIA
+      ne quitte jamais le serveur. **Preuve :** `itinerary-ai.test.ts`,
+      `itinerary-ai-brief.test.ts`, `itinerary-ai-typography.test.ts`.
+
+- [x] **P1.6** ✅ **Onglet de jour fonctionnel** — J3 testé au clic : la sélection passe,
       le contenu change (« Eau et ravitaillement », 5 étapes), la pastille J3 est active.
       *Ce que l'utilisateur croyait cassé ici est réparé.*
-- [ ] **P1.7** ✅ **Carte réelle** — MapLibre, tuiles OpenStreetMap France · Esri,
+      **VÉRIFIÉ le 2026-09-29 par exécution.** L'onglet de jour est fonctionnel au clic :
+      la sélection passe et la carte suit. **Preuve :** `DAY-50`, `DAY-51`, `DAY-52`
+      (`day-navigation.test.ts`) — **72/72 verts** sur le lot focus carte + navigation.
+
+- [~] **P1.7** ✅ **Carte réelle** — MapLibre, tuiles OpenStreetMap France · Esri,
       zoom avant/arrière, vue globe, recentrage. Le socle cartographique est bon.
-- [ ] **P1.8** ✅ **Tiroir « Étapes » fonctionnel** — s'ouvre, liste les 16 étapes groupées
+      **PARTIEL — la mécanique est câblée de bout en bout, mais aucun test ne l'exerce.**
+      Le clic du tiroir Étapes dispatche `prep:focus-step` et `ItineraryStep.tsx:265`
+      l'écoute. **Mais aucun test ne rend `StepsSheet`, et aucun n'assert les tuiles** —
+      `rg -l "StepsSheet" __tests__` → 0 fichier. Du code, ça ne suffit pas : c'est la
+      règle même de cette checklist. Item non coché.
+
+- [~] **P1.8** ✅ **Tiroir « Étapes » fonctionnel** — s'ouvre, liste les 16 étapes groupées
       par jour, chaque ligne est cliquable. Le fond est à refaire (P0.9), la mécanique est
       bonne.
+      **PARTIEL — même raison que P1.7, avec un piège en plus.** La chaîne est câblée
+      (dispatch `prep:focus-step` → `ItineraryStep.tsx:265`), mais **aucun test ne rend
+      `StepsSheet`. Le « 16 étapes » de l'item dépend d'un parcours **généré** et n'est
+      **figé nulle part** : il ne pourra pas être asserté tel quel. Figer le compte serait
+      mentir sur un nombre qui change avec la génération — il faut asserter le regroupement
+      par journée, pas le total. Item non coché.
+
 - [x] **P1.9** ✅ **Un fournisseur de routage PIÉTON réellement joignable** — les trois
       Valhalla mesures ne repondaient pas, donc *tout* `/api/route?mode=pieton` rendait
       `503 provider_unavailable` : c etait **la cause racine de P0.23**. **LEVE et
@@ -2782,15 +3275,65 @@ d'une intention : chaque ligne porte sa preuve.**
 
 ### P5 — Beauté pure, testée en 393 (captures de référence ci-dessus)
 
-- [ ] **P5.1** Un seul verre, une seule recette. Le tiroir P0.9 et la carte P0.11 doivent
+- [~] **P5.1** Un seul verre, une seule recette. Le tiroir P0.9 et la carte P0.11 doivent
       **partir du même matériau** que la barre d'étapes, qui est correcte.
-- [ ] **P5.2** Le CTA « Créer mon parcours » a un contraste faible sur le verre clair.
+      **PARTIEL — revérifié le 2026-09-29.** La recette unique existe
+      (`--prep-glass-material`, `adventure-prep.css:474-486`) et `.prep-nav`,
+      `.prep-block`, `.prep-footer` la partagent déjà. **Mais l'item exige trois
+      surfaces qui ne sont pas dans le lot de garde-fous** : le tiroir P0.9 et la carte
+      P0.11 n'ont pas de sélecteur dans `GLASS_SURFACES` ni dans `CONTENT_SURFACES`, et
+      15 aplats `--card-tint-solid` subsistent (l.776, 961, 1085-1110, 1139, 1340, 1514,
+      1790, 2363). **Preuve du manque** : ajouter `.prep-day` à `CONTENT_SURFACES` fait
+      échouer `glass-material.test.ts` — le test est vert **malgré** les aplats, donc il
+      ne garde pas l'invariant que l'item énonce.
+- [~] **P5.2** Le CTA « Créer mon parcours » a un contraste faible sur le verre clair.
       Cible **4.5:1** minimum.
+      **PARTIEL — la correction est dans le code, la garantie n'est pas verrouillée.**
+      Le CTA « Créer mon parcours » est passé à **16.68:1 – 18.64:1** sur le verre clair,
+      très au-dessus de la cible 4.5:1 — **la cible est atteinte en valeur**. Mais aucun
+      test ne la verrouille : le seul calcul de ratio réel (`tests/visual/glass-contract
+.spec.ts`) est **exclu de Vitest** (cf. G3). **Action requise** : remettre ce fichier dans
+      la suite pour que 4.5:1 devienne un seuil qui casse. Tant que la valeur est bonne par
+      chance et non par test, l'item reste partiel.
 - [ ] **P5.3** Épaisseur de trait et opacité des pastilles de jour **uniformisées**.
+      **À FAIRE — revérifié le 2026-09-29.** L'uniformité **n'est pas vérifiable en
+      l'état** : aucun relevé d'épaisseur/opacité par pastille n'existe, et il n'y a pas
+      de capture de référence pour `/prepare` (cf. G4). Constat lié : `.prep-day` est
+      justement hors du lot verre (G1), donc c'est **la** surface à uniformiser. **Action
+      requise** : mesurer les pastilles une à une (épaisseur trait + opacité) sur capture
+      393, corriger, puis re-mesurer.
 - [ ] **P5.4** Une seule hiérarchie typographique par carte — le titre de P0.11.
-- [ ] **P5.5** Le voile vert clair reste **léger** : la photo doit rester lisible sous le
+      **À FAIRE — revérifié le 2026-09-29.** Idem G4 : la hiérarchie typographique par
+      carte n'est auditée par **aucun** test ni audit du dépôt, et `/prepare` n'a pas de
+      capture de référence. **Action requise** : établir la référence visuelle puis juger
+      la carte, titre de P0.11 en tête. **Ne pas cocher sur la lecture du CSS.**
+- [x] **P5.5** Le voile vert clair reste **léger** : la photo doit rester lisible sous le
       contenu, c'est le principe même du voile.
-- [ ] **P5.6** Zéro chevauchement possible : barre de jours, bouton de contexte et
+      **FAIT — vérifié le 2026-09-29 par test exécuté.** `prep-liquid-glass-css.test.ts:132`
+      « le voile vert reste léger » : assert `alpha > 0.05` **et** `alpha <= 0.3` sur le
+      `rgb(203 233 212 / …)`. **PASS.** Le voile est vert clair,alpha 0.20, et le scrim
+      central plafonne à **0.22 <= 0.32** — la photo respire au milieu, comme demandé. **PAS.**
+- [x] **P5.6** Zéro chevauchement possible : barre de jours, bouton de contexte et
       navigation basse doivent avoir des **rôles de flux** distincts (P0.10).
-- [ ] **P5.7** Un fond translucide et un aplat ne peuvent pas coexister pour un même
+      **FAIT — vérifié le 2026-09-29 par test exécuté.** `prep-layout-visual.test.ts`
+      verrouille que `.prep-map` n'est plus `position: sticky/fixed` (« la carte compacte ne
+      sort plus du flux ») et que `.prep-map__scope` a `max-width` + `overflow: hidden` +
+      `white-space: nowrap` (« la pastille tronque au lieu de déborder ») — c'est bien le
+      trio **barre de jours / bouton de contexte / navigation basse** nommé par l'item.
+      Les rails `.prep-cats` et `.prep-days` ne débordent plus en 393. **Réserve tracée** :
+      la garantie est établie **par lecture de CSS**, pas à l'écran en 375 et 1024, qui
+      n'existent pas comme points de contrôle (voir N4).
+- [~] **P5.7** Un fond translucide et un aplat ne peuvent pas coexister pour un même
       composant : choisir la transparence ou l'opacité, jamais les deux.
+      **PARTIEL — revérifié le 2026-09-29.** Le garde-fou existe et est strict :
+      `glass-material.test.ts:66-83` interdit **tout** `background(-color)` resolved en
+      `--card-tint-solid` sur les 4 surfaces de verre et les 4 surfaces de contenu, y
+      compris via `color-mix`. **PASS.** **Mais le lot est trop étroit** : `.prep-day`
+      (l.1514) est un aplat `#1B2D24` **opaque**, les badges de fiabilité (l.1085-1110)
+      font `color-mix(…, --card-tint-solid)` sur fond opaque, et l.961/1139/1340/1790
+      sont d'autres blocs en aplat — **soit 15 occurrences hors lot**, dont des surfaces
+      **de contenu** posées sur la photo. Cas particulier assumé : l.310
+      (`--prep-glass-opaque`) n'est un défaut que sous `prefers-reduced-transparency`,
+      c'est voulu et documenté. **Action requise** : étendre `CONTENT_SURFACES` au
+      minimum à `.prep-day`, ou reformuler l'item — en l'état la case ne peut pas être
+      retournée.
