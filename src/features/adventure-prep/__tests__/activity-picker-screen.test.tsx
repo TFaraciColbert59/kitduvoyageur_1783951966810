@@ -201,9 +201,34 @@ describe('Ecran 02 — appel d action', () => {
     expect(render(draftWithoutItineraryInput())).toContain('Continuer');
   });
 
-  it('E02-18: le CTA est bloque tant qu aucune activite n est choisie', () => {
-    expect(render(draftWithoutItineraryInput())).toContain('disabled');
-    expect(render(fullDraft())).not.toMatch(/prep-footer__primary[^>]*disabled/);
+  // E02-18, contrat CORIGE le 2026-09-28. L ancienne version exigeait une
+  // activite du catalogue et bloquait le CTA sur le brief seul. C etait faux :
+  // l invite IA est l entree principale de cet ecran, posee en haut, et son
+  // libelle promet que l IA en tient compte pour tout generer. Un gate qui
+  // n ecoute que le catalogue laisse donc le bouton principal mort des que la
+  // personne ecrit ce qu elle veut — mesure en 393 : « Continuer » etait
+  // `disabled` avec un brief complet, et le seul chemin restant etait le lien
+  // secondaire « Partir librement ». Les deux moities de l ecran se
+  // contredisaient, et le gate avait ete ecrit avant l invite.
+  // Le vrai invariant : le CTA s ouvre des qu il y a DE LA MATIERE — une
+  // activite choisie OU un invite — et reste ferme sur un ecran vide.
+  it('E02-18: le CTA est bloque seulement quand il n y a ni activite ni brief', () => {
+    // « disabled » apparait aussi dans les classes Tailwind du bouton
+    // (disabled:pointer-events-none), donc on ne peut pas chercher le mot
+    // dans tout le markup : on retire les classes et on ne lit plus que
+    // l ATTRIBUT, qui est la seule chose qui empêche vraiment le clic.
+    const bloque = (markup: string) => markup.replace(/class="[^"]*"/g, '').includes('disabled');
+
+    // Ecran vide : ni activite, ni invite. Rien a envoyer, donc bloque.
+    expect(bloque(render(draftWithoutItineraryInput()))).toBe(true);
+    // Invite seul : la personne a dit ce qu elle veut, le CTA s ouvre.
+    const briefOnly = render(
+      draftWithoutItineraryInput({ brief: 'Week-end de randonnee, refuge la premiere nuit' }),
+    );
+    expect(bloque(briefOnly)).toBe(false);
+    expect(visible(briefOnly)).toContain('Continuer');
+    // Activite choisie : le cas d avant, toujours ouvert.
+    expect(bloque(render(fullDraft()))).toBe(false);
   });
 
   it('E02-19: le CTA annonce ce qu il va faire, sans pourcentage', () => {

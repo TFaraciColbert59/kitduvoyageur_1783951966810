@@ -242,15 +242,31 @@ export function ActivityPickerScreen({ onOpenSheet: _onOpenSheet }: ActivityPick
     setSelection((current) => removeComplement(current, id));
   }, []);
 
+  // L invite IA est l ENTREE PRINCIPALE de cet ecran : elle est posee en
+  // haut, et son libelle promet que l IA en tient compte pour tout generer.
+  // Le gate ne regardait que `selected`, donc un brief seul laissait le CTA
+  // principal mort et ne laissait que le lien secondaire « Partir
+  // librement ». Les deux moities de l ecran se contredisaient, et c est
+  // toujours le gate qui avait tort : l invite a ete ajoutee apres lui.
+  //
+  // Sans activite choisi, on ne force donc AUCUNE activite : le brief part
+  // tel quel vers le moteur (qui lit deja `activity?.label ?? 'activite
+  // libre'`), et le catalogue se replie comme sous « Partir librement ».
+  const canContinue = selected !== null || (draft.brief ?? '').trim().length > 0;
+
   const handleContinue = useCallback(() => {
-    if (!selected) return;
-    const { setActivities, goToStep } = useAdventurePrepStore.getState();
+    if (!canContinue) return;
+    const { setActivities, goToStep, dismissPicker } = useAdventurePrepStore.getState();
+    if (!selected) {
+      dismissPicker();
+      return;
+    }
     setActivities({ primary: selected.id, extra: selection.extra, nights: selection.nights });
     goToStep('destination');
     const next = [selected.id, ...recentIds.filter((id) => id !== selected.id)].slice(0, RECENT_MAX);
     writeRecentIds(next);
     setRecentIds(next);
-  }, [selected, selection.extra, selection.nights, recentIds]);
+  }, [canContinue, selected, selection.extra, selection.nights, recentIds]);
 
   const handleSkip = useCallback(() => {
     // Partir librement ne choisit pas d activite : sans cela le catalogue
@@ -420,8 +436,8 @@ export function ActivityPickerScreen({ onOpenSheet: _onOpenSheet }: ActivityPick
         <Button
           variant="primary"
           size="lg"
-          style={{ height: 52, borderRadius: 16, fontSize: 17, fontWeight: 600, background: selected ? 'var(--lkv-action)' : 'var(--btn-on-solid)', color: selected ? '#fff' : 'var(--lkv-text-secondary)' }}
-          disabled={!selected}
+          style={{ height: 52, borderRadius: 16, fontSize: 17, fontWeight: 600, background: canContinue ? 'var(--lkv-action)' : 'var(--btn-on-solid)', color: canContinue ? '#fff' : 'var(--lkv-text-secondary)' }}
+          disabled={!canContinue}
           onClick={handleContinue}
         >
           Continuer
