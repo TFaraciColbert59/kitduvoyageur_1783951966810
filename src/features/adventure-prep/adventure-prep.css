@@ -128,6 +128,28 @@
      d'etape traversait la feuille. */
   --prep-sheet-bg: #1c202bb3;
 
+  /* Surface posee DANS une feuille de verre (ligne de resultat, note, badge,
+     segmente). Mesure 393x852, tiroir ouvert : ces surfaces prenaient
+     --prep-page-bg, un ardoise OPAQUE. Pose sur du verre, un aplat opaque ne
+     laisse rien transparaitre : les lignes se lisaient comme des trous noirs
+     (P0.9). Un composant = un seul materiau, donc un blanc tres faible qui
+     laisse passer la page floutee et pose une legere lueur sur le verre. */
+  --prep-row-bg: rgb(255 255 255 / 0.06);
+
+  /* Filet de separation d'une surface de verre : assez present pour que deux
+     lignes voisines ne se fondent pas, jamais assez pour lire comme un trait. */
+  --prep-row-edge: rgb(255 255 255 / 0.09);
+
+  /* Reflet de lumiere en tete de feuille de verre : c'est ce qui distingue une
+     feuille d'une dalle. La lumiere tombe du haut et s'eteint vers le tiers
+     superieur, comme sur une plaque de verre eclaircee par dessus. */
+  --prep-sheet-sheen: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 0.16) 0%,
+    rgb(255 255 255 / 0.06) 16%,
+    rgb(255 255 255 / 0) 44%
+  );
+
   /* Surface elevee reellement sombre pour le preparateur : la variable
      --lkv-surface-elevated du theme `light` est blanche, donc toute pastille
      ou pastille survolee devenait invisible sur le fond sombre. */
@@ -1892,6 +1914,7 @@ body:has(.app-shell--preparer) {
    feuille continue de fonctionner pour une liste plus longue qu'elle. */
 body:has(.app-shell--preparer) .lkv-sheet-up {
   background-color: var(--prep-sheet-bg);
+  background-image: var(--prep-sheet-sheen);
   -webkit-backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
   backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
   box-shadow:
@@ -2245,7 +2268,9 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   gap: 10px;
   min-height: 48px;
   padding: 0 14px;
-  background: var(--lkv-surface);
+  background: var(--prep-row-bg);
+  border: 1px solid var(--prep-row-edge);
+  border-radius: var(--lkv-radius-md);
   font-size: 17px;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
 }
@@ -2331,8 +2356,8 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   gap: var(--space-1);
   padding: var(--space-1);
   border-radius: var(--lkv-radius-md);
-  background: var(--prep-page-bg);
-  border: 1px solid var(--lkv-border-subtle);
+  background: var(--prep-row-bg);
+  border: 1px solid var(--prep-row-edge);
 }
 .seg > button {
   min-height: var(--control-height-sm);
@@ -2393,13 +2418,13 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
   border-radius: var(--lkv-radius-md);
-  background: var(--prep-page-bg);
+  background: var(--prep-row-bg);
   width: 100%;
   font: inherit;
   color: inherit;
   text-align: left;
   cursor: pointer;
-  border: 1px solid transparent;
+  border: 1px solid var(--prep-row-edge);
   transition: background-color 120ms ease;
 }
 .li:focus-visible {
@@ -2452,8 +2477,8 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   font-size: var(--f-body-sm);
   line-height: 1.4;
   color: var(--lkv-text-secondary);
-  background: var(--prep-page-bg);
-  border: 1px solid var(--lkv-border-subtle);
+  background: var(--prep-row-bg);
+  border: 1px solid var(--prep-row-edge);
 }
 .note.red {
   color: var(--lkv-danger);
@@ -2462,7 +2487,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 }
 .note.neutral {
   color: var(--lkv-text-note);
-  background: var(--prep-page-bg);
+  background: var(--prep-row-bg);
 }
 
 /* --- Compteur de jours --------------------------------------------------
@@ -2491,8 +2516,8 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   font-size: var(--f-caption);
   font-weight: 600;
   color: var(--lkv-text-secondary);
-  background: var(--prep-page-bg);
-  border: 1px solid var(--lkv-border-subtle);
+  background: var(--prep-row-bg);
+  border: 1px solid var(--prep-row-edge);
 }
 .badge.amber {
   /* Le fond ambre tres clair lavait le texte : on le melange a l'encre sombre

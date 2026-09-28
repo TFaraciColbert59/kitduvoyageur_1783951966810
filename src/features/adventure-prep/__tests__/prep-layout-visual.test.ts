@@ -290,6 +290,56 @@ describe('D7 - le verre du tiroir est reel, pas annonce', () => {
   });
 });
 
+describe('P0.9 - le contenu du tiroir est du verre, pas des trous noirs', () => {
+  /* Mesure au navigateur, 393x852, tiroir "Ou tu pars" ouvert sur /prepare :
+     la feuille elle-meme est bien translucide (D7), mais CHAQUE ligne de
+     resultat, chaque note et chaque badge prenaient `--prep-page-bg`, un
+     ardoise opaque (#0b0d12). Sur une feuille de verre, un aplat opaque a
+     100 % ne montre rien derriere : les lignes se lisaient comme des trous
+     noirs poses sur du verre - exactement le reproche P0.9 ("lignes quasi
+     noires, aucun reflet"). Un composant = un seul materiau : le contenu
+     d'un tiroir en verre porte un fond TRANSLUCIDE, pas la couleur de la
+     page. Le meme defaut existait sur `.note`, `.badge` et `.seg`. */
+  const OPAQUE_ROW_SELECTORS = ['.li', '.note', '.badge', '.seg'];
+
+  it('aucune surface posee dans le tiroir ne reprend le fond opaque de la page', () => {
+    for (const selector of OPAQUE_ROW_SELECTORS) {
+      const d = declarations(lastRule(selector)?.body ?? '');
+      expect(`${selector}=${d.get('background') ?? d.get('background-color') ?? ''}`).not.toContain(
+        '--prep-page-bg',
+      );
+    }
+  });
+
+  it('la recherche du lieu est du meme verre que les lignes qu elle liste', () => {
+    // Mesure 393x852, tiroir "Ou tu pars" : la barre de recherche etait le
+    // SEUL aplat noir du tiroir - un rectangle solide coupe dans du verre,
+    // alors que les resultats qu elle commande sont translucides. Elle
+    // prenait `--lkv-surface`, un jeton de page et non de feuille. Meme
+    // materiau que `.li`, sinon la feuille n'est plus d'un seul tenant.
+    const d = declarations(lastRule('.prep-search')?.body ?? '');
+    expect(d.get('background') ?? '').toBe('var(--prep-row-bg)');
+  });
+
+  it('le fond de ligne existe en token translucide et reutilisable', () => {
+    // Un token unique pour toutes les surfaces du tiroir : c'est ce qui
+    // interdit qu'une retouche future reintroduise un aplat opaque.
+    expect(css).toMatch(/--prep-row-bg:\s*rgb\(255 255 255 \/ 0\.0\d\);/);
+  });
+
+  it('la feuille de verre attrape la lumiere en haut', () => {
+    // Un verre sans reflet n'est pas un verre. Le degrade + le liseré clair
+    // du bord superieur sont ce qui distingue la feuille d'une dalle. La
+    // recette vit dans un token (regle « une seule recette ») : on verifie
+    // donc le token ET sa pose sur la feuille, pas le degrade en dur.
+    const sheen = /--prep-sheet-sheen:\s*([^;]+);/.exec(css)?.[1] ?? '';
+    expect(sheen).toMatch(/linear-gradient/);
+    const d = declarations(rules().find((r) => r.selector.includes('.lkv-sheet-up'))?.body ?? '');
+    expect(d.get('background-image') ?? '').toBe('var(--prep-sheet-sheen)');
+    expect(d.get('background-color') ?? '').not.toBe('');
+  });
+});
+
 describe('D4 — le curseur flottant de bureau reste hors perimetre', () => {
   it('aucune regle ne cible le curseur flottant', () => {
     // Mesure : le curseur est monte par src/app/layout.tsx, donc HORS de la
