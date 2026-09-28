@@ -4,6 +4,8 @@
 Source : 32 maquettes uniques (41 fichiers, 9 doublons) analysées une à une,
 croisées avec l'intégralité des consignes écrites de la conversation.
 
+**Progression : 112 / 225 items prouvés (49.8 %) — 37 partiels · 76 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas). Dernière preuve ajoutée : `npm run audit:prep-contrast` → 98 mesurés, 22 PASS, 76 FAIL sur `/prepare` (voir G3).
+
 Légende : `[ ]` à faire · `[~]` partiellement fait · `[x]` fait et vérifié · `[!]` bloqué par une donnée absente du dépôt · `R` rectificatif d'audit
 
 **Structure** — 0 rectificatifs · A→H périmètre fonctionnel · I routage · J décisions
@@ -1477,22 +1479,52 @@ corrompue ne doit pas fabriquer une alerte qui aura l’air d’un fait.
       **tous** les alphas du scrim sont `< 0.7` avec `min <= 0.32` au centre. **PASS.**
       Réserve tracée : `--prep-page-bg: #0b0d12` (l.87) subsiste en `background-color` sous
       la photo — c’est un repli, jamais visible, donc pas un « fond noir ».
-- [ ] G3 Contraste WCAG AA vérifié par mesure de pixel réel
-      **À FAIRE — c’est le verrou de cette section, et l’écart est net.**
-      **`/prepare` est absent de toute campagne de mesure de pixel du dépôt** :
-      `audit/contrast-measurements.json` → recherche `/prepare` = **0 occurrence**. Le champ
-      `measuredRoutes` couvre 62 routes, dont `/preparer-randonnee` — mais c’est une
-      **redirection legacy vers `/hub`** (`scripts/audit/measure_contrast_v2.mjs:40`,
-      `kind: 'redirect', finalPath: '/hub'`). Le fichier est **auto-déclaré non vérifié** :
-      `verificationStatus: "PARTIAL / NOT VERIFIED"`, `totals: {pass: 0, contrast_fail: 27,
-      unknown: 1174, occluded: 1291}` — **zéro passe**.
-      **`npm run audit:contrast` est vert (42/42) mais ne mesure pas cette page** : le script
-      ne lit que `src/styles/tokens.css` et **ignore tous les jetons `--prep-*`**. Cocher G3
-      sur la base du « 42/42 » serait un faux positif. **Piège documenté dans `audit`.**
-      **Le test qui calcule de vrais ratios** (`tests/visual/glass-contract.spec.ts`) est
-      **exclu de Vitest** et mesure un fragment synthétique sur un fond **codé en dur
-      `#F5F7F3`**, pas la photo. **Action requise** : ajouter `/prepare` à
-      `measure_contrast_v2.mjs`, puis mesurer. Tant que ce n’est pas fait, l’item reste `[ ]`.
+- [~] G3 Contraste WCAG AA vérifié par mesure de pixel réel
+      **LA MESURE EXISTE ET A ÉTÉ EXÉCUTÉE — LE VERDICT EST NÉGATIF : 76 ÉCHECS.**
+      L'item reste donc `[~]`, pas `[x]` : la campagne est en place et reproductible, mais
+      `/prepare` n'est pas conforme AA. Une mesure « verte » sur une page qui n'a jamais été
+      mesurée est un faux positif ; ici la preuve dit le contraire.
+
+      **Ce qui a été fait (2026-09-29).** Nouveau `scripts/audit/measure_prep_contrast.mjs`
+      (`npm run audit:prep-contrast`, auto-vérification : `npm run audit:prep-contrast:selftest`).
+      Il corrige une faute de méthode majeure : **`/prepare` ne fait pas défiler la fenêtre**
+      (`scrollHeight === innerHeight` sur 393×852) — tout le contenu défile dans
+      `div.prep-body`. Un `window.scrollTo` n'aurait couvert que le premier écran, ce qui
+      explique que les audits précédents n'aient rien trouvé. L'outil pilote explicitement les
+      conteneurs internes et mesure le contraste WCAG 2.2 **sur les pixels peints**, fond
+      local prélevé autour des glyphes — aucun arrière-plan DOM n'est composé, car le calque
+      photo est un élément frère `aria-hidden` en `position: fixed; z-index: -1`.
+
+      **Verdict exécuté — 4 points de rupture, 98 éléments mesurés :**
+      `totals: {breakpoints: 4, measured: 98, pass: 22, fail: 76, skipped: 12, occluded: 0}`.
+      Rapport versionné : `audit/prep-contrast-measurements.json`.
+
+      **Les échecs sont massifs et localisés — ce ne sont pas du bruit :**
+      - `.prep-action` (« Eau », « À vélo », « À pied ») → **1,05:1** à **1,08:1** en 13px
+      - `.prep-brief__hint` → **1,08:1** à **1,09:1** en 13px
+      - `.prep-act__name` (« Trail », « Course ») → **1,08:1** à **1,09:1** en 17px
+      - `.prep-act__hint` (« Gabarit : journée ») → **1,07:1** à **1,09:1** en 13px
+      - placeholder `.prep-brief__input` (« Écris ce que tu… ») → **1,08:1** à **1,09:1** en 16-17px
+
+      Seuil applicable : 4,5:1 en 13-17px (texte normal). Rien n'est occlus (`occluded: 0`),
+      donc rien de ces échecs ne peut être mis sur le compte d'un recouvrement.
+
+      **Ce que ça prouve.** Un ratio de 1,05:1 signifie que le texte est *virtuellement de la
+      même couleur que son fond* : du texte quasi invisible. Ce n'est pas une marge
+      esthétique, c'est un défaut de lisibilité. Le `42/42` de `npm run audit:contrast` ne
+      voyait rien de tout cela parce que ce script ne lit **que** `src/styles/tokens.css` et
+      **ignore tous les jetons `--prep-*`** — l'avertissement de méthode inscrit dans cet item
+      est confirmé, et il a évité un faux positif.
+
+      **Cause racine identifiée** (items M0.2 / M0.3, section M). Dans `adventure-prep.css` :
+      `--prep-page-bg: #0b0d12` (noir **opaque**) est posé en `background-color`
+      **par-dessus** le wash qui contient déjà la photo d'origine et le voile vert, et
+      `--prep-glass-bg: rgba(14, 18, 16, 0.68)` (noir translucide) est utilisé là où la spec
+      demande un blanc à 10-30 %. Un texte clair posé sur ce verre noir tombe à 1,05:1.
+
+      **Action requise pour fermer.** Corriger M0.2 / M0.3, puis **relancer la campagne** :
+      `npm run audit:prep-contrast` doit sortir `fail: 0`. Tant qu'il reste 76 échecs, cet
+      item reste `[~]` et ne peut pas être coché.
 - [ ] G4 Affichage épuré, plus propre et plus soigné
       **À FAIRE — non mesurable en l’état.** Aucun des audits disponibles ne porte sur
       « épuré » : ils couvrent le contraste, le verre et les breakpoints. Le seul audit
