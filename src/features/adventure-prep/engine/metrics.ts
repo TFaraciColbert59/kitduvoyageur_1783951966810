@@ -22,6 +22,25 @@ export interface PrepMetric {
 
 export type MetricScope = 'jour' | 'aventure';
 
+/**
+ * Jour reellement focalise, ou `null` pour le voyage entier.
+ *
+ * UNE seule decision de perimetre, partagee par les deux etapes qui montrent
+ * des mesures. Elle vit ici, et pas dans un composant, parce que les deux
+ * ecrans ont deja diverge une fois : `DepartureStep` filtrait sa liste de
+ * programme sur le jour choisi tout en affichant, juste au-dessus, le total de
+ * l'aventure. L'ecran disait donc « Jour 1 » et comptait le voyage — mesure
+ * du 2026-09-28.
+ *
+ * Hors borne (jour supprime, voyage raccourci entre deux rendus), on retombe
+ * sur `null` : l'ecran montre tout plutot que de devenir vide.
+ */
+export function activeDayOrNull(totalDays: number, selectedDay: number | null): number | null {
+  if (selectedDay === null) return null;
+  if (!Number.isInteger(selectedDay) || selectedDay < 1) return null;
+  return selectedDay <= totalDays ? selectedDay : null;
+}
+
 const ORDER: Readonly<Record<MetricsContext, readonly PrepMetricId[]>> = {
   terrain: ['distance', 'denivele', 'duree'],
   sejour: ['nuitees', 'budget', 'duree'],

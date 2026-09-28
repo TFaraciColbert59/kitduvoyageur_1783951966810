@@ -12,7 +12,7 @@ import { packWeight, resolvedGear } from '../engine/gear';
 import { mealNeeds, uncoveredMeals, waterNeeds } from '../engine/consumables';
 import { knownGaps } from '../engine/itinerary';
 import { daySteps } from '../engine/itinerary';
-import { dayMetrics, metricsFor } from '../engine/metrics';
+import { activeDayOrNull, dayMetrics, metricsFor } from '../engine/metrics';
 import { weatherParts } from '../engine/weather';
 import { bookWeightLabel, gearToVerifyCount, plural } from '../engine/labels';
 import type { AdventurePrepDraft, GearNeed, ItineraryModel, PlaceRef } from '../types';
@@ -33,8 +33,8 @@ export interface DepartureStepProps {
 // retombe sur la vue complete plutot que de laisser un ecran vide.
 export function focusedDayNumbers(totalDays: number, selectedDay: number | null): number[] {
   const all = Array.from({ length: Math.max(1, Math.trunc(totalDays) || 0) }, (_, i) => i + 1);
-  if (selectedDay === null) return all;
-  return all.includes(selectedDay) ? [selectedDay] : all;
+  const focused = activeDayOrNull(all.length, selectedDay);
+  return focused === null ? all : [focused];
 }
 
 
@@ -215,6 +215,11 @@ function coverSubtitle(draft: AdventurePrepDraft): string {
   
   const points = openPointsOf(draft, gear);
   const model = draft.itinerary;
+  // Le bandeau et la liste doivent dire la MEME chose : c est la meme decision
+  // de perimetre, donc le meme jour. Avant, la liste suivait le rail et le
+  // bandeau restait sur le total — l ecran annoncait « Jour 1 » en comptant
+  // les deux jours (mesure du 2026-09-28).
+  const activeDay = model === null ? null : activeDayOrNull(model.days, selectedDay);
   const visibleDays = model === null ? [] : focusedDayNumbers(model.days, selectedDay);
 
   return (
@@ -254,7 +259,7 @@ function coverSubtitle(draft: AdventurePrepDraft): string {
         {model && (
           <>
             <div className="prep-metrics">
-              {metricsFor(model, 'aventure').map((metric) => (
+              {metricsFor(model, activeDay === null ? 'aventure' : 'jour', activeDay ?? undefined).map((metric) => (
                 <div key={metric.id} className="prep-metric">
                   <span className="prep-metric__label">{metric.label}</span>
                   <span

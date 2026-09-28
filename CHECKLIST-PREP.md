@@ -48,7 +48,7 @@ vérifiés dans le fichier, pas sur des goûts : chaque point porte son numéro 
 > fil entre eux. C'est ce que la section P documente, ligne par ligne, avec sa preuve.
 ## Journal de progression — mis à jour à chaque lot
 
-**Comptage honnete au 2026-09-28, recompté par `grep` sur les cases (37 faits · 8 partiels · 177 restants = 222 items) :** 4 **dements** (P0.10, P0.14, P0.20, et la course `Promise.race` de P0.24 retirée après mesure). **LE LOT DU JOUR : P1.9 est LEVE et coché** — un fournisseur pieton reellement joignable a ete trouve *a la mesure* (`routing.openstreetmap.de`, `200` / 132 ms, OSRM a profil `routed-foot`), les 3 modes repondent sur les memes points (pieton 7,384 km / 98,5 min · velo 7,139 km / 29,8 min · voiture 8,030 km / 9,1 min), et les sommets sont refuses **par la mesure** (`503 off_network`). 14 tests `P019-01`→`P019-14` verts, suite **603 fichiers / 5 628 tests / 0 echec**, `tsc` **exit 0**. **P0.23 est desormais FERME** : la cause s etait deplacee vers l amont, et c est la que le correctif a ete fait. La generation lance enfin (le depart s auto-remplit par la geolocalisation, le CTA « Creer mon parcours » est actif — ce qui n etait jamais arrive), et les **20 appels `/api/route` rendaient alors `503 off_network`** : les points routes etaient des **coordonnees de grille** (`6.9,45.91`, `6.9012,45.9123`) et le **sommet du Mont Blanc** — pas des lieux. **Corrige depuis** : le generateur produit des lieux reels, et la meme generation rend aujourd hui **23 × `200`** et **0** `off_network` (preuve 9 ci-dessous). `/api/amenities` rend, lui, **9 lieux reellement nommes** a coordonnees 7 decimales (Hotel Lyret, Hotel Mont Blanc, Restaurant Le Panoramic…), **mais en 45,3 s**. Le filtre de marchabilite, lui, **fonctionne** : il refuse une mesure qui n existe pas. **Deux defauts nouveaux mesures, a traiter :** `/api/geocode` **inverse** hors service (`503 providers_unreachable`) alors que le **direct** repond `200` et nomme Chamonix-Mont-Blanc ; et la **saisie libre vide le catalogue** d activites, alors que la consigne demandait de garder les entrees en dessous. **P0.24** reste en **partiel** sur son seul delai de 45 s, mesure a 45,3 s.
+**Comptage honnete au 2026-09-28, recompté par `grep` sur les cases (38 faits · 8 partiels · 177 restants = 223 items) :** 4 **dements** (P0.10, P0.14, P0.20, et la course `Promise.race` de P0.24 retirée après mesure). **LE LOT DU JOUR : P1.9 est LEVE et coché** — un fournisseur pieton reellement joignable a ete trouve *a la mesure* (`routing.openstreetmap.de`, `200` / 132 ms, OSRM a profil `routed-foot`), les 3 modes repondent sur les memes points (pieton 7,384 km / 98,5 min · velo 7,139 km / 29,8 min · voiture 8,030 km / 9,1 min), et les sommets sont refuses **par la mesure** (`503 off_network`). 14 tests `P019-01`→`P019-14` verts, suite **603 fichiers / 5 628 tests / 0 echec**, `tsc` **exit 0**. **P0.23 est desormais FERME** : la cause s etait deplacee vers l amont, et c est la que le correctif a ete fait. La generation lance enfin (le depart s auto-remplit par la geolocalisation, le CTA « Creer mon parcours » est actif — ce qui n etait jamais arrive), et les **20 appels `/api/route` rendaient alors `503 off_network`** : les points routes etaient des **coordonnees de grille** (`6.9,45.91`, `6.9012,45.9123`) et le **sommet du Mont Blanc** — pas des lieux. **Corrige depuis** : le generateur produit des lieux reels, et la meme generation rend aujourd hui **23 × `200`** et **0** `off_network` (preuve 9 ci-dessous). `/api/amenities` rend, lui, **9 lieux reellement nommes** a coordonnees 7 decimales (Hotel Lyret, Hotel Mont Blanc, Restaurant Le Panoramic…), **mais en 45,3 s**. Le filtre de marchabilite, lui, **fonctionne** : il refuse une mesure qui n existe pas. **Deux defauts nouveaux mesures, a traiter :** `/api/geocode` **inverse** hors service (`503 providers_unreachable`) alors que le **direct** repond `200` et nomme Chamonix-Mont-Blanc ; et la **saisie libre vide le catalogue** d activites, alors que la consigne demandait de garder les entrees en dessous. **P0.24** reste en **partiel** sur son seul delai de 45 s, mesure a 45,3 s.
 Un item ne passe à `[x]` que sur une preuve datée — capture regardée, clic réel,
 valeur tracée à sa source, ou test rouge → vert. Jamais sur la foi du code.
 
@@ -2121,6 +2121,56 @@ d'une intention : chaque ligne porte sa preuve.**
       interdisait ce masque **n a pas ete supprime** : il porte desormais
       l intention reelle « le dernier bloc ne doit jamais etre estompe ».
       Preuve : `proof/P026-06-zoom-footer.png` avant / apres.
+- [x] **P0.28** ✅ **La banniere de mesures de l etape 3 ne suivait pas le
+      jour : elle restait figee sur le total de l aventure.** Ferme le
+      2026-09-28, preuve navigateur D5 sur un parcours 2 jours relu depuis
+      le brouillon persiste.
+      **Mesure avant.** Sur `En avant !`, `J1` puis `J2` donnaient tous les
+      trois la meme ligne — **À vérifier / À vérifier / 16 h 09 min** — alors
+      que la liste du programme, juste dessous, repondait correctement
+      (`["Jour 1"]` puis `["Jour 2"]`). **Cause :** `DepartureStep.tsx`
+      lisait `selectedDay` pour la liste (`focusedDayNumbers`) mais Passing
+      `metricsFor(model, 'aventure')` en dur au bandeau. Le commentaire du
+      fichier affirmait pourtant « l onglet choisi plus haut pilote l ecran 3,
+      il ne decore pas » : **l intention etait ecrite, le calcul ne la
+      suivait pas.** C est le symptome « le selecteur de jours ne se met pas a
+      jour sur toutes les pages ».
+      **Deux erreurs de mesure de ma part, avant la bonne.** (1) J ai lu
+      `.prep-metrics` en supposant n avoir qu un ecran monte : le composant
+      existe aussi dans `DepartureStep` ET `ItineraryStep`, et mon
+      premiere lecture etait en fait sur l etape 3, pas l etape 2. (2) J ai
+      cherche le rail avec `role="button"` alors que `DayPlateau` utilise
+      `role="tab"`, et le selecteur in-screen avec `/^J1/` alors que son
+      libelle est **« Jour 1 »**. Les deux ont produit un « controle absent »
+      qui n en etait pas un.
+      **Correction.** `activeDayOrNull(totalDays, selectedDay)` extrait dans
+      `engine/metrics.ts` : UNE decision de perimetre, **partagee** par
+      `focusedDayNumbers`, `DepartureStep` et `ItineraryStep`. Hors borne
+      (jour supprime, voyage raccourci) on retombe sur `null` — l ecran montre
+      tout plutot que de devenir vide.
+      **Mesure apres, meme session.** Étape 3 : `Tout` = À vérifier / À
+      vérifier / **16 h 09 min** ; `J1` = **55,1 km / 5 096 m / 15 h 09 min** ;
+      `J2` = À vérifier / À vérifier / **1 h**. **15 h 09 + 1 h 00 = 16 h 09.**
+      La selection **survit au changement d etape** : revenue en `Preparation`,
+      `J2` affiche toujours 1 h. Le rail bas et le selecteur in-screen
+      donnent la meme valeur — ils alimentent le meme store.
+      **Tests.** `jour-focus-mesures.test.ts`, **16 tests** `P0.28-1`→`4`,
+      **rouge (9 echecs / 2 succes) → vert (16/16)**. Typecheck `tsc --noEmit`
+      **exit 0**, suite complete **611 fichiers / 5 722 tests / 0 echec**.
+      **Sabotage preuve** : remettre le scope en dur fait rougir
+      `DepartureStep ne passe plus le scope en dur` ; rebasculer
+      `ItineraryStep` sur son filtre local fait rougir
+      `ItineraryStep utilise la MEME decision de perimetre`.
+      **Un test a ete corrige, pas repasse.** `P0.28-2` comparait jour et
+      voyage sur la fixture par defaut, ou les deux sont « a verifier » :
+      il ne prouvait rien. Il porte desormais un modele **mesure**
+      (55,1 / 12,4 / 67,5 km) et verifie que le lecteur de nombres respecte le
+      **format francais** — `Number("55,1")` vaut 551, pas 55,1.
+      Preuve : `proof/P028-10-etape3-jour1.png`, `proof/P028-11-etape3-jour2.png`.
+      **Deux defauts vues sur la meme capture, pas encore traites :** le titre
+      Generated dit **« Boucle du Mont-Blanc en 2 jours »** alors que le
+      parcours mesure fait 67 km ; et la note **« 3 etapes a verifier »** est
+      **masquee par le CTA « Enregistrer mon aventure »** en bas de l etape 3.
 - [~] **P0.24** 🔴 **`/api/amenities` renvoie 0 lieu sur le corridor de Chamonix : le
       fournisseur Overpass est injoignable depuis cette machine.** Ouvert le
       2026-09-28, pendant la preuve de P0.23.

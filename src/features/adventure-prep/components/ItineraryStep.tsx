@@ -6,7 +6,7 @@ import { Button } from '@/components/ui';
 import { useDayFocusStore } from '@/components/mobile-nav/dayFocusStore';
 import { fetchItineraryProposal } from '@/app/prepare/actions';
 import { activityById } from '../catalog';
-import { metricsFor } from '../engine/metrics';
+import { activeDayOrNull, metricsFor } from '../engine/metrics';
 import { daySteps, knownGaps } from '../engine/itinerary';
 import type { DayWeather } from '../engine/weather';
 import { weatherParts } from '../engine/weather';
@@ -453,7 +453,7 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
   const gaps = useMemo(() => (model ? knownGaps(model) : []), [model]);
 
   // `null` = Ensemble. Un jour hors borne retombe sur l'ensemble.
-  const activeDay = model && focusDay !== null && focusDay <= model.days ? focusDay : null;
+  const activeDay = model === null ? null : activeDayOrNull(model.days, focusDay);
   const metrics = useMemo(
     () =>
       model
