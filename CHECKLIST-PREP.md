@@ -48,7 +48,7 @@ vérifiés dans le fichier, pas sur des goûts : chaque point porte son numéro 
 > fil entre eux. C'est ce que la section P documente, ligne par ligne, avec sa preuve.
 ## Journal de progression — mis à jour à chaque lot
 
-**Comptage honnete au 2026-09-28, recompté par `grep` sur les cases (34 faits · 8 partiels · 178 restants = 219 items) :** 4 **dements** (P0.10, P0.14, P0.20, et la course `Promise.race` de P0.24 retirée après mesure). **LE LOT DU JOUR : P1.9 est LEVE et coché** — un fournisseur pieton reellement joignable a ete trouve *a la mesure* (`routing.openstreetmap.de`, `200` / 132 ms, OSRM a profil `routed-foot`), les 3 modes repondent sur les memes points (pieton 7,384 km / 98,5 min · velo 7,139 km / 29,8 min · voiture 8,030 km / 9,1 min), et les sommets sont refuses **par la mesure** (`503 off_network`). 14 tests `P019-01`→`P019-14` verts, suite **603 fichiers / 5 628 tests / 0 echec**, `tsc` **exit 0**. **P0.23 reste donc OUVERT, et ne doit pas etre decoche** : la cause s est deplacee, elle n a pas disparu. La generation lance enfin (le depart s auto-remplit par la geolocalisation, le CTA « Creer mon parcours » est actif — ce qui n etait jamais arrive), mais les **20 appels `/api/route` rendent `503 off_network`** : les points routes sont des **coordonnees de grille** (`6.9,45.91`, `6.9012,45.9123`) et le **sommet du Mont Blanc** — pas des lieux. `/api/amenities` rend, lui, **9 lieux reellement nommes** a coordonnees 7 decimales (Hotel Lyret, Hotel Mont Blanc, Restaurant Le Panoramic…), **mais en 45,3 s**. Le filtre de marchabilite, lui, **fonctionne** : il refuse une mesure qui n existe pas. **Deux defauts nouveaux mesures, a traiter :** `/api/geocode` **inverse** hors service (`503 providers_unreachable`) alors que le **direct** repond `200` et nomme Chamonix-Mont-Blanc ; et la **saisie libre vide le catalogue** d activites, alors que la consigne demandait de garder les entrees en dessous. **P0.24** reste en **partiel** sur son seul delai de 45 s, mesure a 45,3 s.
+**Comptage honnete au 2026-09-28, recompté par `grep` sur les cases (35 faits · 8 partiels · 177 restants = 220 items) :** 4 **dements** (P0.10, P0.14, P0.20, et la course `Promise.race` de P0.24 retirée après mesure). **LE LOT DU JOUR : P1.9 est LEVE et coché** — un fournisseur pieton reellement joignable a ete trouve *a la mesure* (`routing.openstreetmap.de`, `200` / 132 ms, OSRM a profil `routed-foot`), les 3 modes repondent sur les memes points (pieton 7,384 km / 98,5 min · velo 7,139 km / 29,8 min · voiture 8,030 km / 9,1 min), et les sommets sont refuses **par la mesure** (`503 off_network`). 14 tests `P019-01`→`P019-14` verts, suite **603 fichiers / 5 628 tests / 0 echec**, `tsc` **exit 0**. **P0.23 est desormais FERME** : la cause s etait deplacee vers l amont, et c est la que le correctif a ete fait. La generation lance enfin (le depart s auto-remplit par la geolocalisation, le CTA « Creer mon parcours » est actif — ce qui n etait jamais arrive), et les **20 appels `/api/route` rendaient alors `503 off_network`** : les points routes etaient des **coordonnees de grille** (`6.9,45.91`, `6.9012,45.9123`) et le **sommet du Mont Blanc** — pas des lieux. **Corrige depuis** : le generateur produit des lieux reels, et la meme generation rend aujourd hui **23 × `200`** et **0** `off_network` (preuve 9 ci-dessous). `/api/amenities` rend, lui, **9 lieux reellement nommes** a coordonnees 7 decimales (Hotel Lyret, Hotel Mont Blanc, Restaurant Le Panoramic…), **mais en 45,3 s**. Le filtre de marchabilite, lui, **fonctionne** : il refuse une mesure qui n existe pas. **Deux defauts nouveaux mesures, a traiter :** `/api/geocode` **inverse** hors service (`503 providers_unreachable`) alors que le **direct** repond `200` et nomme Chamonix-Mont-Blanc ; et la **saisie libre vide le catalogue** d activites, alors que la consigne demandait de garder les entrees en dessous. **P0.24** reste en **partiel** sur son seul delai de 45 s, mesure a 45,3 s.
 Un item ne passe à `[x]` que sur une preuve datée — capture regardée, clic réel,
 valeur tracée à sa source, ou test rouge → vert. Jamais sur la foi du code.
 
@@ -77,7 +77,7 @@ valeur tracée à sa source, ou test rouge → vert. Jamais sur la foi du code.
 | **P0.18** | **le brief nommait 2 jours, l’écran affichait 1 jour** | ✅ **fermé** | catalogue contredisait l’IA avant la génération ; `setActivities` donne la priorité au brief · `proof/P018-03` (2 jours à l’écran), `proof/P018-05` (J1/J2 réels) · test `P0.18-F` **rouge→vert** · **5569/5569** verts (604 fichiers), tsc 0 |
 | **P0.20** | **« le pied recouvre le contenu »** | ⚠️ **démenti + correctif réel** | `bodyBottom === footerTop === 528` : **rien ne se superpose**. En revanche la langue AN9 (20 px) recouvrait **97 % des 20.6 px encore visibles** et son `blur(6px)` les rendait illisibles · masque ajouté · A/B `P020-32` / `P020-33` · **5574/5574** verts (605 fichiers), tsc 0 |
 | **P0.22** | **toutes les durées et distances de l’étape 2 étaient des valeurs voiture** | ⚠️ **corrigé, preuve écran restante** | 7 appels réels `/api/route` : **92,3 min** piéton vs **9,8 min** voiture sur les **mêmes** points · garde-fou 500 m (refuge du Goûter à 4 321 m → `503`) · **5588/5588** verts, tsc 0 |
-| **P0.23** | **la distance reelle ne s affiche pas a l ecran** | ⚠️ **toujours ouvert, la cause s est deplacee** | **P1.9 LEVE** : le `/api/route` pieton repond desormais (`200`, Chamonix->Les Houches = 7,384 km / 98,5 min). **Mais la generation echoue toujours** : les **20** appels `/api/route` de la derniere passe rendent `503 off_network`, car les points routes ne sont pas des lieux reels. `/api/amenities` renvoie bien **9 lieux reels nommes** (hotels, restaurants) a coordonnees 7 decimales, en **45,3 s**. La cause est passee de « aucun fournisseur » a « les lieux choisis ne sont pas des lieux » |
+| **P0.23** | **la distance reelle ne s affiche pas a l ecran** | ✅ **ferme — preuve ecran faite** | Clic réel étape 1 → étape 3 : **92,5 km** / **10 407 m** / **3 jours** à l’écran · `geocode` **1×200** · `route` **23×200** · `elevation` **3×200** · **0** `off_network` (contre 20) · CTA « Enregistrer mon aventure » lisible · capture `proof/D3-36-fin-generation.png` |
 
 | **P0.24** | **`/api/amenities` renvoyait 0 lieu : Overpass injoignable** | ⚠️ **repli livré, délai restant** | repli **Photon** (déjà dépendance du projet, sans clé) : `200` → **7 lieux réels**, 2 repas + 5 hôtels nommés à Chamonix / Les Houches, contre **0** avant · 9 tests AM-20→30 **rouge→vert**, **30/30** verts, tsc 0 · reste le délai de ~50 s |
 | **P0.25** | **le filtre de marchabilite echouait OUVERT : un lieu non mesure recevait une position, et chaque sonde payait 8 s** | ✅ **ferme** | `WalkReachability` a 3 etats * `keepMeasuredFrom` (ferme) sur `searchPlacesNear`, `keepWalkableFrom` (ouvert) sur l inventaire * panne memorisee 30 s * **5 tests P025-01->05, 23/23 verts** * suite **602 fichiers / 5 614 tests / 0 echec** * `tsc` **exit 0**. **La panne de fournisseur qu il suivait est desormais **LEVE par P1.9** (voir P1.9) |
@@ -88,7 +88,7 @@ valeur tracée à sa source, ou test rouge → vert. Jamais sur la foi du code.
 | — | le prompt annonçait « 1 jour » comme un fait, deux fois | ✅ **fermé** | Ni la personne ni le brief n’ayant de durée, le prompt portait `Duree : 1 jour(s)` **et** `Ce voyage dure 1 jour` — le `durationDays ?? 1` de `aiItinerary` —
 puis `« choisis »` une fois. Le modèle couvrait un jour, en proposait trois, et sa proposition partait refusée pour `journee_non_couverte`. Test **D1-06** : le prompt ne contient plus aucun jour annoncé |
 
-**En cours :** **P1.9 vient d etre leve ; le verrou s est deplace vers l amont de P0.23.** Le fournisseur de routage pietron repond enfin — c etait la cause racine bloquee depuis le debut. Ce qui reste ouvert n est plus « aucun fournisseur » mais « **les etapes generees ne sont pas des lieux reels** » : le generateur produit des coordonnees de grille, le filtre de marchabilite les refuse a juste titre, et l ecran affiche donc toujours « a verifier ». **L ordre de correction est impose par la mesure :** (1) faire produire au generateur des lieux **issus de la source reelle** `/api/amenities`, avec l affiliation demandee au dossier ; (2) sortir le **45,3 s** de `/api/amenities` du chemin critique ; (3) **ensuite seulement**, la preuve ecran de P0.23. **P0.22** reste en **partiel** : la chaine est prouvee des deux cotes, mais l ecran n a pas encore montre de duree de marche. **P0.24** reste en **partiel** sur son seul delai. **P0.19**, **P0.21**, **P0.20** restent en **partiel**.
+**En cours :** **P0.23 est FERME — la preuve ecran est faite.** Clic reel étape 1 → étape 3 : **92,5 km**, **10 407 m** de denivele, **3 jours**, `geocode` **1×200**, `route` **23×200** (contre 20 × `503`), `elevation` **3×200**, **0** `off_network`. La cause racine etait bien « les etapes generees n etaient pas des lieux reels » : le generateur produisait des coordonnees de grille, que le filtre de marchabilite refusait a juste titre. **Prochaine priorite immediate :** (1) **P0.26** — generation reelle **2 jours** avec le tiroir de duree, et non 3 par defaut ; (2) la **duree d activite estimee par journee** a la place de la duree globale 28 h 11 min ; (3) le **budget reel** ; (4) la **carte journaliere** qui ne trace que le jour affiche. Le budget et la meteo restent **honnetement absents** (« À verifier » / « Meteo indisponible ») : aucune valeur n est inventee, la meteo étant hors fenetre Open-Meteo (15 octobre 2026 > 13 octobre 2026).
 **Fermés le 2026-09-28 :** P0.18 (durée du brief respectée — le catalogue ne contredit plus l’IA), P0.15 (canal date de l’IA, de bout en bout), P0.13 (par ricochet — le badge existe enfin et porte sur la bonne cellule), P0.16 (météo échouée quand la date venait de l’IA).
 
 **Fait le 2026-09-28 (P0.10 reste, A5, P0.2) :** parcours de 3 JOURS généré
@@ -1724,7 +1724,7 @@ d'une intention : chaque ligne porte sa preuve.**
       vélo est donc mesuré en piéton : moins faux qu’en voiture, encore faux. Le
       corriger exige `travelMode` dans `ItineraryModel` (2 constructeurs + schéma de
       commit + 8 fixtures de test).
-- [ ] **P0.23** 🔴 **La distance et la durée réelles ne s’affichent JAMAIS : le
+- [x] **P0.23** ✅ **La distance et la durée réelles ne s’affichent JAMAIS : le
       générateur colle des sommets et des cours d’eau aux étapes d’une journée de
       randonnée, donc aucun tronçon n’est routable.** Ouvert le 2026-09-28 en
       pilotant P0.22. C’est le dernier obstacle à l’exigence du dossier, « calculé et
@@ -1902,6 +1902,40 @@ d'une intention : chaque ligne porte sa preuve.**
         affiche « Aucune activité du catalogue ne repond a cette description ». Or la
         consigne demandait de **garder les autres entrees en dessous**. Le message est
         honnete et propose « pars librement », mais les entrees ont disparu.
+      **PREUVE 9 — 2026-09-28, LA BOUCLE EST BOUCLÉE : LA PREUVE ÉCRAN EST FAITE.**
+      Cette preuve porte sur le **rendu**, pas sur les données — c’est exactement
+      ce qui manquait aux preuves 1 à 8, et c’est ce que la consigne exigeait
+      (« calculé et affiché la distance réelle »).
+      Clic réel depuis l’étape 1 → génération réelle → étape 3, sans aucune
+      intervention du script entre le clic et l’affichage :
+      | Mesure réelle | Valeur |
+      |---|---|
+      | Titre généré | « Boucle du Mont-Blanc en autonomie » |
+      | **Distance totale** | **92,5 km** (mesurée, pas estimée) |
+      | **Dénivelé total** | **10 407 m** |
+      | **Jours** | **3** (J1, J2, J3 réellement configurés) |
+      | `GET /api/geocode` | **1 × `200`** |
+      | `GET /api/route` | **23 × `200`** |
+      | `GET /api/elevation` | **3 × `200`** |
+      | `off_network` | **0** (contre 20 avant) |
+      | CTA final | « Enregistrer mon aventure » présent et lisible |
+      Preuve regardée : `proof/D3-36-fin-generation.png`.
+      Pilote : `qa-local/d3-gen.mjs`.
+      **Les 23 appels `/api/route` en `200` sont la preuve définitive** : le
+      `off_network` n’était pas une panne du fournisseur, c’était la réponse
+      correcte à des coordonnées de grille. Le générateur produit maintenant des
+      lieux réels, donc la mesure passe.
+      **Ce qui n’est PAS fermé par cette preuve, et le reste assumé :**
+      * le **budget** reste « À vérifier » — aucune source ne répond pour ce
+        parcours, donc **aucune somme n’est inventée**. C’est le contrat à tenir ;
+      * la **météo** est **réellement indisponible** : le parcours démarre le
+        **15 octobre 2026**, or Open-Meteo refuse toute date au-delà du **13 octobre
+        2026** (`Parameter 'start_date' is out of allowed range`). L’écran affiche
+        « Météo indisponible », un bandeau d’échec et « Réessayer ».
+        **Aucune température inventée.** C’est un 503 fournisseur assumé, pas un bug ;
+      * la **durée globale 28 h 11 min** reste affichée en en-tête alors que la
+        consigne demandait la **durée d’activité estimée de chaque journée** —
+        **c’est un écart connu, followed dans P0.26 et dans le lot d’affichage.**
 - [~] **P0.24** 🔴 **`/api/amenities` renvoie 0 lieu sur le corridor de Chamonix : le
       fournisseur Overpass est injoignable depuis cette machine.** Ouvert le
       2026-09-28, pendant la preuve de P0.23.
