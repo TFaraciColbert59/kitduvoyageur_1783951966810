@@ -22,20 +22,50 @@ import { ProviderError } from './types';
 const NIM_CHAT_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
 
 /**
- * Tier `fast` : Nemotron 3.5 Lightning 30B-A3B. Contexte 1M, structured
- * output et function calling supportes par l'endpoint.
+ * Tier `fast` ET tier `heavy` : Nemotron 3 Super 120B-A12B.
+ *
+ * CHOISI SUR MESURE, pas sur documentation (2026-09-29). Sonde directe sur
+ * `integrate.api.nvidia.com`, 30 s de budget par modele, cle de `.env.local` :
+ *
+ *   nvidia/nemotron-3.5-lightning-30b-a3b   ABORT   > 30,0 s   <-- avant
+ *   nvidia/nemotron-3-super-120b-a12b       HTTP 200    0,5 s   <-- retenu
+ *   nvidia/nemotron-3-nano-omni-30b-a3b    HTTP 200    0,5 s
+ *   nvidia/llama-3.1-nemotron-51b-instruct  HTTP 404    0,2 s
+ *   nvidia/mistral-nemo-minitron-8b-8k-inst HTTP 404    0,2 s
+ *   deepseek-ai/deepseek-v4.1-flash        ABORT   > 30,0 s
+ *
+ * `GET /v1/models` repondait en 0,2 s sur la meme sonde : l hote etait
+ * joignable et la cle valide. Le modele precedent ne rendait simplement
+ * jamais son jet de fin. Consequence mesuree dans le preparateur : 70 s
+ * d ecran fige a 0/7 phase, puis un parcours 100 % regles presente comme une
+ * generation reussie. Le timeout de 45 s masquait la panne en la faisant
+ * ressembler a un repli volontaire.
+ *
+ * Un modele Muet est un modele ABSENT : `/v1/models` ment sur ce qui est
+ * reellement deploye (deux modeles y figuraient, tous deux en 404). La seule
+ * preuve qui vaut est la reponse, et elle est ci-dessus, datee.
+ *
  * Tier `heavy` : repli sur le meme modele (cf. note de portee ci-dessus).
  */
 export const NIM_MODEL_BY_TIER: Record<AITier, string> = {
-  heavy: 'nvidia/nemotron-3.5-lightning-30b-a3b',
-  fast: 'nvidia/nemotron-3.5-lightning-30b-a3b',
+  heavy: 'nvidia/nemotron-3-super-120b-a12b',
+  fast: 'nvidia/nemotron-3-super-120b-a12b',
 };
 
 export function nvidiaModelFor(tier: AITier): string {
   return NIM_MODEL_BY_TIER[tier];
 }
 
-const TIMEOUT_MS: Record<AITier, number> = { fast: 45_000, heavy: 60_000 };
+/**
+ * Delai par tier, mesure contre l ATTENTE REELLE d une personne.
+ *
+ * 45 s etaient herites d un modele qui ne repondait pas : le plafond ne
+ * protegeait personne, il prolongeait le gel. Sur le modele mesure a 0,5 s,
+ * 20 s laisse trente fois la latence observee avant de conclure — et si le
+ * provider retombe muet, l ecran rend la main en 20 s au lieu de 45.
+ * `heavy` garde 60 s : la redaction longue est legitimement plus lente.
+ */
+const TIMEOUT_MS: Record<AITier, number> = { fast: 20_000, heavy: 60_000 };
 
 /**
  * Le raisonnement compte DANS max_tokens chez Nemotron : sans buffer, le
@@ -79,6 +109,14 @@ export const nvidiaProvider: AIProvider = {
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS[req.tier]);
+    // Le signal de l appelant prime sur notre delai interne : abandonner doit
+    // etre immediat, pas differe jusqu au timeout. On le retire dans le finally
+    // pour ne pas laisser un listener accroche a un controller qui survit.
+    const surAbandon = () => controller.abort();
+    if (req.signal) {
+      if (req.signal.aborted) controller.abort();
+      else req.signal.addEventListener('abort', surAbandon, { once: true });
+    }
 
     try {
       const res = await fetch(NIM_CHAT_URL, {
@@ -128,6 +166,7 @@ export const nvidiaProvider: AIProvider = {
       throw new ProviderError('NVIDIA NIM: echec reseau', 502);
     } finally {
       clearTimeout(timer);
+      req.signal?.removeEventListener('abort', surAbandon);
     }
   },
 };

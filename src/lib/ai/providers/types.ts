@@ -21,6 +21,19 @@ export interface AIRequest {
   cacheTtlSeconds?: number; // 0 = pas de cache (utilisé par askAI, pas le provider)
   userId?: string; // pour le quota (utilisé par askAI, pas le provider)
   plugins?: AIPluginConfig[]; // plugins OpenRouter optionnels (ex: web search)
+  /**
+   * Annulation cooperative, propagee du client jusqu a la socket.
+   *
+   * Elle manquait, et cette absence coutait deux fois. Le preparateur verifies
+   * `signal.aborted` entre deux phases, donc l utilisateur pouvait croire
+   * avoir abandonne alors que la requete continuait de courir cote serveur — et
+   * payer le full jet de tokens pour un resultat jette. Et `askAI`, teste les
+   * providers l un apres l autre, ne pouvait pas interrompre un candidat deja
+   * perdu : il fallait attendre son delai entier.
+   *
+   * Facultatif : un provider appele sans signal se comporte comme avant.
+   */
+  signal?: AbortSignal;
 }
 
 /**

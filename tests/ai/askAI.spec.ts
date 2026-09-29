@@ -1,16 +1,26 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-const { providerCompleteMock, getCachedMock, setCachedMock, consumeQuotaMock, getProviderMock } =
-  vi.hoisted(() => ({
-    providerCompleteMock: vi.fn(),
-    getCachedMock: vi.fn(async (..._args: unknown[]) => null as unknown),
-    setCachedMock: vi.fn(async () => {}),
-    consumeQuotaMock: vi.fn(async () => true),
-    getProviderMock: vi.fn(),
-  }));
+const {
+  providerCompleteMock,
+  getCachedMock,
+  setCachedMock,
+  consumeQuotaMock,
+  getProviderMock,
+  providerChainMock,
+} = vi.hoisted(() => ({
+  providerCompleteMock: vi.fn(),
+  getCachedMock: vi.fn(async (..._args: unknown[]) => null as unknown),
+  setCachedMock: vi.fn(async () => {}),
+  consumeQuotaMock: vi.fn(async () => true),
+  getProviderMock: vi.fn(),
+  // `askAI` ne consulte plus un gagnant unique : il PARCOURT la chaine, du
+  // premier contact disponible jusqu a noop. Le mock expose donc la chaine.
+  providerChainMock: vi.fn(),
+}));
 
 vi.mock('@/lib/ai/providers', () => ({
   getProvider: getProviderMock,
+  providerChain: providerChainMock,
   modelNameFor: (_provider: unknown, tier: string) =>
     tier === 'heavy' ? 'ultra-model-id' : 'nano-model-id',
   modelFor: (tier: string) => (tier === 'heavy' ? 'ultra-model-id' : 'nano-model-id'),
@@ -47,6 +57,7 @@ describe('src/lib/ai/askAI — point d\'entrée unique (port IA + registre)', ()
   beforeEach(() => {
     providerCompleteMock.mockReset().mockResolvedValue('réponse IA');
     getProviderMock.mockReset().mockReturnValue(makeProvider({}));
+    providerChainMock.mockReset().mockReturnValue([makeProvider({})]);
     getCachedMock.mockReset().mockResolvedValue(null);
     setCachedMock.mockReset();
     consumeQuotaMock.mockReset().mockResolvedValue(true);
@@ -153,10 +164,16 @@ describe('src/lib/ai/askAI — point d\'entrée unique (port IA + registre)', ()
   });
 
   it('TEST-ASK-10: provider noop (sans clé) → complete throw → fallback gracieux', async () => {
+    // noop est le DERNIER maillon : meme quand il est seul sur la chaine, son
+    // echec ne doit pas remonter vers l UI.
     getProviderMock.mockReturnValueOnce(makeProvider({
       name: 'noop',
       complete: vi.fn(async () => { throw new Error('IA indisponible'); }),
     }));
+    providerChainMock.mockReturnValueOnce([makeProvider({
+      name: 'noop',
+      complete: vi.fn(async () => { throw new Error('IA indisponible'); }),
+    })]);
 
     const result = await askAI(makeReq({ feature: 'chat-completion', tier: 'fast' }));
 

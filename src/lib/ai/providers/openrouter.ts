@@ -80,6 +80,11 @@ export const openrouterProvider: AIProvider = {
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS[req.tier]);
+    const surAbandon = () => controller.abort();
+    if (req.signal) {
+      if (req.signal.aborted) controller.abort();
+      else req.signal.addEventListener('abort', surAbandon, { once: true });
+    }
 
     // Free uniquement : refuse tout modèle payant avant l'appel réseau.
     const model = assertFreeModel(MODEL_BY_TIER[req.tier]);
@@ -122,6 +127,7 @@ export const openrouterProvider: AIProvider = {
       return content;
     } finally {
       clearTimeout(timer);
+      req.signal?.removeEventListener('abort', surAbandon);
     }
   },
 };

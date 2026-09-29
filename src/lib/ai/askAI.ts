@@ -1,10 +1,11 @@
 import 'server-only';
 import { z } from 'zod';
-import { getProvider, modelNameFor } from './providers';
+import { providerChain, modelNameFor } from './providers';
+import { raceProviders, HEDGE_MS } from './providers/providerRace';
 import { getCached, setCached } from './responseStore';
 import { consumeQuota } from './quota';
 import { getFeature } from './features/registry';
-import { ProviderError, type AIRequest, type AIResponse, type AIFailureReason } from './providers/types';
+import type { AIRequest, AIResponse, AIFailureReason } from './providers/types';
 
 /**
  * POINT D'ENTRÉE UNIQUE du système IA LKDV — SERVEUR ONLY.
@@ -74,12 +75,24 @@ export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
     spec.maxReasoningBudget,
     req.reasoningBudget ?? spec.maxReasoningBudget
   );
-  const provider = getProvider(req.tier);
+  // (4) Provider — reasoning borne par le registre (crucial pour le quota :free).
+  //
+  // La chaine n est pas seulement CONSULTEE, elle est EMPRUNTEE — et elle ne
+  // se joue plus l un apres l autre. Voir `providerRace` : un candidat lent
+  // ne se voit plus laisser tout son delai avant que le suivant demarre. Mesure
+  // du 2026-09-29 : NVIDIA repond en 4,6 s quand elle repond, mais un 503 en
+  // 200 ms l another fois — et le tout sequentielavalait alors 70 s d ecran
+  // fige. Le provider qui a repondu est celui nomme dans `AIResponse.model`,
+  // donc la provenance affichee a l utilisateur dit la verite.
+  const chaine = providerChain(req.tier).filter((provider) => provider.name !== 'noop');
+  const depart = Date.now();
+  const course = await raceProviders(chaine, { ...req, reasoningBudget }, { hedgeMs: HEDGE_MS[req.tier] });
+  const echecs = course.echecs.map((e) => e.provider + ': ' + e.raison);
 
-  try {
-    const text = await provider.complete({ ...req, reasoningBudget });
+  if (course.provider && course.text !== null) {
+    const provider = course.provider;
     const response: AIResponse = {
-      text,
+      text: course.text,
       model: modelNameFor(provider, req.tier),
       degraded: false,
       cached: false,
@@ -88,17 +101,39 @@ export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
     if (ttl > 0) {
       await setCached(req.feature, req.prompt, response, ttl);
     }
-    return response;
-  } catch (err) {
-    // (5) Fallback feature : jamais de crash vers l'UI, jamais de clé dans les erreurs.
-    console.error(
-      `[askAI] provider ${provider.name} en échec pour ${req.feature}:`,
-      err instanceof Error ? err.message : err
+    // Trace de SUCCES, symetrique de la trace d echec total plus bas. Sans
+    // elle, une generation servie par le repli et une generation servie par
+    // l IA ne laissaient pas la meme trace au bout du compte : impossible de
+    // distinguer les deux depuis le serveur. On n ecrit ni la cle, ni le
+    // prompt, ni la reponse — seulement qui a repondu, en combien de temps,
+    // et apres combien de candidats tombes.
+    console.log(
+      '[askAI] ' +
+        req.feature +
+        ' -> ' +
+        response.model +
+        ' (' +
+        provider.name +
+        ') en ' +
+        (Date.now() - depart) +
+        'ms apres ' +
+        echecs.length +
+        ' echec(s) et ' +
+        course.lances +
+        ' candidat(s) lance(s)'
     );
-    // 504 = le provider a depasse son propre delai (cf. nvidia.ts). C'est le
-    // SEUL aleas transitoire de cette liste, et donc le seul qui se retente.
-    const failureReason: AIFailureReason =
-      err instanceof ProviderError && err.status === 504 ? 'delai_depasse' : 'provider_indisponible';
-    return { ...(await spec.fallbackResponse(req)), failureReason };
+    return response;
   }
+
+  // (5) Fallback feature : jamais de crash vers l'UI, jamais de cle dans les
+  // erreurs. Toute la chaine a echoue — on rend la feature telle qu elle sait
+  // rendre, et on nomme la DERNIERE cause rencontree.
+  console.error(`[askAI] tous providers en echec pour ${req.feature} —`, echecs.join(' | '));
+  const dernier = echecs[echecs.length - 1] ?? '';
+  // 504 = le provider a depasse son propre delai (cf. nvidia.ts). C'est le
+  // SEUL aleas transitoire de cette liste, et donc le seul qui se retente.
+  const failureReason: AIFailureReason = dernier.includes('delai') || dernier.includes('504')
+    ? 'delai_depasse'
+    : 'provider_indisponible';
+  return { ...(await spec.fallbackResponse(req)), failureReason };
 }

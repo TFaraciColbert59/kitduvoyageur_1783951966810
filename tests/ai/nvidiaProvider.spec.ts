@@ -7,6 +7,7 @@ import {
   openrouterProvider,
   noopProvider,
   getProvider,
+  providerChain,
   modelNameFor,
 } from '../../src/lib/ai/providers';
 import type { AIRequest } from '../../src/lib/ai/providers/types';
@@ -60,9 +61,17 @@ describe('src/lib/ai/providers/nvidia - adapter NVIDIA NIM direct', () => {
     return JSON.parse(init.body as string) as Record<string, unknown>;
   }
 
-  it('TEST-NIM-01: le modele NIM est exact sur les deux tiers', () => {
-    expect(NIM_MODEL_BY_TIER.fast).toBe('nvidia/nemotron-3.5-lightning-30b-a3b');
-    expect(NIM_MODEL_BY_TIER.heavy).toBe('nvidia/nemotron-3.5-lightning-30b-a3b');
+  // Bake-off du 2026-09-29 contre l hote NVIDIA, 30 s de delai par modele :
+  //   nemotron-3.5-lightning-30b-a3b   ABORT >30s  <- jamais de jet de fin
+  //   nemotron-3-super-120b-a12b       HTTP 200  0,5s <- retenu
+  //   nemotron-3-nano-omni-30b-a3b    HTTP 200  0,5s
+  //   llama-3.1-nemotron-51b-*         HTTP 404
+  // Le modele configure etait donc un modele qui ne repondait pas. `GET
+  // /v1/models` repondait en 0,2 s : l hote etait joignable, la cle valide, et
+  // seul le modele etait muet.
+  it('TEST-NIM-01: le modele NIM est un modele REELLEMENT mesure, sur les deux tiers', () => {
+    expect(NIM_MODEL_BY_TIER.fast).toBe('nvidia/nemotron-3-super-120b-a12b');
+    expect(NIM_MODEL_BY_TIER.heavy).toBe('nvidia/nemotron-3-super-120b-a12b');
     expect(nvidiaModelFor('fast')).toBe(NIM_MODEL_BY_TIER.fast);
     expect(nvidiaModelFor('heavy')).toBe(NIM_MODEL_BY_TIER.heavy);
   });
@@ -194,14 +203,35 @@ describe('src/lib/ai/providers/nvidia - adapter NVIDIA NIM direct', () => {
     expect(init.signal).toBeInstanceOf(AbortSignal);
   });
 
-  it('TEST-NIM-12: getProvider priorise NVIDIA sur fast et garde OpenRouter sur heavy', () => {
+  it('TEST-NIM-12: NVIDIA passe devant sur les DEUX tiers quand les deux cles sont la', () => {
     vi.stubEnv('NVIDIA_API_KEY', FAKE_KEY);
     vi.stubEnv('OPENROUTER_API_KEY', 'sk-or-test-key');
 
+    // Ancien contrat : `heavy` etait servi par OpenRouter. Il est caduc — le
+    // contact direct evite un hop de routeur, et le routeur reste derriere
+    // comme voie de secours, ce qui est justement ce que la chaine sait faire.
     expect(getProvider('fast').name).toBe('nvidia');
-    expect(getProvider('heavy').name).toBe('openrouter');
-    // Sans argument : comportement historique preserve (OpenRouter d abord).
-    expect(getProvider().name).toBe('openrouter');
+    expect(getProvider('heavy').name).toBe('nvidia');
+    expect(getProvider().name).toBe('nvidia');
+  });
+
+  it('TEST-NIM-12b: la chaine est ordonnee, sans doublon, et se termine toujours sur noop', () => {
+    vi.stubEnv('NVIDIA_API_KEY', FAKE_KEY);
+    vi.stubEnv('OPENROUTER_API_KEY', 'sk-or-test-key');
+
+    // Les deux cles presentes : les deux contacts sont essayes, dans cet ordre,
+    // puis noop ferme la chaine. `askAI` ne peut donc jamais n avoir ou tomber.
+    expect(providerChain('fast').map((p) => p.name)).toEqual(['nvidia', 'openrouter', 'noop']);
+    expect(providerChain('heavy').map((p) => p.name)).toEqual(['nvidia', 'openrouter', 'noop']);
+
+    // Une seule cle : pas de doublon, pas de trou.
+    vi.stubEnv('OPENROUTER_API_KEY', undefined);
+    expect(providerChain('fast').map((p) => p.name)).toEqual(['nvidia', 'noop']);
+
+    // Symetrique : NVIDIA seule disparue, il reste OpenRouter puis noop.
+    vi.stubEnv('NVIDIA_API_KEY', undefined);
+    vi.stubEnv('OPENROUTER_API_KEY', 'sk-or-test-key');
+    expect(providerChain('fast').map((p) => p.name)).toEqual(['openrouter', 'noop']);
   });
 
   it('TEST-NIM-13: getProvider degrade proprement jusqu a noop', () => {
@@ -216,7 +246,7 @@ describe('src/lib/ai/providers/nvidia - adapter NVIDIA NIM direct', () => {
   });
 
   it('TEST-NIM-14: modelNameFor mappe le provider sur le vrai identifiant de modele', () => {
-    expect(modelNameFor(nvidiaProvider, 'fast')).toBe('nvidia/nemotron-3.5-lightning-30b-a3b');
+    expect(modelNameFor(nvidiaProvider, 'fast')).toBe('nvidia/nemotron-3-super-120b-a12b');
     expect(modelNameFor(openrouterProvider, 'fast')).toMatch(/:free$/);
     expect(modelNameFor(noopProvider, 'fast')).toBe('noop');
   });
