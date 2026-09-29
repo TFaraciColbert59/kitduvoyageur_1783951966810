@@ -4,7 +4,7 @@
 Source : 32 maquettes uniques (41 fichiers, 9 doublons) analysées une à une,
 croisées avec l'intégralité des consignes écrites de la conversation.
 
-**Progression : 146 / 226 items prouvés (64,6 %) — 36 partiels · 44 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
+**Progression : 147 / 226 items prouvés (65,0 %) — 36 partiels · 43 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
 
 Légende : `[ ]` à faire · `[~]` partiellement fait · `[x]` fait et vérifié · `[!]` bloqué par une donnée absente du dépôt · `R` rectificatif d'audit
 
@@ -1789,8 +1789,22 @@ Viewport de test : **iPhone 393×852** (cible Sidestore). Le rendu desktop 1280p
 
 ### L0 — Bloquants (à traiter en premier)
 
-- [ ] **L0.1** 🔴 CTA « Vers le départ » **coupé en deux** par le scroller + la barre basse
-      (étape 2). Cause probable du « quand je clique, rien ne se passe ».
+- [x] **L0.1** ✅ **TRAITE et PROUVE, mais la piste de l item etait fausse deux fois.**
+      Le CTA n etait pas coupe par `.prep-footer` : mesure navigateur, le pied est en
+      `position: relative` (521 -> 527) et ne recouvre rien. Ce qui le rendait indistinct
+      etait la **COUPURE** : le pied etait opaque et ne laissait aucun signe de
+      continuation, donc un bloc intact traversant la ligne de coupe paraissait casse.
+      **Le vrai defaut etait un pli**, mesure a 375 **et** 393 : le bloqueur est a
+      `top 72 / bottom 95.8`, le scroller commence a 95.8, et la copie de la copie du
+      scroller tombe a `top 647.2` — **sous la coupe**, donc invisible.
+      **Correctif en place** : une langue de verre en `position: absolute` ancree a
+      `bottom: 100%` du pied, donc **hors du flux** (un pseudo-element porté par le corps
+      aurait ete un 6e item flex et son `gap` aurait ajoute 16 px — mesure : 643 -> 659),
+      plus un fondu de 32 px sur `.prep-body`. La coupe se voit, rien n est cache.
+      `pointer-events: none` : le geste traverse la langue, elle ne peut donc jamais
+      bloquer un bouton ni un scroll.
+      **Preuve** : `prep-scroll-lip-an9.test.ts` **7/7 verts**, `prep-scroll-dissolve.test.ts`,
+      `prep-scroll-lip-legibility-p020.test.ts`.
 - [x] **L0.2** **FERME le 2026-09-29 sur test a morsant.** La tuile « Duree » d un jour
       affiche desormais `perDay[].activityMin` -- la duree d activite reelle de la
       journee -- et plus l index du jour. Le correctif etait deja en place
