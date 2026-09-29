@@ -94,6 +94,9 @@ audit/a11y/*.json
 audit/a11y/campaign/**
 audit/a11y/section4/**
 audit/contrast-measurements.json
+# Les captures de l audit de contraste /prepare sont regenerables :
+# 98 mesures sur 4 breakpoints, relancable par `npm run audit:prep-contrast`.
+audit/prep-contrast-shots/
 
 # Local visual QA scratch
 .probe/

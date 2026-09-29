@@ -157,6 +157,73 @@ function writeCache(key: string, value: unknown): void {
   }
   cache.set(key, { at: Date.now(), value });
 }
+/* ------------------------------------------------------------------ */
+/* Limite de debit                                                    */
+/* ------------------------------------------------------------------ */
+
+/**
+ * `MAX_ROUTE_POINTS = 12` borne la TAILLE d une requete. Rien ne bornait le
+ * NOMBRE de requetes, et c est la le vrai risque : les trois fournisseurs sont
+ * des services publics et sans cle, partages avec tous les autres. Une journee
+ * de N etapes, regeneree apres chaque ajustement, peut faire partir des
+ * dizaines d appels en quelques secondes et epuiser un quota qui n est pas le
+ * notre. Le symptome n est pas une donnee fausse : c est une panne, et une panne
+ * se propage en `a_verifier` - donc l utilisateur voit ses distances disparaitre.
+ *
+ * D ou vient ce debit, et pourquoi ces deux nombres.
+ *
+ * La taille n est pas un quota mesure - aucun fournisseur publie de plafond
+ * exploitable - mais une borne de BON SENS, dimensionnee sur ce que le produit
+ * fait reellement. Un sejour de sept jours compte huit segments par jour, soit
+ * environ 56 troncons ; deux regenerations successives pourComparer ou
+ * ajuster, plus les retries de chaque phase, donnent une pointe de l ordre de
+ * 120. En dessous, un utilisateur voit ses distances DISPARAITRE alors que rien
+ * ne le justifie : le limiteur prot gerait le service public, il ne doit
+ * jamais servir d excuse pour perdre une mesure.
+ *
+ *   - `RATE_BURST = 120` : deux itineraires complets a regenerer d un trait.
+ *   - `RATE_REFILL_PER_SEC = 20` : de quoi soutenir une rafale de regeneration
+ *     apres un long inactivite, sans jamais autoriser une boucle serree.
+ *
+ * Au-dela de 120 appels sans recharge, le refus est LOCAL et nomme
+ * (`rate_limited`) : il se distingue donc d une panne de fournisseur, qui se
+ * propage en `provider_unavailable`. Un depassement se voit, il ne se confon
+ * d pas avec un itineraire impossible.
+ *
+ * Un seau a jetons, et non une fenetre glissante : il plafonne le debit MOYEN
+ * sans interdire un elan bref et legitime. Une fenetre aurait refuse une salve
+ * courte alors qu elle est parfaitement normale.
+ */
+export const RATE_BURST = 120;
+export const RATE_REFILL_PER_SEC = 20;
+
+let rateJetsons = RATE_BURST;
+let rateDernier = Date.now();
+
+/** Reserve aux tests : rend le plein budget. */
+export function __resetRouteLimiter(): void {
+  rateJetsons = RATE_BURST;
+  rateDernier = Date.now();
+}
+
+/**
+ * Un jeton, ou rien.
+ *
+ * Le temps qui s ecoule remet des jetons ; le gaspillage n en remet pas. Le
+ * refill est borne a la capacite pour qu une longue inactivite ne stocke pas un
+ * credit que personne ne pourra depenser ensuite.
+ */
+function consumeRateToken(): boolean {
+  const maintenant = Date.now();
+  const ecoule = Math.max(0, maintenant - rateDernier);
+  rateDernier = maintenant;
+  if (ecoule > 0) {
+    rateJetsons = Math.min(RATE_BURST, rateJetsons + (ecoule / 1000) * RATE_REFILL_PER_SEC);
+  }
+  if (rateJetsons < 1) return false;
+  rateJetsons -= 1;
+  return true;
+}
 
 function finite(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
@@ -414,7 +481,8 @@ export type RouteFailure =
   | 'off_network'
   | 'provider_unavailable'
   | 'points_expected'
-  | 'mode_expected';
+  | 'mode_expected'
+  | 'rate_limited';
 
 /**
  * Une reponse OSRM qui dit explicitement « pas de chemin ».
@@ -772,6 +840,9 @@ export async function routeAttempt(
   const cacheKey = `route:${mode}:${key}`;
   const cached = readCache(cacheKey) as RouteAttempt | undefined;
   if (cached !== undefined) return cached;
+  // Apres le cache, avant le reseau : une reponse qu on a deja ne coute rien,
+  // et un budget epuise doit s arreter AVANT de partir, pas en revenant.
+  if (!consumeRateToken()) return { legs: null, reason: 'rate_limited' };
   const { signal: local, done } = withTimeout(signal);
   try {
     // Le mode ne se negotiate jamais : `pieton` sur un graphe routier afficherait

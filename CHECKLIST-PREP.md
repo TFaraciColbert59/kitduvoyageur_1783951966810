@@ -4,7 +4,7 @@
 Source : 32 maquettes uniques (41 fichiers, 9 doublons) analysées une à une,
 croisées avec l'intégralité des consignes écrites de la conversation.
 
-**Progression : 112 / 225 items prouvés (49.8 %) — 37 partiels · 76 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas). Dernière preuve ajoutée : `npm run audit:prep-contrast` → 98 mesurés, 22 PASS, 76 FAIL sur `/prepare` (voir G3).
+**Progression : 114 / 225 items prouvés (50.7 %) — 37 partiels · 74 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas). Dernière preuve ajoutée : I5 — limiteur de débit de routage, 81/81 verts + 2 morsants.
 
 Légende : `[ ]` à faire · `[~]` partiellement fait · `[x]` fait et vérifié · `[!]` bloqué par une donnée absente du dépôt · `R` rectificatif d'audit
 
@@ -1597,18 +1597,49 @@ corrompue ne doit pas fabriquer une alerte qui aura l’air d’un fait.
 Rien dans E1/E2/E4/H1/H2 n'est possible sans ceci. C'est le seul chantier
 qui débloque le plus de cases à la fois.
 
-- [ ] **I1** 🔴 Moteur **branché**, mais **profil `driving`** : `routingService.ts:15`
-      `router.project-osrm.org/route/v1/driving`. L'en-tête du fichier dit honnêtement
-      « trace **routiers** ». Le piège signalé plus bas est devenu un **défaut réel**.
-      **Décision à prendre** : Valhalla (recommandé) ou BRouter, tous deux profil piéton.
+- [x] **I1** ✅ **STATUT PÉRIMÉ — le défaut décrit n'existe plus.** Même famille que H1 : le libellé
+      datait d'avant le choix des profils. **Ne pas lire cet item sur son texte.**
+      Le mot `driving` quiSubsiste dans l'URL n'est **pas** le mode demandé : c'est le format de
+      l'API OSRM. C'est le **préfixe** qui choisit le graphe, et le fichier le dit explicitement
+      (`routingService.ts:51-58` : « le chemin se lit `routed-foot/route/v1/driving/<points>` :
+      le mot `driving` est le format de l'API OSRM, pas le mode demandé »).
+      **Le routage réel aujourd'hui** (`routingService.ts:59-62, 682-686`) :
+      - `pieton` → `routing.openstreetmap.de` **prefixe `routed-foot`** (réseau piéton)
+      - `velo`   → `routing.openstreetmap.de` **préfixe `routed-bike`** (réseau cyclable)
+      - `voiture` → `router.project-osrm.org` **prefixe `driving`** — et c'est **juste** : une
+        voiture appartient au graphe routier, c'est le seul des trois modes pour lequel `driving`
+        est le bon profil. Il n'y a donc aucun mode non routier mesuré sur des routes.
+      **Preuve exécutée le 2026-09-29 — 41 tests verts** sur les 3 fichiers qui verrouillent
+      le profil : `routing-modes.test.ts` (17, dont le fichier est explicitement intitulé
+      « P0.22 — le profil de routage ne peut plus être figé sur `driving` »),
+      `p019-pedestrian-provider.test.ts` (14) et `p110-hiking-provider.test.ts` (10).
+      **Morsant** : `const profil = OSRM_PROFIL[mode]` remplacé par `const profil = undefined`
+      → **5 tests rougissent** avec le symptôme exact, `expected
+      'https://router.project-osrm.org/route/v1/driving/6.8693,45.9237;6.8652,45.8326' to
+      contain 'routed-foot'` — c'est-à-dire littéralement « une randonnée mesurée sur le graphe
+      routier ». Fichier restauré, `git diff` vide, 41/41 verts à nouveau.
+      La décision « Valhalla ou BRouter » demandée ici a été **prise et implémentée** : il y a
+      trois fournisseurs avec des rôles distincts (OSRM pour la mesure, Valhalla sur `off_network`,
+      BRouter `trekking` en dernier recours du mode piéton pour l'altitude) — voir P1.9, P1.10.
 - [~] **I2** Interface créée, mais **pas au nom ni à l'emplacement annoncés** :
       `RoutingProvider.ts` → **0 occurrence**. L'équivalent est `routingService.ts` +
       `engine/routing.ts` (types + orchestration). Aligner le checklist ou le fichier.
 - [x] **I3** Route API **côté serveur uniquement** : `src/app/api/route/`. Jamais d'appel navigateur.
 - [~] **I4** Cache présent mais **en mémoire seulement** : `new Map`, TTL 1 h, max 200
       (`routingService.ts:28`). Pas de table `route_cache` → repart à zéro à chaque redéploiement.
-- [ ] **I5** 🔴 **Aucun rate limit** : 0 occurrence de rate/limit/throttle. `MAX_ROUTE_POINTS = 12`
-      borne *une* requête, pas le débit. Le quota public OSRM peut être épuisé.
+- [x] **I5** ✅ **Débit de routage borné** : seau à jetons dans `routeAttempt`, appelé APRÈS le
+      cache et AVANT le réseau — une réponse déjà connue ne coûte rien, et un budget épuisé
+      s'arrête avant de partir, pas en revenant (`routingService.ts:845`). `RATE_BURST = 120`
+      (7 jours × 8 segments, ×2 régénérations + retries), `RATE_REFILL_PER_SEC = 20`, recharge
+      plafonnée à la capacité par `Math.min` — une longue inactivité rend un seau PLEIN, jamais
+      un crédit d'intérêt. Au-delà, le refus est **local et nommé** `rate_limited`
+      (`routingService.ts:197-226,480-485`) : il se distingue donc de `provider_unavailable`, et un
+      dépassement se voit au lieu de se déguiser en itinéraire impossible. Zéro distance approchée
+      sur refus : `legs` est `null`, `provider` est `undefined`. **Preuve** : 81/81 verts sur les 6
+      fichiers de routage. **Morsants** : (a) `if (rateJetsons < 1) return true` → 4 tests rouges,
+      symptôme exact `expected null to be 'rate_limited'` ; (b) retrait du `Math.min` → le test de
+      plafond rouge, symptôme `expected null to be 'rate_limited'`. Restauration, 0 MORSANT
+      résiduel, 81/81 rebas. `npx tsc --noEmit` : 0 erreur sur les 2 fichiers.
 - [x] **I6** Repli honnête : `null` propagé, état `a_verifier`, affichage `A_VERIFIER`
       (`metrics.ts:63,82,83`). Aucune distance approchée ne se glisse à la place d'une mesure.
 - [x] **I7** Tests : **20 cas** sur 2 fichiers — OSRM (conversion, géométrie, refus),
