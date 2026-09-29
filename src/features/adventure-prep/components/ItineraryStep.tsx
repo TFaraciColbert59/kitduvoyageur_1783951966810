@@ -525,6 +525,26 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
       // jamais atteignable, et rien de cet ecran n etait mesurable.
       // La validation reste au pied, qui appelle deja `completeStep` puis
       // `goToStep('departure')` : un seul endroit decide de la sortie.
+    } catch (err) {
+      // Une generation qui LEVE ne doit jamais laisser le store muet.
+      //
+      // Defaut mesure le 2026-09-29 : ce bloc n avait que `finally`. Le
+      // `finally` liberait le controleur — l ecran se croyait donc libre — mais
+      // rien n appelait `failGenerationRun`. Le statut restait `en_cours` :
+      // plus aucun lancement possible, aucun echec affiche, aucune sortie. Un
+      // etat terminal qui n est ni un succes ni un echec, dans lequel
+      // l utilisateur pouvait rester.
+      //
+      // Le rejeu etait en outre `UNHANDLED` : la levee sortait de `startRun`
+      // et personne ne la recevait, donc meme la console de production n aurait
+      // rien dit. Le run coupe, lui, n est pas une panne : c est un choix, et il
+      // laisse la main au run qui l a remplace.
+      if (controller.signal.aborted) return;
+      const raison = err instanceof Error ? err.message : String(err);
+      setBlocked(true);
+      useAdventurePrepStore.getState().failGenerationRun(
+        `La preparation n a pas pu aboutir : ${raison}`
+      );
     } finally {
       // La reference est liberee dans TOUS les cas : un ecran qui remonte
       // apres un run termine ne doit pas se croire encore vivant, sinon il
