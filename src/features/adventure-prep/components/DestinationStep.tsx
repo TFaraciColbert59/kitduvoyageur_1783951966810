@@ -45,6 +45,11 @@ interface BlockRowProps {
   unknown?: boolean;
   onClick?: () => void;
   disabled?: boolean;
+  /**
+   * L2.3 : la ligne ne montre plus son mot, elle garde son nom accessible.
+   * Reserve a la ligne Depart, dont la maquette ne veut que la boussole.
+   */
+  hideLabel?: boolean;
   children?: React.ReactNode;
 }
 
@@ -84,6 +89,7 @@ function BlockRow({
   unknown,
   onClick,
   disabled,
+  hideLabel,
   children,
 }: BlockRowProps) {
   const isUnknown = unknown ?? parts === null;
@@ -96,9 +102,19 @@ function BlockRow({
       aria-disabled={disabled || undefined}
     >
       <Icon name={icon} size={18} aria-hidden="true" />
-      <span className="prep-block__label" style={LABEL_STYLE}>
-        {label}
-      </span>
+      {/*
+        L2.3 — la ligne Depart ne montre QUE la boussole. Le mot ne disparait
+        pas du DOM : sans nom accessible, ce bouton n existe pas pour un lecteur
+        d ecran. Il part dans la classe reservee aux lecteurs, ce qui laisse en
+        prime la valeur du lieu dans le nom annonce (« Depart, Chamonix »).
+      */}
+      {hideLabel ? (
+        <span className="prep-visually-hidden">{label}</span>
+      ) : (
+        <span className="prep-block__label" style={LABEL_STYLE}>
+          {label}
+        </span>
+      )}
       <span className="prep-block__stack" style={STACK_STYLE}>
         <span className="prep-block__value" data-unknown={isUnknown}>
           {parts ? parts.primary : (text ?? A_VERIFIER)}
@@ -119,6 +135,11 @@ interface CellProps {
   suggested?: boolean;
   onClick?: () => void;
   disabled?: boolean;
+  /**
+   * L2.3 : la ligne ne montre plus son mot, elle garde son nom accessible.
+   * Reserve a la ligne Depart, dont la maquette ne veut que la boussole.
+   */
+  hideLabel?: boolean;
   children?: React.ReactNode;
 }
 
@@ -254,6 +275,7 @@ export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
                 label={row.label}
                 icon={row.icon}
                 parts={partsFor(row.field)}
+                hideLabel={row.field === 'origin'}
                 onClick={() => onOpenSheet('place', null, row.field)}
               />
             );

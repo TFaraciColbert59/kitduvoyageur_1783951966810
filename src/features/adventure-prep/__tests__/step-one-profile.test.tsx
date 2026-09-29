@@ -93,7 +93,7 @@ describe('S11 — les questions posees', () => {
   it('S11-07: le trajet pose depart, arrivee et duree, sans demander la forme', () => {
     const profile = stepOneProfile('trajet');
     expect(profile.rows.map((row) => row.label)).toEqual(['Départ', 'Arrivée']);
-    expect(profile.cells.map((cell) => cell.label)).toEqual(['Date', 'Temps disponible']);
+    expect(profile.cells.map((cell) => cell.label)).toEqual(['Date', 'Durée estimée']);
     expect('showRouteShape' in profile).toBe(false);
   });
 

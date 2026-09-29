@@ -56,7 +56,7 @@ describe('Écran 10 — les trois blocs', () => {
     expect(text).toContain('Départ');
     expect(text).toContain('Arrivée');
     expect(text).toContain('Date');
-    expect(text).toContain('Temps disponible');
+    expect(text).toContain('Durée estimée');
     expect(text).toContain('Participants');
   });
 
@@ -64,7 +64,7 @@ describe('Écran 10 — les trois blocs', () => {
     const html = render(fullDraft());
     expect(html).toContain('prep-cell');
     // Deux cellules séparées : le titre de la cellule durée existe seul.
-    expect(visible(html)).toContain('Temps disponible');
+    expect(visible(html)).toContain('Durée estimée');
   });
 
   it('D10-05: le lieu affiche sa commune puis son détail', () => {

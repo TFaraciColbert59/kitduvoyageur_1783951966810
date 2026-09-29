@@ -83,20 +83,20 @@ const PROFILES: Readonly<Record<StepOneProfileId, StepOneProfile>> = {
   trajet: {
     id: 'trajet',
     rows: [
-      { field: 'origin', label: 'Départ', icon: 'map-pin' },
+      { field: 'origin', label: 'Départ', icon: 'compass' },
       { field: 'destination', label: 'Arrivée', icon: 'flag' },
     ],
     singlePlace: null,
     cells: [
       { field: 'startDate', label: 'Date', icon: 'calendar' },
-      { field: 'duration', label: 'Temps disponible', icon: 'clock' },
+      { field: 'duration', label: 'Durée estimée', icon: 'clock' },
     ],
     cta: 'Créer mon parcours',
   },
   voyage: {
     id: 'voyage',
     rows: [
-      { field: 'origin', label: 'Départ', icon: 'map-pin' },
+      { field: 'origin', label: 'Départ', icon: 'compass' },
       { field: 'destination', label: 'Destination', icon: 'flag' },
     ],
     singlePlace: null,
@@ -109,7 +109,7 @@ const PROFILES: Readonly<Record<StepOneProfileId, StepOneProfile>> = {
   sejour: {
     id: 'sejour',
     rows: [
-      { field: 'origin', label: 'Lieu de départ', icon: 'map-pin' },
+      { field: 'origin', label: 'Lieu de départ', icon: 'compass' },
       { field: 'destination', label: 'Destination ou hébergement de base', icon: 'bed-double' },
     ],
     singlePlace: null,
@@ -121,7 +121,7 @@ const PROFILES: Readonly<Record<StepOneProfileId, StepOneProfile>> = {
   },
   local: {
     id: 'local',
-    rows: [{ field: 'origin', label: 'Lieu de pratique', icon: 'map-pin' }],
+    rows: [{ field: 'origin', label: 'Lieu de pratique', icon: 'compass' }],
     singlePlace: 'origin',
     cells: [
       { field: 'startDate', label: 'Date', icon: 'calendar' },
