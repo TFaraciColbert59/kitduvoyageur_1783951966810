@@ -4,7 +4,7 @@
 Source : 32 maquettes uniques (41 fichiers, 9 doublons) analysées une à une,
 croisées avec l'intégralité des consignes écrites de la conversation.
 
-**Progression : 164 / 232 items prouvés (70,7 %) — 35 partiels · 33 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
+**Progression : 171 / 232 items prouvés (73,7 %) — 35 partiels · 26 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
 
 Légende : `[ ]` à faire · `[~]` partiellement fait · `[x]` fait et vérifié · `[!]` bloqué par une donnée absente du dépôt · `R` rectificatif d'audit
 
@@ -96,6 +96,56 @@ auto-vérification verte. Suite complète : **658 fichiers, 6168 tests, 0 échec
 atteints (nav 0→4, `.prep-action` 0→1, CTA +1) et restaurés au vert.
 
 ## Journal de progression — mis à jour à chaque lot
+### Lot 2026-09-29 (matin 3) — le libelle qui cedait, et trois boutons morts
+
+**Comptage au début du lot : 164 faits / 35 partiels / 33 restants = 232 items.**
+Fermé dans ce lot : **L0.3, L1.1, L1.2, L1.3, L1.4, L2.7, L2.11**. Reste **171 / 35 / 26 = 232**.
+
+**Le bug de fond n était pas « un libellé trop long ».** C’était un libellé qui
+**recevait** la place. `flex: 1 1 auto` **sans confinement** : un élément flex qui
+rétrécit déborde de sa boîte et vient se peindre sur la valeur voisine. Le
+correctif porte donc sur le **flex**, pas sur le texte — et la règle est remontée
+dans la feuille, le `style=` inline retiré du TSX, pour qu elle soit visible de la
+recette et conforme à **P0.17**.
+
+**Un test qui passe pour une preuve sans rien prouver.** Le test L0.3-03 lisait une
+fenêtre de 200 caractères autour du `className` ; cette fenêtre attrapait la balise
+**voisine**, qui porte elle un style inline légitime. Le test autorisait donc
+exactement ce qu’il interdit. Il lit désormais la **balise d’ouverture** du
+libellé, rien d autre. C’est le genre de test qui passe au vert le jour où le
+défaut revient — et qui n’aurait rien vu venir le jour où il était déjà là.
+
+**L1.1-L1.3 : 24 lignes de CSS mort.** Aucun composant ne posait plus
+`prep-nav__icon` depuis le retrait des boutons, mais la recette restait, et les
+tests ne la regardaient pas — ils lisaient le source des composants. Une feuille de
+style peut donc réaccueillir une recette morte sans qu’un seul test ne bronche.
+Les trois items verrouillent désormais **la feuille elle-même**.
+
+**L2.11 : « garder tel quel » demande une preuve, pas une absence.** Un item qui
+demande de ne pas toucher à quelque chose doit être verrouillé, sinon le prochain
+lot le déplace. Cinq tests sur la ponctuation, la source et le silence hors étape 1.
+Et une précision qui aurait faussé la preuve : **ce qui bloque, c’est `activity`
+et `origin`** — la date et l’arrivée ne bloquent jamais, l’IA les tranche. Un
+brouillon « sans date » n’est pas bloquant : l’item se prouve sur un vrai manque.
+
+**L1.4 (commit `fbd68703`) était codé mais pas coché.** C’est exactement la dérive
+que ce document s’est donné pour mission d’empêcher. Recompté et vérifié :
+13 tests, morsant 12/12, mesure navigateur réelle en 393×852 et 320×568.
+
+**Preuve du lot** : 17 tests dans `chrome-haut-l0-l1-l2.test.ts`, morsant **17/17**
+— chaque sabotage a produit un test rouge **nommant l’offense**, restauration
+verte. 8 suites / 111 tests verts, dont les trois gardes du design system (M2
+rayons, M3 typo, P0.17 jetons). Commit `bd613d46`.
+
+**Un détail d outillage qui aurait fait perdre 17 minutes.** Sur Windows, `npx`
+est un `.cmd` que `execFileSync` refuse de lancer (`ENOENT` puis `EINVAL`) : le
+morsant échouait **17 fois sur 17** pour une raison de shell, et aurait pu être lu
+comme « les tests ne mordent pas ». Le lanceur appelle maintenant l’entrée de la
+CLI vitest avec le **nœud courant**. Second piège, plus grave : un `replace` à la
+première occurrence sabotait presque toujours la **mauvaise règle** (le même
+`flex: 0 1 auto` existe ailleurs) — trois scénarios semblaient verts alors que le
+défaut était bien présent. Le morsant travaille désormais **dans le corps de la
+règle visée**, et **refuse de continuer** si son motif est introuvable.
 ### Lot 2026-09-29 (matin 2) — le fournisseur etait muet, la chaine jamais empruntee
 
 **Comptage au debut du lot : 158 faits / 35 partiels / 33 restants = 226 items.**
@@ -2045,8 +2095,23 @@ Viewport de test : **iPhone 393×852** (cible Sidestore). Le rendu desktop 1280p
       **3** des 5 tests, dont `expected 1 to be 420` -- precisement le symptome
       d origine (« 2 h » sur le jour 2). Restauration -> 34/34. `metrics.ts` est
       identique a HEAD apres restauration (`git diff` vide). 🔴 `metrics.ts:57` — la durée affiche l'index du jour. Cf. R5.
-- [ ] **L0.3** 🔴 Ligne **Participants** : le libellé et la valeur se **chevauchent**
-      (« Participants » par-dessus « 3 personnes · 1 ad… »). Bug CSS net.
+- [x] **L0.3** 🔴 Ligne **Participants** : le libellé et la valeur se **chevauchent**
+      — **FERME le 2026-09-29 sur test a morsant.**
+      Le CSS donnait au libellé `flex: 1 1 auto` **sans confinement** : un élément
+      flex qui rétrécit déborde de sa boîte et vient se peindre sur la valeur
+      voisine. C est exactement la ligne « Participants », dont le texte passait
+      sur « 3 personnes · 1 ad… ».
+      **Correctif** : `flex: 0 1 auto` + les quatre garde-fous (`min-width: 0`,
+      `overflow: hidden`, `text-overflow: ellipsis`, `white-space: nowrap`). Le
+      libellé se raccourcit ; la valeur et les avatars gardent leur place
+      (`STACK_STYLE` reste en `flex: 0 0 auto`). La règle est ramenée dans
+      `.prep-block__label` et le `style=` inline retiré du TSX : une variable CSS
+      custom posée dans le composant sans déclaration CSS viole **P0.17**, et un
+      style inline sort de la cascade — le correctif serait invisible de la recette.
+      **Preuve** : `chrome-haut-l0-l1-l2.test.ts` L0.3-01→04.
+      **Morsant 4/4** : `flex: 1 1 auto` rétabli ; `text-overflow` retiré ;
+      `style=` remis sur la balise ; valeur passée en `1 1 auto` — rouge avec
+      l accusation à chaque fois, restauration verte.
 - [x] **L0.4** **FERME le 2026-09-29 sur test a morsant.** Un point pose ne
       recoit plus de nom invente : ni « Point 50.64° N 03.06° E », ni aucune
       adresse devinee. `pickedPlace` (`PrepSetupSheets.tsx:858`) laisse `name`
@@ -2065,10 +2130,33 @@ Viewport de test : **iPhone 393×852** (cible Sidestore). Le rendu desktop 1280p
 
 ### L1 — Barre haute (les 3 écrans)
 
-- [ ] **L1.1** Supprimer le bouton retour `‹`
-- [ ] **L1.2** Supprimer le bouton fermer `✕` — il **recouvre « En avant ! »**
-- [ ] **L1.3** Supprimer le bouton filtres `▽`
-- [ ] **L1.4** Fil d'étapes : passer en pilules liquid glass, actif visible, **sans débordement**
+- [x] **L1.1** Supprimer le bouton retour `‹` — **FERME le 2026-09-29.** Aucun glyphe
+      `‹` dans le chrome ; plus aucun composant ne pose `prep-nav__icon` ; et la
+      **recette CSS morte a été supprimée** (24 lignes, aucun lecteur). La capacité
+      reste atteignable hors flux visible (« Revenir au hub »). **Morsant 3/3** :
+      glyphe réinjecté, classe re-posée, recette retablie — rouge + accusé.
+- [x] **L1.2** Supprimer le bouton fermer `✕` — il **recouvrait « En avant ! »** —
+      **FERME le 2026-09-29.** Aucun glyphe `✕` dans le chrome, et la recette ne
+      revit pas sous un nom voisin (`prep-btn__close`, `__cross`). **Morsant 2/2**.
+- [x] **L1.3** Supprimer le bouton filtres `▽` — **FERME le 2026-09-29.** Aucun glyphe
+      `▽` dans le chrome. **Morsant 1/1.**
+      **Preuve commune** : `chrome-haut-l0-l1-l2.test.ts` L1.1-03→05, L1.2-03→05,
+      L1.3-03 ; et `chrome-rail.test.tsx` CH-CHROME-01→04 (montage réel, les DEUX
+      bandeaux). Ces items verrouillent désormais la **feuille de style**, pas
+      seulement le source des composants.
+- [x] **L1.4** Fil d'étapes : passer en pilules liquid glass, actif visible, **sans
+      débordement** — **FERME le 2026-09-29, mesuré à l'écran** (commit `fbd68703`).
+      Le rail est redevenu **trois pastilles de verre** : coins ronds, `blur(14px)
+      saturate(150%)`, bord 1 px, reflet de bord. Actif / fait / verrouillé se
+      distinguent **sans la couleur** (remplissage, épaisseur de bordure, graisse,
+      pointillés), et le glyphe séparateur `·` a été supprimé à la source dans les
+      DEUX appelants.
+      **Mesure navigateur réelle** (Playwright, `.prep-nav` en 393×852 et 320×568) :
+      `scrollWidth == clientWidth`, **aucune pastille hors bandeau** aux deux
+      largeurs. Rayon 9999 px mesuré, verre actif mesuré.
+      **Preuve** : `l1-4-pastilles-verre.test.tsx` (13 tests) ; morsant **12/12**
+      scénarios rouges. Effet de bord utile : le compteur M2.4 (rayons distincts)
+      est descendu de 15 à 14.
 - [x] **L1.5** ✅ **Une ligne, jamais tronquée.** `.prep-nav__progress` porte `white-space: nowrap` et
       aucune ellipse. La pastille est centrée et bornée par la largeur de la barre, et la barre haute garde
       ses trois colonnes et une hauteur déclarée. **Preuve** : `l1-l5-barres.test.ts` (4 assertions).
@@ -2116,7 +2204,13 @@ Viewport de test : **iPhone 393×852** (cible Sidestore). Le rendu desktop 1280p
       pas une règle — les remettre aurait été réécrire la question, pas la preuve.
       `DEFAULT_LABELS.duration` reste « temps disponible » en minuscules et alimente
       « L'IA complètera : … » ; L2.11 demande de garder ce message tel quel, il est resté.
-- [ ] **L2.7** 🔴 Scroller de jours **présent sur l'étape 1** — à réserver à l'étape 2
+- [x] **L2.7** 🔴 Scroller de jours **présent sur l'étape 1** — **FERME le 2026-09-29.**
+      Le cadre publie le rail par `usePrepDayFocusPublisher(draft, step !== 'destination')`.
+      L étape 1 n affichant aucune journée, y publier produirait un contrôle mort ;
+      les journées restent publiées pour que la sélection survive au passage.
+      **Preuve** : `chrome-haut-l0-l1-l2.test.ts` L2.7-01/02 — dont un test qui
+      refuse `step !== 'departure'`, ce qui laisserait le rail mort sur la création.
+      **Morsant 2/2** : prédicat neutralisé puis redirigé — rouge + accusé.
 - [x] **L2.8** Carte **présente dans l'étape 1** → **retirée**, `PrepMap` à 0.
 - [x] **L2.9** 🔴 Bouton « Zone » superposé au contenu de la carte — **FERME le 2026-09-29 sur morsant.**
       Il n y a plus AUCUN controle nomme « Zone » sur la carte du preparateur.
@@ -2130,7 +2224,17 @@ Viewport de test : **iPhone 393×852** (cible Sidestore). Le rendu desktop 1280p
       retirer. **Preuve** : `tiroir-carte-controles.test.ts`.
       **Morsant** : le meme renommage « Zone » fait tomber les 2 tests de structure
       (`expected ... to contain 'aria-label="Agrandir la carte"’`). Restauration ⇒ 12/12.
-- [ ] **L2.11** ✅ Message « Il manque : lieu d'arrivée » — fonctionne, garder tel quel
+- [x] **L2.11** ✅ Message « Il manque : lieu d'arrivée » — fonctionne, garder tel quel
+      — **VERROUILLE le 2026-09-29.** Le message est exact et reste tel quel ; on
+      verrouille donc sa **formulation** (espace avant les deux-points, aucun après)
+      et sa **source** : la liste vient de `stepOneMissing`, pas d'une recopie.
+      **Une précision qui compte** : ce qui bloque, ce sont `activity` et `origin`
+      — le moteur. La date et l'arrivée ne bloquent jamais, l'IA les tranche. Un
+      brouillon « sans date » n'est donc PAS bloquant, et l'item se prouve sur un
+      vrai manque. Hors étape 1, le cadre se tait ; sans manque, aucun message.
+      **Preuve** : `chrome-haut-l0-l1-l2.test.ts` L2.11-01→05.
+      **Morsant 5/5** : ponctuation anglo-saxonne, liste reécrite hors source,
+      séparateur changé, cadre parlant hors étape 1, message annoncé à vide.
 
 ### L3 — Étape 2 « Préparation »
 
