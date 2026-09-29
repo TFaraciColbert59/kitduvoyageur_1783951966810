@@ -53,27 +53,6 @@ interface BlockRowProps {
   children?: React.ReactNode;
 }
 
-/**
- * Regle anti-chevauchement, portee par le TSX.
- *
- * Le CSS donne au libelle `flex: 1 1 auto` SANS `overflow: hidden` : le texte
- * d'un element flex reduit deborde de sa boite et vient se peindre sur la
- * valeur voisine. C est exactement ce que montrait la ligne « Participants »,
- * ou « Participants » passait sur « 3 personnes · 1 ad… ».
- *
- * `adventure-prep.css` appartient a un autre agent : la correction est donc
- * posee ici, en style inline, avec une regle qui tient quelle que soit la
- * longueur du libelle. Le libelle est le seul element qui cede de la place ;
- * la valeur et les avatars gardent la leur.
- */
-const LABEL_STYLE: React.CSSProperties = {
-  flex: '0 1 auto',
-  minWidth: 0,
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-};
-
 const STACK_STYLE: React.CSSProperties = {
   flex: '0 0 auto',
   minWidth: 0,
@@ -111,7 +90,7 @@ function BlockRow({
       {hideLabel ? (
         <span className="prep-visually-hidden">{label}</span>
       ) : (
-        <span className="prep-block__label" style={LABEL_STYLE}>
+        <span className="prep-block__label">
           {label}
         </span>
       )}

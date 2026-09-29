@@ -776,30 +776,6 @@
   border-radius: var(--lkv-radius-full);
 }
 
-/* Les deux boutons lateraux sont des icones : pas de libelle visible. */
-.prep-nav__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--control-height-md);
-  height: var(--control-height-md);
-  padding: 0;
-  border-radius: var(--lkv-radius-full);
-  color: var(--lkv-text-secondary);
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-}
-
-.prep-nav__icon:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.prep-nav__icon:focus-visible {
-  outline: 2px solid var(--lkv-action);
-  outline-offset: 2px;
-}
 .prep-nav__progress {
   justify-self: center;
   max-width: 100%;
@@ -951,8 +927,14 @@ button.prep-block__row:active {
   outline-offset: -2px;
 }
 
+/* Le libelle est le SEUL element de la ligne qui cede de la place (L0.3).
+   `flex: 1 1 auto` le faisait au contraire : un element flex qui retrecit
+   deborde de sa boite et vient se peindre sur la valeur voisine — c etait
+   exactement la ligne « Participants », ou le libellé passait sur
+   « 3 personnes · 1 ad… ». `0 1 auto` + ellipsis : le libelle se raccourcit,
+   la valeur et les avatars gardent leur place. */
 .prep-block__label {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
