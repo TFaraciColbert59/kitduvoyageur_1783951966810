@@ -72,6 +72,7 @@ function initial(): GenerationState {
     error: null,
     notice: null,
     failure: null,
+    rejectedReason: null,
     outcomes: [],
   };
 }

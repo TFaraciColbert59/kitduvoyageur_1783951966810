@@ -7,6 +7,7 @@ import type {
   GenerationState,
   ItineraryStep,
 } from '../types';
+import type { RejectionReason } from './itineraryEngine';
 
 /**
  * Les sept phases reellement executees, dans l'ordre. Elles decrivent un
@@ -40,6 +41,7 @@ export function initialGeneration(): GenerationState {
     error: null,
     notice: null,
     failure: null,
+    rejectedReason: null,
     outcomes: [],
   };
 }
@@ -99,6 +101,9 @@ export function generationProgress(state: GenerationState): GenerationProgress {
 }
 
 export function startGeneration(_previous: GenerationState): GenerationState {
+  // `_previous.rejectedReason` n est PAS repris : une NOUVELLE generation n a
+  // encore rien refuse. Le garder afficherait le motif d un refus deja
+  // remplace, exactement comme une notice d enrichissement perimee.
   return {
     status: 'en_cours',
     phases: phases(),
@@ -107,6 +112,7 @@ export function startGeneration(_previous: GenerationState): GenerationState {
     error: null,
     notice: null,
     failure: null,
+    rejectedReason: null,
     outcomes: [],
   };
 }
@@ -169,6 +175,29 @@ export function setGenerationFailure(
   failure: AIFailureReason | null
 ): GenerationState {
   return state.failure === failure ? state : { ...state, failure };
+}
+
+/**
+ * La phrase du refus, stockee a cote de la notice.
+ *
+ * Elle vit dans le store pour la meme raison que `failure` : l ecran qui
+ * montre le parcours doit pouvoir nommer le refus SANS redemander la
+ * generation qui l a produit. Un parcours de regles affiche apres un
+ * retour au hub doit encore dire pourquoi il n a pas ete enrichi.
+ *
+ * `null` efface : c est le seul cas ou l information part, et il correspond
+ * a une generation qui n a rien refuse.
+ */
+export function setGenerationRejection(
+  state: GenerationState,
+  reason: RejectionReason | null | undefined
+): GenerationState {
+  // `undefined` ne peut pas survivre au typage : un `GenerationOutcome`
+  // construit ailleurs, ou sur un brouillon enregistre avant ce champ,
+  // ne doit pas laisser un trou qui se lirait comme une absence de donnee
+  // alors qu il s agit d une absence de champ.
+  const suivant = reason ?? null;
+  return state.rejectedReason === suivant ? state : { ...state, rejectedReason: suivant };
 }
 
 export function finishGeneration(state: GenerationState): GenerationState {

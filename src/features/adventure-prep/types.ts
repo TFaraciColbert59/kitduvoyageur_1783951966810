@@ -13,6 +13,9 @@
 import type { AIFailureReason } from '@/lib/ai/providers/types';
 
 import type { DayWeather } from './engine/weather';
+// `import type` : le lien est efface a la compilation, donc aucun cycle
+// d execution. `itineraryEngine.ts` importe deja `../types`.
+import type { RejectionReason } from './engine/itineraryEngine';
 
 /* ------------------------------------------------------------------ */
 /* Etapes                                                              */
@@ -426,6 +429,18 @@ export interface GenerationState {
    * cause.
    */
   failure: AIFailureReason | null;
+  /**
+   * POURQUOI le planning propose par l IA a ete REFUSE, quand elle l a ete.
+   *
+   * Valeur distincte de `failure` : celle-ci dit quel SERVICE a tombe,
+   * celle-ci dit ce que le CONTROLE de coherence a refuse. Un refus porte
+   * aucun fournisseur et aucune panne - il porte une contradiction mesuree.
+   *
+   * `null` = rien n a ete refuse. C est la valeur par defaut d une
+   * generation, et elle est PRESERVEE par une reprise de phase : le refus
+   * reste un fait passe tant qu un resultat ne l a pas remplace.
+   */
+  rejectedReason: RejectionReason | null;
   /**
    * Les verdicts REELS rendus par le moteur, phase par phase.
    *

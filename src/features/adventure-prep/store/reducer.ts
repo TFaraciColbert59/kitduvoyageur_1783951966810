@@ -32,6 +32,7 @@ import {
   resumeGeneration,
   setGenerationFailure,
   setGenerationNotice,
+  setGenerationRejection,
   setPartial,
   setPhaseOutcomes,
   startGeneration,
@@ -167,10 +168,16 @@ export const draftActions = {
    *    « en attente », pas « reussie » : cocher ici produirait exactement le
    *    mensonge que ce preparateur interdit — une coche sans travail derriere.
    *
-   * `notice` et `failure` sont conserves : c est la derniere cause REELLEMENT
-   * observee, et elle reste vraie tant qu un resultat n est pas venu la
-   * remplacer. Les effacer au clic ferait disparaitre l information au moment
-   * ou l utilisateur cherche a comprendre.
+   * `notice`, `failure` et `rejectedReason` sont conserves : ce sont les
+   * dernieres causes REELLEMENT observees, et elles restent vraies tant
+   * qu un resultat n est pas venu les remplacer. Les effacer au clic
+   * ferait disparaitre l information au moment ou l utilisateur cherche a
+   * comprendre. Concretement : `retryPhase` ne fait QUE `{ ...draft }`
+   * puis `clearPhaseOutcome` - il ne touche a aucun de ces trois champs -,
+   * et `p4-rejection.test.ts` verrouille cette preservation.
+   *
+   * Ce que la reprise PERIME, c est le VERDICT de la phase, pas la cause :
+   * un verdict decrit un etat passe, une cause est un fait.
    */
   retryPhase: (draft: AdventurePrepDraft, phase: GenerationPhaseId): AdventurePrepDraft => {
     const fallen = failedGenerationPhase(draft.generation);
@@ -254,9 +261,14 @@ export const draftActions = {
     // donc par la date plutot que par le brouillon d origine, sinon une date
     // ET une duree proposees ensemble ne s appliqueraient que l une des deux.
     const timed = suggestDurationDays(dated, outcome.suggestedDurationDays);
+    // La cause du REFUS est deposee par le meme chemin que la notice et la
+    // panne : un seul point d entree, donc l ecran ne peut pas en lire une
+    // pendant qu une autre. `?? null` explicite : un `GenerationOutcome`
+    // venus d une version anterieure ne laisse pas `undefined` derriere.
+    const reasoned = setGenerationRejection(finishGeneration(draft.generation), outcome.rejectedReason);
     const generation = setPhaseOutcomes(
       setGenerationFailure(
-        setGenerationNotice(finishGeneration(draft.generation), outcome.message),
+        setGenerationNotice(reasoned, outcome.message),
         outcome.failure
       ),
       outcome.phases

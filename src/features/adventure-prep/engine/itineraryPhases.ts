@@ -109,6 +109,49 @@ export const AI_ENRICHMENT_UNAVAILABLE =
 export const AI_ACCEPTED =
   'Parcours enrichi par l’IA, puis vérifié : les prix et les disponibilités restent à confirmer.';
 
+/**
+ * Le refus, ecrit pour la personne qui le subit.
+ *
+ * `REJECTION_MESSAGES` (`itineraryEngine.ts`) sert au VERDICT technique de
+ * la phase : c est un motif court, sans accents, destine a un lecteur de
+ * moteur. Il est prive, donc l ecran ne peut pas le reutiliser tel quel - et
+ * il ne le doit pas : « une proposition affirme un prix ou une disponibilite
+ * non verifiee » est un constat, pas une explication.
+ *
+ * Cette table est donc l unique formulation ECRAN, et elle est
+ * exhaustive : toute raison que `RejectionReason` peut prendre a une ligne.
+ * Une raison sans ligne rendrait un bandeau vide - le meme defaut qu un
+ * `?? 0`. `p4-rejection.test.ts` verrouille l exhaustivite ET la lisibilite
+ * de chacune des six, donc l ajout d une raison cassera ce test.
+ *
+ * Aucune de ces phrases ne dit « desole » ni ne accuse : le parcours de
+ * repli existe, il est affiche, et la personne doit comprendre POURQUOI elle
+ * ne l a pas ete enrichi.
+ */
+const REJECTION_ECRAN: Readonly<Record<RejectionReason, string>> = {
+  chevauchement_horaire:
+    'Deux étapes se chevauchent sur la même journée : le planning propose ne tenait pas.',
+  affirmation_non_sourcee:
+    'Le planning proposait un prix ou une disponibilité que rien ne permet de vérifier : il a été refusé.',
+  aucune_etape:
+    'Le planning proposé ne contenait aucune étape exploitable.',
+  journee_non_couverte:
+    'Au moins une journée de ton voyage n’avait reçu aucune étape.',
+  brief_non_honore:
+    'Le parcours proposé couvrait moins de jours que ceux que tu as demandés.',
+  programme_absent:
+    'Le planning ne contenait que des déplacements, aucune activité : ce n’était pas un voyage.',
+};
+
+/**
+ * La cause lisible d un refus. Jamais `null`, jamais une chaine vide :
+ * `REJECTION_ECRAN` est `Record` sur toute l union, donc une raison non
+ * listee est deja une erreur de compilation, pas un trou a l execution.
+ */
+export function rejectionMessage(reason: RejectionReason): string {
+  return REJECTION_ECRAN[reason];
+}
+
 export interface GenerationOutcome {
   model: ItineraryModel | null;
   engineId: 'rules' | 'ai';

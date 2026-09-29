@@ -6,11 +6,17 @@ import { Button } from '@/components/ui';
 import { useDayFocusStore } from '@/components/mobile-nav/dayFocusStore';
 import { fetchItineraryProposal } from '@/app/prepare/actions';
 import { activityById } from '../catalog';
-import { activeDayOrNull, metricsFor } from '../engine/metrics';
-import { daySteps, knownGaps } from '../engine/itinerary';
+import { activeDayOrNull, metricsFor, type PrepMetric } from '../engine/metrics';
+import { daySteps } from '../engine/itinerary';
 import type { DayWeather } from '../engine/weather';
 import { weatherParts } from '../engine/weather';
-import { runItineraryGeneration } from '../engine/itineraryPhases';
+import { rejectionMessage, runItineraryGeneration } from '../engine/itineraryPhases';
+import {
+  routeDataSource,
+  type DataSourceEntry,
+  type DataSourceId,
+  type RouteProvider,
+} from '../engine/provenance';
 import { browserMeasurementRunners } from '../browserMeasurements';
 import {
   anchorsOf,
@@ -33,7 +39,9 @@ import type {
   PlaceRef,
 } from '../types';
 import { PrepMap, PREP_POINT_COLORS, type PrepMapPoint } from './PrepMap';
+import { PrepDataSource } from './PrepDataSource';
 import type { PrepSheetId } from './PrepSheets';
+import { failedGenerationPhase } from '../types';
 
 export interface ItineraryStepScreenProps {
   onOpenSheet: (sheet: PrepSheetId, focusStepId?: string | null) => void;
@@ -129,7 +137,48 @@ function mapPoints(steps: readonly ItineraryStepModel[]): PrepMapPoint[] {
  * alors qu'on ne regarde qu'une partie du programme. On ne conserve que les
  * etapes localisees de ce jour, dans l'ordre.
  */
-function dayRouteCoords(steps: readonly ItineraryStepModel[]): Array<[number, number]> {
+/**
+ * H5 : la provenance de chaque mesure, une ligne par mesure affichee et
+ * reellement relevee.
+ *
+ * Fonction PURE et exportee : c est elle qui dit d ou vient chaque chiffre.
+ * Elle ne separe que deux mesures, pour une raison de contracts — la distance
+ * et la duree sortent du ROUTEUR qui a repondu, le denivele sort de la grille
+ * d altitudes, et ces trois reponses ne nomment pas leur source de la meme
+ * facon (voir `engine/provenance.ts`).
+ *
+ * `routeProvider` est la valeur lue dans la REPONSE de `/api/route`. Un
+ * refus ne nomme personne : le parametre reste alors `null` et la ligne dit
+ * « source inconnue ». Nommer le routeur PAR DEFAUT — parce que c est celui
+ * qu on a demande — serait exactement le mensonge que ce module refuse.
+ *
+ * Le denivele est laisse a `null` tant que `/api/elevation` ne renvoyant
+ * aucun fournisseur : il en rend un, et ce jour la ligne le nommera.
+ */
+export function buildProvenance(
+  metrics: readonly PrepMetric[],
+  routeProvider: RouteProvider | null,
+): DataSourceEntry[] {
+  const route = routeProvider === null ? null : routeDataSource(routeProvider);
+  return metrics.flatMap((metric): DataSourceEntry[] => {
+    // La meteo n a pas sa place ici : elle affiche par journee, dans le
+    // programme, et son rendu n est pas celui d une tuile de mesure.
+    if (metric.id !== 'distance' && metric.id !== 'denivele') return [];
+    // Une mesure sans valeur n a pas de chiffre a attribuer. La recopier
+    // afficherait deux fois « À vérifier » pour la meme absence.
+    if (metric.value === null) return [];
+    return [
+      {
+        metric: metric.id,
+        value: metric.value,
+        unit: metric.unit,
+        source: metric.id === 'distance' ? route : null,
+      },
+    ];
+  });
+}
+
+export function dayRouteCoords(steps: readonly ItineraryStepModel[]): Array<[number, number]> {
   const coords: Array<[number, number]> = [];
   for (const step of steps) {
     if (step.lat === null || step.lon === null) continue;
@@ -349,6 +398,12 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
   // allumer un indicateur dont il ne connait pas l'etat.
   const remeasuring = useAdventurePrepStore((state) => state.remeasuring ?? null);
   const [blocked, setBlocked] = useState(false);
+  // H5 : le fournisseur de la distance et de la duree. Il n est PAS le mode
+  // demande au routeur : c est la valeur que /api/route a lue dans sa
+  // reponse. Un refus (`legs === null`) ne nomme personne, donc ce state
+  // reste `null` et l ecran dit « source inconnue » plutot que de
+  // reproposer le routeur par defaut. Voir `browserMeasurements.ts`.
+  const [routeProvider, setRouteProvider] = useState<RouteProvider | null>(null);
 
   // Focus jour : source unique dans le store module, partage avec la bottom bar.
   // L'ecran n'invente donc jamais son propre « jour » : il lit ce que le rail
@@ -389,6 +444,10 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
     const controller = new AbortController();
     runAbort.current = controller;
     setBlocked(false);
+    // Un run qui recommence n herite d aucun fournisseur : sans cette remise a
+    // zero, un refus du second run afficherait encore le routeur qui avait
+    // repondu au premier. La provenance suit la MESURE, pas l historique.
+    setRouteProvider(null);
 
     const store = useAdventurePrepStore.getState();
     if (mode === 'start') store.startGenerationRun();
@@ -401,7 +460,7 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
         (draftToBuild, _signal, availablePlaces) =>
           fetchItineraryProposal(draftToBuild, availablePlaces),
         (phase) => useAdventurePrepStore.getState().markPhase(phase),
-        browserMeasurementRunners(),
+        browserMeasurementRunners(fetch, (provider) => setRouteProvider(provider)),
         {},
         resolvePlacesFor(),
         loadPlaceInventoryFor(),
@@ -456,8 +515,10 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
 
   const model = draft.itinerary;
   const generation = draft.generation;
+  // La phase a rejouer, DERIVEE de l'etat — jamais supposee, jamais
+  // une constante. C'est elle qui decide s'il y a un bouton.
+  const retryablePhase = failedGenerationPhase(generation);
   const activity = activityById(draft.activities.primary);
-  const gaps = useMemo(() => (model ? knownGaps(model) : []), [model]);
 
   // `null` = Ensemble. Un jour hors borne retombe sur l'ensemble.
   const activeDay = model === null ? null : activeDayOrNull(model.days, focusDay);
@@ -478,6 +539,21 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
         ? metricsFor(model, activeDay === null ? 'aventure' : 'jour', activeDay ?? undefined)
         : [],
     [model, activeDay]
+  );
+  // H5 : la provenance, une ligne par mesure REELLEMENT affichee et
+  // REELLEMENT relevee. Une mesure sans valeur n a pas de chiffre a
+  // attribuer, et la recopier afficherait deux fois « À vérifier ».
+  //
+  // La source vient de la reponse du reseau, jamais du mode demande :
+  // `routeProvider` est rempli par le callback de
+  // `browserMeasurementRunners`, que le routeur declenche apres avoir lu
+  // un `provider` dans le corps de sa reponse. Un refus ne le declenche
+  // pas, donc la ligne affiche « source inconnue » au lieu d inventer un
+  // fournisseur. Le denivele reste `null` : `/api/elevation` ne renvoie
+  // aujourd hui aucun nom de fournisseur, et le nommer serait inventer.
+  const provenance = useMemo(
+    () => buildProvenance(metrics, routeProvider),
+    [metrics, routeProvider]
   );
   const program = useMemo(() => {
     if (!model) return [];
@@ -506,6 +582,27 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
 
   const openStep = useCallback((stepId: string) => onOpenSheet('step', stepId), [onOpenSheet]);
 
+  /**
+   * Reprise bornee a la phase tombee (P4.4).
+   *
+   * Deux gestes, dans cet ordre. `retryPhase` re-arme la phase — elle
+   * cesse d'etre verdit « non livree » et son constat s'efface du bandeau.
+   * `startRun('resume')` fait le travail. Inverser l'ordre relancerait un
+   * parcours dont l'etat dit encore que la phase a echoue ; n'armer que
+   * laisserait un bouton qui ne lance rien.
+   *
+   * La cause (`rejectedReason`, `failure`, `notice`) n'est PAS effacee :
+   * `retryPhase` la conserve, et `startRun` ne l'ecrit qu'a la fin, quand
+   * un resultat a reellement remplace la panne. C'est exactement ce que le
+   * commentaire du reducer exige, et `p4-rejection.test.ts` le verrouille.
+   */
+  const resumeFailedPhase = useCallback(() => {
+    const fallen = failedGenerationPhase(useAdventurePrepStore.getState().draft.generation);
+    if (!fallen) return;
+    useAdventurePrepStore.getState().retryPhase(fallen.id);
+    void startRun('resume');
+  }, [startRun]);
+
   /* --- Rendering -------------------------------------------------------- */
 
   return (
@@ -524,7 +621,52 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
           </span>
         </button>
 
-        {model && generation.notice && <p className="prep-notice">{generation.notice}</p>}
+        {/* P4.6 — la cause du REFUS de l'IA, enfin lue. Le moteur la
+            produit, `applyGenerated` la conserve, et c'est ici qu'elle
+            devient une phrase. Sans elle, le bandeau annonçait un repli
+            sur les regles sans jamais nommer CE QUI avait ete refuse : la
+            personne ne pouvait ni comprendre la panne, ni savoir si
+            relancer changerait quoi que ce soit.
+
+            P4.4 — le bouton n'apparait QUE si une phase est reellement
+            rejouable. `failedGenerationPhase` ne rend une phase que si le
+            moteur l'a declaree non livree ET rejouable ; sinon
+            `retryPhase` rendrait le brouillon intact et le bouton serait
+            un appel qui ne fait rien. Aucun CTA mort, donc aucune phase a
+            designer, donc pas de bouton.
+
+            Le clic arme la phase PUIS relance : armer seul ne rejouerait
+            rien, et relancer sans armer laisserait a l'ecran un verdict de
+            panne que la reprise vient justement de lever. */}
+        {model && generation.notice !== null && (
+          <p className="prep-notice" role="status">
+            {generation.notice}
+          </p>
+        )}
+
+        {/* La cause du refus est son PROPRE bloc, jamais une suite de texte
+            collee a la notice : deux causes, deux boites, deux lectures. Elle
+            garde `role="status""` pour etre annoncee, et le meme gabarit
+            `prep-notice` pour ne pas creer une style que l agent CSS n aura
+            pas ecrit. */}
+        {generation.rejectedReason !== null && (
+          <p className="prep-notice" role="status" data-tone="warn">
+            {rejectionMessage(generation.rejectedReason)}
+          </p>
+        )}
+
+        {retryablePhase !== null && (
+          <span style={{ display: 'block', marginTop: 'var(--space-2)' }}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={resumeFailedPhase}
+              icon={<Icon name="refresh-cw" size={16} />}
+            >
+              Relancer « {retryablePhase.label} »
+            </Button>
+          </span>
+        )}
 
         {/* D1-C : ce texte ne nomme aucune distance reelle, il ne parle que
             d attendu. Pendant la generation il etait coupe par le haut et
@@ -617,6 +759,14 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
                 </div>
               ))}
             </div>
+
+            {/* H5 : d ou vient chaque chiffre affiche au-dessus. La ligne
+                ne propose ni bouton ni lien — une provenance n est pas une
+                action — et elle ne remplace jamais la tuile : elle la
+                complete. */}
+            {provenance.map((entry) => (
+              <PrepDataSource key={entry.metric} entry={entry} />
+            ))}
 
             {model.days > 1 && (
               <div className="prep-days" role="group" aria-label="Périmètre du programme">
