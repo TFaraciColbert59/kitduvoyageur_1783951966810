@@ -4,7 +4,7 @@
 Source : 32 maquettes uniques (41 fichiers, 9 doublons) analysées une à une,
 croisées avec l'intégralité des consignes écrites de la conversation.
 
-**Progression : 146 / 226 items prouvés (64,6 %) — 35 partiels · 45 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
+**Progression : 146 / 226 items prouvés (64,6 %) — 36 partiels · 44 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
 
 Légende : `[ ]` à faire · `[~]` partiellement fait · `[x]` fait et vérifié · `[!]` bloqué par une donnée absente du dépôt · `R` rectificatif d'audit
 
@@ -1923,7 +1923,17 @@ Viewport de test : **iPhone 393×852** (cible Sidestore). Le rendu desktop 1280p
       `prep-bottom-inset.test.ts` (INSET-01/02/03) et `prep-filets-verre.test.ts` passent **inchangés** —
       le comportement de reservation n'a pas bougé, donc aucune assertion n'a eu besoin d'être réécrite.
 - [x] **L5.3** Réserver une zone de sécurité réelle pour le CTA (corrige L0.1)
-    - **FAUX-POSITIF sur la cause, VRAI sur le besoin.** `.prep-footer` est en
+    - **FERME le 2026-09-29 : le besoin etait deja satisfait, le defaut etait dans la mesure.**
+      La premiere lecture concluait `padding-bottom: 0px` et demandait un
+      `env(safe-area-inset-bottom)`. Relu dans le code, `NavigationSurface.tsx`
+      pose deja `paddingBottom: var(--safe-bottom)`, et `tokens.css:375` definit
+      `--safe-bottom: env(safe-area-inset-bottom, 0px)`. Le `0px` mesure vient du
+      navigateur de test, qui n a pas d encoche : `env()` tombe alors sur son
+      repli, ce qui est le comportement correct. **Ajouter un `env()` en dur
+      aurait ete du bruit qui duplique une source unique deja verifiee.**
+      `--nav-offset` (l.383) et `--page-bottom-inset` (l.395) consomment deja ce
+      meme token. **Faux positif de mesure, pas de code.** Preuve : lecture de
+      `tokens.css` + `NavigationSurface.tsx`.
       `position: relative` (521 -> 527) : il ne recouvre rien. Ce qui coupait le CTA
       etait le **pli** du scroller (`scrollHeight 642 / clientHeight 431`,
       `maxScroll 211`), pas le footer. Le besoin, lui, est exact : `nav.lkv-nav-surface`
@@ -1985,7 +1995,23 @@ Ces points sont **hors de portée d'une capture d'écran** : à tester au doigt.
       tombe sur `une reponse avec tripId doit emmener au hub`, avec l argument
       attendu affiche. Restauration ⇒ 11/11, `DepartureStep.tsx` identique a
       HEAD. « Enregistrer mon aventure » → redirection Hub
-- [ ] **L6.6** Le sélecteur de jours se met-il à jour sur les 3 pages ? (A5)
+- [~] **L6.6** Le sélecteur de jours se met-il à jour sur les 3 pages ? (A5)
+    - **FONCTIONNEL sur les 3 ecrans, mais un double montage subsiste.** Le
+      selecteur se met bien a jour : le shell (`AdventurePrepShell.tsx:743`) monte
+      `usePrepDayFocusPublisher(draft, step !== 'destination')` et enveloppe les trois
+      ecrans, donc une seule publication couvre `destination`, `itinerary` et
+      `departure`. `ItineraryStep.tsx:430` le remonte **une seconde fois**, avec le
+      `focusable` par defaut. La garde de signature rend la liste idempotente donc
+      rien ne scintille, mais le store est ecrit deux fois et le second mount
+      repasserait `focusable` a `true` la ou le shell a decide `false`.
+      **Preuve** : `shell-day-focus.test.tsx` + `prep-day-focus.test.tsx`, **28/28 verts**
+      (SH-DAY-06 verifie `destination=false / itinerary=true / departure=true`, SH-DAY-07
+      que la selection survit au passage par l etape 1). Ces tests isolent le shell et
+      ne voient donc pas le doublon.
+      **Temoin rouge** : `day-focus-double-mount.test.ts` compte les montages et
+      **echoue** tant que le second existe. Il ne sera vert que lorsque
+      `ItineraryStep.tsx` n aura plus son propre appel. **Non corrige ici** : le
+      fichier appartient a un lot en cours, on ne le modifie pas a moitie.
 ---
 
 ## M — Beauté pure (le chantier qui change le plus de pixels)
