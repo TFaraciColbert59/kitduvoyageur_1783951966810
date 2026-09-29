@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { AutoGenTripView } from './AutoGenTripView';
 import type { Proposal } from '@/features/trips/schemas/autoGen.schema';
 import type { TripBrief } from '@/features/trips/schemas/autoGen.schema';
-import { createTripFromAutogenIntent } from '@/features/trips/server/createTripFromAutogenIntent';
+import type { CreateTripFromAutogenIntentResult } from '@/features/trips/server/createTripFromAutogenIntent';
 import { useActiveAdventure } from '@/features/hub/context/ActiveAdventureContext';
 import { Card, Spinner } from '@/components/ui';
 
@@ -40,6 +40,21 @@ function messageForStatus(status: number, retryAfterS?: number): string {
   }
 }
 
+/**
+ * La commande serveur passe par la Route Handler `/api/trips/autogen`.
+ * Un composant `'use client'` ne peut pas importer un module `server-only` :
+ * le bundle client entrainait `lib/ai/serviceClient.ts` et Next faisait
+ * tomber TOUTES les routes en 500. Le contrat de retour est inchange, donc
+ * le reste du composant n a rien a traduire.
+ */
+async function createAutogenTrip(body: unknown): Promise<CreateTripFromAutogenIntentResult> {
+  const res = await fetch('/api/trips/autogen', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return (await res.json()) as CreateTripFromAutogenIntentResult;
+}
 /**
  * Mode « Génération IA » du hub — brief → pipeline déterministe 12 couches →
  * commande serveur canonique `createTripFromAutogenIntent` : le voyage réel est
@@ -79,7 +94,7 @@ export function AutoGenTripCreateView({ initialBriefInput = '' }: AutoGenTripCre
         correlationIdRef.current = crypto.randomUUID();
       }
 
-      const res = await createTripFromAutogenIntent({
+      const res = await createAutogenTrip({
         rawInput,
         brief: tripData.brief ?? null,
         layers: tripData.layers,

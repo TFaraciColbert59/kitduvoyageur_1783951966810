@@ -4,7 +4,7 @@
 Source : 32 maquettes uniques (41 fichiers, 9 doublons) analysées une à une,
 croisées avec l'intégralité des consignes écrites de la conversation.
 
-**Progression : 193 / 234 items prouvés (82,5 %) — 21 partiels · 20 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
+**Progression : 197 / 237 items prouvés (83,1 %) — 17 partiels · 23 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
 
 
 > ### Campagne finale — les morsants que le pilote rejoue lui-meme
@@ -13,12 +13,12 @@ croisées avec l'intégralité des consignes écrites de la conversation.
 > la preuve, mais un item marque `[~]` « morsant a rejouer » ne passe `[x]` que
 > lorsque **le pilote** a vu le test rougir sur le bon nom, puis le fichier
 > restaure **octet pour octet** (`Buffer.compare === 0`), puis le retour au vert.
-> Registre des morsants dus, jour du 2026-09-29 :
+> Registre des morsants, jour du 2026-09-29 - **les deux dus sont joues, A4 et N6 sont fermes** :
 >
 > | Item | Sabotage a rejouer | Test qui doit rougir |
 > |---|---|---|
-> | A4 | reinscrire `/prepare` dans `isNoNavRoute` | `A4-03` |
-> | N6 | retirer `triggerHaptic('selection')` du swipe | `N6-08` |
+> | A4 | **JOUE** - `/prepare` reinscrit dans `isNoNavRoute` | **6/12 rouges dont `A4-03`** (la cible) |
+> | N6 | **JOUE** - `triggerHaptic('selection')` retire | **3/12 rouges dont `N6-08`** (la cible) |
 >
 > Les morsants produits par les autres agents sont cites dans leur item, avec le
 > nom du test et la restauration. Ceux de ce tableau sont les miens : je ne les
@@ -734,23 +734,16 @@ lecteur y voit un bug de rendu, pas du contenu qui continue.
       d'étapes, et le CSS `:548-637` le met en forme. **Preuve :** **43 tests** du
       périmètre navigation, tous verts.
 
-- [~] A4 Barre basse jamais masquée, jamais recouverte
-      **FIXE ET TESTE VERT le 2026-09-29 (Mendel) — fermeture en attente du
-      morsant de fin de campagne.** Le code etait deja correct :
-      `MobileNavWrapper.tsx:23-35` ne liste plus `/prepare` dans
+- [x] A4 Barre basse jamais masquée, jamais recouverte
+      **FERME le 2026-09-29 — MORSANT DE FIN DE CAMPAGNE JOUE.**
+      Le code etait deja correct : `MobileNavWrapper.tsx:23-35` ne liste plus `/prepare` dans
       `isNoNavRoute`, et `AdventurePrepScreen.tsx:23` transmet `hasBottomNav`.
-      Ce qui manquait, c etait le filet — `isNoNavRoute` n apparait dans aucun
-      test, donc une regression sur ce chemin ne rougissait rien. Mendel a
-      ecrit le filet, pas le code.
-      **Preuve** — `a4-barre-basse.test.tsx`, 8 tests en 4 groupes :
-      A4-01 `/prepare` rend la barre ; A4-02 la barre porte des onglets, pas un
-      conteneur vide ; A4-03 `/prepare` n est PAS dans les routes sans
-      navigation ; A4-05/06 `/preparer-randonnee` et `/preparer-sentier` gardent
-      leur navigation (frontiere de prefixe) ; A4-07 la reservation basse publiee
-      n est pas nue ; A4-08 l ecran du preparateur demande la reservation au
-      shell. **Rejoues par le pilote le 2026-09-29** : 24/24 verts avec N6.
-      **Morsant a rejouer en fin de campagne** (fichiers alors libres) :
-      reinscrire `/prepare` dans `isNoNavRoute` doit faire rougir A4-03.
+      **MORSANT** : `/prepare` reecrit dans `isNoNavRoute` -> `a4-barre-basse.test.tsx`
+      **6/12 rouges**, dont **A4-03: `/prepare` n est PAS dans la liste des routes sans
+      navigation** (la cible exacte), plus A4-01, A4-02, A4-05, A4-06 qui constatent tous la
+      disparition effective de la barre. Levier reellement mordant, pas cosmetique.
+      **RESTAURATION** : SHA256 `79D2EB1326AE7304A7D144E383D6582B9C95F68D79A81B1972A4A60492114BE7`
+      identique, **12/12 verts** restores.
 
 - [x] A5 Le sélecteur de jours se met à jour sur les 3 pages — **FERME le
       2026-09-29 sur test a morsant.** L item etait reste `[~]` faute de preuve
@@ -874,15 +867,19 @@ lecteur y voit un bug de rendu, pas du contenu qui continue.
       compris`, complété par `DPL-32: l'interrupteur animaux reste, lui est toujours
       pertinent` — qui prouve qu'on a retiré **le bon** interrupteur. **60/60 verts.**
 
-- [~] C9 Tiroir Quand : heure de départ + durée
-      **PARTIEL — vérifié le 2026-09-29. Un des deux termes seulement est livré.**
-      La **durée** est là : `:1147-1162`, stepper `- / n / +` avec `daysLabel`,
-      preuves `DPL-33`, `DPL-100`, `DPL-101`, `DPL-102` (**60/60 verts**).
-      **L'heure de départ n'existe nulle part** : aucun `<input type="time">` dans
-      `CalendarSheet`, et le modèle ne la porte pas — `types.ts:153-164` (`CalendarBlock`
-      = `startDate`, `startDateIsSuggested`, `durationDays`, `durationIsSuggested`,
-      `returnDate`) n'a **aucun champ heure**. Le `startTime` qui existe (`types.ts:204`)
-      est porté par l'**étape d'itinéraire**, pas par le calendrier. Item non coché.
+- [x] C9 Tiroir Quand : heure de départ + durée
+      **FERME le 2026-09-29 (Euler).** Les DEUX termes sont livres.
+      L'heure de depart existe : champ `<input type="time">` ajoute dans le tiroir Quand
+      (`PrepSetupSheets.tsx`), branche sur `actions.setCalendarStartTime`.
+      **Le blocage rouge initial etait deux erreurs de test, pas un bug** : `CalendarBlock.startTime`
+      est volontairement optionnel, et jsdom sanitise une heure invalide en `""` sans declencher
+      de `change`. Test `C9-UI-04` reecrit (repose `08:30` avant chaque valeur fausse).
+      **MORSANT** : levier `setCalendarStartTime` debranche -> rouge sur `C9-UI-02/03/04`,
+      restauration SHA256 identique (62 261 octets), re-vert.
+      **Regression detectee puis corrigee** : son `StartTimeField` posait un `background:`
+      inline, ce qui a fait rougir `tiroir-lieu-verre.test.tsx` (invariant : le tiroir ne peint
+      aucun fond) -> corrige via la classe `.note` sans toucher au CSS.
+      Preuves : `e10-actions.test.tsx` + `PrepSetupSheets.tsx`, 5 fichiers, 73/73 verts.
 
 - [x] C10 Tiroir Qui : sélecteur solo / groupes retiré
       **VÉRIFIÉ le 2026-09-29 par exécution.** `:1173-1276` (`GroupSheet`) n'expose aucun
@@ -991,17 +988,43 @@ lecteur y voit un bug de rendu, pas du contenu qui continue.
       « Réessayer » ne pouvaient donc jamais s'atteindre. Aucun mock
       ajouté. `proof/D4-22/23`, 11 tests D4.
 - [~] D5 IA seeded par le brief libre + statistiques des invités
-      **PARTIEL — vérifié le 2026-09-29.** La moitié **brief libre** est prouvée :
-      `aiItinerary.ts:164` passe `brief: draft.brief` au prompt, `:141` en dérive le
-      nombre de jours, et 10 tests l'exécutent — dont « le brief est recopié dans le
-      prompt, mot pour mot » et « la consigne de couverture est liée au nombre de jours
-      demandé ». **57/57 verts** sur les 4 fichiers du lot.
-      **La moitié « statistiques des invités » est câblée mais jamais testée** :
-      `aiItinerary.ts:43` `partySize = adults + children`, `:58-60` les lignes
-      animaux/enfants, et `- Participants : ${input.partySize}`
-      (`src/lib/ai/features/itinerary.ts:551`). Mais `rg "partySize|Participants"` dans les
-      tests ne trouve que des fixtures et deux libellés d'étape 1 — **aucun test ne prouve
-      que `draft.group` atteint le prompt**. Item non coché.
+      **PARTIEL->FERME sur le perimetre autore le 2026-09-29 (Pasteur)** : le brief libre ET
+      les statistiques des invités sont transmis, preuve par preuve.
+      `gen-brief-groupe.test.ts` passe de 8 a 13 tests :
+      - `GEN-GROUPE-6` besoins d'accessibilite transmis mot pour mot + contre-temoin liste vide
+      - `GEN-GROUPE-7` centres d'interet + contre-temoin liste vide
+      - `GEN-GROUPE-8` **causalite** : une fois laves l'effectif et la ligne enfant, les deux
+        requetes sont le meme texte - la composition ne fait bouger aucune autre ligne
+      - `GEN-GROUPE-9` contre-temoin global : brouillon nu => ni enfant, ni animal, ni besoin,
+        ni interet, et "depart/arrivee non precise" plutot qu'un lieu invente
+      - `GEN-GROUPE-10` contre-temoin documentant ce qui n'est PAS transmis
+      **MORSANT D5** : une seule expression sabotee dans `aiItinerary.ts`
+      (`accessibilityNeeds.length > 0 && false`) => **un seul** test rouge, sur le bon nom :
+      `GEN-GROUPE-6 : les besoins d accessibilite atteignent le modele, et leur absence ne se
+      comble pas` - `AssertionError: expected 'Construis un parcours realiste pour c...' to match
+      /accessibilit[ée]\s*:\s*fauteuil roula../`. Les 12 autres restent verts : levier isole.
+      `aiItinerary.ts` restaure, hash identique `97E739288435AA4A...`.
+      **Trois reserves REELLES, verifiees, non fermees** (correctif hors perimetre, route vers
+      l'agent `engine/`) : `group.knownMembers` (noms des invites) n'atteint jamais le prompt ;
+      `preferences.budgetPerPerson` n'atteint jamais le prompt (seul `budgetLevel` passe) ;
+      aucun champ "regime alimentaire / signes particuliers" n'existe dans `GroupBlock`
+      (seul `hasPets` fait office, cable et teste). Voir **D5.1**, **D5.2**, **D5.3**.
+
+- [ ] **D5.1** **`group.knownMembers` (les noms des invites) n'atteint jamais le prompt.**
+      Le champ existe dans `types.ts`, il est utilise par l'UI et par `destinationModel`,
+      mais `rg` ne le trouve dans aucun `aiItinerary.ts`. Consequence : l'IA genere « pour 4
+      personnes » sans jamais savoir **qui** part. A transmettre dans le prompt, avec un
+      contre-temoin (liste vide => rien n'est invente) et un morsant.
+- [ ] **D5.2** **`preferences.budgetPerPerson` n'atteint jamais le prompt.**
+      Seul `budgetLevel` (la pilule rat / confort / luxe) est transmis. Le budget en euros par
+      personne - que l'utilisateur saisit - est donc ignore par la generation. A porter dans le
+      prompt, avec contre-temoin et morsant. Distinct de **P0.30** (le mode `velo`), qui parle
+      de trajet et non de budget.
+- [ ] **D5.3** **Aucun champ « regime alimentaire » ni « signes particuliers » dans `GroupBlock`.**
+      `GroupBlock` = `mode`, `adults`, `children`, `hasPets`, `knownMembers`. Il n'y a rien a
+      transmettre : le champ n'existe pas. Seul `hasPets` fait office de signe particulier, et il
+      est cable et teste. Il faut ajouter le champ (schema + UI + prompt) ou acter que la
+      donnee n'est pas collectee - mais pas laisser croire qu'elle l'est.
 
 
 ### D1 / D2 — FERMÉS le 2026-09-28, mesurés sur 393×852 pendant une VRAIE génération
@@ -1884,32 +1907,24 @@ contrat reel. Suite complete : **658 fichiers / 6168 tests verts** (4 + 27 skips
       badge, jamais de nombre plausible inventé. **Preuve :** `DEPART-15: sans mesure, le
       récap reste « à vérifier » et n'invente rien`, `IT2-21` (« jamais 0 km »).
 
-- [~] H5 🔶 **Le routage nomme son fournisseur ; la météo et l'altitude ne nomment toujours personne.**
-      `h5-provenance.test.tsx` rend `PrepDataSource` **par mesure** : le mode demandé `pieton` reçoit une
-      réponse `valhalla`, ce qui prouve que le `provider` vient du **serveur** et non d'une intention
-      affichée. Et un refus **ne nomme personne** — pas de fournisseur inventé pour une mesure absente.
-      **Avancé le 2026-09-29 — la moitié en aval est livrée.** `provenance.ts` a reçu
-      `readMeasureProvider` (lit `payload.provider.id`), `elevationDataSource` /
-      `weatherDataSource`, et `metricDataSource(metric, provider)` qui **refuse d'attribuer**
-      le crédit Open-Meteo des séries de mesure à la distance. `describeDataSource` ne crédite
-      **aucun** fournisseur quand `value === null` — l'inverse exact d'un `?? 18`.
-      `h5-serie-providers.test.ts` (13 tests) : parcours route→moteur→affichage pour les deux
-      séries, refus/503 sans source, séries distinctes, mesure absente sans crédit.
-      **Morsants 3/3** : `readMeasureProvider` sans tester l'id (3 tests rouge),
-      `elevationDataSource` renommé à tort (3 tests rouge), garde de `describeDataSource
-      retirée (2 tests rouge).
-      **Ce qui reste ouvert, mesuré et nommé** : deux points hors périmètre, tous deux
-      des *raccordements*, pas des notes manquantes. (1) `browserMeasurements.ts` :
-      `readElevationResponse` déstructure `{ status, elevations }` et **jette `provider`** ;
-      le runner `elevation` renvoie un tableau de nombres sans `onProvider`, alors que le
-      runner `route` appelle bien `readRouteProvider(body)` puis `onProvider(provider) —
-      c'est exactement à copier. `browserMeasurementRunners` type le callback en
-      `RouteProviderListener` et ne le route que vers `routing` : il faut un second canal.
-      Même constat côté météo (`weatherClient.ts` ne lit aucun `provider`).
-      (2) `ItineraryStep.tsx` `buildProvenance` fait `source: metric.id === 'distance'
-      ` ? route : null` : `denivele` et `meteo` restent à `null`
-      quoi qu'il arrive. **Tant que ces deux points ne sont pas branchés, l'écran affiche
-      « source inconnue » sous une météo et un dénivelé réellement mesurés.**
+- [x] H5 🔶 **Le routage nomme son fournisseur ; la météo et l'altitude ne nomment toujours personne.**
+      **FERME le 2026-09-29 (Pasteur).** Le routage, la meteo ET l'altitude nomment
+      chacun LEUR fournisseur, ou personne.
+      **Diagnostic reel** : le canal `onMeasureProvider` de `browserMeasurementRunners` etait
+      **partage** entre `/api/elevation` (phase `trace`) et `/api/weather` (phase `weather`),
+      et les deux repondent `'open-meteo'`. Un seul etat `measureProvider` faisait donc qu'une
+      reponse meteo credirait le denivele. Les deux series sont desormais encadrees separement
+      (`measuring.current = nom` ... `finally { measuring.current = null }`), et un refus nomme
+      PERSONNE.
+      **Tests ajoutes** : H5-17 (meteo nommee seule => denivele reste "source inconnue"),
+      H5-18 (garde structurel), H5R-15 (meteo desalignee => denivele conserve) ; H5R-12/13/14
+      reecrits sur la chaine complete.
+      **MORSANT H5** : levier unique (toute annonce forcee dans le slot `denivele`) => rouge sur
+      `H5R-14 : des altitudes REELLES sans credit dans le corps restent sans source` -
+      `AssertionError: expected '...' to match /Dénivelé\s*:\s*28 m\s*·\s*source inco../`,
+      recu `...Dénivelé : 28 m · Open-Meteo (altitudes)...`. Restauration par hash `848448C1E9DE...`
+      puis retour au vert.
+      Fichiers : `ItineraryStep.tsx`, `h5-provenance.test.tsx`, `h5r-raccord-fournisseur.test.ts`.
 
 - [x] H6 Aucune donnée codée en dur dans les composants — **FERMÉ le 2026-09-29.**
       Les trois valeurs nommées ont été trouvées puis tombées, et **une amplitude inventée de
@@ -2701,28 +2716,15 @@ box-shadow:
       **Fermé le 2026-09-29 (Mendel, morsant).** La media query existe et couvre
       bien les deux branches ; le morsant la supprime et le test rougit sur le bon
       nom. Restauration `Buffer.compare = 0`.
-- [~] **N6** Swipe : retour haptique + résistance aux bords. Non vérifiable en capture → L6.1.
-      **RESOLU PAR LA MESURE, PAS PAR LA CAPTURE — 2026-09-29 (Mendel).**
-      L item disait « non verifiable en capture ». C etait vrai tant que le seul
-      regard sur un geste etait une image ; un geste se pilote. `n6-swipe.test.ts`
-      monte le hook reel en jsdom, lui envoie de vrais payloads de contact et lit
-      la chaine entiere. **La chaine n est pas simulee** : `useDaySwipe` appelle
-      `useHapticFeedback` qui retombe hors natif sur `navigator.vibrate(10)`.
-      Le test observe donc le point d arrive reel — si la chaine change de
-      forme, il echoue au lieu de continuer a passer.
-      **Resistance aux bords** (N6-03 a N6-07) : un geste qui ne changerait rien
-      n ecrit jamais dans le store ; un jour fantome revient a l ensemble, jamais
-      a un jour specimen ; sous deux journees ou sans programme, aucun geste ne
-      navigate ; un geste sur la carte, a deux doigts ou annule ne navigue pas ;
-      le defilement vertical du programme n est jamais bloque.
-      **Retour haptique** (N6-08 a N6-11) : un balayage effectif vibre UNE fois,
-      au moment du changement ; un geste refuse, interrompu, vertical ou sur la
-      carte ne vibre pas ; `prefers-reduced-motion` coupe la vibration mais PAS
-      la navigation. Chaque garde negative a son temoin positif dans le meme
-      test — sans lui, « aucune vibration » ne prouverait que le spy ne marche
-      pas. **Rejoues par le pilote le 2026-09-29** : 24/24 verts avec A4.
-      **Morsant a rejouer en fin de campagne** : retirer
-      `triggerHaptic('selection')` doit faire rougir N6-08.
+- [x] **N6** Swipe : retour haptique + résistance aux bords. Non vérifiable en capture → L6.1.
+      **FERME le 2026-09-29 — MORSANT DE FIN DE CAMPAGNE JOUE.**
+      Le hook pilote le vrai `useHapticFeedback` → `navigator.vibrate(10)`.
+      **MORSANT** : `triggerHaptic('selection')` retire de `useDaySwipe.ts:114` ->
+      `n6-swipe.test.ts` **3/12 rouges** : **N6-08 un balayage effectif vibre, une fois, au moment
+      du changement** (la cible), plus N6-09 et N6-11 qui assertent eux aussi la vibration -
+      le levier coupe reellement le retour haptique, il ne masque pas un detail.
+      **RESTAURATION** : SHA256 `DB5A3F776485026DC16D2BFD76675E9279BFF595523644122C931FF400BD038A`
+      identique, **12/12 verts** restores.
 - [ ] **N7** Chaque correctif visuel de cette section doit être **re-capturé en 393×852**
       et re-validé sur l'image, pas jugé sur le code.
 
