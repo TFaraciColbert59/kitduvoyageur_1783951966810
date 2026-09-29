@@ -83,8 +83,17 @@
      Par-dessus, un voile vert CLAIR et leger (`--prep-page-veil`) : c'est la
      teinte demandee, et il ne porte aucun texte, donc aucune exigence de
      contraste propre -- seulement de ne pas ecraser la photo. Valeurs brutes
-     uniquement ici, dans la couche de tokens. */
-  --prep-page-bg: #0b0d12;
+      uniquement ici, dans la couche de tokens.
+
+      M0.3 : `--prep-page-bg` n'est plus un noir opaque ecrit en dur. Il reprend
+      `--lkv-app-bg-fallback`, le jeton que `.lkv-app-background` pose deja pour
+      le decor de toute l'app : meme base, donc meme rendu en theme clair. La
+      photo reste la couche peinte, et elle l'estait deja : en CSS
+      `background-color` est toujours SOUS `background-image`, donc
+      `--prep-page-wash` la recouvrait. Ce que la valeur en dur cassait, c'est
+      le repli : si l'image ne se peint pas, la page devenait un trou noir,
+      la ou le reste de l'app tombe sur son fond clair. */
+  --prep-page-bg: var(--lkv-app-bg-fallback);
   --prep-page-veil: rgb(203 233 212 / 0.2);
   --prep-page-scrim: linear-gradient(
     180deg,
@@ -137,6 +146,25 @@
   /* Filet de separation d'une surface de verre : assez present pour que deux
      lignes voisines ne se fondent pas, jamais assez pour lire comme un trait. */
   --prep-row-edge: rgb(255 255 255 / 0.09);
+
+  /* --- Le tiroir Lieu, en jetons (M1.2) ---------------------------------
+     Le tiroir Lieu est la seule surface du chantier qui atteint la spec : une
+     ligne = un materiau translucide + un filet + un rayon, et la selection se
+     lit par la COULEUR, jamais par un aplat. Ses valeurs etaient ecrites regle
+     par regle, si bien qu'une nouvelle surface n'etait correcte que si
+     quelqu'un les recopiait a la main -- c'est precisement ce que M1.2
+     supprime. Ces jetons n'inventent rien : ils reprennent, a l'identique, ce
+     que le tiroir portait deja, et ilsPointent sur les materiaux de verre
+     ci-dessus plutot que de les dupliquer. */
+  --prep-drawer-row-bg: var(--prep-row-bg);
+  --prep-drawer-row-edge: var(--prep-row-edge);
+  --prep-drawer-row-radius: var(--prep-radius-card);
+  /* Le survol montait la ligne vers `--lkv-surface-elevated`, un APLAT de theme
+     (blanc en theme clair) pose sur du verre : meme famille de defaut que les
+     trous noirs P0.9, un rectangle solide coupe dans une vitre. Le survol
+     reste dans le verre et se contente de l'eclaircir. */
+  --prep-drawer-row-hover: rgb(255 255 255 / 0.12);
+  --prep-drawer-row-selected-ink: var(--lkv-action);
 
   /* Barre d actions collee en bas de feuille : le contenu qui derive passe
      sous elle en s estompant, donc la feuille garde une lisiere nette. */
@@ -217,15 +245,29 @@
      SOUS la reserve basse du corps (test DISS-04), sinon le dernier bloc
      arrive estompe a chaque fin de defilement. */
   --prep-scroll-fade-h: 32px;
-  /* --- Rayons ----------------------------------------------------------
-     La carte reprend le rayon des cards, la pastille et les puces sont
-     totalement rondes, la feuille suit l'échelle sheet, et le plein écran n'a
-     aucun rayon (il n'y a plus de surface derrière). */
-  --prep-radius-map: var(--card-radius);
-  --prep-radius-map-compact: var(--lkv-radius-md);
+  /* --- Rayons : DEUX, et deux seulement (M2.4) -----------------------
+     `--prep-radius-card` : toute surface de contenu posee sur la photo ou
+     dans une feuille de verre -- carte, tuile, champ, segment, ligne de liste.
+     `--prep-radius-pill` : tout ce qui est appuye, donc rond -- pastille de
+     filtre, puce, badge, segment interne.
+
+     Les trois autres rayons qu'annoncaient le fichier (`-map`,
+     `-map-compact`, `-sheet`, `-fullscreen`) n'etaient consommes par aucune
+     regle : zero usage dans la feuille, zero usage dans les composants. Un
+     jeton que rien ne lit ne governait rien, il divisait seulement l'espace
+     nominal disponible. La carte plein ecran n'a pas de rayon parce qu'il
+     n'y a pas de surface derriere elle : c'est une absence de surface, pas
+     un rayon a maintenir. */
+  --prep-radius-card: var(--lkv-radius-md);
   --prep-radius-pill: var(--lkv-radius-full);
+  /* EXCEPTION, et elle est imposee : free-departure.css:504 lit CE jeton dans
+     le :root de cette feuille pour son propre tiroir. Le supprimer le
+     laisserait sans definition, donc sa bordure disparaitrait en silence.
+     Il ne peut pas non plus pointer sur --prep-radius-card : le rayon sheet
+     vaut 36 px la ou le rayon card vaut 18 px, l'alias changerait les coins
+     d'une feature qui n'est pas la mienne. Il reste donc, et M2.4 est
+    Declare partiel plutot que tenu par un changement invisible ailleurs. */
   --prep-radius-sheet: var(--lkv-radius-sheet);
-  --prep-radius-fullscreen: 0px;
 
   /* --- Espacement ------------------------------------------------------
      Échelle base 4 px alignée sur --space-*, exposée sous le nom de la
@@ -282,13 +324,15 @@
   /* --- Verre -----------------------------------------------------------
      Réservé aux commandes flottantes au-dessus de la carte. `--prep-glass-
      opaque` est le repli accessibilité quand la transparence est réduite. */
-  /* Densifie pour le preparateur. --glass-bg-medium vaut rgba(16,16,16,0.34)
-     : assez sombre au-dessus de la photo (ou le voile de lisibilite est dense),
-     mais transparent au-dessus de la CARTE, qui est claire. Les controles
-     suspendus (Zone, Agrandir, Recentrer) y etaient donc du blanc sur du clair,
-     a 2.47:1 mesure. On garde la translucidite -- le fond continue de se
-     deviner -- mais on assez de matiere pour que le blanc tienne 4.5:1. */
-  --prep-glass-bg: rgba(14, 18, 16, 0.68);
+  /* M0.2 : blanc a 12 %, dans la plage 10-30 % de la spec glassmorphism.
+     L'ancien `rgba(14, 18, 16, 0.68)` etait du NOIR translucide : pose sur la
+     photo du preparateur (foret sombre, voile degrade par-dessus), du noir
+     translucide ne se lit pas comme une vitre mais comme un trou decoupe dans
+     l'image. Un verre clair laisse passer la photo et se contente de la
+     depoussiere. La densite anterieure visait le contraste des controles
+     suspendus au-dessus de la CARTE, qui est claire : ce probleme-la est
+     traite par leur propre materiau, pas en noircissant tout le verre. */
+  --prep-glass-bg: rgb(255 255 255 / 0.12);
   /* Ancien --prep-glass-rim : supprime. Il deleguait a --glass-rim, qui est une
      OMBRE et non une couleur (cf. --prep-hairline-ink plus bas) : pose dans un
      border, il le rendait invalide et la bordure disparut sans bruit. Les 24
@@ -308,6 +352,22 @@
   --prep-ink-accent: #7fc49a;
   --prep-glass-shadow: var(--glass-shadow);
   --prep-glass-opaque: var(--card-tint-solid);
+
+  /* --- Typographie : QUATRE tailles (M3.2) -----------------------------
+     La feuille consommait onze jetons de texte distincts, dont deux doublons
+     exacts, et cinq tailles ecrites en dur. On garde quatre ROLES, et
+     chacun reprend une valeur deja presente dans le design system :
+       titre  28 px  (--lkv-text-title-md)   l'etape en cours
+       corps  17 px  (--lkv-text-body)       la valeur qu on lit
+       label  15 px  (--lkv-text-body-sm)    le libelle qui nomme
+       meta   13 px  (--lkv-text-footnote)   la precision, l'unite
+     Ce qui etait a 11, 12 et 14 px rejoint le niveau meta : sur un ecran de
+     saisie dense, un ecart de 1 px entre deux niveaux d'annotation ne se lit
+     pas et ne fait que multiplier les tailles a recompter. */
+  --prep-type-title: var(--lkv-text-title-md);
+  --prep-type-body: var(--lkv-text-body);
+  --prep-type-label: var(--lkv-text-body-sm);
+  --prep-type-meta: var(--lkv-text-footnote);
 
   /* --- Les trois couches qui font le verre --------------------------------
      Une surface translucide et floue reste un rectangle : c'est la LUMIERE
@@ -571,7 +631,7 @@
 
 .prep-crumb__label,
 .prep-crumb__link {
-  font-size: var(--lkv-text-footnote);
+  font-size: var(--prep-type-meta);
   font-weight: 650;
   letter-spacing: var(--lkv-tracking-body);
   white-space: nowrap;
@@ -663,13 +723,11 @@
 .prep-nav__progress {
   justify-self: center;
   max-width: 100%;
-  font-size: var(--lkv-text-footnote);
+  font-size: var(--prep-type-meta);
   font-weight: 650;
   letter-spacing: var(--lkv-tracking-body);
   color: var(--lkv-text-secondary);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .prep-nav__progress b {
@@ -745,7 +803,7 @@
 
 .prep-title {
   margin: 0;
-  font-size: var(--lkv-text-title-md);
+  font-size: var(--prep-type-title);
   line-height: var(--lkv-line-title);
   letter-spacing: var(--lkv-tracking-title);
   font-weight: 780;
@@ -755,7 +813,7 @@
 
 .prep-help {
   margin: var(--space-2) 0 0;
-  font-size: var(--lkv-text-body-sm);
+  font-size: var(--prep-type-label);
   line-height: var(--lkv-line-body);
   color: var(--lkv-text-secondary);
   text-wrap: pretty;
@@ -763,7 +821,7 @@
 
 .prep-section-title {
   margin: 0;
-  font-size: var(--lkv-text-subheadline);
+  font-size: var(--prep-type-label);
   font-weight: 700;
   letter-spacing: var(--lkv-tracking-body);
   color: var(--lkv-text-primary);
@@ -791,7 +849,7 @@
   border: 0;
   font: inherit;
   color: inherit;
-  transition: background-color var(--motion-control-duration) var(--motion-ease-standard);
+  transition: background-color var(--prep-duration-control) var(--prep-ease-standard);
 }
 
 .prep-block__row + .prep-block__row {
@@ -818,7 +876,7 @@ button.prep-block__row:active {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--lkv-text-note);
+  font-size: var(--prep-type-meta);
   color: var(--lkv-text-secondary);
 }
 
@@ -826,7 +884,7 @@ button.prep-block__row:active {
   flex: 0 1 auto;
   min-width: 0;
   max-width: 58%;
-  font-size: var(--lkv-text-body);
+  font-size: var(--prep-type-body);
   font-weight: 620;
   color: var(--lkv-text-primary);
   text-align: right;
@@ -852,7 +910,7 @@ button.prep-block__row:active {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--lkv-text-subheadline);
+  font-size: var(--prep-type-label);
   font-weight: 700;
   letter-spacing: var(--lkv-tracking-body);
   color: var(--lkv-text-primary);
@@ -863,7 +921,7 @@ button.prep-block__row:active {
   min-height: calc(var(--control-height-lg) * 2);
   padding: var(--space-3);
   font: inherit;
-  font-size: var(--lkv-text-body);
+  font-size: var(--prep-type-body);
   line-height: var(--lkv-line-body);
   color: var(--lkv-text-primary);
   background-color: color-mix(in srgb, var(--lkv-text-primary) 5%, transparent);
@@ -871,8 +929,8 @@ button.prep-block__row:active {
   border-radius: calc(var(--card-radius) * 0.7);
   resize: vertical;
   transition:
-    background-color var(--motion-control-duration) var(--motion-ease-standard),
-    border-color var(--motion-control-duration) var(--motion-ease-standard);
+    background-color var(--prep-duration-control) var(--prep-ease-standard),
+    border-color var(--prep-duration-control) var(--prep-ease-standard);
 }
 
 .prep-brief__input::placeholder {
@@ -886,14 +944,14 @@ button.prep-block__row:active {
 }
 
 .prep-brief__hint {
-  font-size: var(--lkv-text-footnote);
+  font-size: var(--prep-type-meta);
   line-height: var(--lkv-line-body);
   color: var(--lkv-text-secondary);
 }
 
 .prep-block__hint {
   padding: 0 var(--space-4) var(--space-3);
-  font-size: var(--lkv-text-footnote);
+  font-size: var(--prep-type-meta);
   line-height: var(--lkv-line-body);
   color: var(--lkv-text-secondary);
 }
@@ -917,12 +975,10 @@ button.prep-block__row:active {
 
 .prep-block__detail {
   max-width: 100%;
-  font-size: var(--lkv-text-footnote);
+  font-size: var(--prep-type-meta);
   line-height: 1.2;
   color: var(--lkv-text-subtle);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 /* --- Bascule de forme : boucle contre aller simple ---------------------- */
@@ -947,13 +1003,13 @@ button.prep-block__row:active {
   border: 0;
   border-radius: var(--prep-radius-pill);
   font: inherit;
-  font-size: var(--lkv-text-note);
+  font-size: var(--prep-type-meta);
   font-weight: 620;
   color: var(--lkv-text-secondary);
   background-color: transparent;
   transition:
-    background-color var(--motion-control-duration) var(--motion-ease-standard),
-    color var(--motion-control-duration) var(--motion-ease-standard);
+    background-color var(--prep-duration-control) var(--prep-ease-standard),
+    color var(--prep-duration-control) var(--prep-ease-standard);
 }
 
 .prep-segmented__item[aria-pressed='true'] {
@@ -1018,18 +1074,16 @@ button.prep-block__row:active {
   align-items: center;
   gap: var(--space-2);
   min-width: 0;
-  font-size: var(--lkv-text-footnote);
+  font-size: var(--prep-type-meta);
   color: var(--lkv-text-secondary);
 }
 
 .prep-cell__value {
   min-width: 0;
-  font-size: var(--lkv-text-body);
+  font-size: var(--prep-type-body);
   font-weight: 620;
   color: var(--lkv-text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .prep-cell__value[data-unknown='true'] {
@@ -1053,7 +1107,7 @@ button.prep-block__row:active {
 .prep-cell__badge {
   align-self: flex-start;
   margin-top: var(--space-1);
-  font-size: var(--lkv-text-caption);
+  font-size: var(--prep-type-meta);
 }
 
 .prep-block__hint--wide {
@@ -1078,7 +1132,7 @@ button.prep-block__row:active {
   height: var(--prep-avatar-size);
   margin-left: var(--prep-avatar-overlap);
   border-radius: var(--prep-radius-pill);
-  font-size: var(--lkv-text-footnote);
+  font-size: var(--prep-type-meta);
   font-weight: 700;
   letter-spacing: 0.01em;
   color: var(--lkv-text-primary);
@@ -1124,7 +1178,7 @@ button.prep-block__row:active {
   align-self: flex-start;
   padding: var(--space-2) var(--space-3);
   border-radius: var(--lkv-radius-concentric);
-  font-size: var(--lkv-text-footnote);
+  font-size: var(--prep-type-meta);
   line-height: var(--lkv-line-body);
   color: var(--lkv-text-primary);
   background-color: var(--prep-missing-tone);
@@ -1133,7 +1187,7 @@ button.prep-block__row:active {
 .prep-pill--action {
   cursor: pointer;
   font: inherit;
-  font-size: var(--lkv-text-note);
+  font-size: var(--prep-type-meta);
   font-weight: 650;
   color: var(--lkv-text-primary);
   background-color: var(--card-tint-solid);
@@ -1157,7 +1211,7 @@ button.prep-block__row:active {
 
 .prep-screen--dense .prep-block__hint--wide {
   padding-block: var(--space-1) var(--space-2);
-  font-size: var(--lkv-text-footnote);
+  font-size: var(--prep-type-meta);
   line-height: 1.35;
 }
 /* --- Carte : coins 24 px, contrôles flottants en verre ----------------- */
@@ -1246,7 +1300,7 @@ button.prep-block__row:active {
   min-height: var(--control-height-md);
   padding-inline: var(--space-3);
   border-radius: 999px;
-  font-size: var(--lkv-text-footnote);
+  font-size: var(--prep-type-meta);
   font-weight: 650;
   color: var(--glass-label);
   /* Passe par le token du preparateur, pas par --glass-bg-medium direct :
@@ -1262,7 +1316,7 @@ button.prep-block__row:active {
 button.prep-map__glass {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background-color var(--motion-control-duration) var(--motion-ease-standard);
+  transition: background-color var(--prep-duration-control) var(--prep-ease-standard);
 }
 
 button.prep-map__glass:active {
@@ -1443,14 +1497,14 @@ button.prep-map__glass:active {
   min-height: var(--control-height-md);
   padding: 0 var(--space-3) 0 var(--space-2);
   border-radius: 999px;
-  font-size: var(--lkv-text-note);
+  font-size: var(--prep-type-meta);
   font-weight: 650;
   color: var(--prep-ink-accent);
   background-color: color-mix(in srgb, var(--lkv-action) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--lkv-action) 26%, transparent);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background-color var(--motion-control-duration) var(--motion-ease-standard);
+  transition: background-color var(--prep-duration-control) var(--prep-ease-standard);
 }
 
 .prep-pill:hover {
@@ -1466,9 +1520,7 @@ button.prep-map__glass:active {
    sur deux lignes et la pastille cesse d'etre une pastille. */
 .prep-pill__label {
   min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 /* Le sous-titre du titre (P0.11) : une seule ligne de mieux, meme verre que la
@@ -1478,12 +1530,12 @@ button.prep-map__glass:active {
   max-width: 100%;
   margin: var(--space-2) 0 0;
   padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-lg, 14px);
+  border-radius: var(--lkv-radius-concentric);
   background-color: var(--prep-notice-bg);
   border: 1px solid var(--prep-notice-edge);
   -webkit-backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
   backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
-  font-size: var(--lkv-text-footnote);
+  font-size: var(--prep-type-meta);
   line-height: 1.45;
   color: var(--prep-notice-ink);
 }
@@ -1508,7 +1560,7 @@ button.prep-map__glass:active {
   min-height: var(--control-height-md);
   padding-inline: var(--space-4);
   border-radius: 999px;
-  font-size: var(--lkv-text-note);
+  font-size: var(--prep-type-meta);
   font-weight: 650;
   color: var(--lkv-text-secondary);
   background-color: var(--card-tint-solid);
@@ -1516,8 +1568,8 @@ button.prep-map__glass:active {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition:
-    background-color var(--motion-control-duration) var(--motion-ease-standard),
-    color var(--motion-control-duration) var(--motion-ease-standard);
+    background-color var(--prep-duration-control) var(--prep-ease-standard),
+    color var(--prep-duration-control) var(--prep-ease-standard);
 }
 
 .prep-day[aria-pressed='true'] {
@@ -1562,19 +1614,17 @@ button.prep-map__glass:active {
 
 .prep-metric__label {
   display: block;
-  font-size: var(--lkv-text-caption);
+  font-size: var(--prep-type-meta);
   font-weight: 620;
   letter-spacing: 0.01em;
   color: var(--lkv-text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .prep-metric__value {
   display: block;
   margin-top: 2px;
-  font-size: min(var(--lkv-text-callout), 13.5cqi);
+  font-size: min(var(--prep-type-body), 13.5cqi);
   font-weight: 760;
   letter-spacing: var(--lkv-tracking-title);
   color: var(--lkv-text-primary);
@@ -1594,7 +1644,7 @@ button.prep-map__glass:active {
 .prep-metric__note {
   display: block;
   margin-top: 1px;
-  font-size: var(--lkv-text-caption-2);
+  font-size: var(--prep-type-meta);
   font-weight: 520;
   line-height: 1.25;
   color: var(--lkv-text-subtle);
@@ -1603,7 +1653,7 @@ button.prep-map__glass:active {
 .prep-metric__scope {
   display: block;
   margin-top: 1px;
-  font-size: var(--lkv-text-caption-2);
+  font-size: var(--prep-type-meta);
   color: var(--lkv-text-subtle);
 }
 
@@ -1631,7 +1681,7 @@ button.prep-map__glass:active {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  font-size: var(--lkv-text-note);
+  font-size: var(--prep-type-meta);
   color: var(--lkv-text-secondary);
 }
 
@@ -1705,7 +1755,7 @@ button.prep-map__glass:active {
 
 .prep-step__name {
   margin: 0;
-  font-size: var(--lkv-text-body);
+  font-size: var(--prep-type-body);
   font-weight: 700;
   letter-spacing: var(--lkv-tracking-body);
   color: var(--lkv-text-primary);
@@ -1713,21 +1763,21 @@ button.prep-map__glass:active {
 
 .prep-step__when {
   margin-top: 2px;
-  font-size: var(--lkv-text-note);
+  font-size: var(--prep-type-meta);
   color: var(--lkv-text-secondary);
   font-variant-numeric: tabular-nums;
 }
 
 .prep-step__reason {
   margin-top: 4px;
-  font-size: var(--lkv-text-footnote);
+  font-size: var(--prep-type-meta);
   line-height: var(--lkv-line-body);
   color: var(--lkv-text-subtle);
 }
 
 .prep-step__price {
   flex: 0 0 auto;
-  font-size: var(--lkv-text-note);
+  font-size: var(--prep-type-meta);
   font-weight: 700;
   text-align: right;
   color: var(--lkv-text-primary);
@@ -1784,14 +1834,14 @@ button.prep-map__glass:active {
   min-height: var(--control-height-md);
   padding-inline: var(--space-4);
   border-radius: 999px;
-  font-size: var(--lkv-text-note);
+  font-size: var(--prep-type-meta);
   font-weight: 650;
   color: var(--lkv-text-primary);
   background-color: var(--card-tint-solid);
   border: var(--prep-hairline) solid var(--prep-hairline-ink);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background-color var(--motion-control-duration) var(--motion-ease-standard);
+  transition: background-color var(--prep-duration-control) var(--prep-ease-standard);
 }
 
 .prep-action:hover {
@@ -1892,7 +1942,7 @@ button.prep-map__glass:active {
 .prep-footer__primary {
   flex: 1 1 auto;
   min-height: var(--prep-action-height);
-  font-size: var(--lkv-text-body);
+  font-size: var(--prep-type-body);
   font-weight: 720;
 }
 
@@ -1971,8 +2021,8 @@ button.prep-map__glass:active {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition:
-    background-color var(--motion-control-duration) var(--motion-ease-standard),
-    border-color var(--motion-control-duration) var(--motion-ease-standard);
+    background-color var(--prep-duration-control) var(--prep-ease-standard),
+    border-color var(--prep-duration-control) var(--prep-ease-standard);
 }
 
 .prep-act[aria-pressed='true'] {
@@ -2010,7 +2060,7 @@ button.prep-map__glass:active {
 
 .prep-act__name {
   min-width: 0;
-  font-size: var(--lkv-text-body);
+  font-size: var(--prep-type-body);
   font-weight: 640;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2018,7 +2068,7 @@ button.prep-map__glass:active {
 }
 
 .prep-act__hint {
-  font-size: var(--lkv-text-footnote);
+  font-size: var(--prep-type-meta);
   line-height: var(--lkv-line-body);
   color: var(--lkv-text-secondary);
   text-wrap: pretty;
@@ -2026,7 +2076,7 @@ button.prep-map__glass:active {
 
 .prep-act__meta {
   flex: 0 0 auto;
-  font-size: var(--lkv-text-footnote);
+  font-size: var(--prep-type-meta);
   color: var(--lkv-text-secondary);
   text-align: right;
 }
@@ -2041,7 +2091,7 @@ button.prep-map__glass:active {
 .prep-note {
   padding: var(--space-3) var(--space-4);
   border-radius: var(--lkv-radius-concentric);
-  font-size: var(--lkv-text-note);
+  font-size: var(--prep-type-meta);
   line-height: var(--lkv-line-body);
   /* Meme verre que le reste du preparateur. Melanger --lkv-action a
      --prep-mix-light (qui vaut #fff) produisait un aplat clair sous un texte
@@ -2332,8 +2382,8 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   align-items: center;
   gap: var(--prep-space-1);
   padding: 2px var(--prep-space-2);
-  border-radius: var(--prep-radius-pill, 999px);
-  font-size: var(--lkv-text-caption);
+  border-radius: var(--prep-radius-pill);
+  font-size: var(--prep-type-meta);
   font-weight: 650;
   border: 1px solid transparent;
 }
@@ -2366,7 +2416,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 
 /* Section title */
 .prep-section-title {
-  font-size: var(--lkv-text-footnote);
+  font-size: var(--prep-type-meta);
   font-weight: 680;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -2393,7 +2443,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   border: 1px solid color-mix(in srgb, var(--lkv-action) 22%, transparent);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background var(--motion-control-duration) var(--motion-ease-standard);
+  transition: background var(--prep-duration-control) var(--prep-ease-standard);
 }
 .prep-swap__button:hover {
   background: color-mix(in srgb, var(--lkv-action) 16%, var(--lkv-surface));
@@ -2426,18 +2476,18 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   min-width: 0;
 }
 .prep-gear-row__name {
-  font-size: var(--lkv-text-footnote);
+  font-size: var(--prep-type-meta);
   font-weight: 640;
   color: var(--lkv-text-primary);
 }
 .prep-gear-row__meta {
-  font-size: var(--lkv-text-caption);
+  font-size: var(--prep-type-meta);
   color: var(--lkv-text-subtle);
   margin-top: 1px;
 }
 .prep-gear-row__badge {
   flex-shrink: 0;
-  font-size: var(--lkv-text-caption-2);
+  font-size: var(--prep-type-meta);
   font-weight: 660;
   padding: 2px 6px;
   border-radius: 999px;
@@ -2522,7 +2572,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 .prep-block {
   background: var(--lkv-surface);
   border: var(--prep-hairline) solid var(--prep-hairline-ink);
-  border-radius: var(--lkv-radius-md, 18px);
+  border-radius: var(--lkv-radius-md);
   overflow: hidden;
   box-shadow: 0 1px 2px color-mix(in srgb, var(--lkv-text-primary) 5%, transparent);
 }
@@ -2573,13 +2623,13 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   flex-direction: column;
 }
 .prep-act-name {
-  font-size: 17px;
+  font-size: var(--prep-type-body);
   line-height: 1.3;
   font-weight: 500;
   white-space: normal;
 }
 .prep-act-hint {
-  font-size: 14px;
+  font-size: var(--prep-type-meta);
   color: var(--lkv-text-secondary);
   margin-top: 2px;
 }
@@ -2596,8 +2646,8 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   padding: 0 14px;
   background: var(--prep-row-bg);
   border: 1px solid var(--prep-row-edge);
-  border-radius: var(--lkv-radius-md);
-  font-size: 17px;
+  border-radius: var(--prep-radius-card);
+  font-size: var(--prep-type-body);
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
 }
 .prep-search input {
@@ -2628,7 +2678,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   border-radius: 22px;
   background: var(--lkv-surface);
   border: var(--prep-hairline) solid var(--prep-hairline-ink);
-  font-size: 14px;
+  font-size: var(--prep-type-meta);
   font-weight: 500;
   color: var(--lkv-text-primary);
   white-space: nowrap;
@@ -2645,7 +2695,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 .prep-footer-link {
   display: block;
   text-align: center;
-  font-size: 13px;
+  font-size: var(--prep-type-meta);
   font-weight: 600;
   /* Un bouton ne se souligne pas : le trait venait d un restyle web et
      happochait l oeil au milieu d une barre qui est, elle, du verre. */
@@ -2657,7 +2707,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   border: 0;
   width: 100%;
   -webkit-tap-highlight-color: transparent;
-  transition: opacity var(--motion-control-duration) var(--motion-ease-standard);
+  transition: opacity var(--prep-duration-control) var(--prep-ease-standard);
 }
 /* ==========================================================================
    Feuilles de reglage et selecteur de point
@@ -2681,24 +2731,24 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   grid-auto-columns: 1fr;
   gap: var(--space-1);
   padding: var(--space-1);
-  border-radius: var(--lkv-radius-md);
-  background: var(--prep-row-bg);
-  border: 1px solid var(--prep-row-edge);
+  border-radius: var(--prep-drawer-row-radius);
+  background: var(--prep-drawer-row-bg);
+  border: 1px solid var(--prep-drawer-row-edge);
 }
 .seg > button {
   min-height: var(--control-height-sm);
   padding: var(--space-1) var(--space-2);
   border: 0;
-  border-radius: calc(var(--lkv-radius-md) - 2px);
+  border-radius: calc(var(--prep-drawer-row-radius) - 2px);
   background: transparent;
   color: var(--lkv-text-secondary);
-  font-size: var(--lkv-text-body-sm);
+  font-size: var(--prep-type-label);
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
   transition:
-    background-color 120ms ease,
-    color 120ms ease;
+    background-color var(--prep-duration-control) var(--prep-ease-standard),
+    color var(--prep-duration-control) var(--prep-ease-standard);
 }
 .seg > button[aria-pressed='true'] {
   background: var(--lkv-surface-elevated);
@@ -2719,13 +2769,13 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   border: 1px solid var(--lkv-border);
   background: transparent;
   color: var(--lkv-text-body);
-  font-size: var(--lkv-text-body-sm);
+  font-size: var(--prep-type-label);
   font-family: inherit;
   cursor: pointer;
   transition:
-    background-color 120ms ease,
-    border-color 120ms ease,
-    color 120ms ease;
+    background-color var(--prep-duration-control) var(--prep-ease-standard),
+    border-color var(--prep-duration-control) var(--prep-ease-standard),
+    color var(--prep-duration-control) var(--prep-ease-standard);
 }
 .chip[aria-pressed='true'] {
   background: color-mix(in srgb, var(--lkv-action) 14%, transparent);
@@ -2748,15 +2798,15 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
-  border-radius: var(--lkv-radius-md);
-  background: var(--prep-row-bg);
+  border-radius: var(--prep-drawer-row-radius);
+  background: var(--prep-drawer-row-bg);
   width: 100%;
   font: inherit;
   color: inherit;
   text-align: left;
   cursor: pointer;
-  border: 1px solid var(--prep-row-edge);
-  transition: background-color 120ms ease;
+  border: 1px solid var(--prep-drawer-row-edge);
+  transition: background-color var(--prep-duration-control) var(--prep-ease-standard);
 }
 .li:focus-visible {
   outline: 2px solid var(--lkv-focus-ring);
@@ -2764,11 +2814,11 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 }
 
 .li:hover {
-  background: var(--lkv-surface-elevated);
+  background: var(--prep-drawer-row-hover);
 }
 .li.sel {
-  border-color: var(--lkv-action);
-  color: var(--lkv-action);
+  border-color: var(--prep-drawer-row-selected-ink);
+  color: var(--prep-drawer-row-selected-ink);
 }
 /* `rt` regroupe les deux lignes de texte d'une ligne de liste ; sans
    min-width: 0, un nom de lieu long refuse de se couper et pousse l'icone
@@ -2781,19 +2831,15 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   text-align: left;
 }
 .t1 {
-  font-size: var(--lkv-text-body);
+  font-size: var(--prep-type-body);
   font-weight: 600;
   color: var(--lkv-text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 .t2 {
-  font-size: var(--lkv-text-body-sm);
+  font-size: var(--prep-type-label);
   color: var(--lkv-text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 /* --- Champs et messages ------------------------------------------------- */
@@ -2804,12 +2850,12 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 }
 .note {
   padding: var(--space-2) var(--space-3);
-  border-radius: var(--lkv-radius-md);
-  font-size: var(--lkv-text-body-sm);
+  border-radius: var(--prep-drawer-row-radius);
+  font-size: var(--prep-type-label);
   line-height: 1.4;
   color: var(--lkv-text-secondary);
-  background: var(--prep-row-bg);
-  border: 1px solid var(--prep-row-edge);
+  background: var(--prep-drawer-row-bg);
+  border: 1px solid var(--prep-drawer-row-edge);
 }
 .note.red {
   color: var(--lkv-danger);
@@ -2818,7 +2864,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 }
 .note.neutral {
   color: var(--lkv-text-note);
-  background: var(--prep-row-bg);
+  background: var(--prep-drawer-row-bg);
 }
 
 /* --- Compteur de jours --------------------------------------------------
@@ -2832,7 +2878,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 .stepper > .n {
   min-width: 48px;
   text-align: center;
-  font-size: var(--lkv-text-headline);
+  font-size: var(--prep-type-body);
   font-weight: 700;
   color: var(--lkv-text-primary);
   font-variant-numeric: tabular-nums;
@@ -2844,11 +2890,11 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   gap: var(--space-1);
   padding: 2px var(--space-2);
   border-radius: var(--lkv-radius-full);
-  font-size: var(--lkv-text-caption);
+  font-size: var(--prep-type-meta);
   font-weight: 600;
   color: var(--lkv-text-secondary);
-  background: var(--prep-row-bg);
-  border: 1px solid var(--prep-row-edge);
+  background: var(--prep-drawer-row-bg);
+  border: 1px solid var(--prep-drawer-row-edge);
 }
 .badge.amber {
   /* Le fond ambre tres clair lavait le texte : on le melange a l'encre sombre
@@ -2876,7 +2922,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 .prep-picker {
   position: relative;
   width: 100%;
-  border-radius: var(--lkv-radius-md);
+  border-radius: var(--prep-radius-card);
   background: var(--prep-map-bg);
   border: 1px solid var(--lkv-border);
   cursor: crosshair;
@@ -2897,7 +2943,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 .prep-picker__hint {
   margin: 0;
   color: var(--lkv-text-subtle);
-  font-size: var(--lkv-text-body-sm);
+  font-size: var(--prep-type-label);
 }
 
 /* AN5 · La legende du point garde le nom du lieu.
@@ -2913,7 +2959,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 }
 
 .prep-picker__caption-label {
-  font-size: var(--lkv-text-body);
+  font-size: var(--prep-type-body);
   font-weight: 600;
   line-height: 1.3;
   color: var(--lkv-text-primary);
@@ -2921,7 +2967,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 }
 
 .prep-picker__caption-detail {
-  font-size: var(--lkv-text-body-sm);
+  font-size: var(--prep-type-label);
   line-height: 1.3;
   color: var(--lkv-text-subtle);
   overflow-wrap: anywhere;
@@ -2956,7 +3002,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   gap: var(--space-2);
 }
 .prepcal__month {
-  font-size: var(--lkv-text-callout);
+  font-size: var(--prep-type-body);
   font-weight: 600;
   color: var(--lkv-text-primary);
 }
@@ -2971,8 +3017,8 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   background: var(--lkv-surface-elevated);
   border: 1px solid var(--lkv-border-subtle);
   transition:
-    background-color 120ms ease,
-    color 120ms ease;
+    background-color var(--prep-duration-control) var(--prep-ease-standard),
+    color var(--prep-duration-control) var(--prep-ease-standard);
 }
 .prepcal__nav:hover:not(:disabled) {
   background: var(--lkv-hover-surface);
@@ -2992,7 +3038,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   align-items: center;
   justify-content: center;
   height: 28px;
-  font-size: var(--lkv-text-caption-sm, 11px);
+  font-size: var(--prep-type-meta);
   font-weight: 600;
   color: var(--lkv-text-muted);
 }
@@ -3002,13 +3048,13 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   justify-content: center;
   aspect-ratio: 1;
   border-radius: 50%;
-  font-size: var(--lkv-text-body-sm);
+  font-size: var(--prep-type-label);
   font-weight: 500;
   color: var(--lkv-text-primary);
   transition:
-    background-color 120ms ease,
-    color 120ms ease,
-    box-shadow 120ms ease;
+    background-color var(--prep-duration-control) var(--prep-ease-standard),
+    color var(--prep-duration-control) var(--prep-ease-standard),
+    box-shadow var(--prep-duration-control) var(--prep-ease-standard);
 }
 .prepcal__day:hover:not(:disabled):not(.is-selected) {
   background: var(--lkv-hover-surface);
@@ -3024,7 +3070,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 }
 .prepcal__day.is-range {
   background: color-mix(in srgb, var(--lkv-action) 22%, transparent);
-  border-radius: var(--lkv-radius-md);
+  border-radius: var(--prep-radius-card);
 }
 .prepcal__day.is-today {
   box-shadow: inset 0 0 0 1.5px var(--lkv-focus-ring);
@@ -3102,12 +3148,12 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 }
 
 .prep-metric--jour .prep-metric__label {
-  font-size: var(--lkv-text-caption-2);
+  font-size: var(--prep-type-meta);
   font-weight: 560;
 }
 
 .prep-metric--jour .prep-metric__value {
-  font-size: min(var(--lkv-text-callout), 15cqi);
+  font-size: min(var(--prep-type-body), 15cqi);
 }
 
 /* Assez large pour tenir « Jour 1 » et la meteo sur une ligne. En dessous, l empilement est le comportement assume : la meteo deborde de toute facon sur la largeur d un telephone. */
@@ -3122,7 +3168,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 
 .prep-programme__daylabel {
   flex: 0 0 auto;
-  font-size: var(--lkv-text-body);
+  font-size: var(--prep-type-body);
   font-weight: 700;
   letter-spacing: var(--lkv-tracking-body);
   color: var(--lkv-text-primary);
@@ -3134,7 +3180,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   gap: 1px;
   flex: 0 1 auto;
   min-width: 0;
-  font-size: var(--lkv-text-note);
+  font-size: var(--prep-type-meta);
   color: var(--lkv-text-secondary);
   text-align: left;
   font-variant-numeric: tabular-nums;
@@ -3143,9 +3189,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 
 .prep-programme__sky {
   display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .prep-programme__measures {
@@ -3173,10 +3217,8 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 .prep-programme__steptitle {
   flex: 1 1 auto;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--lkv-text-note);
+  overflow-wrap: anywhere;
+  font-size: var(--prep-type-meta);
   color: var(--lkv-text-primary);
 }
 
@@ -3185,10 +3227,8 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 .prep-step__place {
   margin: 2px 0 0;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--lkv-text-note);
+  overflow-wrap: anywhere;
+  font-size: var(--prep-type-meta);
   color: var(--lkv-text-secondary);
 }
 
@@ -3221,7 +3261,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 .prep-maphint {
   margin: var(--space-2) 0 0;
   padding-inline: var(--space-1);
-  font-size: var(--lkv-text-footnote);
+  font-size: var(--prep-type-meta);
   line-height: var(--lkv-line-body);
   color: var(--lkv-text-subtle);
   text-align: center;
@@ -3245,7 +3285,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 }
 
 .row.small {
-  font-size: var(--lkv-text-note);
+  font-size: var(--prep-type-meta);
 }
 
 .row.muted {
@@ -3264,7 +3304,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   margin: 0 var(--space-4) var(--space-3);
   padding: var(--space-3) var(--space-4);
   border-radius: var(--lkv-radius-concentric);
-  font-size: var(--lkv-text-note);
+  font-size: var(--prep-type-meta);
   line-height: var(--lkv-line-body);
   /* Meme materiau que .prep-note[data-tone=warn], avec le verre du
      preparateur par-dessus : le bandeau doit avoir l air de faire partie de
