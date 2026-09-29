@@ -1066,7 +1066,7 @@ export function StepsSheet({ draft, actions, onClose }: ItinerarySheetProps) {
 
       <p className="prep-visually-hidden" aria-live="polite">
 
-        {draft.itinerary?.steps.length ?? 0} étapes au programme
+        {model.steps.length} étapes au programme
 
       </p>
 

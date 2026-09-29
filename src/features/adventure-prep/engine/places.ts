@@ -22,7 +22,20 @@ import {
 
 /** Ce qu'on sait d'un point d'interet, et rien de plus. */
 export interface PlaceCandidate {
+  /**
+   * CLE INTERNE de deduplication. Ce n'est PAS une reference de catalogue :
+   * elle existe seulement pour qu'un meme point ne soit pas attribue deux
+   * fois dans un meme programme. Elle ne doit jamais etre publiee.
+   */
   readonly id: string;
+  /**
+   * Identifiant REEL dans le catalogue d'origine, quand la source en fournit
+   * un. `null` quand elle n'en fournit pas : une source OSM rend un nom et
+   * des coordonnees, jamais un identifiant. Aucun identifiant ne doit etre
+   * SYNTHETISE - une valeur fabriquee se lit comme une reference cliquable
+   * qui ne mene nulle part.
+   */
+  readonly catalogId?: string | null;
   readonly name: string;
   readonly category: string;
   readonly lat: number;
@@ -100,6 +113,9 @@ export function toCandidate(raw: unknown): PlaceCandidate | null {
 
   return {
     id: textOrNull(poi.id) ?? `${name}:${lat}:${lng}`,
+    // La cle interne ci-dessus se deduit des coordonnees : elle reste
+    // LOCALE. L identite PUBLIEE, elle, ne vaut que si la source l a fournie.
+    catalogId: textOrNull(poi.id),
     name,
     category: category && KNOWN_CATEGORIES.has(category) ? category : 'poi',
     lat,
@@ -110,7 +126,9 @@ export function toCandidate(raw: unknown): PlaceCandidate | null {
     pricePerNight: price,
     phone: textOrNull(poi.phone),
     website: textOrNull(poi.website),
-    isVerifiable: poi.is_verified !== false,
+    // `!== false` affirmait la confiance de la base sur tous les points qui
+    // n en parlaient pas. L absence d information se dit : elle vaut `false`.
+    isVerifiable: poi.is_verified === true,
   };
 }
 
@@ -118,17 +136,19 @@ export function toCandidate(raw: unknown): PlaceCandidate | null {
 export function kindCategories(kind: ItineraryStepKind): readonly string[] {
   switch (kind) {
     case 'nuit':
-      return ['refuge', 'camping', 'stay', 'poi'];
+      // 'poi' est la categorie de REPLI d'un lieu inconnu. La garder ici en
+      // faisait un joker : n'importe quelle boutique devenait un hebergement.
+      return ['refuge', 'camping', 'stay'];
     case 'arret':
-      return ['viewpoint', 'col', 'summit', 'waterfall', 'poi'];
+      return ['viewpoint', 'col', 'summit', 'waterfall'];
     case 'ravitaillement':
-      return ['water', 'food', 'poi'];
+      return ['water', 'food'];
     case 'repos':
       // Une pause se fait quelque part : un belvedere, un col, un point de vue
       // rencontre sur le parcours. Laisser `repos` sans categorie rendait la
       // pause DEFINITIVEMENT introuvable, donc chaque journee portant une
       // pause restait « a verifier » — distance, denivele et duree compris.
-      return ['viewpoint', 'col', 'poi'];
+      return ['viewpoint', 'col'];
     case 'trajet':
       return [];
     default:
@@ -339,31 +359,82 @@ export function matchNamedPlace(
  * aucune coordonnee ne doit subsister. Elle est aussi le seul endroit ou une
  * position peut disparaitre, donc le seul a tester.
  */
-function unlocated(step: ItineraryStep): ItineraryStep {
-  return { ...step, lat: null, lon: null };
+/**
+ * Une etape RATTACHEE a un lieu.
+ *
+ * `types.ts` appartient a un autre agent : on ne le modifie pas. L'intersection
+ * ci-dessous etait la seule facon de porter `placeId` sans ecrire dans ce
+ * fichier-la. Le champ reste OPTIONNEL cote `ItineraryStep` : tous les
+ * modeles qui ne passent pas par `assignPlaces` (regles, repli, ajustement)
+ * restent valides.
+ */
+export interface BoundItineraryStep extends ItineraryStep {
+  /**
+   * Identifiant du catalogue du lieu, ou `null`. Toujours present sur un
+   * modele rendu par `assignPlaces` : `null` signifie « aucun identifiant
+   * connu », jamais « identifiant oublie ».
+   */
+  readonly placeId: string | null;
+}
+
+/** Un programme dont chaque etape porte son identite de lieu. */
+export interface BoundItineraryModel extends ItineraryModel {
+  readonly steps: readonly BoundItineraryStep[];
+}
+
+function unlocated(step: ItineraryStep, placeId: string | null = null): BoundItineraryStep {
+  return { ...step, lat: null, lon: null, placeId };
+}
+
+/**
+ * Rayon maximal de rattachement, en kilometres.
+ *
+ * Aligne sur `GEOCODE_REACH_KM` (placeGeocode) : le programme ne rattache
+ * un point que s il est proche de ce que la personne a reellement choisi. Au
+ * dela, « rattacher quand meme » produisait une journee entiere de mesures
+ * calculees a des centaines de kilometres du parcours demande.
+ */
+export const NEAREST_REACH_KM = 25;
+
+/** Le point retenu, et la distance a vol d'oiseau qui l a fait retenir. */
+export interface ScoredPlace {
+  readonly candidate: PlaceCandidate;
+  /** Distance REELE mesuree, jamais une distance de route ni une duree. */
+  readonly distanceKm: number;
 }
 
 /**
  * Place le point le plus proche ET compatible, par rapport au dernier point
  * connu. Le parcours avance : on ne revient pas en arriere chercher un refuge
  * deja depasse.
+ *
+ * Cette fonction est PUBLIEE, et son resultat garde la mesure qui l a decide.
+ * Rendre un candidat nu faisait disparaitre la seule donnee verifiable de
+ * l operation : l ecran affichait la meme confiance pour un point a 200 m et
+ * pour un point a 180 km.
  */
-function nearestCompatible(
+export function nearestCompatible(
   candidates: readonly PlaceCandidate[],
   used: ReadonlySet<string>,
   from: GeoPoint,
   kind: ItineraryStepKind,
-): PlaceCandidate | null {
+  reachKm: number = NEAREST_REACH_KM,
+): ScoredPlace | null {
+  // Un curseur non fini (pas de depart choisi) rend `haversineKm` NaN, et
+  // `NaN < Infinity` est vrai : le PREMIER candidat aurait ete retenu sur
+  // un calcul sans valeur. On refuse donc des deux cotes.
+  if (!Number.isFinite(reachKm) || reachKm <= 0) return null;
+  if (!Number.isFinite(from.lat) || !Number.isFinite(from.lon)) return null;
+
   const allowed = new Set(kindCategories(kind));
-  let best: PlaceCandidate | null = null;
-  let bestKm = Number.POSITIVE_INFINITY;
+  let best: ScoredPlace | null = null;
   for (const candidate of candidates) {
     if (used.has(candidate.id)) continue;
     if (!allowed.has(candidate.category)) continue;
     const km = haversineKm(from, point(candidate));
-    if (km < bestKm) {
-      bestKm = km;
-      best = candidate;
+    if (!Number.isFinite(km) || km > reachKm) continue;
+    if (!best || km < best.distanceKm) {
+      best = { candidate, distanceKm: km };
     }
   }
   return best;
@@ -372,8 +443,19 @@ function nearestCompatible(
 function applyCandidate(
   step: ItineraryStep,
   candidate: PlaceCandidate,
-): ItineraryStep {
-  const priced = step.kind === 'nuit' && candidate.pricePerNight !== null;
+): BoundItineraryStep {
+  // Le prix ne survit QUE s'il est celui du lieu qui vient d'etre pose. La
+  // version precedente conservait `step.price` quand la base n avait aucun
+  // prix pour ce refuge : une nuit affichait alors le prix plausible de la
+  // proposition d'avant, pour un lieu qui ne l'a jamais annonce.
+  const nuit = step.kind === 'nuit';
+  const prixConnu = nuit && candidate.pricePerNight !== null;
+  const price = prixConnu
+    ? { amount: candidate.pricePerNight, currency: 'EUR' as const, state: 'propose' as const }
+    : nuit
+      ? PRICE_TO_CHECK
+      : step.price;
+
   return {
     ...step,
     placeName: candidate.name,
@@ -383,9 +465,16 @@ function applyCandidate(
     title: candidate.name,
     lat: candidate.lat,
     lon: candidate.lon,
-    price: priced
-      ? { amount: candidate.pricePerNight, currency: 'EUR', state: 'propose' }
-      : step.price,
+    placeId: candidate.catalogId ?? null,
+    price,
+    // AUCUN detail de prix n’est produit ici, MEME quand le montant est
+    // connu. `PriceBreakdown` exige `perPerson` ET `groupTotal` : la base ne
+    // dit pas si `price_per_night` est par personne, par chambre ou par tente,
+    // et le moteur ne connait pas la taille du groupe. Les recopier sur le
+    // montant affiche « 75 € pour 3 personnes » — un nombre qu’aucune
+    // source ne porte. Le montant reste dans `price`, avec son etat honnete :
+    // la ligne « à vérifier » disparait, la donnee reste.
+    priceBreakdown: nuit ? null : step.priceBreakdown,
   };
 }
 
@@ -394,13 +483,18 @@ function applyCandidate(
  *
  * Les deux trajets extremes gardent les lieux que la personne a choisis : on
  * ne remplace jamais sa destination par un point d'interet trouve plus proche.
+ *
+ * Chaque etape rendue porte un `placeId` EXPLICITE : l'identifiant de
+ * catalogue du lieu, ou `null`. Le champ existe deja sur `PlaceRef` pour les
+ * lieux choisis par la personne ; il etait simplement jete, alors qu'il
+ * etait la seule identite REELLE disponible dans la fonction.
  */
 export function assignPlaces(
   model: ItineraryModel,
   candidates: readonly PlaceCandidate[],
   origin: PlaceRef | null,
   destination: PlaceRef | null,
-): ItineraryModel {
+): BoundItineraryModel {
   const ordered = [...model.steps].sort((a, b) => a.day - b.day || a.order - b.order);
   const trajets = ordered.filter((step) => step.kind === 'trajet');
   const firstTrajetId = trajets[0]?.id ?? null;
@@ -427,7 +521,14 @@ export function assignPlaces(
         if (!origin) return unlocated(step);
         cursor = { lat: origin.lat, lon: origin.lon };
         hasCursor = true;
-        return { ...step, placeName: origin.name, lat: origin.lat, lon: origin.lon };
+        return {
+          ...step,
+          placeName: origin.name,
+          lat: origin.lat,
+          lon: origin.lon,
+          // La personne a choisi ce lieu : son identifiant est REEL.
+          placeId: origin.id,
+        };
       }
       if (step.id === lastTrajetId) {
         // Le dernier trajet vise l arrivee en aller simple, le DEPART en
@@ -443,13 +544,17 @@ export function assignPlaces(
           placeName: cible.name,
           lat: cible.lat,
           lon: cible.lon,
+          placeId: cible.id,
         };
       }
       // Journee 2 et suivantes : on repart du point ou la journee precedente
       // s est arretee. C est une continuite, pas une invention : le point vient
       // lui-meme de la base ou de la personne.
       if (firstTrajetByDay.get(step.day) === step.id && hasCursor) {
-        return { ...step, lat: cursor.lat, lon: cursor.lon };
+        // Continuite, pas un lieu choisi : le curseur vient d'une position
+        // deja ecrite plus haut, son identifiant y est deja porte. On ne le
+        // recopie donc pas ici — il n'appartient pas a cette etape.
+        return { ...step, lat: cursor.lat, lon: cursor.lon, placeId: null };
       }
       return unlocated(step);
     }
@@ -475,14 +580,14 @@ export function assignPlaces(
     // l intention est DEPLACEE vers un autre lieu real et compatible. Si la
     // journee n en offre aucun, elle devient une note - honnete, et non un
     // aller-retour au meme point qui ferait mentir la distance.
-    const candidate = nearestCompatible(candidates, used, cursor, step.kind);
-    if (!candidate) return unlocated(step);
-    used.add(candidate.id);
-    cursor = point(candidate);
-    return applyCandidate(step, candidate);
+    const scored = nearestCompatible(candidates, used, cursor, step.kind);
+    if (!scored) return unlocated(step);
+    used.add(scored.candidate.id);
+    cursor = point(scored.candidate);
+    return applyCandidate(step, scored.candidate);
   });
 
-  return demoteOrphans({ ...model, steps });
+  return demoteOrphans({ ...model, steps }) as BoundItineraryModel;
 }
 
 /**

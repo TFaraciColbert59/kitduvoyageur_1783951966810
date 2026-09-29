@@ -81,22 +81,59 @@ const WATER: InterestStop = {
 };
 
 /**
- * L'eau des jours suivants. Meme besoin, une seule etape lisible : le titre
- * change pour ne pas repeter « Eau et ravitaillement » un jour sur trois.
- * Aucun point d'eau n'est promis ici : la raison reste « à vérifier ».
+ * Les libelles generiques des jours suivants.
+ *
+ * Le defaut etait un libelle UNIQUE reutilise tel quel tous les jours >= 2 :
+ * « Ravitaillement et eau » revenait cinq fois sur six jours. Un reservoir
+ * indexe par journee supprime la repetition ; quand il est epuise,
+ * l'etape generique est SUPPRIMEE plutot que repetee (voir `variante`).
+ *
+ * Aucun point d'eau n'est promis : toutes les raisons restent « à vérifier ».
  */
-const WATER_LATER: InterestStop = {
-  kind: 'ravitaillement',
-  title: 'Ravitaillement et eau',
-  reason:
-    'L\'eau accompagne le ravitaillement du jour au lieu d\'être une étape séparée\u00A0: le point reste à vérifier',
-};
+const WATER_LATER: readonly InterestStop[] = [
+  {
+    kind: 'ravitaillement',
+    title: 'Ravitaillement et eau',
+    reason:
+      'L\'eau accompagne le ravitaillement du jour au lieu d\'être une étape séparée\u00A0: le point reste à vérifier',
+  },
+  {
+    kind: 'ravitaillement',
+    title: 'Réserve d\'eau pour la étape du jour',
+    reason:
+      'Le ravitaillement du jour est complet\u00A0: le point d\'eau reste à vérifier sur le terrain',
+  },
+  {
+    kind: 'ravitaillement',
+    title: 'Remplir les gourdes avant la suite',
+    reason:
+      'Les gourdes se remplissent en chemin\u00A0: aucune source n\'est garantie avant la prochaine étape',
+  },
+  {
+    kind: 'ravitaillement',
+    title: 'Approvisionnement en eau du jour',
+    reason:
+      'De l\'eau est prévue pour la journée\u00A0: le point exact reste à vérifier',
+  },
+];
 
-const VIEW: InterestStop = {
-  kind: 'arret',
-  title: "Point d'intérêt sur le parcours",
-  reason: 'Un arrêt est proposé sur le trajet — le lieu sera confirmé sur la carte',
-};
+const VIEW: readonly InterestStop[] = [
+  {
+    kind: 'arret',
+    title: "Point d'intérêt sur le parcours",
+    reason: 'Un arrêt est proposé sur le trajet — le lieu sera confirmé sur la carte',
+  },
+  {
+    kind: 'arret',
+    title: 'Halte sur le parcours',
+    reason: 'Une halte est proposée en chemin — le lieu sera confirmé sur la carte',
+  },
+  {
+    kind: 'arret',
+    title: 'Découverte sur la route',
+    reason: 'L\'itinéraire prévoit une découverte en chemin\u00A0: le lieu sera confirmé sur la carte',
+  },
+];
 
 /** Le groupe ou le corps imposent des pauses, jamais seulement le rythme. */
 function restReason(draft: AdventurePrepDraft): string {
@@ -160,6 +197,25 @@ function interestStop(draft: AdventurePrepDraft): InterestStop | null {
   return null;
 }
 
+/**
+ * La variante generique du jour, ou `null` quand le reservoir est epuise.
+ *
+ * `index` est EXPLICITE et ZERO-BASE : c’est a l’appelant de dire quel jour ouvre
+ * le reservoir. Les deux appels ne demarrent pas au meme jour — `WATER_LATER` sert
+ * les jours >= 2, `VIEW` sert des le jour 1 — et c’est precisement de cet
+ * ecart que naissait le decalage : le jour 2 sautait la premiere variante
+ * d’eau. Un `day - 1` cache dans la fonction aurait rendu le bug invisible.
+ *
+ * Supprimer vaut mieux que repeter — une ligne identique deux jours de suite
+ * n’apporte rien et laisse croire a une etape dediee qui n’existe pas. Le repas,
+ * lui, garantit toujours un ravitaillement (TY-08).
+ */
+function variante(reservoir: readonly InterestStop[], index: number): InterestStop | null {
+  if (!Number.isInteger(index) || index < 0) return null;
+  return reservoir[index] ?? null;
+}
+
+
 export function proposedStops(
   draft: AdventurePrepDraft,
   day: number,
@@ -170,9 +226,8 @@ export function proposedStops(
   const stops: ProposedStop[] = [];
 
   // 1. L'eau, avant l'effort, et une seule fois. L'interet « Eau » reprend la
-  //    main sur le libelle du premier jour. Les jours suivants ne remettent pas
-  //    la meme ligne : l'eau y est fusionnee dans le ravitaillement du jour,
-  //    sinon le programme affiche « Eau et ravitaillement » un jour sur trois.
+  //    main sur le libelle du premier jour. Les jours suivants ne remettent
+  //    JAMAIS la meme ligne : chaque journee tire son libelle dans le reservoir.
   if (day === 1) {
     stops.push(
       interest && interest.kind === 'ravitaillement' && interest.title === WATER.title
@@ -180,18 +235,19 @@ export function proposedStops(
         : { kind: WATER.kind, title: WATER.title, reason: WATER.reason },
     );
   } else {
-    stops.push({
-      kind: WATER_LATER.kind,
-      title: WATER_LATER.title,
-      reason: WATER_LATER.reason,
-    });
+    // Le jour 2 OUVRE le reservoir : c’est le premier element, pas le
+    // deuxieme. Le decalage se paie en libelles manques, pas en plantages.
+    const eau = variante(WATER_LATER, day - 2);
+    if (eau) stops.push({ kind: eau.kind, title: eau.title, reason: eau.reason });
   }
 
   // 2. L'arret porte l'interet declare, sinon une halte generique.
   if (interest && interest.kind === 'arret') {
     stops.push({ kind: interest.kind, title: interest.title, reason: interest.reason });
   } else if (!interest) {
-    stops.push({ kind: VIEW.kind, title: VIEW.title, reason: VIEW.reason });
+    // Le jour 1 ouvre le reservoir : `VIEW` sert des le premier jour.
+    const vue = variante(VIEW, day - 1);
+    if (vue) stops.push({ kind: vue.kind, title: vue.title, reason: vue.reason });
   }
 
   // 3. La pause suit le groupe et le corps, pas seulement le rythme choisi.
