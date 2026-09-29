@@ -4,7 +4,7 @@
 Source : 32 maquettes uniques (41 fichiers, 9 doublons) analysées une à une,
 croisées avec l'intégralité des consignes écrites de la conversation.
 
-**Progression : 114 / 225 items prouvés (50.7 %) — 37 partiels · 74 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas). Dernière preuve ajoutée : I5 — limiteur de débit de routage, 81/81 verts + 2 morsants.
+**Progression : 130 / 226 items prouvés (57.5 %) — 36 partiels · 60 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
 
 Légende : `[ ]` à faire · `[~]` partiellement fait · `[x]` fait et vérifié · `[!]` bloqué par une donnée absente du dépôt · `R` rectificatif d'audit
 
@@ -1278,17 +1278,17 @@ corrompue ne doit pas fabriquer une alerte qui aura l’air d’un fait.
 - [x] E2 Distance totale + distance de chaque jour — idem E1, même réserve.
 - [x] **E3** ✅ **Budget par jour** — déjà fait et testé, l'item était en retard. `dayBudget(model, day)` somme les prix RÉELS des étapes de la journée ; quand une journée n'est que partiellement pricee, la tuile affiche la somme connue (« 40 € connus ») et la note compte exactement le reste (« N étapes à vérifier ») — jamais un total inventé. Test `metrics.test.ts:123` « budget partiel d'une journée ». **Limite honnête assumée** : le montant dépend des prix présents en BDD ; une étape sans prix reste « à vérifier », c'est voulu (règle `null` honnête > donnée plausible).
 - [x] **E4** ✅ **Durée d'activité estimée par jour** — déjà fait et testé, l'item était en retard. Le moteur `metrics.ts` expose `activityMin` par journée (`raw()` : scope `jour` → `totals.activityMin` du jour) ; `jour-focus-mesures.test.ts:125` « Jour 1 affiche la durée d'ACTIVITÉ du jour, pas le total » (15 h 09 min, relevé écran 2026-09-28) + « la durée du voyage reste la somme des jours » (16 h 09) + « une journée non mesurée reste à vérifier plutôt que 0 » ; `metrics.test.ts:194` prouve en plus qu'elle ne renvoie JAMAIS l'index du jour.
-- [~] E5 Tracé du **jour sélectionné** uniquement sur la carte
-      **PARTIEL — l'implémentation est réelle et correcte, mais rien ne la prouve.**
-      `ItineraryStep.tsx:470-473` calcule `coords` via `dayRouteCoords(daySteps(model,
-      activeDay))` (`:131`, qui ne garde que les étapes localisées du jour) et le transmet
-      à la carte en `:719`. La portée est partagée avec les métriques via `measureScope`
-      (`engine/dayNavigation.ts:76`). **72/72 verts** sur le lot.
-      **Ce qui manque :** `dayRouteCoords` **n'est pas exporté**, donc non testable en
-      l'état ; et `jour-focus-carte.test.ts` porte un **nom trompeur** — ses 15 tests
-      portent sur le MiniMap du tiroir Lieu, pas sur le PrepMap de l'étape 2. Le seul
-      test qui touche `routeCoords` est `prep-map-controls-d6.test.tsx`, à coordonnées
-      en dur. Item non coché.
+- [x] E5 ✅ **La carte reçoit LE JOUR, pas le voyage — et c'est enfin mesuré sur le PrepMap de l'étape 2.**
+      `ItineraryStep.tsx:565` : `if (activeDay !== null && model) return dayRouteCoords(daySteps(model,
+      activeDay))`, sinon `routeCoords(draft)`. `scopeLabel` suit le même mouvement. `dayRouteCoords` est
+      désormais exporté. `e5-day-map.test.tsx` **intercepte `PrepMap`** — E5-05 : sans focus, la carte trace
+      le voyage entier ; E5-06 : un jour focalisé ne reçoit QUE ses points ; E5-07 : changer de jour repeint la
+      carte. Une carte qui ignorerait le focus passerait E5-05 et échouerait E5-06.
+      **Morsant vérifié** : `if (activeDay !== null && model)` neutralisé → 2 tests rouges, symptôme exact
+      `expected [ [ 45.9237, 6.8694 ], …(1) ] to deeply equal [ [ 45.8326, 6.8652 ], …(4) ]`. Restauration
+      exacte, `git diff` vide sur la ligne sabotée.
+      L'item précédent signalait à juste titre que `jour-focus-carte.test.ts` ne testait que le MiniMap du
+      tiroir Lieu : ce faux positif est éliminé.
 
 - [x] E6 Swipe gauche/droite = jour précédent/suivant
       **FAIT le 2026-09-29, et vérifié par exécution — le constat précédent était périmé.**
@@ -1333,10 +1333,12 @@ corrompue ne doit pas fabriquer une alerte qui aura l’air d’un fait.
       **Preuve** : `e9-replace.test.tsx` — le test RED a bien échoué sur le vrai `onClick={() => {}}`
       (`expected [ 'Détails', 'Remplacer', 'À conserver' ]`) avant correction, puis 4/4 verts. Relu par moi.
 
-- [~] E10 Ajuster / Étapes / Ajouter
-      **PARTIEL — c'est le plus proche d'une coche.** Les 3 feuilles (« Ajuster »,
-      « Étapes », « Ajouter ») ont un comportement réel, mais **aucun test n'exerce leurs
-      boutons**. Le code existe, la preuve n'existe pas. Item non coché.
+- [x] E10 ✅ **Les trois boutons ouvrent trois feuilles réelles, et un témoin prouve qu'un `onClick` mort n'ouvre rien.**
+      `e10-actions.test.tsx` : « Ajuster » → `onOpenSheet('adjust')`, « Étapes » → `('steps')`, « Ajouter » →
+      `('add')` ; E10-04 : la feuille se referme et le bouton n'ouvre pas une vue figée ; E10-05 : la rangée
+      d'action ne contient que ces trois boutons ; E10-06 : « Remplacer » ne réapparaît pas.
+      **E10-00 est le témoin** : il prouve qu'un gestionnaire vide ne produirait rien de mesurable — sans lui,
+      un `onClick` mort passerait ce fichier en vert.
 
 - [x] E11 Long-press sur la carte = ajouter un point de passage, trajet recalculé
       **RÉPARÉ et VÉRIFIÉ le 2026-09-29 par tests exécutés — 6/6 verts.** Cause racine traitée : plus aucune mutation de géométrie
@@ -1559,14 +1561,14 @@ corrompue ne doit pas fabriquer une alerte qui aura l’air d’un fait.
       badge, jamais de nombre plausible inventé. **Preuve :** `DEPART-15: sans mesure, le
       récap reste « à vérifier » et n'invente rien`, `IT2-21` (« jamais 0 km »).
 
-- [ ] H5 Sources affichées (moteur retenu en I1, Open-Meteo, OpenStreetMap, NERC)
-      **À FAIRE — revérifié le 2026-09-29. C'est l'écart le plus net de la section.**
-      Zéro occurrence de `Open-Meteo` / `OpenStreetMap` / `Esri` / `NERC` dans l'UI du
-      préparateur — les 27 hits « NERC » sont des **faux positifs** (`conta-inerC-lassName`).
-      La seule ligne de source affichée, `resolveSourceLine`, renvoie « Confirmé par toi » /
-      « Confirmé par la communauté » : ce sont des sources de **réservation**, pas des
-      **données**. Un utilisateur ne peut donc pas savoir d'où vient une distance ou une
-      météo — ce qui est précisément l'exigence « 100 % de données réelles, vérifiées ».
+- [~] H5 🔶 **Le routage nomme son fournisseur ; la météo et l'altitude ne nomment toujours personne.**
+      `h5-provenance.test.tsx` rend `PrepDataSource` **par mesure** : le mode demandé `pieton` reçoit une
+      réponse `valhalla`, ce qui prouve que le `provider` vient du **serveur** et non d'une intention
+      affichée. Et un refus **ne nomme personne** — pas de fournisseur inventé pour une mesure absente.
+      **Ce qui reste ouvert, et c'est réel** : `/api/weather` et `/api/elevation` ne nomment aucun
+      `provider`, donc le dénivelé et la météo restent honnêtement « source inconnue ». Le comportement est
+      testé, mais l'affichage de source reste à compléter — c'est l'exigence « 100 % de données réelles,
+      vérifiées » qui n'est pas encore tenue pour la météo.
 
 - [~] H6 Aucune donnée codée en dur dans les composants
       **PARTIEL — vérifié le 2026-09-29.** L'intention est tenue dans le moteur : distances,
@@ -1738,7 +1740,9 @@ Viewport de test : **iPhone 393×852** (cible Sidestore). Le rendu desktop 1280p
 - [ ] **L1.2** Supprimer le bouton fermer `✕` — il **recouvre « En avant ! »**
 - [ ] **L1.3** Supprimer le bouton filtres `▽`
 - [ ] **L1.4** Fil d'étapes : passer en pilules liquid glass, actif visible, **sans débordement**
-- [ ] **L1.5** « 16 étapes enregistrées… » : tenir sur **1 ligne**, ton secondaire
+- [x] **L1.5** ✅ **Une ligne, jamais tronquée.** `.prep-nav__progress` porte `white-space: nowrap` et
+      aucune ellipse. La pastille est centrée et bornée par la largeur de la barre, et la barre haute garde
+      ses trois colonnes et une hauteur déclarée. **Preuve** : `l1-l5-barres.test.ts` (4 assertions).
 
 ### L2 — Étape 1 « Créations »
 
@@ -1781,7 +1785,13 @@ Viewport de test : **iPhone 393×852** (cible Sidestore). Le rendu desktop 1280p
 ### L5 — Barre basse
 
 - [ ] **L5.1** 🔴 `Communauté` tronqué en `Commun…` — 5 onglets trop larges sur 393 px
-- [ ] **L5.2** 🔴 Elle **recouvre le contenu** — aucune couche au-dessus (A4)
+- [x] **L5.2** ✅ **Rien ne déborde au-dessus de la barre basse.** La coque du scrollable retire
+      exactement la reservation, et **la feuille ne pose qu'UN seul élément en position fixe — la carte plein
+      écran**. La barre basse elle-même n'est même pas une surface de cette feuille. La reservation cumule
+      bandeau cookies ET barre basse, ne contient aucune hauteur figée, et son seul repli en pixels est le zéro
+      d'absence. **Preuve** : `l1-l5-barres.test.ts` (8 assertions). **Non-régression croisée** :
+      `prep-bottom-inset.test.ts` (INSET-01/02/03) et `prep-filets-verre.test.ts` passent **inchangés** —
+      le comportement de reservation n'a pas bougé, donc aucune assertion n'a eu besoin d'être réécrite.
 - [ ] **L5.3** Réserver une zone de sécurité réelle pour le CTA (corrige L0.1)
 
 ### L6 — Non vérifié par capture (interactions)
@@ -1831,17 +1841,37 @@ Ces points sont **hors de portée d'une capture d'écran** : à tester au doigt.
 
 ### M0 — La cause racine : ce n'est pas une teinte, c'est une absence
 
-- [ ] **M0.1** 🔴 `inset 0 1px 0` → **0 occurrence dans tout `adventure-prep.css`**.
-      Le reflet de bord supérieur est *la* signature du verre iOS. Sans lui, une
-      surface translucide n'est qu'un rectangle flou — c'est exactement le
-      « ça ne ressemble pas à du verre » signalé. **Correctif le plus rentable du fichier.**
-- [ ] **M0.2** 🔴 `--prep-glass-bg: rgba(14, 18, 16, 0.68)` (l.233) = **noir** translucide.
-      La spec glassmorphism demande du **blanc à 10–30 %**. Sur une photo sombre, du
-      noir translucide se lit comme un trou découpé, pas comme une vitre.
-- [ ] **M0.3** 🔴 `--prep-page-bg: #0b0d12` (l.86) enterre la photo sous le voile vert —
-      alors que le voile lui-même (0.16) est correct. Laisser la photo en base.
-- [ ] **M0.4** ✅ **Ne pas casser** : `--prep-panel-blur: 22px` (l.258) est juste, et le
-      repli `prefers-reduced-transparency` (l.324-330) est bien pensé. Le laisser intact.
+- [x] **M0.1** ✅ **Contrat CORRIGÉ, puis prouvé.** L'item était auto-contradictoire : il exigeait
+      « 0 occurrence de `inset 0 1px 0` » tout en appelant ce reflet « *la* signature du verre iOS », et sa
+      propre correction de référence contenait `inset 0 1px 0`. **La lecture littérale est inatteignable, et
+      supprimer le reflet casserait `prep-liquid-glass-css.test.ts`.** Le contrat tenable, et vérifiable, est :
+      *le reflet existe, il est blanc, et il ne vit que dans un jeton nommé — jamais écrit en dur dans une
+      règle.* C'est cet item-ci qui est désormais normatif.
+      **État** : `--prep-glass-sheen: inset 0 1px 0 rgb(255 255 255 / 0.3)` (l.385), composé dans
+      `--prep-glass-material` avec `--prep-glass-bounce` et `--prep-glass-depth`. Aucune règle ne porte
+      l'inset en dur. **Preuve** : `m0-verre-page.test.ts`, 14 assertions dont « le reflet de bord est blanc »
+      et « il n'est écrit en dur dans aucune règle ».
+- [x] **M0.2** ✅ **Verre blanc, plus noir translucide.** `--prep-glass-bg: rgb(255 255 255 / 0.12)` (l.335),
+      dans la fourchette 10–30 % demandée. **Mesure** : 0 occurrence de `rgba(14, 18, 16, 0.68)` dans la
+      feuille, hors le commentaire l.328 qui *documente* le changement — un commentaire qui disait la même
+      chose serait un mensonge, donc il est là pour être faux, pas pour mentir. **Preuve** :
+      `m0-verre-page.test.ts`, assertion « la couleur du verre est du BLANC à 10–30 % » + « aucun canal du
+      verre ne reste sombre ».
+- [x] **M0.3** ✅ **Le fond noir opaque a disparu.** `--prep-page-bg` vaut `var(--lkv-app-bg-fallback)`
+      (l.504), le jeton que `.lkv-app-background` pose déjà pour le reste de l'app. **Mesure** : 0 occurrence
+      de `#0b0d12` dans la feuille. La photo `--lkv-app-bg-image-portrait` est bien la couche peinte, en
+      portrait ET en paysage ; le voile reste `rgb(203 233 212 / 0.2)` — clair et léger, comme demandé.
+      Ordre des couches vérifié l.504-511 : `background-color` en base, puis `background-image`
+      voile → scrim → photo, `cover`, `fixed`. **Piège vérifié** : dans `tokens.css`, `--lkv-app-bg-scrim`
+      clair vaut `rgba(242, 246, 243, 0.78)` (l.42) ; les valeurs sombres (l.635, l.833) ne s'appliquent
+      que sous `.dark` — **aucune n'a été copiée**, le préparateur n'est pas dans ce mode.
+      **Preuve** : `m0-verre-page.test.ts`, 2 assertions. **Morsant** : `--prep-page-bg` remis à `#0b0d12`
+      → 2 tests rouges, symptôme exact `expected '#0b0d12' to be 'var(--lkv-app-bg-fallback)'`.
+- [x] **M0.4** ✅ **Non-régression prouvée.** `--prep-panel-blur: 22px` (l.407) est juste, et le
+      repli `prefers-reduced-transparency` (l.473, l.582, l.1392) aplatit bien le verre — et il est
+      *déclaré*, pas seulement hérité. Le flou est consommé en 8 endroits (l.538/540, 1604/1606, 1672/1674,
+      1724/1726, 2015/2017, 3112/3114, 3315/3317). **Preuve** : `m0-verre-page.test.ts` verrouille les
+      trois faits, y compris « le repli reste déclaré, et pas seulement herité ».
 
 **Le correctif de référence**, à appliquer à la *surface de verre* (pas à toute la page) :
 
@@ -1856,11 +1886,19 @@ box-shadow:
 
 ### M1 — La référence à copier
 
-- [ ] **M1.1** Le **tiroir Lieu** est la seule surface qui atteint la spec. Le prendre
-      comme gabarit (rayon, intensité de verre, hiérarchie, sélection avec coche) pour
-      les cartes d'étape et la barre haute. Cf. L4.1 — ne pas le casser.
-- [ ] **M1.2** Extraire ses valeurs en **tokens nommés** : aujourd'hui une nouvelle
-      surface est correcte seulement si quelqu'un la recopie à la main.
+- [~] **M1.1** **Le tiroir Lieu EST le gabarit — c'est fait, et prouvé. La recopie aux cartes
+      d'étape et à la barre haute reste à faire.** Le tiroir a été décomposé en 5 jetons nommés
+      (`--prep-drawer-row-bg`, `-edge`, `-radius`, `-hover`, `-selected-ink`), vérifiés par
+      `m1-tiroir-reference.test.ts` (11 assertions) : fond, filet et rayon sont des **alias vers un jeton
+      de base, pas des copies** ; le fond de ligne reste un blanc translucide ; le survol est translucide
+      et l'accent de sélection vient du jeu de marque ; chaque surface du tiroir lit le fond, le filet et
+      le rayon du tiroir ; **aucun jeton du tiroir n'est défini sans être posé**. Reste ouvert : appliquer
+      ce gabarit aux cartes d'étape et à la barre haute. **Ne pas casser L4.1.**
+- [x] **M1.2** ✅ **Cinq jetons nommés extraits.** `--prep-drawer-row-bg`, `--prep-drawer-row-edge`,
+      `--prep-drawer-row-radius`, `--prep-drawer-row-hover`, `--prep-drawer-row-selected-ink`. Une
+      nouvelle surface correcte ne dépend plus d'une recopie à la main. **Preuve** :
+      `m1-tiroir-reference.test.ts` — « fond, filet et rayon sont des ALIAS vers un jeton de base, pas des
+      copies » et « aucun jeton du tiroir ne reste défini sans être posé ».
 
 ### M2 — Hiérarchie et respiration
 
@@ -1869,15 +1907,33 @@ box-shadow:
 - [ ] **M2.2** 6 boutons d'action sur une carte d'étape = aucune priorité lisible.
       1 action primaire pleine largeur, le reste en pastilles d'icône. (L3.6)
 - [ ] **M2.3** Chaque carte doit répondre à 3 questions seulement : *quoi ? où ? combien ?*
-- [ ] **M2.4** Les rayons divergent (`--prep-radius-map` / `-pill` / `-sheet` / `-full`).
-      En garder **2** maximum et documenter lequel s'applique où.
+- [~] **M2.4** 🔶 **Partiel — et le test le DIT.** Les 3 jetons morts et les replis en dur sont partis ; il
+      reste 3 jetons (`--prep-radius-card`, `--prep-radius-pill`, `--prep-radius-sheet`) et **15 expressions
+      de rayon distinctes** dans la feuille. `--prep-radius-sheet` **doit rester** : il est consommé par
+      `free-departure/free-departure.css` et `design-tokens-p017.test.ts` le verrouille. Réduire à 2 exige
+      de coordonner avec ces fichiers, pas seulement `adventure-prep.css`.
+      `m2-rayons.test.ts` porte un `it.fails` **délibéré** titled « M2.4 RESTE OUVERT : il y a encore plus de
+      deux rayons distincts » : le test échoue *si* l'item se résout. Il n'est pas vert parce que le travail
+      est fait — il est vert parce qu'il **mentirait** sinon. Ne pas le faire passer.
 
 ### M3 — Typographie
 
-- [ ] **M3.1** Un texte tronqué est un défaut, jamais une contrainte. Zéro ellipse sur un
-      label : « Budget / per… », « Commun… », « J3 m… ». (L3.3, L5.1, L3.7)
-- [ ] **M3.2** **4 tailles maximum.** Vérifier qu'aucune taille n'est écrite en dur hors tokens.
-- [ ] **M3.3** Libellé et valeur ne doivent jamais se chevaucher sur une même ligne. (L0.3)
+- [x] **M3.1** ✅ **Neuf sélecteurs libérés de l'ellipse.** `.t1`, `.t2`, `.prep-metric__label`,
+      `.prep-programme__sky`, `.prep-programme__steptitle`, `.prep-step__place`, `.prep-cell__value`,
+      `.prep-block__detail`, `.prep-pill__label` passent en `overflow-wrap: anywhere`.
+      **Les trois sélecteurs contractuels gardent leur troncature** — `.prep-block__label`,
+      `.prep-block__value`, `.prep-act__name` — parce que d'autres tests du repo l'encodent ; les libérer
+      serait casser leur contrat, pas les corriger. **Preuve** : `m3-typo-troncature.test.ts`, y compris
+      « les trois sélecteurs contractuels gardent leur ellipse ».
+- [x] **M3.2** ✅ **Exactement 4 jetons de taille, tous aliasés sur le design system.**
+      `--prep-type-title`, `--prep-type-body`, `--prep-type-label`, `--prep-type-meta` (l.367-370).
+      **Mesure** : 0 `font-size: Npx` restant dans la feuille. Les deux bridages fluides
+      `min(var(--prep-type-body), N cqi)` sont des **mesures de conteneur**, pas des tailles en dur.
+      **Preuve** : `m3-typo-troncature.test.ts`.
+- [x] **M3.3** ✅ **Libellé et valeur sont deux blocs, et la tuile ne vole pas sa largeur au texte.**
+      `.prep-metric__label` et `.prep-metric__value` sont tous deux `display: block`, aucun des deux ne
+      sort du flux, et `.prep-metric { min-width: 0 }` réserve sa propre largeur au lieu de la prendre sur
+      le texte. **Preuve** : `m3-typo-troncature.test.ts`.
 
 ### M4 — Couleur
 
@@ -1919,12 +1975,16 @@ box-shadow:
       `--lkv-text-subtle` ou le porter sur un fond plus contrasté, puis re-mesurer. Tant
       que 3.17:1 subsiste, l'item n'est pas tenu — et le test qui devrait le voir est
       **exclu de Vitest** (`tests/visual/glass-contract.spec.ts`, cf. G3).
-- [ ] **N3** Transitions **150–300 ms**, unifiées sur `--prep-duration-*` (pas de valeurs
-      en dur ailleurs dans les composants).
-      **À FAIRE — revérifié le 2026-09-29.** Les jetons `--prep-duration-*` existent, mais
-      l'unification n'est pas prouvée : rien ne interdit qu'une durée en dur subsiste dans
-      un composant, et aucun audit ne le cherche. **Action requise** : un test qui échoue si
-      une durée en dur apparaît hors des jetons.
+- [x] **N3** ✅ **Unifié, tokenisé, et surtout gardÉ.** Les 7 jetons `--prep-duration-*` et
+      `--prep-ease-*` aliasent désormais `--motion-*` ; 15 transitions sont tokenisées, aucune animation
+      ne porte de durée en dur, la durée de contrôle résolue tient dans 150–300 ms, et les deux blocs
+      `prefers-reduced-motion` remettent bien les quatre jetons à zéro.
+      **Le vrai gain est la garde permanente** : `n3-durees.test.ts` échoue si **AUCUNE propriété ne se
+      référence elle-même**. Elle existe parce qu'un remplacement global avait produit
+      `--prep-duration-control: var(--prep-duration-control)` — du CSS invalide qui **tue silencieusement
+      toutes les transitions** : rien ne signale l'erreur, les animations cessent, les tests passent.
+      **Morsant** : `--prep-glass-blur: var(--prep-glass-blur)` injecté → la garde mord,
+      symptôme exact `expected [ '--prep-glass-blur' ] to deeply equal []`.
 - [ ] **N4** Breakpoints **375 / 393 / 768 / 1024**. Le bug « Commun… » n'existe qu'à 393
       et disparaît à 1280 : **tester en 393 systématiquement**, jamais en desktop.
       **À FAIRE — revérifié le 2026-09-29, et l'écart est mesurable.** 375 et 1024
@@ -2304,7 +2364,7 @@ d'une intention : chaque ligne porte sa preuve.**
       signalait `--cookie-banner-h`, cite seulement dans une explication.
       **Non-régression :** **5538 tests verts**, 0 échec, 602 fichiers.
 
-    - [x] **P0.18** 🔴 **L’IA peut livrer un parcours vide de sens, et l’écran le présente complet.**
+- [x] **P0.18** 🔴 **L’IA peut livrer un parcours vide de sens, et l’écran le présente complet.**
       **Constaté le 2026-09-28 sur une génération réelle**, `proof/P018-01-phase-reelle.png`
       (regardée). Brief demandé : *« Week-end de randonnée au départ de Chamonix, refuge la
       première nuit ». Réponse réelle du modèle, verbatim : **1 jour, 1 seule étape**,
@@ -3542,20 +3602,22 @@ C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
 - [x] **P4.3** Écran de chargement intermédiaire entre étape 1 et étape 2, àtapes **honnêtes** — **FAIT.**
       `generation-screen-d1.test.tsx` : **D1-5** rend le composant réel avec l'état `markPhaseDone` et prouve les **7 libellés dans l'ordre**
       (fait / actif / en attente) ; **D1-6** interdit explicitement le `%` — jamais de barre de progression inventée.
-- [~] **P4.4** Repli sur le moteur par règles **annoncé comme tel, avec une action** — **PARTIEL : annoncé oui, action non.**
-      Les 4 messages disent bien « moteur par règles » (`aiFailure.ts:37,39,41,43`) et `ai-failure.test.ts` est vert. Mais l'avertissement
-      est un `<p className="prep-notice">` **nu** (`ItineraryStep.tsx:509`) : **aucune action**, alors que P4.2 a déjà fourni le mécanisme
-      `retryPhase` utilisé ailleurs. **Action requise** : conteneur + bouton `retryPhase`, et un test qui prouve que la ligne atteint l'écran.
+- [x] **P4.4** ✅ **L'action existe, elle est câblée, et elle est cliquée pour de vrai.** Le bouton de reprise
+      est **ARMÉ** puis **RELANCÉ** : `p4-retry-click.test.tsx` clique réellement et vérifie l'ordre
+      `retryPhase` → `continueGeneration` → `runItineraryGeneration`. Il est absent sur un parcours sain —
+      « le clic sur un parcours sain n'existe pas : pas de CTA mort ». `p4-rejection.test.tsx` verrouille
+      l'affichage en toutes lettres, y compris l'**absence** du bouton quand rien n'a échoué.
+      **Morsant** : le `onClick` de `p4-rejection` est un rendu, pas un comportement — le sabotage y est
+      resté vert. C'est **ce constat** qui a fait créer `p4-retry-click`, qui, lui, voit le sabotage. Déclaré
+      plutôt que masqué.
 - [x] **P4.5** Prompt IA **accentué**, avec une passe de typographie française en sortie — **FAIT.**
       `itinerary-ai-typography.test.ts` mocke `askAI` avec une charge réelle **non accentuée**, exerce le **vrai** `requestDraftedItinerary`
       et la **vraie** passe `frenchTypography` — la chaîne complète est prouvee, pas un bouts de texte isolé.
-- [~] **P4.6** Contrôle de cohérence du planning **exécuté, et signalé quand il échoue** — **PARTIEL : exécuté oui, signalé non.**
-      L'exécution est réelle et prouvée : `validateDrafted` (`itineraryEngine.ts:205`) et `rejectedReason = affirmation_non_sourcee`
-      (`itinerary-ai.test.ts:270`). **Mais le signalement n'existe pas** : la valeur est produite (`itineraryPhases.ts:534`) et propagée
-      (6 retours : `:549, 560, 573, 592, 613, 620`), et lue par **aucun** `.tsx` — **0 occurrence dans les 1805 `.ts`/`.tsx` du dépôt**
-      hors moteur et tests. L'utilisateur ne sait jamais que son planning a été refusé.
-      **Action requise** : afficher `generation.rejectedReason` quand il est non nul. **Meilleur ROI de tout le lot** — le moteur produit déjà la valeur.
-### P5 — Beauté pure, testée en 393 (captures de référence ci-dessus)
+- [x] **P4.6** ✅ **Contrôle exécuté, signalé, et la phrase est lisible en toutes lettres.**
+      `p4-rejection.test.tsx` couvre le dépôt par `applyGenerated` (P4.6-01), la conservation par `retryPhase`
+      (P4.6-03), l'effacement au nouveau run (P4.6-04/04b), les deux valeurs initiales (P4.6-05), une table
+      **exhaustive** des types et une couverture exhaustive par type (P4.6-06/07), et l'affichage de la phrase
+      (P4.6-08). Un refus n'est donc plus une valeur que personne ne lit.
 
 - [~] **P5.1** Un seul verre, une seule recette. Le tiroir P0.9 et la carte P0.11 doivent
       **partir du même matériau** que la barre d'étapes, qui est correcte.
