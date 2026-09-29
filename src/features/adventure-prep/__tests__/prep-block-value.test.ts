@@ -36,9 +36,26 @@ describe('la valeur d un bloc ne se fait jamais couper par un libelle long', () 
     expect(value).toMatch(/text-overflow:\s*ellipsis/);
   });
 
-  it('autorise le libelle a passer a la ligne plutot que de pousser la valeur', () => {
+  it('laisse le libelle se reduire, lui seul, plutot que de pousser la valeur', () => {
+    // Ce test exigeait `flex-grow: 1`. Mesure du 2026-09-29 (393x852,
+    // `/prepare?nouvelle=1`, etape 1, libelle « Destination ou hebergement de
+    // base » + valeur « 3 personnes · 1 adulte ») : avec la pile en
+    // `flex: 0 0 auto`, `flex: 0 1 auto` et `flex: 1 1 auto` donnent la meme
+    // boite au pixel pres (183.9 / 183.9). Le libelle est le seul element
+    // qui peut s etendre, donc son grow ne change rien a l ecran — le contrat
+    // decrivait une intention, pas une geometrie.
+    //
+    // Ce qui protege reellement la valeur est ailleurs, et les deux assertions
+    // ci-dessous le disent :
+    //   - le libelle se laisse reduire (sinon son texte deborde sur la pile) ;
+    //   - il se tronque dans sa boite plutot que de painted par-dessus.
     const label = allDeclarations('.prep-block__label');
-    expect(label).toMatch(/flex:\s*1\s+1\s+auto|flex-grow:\s*1/);
     expect(label).toMatch(/min-width:\s*0/);
+    expect(label, 'un libelle bloque sur sa largeur deborde sur la valeur').not.toMatch(
+      /flex:\s*0\s+0\s+auto|flex-shrink:\s*0/,
+    );
+    expect(label, 'sans ellipse, le libelle peint son texte sur la valeur').toMatch(
+      /text-overflow:\s*ellipsis/,
+    );
   });
 });

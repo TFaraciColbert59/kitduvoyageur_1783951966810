@@ -12,7 +12,9 @@
  * le hub ne sa pas afficher.
  */
 
+import { setActiveAdventureAction } from '@/features/hub/context/activeAdventureServer';
 import { blockersBeforeSave } from './adventureRequest';
+import { tripTitle } from './tripCommit';
 import type { AdventurePrepDraft } from './types';
 
 /** Ce que l ecriture a reellement obtenu. */
@@ -24,11 +26,37 @@ export type SaveOutcome =
   | { readonly status: 'failed'; readonly message: string };
 
 /** Injection de tests : le module ne connait que cette forme. */
+/**
+ * L'aventure que le hub doit ouvrir. Meme forme que le cookie
+ * `lkv_active_adventure` : c'est ce contrat-la que le hub relit ensuite.
+ */
+export interface ActiveSortie {
+  readonly nature: 'sortie';
+  readonly id: string;
+  readonly slug: string;
+  readonly title: string;
+}
+
+export type ActivateAdventure = (adventure: ActiveSortie) => Promise<{ success: boolean }>;
+
 export interface SaveAdventureDeps {
   post: (url: string, body: unknown, init: { signal?: AbortSignal }) => Promise<Response>;
+  /**
+   * Pose l'aventure active cote serveur (cookie httpOnly). Par defaut, la
+   * VRAIE action serveur ; injectee dans les tests.
+   */
+  activate?: ActivateAdventure;
+  /**
+   * Recoit le motif quand le hub n'a pas pu etre oriente vers le nouveau
+   * voyage. Le voyage, lui, existe deja : on ne le declare pas perdu.
+   */
+  onActivationIssue?: (issue: string) => void;
 }
 
 export const COMMIT_ENDPOINT = '/api/adventure/commit';
+
+/** Ou le hub lit l'aventure qu'on vient de creer. */
+export const HUB_HREF = '/hub';
 
 const OFFLINE_MESSAGE = 'Impossible de joindre le serveur. Vérifie ta connexion, puis réessaie.';
 const GENERIC_FAILURE = "Ton aventure n’a pas pu être enregistrée. Réessaie dans un instant.";
@@ -86,6 +114,61 @@ export async function readSaveResponse(response: Response): Promise<SaveOutcome>
 
 
 /**
+ * Signale un echec d'orientation sans jamais le laisser remonter : un rappel
+ * de rapport qui leve transformerait un voyage enregistre en panne.
+ */
+function reportActivationIssue(deps: SaveAdventureDeps, issue: string): void {
+  try {
+    deps.onActivationIssue?.(issue);
+  } catch (error) {
+    console.error("[LKDV] le signalement d'un echec d'orientation a echoue:", error);
+  }
+}
+
+/**
+ * Oriente le hub vers l'aventure qui vient d'etre creee.
+ *
+ * Le hub ne devine pas l'aventure affichee : il relit le cookie
+ * `lkv_active_adventure`. On y ecrit donc l'identifiant et le slug renvoyes
+ * par la BASE, et le titre de la ligne `trips` — celui que `buildTripCommit`
+ * a produit, pas un second libelle invente a cote.
+ *
+ * Un echec ici ne remet pas en cause l'ecriture : la ligne existe deja. On le
+ * signale, et le resultat reste `saved` — un cookie non pose se voit et se
+ * rejoue, un voyage declare perdu, non.
+ */
+export async function activateSavedAdventure(
+  draft: AdventurePrepDraft,
+  outcome: SaveOutcome,
+  deps: SaveAdventureDeps,
+): Promise<boolean> {
+  if (outcome.status !== 'saved') return false;
+
+  const slug = outcome.slug;
+  if (!slug) {
+    reportActivationIssue(deps, "Le serveur n'a pas renvoye d'adresse pour ce voyage.");
+    return false;
+  }
+
+  const activate = deps.activate ?? setActiveAdventureAction;
+  try {
+    const result = await activate({
+      nature: 'sortie',
+      id: outcome.tripId,
+      slug,
+      title: tripTitle(draft),
+    });
+    if (result?.success) return true;
+    reportActivationIssue(deps, "Le hub n'a pas pu etre oriente vers ce voyage.");
+    return false;
+  } catch (error) {
+    console.error("[LKDV] orientation du hub vers le nouveau voyage impossible:", error);
+    reportActivationIssue(deps, "Le hub n'a pas pu etre oriente vers ce voyage.");
+    return false;
+  }
+}
+
+/**
  * Enregistre l aventure. Ne leve jamais : tout echec revient dans le resultat,
  * parce qu un rejet non rattrape laisserait l ecran dans un etat « saving »
  * indefini.
@@ -109,7 +192,16 @@ export async function saveAdventure(
       { draft },
       signal ? { signal } : {},
     );
-    return await readSaveResponse(response);
+    const outcome = await readSaveResponse(response);
+
+    // L'aventure active est pointee AVANT de rendre la main : le composant
+    // redirige aussitot vers le hub, qui ne doit donc jamais relire
+    // l'aventure precedente parce que l'ecriture de la ligne a ete plus
+    // rapide que celle de l'orientation.
+    if (outcome.status === 'saved') {
+      await activateSavedAdventure(draft, outcome, deps);
+    }
+    return outcome;
   } catch (error) {
     if (signal?.aborted) {
       return { status: 'failed', message: 'Enregistrement annulé.' };

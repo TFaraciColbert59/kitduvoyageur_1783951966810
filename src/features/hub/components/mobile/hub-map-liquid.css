@@ -96,7 +96,7 @@
 
 .hub-globe-poi-chip {
   display: inline-flex;
-  min-height: 40px;
+  min-height: 44px;
   flex: 0 0 auto;
   align-items: center;
   gap: 6px;
@@ -105,7 +105,7 @@
   border-radius: 999px;
   padding: 7px 11px;
   color: rgba(255, 255, 255, 0.9);
-  background: rgba(16, 16, 16, 0.32);
+  background: rgba(16, 16, 16, 0.78);
   box-shadow: var(--hub-glass-shadow);
   -webkit-backdrop-filter: blur(18px) saturate(200%) brightness(1.06);
   backdrop-filter: blur(18px) saturate(200%) brightness(1.06);

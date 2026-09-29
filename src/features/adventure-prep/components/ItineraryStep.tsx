@@ -26,12 +26,11 @@ import {
 } from '../placeSource';
 import { shouldLaunchGeneration } from '../engine/stepTransition';
 import { minutesLabel, programTitle } from '../engine/labels';
-import { A_VERIFIER, moneyLabel, stateLabel } from '../engine/trust';
+import { A_VERIFIER, moneyLabel } from '../engine/trust';
 import { useDaySwipe } from '../hooks/useDaySwipe';
 import { useAdventurePrepStore } from '../store/useAdventurePrepStore';
 import type {
   AdventurePrepDraft,
-  GenerationPhase,
   ItineraryModel,
   ItineraryStep as ItineraryStepModel,
   ItineraryStepKind,
@@ -66,23 +65,6 @@ const MAP_CATEGORIES: readonly string[] = ['trajet', 'arret', 'repos', 'nuit', '
 
 /** Les classes de `.prep-step` visent du texte de bloc : on leve le inline. */
 const AS_BLOCK: React.CSSProperties = { display: 'block' };
-
-/** Un `<button>` natif garde centrage et cadre navigateur : on ne reprend que ca. */
-const CARD_BUTTON: React.CSSProperties = {
-  textAlign: 'left',
-  font: 'inherit',
-  color: 'inherit',
-  cursor: 'pointer',
-  WebkitTapHighlightColor: 'transparent',
-};
-
-const PLAIN_LIST: React.CSSProperties = {
-  listStyle: 'none',
-  margin: 0,
-  padding: 0,
-  display: 'grid',
-  gap: 'var(--prep-block-gap)',
-};
 
 /* ------------------------------------------------------------------ */
 /* Donnees derivees                                                    */
@@ -201,10 +183,6 @@ function allSteps(model: ItineraryModel): ItineraryStepModel[] {
   return [...model.steps].sort((a, b) => a.day - b.day || a.order - b.order);
 }
 
-function stepIcon(step: ItineraryStepModel): string {
-  return step.icon || STEP_ICONS[step.kind];
-}
-
 /* L3.4 — UN seul « À vérifier » par ligne.
  *
  * La ligne d'un etape est un couple : l'heure de depart, puis la duree. Le
@@ -228,89 +206,6 @@ function whenLabel(step: ItineraryStepModel): string {
 /* ------------------------------------------------------------------ */
 /* Fragments                                                           */
 /* ------------------------------------------------------------------ */
-
-/** Le travail reellement effectue. Jamais de pourcentage ni de jauge. */
-function GenerationRail({ phases }: { phases: readonly GenerationPhase[] }) {
-  return (
-    <div className="prep-rail" aria-live="polite">
-      {phases.map((phase) => (
-        <div key={phase.id} className="prep-rail__line" data-state={phase.done ? 'done' : 'idle'}>
-          <span className="prep-rail__dot" aria-hidden="true">
-            <Icon name={phase.done ? 'check-circle2' : 'circle'} size={20} />
-          </span>
-          <span>
-            {phase.label}
-            <span className="prep-visually-hidden">{phase.done ? ' — fait' : ' — en attente'}</span>
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/** Une etape du programme : toute la ligne ouvre son detail. */
-function StepCard({
-  step,
-  onOpen,
-}: {
-  step: ItineraryStepModel;
-  onOpen: (stepId: string) => void;
-}) {
-  return (
-    <button type="button" className="prep-step" style={CARD_BUTTON} onClick={() => onOpen(step.id)}>
-      <span className="prep-step__head">
-        <span className="prep-step__thumb" aria-hidden="true">
-          <Icon name={stepIcon(step)} size={22} />
-        </span>
-        <span className="prep-step__body">
-          <span className="prep-step__name" style={AS_BLOCK}>
-            {step.title}
-          </span>
-          <span className="prep-step__when" style={AS_BLOCK}>
-            {whenLabel(step)}
-          </span>
-          {step.placeName ? (
-            <span className="prep-step__reason" style={AS_BLOCK}>
-              {step.placeName}
-            </span>
-          ) : null}
-        </span>
-        <span className="prep-step__price" data-state={step.price.state}>
-          {moneyLabel(step.price)}
-        </span>
-      </span>
-      <span className="prep-step__actions">
-        <span className="prep-act__meta">{stateLabel(step.state)}</span>
-        {step.kept ? (
-          <span className="prep-act__meta">
-            <Icon name="check" size={15} /> À conserver
-          </span>
-        ) : null}
-        <Icon name="chevron-right" size={16} aria-hidden="true" />
-      </span>
-    </button>
-  );
-}
-
-/** Ce qui a deja ete produit avant l'interruption : jamais perdu. */
-function ProducedStep({ step }: { step: ItineraryStepModel }) {
-  return (
-    <div className="prep-block">
-      <div className="prep-block__row">
-        <span className="prep-step__thumb" aria-hidden="true">
-          <Icon name={stepIcon(step)} size={18} />
-        </span>
-        <span className="prep-block__label">{step.title}</span>
-        <span
-          className="prep-block__value"
-          data-unknown={step.startTime === null ? 'true' : undefined}
-        >
-          {step.startTime ?? A_VERIFIER}
-        </span>
-      </div>
-    </div>
-  );
-}
 
 /* ------------------------------------------------------------------ */
 /* Ecran                                                               */
@@ -337,11 +232,8 @@ function FocusedStepView({
   return (
     <div className="prep-step">
       <div className="prep-step__head">
-        <span className="prep-step__thumb" aria-hidden="true">
-          <Icon name={stepIcon(step)} size={22} />
-        </span>
         <div className="prep-step__body">
-          <h3 className="prep-step__name" style={AS_BLOCK}>
+          <h3 className="prep-step__name">
             {step.title}
           </h3>
           {/* M2.3 — OÙ ?
@@ -646,8 +538,6 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
     store.goToStep('departure');
   }, []);
 
-  const openStep = useCallback((stepId: string) => onOpenSheet('step', stepId), [onOpenSheet]);
-
   /**
    * Reprise bornee a la phase tombee (P4.4).
    *
@@ -833,30 +723,6 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
             {provenance.map((entry) => (
               <PrepDataSource key={entry.metric} entry={entry} />
             ))}
-
-            {model.days > 1 && (
-              <div className="prep-days" role="group" aria-label="Périmètre du programme">
-                <button
-                  type="button"
-                  className="prep-day"
-                  aria-pressed={activeDay === null}
-                  onClick={() => selectFocusDay(null)}
-                >
-                  Tout
-                </button>
-                {Array.from({ length: model.days }, (_, index) => index + 1).map((day) => (
-                  <button
-                    key={day}
-                    type="button"
-                    className="prep-day"
-                    aria-pressed={activeDay === day}
-                    onClick={() => selectFocusDay(day)}
-                  >
-                    Jour {day}
-                  </button>
-                ))}
-              </div>
-            )}
 
             {/* Le programme EST la liste visible des etapes. Une version parallele
                 « pour les tests » qui n'afficherait rien a l'ecran ne prouverait

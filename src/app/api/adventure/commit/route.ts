@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { buildTripCommit, type CommitDraft, type TripRow, type TripStepRow } from '@/features/adventure-prep/tripCommit';
 import { emitEvent } from '@/lib/events/eventBus';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import { avecHeureDeDepart, HEURE_RE } from '@/features/adventure-prep/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,6 +83,14 @@ const draftSchema = z.object({
     durationDays: z.number().nullable(),
     durationIsSuggested: z.boolean(),
     returnDate: z.string().nullable(),
+    // Accepte l absence (jamais choisie) et la seule forme reelle. Une
+    // heure hors forme est REFUSEE : elle ne doit pas atteindre la base,
+    // ou elle relirait comme un fait alors que personne ne l a saisie.
+    startTime: z
+      .string()
+      .regex(HEURE_RE, 'heure de depart attendue en HH:MM')
+      .nullable()
+      .optional(),
   }),
   group: z.object({
     mode: z.enum(['solo', 'groupe']),
@@ -166,7 +175,12 @@ export async function POST(request: NextRequest) {
   }
 
   const taken = new Set((slugs ?? []).map((row) => row.slug as string));
-  const trip: TripRow = { ...commit.trip, slug: uniqueSlug(commit.trip.slug, taken) };
+
+  const trip: TripRow = {
+    ...commit.trip,
+    slug: uniqueSlug(commit.trip.slug, taken),
+    metadata: avecHeureDeDepart(commit.trip.metadata, draft.calendar.startTime ?? null),
+  };
 
   const { data: created, error: insertError } = await supabase
     .from('trips')

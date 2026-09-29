@@ -143,17 +143,30 @@ describe('M3.2 — quatre tailles, et rien d ecrit en dur', () => {
     }
   });
 
-  it('les deux bridages fluides utilisent une unite de conteneur, pas un nombre', () => {
-    const brides = valeurs().filter((v) => v.startsWith(
-      'min(',
-    ));
-    expect(brides, 'le nombre de bridages fluides a change').toEqual([
-      'min(var(--prep-type-body), 13.5cqi)',
-      'min(var(--prep-type-body), 15cqi)',
-    ]);
-    for (const v of brides) expect(v, `bridage en dur : ${v}`).toMatch(/cqi\)$/);
+  it('aucun bridage fluide ne subsiste : la tuile de mesure ne peut pas descendre sous 13 px', () => {
+    // G3.1, mesure au navigateur en 393x852. Les deux bridages
+    // min(jeton, cqi) avaient ete poses pour faire retrecir le MEME jeton
+    // dans un conteneur etroit. Sur la tuile de mesure ils produisaient
+    // l'inverse de leur but : la boite de contenu de .prep-metric y fait
+    // 80 px, donc 13,5 cqi = 10,8 px et 15 cqi = 12 px. Le chiffre que
+    // l'utilisateur vient mesurer devenait illisible, et le plancher
+    // max(12px, ...) pose pour le rattraper violait ce meme contrat en
+    // ecrivant une taille en dur.
+    //
+    // Le correctif nest pas de choisir un autre plancher en pixels : une
+    // unite de conteneur ne peut pas garantir une taille lisible sur une
+    // grille 3 colonnes dans un telephone de 393 px, la place ny est pas.
+    // Les valeurs passent donc par le jeton, et si elles debordent elles
+    // passent a la ligne : min-width: 0 est deja pose sur la tuile (M3.3).
+    const brides = valeurs().filter((v) => v.includes('cqi'));
+    expect(brides, 'un bridage en unite de conteneur est revenu').toEqual([]);
+    expect(css, 'container-type sans consommateur @container').not.toContain('container-type:');
   });
-});
+
+  it('la valeur de mesure porte un jeton, jamais une taille relative', () => {
+    const d = declarations('.prep-metric__value');
+    expect(d.get('font-size')).toBe('var(--prep-type-body)');
+  });
 
 describe('M3.3 — libelle et valeur ne se chevauchent jamais', () => {
   it('le libelle de tuile est un bloc', () => {
@@ -186,3 +199,4 @@ describe('M3.3 — libelle et valeur ne se chevauchent jamais', () => {
 function valeurs(): string[] {
   return [...new Set([...sansCommentaires.matchAll(/font-size:\s*([^;]+);/g)].map((m) => (m[1] ?? '').trim()))];
 }
+});

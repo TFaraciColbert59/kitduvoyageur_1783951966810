@@ -146,7 +146,13 @@ describe('H6-2 — le resume meteo assume l absence', () => {
       [],
     );
     expect(plan.weatherSummary.measured).toBe(true);
-    expect(plan.weatherSummary.tempMinMax).toBe('11 °C — 16 °C');
+    // La MESURE, telle quelle. Cette assertion pinait « 11 °C — 16 °C »,
+    // c est a dire `tempC - 3` et `tempC + 2` : deux nombres ecrits en dur qui
+    // transformaient une temperature instantanee en amplitude relevee.
+    // `WeatherSnapshot` ne porte qu un point ; le point est donc ce qui sort.
+    expect(plan.weatherSummary.tempC).toBe(14);
+    // Et aucune amplitude n est deduite de ce point.
+    expect(plan.weatherSummary.tempMinMax).toBeNull();
     expect(plan.weatherSummary.windKmh).toBe(22);
     expect(plan.weatherSummary.rainRiskPct).toBe(40);
     expect(plan.weatherSummary.condition).toBe('Ciel voilé');

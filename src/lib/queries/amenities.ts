@@ -24,8 +24,13 @@ const MAX_ELEMENTS = 400;
  * 20 s semblaient suffisants ; la mesure live les a infirmes : les miroirs
  * secondaires ont repondu 200 en 22,7 s et 32 s pour une requete triviale. Un
  * budget de 20 s ne servait qu a les tuer avant leur reponse, et le parcours
- * retombait sur une liste vide. Les miroirs sont en course, donc ce delai est
- * un plafond de generation, pas une somme.
+ * retombait sur une liste vide.
+ *
+ * 45 s n est PLUS sur le chemin critique. Depuis l arbitrage (`arbitrer`), la
+ * reponse est rendue des que le repli apporte des lieux, mesuré a 1,5-2,5 s.
+ * Ce delai est donc le PLAFOND de l appel de fond — celui qui remplit le cache
+ * si Overpass repond apres coup. Le mesurer reste utile : c est lui qui borne
+ * la duree de vie de la requete et le nombre de sockets qu elle garde.
  */
 export const OVERPASS_TIMEOUT_MS = 45_000;
 
@@ -51,6 +56,59 @@ export interface AmenityRow {
   readonly country: string | null;
   readonly website: string | null;
   readonly phone: string | null;
+}
+
+/* ------------------------------------------------------------------ */
+/* Le credit de source (P0.24)                                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Les fournisseurs REELLEMENT interroges par ce module.
+ *
+ * Cette liste n est PAS un inventaire de fournisseurs possibles : chaque
+ * membre y entre parce que le code de ce fichier appelle reellement ce service.
+ * Il n existe donc aucun membre « par defaut » auquel attribuer une reponse.
+ * Une cle inconnue — venue d une version future du serveur, ou bricolee — ne
+ * nomme personne et rend `null`.
+ *
+ * C est la meme regle que le credit d une mesure (`provenance.ts`) : nommer
+ * un fournisseur qui n a pas produit la donnee est un mensonge, et un
+ * `?? 'overpass'` en serait un.
+ */
+export type AmenitySourceId = 'overpass' | 'photon';
+
+/** Le credit porte par la reponse, dans la forme de `DataProvider`. */
+export interface AmenityProvider {
+  readonly id: AmenitySourceId;
+  readonly name: string;
+  readonly url: string;
+}
+
+const AMENITY_PROVIDERS: Readonly<Record<AmenitySourceId, AmenityProvider>> = Object.freeze({
+  overpass: Object.freeze({
+    id: 'overpass' as const,
+    name: 'OpenStreetMap (Overpass)',
+    url: 'https://overpass-api.de/',
+  }),
+  photon: Object.freeze({
+    id: 'photon' as const,
+    name: 'Photon (OpenStreetMap)',
+    url: 'https://photon.komoot.io/',
+  }),
+});
+
+/**
+ * Le credit d un fournisseur, ou `null` quand personne n a repondu.
+ *
+ * L identifiant est COMPARE explicitement plutot qu indexe avec un repli : une
+ * cle hors liste ne retombe sur aucun fournisseur connu, exactement comme
+ * `dataSourceLabel` qui rend « source inconnue » pour une cle inconnue.
+ */
+export function amenityProvider(
+  id: AmenitySourceId | null | undefined,
+): AmenityProvider | null {
+  if (id !== 'overpass' && id !== 'photon') return null;
+  return AMENITY_PROVIDERS[id];
 }
 
 const FOOD_AMENITIES = new Set([
@@ -330,7 +388,7 @@ function inBox(lat: number, lon: number, box: AmenityBbox): boolean {
 async function fetchPhotonForBox(
   box: AmenityBbox,
   fetchImpl: Fetcher,
-): Promise<AmenityRow[]> {
+): Promise<AmenityRow[] | null> {
   const center = centerOf(box);
 
   const perFamily = await Promise.all(
@@ -345,7 +403,10 @@ async function fetchPhotonForBox(
           headers: { 'User-Agent': OVERPASS_USER_AGENT },
           signal: controller.signal,
         });
-        if (!response.ok) return [];
+        // Un HTTP en erreur, un abort, un corps illisible : cette famille est
+        // MUETTE. Elle ne vaut pas un zero mesure — confondre les deux faisait
+        // attendre 45 s une boite ou Photon n avait simplement rien trouvé.
+        if (!response.ok) return null;
         const rows = normalizePhoton(await response.json());
         // Le tri par distance est fait ICI, pas apres fusion : c est la seule
         // maniere de ne pas garder un diner a 90 km choisi pour son nom.
@@ -357,16 +418,21 @@ async function fetchPhotonForBox(
               distanceDeg(center.lat, center.lon, b.lat, b.lon),
           );
       } catch {
-        return [];
+        return null;
       } finally {
         clearTimeout(timer);
       }
     }),
   );
 
+  // Toutes les familles muettes = repli INCONNU (`null`). Au moins une
+  // famille a repondu = elle a MESURE la zone, meme si elle n a rien trouve :
+  // c est alors `[]`, une reponse honnete et signee, pas une panne.
+  if (perFamily.every((familles) => familles === null)) return null;
+
   const seen = new Set<string>();
   const out: AmenityRow[] = [];
-  for (const row of perFamily.flat()) {
+  for (const row of perFamily.flat().filter((ligne): ligne is AmenityRow => ligne !== null)) {
     const key = `${row.name.toLowerCase()}|${row.lat.toFixed(4)}|${row.lon.toFixed(4)}`;
     if (seen.has(key)) continue;
     seen.add(key);
@@ -376,7 +442,17 @@ async function fetchPhotonForBox(
 }
 
 
-const cache = new Map<string, { at: number; rows: AmenityRow[] }>();
+/**
+ * Le cache porte le credit de CE QUI L A REMPLI.
+ *
+ * Raison d etre : un cache herite sans sa source ferait qu une boite relancee
+ * rendrait le repli en creditant Overpass, ou l inverse. La source est donc
+ * stockee AU MEME TITRE que les lignes, et relue telle quelle.
+ */
+const cache = new Map<
+  string,
+  { at: number; rows: AmenityRow[]; source: AmenitySourceId | null }
+>();
 
 /** Reserve aux tests : vide le cache en memoire. */
 export function __resetAmenityCache(): void {
@@ -455,68 +531,253 @@ export const OVERPASS_MIRRORS = [
 ] as const;
 
 /**
+ * Le verdict d une interrogation : les lieux, ET le fournisseur qui les a
+ * produits.
+ *
+ * `source` et `provider` disent la MEME chose a deux niveaux : l identifiant
+ * pour la machine, l objet `{ id, name, url }` pour l ecran — la forme que
+ * `/api/weather` et `/api/elevation` rendent deja. Les deux valent `null`
+ * ensemble : ou personne n a repondu, ou on ne le sait pas.
+ */
+export interface AmenityResolution {
+  readonly rows: AmenityRow[];
+  /** Le fournisseur qui a produit ces lignes, ou `null` si personne n a repondu. */
+  readonly source: AmenitySourceId | null;
+  readonly provider: AmenityProvider | null;
+}
+
+/**
+ * Le verdict « personne n a repondu ».
+ *
+ * Distingue deux realites que la liste vide seule confondait : une zone
+ * reellement sans amenite, et une panne generalisee. La premiere porte un
+ * credit, la seconde non.
+ */
+function verdict(rows: AmenityRow[], source: AmenitySourceId | null): AmenityResolution {
+  return { rows, source, provider: amenityProvider(source) };
+}
+
+/**
+ * Personne n a repondu.
+ *
+ * Construit par `verdict` et JAMAIS a la main : c etait deux reponses ecrites
+ * deux fois, et le duplicata est un piege. Un `?? 'overpass'` glisse dans
+ * `verdict` ne mordait donc aucun test, parce que ce chemin-ci ne passeait
+ * jamais par lui — le defaut aurait pu revenir en silence. Un seul point
+ * calcule le credit, donc un seul point peut etre casse par un test.
+ */
+const PERSONNE: AmenityResolution = verdict([], null);
+
+/**
+ * La fenetre de priorite d Overpass.
+ *
+ * Le repli gagne des qu il apporte des lieux, mais Overpass reste la source la
+ * plus complete : on lui laisse donc une courte fenetre pour produire SA
+ * reponse — y compris une liste VIDE, qui est une reponse MESUREE (« il n y a
+ * rien ici ») et non un echec. Passé cette fenetre le verdict est rendu, et
+ * Overpass continue en arriere-plan, dont la reponse IRA AU CACHE.
+ *
+ * 300 ms suffisent parce que la fenetre ne sert qu a departager deux reponses
+ * quasi simultanees : elle n allonge le retour que du temps que le repli met
+ * deja a repondre.
+ */
+const OVERPASS_PRIORITY_MS = 300;
+
+/** Une attente annidable : une fenetre de priorite ne doit pas fuir. */
+function fenetre(ms: number): { clos: Promise<void>; annuler: () => void } {
+  let handle: ReturnType<typeof setTimeout> | undefined;
+  const clos = new Promise<void>((resolve) => {
+    handle = setTimeout(resolve, ms);
+  });
+  return { clos, annuler: () => clearTimeout(handle) };
+}
+
+/**
+ * Le verdict des deux sources, des que l UNE DES DEUX a repondu utilement.
+ *
+ * C est le coeur du correctif de P0.24. La version d avant faisait
+ * `Promise.all([overpass, repli])` : la reponse attendait donc le budget
+ * d Overpass — 45 s mesurees, puis 48,5 s reel de bout en bout — MEME quand le
+ * repli avait repondu depuis deux secondes et apportait neuf lieux nommes. On
+ * rendait une liste deja disponible pour faire attendre l utilisateur une
+ * reponse qui ne viendrait pas.
+ *
+ * Deux regles, et une seule source de verite — chaque source dit soit "voici
+ * ce que j ai mesure", soit "je ne sais pas". Elle ne peut pas dire les deux :
+ *
+ *   1. Overpass gagne s il produit une liste — meme VIDE — avant la fin de sa
+ *      fenetre de priorite. C est lui, la source la plus complete, et un zero
+ *      qu il mesure est une reponse, pas une panne.
+ *   2. sinon le repli gagne, s il a repondu — meme VIDE. Grace au typage
+ *      `AmenityRow[] | null`, un zero Photon et un Photon mort ne se
+ *      confondent plus : le premier est signe et instantane, le second attend
+ *      Overpass. C est ce qui rend une boite sans amenite rapide ET sincere,
+ *      au lieu de bloquer 45 s le budget Overpass pour finir par ne rien
+ *      nommer.
+ *
+ * « Personne n a repondu » n est donc prononce que si les DEUX sources ont
+ * reellement repondu `null` ET que leurs arbitrages sont ACHEVES — jamais
+ * plus tot, et jamais dans le vide.
+ */
+function arbitrer(
+  overpass: Promise<AmenityRow[] | null>,
+  repli: Promise<AmenityRow[] | null>,
+): Promise<AmenityResolution | null> {
+  let regler: (value: AmenityResolution | null) => void = () => {};
+  const promis = new Promise<AmenityResolution | null>((resolve) => {
+    regler = resolve;
+  });
+
+  // Une branche n est « epuisee » qu une fois son PROPRE arbitrage termine.
+  //
+  // C est la subtilite qui fait tenir tout le correctif. Les deux branches
+  // sont deja catchees (`overpass` finit en `null`, `repli` en liste), donc un
+  // `Promise.all([overpass, repli])` se resout en quelques millisecondes et
+  // pronounce « personne n a repondu » AVANT que la fenetre de priorite de
+  // 300 ms n ait laisse Overpass trancher. Le repli etait alors ecarte au
+  // moment precis ou il venait d apporter ses lieux reels : c etait exactement
+  // le symptome AM-27 (3 miroirs muets + Photon immediat => 0 lieu rendu).
+  //
+  // On ne compte donc pas les promesses brutes mais les arbitrages ACHEVES,
+  // et le dernier pronounce « personne » seulement si aucun verdict n a ete
+  // rendu. `regler` reste idempotent : un premier verdict gagne, toujours.
+  let restant = 2;
+  const epuiser = (): void => {
+    restant -= 1;
+    if (restant === 0) regler(null);
+  };
+
+  void overpass.then(
+    (rows) => {
+      if (rows !== null) regler(verdict(rows, 'overpass'));
+      epuiser();
+    },
+    () => {
+      /* Les trois miroirs sont morts : la main passe au repli, PAS a un
+         verdict « personne n a repondu » — le repli peut encore repondre. */
+      epuiser();
+    },
+  );
+
+  void repli.then(
+    (rows) => {
+      if (rows === null) {
+        /* Repli MUET : il ne mesure rien, il laisse la main a Overpass. */
+        epuiser();
+        return;
+      }
+
+      // Fenetre de priorite : Overpass peut encore produire SA reponse, et elle
+      // est plus complete que celle du repli. Si elle arrive, c est son
+      // gestionnaire — enregistre ci-dessus — qui regle.
+      const limite = fenetre(OVERPASS_PRIORITY_MS);
+      void Promise.race([
+        overpass.then((lus) => lus !== null, () => false),
+        limite.clos.then(() => false),
+      ]).then((overpassRepond) => {
+        limite.annuler();
+        if (!overpassRepond) regler(verdict(rows, 'photon'));
+        epuiser();
+      });
+    },
+    () => {
+      /* Repli muet : seul Overpass peut encore gagner. */
+      epuiser();
+    },
+  );
+
+  return promis;
+}
+
+/**
+ * Les amenites reelles de la boite, ET le fournisseur qui les a produites.
+ *
+ * Quatre garanties, chacune verifiee par un test :
+ *   1. un echec reseau rend `[]` SANS LEVER et SANS CITER PERSONNE — le
+ *      preparateur continue sur ses lieux base, qui sont des, plutot que
+ *      d afficher une erreur ou, pire, des lieux inventes ;
+ *   2. la reponse part des que le repli apporte des lieux, sans attendre le
+ *      budget d Overpass. C est la cause mesuree du delai de 48,5 s ;
+ *   3. la reponse d Overpass, si elle arrive apres coup, n est pas perdue :
+ *      elle ecrit le cache, et l appel suivant — dans le TTL de 6 h — rend
+ *      alors Overpass, avec SON credit. On rend vite, on ameliore apres ;
+ *   4. le credit vient du CORPS de la reponse, jamais d une intention. Une
+ *      liste vide mesuree par Overpass cite Overpass ; une panne totale ne cite
+ *      personne.
+ */
+export async function resolveAmenitiesNear(
+  box: AmenityBbox,
+  fetchImpl: Fetcher = fetch,
+): Promise<AmenityResolution> {
+  let query: string;
+  try {
+    query = buildOverpassQuery(box);
+  } catch {
+    return PERSONNE;
+  }
+
+  const key = cacheKey(box);
+  const hit = cache.get(key);
+  // Un cache frais rejoue son credit : il a ete rempli par CE fournisseur.
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return verdict(hit.rows, hit.source);
+
+  const retenir = (rows: AmenityRow[], source: AmenitySourceId | null): AmenityResolution => {
+    // Un VIDE de repli reste provisoire : le repli est un geocodeur, il voit
+    // mal les petites boxes. Le geler 6 h afficherait un « rien ici » alors
+    // qu Overpass, plus complet, a des lieux. On le rend quand meme — il est
+    // mesure et signe — mais on ne le memorise pas. Des que l appel de fond
+    // ramene la reponse d Overpass, elle ecrit le cache a sa place.
+    if (rows.length > 0 || source === 'overpass') {
+      if (cache.size >= CACHE_MAX) {
+        const oldest = cache.keys().next();
+        if (!oldest.done) cache.delete(oldest.value);
+      }
+      cache.set(key, { at: Date.now(), rows, source });
+    }
+    return verdict(rows, source);
+  };
+
+  // Les deux sources partent EN MEME TEMPS : attendre l echec des trois miroirs
+  // avant d interroger Photon prenait 50 s, le budget d Overpass plus le
+  // repli. Elles partent donc ensemble, et c est `arbitrer` qui decide — pas
+  // `Promise.all`, qui attendait le plus lent des deux.
+  const overpass = Promise.any(
+    OVERPASS_MIRRORS.map((mirror) => fetchFromMirror(mirror, query, fetchImpl)),
+  ).catch(() => null);
+  const repli = fetchPhotonForBox(box, fetchImpl).catch(() => null);
+
+  // L appel de fond. Si le repli a deja regle, la reponse d Overpass n est pas
+  // perdue : elle ECRAIT le cache et le prochain appel rend Overpass, avec son
+  // propre credit. C est ce qui permet de rendre immediatement sans
+  // anisotropier la donnee au profit de la source la plus pauvre.
+  void overpass.then(
+    (rows) => {
+      if (rows !== null) retenir(rows, 'overpass');
+    },
+    () => {},
+  );
+
+  const gain = await arbitrer(overpass, repli);
+  if (gain !== null) return retenir(gain.rows, gain.source);
+
+  // Personne n a repondu. On rend ce que le cache conserve encore — avec le
+  // credit que CE cache porte, c est a dire celui de la reponse qui l a
+  // rempli, jamais un nom devine pour l occasion.
+  if (hit !== undefined) return verdict(hit.rows, hit.source);
+  return PERSONNE;
+}
+
+/**
  * Les amenites reelles de la boite, ou `[]`.
  *
- * Trois garanties :
- *   1. un echec reseau rend `[]` et ne leve jamais — le preparateur continue
- *      sur ses lieux base, qui sont des, plutot que d afficher une erreur ;
- *   2. la reponse est mise en cache 6 h, donc le cout de 20 s n est paye
- *      qu une fois par zone ;
- *   3. rien n est complete : un element sans nom ou sans position est ecarte.
+ * Raccourci conserve pour les appelants qui n ont besoin que des LIEUX. La
+ * route `/api/amenities` appelle `resolveAmenitiesNear` et rend la source :
+ * nommer un fournisseur suppose de savoir qui a repondu, donc de l avoir
+ * demande.
  */
 export async function fetchAmenitiesNear(
   box: AmenityBbox,
   fetchImpl: Fetcher = fetch,
 ): Promise<AmenityRow[]> {
-  let query: string;
-  try {
-    query = buildOverpassQuery(box);
-  } catch {
-    return [];
-  }
-
-  const key = cacheKey(box);
-  const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.rows;
-
-  const retenir = (rows: AmenityRow[]): AmenityRow[] => {
-    if (cache.size >= CACHE_MAX) {
-      const oldest = cache.keys().next();
-      if (!oldest.done) cache.delete(oldest.value);
-    }
-    cache.set(key, { at: Date.now(), rows });
-    return rows;
-  };
-
-  // Course PARALLELE : le premier miroir qui repond exploitable gagne. En
-  // sequence, trois miroirs a 30 s chacun feraient attendre 90 s l ecran, et
-  // le prechauffement ne recouvrirait plus rien. En course, le delai de la
-  // generation est celui du miroir le plus rapide, pas leur somme.
-  //
-  // REPLI CONCURRENT, et non sequential. Mesure du 2026-09-28 : en attendant
-  // l echec des trois miroirs avant d interroger Photon, la reponse prenait
-  // 50 s - le budget de 45 s d Overpass, plus les 5 s du repli. Les deux
-  // sources partent donc EN MEME TEMPS.
-  //
-  // Overpass reste prioritaire : si les deux repondent, c est sa reponse qui
-  // gagne, meme si Photon a ete plus rapide. C est la source la plus complete,
-  // donc c est elle qu on veut voir. Photon n est pas un deuxieme essai du
-  // meme choix : c est une source de COUVERTURE, la seule qui rend un
-  // etablissement nomme quand Overpass ne rend rien du tout.
-  // `Promise.all` et non une course : on rend la reponse Overpass des qu elle
-  // est exploitable, mais on attend quand meme le repli. C estassume et
-  // mesure : quand Overpass est MORT (le cas mesure, trois miroirs
-  // injoignables), seule la reponse du repli compte, et attendre le budget
-  // d Overpass ne coute rien a l'utilisateur puisqu'il n'y a rien a attendre.
-  // Le repli est donc lancE en meme temps, pas apres.
-  const [overpass, repli] = await Promise.all([
-    Promise.any(
-      OVERPASS_MIRRORS.map((mirror) => fetchFromMirror(mirror, query, fetchImpl)),
-    ).catch(() => null),
-    fetchPhotonForBox(box, fetchImpl).catch(() => [] as AmenityRow[]),
-  ]);
-
-  if (overpass !== null) return retenir(overpass);
-  if (repli.length > 0) return retenir(repli);
-  return hit?.rows ?? [];
+  return (await resolveAmenitiesNear(box, fetchImpl)).rows;
 }

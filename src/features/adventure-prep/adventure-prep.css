@@ -361,6 +361,34 @@
   --prep-ink-accent-strong: #a9e6c6;
   --prep-glass-shadow: var(--glass-shadow);
   --prep-glass-opaque: var(--card-tint-solid);
+  /* --- G3.1 · le plancher du verre -------------------------------------
+     Mesure au navigateur, 393x852, sur un parcours REELLEMENT genere :
+     16 groupes de texte sous 4,5:1. Ils n'ont pas seize causes : ils en
+     ont deux.
+
+     La premiere est `.prep-map__glass`, qui plafonne a 1,30:1 meme sur sa
+     MEILLEURE zone. Ce n'est donc pas un contraste qui degrade par
+     endroit, c'est une surface qui n'a JAMAIS eu de materiau : sa regle
+     renvoie a `--prep-glass-bg`, un verre CLAIR a 12 %, alors que son
+     propre commentaire annonce l'inverse — « les controles flottants du
+     preparateur sont poses sur la CARTE, qui est claire ». Le materiau
+     sombre que ce commentaire appelle n'a jamais existe. Il est cree ici,
+     une fois, et c'est le seulendroit ou une couleur de plancher se pose. */
+  --prep-glass-floor: rgb(10 15 12 / 0.74);
+
+  /* --- G3.1 · l encre de lecture du preparateur -----------------------------
+     Le theme de la page porte --lkv-text-subtle a 46 % de blanc : pose sur le
+     verre du preparateur, ce niveau ne lit plus. Mesure au navigateur en
+     393x852, 16 groupes de texte passaient sous 4,5:1.
+
+     Ces deux niveaux sont la declares ICI, dans le :root du preparateur, et
+     non pas en surcharge de --lkv-text-* : une feuille de feature ne redefinit
+     pas les jetons globaux du design system, elle expose les siens. C est
+     aussi ce qui satisfait la regle des couleurs de la section ecrite : une
+     couleur ne se pose que dans un :root, jamais dans une regle de mise en
+     forme. */
+  --prep-ink-subtle: rgb(255 255 255 / 0.72);
+  --prep-ink-secondary: rgb(255 255 255 / 0.86);
 
   /* --- Typographie : QUATRE tailles (M3.2) -----------------------------
      La feuille consommait onze jetons de texte distincts, dont deux doublons
@@ -428,7 +456,7 @@
      hautes lumieres de la photo aprs melange, ce qui recreait exactement le
      pic clair qu'on cherche a supprimer. La correction est faite dans le
      filtre, donc une seule valeur pour tous les panneaux. */
-  --prep-panel-bg: rgb(16 16 16 / 0.72);
+  --prep-panel-bg: rgb(16 16 16 / 0.84);
   --prep-panel-blur: 22px;
   --prep-panel-saturate: 200%;
   --prep-panel-brightness: 0.86;
@@ -1376,7 +1404,8 @@ button.prep-block__row:active {
   /* Passe par le token du preparateur, pas par --glass-bg-medium direct :
      les controles flottants du preparateur sont poses sur la CARTE, qui est
      claire, alors que le token generique est regle pour la photo. */
-  background-color: var(--prep-glass-bg);
+  /* G3.1 : la carte est claire, donc ce materiau-la recoit enfin. */
+  background-color: var(--prep-glass-floor);
   border: var(--prep-hairline) solid var(--prep-hairline-ink);
   -webkit-backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
   backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
@@ -1570,8 +1599,11 @@ button.prep-map__glass:active {
   font-size: var(--prep-type-meta);
   font-weight: 650;
   color: var(--prep-ink-accent-strong);
-  background-color: color-mix(in srgb, var(--lkv-action) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--lkv-action) 26%, transparent);
+  /* G3.1 : 12 % de vert sur du TRANSPARENT laissait passer la neige du
+     decor — le libelle tombait a 2,25:1. Le vert se melange desormais au
+     plancher, donc la pilule garde sa teinte sans perdre son fond. */
+  background-color: color-mix(in srgb, var(--lkv-action) 12%, var(--prep-glass-floor));
+  border: 1px solid color-mix(in srgb, var(--lkv-action) 26%, var(--prep-glass-floor));
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: background-color var(--prep-duration-control) var(--prep-ease-standard);
@@ -1679,7 +1711,6 @@ button.prep-map__glass:active {
   box-shadow: var(--prep-glass-material);
   min-width: 0;
   /* La tuile se mesure elle-meme : la valeur s ajuste a sa largeur au lieu de prendre la taille du texte puis de casser sur deux lignes. */
-  container-type: inline-size;
 }
 
 .prep-metric__label {
@@ -1694,7 +1725,7 @@ button.prep-map__glass:active {
 .prep-metric__value {
   display: block;
   margin-top: 2px;
-  font-size: min(var(--prep-type-body), 13.5cqi);
+  font-size: var(--prep-type-body);
   font-weight: 760;
   letter-spacing: var(--lkv-tracking-title);
   color: var(--lkv-text-primary);
@@ -2536,7 +2567,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   border: 1px solid transparent;
 }
 .prep-step__state[data-state='propose'] {
-  color: var(--lkv-text-secondary);
+  color: var(--prep-ink-secondary);
   background: var(--prep-segmented-track);
   border-style: dashed;
   border-color: color-mix(in srgb, var(--lkv-text-primary) 28%, transparent);
@@ -2568,7 +2599,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   font-weight: 680;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  color: var(--lkv-text-secondary);
+  color: var(--prep-ink-secondary);
   margin-bottom: var(--prep-space-2);
 }
 
@@ -2630,7 +2661,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 }
 .prep-gear-row__meta {
   font-size: var(--prep-type-meta);
-  color: var(--lkv-text-subtle);
+  color: var(--prep-ink-subtle);
   margin-top: 1px;
 }
 .prep-gear-row__badge {
@@ -2656,6 +2687,355 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   border: 1px solid color-mix(in srgb, var(--lkv-action) 25%, transparent);
 }
 
+/* C13 — Les trois paliers de budget en pilules de verre.
+   Le tiroir ne demande pas « quel budget ? » : le budget est optionnel, donc
+   l'ecran propose toujours, et propose A L'ECRAN. La pastille selectionnee est
+   la seule qui s'eleve ; les deux autres restent du meme verre, plus ternes —
+   c'est la hierarchie, pas une couleur supplementaire, qui dit laquelle est
+   choisie. Aucun montant ici : un budget en euros n'existe que si la base en
+   renvoie un, et il est affiche tel quel plus bas. */
+.prep-budget {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.prep-budget__pill {
+  min-height: var(--control-height-md);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--prep-glass-border);
+  border-radius: var(--prep-radius-pill);
+  background-color: color-mix(in srgb, var(--prep-glass-bg) 58%, transparent);
+  -webkit-backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
+  backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
+  box-shadow: var(--prep-glass-material);
+  color: var(--prep-glass-label);
+  font-family: inherit;
+  font-size: var(--prep-type-label);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Non choisie : meme verre, en retrait. On retire le contraste du texte et on
+   laisse la bordure le dire — pas de fond different, donc pas de quasi-pastille
+   « grise » qui ressemblerait a un etat desactive. */
+.prep-budget__pill[aria-pressed='false'] {
+  color: var(--prep-ink-secondary);
+  font-weight: 500;
+}
+
+.prep-budget__pill[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--lkv-action) 46%, var(--prep-glass-border));
+  color: var(--lkv-text-primary);
+  font-weight: 700;
+}
+
+.prep-budget__pill:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+.prep-budget__detail {
+  margin: var(--space-2) 0 0;
+  font-size: var(--prep-type-meta);
+  color: var(--prep-ink-secondary);
+}
+
+/* --- M1.1 / F7 / F8 / F9 — Les tiroirs sur le gabarit du tiroir Lieu -------
+   Le tiroir Lieu est dessine : une section, une liste, deux lignes de texte
+   par ligne, et un etat honnete quand la base n a rien rendu. Les tiroirs
+   Equipement, Eau et repas, et Participants redessinaient chacun leur
+   version, avec du style inline et des listes qui ne se ressemblaient pas.
+
+   Ces blocs ne redessinent rien : ils reglent la mise en page de ce que le
+   gabarit rend deja. Un tiroir qui ne les utilise pas s'affiche mal, pas
+   differently — et c'est exactement ce que M1.1 refuse.
+
+   Aucun rayon nouveau ici : tous reprennent un rayon deja present dans la
+   feuille, sinon la carte de rayons s'allonge et le tiroir Lieu cesse d etre
+   la reference. */
+.prep-drawer__section {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+/* L etat honnete d une liste vide : meme poids qu une ligne, en retrait. Il
+   doit se lire comme une phrase ecrite par l app, pas comme un bug. */
+.prep-drawer__empty {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
+  border-radius: var(--prep-drawer-row-radius);
+  background: var(--prep-drawer-row-bg);
+  color: var(--prep-ink-secondary);
+  font-size: var(--prep-type-label);
+  line-height: 1.4;
+}
+
+.prep-drawer__note {
+  margin: var(--space-2) 0 0;
+  color: var(--prep-ink-secondary);
+  font-size: var(--prep-type-meta);
+  line-height: 1.4;
+}
+
+/* Une ligne qui porte des controles : les champs passent sous la carte, jamais
+   dans le bouton. Un \`<select>\` dans un \`<button>\` est invalide, et sur
+   Safari le clic part dans le vide. */
+.prep-drawer__row-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.prep-drawer__row-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+/* --- F7 · Les trois onglets du materiel ---------------------------------
+   Le compte est sur l onglet : sans lui, un onglet vide se lit comme une
+   panne. Avec lui, on sait que « Manquant » est vide parce que personne ne
+   manque de rien — ou parce qu il reste a decider. */
+.prep-gear__tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+}
+
+.prep-gear__tabs button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: var(--control-height-md);
+  padding: 0 var(--space-2);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
+  border-radius: var(--lkv-radius-md);
+  background: transparent;
+  color: var(--prep-ink-secondary);
+  font-family: inherit;
+  font-size: var(--prep-type-label);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.prep-gear__tabs button[aria-pressed='true'] {
+  border-color: var(--prep-drawer-row-selected-ink);
+  color: var(--prep-drawer-row-selected-ink);
+  font-weight: 700;
+}
+
+.prep-gear__tabs button:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+.prep-gear__tab-count {
+  min-width: 20px;
+  padding: 0 var(--space-1);
+  border-radius: var(--lkv-radius-full);
+  background: var(--prep-glass-bg);
+  color: var(--lkv-text-primary);
+  font-size: var(--prep-type-meta);
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Les deux controles qui rendaient l onglet « Manquant » mort : sans eux, le
+   poids et le porteur restaient a null pour toujours. */
+.prep-gear__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.prep-gear__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  color: var(--prep-ink-secondary);
+  font-size: var(--prep-type-meta);
+}
+
+.prep-gear__field input,
+.prep-gear__field select {
+  min-height: var(--control-height-md);
+  padding: 0 var(--space-2);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
+  border-radius: var(--lkv-radius-md);
+  background: var(--prep-panel-bg);
+  color: var(--lkv-text-primary);
+  font-family: inherit;
+  font-size: var(--prep-type-label);
+}
+
+.prep-gear__field input:focus-visible,
+.prep-gear__field select:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+.prep-gear__check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--lkv-text-primary);
+  font-size: var(--prep-type-label);
+  cursor: pointer;
+}
+
+/* --- F8 · Les segments d eau -------------------------------------------
+   Un titre de journee separe les portions de la journee. Il ne porte pas de
+   poids visuel propre : il est un repere de lecture, pas un bouton. */
+.prep-consumables__day {
+  margin: var(--space-3) 0 var(--space-1);
+  color: var(--prep-ink-secondary);
+  font-size: var(--prep-type-meta);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* --- F9 · Les trois colonnes des participants ---------------------------
+   Confirmes, invites, partage : trois etats, donc deux tons. Le ton ouvert
+   n est pas une alerte, c est une decision qui attend. */
+.prep-people__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
+  border-radius: var(--lkv-radius-full);
+  background: var(--prep-glass-bg);
+  color: var(--lkv-text-primary);
+  font-size: var(--prep-type-meta);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.prep-people__badge--open {
+  border-color: color-mix(in srgb, var(--lkv-action) 40%, var(--prep-hairline-ink));
+  color: var(--prep-ink-secondary);
+}
+
+.prep-people__cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  color: var(--lkv-text-primary);
+  font-size: var(--prep-type-label);
+}
+
+/* Le choix du porteur vit SOUS la ligne, dans la meme colonne : le gabarit
+   prevoit deja les controles sous la ligne, et c est ce qui evite qu un
+   second clic soit necessaire pour comprendre qui porte quoi. */
+.prep-people__owner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  color: var(--prep-ink-secondary);
+  font-size: var(--prep-type-label);
+}
+
+.prep-people__owner select {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
+  border-radius: var(--lkv-radius-md);
+  background: var(--prep-glass-bg);
+  color: var(--lkv-text-primary);
+  font-size: var(--prep-type-label);
+}
+
+.prep-people__owner select:focus-visible {
+  outline: 2px solid var(--lkv-action);
+  outline-offset: 2px;
+}
+
+/* --- P2.7 . Le rail des lieux reels ------------------------------------
+   Le rail est horizontal et defile : c est une rangee, pas une liste. On ne
+   peut pas le poser en `display:grid` comme le reste — une carte sur une
+   colonne fait defiler le tiroir entier et repousse la note de bas.
+
+   Les puces de filtre, elles, restent en grille implicite : elles sont en
+   nombre fixe (natures, jours, tris) et doivent se lire d un coup d oeil. */
+.prep-sheet-rail {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0 0 var(--space-2);
+  list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Chaque carte garde sa largeur : un rail qui etire ses cartes n est plus un
+   rail, c est une liste deguisee. */
+.prep-sheet-rail > .prep-drawer__row-wrap,
+.prep-sheet-rail > .prep-drawer__row {
+  flex: 0 0 auto;
+  width: min(72vw, 280px);
+  scroll-snap-align: start;
+}
+
+.prep-sheet-rail__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+}
+
+.prep-sheet-rail__chip {
+  min-height: var(--control-height-md);
+  padding: 0 var(--space-3);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
+  border-radius: var(--lkv-radius-full);
+  background: var(--prep-glass-bg);
+  color: var(--prep-ink-secondary);
+  font-family: inherit;
+  font-size: var(--prep-type-label);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.prep-sheet-rail__chip[aria-pressed='true'] {
+  border-color: var(--prep-drawer-row-selected-ink);
+  color: var(--prep-drawer-row-selected-ink);
+  font-weight: 700;
+}
+
+.prep-sheet-rail__chip:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+/* La sentinelle n est pas un lieu : elle ne doit rien peindre. Elle n a pas
+   de hauteur propre non plus — c est sa presence dans le flux qui declenche
+   l IntersectionObserver, et rien d autre. */
+.prep-sheet-rail__sentinel {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  opacity: 0;
+  pointer-events: none;
+}
 /* État libre (Partir librement) */
 .prep-libre {
   display: flex;
@@ -2756,7 +3136,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   flex: none;
   background: var(--lkv-surface);
   border: var(--prep-hairline) solid var(--prep-hairline-ink);
-  color: var(--lkv-text-secondary);
+  color: var(--prep-ink-secondary);
 }
 .prep-block__row[aria-pressed='true'] .prep-act-icon {
   background: var(--lkv-action);
@@ -2778,7 +3158,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 }
 .prep-act-hint {
   font-size: var(--prep-type-meta);
-  color: var(--lkv-text-secondary);
+  color: var(--prep-ink-secondary);
   margin-top: 2px;
 }
 .prep-act-check {
@@ -2807,7 +3187,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   color: var(--lkv-text-primary);
 }
 .prep-search input::placeholder {
-  color: color-mix(in srgb, var(--lkv-text-primary) 84%, var(--lkv-text-subtle));
+  color: color-mix(in srgb, var(--lkv-text-primary) 84%, var(--prep-ink-subtle));
 }
 
 /* input[type=search] dessine sa propre croix, qui se collait a notre bouton Effacer. */
@@ -2861,7 +3241,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   /* Un bouton ne se souligne pas : le trait venait d un restyle web et
      happochait l oeil au milieu d une barre qui est, elle, du verre. */
   text-decoration: none;
-  color: color-mix(in srgb, var(--lkv-text-primary) 88%, var(--lkv-text-secondary));
+  color: color-mix(in srgb, var(--lkv-text-primary) 88%, var(--prep-ink-secondary));
   padding: 10px 8px;
   cursor: pointer;
   background: transparent;
@@ -2902,7 +3282,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   border: 0;
   border-radius: calc(var(--prep-drawer-row-radius) - 2px);
   background: transparent;
-  color: var(--lkv-text-secondary);
+  color: var(--prep-ink-secondary);
   font-size: var(--prep-type-label);
   font-weight: 500;
   font-family: inherit;
@@ -2999,7 +3379,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 }
 .t2 {
   font-size: var(--prep-type-label);
-  color: var(--lkv-text-secondary);
+  color: var(--prep-ink-secondary);
   overflow-wrap: anywhere;
 }
 
@@ -3014,7 +3394,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   border-radius: var(--prep-drawer-row-radius);
   font-size: var(--prep-type-label);
   line-height: 1.4;
-  color: var(--lkv-text-secondary);
+  color: var(--prep-ink-secondary);
   background: var(--prep-drawer-row-bg);
   border: 1px solid var(--prep-drawer-row-edge);
 }
@@ -3053,7 +3433,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   border-radius: var(--lkv-radius-full);
   font-size: var(--prep-type-meta);
   font-weight: 600;
-  color: var(--lkv-text-secondary);
+  color: var(--prep-ink-secondary);
   background: var(--prep-drawer-row-bg);
   border: 1px solid var(--prep-drawer-row-edge);
 }
@@ -3129,7 +3509,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 
 .prep-picker__hint {
   margin: 0;
-  color: var(--lkv-text-subtle);
+  color: var(--prep-ink-subtle);
   font-size: var(--prep-type-label);
 }
 
@@ -3156,7 +3536,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 .prep-picker__caption-detail {
   font-size: var(--prep-type-label);
   line-height: 1.3;
-  color: var(--lkv-text-subtle);
+  color: var(--prep-ink-subtle);
   overflow-wrap: anywhere;
 }
 
@@ -3200,7 +3580,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  color: var(--lkv-text-secondary);
+  color: var(--prep-ink-secondary);
   background: var(--lkv-surface-elevated);
   border: 1px solid var(--lkv-border-subtle);
   transition:
@@ -3340,7 +3720,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 }
 
 .prep-metric--jour .prep-metric__value {
-  font-size: min(var(--prep-type-body), 15cqi);
+  font-size: var(--prep-type-body);
 }
 
 /* Assez large pour tenir « Jour 1 » et la meteo sur une ligne. En dessous, l empilement est le comportement assume : la meteo deborde de toute facon sur la largeur d un telephone. */
@@ -3368,7 +3748,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   flex: 0 1 auto;
   min-width: 0;
   font-size: var(--prep-type-meta);
-  color: var(--lkv-text-secondary);
+  color: var(--prep-ink-secondary);
   text-align: left;
   font-variant-numeric: tabular-nums;
   text-wrap: pretty;
@@ -3406,6 +3786,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   min-width: 0;
   overflow-wrap: anywhere;
   font-size: var(--prep-type-meta);
+  font-weight: 560;
   color: var(--lkv-text-primary);
 }
 
@@ -3416,7 +3797,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   min-width: 0;
   overflow-wrap: anywhere;
   font-size: var(--prep-type-meta);
-  color: var(--lkv-text-secondary);
+  color: var(--prep-ink-secondary);
 }
 
 /* La piste elle-meme vient du style inline PICKER_TRACK, qui rejoue les memes
@@ -3450,7 +3831,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   padding-inline: var(--space-1);
   font-size: var(--prep-type-meta);
   line-height: var(--lkv-line-body);
-  color: var(--lkv-text-subtle);
+  color: var(--prep-ink-subtle);
   text-align: center;
 }
 
@@ -3476,7 +3857,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 }
 
 .row.muted {
-  color: var(--lkv-text-secondary);
+  color: var(--prep-ink-secondary);
 }
 
 /* --- P0.5 : le brouillon perime se declare enfin ------------------------- */
@@ -3523,3 +3904,28 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   background-color: color-mix(in srgb, var(--lkv-warning-dark) 18%, transparent);
   border: 1px solid color-mix(in srgb, var(--lkv-warning-dark) 34%, transparent);
 }
+
+/* --- G3.1 - Attribution de la carte, lisible sur fond clair --------------
+   Mesure : la ligne "� OpenStreetMap France � Esri" sort a 1,68:1. Le
+   composant herite --card-tint-strong (noir a 38 %), pose sur des tuiles de
+   carte CLAIRES : l'encre blanche a 50 % ne survit pas. On lui donne le meme
+   plancher que le reste du verre du preparateur. Selecteur par substring de
+   classe : la classe est une chaine Tailwind, on ne peut pas la reproduire
+   litteralement sans la dependre d'un utilitaire. Portee restreinte a
+   .prep-map : l'Explorer et le Hub gardent leur attribution. */
+.prep-map div[class*='card-tint-strong'] {
+  color: var(--prep-ink-secondary);
+  background-color: var(--prep-glass-floor);
+}
+
+/* --- G3.1 - Encre du preparateur sur fond photographique ---------------
+   Mesure au navigateur, 4 points de rupture, measure_prep_contrast.mjs :
+   --prep-panel-bg tient 5,04:1 mais --lkv-text-subtle a 0,46 d alpha plafonne
+   autour de 3:1 meme SUR le panneau prevu. L encre s effondre, pas le fond :
+   c est elle qu il faut remonter, pas la page. Noircir tout contredirait le
+   cahier des charges (fond clair, voile vert leger).
+
+   La correction vit dans le :root de ce fichier, sous --prep-ink-subtle et
+   --prep-ink-secondary. Elle ne surcharge pas --lkv-text-* : une feuille de
+   feature ne redefinit pas les jetons globaux du design system. Les regles
+   de la section ecrite pointent desormais sur ces deux jetons. */

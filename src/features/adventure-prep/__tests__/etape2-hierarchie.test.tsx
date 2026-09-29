@@ -1,5 +1,5 @@
 /**
- * LOT ETAPE 2 — le plus grand ecran du preparateur (L3.1 a L3.9, M2.1 a M2.3).
+ * LOT ETAPE 2 - le plus grand ecran du preparateur (L3.1 a L3.9, M2.1 a M2.4).
  *
  * Ces tests mordent : chacun d eux ECHOIT si le defaut qu il decrit est
  * retabli. Ils portent sur le MARQUAGE rendu, parce qu un defaut de mise en
@@ -12,9 +12,17 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { ItineraryStepScreen } from '../components/ItineraryStep';
+import DayPlateau from '@/components/mobile-nav/navigation/DayPlateau';
+import {
+  useDayFocusStore,
+  type DayFocusDay,
+  type DayFocusState,
+} from '@/components/mobile-nav/dayFocusStore';
 import { buildItinerary } from '../engine/itinerary';
 import { fullDraft } from './fixtures';
 import { PRICE_TO_CHECK } from '../types';
@@ -32,6 +40,29 @@ vi.mock('../store/useAdventurePrepStore', () => {
   return { useAdventurePrepStore: use };
 });
 
+/**
+ * L3.7 - le rail de jours vit dans le CHROME, pas dans le corps de l etape.
+ *
+ * `DayPlateau` est monte par `WebNavigationBar`, dans un arbre React disjoint :
+ * le corps de l etape 2 ne peut donc pas le rendre, et compter ses onglets
+ * demande de le monter pour compte. Deux obstacles, un seul correctif :
+ * zustand v5 sert l etat INITIAL au rendu serveur, donc un composant monte
+ * par `renderToStaticMarkup` ne voit jamais les journees publiees.
+ *
+ * Ce shim ne fabrique aucune donnee et ne doublure aucun comportement : il ne
+ * fait que lever la limite du harnais, exactement comme ce fichier et
+ * `e6-swipe` lisent le store par `getState()`. `getState`, `setState` et
+ * `subscribe` restent ceux du vrai store ; seul le snapshot serveur change.
+ */
+vi.mock('@/components/mobile-nav/dayFocusStore', async (importOriginal) => {
+  const reel = await importOriginal<typeof import('@/components/mobile-nav/dayFocusStore')>();
+  const store = reel.useDayFocusStore;
+  const useSSR = ((selector: (s: DayFocusState) => unknown) =>
+    selector(store.getState())) as unknown as typeof store;
+  Object.assign(useSSR, store);
+  return { ...reel, useDayFocusStore: useSSR };
+});
+
 const noop = () => undefined;
 
 function visible(html: string): string {
@@ -45,6 +76,73 @@ function visible(html: string): string {
     .replace(/&amp;/g, '&')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+const FEUILLE = readFileSync(join(__dirname, '..', 'adventure-prep.css'), 'utf8');
+const SOURCE = readFileSync(join(__dirname, '..', 'components', 'ItineraryStep.tsx'), 'utf8');
+
+/**
+ * Les declarations d UN selecteur, commentaires retires.
+ *
+ * Un defaut de mise en page ne se voit pas dans le DOM : un `nowrap`, un
+ * `ellipsis` ou un plafond de lignes ne laissent aucune trace dans le markup.
+ * Ces items se ferment donc sur la feuille de style, qui est la seule couche
+ * qui s applique a CHAQUE carte, quelle que soit la longueur de son titre.
+ */
+function declarations(selector: string): Map<string, string> {
+  const out = new Map<string, string>();
+  const re = /([^{}]+)\{([^{}]*)\}/g;
+  let m = re.exec(FEUILLE);
+  while (m !== null) {
+    const sel = (m[1] ?? '')
+      .replace(/\/\*[\s\S]*?\*\//g, ' ')
+      .split(',')
+      .map((p) => p.trim());
+    const corps = (m[2] ?? '').replace(/\/\*[\s\S]*?\*\//g, ' ');
+    if (sel.includes(selector)) {
+      for (const d of corps.split(';')) {
+        const i = d.indexOf(':');
+        if (i > 0) out.set(d.slice(0, i).trim(), d.slice(i + 1).trim());
+      }
+    }
+    m = re.exec(FEUILLE);
+  }
+  return out;
+}
+
+/**
+ * Le source de l ecran, commentaires retires : un commentaire peut nommer un
+ * composant mort pour expliquer pourquoi il a disparu ; il ne le ressuscite
+ * pas, et il ne doit donc pas faire echouer la garde.
+ */
+function sourceItineraireStep(): string {
+  return SOURCE.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^[ \t]*\/\/.*$/gm, ' ');
+}
+
+/**
+ * Publie les journees du modele dans le store partage, comme le fait le shell.
+ *
+ * Renvoie ce que le store a ACCEPTE, pas ce qu on lui a donne : sous deux
+ * journees le store vide ses jours, et un test qui compterait le modele au
+ * lieu du store validerait un rail qui n existe pas.
+ */
+function publierLesJours(model: ItineraryModel): DayFocusDay[] {
+  useDayFocusStore.getState().clear();
+  useDayFocusStore.getState().publishDays(
+    Array.from({ length: model.days }, (_, index) => ({
+      day: index + 1,
+      dateLabel: null,
+      stepsCount: 0,
+      distanceKm: null,
+      elevGainM: null,
+    })),
+  );
+  return useDayFocusStore.getState().days;
+}
+
+/** Le rail de jours du chrome, monte pour compte. */
+function railDuChrome(): string {
+  return renderToStaticMarkup(React.createElement(DayPlateau));
 }
 
 function builtDraft(
@@ -168,30 +266,34 @@ describe('L3.8 — la meteo s affiche par jour, ou se declare absente', () => {
 });
 
 /* ------------------------------------------------------------------ */
-/* L3.5 — la vignette ne pretend pas etre une photo                    */
+/* ------------------------------------------------------------------ */
+/* L3.5 - aucune vignette qui pretend etre une photo                    */
 /* ------------------------------------------------------------------ */
 
-describe('L3.5 — la vignette d etape ne ment pas sur ce qu elle montre', () => {
-  it('L3.5-01: la vignette n est JAMAIS un <img> sans source reelle', () => {
+describe('L3.5 - la fiche ne montre aucune image qu elle n a pas', () => {
+  it('L3.5-01: la fiche ne rend AUCUN <img>', () => {
     state.current = { draft: builtDraft() };
-    const html = render();
-    const imgs = html.match(/<img[^>]*>/g) ?? [];
-    for (const img of imgs) {
-      // Une vignette qui pretend etre une photo doit avoir une source. Une
-      // <img> sans src est un cadre vide qui suggere la photo disparue.
-      expect(img).toMatch(/src="[^"]+"/);
-    }
+    const fiche = render().match(
+      /<div class="prep-step">[\s\S]*?<div class="prep-step__actions">/,
+    );
+    expect(fiche).not.toBeNull();
+    // `ItineraryStep` et `PlaceRef` n ont AUCUN champ image : une <img> ici
+    // serait une image FABRIQUEE, donc un mensonge pixelise. Une <img> sans
+    // `src` serait pire encore : un cadre vide qui promet la photo disparue.
+    expect(fiche![0].match(/<img[^>]*>/g) ?? []).toEqual([]);
   });
 
-  it('L3.5-02: la vignette porte un role purement decoratif', () => {
+  it('L3.5-02: pas de vignette icone non plus - le titre suffit', () => {
     state.current = { draft: builtDraft() };
-    const thumbs = render().match(/<span class="prep-step__thumb"[^>]*>/g) ?? [];
-    expect(thumbs.length).toBeGreaterThan(0);
-    for (const thumb of thumbs) {
-      // `aria-hidden` dit au lecteur d ecran « ce n est pas une photo », donc
-      // rien a decrire. C est la seule ligne honnete pour une icone.
-      expect(thumb).toContain('aria-hidden="true"');
-    }
+    const html = render();
+    // La vignette etait un <span> + <Icon>, pas une image : elle ne montrait
+    // aucune photo, elle repetait en 44 px le type d etape que le titre dit
+    // deja. Elle disparait plutot que de continuer a suggerer une image que
+    // le modele ne possede pas. (.prep-step__thumb reste dans la feuille :
+    // le tiroir des etapes, lui, s en sert encore.)
+    expect(html.match(/class="[^"]*prep-step__thumb/g) ?? []).toEqual([]);
+    // Le QUOI reste porte par un seul element textuel.
+    expect(html).toMatch(/<h3 class="prep-step__name">/);
   });
 });
 
@@ -330,21 +432,61 @@ describe('M2.2 — les trois actions ont une priorite lisible', () => {
     expect(variants.filter((v) => v === 'primary').length).toBe(1);
   });
 });
+/* ------------------------------------------------------------------ */
+/* M2.4 - plus un seul jeton mort dans l etape 2                      */
+/* ------------------------------------------------------------------ */
+
+describe('M2.4 - les jetons morts sont retires', () => {
+  it('M2.4-01: ni carte fantome, ni liste orpheline, ni handler orphelin', () => {
+    const source = sourceItineraireStep();
+    // `StepCard` et `ProducedStep` n etaient jamais instancies, `openStep`
+    // n etait appele par personne, `CARD_BUTTON` et `PLAIN_LIST` n etaient
+    // lus par aucune branche. Un composant mort est le pire des allies : il
+    // ressemble a une carte que l on peut corriger, et la correction ne
+    // s affiche jamais. On le cherche dans le CODE, commentaires retires.
+    for (const mort of ['StepCard', 'ProducedStep', 'openStep', 'CARD_BUTTON', 'PLAIN_LIST']) {
+      expect(source).not.toMatch(new RegExp(`\\b${mort}\\b`));
+    }
+  });
+
+  it('M2.4-02: une SEULE carte a l ecran, et c est celle qui est rendue', () => {
+    state.current = { draft: builtDraft() };
+    const html = render();
+    // La carte rendue est `FocusedStepView`. Une seule a l ecran.
+    expect((html.match(/<div class="prep-step">/g) ?? []).length).toBe(1);
+    // Et le source ne la nomme qu une fois en definition et qu une fois en
+    // usage : le nombre d ecrans est coherent avec ce que le test voit.
+    const source = sourceItineraireStep();
+    expect((source.match(/^function FocusedStepView\b/gm) ?? []).length).toBe(1);
+    expect((source.match(/<FocusedStepView\b/g) ?? []).length).toBe(1);
+  });
+});
 
 /* ------------------------------------------------------------------ */
 /* L3.2 / M2.3 — une seule hierarchie typographique                    */
 /* ------------------------------------------------------------------ */
 
 describe('L3.2 — le titre de l etape tient sur trois lignes au plus', () => {
-  it('L3.2-01: le titre n est PAS bride a une ligne unique', () => {
+  it('L3.2-01: le titre est PLAFONNE a trois lignes, pas bride', () => {
     state.current = { draft: builtDraft() };
     const html = render();
     const name = html.match(/<h3 class="prep-step__name"[^>]*>/);
     expect(name).not.toBeNull();
-    // L3.2 : le titre etait bride (`white-space: nowrap`, ou une largeur qui
-    // le force). Un titre borne en 3 lignes se lit ; bride, il deborde.
+    // Bride (`nowrap`, `ellipsis`), le titre deborde sur la colonne etroite.
     expect(name![0]).not.toContain('nowrap');
     expect(html).not.toMatch(/prep-step__name[^>]*style="[^"]*ellipsis/);
+    // Libre, il pousse le lieu et le prix hors de la carte. Le plafond est
+    // donc un CLAMP - et il est dans la feuille : c est la seule couche qui
+    // s applique a CHAQUE carte, quelle que soit la longueur de son titre.
+    const regle = declarations('.prep-step__name');
+    expect(regle.get('display')).toBe('-webkit-box');
+    expect(regle.get('-webkit-box-orient')).toBe('vertical');
+    expect(regle.get('-webkit-line-clamp')).toBe('3');
+    expect(regle.get('overflow')).toBe('hidden');
+    // Et le composant ne repose pas `display` en inline : une cascade qui
+    // perd en specificite laisserait le `display: block` de l inline
+    // ecraser le `-webkit-box` du classeur, et le plafond serait muet.
+    expect(name![0]).not.toMatch(/style="[^"]*display/);
   });
 
   it('L3.2-02: le titre et le lieu ont deux niveaux typographiques distincts', () => {
@@ -358,28 +500,46 @@ describe('L3.2 — le titre de l etape tient sur trois lignes au plus', () => {
 });
 
 /* ------------------------------------------------------------------ */
-/* L3.7 — un seul rail de jours                                        */
+/* ------------------------------------------------------------------ */
+/* L3.7 - un seul rail de jours dans toute l application              */
 /* ------------------------------------------------------------------ */
 
-describe('L3.7 — un seul rail de jours dans le corps de l ecran', () => {
-  it('L3.7-01: le corps ne rend QU UN groupe de jours', () => {
+describe('L3.7 - un seul rail de jours, et il est dans le chrome', () => {
+  it('L3.7-01: le corps de l etape ne rend PLUS aucun rail', () => {
     state.current = { draft: builtDraft() };
+    publierLesJours(state.current.draft.itinerary!);
     const html = render();
-    // Le rail du corps et celui de la barre basse sont deux chemins pour le
-    // meme reglage. Un seul reste dans le corps ; l autre vit dans le chrome,
-    // partage par les trois pages.
-    const groups = html.match(/class="prep-days"/g) ?? [];
-    expect(groups.length).toBe(1);
+    // Deux rails pour UN reglage : celui du corps et celui de la barre basse
+    // etaient deux chemins vers le meme `useDayFocusStore`. Le rail du corps
+    // est retire - il ne restait plus rien a deduire de ce doublon, et l
+    // etape 2 recupere une rangee entiere de hauteur.
+    expect(html.match(/class="[^"]*prep-days/g) ?? []).toEqual([]);
+    expect(visible(html)).not.toContain('Tout');
+    // Le rail qui reste est UN SEUL, et il vit dans le chrome, partage par
+    // les trois etapes : le Preparateur, le Hub et le recapitulatif.
+    expect((railDuChrome().match(/role="tablist"/g) ?? []).length).toBe(1);
   });
 
-  it('L3.7-02: le rail propose un bouton par journee plus « Tout »', () => {
+  it('L3.7-02: le rail du chrome propose un onglet par journee plus « Tout »', () => {
     state.current = { draft: builtDraft() };
-    const html = render();
     const model = state.current.draft.itinerary!;
-    const rail = html.match(/<div class="prep-days"[\s\S]*?<\/div>/);
-    expect(rail).not.toBeNull();
-    const buttons = rail![0].match(/<button/g) ?? [];
-    expect(buttons.length).toBe(model.days + 1);
+    const publies = publierLesJours(model);
+    // Le store publie par le shell alimente le rail du chrome : si le compte
+    // ne suit pas le modele, le rail et le programme ne parlent plus du
+    // meme perimetre.
+    expect(publies.length).toBe(model.days);
+    const rail = railDuChrome();
+    const onglets = Array.from(
+      rail.matchAll(/<button[^>]*role="tab"[^>]*>([\s\S]*?)<\/button>/g),
+    ).map((m) => visible(m[1]));
+    expect(onglets.length).toBe(model.days + 1);
+    expect(onglets[0]).toContain('Tout');
+    for (let jour = 1; jour <= model.days; jour += 1) {
+      expect(onglets[jour]).toContain(`J${jour}`);
+    }
+    // Ce sont des <button role="tab"> : le rail reste atteignable au
+    // clavier, donc le geste n est jamais le seul chemin vers un jour.
+    expect((rail.match(/<button/g) ?? []).length).toBe(model.days + 1);
   });
 });
 

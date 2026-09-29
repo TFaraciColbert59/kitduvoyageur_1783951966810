@@ -19,7 +19,12 @@ import {
 } from '../engine/generation';
 import { PREP_DRAFT_VERSION } from '../engine/emptyDraft';
 import { draftActions } from './reducer';
-import type { GenerationOutcome, PhaseRetry } from '../engine/itineraryPhases';
+import {
+  onGenerationPartial,
+  requestGenerationStop,
+  type GenerationOutcome,
+  type PhaseRetry,
+} from '../engine/itineraryPhases';
 import type { AIFailureReason } from '@/lib/ai/providers/types';
 import type {
   ActivitySelection,
@@ -35,6 +40,9 @@ import type {
   PrepStepId,
   RouteBlock,
 } from '../types';
+// `normalizeClockTime` est une FONCTION : elle vit hors du bloc `import type`,
+// sinon le store l'utiliserait sans l'avoir reellement chargee.
+import { normalizeClockTime } from '../types';
 
 /**
  * Ce qui vient de changer de geometrie, et qui impose donc de remesurer.
@@ -62,6 +70,17 @@ export interface AdventurePrepState {
    * d'afficher un chiffre qui n'a plus de trace derriere lui.
    */
   remeasuring: RemeasureReason | null;
+  /**
+   * Le parcours tel qu'il EXISTE pendant la generation, avant d'etre depose.
+   *
+   * `draft.itinerary` ne se remplit qu'a la FIN : tant qu'il est `null`, la
+   * carte de l'ecran n'a rien a montrer. Ce champ porte la meme geometrie, reelle
+   * et deja localisee, des que le moteur l'a publiee — il permet donc de tracer
+   * le parcours pendant la generation plutot qu'apres. `null` designe
+   * l'absence de fait, jamais un parcours vide : tant que rien n'est localise,
+   * aucune carte n'est tracee plutot qu'une carte muette.
+   */
+  liveModel: ItineraryModel | null;
 }
 
 export interface AdventurePrepActions {
@@ -74,6 +93,15 @@ export interface AdventurePrepActions {
   /** Invite libre de l'etape 1 : ce que l'utilisateur veut, en toutes lettres. */
   setBrief: (value: string | null) => void;
   setCalendar: (value: CalendarBlock) => void;
+  /**
+   * Heure de depart saisie — seule elle. `null` efface la saisie.
+   *
+   * Passe par `setCalendar`, jamais par une ecriture directe : c est le seul
+   * passage qui invalide l itineraire (il repart de zero). Un ecran qui poserait
+   * le champ dans le draft sans passer par ici garderait un parcours trace
+   * pour une heure qui a change.
+   */
+  setCalendarStartTime: (value: string | null) => void;
   setGroup: (value: GroupBlock) => void;
   setPreferences: (value: PreferencesBlock) => void;
   setCoverName: (value: string | null) => void;
@@ -85,6 +113,8 @@ export interface AdventurePrepActions {
   continueGeneration: () => void;
   markPhase: (id: GenerationPhaseId) => void;
   pushGenerated: (days: number) => void;
+  /** Depose la geometrie reelle publiee par le moteur, telle quelle. */
+  publishLiveModel: (model: ItineraryModel) => void;
   stopGeneration: () => void;
   failGenerationRun: (message: string) => void;
   endGeneration: () => void;
@@ -156,6 +186,13 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
       // module peut savoir qu'un run remplace le precedent.
       let enCours: AbortController | null = null;
 
+      // Un arret demande par la personne, pas une panne. Il vit dans la
+      // closure et pas dans l'etat pour une raison precise : la fin du run
+      // observe l'avortement et appelle failGenerationRun, qui sans ce
+      // drapeau transformerait un « Arreter » en « Echec ». Le drapeau se
+      // remet a zero au lancement suivant, donc il ne traine jamais.
+      let arretDemande = false;
+
       /**
        * Remesure SEULEMENT si l'objet du parcours a change.
        *
@@ -177,17 +214,39 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
         draft: emptyDraft(),
         hydrated: false,
         remeasuring: null,
+        liveModel: null,
         markHydrated: () => set({ hydrated: true }),
         startNewAdventure: () =>
           set({
             adventureId: newAdventureId(),
             draft: { ...emptyDraft(), version: PREP_DRAFT_VERSION },
+            liveModel: null,
           }),
         setActivities: (value) => patch((draft) => draftActions.setActivities(draft, value)),
         dismissPicker: () => patch((draft) => draftActions.dismissPicker(draft)),
         setRoute: (value) => patch((draft) => draftActions.setRoute(draft, value)),
         setBrief: (value) => patch((draft) => draftActions.setBrief(draft, value)),
-        setCalendar: (value) => patch((draft) => draftActions.setCalendar(draft, value)),
+        setCalendar: (value) =>
+          patch((draft) =>
+            draftActions.setCalendar(draft, {
+              ...value,
+              // Un calendrier pose SANS la cle (brouillon enregistre avant
+              // l'arrivee de l'heure) doit se lire comme une absence
+              // explicite, pas comme un `undefined` qui se glisse jusqu'a
+              // l'ecran. La forme est aussi normalisee ici : un seul passage,
+              // une seule regle.
+              startTime: normalizeClockTime(value.startTime),
+            }),
+          ),
+        setCalendarStartTime: (value) =>
+          patch((draft) =>
+            draftActions.setCalendar(draft, {
+              ...draft.calendar,
+              // Une heure n est « connue » que si la personne l a tapee : un
+              // espace ou un texte hors forme se relit comme une absence.
+              startTime: normalizeClockTime(value),
+            }),
+          ),
         setGroup: (value) => patch((draft) => draftActions.setGroup(draft, value)),
         setPreferences: (value) => patch((draft) => draftActions.setPreferences(draft, value)),
         setCoverName: (value) => patch((draft) => draftActions.setCoverName(draft, value)),
@@ -195,6 +254,7 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
           set((state) => ({
             adventureId: newAdventureId(),
             draft: draftActions.reset(state.draft),
+            liveModel: null,
           })),
         goToStep: (step) => patch((draft) => draftActions.goToStep(draft, step)),
         completeStep: (step) => patch((draft) => draftActions.completeStep(draft, step)),
@@ -205,8 +265,12 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
               ? draftActions.setItinerary(draft, itinerary)
               : draftActions.setItinerary(draft, null);
           }),
-        startGenerationRun: () =>
-          patch((draft) => draftActions.setGeneration(draft, startGeneration(draft.generation))),
+        startGenerationRun: () => {
+          arretDemande = false;
+          set({ liveModel: null });
+          patch((draft) => draftActions.setGeneration(draft, startGeneration(draft.generation)));
+        },
+        publishLiveModel: (model) => set({ liveModel: model }),
         continueGeneration: () =>
           patch((draft) => draftActions.setGeneration(draft, resumeGeneration(draft.generation))),
         markPhase: (id) =>
@@ -216,15 +280,27 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
             const steps = buildItinerary(draft)?.steps ?? draft.generation.steps;
             return draftActions.setGeneration(draft, setPartial(draft.generation, steps, days));
           }),
-        stopGeneration: () =>
+        stopGeneration: () => {
+          arretDemande = true;
+          // Le statut change d'abord, le run ensuite : l'ecran doit lire
+          // « interrompu » avant que quoi que ce soit ne leve.
           patch((draft) =>
             draftActions.setGeneration(draft, interruptGeneration(draft.generation))
-          ),
-        failGenerationRun: (message) =>
+          );
+          requestGenerationStop();
+          set({ liveModel: null });
+        },
+        failGenerationRun: (message) => {
+          // Un run coupe n'est pas un echec. Sans ce garde, l'arret demande
+          // ci-dessus se lirait « Echec : la preparation n a pas pu aboutir »
+          // alors que la personne a choisi de l arreter.
+          if (arretDemande) return;
           patch((draft) =>
             draftActions.setGeneration(draft, failGeneration(draft.generation, message))
-          ),
-        endGeneration: () =>
+          );
+        },
+        endGeneration: () => {
+          set({ liveModel: null });
           patch((draft) => {
             const itinerary = buildItinerary(draft);
             const generation = finishGeneration(draft.generation);
@@ -232,7 +308,8 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
             return itinerary
               ? draftActions.setItinerary(withGeneration, itinerary)
               : withGeneration;
-          }),
+          });
+        },
         retryPhase: (id) => patch((draft) => draftActions.retryPhase(draft, id)),
         applyPhaseRetry: (retry) => patch((draft) => draftActions.applyPhaseRetry(draft, retry)),
         applyGenerated: (outcome) => patch((draft) => draftActions.applyGenerated(draft, outcome)),
@@ -320,6 +397,19 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
   )
 );
 
+/**
+ * Le moteur publie la geometrie ; le store la depose.
+ *
+ * L'abonnement est au NIVEAU DU MODULE, pas d'un composant : c'est la seule
+ * facon d'etre pret avant qu'une generation ne demarre. Le moteur n'importe
+ * JAMAIS le store — ce serait un cycle — donc ce canal est le seul point de
+ * rencontre. Il ne depend d'aucun ecran monte, donc un double montage ne
+ * depose pas la geometrie deux fois.
+ */
+onGenerationPartial((model) => {
+  useAdventurePrepStore.getState().publishLiveModel(model);
+});
+
 /** Selecteur de draft : la route n'abonne que l'ecran qui en a besoin. */
 export const usePrepDraft = (): AdventurePrepDraft => useAdventurePrepStore((state) => state.draft);
 
@@ -331,6 +421,12 @@ export const prepStore = {
   get: (): AdventurePrepStore => useAdventurePrepStore.getState(),
   subscribe: (listener: () => void) => useAdventurePrepStore.subscribe(listener),
 };
+
+/**
+ * Re-export de la normalisation : l'ecran n'a ainsi qu'une porte a
+ * interroger, et la regle reste ecrite une seule fois, dans `types.ts`.
+ */
+export { normalizeClockTime };
 
 /** Reference stable pour les gestionnaires d'evenements sans re-rendu. */
 export const useStableCallback = <T extends (...args: never[]) => unknown>(fn: T): T =>

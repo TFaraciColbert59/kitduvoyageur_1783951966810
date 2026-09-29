@@ -98,6 +98,96 @@ export function dataSourceLabel(source: DataSourceId | null | undefined): string
   return DATA_SOURCE_LABELS[source] ?? SOURCE_INCONNUE;
 }
 
+/* ------------------------------------------------------------------ */
+/* Les deux series de mesure : meteo et altitude (H5)                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * L'identifiant que portent les reponses de `/api/weather` et
+ * `/api/elevation`.
+ *
+ * Volontairement etroit : une cle venue d'une version future du serveur ne
+ * rejoint aucun fournisseur connu, donc elle ne nomme personne. C'est la
+ * meme regle que `readRouteProvider` cote routage, et elle sert la meme
+ * raison : le credit vient du CORPS de la reponse, jamais d'une intention.
+ */
+export type MeasureProviderId = 'open-meteo';
+
+/**
+ * Le fournisseur nomme par une reponse de mesure, ou `null`.
+ *
+ * Les deux routes rendent l'objet `{ id, name, url }` de
+ * `dataProviders.ts` : c'est donc `provider.id` qui fait foi, et pas un
+ * `provider` nu comme le routage. Lire un objet donne un nom, une URL et un
+ * identifiant — on ne garderait que le dernier des trois, parce que le
+ * vocabulaire d'affichage (`DATA_SOURCE_LABELS`) est lui aussi une decision
+ * d'ecran, pas une donnee du serveur.
+ *
+ * Un 503 ne porte aucun `provider` : la fonction rend alors `null`, et la
+ * ligne affiche « source inconnue ». C'est voulu, et c'est la meme regle que
+ * pour le routage : personne n'a repondu, donc personne n'est cite.
+ */
+export function readMeasureProvider(payload: unknown): MeasureProviderId | null {
+  const body = payload as { provider?: { id?: unknown } | null } | null;
+  const id = body?.provider?.id;
+  return id === 'open-meteo' ? id : null;
+}
+
+/**
+ * La source affichee de l'ALTITUDE, ou `null`.
+ *
+ * `METEO_PROVIDER` et `ELEVATION_PROVIDER` sont volontairement le meme objet
+ * (`dataProviders.ts`) : les deux series viennent d Open-Meteo, donc un seul
+ * credit a l'ecran serait coherent. Ce choix a une contrepartie qu'il faut
+ * dire ici plutot que dans l'appelant : l'identifiant seul ne dit pas quelle
+ * SERIE a ete mesuree, et il ne le peut pas — `'open-meteo'` designe les
+ * deux.
+ *
+ * C'est donc la route qui a repondu qui tranche, exactement comme le routeur
+ * qui a repondu tranche pour la distance : un `200` sur `/api/elevation`
+ * suivi de `open-meteo` est une altitude Open-Meteo, et c'est donc
+ * `'open-meteo-elevation'` qui s'affiche. Sans cette fonction, un ecran qui
+ * lirait le `id` brut afficherait « Open-Meteo (previsions) » sous un
+ * denivele : un credit juste en apparence, faux dans sa precision.
+ */
+export function elevationDataSource(
+  provider: MeasureProviderId | null | undefined,
+): DataSourceId | null {
+  return provider === 'open-meteo' ? 'open-meteo-elevation' : null;
+}
+
+/** La source affichee de la METEO, ou `null`. */
+export function weatherDataSource(
+  provider: MeasureProviderId | null | undefined,
+): DataSourceId | null {
+  return provider === 'open-meteo' ? 'open-meteo' : null;
+}
+
+/**
+ * La source d'UNE mesure, choisie par la mesure elle-meme.
+ *
+ * Regroupe les deux conversions precedente pour qu'un appelant n'ait pas a
+ * se rappeler laquelle des deux correspond a `denivele` : le risque n'est
+ * pas une erreur de syntaxe, c'est un credit de prevision pose sur un
+ * denivele, et il ne se voit pas a la compilation.
+ *
+ * Une cle de mesure inconnue ne nomme personne : la liste des mesures est
+ * fermee, donc une cle sortante de ce module est une version future du
+ * serveur, pas une source de plus.
+ */
+export function metricDataSource(
+  metric: PrepDataSourceId,
+  provider: MeasureProviderId | null | undefined,
+): DataSourceId | null {
+  if (metric === 'meteo') return weatherDataSource(provider);
+  if (metric === 'denivele') return elevationDataSource(provider);
+  // La distance n vient pas de ces deux routes : elle sort du routeur qui a
+  // repondu, et porte son propre identifiant (`routeDataSource`). Lui
+  // attribuer `open-meteo` serait faux, meme si le service s appelait
+  // pareil.
+  return null;
+}
+
 /**
  * Une mesure affichee, avec la seule information qui compte pour elle :
  * d'ou elle vient.
@@ -120,5 +210,10 @@ export interface DataSourceEntry {
  */
 export function describeDataSource(entry: DataSourceEntry): string {
   const value = withUnit(entry.value, entry.unit, METRIC_DIGITS[entry.metric]);
-  return `${METRIC_LABELS[entry.metric]} : ${value} · ${dataSourceLabel(entry.source)}`;
+  // Une mesure absente ne recoit AUCUNE source, meme si un run voisin en a
+  // produit une : « Dénivelé : À vérifier · Open-Meteo (altitudes) » credite
+  // un fournisseur pour un chiffre qui n'existe pas. C'est le meme mensonge
+  // qu'un `?? 18`, a l'envers : le nombre disparait, le credit reste.
+  const source = entry.value === null ? null : entry.source;
+  return `${METRIC_LABELS[entry.metric]} : ${value} · ${dataSourceLabel(source)}`;
 }

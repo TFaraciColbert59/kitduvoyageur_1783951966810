@@ -165,6 +165,82 @@ export interface CalendarBlock {
   /** Vrai quand la duree vient d'une proposition, pas d'une preference connue. */
   durationIsSuggested: boolean;
   returnDate: string | null;
+  /**
+   * Heure de depart saisie, `"HH:MM"` en 24 h, ou `null` = jamais choisie.
+   *
+   * Elle est SAISIE, jamais calculee : une heure inventee se lirait comme un
+   * fait alors qu elle n a aucun poids derriere elle. `null` doit donc rester
+   * l absence de fait - l ecran affiche « a choisir », et rien n est pose a
+   * la persistance tant que la personne n a pas repondu.
+   *
+   * Volontairement `string` et pas `Date` : la valeur survit au changement
+   * de fuseau et se relit telle qu elle a ete tapee. `ItineraryStep.startTime`
+   * porte la meme forme, pour la meme raison.
+   *
+   * Le champ est OPTIONNEL pour qu un brouillon deja enregistre avant son
+   * arrival (donc sans la cle) reste relisible. Son absence se lit exactement
+   * comme `null` - jamais comme une heure par defaut.
+   */
+  startTime?: string | null;
+}
+
+/**
+ * Une heure saisie est-elle une heure ?
+ *
+ * La seule forme acceptee est `HH:MM` en 24 h, minutes entre 0 et 59.
+ * Tout le reste — espace, texte, `7:5`, `25:00` — se relit comme une
+ * ABSENCE, jamais comme une heure approchee : on ne devine pas ce que la
+ * personne voulait taper, on ne garde que ce qui est complet et vrai.
+ */
+export const HEURE_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/**
+ * L'heure recopiee dans sa forme canonique, ou `null` si elle n'en est pas une.
+ *
+ * Le leading zero est tolere en entree et impose en sortie : `8:5` est refuse
+ * (forme incomplete), `8:05` devient `08:05`, ce qui rend la valeur comparable
+ * a celle du modele et de la base.
+ */
+export function normalizeClockTime(value: string | null | undefined): string | null {
+  if (typeof value !== 'string') return null;
+  const m = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
+  if (!m) return null;
+  const heures = Number(m[1]);
+  const minutes = Number(m[2]);
+  if (heures < 0 || heures > 23) return null;
+  if (minutes < 0 || minutes > 59) return null;
+  return `${String(heures).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
+/**
+ * L'heure de depart rejoint-elle la metadata du voyage ?
+ *
+ * Elle y entre telle quelle, ou PAS DU TOUT. La regle est stricte dans les
+ * deux sens, parce que les deux erreurs se lisent de la meme facon a l'ecran :
+ *
+ *   - deposer une heure la ou la personne n en a pas choisi ferait afficher
+ *     une heure qui n'a aucun fait derriere elle ;
+ *   - en omettre une qui a ete saisie ferait croire a l'utilisateur que sa
+ *     reponse a disparu.
+ *
+ * La cle n est donc posee QUE pour une heure reelle : son absence se distingue
+ * d'un `null` pose, qui se lirait comme un fait enregistre.
+ */
+export function avecHeureDeDepart(
+  metadata: Record<string, unknown>,
+  startTime: string | null | undefined,
+): Record<string, unknown> {
+  if (typeof startTime !== 'string' || !HEURE_RE.test(startTime)) return metadata;
+  // `metadata` est un `Record<string, unknown>` : `prep` y est type `unknown`
+  // et ne peut pas etre etale tel quel. On ne le traite comme un objet que
+  // s il l EST vraiment - sinon on repart d'un objet vide plutot que de
+  // laisser une valeur parasite effleurer l'ecriture du voyage.
+  const existant = metadata.prep;
+  const base =
+    typeof existant === 'object' && existant !== null && !Array.isArray(existant)
+      ? (existant as Record<string, unknown>)
+      : {};
+  return { ...metadata, prep: { ...base, startTime } };
 }
 
 export type GroupMode = 'solo' | 'groupe';

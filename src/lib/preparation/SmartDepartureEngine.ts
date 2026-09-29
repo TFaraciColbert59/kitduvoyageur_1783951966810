@@ -74,6 +74,24 @@ export interface DeparturePreparationPlan {
    * d'afficher un nombre plausible.
    */
   weatherSummary: {
+    /**
+     * La temperature MESUREE, telle quelle, ou `null`.
+     *
+     * C est le seul nombre que `WeatherSnapshot` autorise : le fournisseur
+     * donne une temperature INSTANTANEE, pas une amplitude. Un ecran qui
+     * veut la temperature lit ce champ.
+     */
+    tempC: number | null;
+    /**
+     * La fourchette min/max du jour, ou `null`.
+     *
+     * Elle reste `null` tant qu'aucun fournisseur ne rend un MIN et un MAX
+     * REELS, et c est le cas aujourd'hui. L'ancienne version sortait la
+     * mesure MOINS TROIS et PLUS DEUX, deux nombres ecrits en dur qui
+     * donnaient a une temperature ponctuelle l'apparence d'une amplitude
+     * relevee. C'est la meme famille qu'un repli chiffre sur une mesure :
+     * un nombre plausible affiche la ou il faudrait dire « a verifier ».
+     */
     tempMinMax: string | null;
     condition: string | null;
     rainRiskPct: number | null;
@@ -370,9 +388,14 @@ export function resolveDeparturePlan(
       : Math.min(100, Math.round(rawPrecip * 100));
 
   const weatherSummary = {
-    tempMinMax: temp === null
-      ? null
-      : `${Math.round(temp - 3)} °C — ${Math.round(temp + 2)} °C`,
+    // La mesure telle quelle. Elle n'est arrondie que pour l'affichage d'un
+    // releve : un arrondi au degre pres ne change pas la mesure, un decalage
+    // de quelques degres, lui, invente une amplitude qui n'a pas ete relevee.
+    tempC: temp === null ? null : Math.round(temp),
+    // Aucune amplitude mesuree, donc aucune amplitude affichee. Le champ
+    // reste dans le contrat parce qu'un fournisseur quotidien (min/max par
+    // journee) le rendra un jour ; le remplir avant serait le deviner.
+    tempMinMax: null,
     condition: context.weather?.condition ?? null,
     rainRiskPct: safeRainPct,
     windKmh: windKmh === null ? null : Math.round(windKmh),

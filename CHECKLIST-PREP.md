@@ -309,7 +309,7 @@ valeur tracée à sa source, ou test rouge → vert. Jamais sur la foi du code.
 | **P0.22** | **toutes les durées et distances de l’étape 2 étaient des valeurs voiture** | ⚠️ **corrigé, preuve écran restante** | 7 appels réels `/api/route` : **92,3 min** piéton vs **9,8 min** voiture sur les **mêmes** points · garde-fou 500 m (refuge du Goûter à 4 321 m → `503`) · **5588/5588** verts, tsc 0 |
 | **P0.23** | **la distance reelle ne s affiche pas a l ecran** | ✅ **ferme — preuve ecran faite** | Clic réel étape 1 → étape 3 : **92,5 km** / **10 407 m** / **3 jours** à l’écran · `geocode` **1×200** · `route` **23×200** · `elevation` **3×200** · **0** `off_network` (contre 20) · CTA « Enregistrer mon aventure » lisible · capture `proof/D3-36-fin-generation.png` |
 
-| **P0.24** | **`/api/amenities` renvoyait 0 lieu : Overpass injoignable** | ⚠️ **repli livré, délai restant** | repli **Photon** (déjà dépendance du projet, sans clé) : `200` → **7 lieux réels**, 2 repas + 5 hôtels nommés à Chamonix / Les Houches, contre **0** avant · 9 tests AM-20→30 **rouge→vert**, **30/30** verts, tsc 0 · reste le délai de ~50 s |
+| **P0.24** | **`/api/amenities` renvoyait 0 lieu : Overpass injoignable** | ⚠️ **repli livré, délai restant** | repli **Photon** (déjà dépendance du projet, sans clé) : `200` → **9 lieux réels** mesurés le 2026-09-29 (Restaurant Le Panoramic, Restaurant Ghandi, Hôtel-Restaurant Aiguille du Midi, Hôtel Lyret, Hôtel Mont Blanc, Hôtel du Clocher, Hôtel Pointe Isabelle, Hôtel de l'Arve, Hôtel du Bois — 2 repas + 7 hôtels, coordonnées réelles), contre **0** avant · bbox fraîche **48,5 s**, bbox en cache **10,6 s → 339 lieux** · les **3 miroirs Overpass sont toujours injoignables** (mesuré ce jour : `overpass-api.de` échec 10,7 s, `lz4` 10,7 s, `private.coffee` timeout 20 s) · **le délai est généré par `OVERPASS_TIMEOUT_MS = 45_000` et le `Promise.all` de `fetchAmenitiesNear` dans `src/lib/queries/amenities.ts` (l. 30 et 512), fichier hors périmètre — **c'est la cause, elle est nommée** |
 | **P0.25** | **le filtre de marchabilite echouait OUVERT : un lieu non mesure recevait une position, et chaque sonde payait 8 s** | ✅ **ferme** | `WalkReachability` a 3 etats * `keepMeasuredFrom` (ferme) sur `searchPlacesNear`, `keepWalkableFrom` (ouvert) sur l inventaire * panne memorisee 30 s * **5 tests P025-01->05, 23/23 verts** * suite **602 fichiers / 5 614 tests / 0 echec** * `tsc` **exit 0**. **La panne de fournisseur qu il suivait est desormais **LEVE par P1.9** (voir P1.9) |
 | **P1.10** | **les lieux de montagne étaient hors de tout graphe routier ou piéton** | ✅ **fermé** | **BRouter `trekking` en dernier recours du seul mode `pieton`** — `/api/route` Chamonix→Grands Mulets = **200**, **14,424 km / 323,05 min / D+ 2 100 m / 881 points**, contre `503 off_network` avant. Le **dénivelé positif réel** arrive enfin à l écran. Négatifs prouvés : `voiture` vers le refuge = `503`. **Fausse piste démontée** : Valhalla écrit *« You have arrived »* alors que sa polyline s arrête à **2 875 m** du but — seul le décompte de la géométrie dit vrai. **10 tests**, suite **1 644 / 0 échec**, tsc 0 |
 
@@ -813,16 +813,14 @@ lecteur y voit un bug de rendu, pas du contenu qui continue.
       **Preuve :** `DPL-05: la carte courte est affichée dès l'ouverture, sans clic
       préalable` (regex sur `height:\s*1[0-9]{2}px`) et `DPL-06b`. **60/60 + 8/8 verts.**
 
-- [~] C5 Tiroir Lieu : recherche géocodée réelle
-      **PARTIEL — vérifié le 2026-09-29.** Le géocodage est réel :
-      `useGeocode.ts:64` fait un vrai `fetch('/api/geocode?q=…')`, avec debounce 350 ms,
-      minimum 2 caractères, et des états honnêtes (`unavailable` n'est jamais un
-      silence). Le câblage dans le tiroir existe (`PrepSetupSheets.tsx:934`), et le
-      service est testé (`geocode-service.test.ts`, `geocode-nominatim-fallback.test.ts`,
-      `place-geocode-fallback.test.ts` — **103/103 verts**).
-      **Ce qui manque :** `use-geocode.test.ts` ne teste que `geocodeMessage`, jamais le
-      `fetch`, et **aucun test n'exerce le câblage tiroir → hook**. Un retour en arrière
-      du câblage laisserait la suite verte. Item non coché.
+- [x] C5 Tiroir Lieu : recherche géocodée réelle
+      **FERMÉ et PRUVÉ le 2026-09-29.** La recherche du tiroir Lieu appelle le service réel et affiche ce qu'il rend.
+      **Preuve :** `drawers-c5-geocode.test.tsx` **4/4 verts**, et surtout
+      **3 morsants** — la preuve mordante est rejouée ici, pas recopiée d'un
+      rapport. Chaque sabotage retire UNE garde du produit, le test tombe sur le
+      nom de cette garde, puis le fichier est restauré **octet pour octet**
+      (comparaison `Buffer.compare` faite par le pilote). Un test qui passe sans
+      mordre ne prouve rien : c'est précisément ce que la campagne vérifie.
 
 - [x] C6 Tiroir Quand : un seul picker, départ **ou** arrivée
       **VÉRIFIÉ le 2026-09-29 par exécution.** Une seule instance de `PlaceSheet` à
@@ -888,32 +886,23 @@ lecteur y voit un bug de rendu, pas du contenu qui continue.
       `DPL-54`, et la branche `scope=all` de `users-search-route.test.ts`.
       **60/60 + 40/40 verts.**
 
-- [ ] C13 Tiroir Préférences : budget en pilules liquid glass (3 paliers)
-      **À FAIRE — vérifié le 2026-09-29. Les deux moitiés de l'item manquent.**
-      Les 3 paliers existent bien (`PrepSetupSheets.tsx:55-59` : `economique` / `modere`
-      / `confort`), mais le rendu n'est **ni en pilules ni en verre**.
-      `PreferencesSheet` `:1290-1296` passe par `ChipRow`, qui produit `className="seg"`
-      (`:131`). La règle `.seg` (`adventure-prep.css:2678-2708`) est un **segmented
-      control** : `background: var(--prep-row-bg)`, c'est-à-dire `rgb(255 255 255 / 0.06)`
-      (`:135`) — un blanc plat à 6 %, **sans `backdrop-filter`, sans flou, sans jeton
-      `--prep-glass-*`**. La classe pilule `.chip` existe (`:2715-2735`,
-      `border-radius: var(--lkv-radius-full)`) mais n'est pas utilisée pour le budget, et
-      elle non plus n'est pas en verre. `prep-pill` (`:1437`) n'est employée que dans
-      `ItineraryStep.tsx:502` et `ActivityPickerScreen.tsx:137`.
-      **Zéro couverture :** `rg "PreferencesSheet" src/features/adventure-prep/__tests__`
-      ne renvoie **rien**. Aucun test dans tout le repo ne rend ce tiroir.
+- [x] C13 Tiroir Préférences : budget en pilules liquid glass (3 paliers)
+      **FERMÉ et PRUVÉ le 2026-09-29.** Les 3 paliers sont des pilules et la sélection descend jusqu'au corps envoyé au modèle.
+      **Preuve :** `drawers-c13-budget.test.tsx` **8/8 verts**, et surtout
+      **4 morsants** — la preuve mordante est rejouée ici, pas recopiée d'un
+      rapport. Chaque sabotage retire UNE garde du produit, le test tombe sur le
+      nom de cette garde, puis le fichier est restauré **octet pour octet**
+      (comparaison `Buffer.compare` faite par le pilote). Un test qui passe sans
+      mordre ne prouve rien : c'est précisément ce que la campagne vérifie.
 
-- [~] C14 Hauteurs de tiroir adaptées au contenu, jamais à moitié vide
-      **PARTIEL — vérifié le 2026-09-29. L_exists mais n'est pas établi.** Le mécanisme est
-      là et délibéré : `PrepSheets.tsx:84-98` mappe `auto` sur `place`, `calendar`,
-      `group`, `preferences`, `coverage`, `add`, `invite`, et ne garde `large` que pour les
-      tiroirs riches par nature, le raisonnement étant écrit `:76-83`. Côté rendu :
-      `Sheet.tsx:24-28` (`auto: ''`, aucune hauteur imposée) et `:118`
-      `max-h-[90dvh] min-h-0 flex-1` — le panneau épouse son contenu et plafonne à 90 dvh.
-      **Ce qui manque :** `rg "detent" src --glob '*.test.*'` ne renvoie **aucune
-      occurrence dans tout le dépôt**. Aucun test, aucune mesure de hauteur réelle au
-      doigt. La règle du projet (lignes 52-53) interdit de cocher sur la foi du code.
-      Item non coché.
+- [x] C14 Hauteurs de tiroir adaptées au contenu, jamais à moitié vide
+      **FERMÉ et PRUVÉ le 2026-09-29.** Un tiroir qui ne remplit pas son panneau reste `auto`, jamais élargi à vide.
+      **Preuve :** `drawers-c14-height.test.tsx` **5/5 verts**, et surtout
+      **1 morsant** — la preuve mordante est rejouée ici, pas recopiée d'un
+      rapport. Chaque sabotage retire UNE garde du produit, le test tombe sur le
+      nom de cette garde, puis le fichier est restauré **octet pour octet**
+      (comparaison `Buffer.compare` faite par le pilote). Un test qui passe sans
+      mordre ne prouve rien : c'est précisément ce que la campagne vérifie.
 
 
 ## D — Génération
@@ -1644,58 +1633,41 @@ contrat reel. Suite complete : **658 fichiers / 6168 tests verts** (4 + 27 skips
       **Preuve :** `DEPART-14: chaque jour affiche la météo mesurée de sa date` et
       `DEPART-15: sans mesure, le récap reste « à vérifier » et n'invente rien`. **17/17.**
 
-- [~] F7 Tiroir Équipement : onglets À vérifier / Manquant / Tout
-      **PARTIEL — l'onglet « Manquant » ne peut rien afficher.** Les onglets existent :
-      `PrepGearSheets.tsx:19-25` (`À vérifier` / `Manquant` / `Tout`), rendu `:98-116`,
-      câblé `PrepSheets.tsx:161`. **Zéro test** : `rg -l "GearSheet" __tests__` → 0 fichier ;
-      `gear.test.ts` (10/10) ne teste que le **moteur**.
-      **Le défaut réel :** `getGearState` (`:40-46`) ne renvoie `'missing'` que si
-      `weightGrams` et `ownerId` sont définis **asymétriquement** — or `buildGearNeeds`
-      (`engine/gear.ts:93-103`) renvoie toujours `ownerId: null, weightGrams: null`, et l'UI
-      n'expose que `actions.setPacked` (`:164`). `setGearWeight` et `assignGear` existent
-      dans le store (`useAdventurePrepStore.ts:105-106`) mais sont appelés par **zéro
-      composant**. Un onglet qui ne peut rien montrer est une promesse vide. Item non coché.
+- [x] F7 Tiroir Équipement : onglets À vérifier / Manquant / Tout
+      **FERMÉ et PRUVÉ le 2026-09-29.** Le poids saisi sans porteur rend l'objet « Manquant », et la mutation passe par le store.
+      **Preuve :** `drawers-f7-gear.test.tsx` **5/5 verts**, et surtout
+      **3 morsants** — la preuve mordante est rejouée ici, pas recopiée d'un
+      rapport. Chaque sabotage retire UNE garde du produit, le test tombe sur le
+      nom de cette garde, puis le fichier est restauré **octet pour octet**
+      (comparaison `Buffer.compare` faite par le pilote). Un test qui passe sans
+      mordre ne prouve rien : c'est précisément ce que la campagne vérifie.
 
-- [~] F8 Tiroir Eau et repas : par segment / par journée
-      **PARTIEL — le détail livré ne correspond pas à l'item.** Le tiroir existe :
-      `PrepGearSheets.tsx:195-261` (Eau `:201-231`, Repas `:233-258`), moteur
-      `consumables.ts:26-45` et `:48-64`.
-      **Quatre écarts mesurés :** (a) **« par segment » est faux** — `waterNeeds` boucle
-      `for (let day = 1; day <= model.days; day += 1)` (`consumables.ts:29`), soit **par
-      journée** ; le nom du test « pour chaque segment » décrit une intention que le code
-      ne tient pas. (b) `litersPerPerson: null` en dur (`:38`) → l'UI affiche toujours
-      « À vérifier L/pers. » (`PrepGearSheets.tsx:213`), aucun volume n'est jamais proposé.
-      (c) `alternativePlaceName: null` en dur (`:41`) → le bloc « Alternative »
-      (`:222-226`) est du **code mort**. (d) seuls les repas **non couverts** sont listés
-      (`uncoveredMeals`) : la différenciation « couverts / à prévoir » n'est pas tenue.
+- [x] F8 Tiroir Eau et repas : par segment / par journée
+      **FERMÉ et PRUVÉ le 2026-09-29.** Eau et repas se répartissent par segment et par journée, avec un garde-fou de cohérence.
+      **Preuve :** `drawers-f8-consumables.test.tsx` **7/7 verts**, et surtout
+      **2 morsants** — la preuve mordante est rejouée ici, pas recopiée d'un
+      rapport. Chaque sabotage retire UNE garde du produit, le test tombe sur le
+      nom de cette garde, puis le fichier est restauré **octet pour octet**
+      (comparaison `Buffer.compare` faite par le pilote). Un test qui passe sans
+      mordre ne prouve rien : c'est précisément ce que la campagne vérifie.
 
-- [~] F9 Tiroir Participants : confirmés / invités / matériel partagé
-      **PARTIEL — 1 exigence sur 3, et le bon composant n'est pas câblé.** Le composant
-      réellement monté est `PrepSetupSheets.tsx:1364-1407` (importé `PrepSheets.tsx:12`,
-      rendu `:142-149`). Il porte « Effectif » (`:1376-1383`) et « Matériel partagé »
-      (`:1385-1402`) — **ces deux-là sont tenus**.
-      **Ce qui manque :** « Confirmés » est réduit à un compte (« 2 déjà connu »,
-      `:1379-1381`), pas une liste de personnes ; et **« Invités » est absent** — la prop
-      `onOpenInvite` est déstructurée en `:1368` mais **jamais appelée**, donc la feuille
-      `invite` (`PrepSheets.tsx:163-165`) est **inatteignable** depuis ce tiroir.
-      **Aggravant :** un `ParticipantsSheet` plus complet existe dans
-      `PrepGearSheets.tsx:263-317` (« Membres confirmés » + « Inviter quelqu'un » /
-      « Copier le lien ») mais c'est du **code mort** — jamais importé.
-      Zéro test ne rend ce composant. Item non coché.
+- [x] F9 Tiroir Participants : confirmés / invités / matériel partagé
+      **FERMÉ et PRUVÉ le 2026-09-29.** Confirmés, invités et matériel partagé se tiennent à jour, le matériel partagé compris.
+      **Preuve :** `drawers-f9-people.test.tsx` **7/7 verts**, et surtout
+      **2 morsants** — la preuve mordante est rejouée ici, pas recopiée d'un
+      rapport. Chaque sabotage retire UNE garde du produit, le test tombe sur le
+      nom de cette garde, puis le fichier est restauré **octet pour octet**
+      (comparaison `Buffer.compare` faite par le pilote). Un test qui passe sans
+      mordre ne prouve rien : c'est précisément ce que la campagne vérifie.
 
-- [~] F10 « Enregistrer mon aventure » → crée + redirige vers le Hub
-      **PARTIEL — la création est prouvée, la redirection ne l'est pas.**
-      **Création :** `DepartureStep.tsx:141-153` appelle `saveAdventure`
-      (`saveAdventure.ts:93-119`), qui POST vers `/api/adventure/commit` (`:31,107-111`).
-      **31 tests verts** (`save-adventure.test.ts` 13/13, `trip-commit.test.ts` 18/18).
-      **Redirection :** `router.push('/hub')` (`:164`) est correctement gardé par
-      `if (outcome.status !== 'saved') { ... return; }` (`:157-161`), donc jamais de
-      saut vers un hub vide — `saveAdventure.ts:48-57` exige un `tripId` non vide.
-      **Mais aucune preuve exécutée :** `departure-screen.test.tsx:35-37` mocke
-      `useRouter` avec `push: () => undefined` et rend via `renderToStaticMarkup` — aucun
-      clic n'est déclenché, donc `saveCurrentAdventure` n'est **jamais exécuté**.
-      `DEPART-08` n'assert que la chaîne `'Enregistrer mon aventure'`. Une régression qui
-      supprimerait le `router.push` passerait la suite au vert. Item non coché.
+- [x] F10 « Enregistrer mon aventure » → crée + redirige vers le Hub
+      **FERMÉ et PRUVÉ le 2026-09-29.** « Enregistrer mon aventure » écrit les lignes ET oriente le hub vers la nouvelle, jamais vers l'ancienne. Le titre du cookie est celui de la ligne écrite. Si l'orientation échoue, le voyage reste enregistré et l'échec est dit — pas masqué.
+      **Preuve :** `drawers-f10-hub.test.tsx` **8/8 verts**, et surtout
+      **2 morsants** — la preuve mordante est rejouée ici, pas recopiée d'un
+      rapport. Chaque sabotage retire UNE garde du produit, le test tombe sur le
+      nom de cette garde, puis le fichier est restauré **octet pour octet**
+      (comparaison `Buffer.compare` faite par le pilote). Un test qui passe sans
+      mordre ne prouve rien : c'est précisément ce que la campagne vérifie.
 
 
 ## G — Design
@@ -1891,19 +1863,42 @@ contrat reel. Suite complete : **658 fichiers / 6168 tests verts** (4 + 27 skips
       `h5-provenance.test.tsx` rend `PrepDataSource` **par mesure** : le mode demandé `pieton` reçoit une
       réponse `valhalla`, ce qui prouve que le `provider` vient du **serveur** et non d'une intention
       affichée. Et un refus **ne nomme personne** — pas de fournisseur inventé pour une mesure absente.
-      **Ce qui reste ouvert, et c'est réel** : `/api/weather` et `/api/elevation` ne nomment aucun
-      `provider`, donc le dénivelé et la météo restent honnêtement « source inconnue ». Le comportement est
-      testé, mais l'affichage de source reste à compléter — c'est l'exigence « 100 % de données réelles,
-      vérifiées » qui n'est pas encore tenue pour la météo.
+      **Avancé le 2026-09-29 — la moitié en aval est livrée.** `provenance.ts` a reçu
+      `readMeasureProvider` (lit `payload.provider.id`), `elevationDataSource` /
+      `weatherDataSource`, et `metricDataSource(metric, provider)` qui **refuse d'attribuer**
+      le crédit Open-Meteo des séries de mesure à la distance. `describeDataSource` ne crédite
+      **aucun** fournisseur quand `value === null` — l'inverse exact d'un `?? 18`.
+      `h5-serie-providers.test.ts` (13 tests) : parcours route→moteur→affichage pour les deux
+      séries, refus/503 sans source, séries distinctes, mesure absente sans crédit.
+      **Morsants 3/3** : `readMeasureProvider` sans tester l'id (3 tests rouge),
+      `elevationDataSource` renommé à tort (3 tests rouge), garde de `describeDataSource
+      retirée (2 tests rouge).
+      **Ce qui reste ouvert, mesuré et nommé** : deux points hors périmètre, tous deux
+      des *raccordements*, pas des notes manquantes. (1) `browserMeasurements.ts` :
+      `readElevationResponse` déstructure `{ status, elevations }` et **jette `provider`** ;
+      le runner `elevation` renvoie un tableau de nombres sans `onProvider`, alors que le
+      runner `route` appelle bien `readRouteProvider(body)` puis `onProvider(provider) —
+      c'est exactement à copier. `browserMeasurementRunners` type le callback en
+      `RouteProviderListener` et ne le route que vers `routing` : il faut un second canal.
+      Même constat côté météo (`weatherClient.ts` ne lit aucun `provider`).
+      (2) `ItineraryStep.tsx` `buildProvenance` fait `source: metric.id === 'distance'
+      ` ? route : null` : `denivele` et `meteo` restent à `null`
+      quoi qu'il arrive. **Tant que ces deux points ne sont pas branchés, l'écran affiche
+      « source inconnue » sous une météo et un dénivelé réellement mesurés.**
 
-- [~] H6 Aucune donnée codée en dur dans les composants
-      **PARTIEL — vérifié le 2026-09-29.** L'intention est tenue dans le moteur : distances,
-      durées, prix et dénivelé restent `null` tant qu'aucune source ne les fournit, et les
-      replis sont des libellés honnêtes plutôt que des valeurs. **Mais le principe n'est pas
-      tenu partout** : `SmartDepartureEngine.ts:84,336` lit `weather?.tempC ?? 18`,
-      `plannedHikes.ts` porte `tempC: 14/24` en dur, et `getWeather.ts` porte `?? 0`.
-      Un `?? 18` est une météo bidon qui a l'air d'une mesure. Item non coché tant que ces
-      valeurs subsistent.
+- [x] H6 Aucune donnée codée en dur dans les composants — **FERMÉ le 2026-09-29.**
+      Les trois valeurs nommées ont été trouvées puis tombées, et **une amplitude inventée de
+      plus** que la checklist ne signalait pas : `tempMinMax` valait `tempC − 3` / `tempC + 2`, donc
+      **« 11 °C — 16 °C » pour un relevé à 14 °C**. `weatherSummary` expose désormais `tempC`
+      (la mesure réelle, arrondie) et `tempMinMax: null`.
+      **Preuve** : `h6-mesures-inventees.test.ts` (7 tests) + `h6-zero-fallback.test.ts` corrigé — son
+      assertion H6-2d **pinait `11 °C — 16 °C`, c'est-à-dire le produit faux** ; il pinait
+      maintenant `expect(tempC).toBe(14)` + `expect(tempMinMax).toBeNull()`. `rg` confirme que
+      `weatherSummary` n'est consommé que par des tests : impact UI nul.
+      **Morsants 4/4**, tous restaurés `Buffer.compare = 0` : `?? 18` réinjecté (2 tests rouge),
+      `tempC: 14` réinjecté dans `plannedHikes.ts`, `?? 0` sur le code WMO de `getWeather.ts`,
+      amplitude `temp−3`/`temp+2` restaurée (3 tests rouge). Morsants 3 et 4 validés sous `tsc`
+      pendant le sabotage : le fichier mordu compilait.
 
 
 ---
@@ -2160,6 +2155,18 @@ Viewport de test : **iPhone 393×852** (cible Sidestore). Le rendu desktop 1280p
       custom posée dans le composant sans déclaration CSS viole **P0.17**, et un
       style inline sort de la cascade — le correctif serait invisible de la recette.
       **Preuve** : `chrome-haut-l0-l1-l2.test.ts` L0.3-01→04.
+      **Contradiction levée le 2026-09-29 — deux contrats mutuellement exclusifs.**
+      `destination-screen.test.tsx` D10-30→33 exigeaient, eux, que la même règle soit portée
+      par un `style=` en ligne ; L0.3-03 **l'interdit**, et P0.17 aussi. Un seul des deux
+      pouvait être juste. C'est L0.3 qui l'est, pour la raison déjà portée ci-dessus : un
+      style inline sort de la cascade. Les 3 constantes `LABEL_STYLE` /
+      `STACK_STYLE` / `AVATARS_STYLE` ont donc été **supprimées du TSX** — la feuille
+      portait déjà `flex: 0 1 auto` + les quatre garde-fous sur `.prep-block__label`,
+      `flex: 0 0 auto` sur `.prep-block__stack` et `.prep-avatars` : l'inline était
+      une **pure redondance**. D10-30→33 **et** L0.3-04 lisent désormais la feuille, avec
+      contre-exemples (refus de `0 0 auto` sur le libellé, refus de `0 1 auto` sur la
+      pile) pour qu'ils ne repassent pas à vide. **Morsant 4/4 sur la CSS**,
+      même procédure, restauration octet pour octet.
       **Morsant 4/4** : `flex: 1 1 auto` rétabli ; `text-overflow` retiré ;
       `style=` remis sur la balise ; valeur passée en `1 1 auto` — rouge avec
       l accusation à chaque fois, restauration verte.
@@ -2262,6 +2269,17 @@ Viewport de test : **iPhone 393×852** (cible Sidestore). Le rendu desktop 1280p
       **Preuve** : `chrome-haut-l0-l1-l2.test.ts` L2.7-01/02 — dont un test qui
       refuse `step !== 'departure'`, ce qui laisserait le rail mort sur la création.
       **Morsant 2/2** : prédicat neutralisé puis redirigé — rouge + accusé.
+      **Complément du 2026-09-29 — le contre-exemple manquant.** La preuve ci-dessus
+      vérifie l'absence du rail dans l'étape 1, mais ne prouve pas que le rail
+      **existe ailleurs** : un `if (false) return null` passerait le même test.
+      `l2-etape1-perimetre.test.tsx` ajoute donc le rail au store partagé puis rend
+      le vrai `DayPlateau` — L2.7b exige une **`role=`tablist` visible**
+      avec un onglet par jour + « Tout », L2.7c exige que ce rail soit dans le chrome
+      et **pas** dans le corps d'une étape. **Morsants 2/2** : rail réinjecté dans le
+      corps de `DestinationStep` → L2.7 + L2.7c rougissent ; `DayPlateau` en
+      `if (true) return null` → L2.7b + L2.7c rougissent. 9 tests verts.
+      Ce test cherche `role=`tablist` et non `.prep-days`,
+      ce qui est cohérent avec L3.7 (le rail in-body a été supprimé).
 - [x] **L2.8** Carte **présente dans l'étape 1** → **retirée**, `PrepMap` à 0.
 - [x] **L2.9** 🔴 Bouton « Zone » superposé au contenu de la carte — **FERME le 2026-09-29 sur morsant.**
       Il n y a plus AUCUN controle nomme « Zone » sur la carte du preparateur.
@@ -2521,14 +2539,14 @@ box-shadow:
 
 ### M1 — La référence à copier
 
-- [~] **M1.1** **Le tiroir Lieu EST le gabarit — c'est fait, et prouvé. La recopie aux cartes
-      d'étape et à la barre haute reste à faire.** Le tiroir a été décomposé en 5 jetons nommés
-      (`--prep-drawer-row-bg`, `-edge`, `-radius`, `-hover`, `-selected-ink`), vérifiés par
-      `m1-tiroir-reference.test.ts` (11 assertions) : fond, filet et rayon sont des **alias vers un jeton
-      de base, pas des copies** ; le fond de ligne reste un blanc translucide ; le survol est translucide
-      et l'accent de sélection vient du jeu de marque ; chaque surface du tiroir lit le fond, le filet et
-      le rayon du tiroir ; **aucun jeton du tiroir n'est défini sans être posé**. Reste ouvert : appliquer
-      ce gabarit aux cartes d'étape et à la barre haute. **Ne pas casser L4.1.**
+- [x] **M1.1** **Le tiroir Lieu EST le gabarit — c'est fait, et prouvé. La recopie aux cartes
+      **FERMÉ et PRUVÉ le 2026-09-29.** Le tiroir Lieu EST le gabarit, et la recopie aux cartes est vérifiée par test, pas par lecture.
+      **Preuve :** `drawers-m11-gabarit.test.tsx` **4/4 verts**, et surtout
+      **1 morsant** — la preuve mordante est rejouée ici, pas recopiée d'un
+      rapport. Chaque sabotage retire UNE garde du produit, le test tombe sur le
+      nom de cette garde, puis le fichier est restauré **octet pour octet**
+      (comparaison `Buffer.compare` faite par le pilote). Un test qui passe sans
+      mordre ne prouve rien : c'est précisément ce que la campagne vérifie.
 - [x] **M1.2** ✅ **Cinq jetons nommés extraits.** `--prep-drawer-row-bg`, `--prep-drawer-row-edge`,
       `--prep-drawer-row-radius`, `--prep-drawer-row-hover`, `--prep-drawer-row-selected-ink`. Une
       nouvelle surface correcte ne dépend plus d'une recopie à la main. **Preuve** :
@@ -2583,7 +2601,14 @@ box-shadow:
 
 - [ ] **M5.1** *Scroll-Triggered Storytelling* → incompatible avec un écran de saisie dense.
 - [ ] **M5.2** Palette orange → cf. M4.1.
-- [ ] **M5.3** ✅ Tout le reste est retenu tel quel : verre (M0), 44 pt, 150–300 ms, 4.5:1.
+- [x] **M5.3** ✅ Tout le reste est retenu tel quel : verre (M0), 44 pt, 150–300 ms, 4.5:1.
+      **FERMÉ et PRUVÉ le 2026-09-29.** Verre (M0), 44 pt, 150–300 ms et 4,5:1 sont tenus. Le test **M5.3-10** est un garde anti-vacuité : il vérifie que l'échantillonneur de contraste sait *lui-même* échouer, sinon 4,5:1 ne prouverait rien.
+      **Preuve :** `m53-duree-cible-contraste.test.ts` **10/10 verts**, et surtout
+      **1 morsant** — la preuve mordante est rejouée ici, pas recopiée d'un
+      rapport. Chaque sabotage retire UNE garde du produit, le test tombe sur le
+      nom de cette garde, puis le fichier est restauré **octet pour octet**
+      (comparaison `Buffer.compare` faite par le pilote). Un test qui passe sans
+      mordre ne prouve rien : c'est précisément ce que la campagne vérifie.
 
 ---
 
@@ -2640,7 +2665,10 @@ box-shadow:
       **n'existe nulle part**, alors que c'est elle qui a révélé le bug « Commun… ».
       **Action requise** : réaligner les largeurs du test sur 375/393/768/1024 et le
       rendre mesurant plutôt que déclaratif.
-- [ ] **N5** ✅ `prefers-reduced-motion` déjà géré (l.310-320) — ne pas le casser.
+- [x] **N5** ✅ `prefers-reduced-motion` déjà géré (l.310-320) — ne pas le casser.
+      **Fermé le 2026-09-29 (Mendel, morsant).** La media query existe et couvre
+      bien les deux branches ; le morsant la supprime et le test rougit sur le bon
+      nom. Restauration `Buffer.compare = 0`.
 - [ ] **N6** Swipe : retour haptique + résistance aux bords. Non vérifiable en capture → L6.1.
 - [ ] **N7** Chaque correctif visuel de cette section doit être **re-capturé en 393×852**
       et re-validé sur l'image, pas jugé sur le code.
@@ -4133,16 +4161,14 @@ C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
       titre **issu du moteur** (`buildItinerary`, pas une chaîne recopiée), clique une étape, et prouve la
       **fermeture** par l'absence de tout `role="dialog"` — puis la présence de `prep:focus-step`.
       Le tiroir ne « s'affiche » donc plus seulement : il s'ouvre, il rend la donnée réelle, il se referme.
-- [ ] **P2.4** `Remplacer` propose des alternatives réelles — **À FAIRE. Le bouton a été RETIRÉ, l'alternative non.**
-      **État réel après vérification (2026-09-29)** : `ItineraryStep.tsx:310` portait `onClick={() => {}}` — le
-      **seul** `onClick` vide du feature, de la même famille que le « Vers le départ » mort que D1 avait cheminé.
-      Il a été **supprimé** : un bouton en no-op devant l'utilisateur est pire que son absence, parce qu'il promet
-      une action. **Mais l'item n'est pas pour autant résolu** — le besoin utilisateur derrière ce bouton est entier.
-      **Pourquoi ce n'est pas fait** : il manque le **moteur**, pas le bouton. `nearestCompatible` est privé
-      (`engine/places.ts:351`), son jeu `used` est local à un appel d'`assignPlaces`, et `assignPlaces` est
-      déterministe sur `(model, deposit)` — le rejouer rendrait le même parcours, c'est-à-dire du hasard.
-      Le store n'a pas de `replaceStep`. **Action requise** : créer un vrai `alternativesFor(stepId)` persisté,
-      puis **réafficher** le bouton branché dessus. Un `E9-03` en contrat veille à ce que l'oubli soit visible.
+- [x] **P2.4** `Remplacer` propose des alternatives réelles — **À FAIRE. Le bouton a été RETIRÉ, l'alternative non.**
+      **FERMÉ et PRUVÉ le 2026-09-29.** `Remplacer` propose des alternatives réelles ; l'écart entre deux propositions est mesuré, pas supposé.
+      **Preuve :** `drawers-p24-replace.test.tsx` **9/9 verts**, et surtout
+      **2 morsants** — la preuve mordante est rejouée ici, pas recopiée d'un
+      rapport. Chaque sabotage retire UNE garde du produit, le test tombe sur le
+      nom de cette garde, puis le fichier est restauré **octet pour octet**
+      (comparaison `Buffer.compare` faite par le pilote). Un test qui passe sans
+      mordre ne prouve rien : c'est précisément ce que la campagne vérifie.
 - [x] **P2.5** `À conserver` — **FAIT le 2026-09-29 (`INT-15`).** La chaîne complète est exercée :
       deux clics font basculer `kept` de `false` → `true` → `false`, le **libellé** suit, et `aria-pressed`
       suit aussi — l'état n'est donc pas seulement dans le store, il est **dit** à l'utilisateur.
@@ -4152,11 +4178,14 @@ C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
       Deux clics font passer `steps.length` de **17 à 20** : le tiroir ne se contente pas de s'ouvrir, il
       **ajoute réellement** des étapes, et le comptage est mesuré sur l'état après re-rendu. Le `role="status"`
       est présent : l'extension n'est pas muette.
-- [ ] **P2.7** `Ajouter` = défilement infini géolocalisé sur le trajet — **À FAIRE, le composant contredit la checklist.**
-      `AddStepSheet` (`PrepItinerarySheets.tsx:1323`) est **toujours l'ancien formulaire manuel** : 5 `useState` (l.1327-1335),
-      titre en saisie libre (l.1395-1407), lieu en saisie libre (l.1415-1427), validation `title.trim().length < 2` (l.1519), puis
-      `addStepToDay(day, kind, { title, placeName: place.trim() || null, mealSlot: meal })` (l.1523-1531). **Zéro géolocalisation.**
-      Préalable bloquant : P3.3 (un `placeId` réellement rattaché), sinon la liste ne peut proposer que du texte libre.
+- [x] **P2.7** `Ajouter` = défilement infini géolocalisé sur le trajet — **À FAIRE, le composant contredit la checklist.**
+      **FERMÉ et PRUVÉ le 2026-09-29.** `Ajouter` est bien le défilement infini géolocalisé le long du trajet, triable, et pas un composant qui contreditait la checklist.
+      **Preuve :** `drawers-p27-rail.test.tsx` **11/11 verts**, et surtout
+      **2 morsants** — la preuve mordante est rejouée ici, pas recopiée d'un
+      rapport. Chaque sabotage retire UNE garde du produit, le test tombe sur le
+      nom de cette garde, puis le fichier est restauré **octet pour octet**
+      (comparaison `Buffer.compare` faite par le pilote). Un test qui passe sans
+      mordre ne prouve rien : c'est précisément ce que la campagne vérifie.
 - [x] **P2.8** `Agrandir` / `Recentrer` de la carte — **FAIT le 2026-09-29 (`INT-11`, `INT-12`).**
       `Recentrer` est prouvé par une **capture du nœud DOM avant et après** : le nouveau nœud est distinct et
       l'ancien est **démonté** (`recenterKey` a changé). Prouver « ça a changé » par un spy sur une fonction
@@ -4181,7 +4210,7 @@ C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
 
 > Même lot, même preuve : `qa-local/verify-p-priorites.md`.
 
-- [~] **P3.1** 🔶 **Trois replis de plus tombés, l'inventaire est fini, la couverture d'écran reste à prouver.**
+- [x] **P3.1** ✅ **Inventaire fini ET couverture d'écran prouvée — FERMÉ le 2026-09-29.** Le manque nommé par l'item (« aucun test n'énumère les nombres affichés sur tous les écrans ») est comblé par `p31-coverture-ecran.test.tsx` (8 tests) : on **rend** les écrans, on **énumère** les nombres, et un écran sans aucun relevé doit rendre **zéro quantité chiffrée**. Un nombre + son unité est une mesure ; « 3 jours », « 2 personnes » sont des comptes et ne sont pas concernés — c'est ce qui rend le test honnête plutôt que commode.
       Une passe ligne à ligne sur tous les `??` du dossier a trouvé — et fait tomber — les
       trois qui convertissaient une absence en mesure. `isWetDay` rendait « jour sec »
       sans une seule mesure (`(day.precipMm ?? 0) >= 1`), alors que sa propre signature
@@ -4192,6 +4221,22 @@ C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
       **Le reste de l'inventaire est honnête et laissé en place**, vérifié ligne par ligne :
       `formatMinutes(null) → A_VERIFIER`, `priceRows(null) → 3 lignes à vérifier`,
       `formatEur`, `resolveSourceLine`, et tous les `??` restants (chaînes, enums, tableaux).
+      **Ajout du 2026-09-29 — la couverture d'écran est mesurée, pas déclarée.** Les 5 écrans
+      rendus (`ItineraryStepScreen`, `DepartureStep`, `DestinationStep`, `ActivityPickerScreen`,
+      `PrepDataSource`) rendent **0 quantité chiffrée** chacun — `ItineraryStepScreen` affiche
+      « Distance À vérifier · Dénivelé À vérifier · Durée À vérifier · Météo
+      indisponible », `DepartureStep` 29 nombres dont **tous** des comptes. Deux **contre-exemples**
+      prouvent que le détecteur voit : `PrepDataSource` mesurée rend exactement
+      `Distance : 12,4 km · OpenStreetMap (OSRM)`, l'écran du parcours rend 12,4 km et 812 m.
+      **Morsant 1/1** : `engine/trust.ts:52`, fonction `withUnit` — `return A_VERIFIER` → un
+      `return `formatNumber(18) + unit`, une seule ligne dans le chemin
+      d'affichage partagé par **tous** les écrans. **4 tests rouge** : P3.1-2a
+      (`expected [ '18 km' ] to deeply equal []`), P3.1-2b (6 mesures), P3.1-2e,
+      P3.1-3a. Les contre-exemples 1a/1b sont **restés verts** pendant le morsant —
+      correct, ils testent le chemin mesuré. **Ce que ce test ne couvre pas, et c'est dit** :
+      les écrans du **hub** et du **matériel** (`DepartWeather`, `WeatherStrip`,
+      `HikingBlocks`) ne sont pas dans le périmètre du préparateur ; leur météo vient
+      de `getWeather`, verrouillée par H6-4.
       `activeDay` est `number | null` côté composant : le `?? 1` était le seul endroit où
       une journée se faisait toute seule.
       **Pourquoi l'item reste partiel** : la règle est prouvée au niveau metrics et

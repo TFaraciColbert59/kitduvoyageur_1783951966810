@@ -27,6 +27,9 @@ import type { PhaseRetry, PhaseRetryDeps } from '../engine/itineraryPhases';
 import type { PrepSheetId } from './PrepSheets';
 import { PrepNav } from './PrepCrumb';
 import { stepOneMissing, stepOneProfileIdFor } from './stepOneProfile';
+import { PrepMap, PREP_POINT_COLORS, type PrepMapPoint } from './PrepMap';
+import { generationProgress } from '../engine/generation';
+import { MIN_LOCATED_STEPS, locatedStepCount } from '../engine/itineraryPhases';
 
 /* ------------------------------------------------------------------ */
 /* Etat reseau                                                        */
@@ -183,7 +186,7 @@ const NOTICE_ACTION: React.CSSProperties = {
   border: 'var(--prep-hairline) solid var(--lkv-action)',
   borderRadius: '999px',
   backgroundColor: 'transparent',
-  color: 'var(--lkv-action)',
+  color: 'var(--prep-ink-accent-strong)',
   font: 'inherit',
   fontWeight: 640,
   cursor: 'pointer',
@@ -633,6 +636,189 @@ export function PrepBlockerNote({ summary }: { summary: string }) {
 }
 
 /* ------------------------------------------------------------------ */
+/* L6.4 / D3 — L'ecran de generation, et la carte qui se trace          */
+/* ------------------------------------------------------------------ */
+
+/** La carte ne se dessine qu'a partir de deux positions reelles. */
+export const PREP_LIVE_MAP_MIN_STEPS = MIN_LOCATED_STEPS;
+
+/**
+ * La geometrie reelle, dans l'ordre du programme.
+ *
+ * Meme regle que la carte de l'ecran final (ItineraryStep.dayRouteCoords) : une
+ * position absente ou non finie saute, un doublon saute. Un trace qui
+ * repeterait le meme point trois fois afficherait unaller-retour de 0 km que
+ * personne n aura fait.
+ */
+export function liveRouteCoords(model: ItineraryModel | null): Array<[number, number]> {
+  if (model === null) return [];
+  const coords: Array<[number, number]> = [];
+  for (const step of [...model.steps].sort((a, b) => a.day - b.day || a.order - b.order)) {
+    if (step.lat === null || step.lon === null) continue;
+    if (!Number.isFinite(step.lat) || !Number.isFinite(step.lon)) continue;
+    const last = coords[coords.length - 1];
+    if (last && last[0] === step.lat && last[1] === step.lon) continue;
+    coords.push([step.lat, step.lon]);
+  }
+  return coords;
+}
+
+/** Les points du programme, un par etape reellement localisee. */
+export function liveMapPoints(model: ItineraryModel | null): PrepMapPoint[] {
+  if (model === null) return [];
+  return [...model.steps]
+    .sort((a, b) => a.day - b.day || a.order - b.order)
+    .flatMap((step) => {
+      if (step.lat === null || step.lon === null) return [];
+      if (!Number.isFinite(step.lat) || !Number.isFinite(step.lon)) return [];
+      return [
+        {
+          id: step.id,
+          lat: step.lat,
+          lon: step.lon,
+          label: step.title,
+          color: PREP_POINT_COLORS[step.kind],
+          category: step.kind,
+          stepId: step.id,
+        },
+      ];
+    });
+}
+
+/**
+ * L'ecran de generation doit-il prendre la place ?
+ *
+ * Trois conditions, et trois seulement :
+ *
+ * 1. le cadre de l'ecran ET l'ecran enfant ne sont pas deux : ici on est dans
+ *    l'etape 2, celle qui possede le run ;
+ * 2. le statut est `en_cours` — une generation terminee, arretee ou en echec
+ *    a son propre ecran de reprise, et le chevauchement ferait deux verites ;
+ * 3. AUCUN parcours n'est encore depose. Des que `draft.itinerary` existe,
+ *    l'ecran final affiche la carte qui, elle, porte la version mesuree : cet
+ *    ecran intermediaire n'aurait plus rien de provisoire a dire.
+ */
+export function prepGenerationVisible(input: {
+  picking: boolean;
+  step: PrepStepId;
+  generation: GenerationState;
+  itinerary: ItineraryModel | null;
+}): boolean {
+  if (input.picking) return false;
+  if (input.step !== 'itinerary') return false;
+  if (input.generation.status !== 'en_cours') return false;
+  return input.itinerary === null;
+}
+
+const SCREEN_BOX: React.CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  zIndex: 2,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--prep-space-3)',
+  padding: 'var(--prep-space-4)',
+  overflowY: 'auto',
+  backgroundColor: 'var(--lkv-bg, Canvas)',
+};
+
+/** La carte : la place d'honneur, et la seule zone qui grandit. */
+const SCREEN_MAP: React.CSSProperties = {
+  flex: '1 1 auto',
+  minHeight: 200,
+  position: 'relative',
+  // `column` pour que `.prep-map` (flex: 1 1 auto) occupe la hauteur restante
+  // au lieu de se replier sur son seul min-height : sans cela la carte tiendrait
+  // 128 px sous un espace de 300 px, donc l'ecran aurait l'air d'avoir une
+  // carte plus petite que sa place.
+  display: 'flex',
+  flexDirection: 'column',
+};
+
+/**
+ * L'ecran de generation, en surimpression.
+ *
+ * Les PHASES viennent de `draft.generation.phases` et la progression de
+ * `generationProgress` : ce sont les memes objets que le rail de l'ecran
+ * enfant, donc les deux ne peuvent pas diverger. Aucune duree n'est affichee —
+ * le moteur ne mesure pas le temps qu il met, donc l'ecran ne l'invente pas.
+ *
+ * La carte ne se dessine QUE si la geometrie existe : avant la phase « lieux »,
+ * le modele n'a aucune position, et une carte vide centree sur la France
+ * afficherait un etat « pret » qui ne l'est pas. Le seuil est pose une fois
+ * pour toutes (`PREP_LIVE_MAP_MIN_STEPS`) et partage avec le moteur.
+ */
+export function PrepGenerationScreen({
+  generation,
+  liveModel,
+  onStop,
+}: {
+  generation: GenerationState;
+  liveModel: ItineraryModel | null;
+  onStop: () => void;
+}) {
+  const progress = generationProgress(generation);
+  const localisees = locatedStepCount(liveModel);
+  const coords = liveRouteCoords(liveModel);
+  const carteVue = localisees >= PREP_LIVE_MAP_MIN_STEPS;
+  return (
+    <div className="prep-screen" data-generation-screen="1" style={SCREEN_BOX} role="status">
+      <p
+        className="prep-note"
+        style={{ margin: 0, color: 'var(--lkv-text-subtle)', textAlign: 'center' }}
+      >
+        {progress.currentLabel}
+      </p>
+      {carteVue ? (
+        <div className="prep-map--inline" style={SCREEN_MAP}>
+          <PrepMap
+            name="Ton parcours"
+            routeCoords={coords}
+            points={liveMapPoints(liveModel)}
+            scopeLabel="Ensemble"
+            hideExpand
+          />
+        </div>
+      ) : (
+        <div className="prep-map--inline" style={SCREEN_MAP} data-live-map="pending" />
+      )}
+      <p
+        className="prep-maphint"
+        style={{ margin: 0, color: 'var(--lkv-text-subtle)', textAlign: 'center' }}
+      >
+        {carteVue
+          ? `${localisees} étapes localisées. Le tracé se précise à chaque mesure.`
+          : 'Le tracé apparaîtra dès que les lieux réels seront accrochés au parcours.'}
+      </p>
+      <div className="prep-rail" aria-live="polite">
+        {generation.phases.map((phase, index, arr) => {
+          const active = !phase.done && (index === 0 || arr[index - 1].done);
+          return (
+            <div
+              key={phase.id}
+              className="prep-rail__line"
+              data-state={active ? 'active' : phase.done ? 'done' : 'pending'}
+            >
+              <span className="prep-rail__dot" aria-hidden="true">
+                <Icon
+                  name={phase.done ? 'check' : active ? 'refresh-cw' : 'circle'}
+                  size={20}
+                  className={active ? 'spin' : ''}
+                />
+              </span>
+              <span>{phase.label}</span>
+            </div>
+          );
+        })}
+      </div>
+      <button type="button" onClick={onStop} className="prep-note" style={{ alignSelf: 'center' }}>
+        Arrêter
+      </button>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Cadre                                                              */
 /* ------------------------------------------------------------------ */
 
@@ -773,6 +959,12 @@ export function PrepNavActions({ onOpenPreferences, onGoHub }: PrepNavActionsPro
   const goToStep = useAdventurePrepStore((state) => state.goToStep);
   const retryPhaseInStore = useAdventurePrepStore((state) => state.retryPhase);
   const applyPhaseRetry = useAdventurePrepStore((state) => state.applyPhaseRetry);
+  // La geometrie REELLE publiee par le moteur, avant d'etre deposee. Elle est
+  // absente d'un store de test qui ne la connait pas : `?? null` plutot qu'un
+  // `??!`, parce qu'un ecran qui plante vaut moins qu'une carte qui ne s'affiche
+  // pas.
+  const liveModel = useAdventurePrepStore((state) => state.liveModel) ?? null;
+  const stopGeneration = useAdventurePrepStore((state) => state.stopGeneration);
   // Le rail et le message du CTA lisent le MEME etat, calcule ici une
   // seule fois : deux lectures independantes du brouillon finiraient par
   // diverger, et c'est precisement la divergence qui produit un ecran muet
@@ -818,6 +1010,16 @@ export function PrepNavActions({ onOpenPreferences, onGoHub }: PrepNavActionsPro
 
   // La phase a rejouer, DERIVEE de l'etat de generation — jamais supposee.
   const failedPhase = failedGenerationPhase(draft.generation);
+
+  // L'ecran intermediaire se superpose aux enfants SANS les remplacer : c'est
+  // l'ecran enfant qui possede le `AbortController` du run, donc le demonter
+  // annulerait la generation que cet ecran est cense decrire.
+  const generationScreenVisible = prepGenerationVisible({
+    picking,
+    step,
+    generation: draft.generation,
+    itinerary: draft.itinerary,
+  });
 
   // Le port est reconstruit a chaque rendu : il lit l'etat au moment du clic,
   // donc une reprise ne peut pas partir d'un brouillon perime.
@@ -871,6 +1073,14 @@ export function PrepNavActions({ onOpenPreferences, onGoHub }: PrepNavActionsPro
         {blocker && <PrepBlockerNote summary={blocker} />}
 
         {children}
+
+        {generationScreenVisible && (
+          <PrepGenerationScreen
+            generation={draft.generation}
+            liveModel={liveModel}
+            onStop={() => (stopGeneration ? stopGeneration() : undefined)}
+          />
+        )}
 
         {!picking && (
           <PrepNavActions

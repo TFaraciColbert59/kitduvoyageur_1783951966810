@@ -66,7 +66,7 @@ function jeton(source: string, nom: string): string {
   return (found?.[1] ?? '').trim();
 }
 
-const RE_CARDS = /\.(prep-step__[a-z-]+)\s*\{([^}]*)\}/gs;
+const RE_CARDS = new RegExp('\\.(prep-step__[a-z-]+)\\s*\\{([^}]*)\\}', 'gs');
 
 const JOUR = regle(CSS, '.prep-day');
 const JOUR_ACTIF = regle(CSS, ".prep-day[aria-pressed='true']");

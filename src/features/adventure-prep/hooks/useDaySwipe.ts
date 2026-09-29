@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useRef } from 'react';
 import type { TouchEvent } from 'react';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { dayAfterSwipe, swipeIntent } from '../engine/dayNavigation';
 
 /**
@@ -62,6 +63,7 @@ export function isInsideMap(target: EventTarget | null): boolean {
 export function useDaySwipe(options: DaySwipeOptions): DaySwipeHandlers {
   const { current, days, onSelectDay, ignore = isInsideMap } = options;
   const origin = useRef<Origin | null>(null);
+  const { triggerHaptic } = useHapticFeedback();
 
   const onTouchStart = useCallback(
     (event: TouchEvent<Element>) => {
@@ -105,9 +107,14 @@ export function useDaySwipe(options: DaySwipeOptions): DaySwipeHandlers {
       // doit surtout pas non plus ecrire dans le store.
       if (next === current) return;
 
+      // Retour haptique : un SEUL aller-retour par geste reellement effectue.
+      // Il part apres la resistance aux bords, donc un geste refuse ne vibre
+      // pas, et avant l ecriture, donc la secousse est simultanee au changement
+      // d ecran. `triggerNativeHaptic` respecte `prefers-reduced-motion`.
+      triggerHaptic('selection');
       onSelectDay(next);
     },
-    [current, days, onSelectDay],
+    [current, days, onSelectDay, triggerHaptic],
   );
 
   // Un geste annule par le systeme (appel entrant, scroll vole) ne laisse

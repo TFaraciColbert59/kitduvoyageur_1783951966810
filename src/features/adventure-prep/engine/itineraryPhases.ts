@@ -203,6 +203,122 @@ export interface GenerationOutcome {
 export type PhaseReporter = (phase: GenerationPhaseId) => void;
 
 /* ------------------------------------------------------------------ */
+/* D3 — La geometrie REELLE, publiee pendant la generation              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Un abonne a la geometrie telle qu elle existe, pas telle qu elle sera.
+ *
+ * Le canal existe pour une seule raison : ItineraryStep ne monte sa carte que
+ * si draft.itinerary existe, donc l'utilisateur ne voit le trace qu'APRES la
+ * generation. Ce canal publie le meme modele, reellement mesure, au moment ou
+ * il devient vrai — jamais une anticipation, jamais une position inventee.
+ */
+export type GenerationPartialListener = (model: ItineraryModel) => void;
+
+/**
+ * En dessous de ce nombre de points, un trace n'est pas un trace.
+ *
+ * Un point isole ne dessine pas un trajet : il dessine un point, et une
+ * « carte qui se trace » qui n'affiche qu'un point unique pretendrait une
+ * geometrie que personne n'a. Le seuil est donc une condition de dessin, pas
+ * une mesure de completude.
+ */
+export const MIN_LOCATED_STEPS = 2;
+
+const PARTIAL_LISTENERS = new Set<GenerationPartialListener>();
+
+/**
+ * Abonne un ecran a la geometrie reelle. Rend la fonction de desabonnement.
+ *
+ * Abonner deux fois le meme ecran est sans effet : le Set ne le compte pas
+ * deux fois, donc un double montage ne double pas le rendu.
+ */
+export function onGenerationPartial(listener: GenerationPartialListener): () => void {
+  PARTIAL_LISTENERS.add(listener);
+  return () => {
+    PARTIAL_LISTENERS.delete(listener);
+  };
+}
+
+/** Etapes reellement localisees : une position finie, des deux cotes. */
+export function locatedStepCount(model: ItineraryModel | null): number {
+  if (model === null) return 0;
+  return model.steps.filter(
+    (step) => Number.isFinite(step.lat) && Number.isFinite(step.lon),
+  ).length;
+}
+
+/**
+ * Publie la geometrie, si et seulement si elle vaut d'etre dessinee.
+ *
+ * Un abonne qui leve n'interrompt rien : c'est un ecran, pas une frontiere. Le
+ * moteur qui a produit la mesure ne peut pas echouer parce qu'un composant a
+ * mal rendu.
+ */
+function publishPartial(model: ItineraryModel | null): void {
+  if (model === null) return;
+  if (PARTIAL_LISTENERS.size === 0) return;
+  if (locatedStepCount(model) < MIN_LOCATED_STEPS) return;
+  for (const listener of PARTIAL_LISTENERS) {
+    try {
+      listener(model);
+    } catch {
+      // Un abonne muet n annule ni la mesure ni la generation.
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Arret reel — un « Arreter » qui coupe vraiment                      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Les runs en cours, pour un arret demande de l'exterieur.
+ *
+ * ItineraryStep garde son AbortController dans une ref locale : hors de ce
+ * module, store.stopGeneration() ne pouvait que changer un statut, et le run
+ * continuait jusquau bout — un bouton « Arreter » qui n arrete rien. Le canal
+ * ci-dessous rend l'arret possible SANS toucher a l'ecran qui possede la ref.
+ */
+const RUNS_EN_COURS = new Set<AbortController>();
+
+/**
+ * Coupe tous les runs vivants. Vrai s il y en avait au moins un.
+ *
+ * Le retour n'est pas decoratif : l'appelant s'en sert pour ne pas pretendre
+ * avoir arrete un run qui n'existait pas.
+ */
+export function requestGenerationStop(): boolean {
+  if (RUNS_EN_COURS.size === 0) return false;
+  for (const controller of RUNS_EN_COURS) controller.abort();
+  return true;
+}
+
+/**
+ * Relie le signal de l'appelant a un controleur interne, et enregistre ce
+ * dernier pour que requestGenerationStop() puisse le joindre.
+ *
+ * L'appelant garde la main sur SON signal : s'il annule (demontage d'ecran,
+ * remplacement de run), l'interieur s'arrete aussi. Le finally rend toujours la
+ * main, donc un run termine ou coupe ne reste jamais dans le registre.
+ */
+function runControllee(signal: AbortSignal): { signal: AbortSignal; close: () => void } {
+  const interne = new AbortController();
+  const relier = () => interne.abort();
+  if (signal.aborted) interne.abort();
+  else signal.addEventListener('abort', relier);
+  RUNS_EN_COURS.add(interne);
+  return {
+    signal: interne.signal,
+    close: () => {
+      signal.removeEventListener('abort', relier);
+      RUNS_EN_COURS.delete(interne);
+    },
+  };
+}
+
+/* ------------------------------------------------------------------ */
 /* Phase 1 — analyse de la reponse brute                               */
 /* ------------------------------------------------------------------ */
 
@@ -451,7 +567,7 @@ const NO_PLACES: PlaceResolver = async (_draft, model) => model;
  *    paye pour rien, et une distance affichee sur une idee.rangee ferait croire
  *    qu elle tient.
  */
-export async function runItineraryGeneration(
+async function runItineraryPhases(
   draft: AdventurePrepDraft,
   signal: AbortSignal,
   fetchProposal: ProposalFetcher,
@@ -616,6 +732,9 @@ export async function runItineraryGeneration(
     return { model: null, engineId, degraded, message: null, rejectedReason, failure, suggestedStartDate, suggestedDurationDays, phases, infeasible, toVerify };
   }
   onPhase('lieux');
+  // La geometrie existe des la phase FINIE, pas annoncee : c est le seul
+  // instant ou une carte a quelque chose de vrai a dessiner.
+  publishPartial(model);
 
   // 4 ter. La CONTINUITE, une fois les lieux accroches et AVANT tout
   //       kilometrage. Rattacher une journee a la precedente change des
@@ -635,6 +754,10 @@ export async function runItineraryGeneration(
     return { model: null, engineId, degraded, message: null, rejectedReason, failure, suggestedStartDate, suggestedDurationDays, phases, infeasible, toVerify };
   }
   onPhase('trace');
+  // Le reseau a repondu : la meme geometrie, desormais mesuree. Un deuxieme
+  // passage n ajoute pas de trace, il remplace la premiere version du modele
+  // par celle qui porte la distance reelle.
+  publishPartial(model);
 
   // 6. Meteo des dates reelles. Un fournisseur muet laisse la journee a null.
   //
@@ -661,6 +784,44 @@ export async function runItineraryGeneration(
   onPhase('synthese');
   phases.push(phaseOutcome('synthese', 'reussie', null));
   return { model, engineId, degraded, message, rejectedReason, failure, suggestedStartDate, suggestedDurationDays, phases, infeasible, toVerify };
+}
+
+/**
+ * Le chef d'orchestre des sept phases, INSCRIT au registre d'arret.
+
+ * La fonction de travail ne fait qu'un run ; celle-ci y ajoute la seule chose
+ * qu'aucun appelant ne peut faire seul : etre arretable de l'exterieur. Le
+ * finally rend toujours la main, donc un run termine comme un run coupe
+ * disparaissent du registre — un registre qui garderait un controleur mort
+ * rendrait le prochain « Arreter » muet.
+ */
+export async function runItineraryGeneration(
+  draft: AdventurePrepDraft,
+  signal: AbortSignal,
+  fetchProposal: ProposalFetcher,
+  onPhase: PhaseReporter,
+  measure: MeasurementRunners = NO_MEASUREMENTS,
+  feasibility: FeasibilityDeps = {},
+  resolvePlaces: PlaceResolver = NO_PLACES,
+  loadInventory: PlaceInventoryLoader = NO_INVENTORY,
+  warmPlaces: PlaceWarmer = NO_WARM,
+): Promise<GenerationOutcome> {
+  const course = runControllee(signal);
+  try {
+    return await runItineraryPhases(
+      draft,
+      course.signal,
+      fetchProposal,
+      onPhase,
+      measure,
+      feasibility,
+      resolvePlaces,
+      loadInventory,
+      warmPlaces,
+    );
+  } finally {
+    course.close();
+  }
 }
 
 

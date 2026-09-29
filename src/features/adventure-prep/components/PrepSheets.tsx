@@ -3,6 +3,7 @@
 import React from 'react';
 import { Sheet, type SheetDetent } from '@/components/ui';
 import { useAdventurePrepStore } from '../store/useAdventurePrepStore';
+import { useDrawerDetent } from './useDrawerDetent';
 import {
   PlaceSheet,
   CalendarSheet,
@@ -12,16 +13,18 @@ import {
   ParticipantsSheet,
   type PrepPlaceField,
 } from './PrepSetupSheets';
-import { StepSheet, StepsSheet, AdjustSheet, AddStepSheet } from './PrepItinerarySheets';
+import { StepSheet, StepsSheet, AdjustSheet } from './PrepItinerarySheets';
+import { ReplaceSheet } from './PrepStepReplaceSheet';
+import { AddStepRail } from './PrepAddStepRail';
 import { GearSheet, ConsumablesSheet } from './PrepGearSheets';
 import { PrepInviteScreen, type InviteUrlBuilder } from './PrepInviteScreen';
 import { buildPrepInviteUrl } from '@/app/prepare/actions';
 
 /**
- * Toutes les vues secondaires du préparateur, dans un seul Sheet.
+ * Toutes les vues secondaires du preparateur, dans un seul Sheet.
  *
- * Un écran = UNE décision dominante ; tout le reste s'ouvre ici à la demande
- * (A1). Les écrans n'ont donc jamais à empiler plusieurs formulaires.
+ * Un ecran = UNE decision dominante ; tout le reste s ouvre ici a la demande
+ * (A1). Les ecrans n ont donc jamais a empiler plusieurs formulaires.
  */
 export type PrepSheetId =
   | 'place'
@@ -34,6 +37,7 @@ export type PrepSheetId =
   | 'steps'
   | 'adjust'
   | 'add'
+  | 'replace'
   | 'gear'
   | 'consumables'
   | 'invite';
@@ -45,10 +49,14 @@ export type { PrepPlaceField };
 export interface PrepSheetsProps {
   sheet: PrepSheetId | null;
   onClose: () => void;
-  /** Étape ciblée par la vue « step ». */
+  /** Etape ciblee par la vue « step ». */
   focusStepId?: string | null;
   /** Extremite demandee par la ligne cliquee (Depart / Arrivee). */
   placeField?: PrepPlaceField | null;
+  /** Etape a remplacer, pour la vue « replace » (P2.4). */
+  replaceStepId?: string | null;
+  /** Jour cible par « replace » et « add », quand la ligne l a designe. */
+  focusDay?: number | null;
   /** Permet a une vue d en ouvrir une autre (Participants -> Inviter). */
   onOpenSheet?: (
     id: PrepSheetId,
@@ -68,33 +76,25 @@ const TITLES: Readonly<Record<PrepSheetId, string>> = {
   steps: 'Le programme complet',
   adjust: 'Ajuster le parcours',
   add: 'Ajouter une étape',
+  replace: 'Remplacer cette étape',
   gear: 'Équipement',
   consumables: 'Eau et repas',
   invite: 'Inviter',
 };
 
 /**
- * Hauteur de chaque tiroir. Un ecran = UNE decision dominante : la plupart
- * n'ont qu'un champ ou une courte liste, et un detent `large` (90dvh) les
- * laissait « presque vides » (grand tiroir, deux lignes de contenu). `auto`
- * laisse le panneau epouser son contenu, plafonne a 90dvh par `.lkv-sheet-up`,
- * et defile en interne quand la liste est vraiment longue. On ne garde `large`
- * que pour les ecrans riches par nature (itineraire, equipement, invitation).
+ * Les hauteurs FIGEES. Tout le reste se derive du contenu (C14).
+ *
+ * Une seule epingle, et elle n est pas une convention : le tiroir Lieu est le
+ * gabarit, donc par construction il est court — deux extremes et une recherche
+ * saisie en direct. Le forcer sur 90 dvh produirait exactement l ecran « a
+ * moitie vide » que C14 refuse (L4.5). Les autres tiroirs, eux, changent de
+ * taille selon ce que la base a reellement rendu : c est `useDrawerDetent`
+ * qui tranche, d apres la mesure du DOM, ou a defaut le nombre de lignes du
+ * brouillon.
  */
-const DETENT: Readonly<Record<PrepSheetId, SheetDetent>> = {
+const DETENT_FIGE: Readonly<Partial<Record<PrepSheetId, SheetDetent>>> = {
   place: 'auto',
-  calendar: 'auto',
-  group: 'auto',
-  preferences: 'auto',
-  coverage: 'auto',
-  participants: 'large',
-  step: 'large',
-  steps: 'large',
-  adjust: 'large',
-  add: 'auto',
-  gear: 'large',
-  consumables: 'large',
-  invite: 'auto',
 };
 
 /**
@@ -111,16 +111,20 @@ export function PrepSheets({
   onClose,
   focusStepId = null,
   placeField = null,
+  replaceStepId = null,
+  focusDay = null,
   onOpenSheet,
 }: PrepSheetsProps) {
   const draft = useAdventurePrepStore((state) => state.draft);
   const store = useAdventurePrepStore;
 
-  // Les actions sont stables : on lit le store au dernier moment pour éviter de
-  // recréer 12 closures à chaque rendu de l'écran.
+  // Les actions sont stables : on lit le store au dernier moment pour eviter de
+  // recreer 12 closures a chaque rendu de l ecran.
   const actions = useAdventurePrepStore.getState();
 
   void store;
+
+  const { detent, contentRef } = useDrawerDetent(sheet, draft, { focusStepId });
 
   return (
     <Sheet
@@ -129,40 +133,60 @@ export function PrepSheets({
         if (!open) onClose();
       }}
       title={sheet ? TITLES[sheet] : ''}
-      detent={sheet ? DETENT[sheet] : 'auto'}
+      detent={sheet ? (DETENT_FIGE[sheet] ?? detent) : 'auto'}
       dragToDismiss
     >
-      {sheet === 'place' && <PlaceSheet draft={draft} actions={actions} onClose={onClose} field={placeField} />}
-      {sheet === 'calendar' && <CalendarSheet draft={draft} actions={actions} onClose={onClose} />}
-      {sheet === 'group' && <GroupSheet draft={draft} actions={actions} onClose={onClose} />}
-      {sheet === 'preferences' && (
-        <PreferencesSheet draft={draft} actions={actions} onClose={onClose} />
-      )}
-      {sheet === 'coverage' && <CoverageSheet draft={draft} actions={actions} onClose={onClose} />}
-      {sheet === 'participants' && (
-        <ParticipantsSheet
-          draft={draft}
-          actions={actions}
-          onClose={onClose}
-          onOpenInvite={onOpenSheet ? () => onOpenSheet('invite') : undefined}
-        />
-      )}
-      {sheet === 'step' && (
-        <StepSheet
-          draft={draft}
-          actions={actions}
-          stepId={focusStepId}
-          onClose={onClose}
-        />
-      )}
-      {sheet === 'steps' && <StepsSheet draft={draft} actions={actions} onClose={onClose} />}
-      {sheet === 'adjust' && <AdjustSheet draft={draft} actions={actions} onClose={onClose} />}
-      {sheet === 'add' && <AddStepSheet draft={draft} actions={actions} onClose={onClose} />}
-      {sheet === 'gear' && <GearSheet draft={draft} actions={actions} />}
-      {sheet === 'consumables' && <ConsumablesSheet draft={draft} actions={actions} />}
-      {sheet === 'invite' && (
-        <PrepInviteScreen buildInviteUrl={BUILD_INVITE_URL} onBack={onClose} />
-      )}
+      {/* La mesure de C14 se fait sur ce noeud : il enveloppe exactement ce
+          que le tiroir affiche, et rien d autre. */}
+      <div data-prep-drawer-content="" ref={contentRef}>
+        {sheet === 'place' && (
+          <PlaceSheet draft={draft} actions={actions} onClose={onClose} field={placeField} />
+        )}
+        {sheet === 'calendar' && (
+          <CalendarSheet draft={draft} actions={actions} onClose={onClose} />
+        )}
+        {sheet === 'group' && <GroupSheet draft={draft} actions={actions} onClose={onClose} />}
+        {sheet === 'preferences' && (
+          <PreferencesSheet draft={draft} actions={actions} onClose={onClose} />
+        )}
+        {sheet === 'coverage' && <CoverageSheet draft={draft} actions={actions} onClose={onClose} />}
+        {sheet === 'participants' && (
+          <ParticipantsSheet
+            draft={draft}
+            actions={actions}
+            onClose={onClose}
+            onOpenInvite={onOpenSheet ? () => onOpenSheet('invite') : undefined}
+          />
+        )}
+        {sheet === 'step' && (
+          <StepSheet
+            draft={draft}
+            actions={actions}
+            stepId={focusStepId}
+            onClose={onClose}
+          />
+        )}
+        {sheet === 'steps' && <StepsSheet draft={draft} actions={actions} onClose={onClose} />}
+        {sheet === 'adjust' && <AdjustSheet draft={draft} actions={actions} onClose={onClose} />}
+        {/* P2.7 : le rail remplace le champ libre. On ne saisit plus un nom,
+            on choisit un lieu que la base a reellement rendu autour du trace. */}
+        {sheet === 'add' && (
+          <AddStepRail draft={draft} actions={actions} onClose={onClose} day={focusDay} />
+        )}
+        {sheet === 'replace' && (
+          <ReplaceSheet
+            draft={draft}
+            actions={actions}
+            stepId={replaceStepId ?? focusStepId}
+            onClose={onClose}
+          />
+        )}
+        {sheet === 'gear' && <GearSheet draft={draft} actions={actions} />}
+        {sheet === 'consumables' && <ConsumablesSheet draft={draft} actions={actions} />}
+        {sheet === 'invite' && (
+          <PrepInviteScreen buildInviteUrl={BUILD_INVITE_URL} onBack={onClose} />
+        )}
+      </div>
     </Sheet>
   );
 }

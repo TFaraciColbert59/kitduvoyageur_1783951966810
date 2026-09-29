@@ -121,7 +121,11 @@ function tripActivity(draft: CommitDraft): TripRow['primary_activity'] {
   return 'hiking';
 }
 
-function tripTitle(draft: CommitDraft): string {
+/**
+ * Titre unique du voyage. Exporte parce que le hub l'affiche tel quel :
+ * un deuxieme calcul de titre donnerait deux libelles pour la meme ligne.
+ */
+export function tripTitle(draft: CommitDraft): string {
   const named = draft.coverName?.trim();
   if (named) return named.slice(0, 120);
   const origin = draft.route.origin?.name;

@@ -98,10 +98,19 @@ describe('L0.3 - le libelle de ligne ne chevauche plus la valeur', () => {
   it('L0.3-04: la valeur et les avatars ne cedent pas a la place du libelle', () => {
     // Le libelle se raccourcit seul : la valeur doit garder sa place, sinon on
     // aurait deplace le chevauchement au lieu de le supprimer.
-    const valeur = /const STACK_STYLE[^=]*=\s*\{([^}]*)\}/.exec(DEST)?.[1] ?? '';
-    expect(valeur, 'la valeur ne tient plus sa place').toMatch(/flex:\s*'0 0 auto'/);
+    // **Corrige le 2026-09-29** : ce test lisait `const STACK_STYLE` dans le TSX,
+    // donc exigeait un style en ligne que L0.3-03 interdit deux tests plus
+    // haut, dans le meme fichier. La regle se lit dans la feuille, comme
+    // L0.3-02 le fait deja pour le libelle.
+    const pile = regle(CSS, '.prep-block__stack');
+    expect(pile, 'la valeur ne tient plus sa place').toMatch(/flex:\s*0\s+0\s+auto/);
+    // Contre-exemple : une pile reductrice se ferait couper la valeur.
+    expect(pile).not.toMatch(/flex:\s*0\s+1\s+auto/);
+    // Les avatars non plus ne doivent pas rogner la place de la valeur.
+    expect(regle(CSS, '.prep-avatars')).toMatch(/flex:\s*0\s+0\s+auto/);
     // Et elle reste collee au libelle, pas dispersee par la mise en page.
     expect(DEST).toContain('className="prep-block__stack"');
+    expect(DEST).not.toMatch(/STACK_STYLE/);
   });
 });
 

@@ -1,4 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { DestinationStep } from '../components/DestinationStep';
@@ -17,6 +19,7 @@ vi.mock('../store/useAdventurePrepStore', () => {
 });
 
 const noop = () => undefined;
+const cssPath = join(process.cwd(), 'src/features/adventure-prep/adventure-prep.css');
 
 function render(draft: AdventurePrepDraft): string {
   state.current = { draft };
@@ -158,37 +161,62 @@ describe('Écran 10 — participants', () => {
  * donnee : il se produit quand la valeur est longue (« 3 personnes · 1
  * adulte ») et que le libelle garde sa largeur intrinsique. Aucun navigateur
  * ne peut etre observe ici — `renderToStaticMarkup` ne fait pas de mise en
- * page — on verifie donc que la regle anti-chevauchement est portee par le
- * TSX lui-meme, sous forme de style inline, et qu elle tient quelle que soit
- * la longueur du libelle.
+ * page — on vérifie donc que la règle anti-chevauchement est portée par la
+ * **feuille de style**, la seule source qui répond à la cascade, aux jetons
+ * et aux requêtes de media.
+ *
+ * Ce contrat a été **corrigé le 2026-09-29** : il exigeait un `style=` en
+ * ligne, ce qui contredisait P0.17 et `chrome-haut-l0-l1-l2` (L0.3-03) qui
+ * l'interdisent — deux contrats mutuellement exclusifs, dont un déjà coché.
+ * La règle vit dans `.prep-block__label` / `.prep-block__stack` / `.prep-avatars`,
+ * et L0.3-03 garde l'interdiction de style en ligne.
  */
 describe('Écran 10 — libellé et valeur ne se chevauchent jamais', () => {
-  function labelStyle(html: string): string {
-    const tag = html.match(/<span class="prep-block__label"([^>]*)>/);
-    return tag?.[1] ?? '';
+  /** La règle CSS réellement appliquée au sélecteur, lue dans la feuille. */
+  function regleCSS(sel: string): string {
+    const css = lireLaFeuille();
+    const debut = css.search(new RegExp('(^|[,\\s])' + sel.replace('.', '\\.') + '\\s*\\{', 'm'));
+    expect(debut, 'la règle ' + sel + ' doit exister dans la feuille').toBeGreaterThan(-1);
+    const ouvert = css.indexOf('{', debut);
+    const ferme = css.indexOf('}', ouvert);
+    return css.slice(ouvert + 1, ferme);
   }
 
-  function stackStyle(html: string): string {
-    const tag = html.match(/<span class="prep-block__stack"([^>]*)>/);
-    return tag?.[1] ?? '';
+  /** Garde-fou : le lecteur voit bien la feuille, et pas un corps vide. */
+  function lireLaFeuille(): string {
+    const css = readFileSync(cssPath, 'utf8');
+    expect(css.length, 'la feuille de style est lue').toBeGreaterThan(1000);
+    return css;
   }
 
   it('D10-30: le libellé se tronque, il ne déborde jamais sur la valeur', () => {
-    const style = labelStyle(render(fullDraft()));
-    expect(style).toContain('min-width:0');
-    expect(style).toContain('white-space:nowrap');
-    expect(style).toContain('overflow:hidden');
-    expect(style).toContain('text-overflow:ellipsis');
+    lireLaFeuille(); // le lecteur n'est pas vide
+    const regle = regleCSS('.prep-block__label');
+    expect(regle).toMatch(/min-width:\s*0/);
+    expect(regle).toMatch(/white-space:\s*nowrap/);
+    expect(regle).toMatch(/overflow:\s*hidden/);
+    expect(regle).toMatch(/text-overflow:\s*ellipsis/);
+    // Et le rendu ne porte plus de style en ligne : la règle est dans la
+    // cascade, donc un jeton ou une media query peut encore l'atteindre.
+    expect(render(fullDraft())).not.toMatch(
+      /<span class="prep-block__label"[^>]*\sstyle=/,
+    );
   });
 
   it('D10-31: le libellé peut céder la place, la valeur garde la sienne', () => {
-    const label = labelStyle(render(fullDraft()));
-    const stack = stackStyle(render(fullDraft()));
-    // Le libellé est le seul element autorise a reduire. La valeur est portee
-    // par la pile, ecartee de la reduction : c elle qui porte la largeur du
+    lireLaFeuille();
+    const label = regleCSS('.prep-block__label');
+    const stack = regleCSS('.prep-block__stack');
+    // Le libellé est le seul élément autorisé à réduire. La valeur est portée
+    // par la pile, écartée de la réduction : c elle qui porte la largeur du
     // « 3 personnes · 1 adulte ».
-    expect(label).toMatch(/flex:0 1 auto/);
-    expect(stack).toMatch(/flex:0 0 auto/);
+    expect(label).toMatch(/flex:\s*0\s+1\s+auto/);
+    expect(stack).toMatch(/flex:\s*0\s+0\s+auto/);
+    // **Contre-exemples** : sans ces refus, une pile réductrice se ferait
+    // couper la valeur, et un libellé bloqué empiéterait dessus.
+    expect(stack).not.toMatch(/flex:\s*0\s+1\s+auto/);
+    expect(label).not.toMatch(/flex:\s*0\s+0\s+auto/);
+    expect(label).not.toMatch(/flex-shrink:\s*0/);
   });
 
   it('D10-32: un libellé très long ne peut pas non plus pousser la valeur', () => {
@@ -200,7 +228,7 @@ describe('Écran 10 — libellé et valeur ne se chevauchent jamais', () => {
     });
     const html = render(draft);
     expect(visible(html)).toContain('Destination ou hébergement de base');
-    expect(labelStyle(html)).toContain('min-width:0');
+    expect(regleCSS('.prep-block__label')).toMatch(/min-width:\s*0/);
   });
 
   it('D10-33: les avatars ne rognent pas la place de la valeur', () => {
@@ -216,8 +244,9 @@ describe('Écran 10 — libellé et valeur ne se chevauchent jamais', () => {
       },
     });
     const html = render(draft);
-    const avatars = html.match(/<span class="prep-avatars"([^>]*)>/);
-    expect(avatars?.[1] ?? '').toContain('flex:0 0 auto');
+    expect(visible(html)).toContain('3 adultes');
+    expect(regleCSS('.prep-avatars')).toMatch(/flex:\s*0\s+0\s+auto/);
+    expect(html).toMatch(/<span class="prep-avatars"/);
   });
 });
 

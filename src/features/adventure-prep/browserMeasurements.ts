@@ -14,7 +14,11 @@
  */
 
 import { measurementRunners, type MeasurementRunners } from './engine/measurements';
-import type { RouteProvider } from './engine/provenance';
+import {
+  readMeasureProvider,
+  type MeasureProviderId,
+  type RouteProvider,
+} from './engine/provenance';
 import type { GeoPoint, RouteLeg, RoutingDeps, TravelMode } from './engine/routing';
 import { isTravelMode, MAX_ROUTE_POINTS } from './routingService';
 import { fetchWeatherThroughApi } from './weatherClient';
@@ -51,6 +55,33 @@ export function readRouteProvider(payload: unknown): RouteProvider | null {
   const value = body?.provider;
   if (value === 'osrm' || value === 'valhalla' || value === 'brouter') return value;
   return null;
+}
+
+/**
+ * Le fournisseur d une SERIE de mesure — altitude, meteo — tel que la reponse
+ * l a nomme.
+ *
+ * Ce canal est DISTINCT de `RouteProviderListener`, et il devait l etre : les
+ * deux series viennent d Open-Meteo, donc un seul identifiant, `open-meteo`,
+ * couvre les deux. C est la route qui a repondu qui dit de quelle SERIE il
+ * s agit (`metricDataSource` dans `engine/provenance.ts`). Un canal unique
+ * qui confondrait les deux afficherait « Open-Meteo (previsions) » sous un
+ * denivele : un credit vrai en apparence, faux dans sa precision.
+ */
+export type MeasureProviderListener = (provider: MeasureProviderId) => void;
+
+/**
+ * Le fournisseur nomme par le CORPS de la reponse de `/api/elevation`, ou
+ * `null`.
+ *
+ * Symetrique de `readRouteProvider` : la regle est la meme — le credit vient
+ * du corps de la reponse, jamais du fait qu on ait appele une route — mais le
+ * vocabulaire vient de `engine/provenance.ts`, qui lit `provider.id` parce
+ * que `/api/elevation` rend l objet `{ id, name, url }` de
+ * `dataProviders.ts`. Un `provider` en chaine ne nomme personne.
+ */
+export function readElevationProvider(payload: unknown): MeasureProviderId | null {
+  return readMeasureProvider(payload);
 }
 
 function round6(value: number): number {
@@ -206,13 +237,25 @@ export function stitchLegs(batches: readonly (readonly RouteLeg[])[]): RouteLeg[
 /**
  * Les dependances de routage pour un navigateur.
  *
- * `elevation` n est pas branchee ici : le denivele exige une grille d altitude
- * point par point, et `/api/elevation` n est pas interroge par le preparateur.
- * Le denivele reste donc `null` - affiche « a verifier » - plutot que simule.
+ * Deux canaux de provenance, un par famille de fournisseur :
+ *
+ *   - `onProvider` pour le ROUTEUR, lu dans `/api/route` ;
+ *   - `onMeasureProvider` pour la SERIE de mesure, lu dans `/api/elevation`.
+ *
+ * Les deux ne sont pas interchangeables : l un porte un moteur (`osrm`,
+ * `valhalla`, `brouter`), l autre un service de mesure (`open-meteo`). Un
+ * seul canal credited le denivele du routeur qui l a ignore, ou la distance
+ * d Open-Meteo qui ne l a jamais mesuree.
+ *
+ * L altitude EST branchee : `/api/elevation` rend la grille point par point
+ * du trace, et `elevationProfile` en tire le denivele. Une altitude manquante
+ * ne devient jamais un zero — elle invalide le profil entier, donc la tuile
+ * affiche « a verifier ».
  */
 export function browserRoutingDeps(
   fetchImpl: Fetcher = fetch,
   onProvider?: RouteProviderListener,
+  onMeasureProvider?: MeasureProviderListener,
 ): RoutingDeps {
   return {
     route: async (points, mode, signal) => {
@@ -268,7 +311,15 @@ export function browserRoutingDeps(
       } catch {
         return null;
       }
-      return readElevationResponse(body, sent);
+      const elevations = readElevationResponse(body, sent);
+      if (!elevations) return null;
+      // Meme regle, meme endroit que le routage : la provenance se lit sur la
+      // reponse qui porte la mesure, et UNIQUEMENT si la mesure a ete
+      // acceptee. Un profil refuse — serie trop courte, point non fini — ne
+      // nomme personne, parce qu il n y a plus de denivele a crediter.
+      const provider = readElevationProvider(body);
+      if (provider && onMeasureProvider) onMeasureProvider(provider);
+      return elevations;
     },
   };
 }
@@ -283,10 +334,15 @@ export function browserRoutingDeps(
 export function browserMeasurementRunners(
   fetchImpl: Fetcher = fetch,
   onProvider?: RouteProviderListener,
+  onMeasureProvider?: MeasureProviderListener,
 ): MeasurementRunners {
-  const routing = browserRoutingDeps(fetchImpl, onProvider);
+  const routing = browserRoutingDeps(fetchImpl, onProvider, onMeasureProvider);
   return measurementRunners({
     route: routing,
-    weather: async (dates, signal, anchor) => fetchWeatherThroughApi(anchor, dates, signal),
+    // La meteo recoit le meme canal de mesure que l altitude : c est
+    // Open-Meteo qui a repondu dans les deux cas, et c est `metricDataSource`
+    // qui saura dire a l ecran de quelle serie il s agit.
+    weather: async (dates, signal, anchor) =>
+      fetchWeatherThroughApi(anchor, dates, signal, onMeasureProvider, fetchImpl),
   });
 }

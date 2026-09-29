@@ -42,8 +42,10 @@ import { describe, expect, it, vi } from 'vitest';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { DestinationStep } from '../components/DestinationStep';
+import DayPlateau from '@/components/mobile-nav/navigation/DayPlateau';
 import { DepartureStep } from '../components/DepartureStep';
 import { ItineraryStepScreen } from '../components/ItineraryStep';
+import { useDayFocusStore, type DayFocusState } from '@/components/mobile-nav/dayFocusStore';
 import { buildItinerary } from '../engine/itinerary';
 import { fullDraft } from './fixtures';
 import type { AdventurePrepDraft } from '../types';
@@ -71,6 +73,27 @@ vi.mock('next/navigation', () => ({
     prefetch: () => undefined,
   }),
 }));
+
+/**
+ * L2-07b - le rail de jours vit dans le CHROME.
+ *
+ * `DayPlateau` est monte par `WebNavigationBar`, dans un arbre React disjoint :
+ * le corps de l etape 2 ne le rend donc plus (L3.7 a retire le doublon), et
+ * compter ses onglets demande de le monter pour compte. Meme limite de harnais
+ * que dans `etape2-hierarchie.test.tsx` : zustand v5 sert l etat INITIAL au
+ * rendu serveur, donc un composant monte par `renderToStaticMarkup` ne voit
+ * jamais les journees publiees. Ce shim ne fabrique rien et ne doublure aucun
+ * comportement - `getState`, `setState` et `subscribe` restent ceux du vrai
+ * store ; seul le snapshot serveur change.
+ */
+vi.mock('@/components/mobile-nav/dayFocusStore', async (importOriginal) => {
+  const reel = await importOriginal<typeof import('@/components/mobile-nav/dayFocusStore')>();
+  const store = reel.useDayFocusStore;
+  const useSSR = ((selector: (s: DayFocusState) => unknown) =>
+    selector(store.getState())) as unknown as typeof store;
+  Object.assign(useSSR, store);
+  return { ...reel, useDayFocusStore: useSSR };
+});
 
 const noop = () => undefined;
 
@@ -106,12 +129,35 @@ function visible(html: string): string {
 }
 
 /**
- * Un scroller de jours se reconnait a son role de groupe. On ne cherche pas
- * seulement la classe CSS : le libelle est ce que la personne voit, et c est
- * lui qui doit disparaitre de l etape 1.
+ * Un scroller de jours se reconnait a son role de groupe, pas a une classe.
+ * `.prep-days` a disparu du corps de l etape 2 (L3.7) : ne le chercher que
+ * laisserait passer une absence de rail pour une preuve de proprete. On
+ * regarde donc ce que la machine lit ET ce que la personne voit.
  */
 function porteScrollerDeJours(html: string): boolean {
-  return html.includes('prep-days') || visible(html).includes('Tout');
+  return html.includes('role="tablist"') || visible(html).includes('Tout');
+}
+
+/**
+ * Publie les journees du modele dans le store partage, comme le fait le shell,
+ * puis rend le rail du chrome pour compte. Renvoie le markup ET ce que le
+ * store a ACCEPTE - pas ce qu on lui a donne.
+ */
+function railDuChrome(model: { days: number }): { html: string; jours: number } {
+  useDayFocusStore.getState().clear();
+  useDayFocusStore.getState().publishDays(
+    Array.from({ length: model.days }, (_, index) => ({
+      day: index + 1,
+      dateLabel: null,
+      stepsCount: 0,
+      distanceKm: null,
+      elevGainM: null,
+    })),
+  );
+  return {
+    html: renderToStaticMarkup(React.createElement(DayPlateau)),
+    jours: useDayFocusStore.getState().days.length,
+  };
 }
 
 /** Les trois controles de carte qui runaway du contenu sur l etape 1. */
@@ -152,11 +198,35 @@ describe('L2-7 — le scroller de jours appartient a l etape 2', () => {
     expect(porteScrollerDeJours(rendreEtape1(fullDraft()))).toBe(false);
   });
 
-  it('L2-07b : contre-exemple — l etape 2, elle, rend bien le scroller', () => {
+  it('L2-07b : contre-exemple — le rail existe, dans le chrome, un onglet par jour', () => {
     // Sans ce contre-exemple, L2-07 prouverait que la sonde ne trouve rien,
-    // pas que l etape 1 est propre. L etape 2 est l autre moitie du produit :
-    // si elle cesse d afficher ses jours, c est la sonde qui est cassee.
-    expect(porteScrollerDeJours(rendreEtape2(draftConstruit()))).toBe(true);
+    // pas que l etape 1 est propre. Le rail de jours est l autre moitie du
+    // produit : s il cesse d afficher ses journees, c est la sonde qui est
+    // cassee. Il vit dans le chrome - partage par les trois etapes - et nulle
+    // part ailleurs, ce que L2-07c verifie.
+    const draft = draftConstruit();
+    state.current = { draft };
+    const model = draft.itinerary!;
+    const rail = railDuChrome(model);
+    expect(porteScrollerDeJours(rail.html)).toBe(true);
+    // Ce que le store a ACCEPTE, pas ce qu on lui a donne : sous deux journees
+    // le store vide ses jours, et un test qui compterait le modele au lieu du
+    // store validerait un rail qui n existe pas.
+    expect(rail.jours).toBe(model.days);
+    expect(rail.html).toContain('Tout');
+    expect(Array.from(rail.html.matchAll(/role="tab"/g)).length).toBe(model.days + 1);
+  });
+
+  it('L2-07c : le rail est dans le chrome, pas dans le corps d une etape', () => {
+    // Le doublon retire (L3.7) ne doit pas revenir par l autre bout : ni dans
+    // l etape 1, ni dans le corps de l etape 2, qui affiche pourtant autant de
+    // journees. Un seul rail, dans la barre basse.
+    const draft = draftConstruit();
+    state.current = { draft };
+    expect(porteScrollerDeJours(rendreEtape1(draft))).toBe(false);
+    expect(porteScrollerDeJours(rendreEtape2(draft))).toBe(false);
+    const rail = railDuChrome(draft.itinerary!);
+    expect(Array.from(rail.html.matchAll(/role="tablist"/g)).length).toBe(1);
   });
 });
 

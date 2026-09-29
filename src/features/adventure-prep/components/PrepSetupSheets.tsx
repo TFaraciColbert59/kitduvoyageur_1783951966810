@@ -16,17 +16,28 @@ import {
 import { useAdventurePrepStore, type AdventurePrepStore } from '../store/useAdventurePrepStore';
 import type {
   AdventurePrepDraft,
-  BudgetLevel,
   GroupMode,
   Pace,
   PlaceRef,
   TransportPreference,
 } from '../types';
+import { BUDGET_TIERS, DEFAULT_BUDGET_TIER, budgetTierLabel } from '../engine/budgetTiers';
+import { A_VERIFIER } from '../engine/trust';
 import { buildGearNeeds, gearGaps } from '../engine/gear';
 import { daysLabel } from '../engine/labels';
+import { headcountOf, sharedGear } from '../engine/people';
 import { geocodeMessage, useGeocode } from '../hooks/useGeocode';
 import { placeCandidates, type PlaceCandidate } from '../placeCandidates';
 import { PrepCalendar } from './PrepCalendar';
+// Le gabarit des tiroirs. Le tiroir Lieu en est le modele ; le reste le
+// RECOPIE plutot que de redessiner ses listes a la main (M1.1).
+import {
+  DrawerActions,
+  DrawerEmpty,
+  DrawerList,
+  DrawerRow,
+  DrawerSection,
+} from './PrepDrawerTemplate';
 import type { HubRoutePoint } from '@/features/hub/components/mobile/HubRouteMap';
 
 // La carte du tiroir de lieu est la VRAIE carte (celle du hub), pas un cadre
@@ -51,12 +62,6 @@ export interface PrepSheetProps {
  * Cliquer « Depart » modifiait silencieusement l arrivee.
  */
 export type PrepPlaceField = 'origin' | 'destination';
-
-const BUDGET_LEVELS: readonly { id: BudgetLevel; label: string }[] = [
-  { id: 'economique', label: 'Économe' },
-  { id: 'modere', label: 'Modéré' },
-  { id: 'confort', label: 'Confort' },
-];
 
 const PACES: readonly { id: Pace; label: string }[] = [
   { id: 'tranquille', label: 'Tranquille' },
@@ -109,10 +114,19 @@ function SheetActions({
   );
 }
 
+/**
+ * La section du tiroir, version d avant le gabarit.
+ *
+ * Elle reste parce que `--f-h2` n est defini dans aucun CSS du depot : la
+ * taille retombait sur l heritage, ce qui rendait le titre dependant du
+ * contexte. Le gabarit (`DrawerSection`) ne porte plus de style inline et
+ * laisse `.prep-section-title` faire son travail. Ce corps n est conserve que
+ * le temps que les derniers tiroirs migrate ; il rend le MEME balisage.
+ */
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section style={{ display: 'grid', gap: 10, marginBottom: 20 }}>
-      <h3 className="prep-section-title" style={{ fontSize: 'var(--f-h2)', fontWeight: 700 }}>{title}</h3>
+    <section className="prep-drawer__section" style={{ display: 'grid', gap: 10, marginBottom: 20 }}>
+      <h3 className="prep-section-title">{title}</h3>
       {children}
     </section>
   );
@@ -1315,14 +1329,44 @@ export function PreferencesSheet({ draft, actions, onClose }: PrepSheetProps) {
     onClose();
   };
 
+  // Le palier affiche est celui que le brouillon porte reellement. Si l'identifiant
+  // ne correspond a aucun palier connu, on le dit (`A_VERIFIER`) plutot que de
+  // retomber sur le premier de la liste : retomber afficherait un budget que
+  // personne n'a choisi.
+  const activeTier = BUDGET_TIERS.find((tier) => tier.id === preferences.budgetLevel) ?? null;
+  const isProposedDefault = preferences.budgetLevel === DEFAULT_BUDGET_TIER;
+
   return (
     <div>
+      {/* C13 — trois paliers, trois pastilles de verre. Le tiroir ne demande pas
+          « quel budget ? » mais « lequel de ces trois ? » : le budget est
+          optionnel, et l'ecran doit toujours proposer quelque chose de
+          selectionne. La pastille qui porte `data-default` est celle que la base
+          pose sur un brouillon neuf — l'ecran nomme donc sa proposition au lieu
+          de la laisser deviner. */}
       <Section title="Budget">
-        <ChipRow
-          options={BUDGET_LEVELS}
-          value={preferences.budgetLevel}
-          onChange={(next) => actions.setPreferences({ ...preferences, budgetLevel: next })}
-        />
+        <div className="prep-budget" role="group" aria-label="Palier de budget">
+          {BUDGET_TIERS.map((tier) => (
+            <button
+              key={tier.id}
+              type="button"
+              className="prep-budget__pill"
+              aria-pressed={preferences.budgetLevel === tier.id}
+              data-budget-tier={tier.id}
+              data-default={tier.id === DEFAULT_BUDGET_TIER ? 'true' : undefined}
+              onClick={() => actions.setPreferences({ ...preferences, budgetLevel: tier.id })}
+            >
+              {tier.label}
+            </button>
+          ))}
+        </div>
+        <p className="prep-budget__detail">
+          {activeTier ? activeTier.detail : `Budget ${A_VERIFIER}`}
+          {isProposedDefault ? ' C’est le palier proposé par défaut.' : ''}
+          {preferences.budgetPerPerson == null
+            ? ''
+            : ` Budget réel saisi : ${preferences.budgetPerPerson} EUR par personne.`}
+        </p>
       </Section>
 
       <Section title="Rythme">
@@ -1397,53 +1441,115 @@ export function ParticipantsSheet({
   onClose,
   onOpenInvite,
 }: PrepSheetProps & { onOpenInvite?: () => void }) {
-  const gear = buildGearNeeds(draft);
-  const shared = gear.filter((item) => item.quantity > 1 || item.ownerId !== null);
-  const people = draft.group.adults + draft.group.children;
+  const headcount = headcountOf(draft);
+  // Seuls les participants REELS peuvent porter un objet : la liste des
+  // porteurs est `knownMembers`, pas un effectif deviné ni un nom plausible.
+  const members = draft.group.knownMembers;
+  const shared = sharedGear(draft);
 
   return (
-    <div>
-      <Section title="Effectif">
-        <p style={{ fontSize: 'var(--f-sec)', color: 'var(--ink-2)' }}>
-          {people} personne{people > 1 ? 's' : ''} prévue{people > 1 ? 's' : ''} ·{' '}
-          {draft.group.knownMembers.length > 0
-            ? `${draft.group.knownMembers.length} déjà connu${draft.group.knownMembers.length > 1 ? 's' : ''}`
-            : 'aucun membre connu'}
-        </p>
-      </Section>
-
-      <Section title="Matériel partagé">
-        {shared.length === 0 ? (
-          <p style={{ fontSize: 'var(--f-sec)', color: 'var(--ink-2)' }}>
-            Aucun matériel partagé identifié pour cette aventure.
-          </p>
+    <div className="prep-people">
+      <DrawerSection title="Confirmés">
+        {members.length === 0 ? (
+          <DrawerEmpty>
+            Personne n&apos;est encore confirmé. Ajoute les participants dans « Avec qui ».
+          </DrawerEmpty>
         ) : (
-          <ul className="list">
-            {shared.map((item) => (
-              <li key={item.id} className="li">
-                <div className="rt">
-                  <div className="t1">{item.name} ×{item.quantity}</div>
-                  <div className="t2">{item.ownerId ?? 'Responsable à confirmer'}</div>
-                </div>
-              </li>
+          <DrawerList>
+            {members.map((member) => (
+              <DrawerRow
+                key={member}
+                data-prep-row="confirme"
+                title={member}
+                detail="Participant connu · peut proposer des étapes"
+                trailing={<span className="prep-people__badge">Confirmé</span>}
+              />
             ))}
-          </ul>
+          </DrawerList>
         )}
-      </Section>
+        <p className="prep-drawer__note">
+          {headcount} personne{headcount > 1 ? 's' : ''} au total ·{' '}
+          {members.length} confirmée{members.length > 1 ? 's' : ''} par leur nom ; le reste est un
+          effectif déclare.
+        </p>
+      </DrawerSection>
 
-      {/* Le participants est lu ici ; les inviter se fait ailleurs. Ce bouton est le
-          seul passage du recap vers l invitation, et il ne doit pas etre un no-op :
-          onOpenInvite etait recu puis jamais lu. */}
-      {onOpenInvite ? (
-        <div className="row between" style={{ marginTop: 'var(--space-4)' }}>
-          <span>Inviter des personnes</span>
-          <button type="button" className="btn ghost" onClick={onOpenInvite}>
-            Inviter
-          </button>
-        </div>
-      ) : null}
+      <DrawerSection title="Invités">
+        {/* Le lien d invitation est signe et emis une fois ; le brouillon ne
+            conserve pas la liste de ceux qui l ont recu. Ecrire « 0 invite »
+            ou des noms afficherait un suivi que l app n assure pas. */}
+        <DrawerEmpty>
+          Aucun invité suivi ici : l&apos;invitation part par un lien signé, et le préparateur
+          ne conserve pas la liste de ses destinataires.
+        </DrawerEmpty>
+        {onOpenInvite ? (
+          <div className="prep-people__cta">
+            <span>Preparer une invitation</span>
+            <button type="button" className="btn ghost" onClick={onOpenInvite}>
+              Inviter
+            </button>
+          </div>
+        ) : null}
+      </DrawerSection>
 
-      <SheetActions onClose={onClose} onApply={onClose} label="Fermer" />
+      <DrawerSection title="Matériel partagé">
+        {headcount <= 1 ? (
+          <DrawerEmpty>
+            Tu pars seul : il n y a personne avec qui partager un objet. Chaque piece du
+            materiel est a porter par toi.
+          </DrawerEmpty>
+        ) : shared.length === 0 ? (
+          <DrawerEmpty>
+            Aucun materiel a repartir : cette aventure n a aucun besoin d equipement derive.
+          </DrawerEmpty>
+        ) : (
+          <DrawerList>
+            {shared.map((item) => (
+              <DrawerRow
+                key={item.id}
+                data-prep-row="partage"
+                title={item.name + ' x' + item.quantity}
+                detail={
+                  item.ownerId
+                    ? 'Porteur désigné dans « Équipement »'
+                    : 'Personne à désigner — décision de groupe'
+                }
+                trailing={
+                  item.state === 'attribue' ? (
+                    <span className="prep-people__badge">Porte par {item.ownerId}</span>
+                  ) : (
+                    <span className="prep-people__badge prep-people__badge--open">À attribuer</span>
+                  )
+                }
+              >
+                {/* Le porteur se choisit ICI, dans la colonne qui en parle.
+                    Les options sont les participants reels : sans nom saisi,
+                    la liste propose le seul porteur possible — soit personne. */}
+                <label className="prep-people__owner">
+                  <span>Porteur</span>
+                  <select
+                    aria-label={'Porteur de ' + item.name}
+                    value={item.ownerId ?? ''}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      actions.assignGear(item.id, value === '' ? null : value);
+                    }}
+                  >
+                    <option value="">Personne désignée</option>
+                    {members.map((member) => (
+                      <option key={member} value={member}>
+                        {member}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </DrawerRow>
+            ))}
+          </DrawerList>
+        )}
+      </DrawerSection>
+
+      <DrawerActions onClose={onClose} onApply={onClose} label="Fermer" />
     </div>
   );
 }

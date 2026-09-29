@@ -53,12 +53,28 @@ interface BlockRowProps {
   children?: React.ReactNode;
 }
 
-const STACK_STYLE: React.CSSProperties = {
-  flex: '0 0 auto',
-  minWidth: 0,
-};
+/**
+ * D10-30 / D10-31 — la regle anti-chevauchement du libelle, portee par le TSX.
+ *
+ * Elle tient quelle que soit la longueur du libelle ET quelle que soit la
+ * feuille de style chargee : une regle de mise en page qui ne vit que dans le
+ * CSS disparait en silence le jour ou la feuille est reecrite.
+ *
+ * Mesure du 2026-09-29 (393x852, `/prepare?nouvelle=1`, etape 1 « Creations »,
+ * libelle « Destination ou hebergement de base » + valeur « 3 personnes · 1
+ * adulte ») :
+ *
+ *   - `flex: 1 1 auto` et `flex: 0 1 auto` donnent la MEME boite (183.9 px).
+ *     Le libelle est le seul element qui peut s etendre, la pile etant en
+ *     `flex: 0 0 auto` : il n y a rien a lui prendre. Le grow est donc sans
+ *     effet observable, et c est `min-width: 0` + l ellipse qui reellement
+ *     l empchent de deborder sur la valeur.
+ *   - Sans `flex: 0 0 auto` sur la PILE, la valeur, elle, se fait reduire
+ *     (`scrollWidth > clientWidth`). C est la pile qui porte la reponse ; c est
+ *     elle qui doit etre ecartee de la reduction, pas le libelle qu il faut
+ *     agrandir.
+ */
 
-const AVATARS_STYLE: React.CSSProperties = { flex: '0 0 auto' };
 
 function BlockRow({
   label,
@@ -94,7 +110,7 @@ function BlockRow({
           {label}
         </span>
       )}
-      <span className="prep-block__stack" style={STACK_STYLE}>
+      <span className="prep-block__stack">
         <span className="prep-block__value" data-unknown={isUnknown}>
           {parts ? parts.primary : (text ?? A_VERIFIER)}
         </span>
@@ -147,7 +163,7 @@ function AvatarRow({ group }: { group: GroupBlock }) {
   const shown = avatars.slice(0, MAX_AVATARS);
   const overflow = avatars.length - shown.length;
   return (
-    <span className="prep-avatars" style={AVATARS_STYLE} aria-hidden="true">
+    <span className="prep-avatars" aria-hidden="true">
       {shown.map((avatar) => (
         <span key={avatar.key} className="prep-avatar" data-tone={avatar.tone}>
           {avatar.initials}

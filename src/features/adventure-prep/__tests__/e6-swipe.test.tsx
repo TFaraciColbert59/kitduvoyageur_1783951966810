@@ -14,12 +14,16 @@
  *    affiche, un scroll vertical non, un geste trop court non.
  *
  * Harnais : `renderToStaticMarkup` (ni DOM ni Testing Library dans ce projet).
- * Deux consequences, assumees et documentees :
+ * Trois consequences, assumees et documentees :
  * - React ecarte les gestionnaires d evenement au rendu serveur, donc le
  *   cablage est verifie en marquant le hook (E6-01) ;
  * - zustand v5 sert l etat INITIAL en rendu serveur, donc le harnais lit et ecrit
  *   le store par `getState()`. Ce n'est pas une doublure : le `selectDay` appele
- *   est bien celui du store partage avec le rail de jours.
+ *   est bien celui du store partage avec le rail de jours ;
+ * - le rail de jours etant monte par le chrome (L3.7), E6-13 doit monter
+ *   `DayPlateau` pour compte, et zustand v5 lui servant l etat INITIAL au
+ *   rendu serveur, un shim leve cette seule limite. Il ne fabrique aucune
+ *   donnee : le rail compte est celui que le store reellement publie.
  */
 
 import { describe, expect, it, vi, beforeEach } from 'vitest';
@@ -28,8 +32,13 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import type { TouchEvent as ReactTouchEvent } from 'react';
 import { ItineraryStepScreen } from '../components/ItineraryStep';
 import { useDaySwipe, type DaySwipeHandlers } from '../hooks/useDaySwipe';
-import { useDayFocusStore, type DayFocusDay } from '@/components/mobile-nav/dayFocusStore';
+import {
+  useDayFocusStore,
+  type DayFocusDay,
+  type DayFocusState,
+} from '@/components/mobile-nav/dayFocusStore';
 import { buildItinerary } from '../engine/itinerary';
+import DayPlateau from '@/components/mobile-nav/navigation/DayPlateau';
 import { fullDraft } from './fixtures';
 import type { AdventurePrepDraft } from '../types';
 
@@ -44,6 +53,24 @@ vi.mock('../store/useAdventurePrepStore', () => {
   };
   use.getState = () => state.current;
   return { useAdventurePrepStore: use };
+});
+
+/**
+ * L3.7 - shim de lecture du store de jour.
+ *
+ * zustand v5 sert l etat INITIAL au rendu serveur : monte hors de tout
+ * arbre React, `DayPlateau` ne verrait donc jamais les journees publiees et
+ * rendrait `null`. Ce shim ne remplace ni le store ni ses transitions - il
+ * rend la lecture serveur equivalente a `getState()`, que ce fichier utilise
+ * deja partout. `getState`, `setState` et `subscribe` restent les vrais.
+ */
+vi.mock('@/components/mobile-nav/dayFocusStore', async (importOriginal) => {
+  const reel = await importOriginal<typeof import('@/components/mobile-nav/dayFocusStore')>();
+  const store = reel.useDayFocusStore;
+  const useSSR = ((selector: (s: DayFocusState) => unknown) =>
+    selector(store.getState())) as unknown as typeof store;
+  Object.assign(useSSR, store);
+  return { ...reel, useDayFocusStore: useSSR };
 });
 
 /**
@@ -312,14 +339,29 @@ describe('E6 — le balayage est cable sur le contenu de l etape 2', () => {
     expect(onSelectDay).toHaveBeenCalledWith(2);
   });
 
-  it('E6-13: le rail de jours reste un chemin — le geste n est jamais le seul', () => {
-    const rail = ecran().match(/<div class="prep-days"[^>]*>([\s\S]*?)<\/div>/)?.[1] ?? '';
-    const libelles = texte(rail);
-    // Un voyage de trois journees : « Tout », « Jour 1 », « Jour 2 », « Jour 3 ».
-    expect(libelles).toContain('Tout');
-    expect(libelles).toContain('Jour 2');
-    expect(libelles).toContain('Jour 3');
-    // Ce sont des <button>, donc ils restent atteignables au clavier.
-    expect((rail.match(/<button/g) ?? []).length).toBe(4);
+  it('E6-13: le rail de jours reste un chemin - le geste n est jamais le seul', () => {
+    const model = construit().itinerary!;
+    // L3.7 a retire le rail du CORPS de l etape : le geste etait le seul
+    // chemin restant vers un jour, et ce chemin etait aussi le rail de la
+    // barre basse. Un doublon, pas un secours.
+    const corps = ecran();
+    expect(corps.match(/class="[^"]*prep-days/g) ?? []).toEqual([]);
+    // Le rail qui reste est celui du chrome, monte par `WebNavigationBar`
+    // dans un arbre React disjoint : il faut donc le monter pour le compter.
+    const rail = renderToStaticMarkup(React.createElement(DayPlateau));
+    const onglets = Array.from(
+      rail.matchAll(/<button[^>]*role="tab"[^>]*>([\s\S]*?)<\/button>/g),
+    ).map((m) => texte(m[1]));
+    // Un voyage de trois journees : « Tout », « J1 », « J2 », « J3 ».
+    expect(onglets.length).toBe(model.days + 1);
+    expect(onglets[0]).toContain('Tout');
+    expect(onglets[2]).toContain('J2');
+    expect(onglets[3]).toContain('J3');
+    // Le libelle long reste dans le `aria-label` : le rail affiche « J2 »,
+    // le lecteur d ecran entend « Jour 2 ».
+    expect(rail).toContain('aria-label="Jour 2');
+    // Ce sont des <button role="tab"> : ils restent atteignables au
+    // clavier, donc le geste n est JAMAIS le seul chemin vers un jour.
+    expect((rail.match(/<button/g) ?? []).length).toBe(model.days + 1);
   });
 });
