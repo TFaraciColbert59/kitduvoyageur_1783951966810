@@ -4,7 +4,7 @@
 Source : 32 maquettes uniques (41 fichiers, 9 doublons) analysées une à une,
 croisées avec l'intégralité des consignes écrites de la conversation.
 
-**Progression : 158 / 226 items prouvés (69,9 %) — 35 partiels · 33 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
+**Progression : 164 / 232 items prouvés (70,7 %) — 35 partiels · 33 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
 
 Légende : `[ ]` à faire · `[~]` partiellement fait · `[x]` fait et vérifié · `[!]` bloqué par une donnée absente du dépôt · `R` rectificatif d'audit
 
@@ -96,6 +96,17 @@ auto-vérification verte. Suite complète : **658 fichiers, 6168 tests, 0 échec
 atteints (nav 0→4, `.prep-action` 0→1, CTA +1) et restaurés au vert.
 
 ## Journal de progression — mis à jour à chaque lot
+### Lot 2026-09-29 (matin 2) — le fournisseur etait muet, la chaine jamais empruntee
+
+**Comptage au debut du lot : 158 faits / 35 partiels / 33 restants = 226 items.**
+Ferme dans ce lot : **D7.1 → D7.6**. Reste **164 / 35 / 33 = 232**.
+
+Le fait : le generateur pouvait rendre la main « terminee » alors que le
+fournisseur etait mort. Six causes distinctes, six morsants. Le detail est en
+**D7**, juste avant la section E. Les 2 commits sont `37f82775` (course +
+parapluie + signal) et `fcfd9bef` (catch anti-figage). Suite entiere reverifiee
+apres les patchs : **658 fichiers / 6168 tests verts**, `tsc --noEmit` exit 0.
+
 ### Lot 2026-09-29 (aube) — dix items fermes, deux defauts d'infra trouves
 
 **Comptage au début du lot : 147 faits / 36 partiels / 43 restants = 226 items.**
@@ -1392,6 +1403,66 @@ météo) est vrai, mais ce n’est pas ce que P0.5 corrige.
 **Ce que la correction refuse de faire.** Une date illisible ou impossible au
 calendrier (32 janvier) est **ignorée** au lieu d’être signalée : une donnée
 corrompue ne doit pas fabriquer une alerte qui aura l’air d’un fait.
+
+### D7 — IA-P0 : le fournisseur etait muet, et la chaine n'etait jamais empruntee
+
+**Fermes le 2026-09-29.** Six items d'un seul lot, tous sur le meme fait :
+le generateur pouvait reussir alors que le fournisseur etait mort.
+
+**1. Le modele NVIDIA configure ne repondait plus.** Bake-off sur le **vrai payload**
+de generation (`max_tokens: 4096`, `.probe/nv-bakeoff-reel.cjs`), pas sur un
+`ping` de 1 token :
+
+| Modele | Verdict mesure |
+|---|---|
+| `nvidia/nemotron-3-super-120b-a12b` | **HTTP 200, 11,8 s, JSON valide** — retenu |
+| `nvidia/nemotron-3.5-lightning-30b-a3b` (avant) | **ABORT > 25 s** — mort aussi sur payload reel |
+| `nvidia/nemotron-3-nano-omni-30b-a3b` | HTTP 404 (non deploye) |
+| `nvidia/llama-3.3-nemotron-super-49b-v1.5` | HTTP 410 (fin de vie 26-08-2026) |
+| `nvidia/qwen3-coder-480b-a35b-instruct` | HTTP 404 |
+
+**2. La chaine `nvidia -> openrouter -> noop` existait mais n'etait jamais parcourue.**
+`askAI` ne tentait que le premier maillon : le second et le troisieme etaient dead
+code. Correction : `providerRace.ts` (course avec parapluie) — le candidat suivant
+demarre apres `hedgeMs` (6 s `fast`, 12 s `heavy`) **sans attendre le timeout du
+precedent**, un echec **net** (503) passe la main immediatement, le premier succes
+**annule les perdants**. `providerChain(tier)` ordonne, dedoublonne, garantit le
+`noop` final.
+
+**3. `AbortSignal` n'atteignait aucun socket.** Le bouton « Annuler » ne coupait
+rien : les perdants de la course ne pouvaient pas etre interrompus. `AIRequest.signal`
+ajoute, honore par `nvidia` et `openrouter` en plus de leur timer interne, listener
+retire dans le `finally`.
+
+**4. Une generation qui leve figeait le store a jamais.** `startRun` n'avait pas de
+`catch` : l'etat restait `en_cours` et l'ecran de chargement ne se vidait pas.
+Correction : `failGenerationRun`, qui rend un statut terminal et vide l'etat de course.
+
+**Preuve navigateur** (etat vierge, `.probe/genere-propre.cjs`) : **10 s** de bout en
+bout, `statut=termine`, 7/7 phases, itineraire reel de 3 etapes, `err=null`, **une
+seule** generation. Trace de provenance cote serveur :
+`[askAI] itinerary -> nvidia/nemotron-3-super-120b-a12b (nvidia) en 4319ms apres
+0 echec(s) et 1 candidat(s) lance(s)`.
+
+**Morsants.** Chaque correction a ete sabotagee, verifye rouge avec l'offender
+confirme, puis restauree :
+- `catch` retire → 3 tests rouges + Unhandled Rejection → restauration → 18/18 verts ;
+- chaine sans `noop` final → **TEST-NIM-12b rouge** ;
+- `askAI` ne tente que le 1er maillon → **3 tests askai-failover rouges** ;
+- parapluie neutralise → **AI-RACE-02 et AI-RACE-04 rouges** (et expirent a 5 s) ;
+- perdants non annules → **AI-RACE-04 rouge**.
+
+**Tests : 26** (11 `provider-failover`, 3 `askai-failover`, 8 `provider-race`,
+4 `generation-throw-state` jsdom) + TEST-NIM-12b et TEST-ASK-10 reecrits sur le
+contrat reel. Suite complete : **658 fichiers / 6168 tests verts** (4 + 27 skips),
+`tsc --noEmit` exit 0.
+
+- [x] D7.1 Modele NVIDIA mesure sur le vrai payload de generation, pas sur un ping
+- [x] D7.2 La chaine de providers est **parcourue**, pas seulement declaree
+- [x] D7.3 Course avec parapluie : le suivant demarre sans attendre le timeout
+- [x] D7.4 `AbortSignal` propage jusqu'aux sockets — « Annuler » coupe vraiment
+- [x] D7.5 Une generation qui leve ne fige plus le store en `en_cours`
+- [x] D7.6 Trace de provenance : le modele et le provider reussis sont nommes
 
 ## E — Étape 2 « Préparation »
 
