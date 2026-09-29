@@ -4,7 +4,7 @@
 Source : 32 maquettes uniques (41 fichiers, 9 doublons) analysées une à une,
 croisées avec l'intégralité des consignes écrites de la conversation.
 
-**Progression : 130 / 226 items prouvés (57.5 %) — 36 partiels · 60 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
+**Progression : 137 / 226 items prouvés (60.6 %) — 36 partiels · 53 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
 
 Légende : `[ ]` à faire · `[~]` partiellement fait · `[x]` fait et vérifié · `[!]` bloqué par une donnée absente du dépôt · `R` rectificatif d'audit
 
@@ -1749,10 +1749,44 @@ Viewport de test : **iPhone 393×852** (cible Sidestore). Le rendu desktop 1280p
 - [x] **L2.1** Invite IA **absente** → **en place** : `prep-brief__input` rendu
       `DestinationStep.tsx:157-166`, câblé sur `setBrief`, avec un hint. Re-capturer.
 - [x] **L2.2** Sélecteur Boucle/Aller simple → **retiré**, `ROUTE_SHAPE_OPTIONS` à 0.
-- [ ] **L2.3** Ligne Départ : icône boussole seule, pas de texte
-- [ ] **L2.4** Ligne Arrivée : optionnelle, jamais pré-remplie
-- [ ] **L2.5** Ligne Date : un seul picker départ **ou** arrivée
-- [ ] **L2.6** Ligne Temps : durée estimée, pas durée totale
+- [x] **L2.3** ✅ **La ligne Départ ne montre qu'une boussole.** Le libellé part dans un
+      span réservé (`prep-visually-hidden`, masqué par `clip-path: inset(50%)`) : le bouton
+      garde son nom accessible *et* sa valeur — « Départ, Chamonix, France » — sans une
+      seule ligne de texte à l'écran. Ce n'est donc pas un texte caché pour lacommodité,
+      c'est le nom accessible de la valeur affichée.
+      **Preuve** : `l2-etape1-lignes.test.tsx`, L2-03 à L2-03e. **3 morsants** : icône
+      rebasculée en épingle → `expected 'map-pin' to be 'compass'` ; `hideLabel={false}` →
+      `expected '<button…>' not to contain 'prep-block__label'` ; span non réservé →
+      `expected 'Départ Chamonix France' not to contain 'Départ'`.
+- [x] **L2.4** ✅ **L'arrivée est optionnelle et ne se pré-remplit pas.** Le CTA
+      « Continuer » s'active quand le minimum moteur est atteint, et porte `disabled`
+      dès qu'une donnée bloquante manque. **Preuve** : `l2-etape1-lignes.test.tsx`,
+      L2-04 à L2-04f. **Morsant** : `ENGINE_BLOCKING` reçoit `'destination'` →
+      `expected [ 'lieu d'arrivée' ] to deeply equal []` — la sonde qui liste les
+      bloqueurs réagit donc bien.
+      L2-04 (CTA actif) ne se sabote pas depuis ce fichier : la garde passe par
+      `hasEngineMinimum`, dans un autre module. D'où le **contre-exemple L2-04f** : sans
+      départ, `disabled=""` est présent. Sans lui, la sonde d'activation serait aveugle —
+      elle passerait verte avec un CTA mort.
+- [x] **L2.5** ✅ **Un seul sélecteur de date, et un seul `PrepCalendar` dans le tiroir.**
+      Le profil `trajet` — celui des captures — déclare la date une fois. **Preuve** :
+      `l2-etape1-lignes.test.tsx`, L2-05 à L2-05d. **2 morsants** : `clock` rebasculé en
+      `calendar` sur la cellule durée → `expected 2 to be 1` ; second `<PrepCalendar>`
+      injecté dans le tiroir → `expected 2 to be 1`.
+      **Résidu assumé** : les profils `voyage` et `sejour` déclarent encore deux cellules
+      `calendar` (« Retour ou durée » + « Départ »). C'est correct pour eux — ce sont des
+      voyages aller-retour, deux dates sont la règle — mais l'item ne parle que du profil
+      du parcours, et c'est le seul que les captures montrent.
+- [x] **L2.6** ✅ **La cellule se nomme « Durée estimée ».** Elle ne mesurait aucune durée
+      totale : la durée d'une journée d'étapes n'est pas la durée du trajet. **Preuve** :
+      `l2-etape1-lignes.test.tsx`, L2-06 à L2-06d, y compris le cas honnête sans durée →
+      `À vérifier`. **Morsant** : libellé rebasculé →
+      `expected 'Temps disponible' to be 'Durée estimée'`.
+      **Deux assertions ont suivi le renommage** (`destination-screen.test.tsx` D10-03 /
+      D10-04, `step-one-profile.test.tsx` S11-07) : elles interrogeaient l'ancien libellé,
+      pas une règle — les remettre aurait été réécrire la question, pas la preuve.
+      `DEFAULT_LABELS.duration` reste « temps disponible » en minuscules et alimente
+      « L'IA complètera : … » ; L2.11 demande de garder ce message tel quel, il est resté.
 - [ ] **L2.7** 🔴 Scroller de jours **présent sur l'étape 1** — à réserver à l'étape 2
 - [x] **L2.8** Carte **présente dans l'étape 1** → **retirée**, `PrepMap` à 0.
 - [ ] **L2.9** Bouton « Zone » superposé au contenu de la carte
@@ -1813,8 +1847,24 @@ Ces points sont **hors de portée d'une capture d'écran** : à tester au doigt.
       tombent**, dont `E6-02: balayer a droite affiche le jour suivant`,
       `DAY-09/10/13/15b` et le cas carte `E6-08`. Restauration ⇒ 61/61,
       `dayNavigation.ts` identique a HEAD. Swipe gauche/droite = jour précédent/suivant
-- [ ] **L6.2** Long-press sur la carte = ajouter un point de passage
-- [ ] **L6.3** Recalcul du tracé + distances après ajout d'un point
+- [x] **L6.2** ✅ **Le geste existe, et il ne FABRIQUE pas de journée.** Il était câblé,
+      jamais exercé — et, pire, il déposait le point sur le **jour 1** quand la carte était
+      vue en « Ensemble » : le parcours affichait un trait sur une journée que personne
+      n'avait choisie. Le geste n'existe plus que sur un jour focalisé (`activeDay === null`
+      → `onLongPress` vaut `undefined`), et le rappel sous la carte dit alors de choisir
+      le jour, au lieu d'annoncer un retracé qui n'a pas lieu d'être.
+      **Preuve** : `replis-honnetete.test.ts`, M-06 à M-08, sur le vrai composant rendu
+      avec la vraie carte interceptée. **2 morsants** : le repli `activeDay ?? 1`
+      réintroduit → `expected [Function onLongPress] to be undefined` et
+      `expected ''use client';…' not to match /\?\?\s*1\b/`.
+- [x] **L6.3** ✅ **Le retracé et les distances se recalculent, et le disent.** Un point de
+      passage remonte des distances remesurées, pas des `null` — et tant que le mesurage
+      n'est pas revenu, l'écran écrit « Mesurage en cours — les distances restent
+      « à vérifier » jusque-là », plutôt que de réafficher les anciennes, qui ne décrivent
+      plus le trajet affiché. **Preuve** : `remeasure-after-edit.test.ts`, E11-1 à E11-3
+      et E12-4 à E12-6. **Morsant** : `remesureSiChange('point-de-passage', …)` neutralisé
+      dans le store → `expected 2 to be greater than 2` (E11-1) et
+      `expected 0 to be greater than 0` (E12-4). Store restauré à l'octet.
 - [ ] **L6.4** Écran de génération intermédiaire et ses phases
 - [x] **L6.5** **FERME le 2026-09-29 sur test a morsant.** « Enregistrer mon
       aventure » part bien sur `/api/adventure/commit` avec le plan courant
@@ -3537,9 +3587,25 @@ C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
 
 > Même lot, même preuve : `qa-local/verify-p-priorites.md`.
 
-- [~] **P3.1** Chaque nombre affiché est **recalculé** depuis une source, ou absent — **PARTIEL.** La règle **est** prouvée au niveau
-      metrics : `metrics.test.ts:92` boucle sur **toutes** les métriques et impose `null` → `a_verifier`. **Mais aucun test n'énumère les nombres
-      affichés sur tous les écrans** — la garantie est au bon endroit, la couverture d'écran reste à prouver.
+- [~] **P3.1** 🔶 **Trois replis de plus tombés, l'inventaire est fini, la couverture d'écran reste à prouver.**
+      Une passe ligne à ligne sur tous les `??` du dossier a trouvé — et fait tomber — les
+      trois qui convertissaient une absence en mesure. `isWetDay` rendait « jour sec »
+      sans une seule mesure (`(day.precipMm ?? 0) >= 1`), alors que sa propre signature
+      annonçait « sans donnée, on ne conclut rien ». L'appui long déposait le point de
+      passage sur le **jour 1** quand la carte était vue en « Ensemble ». `model?.days ?? 0`
+      reste, et n'a aucun effet : `useDaySwipe` sort dès que `days < 2`. Il est désormais
+      dit en commentaire, pour qu'on ne le relise pas comme une mesure.
+      **Le reste de l'inventaire est honnête et laissé en place**, vérifié ligne par ligne :
+      `formatMinutes(null) → A_VERIFIER`, `priceRows(null) → 3 lignes à vérifier`,
+      `formatEur`, `resolveSourceLine`, et tous les `??` restants (chaînes, enums, tableaux).
+      `activeDay` est `number | null` côté composant : le `?? 1` était le seul endroit où
+      une journée se faisait toute seule.
+      **Pourquoi l'item reste partiel** : la règle est prouvée au niveau metrics et
+      l'inventaire des replis est terminé, mais **aucun test n'énumère les nombres affichés
+      sur tous les écrans**. La garantie est au bon endroit ; la couverture d'écran, non.
+      **Preuve** : `replis-honnetete.test.ts` M-01 à M-10, 2 morsants, contre-exemples
+      inclus (M-03, M-04, M-05 : une mesure réelle conclut toujours dans un sens ou dans
+      l'autre), 2003 verts, tsc 0.
 - [x] **P3.2** `À vérifier` est une absence assumée, avec un seuil — **FAIT le 2026-09-29.**
       Le seuil est une **constante exportée** `OPEN_POINTS_INLINE_LIMIT = 6` (`DepartureStep.tsx`), et la décision
       « lister ou résumer » est **isolée dans une fonction pure** `openPointsView(points)` : ce n'est pas une
@@ -3551,15 +3617,32 @@ C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
       le nombre de points, y compris en mode résumé ; le vide reste un vide. Non-régression feature : **1799/1799**.
       Le bandeau affichait un titre figé « À vérifier avant de partir » quel que soit le nombre de points : au-delà du
       seuil il annonce désormais **le nombre réel**, et un bouton « Voir les N points » déplie le détail à la demande.
-- [ ] **P3.3** Chaque lieu rattaché à un identifiant réel — **À FAIRE, structurellement impossible à l'état.**
-      `placeId` = **0 occurrence dans les 184 fichiers** de `adventure-prep`. `types.ts:202` n'a que `placeName: string | null` ;
-      `PlaceInventory` (`engine/places.ts:46-55`) n'a **ni `id` ni source** ; `assignPlaces` (`places.ts:398`) ne rattache que le nom.
-      L'identifiant du catalogue est donc perdu à la construction — ce n'est pas un manque de test, c'est un manque de **modèle**.
-      **Action requise** : `types.ts:202` + `places.ts:46-55` + `places.ts:398`, puis la géo-proximité de P2.7 devient réalisable.
-- [~] **P3.4** Pas deux fois la même étape générique — **PARTIEL, dédupliquée à l'intra-journée seulement.**
-      La déduplication intra-journalière est prouvée (`proposed-stops.test.ts:165`) — mais **sur `/repas/i` seul**. Entre jours,
-      `proposedStops.ts:176` ne branche que sur `day === 1` : les jours 2..N réutilisent `WATER_LATER` (l.183) et `VIEW` (l.194) à l'identique.
-      **Action requise** : indexer le choix sur le jour, et élargir le test au-delà de `/repas/i`.
+- [~] **P3.3** 🔶 **Le catalogue ne perd plus l'identifiant — le modèle, lui, refuse encore de le porter.**
+      `catalogId` ne reçoit plus que `textOrNull(poi.id)` : la clé synthétique
+      `name:lat:lng` est reléguée en interne, parce qu'elle ne retrouvait aucun lieu à la
+      volée. `is_verified === true` est exigé. Chaque étape exposée porte un `placeId`
+      explicite (`string | null`), et `nearestCompatible` est devenu public, borné à
+      25 km, renvoyant `{candidate, distanceKm}`. `'poi'` a quitté les `kindCategories`.
+      Le prix de nuit tombe en « à vérifier » quand la base n'a rien, et
+      `buildPriceBreakdown()` — qui affichait « 75 € pour 3 personnes » sur une donnée
+      absente — a été supprimée.
+      **Ce qui reste ouvert, et c'est réel** : `types.ts` n'a toujours aucun `placeId`
+      (`ItineraryStep` ne porte que `placeName`), `StepDraft` n'a ni identifiant ni
+      coordonnées, et `PlaceInventory` / `loadPlaceInventoryFor` ne transportent pas
+      l'identifiant. Le champ est porté par une intersection locale `BoundItineraryStep`
+      dans `places.ts` : c'est un pansement sur un modèle qui refuse la donnée. P2.7
+      (géo-proximité) en dépend directement.
+      **Preuve** : `places-p3-identity.test.ts` + `places-p3-honesty.test.ts`, 4 morsants
+      (`placeId: origin.id` → `null` donne `expected null to be 'chamonix'`), 2003 verts.
+- [x] **P3.4** ✅ **Les réservoirs d'étapes génériques sont indexés, et la séquence est
+      pinnée.** `WATER_LATER` et `VIEW` n'étaient pas deux étapes distinctes : c'était un
+      objet unique réemployé à l'identique à partir du deuxième jour — le parcours
+      affichait donc le même titled jour après jour. Ce sont maintenant des réservoirs
+      indexés par jour.
+      **Preuve** : `proposed-p3-dedup.test.ts` et `proposed-stops*.test.ts`, dont **5
+      tests qui pinent la SÉQUENCE**. Les anciens ne pinnaient que l'absence de doublon —
+      ce que le bug passait sans difficulté, puisque réemployer le même objet n'en crée
+      aucun nouveau.
 - [x] **P3.5** Les étapes proposées sont **validées géographiquement avant l'affichage** — **FAIT.**
       `generation-feasibility.test.ts` : les cas **FS-01, FS-04, FS-05, FS-08, FS-09** exécutent réellement le filtre avec des **sondes injectées**
       (nautique loin du rivage, plongée avec enfants). Le rejet se fait bien **avant** l'affichage, pas après.
