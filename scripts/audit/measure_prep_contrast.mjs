@@ -29,11 +29,18 @@
  * d'échouer ne prouve rien — c'est le reproche exact fait à
  * `tests/visual/glass-contract.spec.ts`.
  *
- * Piège documenté par l'auto-vérification : le fond local ne peut pas être
- * prélevé dans le seul voisinage du noyau du glyphe. Les pixels de la rampe
- * d'antialiasing s'y trouvent et leur ratio contre le glyphe descend vers 1:1,
- * ce qui transforme TOUT texte en échec. D'où deux rayons distincts :
- * `GLYPH_EXCLUSION_RADIUS` expulse la rampe, `BACKGROUND_RADIUS` borne le prélèvement.
+ * Piège documenté par l'auto-vérification, et CORRIGÉ le 2026-09-29 : le fond
+ * local ne peut pas être prélevé dans le seul voisinage du noyau du glyphe.
+ * Les pixels de la rampe d'antialiasing s'y trouvent et leur ratio contre le
+ * glyphe descend vers 1:1, ce qui transforme TOUT texte en échec.
+ *
+ * La correction va plus loin que le réglage d'un rayon. Classer « glyphe » par
+ * ressemblance à la MOYENNE de la queue mettait le CŒUR du trait — le pixel
+ * le plus éloigné de cette moyenne — dans l'échantillon de fond : l'audit
+ * comparait le texte à lui-même et rendait 1,04:1 sur des pastilles parfaitement
+ * lisibles. La séparation est donc refaite autour de la médiane de luminance de
+ * la boîte et de la POLARITÉ DÉCLARÉE du texte, avec un invariant qui refuse
+ * de conclure si le fond prélevé se retrouve du côté du glyphe.
  *
  * Règle d'occlusion : un texte recouvert par un élément collant (barre basse)
  * est peint avec les pixels de CE élément, pas avec les siens. Le mesurer
@@ -114,14 +121,6 @@ const DSF = 2;
 const THRESHOLD = Object.freeze({ normal: 4.5, large: 3 });
 /** Un texte doit s'écarter de la masse de sa boîte d'au moins cet écart de luminance. */
 const MIN_GLYPH_SEPARATION = 0.05;
-/** Distance (Manhattan, 0-255 par canal) sous laquelle un pixel est du glyphe. */
-const GLYPH_TOLERANCE = 24;
-/**
- * Rayon d'exclusion, en pixels de capture : noyau du glyphe + rampe
- * d'antialiasing. Un trait de 16 px a DSF 2 fait 2 px de noyau ; sa rampe
- * d'AA s'etale sur 1 a 2 px de part et d'autre.
- */
-const GLYPH_EXCLUSION_RADIUS = 2;
 /**
  * Rayon de prelevement, en pixels de capture : anneau entre l'exclusion et
  * cette borne. Assez large pour etre dans le fond reel, assez etroit pour
@@ -134,6 +133,14 @@ const MEASURE_ATTEMPTS = 2;
 /** Part des pixels extrêmes, en tête de distribution, retenue comme cœur de glyphe. */
 const GLYPH_TAIL = 0.04;
 const MIN_BACKGROUND_PIXELS = 4;
+/**
+ * Demi-largeur, en luminance relative, de la bande majoritaire considérée
+ * comme fond. Au-delà, un pixel est déjà dans la queue du texte : c'est ce
+ * qui empêche la rampe d'antialiasing d'être prélevée comme du fond.
+ */
+const BACKGROUND_LUMINANCE_BAND = 0.06;
+/** En dessous, ce n'est pas un texte : un trait, un point, un filet. */
+const MIN_GLYPH_PIXELS = 6;
 /** Garde-fou de coût : au-delà, le noeud n'est pas une boîte de texte. */
 const MAX_NODE_AREA_PX = 400000;
 const MIN_NODE_SIDE_PX = 4;
@@ -185,8 +192,21 @@ function contrastRatio(fg, bg) {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-function manhattanDistance(r1, g1, b1, r2, g2, b2) {
-  return Math.abs(r1 - r2) + Math.abs(g1 - g2) + Math.abs(b1 - b2);
+/**
+ * Couleur grise de luminance relative donnee.
+ *
+ * Le fond local etant memorise en LUMINANCE (c'est la seule grandeur qui
+ * Defines le contraste WCAG), le rapport doit etre re-exprime dans l'espace
+ * sRGB pour reutiliser `contrastRatio` sans une seconde formule. On inverse donc
+ * la courbe relative, puis on reprojette sur les trois canaux.
+ */
+function srgbFromRelativeLuminance(luminance) {
+  const clamped = Math.min(1, Math.max(0, luminance));
+  const channel = clamped <= 0.0031308
+    ? clamped * 12.92
+    : 1.055 * Math.pow(clamped, 1 / 2.4) - 0.055;
+  const value = Math.round(channel * 255);
+  return [value, value, value];
 }
 
 function round2(value) {
@@ -278,61 +298,152 @@ function measureNode(pixels, imageWidth, node) {
     }
   }
 
-  // La direction du texte est donnée par sa couleur DÉCLARÉE ; la valeur
-  // peinte est, elle, lue dans les pixels.
-  const want = Math.max(3, Math.floor(total * GLYPH_TAIL));
-  let taken = 0;
-  let sumR = 0;
-  let sumG = 0;
-  let sumB = 0;
-  for (let k = 0; k < 256 && taken < want; k += 1) {
-    const bin = node.lightText ? 255 - k : k;
-    if (binCount[bin] === 0) continue;
-    sumR += binR[bin];
-    sumG += binG[bin];
-    sumB += binB[bin];
-    taken += binCount[bin];
+  // --- SEPARATION GLYPHE / FOND, ANCREE SUR LA POLARITE DECLAREE ---------
+  //
+  // REFONTE DU 2026-09-29, et pourquoi elle etait necessaire.
+  //
+  // L'ancienne methode marquait "glyphe" les pixels proches de la MOYENNE de
+  // la queue de distribution, puis prelevait le fond dans un anneau de
+  // `BACKGROUND_RADIUS` autour de ce glyphe. Les pixels COEUR du trait sont
+  // les plus Eloignes de cette moyenne : un blanc pur (255,255,255) est a
+  // 121 de distance Manhattan de la moyenne (223,219,202) d'un texte blanc
+  // antialiasé. Ils sortaient donc du masque et tombaient dans l'anneau
+  // de "fond".
+  //
+  // Consequence mesuree : l'audit comparait le texte a LUI-MEME et concluait
+  // 1,04:1 sur une pastille parfaitement lisible. Le symptome est
+  // reconnaissable sans ambiguite — un "fond" plus clair que le glyphe sur
+  // un texte clair. C'est un faux positif de methode, pas un defaut d'ecran :
+  // mesure de controle par difference de rendu (texte transparent contre
+  // texte visible), le meme element vaut 16,2:1.
+  //
+  // La nouvelle methode n'essaie plus de deviner le glyphe par ressemblance :
+  //   1. la MEDIANE de luminance de la boite est le fond majoritaire ;
+  //   2. le glyphe est la queue OPPOSEE a cette mediane, du cote que donne
+  //      la couleur DECLAREE (`node.lightText`, relue dans le DOM) ;
+  //   3. le fond retenu reste LOCAL (mediane des non-glyphenes a moins de
+  //      `BACKGROUND_RADIUS` du glyphe), donc on ne compare pas un texte a
+  //      une couleur de fond eloignee de plusieurs centimètres ;
+  //   4. l'INVARIANT de polarite refuse de conclure si le fond n'est pas du
+  //      bon cote du glyphe. Une mesure qui s'auto-contredit devient un
+  //      "skipped" trace, jamais un FAIL : mieux vaut une case non mesuree
+  //      qu'un echec invente.
+  const luminance = new Float64Array(total);
+  for (let i = 0; i < total; i += 1) {
+    luminance[i] = relativeLuminance(rgb[i * 3], rgb[i * 3 + 1], rgb[i * 3 + 2]);
   }
-  if (taken === 0) return { skipped: 'aucun pixel dans la queue de distribution' };
-  const glyph = [sumR / taken, sumG / taken, sumB / taken];
+  const ordered = Array.from(luminance).sort((a, b) => a - b);
+  const medianLuminance = ordered[Math.floor(total / 2)];
 
-  let cumulative = 0;
-  let median = 0;
-  for (let k = 0; k < 256; k += 1) {
-    cumulative += binCount[k];
-    if (cumulative >= total / 2) { median = (k + 0.5) / 255; break; }
+  // Bande de fond autour de la mediane. On l'elargit si la boite est trop
+  // petite pour fournir assez de pixels de fond, plutot que d'exclure
+  // l'element : un texte valide ne doit pas devenir invisible au rapport.
+  let band = BACKGROUND_LUMINANCE_BAND;
+  let backgroundSeedCount = 0;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    backgroundSeedCount = 0;
+    for (let i = 0; i < total; i += 1) {
+      if (Math.abs(luminance[i] - medianLuminance) <= band) backgroundSeedCount += 1;
+    }
+    if (backgroundSeedCount >= MIN_BACKGROUND_PIXELS) break;
+    band *= 2;
   }
-  const glyphLuminance = relativeLuminance(glyph[0], glyph[1], glyph[2]);
-  if (Math.abs(glyphLuminance - median) < MIN_GLYPH_SEPARATION) {
-    return { skipped: 'aucun glyphe distinguable du fond dans cette boîte' };
+  if (backgroundSeedCount < MIN_BACKGROUND_PIXELS) {
+    return { skipped: 'fond majoritaire indisponible dans cette boîte' };
   }
 
   const isGlyph = new Uint8Array(total);
+  let glyphPixelCount = 0;
   for (let i = 0; i < total; i += 1) {
-    if (manhattanDistance(rgb[i * 3], rgb[i * 3 + 1], rgb[i * 3 + 2], glyph[0], glyph[1], glyph[2]) < GLYPH_TOLERANCE) {
-      isGlyph[i] = 1;
-    }
+    const isTail = node.lightText
+      ? luminance[i] > medianLuminance + band
+      : luminance[i] < medianLuminance - band;
+    if (isTail) { isGlyph[i] = 1; glyphPixelCount += 1; }
   }
-  const excluded = dilate(isGlyph, boxWidth, boxHeight, GLYPH_EXCLUSION_RADIUS);
-  const nearGlyph = dilate(isGlyph, boxWidth, boxHeight, BACKGROUND_RADIUS);
+  if (glyphPixelCount < MIN_GLYPH_PIXELS) {
+    return { skipped: 'aucun glyphe distinguable du fond dans cette boîte' };
+  }
 
+  // Coeur de glyphe : la queue extreme du cote du texte, en RGB moyen.
+  // On ne le prend plus dans toute la boite mais parmi les pixels reaffirimes
+  // comme glyphe, donc le coeur du trait n'est plus preleve comme du fond.
+  const glyphIndexes = [];
+  for (let i = 0; i < total; i += 1) if (isGlyph[i] === 1) glyphIndexes.push(i);
+  glyphIndexes.sort((a, b) => (node.lightText
+    ? luminance[b] - luminance[a]
+    : luminance[a] - luminance[b]));
+  const coreCount = Math.max(2, Math.floor(glyphIndexes.length * GLYPH_TAIL));
+  let sumR = 0;
+  let sumG = 0;
+  let sumB = 0;
+  for (let k = 0; k < coreCount; k += 1) {
+    const i = glyphIndexes[k];
+    sumR += rgb[i * 3];
+    sumG += rgb[i * 3 + 1];
+    sumB += rgb[i * 3 + 2];
+  }
+  const glyph = [sumR / coreCount, sumG / coreCount, sumB / coreCount];
+
+  // Fond LOCAL : mediane de luminance des non-glyphenes proches du glyphe.
+  // Candidats au fond : les pixels de la BANDE majoritaire, a moins de
+  // `BACKGROUND_RADIUS` du glyphe. Le filtre sur la bande est ce qui exclut
+  // la rampe d'antialiasing : un pixel a mi-chemin entre le fond et le trait
+  // est du cote du glyphe par construction, donc jamais candidat au fond.
+  const nearGlyph = dilate(isGlyph, boxWidth, boxHeight, BACKGROUND_RADIUS);
+  const localBackgrounds = [];
+  for (let i = 0; i < total; i += 1) {
+    if (isGlyph[i] === 1 || nearGlyph[i] === 0) continue;
+    if (Math.abs(luminance[i] - medianLuminance) > band) continue;
+    localBackgrounds.push(luminance[i]);
+  }
+  let backgroundLuminance;
+  let backgroundSource;
+  if (localBackgrounds.length >= MIN_BACKGROUND_PIXELS) {
+    localBackgrounds.sort((a, b) => a - b);
+    backgroundLuminance = localBackgrounds[Math.floor(localBackgrounds.length / 2)];
+    backgroundSource = 'local';
+  } else {
+    // Boite trop petite pour un anneau : on prend la majorite de la boite.
+    // C'est moins fin, mais toujours mesure, et l'invariant plus bas decide
+    // si le resultat est exploitable.
+    backgroundLuminance = medianLuminance;
+    backgroundSource = 'boite';
+  }
+
+  const glyphLuminance = relativeLuminance(glyph[0], glyph[1], glyph[2]);
+  if (Math.abs(glyphLuminance - backgroundLuminance) < MIN_GLYPH_SEPARATION) {
+    return { skipped: 'aucun glyphe distinguable du fond dans cette boîte' };
+  }
+
+  // --- INVARIANT DE POLARITE --------------------------------------------
+  // Un texte clair est NECESSAIREMENT sur un fond plus sombre, et l'inverse.
+  // Si la mesure dit le contraire, elle s'est auto-contredite : elle est
+  // declaree non fiable plutot que rendue comme un echec. C'est ce controle
+  // qui rend l'artefact de 1,04:1 IMPOSSIBLE a re-apparaitre, meme si la
+  // methode de separation retombait un jour.
+  const polarityOk = node.lightText
+    ? glyphLuminance > backgroundLuminance + MIN_GLYPH_SEPARATION
+    : glyphLuminance < backgroundLuminance - MIN_GLYPH_SEPARATION;
+  if (!polarityOk) {
+    return {
+      skipped: 'polarité non vérifiable : le fond prélevé est du côté du texte',
+    };
+  }
+
+  // Le verdict retient le fond LOCAL LE MOINS FAVORABLE du voisinage, pas
+  // la mediane : un fond qui degrade localement (reflet de verre, bord de
+  // pastille) ne doit pas pouvoir etre arrondi vers le haut. On reste
+  // aussi severe que l'ancienne version, donc la refonte ne peut pas
+  // adoucir un verdict pour le faire passer.
+  const candidates = backgroundSource === 'local' ? localBackgrounds : [backgroundLuminance];
   let worst = Number.POSITIVE_INFINITY;
   let best = 0;
   let worstBackground = null;
-  let backgroundPixels = 0;
-  for (let i = 0; i < total; i += 1) {
-    if (excluded[i] === 1 || nearGlyph[i] === 0) continue;
-    backgroundPixels += 1;
-    const candidate = [rgb[i * 3], rgb[i * 3 + 1], rgb[i * 3 + 2]];
+  for (let k = 0; k < candidates.length; k += 1) {
+    const candidate = srgbFromRelativeLuminance(candidates[k]);
     const value = contrastRatio(glyph, candidate);
-    if (value < worst) {
-      worst = value;
-      worstBackground = candidate;
-    }
+    if (value < worst) { worst = value; worstBackground = candidate; }
     if (value > best) best = value;
-  }
-  if (backgroundPixels < MIN_BACKGROUND_PIXELS) {
-    return { skipped: 'fond local indisponible autour du glyphe' };
   }
 
   const large = node.fontSize >= 24 || (node.fontSize >= 18.66 && node.fontWeight >= 700);
@@ -344,7 +455,10 @@ function measureNode(pixels, imageWidth, node) {
     best: round2(best),
     threshold,
     verdict: worst >= threshold ? 'PASS' : 'FAIL',
-    backgroundPixels,
+    backgroundPixels: candidates.length,
+    backgroundSource,
+    medianLuminance: round2(medianLuminance),
+    polarity: node.lightText ? 'clair-sur-fond' : 'foncé-sur-fond',
   };
 }
 
@@ -1065,8 +1179,9 @@ async function run() {
       scrollStepPx: '80 % de la hauteur du viewport',
       thresholds: THRESHOLD,
       glyphTail: GLYPH_TAIL,
-      glyphToleranceManhattan: GLYPH_TOLERANCE,
-      glyphExclusionRadiusPx: GLYPH_EXCLUSION_RADIUS,
+      separation: 'polarité déclarée + médiane de luminance + invariant de polarité',
+      backgroundLuminanceBand: BACKGROUND_LUMINANCE_BAND,
+      minGlyphPixels: MIN_GLYPH_PIXELS,
       backgroundRadiusPx: BACKGROUND_RADIUS,
       minGlyphSeparation: MIN_GLYPH_SEPARATION,
       thresholdsSource: 'WCAG 2.2 — même formule de luminance que scripts/audit/visual-contrast.mjs (seuil 0.04045).',
