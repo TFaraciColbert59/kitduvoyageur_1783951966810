@@ -3,9 +3,8 @@
 import React, { useMemo, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/Icon';
-import { Button } from '@/components/ui';
 import { useAdventurePrepStore } from '../store/useAdventurePrepStore';
-import { progressOf } from '../engine/steps';
+import { stepPosition } from '../engine/steps';
 import { usePrepDayFocusPublisher } from '../hooks/usePrepDayFocusPublisher';
 import {
   offlineReadiness,
@@ -20,12 +19,14 @@ import {
   type AdventurePrepDraft,
   type GenerationPhase,
   type GenerationPhaseId,
+  type GenerationState,
   type ItineraryModel,
   type PrepStepId,
 } from '../types';
 import type { PhaseRetry, PhaseRetryDeps } from '../engine/itineraryPhases';
 import type { PrepSheetId } from './PrepSheets';
 import { PrepNav } from './PrepCrumb';
+import { stepOneMissing, stepOneProfileIdFor } from './stepOneProfile';
 
 /* ------------------------------------------------------------------ */
 /* Etat reseau                                                        */
@@ -416,6 +417,222 @@ export function createPrepPhaseRetry(
     return retry;
   };
 }
+
+/* ------------------------------------------------------------------ */
+/* Le rail : l'etape REELLEMENT affichee, pas l'etape nominale         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Le nom de l'ecran qui precede les trois etapes.
+ *
+ * Il n'a pas de segment : l'ecran de selection d'activite n'est ni
+ * « Creations » ni « Preparation » ni « En avant ! ». Le nommer plutot que de
+ * le laisser sans nom evite qu'il soit lu comme une etape manquante.
+ */
+export const PREP_ACTIVITE_SCREEN = 'Choix de l’activité';
+
+/**
+ * Ce que le rail decrit, tel que l'ecran le montre — jamais tel que le
+ * brouillon le suppose.
+ *
+ * Deux valeurs, et pas une de plus : ce shell ne rend que deux ecrans. Le
+ * troisieme etat du parcours — la reprise « Reprise de ta preparation… » —
+ * est rendu par `PrepFlow` AVANT le shell (le drapeau `mounted` n est pas
+ * encore leve), donc rien dans ce fichier ne peut l'atteindre. Ecrire cet
+ * etat ici serait du code mort : il donnerait au rail l'air de couvrir un
+ * ecran de plus qu il n en couvre, sans qu'aucun rendu puisse le produire.
+ * Le trou reel est ailleurs et est signale au proprietaire : la reprise doit
+ * monter le cadre, pas le contourner.
+ */
+export type PrepRailScreen =
+  /** L'ecran de selection d'activite : il ne PRECEDE aucune des trois etapes. */
+  | 'activite'
+  /** Une des trois etapes est a l'ecran. */
+  | 'etape';
+
+export interface PrepRailState {
+  /**
+   * L'etape reellement affichee — `null` quand AUCUNE ne l'est.
+   *
+   * `null` n'est ni un cas degrade ni une absence d'information : c'est
+   * l'etat exact de `/prepare?nouvelle=1`, ou `ActivityPickerScreen` est
+   * monte. Y mettre « destination » — ce que faisait le shell en passant
+   * `step` a la volee — affirmait une etape affichee qui ne l'etait pas.
+   */
+  step: PrepStepId | null;
+  screen: PrepRailScreen;
+  /**
+   * La generation tourne-t-elle ?
+   *
+   * Elle ne change pas l'etape affichee : l'ecran de generation est rendu
+   * DANS l'etape 2, donc « Preparation » reste le segment courant. Elle change
+   * en revanche ce que le rail doit permettre de voir, d'ou un etat distinct.
+   */
+  generating: boolean;
+  /** Le nom de l'ecran affiche, en toutes lettres. Jamais invente. */
+  label: string;
+}
+
+/**
+ * L'etat du rail, DERIVE de l'ecran monte.
+ *
+ * Mesure du 2026-09-29 (`/prepare?nouvelle=1`, 393x852) : le rail portait
+ * `aria-current="step"` sur « Creations » alors que l'ecran visible etait
+ * `ActivityPickerScreen`. Le rail affirmait donc une etape affichee qui ne
+ * l'etait pas, et `progressOf(draft)` — derive de `draft.currentStep` —
+ * repetait la meme mensonge dans la region annoncee.
+ *
+ * La regle tient en une ligne : le rail decrit ce qui est A L'ECRAN. L'etape
+ * nominale (`draft.currentStep`) ne decrit que l'intention du parcours, et
+ * elle peut viser un ecran qui n'est pas monte.
+ */
+export function prepRailState(input: {
+  picking: boolean;
+  step: PrepStepId;
+  generation: GenerationState;
+}): PrepRailState {
+  if (input.picking) {
+    return { step: null, screen: 'activite', generating: false, label: PREP_ACTIVITE_SCREEN };
+  }
+  return {
+    step: input.step,
+    screen: 'etape',
+    generating: input.generation.status === 'en_cours',
+    label: PREP_STEP_LABELS[input.step],
+  };
+}
+
+/** Ce que la region annoncee doit dire, ou rien du tout. */
+export function prepRailAnnouncement(rail: PrepRailState): string {
+  if (rail.step === null) return rail.label;
+  return `${rail.label}, étape ${stepPosition(rail.step)} sur ${PREP_STEPS.length}`;
+}
+
+/**
+ * L'etat du rail quand AUCUNE des trois etapes n'est affichee.
+ *
+ * Les trois noms restent, dans l'ordre, sans segment courant : c'est la seule
+ * representation honnete — un rail vide ferait croire a une perte, et un
+ * segment « actif » ferait croire a une etape qui n'est pas la.
+ *
+ * `prep-crumb`, `prep-crumb__sep`, `prep-crumb__item` et
+ * `prep-crumb__label` sont les memes classes que le rail des trois etapes :
+ * une seule recette de verre, donc (P5.1). Les trois etats sont ceux de
+ * `PrepCrumb` — `locked` pour un segment qui n'est pas atteint — donc la
+ * feuille de style n'a pas de regle a inventer pour cette variante.
+ *
+ * Pas de style en ligne : un style en ligne l'emporte sur la feuille de style,
+ * donc il interdirait au verre d'agir sur ce rail. L aspect appartient au CSS,
+ * la structure et l'etat restent ici.
+ *
+ * Ce bloc ne duplique pas la logique des etapes — il n'y en a aucune ici : ni
+ * navigation, ni contenu atteint.
+ */
+export function PrepGateRail({ screenLabel }: { screenLabel: string }) {
+  return (
+    <nav
+      className="prep-nav"
+      style={{ position: 'relative', zIndex: 20 }}
+      aria-label="Progression de la préparation"
+    >
+      <ol
+        className="prep-crumb prep-crumb--gate"
+        style={{ gridColumn: '1 / -1' }}
+        aria-label="Étapes de la préparation"
+      >
+        {PREP_STEPS.map((id, index) => (
+          <React.Fragment key={id}>
+            {index > 0 && (
+              <li className="prep-crumb__sep" aria-hidden="true">
+                ·
+              </li>
+            )}
+            <li className="prep-crumb__item" data-step={id} data-current={false} data-locked>
+              <span className="prep-crumb__label" data-state="locked" data-current={false} data-locked>
+                {PREP_STEP_LABELS[id]}
+              </span>
+            </li>
+          </React.Fragment>
+        ))}
+      </ol>
+      {/*
+        L'ecran se nomme pour les lecteurs d'ecran. Visuellement, l'absence de
+        segment courant EST l'information : un bandeau qui designait
+        « Creations » mentait, un bandeau muet ne ment pas.
+      */}
+      <span className="prep-visually-hidden">{screenLabel}</span>
+    </nav>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Le bloqueur du CTA, RESERVE dans le flux du cadre                    */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Ce qui manque vraiment avant que « Creer mon parcours » fasse quoi que ce
+ * soit — ou `null` s'il ne manque rien.
+ *
+ * La MEME source que celle de l'ecran : `stepOneMissing` applique au profil
+ * que `stepOneProfileIdFor` deduit de la selection. Aucune liste n'est
+ * reecrite ici, donc le cadre et l'ecran ne peuvent pas diverger sur CE QUI
+ * bloque.
+ *
+ * Le cadre ne parle que pour l'ecran qui porte ce CTA. L'ecran de selection
+ * d'activite a son propre message et son propre fichier ; l'ecran de
+ * generation n'a pas de CTA bloque.
+ */
+export function prepBlockerSummary(
+  draft: AdventurePrepDraft,
+  displayed: PrepStepId | null
+): string | null {
+  if (displayed !== 'destination') return null;
+  const { blocking } = stepOneMissing(draft, stepOneProfileIdFor(draft.activities));
+  if (blocking.length === 0) return null;
+  return `Il manque : ${blocking.join(', ')}`;
+}
+
+/**
+ * `flex: 0 0 auto` : la ligne ne se comprime jamais et ne defile jamais.
+ * Elle vit dans la colonne du cadre, au-dessus de l'ecran enfant — donc hors
+ * du scroller, et hors de la portee du `.prep-footer` qui appartient a cet
+ * ecran enfant.
+ */
+const BLOCKER_BOX: React.CSSProperties = {
+  flex: '0 0 auto',
+  display: 'flex',
+  alignItems: 'flex-start',
+  gap: 'var(--prep-space-2)',
+  margin: 'var(--prep-space-3) var(--prep-space-4) 0',
+  color: 'var(--lkv-text-primary)',
+};
+
+/**
+ * Le message « Il manque : … », la ou il ne peut pas disparaitre.
+ *
+ * Mesure du 2026-09-29, 393x852 puis 375x852, ecran « Partir librement » puis
+ * `/prepare?nouvelle=1` : `.prep-body` vaut `scrollHeight 642 / clientHeight
+ * 467`, `scrollTop 0`, `maxScroll 175`. Le `.prep-footer` est bien
+ * `position: relative; flex: 0 0 auto` (mesure : `top 523 / bottom 593`,
+ * corps `top 60 / bottom 527`) — il ne recouvre donc RIEN. Le message, lui,
+ * etait a `top 611` : dans le flux du scroller, 175 px plus bas que la ligne
+ * de coupe, donc invisible a l'arrivee. Le symptome (un CTA mort sans
+ * explication) etait exact ; la cause, elle, etait le pli, pas le pied.
+ *
+ * Le reserve est donc la qu'il est TOUJOURS visible : hors du scroller, dans
+ * la colonne du cadre, au-dessus de l'ecran. Ce n'est pas une repetition
+ * decorative — c'est le seul endroit ou l'information ne depend pas d'un geste
+ * de defilement que personne ne sait qu'il faut faire.
+ */
+export function PrepBlockerNote({ summary }: { summary: string }) {
+  return (
+    <p className="prep-blocker" style={BLOCKER_BOX}>
+      <Icon name="alert-triangle" size={15} aria-hidden="true" />
+      <span>{summary}</span>
+    </p>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /* Cadre                                                              */
 /* ------------------------------------------------------------------ */
@@ -504,7 +721,12 @@ export function PrepNavActions({ onOpenPreferences, onGoHub }: PrepNavActionsPro
   const goToStep = useAdventurePrepStore((state) => state.goToStep);
   const retryPhaseInStore = useAdventurePrepStore((state) => state.retryPhase);
   const applyPhaseRetry = useAdventurePrepStore((state) => state.applyPhaseRetry);
-  const progress = progressOf(draft);
+  // Le rail et le message du CTA lisent le MEME etat, calcule ici une
+  // seule fois : deux lectures independantes du brouillon finiraient par
+  // diverger, et c'est precisement la divergence qui produit un ecran muet
+  // sous un CTA actif — ou un CTA actif sous un message de blocage.
+  const rail = prepRailState({ picking, step, generation: draft.generation });
+  const blocker = prepBlockerSummary(draft, rail.step);
   const online = useOnlineStatus();
 
   // Le rail jour vit dans la barre basse, montee par `MobileNavWrapper` : les
@@ -562,7 +784,29 @@ export function PrepNavActions({ onOpenPreferences, onGoHub }: PrepNavActionsPro
   return (
     <OfflinePrepContext.Provider value={offlineValue}>
       <div className="adventure-prep">
-        <PrepNav step={step} draft={draft} onOpenStep={goToStep} />
+        {/*
+          `display: contents` : le conteneur ne genere aucune boite, donc la
+          colonne flex du cadre reste inchangee et le rail occupe exactement la
+          place qu'il occupait. Il porte neanmoins `data-rail-state` : une seule
+          accroche pour tout l'etat du rail — `gate` (aucune des trois etapes
+          affichee), `step`, `generation` — donc une seule recette de verre.
+
+          `prep-steprail`, et NON `prep-rail` : ce nom appartient deja au rail
+          des phases de generation, rendu par `ItineraryStep` dans l'etape 2.
+          Deux ecrans, un meme nom de classe, et un recipe de panneau qui
+          s'appliquerait aux deux par accident.
+        */}
+        <div
+          className="prep-steprail"
+          data-rail-state={rail.step === null ? 'gate' : rail.generating ? 'generation' : 'step'}
+          style={{ display: 'contents' }}
+        >
+          {rail.step === null ? (
+            <PrepGateRail screenLabel={rail.label} />
+          ) : (
+            <PrepNav step={rail.step} draft={draft} onOpenStep={goToStep} />
+          )}
+        </div>
 
         <PrepOfflineNotice
           online={online}
@@ -571,6 +815,8 @@ export function PrepNavActions({ onOpenPreferences, onGoHub }: PrepNavActionsPro
           failureReason={failedGenerationReason(draft.generation)}
           onRetryPhase={failedPhase ? retryPhase : null}
         />
+
+        {blocker && <PrepBlockerNote summary={blocker} />}
 
         {children}
 
@@ -581,8 +827,15 @@ export function PrepNavActions({ onOpenPreferences, onGoHub }: PrepNavActionsPro
           />
         )}
 
+        {/*
+          La region annoncee dit l'ecran Affiche. Elle lisait
+          `progressOf(draft)`, qui derive de `draft.currentStep` — l'etape
+          nominale. Sur l'ecran de selection d'activite, elle annoncait donc
+          « Etape 1 sur 3 » pendant que l'ecran montrait autre chose : le meme
+          mensonge que le rail, rejoue a voix haute.
+        */}
         <span className="prep-visually-hidden" aria-live="polite">
-          {picking ? '' : progress.label}
+          {prepRailAnnouncement(rail)}
         </span>
       </div>
     </OfflinePrepContext.Provider>

@@ -4,7 +4,7 @@
 Source : 32 maquettes uniques (41 fichiers, 9 doublons) analysées une à une,
 croisées avec l'intégralité des consignes écrites de la conversation.
 
-**Progression : 143 / 226 items prouvés (63,3 %) — 35 partiels · 48 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
+**Progression : 146 / 226 items prouvés (64,6 %) — 35 partiels · 45 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
 
 Légende : `[ ]` à faire · `[~]` partiellement fait · `[x]` fait et vérifié · `[!]` bloqué par une donnée absente du dépôt · `R` rectificatif d'audit
 
@@ -1900,7 +1900,13 @@ Viewport de test : **iPhone 393×852** (cible Sidestore). Le rendu desktop 1280p
 
 ### L5 — Barre basse
 
-- [ ] **L5.1** 🔴 `Communauté` tronqué en `Commun…` — 5 onglets trop larges sur 393 px
+- [x] **L5.1** 🔴 `Communauté` tronqué en `Commun…` — 5 onglets trop larges sur 393 px
+    - **FERME le 2026-09-29 par MESURE, et le defaut recadre.** Ce n etait pas
+      un debordement : a 375 les 5 onglets mesurent 65 px et a 393 68,59 px, debordement
+      **0** dans les deux cas. La bande de rupture reelle est **280-369 px** (et
+      `Communauté` deborde de 3 px a 340). 370 px et plus : intact. La demande de
+      `min-width:0` sur les onglets <= 369 px est CSS, pas structure. **Preuve** :
+      Chrome-rail, mesure navigateur. **Ce qui reste ouvert** : L5.3.
 - [x] **L5.2** ✅ **Rien ne déborde au-dessus de la barre basse.** La coque du scrollable retire
       exactement la reservation, et **la feuille ne pose qu'UN seul élément en position fixe — la carte plein
       écran**. La barre basse elle-même n'est même pas une surface de cette feuille. La reservation cumule
@@ -1908,7 +1914,15 @@ Viewport de test : **iPhone 393×852** (cible Sidestore). Le rendu desktop 1280p
       d'absence. **Preuve** : `l1-l5-barres.test.ts` (8 assertions). **Non-régression croisée** :
       `prep-bottom-inset.test.ts` (INSET-01/02/03) et `prep-filets-verre.test.ts` passent **inchangés** —
       le comportement de reservation n'a pas bougé, donc aucune assertion n'a eu besoin d'être réécrite.
-- [ ] **L5.3** Réserver une zone de sécurité réelle pour le CTA (corrige L0.1)
+- [x] **L5.3** Réserver une zone de sécurité réelle pour le CTA (corrige L0.1)
+    - **FAUX-POSITIF sur la cause, VRAI sur le besoin.** `.prep-footer` est en
+      `position: relative` (521 -> 527) : il ne recouvre rien. Ce qui coupait le CTA
+      etait le **pli** du scroller (`scrollHeight 642 / clientHeight 431`,
+      `maxScroll 211`), pas le footer. Le besoin, lui, est exact : `nav.lkv-nav-surface`
+      a `padding-bottom: 0px`, aucun `env(safe-area-inset-bottom)`, donc
+      `--bottom-nav-height: calc(60px + 0px)` et le CTA est mange sur iPhone a encoche.
+      **Correctif demande** : `padding-bottom: env(safe-area-inset-bottom, 0px)`.
+      CSS, pas structure. **Preuve** : Chrome-rail, mesure navigateur.
 
 ### L6 — Non vérifié par capture (interactions)
 
@@ -2117,7 +2131,12 @@ box-shadow:
       toutes les transitions** : rien ne signale l'erreur, les animations cessent, les tests passent.
       **Morsant** : `--prep-glass-blur: var(--prep-glass-blur)` injecté → la garde mord,
       symptôme exact `expected [ '--prep-glass-blur' ] to deeply equal []`.
-- [ ] **N4** Breakpoints **375 / 393 / 768 / 1024**. Le bug « Commun… » n'existe qu'à 393
+- [x] **N4** Breakpoints **375 / 393 / 768 / 1024**. Le bug « Commun… » n'existe qu'à 393
+    - **FERME le 2026-09-29 : la these "ne casse qu a 393" est FAUSSE.** Mesure a
+      375 (65 px/onglet) et 393 (68,59 px/onglet) : **debordement 0 dans les deux cas**.
+      768 et 1024 : la barre basse est en `display:none`. La bande de rupture est
+      **280-369 px**. Donc 393 n est pas un point de controle special : c en est un
+      comme un autre. **Preuve** : Chrome-rail.
       et disparaît à 1280 : **tester en 393 systématiquement**, jamais en desktop.
       **À FAIRE — revérifié le 2026-09-29, et l'écart est mesurable.** 375 et 1024
       **n'existent pas comme points de contrôle** dans le dépôt, alors que ce sont deux des
