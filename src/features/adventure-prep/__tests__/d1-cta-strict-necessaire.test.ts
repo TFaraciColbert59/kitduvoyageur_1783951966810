@@ -104,17 +104,43 @@ describe('D1 — le CTA ne demande que le strict necessaire', () => {
     );
   });
 
-  it('D1-04: le depart reste le seul bloqueur, et il se nomme', () => {
+  it('D1-04: le depart n est plus un bloqueur, le moteur part sans origine', () => {
+    // B4 : « Depart OU arrivee, tous les deux facultatifs ». Le garde-fou
+    // `origin` de `hasEngineMinimum` est tombe — il refusait la MOITIE du
+    // contrat annoncee (arrivee seule, ou rien du tout). `canCreateStepOne`
+    // del egue a `hasEngineMinimum`, donc le CTA suit exactement le moteur.
     const sansDepart = deuxLieuxSansDateNiDuree();
     const ouvert = fullDraft({
       route: { ...sansDepart.route, origin: null },
       calendar: sansDepart.calendar,
     });
-    expect(canCreateStepOne(ouvert)).toBe(false);
-    expect(stepOneMissing(ouvert, 'trajet').blocking).toEqual(['lieu de départ']);
-    // Aucune promesse de complement sous un bouton mort : ce serait le
-    // mensonge exact que AN7 a fait disappear.
-    expect(stepOneReadySummary(ouvert, 'trajet')).toBeNull();
+    expect(ouvert.route.origin).toBeNull();
+    expect(canCreateStepOne(ouvert)).toBe(true);
+  });
+
+  it('D1-04bis: RACCORD UI — aucun bloqueur annonce quand le CTA est actif', () => {
+    // ROUGE VOLONTAIRE. Le MOTEUR est corrige (D1-04) ; l AFFICHAGE ne l est
+    // pas. `ENGINE_BLOCKING = ['activity', 'origin']`
+    // (components/stepOneProfile.ts:269, HORS PERIMETRE) continue de nommer
+    // « lieu de depart » dans `blocking`, et `stepOneReadySummary`
+    // (ligne 351) se tait sur cette foi. Resultat a l ecran : « Il manque :
+    // lieu de depart » sous un CTA ACTIF — le bouton actif-et-mort
+    // d origine, revenu par l autre porte.
+    // RACCORD : retirer 'origin' de ENGINE_BLOCKING, ligne 269. Ce qu on
+    // affiche ensuite pour l absence de depart (« lieu de depart » en
+    // complement, ou rien du tout) est un arbitrage PRODUIT : le moteur
+    // n invente pas d origine, donc promettre que l IA la trouvera serait
+    // le meme mensonge en sens inverse.
+    const sansDepart = deuxLieuxSansDateNiDuree();
+    const ouvert = fullDraft({
+      route: { ...sansDepart.route, origin: null },
+      calendar: sansDepart.calendar,
+    });
+    expect(canCreateStepOne(ouvert)).toBe(true);
+    // CIBLE : aucun bloqueur annonce. `lieu de depart` doit rejoindre les
+    // complements, ou disparaitre — mais pas rester dans `blocking`, la
+    // liste qui signifie « vous ne pouvez pas avancer ».
+    expect(stepOneMissing(ouvert, 'trajet').blocking).toEqual([]);
   });
 
   it('D1-05: rendu reel — un CTA actif, sans « Il manque »', () => {

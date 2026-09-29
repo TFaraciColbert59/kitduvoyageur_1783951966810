@@ -1157,11 +1157,144 @@ export function keepReturnDate(
   return isoPlusDays(startDate, durationDays - 1) === returnDate ? returnDate : null;
 }
 
+
+/**
+ * C9 - l heure de depart, SAISIE et jamais deduite.
+ *
+ * Le modele, le store et la route de commit portaient deja cette heure ; le
+ * tiroir ne laissait personne la saisir. Ce composant pose le seul maillon
+ * qui manquait, et il est volontairement mince : la regle de l heure est
+ * ecrite UNE fois, dans `normalizeClockTime` (types.ts). Le champ
+ * n APPROCHE rien, ne complete rien, ne devine rien.
+ *
+ * Deux consequences, qui sont le contrat de C9 :
+ *
+ *   - une heure absente reste ABSENTE (`null`). Le champ s affiche donc vide,
+ *     jamais « 08:00 » : une heure affichee sans reponse derriere elle se
+ *     lirait comme un fait. C est cette absence qui laisse l IA choisir le
+ *     moment le plus opportun ;
+ *   - une saisie invalide ne devient pas une heure approchee : le store la
+ *     normalise en `null`, et l absence se relit comme une absence.
+ *
+ * Le `<input type="time">` natif est le seul controle qui donne le pave
+ * numerique du systeme et la validation HH:MM sur mobile. Il est laisse
+ * TRANSPARENT (`opacity: 0`) et pose sur une pastille de verre : le natif
+ * garde son comportement, le tiroir garde son materiau. Aucun glyphe n est
+ * ajoute — le depot n expose pas d icone d horloge, et en inventer une
+ * produirait un dessin qui ne veut rien dire.
+ */
+function StartTimeField(props: {
+  value: string | null;
+  onChange: (next: string | null) => void;
+}) {
+  const { value, onChange } = props;
+
+  return (
+    <div className="field">
+      <label htmlFor="prep-start-time" className="t2">
+        Heure de départ
+      </label>
+
+      {/* Le materiau vient de la FEUILLE, jamais du composant : `.note` porte
+          le verre du tiroir, et lui seul. Un fond pose ici rouvrirait la porte
+          a un second materiau et casserait le verre — regle que le tiroir Lieu
+          fait verifier sur le CODE, pas seulement sur le rendu. Le composant ne
+          declare donc que la GEOMETRIE de la pastille. */}
+      <span
+        className="note"
+        style={{
+          position: "relative",
+          display: "inline-flex",
+          alignItems: "center",
+          width: "fit-content",
+          minHeight: 44,
+          overflow: "hidden",
+        }}
+      >
+        <span
+          aria-hidden="true"
+          className={value === null ? "t2" : "t1"}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            fontVariantNumeric: "tabular-nums",
+            letterSpacing: "0.02em",
+            // La couleur est POSEE ICI, et pas laissee a la classe. `.t1`
+            // porte `--lkv-text-primary` : c est l encre des surfaces CLAIRES
+            // du hub, pas celle du verre. Mesure au navigateur (2026-09-29,
+            // 393x852) sur ce composant reel, l heure choisie sortait en
+            // rgb(23, 43, 36) sur la pastille sombre - quasi-noir sur
+            // quasi-noir, donc une heure repondue illisible, et la pastille
+            // devenait l element le plus lumineux d une carte qui ne veut rien
+            // dire. Le tiroir expose ses propres encres, mesurees sur SON
+            // verre : une heure repondue est un accent pose, une heure absente
+            // est une reponse qui n a pas ete donnee. La classe ne garde que
+            // la TAILLE ; la COULEUR vient du tiroir.
+            color:
+              value === null
+                ? "var(--prep-ink-secondary)"
+                : "var(--prep-ink-accent-strong)",
+            // L absence se DIT. Une heure vide ne s affiche pas comme une heure
+            // approchee, mais comme une reponse qui n a pas ete donnee.
+            pointerEvents: "none",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {value === null ? "À choisir" : value}
+        </span>
+
+        {/* Le depot natif est TRANSPARENT et pose sur la pastille : le natif
+            garde son comportement et son pave numerique, la feuille garde le
+            materiau. Aucun glyphe n est ajoute — le tiroir Quand n expose pas
+            d icone d horloge, et en inventer une produirait un dessin qui ne
+            veut rien dire. L element reste focusable et atteignable : on ne le
+            masque que visuellement. */}
+        <input
+          id="prep-start-time"
+          type="time"
+          value={value ?? ""}
+          aria-label="Heure de départ"
+          onChange={(event) => onChange(event.target.value === "" ? null : event.target.value)}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            opacity: 0,
+            cursor: "pointer",
+            border: 0,
+            padding: 0,
+          }}
+        />
+      </span>
+
+      <p className="prep-drawer__note">
+        {value === null
+          ? "Facultatif. Laisse vide, l’IA choisira le moment le plus opportun."
+          : "Départ choisi. Efface le champ pour revenir à un choix de l’IA."}
+      </p>
+    </div>
+  );
+}
+
 export function CalendarSheet({ draft, actions, onClose }: PrepSheetProps) {
   const [startDate, setStartDate] = useState(draft.calendar.startDate ?? '');
   const [duration, setDuration] = useState(
     draft.calendar.durationDays === null ? '' : String(draft.calendar.durationDays),
   );
+  // C9 - l heure se LIT sur le brouillon, elle ne se deduit pas. Un champ vide
+  // donne `null` : le store le normalise, et l absence reste une absence.
+  const [startTime, setStartTime] = useState<string | null>(draft.calendar.startTime ?? null);
+
+  // C9 - la saisie traverse IMMEDIATEMENT le store, et pas seulement a la
+  // validation : le tiroir du Lieu et le tiroir Quand sont deux vues du meme
+  // brouillon, et une heure saisie puis abandonnee ne doit pas laisser une
+  // reponse a moitie posee. Le store normalise (HH:MM), donc `null` reste
+  // une absence et une forme fausse ne devient jamais une heure approchee.
+  const choisirHeure = (next: string | null) => {
+    setStartTime(next);
+    actions.setCalendarStartTime(next);
+  };
 
   const days = Number(duration);
   const suggested = draft.calendar.durationIsSuggested;
@@ -1178,6 +1311,10 @@ export function CalendarSheet({ draft, actions, onClose }: PrepSheetProps) {
       durationDays: totalDays,
       durationIsSuggested: false,
       returnDate: keepReturnDate(draft.calendar.returnDate, startDate || null, totalDays),
+      // C9 - l heure validee est celle du champ. `normalizeClockTime` la
+      // ramene a `null` si elle n en est pas une : une saisie hors forme ne
+      // devient donc jamais une heure approchee.
+      startTime,
     });
     onClose();
   };
@@ -1186,6 +1323,13 @@ export function CalendarSheet({ draft, actions, onClose }: PrepSheetProps) {
     <div>
       <Section title="Date de départ">
         <PrepCalendar value={startDate} onChange={setStartDate} />
+      </Section>
+
+      {/* C9 - une seule section de date : la date de retour n a pas son propre
+          reglage, elle se DEDUIT de la date de depart et de la duree. Ce champ
+          ne fait qu y ajouter l heure, sans jamais remplacer l une ou l autre. */}
+      <Section title="Heure de départ">
+        <StartTimeField value={startTime} onChange={choisirHeure} />
       </Section>
 
       <Section title="Durée">

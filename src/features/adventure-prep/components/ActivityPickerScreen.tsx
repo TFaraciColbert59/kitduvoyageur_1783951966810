@@ -111,7 +111,7 @@ function ActivityRow({ activity, selected, stateLabel, onToggle }: ActivityRowPr
           <Icon name={activity.icon} size={22} />
         </span>
         <span className="prep-act__body">
-          <span className="prep-act__name" style={{ whiteSpace: 'normal', overflow: 'visible', textOverflow: 'clip' }}>
+          <span className="prep-act__name">
             {activity.label}
           </span>
           <span className="prep-act__hint">{activityTemplateLabel(activity.id)}</span>

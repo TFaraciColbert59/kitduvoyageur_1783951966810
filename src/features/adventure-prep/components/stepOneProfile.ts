@@ -266,7 +266,7 @@ export function stepOneMissingSummary(
  * GPS de la personne : le champ ne reste vide que si la geolocalisation est
  * refusee, et la ligne « Il manque : lieu de depart » dit alors quoi faire.
  */
-const ENGINE_BLOCKING: readonly StepOneFieldKey[] = ['activity', 'origin'];
+const ENGINE_BLOCKING: readonly StepOneFieldKey[] = ['activity'];
 
 /**
  * Repartition des champs manquants entre ce qui BLOQUE et ce que l IA prend.
@@ -309,7 +309,30 @@ export function stepOneMissing(draft: AdventurePrepDraft, id: StepOneProfileId):
   // parcours sans activite de catalogue. Sans cette ligne, l'ecran passe du
   // silence « il manque : X » a un silence total, et rien n'explique pourquoi.
   // C'est la meme faute que le bouton actif et mort, dans l'autre sens.
-  if (!draft.activities.primary && !optional.includes(labelOf('activity'))) {
+  //
+  // LE DEPART n'arrete QUE si l'INTENTION manque, lui aussi.
+  //
+  // Le depart n'est plus lu par `hasEngineMinimum` : des qu'une intention
+  // existe, le moteur construit reellement un parcours sans origine (B4), et
+  // nommer le depart comme un arret serait exactement le « bouton actif et
+  // mort » qu'AN7 supprime. Mais sur un brouillon VIDE, il n'y a ni sujet ni
+  // point de rattachement : sans intention, l'absence d'origine redevient un
+  // arret nomme. Des qu'une intention existe, elle passe en facultatif — c'est
+  // l'IA (ou personne) qui la tranche, et l'ecran le dira par `optional`.
+  if (isMissing(draft, 'activity') && isMissing(draft, 'origin')) {
+    const label = labelOf('origin');
+    if (!blocking.includes(label)) blocking.push(label);
+  }
+
+  // L ACTIVITE quand le catalogue a ete ferme ET que rien ne la bloque deja.
+  // Le garde `blocking.includes` est ce qui empeche les deux listes de se
+  // melanger : un meme libelle annonce comme arret ET comme complement est un
+  // message qui se contredit.
+  if (
+    !draft.activities.primary &&
+    !blocking.includes(labelOf('activity')) &&
+    !optional.includes(labelOf('activity'))
+  ) {
     optional.push(labelOf('activity'));
   }
 
@@ -317,6 +340,9 @@ export function stepOneMissing(draft: AdventurePrepDraft, id: StepOneProfileId):
     if (ENGINE_BLOCKING.includes(field)) continue;
     if (!isMissing(draft, field)) continue;
     const label = labelOf(field);
+    // Anti-melange : un champ deja annonce comme arret ne peut pas apparaitre
+    // aussitot comme complement. Les deux lignes se contrediraient a l'ecran.
+    if (blocking.includes(label)) continue;
     if (!optional.includes(label)) optional.push(label);
   }
   return { blocking, optional };

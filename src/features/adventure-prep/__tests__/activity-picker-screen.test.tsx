@@ -141,14 +141,12 @@ describe('Ecran 02 — le catalogue est complet et atteignable', () => {
     }
   });
 
-  it('E02-23: un nom d activite ne peut pas etre coupe', () => {
-    // La feuille de feature met `nowrap` + ellipsis sur `.prep-act__name` :
-    // sur 390 px le nom le plus long se lisait « Randonnee avec n... ». Le
-    // composant annule ces deux proprietes en style inline, donc le nom passe
-    // a la ligne plutot que d etre tronque.
+  it('L3.2: un nom d activite est limite a 3 lignes', () => {
+    // La feuille de feature met un line-clamp de 3 lignes sur `.prep-act__name` :
+    // Le composant n a plus de style inline et depend de la CSS.
     const html = render(draftWithoutItineraryInput());
-    expect(html).toContain('white-space:normal');
-    expect(html).toContain('text-overflow:clip');
+    expect(html).not.toContain('white-space:normal');
+    expect(html).not.toContain('text-overflow:clip');
   });
 
   it('E02-11: une recherche vide montre la famille par defaut, une recherche filtre', () => {

@@ -56,10 +56,23 @@ describe('proposition de parcours', () => {
     expect(built?.activityCount).toBe(0);
   });
 
-  it('ne construit rien sans point de depart', () => {
+  it('construit un squelette SANS depart, sans en inventer un', () => {
+    // B4 : le manque de depart ne refuse plus la construction. Rendre `null`
+    // ici effacait la structure ET les notes, et l ecran n avait plus rien a
+    // montrer alors que la personne avait bien demande des etapes.
     const draft = fullDraft();
     const sansDepart = { ...draft, route: { ...draft.route, origin: null } };
-    expect(buildItinerary(sansDepart)).toBeNull();
+    const built = buildItinerary(sansDepart);
+    expect(built).not.toBeNull();
+    // CONTRE-EXEMPLE : le trou se NOME, il ne se comble pas. Aucune position,
+    // aucun identifiant, aucun nom de lieu a inventer.
+    const premier = built!.steps[0]!;
+    expect(premier.placeName).toBeNull();
+    expect(premier.placeId).toBeNull();
+    expect(premier.lat).toBeNull();
+    expect(premier.lon).toBeNull();
+    // La structure du sejour est celle d avec depart : seule l origine manque.
+    expect(built!.steps).toHaveLength(buildItinerary(draft)!.steps.length);
   });
 
   it('propose une journee quand la duree n a pas ete choisie', () => {

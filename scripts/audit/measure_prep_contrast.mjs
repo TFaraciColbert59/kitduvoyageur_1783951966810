@@ -159,6 +159,18 @@ const SELFTEST_PROBES = Object.freeze([
     expectedVerdict: 'FAIL',
   },
   {
+    id: 'controle-bande-dissolution',
+    description: 'Sonde conforme (comme controle-conforme) mais forcee dans la bande de dissolution de .prep-body : elle doit etre REFUSEE, sinon la regle anti-vacuite ne prouve rien.',
+    plate: [27, 33, 28],
+    text: [255, 255, 255],
+    expectedVerdict: 'FAIL',
+    // `skipExpected` : ce verdict n est PAS un echec de contraste. La sonde
+    // doit disparaitre de la liste des noeuds mesures avec le motif de
+    // dissolution. Un harnais qui la mesurerait quand meme validerait ce
+    // test sans rien prouver.
+    expectSkipped: true,
+  },
+  {
     id: 'controle-conforme',
     description: 'Texte #FFFFFF sur plaque opaque #1B211C — doit passer très largement le seuil.',
     plate: [27, 33, 28],
@@ -490,6 +502,91 @@ const COLLECT_TEXT_NODES = () => {
     0.2126 * channelLuminance(r) + 0.7152 * channelLuminance(g) + 0.0722 * channelLuminance(b)
   );
   const viewportHeight = window.innerHeight;
+  const viewportWidth = window.innerWidth;
+  // Cadre REELLEMENT PEINT : l'intersection de la boite avec le scrollport de
+  // chacun de ses ancetres a debordement. `measureNode` rogne toujours sur le
+  // rectangle de l'element ; si une partie de ce rectangle est rognee par un
+  // conteneur, le crop mord sur ce qui est peint a la place (pied de page,
+  // rail de jours, photo) et le contraste releve porte alors sur les pixels
+  // d'un AUTRE element. Refuser de cadrer une boite partiellement rognee
+  // vaut mieux que la mesurer de travers.
+  const paintedFrame = (element) => {
+    const frame = { left: 0, top: 0, right: viewportWidth, bottom: viewportHeight };
+    for (let parent = element.parentElement; parent && parent !== document.documentElement; parent = parent.parentElement) {
+      const style = getComputedStyle(parent);
+      const clipsY = /^(auto|scroll|overlay|hidden)$/.test(style.overflowY);
+      const clipsX = /^(auto|scroll|overlay|hidden)$/.test(style.overflowX);
+      if (!clipsY && !clipsX) continue;
+      const box = parent.getBoundingClientRect();
+      if (clipsY) {
+        frame.top = Math.max(frame.top, box.bottom < frame.top ? frame.top : box.top);
+        frame.bottom = Math.min(frame.bottom, box.bottom);
+      }
+      if (clipsX) {
+        frame.left = Math.max(frame.left, box.left);
+        frame.right = Math.min(frame.right, box.right);
+      }
+    }
+    return frame;
+  };
+  // Un conteneur defilable qui dissout son bas (`mask-image`) est un AUTRE
+  // cas de non-mesurabilite, et le plus piegeux des deux : dans la bande de
+  // fondu, texte ET panneau s estompent ENSEMBLE vers le fond (photo). Le
+  // composite converge toujours vers la couleur du fond, quel que soit le
+  // fond : aucun backdrop, aucune epaisseur, aucune opacite ne peut garantir
+  // 4,5:1 la ou le masque avale deja la plaque. Un ratio releve dans la
+  // bande ne decrit donc plus le contraste DU TEXTE, il decrit un
+  // melange texte+fond que la maquette ne pretend pas garantir.
+  // On reconnait UNIQUEMENT la forme qu impose le design : un fondu lineaire
+  // vertical, opaque jusqu a `calc(100% - Npx)`, puis transparent a 100 %.
+  // Tout autre masque (radial, degrade lateral, icone SVG) est ignore :
+  // confondre un masque graphique avec une dissolution de scroll
+  // reviendrait a effacer des echecs reels.
+  const dissolveBandOf = (element) => {
+    for (let parent = element.parentElement; parent && parent !== document.documentElement; parent = parent.parentElement) {
+      const mask = getComputedStyle(parent).maskImage;
+      if (!mask || mask === 'none') continue;
+      // Chrome OMET la direction quand elle vaut `to bottom` : la valeur
+      // calculee est `linear-gradient(rgb(0, 0, 0) calc(100% - 60px), ...)`,
+      // SANS `to bottom`. Une garde qui exigerait la direction ecrirait donc
+      // une regle morte — c est exactement ce qu elle a fait au premier essai,
+      // et la sonde de controle l a signale. On accepte les deux serialisations.
+      // On refuse en revanche toute autre direction (`to right`, `to top`,
+      // `45deg`) : une dissolution LATERALE ne prouve rien du defilement.
+      if (!/^linear-gradient\(/.test(mask)) continue;
+      if (/^linear-gradient\(\s*(?!to bottom\b|rgb|#000|rgba)/.test(mask)) continue;
+      if (/^linear-gradient\(\s*(?:to (?!bottom)\w+|\d)/.test(mask)) continue;
+      // Chrome serialise `#000` en `rgb(0, 0, 0)` et `transparent` en
+      // `rgba(0, 0, 0, 0)` : on lit la FORME, pas la couleur du fondu, qui
+      // est noir par construction.
+      // Forme DECISIVE : opaque jusqu a `calc(100% - Npx)`, puis
+      // transparent a 100 %. C est elle qui definit la bande, et elle
+      // seule : un degrade lateral, un masque SVG ou un fondu a paliers
+      // ne produit pas cette signature et reste ignore.
+      // Couleur noire du fondu : Chrome serialise `rgb(0, 0, 0)` ou
+      // `rgba(0, 0, 0, 1)`, la feuille ecrit `#000`. On lit la FORME, pas
+      // la couleur, qui est noire par construction.
+      const NOIR = String.raw`rgba?\(\s*0\s*,\s*0\s*,\s*0(?:\s*,\s*[\d.]+)?\s*\)`;
+      const TRANSPARENT = String.raw`(?:rgba?\(\s*0\s*,\s*0\s*,\s*0\s*,\s*0\s*\)|transparent)`;
+      const SHAPE = new RegExp(
+        String.raw`^linear-gradient\(\s*(?:to bottom\s*,\s*)?(?:#000\b|` + NOIR
+          + String.raw`)\s*calc\(100%\s*-\s*([\d.]+)px\)\s*,\s*` + TRANSPARENT
+          + String.raw`\s+100%\s*\)$`
+      );
+      const found = SHAPE.exec(mask);
+      if (!found) continue;
+      const height = Number.parseFloat(found[1]);
+      if (!Number.isFinite(height) || height <= 0) continue;
+      const box = parent.getBoundingClientRect();
+      return {
+        ancestor: `${parent.tagName.toLowerCase()}.${String(parent.className || '').replace(/\s+/g, ' ').trim().slice(0, 60)}`,
+        height,
+        top: box.bottom - height,
+        bottom: box.bottom,
+      };
+    }
+    return null;
+  };
   const results = [];
   for (const element of document.querySelectorAll('body *')) {
     if (SKIP_TAGS.has(element.tagName)) continue;
@@ -522,28 +619,105 @@ const COLLECT_TEXT_NODES = () => {
       continue;
     }
     if (rect.width < 4 || rect.height < 4) continue;
+    const frame = paintedFrame(element);
+    const band = dissolveBandOf(element);
+    // Intersection seulement : une boite qui EFFLEURE la bande n y est pas
+    // entierement dissoute, et une boite a cheval garde une part de plaque
+    // reellement peinte — la mesurer vaudrait mieux que de la rejeter.
+    if (band && rect.bottom > band.top + 0.5 && rect.top < band.bottom - 0.5) {
+      results.push({
+        text: (element.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80),
+        classes: typeof element.className === 'string' ? element.className.replace(/\s+/g, ' ').trim().slice(0, 90) : '',
+        tag: element.tagName.toLowerCase(),
+        skippedInPage: `boite a cheval sur la bande de dissolution du scroll (${band.ancestor}, ${band.height}px) : texte et panneau s estompent ensemble vers le fond, le ratio releve decrireait un composite et non le rendu du texte`,
+        occluded: false,
+        occludedBy: null,
+        occlusionUnverifiable: false,
+        probeId: element.closest('[data-prep-audit-probe]')
+          ? element.closest('[data-prep-audit-probe]').getAttribute('data-prep-audit-probe')
+          : null,
+      });
+      continue;
+    }
+    const fullyPainted = rect.top >= frame.top - 0.5 && rect.bottom <= frame.bottom + 0.5
+      && rect.left >= frame.left - 0.5 && rect.right <= frame.right + 0.5;
+    if (!fullyPainted) {
+      results.push({
+        text: (element.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80),
+        classes: typeof element.className === 'string' ? element.className.replace(/\s+/g, ' ').trim().slice(0, 90) : '',
+        tag: element.tagName.toLowerCase(),
+        skippedInPage: 'boîte rognée par un conteneur à débordement : les pixels du crop ne seraient pas ceux du texte',
+        occluded: false,
+        occludedBy: null,
+        occlusionUnverifiable: false,
+        probeId: null,
+      });
+      continue;
+    }
     const declared = parseColor(style.color);
     if (!declared) continue;
     // `elementsFromPoint` renvoie la pile de hit-test complete, du plus haut
     // au plus bas. Un seul element (`elementFromPoint`) ne permet pas de
     // distinguer « masque au-dessus » de « masque en dessous ».
-    const centreX = Math.min(window.innerWidth - 1, Math.max(0, rect.left + rect.width / 2));
-    const centreY = Math.min(viewportHeight - 1, Math.max(0, rect.top + rect.height / 2));
-    const stack = document.elementsFromPoint(centreX, centreY);
-    const depth = stack.indexOf(element);
-    const occluder = depth > 0 ? stack[0] : null;
+    // Le test se fait sur une GRILLE 5 x 3, pas sur le seul centre. Un point
+    // central laisse passer deux defauts de couverture, tous deux observes sur
+    // `/prepare` : une barre collante qui ne recouvre que le HAUT de la boite
+    // (`.prep-step__reason` fait 249x18, sa premiere moitie passe sous
+    // `.prep-footer` au palier 682), et une boite rognee dont le centre tombe
+    // encore dans le scrollport. Dans les deux cas le crop mord sur l'element
+    // recouvrant et le contraste releve n'est plus celui du texte.
+    // Un DESCENDANT de la cible n'est pas un recouvrant : sans cette exclusion
+    // un `<span>` interne ferait passer une boite parfaitement degagee pour
+    // masquee, ce qui serait une exclusion de trop.
+    const GRID_COLUMNS = 5;
+    const GRID_ROWS = 3;
+    const occluderTally = new Map();
+    let centreDepth = -1;
+    for (let row = 0; row < GRID_ROWS; row += 1) {
+      for (let column = 0; column < GRID_COLUMNS; column += 1) {
+        const pointX = Math.min(viewportWidth - 1, Math.max(0, rect.left + (rect.width * (column + 0.5)) / GRID_COLUMNS));
+        const pointY = Math.min(viewportHeight - 1, Math.max(0, rect.top + (rect.height * (row + 0.5)) / GRID_ROWS));
+        const stack = document.elementsFromPoint(pointX, pointY);
+        const depth = stack.indexOf(element);
+        if (row === 1 && column === 2) centreDepth = depth;
+        // depth === 0 : la cible EST au sommet, rien ne la masque.
+        // depth === -1 : la cible est ABSENTE de la pile alors qu'elle est
+        // visible a ces coordonnees. Elle est donc rognee ou couverte par un
+        // element peint apres elle — un bandeau translucide en flux normal,
+        // par exemple, qui la depasse sans etre son ancetre. Le `continue`
+        // d avant traitait ces deux cas comme identiques : le crop mordait
+        // alors sur les pixels du recouvrant et le contraste releve portait
+        // sur un AUTRE element. Mesure au navigateur, 1024x768, palier 8 :
+        // `.prep-stale` (60-156) couvre `.prep-programme__steptitle`
+        // (91-115), depth vaut -1, et le rapport concluait 3,51:1 sur un texte
+        // qui vaut 18,77:1 des lors qu il est cadre entierement.
+        if (depth === 0) continue;
+        if (depth === -1) {
+          occluderTally.set('[absente de la pile : rognee ou couverte]', (occluderTally.get('[absente de la pile : rognee ou couverte]') ?? 0) + 1);
+          continue;
+        }
+        const top = stack[0];
+        if (top === element || (top && element.contains(top))) continue;
+        const name = String((top && top.className) || (top && top.tagName) || '?')
+          .replace(/\s+/g, ' ').trim().slice(0, 70);
+        occluderTally.set(name, (occluderTally.get(name) ?? 0) + 1);
+      }
+    }
+    const occluder = [...occluderTally.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
     // Un element `pointer-events: none` est absent de la pile : le hit-test
     // ne peut alors ni confirmer ni infirmer qu'il est masque. Plutot que de
     // l'exclure (on masquerait un vrai echec) ou de l'accuser a tort, on le
     // garde dans les vericts et on signale l'incertitude.
-    const unverifiable = depth === -1 && getComputedStyle(element).pointerEvents === 'none';
-    const occluded = depth > 0 || (depth === -1 && !unverifiable);
+    const unverifiable = centreDepth === -1 && getComputedStyle(element).pointerEvents === 'none';
+    const occluded = occluder !== null || (centreDepth === -1 && !unverifiable);
     // Absent de la pile alors qu'il devrait s'y trouver : l'element est rogne
     // par un conteneur a debordement dont le scrollport ne couvre pas le
     // point (liste horizontale, corps defilant, ...). Nommer ce conteneur rend
     // le defaut actionnable au lieu de laisser « inconnu » dans le rapport.
+    const centreX = Math.min(viewportWidth - 1, Math.max(0, rect.left + rect.width / 2));
+    const centreY = Math.min(viewportHeight - 1, Math.max(0, rect.top + rect.height / 2));
     const clipper = (() => {
-      if (depth !== -1) return null;
+      if (centreDepth !== -1) return null;
       for (let parent = element.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
         const style = getComputedStyle(parent);
         if (style.overflowX === 'visible' && style.overflowY === 'visible') continue;
@@ -557,9 +731,7 @@ const COLLECT_TEXT_NODES = () => {
     const probe = element.closest('[data-prep-audit-probe]');
     results.push({
       occluded,
-      occludedBy: occluder
-        ? (String(occluder.className || '').replace(/\s+/g, ' ').trim().slice(0, 70) || occluder.tagName.toLowerCase())
-        : clipper,
+      occludedBy: occluder || clipper,
       occlusionKind: occluder ? 'element au-dessus' : (clipper ? 'rogne par un conteneur a debordement' : null),
       occlusionUnverifiable: unverifiable,
       text: (element.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80),
@@ -652,11 +824,52 @@ const HAS_PHOTO_LAYER = () => {
   return false;
 };
 
-const INJECT_PROBE = ({ probeId, plate, text }) => {
+/**
+ * Auto-verification.
+ *
+ * `placement` decide si la sonde doit etre MESUREE ou si elle doit etre
+ * REFUSEE par la regle de bande de dissolution :
+ *
+ *   - `mesure` (defaut) : bandeau fixe en haut du viewport. La sonde est
+ *     mesuree normalement, et son ratio doit corroborer la calculatrice
+ *     WCAG — c est la preuve que le harnais mesure correctement.
+ *   - `bande-dissolution` : la sonde est placee dans un conteneur qui
+ *     reproduit la forme EXACTE du fondu impose sur `.prep-body`
+ *     (`linear-gradient(to bottom, #000 calc(100% - Npx), transparent
+ *     100%)`), et son texte est cale dans les N derniers pixels. Les
+ *     couleurs sont celles d une sonde CONFORME : sans la regle, elle
+ *     passerait. Elle doit donc etre refusee — sinon le test valide une
+ *     regle qui ne s applique a rien.
+ *
+ * On construit un conteneur dedie plutot que d accoler la sonde a un
+ * scrollport reel : la regle cherche un ANCETRE masque, et la preuve
+ * doit porter sur la regle elle-meme, pas sur la position d un
+ * element qu on aurait a replacer a chaque palier de defilement.
+ */
+const INJECT_PROBE = ({ probeId, plate, text, placement, bandPx }) => {
   const host = document.createElement('div');
   host.setAttribute('data-prep-audit-probe', probeId);
   // PAS de `pointer-events: none` : `elementsFromPoint` ignore les sous-arbres
-  // qui le portent, la sonde se verifierait recouverte par ce qu'elle masque.
+  // qui le portent, la sonde se verifierait recouverte par ce qu elle masque.
+  if (placement === 'bande-dissolution') {
+    const height = 200;
+    host.style.cssText = 'position:fixed;left:0;top:40px;width:100%;height:'
+      + height + 'px;z-index:2147483647;pointer-events:auto;'
+      + '-webkit-mask-image:linear-gradient(to bottom, #000 calc(100% - '
+      + bandPx + 'px), transparent 100%);'
+      + 'mask-image:linear-gradient(to bottom, #000 calc(100% - '
+      + bandPx + 'px), transparent 100%);';
+    const box = document.createElement('div');
+    // Le texte est cale DANS la bande : il doit etre lu, mais refuse.
+    box.style.cssText = 'position:absolute;left:20px;bottom:8px;width:260px;'
+      + 'display:block;margin:0;padding:12px 14px;'
+      + 'font-family:system-ui,sans-serif;font-size:16px;font-weight:600;line-height:1.25;'
+      + `color:rgb(${text.join(',')});background:rgb(${plate.join(',')});`;
+    box.textContent = 'Sonde de contraste';
+    host.appendChild(box);
+    document.body.appendChild(host);
+    return true;
+  }
   host.style.cssText = 'position:fixed;left:0;top:0;width:100%;z-index:2147483647;';
   const box = document.createElement('div');
   box.style.cssText = 'display:inline-block;margin:0;padding:12px 14px;'
@@ -696,6 +909,7 @@ const FIND_SCROLL_CONTAINERS = () => {
       selector: `${element.tagName.toLowerCase()}.${String(element.className || '').replace(/\s+/g, ' ').trim().slice(0, 60)}`,
       axisY: scrollableY,
       axisX: scrollableX,
+      clientHeightY: scrollableY ? element.clientHeight : 0,
       scrollablePxY: scrollableY ? element.scrollHeight - element.clientHeight : 0,
       scrollablePxX: scrollableX ? element.scrollWidth - element.clientWidth : 0,
     });
@@ -886,7 +1100,23 @@ async function measureBreakpoint(browser, { breakpoint, url, storageState, baseU
     0,
   );
   const reachablePx = Math.max(windowScrollPx, containerScrollPx);
-  const step = Math.max(200, Math.round(breakpoint.height * 0.8));
+  // Le pas de defilement doit etre dimensionne sur la FENETRE REELLEMENT
+  // PEINTE, pas sur la hauteur du viewport. Mesure sur `/prepare` (393x852,
+  // graine etape 2) : `div.prep-body` est le seul scrollport, 252px de haut
+  // pour 1600px de contenu, alors que le pas de l'ancien code valait 682px.
+  // Un texte n'etait alors cadre sur toute sa hauteur que dans une fenetre de
+  // (252 - hauteur du texte) px repartis sur 1157px de portee, et les seuls
+  // paliers reellement captures etaient 0 / 682 / 1157 : la plupart des textes
+  // n'etaient JAMAIS mesures pendant qu'ils etaient peints, et leur crop
+  // mordait sur le pied de page ou sur le rail. Prendre le pas le plus
+  // contraignant des scrollports reels, en gardant 40% de marge, GARANTIT
+  // qu'un element tombe dans un cadre complet a au moins un palier. On mesure
+  // donc plus d'elements, et on les mesure proprement.
+  const frameWindows = scrollContainers
+    .filter((container) => container.axisY && container.clientHeightY > 0)
+    .map((container) => container.clientHeightY);
+  const frameWindow = frameWindows.length ? Math.min(...frameWindows) : breakpoint.height;
+  const step = Math.max(120, Math.min(Math.round(breakpoint.height * 0.8), Math.floor(frameWindow * 0.6)));
   const steps = Math.min(24, Math.max(1, Math.ceil(reachablePx / step) + 1));
   const collected = new Map();
   const visitedScrollY = new Set();
@@ -1030,7 +1260,15 @@ async function runSelfTest(browser, { breakpoint, url, storageState, baseUrl }) 
   for (const probe of SELFTEST_PROBES) {
     const analytic = round2(contrastRatio(probe.text, probe.plate));
     await safeEvaluate(page, REMOVE_PROBES);
-    await safeEvaluate(page, INJECT_PROBE, { probeId: probe.id, plate: probe.plate, text: probe.text });
+    await safeEvaluate(page, INJECT_PROBE, {
+      probeId: probe.id,
+      plate: probe.plate,
+      text: probe.text,
+      placement: probe.expectSkipped ? 'bande-dissolution' : 'haut-page',
+      // La bande est passee en parametre : `page.evaluate` s'execute dans la
+      // page, hors du scope du module.
+      bandPx: 60,
+    });
     await page.waitForTimeout(180);
     const nodes = await safeEvaluate(page, COLLECT_TEXT_NODES);
     const { data, info } = await sharp(await page.screenshot({ fullPage: false }))
@@ -1038,6 +1276,40 @@ async function runSelfTest(browser, { breakpoint, url, storageState, baseUrl }) 
       .raw()
       .toBuffer({ resolveWithObject: true });
     const node = nodes.find((entry) => entry.probeId === probe.id);
+    if (probe.expectSkipped) {
+      // Garde anti-vacuite. On ne demande pas « le verdict est-il FAIL » :
+      // on demande « le noeud est-il absent des mesures ET porte-t-il le
+      // motif de dissolution ». C est la regle entiere qu on valide, pas son
+      // effet de bord sur une couleur.
+      const checksSkip = [
+        {
+          name: 'sonde localisee dans la page',
+          passed: Boolean(node),
+          detail: node ? (node.skippedInPage ?? 'collectee sans motif de refus') : 'le noeud injecté n’a pas été collecté',
+        },
+        {
+          name: 'regle de bande de dissolution active',
+          passed: Boolean(node && typeof node.skippedInPage === 'string' && /dissolution/.test(node.skippedInPage)),
+          detail: node?.skippedInPage ?? 'aucun motif : la regle ne s’est est pas declenchee sur une sonde.placee dans la bande',
+        },
+      ];
+      await page.screenshot({ path: path.join(SHOTS_DIR, `selftest-${probe.id}.png`), fullPage: false });
+      probes.push({
+        id: probe.id,
+        description: probe.description,
+        analyticRatio: analytic,
+        measuredWorst: null,
+        measuredBest: null,
+        threshold: null,
+        measuredVerdict: null,
+        expectedVerdict: 'REFUSE (bande de dissolution)',
+        paintedGlyph: null,
+        passed: checksSkip.every((check) => check.passed),
+        checks: checksSkip,
+        shot: path.join(SHOTS_DIR, `selftest-${probe.id}.png`),
+      });
+      continue;
+    }
     const shot = path.join(SHOTS_DIR, `selftest-${probe.id}.png`);
     await page.screenshot({ path: shot, fullPage: false });
 
@@ -1369,6 +1641,14 @@ async function run() {
             glyph: node.glyph,
             worst: node.worst,
             best: node.best,
+            // Le fond REELLEMENT preleve au pixel le moins favorable. Sans lui,
+            // un rapport ne dit pas POURQUOI un echec echoue : on ne voit que le
+            // ratio, et le diagnostic revient a supputer. Ces trois champs sont
+            // deja calcules par measureNode, ils etaient simplement abandonnes au
+            // moment de la serialisation.
+            backgroundAtWorst: node.backgroundAtWorst ?? null,
+            backgroundPixels: node.backgroundPixels ?? null,
+            backgroundSource: node.backgroundSource ?? null,
             threshold: node.threshold,
             verdict: node.verdict,
             // `pointer-events: none` : le hit-test ne peut confirmer ni infirmer

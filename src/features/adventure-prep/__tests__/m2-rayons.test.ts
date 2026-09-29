@@ -108,7 +108,7 @@ describe('M2.4 — etat mesure de la reduction des rayons', () => {
     // 14 px sans qu aucune declaration ne les porte.
     expect(css, '--radius-lg est toujours reference').not.toContain('--radius-lg');
     expect(css, 'le repli invente 14px est toujours present').not.toMatch(/,\s*14px\s*\)/);
-    expect(declarations('.prep-notice').get('border-radius')).toBe('var(--lkv-radius-concentric)');
+    expect(declarations('.prep-notice').get('border-radius')).toBe('var(--prep-radius-card)');
   });
 
   it('aucun repli de var() n est une mesure inventee', () => {
@@ -122,10 +122,8 @@ describe('M2.4 — etat mesure de la reduction des rayons', () => {
   });
 
   it('M2.4 RESTE OUVERT : il y a encore plus de deux rayons distincts', () => {
-    // Etat mesure au 2026-09-29, revu le meme jour pour L1.4 : passer le rail
-    // d'etapes en pastilles a retire le `border-radius: 2px` du focus-visible,
-    // un rayon ecrit en dur qui n'etait ni dans le design system ni dans la
-    // recette du verre. On passe donc de 15 a 14 rayons distincts.
+    // Etat mesure au 2026-09-29, revu apres reduction par le prior worker.
+    // On passe de 14 a 6 rayons distincts.
     //
     // Ce test ne valide pas l'item : il ENregistre l'ecart, et tombera des que
     // le fichier sera ramene a deux rayons. Chaque reduction doit se voir ici.
@@ -133,7 +131,7 @@ describe('M2.4 — etat mesure de la reduction des rayons', () => {
     expect(
       distincts.length,
       `il ne reste que ${distincts.length} rayons distincts (${JSON.stringify(distincts)}) : mettre a jour`,
-    ).toBe(14);
+    ).toBe(6);
   });
 
   it('la dependance croisee sur --prep-radius-sheet est toujours vraie', () => {

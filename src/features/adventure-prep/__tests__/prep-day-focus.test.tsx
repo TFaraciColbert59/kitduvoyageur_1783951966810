@@ -70,6 +70,7 @@ function model(days: number, perDay: DayTotals[]): ItineraryModel {
     totals: TOTALS,
     perDay,
     metricsContext: { label: 'Estime', basis: 'regles' },
+    travelMode: 'pieton',
     budgetPerPerson: { amount: null, currency: 'EUR' },
     activityCount: 1,
     contingencies: [],

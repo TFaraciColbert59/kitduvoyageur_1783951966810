@@ -216,13 +216,26 @@ describe('L2-4 — l arrivee est facultative et jamais inventee', () => {
     expect(draft.route.destination).toBeNull();
   });
 
-  it('L2-04f : contre-exemple — un depart manquant, lui, bloque bien', () => {
+  it('L2-04f : contre-exemple — un depart manquant, lui, ne bloque PLUS', () => {
     // Sans ce contre-exemple, L2-04 prouverait que la sonde ne voit jamais
-    // `disabled`, pas que l arrivee ne bloque pas. Un Brouillon sans depart
-    // doit, lui, inactiver le bouton.
+    // `disabled`, pas que l arrivee ne bloque pas. B4 a aligne le depart sur
+    // l arrivee : les deux sont facultatifs, et le bouton reste ouvert.
+    // Le CONTRE-EXEMPLE qui redeeme la sonde est redeplace en L2-04g.
     const d = fullDraft();
     const sansDepart: AdventurePrepDraft = { ...d, route: { ...d.route, origin: null } };
-    expect(cta(rendre(sansDepart))).toContain('disabled=""');
+    expect(cta(rendre(sansDepart))).not.toContain('disabled=""');
+  });
+
+  it('L2-04g : contre-exemple — sans INTENTION, le bouton se referme bien', () => {
+    // C est lui qui prouve que la sonde voit `disabled` : sans lui, L2-04f
+    // pourrait passer pour une sonde aveugle.
+    const d = fullDraft();
+    const sansIntention: AdventurePrepDraft = {
+      ...d,
+      activities: { primary: null, extra: [], nights: [] },
+      pickerDismissed: false,
+    };
+    expect(cta(rendre(sansIntention))).toContain('disabled=""');
   });
 
   it('L2-04e : contre-exemple — une arrivee reelle s affiche', () => {

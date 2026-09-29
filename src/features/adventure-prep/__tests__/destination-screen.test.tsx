@@ -273,11 +273,18 @@ describe('Écran 10 — ce qu’il reste à saisir', () => {
     expect(complet).not.toContain('Il manque');
     expect(complet).toContain('L’IA complètera : date, temps disponible');
 
-    // Le seul bloqueur restant, lui, se nomme — et n’annonce aucun complement.
+    // ARBITRAGE A (2026-09-29) : le moteur fait foi, donc le depart manquant
+    // n est plus un bloqueur — `hasEngineMinimum` ne le lit pas, et
+    // `requestDraftedItinerary` part sans origine en nommant le trou. Il
+    // devient donc un complement, et c est la meme loi que les deux lignes
+    // du dessus : l ecran nomme ce que l IA complete.
+    //
+    // Le nom du champ est exige dans les DEUX sens : sans le `toContain`, un
+    // ecran qui n’annoncerait rien passerait aussi bien qu’un ecran honnete.
     const sansDepart = fullDraft({ route: { ...base.route, origin: null } });
-    const bloque = visible(render(sansDepart));
-    expect(bloque).toContain('Il manque : lieu de départ');
-    expect(bloque).not.toContain('L’IA complètera');
+    const complement = visible(render(sansDepart));
+    expect(complement).not.toContain('Il manque : lieu de départ');
+    expect(complement).toContain('L’IA complètera : lieu de départ');
   });
 
   it('D10-15: le bouton reste bloqué tant qu’un champ bloquant manque', () => {

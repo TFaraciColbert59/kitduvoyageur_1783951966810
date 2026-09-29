@@ -61,6 +61,21 @@
      la valeur brute vit ICI, dans la couche de tokens, et le composant ne
      fait que la lire. Sans ce token, `PrepMap` reintroduirait un `rgb()`
      en dur — la règle « aucun hex dans les composants » tient. */
+
+  /* --- Plaque des controls vitres du preparateur ------------------------
+     G3.1 : le fond des pastilles du rail et celui de la rangee d actions
+     sont montes de 0,34 a 0,84 d'opacite. Le pixel de glyphe le plus
+     couvert d'un texte clair ne descend plus sous 4,5:1 sur ces
+     surfaces. Valeur brute ici, comme toute couleur du preparateur : la
+     section des correctifs ne porte que des jetons.
+     La meme plaque sert aux deuxranges (`--g1-bg` sur le rail,
+     `--g2-bg` sur la rangee) parce qu'elles partagent le meme materiau
+     et la meme contrainte de lisibilite. */
+  --prep-rail-plate: rgb(16 16 16 / 0.84);
+  /* Blanc PLEIN, et non 0,86 : a 0,78 d'alpha le texte des pastilles
+     perdait 22 % de sa luminance au pixel le plus couvert et faisait
+     tomber le groupe sous le seuil alors que le fond passait deja. */
+  --prep-ink-full: rgb(255 255 255);
   --prep-map-skeleton-sheen: rgb(34 97 72 / 0.1);
   --prep-map-skeleton-top: rgb(245 247 243);
   --prep-map-skeleton-bottom: rgb(236 241 236);
@@ -361,20 +376,26 @@
   --prep-ink-accent-strong: #a9e6c6;
   --prep-glass-shadow: var(--glass-shadow);
   --prep-glass-opaque: var(--card-tint-solid);
-  /* --- G3.1 · le plancher du verre -------------------------------------
-     Mesure au navigateur, 393x852, sur un parcours REELLEMENT genere :
-     16 groupes de texte sous 4,5:1. Ils n'ont pas seize causes : ils en
-     ont deux.
+  /* --- G3.1 . le plancher du verre -------------------------------------
+     Mesure au navigateur, 4 points de rupture, sur un draft REELLEMENT genere
+     (etape 3, 17 etapes, catalogue rando-refuge, Chamonix -> Argentiere).
 
-     La premiere est `.prep-map__glass`, qui plafonne a 1,30:1 meme sur sa
-     MEILLEURE zone. Ce n'est donc pas un contraste qui degrade par
-     endroit, c'est une surface qui n'a JAMAIS eu de materiau : sa regle
-     renvoie a `--prep-glass-bg`, un verre CLAIR a 12 %, alors que son
-     propre commentaire annonce l'inverse — « les controles flottants du
-     preparateur sont poses sur la CARTE, qui est claire ». Le materiau
-     sombre que ce commentaire appelle n'a jamais existe. Il est cree ici,
-     une fois, et c'est le seulendroit ou une couleur de plancher se pose. */
-  --prep-glass-floor: rgb(10 15 12 / 0.74);
+     La premiere cause des 16 groupes de texte sous 4,5:1 etait
+     `.prep-map__glass`, qui plafonnait a 1,30:1 meme sur sa MEILLEURE zone.
+     Ce n est donc pas un contraste qui degrade par endroit : c est une surface
+     qui n avait JAMAIS eu de materiau. Sa regle renvoyait a `--prep-glass-bg`,
+     un verre CLAIR a 12 %, alors que son propre commentaire annonçait l
+     inverse - les controles flottants du preparateur sont poses sur la CARTE,
+     qui est claire. Le materiau sombre que ce commentaire appelle est cree ici,
+     une fois, et c est le seul endroit ou une couleur de plancher se pose.
+
+     G3.1, MESURE, 4 points de rupture : a 74 % d alpha, les tuiles CLAIRES de
+     la carte transparaissent a travers le controle - « Recentrer » tombait a
+     3,22:1, « Ensemble » a 4,28:1. Le mesureur retient le pixel le MOINS
+     favorable dans un anneau de 3 px autour du trait : sur une carte rasterisee
+     ce n est pas la valeur moyenne qui compte, c est l UNIFORMITE du sol. A 90 %
+     le fond reste sombre sous les tuiles les plus claires et le libelle tient. */
+  --prep-glass-floor: rgb(10 15 12 / 0.9);
 
   /* --- G3.1 · l encre de lecture du preparateur -----------------------------
      Le theme de la page porte --lkv-text-subtle a 46 % de blanc : pose sur le
@@ -456,10 +477,28 @@
      hautes lumieres de la photo aprs melange, ce qui recreait exactement le
      pic clair qu'on cherche a supprimer. La correction est faite dans le
      filtre, donc une seule valeur pour tous les panneaux. */
-  --prep-panel-bg: rgb(16 16 16 / 0.84);
+  --prep-panel-bg: rgb(16 16 16 / 0.94);
+  /* G3.1 - MESURE, 4 points de rupture, draft reel de l etape 3. Le mesureur
+     retient le pixel le moins favorable dans un anneau de 3 px, et sur ce
+     panneau le pire fondighbour monte a rgb(93) la ou le median est a rgb(74).
+     0,94 resserre cet ecart : le verre reste translucide, mais il ne laisse plus
+     remonter de photo claire juste sous le trait. */
   --prep-panel-blur: 22px;
   --prep-panel-saturate: 200%;
   --prep-panel-brightness: 0.86;
+  /* G3.1 . MESURE au navigateur, 4 points de rupture, draft reel de l etape 3.
+     Hypothese testee puis REFUTEE : « Pause » etait notee a 2,93:1 la ou une
+     ligne identique, sur les memes pixels, en valait 7,27:1. Les deux chiffres
+     sortent du meme algo et du meme rendu. Descendre la saturation de 200 % a
+     130 % a ete pose, puis mesure : rendu PIXEL-IDENTIQUE sur cet element
+     (fond le moins favorable a rgb(93) avant comme apres). La saturation
+     n etait donc pas la cause - le pic venait de la COUVERTURE du glyphe
+     antialiasee en 13 px, pas du fond. Le levier a ete rendu a sa valeur
+     d origine : il porte la saturation que le flou retire (sans quoi la photo
+     reste terne sous le verre), invariant verifie par
+     prep-liquid-glass-css.test.ts, et il ne gagnait rien. Les gains mesures
+     de G3.1 viennent d ailleurs : --prep-glass-floor, --prep-panel-bg et le
+     corps du titre d etape. */
 
   /* --- Teintes de famille ---------------------------------------------
      Cinq familles de points, cinq teintes CATEGORIELLES. Le contraste n'est
@@ -600,7 +639,9 @@
    invariant de page, il doit gagner contre un echappement ponctuel. */
 .prep-nav,
 .prep-block,
-.prep-footer {
+.prep-footer,
+.prep-openpoints,
+.prep-body > div:has(> div > .prep-title) {
   background-color: var(--prep-panel-bg) !important;
   -webkit-backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
     brightness(var(--prep-panel-brightness));
@@ -635,6 +676,58 @@
      l invariant tient donc par l unicite de la recette, pas par une
      priorite. Si ce `!important` revient, c est qu un conflit a ressurgi. */
   box-shadow: var(--prep-glass-material);
+}
+
+/* G3.1 - MESURE au navigateur, 393x852, draft reel de l etape 3.
+   L en-tete d etape (titre + resume + bouton Modifier) ne portait AUCUN
+   materiau : classe vide, background transparent, border-radius 0. Trois de
+   ses textes sortaient donc du contraste, tous trois poses a nu sur la meme
+   zone claire de photo :
+       .prep-title  « Ton aventure »                   3,74:1
+       resume        « Randonnee avec nuit de refuge » 3,46:1
+       Button partage « Modifier »                     3,19:1
+   Le fond le moins favorable du mesureur y montait a rgb(132), contre rgb(93)
+   sous le panneau de programme : meme texte blanc, 9:1 contre 3,7:1. Le pic
+   venait de la photo vue au travers, pas du materiau voisin.
+
+   Il est donc rattache a l invariant de verre plus haut - meme bloc, meme
+   declaration, donc aucune recette parallele, ce qui est precisement
+   l invariant que P5.7 verifie - et il ne recoit QUE la forme.
+
+   PAS de padding, volontairement. Mesure au navigateur : l en-tete est a
+   padding 0, son contenu a x=76, alors que la carte voisine est a x=20 avec
+   12 px de marge interne. Ajouter une marge interne l aurait deplace de
+   44 px vers la gauche, sur un element que la mesure ne demande pas de
+   bouger. Le materiau corrige le contraste sans toucher au layout. */
+.prep-body > div:has(> div > .prep-title) {
+  border-radius: var(--prep-radius-card);
+}
+
+/* G3.1 - MESURE au navigateur, 393x852, draft reel de l etape 3.
+   Le bloc « points a verifier » portait un LAVAGE d alerte en fondinline
+   (DepartureStep.tsx:457, backgroundColor: var(--lkv-warning-subtle), resolu
+   en rgba(224,180,95,0.12) sous le theme liquide). Ce lavage deversait une
+   teinte claire sur toute la boite : le fond le moins favorable du mesureur y
+   montait a rgb(130-164) et quatre textes amber en sortaient :
+       « 7 points a verifier avant de partir »  1,40:1
+       « Repas : 1 a regler »                  1,91:1
+       « Equipement : 1 a regler »             1,92:1
+       « Etapes du programme : 5 a regler »    1,99:1
+
+   L ambre, lui, n est pas en cause : rgb(224,180,95) sur le panneau sombre
+   vaut 8,6:1. C est le fond clair d dessous qui le tuait. La correction porte
+   donc sur le FOND, jamais sur la taille ni sur la teinte du texte - les
+   textes heritent de color: var(--lkv-warning) en style inline, on ne les
+   touche pas.
+
+   Le bloc rejoint l invariant de verre plus haut : meme bloc, meme
+   declaration, donc pas de recette parallele (invariant P5.7). Le
+   ackground-color y porte !important pour une raison deja ecrite plus
+   haut dans ce fichier, et c est exactement le meme cas : une echappement
+   inline dans DepartureStep. La semantique d alerte ne disparait pas, elle
+   passe du fond vers un filet lateral - meme signal, sans lager le texte. */
+.prep-openpoints {
+  border-inline-start: 3px solid var(--lkv-warning);
 }
 
 .adventure-prep::before {
@@ -1040,7 +1133,7 @@ button.prep-block__row:active {
 }
 
 .prep-block__value[data-unknown='true'] {
-  color: var(--lkv-text-subtle);
+  color: var(--prep-ink-subtle);
   font-weight: 500;
   font-style: italic;
 }
@@ -1130,7 +1223,7 @@ button.prep-block__row:active {
   max-width: 100%;
   font-size: var(--prep-type-meta);
   line-height: 1.2;
-  color: var(--lkv-text-subtle);
+  color: var(--prep-ink-subtle);
   overflow-wrap: anywhere;
 }
 
@@ -1245,7 +1338,7 @@ button.prep-block__row:active {
 }
 
 .prep-cell__value[data-unknown='true'] {
-  color: var(--lkv-text-subtle);
+  color: var(--prep-ink-subtle);
   font-weight: 500;
   font-style: italic;
 }
@@ -1732,7 +1825,12 @@ button.prep-map__glass:active {
      MESURE, 393x852, navigateur : avant `background-color` resolu
      `var(--card-tint-solid)`, `backdrop-filter: none`, `box-shadow: none`.
      Apres : `rgb(16 16 16 / 0.84)`, blur 22px, saturate 200%,
-     brightness 0.86, plus `box-shadow: var(--prep-glass-material)`. */
+     brightness 0.86, plus `box-shadow: var(--prep-glass-material)`.
+
+     Ce 0,84 etait la valeur a la pose de G1. Il vaut 0,94 depuis G3.1 :
+     l anneau de 3 px du mesureur de contraste remontait encore de la photo
+     claire sous le trait (pire voisin a rgb(93 pour une mediane a rgb(74)).
+     Le materiau est le meme, seule son opacite a ete remontee. */
   background-color: var(--prep-panel-bg);
   -webkit-backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
     brightness(var(--prep-panel-brightness));
@@ -1810,7 +1908,7 @@ button.prep-map__glass:active {
 }
 
 .prep-metric__value[data-unknown='true'] {
-  color: var(--lkv-text-subtle);
+  color: var(--prep-ink-subtle);
   font-weight: 550;
 }
 
@@ -1824,14 +1922,14 @@ button.prep-map__glass:active {
   font-size: var(--prep-type-meta);
   font-weight: 520;
   line-height: 1.25;
-  color: var(--lkv-text-subtle);
+  color: var(--prep-ink-subtle);
   overflow-wrap: anywhere;
 }
 .prep-metric__scope {
   display: block;
   margin-top: 1px;
   font-size: var(--prep-type-meta);
-  color: var(--lkv-text-subtle);
+  color: var(--prep-ink-subtle);
 }
 
 /* --- Bandeau de génération --------------------------------------------- */
@@ -1878,7 +1976,7 @@ button.prep-map__glass:active {
   justify-content: center;
   width: 20px;
   height: 20px;
-  color: var(--lkv-text-subtle);
+  color: var(--prep-ink-subtle);
 }
 
 .prep-rail__line[data-state='done'] .prep-rail__dot {
@@ -1910,19 +2008,6 @@ button.prep-map__glass:active {
   display: flex;
   align-items: flex-start;
   gap: var(--space-3);
-}
-
-.prep-step__thumb {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--prep-radius-card);
-  color: var(--prep-ink-accent-strong);
-  background-color: color-mix(in srgb, var(--lkv-action) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--lkv-action) 18%, transparent);
 }
 
 .prep-step__body {
@@ -1971,7 +2056,7 @@ button.prep-map__glass:active {
   margin-top: 4px;
   font-size: var(--prep-type-meta);
   line-height: var(--lkv-line-body);
-  color: var(--lkv-text-subtle);
+  color: var(--prep-ink-subtle);
 }
 
 .prep-step__price {
@@ -1983,7 +2068,7 @@ button.prep-map__glass:active {
 }
 
 .prep-step__price[data-state='a_reserver'] {
-  color: var(--lkv-text-subtle);
+  color: var(--prep-ink-subtle);
   font-weight: 550;
   font-style: italic;
 }
@@ -2204,8 +2289,8 @@ button.prep-map__glass:active {
    et un aplat construit a partir du verre du preparateur, jamais du blanc. */
 .prep-footer__primary:disabled {
   opacity: 1;
-  color: var(--lkv-text-subtle);
-  background-color: color-mix(in srgb, var(--prep-glass-bg) 70%, transparent);
+  color: var(--g3-text-disabled);
+  background-color: var(--g3-bg-disabled);
   border-color: var(--prep-glass-border);
 }
 
@@ -2311,9 +2396,11 @@ button.prep-map__glass:active {
   min-width: 0;
   font-size: var(--prep-type-body);
   font-weight: 640;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .prep-act__hint {
@@ -2502,9 +2589,12 @@ body:has(.app-shell--preparer) {
    scope CSS correct sans toucher au composant <Sheet> partage par toute
    l'application : la regle ne s'active QUE sur une page portant le shell du
    preparateur, et laisse les feuilles des autres pages intactes.
-   Le fond melange `--lkv-surface-elevated` avec `--lkv-text-primary`, les DEUX
-   etant des couleurs pleines dans les deux themes : le resultat est opaque par
-   construction. Mesure : `color-mix(... var(--lkv-surface) 97%, transparent)`
+   La feuille n est PLUS opaque, et c est voulu. Mesure au navigateur : le jeton
+   `--prep-sheet-bg` vaut #1c202bb3, soit un alpha de 0,70. L affirmation
+   « opaque par construction » qui precedait ce bloc etait PERIMEE : elle
+   decrivait un jeton depuis passe translucide, et la feuille a regagne sa
+   lisibilite par le MATERIAU (P5.1, plus bas), pas par une opacite qui
+   n existe plus. Mesure : `color-mix(... var(--lkv-surface) 97%, transparent)`
    rendait ENCORE un alpha de 0.29, parce que le theme iOS 27 redefinit
    `--lkv-surface` en `rgba(16,16,16,0.3)` — 97 % de 30 % reste translucide, et
    le titre de l'etape traversait toujours la feuille. On ne melange donc plus la
@@ -2519,8 +2609,19 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   background-image: var(--prep-sheet-sheen);
   -webkit-backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
   backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
+  /* P5.1 - la feuille monte par portail Radix, dans <body> : seule la regle
+     scopee plus haut peut l'atteindre. Elle ne peut donc pas reutiliser
+     l invariant .prep-nav / .prep-block tel quel, mais elle doit lire LA MEME
+     recurrence de materiau - sinon le tiroir et la barre d etapes sont deux
+     verifierres, ce que P5.1 interdit.
+
+     Le layer "--prep-glass-bounce" a ete retire parce que
+     "--prep-glass-material" le contient deja : le garder aurait double
+     l arete du bas. Le liseré du HAUT est en revanche conserve et reste
+     necessaire : sur une feuille qui monte du bas, l arete visible est celle
+     du haut, et le materiau n en pose qu une en bas. */
   box-shadow:
-    var(--prep-glass-bounce),
+    var(--prep-glass-material),
     0 -1px 0 0 var(--prep-hairline-ink),
     0 -24px 48px -28px color-mix(in srgb, var(--lkv-text-primary) 60%, transparent),
     var(--prep-shadow-float);
@@ -3201,7 +3302,28 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   border: var(--prep-hairline) solid var(--prep-hairline-ink);
   overflow: hidden;
 }
+/* G3.1 - MESURE au navigateur, 375x812 / 393x852 / 768x1024, draft reel
+   (etape 1, bloc Equipement). « Poids du sac a estimer » sortait a 2,24:1.
 
+   La cause n est pas le fond : le panneau qui le porte tient 5,04:1. C est
+   l ENCRE. Ce span d appoint est pose par DepartureStep.tsx avec un style
+   INLINE color: var(--lkv-text-subtle), et le jeton global vaut 46 % de
+   blanc sous le theme de la page : sur le verre du preparateur, 46 % de blanc
+   ne lit plus.
+
+   Le style inline l emporte sur toute declaration de classe, donc la seule
+   facon de le rattraper depuis cette feuille est !important. C est exactement
+   le meme arbitrage que .prep-block au-dessus, qui Neutralise deja un
+   ackgroundColor pose en inline sur le meme composant : l invariant de
+   lisibilite du preparateur prime sur l echappement ponctuel du composant.
+
+   On ne touche pas au JSX (fichier d un autre agent) ni au jeton global
+   --lkv-text-subtle (appartient au design system). On pointe donc sur les
+   spans d appoint de la carte, avec l encre de lecture du preparateur. */
+.prep-block span[style*='--lkv-text-subtle'],
+.prep-block span[style*='--lkv-text-secondary'] {
+  color: var(--prep-ink-subtle) !important;
+}
 .prep-block__row {
   display: flex;
   align-items: center;
@@ -3899,8 +4021,22 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   flex: 1 1 auto;
   min-width: 0;
   overflow-wrap: anywhere;
-  font-size: var(--prep-type-meta);
-  font-weight: 560;
+  /* G3.1 - MESURE au navigateur, 4 points de rupture, draft reel de l etape 3.
+     Sur le MEME panneau et a la MEME taille de 13 px, le mesureur note des
+     mutants a 9,00:1 et des mutants a 2,93:1. Le fond n est pas en cause : le
+     fond le moins favorable vaut rgb(74) chez les uns et rgb(91) chez les
+     autres, 17 niveaux d ecart. Ce qui les separe, c est le COEUR DU GLYPHE :
+     rgb(255,255,255) chez les uns, rgb(173,171,156) chez les autres. A 13 px
+     et 560, le trait d un mot comme « Pause » ou « Retour d Argentiere » ne
+     couvre plus de 68 % du pixel, et le rapport tombe meme sur un fond noir.
+
+     Le correctif est donc la GRAINE, pas le fond : ce titre de programme est
+     le meme objet semantique que `.prep-step__name` de la fiche d etape, et il
+     etait rendu plus petit ET plus fin que son frere. On lui donne la meme
+     graisse qu a ce frere deja mesuree dans ce meme fichier. M3.2 interdit
+     de SHRINKER un texte de 13 px, pas de l aligner sur son homologue. */
+  font-size: var(--prep-type-body);
+  font-weight: 700;
   color: var(--lkv-text-primary);
 }
 
@@ -3940,13 +4076,31 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   text-align: center;
 }
 
+/* Le message d attente de la carte est pose DIRECTEMENT sur la photo : il
+   n'a ni panneau ni verre, la ou tous les autres textes de lecture ont un
+   materiau. Mesure navigateur 393x852, campagne `--seed p53-draft.json` :
+   `worst 2,64:1`, `best 12,05:1` sur un fond clair a 141. Le meilleur
+   echantillon lisait, le pire ne lisait pas — c est le SIGNE d un texte pose
+   sur une photo variable : sur les neiges claires il disparait.
+
+   meme remede que P0.11 : son propre materiau de verre, un peu plus dense
+   que la ligne de resultat, parce que du texte est plus exigeant qu un
+   nombre. On ne noircit pas la page (cahier des charges : voile vert clair),
+   on donne au texte une surface a lui. */
 .prep-maphint {
-  margin: var(--space-2) 0 0;
-  padding-inline: var(--space-1);
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3) var(--space-4);
   font-size: var(--prep-type-meta);
   line-height: var(--lkv-line-body);
-  color: var(--prep-ink-subtle);
+  color: var(--prep-ink-secondary);
   text-align: center;
+  border-radius: var(--prep-radius-card);
+  background-color: var(--prep-panel-bg);
+  -webkit-backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  box-shadow: var(--prep-glass-shadow);
 }
 
 /* --- Utilitaires de rangee (tiroirs de preparation) --------------------- */
@@ -3992,8 +4146,8 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
      preparateur par-dessus : le bandeau doit avoir l air de faire partie de
      l ecran, pas d etre un ajout. */
   color: var(--lkv-text-primary);
-  background-color: color-mix(in srgb, var(--lkv-warning-dark) 14%, var(--prep-glass-bg));
-  border: 1px solid color-mix(in srgb, var(--lkv-warning-dark) 26%, transparent);
+  background-color: var(--prep-panel-bg);
+  border: 1px solid color-mix(in srgb, var(--lkv-warning-dark) 52%, var(--prep-glass-border));
   -webkit-backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
     brightness(var(--prep-panel-brightness));
   backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
@@ -4025,9 +4179,16 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
    carte CLAIRES : l'encre blanche a 50 % ne survit pas. On lui donne le meme
    plancher que le reste du verre du preparateur. Selecteur par substring de
    classe : la classe est une chaine Tailwind, on ne peut pas la reproduire
-   litteralement sans la dependre d'un utilitaire. Portee restreinte a
-   .prep-map : l'Explorer et le Hub gardent leur attribution. */
-.prep-map div[class*='card-tint-strong'] {
+   litteralement sans la dependre d'un utilitaire. La portee couvre les TROIS
+   emplacements ou la carte du preparateur rend cette attribution. Le
+   SONDEUR l a mesure sur .prep-body, et pas sur la carte :
+     div. > div.prep-body > div.prep-screen > div.adventure-prep
+   ce qui laissait 2,71:1 et 2,73:1 subsister en 768x1024 et 1024x768.
+   On ne peut donc pas se contenter du conteneur de carte. L Explorer et le
+   Hub gardent la leur : seuls ces trois conteneurs sont vises. */
+.prep-map div[class*='card-tint-strong'],
+.prep-picker div[class*='card-tint-strong'],
+.prep-body div[class*='card-tint-strong'] {
   color: var(--prep-ink-secondary);
   background-color: var(--prep-glass-floor);
 }
@@ -4089,4 +4250,77 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 
 .prep-map .hub-globe-poi-chip {
   min-height: 44px;
+}
+
+
+/* --- G3.1 · Rappel de luminance sous le petit texte ------------------------
+   LES TROIS ECHECS RESTANTS DE LA CAMPAGNE DE CONTRASTE, ET LEUR LEVIER.
+
+   Mesure, campagne `scripts/audit/measure_prep_contrast.mjs --seed
+   .probe/seed-step2.json`, avant : 4 echecs en 375x812, 4 en 393x852, 1 en
+   1024x768 (9 au total). Les trois familles echouaient avec la meme
+   signature : un `worst` tres inferieur au `best` (3,28 contre 7,15 ; 4,42
+   contre 8,86 ; 3,51 contre 9,60). Ce rapport n est PAS celui du texte
+   annonce : c est celui du PIXEL DE GLYPHE LE PLUS COUVERT, la ou
+   l anticrenelage n a melange qu entre 40 et 50 % de la couleur du texte.
+   Un texte blanc sur un panneau sombre garde un fond composite sombre au
+   pixel de glyphe ; le seul levier qui remonte ce composite est l opacite
+   du PANNEAU. Ni la taille du texte (M3.2 interdit de la reduire), ni un
+   fond quasi noir (P5.5 impose un voile vert clair, fond clair) : les deux
+   sont exclus par le cahier des charges.
+
+   1. Pastilles du rail de jours. Elles sont rendues par `DayPlateau.tsx`, dont
+      le style est INLINE : `background: var(--g1-bg)`. La classe n existe donc
+      pas et aucune regle de classe ne peut l atteindre ; la redefinition du
+      jeton sous le scope du rail est le seul levier CSS possible, sans toucher
+      au composant partage par toute l application.
+      Portee volontairement structurelle et etroite : `nav.lkv-nav-surface
+      [role=tablist]` designe le rail seul. La bottom nav de l application
+      (Hub/Communaute/Explorer/Messages/Compte) est un FRERE de ce noeud
+      (`.lkv-material-bar`, dans le meme `nav`) et n est donc pas concernee : un
+      `nav.lkv-nav-surface button` plus large aurait assombri la navigation
+      basse, ce que la mesure interdit.
+
+   2. Boutons `.prep-actionrow`. Meme mecanisme : le fond vient de l utilitaire
+      Tailwind `bg-[var(--g2-bg)]`, resolu a un alpha de 0,34. Le jeton est
+      redefini sur la rangee, qui ne contient que ces boutons.
+
+   3. `.prep-programme__steptitle`. La couleur du texte est deja un blanc pur
+      (rgb(255 255 255), 17 px, graisse 700) sur un panneau a 0,94 : le contraste
+      theorique est tres au-dessus du seuil. Ce qui le rabaissait, c est le
+      `brightness(0.86)` du `backdrop-filter` du meme panneau, qui IMSPECE
+      l image a travers le verre. Le panneau est neutralise sur ce seul filtre
+      (`--prep-panel-brightness`), sans toucher ni a son fond ni a sa saturation :
+      le materiau reste du verre, seul l etirement de luminosite disparait.
+
+   Ces trois regles ne peuvent qu ASSOMBRIR le fond sous un texte deja clair.
+   Elles ne modifient ni une taille, ni un poids, ni un rayon, ni un aplat de
+   marque. */
+nav.lkv-nav-surface [role='tablist'] {
+  --g1-bg: var(--prep-rail-plate);
+}
+
+/* Deuxieme lever du meme bloc : le texte des pastilles sortait a 0,78 d alpha
+   (mesure navigateur, 393x852). Remonte a un blanc plein, comme le reste du
+   preparateur. Un texte a 0,78 perd 22 % de sa luminance au pixel le plus
+   couvert, ce qui suffit a faire tomber le groupe sous 4,5:1 alors que le
+   fond, lui, passait deja largement le seuil. */
+/* Le texte des pastilles est style EN LIGNE par `DayPlateau.tsx` :
+   `color: var(--glass-label-secondary)`. Aucun selecteur de classe ne peut
+   donc l atteindre — pas meme un `span` nu, qui perd contre le style inline.
+   Seule la redefinition du jeton sous le scope du rail fonctionne.
+   `--glass-label-secondary` vaut 0,78 d alpha en theme iOS 27
+   (liquid-ios27.css:87) ; on le remonte a un blanc plein, comme
+   `--prep-ink-secondary` (0,86) pour le texte courant du preparateur.
+   Portee : le rail seul, la bottom nav garde son propre jeton. */
+nav.lkv-nav-surface [role='tablist'] {
+  --glass-label-secondary: var(--prep-ink-full);
+}
+
+.prep-actionrow {
+  --g2-bg: var(--prep-rail-plate);
+}
+
+.prep-programme__day {
+  --prep-panel-brightness: 1;
 }

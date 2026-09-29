@@ -72,6 +72,7 @@ function modele(opts: { distanceKm: number | null; budget: number | null }): Iti
     perDay: [jour],
     weather: [],
     metricsContext: 'voyage',
+    travelMode: 'voiture',
     budgetPerPerson: euros(opts.budget),
     activityCount: 0,
     contingencies: [],

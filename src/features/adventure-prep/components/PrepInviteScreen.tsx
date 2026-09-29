@@ -170,10 +170,10 @@ const DEFAULT_EXPIRY_HOURS = 72;
 function PermissionRow({ permissionKey, checked, disabled, onToggle }: { permissionKey: InvitePermissionKey; checked: boolean; disabled: boolean; onToggle: (value: boolean) => void; }) {
   const row = PERMISSION_ROWS[permissionKey];
   return (
-    <div className="prep-block" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid var(--line)' }}>
+    <div className="prep-block" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid var(--lkv-border)' }}>
       <div>
-        <div style={{ fontSize: 'var(--f-body)', fontWeight: 500, color: 'var(--lkv-text-primary)' }}>{row.label}</div>
-        <div style={{ fontSize: 'var(--f-sec)', color: 'var(--lkv-text-secondary)' }}>{row.detail}</div>
+        <div style={{ fontSize: '1rem', fontWeight: 500, color: 'var(--lkv-text-primary)' }}>{row.label}</div>
+        <div style={{ fontSize: '0.875rem', color: 'var(--lkv-text-secondary)' }}>{row.detail}</div>
       </div>
       <Switch id={`prep-invite-droit-${permissionKey}`} checked={checked} disabled={disabled} onCheckedChange={onToggle} aria-label={row.label} />
     </div>
@@ -266,29 +266,29 @@ export function PrepInviteScreen({
           ) : null}
         </div>
 
-        <h1 className="prep-title" style={{ fontSize: 'var(--f-body)', fontWeight: 700 }}>Inviter</h1>
+        <h1 className="prep-title" style={{ fontSize: '1rem', fontWeight: 700 }}>Inviter</h1>
 
-        <div style={{ display: 'flex', gap: 12, padding: 12, backgroundColor: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--card-radius)', boxShadow: 'var(--sh-1)', marginBottom: 20 }}>
+        <div style={{ display: 'flex', gap: 12, padding: 12, backgroundColor: 'var(--surface)', border: '1px solid var(--lkv-border)', borderRadius: 'var(--card-radius)', boxShadow: 'var(--prep-shadow-sm)', marginBottom: 20 }}>
           {coverImageUrl ? (
             <img src={coverImageUrl} alt="" style={{ width: 52, height: 52, borderRadius: 14, objectFit: 'cover' }} />
           ) : (
-            <div style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: 'var(--green-tint)', color: 'var(--green-ink)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: 'var(--lkv-success-bg)', color: 'var(--lkv-success)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="image-off" size={24} aria-hidden="true" />
               <span className="prep-visually-hidden">Aucune image de couverture</span>
             </div>
           )}
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 'var(--f-body)', fontWeight: 700, color: 'var(--lkv-text-primary)' }}>{title}</div>
-            <div style={{ fontSize: 'var(--f-sec)', color: 'var(--lkv-text-secondary)', marginTop: 2 }}>
+            <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--lkv-text-primary)' }}>{title}</div>
+            <div style={{ fontSize: '0.875rem', color: 'var(--lkv-text-secondary)', marginTop: 2 }}>
               {dates} · {participants}
             </div>
             {draft.group.knownMembers.length > 0 && (
-              <div style={{ fontSize: 'var(--f-sec)', color: 'var(--lkv-text-secondary)', marginTop: 2 }}>
+              <div style={{ fontSize: '0.875rem', color: 'var(--lkv-text-secondary)', marginTop: 2 }}>
                 {draft.group.knownMembers.length} {draft.group.knownMembers.length > 1 ? 'personnes déjà dans le groupe' : 'personne déjà dans le groupe'}
               </div>
             )}
             {!coverImageUrl && (
-              <div style={{ fontSize: 'var(--f-sec)', color: 'var(--lkv-text-subtle)', marginTop: 2 }}>
+              <div style={{ fontSize: '0.875rem', color: 'var(--lkv-text-subtle)', marginTop: 2 }}>
                 Aucune image appliquée : l’invitation part sans photo tant que tu n’en choisis pas.
               </div>
             )}
@@ -296,16 +296,16 @@ export function PrepInviteScreen({
         </div>
 
         <div style={{ marginBottom: 24 }}>
-           <div style={{ fontSize: 'var(--f-sec)', fontWeight: 600, color: 'var(--lkv-text-primary)', marginBottom: 6 }}>Budget estimatif</div>
-           <div style={{ padding: 12, backgroundColor: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12 }}>
+           <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--lkv-text-primary)', marginBottom: 6 }}>Budget estimatif</div>
+           <div style={{ padding: 12, backgroundColor: 'var(--surface)', border: '1px solid var(--lkv-border)', borderRadius: 12 }}>
              {draft.preferences.budgetPerPerson ? `≈ ${draft.preferences.budgetPerPerson} € / pers.` : 'Non défini'}
            </div>
         </div>
 
         <div style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: 'var(--f-sec)', fontWeight: 600, color: 'var(--lkv-text-primary)', margin: '0 0 6px 0' }}>Message</h2>
+          <h2 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--lkv-text-primary)', margin: '0 0 6px 0' }}>Message</h2>
           <textarea
-            style={{ width: '100%', minHeight: 84, padding: '12px 14px', borderRadius: 12, backgroundColor: 'var(--surface)', border: '1px solid var(--line-ui)', fontSize: 'var(--f-body)', color: 'var(--lkv-text-primary)', resize: 'vertical' }}
+            style={{ width: '100%', minHeight: 84, padding: '12px 14px', borderRadius: 12, backgroundColor: 'var(--surface)', border: '1px solid var(--lkv-border)', fontSize: '1rem', color: 'var(--lkv-text-primary)', resize: 'vertical' }}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Ex. On part samedi matin, viens avec un coupe-vent."
@@ -314,8 +314,8 @@ export function PrepInviteScreen({
         </div>
 
         <div style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: 'var(--f-sec)', fontWeight: 600, color: 'var(--lkv-text-primary)', margin: '0 0 6px 0' }}>Ce que les invités peuvent faire</h2>
-          <div style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--card-radius)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <h2 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--lkv-text-primary)', margin: '0 0 6px 0' }}>Ce que les invités peuvent faire</h2>
+          <div style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--lkv-border)', borderRadius: 'var(--card-radius)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             {PERMISSION_KEYS.map((key) => (
               <PermissionRow
                 key={key}
@@ -326,7 +326,7 @@ export function PrepInviteScreen({
               />
             ))}
           </div>
-          <p style={{ margin: '8px 0 0 0', fontSize: 'var(--f-sec)', color: 'var(--lkv-text-subtle)' }}>
+          <p style={{ margin: '8px 0 0 0', fontSize: '0.875rem', color: 'var(--lkv-text-subtle)' }}>
             Une invitation ne donne pas accès à ta localisation. Ce que tu vois ici est le maximum possible, jamais une permission automatique.
           </p>
           {full ? (

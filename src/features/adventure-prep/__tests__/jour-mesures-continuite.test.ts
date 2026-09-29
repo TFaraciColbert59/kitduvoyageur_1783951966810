@@ -83,6 +83,7 @@ function modelOf(days: number, steps: readonly ItineraryStep[]): ItineraryModel 
     perDay: Array.from({ length: days }, () => ({ ...UNKNOWN })),
     weather: Array.from({ length: days }, () => null),
     metricsContext: 'voyage',
+    travelMode: 'voiture',
     budgetPerPerson: { ...PRICE },
     activityCount: days,
     contingencies: [],
@@ -113,7 +114,7 @@ function dayOf(iso: string, label: string): DayWeather {
 describe('A4 — libelles de metriques', () => {
   it('A4-01 : « Denivele + » ne porte pas de « + » parasite', () => {
     // Le denivele n apparait que dans le contexte « terrain ».
-    const terrain = { ...modelOf(3, []), metricsContext: 'terrain' as const };
+const terrain = { ...modelOf(3, []), metricsContext: 'terrain' as const, travelMode: 'pieton' as const };
     const labels = metricsFor(terrain, 'jour', 1).map((metric) => metric.label);
     expect(labels).toContain('Dénivelé');
     expect(labels).not.toContain('Dénivelé +');

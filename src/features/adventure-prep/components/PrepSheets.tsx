@@ -164,6 +164,11 @@ export function PrepSheets({
             actions={actions}
             stepId={focusStepId}
             onClose={onClose}
+            /* E9 : depuis la fiche, « Remplacer » ouvre la meme vue que la
+               carte ouvrait. L identite de l etape est transmise, sinon le
+               tiroir afficherait son etat vide - qui se lirait comme un stock
+               de lieux vide alors que la base n a pas ete consultee. */
+            onOpenReplace={onOpenSheet ? (stepId) => onOpenSheet('replace', stepId) : undefined}
           />
         )}
         {sheet === 'steps' && <StepsSheet draft={draft} actions={actions} onClose={onClose} />}

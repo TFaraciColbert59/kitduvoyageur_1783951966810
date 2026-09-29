@@ -463,11 +463,11 @@ describe('M2.4 - les jetons morts sont retires', () => {
 });
 
 /* ------------------------------------------------------------------ */
-/* L3.2 / M2.3 — une seule hierarchie typographique                    */
+/* M2.3 / M2.3 — une seule hierarchie typographique                    */
 /* ------------------------------------------------------------------ */
 
-describe('L3.2 — le titre de l etape tient sur trois lignes au plus', () => {
-  it('L3.2-01: le titre est PLAFONNE a trois lignes, pas bride', () => {
+describe('M2.3 — le titre de l etape tient sur trois lignes au plus', () => {
+  it('M2.3-01: le titre est PLAFONNE a trois lignes, pas bride', () => {
     state.current = { draft: builtDraft() };
     const html = render();
     const name = html.match(/<h3 class="prep-step__name"[^>]*>/);
@@ -489,7 +489,7 @@ describe('L3.2 — le titre de l etape tient sur trois lignes au plus', () => {
     expect(name![0]).not.toMatch(/style="[^"]*display/);
   });
 
-  it('L3.2-02: le titre et le lieu ont deux niveaux typographiques distincts', () => {
+  it('M2.3-02: le titre et le lieu ont deux niveaux typographiques distincts', () => {
     state.current = { draft: builtDraft() };
     const html = render();
     // Une seule hierarchie : le titre est un titre (h3), le lieu est un

@@ -378,7 +378,7 @@ export function ConsumablesSheet({ draft }: GearSheetProps) {
                 data-prep-row="repas"
                 title={`Jour ${need.day} · ${MEAL_SLOT_LABELS[need.slot]}`}
                 detail="À prévoir"
-                trailing={<Icon name="flame" size={20} style={{ color: 'var(--amber-ink)' }} />}
+                trailing={<Icon name="flame" size={20} style={{ color: 'var(--lkv-warning)' }} />}
               />
             ))}
           </DrawerList>

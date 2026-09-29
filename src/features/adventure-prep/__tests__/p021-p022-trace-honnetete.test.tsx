@@ -172,6 +172,7 @@ function modelVierge(context: MetricsContext, days: number): ItineraryModel {
     perDay: Array.from({ length: days }, () => totalsVides()),
     weather: Array.from({ length: days }, () => null),
     metricsContext: context,
+    travelMode: context === 'voyage' ? 'voiture' : 'pieton',
     budgetPerPerson: { amount: null, currency: 'EUR', state: 'a_reserver' },
     activityCount: steps.length,
     contingencies: [],

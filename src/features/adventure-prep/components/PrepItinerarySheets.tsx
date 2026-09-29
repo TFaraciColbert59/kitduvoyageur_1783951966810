@@ -20,6 +20,8 @@ import { adjustmentIds, previewAdjustment } from '../engine/adjustments';
 
 import { daySteps, knownGaps, stepById } from '../engine/itinerary';
 
+import { PrepMap, PREP_POINT_COLORS, type PrepMapPoint } from './PrepMap';
+
 import { A_VERIFIER, formatEur, formatMinutes } from '../engine/trust';
 
 import type { AdventurePrepStore } from '../store/useAdventurePrepStore';
@@ -185,6 +187,17 @@ export interface StepSheetProps extends ItinerarySheetProps {
   offer?: StepSheetOffer | null;
 
   community?: StepSheetCommunity | null;
+
+  /**
+   * Ouvre la feuille de remplacement pour CETTE etape (E9, deplacee).
+   *
+   * L3.6 a retire « Remplacer » de la carte focalisee : trois boutons de meme
+   * poids se lisent comme trois actions de meme importance, et l on ne sait
+   * plus laquelle est secondaire. La capacite, elle, n a pas disparu - elle
+   * se trouve la ou l on cherche les details de l etape, c est-a-dire dans la
+   * fiche. Le tiroir route donc vers la MEME vue, avec la MEME identite.
+   */
+  onOpenReplace?: (stepId: string) => void;
 
   /** `true` SEULEMENT quand la fiche est elle-même le dialogue. L'hôte de production est
 
@@ -612,8 +625,6 @@ function StepHead(props: {
 
       <p className="prep-act__meta">{`Jour ${step.day} · ${CATEGORY_LABELS[step.kind] ?? KIND_LABELS[step.kind]}`}</p>
 
-      <span className="prep-step__thumb"><Icon name={step.icon || STEP_ICONS[step.kind]} size={22} /></span>
-
       <h2 className="prep-step__name" id={titleId} tabIndex={-1} data-prep-step-title="">{step.title}</h2>
 
       <p className="prep-step__place" title={step.placeName ?? undefined}>{place ? place.text : 'Lieu à vérifier'}</p>
@@ -794,9 +805,14 @@ function useStepSheetDialog(
 
 /** Le détail long vit sous un repli : la vue principale tient en six zones, sans défiler. */
 
-function StepActions(props: { step: ItineraryStep; actions: AdventurePrepStore; onClose: () => void }) {
+function StepActions(props: {
+  step: ItineraryStep;
+  actions: AdventurePrepStore;
+  onClose: () => void;
+  onOpenReplace?: (stepId: string) => void;
+}) {
 
-  const { step, actions, onClose } = props;
+  const { step, actions, onClose, onOpenReplace } = props;
 
   return (
 
@@ -825,6 +841,19 @@ function StepActions(props: { step: ItineraryStep; actions: AdventurePrepStore; 
             {step.kept ? 'Ne plus conserver' : 'À conserver'}
 
           </Button>
+
+          {/* E9 : « Remplacer », deplace de la carte vers la fiche (L3.6).
+              La carte focalisee garde deux actions - consulter, et decider si
+              l etape reste - parce que trois boutons de meme poids se lisent
+              comme trois actions de meme importance. Ici l action est ou son
+              contexte existe : on la cherche en regardant le detail de l etape.
+              Le bouton n est rendu QUE si le routeur sait ouvrir la feuille ;
+              un bouton qui ne promettrait rien serait pire que son absence. */}
+          {onOpenReplace ? (
+            <Button variant="secondary" size="md" onClick={() => onOpenReplace(step.id)}>
+              Remplacer l&apos;étape
+            </Button>
+          ) : null}
 
           <Button variant="destructive" size="md" onClick={() => { actions.dropStep(step.id); onClose(); }}>
 
@@ -940,7 +969,7 @@ export function StepSheet(props: StepSheetProps) {
       <StepReasons step={step} titleId={titleId} state={state} community={community} />
       {href !== null && offer ? <StepAffiliate offer={offer} titleId={titleId} /> : null}
       <StepFooter href={href} partner={partnerLabel(offer?.link)} onClose={onClose} />
-      <StepActions step={step} actions={actions} onClose={onClose} />
+      <StepActions step={step} actions={actions} onClose={onClose} onOpenReplace={props.onOpenReplace} />
     </div>
   );
 
@@ -953,6 +982,55 @@ export function StepSheet(props: StepSheetProps) {
 /* ------------------------------------------------------------------ */
 
 
+
+/** Familles affichees par la carte du programme : tout le parcours, sans exception. */
+const MAP_CATEGORIES: readonly string[] = ['trajet', 'arret', 'repos', 'nuit', 'ravitaillement'];
+
+/** Une position n existe que si la base l arendue finie ET non nulle. */
+function located(step: { lat: number | null; lon: number | null }): step is { lat: number; lon: number } {
+  if (step.lat === null || step.lon === null) return false;
+  return Number.isFinite(step.lat) && Number.isFinite(step.lon);
+}
+
+/**
+ * Trace du programme, dans l ordre REEL de lecture : jour, puis rang.
+ *
+ * Deux etape consecutives partageant le meme lieu ne produisent qu un point :
+ * une boucle qui revient au meme endroit retrace alors le chemin, pas une suite
+ * de bonds de longueur nulle.
+ */
+function programRoute(steps: readonly ItineraryStep[]): Array<[number, number]> {
+  const coords: Array<[number, number]> = [];
+  for (const step of [...steps].sort((a, b) => a.day - b.day || a.order - b.order)) {
+    if (!located(step)) continue;
+    const last = coords[coords.length - 1];
+    if (last && last[0] === step.lat && last[1] === step.lon) continue;
+    coords.push([step.lat, step.lon]);
+  }
+  return coords;
+}
+
+/** Une entree de marqueur par etape reellement localisee, et rien d invente. */
+function programPoints(steps: readonly ItineraryStep[]): PrepMapPoint[] {
+  return programRoute(steps)
+    .length === 0
+    ? []
+    : [...steps]
+        .sort((a, b) => a.day - b.day || a.order - b.order)
+        .flatMap((step) =>
+          located(step)
+            ? [{
+                id: step.id,
+                lat: step.lat,
+                lon: step.lon,
+                label: step.title,
+                color: PREP_POINT_COLORS[step.kind],
+                category: step.kind,
+                stepId: step.id,
+              }]
+            : [],
+        );
+}
 
 export function StepsSheet({ draft, actions, onClose }: ItinerarySheetProps) {
 
@@ -984,9 +1062,50 @@ export function StepsSheet({ draft, actions, onClose }: ItinerarySheetProps) {
 
 
 
+  const coords = programRoute(model.steps);
+  const points = programPoints(model.steps);
+
   return (
 
     <div>
+
+      {coords.length > 0 ? (
+
+        <div className="prep-map--inline" data-program-map="on">
+
+          <PrepMap
+
+            name="Ton programme"
+
+            routeCoords={coords}
+
+            points={points}
+
+            scopeLabel="Ensemble"
+
+            filterCategories={MAP_CATEGORIES}
+
+            hideExpand
+
+          />
+
+          <p className="prep-maphint">
+
+            {`${points.length} étapes localisées. Touche une étape ci-dessous pour l’ouvrir sur le parcours.`}
+
+          </p>
+
+        </div>
+
+      ) : (
+
+        <p className="prep-maphint" data-program-map="pending">
+
+          Les positions de ce programme ne sont pas encore mesurées : la carte s’affichera dès que les lieux réels seront accrochés au parcours.
+
+        </p>
+
+      )}
 
       {Array.from({ length: model.days }, (_, index) => index + 1).map((day) => {
 

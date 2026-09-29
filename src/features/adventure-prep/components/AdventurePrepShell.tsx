@@ -180,13 +180,25 @@ const NOTICE_HEADLINE: React.CSSProperties = {
   fontWeight: 640,
 };
 
+/* G3.1 : le bouton « Réessayer » est le dernier element sous le seuil.
+   Mesure navigateur, 393x852, draft reelement genere : 4,50:1 pour un
+   seuil de 4,5:1 - un echec, sur une seule encre.
+
+   L accent fort tient 5,02:1 sur le PANNEAU DU TIROIR, ce que dit la
+   feuille. La plaque d avertissement est un autre fond : le meme accent y
+   descend. Un jeton verifie sur une surface ne vaut pas verification sur
+   l autre, et le code ne le dit pas - seule la mesure le revele.
+
+   Le correctif porte l ENCRE, pas la surface : l avertissement reste un
+   avertissement, et la bordure garde l accent parce qu elle est un trait.
+   Le blanc plein existe deja dans la couche de tokens pour cet usage. */
 const NOTICE_ACTION: React.CSSProperties = {
   flex: '0 0 auto',
   padding: 'var(--prep-space-1) var(--prep-space-3)',
   border: 'var(--prep-hairline) solid var(--lkv-action)',
   borderRadius: '999px',
   backgroundColor: 'transparent',
-  color: 'var(--prep-ink-accent-strong)',
+  color: 'var(--prep-ink-full)',
   font: 'inherit',
   fontWeight: 640,
   cursor: 'pointer',

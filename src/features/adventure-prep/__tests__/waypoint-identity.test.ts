@@ -25,6 +25,7 @@ const JOUR: ItineraryModel = {
   perDay: [],
   weather: [],
   metricsContext: 'voyage',
+    travelMode: 'voiture',
   budgetPerPerson: { amount: null, currency: 'EUR', state: 'a_reserver' },
   activityCount: 0,
   contingencies: [],

@@ -52,6 +52,7 @@ function model(steps: readonly ItineraryStep[], days = 1, notes: ItineraryModel[
     perDay: Array.from({ length: days }, () => ({ ...EMPTY })),
     weather: Array.from({ length: days }, () => null),
     metricsContext: 'terrain',
+    travelMode: 'pieton',
     budgetPerPerson: { amount: null, currency: 'EUR', state: 'a_reserver' },
     activityCount: 1,
     contingencies: [],

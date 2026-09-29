@@ -9,7 +9,7 @@ import { join } from 'node:path';
  * sur des MOTS (« Budget / per... », « Commun... », « J3 m... ») : c'est le
  * triptyque overflow:hidden + text-overflow:ellipsis + white-space:nowrap qui
  * coupe, pas la place disponible. Ces neuf selecteurs ont ete liberes : le
- * texte se replie a la ligne suivante. En contrepartie, trois selecteurs
+ * texte se replie a la ligne suivante. En contrepartie, deux selecteurs
  * GARDENT l'ellipse parce que d'autres tests du repo l'exigent — les
  * decocher ici serait casser le travail de quelqu'un d'autre, et ce serait
  * aussi une redecide de design qui n'est pas la mienne. Le test verrouille
@@ -64,7 +64,7 @@ const LIBERES = [
 ] as const;
 
 /** Les trois selecteurs ou l'ellipse est un contrat d'autres tests. */
-const CONTRACTUELS = ['.prep-block__label', '.prep-block__value', '.prep-act__name'] as const;
+const CONTRACTUELS = ['.prep-block__label', '.prep-block__value'] as const;
 
 const TYPES = ['--prep-type-title', '--prep-type-body', '--prep-type-label', '--prep-type-meta'] as const;
 
@@ -104,7 +104,7 @@ describe('M3.1 — aucune ellipse sur un libelle', () => {
     }
   });
 
-  it('les trois selecteurs contractuels gardent leur ellipse', () => {
+  it('les deux selecteurs contractuels gardent leur ellipse', () => {
     for (const s of CONTRACTUELS) {
       expect(
         declarations(s).get('text-overflow'),

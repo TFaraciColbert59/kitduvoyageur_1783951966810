@@ -63,6 +63,47 @@ function barre(): HTMLElement | null {
   return document.querySelector<HTMLElement>(BARRE);
 }
 
+/**
+ * Le budget d attente de la barre, en millisecondes.
+ *
+ * `NavigationBar` n est pas un composant local : `MobileNavWrapper` le charge
+ * par `next/dynamic(..., { ssr: false })`. La barre n existe donc pas au
+ * moment du `render` : elle n existe qu une fois le module resolu, et ce
+ * module passe par la transformation de Vite.
+ *
+ * Le budget par defaut de `waitFor` (1 000 ms) est alors une course : quand
+ * la suite tourne en entier, le premier worker qui charge ce module partage
+ * le processeur avec les 204 autres fichiers, et la resolution peut depasser
+ * la seconde. Le test echouait alors sur un defaut de BARRE, sans que le
+ * code change : un faux rouge qui apprend au lecteur a ignorer le signal.
+ *
+ * On elargit donc le budget, et on ne touche qu a lui. L assertion reste
+ * « la barre est montee » ; elle cesse seulement de dependre de la charge
+ * machine. Une vraie regression — /prepare remis dans la liste des routes
+ * sans navigation — echoue toujours, et tout de suite.
+ */
+const BUDGET_BARRE = { timeout: 15_000 } as const;
+
+/**
+ * Le budget du runner, en millisecondes.
+ *
+ * Il doit surpasser `BUDGET_BARRE`, sinon vitest tue le test a 5 s et le
+ * defaut sort en « timeout » : on ne lit plus CE QUI MANQUE, on lit une
+ * course perdue. Un test qui echoue doit nommer son absence — ici, la
+ * barre qui ne se monte pas — sinon le lecteur est renvoye vers le
+ *.verbose pour deviner.
+ */
+const BUDGET_TEST = 20_000;
+
+/** Attend que la barre soit la, avec le budget dedie. */
+async function attendreBarre(message: string): Promise<HTMLElement> {
+  return waitFor(() => {
+    const trouve = barre();
+    expect(trouve, message).not.toBeNull();
+    return trouve as HTMLElement;
+  }, BUDGET_BARRE);
+}
+
 /** Les routes que la liste masque encore, et qui doivent donc le rester. */
 const ROUTES_SANS_BARRE = [
   '/connexion',
@@ -118,19 +159,17 @@ async function monter(pathname: string): Promise<void> {
 describe('A4-1 — la barre basse est montee sur /prepare', () => {
   it('A4-01: /prepare rend la barre de navigation principale', async () => {
     await monter('/prepare');
-    await waitFor(() => {
-      expect(barre(), 'la barre basse ne se monte pas sur /prepare').not.toBeNull();
-    });
-  });
+    await attendreBarre('la barre basse ne se monte pas sur /prepare');
+  }, BUDGET_TEST);
 
   it('A4-02: la barre porte des onglets, pas seulement un conteneur vide', async () => {
     await monter('/prepare');
-    await waitFor(() => expect(barre()).not.toBeNull());
     // Une barre vide ne prouverait rien : on compte les liens de
     // destination reellement rendus, pas la presence d une balise.
-    const liens = barre()!.querySelectorAll('a[href]');
+    const surface = await attendreBarre('la barre ne se monte pas, ses onglets nont rien a porter');
+    const liens = surface.querySelectorAll('a[href]');
     expect(liens.length, 'la barre est montee mais ne rend aucun onglet').toBeGreaterThan(3);
-  });
+  }, BUDGET_TEST);
 
   it('A4-03: /prepare n est PAS dans la liste des routes sans navigation', async () => {
     // Le temoin qui empeche l item d etre vacu : la meme liste, la meme
@@ -139,10 +178,10 @@ describe('A4-1 — la barre basse est montee sur /prepare', () => {
     await monter('/checkout');
     expect(barre(), '/checkout ne devrait pas monter la barre').toBeNull();
     await monter('/prepare');
-    await waitFor(() => {
-      expect(barre(), 'la meme liste masque /prepare : liste et route ne sont pas dissociees').not.toBeNull();
-    });
-  });
+    await attendreBarre(
+      'la meme liste masque /prepare : liste et route ne sont pas dissociees',
+    );
+  }, BUDGET_TEST);
 });
 
 describe('A4-2 — les routes reellement masquees le restent', () => {
@@ -166,28 +205,19 @@ describe('A4-3 — la frontiere de prefixe reste respectee', () => {
     // Un prefixe `/prepare` trop large deborderait sur les autres routes du
     // preparateur, qui ont leur propre contenu de chrome.
     await monter('/preparer-randonnee');
-    await waitFor(() => {
-      expect(barre(), '/preparer-randonnee a perdu sa navigation').not.toBeNull();
-    });
-  });
+    await attendreBarre('/preparer-randonnee a perdu sa navigation');
+  }, BUDGET_TEST);
 
   it('A4-06: /preparer-sentier garde sa navigation', async () => {
     await monter('/preparer-sentier');
-    await waitFor(() => {
-      expect(barre(), '/preparer-sentier a perdu sa navigation').not.toBeNull();
-    });
-  });
+    await attendreBarre('/preparer-sentier a perdu sa navigation');
+  }, BUDGET_TEST);
 });
 
 describe('A4-4 — la barre reserve sa place : jamais recouverte', () => {
   it('A4-07: /prepare publie une reservation basse NON nue', async () => {
     await monter('/prepare');
-    await waitFor(() => {
-      expect(
-        barre(),
-        'la barre ne se monte pas, la reservation ne peut pas etre publiee',
-      ).not.toBeNull();
-    });
+    await attendreBarre('la barre ne se monte pas, la reservation ne peut pas etre publiee');
     // La reservation est publiee sur la RACINE par `BottomNavReservation`.
     // `--page-bottom-inset-bare` est la valeur « pas de barre » : la lire
     // ici prouverait que l ecran a ete mesure comme si la barre n existait
@@ -197,7 +227,7 @@ describe('A4-4 — la barre reserve sa place : jamais recouverte', () => {
     expect(reserve, 'la reservation correspond a « pas de barre »').not.toBe(
       'var(--page-bottom-inset-bare)',
     );
-  });
+  }, BUDGET_TEST);
 
   it('A4-08: l ecran du preparateur demande la reservation au shell', async () => {
     // Moitie « jamais recouverte » cote page : `AdventurePrepScreen` doit
@@ -209,12 +239,12 @@ describe('A4-4 — la barre reserve sa place : jamais recouverte', () => {
       const el = document.querySelector('.app-shell') as HTMLElement | null;
       expect(el, 'le shell du preparateur ne se monte pas').not.toBeNull();
       return el as HTMLElement;
-    });
+    }, BUDGET_BARRE);
     const padding = racine.style.paddingBottom;
     expect(padding, 'le shell ne reserve aucune place en bas').not.toBe('');
     expect(
       padding,
       'le shell mesure la page comme si la barre n existait pas',
     ).not.toContain('--page-bottom-inset-bare');
-  });
+  }, BUDGET_TEST);
 });

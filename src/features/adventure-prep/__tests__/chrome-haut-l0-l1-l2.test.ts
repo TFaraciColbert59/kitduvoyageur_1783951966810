@@ -22,7 +22,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { prepBlockerSummary } from '../components/AdventurePrepShell';
-import { stepOneMissing, stepOneProfileIdFor } from '../components/stepOneProfile';
+import { stepOneMissing, stepOneProfileIdFor, stepOneReadySummary } from '../components/stepOneProfile';
 import { fullDraft } from './fixtures';
 import type { AdventurePrepDraft, PrepStepId } from '../types';
 
@@ -194,10 +194,14 @@ describe('L2.7 - le scroller de journee reste absent de l etape 1', () => {
 
 describe('L2.11 - « Il manque : … » reste exactement ce qu il est', () => {
   /**
-   * Ce qui bloque, ce sont `activity` et `origin` — le moteur. La date et
-   * l arrivee ne bloquent jamais : l IA les tranche. Un brouillon « sans date »
-   * n est donc PAS un brouillon bloque, et l item L2.11 doit etre epreuve sur
-   * un vrai manque, pas sur une absence de confort.
+   * ARBITRAGE A (2026-09-29) : ce qui bloque, c est `activity` — et rien
+   * d autre. La date, l arrivee ET le depart ne bloquent jamais : l IA les
+   * tranche, et le moteur part desormais sans origine (B4). Un brouillon
+   * « sans depart » n est donc PAS un brouillon bloque.
+   *
+   * Les fixtures ci-dessous gardent neanmoins un vrai manque (l intention) :
+   * sinon le resume serait vide et L2.11 ne prouverait plus rien. C est la
+   * meme raison qui faisait utiliser `sansDepart` avant.
    */
   const sansDepart = (): AdventurePrepDraft => {
     const d = fullDraft();
@@ -213,28 +217,60 @@ describe('L2.11 - « Il manque : … » reste exactement ce qu il est', () => {
   };
 
   it('L2.11-01: le libelle garde sa ponctuation francaise exacte', () => {
-    const resume = prepBlockerSummary(sansDepart(), 'destination');
-    expect(resume, 'aucun blocage annonce alors que le depart manque').not.toBeNull();
-    // Espace avant les deux-points, aucun apres : « Il manque : lieu de
-    // depart ». Une ponctuation anglo-sonnee deroberait la formulation.
+    // ARBITRAGE A : le depart seul ne bloque plus. On epreuve donc la
+    // ponctuation sur la ligne de complements, qui le nomme elle-meme.
+    const ready = stepOneReadySummary(sansDepart(), stepOneProfileIdFor(sansDepart().activities));
+    expect(ready, 'le depart n est plus annonce du tout').not.toBeNull();
+    expect(ready).toContain('lieu de départ');
+    // Espace insecable avant les deux-points, aucun apres : la formulation
+    // d« L’IA complètera : lieu de départ » est la meme que celle du manque.
+    expect(ready).toMatch(/^L’IA complètera : [^ ]/);
+    expect(ready).not.toMatch(/complètera:/);
+    expect(ready).not.toMatch(/complètera : {2,}/);
+
+    // Et la ligne du MANQUE garde la meme ponctuation, ou elle existe encore :
+    // le contrat de la formulation ne depend pas du champ manquant.
+    const resume = prepBlockerSummary(sansDepartNiActivite(), 'destination');
+    expect(resume, 'la fixture ne bloque plus : le test ne prouve plus rien').not.toBeNull();
     expect(resume).toMatch(/^Il manque : [^ ]/);
     expect(resume).not.toMatch(/Il manque:/);
     expect(resume).not.toMatch(/Il manque : {2,}/);
+    expect(resume).toContain('lieu de départ');
   });
 
   it('L2.11-02: la liste vient de la MEME source que l etape 1', () => {
+    // ARBITRAGE A : sur `sansDepart()` il n y a plus de bloqueur, donc plus de
+    // ligne « Il manque ». La source reste la meme, et elle se lit desormais
+    // dans les complements — avec le depart nomme, sinon la preuve est vide.
     const vide = sansDepart();
-    const attendu = stepOneMissing(vide, stepOneProfileIdFor(vide.activities)).blocking.join(', ');
+    const { blocking, optional } = stepOneMissing(vide, stepOneProfileIdFor(vide.activities));
+    expect(blocking, 'le depart ne doit plus bloquer').toEqual([]);
+    expect(optional.join(', '), 'le depart doit rester annonce').toContain('lieu de départ');
+    expect(prepBlockerSummary(vide, 'destination')).toBeNull();
+    expect(stepOneReadySummary(vide, stepOneProfileIdFor(vide.activities))).toBe(
+      'L’IA complètera : ' + optional.join(', ')
+    );
+
+    // Et la, ou ca bloque encore, le cadre recopie la source, champ compris.
+    const dur = sansDepartNiActivite();
+    const attendu = stepOneMissing(dur, stepOneProfileIdFor(dur.activities)).blocking.join(', ');
     expect(attendu, 'la fixture ne bloque plus : le test ne prouve plus rien').not.toBe('');
-    expect(prepBlockerSummary(vide, 'destination')).toBe('Il manque : ' + attendu);
+    expect(attendu).toContain('lieu de départ');
+    expect(prepBlockerSummary(dur, 'destination')).toBe('Il manque : ' + attendu);
   });
 
   it('L2.11-03: un manque de plus, aucun manque repete', () => {
+    // ARBITRAGE A : le depart seul ne bloque plus (un seul manque = plus de
+    // ligne du tout). Pour mesurer un AJOUT de manque, il faut deux niveaux
+    // reels : rien qui bloque, puis l intention qui manque en plus du depart.
     const un = sansDepart();
     const deux = sansDepartNiActivite();
     const a = prepBlockerSummary(un, 'destination') ?? '';
     const b = prepBlockerSummary(deux, 'destination') ?? '';
-    expect(a).not.toBe('');
+    expect(a, 'un seul manque ne doit plus rien afficher').toBe('');
+    // La seconde, elle, nomme le depart : sans ce controle, le comptage
+    // ci-dessous pourrait nombrer n'importe quoi.
+    expect(b).toContain('lieu de départ');
     // L ordre suit `ENGINE_BLOCKING`, pas l ordre d apparition : ajouter un
     // manque NE DOIT PAS prependre. On exige donc l inclusion des items, pas
     // un prefixe — un prefixe passerait aussi sur une liste reecrite a
@@ -249,6 +285,7 @@ describe('L2.11 - « Il manque : … » reste exactement ce qu il est', () => {
       expect(items(b), '« ' + item + ' » a disparu du resume').toContain(item);
     }
     expect(items(b).length, 'le resume ne compte pas les deux bloqueurs').toBe(2);
+    expect(b, 'le resume ne nomme pas le depart').toContain('lieu de départ');
     expect(new Set(items(b)).size, 'un manque est repete').toBe(items(b).length);
     // Et l affichage suit exactement la source, separateur compris.
     expect(b).toBe(

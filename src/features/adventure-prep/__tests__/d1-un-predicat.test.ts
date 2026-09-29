@@ -117,12 +117,44 @@ const profilsLocaux = (): readonly StepOneProfileId[] => ['trajet', 'voyage', 's
     ];
 
     for (const [nom, draft] of brouillons) {
-      const attendu = !!draft.route.origin && (!!draft.activities.primary || draft.pickerDismissed);
+      // B4 : le verdict ne depend QUE de l intention. Le depart n entre plus
+      // dans la formule — sinon « arrivee seule » et « aucun » y seraient
+      // refuses, ce qui n est pas le contrat annonce.
+      const attendu = !!draft.activities.primary || draft.pickerDismissed;
       expect(hasEngineMinimum(draft), `moteur — ${nom}`).toBe(attendu);
       expect(isStepSatisfied(draft, 'destination'), `rail — ${nom}`).toBe(attendu);
       for (const profil of profils) {
         // Le profil ne change plus le verdict : il ne change que le libelle.
         expect(canCreateStepOne(draft), `CTA ${profil} — ${nom}`).toBe(attendu);
+      }
+    }
+  });
+
+  it('D2-04bis: la ligne de manque suit le verdict — RACCORD UI REQUIS', () => {
+    // CE TEST EST VOLONTAIREMENT ROUGE. Il ne verifie pas le moteur — correct,
+    // epingle par D2-04 juste au-dessus — mais une ligne d ecran, elle, non
+    // corrigee parce qu elle vit hors du perimetre de ce lot.
+    //
+    // RACCORD EXACT : `src/features/adventure-prep/components/stepOneProfile.ts`,
+    // ligne 269 — `const ENGINE_BLOCKING: readonly StepOneFieldKey[] =
+    // ['activity', 'origin'];`. Retirer `'origin'` : le CTA (`blockedByEngine`,
+    // ligne 333) lit deja `hasEngineMinimum`, donc seul le libelle ment encore.
+    const base = fullDraft();
+    const profils: readonly StepOneProfileId[] = ['trajet', 'voyage', 'sejour', 'local'];
+    const brouillons: readonly [string, AdventurePrepDraft][] = [
+      ['sans depart', fullDraft({ route: { origin: null, destination: ARGENTIERE, shape: 'boucle' } })],
+      [
+        'liberation sans depart',
+        fullDraft({
+          activities: { primary: null, extra: [], nights: [] },
+          pickerDismissed: true,
+          route: { origin: null, destination: null, shape: 'boucle' },
+        }),
+      ],
+    ];
+    for (const [nom, draft] of brouillons) {
+      const attendu = !!draft.activities.primary || draft.pickerDismissed;
+      for (const profil of profils) {
         const annonce = stepOneMissing(draft, profil).blocking.length > 0;
         expect(annonce, `ligne ${profil} — ${nom}`).toBe(!attendu);
       }
@@ -197,9 +229,19 @@ const profilsLocaux = (): readonly StepOneProfileId[] => ['trajet', 'voyage', 's
     expect(shouldLaunchGeneration(deuxLieuxSansDateNiDuree())).toBe(true);
     // Et il refuse quand le minimum moteur manque — un ecran de generation
     // qui echouerait aussitos vaut moins que l'explication de l'etape 1.
+    // B4 : un sejour SANS depart lance reellement la generation. Le refus ne
+    // porte plus que sur l absence d intention.
     expect(
       shouldLaunchGeneration(
         fullDraft({ route: { origin: null, destination: ARGENTIERE, shape: 'boucle' } }),
+      ),
+    ).toBe(true);
+    expect(
+      shouldLaunchGeneration(
+        fullDraft({
+          activities: { primary: null, extra: [], nights: [] },
+          route: { origin: null, destination: ARGENTIERE, shape: 'boucle' },
+        }),
       ),
     ).toBe(false);
   });
@@ -226,13 +268,17 @@ const profilsLocaux = (): readonly StepOneProfileId[] => ['trajet', 'voyage', 's
     expect(stepOneMissing(complet, 'trajet').optional).toEqual([]);
   });
 
-  it('D2-07: le refus reste un refus quand le depart manque', () => {
-    const sansDepart = fullDraft({
+  it('D2-07: le refus reste un refus quand l INTENTION manque', () => {
+    // B4 a change la nature du refus, pas sa suppression : ce qui bloque n est
+    // plus le depart, c est l absence de sujet pour le modele. Sans activite ET
+    // sans « Partir librement », il n y a rien a quoi repondre.
+    const sansIntention = fullDraft({
+      activities: { primary: null, extra: [], nights: [] },
       route: { origin: null, destination: ARGENTIERE, shape: 'boucle' },
     });
-    expect(canCreateStepOne(sansDepart)).toBe(false);
+    expect(canCreateStepOne(sansIntention)).toBe(false);
     // Renvoie le MEME objet : ni re-rendu ni autosave pour un clic refuse.
-    expect(draftActions.completeStep(sansDepart, 'destination')).toBe(sansDepart);
-    expect(draftActions.goToStep(sansDepart, 'itinerary')).toBe(sansDepart);
+    expect(draftActions.completeStep(sansIntention, 'destination')).toBe(sansIntention);
+    expect(draftActions.goToStep(sansIntention, 'itinerary')).toBe(sansIntention);
   });
 });

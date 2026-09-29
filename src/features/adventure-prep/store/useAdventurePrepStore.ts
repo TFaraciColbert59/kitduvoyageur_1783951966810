@@ -7,7 +7,15 @@ import { emptyDraft } from '../engine/emptyDraft';
 import { insertWaypoint, type MapCoord } from '../engine/dayNavigation';
 import { measureWithRunners } from '../engine/measurements';
 import { browserMeasurementRunners } from '../browserMeasurements';
-import { buildItinerary, type StepDraft } from '../engine/itinerary';
+import { buildItinerary, stepById, type StepDraft } from '../engine/itinerary';
+import {
+  alternativesFor as rankAlternatives,
+  referenceFor,
+  ringFor,
+  type AlternativesGap,
+} from '../engine/stepAlternatives';
+import type { PlaceCandidate, ScoredPlace } from '../engine/places';
+import { loadBasePlacesNear } from '../placeSource';
 import {
   failGeneration,
   finishGeneration,
@@ -43,6 +51,72 @@ import type {
 // `normalizeClockTime` est une FONCTION : elle vit hors du bloc `import type`,
 // sinon le store l'utiliserait sans l'avoir reellement chargee.
 import { normalizeClockTime } from '../types';
+
+/* ------------------------------------------------------------------ */
+/* E9 — les alternatives REELLES d une etape                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * La source des alternatives. Par defaut la vraie : `/api/pois`, par boite,
+ * avec le filtrage de joignabilite. Injectable pour un test, jamais pour une
+ * donnee de production — c'est la regle de `PrepStepReplaceSheet` aussi.
+ */
+export type AlternativesLoader = (
+  points: readonly { lat: number; lon: number }[],
+  signal?: AbortSignal,
+) => Promise<readonly PlaceCandidate[]>;
+
+const SOURCE_REELLE: AlternativesLoader = (points, signal) =>
+  loadBasePlacesNear(points, fetch, signal);
+
+let SOURCE: AlternativesLoader = SOURCE_REELLE;
+
+/**
+ * Rend sa source a la VRAIE. Meme convention que `__resetAmenityMemo` et
+ * `__resetWalkabilityMemo` de `placeSource` : un test qui substitue la source
+ * la remet ensuite, sinon le test suivant heriterait d'un catalogue de poche
+ * et passerait sans jamais avoir parle a la base.
+ */
+export function __setAlternativesLoader(loader: AlternativesLoader): void {
+  SOURCE = loader;
+}
+
+export function __resetAlternativesLoader(): void {
+  SOURCE = SOURCE_REELLE;
+}
+
+/**
+ * Ce que « remplacer » peut honnument rapporter.
+ *
+ * Une union discriminée, et non deux booleens : « pas d'alternative » et
+ * « source muette » se ressembleraient si on les melangeait, alors que la
+ * premiere est une MESURE — la base a repondu, et personne autour — et la
+ * seconde une INCERTITUDE. Afficher « la base n'a rien » apres un echec
+ * reseau serait un mensonge de plus.
+ */
+export type StepAlternatives =
+  | {
+      readonly etat: 'pret';
+      readonly stepId: string;
+      readonly stepTitle: string;
+      readonly places: readonly ScoredPlace[];
+      readonly reference: { lat: number; lon: number } | null;
+    }
+  | {
+      readonly etat: 'sans-alternative';
+      readonly stepId: string;
+      readonly stepTitle: string;
+      readonly places: readonly [];
+      readonly raison: AlternativesGap;
+      readonly reference: { lat: number; lon: number } | null;
+    }
+  | {
+      readonly etat: 'source-muette';
+      readonly stepId: string;
+      readonly stepTitle: string;
+      readonly places: readonly [];
+      readonly reference: { lat: number; lon: number } | null;
+    };
 
 /**
  * Ce qui vient de changer de geometrie, et qui impose donc de remesurer.
@@ -113,6 +187,15 @@ export interface AdventurePrepActions {
   continueGeneration: () => void;
   markPhase: (id: GenerationPhaseId) => void;
   pushGenerated: (days: number) => void;
+  /**
+   * Les alternatives REELLES d une etape du parcours.
+   *
+   * `count` borne le nombre de lieux proposes ; il vient de l'ecran et n'est
+   * jamais fabrique. La liste exclut ce que le programme porte DEJA,
+   * ailleurs : proposer un lieu deja pose ailleurs n'est pas une alternative,
+   * c'est un doublon qui ferait remarcher la journee.
+   */
+  alternativesForStep: (stepId: string, count: number) => Promise<StepAlternatives>;
   /** Depose la geometrie reelle publiee par le moteur, telle quelle. */
   publishLiveModel: (model: ItineraryModel) => void;
   stopGeneration: () => void;
@@ -271,6 +354,41 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
           patch((draft) => draftActions.setGeneration(draft, startGeneration(draft.generation)));
         },
         publishLiveModel: (model) => set({ liveModel: model }),
+        alternativesForStep: async (stepId, count) => {
+          const model = get().draft.itinerary;
+          if (model === null) {
+            return { etat: 'sans-alternative', stepId, stepTitle: '', places: [], raison: 'reference-absente', reference: null } as const;
+          }
+          const step = stepById(model, stepId);
+          if (step === undefined) {
+            return { etat: 'sans-alternative', stepId, stepTitle: '', places: [], raison: 'reference-absente', reference: null } as const;
+          }
+          const base = { stepId, stepTitle: step.title } as const;
+          // Pas de point REEL autour duquel mesurer : on le dit, on ne substitue
+          // pas le centre de la carte, qui ferait une distance fausse.
+          const reference = referenceFor(step, model);
+          if (reference === null) {
+            return { ...base, etat: 'sans-alternative', places: [], raison: 'reference-absente', reference: null } as const;
+          }
+          let trouves: readonly PlaceCandidate[];
+          try {
+            trouves = await SOURCE(ringFor([reference], 0));
+          } catch {
+            // Une source muette n'est PAS une base vide : la difference change
+            // ce que l'ecran a le droit d'ecrire sur la vacancy du catalogue.
+            return { ...base, etat: 'source-muette', places: [], reference } as const;
+          }
+          const tri = rankAlternatives(step, trouves, model);
+          if (tri.gap !== null) {
+            return { ...base, etat: 'sans-alternative', places: [], raison: tri.gap, reference: tri.reference } as const;
+          }
+          // Un `count` absurde ne doit pas transformer une liste mesuree en
+          // liste vide : on lit au plus ce qu'on a, et la liste entiere si la
+          // demande n'a pas de sens.
+          const demande = Number.isFinite(count) ? Math.trunc(count) : tri.ranked.length;
+          const places = demande > 0 ? tri.ranked.slice(0, demande) : tri.ranked;
+          return { ...base, etat: 'pret', places, reference: tri.reference } as const;
+        },
         continueGeneration: () =>
           patch((draft) => draftActions.setGeneration(draft, resumeGeneration(draft.generation))),
         markPhase: (id) =>

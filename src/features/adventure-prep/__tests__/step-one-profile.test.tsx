@@ -130,17 +130,34 @@ describe('S11 — les questions posees', () => {
 });
 
 describe('S11 — ce qui manque, sans question inutile', () => {
-  it('S11-11: le sejour sans depart est refuse, et il dit pourquoi', () => {
-    // AVANT : aucune question posee, donc aucune ligne, donc un CTA actif — et
-    // un clic sans effet, puisque le moteur n invente pas de depart. L ecran
-    // promettait un parcours que rien ne pouvait produire.
+  it('S11-11: le sejour sans depart est ACCEPTE, le moteur part sans origine', () => {
+    // AVANT : le sejour n affichait meme pas la question du depart, donc rien
+    // n expliquait l arret. Le garde-fou `origin` de `hasEngineMinimum` a ete
+    // retire (B4) : le squelette se construit, les etapes sans point reel
+    // deviennent des notes, et AUCUNE origine n est fabriquee.
     const draft = fullDraft({
       activities: SEJOUR,
       route: { origin: null, destination: ARGENTIERE, shape: 'boucle' },
     });
-    expect(canCreateStepOne(draft)).toBe(false);
-    expect(stepOneMissing(draft, 'sejour').blocking).toEqual(['lieu de départ']);
-    expect(stepOneMissingSummary(draft, 'sejour')).toBe('Il manque : lieu de départ');
+    expect(draft.route.origin).toBeNull();
+    expect(canCreateStepOne(draft)).toBe(true);
+  });
+
+  it('S11-11bis: RACCORD UI — le sejour sans depart n annonce aucun bloqueur', () => {
+    // ROUGE VOLONTAIRE. `ENGINE_BLOCKING = ['activity', 'origin']`
+    // (components/stepOneProfile.ts:269, HORS PERIMETRE) nomme encore
+    // « lieu de depart » comme arret, alors que le CTA est actif.
+    // RACCORD : retirer 'origin' de ENGINE_BLOCKING, ligne 269.
+    const draft = fullDraft({
+      activities: SEJOUR,
+      route: { origin: null, destination: ARGENTIERE, shape: 'boucle' },
+    });
+    expect(canCreateStepOne(draft)).toBe(true);
+    // CIBLE : `blocking` ne nomme que ce qui arrete vraiment. Le resume
+    // historique (`stepOneMissingSummary`) peut, lui, continuer de lister
+    // l absence — c est AN7-7, et c est honnete tant qu il ne pretend pas
+    // etre un arret.
+    expect(stepOneMissing(draft, 'sejour').blocking).toEqual([]);
   });
 
   it('S11-11b: le sejour avec depart n affiche plus aucune arret', () => {

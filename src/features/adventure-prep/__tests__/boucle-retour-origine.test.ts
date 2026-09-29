@@ -56,6 +56,7 @@ function modelOf(days: number, steps: readonly ItineraryStep[]): ItineraryModel 
     perDay: Array.from({ length: days }, () => ({ ...INCONNU })),
     weather: Array.from({ length: days }, () => null),
     metricsContext: 'voyage',
+    travelMode: 'voiture',
     budgetPerPerson: { ...PRIX },
     activityCount: days,
     contingencies: [],

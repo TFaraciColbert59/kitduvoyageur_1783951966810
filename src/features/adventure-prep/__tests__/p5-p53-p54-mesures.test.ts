@@ -13,6 +13,13 @@
  *                          texte rgba(255,255,255,0.71)  71 %,  graisse 650
  *   rayon 999px, hauteur 44px, corps 13px : identiques dans les deux etats.
  *
+ * Ces deux lignes datent d AVANT G1 et decrivent l etat au repos comme un
+ * aplat : c etait vrai a la mesure, ce ne l est plus. Le repos est devenu du
+ * verre (G1), puis son opacite a ete remontee de 0,84 a 0,94 (G3.1). Seul
+ * l etat ACTIF est reste un aplat de marque, ce qui est voulu : c est le seul
+ * element du rail qui doit se lire comme un bouton plein. P5.3-05 verrouille
+ * les DEUX etats, pour qu aucun des deux ne puisse redevenir translucide.
+ *
  * CE QUE CES CHIFFRES PROUVENT, ET CE QU ILS NE PROUVENT PAS.
  * Ils prouvent que la GEOMETRIE des pastilles est uniforme et que l etat actif
  * se distingue par le POIDS et l ALPHA DU TEXTE, pas par un bricolage de
@@ -87,8 +94,11 @@ describe('P5.3 - les pastilles de jour sont uniformes', () => {
   });
 
   it('P5.3-03: l etat actif ne change ni le rayon ni la taille du corps', () => {
-    // Mesure : rayon 999px et corps 13px dans les deux etats.
-    expect(decl(JOUR, 'border-radius')).toBe('999px');
+    // Mesure : rayon pilule et corps 13px dans les deux etats. Le rayon est
+    // desormais lu dans le jeton --prep-radius-pill (M2.4) et non plus dans un
+    // 999px ecrit en dur : le RENDU est identique (le jeton vaut 9999px, la
+    // pastille etant une capsule de 44px de haut), seule la feuille change.
+    expect(decl(JOUR, 'border-radius')).toBe('var(--prep-radius-pill)');
     expect(decl(JOUR_ACTIF, 'border-radius')).toBeNull();
     expect(decl(JOUR, 'font-size')).toBe('var(--prep-type-meta)');
     expect(decl(JOUR_ACTIF, 'font-size')).toBeNull();
@@ -101,16 +111,36 @@ describe('P5.3 - les pastilles de jour sont uniformes', () => {
     expect(jeton(TOKENS, '--lkv-touch-min')).toBe('44px');
   });
 
-  it('P5.3-05: les deux fonds sont des APLATS, aucun translucide (cf. P5.7)', () => {
-    // Mesure : rgb(34,97,72) et rgb(38,43,56), tous deux opaques.
-    // Un fond translucide melange a un aplat sur le meme element, c est
-    // precisement l interdit de P5.7.
-    for (const [nom, corps] of [['repos', JOUR], ['actif', JOUR_ACTIF]] as const) {
-      const fond = decl(corps, 'background-color') ?? '';
-      expect(fond, nom + ' : fond absent').not.toBe('');
-      expect(fond, nom + ' : fond translucide').toMatch(/^var\(--[a-z0-9-]+\)$/);
-      expect(fond, nom + ' : alpha interdit sur un aplat').not.toMatch(/rgba|transparent/);
-    }
+  it('P5.3-05: au repos la pastille est du VERRE, active c est un aplat de marque (cf. P5.7)', () => {
+    /* Ce test disait "les deux fonds sont des APLATS". C etait faux, et pire :
+       il passait meme quand le fond du repos etait devenu du verre, parce
+       qu il ne verifiait que la FORME du jeton (`var(...)`) sans regarder la
+       presence d un materiau. Une regle de verre et un aplat s y ressemble.
+
+       MESURE, 393x852, apres le correctif G1 :
+         repos  : background-color var(--prep-panel-bg) = rgba(16,16,16,0.94)
+                 + backdrop-filter blur 22px + box-shadow --prep-glass-material
+         actif  : background-color var(--btn-tint-solid), OPAQUE, encre
+                 --btn-on-solid, graisse 750.
+       Le repos est donc du verre, l actif un aplat plein : c est voulu et
+       c est le SEUL element du rail qui doit se lire comme un bouton plein.
+       On verifie les DEUX mats, sinon on laisserait passer un etat a moitie
+       translucide ou un actif redevenu vitreux. */
+    const fondRepos = decl(JOUR, 'background-color') ?? '';
+    const fondActif = decl(JOUR_ACTIF, 'background-color') ?? '';
+    // Repos : un materiau de verre, complet.
+    expect(fondRepos, 'repos : fond absent').toBe('var(--prep-panel-bg)');
+    expect(JOUR, 'repos : il faut flouter').toMatch(/backdrop-filter:\s*blur\(/);
+    expect(JOUR, 'repos : il faut une arete').toMatch(/box-shadow:[^;]*var\(--prep-glass-material\)/);
+    expect(fondRepos, 'repos : ne doit pas retomber sur un aplat').not.toMatch(/--card-tint-solid/);
+    // Actif : un aplat de marque, opaque, sans materiau translucide.
+    expect(fondActif, 'actif : fond absent').toBe('var(--btn-tint-solid)');
+    expect(JOUR_ACTIF, 'actif : un aplat plein ne doit pas flouter').not.toMatch(
+      /backdrop-filter:\s*blur\(/,
+    );
+    expect(JOUR_ACTIF, 'actif : un aplat plein ne doit pas porter le materiau').not.toMatch(
+      /--prep-glass-material/,
+    );
   });
 
   it('P5.3-06: aucune couleur en dur dans les deux regles, tout est en jeton', () => {

@@ -182,7 +182,7 @@ describe('INTERACTIONS 2 — le clic change l’état', () => {
     expect(apres.completedSteps, 'l’etape 1 doit etre cochee par le clic').toEqual(['destination']);
   });
 
-  it('INT-10b : sans point de départ, le CTA reste fermé et le clic ne fait rien', () => {
+  it('INT-10b : sans point de départ, le CTA s ouvre et le clic emmene a l etape 2', () => {
     useAdventurePrepStore.setState({
       draft: {
         ...fullDraft(),
@@ -195,16 +195,16 @@ describe('INTERACTIONS 2 — le clic change l’état', () => {
     render(<DestinationStep onOpenSheet={vi.fn()} />);
 
     const cta = screen.getByRole('button', { name: /cr.er mon parcours/i });
-    expect(
-      (cta as HTMLButtonElement).disabled,
-      'un CTA actif sans depart deviendrait un bouton mort',
-    ).toBe(true);
+    // B4 : le clic n est plus un bouton mort sans depart. Il ne l etait
+    // d ailleurs deja pas — `requestDraftedItinerary` ne court-circuitait
+    // qu au moment de la generation, apres le clic.
+    expect((cta as HTMLButtonElement).disabled).toBe(false);
 
     fireEvent.click(cta);
 
     const apres = useAdventurePrepStore.getState().draft;
-    expect(apres.currentStep).toBe('destination');
-    expect(apres.completedSteps).toEqual([]);
+    expect(apres.currentStep).toBe('itinerary');
+    expect(apres.completedSteps).toEqual(['destination']);
   });
 
   /* ---------------------------------------------------------------- */

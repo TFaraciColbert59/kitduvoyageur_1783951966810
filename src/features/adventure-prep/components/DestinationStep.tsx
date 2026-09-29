@@ -342,7 +342,7 @@ export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
           <p
             className="prep-missing"
             role="status"
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--ink-2)' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--lkv-text-secondary)' }}
           >
             <Icon name="alert-triangle" size={15} aria-hidden="true" />
             {`Il manque : ${gap.blocking.join(', ')}`}
@@ -351,7 +351,7 @@ export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
           <p
             className="prep-missing prep-missing--ready"
             role="status"
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--ink-2)' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--lkv-text-secondary)' }}
           >
             <Icon name="sparkles" size={15} aria-hidden="true" />
             {readyNote}

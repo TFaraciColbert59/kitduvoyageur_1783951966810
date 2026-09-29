@@ -6,6 +6,35 @@ import Icon from '@/components/ui/Icon';
 
 type LibreState = 'before' | 'during' | 'after';
 
+/**
+ * Les mesures de session — ou, plus honestement, leur ABSENCE.
+ *
+ * CE QUE CE FICHIER N'A PAS, et qu'il faut dire avant tout :
+ * il ne demarre aucun GPS. `watchPosition` n'est appele nulle part dans le
+ * feature, donc il n'existe ici aucun traceur a afficher, et les trois nombres
+ * qui s'affichaient — « 0.0 km », « 2.4 km », « 120 m » — n'etaient mesures par
+ * rien : des constantes ecrites en dur dans le JSX, sur une page reellement
+ * servie par `/partir-librement`. Un recapitulatif qui invente sa distance ne se
+ * distingue pas d'un recapitulatif honnete.
+ *
+ * La regle du produit s'applique donc telle quelle : une mesure absente
+ * s'affiche « A verifier », jamais zero. Le compteur de temps, lui, reste une
+ * mesure — il compte le temps reellement ecoule depuis l'entree en session.
+ *
+ * Brancher `watchPosition` (permission, cadence, accumulation) est une
+ * decision de produit, pas un correctif de style : elle n'est pas prise ici, et
+ * le manque reste nomme.
+ */
+const MESURE_ABSENTE = 'À vérifier' as const;
+
+interface MesuresSession {
+  readonly distanceM: number | null;
+  readonly deniveleM: number | null;
+}
+
+/** Aucune position n'est observee : tout ce qui vient du GPS reste inconnu. */
+const MESURES_REELLES: MesuresSession = { distanceM: null, deniveleM: null };
+
 export default function PartirLibrementView() {
   const [state, setState] = useState<LibreState>('before');
   const [secondsElapsed, setSecondsElapsed] = useState(0);
@@ -35,8 +64,12 @@ export default function PartirLibrementView() {
       <div className="prep-libre__map" style={{ backgroundColor: 'var(--prep-map-skeleton-bg)' }}>
         <div style={{ padding: 20, textAlign: 'center', opacity: 0.5, paddingTop: 100 }}>
           <Icon name="map" size={48} />
-          <p>Carte plein écran</p>
-          {state === 'during' && <p style={{ color: 'green', marginTop: 10 }}>-- Tracé GPS en cours --</p>}
+          {/* Aucune carte n est rendue : ce composant ne monte pas MapLibre et ne
+              trace aucun parcours. Un fond « carte » sur lequel on ecrit « carte
+              plein ecran » ferait croire a une carte la. On nomme donc
+              l'absence plutot que de la maquiller. */}
+          <p>Aucune carte — le suivi de position n’est pas actif</p>
+          {state === 'during' && <p style={{ marginTop: 10 }}>-- Session en cours --</p>}
         </div>
       </div>
       
@@ -55,11 +88,11 @@ export default function PartirLibrementView() {
             <div className="prep-metrics" style={{ display: 'flex', justifyContent: 'space-around', width: '100%', marginBottom: 'var(--space-4)' }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 'var(--lkv-text-caption)', color: 'var(--lkv-text-subtle)' }}>Durée</div>
-                <div style={{ fontSize: 'var(--lkv-text-title)', fontWeight: 'bold' }}>{formatTime(secondsElapsed)}</div>
+                <div style={{ fontSize: 'var(--lkv-text-headline)', fontWeight: 'bold' }}>{formatTime(secondsElapsed)}</div>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 'var(--lkv-text-caption)', color: 'var(--lkv-text-subtle)' }}>Distance</div>
-                <div style={{ fontSize: 'var(--lkv-text-title)', fontWeight: 'bold' }}>0.0 km</div>
+                <div style={{ fontSize: 'var(--lkv-text-headline)', fontWeight: 'bold' }}>{MESURES_REELLES.distanceM === null ? MESURE_ABSENTE : MESURES_REELLES.distanceM + ' m'}</div>
               </div>
             </div>
             <div style={{ display: 'flex', gap: 'var(--space-2)', width: '100%' }}>
@@ -71,7 +104,7 @@ export default function PartirLibrementView() {
 
         {state === 'after' && (
           <div className="prep-map__glass" style={{ flexDirection: 'column', padding: 'var(--space-4)', width: '100%', borderRadius: 'var(--card-radius)' }}>
-            <h3 style={{ fontSize: 'var(--lkv-text-title)', marginBottom: 'var(--space-3)', textAlign: 'center' }}>Récapitulatif session</h3>
+            <h3 style={{ fontSize: 'var(--lkv-text-headline)', marginBottom: 'var(--space-3)', textAlign: 'center' }}>Récapitulatif session</h3>
             <div className="prep-metrics" style={{ display: 'flex', justifyContent: 'space-around', width: '100%', marginBottom: 'var(--space-4)' }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 'var(--lkv-text-caption)', color: 'var(--lkv-text-subtle)' }}>Durée</div>
@@ -79,11 +112,11 @@ export default function PartirLibrementView() {
               </div>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 'var(--lkv-text-caption)', color: 'var(--lkv-text-subtle)' }}>Distance</div>
-                <div style={{ fontSize: 'var(--lkv-text-body)', fontWeight: 'bold' }}>2.4 km</div>
+                <div style={{ fontSize: 'var(--lkv-text-body)', fontWeight: 'bold' }}>{MESURES_REELLES.distanceM === null ? MESURE_ABSENTE : MESURES_REELLES.distanceM + ' m'}</div>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 'var(--lkv-text-caption)', color: 'var(--lkv-text-subtle)' }}>D+</div>
-                <div style={{ fontSize: 'var(--lkv-text-body)', fontWeight: 'bold' }}>120 m</div>
+                <div style={{ fontSize: 'var(--lkv-text-body)', fontWeight: 'bold' }}>{MESURES_REELLES.deniveleM === null ? MESURE_ABSENTE : MESURES_REELLES.deniveleM + ' m'}</div>
               </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', width: '100%' }}>

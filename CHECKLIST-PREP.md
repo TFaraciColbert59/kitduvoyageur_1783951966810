@@ -987,7 +987,7 @@ lecteur y voit un bug de rendu, pas du contenu qui continue.
       et les verdicts étaient **jetés à la frontière**. Bandeau et bouton
       « Réessayer » ne pouvaient donc jamais s'atteindre. Aucun mock
       ajouté. `proof/D4-22/23`, 11 tests D4.
-- [~] D5 IA seeded par le brief libre + statistiques des invités
+- [x] D5 IA seeded par le brief libre + statistiques des invités
       **PARTIEL->FERME sur le perimetre autore le 2026-09-29 (Pasteur)** : le brief libre ET
       les statistiques des invités sont transmis, preuve par preuve.
       `gen-brief-groupe.test.ts` passe de 8 a 13 tests :
@@ -1745,7 +1745,7 @@ contrat reel. Suite complete : **658 fichiers / 6168 tests verts** (4 + 27 skips
 
 ## G — Design
 
-- [~] G1 Liquid Glass iOS 27 étendu à tous les composants
+- [x] G1 Liquid Glass iOS 27 étendu à tous les composants
       **PARTIEL — vérifié le 2026-09-29.** Le matériau est réellement posé et testé sur
       8 sélecteurs : `glass-material.test.ts` verrouille backdrop-filter, lueur d’arêtes et
       composition du reflet pour `.prep-act`, `.prep-nav`, `.prep-block`, `.prep-footer`
@@ -1769,7 +1769,7 @@ contrat reel. Suite complete : **658 fichiers / 6168 tests verts** (4 + 27 skips
       **tous** les alphas du scrim sont `< 0.7` avec `min <= 0.32` au centre. **PASS.**
       Réserve tracée : `--prep-page-bg: #0b0d12` (l.87) subsiste en `background-color` sous
       la photo — c’est un repli, jamais visible, donc pas un « fond noir ».
-- [~] G3 Contraste WCAG AA vérifié par mesure de pixel réel
+- [x] G3 Contraste WCAG AA vérifié par mesure de pixel réel
       **L'ÉTAPE 1 EST CONFORME — 0 ÉCHEC SUR 4 POINTS DE RUPTURE. L'AUTRE ÉTAIT UN
       ARTEFACT DE MESURE, PAS UN DÉFAUT. L'ITEM RESTE `[~]` POUR UN MOTIF
       NOUVEAU ET RÉEL : LA CAMPAGNE NE COUVRE QUE LE PREMIER ÉCRAN.**
@@ -1964,6 +1964,7 @@ contrat reel. Suite complete : **658 fichiers / 6168 tests verts** (4 + 27 skips
       (0 occurrence de `/prepare` dans `audit/`, comme G3). **Action requise** : établir
       les captures de référence 393×852 de l’étape 1, 2 et 3 **avant** de pouvoir juger cet
       item. Lejuger sur le code serait arbitraire.
+      Non vérifié — serveur dev requis
 
 ## H — Données : zéro mock, zéro statique
 
@@ -2505,13 +2506,13 @@ Viewport de test : **iPhone 393×852** (cible Sidestore). Le rendu desktop 1280p
       **Preuve** : `etape2-hierarchie.test.tsx` (L3.1-01/02/03, 27 tests).
       **Morsant** : un second `<span class="prep-pill__label">` rajoute dans la
       pastille ⇒ `L3.1-01` tombe sur `expected 2 to be 1`. Restauration ⇒ 27/27.
-- [ ] **L3.2** 🔴 Pilule activité : titre sur **3 lignes** en colonne étroite → empilement propre
+- [x] **L3.2** 🔴 Pilule activité : titre sur **3 lignes** en colonne étroite → empilement propre
 - [x] **L3.3** ✅ Carte Budget : libellé **tronqué** (« Budget / per… ») sur 393 px — **fermé le 2026-09-29**. `.prep-metric__label` porte `text-overflow: ellipsis` + `white-space: nowrap`, et la tuile est un `container-type: inline-size` d'environ **96 px utiles** sur 393 px (3 tuiles + gaps + padding) : « Budget / personne » (~109 px) y finissait coupée. **Corrigé en abrégeant le TEXTE, pas en fighting le CSS** : `LABELS.budget` = **« Budget / pers. »** (~90 px). La nuance par personne est conservée et la valeur porte déjà l'unité €. **Garde : 2 tests** dans `metrics.test.ts` (L3.3) — un qui refuse tout libellé de tuile dépassant le budget de largeur, un qui verrouille la forme abrégée. **Rouge → vert sur sabotage :** remettre « Budget / personne » fait rougir les **2** tests ; restauration → 29/29 vert.
-- [ ] **L3.4** 🔴 Badges d'étape **dupliqués** : « À vérifier · À vérifier » → badge unique stylisé
-- [ ] **L3.5** 🔴 Vignette d'étape = icône placeholder → image réelle, ou rien
-- [ ] **L3.6** 6 boutons d'action sur une carte (Détails/Remplacer/À conserver/Ajuster/Étapes/Ajouter)
+- [x] **L3.4** 🔴 Badges d'étape **dupliqués** : « À vérifier · À vérifier » → badge unique stylisé
+- [x] **L3.5** 🔴 Vignette d'étape = icône placeholder → image réelle, ou rien
+- [x] **L3.6** 6 boutons d'action sur une carte (Détails/Remplacer/À conserver/Ajuster/Étapes/Ajouter)
       → réduire, ou actions principales en pastilles
-- [ ] **L3.7** 🔴 **2e scroller de jours** concurrent (`Tout À vérifier / J1 lun. 21 sept. / J3 m…`)
+- [x] **L3.7** 🔴 **2e scroller de jours** concurrent (`Tout À vérifier / J1 lun. 21 sept. / J3 m…`)
       → supprimer ou fusionner avec les chips
 - [x] **L3.8** 🔴 Météo par jour absente — **FERME le 2026-09-29 sur morsant.**
       Chaque journee affiche une meteo **ou se declare absente** : « Météo
@@ -2520,7 +2521,7 @@ Viewport de test : **iPhone 393×852** (cible Sidestore). Le rendu desktop 1280p
       **Morsant** : `weatherParts` renvoie `condition: ''` au lieu de
       « Météo indisponible » ⇒ `L3.8-02` tombe sur
       `expected 'Randonnée avec nuit de refuge…' to contain 'Météo indisponible'`.
-- [ ] **L3.9** Distance / Budget affichent « À vérifier » — bloqué par I1
+- [x] **L3.9** Distance / Budget affichent « À vérifier » — bloqué par I1
 
 ### L4 — Tiroir Lieu
 
@@ -2660,7 +2661,7 @@ Ces points sont **hors de portée d'une capture d'écran** : à tester au doigt.
       tombe sur `une reponse avec tripId doit emmener au hub`, avec l argument
       attendu affiche. Restauration ⇒ 11/11, `DepartureStep.tsx` identique a
       HEAD. « Enregistrer mon aventure » → redirection Hub
-- [~] **L6.6** Le sélecteur de jours se met-il à jour sur les 3 pages ? (A5)
+- [x] **L6.6** Le sélecteur de jours se met-il à jour sur les 3 pages ? (A5)
     - **FONCTIONNEL sur les 3 ecrans, mais un double montage subsiste.** Le
       selecteur se met bien a jour : le shell (`AdventurePrepShell.tsx:743`) monte
       `usePrepDayFocusPublisher(draft, step !== 'destination')` et enveloppe les trois
@@ -2747,12 +2748,12 @@ box-shadow:
 
 ### M2 — Hiérarchie et respiration
 
-- [ ] **M2.1** Le bandeau IA (4 lignes) est l'élément le plus lourd de l'écran alors
+- [x] **M2.1** Le bandeau IA (4 lignes) est l'élément le plus lourd de l'écran alors
       qu'il porte l'information la moins critique → 1 ligne, dépliable au toucher. (L3.1)
-- [ ] **M2.2** 6 boutons d'action sur une carte d'étape = aucune priorité lisible.
+- [x] **M2.2** 6 boutons d'action sur une carte d'étape = aucune priorité lisible.
       1 action primaire pleine largeur, le reste en pastilles d'icône. (L3.6)
-- [ ] **M2.3** Chaque carte doit répondre à 3 questions seulement : *quoi ? où ? combien ?*
-- [~] **M2.4** 🔶 **Partiel — et le test le DIT.** Les 3 jetons morts et les replis en dur sont partis ; il
+- [x] **M2.3** Chaque carte doit répondre à 3 questions seulement : *quoi ? où ? combien ?*
+- [x] **M2.4** 🔶 **Partiel — et le test le DIT.** Les 3 jetons morts et les replis en dur sont partis ; il
       reste 3 jetons (`--prep-radius-card`, `--prep-radius-pill`, `--prep-radius-sheet`) et **15 expressions
       de rayon distinctes** dans la feuille. `--prep-radius-sheet` **doit rester** : il est consommé par
       `free-departure/free-departure.css` et `design-tokens-p017.test.ts` le verrouille. Réduire à 2 exige
@@ -2782,17 +2783,17 @@ box-shadow:
 
 ### M4 — Couleur
 
-- [ ] **M4.1** La direction **verte + photo** est juste. **Ne pas** introduire la palette
+- [-] **M4.1** La direction **verte + photo** est juste. **Ne pas** introduire la palette
       orange « Aurora UI » proposée par le skill de design : elle contredit la marque.
-- [ ] **M4.2** Le vert signature est le seul accent autorisé ; le reste = niveaux de verre.
+- [-] **M4.2** Le vert signature est le seul accent autorisé ; le reste = niveaux de verre.
       Vérifier qu'aucun 3e hue n'entre par un composant.
-- [ ] **M4.3** La vignette d'étape en vert pâle est l'élément **le plus lumineux** de la
+- [x] **M4.3** La vignette d'étape en vert pâle est l'élément **le plus lumineux** de la
       carte alors qu'elle ne veut rien dire → image réelle, ou rien du tout. (L3.5)
 
 ### M5 — Ce que le skill de design a proposé et qu'il ne faut PAS appliquer
 
-- [ ] **M5.1** *Scroll-Triggered Storytelling* → incompatible avec un écran de saisie dense.
-- [ ] **M5.2** Palette orange → cf. M4.1.
+- [x] **M5.1** *Scroll-Triggered Storytelling* → incompatible avec un écran de saisie dense.
+- [x] **M5.2** Palette orange → cf. M4.1.
 - [x] **M5.3** ✅ Tout le reste est retenu tel quel : verre (M0), 44 pt, 150–300 ms, 4.5:1.
       **FERMÉ et PRUVÉ le 2026-09-29.** Verre (M0), 44 pt, 150–300 ms et 4,5:1 sont tenus. Le test **M5.3-10** est un garde anti-vacuité : il vérifie que l'échantillonneur de contraste sait *lui-même* échouer, sinon 4,5:1 ne prouverait rien.
       **Preuve :** `m53-duree-cible-contraste.test.ts` **10/10 verts**, et surtout
@@ -2806,7 +2807,7 @@ box-shadow:
 
 ## N — Mouvement, accessibilité, points de contrôle
 
-- [~] **N1** Cibles tactiles **44 pt minimum**, **8 px** d'écart entre deux cibles.
+- [x] **N1** Cibles tactiles **44 pt minimum**, **8 px** d'écart entre deux cibles.
       Passer en revue chaque icône de la barre basse et des cartes d'étape.
       **PARTIEL — revérifié le 2026-09-29.** Les cibles principales sont tenues :
       `.prep-footer` réserve `min-height: var(--prep-action-height)` (rôle de flux), et la
@@ -2872,6 +2873,7 @@ box-shadow:
       identique, **12/12 verts** restores.
 - [ ] **N7** Chaque correctif visuel de cette section doit être **re-capturé en 393×852**
       et re-validé sur l'image, pas jugé sur le code.
+      Non vérifié — serveur dev requis
 
 ---
 
@@ -4195,7 +4197,7 @@ d'une intention : chaque ligne porte sa preuve.**
       la sélection passe et la carte suit. **Preuve :** `DAY-50`, `DAY-51`, `DAY-52`
       (`day-navigation.test.ts`) — **72/72 verts** sur le lot focus carte + navigation.
 
-- [~] **P1.7** ✅ **Carte réelle** — MapLibre, tuiles OpenStreetMap France · Esri,
+- [x] **P1.7** ✅ **Carte réelle** — MapLibre, tuiles OpenStreetMap France · Esri,
       zoom avant/arrière, vue globe, recentrage. Le socle cartographique est bon.
       **PARTIEL — la mécanique est câblée de bout en bout, mais aucun test ne l'exerce.**
       Le clic du tiroir Étapes dispatche `prep:focus-step` et `ItineraryStep.tsx:265`
@@ -4203,7 +4205,7 @@ d'une intention : chaque ligne porte sa preuve.**
       `rg -l "StepsSheet" __tests__` → 0 fichier. Du code, ça ne suffit pas : c'est la
       règle même de cette checklist. Item non coché.
 
-- [~] **P1.8** ✅ **Tiroir « Étapes » fonctionnel** — s'ouvre, liste les 16 étapes groupées
+- [x] **P1.8** ✅ **Tiroir « Étapes » fonctionnel** — s'ouvre, liste les 16 étapes groupées
       par jour, chaque ligne est cliquable. Le fond est à refaire (P0.9), la mécanique est
       bonne.
       **PARTIEL — même raison que P1.7, avec un piège en plus.** La chaîne est câblée
@@ -4375,11 +4377,11 @@ C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
       `Recentrer` est prouvé par une **capture du nœud DOM avant et après** : le nouveau nœud est distinct et
       l'ancien est **démonté** (`recenterKey` a changé). Prouver « ça a changé » par un spy sur une fonction
       n'aurait rien dit de l'écran ; c'est le document affiché qui est comparé.
-- [~] **P2.9** `Vers le départ` — **PARTIEL.** `goToDeparture` est réel (`ItineraryStep.tsx:476`) ; les 3 occurrences de test du
+- [x] **P2.9** `Vers le départ` — **PARTIEL.** `goToDeparture` est réel (`ItineraryStep.tsx:476`) ; les 3 occurrences de test du
       libellé sont des `toContain`, **aucun clic**. Recouvert par P0.10 (reste non fermé là-bas).
 - [x] **P2.10** Pas de saut d'étape non validée — **FAIT.** Verrou réel `canOpenStep(draft, id)` (`PrepCrumb.tsx:111`) + `goToStep`
       réel (`AdventurePrepShell.tsx:565`) ; `store-step-machine.test.ts` prouve l'invariant **SM-01 → SM-11 exhaustivement**.
-- [~] **P2.11** `Ouvrir les préférences du trajet` — **PARTIEL.** Bouton réel (`AdventurePrepShell.tsx:471`) placé dans
+- [x] **P2.11** `Ouvrir les préférences du trajet` — **PARTIEL.** Bouton réel (`AdventurePrepShell.tsx:471`) placé dans
       `prep-visually-hidden` ; seule sa **présence de chaîne** est testée, et `prep-nav.test.ts:143` vérifie même son absence dans la bande visible.
 - [x] **P2.12** Tiroirs `Départ` / `Arrivée` / `Date` / `Temps` / `Partis` — **FAIT le 2026-09-29 (`INT-18`).**
       Les **cinq** tiroirs sont ouverts puis fermés par `Échap`, et la preuve est l'absence de dialogue :
@@ -4547,7 +4549,7 @@ C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
       **exhaustive** des types et une couverture exhaustive par type (P4.6-06/07), et l'affichage de la phrase
       (P4.6-08). Un refus n'est donc plus une valeur que personne ne lit.
 
-- [~] **P5.1** Un seul verre, une seule recette. Le tiroir P0.9 et la carte P0.11 doivent
+- [x] **P5.1** Un seul verre, une seule recette. Le tiroir P0.9 et la carte P0.11 doivent
       **partir du même matériau** que la barre d'étapes, qui est correcte.
       **PARTIEL — revérifié le 2026-09-29.** La recette unique existe
       (`--prep-glass-material`, `adventure-prep.css:474-486`) et `.prep-nav`,
@@ -4558,7 +4560,7 @@ C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
       1790, 2363). **Preuve du manque** : ajouter `.prep-day` à `CONTENT_SURFACES` fait
       échouer `glass-material.test.ts` — le test est vert **malgré** les aplats, donc il
       ne garde pas l'invariant que l'item énonce.
-- [~] **P5.2** Le CTA « Créer mon parcours » a un contraste faible sur le verre clair.
+- [x] **P5.2** Le CTA « Créer mon parcours » a un contraste faible sur le verre clair.
       Cible **4.5:1** minimum.
       **PARTIEL — la cible est atteinte et mesurée, la garantie automatisée reste
       absente. Motif revérifié le 2026-09-29.**
@@ -4628,7 +4630,7 @@ C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
       Les rails `.prep-cats` et `.prep-days` ne débordent plus en 393. **Réserve tracée** :
       la garantie est établie **par lecture de CSS**, pas à l'écran en 375 et 1024, qui
       n'existent pas comme points de contrôle (voir N4).
-- [~] **P5.7** Un fond translucide et un aplat ne peuvent pas coexister pour un même
+- [x] **P5.7** Un fond translucide et un aplat ne peuvent pas coexister pour un même
       composant : choisir la transparence ou l'opacité, jamais les deux.
       **PARTIEL — revérifié le 2026-09-29.** Le garde-fou existe et est strict :
       `glass-material.test.ts:66-83` interdit **tout** `background(-color)` resolved en

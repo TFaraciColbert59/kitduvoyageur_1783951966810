@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * H5 (raccord navigateur) — l altitude ET la meteo nomment LEUR fournisseur,
  * de la route a l ecran.
@@ -38,10 +39,14 @@
  * ou la chaine est complete et le composant d affichage est le vrai.
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { cleanup, render, waitFor } from '@testing-library/react';
+
+import { ItineraryStepScreen } from '../components/ItineraryStep';
+import { useAdventurePrepStore } from '../store/useAdventurePrepStore';
 
 import { PrepDataSource } from '../components/PrepDataSource';
 import {
@@ -50,6 +55,7 @@ import {
 } from '../browserMeasurements';
 import { readWeatherProvider } from '../weatherClient';
 import { buildItinerary } from '../engine/itinerary';
+import type { MeasurementRunners } from '../engine/measurements';
 import { metricsFor, type PrepMetric } from '../engine/metrics';
 import { assignPlaces, type PlaceCandidate } from '../engine/places';
 import {
@@ -84,6 +90,43 @@ vi.mock('@/lib/rate-limit/routes', () => ({ enforceRateLimit: mocks.enforceRateL
 
 import { GET as weatherGet } from '@/app/api/weather/route';
 import { GET as elevationGet } from '@/app/api/elevation/route';
+
+/* ------------------------------------------------------------------ */
+/* Les mocks du PLAN COMPOSANT (le plan precedent n'en a pas besoin, il */
+/* n'importe pas l'ecran) : le moteur de generation et l'inventaire de  */
+/* lieux sont remplaces, le ROUTAGE et les runners de mesure ne le sont  */
+/* pas.                                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Le faux moteur ne fait qu'une chose de plus que de repondre : il EXERCE
+ * les runners de mesure que l'ecran lui a passes.
+ *
+ * C'est tout l'objet du plan composant. Sans cet appel, le composant
+ * construirait ses propres `browserMeasurementRunners` sans jamais les
+ * utiliser : les callbacks de fournisseur ne seraient declenches par
+ * PERSONNE, l'etat resterait `null`, et la ligne afficherait « source
+ * inconnue » — exactement comme un composant qui n aurait recu aucun
+ * canal. Ce faux moteur est donc un RELAIS, pas une source de donnees :
+ * chaque mesure sort de `fetchRoutage`, donc des gestionnaires de route
+ * REELS et de leurs services.
+ */
+const faux = vi.hoisted(() => ({ run: vi.fn() }));
+
+vi.mock('../engine/itineraryPhases', async (importOriginal) => {
+  const reel = await importOriginal<typeof import('../engine/itineraryPhases')>();
+  // `rejectionMessage` reste le vrai : l'ecran s'en sert hors generation.
+  return { ...reel, runItineraryGeneration: faux.run };
+});
+
+vi.mock('../placeSource', () => ({
+  anchorsOf: () => [],
+  loadPlaceInventoryFor: () => async () => ({ places: [], truncated: false }),
+  resolvePlacesFor: () => async () => null,
+  warmAmenitiesFor: () => undefined,
+}));
+
+vi.mock('@/app/prepare/actions', () => ({ fetchItineraryProposal: vi.fn() }));
 
 /* ------------------------------------------------------------------ */
 /* Les lieux, et le brouillon sur lequel on mesure                    */
@@ -510,5 +553,217 @@ describe('H5R-3 — les lecteurs ne nomment que ce qu ils connaissent', () => {
     });
     expect(text).toContain(SOURCE_INCONNUE);
     expect(text).not.toContain('Open-Meteo');
+  });
+});
+/* ------------------------------------------------------------------ */
+
+/* H5R-4 — le composant : la mesure entre dans son etat, et la ligne
+
+/* nomme le fournisseur. C est le point que ce fichier ne faisait PAS. */
+
+/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------ */
+/* H5R-4 : le composant, de la reponse jusqu a la ligne RENDUE          */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Tout ce qui precede s arrete a `PrepDataSource` : on prouve que la chaine
+ * produit la bonne entree, jamais que l'ECRAN l'affiche. Ce bloc ferme la
+ * boucle — et il ne le fait pas en fabriquant une provenance : le composant
+ * est monte, le moteur de generation est un RELAIS qui exerce les runners que
+ * l'ECRAN lui a passes, chaque mesure sort des gestionnaires de route REELS,
+ * et l'assertion porte sur le texte rendu.
+ *
+ * Un `buildProvenance` appele a la main prouverait la fonction, jamais le
+ * raccordement : c'est exactement le defaut que ce bloc ferme.
+ */
+describe('H5R-4 — la mesure remonte de la reponse jusqu a la ligne rendue', () => {
+  // jsdom ne fournit ni observateur ni media query, et l'ecran s'en sert des
+  // son premier rendu. Sans ces brides, l'echec parlerait de
+  // `IntersectionObserver is not defined` — pas de la provenance.
+  beforeAll(() => {
+    class ResizeObserverShim {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    }
+    (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = ResizeObserverShim;
+
+    class IntersectionObserverShim {
+      readonly root = null;
+      readonly rootMargin = '';
+      readonly thresholds: readonly number[] = [];
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+      takeRecords(): IntersectionObserverEntry[] {
+        return [];
+      }
+    }
+    (globalThis as unknown as { IntersectionObserver: unknown }).IntersectionObserver =
+      IntersectionObserverShim;
+
+    if (!window.matchMedia) {
+      window.matchMedia = ((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: () => {},
+        removeListener: () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        dispatchEvent: () => false,
+      })) as unknown as typeof window.matchMedia;
+    }
+
+    window.scrollTo = (() => {}) as unknown as typeof window.scrollTo;
+    window.Element.prototype.scrollTo = function scrollTo() {};
+    window.Element.prototype.scrollIntoView = function scrollIntoView() {};
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+    faux.run.mockReset();
+  });
+
+  /**
+   * Le faux moteur, arme comme le vrai : il mesure, puis il REMET le modele
+   * mesure.
+   *
+   * `runners` est le 5e argument, donc celui que l'ECRAN a construit. Le test
+   * ne le fabrique pas : il le consomme. C'est ce qui rend la suite incapable
+   * de passer sur un composant qui ne le construirait pas — ou qui construirait
+   * des runners qui n'annoncent rien.
+   *
+   * Le modele rendu est celui d'APRES la meteo : sans cela l'ecran afficherait
+   * « Météo indisponible » meme quand `/api/weather` a repondu, et le test
+   * fenit passerait sur une absence.
+   */
+  function mesurePuisRapporte() {
+    faux.run.mockImplementation(
+      async (
+        draft: AdventurePrepDraft,
+        signal: AbortSignal,
+        _proposition: unknown,
+        _phase: unknown,
+        runners: MeasurementRunners
+      ) => {
+        const trace = await runners.trace(draft, localise(draft), signal);
+        const mesure = await runners.weather(draft, trace, signal);
+        return {
+          model: mesure,
+          engineId: 'ai',
+          degraded: false,
+          message: null,
+          rejectedReason: null,
+          failure: null,
+          suggestedStartDate: null,
+          suggestedDurationDays: null,
+          phases: [],
+          infeasible: [],
+          toVerify: [],
+        };
+      }
+    );
+  }
+
+  /** Le brouillon de l'etape 2 : un parcours a construire, generation encore `idle`. */
+  function poser() {
+    useAdventurePrepStore.setState({ draft: brouillon() });
+  }
+
+  function ecran(): HTMLElement {
+    render(React.createElement(ItineraryStepScreen, { onOpenSheet: () => undefined }));
+    return document.body;
+  }
+
+  function texte(body: HTMLElement): string {
+    return body.textContent ?? '';
+  }
+
+  it('H5R-12 : l altitude nomme Open-Meteo sur l ecran, la distance nomme son routeur', async () => {
+    // Garde-fou : sans valeur reelle, une ligne « source inconnue » passerait
+    // pour un raccordement qui marche. On exige donc les DEUX credits.
+    vi.stubGlobal('fetch', fetchRoutage({ routeProvider: 'osrm' }));
+    mesurePuisRapporte();
+    poser();
+    const body = ecran();
+
+    // Le nom du routeur n'apparait QUE dans la ligne de provenance : c'est un
+    // critere d'attente discriminant, la tuile ne le contient pas.
+    await waitFor(() => expect(texte(body)).toContain('OpenStreetMap (OSRM)'));
+
+    expect(texte(body)).toContain('Open-Meteo (altitudes)');
+    // Et la precision : la meteo ne deborde pas sur la tuile du denivele.
+    expect(texte(body)).not.toContain('Open-Meteo (prévisions)');
+  });
+
+  it('H5R-13 : l altitude muette ne nomme PERSONNE, meme quand la meteo parle', async () => {
+    // Le 503 de `/api/elevation` : personne n'a mesure d'altitude, donc il n'y
+    // a rien a crediter. La meteo, elle, repond et se nomme — et c'est
+    // precisement ce qui rend ce test able : les deux routes rendent le meme
+    // `open-meteo`, donc un composant qui n'ecouterait qu'un credit unique
+    // afficherait « Open-Meteo (altitudes) » sous un denivele inexistant.
+    mocks.elevationsAt.mockResolvedValue(null);
+    vi.stubGlobal('fetch', fetchRoutage({ routeProvider: 'osrm' }));
+    mesurePuisRapporte();
+    poser();
+    const body = ecran();
+
+    await waitFor(() => expect(texte(body)).toContain('OpenStreetMap (OSRM)'));
+
+    // La meteo, elle, a bien ete acceptee : son libelle est affiche. Sans
+    // cette preuve, le test passerait aussi sur un composant qui n'ecouterait
+    // aucune serie.
+    expect(texte(body)).toContain('Partiellement nuageux');
+    // Le denivele n'existe pas : ni credit, ni ligne. La tuile dit deja
+    // « À vérifier », une seconde ligne ne dirait rien de plus.
+    expect(texte(body)).not.toContain('Open-Meteo (altitudes)');
+    expect(texte(body)).not.toMatch(/Dénivelé\s*:/);
+    // Et le routeur garde le sien : les series sont des canaux independants.
+    expect(texte(body)).toContain('OpenStreetMap (OSRM)');
+  });
+
+  it('H5R-14 : des altitudes REELLES sans credit dans le corps restent sans source', async () => {
+    // Le contre-temoin le plus mordant, et le seul qui condamne un
+    // `?? 'open-meteo'`. Le corps de la reponse a ete depouille de son
+    // `provider` : la mesure est la, le nom ne l'est pas. Un composant qui
+    // nommerait « parce qu'on appelle toujours cette route » afficherait
+    // « Open-Meteo (altitudes) » — et passerait les deux tests precedents.
+    vi.stubGlobal('fetch', fetchRoutage({ routeProvider: 'osrm', elevation: 'sans-credit' }));
+    mesurePuisRapporte();
+    poser();
+    const body = ecran();
+
+    await waitFor(() => expect(texte(body)).toContain('OpenStreetMap (OSRM)'));
+
+    // Le denivele, lui, est REEL : la ligne existe donc, avec le chiffre et la
+    // formulation de l'absence. C'est ce qui distingue « on n'a pas de source »
+    // de « on n'a pas de mesure ».
+    expect(texte(body)).toMatch(/Dénivelé\s*:\s*28 m\s*·\s*source inconnue/);
+    expect(texte(body)).not.toContain('Open-Meteo (altitudes)');
+  });
+
+  it('H5R-15 : une meteo refusee ne vole pas le credit de l altitude', async () => {
+    // Le symetrique de H5R-13, et le garde-fou de l'autre sens : une serie qui
+    // echoue ne doit ni nommer, ni EFFACER le credit de l'autre. Un composant
+    // qui viderait son etat de credit sur un echec de la meteo afficherait
+    // « source inconnue » sous un denivele reellement releve.
+    //
+    // Le corps meteo est decale d'un jour : `readWeatherResponse` le refuse
+    // entiere plutot que d'attribuer a un jour la meteo d'un autre, et donc
+    // n'annonce personne.
+    vi.stubGlobal('fetch', fetchRoutage({ routeProvider: 'osrm', weather: 'desalignee' }));
+    mesurePuisRapporte();
+    poser();
+    const body = ecran();
+
+    await waitFor(() => expect(texte(body)).toContain('OpenStreetMap (OSRM)'));
+
+    // La meteo est bien refusee — preuve que l'echec a eu lieu.
+    expect(texte(body)).toContain('Météo indisponible');
+    // Et le denivele garde le credit de la serie qui l'a reellement releve.
+    expect(texte(body)).toMatch(/Dénivelé\s*:\s*28 m\s*·\s*Open-Meteo \(altitudes\)/);
   });
 });

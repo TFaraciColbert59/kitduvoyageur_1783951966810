@@ -12,12 +12,15 @@ import type { DayWeather } from '../engine/weather';
 import { weatherParts } from '../engine/weather';
 import { rejectionMessage, runItineraryGeneration } from '../engine/itineraryPhases';
 import {
+  metricDataSource,
   routeDataSource,
   type DataSourceEntry,
   type DataSourceId,
+  type MeasureProviderId,
   type RouteProvider,
 } from '../engine/provenance';
 import { browserMeasurementRunners } from '../browserMeasurements';
+import type { MeasurementRunners } from '../engine/measurements';
 import {
   anchorsOf,
   loadPlaceInventoryFor,
@@ -133,12 +136,31 @@ function mapPoints(steps: readonly ItineraryStepModel[]): PrepMapPoint[] {
  * « source inconnue ». Nommer le routeur PAR DEFAUT — parce que c est celui
  * qu on a demande — serait exactement le mensonge que ce module refuse.
  *
- * Le denivele est laisse a `null` tant que `/api/elevation` ne renvoyant
- * aucun fournisseur : il en rend un, et ce jour la ligne le nommera.
+ * `series` porte le credit de chaque famille de mesure, et lui seule.
+ * `/api/elevation` et `/api/weather` passent par le meme canal de
+ * `browserMeasurementRunners` — meme service, donc meme identifiant — mais ce
+ * canal ne dit pas QUELLE route a parle : un `MeasureProviderId` unique ne
+ * pourrait pas empecher `/api/weather` de crediter le denivele, puisque les
+ * deux repondent `open-meteo`. L ecran range donc chaque annonce dans la
+ * serie qui l a produite, et cette fonction ne lit plus qu un enregistrement
+ * par serie. `metricDataSource` refuse par ailleurs tout credit sur la
+ * distance, dont la source sort du routeur.
+ *
+ * Une reponse qui ne se nomme pas laisse son enregistrement a `null`, et la
+ * ligne affiche « source inconnue » — jamais un fournisseur deduit du fait
+ * qu on ait appele la route.
  */
+export interface MeasureSeries {
+  /** Ce que `/api/elevation` a nomme pour le denivele, ou `null`. */
+  readonly denivele: MeasureProviderId | null;
+  /** Ce que `/api/weather` a nomme pour les previsions, ou `null`. */
+  readonly meteo: MeasureProviderId | null;
+}
+
 export function buildProvenance(
   metrics: readonly PrepMetric[],
   routeProvider: RouteProvider | null,
+  series: MeasureSeries,
 ): DataSourceEntry[] {
   const route = routeProvider === null ? null : routeDataSource(routeProvider);
   return metrics.flatMap((metric): DataSourceEntry[] => {
@@ -153,7 +175,14 @@ export function buildProvenance(
         metric: metric.id,
         value: metric.value,
         unit: metric.unit,
-        source: metric.id === 'distance' ? route : null,
+        // Trois credits, trois familles, jamais melangees : le routeur pour
+        // la distance, la grille d altitudes pour le denivele. `series[metric.id]`
+        // lit la SEULE serie concernee, donc un credit de prevision ne peut pas
+        // se poser sur un denivele. Et `metricDataSource` renvoie `null` sur
+        // `distance` par construction : meme le jour ou la branche distance
+        // disparaitrait, aucun credit Open-Meteo n y poserait par accident.
+        source:
+          metric.id === 'distance' ? route : metricDataSource(metric.id, series[metric.id]),
       },
     ];
   });
@@ -280,17 +309,24 @@ function FocusedStepView({
         <Button variant="secondary" size="sm" onClick={() => onOpenSheet('step', step.id)}>
           Détails
         </Button>
-        {/* E9 - « Remplacer » a ete RETIRE, et l item reste OUVERT.
-            Le moteur sait poser un point de passage, affecter un lieu a une
-            etape, et rejouer la recherche d un parcours ENTIER. Il ne sait pas
-            proposer des alternatives a UNE etape : les candidats produits par
-            `resolvePlacesFor` meurent dans la generation, et rejouer
-            `assignPlaces` sur le meme depot rendrait le MEME parcours - ce
-            n est pas une alternative. Un `onClick={() => {}}` promet une
-            action qui n existe pas ; mieux vaut son absence, et le besoin
-            reste note plutot que masque. Le test e9-replace.test.tsx
-            verrouille ce constat : il echouera le jour ou un vrai moteur
-            d alternatives existera, et le bouton devra alors revenir. */}
+        {/* L3.6 - deux actions, pas trois.
+
+            « Remplacer » a longtemps partage la carte avec « Détails » et
+            « À conserver », a meme poids et sans ordre. Trois boutons de meme
+            poids se lisent comme trois actions de meme importance : on ne sait
+            plus laquelle est secondaire, alors que deux le sont toujours. Les
+            deux qui restent disent ce qu on fait de l etape - la consulter, ou
+            decider si elle garde sa place dans le parcours.
+
+            La capacite, elle, n a pas disparu. Le moteur classe des lieux du
+            meme type autour d un point de reference REEL (engine/stepAlternatives
+            / alternativesFor), le store l interroge (alternativesForStep), et
+            PrepSheets monte ReplaceSheet pour la vue replace. « Remplacer »
+            s appelle maintenant depuis la fiche de l etape, avec la meme
+            identite qu avant : le tiroir lit l etape qu on regarde, et non
+            la premiere du programme par hasard. Une action qui sert une fois
+            sur dix n a pas besoin d disputer la carte a une action qui sert
+            a chaque consultation. */}
         <Button
           variant="secondary"
           size="sm"
@@ -330,6 +366,21 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
   // reste `null` et l ecran dit « source inconnue » plutot que de
   // reproposer le routeur par defaut. Voir `browserMeasurements.ts`.
   const [routeProvider, setRouteProvider] = useState<RouteProvider | null>(null);
+  // H5 : le fournisseur de chaque SERIE de mesure (altitude ET meteo), lu
+  // dans le corps des deux reponses. La tuile ne pouvait nommer que le routeur
+  // avant ce raccordement, et le denivele restait « source inconnue » meme
+  // quand `/api/elevation` avait repondu et nomme Open-Meteo. Meme regle qu au
+  // routage : un refus ne nomme personne.
+  //
+  // DEUX etats et non un seul : les deux routes partagent un identifiant — le
+  // meme service — donc un credit unique ne saurait pas dire lequel des deux a
+  // repondu. Or `/api/weather` qui repond credited le denivele d un service
+  // qui ne l a pas mesure : un credit vrai en apparence, faux dans sa
+  // precision. Chaque annonce est donc deversee dans SA serie (voir
+  // `mesureRunners`).
+  const [series, setSeries] = useState<MeasureSeries>({ denivele: null, meteo: null });
+  // La serie en cours de mesure, lue au moment ou le canal se declenche.
+  const measuring = useRef<keyof MeasureSeries | null>(null);
 
   // Focus jour : source unique dans le store module, partage avec la bottom bar.
   // L'ecran n'invente donc jamais son propre « jour » : il lit ce que le rail
@@ -362,6 +413,53 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
   );
 
   /**
+   * Les deux phases de mesure, chacune avec SON credit.
+   *
+   * `browserMeasurementRunners` ne rend qu UN canal pour les deux series,
+   * parce qu il n y a qu un service derriere. Ce canal annonce « qui a
+   * repondu », pas « quelle route a repondu » — et comme les deux repondent
+   * `open-meteo`, un composant qui l ecouterait tout court crediterait le
+   * denivele des que la meteo est disponible, meme apres un 503 de
+   * `/api/elevation`.
+   *
+   * On encadre donc chaque phase, et on deverse l annonce dans la seule serie
+   * qui la produit. Ce n est pas une hypothese : `browserMeasurements.ts`
+   * interroge `/api/elevation` dans le `route` de `trace`, et `/api/weather`
+   * dans `weather`. Le marquage est pose AVANT l appel et retire DANS un
+   * `finally`, donc une phase qui echoue ne laisse pas son credit a la suivante.
+   */
+  const mesureRunners = useCallback((): MeasurementRunners => {
+    const base = browserMeasurementRunners(
+      fetch,
+      (provider) => setRouteProvider(provider),
+      (provider) => {
+        const serie = measuring.current;
+        // Une annonce hors phase ne se rattache a aucune serie : elle ne nomme
+        // personne plutot que de nommer la mauvaise.
+        if (serie === null) return;
+        setSeries((avant) =>
+          avant[serie] === provider ? avant : { ...avant, [serie]: provider }
+        );
+      }
+    );
+    const encadrer = (
+      nom: keyof MeasureSeries,
+      phase: (d: AdventurePrepDraft, m: ItineraryModel, s: AbortSignal) => Promise<ItineraryModel>
+    ) => async (d: AdventurePrepDraft, m: ItineraryModel, s: AbortSignal) => {
+      measuring.current = nom;
+      try {
+        return await phase(d, m, s);
+      } finally {
+        measuring.current = null;
+      }
+    };
+    return {
+      trace: encadrer('denivele', base.trace),
+      weather: encadrer('meteo', base.weather),
+    };
+  }, []);
+
+  /**
    * Lance la construction reelle du parcours.
    *
    * Le rail ne coche plus des phases a intervalle fixe :
@@ -379,6 +477,7 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
     // zero, un refus du second run afficherait encore le routeur qui avait
     // repondu au premier. La provenance suit la MESURE, pas l historique.
     setRouteProvider(null);
+    setSeries({ denivele: null, meteo: null });
 
     const store = useAdventurePrepStore.getState();
     if (mode === 'start') store.startGenerationRun();
@@ -391,7 +490,7 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
         (draftToBuild, _signal, availablePlaces) =>
           fetchItineraryProposal(draftToBuild, availablePlaces),
         (phase) => useAdventurePrepStore.getState().markPhase(phase),
-        browserMeasurementRunners(fetch, (provider) => setRouteProvider(provider)),
+        mesureRunners(),
         {},
         resolvePlacesFor(),
         loadPlaceInventoryFor(),
@@ -507,11 +606,16 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
   // `browserMeasurementRunners`, que le routeur declenche apres avoir lu
   // un `provider` dans le corps de sa reponse. Un refus ne le declenche
   // pas, donc la ligne affiche « source inconnue » au lieu d inventer un
-  // fournisseur. Le denivele reste `null` : `/api/elevation` ne renvoie
-  // aujourd hui aucun nom de fournisseur, et le nommer serait inventer.
+  // fournisseur.
+  //
+  // `series` suit la meme regle pour les SERIES de mesure : une annonce ne
+  // survient qu APRES acceptation de SA serie, donc une serie refusee — ou une
+  // reponse muette — ne laisse pas de credit a l ecran. C est ce qui permet
+  // enfin au denivele de nommer le service qui l a releve, au lieu de porter
+  // forever le `null` d avant le raccordement.
   const provenance = useMemo(
-    () => buildProvenance(metrics, routeProvider),
-    [metrics, routeProvider]
+    () => buildProvenance(metrics, routeProvider, series),
+    [metrics, routeProvider, series]
   );
   const program = useMemo(() => {
     if (!model) return [];

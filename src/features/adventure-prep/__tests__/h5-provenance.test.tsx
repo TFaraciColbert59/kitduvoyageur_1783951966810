@@ -2,8 +2,8 @@
  * H5 — La provenance, du point d'integration laisse en attente a l'ecran.
  *
  * `engine/provenance.ts` et `components/PrepDataSource.tsx` existaient,
- * testes (15 cas), et n'etaient appeles par PERSONNE : le module那时候 ne
- * faisait qu'une description, la ligne n'apparaitait sur aucun ecran. Une
+ * testes (15 cas), et n'etaient appeles par PERSONNE : le module ne faisait
+ * qu'une description, la ligne n'apparaitait sur aucun ecran. Une
  * distance affichee sans origine reste un chiffre qu'on ne peut pas verifier.
  *
  * La regle qui rend l'item serieux, et que ces tests verrouillent : le
@@ -28,7 +28,13 @@ import { measureItinerary, type MeasurementDeps } from '../engine/measurements';
 import { assignPlaces, type PlaceCandidate } from '../engine/places';
 import type { RouteLeg, RoutingDeps } from '../engine/routing';
 import { metricsFor, type PrepMetric } from '../engine/metrics';
-import { describeDataSource, SOURCE_INCONNUE, DATA_SOURCE_LABELS } from '../engine/provenance';
+import {
+  describeDataSource,
+  SOURCE_INCONNUE,
+  DATA_SOURCE_LABELS,
+  type MeasureProviderId,
+} from '../engine/provenance';
+import { PrepDataSource } from '../components/PrepDataSource';
 import { fullDraft } from './fixtures';
 import type { AdventurePrepDraft, ItineraryModel } from '../types';
 
@@ -41,6 +47,22 @@ vi.mock('../store/useAdventurePrepStore', () => {
 });
 
 const { ItineraryStepScreen, buildProvenance } = await import('../components/ItineraryStep');
+type MeasureSeries = import('../components/ItineraryStep').MeasureSeries;
+
+/**
+ * Les enregistrements de credit, nommes par ce qu ils prouvent.
+ *
+ * `buildProvenance` ne lit plus UN `MeasureProviderId` mais un credit PAR
+ * serie : les deux routes de mesure partagent un identifiant, donc un credit
+ * unique ne saurait pas dire laquelle des deux a repondu. Ces quatre constantes
+ * rendent cette separation explicite dans chaque test, et permettent d ecrire
+ * le cas piege — une serie qui parle, l autre qui se tait — sans ecrire a la
+ * main un objet qui pourrait se tromper de cle.
+ */
+const SANS_SERIE: MeasureSeries = { denivele: null, meteo: null };
+const ALTITUDE_NOMME: MeasureSeries = { denivele: 'open-meteo', meteo: null };
+const METEO_NOMME: MeasureSeries = { denivele: null, meteo: 'open-meteo' };
+const DEUX_SERIES_NOMMEES: MeasureSeries = { denivele: 'open-meteo', meteo: 'open-meteo' };
 
 const PTS = [
   { lat: 45.9237, lon: 6.8694 },
@@ -74,6 +96,25 @@ function routeOk(provider: string): unknown {
         ],
       },
     ],
+  };
+}
+
+/**
+ * Une MESURE, pas une ligne de provenance deja ecrite a la main.
+ *
+ * Le helper vit au niveau du module parce que la derivation (`buildProvenance`)
+ * est elle aussi globale : un test qui verifierait `metricDataSource` sur une
+ * entree fabriquee a la main ne prouverait que le composant, jamais le
+ * raccordement entre la mesure et le credit.
+ */
+function metric(id: PrepMetric['id'], value: number | null): PrepMetric {
+  return {
+    id,
+    label: id,
+    value,
+    unit: id === 'distance' ? 'km' : 'm',
+    state: value === null ? 'a_verifier' : 'connue',
+    formatted: 'x',
   };
 }
 
@@ -121,26 +162,19 @@ describe('H5-1 — le fournisseur vient de la REPONSE, jamais du mode demande', 
 });
 
 describe('H5-2 — la derivation pure, mesure par mesure', () => {
-  function metric(id: PrepMetric['id'], value: number | null): PrepMetric {
-    return {
-      id,
-      label: id,
-      value,
-      unit: id === 'distance' ? 'km' : 'm',
-      state: value === null ? 'a_verifier' : 'connue',
-      formatted: 'x',
-    };
-  }
-
   it('H5-05: le routeur repondu nomme la distance', () => {
-    const entries = buildProvenance([metric('distance', 12.4), metric('denivele', 800)], 'brouter');
+    const entries = buildProvenance(
+      [metric('distance', 12.4), metric('denivele', 800)],
+      'brouter',
+      SANS_SERIE
+    );
     expect(entries).toHaveLength(2);
     expect(entries[0].source).toBe('brouter');
     expect(describeDataSource(entries[0])).toContain(DATA_SOURCE_LABELS.brouter);
   });
 
   it('H5-06: aucune reponse = « source inconnue », jamais le routeur par defaut', () => {
-    const entries = buildProvenance([metric('distance', 12.4)], null);
+    const entries = buildProvenance([metric('distance', 12.4)], null, SANS_SERIE);
     expect(entries[0].source).toBeNull();
     expect(describeDataSource(entries[0])).toContain(SOURCE_INCONNUE);
     // Le nombre, lui, reste affiche : c'est la MESURE qui est honnete, c'est
@@ -152,14 +186,26 @@ describe('H5-2 — la derivation pure, mesure par mesure', () => {
     // Le denivele sort de la grille d altitudes, pas du routeur. Lui prêter
     // le fournisseur du routage serait une attribution FAUSSE, meme si le
     // chiffre est bon.
-    const entries = buildProvenance([metric('distance', 10), metric('denivele', 500)], 'osrm');
-    expect(entries[1].source).toBeNull();
+    //
+    // Le cas le plus piegeux est donne ici : le canal des series PARLE
+    // ('open-meteo'), et le routeur repond lui aussi ('osrm'). Le denivele doit
+    // alors porter LE credit de la serie, et surtout pas celui du routeur —
+    // sinon un moteur qui ne mesure aucune altitude signerait l'ecran.
+    const entries = buildProvenance(
+      [metric('distance', 10), metric('denivele', 500)],
+      'osrm',
+      DEUX_SERIES_NOMMEES
+    );
+    expect(entries[1].source).not.toBe('osrm');
+    expect(entries[1].source).toBe('open-meteo-elevation');
   });
 
   it('H5-08: une mesure non relevee ne recoit pas de ligne', () => {
     // « Distance : À verifier · source inconnue » sous une tuile qui dit deja
     // « À verifier », c'est deux fois la meme absence et zero information.
-    expect(buildProvenance([metric('distance', null), metric('denivele', null)], 'osrm')).toEqual([]);
+    expect(
+      buildProvenance([metric('distance', null), metric('denivele', null)], 'osrm', ALTITUDE_NOMME)
+    ).toEqual([]);
   });
 
   it('H5-09: seules la distance et le denivele sont concernes', () => {
@@ -170,7 +216,8 @@ describe('H5-2 — la derivation pure, mesure par mesure', () => {
         metric('budget', 90),
         metric('distance', 10),
       ],
-      'osrm'
+      'osrm',
+      DEUX_SERIES_NOMMEES
     );
     expect(entrees.map((e) => e.metric)).toEqual(['distance']);
   });
@@ -263,18 +310,140 @@ describe('H5-3 — la ligne est sur l ecran, sous la tuile', () => {
     expect(html).toContain(SOURCE_INCONNUE);
   });
 
-  it('H5-11: l ecran passe bien le callback de fournisseur AU runner', () => {
+  it('H5-11: l ecran branche les DEUX canaux de fournisseur sur le runner', () => {
     // Le test precedent observe l'affichage ; celui-ci observe le RACCORDEMENT.
     // Sans lui, l'ecran pourrait afficher « source inconnue » en permanence
     // tout en passantant un proprio - et les deux tests passeraient.
+    //
+    // `browserMeasurementRunners` expose DEUX familles de fournisseur depuis le
+    // lot aval : le routeur, et le service de mesure. Brancher le premier seul
+    // laissait le second mort — le composant pouvait donc tourner, mesurer,
+    // afficher un denivele, et n'avoir JAMAIS de quoi le nommer.
     const src = readFileSync(
       join(__dirname, '..', 'components', 'ItineraryStep.tsx'),
       'utf8'
     );
-    expect(src).toContain('browserMeasurementRunners(fetch, (provider) => setRouteProvider(provider))');
+    // Les DEUX familles de fournisseur restent branchees : le routeur, et le
+    // service de mesure. Brancher le premier seul laissait le second mort.
+    expect(src).toMatch(
+      /browserMeasurementRunners\(\s*fetch,\s*\(provider\) => setRouteProvider\(provider\),/
+    );
     expect(src).toContain('<PrepDataSource');
-    // Et le state est remis a zero entre deux runs : sinon un refus du second
-    // run afficherait le routeur du premier.
+    // Et l'etat est remis a zero entre deux runs : sinon un refus du second
+    // run afficherait le routeur du premier. Les DEUX etats, pour la meme
+    // raison — une serie refusee au second run ne doit pas heriter du credit
+    // du premier. Les deux SLOTS, cette fois, parce qu il y a deux series.
     expect(src).toContain('setRouteProvider(null)');
+    expect(src).toContain('setSeries({ denivele: null, meteo: null })');
+    // Enfin la remise, sans laquelle l'etat resterait une variable orpheline :
+    // la tuile afficherait « source inconnue » alors que la mesure est la.
+    expect(src).toContain('buildProvenance(metrics, routeProvider, series)');
+  });
+
+  it('H5-12: le denivele nomme la serie qui l a relevee', () => {
+    const entries = buildProvenance([metric('denivele', 500)], null, ALTITUDE_NOMME);
+    expect(entries[0].source).toBe('open-meteo-elevation');
+    const ligne = describeDataSource(entries[0]);
+    expect(ligne).toContain(DATA_SOURCE_LABELS['open-meteo-elevation']);
+    // La precision qui se perd dans un credit juste en apparence : un
+    // denivele affiche « Open-Meteo (previsions) » nommerait le bon service
+    // et la mauvaise serie. Les deux libelles partagent leur prefixe, donc
+    // l'assertion porte sur le libelle COMPLET.
+    expect(ligne).not.toContain(DATA_SOURCE_LABELS['open-meteo']);
+  });
+
+  it('H5-13: sans reponse de la serie, le denivele ne nomme PERSONNE', () => {
+    // Le refus — pas de `provider` dans le corps, ou serie refusee — laisse le
+    // parametre a `null`. C'est le cas que la serie de tests amont rend
+    // ombrable : nommer Open-Meteo « parce qu on l appelle toujours »
+    // attribuerait un credit a une mesure que personne n a certifiee.
+    const entries = buildProvenance([metric('denivele', 500)], 'osrm', SANS_SERIE);
+    expect(entries[0].source).toBeNull();
+    expect(describeDataSource(entries[0])).toContain(SOURCE_INCONNUE);
+    // Le chiffre, lui, reste : c'est la MESURE qui est honnete.
+    expect(describeDataSource(entries[0])).toContain('500');
+  });
+
+  it('H5-14: la distance ne recoit jamais le credit des series de mesure', () => {
+    // Le piege symetrique de H5-07 : un `metricDataSource` trop permissif
+    // poserait « Open-Meteo (previsions) » sous un kilometrage. Le service de
+    // mesure ne mesure aucune distance, et la ligne le dirait.
+    const entries = buildProvenance([metric('distance', 10)], null, METEO_NOMME);
+    expect(entries[0].source).toBeNull();
+    expect(describeDataSource(entries[0])).toContain(SOURCE_INCONNUE);
+  });
+
+  it('H5-15: un fournisseur de serie inconnu ne devient pas un libelle', () => {
+    // Un serveur d'une version future, ou un corps bricole. Le cast est
+    // volontaire : il imite la realite TypeScript, ou la cle entrante est
+    // `unknown` et ne rejoint jamais un fournisseur connu.
+    const inconnu = 'meteo-france' as MeasureProviderId;
+    const entries = buildProvenance([metric('denivele', 500)], 'osrm', { denivele: inconnu, meteo: null });
+    expect(entries[0].source).toBeNull();
+  });
+
+  it('H5-16: la ligne rendue sous la tuile porte le nom de la serie', () => {
+    // Le dernier maillon de l affichage : l'entree de provenance ne suffit
+    // pas, il faut que le COMPOSANT la rende. `PrepDataSource` est donc monte
+    // sur l'entree produite par la derivation, pas sur une entree ecrite a la
+    // main — sinon le test prouverait le composant, pas le raccordement.
+    const entries = buildProvenance([metric('denivele', 500)], null, ALTITUDE_NOMME);
+    const html = renderToStaticMarkup(
+      React.createElement(PrepDataSource, { entry: entries[0] })
+    );
+    const visible = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    expect(visible).toContain('Dénivelé');
+    expect(visible).toContain('Open-Meteo (altitudes)');
+  });
+
+  it('H5-17: le credit d une serie ne deborde jamais sur l autre', () => {
+    // LE piege de ce lot, et la raison du troisieme parametre de
+    // `buildProvenance`. `/api/elevation` et `/api/weather` rendent le meme
+    // service, donc le meme identifiant `open-meteo`, et
+    // `browserMeasurementRunners` n'expose qu UN canal pour les deux. Un
+    // composant qui l'ecoute tout court stocke le dernier annonce : des que la
+    // meteo est disponible, le denivele porte « Open-Meteo (altitudes) » — meme
+    // apres un 503 de l'elevation, ou apres une reponse sans `provider`. Le
+    // credit est alors vrai en apparence et faux dans sa precision : on
+    // attribue au denivele un service qui ne l'a pas mesure.
+    //
+    // Ici la meteo parle, le denivele se tait. Le denivele ne doit donc nommer
+    // PERSONNE.
+    const entries = buildProvenance(
+      [metric('distance', 10), metric('denivele', 500)],
+      'osrm',
+      METEO_NOMME
+    );
+    expect(entries.find((e) => e.metric === 'denivele')!.source).toBeNull();
+    expect(describeDataSource(entries.find((e) => e.metric === 'denivele')!)).toContain(
+      SOURCE_INCONNUE
+    );
+    // Et le routeur garde le sien : la separation des series ne doit rien
+    // casser du routage.
+    expect(entries.find((e) => e.metric === 'distance')!.source).toBe('osrm');
+  });
+
+  it('H5-18: le composant encadre les deux phases, il ne stocke pas un credit unique', () => {
+    // H5-17 prouve le contrat de la derivation. Ce test prouve qu il est
+    // atteignable : sans encadrage des phases dans `ItineraryStep.tsx`, le
+    // composant ne peut pas savoir de quelle serie vient une annonce, et
+    // repasserait a un seul etat — exactement le defaut que H5-17 condamne.
+    // C est un garde-fou STRUCTUREL, voluntary complementaire du test de bout
+    // en bout (`h5r-raccord-fournisseur.test.ts`, H5R-13 a H5R-15).
+    const src = readFileSync(join(__dirname, '..', 'components', 'ItineraryStep.tsx'), 'utf8');
+    // Le point de partage des deux phases : chacune est encadree par le nom de
+    // SA serie. C'est cette correspondance qui empeche le credit de la meteo
+    // de se poser sur le denivele, alors que les deux repondent le meme
+    // identifiant.
+    expect(src).toContain("trace: encadrer('denivele', base.trace)");
+    expect(src).toContain("weather: encadrer('meteo', base.weather)");
+    // Le marquage est pose AVANT l'appel de la phase, et retire DANS un
+    // `finally` : sans ce retrait, une phase qui echoue laisserait son credit a
+    // la suivante.
+    expect(src).toContain('measuring.current = nom;');
+    expect(src).toMatch(/finally\s*\{\s*measuring\.current = null;/);
+    // Un etat unique de credit de mesure serait la regression : il n'y en a
+    // donc pas, et la remise a zero efface bien les DEUX slots.
+    expect(src).not.toMatch(/useState<MeasureProviderId \| null>/);
   });
 });

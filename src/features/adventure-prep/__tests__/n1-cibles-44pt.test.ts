@@ -164,6 +164,128 @@ const tri = (a: number[]) => [...a].sort((x, y) => x - y);
 const triTexte = (a: string[]) => [...a].sort();
 const attendu = (nom: string) => sousSeuil(trouver(nom)).filter((c) => !estPoi(c));
 
+/* =======================================================================
+ * LE CORRECTIF CSS, LUI, VAUT PREUVE -- et lui seul.
+ *
+ * Les pins du haut sont un RELEVE, donc une PHOTO d'un build. Ils ne
+ * bougent pas : les retirer, ou les requalifier en "conforme", serait
+ * exactement la faute que ce fichier s'interdit. Ce que la feuille peut
+ * prouver, c'est qu'elle ne laisse PLUS passer 44 pt la ou le releve les
+ * a vus caresser. Chaque ligne du tableau est un couple
+ * { mesures du releve -> declarations CSS qui les font remonter }.
+ *
+ * Ces tests mordent sur le PRODUIT : `corpsCSS` va lire la vraie feuille.
+ * Un correctif de papier ne peut donc pas les faire passer.
+ * ======================================================================= */
+
+const CSS_SANS_COMMENT = readFileSync(CSS, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+
+/**
+ * Le corps de la regle CSS qui porte exactement ce selecteur.
+ *
+ * Les commentaires sont retires AVANT toute recherche : sinon un nom de
+ * classe cite dans une explication se lirait comme une regle, et le test
+ * validerait du texte. Entre le selecteur et son accolade on n'accepte que
+ * des blancs : `.prepcal__nav:hover` ne peut donc pas satisfaire une
+ * recherche de `.prepcal__nav`, ni l'inverse.
+ */
+const corpsCSS = (selecteur: string): string[] => {
+  const blocs: string[] = [];
+  let from = 0;
+  for (;;) {
+    const i = CSS_SANS_COMMENT.indexOf(selecteur, from);
+    if (i < 0) break;
+    from = i + selecteur.length;
+    const ouverture = CSS_SANS_COMMENT.indexOf('{', i + selecteur.length);
+    if (ouverture < 0) break;
+    if (!/^\s*$/.test(CSS_SANS_COMMENT.slice(i + selecteur.length, ouverture))) continue;
+    let profondeur = 0;
+    for (let k = ouverture; k < CSS_SANS_COMMENT.length; k += 1) {
+      const c = CSS_SANS_COMMENT[k];
+      if (c === '{') profondeur += 1;
+      else if (c === '}') {
+        profondeur -= 1;
+        if (profondeur === 0) {
+          blocs.push(CSS_SANS_COMMENT.slice(ouverture + 1, k));
+          break;
+        }
+      }
+    }
+  }
+  return blocs;
+};
+
+const attend = (selecteur: string, declaration: string): void => {
+  const corps = corpsCSS(selecteur);
+  expect(corps.length, `la regle \`${selecteur}\` doit exister dans la feuille`).toBeGreaterThan(0);
+  // TOUTES les regles qui portent ce selecteur, pas seulement la premiere :
+  // une declaration concurrente pourrait sinon redefinir la taille sous le
+  // seuil, et l ordre de chargement decides -- ce qu aucun test ne voit.
+  corps.forEach((bloc, index) => {
+    expect(
+      bloc,
+      `\`${selecteur}\` (regle ${index + 1}/${corps.length}) doit porter \`${declaration}\``,
+    ).toContain(declaration);
+  });
+};
+
+/** Les groupes du releve que la feuille du preparateur fait, seule, remonter. */
+const CORRECTIFS_N1: {
+  groupe: string;
+  mesures: string[];
+  selecteur: string;
+  declarations: string[];
+}[] = [
+  {
+    groupe: 'les deux boutons de mois du calendrier',
+    mesures: ['36x36', '36x36'],
+    selecteur: '.prepcal__nav',
+    declarations: ['width: 44px', 'height: 44px'],
+  },
+  {
+    groupe: 'les boutons +/- du compteur de jours',
+    mesures: ['16x23.8'],
+    selecteur: '.stepper button',
+    declarations: ['min-width: 44px', 'min-height: 44px'],
+  },
+  {
+    groupe: 'le bouton d inversion des extremites',
+    mesures: ['32x32'],
+    selecteur: '.prep-swap__button',
+    declarations: ['width: 44px', 'height: 44px'],
+  },
+  {
+    groupe: 'le champ de recherche de lieu',
+    mesures: ['161x22.39'],
+    selecteur: '.prep-search input',
+    declarations: ['min-height: 44px'],
+  },
+  {
+    groupe: 'le bouton Reessayer du bandeau d etat',
+    mesures: ['112.81x33.8'],
+    selecteur: ".adventure-prep details[role='status'] summary > button",
+    declarations: ['min-width: 44px', 'min-height: 44px'],
+  },
+  {
+    groupe: 'les boutons sm du <Button> canonique',
+    mesures: ['69.14x36', '102.61x36'],
+    selecteur: ".adventure-prep button[data-size='sm']",
+    declarations: ['min-width: 44px', 'min-height: 44px'],
+  },
+  {
+    groupe: 'les pastilles de POI du rail de carte',
+    mesures: ['176x40'],
+    selecteur: '.prep-map .hub-globe-poi-chip',
+    declarations: ['min-height: 44px'],
+  },
+  {
+    groupe: 'la zone de toucher des liens de fil d Ariane',
+    mesures: ['101.08x31.8', '101.3x31.8'],
+    selecteur: '.prep-crumb__link::after',
+    declarations: ['height: 44px', 'min-width: 44px'],
+  },
+];
+
 describe('N1 — releve des cibles tactiles sous 44 pt (mesure, pas correctif)', () => {
   it('N1-01 le releve a ete pris au format qui est exige', () => {
     expect(releve.viewport, 'le releve doit declarer son viewport').toBe('393x852 CSS @dpr2');
@@ -288,5 +410,55 @@ describe('N1 — releve des cibles tactiles sous 44 pt (mesure, pas correctif)',
     const total = releve.etapes.reduce((n, e) => n + e.cibles.length, 0);
     const echecs = releve.etapes.reduce((n, e) => n + sousSeuil(e).length, 0);
     expect(total, 'le releve doit contenir plus de conformes que d echecs').toBeGreaterThan(echecs);
+  });
+
+  for (const correctif of CORRECTIFS_N1) {
+    it(`N1-13 ${correctif.groupe} : ${correctif.mesures.join(' / ')} remontes a 44 pt`, () => {
+      // La declaration est lue DANS la feuille, pas reecrite ici : un
+      // correctif de papier ne peut pas la faire apparaitre.
+      for (const declaration of correctif.declarations) {
+        attend(correctif.selecteur, declaration);
+      }
+    });
+  }
+
+  it('N1-14 chaque correctif est ancre sur une mesure REELLE du releve', () => {
+    // Anti-vacuite : une ligne du tableau qui ne decode plus aucune mesure
+    // ne doit pas pouvoir passer inapercue. Le tableau suit le releve, pas
+    // l'inverse.
+    const mesuresDuReleve = new Set(
+      releve.etapes.flatMap((e) => sousSeuil(e).map((c) => taille(c))),
+    );
+    for (const correctif of CORRECTIFS_N1) {
+      for (const mesure of correctif.mesures) {
+        expect(
+          mesuresDuReleve.has(mesure),
+          `${correctif.groupe} annonce ${mesure}, absente du releve`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it('N1-15 les deux groupes hors de portee sont NOMMES, pas forgets', () => {
+    // 23x23 et 24x24 sont des <span> sans classe, enfants d un
+    // <a class="lkv-nav-tab"> qui mesure 68,59 x 60 et capte 25/25
+    // echantillons : ce sont les enfants decoratifs d une cible deja
+    // conforme, pas des cibles. Les elargir a 44 px casserait la barre
+    // basse pour rien. Le seul correctif est dans `TabItem.tsx`, qui
+    // n'appartient pas a ce lot : on le dit plutot que de le maquiller.
+    const horsPortee = releve.etapes
+      .flatMap((e) => sousSeuil(e))
+      .filter((c) => c.parentCls === 'lkv-nav-tab');
+    expect(
+      new Set(horsPortee.map((c) => taille(c))),
+      'les deux tailles decoratives du rail',
+    ).toEqual(new Set(['23x23', '24x24']));
+    // Et la cible qui les contient, elle, est bien conforme.
+    const onglets = releve.etapes[0].cibles.filter((c) => c.cls === 'lkv-nav-tab');
+    expect(onglets.length, 'la barre basse compte ses onglets').toBeGreaterThan(0);
+    for (const onglet of onglets) {
+      expect(Math.min(onglet.w, onglet.h), `onglet ${onglet.label}`).toBeGreaterThanOrEqual(SEUIL);
+      expect(onglet.zone44, `onglet ${onglet.label} capte toute la zone 44`).toBe(onglet.echantillons);
+    }
   });
 });

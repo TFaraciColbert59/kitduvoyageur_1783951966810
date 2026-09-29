@@ -468,13 +468,20 @@ describe('D10 — l etat inactif et les bords de rail se lisent', () => {
     expect(found).toBeDefined();
     const decl = declarations(found!.body);
     expect(decl.get('opacity')).toBe('1');
-    expect(decl.get('color')).toBe('var(--lkv-text-subtle)');
+  // Le test verifie l INTENTION (une encre du preparateur) et non un nom de
+  // jeton. Il epinglait --lkv-text-subtle, qui vaut
+  // rgba(255,255,255,0.46) sur la page du preparateur : un CTA inactif a
+  // 2,3:1 n est plus lisible. Epingler le nom aurait rendu ce test
+  // incapable d accepter la correction.
+  // Le piege reste interdit explicitement, quel que soit le jeton.
+    expect(decl.get('color')).toBe('var(--g3-text-disabled)');
+    expect(decl.get('color')).not.toBe('var(--lkv-text-subtle)');
   });
 
   it('D10-02: le CTA inactif ne repose pas sur le bouton clair de l app', () => {
     const found = rule('.prep-footer__primary:disabled');
     expect(declarations(found!.body).get('background-color') ?? '').not.toContain('#fff');
-    expect(declarations(found!.body).get('background-color') ?? '').toContain('--prep-glass-bg');
+    expect(declarations(found!.body).get('background-color') ?? '').toContain('--g3-bg-disabled');
   });
 
   // Mesure sur la meme page : la derniere puce du rail de familles etait coupee

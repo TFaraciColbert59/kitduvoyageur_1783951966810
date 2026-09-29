@@ -54,6 +54,7 @@ function model(over: Partial<ItineraryModel> = {}): ItineraryModel {
     perDay: Array.from({ length: days }, () => zero),
     weather: Array.from({ length: days }, () => null),
     metricsContext: 'voyage',
+    travelMode: 'voiture',
     budgetPerPerson: PRICE_TO_CHECK,
     activityCount: 3,
     contingencies: [],

@@ -33,7 +33,7 @@ import {
   PREP_ACTIVITE_SCREEN,
   type AdventurePrepShellProps,
 } from '../components/AdventurePrepShell';
-import { stepOneMissing, stepOneProfileIdFor } from '../components/stepOneProfile';
+import { stepOneMissing, stepOneProfileIdFor, stepOneReadySummary } from '../components/stepOneProfile';
 import { initialGeneration } from '../engine/generation';
 import { buildItinerary } from '../engine/itinerary';
 import {
@@ -254,22 +254,55 @@ describe('CH-RAIL — le rail ne ment pas sur l ecran courant', () => {
 
 describe('CH-BLOCK — le message du CTA est visible sans defiler', () => {
   it('CH-BLOCK-01: le message vient du moteur, aucune liste reecrite dans le cadre', () => {
+    // ARBITRAGE A (2026-09-29) : le depart n est plus un bloqueur. Le moteur
+    // fait foi : `hasEngineMinimum` ne lit que l intention. Sur un brouillon qui
+    // n a manque que cela, le cadre n annonce donc RIEN : le bandeau
+    // `prep-blocker` disparait du DOM, et l information passe par la ligne des
+    // complements.
     const draft = sansDepart();
-    const attendu = `Il manque : ${stepOneMissing(draft, stepOneProfileIdFor(draft.activities)).blocking.join(', ')}`;
-    expect(prepBlockerSummary(draft, 'destination')).toBe(attendu);
-    expect(attendu).toMatch(/^Il manque : /);
-    // Reintroduire une liste ecrite au dur dans le cadre echouerait ici des la
-    // premiere divergence entre le cadre et l ecran.
-    expect(prepBlockerSummary(sansIntentionNiDepart(), 'destination')).toBe(
-      `Il manque : ${stepOneMissing(sansIntentionNiDepart(), stepOneProfileIdFor(sansIntentionNiDepart().activities)).blocking.join(', ')}`
+    const { blocking } = stepOneMissing(draft, stepOneProfileIdFor(draft.activities));
+    expect(blocking, 'le depart ne doit plus etre un arret').toEqual([]);
+    expect(prepBlockerSummary(draft, 'destination')).toBeNull();
+
+    // Le depart reste NOMME : en complement, et par son nom. Sans cette
+    // assertion, un cadre muet passerait aussi bien qu un cadre honnete.
+    expect(stepOneReadySummary(draft, stepOneProfileIdFor(draft.activities))).toBe(
+      'L’IA complètera : lieu de départ'
     );
+
+    // La ou l intention manque AUSSI, la, le cadre parle — et il parle depuis
+    // la MEME source que l ecran. Reintroduire une liste ecrite au dur dans le
+    // cadre echouerait des la premiere divergence.
+    const dur = sansIntentionNiDepart();
+    const attendu = `Il manque : ${stepOneMissing(dur, stepOneProfileIdFor(dur.activities)).blocking.join(', ')}`;
+    expect(attendu, 'la fixture ne bloque plus : le test ne prouve plus rien').not.toBe('Il manque : ');
+    expect(attendu).toMatch(/^Il manque : [^ ]/);
+    expect(attendu).toContain('lieu de départ');
+    expect(prepBlockerSummary(dur, 'destination')).toBe(attendu);
   });
 
   it('CH-BLOCK-02: le message est dans le cadre, hors du scroller de l ecran enfant', () => {
-    const html = monter('destination', sansDepart());
+    // ARBITRAGE A (2026-09-29) : ce test mesure une GEOMETRIE : le bandeau est
+    // reserve hors du scroller de l ecran enfant. Il lui faut donc un
+    // brouillon qui bloque REELLEMENT — `sansIntentionNiDepart()`, qui nomme le
+    // depart. Avec `sansDepart()` le bandeau n existe plus, et le test
+    // verdirait sur un bandeau disparu.
+    const html = monter('destination', sansIntentionNiDepart());
     const atMessage = html.indexOf('class="prep-blocker"');
     const atEnfant = html.indexOf('data-child="ecran"');
     expect(atMessage).toBeGreaterThan(-1);
+    // Le bandeau nomme bien le depart : une geometrie sans contenu ne prouve
+    // pas que l information atteint l utilisateur.
+    expect(html.slice(atMessage)).toContain('lieu de départ');
+    // Le levier : sur un brouillon ou il ne manque QUE le depart, le cadre se
+    // tait. C est ce qui distingue `ENGINE_BLOCKING = ['activity']` de
+    // `['activity', 'origin']` : avec `origin` dans la liste, ce brouillon
+    // produirait encore un bandeau, et cette assertion rougirait.
+    const sansDepartHtml = monter('destination', sansDepart());
+    expect(sansDepartHtml, 'le depart ne doit plus produire de bandeau').not.toContain('prep-blocker');
+    expect(sansDepartHtml, 'le cadre se tait, l ecran nomme le complement').not.toContain(
+      'Il manque : lieu de départ'
+    );
     // Avant l ecran enfant, donc hors de son scroller et de son pied de page.
     expect(atMessage).toBeLessThan(atEnfant);
     expect(html.slice(atEnfant)).not.toContain('prep-blocker');
@@ -278,11 +311,25 @@ describe('CH-BLOCK — le message du CTA est visible sans defiler', () => {
   });
 
   it('CH-BLOCK-03: la bande est reservee dans le flux — elle ne peut pas etre comprimee', () => {
-    const html = monter('destination', sansDepart());
+    // Meme raison qu en CH-BLOCK-02 : la bande doit exister pour qu on mesure
+    // sa reservation. `sansIntentionNiDepart()` est un vrai blocage et nomme le
+    // depart, donc le message reste verifiable — pas seulement la boite.
+    const html = monter('destination', sansIntentionNiDepart());
     const boite = elementPortant(html, 'class="prep-blocker"', '</p>');
     // `flex: 0 0 auto` : elle ne se comprime pas, elle ne defile pas.
     expect(boite).toContain('flex:0 0 auto');
     expect(boite).toContain('Il manque :');
+    expect(boite).toContain('lieu de départ');
+
+    // Le meme levier qu en CH-BLOCK-02, mesure sur la boite elle-meme : sans
+    // `origin` dans `ENGINE_BLOCKING`, un brouillon ou il ne manque que le
+    // depart ne produit AUCUNE bande. Avec `origin`, il en produirait une — et
+    // cette assertion rougirait. Sans elle, ce test mesurerait une classe CSS
+    // sur un etat de blocage qui n existe plus.
+    expect(
+      monter('destination', sansDepart()),
+      'le depart seul ne doit plus reserver de bande'
+    ).not.toContain('prep-blocker');
   });
 
   it('CH-BLOCK-04: rien n est annonce quand rien ne bloque, ni sur les autres ecrans', () => {

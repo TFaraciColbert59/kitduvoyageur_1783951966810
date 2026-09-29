@@ -70,10 +70,18 @@ describe('Fil d’Ariane — ce qui est atteignable', () => {
     expect(canOpenStep(draft, 'departure')).toBe(false);
   });
 
-  it('NA-04: tant que la destination n’est pas remplie, l’étape 2 reste fermée', () => {
+  it('NA-04: sans depart ni arrivee, l etape 2 s ouvre des qu il y a une intention', () => {
+    // B4 : ni le depart ni l arrivee ne ferment l etape 2. Le seul verrou
+    // restant est l absence d intention.
     const draft = fullDraft({ route: { origin: null, destination: null, shape: 'boucle' } });
-    expect(canOpenStep(draft, 'itinerary')).toBe(false);
+    expect(canOpenStep(draft, 'itinerary')).toBe(true);
     expect(canOpenStep(draft, 'destination')).toBe(true);
+    // CONTRE-EXEMPLE : sans sujet pour le modele, l etape reste fermee.
+    const sansIntention = fullDraft({
+      activities: { primary: null, extra: [], nights: [] },
+      route: { origin: null, destination: null, shape: 'boucle' },
+    });
+    expect(canOpenStep(sansIntention, 'itinerary')).toBe(false);
   });
 
   it('NA-05: la toute première étape reste toujours ouverte', () => {

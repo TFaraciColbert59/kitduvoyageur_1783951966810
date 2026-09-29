@@ -297,17 +297,17 @@ function coverSubtitle(draft: AdventurePrepDraft): string {
           <div style={{ 
             width: 44, height: 44, flex: 'none',
             borderRadius: 'var(--lkv-radius-md)',
-            backgroundColor: 'var(--green-tint)',
-            color: 'var(--green-ink)',
+            backgroundColor: 'var(--lkv-success-bg)',
+            color: 'var(--lkv-success)',
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
             <Icon name={activity?.icon ?? 'compass'} size={24} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h1 className="prep-title" style={{ fontSize: 'var(--f-body)', fontWeight: 700, margin: 0, lineHeight: 1.2 }}>
+            <h1 className="prep-title" style={{ fontSize: '1rem', fontWeight: 700, margin: 0, lineHeight: 1.2 }}>
               {title}
             </h1>
-            <div style={{ fontSize: 'var(--f-sec)', color: 'var(--lkv-text-secondary)', marginTop: 2 }}>
+            <div style={{ fontSize: '0.875rem', color: 'var(--lkv-text-secondary)', marginTop: 2 }}>
               {coverSubtitle(draft)}
             </div>
           </div>
@@ -395,12 +395,12 @@ function coverSubtitle(draft: AdventurePrepDraft): string {
         {/* Blocs résumés */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--prep-block-gap)', marginBottom: 'var(--space-4)' }}>
           
-          <button type="button" className="prep-block" onClick={() => onOpenSheet('gear')} style={{ padding: 'var(--space-3)', width: '100%', textAlign: 'left', border: '1px solid var(--line)', borderRadius: 'var(--card-radius)', backgroundColor: 'var(--surface)' }}>
+          <button type="button" className="prep-block" onClick={() => onOpenSheet('gear')} style={{ padding: 'var(--space-3)', width: '100%', textAlign: 'left', border: '1px solid var(--lkv-border)', borderRadius: 'var(--card-radius)', backgroundColor: 'var(--surface)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', width: '100%' }}>
-              <Icon name="backpack" size={24} style={{ color: 'var(--green)' }} />
+              <Icon name="backpack" size={24} style={{ color: 'var(--lkv-success)' }} />
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, color: 'var(--lkv-text-primary)' }}>Équipement</div>
-                <div style={{ fontSize: 'var(--f-sec)', color: 'var(--lkv-text-secondary)' }}>
+                <div style={{ fontSize: '0.875rem', color: 'var(--lkv-text-secondary)' }}>
                   {gearSummaryText}
                   <span style={{ display: 'block', fontSize: 'var(--lkv-text-caption, 13px)', color: 'var(--lkv-text-subtle)' }}>
                     {weight.grams !== null && weight.grams > 0 ? bookWeightLabel(weight) : 'Poids du sac à estimer'}
@@ -411,12 +411,12 @@ function coverSubtitle(draft: AdventurePrepDraft): string {
             </div>
           </button>
           
-          <button type="button" className="prep-block" onClick={() => onOpenSheet('consumables')} style={{ padding: 'var(--space-3)', width: '100%', textAlign: 'left', border: '1px solid var(--line)', borderRadius: 'var(--card-radius)', backgroundColor: 'var(--surface)' }}>
+          <button type="button" className="prep-block" onClick={() => onOpenSheet('consumables')} style={{ padding: 'var(--space-3)', width: '100%', textAlign: 'left', border: '1px solid var(--lkv-border)', borderRadius: 'var(--card-radius)', backgroundColor: 'var(--surface)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', width: '100%' }}>
-              <Icon name="droplets" size={24} style={{ color: 'var(--green)' }} />
+              <Icon name="droplets" size={24} style={{ color: 'var(--lkv-success)' }} />
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, color: 'var(--lkv-text-primary)' }}>Eau et repas</div>
-                <div style={{ fontSize: 'var(--f-sec)', color: 'var(--lkv-text-secondary)' }}>
+                <div style={{ fontSize: '0.875rem', color: 'var(--lkv-text-secondary)' }}>
                   {meals.length === 0 ? 'Couvert' : `${meals.length} repas à organiser`}
                 </div>
               </div>
@@ -424,12 +424,12 @@ function coverSubtitle(draft: AdventurePrepDraft): string {
             </div>
           </button>
           
-          <button type="button" className="prep-block" onClick={() => onOpenSheet('participants')} style={{ padding: 'var(--space-3)', width: '100%', textAlign: 'left', border: '1px solid var(--line)', borderRadius: 'var(--card-radius)', backgroundColor: 'var(--surface)' }}>
+          <button type="button" className="prep-block" onClick={() => onOpenSheet('participants')} style={{ padding: 'var(--space-3)', width: '100%', textAlign: 'left', border: '1px solid var(--lkv-border)', borderRadius: 'var(--card-radius)', backgroundColor: 'var(--surface)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', width: '100%' }}>
-              <Icon name="users" size={24} style={{ color: 'var(--green)' }} />
+              <Icon name="users" size={24} style={{ color: 'var(--lkv-success)' }} />
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, color: 'var(--lkv-text-primary)' }}>Participants</div>
-                <div style={{ fontSize: 'var(--f-sec)', color: 'var(--lkv-text-secondary)' }}>
+                <div style={{ fontSize: '0.875rem', color: 'var(--lkv-text-secondary)' }}>
                   {headcount} personne{headcount > 1 ? 's' : ''} {knownMembers > 0 && `(${knownMembers} confirmé${knownMembers > 1 ? 's' : ''})`}
                 </div>
               </div>
@@ -438,8 +438,8 @@ function coverSubtitle(draft: AdventurePrepDraft): string {
                 <div style={{ display: 'flex' }}>
                    {draft.group.knownMembers.slice(0, 3).map((m, i) => (
                      <div key={m} style={{
-                       width: 32, height: 32, borderRadius: 'var(--lkv-radius-full)', backgroundColor: 'var(--green-tint)', border: '2px solid var(--surface)',
-                       display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'var(--green-ink)',
+                       width: 32, height: 32, borderRadius: 'var(--lkv-radius-full)', backgroundColor: 'var(--lkv-success-bg)', border: '2px solid var(--surface)',
+                       display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'var(--lkv-success)',
                        marginLeft: i > 0 ? -8 : 0, zIndex: 3 - i
                      }}>
                        {m.charAt(0).toUpperCase()}
@@ -454,8 +454,8 @@ function coverSubtitle(draft: AdventurePrepDraft): string {
         </div>
         
         {points.length > 0 && (
-          <div className="prep-openpoints" style={{ marginBottom: 'var(--space-4)', backgroundColor: 'var(--amber-bg)', padding: 'var(--space-3)', borderRadius: 'var(--card-radius)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--amber-ink)', fontWeight: 600, marginBottom: 8 }}>
+          <div className="prep-openpoints" style={{ marginBottom: 'var(--space-4)', backgroundColor: 'var(--lkv-warning-subtle)', padding: 'var(--space-3)', borderRadius: 'var(--card-radius)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--lkv-warning)', fontWeight: 600, marginBottom: 8 }}>
               <Icon name="alert-circle" size={20} />
               <span>
                 {pointsView.mode === 'resume'
@@ -467,7 +467,7 @@ function coverSubtitle(draft: AdventurePrepDraft): string {
               <>
                 <ul
                   className="prep-openpoints__groups"
-                  style={{ margin: 0, paddingLeft: 24, fontSize: 'var(--f-sec)', color: 'var(--amber-ink)' }}
+                  style={{ margin: 0, paddingLeft: 24, fontSize: '0.875rem', color: 'var(--lkv-warning)' }}
                 >
                   {pointsView.groupes.map((g) => (
                     <li key={g.cle} style={{ marginBottom: 4 }}>{g.label} : {g.count} à régler</li>
@@ -486,7 +486,7 @@ function coverSubtitle(draft: AdventurePrepDraft): string {
             ) : (
               <ul
                 className="prep-openpoints__list"
-                style={{ margin: 0, paddingLeft: 24, fontSize: 'var(--f-sec)', color: 'var(--amber-ink)' }}
+                style={{ margin: 0, paddingLeft: 24, fontSize: '0.875rem', color: 'var(--lkv-warning)' }}
               >
                 {pointsView.points.map((p) => (
                   <li key={p.id} style={{ marginBottom: 4 }}>{p.label}</li>

@@ -37,7 +37,9 @@ function avecParcours(): AdventurePrepDraft {
 
 describe('Machine d etats — une etape ne se saute pas', () => {
   it('SM-01: l etape 2 reste refusee tant que l etape 1 n est pas validee', () => {
-    const draft = sansOrigine();
+    // Ce qui bloque n est PLUS le depart : c est l absence d intention. Une
+    // arrivee seule, ou rien du tout, ouvre desormais l etape 2 (voir SM-14).
+    const draft = draftWithoutItineraryInput();
     const suivant = draftActions.goToStep(draft, 'itinerary');
     // Refus total : meme objet, donc ni version bump ni re-rendu.
     expect(suivant).toBe(draft);
@@ -152,11 +154,21 @@ describe('Machine d etats — partir librement', () => {
     expect(valide.currentStep).toBe('itinerary');
   });
 
-  it('SM-14: partir librement ne dispense ni du depart ni de la duree', () => {
-    const sansDepart = draftActions.dismissPicker(
+  it('SM-14: partir librement dispense des DEUX points, et ouvre l etape 2', () => {
+    // AVANT : la liberation dispensait de l activite de catalogue mais pas du
+    // depart — donc, precisement dans le cas qu elle promet, l etape 2 restait
+    // fermee. B4 retire cette exigence : la liberation est une INTENTION, et
+    // c est la seule chose que le moteur exige encore.
+    const libre = draftActions.dismissPicker(
       draftWithoutItineraryInput({ route: { origin: null, destination: null, shape: 'boucle' } }),
     );
-    expect(isStepSatisfied(sansDepart, 'destination')).toBe(false);
-    expect(draftActions.goToStep(sansDepart, 'itinerary')).toBe(sansDepart);
+    expect(libre.route.origin).toBeNull();
+    expect(isStepSatisfied(libre, 'destination')).toBe(true);
+    expect(draftActions.goToStep(libre, 'itinerary').currentStep).toBe('itinerary');
+    // CONTRE-EXEMPLE : ni liberation ni activite, alors la rien n est dispensé.
+    const muet = draftWithoutItineraryInput({
+      route: { origin: null, destination: null, shape: 'boucle' },
+    });
+    expect(isStepSatisfied(muet, 'destination')).toBe(false);
   });
 });
