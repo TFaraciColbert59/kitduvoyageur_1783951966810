@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "tool": "scripts/audit/measure_prep_contrast.mjs",
   "method": "Contraste WCAG 2.2 mesuré sur les PIXELS PEINTS, fond local prélevé autour des glyphes. Aucun arrière-plan DOM n’est composé : le calque photo de /prepare est un élément frère `aria-hidden` en `position: fixed; z-index: -1`, hors de toute chaîne d’ancêtres.",
-  "measuredAt": "2026-09-29T07:12:46.381Z",
+  "measuredAt": "2026-09-29T08:47:07.802Z",
   "target": {
     "url": "http://localhost:4000/prepare?nouvelle=1",
     "baseUrl": "http://localhost:4000"
@@ -155,13 +155,12 @@
       },
       "scrollCoverage": {
         "windowScrollablePx": 0,
-        "innerContainerScrollablePx": 1141,
-        "reachablePx": 1141,
-        "steps": 3,
+        "innerContainerScrollablePx": 194,
+        "reachablePx": 194,
+        "steps": 2,
         "capturedScrollPositions": [
           0,
-          650,
-          1141
+          194
         ],
         "containers": [
           {
@@ -169,8 +168,16 @@
             "selector": "div.prep-body",
             "axisY": true,
             "axisX": false,
-            "scrollablePxY": 1141,
+            "scrollablePxY": 194,
             "scrollablePxX": 0
+          },
+          {
+            "index": 1,
+            "selector": "div.prep-cats",
+            "axisY": false,
+            "axisX": true,
+            "scrollablePxY": 0,
+            "scrollablePxX": 423
           }
         ]
       },
@@ -186,62 +193,31 @@
       },
       "referenceShot": "audit/prep-contrast-shots/375x812.png",
       "counts": {
-        "measured": 56,
-        "pass": 42,
-        "fail": 14,
-        "skipped": 7,
-        "occluded": 2
+        "measured": 19,
+        "pass": 19,
+        "fail": 0,
+        "skipped": 5,
+        "occluded": 0
       },
-      "occlusion": [
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Distance à vérifier",
-          "occludedBy": "div.prep-body",
-          "seenAt": 3,
-          "occludedSteps": 2,
-          "ratioUnderOccluder": 2.85
-        },
-        {
-          "classes": "",
-          "tag": "button",
-          "text": "Ouvrir les préférences du trajet",
-          "occludedBy": "div.prep-visually-hidden",
-          "seenAt": 3,
-          "occludedSteps": 3,
-          "ratioUnderOccluder": 6.93
-        }
-      ],
+      "occlusion": [],
       "occlusionUnverifiable": 1,
       "skipped": [
         {
-          "classes": "",
+          "classes": "prep-action",
           "tag": "button",
-          "text": "Revenir au hub",
+          "text": "Voyage et séjour",
           "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
         },
         {
-          "classes": "prep-programme__daylabel",
-          "tag": "span",
-          "text": "Jour 2",
-          "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
-        },
-        {
-          "classes": "prep-programme__measures",
-          "tag": "span",
-          "text": "6° / 12° · 25 % de pluie",
-          "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
-        },
-        {
-          "classes": "prep-programme__sky",
-          "tag": "span",
-          "text": "Partiellement nuageux",
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "Autres sports",
           "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
         },
         {
           "classes": "prep-visually-hidden",
           "tag": "span",
-          "text": "En avant !, étape 3 sur 3",
+          "text": "Choix de l’activité",
           "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
         },
         {
@@ -258,426 +234,16 @@
         }
       ],
       "skippedByReason": {
-        "rectangle hors cadre : rogné horizontalement ou verticalement": 7
+        "rectangle hors cadre : rogné horizontalement ou verticalement": 5
       },
       "runtimeErrors": [],
-      "failures": [
-        {
-          "classes": "pointer-events-none absolute z-[var(--z-sticky)] rounded-full bg-[color:var(--card-tint-st",
-          "occurrences": 1,
-          "worst": 1.72,
-          "best": 3.88,
-          "threshold": 4.5,
-          "fontSize": 11,
-          "glyph": [
-            135,
-            137,
-            93
-          ],
-          "backgroundAtWorst": [
-            96,
-            96,
-            96
-          ],
-          "samples": [
-            "© OpenStreetMap France · Esri",
-            "© OpenStreetMap France · Esri"
-          ]
-        },
-        {
-          "classes": "prep-programme__steptitle",
-          "occurrences": 1,
-          "worst": 2.18,
-          "best": 6.18,
-          "threshold": 4.5,
-          "fontSize": 13,
-          "glyph": [
-            155,
-            151,
-            135
-          ],
-          "backgroundAtWorst": [
-            95,
-            95,
-            95
-          ],
-          "samples": [
-            "Refuge du Plan de l Aiguille",
-            "Refuge du Plan de l Aiguille"
-          ]
-        },
-        {
-          "classes": "(li)",
-          "occurrences": 5,
-          "worst": 2.85,
-          "best": 8.59,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            127,
-            196,
-            154
-          ],
-          "backgroundAtWorst": [
-            101,
-            101,
-            101
-          ],
-          "samples": [
-            "Distance à vérifier",
-            "Distance à vérifier",
-            "Temps de parcours à vérifier"
-          ]
-        },
-        {
-          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
-          "occurrences": 1,
-          "worst": 3.11,
-          "best": 4.81,
-          "threshold": 4.5,
-          "fontSize": 13,
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "backgroundAtWorst": [
-            146,
-            146,
-            146
-          ],
-          "samples": [
-            "Modifier",
-            "Modifier"
-          ]
-        },
-        {
-          "classes": "(div)",
-          "occurrences": 1,
-          "worst": 3.31,
-          "best": 5.85,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            238,
-            238,
-            235
-          ],
-          "backgroundAtWorst": [
-            130,
-            130,
-            130
-          ],
-          "samples": [
-            "2 jours",
-            "2 jours"
-          ]
-        },
-        {
-          "classes": "(span)",
-          "occurrences": 3,
-          "worst": 3.36,
-          "best": 7.11,
-          "threshold": 4.5,
-          "fontSize": 10,
-          "glyph": [
-            159,
-            160,
-            155
-          ],
-          "backgroundAtWorst": [
-            74,
-            74,
-            74
-          ],
-          "samples": [
-            "jeu. 1 oct.",
-            "jeu. 1 oct.",
-            "ven. 2 oct."
-          ]
-        },
-        {
-          "classes": "prep-title",
-          "occurrences": 1,
-          "worst": 4.23,
-          "best": 8.19,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "backgroundAtWorst": [
-            123,
-            123,
-            123
-          ],
-          "samples": [
-            "Boucle du Mont-Blanc en 2 jours",
-            "Boucle du Mont-Blanc en 2 jours"
-          ]
-        },
-        {
-          "classes": "(button)",
-          "occurrences": 1,
-          "worst": 4.39,
-          "best": 7.93,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            162,
-            222,
-            191
-          ],
-          "backgroundAtWorst": [
-            92,
-            92,
-            92
-          ],
-          "samples": [
-            "Réessayer",
-            "Réessayer"
-          ]
-        },
-        {
-          "classes": "prep-metric__value",
-          "occurrences": 1,
-          "worst": 4.47,
-          "best": 9.55,
-          "threshold": 4.5,
-          "fontSize": 14.25,
-          "glyph": [
-            192,
-            193,
-            193
-          ],
-          "backgroundAtWorst": [
-            80,
-            80,
-            80
-          ],
-          "samples": [
-            "À vérifier",
-            "À vérifier"
-          ]
-        }
-      ],
+      "failures": [],
       "elements": [
-        {
-          "classes": "pointer-events-none absolute z-[var(--z-sticky)] rounded-full bg-[color:var(--card-tint-st",
-          "tag": "div",
-          "text": "© OpenStreetMap France · Esri",
-          "fontSize": 11,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            135,
-            137,
-            93
-          ],
-          "worst": 1.72,
-          "best": 3.88,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": true,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__steptitle",
-          "tag": "span",
-          "text": "Refuge du Plan de l Aiguille",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            155,
-            151,
-            135
-          ],
-          "worst": 2.18,
-          "best": 6.18,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
-          "tag": "button",
-          "text": "Modifier",
-          "fontSize": 13,
-          "fontWeight": 600,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 3.11,
-          "best": 4.81,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Activité à choisir",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 3.23,
-          "best": 5.17,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "2 jours",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            238,
-            238,
-            235
-          ],
-          "worst": 3.31,
-          "best": 5.85,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "span",
-          "text": "ven. 2 oct.",
-          "fontSize": 10,
-          "fontWeight": 500,
-          "declaredColor": "rgba(255, 255, 255, 0.78)",
-          "glyph": [
-            159,
-            160,
-            155
-          ],
-          "worst": 3.36,
-          "best": 7.11,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "span",
-          "text": "jeu. 1 oct.",
-          "fontSize": 10,
-          "fontWeight": 500,
-          "declaredColor": "rgba(255, 255, 255, 0.78)",
-          "glyph": [
-            169,
-            167,
-            160
-          ],
-          "worst": 3.39,
-          "best": 7.28,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Repas : 6 à organiser",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 3.5,
-          "best": 5.83,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Temps de parcours à vérifier",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 3.64,
-          "best": 6.29,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Dénivelé à vérifier",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 3.95,
-          "best": 7.23,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "span",
-          "text": "À vérifier avant de partir",
-          "fontSize": 17,
-          "fontWeight": 600,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 4.06,
-          "best": 7.57,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
         {
           "classes": "prep-title",
           "tag": "h1",
-          "text": "Boucle du Mont-Blanc en 2 jours",
-          "fontSize": 17,
+          "text": "Quelle aventure ?",
+          "fontSize": 28,
           "fontWeight": 700,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
@@ -685,50 +251,12 @@
             255,
             255
           ],
-          "worst": 4.23,
-          "best": 8.19,
-          "threshold": 4.5,
-          "verdict": "FAIL",
+          "worst": 3.32,
+          "best": 5.33,
+          "threshold": 3,
+          "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "button",
-          "text": "Réessayer",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(169, 230, 198)",
-          "glyph": [
-            162,
-            222,
-            191
-          ],
-          "worst": 4.39,
-          "best": 7.93,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__value",
-          "tag": "span",
-          "text": "À vérifier",
-          "fontSize": 14.25,
-          "fontWeight": 550,
-          "declaredColor": "rgba(255, 255, 255, 0.72)",
-          "glyph": [
-            192,
-            193,
-            193
-          ],
-          "worst": 4.47,
-          "best": 9.55,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 12
+          "seenAt": 2
         },
         {
           "classes": "relative z-[1] text-[10px] font-semibold leading-none",
@@ -747,45 +275,64 @@
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "",
+          "classes": "prep-crumb__label",
           "tag": "span",
-          "text": "Poids du sac à estimer",
-          "fontSize": 12,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.72)",
-          "glyph": [
-            191,
-            192,
-            191
-          ],
-          "worst": 4.64,
-          "best": 9.54,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__note",
-          "tag": "span",
-          "text": "3 étapes à vérifier",
+          "text": "En avant !",
           "fontSize": 13,
-          "fontWeight": 520,
+          "fontWeight": 650,
           "declaredColor": "rgba(255, 255, 255, 0.72)",
           "glyph": [
-            193,
-            193,
-            192
+            190,
+            190,
+            189
           ],
-          "worst": 4.71,
-          "best": 9.89,
+          "worst": 4.76,
+          "best": 10.07,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
+        },
+        {
+          "classes": "prep-crumb__label",
+          "tag": "span",
+          "text": "Créations",
+          "fontSize": 13,
+          "fontWeight": 650,
+          "declaredColor": "rgba(255, 255, 255, 0.72)",
+          "glyph": [
+            188,
+            189,
+            189
+          ],
+          "worst": 4.78,
+          "best": 10.03,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
+        },
+        {
+          "classes": "prep-crumb__label",
+          "tag": "span",
+          "text": "Préparation",
+          "fontSize": 13,
+          "fontWeight": 650,
+          "declaredColor": "rgba(255, 255, 255, 0.72)",
+          "glyph": [
+            189,
+            189,
+            189
+          ],
+          "worst": 4.79,
+          "best": 10.05,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
         },
         {
           "classes": "relative z-[1] text-[10px] font-semibold leading-none",
@@ -804,7 +351,45 @@
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
+        },
+        {
+          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
+          "tag": "button",
+          "text": "Continuer",
+          "fontSize": 17,
+          "fontWeight": 600,
+          "declaredColor": "rgba(255, 255, 255, 0.82)",
+          "glyph": [
+            216,
+            216,
+            216
+          ],
+          "worst": 5.4,
+          "best": 9.93,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": true,
+          "seenAt": 2
+        },
+        {
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "À pied",
+          "fontSize": 13,
+          "fontWeight": 600,
+          "declaredColor": "rgb(169, 230, 198)",
+          "glyph": [
+            169,
+            230,
+            198
+          ],
+          "worst": 5.43,
+          "best": 10.68,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
         },
         {
           "classes": "relative z-[1] text-[10px] font-semibold leading-none",
@@ -823,45 +408,7 @@
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "span",
-          "text": "J2",
-          "fontSize": 12,
-          "fontWeight": 500,
-          "declaredColor": "rgba(255, 255, 255, 0.78)",
-          "glyph": [
-            206,
-            205,
-            202
-          ],
-          "worst": 5.49,
-          "best": 11.69,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "span",
-          "text": "J1",
-          "fontSize": 12,
-          "fontWeight": 500,
-          "declaredColor": "rgba(255, 255, 255, 0.78)",
-          "glyph": [
-            204,
-            204,
-            202
-          ],
-          "worst": 5.51,
-          "best": 11.36,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
           "classes": "relative z-[1] text-[10px] font-semibold leading-none",
@@ -880,26 +427,7 @@
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Équipement : 3 éléments à confirmer",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 5.66,
-          "best": 13.58,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
           "classes": "relative z-[1] text-[10px] font-semibold leading-none",
@@ -918,375 +446,33 @@
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "prep-crumb__link",
+          "classes": "prep-action",
           "tag": "button",
-          "text": "Créations",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(169, 230, 198)",
-          "glyph": [
-            169,
-            230,
-            198
-          ],
-          "worst": 6.06,
-          "best": 12.77,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-crumb__link",
-          "tag": "button",
-          "text": "Préparation",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(169, 230, 198)",
-          "glyph": [
-            169,
-            230,
-            198
-          ],
-          "worst": 6.06,
-          "best": 12.65,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-map__glass",
-          "tag": "button",
-          "text": "Recentrer",
+          "text": "Eau",
           "fontSize": 13,
-          "fontWeight": 650,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 6.1,
-          "best": 11.37,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__label",
-          "tag": "span",
-          "text": "Budget / pers.",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            225,
-            225,
-            224
-          ],
-          "worst": 6.16,
-          "best": 13.3,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 6
-        },
-        {
-          "classes": "prep-map__glass",
-          "tag": "span",
-          "text": "Ensemble",
-          "fontSize": 13,
-          "fontWeight": 650,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 6.29,
-          "best": 13.39,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__sky",
-          "tag": "span",
-          "text": "Pluie",
-          "fontSize": 13,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            221,
-            222,
-            221
-          ],
-          "worst": 6.37,
-          "best": 13.42,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__label",
-          "tag": "span",
-          "text": "Durée",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            222,
-            222,
-            222
-          ],
-          "worst": 6.4,
-          "best": 13.35,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 9
-        },
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "3 éléments à confirmerPoids du sac à estimer",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            224,
-            224,
-            223
-          ],
-          "worst": 6.41,
-          "best": 13.46,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "6 repas à organiser",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            224,
-            224,
-            223
-          ],
-          "worst": 6.41,
-          "best": 13.72,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "span",
-          "text": "Échec : Calcul des distances sur le réseau",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            251,
-            252,
-            252
-          ],
-          "worst": 6.43,
-          "best": 11.62,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__label",
-          "tag": "span",
-          "text": "Dénivelé",
-          "fontSize": 13,
-          "fontWeight": 620,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            222,
-            223,
-            222
-          ],
-          "worst": 6.43,
-          "best": 13.16,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "1 personne",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            223,
-            223,
-            223
-          ],
-          "worst": 6.44,
-          "best": 13.82,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-map__glass",
-          "tag": "button",
-          "text": "Agrandir",
-          "fontSize": 13,
-          "fontWeight": 650,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 6.48,
-          "best": 14.55,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__measures",
-          "tag": "span",
-          "text": "14° / 17° · 68 % de pluie",
-          "fontSize": 13,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            223,
-            223,
-            223
-          ],
-          "worst": 6.54,
-          "best": 13.57,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__label",
-          "tag": "span",
-          "text": "Distance",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            223,
-            223,
-            223
-          ],
-          "worst": 6.55,
-          "best": 13.83,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 9
-        },
-        {
-          "classes": "",
-          "tag": "span",
-          "text": "à vérifier",
-          "fontSize": 10,
           "fontWeight": 500,
-          "declaredColor": "rgb(16, 16, 16)",
-          "glyph": [
-            68,
-            68,
-            69
-          ],
-          "worst": 7.03,
-          "best": 7.65,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-crumb__label",
-          "tag": "span",
-          "text": "En avant !",
-          "fontSize": 13,
-          "fontWeight": 720,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
             255,
             255
           ],
-          "worst": 7.57,
-          "best": 17.04,
+          "worst": 7.94,
+          "best": 17.58,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "prep-metric__value",
-          "tag": "span",
-          "text": "16 h 09 min",
-          "fontSize": 12,
-          "fontWeight": 760,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.06,
-          "best": 16.48,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
+          "classes": "prep-action",
           "tag": "button",
-          "text": "Enregistrer mon aventure",
-          "fontSize": 17,
-          "fontWeight": 720,
-          "declaredColor": "rgb(8, 21, 15)",
-          "glyph": [
-            8,
-            21,
-            15
-          ],
-          "worst": 8.13,
-          "best": 9.11,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__value",
-          "tag": "span",
-          "text": "48 € connus",
-          "fontSize": 14.25,
-          "fontWeight": 760,
+          "text": "Neige et montagne",
+          "fontSize": 13,
+          "fontWeight": 500,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
@@ -1294,17 +480,17 @@
             255
           ],
           "worst": 8.32,
-          "best": 17.58,
+          "best": 17.93,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "prep-programme__daylabel",
+          "classes": "",
           "tag": "span",
-          "text": "Jour 1",
-          "fontSize": 17,
+          "text": "Qu’est-ce que tu as en tête ?",
+          "fontSize": 15,
           "fontWeight": 700,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
@@ -1313,37 +499,18 @@
             255
           ],
           "worst": 8.45,
-          "best": 18.1,
+          "best": 17.93,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "prep-programme__steptitle",
+          "classes": "prep-act__name",
           "tag": "span",
-          "text": "Matinée au Refuge du Plan de l’Aiguille",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.45,
-          "best": 18.1,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "Équipement",
+          "text": "Randonnée à la journée",
           "fontSize": 17,
-          "fontWeight": 600,
+          "fontWeight": 640,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
@@ -1351,132 +518,37 @@
             255
           ],
           "worst": 8.45,
-          "best": 17.76,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "Participants",
-          "fontSize": 17,
-          "fontWeight": 600,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.45,
-          "best": 18.1,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__value",
-          "tag": "span",
-          "text": "55,1 km",
-          "fontSize": 14.25,
-          "fontWeight": 760,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.59,
-          "best": 18.42,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__steptitle",
-          "tag": "span",
-          "text": "Aiguille du Midi",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.59,
           "best": 18.26,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "",
-          "tag": "div",
-          "text": "Eau et repas",
+          "classes": "prep-act__name",
+          "tag": "span",
+          "text": "Randonnée avec nuit de refuge",
           "fontSize": 17,
-          "fontWeight": 600,
+          "fontWeight": 640,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
             255,
             255
           ],
-          "worst": 8.59,
-          "best": 17.4,
+          "worst": 8.45,
+          "best": 18.26,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "prep-metric__value",
-          "tag": "span",
-          "text": "15 h 09 min",
-          "fontSize": 14.25,
-          "fontWeight": 760,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.72,
-          "best": 18.1,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__steptitle",
-          "tag": "span",
-          "text": "Départ Chamonix vers Refuge du Goûter",
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "À vélo",
           "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.72,
-          "best": 18.42,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__steptitle",
-          "tag": "span",
-          "text": "Refuge du Gouter",
-          "fontSize": 13,
-          "fontWeight": 560,
+          "fontWeight": 500,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
@@ -1488,14 +560,33 @@
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "prep-metric__value",
+          "classes": "prep-act__name",
           "tag": "span",
-          "text": "1 h",
-          "fontSize": 14.25,
-          "fontWeight": 760,
+          "text": "Course",
+          "fontSize": 17,
+          "fontWeight": 640,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            255,
+            255,
+            255
+          ],
+          "worst": 8.86,
+          "best": 18.42,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
+        },
+        {
+          "classes": "prep-act__name",
+          "tag": "span",
+          "text": "Trail",
+          "fontSize": 17,
+          "fontWeight": 640,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
@@ -1503,30 +594,11 @@
             255
           ],
           "worst": 10.05,
-          "best": 17.22,
+          "best": 18.42,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "span",
-          "text": "Tout",
-          "fontSize": 12,
-          "fontWeight": 700,
-          "declaredColor": "rgb(16, 16, 16)",
-          "glyph": [
-            16,
-            16,
-            16
-          ],
-          "worst": 13.74,
-          "best": 14.97,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         }
       ]
     },
@@ -1551,13 +623,12 @@
       },
       "scrollCoverage": {
         "windowScrollablePx": 0,
-        "innerContainerScrollablePx": 1070,
-        "reachablePx": 1070,
-        "steps": 3,
+        "innerContainerScrollablePx": 130,
+        "reachablePx": 130,
+        "steps": 2,
         "capturedScrollPositions": [
           0,
-          682,
-          1070
+          130
         ],
         "containers": [
           {
@@ -1565,8 +636,16 @@
             "selector": "div.prep-body",
             "axisY": true,
             "axisX": false,
-            "scrollablePxY": 1070,
+            "scrollablePxY": 130,
             "scrollablePxX": 0
+          },
+          {
+            "index": 1,
+            "selector": "div.prep-cats",
+            "axisY": false,
+            "axisX": true,
+            "scrollablePxY": 0,
+            "scrollablePxX": 405
           }
         ]
       },
@@ -1582,59 +661,31 @@
       },
       "referenceShot": "audit/prep-contrast-shots/393x852.png",
       "counts": {
-        "measured": 56,
-        "pass": 42,
-        "fail": 14,
-        "skipped": 8,
-        "occluded": 1
+        "measured": 19,
+        "pass": 19,
+        "fail": 0,
+        "skipped": 5,
+        "occluded": 0
       },
-      "occlusion": [
-        {
-          "classes": "",
-          "tag": "button",
-          "text": "Ouvrir les préférences du trajet",
-          "occludedBy": "div.prep-visually-hidden",
-          "seenAt": 3,
-          "occludedSteps": 3,
-          "ratioUnderOccluder": 6.91
-        }
-      ],
+      "occlusion": [],
       "occlusionUnverifiable": 1,
       "skipped": [
         {
-          "classes": "",
+          "classes": "prep-action",
           "tag": "button",
-          "text": "Revenir au hub",
+          "text": "Voyage et séjour",
           "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
         },
         {
-          "classes": "prep-metric__value",
-          "tag": "span",
-          "text": "1 h",
-          "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
-        },
-        {
-          "classes": "prep-programme__daylabel",
-          "tag": "span",
-          "text": "Jour 2",
-          "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
-        },
-        {
-          "classes": "prep-programme__measures",
-          "tag": "span",
-          "text": "6° / 12° · 25 % de pluie",
-          "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
-        },
-        {
-          "classes": "prep-programme__sky",
-          "tag": "span",
-          "text": "Partiellement nuageux",
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "Autres sports",
           "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
         },
         {
           "classes": "prep-visually-hidden",
           "tag": "span",
-          "text": "En avant !, étape 3 sur 3",
+          "text": "Choix de l’activité",
           "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
         },
         {
@@ -1651,252 +702,16 @@
         }
       ],
       "skippedByReason": {
-        "rectangle hors cadre : rogné horizontalement ou verticalement": 8
+        "rectangle hors cadre : rogné horizontalement ou verticalement": 5
       },
       "runtimeErrors": [],
-      "failures": [
-        {
-          "classes": "pointer-events-none absolute z-[var(--z-sticky)] rounded-full bg-[color:var(--card-tint-st",
-          "occurrences": 1,
-          "worst": 2.22,
-          "best": 4.94,
-          "threshold": 4.5,
-          "fontSize": 11,
-          "glyph": [
-            159,
-            155,
-            122
-          ],
-          "backgroundAtWorst": [
-            96,
-            96,
-            96
-          ],
-          "samples": [
-            "© OpenStreetMap France · Esri",
-            "© OpenStreetMap France · Esri"
-          ]
-        },
-        {
-          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
-          "occurrences": 1,
-          "worst": 2.88,
-          "best": 4.29,
-          "threshold": 4.5,
-          "fontSize": 13,
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "backgroundAtWorst": [
-            152,
-            152,
-            152
-          ],
-          "samples": [
-            "Modifier",
-            "Modifier"
-          ]
-        },
-        {
-          "classes": "(li)",
-          "occurrences": 6,
-          "worst": 3.03,
-          "best": 4.61,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "backgroundAtWorst": [
-            148,
-            148,
-            148
-          ],
-          "samples": [
-            "Équipement : 3 éléments à confirmer",
-            "Équipement : 3 éléments à confirmer",
-            "Distance à vérifier"
-          ]
-        },
-        {
-          "classes": "prep-title",
-          "occurrences": 1,
-          "worst": 3.32,
-          "best": 5.33,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "backgroundAtWorst": [
-            141,
-            141,
-            141
-          ],
-          "samples": [
-            "Boucle du Mont-Blanc en 2 jours",
-            "Boucle du Mont-Blanc en 2 jours"
-          ]
-        },
-        {
-          "classes": "(span)",
-          "occurrences": 2,
-          "worst": 3.37,
-          "best": 7.13,
-          "threshold": 4.5,
-          "fontSize": 10,
-          "glyph": [
-            160,
-            160,
-            154
-          ],
-          "backgroundAtWorst": [
-            74,
-            74,
-            74
-          ],
-          "samples": [
-            "jeu. 1 oct.",
-            "jeu. 1 oct.",
-            "ven. 2 oct."
-          ]
-        },
-        {
-          "classes": "(div)",
-          "occurrences": 1,
-          "worst": 3.74,
-          "best": 7.91,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            230,
-            232,
-            231
-          ],
-          "backgroundAtWorst": [
-            117,
-            117,
-            117
-          ],
-          "samples": [
-            "2 jours",
-            "2 jours"
-          ]
-        },
-        {
-          "classes": "(button)",
-          "occurrences": 1,
-          "worst": 4.39,
-          "best": 7.93,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            162,
-            222,
-            191
-          ],
-          "backgroundAtWorst": [
-            92,
-            92,
-            92
-          ],
-          "samples": [
-            "Réessayer",
-            "Réessayer"
-          ]
-        },
-        {
-          "classes": "prep-metric__value",
-          "occurrences": 1,
-          "worst": 4.48,
-          "best": 9.71,
-          "threshold": 4.5,
-          "fontSize": 15.15,
-          "glyph": [
-            191,
-            192,
-            191
-          ],
-          "backgroundAtWorst": [
-            79,
-            79,
-            79
-          ],
-          "samples": [
-            "À vérifier",
-            "À vérifier"
-          ]
-        }
-      ],
+      "failures": [],
       "elements": [
-        {
-          "classes": "pointer-events-none absolute z-[var(--z-sticky)] rounded-full bg-[color:var(--card-tint-st",
-          "tag": "div",
-          "text": "© OpenStreetMap France · Esri",
-          "fontSize": 11,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            159,
-            155,
-            122
-          ],
-          "worst": 2.22,
-          "best": 4.94,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": true,
-          "seenAt": 3
-        },
-        {
-          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
-          "tag": "button",
-          "text": "Modifier",
-          "fontSize": 13,
-          "fontWeight": 600,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 2.88,
-          "best": 4.29,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Équipement : 3 éléments à confirmer",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 3.03,
-          "best": 4.61,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
         {
           "classes": "prep-title",
           "tag": "h1",
-          "text": "Boucle du Mont-Blanc en 2 jours",
-          "fontSize": 17,
+          "text": "Quelle aventure ?",
+          "fontSize": 28,
           "fontWeight": 700,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
@@ -1904,240 +719,12 @@
             255,
             255
           ],
-          "worst": 3.32,
-          "best": 5.33,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Repas : 6 à organiser",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 3.36,
-          "best": 5.49,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "span",
-          "text": "ven. 2 oct.",
-          "fontSize": 10,
-          "fontWeight": 500,
-          "declaredColor": "rgba(255, 255, 255, 0.78)",
-          "glyph": [
-            160,
-            160,
-            154
-          ],
-          "worst": 3.37,
-          "best": 7.13,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "span",
-          "text": "jeu. 1 oct.",
-          "fontSize": 10,
-          "fontWeight": 500,
-          "declaredColor": "rgba(255, 255, 255, 0.78)",
-          "glyph": [
-            170,
-            167,
-            161
-          ],
-          "worst": 3.42,
-          "best": 7.48,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Dénivelé à vérifier",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 3.59,
-          "best": 6.01,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Distance à vérifier",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 3.64,
-          "best": 6.19,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Activité à choisir",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 3.69,
-          "best": 6.39,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "2 jours",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            230,
-            232,
-            231
-          ],
-          "worst": 3.74,
-          "best": 7.91,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Temps de parcours à vérifier",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 4.06,
-          "best": 7.57,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "button",
-          "text": "Réessayer",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(169, 230, 198)",
-          "glyph": [
-            162,
-            222,
-            191
-          ],
-          "worst": 4.39,
-          "best": 7.93,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__value",
-          "tag": "span",
-          "text": "À vérifier",
-          "fontSize": 15.15,
-          "fontWeight": 550,
-          "declaredColor": "rgba(255, 255, 255, 0.72)",
-          "glyph": [
-            191,
-            192,
-            191
-          ],
-          "worst": 4.48,
-          "best": 9.71,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 12
-        },
-        {
-          "classes": "prep-metric__note",
-          "tag": "span",
-          "text": "3 étapes à vérifier",
-          "fontSize": 13,
-          "fontWeight": 520,
-          "declaredColor": "rgba(255, 255, 255, 0.72)",
-          "glyph": [
-            196,
-            195,
-            194
-          ],
-          "worst": 4.59,
-          "best": 9.91,
-          "threshold": 4.5,
+          "worst": 3.45,
+          "best": 5.66,
+          "threshold": 3,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "span",
-          "text": "Poids du sac à estimer",
-          "fontSize": 12,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.72)",
-          "glyph": [
-            191,
-            192,
-            191
-          ],
-          "worst": 4.63,
-          "best": 9.83,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
           "classes": "relative z-[1] text-[10px] font-semibold leading-none",
@@ -2156,26 +743,64 @@
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "",
+          "classes": "prep-crumb__label",
           "tag": "span",
-          "text": "À vérifier avant de partir",
-          "fontSize": 17,
-          "fontWeight": 600,
-          "declaredColor": "rgb(255, 255, 255)",
+          "text": "En avant !",
+          "fontSize": 13,
+          "fontWeight": 650,
+          "declaredColor": "rgba(255, 255, 255, 0.72)",
           "glyph": [
-            255,
-            255,
-            255
+            190,
+            190,
+            189
           ],
-          "worst": 4.67,
-          "best": 10.21,
+          "worst": 4.76,
+          "best": 10.07,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
+        },
+        {
+          "classes": "prep-crumb__label",
+          "tag": "span",
+          "text": "Créations",
+          "fontSize": 13,
+          "fontWeight": 650,
+          "declaredColor": "rgba(255, 255, 255, 0.72)",
+          "glyph": [
+            188,
+            189,
+            189
+          ],
+          "worst": 4.78,
+          "best": 10.03,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
+        },
+        {
+          "classes": "prep-crumb__label",
+          "tag": "span",
+          "text": "Préparation",
+          "fontSize": 13,
+          "fontWeight": 650,
+          "declaredColor": "rgba(255, 255, 255, 0.72)",
+          "glyph": [
+            189,
+            189,
+            189
+          ],
+          "worst": 4.79,
+          "best": 10.05,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
         },
         {
           "classes": "relative z-[1] text-[10px] font-semibold leading-none",
@@ -2194,26 +819,26 @@
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "",
-          "tag": "span",
-          "text": "J2",
-          "fontSize": 12,
-          "fontWeight": 500,
-          "declaredColor": "rgba(255, 255, 255, 0.78)",
+          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
+          "tag": "button",
+          "text": "Continuer",
+          "fontSize": 17,
+          "fontWeight": 600,
+          "declaredColor": "rgba(255, 255, 255, 0.82)",
           "glyph": [
-            206,
-            205,
-            202
+            216,
+            216,
+            216
           ],
-          "worst": 5.41,
-          "best": 11.7,
+          "worst": 5.4,
+          "best": 9.93,
           "threshold": 4.5,
           "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
+          "occlusionUnverifiable": true,
+          "seenAt": 2
         },
         {
           "classes": "relative z-[1] text-[10px] font-semibold leading-none",
@@ -2232,7 +857,26 @@
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
+        },
+        {
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "À pied",
+          "fontSize": 13,
+          "fontWeight": 600,
+          "declaredColor": "rgb(169, 230, 198)",
+          "glyph": [
+            169,
+            230,
+            198
+          ],
+          "worst": 5.51,
+          "best": 10.68,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
         },
         {
           "classes": "relative z-[1] text-[10px] font-semibold leading-none",
@@ -2251,26 +895,7 @@
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "span",
-          "text": "J1",
-          "fontSize": 12,
-          "fontWeight": 500,
-          "declaredColor": "rgba(255, 255, 255, 0.78)",
-          "glyph": [
-            204,
-            204,
-            202
-          ],
-          "worst": 5.69,
-          "best": 11.47,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
           "classes": "relative z-[1] text-[10px] font-semibold leading-none",
@@ -2289,356 +914,33 @@
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "prep-crumb__link",
+          "classes": "prep-action",
           "tag": "button",
-          "text": "Créations",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(169, 230, 198)",
-          "glyph": [
-            169,
-            230,
-            198
-          ],
-          "worst": 6.06,
-          "best": 12.77,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-crumb__link",
-          "tag": "button",
-          "text": "Préparation",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(169, 230, 198)",
-          "glyph": [
-            169,
-            230,
-            198
-          ],
-          "worst": 6.06,
-          "best": 12.65,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-map__glass",
-          "tag": "button",
-          "text": "Recentrer",
+          "text": "Eau",
           "fontSize": 13,
-          "fontWeight": 650,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 6.1,
-          "best": 11.37,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__label",
-          "tag": "span",
-          "text": "Durée",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            223,
-            223,
-            223
-          ],
-          "worst": 6.26,
-          "best": 12.26,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 9
-        },
-        {
-          "classes": "prep-map__glass",
-          "tag": "span",
-          "text": "Ensemble",
-          "fontSize": 13,
-          "fontWeight": 650,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 6.29,
-          "best": 11.9,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "6 repas à organiser",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            223,
-            223,
-            222
-          ],
-          "worst": 6.34,
-          "best": 13.05,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__label",
-          "tag": "span",
-          "text": "Dénivelé",
-          "fontSize": 13,
-          "fontWeight": 620,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            223,
-            223,
-            223
-          ],
-          "worst": 6.35,
-          "best": 13.34,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__measures",
-          "tag": "span",
-          "text": "14° / 17° · 68 % de pluie",
-          "fontSize": 13,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            223,
-            224,
-            223
-          ],
-          "worst": 6.39,
-          "best": 13.68,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "3 éléments à confirmerPoids du sac à estimer",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            224,
-            224,
-            223
-          ],
-          "worst": 6.39,
-          "best": 13.69,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-map__glass",
-          "tag": "button",
-          "text": "Agrandir",
-          "fontSize": 13,
-          "fontWeight": 650,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 6.39,
-          "best": 14.16,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "1 personne",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            222,
-            223,
-            222
-          ],
-          "worst": 6.42,
-          "best": 13.53,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "span",
-          "text": "Échec : Calcul des distances sur le réseau",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            252,
-            253,
-            252
-          ],
-          "worst": 6.55,
-          "best": 11.66,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__label",
-          "tag": "span",
-          "text": "Distance",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            221,
-            222,
-            222
-          ],
-          "worst": 6.57,
-          "best": 13.17,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 9
-        },
-        {
-          "classes": "prep-metric__label",
-          "tag": "span",
-          "text": "Budget / pers.",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            224,
-            224,
-            223
-          ],
-          "worst": 6.61,
-          "best": 13.04,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 6
-        },
-        {
-          "classes": "prep-programme__sky",
-          "tag": "span",
-          "text": "Pluie",
-          "fontSize": 13,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            223,
-            223,
-            223
-          ],
-          "worst": 6.65,
-          "best": 13.58,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "span",
-          "text": "à vérifier",
-          "fontSize": 10,
           "fontWeight": 500,
-          "declaredColor": "rgb(16, 16, 16)",
-          "glyph": [
-            68,
-            68,
-            69
-          ],
-          "worst": 7.03,
-          "best": 7.65,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-crumb__label",
-          "tag": "span",
-          "text": "En avant !",
-          "fontSize": 13,
-          "fontWeight": 720,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
             255,
             255
           ],
-          "worst": 7.57,
-          "best": 17.04,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__value",
-          "tag": "span",
-          "text": "48 € connus",
-          "fontSize": 15.15,
-          "fontWeight": 760,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 7.94,
+          "worst": 7.81,
           "best": 17.58,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "prep-metric__value",
+          "classes": "prep-act__name",
           "tag": "span",
-          "text": "15 h 09 min",
-          "fontSize": 15.15,
-          "fontWeight": 760,
+          "text": "Randonnée avec nuit de refuge",
+          "fontSize": 17,
+          "fontWeight": 640,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
@@ -2646,74 +948,17 @@
             255
           ],
           "worst": 8.06,
-          "best": 17.93,
+          "best": 18.1,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
-          "tag": "button",
-          "text": "Enregistrer mon aventure",
-          "fontSize": 17,
-          "fontWeight": 720,
-          "declaredColor": "rgb(8, 21, 15)",
-          "glyph": [
-            8,
-            21,
-            15
-          ],
-          "worst": 8.13,
-          "best": 9.11,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__steptitle",
+          "classes": "",
           "tag": "span",
-          "text": "Matinée au Refuge du Plan de l’Aiguille",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.32,
-          "best": 17.4,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__value",
-          "tag": "span",
-          "text": "16 h 09 min",
-          "fontSize": 12,
-          "fontWeight": 760,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.45,
-          "best": 16.86,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__daylabel",
-          "tag": "span",
-          "text": "Jour 1",
-          "fontSize": 17,
+          "text": "Qu’est-ce que tu as en tête ?",
+          "fontSize": 15,
           "fontWeight": 700,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
@@ -2721,133 +966,76 @@
             255,
             255
           ],
-          "worst": 8.45,
-          "best": 17.58,
+          "worst": 8.32,
+          "best": 17.93,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "",
-          "tag": "div",
-          "text": "Eau et repas",
-          "fontSize": 17,
-          "fontWeight": 600,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.45,
-          "best": 17.58,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__steptitle",
-          "tag": "span",
-          "text": "Départ Chamonix vers Refuge du Goûter",
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "À vélo",
           "fontSize": 13,
-          "fontWeight": 560,
+          "fontWeight": 500,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
             255,
             255
           ],
-          "worst": 8.59,
-          "best": 18.42,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "Équipement",
-          "fontSize": 17,
-          "fontWeight": 600,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.59,
+          "worst": 8.45,
           "best": 18.1,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "",
-          "tag": "div",
-          "text": "Participants",
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "Neige et montagne",
+          "fontSize": 13,
+          "fontWeight": 500,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            255,
+            255,
+            255
+          ],
+          "worst": 8.45,
+          "best": 17.22,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
+        },
+        {
+          "classes": "prep-act__name",
+          "tag": "span",
+          "text": "Randonnée à la journée",
           "fontSize": 17,
-          "fontWeight": 600,
+          "fontWeight": 640,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
             255,
             255
           ],
-          "worst": 8.59,
-          "best": 18.1,
+          "worst": 8.45,
+          "best": 17.4,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "prep-programme__steptitle",
+          "classes": "prep-act__name",
           "tag": "span",
-          "text": "Aiguille du Midi",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.72,
-          "best": 18.42,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__steptitle",
-          "tag": "span",
-          "text": "Refuge du Plan de l Aiguille",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.72,
-          "best": 18.26,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__steptitle",
-          "tag": "span",
-          "text": "Refuge du Gouter",
-          "fontSize": 13,
-          "fontWeight": 560,
+          "text": "Trail",
+          "fontSize": 17,
+          "fontWeight": 640,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
@@ -2859,45 +1047,26 @@
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "prep-metric__value",
+          "classes": "prep-act__name",
           "tag": "span",
-          "text": "55,1 km",
-          "fontSize": 15.15,
-          "fontWeight": 760,
+          "text": "Course",
+          "fontSize": 17,
+          "fontWeight": 640,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
             255,
             255
           ],
-          "worst": 9,
+          "worst": 8.86,
           "best": 18.42,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "span",
-          "text": "Tout",
-          "fontSize": 12,
-          "fontWeight": 700,
-          "declaredColor": "rgb(16, 16, 16)",
-          "glyph": [
-            16,
-            16,
-            16
-          ],
-          "worst": 13.74,
-          "best": 14.97,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         }
       ]
     },
@@ -2922,22 +1091,20 @@
       },
       "scrollCoverage": {
         "windowScrollablePx": 0,
-        "innerContainerScrollablePx": 871,
-        "reachablePx": 871,
-        "steps": 3,
+        "innerContainerScrollablePx": 0,
+        "reachablePx": 0,
+        "steps": 1,
         "capturedScrollPositions": [
-          0,
-          819,
-          871
+          0
         ],
         "containers": [
           {
             "index": 0,
-            "selector": "div.prep-body",
-            "axisY": true,
-            "axisX": false,
-            "scrollablePxY": 871,
-            "scrollablePxX": 0
+            "selector": "div.prep-cats",
+            "axisY": false,
+            "axisX": true,
+            "scrollablePxY": 0,
+            "scrollablePxX": 30
           }
         ]
       },
@@ -2953,50 +1120,19 @@
       },
       "referenceShot": "audit/prep-contrast-shots/768x1024.png",
       "counts": {
-        "measured": 47,
-        "pass": 35,
-        "fail": 12,
-        "skipped": 5,
-        "occluded": 2
+        "measured": 16,
+        "pass": 16,
+        "fail": 0,
+        "skipped": 3,
+        "occluded": 0
       },
-      "occlusion": [
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "Eau et repas",
-          "occludedBy": "div.prep-body",
-          "seenAt": 3,
-          "occludedSteps": 3,
-          "ratioUnderOccluder": 4.26
-        },
-        {
-          "classes": "",
-          "tag": "button",
-          "text": "Ouvrir les préférences du trajet",
-          "occludedBy": "div.prep-visually-hidden",
-          "seenAt": 3,
-          "occludedSteps": 3,
-          "ratioUnderOccluder": 6.16
-        }
-      ],
+      "occlusion": [],
       "occlusionUnverifiable": 1,
       "skipped": [
         {
-          "classes": "",
-          "tag": "span",
-          "text": "Poids du sac à estimer",
-          "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
-        },
-        {
-          "classes": "",
-          "tag": "button",
-          "text": "Revenir au hub",
-          "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
-        },
-        {
           "classes": "prep-visually-hidden",
           "tag": "span",
-          "text": "En avant !, étape 3 sur 3",
+          "text": "Choix de l’activité",
           "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
         },
         {
@@ -3013,360 +1149,16 @@
         }
       ],
       "skippedByReason": {
-        "rectangle hors cadre : rogné horizontalement ou verticalement": 5
+        "rectangle hors cadre : rogné horizontalement ou verticalement": 3
       },
       "runtimeErrors": [],
-      "failures": [
-        {
-          "classes": "pointer-events-none absolute z-[var(--z-sticky)] rounded-full bg-[color:var(--card-tint-st",
-          "occurrences": 1,
-          "worst": 2.41,
-          "best": 5.1,
-          "threshold": 4.5,
-          "fontSize": 11,
-          "glyph": [
-            161,
-            157,
-            136
-          ],
-          "backgroundAtWorst": [
-            93,
-            93,
-            93
-          ],
-          "samples": [
-            "© OpenStreetMap France · Esri",
-            "© OpenStreetMap France · Esri"
-          ]
-        },
-        {
-          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
-          "occurrences": 1,
-          "worst": 2.81,
-          "best": 4.17,
-          "threshold": 4.5,
-          "fontSize": 13,
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "backgroundAtWorst": [
-            154,
-            154,
-            154
-          ],
-          "samples": [
-            "Modifier",
-            "Modifier"
-          ]
-        },
-        {
-          "classes": "(div)",
-          "occurrences": 3,
-          "worst": 3.27,
-          "best": 8.93,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            127,
-            196,
-            154
-          ],
-          "backgroundAtWorst": [
-            92,
-            92,
-            92
-          ],
-          "samples": [
-            "2 jours",
-            "2 jours",
-            "3 éléments à confirmerPoids du sac à estimer"
-          ]
-        },
-        {
-          "classes": "(li)",
-          "occurrences": 6,
-          "worst": 3.54,
-          "best": 6.01,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "backgroundAtWorst": [
-            136,
-            136,
-            136
-          ],
-          "samples": [
-            "Équipement : 3 éléments à confirmer",
-            "Équipement : 3 éléments à confirmer",
-            "Distance à vérifier"
-          ]
-        },
-        {
-          "classes": "(button)",
-          "occurrences": 1,
-          "worst": 4.37,
-          "best": 7.9,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            162,
-            222,
-            191
-          ],
-          "backgroundAtWorst": [
-            92,
-            92,
-            92
-          ],
-          "samples": [
-            "Réessayer",
-            "Réessayer"
-          ]
-        },
-        {
-          "classes": "prep-title",
-          "occurrences": 1,
-          "worst": 4.48,
-          "best": 9.15,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "backgroundAtWorst": [
-            119,
-            119,
-            119
-          ],
-          "samples": [
-            "Boucle du Mont-Blanc en 2 jours",
-            "Boucle du Mont-Blanc en 2 jours"
-          ]
-        }
-      ],
+      "failures": [],
       "elements": [
-        {
-          "classes": "pointer-events-none absolute z-[var(--z-sticky)] rounded-full bg-[color:var(--card-tint-st",
-          "tag": "div",
-          "text": "© OpenStreetMap France · Esri",
-          "fontSize": 11,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            161,
-            157,
-            136
-          ],
-          "worst": 2.41,
-          "best": 5.1,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": true,
-          "seenAt": 3
-        },
-        {
-          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
-          "tag": "button",
-          "text": "Modifier",
-          "fontSize": 13,
-          "fontWeight": 600,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 2.81,
-          "best": 4.17,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "3 éléments à confirmerPoids du sac à estimer",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            127,
-            196,
-            154
-          ],
-          "worst": 3.27,
-          "best": 8.93,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "2 jours",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            224,
-            226,
-            226
-          ],
-          "worst": 3.3,
-          "best": 6.5,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Activité à choisir",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 3.54,
-          "best": 6.01,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Temps de parcours à vérifier",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 3.59,
-          "best": 6.01,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Dénivelé à vérifier",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 3.59,
-          "best": 6.01,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Repas : 6 à organiser",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 3.59,
-          "best": 6.1,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Distance à vérifier",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 3.64,
-          "best": 6.19,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Équipement : 3 éléments à confirmer",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 3.74,
-          "best": 6.58,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "button",
-          "text": "Réessayer",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(169, 230, 198)",
-          "glyph": [
-            162,
-            222,
-            191
-          ],
-          "worst": 4.37,
-          "best": 7.9,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
         {
           "classes": "prep-title",
           "tag": "h1",
-          "text": "Boucle du Mont-Blanc en 2 jours",
-          "fontSize": 17,
+          "text": "Quelle aventure ?",
+          "fontSize": 28,
           "fontWeight": 700,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
@@ -3374,513 +1166,190 @@
             255,
             255
           ],
-          "worst": 4.48,
-          "best": 9.15,
-          "threshold": 4.5,
-          "verdict": "FAIL",
+          "worst": 3.79,
+          "best": 6.69,
+          "threshold": 3,
+          "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 1
         },
         {
-          "classes": "prep-metric__value",
+          "classes": "prep-crumb__label",
           "tag": "span",
-          "text": "À vérifier",
-          "fontSize": 17,
-          "fontWeight": 550,
+          "text": "Préparation",
+          "fontSize": 13,
+          "fontWeight": 650,
           "declaredColor": "rgba(255, 255, 255, 0.72)",
           "glyph": [
             190,
-            191,
-            190
+            190,
+            189
           ],
-          "worst": 4.66,
-          "best": 9.64,
+          "worst": 4.76,
+          "best": 9.99,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 12
-        },
-        {
-          "classes": "prep-metric__note",
-          "tag": "span",
-          "text": "3 étapes à vérifier",
-          "fontSize": 13,
-          "fontWeight": 520,
-          "declaredColor": "rgba(255, 255, 255, 0.72)",
-          "glyph": [
-            194,
-            194,
-            193
-          ],
-          "worst": 4.99,
-          "best": 10,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "span",
-          "text": "À vérifier avant de partir",
-          "fontSize": 17,
-          "fontWeight": 600,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 5.33,
-          "best": 8.86,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-crumb__link",
-          "tag": "button",
-          "text": "Préparation",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(169, 230, 198)",
-          "glyph": [
-            169,
-            230,
-            198
-          ],
-          "worst": 5.87,
-          "best": 12.03,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-crumb__link",
-          "tag": "button",
-          "text": "Créations",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(169, 230, 198)",
-          "glyph": [
-            169,
-            230,
-            198
-          ],
-          "worst": 5.97,
-          "best": 12.28,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "6 repas à organiser",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            222,
-            222,
-            222
-          ],
-          "worst": 6.09,
-          "best": 13.44,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "span",
-          "text": "Échec : Calcul des distances sur le réseau",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            241,
-            242,
-            242
-          ],
-          "worst": 6.17,
-          "best": 10.64,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-map__glass",
-          "tag": "button",
-          "text": "Agrandir",
-          "fontSize": 13,
-          "fontWeight": 650,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 6.19,
-          "best": 11.37,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-map__glass",
-          "tag": "button",
-          "text": "Recentrer",
-          "fontSize": 13,
-          "fontWeight": 650,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 6.19,
-          "best": 11.9,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__measures",
-          "tag": "span",
-          "text": "6° / 12° · 25 % de pluie",
-          "fontSize": 13,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            224,
-            224,
-            223
-          ],
-          "worst": 6.2,
-          "best": 12.76,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__measures",
-          "tag": "span",
-          "text": "14° / 17° · 68 % de pluie",
-          "fontSize": 13,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            223,
-            224,
-            223
-          ],
-          "worst": 6.27,
-          "best": 13.64,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-map__glass",
-          "tag": "span",
-          "text": "Ensemble",
-          "fontSize": 13,
-          "fontWeight": 650,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 6.29,
-          "best": 13.39,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__label",
-          "tag": "span",
-          "text": "Distance",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            224,
-            224,
-            223
-          ],
-          "worst": 6.3,
-          "best": 13.94,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 9
-        },
-        {
-          "classes": "prep-metric__label",
-          "tag": "span",
-          "text": "Dénivelé",
-          "fontSize": 13,
-          "fontWeight": 620,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            222,
-            223,
-            222
-          ],
-          "worst": 6.33,
-          "best": 13.42,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__sky",
-          "tag": "span",
-          "text": "Partiellement nuageux",
-          "fontSize": 13,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            225,
-            224,
-            223
-          ],
-          "worst": 6.33,
-          "best": 13.38,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "1 personne",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            221,
-            221,
-            221
-          ],
-          "worst": 6.33,
-          "best": 13.33,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__label",
-          "tag": "span",
-          "text": "Budget / pers.",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            223,
-            223,
-            223
-          ],
-          "worst": 6.34,
-          "best": 13.19,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 6
-        },
-        {
-          "classes": "prep-programme__sky",
-          "tag": "span",
-          "text": "Pluie",
-          "fontSize": 13,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            224,
-            224,
-            223
-          ],
-          "worst": 6.4,
-          "best": 12.62,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__label",
-          "tag": "span",
-          "text": "Durée",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            223,
-            223,
-            223
-          ],
-          "worst": 6.76,
-          "best": 12.37,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 9
+          "seenAt": 1
         },
         {
           "classes": "prep-crumb__label",
           "tag": "span",
           "text": "En avant !",
           "fontSize": 13,
-          "fontWeight": 720,
-          "declaredColor": "rgb(255, 255, 255)",
+          "fontWeight": 650,
+          "declaredColor": "rgba(255, 255, 255, 0.72)",
           "glyph": [
-            255,
-            255,
-            255
+            190,
+            190,
+            189
           ],
-          "worst": 7.57,
-          "best": 17.04,
+          "worst": 4.77,
+          "best": 9.99,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 1
+        },
+        {
+          "classes": "prep-crumb__label",
+          "tag": "span",
+          "text": "Créations",
+          "fontSize": 13,
+          "fontWeight": 650,
+          "declaredColor": "rgba(255, 255, 255, 0.72)",
+          "glyph": [
+            189,
+            190,
+            189
+          ],
+          "worst": 4.83,
+          "best": 10.05,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 1
+        },
+        {
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "À pied",
+          "fontSize": 13,
+          "fontWeight": 600,
+          "declaredColor": "rgb(169, 230, 198)",
+          "glyph": [
+            169,
+            230,
+            198
+          ],
+          "worst": 5.43,
+          "best": 10.68,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 1
         },
         {
           "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
           "tag": "button",
-          "text": "Enregistrer mon aventure",
+          "text": "Continuer",
           "fontSize": 17,
-          "fontWeight": 720,
-          "declaredColor": "rgb(8, 21, 15)",
+          "fontWeight": 600,
+          "declaredColor": "rgba(255, 255, 255, 0.82)",
           "glyph": [
-            8,
-            21,
-            15
+            216,
+            216,
+            216
           ],
-          "worst": 8.13,
-          "best": 9.11,
+          "worst": 5.48,
+          "best": 9.93,
           "threshold": 4.5,
           "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
+          "occlusionUnverifiable": true,
+          "seenAt": 1
         },
         {
-          "classes": "prep-programme__daylabel",
-          "tag": "span",
-          "text": "Jour 1",
-          "fontSize": 17,
-          "fontWeight": 700,
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "Eau",
+          "fontSize": 13,
+          "fontWeight": 500,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
             255,
             255
           ],
-          "worst": 8.19,
-          "best": 17.4,
+          "worst": 8.06,
+          "best": 17.22,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 1
         },
         {
-          "classes": "prep-metric__value",
-          "tag": "span",
-          "text": "16 h 09 min",
-          "fontSize": 17,
-          "fontWeight": 760,
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "Neige et montagne",
+          "fontSize": 13,
+          "fontWeight": 500,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
             255,
             255
           ],
-          "worst": 8.59,
-          "best": 16.86,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__value",
-          "tag": "span",
-          "text": "55,1 km",
-          "fontSize": 17,
-          "fontWeight": 760,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.59,
-          "best": 18.42,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__value",
-          "tag": "span",
-          "text": "48 € connus",
-          "fontSize": 17,
-          "fontWeight": 760,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.59,
+          "worst": 8.32,
           "best": 17.04,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 1
         },
         {
-          "classes": "prep-programme__steptitle",
-          "tag": "span",
-          "text": "Départ Chamonix vers Refuge du Goûter",
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "À vélo",
           "fontSize": 13,
-          "fontWeight": 560,
+          "fontWeight": 500,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
             255,
             255
           ],
-          "worst": 8.59,
+          "worst": 8.45,
           "best": 18.1,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 1
         },
         {
-          "classes": "prep-programme__steptitle",
-          "tag": "span",
-          "text": "Refuge du Plan de l Aiguille",
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "Voyage et séjour",
           "fontSize": 13,
-          "fontWeight": 560,
+          "fontWeight": 500,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            255,
+            255,
+            255
+          ],
+          "worst": 8.45,
+          "best": 17.76,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 1
+        },
+        {
+          "classes": "prep-act__name",
+          "tag": "span",
+          "text": "Randonnée avec nuit de refuge",
+          "fontSize": 17,
+          "fontWeight": 640,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
@@ -3892,13 +1361,51 @@
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 1
         },
         {
-          "classes": "prep-programme__daylabel",
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "Autres sports",
+          "fontSize": 13,
+          "fontWeight": 500,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            255,
+            255,
+            255
+          ],
+          "worst": 8.72,
+          "best": 17.76,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 1
+        },
+        {
+          "classes": "prep-act__name",
           "tag": "span",
-          "text": "Jour 2",
+          "text": "Randonnée à la journée",
           "fontSize": 17,
+          "fontWeight": 640,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            255,
+            255,
+            255
+          ],
+          "worst": 8.72,
+          "best": 18.1,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 1
+        },
+        {
+          "classes": "",
+          "tag": "span",
+          "text": "Qu’est-ce que tu as en tête ?",
+          "fontSize": 15,
           "fontWeight": 700,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
@@ -3906,114 +1413,19 @@
             255,
             255
           ],
-          "worst": 8.59,
-          "best": 18.26,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "Participants",
-          "fontSize": 17,
-          "fontWeight": 600,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.59,
+          "worst": 8.86,
           "best": 18.1,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 1
         },
         {
-          "classes": "prep-metric__value",
+          "classes": "prep-act__name",
           "tag": "span",
-          "text": "15 h 09 min",
+          "text": "Course",
           "fontSize": 17,
-          "fontWeight": 760,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.72,
-          "best": 16.67,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__steptitle",
-          "tag": "span",
-          "text": "Refuge du Gouter",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.72,
-          "best": 18.1,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__steptitle",
-          "tag": "span",
-          "text": "Aiguille du Midi",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.72,
-          "best": 18.42,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__steptitle",
-          "tag": "span",
-          "text": "Matinée au Refuge du Plan de l’Aiguille",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.72,
-          "best": 18.42,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "Équipement",
-          "fontSize": 17,
-          "fontWeight": 600,
+          "fontWeight": 640,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
@@ -4025,26 +1437,26 @@
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 1
         },
         {
-          "classes": "prep-metric__value",
+          "classes": "prep-act__name",
           "tag": "span",
-          "text": "1 h",
+          "text": "Trail",
           "fontSize": 17,
-          "fontWeight": 760,
+          "fontWeight": 640,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
             255,
             255
           ],
-          "worst": 9.59,
-          "best": 17.22,
+          "worst": 9.15,
+          "best": 18.42,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 1
         }
       ]
     },
@@ -4069,13 +1481,12 @@
       },
       "scrollCoverage": {
         "windowScrollablePx": 0,
-        "innerContainerScrollablePx": 1051,
-        "reachablePx": 1051,
-        "steps": 3,
+        "innerContainerScrollablePx": 198,
+        "reachablePx": 198,
+        "steps": 2,
         "capturedScrollPositions": [
           0,
-          614,
-          1051
+          198
         ],
         "containers": [
           {
@@ -4083,7 +1494,7 @@
             "selector": "div.prep-body",
             "axisY": true,
             "axisX": false,
-            "scrollablePxY": 1051,
+            "scrollablePxY": 198,
             "scrollablePxX": 0
           }
         ]
@@ -4100,59 +1511,19 @@
       },
       "referenceShot": "audit/prep-contrast-shots/1024x768.png",
       "counts": {
-        "measured": 45,
-        "pass": 34,
-        "fail": 11,
-        "skipped": 8,
-        "occluded": 1
+        "measured": 16,
+        "pass": 16,
+        "fail": 0,
+        "skipped": 3,
+        "occluded": 0
       },
-      "occlusion": [
-        {
-          "classes": "",
-          "tag": "button",
-          "text": "Ouvrir les préférences du trajet",
-          "occludedBy": "div.prep-visually-hidden",
-          "seenAt": 3,
-          "occludedSteps": 3,
-          "ratioUnderOccluder": 6.35
-        }
-      ],
+      "occlusion": [],
       "occlusionUnverifiable": 1,
       "skipped": [
         {
-          "classes": "",
-          "tag": "button",
-          "text": "Revenir au hub",
-          "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
-        },
-        {
-          "classes": "prep-metric__value",
-          "tag": "span",
-          "text": "1 h",
-          "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
-        },
-        {
-          "classes": "prep-programme__daylabel",
-          "tag": "span",
-          "text": "Jour 2",
-          "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
-        },
-        {
-          "classes": "prep-programme__measures",
-          "tag": "span",
-          "text": "6° / 12° · 25 % de pluie",
-          "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
-        },
-        {
-          "classes": "prep-programme__sky",
-          "tag": "span",
-          "text": "Partiellement nuageux",
-          "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
-        },
-        {
           "classes": "prep-visually-hidden",
           "tag": "span",
-          "text": "En avant !, étape 3 sur 3",
+          "text": "Choix de l’activité",
           "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
         },
         {
@@ -4169,283 +1540,16 @@
         }
       ],
       "skippedByReason": {
-        "rectangle hors cadre : rogné horizontalement ou verticalement": 8
+        "rectangle hors cadre : rogné horizontalement ou verticalement": 3
       },
       "runtimeErrors": [],
-      "failures": [
-        {
-          "classes": "(li)",
-          "occurrences": 6,
-          "worst": 1.87,
-          "best": 3.96,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            171,
-            166,
-            139
-          ],
-          "backgroundAtWorst": [
-            117,
-            117,
-            117
-          ],
-          "samples": [
-            "Équipement : 3 éléments à confirmer",
-            "Équipement : 3 éléments à confirmer",
-            "Distance à vérifier"
-          ]
-        },
-        {
-          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
-          "occurrences": 1,
-          "worst": 2.17,
-          "best": 2.85,
-          "threshold": 4.5,
-          "fontSize": 13,
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "backgroundAtWorst": [
-            176,
-            176,
-            176
-          ],
-          "samples": [
-            "Modifier",
-            "Modifier"
-          ]
-        },
-        {
-          "classes": "(div)",
-          "occurrences": 1,
-          "worst": 2.53,
-          "best": 4.38,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            210,
-            215,
-            211
-          ],
-          "backgroundAtWorst": [
-            133,
-            133,
-            133
-          ],
-          "samples": [
-            "2 jours",
-            "2 jours"
-          ]
-        },
-        {
-          "classes": "pointer-events-none absolute z-[var(--z-sticky)] rounded-full bg-[color:var(--card-tint-st",
-          "occurrences": 1,
-          "worst": 2.72,
-          "best": 5.84,
-          "threshold": 4.5,
-          "fontSize": 11,
-          "glyph": [
-            175,
-            166,
-            140
-          ],
-          "backgroundAtWorst": [
-            93,
-            93,
-            93
-          ],
-          "samples": [
-            "© OpenStreetMap France · Esri",
-            "© OpenStreetMap France · Esri"
-          ]
-        },
-        {
-          "classes": "prep-title",
-          "occurrences": 1,
-          "worst": 3.54,
-          "best": 6.01,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "backgroundAtWorst": [
-            136,
-            136,
-            136
-          ],
-          "samples": [
-            "Boucle du Mont-Blanc en 2 jours",
-            "Boucle du Mont-Blanc en 2 jours"
-          ]
-        },
-        {
-          "classes": "(button)",
-          "occurrences": 1,
-          "worst": 4.35,
-          "best": 7.86,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            162,
-            221,
-            190
-          ],
-          "backgroundAtWorst": [
-            92,
-            92,
-            92
-          ],
-          "samples": [
-            "Réessayer",
-            "Réessayer"
-          ]
-        }
-      ],
+      "failures": [],
       "elements": [
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Temps de parcours à vérifier",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            171,
-            166,
-            139
-          ],
-          "worst": 1.87,
-          "best": 3.96,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
-          "tag": "button",
-          "text": "Modifier",
-          "fontSize": 13,
-          "fontWeight": 600,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 2.17,
-          "best": 2.85,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "2 jours",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            210,
-            215,
-            211
-          ],
-          "worst": 2.53,
-          "best": 4.38,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "pointer-events-none absolute z-[var(--z-sticky)] rounded-full bg-[color:var(--card-tint-st",
-          "tag": "div",
-          "text": "© OpenStreetMap France · Esri",
-          "fontSize": 11,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            175,
-            166,
-            140
-          ],
-          "worst": 2.72,
-          "best": 5.84,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": true,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Repas : 6 à organiser",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 3.07,
-          "best": 4.74,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Équipement : 3 éléments à confirmer",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 3.41,
-          "best": 5.57,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Dénivelé à vérifier",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            254,
-            254,
-            254
-          ],
-          "worst": 3.48,
-          "best": 5.8,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
         {
           "classes": "prep-title",
           "tag": "h1",
-          "text": "Boucle du Mont-Blanc en 2 jours",
-          "fontSize": 17,
+          "text": "Quelle aventure ?",
+          "fontSize": 28,
           "fontWeight": 700,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
@@ -4453,494 +1557,133 @@
             255,
             255
           ],
-          "worst": 3.54,
-          "best": 6.01,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Activité à choisir",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            254,
-            254,
-            254
-          ],
-          "worst": 3.7,
-          "best": 6.41,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "li",
-          "text": "Distance à vérifier",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 4.28,
-          "best": 8.43,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "button",
-          "text": "Réessayer",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(169, 230, 198)",
-          "glyph": [
-            162,
-            221,
-            190
-          ],
-          "worst": 4.35,
-          "best": 7.86,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "span",
-          "text": "Poids du sac à estimer",
-          "fontSize": 12,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.72)",
-          "glyph": [
-            190,
-            190,
-            190
-          ],
-          "worst": 4.55,
+          "worst": 4.67,
           "best": 9.74,
-          "threshold": 4.5,
+          "threshold": 3,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "prep-metric__value",
+          "classes": "prep-crumb__label",
           "tag": "span",
-          "text": "À vérifier",
-          "fontSize": 17,
-          "fontWeight": 550,
-          "declaredColor": "rgba(255, 255, 255, 0.72)",
-          "glyph": [
-            193,
-            193,
-            193
-          ],
-          "worst": 4.77,
-          "best": 9.77,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 12
-        },
-        {
-          "classes": "prep-metric__note",
-          "tag": "span",
-          "text": "3 étapes à vérifier",
-          "fontSize": 13,
-          "fontWeight": 520,
-          "declaredColor": "rgba(255, 255, 255, 0.72)",
-          "glyph": [
-            195,
-            195,
-            194
-          ],
-          "worst": 4.87,
-          "best": 9.66,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "span",
-          "text": "À vérifier avant de partir",
-          "fontSize": 17,
-          "fontWeight": 600,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 5.74,
-          "best": 13.39,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-crumb__link",
-          "tag": "button",
           "text": "Créations",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(169, 230, 198)",
+          "fontSize": 13,
+          "fontWeight": 650,
+          "declaredColor": "rgba(255, 255, 255, 0.72)",
           "glyph": [
-            169,
-            230,
-            198
+            188,
+            189,
+            189
           ],
-          "worst": 6.06,
-          "best": 12.65,
+          "worst": 4.78,
+          "best": 10.03,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "prep-crumb__link",
-          "tag": "button",
+          "classes": "prep-crumb__label",
+          "tag": "span",
           "text": "Préparation",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(169, 230, 198)",
-          "glyph": [
-            169,
-            230,
-            198
-          ],
-          "worst": 6.06,
-          "best": 12.65,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__label",
-          "tag": "span",
-          "text": "Durée",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            223,
-            223,
-            223
-          ],
-          "worst": 6.14,
-          "best": 12.64,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 9
-        },
-        {
-          "classes": "",
-          "tag": "span",
-          "text": "Échec : Calcul des distances sur le réseau",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            241,
-            242,
-            242
-          ],
-          "worst": 6.16,
-          "best": 10.63,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "3 éléments à confirmerPoids du sac à estimer",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            222,
-            222,
-            222
-          ],
-          "worst": 6.29,
-          "best": 13.46,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-map__glass",
-          "tag": "span",
-          "text": "Ensemble",
           "fontSize": 13,
           "fontWeight": 650,
-          "declaredColor": "rgb(255, 255, 255)",
+          "declaredColor": "rgba(255, 255, 255, 0.72)",
           "glyph": [
-            255,
-            255,
-            255
+            189,
+            189,
+            189
           ],
-          "worst": 6.29,
-          "best": 10.7,
+          "worst": 4.79,
+          "best": 10.05,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-map__glass",
-          "tag": "button",
-          "text": "Agrandir",
-          "fontSize": 13,
-          "fontWeight": 650,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 6.29,
-          "best": 10.86,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "1 personne",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            222,
-            223,
-            222
-          ],
-          "worst": 6.31,
-          "best": 13.76,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "6 repas à organiser",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            223,
-            223,
-            223
-          ],
-          "worst": 6.34,
-          "best": 13.45,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-map__glass",
-          "tag": "button",
-          "text": "Recentrer",
-          "fontSize": 13,
-          "fontWeight": 650,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 6.39,
-          "best": 11.73,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__label",
-          "tag": "span",
-          "text": "Distance",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            222,
-            222,
-            222
-          ],
-          "worst": 6.4,
-          "best": 13.72,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 9
-        },
-        {
-          "classes": "prep-metric__label",
-          "tag": "span",
-          "text": "Budget / pers.",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            224,
-            224,
-            223
-          ],
-          "worst": 6.41,
-          "best": 12.35,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 6
-        },
-        {
-          "classes": "prep-programme__measures",
-          "tag": "span",
-          "text": "14° / 17° · 68 % de pluie",
-          "fontSize": 13,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            223,
-            223,
-            222
-          ],
-          "worst": 6.44,
-          "best": 12.92,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__label",
-          "tag": "span",
-          "text": "Dénivelé",
-          "fontSize": 13,
-          "fontWeight": 620,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            224,
-            224,
-            223
-          ],
-          "worst": 6.5,
-          "best": 13.18,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__sky",
-          "tag": "span",
-          "text": "Pluie",
-          "fontSize": 13,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.86)",
-          "glyph": [
-            223,
-            223,
-            223
-          ],
-          "worst": 6.55,
-          "best": 12.23,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
           "classes": "prep-crumb__label",
           "tag": "span",
           "text": "En avant !",
           "fontSize": 13,
-          "fontWeight": 720,
-          "declaredColor": "rgb(255, 255, 255)",
+          "fontWeight": 650,
+          "declaredColor": "rgba(255, 255, 255, 0.72)",
           "glyph": [
-            255,
-            255,
-            255
+            189,
+            189,
+            189
           ],
-          "worst": 7.69,
-          "best": 17.58,
+          "worst": 4.79,
+          "best": 9.97,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
           "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
           "tag": "button",
-          "text": "Enregistrer mon aventure",
+          "text": "Continuer",
           "fontSize": 17,
-          "fontWeight": 720,
-          "declaredColor": "rgb(8, 21, 15)",
+          "fontWeight": 600,
+          "declaredColor": "rgba(255, 255, 255, 0.82)",
           "glyph": [
-            8,
-            21,
-            15
+            216,
+            216,
+            216
           ],
-          "worst": 8.13,
-          "best": 9.11,
+          "worst": 5.32,
+          "best": 9.68,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": true,
+          "seenAt": 2
+        },
+        {
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "À pied",
+          "fontSize": 13,
+          "fontWeight": 600,
+          "declaredColor": "rgb(169, 230, 198)",
+          "glyph": [
+            169,
+            230,
+            198
+          ],
+          "worst": 5.51,
+          "best": 10.82,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "prep-metric__value",
-          "tag": "span",
-          "text": "16 h 09 min",
-          "fontSize": 17,
-          "fontWeight": 760,
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "Autres sports",
+          "fontSize": 13,
+          "fontWeight": 500,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
             255,
             255
           ],
-          "worst": 8.32,
-          "best": 17.04,
+          "worst": 8.19,
+          "best": 17.4,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "",
-          "tag": "div",
-          "text": "Équipement",
-          "fontSize": 17,
-          "fontWeight": 600,
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "Eau",
+          "fontSize": 13,
+          "fontWeight": 500,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
@@ -4952,13 +1695,89 @@
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "prep-programme__daylabel",
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "Voyage et séjour",
+          "fontSize": 13,
+          "fontWeight": 500,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            255,
+            255,
+            255
+          ],
+          "worst": 8.32,
+          "best": 17.58,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
+        },
+        {
+          "classes": "prep-act__name",
           "tag": "span",
-          "text": "Jour 1",
+          "text": "Randonnée à la journée",
           "fontSize": 17,
+          "fontWeight": 640,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            255,
+            255,
+            255
+          ],
+          "worst": 8.32,
+          "best": 18.1,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
+        },
+        {
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "Neige et montagne",
+          "fontSize": 13,
+          "fontWeight": 500,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            255,
+            255,
+            255
+          ],
+          "worst": 8.45,
+          "best": 17.76,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
+        },
+        {
+          "classes": "prep-act__name",
+          "tag": "span",
+          "text": "Randonnée avec nuit de refuge",
+          "fontSize": 17,
+          "fontWeight": 640,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            255,
+            255,
+            255
+          ],
+          "worst": 8.45,
+          "best": 18.42,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
+        },
+        {
+          "classes": "",
+          "tag": "span",
+          "text": "Qu’est-ce que tu as en tête ?",
+          "fontSize": 15,
           "fontWeight": 700,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
@@ -4966,114 +1785,19 @@
             255,
             255
           ],
-          "worst": 8.45,
-          "best": 17.4,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__value",
-          "tag": "span",
-          "text": "48 € connus",
-          "fontSize": 17,
-          "fontWeight": 760,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.45,
-          "best": 17.4,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__steptitle",
-          "tag": "span",
-          "text": "Aiguille du Midi",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.45,
-          "best": 18.42,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__steptitle",
-          "tag": "span",
-          "text": "Matinée au Refuge du Plan de l’Aiguille",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.45,
+          "worst": 8.59,
           "best": 18.1,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "",
-          "tag": "div",
-          "text": "Eau et repas",
-          "fontSize": 17,
-          "fontWeight": 600,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.45,
-          "best": 17.93,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "",
-          "tag": "div",
-          "text": "Participants",
-          "fontSize": 17,
-          "fontWeight": 600,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.45,
-          "best": 18.42,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-metric__value",
-          "tag": "span",
-          "text": "55,1 km",
-          "fontSize": 17,
-          "fontWeight": 760,
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "À vélo",
+          "fontSize": 13,
+          "fontWeight": 500,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
@@ -5085,33 +1809,14 @@
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "prep-metric__value",
+          "classes": "prep-act__name",
           "tag": "span",
-          "text": "15 h 09 min",
+          "text": "Trail",
           "fontSize": 17,
-          "fontWeight": 760,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.59,
-          "best": 17.76,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__steptitle",
-          "tag": "span",
-          "text": "Départ Chamonix vers Refuge du Goûter",
-          "fontSize": 13,
-          "fontWeight": 560,
+          "fontWeight": 640,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
@@ -5123,33 +1828,14 @@
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         },
         {
-          "classes": "prep-programme__steptitle",
+          "classes": "prep-act__name",
           "tag": "span",
-          "text": "Refuge du Plan de l Aiguille",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.59,
-          "best": 18.26,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-programme__steptitle",
-          "tag": "span",
-          "text": "Refuge du Gouter",
-          "fontSize": 13,
-          "fontWeight": 560,
+          "text": "Course",
+          "fontSize": 17,
+          "fontWeight": 640,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
             255,
@@ -5161,35 +1847,29 @@
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
-          "seenAt": 3
+          "seenAt": 2
         }
       ]
     }
   ],
   "totals": {
     "breakpoints": 4,
-    "measured": 204,
-    "pass": 153,
-    "fail": 51,
-    "skipped": 28,
-    "occluded": 6
+    "measured": 70,
+    "pass": 70,
+    "fail": 0,
+    "skipped": 16,
+    "occluded": 0
   },
   "notes": [
-    "Draft seme depuis qa-local/p3-draft.json (7234 octets) dans lkdv_adventure_prep_v2 : la campagne mesure l etape affichee par ce draft, pas seulement l etape 1.",
-    "375x812 : la fenetre ne defile pas (812px pour 812px de viewport) ; le contenu defile dans 1 conteneur(s) interne(s), pilotes explicitement — un simple window.scrollTo n'aurait couvert que le premier ecran.",
-    "393x852 : la fenetre ne defile pas (852px pour 852px de viewport) ; le contenu defile dans 1 conteneur(s) interne(s), pilotes explicitement — un simple window.scrollTo n'aurait couvert que le premier ecran.",
-    "768x1024 : la fenetre ne defile pas (1024px pour 1024px de viewport) ; le contenu defile dans 1 conteneur(s) interne(s), pilotes explicitement — un simple window.scrollTo n'aurait couvert que le premier ecran.",
+    "375x812 : la fenetre ne defile pas (812px pour 812px de viewport) ; le contenu defile dans 2 conteneur(s) interne(s), pilotes explicitement — un simple window.scrollTo n'aurait couvert que le premier ecran.",
+    "393x852 : la fenetre ne defile pas (852px pour 852px de viewport) ; le contenu defile dans 2 conteneur(s) interne(s), pilotes explicitement — un simple window.scrollTo n'aurait couvert que le premier ecran.",
     "1024x768 : la fenetre ne defile pas (768px pour 768px de viewport) ; le contenu defile dans 1 conteneur(s) interne(s), pilotes explicitement — un simple window.scrollTo n'aurait couvert que le premier ecran."
   ],
   "limitations": [
     "375x812 : 1 texte(s) en pointer-events none — conserves dans les verdicts, mais leur recouvrement ne peut etre ni confirme ni infirme par hit-test.",
-    "375x812 : 2 texte(s) recouverts par div.prep-body, div.prep-visually-hidden — exclus des verdicts de contraste, leur ratio porterait sur les pixels de l'élément recouvrant.",
     "393x852 : 1 texte(s) en pointer-events none — conserves dans les verdicts, mais leur recouvrement ne peut etre ni confirme ni infirme par hit-test.",
-    "393x852 : 1 texte(s) recouverts par div.prep-visually-hidden — exclus des verdicts de contraste, leur ratio porterait sur les pixels de l'élément recouvrant.",
     "768x1024 : 1 texte(s) en pointer-events none — conserves dans les verdicts, mais leur recouvrement ne peut etre ni confirme ni infirme par hit-test.",
-    "768x1024 : 2 texte(s) recouverts par div.prep-body, div.prep-visually-hidden — exclus des verdicts de contraste, leur ratio porterait sur les pixels de l'élément recouvrant.",
-    "1024x768 : 1 texte(s) en pointer-events none — conserves dans les verdicts, mais leur recouvrement ne peut etre ni confirme ni infirme par hit-test.",
-    "1024x768 : 1 texte(s) recouverts par div.prep-visually-hidden — exclus des verdicts de contraste, leur ratio porterait sur les pixels de l'élément recouvrant."
+    "1024x768 : 1 texte(s) en pointer-events none — conserves dans les verdicts, mais leur recouvrement ne peut etre ni confirme ni infirme par hit-test."
   ],
   "verificationStatus": "PARTIAL / NOT VERIFIED"
 }

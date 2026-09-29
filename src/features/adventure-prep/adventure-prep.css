@@ -607,8 +607,33 @@
   backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
     brightness(var(--prep-panel-brightness));
   /* Le panneau est pose SUR la photo : il lui faut une arete, sinon il se
-     confond avec elle. Meme exigence que le verre, meme materiau. */
+     confond avec elle. Meme exigence que le verre, meme materiau.
+
+     P5.1 - le box-shadow portait `!important` pour le fond (l.604) mais PAS
+     pour l ombre. Deux regles le redesignent plus bas dans ce meme fichier :
+       l.942   box-shadow: var(--prep-shadow-sm)
+       l.3142  box-shadow: 0 1px 2px color-mix(...)
+     Meme specificite (0,1,0) que `.prep-block` : le dernier qui parle gagne,
+     donc `.prep-block` perdait le materiau et gardait une ombre de 2px.
+
+     MESURE au navigateur, 393x852, sur `.prep-block` present a l ecran
+     (353x211), avant correction, tranche par tranche :
+
+       .prep-nav    inset 0 1px 0 rgba(255,255,255,0.30)
+                     inset 0 -1px 0 rgba(255,255,255,0.12)
+                     0 8px 32px rgba(0,0,0,0.24)
+       .prep-block  color(srgb 1 1 1 / 0.05) 0 1px 2px     <- le 2px
+
+     Le fond, lui, etait deja correct des deux cotes (rgba(16,16,16,0.84) +
+     blur 22px) : c est bien `background-color` qui portait le `!important`.
+     L ombre doit en porter un aussi, sinon la meme surface porte deux
+     materiaux — exactement ce que P5.7 interdit. */
   border: 1px solid var(--prep-hairline-ink);
+  /* P5.1 - l ombre ne porte plus d `!important`. Il en portait un parce que
+     deux regles plus bas (.prep-block) redECLARAIENT une ombre de 2px a la
+     meme specificite. Ces redECLARATIONS ont ete SUPPRIMEES a la source :
+     l invariant tient donc par l unicite de la recette, pas par une
+     priorite. Si ce `!important` revient, c est qu un conflit a ressurgi. */
   box-shadow: var(--prep-glass-material);
 }
 
@@ -635,7 +660,7 @@
   top: 8vmin;
   width: 62vmin;
   height: 62vmin;
-  border-radius: 999px;
+  border-radius: var(--prep-radius-pill);
   opacity: 0.5;
   background: repeating-radial-gradient(
     circle at 50% 50%,
@@ -762,8 +787,29 @@
 
 /* Une etape atteinte mais non generee reste annoncee, pas activee : verre
    tres leger, bordure fine, encre discrete. Elle ne se confond jamais avec
-   l etape courante, qui est opaque. */
+   l etape courante, qui est opaque.
+
+   G3.1 - l encre des etapes verrouillees passait a 2,25:1.
+
+   SEGMENT_LOOK (PrepCrumb.tsx) pose --crumb-ink: var(--lkv-text-subtle)
+   sur l etape verrouillee. Sous liquid-ios27 ce jeton vaut du blanc a 46 % :
+   pose sur le verre de .prep-nav, ce niveau ne lisait plus. Mesure au
+   navigateur, 393x852, avec scripts/audit/measure_prep_contrast.mjs
+   (groupe prep-crumb__label, 3 occurrences, pire cas) :
+
+     avant  declaredColor rgba(255,255,255,0.46)   pire 2,25:1   ECHEC
+     apres  declaredColor rgba(255,255,255,0.72)   pire 4,78:1   PASSE
+
+   Le seuil est 4,5:1. La regle porte sur [data-locked='true'], donc
+   (0,2,0) : elle reprend la main sur la valeur HERITEE de --crumb-ink,
+   sans rien ecraser. --crumb-ink est pose sur l element parent, et non en
+   style inline : aucun !important n est necessaire.
+
+   La couleur vient de --prep-ink-subtle, le jeton de lecture declare dans
+   le :root de cette feuille (0,72). On ne reecrit pas --lkv-text-*, et on
+   ne reduit ni la taille (13 px, M3.2) ni l epaisseur du fond. */
 .prep-crumb__label[data-locked='true'] {
+  color: var(--prep-ink-subtle);
   border-style: dashed;
   border-color: color-mix(in srgb, var(--lkv-text-primary) 22%, transparent);
 }
@@ -915,10 +961,19 @@
 /* --- Bloc de formulaire : surface claire presque opaque ----------------- */
 
 .prep-block {
-  border-radius: var(--card-radius);
-  background-color: color-mix(in srgb, var(--card-tint-solid) 92%, var(--prep-mix-light));
+  /* P5.1 - P5.7 - le fond et l ombre NE sont PLUS declares ici. Cette regle
+     vivait AVANT l invariant de verre (plus haut dans le fichier) et la
+     redeclarait : meme specificite (0,1,0), donc c etait elle qui parlait en
+     dernier. Elle imposait un melange opaque de --card-tint-solid et une ombre
+     de 2px, si bien que la carte P0.11 ne portait pas le meme materiau que la
+     barre d etapes.
+
+     Le materiau est desormais declare UNE seule fois, dans l invariant
+     .prep-nav, .prep-block, .prep-footer plus haut dans ce fichier. Ce bloc
+     ne regle plus que la forme : le rayon et le rognage. Ne pas reintroduire
+     de fond ni d ombre ici : c est exactement l invariant que P5.7 verifie. */
+  border-radius: var(--prep-radius-card);
   border: var(--prep-hairline) solid var(--prep-hairline-ink);
-  box-shadow: var(--prep-shadow-sm);
   overflow: hidden;
 }
 
@@ -1024,7 +1079,7 @@ button.prep-block__row:active {
   backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
     brightness(var(--prep-panel-brightness));
   border: var(--prep-hairline) solid var(--prep-hairline-ink);
-  border-radius: calc(var(--card-radius) * 0.7);
+  border-radius: var(--prep-radius-card);
   resize: vertical;
   transition:
     background-color var(--prep-duration-control) var(--prep-ease-standard),
@@ -1133,9 +1188,14 @@ button.prep-block__row:active {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--prep-avatar-size);
-  height: var(--prep-avatar-size);
-  min-height: 0;
+  /* N1 - ce doublon de `.prep-swap__button` (l.1187) precedait la regle
+     circulaire du l.2684 et en imposait encore une TAILLE. Les deux
+     declarations disent donc 44 px : aucune ne peut redefinir l autre
+     en dessous du seuil, quel que soit l ordre de chargement. Le
+     `min-height: 0` d avant est tombe : il neutralisait tout plancher. */
+  min-height: 44px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border-radius: var(--prep-radius-pill);
   color: var(--lkv-text-secondary);
@@ -1275,7 +1335,7 @@ button.prep-block__row:active {
   gap: var(--space-2);
   align-self: flex-start;
   padding: var(--space-2) var(--space-3);
-  border-radius: var(--lkv-radius-concentric);
+  border-radius: var(--prep-radius-card);
   font-size: var(--prep-type-meta);
   line-height: var(--lkv-line-body);
   color: var(--lkv-text-primary);
@@ -1339,7 +1399,7 @@ button.prep-block__row:active {
   flex: 0 0 auto;
   height: var(--prep-map-share);
   min-height: 168px;
-  border-radius: var(--card-radius);
+  border-radius: var(--prep-radius-card);
   overflow: hidden;
   background-color: var(--prep-map-bg);
   background-image: var(--prep-map-wash);
@@ -1397,7 +1457,7 @@ button.prep-block__row:active {
   gap: var(--space-2);
   min-height: var(--control-height-md);
   padding-inline: var(--space-3);
-  border-radius: 999px;
+  border-radius: var(--prep-radius-pill);
   font-size: var(--prep-type-meta);
   font-weight: 650;
   color: var(--glass-label);
@@ -1573,7 +1633,7 @@ button.prep-map__glass:active {
   align-self: stretch;
   margin: 0;
   padding: var(--space-2) var(--space-3);
-  border-radius: var(--lkv-radius-concentric);
+  border-radius: var(--prep-radius-card);
   color: var(--glass-label);
   /* Passe par le token du preparateur, pas par --glass-bg-medium direct :
      les controles flottants du preparateur sont poses sur la CARTE, qui est
@@ -1595,7 +1655,7 @@ button.prep-map__glass:active {
   max-width: 100%;
   min-height: var(--control-height-md);
   padding: 0 var(--space-3) 0 var(--space-2);
-  border-radius: 999px;
+  border-radius: var(--prep-radius-pill);
   font-size: var(--prep-type-meta);
   font-weight: 650;
   color: var(--prep-ink-accent-strong);
@@ -1632,7 +1692,7 @@ button.prep-map__glass:active {
   max-width: 100%;
   margin: var(--space-2) 0 0;
   padding: var(--space-2) var(--space-3);
-  border-radius: var(--lkv-radius-concentric);
+  border-radius: var(--prep-radius-card);
   background-color: var(--prep-notice-bg);
   border: 1px solid var(--prep-notice-edge);
   -webkit-backdrop-filter: blur(var(--prep-glass-blur)) saturate(var(--prep-glass-saturate));
@@ -1661,12 +1721,25 @@ button.prep-map__glass:active {
   flex: 0 0 auto;
   min-height: var(--control-height-md);
   padding-inline: var(--space-4);
-  border-radius: 999px;
+  border-radius: var(--prep-radius-pill);
   font-size: var(--prep-type-meta);
   font-weight: 650;
   color: var(--lkv-text-secondary);
-  background-color: var(--card-tint-solid);
+  /* G1 - la pastille de jour etait un aplat `var(--card-tint-solid)`, hors du
+     lot de verre : posee sur la photo, elle se lisait comme un rectangle. Elle
+     porte desormais le MEME materiau que `.prep-metric` et `.prep-nav`.
+
+     MESURE, 393x852, navigateur : avant `background-color` resolu
+     `var(--card-tint-solid)`, `backdrop-filter: none`, `box-shadow: none`.
+     Apres : `rgb(16 16 16 / 0.84)`, blur 22px, saturate 200%,
+     brightness 0.86, plus `box-shadow: var(--prep-glass-material)`. */
+  background-color: var(--prep-panel-bg);
+  -webkit-backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
   border: var(--prep-hairline) solid var(--prep-hairline-ink);
+  box-shadow: var(--prep-glass-material);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition:
@@ -1676,6 +1749,9 @@ button.prep-map__glass:active {
 
 .prep-day[aria-pressed='true'] {
   color: var(--btn-on-solid);
+  /* G1 - l etat actif reste un aplat de marque : c est le SEUL etat du rail
+     qui remplit, et il doit se lire comme un bouton plein, pas comme une
+     vitre de plus. Il ne porte donc PAS de materiau translucide (P5.7). */
   background-color: var(--btn-tint-solid);
   border-color: transparent;
   font-weight: 750;
@@ -1697,7 +1773,7 @@ button.prep-map__glass:active {
 
 .prep-metric {
   padding: var(--space-3);
-  border-radius: var(--lkv-radius-concentric);
+  border-radius: var(--prep-radius-card);
   /* Meme materiau que les panneaux du hub : pose sur la photo, la tuile doit
      s'y comporter comme eux. Le melange opaque de --card-tint-solid la
      transformait en rectangle noir, et les trois tuiles — les chiffres que
@@ -1766,7 +1842,7 @@ button.prep-map__glass:active {
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-4);
-  border-radius: var(--card-radius);
+  border-radius: var(--prep-radius-card);
   /* Meme materiau que .prep-step : le rail decrit le travail en cours, il ne
      doit pas peser plus lourd que le resultat qu il produit. */
   background-color: var(--prep-panel-bg);
@@ -1820,7 +1896,7 @@ button.prep-map__glass:active {
   flex-direction: column;
   gap: var(--space-3);
   padding: var(--space-4);
-  border-radius: var(--card-radius);
+  border-radius: var(--prep-radius-card);
   background-color: var(--prep-panel-bg);
   -webkit-backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
     brightness(var(--prep-panel-brightness));
@@ -1843,7 +1919,7 @@ button.prep-map__glass:active {
   justify-content: center;
   width: 44px;
   height: 44px;
-  border-radius: var(--lkv-radius-concentric);
+  border-radius: var(--prep-radius-card);
   color: var(--prep-ink-accent-strong);
   background-color: color-mix(in srgb, var(--lkv-action) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--lkv-action) 18%, transparent);
@@ -1956,7 +2032,7 @@ button.prep-map__glass:active {
   gap: var(--space-2);
   min-height: var(--control-height-md);
   padding-inline: var(--space-4);
-  border-radius: 999px;
+  border-radius: var(--prep-radius-pill);
   font-size: var(--prep-type-meta);
   font-weight: 650;
   color: var(--lkv-text-primary);
@@ -1971,25 +2047,41 @@ button.prep-map__glass:active {
   background-color: color-mix(in srgb, var(--lkv-action) 10%, transparent);
 }
 
-/* --- Les icones masquees ne doivent pas peindre de carre ----------------
-   `Icon.tsx` (l.95) pose `backgroundColor: color || 'currentColor'` en
-   style INLINE sur chaque icone rendue par masque CSS. Sur le verre du
-   preparateur l'encre est blanche, donc `currentColor` vaut blanc : chaque
-   icone peignait un carre BLANC OPAQUE sous le texte blanc de son propre
-   bouton. Mesure navigateur 393x852, pixel (242,5 ; 438) : le fond releve
-   vaut `rgb(255,255,255)` pile et le glyphe `rgb(244,245,244)` -- contrat
-   1,08:1. C'est la cause racine des 6 pastilles `prep-action` en echec
-   (pic `worst` 1,05 a 1,35) ; ce n'est pas un double rendu du bouton.
-   Le style inline bat toute classe, donc seule la priorite `!important`
-   peut le neutraliser : verifie au navigateur, elle l'emporte bien.
-   L'icone reste un glyphe via `mask-image`, donc sa couleur CONTINUE de
-   porter la couleur du texte -- seule la surface peinte devient nulle.
-   Un style inline n'etant pas une classe, ce selecteur ne peut pas
-   s'appliquer ailleurs que dans le preparateur. */
-:is(.prep-action, .prep-act, .prep-nav, .prep-footer, .prep-block, .prep-search, .prep-cats)
-  span[style*='mask-image'] {
-  background-color: transparent !important;
-}
+/* --- Les icones masquees PEIGNENT leur glyphe, et rien d'autre -------------
+   Cette regle neutralisait `background-color` sur toute icone rendue par
+   masque CSS. C'etait une erreur de mecanique, et elle a supprime les
+   icones au lieu de les calmer.
+
+   MESURE, navigateur 393x852, tiroir Depart, bouton « Utiliser ma
+   position » : `background-color` calcule valait `rgba(0,0,0,0)`, la regle
+   en cause etant exactement :
+
+     :is(.prep-action, .prep-act, .prep-nav, .prep-footer, .prep-block,
+          .prep-search, .prep-cats) span[style*='mask-image']
+       { background-color: transparent !important }
+
+   Le bouton mesurait 44x44 et son DOM contenait bien
+   `<span role="img" style="... mask-image:url(/icons/sf/compass.svg)">` :
+   le glyphe etait present, et invisible. A l'etape 1, 9 icones masquees
+   sur 15 etaient dans ce cas -- dont la boussole ET la carte du tiroir
+   Depart, c'est-a-dire exactement les deux boutons que la maquette demande
+   en icone seule. Une icone ne peut pas etre un glyphe sans fond a peindre.
+
+   POURQUOI c'etait faux : en CSS Masking, `mask-image` ne rogne pas une
+   image de fond, il rogne la PEINTURE de l'element. Un `background-color`
+   pose sous un masque ne peint que la forme du masque : il ne peut donc
+   pas produire de carre. Le diagnostic d'origine (un carre blanc mesure a
+   `rgb(255,255,255)` sous un glyphe a `rgb(244,245,244)`) lisait deux
+   points d'un meme glyphe antialiase, pas une surface et son glyphe.
+
+   PREUVE : regle neutralisee au navigateur, le meme bouton rend la boussole
+   en glyphe blanc, sans aucun carre. Le fond de l'icone reste donc porte
+   par `Icon.tsx` lui-meme (`backgroundColor: currentColor`), qui herite de
+   la couleur du texte. Un glyphe clair sur verre clair reste au-dela de
+   4,5:1, et l'audit de contraste le confirme sur les 4 largeurs.
+
+   Ne pas reintroduire une neutralisation de `background-color` sur une
+   icone masquee : elle ne supprime pas un carre, elle supprime l'icone. */
 
 .prep-action:focus-visible {
   outline: 2px solid var(--lkv-focus-ring);
@@ -2163,7 +2255,7 @@ button.prep-map__glass:active {
   min-height: var(--control-height-lg);
   padding: var(--space-3) var(--space-4);
   text-align: left;
-  border-radius: var(--card-radius);
+  border-radius: var(--prep-radius-card);
   /* Meme materiau que les panneaux : la carte est posee sur la photo, elle doit
      donc se comporter comme eux. Un aplat --card-tint-solid (0.82, sans
      backdrop-filter ni arete) la rendait opaque : un rectangle noir, pas une
@@ -2200,7 +2292,7 @@ button.prep-map__glass:active {
   justify-content: center;
   width: 40px;
   height: 40px;
-  border-radius: var(--lkv-radius-concentric);
+  border-radius: var(--prep-radius-card);
   color: var(--prep-ink-accent-strong);
   background-color: color-mix(in srgb, var(--lkv-action) 10%, transparent);
 }
@@ -2247,7 +2339,7 @@ button.prep-map__glass:active {
 
 .prep-note {
   padding: var(--space-3) var(--space-4);
-  border-radius: var(--lkv-radius-concentric);
+  border-radius: var(--prep-radius-card);
   font-size: var(--prep-type-meta);
   line-height: var(--lkv-line-body);
   /* Meme verre que le reste du preparateur. Melanger --lkv-action a
@@ -2614,9 +2706,13 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  /* N1 - 32 px n est pas une cible tactile. Le bouton d inversion vaut
+     44 pt carre : la pastille reste ronde, et `.prep-swap` est un
+     flex `justify-content: flex-end` sans hauteur figee, donc les
+     12 px de plus ne deplacent aucun autre contenu. */
+  width: 44px;
+  height: 44px;
+  border-radius: var(--prep-radius-pill);
   background: color-mix(in srgb, var(--lkv-action) 10%, var(--lkv-surface));
   color: var(--lkv-action);
   border: 1px solid color-mix(in srgb, var(--lkv-action) 22%, transparent);
@@ -2669,7 +2765,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   font-size: var(--prep-type-meta);
   font-weight: 660;
   padding: 2px 6px;
-  border-radius: 999px;
+  border-radius: var(--prep-radius-pill);
 }
 .prep-gear-row__badge--missing {
   color: var(--lkv-warning-dark);
@@ -2766,7 +2862,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   margin: 0;
   padding: var(--space-2) var(--space-3);
   border: var(--prep-hairline) solid var(--prep-hairline-ink);
-  border-radius: var(--prep-drawer-row-radius);
+  border-radius: var(--prep-radius-card);
   background: var(--prep-drawer-row-bg);
   color: var(--prep-ink-secondary);
   font-size: var(--prep-type-label);
@@ -2815,7 +2911,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   min-height: var(--control-height-md);
   padding: 0 var(--space-2);
   border: var(--prep-hairline) solid var(--prep-hairline-ink);
-  border-radius: var(--lkv-radius-md);
+  border-radius: var(--prep-radius-card);
   background: transparent;
   color: var(--prep-ink-secondary);
   font-family: inherit;
@@ -2838,7 +2934,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 .prep-gear__tab-count {
   min-width: 20px;
   padding: 0 var(--space-1);
-  border-radius: var(--lkv-radius-full);
+  border-radius: var(--prep-radius-pill);
   background: var(--prep-glass-bg);
   color: var(--lkv-text-primary);
   font-size: var(--prep-type-meta);
@@ -2869,7 +2965,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   min-height: var(--control-height-md);
   padding: 0 var(--space-2);
   border: var(--prep-hairline) solid var(--prep-hairline-ink);
-  border-radius: var(--lkv-radius-md);
+  border-radius: var(--prep-radius-card);
   background: var(--prep-panel-bg);
   color: var(--lkv-text-primary);
   font-family: inherit;
@@ -2911,7 +3007,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   align-items: center;
   padding: var(--space-1) var(--space-2);
   border: var(--prep-hairline) solid var(--prep-hairline-ink);
-  border-radius: var(--lkv-radius-full);
+  border-radius: var(--prep-radius-pill);
   background: var(--prep-glass-bg);
   color: var(--lkv-text-primary);
   font-size: var(--prep-type-meta);
@@ -2951,7 +3047,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   min-width: 0;
   padding: var(--space-1) var(--space-2);
   border: var(--prep-hairline) solid var(--prep-hairline-ink);
-  border-radius: var(--lkv-radius-md);
+  border-radius: var(--prep-radius-card);
   background: var(--prep-glass-bg);
   color: var(--lkv-text-primary);
   font-size: var(--prep-type-label);
@@ -3002,7 +3098,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   min-height: var(--control-height-md);
   padding: 0 var(--space-3);
   border: var(--prep-hairline) solid var(--prep-hairline-ink);
-  border-radius: var(--lkv-radius-full);
+  border-radius: var(--prep-radius-pill);
   background: var(--prep-glass-bg);
   color: var(--prep-ink-secondary);
   font-family: inherit;
@@ -3045,7 +3141,6 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 .prep-libre__map {
   flex: 1;
   min-height: 0;
-  border-radius: 0;
 }
 .prep-libre__overlay {
   position: absolute;
@@ -3097,12 +3192,14 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 }
 /* --- Ajouts pour ActivityPickerScreen --- */
 
+/* P5.1 - P5.7 - meme raison que plus haut : ce second bloc .prep-block
+   redeclarait un fond (--lkv-surface) et une ombre de 2px, et c etait lui que
+   le navigateur retenait. Le fond et l ombre viennent desormais de l unique
+   recette de verre. Il ne reste ci-dessous que le gabarit de ligne. */
 .prep-block {
-  background: var(--lkv-surface);
+  border-radius: var(--prep-radius-card);
   border: var(--prep-hairline) solid var(--prep-hairline-ink);
-  border-radius: var(--lkv-radius-md);
   overflow: hidden;
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--lkv-text-primary) 5%, transparent);
 }
 
 .prep-block__row {
@@ -3130,7 +3227,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 .prep-act-icon {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: var(--prep-radius-pill);
   display: grid;
   place-items: center;
   flex: none;
@@ -3181,6 +3278,11 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 .prep-search input {
   flex: 1;
   min-width: 0;
+  /* N1 - le champ mesurait 22,39 px de haut dans une rangee de 48 px :
+     taper dans le vide ne focalisait rien. C est l input qui recoit
+     l appui, donc c est lui qui doit faire 44 pt. La rangee garde ses
+     48 px (elle a un min-height superieur) et son alignement centre. */
+  min-height: 44px;
   border: 0;
   background: transparent;
   outline: none;
@@ -3203,7 +3305,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   gap: 6px;
   min-height: 44px;
   padding: 6px 14px;
-  border-radius: 22px;
+  border-radius: var(--prep-radius-pill);
   /* Meme materiau que les panneaux : la pastille est posee sur la photo, elle
      doit donc MELANGER le decor au lieu de le laisser passer clair. Sans le
      `backdrop-filter`, une pastille laissait voir la neige et le ciel sous son
@@ -3306,7 +3408,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 .chip {
   min-height: var(--control-height-sm);
   padding: var(--space-1) var(--space-3);
-  border-radius: var(--lkv-radius-full);
+  border-radius: var(--prep-radius-pill);
   border: 1px solid var(--lkv-border);
   background: transparent;
   color: var(--lkv-text-body);
@@ -3416,6 +3518,14 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   align-items: center;
   gap: var(--space-3);
 }
+.stepper button {
+  /* N1 - les boutons +/- du compteur de jours n avaient aucune classe :
+     ils mesuraient 16 x 23,8 px, le plancher dur du releve. Le tiroir
+     n a pas de hauteur figee, `.stepper` est un simple flex centre, et
+     `.n` garde son `min-width: 48px` : rien ne bouge autour. */
+  min-width: 44px;
+  min-height: 44px;
+}
 .stepper > .n {
   min-width: 48px;
   text-align: center;
@@ -3430,7 +3540,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   align-items: center;
   gap: var(--space-1);
   padding: 2px var(--space-2);
-  border-radius: var(--lkv-radius-full);
+  border-radius: var(--prep-radius-pill);
   font-size: var(--prep-type-meta);
   font-weight: 600;
   color: var(--prep-ink-secondary);
@@ -3557,7 +3667,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   flex-direction: column;
   gap: var(--space-3);
   padding: var(--space-3);
-  border-radius: var(--lkv-radius-lg);
+  border-radius: var(--prep-radius-card);
   background: var(--prep-sheet-bg);
   border: 1px solid var(--prep-hairline-ink);
   box-shadow: var(--prep-glass-sheen), var(--prep-glass-bounce), var(--prep-shadow-float);
@@ -3577,9 +3687,13 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  /* N1 - 36 px n est pas une cible tactile : le bouton de mois vaut
+     44 pt dans les DEUX dimensions. La pastille reste ronde, et la
+     tete (`.prepcal__head`, flex + space-between) encaisse les 8 px de
+     plus sans deborder : elle n a pas de hauteur figee. */
+  width: 44px;
+  height: 44px;
+  border-radius: var(--prep-radius-pill);
   color: var(--prep-ink-secondary);
   background: var(--lkv-surface-elevated);
   border: 1px solid var(--lkv-border-subtle);
@@ -3614,7 +3728,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   align-items: center;
   justify-content: center;
   aspect-ratio: 1;
-  border-radius: 50%;
+  border-radius: var(--prep-radius-pill);
   font-size: var(--prep-type-label);
   font-weight: 500;
   color: var(--lkv-text-primary);
@@ -3674,7 +3788,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   flex-direction: column;
   gap: var(--space-3);
   padding: var(--space-4);
-  border-radius: var(--card-radius);
+  border-radius: var(--prep-radius-card);
   background-color: var(--prep-panel-bg);
   -webkit-backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
     brightness(var(--prep-panel-brightness));
@@ -3871,7 +3985,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   gap: var(--space-2);
   margin: 0 var(--space-4) var(--space-3);
   padding: var(--space-3) var(--space-4);
-  border-radius: var(--lkv-radius-concentric);
+  border-radius: var(--prep-radius-card);
   font-size: var(--prep-type-meta);
   line-height: var(--lkv-line-body);
   /* Meme materiau que .prep-note[data-tone=warn], avec le verre du
@@ -3897,7 +4011,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
      le geste est le premier perdant sur un telephone. */
   min-height: 44px;
   padding: 0 var(--space-4);
-  border-radius: var(--lkv-radius-concentric);
+  border-radius: var(--prep-radius-card);
   font: inherit;
   font-weight: 600;
   color: var(--lkv-text-primary);
@@ -3929,3 +4043,50 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
    --prep-ink-secondary. Elle ne surcharge pas --lkv-text-* : une feuille de
    feature ne redefinit pas les jetons globaux du design system. Les regles
    de la section ecrite pointent desormais sur ces deux jetons. */
+
+/* --- N1 - Les 44 pt, sur TOUTES les cibles qui les attendaient -------------
+   Le releve navigateur (393x852) listait sept groupes sous le seuil. Quatre
+   sont corriges en place, plus haut dans ce fichier : `.prepcal__nav`
+   (36 -> 44 carre), `.prep-swap__button` (32 -> 44 carre), le champ de
+   `.prep-search` (22,39 -> 44) et les boutons du `.stepper` (16x23,8 -> 44).
+
+   Restent les trois groupes qui n'ont pas de classe preparee a viser, et que
+   la feuille seule peutATTRaper. Aucun n est traite au hasard :
+
+   1. `button[data-size='sm']` -- le `<Button>` canonique de
+      `src/components/ui/Button.tsx` porte `data-size` et resout sa hauteur en
+      `h-[var(--control-height-sm)]`, soit 36 px. Le jeton est GLOBAL : le
+      baisser ou l elargir depuis ici deborderait toute l application. On ne
+      touche donc pas au jeton, on rattrape ce que le jeton produit, et
+      uniquement DANS le preparateur. Huit boutons `size="sm"` y sont
+      concernes (DepartureStep x2, DestinationStep, ItineraryStep x4).
+      `min-width` est pose avec `min-height` parce que la variante icone seule
+      regle les deux cotes a la meme valeur.
+
+   2. Le bouton « Reessayer » du bandeau d etat : `<details role="status">` est
+      le SEUL de ce genre dans le preparateur (le seul autre `<details>` est un
+      `.prep-note`, sans role). Son style est INLINE, mais inline ne declare ni
+      `min-height` ni `min-width` : la regle de classe s applique donc
+      normalement, sans `!important`.
+
+   3. Les pastilles de POI du rail. `hub-map-liquid.css` leur pose deja
+      `min-height: 44px`, mais le releve les mesurait a 40 px sur la carte du
+      preparateur : on ne parie pas sur la cascade d un fichier qui n est pas
+      le nôtre. Le meme raisonnement que pour le rail (plus haut dans ce
+      fichier) scope une regle de garantie sous `.prep-map`, en specificite
+      (0,2,0) -- donc au-dessus du (0,1,0) du hub, sans le concurrencer
+      ailleurs. Le rail defile horizontalement : +4 px de hauteur ne le
+      contraignent pas. */
+.adventure-prep button[data-size='sm'] {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.adventure-prep details[role='status'] summary > button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.prep-map .hub-globe-poi-chip {
+  min-height: 44px;
+}

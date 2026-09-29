@@ -1876,7 +1876,7 @@ contrat reel. Suite complete : **658 fichiers / 6168 tests verts** (4 + 27 skips
       **Action requise pour fermer.** Corriger M0.2 / M0.3, puis **relancer la campagne** :
       `npm run audit:prep-contrast` doit sortir `fail: 0`. Tant qu'il reste 76 échecs, cet
       item reste `[~]` et ne peut pas être coché.
-- [ ] **G3.1** **Remédiation : 26 groupes de contraste à porter au-dessus de 4,5:1 sur
+- [x] **G3.1** **Remédiation : 26 groupes de contraste à porter au-dessus de 4,5:1 sur
       les étapes 2 et 3, sans casser P5.5 ni G2.**
       **NÉ DE LA CAMPAGNE G3, PAS D'UNE INTUITION.** La recette du verre laisse
       passer les zones claires de la photo alors que le texte porte le jeton du
@@ -1897,6 +1897,64 @@ contrat reel. Suite complete : **658 fichiers / 6168 tests verts** (4 + 27 skips
       26 groupes doivent être traités **au niveau du composant** : six sont des
       classes utilitaires Tailwind (`(li)`, `(span)`, `(div)`, `(button)`) qu'il
       faut remonter au composant avant de pouvoir les corriger.
+      **MORSANT — la campagne est portante, pas decorative (2026-09-29).**
+      Sabotage de la seule regle qui porte le fil d etape verrouillee
+      (`.prep-crumb__label[data-locked='true']`, `color: var(--prep-ink-subtle)`
+      0,72 remplace par `rgb(255 255 255 / 0.46)`) → l audit
+      `measure_prep_contrast.mjs` sort en **1** et rapporte **1 echec a 2,25:1**
+      sur les **4** points de rupture, `auto-verification VERTE` maintenue. C est
+      exactement la valeur « avant » annoncee plus haut, ce qui prouve que la
+      mesure distingue bien les deux etats. Restauration **octet pour octet** :
+      SHA-256 identique a celui d avant sabotage, 0 echec retrouve sur les 4
+      largeurs. (Le premier script de sabotage avait mange les deux declarations
+      `border-style` / `border-color` du bloc ; c est le hash, et non l aspect
+      du fichier, qui l a revele. Les deux ont ete reecrites et le hash
+      redonne. Un fichier qui parait correct peut avoir perdu une
+      declaration : seul le hash le dit.)
+- [x] **P0.31** 🔴 **Les icônes du préparateur étaient toutes peintes en blanc sur blanc.**
+      **TROUVÉ ET CORRIGÉ le 2026-09-29, alors qu'aucun item ne le décrivait.**
+      `adventure-prep.css` neutralisait `background-color` sur toute icône rendue
+      par masque CSS :
+      `:is(.prep-action, .prep-act, .prep-nav, .prep-footer, .prep-block,
+      .prep-search, .prep-cats) span[style*='mask-image']
+        { background-color: transparent !important; }`
+      Or `Icon.tsx` rend l'icône en `<span style="… mask-image:url(...)">` et
+      pose `backgroundColor: color || 'currentColor'` sur ce span. La règle
+      annulait donc exactement la peinture du glyphe.
+
+      **MESURE, navigateur 393×852, `/prepare?nouvelle=1`, tiroir Départ :**
+      bouton « Utiliser ma position » 44×44, DOM correct
+      (`<span role="img" style="… mask-image:url(/icons/sf/compass.svg)">`),
+      `background-color` calculé `rgba(0, 0, 0, 0)`, capture : **deux cercles
+      VIDES** — ni la boussole, ni la carte. Étape 1 complète : **9 icônes
+      masquées invisibles sur 15** (sparkles, compass, chevron-right ×3, flag,
+      calendar, clock, users). C'est la cause racine de l'air « boutons morts »
+      et « rien ne s'affiche » du préparateur.
+
+      **POURQUOI LA RÈGLE D'ORIGINE ÉTAIT FAUSSE.** En CSS Masking,
+      `mask-image` ne rogne pas une image de fond : il rogne la **peinture** de
+      l'élément. Un `background-color` posé sous un masque ne peint que la
+      forme du masque, il ne peut donc pas produire de carré. Le diagnostic
+      d'origine lisait deux points d'un même glyphe antialiasé
+      (`rgb(255,255,255)` et `rgb(244,245,244)`) comme une surface et son
+      glyphe. La règle ne calmait rien : elle effaçait.
+
+      **PREUVE.** Règle neutralisée au navigateur : le même bouton rend la
+      boussole en glyphe blanc, **sans aucun carré**. Après correction : **0
+      icône invisible sur 15**, et l'audit de contraste reste à **0 échec sur
+      les 4 largeurs** (il était déjà à 0 avec les icônes effacées — un glyphe
+      absent n'est pas un texte illisible, c'est exactement la panne qu'un
+      audit de contraste ne voit pas).
+
+      **GARDE.** `icones-masquees.test.ts` (5 tests) verrouille le retour de la
+      panne. Morsant : règle réintroduite → **ICONE-01 et ICONE-02 rougissent**
+      sur leurs noms, les 3 contre-témoins (peinture d'`Icon.tsx`, présence des
+      7 conteneurs, vrai fichier mesuré) restent verts. Restauration
+      **octet pour octet**, SHA-256 identique. Le test retire les commentaires
+      CSS avant de lire la feuille : sans cela il voyait la règle historique
+      citée en toutes lettres dans le commentaire qui explique sa suppression,
+      et échouait à tort. Un test qui ment sur son propre fichier est pire
+      qu'aucun test.
 
 - [ ] G4 Affichage épuré, plus propre et plus soigné
       **À FAIRE — non mesurable en l’état.** Aucun des audits disponibles ne porte sur
