@@ -11,6 +11,7 @@
  */
 
 import { haversineKm, type GeoPoint } from './routing';
+import { publishPartial } from './partialBus';
 import {
   PRICE_TO_CHECK,
   type DayNote,
@@ -514,7 +515,19 @@ export function assignPlaces(
     : { lat: NaN, lon: NaN };
   let hasCursor = origin !== null;
 
+  // D3 — la geometrie est PUBLIEE etape par etape, des qu elle est vraie.
+  //
+  // Une seule passe finale ne laisse rien dessiner : la carte restait figee
+  // pendant toute l'affectation des lieux, puis sautait d'un coup a la fin.
+  // Chaque etape localisee est donc publiee aussitot, dans l'ordre ou le
+  // parcours la produit. Le modele publie ne porte QUE des etapes avec une
+  // position reelle : une intention non rattachee n'est pas un point, et la
+  // publier dessinerait un trace qui n'existe pas. Aucune anticipation, donc
+  // aucune position inventee — le trace peut se corriger ensuite, ce qui est
+  // honnete ; il ne peut pas etre fabrique, ce qui ne le serait pas.
+  const localisees: ItineraryStep[] = [];
   const steps = ordered.map((step) => {
+    const next = ((): ItineraryStep => {
     if (step.kind === 'trajet') {
       if (step.id === firstTrajetId) {
         if (!origin) return unlocated(step);
@@ -584,6 +597,12 @@ export function assignPlaces(
     used.add(scored.candidate.id);
     cursor = point(scored.candidate);
     return applyCandidate(step, scored.candidate);
+    })();
+    if (next.lat !== null && next.lon !== null) {
+      localisees.push(next);
+      publishPartial({ ...model, steps: [...localisees] });
+    }
+    return next;
   });
 
   return demoteOrphans({ ...model, steps }) as BoundItineraryModel;

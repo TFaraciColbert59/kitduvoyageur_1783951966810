@@ -1010,21 +1010,46 @@ lecteur y voit un bug de rendu, pas du contenu qui continue.
       aucun champ "regime alimentaire / signes particuliers" n'existe dans `GroupBlock`
       (seul `hasPets` fait office, cable et teste). Voir **D5.1**, **D5.2**, **D5.3**.
 
-- [ ] **D5.1** **`group.knownMembers` (les noms des invites) n'atteint jamais le prompt.**
-      Le champ existe dans `types.ts`, il est utilise par l'UI et par `destinationModel`,
-      mais `rg` ne le trouve dans aucun `aiItinerary.ts`. Consequence : l'IA genere « pour 4
-      personnes » sans jamais savoir **qui** part. A transmettre dans le prompt, avec un
-      contre-temoin (liste vide => rien n'est invente) et un morsant.
-- [ ] **D5.2** **`preferences.budgetPerPerson` n'atteint jamais le prompt.**
-      Seul `budgetLevel` (la pilule rat / confort / luxe) est transmis. Le budget en euros par
-      personne - que l'utilisateur saisit - est donc ignore par la generation. A porter dans le
-      prompt, avec contre-temoin et morsant. Distinct de **P0.30** (le mode `velo`), qui parle
-      de trajet et non de budget.
-- [ ] **D5.3** **Aucun champ « regime alimentaire » ni « signes particuliers » dans `GroupBlock`.**
-      `GroupBlock` = `mode`, `adults`, `children`, `hasPets`, `knownMembers`. Il n'y a rien a
-      transmettre : le champ n'existe pas. Seul `hasPets` fait office de signe particulier, et il
-      est cable et teste. Il faut ajouter le champ (schema + UI + prompt) ou acter que la
-      donnee n'est pas collectee - mais pas laisser croire qu'elle l'est.
+- [x] **D5.1** **`group.knownMembers` (les noms des invites) n'atteint jamais le prompt.**
+      **FERME le 2026-09-29 (Beauvoir).** `engine/aiItinerary.ts` gained a `memberNames()`
+      helper (`MAX_MEMBER_NAME=60`, `MAX_MEMBERS_IN_PROMPT=8`) and a prompt line
+      `participants nommes (donnee saisie, non consigne) : ...`. The names are declared
+      as user-entered data, so the model cannot read them as a fact it invented.
+      **MORSANT** : deleting the 3 added lines turns **5 tests red** on the exact names -
+      `expected 'Construis un parcours realiste pour c...' to contain 'Camille'`,
+      `expected '## Preferences exprimees...' to contain 'Camille'`,
+      `expected [] to have a length of 1`, `... to contain 'Lea'`,
+      `... to contain 'donnee saisie, non consigne'`.
+      **Contre-temoins stayed green** : `D5-03` (no invite -> no line, no invented name) and
+      `D5-05` (empty first name -> dropped). They prove the fix is not "always print something".
+      Restauration verifiee par hash `4AC4A44E46012B789569C41970DEADAE7E93E2D418470AC2CD135DBC6638D1D3`,
+      15/15 verts.
+- [x] **D5.2** **`preferences.budgetPerPerson` n'atteint jamais le prompt.**
+      **FERME le 2026-09-29 (Beauvoir).** `engine/aiItinerary.ts` gained a `budgetAmount()`
+      helper that rejects `null`, `NaN`, `Infinity` and negative amounts, plus a prompt line
+      `budget reel saisi : 90 EUR par personne`. The real figure now reaches generation
+      alongside the rat / confort / luxe pill.
+      **MORSANT** : deleting the 2 added lines turns **3 tests red** - `... to contain '90'`,
+      `... to contain '45'`, `... to contain '90'`.
+      **Contre-temoins stayed green** : `D5-12` (null) and `D5-13` (NaN / Infinity / negative)
+      - no figure is ever invented when the user gave none.
+      Same restoration hash as D5.1, 15/15 verts.
+- [x] **D5.3** **Aucun champ « regime alimentaire » ni « signes particuliers » dans `GroupBlock`.**
+      **FERME le 2026-09-29 (Beauvoir) — par la branche honnete de l item.**
+      L item autorisait explicitement deux issues : ajouter le champ, ou **acter que la donnee
+      n est pas collectee — mais pas laisser croire qu elle l est**. C est la seconde qui a ete
+      prise, parce que la premiere aurait invente une saisie utilisateur qui n existe pas.
+      Nouveau `engine/groupIntake.ts` : `NOT_COLLECTED_GROUP_FIELDS`
+      (`regime_alimentaire`, `signes_particuliers`, chacun `{cle, libelle, pourquoi}`) et
+      `groupIntake(draft)` qui renvoie `null` **plus la liste de ce qui manque**. L ecran peut
+      donc lire la trace, elle est exportee et nommee (`D5-20`), pas cachee en commentaire.
+      **MORSANT 1 (invention)** : adding a `regime alimentaire : vegetarien` line to the prompt
+      turns `D5-22` red - `expected '## preferences exprimees...' not to contain 'regime alimentaire'`.
+      **MORSANT 2 (trace fantome)** : feeding `regimeAlimentaire: 'vegetarien'` turns `D5-21` red -
+      `expected 'vegetarien' to be null`.
+      The two bites close both directions: the engine can neither invent the field nor pretend
+      to have received it. Restauration hash
+      `B7FF63834227405EF75774C74712BC4B548DCCB5A71FC542335EFDC62A54AA72`, 15/15 verts.
 
 
 ### D1 / D2 — FERMÉS le 2026-09-28, mesurés sur 393×852 pendant une VRAIE génération
@@ -1995,8 +2020,70 @@ qui débloque le plus de cases à la fois.
       Le defaut etait documentaire ; il est corrige ici plutot que dans le code,
       parce que creer le fichier aurait ajoute une surface morte.
 - [x] **I3** Route API **côté serveur uniquement** : `src/app/api/route/`. Jamais d'appel navigateur.
-- [~] **I4** Cache présent mais **en mémoire seulement** : `new Map`, TTL 1 h, max 200
-      (`routingService.ts:28`). Pas de table `route_cache` → repart à zéro à chaque redéploiement.
+- [x] **I4** Cache présent mais **en mémoire seulement** : `new Map`, TTL 1 h, max 200
+      **FERME le 2026-09-29 (Carson, morsant rejoue par le pilote).**
+      Le cache n est plus un `Map` qui oublie a chaque deploiement : une table `route_cache`
+      porte desormais les traces, avec TTL et provider, et le module passe par la bas.
+      **Deux choses avaient ete livrees, dont une invisible.** La migration
+      `20260929010000_route_persist.sql` cree la table et les RPC `get_route_cache` /
+      `set_route_cache`. Mais la premiere version de `routingService.ts` lisait la base via
+      `lib/ai/serviceClient`, qui porte `import 'server-only'` - et ce module est partage :
+      `src/app/api/route/route.ts` (Route Handler serveur) et `browserMeasurements.ts`
+      (`'use client'`, via `PrepFlow.tsx`) l'importent tous les deux. Resultat : **webpack suit
+      l'`import()` dynamique dans le graphe client, `/prepare`, `/` et `/hub` sont tombés en
+      500.** Un `import()` paresseux ne suffit pas : il fautsortir le serveur du graphe.
+      **Correctif** : nouvelle Route Handler `src/app/api/route/cache/route.ts` (runtime nodejs,
+      `force-dynamic`, `enforceRateLimit` fail-open) qui relaie les deux RPC ;
+      `routingService.ts` ne parle plus qu'a `fetch(CACHE_ROUTE)`. Le repli reste silencieux :
+      base en panne -> le `Map` prend le relais, jamais de casse.
+      **Preuve** : `routing-service.test.ts` **26/26 verts**, dont 9 `I4-CACHE-01` a 09
+      (persistance, provider, TTL, expiration, panne) et 2 garde-fous de bundle.
+      **MORSANT JOUE PAR LE PILOTE** : un `import { getServiceSupabase } from
+      '@/lib/ai/serviceClient'` reinjecte dans le module ->
+      **UN SEUL test rouge, sur le nom exact** : `I4-BUNDLE-01: aucune reference a serviceClient,
+      ni statique ni dynamique`. Les 25 autres restent verts : le levier est isole et le test
+      interdit bien le retour du 500, pas seulement son symptome.
+      Restauration SHA256 `95C232A21C0C756B0394080D46269458E1945B2BADE88FEA3C4642EB3541AC7F`
+      identique, 26/26 verts.
+      Preuve de bout en bout : `/prepare?nouvelle=1`, `/` et `/hub` repassent en **200**.
+      **COMPLETE le 2026-09-29 (pilote) : la migration etait laite, ET elle ouvrait une faille.**
+
+      1. **La migration n availait jamais ete appliquee.** Verifie sur la base du projet
+         (`icxyvwzfjbflcbqukpfz`) : ni la table ni les 3 RPC n existaient. La degradation
+         en 503 cachait donc un schema absent, pas une panne. Applique, puis eprouve en base.
+
+      2. **Faille de privilege trouvee et fermee.** Le fichier ne faisait que
+         `REVOKE ... FROM PUBLIC` sur les 3 RPC. Or Supabase accorde EXECUTE sur toute
+         fonction creee a `anon` et `authenticated` via ses privileges par defaut : le
+         `REVOKE FROM PUBLIC` ne retire pas ce grant-la, il subsiste.
+         Mesure, avant correctif :
+         `anon_get=true, anon_set=true, auth_get=true`.
+         Consequence concrete : n importe quel client pouvait appeler `set_route_cache` en
+         direct et y deposer une trace INVENTEE sous une cle legitime — exactement ce que la
+         garantie 1 du fichier interdit ("SEULE UNE TRACE REUSSIE est persistee") — et elle
+         aurait ensuite ete servie comme une MESURE pendant tout le TTL.
+         Correctif : `REVOKE ... FROM PUBLIC, anon, authenticated` sur les 3 RPC, en base ET
+         dans le fichier (sinon un `db reset` rouvrait la faille).
+
+      **Preuves jouees (base + reseau, toutes avec un contre-temoign).**
+      - Cycle de vie, en base : ecriture -> lecture provider `"routestack"` conserve, 1 leg,
+        `hit_count` passe a 1, entree expiree renvoyee `NULL` ET supprimee (`lignes_apres=0`),
+        `purge_route_cache` retire 1. **7/7.**
+      - Contraintes : mode `PIETON-V2` refuse, payload `[1,2,3]` refuse, TTL demande 1 s
+        remonte a >= 59 s. **3/3.**
+      - RLS : `relrowsecurity=true`, policy `route_cache_select_false` en `USING (false)`,
+        `anon` et `authenticated` sans SELECT sur la table. **3/3.**
+      - **Leve par le reseau, pas seulement en SQL** — un client anonyme reel :
+        `POST /rest/v1/rpc/set_route_cache` -> **401 `permission denied for function
+        set_route_cache`** ; `get_route_cache` -> **401 idem**. `service_role` conserve
+        EXECUTE sur les 3. Avant le correctif, cet appel aurait reussi.
+      - **Round-trip par l application** : `POST /api/route/cache` -> `200 {"status":"stored"}`
+        puis `GET` -> `200 {"status":"hit", payload identique, provider conserve}`. Le cache
+        persiste donc reellement a travers l app, et non plus seulement en `Map`.
+      - Cas degrade toujours honnete : cle mal formee -> `400 key_expected` ; absence ->
+        `404 {"status":"miss"}` (et non plus `503 cache_unavailable`).
+      - Historique : `route_persist` enregistre dans `supabase_migrations.schema_migrations`,
+        pour que `db push` ne rejoue pas une migration deja posee.
 - [x] **I5** ✅ **Débit de routage borné** : seau à jetons dans `routeAttempt`, appelé APRÈS le
       cache et AVANT le réseau — une réponse déjà connue ne coûte rien, et un budget épuisé
       s'arrête avant de partir, pas en revenant (`routingService.ts:845`). `RATE_BURST = 120`
@@ -3674,20 +3761,32 @@ d'une intention : chaque ligne porte sa preuve.**
       le CSS ; j'en suis revenu à un recensement depuis la source. (3) Mon test
       initial classait `border-radius` comme une bordure, et `1px` comme une
       ombre : les deux venaient de comparer des noms au lieu des valeurs.
-- [ ] **P0.30** **`velo` est un mode accepte partout mais jamais produit : un
-      parcours velo se fait mesurer en pieton.** Trace et non cache le
-      2026-09-29 en fermant P0.22. `isTravelMode` accepte `velo`,
-      `/api/route` le route vers `routing.openstreetmap.de` prefixe
-      `routed-bike`, et les tests le couvrent — mais `travelModeFor()` ne le
-      produit jamais, car `ItineraryModel` ne porte que `metricsContext` et non
-      la selection d activites. **Ecart mesure sur les memes points** :
-      7,139 km / **29,8 min** en velo contre **98,5 min** en pieton, soit un
-      facteur **x3,4**. C est moins faux que la voiture du defaut P0.22, mais
-      c est encore faux, et c est ce chiffre que l ecran affiche.
-      **Correctif** : porter `travelMode` dans `ItineraryModel` (2
-      constructeurs + schema de commit `metadata.prep` + fixtures), puis le
-      retourner dans `travelModeFor()`. Mesurer avant d ecrire, et morsant
-      obligatoire : un parcours velo doit produire un mode velo, pas pieton.
+- [x] **P0.30** **`velo` est un mode accepte partout mais jamais produit : un
+      **FERME le 2026-09-29 (Beauvoir).** `velo` est maintenant **produit**, pas seulement accepte.
+      `types.ts` : `export type TravelMode = 'pieton'|'velo'|'voiture'` et
+      `travelMode: TravelMode` **obligatoire** sur `ItineraryModel` — obligatoire, donc pas de
+      retour silencieux a `pieton` si le champ manque. `routing.ts` : `travelModeFor(selection)`
+      derive `voiture` si `voyage`, sinon `velo` si une activite `a_velo`, sinon `pieton` ;
+      `routeItinerary` lit `model.travelMode` et **refuse** un mode hors vocabulaire.
+      Les 2 constructeurs (`itinerary.ts`, `itineraryPhases.ts`) portent le mode.
+      **MORSANT 1** (retour a l ancienne deduction) -> **6 rouges** : `P0-01/02/03/10/11`
+      `expected 'pieton' to be 'velo' // Object.is equality`, et
+      `P0-20 expected Set{ 'pieton' } to deeply equal Set{ 'velo' }`.
+      **MORSANT 2** (`travelModeFor` retire de `itineraryPhases.ts`) -> **2 rouges** :
+      `P0-11 expected undefined to be 'velo'`, `P0-12 expected 'velo' to be undefined`.
+      **Contre-temoins stayed green** : `P0-04` (rando seule -> pieton), `P0-05` (road trip ->
+      voiture, non-regression), `P0-06` (selection vide -> pieton, **jamais** velo), `P0-07`
+      (une nuit a velo ne fait pas basculer), `P0-21` (jamais de requete velo sur un parcours
+      pieton), `P0-22` (mode hors vocabulaire refuse).
+      Restauration : 5 hashes verifies, dont `itineraryPhases.ts`
+      `478425689AA6CBF3C4664542B65EDBB77C8B350E6E3A05B7498514CED630F572` -> 13/13.
+      **Preuve d innocence** : ses 4 items revoques (retour HEAD par `git checkout --`), ses
+      42 tests tombent tous rouges ; les 10 autres echecs sont identiques dans les deux etats,
+      donc ils ne lui appartiennent pas.
+      **Reserve transmise au pilote** : `types.ts` sortait du perimetre declare, modifie quand
+      meme parce que le mode doit survivre au passage reseau (« trace et non cache »).
+      **Raccord UI restant** : le mode est calcule mais pas encore nomme a l ecran
+      (`ItineraryStep.tsx:586-592` et le rendu `.prep-metrics` en 801-807).
 - [x] **A9** ✅ **« Boucle du Mont-Blanc en 2 jours » : le titre promettait un
       retour au départ que le programme ne faisait pas — la boucle existait à
       l'écran, pas dans le tracé.**

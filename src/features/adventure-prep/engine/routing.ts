@@ -20,7 +20,15 @@
  * l'appel reseau (injecte), pour que la logique reste verifiable hors ligne.
  */
 
-import type { ItineraryModel, ItineraryStep, MetricsContext } from '../types';
+import { activityById, metricsContextFor } from '../catalog';
+import type { ActivitySelection, ItineraryModel, ItineraryStep, TravelMode } from '../types';
+
+/**
+ * Le vocabulaire du mode vit dans `types.ts` : c est lui que porte le modele.
+ * Il est re-exporte ici parce que c est par ce module que le reste du
+ * preparateur (routeur, navigateur, tests) l a toujours importe.
+ */
+export type { TravelMode } from '../types';
 
 export interface GeoPoint {
   readonly lat: number;
@@ -30,13 +38,12 @@ export interface GeoPoint {
 /**
  * Mode de deplacement reellement mesure.
  *
- * Ces trois valeurs sont le SEUL vocabulaire du routage. Un profil qui n'est
+ * Ces trois valeurs sont le SEUL vocabulaire du routage, et le type est
+ * declare dans `types.ts` parce que le modele le porte. Un profil qui n'est
  * pas dans cette liste n'est pas un mode, c'est une faute de frappe : il doit
  * etre refuse, jamais remplace par un defaut silencieux, car un defaut
  * silencieux afficherait encore des kilometres de voiture.
  */
-export type TravelMode = 'pieton' | 'velo' | 'voiture';
-
 export const TRAVEL_MODES: readonly TravelMode[] = ['pieton', 'velo', 'voiture'];
 
 /**
@@ -46,14 +53,40 @@ export const TRAVEL_MODES: readonly TravelMode[] = ['pieton', 'velo', 'voiture']
  * sont donc mesures sur le graphe pedestre. `voyage` est un trajet d'un point a
  * un autre : il est mesure sur le reseau routier.
  *
- * Limite CONNUE et assumee : `velo` est accepte partout (contrat, route,
- * routeur, tests) mais pas encore produit ici, parce que le modele ne porte que
- * `metricsContext` et non la selection d'activites. Un parcours velo est donc
- * mesure comme un parcours pieton : moins faux qu'en voiture, encore faux.
- * Le reste est trace dans la checklist, pas ici.
+ * P0.30 : `velo` est desormais PRODUIT. Il ne l etait pas, parce que seule la
+ * lettre du mode remontait : le modele portait `metricsContext` et rien d
+ * autre, donc toute selection d activities retombait sur deux cas. Un parcours
+ * a velo se faisait donc mesurer sur le graphe pedestre — 7,139 km annonces en
+ * 98,5 min a pied contre 29,8 min a velo sur les MEMES points, soit x3,4.
+ * C est ce chiffre, faux mais plausible, que l ecran affichait.
+ *
+ * La regle de lecture est celle du module entier : on ne devine pas, on
+ * DECIDE. Un mode est deduit d un choix reel de la personne — l activite
+ * qu elle a selectionnee dans le catalogue — et d rien d autre. Trois cas, dans
+ * cet ordre :
+ *
+ *   1. le parcours est un `voyage` : c est un trajet d un point a un autre,
+ *      donc le reseau routier. Voiture.
+ *   2. sinon, si UNE activite selectionnee est de la categorie `a_velo` : les
+ *      deplacements locaux se font a velo. Velos.
+ *   3. sinon : pieton. Sur place, on marche.
+ *
+ * Le signal velo est lu sur l activite PRINCIPALE et les complements, comme
+ * `metricsContextFor` lit le contexte : une nuit ne red definit pas la facon de
+ * circuler dans la journee, et faire dependre le mode d un bivouac ferait
+ * basculer tous les kilometres du parcours.
+ *
+ * Aucune valeur n est inventee : une selection vide ou inconnue ne produit
+ * ni `velo` ni `voiture`, elle produit `pieton` — qui est la seule reponse
+ * honnete quand personne n a dit comment il se deplace.
  */
-export function travelModeFor(context: MetricsContext): TravelMode {
-  return context === 'voyage' ? 'voiture' : 'pieton';
+export function travelModeFor(selection: ActivitySelection): TravelMode {
+  if (metricsContextFor(selection) === 'voyage') return 'voiture';
+  const defs = [selection.primary, ...selection.extra]
+    .filter((id): id is string => typeof id === 'string' && id.length > 0)
+    .map((id) => activityById(id))
+    .filter((def): def is NonNullable<typeof def> => def !== null);
+  return defs.some((def) => def.category === 'a_velo') ? 'velo' : 'pieton';
 }
 
 /** Un troncon tel que renvoye par OSRM : la mesure, jamais une estimation. */
@@ -358,9 +391,14 @@ export async function routeItinerary(
   deps: RoutingDeps,
   signal?: AbortSignal,
 ): Promise<ItineraryModel> {
-  // Le mode se deduit UNE fois pour tout le parcours : c'est la meme
-  // intention de deplacement du premier au dernier jour.
-  const mode = travelModeFor(model.metricsContext);
+  // Le mode est PORTE par le modele, pas rededuit ici : c est la meme
+  // intention de deplacement du premier au dernier jour, et elle a ete
+  // decidee a la construction, quand la selection d activites etait connue.
+  // Un modele sans mode — venue d ailleurs, ou bricole — n est PAS converti
+  // en pieton : on refuse de router, plutot que d afficher des kilometres
+  // mesures sur un graphe que personne n a choisi.
+  const mode = model.travelMode;
+  if (!TRAVEL_MODES.includes(mode)) return model;
   const chains = dayChains(model);
   const ids = stepIdsByDay(model);
   const perDay: (DayRoute | null)[] = [];

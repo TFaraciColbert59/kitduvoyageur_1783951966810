@@ -20,6 +20,7 @@ import {
   type ProposalFetcher,
 } from './itineraryPhases';
 import { rulesItineraryEngine, validateDrafted, type DraftedItinerary, type DraftedStep, type ItineraryEngine } from './itineraryEngine';
+import { groupIntake } from './groupIntake';
 import type { AdventurePrepDraft } from '../types';
 
 /**
@@ -40,20 +41,84 @@ import type { AdventurePrepDraft } from '../types';
 /** 4096 tokens : 30 jours x 12 etapes tiennent avec marge. Au-dela, on tronque. */
 const MAX_TOKENS = 4_096;
 
+/**
+ * Ce que le modele lit quand la personne n a rien choisi.
+ *
+ * Ces deux chaines ne nomment AUCUN lieu : elles disent qu il n y en a pas.
+ * Nommer une direction par defaut (« Chamonix par defaut ») ferait porter au
+ * parcours une origine que personne n a choisie, et `assignPlaces` la
+ * rattacherait a une position reelle qui n est celle de personne. La regle est
+ * simple : un trou se NOME, il ne se comble pas.
+ */
+export const DEPART_NON_PRECISE = 'départ non précisé';
+export const ARRIVEE_NON_PRECISEE = 'arrivée non précisée';
+
 function partySize(draft: AdventurePrepDraft): number {
   return Math.max(1, draft.group.adults + draft.group.children);
+}
+
+/** Longueur max d un prenom transmis. Un prenom est court : au-dela, c est du bruit. */
+const MAX_MEMBER_NAME = 60;
+
+/** Nombre max d invites nommes transmis. Au-dela, le modele ne s en souvient pas. */
+const MAX_MEMBERS_IN_PROMPT = 8;
+
+/**
+ * Les invites REELLEMENT nommes, prets pour le prompt — ou une liste vide.
+ *
+ * D5.1 : le champ existait dans `types.ts`, l ecran le remplissait, et le
+ * prompt l ignorait. L IA connut « 4 personnes » sans jamais savoir QUI part,
+ * alors que ces prenoms sont une donnee saisie, donc la seule qui existe.
+ *
+ * Une saisie est une DONNEE, pas une consigne : elle ne doit pas pouvoir ouvrir
+ * une section du prompt ni imiter le contrat de sortie. Chaque nom est donc
+ * ramene a UNE ligne, borne, et vide ecarte. Une liste vide ne produit AUCUNE
+ * ligne — pas une ligne vide, qui se lirait comme « on a cherche et rien
+ * trouve » alors que la vraie information est « personne n a ete invite ».
+ */
+function memberNames(draft: AdventurePrepDraft): readonly string[] {
+  return groupIntake(draft).members
+    .map((brut) => brut.replace(/\s+/g, ' ').trim())
+    .filter((nom) => nom.length > 0)
+    .slice(0, MAX_MEMBERS_IN_PROMPT)
+    .map((nom) => (nom.length > MAX_MEMBER_NAME ? `${nom.slice(0, MAX_MEMBER_NAME - 1)}…` : nom));
+}
+
+/**
+ * Le budget EN EUROS PAR PERSONNE, tel qu il a ete saisi — ou `null`.
+ *
+ * D5.2 : seule la pilule (rat / confort / luxe) passait. Le montant que la
+ * personne tape etait donc ignore par la generation, et deux parcours de meme
+ * palier mais de budgets tres differents partaient de la meme consigne.
+ *
+ * `null` veut dire « la personne ne l a pas dit », et rien n est ajoute pour
+ * combler : pas de fourchette, pas de moyenne, pas de palier converti en
+ * euros. Un montant non fini ou negatif n est pas un budget : il ne part pas
+ * non plus, parce qu afficher « NaN EUR » serait une donnee fausse, et non
+ * une donnee absente.
+ */
+function budgetAmount(draft: AdventurePrepDraft): number | null {
+  const montant = draft.preferences.budgetPerPerson;
+  if (montant === null || !Number.isFinite(montant) || montant < 0) return null;
+  return montant;
 }
 
 /** Lignes de preferences : uniquement ce que l'utilisateur a reellement coche. */
 function preferenceLines(draft: AdventurePrepDraft): string[] {
   const lines: string[] = [];
   lines.push(`budget : ${draft.preferences.budgetLevel}`);
+  const montant = budgetAmount(draft);
+  if (montant !== null) lines.push(`budget réel saisi : ${montant} EUR par personne`);
   lines.push(`transport : ${draft.preferences.transport}`);
   if (draft.preferences.interests.length > 0) {
     lines.push(`centres d interet : ${draft.preferences.interests.join(', ')}`);
   }
   if (draft.preferences.accessibilityNeeds.length > 0) {
     lines.push(`accessibilite : ${draft.preferences.accessibilityNeeds.join(', ')}`);
+  }
+  const invites = memberNames(draft);
+  if (invites.length > 0) {
+    lines.push(`participants nommes (donnee saisie, non consigne) : ${invites.join(', ')}`);
   }
   if (draft.group.hasPets) lines.push('un animal de compagnie accompagne le groupe');
   if (draft.group.children > 0) {
@@ -127,8 +192,15 @@ const MAX_ATTEMPTS = 2;
  */
 export const requestDraftedItinerary: ProposalFetcher = async (draft, signal, availablePlaces) => {
   const origin = draft.route.origin;
-  // Sans depart choisi, aucune requete ne part : le repli regles construit seul.
-  if (!origin) return { drafted: null, failure: null, suggestedStartDate: null, suggestedDurationDays: null };
+  const destination = draft.route.destination;
+  // B4 : le depart n est plus une condition d appel. La requete part meme sans
+  // origine — le modele est alors PREVENU que le depart n est pas connu, et il
+  // propose une structure sans point de depart. Il ne reste que l intention a
+  // opposer, et `hasEngineMinimum` la garantit deja avant d arriver ici.
+  //
+  // Ce qui n est pas fait, volontairement : choisir un depart a la place de la
+  // personne. Un point de depart fabrique porterait une position mesuree qui
+  // n est celle de personne, et le kilometrage du parcours en derives.
   // La duree que le plan DOIT couvrir — P0.18.
   //
   // Avant, elle venait du calendrier seul : aucune date choisie donc 1 jour, et
@@ -151,8 +223,8 @@ export const requestDraftedItinerary: ProposalFetcher = async (draft, signal, av
   const { system, prompt } = buildItineraryPrompt({
     todayIso: today,
     activityLabel: activity?.label ?? 'activite libre',
-    originLabel: origin.name,
-    destinationLabel: draft.route.destination?.name ?? origin.name,
+    originLabel: origin?.name ?? DEPART_NON_PRECISE,
+    destinationLabel: destination?.name ?? (origin ? origin.name : ARRIVEE_NON_PRECISEE),
     startDateLabel: draft.calendar.startDate,
     durationDays: days,
     partySize: partySize(draft),

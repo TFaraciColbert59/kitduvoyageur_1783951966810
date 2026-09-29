@@ -117,10 +117,23 @@ export const GAP_LABELS: Readonly<Record<AlternativesGap, string>> = {
 /**
  * Les etablissements REELS du meme type, autour du point de reference.
  *
- * Le lieu de l etape elle-meme est exclu : « remplacer » par le lieu qu on
- * remplace ne remplacerait rien. L exclusion se fait sur l identifiant de
- * catalogue ET sur le nom normalise — un lieu peut etre connu par une source
- * qui ne donne pas d identifiant.
+ * Deux exclusions, et elles ne se ressemblent pas.
+ *
+   * L etape elle-meme : « remplacer » par le lieu qu on remplace ne
+   * remplacerait rien. Elle joue meme sans `model`, donc meme isolee.
+   *
+   * TOUT le reste du programme : un lieu deja porte par une AUTRE journee
+   * n'est pas une alternative, c'est un doublon. Sans cette exclusion, le
+   * tiroir pouvait proposer a l'etape 3 le refuge que le parcours pose deja
+   * a l'etape 1 — et l'ecran aurait alors propose de faire REMARCHER la
+   * journee. Les distances restent mesurees, mais la proposition serait
+   * fausse.
+   *
+ * Deux cles, parce qu'aucune ne suffit seule : l identifiant de catalogue
+ * quand la source en fournit un, le nom normalise sinon — un lieu peut etre
+ * connu par une source qui ne donne pas d identifiant. On ne compare jamais
+ * l identifiant interne de deduplication d un candidat a un identifiant de
+ * catalogue : ils ne designent pas la meme chose.
  */
 export function alternativesFor(
   step: ItineraryStep,
@@ -141,11 +154,20 @@ export function alternativesFor(
   }
   const categories = new Set(allowed);
   const nom = step.placeName === null ? null : normalizePlaceName(step.placeName);
+  // E9 — ce que le programme porte deja, partout, tous jours confondus.
+  const dejaPortes = usedPlaceIds(model);
+  const nomsPortes = new Set<string>();
+  for (const autre of model?.steps ?? []) {
+    if (autre.placeName === null) continue;
+    nomsPortes.add(normalizePlaceName(autre.placeName));
+  }
   const retenus: ScoredPlace[] = [];
   for (const candidate of candidates) {
     if (!categories.has(candidate.category)) continue;
     if (step.placeId !== null && candidate.catalogId === step.placeId) continue;
     if (nom !== null && normalizePlaceName(candidate.name) === nom) continue;
+    if (candidate.catalogId != null && dejaPortes.has(candidate.catalogId)) continue;
+    if (nomsPortes.has(normalizePlaceName(candidate.name))) continue;
     const km = haversineKm(reference, point(candidate));
     if (!Number.isFinite(km) || km > reachKm) continue;
     retenus.push({ candidate, distanceKm: km });

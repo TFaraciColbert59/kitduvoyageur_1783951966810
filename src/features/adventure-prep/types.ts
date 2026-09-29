@@ -48,6 +48,19 @@ export interface ActivityCategory {
 /** Contexte de metrique dominant : pilote les trois metriques de l'etape 2. */
 export type MetricsContext = 'terrain' | 'sejour' | 'voyage';
 
+/**
+ * Mode de deplacement REELLEMENT mesure sur le reseau.
+ *
+ * Le vocabulaire vit ici, et non dans le moteur, parce qu il fait partie du
+ * contrat du modele : c est lui qui est porte, persiste et relu.
+ *
+ * P0.22 a montre qu un mode par defaut affiche des kilometres faux. P0.30
+ * montre la suite : un mode absent affiche des minutes fausses. Les trois
+ * valeurs sont donc declarees, et aucune n est « les autres » : un profil qui
+ * n est pas dans cette liste est une faute, pas un mode.
+ */
+export type TravelMode = 'pieton' | 'velo' | 'voiture';
+
 export interface ActivityDef {
   id: string;
   label: string;
@@ -357,6 +370,21 @@ export interface ItineraryModel {
   weather: readonly (DayWeather | null)[];
   /** Contexte qui a determine les trois metriques affichees. */
   metricsContext: MetricsContext;
+  /**
+   * Mode de deplacement REELLEMENT choisi, porte par le modele.
+   *
+   * P0.22 : le profil etait fige sur le reseau routier, et une marche etait
+   * annoncee en 12 min de voiture. P0.30 : le mode existe partout ailleurs
+   * (`isTravelMode`, le routeur, les tests) mais n etait jamais PRODUIT, parce
+   * que seul `metricsContext` remontait. Un parcours a vélo se faisait donc
+   * mesurer en pieton : 7,139 km en 29,8 min a vélo contre 98,5 min a pied sur
+   * les MEMES points, soit x3,4. C est ce chiffre que l ecran affiche.
+   *
+   * Le champ est OBLIGATOIRE, et c est deliberé : un mode optionnel absent
+   * retomberait silencieusement sur `pieton` — exactement le defaut qu il
+   * corrige. Les deux constructeurs doivent donc le dire, et le dire vrai.
+   */
+  travelMode: TravelMode;
   budgetPerPerson: MoneyValue;
   activityCount: number;
   /** Points de repli calcules (pluie, fermeture, retard…). */

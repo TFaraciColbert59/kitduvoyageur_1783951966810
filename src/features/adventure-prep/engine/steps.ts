@@ -18,24 +18,32 @@ export function isPicking(draft: AdventurePrepDraft): boolean {
 /**
  * Le strict necessaire du MOTEUR — et lui seul.
  *
- * `requestDraftedItinerary` ne lit que deux choses : une INTENTION (une
- * activite du catalogue, ou « Partir librement » qui la remplace) et
- * `route.origin`. Sans depart il renvoie une proposition vide sans jamais
- * appeler le modele : un bouton actif y deviendrait un bouton mort. Tout le
- * reste se complete sans la personne — l arrivee deduit la forme du parcours,
- * la date et la duree sont proposees puis badgees (P0.15, P0.18) — et ne peut
- * donc pas bloquer.
+ * Il ne reste qu'une chose : une INTENTION, c est a dire une activite du
+ * catalogue ou « Partir librement » qui la remplace. Sans intention, le modele
+ * n a aucun sujet : il ne reste alors rien a lui demander.
+ *
+ * B4 a retire la seconde condition, `route.origin`. Elle existait parce que
+ * `requestDraftedItinerary` court-circuitait sans depart (raison du 2026-09-28,
+ * un bouton actif y promettait un clic qui n appelait meme pas l'API). La
+ * cause ayant disparu, garder le garde-fou ne protégeait plus rien : il
+ * refusait la MOITIE du contrat annoncee, celle ou la personne donne une
+ * arrivee sans depart, ou rien du tout.
+ *
+ * L'absence de depart n'est donc plus un blocage, mais elle n'est pas non plus
+ * un point de depart. Elle se propage telle quelle jusqu'a l ecran : le
+ * parcours part d'un depart non precise, les etapes qui n ont aucun point
+ * reel a quoi se rattacher deviennent des notes (`demoteOrphans`), et
+ * kilometrage, meteo et budget restent « a verifier ». Aucune origine n est
+ * inventeee pour combler le trou — une origine fabriquee ferait croire a une
+ * position mesuree.
  *
  * CE PREDICAT EST LE SEUL. Le CTA (`canCreateStepOne`), le rail
  * (`isStepSatisfied`, `canOpenStep`, `stepCountDone`) et le clic
  * (`completeStep`) le lisent tous. Deux definitions, et l ecran finit par
- * promettre un clic que le comportement refuse — ce que la mesure du
- * 2026-09-28 a vu : depart propose par la geolocalisation, aucune date, aucune
- * duree, « Creer mon parcours » actif… et un clic qui ne changeait rien, sans
- * meme appeler l'API.
+ * promettre un clic que le comportement refuse.
  */
 export function hasEngineMinimum(draft: AdventurePrepDraft): boolean {
-  return (!!draft.activities.primary || draft.pickerDismissed) && !!draft.route.origin;
+  return !!draft.activities.primary || draft.pickerDismissed;
 }
 
 /** Une etape est satisfaite quand les reponses necessaires sont saisies. */

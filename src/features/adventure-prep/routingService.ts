@@ -131,6 +131,8 @@ const ELEVATION_CHUNK = 100;
 
 const TIMEOUT_MS = 8000;
 const CACHE_TTL_MS = 60 * 60 * 1000;
+/** La Route Handler qui relaie le cache persistant. Le SEUL pont vers la base. */
+const CACHE_ROUTE = '/api/route/cache';
 const CACHE_MAX = 200;
 
 const cache = new Map<string, { at: number; value: unknown }>();
@@ -138,6 +140,232 @@ const cache = new Map<string, { at: number; value: unknown }>();
 /** Reserve aux tests : vide le cache en memoire. */
 export function __resetRouteCache(): void {
   cache.clear();
+}
+
+/**
+ * Le cache MEMOIRE, seul, ne survit pas a un redeploiement.
+ *
+ * Mesure du 29/09/2026 : `new Map`, TTL 1 h, max 200 — donc tout disparait au
+ * redemarrage. Consequence mesuree : a chaque deploiement toutes les distances
+ * doivent etre RE-MESUREES. C est lent, couteux en appels vers des services
+ * publics sans cle, et un « Reessayer » sur une etape deja connue repart de
+ * zero alors que la mesure existe deja.
+ *
+ * La base prend donc le relais du `Map`, avec le meme contrat :
+ *   - CLE = les parametres de route (mode + points + profil), jamais la
+ *     reponse : deux demandes identiques tombent sur la meme entree.
+ *   - VALEUR = la reponse MESUREE + son `provider` + `expires_at`.
+ *
+ * Le `provider` est stocke AVEC la reponse, et c est deliberé : c est la base
+ * de H5, le credit de la source de la donnee. Le perdre au redemarrage serait
+ * une regression de tracabilite — exactement ce que le `Map` faisait deja.
+ *
+ * DEGRADE, JAMAIS CASSANT. Si la base est injoignable, absente ou configuree
+ * sans cle, ce service doit continuer a repondre exactement comme avant. Un
+ * cache est une ACCELERATION, jamais une dependance fonctionnelle : le faire
+ * tomber ferait perdre des mesures, ce qui est le seul echec que ce module
+ * n a pas le droit de produire.
+ */
+
+/**
+ * Ou poser la lecture du cache persistant.
+ *
+ * La base ne se touche QUE par `POST/GET /api/route/cache`, une Route Handler
+ * — jamais par un import. Raison, MESUREE le 29/09/2026 : ce module est
+ * PARTAGE, `/api/route` (serveur) et `browserMeasurements` ('use client') l
+ * importent tous les deux. La base se touche par `lib/ai/serviceClient.ts`,
+ * qui commence par `import 'server-only'` : l inclure dans ce graphe fait
+ * tomber TOUTES les routes en 500 (`ModuleBuildError` sur `/`, `/hub`,
+ * `/prepare`).
+ *
+ * Un `import()` PARSEUX ne sauve rien. C est le piege : webpack resout un
+ * litteral de chaine dans le graphe STATIQUE, donc `serviceClient` y entrait
+ * quand meme et le 500 revenait. Il n existe aucun import, meme dynamique,
+ * qui sorte un module `server-only` d un bundle client. D ou la Route Handler.
+ *
+ * Le point d arrivee, lui, se choisit a l appel :
+ *   - le NAVIGATEUR donne une URL relative, resolue par le navigateur ;
+ *   - le SERVEUR doit donner une URL ABSOLUE, car `fetch('/api/…')` y est une
+ *     URL invalide. `/api/route` la tire de la requete (`request.nextUrl.origin`),
+ *     donc elle est toujours juste, y compris en local et en apercu.
+ *
+ * Sans point d arrivee, on ne fait rien : repli memoire, jamais une erreur.
+ */
+function cacheEndpoint(cacheBaseUrl?: string): string | null {
+  if (cacheBaseUrl) return new URL(CACHE_ROUTE, cacheBaseUrl).toString();
+  if (typeof window !== 'undefined') return CACHE_ROUTE;
+  return null;
+}
+
+/**
+ * La reponse relue de la base, ou `undefined` — jamais un `legs: null`.
+ *
+ * Ce filtre n est pas une defense cosmétique, c est la garantie centrale de
+ * I4 : une entree en ERREUR ne doit JAMAIS etre servie depuis le cache. Une
+ * panne de cinq minutes serait sinon republiée comme une MESURE pendant toute
+ * la duree du TTL. Le contrat est donc verifie ici, a la lecture, et pas
+ * seulement a l'ecriture.
+ *
+ * Il s'applique a TOUTE source, y compris une entree plantee a la main en
+ * base : c est ici, cote service, que la garantie est tenue, pas dans le SQL
+ * ni dans la Route Handler.
+ */
+function decodeStoredRoute(stored: unknown): RouteAttempt | undefined {
+  if (!stored || typeof stored !== 'object') return undefined;
+  const candidate = stored as {
+    legs?: unknown;
+    reason?: unknown;
+    provider?: unknown;
+  };
+  // `legs` DOIT etre un tableau non vide : une trace mesuree a au moins un
+  // troncon. Ni `null`, ni absent, ni vide ne sont des mesures.
+  if (!Array.isArray(candidate.legs) || candidate.legs.length === 0) return undefined;
+  const provider =
+    candidate.provider === 'osrm' ||
+    candidate.provider === 'valhalla' ||
+    candidate.provider === 'brouter'
+      ? candidate.provider
+      : undefined;
+  return {
+    legs: candidate.legs as RouteLeg[],
+    // Une entree reussie porte toujours `reason: null`. On le Reinstalle
+    // plutot que de lire la colonne : la mesure est vraie, son echec ne l est
+    // pas, et un `reason` incoherent la trahirait en aval.
+    reason: null,
+    ...(provider ? { provider } : {}),
+  };
+}
+
+/**
+ * La LECTURE du cache persistant, ou `undefined`.
+ *
+ * Un 404 est un MISS, pas une panne : la cle n existe pas encore, on mesure.
+ * Toute autre reponse — 503, 500, reseau coupe, corps illisible — est une
+ * panne, et se replie sans bruit sur le `Map`.
+ */
+async function readRouteCacheRemote(
+  endpoint: string,
+  key: string,
+): Promise<RouteAttempt | undefined> {
+  try {
+    const reponse = await fetch(`${endpoint}?key=${encodeURIComponent(key)}`, {
+      headers: { accept: 'application/json' },
+    });
+    if (reponse.status === 404) return undefined;
+    if (!reponse.ok) {
+      console.warn('[routing] cache base indisponible (repli memoire) :', reponse.status);
+      return undefined;
+    }
+    const corps = (await reponse.json()) as { status?: unknown; payload?: unknown };
+    return decodeStoredRoute(corps?.payload);
+  } catch (err) {
+    console.warn(
+      '[routing] lecture du cache base impossible (repli memoire) :',
+      err instanceof Error ? err.message : err,
+    );
+    return undefined;
+  }
+}
+
+/**
+ * L'ECRITURE, attendue.
+ *
+ * En runtime serverless la fonction peut etre gelee des que la reponse est
+ * renvoyee, et une ecriture non attendue n'arrive jamais au disque. Le cout
+ * est nul en pratique : une ecriture par MESURE NOUVELLE, donc deja bornee
+ * par le limiteur de debit.
+ *
+ * L'echec reste SANS CONSEQUENCE : la reponse existe, elle est vraie, elle
+ * vient d etre mesuree. Seul l acceleration future est perdue.
+ */
+async function writeRouteCacheRemote(
+  endpoint: string,
+  key: string,
+  mode: TravelMode,
+  value: RouteAttempt,
+): Promise<void> {
+  try {
+    await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        key,
+        mode,
+        provider: value.provider ?? null,
+        legs: value.legs,
+      }),
+    });
+  } catch (err) {
+    console.warn(
+      '[routing] ecriture du cache base impossible (repli memoire) :',
+      err instanceof Error ? err.message : err,
+    );
+  }
+}
+
+/**
+ * La reponse connue, d ou qu elle vienne — et DANS QUEL ORDRE.
+ *
+ * L ordre est le contrat, pas un detail :
+ *
+ *   1. le `Map` d'abord. Il est synchrone, gratuit, et c est lui qui absorbe
+ *      la regeneneration d un itineraire qu on ajuste en boucle.
+ *   2. la base ENSUITE : une entree trouvee est rappelee dans le `Map` pour que
+ *      les appels suivants redemarrent au point 1.
+ *
+ * La base est donc interrogee AVANT le reseau, jamais apres : une reponse deja
+ * connue ne coute toujours rien, et le limiteur de debit ne voit que les
+ * vraies mesures manquantes.
+ *
+ * Sans point d arrivee — pas de navigateur, pas d URL d origine fournie — on ne
+ * consulte que la memoire. C est le comportement d avant I4, jamais une panne.
+ */
+async function readRouteCache(
+  endpoint: string | null,
+  key: string,
+): Promise<RouteAttempt | undefined> {
+  const memoire = readCache(key) as RouteAttempt | undefined;
+  if (memoire !== undefined) return memoire;
+  if (endpoint === null) return undefined;
+
+  const persistee = await readRouteCacheRemote(endpoint, key);
+  if (persistee !== undefined) {
+    // On la remet en memoire : le prochain appel ne paie meme plus le
+    // aller-retour vers la base.
+    writeCache(key, persistee);
+  }
+  return persistee;
+}
+
+/**
+ * La trace, avec son `provider`, cote memoire ET cote base.
+ *
+ * L'ECRITURE en base est ATTENDUE, et c est un choix, pas une coincidence.
+ *
+ * fire-and-forget parait naturel — la reponse est deja mesuree, on n attend
+ * rien pour la servir — et c est FAUX ici. En runtime serverless, la fonction
+ * peut etre gelee des que la reponse est renvoyee : une ecriture non attendue
+ * n arrive jamais au disque. Le cache perdrait alors sa raison d etre, et
+ * surtout on ne le SAURAIT pas : le service fonctionnerait, les tests
+ * passeraient, et la persistance disparaitrait a la premiere vague de
+ * redemarrages. C est exactement le defaut qu I4 vient corriger.
+ *
+ * Le cout est nul en pratique : une seule ecriture par MESURE NOUVELLE, donc
+ * deja bornee par le limiteur de debit, face a une requete dont le delai
+ * admissible est de plusieurs secondes.
+ *
+ * L'echec d'ecriture reste SANS CONSEQUENCE : la reponse existe, elle est
+ * vraie, elle vient d etre mesuree. Seul l acceleration future est perdue.
+ */
+async function writeRouteCache(
+  endpoint: string | null,
+  key: string,
+  mode: TravelMode,
+  value: RouteAttempt,
+): Promise<void> {
+  writeCache(key, value);
+  if (endpoint === null) return;
+  await writeRouteCacheRemote(endpoint, key, mode, value);
 }
 
 function readCache(key: string): unknown {
@@ -828,6 +1056,7 @@ export async function routeAttempt(
   points: readonly RoutePoint[],
   mode: TravelMode,
   signal?: AbortSignal,
+  cacheBaseUrl?: string,
 ): Promise<RouteAttempt> {
   // Un mode inconnu et une liste de points inexploitable sont des REFAUX de
   // l appelant, pas une panne du fournisseur : ils se distinguent, parce
@@ -838,7 +1067,10 @@ export async function routeAttempt(
   }
   const key = points.map((p) => coord([p.lon, p.lat])).join(';');
   const cacheKey = `route:${mode}:${key}`;
-  const cached = readCache(cacheKey) as RouteAttempt | undefined;
+  // Memoire PUIS base, toutes deux avant le debit et avant le reseau. Une
+  // reponse deja connue ne coute rien, quel que soit l endroit ou elle a ete
+  // mesuree — et c est ce qui survit au redeploiement.
+  const cached = await readRouteCache(cacheEndpoint(cacheBaseUrl), cacheKey);
   if (cached !== undefined) return cached;
   // Apres le cache, avant le reseau : une reponse qu on a deja ne coute rien,
   // et un budget epuise doit s arreter AVANT de partir, pas en revenant.
@@ -868,10 +1100,12 @@ export async function routeAttempt(
     const apresValhalla =
       fromOsrm.legs !== null || fromOsrm.reason === 'off_network' ? fromOsrm : await byValhalla();
     const attempt = await avecRandonnee(points, mode, local, apresValhalla);
-    // Seule une trace REUSSIE est memorisee. Un echec ne doit pas etre fige
-    // pendant une heure : une panne de cinq minutes finirait par etre servie
-    // comme une reponse Mesuree pendant toute la session.
-    if (attempt.legs) writeCache(cacheKey, attempt);
+    // Seule une trace REUSSIE est memorisee — cote memoire ET cote base. Un
+    // echec ne doit pas etre fige : une panne de cinq minutes finirait par etre
+    // servie comme une reponse Mesuree pendant toute la duree du TTL.
+    if (attempt.legs) {
+      await writeRouteCache(cacheEndpoint(cacheBaseUrl), cacheKey, mode, attempt);
+    }
     return attempt;
   } finally {
     done();

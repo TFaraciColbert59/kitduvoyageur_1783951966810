@@ -14,6 +14,7 @@ import { hasEngineMinimum } from './steps';
 import { proposedStops } from './proposedStops';
 import { buildContingencies } from './resilience';
 import { de } from './frenchText';
+import { travelModeFor } from './routing';
 
 const ICONS: Record<ItineraryStepKind, string> = {
   trajet: 'navigation',
@@ -103,6 +104,19 @@ function nightTitle(selection: AdventurePrepDraft['activities']): string {
 }
 
 /**
+ * Le manque de depart, nomme.
+ *
+ * Ces deux chaines sont la seule chose que le moteur produit quand la personne
+ * n a choisi aucun depart : elles disent que l information manque. Aucune ne
+ * designe un lieu — sinon le parcours afficherait une origine que personne
+ * n a choisie, et la distance mesuree depuis ce point serait celle d un trajet
+ * que personne ne fera.
+ */
+export const DEPART_A_PRECISER = 'Départ à préciser';
+export const DEPART_NON_PRECISE_RAISON =
+  'Départ non précisé : le parcours démarre sans position connue, le kilométrage reste à vérifier.';
+
+/**
  * La forme du parcours, telle qu elle se lit dans la phrase du jour 1.
  *
  * Elle rend un groupe complet, pas un fragment : « parcours en « et on
@@ -124,7 +138,11 @@ export function buildItinerary(draft: AdventurePrepDraft): ItineraryModel | null
   if (!isBuildable(draft)) return null;
   const origin = draft.route.origin;
   const destination = draft.route.destination;
-  if (!origin) return null;
+  // B4 : plus aucun refus sur l absence de depart. Le squelette se construit
+  // sans origine, et c est `assignPlaces` qui decidera de ce qui peut vraiment
+  // etre positionne — donc de ce qui restera une note. Rendre `null` ici
+  // effacait d avance la structure ET les notes : l ecran n avait plus rien a
+  // montrer, alors que la personne avait bien demande des etapes.
   const days = Math.max(1, Math.trunc(draft.calendar.durationDays ?? 1));
   const primary = activityById(draft.activities.primary ?? '');
   const bivouac = draft.activities.nights.includes('bivouac');
@@ -139,11 +157,16 @@ export function buildItinerary(draft: AdventurePrepDraft): ItineraryModel | null
 
   for (let day = 1; day <= days; day += 1) {
     if (day === 1) {
+      // Sans depart choisi, l etape porte le MANQUE, pas un lieu de remplacement.
+      // Elle n a ni nom ni identifiant : `assignPlaces` la rendra non positionnee
+      // et `demoteOrphans` la gardera en note, ce que la personne voit.
       push(1, 'trajet', {
-        title: `Départ de ${origin.name}`,
-        placeName: origin.name,
-        placeId: origin.id,
-        reason: `Départ choisi, parcours en ${shapeLabel(draft.route.shape)}.`,
+        title: origin ? `Départ de ${origin.name}` : DEPART_A_PRECISER,
+        placeName: origin ? origin.name : null,
+        placeId: origin ? origin.id : null,
+        reason: origin
+          ? `Départ choisi, parcours en ${shapeLabel(draft.route.shape)}.`
+          : DEPART_NON_PRECISE_RAISON,
         state: travelState(draft),
         price:
           draft.preferences.transport === 'peigne'
@@ -200,6 +223,7 @@ export function buildItinerary(draft: AdventurePrepDraft): ItineraryModel | null
     // les dates reelles. Aucune n est encore connue ici.
     weather: Array.from({ length: days }, () => null),
     metricsContext: metricsContextFor(draft.activities),
+    travelMode: travelModeFor(draft.activities),
     budgetPerPerson:
       draft.preferences.budgetPerPerson === null
         ? PRICE_TO_CHECK
