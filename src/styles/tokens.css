@@ -730,6 +730,8 @@
   --g2-bg: rgb(255 255 255 / calc(0.08 + 0.08 * var(--glass-intensity, 0.5)));
   --g3-bg: rgba(255, 255, 255, 0.90);
   --g3-text: #121815;
+  --g3-bg-disabled: rgba(255, 255, 255, 0.62);
+  --g3-text-disabled: #565B58;
   --gc-bg: rgba(255, 255, 255, 0.12);
 
   --glass-rim: 0 0 0 0.5px rgba(0, 0, 0, 0.55);
@@ -764,6 +766,8 @@
   --gc-reduced-bg: #F5F8F6;
   --g3-bg: rgba(18, 24, 21, 0.94);
   --g3-text: #FFFFFF;
+  --g3-bg-disabled: rgba(255, 255, 255, 0.10);
+  --g3-text-disabled: rgba(255, 255, 255, 0.85);
   --gc-bg: rgba(255, 255, 255, 0.40);
 
   /* Bords assombris et reflets iOS 27 */
@@ -825,6 +829,8 @@ html.dark, .dark, [data-theme='dark'] {
   --gc-reduced-bg: #161A18;
   --g3-bg: rgba(255, 255, 255, 0.95);
   --g3-text: #0E1411;
+  --g3-bg-disabled: rgba(255, 255, 255, 0.62);
+  --g3-text-disabled: #565B58;
   --gc-bg: rgba(255, 255, 255, 0.18);
   --glass-rim: 0 0 0 0.5px rgba(0, 0, 0, 0.65);
   --glass-rim-inner: inset 0 0 0 0.5px rgba(255, 255, 255, 0.25);
@@ -860,6 +866,18 @@ button.g3,
 [class*='var(--g3-bg)'] {
   background-color: var(--g3-bg) !important;
   color: var(--g3-text) !important;
+}
+/* Un CTA primaire desactive ne peut pas etre rendu avec une opacite : elle
+   compose le texte ET son fond vers le meme gris et le rend illisible. On
+   lui donne donc une PALETTE desactivee, portee par deux jetons, et on
+   neutralise l opacite. Ce selecteur (0,2,0) l emporte sur le hack
+   [class*=var(--g3-bg)] (0,1,0) qui impose le materiau G3 en !important. */
+.button-primary:disabled {
+  --g3-bg: var(--g3-bg-disabled);
+  --g3-text: var(--g3-text-disabled);
+  background-color: var(--g3-bg) !important;
+  color: var(--g3-text) !important;
+  opacity: 1;
 }
 .g2,
 button.g2,

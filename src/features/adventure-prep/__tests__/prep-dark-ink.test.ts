@@ -106,9 +106,33 @@ describe('D9 — le preparateur possede son encre d accent', () => {
   });
 
   it('D9-06: la puce selectionnee prend cette encre, pas l accent brut', () => {
+    // Le test ne figeait plus un NOM de variable mais l'ECRITURE : c'est
+    // `--prep-ink-accent-strong` que la puce pressee doit porter. L'ancien
+    // `var(--prep-ink-accent)` tenant 3,48:1 sortait sous le seuil de 4,5:1
+    // pour un libelle de 13px.
     const decl = /\.prep-action\[aria-pressed=["']?true["']?\]\s*\{([^}]*)\}/.exec(prep)?.[1] ?? '';
     const color = /color:\s*([^;]+);/.exec(decl)?.[1]?.trim() ?? '';
-    expect(color).toBe('var(--prep-ink-accent)');
+    expect(color).toBe('var(--prep-ink-accent-strong)');
+  });
+
+  it('D9-06b: aucune encre de TEXTE ne porte l accent de base', () => {
+    // L accent de base (`#7fc49a`, 3,48:1) reste fait pour un TRAIT : bordure,
+    // pastille, filet. Des qu il part dans `color:` il retombe sous 4,5:1.
+    // Ce garde-fou attrape le defaut la ou il reapparait, plutot que de
+    // laisser un libelle de 13px pres de 3:1 dans une feuille non couverte
+    // par la campagne de contraste (qui ne voit que l'ecran par defaut).
+    const rules = [...prep.matchAll(/([^{}]+)\{([^}]*)\}/g)].map((m) => ({
+      selector: m[1].trim().replace(/\s+/g, ' '),
+      body: m[2],
+    }));
+    const offenders = rules
+      .filter(({ selector, body }) =>
+        !selector.startsWith('@') &&
+        !selector.includes('%') &&
+        /color:\s*var\(--prep-ink-accent\)/.test(body),
+      )
+      .map(({ selector }) => selector);
+    expect(offenders).toEqual([]);
   });
 
   it('D9-07: le preparateur remappe l accent du theme sur son encre', () => {

@@ -50,13 +50,13 @@ const ICON_SIZE: Record<ButtonSize, string> = {
    Destructive: tinted glass */
 const VARIANT: Record<ButtonVariant, string> = {
   primary:
-    'bg-[var(--g3-bg)] text-[var(--g3-text)] shadow-[var(--glass-rim)] hover:brightness-[1.08]',
+    'button-primary bg-[var(--g3-bg)] text-[var(--g3-text)] shadow-[var(--glass-rim)] hover:brightness-[1.08] disabled:hover:brightness-100',
   secondary:
-    'bg-[var(--g2-bg)] text-[var(--glass-label)] border border-[var(--glass-rim)] shadow-[var(--glass-rim)] backdrop-blur-md hover:brightness-[1.08]',
+    'bg-[var(--g2-bg)] text-[var(--glass-label)] border border-[var(--glass-rim)] shadow-[var(--glass-rim)] backdrop-blur-md hover:brightness-[1.08] disabled:opacity-[var(--opacity-disabled)]',
   ghost:
-    'bg-transparent text-[var(--glass-label)] hover:bg-[var(--lkv-hover-surface)]',
+    'bg-transparent text-[var(--glass-label)] hover:bg-[var(--lkv-hover-surface)] disabled:opacity-[var(--opacity-disabled)]',
   destructive:
-    'bg-red-500/15 border border-red-500/30 text-[var(--lkv-danger)] hover:bg-red-500/25',
+    'bg-red-500/15 border border-red-500/30 text-[var(--lkv-danger)] hover:bg-red-500/25 disabled:opacity-[var(--opacity-disabled)]',
 };
 
 /**
@@ -93,7 +93,7 @@ export function Button({
         'touch-manipulation transition-transform [transition-duration:var(--motion-press-duration)] [transition-timing-function:var(--motion-ease-standard)]',
         'active:scale-[var(--motion-press-scale)] motion-reduce:transition-none',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]',
-        'disabled:pointer-events-none disabled:opacity-[var(--opacity-disabled)]',
+        'disabled:pointer-events-none',
         VARIANT[variant],
         iconOnly ? ICON_SIZE[size] : SIZE[size],
         fullWidth && 'w-full',

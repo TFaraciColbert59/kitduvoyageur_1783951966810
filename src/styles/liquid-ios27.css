@@ -72,14 +72,20 @@ html[data-liquid-ios27] {
   --hub-label-primary: #ffffff;
   --hub-label-secondary: #999999;
   --hub-symbol: #d9d9d9;
+  /* Le voile 0.58 des symboles est illisible en libelle : compose sur le verre
+     sombre de la barre, il tombait a 2,39:1 (mesure du 2026-09-29) pour un
+     seuil de 4,5:1 a 10px. Les icones gardent --hub-symbol-dim : leur seuil
+     est 3:1 et elles tiennent a 3,5:1. Le libelle a son propre jeton, plus
+     clair, qui partage la teinte verte du jeu d icones. */
   --hub-symbol-dim: rgba(217, 217, 217, 0.58);
+  --hub-label-tertiary: rgb(226, 230, 227, 0.95);
 
   /* Les variables de navigation du design system sont redefinies ici : sinon
      le theme clair de tokens.css (--glass-label: #101813) l'emporte et les
      icones de la barre deviennent illisibles sur le verre sombre. */
   --glass-label: #ffffff;
   --glass-label-secondary: rgba(255, 255, 255, 0.78);
-  --glass-label-tertiary: var(--hub-symbol-dim);
+  --glass-label-tertiary: var(--hub-label-tertiary);
   --glass-label-quaternary: rgba(255, 255, 255, 0.4);
 
   /* Typographie du kit : SF Pro 15px, tracking -0.23px, titre en 590. */

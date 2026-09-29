@@ -436,7 +436,7 @@ export function ActivityPickerScreen({ onOpenSheet: _onOpenSheet }: ActivityPick
         <Button
           variant="primary"
           size="lg"
-          style={{ height: 52, borderRadius: 16, fontSize: 17, fontWeight: 600, background: canContinue ? 'var(--lkv-action)' : 'var(--btn-on-solid)', color: canContinue ? '#fff' : 'var(--lkv-text-secondary)' }}
+          style={{ height: 52, borderRadius: 16, fontSize: 17, fontWeight: 600 }}
           disabled={!canContinue}
           onClick={handleContinue}
         >

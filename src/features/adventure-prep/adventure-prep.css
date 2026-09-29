@@ -350,6 +350,15 @@
      theme sombre n'est pas recopie ici : il depend du theme. On derive donc
      l'encre de l'accent courant, pour n'avoir qu'une seule source. */
   --prep-ink-accent: #7fc49a;
+  /* Meme teinte, remontee pour porter du TEXTE pose. L accent de base tient
+     3,48:1 sur le panneau du tiroir : suffisant pour un trait (bordure,
+     pastille, filet), pas pour du texte. La variante forte tient 5,02:1 sur
+     le meme fond.
+
+     Le contrat est donc : `--prep-ink-accent` pour les traits, jamais pour
+     `color:`. Toute encre de TEXTE pose sur le verre du preparateur passe par
+     `--prep-ink-accent-strong`. */
+  --prep-ink-accent-strong: #a9e6c6;
   --prep-glass-shadow: var(--glass-shadow);
   --prep-glass-opaque: var(--card-tint-solid);
 
@@ -506,6 +515,15 @@
   --lkv-action: var(--prep-ink-accent);
   --lkv-on-action: #08150f;
   --btn-on-solid: #08150f;
+  /* Le materiau G3 du panneau ne peut pas rester celui de tokens.css : le
+     theme clair y impose un fond blanc et une encre sombre, et le hack
+     [class*=var(--g3-bg)] ecrase le style inline du CTA. On le rebranche
+     donc sur les jetons du preparateur — accent plein, encre solide, et
+     une palette desactivee qui reste lisible sur le verre sombre. */
+  --g3-bg: var(--lkv-action);
+  --g3-text: var(--btn-on-solid);
+  --g3-bg-disabled: rgb(255 255 255 / 0.1);
+  --g3-text-disabled: rgb(255 255 255 / 0.82);
   /* Fond : blanc teinté de vert. La topographie est peinte par une couche
      radiale très basse opacité, masquée sous les zones de texte. */
   position: relative;
@@ -663,7 +681,7 @@
    ne porte jamais l information seule. */
 .prep-crumb__label[data-current='true'] {
   color: var(--lkv-text-primary);
-  border-bottom-color: var(--prep-ink-accent);
+  border-bottom-color: var(--prep-ink-accent-strong);
 }
 
 /* Une etape atteinte mais non generee reste annoncee, pas activee. */
@@ -677,7 +695,7 @@
 .prep-crumb__link {
   padding: 2px 0;
   font: inherit;
-  color: var(--prep-ink-accent);
+  color: var(--prep-ink-accent-strong);
   background: transparent;
   border: 0;
   border-bottom: 2px solid transparent;
@@ -747,7 +765,7 @@
 }
 
 .prep-nav__progress b {
-  color: var(--prep-ink-accent);
+  color: var(--prep-ink-accent-strong);
   font-weight: 750;
 }
 
@@ -964,7 +982,7 @@ button.prep-block__row:active {
 .prep-brief__input:focus-visible {
   outline: none;
   background-color: color-mix(in srgb, var(--prep-panel-bg) 88%, var(--lkv-text-primary) 12%);
-  border-color: var(--prep-ink-accent);
+  border-color: var(--prep-ink-accent-strong);
 }
 
 .prep-brief__hint {
@@ -1483,7 +1501,7 @@ button.prep-map__glass:active {
 }
 
 .prep-map__dayrail .prep-map__glass[aria-pressed='true'] {
-  color: var(--prep-ink-accent);
+  color: var(--prep-ink-accent-strong);
   background-color: var(--prep-glass-bg);
   border-color: color-mix(in srgb, var(--lkv-action) 42%, var(--glass-border));
 }
@@ -1523,7 +1541,7 @@ button.prep-map__glass:active {
   border-radius: 999px;
   font-size: var(--prep-type-meta);
   font-weight: 650;
-  color: var(--prep-ink-accent);
+  color: var(--prep-ink-accent-strong);
   background-color: color-mix(in srgb, var(--lkv-action) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--lkv-action) 26%, transparent);
   cursor: pointer;
@@ -1710,7 +1728,7 @@ button.prep-map__glass:active {
 }
 
 .prep-rail__line[data-state='done'] {
-  color: var(--prep-ink-accent);
+  color: var(--prep-ink-accent-strong);
 }
 
 .prep-rail__line[data-state='active'] {
@@ -1729,7 +1747,7 @@ button.prep-map__glass:active {
 }
 
 .prep-rail__line[data-state='done'] .prep-rail__dot {
-  color: var(--prep-ink-accent);
+  color: var(--prep-ink-accent-strong);
 }
 
 .prep-rail__line[data-state='active'] .prep-rail__dot {
@@ -1767,7 +1785,7 @@ button.prep-map__glass:active {
   width: 44px;
   height: 44px;
   border-radius: var(--lkv-radius-concentric);
-  color: var(--prep-ink-accent);
+  color: var(--prep-ink-accent-strong);
   background-color: color-mix(in srgb, var(--lkv-action) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--lkv-action) 18%, transparent);
 }
@@ -1898,7 +1916,7 @@ button.prep-map__glass:active {
 }
 
 .prep-action[aria-pressed='true'] {
-  color: var(--prep-ink-accent);
+  color: var(--prep-ink-accent-strong);
   /* Un `background-color` ICI ecraseait la densite du panneau : la pastille
      pressee redevenait quasi transparente et laissait la photo claire
      repasser sous son propre texte. On SUPERPOSE donc un voile d accent en
@@ -2084,7 +2102,7 @@ button.prep-map__glass:active {
 }
 
 .prep-act[aria-pressed='true'] {
-  color: var(--prep-ink-accent);
+  color: var(--prep-ink-accent-strong);
   background-color: color-mix(in srgb, var(--lkv-action) 11%, transparent);
   border-color: color-mix(in srgb, var(--lkv-action) 34%, transparent);
 }
@@ -2102,7 +2120,7 @@ button.prep-map__glass:active {
   width: 40px;
   height: 40px;
   border-radius: var(--lkv-radius-concentric);
-  color: var(--prep-ink-accent);
+  color: var(--prep-ink-accent-strong);
   background-color: color-mix(in srgb, var(--lkv-action) 10%, transparent);
 }
 
@@ -2781,7 +2799,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
     color-mix(in srgb, var(--lkv-action) 12%, transparent)
   );
   border-color: var(--lkv-action);
-  color: var(--lkv-action);
+  color: var(--prep-ink-accent-strong);
   font-weight: 600;
 }
 
@@ -2873,7 +2891,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 .chip[aria-pressed='true'] {
   background: color-mix(in srgb, var(--lkv-action) 14%, transparent);
   border-color: var(--lkv-action);
-  color: var(--lkv-action);
+  color: var(--prep-ink-accent-strong);
   font-weight: 600;
 }
 
