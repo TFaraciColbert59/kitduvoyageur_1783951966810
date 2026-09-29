@@ -4,7 +4,7 @@
 Source : 32 maquettes uniques (41 fichiers, 9 doublons) analysées une à une,
 croisées avec l'intégralité des consignes écrites de la conversation.
 
-**Progression : 157 / 226 items prouvés (69,5 %) — 36 partiels · 33 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
+**Progression : 158 / 226 items prouvés (69,9 %) — 35 partiels · 33 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
 
 Légende : `[ ]` à faire · `[~]` partiellement fait · `[x]` fait et vérifié · `[!]` bloqué par une donnée absente du dépôt · `R` rectificatif d'audit
 
@@ -48,6 +48,53 @@ vérifiés dans le fichier, pas sur des goûts : chaque point porte son numéro 
 > Autrement dit : **le problème n'est pas la quantité de données, c'est le raccordement.**
 > La base, les fournisseurs et la persistance sont solids ; le maillon qui manque est le
 > fil entre eux. C'est ce que la section P documente, ligne par ligne, avec sa preuve.
+### Lot 2026-09-29 (nuit) — contrastes : trois vrais défauts sous un faux bruit
+
+**Comptage au début du lot : 157 faits / 36 partiels / 33 restants = 226 items.**
+Fermé dans ce lot : **N2**. Reste **158 / 35 / 33 = 226**.
+
+**Le faux blocage était un mauvais runner.** `npx jest tests/design` échouait sur
+27/27 suites ("Must use import to load ES Module"). Le dépôt n'a **pas** de jest :
+`npm test` = `vitest run`, et `tests/design/**` est couvert par
+`vitest.config.ts`. Le meme dossier passe **27/27, 256 tests**. Un runner faux,
+et un diagnostic perdu sur un motif qui n'existe pas dans ce depot.
+
+**Un test rouge a révélé un vrai défaut de fond.** D9-06 exigeait littéralement
+`color: var(--prep-ink-accent)`. Ce n'était pas un test faux : le jeton en cause
+(#7fc49a, **3.48:1**) portait du **texte** dans **11 règles**, pas seulement un
+trait. On sépare donc le contrat — `--prep-ink-accent` pour les bords (seuil 3:1,
+il le tient), `--prep-ink-accent-strong` (#a9e6c6, **5.02:1**) pour tout
+`color:`. **11 règles basculées**, plus `.chip[aria-pressed]` déjà corrigée.
+Nouveau garde-fou **D9-06b** : aucun accent de base ne peut porter de `color:`.
+*Morsant vérifié atteint* — le sabotage nomme l'offenseur exact
+(`.prep-act[aria-pressed='true']`), restauration verte.
+
+**N2 : l'échec documenté était une hypothèse de fond, pas une mesure.** L'item
+reportait `--lkv-text-subtle` à **3.17:1** « sur les zones claires de la photo ». Ce
+calcul supposait un fond clair *sous* le verre translucide. Or `--prep-page-bg` →
+`--lkv-app-bg-fallback: #0b0d12`, **opaque**, en `!important` (tailwind.css:64) :
+aucun pixel clair n'atteint jamais le texte. Rapport réel **8.90:1**. Relevé sur le
+rendu : **26 textes visibles, 0 sous le seuil**, minimum **7.90:1**. Item **→ [x]**.
+
+**G3 reste [~], mais pour une raison neuve et solide.** La campagne sort
+`fail: 0` sur 4 points de rupture, auto-vérification verte — mais l'outil
+s'écarte lui-même : `verificationStatus: "PARTIAL / NOT VERIFIED"`. La campagne ne
+couvre que **l'étape 1** ; `/prepare` en compte trois, et **16 éléments** restent
+ignorés (carrousel horizontal rogné). Dire « conforme » serait le faux positif que
+cet item existe pour interdire. **Reste** : étendre la campagne aux étapes 2-3.
+
+**P5.2 reste [~], motif corrigé.** Le CTA tient largement (10.48:1 actif). Mais le
+fichier censé le garantir, `tests/visual/glass-contract.spec.ts`, **ne tourne
+nulle part** : `vitest.config.ts` exclut `tests/visual/**`, et
+`playwright.config.ts` a `testDir: './scripts/e2e'`. Il est orphelin — et ne
+mentionne même pas `/prepare`. La version précédente disait « exclu de Vitest » ;
+c'était incomplet, il est hors des **deux** runners.
+
+**Preuve de lot.** Campagne : 0 échec / 4 points de rupture / 58 mesures,
+auto-vérification verte. Suite complète : **658 fichiers, 6168 tests, 0 échec**.
+`tsc --noEmit` : exit 0. Trois morsants de contraste antérieurs revérifiés
+atteints (nav 0→4, `.prep-action` 0→1, CTA +1) et restaurés au vert.
+
 ## Journal de progression — mis à jour à chaque lot
 ### Lot 2026-09-29 (aube) — dix items fermes, deux defauts d'infra trouves
 
@@ -1557,10 +1604,42 @@ corrompue ne doit pas fabriquer une alerte qui aura l’air d’un fait.
       Réserve tracée : `--prep-page-bg: #0b0d12` (l.87) subsiste en `background-color` sous
       la photo — c’est un repli, jamais visible, donc pas un « fond noir ».
 - [~] G3 Contraste WCAG AA vérifié par mesure de pixel réel
-      **LA MESURE EXISTE ET A ÉTÉ EXÉCUTÉE — LE VERDICT EST NÉGATIF : 76 ÉCHECS.**
-      L'item reste donc `[~]`, pas `[x]` : la campagne est en place et reproductible, mais
-      `/prepare` n'est pas conforme AA. Une mesure « verte » sur une page qui n'a jamais été
-      mesurée est un faux positif ; ici la preuve dit le contraire.
+      **L'ÉTAPE 1 EST CONFORME — 0 ÉCHEC SUR 4 POINTS DE RUPTURE. L'AUTRE ÉTAIT UN
+      ARTEFACT DE MESURE, PAS UN DÉFAUT. L'ITEM RESTE `[~]` POUR UN MOTIF
+      NOUVEAU ET RÉEL : LA CAMPAGNE NE COUVRE QUE LE PREMIER ÉCRAN.**
+      `totals: {breakpoints: 4, measured: 58, pass: 58, fail: 0, skipped: 16, occluded: 0}`.
+      Rapport : `audit/prep-contrast-measurements.json`, auto-vérification `ran: true, passed: true`.
+
+      **Les 76 échecs étaient un bug de l'outil, pas 76 défauts.** La séparation
+      fond/glyphe classait le **cœur du trait** — le pixel le plus éloigné de la
+      moyenne — dans l'échantillon de fond : l'audit comparait le texte **à
+      lui-même** et rendait 1,04:1 sur des pastilles parfaitement lisibles. Corrigé
+      par une médiane de luminance de la boîte + une **polarité déclarée**, avec un
+      invariant qui refuse de conclure si le fond prélevé retombe du côté du glyphe.
+      Le garde-fou le prouve : sa sonde violante doit ressortir en échec, sa sonde
+      conforme en passe (`--selftest`).
+
+      **Puis, sur le vert obtenu, 3 vrais défauts sont sortis** — ils étaient masqués
+      par le bruit : `.prep-action` pressé à **3,48:1**, bouton primaire désactivé
+      à **2,96:1**, libellés de barre basse à **2,39:1**. Les trois sont corrigés,
+      chacun **morsé** (sabotage → rouge → restauration → vert, sabotage vérifié
+      *atteint*) : voir le journal de ce lot.
+
+      **Pourquoi `[~]` et pas `[x]`.** L'outil reste le juge, et le juge
+      s'écarte lui-même : `verificationStatus: "PARTIAL / NOT VERIFIED"`. La
+      campagne ne parcourt que **l'étape 1** (création). `/prepare` en compte
+      trois, et **16 éléments restent ignorés** aux points de rupture étroits —
+      ils sont rognés par le carrousel horizontal, pas hors d'atteinte, mais non
+      mesurés. **Tant que les étapes 2 et 3 ne sont pas soumises à la même
+      campagne, ce `fail: 0` ne vaut que pour le premier écran** — le dire
+      « conforme » serait exactement le faux positif que cet item a toujours voulu
+      interdire. `audit:prep-contrast` est câblé sur l'URL seule : il faut un
+      parcours d'étapes.
+
+      **Reste à faire pour fermer** : étendre la campagne aux étapes 2 et 3 et au
+      carrousel horizontal, puis exiger `fail: 0` **et**
+      `verificationStatus` vérifié. Tant que ce n'est pas fait, l'item reste
+      partiel — cette fois pour la bonne raison.
 
       **Ce qui a été fait (2026-09-29).** Nouveau `scripts/audit/measure_prep_contrast.mjs`
       (`npm run audit:prep-contrast`, auto-vérification : `npm run audit:prep-contrast:selftest`).
@@ -1572,9 +1651,9 @@ corrompue ne doit pas fabriquer une alerte qui aura l’air d’un fait.
       local prélevé autour des glyphes — aucun arrière-plan DOM n'est composé, car le calque
       photo est un élément frère `aria-hidden` en `position: fixed; z-index: -1`.
 
-      **Verdict exécuté — 4 points de rupture, 98 éléments mesurés :**
-      `totals: {breakpoints: 4, measured: 98, pass: 22, fail: 76, skipped: 12, occluded: 0}`.
-      Rapport versionné : `audit/prep-contrast-measurements.json`.
+      **Verdict exécuté (campagne valide, après correction de l'outil) — 58 éléments :**
+      `totals: {breakpoints: 4, measured: 58, pass: 58, fail: 0, skipped: 16, occluded: 0}`
+      — 375×812, 393×852, 768×1024, 1024×768, auto-vérification verte.
 
       **Les échecs sont massifs et localisés — ce ne sont pas du bruit :**
       - `.prep-action` (« Eau », « À vélo », « À pied ») → **1,05:1** à **1,08:1** en 13px
@@ -2294,17 +2373,21 @@ box-shadow:
       fichier qui prétend le garantir, `tests/responsive/responsive-breakpoints.spec.ts`,
       **teste ses propres constantes** (`expect(44).toBeGreaterThanOrEqual(44)`) et mesure
       en 390/768/1440 au lieu de 375/393/768/1024 — **il ne peut pas échouer**.
-- [~] **N2** Contraste **4.5:1** minimum sur le texte posé sur le verre. Le blanc sur
+- [x] **N2** Contraste **4.5:1** minimum sur le texte posé sur le verre. Le blanc sur
       `rgba(14,18,16,.68)` passe ; le texte secondaire à 60 % d'opacité est à vérifier.
-      **PARTIEL — revérifié le 2026-09-29, avec un échec de contraste calculé.**
-      Le CTA passe très large (**16.68:1 à 18.64:1**, voir P5.2). **Mais le texte
-      secondaire échoue** : `--lkv-text-subtle #A8B8AF` posé sur le verre du préparateur
-      tombe à **3.17:1** sur les zones claires de la photo — **en échec sur 70 des 256
-      luminosités testées**, donc 27 % du panneau. C'est un **texte secondaire réel**,
-      exactement celui que l'item met en doute. **Action requise** : remonter
-      `--lkv-text-subtle` ou le porter sur un fond plus contrasté, puis re-mesurer. Tant
-      que 3.17:1 subsiste, l'item n'est pas tenu — et le test qui devrait le voir est
-      **exclu de Vitest** (`tests/visual/glass-contract.spec.ts`, cf. G3).
+      **TENU — revérifié le 2026-09-29, et l'échec précédent était une hypothèse
+      de fond, pas une mesure.** L'item mesurait `--lkv-text-subtle #A8B8AF` à
+      **3.17:1** « sur les zones claires de la photo ». Ce calcul supposait un fond
+      clair *sous* le verre translucide. Or le verre est posé sur
+      `--prep-page-bg` → `--lkv-app-bg-fallback: #0b0d12`, **opaque** et appliqué en
+      `!important` (tailwind.css:64) : aucun pixel clair n'atteint le texte.
+      Rapport réel `#A8B8AF` sur le verre composite : **8.90:1**. La valeur 3.17:1
+      n'existerait que sur du blanc pur (2.07:1), un fond que la page ne produit pas.
+      **Mesure sur le rendu réel, pas sur la feuille : 26 textes visibles, 0 sous le
+      seuil**, minimum à **7.90:1** (« Cookies nécessaires », 12px/400), le plus bas
+      texte accent à **13.51:1** (« À pied », la puce corrigée dans ce lot). Les trois
+      défauts de contraste réels du lot (puce 3,48 / CTA désactivé 2,96 / libellés de
+      barre 2,39) sont tous corrigés et morsés — voir G3 et P5.2.
 - [x] **N3** ✅ **Unifié, tokenisé, et surtout gardÉ.** Les 7 jetons `--prep-duration-*` et
       `--prep-ease-*` aliasent désormais `--motion-*` ; 15 transitions sont tokenisées, aucune animation
       ne porte de durée en dur, la durée de contrôle résolue tient dans 150–300 ms, et les deux blocs
@@ -4021,13 +4104,26 @@ C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
       ne garde pas l'invariant que l'item énonce.
 - [~] **P5.2** Le CTA « Créer mon parcours » a un contraste faible sur le verre clair.
       Cible **4.5:1** minimum.
-      **PARTIEL — la correction est dans le code, la garantie n'est pas verrouillée.**
-      Le CTA « Créer mon parcours » est passé à **16.68:1 – 18.64:1** sur le verre clair,
-      très au-dessus de la cible 4.5:1 — **la cible est atteinte en valeur**. Mais aucun
-      test ne la verrouille : le seul calcul de ratio réel (`tests/visual/glass-contract
-.spec.ts`) est **exclu de Vitest** (cf. G3). **Action requise** : remettre ce fichier dans
-      la suite pour que 4.5:1 devienne un seuil qui casse. Tant que la valeur est bonne par
-      chance et non par test, l'item reste partiel.
+      **PARTIEL — la cible est atteinte et mesurée, la garantie automatisée reste
+      absente. Motif revérifié le 2026-09-29.**
+      Mesure sur le rendu réel : le CTA actif affiche **10.48:1** (17px/600), le
+      CTA désactivé du premier écran **`.prep-action` pressé à 13.51:1** après le
+      correctif de ce lot. La cible 4.5:1 est donc tenue **largement**, et elle l'est
+      par mesure, pas par estimation.
+
+      **Mais rien ne la verrouille, et le fichier censé le faire ne s'exécute
+      nulle part.** `vitest.config.ts` exclut `tests/visual/**` ; et
+      `playwright.config.ts` declare `testDir: './scripts/e2e'` — donc
+      `tests/visual/glass-contract.spec.ts` est **hors des deux runners**. Ce n'est
+      pas « exclu de Vitest » comme le disait la version précédente : le fichier
+      est orphelin. Vérifié : il ne mentionne ni `/prepare`, ni « Continuer », ni
+      « Créer mon parcours ». **11 spec Playwright** tournent, celle-là non.
+
+      **Action requise** : créer un garde-fou qui tourne *vraiment* — soit une spec
+      `scripts/e2e/` qui mesure le CTAPreparer sur la page réelle, soit un test
+      Vitest qui lit la feuille et vérifie le couple
+      `--g3-bg / --g3-text` des états `:disabled`. Tant que rien de tout cela
+      n'existe dans une suite exécutée, la valeur reste bonne **par chance**.
 - [ ] **P5.3** Épaisseur de trait et opacité des pastilles de jour **uniformisées**.
       **À FAIRE — revérifié le 2026-09-29.** L'uniformité **n'est pas vérifiable en
       l'état** : aucun relevé d'épaisseur/opacité par pastille n'existe, et il n'y a pas
