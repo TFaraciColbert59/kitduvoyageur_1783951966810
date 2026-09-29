@@ -657,15 +657,43 @@ async function waitForPhotoLayer(page) {
   }
 }
 
+/**
+ * Un `page.evaluate` qui survit a un redemarrage de page.
+ *
+ * Charger `/prepare` declenche un aller-retour (chargement de donnees,
+ * redirection client) qui detruit le contexte d execution. `page.evaluate`
+ * leve alors `Execution context was destroyed` - une COURSE de chargement,
+ * pas une panne. Sans filet, l auto-verification echoue sur un detail de
+ * timing et les 98 mesures de la campagne partent avec elle.
+ *
+ * On rejoue jusqu a trois fois, en attendant la reprise a chaque fois. Au
+ * dela, l erreur remonte telle quelle : une page reellement morte doit
+ * continuer de se voir, elle ne doit pas etre masquee par une patience.
+ */
+async function safeEvaluate(page, fn, arg) {
+  const DESTRUCTIBLE = /Execution context was destroyed|Target closed|Navigating frame was detached/i;
+  for (let tentative = 0; tentative < 3; tentative += 1) {
+    try {
+      return await page.evaluate(fn, arg);
+    } catch (err) {
+      const motif = String(err && err.message ? err.message : err);
+      if (!DESTRUCTIBLE.test(motif) || tentative === 2) throw err;
+      await page.waitForLoadState('domcontentloaded', { timeout: 15000 }).catch(() => {});
+      await page.waitForTimeout(400);
+    }
+  }
+  throw new Error('safeEvaluate : boucle epuisee sans lever ni valeur ni erreur utile');
+}
+
 async function dismissCookieBanner(page) {
   const result = { mechanism: 'localStorage (lkdv_cookie_consent)', dismissed: null, fallback: null, verifiedAbsent: null };
-  if (await page.evaluate(COOKIE_BANNER_PRESENT)) {
-    result.fallback = await page.evaluate(HIDE_COOKIE_BANNER);
+  if (await safeEvaluate(page, COOKIE_BANNER_PRESENT)) {
+    result.fallback = await safeEvaluate(page, HIDE_COOKIE_BANNER);
     result.mechanism = 'masquage DOM (bouton « Tout accepter » → conteneur)';
   }
   result.dismissed = true;
   await page.waitForTimeout(150);
-  result.verifiedAbsent = !(await page.evaluate(COOKIE_BANNER_PRESENT));
+  result.verifiedAbsent = !(await safeEvaluate(page, COOKIE_BANNER_PRESENT));
   if (!result.verifiedAbsent) {
     result.note = 'Le bandeau cookies est toujours visible : il contamine la capture et les mesures du bas de l’écran.';
   }
@@ -711,13 +739,13 @@ async function measureBreakpoint(browser, { breakpoint, url, storageState, baseU
   await page.waitForTimeout(900);
   const cookie = await dismissCookieBanner(page);
 
-  const document_ = await page.evaluate(() => ({
+  const document_ = await safeEvaluate(page, () => ({
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth,
     scrollHeight: document.documentElement.scrollHeight,
     innerHeight: window.innerHeight,
   }));
-  const pageState = await page.evaluate(READ_PAGE_STATE);
+  const pageState = await safeEvaluate(page, READ_PAGE_STATE);
 
   await fs.promises.mkdir(SHOTS_DIR, { recursive: true });
   const referenceShot = path.join(SHOTS_DIR, `${breakpoint.id}.png`);
@@ -728,7 +756,7 @@ async function measureBreakpoint(browser, { breakpoint, url, storageState, baseU
   // et fait defiler son contenu dans un conteneur interne. Uniquement la
   // fenetre, la campagne n'aurait couvert que le premier ecran tout en
   // annoncant une page entiere.
-  const scrollContainers = await page.evaluate(FIND_SCROLL_CONTAINERS);
+  const scrollContainers = await safeEvaluate(page, FIND_SCROLL_CONTAINERS);
   const windowScrollPx = Math.max(0, document_.scrollHeight - breakpoint.height);
   const containerScrollPx = scrollContainers.reduce(
     (max, container) => Math.max(max, container.scrollablePxY || 0),
@@ -746,9 +774,9 @@ async function measureBreakpoint(browser, { breakpoint, url, storageState, baseU
     // on ne rejoue pas la meme capture, on ne perd pas de temps pour rien.
     if (visitedScrollY.has(scrollY)) continue;
     visitedScrollY.add(scrollY);
-    await page.evaluate(SCROLL_EVERYTHING, scrollY);
+    await safeEvaluate(page, SCROLL_EVERYTHING, scrollY);
     await page.waitForTimeout(260);
-    const nodes = await page.evaluate(COLLECT_TEXT_NODES);
+    const nodes = await safeEvaluate(page, COLLECT_TEXT_NODES);
     if (nodes.length === 0) continue;
     const { data, info } = await sharp(await page.screenshot({ fullPage: false }))
       .removeAlpha()
@@ -826,7 +854,7 @@ async function measureBreakpoint(browser, { breakpoint, url, storageState, baseU
     }
   }
 
-  await page.evaluate(RESET_SCROLL);
+  await safeEvaluate(page, RESET_SCROLL);
   await context.close();
   return {
     breakpoint,
@@ -878,10 +906,10 @@ async function runSelfTest(browser, { breakpoint, url, storageState, baseUrl }) 
   const probes = [];
   for (const probe of SELFTEST_PROBES) {
     const analytic = round2(contrastRatio(probe.text, probe.plate));
-    await page.evaluate(REMOVE_PROBES);
-    await page.evaluate(INJECT_PROBE, { probeId: probe.id, plate: probe.plate, text: probe.text });
+    await safeEvaluate(page, REMOVE_PROBES);
+    await safeEvaluate(page, INJECT_PROBE, { probeId: probe.id, plate: probe.plate, text: probe.text });
     await page.waitForTimeout(180);
-    const nodes = await page.evaluate(COLLECT_TEXT_NODES);
+    const nodes = await safeEvaluate(page, COLLECT_TEXT_NODES);
     const { data, info } = await sharp(await page.screenshot({ fullPage: false }))
       .removeAlpha()
       .raw()
@@ -930,7 +958,7 @@ async function runSelfTest(browser, { breakpoint, url, storageState, baseUrl }) 
       shot,
     });
   }
-  await page.evaluate(REMOVE_PROBES);
+  await safeEvaluate(page, REMOVE_PROBES);
   await context.close();
   return { ran: true, breakpoint: breakpoint.id, passed: probes.every((probe) => probe.passed), probes };
 }
