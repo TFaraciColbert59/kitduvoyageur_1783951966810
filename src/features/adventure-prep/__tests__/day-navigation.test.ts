@@ -29,6 +29,7 @@ function step(over: Partial<ItineraryStep> & { id: string; day: number; order: n
     kind: 'arret',
     title: 'Etape',
     placeName: null,
+    placeId: null,
     startTime: null,
     durationMin: null,
     reason: null,

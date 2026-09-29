@@ -203,6 +203,16 @@ export interface ItineraryStep {
   kind: ItineraryStepKind;
   title: string;
   placeName: string | null;
+  /**
+   * Identifiant REEL du lieu dans le catalogue d origine, ou `null` quand la
+   * source n en fournit pas (ligne OSM, commerce de proximite).
+   *
+   * Toujours present, y compris a `null` : une absence doit se lire « aucun
+   * lieu rattache », jamais « identifiant oublie ». Jamais de valeur fabriquee
+   * — une cle synthetique se lit comme une reference de catalogue qui ne
+   * mene nulle part.
+   */
+  placeId: string | null;
   /** Heure indicative « 08:30 », jamais une reservation. */
   startTime: string | null;
   durationMin: number | null;

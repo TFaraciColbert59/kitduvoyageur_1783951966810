@@ -79,6 +79,7 @@ function nuitAvec(price: MoneyValue, extra: Partial<ItineraryStep> = {}): Itiner
     kind: 'nuit',
     title: 'Refuge du Gouter',
     placeName: 'Refuge du Gouter',
+    placeId: null,
     startTime: null,
     durationMin: null,
     reason: null,

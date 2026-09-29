@@ -50,6 +50,7 @@ function step(day: number, id: string): ItineraryStep {
     kind: 'arret',
     title: `Etape ${id}`,
     placeName: null,
+    placeId: null,
     startTime: null,
     durationMin: null,
     reason: null,

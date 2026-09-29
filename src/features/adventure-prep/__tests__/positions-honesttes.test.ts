@@ -63,6 +63,7 @@ function step(overrides: Partial<ItineraryStep> & { id: string; day: number; ord
     kind: 'arret',
     title: 'Etape',
     placeName: null,
+    placeId: null,
     startTime: null,
     durationMin: 60,
     reason: null,

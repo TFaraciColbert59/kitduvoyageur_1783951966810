@@ -21,6 +21,7 @@ function step(id: string): ItineraryStep {
     kind: 'arret',
     title: 'Pause',
     placeName: null,
+    placeId: null,
     startTime: null,
     durationMin: null,
     reason: null,

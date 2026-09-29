@@ -21,6 +21,7 @@ function step(overrides: Partial<ItineraryStep> = {}): ItineraryStep {
     kind: 'arret',
     title: 'Pause au col',
     placeName: null,
+    placeId: null,
     startTime: null,
     durationMin: null,
     reason: null,

@@ -53,6 +53,7 @@ function stepOf(
     kind,
     title,
     placeName,
+    placeId: null,
     startTime: null,
     durationMin: null,
     reason: null,

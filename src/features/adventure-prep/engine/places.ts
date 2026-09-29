@@ -65,6 +65,12 @@ export interface PlaceInventory {
   // enchainait un sommet et un hameau comme s ils etaient voisins.
   readonly lat?: number | null;
   readonly lon?: number | null;
+  /**
+   * Identifiant REEL du catalogue d origine, quand la source en fournit un.
+   * `null` ou absent sinon. transporter cette valeur est ce qui permet de
+   * rattacher une etape a un lieu sans repasser par une recherche par nom.
+   */
+  readonly catalogId?: string | null;
 }
 
 const KNOWN_CATEGORIES = new Set([
@@ -362,25 +368,18 @@ export function matchNamedPlace(
 /**
  * Une etape RATTACHEE a un lieu.
  *
- * `types.ts` appartient a un autre agent : on ne le modifie pas. L'intersection
- * ci-dessous etait la seule facon de porter `placeId` sans ecrire dans ce
- * fichier-la. Le champ reste OPTIONNEL cote `ItineraryStep` : tous les
- * modeles qui ne passent pas par `assignPlaces` (regles, repli, ajustement)
- * restent valides.
+ * Ce type etait un PANSEMENT : `ItineraryStep` ne declarait pas `placeId`,
+ * et cette intersection locale servait a le porter a sa place. Le modele
+ * porte desormais le champ, et `tsc` oblige chaque producteur a le
+ * declarer. L intersection n a plus rien a ajouter.
+ *
+ * Conserve en alias : les appelants et les tests nomment encore ce type,
+ * et les renommer ne fermerait aucun ecart reel.
  */
-export interface BoundItineraryStep extends ItineraryStep {
-  /**
-   * Identifiant du catalogue du lieu, ou `null`. Toujours present sur un
-   * modele rendu par `assignPlaces` : `null` signifie « aucun identifiant
-   * connu », jamais « identifiant oublie ».
-   */
-  readonly placeId: string | null;
-}
+export type BoundItineraryStep = ItineraryStep;
 
 /** Un programme dont chaque etape porte son identite de lieu. */
-export interface BoundItineraryModel extends ItineraryModel {
-  readonly steps: readonly BoundItineraryStep[];
-}
+export type BoundItineraryModel = ItineraryModel;
 
 function unlocated(step: ItineraryStep, placeId: string | null = null): BoundItineraryStep {
   return { ...step, lat: null, lon: null, placeId };

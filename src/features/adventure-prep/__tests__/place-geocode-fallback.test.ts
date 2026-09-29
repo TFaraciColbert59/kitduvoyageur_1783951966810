@@ -141,6 +141,7 @@ function step(over: Partial<ItineraryStep> & Pick<ItineraryStep, 'id' | 'kind' |
     day: 1,
     order: 0,
     placeName: null,
+    placeId: null,
     startTime: null,
     durationMin: null,
     reason: null,

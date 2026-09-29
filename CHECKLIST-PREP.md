@@ -4,7 +4,7 @@
 Source : 32 maquettes uniques (41 fichiers, 9 doublons) analysées une à une,
 croisées avec l'intégralité des consignes écrites de la conversation.
 
-**Progression : 142 / 226 items prouvés (62.8 %) — 36 partiels · 48 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
+**Progression : 143 / 226 items prouvés (63,3 %) — 35 partiels · 48 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
 
 Légende : `[ ]` à faire · `[~]` partiellement fait · `[x]` fait et vérifié · `[!]` bloqué par une donnée absente du dépôt · `R` rectificatif d'audit
 
@@ -3699,23 +3699,44 @@ C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
       le nombre de points, y compris en mode résumé ; le vide reste un vide. Non-régression feature : **1799/1799**.
       Le bandeau affichait un titre figé « À vérifier avant de partir » quel que soit le nombre de points : au-delà du
       seuil il annonce désormais **le nombre réel**, et un bouton « Voir les N points » déplie le détail à la demande.
-- [~] **P3.3** 🔶 **Le catalogue ne perd plus l'identifiant — le modèle, lui, refuse encore de le porter.**
+- [x] **P3.3** ✅ **Le modèle porte l’identité — le pansement a disparu.**
       `catalogId` ne reçoit plus que `textOrNull(poi.id)` : la clé synthétique
-      `name:lat:lng` est reléguée en interne, parce qu'elle ne retrouvait aucun lieu à la
-      volée. `is_verified === true` est exigé. Chaque étape exposée porte un `placeId`
-      explicite (`string | null`), et `nearestCompatible` est devenu public, borné à
-      25 km, renvoyant `{candidate, distanceKm}`. `'poi'` a quitté les `kindCategories`.
-      Le prix de nuit tombe en « à vérifier » quand la base n'a rien, et
+      `name:lat:lng` est reléguée en interne, parce qu’elle ne retrouvait aucun lieu à la
+      volée. `is_verified === true` est exigé. `nearestCompatible` est public, borné à
+      25 km, renvoyant `{candidate, distanceKm}`. `’poi’` a quitté les `kindCategories`.
+      Le prix de nuit tombe en « à vérifier » quand la base n’a rien, et
       `buildPriceBreakdown()` — qui affichait « 75 € pour 3 personnes » sur une donnée
-      absente — a été supprimée.
-      **Ce qui reste ouvert, et c'est réel** : `types.ts` n'a toujours aucun `placeId`
-      (`ItineraryStep` ne porte que `placeName`), `StepDraft` n'a ni identifiant ni
-      coordonnées, et `PlaceInventory` / `loadPlaceInventoryFor` ne transportent pas
-      l'identifiant. Le champ est porté par une intersection locale `BoundItineraryStep`
-      dans `places.ts` : c'est un pansement sur un modèle qui refuse la donnée. P2.7
-      (géo-proximité) en dépend directement.
-      **Preuve** : `places-p3-identity.test.ts` + `places-p3-honesty.test.ts`, 4 morsants
-      (`placeId: origin.id` → `null` donne `expected null to be 'chamonix'`), 2003 verts.
+      absente — a été supprimé.
+      **Le modèle porte maintenant la donnée, et le compilateur l’exige** :
+      `ItineraryStep.placeId` est un champ **requis** `string | null`, donc **13 sites de
+      production** ont dû le déclarer — `tsc` ne compile plus une étape qui ne dit pas à quel
+      lieu elle est rattachée. C’est le point : le modèle ne peut plus refuser la donnée.
+      `StepDraft` transporte l’identifiant, et le **départ et le retour le portent
+      réellement** (`origin.id` / `retour.id`) — les mettre à `null` aurait été un
+      mensonge par omission, ces lieux en ont un.
+      `PlaceInventory` porte `catalogId` et **`loadPlaceInventoryFor` ne le jette plus** :
+      l’inventaire reconstruisait l’objet sans lui, donc le proposeur reçevait un nom et
+      l’identifiant partait à la poubelle — rattacher un lieu revenait à le retrouver par son
+      nom, donc à le confondre avec un homonyme.
+      `insertWaypoint` accepte un `WaypointPlace` **optionnel en fin de signature** (les
+      appels existants ne bougent pas) : un lieu choisi dans la liste géolocalisée est
+      rattaché par son nom ET son identifiant ; un point nu posé à la main reste
+      `null`/`null`. `BoundItineraryStep` n’est plus qu’un alias, conservé parce que les
+      appelants le nomment encore — le renommer ne fermerait aucun écart réel.
+      **Un doute testé plutôt que cru** : `unlocated()` force `placeId: null`, ce qui
+      aurait effacé l’identité du départ. La lecture du code montre que `assignPlaces`
+      rattache `origin.id` explicitement (l.529) et que `unlocated` n’est appelé que
+      quand il n’y a aucune origine — donc `null` y est honnêtte. **Aucun durcissement
+      ajouté** : le code est restsé correct, `P3M-06` garde la dérégée.
+      **Preuve** : `places-p3-model.test.ts` (6 morsants : champ absent sur une étape du
+      moteur, inventaire sans `catalogId`, départ sans `origin.id`, identifiant effacé par
+      une résolution vide) + `waypoint-identity.test.ts` (5 : le point nu ne bouge pas, le
+      lieu choisi est rattaché, un nom vide ne fait pas disparaître l’identifiant, un nom
+      ne déplace pas le point) + les morsants existants `places-p3-identity` /
+      `places-p3-honesty`. `tsc` exit 0, **2 044 tests verts** dans `src/features/adventure-prep`.
+      **Débloque P2.7** : la liste géolocalisée peut rattacher une étape à un lieu réel sans
+      repasser par une recherche par nom.
+
 - [x] **P3.4** ✅ **Les réservoirs d'étapes génériques sont indexés, et la séquence est
       pinnée.** `WATER_LATER` et `VIEW` n'étaient pas deux étapes distinctes : c'était un
       objet unique réemployé à l'identique à partir du deuxième jour — le parcours

@@ -3,6 +3,7 @@
 // d indisponibilite distinct de « pas de pluie ».
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchDayWeather } from '@/features/adventure-prep/weatherService';
+import { METEO_PROVIDER } from '@/features/adventure-prep/dataProviders';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { clientIpFromHeaders } from '@/lib/rate-limit';
 
@@ -94,5 +95,10 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  return NextResponse.json({ status: 'ok', days }, { status: 200, headers: CACHE });
+  // Le credit voyage avec la donnee : l ecran affiche la source sans la
+  // deviner, et une panne reste sans source.
+  return NextResponse.json(
+    { status: 'ok', days, provider: METEO_PROVIDER },
+    { status: 200, headers: CACHE },
+  );
 }

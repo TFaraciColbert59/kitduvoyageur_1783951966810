@@ -2,6 +2,7 @@
 // /api/route : meme allowlist, meme rate limit, meme honnetete des statuts.
 import { NextRequest, NextResponse } from 'next/server';
 import { elevationsAt } from '@/features/adventure-prep/routingService';
+import { ELEVATION_PROVIDER } from '@/features/adventure-prep/dataProviders';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { clientIpFromHeaders } from '@/lib/rate-limit';
 
@@ -66,5 +67,9 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  return NextResponse.json({ status: 'ok', elevations }, { status: 200, headers: CACHE });
+  // Meme regle que la meteo : la source est nommee quand la donnee existe.
+  return NextResponse.json(
+    { status: 'ok', elevations, provider: ELEVATION_PROVIDER },
+    { status: 200, headers: CACHE },
+  );
 }

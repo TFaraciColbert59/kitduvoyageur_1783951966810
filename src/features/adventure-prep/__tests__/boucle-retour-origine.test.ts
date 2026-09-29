@@ -38,6 +38,7 @@ function etape(
 ): ItineraryStep {
   return {
     id, day, order, kind, title: titre, placeName,
+    placeId: null,
     startTime: null, durationMin: null, reason: null,
     price: { ...PRIX }, state: 'propose', kept: false, icon: 'map-pin',
     lat: point?.lat ?? null, lon: point?.lon ?? null,

@@ -36,6 +36,7 @@ function etape(over: Partial<ItineraryStep> & Pick<ItineraryStep, 'id' | 'title'
     order: 0,
     kind: 'trajet',
     placeName: null,
+    placeId: null,
     startTime: '08:00',
     durationMin: 120,
     reason: null,

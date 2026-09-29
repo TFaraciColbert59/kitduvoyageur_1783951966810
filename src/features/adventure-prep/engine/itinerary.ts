@@ -34,6 +34,13 @@ const EMPTY_TOTALS: DayTotals = {
 export interface StepDraft {
   title: string;
   placeName?: string | null;
+  /**
+   * Identifiant REEL du lieu, quand celui qui redige l etape le connait
+   * reellement : le depart et l arrivee sont des `PlaceRef`, ils ont un id.
+   * Absent ou `null` sinon — un lieu trouve par un modele n a pas
+   * d identifiant, et il ne doit pas en recevoir un de fabrication.
+   */
+  placeId?: string | null;
   reason?: string | null;
   startTime?: string | null;
   mealSlot?: MealSlot | null;
@@ -56,6 +63,7 @@ export function createStep(
     kind,
     title: draft.title,
     placeName: draft.placeName ?? null,
+    placeId: draft.placeId ?? null,
     startTime: draft.startTime ?? null,
     durationMin: null,
     reason: draft.reason ?? null,
@@ -134,6 +142,7 @@ export function buildItinerary(draft: AdventurePrepDraft): ItineraryModel | null
       push(1, 'trajet', {
         title: `Départ de ${origin.name}`,
         placeName: origin.name,
+        placeId: origin.id,
         reason: `Départ choisi, parcours en ${shapeLabel(draft.route.shape)}.`,
         state: travelState(draft),
         price:
@@ -169,6 +178,7 @@ export function buildItinerary(draft: AdventurePrepDraft): ItineraryModel | null
       push(day, 'trajet', {
         title: `Retour ${de(retour.name)}`,
         placeName: retour.name,
+        placeId: retour.id,
         reason: 'Retour : trajet et horaires à vérifier',
         state: travelState(draft),
         price:

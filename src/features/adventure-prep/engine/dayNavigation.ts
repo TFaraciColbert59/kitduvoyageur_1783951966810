@@ -209,6 +209,13 @@ const UNMEASURED = {
   elevLossM: null,
 } as const;
 
+/** Lieu REEL choisi dans une liste, rattache a un point de passage. */
+export interface WaypointPlace {
+  readonly name: string;
+  /** Identifiant de catalogue quand la source en fournit un. */
+  readonly catalogId?: string | null;
+}
+
 /** Le libelle honnete d'un point de passage : une position, pas un nom de lieu. */
 export const WAYPOINT_TITLE = 'Point de passage';
 export const WAYPOINT_REASON = 'Ajouté depuis la carte';
@@ -231,6 +238,7 @@ export function insertWaypoint(
   day: number,
   afterOrder?: number,
   seedId?: string,
+  place?: WaypointPlace,
 ): ItineraryModel {
   if (!isHonestCoord(coord)) return model;
   if (!Number.isInteger(day) || day < 1 || day > model.days) return model;
@@ -245,6 +253,10 @@ export function insertWaypoint(
   const requested = afterOrder ?? (daySteps.length || 1);
   const anchor = Math.min(Math.max(1, Math.trunc(requested)), Math.max(1, daySteps.length));
   const base = seedId ?? `point-j${day}`;
+  // Lieu choisi dans la liste geolocalisee, ou absent pour un point nu.
+  const lieu = place?.name.trim() ? place.name.trim() : null;
+  const catalogId = place?.catalogId?.trim() ? place.catalogId.trim() : null;
+
   const waypoint: ItineraryStep = {
     id: uniqueId(base, taken),
     day,
@@ -253,7 +265,11 @@ export function insertWaypoint(
     title: WAYPOINT_TITLE,
     // Un point pose a la main n'a pas de nom de lieu, et l'ecran affiche
     // « à vérifier » plutot que d'inventer une adresse.
-    placeName: null,
+    // porte le sien.
+    placeName: lieu,
+    // L'identifiant ne vient que de la source. Jamais de cle synthetique :
+    // elle se lirait comme une reference de catalogue qui ne mène nulle part.
+    placeId: catalogId,
     startTime: null,
     durationMin: null,
     reason: WAYPOINT_REASON,

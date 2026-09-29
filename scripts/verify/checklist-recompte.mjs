@@ -166,7 +166,7 @@ if (process.argv.includes("--write")) {
   if (pIdx >= 0) {
     const pct = ((counts.x / total) * 100).toFixed(1).replace(".", ",");
     lines[hIdx] = lines[hIdx]
-      .replace(/(\d+)\s*\/(\d+)\s+items/, counts.x + " / " + total + " items")
+      .replace(/(\d+)\s*\/\s*(\d+)\s+items/, counts.x + " / " + total + " items")
       .replace(/\([\d.,]+\s*%\)/, "(" + pct + " %)")
       .replace(/(\d+)\s+partiels/, counts["~"] + " partiels")
       .replace(/(\d+)\s+[àa]\s+faire/, counts[" "] + " à faire")

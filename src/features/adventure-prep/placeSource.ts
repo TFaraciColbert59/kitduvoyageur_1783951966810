@@ -635,6 +635,10 @@ export function loadPlaceInventoryFor(fetchImpl: Fetcher = fetch): PlaceInventor
         category: candidate.category,
         lat: candidate.lat,
         lon: candidate.lon,
+        // L identifiant de catalogue descend avec le lieu. Le perdre ici
+        // obligait a retrouver le lieu par son nom, donc a le confondre avec
+        // un homonyme.
+        catalogId: candidate.catalogId ?? null,
       });
     }
     return inventory;
