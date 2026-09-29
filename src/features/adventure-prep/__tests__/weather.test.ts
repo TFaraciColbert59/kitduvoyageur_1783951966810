@@ -118,9 +118,10 @@ describe('lecture par journee', () => {
   });
 
   it('sans donnee, aucune conclusion de meteo', () => {
-    expect(isWetDay({ date: 'x', tMaxC: null, tMinC: null, precipMm: null, precipProbPct: null, windMaxKmh: null, code: null, label: '' })).toBe(false);
+    // `null`, pas `false` : sans une seule mesure, on ne peut pas dire « jour sec ».
+    expect(isWetDay({ date: 'x', tMaxC: null, tMinC: null, precipMm: null, precipProbPct: null, windMaxKmh: null, code: null, label: '' })).toBeNull();
   });
-});
+  });
 
 /* ------------------------------------------------------------------ */
 /* P0.2 — La meteo du programme, consumable par l ecran                 */

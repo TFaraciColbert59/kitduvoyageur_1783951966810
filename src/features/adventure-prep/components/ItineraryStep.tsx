@@ -530,7 +530,7 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
   // chemin vers un jour.
   const daySwipe = useDaySwipe({
     current: activeDay,
-    days: model?.days ?? 0,
+    days: model?.days ?? 0, // 0 = aucun jour a balayer ; useDaySwipe sort des que days < 2.
     onSelectDay: selectFocusDay,
   });
   const metrics = useMemo(
@@ -879,6 +879,10 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
             Recentrer » et promettait qu un appui long poserait un point de
             passage qui FAIT EVOLUER LE TRAJET. Il n y avait pas de trajet a
             faire evoluer. Meme carte, meme promesse, que l itineraire existe. */}
+            Un appui long NE FABRIQUE pas de journee. Vu en « Ensemble », il n'y a pas de
+            jour auquel rattacher le point : le deposer sur le jour 1 mettrait un trait sur
+            une journee qui ne l'a pas demande. Le geste n'existe donc que sur un jour
+            focus -- c'est la que le trajet retrace se compare a ce qu'il decrit.
         {model && (
           <>
             <PrepMap
@@ -888,13 +892,17 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
               points={points}
               scopeLabel={activeDay === null ? 'Ensemble' : `Jour ${activeDay}`}
               filterCategories={MAP_CATEGORIES}
-              onLongPress={(lat, lon) =>
-                useAdventurePrepStore.getState().addWaypoint({ lat, lon }, activeDay ?? 1)
+              onLongPress={
+                activeDay === null
+                  ? undefined
+                  : (lat, lon) => useAdventurePrepStore.getState().addWaypoint({ lat, lon }, activeDay)
               }
             />
             <p className="prep-maphint">
-              Maintiens appuyé sur la carte pour poser un point de passage : le trajet est
-              retracé sur le réseau réel, puis les distances remesurées.
+              {activeDay === null
+                ? 'Choisis un jour pour y poser un point de passage : le trajet sera retracé sur le réseau réel, puis les distances remesurées.'
+                : 'Maintiens appuyé sur la carte pour poser un point de passage : le trajet est retracé sur le réseau réel, puis les distances remesurées.'
+              }
             </p>
             {/* Le mesurage se DIT. Tant qu'il n'est pas revenu, les distances
                 restent « à vérifier » : réafficher les anciennes dirait qu'elles

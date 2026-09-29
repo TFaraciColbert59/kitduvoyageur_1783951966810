@@ -52,16 +52,23 @@ export function weatherForDay(
 
 /**
  * Journee humide : pluie annoncee, averses, orage, ou vent qui rend la
- * sortie hasardeuse. Sans donnee, on ne conclut rien.
+ * sortie hasardeuse.
+ *
+ * Renvoie `null` quand AUCUNE de ces mesures n'existe : une absence de
+ * donnee ne vaut pas une mesure de zero. Renvoyer `false` la transformerait
+ * en « jour sec » -- une conclusion fabriquee a partir d'un silence.
  */
-export function isWetDay(day: DayWeather | null): boolean {
-  if (!day) return false;
-  if ((day.precipMm ?? 0) >= 1) return true;
-  if ((day.precipProbPct ?? 0) >= 60) return true;
+export function isWetDay(day: DayWeather | null): boolean | null {
+  if (!day) return null;
+  const connu =
+    day.precipMm !== null || day.precipProbPct !== null || day.windMaxKmh !== null || day.code !== null;
+  if (!connu) return null;
+  if (day.precipMm !== null && day.precipMm >= 1) return true;
+  if (day.precipProbPct !== null && day.precipProbPct >= 60) return true;
   if (day.code !== null && (day.code >= 51 || day.code === 95 || day.code === 96 || day.code === 99)) {
     return true;
   }
-  return (day.windMaxKmh ?? 0) >= 60;
+  return day.windMaxKmh !== null && day.windMaxKmh >= 60;
 }
 
 /** Phrase courte pour une carte de jour : jamais de nombre invente. */
