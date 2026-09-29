@@ -4,7 +4,7 @@
 Source : 32 maquettes uniques (41 fichiers, 9 doublons) analysées une à une,
 croisées avec l'intégralité des consignes écrites de la conversation.
 
-**Progression : 171 / 232 items prouvés (73,7 %) — 35 partiels · 26 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
+**Progression : 173 / 232 items prouvés (74,6 %) — 35 partiels · 24 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
 
 Légende : `[ ]` à faire · `[~]` partiellement fait · `[x]` fait et vérifié · `[!]` bloqué par une donnée absente du dépôt · `R` rectificatif d'audit
 
@@ -4299,18 +4299,38 @@ C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
       Vitest qui lit la feuille et vérifie le couple
       `--g3-bg / --g3-text` des états `:disabled`. Tant que rien de tout cela
       n'existe dans une suite exécutée, la valeur reste bonne **par chance**.
-- [ ] **P5.3** Épaisseur de trait et opacité des pastilles de jour **uniformisées**.
-      **À FAIRE — revérifié le 2026-09-29.** L'uniformité **n'est pas vérifiable en
-      l'état** : aucun relevé d'épaisseur/opacité par pastille n'existe, et il n'y a pas
-      de capture de référence pour `/prepare` (cf. G4). Constat lié : `.prep-day` est
-      justement hors du lot verre (G1), donc c'est **la** surface à uniformiser. **Action
-      requise** : mesurer les pastilles une à une (épaisseur trait + opacité) sur capture
-      393, corriger, puis re-mesurer.
-- [ ] **P5.4** Une seule hiérarchie typographique par carte — le titre de P0.11.
-      **À FAIRE — revérifié le 2026-09-29.** Idem G4 : la hiérarchie typographique par
-      carte n'est auditée par **aucun** test ni audit du dépôt, et `/prepare` n'a pas de
-      capture de référence. **Action requise** : établir la référence visuelle puis juger
-      la carte, titre de P0.11 en tête. **Ne pas cocher sur la lecture du CSS.**
+- [x] **P5.3** Épaisseur de trait et opacité des pastilles de jour **uniformisées**.
+      **FAIT — MESURÉ au navigateur le 2026-09-29, puis verrouillé par test.** Mesure
+      réelle en 393x852 sur l'étape 2 semée depuis un vrai draft (5 étapes, 2 jours) :
+      | pastille | trait | fond | texte | graisse | rayon | h | corps |
+      |---|---|---|---|---|---|---|---|
+      | **J1 active** | 1px solid | `rgb(34,97,72)` **opaque** | `rgb(255,255,255)` 100 % | 750 | 999px | 44 | 13px |
+      | **J2 au repos** | 1px solid | `rgb(38,43,56)` **opaque** | `rgba(255,255,255,0.71)` 71 % | 650 | 999px | 44 | 13px |
+      **Verdict : la GÉOMÉTRIE est uniforme** — 1px, 999px, 44pt, 13px dans les deux
+      états, et l'état actif ne re-déclare ni `border-width`, ni `border-radius`, ni
+      `font-size` (donc **pas de décalage** à l'activation). La distinction d'état passe
+      par le **poids** et l'**alpha du texte**, jamais par un bricolage de boîte.
+      **Le 0.71 n'est PAS un alpha codé en dur** : il vient de `--hub-white-secondary`
+      (`liquid-ios27.css:47`) relié par `--lkv-text-secondary` (`liquid-ios27.css:50`).
+      **Ce que cette mesure NE prouve pas** : que 0.71 est le bon contraste — cela
+      appartient à la campagne de pixels (G3), pas ici.
+      **Verrou** : `p5-p53-p54-mesures.test.ts` P5.3-01→07. Morsant **9/9**
+      (`.probe/morsant-p5.cjs`) : trait actif réécrit à 2px, rayon et corps
+      désuniformisés, fond translucide, couleur en dur, états confondus, cible ramenée à
+      36 pt — chaque scénario fait rougir le test attendu. Restauration à l'octet près.
+      **Correction appliquée** : aucune. Le code était déjà conforme ; c'est la preuve
+      qui manquait, et c'est ce que l'item demandait.
+- [x] **P5.4** Une seule hiérarchie typographique par carte — le titre de P0.11.
+      **FAIT — MESURÉ puis verrouillé par test, le 2026-09-29.** Mesure réelle en
+      393x852 sur la carte d'étape : titre `.prep-step__name` **17px / 700 / lh 23.8px**,
+      et **tous** les autres textes (`place`, `when`, `reason`, `price`, `state`)
+      à **13px / lh 18.2px**. Donc **exactement deux tailles** sur la carte : 17 et 13.
+      Les 6 slots se répartissent en deux groupes et **un seul** — `.prep-step__name` —
+      porte le corps 17 ; les 5 autres portent `--prep-type-meta`. Aucun px écrit en
+      dur : la chaîne de jetons est vérifiée jusqu'au bout
+      (`--prep-type-body` → `--lkv-text-body` = 1.0625rem, `--prep-type-meta` →
+      `--lkv-text-footnote` = 0.8125rem). **Verrou** : `p5-p53-p54-mesures.test.ts`
+      P5.4-01→04, morsant 9/9 (un second slot en 17px, un px en dur sur le titre).
 - [x] **P5.5** Le voile vert clair reste **léger** : la photo doit rester lisible sous le
       contenu, c'est le principe même du voile.
       **FAIT — vérifié le 2026-09-29 par test exécuté.** `prep-liquid-glass-css.test.ts:132`
