@@ -1660,22 +1660,30 @@ pour du rando produirait un faux routage — exactement ce qu'on veut éviter.
 
 ## J — Décisions owner à trancher avant d'engager du temps
 
-- [x] **J1** ✅ **Décision : la table first-party `map_refuges` en source primaire, le deeplink
-      en repli — et non l'inverse.** La table existe et elle est **reelle** : 16 lignes,
-      10 refuges distincts apres deduplication (6 sont en double : Baysselance, Charpoua,
-      Vanoise, Oulettes de Gaube, Goûter, Plan de l'Aiguille — `SELECT DISTINCT ON (name)`
-      ou un `DISTINCT` applicatif, avec test qui mord sur le compte).
-      Colonnes porteuses, toutes mesurees : `price_per_night` **15–75 €**, `altitude_m`
-      90–3835 m, `capacity` 10–120, `is_staffed`, `open_months` (6 refuges sur 10 n'ouvrent
-      qu'en saison), `has_meals`, `has_blankets`, `phone`, `website`.
-      **Pourquoi first-party** : le budget, la compatibilité saisonnière et la capacité
-      dorment alors de données RÉELLES, ce que ne fait aucun deeplink. Le deeplink reste
-      utile en repli quand la table ne couvre pas la boîte demandée — il ne doit jamais
-      être la source principale, sinon le budget redevient une estimation.
-      **Ce que la décision n'est pas** : brancher la table reste un travail de moteur
-      (P3.3 / Itinéraire). Ici on tranche *la source*, pas le branchement.
-      **Preuve** : `qa-local/db-probe3.mjs` (SELECT réel), `qa-local/db-budget.mjs`
-      (déduplication + distribution des prix).
+- [x] **J1** ✅ **APPLIQUÉ EN BASE le 2026-09-29 — la table est propre et la
+      source first-party tient sa promesse.** La decision de source (map_refuges en
+      primaire, deeplink en repli) reste la bonne, mais elle ne valait rien tant que la
+      table etait sale : on payait le double seed a chaque requete.
+      **Ce que la mesure a montre, au-dela des 6 doublons deja connus** : le
+      double-seed du 16 juil. + 9 aout. touchait les QUATRE tables outdoor, pas une seule.
+      `outdoor_points` etait a 50 lignes pour 25 lieux (25 groupes de copies
+      **strictement identiques**, 0 divergence) ; `map_summits` 21 -> 13 ;
+      `map_water_points` 16 -> 10. Total : 103 lignes pour 58 lieux reels.
+      **Regle appliquee** : on ne supprime que les copies **strictement identiques**
+      sur tous les champs, et on garde la plus ancienne (`created_at`). Une paire qui
+      diverge est laissee intacte — trancher une difference, ce serait inventer.
+      `trail_pois` a ete auditee et laissee telle quelle : 1000 lignes OSM, 0 doublon
+      nom+coordonnees sur 200 echantillons. Ses noms generiques (`Panorama`,
+      `Abri`) sont des lieux REELS distincts, pas des copies.
+      **Preuve, apres coup** : `GET /api/pois?min_lat=45.72&max_lat=45.98&min_lng=6.72&max_lng=6.98`
+      (le contrat snake_case, seul filtre reellement lu par la route) rend
+      **9 lieux uniques, 0 doublon, 0 Kilimanjaro**, en 418 ms. Colonnes porteuses
+      toujours mesurees : `price_per_night` **15–75 EUR**, `altitude_m` 90–3835 m,
+      `capacity` 10–120, `is_staffed`, `open_months`, `has_meals`, `has_blankets`.
+      **Piege relu et confirme** : un appel en `lat/lng/radius` ne leve aucune erreur,
+      la route ignore le filtre et renvoie le monde entier. C est deja ecrit en tete de
+      `placeSource.ts` et verrouille par un test.
+      **Preuve** : `place-source.test.ts` (23/23 verts).
 - [x] **J2** ✅ **Décision : trois paliers exprimés en € par personne et par jour, dérivés des
       prix réels de la base — pas d'une fourchette inventée.** Le plafond doit être une
       **contrainte de génération** que l'IA respecte, pas un simple filtre d'affichage.
