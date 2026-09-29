@@ -238,7 +238,16 @@ describe('PrepOfflineNotice - le bandeau annonce, il n’efface rien', () => {
     expect(html).toContain('aria-live="polite"');
     expect(visible(html)).toContain('Hors ligne');
     expect(visible(html)).toContain(`${steps} étapes enregistrées`);
-    expect(visible(html)).toContain('le programme, la carte et les étapes restent');
+    // Cette assertion a change de sens le 2026-09-29, et elle avait raison
+    // d'echouer. Elle ecrivait « le programme, la carte et les etapes restent » :
+    // une enumeration coordonnee qui engageait la carte a l'identique des deux
+    // autres, alors que rien ne telecharge de carte depuis le preparateur. Elle
+    // verrouillait donc le mensonge. Elle verrouille desormais les deux
+    // verites separees : ce qui est local, et la limite reelle de la carte.
+    expect(visible(html)).toContain('le programme et les étapes restent sur cet appareil');
+    expect(visible(html)).toContain(
+      'La carte reste visible uniquement sur les zones déjà consultées en ligne',
+    );
   });
 
   it('OFF-13: assistant coupé seul s’affiche, et le bandeau ne prétend pas hors ligne', () => {

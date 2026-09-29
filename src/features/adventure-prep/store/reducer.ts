@@ -17,9 +17,11 @@ import {
   addStep,
   buildItinerary,
   removeStep,
+  replaceStep,
   setStepKept,
   setStepMealSlot,
   type StepDraft,
+  type StepReplacement,
 } from '../engine/itinerary';
 import type { AdjustmentId } from '../types';
 import type { GenerationPhaseId, GenerationState } from '../types';
@@ -289,6 +291,19 @@ export const draftActions = {
     return commit(draft, { itinerary: addStep(draft.itinerary, day, kind, stepDraft) });
   },
 
+  /**
+   * Remplace le lieu d une etape, et le remesure comme toute autre edition.
+   * Sans parc, le tiroir perdrait la position ET le parcours ne bougeait pas :
+   * deux definitions opposees du mot « remplacer ».
+   */
+  replaceItineraryStep: (
+    draft: AdventurePrepDraft,
+    stepId: string,
+    replacement: StepReplacement,
+  ): AdventurePrepDraft => {
+    if (!draft.itinerary) return draft;
+    return commit(draft, { itinerary: replaceStep(draft.itinerary, stepId, replacement) });
+  },
   setItineraryKept: (
     draft: AdventurePrepDraft,
     stepId: string,

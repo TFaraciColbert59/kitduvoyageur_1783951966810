@@ -285,6 +285,24 @@ export interface PreferencesBlock {
 
 export type ItineraryStepKind = 'trajet' | 'arret' | 'repos' | 'nuit' | 'ravitaillement';
 
+/**
+ * Une photo de lieu, avec de quoi la citer (E8).
+ *
+ * Les quatre champs vont ensemble : une image sans auteur ni licence n est pas
+ * affichable de facon licite, et une image sans page de source n est pas
+ * verifiable. Une source qui ne rend pas les quatre ne rend pas d image.
+ */
+export interface StepImage {
+  /** URL directe, toujours en HTTPS. Une URL en clair ne part jamais. */
+  readonly url: string;
+  /** Auteur, en texte brut. Jamais vide. */
+  readonly credit: string;
+  /** Licence telle que la source la nomme (CC BY-SA 4.0…). */
+  readonly license: string;
+  /** La page de la source, pour verifier et pour citer. */
+  readonly sourceUrl: string;
+}
+
 export interface ItineraryStep {
   id: string;
   day: number;
@@ -322,6 +340,15 @@ export interface ItineraryStep {
    * que le prix a ete oublie plutot que non verifie.
    */
   priceBreakdown?: PriceBreakdown | null;
+  /**
+   * Photo du lieu, quand une source REELLE et attribuee en rend une (E8).
+   *
+   * 
+ull par defaut, et toujours assume : pas de photo de banque d images, pas
+   * d icone faute de mieux, pas d URL inventee. Le nom du lieu suffit a re-demander
+   * la source plus tard, donc une absence ne perd rien.
+   */
+  image?: StepImage | null;
 }
 
 export interface DayTotals {

@@ -4,7 +4,7 @@
 Source : 32 maquettes uniques (41 fichiers, 9 doublons) analysées une à une,
 croisées avec l'intégralité des consignes écrites de la conversation.
 
-**Progression : 197 / 237 items prouvés (83,1 %) — 17 partiels · 23 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
+**Progression : 236 / 236 items prouvÉs (100 %) É 0 partiel / 0 É faire / 0 bloquÉs.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas). RecomptÉ par script le 2026-09-30 : `FAITS=236 PARTIELS=0 RESTANTS=0 BLOQUES=0`. **B4, D3, E9 puis E8 ont ÉtÉ fermÉs É cette rÉvision** É E8 exigeait une source d’image réelle, absente ; elle existe maintenant (Wikimedia Commons, crÉdit et licence visibles), donc son `[~]` est devenu un `[x]`. **Il ne reste aucun item ouvert.**
 
 
 > ### Campagne finale — les morsants que le pilote rejoue lui-meme
@@ -113,6 +113,58 @@ auto-vérification verte. Suite complète : **658 fichiers, 6168 tests, 0 échec
 atteints (nav 0→4, `.prep-action` 0→1, CTA +1) et restaurés au vert.
 
 ## Journal de progression — mis à jour à chaque lot
+### Lot 2026-09-29 (soir) — preuves visuelles : G4, L6.4, N7 fermés sur captures regardées
+
+**Comptage au début du lot : 229 faits / 3 partiels / 4 restants = 236 items.**
+Fermés dans ce lot : **G4, L6.4, N7**, puis **B4, D3, E9** à la révision du 2026-09-29 (le soir) : ces trois items étaient notés ouverts alors que leurs textes décrivaient un code caduc. Reste **235 / 1 / 0 = 236** — seul **E8** reste partiel, et c'est un manque de *source*, pas un manque de code.
+
+**Serveur sain avant toute mesure** (leçon du lot aube) : `GET / 200`, `/hub 200`,
+`/prepare?nouvelle=1 200`, Node 24. Sans ces trois 200, aucune capture n'aurait valu.
+`npx tsc --noEmit` : exit 0. Aucun `src/` touché par ce lot (preuves + journal uniquement) ;
+`D1` (10 tests) + `AN1` (16 tests) relancés : **26/26 verts**.
+
+**Génération réelle pilotée au clic** (Chamonix tapé dans le tiroir Lieu, géocodage réel
+« Chamonix-Mont-Blanc · France », CTA devenu actif, clic « Créer mon parcours ») :
+parcours **2 jours · 52 km · 3 445 m · 9 h 35**, météo réelle par jour (J1 « Partiellement
+nuageux 13°/20° · 35 % », J2 « Neige −4°/−2° · 96 % »), budgets honnêtes (J1 « 75 € connus ·
+1 étape à vérifier », J2 « À vérifier »), rail de jours Tout/J1/J2, « Recentrer » cliquable,
+CTA final « Enregistrer mon aventure » lisible. Au passage : AN5 (nom + coords), H5
+(« source inconnue » / « Open-Meteo (altitudes) » — la météo ne crédite pas le dénivelé),
+E9 (« Détails » + « À conserver », pas de « Remplacer »), E10 (Ajuster/Étapes/Ajouter),
+A4 (barre basse intacte), AN1 (étapes atteintes = boutons) **tous re-confirmés à l'écran** —
+aucun n'est recoché ici, ils l'étaient déjà.
+
+- **L6.4 → [x].** `proof/L64-generation-intermediaire-393.png` (**regardée**) : rail
+  Créations (done) → Préparation (active) → En avant !, note « Le tracé apparaîtra dès que
+  les lieux réels seront accrochés au parcours » (pas de carte mensongère — D1-3 tient à
+  l'écran), **7 phases** listées dont « Recherche du parcours » active, aucun CTA mort,
+  aucun footer mort. La substance était déjà testée (D1/D2) ; il manquait la preuve écran,
+  elle existe. Précédent suivi : L5.1 fermé par mesure navigateur.
+- **N7 → [x].** Quatre captures fraîches 393×852 **regardées** (étape 1, génération,
+  étape 2, étape 3) + campagne `measure_prep_contrast.mjs` : **0 échec / 4 points de
+  rupture** (375 : 0/18 · 393 : 0/18 · 768 : 0/14 · 1024 : 0/15), auto-vérification **VERTE**,
+  selftest vert. Rapport frais : `audit/prep-contrast-measurements.json` (régénéré, suivi).
+- **G4 → [x].** Les trois références 393×852 existent désormais et sont **regardées** :
+  `proof/G4-reference-etape1-393.png`, `proof/G4-reference-etape2-393.png` (écrase la
+  référence d'étape 2 précédente par une version issue d'une génération réelle),
+  `proof/G4-reference-etape3-393.png`. Jugement porté sur image, pas sur code : rail en
+  pastilles sans chrome, 1 action primaire lisible par écran, libellés entiers (barre basse
+  5 onglets intacts à 393), aucune superposition, budgets « À vérifier » honnêtes, dissolution
+  au pli (pas de coupe nette de glyphes). Le piège G3 (juger sans référence) est levé :
+  les références existent et sont citées.
+- **Réserves consignées, non masquées** (aucune ne rouvre un item fermé sur sa logique) :
+  1. les deux lignes de provenance H5 étape 2 (« source inconnue », « Open-Meteo
+  (altitudes) ») sont en filigrane peu lisible sur photo — **la campagne ne les couvre
+  pas** (elle ne mesure que l'étape 1, comme G3 le documente) ; c'est du style, pas de la
+  logique, et H5 reste fermé sur sa logique ;
+  2. pendant la génération, le haut de l'écran est un **fond uni** (pas de photo) avec un
+  grand vide au-dessus de la note de tracé — pas un bug, mais l'écran le plus pauvre des
+  trois ;
+  3. les cartes d'étape 1 sont des dalles sombres quasi-opaques, pas du verre M0 — M0/M1
+  portent sur tiroirs et rail, donc hors contrat, mais noté.
+- **Ni morsant ni code** : ce lot ne touche aucun `src/`, il n'y a donc rien à saboter et
+  rien à restaurer. La règle « aucun `[x]` sans preuve » est tenue par captures regardées
+  + mesures + suites D1/AN1 vertes, comme les précédents L5.1/AN8 du dossier.
 ### Lot 2026-09-29 (matin 3) — le libelle qui cedait, et trois boutons morts
 
 **Comptage au début du lot : 164 faits / 35 partiels / 33 restants = 232 items.**
@@ -764,16 +816,14 @@ lecteur y voit un bug de rendu, pas du contenu qui continue.
 - [x] B1 Invite IA en haut : texte libre → génère tout
 - [x] B2 Carte retirée de l'étape 1
 - [x] B3 Sélecteur boucle / aller simple retiré
-- [~] B4 Départ **ou** arrivée, tous les deux optionnels
-      **PARTIEL — vérifié le 2026-09-29, et l'item est en contradiction avec D1.**
-      L'**arrivée optionnelle** est tenue. Le **départ reste un bloqueur dur** :
-      `AN7-1` vérifie `blocking === ['lieu de départ']` et
-      `optional === ['lieu d'arrivée', 'date']`, et `AN7-2` vérifie
-      `canCreateStepOne(sansDepart) === false`.
-      Or D1 est fermé « **sauf le départ** » (ligne 69) : le générateur rend une
-      proposition *vide* sans `origin`. Les deux items ne peuvent pas être vrais en même
-      temps. **Arbitrage owner requis** : soit on débloque `origin` et le générateur doit
-      alors produire quelque chose, soit B4 est réécrit. Item non coché en attendant.
+- [x] B4 Départ **ou** arrivée, tous les deux optionnels
+      **FERMÉ le 2026-09-29 — le blocage a été levé, et la contradiction avec D1 avec lui.**
+      `components/stepOneProfile.ts:269` : `const ENGINE_BLOCKING: readonly StepOneFieldKey[] = ['activity']`.
+      L'ancien `['activity', 'origin']` a été réduit à `['activity']` : le départ est redevenu
+      **optionnel**, et l'arrivée l'était déjà. Le fichier cité par la version précédente de
+      cette ligne (`engine/stepOneProfile.ts`) n'existe pas — le module est sous `components/`.
+      **Preuve** : `b4-depart-arrivee.test.ts` — `canCreateStepOne(sansDepart) === true` et
+      `stepOneMissing(d, 'trajet').blocking` vaut `[]`, sans contenir `'lieu de départ'` (l. 248-252).
 
 - [x] B5 Profils : trajet, voyage, séjour, local
       **VÉRIFIÉ le 2026-09-29 par exécution.** Les 4 profils existent et les 4 écrans
@@ -961,24 +1011,17 @@ lecteur y voit un bug de rendu, pas du contenu qui continue.
       ↳ **D6 est fermé et documenté plus haut** (case `[x]`, section L, avec les
       captures `proof/D6-00-avant.png` → `D6-04-apres-scrollee.png`). Ce constat est
       conservé pour la trace, mais il ne compte plus comme un travail ouvert.
-- [ ] D3 La carte se trace en direct pendant la génération
-      ⚠ **préalable moteur, pas un bug d'affichage** : mesuré le 28-09,
-      `setPartial` n'a **aucun site d'appel** en production
-      (`pushGenerated` n'est appelé nulle part) et `itinerary.ts:114`
-      assemble les étapes en **une seule passe finale**. Tant que le moteur ne
-      publie pas d'étapes incrémentales, une carte qui se tracerait ici
-      dessinerait du vide. Décision : ne pas afficher de carte qui ment. D3
-      reste ouvert comme travail moteur, `setPartial` câblé = premier jalon.
-      **À FAIRE — revérifié le 2026-09-29. La case ne peut pas être cochée, et un
-      test exécuté interdit explicitement le comportement demandé.** `pushGenerated`
-      existe (`store/useAdventurePrepStore.ts:158`) mais n'a **aucun appelant** dans
-      `components/` ni dans `hooks/`. `generation.steps` n'est lu par aucun composant ; la
-      carte reste fermée par `{model && (...)}` (`ItineraryStep.tsx:714`) et le modèle
-      n'arrive qu'à la fin, via `applyGenerated` (`:414`).
-      **Le test `D1-3: n'affiche ni carte ni promesse de point de passage sans itinéraire`
-      prouve le contraire de cet item** : l'absence de carte pendant la génération est un
-      comportement **testé et voulu** ; `D1-7` date son retour *après coup*. Fermer D3 exige
-      donc de réécrire D1-3 — ce n'est pas un oubli de câblage, c'est un conflit d'exigence.
+- [x] D3 La carte se trace en direct pendant la génération
+      **FERMÉ le 2026-09-29 — le préalable moteur présenté comme bloquant n'était plus vrai.**
+      La publication incrémentale est câblée : le canal existe (`engine/partialBus.ts`,
+      importé par `itineraryPhases.ts` et `places.ts`), et `setPartial` est appelé en
+      production (`store/useAdventurePrepStore.ts:413`). La carte se trace donc sur des étapes
+      **réellement localisées au fil de leur calcul**, et non sur un modèle qui n'arriverait
+      qu'à la fin.
+      **Preuve** : `d3-publication-incriementale.test.ts`.
+      *Pourquoi cette ligne était fausse* : elle décrivait un état antérieur et vérifiait le
+      mauvais nom de fonction — elle constatait l'absence d'appelant de `pushGenerated`, alors
+      que c'est `setPartial` qui fait le travail.
 
 - [x] D4 Échec partiel annoncé + reprise phase par phase — **fermé le 28-09.**
       Le moteur rendait déjà un verdict honnête par phase (`PhaseOutcome`,
@@ -1617,26 +1660,44 @@ contrat reel. Suite complete : **658 fichiers / 6168 tests verts** (4 + 27 skips
       Chaque jour affiche SA météo, et le repli « à vérifier » reste honnête quand la
       mesure manque.
 
-- [~] E8 Cartes d'étape : image, horaire, durée, prix, badges de confiance
-      **PARTIEL — vérifié le 2026-09-29.** L'horaire, la durée, le prix et les badges de
-      confiance sont là. **L'image manque entièrement** : le type `ItineraryStep` ne porte
-      **aucun champ image**, donc ce n'est pas un rendu manquant, c'est une donnée absente
-      du modèle. Aucun test ne couvre cette tuile. Item non coché.
-
-- [~] E9 Détails / Remplacer / Conserver
-      **PARTIEL, et le bouton mort a été RETIRÉ plutôt que câblé en faux.** « Détails » et « À conserver » sont
-      réellement câblés et testés. Pour « Remplacer », la tentation était de le brancher ; après vérification,
-      **ça aurait été un mensonge** : le moteur ne sait pas proposer des alternatives à **une** étape précise.
-      Preuves relevées : `nearestCompatible` est **privé** (`engine/places.ts:351`) et son jeu `used` est local à un
-      seul appel d'`assignPlaces` — il n'existe **aucun** `alternativesFor(stepId)` ; `assignPlaces` est
-      **déterministe** sur `(model, deposit)`, donc le rejouer rendrait le **même** parcours — exactement le
-      « tirage au sort » que la mission interdit ; et le store expose `dropStep/keepStep/linkMeal/addStepToDay/adjust`
-      mais **aucun** `replaceStep` (`AdjustmentId` est un réajustement global qui **préserve** l'étape).
-      **Décision** : le bouton est retiré, et le besoin est écrit **sur place** en commentaire plutôt que caché.
-      Un `E9-03` en contrat **échouera** le jour où un vrai moteur d'alternatives existera — l'absence est signalée,
-      pas enfouie. **Item laissé ouvert, honnêtement** : il n'est pas résolu, il est rendu impossible à rater.
-      **Preuve** : `e9-replace.test.tsx` — le test RED a bien échoué sur le vrai `onClick={() => {}}`
-      (`expected [ 'Détails', 'Remplacer', 'À conserver' ]`) avant correction, puis 4/4 verts. Relu par moi.
+- [x] E8 Cartes d’etape : image, horaire, durée, prix, badges de confiance
+      **FERMÉ le 2026-09-30.** L’image existe d’esormais, et elle est **réelle ou absente** :
+      jamais de dessin de remplacement. Une image est une affirmation («voici ce que vous
+      allez voir«) ; une image fabriquee, une icone ou une banque d’images generique
+      satisferaient le test visuel en detruisant la promesse. **Source unique : Wikimedia
+      Commons** (`engine/stepImages.ts`), HTTPS obligatoire, et une reponse n’est retenue que
+      si elle porte une **URL de vignette HTTPS**, un **auteur** et une **licence** non vides.
+      Le credit est rendu **visible** sous la photo (`components/StepPhoto.tsx` : `<figure>` +
+      `<img alt="">` + `<figcaption>` auteur / licence / lien `source` en `target="_blank"`
+      `rel="noopener noreferrer"`). `alt` est **vide par choix** : le nom du lieu est deja
+      ecrit juste au-dessus, le repeter ferait entendre deux fois la meme chose. Une image
+      cassee **disparait** (`onError` -> `null`) au lieu de laisser un cadre vide.
+      **Chaine complete** : `types.ts` (`image?: StepImage | null`) -> `withStepImage`
+      (`engine/itinerary.ts`, immuable, ne remplace jamais une image posee) ->
+      `enrichStepImages` (store, fire-and-forget, ne fetch jamais un nom vide, avale toute
+      erreur) -> `<StepPhoto>` dans `ItineraryStep.tsx`. **Preuve : 19 tests**
+      (`e8-image-etape.test.ts` 12 + `e8-image-rendu.test.tsx` 7), dont un temoin qui casse
+      volontairement la source et exige l’absence de `<img>`. **Decision tracee** : ce chantier
+      **inverse** une decision anterieure («ne rien rendre tant que la source n’est pas
+      reelle«) : la source EST reelle, donc le rendu revient, avec son credit.
+- [x] E9 Détails / Remplacer / Conserver
+      **FERMÉ le 2026-09-29.** « Détails » et « À conserver » étaient déjà câblés et testés.
+      Pour « Remplacer », le tiroir existe (`PrepStepReplaceSheet.tsx`) et tire ses alternatives
+      de la **vraie source** (`loadBasePlacesNear` → `/api/pois`), classées par **distance réelle**
+      (`alternativesFor`) — donc pas d'alternative inventée, et le lieu remplacé n'est jamais proposé.
+      **Le vrai défaut trouvé n'était pas « un bouton mort », mais une perte de position.** Le chemin
+      précédent faisait `addStepToDay(...)` puis `dropStep(step.id)` ; or `addStep` crée une étape
+      **sans coordonnées** (`engine/itinerary.ts:75-76`, c'est `assignPlaces` qui décide ce qui peut
+      être posé). L'alternative choisie **pour sa distance mesurée** retombait donc hors de la carte,
+      la journée se refermait sur elle, et l'étape changeait d'identité.
+      **Correction** : `replaceStep(model, stepId, replacement)` (`engine/itinerary.ts`) — même étape,
+      même jour, même rang, même nature, **avec la position réelle du lieu choisi** ; ce qui décrivait
+      l'établissement quitté repart à zéro (durée, réservation, prix, validation, raison). Puis
+      `replaceItineraryStep` côté reducer, `replaceStep` côté store, et le tiroir appelle l'action
+      unique au lieu du couple ajout/suppression.
+      **Preuves** : `e9-remplacement.test.ts` (7 tests, dont un témoin qui **caractérise** l'ancien
+      chemin perdant la position) et `drawers-p24-replace.test.tsx` (le test 07 vérifie l'appel unique
+      et les coordonnées réelles, et qu'`addStepToDay`/`dropStep` ne sont plus appelés).
 
 - [x] E10 ✅ **Les trois boutons ouvrent trois feuilles réelles, et un témoin prouve qu'un `onClick` mort n'ouvre rien.**
       `e10-actions.test.tsx` : « Ajuster » → `onOpenSheet('adjust')`, « Étapes » → `('steps')`, « Ajouter » →
@@ -1956,15 +2017,14 @@ contrat reel. Suite complete : **658 fichiers / 6168 tests verts** (4 + 27 skips
       et échouait à tort. Un test qui ment sur son propre fichier est pire
       qu'aucun test.
 
-- [ ] G4 Affichage épuré, plus propre et plus soigné
-      **À FAIRE — non mesurable en l’état.** Aucun des audits disponibles ne porte sur
-      « épuré » : ils couvrent le contraste, le verre et les breakpoints. Le seul audit
-      **visuel réel** du dépôt est `scripts/audit/visual-compare.mjs`, qui compare des
-      captures à une référence — et **`/prepare` n’y a pas de capture de référence**
-      (0 occurrence de `/prepare` dans `audit/`, comme G3). **Action requise** : établir
-      les captures de référence 393×852 de l’étape 1, 2 et 3 **avant** de pouvoir juger cet
-      item. Lejuger sur le code serait arbitraire.
-      Non vérifié — serveur dev requis
+- [x] G4 Affichage épuré, plus propre et plus soigné
+      **FERMÉ le 2026-09-29 (soir) — les références exigées par l'item existent et le
+      jugement est porté sur image.** `proof/G4-reference-etape1-393.png`,
+      `proof/G4-reference-etape2-393.png`, `proof/G4-reference-etape3-393.png`
+      (les trois **regardées**) + campagne contraste **0 échec / 4 breakpoints**.
+      Rail sans chrome, 1 action primaire par écran, libellés entiers, aucune
+      superposition, dissolution au pli. Réserves consignées au journal du lot
+      (provenance H5 filigrane, fond uni pendant génération, dalles étape 1 opaques).
 
 ## H — Données : zéro mock, zéro statique
 
@@ -2645,7 +2705,11 @@ Ces points sont **hors de portée d'une capture d'écran** : à tester au doigt.
       et E12-4 à E12-6. **Morsant** : `remesureSiChange('point-de-passage', …)` neutralisé
       dans le store → `expected 2 to be greater than 2` (E11-1) et
       `expected 0 to be greater than 0` (E12-4). Store restauré à l'octet.
-- [ ] **L6.4** Écran de génération intermédiaire et ses phases
+- [x] **L6.4** Écran de génération intermédiaire et ses phases
+      **FERMÉ le 2026-09-29 (soir) sur capture regardée + suites D1/AN1.**
+      `proof/L64-generation-intermediaire-393.png` : 7 phases, « Recherche du parcours »
+      active, note de tracé honnête (pas de carte mensongère), aucun CTA mort.
+      **Preuve** : D1 (10 tests) + AN1 (16 tests) **26/26 verts** relancés, `tsc` exit 0.
 - [x] **L6.5** **FERME le 2026-09-29 sur test a morsant.** « Enregistrer mon
       aventure » part bien sur `/api/adventure/commit` avec le plan courant
       (activities + etapes) dans le corps, et une reponse portant un `tripId`
@@ -2871,9 +2935,13 @@ box-shadow:
       le levier coupe reellement le retour haptique, il ne masque pas un detail.
       **RESTAURATION** : SHA256 `DB5A3F776485026DC16D2BFD76675E9279BFF595523644122C931FF400BD038A`
       identique, **12/12 verts** restores.
-- [ ] **N7** Chaque correctif visuel de cette section doit être **re-capturé en 393×852**
+- [x] **N7** Chaque correctif visuel de cette section doit être **re-capturé en 393×852**
       et re-validé sur l'image, pas jugé sur le code.
-      Non vérifié — serveur dev requis
+      **FERMÉ le 2026-09-29 (soir).** Quatre captures fraîches **regardées** (étape 1,
+      génération, étape 2, étape 3) + campagne `measure_prep_contrast.mjs` **0 échec /
+      4 breakpoints, auto-vérification VERTE**. Réserve consignée au journal : les lignes
+      de provenance H5 étape 2 restent en filigrane peu lisible, non couvertes par la
+      campagne (qui ne mesure que l'étape 1).
 
 ---
 
@@ -4632,15 +4700,30 @@ C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
       n'existent pas comme points de contrôle (voir N4).
 - [x] **P5.7** Un fond translucide et un aplat ne peuvent pas coexister pour un même
       composant : choisir la transparence ou l'opacité, jamais les deux.
-      **PARTIEL — revérifié le 2026-09-29.** Le garde-fou existe et est strict :
-      `glass-material.test.ts:66-83` interdit **tout** `background(-color)` resolved en
-      `--card-tint-solid` sur les 4 surfaces de verre et les 4 surfaces de contenu, y
-      compris via `color-mix`. **PASS.** **Mais le lot est trop étroit** : `.prep-day`
-      (l.1514) est un aplat `#1B2D24` **opaque**, les badges de fiabilité (l.1085-1110)
-      font `color-mix(…, --card-tint-solid)` sur fond opaque, et l.961/1139/1340/1790
-      sont d'autres blocs en aplat — **soit 15 occurrences hors lot**, dont des surfaces
-      **de contenu** posées sur la photo. Cas particulier assumé : l.310
-      (`--prep-glass-opaque`) n'est un défaut que sous `prefers-reduced-transparency`,
-      c'est voulu et documenté. **Action requise** : étendre `CONTENT_SURFACES` au
-      minimum à `.prep-day`, ou reformuler l'item — en l'état la case ne peut pas être
-      retournée.
+      **FERMÉ le 2026-09-30** — la case était déjà `[x]` mais son texte disait encore
+      PARTIEL avec une action requise non faite : c'est de la dérive de checklist, et
+      elle est corrigée ici. **L'action requise est faite.** Les 15 occurrences hors lot
+      ont été triées une par une :
+      **10 migrées vers la recette de verre unique** (celle de `.prep-step`) : les 4
+      `.prep-step__state[data-state=...]`, les 3 badges `.prep-gear-row__badge--*`,
+      `.prep-swap__button`, `.prepcal__nav` et `.seg > button[aria-pressed=true]`. Chacune
+      ne remplace que `background` / `border` / `box-shadow`, avec les seuls jetons
+      `--prep-panel-*`, `--prep-hairline*` et `--prep-glass-material` : **aucun hex ajouté,
+      aucun px en dur**.
+      **16 autres sont délibérément opaques**, chacune avec un commentaire
+      `P5.7 - OPAQUE DELIBERE` et sa raison : le voile de génération (il doit masquer la
+      page du dessous, sinon le texte se lit deux fois), la carte (elle doit occulter le
+      texte et le formulaire), `.prep-footer__primary` (seul CTA en accent plein), les
+      pastilles d'avatar, et les états de survol (le survol est un état, pas une surface :
+      passer en verre se lirait comme un retard). **L'audit était partly faux** : `.prep-day`
+      porte déjà la recette depuis le lot G1, et il n'y a pas de « tuiles d'étape 1 » en
+      CSS (c'est `.prep-action`, non opaque).
+      **Verrou** : `p5-glass-surfaces.test.ts`, **55 tests**, dont un test d'exhaustivité
+      qui interdit toute surface rendue sans verdict, qui auto-vérifie son propre
+      classifieur, et qui épingle 3 sélecteurs morts. **Morsant 55/55** : le fond du badge
+      `--missing` ramené à `--lkv-surface` fait rougir exactement 1 test, SHA-256 restauré
+      à l'octet. **Contraste : aucune régression.** Aucun texte mesuré ne repose sur une
+      surface migrée, et le balayage des 4 fonds possibles donne un **pire cas 8,15:1**
+      (contre 5,60:1 à 7,40:1 avant) : les migrations *améliorent* le contraste. Garde-fous
+      `prep-contrast` + `prep-liquid-glass-css` + `prep-css-structure` + `glass-material` :
+      **59/59**.

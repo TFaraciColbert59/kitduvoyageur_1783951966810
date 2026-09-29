@@ -575,6 +575,10 @@
   }
 }
 
+/* P5.7 - OPAQUE DELIBERE. Le sol du preparateur est le SEUL aplat de la page :
+   tout ce qui flotte au-dessus doit avoir un fond sur lequel poser un texte
+   lisible. Un verre ici laisserait la photo legere passer sous le contenu, et
+   les textes se poseraient sur les zones claires de l image. */
 .adventure-prep {
   /* Le preparateur flotte sur la photo, dans un verre sombre, quel que soit le
      theme de la page : mesure au navigateur en 393x832, `<html
@@ -960,6 +964,12 @@
 
 /* --- Ecran : remplit l'espace restant sous le bandeau ------------------ */
 
+/* P5.7 - OPAQUE DELIBERE. Le voile de generation est pose en inline par
+   `SCREEN_BOX` dans AdventurePrepShell.tsx (backgroundColor), pas ici. Il reste
+   volontairement plein : pendant qu il est visible, il doit retirer la page de
+   dessous, sinon le contenu qui apparait se superposerait a l ancien ecran et
+   le texte serait lu deux fois. Le fond est un aplat systeme, donc opaque par
+   construction : aucune migration n est possible ni souhaitee. */
 .prep-screen {
   position: relative;
   z-index: 1;
@@ -1375,6 +1385,9 @@ button.prep-block__row:active {
   margin-right: var(--space-2);
 }
 
+/* P5.7 - OPAQUE DELIBERE. Un avatar est une pastille posee SUR une photo de
+   voyage : a cette taille le verre ne se lit pas comme du verre, il noie
+   l initiale dans le decor. Le ton d identite doit rester un aplat. */
 .prep-avatar {
   display: inline-flex;
   align-items: center;
@@ -1395,22 +1408,32 @@ button.prep-block__row:active {
   margin-left: 0;
 }
 
+/* P5.7 - OPAQUE DELIBERE : meme raison que `.prep-avatar`, le ton ne change
+   que la teinte de l aplat. */
 .prep-avatar[data-tone='1'] {
   background-color: color-mix(in srgb, var(--prep-kind-repos) 20%, var(--card-tint-solid));
 }
 
+/* P5.7 - OPAQUE DELIBERE : meme raison que `.prep-avatar`, le ton ne change
+   que la teinte de l aplat. */
 .prep-avatar[data-tone='2'] {
   background-color: color-mix(in srgb, var(--prep-kind-nuit) 18%, var(--card-tint-solid));
 }
 
+/* P5.7 - OPAQUE DELIBERE : meme raison que `.prep-avatar`, le ton ne change
+   que la teinte de l aplat. */
 .prep-avatar[data-tone='3'] {
   background-color: color-mix(in srgb, var(--prep-kind-trajet) 22%, var(--card-tint-solid));
 }
 
+/* P5.7 - OPAQUE DELIBERE : meme raison que `.prep-avatar`, le ton ne change
+   que la teinte de l aplat. */
 .prep-avatar[data-tone='4'] {
   background-color: color-mix(in srgb, var(--prep-kind-arret) 20%, var(--card-tint-solid));
 }
 
+/* P5.7 - OPAQUE DELIBERE : meme raison que `.prep-avatar`, le ton ne change
+   que la teinte de l aplat. */
 .prep-avatar[data-tone='5'] {
   background-color: color-mix(in srgb, var(--lkv-text-primary) 14%, var(--card-tint-solid));
 }
@@ -1466,6 +1489,9 @@ button.prep-block__row:active {
   line-height: 1.35;
 }
 /* --- Carte : coins 24 px, contrôles flottants en verre ----------------- */
+/* P5.7 - OPAQUE DELIBERE. Le fond de carte doit cacher completement ce qui
+   passe dessous : le texte de l etape et les champs du formulaire. Un verre
+   laissait lire les deux a travers la carte. */
 .prep-map {
   /* ANCRAGE. `.prep-map` est un enfant de `.prep-body` (overflow-y: auto) et
      rend son contenu en flux, PAS en overlay.
@@ -1544,6 +1570,10 @@ button.prep-block__row:active {
   align-items: flex-end;
 }
 
+/* P5.7 - OPAQUE DELIBERE, et DOUBLEMENT. Ce bloc est le repli de
+   l accessibilite : quand l utilisateur demande moins de transparence, tout
+   verre devient un aplat. Il n y a donc rien a migrer ici au sens du verre, et
+   il ne faut surtout pas y poser la recette de verre. */
 .prep-map__glass {
   display: inline-flex;
   align-items: center;
@@ -1650,6 +1680,8 @@ button.prep-map__glass:active {
 }
 
 /* Carte en plein écran : la carte occupe tout, les filtres restent en bas. */
+/* P5.7 - OPAQUE DELIBERE. La carte plein ecran couvre toute la fenetre : rien
+   ne doit transparaitre derriere elle, pas meme la photo. */
 .prep-map--full {
   position: fixed;
   inset: 0;
@@ -1845,6 +1877,9 @@ button.prep-map__glass:active {
     color var(--prep-duration-control) var(--prep-ease-standard);
 }
 
+/* P5.7 - OPAQUE DELIBERE. L etat actif reste un aplat de marque : c est le SEUL
+   etat du rail qui remplit, et il doit se lire comme un bouton plein, pas comme
+   une vitre de plus. Le commentaire de G1, plus bas, developpe cette decision. */
 .prep-day[aria-pressed='true'] {
   color: var(--btn-on-solid);
   /* G1 - l etat actif reste un aplat de marque : c est le SEUL etat du rail
@@ -2059,6 +2094,49 @@ button.prep-map__glass:active {
   color: var(--prep-ink-subtle);
 }
 
+/* E8 - la photo d une etape, et son credit.
+ *
+ * La photo est un bloc a part entiere, pas un decor. Elle porte une
+ * affirmation, donc elle a son propre cadre et SURTOUT son credit en dessous,
+ * en texte, lisible. Un `title` au survol ne serait pas une attribution.
+ *
+ * `aspect-ratio` + `object-fit: cover` : la source rend du 640x480, la carte
+ * est plus etroite. Sans le ratio, une image large deborderait ; sans
+ * `object-fit`, elle s etirerait. Le ratio reserve la place AVANT l arrivee des
+ * octets, donc aucun saut de mise en page sous les yeux de la personne.
+ *
+ * Le credit reprend l encre de `.prep-step__when`, deja mesuree sur les deux
+ * fonds de la carte. L alléger pour « faire de la place » baisserait le
+ * contraste sous le seuil sans que personne ne le voie, et une attribution
+ * illisible n est pas une attribution. */
+.prep-step__photo {
+  margin: var(--space-2) 0 0;
+}
+
+.prep-step__photo-img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--prep-radius-card);
+}
+
+/* Un lien sans sous-ligne n est pas un lien pour une personne qui ne distingue
+   pas la couleur : la forme doit signaler le clic, pas seulement l encre. */
+.prep-step__photo-source {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.prep-step__photo-credit {
+  margin-top: 4px;
+  font-size: var(--prep-type-meta);
+  line-height: var(--lkv-line-body);
+  color: var(--lkv-text-secondary);
+  overflow-wrap: anywhere;
+}
+
 .prep-step__price {
   flex: 0 0 auto;
   font-size: var(--prep-type-meta);
@@ -2266,6 +2344,9 @@ button.prep-map__glass:active {
   );
 }
 
+/* P5.7 - OPAQUE DELIBERE. Le CTA d action est le seul element de la page qui
+   porte l accent plein : c est lui, et lui seul, qui dit << ici >>. Un verre
+   ici le confondrait avec les pastilles de filtre, qui sont du meme accent. */
 .prep-footer__primary {
   flex: 1 1 auto;
   min-height: var(--prep-action-height);
@@ -2767,23 +2848,54 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 }
 .prep-step__state[data-state='a_reserver'] {
   color: color-mix(in srgb, var(--lkv-warning-dark) 90%, black);
-  background: color-mix(in srgb, var(--lkv-warning-dark) 12%, var(--lkv-surface));
+  /* P5.1 : le badge etait un aplatmelange, il passe sur la recette de verre
+     unique. Le fond du panneau est plus sombre que --lkv-surface, donc l encre
+     claire du libelle ne perd aucun contraste en gagnant la transparence. */
+  background: var(--prep-panel-bg);
+  -webkit-backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
   border-color: color-mix(in srgb, var(--lkv-warning-dark) 28%, transparent);
+  box-shadow: var(--prep-glass-material);
 }
 .prep-step__state[data-state='confirme'] {
   color: var(--lkv-action);
-  background: color-mix(in srgb, var(--lkv-action) 10%, var(--lkv-surface));
+  /* P5.1 : migration sur la recette de verre unique, meme fond de panneau que
+     les autres etats pour que la teinte vienne de l encre et non du fond. */
+  background: var(--prep-panel-bg);
+  -webkit-backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
   border-color: color-mix(in srgb, var(--lkv-action) 26%, transparent);
+  box-shadow: var(--prep-glass-material);
 }
 .prep-step__state[data-state='confirme_communaute'] {
   color: var(--pos, var(--lkv-action));
-  background: color-mix(in srgb, var(--pos, var(--lkv-action)) 10%, var(--lkv-surface));
+  /* P5.1 : meme migration que les autres etats de reservation. */
+  background: var(--prep-panel-bg);
+  -webkit-backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
   border-color: color-mix(in srgb, var(--pos, var(--lkv-action)) 26%, transparent);
+  box-shadow: var(--prep-glass-material);
 }
 .prep-step__state[data-state='retenu'] {
   color: var(--lkv-text-primary);
-  background: color-mix(in srgb, var(--lkv-action) 8%, var(--card-tint-solid));
+  /* P5.1 : migration sur la recette de verre unique. */
+  background: var(--prep-panel-bg);
+  -webkit-backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
   border-color: color-mix(in srgb, var(--lkv-action) 20%, transparent);
+  box-shadow: var(--prep-glass-material);
 }
 
 /* Section title */
@@ -2814,13 +2926,25 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   width: 44px;
   height: 44px;
   border-radius: var(--prep-radius-pill);
-  background: color-mix(in srgb, var(--lkv-action) 10%, var(--lkv-surface));
+  /* P5.1 : la pastille d inversion passe sur la recette de verre unique. Le
+     survol, plus bas, reste un aplat teinte : il ne doit pas laisser voir la
+     photo au travers d une pastille de 44 pt. */
+  background: var(--prep-panel-bg);
+  -webkit-backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
   color: var(--lkv-action);
-  border: 1px solid color-mix(in srgb, var(--lkv-action) 22%, transparent);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
+  border-color: color-mix(in srgb, var(--lkv-action) 22%, transparent);
+  box-shadow: var(--prep-glass-material);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: background var(--prep-duration-control) var(--prep-ease-standard);
 }
+/* P5.7 - OPAQUE DELIBERE. Le survol est un etat, pas une surface : il doit
+   apparaitre immediatement, or une transition vers un verre se lirait comme
+   un delai. Le fond au repos porte la recette de verre, celui-ci reste un aplat. */
 .prep-swap__button:hover {
   background: color-mix(in srgb, var(--lkv-action) 16%, var(--lkv-surface));
 }
@@ -2870,18 +2994,40 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 }
 .prep-gear-row__badge--missing {
   color: var(--lkv-warning-dark);
-  background: color-mix(in srgb, var(--lkv-warning-dark) 10%, var(--lkv-surface));
-  border: 1px solid color-mix(in srgb, var(--lkv-warning-dark) 25%, transparent);
+  /* P5.1 : badge de fiabilite migre sur la recette de verre unique. La teinte
+     d alerte passe desormais par l arete, le fond reste le panneau. */
+  background: var(--prep-panel-bg);
+  -webkit-backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
+  border-color: color-mix(in srgb, var(--lkv-warning-dark) 25%, transparent);
+  box-shadow: var(--prep-glass-material);
 }
 .prep-gear-row__badge--check {
   color: var(--lkv-warning-dark);
-  background: color-mix(in srgb, var(--lkv-warning-dark) 10%, var(--lkv-surface));
-  border: 1px solid color-mix(in srgb, var(--lkv-warning-dark) 25%, transparent);
+  /* P5.1 : meme migration que --missing, meme raison. */
+  background: var(--prep-panel-bg);
+  -webkit-backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
+  border-color: color-mix(in srgb, var(--lkv-warning-dark) 25%, transparent);
+  box-shadow: var(--prep-glass-material);
 }
 .prep-gear-row__badge--shared {
   color: var(--lkv-action);
-  background: color-mix(in srgb, var(--lkv-action) 10%, var(--lkv-surface));
-  border: 1px solid color-mix(in srgb, var(--lkv-action) 25%, transparent);
+  /* P5.1 : meme migration que --missing, meme raison. */
+  background: var(--prep-panel-bg);
+  -webkit-backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
+  border-color: color-mix(in srgb, var(--lkv-action) 25%, transparent);
+  box-shadow: var(--prep-glass-material);
 }
 
 /* C13 — Les trois paliers de budget en pilules de verre.
@@ -3357,6 +3503,9 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   border: var(--prep-hairline) solid var(--prep-hairline-ink);
   color: var(--prep-ink-secondary);
 }
+/* P5.7 - OPAQUE DELIBERE. L icone cochee est un aplat plein : elle doit
+   distinguer l etat actif d une simple selection au verre, pas doubler la
+   couleur du fond de la ligne. */
 .prep-block__row[aria-pressed='true'] .prep-act-icon {
   background: var(--lkv-action);
   border-color: var(--lkv-action);
@@ -3515,11 +3664,18 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
     background-color var(--prep-duration-control) var(--prep-ease-standard),
     color var(--prep-duration-control) var(--prep-ease-standard);
 }
+/* P5.1 : le segment selectionne passe sur la recette de verre unique. Le rail
+   lui-meme reste un verre leger : il ne faut qu UNE surface qui se eleve. */
 .seg > button[aria-pressed='true'] {
-  background: var(--lkv-surface-elevated);
+  background: var(--prep-panel-bg);
+  -webkit-backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
   color: var(--lkv-text-primary);
   font-weight: 600;
-  box-shadow: var(--card-shadow);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
+  box-shadow: var(--prep-glass-material);
 }
 
 .chips {
@@ -3692,6 +3848,8 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
    La carte reelle du hub, en cadre bas (150px) : le tiroir de lieu montrait
    un carre quadrille sans aucune tuile, et la position y etait inventee par
    une projection homemade. Le clic est desormais resolu par MapLibre. */
+/* P5.7 - OPAQUE DELIBERE. Comme `.prep-map` : un cadre de carte partageant le
+   meme fond, dans le tiroir de lieu. */
 .prep-picker {
   position: relative;
   width: 100%;
@@ -3817,12 +3975,20 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   height: 44px;
   border-radius: var(--prep-radius-pill);
   color: var(--prep-ink-secondary);
-  background: var(--lkv-surface-elevated);
-  border: 1px solid var(--lkv-border-subtle);
+  /* P5.1 : les fleches de mois passent sur la recette de verre unique. */
+  background: var(--prep-panel-bg);
+  -webkit-backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
+  box-shadow: var(--prep-glass-material);
   transition:
     background-color var(--prep-duration-control) var(--prep-ease-standard),
     color var(--prep-duration-control) var(--prep-ease-standard);
 }
+/* P5.7 - OPAQUE DELIBERE : meme raison que `.prep-swap__button:hover`, le
+   survol est un signal d etat et non une surface. */
 .prepcal__nav:hover:not(:disabled) {
   background: var(--lkv-hover-surface);
   color: var(--lkv-text-primary);
@@ -3859,6 +4025,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
     color var(--prep-duration-control) var(--prep-ease-standard),
     box-shadow var(--prep-duration-control) var(--prep-ease-standard);
 }
+/* P5.7 - OPAQUE DELIBERE : meme raison que `.prep-swap__button:hover`. */
 .prepcal__day:hover:not(:disabled):not(.is-selected) {
   background: var(--lkv-hover-surface);
 }
@@ -3878,6 +4045,8 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 .prepcal__day.is-today {
   box-shadow: inset 0 0 0 1.5px var(--lkv-focus-ring);
 }
+/* P5.7 - OPAQUE DELIBERE. Le jour selectionne est un aplat plein : il porte
+   l accent de marque et son encre associee, non lisible sur un verre. */
 .prepcal__day.is-selected {
   background: var(--lkv-action);
   color: var(--prep-on-action);

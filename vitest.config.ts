@@ -17,7 +17,10 @@ export default defineConfig({
       OPENROUTER_API_KEY: '',
     },
     include: ['tests/**/*.spec.ts', 'tests/**/*.spec.tsx', 'src/**/__tests__/**/*.test.ts', 'src/**/__tests__/**/*.test.tsx'],
-    exclude: ['node_modules/**', 'tests/visual/**', 'tests/a11y/e2e/**', 'tests/ui/**'],
+    // tests/visual/ heberge des specs Playwright qui exigent un navigateur.
+    // Le contrat de verre fait exception : c est le seul garde-fou de contraste
+    // du CTA, et il doit rester dans la suite Vitest pour tourner a chaque commit.
+    exclude: ['node_modules/**', 'tests/visual/!(glass-contract).spec.ts', 'tests/a11y/e2e/**', 'tests/ui/**'],
   },
   resolve: {
     alias: {

@@ -120,6 +120,7 @@ function nomsAlternatives(): string[] {
 
 function monter(stepId: string, loadPlaces: () => Promise<PlaceCandidate[]> = SOURCE) {
   const actions = {
+    replaceStep: vi.fn().mockResolvedValue(undefined),
     addStepToDay: vi.fn().mockResolvedValue(undefined),
     dropStep: vi.fn().mockResolvedValue(undefined),
   };
@@ -213,24 +214,30 @@ describe('P2.4 - Remplacer par une alternative reelle', () => {
     expect(document.body.textContent ?? '').not.toContain('Refuge du Col');
   });
 
-  it('07 - choisir une alternative AJOUTE puis RETIRE, et ferme', async () => {
+  it('07 - choisir une alternative REMPLACE sur place, avec sa position reelle', async () => {
     const { actions, onClose } = monter(NUIT.id);
     await waitFor(() => expect(nomsAlternatives().length).toBeGreaterThan(0));
     fireEvent.click(screen.getByLabelText(/Remplacer par Refuge du Col/));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
-    // L ajout porte le VRAI lieu de l'alternative, sur le MEME jour et le
-    // MEME type que l'etape qu elle remplace.
-    expect(actions.addStepToDay).toHaveBeenCalledWith(
-      NUIT.day,
-      NUIT.kind,
-      expect.objectContaining({ title: 'Refuge du Col', placeName: 'Refuge du Col' }),
-    );
-    // L ajout passe AVANT le retrait : si l'ajout echoue, l'etape d'origine
-    // est encore la. L'inverse perdrait le parcours.
-    expect(actions.addStepToDay.mock.invocationCallOrder[0]).toBeLessThan(
-      actions.dropStep.mock.invocationCallOrder[0],
-    );
-    expect(actions.dropStep).toHaveBeenCalledWith(NUIT.id);
+    // Un SEUL appel, sur l'etape d ORIGINE : meme identite, meme jour, meme
+    // rang. C est cette identite que le reste du parcours continue de designer.
+    expect(actions.replaceStep).toHaveBeenCalledTimes(1);
+    expect(actions.replaceStep).toHaveBeenCalledWith(NUIT.id, {
+      title: 'Refuge du Col',
+      placeName: 'Refuge du Col',
+      // placeId null et non r-proche : la source ne rend aucun identifiant de
+      // catalogue ici, et r-proche est une cle interne de deduplication.
+      // Publier celle-la fabricerait une reference qui ne mene nulle part.
+      placeId: null,
+      // Les coordonnees REELLES du lieu choisi. Sans elles, l etape perdait sa
+      // position : elle etait choisie pour sa distance, puis disparaissait de la
+      // carte et la journee se refermait sur elle.
+      lat: P_PROCHE.lat,
+      lon: P_PROCHE.lon,
+    });
+    // Le tiroir ne passe donc plus par un ajout suivi d une suppression.
+    expect(actions.addStepToDay).not.toHaveBeenCalled();
+    expect(actions.dropStep).not.toHaveBeenCalled();
   });
 
   it('08 - un prix inconnu reste « a verifier », jamais un chiffre', async () => {

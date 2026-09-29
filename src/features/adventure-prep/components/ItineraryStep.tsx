@@ -39,6 +39,7 @@ import type {
   ItineraryStepKind,
   PlaceRef,
 } from '../types';
+import { StepPhoto } from './StepPhoto';
 import { PrepMap, PREP_POINT_COLORS, type PrepMapPoint } from './PrepMap';
 import { PrepDataSource } from './PrepDataSource';
 import type { PrepSheetId } from './PrepSheets';
@@ -284,6 +285,20 @@ function FocusedStepView({
               {step.placeName}
             </p>
           ) : null}
+          {/* E8 - LA PHOTO, ou rien.
+
+              L image est une donnee comme le lieu : elle n arrive que si la
+              source a rendu une URL HTTPS, un auteur et une licence. Aucune des
+              trois, aucune photo. `StepPhoto` porte le credit et le retire si le
+              fichier ne se charge pas, donc cette carte ne peut ni afficher un
+              cadre vide, ni faire semblant d en savoir plus qu elle n en sait.
+
+              Elle se place sous le LIEU, pas au-dessus du titre : une photo
+              illustre un endroit precis, et le nom de cet endroit est
+              immediatement au-dessus d elle. */}
+          {step.image ? (
+            <StepPhoto image={step.image} placeName={step.placeName} title={step.title} />
+          ) : null}
           <div className="prep-step__when" style={AS_BLOCK}>
             {whenLabel(step)}
           </div>
@@ -359,6 +374,32 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
   // `?? null` : un store qui n'expose pas encore la mesure ne doit surtout pas
   // allumer un indicateur dont il ne connait pas l'etat.
   const remeasuring = useAdventurePrepStore((state) => state.remeasuring ?? null);
+  // E8 - la photo REELLE, demandee une fois le parcours construit, jamais
+  // pendant qu il se construit. La fonction du store est stable, donc cette
+  // dependance ne peut pas relancer la passe a chaque rendu.
+  const enrichStepImages = useAdventurePrepStore((state) => state.enrichStepImages);
+  const itineraryCourant = draft.itinerary;
+
+  /**
+   * Demande les photos, en arriere-plan, une fois par PARCOURS.
+   *
+   * La cle est l IDENTITE du modele : c est le seul changement que les moteurs
+   * signalent, puisqu ils rendent le MEME objet quand ils n ont rien change. Une
+   * cle sur le nombre d etapes serait fausse - remplacer un lieu garde le meme
+   * compte alors que la photo, elle, change de sujet.
+   *
+   * L effet ne bloque rien et n attend rien. Source muette, delai long ou image
+   * cassee ne changent rien au parcours : la carte s affiche entiere, et la
+   * photo s ajoutera apres coup, ou pas du tout.
+   */
+  useEffect(() => {
+    if (itineraryCourant === null) return;
+    // Un store qui n expose pas encore l action — un double de test, un etat en
+    // cours d hydratation — ne doit pas faire tomber l ecran POUR UNE PHOTO.
+    // L absence se paie en photo manquante, jamais en page blanche.
+    if (typeof enrichStepImages !== 'function') return;
+    void enrichStepImages();
+  }, [itineraryCourant, enrichStepImages]);
   const [blocked, setBlocked] = useState(false);
   // H5 : le fournisseur de la distance et de la duree. Il n est PAS le mode
   // demande au routeur : c est la valeur que /api/route a lue dans sa

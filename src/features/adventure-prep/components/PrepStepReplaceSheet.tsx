@@ -198,17 +198,21 @@ export function ReplaceSheet({
                   detail={`${detail.distance} · ${detail.category} · ${detail.price}`}
                   ariaLabel={`Remplacer par ${alternative.candidate.name}, a ${detail.distance}`}
                   onSelect={() => {
-                    // On AJOUTE avant de retirer : si l ajout echoue, l etape
-                    // d origine est encore la. L inverse perdrait le parcours.
+                    // Un seul remplacement, PAS un ajout suivi d une suppression.
+                    // ddStepToDay cree une etape SANS position (c est
+                    // ssignPlaces qui decide ce qui peut etre pose) : l
+                    // alternative choisie pour sa distance reelle retombait donc
+                    // hors carte, et la journee se refermait dessus. On passe
+                    // donc la position REELLE du lieu, et l etape garde son
+                    // identite, son jour, son rang et son lien de repas.
                     void actions
-                      .addStepToDay(step.day, step.kind, {
+                      .replaceStep(step.id, {
                         title: alternative.candidate.name,
                         placeName: alternative.candidate.name,
                         placeId: alternative.candidate.catalogId ?? null,
-                        reason: step.reason,
-                        mealSlot: step.mealSlot,
+                        lat: alternative.candidate.lat,
+                        lon: alternative.candidate.lon,
                       })
-                      .then(() => actions.dropStep(step.id))
                       .then(onClose);
                   }}
                 />

@@ -72,6 +72,7 @@
     "icons:codemod": "node scripts/icons/codemod-lucide-to-icon.mjs",
     "prebuild": "node scripts/icons/build-sprite.mjs && node scripts/icons/build-heroicons-map.mjs && node scripts/atlas/copy-maplibre-worker.mjs",
     "test:a11y": "playwright test --config=playwright.a11y.config.ts",
+    "test:glass": "playwright test --config=playwright.glass.config.ts",
     "audit:contrast": "node scripts/audit/visual-contrast.mjs",
     "audit:prep-contrast": "node scripts/audit/measure_prep_contrast.mjs",
     "audit:prep-contrast:selftest": "node scripts/audit/measure_prep_contrast.mjs --selftest",

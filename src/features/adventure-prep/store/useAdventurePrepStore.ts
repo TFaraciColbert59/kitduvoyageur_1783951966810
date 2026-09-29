@@ -7,7 +7,14 @@ import { emptyDraft } from '../engine/emptyDraft';
 import { insertWaypoint, type MapCoord } from '../engine/dayNavigation';
 import { measureWithRunners } from '../engine/measurements';
 import { browserMeasurementRunners } from '../browserMeasurements';
-import { buildItinerary, stepById, type StepDraft } from '../engine/itinerary';
+import {
+  buildItinerary,
+  stepById,
+  withStepImage,
+  type StepDraft,
+  type StepReplacement,
+} from '../engine/itinerary';
+import { fetchStepImage, type StepImage } from '../engine/stepImages';
 import {
   alternativesFor as rankAlternatives,
   referenceFor,
@@ -85,6 +92,33 @@ export function __resetAlternativesLoader(): void {
   SOURCE = SOURCE_REELLE;
 }
 
+/* ------------------------------------------------------------------ */
+/* E8 - la photo REELLE d une etape                                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * La source des photos. Par defaut la vraie : Wikimedia Commons, qui exige un
+ * auteur et une licence par fichier. Injectable pour un test, jamais pour une
+ * donnee de production, exactement comme `AlternativesLoader` au-dessus.
+ */
+export type StepImageLoader = (
+  nom: string,
+  options?: { readonly signal?: AbortSignal },
+) => Promise<StepImage | null>;
+
+const IMAGE_REELLE: StepImageLoader = (nom, options) => fetchStepImage(nom, options);
+
+let IMAGE_SOURCE: StepImageLoader = IMAGE_REELLE;
+
+/** Meme convention que le reste du fichier : un test substitue, puis remet. */
+export function __setStepImageLoader(loader: StepImageLoader): void {
+  IMAGE_SOURCE = loader;
+}
+
+export function __resetStepImageLoader(): void {
+  IMAGE_SOURCE = IMAGE_REELLE;
+}
+
 /**
  * Ce que « remplacer » peut honnument rapporter.
  *
@@ -129,6 +163,7 @@ export type RemeasureReason =
   | 'point-de-passage'
   | 'ajout-etape'
   | 'suppression-etape'
+  | 'remplacement-etape'
   | 'ajustement';
 
 export interface AdventurePrepState {
@@ -196,6 +231,15 @@ export interface AdventurePrepActions {
    * c'est un doublon qui ferait remarcher la journee.
    */
   alternativesForStep: (stepId: string, count: number) => Promise<StepAlternatives>;
+  /**
+   * Cherche la photo REELLE de chaque etape, sans bloquer le parcours.
+   *
+   * Renvoie `null` quand il n y a rien a poser. Elle n announce jamais
+   * l echec : une source muette et un lieu sans photo se ressemblent depuis
+   * l ecran, et les traiter differemment obligerait l interface a inventer un
+   * etat qu elle ne sait pas mesurer.
+   */
+  enrichStepImages: () => Promise<void>;
   /** Depose la geometrie reelle publiee par le moteur, telle quelle. */
   publishLiveModel: (model: ItineraryModel) => void;
   stopGeneration: () => void;
@@ -225,6 +269,14 @@ export interface AdventurePrepActions {
    */
   applyGenerated: (outcome: GenerationOutcome) => void;
   addStepToDay: (day: number, kind: ItineraryStepKind, step: StepDraft) => Promise<void>;
+  /**
+   * Remplace le LIEU d une etape par un etablissement reel, puis remesure.
+   *
+   * Le remesure n est pas optionnel : changer de lieu deplace le parcours, et
+   * un trace qui garde l ancien itinerire afficherait une geometrie qui n est
+   * plus celle du programme.
+   */
+  replaceStep: (stepId: string, replacement: StepReplacement) => Promise<void>;
   /**
    * Remesure le parcours courant sur le reseau reel.
    *
@@ -389,6 +441,61 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
           const places = demande > 0 ? tri.ranked.slice(0, demande) : tri.ranked;
           return { ...base, etat: 'pret', places, reference: tri.reference } as const;
         },
+        /**
+         * Cherche la photo REELLE de chaque etape, en arriere-plan.
+         *
+         * Pourquoi une passe a part, plutot qu une image dans le modele : la
+         * photo ne vient pas du moteur, elle vient d une source exterieure qui
+         * peut etre muette, lente, ou mise a jour apres coup. La melee a la
+         * construction ferait dependre le ROTOR d une image, donc porterait un
+         * detail d affichage dans l etat du programme. Ici elle arrive apres,
+         * et le parcours reste entierement utilisable sans elle.
+         *
+         * Ce que cette passe s interdit, et qui compte autant que ce qu elle
+         * fait :
+         *
+         *   - elle n attend pas. Aucun rendu ne depend d elle, et une source
+         *     muette ne se traduit jamais par un ecran qui tourne ;
+         *   - elle ne signale pas l absence. Une etape sans photo porte le meme
+         *     texte qu avant : on ignore, on n invente pas d information a
+         *     afficher la ;
+         *   - elle ne pose rien sur une etape sans lieu. Un trajet n a pas
+         *     d endroit a photographier, et chercher par titre de trajet
+         *     reviendrait a photographier le mot « trajet ».
+         */
+        enrichStepImages: async () => {
+          const model = get().draft.itinerary;
+          if (model === null) return;
+
+          // Une requete par LIEU, et seulement pour ceux qui en nomment un.
+          const cibles = model.steps.filter((step) => step.image == null && step.placeName != null);
+          if (cibles.length === 0) return;
+
+          await Promise.all(
+            cibles.map(async (step) => {
+              const nom = step.placeName;
+              if (nom == null) return;
+
+              let image: StepImage | null;
+              try {
+                image = await IMAGE_SOURCE(nom);
+              } catch {
+                // Une source qui leve est une source muette. Le preparateur ne
+                // remplace jamais un silence par une image de substitution, donc
+                // il ne rend rien et ne le signale pas.
+                return;
+              }
+              if (image === null) return;
+
+              patch((draft) => {
+                // Le parcours a pu changer entre la demande et la reponse.
+                const courant = draft.itinerary;
+                if (courant === null) return draft;
+                return draftActions.setItinerary(draft, withStepImage(courant, step.id, image));
+              });
+            }),
+          );
+        },
         continueGeneration: () =>
           patch((draft) => draftActions.setGeneration(draft, resumeGeneration(draft.generation))),
         markPhase: (id) =>
@@ -470,6 +577,10 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
           const avant = get().draft.itinerary;
           patch((draft) => draftActions.addItineraryStep(draft, day, kind, step));
           return remesureSiChange('ajout-etape', avant);
+        },        replaceStep: (stepId, replacement) => {
+          const avant = get().draft.itinerary;
+          patch((draft) => draftActions.replaceItineraryStep(draft, stepId, replacement));
+          return remesureSiChange('remplacement-etape', avant);
         },
         addWaypoint: (coord, day) => {
           const avant = get().draft.itinerary;

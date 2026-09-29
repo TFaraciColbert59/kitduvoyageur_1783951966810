@@ -9,6 +9,7 @@ import {
   type MealSlot,
   type MoneyValue,
   type RouteShape,
+  type StepImage,
 } from '../types';
 import { hasEngineMinimum } from './steps';
 import { proposedStops } from './proposedStops';
@@ -279,6 +280,76 @@ export function addStep(
   return withSteps(model, renumberByDay([...model.steps, step]));
 }
 
+/**
+ * Ce qu un etablissement REEL apporte quand il remplace une etape.
+ *
+ * Les coordonnees ne sont pas facultatives, et c est le point. Une
+ * alternative sans position n est pas un lieu : la poser ferait disparaitre
+ * l etape de la carte, alors meme qu elle viendrait d etre choisie pour sa
+ * distance. Aucune valeur par defaut, donc : `lat`/`lon` sont des nombres ou
+ * il n y a pas de remplacement.
+ */
+export interface StepReplacement {
+  readonly title: string;
+  readonly placeName: string | null;
+  readonly placeId: string | null;
+  readonly lat: number;
+  readonly lon: number;
+  /** Raison REELLE du nouveau choix ; `null` quand la source n en dit rien. */
+  readonly reason?: string | null;
+  /** Prix REEL du lieu, quand la source le rend. Jamais celui du lieu quitte. */
+  readonly price?: MoneyValue;
+}
+
+/**
+ * Remplace le LIEU d une etape, sans remplacer l etape.
+ *
+ * Le contrat tient en une phrase : meme etape, meme jour, meme rang, meme
+ * nature -- et la position du lieu choisi. Tout ce qui decrivait
+ * l etablissement qu on quitte repart a zero, parce qu il ne decrit plus rien :
+ * la duree, la reservation, le prix, la validation, la raison du choix.
+ *
+ * Ce qui SURVIT est la structure de la journee, pas le lieu : l identite, le
+ * jour, le rang, le lien de ravitaillement a un repas.
+ *
+ * Un `stepId` inconnu ne leve rien et ne deforme rien. Le rotor peut pointer
+ * une etape retiree entre-temps, et un remplacement qui echouerait bruyamment
+ * dans ce cas laisserait la personne sans comprendre pourquoi son tiroir s est
+ * referme sur un echec.
+ */
+export function replaceStep(
+  model: ItineraryModel,
+  stepId: string,
+  replacement: StepReplacement,
+): ItineraryModel {
+  if (!model.steps.some((step) => step.id === stepId)) return model;
+  return withSteps(
+    model,
+    model.steps.map((step) =>
+      step.id === stepId
+        ? {
+            ...step,
+            title: replacement.title,
+            placeName: replacement.placeName,
+            placeId: replacement.placeId,
+            lat: replacement.lat,
+            lon: replacement.lon,
+            reason: replacement.reason ?? null,
+            price: replacement.price ?? PRICE_TO_CHECK,
+            // Ce qui decrivait l ANCIEN etablissement. Le reconduire, ce
+            // serait afficher une mesure ou une reservation portant sur un
+            // lieu que personne n a vu, ni reserve.
+            durationMin: null,
+            state: 'propose',
+            // « A conserver » validait un lieu precis. Le reconduire serait
+            // une approbation que personne n a donnee pour l autre.
+            kept: false,
+          }
+        : step,
+    ),
+  );
+}
+
 export function setStepKept(model: ItineraryModel, stepId: string, kept: boolean): ItineraryModel {
   return withSteps(
     model,
@@ -297,6 +368,41 @@ export function setStepMealSlot(
   );
 }
 
+/**
+ * Pose — ou retire — l image d une etape, sans toucher au reste.
+ *
+ * Une image est une DONNEE, donc elle se manipule comme une donnee : elle
+ * arrive apres la construction du programme, jamais pendant. L enrichissement
+ * tourne en arriere-plan, ce qui veut dire qu il ne doit pas refaire passer le
+ * rotor : il appelle ceci, et recoit un modele neuf.
+ *
+ * Deux garde-fous, tous deux issus de la meme question — « d ou vient cette
+ * image ? » :
+ *
+ *   - un `stepId` inconnu rend la MEME reference. La requete est asynchrone :
+ *     si la personne a supprime l etape entre le lancement et la reponse, on ne
+ *     doit ni la recreer, ni reconstruire un modele pour rien ;
+ *   - une image deja posee n est pas remplacee. Un deuxieme essai, plus complet,
+ *     ne doit pas ecraser une attribution deja verifiee par une autre — ni faire
+ *     clignoter la tuile sous les yeux de la personne.
+ *
+ * Passer `null` efface. C est le seul retrait : on ne retire une image
+ * que lorsqu on sait qu elle ne montre pas le lieu.
+ */
+export function withStepImage(
+  model: ItineraryModel,
+  stepId: string,
+  image: StepImage | null,
+): ItineraryModel {
+  const cible = model.steps.find((step) => step.id === stepId);
+  if (cible === undefined) return model;
+  if (cible.image != null && image !== null) return model;
+
+  return withSteps(
+    model,
+    model.steps.map((step) => (step.id === stepId ? { ...step, image } : step)),
+  );
+}
 export function removeStep(model: ItineraryModel, stepId: string): ItineraryModel {
   return withSteps(
     model,

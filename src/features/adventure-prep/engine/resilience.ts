@@ -105,9 +105,38 @@ function recordedStepsLabel(count: number): string {
  * La phrase affichee dit CE QUI RESTE, pas ce qui manque : c'est la seule
  * information utile quand le reseau tombe. Le compte vient de la donnee, donc
  * le composant n'a jamais de chaine de secours a maintenir en parallele.
+ *
+ * LA CARTE N'EST PLUS DANS LA LISTE, et c'est la seule correction de ce
+ * module. Elle y etait, dans une enumeration coordonnee :
+ *
+ *   « le programme, la carte et les etapes restent sur cet appareil »
+ *
+ * Or seul le programme et les etapes y sont. La mise en liste est un
+ * engagement : elle fait porter au lecteur la meme disponibilite a trois
+ * choses, et deux seulement la meritent.
+ *
+ * Ce qui est vrai sur la carte, verifie et non suppose :
+ *   - `public/sw.js` encache les tuiles, mais CACHE-FIRST A LA VOLONTAIRE :
+ *     seules celles consultees en ligne sont conservees, borne FIFO a 3000
+ *     entrees, donc evacueable sans preavis ;
+ *   - le seul telechargement du produit, `src/hooks/useOfflineDownload.ts`,
+ *     n'est branche qu'a `/hors-ligne` et au panneau d'itineraire de
+ *     l'explorateur. Le preparateur ne l'appelle jamais ;
+ *   - cette fonction est PURE : elle ignore tout de ces etats, et ne pourrait
+ *     donc pas repondre « oui, la carte est la » meme si on le lui demandait.
+ *
+ * Corriger le fond —/downloader une carte depuis le preparateur— est une
+ * FONCTIONNALITE, pas un correctif : bbox depuis l'itineraire, ecran de
+ * telechargement, quota, progression, et des fichiers hors de ce module. Ce
+ * n'est pas pris ici. En attendant, la carte sort de la liste et son statut
+ * reel est dit, parce que taire une limite la laisse lire comme un acquis.
  */
 function buildSummary(count: number): string {
-  return `${recordedStepsLabel(count)} — le programme, la carte et les étapes restent sur cet appareil, lisibles sans réseau.`;
+  return (
+    `${recordedStepsLabel(count)} — le programme et les étapes restent sur cet ` +
+    `appareil, lisibles sans réseau. La carte reste visible uniquement sur les ` +
+    `zones déjà consultées en ligne.`
+  );
 }
 
 /**
@@ -181,7 +210,14 @@ export function buildContingencies(model: ItineraryModel | null): ItineraryModel
     {
       kind: 'hors_ligne',
       trigger: 'Tu perds le réseau en chemin',
-      action: 'Ton parcours reste lisible hors ligne, comme la carte téléchargée.',
+      // « comme la carte téléchargée » comparait le parcours a un objet que le
+      // preparateur ne telecharge jamais : le seul telechargement du produit
+      // (/hors-ligne) n'est pas atteignable d'ici. C'est ce plan qu'on lit EN
+      // CHEMIN, une fois le reseau tombe — donc celui ou une fausse comparaison
+      // coute le plus cher. Meme verite que le bandeau, meme limite.
+      action:
+        'Ton programme et tes étapes restent lisibles hors ligne. La carte, elle, ' +
+        'ne reste visible que sur les zones déjà consultées en ligne.',
       affectedStepIds: [] as string[],
       prepared: true,
     },

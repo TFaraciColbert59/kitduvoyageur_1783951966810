@@ -206,20 +206,33 @@ describe("E8 / M4.3 - la carte d etape n invente aucune image", () => {
     "utf-8",
   );
 
-  it("E8-01 : le type d etape ne porte AUCUN champ image", () => {
-    // Le contrat de la donnee AVANT le rendu. Si un jour un champ image
-    // arrive reellement d une source (BDD, fournisseur), c est ce test qui
-    // doit rougir : il obligera alors a BRANCHER la source, et non a
-    // continued de l ignorer.
+  it("E8-01 : le type d etape porte le champ image, et lui SEUL", () => {
+    // CE TEST A CHANGE DE CAMP. Il affirmait l absence de tout champ image, et
+    // son propre message annoncait le basculement : « ItineraryStep porte
+    // desormais un champ image : la source REELLE doit etre branchee ».
+    // Elle l est. Wikimedia Commons rend une URL HTTPS, un auteur et une
+    // licence par fichier, et `engine/stepImages` refuse tout ce qui en
+    // manque. Le champ existe donc, et il se nomme `image`.
+    //
+    // Ce qui n a PAS change, et que ce test continue de surveiller : le champ
+    // est le SEUL, et il n a pas de valeur par defaut. Un `cover` ou un
+    // `banner` qui reapparaitrait ici serait un second point d entree, donc
+    // une seconde source, donc une seconde question de licence — ouverte
+    // celle-la.
     const types = readFileSync(join(racineFeature(), "types.ts"), "utf-8");
     const bloc = types.slice(types.indexOf("export interface ItineraryStep"));
     const champs = bloc.slice(0, bloc.indexOf("\n}")).match(/^\s{2}(\w+)\??:/gm) ?? [];
 
     expect(
       champs.filter((c) => /image|photo|thumb|cover|banner|media|picture/i.test(c)),
-      "ItineraryStep porte desormais un champ image : la source REELLE doit "
-        + "etre branchee, et le placeholder retire",
-    ).toEqual([]);
+      "ItineraryStep ne doit porter QU UN champ image, nomme image : "
+        + "un deuxieme champ serait une deuxieme source, donc une deuxieme "
+        + "question de licence",
+    ).toEqual(["  image?:"]);
+
+    // `null` par defaut, jamais une image vide : une carte sans photo doit
+    // se distinguer d une carte dont la photo n a pas encore arrive.
+    expect(types).toMatch(/image\?:\s*StepImage\s*\|\s*null/);
   });
 
   it("E8-02 : AUCUNE carte d etape ne rend <img> ni vignette", () => {

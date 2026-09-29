@@ -30,6 +30,11 @@
  * B. Un classifieur de dimensions incapable de rejeter est inutile. N7-06 lui
  *    fait passer deux images synthetiques construites pour etre rejetees
  *    (390x844 et 390x1704), et exige qu il les refuse.
+ * C. Un item qui lit un dossier LOCAL sans le garder fait echouer tout le
+ *    fichier de test quand ce dossier n existe pas -- y compris les items qui
+ *    n ont rien a y voir. `proof/` est gitignore, donc absent d une clone
+ *    frais : c est ce qui rendait la suite rouge en CI. N7-H verrouille le
+ *    garde-fou ; les items corpus sont desactives, jamais verts sur du vide.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -98,15 +103,21 @@ const classer = (
   return { classe: 'hors-cadre', densite };
 };
 
-const lireCorpus = (): Image[] =>
-  fs
-    .readdirSync(PROOF)
+const lireCorpus = (racine: string = PROOF): Image[] => {
+  let noms: string[];
+  try {
+    noms = fs.readdirSync(racine);
+  } catch {
+    return [];
+  }
+  return noms
     .filter((nom) => nom.toLowerCase().endsWith('.png'))
     .map((nom) => {
-      const buf = fs.readFileSync(path.join(PROOF, nom));
+      const buf = fs.readFileSync(path.join(racine, nom));
       const { largeur, hauteur } = lireIhdr(buf);
       return { nom, largeur, hauteur, octets: buf.length };
     });
+};
 
 /* --------------------------------------------- scripts de capture reels -- */
 
@@ -173,6 +184,7 @@ const collecterScripts = (): Script[] => {
 };
 
 const corpus = lireCorpus();
+const CORPUS_PRESENT = corpus.length > 0;
 const scripts = collecterScripts();
 const classes = corpus.map((img) => ({ ...img, ...classer(img.largeur, img.hauteur) }));
 const pleine = classes.filter((c) => c.classe === 'cadre-complet');
@@ -181,13 +193,13 @@ const hors = classes.filter((c) => c.classe === 'hors-cadre');
 const densitesDeclarees = [...new Set(scripts.map((s) => s.dpr).filter((d) => d > 0))].sort((a, b) => a - b);
 
 describe('N7 · infrastructure de capture 393x852', () => {
-  it('N7-01 · le corpus de preuve existe et n est pas vide', () => {
+  it.skipIf(!CORPUS_PRESENT)('N7-01 · le corpus de preuve existe et n est pas vide', () => {
     expect(fs.existsSync(PROOF)).toBe(true);
     expect(corpus.length).toBeGreaterThan(0);
     expect(corpus.length).toBeGreaterThanOrEqual(200);
   });
 
-  it('N7-02 · chaque capture pleine est exactement 393x852 a un facteur entier', () => {
+  it.skipIf(!CORPUS_PRESENT)('N7-02 · chaque capture pleine est exactement 393x852 a un facteur entier', () => {
     expect(pleine.length).toBeGreaterThan(0);
     // La distribution des densites est un fait, pas une cible : elle est
     // verifiee, pas imposee.
@@ -205,11 +217,15 @@ describe('N7 · infrastructure de capture 393x852', () => {
     expect([...new Set(pleine.map((c) => c.densite))].sort((a, b) => a - b)).toEqual([1, 2, 3]);
   });
 
-  it('N7-03 · les images hors cadre plein sont des RECADRAGES du meme cadre', () => {
+  it.skipIf(!CORPUS_PRESENT)('N7-03 · les images hors cadre plein sont des RECADRAGES du meme cadre', () => {
     // Liste explicite, pour qu une nouvelle image atypique soit visible.
     expect(recadrages.map((r) => `${r.nom} ${r.largeur}x${r.hauteur}@${r.densite}x`).sort()).toEqual([
       'D6-01-zone-carte.png 706x264@2x',
+      'G4-reference-etape1-393.png 500x852@2x',
+      'G4-reference-etape2-393.png 500x852@2x',
+      'G4-reference-etape3-393.png 500x852@2x',
       'L1-4-rail-verre-393.png 786x104@2x',
+      'L64-generation-intermediaire-393.png 500x852@2x',
       'P020-31-zoom-coupe.png 786x340@2x',
       'P020-32-AB-SANS-masque.png 1179x240@3x',
       'P020-33-AB-AVEC-masque.png 1179x240@3x',
@@ -218,11 +234,11 @@ describe('N7 · infrastructure de capture 393x852', () => {
     for (const r of recadrages) expect(densitesDeclarees).toContain(r.densite);
   }, 30_000);
 
-  it('N7-04 · aucune capture ne sort du cadre 393x852', () => {
+  it.skipIf(!CORPUS_PRESENT)('N7-04 · aucune capture ne sort du cadre 393x852', () => {
     expect(hors.map((h) => `${h.nom} ${h.largeur}x${h.hauteur}`)).toEqual([]);
   });
 
-  it('N7-05 · le corpus est exploitable : PNG decodable, non plat, poids plausible', async () => {
+  it.skipIf(!CORPUS_PRESENT)('N7-05 · le corpus est exploitable : PNG decodable, non plat, poids plausible', async () => {
     expect(corpus.length).toBeGreaterThan(0);
     const plats: string[] = [];
     let poidsMin = Number.POSITIVE_INFINITY;
@@ -289,5 +305,39 @@ describe('N7 · infrastructure de capture 393x852', () => {
     // Et l infrastructure declare bien les densites utilisees par le corpus.
     expect(densitesDeclarees.length).toBeGreaterThan(0);
     expect(densitesDeclarees.every((d) => DENSITES.includes(d))).toBe(true);
+  });
+
+  /**
+   * Le contrat d hermeticite, lui-meme verifie. Cet item ne depend d aucun
+   * corpus : il tourne sur une clone frais comme sur un poste de travail.
+   *
+   * Le fait qu il ait pu s executer EST deja une preuve : si `lireCorpus`
+   * levait sur un dossier absent, le module n aurait pas fini de charger et
+   * ce fichier entier -- les sept autres items compris -- serait tombe en
+   * erreur de collection. La suite resterait rouge, pas verte.
+   */
+  it('N7-H · le corpus est un artefact local : son absence desactive, elle ne casse rien', () => {
+    // 1. Lire un dossier absent ne leve pas. C est l etat exact de la CI.
+    const inexistant = path.join(ROOT, 'preuve-absente-volontairement');
+    expect(fs.existsSync(inexistant)).toBe(false);
+    expect(() => lireCorpus(inexistant)).not.toThrow();
+    expect(lireCorpus(inexistant)).toEqual([]);
+
+    // 2. Le gate est une consequence, pas une convention : il dit exactement
+    //    ce que la lecture a trouve, donc il ne peut pas mentir sur le corpus.
+    expect(CORPUS_PRESENT).toBe(corpus.length > 0);
+
+    // 3. Ce qui reste verifie SANS le disque est bien verifie : sinon la CI
+    //    ne degraderait pas vers "moins de controles", elle degraderait vers
+    //    "aucun controle".
+    expect(scripts.length).toBeGreaterThan(0);
+    expect(densitesDeclarees.length).toBeGreaterThan(0);
+    expect(classer(786, 1704)).toEqual({ classe: 'cadre-complet', densite: 2 });
+
+    // 4. Le contrat vit dans le .gitignore, pas dans une convention orale :
+    //    si quelqu un decide un jour de versionner les 150 MB de PNG, ce
+    //    item tombe et oblige a re-decider, explicitement, du sort de la CI.
+    const gitignore = fs.readFileSync(path.join(ROOT, '.gitignore'), 'utf8');
+    expect(gitignore.split(/\r?\n/).some((l) => l.trim() === 'proof/')).toBe(true);
   });
 });
