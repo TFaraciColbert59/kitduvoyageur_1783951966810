@@ -403,10 +403,26 @@
      meme densite de base sur les panneaux du preparateur.
 
      Valeurs brutes uniquement ici, dans la couche de tokens. */
-  --prep-panel-bg: rgb(16 16 16 / 0.42);
+  /* La DENSITE de base du panneau est ce qui garantit le contraste, pas la
+     force de l'encre. La mesure prend le pixel le plus defavorable du glyphe
+     : un panneau a 42 % laissait passer les zones CLAIRES de la photo (neige,
+     ciel) et le texte blanc y tombait a 1,08:1 -- l'ecart entre le `best`
+     (11,3:1 sur la zone sombre) et le `worst` (1,08:1 sur la zone claire)
+     mesurait exactement cette fuite.
+
+     On monte donc le plancher du panneau. Ce n'est pas un aplat noir opaque :
+     le `backdrop-filter` (22px de flou + saturation) MELANGE la photo dans
+     cette densite au lieu de la remplacer, et le decor reste lu comme un
+     decor -- il traverse simplement le verre au lieu de le traverser en clair.
+
+     `brightness` passe sous 1 pour la meme raison : a 1,04 il REMONTAIT les
+     hautes lumieres de la photo aprs melange, ce qui recreait exactement le
+     pic clair qu'on cherche a supprimer. La correction est faite dans le
+     filtre, donc une seule valeur pour tous les panneaux. */
+  --prep-panel-bg: rgb(16 16 16 / 0.72);
   --prep-panel-blur: 22px;
   --prep-panel-saturate: 200%;
-  --prep-panel-brightness: 1.04;
+  --prep-panel-brightness: 0.86;
 
   /* --- Teintes de famille ---------------------------------------------
      Cinq familles de points, cinq teintes CATEGORIELLES. Le contraste n'est
@@ -626,7 +642,7 @@
 
 .prep-crumb__sep {
   flex: 0 0 auto;
-  color: var(--lkv-text-subtle);
+  color: color-mix(in srgb, var(--lkv-text-primary) 74%, var(--lkv-text-subtle));
 }
 
 .prep-crumb__label,
@@ -639,7 +655,7 @@
 
 .prep-crumb__label {
   padding-block: 2px;
-  color: var(--lkv-text-secondary);
+  color: color-mix(in srgb, var(--lkv-text-primary) 90%, var(--lkv-text-secondary));
   border-bottom: 2px solid transparent;
 }
 
@@ -652,7 +668,7 @@
 
 /* Une etape atteinte mais non generee reste annoncee, pas activee. */
 .prep-crumb__label[data-locked='true'] {
-  color: var(--lkv-text-subtle);
+  color: color-mix(in srgb, var(--lkv-text-primary) 80%, var(--lkv-text-subtle));
 }
 
 /* Le libelle d une étape atteinte EST un bouton, mais il ne doit pas en avoir
@@ -802,6 +818,7 @@
 /* --- Titre d'étape ------------------------------------------------------ */
 
 .prep-title {
+  position: relative;
   margin: 0;
   font-size: var(--prep-type-title);
   line-height: var(--lkv-line-title);
@@ -924,7 +941,14 @@ button.prep-block__row:active {
   font-size: var(--prep-type-body);
   line-height: var(--lkv-line-body);
   color: var(--lkv-text-primary);
-  background-color: color-mix(in srgb, var(--lkv-text-primary) 5%, transparent);
+  /* Le champ libre etait pose a 5% d encre sur du transparent : son texte se
+     retrouvait directement sur la photo (mesure 393, pire 1.09). Il recoit donc
+     le MEME materiau que les autres panneaux, densite comprise. */
+  background-color: var(--prep-panel-bg);
+  -webkit-backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
   border: var(--prep-hairline) solid var(--prep-hairline-ink);
   border-radius: calc(var(--card-radius) * 0.7);
   resize: vertical;
@@ -934,19 +958,19 @@ button.prep-block__row:active {
 }
 
 .prep-brief__input::placeholder {
-  color: var(--lkv-text-tertiary, var(--lkv-text-secondary));
+  color: color-mix(in srgb, var(--lkv-text-primary) 86%, var(--lkv-text-secondary));
 }
 
 .prep-brief__input:focus-visible {
   outline: none;
-  background-color: color-mix(in srgb, var(--lkv-text-primary) 8%, transparent);
+  background-color: color-mix(in srgb, var(--prep-panel-bg) 88%, var(--lkv-text-primary) 12%);
   border-color: var(--prep-ink-accent);
 }
 
 .prep-brief__hint {
   font-size: var(--prep-type-meta);
   line-height: var(--lkv-line-body);
-  color: var(--lkv-text-secondary);
+  color: color-mix(in srgb, var(--lkv-text-primary) 88%, var(--lkv-text-secondary));
 }
 
 .prep-block__hint {
@@ -1848,6 +1872,26 @@ button.prep-map__glass:active {
   background-color: color-mix(in srgb, var(--lkv-action) 10%, transparent);
 }
 
+/* --- Les icones masquees ne doivent pas peindre de carre ----------------
+   `Icon.tsx` (l.95) pose `backgroundColor: color || 'currentColor'` en
+   style INLINE sur chaque icone rendue par masque CSS. Sur le verre du
+   preparateur l'encre est blanche, donc `currentColor` vaut blanc : chaque
+   icone peignait un carre BLANC OPAQUE sous le texte blanc de son propre
+   bouton. Mesure navigateur 393x852, pixel (242,5 ; 438) : le fond releve
+   vaut `rgb(255,255,255)` pile et le glyphe `rgb(244,245,244)` -- contrat
+   1,08:1. C'est la cause racine des 6 pastilles `prep-action` en echec
+   (pic `worst` 1,05 a 1,35) ; ce n'est pas un double rendu du bouton.
+   Le style inline bat toute classe, donc seule la priorite `!important`
+   peut le neutraliser : verifie au navigateur, elle l'emporte bien.
+   L'icone reste un glyphe via `mask-image`, donc sa couleur CONTINUE de
+   porter la couleur du texte -- seule la surface peinte devient nulle.
+   Un style inline n'etant pas une classe, ce selecteur ne peut pas
+   s'appliquer ailleurs que dans le preparateur. */
+:is(.prep-action, .prep-act, .prep-nav, .prep-footer, .prep-block, .prep-search, .prep-cats)
+  span[style*='mask-image'] {
+  background-color: transparent !important;
+}
+
 .prep-action:focus-visible {
   outline: 2px solid var(--lkv-focus-ring);
   outline-offset: 2px;
@@ -1855,7 +1899,14 @@ button.prep-map__glass:active {
 
 .prep-action[aria-pressed='true'] {
   color: var(--prep-ink-accent);
-  background-color: color-mix(in srgb, var(--lkv-action) 14%, transparent);
+  /* Un `background-color` ICI ecraseait la densite du panneau : la pastille
+     pressee redevenait quasi transparente et laissait la photo claire
+     repasser sous son propre texte. On SUPERPOSE donc un voile d accent en
+     `background-image`, ce qui laisse vivre le fond du panneau. */
+  background-image: linear-gradient(
+    color-mix(in srgb, var(--lkv-action) 14%, transparent),
+    color-mix(in srgb, var(--lkv-action) 14%, transparent)
+  );
   border-color: color-mix(in srgb, var(--lkv-action) 30%, transparent);
 }
 
@@ -1944,6 +1995,13 @@ button.prep-map__glass:active {
   min-height: var(--prep-action-height);
   font-size: var(--prep-type-body);
   font-weight: 720;
+  /* L encre claire du bouton partage survivait a la revocation de
+     --card-tint-solid : le CTA devenait du rgb(16,16,16) sur du rgb(28,31,26),
+     soit 1.09. On lui rend son aplat d action et son encre d action. L etat
+     `:disabled` plus bas garde la priorite et n est pas touche. */
+  color: var(--lkv-on-action);
+  background-color: var(--lkv-action);
+  border-color: var(--lkv-action);
 }
 
 /* --- D10 · L etat inactif du CTA se lit -------------------------------------
@@ -2070,7 +2128,7 @@ button.prep-map__glass:active {
 .prep-act__hint {
   font-size: var(--prep-type-meta);
   line-height: var(--lkv-line-body);
-  color: var(--lkv-text-secondary);
+  color: color-mix(in srgb, var(--lkv-text-primary) 88%, var(--lkv-text-secondary));
   text-wrap: pretty;
 }
 
@@ -2214,8 +2272,30 @@ button.prep-map__glass:active {
    `document.body`, donc les tiroirs sont des FRERES de l'app-shell, pas des
    descendants. Une variable posee sur l'app-shell ne les atteint pas ; posee
    sur le body (via :has), elle cascade vers tous les sheets portaled. */
+/* Les deux memes variables n'ont pas la meme polarite dans le preparateur, et le
+   constat vaut aussi pour les deux surfaces d'APLAT clair -- pas seulement pour
+   la surface elevee. En theme `light`, `--lkv-surface` vaut #F5F7F3 et
+   `--card-tint-solid` vaut #FFFFFF, alors que le preparateur y force une encre
+   blanche : toute pastille, vignette ou bandeau pose sur ces deux jetons
+   peignait un aplat blanc SOUS du texte blanc.
+
+   Mesure navigateur 393x852, avant correction : les 6 pastilles `.prep-action`
+   sortaient a `worst` 1,05-1,35, avec un fond releve a `rgb(255,255,255)` pile
+   au pixel (242,5 ; 438) -- la mesure ne voyait ni le verre, ni la photo,
+   seulement cet aplat. La meme signature touchait `.prep-segmented__item`
+   (l.1017), les vignettes d'etape (l.1193) et la pastille de categorie
+   (l.1566).
+
+   Le revoquement reprend exactement celui deja pose pour
+   `--lkv-surface-elevated` ci-dessus, et sur le meme scope : `body` via
+   `:has()`, pour que les tiroirs montes en portail dans `document.body`
+   (cf. la note sur `Sheet` plus bas) en heritent aussi. Les valeurs sont
+   celles de la feuille, lues comme jetons : aucune couleur en dur ici, et la
+   polarite sombre reste celle du verre. */
 body:has(.app-shell--preparer) {
   --lkv-surface-elevated: var(--prep-surface-elevated);
+  --lkv-surface: var(--prep-surface-elevated);
+  --card-tint-solid: var(--prep-surface-elevated);
 }
 
 .app-shell--preparer > div {
@@ -2659,7 +2739,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   color: var(--lkv-text-primary);
 }
 .prep-search input::placeholder {
-  color: var(--lkv-text-subtle);
+  color: color-mix(in srgb, var(--lkv-text-primary) 84%, var(--lkv-text-subtle));
 }
 
 /* input[type=search] dessine sa propre croix, qui se collait a notre bouton Effacer. */
@@ -2676,7 +2756,17 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   min-height: 44px;
   padding: 6px 14px;
   border-radius: 22px;
-  background: var(--lkv-surface);
+  /* Meme materiau que les panneaux : la pastille est posee sur la photo, elle
+     doit donc MELANGER le decor au lieu de le laisser passer clair. Sans le
+     `backdrop-filter`, une pastille laissait voir la neige et le ciel sous son
+     propre texte blanc -- mesure 393x852, pixel (271,5 ; 443) : fond releve
+     `rgb(219,220,222)`, soit 1,05:1 avec le glyphe. La densite vient du meme
+     jeton que les autres panneaux, donc une seule valeur a suivre. */
+  background: var(--prep-panel-bg);
+  -webkit-backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
+  backdrop-filter: blur(var(--prep-panel-blur)) saturate(var(--prep-panel-saturate))
+    brightness(var(--prep-panel-brightness));
   border: var(--prep-hairline) solid var(--prep-hairline-ink);
   font-size: var(--prep-type-meta);
   font-weight: 500;
@@ -2686,7 +2776,10 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
 }
 .prep-action[aria-pressed='true'] {
-  background: color-mix(in srgb, var(--lkv-action) 12%, transparent);
+  background-image: linear-gradient(
+    color-mix(in srgb, var(--lkv-action) 12%, transparent),
+    color-mix(in srgb, var(--lkv-action) 12%, transparent)
+  );
   border-color: var(--lkv-action);
   color: var(--lkv-action);
   font-weight: 600;
@@ -2700,7 +2793,7 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   /* Un bouton ne se souligne pas : le trait venait d un restyle web et
      happochait l oeil au milieu d une barre qui est, elle, du verre. */
   text-decoration: none;
-  color: var(--lkv-text-secondary);
+  color: color-mix(in srgb, var(--lkv-text-primary) 88%, var(--lkv-text-secondary));
   padding: 10px 8px;
   cursor: pointer;
   background: transparent;
@@ -2936,6 +3029,32 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
 /* La carte remplit le cadre : la carte du hub impose 20rem de hauteur
    minimale, qui deborderait du tiroir de 150px. */
 .prep-picker__map {
+  min-height: 0;
+  height: 100%;
+}
+/* L4.4 — meme verrou, cote tiroir. La regle ci-dessus vaut (0,1,0), exactement
+   ce que vaut `.hub-globe-map { min-height: 20rem }` dans
+   `hub-map-liquid.css:15`. A specificite egale, le hub gagne sur l ORDRE DE
+   SOURCE : sa carte faisait 320px dans un cadre de 150px.
+
+   Mesure navigateur, tiroir Lieu ouvert, 393x852, avant correction :
+     .prep-picker        353 x 150   (overflow: hidden)
+     .hub-globe-map      351 x 320   (min-height: 320px)
+     carteDepasse        +171px      centre carte y=699  vs  centre cadre y=613
+   Apres correction :
+     .hub-globe-map      351 x 148   (min-height: 0px)
+     carteDepasse        -1px        centre carte y=613  =  centre cadre y=613
+
+   Le point choisi n etait donc pas centre : il etait decale de 86px vers le
+   bas, et la carte etait rognee. Un selecteur qui porte `.prep-picker` ET une
+   classe descendante vaut au moins (0,2,0) : il bat le hub sans dependre de
+   l ordre d import, et il survit a l ajout d une classe intermediaire.
+
+   C est le miroir exact de la regle deja posee plus haut dans ce meme fichier
+   pour la carte de l ecran (l. 1399) ; le tiroir n avait simplement pas droit
+   au meme traitement. Aucun code change : la correction est 100% CSS. */
+.prep-picker .hub-globe-map,
+.prep-picker .prep-picker__map {
   min-height: 0;
   height: 100%;
 }

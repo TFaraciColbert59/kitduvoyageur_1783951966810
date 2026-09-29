@@ -306,6 +306,9 @@ export function materializeSteps(
     kind: step.kind,
     title: step.title,
     placeName: step.placeName,
+    // Un lieu nomme par le modele n a pas d identifiant de catalogue, et il
+    // n en recoit pas un de fabrication : la table de resolution fait foi.
+    placeId: null,
     startTime: step.startTime,
     durationMin: step.durationMin,
     reason: step.reason,

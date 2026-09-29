@@ -679,13 +679,66 @@ interface PrepNavActionsProps {
   onGoHub: () => void;
 }
 
+/**
+ * Le revirement au focus, porte par le composant, pas par la feuille.
+ *
+ * `prep-visually-hidden` ecrase le groupe en 1 px (clip-path inset(50%)). Un
+ * bouton qui y reste focusable est donc un focus ORPHELIN : le clavier y va,
+ * l ecran ne montre rien, et rien ne signale ou l on est. Ces deux constantes
+ * neutralisent la coupe quand le groupe porte le focus, et le replongent
+ * dans le cache quand il le perd.
+ */
+const PREP_ACTIONS_REVEAL: React.CSSProperties = {
+  position: 'fixed',
+  top: '0.5rem',
+  left: '0.5rem',
+  zIndex: 80,
+  display: 'flex',
+  gap: '0.5rem',
+  width: 'auto',
+  height: 'auto',
+  margin: 0,
+  padding: '0.5rem',
+  overflow: 'visible',
+  clip: 'auto',
+  clipPath: 'none',
+  whiteSpace: 'normal',
+};
+
+/** Le bouton redevient un bouton : 44 pt de haut, pastille, contraste herite. */
+const PREP_ACTION_BOUTON: React.CSSProperties = {
+  minHeight: '44px',
+  padding: '0 1rem',
+  borderRadius: '999px',
+  border: '1px solid currentColor',
+  background: 'var(--lkv-surface, Canvas)',
+  color: 'var(--lkv-text-primary, CanvasText)',
+  cursor: 'pointer',
+};
+
 export function PrepNavActions({ onOpenPreferences, onGoHub }: PrepNavActionsProps) {
+  const [auFocus, setAuFocus] = React.useState(false);
   return (
-    <div className="prep-visually-hidden" role="group" aria-label="Actions de la préparation">
-      <button type="button" onClick={onGoHub}>
+    <div
+      className='prep-visually-hidden'
+      style={auFocus ? PREP_ACTIONS_REVEAL : undefined}
+      role='group'
+      aria-label="Actions de la préparation"
+      onFocusCapture={() => setAuFocus(true)}
+      onBlurCapture={() => setAuFocus(false)}
+    >
+      <button
+        type='button'
+        style={auFocus ? PREP_ACTION_BOUTON : undefined}
+        onClick={onGoHub}
+      >
         Revenir au hub
       </button>
-      <button type="button" onClick={onOpenPreferences}>
+      <button
+        type='button'
+        style={auFocus ? PREP_ACTION_BOUTON : undefined}
+        onClick={onOpenPreferences}
+      >
         Ouvrir les préférences du trajet
       </button>
     </div>

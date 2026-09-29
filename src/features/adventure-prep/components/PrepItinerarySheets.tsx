@@ -78,9 +78,25 @@ function section(title: string, children: React.ReactNode) {
 
 
 
+/* L3.4 — meme regle que sur la carte, et pour la meme raison : la ligne
+ * d une etape est un couple (heure de depart, duree sur place). La ligne
+ * juxtaposait TOUJOURS les deux, meme absentes, et lisait alors
+ * « Heure à vérifier · À vérifier sur place » : deux badges pour une seule
+ * absence. On n affiche que ce qui existe, et une absence reste une absence
+ * — jamais un zero pour completer le couple. */
 function whenLabel(step: ItineraryStep): string {
 
-  return `${step.startTime ?? 'Heure à vérifier'} · ${formatMinutes(step.durationMin)} sur place`;
+  const parts: string[] = [];
+
+  if (step.startTime) parts.push(step.startTime);
+
+  if (step.durationMin !== null && Number.isFinite(step.durationMin)) {
+
+    parts.push(`${formatMinutes(step.durationMin)} sur place`);
+
+  }
+
+  return parts.length > 0 ? parts.join(' · ') : 'Heure et durée à vérifier';
 
 }
 

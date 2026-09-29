@@ -27,7 +27,6 @@ import {
 import { shouldLaunchGeneration } from '../engine/stepTransition';
 import { minutesLabel, programTitle } from '../engine/labels';
 import { A_VERIFIER, moneyLabel, stateLabel } from '../engine/trust';
-import { usePrepDayFocusPublisher } from '../hooks/usePrepDayFocusPublisher';
 import { useDaySwipe } from '../hooks/useDaySwipe';
 import { useAdventurePrepStore } from '../store/useAdventurePrepStore';
 import type {
@@ -206,8 +205,24 @@ function stepIcon(step: ItineraryStepModel): string {
   return step.icon || STEP_ICONS[step.kind];
 }
 
+/* L3.4 — UN seul « À vérifier » par ligne.
+ *
+ * La ligne d'un etape est un couple : l'heure de depart, puis la duree. Le
+ * joint `·` rendait les deux MOIS meme quand aucun des deux n etait connu,
+ * et l ecran lisait « À vérifier · À vérifier » : la meme absence repetee
+ * deux fois se lit comme deux informations, alors qu il n'y en a qu une.
+ *
+ * On ne decide pas QUELLE des deux absences montrer : la ligne conserve son
+ * contrat (heure, puis duree) et n'affiche que ce qui existe. Une seule
+ * absence donne un seul « À vérifier » ; deux absences donnent le meme
+ * « À vérifier » qu une, ce qui est exact : on ignore toujours deux choses. */
 function whenLabel(step: ItineraryStepModel): string {
-  return `${step.startTime ?? A_VERIFIER} · ${minutesLabel(step.durationMin)}`;
+  const parts: string[] = [];
+  if (step.startTime) parts.push(step.startTime);
+  if (step.durationMin !== null && Number.isFinite(step.durationMin)) {
+    parts.push(minutesLabel(step.durationMin));
+  }
+  return parts.length > 0 ? parts.join(' · ') : A_VERIFIER;
 }
 
 /* ------------------------------------------------------------------ */
@@ -329,6 +344,25 @@ function FocusedStepView({
           <h3 className="prep-step__name" style={AS_BLOCK}>
             {step.title}
           </h3>
+          {/* M2.3 — OÙ ?
+              *
+              * Mesure (etape 2, 393x852) : la carte focalisee repondait a QUOI
+              * (titre), QUAND (when) et POURQUOI (reason), et ne nommait
+              * JAMAIS le lieu. Une carte dont on ne sait pas OU on va n a pas
+              * repondu a la question la plus simple du voyage.
+              *
+              * Le champ existait deja dans le modele (`placeName`) et la feuille
+              * de style possedait deja `.prep-step__place` (adventure-prep.css:3321) :
+              * la case etait prevue, jamais remplie.
+              *
+              * Comme partout ailleurs sur cet ecran, un lieu absent ne rend RIEN :
+              * ni tiret, ni «Lieu a verifier », ni le nom du lieu voisin. Une ligne
+              * vide-costumee serait un mensonge de moins, mais toujours un mensonge. */}
+          {step.placeName ? (
+            <p className="prep-step__place" style={AS_BLOCK}>
+              {step.placeName}
+            </p>
+          ) : null}
           <div className="prep-step__when" style={AS_BLOCK}>
             {whenLabel(step)}
           </div>
@@ -411,7 +445,12 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
   // parlent tous du meme perimetre.
   const focusDay = useDayFocusStore((state) => state.selectedDay);
   const selectFocusDay = useDayFocusStore((state) => state.selectDay);
-  usePrepDayFocusPublisher(draft);
+  // L6.6 — cet ecran NE MONTE PLUS le publisher. `AdventurePrepShell` le
+  // monte deja, une fois, avec le `focusable` reellement decide par l etape
+  // courante ; le remonter ici ecrivait deux fois le meme store et pouvait
+  // repasser `focusable` a `true` la ou le shell venait de dire `false`.
+  // Le rail partage est donc publie depuis le cadre commun des trois
+  // ecrans, ce qui est la seule maniere qu il le soit vraiment.
 
   const runAbort = useRef<AbortController | null>(null);
 
@@ -478,7 +517,14 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
         return;
       }
       next.applyGenerated(outcome);
-      next.completeStep('itinerary');
+      // L0 (mesure, etape 2) : `completeStep('itinerary')` venait ici. Le
+      // reducer avance d office `currentStep` vers l etape suivante des que
+      // l etape est satisfaite (reducer.ts:147) : le parcours venait de
+      // s afficher, et la meme seconde leciait l ecran. Le pied « Vers le
+      // depart » — le SEUL sortie que l etape 2 se donne — n etait donc
+      // jamais atteignable, et rien de cet ecran n etait mesurable.
+      // La validation reste au pied, qui appelle deja `completeStep` puis
+      // `goToStep('departure')` : un seul endroit decide de la sortie.
     } finally {
       // La reference est liberee dans TOUS les cas : un ecran qui remonte
       // apres un run termine ne doit pas se croire encore vivant, sinon il
@@ -834,8 +880,24 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
             {program.length > 0 && <FocusedStepView program={program} onOpenSheet={onOpenSheet} />}
 
             <div className="prep-actionrow">
+              {/* M2.2 — une priorite lisible, SANS changer le nombre de CTA.
+                  *
+                  * Les trois boutons etaient strictement identiques : meme
+                  * variante, meme taille, meme poids. Trois actions de meme
+                  * poids se lisent comme trois actions de meme importance, ce
+                  * qu elles ne sont pas. « Etapes » (lire le parcours) et
+                  * « Ajouter » (le completer) ne valent pas « Ajuster »
+                  * (le corriger), qui est le geste attendu juste apres que le
+                  * parcours vient d etre produit.
+                  *
+                  * On ne regroupe PAS les trois. E10-05 verrouille exactement
+                  * ces trois libelles dans cet ordre, et la consigne du
+                  * proprietaire impose que le tiroir « Etapes » reste
+                  * fonctionnel et liste les 16 etapes : le regrouper le ferait
+                  * disparaitre de l ecran, et le remede aurait supprime le
+                  * symptome en cassant la garantie. */}
               <Button
-                variant="secondary"
+                variant="primary"
                 size="md"
                 onClick={() => onOpenSheet('adjust')}
                 icon={<Icon name="Cog6ToothIcon" size={18} />}
@@ -878,11 +940,15 @@ export function ItineraryStepScreen({ onOpenSheet }: ItineraryStepScreenProps) {
         {/* D1-D : sans itineraire, la carte montrait « Ensemble / Agrandir /
             Recentrer » et promettait qu un appui long poserait un point de
             passage qui FAIT EVOLUER LE TRAJET. Il n y avait pas de trajet a
-            faire evoluer. Meme carte, meme promesse, que l itineraire existe. */}
-            Un appui long NE FABRIQUE pas de journee. Vu en « Ensemble », il n'y a pas de
-            jour auquel rattacher le point : le deposer sur le jour 1 mettrait un trait sur
-            une journee qui ne l'a pas demande. Le geste n'existe donc que sur un jour
-            focus -- c'est la que le trajet retrace se compare a ce qu'il decrit.
+            faire evoluer. Meme carte, meme promesse, que l itineraire existe.
+
+            D1-D bis : ces phrases ETAIENT du texte developpement rendu tel quel
+            hors du commentaire, donc affichees comme du contenu devant l
+            itineraire. Le comportement qu elles decrivent est celui de
+            `onAddWaypoint` : un point n est accepte que sur un jour focus, et
+            l ensemble n en accepte aucun. Le code le dit deja (`activeDay ===
+            null` puis `onAddWaypoint` de toute maniere) ; le texte, lui, etait
+            affiche. Il disparait d ici : la regle vit dans la carte. */}
         {model && (
           <>
             <PrepMap

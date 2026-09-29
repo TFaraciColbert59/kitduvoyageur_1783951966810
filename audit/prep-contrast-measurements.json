@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "tool": "scripts/audit/measure_prep_contrast.mjs",
   "method": "Contraste WCAG 2.2 mesuré sur les PIXELS PEINTS, fond local prélevé autour des glyphes. Aucun arrière-plan DOM n’est composé : le calque photo de /prepare est un élément frère `aria-hidden` en `position: fixed; z-index: -1`, hors de toute chaîne d’ancêtres.",
-  "measuredAt": "2026-09-28T23:53:08.441Z",
+  "measuredAt": "2026-09-29T02:15:42.027Z",
   "target": {
     "url": "http://localhost:4000/prepare?nouvelle=1",
     "baseUrl": "http://localhost:4000"
@@ -192,10 +192,10 @@
       },
       "referenceShot": "audit/prep-contrast-shots/375x812.png",
       "counts": {
-        "measured": 26,
+        "measured": 16,
         "pass": 6,
-        "fail": 20,
-        "skipped": 4,
+        "fail": 10,
+        "skipped": 5,
         "occluded": 0
       },
       "occlusion": [],
@@ -214,6 +214,12 @@
           "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
         },
         {
+          "classes": "prep-visually-hidden",
+          "tag": "span",
+          "text": "Choix de l’activité",
+          "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
+        },
+        {
           "classes": "sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[var(--z-emergency)",
           "tag": "a",
           "text": "Aller au contenu principal",
@@ -227,26 +233,26 @@
         }
       ],
       "skippedByReason": {
-        "rectangle hors cadre : rogné horizontalement ou verticalement": 4
+        "rectangle hors cadre : rogné horizontalement ou verticalement": 5
       },
       "runtimeErrors": [],
       "failures": [
         {
           "classes": "prep-action",
-          "occurrences": 4,
-          "worst": 1.05,
-          "best": 6.68,
+          "occurrences": 3,
+          "worst": 1.04,
+          "best": 10,
           "threshold": 4.5,
           "fontSize": 13,
           "glyph": [
-            127,
-            196,
-            154
+            223,
+            219,
+            202
           ],
           "backgroundAtWorst": [
-            179,
-            188,
-            180
+            223,
+            223,
+            222
           ],
           "samples": [
             "À pied",
@@ -255,137 +261,47 @@
           ]
         },
         {
-          "classes": "prep-brief__hint",
+          "classes": "prep-act__name",
           "occurrences": 1,
           "worst": 1.08,
-          "best": 7.76,
-          "threshold": 4.5,
-          "fontSize": 13,
-          "glyph": [
-            204,
-            206,
-            202
-          ],
-          "backgroundAtWorst": [
-            198,
-            198,
-            190
-          ],
-          "samples": [
-            "L’IA en tient compte pour tout générer. Tu peux aussi partir d’une activité du c",
-            "L’IA en tient compte pour tout générer. Tu peux aussi partir d’une activité du c"
-          ]
-        },
-        {
-          "classes": "prep-act__name",
-          "occurrences": 2,
-          "worst": 1.08,
-          "best": 13.08,
+          "best": 13.88,
           "threshold": 4.5,
           "fontSize": 17,
           "glyph": [
-            231,
-            232,
-            231
+            228,
+            228,
+            228
           ],
           "backgroundAtWorst": [
-            223,
-            224,
-            223
+            219,
+            220,
+            219
           ],
           "samples": [
-            "Randonnée avec nuit de refuge",
-            "Randonnée avec nuit de refuge",
+            "Trail",
             "Trail"
           ]
         },
         {
-          "classes": "prep-brief__input",
-          "occurrences": 1,
-          "worst": 1.08,
-          "best": 9.27,
-          "threshold": 4.5,
-          "fontSize": 16,
-          "glyph": [
-            186,
-            189,
-            186
-          ],
-          "backgroundAtWorst": [
-            193,
-            196,
-            196
-          ],
-          "samples": [
-            "placeholder: Écris ce que tu imagines, l’IA s’en charge…",
-            "placeholder: Écris ce que tu imagines, l’IA s’en charge…"
-          ]
-        },
-        {
-          "classes": "prep-act__hint",
-          "occurrences": 2,
-          "worst": 1.09,
-          "best": 9.85,
-          "threshold": 4.5,
-          "fontSize": 13,
-          "glyph": [
-            203,
-            204,
-            200
-          ],
-          "backgroundAtWorst": [
-            193,
-            196,
-            193
-          ],
-          "samples": [
-            "Gabarit : journée",
-            "Gabarit : journée",
-            "Gabarit : avec une nuit"
-          ]
-        },
-        {
-          "classes": "(placeholder)",
+          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
           "occurrences": 1,
           "worst": 1.1,
-          "best": 5.64,
-          "threshold": 4.5,
-          "fontSize": 16,
-          "glyph": [
-            165,
-            166,
-            158
-          ],
-          "backgroundAtWorst": [
-            159,
-            158,
-            145
-          ],
-          "samples": [
-            "placeholder: Rechercher une activité",
-            "placeholder: Rechercher une activité"
-          ]
-        },
-        {
-          "classes": "prep-crumb__sep",
-          "occurrences": 1,
-          "worst": 1.11,
-          "best": 3,
+          "best": 4.29,
           "threshold": 4.5,
           "fontSize": 17,
           "glyph": [
-            126,
-            137,
-            129
+            20,
+            22,
+            18
           ],
           "backgroundAtWorst": [
-            134,
-            145,
-            138
+            28,
+            31,
+            26
           ],
           "samples": [
-            "·",
-            "·"
+            "Continuer",
+            "Continuer"
           ]
         },
         {
@@ -432,54 +348,28 @@
             "Quelle aventure ?",
             "Quelle aventure ?"
           ]
-        },
-        {
-          "classes": "prep-crumb__label",
-          "occurrences": 2,
-          "worst": 2.96,
-          "best": 3.84,
-          "threshold": 4.5,
-          "fontSize": 13,
-          "glyph": [
-            156,
-            160,
-            148
-          ],
-          "backgroundAtWorst": [
-            78,
-            84,
-            63
-          ],
-          "samples": [
-            "Préparation",
-            "Préparation",
-            "En avant !"
-          ]
-        },
-        {
-          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
-          "occurrences": 1,
-          "worst": 4.01,
-          "best": 4.43,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            28,
-            33,
-            25
-          ],
-          "backgroundAtWorst": [
-            121,
-            127,
-            121
-          ],
-          "samples": [
-            "Continuer",
-            "Continuer"
-          ]
         }
       ],
       "elements": [
+        {
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "Eau",
+          "fontSize": 13,
+          "fontWeight": 500,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            223,
+            219,
+            202
+          ],
+          "worst": 1.04,
+          "best": 10,
+          "threshold": 4.5,
+          "verdict": "FAIL",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
+        },
         {
           "classes": "prep-action",
           "tag": "button",
@@ -493,45 +383,7 @@
             154
           ],
           "worst": 1.05,
-          "best": 6.68,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-action",
-          "tag": "button",
-          "text": "Eau",
-          "fontSize": 13,
-          "fontWeight": 500,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            241,
-            242,
-            241
-          ],
-          "worst": 1.07,
-          "best": 10.64,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-brief__hint",
-          "tag": "p",
-          "text": "L’IA en tient compte pour tout générer. Tu peux aussi partir d’une activité du c",
-          "fontSize": 13,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.71)",
-          "glyph": [
-            204,
-            206,
-            202
-          ],
-          "worst": 1.08,
-          "best": 7.76,
+          "best": 6.96,
           "threshold": 4.5,
           "verdict": "FAIL",
           "occlusionUnverifiable": false,
@@ -545,12 +397,12 @@
           "fontWeight": 500,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
-            242,
-            243,
-            242
+            221,
+            219,
+            210
           ],
           "worst": 1.08,
-          "best": 11.67,
+          "best": 12.14,
           "threshold": 4.5,
           "verdict": "FAIL",
           "occlusionUnverifiable": false,
@@ -564,110 +416,34 @@
           "fontWeight": 640,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
-            231,
-            232,
-            231
+            228,
+            228,
+            228
           ],
           "worst": 1.08,
-          "best": 13.08,
+          "best": 13.88,
           "threshold": 4.5,
           "verdict": "FAIL",
           "occlusionUnverifiable": false,
           "seenAt": 2
         },
         {
-          "classes": "prep-brief__input",
-          "tag": "placeholder",
-          "text": "placeholder: Écris ce que tu imagines, l’IA s’en charge…",
-          "fontSize": 16,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.71)",
+          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
+          "tag": "button",
+          "text": "Continuer",
+          "fontSize": 17,
+          "fontWeight": 600,
+          "declaredColor": "rgb(16, 16, 16)",
           "glyph": [
-            186,
-            189,
-            186
-          ],
-          "worst": 1.08,
-          "best": 9.27,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 1
-        },
-        {
-          "classes": "prep-act__hint",
-          "tag": "span",
-          "text": "Gabarit : journée",
-          "fontSize": 13,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.71)",
-          "glyph": [
-            203,
-            204,
-            200
-          ],
-          "worst": 1.09,
-          "best": 9.85,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 6
-        },
-        {
-          "classes": "",
-          "tag": "placeholder",
-          "text": "placeholder: Rechercher une activité",
-          "fontSize": 16,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.46)",
-          "glyph": [
-            165,
-            166,
-            158
+            20,
+            22,
+            18
           ],
           "worst": 1.1,
-          "best": 5.64,
+          "best": 4.29,
           "threshold": 4.5,
           "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-crumb__sep",
-          "tag": "li",
-          "text": "·",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.46)",
-          "glyph": [
-            126,
-            137,
-            129
-          ],
-          "worst": 1.11,
-          "best": 3,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 4
-        },
-        {
-          "classes": "prep-act__hint",
-          "tag": "span",
-          "text": "Gabarit : avec une nuit",
-          "fontSize": 13,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.71)",
-          "glyph": [
-            197,
-            200,
-            197
-          ],
-          "worst": 1.26,
-          "best": 8.23,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
+          "occlusionUnverifiable": true,
           "seenAt": 2
         },
         {
@@ -704,63 +480,6 @@
           "worst": 2.32,
           "best": 9.67,
           "threshold": 3,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-crumb__label",
-          "tag": "span",
-          "text": "En avant !",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgba(255, 255, 255, 0.46)",
-          "glyph": [
-            156,
-            160,
-            148
-          ],
-          "worst": 2.96,
-          "best": 3.84,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-crumb__label",
-          "tag": "span",
-          "text": "Préparation",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgba(255, 255, 255, 0.46)",
-          "glyph": [
-            137,
-            150,
-            144
-          ],
-          "worst": 3.56,
-          "best": 4.06,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-action",
-          "tag": "button",
-          "text": "Neige et montagne",
-          "fontSize": 13,
-          "fontWeight": 500,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            253,
-            253,
-            252
-          ],
-          "worst": 3.61,
-          "best": 11.71,
-          "threshold": 4.5,
           "verdict": "FAIL",
           "occlusionUnverifiable": false,
           "seenAt": 2
@@ -804,25 +523,6 @@
           "seenAt": 2
         },
         {
-          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
-          "tag": "button",
-          "text": "Continuer",
-          "fontSize": 17,
-          "fontWeight": 600,
-          "declaredColor": "rgb(16, 16, 16)",
-          "glyph": [
-            28,
-            33,
-            25
-          ],
-          "worst": 4.01,
-          "best": 4.43,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": true,
-          "seenAt": 2
-        },
-        {
           "classes": "relative z-[1] text-[10px] font-semibold leading-none",
           "tag": "span",
           "text": "Communauté",
@@ -838,63 +538,6 @@
           "best": 4.73,
           "threshold": 4.5,
           "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-act__name",
-          "tag": "span",
-          "text": "Randonnée avec nuit de refuge",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 4.44,
-          "best": 14.96,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-act__name",
-          "tag": "span",
-          "text": "Randonnée à la journée",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 4.59,
-          "best": 11.16,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "",
-          "tag": "span",
-          "text": "Qu’est-ce que tu as en tête ?",
-          "fontSize": 15,
-          "fontWeight": 700,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 5.58,
-          "best": 14.01,
-          "threshold": 4.5,
-          "verdict": "PASS",
           "occlusionUnverifiable": false,
           "seenAt": 2
         },
@@ -918,6 +561,82 @@
           "seenAt": 2
         },
         {
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "Neige et montagne",
+          "fontSize": 13,
+          "fontWeight": 500,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            248,
+            248,
+            248
+          ],
+          "worst": 9.88,
+          "best": 15.4,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
+        },
+        {
+          "classes": "prep-act__name",
+          "tag": "span",
+          "text": "Randonnée avec nuit de refuge",
+          "fontSize": 17,
+          "fontWeight": 640,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            255,
+            255,
+            255
+          ],
+          "worst": 10.02,
+          "best": 17.2,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
+        },
+        {
+          "classes": "prep-act__name",
+          "tag": "span",
+          "text": "Randonnée à la journée",
+          "fontSize": 17,
+          "fontWeight": 640,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            255,
+            255,
+            255
+          ],
+          "worst": 10.18,
+          "best": 15.26,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
+        },
+        {
+          "classes": "",
+          "tag": "span",
+          "text": "Qu’est-ce que tu as en tête ?",
+          "fontSize": 15,
+          "fontWeight": 700,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            255,
+            255,
+            255
+          ],
+          "worst": 11.27,
+          "best": 16.7,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
+        },
+        {
           "classes": "prep-act__name",
           "tag": "span",
           "text": "Course",
@@ -929,46 +648,8 @@
             254,
             254
           ],
-          "worst": 5.97,
-          "best": 16.35,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-footer-link",
-          "tag": "button",
-          "text": "Partir librement",
-          "fontSize": 13,
-          "fontWeight": 600,
-          "declaredColor": "rgba(255, 255, 255, 0.71)",
-          "glyph": [
-            193,
-            196,
-            191
-          ],
-          "worst": 6.39,
-          "best": 7.57,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-crumb__label",
-          "tag": "span",
-          "text": "Créations",
-          "fontSize": 13,
-          "fontWeight": 720,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 12.55,
-          "best": 13.28,
+          "worst": 11.49,
+          "best": 17.75,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
@@ -1035,10 +716,10 @@
       },
       "referenceShot": "audit/prep-contrast-shots/393x852.png",
       "counts": {
-        "measured": 26,
+        "measured": 16,
         "pass": 6,
-        "fail": 20,
-        "skipped": 4,
+        "fail": 10,
+        "skipped": 5,
         "occluded": 0
       },
       "occlusion": [],
@@ -1057,6 +738,12 @@
           "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
         },
         {
+          "classes": "prep-visually-hidden",
+          "tag": "span",
+          "text": "Choix de l’activité",
+          "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
+        },
+        {
           "classes": "sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[var(--z-emergency)",
           "tag": "a",
           "text": "Aller au contenu principal",
@@ -1070,26 +757,26 @@
         }
       ],
       "skippedByReason": {
-        "rectangle hors cadre : rogné horizontalement ou verticalement": 4
+        "rectangle hors cadre : rogné horizontalement ou verticalement": 5
       },
       "runtimeErrors": [],
       "failures": [
         {
           "classes": "prep-action",
-          "occurrences": 4,
+          "occurrences": 3,
           "worst": 1.07,
-          "best": 11.31,
+          "best": 11.78,
           "threshold": 4.5,
           "fontSize": 13,
           "glyph": [
-            244,
-            245,
-            244
+            220,
+            220,
+            212
           ],
           "backgroundAtWorst": [
-            236,
-            237,
-            236
+            226,
+            226,
+            225
           ],
           "samples": [
             "À pied",
@@ -1098,115 +785,47 @@
           ]
         },
         {
-          "classes": "prep-brief__hint",
+          "classes": "prep-act__name",
           "occurrences": 1,
           "worst": 1.08,
-          "best": 7.88,
-          "threshold": 4.5,
-          "fontSize": 13,
-          "glyph": [
-            202,
-            204,
-            200
-          ],
-          "backgroundAtWorst": [
-            197,
-            196,
-            188
-          ],
-          "samples": [
-            "L’IA en tient compte pour tout générer. Tu peux aussi partir d’une activité du c",
-            "L’IA en tient compte pour tout générer. Tu peux aussi partir d’une activité du c"
-          ]
-        },
-        {
-          "classes": "prep-act__name",
-          "occurrences": 2,
-          "worst": 1.08,
-          "best": 12.12,
+          "best": 12.41,
           "threshold": 4.5,
           "fontSize": 17,
           "glyph": [
-            223,
-            223,
-            221
+            216,
+            216,
+            215
           ],
           "backgroundAtWorst": [
-            231,
-            231,
-            230
+            208,
+            208,
+            207
           ],
           "samples": [
-            "Randonnée avec nuit de refuge",
-            "Randonnée avec nuit de refuge",
+            "Trail",
             "Trail"
           ]
         },
         {
-          "classes": "prep-brief__input",
+          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
           "occurrences": 1,
           "worst": 1.09,
-          "best": 8.47,
+          "best": 4.16,
           "threshold": 4.5,
-          "fontSize": 16,
+          "fontSize": 17,
           "glyph": [
-            181,
-            185,
-            182
+            20,
+            22,
+            18
           ],
           "backgroundAtWorst": [
-            189,
-            192,
-            191
+            28,
+            30,
+            26
           ],
           "samples": [
-            "placeholder: Écris ce que tu imagines, l’IA s’en charge…",
-            "placeholder: Écris ce que tu imagines, l’IA s’en charge…"
-          ]
-        },
-        {
-          "classes": "(placeholder)",
-          "occurrences": 1,
-          "worst": 1.1,
-          "best": 4.8,
-          "threshold": 4.5,
-          "fontSize": 16,
-          "glyph": [
-            150,
-            154,
-            149
-          ],
-          "backgroundAtWorst": [
-            160,
-            162,
-            156
-          ],
-          "samples": [
-            "placeholder: Rechercher une activité",
-            "placeholder: Rechercher une activité"
-          ]
-        },
-        {
-          "classes": "prep-act__hint",
-          "occurrences": 2,
-          "worst": 1.11,
-          "best": 9.71,
-          "threshold": 4.5,
-          "fontSize": 13,
-          "glyph": [
-            202,
-            203,
-            199
-          ],
-          "backgroundAtWorst": [
-            191,
-            193,
-            191
-          ],
-          "samples": [
-            "Gabarit : journée",
-            "Gabarit : journée",
-            "Gabarit : avec une nuit"
+            "Continuer",
+            "Continuer"
           ]
         },
         {
@@ -1253,73 +872,6 @@
             "Quelle aventure ?",
             "Quelle aventure ?"
           ]
-        },
-        {
-          "classes": "prep-crumb__label",
-          "occurrences": 2,
-          "worst": 2.92,
-          "best": 3.9,
-          "threshold": 4.5,
-          "fontSize": 13,
-          "glyph": [
-            156,
-            160,
-            148
-          ],
-          "backgroundAtWorst": [
-            79,
-            85,
-            62
-          ],
-          "samples": [
-            "Préparation",
-            "Préparation",
-            "En avant !"
-          ]
-        },
-        {
-          "classes": "prep-crumb__sep",
-          "occurrences": 1,
-          "worst": 2.99,
-          "best": 3.09,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            127,
-            139,
-            131
-          ],
-          "backgroundAtWorst": [
-            47,
-            67,
-            54
-          ],
-          "samples": [
-            "·",
-            "·"
-          ]
-        },
-        {
-          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
-          "occurrences": 1,
-          "worst": 4.02,
-          "best": 4.31,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            27,
-            33,
-            25
-          ],
-          "backgroundAtWorst": [
-            121,
-            127,
-            121
-          ],
-          "samples": [
-            "Continuer",
-            "Continuer"
-          ]
         }
       ],
       "elements": [
@@ -1331,12 +883,12 @@
           "fontWeight": 500,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
-            244,
-            245,
-            244
+            220,
+            220,
+            212
           ],
           "worst": 1.07,
-          "best": 11.31,
+          "best": 11.78,
           "threshold": 4.5,
           "verdict": "FAIL",
           "occlusionUnverifiable": false,
@@ -1350,31 +902,12 @@
           "fontWeight": 500,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
-            241,
-            242,
-            242
-          ],
-          "worst": 1.07,
-          "best": 9.33,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-brief__hint",
-          "tag": "p",
-          "text": "L’IA en tient compte pour tout générer. Tu peux aussi partir d’une activité du c",
-          "fontSize": 13,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.71)",
-          "glyph": [
-            202,
-            204,
-            200
+            218,
+            216,
+            201
           ],
           "worst": 1.08,
-          "best": 7.88,
+          "best": 7.76,
           "threshold": 4.5,
           "verdict": "FAIL",
           "occlusionUnverifiable": false,
@@ -1388,73 +921,35 @@
           "fontWeight": 640,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
-            223,
-            223,
-            221
+            216,
+            216,
+            215
           ],
           "worst": 1.08,
-          "best": 12.12,
+          "best": 12.41,
           "threshold": 4.5,
           "verdict": "FAIL",
           "occlusionUnverifiable": false,
           "seenAt": 2
         },
         {
-          "classes": "prep-brief__input",
-          "tag": "placeholder",
-          "text": "placeholder: Écris ce que tu imagines, l’IA s’en charge…",
-          "fontSize": 16,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.71)",
+          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
+          "tag": "button",
+          "text": "Continuer",
+          "fontSize": 17,
+          "fontWeight": 600,
+          "declaredColor": "rgb(16, 16, 16)",
           "glyph": [
-            181,
-            185,
-            182
+            20,
+            22,
+            18
           ],
           "worst": 1.09,
-          "best": 8.47,
+          "best": 4.16,
           "threshold": 4.5,
           "verdict": "FAIL",
-          "occlusionUnverifiable": false,
+          "occlusionUnverifiable": true,
           "seenAt": 2
-        },
-        {
-          "classes": "",
-          "tag": "placeholder",
-          "text": "placeholder: Rechercher une activité",
-          "fontSize": 16,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.46)",
-          "glyph": [
-            150,
-            154,
-            149
-          ],
-          "worst": 1.1,
-          "best": 4.8,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-act__hint",
-          "tag": "span",
-          "text": "Gabarit : journée",
-          "fontSize": 13,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.71)",
-          "glyph": [
-            202,
-            203,
-            199
-          ],
-          "worst": 1.11,
-          "best": 9.71,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 6
         },
         {
           "classes": "prep-action",
@@ -1469,7 +964,7 @@
             154
           ],
           "worst": 1.35,
-          "best": 6.61,
+          "best": 6.97,
           "threshold": 4.5,
           "verdict": "FAIL",
           "occlusionUnverifiable": false,
@@ -1514,101 +1009,6 @@
           "seenAt": 2
         },
         {
-          "classes": "prep-crumb__label",
-          "tag": "span",
-          "text": "En avant !",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgba(255, 255, 255, 0.46)",
-          "glyph": [
-            156,
-            160,
-            148
-          ],
-          "worst": 2.92,
-          "best": 3.9,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-crumb__sep",
-          "tag": "li",
-          "text": "·",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.46)",
-          "glyph": [
-            127,
-            139,
-            131
-          ],
-          "worst": 2.99,
-          "best": 3.09,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 4
-        },
-        {
-          "classes": "prep-action",
-          "tag": "button",
-          "text": "Neige et montagne",
-          "fontSize": 13,
-          "fontWeight": 500,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            253,
-            253,
-            253
-          ],
-          "worst": 3.41,
-          "best": 7.71,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-act__hint",
-          "tag": "span",
-          "text": "Gabarit : avec une nuit",
-          "fontSize": 13,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.71)",
-          "glyph": [
-            195,
-            196,
-            193
-          ],
-          "worst": 3.54,
-          "best": 9.29,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-crumb__label",
-          "tag": "span",
-          "text": "Préparation",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgba(255, 255, 255, 0.46)",
-          "glyph": [
-            137,
-            149,
-            144
-          ],
-          "worst": 3.59,
-          "best": 4.05,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
           "classes": "relative z-[1] text-[10px] font-semibold leading-none",
           "tag": "span",
           "text": "Explorer",
@@ -1625,25 +1025,6 @@
           "threshold": 4.5,
           "verdict": "FAIL",
           "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
-          "tag": "button",
-          "text": "Continuer",
-          "fontSize": 17,
-          "fontWeight": 600,
-          "declaredColor": "rgb(16, 16, 16)",
-          "glyph": [
-            27,
-            33,
-            25
-          ],
-          "worst": 4.02,
-          "best": 4.31,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": true,
           "seenAt": 2
         },
         {
@@ -1685,63 +1066,6 @@
           "seenAt": 2
         },
         {
-          "classes": "prep-act__name",
-          "tag": "span",
-          "text": "Randonnée avec nuit de refuge",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 4.35,
-          "best": 14.63,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-act__name",
-          "tag": "span",
-          "text": "Randonnée à la journée",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 4.55,
-          "best": 11.68,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "",
-          "tag": "span",
-          "text": "Qu’est-ce que tu as en tête ?",
-          "fontSize": 15,
-          "fontWeight": 700,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 5.5,
-          "best": 13.51,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
           "classes": "relative z-[1] text-[10px] font-semibold leading-none",
           "tag": "span",
           "text": "Hub",
@@ -1761,6 +1085,82 @@
           "seenAt": 2
         },
         {
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "Neige et montagne",
+          "fontSize": 13,
+          "fontWeight": 500,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            247,
+            247,
+            247
+          ],
+          "worst": 9.53,
+          "best": 13.12,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
+        },
+        {
+          "classes": "prep-act__name",
+          "tag": "span",
+          "text": "Randonnée avec nuit de refuge",
+          "fontSize": 17,
+          "fontWeight": 640,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            255,
+            255,
+            255
+          ],
+          "worst": 9.87,
+          "best": 17.07,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
+        },
+        {
+          "classes": "prep-act__name",
+          "tag": "span",
+          "text": "Randonnée à la journée",
+          "fontSize": 17,
+          "fontWeight": 640,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            255,
+            255,
+            255
+          ],
+          "worst": 10.14,
+          "best": 15.6,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
+        },
+        {
+          "classes": "",
+          "tag": "span",
+          "text": "Qu’est-ce que tu as en tête ?",
+          "fontSize": 15,
+          "fontWeight": 700,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            255,
+            255,
+            255
+          ],
+          "worst": 11.13,
+          "best": 16.54,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
+        },
+        {
           "classes": "prep-act__name",
           "tag": "span",
           "text": "Course",
@@ -1772,46 +1172,8 @@
             254,
             254
           ],
-          "worst": 5.94,
-          "best": 16.27,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-footer-link",
-          "tag": "button",
-          "text": "Partir librement",
-          "fontSize": 13,
-          "fontWeight": 600,
-          "declaredColor": "rgba(255, 255, 255, 0.71)",
-          "glyph": [
-            191,
-            194,
-            190
-          ],
-          "worst": 6.35,
-          "best": 7.52,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-crumb__label",
-          "tag": "span",
-          "text": "Créations",
-          "fontSize": 13,
-          "fontWeight": 720,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 12.54,
-          "best": 13.26,
+          "worst": 11.6,
+          "best": 17.66,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
@@ -1869,15 +1231,21 @@
       },
       "referenceShot": "audit/prep-contrast-shots/768x1024.png",
       "counts": {
-        "measured": 23,
+        "measured": 13,
         "pass": 5,
-        "fail": 18,
-        "skipped": 2,
+        "fail": 8,
+        "skipped": 3,
         "occluded": 0
       },
       "occlusion": [],
       "occlusionUnverifiable": 1,
       "skipped": [
+        {
+          "classes": "prep-visually-hidden",
+          "tag": "span",
+          "text": "Choix de l’activité",
+          "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
+        },
         {
           "classes": "sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[var(--z-emergency)",
           "tag": "a",
@@ -1892,26 +1260,26 @@
         }
       ],
       "skippedByReason": {
-        "rectangle hors cadre : rogné horizontalement ou verticalement": 2
+        "rectangle hors cadre : rogné horizontalement ou verticalement": 3
       },
       "runtimeErrors": [],
       "failures": [
         {
           "classes": "prep-action",
-          "occurrences": 6,
+          "occurrences": 5,
           "worst": 1.07,
-          "best": 11.86,
+          "best": 14.79,
           "threshold": 4.5,
           "fontSize": 13,
           "glyph": [
-            243,
-            243,
-            243
+            246,
+            246,
+            246
           ],
           "backgroundAtWorst": [
-            234,
-            236,
-            235
+            254,
+            254,
+            254
           ],
           "samples": [
             "À pied",
@@ -1920,88 +1288,21 @@
           ]
         },
         {
-          "classes": "prep-brief__input",
-          "occurrences": 1,
-          "worst": 1.08,
-          "best": 3.82,
-          "threshold": 4.5,
-          "fontSize": 16,
-          "glyph": [
-            144,
-            145,
-            136
-          ],
-          "backgroundAtWorst": [
-            138,
-            140,
-            123
-          ],
-          "samples": [
-            "placeholder: Écris ce que tu imagines, l’IA s’en charge…",
-            "placeholder: Écris ce que tu imagines, l’IA s’en charge…"
-          ]
-        },
-        {
-          "classes": "prep-brief__hint",
-          "occurrences": 1,
-          "worst": 1.09,
-          "best": 7.91,
-          "threshold": 4.5,
-          "fontSize": 13,
-          "glyph": [
-            201,
-            203,
-            200
-          ],
-          "backgroundAtWorst": [
-            191,
-            195,
-            193
-          ],
-          "samples": [
-            "L’IA en tient compte pour tout générer. Tu peux aussi partir d’une activité du c",
-            "L’IA en tient compte pour tout générer. Tu peux aussi partir d’une activité du c"
-          ]
-        },
-        {
-          "classes": "prep-act__hint",
-          "occurrences": 2,
-          "worst": 1.09,
-          "best": 6.05,
-          "threshold": 4.5,
-          "fontSize": 13,
-          "glyph": [
-            157,
-            160,
-            152
-          ],
-          "backgroundAtWorst": [
-            162,
-            167,
-            166
-          ],
-          "samples": [
-            "Gabarit : journée",
-            "Gabarit : journée",
-            "Gabarit : avec une nuit"
-          ]
-        },
-        {
           "classes": "prep-act__name",
           "occurrences": 2,
-          "worst": 1.09,
-          "best": 4.64,
+          "worst": 1.11,
+          "best": 5.16,
           "threshold": 4.5,
           "fontSize": 17,
           "glyph": [
-            137,
             138,
-            129
+            138,
+            135
           ],
           "backgroundAtWorst": [
-            142,
-            144,
-            143
+            145,
+            146,
+            145
           ],
           "samples": [
             "Trail",
@@ -2010,114 +1311,25 @@
           ]
         },
         {
-          "classes": "prep-crumb__sep",
-          "occurrences": 1,
-          "worst": 1.1,
-          "best": 2.39,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            153,
-            154,
-            137
-          ],
-          "backgroundAtWorst": [
-            161,
-            162,
-            146
-          ],
-          "samples": [
-            "·",
-            "·"
-          ]
-        },
-        {
-          "classes": "prep-footer-link",
-          "occurrences": 1,
-          "worst": 1.11,
-          "best": 2.93,
-          "threshold": 4.5,
-          "fontSize": 13,
-          "glyph": [
-            106,
-            111,
-            96
-          ],
-          "backgroundAtWorst": [
-            108,
-            119,
-            111
-          ],
-          "samples": [
-            "Partir librement",
-            "Partir librement"
-          ]
-        },
-        {
-          "classes": "(placeholder)",
-          "occurrences": 1,
-          "worst": 1.11,
-          "best": 4.31,
-          "threshold": 4.5,
-          "fontSize": 16,
-          "glyph": [
-            148,
-            152,
-            147
-          ],
-          "backgroundAtWorst": [
-            146,
-            143,
-            132
-          ],
-          "samples": [
-            "placeholder: Rechercher une activité",
-            "placeholder: Rechercher une activité"
-          ]
-        },
-        {
           "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
           "occurrences": 1,
-          "worst": 1.13,
-          "best": 4.38,
+          "worst": 1.9,
+          "best": 4.14,
           "threshold": 4.5,
           "fontSize": 17,
           "glyph": [
-            26,
-            33,
-            26
+            19,
+            22,
+            19
           ],
           "backgroundAtWorst": [
-            33,
-            44,
-            33
+            66,
+            70,
+            66
           ],
           "samples": [
             "Continuer",
             "Continuer"
-          ]
-        },
-        {
-          "classes": "prep-crumb__label",
-          "occurrences": 2,
-          "worst": 2.67,
-          "best": 2.93,
-          "threshold": 4.5,
-          "fontSize": 13,
-          "glyph": [
-            166,
-            167,
-            152
-          ],
-          "backgroundAtWorst": [
-            93,
-            96,
-            69
-          ],
-          "samples": [
-            "Préparation",
-            "Préparation",
-            "En avant !"
           ]
         }
       ],
@@ -2125,36 +1337,17 @@
         {
           "classes": "prep-action",
           "tag": "button",
-          "text": "À vélo",
+          "text": "Voyage et séjour",
           "fontSize": 13,
           "fontWeight": 500,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
-            243,
-            243,
-            243
+            246,
+            246,
+            246
           ],
           "worst": 1.07,
-          "best": 11.86,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 1
-        },
-        {
-          "classes": "prep-action",
-          "tag": "button",
-          "text": "Eau",
-          "fontSize": 13,
-          "fontWeight": 500,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            245,
-            245,
-            243
-          ],
-          "worst": 1.07,
-          "best": 8.88,
+          "best": 14.79,
           "threshold": 4.5,
           "verdict": "FAIL",
           "occlusionUnverifiable": false,
@@ -2168,88 +1361,69 @@
           "fontWeight": 500,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
-            237,
-            238,
-            238
+            222,
+            224,
+            223
           ],
           "worst": 1.08,
-          "best": 10.24,
+          "best": 12.32,
           "threshold": 4.5,
           "verdict": "FAIL",
           "occlusionUnverifiable": false,
           "seenAt": 1
         },
         {
-          "classes": "prep-brief__input",
-          "tag": "placeholder",
-          "text": "placeholder: Écris ce que tu imagines, l’IA s’en charge…",
-          "fontSize": 16,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.71)",
-          "glyph": [
-            144,
-            145,
-            136
-          ],
-          "worst": 1.08,
-          "best": 3.82,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 1
-        },
-        {
-          "classes": "prep-brief__hint",
-          "tag": "p",
-          "text": "L’IA en tient compte pour tout générer. Tu peux aussi partir d’une activité du c",
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "Eau",
           "fontSize": 13,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.71)",
+          "fontWeight": 500,
+          "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
-            201,
-            203,
-            200
+            212,
+            211,
+            199
           ],
           "worst": 1.09,
-          "best": 7.91,
+          "best": 9.85,
           "threshold": 4.5,
           "verdict": "FAIL",
           "occlusionUnverifiable": false,
           "seenAt": 1
         },
         {
-          "classes": "prep-act__hint",
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "À vélo",
+          "fontSize": 13,
+          "fontWeight": 500,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            207,
+            209,
+            206
+          ],
+          "worst": 1.1,
+          "best": 10.03,
+          "threshold": 4.5,
+          "verdict": "FAIL",
+          "occlusionUnverifiable": false,
+          "seenAt": 1
+        },
+        {
+          "classes": "prep-act__name",
           "tag": "span",
-          "text": "Gabarit : journée",
-          "fontSize": 13,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.71)",
+          "text": "Course",
+          "fontSize": 17,
+          "fontWeight": 640,
+          "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
-            157,
-            160,
-            152
+            138,
+            138,
+            135
           ],
-          "worst": 1.09,
-          "best": 6.05,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 3
-        },
-        {
-          "classes": "prep-act__hint",
-          "tag": "span",
-          "text": "Gabarit : avec une nuit",
-          "fontSize": 13,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.71)",
-          "glyph": [
-            171,
-            173,
-            167
-          ],
-          "worst": 1.09,
-          "best": 7.15,
+          "worst": 1.11,
+          "best": 5.16,
           "threshold": 4.5,
           "verdict": "FAIL",
           "occlusionUnverifiable": false,
@@ -2263,110 +1437,15 @@
           "fontWeight": 640,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
-            137,
-            138,
-            129
+            76,
+            77,
+            72
           ],
-          "worst": 1.09,
-          "best": 4.64,
+          "worst": 1.2,
+          "best": 8.51,
           "threshold": 4.5,
           "verdict": "FAIL",
           "occlusionUnverifiable": false,
-          "seenAt": 1
-        },
-        {
-          "classes": "prep-crumb__sep",
-          "tag": "li",
-          "text": "·",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.46)",
-          "glyph": [
-            153,
-            154,
-            137
-          ],
-          "worst": 1.1,
-          "best": 2.39,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-act__name",
-          "tag": "span",
-          "text": "Course",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            168,
-            169,
-            163
-          ],
-          "worst": 1.1,
-          "best": 6.85,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 1
-        },
-        {
-          "classes": "prep-footer-link",
-          "tag": "button",
-          "text": "Partir librement",
-          "fontSize": 13,
-          "fontWeight": 600,
-          "declaredColor": "rgba(255, 255, 255, 0.71)",
-          "glyph": [
-            106,
-            111,
-            96
-          ],
-          "worst": 1.11,
-          "best": 2.93,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 1
-        },
-        {
-          "classes": "",
-          "tag": "placeholder",
-          "text": "placeholder: Rechercher une activité",
-          "fontSize": 16,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.46)",
-          "glyph": [
-            148,
-            152,
-            147
-          ],
-          "worst": 1.11,
-          "best": 4.31,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 1
-        },
-        {
-          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
-          "tag": "button",
-          "text": "Continuer",
-          "fontSize": 17,
-          "fontWeight": 600,
-          "declaredColor": "rgb(16, 16, 16)",
-          "glyph": [
-            26,
-            33,
-            26
-          ],
-          "worst": 1.13,
-          "best": 4.38,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": true,
           "seenAt": 1
         },
         {
@@ -2381,49 +1460,30 @@
             196,
             154
           ],
-          "worst": 1.6,
-          "best": 6.68,
+          "worst": 1.7,
+          "best": 6.95,
           "threshold": 4.5,
           "verdict": "FAIL",
           "occlusionUnverifiable": false,
           "seenAt": 1
         },
         {
-          "classes": "prep-crumb__label",
-          "tag": "span",
-          "text": "En avant !",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgba(255, 255, 255, 0.46)",
+          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
+          "tag": "button",
+          "text": "Continuer",
+          "fontSize": 17,
+          "fontWeight": 600,
+          "declaredColor": "rgb(16, 16, 16)",
           "glyph": [
-            166,
-            167,
-            152
+            19,
+            22,
+            19
           ],
-          "worst": 2.67,
-          "best": 2.93,
+          "worst": 1.9,
+          "best": 4.14,
           "threshold": 4.5,
           "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 1
-        },
-        {
-          "classes": "prep-crumb__label",
-          "tag": "span",
-          "text": "Préparation",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgba(255, 255, 255, 0.46)",
-          "glyph": [
-            166,
-            166,
-            151
-          ],
-          "worst": 2.7,
-          "best": 3.44,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
+          "occlusionUnverifiable": true,
           "seenAt": 1
         },
         {
@@ -2448,38 +1508,19 @@
         {
           "classes": "prep-action",
           "tag": "button",
-          "text": "Voyage et séjour",
-          "fontSize": 13,
-          "fontWeight": 500,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            252,
-            253,
-            252
-          ],
-          "worst": 3.57,
-          "best": 10.7,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 1
-        },
-        {
-          "classes": "prep-action",
-          "tag": "button",
           "text": "Neige et montagne",
           "fontSize": 13,
           "fontWeight": 500,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
-            253,
-            253,
-            253
+            248,
+            248,
+            248
           ],
-          "worst": 3.81,
-          "best": 8.25,
+          "worst": 10.1,
+          "best": 13.8,
           "threshold": 4.5,
-          "verdict": "FAIL",
+          "verdict": "PASS",
           "occlusionUnverifiable": false,
           "seenAt": 1
         },
@@ -2495,8 +1536,8 @@
             255,
             255
           ],
-          "worst": 5.78,
-          "best": 16.3,
+          "worst": 11.48,
+          "best": 17.84,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
@@ -2514,8 +1555,8 @@
             255,
             255
           ],
-          "worst": 7.42,
-          "best": 14.74,
+          "worst": 12.94,
+          "best": 17.07,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
@@ -2533,27 +1574,8 @@
             255,
             255
           ],
-          "worst": 8.54,
-          "best": 14.46,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 1
-        },
-        {
-          "classes": "prep-crumb__label",
-          "tag": "span",
-          "text": "Créations",
-          "fontSize": 13,
-          "fontWeight": 720,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 8.92,
-          "best": 10.16,
+          "worst": 13.69,
+          "best": 16.93,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
@@ -2612,15 +1634,21 @@
       },
       "referenceShot": "audit/prep-contrast-shots/1024x768.png",
       "counts": {
-        "measured": 23,
-        "pass": 5,
-        "fail": 18,
-        "skipped": 2,
+        "measured": 13,
+        "pass": 4,
+        "fail": 9,
+        "skipped": 3,
         "occluded": 0
       },
       "occlusion": [],
       "occlusionUnverifiable": 1,
       "skipped": [
+        {
+          "classes": "prep-visually-hidden",
+          "tag": "span",
+          "text": "Choix de l’activité",
+          "reason": "rectangle hors cadre : rogné horizontalement ou verticalement"
+        },
         {
           "classes": "sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[var(--z-emergency)",
           "tag": "a",
@@ -2635,7 +1663,7 @@
         }
       ],
       "skippedByReason": {
-        "rectangle hors cadre : rogné horizontalement ou verticalement": 2
+        "rectangle hors cadre : rogné horizontalement ou verticalement": 3
       },
       "runtimeErrors": [],
       "failures": [
@@ -2643,18 +1671,18 @@
           "classes": "prep-action",
           "occurrences": 6,
           "worst": 1.07,
-          "best": 13.89,
+          "best": 14.88,
           "threshold": 4.5,
           "fontSize": 13,
           "glyph": [
-            243,
-            244,
-            243
+            247,
+            247,
+            247
           ],
           "backgroundAtWorst": [
-            235,
-            236,
-            235
+            255,
+            255,
+            255
           ],
           "samples": [
             "À pied",
@@ -2663,208 +1691,90 @@
           ]
         },
         {
-          "classes": "prep-act__hint",
-          "occurrences": 2,
-          "worst": 1.07,
-          "best": 4.12,
+          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
+          "occurrences": 1,
+          "worst": 1.09,
+          "best": 4.17,
           "threshold": 4.5,
-          "fontSize": 13,
+          "fontSize": 17,
           "glyph": [
-            130,
-            130,
-            119
+            22,
+            23,
+            19
           ],
           "backgroundAtWorst": [
-            128,
-            126,
-            91
+            30,
+            32,
+            26
           ],
           "samples": [
-            "Gabarit : journée",
-            "Gabarit : journée",
-            "Gabarit : avec une nuit"
+            "Continuer",
+            "Continuer"
           ]
         },
         {
           "classes": "prep-act__name",
           "occurrences": 2,
-          "worst": 1.08,
-          "best": 4.59,
+          "worst": 1.12,
+          "best": 8.14,
           "threshold": 4.5,
           "fontSize": 17,
           "glyph": [
-            139,
-            136,
-            121
+            81,
+            80,
+            73
           ],
           "backgroundAtWorst": [
-            141,
-            142,
-            138
+            86,
+            87,
+            86
           ],
           "samples": [
             "Trail",
             "Trail",
             "Course"
           ]
-        },
-        {
-          "classes": "prep-brief__hint",
-          "occurrences": 1,
-          "worst": 1.09,
-          "best": 8.9,
-          "threshold": 4.5,
-          "fontSize": 13,
-          "glyph": [
-            202,
-            203,
-            201
-          ],
-          "backgroundAtWorst": [
-            192,
-            195,
-            194
-          ],
-          "samples": [
-            "L’IA en tient compte pour tout générer. Tu peux aussi partir d’une activité du c",
-            "L’IA en tient compte pour tout générer. Tu peux aussi partir d’une activité du c"
-          ]
-        },
-        {
-          "classes": "prep-brief__input",
-          "occurrences": 1,
-          "worst": 1.09,
-          "best": 4.58,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            143,
-            144,
-            135
-          ],
-          "backgroundAtWorst": [
-            146,
-            151,
-            149
-          ],
-          "samples": [
-            "placeholder: Écris ce que tu imagines, l’IA s’en charge…",
-            "placeholder: Écris ce que tu imagines, l’IA s’en charge…"
-          ]
-        },
-        {
-          "classes": "(placeholder)",
-          "occurrences": 1,
-          "worst": 1.1,
-          "best": 4.55,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            135,
-            137,
-            129
-          ],
-          "backgroundAtWorst": [
-            141,
-            145,
-            142
-          ],
-          "samples": [
-            "placeholder: Rechercher une activité",
-            "placeholder: Rechercher une activité"
-          ]
-        },
-        {
-          "classes": "prep-footer-link",
-          "occurrences": 1,
-          "worst": 1.14,
-          "best": 3.25,
-          "threshold": 4.5,
-          "fontSize": 13,
-          "glyph": [
-            95,
-            106,
-            95
-          ],
-          "backgroundAtWorst": [
-            105,
-            115,
-            105
-          ],
-          "samples": [
-            "Partir librement",
-            "Partir librement"
-          ]
-        },
-        {
-          "classes": "prep-crumb__sep",
-          "occurrences": 1,
-          "worst": 3.17,
-          "best": 3.25,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            120,
-            134,
-            130
-          ],
-          "backgroundAtWorst": [
-            34,
-            59,
-            51
-          ],
-          "samples": [
-            "·",
-            "·"
-          ]
-        },
-        {
-          "classes": "prep-crumb__label",
-          "occurrences": 2,
-          "worst": 3.56,
-          "best": 3.7,
-          "threshold": 4.5,
-          "fontSize": 13,
-          "glyph": [
-            139,
-            151,
-            146
-          ],
-          "backgroundAtWorst": [
-            45,
-            66,
-            57
-          ],
-          "samples": [
-            "Préparation",
-            "Préparation",
-            "En avant !"
-          ]
-        },
-        {
-          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
-          "occurrences": 1,
-          "worst": 4,
-          "best": 4.36,
-          "threshold": 4.5,
-          "fontSize": 17,
-          "glyph": [
-            33,
-            36,
-            26
-          ],
-          "backgroundAtWorst": [
-            125,
-            130,
-            123
-          ],
-          "samples": [
-            "Continuer",
-            "Continuer"
-          ]
         }
       ],
       "elements": [
+        {
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "Neige et montagne",
+          "fontSize": 13,
+          "fontWeight": 500,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            247,
+            247,
+            247
+          ],
+          "worst": 1.07,
+          "best": 14.88,
+          "threshold": 4.5,
+          "verdict": "FAIL",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
+        },
+        {
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "Voyage et séjour",
+          "fontSize": 13,
+          "fontWeight": 500,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            246,
+            246,
+            246
+          ],
+          "worst": 1.07,
+          "best": 14.21,
+          "threshold": 4.5,
+          "verdict": "FAIL",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
+        },
         {
           "classes": "prep-action",
           "tag": "button",
@@ -2873,35 +1783,16 @@
           "fontWeight": 500,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
-            243,
-            244,
-            243
+            202,
+            203,
+            201
           ],
-          "worst": 1.07,
-          "best": 13.89,
+          "worst": 1.08,
+          "best": 10.41,
           "threshold": 4.5,
           "verdict": "FAIL",
           "occlusionUnverifiable": false,
           "seenAt": 2
-        },
-        {
-          "classes": "prep-act__hint",
-          "tag": "span",
-          "text": "Gabarit : journée",
-          "fontSize": 13,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.71)",
-          "glyph": [
-            130,
-            130,
-            119
-          ],
-          "worst": 1.07,
-          "best": 4.12,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 6
         },
         {
           "classes": "prep-action",
@@ -2911,31 +1802,69 @@
           "fontWeight": 500,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
-            243,
-            244,
-            243
+            201,
+            203,
+            196
           ],
           "worst": 1.08,
-          "best": 11.19,
+          "best": 9.96,
           "threshold": 4.5,
           "verdict": "FAIL",
           "occlusionUnverifiable": false,
           "seenAt": 2
         },
         {
-          "classes": "prep-act__hint",
-          "tag": "span",
-          "text": "Gabarit : avec une nuit",
+          "classes": "prep-action",
+          "tag": "button",
+          "text": "Autres sports",
           "fontSize": 13,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.71)",
+          "fontWeight": 500,
+          "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
-            156,
-            156,
-            146
+            240,
+            240,
+            239
           ],
           "worst": 1.08,
-          "best": 5.73,
+          "best": 13.19,
+          "threshold": 4.5,
+          "verdict": "FAIL",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
+        },
+        {
+          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
+          "tag": "button",
+          "text": "Continuer",
+          "fontSize": 17,
+          "fontWeight": 600,
+          "declaredColor": "rgb(16, 16, 16)",
+          "glyph": [
+            22,
+            23,
+            19
+          ],
+          "worst": 1.09,
+          "best": 4.17,
+          "threshold": 4.5,
+          "verdict": "FAIL",
+          "occlusionUnverifiable": true,
+          "seenAt": 2
+        },
+        {
+          "classes": "prep-act__name",
+          "tag": "span",
+          "text": "Course",
+          "fontSize": 17,
+          "fontWeight": 640,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            81,
+            80,
+            73
+          ],
+          "worst": 1.12,
+          "best": 8.14,
           "threshold": 4.5,
           "verdict": "FAIL",
           "occlusionUnverifiable": false,
@@ -2949,107 +1878,12 @@
           "fontWeight": 640,
           "declaredColor": "rgb(255, 255, 255)",
           "glyph": [
-            139,
-            136,
-            121
+            86,
+            84,
+            76
           ],
-          "worst": 1.08,
-          "best": 4.59,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-act__name",
-          "tag": "span",
-          "text": "Course",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            143,
-            139,
-            127
-          ],
-          "worst": 1.08,
-          "best": 4.8,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-brief__hint",
-          "tag": "p",
-          "text": "L’IA en tient compte pour tout générer. Tu peux aussi partir d’une activité du c",
-          "fontSize": 13,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.71)",
-          "glyph": [
-            202,
-            203,
-            201
-          ],
-          "worst": 1.09,
-          "best": 8.9,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-brief__input",
-          "tag": "placeholder",
-          "text": "placeholder: Écris ce que tu imagines, l’IA s’en charge…",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.71)",
-          "glyph": [
-            143,
-            144,
-            135
-          ],
-          "worst": 1.09,
-          "best": 4.58,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 1
-        },
-        {
-          "classes": "",
-          "tag": "placeholder",
-          "text": "placeholder: Rechercher une activité",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.46)",
-          "glyph": [
-            135,
-            137,
-            129
-          ],
-          "worst": 1.1,
-          "best": 4.55,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-footer-link",
-          "tag": "button",
-          "text": "Partir librement",
-          "fontSize": 13,
-          "fontWeight": 600,
-          "declaredColor": "rgba(255, 255, 255, 0.71)",
-          "glyph": [
-            95,
-            106,
-            95
-          ],
-          "worst": 1.14,
-          "best": 3.25,
+          "worst": 1.31,
+          "best": 7.57,
           "threshold": 4.5,
           "verdict": "FAIL",
           "occlusionUnverifiable": false,
@@ -3067,181 +1901,10 @@
             196,
             154
           ],
-          "worst": 1.42,
-          "best": 5.43,
+          "worst": 1.68,
+          "best": 7.04,
           "threshold": 4.5,
           "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-action",
-          "tag": "button",
-          "text": "Autres sports",
-          "fontSize": 13,
-          "fontWeight": 500,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            249,
-            249,
-            248
-          ],
-          "worst": 3.12,
-          "best": 8.44,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-crumb__sep",
-          "tag": "li",
-          "text": "·",
-          "fontSize": 17,
-          "fontWeight": 400,
-          "declaredColor": "rgba(255, 255, 255, 0.46)",
-          "glyph": [
-            120,
-            134,
-            130
-          ],
-          "worst": 3.17,
-          "best": 3.25,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 4
-        },
-        {
-          "classes": "prep-crumb__label",
-          "tag": "span",
-          "text": "En avant !",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgba(255, 255, 255, 0.46)",
-          "glyph": [
-            139,
-            151,
-            146
-          ],
-          "worst": 3.56,
-          "best": 3.7,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-crumb__label",
-          "tag": "span",
-          "text": "Préparation",
-          "fontSize": 13,
-          "fontWeight": 560,
-          "declaredColor": "rgba(255, 255, 255, 0.46)",
-          "glyph": [
-            137,
-            149,
-            145
-          ],
-          "worst": 3.65,
-          "best": 3.93,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-action",
-          "tag": "button",
-          "text": "Voyage et séjour",
-          "fontSize": 13,
-          "fontWeight": 500,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            252,
-            253,
-            252
-          ],
-          "worst": 3.7,
-          "best": 10.25,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespa",
-          "tag": "button",
-          "text": "Continuer",
-          "fontSize": 17,
-          "fontWeight": 600,
-          "declaredColor": "rgb(16, 16, 16)",
-          "glyph": [
-            33,
-            36,
-            26
-          ],
-          "worst": 4,
-          "best": 4.36,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": true,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-action",
-          "tag": "button",
-          "text": "Neige et montagne",
-          "fontSize": 13,
-          "fontWeight": 500,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            252,
-            253,
-            252
-          ],
-          "worst": 4.06,
-          "best": 11.56,
-          "threshold": 4.5,
-          "verdict": "FAIL",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-act__name",
-          "tag": "span",
-          "text": "Randonnée à la journée",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            253,
-            253,
-            253
-          ],
-          "worst": 4.93,
-          "best": 14.12,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-act__name",
-          "tag": "span",
-          "text": "Randonnée avec nuit de refuge",
-          "fontSize": 17,
-          "fontWeight": 640,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 5.57,
-          "best": 16.44,
-          "threshold": 4.5,
-          "verdict": "PASS",
           "occlusionUnverifiable": false,
           "seenAt": 2
         },
@@ -3265,6 +1928,44 @@
           "seenAt": 2
         },
         {
+          "classes": "prep-act__name",
+          "tag": "span",
+          "text": "Randonnée à la journée",
+          "fontSize": 17,
+          "fontWeight": 640,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            252,
+            252,
+            252
+          ],
+          "worst": 10.4,
+          "best": 16.51,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
+        },
+        {
+          "classes": "prep-act__name",
+          "tag": "span",
+          "text": "Randonnée avec nuit de refuge",
+          "fontSize": 17,
+          "fontWeight": 640,
+          "declaredColor": "rgb(255, 255, 255)",
+          "glyph": [
+            255,
+            255,
+            255
+          ],
+          "worst": 11.22,
+          "best": 17.84,
+          "threshold": 4.5,
+          "verdict": "PASS",
+          "occlusionUnverifiable": false,
+          "seenAt": 2
+        },
+        {
           "classes": "",
           "tag": "span",
           "text": "Qu’est-ce que tu as en tête ?",
@@ -3276,27 +1977,8 @@
             255,
             255
           ],
-          "worst": 6.61,
-          "best": 14.69,
-          "threshold": 4.5,
-          "verdict": "PASS",
-          "occlusionUnverifiable": false,
-          "seenAt": 2
-        },
-        {
-          "classes": "prep-crumb__label",
-          "tag": "span",
-          "text": "Créations",
-          "fontSize": 13,
-          "fontWeight": 720,
-          "declaredColor": "rgb(255, 255, 255)",
-          "glyph": [
-            255,
-            255,
-            255
-          ],
-          "worst": 12.2,
-          "best": 12.7,
+          "worst": 12.22,
+          "best": 17.05,
           "threshold": 4.5,
           "verdict": "PASS",
           "occlusionUnverifiable": false,
@@ -3307,10 +1989,10 @@
   ],
   "totals": {
     "breakpoints": 4,
-    "measured": 98,
-    "pass": 22,
-    "fail": 76,
-    "skipped": 12,
+    "measured": 58,
+    "pass": 21,
+    "fail": 37,
+    "skipped": 16,
     "occluded": 0
   },
   "notes": [

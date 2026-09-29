@@ -239,6 +239,22 @@ function asCandidate(item: PlaceCandidate | PlaceRef): PlaceCandidate {
   };
 }
 
+/**
+ * L4.6 — une suggestion sans nom lisible ne s'affiche pas.
+ *
+ * Le proprietaire l'a tranche : pas de nom, pas de ligne. La seule chose
+ * qu'un point nu sait dire, c'est sa position ; la publier dans la liste
+ * remplacerait un nom de lieu par « 46.79907° N 2.56303° E », c'est-a-dire
+ * des nombres bruts la ou la personne attendait un lieu.
+ *
+ * Le contrat des lignes (titre « Point sans nom verifie », detail
+ * « Coordonnees : ... ») reste intact pour qui l'appelle : c'est le tiroir
+ * qui refuse d'afficher la ligne, pas la ligne qui ment sur elle-meme.
+ */
+export function isDisplayableSuggestion(candidate: PlaceCandidate): boolean {
+  return candidate.place.name.trim().length > 0;
+}
+
 export function mergePositionCandidate(
   results: readonly (PlaceCandidate | PlaceRef)[],
   place: PlaceRef | null,
@@ -940,7 +956,13 @@ export function PlaceSheet({ draft, actions, onClose, field }: PrepSheetProps & 
 
   // La position reelle ouvre la liste, pour le depart comme pour l'arrivee.
   const here = myPosition.place;
-  const list = useMemo(() => mergePositionCandidate(results, here), [results, here]);
+  // L4.6 — un point sans nom n entre pas dans la liste : ni ici, ni plus tard
+  // par la liste « lieux mémorisés ». La ligne ne peut pas etre rendue, donc
+  // elle ne se propose pas.
+  const list = useMemo(
+    () => mergePositionCandidate(results, here).filter(isDisplayableSuggestion),
+    [results, here],
+  );
   const geoMessage = geocodeMessage(geo);
 
   const apply = (place: PlaceRef, remember = true) => {
@@ -1060,13 +1082,21 @@ export function PlaceSheet({ draft, actions, onClose, field }: PrepSheetProps & 
         onCancel={() => setPicking(false)}
       />
 
+      {/* L4.1 — un SEUL verre. Ce `backgroundColor` peignait un second
+          materiau plat par-dessus le verre du tiroir : la bande devenait plus
+          sombre, a bords durs, et le degrade de la feuille s'arretait net au
+          niveau du bouton. Le pied n'ajoute plus de fond — seul le verre de la
+          feuille traverse.
+
+          L4.5 — plus de `marginTop: 'auto'` : c'etait l'ecarteur qui laissait
+          le tiroir a moitie vide quand le contenu etait court. Le tiroir prend
+          la hauteur de son contenu, le bouton suit le dernier bloc. */}
       <div
+        className="prep-place-cta"
         style={{
-          marginTop: 'auto',
           paddingTop: '16px',
           position: 'sticky',
           bottom: 0,
-          backgroundColor: 'var(--surface)',
         }}
       >
         <Button variant="primary" style={{ width: '100%' }} disabled={!current} onClick={onClose}>

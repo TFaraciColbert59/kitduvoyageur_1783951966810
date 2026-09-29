@@ -239,7 +239,22 @@ describe('fix round 1 — régressions', () => {
     expect(campaign).toContain("localStorage.setItem('lkdv_theme'");
     for (const file of auditFiles) {
       const content = source(file);
-      expect(content).not.toMatch(/document\.documentElement\.(?:classList|setAttribute|style)/);
+
+      // On vise une ECRITURE sur `<html>`, pas une lecture.
+      //
+      // Le theme doit etre pose par le visiteur via localStorage, jamais
+      // force par le script : sinon la campagne mesure un etat que personne ne
+      // verra. La regle porte donc sur la mutation (`add`, `remove`, `toggle`,
+      // `setAttribute`, `style`) -- un `classList.contains(...)` qui CONSULTE le
+      // theme n injecte rien et doit rester permis. Une lecture precedente
+      // faisait echouer ce test a tort sur `measure_prep_contrast.mjs`, qui
+      // se contente de rapporter le theme mesure dans son rapport.
+      expect(content).not.toMatch(
+        /document\.documentElement\.classList\.(?:add|remove|toggle)\s*\(/,
+      );
+      expect(content).not.toMatch(/document\.documentElement\.setAttribute\s*\(/);
+      expect(content).not.toMatch(/document\.documentElement\.style\b/);
+      expect(content).not.toMatch(/document\.documentElement\.dataset\.\w+\s*=/);
       expect(content).not.toContain("style.setProperty('--glass-intensity'");
     }
   });

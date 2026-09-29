@@ -4,7 +4,7 @@
 Source : 32 maquettes uniques (41 fichiers, 9 doublons) analysées une à une,
 croisées avec l'intégralité des consignes écrites de la conversation.
 
-**Progression : 147 / 226 items prouvés (65,0 %) — 36 partiels · 43 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
+**Progression : 157 / 226 items prouvés (69,5 %) — 36 partiels · 33 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
 
 Légende : `[ ]` à faire · `[~]` partiellement fait · `[x]` fait et vérifié · `[!]` bloqué par une donnée absente du dépôt · `R` rectificatif d'audit
 
@@ -49,6 +49,81 @@ vérifiés dans le fichier, pas sur des goûts : chaque point porte son numéro 
 > La base, les fournisseurs et la persistance sont solids ; le maillon qui manque est le
 > fil entre eux. C'est ce que la section P documente, ligne par ligne, avec sa preuve.
 ## Journal de progression — mis à jour à chaque lot
+### Lot 2026-09-29 (aube) — dix items fermes, deux defauts d'infra trouves
+
+**Comptage au début du lot : 147 faits / 36 partiels / 43 restants = 226 items.**
+Fermes dans ce lot : **L2.9, L2.10, L3.1, L3.8, L4.1, L4.2, L4.3, L4.4, L4.5, L4.6**.
+Reste **157 / 36 / 33 = 226**.
+
+**Deux trouvailles d'infrastructure, qui ne sont PAS des defauts de code.**
+
+1. RED **Le build de production ne cassait pas : `.next` etait un residu.** Trois
+   builds successifs avaient compile, passe TypeScript, puis bloque sur
+   `Cannot find module './5611.js'`. Le chunk `5611.js` existait — dans
+   `.next/server/chunks/`, la ou le runtime ne va pas le chercher — et
+   `.next/server/webpack-runtime.js` ne contenait meme plus la chaine
+   `5611`. **C'est la signature d'un repertoire de build melange**, pas d'un
+   diff casse. **Preuve** : build complet sur un `distDir` neuf
+   (`DIST_DIR=.next-verify`, deja supporte par `next.config`) =>
+   **Compiled successfully in 40s**, `Collecting page data` **sans
+   erreur**, **275/275 pages statiques**. Et dans ce build propre, le chunk
+   `5611.js` **n'existe plus du tout** : c'est bien l'ancien residu qui
+   etait incoherent, pas le code. **Consequence de methode : un echec de build
+   qui ne se reproduit pas sur un distDir neuf ne se rattache pas au diff tant
+   qu on ne l a pas montre.**
+   *Nettoyage :* un build Next reecrit `next-env.d.ts` et `tsconfig.json` pour
+   pointer vers son `distDir`. Les deux ont ete **restitues**
+   (`git checkout --`) : le commit ne doit pas contenir le chemin d'un
+   distDir de verification.
+
+2. RED **Le serveur de dev servait des 500 sur TOUTES les routes.** `/`,
+   `/hub`, `/prepare` : `500`, corps `Internal Server Error`. Ce n etait
+   donc pas `/prepare` qui etait casse, et `tsc` + les 6 140 tests passaient
+   quand meme. **Preuve** : redemarrage du seul serveur (`next dev -p 4000`)
+   **sans aucune modification du code** => `Ready in 2.1s`, puis
+   `GET / 200`, `GET /hub 200`, `GET /prepare?nouvelle=1 200`.
+   **Lecon retenue, et elle est chere :** l'audit de contraste lance dans la
+   foulure a donc mesure **1 point** au lieu de 58, et le rapport porta
+   lui-meme « Aucun calque de photo trouve : la capture ne verrait qu'un
+   aplat, la mesure serait sans valeur ». Il ne reportait donc **aucune**
+   reelle regression, et un audit qui degrade en silence vaut moins qu un
+   audit qui echoue. **Les chiffres « 26 succes / 71 echecs » rapportes plus
+   tot ne sont PAS reproductibles** ; ce qui l est, c'est l etat de depart
+   honnete ci-dessous.
+
+**Etat reel du contraste au 2026-09-29, remesure sur serveur sain :**
+**58 mesures, 21 succes, 37 echecs, 16 ignorees, 0 occlusion**, sur 4 points de
+rupture, auto-verification de l outil **VERTE**. Cinq classes de defaut
+restantes, toutes nommees :
+
+| Classe | pire ratio | seuil | echantillon |
+|---|---|---|---|
+| `.prep-action` | **1,04** | 4,5 | « À pied », « À vélo » |
+| `.prep-act__name` | **1,08** | 4,5 | « Trail », « Course » |
+| CTA « Continuer » | **1,09** | 4,5 | encre sombre sur fond sombre |
+| libelles de la barre basse | **1,31** | 4,5 | « Communauté », « Explorer » |
+| `.prep-title` | **2,32** | 3 (grand texte) | « Quelle aventure ? » |
+
+Les deux premiers sont le meme symptome : le glyphe clair (223,219,202) et son
+fond clair (223,223,222) ont la meme luminance, donc le texte est
+**invisible** et non pas « faible ». Le titre echoue parce qu il se pose sur la
+zone claire de la photo. **Ce sont les cibles du prochain lot.**
+
+**Ce que les 10 items fermes ont en commun** : chacun a un **morsant** mesure
+ce matin, pas seulement un test vert. Deux de ces morsants ont d aborti rate —
+le sabotage de L3.8 visait `weather.ts:76` alors que le rendu passe par la
+ligne 96, et celui de L4.3 avait ete place **apres** la `</div>` de la barre,
+donc hors du composant que le test mesure. **Un sabotage qui ne mord pas ne
+prouve rien, ni dans un sens ni dans l autre** : il faut verifier que la panne
+a bien ete atteinte avant de conclure que le test est creux. C est
+exactement le piege signale plus haut sur L4.4, et il s est reproduit ici.
+
+**Etat de l arbre au moment du commit :** `tsc --noEmit` **exit 0** ·
+suite complete **654 fichiers / 6 140 tests verts, 0 echec, 27 ignores** ·
+`adventure-prep` **157 fichiers / 2 117 tests verts** · build de production
+**vert sur distDir neuf** · aucune trace de sabotage residuelle (verifie par
+`grep` sur les 4 fichiers touches, puis suite complete).
+
 
 **Comptage honnete au 2026-09-28, recompté par `grep` sur les cases (38 faits · 8 partiels · 177 restants = 223 items) :** 4 **dements** (P0.10, P0.14, P0.20, et la course `Promise.race` de P0.24 retirée après mesure). **LE LOT DU JOUR : P1.9 est LEVE et coché** — un fournisseur pieton reellement joignable a ete trouve *a la mesure* (`routing.openstreetmap.de`, `200` / 132 ms, OSRM a profil `routed-foot`), les 3 modes repondent sur les memes points (pieton 7,384 km / 98,5 min · velo 7,139 km / 29,8 min · voiture 8,030 km / 9,1 min), et les sommets sont refuses **par la mesure** (`503 off_network`). 14 tests `P019-01`→`P019-14` verts, suite **603 fichiers / 5 628 tests / 0 echec**, `tsc` **exit 0**. **P0.23 est desormais FERME** : la cause s etait deplacee vers l amont, et c est la que le correctif a ete fait. La generation lance enfin (le depart s auto-remplit par la geolocalisation, le CTA « Creer mon parcours » est actif — ce qui n etait jamais arrive), et les **20 appels `/api/route` rendaient alors `503 off_network`** : les points routes etaient des **coordonnees de grille** (`6.9,45.91`, `6.9012,45.9123`) et le **sommet du Mont Blanc** — pas des lieux. **Corrige depuis** : le generateur produit des lieux reels, et la meme generation rend aujourd hui **23 × `200`** et **0** `off_network` (preuve 9 ci-dessous). `/api/amenities` rend, lui, **9 lieux reellement nommes** a coordonnees 7 decimales (Hotel Lyret, Hotel Mont Blanc, Restaurant Le Panoramic…), **mais en 45,3 s**. Le filtre de marchabilite, lui, **fonctionne** : il refuse une mesure qui n existe pas. **Deux defauts nouveaux mesures, a traiter :** `/api/geocode` **inverse** hors service (`503 providers_unreachable`) alors que le **direct** repond `200` et nomme Chamonix-Mont-Blanc ; et la **saisie libre vide le catalogue** d activites, alors que la consigne demandait de garder les entrees en dessous. **P0.24** reste en **partiel** sur son seul delai de 45 s, mesure a 45,3 s.
 
@@ -1893,13 +1968,28 @@ Viewport de test : **iPhone 393×852** (cible Sidestore). Le rendu desktop 1280p
       « L'IA complètera : … » ; L2.11 demande de garder ce message tel quel, il est resté.
 - [ ] **L2.7** 🔴 Scroller de jours **présent sur l'étape 1** — à réserver à l'étape 2
 - [x] **L2.8** Carte **présente dans l'étape 1** → **retirée**, `PrepMap` à 0.
-- [ ] **L2.9** Bouton « Zone » superposé au contenu de la carte
-- [ ] **L2.10** Boutons Agrandir / Recentrer empilés à droite, mangent la carte
+- [x] **L2.9** 🔴 Bouton « Zone » superposé au contenu de la carte — **FERME le 2026-09-29 sur morsant.**
+      Il n y a plus AUCUN controle nomme « Zone » sur la carte du preparateur.
+      **Preuve** : `tiroir-carte-controles.test.ts` (12 tests).
+      **Morsant** : `aria-label="Agrandir la carte"` rebaptisee « Zone » dans
+      `PrepMap.tsx` ⇒ **3 tests tombent**, dont
+      `expected ... not to match /aria-label="[^"]*Zone/`. Restauration ⇒ 12/12.
+- [x] **L2.10** Boutons Agrandir / Recentrer empilés à droite — **FERME le 2026-09-29 sur morsant.**
+      Les deux boutons compacts sont **poses** dans le composant `MapCompactActions`,
+      pas empiles par lePreparateur ; « Agrandir » est le seul que l appelant peut
+      retirer. **Preuve** : `tiroir-carte-controles.test.ts`.
+      **Morsant** : le meme renommage « Zone » fait tomber les 2 tests de structure
+      (`expected ... to contain 'aria-label="Agrandir la carte"’`). Restauration ⇒ 12/12.
 - [ ] **L2.11** ✅ Message « Il manque : lieu d'arrivée » — fonctionne, garder tel quel
 
 ### L3 — Étape 2 « Préparation »
 
-- [ ] **L3.1** 🔴 Bandeau IA : **4 lignes**, ~15 % de l'écran → 1 ligne repliable
+- [x] **L3.1** 🔴 Bandeau IA : 4 lignes, ~15 % de l écran — **FERME le 2026-09-29 sur morsant.**
+      La pastille ne porte plus qu **un** element textuel et **un** bouton : la notice
+      de generation en est sortie au lieu de se replier sur trois lignes.
+      **Preuve** : `etape2-hierarchie.test.tsx` (L3.1-01/02/03, 27 tests).
+      **Morsant** : un second `<span class="prep-pill__label">` rajoute dans la
+      pastille ⇒ `L3.1-01` tombe sur `expected 2 to be 1`. Restauration ⇒ 27/27.
 - [ ] **L3.2** 🔴 Pilule activité : titre sur **3 lignes** en colonne étroite → empilement propre
 - [x] **L3.3** ✅ Carte Budget : libellé **tronqué** (« Budget / per… ») sur 393 px — **fermé le 2026-09-29**. `.prep-metric__label` porte `text-overflow: ellipsis` + `white-space: nowrap`, et la tuile est un `container-type: inline-size` d'environ **96 px utiles** sur 393 px (3 tuiles + gaps + padding) : « Budget / personne » (~109 px) y finissait coupée. **Corrigé en abrégeant le TEXTE, pas en fighting le CSS** : `LABELS.budget` = **« Budget / pers. »** (~90 px). La nuance par personne est conservée et la valeur porte déjà l'unité €. **Garde : 2 tests** dans `metrics.test.ts` (L3.3) — un qui refuse tout libellé de tuile dépassant le budget de largeur, un qui verrouille la forme abrégée. **Rouge → vert sur sabotage :** remettre « Budget / personne » fait rougir les **2** tests ; restauration → 29/29 vert.
 - [ ] **L3.4** 🔴 Badges d'étape **dupliqués** : « À vérifier · À vérifier » → badge unique stylisé
@@ -1908,17 +1998,63 @@ Viewport de test : **iPhone 393×852** (cible Sidestore). Le rendu desktop 1280p
       → réduire, ou actions principales en pastilles
 - [ ] **L3.7** 🔴 **2e scroller de jours** concurrent (`Tout À vérifier / J1 lun. 21 sept. / J3 m…`)
       → supprimer ou fusionner avec les chips
-- [ ] **L3.8** 🔴 Météo par jour **absente** — le service existe, il manque l'affichage (R6)
+- [x] **L3.8** 🔴 Météo par jour absente — **FERME le 2026-09-29 sur morsant.**
+      Chaque journee affiche une meteo **ou se declare absente** : « Météo
+      indisponible », et **aucune temperature fabriquee** dans ce cas.
+      **Preuve** : `etape2-hierarchie.test.tsx` (L3.8-01/02/03).
+      **Morsant** : `weatherParts` renvoie `condition: ''` au lieu de
+      « Météo indisponible » ⇒ `L3.8-02` tombe sur
+      `expected 'Randonnée avec nuit de refuge…' to contain 'Météo indisponible'`.
 - [ ] **L3.9** Distance / Budget affichent « À vérifier » — bloqué par I1
 
 ### L4 — Tiroir Lieu
 
-- [ ] **L4.1** ✅ Le verre Liquid Glass est correct — ne pas le casser
-- [ ] **L4.2** « Ma position » → **icône boussole seule** (C1)
-- [ ] **L4.3** « Choisir sur la carte » → **icône carte à droite de la barre de recherche** (C2)
-- [ ] **L4.4** 🔴 Carte basse **absente** du tiroir → carte avec le point choisi (C4)
-- [ ] **L4.5** Hauteur du tiroir : adaptée au contenu, jamais à moitié vide (C14)
-- [ ] **L4.6** Suggestions : ne jamais afficher de coordonnées brutes (cf. L0.4)
+- [x] **L4.1** ✅ Le verre Liquid Glass est correct — **NE PAS LE CASSER, et
+      la non-regression est desormais prouvee le 2026-09-29.** Le composant de
+      tiroir ne pose **aucun** fond : le verre vient de la feuille seule
+      (`body:has(.app-shell--preparer) .lkv-sheet-up`). **Preuve** :
+      `tiroir-lieu-verre.test.tsx`. **Morsant** : un `backgroundColor` reintroduit
+      dans `PrepSetupSheets.tsx` + `blur(var(--prep-glass-blur))` remplace par
+      `none` ⇒ **3 tests tombent** (`le tiroir Lieu ne doit poser aucun fond`,
+      `le verre du tiroir a perdu son flou`). Restauration ⇒ 7/7.
+- [x] **L4.2** « Ma position » → icone boussole seule — **FERME le 2026-09-29 sur morsant.**
+      Bouton a `ICON_BUTTON`, un nom accessible, et **aucun mot de plus** a l ecran.
+      **Preuve** : `tiroir-lieu-icones.test.tsx` (7 tests).
+      **Morsant** : `compass` rebaptise `map-pin` ⇒ le test tombe sur
+      `expected 'map-pin' to be 'compass'`. Restauration ⇒ 7/7.
+- [x] **L4.3** « Choisir sur la carte » → icone carte a droite de la barre de
+      recherche — **FERME le 2026-09-29 sur morsant.** Le bouton carte vit dans
+      `.prep-search`, **apres le champ**, et il en est le **dernier** element.
+      **Preuve** : `tiroir-lieu-icones.test.tsx`.
+      **Morsant** : un bouton ajoute **apres** lui dans la barre ⇒
+      `expected '<button aria-label=" sabotage"…' to contain
+      'aria-label="Choisir un point sur la carte"'` — c est bien la position,
+      et pas la presence, que le test verifie.
+- [x] **L4.4** 🔴 Carte basse absente du tiroir — **FERME le 2026-09-29 sur morsant.**
+      Le tiroir rend la **vraie** carte du hub (`HubGlobeMap`) dans un cadre bas,
+      avec le point choisi passe comme repere nomme. **Cause racine trouvee et
+      corrigee** : le tiroir perdait le conflit CSS contre
+      `.hub-globe-map { min-height: 20rem }` du hub — une carte de 320 px dans un
+      cadre de 150 px. `.prep-picker .hub-globe-map` porte desormais `min-height: 0`.
+      **Preuve** : `tiroir-lieu-carte.test.tsx`.
+      **Morsant** : retirer la regle `min-height: 0` fait tomber le test de regle
+      CSS ; restauration ⇒ vert. *Attention, note d honnetete : un premier sabotage
+      mal construit laissait passer le test via un placeholder — seul le
+      sabotage reel (suppression de la regle) mord.*
+- [x] **L4.5** Hauteur du tiroir : adaptee au contenu, jamais a moitie vide —
+      **FERME le 2026-09-29 sur morsant.** Plus aucun espacement pousse par le bas
+      (`marginTop: 'auto'` etait l ecarteur), et le tiroir ne s impose
+      aucune hauteur fixe. **Preuve** : `tiroir-lieu-verre.test.tsx`.
+      **Morsant** : `marginTop: 'auto'` + `backgroundColor` reintroduits dans le
+      pied ⇒ **2 tests tombent** (`aucun espacement pousse par le bas ne survit`,
+      `le pied du tiroir ne declare ni fond`). Restauration ⇒ 7/7.
+- [x] **L4.6** Suggestions : jamais de coordonnees brutes — **FERME le 2026-09-29
+      sur morsant.** `isDisplayableSuggestion` filtre sur le **nom** et rien
+      d autre : un point nu, ou un nom de seuls espaces, n entre pas dans la liste.
+      **Preuve** : `tiroir-lieu-suggestions.test.tsx` (5 tests).
+      **Morsant** : le filtre remplace par `return true;` ⇒ **4 tests tombent**, avec
+      le nom fabrique visible dans le diff
+      (`expected 'Point sans nom vérifié…' not to contain 'Point sans nom'`).
 
 ### L5 — Barre basse
 
