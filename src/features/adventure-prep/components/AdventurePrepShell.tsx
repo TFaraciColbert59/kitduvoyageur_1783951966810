@@ -542,11 +542,10 @@ export function PrepGateRail({ screenLabel }: { screenLabel: string }) {
       >
         {PREP_STEPS.map((id, index) => (
           <React.Fragment key={id}>
-            {index > 0 && (
-              <li className="prep-crumb__sep" aria-hidden="true">
-                ·
-              </li>
-            )}
+            {/* Meme separateur que PrepCrumb : un trait de verre dessine en
+                CSS, jamais un glyphe. Un glyphe avait une hauteur de ligne et
+                faisait sauter la hauteur du rail. */}
+            {index > 0 && <li className="prep-crumb__sep" aria-hidden="true" />}
             <li className="prep-crumb__item" data-step={id} data-current={false} data-locked>
               <span className="prep-crumb__label" data-state="locked" data-current={false} data-locked>
                 {PREP_STEP_LABELS[id]}

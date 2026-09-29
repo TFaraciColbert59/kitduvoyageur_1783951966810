@@ -471,6 +471,11 @@
      Un seul pour la finesse des filets de ce chantier, et une seule
      teinte à l'opacité médiane de celles utilisées ici. */
   --prep-hairline: 1px;
+  /* Le reflet de bord des pastilles de verre. Un seul token pour toutes les
+     surfaces du preparateur : c est ce qui rend le verre homogene (P5.1) et
+     ce qui evite a un composant d ecrire un blanc en dur (H6). */
+  --prep-sheen-top: color-mix(in srgb, #fff 58%, transparent);
+  --prep-sheen-top-soft: color-mix(in srgb, #fff 32%, transparent);
   /* Derive de --lkv-text-primary et NON de --glass-rim : dans le theme
      iOS 27, --glass-rim vaut `0 0 0 0.5px rgba(...)` - c'est une OMBRE, pas
      une couleur. Le color-mix etait donc invalide, et la totalite du
@@ -637,13 +642,31 @@
   border-bottom: var(--prep-hairline) solid var(--prep-hairline-ink);
 }
 
-/* --- Fil d Ariane : trois segments nommes, un actif ------------------ */
+/* --- Fil d Ariane : trois pastilles de verre, un actif --------------- */
 
+/* L1.4. Le rail n est plus une ligne de texte soulignee : ce sont trois
+   pastilles de verre. Le libelle ne change pas, sa matière si — d ou la
+   demande « affiche amelioree des etapes », formulee sans bouton ni fleche.
+
+   La regle qui tient l ensemble : la pastille ne decide de rien. Elle recoit
+   trois variables posees par le composant (--crumb-ink, --crumb-edge,
+   --crumb-fill, --crumb-sheen) et n invente aucune couleur. Une seule
+   recette, donc un seul verre a maintenir — c est le point P5.1. */
+/* Les quatre variables d une pastille. La recette les declare, le composant
+   les surcharge par etat : un `var()` sans repli qui pointe un jeton non
+   declare est une valeur qui s efface a la cascade (P0.17). Les valeurs par
+   defaut sont celles d une pastille verrouillee ; SEGMENT_LOOK les remplace
+   pour `done` et `active`. */
 .prep-crumb {
+  --crumb-ink: var(--lkv-text-subtle);
+  --crumb-edge: transparent;
+  --crumb-fill: transparent;
+  --crumb-sheen: transparent;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
+  gap: var(--space-1);
   min-width: 0;
   margin: 0;
   padding: 0;
@@ -654,58 +677,81 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
   min-width: 0;
+  /* 0 1 auto, jamais 0 0 auto : la pastille longue cede de la place avant
+     de deborder. C est ce qui rend « sans debordement » vrai a 320 px
+     comme a 393 px, sans coupe ni debordement du rail. */
+  flex: 0 1 auto;
 }
 
+/* Le separateur est un trait, pas un glyphe. Un glyphe a une hauteur de
+   ligne, donc il sautait d une etape a l autre et pesait sur la hauteur du
+   rail ; un trait de 10 x 1 px est indifferent a la taille de la pastille
+   voisine. font-size: 0 neutralise aussi le « · » rendu par l appelant
+   qui construit le meme rail (AdventurePrepShell) : la recette est
+   identique des deux cotes. */
 .prep-crumb__sep {
   flex: 0 0 auto;
-  color: color-mix(in srgb, var(--lkv-text-primary) 74%, var(--lkv-text-subtle));
+  width: 10px;
+  height: 1px;
+  line-height: 0;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--lkv-text-primary) 30%, transparent);
 }
 
+/* La pastille. display inline-block (et non flex) parce que text-overflow
+   ne s applique qu a un conteneur de bloc : c est ce qui permet a un libelle
+   trop long de se raccourcir proprement au lieu de repousser le rail. */
 .prep-crumb__label,
 .prep-crumb__link {
+  display: inline-block;
+  max-width: 100%;
+  min-height: 26px;
+  padding: 3px 10px;
   font-size: var(--prep-type-meta);
   font-weight: 650;
+  line-height: 18px;
   letter-spacing: var(--lkv-tracking-body);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  border-radius: var(--lkv-radius-full);
+  border: 1px solid var(--crumb-edge);
+  background: var(--crumb-fill);
+  color: var(--crumb-ink);
+  box-shadow: inset 0 1px 0 var(--crumb-sheen);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  backdrop-filter: blur(14px) saturate(150%);
 }
 
-.prep-crumb__label {
-  padding-block: 2px;
-  color: color-mix(in srgb, var(--lkv-text-primary) 90%, var(--lkv-text-secondary));
-  border-bottom: 2px solid transparent;
-}
-
-/* L etape en cours est soulignee ET portee par aria-current : la couleur
-   ne porte jamais l information seule. */
+/* L etape courante est la seule a etre remplie de verre dense et a porter
+   l accent : elle est visible meme sans couleur (remplissage + epaisseur de
+   bordure), et toujours en plus de aria-current. */
 .prep-crumb__label[data-current='true'] {
-  color: var(--lkv-text-primary);
-  border-bottom-color: var(--prep-ink-accent-strong);
+  border-width: 1.5px;
 }
 
-/* Une etape atteinte mais non generee reste annoncee, pas activee. */
+/* Une etape atteinte mais non generee reste annoncee, pas activee : verre
+   tres leger, bordure fine, encre discrete. Elle ne se confond jamais avec
+   l etape courante, qui est opaque. */
 .prep-crumb__label[data-locked='true'] {
-  color: color-mix(in srgb, var(--lkv-text-primary) 80%, var(--lkv-text-subtle));
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--lkv-text-primary) 22%, transparent);
 }
 
-/* Le libelle d une étape atteinte EST un bouton, mais il ne doit pas en avoir
-   l aspect : meme police, meme graisse, meme soulignement, meme couleur, meme
-   metriques. Ce qui change est invisible — la zone de toucher. */
+/* Le libelle d une etape atteinte EST un bouton, mais il ne doit pas en avoir
+   l aspect : meme police, meme graisse, meme verre, meme metriques. Ce qui
+   change est invisible — la zone de toucher. */
 .prep-crumb__link {
-  padding: 2px 0;
   font: inherit;
-  color: var(--prep-ink-accent-strong);
-  background: transparent;
-  border: 0;
-  border-bottom: 2px solid transparent;
   cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
   touch-action: manipulation;
 }
 
-/* 24 px de libelle ne sont pas une cible tactile. La zone reelle est etendue
+/* 26 px de pastille ne sont pas une cible tactile. La zone reelle est etendue
    en absolu — donc hors du flux — jusqu aux 44 px du confort tactile, sans
    decaler un seul pixel de ce que l on voit. Le fond transparent capte aussi
    les appuis qui tombent entre deux lettres. */
@@ -721,13 +767,13 @@
 }
 
 .prep-crumb__link:hover {
-  border-bottom-color: color-mix(in srgb, var(--lkv-action) 45%, transparent);
+  border-color: var(--prep-ink-accent-strong);
 }
 
 .prep-crumb__link:focus-visible {
   outline: 2px solid var(--lkv-action);
   outline-offset: 2px;
-  border-radius: 2px;
+  border-radius: var(--lkv-radius-full);
 }
 
 /* Les deux boutons lateraux sont des icones : pas de libelle visible. */
@@ -1795,7 +1841,29 @@ button.prep-map__glass:active {
   min-width: 0;
 }
 
+/* L3.2 — trois lignes au plus, et pas une de plus.
+ *
+ * Le titre d une etape est le seul texte long de la fiche. Bride (`nowrap`
+ * ou `ellipsis`) il debordeait sur la colonne etroite ; libre, il poussait le
+ * lieu et le prix hors de la carte. Le plafond est donc un CLAMP, pas une
+ * troncature : la troisieme ligne reste lisible, la quatrieme cesse d exister
+ * et le titre entier reste dans le DOM pour le lecteur d ecran.
+ *
+ * Les quatre declarations vont ensemble : `-webkit-line-clamp` ne fait rien
+ * sans `display: -webkit-box` ni `-webkit-box-orient: vertical`, et sans
+ * `overflow: hidden` le texte deborde au lieu d etre borne. Le composant ne
+ * pose donc plus de `display` EN INLINE sur ce titre : une cascate qui perd
+ * en specificite laisserait le `display: block` de l inlineecraser le
+ * `-webkit-box` du classeur, et le plafond serait muet.
+ *
+ * `overflow-wrap: anywhere` complete le dispositif : sans lui, un mot unique
+ * plus long que la colonne ignore le repli vertical et deborde. */
 .prep-step__name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  overflow-wrap: anywhere;
   margin: 0;
   font-size: var(--prep-type-body);
   font-weight: 700;

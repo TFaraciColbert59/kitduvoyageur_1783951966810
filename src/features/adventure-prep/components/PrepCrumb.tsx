@@ -18,31 +18,43 @@ import type { AdventurePrepDraft } from '../types';
 type SegmentState = 'active' | 'done' | 'locked';
 
 /**
- * Aspect d un segment.
+ * Aspect d un segment — trois pastilles de verre, trois etats.
  *
- * Le soulignement fait la difference : epais et plein pour l etape courante,
- * discret pour une etape terminee, absent pour une etape verrouillee. Trois
- * etats restent donc distinguables sans la couleur, en contraste eleve comme
- * en daltonisme.
+ * Le composant ne pose plus de couleur : il ne pose que TROIS variables
+ * (`--crumb-ink`, `--crumb-edge`, `--crumb-fill`) que la recette CSS
+ * (`.prep-crumb__label` / `.prep-crumb__link`) tourne en verre flou, bordure
+ * et remplissage. Une seule recette pour tout le rail : c est ce qui rend le
+ * passage en pilules verre tenable dans le temps, et ce qui evite au
+ * composant d inventer une couleur qu il ne maitrise pas (item H6).
  *
- * Le CSS porte deja `border-bottom: 2px solid transparent` sur
- * `.prep-crumb__label` : on ne change que la couleur du trait, jamais son
- * epaisseur, pour que la ligne du bas ne saute pas d un etat a l autre.
+ * L etat reste porte trois fois : `data-state`, `aria-current` pour l etape
+ * courante, et la graisse. La couleur ne porte donc jamais l information
+ * seule — les trois etats se distinguent aussi en contraste eleve et en
+ * daltonisme, par le remplissage et l epaisseur de bordure.
  */
-const SEGMENT_LOOK: Readonly<Record<SegmentState, React.CSSProperties>> = {
+type CrumbStyle = React.CSSProperties &
+  Record<'--crumb-ink' | '--crumb-edge' | '--crumb-fill' | '--crumb-sheen', string>;
+
+const SEGMENT_LOOK: Readonly<Record<SegmentState, CrumbStyle>> = {
   active: {
-    color: 'var(--lkv-text-primary)',
-    borderBottomColor: 'var(--lkv-action)',
+    '--crumb-ink': 'var(--lkv-text-primary)',
+    '--crumb-edge': 'var(--prep-ink-accent-strong)',
+    '--crumb-fill': 'color-mix(in srgb, var(--lkv-action) 16%, transparent)',
+    '--crumb-sheen': 'var(--prep-sheen-top)',
     fontWeight: 720,
   },
   done: {
-    color: 'var(--lkv-action)',
-    borderBottomColor: 'color-mix(in srgb, var(--lkv-action) 34%, transparent)',
+    '--crumb-ink': 'var(--prep-ink-accent-strong)',
+    '--crumb-edge': 'color-mix(in srgb, var(--lkv-action) 42%, transparent)',
+    '--crumb-fill': 'color-mix(in srgb, var(--lkv-action) 7%, transparent)',
+    '--crumb-sheen': 'var(--prep-sheen-top-soft)',
     fontWeight: 640,
   },
   locked: {
-    color: 'var(--lkv-text-subtle)',
-    borderBottomColor: 'transparent',
+    '--crumb-ink': 'var(--lkv-text-subtle)',
+    '--crumb-edge': 'transparent',
+    '--crumb-fill': 'transparent',
+    '--crumb-sheen': 'transparent',
     fontWeight: 560,
   },
 };
@@ -112,11 +124,10 @@ export function PrepCrumb({ step, draft, onOpenStep }: PrepCrumbProps) {
 
         return (
           <React.Fragment key={id}>
-            {index > 0 && (
-              <li className="prep-crumb__sep" aria-hidden="true">
-                ·
-              </li>
-            )}
+            {/* Le separateur n a plus de glyphe : c est un trait de verre,
+                dessine en CSS, donc jamais annonce ni jamais coupe en deux
+                quand la pastille voisine grandit. */}
+            {index > 0 && <li className="prep-crumb__sep" aria-hidden="true" />}
             <li className="prep-crumb__item">
               {reachable ? (
                 <button
