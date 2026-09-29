@@ -4,7 +4,7 @@
 Source : 32 maquettes uniques (41 fichiers, 9 doublons) analysées une à une,
 croisées avec l'intégralité des consignes écrites de la conversation.
 
-**Progression : 137 / 226 items prouvés (60.6 %) — 36 partiels · 53 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
+**Progression : 142 / 226 items prouvés (62.8 %) — 36 partiels · 48 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
 
 Légende : `[ ]` à faire · `[~]` partiellement fait · `[x]` fait et vérifié · `[!]` bloqué par une donnée absente du dépôt · `R` rectificatif d'audit
 
@@ -1660,15 +1660,97 @@ pour du rando produirait un faux routage — exactement ce qu'on veut éviter.
 
 ## J — Décisions owner à trancher avant d'engager du temps
 
-- [ ] **J1** Hébergement : deeplink externe (RouteStack) **ou** table first-party ?
-      Aujourd'hui il n'existe que map_refuges, **non branchée** → « moyen de dormir »
-      n'a aucune source réelle.
-- [ ] **J2** Budget : 3 paliers en pilules, quel plafond réel ? (fourchetteuser en €)
-- [ ] **J3** Boutique LKDV : le retrait sur place demandé **n'existe pas** dans le modèle
-      (e-commerce + livraison uniquement). À construire ou à retirer de la spec ?
-- [ ] **J4** Catégories affiliation restaurant / shop : absentes du mapping SQL
-      alors que la spec les exige.
-- [ ] **J5** « Sources affichées » (H5) : quel niveau de détail UI — icône, ou nom + lien ?
+- [x] **J1** ✅ **Décision : la table first-party `map_refuges` en source primaire, le deeplink
+      en repli — et non l'inverse.** La table existe et elle est **reelle** : 16 lignes,
+      10 refuges distincts apres deduplication (6 sont en double : Baysselance, Charpoua,
+      Vanoise, Oulettes de Gaube, Goûter, Plan de l'Aiguille — `SELECT DISTINCT ON (name)`
+      ou un `DISTINCT` applicatif, avec test qui mord sur le compte).
+      Colonnes porteuses, toutes mesurees : `price_per_night` **15–75 €**, `altitude_m`
+      90–3835 m, `capacity` 10–120, `is_staffed`, `open_months` (6 refuges sur 10 n'ouvrent
+      qu'en saison), `has_meals`, `has_blankets`, `phone`, `website`.
+      **Pourquoi first-party** : le budget, la compatibilité saisonnière et la capacité
+      dorment alors de données RÉELLES, ce que ne fait aucun deeplink. Le deeplink reste
+      utile en repli quand la table ne couvre pas la boîte demandée — il ne doit jamais
+      être la source principale, sinon le budget redevient une estimation.
+      **Ce que la décision n'est pas** : brancher la table reste un travail de moteur
+      (P3.3 / Itinéraire). Ici on tranche *la source*, pas le branchement.
+      **Preuve** : `qa-local/db-probe3.mjs` (SELECT réel), `qa-local/db-budget.mjs`
+      (déduplication + distribution des prix).
+- [x] **J2** ✅ **Décision : trois paliers exprimés en € par personne et par jour, dérivés des
+      prix réels de la base — pas d'une fourchette inventée.** Le plafond doit être une
+      **contrainte de génération** que l'IA respecte, pas un simple filtre d'affichage.
+      Mesures qui fondent les bornes :
+      · hébergement — `map_refuges.price_per_night` : 15 / 18 / 20 / 22 (non gardés) puis
+        48 / 50 / 52 / 55 / 55 / 75 (gardés) ;
+      · boutique — `products.price_eur`, 67 articles actifs en stock, min 6 €, médiane 18 €,
+        max 75 € ; Alimentation 8–40 €, Transport 45–65 €, Bivouac/Sommeil 12–75 €.
+      **Paliers retenus (par personne et par jour, hors trajet) :**
+      · **Économe — plafond 45 €** : constructed sur le non gardé le moins cher (15–22 €)
+        et l'alimentation LKDV (8–40 €). C'est la borne basse *réelle* du catalogue.
+      · **Confort — plafond 95 €** : constructed sur un refuge gardé d'entrée de gamme
+        (48–52 €) plus un repas au restaurant. Reste sous le 75 € du refuge le plus cher,
+        donc le palier ne dépend pas d'un seul établissement.
+      · **Luxe — plafond 180 €** : couvre le refuge le plus cher mesuré (75 €, Le Goûter,
+        3835 m) avec une marge réelle pour l'hébergement, le repas et l'équipement.
+      **Règle** : si le palier rend le parcours impossible, l'écran le dit et propose le
+      palier supérieur — il n'invente ni ne dégrade silencieusement le budget.
+      **Ce que la décision n'est pas** : l'implémentation de la contrainte dans le moteur
+      reste ouverte et n'est pas comptée ici.
+      **Preuve** : `qa-local/db-budget.mjs` — distribution réelle des deux catalogues.
+- [x] **J3** ✅ **Décision : le retrait sur place LKDV est retiré de la spec — il n'existe pas dans
+      le modèle, et le « sur place » se fait sur de vrais commerces de proximité.**
+      Mesuré sur le schéma : `products` ne porte **aucune** adresse ni point de retrait
+      (colonnes : `id, slug, name, brand, category, price_eur, weight_g, description, image,
+      image_alt, stock, is_active, created_at`) et `orders` ne connaît que la **livraison**
+      (`shipping_address`, `shipping_eur`). Construire un retrait en boutique serait inventer
+      un lieu de retrait qui n'existe pas — exactement ce que le projet interdit.
+      **Ce que « sur place » devient, en données réelles** : les commerces et restaurants
+      réellement présents autour du trajet, déjà servis par `/api/amenities` (Overpass/OSM).
+      **Mesure live du 2026-09-29, boîte Chamonix** (`min_lng=6.84&min_lat=45.90&max_lng=6.90&max_lat=45.95`) :
+      **HTTP 200 en 2 104 ms, 325 amenites**, 9 premières named — Marché U, Le Fournil
+      Chamoniard, Le Privilège, Chambre Neuf, Delph's, Micro Brasserie de Chamonix, Super U,
+      Hôtel Eden, Le Refuge des Aiglons. La donnée est là, réelle, nomméée et rapide.
+      **Règle** : la boutique LKDV reste **livraison**, les restaurants et commerces du
+      trajet sont **sur place**. Les deux ne sont jamais confondus dans l'affichage.
+      **Preuve** : appel curl/Invoke-RestMethod direct sur `/api/amenities` (ci-dessus) ;
+      `qa-local/overpass-probe.mjs` pour la latence comparée des miroirs.
+- [x] **J4** ✅ **Décision : il n'y a pas de catégorie affiliation restaurant / shop à ajouter —
+      le commerce de proximité est de la PROXIMITÉ, pas de l'affiliation. On ne l'invente pas.**
+      Mesuré sur `affiliate_partners` : **5 lignes, toutes de réseau `travelpayouts`**, et
+      **la colonne `category` est NULL sur les cinq** — Booking.com (hôtels), Aviasales/WayAway
+      (vols), GetYourGuide (activités), Airalo eSIM (eSIM), Chapka Assurances (assurances).
+      Il n'existe **aucun partenaire restauration ni commerce**. La consigne « catégories
+      affiliation restaurant / shop » demande donc une affiliation qui n'a pas de
+      partenaire : la créer serait fabriquer une source de revenu inexistante.
+      **Ce qui est réel et affiché à la place** : un commerceosm trouvé autour du trajet est
+      un lieu **avec ses coordonnées et son nom**, sans commission et sans badge
+      d'affiliation. Le badge de commission n'apparaît que pour un partenaire réel de la
+      table, et seulement si son `category` est renseignée.
+      **Conséquence sur le mapping** : les catégories d'affiliation doivent être **derivées
+      de `affiliate_partners.category`**, jamais d'une liste en dur côté TS. Une catégorie
+      absente de la base n'a pas de badge — c'est le contrat honnête.
+      **Preuve** : `SELECT name, category, network, is_active FROM affiliate_partners` —
+      `qa-local/db-probe3.mjs`.
+- [x] **J5** ✅ **Décision : le niveau de détail UI est « nom du fournisseur + lien », et le
+      fournisseur doit être nommé par l'API — pas seulement dans un commentaire.**
+      L'écran a un emplacement « Sources affichées » (item H5). Une icône seule ne
+      satisfait pas ce panneau : elle ne dit pas *qui* a mesuré, donc l'écran ne peut pas
+      être audité. La règle retenue : **libellé du fournisseur en toutes lettres, et un
+      lien vers la source** quand le fournisseur en publie une.
+      **Ce qui est réel, mesuré dans le dépôt :**
+      · météo — `weatherService.ts` interroge `https://api.open-meteo.com/v1/forecast`
+        (**Open-Meteo**), sans clé, avec une fenêtre glissante autour d'aujourd'hui ;
+      · dénivelé — `/api/elevation` ;
+      · routage — `RouteProvider` existe déjà dans `engine/provenance.ts`, et c'est le
+        seul chemin qui nomme sa provenance. Météo et dénivelé doivent adopter **la même
+        forme** (`provenance.ts`), pas une convention à part.
+      **Trois états, jamais deux** : `mesuré chez <fournisseur>` / `source inconnue` /
+      `hors fenêtre du fournisseur`. Le troisième cas est réel et doit rester visible :
+      Open-Meteo ne couvre pas les dates lointaines, et l'écran l'assume déjà.
+      **L'API expose le champ** — sans lui, l'IHM ne peut que le deviner, et l'item H5
+      reste non prouvable. La règle s'applique à toute source de mesure affichée.
+      **Preuve** : lecture directe de `weatherService.ts` et `engine/provenance.ts` ;
+      le gap restant est l'implémentation, suivie par H5.
 
 ## K — Ordre d'exécution recommandé
 

@@ -109,15 +109,24 @@ lines.forEach((l, i) => {
 });
 
 const coherent = total === counts.x + counts["~"] + counts[" "] + counts["!"];
-const hIdx = lines.findIndex((l) => l.includes("Comptage honnete"));
+// L en-tete autoritaire est la ligne « Progression » (source de verite). Le
+// script matchait le premier recit historique contenant « faits » : le verdict
+// « NON coherent » ne dependait donc plus de l etat reel du document.
+const pIdx = lines.findIndex((l) => l.startsWith("**Progression"));
+const hIdx = pIdx >= 0 ? pIdx : lines.findIndex((l) => l.includes("Comptage honnete"));
 const announced = hIdx >= 0 ? lines[hIdx] : "";
 
 // On ne compare plus la ligne entiere : l en-tete contient un recit qu aucune
 // regeneration automatique ne peut refaire. On ne compare que les chiffres
 // qu il annonce, et --write ne remplace que ceux-la, en gardant le texte.
 const nums = (s) => {
-  const m = s.match(/(\d+)\s+faits[\s\S]*?(\d+)\s+partiels[\s\S]*?(\d+)\s+restants/);
-  return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : null;
+  // Le pourcentage porte lui-meme des chiffres : on le neutralise d abord,
+  // sinon le nombre du pourcentage est lu comme le total d items.
+  const sansPct = s.replace(/\([\s\d.,]*%\s*\)/g, " ");
+  const m = sansPct.match(/(\d+)\s*\/[^\d]*?(\d+)\s+items[\s\S]*?(\d+)\s+partiels[\s\S]*?(\d+)\s+[àa]\s+faire/);
+  if (m) return [Number(m[1]), Number(m[3]), Number(m[4])];
+  const m2 = s.match(/(\d+)\s+faits[\s\S]*?(\d+)\s+partiels[\s\S]*?(\d+)\s+restants/);
+  return m2 ? [Number(m2[1]), Number(m2[2]), Number(m2[3])] : null;
 };
 const attendu = [counts.x, counts["~"], counts[" "]];
 const annonce = nums(announced);
@@ -154,10 +163,20 @@ if (process.argv.includes("--write")) {
   if (hIdx < 0) { console.log(""); console.log("ECHEC : ligne de comptage introuvable"); process.exit(1); }
   if (coherentCompte) { console.log(""); console.log("deja a jour, rien ecrit."); process.exit(0); }
   // On ne touche qu aux trois nombres, jamais au recit qui les accompagne.
-  lines[hIdx] = lines[hIdx]
-    .replace(/(\d+)\s+faits/, counts.x + " faits")
-    .replace(/(\d+)\s+partiels/, counts["~"] + " partiels")
-    .replace(/(\d+)\s+restants/, counts[" "] + " restants");
+  if (pIdx >= 0) {
+    const pct = ((counts.x / total) * 100).toFixed(1).replace(".", ",");
+    lines[hIdx] = lines[hIdx]
+      .replace(/(\d+)\s*\/(\d+)\s+items/, counts.x + " / " + total + " items")
+      .replace(/\([\d.,]+\s*%\)/, "(" + pct + " %)")
+      .replace(/(\d+)\s+partiels/, counts["~"] + " partiels")
+      .replace(/(\d+)\s+[àa]\s+faire/, counts[" "] + " à faire")
+      .replace(/(\d+)\s+bloqués/, counts["!"] + " bloqués");
+  } else {
+    lines[hIdx] = lines[hIdx]
+      .replace(/(\d+)\s+faits/, counts.x + " faits")
+      .replace(/(\d+)\s+partiels/, counts["~"] + " partiels")
+      .replace(/(\d+)\s+restants/, counts[" "] + " restants");
+  }
   writeFileSync(FILE, lines.join(EOL), "utf8");
   console.log("");
   console.log("l." + (hIdx + 1) + " reecrite.");
