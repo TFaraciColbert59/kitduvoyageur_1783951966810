@@ -4,7 +4,7 @@
 Source : 32 maquettes uniques (41 fichiers, 9 doublons) analysées une à une,
 croisées avec l'intégralité des consignes écrites de la conversation.
 
-**Progression : 173 / 232 items prouvés (74,6 %) — 35 partiels · 24 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
+**Progression : 173 / 233 items prouvés (74,2 %) — 35 partiels · 25 à faire · 0 bloqués.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas).
 
 Légende : `[ ]` à faire · `[~]` partiellement fait · `[x]` fait et vérifié · `[!]` bloqué par une donnée absente du dépôt · `R` rectificatif d'audit
 
@@ -1746,21 +1746,50 @@ contrat reel. Suite complete : **658 fichiers / 6168 tests verts** (4 + 27 skips
       chacun **morsé** (sabotage → rouge → restauration → vert, sabotage vérifié
       *atteint*) : voir le journal de ce lot.
 
-      **Pourquoi `[~]` et pas `[x]`.** L'outil reste le juge, et le juge
-      s'écarte lui-même : `verificationStatus: "PARTIAL / NOT VERIFIED"`. La
-      campagne ne parcourt que **l'étape 1** (création). `/prepare` en compte
-      trois, et **16 éléments restent ignorés** aux points de rupture étroits —
-      ils sont rognés par le carrousel horizontal, pas hors d'atteinte, mais non
-      mesurés. **Tant que les étapes 2 et 3 ne sont pas soumises à la même
-      campagne, ce `fail: 0` ne vaut que pour le premier écran** — le dire
-      « conforme » serait exactement le faux positif que cet item a toujours voulu
-      interdire. `audit:prep-contrast` est câblé sur l'URL seule : il faut un
-      parcours d'étapes.
+      **LA CAMPAGNE COUVRE MAINTENANT LES TROIS ÉTAPES — ET L'VERDICT EST
+      NÉGATIF SUR DEUX D'ENTRE ELLES. L'ITEM RESTE `[~]`, MAIS PLUS PARCE QU'IL
+      MANQUE DES MESURES : PARCE QU'ELLES EXISTENT ET ÉCHOUENT.**
+      L'outil a reçu une option `--seed <fichier>` qui sème un brouillon dans
+      `lkdv_adventure_prep_v2` par `addInitScript` **avant le premier
+      chargement**, et trace le semis dans `report.notes` : la campagne mesure
+      donc l'étape réellement affichée, pas seulement l'étape 1. Le semis est
+      **declared in the report**, pas supposé.
 
-      **Reste à faire pour fermer** : étendre la campagne aux étapes 2 et 3 et au
-      carrousel horizontal, puis exiger `fail: 0` **et**
-      `verificationStatus` vérifié. Tant que ce n'est pas fait, l'item reste
-      partiel — cette fois pour la bonne raison.
+      | étape | mesurés | passent | **échouent** | ignorés | occlus |
+      |---|---|---|---|---|---|
+      | 1 — `destination` | 58 | 58 | **0** | 16 | 0 |
+      | 2 — `itinerary` | 181 | 105 | **76** | 33 | 8 |
+      | 3 — `departure` | 204 | 103 | **101** | 28 | 6 |
+
+      Auto-vérification verte sur les deux nouvelles campagnes
+      (`selfTest.ran: true, passed: true`). **177 mesures en échec se
+      répartissent en 26 groupes distincts** (classe + corps de texte), et le
+      motif est le même partout — le pire étant `.prep-map__glass`
+      (« Ensemble », « Agrandir ») à **1,13:1** : glyphe `rgb(255,255,255)` sur
+      un fond local prélevé à `rgb(240,240,240)`.
+
+      **Ce n'est ni un artefact, ni un point de rupture particulier.** La capture
+      `audit/prep-contrast-shots/393x852.png` montre le mécanisme : le verre
+      laisse passer les **zones claires de la photo**, et le texte porte le jeton
+      du verre sombre. Le fond prélevé vaut 240,240,240 — ce n'est pas une
+      hypothèse de feuille de style, c'est le pixel peint. Les 8 et 6
+      `occluded` signalent des chevauchements réels, pas la cause des échecs.
+
+      Les 26 groupes, du pire au moins pire : `prep-map__glass` 1,13 ·
+      attribution OSM 1,68 · `prep-programme__steptitle` 1,68 · `(li)`
+      équipement 1,85 · `prep-step__when` 1,93 · `(span)` 1,95 · `(div)`
+      « 2 jours » 2,04 · `Modifier` 2,17 · `prep-maphint` 2,19 ·
+      `prep-pill__label` 2,25 · `prep-step__price` 2,29 · `prep-step__reason`
+      2,34 · `Réessayer` 3,15 · `.prep-title` 3,32 · `prep-metric__label` 4,05.
+      Six de ces groupes sont des **classes utilitaires Tailwind** échappées
+      (`(li)`, `(span)`, `(div)`, `(button)`) : le nom de classe ne dit rien, il
+      faudra les remonter au composant.
+
+      **Pourquoi `[~]` et pas `[x]`.** L'item exige `fail: 0` **et** un
+      `verificationStatus` vérifié. Le premier est à 177. Cocher « contraste
+      conforme » ici serait exactement le faux positif que cet item a toujours
+      voulu interdire. La vérification, elle, est terminée et son verdict est
+      consigné — c'est la remédiation qui manque, et elle a son propre item.
 
       **Ce qui a été fait (2026-09-29).** Nouveau `scripts/audit/measure_prep_contrast.mjs`
       (`npm run audit:prep-contrast`, auto-vérification : `npm run audit:prep-contrast:selftest`).
@@ -1802,6 +1831,28 @@ contrat reel. Suite complete : **658 fichiers / 6168 tests verts** (4 + 27 skips
       **Action requise pour fermer.** Corriger M0.2 / M0.3, puis **relancer la campagne** :
       `npm run audit:prep-contrast` doit sortir `fail: 0`. Tant qu'il reste 76 échecs, cet
       item reste `[~]` et ne peut pas être coché.
+- [ ] **G3.1** **Remédiation : 26 groupes de contraste à porter au-dessus de 4,5:1 sur
+      les étapes 2 et 3, sans casser P5.5 ni G2.**
+      **NÉ DE LA CAMPAGNE G3, PAS D'UNE INTUITION.** La recette du verre laisse
+      passer les zones claires de la photo alors que le texte porte le jeton du
+      verre sombre : le fond **peint** est à `rgb(240,240,240)` sous un glyphe
+      `rgb(255,255,255)`. Le pire groupe, `.prep-map__glass`, est à **1,13:1**.
+
+      **Contraintes à ne pas violer.** P5.5 exige un voile vert **≤ 0,3** d'alpha
+      et G2 exige que la photo d'origine reste lisible. On ne peut donc pas
+      simplement noircir toute la page : la correction se joue sur la **recette
+      du verre** et sur le **jeton de texte porté par ce verre**, pas sur le
+      calque photo. P5.1 (un seul verre, une seule recette) impose de traiter la
+      cause, pas les 26 symptômes un par un.
+
+      **Preuve de fermeture** : les deux campagnes rendues **0 échec** —
+      `measure_prep_contrast.mjs --seed qa-local/p53-draft.json` (étape 2) et
+      `--seed qa-local/p3-draft.json` (étape 3) — sur les **4** points de rupture,
+      `selfTest.passed: true` sur les deux, l'étape 1 restant à 0 échec. Les
+      26 groupes doivent être traités **au niveau du composant** : six sont des
+      classes utilitaires Tailwind (`(li)`, `(span)`, `(div)`, `(button)`) qu'il
+      faut remonter au composant avant de pouvoir les corriger.
+
 - [ ] G4 Affichage épuré, plus propre et plus soigné
       **À FAIRE — non mesurable en l’état.** Aucun des audits disponibles ne porte sur
       « épuré » : ils couvrent le contraste, le verre et les breakpoints. Le seul audit

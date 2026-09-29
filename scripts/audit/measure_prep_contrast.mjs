@@ -820,7 +820,7 @@ async function dismissCookieBanner(page) {
  * pas : la barre basse est en `position: fixed` et y serait peinte ailleurs
  * que là où son rectangle l'annonce.
  */
-async function measureBreakpoint(browser, { breakpoint, url, storageState, baseUrl }) {
+async function measureBreakpoint(browser, { breakpoint, url, storageState, baseUrl, seed }) {
   const context = await browser.newContext({
     baseURL: baseUrl,
     viewport: { width: breakpoint.width, height: breakpoint.height },
@@ -839,6 +839,15 @@ async function measureBreakpoint(browser, { breakpoint, url, storageState, baseU
       }));
     } catch { /* stockage indisponible : le repli DOM prendra le relais */ }
   });
+  // Un draft seme AVANT le premier chargement : sans lui, /prepare n affiche
+  // que l etape 1 et la campagne ne peut pas voir les etapes 2 et 3. La cle
+  // est celle du store, le contenu est un fichier - aucune donnee fabriquee ici.
+  if (seed) {
+    await context.addInitScript((payload) => {
+      try { window.localStorage.setItem(payload.cle, payload.blob); }
+      catch { /* stockage indisponible : la campagne le notera sans etape supplementaire */ }
+    }, { cle: 'lkdv_adventure_prep_v2', blob: seed });
+  }
 
   const page = await context.newPage();
   const runtimeErrors = [];
@@ -1110,13 +1119,14 @@ async function resolveSession(browser, baseUrl, requireAuth) {
 }
 
 function parseArgs(argv) {
-  const options = { selfTest: false, reportOnly: false, requireAuth: false, url: null, out: DEFAULT_REPORT };
+  const options = { selfTest: false, reportOnly: false, requireAuth: false, url: null, out: DEFAULT_REPORT, seed: null };
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
     if (argument === '--selftest') options.selfTest = true;
     else if (argument === '--report-only') options.reportOnly = true;
     else if (argument === '--require-auth') options.requireAuth = true;
     else if (argument === '--url') options.url = argv[++index] ?? null;
+    else if (argument === '--seed') options.seed = argv[++index] ?? null;
     else if (argument === '--out') options.out = argv[++index] ?? DEFAULT_REPORT;
     else throw new Error(`Argument inconnu : ${argument}`);
   }
@@ -1165,6 +1175,9 @@ async function run() {
   const options = parseArgs(process.argv.slice(2));
   const baseUrl = resolveBaseUrl();
   const url = options.url ?? process.env.PREP_AUDIT_URL ?? `${baseUrl}${DEFAULT_URL_PATH}`;
+  // Le semis est un ETAT DE MESURE, pas une donnee de produit : il vient d un
+  // fichier, se trace dans le rapport, et n existe qu au moment de mesurer.
+  const seed = options.seed ? fs.readFileSync(options.seed, 'utf8') : null;
 
   const browser = await chromium.launch({ headless: true });
   const report = {
@@ -1198,6 +1211,11 @@ async function run() {
     notes: [],
     limitations: [],
   };
+  // Le semis est un etat de mesure, trace pour que le rapport se suffise :
+  // on doit pouvoir relire CE draft sans le deviner.
+  if (seed) {
+    report.notes.push(`Draft seme depuis ${options.seed} (${seed.length} octets) dans lkdv_adventure_prep_v2 : la campagne mesure l etape affichee par ce draft, pas seulement l etape 1.`);
+  }
 
   try {
     const session = await resolveSession(browser, baseUrl, options.requireAuth);
@@ -1230,6 +1248,7 @@ async function run() {
             url,
             storageState: session.storageState,
             baseUrl,
+            seed,
           });
           attempts.push({ attempt, ok: true });
         } catch (error) {
