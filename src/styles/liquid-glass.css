@@ -373,8 +373,13 @@
   white-space: normal;
 }
 .glass-capsule-btn.sm, .glass-btn.sm, .glass-capsule-btn.xs, .glass-btn.xs { font-size: 11px; }
+/* Bouton d'action plein : la couleur d'action du design system
+   (--btn-tint-solid = --lkv-action, « primaire / actif / publier »), pas le
+   verre neutre --g3-bg. --g3-bg rendait le CTA sombre sur fond sombre en theme
+   clair et inversement ; le contrat de contraste du CTA est verifie par
+   tests/visual/glass-contract.spec.ts et scripts/audit/visual-contrast.mjs. */
 .glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary {
-  background: var(--g3-bg); color: var(--g3-text);
+  background: var(--btn-tint-solid); color: var(--btn-on-solid);
 }
 .glass-btn-secondary, .glass-capsule-btn.secondary { background: var(--btn-tint); }
 .lkv-button-primitive { text-shadow: var(--btn-text-shadow); }
@@ -919,6 +924,21 @@
   }
   .glass::before, .glass::after { display: none; }
 }
+/* Repli d'accessibilite des boutons d'action : hors mode normal, le bouton
+   garde sa couleur d'action --btn-tint-solid (= --lkv-action), texte
+   --lkv-on-action blanc. Aplatir le fond en --g3-bg rendait le CTA illisible
+   en mode contraste eleve (fond clair + texte clair) : c'est exactement
+   l'inverse de l'intention d'accessibilite. */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active) {
+  :is(.glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary) {
+    background: var(--btn-tint-solid) !important;
+    color: var(--lkv-on-action) !important;
+  }
+  .glass-btn-danger {
+    background: var(--btn-tint) !important;
+    color: var(--lkv-danger) !important;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   :is(.glass, .glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-capsule-btn-like,
     .glass-capsule-segment, .glass-sub-card, .lkv-button-primitive, .lkv-chip-primitive,
@@ -948,19 +968,6 @@
 }
 .glass[data-glass-shape='drawer'] { border-radius: var(--glass-radius) 0 0 var(--glass-radius); }
 :where(.glass) { overflow: hidden; }
-:is(.glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary) {
-  background: var(--g3-bg) !important;
-  color: var(--g3-text) !important;
-}
-.glass-btn-danger {
-  background: var(--btn-tint) !important;
-  color: var(--lkv-danger) !important;
-}
-@media (forced-colors: active) {
-  :is(.glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary, .glass-btn-danger) {
-    background: ButtonFace !important; color: ButtonText !important;
-  }
-}
 
 /* ============================================================
    LKDV — Système Liquid Glass Réel (Couches Optiques)

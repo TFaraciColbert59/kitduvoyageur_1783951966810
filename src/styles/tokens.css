@@ -520,6 +520,8 @@
   --glass-border-color: rgba(23, 43, 36, 0.12);
   --glass-border: rgba(23, 43, 36, 0.12);
   --glass-rim: rgba(255, 255, 255, 0.85);
+  --glass-rim-color: rgba(255, 255, 255, 0.85);
+  --glass-rim-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.22);
   --glass-radius: var(--card-radius);
   --glass-blur-sm: var(--card-blur);
   --glass-blur-md: 18px;
@@ -527,7 +529,7 @@
   --glass-sat: var(--card-saturate);
   --glass-shadow: var(--card-shadow);
   --glass-shadow-elevated: var(--card-shadow-elevated);
-  --glass-highlight-top: linear-gradient(100deg, transparent, var(--glass-rim) 22%, transparent 84%);
+  --glass-highlight-top: linear-gradient(100deg, transparent, var(--glass-rim-color) 22%, transparent 84%);
   --glass-sheen: radial-gradient(100% 70% at 18% 0%, rgba(255, 255, 255, 0.22), transparent 70%);
   --glass-edge-light: var(--glass-highlight-top);
   --glass-highlight-radial: var(--glass-sheen);
@@ -542,8 +544,8 @@
   --glass-blur-xl: 32px;
 
   /* Additional depth tokens */
-  --glass-shadow-overlay: inset 0 1px 0 var(--glass-rim), 0 24px 48px -16px rgba(11, 31, 23, 0.32);
-  --glass-shadow-sheet: inset 0 1px 0 var(--glass-rim), 0 -4px 24px -8px rgba(11, 31, 23, 0.16);
+  --glass-shadow-overlay: inset 0 1px 0 var(--glass-rim-color), 0 24px 48px -16px rgba(11, 31, 23, 0.32);
+  --glass-shadow-sheet: inset 0 1px 0 var(--glass-rim-color), 0 -4px 24px -8px rgba(11, 31, 23, 0.16);
 
   /* Premium rdev tokens (used by PremiumGlassCard only) */
   --glass-refraction-scale: 14;
@@ -693,8 +695,8 @@
   --glass-focus: #7FC49A;
   --glass-selected-border: #7FC49A;
   --glass-critical-border: #FFB4A9;
-  --glass-shadow-overlay: inset 0 1px 0 var(--glass-rim), 0 24px 48px -16px rgba(0, 0, 0, 0.5);
-  --glass-shadow-sheet: inset 0 1px 0 var(--glass-rim), 0 -4px 24px -8px rgba(0, 0, 0, 0.3);
+  --glass-shadow-overlay: inset 0 1px 0 var(--glass-rim-color), 0 24px 48px -16px rgba(0, 0, 0, 0.5);
+  --glass-shadow-sheet: inset 0 1px 0 var(--glass-rim-color), 0 -4px 24px -8px rgba(0, 0, 0, 0.3);
 
   --btn-tint: rgba(255, 255, 255, 0.10);
   --btn-tint-action: rgba(255, 255, 255, 0.10);
@@ -735,6 +737,7 @@
   --gc-bg: rgba(255, 255, 255, 0.12);
 
   --glass-rim: 0 0 0 0.5px rgba(0, 0, 0, 0.55);
+  --glass-rim-color: rgba(0, 0, 0, 0.55);
   --glass-rim-inner: inset 0 0 0 0.5px rgba(255, 255, 255, 0.22);
   --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.18);
   --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
@@ -772,6 +775,7 @@
 
   /* Bords assombris et reflets iOS 27 */
   --glass-rim: 0 0 0 0.5px rgba(0, 0, 0, 0.22);
+  --glass-rim-color: rgba(0, 0, 0, 0.22);
   --glass-rim-inner: inset 0 0 0 0.5px rgba(255, 255, 255, 0.45);
   --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.55);
   --glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.16);
@@ -833,6 +837,7 @@ html.dark, .dark, [data-theme='dark'] {
   --g3-text-disabled: #565B58;
   --gc-bg: rgba(255, 255, 255, 0.18);
   --glass-rim: 0 0 0 0.5px rgba(0, 0, 0, 0.65);
+  --glass-rim-color: rgba(0, 0, 0, 0.65);
   --glass-rim-inner: inset 0 0 0 0.5px rgba(255, 255, 255, 0.25);
   --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.20);
   --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.50);
@@ -984,20 +989,20 @@ button.g2,
   background: var(--g1-bg);
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-  box-shadow: var(--glass-rim), var(--glass-rim-inner), var(--glass-highlight), var(--glass-shadow);
+  box-shadow: var(--glass-rim-shadow), var(--glass-rim-inner), var(--glass-highlight), var(--glass-shadow);
   border-radius: var(--lkv-radius-card);
 }
 
 .g2 {
   background: var(--g2-bg);
-  box-shadow: var(--glass-rim), var(--glass-highlight);
+  box-shadow: var(--glass-rim-shadow), var(--glass-highlight);
   border-radius: var(--lkv-radius-tile);
 }
 
 .g3 {
   background: var(--g3-bg);
   color: var(--g3-text);
-  box-shadow: var(--glass-rim), inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 16px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--glass-rim-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 16px rgba(0, 0, 0, 0.25);
   border-radius: var(--lkv-radius-full);
   font-weight: 600;
 }
@@ -1006,7 +1011,7 @@ button.g2,
   background: var(--gc-bg);
   backdrop-filter: blur(16px) saturate(160%);
   -webkit-backdrop-filter: blur(16px) saturate(160%);
-  box-shadow: var(--glass-rim), var(--glass-highlight), 0 4px 14px rgba(0,0,0,0.18);
+  box-shadow: var(--glass-rim-shadow), var(--glass-highlight), 0 4px 14px rgba(0,0,0,0.18);
   border-radius: var(--lkv-radius-full);
 }
 
@@ -1072,10 +1077,17 @@ button.g2,
     background: var(--g3-reduced-bg) !important;
     color: var(--g3-text) !important;
   }
-  html body .glass-pill.glass-pill,
-  html body .primary.primary {
+  html body .glass-pill.glass-pill {
     background: var(--g3-reduced-bg) !important;
     color: var(--g3-text) !important;
+  }
+  /* Le bouton d'action plein garde sa couleur d'action : --g3-reduced-bg
+     (verre neutre aplati) rendait le CTA en #121815 sous contraste eleve,
+     couleur invalide pour le texte blanc et contraire a l'intention
+     d'accessibilite. Ce repli appartient aux pills, pas aux CTA. */
+  html body :is(.glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary) {
+    background: var(--btn-tint-solid) !important;
+    color: var(--btn-on-solid) !important;
   }
 }
 
