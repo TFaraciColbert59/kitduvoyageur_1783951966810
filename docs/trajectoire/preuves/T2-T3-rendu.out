@@ -1,0 +1,293 @@
+{
+  "par_zone": {
+    "run": {
+      "compteur_en_tete": "LKDV1 à ton échelle",
+      "compteur_n": 1,
+      "nb_badges_trace": 1,
+      "traces": [
+        {
+          "qui": "Sarah L.",
+          "echelle": "Run urbain - 1 h - 8 km",
+          "badge": true,
+          "dim": false
+        },
+        {
+          "qui": "Camille M.",
+          "echelle": "Dolomites - 8 h - boucle des lacs",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "Youssef B.",
+          "echelle": "Raid Vercors - 1,5 j - bivouac",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "Marco D.",
+          "echelle": "Dolomites - 5 j - refuges",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "La tribu Andes",
+          "echelle": "Salkantay - 6 j - 4 630 m",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "Elin S.",
+          "echelle": "Lofoten - 12 j - sans voiture",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "Kenji T.",
+          "echelle": "Tour du monde - 28 j - 9 pays",
+          "badge": false,
+          "dim": true
+        }
+      ],
+      "libelle_puce": "Sortie"
+    },
+    "journee": {
+      "compteur_en_tete": "LKDV1 à ton échelle",
+      "compteur_n": 1,
+      "nb_badges_trace": 1,
+      "traces": [
+        {
+          "qui": "Camille M.",
+          "echelle": "Dolomites - 8 h - boucle des lacs",
+          "badge": true,
+          "dim": false
+        },
+        {
+          "qui": "Youssef B.",
+          "echelle": "Raid Vercors - 1,5 j - bivouac",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "Sarah L.",
+          "echelle": "Run urbain - 1 h - 8 km",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "Marco D.",
+          "echelle": "Dolomites - 5 j - refuges",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "La tribu Andes",
+          "echelle": "Salkantay - 6 j - 4 630 m",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "Elin S.",
+          "echelle": "Lofoten - 12 j - sans voiture",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "Kenji T.",
+          "echelle": "Tour du monde - 28 j - 9 pays",
+          "badge": false,
+          "dim": true
+        }
+      ],
+      "libelle_puce": "Journee"
+    },
+    "raid": {
+      "compteur_en_tete": "LKDV1 à ton échelle",
+      "compteur_n": 1,
+      "nb_badges_trace": 1,
+      "traces": [
+        {
+          "qui": "Youssef B.",
+          "echelle": "Raid Vercors - 1,5 j - bivouac",
+          "badge": true,
+          "dim": false
+        },
+        {
+          "qui": "Camille M.",
+          "echelle": "Dolomites - 8 h - boucle des lacs",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "Marco D.",
+          "echelle": "Dolomites - 5 j - refuges",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "La tribu Andes",
+          "echelle": "Salkantay - 6 j - 4 630 m",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "Elin S.",
+          "echelle": "Lofoten - 12 j - sans voiture",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "Kenji T.",
+          "echelle": "Tour du monde - 28 j - 9 pays",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "Sarah L.",
+          "echelle": "Run urbain - 1 h - 8 km",
+          "badge": false,
+          "dim": true
+        }
+      ],
+      "libelle_puce": "Raid"
+    },
+    "expedition": {
+      "compteur_en_tete": "LKDV2 à ton échelle",
+      "compteur_n": 2,
+      "nb_badges_trace": 2,
+      "traces": [
+        {
+          "qui": "La tribu Andes",
+          "echelle": "Salkantay - 6 j - 4 630 m",
+          "badge": true,
+          "dim": false
+        },
+        {
+          "qui": "Marco D.",
+          "echelle": "Dolomites - 5 j - refuges",
+          "badge": true,
+          "dim": false
+        },
+        {
+          "qui": "Elin S.",
+          "echelle": "Lofoten - 12 j - sans voiture",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "Youssef B.",
+          "echelle": "Raid Vercors - 1,5 j - bivouac",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "Kenji T.",
+          "echelle": "Tour du monde - 28 j - 9 pays",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "Camille M.",
+          "echelle": "Dolomites - 8 h - boucle des lacs",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "Sarah L.",
+          "echelle": "Run urbain - 1 h - 8 km",
+          "badge": false,
+          "dim": true
+        }
+      ],
+      "libelle_puce": "Expedition"
+    },
+    "monde": {
+      "compteur_en_tete": "LKDV2 à ton échelle",
+      "compteur_n": 2,
+      "nb_badges_trace": 2,
+      "traces": [
+        {
+          "qui": "Kenji T.",
+          "echelle": "Tour du monde - 28 j - 9 pays",
+          "badge": true,
+          "dim": false
+        },
+        {
+          "qui": "Elin S.",
+          "echelle": "Lofoten - 12 j - sans voiture",
+          "badge": true,
+          "dim": false
+        },
+        {
+          "qui": "La tribu Andes",
+          "echelle": "Salkantay - 6 j - 4 630 m",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "Marco D.",
+          "echelle": "Dolomites - 5 j - refuges",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "Youssef B.",
+          "echelle": "Raid Vercors - 1,5 j - bivouac",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "Camille M.",
+          "echelle": "Dolomites - 8 h - boucle des lacs",
+          "badge": false,
+          "dim": true
+        },
+        {
+          "qui": "Sarah L.",
+          "echelle": "Run urbain - 1 h - 8 km",
+          "badge": false,
+          "dim": true
+        }
+      ],
+      "libelle_puce": "Tour du monde"
+    }
+  },
+  "T3_gate_3_zones": [
+    {
+      "zone": "journee",
+      "compteur_en_tete": 1,
+      "badges_reellement_affiches": 1,
+      "traces": [
+        "Camille M. / Dolomites - 8 h - boucle des lacs"
+      ],
+      "concordant": true,
+      "passe": true
+    },
+    {
+      "zone": "raid",
+      "compteur_en_tete": 1,
+      "badges_reellement_affiches": 1,
+      "traces": [
+        "Youssef B. / Raid Vercors - 1,5 j - bivouac"
+      ],
+      "concordant": true,
+      "passe": true
+    },
+    {
+      "zone": "expedition",
+      "compteur_en_tete": 2,
+      "badges_reellement_affiches": 2,
+      "traces": [
+        "La tribu Andes / Salkantay - 6 j - 4 630 m",
+        "Marco D. / Dolomites - 5 j - refuges"
+      ],
+      "concordant": true,
+      "passe": true
+    }
+  ],
+  "T3_passe": true,
+  "erreurs_console_provenance": [],
+  "erreurs_console_toutes": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Refused to execute script from 'http://localhost:4028/_vercel/speed-insights/script.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled."
+  ]
+}

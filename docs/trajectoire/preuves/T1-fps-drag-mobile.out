@@ -1,0 +1,14 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 664
+  },
+  "frames": 132,
+  "dureeMs": 2183,
+  "fpsMoyen": 60,
+  "fpsMedians": 60,
+  "pireMs": 17,
+  "p95Ms": 17,
+  "imagesRatees": 0,
+  "tauxImagesRatees": 0
+}

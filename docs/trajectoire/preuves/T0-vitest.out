@@ -1,0 +1,10 @@
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v4.1.11 C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810
+
+
+ Test Files  9 passed (9)
+      Tests  121 passed (121)
+   Start at  10:09:50
+   Duration  626ms (transform 954ms, setup 0ms, import 1.33s, tests 177ms, environment 1ms)
+

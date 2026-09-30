@@ -5,6 +5,7 @@ import * as activityEnrichment from './activityEnrichment';
 import * as countryGuides from './countryGuides';
 import * as paysRecommendations from './paysRecommendations';
 import * as itinerary from './itinerary';
+import * as trajectoireNarration from './trajectoireNarration';
 
 /**
  * Registre des features IA — ajouter une feature IA = ajouter UN fichier
@@ -67,6 +68,13 @@ export const FEATURES: Record<string, FeatureSpec> = {
     cacheTtlSeconds: paysRecommendations.PAYS_RECOMMENDATIONS_SPEC.cacheTtlSeconds,
     maxPerUserPerDay: paysRecommendations.PAYS_RECOMMENDATIONS_SPEC.maxPerUserPerDay,
     fallbackResponse: paysRecommendations.fallbackResponse,
+  },
+  'trajectoire-narration': {
+    tier: trajectoireNarration.TRAJECTOIRE_NARRATION_SPEC.tier,
+    maxReasoningBudget: trajectoireNarration.TRAJECTOIRE_NARRATION_SPEC.maxReasoningBudget,
+    cacheTtlSeconds: trajectoireNarration.TRAJECTOIRE_NARRATION_SPEC.cacheTtlSeconds,
+    maxPerUserPerDay: trajectoireNarration.TRAJECTOIRE_NARRATION_SPEC.maxPerUserPerDay,
+    fallbackResponse: trajectoireNarration.fallbackResponse,
   },
   'itinerary': {
     tier: itinerary.ITINERARY_SPEC.tier,

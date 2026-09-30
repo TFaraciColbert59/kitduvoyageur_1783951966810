@@ -1,0 +1,29 @@
+{
+  "appels": [
+    {
+      "phase": "chargement",
+      "status": 200,
+      "t": 0.5943566521556266,
+      "at": 1790754933747
+    },
+    {
+      "phase": "Home",
+      "status": 200,
+      "t": 0,
+      "at": 1790754937129
+    },
+    {
+      "phase": "End",
+      "status": 200,
+      "t": 1,
+      "at": 1790754939181
+    },
+    {
+      "phase": "fleche-gauche",
+      "status": 200,
+      "t": 0.98,
+      "at": 1790754944335
+    }
+  ],
+  "aria_final": "631 heures (26 jours), Tour du monde"
+}

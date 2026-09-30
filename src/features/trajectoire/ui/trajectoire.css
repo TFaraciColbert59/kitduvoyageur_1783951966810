@@ -1,0 +1,552 @@
+/**
+ * La Trajectoire Vivante — feuille de style du chantier.
+ *
+ * Règle de design : uniquement des tokens de src/styles/tokens.css. Aucune
+ * couleur, aucune ombre et aucune durée d'animation n'est écrite en dur ; le
+ * paysage de zone arrive via les variables `--tj-zone-*` posées par le board.
+ */
+
+/* ---------- Paysage de zone ---------- */
+/* La photo de marque du site reste derriere, et dans les gouttieres elle
+   butait contre la scene sombre par un arrete vertical net — a droite, le
+   soleil dore etait l'element le plus clair de toute la page, sans rapport
+   avec le contenu. Sur cette page seule, on l'amenuit en texture : c'est la
+   scene qui porte le paysage, pas la photo. */
+body:has(.tj-scene) .lkv-app-background {
+  opacity: 0.45;
+  filter: saturate(0.6);
+}
+
+.tj-scene {
+  position: relative;
+  isolation: isolate;
+  min-height: 100%;
+  background: var(--tj-scene-bg, var(--lkv-app-bg-fallback));
+  transition: background var(--motion-page-duration) var(--motion-ease-standard);
+}
+
+.tj-scene::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    var(--lkv-app-bg-scrim) 62%,
+    var(--lkv-app-bg-scrim) 100%
+  );
+}
+
+/* ---------- Curseur d'échelle ---------- */
+.tj-ruler {
+  /* Le curseur est pose sur un panneau de verre, pas sur la page nue : c'est
+     la signature LKDV (dossier T1, Liquid Glass). Le G1 porte le
+     backdrop-filter 26px + saturate() demande par le dossier. */
+  padding: var(--space-4, 1rem) var(--space-4, 1rem) var(--space-3, 0.75rem);
+  user-select: none;
+  touch-action: none;
+}
+
+.tj-ruler__track {
+  position: relative;
+  height: var(--lkv-touch-min, 44px);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  border-radius: var(--lkv-radius-full, 999px);
+  /* La zone de toucher de 44 px est portée par la piste, pas par le curseur. */
+  background: color-mix(in srgb, var(--lkv-text-inverted) 18%, transparent);
+  box-shadow: var(--glass-depth-inset);
+}
+
+.tj-ruler__track:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+.tj-ruler__fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--lkv-sage-400) 0%, var(--lkv-sage-200) 100%);
+  pointer-events: none;
+}
+
+.tj-ruler__thumb {
+  position: absolute;
+  top: 50%;
+  width: var(--lkv-touch-min, 44px);
+  height: var(--lkv-touch-min, 44px);
+  translate: -50% -50%;
+  display: grid;
+  place-items: center;
+  border-radius: var(--lkv-radius-full, 999px);
+  background: var(--lkv-surface-elevated, var(--glass-solid));
+  box-shadow:
+    var(--glass-depth-inset),
+    0 6px 18px rgb(0 0 0 / 28%);
+  border: 1px solid var(--lkv-border-subtle, var(--glass-rim));
+  pointer-events: none;
+  transition: translate var(--motion-control-duration) var(--ease-spring);
+}
+
+.tj-ruler__thumb-glyph {
+  width: 0;
+  height: 0;
+  border-inline: 7px solid transparent;
+  border-bottom: 11px solid var(--lkv-sage-400);
+}
+
+.tj-ruler__ticks {
+  position: relative;
+  height: 1.25rem;
+  margin-top: 0.25rem;
+}
+
+.tj-ruler__tick {
+  position: absolute;
+  translate: -50% 0;
+  font-size: var(--lkv-text-caption-2, 0.6875rem);
+  color: var(--lkv-text-muted);
+  white-space: nowrap;
+}
+
+/* ---------- Cartes ---------- */
+.tj-grid {
+  display: grid;
+  gap: var(--space-4, 1rem);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .tj-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  /* 12 colonnes, et non 6. En 6 colonnes, deux cartes `span 4` ne pouvaient
+     pas se placer cote a cote (4 + 4 > 6) : une seule carte par ligne, et deux
+     colonnes vides a droite sur CHAQUE ligne — une bande morte de 336 px sur
+     toute la page. En 12 colonnes, `span 6` se place par deux. */
+  .tj-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .tj-grid > * {
+    grid-column: span 6;
+  }
+  .tj-grid > .tj-span-4 {
+    grid-column: span 6;
+  }
+  .tj-grid > .tj-span-6 {
+    grid-column: span 12;
+  }
+}
+
+.tj-card__head {
+  /* Grille a deux ranges : le titre occupe TOUTE la largeur de la range 1, les
+     metas la range 2, alignees a droite.
+
+     Avant, c'etait un `flex` + `flex-wrap: wrap`. Deux defauts en decoulaient :
+     1. `.tj-prov` etait plafonne a `max-width: 60%` (268 px sur une carte de
+        446 px) : au-dela de deux chips, le conteneur passait sur TROIS rangees
+        de 68 px, pendant que le titre, verticalement centre par
+        `align-items: center`, restait au milieu de ce bloc. Le titre finissait
+        donc ENCERCLE par les chips.
+     2. `align-items: center` centrait le titre par rapport a la rangee la plus
+        haute, ce qui decalait verticalement les cartes voisines de 24 px.
+
+     Deux rangees explicites suppriment les deux : la hauteur d'un head ne
+     depend plus du nombre de chips. */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  row-gap: var(--space-2, 0.5rem);
+  margin-bottom: var(--space-3, 0.75rem);
+  justify-items: end;
+}
+
+.tj-card__head > h3 {
+  justify-self: start;
+}
+
+/* Chips de provenance (gate T2).
+   Ils occupent leur propre rangee, sous le titre : le titre est plus important
+   que la source qu'il annonce, donc il garde toujours toute la largeur. */
+.tj-prov {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1, 0.25rem);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 100%;
+}
+
+.tj-prov__more {
+  font-size: var(--lkv-text-caption-2, 0.6875rem);
+  font-weight: 600;
+  color: var(--lkv-text-secondary);
+  padding-inline: var(--space-1, 0.25rem);
+}
+
+@media (max-width: 30rem) {
+  .tj-prov {
+    max-width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* Respect du systeme de mouvement : les chips n'animent que leur teinte. */
+@media (prefers-reduced-motion: reduce) {
+  .tj-prov * {
+    transition: none !important;
+  }
+}
+.tj-card__head h3 {
+  font-size: var(--lkv-text-headline, 1.0625rem);
+  line-height: var(--lkv-line-title, 1.25);
+  letter-spacing: var(--lkv-tracking-title, -0.01em);
+  color: var(--lkv-text-primary);
+}
+
+.tj-bignum {
+  font-size: var(--lkv-text-title-lg, 2.25rem);
+  font-weight: var(--lkv-weight-bold, 700);
+  line-height: 1;
+  color: var(--lkv-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.tj-bignum small {
+  font-size: 0.5em;
+  color: var(--lkv-text-muted);
+}
+
+/* ---------- Lignes de détail ---------- */
+.tj-lines {
+  display: flex;
+  flex-direction: column;
+}
+
+.tj-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3, 0.75rem);
+  padding-block: 0.5rem;
+  border-top: 1px solid var(--lkv-border-subtle);
+  font-size: var(--lkv-text-body-sm, 0.875rem);
+  color: var(--lkv-text-secondary);
+}
+
+.tj-line:first-child {
+  border-top: 0;
+}
+
+.tj-line b {
+  font-weight: var(--lkv-weight-semibold, 600);
+  color: var(--lkv-text-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tj-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: var(--lkv-text-caption-2, 0.6875rem);
+  font-weight: var(--lkv-weight-semibold, 600);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--lkv-text-muted);
+}
+
+/* ---------- Jauge de dangerosité ---------- */
+.tj-gauge {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 9.5rem;
+  height: 9.5rem;
+  margin-inline: auto;
+}
+
+.tj-gauge svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  rotate: -90deg;
+}
+
+.tj-gauge__track {
+  fill: none;
+  stroke: var(--lkv-border-subtle);
+  stroke-width: 9;
+}
+
+.tj-gauge__arc {
+  fill: none;
+  stroke: var(--lkv-warning);
+  stroke-width: 9;
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--motion-page-duration) var(--motion-ease-decelerate);
+}
+
+.tj-gauge__value {
+  text-align: center;
+}
+
+.tj-gauge__num {
+  font-size: var(--lkv-text-title-lg, 2.25rem);
+  font-weight: var(--lkv-weight-bold, 700);
+  line-height: 1;
+  color: var(--lkv-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.tj-factors {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: var(--space-3, 0.75rem);
+}
+
+.tj-factor {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--lkv-text-caption, 0.75rem);
+  color: var(--lkv-text-secondary);
+}
+
+.tj-bar {
+  height: 4px;
+  border-radius: var(--lkv-radius-full, 999px);
+  background: var(--lkv-surface-muted, var(--lkv-border-subtle));
+  overflow: hidden;
+}
+
+.tj-bar > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--lkv-sage-400);
+  transition: width var(--motion-page-duration) var(--motion-ease-decelerate);
+}
+
+.tj-factor b {
+  color: var(--lkv-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Liste d'étapes / kit / traces ---------- */
+.tj-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tj-step {
+  display: grid;
+  grid-template-columns: 1.75rem 1fr;
+  gap: 0.625rem;
+  align-items: start;
+}
+
+.tj-step__index {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--lkv-radius-full, 999px);
+  background: var(--lkv-surface-muted);
+  color: var(--lkv-text-primary);
+  font-size: var(--lkv-text-caption-2, 0.6875rem);
+  font-weight: var(--lkv-weight-semibold, 600);
+  font-variant-numeric: tabular-nums;
+}
+
+.tj-step__title {
+  font-size: var(--lkv-text-body-sm, 0.875rem);
+  font-weight: var(--lkv-weight-semibold, 600);
+  color: var(--lkv-text-primary);
+}
+
+.tj-step__detail {
+  font-size: var(--lkv-text-caption, 0.75rem);
+  color: var(--lkv-text-muted);
+}
+
+.tj-kit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.tj-trace {
+  display: grid;
+  /* 2rem avatar | 1fr qui/nom | 7.5rem colonne "duree" de largeur FIXE.
+     En `auto`, chaque rangee etait une grille a part entiere : la colonne de
+     droite se dimensionnait ligne par ligne, donc "36 h", "12 j", "8 h",
+     "28 j", "1 h" formaient un bord gauche en escalier. */
+  grid-template-columns: 2rem minmax(0, 1fr) 7.5rem;
+  align-items: center;
+  gap: 0.625rem;
+  padding-block: 0.5rem;
+  border-top: 1px solid var(--lkv-border-subtle);
+}
+
+/* Colonne de droite alignee sur le meme bord pour toutes les traces. */
+.tj-trace > :last-child {
+  justify-self: end;
+}
+
+.tj-trace:first-child {
+  border-top: 0;
+}
+
+.tj-trace__avatar {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--lkv-radius-full, 999px);
+  background: var(--lkv-surface-muted);
+  font-size: var(--lkv-text-caption, 0.75rem);
+  font-weight: var(--lkv-weight-semibold, 600);
+  color: var(--lkv-text-primary);
+}
+
+.tj-trace--dim {
+  opacity: 0.55;
+}
+
+.tj-trace__who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tj-trace__who b {
+  font-size: var(--lkv-text-body-sm, 0.875rem);
+  color: var(--lkv-text-primary);
+}
+
+.tj-trace__who span {
+  font-size: var(--lkv-text-caption, 0.75rem);
+  color: var(--lkv-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Veille / narration ---------- */
+.tj-switch {
+  width: 3rem;
+  height: 1.75rem;
+  border-radius: var(--lkv-radius-full, 999px);
+  background: var(--lkv-disabled-bg, var(--lkv-surface-muted));
+  border: 0;
+  position: relative;
+  cursor: pointer;
+  transition: background var(--motion-control-duration) var(--motion-ease-standard);
+}
+
+.tj-switch[aria-checked='true'] {
+  background: var(--lkv-sage-400);
+}
+
+.tj-switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 50%;
+  background: var(--lkv-surface-elevated, #fff);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 30%);
+  transition: translate var(--motion-control-duration) var(--ease-spring);
+}
+
+.tj-switch[aria-checked='true']::after {
+  translate: 1.25rem 0;
+}
+
+.tj-narration p {
+  font-size: var(--lkv-text-body-sm, 0.875rem);
+  line-height: var(--lkv-line-body, 1.6);
+  color: var(--lkv-text-secondary);
+}
+
+.tj-narration ul {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-3, 0.75rem) 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.tj-narration li {
+  position: relative;
+  padding-left: 0.875rem;
+  font-size: var(--lkv-text-caption, 0.75rem);
+  line-height: 1.5;
+  color: var(--lkv-text-muted);
+}
+
+.tj-narration li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.5em;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--lkv-sage-400);
+}
+
+.tj-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: var(--lkv-text-caption-2, 0.6875rem);
+  color: var(--lkv-success);
+}
+
+.tj-live::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ---------- Accessibilité mouvement ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .tj-scene,
+  .tj-ruler__thumb,
+  .tj-gauge__arc,
+  .tj-bar > i,
+  .tj-switch,
+  .tj-switch::after {
+    transition: none;
+  }
+}
+/* Version de plan : monospace, pour qu'on ne la lise pas comme une donnee de voyage. */
+.tj-plan-version {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  letter-spacing: 0.01em;
+  margin-top: 0.25rem;
+}
