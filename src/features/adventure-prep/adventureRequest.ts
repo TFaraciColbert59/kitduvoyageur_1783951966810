@@ -11,13 +11,53 @@
  */
 
 import { activityById } from './catalog';
+import { resolvedGear } from './engine/gear';
 import type { AdventurePrepDraft, PlaceRef } from './types';
+
+/** Version du contrat `acceptedPlan` : changee uniquement a la migration. */
+export const ACCEPTED_PLAN_SCHEMA_VERSION = 1;
+
+/**
+ * Le plan tel que l'utilisateur l'a valide a l'ecran.
+ *
+ * P0 « conserver exactement le plan choisi » : la phrase `text` sert a la
+ * comprehension serveur, mais elle ne peut pas porter les etapes gardees, les
+ * affectations du sac ni les participants. Ce snapshot structure voyage a cote,
+ * tel quel, et le serveur le persiste dans la version initiale du plan.
+ */
+export interface AcceptedPrepPlan {
+  schemaVersion: typeof ACCEPTED_PLAN_SCHEMA_VERSION;
+  draftVersion: number;
+  coverName: string | null;
+  activities: AdventurePrepDraft['activities'];
+  route: AdventurePrepDraft['route'];
+  calendar: AdventurePrepDraft['calendar'];
+  group: AdventurePrepDraft['group'];
+  preferences: AdventurePrepDraft['preferences'];
+  itinerary: {
+    days: number;
+    steps: NonNullable<AdventurePrepDraft['itinerary']>['steps'];
+  } | null;
+  gear: ReadonlyArray<{
+    id: string;
+    name: string;
+    category: string;
+    quantity: number;
+    vital: boolean;
+    ownerId: string | null;
+    weightGrams: number | null;
+    packed: boolean;
+  }>;
+}
 
 /** Corps accepte par POST /api/adventure/generate (cote serveur : zod). */
 export interface AdventureGenerateRequest {
   text: string;
   coordinates?: { lat: number; lng: number } | Array<{ lat: number; lng: number }>;
   weatherDays?: number;
+  /** Effectif reel du brouillon (adultes + enfants), jamais devine. */
+  participantsCount?: number;
+  acceptedPlan?: AcceptedPrepPlan;
 }
 
 const BUDGET_LABELS: Readonly<Record<AdventurePrepDraft['preferences']['budgetLevel'], string>> = {
@@ -70,11 +110,24 @@ export function draftCoordinates(
   return coords;
 }
 
-/** Nombre de jours a prevoir : borne a 7, la plage acceptee par la route. */
-export function draftWeatherDays(draft: AdventurePrepDraft): number | undefined {
+/**
+ * Duree REELLE de l'aventure, en jours. Aucune borne : un voyage d'un mois
+ * reste un voyage d'un mois. A ne jamais confondre avec l'horizon meteo.
+ */
+export function draftDurationDays(draft: AdventurePrepDraft): number | undefined {
   const days = draft.calendar.durationDays;
   if (typeof days !== 'number' || !Number.isFinite(days) || days < 1) return undefined;
-  return Math.min(Math.round(days), 7);
+  return Math.round(days);
+}
+
+/** Plage de prevision acceptee par la route : une contrainte meteo, pas de voyage. */
+export const WEATHER_HORIZON_MAX_DAYS = 7;
+
+/** Horizon meteo a demander : la duree, bornee a la plage de prevision. */
+export function draftWeatherDays(draft: AdventurePrepDraft): number | undefined {
+  const days = draftDurationDays(draft);
+  if (days === undefined) return undefined;
+  return Math.min(days, WEATHER_HORIZON_MAX_DAYS);
 }
 
 /**
@@ -111,9 +164,11 @@ export function draftText(draft: AdventurePrepDraft): string {
   }
 
   if (draft.calendar.startDate) parts.push(`le ${draft.calendar.startDate}`);
-  const weatherDays = draftWeatherDays(draft);
-  if (weatherDays && weatherDays > 1) {
-    parts.push(`sur ${weatherDays} jours`);
+  // La phrase decrit le VOYAGE : elle lit la duree reelle, jamais l'horizon
+  // meteo borne a 7 jours (un mois annonce « sur 7 jours » etait faux).
+  const durationDays = draftDurationDays(draft);
+  if (durationDays && durationDays > 1) {
+    parts.push(`sur ${durationDays} jours`);
   }
 
   const prefs = draft.preferences;
@@ -129,6 +184,42 @@ export function draftText(draft: AdventurePrepDraft): string {
   return parts.join(' ').trim();
 }
 
+/** Effectif du brouillon : au moins une personne, jamais un nombre invente. */
+export function draftParticipantsCount(draft: AdventurePrepDraft): number {
+  const count = Math.trunc(draft.group.adults) + Math.trunc(draft.group.children);
+  return Number.isFinite(count) && count >= 1 ? count : 1;
+}
+
+/**
+ * Snapshot exact de ce que l'ecran montre au moment de l'enregistrement.
+ * Fonction PURE : meme brouillon, meme snapshot (idempotence de la sauvegarde).
+ */
+export function buildAcceptedPlan(draft: AdventurePrepDraft): AcceptedPrepPlan {
+  return {
+    schemaVersion: ACCEPTED_PLAN_SCHEMA_VERSION,
+    draftVersion: draft.version,
+    coverName: draft.coverName,
+    activities: draft.activities,
+    route: draft.route,
+    calendar: draft.calendar,
+    group: draft.group,
+    preferences: draft.preferences,
+    itinerary: draft.itinerary
+      ? { days: draft.itinerary.days, steps: draft.itinerary.steps }
+      : null,
+    gear: resolvedGear(draft).map((item) => ({
+      id: item.id,
+      name: item.name,
+      category: item.category,
+      quantity: item.quantity,
+      vital: item.vital,
+      ownerId: item.ownerId,
+      weightGrams: item.weightGrams,
+      packed: draft.packedGearIds.includes(item.id),
+    })),
+  };
+}
+
 /** Charge utile complete, prete pour la route. */
 export function buildAdventureGenerateRequest(
   draft: AdventurePrepDraft,
@@ -137,6 +228,8 @@ export function buildAdventureGenerateRequest(
   const coordinates = draftCoordinates(draft);
   const weatherDays = draftWeatherDays(draft);
   return {
+    participantsCount: draftParticipantsCount(draft),
+    acceptedPlan: buildAcceptedPlan(draft),
     // La route refuse moins de 10 caracteres : un brouillon quasi vide ne doit
     // pas partir en requete invalide, il doit etre refuse avant l'appel.
     text: text.length >= 10 ? text : 'Prepare une sortie de plein air en France.',

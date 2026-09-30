@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import {
+  ACCEPTED_PLAN_SCHEMA_VERSION,
   blockersBeforeSave,
+  buildAcceptedPlan,
   buildAdventureGenerateRequest,
+  draftDurationDays,
+  draftParticipantsCount,
   draftCoordinates,
   draftText,
   draftWeatherDays,
@@ -120,5 +124,94 @@ describe('buildAdventureGenerateRequest — charge utile de la route', () => {
     const draft: AdventurePrepDraft = emptyDraft();
     const request = buildAdventureGenerateRequest(draft);
     expect(request.text.length).toBeGreaterThanOrEqual(10);
+  });
+});
+describe('Chantier P0 — la durée du voyage n’est pas l’horizon météo', () => {
+  const monthLong = () =>
+    fullDraft({ calendar: { ...fullDraft().calendar, durationDays: 30 } });
+
+  it('AR-50: un voyage de 30 jours reste un voyage de 30 jours', () => {
+    expect(draftDurationDays(monthLong())).toBe(30);
+  });
+
+  it('AR-51: la phrase annonce la vraie durée, jamais « sur 7 jours »', () => {
+    const text = draftText(monthLong());
+    expect(text).toContain('sur 30 jours');
+    expect(text).not.toContain('sur 7 jours');
+  });
+
+  it('AR-52: seule la météo reste bornée à 7 jours', () => {
+    const request = buildAdventureGenerateRequest(monthLong());
+    expect(request.weatherDays).toBe(7);
+    expect(request.acceptedPlan?.calendar.durationDays).toBe(30);
+  });
+});
+
+describe('Chantier P0 — le plan accepté voyage intact', () => {
+  it('AR-60: le snapshot porte version de contrat, groupe et préférences', () => {
+    const plan = buildAcceptedPlan(fullDraft());
+    expect(plan.schemaVersion).toBe(ACCEPTED_PLAN_SCHEMA_VERSION);
+    expect(plan.group.knownMembers).toEqual(['Camille']);
+    expect(plan.preferences.budgetPerPerson).toBe(90);
+    expect(plan.route.destination?.name).toBe('Argentière');
+  });
+
+  it('AR-61: le sac garde affectations et état préparé, sans inventer de poids', () => {
+    const base = fullDraft();
+    const draft = fullDraft({
+      gear: [
+        {
+          id: 'trousse',
+          name: 'Trousse de secours',
+          category: 'safety',
+          quantity: 1,
+          vital: true,
+          requiredFor: ['a_pied'],
+          ownerId: 'camille',
+          weightGrams: 250,
+          packed: false,
+        },
+      ],
+      packedGearIds: ['trousse'],
+    });
+    const plan = buildAcceptedPlan(draft);
+    const trousse = plan.gear.find((item) => item.id === 'trousse');
+    expect(trousse).toMatchObject({ ownerId: 'camille', weightGrams: 250, packed: true });
+    const eau = plan.gear.find((item) => item.id === 'eau');
+    expect(eau?.weightGrams).toBeNull();
+    expect(eau?.packed).toBe(false);
+    expect(base.packedGearIds).toEqual([]);
+  });
+
+  it('AR-62: les étapes gardées sont transmises telles quelles', () => {
+    const steps = [
+      {
+        id: 's1', day: 1, order: 0, kind: 'nuit' as const, title: 'Refuge', placeName: 'Refuge',
+        startTime: '18:00', durationMin: null, reason: null,
+        price: { amount: null, currency: 'EUR' as const, state: 'a_reserver' as const },
+        state: 'a_reserver' as const, kept: true, icon: 'bed', lat: 45.9, lon: 6.9,
+      },
+    ];
+    const draft = fullDraft({
+      itinerary: {
+        days: 3, steps, totals: { distanceKm: null, movingMin: null, elevGainM: null, elevLossM: null },
+        perDay: [], metricsContext: 'terrain',
+        budgetPerPerson: { amount: null, currency: 'EUR', state: 'a_reserver' },
+        activityCount: 1, contingencies: [],
+      },
+    });
+    const plan = buildAcceptedPlan(draft);
+    expect(plan.itinerary?.steps[0]).toEqual(steps[0]);
+    expect(plan.itinerary?.days).toBe(3);
+  });
+
+  it('AR-63: l’effectif vient du groupe réel, au moins une personne', () => {
+    expect(draftParticipantsCount(fullDraft())).toBe(2);
+    expect(draftParticipantsCount(emptyDraft())).toBe(1);
+    expect(buildAdventureGenerateRequest(fullDraft()).participantsCount).toBe(2);
+  });
+
+  it('AR-64: même brouillon, même snapshot (sauvegarde idempotente)', () => {
+    expect(buildAcceptedPlan(fullDraft())).toEqual(buildAcceptedPlan(fullDraft()));
   });
 });

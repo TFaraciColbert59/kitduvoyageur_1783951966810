@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LKDV — Configurateur d'aventures (maquette)</title>
+<style>
+:root{
+  --forest:#17402C; --forest-2:#205238; --sage:#5B7F55; --sage-soft:#A6C1A0;
+  --stone:#F5F2EC; --stone-2:#FAF8F5; --paper:#FBFAF6; --ink:#15231B; --ink-2:#4A5A50; --ink-3:#7C887F;
+  --warn:#C89A3B; --warn-bg:#FBF1DC; --danger:#A8443A; --danger-bg:#F5DDD9; --info:#4B6B7C; --info-bg:#DDE7EE;
+  --glass:rgba(251,250,246,.58); --glass-edge:rgba(255,255,255,.7);
+  --r-s:12px; --r-m:16px; --r-l:24px;
+  --sys:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Inter","Segoe UI",system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--sys);color:var(--ink);background:#E9E4D8;-webkit-font-smoothing:antialiased;display:flex;justify-content:center;align-items:flex-start;gap:48px;padding:40px 24px;min-height:100vh}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+:focus-visible{outline:3px solid var(--sage);outline-offset:2px;border-radius:10px}
+
+/* ---------- côté gauche : notice ---------- */
+.notes{max-width:360px;padding-top:24px}
+.notes .eyebrow{font:600 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--sage)}
+.notes h1{font-size:40px;line-height:1.02;letter-spacing:-.035em;font-weight:700;margin:14px 0 16px;color:var(--forest)}
+.notes p{font-size:15px;line-height:1.5;color:var(--ink-2);margin-bottom:14px}
+.notes dl{margin-top:22px;border-top:1px solid rgba(23,64,44,.14)}
+.notes dt{font:600 12px/1 var(--mono);color:var(--forest);padding-top:14px}
+.notes dd{font-size:14px;line-height:1.45;color:var(--ink-2);padding:6px 0 14px;border-bottom:1px solid rgba(23,64,44,.14)}
+.notes .sample{display:inline-block;margin-top:18px;font:500 12px/1.3 var(--mono);color:var(--warn);background:var(--warn-bg);padding:8px 10px;border-radius:10px}
+
+/* ---------- téléphone ---------- */
+.phone{width:402px;height:874px;border-radius:56px;background:#0E1511;padding:12px;box-shadow:0 40px 80px -30px rgba(21,35,27,.55),0 0 0 1px rgba(0,0,0,.4);flex:none;position:sticky;top:24px}
+.screen{position:relative;width:100%;height:100%;border-radius:44px;overflow:hidden;background:var(--stone)}
+
+/* carte persistante */
+.map{position:absolute;inset:0;background:#E6E7D6}
+.map svg{width:100%;height:100%;display:block}
+.contour{fill:none;stroke:#C9CCB2;stroke-width:1}
+.contour.major{stroke:#B6BB9A;stroke-width:1.3}
+.water{fill:#C7D9DD}
+.route-halo{fill:none;stroke:rgba(255,255,255,.85);stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
+.route{fill:none;stroke:var(--forest);stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round;transition:opacity .4s}
+.route.dim{stroke:var(--sage-soft);stroke-width:3;opacity:.9}
+.poi circle{stroke:#fff;stroke-width:2}
+.poi text{font:600 10px var(--sys);fill:var(--ink);paint-order:stroke;stroke:rgba(255,255,255,.9);stroke-width:3px}
+.cursor{fill:#fff;stroke:var(--forest);stroke-width:3;transition:opacity .2s}
+
+/* barre de statut */
+.status{position:absolute;top:0;left:0;right:0;height:54px;display:flex;justify-content:space-between;align-items:center;padding:14px 32px 0;font:600 16px var(--sys);z-index:5}
+.island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:124px;height:36px;border-radius:20px;background:#000;z-index:6}
+
+/* verre */
+.glass{background:var(--glass);backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%);border:1px solid var(--glass-edge);box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 10px 30px -12px rgba(21,35,27,.35)}
+
+/* barre supérieure flottante */
+.topbar{position:absolute;top:60px;left:14px;right:14px;z-index:4;display:flex;gap:8px;align-items:center}
+.pill{height:44px;min-width:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;padding:0 14px;font-size:15px;font-weight:600}
+.pill svg{width:20px;height:20px}
+.title-pill{flex:1;justify-content:flex-start;gap:10px;overflow:hidden}
+.title-pill .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scale-badge{font:600 11px/1 var(--mono);letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--forest);padding:6px 8px;border-radius:8px;flex:none}
+
+/* sélecteur d'échelle : la signature */
+.scaler{position:absolute;top:114px;left:14px;right:14px;z-index:4;border-radius:22px;padding:10px 12px 12px}
+.scaler-head{display:flex;justify-content:space-between;align-items:baseline;padding:0 4px 8px}
+.scaler-head b{font-size:13px;color:var(--ink-2);font-weight:600}
+.scaler-head span{font:600 12px var(--mono);color:var(--forest)}
+.track{position:relative;display:grid;grid-template-columns:repeat(4,1fr);background:rgba(23,64,44,.08);border-radius:14px;padding:3px}
+.thumb{position:absolute;top:3px;bottom:3px;left:3px;width:calc(25% - 1.5px);border-radius:11px;background:#fff;box-shadow:0 2px 8px rgba(21,35,27,.18);transition:transform .45s cubic-bezier(.3,1.3,.5,1)}
+.track button{position:relative;z-index:1;height:40px;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:13px;font-weight:600;color:var(--ink-2)}
+.track button small{font:500 10px var(--mono);color:var(--ink-3)}
+.track button[aria-pressed=true]{color:var(--forest)}
+
+/* rail des jours */
+.rail{position:absolute;top:212px;left:14px;right:14px;z-index:4;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px}
+.rail::-webkit-scrollbar{display:none}
+.rail{-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)}
+.day{flex:none;height:36px;min-width:44px;border-radius:18px;padding:0 12px;font:600 13px var(--sys);display:flex;align-items:center;gap:6px}
+.day[aria-pressed=true]{background:var(--forest);color:#fff;border-color:var(--forest)}
+.day .dot{width:6px;height:6px;border-radius:3px;background:var(--warn)}
+.rail[hidden]{display:none}
+
+/* feuille principale (surface stable, non vitrée) */
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:3;background:var(--paper);border-radius:28px 28px 0 0;box-shadow:0 -12px 40px -18px rgba(21,35,27,.35);height:452px;display:flex;flex-direction:column;transition:height .45s cubic-bezier(.3,1.1,.4,1)}
+.grab{width:38px;height:5px;border-radius:3px;background:rgba(21,35,27,.18);margin:8px auto 4px;flex:none}
+.sheet-scroll{overflow-y:auto;padding:6px 20px 120px;flex:1;-webkit-mask-image:linear-gradient(#000 calc(100% - 128px),transparent calc(100% - 78px));mask-image:linear-gradient(#000 calc(100% - 128px),transparent calc(100% - 78px))}
+.kicker{font:600 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--sage);margin-top:8px}
+.h{font-size:26px;line-height:1.1;letter-spacing:-.025em;font-weight:700;margin:6px 0 4px}
+.sub{font-size:14px;color:var(--ink-2);line-height:1.4}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.metric{background:var(--stone-2);border:1px solid rgba(21,35,27,.06);border-radius:var(--r-s);padding:10px}
+.metric b{display:block;font:700 19px/1.1 var(--sys);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.metric span{font-size:11.5px;color:var(--ink-3)}
+.metric .q{color:var(--warn)}
+
+.profile{margin:4px 0 12px;background:var(--stone-2);border-radius:var(--r-s);padding:10px 10px 4px;border:1px solid rgba(21,35,27,.06)}
+.profile-head{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-3);margin-bottom:4px}
+.profile-head b{color:var(--ink);font-variant-numeric:tabular-nums}
+.profile svg{width:100%;height:64px;display:block;touch-action:none;cursor:crosshair}
+
+.sections{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 14px}
+.chip{font-size:12.5px;font-weight:600;padding:7px 10px;border-radius:999px;background:rgba(91,127,85,.12);color:var(--forest)}
+.chip.new{animation:pop .5s ease}
+@keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:none;opacity:1}}
+
+.alert{display:flex;gap:10px;padding:12px;border-radius:var(--r-s);margin-bottom:8px;font-size:13.5px;line-height:1.4}
+.alert.warn{background:var(--warn-bg)} .alert.info{background:var(--info-bg)} .alert.danger{background:var(--danger-bg)}
+.alert i{flex:none;width:8px;border-radius:4px}
+.alert.warn i{background:var(--warn)} .alert.info i{background:var(--info)} .alert.danger i{background:var(--danger)}
+.alert b{display:block;font-size:13.5px}
+.alert em{font-style:normal;color:var(--ink-2)}
+
+.steps{list-style:none;margin:10px 0}
+.steps li{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid rgba(21,35,27,.07)}
+.steps time{font:600 13px var(--mono);color:var(--ink-3)}
+.steps .n{font-size:15px;font-weight:600}
+.steps .m{font-size:12.5px;color:var(--ink-3)}
+.state{font:600 11px var(--sys);padding:4px 8px;border-radius:8px;white-space:nowrap}
+.s-prop{background:rgba(21,35,27,.06);color:var(--ink-2)}
+.s-res{background:var(--warn-bg);color:#8a6620}
+.s-ok{background:rgba(91,127,85,.16);color:var(--forest)}
+.s-lock{background:var(--forest);color:#fff}
+
+/* tab bar flottante (verre) */
+.dock{position:absolute;left:14px;right:14px;bottom:26px;z-index:6;display:flex;gap:8px;align-items:center}
+.tabs{flex:1;height:60px;border-radius:30px;display:flex;justify-content:space-around;align-items:center;padding:0 6px}
+.tabs button{flex:1;height:50px;border-radius:25px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10.5px;font-weight:600;color:var(--ink-2)}
+.tabs button svg{width:22px;height:22px}
+.tabs button[aria-current=true]{color:var(--forest);background:rgba(255,255,255,.7)}
+.ask{width:60px;height:60px;border-radius:30px;display:flex;align-items:center;justify-content:center;color:var(--forest)}
+.ask svg{width:24px;height:24px}
+.home{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#111;z-index:7}
+
+/* tiroirs */
+.scrim{position:absolute;inset:0;background:rgba(14,21,17,.28);z-index:8;opacity:0;pointer-events:none;transition:opacity .3s}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:absolute;left:0;right:0;bottom:0;z-index:9;background:var(--paper);border-radius:28px 28px 0 0;max-height:78%;transform:translateY(105%);transition:transform .42s cubic-bezier(.3,1.1,.4,1);display:flex;flex-direction:column}
+.drawer.on{transform:none}
+.drawer-head{display:flex;justify-content:space-between;align-items:center;padding:4px 20px 8px}
+.drawer-head h2{font-size:21px;letter-spacing:-.02em}
+.close{width:36px;height:36px;border-radius:18px;background:rgba(21,35,27,.07);font-size:18px;display:flex;align-items:center;justify-content:center}
+.drawer-body{overflow-y:auto;padding:0 20px 48px}
+.gear{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:11px 0;border-bottom:1px solid rgba(21,35,27,.07);align-items:center}
+.gear .n{font-weight:600;font-size:15px}
+.gear .m{font-size:12.5px;color:var(--ink-3);grid-column:1}
+.gear .w{font:600 13px var(--mono);color:var(--ink-2);grid-row:1/3;grid-column:2;text-align:right}
+.legend{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 10px}
+.diff{list-style:none;margin:8px 0 14px}
+.diff li{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(21,35,27,.07);font-size:14px;line-height:1.35}
+.diff .sig{font:700 14px var(--mono);width:18px;flex:none}
+.diff .plus{color:var(--forest)} .diff .minus{color:var(--danger)} .diff .eq{color:var(--ink-3)}
+.cta{width:100%;height:52px;border-radius:26px;background:var(--forest);color:#fff;font-weight:600;font-size:16px;margin-top:8px}
+.cta.ghost{background:rgba(21,35,27,.06);color:var(--forest)}
+.prompt{display:flex;gap:8px;margin:6px 0 12px}
+.prompt input{flex:1;height:46px;border-radius:23px;border:1px solid rgba(21,35,27,.14);padding:0 16px;font:inherit;font-size:15px;background:#fff}
+.suggest{display:flex;flex-direction:column;gap:8px}
+.suggest button{text-align:left;padding:12px 14px;border-radius:var(--r-s);background:var(--stone-2);border:1px solid rgba(21,35,27,.06);font-size:14px;line-height:1.35}
+.note{font-size:12px;color:var(--ink-3);margin-top:10px;line-height:1.4}
+
+@media (max-width:860px){body{flex-direction:column;align-items:center;padding:16px}.notes{max-width:402px;padding-top:0}.phone{position:relative;top:0}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (prefers-reduced-transparency:reduce){.glass{background:var(--paper);backdrop-filter:none;-webkit-backdrop-filter:none}}
+</style>
+</head>
+<body>
+
+<aside class="notes">
+  <div class="eyebrow">Chantier configurateur · L7</div>
+  <h1>Un seul préparateur, de la course d'une heure au mois au Japon.</h1>
+  <p>Change l'échelle en haut de l'écran : les questions, les sections, le rail des jours et la stratégie de génération suivent. Le plan, le sac et la carte restent les mêmes.</p>
+  <p>Glisse sur le profil d'altitude : le point se déplace sur la carte. Ouvre le sac, puis demande à l'assistant « On dort en hébergement ».</p>
+  <dl>
+    <dt>Verre</dt><dd>Barres, rail, onglets et bouton assistant flottent au-dessus de la carte.</dd>
+    <dt>Surfaces stables</dt><dd>Programme, prix, alertes et sac restent sur papier opaque, lisibles dehors.</dd>
+    <dt>États</dt><dd>Proposé · À réserver · Confirmé · Verrouillé. Un clic affilié ne confirme rien.</dd>
+  </dl>
+  <span class="sample">Données d'exemple, pas des données réelles</span>
+</aside>
+
+<div class="phone">
+ <div class="screen" id="screen">
+  <div class="map" aria-hidden="true">
+   <svg viewBox="0 0 378 850" preserveAspectRatio="xMidYMid slice">
+    <path class="water" d="M-10 690 C 60 660 120 700 170 680 S 290 640 390 670 L390 860 L-10 860Z"/>
+    <g id="contours"></g>
+    <path id="routeAlt" class="route-halo" d=""/>
+    <path id="routeHalo" class="route-halo" d=""/>
+    <path id="route" class="route" d=""/>
+    <g id="pois" class="poi"></g>
+    <circle id="cursor" class="cursor" r="7" cx="-20" cy="-20"/>
+   </svg>
+  </div>
+
+  <div class="island"></div>
+  <div class="status"><span>10:42</span><span aria-label="Réseau et batterie">5G ▮▮▮</span></div>
+
+  <div class="topbar">
+   <button class="pill glass" aria-label="Retour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+   <div class="pill glass title-pill"><span class="scale-badge" id="badge">Sortie</span><span class="t" id="title">Course · 1 h</span></div>
+   <button class="pill glass" aria-label="Partager"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12M7 8l5-5 5 5M5 13v6h14v-6"/></svg></button>
+  </div>
+
+  <div class="scaler glass" role="group" aria-label="Échelle de l'aventure">
+   <div class="scaler-head"><b>Même préparateur, autre profondeur</b><span id="stratLabel">1 appel IA</span></div>
+   <div class="track">
+    <div class="thumb" id="thumb"></div>
+    <button data-s="0" aria-pressed="true">1 h<small>sortie</small></button>
+    <button data-s="1" aria-pressed="false">1 jour<small>journée</small></button>
+    <button data-s="2" aria-pressed="false">3 jours<small>itinérance</small></button>
+    <button data-s="3" aria-pressed="false">30 jours<small>voyage</small></button>
+   </div>
+  </div>
+
+  <nav class="rail" id="rail" hidden aria-label="Jours"></nav>
+
+  <section class="sheet" id="sheet" aria-live="polite">
+   <div class="grab"></div>
+   <div class="sheet-scroll" id="sheetBody"></div>
+  </section>
+
+  <div class="dock">
+   <div class="tabs glass" role="tablist">
+    <button aria-current="true" data-d="plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg>Plan</button>
+    <button data-d="sac"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7V5a4 4 0 018 0v2"/><rect x="4" y="7" width="16" height="14" rx="4"/><path d="M9 13h6"/></svg>Sac</button>
+    <button data-d="equipe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 5.2a3 3 0 010 5.6M18 14.5c1.8.8 3 2.7 3 5.5"/></svg>Équipe</button>
+    <button data-d="budget"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18M7 15h3"/></svg>Budget</button>
+   </div>
+   <button class="ask glass" data-d="assistant" aria-label="Ouvrir l'assistant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2-2.2-.8 2.2-.8z"/></svg></button>
+  </div>
+  <div class="home"></div>
+
+  <div class="scrim" id="scrim"></div>
+  <section class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+   <div class="grab"></div>
+   <div class="drawer-head"><h2 id="drawerTitle">Sac</h2><button class="close" id="close" aria-label="Fermer">×</button></div>
+   <div class="drawer-body" id="drawerBody"></div>
+  </section>
+ </div>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+/* ---------------- relief ---------------- */
+const cg=$('#contours'); let c='';
+for(let i=0;i<14;i++){const y=90+i*48,a=18+i*3;
+ c+=`<path class="contour${i%4===0?' major':''}" d="M-20 ${y} C 60 ${y-a} 120 ${y+a} 190 ${y-a/2} S 320 ${y+a} 400 ${y-a/3}"/>`;}
+for(let r=20;r<120;r+=18){c+=`<ellipse class="contour${r%54===20?' major':''}" cx="250" cy="330" rx="${r*1.3}" ry="${r}"/>`;}
+cg.innerHTML=c;
+
+/* ---------------- scénarios (données d'exemple) ---------------- */
+const S=[
+ {badge:'Sortie',title:'Course · 1 h',strat:'1 appel IA',sheetH:432,
+  kicker:'Boucle proposée',h:'Boucle des berges, 10,4 km',sub:'Départ de chez toi à 17 h 55, retour estimé 18 h 57. Marge de 3 min sur ton heure limite.',
+  metrics:[['10,4 km','distance'],['62 min','allure 6:00/km'],['+84 m','dénivelé']],
+  alt:[40,42,48,55,60,58,52,47,44,41,40],altLabel:'Altitude max 58 m',
+  route:'M190 560 C 150 520 120 470 140 420 S 230 360 262 402 S 280 500 240 540 S 205 575 190 560',
+  pois:[[190,560,'Départ','#17402C'],[140,420,'Fontaine','#4B6B7C']],
+  sections:['Parcours','Conditions','Essentiels'],
+  alerts:[['info','Coucher du soleil à 19 h 21','Lumière suffisante ; frontale inutile.']],
+  steps:null,days:0},
+ {badge:'Journée',title:'Rando · Lac Blanc',strat:'1 appel IA',sheetH:432,
+  kicker:'Parcours sourcé LKDV',h:'Lac Blanc par les Chéserys',sub:'Accès en train jusqu\u2019à Argentière. 3 pauses, 2 points d\u2019eau dont 1 non confirmé.',
+  metrics:[['12,8 km','distance'],['5 h 40','avec pauses'],['+1 030 m','dénivelé']],
+  alt:[1250,1400,1620,1810,1980,2150,2352,2200,1900,1600,1300],altLabel:'Altitude max 2 352 m',
+  route:'M110 600 C 130 540 170 520 200 470 S 240 380 250 330 S 300 400 290 470 S 220 590 170 610',
+  pois:[[110,600,'Argentière','#17402C'],[250,330,'Lac Blanc','#4B6B7C'],[200,470,'Eau ?','#C89A3B']],
+  sections:['Parcours','Conditions','Sac','Eau et repas','Groupe'],
+  alerts:[['warn','Point d\u2019eau des Chéserys non confirmé','Dernier retour il y a 24 jours. Emporte 1,5 L de plus ou confirme avant le départ.'],
+          ['info','Orages possibles après 15 h au-dessus de 2 000 m','Départ avancé à 8 h 10 proposé.']],
+  steps:[['08:10','Départ Argentière','Train depuis Chamonix','s-res','À réserver'],['10:45','Pause Chéserys','Eau à confirmer','s-prop','Proposé'],['12:15','Lac Blanc','Déjeuner, 45 min','s-prop','Proposé'],['16:30','Retour Tré-le-Champ','Bus 16:52','s-prop','Proposé']],days:0},
+ {badge:'Itinérance',title:'3 jours · Mont-Blanc',strat:'1 appel IA',sheetH:432,
+  kicker:'Jour 2 sur 3',h:'Balcon Sud, bivouac à Chéserys',sub:'Avec Camille. Matériel partagé : la tente est chez toi, le réchaud chez Camille.',
+  metrics:[['14,2 km','jour 2'],['6 h 10','avec pauses'],['+880 m','dénivelé']],
+  alt:[1900,2050,2150,2100,2250,2352,2300,2150,2080,2000,1990],altLabel:'Altitude max 2 352 m',
+  route:'M80 640 C 120 560 160 540 190 480 S 250 360 250 330 S 300 400 300 470 S 260 580 250 610',
+  pois:[[80,640,'Chamonix','#17402C'],[190,480,'Bivouac J1','#5B7F55'],[250,330,'Bivouac J2','#5B7F55'],[250,610,'Argentière','#17402C']],
+  sections:['Parcours','Conditions','Sac','Eau et repas','Nuitées','Groupe','Budget','Hors ligne'],
+  alerts:[['warn','Bivouac réglementé dans la réserve','Autorisé de 19 h à 8 h, au-dessus de 2 000 m. Source : gestionnaire de réserve, à revérifier.'],
+          ['info','Sac de Camille : poids inconnu pour 2 objets','Le total du groupe reste « à compléter ».']],
+  steps:[['08:30','Départ bivouac J1','','s-ok','Confirmé'],['12:00','Refuge de la Flégère','Déjeuner, réservation conseillée','s-res','À réserver'],['17:30','Bivouac Chéserys','Zone autorisée 19 h – 8 h','s-prop','Proposé']],days:3},
+ {badge:'Voyage',title:'30 jours · Japon',strat:'Ossature + jours à la demande',sheetH:432,
+  kicker:'Jour 12 · Takayama',h:'Alpes japonaises, jour souple',sub:'Hôtel verrouillé depuis la veille. Course matinale dans le même plan, avec ton profil et ton sac.',
+  metrics:[['8 km','course 6:30'],['2','activités'],['1 libre','demi-journée']],
+  alt:[570,575,590,610,640,660,655,630,600,580,572],altLabel:'Altitude max 660 m',
+  route:'M60 700 C 100 620 150 600 170 540 S 230 450 260 400 S 310 330 300 300',
+  pois:[[60,700,'Tokyo','#17402C'],[170,540,'Matsumoto','#5B7F55'],[260,400,'Takayama','#17402C'],[300,300,'Kanazawa','#5B7F55']],
+  sections:['Parcours','Transports','Nuitées','Réservations','Conditions','Sac','Groupe','Budget','Documents','Hors ligne'],
+  alerts:[['info','Météo du 12e jour : tendance saisonnière','La prévision détaillée arrive 7 jours avant. Rien n\u2019est présenté comme certain.'],
+          ['warn','Visite guidée : rendez-vous à 9 h 30, gare à 12 min','Faisable avec 18 min de marge après la course. Prix indicatif, disponibilité à vérifier.']],
+  steps:[['06:45','Course le long de la Miyagawa','Boucle 8 km, ton allure','s-prop','Proposé'],['09:30','Vieille ville, visite guidée','Offre partenaire, prix indicatif','s-res','À réserver'],['14:00','Temps libre','Laissé volontairement vide','s-prop','Libre'],['19:00','Ryokan à Takayama','Réservé, nuit 2 sur 2','s-lock','Verrouillé']],days:30}
+];
+
+const GEAR={
+ 0:[['Chaussures route','Possédé · disponible','280 g','s-ok','Prêt'],['Gourde souple 0,5 L','Possédé · disponible','40 g','s-ok','Prêt'],['Téléphone + suivi','Batterie à 62 %','—','s-res','À vérifier']],
+ 1:[['Sac 30 L','Possédé · disponible','980 g','s-ok','Prêt'],['Veste imperméable','Possédé · disponible','340 g','s-ok','Prêt'],['Frontale','Prêtée à Léo jusqu\u2019au 12','—','s-res','Indisponible'],['Eau 2,5 L','Consommable','2 500 g','s-prop','Calculé'],['Bâtons','Non possédé','—','s-prop','Emprunter ?']],
+ 2:[['Tente 2 places','Chez toi · partagée','1 450 g','s-ok','Attribuée'],['Réchaud + gaz','Chez Camille · partagé','—','s-res','Poids inconnu'],['Sac de couchage','Possédé · disponible','890 g','s-ok','Prêt'],['Matelas','Entretien prévu le 5','420 g','s-res','À vérifier'],['Filtre à eau','Non possédé','—','s-prop','Louer ou acheter']],
+ 3:[['Valise cabine','Possédé · disponible','2 100 g','s-ok','Prêt'],['Chaussures trail','Possédé · disponible','290 g','s-ok','Prêt'],['Tenues × 7','Lessive tous les 6 jours','—','s-prop','Calculé'],['Adaptateur type A','Non possédé','—','s-prop','Acheter'],['Passeport','Valide jusqu\u2019en 2031','—','s-ok','Vérifié']]
+};
+
+let cur=0, hostel=false;
+
+const route=$('#route'),halo=$('#routeHalo'),alt=$('#routeAlt'),cursor=$('#cursor');
+
+function stepsHTML(steps){return '<ul class="steps">'+steps.map(s=>`<li><time>${s[0]}</time><div><div class="n">${s[1]}</div>${s[2]?`<div class="m">${s[2]}</div>`:''}</div><span class="state ${s[3]}">${s[4]}</span></li>`).join('')+'</ul>';}
+
+function profileSVG(a){const w=320,h=60,min=Math.min(...a),max=Math.max(...a),r=max-min||1;
+ const pts=a.map((v,i)=>[i*w/(a.length-1),h-6-(v-min)/r*(h-14)]);
+ const d='M'+pts.map(p=>p.map(n=>n.toFixed(1)).join(' ')).join(' L');
+ return `<svg id="prof" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="Profil d'altitude. Glisse pour situer le point sur la carte."><path d="${d} L${w} ${h} L0 ${h}Z" fill="rgba(91,127,85,.18)"/><path d="${d}" fill="none" stroke="#17402C" stroke-width="2"/><line id="pline" x1="-5" x2="-5" y1="0" y2="${h}" stroke="#17402C" stroke-width="1" stroke-dasharray="3 3"/></svg>`;}
+
+function render(prevSections){
+ const s=S[cur];
+ $('#badge').textContent=s.badge; $('#title').textContent=s.title; $('#stratLabel').textContent=s.strat;
+ document.querySelectorAll('.track button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.s===cur)));
+ $('#thumb').style.transform=`translateX(${cur*100}%)`;
+ route.setAttribute('d',s.route); halo.setAttribute('d',s.route);
+ const len=route.getTotalLength(); route.style.strokeDasharray=len; route.style.strokeDashoffset=len;
+ requestAnimationFrame(()=>{route.style.transition='stroke-dashoffset .9s ease';route.style.strokeDashoffset=0;});
+ $('#pois').innerHTML=s.pois.map(p=>`<g><circle cx="${p[0]}" cy="${p[1]}" r="7" fill="${p[3]}"/><text x="${p[0]+11}" y="${p[1]+4}">${p[2]}</text></g>`).join('');
+ cursor.setAttribute('cx',-20);
+
+ const rail=$('#rail');
+ if(s.days>=2){rail.hidden=false;
+  if(s.days>10){rail.innerHTML=['Sem. 1','Sem. 2','J12','Sem. 3','Sem. 4','J29–30'].map(l=>`<button class="day glass" aria-pressed="${l==='J12'}">${l}${l==='Sem. 3'?'<span class="dot" aria-label="à revoir"></span>':''}</button>`).join('');}
+  else{rail.innerHTML=Array.from({length:s.days},(_,i)=>`<button class="day glass" aria-pressed="${i===1}">J${i+1}</button>`).join('')+'<button class="day glass" aria-pressed="false">Tout</button>';}
+ } else rail.hidden=true;
+
+ const prev=new Set(prevSections||[]);
+ const sectionsHTML=s.sections.map(x=>`<span class="chip${prevSections&&!prev.has(x)?' new':''}">${x}</span>`).join('');
+ const m=s.metrics.map(x=>`<div class="metric"><b>${x[0]}</b><span>${x[1]}</span></div>`).join('');
+ const al=s.alerts.map(a=>`<div class="alert ${a[0]}"><i></i><div><b>${a[1]}</b><em>${a[2]}</em></div></div>`).join('');
+ $('#sheetBody').innerHTML=`<div class="kicker">${s.kicker}</div><h2 class="h">${s.h}</h2><p class="sub">${s.sub}</p>
+  <div class="metrics">${m}</div>
+  <div class="profile"><div class="profile-head"><span>Profil</span><b id="profVal">${s.altLabel}</b></div>${profileSVG(s.alt)}</div>
+  <div class="kicker">Sections affichées à cette échelle</div><div class="sections">${sectionsHTML}</div>
+  ${al}${s.steps?stepsHTML(s.steps):''}
+  <p class="note">Les états « Proposé » et « À réserver » ne sont jamais présentés comme confirmés.</p>`;
+ bindProfile(s);
+}
+
+function bindProfile(s){
+ const svg=$('#prof'),line=$('#pline'),val=$('#profVal');
+ const move=e=>{const r=svg.getBoundingClientRect();const x=Math.max(0,Math.min(1,((e.touches?e.touches[0].clientX:e.clientX)-r.left)/r.width));
+  line.setAttribute('x1',x*320);line.setAttribute('x2',x*320);
+  const p=route.getPointAtLength(route.getTotalLength()*x);cursor.setAttribute('cx',p.x);cursor.setAttribute('cy',p.y);
+  const i=x*(s.alt.length-1),lo=Math.floor(i),hi=Math.ceil(i),v=Math.round(s.alt[lo]+(s.alt[hi]-s.alt[lo])*(i-lo));
+  val.textContent=v.toLocaleString('fr-FR')+' m';};
+ svg.addEventListener('pointermove',move);svg.addEventListener('pointerdown',move);
+ svg.addEventListener('pointerleave',()=>{val.textContent=s.altLabel;});
+}
+
+document.querySelectorAll('.track button').forEach(b=>b.addEventListener('click',()=>{const prev=S[cur].sections;cur=+b.dataset.s;hostel=false;render(prev);}));
+$('#rail').addEventListener('click',e=>{const b=e.target.closest('.day');if(!b)return;$('#rail').querySelectorAll('.day').forEach(d=>d.setAttribute('aria-pressed',String(d===b)));});
+
+/* ---------------- tiroirs ---------------- */
+const drawer=$('#drawer'),scrim=$('#scrim');let opener=null;
+function openDrawer(kind,from){opener=from;const s=S[cur];let t='',h='';
+ if(kind==='sac'){t='Sac';const g=GEAR[cur].filter(x=>!(hostel&&/Tente|Réchaud|Matelas/.test(x[0])));
+  h=`<div class="legend"><span class="state s-ok">Prêt</span><span class="state s-res">À vérifier</span><span class="state s-prop">À combler</span></div>
+  <p class="sub">Construit à partir de ton inventaire : un objet prêté ou en entretien n\u2019est pas compté comme disponible.</p>`+
+  g.map(x=>`<div class="gear"><div class="n">${x[0]}</div><div class="w">${x[2]}<br><span class="state ${x[3]}">${x[4]}</span></div><div class="m">${x[1]}</div></div>`).join('')+
+  `<p class="note">Poids porté : ${cur===2?(hostel?'3,1 kg':'5,8 kg')+' connus, 1 poids inconnu':'calculé sur les poids connus uniquement'}.</p>`;}
+ else if(kind==='equipe'){t='Équipe';h=`<p class="sub">${cur>=2?'Toi et Camille. Chacun partage ce qu\u2019il veut : horaires, budget, effort accepté.':'Tu pars seul. Une sortie visible d\u2019un ami ou d\u2019un club peut être proposée si tu l\u2019autorises.'}</p>
+  <div class="alert info"><i></i><div><b>${cur>=2?'Participant limitant : Camille, 900 m D+ par jour':'Club Lille Trail : sortie visible jeudi 18 h 30'}</b><em>${cur>=2?'Le jour 2 reste sous cette limite.':'Rejoindre ajoute 6 min de trajet. Invitation envoyée uniquement si tu confirmes.'}</em></div></div>`;}
+ else if(kind==='budget'){t='Budget';h=`<div class="metrics"><div class="metric"><b>${['0 €','14 €','96 €','3 480 €'][cur]}</b><span>engagé</span></div><div class="metric"><b class="q">${['—','~8 €','~60 €','~1 900 €'][cur]}</b><span>estimé</span></div><div class="metric"><b>${['—','—','90 €/pers.','5 600 €'][cur]}</b><span>prévu</span></div></div>
+  <p class="sub">Un prix « estimé » porte toujours la mention. Les offres partenaires sont classées par pertinence, jamais par commission.</p>`;}
+ else if(kind==='assistant'){t='Assistant';h=`<div class="prompt"><input id="ask" value="${cur===2?'Finalement, on dort en hébergement':''}" placeholder="Dis ce que tu veux changer" aria-label="Demande à l'assistant"><button class="pill glass" id="send" aria-label="Envoyer">↑</button></div>
+  <div class="suggest">${(cur===2?['Finalement, on dort en hébergement','Moins de dénivelé le jour 2']:cur===3?['Ajoute une journée libre à Kyoto','Moins de changements d\u2019hôtel']:['Évite la côte du parc','Raccourcis à 45 min']).map(x=>`<button>${x}</button>`).join('')}</div>
+  <p class="note">L\u2019assistant propose ; les moteurs recalculent ; tu valides l\u2019aperçu. Sans réponse de l\u2019IA, le plan reste modifiable.</p><div id="diff"></div>`;}
+ else {closeDrawer();return;}
+ $('#drawerTitle').textContent=t;$('#drawerBody').innerHTML=h;
+ drawer.classList.add('on');scrim.classList.add('on');$('#close').focus();
+ if(kind==='assistant'){const run=q=>showDiff(q);$('#send').onclick=()=>run($('#ask').value);$('#drawerBody').querySelectorAll('.suggest button').forEach(b=>b.onclick=()=>{$('#ask').value=b.textContent;run(b.textContent);});}
+}
+function showDiff(q){const d=$('#diff');
+ if(/h[ée]bergement/i.test(q)&&cur===2){
+  d.innerHTML=`<div class="kicker" style="margin-top:14px">Aperçu avant validation</div><ul class="diff">
+  <li><span class="sig minus">−</span><span>2 bivouacs → <b>Refuge de la Flégère</b> et <b>gîte d\u2019Argentière</b> (à réserver)</span></li>
+  <li><span class="sig minus">−</span><span>Tente, réchaud et matelas retirés du sac : <b>−2,7 kg</b> portés</span></li>
+  <li><span class="sig plus">+</span><span>Effort du jour 2 : 6 h 10 → <b>5 h 45</b> estimées</span></li>
+  <li><span class="sig plus">+</span><span>Budget : <b>+~70 €/pers.</b> estimés (demi-pension)</span></li>
+  <li><span class="sig eq">=</span><span>Billet de train confirmé conservé, aucune réservation annulée</span></li></ul>
+  <button class="cta" id="apply">Appliquer ces changements</button><button class="cta ghost" id="keep">Garder le bivouac</button>`;
+  $('#apply').onclick=()=>{hostel=true;S[2].sub='Avec Camille. Nuitées en refuge et gîte, sac allégé de 2,7 kg.';S[2].h='Balcon Sud, nuit au refuge';S[2].metrics[1]=['5 h 45','avec pauses'];closeDrawer();render(S[2].sections);};
+  $('#keep').onclick=closeDrawer;
+ } else d.innerHTML=`<div class="alert info" style="margin-top:12px"><i></i><div><b>Aperçu en préparation</b><em>Dans la maquette, essaie « Finalement, on dort en hébergement » sur l\u2019échelle 3 jours.</em></div></div>`;}
+function closeDrawer(){drawer.classList.remove('on');scrim.classList.remove('on');document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.d==='plan')));if(opener)opener.focus();}
+document.querySelectorAll('[data-d]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.d==='plan'){closeDrawer();return;}document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-current',String(x===b)));openDrawer(b.dataset.d,b);}));
+$('#close').onclick=closeDrawer;scrim.onclick=closeDrawer;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&drawer.classList.contains('on'))closeDrawer();});
+
+render(null);
+const q=new URLSearchParams(location.search);if(q.has('s')){cur=+q.get('s');render(null);}if(q.has('d'))openDrawer(q.get('d'),null);
+})();
+</script>
+</body>
+</html>

@@ -253,6 +253,59 @@ describe('A10 — Route generate durcie (TEST-A10-GEN, route mockée)', () => {
     expect(body).toMatchObject({ planId: PLAN_ID, version: 1 });
   });
 
+  it('CHANTIER-P0-ROUTE-01: plan accepté et effectif transmis tels quels à la génération', async () => {
+    mockedGenerate.mockResolvedValue({
+      plan: { id: PLAN_ID, currentVersion: 1 } as never,
+      candidates: [{ id: 'comfort' }, { id: 'balanced' }, { id: 'adventure' }] as never,
+      candidatePlans: [],
+      candidateComparison: {
+        planId: PLAN_ID,
+        sharedRoute: true,
+        sharedDates: true,
+        sharedAccommodations: true,
+        segmentation: 'uniform_from_blueprint',
+        routeTotalDistanceKm: null,
+        rows: [],
+        generatedAt: new Date().toISOString(),
+      },
+      runs: [],
+      explanation: 'Résumé déterministe.',
+      aiUsed: false,
+    });
+
+    const acceptedPlan = {
+      schemaVersion: 1,
+      draftVersion: 4,
+      coverName: 'Japon en un mois',
+      activities: { primary: 'city-break', extra: ['course'], nights: [] },
+      route: { origin: null, destination: null, shape: 'boucle' },
+      calendar: { startDate: '2027-04-01', durationDays: 30, durationIsSuggested: false, returnDate: '2027-04-30' },
+      group: { mode: 'groupe', adults: 2, children: 0, hasPets: false, knownMembers: [] },
+      preferences: { pace: 'normal' },
+      itinerary: null,
+      gear: [{ id: 'eau', name: 'Eau', category: 'water', quantity: 1, vital: true, ownerId: null, weightGrams: null, packed: false }],
+    };
+
+    const response = await generatePOST(
+      generateRequest({ text: TEXT, participantsCount: 2, weatherDays: 7, acceptedPlan })
+    );
+
+    expect(response.status).toBe(201);
+    const [input, deps] = mockedGenerate.mock.calls[0];
+    expect(input.participantsCount).toBe(2);
+    expect(input.weatherDays).toBe(7);
+    expect(input.acceptedPlan).toEqual(acceptedPlan);
+    expect(typeof deps.getOwnedGear).toBe('function');
+  });
+
+  it('CHANTIER-P0-ROUTE-02: plan accepté malformé ⇒ 400, aucune génération', async () => {
+    const response = await generatePOST(
+      generateRequest({ text: TEXT, acceptedPlan: { schemaVersion: 2 } })
+    );
+    expect(response.status).toBe(400);
+    expect(mockedGenerate).not.toHaveBeenCalled();
+  });
+
   it('TEST-A10-GEN-06c: échec de génération ⇒ requête marquée failed, erreur 500', async () => {
     mockedGenerate.mockRejectedValue(new Error('moteur indisponible'));
 

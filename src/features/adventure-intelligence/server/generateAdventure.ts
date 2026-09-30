@@ -37,6 +37,7 @@ import {
   type EngineRunRecord,
 } from '../domain/engineRegistry';
 import { buildLockConfirmationDecisions } from '../domain/locks';
+import type { OwnedGearRow } from '../domain/gearInventory';
 import { adventurePlanSchema, candidateComparisonSchema } from '../schemas/adventurePlan.schema';
 import {
   performanceProfileSchema,
@@ -146,6 +147,13 @@ export interface AdventureGenerationInput {
    * route → session → publication). Absente : un identifiant est généré.
    */
   correlationId?: string;
+  /**
+   * Chantier configurateur (P0) — plan accepté à l'écran (étapes gardées, sac,
+   * participants, durée réelle). Persisté tel quel dans le snapshot de la
+   * version initiale : la relecture restitue exactement les choix validés.
+   * C'est une DONNÉE utilisateur : aucun moteur ne l'interprète comme consigne.
+   */
+  acceptedPlan?: Record<string, unknown>;
 }
 
 export interface AdventureExplainContext {
@@ -188,6 +196,12 @@ export interface AdventureGenerationDeps {
   getCurrentProfile: (userId: string) => Promise<PerformanceProfile | null>;
   /** A10 (10.7/10.9) — consentement courant pour la performance personnelle. */
   hasActiveConsent: (userId: string, purpose: 'personal_performance') => Promise<boolean>;
+  /**
+   * Chantier configurateur (P0) — inventaire réel du propriétaire du plan.
+   * Absent ou en échec : repli explicite « inventaire non fourni », jamais un
+   * inventaire deviné. Ne lit QUE les lignes de `ownerId`.
+   */
+  getOwnedGear?: (userId: string) => Promise<OwnedGearRow[]>;
   /** A10 (10.9) — persistance des prédictions segment + route. */
   persistAdventurePredictions: (bundle: AdventurePredictionBundle) => Promise<void>;
   /**
@@ -517,21 +531,25 @@ function versionRow(
   reason: string,
   generatedBy: string,
   candidates?: AdventurePlan[],
-  candidateComparison?: AdventureCandidateComparison
+  candidateComparison?: AdventureCandidateComparison,
+  acceptedPlan?: Record<string, unknown>
 ): Record<string, unknown> {
+  // A11 #14 / A13 (S2) — les trois plans candidats et leur tableau comparatif
+  // voyagent dans le snapshot initial, sans changement de schéma de table.
+  // Chantier configurateur (P0) — le plan accepté y voyage aussi, intact.
+  const base: Record<string, unknown> =
+    candidates && candidates.length > 0
+      ? {
+          ...plan,
+          candidates,
+          ...(candidateComparison ? { candidateComparison } : {}),
+        }
+      : { ...plan };
+  if (acceptedPlan) base.acceptedPlan = acceptedPlan;
   return {
     plan_id: plan.id,
     version: plan.currentVersion,
-    // A11 #14 / A13 (S2) — les trois plans candidats et leur tableau comparatif
-    // voyagent dans le snapshot initial, sans changement de schéma de table.
-    snapshot:
-      candidates && candidates.length > 0
-        ? {
-            ...plan,
-            candidates,
-            ...(candidateComparison ? { candidateComparison } : {}),
-          }
-        : plan,
+    snapshot: base,
     reason,
     generated_by: generatedBy,
     confidence: plan.confidence,
@@ -711,6 +729,21 @@ export async function generateAdventure(
   } catch {
     personalConsent = false;
   }
+  // Chantier configurateur (P0) — l'inventaire réel alimente le sac. Un échec
+  // de lecture n'invente rien : l'adaptateur déclare l'inventaire manquant.
+  let ownedGear: OwnedGearRow[] | undefined;
+  if (deps.getOwnedGear) {
+    try {
+      ownedGear = await deps.getOwnedGear(input.ownerId);
+    } catch {
+      ownedGear = undefined;
+    }
+  }
+  const acceptedCalendar = (input.acceptedPlan?.calendar ?? null) as
+    | { startDate?: unknown }
+    | null;
+  const departureDay =
+    typeof acceptedCalendar?.startDate === 'string' ? acceptedCalendar.startDate : null;
   let personalProfile: PerformanceProfile | null = null;
   if (personalConsent) {
     try {
@@ -736,8 +769,17 @@ export async function generateAdventure(
       case 'intent':
       case 'route':
         return { text: input.text };
-      case 'budget':
       case 'gear':
+        return {
+          route: valueOf<RouteAdapterOutput>(outputs, 'route'),
+          locks: input.locks ?? [],
+          participantsCount: resolvedPartySize(outputs),
+          profile: personalProfile,
+          startAt: now,
+          ...(ownedGear ? { inventory: ownedGear } : {}),
+          departureDay,
+        };
+      case 'budget':
       case 'coherence':
       case 'prediction':
       case 'difficulty':
@@ -896,7 +938,8 @@ export async function generateAdventure(
       'Génération initiale (A6)',
       'a6-orchestrator',
       candidatePlans,
-      candidateComparison
+      candidateComparison,
+      input.acceptedPlan
     ),
     runs: runs.map((run) => runRow(plan.id, run, correlationId)),
     decisions: decisions.map((decision) => decisionRow(plan.id, decision)),

@@ -12,6 +12,7 @@ import {
   getAdventurePlan,
   getStoredPerformanceProfile,
 } from '@/features/adventure-intelligence/server/generateAdventure';
+import { createSupabaseOwnedGearReader } from '@/features/adventure-intelligence/server/ownedGear';
 import { createSupabaseLiveSourcesClient } from '@/features/adventure-intelligence/server/liveSources';
 import { MAX_ROUTE_POLYLINE_POINTS } from '@/features/adventure-intelligence/server/routePrediction';
 import { currentAdventureFeatureFlags } from '@/features/adventure-intelligence/server/featureFlags';
@@ -63,6 +64,53 @@ const coordinatesSchema = z
   })
   .strict();
 
+/** Taille maximale sérialisée du plan accepté (≈ un mois détaillé). */
+const MAX_ACCEPTED_PLAN_BYTES = 256_000;
+
+const acceptedPlanSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    draftVersion: z.number().int().min(0),
+    coverName: z.string().max(200).nullable(),
+    activities: z.object({
+      primary: z.string().max(80).nullable(),
+      extra: z.array(z.string().max(80)).max(20),
+      nights: z.array(z.string().max(80)).max(20),
+    }),
+    route: z.record(z.string(), z.unknown()),
+    calendar: z.object({
+      startDate: z.string().max(10).nullable(),
+      durationDays: z.number().int().min(1).max(366).nullable(),
+      durationIsSuggested: z.boolean(),
+      returnDate: z.string().max(10).nullable(),
+    }),
+    group: z.record(z.string(), z.unknown()),
+    preferences: z.record(z.string(), z.unknown()),
+    itinerary: z
+      .object({
+        days: z.number().int().min(0).max(366),
+        steps: z.array(z.record(z.string(), z.unknown())).max(1500),
+      })
+      .nullable(),
+    gear: z
+      .array(
+        z.object({
+          id: z.string().max(120),
+          name: z.string().max(200),
+          category: z.string().max(40),
+          quantity: z.number().int().min(0).max(999),
+          vital: z.boolean(),
+          ownerId: z.string().max(120).nullable(),
+          weightGrams: z.number().int().min(0).max(100_000).nullable(),
+          packed: z.boolean(),
+        })
+      )
+      .max(300),
+  })
+  .refine((plan) => JSON.stringify(plan).length <= MAX_ACCEPTED_PLAN_BYTES, {
+    message: `acceptedPlan dépasse ${MAX_ACCEPTED_PLAN_BYTES} octets`,
+  });
+
 const generateSchema = z.object({
   text: z
     .string()
@@ -101,6 +149,16 @@ const generateSchema = z.object({
   // Phase 10 : l'en-tête `x-correlation-id` est aussi accepté (corps prioritaire)
   // et un identifiant est généré si rien de valide n'est fourni.
   correlationId: z.string().uuid('correlationId doit être un UUID').optional(),
+  // Chantier configurateur (P0) — effectif réel du brouillon, jamais deviné.
+  participantsCount: z
+    .number()
+    .int('participantsCount doit être un entier')
+    .min(1, 'participantsCount doit être compris entre 1 et 50')
+    .max(50, 'participantsCount doit être compris entre 1 et 50')
+    .optional(),
+  // Chantier configurateur (P0) — plan accepté à l'écran, persisté tel quel
+  // dans la version initiale. Borné en taille ; son contenu reste une DONNÉE.
+  acceptedPlan: acceptedPlanSchema.optional(),
 });
 
 function zodDetails(error: z.ZodError): string {
@@ -312,6 +370,8 @@ export async function POST(request: NextRequest) {
           locks: parsed.data.locks,
           coordinates: parsed.data.coordinates,
           weatherDays: parsed.data.weatherDays,
+          participantsCount: parsed.data.participantsCount,
+          acceptedPlan: parsed.data.acceptedPlan,
           // Phase 10 — l'identifiant résolu (corps > en-tête > généré) est
           // propagé aux runs moteurs (`adventure_engine_runs.correlation_id`).
           correlationId,
@@ -345,6 +405,8 @@ export async function POST(request: NextRequest) {
           routePredictionClient: createSupabaseRoutePredictionClient(supabase),
           // A13 (S4) — sources vivantes : Terrain Live + POI OSM eau/refuges.
           liveSourcesClient: createSupabaseLiveSourcesClient(supabase),
+          // Chantier configurateur (P0) — sac calculé sur l'inventaire réel.
+          getOwnedGear: createSupabaseOwnedGearReader(supabase),
         }
       );
     } catch (error) {

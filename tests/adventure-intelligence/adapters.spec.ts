@@ -150,6 +150,22 @@ describe('A6 — adaptateurs des moteurs existants (TEST-A6-ADP)', () => {
     expect(result.warnings.some((warning) => warning.code === 'inventory_missing')).toBe(true);
   });
 
+  it('CHANTIER-P0-GEAR: gearAdapter compare l’inventaire réel et exclut le matériel prêté', async () => {
+    const inventory = [
+      { id: 'i1', name: 'Frontale', category: null, weight_g: 90, condition: 'bon', is_lent: false, maintenance_due_at: null, expiry_date: null },
+      { id: 'i2', name: 'Tente', category: null, weight_g: 1200, condition: 'bon', is_lent: true, maintenance_due_at: null, expiry_date: null },
+    ];
+    const withInventory = await gearAdapter.run(
+      { route: routeOutput(), inventory, departureDay: '2026-10-10' },
+      CONTEXT
+    );
+    expect(withInventory.warnings.some((w) => w.code === 'inventory_missing')).toBe(false);
+    expect(withInventory.warnings.some((w) => w.code === 'inventory_unavailable_items')).toBe(true);
+    expect(withInventory.assumptions.some((a) => a.id === 'owned_inventory')).toBe(true);
+    expect(withInventory.value.totalItemsCount).toBe(1);
+    expect(withInventory.value.packedItemsCount).toBe(0);
+  });
+
   it('TEST-A6-ADP-05: coherenceAdapter arbitre et respecte les verrous sans violation silencieuse', async () => {
     const unlocked = await coherenceAdapter.run({ route: routeOutput() }, CONTEXT);
     const swapped = unlocked.value.resolvedLayers.accommodations as Proposal<{ priceEur: number }>;
