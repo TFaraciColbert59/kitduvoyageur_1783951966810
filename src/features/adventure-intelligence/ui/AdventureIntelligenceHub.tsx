@@ -69,6 +69,14 @@ export function AdventureIntelligenceHub({
     [router, sectionHrefs]
   );
 
+  // L0.7 — modifier l'aventure dans le même préparateur que la création.
+  // Hors ligne, l'édition ne peut pas être relue ni enregistrée : pas d'action.
+  const planId = cockpit.plan?.id ?? null;
+  const handleEditPlan = useCallback(() => {
+    if (planId) router.push(`/prepare?plan=${encodeURIComponent(planId)}`);
+  }, [planId, router]);
+  const canEditPlan = Boolean(planId) && !offline;
+
   const handleConfirm = useCallback(
     async (reportId: string, confirmation: TerrainConfirmation) => {
       setConfirmingId(reportId);
@@ -99,6 +107,8 @@ export function AdventureIntelligenceHub({
         view={view}
         sections={sections}
         onSelectSection={handleSelectSection}
+        onOpenCockpit={canEditPlan ? handleEditPlan : undefined}
+        openCockpitLabel="Modifier"
         pendingSyncCount={pendingCount}
         compact={compact}
       />

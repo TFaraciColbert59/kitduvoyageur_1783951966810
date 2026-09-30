@@ -35,6 +35,13 @@ import type {
 export interface AdventurePrepState {
   adventureId: string;
   draft: AdventurePrepDraft;
+  /**
+   * Aventure enregistree que ce brouillon modifie. `null` = nouvelle aventure :
+   * l'enregistrement la cree. Sinon il ajoute une version a ce plan (L0.7).
+   */
+  planId: string | null;
+  /** Version du plan sur laquelle l'ecran travaille (verrou optimiste). */
+  planVersion: number | null;
   /** `true` une fois la reprise du brouillon terminee : evite tout ecart de rendu. */
   hydrated: boolean;
 }
@@ -42,6 +49,10 @@ export interface AdventurePrepState {
 export interface AdventurePrepActions {
   markHydrated: () => void;
   startNewAdventure: () => void;
+  /** Ouvre une aventure enregistree dans le meme ecran que la creation. */
+  loadSavedPlan: (planId: string, planVersion: number, draft: AdventurePrepDraft) => void;
+  /** Rattache le brouillon au plan que le serveur vient d'ecrire. */
+  markSaved: (planId: string, planVersion: number) => void;
   setActivities: (value: ActivitySelection) => void;
   setRoute: (value: RouteBlock) => void;
   setCalendar: (value: CalendarBlock) => void;
@@ -79,6 +90,23 @@ export interface AdventurePrepActions {
 
 export type AdventurePrepStore = AdventurePrepState & AdventurePrepActions;
 
+/** Format persiste courant. Ne jamais reutiliser un numero deja publie. */
+export const PREP_PERSIST_VERSION = 2;
+
+/**
+ * Reprise d'un etat persiste d'une version anterieure. Un brouillon en cours
+ * n'est JAMAIS jete a la mise a jour : seuls les champs nouveaux sont completes.
+ */
+export function migratePersistedPrep(persisted: unknown): Partial<AdventurePrepState> {
+  if (persisted === null || typeof persisted !== 'object') return {};
+  const raw = persisted as Partial<AdventurePrepState>;
+  return {
+    ...raw,
+    planId: typeof raw.planId === 'string' ? raw.planId : null,
+    planVersion: typeof raw.planVersion === 'number' ? raw.planVersion : null,
+  };
+}
+
 const newAdventureId = (): string =>
   `av-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -90,10 +118,20 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
       return {
         adventureId: newAdventureId(),
         draft: emptyDraft(),
+        planId: null,
+        planVersion: null,
         hydrated: false,
         markHydrated: () => set({ hydrated: true }),
         startNewAdventure: () =>
-          set({ adventureId: newAdventureId(), draft: { ...emptyDraft(), version: PREP_DRAFT_VERSION } }),
+          set({
+            adventureId: newAdventureId(),
+            draft: { ...emptyDraft(), version: PREP_DRAFT_VERSION },
+            planId: null,
+            planVersion: null,
+          }),
+        loadSavedPlan: (planId, planVersion, draft) =>
+          set({ adventureId: newAdventureId(), draft, planId, planVersion }),
+        markSaved: (planId, planVersion) => set({ planId, planVersion }),
         setActivities: (value) => patch((draft) => draftActions.setActivities(draft, value)),
         setRoute: (value) => patch((draft) => draftActions.setRoute(draft, value)),
         setCalendar: (value) => patch((draft) => draftActions.setCalendar(draft, value)),
@@ -104,6 +142,8 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
           set((state) => ({
             adventureId: newAdventureId(),
             draft: draftActions.reset(state.draft),
+            planId: null,
+            planVersion: null,
           })),
         goToStep: (step) => patch((draft) => draftActions.goToStep(draft, step)),
         completeStep: (step) => patch((draft) => draftActions.completeStep(draft, step)),
@@ -165,9 +205,17 @@ export const useAdventurePrepStore = create<AdventurePrepStore>()(
     },
     {
       name: `lkdv_adventure_prep_v${PREP_DRAFT_VERSION}`,
-      version: PREP_DRAFT_VERSION,
+      // Version du FORMAT persiste (distincte de la version du brouillon) :
+      // 2 ajoute planId/planVersion. Les brouillons v1 sont repris tels quels.
+      version: PREP_PERSIST_VERSION,
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ adventureId: state.adventureId, draft: state.draft }),
+      partialize: (state) => ({
+        adventureId: state.adventureId,
+        draft: state.draft,
+        planId: state.planId,
+        planVersion: state.planVersion,
+      }),
+      migrate: (persisted) => migratePersistedPrep(persisted),
       onRehydrateStorage: () => (state) => {
         state?.markHydrated();
       },

@@ -170,3 +170,59 @@ describe('A11 — météo réelle (TEST-A11-WX)', () => {
     expect(versions).toHaveLength(2);
   });
 });
+
+describe('Chantier configurateur L0.8 — météo alignée sur la date de départ', () => {
+  function datedForecast(startIso: string, count: number): WeatherForecast {
+    const base = forecast(count);
+    const start = Date.parse(`${startIso}T00:00:00Z`);
+    return {
+      ...base,
+      days: base.days.map((day, index) => ({
+        ...day,
+        date: new Date(start + index * 86_400_000).toISOString().slice(0, 10),
+      })),
+    };
+  }
+
+  it('CU-WX-01: départ dans 5 jours ⇒ fenêtre étendue, seuls les jours du voyage', async () => {
+    // NOW = 2026-09-11 ; départ 2026-09-16 (offset 5), 3 jours demandés.
+    weatherMock.getWeather.mockResolvedValue(datedForecast('2026-09-11', 8));
+    const result = await weatherAdapter.run(
+      { coordinates: { lat: 45.53, lng: 2.81 }, weatherDays: 3, departureDay: '2026-09-16', tripDays: 3 },
+      CONTEXT
+    );
+    expect(weatherMock.getWeather).toHaveBeenCalledWith(45.53, 2.81, null, 8);
+    expect(result.value.days.map((day) => day.date)).toEqual(['2026-09-16', '2026-09-17', '2026-09-18']);
+    expect(result.value.horizon).toEqual({ departureDay: '2026-09-16', coveredDays: 3, beyondHorizonDays: 0 });
+  });
+
+  it('CU-WX-02: départ au-delà de l’horizon ⇒ aucun appel, tendance annoncée', async () => {
+    const rejection = await weatherAdapter
+      .run({ coordinates: { lat: 45.53, lng: 2.81 }, weatherDays: 7, departureDay: '2027-04-01', tripDays: 30 }, CONTEXT)
+      .catch((error: unknown) => error);
+    expect(rejection).toBeInstanceOf(EngineSkipSignal);
+    expect((rejection as EngineSkipSignal).warning.code).toBe('weather_beyond_forecast_horizon');
+    expect(weatherMock.getWeather).not.toHaveBeenCalled();
+  });
+
+  it('CU-WX-03: voyage de 30 jours proche ⇒ jours hors prévision comptés, jamais inventés', async () => {
+    weatherMock.getWeather.mockResolvedValue(datedForecast('2026-09-11', 9));
+    const result = await weatherAdapter.run(
+      { coordinates: { lat: 45.53, lng: 2.81 }, weatherDays: 7, departureDay: '2026-09-13', tripDays: 30 },
+      CONTEXT
+    );
+    expect(result.value.days).toHaveLength(7);
+    expect(result.value.days[0].date).toBe('2026-09-13');
+    // horizon 16 j depuis aujourd'hui, départ à J+2 ⇒ 14 jours prévisibles, 16 en tendance.
+    expect(result.value.horizon?.beyondHorizonDays).toBe(16);
+    expect(result.warnings.map((warning) => warning.code)).toContain('weather_trend_only');
+  });
+
+  it('CU-WX-04: sans date de départ ⇒ comportement historique inchangé', async () => {
+    weatherMock.getWeather.mockResolvedValue(forecast(5));
+    const result = await weatherAdapter.run({ coordinates: { lat: 45.53, lng: 2.81 }, weatherDays: 3 }, CONTEXT);
+    expect(weatherMock.getWeather).toHaveBeenCalledWith(45.53, 2.81, null, 3);
+    expect(result.value.horizon).toBeUndefined();
+    expect(result.value.days).toHaveLength(3);
+  });
+});

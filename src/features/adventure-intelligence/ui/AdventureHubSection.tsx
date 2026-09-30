@@ -29,6 +29,8 @@ export interface AdventureHubSectionProps {
   onSelectSection?: (sectionId: string) => void;
   onDecide?: (decisionId: string) => void;
   onOpenCockpit?: () => void;
+  /** Libellé de l'action d'en-tête (défaut « Ouvrir »). */
+  openCockpitLabel?: string;
   pendingSyncCount?: number;
   className?: string;
   /**
@@ -51,6 +53,7 @@ export function AdventureHubSection({
   onSelectSection,
   onDecide,
   onOpenCockpit,
+  openCockpitLabel = 'Ouvrir',
   pendingSyncCount = 0,
   className = '',
   compact = false,
@@ -88,7 +91,7 @@ export function AdventureHubSection({
             onClick={onOpenCockpit}
             className="hub-liquid-action min-h-[44px] shrink-0 rounded-full px-4 text-[13px] font-semibold active:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
           >
-            Ouvrir
+            {openCockpitLabel}
           </button>
         )}
       </header>

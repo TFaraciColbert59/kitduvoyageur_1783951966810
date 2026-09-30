@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getPreparatorData } from '@/features/preparator/server/getPreparatorData';
 import { PreparatorView } from '@/features/preparator/components/PreparatorView';
 import AdventurePrepScreen from '@/features/adventure-prep/components/AdventurePrepScreen';
+import { isPlanId } from '@/features/adventure-prep/savedPlanClient';
 
 /**
  * Préparateur de voyage — route unique, toutes activités.
@@ -50,9 +51,14 @@ const NEW_FLOW_VALUES = new Set(['1', 'oui', 'true', 'aventure']);
 export default async function PreparatorPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; apercu?: string; nouvelle?: string }>;
+  searchParams: Promise<{ tab?: string; apercu?: string; nouvelle?: string; plan?: string }>;
 }) {
-  const { tab, apercu, nouvelle } = await searchParams;
+  const { tab, apercu, nouvelle, plan } = await searchParams;
+
+  // `?plan=<uuid>` -- modifier une aventure enregistree dans le MEME ecran que
+  // la creation (L0.7). L'identifiant est valide ici et relu cote client par
+  // la route API, qui applique les droits : un plan d'autrui repond 404.
+  if (isPlanId(plan)) return <AdventurePrepScreen planId={plan} />;
 
   // Court-circuit avant toute lecture : l'ecran ignore ces donnees, inutile
   // de payer une requete Supabase pour l'afficher.
@@ -63,7 +69,7 @@ export default async function PreparatorPage({
   // que le lien du hub. La porte reste fermee en production.
   const wantsNewFlow =
     NEW_FLOW_VALUES.has(nouvelle ?? '') || (isPreviewable && Boolean(apercu));
-  if (wantsNewFlow) return <AdventurePrepScreen />;
+  if (wantsNewFlow) return <AdventurePrepScreen startFresh={NEW_FLOW_VALUES.has(nouvelle ?? '')} />;
 
   const data = await getPreparatorData();
   if (!data) return <AdventurePrepScreen />;

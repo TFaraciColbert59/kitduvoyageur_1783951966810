@@ -63,6 +63,10 @@ import {
   type LiveSourcesClient,
 } from './liveSources';
 import type { TripKitAnalysis } from '@/features/trips/types/kit.types';
+import {
+  parseAcceptedPlan,
+  type AcceptedPrepPlan,
+} from '@/features/adventure-prep/acceptedPlan';
 
 /** Bundle atomique plan + version + runs + décisions (A10 — 10.4). */
 export interface AdventurePlanBundle {
@@ -511,6 +515,14 @@ export function buildLocalExplanation(
   return parts.join(' ');
 }
 
+/** Nom de couverture du plan accepté, s'il est réellement saisi. */
+function acceptedCoverName(acceptedPlan: Record<string, unknown> | undefined): string | null {
+  const raw = acceptedPlan?.coverName;
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  return trimmed.length > 0 ? trimmed.slice(0, 200) : null;
+}
+
 function planRow(plan: AdventurePlan): Record<string, unknown> {
   return {
     id: plan.id,
@@ -744,6 +756,11 @@ export async function generateAdventure(
     | null;
   const departureDay =
     typeof acceptedCalendar?.startDate === 'string' ? acceptedCalendar.startDate : null;
+  const acceptedDuration = (acceptedCalendar as { durationDays?: unknown } | null)?.durationDays;
+  const acceptedTripDays =
+    typeof acceptedDuration === 'number' && Number.isFinite(acceptedDuration)
+      ? Math.trunc(acceptedDuration)
+      : null;
   let personalProfile: PerformanceProfile | null = null;
   if (personalConsent) {
     try {
@@ -801,6 +818,10 @@ export async function generateAdventure(
           route: valueOf<RouteAdapterOutput>(outputs, 'route'),
           coordinates: weatherCoordinates(input),
           weatherDays: input.weatherDays,
+          // L0.8 — la météo suit la date de départ réelle, jamais aujourd'hui
+          // par défaut quand le voyage a une date.
+          departureDay,
+          tripDays: acceptedTripDays,
           label:
             valueOf<TripBrief>(outputs, 'intent')?.destinations.value[0]?.region ??
             null,
@@ -897,7 +918,10 @@ export async function generateAdventure(
   const plan: AdventurePlan = {
     id: planId,
     ownerId: input.ownerId,
-    title: destinations[0] ? `Aventure — ${destinations[0].label}` : 'Aventure à composer',
+    // Le nom choisi par l'utilisateur prime : c'est celui qu'il retrouvera au Hub.
+    title:
+      acceptedCoverName(input.acceptedPlan) ??
+      (destinations[0] ? `Aventure — ${destinations[0].label}` : 'Aventure à composer'),
     status: 'draft',
     currentVersion: 1,
     intent: buildIntent(brief, input.text),
@@ -1167,6 +1191,11 @@ export interface StoredAdventurePlan {
   candidates: AdventurePlan[];
   /** A13 (S2) — tableau comparatif des candidats, quand la version le contient. */
   candidateComparison: AdventureCandidateComparison | null;
+  /**
+   * Chantier configurateur (L0.6) — plan accepté à l'écran, revalidé par le
+   * contrat strict partagé. `null` si absent ou non conforme (jamais partiel).
+   */
+  acceptedPlan?: AcceptedPrepPlan | null;
 }
 
 /**
@@ -1192,6 +1221,12 @@ function candidateComparisonFromSnapshot(snapshot: unknown): AdventureCandidateC
   if (raw === undefined || raw === null) return null;
   const parsed = candidateComparisonSchema.safeParse(raw);
   return parsed.success ? (parsed.data as AdventureCandidateComparison) : null;
+}
+
+/** L0.6 — relit `snapshot.acceptedPlan` avec le contrat strict partagé. */
+function acceptedPlanFromSnapshot(snapshot: unknown): AcceptedPrepPlan | null {
+  if (snapshot === null || typeof snapshot !== 'object') return null;
+  return parseAcceptedPlan((snapshot as { acceptedPlan?: unknown }).acceptedPlan);
 }
 
 function planFromRow(row: Record<string, unknown>): AdventurePlan {
@@ -1285,5 +1320,6 @@ export async function getAdventurePlan(
     decisions,
     candidates: candidatePlansFromSnapshot(versionData?.snapshot),
     candidateComparison: candidateComparisonFromSnapshot(versionData?.snapshot),
+    acceptedPlan: acceptedPlanFromSnapshot(versionData?.snapshot),
   };
 }

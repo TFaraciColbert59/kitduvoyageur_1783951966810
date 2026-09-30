@@ -18,10 +18,17 @@ import '../adventure-prep.css';
  * `safeTop` garde sa valeur par defaut — le shell applique
  * `env(safe-area-inset-top)`, la page ne le fait jamais elle-meme.
  */
-export default function AdventurePrepScreen() {
+export interface AdventurePrepScreenProps {
+  /** Aventure enregistrée à modifier dans le même écran (L0.7). */
+  planId?: string | null;
+  /** Intention explicite de démarrer une nouvelle aventure. */
+  startFresh?: boolean;
+}
+
+export default function AdventurePrepScreen({ planId = null, startFresh = false }: AdventurePrepScreenProps = {}) {
   return (
     <AppShell hasBottomNav videoBackground={false} className="app-shell--preparer">
-      <PrepFlow />
+      <PrepFlow planId={planId} startFresh={startFresh} />
     </AppShell>
   );
 }

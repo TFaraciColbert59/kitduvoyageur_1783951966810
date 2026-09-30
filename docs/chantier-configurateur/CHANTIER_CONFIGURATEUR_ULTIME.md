@@ -41,10 +41,21 @@
 
 **Sécurité inventaire** — la route utilise le client service_role : le filtre `user_id = ownerId` est codé dans `createSupabaseOwnedGearReader`, jamais délégué. Échec de lecture ⇒ repli déclaré `inventory_missing`, pas d'inventaire deviné. Les warnings ne contiennent que des comptes, aucun nom d'objet.
 
-**Reste à faire dans L0 (P0 bis)**
-- [ ] L0.6 — Relecture : `GET /api/adventure/[id]` expose `acceptedPlan` ; le Hub réhydrate le brouillon depuis ce snapshot. Critère : un voyage de 30 jours relu après reconnexion est identique (test de bout en bout brouillon → POST → GET → brouillon, égalité profonde).
-- [ ] L0.7 — Unifier « nouvelle préparation » et « modifier une aventure existante » : même store, même écran, entrée par `planId`. Critère : mêmes actions depuis `/prepare` et le Hub.
-- [ ] L0.8 — `weatherDays` au-delà de 7 : le texte montre « tendance saisonnière » pour les jours hors prévision (`scaleProfile().weatherMode`).
+**L0 bis — LIVRÉ (30/09/2026)**
+
+| Livraison | Fichiers | Preuve |
+|---|---|---|
+| L0.6 — Contrat `acceptedPlan` v1 **strict et partagé** client/serveur (clé inconnue refusée à tous les niveaux, dates/heures/coordonnées/énumérations bornées) ; `GET /api/adventure/[id]` renvoie `acceptedPlan`, `acceptedPlanMeta`, `canEdit` ; réhydratation `draftFromAcceptedPlan` | `adventure-prep/acceptedPlan.ts`, `app/api/adventure/[id]/route.ts`, `server/generateAdventure.ts` | AP-01 → AP-14, CU-GET-01 → 03 (aller-retour 30 jours à l'identique) |
+| L0.7 — Même écran pour créer et modifier : `/prepare?plan=<uuid>` charge le plan dans le store ; `PUT /api/adventure/[id]` ajoute une **version immuable** (`a13_append_plan_version`, propriété vérifiée sous verrou), verrou optimiste `expectedVersion` (409), anti-rafale, 404 pour un plan d'autrui ; sections calculées marquées `sectionsStale` si lieu/date/durée/activités/groupe changent (aucun recalcul silencieux) ; bouton « Modifier » au Hub | `domain/acceptedPlanEdit.ts`, `savedPlanClient.ts`, `store/useAdventurePrepStore.ts`, `PrepFlow.tsx`, `DepartureStep.tsx`, `app/prepare/page.tsx`, `ui/AdventureIntelligenceHub.tsx` | CU-PUT-01 → 07, CU-EDIT-01 → 04, SP-01 → 31, CU-HUB-01/02 |
+| L0.8 — Météo alignée sur la **date de départ** (plus la météo d'aujourd'hui pour un voyage futur) ; départ au-delà de l'horizon fournisseur (16 j) ⇒ aucun appel, `weather_beyond_forecast_horizon` ; jours hors horizon comptés (`horizon.beyondHorizonDays`, `weather_trend_only`) | `server/adapters/weatherAdapter.ts` | CU-WX-01 → 04 |
+| Robustesse sauvegarde : réessai après échec (clé `failed`) relancé via `requeue` au lieu d'un 409 perpétuel ; nouvelle clé d'idempotence si le brouillon a changé ; messages actionnables pour 401/409/429/503 (délai lisible), jamais de code HTTP ; le brouillon est rattaché au plan créé (un 2ᵉ enregistrement ajoute une version, ne duplique pas) ; titre du plan = nom choisi | `app/api/adventure/generate/route.ts`, `savedPlanClient.ts`, `DepartureStep.tsx` | CHANTIER-P0-ROUTE-03/04, SP-20 → 26 |
+| Migration du stockage local (format v2) : un brouillon en cours n'est jamais perdu à la mise à jour | `store/useAdventurePrepStore.ts` | SP-30/31 |
+
+**Limites connues de L0 (assumées, documentées)**
+- Sections calculées (météo, sac, ETA, budget) non recalculées après modification : annoncées `sectionsStale`, recalcul ciblé = lot L6. L'affichage de cet état au Hub reste à brancher.
+- Le Hub ne propose « Modifier » que pour le plan le plus récent (le cockpit n'en charge qu'un) ; la liste multi-aventures relève du Hub.
+- Plans créés avant le contrat (`acceptedPlan` absent) : ouverture refusée avec message explicite, jamais de brouillon reconstruit par supposition.
+- `src/app/prepare/actions.ts` `buildPrepInviteUrl` signe un jeton pour un identifiant arbitraire sans session. Non exploitable aujourd'hui (le parcours `/rejoindre` vérifie `trips.share_token`, pas ce jeton), mais à supprimer ou authentifier avant d'en faire un usage réel.
 
 ---
 
@@ -138,7 +149,12 @@ Garde-fous : délai max, annulation, déduplication, budget d'appels par plan, a
 | Visuel (écrans touchés) | `npm run test:visual` |
 | A11y | `playwright test --config=playwright.a11y.config.ts` |
 
-**État mesuré sur cette branche (30/09/2026) :** 126 fichiers / 1 108 tests verts sur les trois suites ci-dessus (1 071 avant le chantier + 37 nouveaux) ; type-check ciblé des fichiers modifiés sans erreur. Le type-check complet n'a pas pu tourner dans l'environnement de préparation (dépassement mémoire à 2 Go) : **à confirmer en CI**.
+**État mesuré sur cette branche (30/09/2026, après L0 bis, Node 22 = CI) :**
+- `npm run type-check` complet : 0 erreur (8 Go de heap requis en local).
+- `vitest run` complet : 4 527 verts, 6 échecs **identiques sur `main` 4f5764e** (5 `tests/audit/*` : répertoire temporaire macOS lié par symlink ; 1 `Z-D18-03` : fixture datée du 29/09/2026, désormais passée). Aucune régression.
+- ESLint des fichiers touchés : 0 erreur ; invariants CI et icônes : OK.
+- `next build` de production : OK. Fumée `next start` : `/prepare?nouvelle=1`, `/prepare?plan=<uuid>` (état d'erreur rendu, aucune erreur JS), `GET` 404 / `PUT` 401 sans session.
+- Non exécutés faute de base de test : E2E Playwright avec session réelle, RPC `a13_append_plan_version` contre Supabase.
 
 ---
 

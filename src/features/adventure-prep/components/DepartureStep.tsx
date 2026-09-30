@@ -12,7 +12,8 @@ import { mealNeeds, uncoveredMeals, waterNeeds } from '../engine/consumables';
 import { knownGaps } from '../engine/itinerary';
 import { bookWeightLabel, gearToVerifyCount, plural } from '../engine/labels';
 import type { AdventurePrepDraft, GearNeed, PlaceRef } from '../types';
-import { blockersBeforeSave, buildAdventureGenerateRequest } from '../adventureRequest';
+import { blockersBeforeSave } from '../adventureRequest';
+import { saveAdventure as persistAdventure } from '../savedPlanClient';
 import { PrepMap } from './PrepMap';
 import type { PrepSheetId } from './PrepSheets';
 
@@ -78,17 +79,21 @@ function routeCoords(draft: AdventurePrepDraft): Array<[number, number]> {
 
 export function DepartureStep({ onOpenSheet }: DepartureStepProps) {
   const draft = useAdventurePrepStore((state) => state.draft);
+  const planId = useAdventurePrepStore((state) => state.planId);
+  const planVersion = useAdventurePrepStore((state) => state.planVersion);
   const syncGear = useAdventurePrepStore((state) => state.syncGear);
+  const markSaved = useAdventurePrepStore((state) => state.markSaved);
   const [save, setSave] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
   const router = useRouter();
   // L abort est partage : un demontage ou une deuxieme tentative doit annuler
   // la premiere, sinon un plan arrive apres le depart de l ecran.
   const abort = useRef<AbortController | null>(null);
-  // Cle d idempotence : une par tentative. Si la reponse se perd, le reessai
-  // rejoue la MEME requete et la route renvoie le plan deja cree au lieu d en
-  // fabriquer un second.
-  const idempotencyKey = useRef<string | null>(null);
+  // Cle d idempotence : une par CONTENU enregistre. Si la reponse se perd, le
+  // reessai du meme brouillon rejoue la MEME requete et la route renvoie le plan
+  // deja cree ; un brouillon modifie entre-temps obtient une nouvelle cle.
+  const idempotency = useRef<{ key: string; draftVersion: number } | null>(null);
+  const editing = typeof planId === 'string';
 
   useEffect(() => {
     syncGear();
@@ -102,55 +107,41 @@ export function DepartureStep({ onOpenSheet }: DepartureStepProps) {
     if (save === 'saving') return;
     const blockers = blockersBeforeSave(draft);
     if (blockers.length > 0) {
-      setSaveError(`Il manque ${blockers.join(', ')} avant d enregistrer ton aventure.`);
+      setSaveError(`Il manque ${blockers.join(', ')} avant d’enregistrer ton aventure.`);
       return;
     }
 
     setSaveError(null);
     setSave('saving');
 
+    abort.current?.abort();
     const controller = new AbortController();
     abort.current = controller;
-    idempotencyKey.current = idempotencyKey.current ?? crypto.randomUUID();
-
-    try {
-      const response = await fetch('/api/adventure/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Idempotency-Key': idempotencyKey.current,
-        },
-        body: JSON.stringify(buildAdventureGenerateRequest(draft)),
-        signal: controller.signal,
-      });
-
-      if (!response.ok) {
-        // Le detail technique reste cote serveur : l ecran ne montre qu une
-        // phrase actionnable, jamais un code HTTP ni une charge utile brute.
-        setSave('idle');
-        setSaveError(
-          response.status === 401
-            ? 'Connecte-toi pour enregistrer ton aventure, puis reessaie.'
-            : 'Ton aventure n a pas pu etre enregistree. Reessaie dans un instant.'
-        );
-        return;
-      }
-
-      const payload = (await response.json()) as { planId?: string };
-      if (!payload.planId) {
-        setSave('idle');
-        setSaveError('Le parcours a ete enregistre sans identifiant. Verifie ton hub.');
-        return;
-      }
-
-      setSave('saved');
-      router.push('/hub');
-    } catch (error) {
-      if (controller.signal.aborted) return;
-      setSave('idle');
-      setSaveError('Impossible de joindre le serveur. Verifie ta connexion, puis reessaie.');
+    if (!idempotency.current || idempotency.current.draftVersion !== draft.version) {
+      idempotency.current = { key: crypto.randomUUID(), draftVersion: draft.version };
     }
-  }, [draft, router, save]);
+
+    const result = await persistAdventure({
+      draft,
+      planId: planId ?? null,
+      planVersion: planVersion ?? null,
+      idempotencyKey: idempotency.current.key,
+      signal: controller.signal,
+    });
+    if (controller.signal.aborted) return;
+
+    if (!result.ok) {
+      setSave('idle');
+      setSaveError(result.message);
+      return;
+    }
+
+    // Le brouillon est desormais rattache a ce plan : un nouvel enregistrement
+    // ajoutera une version au lieu de creer une seconde aventure.
+    markSaved(result.planId, result.planVersion);
+    setSave('saved');
+    router.push('/hub');
+  }, [draft, markSaved, planId, planVersion, router, save]);
   const activity = activityById(draft.activities.primary);
   const title = draft.coverName ?? 'Ton aventure';
   
@@ -298,7 +289,11 @@ export function DepartureStep({ onOpenSheet }: DepartureStepProps) {
           icon={save === 'saved' ? <Icon name="check" size={20} aria-hidden="true" /> : undefined}
           style={{ width: '100%' }}
         >
-          {save === 'saved' ? 'Enregistré' : 'Enregistrer mon aventure'}
+          {save === 'saved'
+            ? 'Enregistré'
+            : editing
+              ? 'Enregistrer les modifications'
+              : 'Enregistrer mon aventure'}
         </Button>
       </div>
     </div>

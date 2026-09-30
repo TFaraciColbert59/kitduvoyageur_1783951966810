@@ -30,6 +30,7 @@ import {
   resolveCorrelationId,
 } from '@/lib/observability/correlation';
 import { createStructuredLogger } from '@/lib/observability/logger';
+import { acceptedPlanSchema } from '@/features/adventure-prep/acceptedPlan';
 
 const logger = createStructuredLogger({ service: 'api.adventure.generate' });
 
@@ -63,53 +64,6 @@ const coordinatesSchema = z
       .max(180, 'coordinates.lng doit être compris entre -180 et 180'),
   })
   .strict();
-
-/** Taille maximale sérialisée du plan accepté (≈ un mois détaillé). */
-const MAX_ACCEPTED_PLAN_BYTES = 256_000;
-
-const acceptedPlanSchema = z
-  .object({
-    schemaVersion: z.literal(1),
-    draftVersion: z.number().int().min(0),
-    coverName: z.string().max(200).nullable(),
-    activities: z.object({
-      primary: z.string().max(80).nullable(),
-      extra: z.array(z.string().max(80)).max(20),
-      nights: z.array(z.string().max(80)).max(20),
-    }),
-    route: z.record(z.string(), z.unknown()),
-    calendar: z.object({
-      startDate: z.string().max(10).nullable(),
-      durationDays: z.number().int().min(1).max(366).nullable(),
-      durationIsSuggested: z.boolean(),
-      returnDate: z.string().max(10).nullable(),
-    }),
-    group: z.record(z.string(), z.unknown()),
-    preferences: z.record(z.string(), z.unknown()),
-    itinerary: z
-      .object({
-        days: z.number().int().min(0).max(366),
-        steps: z.array(z.record(z.string(), z.unknown())).max(1500),
-      })
-      .nullable(),
-    gear: z
-      .array(
-        z.object({
-          id: z.string().max(120),
-          name: z.string().max(200),
-          category: z.string().max(40),
-          quantity: z.number().int().min(0).max(999),
-          vital: z.boolean(),
-          ownerId: z.string().max(120).nullable(),
-          weightGrams: z.number().int().min(0).max(100_000).nullable(),
-          packed: z.boolean(),
-        })
-      )
-      .max(300),
-  })
-  .refine((plan) => JSON.stringify(plan).length <= MAX_ACCEPTED_PLAN_BYTES, {
-    message: `acceptedPlan dépasse ${MAX_ACCEPTED_PLAN_BYTES} octets`,
-  });
 
 const generateSchema = z.object({
   text: z
@@ -348,7 +302,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const created = await store.createPending(user.id, idempotencyKey);
+    // Une clé `failed` est une tentative interrompue : on la relance avec la
+    // MÊME clé (contrainte UNIQUE user/clé), sinon le réessai du client
+    // resterait bloqué en 409 pour toujours.
+    let created: { id: string } | null = null;
+    if (existing?.status === 'failed') {
+      await store.requeue(existing.id);
+      created = { id: existing.id };
+    } else {
+      created = await store.createPending(user.id, idempotencyKey);
+    }
     if (!created) {
       return NextResponse.json(
         {

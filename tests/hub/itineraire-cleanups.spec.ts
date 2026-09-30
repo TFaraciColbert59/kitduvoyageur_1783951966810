@@ -213,3 +213,22 @@ describe('cockpit itinéraire — branchement compact', () => {
     expect(readSource(...INTELLIGENCE_HOST)).toMatch(/terrainEnabled && !compact/);
   });
 });
+
+describe('Chantier configurateur L0.7 — modifier depuis le Hub', () => {
+  it('CU-HUB-01: le cockpit expose « Modifier » quand une action est fournie', () => {
+    const html = renderToStaticMarkup(
+      React.createElement(AdventureHubSection, {
+        view: buildCockpitView({ ...COCKPIT_INPUT, offline: false } as never),
+        onOpenCockpit: () => undefined,
+        openCockpitLabel: 'Modifier',
+      })
+    );
+    expect(html).toContain('Modifier');
+  });
+
+  it('CU-HUB-02: la cible est le même préparateur que la création, par identifiant', () => {
+    const source = readSource(...INTELLIGENCE_HOST);
+    expect(source).toContain('/prepare?plan=${encodeURIComponent(planId)}');
+    expect(source).toContain('!offline');
+  });
+});

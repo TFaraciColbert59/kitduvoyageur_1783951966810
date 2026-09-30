@@ -12,43 +12,10 @@
 
 import { activityById } from './catalog';
 import { resolvedGear } from './engine/gear';
+import { ACCEPTED_PLAN_SCHEMA_VERSION, type AcceptedPrepPlan } from './acceptedPlan';
 import type { AdventurePrepDraft, PlaceRef } from './types';
 
-/** Version du contrat `acceptedPlan` : changee uniquement a la migration. */
-export const ACCEPTED_PLAN_SCHEMA_VERSION = 1;
-
-/**
- * Le plan tel que l'utilisateur l'a valide a l'ecran.
- *
- * P0 « conserver exactement le plan choisi » : la phrase `text` sert a la
- * comprehension serveur, mais elle ne peut pas porter les etapes gardees, les
- * affectations du sac ni les participants. Ce snapshot structure voyage a cote,
- * tel quel, et le serveur le persiste dans la version initiale du plan.
- */
-export interface AcceptedPrepPlan {
-  schemaVersion: typeof ACCEPTED_PLAN_SCHEMA_VERSION;
-  draftVersion: number;
-  coverName: string | null;
-  activities: AdventurePrepDraft['activities'];
-  route: AdventurePrepDraft['route'];
-  calendar: AdventurePrepDraft['calendar'];
-  group: AdventurePrepDraft['group'];
-  preferences: AdventurePrepDraft['preferences'];
-  itinerary: {
-    days: number;
-    steps: NonNullable<AdventurePrepDraft['itinerary']>['steps'];
-  } | null;
-  gear: ReadonlyArray<{
-    id: string;
-    name: string;
-    category: string;
-    quantity: number;
-    vital: boolean;
-    ownerId: string | null;
-    weightGrams: number | null;
-    packed: boolean;
-  }>;
-}
+export { ACCEPTED_PLAN_SCHEMA_VERSION, type AcceptedPrepPlan } from './acceptedPlan';
 
 /** Corps accepte par POST /api/adventure/generate (cote serveur : zod). */
 export interface AdventureGenerateRequest {
