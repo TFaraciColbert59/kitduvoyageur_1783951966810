@@ -1,0 +1,61 @@
+import type { CompasKitLine, CompasStepId } from '../engine/compasModel';
+import type { CompasData, CompasShopProduct } from '../server/getCompasData';
+import type { Detent } from './CompasSheet';
+
+export type AcquireMode = 'emprunter' | 'louer' | 'acheter';
+
+/** Parcours internes du tiroir de chaque étape (capsule, comme les étapes). */
+export const STEP_FLOWS = {
+  ou: [
+    { id: 'etapes', label: 'Étapes', icon: 'route' },
+    { id: 'meteo', label: 'Météo', icon: 'cloud-sun' },
+  ],
+  nous: [
+    { id: 'equipe', label: 'Équipe', icon: 'users' },
+    { id: 'budget', label: 'Budget', icon: 'coins' },
+  ],
+  resa: [
+    { id: 'reservations', label: 'Réservations', icon: 'ticket' },
+    { id: 'offres', label: 'Offres', icon: 'tag' },
+  ],
+  verdict: [
+    { id: 'raisons', label: 'Signaux', icon: 'shield-check' },
+    { id: 'sources', label: 'Sources', icon: 'layers' },
+  ],
+  kit: [
+    { id: 'trouver', label: 'Trouver', icon: 'search' },
+    { id: 'emballer', label: 'Emballer', icon: 'check-square' },
+    { id: 'tout', label: 'Tout', icon: 'clipboard-list' },
+    { id: 'sacs', label: 'Sacs', icon: 'backpack' },
+  ],
+} as const;
+
+export type StepFlow<S extends CompasStepId = CompasStepId> = (typeof STEP_FLOWS)[S][number]['id'];
+
+export type SheetState =
+  | { kind: 'item'; lineId: string }
+  | { kind: 'acquire'; lineId: string; mode: AcquireMode }
+  | { kind: 'add'; target: 'kit' | 'inventaire' }
+  | { kind: 'bag'; userId: string }
+  | { kind: 'carrier'; lineId: string }
+  | { kind: 'step'; step: CompasStepId; flow: StepFlow };
+
+export type ActionResult = { success: boolean; error?: string };
+
+/** Contrôleur partagé par les cartes et les tiroirs. */
+export interface CompasCtl {
+  data: CompasData;
+  /** Lignes du kit avec l'état « emballé » optimiste appliqué. */
+  lines: CompasKitLine[];
+  busy: boolean;
+  open: (sheet: SheetState, detent?: Detent) => void;
+  /** Remplace le tiroir du dessus (changement de parcours interne). */
+  replace: (sheet: SheetState) => void;
+  back: () => void;
+  close: () => void;
+  run: (success: string, action: () => Promise<ActionResult>) => Promise<boolean>;
+  togglePacked: (line: CompasKitLine) => void;
+  memberName: (userId: string | null) => string;
+  product: (id: string | null) => CompasShopProduct | undefined;
+  notify: (message: string, tone?: 'bad') => void;
+}

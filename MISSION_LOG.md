@@ -1,5 +1,29 @@
 # MISSION LOG — LKDV
 
+## 2026-10-01 — Compas (préparateur ultime) : écran branché sur les données réelles
+
+- **Branche** : `feat/compas-preparateur` · **Route** : `/compas` (validation) — `/prepare` inchangée jusqu'à validation.
+- **Projet Supabase** : `icxyvwzfjbflcbqukpfz` (lectures de schéma et de politiques RLS uniquement). **Aucune migration** : tout s'appuie sur des colonnes existantes.
+- **Design** : portage fidèle de la maquette v8 validée (capsule d'étapes = barre d'onglets, ≡ et ☀ en haut, carte 40 % sous la barre flottante, tiroirs qui s'arrêtent au-dessus de la carte, carte agrandie sans zoom avec carte-titre réduite).
+
+### Livré
+1. `src/features/compas/engine/` : `compasModel.ts` (modèle pur : parcours, dates, lumière, météo, kit, sacs, budget, réservations, verdict sans score, prochaine décision), `sun.ts` (lever/coucher NOAA), `format.ts`.
+2. `src/features/compas/server/getCompasData.ts` : un seul chargeur (aventure active du hub + inventaire, réservations, boutique active, liens affiliés `/go`, mode des fournisseurs).
+3. `src/features/compas/server/compasActions.ts` : porteur (propriétaire, collaborateurs, équipage actif), produit précis relié au kit + panier, produit boutique → kit, objet → inventaire (poids jamais inventé), objet prêté récupéré, enveloppe du voyage. Zod + session + droit d'édition + RLS (0 ligne = échec).
+4. Actions existantes réutilisées : `togglePackedAction` (optimiste), `deleteTripItemAction`, `addInventoryItemToTripAction`, `addCustomTripItemAction`.
+5. `src/features/compas/components/*` + `compas.css` + `src/app/compas/page.tsx` ; `/compas` rattachée à l'onglet Hub.
+
+### Preuves
+- `npx tsc --noEmit` : 0 erreur.
+- `npx eslint --max-warnings=0 src/features/compas src/app/compas` : 0.
+- `node scripts/verify/ci_invariants.mjs` : SUCCÈS (icônes du registre, aucun jeton --role-*).
+- `npx vitest run src/features/compas` : 27/27 (moteur, formats, écran réel en jsdom : décision → tiroir → fiche → achat relié au panier, emballage optimiste et annulation sur refus RLS, porteur, récupération d'un prêt, enveloppe).
+- Suite complète : aucun nouvel échec par rapport à `main` (24 échecs préexistants, identiques avec et sans la branche).
+- Harnais navigateur (Chromium 390×844, 375×667, 430×932, clair et sombre) : 23 états audités, 0 débordement, 0 tiroir sur la carte, 0 erreur console.
+- `npm run build` : non exécutable dans le bac à sable (Google Fonts bloqué par le proxy réseau) — à lancer en CI ou en local.
+
+---
+
 ## 2026-09-05 — Programme Intégral « Module Voyage » (Chantiers C0 à C8 + Recette Finale RF)
 
 ### Synthèse Globale

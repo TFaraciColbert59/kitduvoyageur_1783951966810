@@ -56,6 +56,7 @@ export const DESTINATIONS: readonly Destination[] = [
       '/mes-aventures',
       '/preparation',
       '/prepare',
+      '/compas',
       '/terrain',
       '/alertes',
       '/recommandations',
