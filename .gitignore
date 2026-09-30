@@ -8,13 +8,45 @@ node_modules/
 .env.production
 .env.development
 
-# Next.js build output
+# Next.js build output & Transpile caches
+dist/
+build/
+out/
 .next/
 .next-dev/
 .next-verify/
-out/
-build/
+.output/
 .vercel/
+.turbo/
+.parcel-cache/
+
+# OS artifacts
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Editor debris & temporary files
+*.bak
+*.swp
+*.swo
+*~
+*.orig
+*.rej
+*.diff
+*.patch
+*.out
+page_content.html
+step*_form.html
+temp.txt
+screenshot*.png
+step*.png
+work/
+%SystemDrive%
 
 # Optional: if using TypeScript
 *.tsbuildinfo
