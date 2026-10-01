@@ -222,11 +222,18 @@ describe('L2.11 - « Il manque : … » reste exactement ce qu il est', () => {
     const ready = stepOneReadySummary(sansDepart(), stepOneProfileIdFor(sansDepart().activities));
     expect(ready, 'le depart n est plus annonce du tout').not.toBeNull();
     expect(ready).toContain('lieu de départ');
-    // Espace insecable avant les deux-points, aucun apres : la formulation
-    // d« L’IA complètera : lieu de départ » est la meme que celle du manque.
-    expect(ready).toMatch(/^L’IA complètera : [^ ]/);
-    expect(ready).not.toMatch(/complètera:/);
-    expect(ready).not.toMatch(/complètera : {2,}/);
+    // Le depart n est plus promis a l IA (elle ne le pose jamais) : sans nom
+    // dans la phrase, l ecran dit ce que son absence coute.
+    expect(ready).toBe('Sans lieu de départ, la carte et les distances resteront à vérifier');
+    // Avec un depart ecrit dans la phrase, meme ponctuation que le manque :
+    // une espace avant les deux-points, une seule apres.
+    const lu = stepOneReadySummary(
+      { ...sansDepart(), brief: 'Deux jours au départ de Villard-de-Lans' },
+      stepOneProfileIdFor(sansDepart().activities)
+    );
+    expect(lu).toBe('Départ lu dans ta phrase : Villard-de-Lans');
+    expect(lu).not.toMatch(/phrase:/);
+    expect(lu).not.toMatch(/phrase : {2,}/);
 
     // Et la ligne du MANQUE garde la meme ponctuation, ou elle existe encore :
     // le contrat de la formulation ne depend pas du champ manquant.
@@ -247,8 +254,13 @@ describe('L2.11 - « Il manque : … » reste exactement ce qu il est', () => {
     expect(blocking, 'le depart ne doit plus bloquer').toEqual([]);
     expect(optional.join(', '), 'le depart doit rester annonce').toContain('lieu de départ');
     expect(prepBlockerSummary(vide, 'destination')).toBeNull();
+    // Le depart se lit a part ; le reste de la MEME liste est propose par l IA.
+    const proposes = optional.filter((label) => label !== 'lieu de départ');
     expect(stepOneReadySummary(vide, stepOneProfileIdFor(vide.activities))).toBe(
-      'L’IA complètera : ' + optional.join(', ')
+      [
+        ...(proposes.length > 0 ? ['L’IA proposera : ' + proposes.join(', ')] : []),
+        'Sans lieu de départ, la carte et les distances resteront à vérifier',
+      ].join(' · ')
     );
 
     // Et la, ou ca bloque encore, le cadre recopie la source, champ compris.

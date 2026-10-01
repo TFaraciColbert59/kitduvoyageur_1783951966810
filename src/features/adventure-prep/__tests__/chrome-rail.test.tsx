@@ -264,10 +264,11 @@ describe('CH-BLOCK — le message du CTA est visible sans defiler', () => {
     expect(blocking, 'le depart ne doit plus etre un arret').toEqual([]);
     expect(prepBlockerSummary(draft, 'destination')).toBeNull();
 
-    // Le depart reste NOMME : en complement, et par son nom. Sans cette
-    // assertion, un cadre muet passerait aussi bien qu un cadre honnete.
+    // Le depart reste NOMME : par ce que son absence coute, jamais comme une
+    // promesse de l IA. Sans cette assertion, un cadre muet passerait aussi
+    // bien qu un cadre honnete.
     expect(stepOneReadySummary(draft, stepOneProfileIdFor(draft.activities))).toBe(
-      'L’IA complètera : lieu de départ'
+      'Sans lieu de départ, la carte et les distances resteront à vérifier'
     );
 
     // La ou l intention manque AUSSI, la, le cadre parle — et il parle depuis

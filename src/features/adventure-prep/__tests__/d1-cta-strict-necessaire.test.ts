@@ -90,7 +90,7 @@ describe('D1 — le CTA ne demande que le strict necessaire', () => {
     expect(optional).toContain('date');
   });
 
-  it('D1-03: l ecran promet les trois complements, et rien d arret', () => {
+  it('D1-03: l ecran annonce les trois propositions, et rien d arret', () => {
     const base = fullDraft();
     const sansArrivee = deuxLieuxSansDateNiDuree();
     const ouvert = fullDraft({
@@ -100,7 +100,7 @@ describe('D1 — le CTA ne demande que le strict necessaire', () => {
     expect(base.route.origin).not.toBeNull();
     expect(ouvert.route.origin).not.toBeNull();
     expect(stepOneReadySummary(ouvert, 'trajet')).toBe(
-      'L’IA complètera : lieu d’arrivée, date, temps disponible'
+      'L’IA proposera : lieu d’arrivée, date, temps disponible'
     );
   });
 
@@ -147,7 +147,7 @@ describe('D1 — le CTA ne demande que le strict necessaire', () => {
     const text = visible(render(deuxLieuxSansDateNiDuree()));
     expect(text).toContain('Créer mon parcours');
     expect(text).not.toContain('Il manque');
-    expect(text).toContain('L’IA complètera');
+    expect(text).toContain('L’IA proposera');
   });
 });
 

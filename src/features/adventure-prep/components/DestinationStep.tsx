@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import Icon from '@/components/ui/Icon';
 import { Button } from '@/components/ui';
 import { activityById } from '../catalog';
@@ -25,6 +25,8 @@ import {
   type StepOneRow,
 } from './stepOneProfile';
 import { useAdventurePrepStore } from '../store/useAdventurePrepStore';
+import { departureFromBrief, pickNamedDeparture } from '../engine/briefDeparture';
+import { geocodePlace } from '../geocodeService';
 import { useDefaultOrigin } from './PrepSetupSheets';
 import type { GroupBlock, PlaceRef } from '../types';
 import type { PrepPlaceField, PrepSheetId } from './PrepSheets';
@@ -233,7 +235,34 @@ export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
     useAdventurePrepStore.getState().setBrief(value);
   }, []);
 
-  const handleCreate = useCallback(() => {
+  // Le depart ecrit dans la phrase (« au depart de Villard-de-Lans ») est
+  // cherche comme une commune avant la generation : sans lui, le parcours
+  // n'a ni carte ni distances. Sans correspondance sure, rien n'est pose.
+  const [locating, setLocating] = useState(false);
+  const handleCreate = useCallback(async () => {
+    const current = useAdventurePrepStore.getState().draft;
+    const name = current.route.origin ? null : departureFromBrief(current.brief);
+    if (name) {
+      setLocating(true);
+      try {
+        const found = await geocodePlace(name);
+        const latest = useAdventurePrepStore.getState().draft;
+        const hit =
+          found.status === 'ok'
+            ? pickNamedDeparture(name, found.matches, latest.route.destination)
+            : null;
+        if (hit && !latest.route.origin) {
+          useAdventurePrepStore.getState().setRoute({
+            ...latest.route,
+            origin: { id: hit.id, name: hit.name, country: hit.country, lat: hit.lat, lon: hit.lon },
+          });
+        }
+      } catch {
+        // Recherche indisponible : la generation part sans depart, comme avant.
+      } finally {
+        setLocating(false);
+      }
+    }
     const { completeStep, goToStep } = useAdventurePrepStore.getState();
     completeStep('destination');
     goToStep('itinerary');
@@ -364,11 +393,11 @@ export function DestinationStep({ onOpenSheet }: DestinationStepProps) {
           type="button"
           variant="primary"
           size="lg"
-          disabled={!ready}
-          onClick={handleCreate}
+          disabled={!ready || locating}
+          onClick={() => void handleCreate()}
           style={{ width: '100%' }}
         >
-          {profile.cta}
+          {locating ? 'Recherche du départ…' : profile.cta}
         </Button>
       </div>
     </div>

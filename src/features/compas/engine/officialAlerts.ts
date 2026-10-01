@@ -51,7 +51,7 @@ const HAZARDS: Record<number, string> = {
 export function normalizeArea(name: string): string {
   return name
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[-'’\s]+/g, ' ')
     .trim();

@@ -302,7 +302,7 @@ describe('S11 — rendu des ecrans 10, 11, 12 et 13', () => {
     // L'arrivee est une aide, pas une condition : sans elle le parcours reboucle
     // depuis le depart. Le CTA reste actif. AN7 : l arrivee ne s annonce plus
     // comme un MANQUE — ce mot ne nomme plus que les seuls bloqueurs — mais
-    // comme ce que l IA complete. C est vrai, et ca se lit d un coup d oeil.
+    // comme ce que l IA propose. C est vrai, et ca se lit d un coup d oeil.
     const base = fullDraft({ activities: RANDO });
     const partial = { ...base, route: { ...base.route, destination: null } };
     const text = visible(render(partial));
@@ -311,8 +311,7 @@ describe('S11 — rendu des ecrans 10, 11, 12 et 13', () => {
     expect(text).toContain('Créer mon parcours');
     expect(text).not.toContain('Compléter');
     expect(text).not.toContain('Il manque');
-    expect(text).toContain('L’IA complètera');
-    expect(text).toContain('lieu d’arrivée');
+    expect(text).toContain('L’IA proposera : lieu d’arrivée');
   });
   it('S11-27: l ecran local ne parle jamais de depart', () => {
     // L'ecran 13 affiche « Lieu de pratique » et dit « Pas de trajet » :
