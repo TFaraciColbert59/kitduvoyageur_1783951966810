@@ -106,6 +106,23 @@ describe('buildCompasModel', () => {
     expect(m.nextDecision?.label).toBe('Récupérer : frontale');
   });
 
+  it('un vital déjà dans le panier passe après ceux sans solution, puis devient « Commander »', () => {
+    const both = buildCompasModel(
+      baseInput({
+        items: [
+          item({ id: 'a', name: 'Sac de couchage', isVital: true, purchaseState: 'in_cart', shopProductId: 'x' }),
+          item({ id: 'b', name: 'Frontale', isVital: true }),
+        ],
+      }),
+    );
+    expect(both.nextDecision?.label).toBe('Trouver : frontale');
+    const one = buildCompasModel(
+      baseInput({ items: [item({ id: 'a', name: 'Sac de couchage', isVital: true, purchaseState: 'in_cart', shopProductId: 'x' })] }),
+    );
+    expect(one.nextDecision?.label).toBe('Commander : sac de couchage');
+    expect(one.verdict.level).toBe('bloque');
+  });
+
   it('répartit le commun par porteur et garde les objets sans porteur visibles', () => {
     const m = buildCompasModel(
       baseInput({

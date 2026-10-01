@@ -470,13 +470,19 @@ export function buildCompasModel(input: CompasInput): CompasModel {
   /* Prochaine décision : la plus bloquante d'abord */
   let nextDecision: CompasDecision | null = null;
   if (vitalMissing.length) {
-    const first = vitalMissing[0];
-    nextDecision = {
-      step: 'kit',
-      flow: 'manques',
-      label: first.status === 'lent' ? `Récupérer : ${first.name.toLowerCase()}` : `Trouver : ${first.name.toLowerCase()}`,
-      detail: first.reason ?? 'Objet vital pour ce parcours',
-    };
+    // Un objet déjà commandé est en route : on traite d'abord ceux qui n'ont
+    // encore aucune solution.
+    const inProgress = (l: CompasKitLine) => l.purchaseState === 'in_cart' || l.purchaseState === 'shipping';
+    const first = vitalMissing.find((l) => !inProgress(l)) ?? vitalMissing[0];
+    const name = first.name.toLowerCase();
+    nextDecision =
+      first.status === 'lent'
+        ? { step: 'kit', flow: 'manques', label: `Récupérer : ${name}`, detail: first.reason ?? 'Prêté, à récupérer avant le départ' }
+        : first.purchaseState === 'in_cart'
+          ? { step: 'kit', flow: 'manques', label: `Commander : ${name}`, detail: 'Produit choisi, dans le panier' }
+          : first.purchaseState === 'shipping'
+            ? { step: 'kit', flow: 'manques', label: `Réceptionner : ${name}`, detail: 'En livraison' }
+            : { step: 'kit', flow: 'manques', label: `Trouver : ${name}`, detail: first.reason ?? 'Objet vital pour ce parcours' };
   } else if (!start) {
     nextDecision = { step: 'ou', flow: 'quand', label: 'Choisir les dates', detail: 'La météo et les réservations en dépendent' };
   } else if (unassignedShared.length && members.length > 1) {
