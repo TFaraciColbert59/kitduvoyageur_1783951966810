@@ -22,6 +22,7 @@ import {
   compasApplyKitAction,
   compasListMyKitsAction,
   compasSetPartySizeAction,
+  compasSearchStaysAction,
   compasSetStayAction,
 } from '../server/compasActions';
 import { KitRow, LIVE_BOOKING, MemberAvatar, lineStatus, verticalOf } from './CompasCards';
@@ -32,6 +33,7 @@ import {
   poiLabel,
   type RoutePoiCategory,
 } from '../engine/routePois';
+import type { CompasStayOffer } from '../engine/stays';
 import { kitCompatibility, planKitApply, type MyKit } from '../engine/kitApply';
 import { convertFromEur } from '../engine/currency';
 import { Chip, PagedList, Segments, Thumb, useTextFilter } from './CompasPrimitives';
@@ -1125,6 +1127,115 @@ const VERTICAL_LABEL: Record<string, { label: string; icon: string }> = {
 
 const STAY_OFFER = /h[ôo]tel|h[ée]berg|stay|refuge|g[îi]te|logement|nuit/i;
 
+type StaySearchState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'error'; error: string }
+  | { status: 'ok'; mode: 'sandbox' | 'live'; offers: CompasStayOffer[] };
+
+/** Recherche d'hébergement pour une nuit : liste des offres, rien n'est réservé. */
+function StaySearch({ ctl, nights }: { ctl: CompasCtl; nights: number[] }) {
+  const { tripId, slug } = ctl.data.model;
+  const [day, setDay] = useState<number>(nights[0]);
+  const [state, setState] = useState<StaySearchState>({ status: 'idle' });
+
+  const search = async () => {
+    setState({ status: 'loading' });
+    try {
+      const res = await compasSearchStaysAction({ tripId, day });
+      setState(
+        res.success
+          ? { status: 'ok', mode: res.mode, offers: res.offers }
+          : { status: 'error', error: res.error }
+      );
+    } catch {
+      setState({ status: 'error', error: 'Connexion perdue : réessaie.' });
+    }
+  };
+
+  return (
+    <>
+      <div className="cp-actions" style={{ alignItems: 'flex-end' }}>
+        <label className="cp-field" style={{ flex: 1 }}>
+          Chercher un hébergement pour
+          <select value={day} onChange={(e) => setDay(Number(e.target.value))}>
+            {nights.map((n) => (
+              <option key={n} value={n}>
+                la nuit du jour {n}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="button"
+          className="cp-btn cp-btn--pg"
+          disabled={state.status === 'loading'}
+          onClick={search}
+        >
+          Chercher
+        </button>
+      </div>
+      {state.status === 'loading' && <p className="cp-note">Recherche en cours…</p>}
+      {state.status === 'error' && <p className="cp-note">{state.error}</p>}
+      {state.status === 'ok' && (
+        <>
+          {state.mode === 'sandbox' && (
+            <p className="cp-note">
+              <b>Mode test.</b> Ces résultats viennent du bac à sable du fournisseur : ce ne sont
+              pas de vraies offres.
+            </p>
+          )}
+          <TallList
+            label="Offres d’hébergement"
+            items={state.offers}
+            empty={<p className="cp-note">Aucune offre trouvée pour cette nuit.</p>}
+            render={(o) => (
+              <div key={o.id} className="cp-row cp-row--tall" style={staticRow}>
+                <span className="cp-thumb">
+                  <Icon name="bed-double" size={20} />
+                </span>
+                <span className="cp-row__t cp-row__t--wrap">
+                  <b>{o.title}</b>
+                  <span>
+                    {o.amount != null && o.currency
+                      ? `${formatMoney(o.amount, o.currency)} · tarif à revalider avant tout paiement`
+                      : 'Prix non confirmé par le fournisseur'}
+                  </span>
+                  {o.description && <span>{o.description}</span>}
+                </span>
+                <span className="cp-row__end" style={{ flexDirection: 'column', gap: 6 }}>
+                  <button
+                    type="button"
+                    className="cp-btn cp-btn--soft"
+                    disabled={ctl.busy}
+                    onClick={() =>
+                      void ctl.run('Hébergement noté', () =>
+                        compasSetStayAction({ tripId, tripSlug: slug, day, name: o.title })
+                      )
+                    }
+                  >
+                    Noter
+                  </button>
+                  {o.url && (
+                    <a
+                      className="cp-btn cp-btn--soft"
+                      href={o.url}
+                      target="_blank"
+                      rel="sponsored nofollow noopener"
+                    >
+                      Voir l’offre
+                    </a>
+                  )}
+                </span>
+              </div>
+            )}
+          />
+        </>
+      )}
+    </>
+  );
+}
+
 function NuitsFlow({ ctl }: { ctl: CompasCtl }) {
   const { tripId, slug } = ctl.data.model;
   const byDay = new Map<number, string | null>();
@@ -1229,11 +1340,14 @@ function NuitsFlow({ ctl }: { ctl: CompasCtl }) {
           />
         </>
       )}
-      <p className="cp-disc">
-        {live
-          ? 'Recherche d’hébergements en direct : tarif revalidé avant tout paiement, jamais de commande sans ton accord.'
-          : 'Recherche d’hébergements en direct : active dès que les clés partenaires sont posées. Rien n’est simulé d’ici là.'}
-      </p>
+      {live && ctl.data.canEdit && nights.length > 0 ? (
+        <StaySearch ctl={ctl} nights={nights.map(([day]) => day)} />
+      ) : (
+        <p className="cp-disc">
+          Recherche d’hébergements en direct : active dès que les clés partenaires sont posées. Rien
+          n’est simulé d’ici là.
+        </p>
+      )}
     </>
   );
 }

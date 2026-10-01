@@ -8,6 +8,9 @@ import { addTripItem } from '@/lib/queries-trip-kit';
 import { HUB_HOME_HREF, hubSectionHref } from '@/features/hub/registry/hubSectionRegistry';
 import { tripSegmentPath } from '@/features/trips/registry/tripPaths';
 import { askAI } from '@/lib/ai/askAI';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import { createBookingProvider } from '@/features/booking/server/bookingProvider';
+import { BookingProviderError } from '@/features/booking/server/bookingProviderErrors';
 import type { AIFailureReason } from '@/lib/ai/providers/types';
 import {
   MAX_INTENT_CHARS,
@@ -26,6 +29,7 @@ import {
   type CompasProposal,
 } from '../engine/intent';
 import { planKitApply, type MyKit } from '../engine/kitApply';
+import { simplifyOffers, stayDates, type CompasStayOffer } from '../engine/stays';
 import { readCompasMeta } from '../engine/meta';
 import { localToday } from './weather';
 
@@ -696,6 +700,81 @@ export async function compasSetStayAction(
     return { success: true };
   } catch (err) {
     console.error('[compas] compasSetStayAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+/* ---------- Recherche d'hébergement (aucune réservation) ---------- */
+
+export type CompasStaySearchResult =
+  | {
+      success: true;
+      mode: 'sandbox' | 'live';
+      offers: CompasStayOffer[];
+      fetchedAt: string;
+    }
+  | { success: false; error: string };
+
+const staySearchSchema = z.object({ tripId: uuid, day: z.number().int().min(1).max(60) });
+
+/**
+ * Cherche des hébergements pour la nuit d'un jour du voyage. Lecture seule :
+ * aucune commande, aucun paiement, aucun lien de paiement n'est créé ici. Le
+ * mode « test » du fournisseur est signalé pour que ses résultats ne passent
+ * jamais pour de vraies offres.
+ */
+export async function compasSearchStaysAction(
+  input: z.input<typeof staySearchSchema>
+): Promise<CompasStaySearchResult> {
+  const parsed = staySearchSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Requête invalide' };
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    const trip = auth.trip as {
+      start_date?: string | null;
+      destination_name?: string | null;
+      party_size?: number | null;
+    };
+    const dates = stayDates(trip.start_date ?? null, parsed.data.day);
+    if (!dates) return { success: false, error: 'Choisis d’abord la date de départ du voyage.' };
+    const destination = trip.destination_name?.trim();
+    if (!destination) return { success: false, error: 'Le voyage n’a pas de destination.' };
+
+    const provider = createBookingProvider({ env: process.env });
+    if (!provider.supports('hotel'))
+      return {
+        success: false,
+        error: 'Recherche en direct indisponible : les clés partenaires ne sont pas activées.',
+      };
+
+    const limited = await enforceRateLimit(auth.userId, {
+      scope: 'booking-search',
+      limit: 30,
+      windowMs: 10 * 60_000,
+      failMode: 'closed',
+    });
+    if (limited)
+      return { success: false, error: 'Trop de recherches : réessaie dans quelques minutes.' };
+
+    const result = await provider.search({
+      vertical: 'hotel',
+      destination,
+      checkIn: dates.checkIn,
+      checkOut: dates.checkOut,
+      travelers: Math.max(1, Math.min(20, trip.party_size ?? 1)),
+      limit: 8,
+    });
+    return {
+      success: true,
+      mode: result.mode,
+      offers: simplifyOffers(result.offers),
+      fetchedAt: result.fetchedAt,
+    };
+  } catch (err) {
+    if (err instanceof BookingProviderError)
+      return { success: false, error: 'Le fournisseur n’a pas répondu : réessaie plus tard.' };
+    console.error('[compas] compasSearchStaysAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }

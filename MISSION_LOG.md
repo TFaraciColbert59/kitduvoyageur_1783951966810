@@ -1,5 +1,13 @@
 # MISSION LOG — LKDV
 
+## 2026-10-01 — Compas, Lot 3 (suite) : recherche d'hébergement par nuit
+
+- `engine/stays.ts` : dates d'arrivée/départ de la nuit du jour N, simplification des offres (prix et devise jamais devinés : sans devise confirmée, « Prix non confirmé » ; seuls les liens `https` sont gardés).
+- Action `compasSearchStaysAction` : éditeur connecté, limite de débit partagée avec `/api/booking/search` (30 requêtes / 10 min, échec fermé), fournisseur via `createBookingProvider` (RouteStack), **lecture seule**. Mode test signalé (« ce ne sont pas de vraies offres »). Aucune commande, aucun `checkoutUrl`, aucun paiement.
+- UI (étape Résa › Nuits) : choisir la nuit, « Chercher », puis « Noter » (repère, sans réserver) ou « Voir l'offre » (lien partenaire `sponsored nofollow`, ouvert par l'utilisateur). Affichée seulement si le fournisseur est actif, sinon le message « active dès que les clés sont posées ».
+- **Non testé en réel** : réponse RouteStack (réseau fermé dans le conteneur) ; testé avec un fournisseur simulé. Les clés RouteStack sont uniquement dans `.env.local` du conteneur, pas dans Vercel.
+- Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants OK, 137 tests, build OK.
+
 ## 2026-10-01 — Compas : accessibilité (axe) et trois hauteurs de tiroir (Lot 7, partie)
 
 - **Audit axe-core** (WCAG 2 A/AA, Chromium 390×844, données de test) sur l'écran et 6 tiroirs (Où/Sur le tracé, Nous/Budget, Résa/Nuits, Verdict/Signaux, Kit/Conseils) : 1 violation critique trouvée (`aria-required-children` sur `TallList`, `role="list"` sans éléments de liste) → corrigée (`role="group"`). Résultat : 0 violation. Limite : fond de page de test, contrastes non représentatifs ; pas de test sur le tiroir « Mes kits » (action serveur).

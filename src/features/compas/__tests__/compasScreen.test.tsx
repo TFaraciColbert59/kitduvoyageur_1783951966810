@@ -36,6 +36,33 @@ const compas = vi.hoisted(() => ({
   compasSetPreferencesAction: vi.fn(async () => ({ success: true })),
   compasSetPartySizeAction: vi.fn(async () => ({ success: true })),
   compasSetStayAction: vi.fn(async () => ({ success: true })),
+  compasSearchStaysAction: vi.fn(async () => ({
+    success: true,
+    mode: 'sandbox' as const,
+    fetchedAt: '2026-10-01T10:00:00Z',
+    offers: [
+      {
+        id: 'h1',
+        title: 'Gîte des Cimes',
+        description: null,
+        amount: 64,
+        currency: 'EUR',
+        provider: 'routestack',
+        url: 'https://partner.example/h1',
+        requiresRevalidation: true,
+      },
+      {
+        id: 'h2',
+        title: 'Refuge sans prix',
+        description: null,
+        amount: null,
+        currency: null,
+        provider: 'routestack',
+        url: null,
+        requiresRevalidation: true,
+      },
+    ],
+  })),
   compasListMyKitsAction: vi.fn(async () => ({
     success: true,
     kits: [
@@ -554,6 +581,34 @@ describe('CompasScreen', () => {
     expect(detent()).toBe('small');
     pull(60);
     expect(screen.queryByRole('dialog', { name: 'Nous' })).toBeNull();
+  });
+
+  it('nuits : recherche en direct (mode test signalé), noter une offre sans rien réserver', async () => {
+    const data = makeData();
+    data.providers = { routestack: 'sandbox', viator: 'disabled' };
+    render(<CompasScreen data={data} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Réserver' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Réserver' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Nuits/ }));
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
+    await waitFor(() =>
+      expect(compas.compasSearchStaysAction).toHaveBeenCalledWith({ tripId: TRIP, day: 1 })
+    );
+    expect(await within(sheet).findByText('Gîte des Cimes')).toBeTruthy();
+    expect(within(sheet).getByText(/Mode test/)).toBeTruthy();
+    expect(within(sheet).getByText('Prix non confirmé par le fournisseur')).toBeTruthy();
+    const link = within(sheet).getByRole('link', { name: 'Voir l’offre' });
+    expect(link.getAttribute('rel')).toContain('sponsored');
+    fireEvent.click(within(sheet).getAllByRole('button', { name: 'Noter' })[0]);
+    await waitFor(() =>
+      expect(compas.compasSetStayAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        day: 1,
+        name: 'Gîte des Cimes',
+      })
+    );
   });
 
   const openOu = async (flow: RegExp) => {
