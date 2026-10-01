@@ -1552,7 +1552,7 @@ export function CoverageSheet({ draft, actions, onClose }: PrepSheetProps) {
     <div>
       <Section title="Nom de l’aventure">
         <input
-          className="field"
+          className="prep-text-input"
           value={name}
           onChange={(event) => setName(event.target.value)}
           onBlur={() => actions.setCoverName(name.trim() || null)}
