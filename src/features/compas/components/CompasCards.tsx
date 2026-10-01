@@ -252,7 +252,12 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
   const { crew, budget, dates } = ctl.data.model;
   const engaged = budget.planned + budget.spent;
   const share = budget.target ? engaged / budget.target : null;
-  const perDay = budget.perPerson != null && dates.days ? budget.perPerson / dates.days : null;
+  // L'enveloppe ramenée à une journée et une personne : c'est un repère de
+  // préparation. Les dépenses engagées sont déjà affichées juste au-dessus.
+  const envelopePerDay =
+    budget.target != null && dates.days && crew.size > 0
+      ? budget.target / crew.size / dates.days
+      : null;
   const known = crew.loads.filter((l) => l.capacityKg != null).length;
 
   return (
@@ -304,7 +309,7 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
       )}
       <p className="cp-sub">
         {budget.target != null
-          ? `Enveloppe ${formatMoney(budget.target, budget.currency)}${perDay != null ? ` · ${formatMoney(Math.round(perDay), budget.currency)} par jour et par personne` : ''}`
+          ? `Enveloppe ${formatMoney(budget.target, budget.currency)}${envelopePerDay != null ? ` · soit ${formatMoney(Math.round(envelopePerDay), budget.currency)} par jour et par personne` : ''}`
           : 'Aucune enveloppe fixée pour ce voyage.'}
       </p>
       {budget.overTarget && (
@@ -398,13 +403,17 @@ export function ResaCard({ ctl }: { ctl: CompasCtl }) {
                 key={day}
                 type="button"
                 className="cp-day"
-                onClick={() => ctl.open({ kind: 'step', step: 'resa', flow: 'nuits' })}
+                onClick={() =>
+                  ctl.open({ kind: 'step', step: 'resa', flow: 'nuits', hint: { day } })
+                }
               >
                 <b>Jour {day}</b>
                 <small>{stay ?? (needNight ? 'nuit à trouver' : 'libre')}</small>
                 <span className="cp-slots">
                   {stay && (
-                    <span className="cp-slot" data-s="confirmed" title={stay}>
+                    // Noté n'est pas réservé : pastille neutre, jamais la
+                    // teinte « confirmée » d'une réservation réelle.
+                    <span className="cp-slot" data-s="noted" title={`Noté : ${stay} (non réservé)`}>
                       H
                     </span>
                   )}

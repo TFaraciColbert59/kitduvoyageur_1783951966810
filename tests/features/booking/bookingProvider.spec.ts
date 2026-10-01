@@ -249,6 +249,28 @@ describe('RouteStackBookingProvider', () => {
       deeplink: 'https://routestack.ai/book/hotel-1',
     });
     expect(result.offers[1]).toMatchObject({ id: 'hotel-2', deeplink: null });
+    expect(result.offers[0].untitled).toBeUndefined();
+  });
+
+  it('signale une offre que RouteStack ne nomme pas (titre de repli)', async () => {
+    const callTool = vi.fn<RouteStackToolCaller>().mockResolvedValue({
+      isError: false,
+      content: [{ type: 'text', text: JSON.stringify({ offers: [{ id: 'hotel-3', amount: 70 }] }) }],
+    });
+    const provider = createRouteStackBookingProvider({
+      env: env({ ROUTESTACK_API_KEY: 'k' }),
+      callTool,
+    });
+
+    const result = await provider.search({
+      vertical: 'hotel',
+      destination: 'Villard-de-Lans',
+      checkIn: '2026-11-12',
+      checkOut: '2026-11-13',
+      travelers: 1,
+    });
+
+    expect(result.offers[0]).toMatchObject({ title: 'Hôtel · Villard-de-Lans', untitled: true });
   });
 
   it('normalise les erreurs HTTP et les réponses isError en BookingProviderError', async () => {

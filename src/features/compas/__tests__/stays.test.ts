@@ -58,6 +58,14 @@ describe('simplifyOffers', () => {
     expect(out).toHaveLength(1);
     expect(out[0].url).toBeNull();
   });
+  it('signale une offre que le fournisseur ne nomme pas', () => {
+    const [nommee, repli] = simplifyOffers([
+      cand(),
+      cand({ id: 'r', title: 'Hôtel · Villard-de-Lans', untitled: true }),
+    ]);
+    expect(nommee.untitled).toBe(false);
+    expect(repli.untitled).toBe(true);
+  });
   it('limite le nombre d’offres', () => {
     const many = Array.from({ length: 20 }, (_, i) => cand({ id: `h${i}`, title: `H${i}` }));
     expect(simplifyOffers(many, 5)).toHaveLength(5);

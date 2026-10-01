@@ -876,7 +876,7 @@ function StepSheet({
       {step === 'ou' && flow === 'preferences' && <PreferencesFlow ctl={ctl} />}
       {step === 'nous' && flow === 'equipe' && <EquipeFlow ctl={ctl} />}
       {step === 'nous' && flow === 'budget' && <BudgetFlow ctl={ctl} />}
-      {step === 'resa' && flow === 'nuits' && <NuitsFlow ctl={ctl} />}
+      {step === 'resa' && flow === 'nuits' && <NuitsFlow ctl={ctl} focusDay={hint?.day} />}
       {step === 'resa' && flow === 'reservations' && <ReservationsFlow ctl={ctl} />}
       {step === 'resa' && flow === 'offres' && <OffresFlow ctl={ctl} />}
       {step === 'verdict' && flow === 'raisons' && <RaisonsFlow ctl={ctl} />}
@@ -1134,9 +1134,19 @@ type StaySearchState =
   | { status: 'ok'; mode: 'sandbox' | 'live'; offers: CompasStayOffer[] };
 
 /** Recherche d'hébergement pour une nuit : liste des offres, rien n'est réservé. */
-function StaySearch({ ctl, nights }: { ctl: CompasCtl; nights: number[] }) {
+function StaySearch({
+  ctl,
+  nights,
+  focusDay,
+}: {
+  ctl: CompasCtl;
+  nights: number[];
+  focusDay?: number;
+}) {
   const { tripId, slug } = ctl.data.model;
-  const [day, setDay] = useState<number>(nights[0]);
+  const [day, setDay] = useState<number>(
+    focusDay != null && nights.includes(focusDay) ? focusDay : nights[0]
+  );
   const [state, setState] = useState<StaySearchState>({ status: 'idle' });
 
   const search = async () => {
@@ -1196,6 +1206,7 @@ function StaySearch({ ctl, nights }: { ctl: CompasCtl; nights: number[] }) {
                 </span>
                 <span className="cp-row__t cp-row__t--wrap">
                   <b>{o.title}</b>
+                  {o.untitled && <span>Nom non communiqué par le fournisseur</span>}
                   <span>
                     {o.amount != null && o.currency
                       ? `${formatMoney(o.amount, o.currency)} · tarif à revalider avant tout paiement`
@@ -1204,18 +1215,22 @@ function StaySearch({ ctl, nights }: { ctl: CompasCtl; nights: number[] }) {
                   {o.description && <span>{o.description}</span>}
                 </span>
                 <span className="cp-row__end" style={{ flexDirection: 'column', gap: 6 }}>
-                  <button
-                    type="button"
-                    className="cp-btn cp-btn--soft"
-                    disabled={ctl.busy}
-                    onClick={() =>
-                      void ctl.run('Hébergement noté', () =>
-                        compasSetStayAction({ tripId, tripSlug: slug, day, name: o.title })
-                      )
-                    }
-                  >
-                    Noter
-                  </button>
+                  {/* Un libellé de repli n'est pas un lieu : il n'est jamais
+                      enregistré comme hébergement de la nuit. */}
+                  {!o.untitled && (
+                    <button
+                      type="button"
+                      className="cp-btn cp-btn--soft"
+                      disabled={ctl.busy}
+                      onClick={() =>
+                        void ctl.run('Hébergement noté', () =>
+                          compasSetStayAction({ tripId, tripSlug: slug, day, name: o.title })
+                        )
+                      }
+                    >
+                      Noter
+                    </button>
+                  )}
                   {o.url && (
                     <a
                       className="cp-btn cp-btn--soft"
@@ -1236,7 +1251,7 @@ function StaySearch({ ctl, nights }: { ctl: CompasCtl; nights: number[] }) {
   );
 }
 
-function NuitsFlow({ ctl }: { ctl: CompasCtl }) {
+function NuitsFlow({ ctl, focusDay }: { ctl: CompasCtl; focusDay?: number }) {
   const { tripId, slug } = ctl.data.model;
   const byDay = new Map<number, string | null>();
   for (const st of ctl.data.itinerary) byDay.set(st.day, byDay.get(st.day) ?? st.accommodation);
@@ -1264,6 +1279,7 @@ function NuitsFlow({ ctl }: { ctl: CompasCtl }) {
       <PagedList
         label="Nuits du voyage"
         items={nights}
+        focusIndex={nights.findIndex(([day]) => day === focusDay)}
         render={([day, stay]) => (
           <form
             key={day}
@@ -1341,7 +1357,7 @@ function NuitsFlow({ ctl }: { ctl: CompasCtl }) {
         </>
       )}
       {live && ctl.data.canEdit && nights.length > 0 ? (
-        <StaySearch ctl={ctl} nights={nights.map(([day]) => day)} />
+        <StaySearch ctl={ctl} nights={nights.map(([day]) => day)} focusDay={focusDay} />
       ) : (
         <p className="cp-disc">
           Recherche d’hébergements en direct : active dès que les clés partenaires sont posées. Rien

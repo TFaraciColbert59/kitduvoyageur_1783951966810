@@ -256,6 +256,7 @@ export function CompasScreen({
     <div
       className="compas"
       data-map={mapBig ? 'big' : undefined}
+      data-sheet={top?.detent}
       data-outdoor={display.outdoor ? '1' : undefined}
       style={style}
     >

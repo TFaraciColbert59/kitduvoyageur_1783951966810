@@ -15,6 +15,7 @@ export function PagedList<T>({
   empty,
   resetKey,
   label,
+  focusIndex,
 }: {
   items: readonly T[];
   render: (item: T) => ReactNode;
@@ -22,10 +23,13 @@ export function PagedList<T>({
   /** Change → retour à la première page. */
   resetKey?: string;
   label: string;
+  /** Élément à montrer à l'ouverture (index, -1 ou absent : première page). */
+  focusIndex?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
   const [page, setPage] = useState(0);
+  const focused = useRef(false);
 
   useLayoutEffect(() => {
     const el = ref.current;
@@ -45,6 +49,14 @@ export function PagedList<T>({
     return Math.max(1, Math.floor((height - PAGER_H) / ROW_H));
   }, [height, items.length]);
   const pages = useMemo(() => paginate(items, perPage), [items, perPage]);
+
+  // La page de l'élément demandé, une seule fois, quand la hauteur est connue :
+  // ensuite la pagination appartient à la personne.
+  useLayoutEffect(() => {
+    if (focused.current || height <= 0 || focusIndex == null || focusIndex < 0) return;
+    focused.current = true;
+    setPage(Math.floor(focusIndex / perPage));
+  }, [focusIndex, height, perPage]);
   const current = Math.min(page, pages.length - 1);
 
   return (
@@ -202,8 +214,21 @@ export function Segments<K extends string>({
   onChange: (id: K) => void;
   label: string;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+  // Le groupe défile horizontalement (5 à 6 onglets) : l'onglet actif reste
+  // visible, y compris quand un tiroir s'ouvre directement sur le dernier.
+  // Seul le défilement horizontal du groupe bouge, jamais la page.
+  useLayoutEffect(() => {
+    const box = ref.current;
+    const on = box?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (!box || !on) return;
+    const left = on.offsetLeft - box.offsetLeft;
+    const right = left + on.offsetWidth;
+    if (left < box.scrollLeft) box.scrollLeft = left;
+    else if (right > box.scrollLeft + box.clientWidth) box.scrollLeft = right - box.clientWidth;
+  }, [value]);
   return (
-    <div className="cp-seg" role="group" aria-label={label}>
+    <div ref={ref} className="cp-seg" role="group" aria-label={label}>
       {options.map((o) => (
         <button
           key={o.id}

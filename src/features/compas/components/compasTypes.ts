@@ -53,6 +53,8 @@ export interface FlowHint {
   hours?: number;
   /** Lieu à chercher dans Parcours. */
   query?: string;
+  /** Jour touché (tuile de nuit) : le tiroir s'ouvre sur ce jour. */
+  day?: number;
 }
 
 export type ActionResult = { success: boolean; error?: string };

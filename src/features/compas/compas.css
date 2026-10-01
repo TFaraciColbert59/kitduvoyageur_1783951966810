@@ -925,7 +925,22 @@
   letter-spacing: -0.02em;
 }
 
+/* Tiroir au plus haut : le résumé de la carte et la décision passent sous le
+   verre du tiroir et leurs textes se superposaient au contenu. Ils
+   s'effacent (opacité seule) et reviennent dès que le tiroir redescend. */
+.cp-acc,
+.cp-decision {
+  transition: opacity 0.2s ease;
+}
+.compas[data-sheet='large'] .cp-acc,
+.compas[data-sheet='large'] .cp-decision {
+  opacity: 0;
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .cp-acc,
+  .cp-decision,
   .compas,
   .cp-sheet,
   .cp-step {
@@ -1350,6 +1365,10 @@
 .cp-slot[data-s='confirmed'] {
   background: var(--cp-good-bg);
   color: var(--cp-good);
+}
+.cp-slot[data-s='noted'] {
+  background: var(--cp-fill);
+  color: var(--cp-ink2);
 }
 .cp-slot[data-s='pending'] {
   background: var(--cp-warn-bg);

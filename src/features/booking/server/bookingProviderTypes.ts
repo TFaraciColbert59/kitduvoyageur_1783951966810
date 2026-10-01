@@ -50,6 +50,11 @@ export interface BookingCandidate {
   provider: Exclude<BookingProviderId, 'unavailable'>;
   vertical: BookingVertical;
   title: string;
+  /**
+   * Vrai quand l'amont ne nomme pas l'offre : `title` est alors un libellé de
+   * repli (« Hôtel · Ville »), pas un nom à enregistrer comme lieu réel.
+   */
+  untitled?: boolean;
   description: string | null;
   amount: number | null;
   /** Null quand l'amont ne confirme pas la devise : ne jamais inventer EUR. */

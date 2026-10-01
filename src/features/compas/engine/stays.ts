@@ -11,6 +11,8 @@ import type { BookingCandidate } from '@/features/booking/server/bookingProvider
 export interface CompasStayOffer {
   id: string;
   title: string;
+  /** Le fournisseur ne nomme pas l'offre : le titre est un libellé, pas un nom de lieu. */
+  untitled: boolean;
   description: string | null;
   /** Null si le fournisseur ne confirme pas le prix. */
   amount: number | null;
@@ -57,6 +59,7 @@ export function simplifyOffers(candidates: BookingCandidate[], limit = 8): Compa
     out.push({
       id: c.id,
       title,
+      untitled: c.untitled === true,
       description: c.description?.trim() || null,
       amount: amount != null && currency != null ? amount : null,
       currency: amount != null ? currency : null,

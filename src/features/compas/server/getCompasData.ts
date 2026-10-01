@@ -25,6 +25,7 @@ import {
   type CompasWeatherDayInput,
 } from '../engine/compasModel';
 import { readCompasMeta } from '../engine/meta';
+import { relevantAffiliateLinks } from '../engine/affiliates';
 import { getCompasWeather, type CompasWeather } from './weather';
 
 /**
@@ -478,7 +479,10 @@ export async function getCompasData(): Promise<CompasData | null> {
     ],
     inventory,
     shop,
-    affiliateLinks: (hub.affiliateLinks ?? []).map((l) => ({
+    affiliateLinks: relevantAffiliateLinks(
+      hub.affiliateLinks ?? [],
+      trip.destination_country_code
+    ).map((l) => ({
       id: l.id,
       label: l.title,
       category: l.category ?? null,
