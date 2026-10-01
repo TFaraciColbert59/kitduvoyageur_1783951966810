@@ -52,6 +52,43 @@ export function formatWeekday(iso: string): string {
   return `${WEEKDAYS[d.getUTCDay()]} ${d.getUTCDate()}`;
 }
 
+const MONTHS = [
+  'janv.',
+  'févr.',
+  'mars',
+  'avr.',
+  'mai',
+  'juin',
+  'juil.',
+  'août',
+  'sept.',
+  'oct.',
+  'nov.',
+  'déc.',
+];
+
+/** « sam. 12 oct. » à partir d'une date ISO. */
+export function formatDayMonth(iso: string): string {
+  const d = new Date(`${iso.slice(0, 10)}T12:00:00Z`);
+  if (Number.isNaN(d.getTime())) return iso;
+  return `${WEEKDAYS[d.getUTCDay()]} ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
+}
+
+/** Ajoute `n` jours à une date ISO (AAAA-MM-JJ), sans fuseau. */
+export function addDaysIso(iso: string, n: number): string {
+  const d = new Date(`${iso.slice(0, 10)}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Nombre de jours de `a` à `b` (b − a). */
+export function daysBetweenIso(a: string, b: string): number {
+  return Math.round(
+    (Date.parse(`${b.slice(0, 10)}T12:00:00Z`) - Date.parse(`${a.slice(0, 10)}T12:00:00Z`)) /
+      86_400_000
+  );
+}
+
 /** Libellé court d'un code météo WMO (Open-Meteo) et icône du registre LKDV. */
 export function weatherLabel(code: number): { label: string; icon: string } {
   if (code === 0) return { label: 'Dégagé', icon: 'sun' };
@@ -96,6 +133,33 @@ const LN = Math.log(720) - LN0;
 export function rulerPosition(hours: number): number {
   const t = (Math.log(Math.max(0.25, Math.min(720, hours))) - LN0) / LN;
   return Math.round(t * 1000) / 1000;
+}
+
+/** Inverse de `rulerPosition` : position 0..1 → durée (heures), bornée. */
+export function hoursFromPosition(t: number): number {
+  const c = Math.max(0, Math.min(1, t));
+  return Math.exp(LN0 + c * LN);
+}
+
+/**
+ * Pas de la règle : 15 min sous un jour, un jour au-delà (un voyage se
+ * réserve en dates : « 1 j 5 h » n'existe pas dans un calendrier).
+ */
+export function snapHours(hours: number): number {
+  const h = Math.max(0.25, Math.min(720, hours));
+  if (h < 23.875) return Math.max(0.25, Math.round(h * 4) / 4);
+  return Math.max(1, Math.min(30, Math.round(h / 24))) * 24;
+}
+
+/** Pas suivant ou précédent de la règle (clavier). `big` = 1 h ou 1 semaine. */
+export function stepHours(hours: number, dir: 1 | -1, big = false): number {
+  const h = snapHours(hours);
+  if (h < 24) {
+    const next = h + dir * (big ? 1 : 0.25);
+    return next >= 24 ? 24 : snapHours(Math.max(0.25, next));
+  }
+  const days = h / 24 + dir * (big ? 7 : 1);
+  return days < 1 ? 23.75 : snapHours(Math.min(30, days) * 24);
 }
 
 export const RULER_TICKS: ReadonlyArray<[number, string]> = [

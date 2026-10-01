@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { buildCompasModel, formatDateRange, type CompasInput, type CompasItemInput } from '../engine/compasModel';
+import {
+  buildCompasModel,
+  formatDateRange,
+  type CompasInput,
+  type CompasItemInput,
+} from '../engine/compasModel';
 import { sunTimes } from '../engine/sun';
 
 function item(partial: Partial<CompasItemInput> & { id: string; name: string }): CompasItemInput {
@@ -38,13 +43,59 @@ function baseInput(overrides: Partial<CompasInput> = {}): CompasInput {
       ownerId: 'u1',
     },
     steps: [
-      { id: 's1', dayNumber: 1, orderIndex: 0, title: 'Gavarnie', locationName: 'Gavarnie', lat: 42.73, lon: -0.01, distanceKm: 12.4, elevationGainM: 900, elevationLossM: 300, accommodationName: null, transportMode: 'foot', startTime: null },
-      { id: 's2', dayNumber: 2, orderIndex: 0, title: 'Refuge', locationName: 'Refuge', lat: 42.7, lon: 0.02, distanceKm: 10, elevationGainM: 700, elevationLossM: 800, accommodationName: 'Refuge', transportMode: 'foot', startTime: null },
+      {
+        id: 's1',
+        dayNumber: 1,
+        orderIndex: 0,
+        title: 'Gavarnie',
+        locationName: 'Gavarnie',
+        lat: 42.73,
+        lon: -0.01,
+        distanceKm: 12.4,
+        elevationGainM: 900,
+        elevationLossM: 300,
+        accommodationName: null,
+        transportMode: 'foot',
+        startTime: null,
+      },
+      {
+        id: 's2',
+        dayNumber: 2,
+        orderIndex: 0,
+        title: 'Refuge',
+        locationName: 'Refuge',
+        lat: 42.7,
+        lon: 0.02,
+        distanceKm: 10,
+        elevationGainM: 700,
+        elevationLossM: 800,
+        accommodationName: 'Refuge',
+        transportMode: 'foot',
+        startTime: null,
+      },
     ],
     items: [],
     members: [
-      { userId: 'u1', name: 'Tony', avatarUrl: null, role: 'owner', maxCarryKg: 14, flatSpeedKmh: 4.6, experienceLevel: null, calibrationLevel: null },
-      { userId: 'u2', name: 'Léa', avatarUrl: null, role: 'member', maxCarryKg: null, flatSpeedKmh: null, experienceLevel: null, calibrationLevel: null },
+      {
+        userId: 'u1',
+        name: 'Tony',
+        avatarUrl: null,
+        role: 'owner',
+        maxCarryKg: 14,
+        flatSpeedKmh: 4.6,
+        experienceLevel: null,
+        calibrationLevel: null,
+      },
+      {
+        userId: 'u2',
+        name: 'Léa',
+        avatarUrl: null,
+        role: 'member',
+        maxCarryKg: null,
+        flatSpeedKmh: null,
+        experienceLevel: null,
+        calibrationLevel: null,
+      },
     ],
     expenses: [],
     inventory: [],
@@ -77,7 +128,7 @@ describe('buildCompasModel', () => {
           item({ id: 'a', name: 'Frontale', isVital: true, isPacked: true, weightGrams: 90 }),
           item({ id: 'b', name: 'Bâtons', isPacked: false, weightGrams: 480 }),
         ],
-      }),
+      })
     );
     // vital emballé = 2 sur 3
     expect(m.kit.packedPct).toBe(67);
@@ -86,7 +137,9 @@ describe('buildCompasModel', () => {
 
   it('signale un vital manquant comme prochaine décision et bloque le verdict', () => {
     const m = buildCompasModel(
-      baseInput({ items: [item({ id: 'a', name: 'Sac de couchage', isVital: true, reason: 'Nuit à −3 °C' })] }),
+      baseInput({
+        items: [item({ id: 'a', name: 'Sac de couchage', isVital: true, reason: 'Nuit à −3 °C' })],
+      })
     );
     expect(m.kit.vitalMissing).toHaveLength(1);
     expect(m.verdict.level).toBe('bloque');
@@ -98,8 +151,21 @@ describe('buildCompasModel', () => {
     const m = buildCompasModel(
       baseInput({
         items: [item({ id: 'a', name: 'Frontale', isVital: true, inventoryItemId: 'p1' })],
-        inventory: [{ id: 'p1', name: 'Frontale', brand: 'Petzl', category: 'Sécurité', weightG: 80, condition: 'bon', isLent: true, maintenanceDueAt: null, expiryDate: null, quantity: 1 }],
-      }),
+        inventory: [
+          {
+            id: 'p1',
+            name: 'Frontale',
+            brand: 'Petzl',
+            category: 'Sécurité',
+            weightG: 80,
+            condition: 'bon',
+            isLent: true,
+            maintenanceDueAt: null,
+            expiryDate: null,
+            quantity: 1,
+          },
+        ],
+      })
     );
     expect(m.kit.lines[0].status).toBe('lent');
     expect(m.kit.lines[0].weightGrams).toBe(80);
@@ -110,14 +176,30 @@ describe('buildCompasModel', () => {
     const both = buildCompasModel(
       baseInput({
         items: [
-          item({ id: 'a', name: 'Sac de couchage', isVital: true, purchaseState: 'in_cart', shopProductId: 'x' }),
+          item({
+            id: 'a',
+            name: 'Sac de couchage',
+            isVital: true,
+            purchaseState: 'in_cart',
+            shopProductId: 'x',
+          }),
           item({ id: 'b', name: 'Frontale', isVital: true }),
         ],
-      }),
+      })
     );
     expect(both.nextDecision?.label).toBe('Trouver : frontale');
     const one = buildCompasModel(
-      baseInput({ items: [item({ id: 'a', name: 'Sac de couchage', isVital: true, purchaseState: 'in_cart', shopProductId: 'x' })] }),
+      baseInput({
+        items: [
+          item({
+            id: 'a',
+            name: 'Sac de couchage',
+            isVital: true,
+            purchaseState: 'in_cart',
+            shopProductId: 'x',
+          }),
+        ],
+      })
     );
     expect(one.nextDecision?.label).toBe('Commander : sac de couchage');
     expect(one.verdict.level).toBe('bloque');
@@ -127,11 +209,25 @@ describe('buildCompasModel', () => {
     const m = buildCompasModel(
       baseInput({
         items: [
-          item({ id: 't', name: 'Tente 2P', ownership: 'shared', ownerId: 'u2', weightGrams: 1720, isPacked: true }),
-          item({ id: 'r', name: 'Réchaud', ownership: 'shared', ownerId: null, weightGrams: 310, isPacked: true }),
+          item({
+            id: 't',
+            name: 'Tente 2P',
+            ownership: 'shared',
+            ownerId: 'u2',
+            weightGrams: 1720,
+            isPacked: true,
+          }),
+          item({
+            id: 'r',
+            name: 'Réchaud',
+            ownership: 'shared',
+            ownerId: null,
+            weightGrams: 310,
+            isPacked: true,
+          }),
           item({ id: 'v', name: 'Veste', isWorn: true, weightGrams: 390, isPacked: true }),
         ],
-      }),
+      })
     );
     const lea = m.crew.loads.find((l) => l.userId === 'u2');
     expect(lea?.carriedGrams).toBe(1720);
@@ -141,7 +237,9 @@ describe('buildCompasModel', () => {
   });
 
   it('reste honnête sans dates ni tracé', () => {
-    const m = buildCompasModel(baseInput({ trip: { ...baseInput().trip, startDate: null, endDate: null }, steps: [] }));
+    const m = buildCompasModel(
+      baseInput({ trip: { ...baseInput().trip, startDate: null, endDate: null }, steps: [] })
+    );
     expect(m.dates.label).toBe('Dates à choisir');
     expect(m.daylight).toBeNull();
     expect(m.verdict.level).toBe('incomplet');
@@ -152,10 +250,26 @@ describe('buildCompasModel', () => {
     const m = buildCompasModel(
       baseInput({
         expenses: [
-          { id: 'e1', title: 'Refuge', amount: 600, category: 'Hébergement', isPlanned: true, payerId: 'u1', splitType: 'equal' },
-          { id: 'e2', title: 'Train', amount: 500, category: 'Transport', isPlanned: false, payerId: 'u1', splitType: 'equal' },
+          {
+            id: 'e1',
+            title: 'Refuge',
+            amount: 600,
+            category: 'Hébergement',
+            isPlanned: true,
+            payerId: 'u1',
+            splitType: 'equal',
+          },
+          {
+            id: 'e2',
+            title: 'Train',
+            amount: 500,
+            category: 'Transport',
+            isPlanned: false,
+            payerId: 'u1',
+            splitType: 'equal',
+          },
         ],
-      }),
+      })
     );
     expect(m.budget.overTarget).toBe(true);
     expect(m.budget.perPerson).toBe(550);

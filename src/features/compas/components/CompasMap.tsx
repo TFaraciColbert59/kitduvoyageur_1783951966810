@@ -14,7 +14,7 @@ import type { CompasPoint } from '../server/getCompasData';
  */
 const HubGlobeMap = dynamic(
   () => import('@/features/hub/components/mobile/HubGlobeMap').then((module) => module.default),
-  { ssr: false, loading: () => null },
+  { ssr: false, loading: () => null }
 );
 
 /** Palette de marqueurs du préparateur (mêmes teintes que PreparatorView). */
@@ -53,7 +53,7 @@ export function CompasMap({
         category: p.category,
         color: POINT_COLORS[p.kind === 'poi' ? 'poi' : p.category === 'stay' ? 'stay' : 'step'],
       })),
-    [points],
+    [points]
   );
   const hasSomething = coords.length > 0 || Boolean(routeGeojson) || points.length > 0;
 
@@ -71,7 +71,9 @@ export function CompasMap({
           />
         </div>
       ) : (
-        <p className="cp-map__empty">Aucun point encore : trace le parcours dans le préparateur pour le voir ici.</p>
+        <p className="cp-map__empty">
+          Aucun point encore : trace le parcours dans le préparateur pour le voir ici.
+        </p>
       )}
       <span className="cp-map__grab" aria-hidden="true" />
       <div className="cp-map__actions cp-glass">

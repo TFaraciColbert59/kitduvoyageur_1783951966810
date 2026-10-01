@@ -1,7 +1,15 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type CSSProperties } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  type CSSProperties,
+} from 'react';
 import Icon from '@/components/ui/Icon';
 import { togglePackedAction } from '@/app/voyages/kit-actions';
 import { COMPAS_STEPS, type CompasKitLine, type CompasStepId } from '../engine/compasModel';
@@ -9,6 +17,7 @@ import { activityLabel, formatHours, formatKm, formatMeters } from '../engine/fo
 import type { CompasData } from '../server/getCompasData';
 import { KitCard, NousCard, OuCard, ResaCard, VerdictCard } from './CompasCards';
 import { CompasMap } from './CompasMap';
+import { tripHours } from './CompasRuler';
 import { CompasSheet, type Detent } from './CompasSheet';
 import { SheetContent, sheetTitle } from './CompasSheets';
 import type { ActionResult, CompasCtl, SheetState, StepFlow } from './compasTypes';
@@ -27,7 +36,7 @@ const STEP_TITLES: Record<CompasStepId, string> = {
 function defaultFlow(step: CompasStepId, data: CompasData): StepFlow {
   switch (step) {
     case 'ou':
-      return 'etapes';
+      return data.model.dates.start ? 'parcours' : 'quand';
     case 'nous':
       return 'equipe';
     case 'resa':
@@ -42,7 +51,8 @@ function defaultFlow(step: CompasStepId, data: CompasData): StepFlow {
 /** Parcours de tiroir correspondant à la prochaine décision du moteur. */
 const DECISION_FLOWS: Record<string, { step: CompasStepId; flow: StepFlow }> = {
   manques: { step: 'kit', flow: 'trouver' },
-  quand: { step: 'ou', flow: 'meteo' },
+  quand: { step: 'ou', flow: 'quand' },
+  parcours: { step: 'ou', flow: 'parcours' },
   sacs: { step: 'kit', flow: 'sacs' },
   choix: { step: 'resa', flow: 'reservations' },
   budget: { step: 'nous', flow: 'budget' },
@@ -65,7 +75,10 @@ export function CompasScreen({ data }: { data: CompasData }) {
   const [running, setRunning] = useState(false);
   const [step, setStep] = useState<CompasStepId>(() => data.model.nextDecision?.step ?? 'ou');
   const [mapBig, setMapBig] = useState(false);
-  const [display, setDisplay] = useState<{ outdoor: boolean; glass: number }>({ outdoor: false, glass: 0.19 });
+  const [display, setDisplay] = useState<{ outdoor: boolean; glass: number }>({
+    outdoor: false,
+    glass: 0.19,
+  });
   const [popover, setPopover] = useState(false);
   const [stack, setStack] = useState<Array<{ sheet: SheetState; detent: Detent }>>([]);
   const [packed, setPacked] = useState<Record<string, boolean>>({});
@@ -126,14 +139,17 @@ export function CompasScreen({ data }: { data: CompasData }) {
         setRunning(false);
       }
     },
-    [notify, router],
+    [notify, router]
   );
 
   const lines = useMemo<CompasKitLine[]>(
     () => model.kit.lines.map((l) => (l.id in packed ? { ...l, packed: packed[l.id] } : l)),
-    [model.kit.lines, packed],
+    [model.kit.lines, packed]
   );
-  const members = useMemo(() => new Map(model.crew.loads.map((m) => [m.userId, m.name])), [model.crew.loads]);
+  const members = useMemo(
+    () => new Map(model.crew.loads.map((m) => [m.userId, m.name])),
+    [model.crew.loads]
+  );
   const products = useMemo(() => new Map(data.shop.map((p) => [p.id, p])), [data.shop]);
 
   const open = useCallback((sheet: SheetState, detent: Detent = 'medium') => {
@@ -142,7 +158,9 @@ export function CompasScreen({ data }: { data: CompasData }) {
     setStack((s) => [...s, { sheet, detent }]);
   }, []);
   const replace = useCallback((sheet: SheetState) => {
-    setStack((s) => (s.length ? [...s.slice(0, -1), { ...s[s.length - 1], sheet }] : [{ sheet, detent: 'medium' }]));
+    setStack((s) =>
+      s.length ? [...s.slice(0, -1), { ...s[s.length - 1], sheet }] : [{ sheet, detent: 'medium' }]
+    );
   }, []);
   const back = useCallback(() => setStack((s) => s.slice(0, -1)), []);
   const close = useCallback(() => setStack([]), []);
@@ -152,7 +170,10 @@ export function CompasScreen({ data }: { data: CompasData }) {
       const next = !line.packed;
       setPacked((p) => ({ ...p, [line.id]: next }));
       void (async () => {
-        const res = await togglePackedAction(line.id, next, model.slug).catch(() => ({ success: false, error: 'Connexion perdue' }));
+        const res = await togglePackedAction(line.id, next, model.slug).catch(() => ({
+          success: false,
+          error: 'Connexion perdue',
+        }));
         if (!res.success) {
           setPacked((p) => ({ ...p, [line.id]: line.packed }));
           notify(res.error ?? 'Action impossible', 'bad');
@@ -161,7 +182,7 @@ export function CompasScreen({ data }: { data: CompasData }) {
         }
       })();
     },
-    [model.slug, notify, router],
+    [model.slug, notify, router]
   );
 
   const ctl: CompasCtl = {
@@ -182,7 +203,10 @@ export function CompasScreen({ data }: { data: CompasData }) {
   const decision = model.nextDecision;
   const followDecision = () => {
     if (!decision) return;
-    const target = DECISION_FLOWS[decision.flow] ?? { step: decision.step, flow: defaultFlow(decision.step, data) };
+    const target = DECISION_FLOWS[decision.flow] ?? {
+      step: decision.step,
+      flow: defaultFlow(decision.step, data),
+    };
     setStep(target.step);
     setStack([]);
     open({ kind: 'step', step: target.step, flow: target.flow });
@@ -192,13 +216,22 @@ export function CompasScreen({ data }: { data: CompasData }) {
     ou: !model.dates.start ? 'warn' : undefined,
     nous: model.budget.overTarget ? 'warn' : undefined,
     resa: model.bookings.pending ? 'warn' : undefined,
-    verdict: model.verdict.level === 'bloque' ? 'bad' : model.verdict.level === 'go' ? undefined : 'warn',
-    kit: model.kit.vitalMissing.length ? 'bad' : model.kit.toAcquire.length || model.crew.unassignedShared.length ? 'warn' : undefined,
+    verdict:
+      model.verdict.level === 'bloque' ? 'bad' : model.verdict.level === 'go' ? undefined : 'warn',
+    kit: model.kit.vitalMissing.length
+      ? 'bad'
+      : model.kit.toAcquire.length || model.crew.unassignedShared.length
+        ? 'warn'
+        : undefined,
   };
   const stepIndex = COMPAS_STEPS.findIndex((s) => s.id === step);
 
-  const hours = model.dates.days ? model.dates.days * 24 : model.route.durationMin ? model.route.durationMin / 60 : null;
-  const miniLine = [activityLabel(model.activity), hours != null ? formatHours(hours) : null, model.dates.label]
+  const hours = tripHours(model);
+  const miniLine = [
+    activityLabel(model.activity),
+    hours != null ? formatHours(hours) : null,
+    model.dates.label,
+  ]
     .filter(Boolean)
     .join(' · ');
 
@@ -206,12 +239,21 @@ export function CompasScreen({ data }: { data: CompasData }) {
   const style = (display.outdoor ? {} : { ['--cp-ga' as string]: display.glass }) as CSSProperties;
 
   return (
-    <div className="compas" data-map={mapBig ? 'big' : undefined} data-outdoor={display.outdoor ? '1' : undefined} style={style}>
+    <div
+      className="compas"
+      data-map={mapBig ? 'big' : undefined}
+      data-outdoor={display.outdoor ? '1' : undefined}
+      style={style}
+    >
       <div className="cp-bg" aria-hidden="true" />
       <div className="cp-top">
         <div className="cp-headrow">
           <nav className="cp-steps cp-glass" aria-label="Étapes du Compas">
-            <span className="cp-steps__lens" aria-hidden="true" style={{ transform: `translateX(${stepIndex * 100}%)` }} />
+            <span
+              className="cp-steps__lens"
+              aria-hidden="true"
+              style={{ transform: `translateX(${stepIndex * 100}%)` }}
+            />
             {COMPAS_STEPS.map((s) => (
               <button
                 key={s.id}
@@ -226,7 +268,9 @@ export function CompasScreen({ data }: { data: CompasData }) {
               >
                 <Icon name={s.icon} size={20} />
                 <span className="cp-step__l">{s.label}</span>
-                {alerts[s.id] && <i className="cp-step__dot" data-tone={alerts[s.id]} aria-hidden="true" />}
+                {alerts[s.id] && (
+                  <i className="cp-step__dot" data-tone={alerts[s.id]} aria-hidden="true" />
+                )}
               </button>
             ))}
           </nav>
@@ -257,7 +301,12 @@ export function CompasScreen({ data }: { data: CompasData }) {
           {step === 'kit' && <KitCard ctl={ctl} />}
         </section>
 
-        <button type="button" className="cp-mini cp-sheet-glass" onClick={() => setMapBig(false)} aria-label="Réduire la carte">
+        <button
+          type="button"
+          className="cp-mini cp-sheet-glass"
+          onClick={() => setMapBig(false)}
+          aria-label="Réduire la carte"
+        >
           <span className="cp-mini__t">
             <b>{model.title}</b>
             <span>{miniLine}</span>
@@ -280,7 +329,10 @@ export function CompasScreen({ data }: { data: CompasData }) {
       >
         {decision && !mapBig && (
           <button type="button" className="cp-decision cp-glass" onClick={followDecision}>
-            <span className="cp-decision__i" data-tone={model.verdict.level === 'bloque' ? 'bad' : undefined}>
+            <span
+              className="cp-decision__i"
+              data-tone={model.verdict.level === 'bloque' ? 'bad' : undefined}
+            >
               <Icon name="compass" size={17} />
             </span>
             <span className="cp-decision__t">
@@ -303,7 +355,8 @@ export function CompasScreen({ data }: { data: CompasData }) {
             <span className="cp-acc__v">
               <b>{formatKm(model.route.distanceKm)}</b>
               <span>
-                {model.route.days} jour{model.route.days > 1 ? 's' : ''} · {model.route.stepsCount} étape
+                {model.route.days} jour{model.route.days > 1 ? 's' : ''} · {model.route.stepsCount}{' '}
+                étape
                 {model.route.stepsCount > 1 ? 's' : ''}
               </span>
             </span>
@@ -347,7 +400,9 @@ export function CompasScreen({ data }: { data: CompasData }) {
           key={stack.length}
           title={sheetTitle(top.sheet, ctl)}
           detent={top.detent}
-          onDetent={(d) => setStack((s) => s.map((x, i) => (i === s.length - 1 ? { ...x, detent: d } : x)))}
+          onDetent={(d) =>
+            setStack((s) => s.map((x, i) => (i === s.length - 1 ? { ...x, detent: d } : x)))
+          }
           onClose={close}
           onBack={stack.length > 1 ? back : undefined}
         >
@@ -367,7 +422,16 @@ export function CompasScreen({ data }: { data: CompasData }) {
 /** Trois traits (≡) : aucun glyphe du registre ne le dessine. */
 function LinesGlyph() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
       <path d="M4 7h16M4 12h16M4 17h16" />
     </svg>
   );

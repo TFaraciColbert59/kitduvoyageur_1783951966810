@@ -3,7 +3,10 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { getHubAdventureData } from '@/features/hub/server/getHubAdventureData';
-import { getActiveProviderMode, type ProviderCredentialMode } from '@/features/booking/server/providerCredentials';
+import {
+  getActiveProviderMode,
+  type ProviderCredentialMode,
+} from '@/features/booking/server/providerCredentials';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import {
   buildCompasModel,
@@ -13,7 +16,10 @@ import {
   type CompasItemInput,
   type CompasMemberInput,
   type CompasModel,
+  type CompasWeatherDayInput,
 } from '../engine/compasModel';
+import { readCompasMeta } from '../engine/meta';
+import { getCompasWeather, type CompasWeather } from './weather';
 
 /**
  * Compas — chargeur serveur unique.
@@ -70,11 +76,23 @@ export interface CompasData {
   points: CompasPoint[];
   inventory: CompasInventoryInput[];
   shop: CompasShopProduct[];
-  affiliateLinks: Array<{ id: string; label: string; category: string | null; partner: string | null; url: string }>;
+  affiliateLinks: Array<{
+    id: string;
+    label: string;
+    category: string | null;
+    partner: string | null;
+    url: string;
+  }>;
   canEdit: boolean;
   viewerId: string | null;
   /** Mode réel des fournisseurs de réservation (`disabled` tant que les clés manquent). */
   providers: { routestack: ProviderCredentialMode; viator: ProviderCredentialMode };
+  /** Météo Open-Meteo des jours du voyage et calendrier 6 semaines (null si indisponible). */
+  weather: CompasWeather | null;
+  /** Parcours du catalogue choisi pour le voyage. */
+  route: { id: number | null; name: string | null };
+  /** Point de départ (première étape géolocalisée), pour chercher autour. */
+  origin: { lat: number; lon: number } | null;
 }
 
 const TIME_ZONE = 'Europe/Paris';
@@ -87,6 +105,24 @@ function num(value: unknown): number | null {
 
 function str(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value : null;
+}
+
+/** Prévisions des jours du voyage → entrée du modèle (jamais de valeur comblée). */
+function toWeatherInput(weather: CompasWeather | null): CompasWeatherDayInput[] {
+  if (!weather) return [];
+  const out: CompasWeatherDayInput[] = [];
+  for (const d of weather.tripDays) {
+    const f = d.forecast;
+    if (!f || f.tMin == null || f.tMax == null || f.precipPct == null || f.code == null) continue;
+    out.push({
+      date: f.date,
+      tempMinC: f.tMin,
+      tempMaxC: f.tMax,
+      precipPct: f.precipPct,
+      weathercode: f.code,
+    });
+  }
+  return out;
 }
 
 function toItems(trip: TripFull): CompasItemInput[] {
@@ -112,12 +148,17 @@ function toItems(trip: TripFull): CompasItemInput[] {
 
 function toMembers(
   trip: TripFull,
-  crew: Array<{ userId: string; role: string; fullName: string | null; avatarUrl: string | null }>,
+  crew: Array<{ userId: string; role: string; fullName: string | null; avatarUrl: string | null }>
 ): CompasMemberInput[] {
   const profiles = new Map((trip.member_profiles ?? []).map((p) => [p.user_id, p]));
   const base =
     crew.length > 0
-      ? crew.map((m) => ({ userId: m.userId, name: m.fullName, avatarUrl: m.avatarUrl, role: m.role }))
+      ? crew.map((m) => ({
+          userId: m.userId,
+          name: m.fullName,
+          avatarUrl: m.avatarUrl,
+          role: m.role,
+        }))
       : (trip.collaborators ?? []).map((c) => ({
           userId: c.user_id,
           name: c.profile?.full_name ?? c.profile?.username ?? null,
@@ -142,12 +183,17 @@ function toMembers(
   });
 }
 
-async function loadInventory(client: SupabaseClient, userId: string | null): Promise<CompasInventoryInput[]> {
+async function loadInventory(
+  client: SupabaseClient,
+  userId: string | null
+): Promise<CompasInventoryInput[]> {
   if (!userId) return [];
   try {
     const { data, error } = await client
       .from('product_ownership')
-      .select('id, name, brand, category, weight_g, condition, is_lent, maintenance_due_at, expiry_date, quantity')
+      .select(
+        'id, name, brand, category, weight_g, condition, is_lent, maintenance_due_at, expiry_date, quantity'
+      )
       .eq('user_id', userId)
       .order('category', { ascending: true })
       .limit(500);
@@ -196,7 +242,7 @@ async function loadShop(client: SupabaseClient): Promise<CompasShopProduct[]> {
     const { data, error } = await client
       .from('shop_products')
       .select(
-        'id, slug, name, brand, category_main, category, weight_g, weight_grams, price_eur, price_per_day, rating, review_count, image, image_alt, transaction_type',
+        'id, slug, name, brand, category_main, category, weight_g, weight_grams, price_eur, price_per_day, rating, review_count, image, image_alt, transaction_type'
       )
       .eq('is_active', true)
       .is('deleted_at', null)
@@ -206,7 +252,9 @@ async function loadShop(client: SupabaseClient): Promise<CompasShopProduct[]> {
     return (data ?? []).map((r: Record<string, unknown>) => ({
       id: String(r.id),
       slug: str(r.slug),
-      mode: SHOP_MODES.has(String(r.transaction_type)) ? (String(r.transaction_type) as CompasShopProduct['mode']) : null,
+      mode: SHOP_MODES.has(String(r.transaction_type))
+        ? (String(r.transaction_type) as CompasShopProduct['mode'])
+        : null,
       name: str(r.name) ?? 'Produit',
       brand: str(r.brand),
       category: str(r.category_main) ?? str(r.category),
@@ -242,6 +290,7 @@ export async function getCompasData(): Promise<CompasData | null> {
   ]);
 
   const members = toMembers(trip, hub.group?.members ?? []);
+  const compasMeta = readCompasMeta(trip.metadata);
   const input: CompasInput = {
     trip: {
       id: trip.id,
@@ -255,6 +304,8 @@ export async function getCompasData(): Promise<CompasData | null> {
       budgetCurrency: trip.budget_currency ?? 'EUR',
       partySize: num(trip.party_size),
       ownerId: trip.user_id,
+      durationHours: compasMeta.durationHours,
+      preferences: compasMeta.preferences,
     },
     steps: (trip.steps ?? []).map((s) => ({
       id: s.id,
@@ -284,13 +335,9 @@ export async function getCompasData(): Promise<CompasData | null> {
     })),
     inventory,
     bookings,
-    weather: (hub.hiking?.weather?.days ?? []).map((d) => ({
-      date: d.date,
-      tempMinC: d.tempMinC,
-      tempMaxC: d.tempMaxC,
-      precipPct: d.precipPct,
-      weathercode: d.weathercode,
-    })),
+    // Rempli plus bas avec la prévision des VRAIS jours du voyage : la météo du
+    // hub couvre aujourd'hui + 5 jours, pas les dates de la sortie.
+    weather: [],
     routeDurationMin: hub.hiking?.durationMin ?? null,
     routeHasGeometry: Boolean(hub.hiking?.routeGeojson),
     waterPointsCount: hub.hiking?.waterPointsCount ?? null,
@@ -322,6 +369,30 @@ export async function getCompasData(): Promise<CompasData | null> {
       })),
   ];
 
+  // 1er passage : jours de marche datés et géolocalisés ; 2e : avec leur météo.
+  const draft = buildCompasModel(input);
+  const plans = draft.route.dayPlans;
+  const firstGeo = plans.find((d) => d.lat != null && d.lon != null);
+  const firstPoint = points.find((p) => p.kind === 'step') ?? points[0];
+  const origin = firstGeo
+    ? { lat: firstGeo.lat as number, lon: firstGeo.lon as number }
+    : firstPoint
+      ? { lat: firstPoint.lat, lon: firstPoint.lon }
+      : null;
+  const weather = await getCompasWeather({
+    origin,
+    tripDays: plans
+      .filter((d) => d.date != null && d.lat != null && d.lon != null)
+      .map((d) => ({
+        day: d.day,
+        date: d.date as string,
+        lat: d.lat as number,
+        lon: d.lon as number,
+      })),
+    timeZone: TIME_ZONE,
+  });
+  input.weather = toWeatherInput(weather);
+
   const itinerary: CompasItineraryStep[] = [...input.steps]
     .sort((a, b) => a.dayNumber - b.dayNumber || a.orderIndex - b.orderIndex)
     .map((s) => ({
@@ -333,8 +404,10 @@ export async function getCompasData(): Promise<CompasData | null> {
       accommodation: s.accommodationName,
     }));
 
+  const routeId = compasMeta.routeId ?? num(hub.hiking?.routeId);
+
   return {
-    model: buildCompasModel(input),
+    model: input.weather.length ? buildCompasModel(input) : draft,
     itinerary,
     bookings,
     routeGeojson: hub.hiking?.routeGeojson ?? null,
@@ -351,5 +424,8 @@ export async function getCompasData(): Promise<CompasData | null> {
     canEdit: Boolean(trip.permissions?.canEdit),
     viewerId,
     providers: getActiveProviderMode(),
+    weather,
+    route: { id: routeId, name: hub.hiking?.routeName ?? null },
+    origin,
   };
 }

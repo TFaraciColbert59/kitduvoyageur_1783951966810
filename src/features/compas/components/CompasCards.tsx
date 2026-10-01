@@ -5,18 +5,15 @@ import type { ReactNode } from 'react';
 import Icon from '@/components/ui/Icon';
 import type { CompasKitLine, CompasModel } from '../engine/compasModel';
 import {
-  RULER_TICKS,
   activityLabel,
-  durationZone,
   formatHours,
   formatKg,
   formatKm,
-  formatMeters,
   formatMoney,
   initials,
-  rulerPosition,
 } from '../engine/format';
 import { Thumb, useLongPress, type Tone } from './CompasPrimitives';
+import { DurationRuler, tripHours } from './CompasRuler';
 import type { CompasCtl } from './compasTypes';
 
 /* =============================================================================
@@ -34,8 +31,10 @@ export const STATUS: Record<CompasKitLine['status'], { label: string; tone: Tone
 };
 
 export function lineStatus(line: CompasKitLine): { label: string; tone: Tone } {
-  if (line.status !== 'owned' && line.purchaseState === 'in_cart') return { label: 'Dans le panier', tone: 'soft' };
-  if (line.status !== 'owned' && line.purchaseState === 'shipping') return { label: 'En livraison', tone: 'soft' };
+  if (line.status !== 'owned' && line.purchaseState === 'in_cart')
+    return { label: 'Dans le panier', tone: 'soft' };
+  if (line.status !== 'owned' && line.purchaseState === 'shipping')
+    return { label: 'En livraison', tone: 'soft' };
   return STATUS[line.status];
 }
 
@@ -43,15 +42,30 @@ export function lineStatus(line: CompasKitLine): { label: string; tone: Tone } {
 export function KitRow({ line, ctl }: { line: CompasKitLine; ctl: CompasCtl }) {
   const press = useLongPress(
     () => ctl.open({ kind: 'item', lineId: line.id }, 'large'),
-    () => ctl.open({ kind: 'item', lineId: line.id }),
+    () => ctl.open({ kind: 'item', lineId: line.id })
   );
   const product = ctl.product(line.shopProductId);
   const status = lineStatus(line);
-  const carrier = line.ownerId ? ctl.memberName(line.ownerId) : line.shared ? 'sans porteur' : 'chacun';
+  const carrier = line.ownerId
+    ? ctl.memberName(line.ownerId)
+    : line.shared
+      ? 'sans porteur'
+      : 'chacun';
   const weight = line.weightGrams == null ? 'à peser' : formatKg(line.weightGrams * line.quantity);
   return (
-    <div className="cp-row" role="button" tabIndex={0} {...press} onKeyDown={(e) => e.key === 'Enter' && press.onClick()}>
-      <Thumb image={product?.image} alt={product?.imageAlt} category={line.category} name={line.name} />
+    <div
+      className="cp-row"
+      role="button"
+      tabIndex={0}
+      {...press}
+      onKeyDown={(e) => e.key === 'Enter' && press.onClick()}
+    >
+      <Thumb
+        image={product?.image}
+        alt={product?.imageAlt}
+        category={line.category}
+        name={line.name}
+      />
       <span className="cp-row__t">
         <b>
           {line.quantity > 1 ? `${line.quantity} × ` : ''}
@@ -82,7 +96,15 @@ export function KitRow({ line, ctl }: { line: CompasKitLine; ctl: CompasCtl }) {
   );
 }
 
-export function MemberAvatar({ name, url, small = false }: { name: string; url: string | null; small?: boolean }) {
+export function MemberAvatar({
+  name,
+  url,
+  small = false,
+}: {
+  name: string;
+  url: string | null;
+  small?: boolean;
+}) {
   return (
     <span className={`cp-avi${small ? ' cp-avi--sm' : ''}`} title={name} aria-hidden="true">
       {url ? (
@@ -134,24 +156,47 @@ function SummaryRow({
   );
 }
 
-const plainButton = { border: 0, background: 'none', padding: 0, textAlign: 'left', cursor: 'pointer', width: '100%' } as const;
+const plainButton = {
+  border: 0,
+  background: 'none',
+  padding: 0,
+  textAlign: 'left',
+  cursor: 'pointer',
+  width: '100%',
+} as const;
 
 /* ---------- Où ---------- */
 
-function tripHours(model: CompasModel): number | null {
-  if (model.dates.days) return model.dates.days * 24;
-  if (model.route.durationMin) return model.route.durationMin / 60;
-  return null;
-}
+const PACE_SHORT = {
+  tranquille: 'tranquille',
+  normal: 'rythme normal',
+  soutenu: 'soutenu',
+} as const;
+const NIGHTS_SHORT = {
+  bivouac: 'bivouac',
+  refuge: 'refuges',
+  hebergement: 'hébergements',
+  mixte: 'nuits mixtes',
+} as const;
 
 export function OuCard({ ctl, onKit }: { ctl: CompasCtl; onKit: () => void }) {
   const m = ctl.data.model;
   const hours = tripHours(m);
-  const pos = hours == null ? null : rulerPosition(hours);
   const act = activityLabel(m.activity);
   const worst = m.weather.worstPrecipPct;
-  const light = m.daylight?.sunrise && m.daylight?.sunset ? `${m.daylight.sunrise} – ${m.daylight.sunset}` : 'Avec les dates';
   const toFind = ctl.lines.filter((l) => l.status !== 'owned').length;
+  const prefs = [
+    PACE_SHORT[m.preferences.pace],
+    m.preferences.nights ? NIGHTS_SHORT[m.preferences.nights] : null,
+    m.preferences.avoid.length ? `sans ${m.preferences.avoid[0].toLowerCase()}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const route = m.route.stepsCount
+    ? `${ctl.data.route.name ? `${ctl.data.route.name} · ` : ''}${formatKm(m.route.distanceKm)}`
+    : 'À choisir';
+  const open = (flow: 'activite' | 'parcours' | 'quand' | 'preferences') =>
+    ctl.open({ kind: 'step', step: 'ou', flow });
 
   return (
     <>
@@ -159,51 +204,31 @@ export function OuCard({ ctl, onKit }: { ctl: CompasCtl; onKit: () => void }) {
         <h2 className="cp-t2" id="cp-card-title">
           {m.title}
         </h2>
-        <p className="cp-sub">{[act, hours != null ? formatHours(hours) : null, m.dates.label].filter(Boolean).join(' · ')}</p>
+        <p className="cp-sub">
+          {[act, hours != null ? formatHours(hours) : null, m.dates.label]
+            .filter(Boolean)
+            .join(' · ')}
+        </p>
       </div>
 
-      <div
-        className="cp-ruler cp-glass"
-        role="img"
-        aria-label={hours == null ? 'Durée à définir' : `Durée ${formatHours(hours)}, ${durationZone(hours)}`}
-      >
-        <div className="cp-ruler__h">
-          <span>Durée{hours != null && <span className="cp-zone">{durationZone(hours)}</span>}</span>
-          <b>{hours == null ? 'À définir' : formatHours(hours)}</b>
-        </div>
-        <div className="cp-ruler__track">
-          {pos != null && (
-            <>
-              <i className="cp-ruler__fill" style={{ width: `calc((100% - 30px) * ${pos})` }} />
-              <i className="cp-ruler__thumb" style={{ left: `calc(15px + (100% - 30px) * ${pos})` }} />
-            </>
-          )}
-        </div>
-        <div className="cp-ticks cp-hide-sm" aria-hidden="true">
-          {RULER_TICKS.map(([h, label]) => (
-            <span key={label} style={{ left: `calc(15px + (100% - 30px) * ${rulerPosition(h)})` }}>
-              {label}
-            </span>
-          ))}
-        </div>
-      </div>
+      <DurationRuler ctl={ctl} />
 
       <div className="cp-fsum cp-glass">
-        <SummaryRow icon="flag" label="Activité" value={act ?? 'À choisir'} href="/prepare" />
         <SummaryRow
-          icon="route"
-          label="Parcours"
-          value={m.route.stepsCount ? `${formatKm(m.route.distanceKm)} · D+ ${formatMeters(m.route.elevationGainM)}` : 'À tracer'}
-          onClick={() => ctl.open({ kind: 'step', step: 'ou', flow: 'etapes' })}
+          icon="flag"
+          label="Activité"
+          value={act ?? 'À choisir'}
+          onClick={() => open('activite')}
         />
+        <SummaryRow icon="route" label="Parcours" value={route} onClick={() => open('parcours')} />
         <SummaryRow
           icon="calendar"
           label="Quand"
-          value={m.dates.label}
+          value={m.dates.start ? m.dates.label : 'À choisir'}
           dot={worst == null ? undefined : worst >= 70 ? 'bad' : worst >= 40 ? 'warn' : 'good'}
-          onClick={() => ctl.open({ kind: 'step', step: 'ou', flow: 'meteo' })}
+          onClick={() => open('quand')}
         />
-        <SummaryRow icon="sun" label="Lumière" value={light} onClick={() => ctl.open({ kind: 'step', step: 'ou', flow: 'meteo' })} />
+        <SummaryRow icon="heart" label="Envies" value={prefs} onClick={() => open('preferences')} />
         <SummaryRow
           icon="backpack"
           label="Sac"
@@ -240,12 +265,23 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
         </span>
       </div>
       <p className="cp-sub">
-        Capacité de portage renseignée : <b>{known} / {crew.loads.length}</b>
+        Capacité de portage renseignée :{' '}
+        <b>
+          {known} / {crew.loads.length}
+        </b>
       </p>
-      <button type="button" className="cp-bigsum" style={plainButton} onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'budget' })}>
+      <button
+        type="button"
+        className="cp-bigsum"
+        style={plainButton}
+        onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'budget' })}
+      >
         <b>{formatMoney(engaged, budget.currency)}</b>
         <span className="cp-sub">
-          prévus et dépensés{budget.perPerson != null ? ` · ta part ${formatMoney(budget.perPerson, budget.currency)}` : ''}
+          prévus et dépensés
+          {budget.perPerson != null
+            ? ` · ta part ${formatMoney(budget.perPerson, budget.currency)}`
+            : ''}
         </span>
       </button>
       {share != null && (
@@ -264,13 +300,21 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
           : 'Aucune enveloppe fixée pour ce voyage.'}
       </p>
       {budget.overTarget && (
-        <button type="button" className="cp-alertline" onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'budget' })}>
+        <button
+          type="button"
+          className="cp-alertline"
+          onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'budget' })}
+        >
           <Icon name="alert-triangle" size={16} />
           <span className="cp-alertline__t">Dépenses au-dessus de l’enveloppe</span>
           <Icon name="chevron-right" size={14} />
         </button>
       )}
-      <button type="button" className="cp-btn cp-btn--soft" onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'equipe' })}>
+      <button
+        type="button"
+        className="cp-btn cp-btn--soft"
+        onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'equipe' })}
+      >
         <Icon name="users" size={16} />
         L’équipe et ses sacs
       </button>
@@ -282,12 +326,13 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
 
 export type VerticalId = 'hotel' | 'trajet' | 'activity';
 
-export const VERTICALS: ReadonlyArray<{ id: VerticalId | 'offres'; label: string; icon: string }> = [
-  { id: 'hotel', label: 'Nuits', icon: 'bed-double' },
-  { id: 'trajet', label: 'Trajets', icon: 'car' },
-  { id: 'activity', label: 'Activités', icon: 'ticket' },
-  { id: 'offres', label: 'Offres', icon: 'tag' },
-];
+export const VERTICALS: ReadonlyArray<{ id: VerticalId | 'offres'; label: string; icon: string }> =
+  [
+    { id: 'hotel', label: 'Nuits', icon: 'bed-double' },
+    { id: 'trajet', label: 'Trajets', icon: 'car' },
+    { id: 'activity', label: 'Activités', icon: 'ticket' },
+    { id: 'offres', label: 'Offres', icon: 'tag' },
+  ];
 
 export function verticalOf(v: string): VerticalId {
   if (v === 'hotel') return 'hotel';
@@ -295,7 +340,8 @@ export function verticalOf(v: string): VerticalId {
   return 'trajet';
 }
 
-export const LIVE_BOOKING = (s: string) => s !== 'cancelled' && s !== 'expired' && s !== 'failed' && s !== 'refunded';
+export const LIVE_BOOKING = (s: string) =>
+  s !== 'cancelled' && s !== 'expired' && s !== 'failed' && s !== 'refunded';
 
 export function ResaCard({ ctl }: { ctl: CompasCtl }) {
   const { bookings } = ctl.data.model;
@@ -310,14 +356,23 @@ export function ResaCard({ ctl }: { ctl: CompasCtl }) {
     <>
       <div className="cp-tchips">
         {VERTICALS.map((v) => {
-          const count = v.id === 'offres' ? ctl.data.affiliateLinks.length : list.filter((b) => verticalOf(b.vertical) === v.id).length;
+          const count =
+            v.id === 'offres'
+              ? ctl.data.affiliateLinks.length
+              : list.filter((b) => verticalOf(b.vertical) === v.id).length;
           return (
             <button
               key={v.id}
               type="button"
               className="cp-tchip"
               data-on={count ? '1' : undefined}
-              onClick={() => ctl.open({ kind: 'step', step: 'resa', flow: v.id === 'offres' ? 'offres' : 'reservations' })}
+              onClick={() =>
+                ctl.open({
+                  kind: 'step',
+                  step: 'resa',
+                  flow: v.id === 'offres' ? 'offres' : 'reservations',
+                })
+              }
             >
               <Icon name={v.icon} size={17} />
               <span>{v.label}</span>
@@ -331,7 +386,12 @@ export function ResaCard({ ctl }: { ctl: CompasCtl }) {
           {days.slice(0, 5).map(([day, stay]) => {
             const needNight = days.length > 1 && day < lastDay && !stay;
             return (
-              <button key={day} type="button" className="cp-day" onClick={() => ctl.open({ kind: 'step', step: 'ou', flow: 'etapes' })}>
+              <button
+                key={day}
+                type="button"
+                className="cp-day"
+                onClick={() => ctl.open({ kind: 'step', step: 'ou', flow: 'parcours' })}
+              >
                 <b>Jour {day}</b>
                 <small>{stay ?? (needNight ? 'nuit à trouver' : 'libre')}</small>
                 <span className="cp-slots">
@@ -353,7 +413,8 @@ export function ResaCard({ ctl }: { ctl: CompasCtl }) {
       )}
       <div className="cp-sumline">
         <span>
-          <b>{bookings.total}</b> réservation{bookings.total > 1 ? 's' : ''} · {bookings.confirmed} confirmée
+          <b>{bookings.total}</b> réservation{bookings.total > 1 ? 's' : ''} · {bookings.confirmed}{' '}
+          confirmée
           {bookings.confirmed > 1 ? 's' : ''} · {bookings.pending} en attente
         </span>
         <span className="cp-num cp-sub">{formatMoney(bookings.amountEur)}</span>
@@ -370,11 +431,24 @@ export function ResaCard({ ctl }: { ctl: CompasCtl }) {
 
 /* ---------- Verdict (sans score) ---------- */
 
-const VERDICT: Record<CompasModel['verdict']['level'], { label: string; tone: Tone; icon: string; color: string }> = {
+const VERDICT: Record<
+  CompasModel['verdict']['level'],
+  { label: string; tone: Tone; icon: string; color: string }
+> = {
   go: { label: 'Prêt à partir', tone: 'good', icon: 'check-circle', color: 'var(--cp-good)' },
-  vigilance: { label: 'Vigilance', tone: 'warn', icon: 'alert-triangle', color: 'var(--lkv-warning)' },
+  vigilance: {
+    label: 'Vigilance',
+    tone: 'warn',
+    icon: 'alert-triangle',
+    color: 'var(--lkv-warning)',
+  },
   bloque: { label: 'Bloqué', tone: 'bad', icon: 'shield-alert', color: 'var(--cp-bad)' },
-  incomplet: { label: 'À compléter', tone: 'soft', icon: 'clipboard-list', color: 'var(--cp-ink3)' },
+  incomplet: {
+    label: 'À compléter',
+    tone: 'soft',
+    icon: 'clipboard-list',
+    color: 'var(--cp-ink3)',
+  },
 };
 
 export function verdictMeta(level: CompasModel['verdict']['level']) {
@@ -408,11 +482,21 @@ export function VerdictCard({ ctl }: { ctl: CompasCtl }) {
           ))}
         </ul>
       ) : (
-        <p className="cp-sub">Aucun signal bloquant ni point de vigilance sur les données disponibles.</p>
+        <p className="cp-sub">
+          Aucun signal bloquant ni point de vigilance sur les données disponibles.
+        </p>
       )}
-      <button type="button" className="cp-btn cp-btn--soft" onClick={() => ctl.open({ kind: 'step', step: 'verdict', flow: more > 0 ? 'raisons' : 'sources' })}>
+      <button
+        type="button"
+        className="cp-btn cp-btn--soft"
+        onClick={() =>
+          ctl.open({ kind: 'step', step: 'verdict', flow: more > 0 ? 'raisons' : 'sources' })
+        }
+      >
         <Icon name="info" size={16} />
-        {more > 0 ? `${more} autre${more > 1 ? 's' : ''} signal${more > 1 ? 'aux' : ''}` : 'Sources et détails'}
+        {more > 0
+          ? `${more} autre${more > 1 ? 's' : ''} signal${more > 1 ? 'aux' : ''}`
+          : 'Sources et détails'}
       </button>
     </>
   );
@@ -425,7 +509,11 @@ export function KitCard({ ctl }: { ctl: CompasCtl }) {
   const lines = ctl.lines;
   const packed = lines.filter((l) => l.packed).length;
   const weightTotal = lines.reduce((t, l) => t + (l.vital ? 2 : 1), 0);
-  const pct = lines.length ? Math.round((lines.reduce((t, l) => t + (l.packed ? (l.vital ? 2 : 1) : 0), 0) / weightTotal) * 100) : null;
+  const pct = lines.length
+    ? Math.round(
+        (lines.reduce((t, l) => t + (l.packed ? (l.vital ? 2 : 1) : 0), 0) / weightTotal) * 100
+      )
+    : null;
   const total = kit.baseGrams + kit.consumableGrams + kit.wornGrams;
   const missing = kit.vitalMissing.length;
 
@@ -442,22 +530,36 @@ export function KitCard({ ctl }: { ctl: CompasCtl }) {
           )}
         </div>
         <div className="cp-wl">
-          <span style={{ ['--c' as string]: 'var(--lkv-primary)' }}>Base {formatKg(kit.baseGrams)}</span>
-          <span style={{ ['--c' as string]: 'var(--lkv-secondary-subtle)' }}>Conso. {formatKg(kit.consumableGrams)}</span>
-          <span style={{ ['--c' as string]: 'var(--lkv-info)' }}>Porté {formatKg(kit.wornGrams)}</span>
+          <span style={{ ['--c' as string]: 'var(--lkv-primary)' }}>
+            Base {formatKg(kit.baseGrams)}
+          </span>
+          <span style={{ ['--c' as string]: 'var(--lkv-secondary-subtle)' }}>
+            Conso. {formatKg(kit.consumableGrams)}
+          </span>
+          <span style={{ ['--c' as string]: 'var(--lkv-info)' }}>
+            Porté {formatKg(kit.wornGrams)}
+          </span>
         </div>
       </div>
       <button
         type="button"
         className="cp-ready"
         style={plainButton}
-        onClick={() => ctl.open({ kind: 'step', step: 'kit', flow: kit.toAcquire.length ? 'trouver' : 'emballer' })}
+        onClick={() =>
+          ctl.open({
+            kind: 'step',
+            step: 'kit',
+            flow: kit.toAcquire.length ? 'trouver' : 'emballer',
+          })
+        }
       >
         <div>
           <div className="cp-hl">Prêt sur les points vérifiés</div>
           <div className="cp-sub">
             {packed} / {lines.length} emballés ·{' '}
-            {missing ? `${missing} vital${missing > 1 ? 's' : ''} à trouver` : 'rien de vital ne manque'}
+            {missing
+              ? `${missing} vital${missing > 1 ? 's' : ''} à trouver`
+              : 'rien de vital ne manque'}
           </div>
         </div>
         <b>{pct == null ? '—' : `${pct} %`}</b>
@@ -482,7 +584,10 @@ export function KitCard({ ctl }: { ctl: CompasCtl }) {
               aria-label={`Voir le sac de ${m.name}`}
             >
               <MemberAvatar name={m.name} url={m.avatarUrl} small />
-              <span className="cp-bar" data-tone={r == null ? undefined : r > 1 ? 'bad' : r > 0.9 ? 'warn' : undefined}>
+              <span
+                className="cp-bar"
+                data-tone={r == null ? undefined : r > 1 ? 'bad' : r > 0.9 ? 'warn' : undefined}
+              >
                 <i style={{ width: r == null ? '0%' : `${Math.min(100, r * 100)}%` }} />
               </span>
               <b>
@@ -494,7 +599,11 @@ export function KitCard({ ctl }: { ctl: CompasCtl }) {
         })}
       </div>
       {crew.unassignedShared.length > 0 && (
-        <button type="button" className="cp-alertline" onClick={() => ctl.open({ kind: 'step', step: 'kit', flow: 'sacs' })}>
+        <button
+          type="button"
+          className="cp-alertline"
+          onClick={() => ctl.open({ kind: 'step', step: 'kit', flow: 'sacs' })}
+        >
           <Icon name="users" size={16} />
           <span className="cp-alertline__t">
             {crew.unassignedShared.length} objet{crew.unassignedShared.length > 1 ? 's' : ''} commun

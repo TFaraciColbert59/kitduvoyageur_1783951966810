@@ -9,7 +9,10 @@ import type { CompasData } from '../server/getCompasData';
 /* Frontières réseau et navigateur uniquement : l'écran, les cartes, les
    tiroirs et le moteur sont les vrais. */
 const refresh = vi.fn();
-vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh, push: vi.fn() }), usePathname: () => '/compas' }));
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ refresh, push: vi.fn() }),
+  usePathname: () => '/compas',
+}));
 vi.mock('next/dynamic', () => ({ default: () => () => <div data-testid="map" /> }));
 
 const kit = vi.hoisted(() => ({
@@ -27,6 +30,19 @@ const compas = vi.hoisted(() => ({
   compasAddInventoryItemAction: vi.fn(async () => ({ success: true })),
   compasMarkReturnedAction: vi.fn(async () => ({ success: true })),
   compasSetBudgetAction: vi.fn(async () => ({ success: true })),
+  compasSetDatesAction: vi.fn(async () => ({ success: true })),
+  compasSetActivityAction: vi.fn(async () => ({ success: true })),
+  compasSetPreferencesAction: vi.fn(async () => ({ success: true })),
+  compasSetPartySizeAction: vi.fn(async () => ({ success: true })),
+  compasApplyRouteAction: vi.fn(async () => ({ success: true, kept: 0 })),
+  compasMyRoutesAction: vi.fn(async () => ({ success: true, routes: [] })),
+  compasSearchRoutesAction: vi.fn(async () => ({ success: true, routes: [] as unknown[] })),
+  compasInterpretAction: vi.fn(async () => ({
+    success: true,
+    proposals: [] as unknown[],
+    usedAi: false,
+    note: null,
+  })),
 }));
 vi.mock('../server/compasActions', () => compas);
 
@@ -80,16 +96,76 @@ function makeData(overrides: Partial<CompasInput> = {}): CompasData {
   const input: CompasInput = {
     trip: baseTrip,
     steps: [
-      { id: 's1', dayNumber: 1, orderIndex: 0, title: 'Gavarnie', locationName: 'Gavarnie', lat: 42.73, lon: -0.01, distanceKm: 12.4, elevationGainM: 900, elevationLossM: 300, accommodationName: null, transportMode: 'foot', startTime: null },
-      { id: 's2', dayNumber: 2, orderIndex: 0, title: 'Refuge', locationName: 'Refuge', lat: 42.7, lon: 0.02, distanceKm: 10, elevationGainM: 700, elevationLossM: 800, accommodationName: 'Refuge', transportMode: 'foot', startTime: null },
+      {
+        id: 's1',
+        dayNumber: 1,
+        orderIndex: 0,
+        title: 'Gavarnie',
+        locationName: 'Gavarnie',
+        lat: 42.73,
+        lon: -0.01,
+        distanceKm: 12.4,
+        elevationGainM: 900,
+        elevationLossM: 300,
+        accommodationName: null,
+        transportMode: 'foot',
+        startTime: null,
+      },
+      {
+        id: 's2',
+        dayNumber: 2,
+        orderIndex: 0,
+        title: 'Refuge',
+        locationName: 'Refuge',
+        lat: 42.7,
+        lon: 0.02,
+        distanceKm: 10,
+        elevationGainM: 700,
+        elevationLossM: 800,
+        accommodationName: 'Refuge',
+        transportMode: 'foot',
+        startTime: null,
+      },
     ],
     items: [
-      item({ id: SLEEP, name: 'Sac de couchage', category: 'sleep', isVital: true, reason: 'Nuit à −3 °C', ownerId: U1 }),
-      item({ id: TENT, name: 'Tente 2P', category: 'shelter', ownership: 'shared', weightGrams: 1720, isPacked: true }),
+      item({
+        id: SLEEP,
+        name: 'Sac de couchage',
+        category: 'sleep',
+        isVital: true,
+        reason: 'Nuit à −3 °C',
+        ownerId: U1,
+      }),
+      item({
+        id: TENT,
+        name: 'Tente 2P',
+        category: 'shelter',
+        ownership: 'shared',
+        weightGrams: 1720,
+        isPacked: true,
+      }),
     ],
     members: [
-      { userId: U1, name: 'Tony', avatarUrl: null, role: 'owner', maxCarryKg: 14, flatSpeedKmh: 4.6, experienceLevel: null, calibrationLevel: null },
-      { userId: U2, name: 'Léa', avatarUrl: null, role: 'member', maxCarryKg: null, flatSpeedKmh: null, experienceLevel: null, calibrationLevel: null },
+      {
+        userId: U1,
+        name: 'Tony',
+        avatarUrl: null,
+        role: 'owner',
+        maxCarryKg: 14,
+        flatSpeedKmh: 4.6,
+        experienceLevel: null,
+        calibrationLevel: null,
+      },
+      {
+        userId: U2,
+        name: 'Léa',
+        avatarUrl: null,
+        role: 'member',
+        maxCarryKg: null,
+        flatSpeedKmh: null,
+        experienceLevel: null,
+        calibrationLevel: null,
+      },
     ],
     expenses: [],
     inventory: [],
@@ -138,6 +214,9 @@ function makeData(overrides: Partial<CompasInput> = {}): CompasData {
     canEdit: true,
     viewerId: U1,
     providers: { routestack: 'disabled', viator: 'disabled' },
+    weather: null,
+    route: { id: 374, name: 'Tour des Vallées' },
+    origin: { lat: 42.73, lon: -0.01 },
   };
 }
 
@@ -156,7 +235,9 @@ const stepsNav = () => screen.getByRole('navigation', { name: 'Étapes du Compas
 describe('CompasScreen', () => {
   it('ouvre sur l’étape de la prochaine décision réelle', () => {
     render(<CompasScreen data={makeData()} />);
-    expect(within(stepsNav()).getByRole('button', { name: /Kit/ }).getAttribute('aria-current')).toBe('step');
+    expect(
+      within(stepsNav()).getByRole('button', { name: /Kit/ }).getAttribute('aria-current')
+    ).toBe('step');
     expect(screen.getByText('Trouver : sac de couchage')).toBeTruthy();
     expect(screen.getByText('Prêt sur les points vérifiés')).toBeTruthy();
     expect(screen.getByText(/1 vital à trouver/)).toBeTruthy();
@@ -181,9 +262,13 @@ describe('CompasScreen', () => {
         tripSlug: 'trek-3-vallees',
         itemId: SLEEP,
         shopProductId: PRODUCT,
-      }),
+      })
     );
-    await waitFor(() => expect(cart.addToCart).toHaveBeenCalledWith(expect.objectContaining({ id: PRODUCT, priceEur: 75 })));
+    await waitFor(() =>
+      expect(cart.addToCart).toHaveBeenCalledWith(
+        expect.objectContaining({ id: PRODUCT, priceEur: 75 })
+      )
+    );
     expect(refresh).toHaveBeenCalled();
   });
 
@@ -199,11 +284,16 @@ describe('CompasScreen', () => {
     await openAllKit();
     fireEvent.click(screen.getByRole('button', { name: 'Emballer Sac de couchage' }));
     expect(screen.getByRole('button', { name: 'Déballer Sac de couchage' })).toBeTruthy();
-    await waitFor(() => expect(kit.togglePackedAction).toHaveBeenCalledWith(SLEEP, true, 'trek-3-vallees'));
+    await waitFor(() =>
+      expect(kit.togglePackedAction).toHaveBeenCalledWith(SLEEP, true, 'trek-3-vallees')
+    );
   });
 
   it('un échec serveur annule l’état optimiste et le dit', async () => {
-    kit.togglePackedAction.mockResolvedValueOnce({ success: false, error: 'Refusé par la RLS' } as never);
+    kit.togglePackedAction.mockResolvedValueOnce({
+      success: false,
+      error: 'Refusé par la RLS',
+    } as never);
     render(<CompasScreen data={makeData()} />);
     await openAllKit();
     fireEvent.click(screen.getByRole('button', { name: 'Emballer Sac de couchage' }));
@@ -225,7 +315,7 @@ describe('CompasScreen', () => {
         itemId: TENT,
         carrierId: U2,
         shared: true,
-      }),
+      })
     );
   });
 
@@ -248,10 +338,11 @@ describe('CompasScreen', () => {
     });
     render(<CompasScreen data={data} />);
     expect(screen.getByText('Choisir les dates')).toBeTruthy();
-    expect(within(stepsNav()).getByRole('button', { name: /Où/ }).getAttribute('aria-current')).toBe('step');
+    expect(
+      within(stepsNav()).getByRole('button', { name: /Où/ }).getAttribute('aria-current')
+    ).toBe('step');
     expect(screen.getAllByText(/Dates à choisir/).length).toBeGreaterThan(0);
-    expect(screen.getByText('Avec les dates')).toBeTruthy();
-    expect(screen.getByText('À choisir')).toBeTruthy();
+    expect(screen.getAllByText('À choisir').length).toBe(2);
   });
 
   it('Nous : budget réel, aucune enveloppe inventée, l’équipe la fixe', async () => {
@@ -262,26 +353,48 @@ describe('CompasScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Détails : Nous' }));
     const sheet = await screen.findByRole('dialog', { name: 'Nous' });
     fireEvent.click(within(sheet).getByRole('button', { name: /Budget/ }));
-    fireEvent.change(within(sheet).getByLabelText(/Enveloppe du voyage/), { target: { value: '1200' } });
+    fireEvent.change(within(sheet).getByLabelText(/Enveloppe du voyage/), {
+      target: { value: '1200' },
+    });
     fireEvent.click(within(sheet).getByRole('button', { name: 'Enregistrer' }));
     await waitFor(() =>
-      expect(compas.compasSetBudgetAction).toHaveBeenCalledWith({ tripId: TRIP, tripSlug: 'trek-3-vallees', amount: 1200 }),
+      expect(compas.compasSetBudgetAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        amount: 1200,
+      })
     );
   });
 
   it('objet prêté : « Je l’ai récupéré » remet l’objet de l’inventaire en service', async () => {
     const INV = '77777777-7777-4777-8777-777777777777';
     const inventory = [
-      { id: INV, name: 'Frontale', brand: 'Petzl', category: 'Électronique', weightG: 80, condition: 'bon', isLent: true, maintenanceDueAt: null, expiryDate: null, quantity: 1 },
+      {
+        id: INV,
+        name: 'Frontale',
+        brand: 'Petzl',
+        category: 'Électronique',
+        weightG: 80,
+        condition: 'bon',
+        isLent: true,
+        maintenanceDueAt: null,
+        expiryDate: null,
+        quantity: 1,
+      },
     ];
-    const data = makeData({ items: [item({ id: SLEEP, name: 'Frontale', isVital: true, inventoryItemId: INV })], inventory });
+    const data = makeData({
+      items: [item({ id: SLEEP, name: 'Frontale', isVital: true, inventoryItemId: INV })],
+      inventory,
+    });
     render(<CompasScreen data={{ ...data, inventory }} />);
     fireEvent.click(screen.getByText('Récupérer : frontale'));
     const kitSheet = await screen.findByRole('dialog', { name: 'Kit' });
     fireEvent.click(within(kitSheet).getByText('Frontale'));
     const sheet = await screen.findByRole('dialog', { name: 'Frontale' });
     fireEvent.click(within(sheet).getByRole('button', { name: /Je l’ai récupéré/ }));
-    await waitFor(() => expect(compas.compasMarkReturnedAction).toHaveBeenCalledWith({ inventoryItemId: INV }));
+    await waitFor(() =>
+      expect(compas.compasMarkReturnedAction).toHaveBeenCalledWith({ inventoryItemId: INV })
+    );
   });
 
   it('agrandir la carte réduit le haut à une carte-titre', () => {
@@ -290,5 +403,150 @@ describe('CompasScreen', () => {
     expect(container.querySelector('.compas')?.getAttribute('data-map')).toBe('big');
     fireEvent.click(screen.getAllByRole('button', { name: 'Réduire la carte' })[0]);
     expect(container.querySelector('.compas')?.getAttribute('data-map')).toBeNull();
+  });
+
+  const openOu = async (flow: RegExp) => {
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Où et quand' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Où et quand' });
+    fireEvent.click(within(sheet).getByRole('button', { name: flow }));
+    return sheet;
+  };
+
+  it('règle de durée : glisser propose, ✓ écrit les dates et redécoupe le parcours', async () => {
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
+    const ruler = screen.getByRole('slider', { name: 'Durée de la sortie' });
+    expect(ruler.getAttribute('aria-valuetext')).toBe('4 j');
+    fireEvent.keyDown(ruler, { key: 'ArrowRight' });
+    expect(compas.compasSetDatesAction).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Appliquer : 5 j' }));
+    await waitFor(() =>
+      expect(compas.compasSetDatesAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        startDate: '2026-10-12',
+        endDate: '2026-10-16',
+        durationHours: null,
+        resplit: true,
+      })
+    );
+    expect(await screen.findByText('Durée : 5 j · parcours redécoupé')).toBeTruthy();
+  });
+
+  it('Parcours : chercher un lieu, voir la communauté, choisir découpé sur les dates', async () => {
+    compas.compasSearchRoutesAction.mockResolvedValueOnce({
+      success: true,
+      routes: [
+        {
+          routeId: 812,
+          name: 'GR 10 · Gavarnie',
+          region: 'Hautes-Pyrénées',
+          distanceKm: 41.2,
+          elevationGainM: 2100,
+          durationHours: 14,
+          difficulty: 'difficile',
+          distanceFromKm: 3,
+          communitySessions: 7,
+          mine: null,
+        },
+      ],
+    });
+    render(<CompasScreen data={makeData()} />);
+    const sheet = await openOu(/Parcours/);
+    fireEvent.change(within(sheet).getByRole('searchbox'), { target: { value: 'Gavarnie' } });
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
+    await waitFor(() =>
+      expect(compas.compasSearchRoutesAction).toHaveBeenCalledWith({
+        lat: 42.73,
+        lon: -0.01,
+        query: 'Gavarnie',
+      })
+    );
+    fireEvent.click(await within(sheet).findByRole('button', { name: /GR 10 · Gavarnie/ }));
+    expect(within(sheet).getByText('7 sorties publiques')).toBeTruthy();
+    fireEvent.click(within(sheet).getByRole('button', { name: /Choisir ce parcours/ }));
+    await waitFor(() =>
+      expect(compas.compasApplyRouteAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        routeId: 812,
+        days: 4,
+      })
+    );
+  });
+
+  it('Envies : choisir le bivouac enregistre les préférences complètes', async () => {
+    render(<CompasScreen data={makeData()} />);
+    const sheet = await openOu(/Envies/);
+    fireEvent.click(within(sheet).getByRole('button', { name: /Bivouac/ }));
+    await waitFor(() =>
+      expect(compas.compasSetPreferencesAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        preferences: { pace: 'normal', nights: 'bivouac', avoid: [], wishes: [] },
+      })
+    );
+  });
+
+  it('Dis-le : les propositions refusées ne s’appliquent pas, les autres oui', async () => {
+    compas.compasInterpretAction.mockResolvedValueOnce({
+      success: true,
+      usedAi: true,
+      note: null,
+      proposals: [
+        {
+          id: '0-set_party_size',
+          action: { type: 'set_party_size', count: 4 },
+          label: '4 personnes',
+          ok: true,
+          reason: null,
+          source: 'ia',
+        },
+        {
+          id: '1-set_pace',
+          action: { type: 'set_pace', pace: 'tranquille' },
+          label: 'Rythme tranquille',
+          ok: true,
+          reason: null,
+          source: 'regles',
+        },
+        {
+          id: '2-set_budget',
+          action: { type: 'set_budget', amount: 50 },
+          label: 'Enveloppe : 50 €',
+          ok: false,
+          reason: 'Sous les 240 € déjà engagés',
+          source: 'regles',
+        },
+      ],
+    });
+    render(<CompasScreen data={makeData()} />);
+    const sheet = await openOu(/Quand/);
+    fireEvent.change(within(sheet).getByLabelText('Dis-le'), {
+      target: { value: 'à 4, tranquille, 50 €' },
+    });
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Comprendre la phrase' }));
+    await waitFor(() =>
+      expect(compas.compasInterpretAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        text: 'à 4, tranquille, 50 €',
+      })
+    );
+    expect(await within(sheet).findByText('Sous les 240 € déjà engagés')).toBeTruthy();
+    fireEvent.click(within(sheet).getByRole('button', { name: /Appliquer \(2\)/ }));
+    await waitFor(() =>
+      expect(compas.compasSetPartySizeAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        partySize: 4,
+      })
+    );
+    expect(compas.compasSetPreferencesAction).toHaveBeenCalledWith({
+      tripId: TRIP,
+      tripSlug: 'trek-3-vallees',
+      preferences: { pace: 'tranquille', nights: null, avoid: [], wishes: [] },
+    });
+    expect(compas.compasSetBudgetAction).not.toHaveBeenCalled();
   });
 });

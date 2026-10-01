@@ -54,7 +54,13 @@ export function CompasSheet({
 
   return (
     <>
-      <button type="button" className="cp-scrim" aria-label="Fermer le tiroir" tabIndex={-1} onClick={onClose} />
+      <button
+        type="button"
+        className="cp-scrim"
+        aria-label="Fermer le tiroir"
+        tabIndex={-1}
+        onClick={onClose}
+      />
       <div
         ref={ref}
         className="cp-sheet cp-sheet-glass"

@@ -10,7 +10,10 @@ import {
   deleteTripItemAction,
 } from '@/app/voyages/kit-actions';
 import type { CompasKitLine, CompasStepId } from '../engine/compasModel';
-import { formatKg, formatKm, formatMeters, formatMoney, formatWeekday, weatherLabel } from '../engine/format';
+import {
+  formatKg,
+  formatMoney,
+} from '../engine/format';
 import type { CompasShopProduct } from '../server/getCompasData';
 import {
   compasAddInventoryItemAction,
@@ -22,7 +25,16 @@ import {
 } from '../server/compasActions';
 import { KitRow, LIVE_BOOKING, MemberAvatar, lineStatus, verticalOf } from './CompasCards';
 import { Chip, PagedList, Segments, Thumb, useTextFilter } from './CompasPrimitives';
-import { STEP_FLOWS, type AcquireMode, type CompasCtl, type SheetState, type StepFlow } from './compasTypes';
+import { DisLe } from './CompasDisLe';
+import { ActiviteFlow, ParcoursFlow, PreferencesFlow, QuandFlow } from './CompasOuFlows';
+import {
+  STEP_FLOWS,
+  type AcquireMode,
+  type CompasCtl,
+  type FlowHint,
+  type SheetState,
+  type StepFlow,
+} from './compasTypes';
 
 /* ---------- Titre de chaque tiroir ---------- */
 
@@ -44,7 +56,9 @@ export function sheetTitle(sheet: SheetState, ctl: CompasCtl): string {
     case 'add':
       return sheet.target === 'kit' ? 'Ajouter au kit' : 'Ajouter à l’inventaire';
     case 'bag':
-      return sheet.userId === ctl.data.viewerId ? 'Mon sac' : `Sac de ${ctl.memberName(sheet.userId)}`;
+      return sheet.userId === ctl.data.viewerId
+        ? 'Mon sac'
+        : `Sac de ${ctl.memberName(sheet.userId)}`;
     case 'carrier':
       return line ? `Qui porte : ${line.name}` : 'Porteur';
     case 'step':
@@ -65,7 +79,7 @@ export function SheetContent({ sheet, ctl }: { sheet: SheetState; ctl: CompasCtl
     case 'carrier':
       return <CarrierSheet ctl={ctl} lineId={sheet.lineId} />;
     case 'step':
-      return <StepSheet ctl={ctl} step={sheet.step} flow={sheet.flow} />;
+      return <StepSheet ctl={ctl} step={sheet.step} flow={sheet.flow} hint={sheet.hint} />;
   }
 }
 
@@ -80,7 +94,9 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
   const [confirm, setConfirm] = useState(false);
   if (!line) return <Missing />;
   const product = ctl.product(line.shopProductId);
-  const inv = line.inventoryItemId ? ctl.data.inventory.find((i) => i.id === line.inventoryItemId) : undefined;
+  const inv = line.inventoryItemId
+    ? ctl.data.inventory.find((i) => i.id === line.inventoryItemId)
+    : undefined;
   const status = lineStatus(line);
   const { slug } = ctl.data.model;
   const edit = ctl.data.canEdit;
@@ -88,20 +104,46 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
   return (
     <>
       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-        <Thumb large image={product?.image} alt={product?.imageAlt} category={line.category} name={line.name} />
+        <Thumb
+          large
+          image={product?.image}
+          alt={product?.imageAlt}
+          category={line.category}
+          name={line.name}
+        />
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, minWidth: 0 }}>
           <Chip tone={status.tone}>{status.label}</Chip>
-          {line.vital && <Chip tone="bad" icon="shield-alert">Vital</Chip>}
+          {line.vital && (
+            <Chip tone="bad" icon="shield-alert">
+              Vital
+            </Chip>
+          )}
           <Chip tone="soft">{line.shared ? 'Commun' : 'Personnel'}</Chip>
-          {line.kind !== 'base' && <Chip>{line.kind === 'worn' ? 'Porté sur soi' : 'Consommable'}</Chip>}
-          {line.packed && <Chip tone="good" icon="check">Emballé</Chip>}
+          {line.kind !== 'base' && (
+            <Chip>{line.kind === 'worn' ? 'Porté sur soi' : 'Consommable'}</Chip>
+          )}
+          {line.packed && (
+            <Chip tone="good" icon="check">
+              Emballé
+            </Chip>
+          )}
         </div>
       </div>
       <dl className="cp-kv">
         <dt>Poids</dt>
-        <dd>{line.weightGrams == null ? 'à peser' : `${formatKg(line.weightGrams)}${line.quantity > 1 ? ` × ${line.quantity}` : ''}`}</dd>
+        <dd>
+          {line.weightGrams == null
+            ? 'à peser'
+            : `${formatKg(line.weightGrams)}${line.quantity > 1 ? ` × ${line.quantity}` : ''}`}
+        </dd>
         <dt>Porteur</dt>
-        <dd>{line.ownerId ? ctl.memberName(line.ownerId) : line.shared ? 'personne pour l’instant' : 'chacun le sien'}</dd>
+        <dd>
+          {line.ownerId
+            ? ctl.memberName(line.ownerId)
+            : line.shared
+              ? 'personne pour l’instant'
+              : 'chacun le sien'}
+        </dd>
         {inv && (
           <>
             <dt>Inventaire</dt>
@@ -132,11 +174,19 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
       </dl>
       {edit && (
         <div className="cp-actions">
-          <button type="button" className="cp-btn cp-btn--pg" onClick={() => ctl.togglePacked(line)}>
+          <button
+            type="button"
+            className="cp-btn cp-btn--pg"
+            onClick={() => ctl.togglePacked(line)}
+          >
             <Icon name={line.packed ? 'rotate-ccw' : 'check'} size={16} />
             {line.packed ? 'Déballer' : 'Emballer'}
           </button>
-          <button type="button" className="cp-btn cp-btn--soft" onClick={() => ctl.open({ kind: 'carrier', lineId: line.id })}>
+          <button
+            type="button"
+            className="cp-btn cp-btn--soft"
+            onClick={() => ctl.open({ kind: 'carrier', lineId: line.id })}
+          >
             <Icon name="user-plus" size={16} />
             Porteur
           </button>
@@ -147,7 +197,11 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
           type="button"
           className="cp-btn cp-btn--soft"
           disabled={ctl.busy}
-          onClick={() => ctl.run(`${inv.name} récupéré`, () => compasMarkReturnedAction({ inventoryItemId: inv.id }))}
+          onClick={() =>
+            ctl.run(`${inv.name} récupéré`, () =>
+              compasMarkReturnedAction({ inventoryItemId: inv.id })
+            )
+          }
         >
           <Icon name="archive-restore" size={16} />
           Je l’ai récupéré
@@ -162,7 +216,12 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
               { id: 'acheter', label: 'Acheter', icon: 'shopping-bag' },
             ] as const
           ).map((m) => (
-            <button key={m.id} type="button" aria-pressed={false} onClick={() => ctl.open({ kind: 'acquire', lineId: line.id, mode: m.id })}>
+            <button
+              key={m.id}
+              type="button"
+              aria-pressed={false}
+              onClick={() => ctl.open({ kind: 'acquire', lineId: line.id, mode: m.id })}
+            >
               <Icon name={m.icon} size={15} />
               {m.label}
             </button>
@@ -184,7 +243,9 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
                 className="cp-btn cp-btn--bad"
                 disabled={ctl.busy}
                 onClick={async () => {
-                  const ok = await ctl.run('Retiré du kit', () => deleteTripItemAction(line.id, slug));
+                  const ok = await ctl.run('Retiré du kit', () =>
+                    deleteTripItemAction(line.id, slug)
+                  );
                   if (ok) ctl.back();
                 }}
               >
@@ -211,7 +272,7 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
 function tokens(value: string): string[] {
   return value
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .split(/[^a-z0-9]+/)
     .filter((t) => t.length > 2);
@@ -241,16 +302,28 @@ function ProductRow({
       : formatMoney(product.priceEur);
   return (
     <div className="cp-row" style={{ cursor: 'default' }}>
-      <Thumb image={product.image} alt={product.imageAlt} category={product.category} name={product.name} />
+      <Thumb
+        image={product.image}
+        alt={product.imageAlt}
+        category={product.category}
+        name={product.name}
+      />
       <span className="cp-row__t">
         <b>{product.name}</b>
         <span>
-          {[product.brand, product.weightG != null ? formatKg(product.weightG) : null, price].filter(Boolean).join(' · ')}
+          {[product.brand, product.weightG != null ? formatKg(product.weightG) : null, price]
+            .filter(Boolean)
+            .join(' · ')}
           {product.rating != null ? ` · ★ ${product.rating.toLocaleString('fr-FR')}` : ''}
         </span>
       </span>
       <span className="cp-row__end">
-        <button type="button" className="cp-btn cp-btn--soft" disabled={disabled} onClick={onAction}>
+        <button
+          type="button"
+          className="cp-btn cp-btn--soft"
+          disabled={disabled}
+          onClick={onAction}
+        >
           {action}
         </button>
       </span>
@@ -258,16 +331,37 @@ function ProductRow({
   );
 }
 
-function SearchField({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
+function SearchField({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+}) {
   return (
     <label className="cp-field">
       <span className="sr-only">{placeholder}</span>
-      <input type="search" value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
+      <input
+        type="search"
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+      />
     </label>
   );
 }
 
-function AcquireSheet({ ctl, lineId, initialMode }: { ctl: CompasCtl; lineId: string; initialMode: AcquireMode }) {
+function AcquireSheet({
+  ctl,
+  lineId,
+  initialMode,
+}: {
+  ctl: CompasCtl;
+  lineId: string;
+  initialMode: AcquireMode;
+}) {
   const line = ctl.lines.find((l) => l.id === lineId);
   const [mode, setMode] = useState<AcquireMode>(initialMode);
   const { query, setQuery, matches } = useTextFilter();
@@ -277,7 +371,9 @@ function AcquireSheet({ ctl, lineId, initialMode }: { ctl: CompasCtl; lineId: st
     if (!line) return [];
     const wanted = mode === 'louer' ? 'location' : 'achat';
     return ctl.data.shop
-      .filter((p) => (p.mode ?? 'achat') === wanted || (mode === 'acheter' && p.mode === 'occasion'))
+      .filter(
+        (p) => (p.mode ?? 'achat') === wanted || (mode === 'acheter' && p.mode === 'occasion')
+      )
       .map((p) => ({ p, score: relevance(line, p) }))
       .sort((a, b) => b.score - a.score)
       .map((x) => x.p);
@@ -300,13 +396,16 @@ function AcquireSheet({ ctl, lineId, initialMode }: { ctl: CompasCtl; lineId: st
       />
       {mode === 'emprunter' ? (
         <>
-          <p className="cp-note">Quelqu’un de l’équipe l’a ? Il le porte pour le groupe : l’objet devient commun.</p>
+          <p className="cp-note">
+            Quelqu’un de l’équipe l’a ? Il le porte pour le groupe : l’objet devient commun.
+          </p>
           <PagedList
             label="Équipe"
             items={ctl.data.model.crew.loads.filter((m) => m.userId !== ctl.data.viewerId)}
             empty={
               <p className="cp-note">
-                Personne d’autre dans l’équipe pour l’instant. <Link href="/hub/groupe">Inviter quelqu’un</Link>
+                Personne d’autre dans l’équipe pour l’instant.{' '}
+                <Link href="/hub/groupe">Inviter quelqu’un</Link>
               </p>
             }
             render={(m) => (
@@ -323,7 +422,13 @@ function AcquireSheet({ ctl, lineId, initialMode }: { ctl: CompasCtl; lineId: st
                     disabled={ctl.busy}
                     onClick={async () => {
                       const ok = await ctl.run(`${m.name} porte ${line.name}`, () =>
-                        compasSetCarrierAction({ tripId, tripSlug: slug, itemId: line.id, carrierId: m.userId, shared: true }),
+                        compasSetCarrierAction({
+                          tripId,
+                          tripSlug: slug,
+                          itemId: line.id,
+                          carrierId: m.userId,
+                          shared: true,
+                        })
                       );
                       if (ok) ctl.back();
                     }}
@@ -337,7 +442,11 @@ function AcquireSheet({ ctl, lineId, initialMode }: { ctl: CompasCtl; lineId: st
         </>
       ) : (
         <>
-          <SearchField value={query} onChange={setQuery} placeholder={`Chercher ${mode === 'louer' ? 'une location' : 'un produit'}`} />
+          <SearchField
+            value={query}
+            onChange={setQuery}
+            placeholder={`Chercher ${mode === 'louer' ? 'une location' : 'un produit'}`}
+          />
           <PagedList
             label={mode === 'louer' ? 'Locations' : 'Produits'}
             resetKey={`${mode}-${query}`}
@@ -346,7 +455,8 @@ function AcquireSheet({ ctl, lineId, initialMode }: { ctl: CompasCtl; lineId: st
               <p className="cp-note">
                 {mode === 'louer' ? (
                   <>
-                    Aucune location disponible dans la boutique pour l’instant. <Link href="/location">Voir la location</Link>
+                    Aucune location disponible dans la boutique pour l’instant.{' '}
+                    <Link href="/location">Voir la location</Link>
                   </>
                 ) : (
                   'Aucun produit ne correspond.'
@@ -361,7 +471,12 @@ function AcquireSheet({ ctl, lineId, initialMode }: { ctl: CompasCtl; lineId: st
                 disabled={ctl.busy || line.shopProductId === p.id}
                 onAction={async () => {
                   const ok = await ctl.run('Ajouté au panier et relié au kit', () =>
-                    compasPickShopProductAction({ tripId, tripSlug: slug, itemId: line.id, shopProductId: p.id }),
+                    compasPickShopProductAction({
+                      tripId,
+                      tripSlug: slug,
+                      itemId: line.id,
+                      shopProductId: p.id,
+                    })
                   );
                   if (ok && p.slug && p.priceEur != null) {
                     addToCart({
@@ -408,11 +523,18 @@ const CATEGORIES = [
 type AddSource = 'inventaire' | 'boutique' | 'libre';
 
 function AddSheet({ ctl, target }: { ctl: CompasCtl; target: 'kit' | 'inventaire' }) {
-  const [source, setSource] = useState<AddSource>(target === 'kit' && ctl.data.inventory.length ? 'inventaire' : 'boutique');
+  const [source, setSource] = useState<AddSource>(
+    target === 'kit' && ctl.data.inventory.length ? 'inventaire' : 'boutique'
+  );
   const { query, setQuery, matches } = useTextFilter();
   const { tripId, slug } = ctl.data.model;
-  const inKit = useMemo(() => new Set(ctl.lines.map((l) => l.inventoryItemId).filter(Boolean)), [ctl.lines]);
-  const inventory = ctl.data.inventory.filter((i) => !inKit.has(i.id) && matches(i.name, i.brand, i.category));
+  const inKit = useMemo(
+    () => new Set(ctl.lines.map((l) => l.inventoryItemId).filter(Boolean)),
+    [ctl.lines]
+  );
+  const inventory = ctl.data.inventory.filter(
+    (i) => !inKit.has(i.id) && matches(i.name, i.brand, i.category)
+  );
   const shop = ctl.data.shop.filter((p) => matches(p.name, p.brand, p.category));
 
   const options =
@@ -430,7 +552,9 @@ function AddSheet({ ctl, target }: { ctl: CompasCtl; target: 'kit' | 'inventaire
   return (
     <>
       <Segments label="Source" value={source} onChange={setSource} options={options} />
-      {source !== 'libre' && <SearchField value={query} onChange={setQuery} placeholder="Chercher" />}
+      {source !== 'libre' && (
+        <SearchField value={query} onChange={setQuery} placeholder="Chercher" />
+      )}
       {source === 'inventaire' && (
         <PagedList
           label="Mon inventaire"
@@ -438,7 +562,9 @@ function AddSheet({ ctl, target }: { ctl: CompasCtl; target: 'kit' | 'inventaire
           items={inventory}
           empty={
             <p className="cp-note">
-              {ctl.data.inventory.length ? 'Tout ton inventaire est déjà dans le kit.' : 'Ton inventaire est vide.'}{' '}
+              {ctl.data.inventory.length
+                ? 'Tout ton inventaire est déjà dans le kit.'
+                : 'Ton inventaire est vide.'}{' '}
               <Link href="/hub/inventaire">Ouvrir l’inventaire</Link>
             </p>
           }
@@ -448,7 +574,13 @@ function AddSheet({ ctl, target }: { ctl: CompasCtl; target: 'kit' | 'inventaire
               <span className="cp-row__t">
                 <b>{i.name}</b>
                 <span>
-                  {[i.brand, i.weightG != null ? formatKg(i.weightG) : 'à peser', i.isLent ? 'prêté' : null].filter(Boolean).join(' · ')}
+                  {[
+                    i.brand,
+                    i.weightG != null ? formatKg(i.weightG) : 'à peser',
+                    i.isLent ? 'prêté' : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
                 </span>
               </span>
               <span className="cp-row__end">
@@ -458,7 +590,14 @@ function AddSheet({ ctl, target }: { ctl: CompasCtl; target: 'kit' | 'inventaire
                   disabled={ctl.busy}
                   onClick={() =>
                     ctl.run(`${i.name} ajouté au kit`, () =>
-                      addInventoryItemToTripAction(tripId, slug, i.id, i.name, i.category ?? undefined, i.weightG ?? undefined),
+                      addInventoryItemToTripAction(
+                        tripId,
+                        slug,
+                        i.id,
+                        i.name,
+                        i.category ?? undefined,
+                        i.weightG ?? undefined
+                      )
                     )
                   }
                 >
@@ -483,8 +622,16 @@ function AddSheet({ ctl, target }: { ctl: CompasCtl; target: 'kit' | 'inventaire
               disabled={ctl.busy}
               onAction={() =>
                 target === 'kit'
-                  ? ctl.run(`${p.name} ajouté au kit`, () => compasAddShopProductToTripAction({ tripId, tripSlug: slug, shopProductId: p.id }))
-                  : ctl.run(`${p.name} ajouté à l’inventaire`, () => compasAddInventoryItemAction({ name: p.name, fromShopProductId: p.id }))
+                  ? ctl.run(`${p.name} ajouté au kit`, () =>
+                      compasAddShopProductToTripAction({
+                        tripId,
+                        tripSlug: slug,
+                        shopProductId: p.id,
+                      })
+                    )
+                  : ctl.run(`${p.name} ajouté à l’inventaire`, () =>
+                      compasAddInventoryItemAction({ name: p.name, fromShopProductId: p.id })
+                    )
               }
             />
           )}
@@ -513,7 +660,11 @@ function FreeItemForm({ ctl, target }: { ctl: CompasCtl; target: 'kit' | 'invent
     } else {
       const cat = CATEGORIES.find((c) => c.id === fd.get('category'))?.label;
       ok = await ctl.run(`${name} ajouté à l’inventaire`, () =>
-        compasAddInventoryItemAction({ name, category: cat, weightG: weight > 0 ? Math.round(weight) : null }),
+        compasAddInventoryItemAction({
+          name,
+          category: cat,
+          weightG: weight > 0 ? Math.round(weight) : null,
+        })
       );
     }
     if (ok) form.reset();
@@ -550,7 +701,14 @@ function FreeItemForm({ ctl, target }: { ctl: CompasCtl; target: 'kit' | 'invent
           </label>
           <label className="cp-field" style={{ flexDirection: 'row', alignItems: 'center' }}>
             Quantité
-            <input name="quantity" type="number" min={1} max={999} defaultValue={1} style={{ width: 72 }} />
+            <input
+              name="quantity"
+              type="number"
+              min={1}
+              max={999}
+              defaultValue={1}
+              style={{ width: 72 }}
+            />
           </label>
         </div>
       )}
@@ -568,7 +726,9 @@ function BagSheet({ ctl, userId }: { ctl: CompasCtl; userId: string }) {
   const load = ctl.data.model.crew.loads.find((l) => l.userId === userId);
   const lines = useMemo(() => {
     const shared = new Set(load?.sharedItemIds ?? []);
-    return ctl.lines.filter((l) => shared.has(l.id) || (!l.shared && (l.ownerId === userId || l.ownerId == null)));
+    return ctl.lines.filter(
+      (l) => shared.has(l.id) || (!l.shared && (l.ownerId === userId || l.ownerId == null))
+    );
   }, [ctl.lines, load, userId]);
   if (!load) return <p className="cp-note">Cette personne ne fait plus partie de l’équipe.</p>;
   const pct = load.ratio == null ? null : Math.round(load.ratio * 100);
@@ -580,10 +740,16 @@ function BagSheet({ ctl, userId }: { ctl: CompasCtl; userId: string }) {
           <b>{formatKg(load.carriedGrams)}</b>
           <span className="cp-note">
             {' '}
-            {load.capacityKg != null ? `sur ${load.capacityKg} kg de capacité` : '· capacité non renseignée'}
+            {load.capacityKg != null
+              ? `sur ${load.capacityKg} kg de capacité`
+              : '· capacité non renseignée'}
           </span>
           {pct != null && (
-            <div className="cp-meter" data-tone={pct > 100 ? 'bad' : pct > 85 ? 'warn' : undefined} style={{ marginTop: 6 }}>
+            <div
+              className="cp-meter"
+              data-tone={pct > 100 ? 'bad' : pct > 85 ? 'warn' : undefined}
+              style={{ marginTop: 6 }}
+            >
               <i style={{ width: `${Math.min(100, pct)}%` }} />
             </div>
           )}
@@ -608,8 +774,9 @@ function CarrierSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
   const { tripId, slug } = ctl.data.model;
   const assign = async (carrierId: string | null) => {
     const who = carrierId ? ctl.memberName(carrierId) : 'personne';
-    const ok = await ctl.run(carrierId ? `${who} porte ${line.name}` : `${line.name} sans porteur`, () =>
-      compasSetCarrierAction({ tripId, tripSlug: slug, itemId: line.id, carrierId, shared }),
+    const ok = await ctl.run(
+      carrierId ? `${who} porte ${line.name}` : `${line.name} sans porteur`,
+      () => compasSetCarrierAction({ tripId, tripSlug: slug, itemId: line.id, carrierId, shared })
     );
     if (ok) ctl.back();
   };
@@ -628,7 +795,13 @@ function CarrierSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
         label="Équipe"
         items={ctl.data.model.crew.loads}
         render={(m) => (
-          <button key={m.userId} type="button" className="cp-row" disabled={ctl.busy} onClick={() => assign(m.userId)}>
+          <button
+            key={m.userId}
+            type="button"
+            className="cp-row"
+            disabled={ctl.busy}
+            onClick={() => assign(m.userId)}
+          >
             <MemberAvatar name={m.name} url={m.avatarUrl} />
             <span className="cp-row__t">
               <b>
@@ -640,7 +813,9 @@ function CarrierSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
                 {m.capacityKg != null ? ` sur ${m.capacityKg} kg` : ''}
               </span>
             </span>
-            <span className="cp-row__end">{line.ownerId === m.userId && <Icon name="check" size={18} />}</span>
+            <span className="cp-row__end">
+              {line.ownerId === m.userId && <Icon name="check" size={18} />}
+            </span>
           </button>
         )}
       />
@@ -658,7 +833,17 @@ function CarrierSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
    étapes, puis la liste paginée. Tout vient des données réelles du voyage.
    ============================================================================= */
 
-function StepSheet({ ctl, step, flow }: { ctl: CompasCtl; step: CompasStepId; flow: StepFlow }) {
+function StepSheet({
+  ctl,
+  step,
+  flow,
+  hint,
+}: {
+  ctl: CompasCtl;
+  step: CompasStepId;
+  flow: StepFlow;
+  hint?: FlowHint;
+}) {
   const flows = STEP_FLOWS[step];
   return (
     <>
@@ -668,100 +853,30 @@ function StepSheet({ ctl, step, flow }: { ctl: CompasCtl; step: CompasStepId; fl
         onChange={(f) => ctl.replace({ kind: 'step', step, flow: f })}
         options={flows.map((f) => ({ id: f.id as StepFlow, label: f.label, icon: f.icon }))}
       />
-      {step === 'ou' && flow === 'etapes' && <EtapesFlow ctl={ctl} />}
-      {step === 'ou' && flow === 'meteo' && <MeteoFlow ctl={ctl} />}
+      {step === 'ou' && flow === 'activite' && <ActiviteFlow ctl={ctl} />}
+      {step === 'ou' && flow === 'parcours' && (
+        <ParcoursFlow key={hint?.query ?? 'p'} ctl={ctl} hint={hint} />
+      )}
+      {step === 'ou' && flow === 'quand' && (
+        <QuandFlow key={hint?.hours ?? 'q'} ctl={ctl} hint={hint} />
+      )}
+      {step === 'ou' && flow === 'preferences' && <PreferencesFlow ctl={ctl} />}
       {step === 'nous' && flow === 'equipe' && <EquipeFlow ctl={ctl} />}
       {step === 'nous' && flow === 'budget' && <BudgetFlow ctl={ctl} />}
       {step === 'resa' && flow === 'reservations' && <ReservationsFlow ctl={ctl} />}
       {step === 'resa' && flow === 'offres' && <OffresFlow ctl={ctl} />}
       {step === 'verdict' && flow === 'raisons' && <RaisonsFlow ctl={ctl} />}
       {step === 'verdict' && flow === 'sources' && <SourcesFlow ctl={ctl} />}
-      {step === 'kit' && (flow === 'trouver' || flow === 'emballer' || flow === 'tout') && <KitListFlow ctl={ctl} flow={flow} />}
+      {step === 'kit' && (flow === 'trouver' || flow === 'emballer' || flow === 'tout') && (
+        <KitListFlow ctl={ctl} flow={flow} />
+      )}
       {step === 'kit' && flow === 'sacs' && <SacsFlow ctl={ctl} />}
+      {ctl.data.canEdit && <DisLe ctl={ctl} />}
     </>
   );
 }
 
 const staticRow = { cursor: 'default' } as const;
-
-function EtapesFlow({ ctl }: { ctl: CompasCtl }) {
-  return (
-    <>
-      <PagedList
-        label="Étapes du parcours"
-        items={ctl.data.itinerary}
-        empty={<p className="cp-note">Aucune étape pour l’instant : trace le parcours dans le préparateur.</p>}
-        render={(s) => (
-          <div key={s.id} className="cp-row" style={staticRow}>
-            <span className="cp-thumb" aria-hidden="true">
-              <b>{s.day}</b>
-            </span>
-            <span className="cp-row__t">
-              <b>{s.title}</b>
-              <span>
-                Jour {s.day} · {formatKm(s.distanceKm)} · D+ {formatMeters(s.elevationGainM)}
-              </span>
-            </span>
-            <span className="cp-row__end">{s.accommodation && <Chip icon="bed-double">{s.accommodation}</Chip>}</span>
-          </div>
-        )}
-      />
-      <div className="cp-actions">
-        <Link className="cp-btn cp-btn--soft" href="/prepare">
-          <Icon name="edit3" size={16} />
-          Modifier le parcours
-        </Link>
-      </div>
-    </>
-  );
-}
-
-function MeteoFlow({ ctl }: { ctl: CompasCtl }) {
-  const { weather, daylight, dates } = ctl.data.model;
-  return (
-    <>
-      {daylight && (
-        <div className="cp-sumline">
-          <span>
-            <b>Lumière du {formatWeekday(daylight.date)}</b> · lever {daylight.sunrise ?? '—'} · coucher {daylight.sunset ?? '—'}
-          </span>
-          <span className="cp-sub">{daylight.source}</span>
-        </div>
-      )}
-      <PagedList
-        label="Prévisions Open-Meteo"
-        items={weather.days}
-        empty={
-          <p className="cp-note">
-            {dates.start
-              ? 'Prévisions disponibles à 16 jours du départ : elles apparaîtront ici automatiquement.'
-              : 'Choisis les dates : la météo, la lumière du jour et les réservations en dépendent.'}
-          </p>
-        }
-        render={(d) => {
-          const w = weatherLabel(d.weathercode);
-          return (
-            <div className="cp-row" key={d.date} style={staticRow}>
-              <span className="cp-thumb">
-                <Icon name={w.icon} size={20} />
-              </span>
-              <span className="cp-row__t">
-                <b>{formatWeekday(d.date)}</b>
-                <span>{w.label} · Open-Meteo</span>
-              </span>
-              <span className="cp-row__end">
-                {Math.round(d.tempMinC)}° / {Math.round(d.tempMaxC)}°
-                <Chip tone={d.precipPct >= 60 ? 'warn' : undefined} icon="droplet">
-                  {d.precipPct} %
-                </Chip>
-              </span>
-            </div>
-          );
-        }}
-      />
-    </>
-  );
-}
 
 function EquipeFlow({ ctl }: { ctl: CompasCtl }) {
   return (
@@ -772,7 +887,12 @@ function EquipeFlow({ ctl }: { ctl: CompasCtl }) {
         render={(m) => {
           const pct = m.ratio == null ? null : Math.round(m.ratio * 100);
           return (
-            <button key={m.userId} type="button" className="cp-row" onClick={() => ctl.open({ kind: 'bag', userId: m.userId })}>
+            <button
+              key={m.userId}
+              type="button"
+              className="cp-row"
+              onClick={() => ctl.open({ kind: 'bag', userId: m.userId })}
+            >
               <MemberAvatar name={m.name} url={m.avatarUrl} />
               <span className="cp-row__t">
                 <b>
@@ -785,7 +905,9 @@ function EquipeFlow({ ctl }: { ctl: CompasCtl }) {
                 </span>
               </span>
               <span className="cp-row__end">
-                {pct != null && <Chip tone={pct > 100 ? 'bad' : pct > 90 ? 'warn' : 'good'}>{pct} %</Chip>}
+                {pct != null && (
+                  <Chip tone={pct > 100 ? 'bad' : pct > 90 ? 'warn' : 'good'}>{pct} %</Chip>
+                )}
                 <Icon name="chevron-right" size={16} />
               </span>
             </button>
@@ -808,14 +930,16 @@ function BudgetFlow({ ctl }: { ctl: CompasCtl }) {
   const { tripId, slug } = ctl.data.model;
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const raw = String(new FormData(e.currentTarget).get('amount') ?? '').replace(',', '.').trim();
+    const raw = String(new FormData(e.currentTarget).get('amount') ?? '')
+      .replace(',', '.')
+      .trim();
     const amount = raw === '' ? null : Number(raw);
     if (amount != null && (!Number.isFinite(amount) || amount < 0)) {
       ctl.notify('Montant invalide', 'bad');
       return;
     }
     void ctl.run(amount == null ? 'Enveloppe retirée' : 'Enveloppe enregistrée', () =>
-      compasSetBudgetAction({ tripId, tripSlug: slug, amount }),
+      compasSetBudgetAction({ tripId, tripSlug: slug, amount })
     );
   };
   return (
@@ -891,23 +1015,40 @@ const VERTICAL_LABEL: Record<string, { label: string; icon: string }> = {
 };
 
 function ReservationsFlow({ ctl }: { ctl: CompasCtl }) {
-  const list = [...ctl.data.bookings].sort((a, b) => Number(LIVE_BOOKING(b.status)) - Number(LIVE_BOOKING(a.status)));
+  const list = [...ctl.data.bookings].sort(
+    (a, b) => Number(LIVE_BOOKING(b.status)) - Number(LIVE_BOOKING(a.status))
+  );
   return (
     <PagedList
       label="Réservations du voyage"
       items={list}
-      empty={<p className="cp-note">Aucune réservation pour ce voyage. Les offres partenaires sont dans l’onglet Offres.</p>}
+      empty={
+        <p className="cp-note">
+          Aucune réservation pour ce voyage. Les offres partenaires sont dans l’onglet Offres.
+        </p>
+      }
       render={(b) => {
         const v = VERTICAL_LABEL[b.vertical] ?? { label: b.vertical, icon: 'ticket' };
         const st = BOOKING_STATUS[b.status] ?? { label: b.status };
         return (
-          <div key={b.id} className="cp-row" style={staticRow} data-vertical={verticalOf(b.vertical)}>
+          <div
+            key={b.id}
+            className="cp-row"
+            style={staticRow}
+            data-vertical={verticalOf(b.vertical)}
+          >
             <span className="cp-thumb">
               <Icon name={v.icon} size={20} />
             </span>
             <span className="cp-row__t">
               <b>{v.label}</b>
-              <span>{b.provider === 'affiliate' ? 'Partenaire affilié' : b.provider === 'routestack' ? 'RouteStack' : 'Viator'}</span>
+              <span>
+                {b.provider === 'affiliate'
+                  ? 'Partenaire affilié'
+                  : b.provider === 'routestack'
+                    ? 'RouteStack'
+                    : 'Viator'}
+              </span>
             </span>
             <span className="cp-row__end">
               {formatMoney(b.amountEur)}
@@ -939,7 +1080,9 @@ function OffresFlow({ ctl }: { ctl: CompasCtl }) {
       <PagedList
         label="Offres partenaires"
         items={ctl.data.affiliateLinks}
-        empty={<p className="cp-note">Aucune offre partenaire pour cette destination pour l’instant.</p>}
+        empty={
+          <p className="cp-note">Aucune offre partenaire pour cette destination pour l’instant.</p>
+        }
         render={(l) => (
           <a key={l.id} className="cp-row" href={l.url} target="_blank" rel="noopener sponsored">
             <span className="cp-thumb">
@@ -973,14 +1116,25 @@ function RaisonsFlow({ ctl }: { ctl: CompasCtl }) {
       render={(r) => (
         <div key={`${r.source}-${r.label}`} className="cp-row" style={staticRow}>
           <span className="cp-thumb">
-            <Icon name={r.severity === 'block' ? 'shield-alert' : r.severity === 'warn' ? 'alert-triangle' : 'info'} size={20} />
+            <Icon
+              name={
+                r.severity === 'block'
+                  ? 'shield-alert'
+                  : r.severity === 'warn'
+                    ? 'alert-triangle'
+                    : 'info'
+              }
+              size={20}
+            />
           </span>
           <span className="cp-row__t">
             <b>{r.label}</b>
             <span>Source : {r.source}</span>
           </span>
           <span className="cp-row__end">
-            <Chip tone={r.severity === 'block' ? 'bad' : r.severity === 'warn' ? 'warn' : undefined}>
+            <Chip
+              tone={r.severity === 'block' ? 'bad' : r.severity === 'warn' ? 'warn' : undefined}
+            >
               {r.severity === 'block' ? 'Bloquant' : r.severity === 'warn' ? 'Vigilance' : 'Info'}
             </Chip>
           </span>
@@ -1024,9 +1178,15 @@ function SourcesFlow({ ctl }: { ctl: CompasCtl }) {
           </Chip>
         ))}
       </div>
-      <p className="cp-note">Aucune donnée n’est inventée : ce qui manque est affiché comme manquant, sans score.</p>
+      <p className="cp-note">
+        Aucune donnée n’est inventée : ce qui manque est affiché comme manquant, sans score.
+      </p>
       <div className="cp-actions">
-        <button type="button" className="cp-btn cp-btn--soft" onClick={() => ctl.open({ kind: 'add', target: 'inventaire' })}>
+        <button
+          type="button"
+          className="cp-btn cp-btn--soft"
+          onClick={() => ctl.open({ kind: 'add', target: 'inventaire' })}
+        >
           <Icon name="archive" size={16} />
           Ajouter à l’inventaire
         </button>
@@ -1037,7 +1197,11 @@ function SourcesFlow({ ctl }: { ctl: CompasCtl }) {
 
 function KitListFlow({ ctl, flow }: { ctl: CompasCtl; flow: 'trouver' | 'emballer' | 'tout' }) {
   const lines =
-    flow === 'trouver' ? ctl.lines.filter((l) => l.status !== 'owned') : flow === 'emballer' ? ctl.lines.filter((l) => !l.packed) : ctl.lines;
+    flow === 'trouver'
+      ? ctl.lines.filter((l) => l.status !== 'owned')
+      : flow === 'emballer'
+        ? ctl.lines.filter((l) => !l.packed)
+        : ctl.lines;
   return (
     <>
       <PagedList
@@ -1057,7 +1221,11 @@ function KitListFlow({ ctl, flow }: { ctl: CompasCtl; flow: 'trouver' | 'emballe
       />
       {ctl.data.canEdit && (
         <div className="cp-actions">
-          <button type="button" className="cp-btn cp-btn--pg cp-btn--block" onClick={() => ctl.open({ kind: 'add', target: 'kit' })}>
+          <button
+            type="button"
+            className="cp-btn cp-btn--pg cp-btn--block"
+            onClick={() => ctl.open({ kind: 'add', target: 'kit' })}
+          >
             <Icon name="plus" size={16} />
             Ajouter au kit
           </button>
@@ -1070,12 +1238,18 @@ function KitListFlow({ ctl, flow }: { ctl: CompasCtl; flow: 'trouver' | 'emballe
 function SacsFlow({ ctl }: { ctl: CompasCtl }) {
   const unassigned = new Set(ctl.data.model.crew.unassignedShared.map((l) => l.id));
   const rows: Array<{ kind: 'line'; line: CompasKitLine } | { kind: 'member'; id: string }> = [
-    ...ctl.lines.filter((l) => unassigned.has(l.id)).map((line) => ({ kind: 'line' as const, line })),
+    ...ctl.lines
+      .filter((l) => unassigned.has(l.id))
+      .map((line) => ({ kind: 'line' as const, line })),
     ...ctl.data.model.crew.loads.map((m) => ({ kind: 'member' as const, id: m.userId })),
   ];
   return (
     <>
-      {unassigned.size > 0 && <p className="cp-note">Touche un objet commun pour choisir qui le porte : la charge de chacun se met à jour.</p>}
+      {unassigned.size > 0 && (
+        <p className="cp-note">
+          Touche un objet commun pour choisir qui le porte : la charge de chacun se met à jour.
+        </p>
+      )}
       <PagedList
         label="Sacs et matériel commun"
         items={rows}
@@ -1083,11 +1257,21 @@ function SacsFlow({ ctl }: { ctl: CompasCtl }) {
           if (r.kind === 'line') {
             const line = r.line;
             return (
-              <button key={line.id} type="button" className="cp-row" onClick={() => ctl.open({ kind: 'carrier', lineId: line.id })}>
+              <button
+                key={line.id}
+                type="button"
+                className="cp-row"
+                onClick={() => ctl.open({ kind: 'carrier', lineId: line.id })}
+              >
                 <Thumb category={line.category} name={line.name} />
                 <span className="cp-row__t">
                   <b>{line.name}</b>
-                  <span>Commun sans porteur · {line.weightGrams == null ? 'à peser' : formatKg(line.weightGrams * line.quantity)}</span>
+                  <span>
+                    Commun sans porteur ·{' '}
+                    {line.weightGrams == null
+                      ? 'à peser'
+                      : formatKg(line.weightGrams * line.quantity)}
+                  </span>
                 </span>
                 <span className="cp-row__end">
                   <Chip tone="warn">Qui porte ?</Chip>
@@ -1098,7 +1282,12 @@ function SacsFlow({ ctl }: { ctl: CompasCtl }) {
           const m = ctl.data.model.crew.loads.find((x) => x.userId === r.id);
           if (!m) return null;
           return (
-            <button key={m.userId} type="button" className="cp-row" onClick={() => ctl.open({ kind: 'bag', userId: m.userId })}>
+            <button
+              key={m.userId}
+              type="button"
+              className="cp-row"
+              onClick={() => ctl.open({ kind: 'bag', userId: m.userId })}
+            >
               <MemberAvatar name={m.name} url={m.avatarUrl} />
               <span className="cp-row__t">
                 <b>Sac de {m.name}</b>

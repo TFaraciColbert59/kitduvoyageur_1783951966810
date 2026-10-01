@@ -33,11 +33,19 @@
   --cp-la: 140deg;
   --cp-soft: rgb(150 186 142 / 0.28);
   --cp-soft-line: rgb(91 127 85 / 0.38);
-  --cp-pg: linear-gradient(180deg, rgb(255 255 255 / 0.62), rgb(255 255 255 / 0.16) 52%, rgb(255 255 255 / 0.3)),
+  --cp-pg:
+    linear-gradient(
+      180deg,
+      rgb(255 255 255 / 0.62),
+      rgb(255 255 255 / 0.16) 52%,
+      rgb(255 255 255 / 0.3)
+    ),
     rgb(150 186 142 / 0.34);
   --cp-pg-ink: var(--lkv-primary);
-  --cp-pg-sh: inset 0 1px 0 rgb(255 255 255 / 0.95), inset 0 -1px 0 rgb(255 255 255 / 0.4),
-    inset 0 0 0 0.6px rgb(255 255 255 / 0.5), 0 0 0 0.6px rgb(23 64 44 / 0.16), 0 5px 14px rgb(23 64 44 / 0.13);
+  --cp-pg-sh:
+    inset 0 1px 0 rgb(255 255 255 / 0.95), inset 0 -1px 0 rgb(255 255 255 / 0.4),
+    inset 0 0 0 0.6px rgb(255 255 255 / 0.5), 0 0 0 0.6px rgb(23 64 44 / 0.16),
+    0 5px 14px rgb(23 64 44 / 0.13);
   --cp-hi: rgb(255 255 255 / 0.9);
   --cp-shadow: 0 8px 22px rgb(23 43 36 / 0.12);
   --cp-map-h: 40%;
@@ -45,7 +53,9 @@
   --cp-row-h: 48px;
   /* La barre d'onglets flotte AU-DESSUS de la carte (comme dans Plans et la
      maquette v8) : le Compas descend sous la barre, seule la carte y passe. */
-  --cp-nav-clear: calc(max(var(--bottom-nav-height, 0px), var(--cookie-banner-h, 0px)) + var(--space-6, 24px));
+  --cp-nav-clear: calc(
+    max(var(--bottom-nav-height, 0px), var(--cookie-banner-h, 0px)) + var(--space-6, 24px)
+  );
   --cp-island-bg: var(--lkv-text-primary);
   --cp-island-ink: var(--lkv-on-dark);
   --cp-island-ink2: rgb(255 255 255 / 0.72);
@@ -87,7 +97,13 @@
   --cp-hi: rgb(255 255 255 / 0.35);
   --cp-soft: rgb(166 193 160 / 0.2);
   --cp-soft-line: rgb(166 193 160 / 0.4);
-  --cp-pg: linear-gradient(180deg, rgb(255 255 255 / 0.2), rgb(255 255 255 / 0.04) 52%, rgb(255 255 255 / 0.1)),
+  --cp-pg:
+    linear-gradient(
+      180deg,
+      rgb(255 255 255 / 0.2),
+      rgb(255 255 255 / 0.04) 52%,
+      rgb(255 255 255 / 0.1)
+    ),
     rgb(91 127 85 / 0.36);
   --cp-pg-ink: var(--lkv-text-primary);
   --cp-shadow: 0 8px 22px rgb(0 0 0 / 0.3);
@@ -112,14 +128,26 @@
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: linear-gradient(180deg, rgb(255 250 236 / 0.08), rgb(255 255 255 / 0) 30%, rgb(245 242 236 / 0.12) 60%),
+  background:
+    linear-gradient(
+      180deg,
+      rgb(255 250 236 / 0.08),
+      rgb(255 255 255 / 0) 30%,
+      rgb(245 242 236 / 0.12) 60%
+    ),
     var(--lkv-app-bg-image-portrait) center 30% / cover no-repeat,
     var(--lkv-app-bg-fallback);
   filter: brightness(1.1) saturate(1.05);
 }
 @media (min-aspect-ratio: 1 / 1) {
   .cp-bg {
-    background: linear-gradient(180deg, rgb(255 250 236 / 0.08), rgb(255 255 255 / 0) 30%, rgb(245 242 236 / 0.12) 60%),
+    background:
+      linear-gradient(
+        180deg,
+        rgb(255 250 236 / 0.08),
+        rgb(255 255 255 / 0) 30%,
+        rgb(245 242 236 / 0.12) 60%
+      ),
       var(--lkv-app-bg-image-landscape) center / cover no-repeat,
       var(--lkv-app-bg-fallback);
   }
@@ -151,9 +179,14 @@
   );
   -webkit-backdrop-filter: blur(var(--cp-gb)) saturate(1.9) brightness(1.07);
   backdrop-filter: blur(var(--cp-gb)) saturate(1.9) brightness(1.07);
-  box-shadow: inset 0 1px 0 var(--cp-hi), inset 0 -1px 1px rgb(255 255 255 / 0.45),
-    inset 1px 0 1px rgb(255 255 255 / 0.28), inset -1px 0 1px rgb(255 255 255 / 0.28),
-    inset 0 0 12px rgb(255 255 255 / 0.14), 0 0 0 0.5px rgb(23 43 36 / 0.14), var(--cp-shadow);
+  box-shadow:
+    inset 0 1px 0 var(--cp-hi),
+    inset 0 -1px 1px rgb(255 255 255 / 0.45),
+    inset 1px 0 1px rgb(255 255 255 / 0.28),
+    inset -1px 0 1px rgb(255 255 255 / 0.28),
+    inset 0 0 12px rgb(255 255 255 / 0.14),
+    0 0 0 0.5px rgb(23 43 36 / 0.14),
+    var(--cp-shadow);
 }
 .cp-glass::before {
   content: '';
@@ -172,26 +205,42 @@
     rgb(255 255 255 / 0.25) 82%,
     rgb(255 255 255 / 1)
   );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
 }
 .cp-glass > * {
   position: relative;
   z-index: 1;
 }
 .cp-sheet-glass {
-  background: linear-gradient(180deg, rgb(255 255 255 / calc(var(--cp-ga) + 0.3)), rgb(255 255 255 / calc(var(--cp-ga) + 0.2)));
+  background: linear-gradient(
+    180deg,
+    rgb(255 255 255 / calc(var(--cp-ga) + 0.3)),
+    rgb(255 255 255 / calc(var(--cp-ga) + 0.2))
+  );
   -webkit-backdrop-filter: blur(calc(var(--cp-gb) + 18px)) saturate(1.8) brightness(1.05);
   backdrop-filter: blur(calc(var(--cp-gb) + 18px)) saturate(1.8) brightness(1.05);
-  box-shadow: inset 0 1px 0 var(--cp-hi), inset 0 -1px 1px rgb(255 255 255 / 0.4), inset 0 0 16px rgb(255 255 255 / 0.12),
-    0 0 0 0.5px rgb(23 43 36 / 0.12), 0 10px 30px rgb(23 43 36 / 0.14);
+  box-shadow:
+    inset 0 1px 0 var(--cp-hi),
+    inset 0 -1px 1px rgb(255 255 255 / 0.4),
+    inset 0 0 16px rgb(255 255 255 / 0.12),
+    0 0 0 0.5px rgb(23 43 36 / 0.12),
+    0 10px 30px rgb(23 43 36 / 0.14);
 }
 .dark .cp-glass,
 [data-theme='dark'] .cp-glass,
 .dark .cp-sheet-glass,
 [data-theme='dark'] .cp-sheet-glass {
-  background: linear-gradient(180deg, rgb(24 30 27 / calc(var(--cp-ga) + 0.38)), rgb(24 30 27 / calc(var(--cp-ga) + 0.3)));
+  background: linear-gradient(
+    180deg,
+    rgb(24 30 27 / calc(var(--cp-ga) + 0.38)),
+    rgb(24 30 27 / calc(var(--cp-ga) + 0.3))
+  );
 }
 @media (prefers-reduced-transparency: reduce) {
   .cp-glass,
@@ -267,7 +316,10 @@
   border-radius: 999px;
   z-index: 1;
   background: linear-gradient(180deg, rgb(255 255 255 / 0.62), rgb(255 255 255 / 0.26));
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 1), inset 0 -1px 1px rgb(255 255 255 / 0.5), 0 0 0 0.5px rgb(23 43 36 / 0.08),
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 1),
+    inset 0 -1px 1px rgb(255 255 255 / 0.5),
+    0 0 0 0.5px rgb(23 43 36 / 0.08),
     0 3px 10px rgb(23 43 36 / 0.1);
   transition: transform 0.55s cubic-bezier(0.3, 1.35, 0.4, 1);
 }
@@ -295,7 +347,9 @@
   background: transparent;
   color: var(--cp-ink2);
   cursor: pointer;
-  transition: background 0.25s, color 0.25s;
+  transition:
+    background 0.25s,
+    color 0.25s;
 }
 .cp-step__l {
   font-size: 10.5px;
@@ -598,7 +652,9 @@
 }
 .cp-seg button[aria-pressed='true'] {
   background: var(--cp-soft);
-  box-shadow: inset 0 0 0 0.6px var(--cp-soft-line), inset 0 1px 0 rgb(255 255 255 / 0.7);
+  box-shadow:
+    inset 0 0 0 0.6px var(--cp-soft-line),
+    inset 0 1px 0 rgb(255 255 255 / 0.7);
   color: var(--cp-ink);
 }
 
@@ -610,7 +666,9 @@
   border-radius: 32px 32px 0 0;
   overflow: hidden;
   background: var(--prep-map-skeleton-bg, var(--cp-fill));
-  box-shadow: 0 0 0 0.5px rgb(23 43 36 / 0.14), var(--cp-shadow);
+  box-shadow:
+    0 0 0 0.5px rgb(23 43 36 / 0.14),
+    var(--cp-shadow);
 }
 .cp-map__canvas {
   position: absolute;
@@ -682,7 +740,9 @@
   flex-direction: column;
   border-radius: 30px;
   overflow: hidden;
-  transition: bottom 0.45s cubic-bezier(0.32, 0.72, 0, 1), top 0.45s cubic-bezier(0.32, 0.72, 0, 1);
+  transition:
+    bottom 0.45s cubic-bezier(0.32, 0.72, 0, 1),
+    top 0.45s cubic-bezier(0.32, 0.72, 0, 1);
   animation: cp-sheet-in 0.42s cubic-bezier(0.32, 0.72, 0, 1);
 }
 .cp-sheet[data-detent='large'] {
@@ -996,7 +1056,9 @@
   margin-left: -15px;
   border-radius: 999px;
   background: var(--lkv-surface-paper);
-  box-shadow: 0 2px 8px rgb(23 43 36 / 0.28), inset 0 0 0 0.5px rgb(0 0 0 / 0.08);
+  box-shadow:
+    0 2px 8px rgb(23 43 36 / 0.28),
+    inset 0 0 0 0.5px rgb(0 0 0 / 0.08);
 }
 .cp-ticks {
   position: relative;
@@ -1616,4 +1678,415 @@
 }
 .compas[data-map='big'] .cp-mini {
   display: flex;
+}
+
+/* =============================================================================
+   Lot 1 — Où et quand : règle interactive, parcours, calendrier, envies, Dis-le
+   ============================================================================= */
+
+/* Petits boutons ronds (règle, Dis-le, pas-à-pas) */
+.cp-ibtn--sm {
+  width: 28px;
+  height: 28px;
+}
+.cp-ibtn--pg {
+  background: var(--cp-pg);
+  box-shadow: var(--cp-pg-sh);
+  color: var(--cp-pg-ink);
+}
+.cp-ibtn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Règle modifiable : le pouce se saisit, la proposition attend ✓ */
+.cp-ruler[data-edit='1'] .cp-ruler__track {
+  cursor: ew-resize;
+  touch-action: none;
+}
+.cp-ruler__track:focus-visible {
+  outline: 2px solid var(--lkv-secondary);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+.cp-ruler__ask {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-block: -4px;
+}
+.cp-ruler__ask b {
+  color: var(--lkv-primary);
+}
+
+/* Rangée champ + bouton (recherche, ajout d'étiquette) */
+.cp-searchrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cp-searchrow .cp-field {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Pastilles cliquables (sources de parcours, nuits, étiquettes, jours) */
+.cp-chiprow {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-block: 1px;
+}
+.cp-chiprow::-webkit-scrollbar {
+  display: none;
+}
+.cp-pill {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--cp-fill);
+  color: var(--cp-ink2);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.cp-pill[aria-pressed='true'] {
+  background: var(--cp-soft);
+  box-shadow:
+    inset 0 0 0 0.6px var(--cp-soft-line),
+    inset 0 1px 0 rgb(255 255 255 / 0.7);
+  color: var(--cp-ink);
+}
+.cp-pill:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.cp-row:disabled {
+  cursor: default;
+}
+.cp-thumb[data-on='1'] {
+  background: var(--cp-pg);
+  box-shadow: var(--cp-pg-sh);
+  color: var(--cp-pg-ink);
+}
+
+/* Pas-à-pas (nombre de jours) */
+.cp-stepper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--cp-ink2);
+}
+.cp-stepper b {
+  min-width: 64px;
+  text-align: center;
+  color: var(--cp-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Quand : départ + durée */
+.cp-when {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 8px;
+  align-items: end;
+}
+.cp-when__dur {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 64px;
+  gap: 6px;
+}
+.cp-when__dur select,
+.cp-when__dur input {
+  min-width: 0;
+}
+.cp-when__note {
+  grid-column: 1 / -1;
+}
+.cp-when .cp-btn {
+  grid-column: 1 / -1;
+}
+
+/* Calendrier six semaines (prévision puis tendance) */
+.cp-cal {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cp-cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+}
+.cp-cal__wd {
+  text-align: center;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--cp-ink3);
+}
+.cp-cal__d {
+  --q: transparent;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--cp-ink);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.cp-cal__d:disabled {
+  cursor: default;
+}
+.cp-cal__d > span {
+  white-space: nowrap;
+  font-size: 11.5px;
+}
+.cp-cal__d i,
+.cp-cal__legend i {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--q);
+}
+.cp-cal__d[data-q='bon'],
+.cp-cal__legend i[data-q='bon'] {
+  --q: var(--cp-good);
+}
+.cp-cal__d[data-q='moyen'],
+.cp-cal__legend i[data-q='moyen'] {
+  --q: var(--lkv-warning);
+}
+.cp-cal__d[data-q='mauvais'],
+.cp-cal__legend i[data-q='mauvais'] {
+  --q: var(--cp-bad);
+}
+/* Tendance : cerclée, jamais confondue avec une prévision */
+.cp-cal__d[data-kind='tendance'] i {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--q);
+}
+.cp-cal__d[data-kind='inconnu'] {
+  color: var(--cp-ink3);
+}
+.cp-cal__d[data-sel='1'] {
+  background: var(--cp-soft);
+  box-shadow: inset 0 0 0 0.6px var(--cp-soft-line);
+}
+.cp-cal__d[data-start='1'] {
+  background: var(--cp-pg);
+  box-shadow: var(--cp-pg-sh);
+  font-weight: 700;
+}
+.cp-cal__legend {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--cp-ink2);
+}
+.cp-cal__legend i {
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+/* Détail d'un jour de marche */
+.cp-dayd {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 11px;
+  border-radius: 16px;
+  background: rgb(255 255 255 / 0.3);
+}
+.dark .cp-dayd,
+[data-theme='dark'] .cp-dayd {
+  background: rgb(0 0 0 / 0.2);
+}
+.cp-dayd__h {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  font-size: 13.5px;
+}
+.cp-dayd__h b {
+  flex: none;
+}
+.cp-dayd__h span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--cp-ink2);
+  font-size: 12.5px;
+}
+.cp-dayd__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.cp-note--warn {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  color: var(--cp-warn);
+}
+.cp-note--warn > :first-child {
+  flex: none;
+  margin-top: 1px;
+}
+
+/* Heure par heure : défile dans sa propre bande, jamais la page */
+.cp-hours {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-inline: -4px;
+  padding-inline: 4px;
+}
+.cp-hours::-webkit-scrollbar {
+  display: none;
+}
+.cp-hour {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 44px;
+  padding: 6px 0;
+  border-radius: 12px;
+  background: var(--cp-fill);
+  font-variant-numeric: tabular-nums;
+}
+.cp-hour small {
+  font-size: 10.5px;
+  color: var(--cp-ink2);
+}
+.cp-hour b {
+  font-size: 13px;
+}
+.cp-hour[data-q='moyen'] {
+  background: var(--cp-warn-bg);
+}
+.cp-hour[data-q='mauvais'] {
+  background: var(--cp-bad-bg);
+}
+
+/* Envies */
+.cp-prefs__block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cp-prefs__l {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cp-ink2);
+}
+
+/* Dis-le : toujours en bas du tiroir */
+.cp-disle {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+.cp-disle__in {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 7px 0 13px;
+  border-radius: 999px;
+  color: var(--cp-ink2);
+}
+.cp-disle__in input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--cp-ink);
+  font-size: 14px;
+  outline: none;
+}
+.cp-disle__in:focus-within {
+  box-shadow: 0 0 0 2px var(--lkv-secondary);
+}
+.cp-disle__out {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 11px;
+  border-radius: 16px;
+  background: rgb(255 255 255 / 0.3);
+}
+.dark .cp-disle__out,
+[data-theme='dark'] .cp-disle__out {
+  background: rgb(0 0 0 / 0.2);
+}
+.cp-props {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cp-prop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  font-size: 13.5px;
+  color: var(--cp-ink3);
+}
+.cp-prop[data-ok='1'] {
+  color: var(--cp-ink);
+}
+.cp-prop input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--lkv-secondary);
+}
+.cp-prop__t {
+  flex: 1;
+  min-width: 0;
+}
+.cp-prop__ai {
+  flex: none;
+  color: var(--lkv-secondary);
+}
+.cp-prop__why {
+  flex: none;
+  max-width: 50%;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--cp-bad-bg);
+  color: var(--cp-bad);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

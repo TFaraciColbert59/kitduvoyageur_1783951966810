@@ -40,7 +40,8 @@ export function sunTimes(lat: number, lon: number, date: Date): SunTimes {
     0.00148 * Math.sin(3 * gamma);
   const zenith = 90.833 * RAD;
   const cosHa =
-    Math.cos(zenith) / (Math.cos(lat * RAD) * Math.cos(decl)) - Math.tan(lat * RAD) * Math.tan(decl);
+    Math.cos(zenith) / (Math.cos(lat * RAD) * Math.cos(decl)) -
+    Math.tan(lat * RAD) * Math.tan(decl);
   if (cosHa > 1 || cosHa < -1) return { sunriseUtcMin: null, sunsetUtcMin: null };
   const ha = Math.acos(cosHa) / RAD;
   const noon = 720 - 4 * lon - eqTime;
@@ -71,4 +72,20 @@ export function tzOffsetMinutes(timeZone: string, date: Date): number {
 export function formatClock(minutes: number): string {
   const m = ((Math.round(minutes) % 1440) + 1440) % 1440;
   return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+}
+
+/** Lever et coucher locaux (« HH:MM ») d'un jour donné, calculés sur place. */
+export function daylightClock(
+  lat: number,
+  lon: number,
+  iso: string,
+  timeZone: string
+): { sunrise: string | null; sunset: string | null } {
+  const date = new Date(`${iso.slice(0, 10)}T12:00:00Z`);
+  const sun = sunTimes(lat, lon, date);
+  const offset = tzOffsetMinutes(timeZone, date);
+  return {
+    sunrise: sun.sunriseUtcMin == null ? null : formatClock(sun.sunriseUtcMin + offset),
+    sunset: sun.sunsetUtcMin == null ? null : formatClock(sun.sunsetUtcMin + offset),
+  };
 }

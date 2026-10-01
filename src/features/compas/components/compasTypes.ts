@@ -6,9 +6,12 @@ export type AcquireMode = 'emprunter' | 'louer' | 'acheter';
 
 /** Parcours internes du tiroir de chaque étape (capsule, comme les étapes). */
 export const STEP_FLOWS = {
+  // Ordre de la maquette : Activité → Parcours → Quand → Préférences.
   ou: [
-    { id: 'etapes', label: 'Étapes', icon: 'route' },
-    { id: 'meteo', label: 'Météo', icon: 'cloud-sun' },
+    { id: 'activite', label: 'Activité', icon: 'flag' },
+    { id: 'parcours', label: 'Parcours', icon: 'route' },
+    { id: 'quand', label: 'Quand', icon: 'calendar-days' },
+    { id: 'preferences', label: 'Envies', icon: 'heart' },
   ],
   nous: [
     { id: 'equipe', label: 'Équipe', icon: 'users' },
@@ -38,7 +41,15 @@ export type SheetState =
   | { kind: 'add'; target: 'kit' | 'inventaire' }
   | { kind: 'bag'; userId: string }
   | { kind: 'carrier'; lineId: string }
-  | { kind: 'step'; step: CompasStepId; flow: StepFlow };
+  | { kind: 'step'; step: CompasStepId; flow: StepFlow; hint?: FlowHint };
+
+/** Ce qu'un geste ailleurs (règle, « Dis-le ») transmet au parcours ouvert. */
+export interface FlowHint {
+  /** Durée choisie sur la règle, en heures, en attente d'un départ. */
+  hours?: number;
+  /** Lieu à chercher dans Parcours. */
+  query?: string;
+}
 
 export type ActionResult = { success: boolean; error?: string };
 

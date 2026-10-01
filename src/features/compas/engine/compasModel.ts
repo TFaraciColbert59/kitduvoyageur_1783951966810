@@ -8,6 +8,7 @@
  */
 
 import { formatClock, sunTimes, tzOffsetMinutes } from './sun';
+import { walkingMinutes, type Pace } from './weather';
 
 export type CompasStepId = 'ou' | 'nous' | 'resa' | 'verdict' | 'kit';
 
@@ -33,6 +34,18 @@ export interface CompasTripInput {
   budgetCurrency: string | null;
   partySize: number | null;
   ownerId: string;
+  /** Durée choisie en heures quand la sortie tient en moins d'une journée. */
+  durationHours?: number | null;
+  preferences?: Partial<CompasPreferences> | null;
+}
+
+export type CompasNights = 'bivouac' | 'refuge' | 'hebergement' | 'mixte';
+
+export interface CompasPreferences {
+  pace: Pace;
+  nights: CompasNights | null;
+  avoid: string[];
+  wishes: string[];
 }
 
 export interface CompasStepInput {
@@ -176,6 +189,19 @@ export interface CompasMemberLoad {
   sharedItemIds: string[];
 }
 
+export interface CompasDayPlan {
+  day: number;
+  date: string | null;
+  title: string;
+  distanceKm: number | null;
+  gainM: number | null;
+  lossM: number | null;
+  lat: number | null;
+  lon: number | null;
+  stay: string | null;
+  walkMin: number | null;
+}
+
 export interface CompasDecision {
   step: CompasStepId;
   label: string;
@@ -190,7 +216,15 @@ export interface CompasModel {
   title: string;
   activity: string | null;
   destination: string | null;
-  dates: { start: string | null; end: string | null; days: number | null; label: string };
+  dates: {
+    start: string | null;
+    end: string | null;
+    days: number | null;
+    /** Durée en heures : choisie (moins d'un jour) ou déduite des dates. */
+    hours: number | null;
+    label: string;
+  };
+  preferences: CompasPreferences;
   route: {
     distanceKm: number;
     elevationGainM: number;
@@ -200,6 +234,10 @@ export interface CompasModel {
     hasGeometry: boolean;
     durationMin: number | null;
     coords: Array<[number, number]>;
+    /** Une entrée par jour de marche, avec le temps de marche du plus lent. */
+    dayPlans: CompasDayPlan[];
+    /** Nuits sans hébergement (hors dernier jour), bivouac choisi exclu. */
+    nightsToFind: number;
   };
   daylight: {
     date: string;
@@ -270,7 +308,20 @@ function parseDate(value: string | null): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-const MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const MONTHS = [
+  'janv.',
+  'févr.',
+  'mars',
+  'avr.',
+  'mai',
+  'juin',
+  'juil.',
+  'août',
+  'sept.',
+  'oct.',
+  'nov.',
+  'déc.',
+];
 
 export function formatDateRange(start: string | null, end: string | null): string {
   const a = parseDate(start);
@@ -299,7 +350,7 @@ function kitKind(item: CompasItemInput): CompasKitLine['kind'] {
 export function buildCompasModel(input: CompasInput): CompasModel {
   const { trip } = input;
   const steps = [...input.steps].sort(
-    (a, b) => a.dayNumber - b.dayNumber || a.orderIndex - b.orderIndex,
+    (a, b) => a.dayNumber - b.dayNumber || a.orderIndex - b.orderIndex
   );
   const coords = steps
     .filter((s) => s.lat != null && s.lon != null)
@@ -308,7 +359,24 @@ export function buildCompasModel(input: CompasInput): CompasModel {
   /* Dates */
   const start = parseDate(trip.startDate);
   const end = parseDate(trip.endDate);
-  const days = start && end ? Math.max(1, Math.round((end.getTime() - start.getTime()) / MS_DAY) + 1) : null;
+  const days =
+    start && end ? Math.max(1, Math.round((end.getTime() - start.getTime()) / MS_DAY) + 1) : null;
+  const shortHours =
+    trip.durationHours != null &&
+    trip.durationHours > 0 &&
+    trip.durationHours < 24 &&
+    (days == null || days === 1)
+      ? trip.durationHours
+      : null;
+  const hours = shortHours ?? (days != null ? days * 24 : null);
+
+  /* Préférences (valeurs par défaut explicites, jamais devinées) */
+  const prefs: CompasPreferences = {
+    pace: trip.preferences?.pace ?? 'normal',
+    nights: trip.preferences?.nights ?? null,
+    avoid: trip.preferences?.avoid ?? [],
+    wishes: trip.preferences?.wishes ?? [],
+  };
 
   /* Lumière du jour : premier jour, première étape géolocalisée */
   let daylight: CompasModel['daylight'] = null;
@@ -333,7 +401,13 @@ export function buildCompasModel(input: CompasInput): CompasModel {
     const lent = Boolean(inv?.isLent);
     const replace = item.condition === 'a_remplacer' || item.condition === 'pour_pieces';
     const owned = Boolean(inv) || item.purchaseState === 'owned' || item.isPacked;
-    const status: CompasKitLine['status'] = lent ? 'lent' : replace ? 'replace' : owned ? 'owned' : 'missing';
+    const status: CompasKitLine['status'] = lent
+      ? 'lent'
+      : replace
+        ? 'replace'
+        : owned
+          ? 'owned'
+          : 'missing';
     return {
       id: item.id,
       name: item.name,
@@ -355,13 +429,25 @@ export function buildCompasModel(input: CompasInput): CompasModel {
     };
   });
   const weightOf = (line: CompasKitLine) => (line.weightGrams ?? 0) * line.quantity;
-  const baseGrams = sumBy(lines.filter((l) => l.kind === 'base'), weightOf);
-  const wornGrams = sumBy(lines.filter((l) => l.kind === 'worn'), weightOf);
-  const consumableGrams = sumBy(lines.filter((l) => l.kind === 'consumable'), weightOf);
+  const baseGrams = sumBy(
+    lines.filter((l) => l.kind === 'base'),
+    weightOf
+  );
+  const wornGrams = sumBy(
+    lines.filter((l) => l.kind === 'worn'),
+    weightOf
+  );
+  const consumableGrams = sumBy(
+    lines.filter((l) => l.kind === 'consumable'),
+    weightOf
+  );
   const unknownWeightCount = lines.filter((l) => l.weightGrams == null).length;
   // Préparation pondérée : un objet vital compte double.
   const weightTotal = sumBy(lines, (l) => (l.vital ? 2 : 1));
-  const weightPacked = sumBy(lines.filter((l) => l.packed), (l) => (l.vital ? 2 : 1));
+  const weightPacked = sumBy(
+    lines.filter((l) => l.packed),
+    (l) => (l.vital ? 2 : 1)
+  );
   const packedPct = lines.length ? Math.round((weightPacked / weightTotal) * 100) : null;
   const vitalMissing = lines.filter((l) => l.vital && l.status !== 'owned');
   const toAcquire = lines.filter((l) => l.status !== 'owned');
@@ -369,7 +455,18 @@ export function buildCompasModel(input: CompasInput): CompasModel {
   /* Équipage et charges */
   const members = input.members.length
     ? input.members
-    : [{ userId: trip.ownerId, name: 'Toi', avatarUrl: null, role: 'owner', maxCarryKg: null, flatSpeedKmh: null, experienceLevel: null, calibrationLevel: null }];
+    : [
+        {
+          userId: trip.ownerId,
+          name: 'Toi',
+          avatarUrl: null,
+          role: 'owner',
+          maxCarryKg: null,
+          flatSpeedKmh: null,
+          experienceLevel: null,
+          calibrationLevel: null,
+        },
+      ];
   const memberIds = new Set(members.map((m) => m.userId));
   const loads: CompasMemberLoad[] = members.map((m) => ({
     userId: m.userId,
@@ -404,12 +501,62 @@ export function buildCompasModel(input: CompasInput): CompasModel {
     l.ratio = l.capacityKg ? Math.round((l.carriedGrams / 1000 / l.capacityKg) * 100) / 100 : null;
   });
 
+  /* Journées de marche : le rythme du groupe est celui du plus lent */
+  const speeds = members.map((m) => m.flatSpeedKmh).filter((v): v is number => v != null && v > 0);
+  const slowest = speeds.length ? Math.min(...speeds) : null;
+  const dayNumbers = [...new Set(steps.map((s) => s.dayNumber))].sort((a, b) => a - b);
+  const dayPlans: CompasDayPlan[] = dayNumbers.map((day) => {
+    const ofDay = steps.filter((s) => s.dayNumber === day);
+    const first = ofDay.find((s) => s.lat != null && s.lon != null) ?? ofDay[0];
+    const has = (pick: (s: CompasStepInput) => number | null) => ofDay.some((s) => pick(s) != null);
+    const distanceKm = has((s) => s.distanceKm) ? round1(sumBy(ofDay, (s) => s.distanceKm)) : null;
+    const gainM = has((s) => s.elevationGainM)
+      ? Math.round(sumBy(ofDay, (s) => s.elevationGainM))
+      : null;
+    const lossM = has((s) => s.elevationLossM)
+      ? Math.round(sumBy(ofDay, (s) => s.elevationLossM))
+      : null;
+    const date = start
+      ? new Date(start.getTime() + (day - 1) * MS_DAY).toISOString().slice(0, 10)
+      : null;
+    return {
+      day,
+      date,
+      title: first?.title ?? `Jour ${day}`,
+      distanceKm,
+      gainM,
+      lossM,
+      lat: first?.lat ?? null,
+      lon: first?.lon ?? null,
+      stay: ofDay.map((s) => s.accommodationName).find(Boolean) ?? null,
+      walkMin: walkingMinutes({
+        distanceKm,
+        gainM,
+        lossM,
+        flatSpeedKmh: slowest,
+        pace: prefs.pace,
+      }),
+    };
+  });
+  const lastDay = dayNumbers.length ? dayNumbers[dayNumbers.length - 1] : 0;
+  const nightsToFind =
+    prefs.nights === 'bivouac' ? 0 : dayPlans.filter((d) => d.day < lastDay && !d.stay).length;
+  const shelterInKit = lines.some((l) => /tente|tarp|abri|hamac|bivy|bivouac/i.test(l.name));
+
   /* Budget */
   const partySize = Math.max(1, trip.partySize ?? members.length);
-  const planned = sumBy(input.expenses.filter((e) => e.isPlanned), (e) => e.amount);
-  const spent = sumBy(input.expenses.filter((e) => !e.isPlanned), (e) => e.amount);
+  const planned = sumBy(
+    input.expenses.filter((e) => e.isPlanned),
+    (e) => e.amount
+  );
+  const spent = sumBy(
+    input.expenses.filter((e) => !e.isPlanned),
+    (e) => e.amount
+  );
   const byCat = new Map<string, number>();
-  input.expenses.forEach((e) => byCat.set(e.category ?? 'Autre', (byCat.get(e.category ?? 'Autre') ?? 0) + e.amount));
+  input.expenses.forEach((e) =>
+    byCat.set(e.category ?? 'Autre', (byCat.get(e.category ?? 'Autre') ?? 0) + e.amount)
+  );
   const byCategory = [...byCat.entries()]
     .map(([category, amount]) => ({ category, amount: Math.round(amount * 100) / 100 }))
     .sort((a, b) => b.amount - a.amount);
@@ -431,14 +578,17 @@ export function buildCompasModel(input: CompasInput): CompasModel {
 
   /* Météo réelle */
   const weatherDays = input.weather;
-  const worstPrecipPct = weatherDays.length ? Math.max(...weatherDays.map((d) => d.precipPct)) : null;
+  const worstPrecipPct = weatherDays.length
+    ? Math.max(...weatherDays.map((d) => d.precipPct))
+    : null;
   const minTempC = weatherDays.length ? Math.min(...weatherDays.map((d) => d.tempMinC)) : null;
   const maxTempC = weatherDays.length ? Math.max(...weatherDays.map((d) => d.tempMaxC)) : null;
 
   /* Verdict : uniquement des signaux vérifiables, jamais un score inventé */
   const reasons: CompasModel['verdict']['reasons'] = [];
   if (!start) reasons.push({ label: 'Dates non choisies', severity: 'warn', source: 'voyage' });
-  if (coords.length < 2 && !input.routeHasGeometry) reasons.push({ label: 'Parcours non tracé', severity: 'warn', source: 'étapes' });
+  if (coords.length < 2 && !input.routeHasGeometry)
+    reasons.push({ label: 'Parcours non tracé', severity: 'warn', source: 'étapes' });
   if (vitalMissing.length) {
     reasons.push({
       label: `${vitalMissing.length} objet${vitalMissing.length > 1 ? 's' : ''} vital${vitalMissing.length > 1 ? 's' : ''} manquant${vitalMissing.length > 1 ? 's' : ''}`,
@@ -447,17 +597,43 @@ export function buildCompasModel(input: CompasInput): CompasModel {
     });
   }
   if (worstPrecipPct != null && worstPrecipPct >= 60) {
-    reasons.push({ label: `Pluie probable (${worstPrecipPct} %)`, severity: 'warn', source: 'Open-Meteo' });
+    reasons.push({
+      label: `Pluie probable (${worstPrecipPct} %)`,
+      severity: 'warn',
+      source: 'Open-Meteo',
+    });
   }
   if (minTempC != null && minTempC <= 0) {
-    reasons.push({ label: `Gel possible (${Math.round(minTempC)} °C)`, severity: 'warn', source: 'Open-Meteo' });
+    reasons.push({
+      label: `Gel possible (${Math.round(minTempC)} °C)`,
+      severity: 'warn',
+      source: 'Open-Meteo',
+    });
   }
   const overloaded = loads.filter((l) => l.ratio != null && l.ratio > 1);
   if (overloaded.length) {
-    reasons.push({ label: `Surcharge : ${overloaded.map((l) => l.name).join(', ')}`, severity: 'warn', source: 'répartition' });
+    reasons.push({
+      label: `Surcharge : ${overloaded.map((l) => l.name).join(', ')}`,
+      severity: 'warn',
+      source: 'répartition',
+    });
   }
   if (target != null && totalBudget > target) {
     reasons.push({ label: 'Budget dépassé', severity: 'warn', source: 'dépenses' });
+  }
+  if (prefs.nights === 'bivouac' && lastDay > 1 && !shelterInKit) {
+    reasons.push({
+      label: 'Bivouac prévu sans abri dans le kit',
+      severity: 'warn',
+      source: 'préférences et kit',
+    });
+  }
+  if (nightsToFind > 0) {
+    reasons.push({
+      label: `${nightsToFind} nuit${nightsToFind > 1 ? 's' : ''} sans hébergement`,
+      severity: 'warn',
+      source: 'étapes',
+    });
   }
   const level: CompasModel['verdict']['level'] = reasons.some((r) => r.severity === 'block')
     ? 'bloque'
@@ -472,25 +648,73 @@ export function buildCompasModel(input: CompasInput): CompasModel {
   if (vitalMissing.length) {
     // Un objet déjà commandé est en route : on traite d'abord ceux qui n'ont
     // encore aucune solution.
-    const inProgress = (l: CompasKitLine) => l.purchaseState === 'in_cart' || l.purchaseState === 'shipping';
+    const inProgress = (l: CompasKitLine) =>
+      l.purchaseState === 'in_cart' || l.purchaseState === 'shipping';
     const first = vitalMissing.find((l) => !inProgress(l)) ?? vitalMissing[0];
     const name = first.name.toLowerCase();
     nextDecision =
       first.status === 'lent'
-        ? { step: 'kit', flow: 'manques', label: `Récupérer : ${name}`, detail: first.reason ?? 'Prêté, à récupérer avant le départ' }
+        ? {
+            step: 'kit',
+            flow: 'manques',
+            label: `Récupérer : ${name}`,
+            detail: first.reason ?? 'Prêté, à récupérer avant le départ',
+          }
         : first.purchaseState === 'in_cart'
-          ? { step: 'kit', flow: 'manques', label: `Commander : ${name}`, detail: 'Produit choisi, dans le panier' }
+          ? {
+              step: 'kit',
+              flow: 'manques',
+              label: `Commander : ${name}`,
+              detail: 'Produit choisi, dans le panier',
+            }
           : first.purchaseState === 'shipping'
-            ? { step: 'kit', flow: 'manques', label: `Réceptionner : ${name}`, detail: 'En livraison' }
-            : { step: 'kit', flow: 'manques', label: `Trouver : ${name}`, detail: first.reason ?? 'Objet vital pour ce parcours' };
+            ? {
+                step: 'kit',
+                flow: 'manques',
+                label: `Réceptionner : ${name}`,
+                detail: 'En livraison',
+              }
+            : {
+                step: 'kit',
+                flow: 'manques',
+                label: `Trouver : ${name}`,
+                detail: first.reason ?? 'Objet vital pour ce parcours',
+              };
   } else if (!start) {
-    nextDecision = { step: 'ou', flow: 'quand', label: 'Choisir les dates', detail: 'La météo et les réservations en dépendent' };
+    nextDecision = {
+      step: 'ou',
+      flow: 'quand',
+      label: 'Choisir les dates',
+      detail: 'La météo et les réservations en dépendent',
+    };
+  } else if (steps.length === 0 && !input.routeHasGeometry) {
+    nextDecision = {
+      step: 'ou',
+      flow: 'parcours',
+      label: 'Choisir un parcours',
+      detail: 'Autour du départ, dans tes randos ou par lieu',
+    };
   } else if (unassignedShared.length && members.length > 1) {
-    nextDecision = { step: 'kit', flow: 'sacs', label: 'Répartir le matériel commun', detail: `${unassignedShared.length} objet(s) sans porteur` };
+    nextDecision = {
+      step: 'kit',
+      flow: 'sacs',
+      label: 'Répartir le matériel commun',
+      detail: `${unassignedShared.length} objet(s) sans porteur`,
+    };
   } else if (pending) {
-    nextDecision = { step: 'resa', flow: 'choix', label: 'Confirmer les réservations', detail: `${pending} en attente` };
+    nextDecision = {
+      step: 'resa',
+      flow: 'choix',
+      label: 'Confirmer les réservations',
+      detail: `${pending} en attente`,
+    };
   } else if (target != null && totalBudget > target) {
-    nextDecision = { step: 'nous', flow: 'budget', label: 'Ajuster le budget', detail: 'Dépenses au-dessus de l’enveloppe' };
+    nextDecision = {
+      step: 'nous',
+      flow: 'budget',
+      label: 'Ajuster le budget',
+      detail: 'Dépenses au-dessus de l’enveloppe',
+    };
   }
 
   return {
@@ -499,7 +723,14 @@ export function buildCompasModel(input: CompasInput): CompasModel {
     title: trip.title,
     activity: trip.primaryActivity,
     destination: trip.destinationName,
-    dates: { start: trip.startDate, end: trip.endDate, days, label: formatDateRange(trip.startDate, trip.endDate) },
+    dates: {
+      start: trip.startDate,
+      end: trip.endDate,
+      days,
+      hours,
+      label: formatDateRange(trip.startDate, trip.endDate),
+    },
+    preferences: prefs,
     route: {
       distanceKm: round1(sumBy(steps, (s) => s.distanceKm)),
       elevationGainM: Math.round(sumBy(steps, (s) => s.elevationGainM)),
@@ -509,6 +740,8 @@ export function buildCompasModel(input: CompasInput): CompasModel {
       hasGeometry: input.routeHasGeometry || coords.length >= 2,
       durationMin: input.routeDurationMin,
       coords,
+      dayPlans,
+      nightsToFind,
     },
     daylight,
     weather: { days: weatherDays, worstPrecipPct, minTempC, maxTempC },

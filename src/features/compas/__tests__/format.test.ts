@@ -55,7 +55,6 @@ describe('formats du Compas', () => {
   });
 });
 
-
 describe('échelle de durée', () => {
   it('bornes et zones de la maquette', () => {
     expect(rulerPosition(0.25)).toBe(0);

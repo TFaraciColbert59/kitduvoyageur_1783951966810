@@ -50,13 +50,18 @@ export function PagedList<T>({
   return (
     <div className="cp-list" ref={ref} aria-label={label}>
       {items.length === 0 ? (
-        empty ?? null
+        (empty ?? null)
       ) : (
         <>
           <div className="cp-list__page">{pages[current].map(render)}</div>
           {pages.length > 1 && (
             <div className="cp-pager">
-              <button type="button" aria-label="Page précédente" disabled={current === 0} onClick={() => setPage(current - 1)}>
+              <button
+                type="button"
+                aria-label="Page précédente"
+                disabled={current === 0}
+                onClick={() => setPage(current - 1)}
+              >
                 <Icon name="chevron-left" size={16} />
               </button>
               <span aria-live="polite">
@@ -102,7 +107,8 @@ export function useLongPress(onLongPress: () => void, onPress: () => void, ms = 
     },
     onPointerMove: (e: React.PointerEvent) => {
       if (!start.current) return;
-      if (Math.abs(e.clientX - start.current.x) > 8 || Math.abs(e.clientY - start.current.y) > 8) clear();
+      if (Math.abs(e.clientX - start.current.x) > 8 || Math.abs(e.clientY - start.current.y) > 8)
+        clear();
     },
     onPointerUp: clear,
     onPointerCancel: clear,
@@ -152,7 +158,10 @@ export function Thumb({
   large?: boolean;
 }) {
   return (
-    <span className={`cp-thumb${large ? ' cp-thumb--lg' : ''}`} aria-hidden={image ? undefined : true}>
+    <span
+      className={`cp-thumb${large ? ' cp-thumb--lg' : ''}`}
+      aria-hidden={image ? undefined : true}
+    >
       {image ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={image} alt={alt ?? name} loading="lazy" />
@@ -165,7 +174,15 @@ export function Thumb({
 
 export type Tone = 'good' | 'warn' | 'bad' | 'soft' | undefined;
 
-export function Chip({ tone, icon, children }: { tone?: Tone; icon?: string; children: ReactNode }) {
+export function Chip({
+  tone,
+  icon,
+  children,
+}: {
+  tone?: Tone;
+  icon?: string;
+  children: ReactNode;
+}) {
   return (
     <span className="cp-chip" data-tone={tone}>
       {icon && <Icon name={icon} size={13} />}
@@ -188,7 +205,12 @@ export function Segments<K extends string>({
   return (
     <div className="cp-seg" role="group" aria-label={label}>
       {options.map((o) => (
-        <button key={o.id} type="button" aria-pressed={value === o.id} onClick={() => onChange(o.id)}>
+        <button
+          key={o.id}
+          type="button"
+          aria-pressed={value === o.id}
+          onClick={() => onChange(o.id)}
+        >
           {o.icon && <Icon name={o.icon} size={15} />}
           {o.label}
         </button>
@@ -204,9 +226,9 @@ export function useTextFilter() {
     (v: string) =>
       v
         .normalize('NFD')
-        .replace(/[̀-ͯ]/g, '')
+        .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase(),
-    [],
+    []
   );
   const matches = useCallback(
     (...fields: Array<string | null | undefined>) => {
@@ -214,7 +236,7 @@ export function useTextFilter() {
       if (!q) return true;
       return q.split(/\s+/).every((word) => fields.some((f) => f && norm(f).includes(word)));
     },
-    [norm, query],
+    [norm, query]
   );
   return { query, setQuery, matches, norm };
 }
