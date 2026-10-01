@@ -65,7 +65,7 @@ const KIND_LABELS: Readonly<Record<ItineraryStepKind, string>> = {
   trajet: 'Trajet',
   arret: 'Lieu',
   repos: 'Pause',
-  nuit: 'Hebergement',
+  nuit: 'Hébergement',
   ravitaillement: 'Ravitaillement',
 };
 

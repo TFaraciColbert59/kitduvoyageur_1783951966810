@@ -43,13 +43,13 @@ export default async function CompasPage({
 
   // Intention explicite : elle gagne même si une aventure est déjà active, et
   // évite une lecture de base inutile.
-  if (NEW_FLOW_VALUES.has(nouvelle ?? '')) return <AdventurePrepScreen />;
+  if (NEW_FLOW_VALUES.has(nouvelle ?? '')) return <AdventurePrepScreen material="compas" />;
 
   const data = await getCompasData();
   if (!data) {
     // Aucune aventure active : choisir parmi ses voyages s'il y en a, sinon créer.
     const trips = await listCompasTrips();
-    if (trips.length === 0) return <AdventurePrepScreen />;
+    if (trips.length === 0) return <AdventurePrepScreen material="compas" />;
     return (
       <AppShell hasBottomNav videoBackground={false}>
         <CompasTripPicker trips={trips} />

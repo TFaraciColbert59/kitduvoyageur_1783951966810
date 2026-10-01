@@ -198,7 +198,7 @@ describe('P2.7 - Ajouter : un rail de lieux reels', () => {
     };
     monter({ ...BROUILLON, itinerary: sansPointes });
     const corps = document.body.textContent ?? '';
-    expect(corps).toMatch(/aucun point reellement localise/i);
+    expect(corps).toMatch(/aucun point réellement localisé/i);
     expect(nomsRail()).toHaveLength(0);
   });
 
@@ -253,8 +253,8 @@ describe('P2.7 - Ajouter : un rail de lieux reels', () => {
   it('05 - changer de nature ne montre que les vraies categories', async () => {
     monter(BROUILLON);
     await waitFor(() => expect(nomsRail().length).toBeGreaterThan(0));
-    // « Hebergement » : le refuge, et rien des points de vue.
-    fireEvent.click(screenBouton('Hebergement'));
+    // « Hébergement » : le refuge, et rien des points de vue.
+    fireEvent.click(screenBouton('Hébergement'));
     await waitFor(() => expect(nomsRail()).toEqual(['Refuge de l Arve']));
     // « Pause » et « Lieu » partagent des categories : le filtre est le meme.
     fireEvent.click(screenBouton('Lieu'));
