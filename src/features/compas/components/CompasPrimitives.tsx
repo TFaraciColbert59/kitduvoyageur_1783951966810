@@ -53,12 +53,6 @@ export function PagedList<T>({
   }, [height, items.length, rowH]);
   const pages = useMemo(() => paginate(items, perPage), [items, perPage]);
 
-  useLayoutEffect(() => {
-    const rows = ref.current?.querySelectorAll<HTMLElement>('.cp-list__page > *');
-    if (!rows?.length) return;
-    const tallest = Math.max(...Array.from(rows, (r) => r.offsetHeight));
-    if (tallest > rowH) setRowH(tallest);
-  });
 
   // La page de l'élément demandé, une seule fois, quand la hauteur est connue :
   // ensuite la pagination appartient à la personne.
@@ -68,6 +62,13 @@ export function PagedList<T>({
     setPage(Math.floor(focusIndex / perPage));
   }, [focusIndex, height, perPage]);
   const current = Math.min(page, pages.length - 1);
+
+  useLayoutEffect(() => {
+    const rows = ref.current?.querySelectorAll<HTMLElement>('.cp-list__page > *');
+    if (!rows?.length) return;
+    const tallest = Math.max(...Array.from(rows, (r) => r.offsetHeight));
+    if (tallest > rowH) setRowH(tallest);
+  }, [pages, current, rowH]);
 
   return (
     <div

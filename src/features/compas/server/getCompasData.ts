@@ -26,6 +26,7 @@ import {
 } from '../engine/compasModel';
 import { readCompasMeta } from '../engine/meta';
 import { relevantAffiliateLinks } from '../engine/affiliates';
+import { getOfficialAlerts } from './officialAlerts';
 import { getCompasWeather, type CompasWeather } from './weather';
 
 /**
@@ -438,6 +439,11 @@ export async function getCompasData(): Promise<CompasData | null> {
     routeId != null && routePois.length ? waterOnRoute : input.waterPointsCount;
 
   const baseModel = input.weather.length ? buildCompasModel(input) : draft;
+  const officialAlerts = await getOfficialAlerts({
+    point: origin,
+    from: trip.start_date ?? null,
+    to: trip.end_date ?? trip.start_date ?? null,
+  });
   const danger = assessDanger({
     dayPlans: baseModel.route.dayPlans,
     forecasts: (weather?.tripDays ?? []).map((d) => ({
@@ -445,10 +451,9 @@ export async function getCompasData(): Promise<CompasData | null> {
       date: d.date,
       forecast: d.forecast,
     })),
-    // Alertes officielles : pas encore lues (voir MISSION_LOG) ; l'axe
-    // conjoncturel le dit au lieu d'afficher un « RAS » complet.
-    alerts: [],
-    alertsChecked: false,
+    // France : Météo-France via Meteoalarm ; ailleurs, l'axe le dit.
+    alerts: officialAlerts.alerts,
+    alertsStatus: officialAlerts.status,
   });
 
   return {

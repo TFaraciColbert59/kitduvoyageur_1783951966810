@@ -124,7 +124,7 @@ describe('assessDanger — évaluation partielle', () => {
       dayPlans: [plan()],
       forecasts: [{ day: 1, date: '2026-10-12', forecast: forecast() }],
       alerts: [],
-      alertsChecked: true,
+      alertsStatus: 'lues',
     });
     expect(lu.axes.conjoncturel.partial).toBeNull();
   });
@@ -137,7 +137,7 @@ describe('assessDanger — évaluation partielle', () => {
         { day: 2, date: '2026-10-13', forecast: null },
       ],
       alerts: [],
-      alertsChecked: true,
+      alertsStatus: 'lues',
     });
     expect(d.axes.physique.partial).toBe('Non vérifié : chaleur et froid (J2).');
     expect(d.axes.conjoncturel.partial).toBe('Non vérifié : météo (J2).');
@@ -148,3 +148,52 @@ describe('assessDanger — évaluation partielle', () => {
     expect(d.axes.physique).toMatchObject({ level: 'non_evalue', partial: null });
   });
 });
+
+describe('assessDanger — état des alertes officielles', () => {
+  const avec = (alertsStatus: Parameters<typeof assessDanger>[0]['alertsStatus']) =>
+    assessDanger({
+      dayPlans: [plan()],
+      forecasts: [{ day: 1, date: '2026-10-12', forecast: forecast() }],
+      alerts: [],
+      alertsStatus,
+    }).axes.conjoncturel.partial;
+
+  it('dit pourquoi les alertes ne sont pas couvertes', () => {
+    expect(avec('lues')).toBeNull();
+    expect(avec('pas_encore_publiees')).toBe(
+      'Non vérifié : alertes officielles (publiées la veille du départ).'
+    );
+    expect(avec('hors_france')).toBe('Non vérifié : alertes officielles (hors France, non couvertes).');
+    expect(avec('indisponibles')).toBe('Non vérifié : alertes officielles.');
+    expect(avec(undefined)).toBe('Non vérifié : alertes officielles.');
+  });
+});
+
+describe('assessDanger — alerte officielle mise à jour depuis', () => {
+  it('reste visible, en information « à vérifier », datée de son émission', () => {
+    const d = assessDanger({
+      dayPlans: [plan()],
+      forecasts: [{ day: 1, date: '2026-10-12', forecast: forecast() }],
+      alertsStatus: 'lues',
+      alerts: [
+        {
+          id: 'r',
+          source: 'Météo-France via Meteoalarm',
+          hazard: 'inondations',
+          level: 'rouge',
+          area: 'Hérault',
+          onset: '2026-10-01T00:00:00+02:00',
+          expires: '2026-10-02T00:00:00+02:00',
+          sent: '2026-09-30T14:04:23.000Z',
+          updatedSince: '2026-09-30T20:05:48.000Z',
+          fetchedAt: '2026-10-01T18:00:00.000Z',
+        },
+      ],
+    });
+    const s = d.signals.find((x) => x.id === 'alert-r');
+    expect(s?.severity).toBe('info');
+    expect(s?.label).toContain('à vérifier sur vigilance.meteofrance.fr');
+    expect(s?.asOf).toBe('2026-09-30T14:04:23.000Z');
+  });
+});
+

@@ -46,3 +46,30 @@ Chaque ligne : **geste → résultat attendu**. Noter ce qui diffère, avec une 
 
 ## 7. À signaler en priorité
 Tout écart avec la maquette v8 (espacements, matière du verre, textes), toute erreur à l'écran, tout chiffre qui paraît faux.
+
+---
+
+## Passage du 2026-10-01 (Chromium 390×844, compte démo, `next dev` + Supabase de production)
+
+Déroulé par Claude dans le conteneur cloud, sur un voyage réel créé par l'interface
+(« Villard-de-Lans et ses environs », 3 jours). ✅ conforme · 🔧 écart trouvé puis corrigé · ⚠️ limite.
+
+| § | Résultat |
+|---|---|
+| 0 | ✅ `/compas` sans aventure → création ; `/prepare`, `?tab=equipement`, `?nouvelle=1`, `/ai-configurator`, `/rapport-kit`, `/configurateur` → bonnes destinations. |
+| 0 | 🔧 **Bloquant** : « Enregistrer mon aventure » échouait toujours (503) — la route insérait la ligne `owner` que la policy refuse, alors que le trigger la pose déjà. Corrigé (`d18dac8`). Après l'enregistrement : retour sur `/compas` (au lieu du hub). |
+| 1 | ✅ Règle 2 j → 3 j + ✓ : dates 10–12 oct. enregistrées. Redécoupage des étapes seulement avec un parcours du catalogue (vérifié : jour 3 créé, titres et hébergements gardés). |
+| 1 | ✅ Quand : prévision 16 j (pastilles pleines) puis tendance (cerclées), heure de départ conseillée et « au plus tard ». |
+| 1 | ✅ Parcours (Autour, recherche, Mes randos, choisir) ; Sur le tracé (état vide honnête + crédit OSM). ⚠️ Catalogue : 1 169 parcours sur 1 170 dans le Nord, aucun dans les Alpes ; un parcours de test « Phase 3 E2E Sancy » est visible en production. |
+| 1 | ✅ Dis-le avec l'IA (NVIDIA, 1,4 s) : « Compris par l'IA, vérifié par le Compas » ; aucun nombre inventé (« des amis » ne devient pas un effectif). |
+| 2 | ✅ Équipe, « − » bloqué au nombre de membres, « + » (personne hors groupe), lien `/hub/groupe`. Enveloppe 300 € ; dépense saisie dans le hub visible dans le Compas. 🔧 « 14 € par jour et par personne » mélangeait dépenses et enveloppe. ⚠️ « Qui doit quoi » demande deux comptes membres : non testable avec un seul compte. |
+| 3 | ✅ Nuits (une par nuit, « Noter ne réserve rien »), recherche RouteStack en mode test signalé, « Noter », retrait. 🔧 Offres de Chamonix et Katmandou pour un voyage ailleurs ; libellé de repli « Hôtel · Ville » noté comme un vrai lieu ; pastille « confirmée » pour une nuit seulement notée ; la tuile d'un jour ouvrait la nuit 1. ⚠️ Conversion de devise non testée (voyage en euros). |
+| 4 | ✅ Trois axes, aucun score, sources datées. 🔧 « RAS » affiché alors que le dénivelé était inconnu et les alertes officielles non lues → « RAS partiel » + liste de ce qui n'est pas vérifié. Toujours pas branchés : alertes officielles, explication IA. |
+| 5 | ✅ Conseils datés et sourcés ; « Mes kits » (aucun kit : message honnête) ; emballer/déballer. 🔧 Sac vide affiché « Prêt · rien de vital ne manque » ; « Ajouter » depuis un conseil ouvrait toute la boutique ; « ★ 0 » pour un produit sans avis. |
+| 6 | ✅ Poignée : moyen → grand → moyen → petit → fermé ; aucun défilement horizontal (390/390). 🔧 Ligne qui débordait en petite hauteur ; onglet actif hors champ ; résumé de carte visible à travers le tiroir agrandi. |
+| 7 | 🔧 **Contraste** : texte blanc sur verre clair (couche globale `liquid-ios27`), illisible sur un vrai paysage. Encre prise sur les primitives. « Raid » et « Expédition » affichés ensemble pour 2 jours → une seule table (maquette v8). |
+
+Limites du conteneur (pas de l'application) : Overpass et `api.open-meteo.com` coupés ou lents par le
+proxy, d'où des rendus serveur lents (~15 s) et une recherche de lieux pauvre dans le flux de création ;
+Realtime (WebSocket) non supporté par le proxy.
+

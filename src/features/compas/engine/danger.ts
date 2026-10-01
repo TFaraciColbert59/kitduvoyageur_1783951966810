@@ -11,6 +11,8 @@
  * - conjoncturel   : ce qui change avec le jour (vent, orage, pluie, alertes).
  */
 
+import type { AlertsStatus } from './officialAlerts';
+
 import type { CompasDayPlan } from './compasModel';
 import type { DayForecast } from './weather';
 
@@ -27,6 +29,13 @@ export interface OfficialAlert {
   area: string;
   onset: string | null;
   expires: string | null;
+  /** Émission de l'alerte par le service officiel (ISO). */
+  sent?: string | null;
+  /**
+   * Une mise à jour plus récente existe sans nouvelle alerte qui la remplace :
+   * l'état actuel n'est pas connu, l'alerte reste affichée « à vérifier ».
+   */
+  updatedSince?: string | null;
   /** Instant de lecture du flux (ISO). */
   fetchedAt: string;
 }
@@ -76,6 +85,14 @@ export const DANGER_THRESHOLDS = {
 
 const THUNDER_CODES = new Set([95, 96, 99]);
 
+/** Ce qu'un « RAS » conjoncturel ne couvre pas, selon l'état des alertes officielles. */
+const ALERTS_GAP: Record<AlertsStatus, string | null> = {
+  lues: null,
+  pas_encore_publiees: 'alertes officielles (publiées la veille du départ)',
+  hors_france: 'alertes officielles (hors France, non couvertes)',
+  indisponibles: 'alertes officielles',
+};
+
 const ALERT_SEVERITY: Record<OfficialAlert['level'], DangerSeverity> = {
   jaune: 'info',
   orange: 'warn',
@@ -97,8 +114,8 @@ export function assessDanger(input: {
   dayPlans: CompasDayPlan[];
   forecasts: Array<{ day: number; date: string; forecast: DayForecast | null }>;
   alerts: OfficialAlert[];
-  /** Le flux d'alertes officielles couvrant la zone a-t-il été lu ? Sinon, dit. */
-  alertsChecked?: boolean;
+  /** Ce que l'on sait des alertes officielles (absent : non lues). */
+  alertsStatus?: AlertsStatus;
 }): DangerAssessment {
   const T = DANGER_THRESHOLDS;
   const signals: DangerSignal[] = [];
@@ -118,7 +135,8 @@ export function assessDanger(input: {
   };
   // Aucune cotation du terrain n'existe dans les données du voyage.
   gap('technique', 'cotation du terrain');
-  if (!input.alertsChecked) gap('conjoncturel', 'alertes officielles');
+  const alertsGap = ALERTS_GAP[input.alertsStatus ?? 'indisponibles'];
+  if (alertsGap) gap('conjoncturel', alertsGap);
 
   for (const plan of input.dayPlans) {
     const f = forecastOf.get(plan.day);
@@ -226,10 +244,12 @@ export function assessDanger(input: {
     signals.push({
       id: `alert-${a.id}`,
       axis: 'conjoncturel',
-      severity: ALERT_SEVERITY[a.level],
-      label: `Vigilance ${a.level} · ${a.hazard} (${a.area})`,
+      severity: a.updatedSince ? 'info' : ALERT_SEVERITY[a.level],
+      label: `Vigilance ${a.level} · ${a.hazard} (${a.area})${
+        a.updatedSince ? ' — mise à jour depuis, à vérifier sur vigilance.meteofrance.fr' : ''
+      }`,
       source: a.source,
-      asOf: a.fetchedAt,
+      asOf: a.sent ?? a.fetchedAt,
     });
   }
 
