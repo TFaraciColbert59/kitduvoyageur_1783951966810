@@ -441,6 +441,48 @@ describe('CompasScreen', () => {
     expect(within(sheet).getByText(/ne confirme jamais/)).toBeTruthy();
   });
 
+  it('inventaire : classé par catégorie, « Dans le kit » ouvre la fiche, le reste s’ajoute', async () => {
+    const INV1 = '88888888-8888-4888-8888-888888888881';
+    const INV2 = '88888888-8888-4888-8888-888888888882';
+    const inv = (id: string, name: string, category: string) => ({
+      id,
+      name,
+      brand: null,
+      category,
+      weightG: 300,
+      condition: 'bon',
+      isLent: false,
+      maintenanceDueAt: null,
+      expiryDate: '2020-01-01',
+      quantity: 1,
+    });
+    const inventory = [inv(INV1, 'Réchaud', 'Cuisine'), inv(INV2, 'Popote', 'Cuisine')];
+    const data = makeData({
+      items: [item({ id: SLEEP, name: 'Réchaud', inventoryItemId: INV1 })],
+      inventory,
+    });
+    render(<CompasScreen data={{ ...data, inventory }} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Kit/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Kit' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Kit' });
+    const tabs = within(sheet).getByRole('group', { name: 'Parcours du tiroir' });
+    fireEvent.click(within(tabs).getByText('Inventaire'));
+    expect(within(sheet).getAllByText(/périmé/)).toHaveLength(2);
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Ajouter au kit : Popote' }));
+    await waitFor(() =>
+      expect(kit.addInventoryItemToTripAction).toHaveBeenCalledWith(
+        TRIP,
+        'trek-3-vallees',
+        INV2,
+        'Popote',
+        'Cuisine',
+        300
+      )
+    );
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Fiche : Réchaud' }));
+    expect(await screen.findByRole('dialog', { name: 'Réchaud' })).toBeTruthy();
+  });
+
   it('sans dates : aucun chiffre inventé, la décision demande les dates', () => {
     const data = makeData({
       trip: {

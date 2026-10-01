@@ -67,7 +67,7 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 | Répartition base / consommable / porté | ✅ | |
 | Prêt sur les points vérifiés + % | ✅ | |
 | Charge par membre (barre / limite) | 🟡 | |
-| Inventaire (catégories, appui long : fiche) | ⬜ | |
+| Inventaire (catégories, appui long : fiche) | ✅ | onglet « Inventaire » : inventaire réel par catégorie, « Dans le kit » ouvre la fiche, « Ajouter » sinon ; prêté, entretien dû, périmé affichés |
 | Manques : Emprunter · Louer · Acheter, boutique | 🟡 | modes d'acquisition existants |
 | Eau par personne (minimum, contenants, points d'eau) | ✅ | onglet « Eau » : repère par heure de marche jour par jour, contenants au volume écrit (`engine/water.ts`), points d'eau OSM du tracé |
 | Appui long : fiche, historique, commandes | 🟡 | |

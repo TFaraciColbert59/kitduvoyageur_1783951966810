@@ -961,6 +961,7 @@ function StepSheet({
       )}
       {step === 'kit' && flow === 'conseils' && <ConseilsFlow ctl={ctl} />}
       {step === 'kit' && flow === 'mes-kits' && <MesKitsFlow ctl={ctl} />}
+      {step === 'kit' && flow === 'inventaire' && <InventaireFlow ctl={ctl} />}
       {step === 'kit' && flow === 'sacs' && <SacsFlow ctl={ctl} />}
       {step === 'kit' && flow === 'eau' && <EauFlow ctl={ctl} />}
       {ctl.data.canEdit ? (
@@ -2362,6 +2363,119 @@ function EauFlow({ ctl }: { ctl: CompasCtl }) {
         jour). Une source OpenStreetMap peut être tarie : à vérifier avant de compter dessus.
       </p>
       {water.length > 0 && <p className="cp-disc">© contributeurs OpenStreetMap (licence ODbL)</p>}
+    </>
+  );
+}
+
+/**
+ * Inventaire (maquette finale, onglet du Kit) : l'inventaire réel classé par
+ * catégorie. Un objet déjà dans le kit ouvre sa fiche ; les autres s'ajoutent
+ * d'un geste. Prêté, à entretenir, périmé : dit, jamais caché.
+ */
+function InventaireFlow({ ctl }: { ctl: CompasCtl }) {
+  const { tripId, slug } = ctl.data.model;
+  const lineByInv = useMemo(
+    () =>
+      new Map(
+        ctl.lines
+          .filter((l) => l.inventoryItemId)
+          .map((l) => [l.inventoryItemId as string, l.id] as const)
+      ),
+    [ctl.lines]
+  );
+  const cats = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const i of ctl.data.inventory) {
+      const c = i.category ?? 'Sans catégorie';
+      m.set(c, (m.get(c) ?? 0) + 1);
+    }
+    return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'fr'));
+  }, [ctl.data.inventory]);
+  const [cat, setCat] = useState<string>('all');
+  const today = new Date().toISOString().slice(0, 10);
+  const shown = ctl.data.inventory
+    .filter((i) => cat === 'all' || (i.category ?? 'Sans catégorie') === cat)
+    .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+  if (ctl.data.inventory.length === 0)
+    return (
+      <p className="cp-note">
+        Ton inventaire est vide. <Link href="/hub/inventaire">Ouvrir l’inventaire</Link>
+      </p>
+    );
+  return (
+    <>
+      {cats.length > 1 && (
+        <Segments
+          label="Catégorie"
+          value={cat}
+          onChange={setCat}
+          options={[
+            { id: 'all', label: `Tout (${ctl.data.inventory.length})` },
+            ...cats.map(([c, n]) => ({ id: c, label: `${c} (${n})` })),
+          ]}
+        />
+      )}
+      <PagedList
+        label="Mon inventaire"
+        resetKey={cat}
+        items={shown}
+        render={(i) => {
+          const lineId = lineByInv.get(i.id) ?? null;
+          const notes = [
+            i.brand,
+            i.weightG != null ? formatKg(i.weightG) : 'à peser',
+            i.isLent ? 'prêté' : null,
+            i.maintenanceDueAt && i.maintenanceDueAt <= today ? 'entretien dû' : null,
+            i.expiryDate && i.expiryDate <= today ? 'périmé' : null,
+          ].filter(Boolean);
+          return (
+            <div key={i.id} className="cp-row" style={staticRow}>
+              <Thumb category={i.category} name={i.name} />
+              <span className="cp-row__t">
+                <b>{i.name}</b>
+                <span>{notes.join(' · ')}</span>
+              </span>
+              <span className="cp-row__end">
+                {lineId ? (
+                  <button
+                    type="button"
+                    className="cp-btn cp-btn--soft"
+                    onClick={() => ctl.open({ kind: 'item', lineId })}
+                    aria-label={`Fiche : ${i.name}`}
+                  >
+                    Dans le kit
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="cp-btn cp-btn--soft"
+                    disabled={ctl.busy || !ctl.data.canEdit}
+                    aria-label={`Ajouter au kit : ${i.name}`}
+                    onClick={() =>
+                      ctl.run(`${i.name} ajouté au kit`, () =>
+                        addInventoryItemToTripAction(
+                          tripId,
+                          slug,
+                          i.id,
+                          i.name,
+                          i.category ?? undefined,
+                          i.weightG ?? undefined
+                        )
+                      )
+                    }
+                  >
+                    Ajouter
+                  </button>
+                )}
+              </span>
+            </div>
+          );
+        }}
+      />
+      <p className="cp-note">
+        Les objets de ton inventaire (<Link href="/hub/inventaire">Hub</Link>). Ajouter au kit ne
+        change rien à l’inventaire.
+      </p>
     </>
   );
 }
