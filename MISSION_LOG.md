@@ -1,5 +1,16 @@
 # MISSION LOG — LKDV
 
+## 2026-10-01 — Création d'aventure (`/compas?nouvelle=1`) : départ, bandeau, champ du nom
+
+Trois défauts relevés pendant le test réel, corrigés et vérifiés dans Chromium (`a8a0170`, `2e351c8`) :
+
+- **Départ écrit dans la phrase** : « au départ de Villard-de-Lans », « depuis Chamonix »… ne servait à rien alors que l'écran promettait « L'IA complètera : lieu de départ ». `engine/briefDeparture.ts` lit le nom (nom propre seulement), le cherche comme commune au clic sur « Créer mon parcours » (homonymes départagés par l'arrivée, sinon rien n'est posé). Le résumé dit désormais « L'IA proposera : … » (arrivée, date, durée) et « Départ lu dans ta phrase : X » ou « Sans lieu de départ, la carte et les distances resteront à vérifier ». Mesuré : départ Villard-de-Lans (45.07, 5.56) posé, parcours construit depuis ce point.
+- **Bandeau « Échec » périmé** : changer le départ, la phrase, la date ou l'activité jetait le parcours mais gardait le verdict précédent (« Échec : Météo » au-dessus de « Générer mon parcours », sans parcours). La génération est remise à zéro avec le parcours (une génération en cours est laissée à son run) ; « Créer mon parcours » relance la génération.
+- **Champ « Nom de l'aventure »** : blanc sur tiroir sombre (classe de conteneur posée sur l'input) → `.prep-text-input`, matériau des champs du tiroir Matériel.
+- **Limite d'environnement** : Overpass (lieux réels) est coupé depuis le conteneur ; sans lieux, les étapes restent sur le départ et les distances ne se calculent pas (« Échec : Calcul des distances »). Les routeurs (BRouter, OSRM, Valhalla) répondent. À revérifier sur Vercel.
+- **Reste** : l'écran de création garde l'ancien style sombre (pas encore le matériau du Compas).
+- Preuves : `tsc` 0 ; `eslint` 0 erreur (avertissements identiques avant/après) ; adventure-prep 2727 tests, 10 échecs = base de référence (m4, m5, n7, m53) ; 15 tests départ + 7 tests bandeau (4 échouent sans le correctif).
+
 ## 2026-10-01 — Compas : test réel complet (Chromium, compte démo, base de production)
 
 Check-list `docs/compas/TEST_REEL.md` déroulée de bout en bout sur un voyage créé par l'interface ; tableau des résultats dans ce fichier. Corrections poussées (`d18dac8` → dernier commit de la branche) :
