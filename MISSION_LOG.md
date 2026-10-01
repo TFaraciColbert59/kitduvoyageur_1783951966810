@@ -5,7 +5,9 @@
 - Météo des vrais jours du voyage (Open-Meteo, heure par heure, isotherme, calendrier 6 semaines prévision puis tendance), heure de départ conseillée, règle de durée modifiable, choix du parcours (catalogue, mes randos, communauté) avec redécoupage non destructif, activité, envies, « Dis-le » (IA `compas-intent` + règles, ancrage des nombres).
 - Migration appliquée sur `icxyvwzfjbflcbqukpfz` : `20261001090000_compas_routes.sql` (RPC `compas_search_routes`, `compas_route_stages`).
 - Preuves bac à sable : `tsc` 0, `eslint src/features/compas` 0, invariants CI OK, 74 tests (`src/features/compas` + `src/lib/ai`), harnais Chromium 12 états sans débordement ni erreur console.
-- **Reste** : `npm run build` et test réel sur le compte démo (voir `docs/compas/REPRISE_CLAUDE_CODE.md`, §4).
+- Reprise Claude Code (conteneur cloud) : `npm run build` OK (Next 15.5), `tsc` 0, `eslint src/features/compas` 0, invariants CI/identité/icônes OK, 74 tests OK.
+- Correctif : « Dis-le » passe le tiroir en grande hauteur quand il affiche des propositions (débordement de 12 px en hauteur moyenne).
+- **Reste** : test réel sur `localhost:4000/compas` avec le compte démo (réseau Open-Meteo, base, clé IA) — non faisable depuis le conteneur (identifiants et `.env.local` sur le PC de Tony). Voir `docs/compas/REPRISE_CLAUDE_CODE.md`, §4.
 
 ## 2026-10-01 — Compas (préparateur ultime) : écran branché sur les données réelles
 

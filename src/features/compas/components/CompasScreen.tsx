@@ -164,6 +164,10 @@ export function CompasScreen({ data }: { data: CompasData }) {
   }, []);
   const back = useCallback(() => setStack((s) => s.slice(0, -1)), []);
   const close = useCallback(() => setStack([]), []);
+  const enlarge = useCallback(
+    () => setStack((s) => s.map((x, i) => (i === s.length - 1 ? { ...x, detent: 'large' } : x))),
+    []
+  );
 
   const togglePacked = useCallback(
     (line: CompasKitLine) => {
@@ -193,6 +197,7 @@ export function CompasScreen({ data }: { data: CompasData }) {
     replace,
     back,
     close,
+    enlarge,
     run,
     togglePacked,
     memberName: (id) => (id ? (members.get(id) ?? 'Membre') : 'Personne'),

@@ -64,6 +64,8 @@ export interface CompasCtl {
   replace: (sheet: SheetState) => void;
   back: () => void;
   close: () => void;
+  /** Passe le tiroir du dessus en grande hauteur (contenu qui s'allonge). */
+  enlarge: () => void;
   run: (success: string, action: () => Promise<ActionResult>) => Promise<boolean>;
   togglePacked: (line: CompasKitLine) => void;
   memberName: (userId: string | null) => string;

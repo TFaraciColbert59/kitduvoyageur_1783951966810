@@ -35,6 +35,7 @@ export function DisLe({ ctl }: { ctl: CompasCtl }) {
         return;
       }
       setState({ status: 'done', proposals: res.proposals, usedAi: res.usedAi, note: res.note });
+      if (res.proposals.length) ctl.enlarge();
       setChecked(Object.fromEntries(res.proposals.map((p) => [p.id, p.ok])));
     } catch {
       setState({ status: 'error', error: 'Connexion perdue : réessaie.' });
