@@ -13,13 +13,18 @@
    Aucun jeton parallèle : les couleurs viennent de tokens.css (--lkv-*).
    ============================================================================= */
 
+/* Encre du thème clair prise sur les primitives (--lkv-ink-*, --lkv-sage-*) :
+   la couche globale html[data-liquid-ios27] force --lkv-text-* et
+   --lkv-secondary en BLANC pour le hub sombre, ce qui rendait le Compas
+   (verre clair) illisible sur un vrai paysage. Le thème sombre, plus bas,
+   reprend les jetons de texte. */
 .compas {
-  --cp-ink: var(--lkv-text-primary);
-  --cp-ink2: var(--lkv-text-secondary);
+  --cp-ink: var(--lkv-ink-900);
+  --cp-ink2: var(--lkv-ink-500);
   --cp-ink3: rgb(23 43 36 / 0.5);
   --cp-sep: rgb(23 43 36 / 0.1);
   --cp-fill: rgb(23 43 36 / 0.07);
-  --cp-accent: var(--lkv-secondary);
+  --cp-accent: var(--lkv-sage-500);
   --cp-good: var(--lkv-success);
   --cp-good-bg: rgb(61 96 56 / 0.14);
   --cp-warn: var(--lkv-warning-dark);
@@ -56,7 +61,7 @@
   --cp-nav-clear: calc(
     max(var(--bottom-nav-height, 0px), var(--cookie-banner-h, 0px)) + var(--space-6, 24px)
   );
-  --cp-island-bg: var(--lkv-text-primary);
+  --cp-island-bg: var(--lkv-ink-900);
   --cp-island-ink: var(--lkv-on-dark);
   --cp-island-ink2: rgb(255 255 255 / 0.72);
   --cp-island-accent: var(--lkv-secondary-subtle);
@@ -85,12 +90,15 @@
 .compas[data-outdoor='1'] {
   --cp-ga: 0.9;
   --cp-gb: 30px;
-  --cp-ink2: var(--lkv-text-primary);
+  --cp-ink2: var(--lkv-ink-700);
   --cp-ink3: rgb(23 43 36 / 0.72);
   font-size: 15px;
 }
 .dark .compas,
 [data-theme='dark'] .compas {
+  --cp-ink: var(--lkv-text-primary);
+  --cp-ink2: var(--lkv-text-secondary);
+  --cp-accent: var(--lkv-secondary);
   --cp-ink3: rgb(236 237 232 / 0.55);
   --cp-sep: rgb(236 237 232 / 0.12);
   --cp-fill: rgb(236 237 232 / 0.08);
@@ -673,6 +681,12 @@
 .cp-map__canvas {
   position: absolute;
   inset: 0;
+}
+/* Les pastilles de lieux de la carte du hub sont en verre fumé sombre et
+   héritent leur couleur : sous l'encre sombre du Compas, elles devenaient
+   illisibles. Elles gardent ici l'encre claire prévue pour leur fond. */
+.cp-map__canvas .hub-globe-poi-chip {
+  color: var(--cp-island-ink);
 }
 .cp-map__actions {
   position: absolute;

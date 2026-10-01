@@ -182,7 +182,7 @@ export async function saveAdventure(
   if (blockers.length > 0) {
     return {
       status: 'rejected',
-      message: `Il manque ${blockers.join(', ')} avant d’enregistrer ton aventure.`,
+      message: `Il manque : ${blockers.join(', ')} (nécessaire pour enregistrer ton aventure).`,
     };
   }
 

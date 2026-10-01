@@ -189,8 +189,9 @@ export function DepartureStep({ onOpenSheet }: DepartureStepProps) {
   }, []);
 
   // L identifiant de voyage vient de la reponse de la base. Tant qu il n
-  // est pas la, aucun depart vers le hub : une redirection sans ligne creee
-  // afficherait un hub vide, pire qu un echec visible.
+  // est pas la, aucun depart vers le Compas : une redirection sans ligne creee
+  // afficherait un Compas vide, pire qu un echec visible. Le Compas lit
+  // l aventure active, que `saveAdventure` vient d orienter vers ce voyage.
   const saveCurrentAdventure = useCallback(async () => {
     if (save === 'saving') return;
 
@@ -225,7 +226,7 @@ export function DepartureStep({ onOpenSheet }: DepartureStepProps) {
       }
 
       setSave('saved');
-      router.push('/hub');
+      router.push('/compas');
     } finally {
       if (!controller.signal.aborted) abort.current = null;
     }

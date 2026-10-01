@@ -3,6 +3,8 @@
  * libellé honnête, jamais comme un zéro.
  */
 
+import { classifyScale } from './scale';
+
 const nf1 = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 });
 const nf0 = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 
@@ -170,16 +172,13 @@ export const RULER_TICKS: ReadonlyArray<[number, string]> = [
   [720, '1 mois'],
 ];
 
-const ZONES: ReadonlyArray<{ upTo: number; label: string }> = [
-  { upTo: 3, label: 'Sortie' },
-  { upTo: 12, label: 'Journée' },
-  { upTo: 48, label: 'Raid' },
-  { upTo: 240, label: 'Expédition' },
-  { upTo: Infinity, label: 'Monde' },
-];
-
+/**
+ * Libellé d'échelle de la règle de durée. Une seule convention dans le Compas :
+ * celle de `classifyScale` (en-tête « Où » compris). Deux tables parallèles
+ * affichaient « Raid » en tête et « Expédition » sur la règle pour 2 jours.
+ */
 export function durationZone(hours: number): string {
-  return (ZONES.find((z) => hours < z.upTo) ?? ZONES[ZONES.length - 1]).label;
+  return classifyScale(hours)?.label ?? '';
 }
 
 /** Durée en heures, « 4 j », « 5 h 30 », « 45 min ». */

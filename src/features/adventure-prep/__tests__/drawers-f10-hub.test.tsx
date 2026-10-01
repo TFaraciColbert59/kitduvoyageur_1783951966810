@@ -121,6 +121,10 @@ class Chaine implements PromiseLike<ReponseBdd> {
     return { data: data ?? null, error: null };
   }
 
+  async maybeSingle(): Promise<ReponseBdd> {
+    return this.single();
+  }
+
   then<TResult1 = ReponseBdd, TResult2 = never>(
     onfulfilled?: ((valeur: ReponseBdd) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((raison: unknown) => TResult2 | PromiseLike<TResult2>) | null,
@@ -150,6 +154,14 @@ class Chaine implements PromiseLike<ReponseBdd> {
         return { data: null, error: { message: `table ${this.table} indisponible` } };
       }
       const entrantes = (Array.isArray(this.charge) ? this.charge : [this.charge]) as Ligne[];
+      // Comme la base reelle : la policy d'insertion de `trip_collaborators`
+      // refuse le role `owner` a tout client (anti-escalade).
+      if (this.table === 'trip_collaborators' && entrantes.some((ligne) => ligne.role === 'owner')) {
+        return {
+          data: null,
+          error: { code: '42501', message: 'new row violates row-level security policy for table "trip_collaborators"' },
+        };
+      }
       const enregistrees = entrantes.map((ligne) => {
         // La cle primaire est attribuee par la base, pas par le produit :
         // c'est elle que le cookie doit reporter, fidelement.
@@ -158,6 +170,11 @@ class Chaine implements PromiseLike<ReponseBdd> {
             ? { ...ligne, id: `trip_${(compteurTrip += 1)}` }
             : { ...ligne };
         lignes.push(complete);
+        // Trigger `trg_trips_insert_owner` (SECURITY DEFINER) : la ligne owner
+        // est posee par la base, pas par la route.
+        if (this.table === 'trips') {
+          etat.trip_collaborators.push({ trip_id: complete.id, user_id: complete.user_id, role: 'owner' });
+        }
         return complete;
       });
       return { data: this.projeter(enregistrees), error: null };
@@ -165,7 +182,13 @@ class Chaine implements PromiseLike<ReponseBdd> {
 
     if (this.operation === 'suppression') {
       const restantes = lignes.filter((ligne) => !this.correspond(ligne));
+      const supprimes = new Set(lignes.filter((ligne) => this.correspond(ligne)).map((ligne) => ligne.id));
       etat[this.table] = restantes;
+      // ON DELETE CASCADE sur `trip_steps` et `trip_collaborators`.
+      if (this.table === 'trips') {
+        etat.trip_steps = etat.trip_steps.filter((ligne) => !supprimes.has(ligne.trip_id));
+        etat.trip_collaborators = etat.trip_collaborators.filter((ligne) => !supprimes.has(ligne.trip_id));
+      }
       return { data: lignes.length - restantes.length, error: null };
     }
 
