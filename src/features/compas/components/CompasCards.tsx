@@ -563,6 +563,25 @@ export function KitCard({ ctl }: { ctl: CompasCtl }) {
     : null;
   const total = kit.baseGrams + kit.consumableGrams + kit.wornGrams;
   const missing = kit.vitalMissing.length;
+  // L'état se lit sur le sac réel : un sac vide n'est ni prêt ni complet, et
+  // « rien de vital ne manque » ne se dit que s'il y a quelque chose à vérifier.
+  const empty = lines.length === 0;
+  const readiness = empty
+    ? { title: 'Sac à composer', detail: 'aucun objet prévu pour ce voyage' }
+    : missing
+      ? {
+          title: 'Pas encore prêt',
+          detail: `${packed} / ${lines.length} emballés · ${missing} vital${missing > 1 ? 's' : ''} à trouver`,
+        }
+      : packed < lines.length
+        ? {
+            title: 'En préparation',
+            detail: `${packed} / ${lines.length} emballés · aucun vital manquant parmi ces objets`,
+          }
+        : {
+            title: 'Prêt sur les points vérifiés',
+            detail: `${packed} / ${lines.length} emballés · aucun vital manquant parmi ces objets`,
+          };
 
   return (
     <>
@@ -596,18 +615,13 @@ export function KitCard({ ctl }: { ctl: CompasCtl }) {
           ctl.open({
             kind: 'step',
             step: 'kit',
-            flow: kit.toAcquire.length ? 'trouver' : 'emballer',
+            flow: empty ? 'mes-kits' : kit.toAcquire.length ? 'trouver' : 'emballer',
           })
         }
       >
         <div>
-          <div className="cp-hl">Prêt sur les points vérifiés</div>
-          <div className="cp-sub">
-            {packed} / {lines.length} emballés ·{' '}
-            {missing
-              ? `${missing} vital${missing > 1 ? 's' : ''} à trouver`
-              : 'rien de vital ne manque'}
-          </div>
+          <div className="cp-hl">{readiness.title}</div>
+          <div className="cp-sub">{readiness.detail}</div>
         </div>
         <b>{pct == null ? '—' : `${pct} %`}</b>
       </button>

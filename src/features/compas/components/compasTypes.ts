@@ -42,7 +42,12 @@ export type StepFlow<S extends CompasStepId = CompasStepId> = (typeof STEP_FLOWS
 export type SheetState =
   | { kind: 'item'; lineId: string }
   | { kind: 'acquire'; lineId: string; mode: AcquireMode }
-  | { kind: 'add'; target: 'kit' | 'inventaire' }
+  | {
+      kind: 'add';
+      target: 'kit' | 'inventaire';
+      /** Venu d'un conseil : recherche pré-remplie et nom proposé pour « Autre ». */
+      suggest?: { query: string; name: string };
+    }
   | { kind: 'bag'; userId: string }
   | { kind: 'carrier'; lineId: string }
   | { kind: 'step'; step: CompasStepId; flow: StepFlow; hint?: FlowHint };

@@ -29,6 +29,9 @@ export function PagedList<T>({
   const ref = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
   const [page, setPage] = useState(0);
+  // Hauteur RÉELLE d'une ligne : certaines tiennent sur trois lignes (membre,
+  // allure, niveau) et 48 px les faisait déborder sur le bloc suivant.
+  const [rowH, setRowH] = useState(ROW_H);
   const focused = useRef(false);
 
   useLayoutEffect(() => {
@@ -45,10 +48,17 @@ export function PagedList<T>({
 
   const perPage = useMemo(() => {
     if (height <= 0) return Math.max(1, items.length);
-    if (items.length * ROW_H <= height) return Math.max(1, items.length);
-    return Math.max(1, Math.floor((height - PAGER_H) / ROW_H));
-  }, [height, items.length]);
+    if (items.length * rowH <= height) return Math.max(1, items.length);
+    return Math.max(1, Math.floor((height - PAGER_H) / rowH));
+  }, [height, items.length, rowH]);
   const pages = useMemo(() => paginate(items, perPage), [items, perPage]);
+
+  useLayoutEffect(() => {
+    const rows = ref.current?.querySelectorAll<HTMLElement>('.cp-list__page > *');
+    if (!rows?.length) return;
+    const tallest = Math.max(...Array.from(rows, (r) => r.offsetHeight));
+    if (tallest > rowH) setRowH(tallest);
+  });
 
   // La page de l'élément demandé, une seule fois, quand la hauteur est connue :
   // ensuite la pagination appartient à la personne.
@@ -60,7 +70,16 @@ export function PagedList<T>({
   const current = Math.min(page, pages.length - 1);
 
   return (
-    <div className="cp-list" ref={ref} aria-label={label}>
+    <div
+      className="cp-list"
+      ref={ref}
+      aria-label={label}
+      // Jamais moins d'une ligne (et sa pagination) : en dessous, la ligne
+      // débordait sur le bloc suivant ; c'est le tiroir qui défile alors.
+      style={
+        items.length ? { minHeight: rowH + (items.length > 1 ? PAGER_H : 0) } : undefined
+      }
+    >
       {items.length === 0 ? (
         (empty ?? null)
       ) : (
@@ -245,8 +264,8 @@ export function Segments<K extends string>({
 }
 
 /** Recherche plein texte tolérante (accents, casse). */
-export function useTextFilter() {
-  const [query, setQuery] = useState('');
+export function useTextFilter(initial = '') {
+  const [query, setQuery] = useState(initial);
   const norm = useCallback(
     (v: string) =>
       v

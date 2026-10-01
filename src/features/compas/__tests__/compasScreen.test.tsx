@@ -303,8 +303,16 @@ describe('CompasScreen', () => {
       within(stepsNav()).getByRole('button', { name: /Kit/ }).getAttribute('aria-current')
     ).toBe('step');
     expect(screen.getByText('Trouver : sac de couchage')).toBeTruthy();
-    expect(screen.getByText('Prêt sur les points vérifiés')).toBeTruthy();
+    expect(screen.getByText('Pas encore prêt')).toBeTruthy();
     expect(screen.getByText(/1 vital à trouver/)).toBeTruthy();
+  });
+
+  it('CONTRE-EXEMPLE — sac vide : ni « prêt » ni « rien de vital ne manque »', () => {
+    render(<CompasScreen data={makeData({ items: [] })} initialStep="kit" />);
+    expect(screen.getByText('Sac à composer')).toBeTruthy();
+    expect(screen.getByText('aucun objet prévu pour ce voyage')).toBeTruthy();
+    expect(screen.queryByText('Prêt sur les points vérifiés')).toBeNull();
+    expect(screen.queryByText(/rien de vital ne manque/)).toBeNull();
   });
 
   it('décision → tiroir Kit → fiche → Acheter → produit précis relié et mis au panier', async () => {

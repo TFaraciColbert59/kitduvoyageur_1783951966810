@@ -1978,6 +1978,16 @@
   flex-wrap: wrap;
   gap: 5px;
 }
+.cp-linkbtn {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--cp-accent);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
 .cp-note--warn {
   display: flex;
   gap: 6px;

@@ -85,7 +85,7 @@ export function SheetContent({ sheet, ctl }: { sheet: SheetState; ctl: CompasCtl
     case 'acquire':
       return <AcquireSheet ctl={ctl} lineId={sheet.lineId} initialMode={sheet.mode} />;
     case 'add':
-      return <AddSheet ctl={ctl} target={sheet.target} />;
+      return <AddSheet ctl={ctl} target={sheet.target} suggest={sheet.suggest} />;
     case 'bag':
       return <BagSheet ctl={ctl} userId={sheet.userId} />;
     case 'carrier':
@@ -326,7 +326,10 @@ function ProductRow({
           {[product.brand, product.weightG != null ? formatKg(product.weightG) : null, price]
             .filter(Boolean)
             .join(' · ')}
-          {product.rating != null ? ` · ★ ${product.rating.toLocaleString('fr-FR')}` : ''}
+          {/* Une note sans avis n'est pas une note : « ★ 0 » laissait croire à un produit mal noté. */}
+          {product.rating != null && (product.reviewCount ?? 0) > 0
+            ? ` · ★ ${product.rating.toLocaleString('fr-FR')} (${product.reviewCount} avis)`
+            : ''}
         </span>
       </span>
       <span className="cp-row__end">
@@ -534,11 +537,19 @@ const CATEGORIES = [
 
 type AddSource = 'inventaire' | 'boutique' | 'libre';
 
-function AddSheet({ ctl, target }: { ctl: CompasCtl; target: 'kit' | 'inventaire' }) {
+function AddSheet({
+  ctl,
+  target,
+  suggest,
+}: {
+  ctl: CompasCtl;
+  target: 'kit' | 'inventaire';
+  suggest?: { query: string; name: string };
+}) {
   const [source, setSource] = useState<AddSource>(
     target === 'kit' && ctl.data.inventory.length ? 'inventaire' : 'boutique'
   );
-  const { query, setQuery, matches } = useTextFilter();
+  const { query, setQuery, matches } = useTextFilter(suggest?.query ?? '');
   const { tripId, slug } = ctl.data.model;
   const inKit = useMemo(
     () => new Set(ctl.lines.map((l) => l.inventoryItemId).filter(Boolean)),
@@ -625,7 +636,16 @@ function AddSheet({ ctl, target }: { ctl: CompasCtl; target: 'kit' | 'inventaire
           label="Boutique"
           resetKey={query}
           items={shop}
-          empty={<p className="cp-note">Aucun produit ne correspond.</p>}
+          empty={
+            <p className="cp-note">
+              Aucun produit ne correspond{query.trim() ? ` à « ${query.trim()} »` : ''}.{' '}
+              {query.trim() && (
+                <button type="button" className="cp-linkbtn" onClick={() => setQuery('')}>
+                  Voir toute la boutique
+                </button>
+              )}
+            </p>
+          }
           render={(p) => (
             <ProductRow
               key={p.id}
@@ -649,12 +669,22 @@ function AddSheet({ ctl, target }: { ctl: CompasCtl; target: 'kit' | 'inventaire
           )}
         />
       )}
-      {source === 'libre' && <FreeItemForm ctl={ctl} target={target} />}
+      {source === 'libre' && (
+        <FreeItemForm ctl={ctl} target={target} defaultName={suggest?.name} />
+      )}
     </>
   );
 }
 
-function FreeItemForm({ ctl, target }: { ctl: CompasCtl; target: 'kit' | 'inventaire' }) {
+function FreeItemForm({
+  ctl,
+  target,
+  defaultName,
+}: {
+  ctl: CompasCtl;
+  target: 'kit' | 'inventaire';
+  defaultName?: string;
+}) {
   const { tripId, slug } = ctl.data.model;
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -685,7 +715,13 @@ function FreeItemForm({ ctl, target }: { ctl: CompasCtl; target: 'kit' | 'invent
     <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <label className="cp-field">
         Nom
-        <input name="itemName" required maxLength={160} autoComplete="off" />
+        <input
+          name="itemName"
+          required
+          maxLength={160}
+          autoComplete="off"
+          defaultValue={defaultName}
+        />
       </label>
       <div className="cp-grid2">
         <label className="cp-field">
@@ -1664,6 +1700,17 @@ const ADVICE_ICON: Record<string, string> = {
   eau: 'droplet',
 };
 
+/** Mot cherché dans la boutique quand on ajoute depuis un conseil (sous-chaîne, sans accent). */
+const ADVICE_QUERY: Record<string, string> = {
+  pluie: 'imperm',
+  froid: 'polaire',
+  chaud: 'polaire',
+  extremites: 'gant',
+  soleil: 'solaire',
+  frontale: 'frontale',
+  eau: 'gourde',
+};
+
 function ConseilsFlow({ ctl }: { ctl: CompasCtl }) {
   const advice = ctl.data.kitAdvice;
   return (
@@ -1701,7 +1748,16 @@ function ConseilsFlow({ ctl }: { ctl: CompasCtl }) {
                   <button
                     type="button"
                     className="cp-btn cp-btn--soft"
-                    onClick={() => ctl.open({ kind: 'add', target: 'kit' }, 'large')}
+                    onClick={() =>
+                      ctl.open(
+                        {
+                          kind: 'add',
+                          target: 'kit',
+                          suggest: { query: ADVICE_QUERY[a.need] ?? '', name: a.label },
+                        },
+                        'large'
+                      )
+                    }
                   >
                     Ajouter
                   </button>
