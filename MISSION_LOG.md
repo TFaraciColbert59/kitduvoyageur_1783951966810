@@ -1,5 +1,19 @@
 # MISSION LOG — LKDV
 
+## 2026-10-01 — Compas : test réel complet (Chromium, compte démo, base de production)
+
+Check-list `docs/compas/TEST_REEL.md` déroulée de bout en bout sur un voyage créé par l'interface ; tableau des résultats dans ce fichier. Corrections poussées (`d18dac8` → dernier commit de la branche) :
+
+- **Bloquant production** : `/api/adventure/commit` échouait à chaque enregistrement (insertion `owner` refusée par la policy, déjà posée par le trigger) → la route relit la ligne du trigger ; doubles de test alignés sur la base réelle (trigger, policy, cascade). Retour sur `/compas` après l'enregistrement.
+- **Contraste** : la couche globale `liquid-ios27` forçait `--lkv-text-*` en blanc → encre du Compas sur les primitives `--lkv-ink-*` / `--lkv-sage-500` (thème clair).
+- **Données honnêtes** : « RAS partiel » + liste de ce qui n'est pas vérifié ; sac vide plus jamais « prêt » ; plus de « Complet » ni de « ★ 0 » ; libellé de repli RouteStack jamais noté comme lieu ; nuit notée ≠ réservée ; offres partenaires filtrées par pays ; enveloppe par jour et par personne calculée sur l'enveloppe.
+- **Alertes officielles** (Lot 4) : Météo-France via Meteoalarm, champs structurés seulement, mise à jour à fenêtre nulle = alerte « à vérifier », statut explicite (lues / publiées la veille / hors France / indisponibles). Département par Nominatim (UA de l'application, coordonnées arrondies).
+- **Ergonomie** : tiroirs (ligne qui débordait, onglet actif hors champ, résumé de carte sous le verre), « Ajouter » depuis un conseil filtré sur le besoin, tuile de nuit ouvrant la bonne nuit, échelle unique (maquette v8).
+- **Carte partagée** : couche pays ajoutée avant la fin du style (« Style is not done loading ») → attend le style ; trouvé avec **browser-harness** (Chromium piloté par CDP, télémétrie et enregistrements désactivés).
+- **Non testable ici** : « Qui doit quoi » (deux comptes membres), conversion de devise (voyage en euros), explication IA du verdict (non faite). Catalogue de parcours : quasi uniquement le Nord ; un parcours de test E2E visible en production.
+- **agentmemory** : installation refusée par le mode d'autorisation automatique (exécution d'un binaire externe) ; non installé.
+- Preuves : `tsc` 0 ; `eslint` 0 erreur sur les fichiers touchés ; Compas 137 tests ; booking 133 ; suite complète 25 échecs = 24 de la base de référence + 1 test de performance (2 ms) qui passe seul 3/3 ; `identity_compliance` OK.
+
 ## 2026-10-01 — Le Compas devient la référence design (décision de Tony)
 
 - `docs/compas/DESIGN_REFERENCE.md` : matériau, structure d'écran, tiroirs à trois hauteurs, lignes, règles de contenu, accessibilité mesurée, **dette connue** (variables `--cp-*` limitées à `.compas` et ~90 valeurs `rgb()` littérales, classes non extraites en primitives, primitives canoniques non alignées, tests de gouvernance qui ne couvrent pas `compas.css`, maquette v8 non comparée).
