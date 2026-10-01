@@ -100,7 +100,8 @@ describe('branchement : seul /compas active le matériau', () => {
         React.createElement('div', { 'data-shell': className }, children),
     }));
     vi.vi.doMock('../components/PrepFlow', () => ({ default: () => null }));
-    const { default: Screen } = await import('../components/AdventurePrepScreen');
+    const { default: AdventurePrepScreen } = await import('../components/AdventurePrepScreen');
+    const Screen = AdventurePrepScreen as React.ComponentType<{ material?: 'compas' }>;
     const sombre = renderToStaticMarkup(React.createElement(Screen));
     const compas = renderToStaticMarkup(React.createElement(Screen, { material: 'compas' }));
     expect(sombre).not.toContain('prep-material-compas');
