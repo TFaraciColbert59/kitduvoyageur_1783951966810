@@ -1,5 +1,12 @@
 # MISSION LOG — LKDV
 
+## 2026-10-01 — Compas, Lot 8 « Échelles » (version sobre)
+
+- `engine/scale.ts` : Sortie (< 8 h) → Journée (≤ 1 j) → Raid (2 à 4 j) → Expédition (5 à 30 j) → Monde (> 30 j). Convention de l'application, fondée sur la seule durée choisie ; sans durée, aucune échelle n'est affichée. Affichée dans l'en-tête de la carte Où.
+- **Non fait volontairement** : « grain des étapes » par échelle, sac type, pays et formalités pour « Monde » : aucune source de données fiable dans le dépôt (visas, vaccins) et rien à inventer.
+- **En attente de décision de Tony** : `/compas` remplace `/prepare` (changement de route) ; nettoyage des mocks `EXAMPLE_TRAIL` / « Marceline » (présents hors Compas : `CreateCarnetView`, `src/lib/mock/*`).
+- Preuves : `tsc` 0, `eslint src/features/compas` 0, 125 tests, build OK.
+
 ## 2026-10-01 — Compas, Lot 6 « Carte » (points sur le tracé)
 
 - Migration appliquée sur `icxyvwzfjbflcbqukpfz` : `20261001100000_compas_route_pois.sql` (fonction `compas_route_pois`, lecture seule, SECURITY INVOKER : eau, abris, camping, vues, sommets, parkings à moins de 1 km du tracé, 20 par catégorie, avec coordonnées et points sans nom). Testée sur un vrai parcours du catalogue.

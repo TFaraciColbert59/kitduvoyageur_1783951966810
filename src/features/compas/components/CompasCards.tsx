@@ -1,5 +1,6 @@
 'use client';
 
+import { classifyScale } from '../engine/scale';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import Icon from '@/components/ui/Icon';
@@ -205,7 +206,12 @@ export function OuCard({ ctl, onKit }: { ctl: CompasCtl; onKit: () => void }) {
           {m.title}
         </h2>
         <p className="cp-sub">
-          {[act, hours != null ? formatHours(hours) : null, m.dates.label]
+          {[
+            act,
+            classifyScale(hours)?.label ?? null,
+            hours != null ? formatHours(hours) : null,
+            m.dates.label,
+          ]
             .filter(Boolean)
             .join(' · ')}
         </p>
