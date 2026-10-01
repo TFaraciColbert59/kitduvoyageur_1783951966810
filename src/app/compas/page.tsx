@@ -1,18 +1,23 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import AppShell from '@/components/shell/AppShell';
-import Icon from '@/components/ui/Icon';
+import { COMPAS_STEPS, type CompasStepId } from '@/features/compas/engine/compasModel';
 import { CompasScreen } from '@/features/compas/components/CompasScreen';
 import { getCompasData } from '@/features/compas/server/getCompasData';
+import AdventurePrepScreen from '@/features/adventure-prep/components/AdventurePrepScreen';
 import '@/features/compas/compas.css';
 
 /**
- * Compas — le préparateur ultime (maquette v8 validée), branché sur les
- * données réelles de l'aventure active du hub.
+ * Compas — le préparateur de voyage (il remplace `/prepare`, qui redirige ici),
+ * branché sur les données réelles de l'aventure active du hub.
  *
- * Route dédiée tant que le Compas est en validation ; `/prepare` reste
- * inchangée et le remplacera une fois validé. Le rendu dépend de la session
- * (aventure active, inventaire) : jamais prérendu.
+ * Deux états, une seule route :
+ *   - aventure active   -> le Compas ;
+ *   - aucune aventure, ou `?nouvelle=1` (intention explicite de créer) ->
+ *     le flux de création d'aventure.
+ *
+ * `?etape=ou|nous|resa|verdict|kit` ouvre directement une étape (ex. `kit` pour
+ * les anciens liens « configurateur »). Le rendu dépend de la session :
+ * jamais prérendu.
  */
 export const dynamic = 'force-dynamic';
 
@@ -22,31 +27,31 @@ export const metadata: Metadata = {
     'Où, quand, avec qui, quoi réserver et quoi emporter : tout le voyage au même endroit, sans score ni donnée inventée.',
 };
 
-export default async function CompasPage() {
+/** Valeurs acceptées pour ouvrir le flux de création, par porte. */
+const NEW_FLOW_VALUES = new Set(['1', 'oui', 'true', 'aventure']);
+const STEP_IDS = new Set<string>(COMPAS_STEPS.map((s) => s.id));
+
+export default async function CompasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ nouvelle?: string; etape?: string }>;
+}) {
+  const { nouvelle, etape } = await searchParams;
+
+  // Intention explicite : elle gagne même si une aventure est déjà active, et
+  // évite une lecture de base inutile.
+  if (NEW_FLOW_VALUES.has(nouvelle ?? '')) return <AdventurePrepScreen />;
+
   const data = await getCompasData();
+  if (!data) return <AdventurePrepScreen />;
+
+  const initialStep = STEP_IDS.has(etape ?? '') ? (etape as CompasStepId) : undefined;
 
   return (
     // Fond peint par `.cp-bg` (paysage éclairci de la maquette) : la toile
     // globale assombrie n'est pas rendue sur cette route.
     <AppShell hasBottomNav videoBackground={false}>
-      {data ? (
-        <CompasScreen data={data} />
-      ) : (
-        <div className="compas compas--empty">
-          <div className="cp-bg" aria-hidden="true" />
-          <section className="cp-empty cp-glass">
-            <h1>Aucune aventure active</h1>
-            <p className="cp-note">
-              Le Compas rassemble ton parcours, ton équipe, tes réservations et ton matériel. Commence par préparer une
-              activité : il se remplira tout seul.
-            </p>
-            <Link className="cp-btn cp-btn--pg" href="/prepare?nouvelle=1">
-              <Icon name="compass" size={16} />
-              Préparer une activité
-            </Link>
-          </section>
-        </div>
-      )}
+      <CompasScreen data={data} initialStep={initialStep} />
     </AppShell>
   );
 }

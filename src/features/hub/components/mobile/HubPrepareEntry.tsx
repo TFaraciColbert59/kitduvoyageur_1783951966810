@@ -16,7 +16,7 @@ export function HubPrepareEntry() {
   return (
     <section aria-label="Préparer une activité" className="min-w-0">
       <Link
-        href="/prepare?nouvelle=1"
+        href="/compas?nouvelle=1"
         aria-label="Préparer une activité"
         className="hub-chip-control glass-sub-card flex min-h-[44px] w-full items-center gap-3 rounded-2xl bg-[color:var(--card-tint-solid)] px-3 py-2.5 text-[color:var(--lkv-text-primary)] transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
       >

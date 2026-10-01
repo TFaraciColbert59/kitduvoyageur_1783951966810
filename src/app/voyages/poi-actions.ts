@@ -76,7 +76,7 @@ function revalidateTrip(slug: string) {
   revalidatePath(HUB_HOME_HREF);
   revalidatePath(hubSectionHref({ nature: 'sortie', slug }, 'itinerary'));
   // Le preparateur affiche la meme liste de POI : il doit suivre l'ecriture.
-  revalidatePath('/prepare');
+  revalidatePath('/compas');
 }
 
 export async function addTripPoiAction(

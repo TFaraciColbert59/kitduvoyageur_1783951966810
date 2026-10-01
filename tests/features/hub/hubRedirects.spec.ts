@@ -37,14 +37,14 @@ describe('H-AUTO-42 — resolveLegacyRedirect : table statique', () => {
     expect(resolveLegacyRedirect('/recommandations')?.destination).toBe('/hub');
     expect(resolveLegacyRedirect('/naviguer')?.destination).toBe('/randonnee-active');
     expect(resolveLegacyRedirect('/boussole')?.destination).toBe('/randonnee-active');
-    // L'assistant equipement est un onglet du preparateur (fusion).
+    // L'assistant equipement est l'etape Kit du Compas (fusion).
     expect(resolveLegacyRedirect('/rapport-kit')).toEqual({
-      destination: '/prepare',
-      setParams: { tab: 'equipement' },
+      destination: '/compas',
+      setParams: { etape: 'kit' },
     });
     expect(resolveLegacyRedirect('/ai-configurator')).toEqual({
-      destination: '/prepare',
-      setParams: { tab: 'equipement' },
+      destination: '/compas',
+      setParams: { etape: 'kit' },
     });
     expect(resolveLegacyRedirect('/activite')?.destination).toBe('/feed');
     expect(resolveLegacyRedirect('/gamification')?.destination).toBe('/recompenses');
@@ -137,7 +137,7 @@ describe('H-AUTO-42 — invariants de la matrice (chaînes, boucles, registre)',
   });
 
   it('INV-4: destinations hors hub = routes canoniques vivantes', () => {
-    const allowed = new Set(['/randonnee-active', '/prepare', '/feed', '/recompenses', '/occasion']);
+    const allowed = new Set(['/randonnee-active', '/compas', '/feed', '/recompenses', '/occasion']);
     for (const destination of Object.values(LEGACY_REDIRECTS)) {
       if (!destination.startsWith('/hub')) expect(allowed.has(destination)).toBe(true);
     }

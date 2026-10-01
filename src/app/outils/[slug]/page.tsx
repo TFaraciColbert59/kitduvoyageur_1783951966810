@@ -1045,7 +1045,7 @@ function ToolPlanificateur() {
           ))}
           <div className="bg-primary/5 border border-primary/20 rounded-[var(--lkv-radius-md)] p-4 text-center">
             <p className="text-sm text-muted-foreground mb-3">Pour un itinéraire personnalisé avec équipement recommandé :</p>
-            <a href="/prepare?tab=equipement" className="btn-primary py-2 px-6 text-sm inline-flex items-center gap-2">
+            <a href="/compas?etape=kit" className="btn-primary py-2 px-6 text-sm inline-flex items-center gap-2">
               ✨ Configurateur IA complet
             </a>
           </div>

@@ -1,5 +1,14 @@
 # MISSION LOG — LKDV
 
+## 2026-10-01 — `/compas` remplace `/prepare` à 100 % (décision de Tony)
+
+- `/compas` : sans aventure active ou avec `?nouvelle=1` → flux de création d'aventure (`AdventurePrepScreen`) ; `?etape=` ouvre une étape (nouvelle prop `initialStep`).
+- `/prepare` devient une passerelle 308 : `?nouvelle=1` → `/compas?nouvelle=1`, `?tab=equipement` → `/compas?etape=kit`, le reste → `/compas`. Vérifié sur le build (`next start`) : `/prepare`, `/prepare?tab=equipement`, `/prepare?nouvelle=1`, `/configurateur` (308), `/ai-configurator`, `/rapport-kit`, `/preparer` (307) atterrissent bien sur `/compas`.
+- ~25 liens internes mis à jour (navigation, pied de page, pays, carnet, groupes, outils, assistants de création de voyage, registre de routes, redirections legacy). `loading.tsx` de `/prepare` supprimé.
+- **Perte assumée** : les paramètres `country` et `groupId` des liens « configurateur » ne sont plus transmis (le Compas ne les lit pas).
+- **Gardé volontairement** : `src/app/prepare/actions.ts` (utilisé par le flux de création) et `src/features/preparator/` (code mort, référence pour porter la recherche de réservation RouteStack dans le Compas, Lot 3).
+- Tests adaptés : `hubRedirects`, `preparatorFusion`, `hub-adventures-drawer`. Suite complète : 7 046 tests, 24 en échec, **identiques à la base de référence** (0 nouvel échec, 0 résolu). `tsc` 0, invariants OK, build OK.
+
 ## 2026-10-01 — Compas, contrôle visuel mobile (Chromium 390×844) et corrections
 
 - Page de test temporaire (supprimée, non commitée) avec des données de test : onglets Kit/Où/Résa/Verdict/Nous ouverts dans Chromium. 0 débordement horizontal de page. Seules erreurs console : tuiles de carte bloquées par le réseau du conteneur.

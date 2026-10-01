@@ -208,7 +208,7 @@ export function PreparatorView({
   );
 
   // La barre d'onglets defile : l'onglet ouvert reste centre (jamais coupe
-  // quand on arrive via /prepare?tab=equipement depuis un ancien lien).
+  // quand on arrive via /compas?etape=kit depuis un ancien lien).
   useEffect(() => {
     const active = tabsRef.current?.querySelector<HTMLButtonElement>('[aria-selected="true"]');
     active?.scrollIntoView({ inline: 'center', block: 'nearest' });

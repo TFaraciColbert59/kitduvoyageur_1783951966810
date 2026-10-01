@@ -284,6 +284,13 @@ redirects() {
 }
 ```
 
+### `/prepare` → `/compas` (le Compas remplace le préparateur)
+- `/compas` est le préparateur de voyage canonique (étapes Où, Nous, Résa, Verdict, Kit). Sans aventure active, ou avec `?nouvelle=1`, il affiche le flux de création d'aventure.
+- `/prepare` n'est plus qu'une passerelle : redirection **308** vers `/compas` (`?nouvelle=1` conservé ; `?tab=equipement` → `/compas?etape=kit`). `src/app/prepare/actions.ts` reste : le flux de création l'importe.
+- `?etape=ou|nous|resa|verdict|kit` ouvre directement une étape. Anciens liens « configurateur » (`/configurateur`, `/ai-configurator`, `/rapport-kit`) → `/compas?etape=kit`.
+- `src/features/preparator/` n'est plus branché à aucune route ; conservé comme référence pour porter la recherche de réservation RouteStack dans le Compas.
+
+
 ### transpilePackages (next.config.mjs)
 ```js
 transpilePackages: ['react-globe.gl', 'three', 'lucide-react']

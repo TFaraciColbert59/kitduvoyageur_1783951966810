@@ -69,11 +69,20 @@ const DECISION_FLOWS: Record<string, { step: CompasStepId; flow: StepFlow }> = {
  * Les tiroirs s'empilent au-dessus de la zone haute sans déborder sur la carte,
  * ou en grand.
  */
-export function CompasScreen({ data }: { data: CompasData }) {
+export function CompasScreen({
+  data,
+  initialStep,
+}: {
+  data: CompasData;
+  /** Étape ouverte à l'arrivée (lien `?etape=`) ; sinon la prochaine décision. */
+  initialStep?: CompasStepId;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [running, setRunning] = useState(false);
-  const [step, setStep] = useState<CompasStepId>(() => data.model.nextDecision?.step ?? 'ou');
+  const [step, setStep] = useState<CompasStepId>(
+    () => initialStep ?? data.model.nextDecision?.step ?? 'ou'
+  );
   const [mapBig, setMapBig] = useState(false);
   const [display, setDisplay] = useState<{ outdoor: boolean; glass: number }>({
     outdoor: false,

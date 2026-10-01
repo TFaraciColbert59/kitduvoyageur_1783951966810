@@ -69,7 +69,7 @@ const SECTIONS: NavSection[] = [
     label: 'Compte & légal',
     items: [
       { label: "Rapport d'Expédition", icon: 'doc', href: '/rapport-expedition' },
-          { label: 'Rapport Kit', icon: 'bag', href: '/prepare?tab=equipement' },
+          { label: 'Rapport Kit', icon: 'bag', href: '/compas?etape=kit' },
       { label: 'Aide / FAQ', icon: 'heart', href: '/faq' },
       { label: 'Contact', icon: 'heart', href: '/contact' },
       { label: 'CGU', icon: 'lock', href: '/cgu' },

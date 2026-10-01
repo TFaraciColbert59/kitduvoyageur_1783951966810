@@ -96,7 +96,7 @@ describe('Tiroir « Tes aventures » — actions', () => {
     expect(actions).toHaveLength(2);
     expect(actions[0].id).toBe('prepare');
     expect(actions[0].label).toBe('Pr\u00e9parer une activit\u00e9');
-    expect(actions[0].href).toBe('/prepare?nouvelle=1');
+    expect(actions[0].href).toBe('/compas?nouvelle=1');
     expect(actions[1].id).toBe('libre');
     expect(actions[1].label).toBe('Partir librement');
     expect(actions[1].href).toBe('/partir-librement');

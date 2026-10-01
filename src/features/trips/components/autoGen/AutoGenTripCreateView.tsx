@@ -112,7 +112,7 @@ export function AutoGenTripCreateView({ initialBriefInput = '' }: AutoGenTripCre
           title: res.title,
         });
         startTransition(() => {
-          router.push('/prepare');
+          router.push('/compas');
           router.refresh();
         });
         return;

@@ -21,7 +21,7 @@
     { "source": "/inventaire", "destination": "/explorer", "permanent": true, "note": "Materiel fusionne dans l'explorateur." },
     { "source": "/shop", "destination": "/explorer", "permanent": true, "note": "Commerce non livre." },
     { "source": "/catalogue/:path*", "destination": "/explorer", "permanent": true, "note": "Catalogue remplace par l'explorateur." },
-    { "source": "/configurateur", "destination": "/prepare?tab=equipement", "permanent": true, "note": "L'equipement est un onglet du preparateur." },
+    { "source": "/configurateur", "destination": "/compas?etape=kit", "permanent": true, "note": "L'equipement est l'etape Kit du Compas." },
     { "source": "/ateliers", "destination": "/explorer", "permanent": false, "note": "Cible temporaire, pas de promesse d'URL." },
     { "source": "/presse", "destination": "/contact", "permanent": false, "note": "Page de presse non livree." },
     { "source": "/confidentialite", "destination": "/politique-confidentialite", "permanent": true, "note": "Correction du nom de route." },
@@ -29,7 +29,8 @@
     { "source": "/pays", "destination": "/explorer", "permanent": false, "note": "Racine /pays remplacee par l'explorateur ; /pays/[code] reste servie." }
   ],
   "kept": [
-    { "route": "/prepare", "note": "Route fine du preparateur de voyage (D-20)." },
+    { "route": "/prepare", "note": "Passerelle : redirige (308) vers /compas, qui remplace le preparateur (D-20). Les anciens liens et favoris continuent de marcher." },
+    { "route": "/compas", "note": "Preparateur de voyage canonique : etapes Ou, Nous, Resa, Verdict, Kit ; cree une aventure si aucune n'est active." },
     { "route": "/hub", "note": "Hub unique (D-02)." },
     { "route": "/hub/[section]", "note": "Sections du hub, y compris /hub/nouveau." },
     { "route": "/k/[token]", "note": "Deep link d'invitation, servi." },
