@@ -1,5 +1,11 @@
 # MISSION LOG — LKDV
 
+## 2026-10-01 — Le Compas devient la référence design (décision de Tony)
+
+- `docs/compas/DESIGN_REFERENCE.md` : matériau, structure d'écran, tiroirs à trois hauteurs, lignes, règles de contenu, accessibilité mesurée, **dette connue** (variables `--cp-*` limitées à `.compas` et ~90 valeurs `rgb()` littérales, classes non extraites en primitives, primitives canoniques non alignées, tests de gouvernance qui ne couvrent pas `compas.css`, maquette v8 non comparée).
+- `DESIGN_SYSTEM.md` §0 et `CLAUDE.md` : le Compas prévaut sur `/materiel` pour tout nouvel écran ; jetons toujours `--lkv-*` ; `/compte` reste la référence des patterns utilisateur.
+- Documentation seule : aucun code modifié. `ci_invariants` OK ; les 2 échecs de `tests/design/task-2a-contrast.spec.ts` sont dans la base de référence.
+
 ## 2026-10-01 — Compas, Lot 3 (suite) : recherche d'hébergement par nuit
 
 - `engine/stays.ts` : dates d'arrivée/départ de la nuit du jour N, simplification des offres (prix et devise jamais devinés : sans devise confirmée, « Prix non confirmé » ; seuls les liens `https` sont gardés).

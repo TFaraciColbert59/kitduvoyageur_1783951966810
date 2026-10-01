@@ -197,6 +197,14 @@ Tout en ink-based : `rgba(11,31,23, %)`. Jamais `rgba(0,0,0)`.
 
 ---
 
+## 🧭 Référence design : le Compas (2026-10-01)
+
+- Le Compas (`/compas`) est la **référence visuelle et d'interaction** pour tout nouvel écran (verre Liquid Glass v8, tiroirs à trois hauteurs, capsule d'étapes, lignes `.cp-row`, états « non renseigné / non évalué »). Voir `docs/compas/DESIGN_REFERENCE.md` et `DESIGN_SYSTEM.md` §0.
+- En cas de divergence de style, le Compas prévaut sur `/materiel`. Jetons : toujours `--lkv-*` (`src/styles/tokens.css`), aucune couleur littérale nouvelle.
+- Dette connue : variables `--cp-*` limitées à `.compas` et valeurs `rgb()` littérales, classes non extraites en primitives (`LkvButton`, `GlassCard`… pas encore alignés).
+
+---
+
 ## ⚡ Interaction Design & UX (Skill Aura)
 
 > **Règle Permanente :** Le skill Aura Interaction Design doit être utilisé pour toute décision relative aux interactions et à l'expérience utilisateur lorsqu'il est pertinent.
