@@ -3,14 +3,16 @@
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
 import Icon from '@/components/ui/Icon';
 
-export type Detent = 'medium' | 'large';
+export type Detent = 'small' | 'medium' | 'large';
 
 /**
- * Tiroir en verre à deux hauteurs.
+ * Tiroir en verre à trois hauteurs.
+ * - `small`  : un coup d'œil, environ la moitié de la zone haute (le contenu défile) ;
  * - `medium` : occupe la zone haute, s'arrête AU-DESSUS de la carte ;
  * - `large`  : recouvre l'écran du Compas.
  * La poignée se tire (haut = agrandir, bas = réduire puis fermer) ou se touche
- * (bascule). Échap ferme. Le focus entre dans le tiroir à l'ouverture.
+ * (petit → moyen → grand, puis retour au moyen). Échap ferme. Le focus entre
+ * dans le tiroir à l'ouverture.
  */
 export function CompasSheet({
   title,
@@ -73,7 +75,7 @@ export function CompasSheet({
         <button
           type="button"
           className="cp-sheet__grab"
-          aria-label={detent === 'medium' ? 'Agrandir le tiroir' : 'Réduire le tiroir'}
+          aria-label={detent === 'large' ? 'Réduire le tiroir' : 'Agrandir le tiroir'}
           onPointerDown={(e) => {
             drag.current = { y: e.clientY, moved: false };
             (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
@@ -84,17 +86,19 @@ export function CompasSheet({
             const dy = e.clientY - d.y;
             if (dy < -36) {
               d.moved = true;
-              onDetent('large');
+              onDetent(detent === 'small' ? 'medium' : 'large');
             } else if (dy > 36) {
               d.moved = true;
               if (detent === 'large') onDetent('medium');
+              else if (detent === 'medium') onDetent('small');
               else onClose();
             }
           }}
           onPointerUp={() => {
             const d = drag.current;
             drag.current = null;
-            if (d && !d.moved) onDetent(detent === 'medium' ? 'large' : 'medium');
+            if (d && !d.moved)
+              onDetent(detent === 'small' ? 'medium' : detent === 'medium' ? 'large' : 'medium');
           }}
         />
         <div className="cp-sheet__h">

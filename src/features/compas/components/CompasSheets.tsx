@@ -1511,7 +1511,7 @@ function TallList<T>({
 }) {
   if (!items.length) return <>{empty}</>;
   return (
-    <div className="cp-list__page" role="list" aria-label={label}>
+    <div className="cp-list__page" role="group" aria-label={label}>
       {items.map(render)}
     </div>
   );

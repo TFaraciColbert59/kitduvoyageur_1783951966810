@@ -1,5 +1,12 @@
 # MISSION LOG — LKDV
 
+## 2026-10-01 — Compas : accessibilité (axe) et trois hauteurs de tiroir (Lot 7, partie)
+
+- **Audit axe-core** (WCAG 2 A/AA, Chromium 390×844, données de test) sur l'écran et 6 tiroirs (Où/Sur le tracé, Nous/Budget, Résa/Nuits, Verdict/Signaux, Kit/Conseils) : 1 violation critique trouvée (`aria-required-children` sur `TallList`, `role="list"` sans éléments de liste) → corrigée (`role="group"`). Résultat : 0 violation. Limite : fond de page de test, contrastes non représentatifs ; pas de test sur le tiroir « Mes kits » (action serveur).
+- **Trois hauteurs de tiroir** : petit (≈ moitié de la zone haute, 340 px max, le contenu défile), moyen, grand. Poignée : tirer vers le haut agrandit, vers le bas réduit puis ferme depuis « petit » ; toucher = petit → moyen → grand → moyen. Vérifié au pointeur réel dans Chromium (hauteurs mesurées 340 / 498 / 629 px) et par test automatisé.
+- **Reste du Lot 7 (non fait, à valider sur téléphone)** : lentille au doigt, barre d'onglets qui se réduit, appui long avec aperçu de l'effet, îlot dynamique « Annuler ».
+- Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants OK, 126 tests, build OK.
+
 ## 2026-10-01 — `/compas` remplace `/prepare` à 100 % (décision de Tony)
 
 - `/compas` : sans aventure active ou avec `?nouvelle=1` → flux de création d'aventure (`AdventurePrepScreen`) ; `?etape=` ouvre une étape (nouvelle prop `initialStep`).

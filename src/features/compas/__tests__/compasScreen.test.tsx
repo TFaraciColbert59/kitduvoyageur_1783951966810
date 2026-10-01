@@ -519,6 +519,43 @@ describe('CompasScreen', () => {
     expect(within(sheet).getByText(/contributeurs OpenStreetMap/)).toBeTruthy();
   });
 
+  it('tiroir : trois hauteurs (petit, moyen, grand) et fermeture en tirant la poignée', async () => {
+    // jsdom n'a pas PointerEvent : sans lui, clientY est perdu.
+    class TestPointerEvent extends MouseEvent {
+      pointerId: number;
+      constructor(type: string, init: MouseEventInit & { pointerId?: number } = {}) {
+        super(type, init);
+        this.pointerId = init.pointerId ?? 1;
+      }
+    }
+    vi.stubGlobal('PointerEvent', TestPointerEvent);
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Nous' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Nous' });
+    const grab = () => within(sheet).getByRole('button', { name: /(Agrandir|Réduire) le tiroir/ });
+    const pull = (dy: number) => {
+      fireEvent.pointerDown(grab(), { clientY: 300, pointerId: 1 });
+      fireEvent.pointerMove(grab(), { clientY: 300 + dy, pointerId: 1 });
+      fireEvent.pointerUp(grab(), { clientY: 300 + dy, pointerId: 1 });
+    };
+    const detent = () => sheet.getAttribute('data-detent');
+    // Ramène à « moyen » si le contenu avait agrandi le tiroir, puis descend en « petit ».
+    if (detent() === 'large') pull(60);
+    expect(detent()).toBe('medium');
+    pull(60);
+    expect(detent()).toBe('small');
+    pull(-60);
+    expect(detent()).toBe('medium');
+    pull(-60);
+    expect(detent()).toBe('large');
+    pull(60);
+    pull(60);
+    expect(detent()).toBe('small');
+    pull(60);
+    expect(screen.queryByRole('dialog', { name: 'Nous' })).toBeNull();
+  });
+
   const openOu = async (flow: RegExp) => {
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Détails : Où et quand' }));
