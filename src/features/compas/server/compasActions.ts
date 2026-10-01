@@ -32,6 +32,13 @@ import { planKitApply, type MyKit } from '../engine/kitApply';
 import { simplifyOffers, stayDates, type CompasStayOffer } from '../engine/stays';
 import { readCompasMeta } from '../engine/meta';
 import { localToday } from './weather';
+import {
+  COMPAS_VERDICT_SPEC,
+  buildCompasVerdictPrompt,
+  buildCompasVerdictSystem,
+} from '@/lib/ai/features/compasVerdict';
+import { checkExplanation, verdictFacts } from '../engine/verdictExplain';
+import { getCompasData } from './getCompasData';
 
 /**
  * Compas — actions serveur propres à l'écran.
@@ -1165,6 +1172,67 @@ export async function compasInterpretAction(
     return { success: true, proposals, usedAi, note };
   } catch (err) {
     console.error('[compas] compasInterpretAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+/* ---------- Verdict expliqué par l'IA ---------- */
+
+const explainSchema = z.object({ tripId: uuid });
+
+/**
+ * L'IA reformule le verdict à partir des seuls faits du moteur. Le niveau ne
+ * change jamais ; une réponse qui invente un nombre, parle de score ou rassure
+ * au-delà des faits est écartée et la raison est rendue.
+ */
+export async function compasExplainVerdictAction(input: z.input<typeof explainSchema>): Promise<
+  | { success: true; text: string | null; refused: string | null; note: string | null }
+  | { success: false; error: string }
+> {
+  const parsed = explainSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Voyage invalide' };
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Connecte-toi pour obtenir une explication.' };
+    // Les mêmes données que l'écran, lues pour cette personne (RLS) : l'IA ne
+    // voit que ce que le Compas affiche déjà.
+    const data = await getCompasData();
+    if (!data || data.model.tripId !== parsed.data.tripId)
+      return { success: false, error: 'Voyage introuvable ou non autorisé.' };
+    const facts = verdictFacts({
+      level: data.model.verdict.level,
+      reasons: data.model.verdict.reasons,
+      danger: data.danger,
+    });
+    const res = await askAI({
+      feature: 'compas-verdict',
+      tier: COMPAS_VERDICT_SPEC.tier,
+      system: buildCompasVerdictSystem(),
+      prompt: buildCompasVerdictPrompt(facts),
+      maxTokens: 400,
+      cacheTtlSeconds: 0,
+      userId: user.id,
+    });
+    if (res.degraded || res.provider === 'fallback') {
+      return {
+        success: true,
+        text: null,
+        refused: null,
+        note: AI_NOTES[res.failureReason ?? 'provider_indisponible'].replace(
+          'lu par les règles du Compas',
+          'les signaux ci-dessus restent la référence'
+        ),
+      };
+    }
+    const check = checkExplanation(res.text, facts);
+    return check.ok
+      ? { success: true, text: check.text, refused: null, note: null }
+      : { success: true, text: null, refused: check.reason, note: null };
+  } catch (err) {
+    console.error('[compas] compasExplainVerdictAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }

@@ -7,6 +7,7 @@ import * as paysRecommendations from './paysRecommendations';
 import * as itinerary from './itinerary';
 import * as trajectoireNarration from './trajectoireNarration';
 import * as compasIntent from './compasIntent';
+import * as compasVerdict from './compasVerdict';
 
 /**
  * Registre des features IA — ajouter une feature IA = ajouter UN fichier
@@ -90,6 +91,13 @@ export const FEATURES: Record<string, FeatureSpec> = {
     cacheTtlSeconds: compasIntent.COMPAS_INTENT_SPEC.cacheTtlSeconds,
     maxPerUserPerDay: compasIntent.COMPAS_INTENT_SPEC.maxPerUserPerDay,
     fallbackResponse: compasIntent.fallbackResponse,
+  },
+  'compas-verdict': {
+    tier: compasVerdict.COMPAS_VERDICT_SPEC.tier,
+    maxReasoningBudget: compasVerdict.COMPAS_VERDICT_SPEC.maxReasoningBudget,
+    cacheTtlSeconds: compasVerdict.COMPAS_VERDICT_SPEC.cacheTtlSeconds,
+    maxPerUserPerDay: compasVerdict.COMPAS_VERDICT_SPEC.maxPerUserPerDay,
+    fallbackResponse: compasVerdict.fallbackResponse,
   },
   'country-practical-guide': {
     tier: 'fast',

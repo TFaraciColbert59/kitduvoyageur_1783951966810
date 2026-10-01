@@ -24,6 +24,7 @@ import {
   compasSetPartySizeAction,
   compasSearchStaysAction,
   compasSetStayAction,
+  compasExplainVerdictAction,
 } from '../server/compasActions';
 import { KitRow, LIVE_BOOKING, MemberAvatar, lineStatus, verticalOf } from './CompasCards';
 import { AffiliateDisclosure } from '@/features/affiliation/components/AffiliateDisclosure';
@@ -1575,7 +1576,64 @@ function RaisonsFlow({ ctl }: { ctl: CompasCtl }) {
           </div>
         )}
       />
+      <VerdictExplain ctl={ctl} />
     </>
+  );
+}
+
+type ExplainState =
+  | { status: 'idle' | 'loading' }
+  | { status: 'done'; text: string | null; refused: string | null; note: string | null }
+  | { status: 'error'; error: string };
+
+/** L'IA reformule les signaux ci-dessus ; le niveau reste celui du moteur. */
+function VerdictExplain({ ctl }: { ctl: CompasCtl }) {
+  const [state, setState] = useState<ExplainState>({ status: 'idle' });
+  const explain = async () => {
+    setState({ status: 'loading' });
+    try {
+      const res = await compasExplainVerdictAction({ tripId: ctl.data.model.tripId });
+      setState(
+        res.success
+          ? { status: 'done', text: res.text, refused: res.refused, note: res.note }
+          : { status: 'error', error: res.error }
+      );
+    } catch {
+      setState({ status: 'error', error: 'Connexion perdue : réessaie.' });
+    }
+  };
+  return (
+    <section aria-live="polite" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {state.status === 'done' && state.text ? (
+        <div className="cp-note">
+          <p style={{ margin: 0 }}>{state.text}</p>
+          <p className="cp-sub" style={{ margin: '6px 0 0' }}>
+            Rédigé par l’IA à partir des seuls signaux ci-dessus, puis vérifié par le Compas. Le
+            niveau vient du moteur, pas de l’IA.
+          </p>
+        </div>
+      ) : state.status === 'done' && state.refused ? (
+        <p className="cp-note">
+          Explication de l’IA écartée ({state.refused}) : les signaux ci-dessus restent la
+          référence.
+        </p>
+      ) : state.status === 'done' && state.note ? (
+        <p className="cp-note">{state.note}</p>
+      ) : state.status === 'error' ? (
+        <p className="cp-note">{state.error}</p>
+      ) : null}
+      {!(state.status === 'done' && state.text) && (
+        <button
+          type="button"
+          className="cp-btn cp-btn--soft"
+          disabled={state.status === 'loading'}
+          onClick={() => void explain()}
+        >
+          <Icon name="sparkles" size={16} />
+          {state.status === 'loading' ? 'L’IA lit les signaux…' : 'Expliquer avec l’IA'}
+        </button>
+      )}
+    </section>
   );
 }
 
