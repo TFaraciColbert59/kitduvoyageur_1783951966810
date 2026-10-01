@@ -8,6 +8,7 @@
  */
 
 import { formatClock, sunTimes, tzOffsetMinutes } from './sun';
+import { crewPace, settleExpenses, type CompasPace, type CompasSettlement } from './crew';
 import { walkingMinutes, type Pace } from './weather';
 
 export type CompasStepId = 'ou' | 'nous' | 'resa' | 'verdict' | 'kit';
@@ -184,6 +185,10 @@ export interface CompasMemberLoad {
   role: string | null;
   carriedGrams: number;
   capacityKg: number | null;
+  /** Allure à plat (km/h), null si jamais renseignée ou mesurée. */
+  flatSpeedKmh: number | null;
+  experienceLevel: string | null;
+  calibrationLevel: string | null;
   /** Rapport charge / capacité, null si la capacité est inconnue. */
   ratio: number | null;
   sharedItemIds: string[];
@@ -266,6 +271,10 @@ export interface CompasModel {
     loads: CompasMemberLoad[];
     unassignedShared: CompasKitLine[];
     capacityKnown: boolean;
+    /** Personnes du voyage sans compte dans le groupe (taille - membres), jamais négatif. */
+    guests: number;
+    pace: CompasPace;
+    settlement: CompasSettlement;
   };
   budget: {
     currency: string;
@@ -475,6 +484,9 @@ export function buildCompasModel(input: CompasInput): CompasModel {
     role: m.role,
     carriedGrams: 0,
     capacityKg: m.maxCarryKg,
+    flatSpeedKmh: m.flatSpeedKmh,
+    experienceLevel: m.experienceLevel,
+    calibrationLevel: m.calibrationLevel,
     ratio: null,
     sharedItemIds: [],
   }));
@@ -760,6 +772,12 @@ export function buildCompasModel(input: CompasInput): CompasModel {
       loads,
       unassignedShared,
       capacityKnown: loads.some((l) => l.capacityKg != null),
+      guests: Math.max(0, partySize - loads.length),
+      pace: crewPace(loads),
+      settlement: settleExpenses(
+        input.expenses,
+        loads.map((l) => ({ userId: l.userId, name: l.name }))
+      ),
     },
     budget: {
       currency: trip.budgetCurrency ?? 'EUR',

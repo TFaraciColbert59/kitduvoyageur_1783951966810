@@ -10,10 +10,7 @@ import {
   deleteTripItemAction,
 } from '@/app/voyages/kit-actions';
 import type { CompasKitLine, CompasStepId } from '../engine/compasModel';
-import {
-  formatKg,
-  formatMoney,
-} from '../engine/format';
+import { formatKg, formatMoney } from '../engine/format';
 import type { CompasShopProduct } from '../server/getCompasData';
 import {
   compasAddInventoryItemAction,
@@ -22,6 +19,7 @@ import {
   compasPickShopProductAction,
   compasSetBudgetAction,
   compasSetCarrierAction,
+  compasSetPartySizeAction,
 } from '../server/compasActions';
 import { KitRow, LIVE_BOOKING, MemberAvatar, lineStatus, verticalOf } from './CompasCards';
 import { Chip, PagedList, Segments, Thumb, useTextFilter } from './CompasPrimitives';
@@ -878,14 +876,68 @@ function StepSheet({
 
 const staticRow = { cursor: 'default' } as const;
 
+const LEVELS: Record<string, string> = {
+  beginner: 'débutant',
+  intermediate: 'intermédiaire',
+  advanced: 'confirmé',
+  expert: 'expert',
+};
+
+function PartySize({ ctl }: { ctl: CompasCtl }) {
+  const { crew, tripId, slug } = ctl.data.model;
+  const set = (n: number) =>
+    void ctl.run('Nombre de personnes mis à jour', () =>
+      compasSetPartySizeAction({ tripId, tripSlug: slug, partySize: n })
+    );
+  return (
+    <div className="cp-between">
+      <span className="cp-sub">
+        <b>{crew.size}</b> personne{crew.size > 1 ? 's' : ''} dans ce voyage
+        {crew.guests > 0 ? ` · dont ${crew.guests} sans compte dans le groupe` : ''}
+      </span>
+      {ctl.data.canEdit && (
+        <span className="cp-actions" style={{ gap: 8 }}>
+          <button
+            type="button"
+            className="cp-btn cp-btn--soft"
+            aria-label="Une personne de moins"
+            disabled={ctl.busy || crew.size <= Math.max(1, crew.loads.length)}
+            onClick={() => set(crew.size - 1)}
+          >
+            <Icon name="minus" size={16} />
+          </button>
+          <button
+            type="button"
+            className="cp-btn cp-btn--soft"
+            aria-label="Une personne de plus"
+            disabled={ctl.busy || crew.size >= 50}
+            onClick={() => set(crew.size + 1)}
+          >
+            <Icon name="plus" size={16} />
+          </button>
+        </span>
+      )}
+    </div>
+  );
+}
+
 function EquipeFlow({ ctl }: { ctl: CompasCtl }) {
+  const { crew } = ctl.data.model;
+  const slowest = crew.pace.slowest;
   return (
     <>
+      <PartySize ctl={ctl} />
+      <p className="cp-note">
+        {slowest
+          ? `Le groupe marche au rythme de ${slowest.name} (${String(slowest.speedKmh).replace('.', ',')} km/h à plat). Allure connue pour ${crew.pace.known} sur ${crew.pace.total}.`
+          : 'Aucune allure connue : les temps de marche utilisent 4 km/h par défaut. Chaque membre peut la renseigner dans son profil terrain.'}
+      </p>
       <PagedList
         label="Équipe"
-        items={ctl.data.model.crew.loads}
+        items={crew.loads}
         render={(m) => {
           const pct = m.ratio == null ? null : Math.round(m.ratio * 100);
+          const level = m.experienceLevel ? (LEVELS[m.experienceLevel] ?? m.experienceLevel) : null;
           return (
             <button
               key={m.userId}
@@ -903,6 +955,12 @@ function EquipeFlow({ ctl }: { ctl: CompasCtl }) {
                   porte {formatKg(m.carriedGrams)}
                   {m.capacityKg != null ? ` sur ${m.capacityKg} kg` : ' · capacité non renseignée'}
                 </span>
+                <span>
+                  {m.flatSpeedKmh != null
+                    ? `${String(m.flatSpeedKmh).replace('.', ',')} km/h`
+                    : 'allure non renseignée'}
+                  {` · niveau ${level ?? 'non renseigné'}`}
+                </span>
               </span>
               <span className="cp-row__end">
                 {pct != null && (
@@ -917,9 +975,43 @@ function EquipeFlow({ ctl }: { ctl: CompasCtl }) {
       <div className="cp-actions">
         <Link className="cp-btn cp-btn--soft" href="/hub/groupe">
           <Icon name="user-plus" size={16} />
-          Gérer l’équipe dans le hub
+          Inviter ou gérer les rôles dans le hub
         </Link>
       </div>
+    </>
+  );
+}
+
+function SettlementBlock({ ctl }: { ctl: CompasCtl }) {
+  const { crew, budget } = ctl.data.model;
+  const st = crew.settlement;
+  if (!st.countedAmount && !st.excludedCount) return null;
+  return (
+    <>
+      <p className="cp-sub">
+        <b>Qui doit quoi</b> · dépenses réelles partagées{' '}
+        {formatMoney(st.countedAmount, budget.currency)}
+      </p>
+      {st.debts.length === 0 ? (
+        <p className="cp-note">Les comptes sont équilibrés.</p>
+      ) : (
+        <ul className="cp-props">
+          {st.debts.map((d) => (
+            <li key={`${d.fromUserId}-${d.toUserId}`}>
+              <b>{d.fromUserId === ctl.data.viewerId ? 'Toi' : d.fromName}</b> doit{' '}
+              {formatMoney(d.amount, budget.currency)} à{' '}
+              <b>{d.toUserId === ctl.data.viewerId ? 'toi' : d.toName}</b>
+            </li>
+          ))}
+        </ul>
+      )}
+      {st.excludedCount > 0 && (
+        <p className="cp-note">
+          {st.excludedCount} dépense{st.excludedCount > 1 ? 's' : ''} à parts libres (
+          {formatMoney(st.excludedAmount, budget.currency)}) non incluse
+          {st.excludedCount > 1 ? 's' : ''} : la répartition exacte n’est pas calculée ici.
+        </p>
+      )}
     </>
   );
 }
@@ -974,6 +1066,7 @@ function BudgetFlow({ ctl }: { ctl: CompasCtl }) {
         <dt>Par personne</dt>
         <dd>{formatMoney(b.perPerson, b.currency)}</dd>
       </dl>
+      <SettlementBlock ctl={ctl} />
       <PagedList
         label="Dépenses par catégorie"
         items={b.byCategory}

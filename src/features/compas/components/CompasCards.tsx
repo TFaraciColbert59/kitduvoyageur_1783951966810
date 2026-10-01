@@ -262,6 +262,7 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
         </div>
         <span className="cp-sub">
           {crew.size} personne{crew.size > 1 ? 's' : ''}
+          {crew.guests > 0 ? ` (dont ${crew.guests} hors groupe)` : ''}
         </span>
       </div>
       <p className="cp-sub">
@@ -269,6 +270,7 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
         <b>
           {known} / {crew.loads.length}
         </b>
+        {crew.pace.slowest ? ` · rythme de ${crew.pace.slowest.name}` : ' · allure non renseignée'}
       </p>
       <button
         type="button"

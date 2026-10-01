@@ -1,5 +1,13 @@
 # MISSION LOG — LKDV
 
+## 2026-10-01 — Compas, Lot 2 « Nous »
+
+- Moteur pur `engine/crew.ts` : `settleExpenses` (soldes + remboursements simplifiés ; `equal` partagé entre membres, `individual` à la charge du payeur, **`custom` exclu et signalé, jamais deviné**, prévues ignorées) et `crewPace` (rythme du plus lent, « x sur y connues »).
+- Modèle : `crew.guests` (personnes sans compte), `crew.pace`, `crew.settlement`, allure/niveau par membre.
+- UI : tiroir Équipe (nombre de personnes ± pour les éditeurs, allure et niveau par membre — « non renseigné » sinon, rythme du groupe), « Qui doit quoi » dans le budget, résumé de la carte Nous. Invitations et rôles : renvoi vers `/hub/groupe` uniquement.
+- Aucune migration. Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants CI/identité/icônes OK, 81 tests (dont 7 nouveaux), `npm run build` OK.
+- Non couvert : test UI du stepper (action déjà testée via « Dis-le »), test réel avec données du compte démo.
+
 ## 2026-10-01 — Compas, Lot 1 « Où et quand » (commit `c299cab`)
 
 - Météo des vrais jours du voyage (Open-Meteo, heure par heure, isotherme, calendrier 6 semaines prévision puis tendance), heure de départ conseillée, règle de durée modifiable, choix du parcours (catalogue, mes randos, communauté) avec redécoupage non destructif, activité, envies, « Dis-le » (IA `compas-intent` + règles, ancrage des nombres).
