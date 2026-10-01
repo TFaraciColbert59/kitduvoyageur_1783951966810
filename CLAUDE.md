@@ -405,6 +405,13 @@ Coverage allow/disallow étendue, références aux routes mortes supprimées.
 
 ---
 
+## 🚀 Plateformes de déploiement (règle fixe)
+
+- **Web : Vercel uniquement.** **Mobile : Capacitor uniquement** (`capacitor.config.ts`, `ios/`, `android/`).
+- Aucune autre plateforme : pas de Netlify, GitHub Pages, Cloudflare, Firebase, Render, Fly, Railway, Expo / React Native. Ne pas en réintroduire (config, plugin, workflow, dépendance).
+
+---
+
 ## 🧱 CI/CD
 
 Workflow CI avec 4 quality gates (`.github/ci.yml`) :
