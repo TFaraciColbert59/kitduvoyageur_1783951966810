@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import Icon from '@/components/ui/Icon';
 import { addToCart } from '@/lib/cart';
 import {
@@ -19,11 +19,14 @@ import {
   compasPickShopProductAction,
   compasSetBudgetAction,
   compasSetCarrierAction,
+  compasApplyKitAction,
+  compasListMyKitsAction,
   compasSetPartySizeAction,
   compasSetStayAction,
 } from '../server/compasActions';
 import { KitRow, LIVE_BOOKING, MemberAvatar, lineStatus, verticalOf } from './CompasCards';
 import { AffiliateDisclosure } from '@/features/affiliation/components/AffiliateDisclosure';
+import { kitCompatibility, planKitApply, type MyKit } from '../engine/kitApply';
 import { convertFromEur } from '../engine/currency';
 import { Chip, PagedList, Segments, Thumb, useTextFilter } from './CompasPrimitives';
 import { DisLe } from './CompasDisLe';
@@ -872,6 +875,8 @@ function StepSheet({
       {step === 'kit' && (flow === 'trouver' || flow === 'emballer' || flow === 'tout') && (
         <KitListFlow ctl={ctl} flow={flow} />
       )}
+      {step === 'kit' && flow === 'conseils' && <ConseilsFlow ctl={ctl} />}
+      {step === 'kit' && flow === 'mes-kits' && <MesKitsFlow ctl={ctl} />}
       {step === 'kit' && flow === 'sacs' && <SacsFlow ctl={ctl} />}
       {ctl.data.canEdit && <DisLe ctl={ctl} />}
     </>
@@ -1481,6 +1486,173 @@ function KitListFlow({ ctl, flow }: { ctl: CompasCtl; flow: 'trouver' | 'emballe
           </button>
         </div>
       )}
+    </>
+  );
+}
+
+const ADVICE_ICON: Record<string, string> = {
+  pluie: 'cloud-rain',
+  froid: 'thermometer',
+  chaud: 'thermometer',
+  extremites: 'cloud-snow',
+  soleil: 'sun',
+  frontale: 'sunset',
+  eau: 'droplet',
+};
+
+function ConseilsFlow({ ctl }: { ctl: CompasCtl }) {
+  const advice = ctl.data.kitAdvice;
+  return (
+    <>
+      <p className="cp-note">
+        Des repères tirés de la météo et du parcours, pas des ordres : chacun cite la donnée qui le
+        déclenche. « Couvert » veut dire qu’un objet de ton kit porte un nom qui correspond.
+      </p>
+      <PagedList
+        label="Conseils de kit"
+        items={advice}
+        empty={
+          <p className="cp-note">
+            Aucun conseil : prévisions ou parcours indisponibles pour ce voyage.
+          </p>
+        }
+        render={(a) => (
+          <div key={a.id} className="cp-row" style={staticRow}>
+            <span className="cp-thumb">
+              <Icon name={ADVICE_ICON[a.need] ?? 'sparkles'} size={20} />
+            </span>
+            <span className="cp-row__t">
+              <b>{a.label}</b>
+              <span>{a.reason}</span>
+              <span>
+                Source : {a.source}
+                {a.coveredBy ? ` · couvert par « ${a.coveredBy} »` : ''}
+              </span>
+            </span>
+            <span className="cp-row__end">
+              {a.covered ? (
+                <Chip tone="good">Couvert</Chip>
+              ) : (
+                ctl.data.canEdit && (
+                  <button
+                    type="button"
+                    className="cp-btn cp-btn--soft"
+                    onClick={() => ctl.open({ kind: 'add', target: 'kit' }, 'large')}
+                  >
+                    Ajouter
+                  </button>
+                )
+              )}
+            </span>
+          </div>
+        )}
+      />
+    </>
+  );
+}
+
+function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
+  const [state, setState] = useState<
+    { status: 'loading' } | { status: 'error'; error: string } | { status: 'ok'; kits: MyKit[] }
+  >({ status: 'loading' });
+  const [pending, setPending] = useState<string | null>(null);
+  const model = ctl.data.model;
+  const tripNames = useMemo(() => ctl.lines.map((l) => l.name), [ctl.lines]);
+  const forecasts = useMemo(
+    () =>
+      (ctl.data.weather?.tripDays ?? []).map((d) => ({
+        day: d.day,
+        date: d.date,
+        forecast: d.forecast,
+      })),
+    [ctl.data.weather]
+  );
+
+  useEffect(() => {
+    let alive = true;
+    compasListMyKitsAction()
+      .then((res) => {
+        if (!alive) return;
+        setState(
+          res.success ? { status: 'ok', kits: res.kits } : { status: 'error', error: res.error }
+        );
+      })
+      .catch(() => alive && setState({ status: 'error', error: 'Connexion perdue : réessaie.' }));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  if (state.status === 'loading') return <p className="cp-note">Lecture de tes kits…</p>;
+  if (state.status === 'error') return <p className="cp-note">{state.error}</p>;
+
+  return (
+    <>
+      <p className="cp-note">
+        Appliquer un kit ajoute au voyage les objets qui n’y sont pas déjà (même nom). Rien n’est
+        retiré ni emballé.
+      </p>
+      <PagedList
+        label="Mes kits"
+        items={state.kits}
+        empty={<p className="cp-note">Tu n’as encore aucun kit enregistré.</p>}
+        render={(kit) => {
+          const plan = planKitApply(kit, tripNames);
+          const compat = kitCompatibility({
+            kit,
+            tripNames,
+            forecasts,
+            dayPlans: model.route.dayPlans,
+            waterPointsCount: null,
+          });
+          return (
+            <div key={kit.id} className="cp-row" style={staticRow}>
+              <span className="cp-thumb">
+                <Icon name="package" size={20} />
+              </span>
+              <span className="cp-row__t">
+                <b>
+                  {kit.name}
+                  {kit.season ? ` · ${kit.season}` : ''}
+                </b>
+                <span>
+                  {kit.items.length} objet{kit.items.length > 1 ? 's' : ''} · {plan.alreadyThere}{' '}
+                  déjà dans le voyage · {plan.toAdd.length} à ajouter
+                </span>
+                <span>
+                  {compat.total > 0
+                    ? `Couvre ${compat.covered} conseil${compat.covered > 1 ? 's' : ''} météo sur ${compat.total}${compat.bringsNew ? ` (dont ${compat.bringsNew} de plus qu’aujourd’hui)` : ''}`
+                    : 'Aucun conseil météo à comparer'}
+                </span>
+              </span>
+              <span className="cp-row__end">
+                {ctl.data.canEdit && (
+                  <button
+                    type="button"
+                    className="cp-btn cp-btn--pg"
+                    disabled={ctl.busy || pending !== null || plan.toAdd.length === 0}
+                    onClick={async () => {
+                      setPending(kit.id);
+                      await ctl.run(
+                        `${plan.toAdd.length} objet${plan.toAdd.length > 1 ? 's' : ''} ajouté${plan.toAdd.length > 1 ? 's' : ''}`,
+                        () =>
+                          compasApplyKitAction({
+                            tripId: model.tripId,
+                            tripSlug: model.slug,
+                            kitId: kit.id,
+                          })
+                      );
+                      setPending(null);
+                    }}
+                  >
+                    {plan.toAdd.length === 0 ? 'Déjà complet' : 'Appliquer'}
+                  </button>
+                )}
+              </span>
+            </div>
+          );
+        }}
+      />
     </>
   );
 }

@@ -25,6 +25,7 @@ import {
   type CompasIntentAction,
   type CompasProposal,
 } from '../engine/intent';
+import { planKitApply, type MyKit } from '../engine/kitApply';
 import { readCompasMeta } from '../engine/meta';
 import { localToday } from './weather';
 
@@ -695,6 +696,123 @@ export async function compasSetStayAction(
     return { success: true };
   } catch (err) {
     console.error('[compas] compasSetStayAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+/* ---------- Mes kits ---------- */
+
+export type CompasMyKitsResult =
+  { success: true; kits: MyKit[] } | { success: false; error: string };
+
+/** Les kits de l'utilisateur connecté (hors corbeille), avec leurs objets. */
+export async function compasListMyKitsAction(): Promise<CompasMyKitsResult> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Connecte-toi pour voir tes kits.' };
+    const { data: kits, error } = await supabase
+      .from('materiel_kits')
+      .select('id, name, season')
+      .eq('user_id', user.id)
+      .eq('is_trashed', false)
+      .order('updated_at', { ascending: false })
+      .limit(20);
+    if (error) return { success: false, error: 'Impossible de lire tes kits.' };
+    const ids = (kits ?? []).map((k) => k.id as string);
+    if (!ids.length) return { success: true, kits: [] };
+    const { data: items, error: itemsError } = await supabase
+      .from('materiel_kit_items')
+      .select('id, kit_id, name, category, weight_g, quantity, is_vital, product_ownership_id')
+      .in('kit_id', ids)
+      .limit(1000);
+    if (itemsError) return { success: false, error: 'Impossible de lire les objets de tes kits.' };
+    const byKit = new Map<string, MyKit['items']>();
+    for (const row of (items ?? []) as Array<Record<string, unknown>>) {
+      const name = typeof row.name === 'string' ? row.name.trim() : '';
+      if (!name) continue;
+      const list = byKit.get(String(row.kit_id)) ?? [];
+      list.push({
+        id: String(row.id),
+        name,
+        category: typeof row.category === 'string' ? row.category : null,
+        weightG: typeof row.weight_g === 'number' && row.weight_g > 0 ? row.weight_g : null,
+        quantity: typeof row.quantity === 'number' && row.quantity > 0 ? row.quantity : 1,
+        isVital: row.is_vital === true,
+        productOwnershipId:
+          typeof row.product_ownership_id === 'string' ? row.product_ownership_id : null,
+      });
+      byKit.set(String(row.kit_id), list);
+    }
+    return {
+      success: true,
+      kits: (kits ?? []).map((k) => ({
+        id: k.id as string,
+        name: String(k.name ?? 'Kit sans nom'),
+        season: typeof k.season === 'string' ? k.season : null,
+        items: byKit.get(k.id as string) ?? [],
+      })),
+    };
+  } catch (err) {
+    console.error('[compas] compasListMyKitsAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+const applyKitSchema = z.object({ tripId: uuid, tripSlug: slug, kitId: uuid });
+
+/**
+ * Ajoute au voyage les objets d'un des kits de l'utilisateur qui n'y sont pas
+ * déjà (même nom). Rien n'est retiré ni modifié ; objets personnels, non emballés.
+ */
+export async function compasApplyKitAction(
+  input: z.input<typeof applyKitSchema>
+): Promise<CompasActionResult> {
+  const parsed = applyKitSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Requête invalide' };
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    const listed = await compasListMyKitsAction();
+    if (!listed.success) return listed;
+    const kit = listed.kits.find((k) => k.id === parsed.data.kitId);
+    if (!kit) return { success: false, error: 'Kit introuvable.' };
+    const { data: existing, error: readError } = await auth.supabase
+      .from('trip_items')
+      .select('item_name')
+      .eq('trip_id', parsed.data.tripId);
+    if (readError) return { success: false, error: 'Impossible de lire le kit du voyage.' };
+    const { toAdd } = planKitApply(
+      kit,
+      ((existing ?? []) as Array<{ item_name: string }>).map((r) => r.item_name)
+    );
+    if (!toAdd.length) return { success: true };
+    const { data, error } = await auth.supabase
+      .from('trip_items')
+      .insert(
+        toAdd.map((i) => ({
+          trip_id: parsed.data.tripId,
+          item_name: i.name,
+          category: i.category,
+          quantity: i.quantity,
+          weight_grams: i.weightG,
+          is_vital: i.isVital,
+          priority: i.isVital ? 'vital' : 'recommended',
+          source: 'kit',
+          ownership: 'personal',
+          owner_id: auth.userId,
+          inventory_item_id: i.productOwnershipId,
+        }))
+      )
+      .select('id');
+    if (error || data?.length !== toAdd.length)
+      return { success: false, error: 'Impossible d’ajouter les objets du kit.' };
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true };
+  } catch (err) {
+    console.error('[compas] compasApplyKitAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }

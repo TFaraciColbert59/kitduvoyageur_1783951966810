@@ -594,6 +594,21 @@ export function KitCard({ ctl }: { ctl: CompasCtl }) {
         </div>
         <b>{pct == null ? '—' : `${pct} %`}</b>
       </button>
+      {ctl.data.kitAdvice.length > 0 && (
+        <button
+          type="button"
+          className="cp-btn cp-btn--soft"
+          onClick={() => ctl.open({ kind: 'step', step: 'kit', flow: 'conseils' })}
+        >
+          <Icon name="sparkles" size={16} />
+          {(() => {
+            const open = ctl.data.kitAdvice.filter((a) => !a.covered).length;
+            return open
+              ? `${open} conseil${open > 1 ? 's' : ''} météo à regarder`
+              : 'Conseils météo : tout est couvert';
+          })()}
+        </button>
+      )}
       <p className="cp-sub cp-hide-sm" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <Icon name="package" size={13} />
         <span>

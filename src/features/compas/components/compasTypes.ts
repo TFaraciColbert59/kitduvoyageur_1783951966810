@@ -27,6 +27,8 @@ export const STEP_FLOWS = {
     { id: 'sources', label: 'Sources', icon: 'layers' },
   ],
   kit: [
+    { id: 'conseils', label: 'Conseils', icon: 'sparkles' },
+    { id: 'mes-kits', label: 'Mes kits', icon: 'package' },
     { id: 'trouver', label: 'Trouver', icon: 'search' },
     { id: 'emballer', label: 'Emballer', icon: 'check-square' },
     { id: 'tout', label: 'Tout', icon: 'clipboard-list' },

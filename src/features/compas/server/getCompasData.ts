@@ -2,6 +2,7 @@ import 'server-only';
 
 import type { FxRate } from '../engine/currency';
 import { assessDanger, mergeDangerIntoVerdict, type DangerAssessment } from '../engine/danger';
+import { adviseKit, type KitAdvice } from '../engine/kitRules';
 import { getEurRate } from './rates';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -95,6 +96,8 @@ export interface CompasData {
   fx: FxRate | null;
   /** Danger en trois axes, chaque signal sourcé et daté. */
   danger: DangerAssessment;
+  /** Conseils de kit selon la météo et le parcours, chacun avec sa donnée source. */
+  kitAdvice: KitAdvice[];
   /** Météo Open-Meteo des jours du voyage et calendrier 6 semaines (null si indisponible). */
   weather: CompasWeather | null;
   /** Parcours du catalogue choisi pour le voyage. */
@@ -429,6 +432,16 @@ export async function getCompasData(): Promise<CompasData | null> {
   return {
     model: { ...baseModel, verdict: mergeDangerIntoVerdict(baseModel.verdict, danger) },
     danger,
+    kitAdvice: adviseKit({
+      lines: baseModel.kit.lines,
+      forecasts: (weather?.tripDays ?? []).map((d) => ({
+        day: d.day,
+        date: d.date,
+        forecast: d.forecast,
+      })),
+      dayPlans: baseModel.route.dayPlans,
+      waterPointsCount: input.waterPointsCount,
+    }),
     itinerary,
     bookings,
     routeGeojson: hub.hiking?.routeGeojson ?? null,

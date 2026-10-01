@@ -1,5 +1,14 @@
 # MISSION LOG — LKDV
 
+## 2026-10-01 — Compas, Lot 5 « Kit » (conseils météo, mes kits)
+
+- `engine/kitRules.ts` : conseils de kit (pluie, froid, gel → gants/bonnet, chaleur → soleil, marche > jour → frontale, repère d'eau 0,5 L/h). Chaque conseil cite jour, valeur et source ; « couvert » = un objet du kit porte un nom qui correspond. Seuils exportés (`KIT_THRESHOLDS`). Aucun conseil sans prévision.
+- `engine/kitApply.ts` + actions `compasListMyKitsAction` / `compasApplyKitAction` : appliquer un de ses kits (`materiel_kits`) ajoute uniquement les objets absents (même nom, accents/casse ignorés), personnels, non emballés ; rien n'est retiré. Compatibilité = deux décomptes (conseils couverts, objets déjà présents), **pas de score**.
+- UI : onglets Kit « Conseils » et « Mes kits », bouton de synthèse sur la carte Kit.
+- Vérifié sur la base réelle (transaction annulée) : l'insertion `trip_items` de l'action passe (colonnes, types, lien d'inventaire).
+- Non fait : emprunt dans le groupe depuis ce flux, eau par point d'eau réel du tracé (donnée absente → « non renseignés »), test réel avec le compte démo (réseau).
+- Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants OK, 111 tests, build OK.
+
 ## 2026-10-01 — Compas, Lot 4 « Verdict » (partie sans réseau)
 
 - `engine/danger.ts` : danger en **trois axes** (physique, technique, conjoncturel), **sans score**. Chaque signal porte sa source et sa date. Un axe sans donnée est « non évalué », jamais « RAS » (le technique l'est tant que cotation et altitude manquent). Seuils par défaut exportés (`DANGER_THRESHOLDS`), à valider. Blocage seulement pour rafales ≥ 90 km/h et alerte officielle rouge.

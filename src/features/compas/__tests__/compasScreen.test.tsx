@@ -36,6 +36,37 @@ const compas = vi.hoisted(() => ({
   compasSetPreferencesAction: vi.fn(async () => ({ success: true })),
   compasSetPartySizeAction: vi.fn(async () => ({ success: true })),
   compasSetStayAction: vi.fn(async () => ({ success: true })),
+  compasListMyKitsAction: vi.fn(async () => ({
+    success: true,
+    kits: [
+      {
+        id: '8d9c1a52-0000-4000-8000-000000000001',
+        name: 'Automne alpin',
+        season: 'automne',
+        items: [
+          {
+            id: 'i1',
+            name: 'Gourde 1 L',
+            category: null,
+            weightG: 120,
+            quantity: 1,
+            isVital: false,
+            productOwnershipId: null,
+          },
+          {
+            id: 'i2',
+            name: 'Frontale',
+            category: null,
+            weightG: 90,
+            quantity: 1,
+            isVital: true,
+            productOwnershipId: null,
+          },
+        ],
+      },
+    ],
+  })),
+  compasApplyKitAction: vi.fn(async () => ({ success: true })),
   compasApplyRouteAction: vi.fn(async () => ({ success: true, kept: 0 })),
   compasMyRoutesAction: vi.fn(async () => ({ success: true, routes: [] })),
   compasSearchRoutesAction: vi.fn(async () => ({ success: true, routes: [] as unknown[] })),
@@ -217,6 +248,7 @@ function makeData(overrides: Partial<CompasInput> = {}): CompasData {
     viewerId: U1,
     providers: { routestack: 'disabled', viator: 'disabled' },
     fx: null,
+    kitAdvice: [],
     danger: assessDanger({ dayPlans: [], forecasts: [], alerts: [] }),
     weather: null,
     route: { id: 374, name: 'Tour des Vallées' },
@@ -440,6 +472,24 @@ describe('CompasScreen', () => {
     expect(link.getAttribute('rel')).toContain('sponsored');
     expect(link.getAttribute('rel')).toContain('nofollow');
     expect(within(sheet).getByRole('note')).toBeTruthy();
+  });
+
+  it('mes kits : liste les décomptes et applique sans rien retirer', async () => {
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Kit/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Kit' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Kit' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Mes kits/ }));
+    expect(await within(sheet).findByText(/Automne alpin/)).toBeTruthy();
+    expect(within(sheet).getByText(/2 à ajouter/)).toBeTruthy();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Appliquer' }));
+    await waitFor(() =>
+      expect(compas.compasApplyKitAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        kitId: '8d9c1a52-0000-4000-8000-000000000001',
+      })
+    );
   });
 
   const openOu = async (flow: RegExp) => {
