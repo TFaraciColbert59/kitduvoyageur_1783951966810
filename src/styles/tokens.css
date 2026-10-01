@@ -153,6 +153,12 @@
   --lkv-border-subtle: rgba(23, 43, 36, 0.07);
   --lkv-border-strong: rgba(23, 43, 36, 0.52);
 
+  /* Primitives des statuts (thème clair). La couche globale liquid-ios27
+     éclaircit --lkv-warning-dark / --lkv-danger pour le hub sombre ; les
+     écrans en verre clair (Compas) lisent ces primitives, jamais redéfinies. */
+  --lkv-amber-800: #765014;
+  --lkv-brick-600: #A8443A;
+
   /* ── 3. Statuts et Alertes Terrain (palette hors orange designer) ───────────── */
   --lkv-success: #3D6038;
   --lkv-success-bg: #E1EBDE;

@@ -41,8 +41,8 @@ export const LEGACY_REDIRECTS: Record<string, string> = {
   '/equipages': '/hub/groupe',
   // ── Racines absorbées (H5) ──
   '/preparation': '/hub/preparation',
-  // Alias court de la route canonique du preparateur de voyage.
-  '/preparer': '/prepare',
+  // Alias court de la route canonique du preparateur de voyage (le Compas).
+  '/preparer': '/compas',
   '/alertes': '/hub/alertes',
   '/terrain': '/hub',
   '/mes-aventures': '/hub',
@@ -68,11 +68,11 @@ export const LEGACY_REDIRECTS: Record<string, string> = {
  */
 export function resolveLegacyRedirect(pathname: string): LegacyRedirect | null {
   // L'assistant equipement n'est plus une page : c'est l'onglet « equipement »
-  // du preparateur. /rapport-kit et /ai-configurator ouvrent directement le
-  // bon onglet ; la query d'origine (country, groupId, carnetId, trail) est
+  // du Compas. /rapport-kit et /ai-configurator ouvrent directement l'etape
+  // Kit ; la query d'origine (country, groupId, carnetId, trail) est
   // conservee par le clone d'URL du middleware.
   if (pathname === '/rapport-kit' || pathname === '/ai-configurator') {
-    return { destination: '/prepare', setParams: { tab: 'equipement' } };
+    return { destination: '/compas', setParams: { etape: 'kit' } };
   }
 
   const staticTarget = LEGACY_REDIRECTS[pathname];

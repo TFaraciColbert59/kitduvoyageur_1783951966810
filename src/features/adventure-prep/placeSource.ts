@@ -560,8 +560,8 @@ function cleDeNom(name: string): string {
 }
 
 /**
- * Au-dela, on cesse de/geocoder : chaque appel est une requete de service
- * gratuit, et un programme de dix etapes ne doit pas en用户的化领 dix fois le
+ * Au-dela, on cesse de geocoder : chaque appel est une requete de service
+ * gratuit, et un programme de dix etapes ne doit pas demander dix fois le
  * meme toponyme. Le refus est preferable a une attente qui n arrive pas.
  */
 const GEOCODE_MAX_APPELS = 6;

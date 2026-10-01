@@ -1,5 +1,140 @@
 # MISSION LOG — LKDV
 
+## 2026-10-01 — Compas : test réel complet (Chromium, compte démo, base de production)
+
+Check-list `docs/compas/TEST_REEL.md` déroulée de bout en bout sur un voyage créé par l'interface ; tableau des résultats dans ce fichier. Corrections poussées (`d18dac8` → dernier commit de la branche) :
+
+- **Bloquant production** : `/api/adventure/commit` échouait à chaque enregistrement (insertion `owner` refusée par la policy, déjà posée par le trigger) → la route relit la ligne du trigger ; doubles de test alignés sur la base réelle (trigger, policy, cascade). Retour sur `/compas` après l'enregistrement.
+- **Contraste** : la couche globale `liquid-ios27` forçait `--lkv-text-*` en blanc → encre du Compas sur les primitives `--lkv-ink-*` / `--lkv-sage-500` (thème clair).
+- **Données honnêtes** : « RAS partiel » + liste de ce qui n'est pas vérifié ; sac vide plus jamais « prêt » ; plus de « Complet » ni de « ★ 0 » ; libellé de repli RouteStack jamais noté comme lieu ; nuit notée ≠ réservée ; offres partenaires filtrées par pays ; enveloppe par jour et par personne calculée sur l'enveloppe.
+- **Alertes officielles** (Lot 4) : Météo-France via Meteoalarm, champs structurés seulement, mise à jour à fenêtre nulle = alerte « à vérifier », statut explicite (lues / publiées la veille / hors France / indisponibles). Département par Nominatim (UA de l'application, coordonnées arrondies).
+- **Ergonomie** : tiroirs (ligne qui débordait, onglet actif hors champ, résumé de carte sous le verre), « Ajouter » depuis un conseil filtré sur le besoin, tuile de nuit ouvrant la bonne nuit, échelle unique (maquette v8).
+- **Carte partagée** : couche pays ajoutée avant la fin du style (« Style is not done loading ») → attend le style ; trouvé avec **browser-harness** (Chromium piloté par CDP, télémétrie et enregistrements désactivés).
+- **Non testable ici** : « Qui doit quoi » (deux comptes membres), conversion de devise (voyage en euros), explication IA du verdict (non faite). Catalogue de parcours : quasi uniquement le Nord ; un parcours de test E2E visible en production.
+- **agentmemory** : installation refusée par le mode d'autorisation automatique (exécution d'un binaire externe) ; non installé.
+- Preuves : `tsc` 0 ; `eslint` 0 erreur sur les fichiers touchés ; Compas 137 tests ; booking 133 ; suite complète 25 échecs = 24 de la base de référence + 1 test de performance (2 ms) qui passe seul 3/3 ; `identity_compliance` OK.
+
+## 2026-10-01 — Le Compas devient la référence design (décision de Tony)
+
+- `docs/compas/DESIGN_REFERENCE.md` : matériau, structure d'écran, tiroirs à trois hauteurs, lignes, règles de contenu, accessibilité mesurée, **dette connue** (variables `--cp-*` limitées à `.compas` et ~90 valeurs `rgb()` littérales, classes non extraites en primitives, primitives canoniques non alignées, tests de gouvernance qui ne couvrent pas `compas.css`, maquette v8 non comparée).
+- `DESIGN_SYSTEM.md` §0 et `CLAUDE.md` : le Compas prévaut sur `/materiel` pour tout nouvel écran ; jetons toujours `--lkv-*` ; `/compte` reste la référence des patterns utilisateur.
+- Documentation seule : aucun code modifié. `ci_invariants` OK ; les 2 échecs de `tests/design/task-2a-contrast.spec.ts` sont dans la base de référence.
+
+## 2026-10-01 — Compas, Lot 3 (suite) : recherche d'hébergement par nuit
+
+- `engine/stays.ts` : dates d'arrivée/départ de la nuit du jour N, simplification des offres (prix et devise jamais devinés : sans devise confirmée, « Prix non confirmé » ; seuls les liens `https` sont gardés).
+- Action `compasSearchStaysAction` : éditeur connecté, limite de débit partagée avec `/api/booking/search` (30 requêtes / 10 min, échec fermé), fournisseur via `createBookingProvider` (RouteStack), **lecture seule**. Mode test signalé (« ce ne sont pas de vraies offres »). Aucune commande, aucun `checkoutUrl`, aucun paiement.
+- UI (étape Résa › Nuits) : choisir la nuit, « Chercher », puis « Noter » (repère, sans réserver) ou « Voir l'offre » (lien partenaire `sponsored nofollow`, ouvert par l'utilisateur). Affichée seulement si le fournisseur est actif, sinon le message « active dès que les clés sont posées ».
+- **Non testé en réel** : réponse RouteStack (réseau fermé dans le conteneur) ; testé avec un fournisseur simulé. Les clés RouteStack sont uniquement dans `.env.local` du conteneur, pas dans Vercel.
+- Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants OK, 137 tests, build OK.
+
+## 2026-10-01 — Compas : accessibilité (axe) et trois hauteurs de tiroir (Lot 7, partie)
+
+- **Audit axe-core** (WCAG 2 A/AA, Chromium 390×844, données de test) sur l'écran et 6 tiroirs (Où/Sur le tracé, Nous/Budget, Résa/Nuits, Verdict/Signaux, Kit/Conseils) : 1 violation critique trouvée (`aria-required-children` sur `TallList`, `role="list"` sans éléments de liste) → corrigée (`role="group"`). Résultat : 0 violation. Limite : fond de page de test, contrastes non représentatifs ; pas de test sur le tiroir « Mes kits » (action serveur).
+- **Trois hauteurs de tiroir** : petit (≈ moitié de la zone haute, 340 px max, le contenu défile), moyen, grand. Poignée : tirer vers le haut agrandit, vers le bas réduit puis ferme depuis « petit » ; toucher = petit → moyen → grand → moyen. Vérifié au pointeur réel dans Chromium (hauteurs mesurées 340 / 498 / 629 px) et par test automatisé.
+- **Reste du Lot 7 (non fait, à valider sur téléphone)** : lentille au doigt, barre d'onglets qui se réduit, appui long avec aperçu de l'effet, îlot dynamique « Annuler ».
+- Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants OK, 126 tests, build OK.
+
+## 2026-10-01 — `/compas` remplace `/prepare` à 100 % (décision de Tony)
+
+- `/compas` : sans aventure active ou avec `?nouvelle=1` → flux de création d'aventure (`AdventurePrepScreen`) ; `?etape=` ouvre une étape (nouvelle prop `initialStep`).
+- `/prepare` devient une passerelle 308 : `?nouvelle=1` → `/compas?nouvelle=1`, `?tab=equipement` → `/compas?etape=kit`, le reste → `/compas`. Vérifié sur le build (`next start`) : `/prepare`, `/prepare?tab=equipement`, `/prepare?nouvelle=1`, `/configurateur` (308), `/ai-configurator`, `/rapport-kit`, `/preparer` (307) atterrissent bien sur `/compas`.
+- ~25 liens internes mis à jour (navigation, pied de page, pays, carnet, groupes, outils, assistants de création de voyage, registre de routes, redirections legacy). `loading.tsx` de `/prepare` supprimé.
+- **Perte assumée** : les paramètres `country` et `groupId` des liens « configurateur » ne sont plus transmis (le Compas ne les lit pas).
+- **Gardé volontairement** : `src/app/prepare/actions.ts` (utilisé par le flux de création) et `src/features/preparator/` (code mort, référence pour porter la recherche de réservation RouteStack dans le Compas, Lot 3).
+- Tests adaptés : `hubRedirects`, `preparatorFusion`, `hub-adventures-drawer`. Suite complète : 7 046 tests, 24 en échec, **identiques à la base de référence** (0 nouvel échec, 0 résolu). `tsc` 0, invariants OK, build OK.
+
+## 2026-10-01 — Compas, contrôle visuel mobile (Chromium 390×844) et corrections
+
+- Page de test temporaire (supprimée, non commitée) avec des données de test : onglets Kit/Où/Résa/Verdict/Nous ouverts dans Chromium. 0 débordement horizontal de page. Seules erreurs console : tuiles de carte bloquées par le réseau du conteneur.
+- Trois défauts réels des Lots 3 à 6 corrigés : (1) 5 à 6 onglets de tiroir qui se chevauchaient → capsule défilante, onglets à largeur de contenu ; (2) champ d'hébergement qui recouvrait la pastille « À trouver » → champ stylé et contenu dans la ligne ; (3) texte des conseils et des kits tronqué par la hauteur fixe des lignes → lignes de hauteur libre (`TallList`), le tiroir défile.
+- Limite : le fond de la page de test n'est pas celui de `AppShell` ; contrastes de couleur non jugés, uniquement la mise en page.
+- Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants OK, 125 tests, build OK.
+
+## 2026-10-01 — Compas, Lot 8 « Échelles » (version sobre)
+
+- `engine/scale.ts` : Sortie (< 8 h) → Journée (≤ 1 j) → Raid (2 à 4 j) → Expédition (5 à 30 j) → Monde (> 30 j). Convention de l'application, fondée sur la seule durée choisie ; sans durée, aucune échelle n'est affichée. Affichée dans l'en-tête de la carte Où.
+- **Non fait volontairement** : « grain des étapes » par échelle, sac type, pays et formalités pour « Monde » : aucune source de données fiable dans le dépôt (visas, vaccins) et rien à inventer.
+- **En attente de décision de Tony** : `/compas` remplace `/prepare` (changement de route) ; nettoyage des mocks `EXAMPLE_TRAIL` / « Marceline » (présents hors Compas : `CreateCarnetView`, `src/lib/mock/*`).
+- Preuves : `tsc` 0, `eslint src/features/compas` 0, 125 tests, build OK.
+
+## 2026-10-01 — Compas, Lot 6 « Carte » (points sur le tracé)
+
+- Migration appliquée sur `icxyvwzfjbflcbqukpfz` : `20261001100000_compas_route_pois.sql` (fonction `compas_route_pois`, lecture seule, SECURITY INVOKER : eau, abris, camping, vues, sommets, parkings à moins de 1 km du tracé, 20 par catégorie, avec coordonnées et points sans nom). Testée sur un vrai parcours du catalogue.
+- `engine/routePois.ts` : lecture défensive des lignes (catégorie inconnue ou coordonnées hors limites écartées) ; un point sans nom garde sa catégorie, jamais un nom inventé.
+- UI : onglet « Sur le tracé » (étape Où), filtre par catégorie, avertissement « source tarie / refuge fermé », crédit © OpenStreetMap (ODbL) ; les points s'ajoutent à la carte.
+- Le décompte des points d'eau du tracé alimente désormais le conseil d'eau du kit (avant : valeur du hub, souvent absente).
+- **Volontairement non fait** : couches Tribu / Amis (positions d'autres personnes : demande consentement explicite et conception vie privée, pas de construction à l'aveugle) ; profil d'altitude (aucune altitude fiable le long du tracé dans les données du Compas).
+- Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants OK, 115 tests, build OK.
+
+## 2026-10-01 — Compas, Lot 5 « Kit » (conseils météo, mes kits)
+
+- `engine/kitRules.ts` : conseils de kit (pluie, froid, gel → gants/bonnet, chaleur → soleil, marche > jour → frontale, repère d'eau 0,5 L/h). Chaque conseil cite jour, valeur et source ; « couvert » = un objet du kit porte un nom qui correspond. Seuils exportés (`KIT_THRESHOLDS`). Aucun conseil sans prévision.
+- `engine/kitApply.ts` + actions `compasListMyKitsAction` / `compasApplyKitAction` : appliquer un de ses kits (`materiel_kits`) ajoute uniquement les objets absents (même nom, accents/casse ignorés), personnels, non emballés ; rien n'est retiré. Compatibilité = deux décomptes (conseils couverts, objets déjà présents), **pas de score**.
+- UI : onglets Kit « Conseils » et « Mes kits », bouton de synthèse sur la carte Kit.
+- Vérifié sur la base réelle (transaction annulée) : l'insertion `trip_items` de l'action passe (colonnes, types, lien d'inventaire).
+- Non fait : emprunt dans le groupe depuis ce flux, eau par point d'eau réel du tracé (donnée absente → « non renseignés »), test réel avec le compte démo (réseau).
+- Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants OK, 111 tests, build OK.
+
+## 2026-10-01 — Compas, Lot 4 « Verdict » (partie sans réseau)
+
+- `engine/danger.ts` : danger en **trois axes** (physique, technique, conjoncturel), **sans score**. Chaque signal porte sa source et sa date. Un axe sans donnée est « non évalué », jamais « RAS » (le technique l'est tant que cotation et altitude manquent). Seuils par défaut exportés (`DANGER_THRESHOLDS`), à valider. Blocage seulement pour rafales ≥ 90 km/h et alerte officielle rouge.
+- `mergeDangerIntoVerdict` : le danger s'ajoute au verdict existant sans jamais l'adoucir.
+- UI : pastilles des trois axes sur la carte Verdict ; tiroir Signaux avec date et axes non évalués.
+- **Reste (bloqué : réseau du conteneur)** : lecture des alertes officielles (Meteoalarm, flux ouvert, sans clé) et explication IA avec validateur de nombres. Les hôtes sont refusés par la politique réseau du conteneur (403, y compris Open-Meteo) : aucune réponse réelle n'a pu être testée, donc rien n'est branché à l'aveugle (`alerts: []` dans `getCompasData`).
+- Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants OK, 99 tests, build OK.
+
+## 2026-10-01 — Compas, Lot 3 « Réserver » (périmètre sans paiement)
+
+- Flux **Nuits** (étape Résa) : une ligne par nuit, hébergement noté par l'éditeur (`compasSetStayAction` → `trip_steps.accommodation_name`, 0 ligne = échec). **Noter ne réserve rien** ; aucune commande, aucun paiement, aucun lien de paiement.
+- Offres partenaires : composant obligatoire `AffiliateDisclosure` (DGCCRF) ajouté aux Offres et aux hébergements, `rel="sponsored nofollow noopener"` (avant : `noopener sponsored`).
+- Conversion Frankfurter (BCE, sans clé, revalidée 12 h) : `engine/currency.ts` + `server/rates.ts`. Total des réservations affiché en euros puis converti avec le taux et sa date ; sans taux, « conversion indisponible », jamais d'estimation.
+- RouteStack reste en mode désactivé tant que les clés manquent (message inchangé, rien de simulé). Viator : pas de changement.
+- La tuile « nuit à trouver » de la carte Résa ouvre désormais Nuits (avant : Parcours).
+- Aucune migration. Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants CI/identité/icônes OK, 90 tests (`src/features/compas` + `src/lib/ai`), `npm run build` OK.
+- Non fait : recherche d'hébergements en direct (attend les clés RouteStack), liens Viator par activité, test réel sur le compte démo.
+
+## 2026-10-01 — Compas, Lot 2 « Nous »
+
+- Moteur pur `engine/crew.ts` : `settleExpenses` (soldes + remboursements simplifiés ; `equal` partagé entre membres, `individual` à la charge du payeur, **`custom` exclu et signalé, jamais deviné**, prévues ignorées) et `crewPace` (rythme du plus lent, « x sur y connues »).
+- Modèle : `crew.guests` (personnes sans compte), `crew.pace`, `crew.settlement`, allure/niveau par membre.
+- UI : tiroir Équipe (nombre de personnes ± pour les éditeurs, allure et niveau par membre — « non renseigné » sinon, rythme du groupe), « Qui doit quoi » dans le budget, résumé de la carte Nous. Invitations et rôles : renvoi vers `/hub/groupe` uniquement.
+- Aucune migration. Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants CI/identité/icônes OK, 81 tests (dont 7 nouveaux), `npm run build` OK.
+- Non couvert : test UI du stepper (action déjà testée via « Dis-le »), test réel avec données du compte démo.
+
+## 2026-10-01 — Compas, Lot 1 « Où et quand » (commit `c299cab`)
+
+- Météo des vrais jours du voyage (Open-Meteo, heure par heure, isotherme, calendrier 6 semaines prévision puis tendance), heure de départ conseillée, règle de durée modifiable, choix du parcours (catalogue, mes randos, communauté) avec redécoupage non destructif, activité, envies, « Dis-le » (IA `compas-intent` + règles, ancrage des nombres).
+- Migration appliquée sur `icxyvwzfjbflcbqukpfz` : `20261001090000_compas_routes.sql` (RPC `compas_search_routes`, `compas_route_stages`).
+- Preuves bac à sable : `tsc` 0, `eslint src/features/compas` 0, invariants CI OK, 74 tests (`src/features/compas` + `src/lib/ai`), harnais Chromium 12 états sans débordement ni erreur console.
+- Reprise Claude Code (conteneur cloud) : `npm run build` OK (Next 15.5), `tsc` 0, `eslint src/features/compas` 0, invariants CI/identité/icônes OK, 74 tests OK.
+- Correctif : « Dis-le » passe le tiroir en grande hauteur quand il affiche des propositions (débordement de 12 px en hauteur moyenne).
+- **Reste** : test réel sur `localhost:4000/compas` avec le compte démo (réseau Open-Meteo, base, clé IA) — non faisable depuis le conteneur (identifiants et `.env.local` sur le PC de Tony). Voir `docs/compas/REPRISE_CLAUDE_CODE.md`, §4.
+
+## 2026-10-01 — Compas (préparateur ultime) : écran branché sur les données réelles
+
+- **Branche** : `feat/compas-preparateur` · **Route** : `/compas` (validation) — `/prepare` inchangée jusqu'à validation.
+- **Projet Supabase** : `icxyvwzfjbflcbqukpfz` (lectures de schéma et de politiques RLS uniquement). **Aucune migration** : tout s'appuie sur des colonnes existantes.
+- **Design** : portage fidèle de la maquette v8 validée (capsule d'étapes = barre d'onglets, ≡ et ☀ en haut, carte 40 % sous la barre flottante, tiroirs qui s'arrêtent au-dessus de la carte, carte agrandie sans zoom avec carte-titre réduite).
+
+### Livré
+1. `src/features/compas/engine/` : `compasModel.ts` (modèle pur : parcours, dates, lumière, météo, kit, sacs, budget, réservations, verdict sans score, prochaine décision), `sun.ts` (lever/coucher NOAA), `format.ts`.
+2. `src/features/compas/server/getCompasData.ts` : un seul chargeur (aventure active du hub + inventaire, réservations, boutique active, liens affiliés `/go`, mode des fournisseurs).
+3. `src/features/compas/server/compasActions.ts` : porteur (propriétaire, collaborateurs, équipage actif), produit précis relié au kit + panier, produit boutique → kit, objet → inventaire (poids jamais inventé), objet prêté récupéré, enveloppe du voyage. Zod + session + droit d'édition + RLS (0 ligne = échec).
+4. Actions existantes réutilisées : `togglePackedAction` (optimiste), `deleteTripItemAction`, `addInventoryItemToTripAction`, `addCustomTripItemAction`.
+5. `src/features/compas/components/*` + `compas.css` + `src/app/compas/page.tsx` ; `/compas` rattachée à l'onglet Hub.
+
+### Preuves
+- `npx tsc --noEmit` : 0 erreur.
+- `npx eslint --max-warnings=0 src/features/compas src/app/compas` : 0.
+- `node scripts/verify/ci_invariants.mjs` : SUCCÈS (icônes du registre, aucun jeton --role-*).
+- `npx vitest run src/features/compas` : 28/28 (moteur, formats, écran réel en jsdom : décision → tiroir → fiche → achat relié au panier, emballage optimiste et annulation sur refus RLS, porteur, récupération d'un prêt, enveloppe).
+- Suite complète : aucun nouvel échec par rapport à `main` (24 échecs préexistants, identiques avec et sans la branche).
+- Harnais navigateur (Chromium 390×844, 375×667, 430×932, clair et sombre) : 23 états audités, 0 débordement, 0 tiroir sur la carte, 0 erreur console.
+- `npm run build` : non exécutable dans le bac à sable (Google Fonts bloqué par le proxy réseau) — à lancer en CI ou en local.
+
+---
+
 ## 2026-09-05 — Programme Intégral « Module Voyage » (Chantiers C0 à C8 + Recette Finale RF)
 
 ### Synthèse Globale

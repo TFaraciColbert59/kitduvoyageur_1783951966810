@@ -1,76 +1,29 @@
-import type { Metadata } from 'next';
-import { getPreparatorData } from '@/features/preparator/server/getPreparatorData';
-import { PreparatorView } from '@/features/preparator/components/PreparatorView';
-import AdventurePrepScreen from '@/features/adventure-prep/components/AdventurePrepScreen';
+import { permanentRedirect } from 'next/navigation';
 
 /**
- * Préparateur de voyage — route unique, toutes activités.
+ * `/prepare` est remplacée par `/compas` : cette route ne sert plus que de
+ * passerelle pour les anciens liens, les favoris et les moteurs de recherche.
  *
- * Elle remplace les configurateurs : une seule page qui prépare le voyage
- * entier (trace, POI, nuitées, transports, tables, budget, check-list).
+ *   ?nouvelle=1 (ou ?apercu, en développement) -> /compas?nouvelle=1
+ *   ?tab=equipement                            -> /compas?etape=kit
+ *   tout le reste                              -> /compas
  *
- * Deux états, une seule route :
- *   - aventure active   -> le preparateur detaille de l'aventure existante ;
- *   - aucune aventure   -> le preparateur d'aventure, en materiau Liquid Glass
- *                          iOS 27 (activite, parcours, itineraire, depart).
- *
- * Le second etat remplace une redirection aveugle vers la creation : on guide
- * la personne dans le flux au lieu de la renvoyer vers un formulaire sans
- * contexte.
- *
- * Le rendu est auth/cookie-driven (aventure active) : jamais prérendu statique.
+ * `actions.ts`, voisin de ce fichier, reste ici : le flux de création
+ * d'aventure l'importe.
  */
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  title: 'Préparer — Kit du Voyageur',
-  description:
-    'Prépare ton activité : parcours, étapes, équipement et eau. Sans score, sans donnée inventée.',
-};
-
-/**
- * Deux facons d'ouvrir le preparateur d'aventure, une seule route.
- *
- * `?nouvelle=1` -- production. C'est le lien des deux CTA "Preparer une
- *   activite" : la pastille du hub et l'action du tiroir d'aventures. Il
- *   exprime une intention explicite -- ouvrir le nouveau flux -- et il gagne
- *   donc meme quand une aventure est deja active. Sans ce parametre, la route
- *   garde son comportement historique (le preparateur detaille de l'aventure en
- *   cours) : aucun lien existant ne change de destination.
- *
- * `?apercu=aventure` -- developpement uniquement. Meme effet, mais refuse en
- *   production : c'est une porte de test, pas une URL a publier. Le
- *   developpement garde ainsi un raccourci qui ne peut pas fuir.
- */
+const NEW_FLOW_VALUES = new Set(['1', 'oui', 'true', 'aventure']);
 const isPreviewable = process.env.NODE_ENV !== 'production';
 
-/** Valeurs acceptees pour activer le nouveau flux, par porte. */
-const NEW_FLOW_VALUES = new Set(['1', 'oui', 'true', 'aventure']);
-
-export default async function PreparatorPage({
+export default async function PrepareRedirect({
   searchParams,
 }: {
   searchParams: Promise<{ tab?: string; apercu?: string; nouvelle?: string }>;
 }) {
   const { tab, apercu, nouvelle } = await searchParams;
-
-  // Court-circuit avant toute lecture : l'ecran ignore ces donnees, inutile
-  // de payer une requete Supabase pour l'afficher.
-  // `?apercu` est une porte de developpement : toute valeur non vide l'ouvre.
-  // La comparer a la seule chaine 'aventure' faisait retomber `?apercu` nu
-  // dans le preparateur detaille, et c'est exactement le « j'ai l'ancienne
-  // version de /prepare » : le lien tape a la main nouvrait pas le meme ecran
-  // que le lien du hub. La porte reste fermee en production.
-  const wantsNewFlow =
-    NEW_FLOW_VALUES.has(nouvelle ?? '') || (isPreviewable && Boolean(apercu));
-  if (wantsNewFlow) return <AdventurePrepScreen />;
-
-  const data = await getPreparatorData();
-  if (!data) return <AdventurePrepScreen />;
-
-  // Les anciens liens configurateur ouvrent directement l'onglet equipement
-  // du preparateur : une seule page, jamais de configurateur a cote.
-  const initialTab = tab === 'equipement' ? ('equipement' as const) : ('itineraire' as const);
-
-  return <PreparatorView data={data} initialTab={initialTab} />;
+  if (NEW_FLOW_VALUES.has(nouvelle ?? '') || (isPreviewable && Boolean(apercu)))
+    permanentRedirect('/compas?nouvelle=1');
+  if (tab === 'equipement') permanentRedirect('/compas?etape=kit');
+  permanentRedirect('/compas');
 }

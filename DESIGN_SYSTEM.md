@@ -4,6 +4,16 @@
 
 ---
 
+## 0. Référence design : le Compas (décision du 2026-10-01)
+
+Le **Compas** (`/compas`) est la nouvelle référence visuelle et d'interaction pour tout NOUVEL écran : matériau Liquid Glass v8, tiroirs à trois hauteurs, capsule d'étapes, lignes de liste, états « non renseigné / non évalué ». Détail, règles et dette connue : `docs/compas/DESIGN_REFERENCE.md`.
+
+- En cas de divergence de style (verre, surfaces, onglets, tiroirs, lignes, états), **le Compas prévaut** sur `/materiel`.
+- Les jetons restent ceux de `src/styles/tokens.css` (`--lkv-*`) : aucune couleur littérale nouvelle hors fichier de jetons.
+- `/materiel` reste la référence des écrans existants jusqu'à leur migration ; `/compte` reste la référence des patterns utilisateur (profils, réglages, formulaires).
+
+---
+
 ## 1. Sources de Vérité Canoniques
 
 1. **`/materiel` = Source unique de vérité visuelle**  

@@ -1,0 +1,160 @@
+'use client';
+
+import { useState, type FormEvent } from 'react';
+import Icon from '@/components/ui/Icon';
+import { planApplication, type CompasProposal } from '../engine/intent';
+import { compasInterpretAction } from '../server/compasActions';
+import { applyCurrent, runOps } from './compasApply';
+import type { CompasCtl } from './compasTypes';
+
+type State =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'error'; error: string }
+  | { status: 'done'; proposals: CompasProposal[]; usedAi: boolean; note: string | null };
+
+/**
+ * « Dis-le » (maquette v8, en bas de chaque tiroir) : une phrase devient des
+ * actions proposées. L'IA traduit, le moteur vérifie, l'utilisateur coche puis
+ * applique. Rien n'est écrit sans ce dernier geste.
+ */
+export function DisLe({ ctl }: { ctl: CompasCtl }) {
+  const [text, setText] = useState('');
+  const [state, setState] = useState<State>({ status: 'idle' });
+  const [checked, setChecked] = useState<Record<string, boolean>>({});
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    const phrase = text.trim();
+    if (phrase.length < 2) return;
+    setState({ status: 'loading' });
+    try {
+      const res = await compasInterpretAction({ tripId: ctl.data.model.tripId, text: phrase });
+      if (!res.success) {
+        setState({ status: 'error', error: res.error });
+        return;
+      }
+      setState({ status: 'done', proposals: res.proposals, usedAi: res.usedAi, note: res.note });
+      if (res.proposals.length) ctl.enlarge();
+      setChecked(Object.fromEntries(res.proposals.map((p) => [p.id, p.ok])));
+    } catch {
+      setState({ status: 'error', error: 'Connexion perdue : réessaie.' });
+    }
+  };
+
+  const reset = () => {
+    setState({ status: 'idle' });
+    setChecked({});
+  };
+
+  const proposals = state.status === 'done' ? state.proposals : [];
+  const chosen = proposals.filter((p) => p.ok && checked[p.id]);
+
+  const apply = async () => {
+    const ops = planApplication(
+      chosen.map((p) => p.action),
+      applyCurrent(ctl)
+    );
+    const route = ops.find((o) => o.op === 'route');
+    const writes = ops.filter((o) => o.op !== 'route');
+    let ok = true;
+    if (writes.length) {
+      const n = chosen.filter((p) => p.action.type !== 'search_route').length;
+      ok = await ctl.run(`${n} changement${n > 1 ? 's' : ''} appliqué${n > 1 ? 's' : ''}`, () =>
+        runOps(ctl, writes)
+      );
+    }
+    if (!ok) return;
+    setText('');
+    reset();
+    if (route && route.op === 'route') {
+      ctl.replace({ kind: 'step', step: 'ou', flow: 'parcours', hint: { query: route.query } });
+    }
+  };
+
+  return (
+    <div className="cp-disle">
+      {state.status === 'done' && (
+        <div className="cp-disle__out" aria-live="polite">
+          {proposals.length === 0 ? (
+            <p className="cp-note">
+              Rien de précis à appliquer dans cette phrase. Essaie : « 3 jours à 4, départ samedi,
+              bivouac ».
+            </p>
+          ) : (
+            <ul className="cp-props">
+              {proposals.map((p) => (
+                <li key={p.id}>
+                  <label className="cp-prop" data-ok={p.ok ? '1' : undefined}>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(checked[p.id]) && p.ok}
+                      disabled={!p.ok}
+                      onChange={(e) => setChecked((c) => ({ ...c, [p.id]: e.target.checked }))}
+                    />
+                    <span className="cp-prop__t">{p.label}</span>
+                    {p.source === 'ia' && (
+                      <span className="cp-prop__ai" aria-label="Compris par l’IA">
+                        <Icon name="sparkles" size={12} />
+                      </span>
+                    )}
+                    {p.reason && <span className="cp-prop__why">{p.reason}</span>}
+                  </label>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="cp-sub">
+            {state.usedAi
+              ? 'Compris par l’IA, vérifié par le Compas.'
+              : (state.note ?? 'Lu par les règles du Compas.')}
+          </p>
+          <div className="cp-actions">
+            <button type="button" className="cp-btn cp-btn--soft" onClick={reset}>
+              Effacer
+            </button>
+            {chosen.length > 0 && (
+              <button
+                type="button"
+                className="cp-btn cp-btn--pg cp-btn--block"
+                disabled={ctl.busy}
+                onClick={() => void apply()}
+              >
+                <Icon name="check" size={16} />
+                Appliquer ({chosen.length})
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+      {state.status === 'error' && (
+        <p className="cp-note" role="alert">
+          {state.error}
+        </p>
+      )}
+      <form className="cp-disle__in cp-glass" onSubmit={submit}>
+        <Icon name="sparkles" size={15} />
+        <label className="sr-only" htmlFor="cp-disle-input">
+          Dis-le
+        </label>
+        <input
+          id="cp-disle-input"
+          value={text}
+          maxLength={280}
+          autoComplete="off"
+          placeholder="Dis-le : « 3 jours à 4, départ samedi »"
+          onChange={(e) => setText(e.target.value)}
+        />
+        <button
+          type="submit"
+          className="cp-ibtn cp-ibtn--sm cp-ibtn--pg"
+          aria-label="Comprendre la phrase"
+          disabled={state.status === 'loading' || text.trim().length < 2}
+          aria-busy={state.status === 'loading'}
+        >
+          <Icon name={state.status === 'loading' ? 'clock' : 'send'} size={14} />
+        </button>
+      </form>
+    </div>
+  );
+}

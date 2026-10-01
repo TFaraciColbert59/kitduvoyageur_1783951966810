@@ -46,7 +46,7 @@ export function QuickCreateTripModal({ isOpen, onClose, onSubmitTrip }: QuickCre
       slug,
       title: title.trim() || 'Nouvelle aventure',
     });
-    router.push('/prepare');
+    router.push('/compas');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

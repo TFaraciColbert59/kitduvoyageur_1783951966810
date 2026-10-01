@@ -60,7 +60,7 @@ interface BlockRowProps {
  * feuille de style chargee : une regle de mise en page qui ne vit que dans le
  * CSS disparait en silence le jour ou la feuille est reecrite.
  *
- * Mesure du 2026-09-29 (393x852, `/prepare?nouvelle=1`, etape 1 « Creations »,
+ * Mesure du 2026-09-29 (393x852, `/compas?nouvelle=1`, etape 1 « Creations »,
  * libelle « Destination ou hebergement de base » + valeur « 3 personnes · 1
  * adulte ») :
  *

@@ -23,6 +23,8 @@ const EXPECTED_SPECS: Record<string, { tier: string; maxReasoningBudget: number;
   'itinerary': { tier: 'fast', maxReasoningBudget: 0, cacheTtlSeconds: 0, maxPerUserPerDay: 20 },
   'chat-completion': { tier: 'heavy', maxReasoningBudget: 4096, cacheTtlSeconds: 0, maxPerUserPerDay: 100 },
   diagnostic: { tier: 'heavy', maxReasoningBudget: 512, cacheTtlSeconds: 0, maxPerUserPerDay: 50 },
+  'compas-intent': { tier: 'fast', maxReasoningBudget: 0, cacheTtlSeconds: 0, maxPerUserPerDay: 60 },
+  'compas-verdict': { tier: 'fast', maxReasoningBudget: 0, cacheTtlSeconds: 0, maxPerUserPerDay: 30 },
 };
 
 describe('src/lib/ai/features/registry — registre des features IA', () => {

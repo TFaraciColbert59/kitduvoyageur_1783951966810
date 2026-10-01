@@ -453,7 +453,7 @@ describe('INTERACTIONS 2 — le clic change l’état', () => {
     );
     expect(corps.draft.itinerary?.steps.length, 'le parcours doit etre inclus').toBeGreaterThan(0);
 
-    expect(routerPush, 'une reponse avec tripId doit emmener au hub').toHaveBeenCalledWith('/hub');
+    expect(routerPush, 'une reponse avec tripId doit emmener au Compas').toHaveBeenCalledWith('/compas');
     expect(
       screen.getByRole('button', { name: /enregistr./i }),
       'l’ecran doit confirmer l’enregistrement',

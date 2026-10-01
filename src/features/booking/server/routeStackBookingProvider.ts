@@ -386,14 +386,15 @@ function normalizeOffers(
       'vehicleId',
     ]);
     const id = (rawId ?? stableFallbackId(record)).slice(0, MAX_ID_LENGTH);
-    const title = (readString(record, [
+    const providerTitle = readString(record, [
       'name',
       'title',
       'hotelName',
       'vehicleName',
       'carType',
       'description',
-    ]) ?? fallbackTitle(record, request))?.slice(0, MAX_TITLE_LENGTH);
+    ]);
+    const title = (providerTitle ?? fallbackTitle(record, request))?.slice(0, MAX_TITLE_LENGTH);
     if (!title || seen.has(id)) continue;
 
     const rawDeeplink = record.deeplink ?? record.booking_url ?? record.checkoutUrl ?? record.url;
@@ -420,6 +421,7 @@ function normalizeOffers(
       provider: 'routestack',
       vertical: request.vertical,
       title,
+      ...(providerTitle ? {} : { untitled: true }),
       description: description?.slice(0, MAX_DESCRIPTION_LENGTH) ?? null,
       amount,
       currency,

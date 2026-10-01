@@ -5,18 +5,19 @@ import { LEGACY_REDIRECTS, resolveLegacyRedirect } from '@/lib/hub/hubRedirects'
 import { ACTIVE_ROUTES } from '@/constants/routeRegistry';
 
 /**
- * Fusion des configurateurs — /prepare est l'UNIQUE point d'entree :
- * plus aucune page "configurateur". Cet onglet verifie que /prepare porte
- * l'onglet equipement, que /preparer reste un alias direct et que tous les
- * anciens chemins tombent sur la route canonique.
+ * Fusion des configurateurs — /compas est l'UNIQUE point d'entree :
+ * plus aucune page "configurateur". /prepare n'est plus qu'une passerelle.
+ * Cet onglet verifie que l'etape Kit du Compas porte l'equipement, que
+ * /preparer reste un alias direct et que tous les anciens chemins tombent sur
+ * la route canonique.
  */
 
 const ROOT = process.cwd();
-const KIT_TAB = '/prepare?tab=equipement';
+const KIT_TAB = '/compas?etape=kit';
 
-describe('Fusion des configurateurs — /prepare est l unique point de vente', () => {
-  it('FUS-1: /rapport-kit et /ai-configurator ouvrent l onglet equipement du preparateur', () => {
-    const expected = { destination: '/prepare', setParams: { tab: 'equipement' } };
+describe('Fusion des configurateurs — /compas est l unique point de vente', () => {
+  it('FUS-1: /rapport-kit et /ai-configurator ouvrent l etape Kit du Compas', () => {
+    const expected = { destination: '/compas', setParams: { etape: 'kit' } };
     expect(resolveLegacyRedirect('/rapport-kit')).toEqual(expected);
     expect(resolveLegacyRedirect('/ai-configurator')).toEqual(expected);
   });
@@ -37,10 +38,13 @@ describe('Fusion des configurateurs — /prepare est l unique point de vente', (
     expect(matcher![1]).toContain("'/preparer'");
   });
 
-  it('FUS-4: /prepare lit ?tab=equipement et ouvre l onglet sans page intermediaire', () => {
-    const page = fs.readFileSync(path.join(ROOT, 'src', 'app', 'prepare', 'page.tsx'), 'utf8');
-    expect(page).toContain("tab === 'equipement'");
-    expect(page).toContain('initialTab={initialTab}');
+  it('FUS-4: /prepare redirige (308) ?tab=equipement vers l etape Kit et /compas la lit', () => {
+    const gateway = fs.readFileSync(path.join(ROOT, 'src', 'app', 'prepare', 'page.tsx'), 'utf8');
+    expect(gateway).toContain("tab === 'equipement'");
+    expect(gateway).toContain("permanentRedirect('/compas?etape=kit')");
+    const compas = fs.readFileSync(path.join(ROOT, 'src', 'app', 'compas', 'page.tsx'), 'utf8');
+    expect(compas).toContain('initialStep={initialStep}');
+    expect(compas).toContain('etape');
   });
 
   it('FUS-5: PreparatorView porte l onglet equipement charge a la demande', () => {
@@ -93,8 +97,8 @@ describe('Fusion des configurateurs — /prepare est l unique point de vente', (
     }
   });
 
-  it('FUS-8: /preparer est un alias 307 Court vers /prepare et ne possede plus la page', () => {
-    expect(resolveLegacyRedirect('/preparer')).toEqual({ destination: '/prepare' });
+  it('FUS-8: /preparer est un alias 307 court vers /compas et ne possede plus la page', () => {
+    expect(resolveLegacyRedirect('/preparer')).toEqual({ destination: '/compas' });
     expect(fs.existsSync(path.join(ROOT, 'src', 'app', 'preparer'))).toBe(false);
   });
 

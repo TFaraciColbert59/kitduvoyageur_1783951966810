@@ -6,6 +6,8 @@ import * as countryGuides from './countryGuides';
 import * as paysRecommendations from './paysRecommendations';
 import * as itinerary from './itinerary';
 import * as trajectoireNarration from './trajectoireNarration';
+import * as compasIntent from './compasIntent';
+import * as compasVerdict from './compasVerdict';
 
 /**
  * Registre des features IA — ajouter une feature IA = ajouter UN fichier
@@ -76,12 +78,26 @@ export const FEATURES: Record<string, FeatureSpec> = {
     maxPerUserPerDay: trajectoireNarration.TRAJECTOIRE_NARRATION_SPEC.maxPerUserPerDay,
     fallbackResponse: trajectoireNarration.fallbackResponse,
   },
-  'itinerary': {
+  itinerary: {
     tier: itinerary.ITINERARY_SPEC.tier,
     maxReasoningBudget: itinerary.ITINERARY_SPEC.maxReasoningBudget,
     cacheTtlSeconds: itinerary.ITINERARY_SPEC.cacheTtlSeconds,
     maxPerUserPerDay: itinerary.ITINERARY_SPEC.maxPerUserPerDay,
     fallbackResponse: itinerary.fallbackResponse,
+  },
+  'compas-intent': {
+    tier: compasIntent.COMPAS_INTENT_SPEC.tier,
+    maxReasoningBudget: compasIntent.COMPAS_INTENT_SPEC.maxReasoningBudget,
+    cacheTtlSeconds: compasIntent.COMPAS_INTENT_SPEC.cacheTtlSeconds,
+    maxPerUserPerDay: compasIntent.COMPAS_INTENT_SPEC.maxPerUserPerDay,
+    fallbackResponse: compasIntent.fallbackResponse,
+  },
+  'compas-verdict': {
+    tier: compasVerdict.COMPAS_VERDICT_SPEC.tier,
+    maxReasoningBudget: compasVerdict.COMPAS_VERDICT_SPEC.maxReasoningBudget,
+    cacheTtlSeconds: compasVerdict.COMPAS_VERDICT_SPEC.cacheTtlSeconds,
+    maxPerUserPerDay: compasVerdict.COMPAS_VERDICT_SPEC.maxPerUserPerDay,
+    fallbackResponse: compasVerdict.fallbackResponse,
   },
   'country-practical-guide': {
     tier: 'fast',
@@ -90,7 +106,8 @@ export const FEATURES: Record<string, FeatureSpec> = {
     maxPerUserPerDay: 100,
     fallbackResponse: async (_req: AIRequest): Promise<AIResponse> => ({
       text: JSON.stringify({
-        content_md: "Informations pratiques temporairement indisponibles. Veuillez vérifier auprès de l'ambassade ou des services officiels.",
+        content_md:
+          "Informations pratiques temporairement indisponibles. Veuillez vérifier auprès de l'ambassade ou des services officiels.",
         sources: [],
       }),
       model: 'fallback-deterministe',

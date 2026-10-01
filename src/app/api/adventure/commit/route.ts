@@ -209,10 +209,19 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const { error: collabError } = await supabase
+  // La ligne `owner` est posee par le trigger `trg_trips_insert_owner`
+  // (SECURITY DEFINER). La route ne l'insere pas : la policy d'insertion
+  // refuse le role `owner` a tout client, et cet insert faisait echouer puis
+  // annuler CHAQUE enregistrement. On relit la ligne du trigger : absente,
+  // le voyage n'a pas de proprietaire et il est annule.
+  const { data: owner, error: collabError } = await supabase
     .from('trip_collaborators')
-    .insert({ trip_id: created.id, user_id: user.id, role: 'owner' });
-  if (collabError) {
+    .select('role')
+    .eq('trip_id', created.id)
+    .eq('user_id', user.id)
+    .maybeSingle();
+  if (collabError || owner?.role !== 'owner') {
+    console.error('[adventure/commit] ligne owner absente apres insertion du voyage', collabError?.code ?? 'aucune ligne');
     await supabase.from('trip_steps').delete().eq('trip_id', created.id);
     await supabase.from('trips').delete().eq('id', created.id);
     return NextResponse.json(

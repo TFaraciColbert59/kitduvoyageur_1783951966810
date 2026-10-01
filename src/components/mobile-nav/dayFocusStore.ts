@@ -36,7 +36,7 @@ import { create } from 'zustand';
  * plus plutot qu'en icones sur tout le site. Le hub garde la racine seule
  * (`/hub`) ; le preparateur garde la racine ET ses sous-ecrans.
  */
-const DAY_FOCUS_SURFACE_PREFIXES: readonly string[] = ['/hub', '/prepare'];
+const DAY_FOCUS_SURFACE_PREFIXES: readonly string[] = ['/hub', '/prepare', '/compas'];
 
 export function isDayFocusSurfacePathname(pathname: string | null | undefined): boolean {
   if (!pathname) return false;

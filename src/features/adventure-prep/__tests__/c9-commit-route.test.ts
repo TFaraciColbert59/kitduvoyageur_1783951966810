@@ -28,6 +28,12 @@ import { POST } from '@/app/api/adventure/commit/route';
 /** Ligne `trips` reellement posee, relevee au moment du insert. */
 let ligneTrips: Record<string, unknown> | null = null;
 let insere = false;
+/** Lignes que la route tenterait d'inserer dans `trip_collaborators`. */
+let insertsCollab: Record<string, unknown>[] = [];
+/** Le trigger a-t-il pose la ligne owner ? */
+let ownerPose = true;
+/** Tables dont la route a demande la suppression (annulation). */
+let suppressions: string[] = [];
 
 function clientFactice() {
   const selectSlug = {
@@ -42,11 +48,40 @@ function clientFactice() {
           insere = true;
           return { select: () => ({ single: () => Promise.resolve({ data: { id: 't1', slug: row.slug }, error: null }) }) };
         },
-        delete: () => Promise.resolve({ data: null, error: null }),
+        delete: () => {
+          suppressions.push('trips');
+          return { eq: () => Promise.resolve({ data: null, error: null }) };
+        },
       };
     }
     if (table === 'trip_steps') {
-      return { insert: () => Promise.resolve({ data: null, error: null }), delete: () => Promise.resolve({ data: null, error: null }) };
+      return {
+        insert: () => Promise.resolve({ data: null, error: null }),
+        delete: () => {
+          suppressions.push('trip_steps');
+          return { eq: () => Promise.resolve({ data: null, error: null }) };
+        },
+      };
+    }
+    if (table === 'trip_collaborators') {
+      // La base reelle : le trigger `trg_trips_insert_owner` a deja pose la
+      // ligne owner, et la policy d'insertion refuse le role `owner` au client.
+      return {
+        insert: (row: Record<string, unknown>) => {
+          insertsCollab.push(row);
+          return Promise.resolve({
+            data: null,
+            error: row.role === 'owner' ? { code: '42501', message: 'new row violates row-level security policy' } : null,
+          });
+        },
+        select: () => ({
+          eq: () => ({
+            eq: () => ({
+              maybeSingle: () => Promise.resolve({ data: ownerPose ? { role: 'owner' } : null, error: null }),
+            }),
+          }),
+        }),
+      };
     }
     return { insert: () => Promise.resolve({ data: null, error: null }) };
   };
@@ -67,6 +102,9 @@ function requete(calendar: Partial<AdventurePrepDraft['calendar']>) {
 beforeEach(() => {
   ligneTrips = null;
   insere = false;
+  insertsCollab = [];
+  ownerPose = true;
+  suppressions = [];
   mocks.createClient.mockReset().mockImplementation(async () => clientFactice());
   mocks.enforceRateLimit.mockReset().mockResolvedValue(null);
 });
@@ -124,5 +162,23 @@ describe('C9-6 — la route depose l’heure saisie, et rien d’autre', () => {
     // `days` vient de `tripCommit`, pas de la route : la route ne l'efface pas.
     expect(prep.days).toBeDefined();
     expect(prep.startTime).toBe('06:15');
+  });
+});
+
+describe('C9-7 — le proprietaire vient du trigger, pas de la route', () => {
+  it('C9-7a: la route n’insere jamais la ligne owner (la policy la refuse au client)', async () => {
+    const rep = await POST(requete({ startTime: '08:30' }));
+    expect(rep.status).toBe(201);
+    expect(insertsCollab).toEqual([]);
+    expect(suppressions).toEqual([]);
+  });
+
+  it('C9-7b: CONTRE-EXEMPLE — sans ligne owner posee, le voyage est annule', async () => {
+    ownerPose = false;
+    const erreur = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const rep = await POST(requete({ startTime: '08:30' }));
+    expect(rep.status).toBe(503);
+    expect(suppressions).toEqual(['trip_steps', 'trips']);
+    erreur.mockRestore();
   });
 });

@@ -470,7 +470,7 @@ export interface PrepRailState {
    * L'etape reellement affichee — `null` quand AUCUNE ne l'est.
    *
    * `null` n'est ni un cas degrade ni une absence d'information : c'est
-   * l'etat exact de `/prepare?nouvelle=1`, ou `ActivityPickerScreen` est
+   * l'etat exact de `/compas?nouvelle=1`, ou `ActivityPickerScreen` est
    * monte. Y mettre « destination » — ce que faisait le shell en passant
    * `step` a la volee — affirmait une etape affichee qui ne l'etait pas.
    */
@@ -491,7 +491,7 @@ export interface PrepRailState {
 /**
  * L'etat du rail, DERIVE de l'ecran monte.
  *
- * Mesure du 2026-09-29 (`/prepare?nouvelle=1`, 393x852) : le rail portait
+ * Mesure du 2026-09-29 (`/compas?nouvelle=1`, 393x852) : le rail portait
  * `aria-current="step"` sur « Creations » alors que l'ecran visible etait
  * `ActivityPickerScreen`. Le rail affirmait donc une etape affichee qui ne
  * l'etait pas, et `progressOf(draft)` — derive de `draft.currentStep` —
@@ -625,7 +625,7 @@ const BLOCKER_BOX: React.CSSProperties = {
  * Le message « Il manque : … », la ou il ne peut pas disparaitre.
  *
  * Mesure du 2026-09-29, 393x852 puis 375x852, ecran « Partir librement » puis
- * `/prepare?nouvelle=1` : `.prep-body` vaut `scrollHeight 642 / clientHeight
+ * `/compas?nouvelle=1` : `.prep-body` vaut `scrollHeight 642 / clientHeight
  * 467`, `scrollTop 0`, `maxScroll 175`. Le `.prep-footer` est bien
  * `position: relative; flex: 0 0 auto` (mesure : `top 523 / bottom 593`,
  * corps `top 60 / bottom 527`) — il ne recouvre donc RIEN. Le message, lui,
