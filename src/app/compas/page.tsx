@@ -3,6 +3,8 @@ import AppShell from '@/components/shell/AppShell';
 import { COMPAS_STEPS, type CompasStepId } from '@/features/compas/engine/compasModel';
 import { CompasScreen } from '@/features/compas/components/CompasScreen';
 import { getCompasData } from '@/features/compas/server/getCompasData';
+import { listCompasTrips } from '@/features/compas/server/myTrips';
+import { CompasTripPicker } from '@/features/compas/components/CompasTripPicker';
 import AdventurePrepScreen from '@/features/adventure-prep/components/AdventurePrepScreen';
 import '@/features/compas/compas.css';
 
@@ -10,9 +12,10 @@ import '@/features/compas/compas.css';
  * Compas — le préparateur de voyage (il remplace `/prepare`, qui redirige ici),
  * branché sur les données réelles de l'aventure active du hub.
  *
- * Deux états, une seule route :
+ * Trois états, une seule route :
  *   - aventure active   -> le Compas ;
- *   - aucune aventure, ou `?nouvelle=1` (intention explicite de créer) ->
+ *   - aucune aventure active mais des voyages -> le choix du voyage à préparer ;
+ *   - aucun voyage, ou `?nouvelle=1` (intention explicite de créer) ->
  *     le flux de création d'aventure.
  *
  * `?etape=ou|nous|resa|verdict|kit` ouvre directement une étape (ex. `kit` pour
@@ -43,7 +46,16 @@ export default async function CompasPage({
   if (NEW_FLOW_VALUES.has(nouvelle ?? '')) return <AdventurePrepScreen />;
 
   const data = await getCompasData();
-  if (!data) return <AdventurePrepScreen />;
+  if (!data) {
+    // Aucune aventure active : choisir parmi ses voyages s'il y en a, sinon créer.
+    const trips = await listCompasTrips();
+    if (trips.length === 0) return <AdventurePrepScreen />;
+    return (
+      <AppShell hasBottomNav videoBackground={false}>
+        <CompasTripPicker trips={trips} />
+      </AppShell>
+    );
+  }
 
   const initialStep = STEP_IDS.has(etape ?? '') ? (etape as CompasStepId) : undefined;
 

@@ -39,6 +39,7 @@ import {
 } from '@/lib/ai/features/compasVerdict';
 import { checkExplanation, verdictFacts } from '../engine/verdictExplain';
 import { getCompasData } from './getCompasData';
+import { setActiveAdventureAction } from '@/features/hub/context/activeAdventureServer';
 
 /**
  * Compas — actions serveur propres à l'écran.
@@ -1233,6 +1234,42 @@ export async function compasExplainVerdictAction(input: z.input<typeof explainSc
       : { success: true, text: null, refused: check.reason, note: null };
   } catch (err) {
     console.error('[compas] compasExplainVerdictAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+/* ---------- Ouvrir une aventure dans le Compas ---------- */
+
+const openTripSchema = z.object({ tripId: uuid });
+
+/**
+ * Fait de ce voyage l'aventure active (même cookie que le hub), après avoir
+ * vérifié que la personne peut le lire. Le Compas s'ouvre alors dessus.
+ */
+export async function compasOpenTripAction(
+  input: z.input<typeof openTripSchema>
+): Promise<CompasActionResult> {
+  const parsed = openTripSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Voyage invalide' };
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Connecte-toi pour ouvrir un voyage.' };
+    const trip = await getTripById(parsed.data.tripId, user.id);
+    if (!trip?.slug) return { success: false, error: 'Voyage introuvable ou non autorisé.' };
+    const res = await setActiveAdventureAction({
+      nature: 'sortie',
+      id: trip.id,
+      slug: trip.slug,
+      title: trip.title ?? 'Voyage',
+    });
+    if (!res.success) return { success: false, error: 'Impossible d’ouvrir ce voyage.' };
+    revalidatePath('/compas');
+    return { success: true };
+  } catch (err) {
+    console.error('[compas] compasOpenTripAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
