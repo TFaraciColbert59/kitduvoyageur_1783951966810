@@ -1,5 +1,13 @@
 # MISSION LOG — LKDV
 
+## 2026-10-01 — La création d'aventure prend le matériau du Compas (carte blanche de Tony)
+
+- `prep-compas.css` (portée `.prep-material-compas`, thème clair) : capsule d'étapes avec lentille et icônes, cartes en verre dépoli, lignes à tuile sage, boutons en verre teinté doux, tiroirs clairs, rail des jours clair, bandeau d'échec et notes ambrés, génération en verre dépoli. Aucune couleur littérale (primitives `--lkv-*` + `color-mix`).
+- Trouvé en mesurant : le fondu `mask-image` du corps empêchait le flou des panneaux de voir la photo (racine d'arrière-plan) → retiré dans cette portée. Plus aucun texte à nu sur la photo (inventaire automatique dans Chromium).
+- Textes : accents rendus au tiroir « Ajouter une étape » ; libellés de budget corrompus (« nuces », « transport staking ») réécrits.
+- Non fait : comparaison pixel à pixel avec la maquette v8 (fichier absent du dépôt et des envois) ; référence prise = le Compas, qui l'implémente. Version ordinateur : reportée (demande de Tony).
+- Preuves : `tsc` 0 ; `eslint` 0 erreur ; adventure-prep 2727+7 tests, 10 échecs = base de référence ; `tests/design` + `tests/responsive` identiques à avant (2 échecs de référence) ; `ci_invariants`, `icon-names`, `identity_compliance` OK ; captures 390×844 du catalogue, des étapes 1 à 3, de la génération et de six tiroirs ; `/partir-librement` et thème sombre inchangés.
+
 ## 2026-10-01 — Création d'aventure (`/compas?nouvelle=1`) : départ, bandeau, champ du nom
 
 Trois défauts relevés pendant le test réel, corrigés et vérifiés dans Chromium (`a8a0170`, `2e351c8`) :

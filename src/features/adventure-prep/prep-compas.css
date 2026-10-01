@@ -224,6 +224,44 @@
   border-color: var(--prep-cp-rim);
 }
 
+/* --- Lignes = lignes du Compas (.cp-row) ----------------------------------
+   L'icône d'une ligne vit dans une tuile sage (.cp-thumb), le chevron est
+   rejeté au bord droit. L'icône est un masque CSS : elle ne peut pas porter
+   sa propre tuile, la tuile est donc dessinée par la ligne, centrée sur
+   l'icône (padding gauche 22 px + 9 px = centre à 31 px). */
+:root:not([data-theme='dark']) .prep-material-compas .prep-block__row:has(> span[role='img']:first-child) {
+  position: relative;
+  padding-left: 22px;
+  gap: 20px;
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-block__row:has(> span[role='img']:first-child)::before {
+  content: '';
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  width: 36px;
+  height: 36px;
+  transform: translateY(-50%);
+  border-radius: 11px;
+  background: var(--prep-cp-soft);
+  box-shadow: inset 0 0 0 0.6px var(--prep-cp-soft-line);
+  pointer-events: none;
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-block__row > span[role='img'] {
+  position: relative;
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-block__row > span[role='img']:last-child:not(:first-child) {
+  margin-left: auto;
+  color: var(--lkv-ink-500);
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-act-icon {
+  border-radius: 11px;
+  background: var(--prep-cp-soft);
+  border: 0;
+  box-shadow: inset 0 0 0 0.6px var(--prep-cp-soft-line);
+  color: var(--lkv-ink-900);
+}
+
 /* --- Rail d'étapes = capsule des étapes du Compas --------------------------
    Le bandeau sombre pleine largeur devient la capsule flottante de .cp-steps :
    trois segments égaux, une lentille de verre sous l'étape courante, l'icône
