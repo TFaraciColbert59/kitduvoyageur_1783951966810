@@ -1,5 +1,13 @@
 # MISSION LOG — LKDV
 
+## 2026-10-01 — Compas, Lot 4 « Verdict » (partie sans réseau)
+
+- `engine/danger.ts` : danger en **trois axes** (physique, technique, conjoncturel), **sans score**. Chaque signal porte sa source et sa date. Un axe sans donnée est « non évalué », jamais « RAS » (le technique l'est tant que cotation et altitude manquent). Seuils par défaut exportés (`DANGER_THRESHOLDS`), à valider. Blocage seulement pour rafales ≥ 90 km/h et alerte officielle rouge.
+- `mergeDangerIntoVerdict` : le danger s'ajoute au verdict existant sans jamais l'adoucir.
+- UI : pastilles des trois axes sur la carte Verdict ; tiroir Signaux avec date et axes non évalués.
+- **Reste (bloqué : réseau du conteneur)** : lecture des alertes officielles (Meteoalarm, flux ouvert, sans clé) et explication IA avec validateur de nombres. Les hôtes sont refusés par la politique réseau du conteneur (403, y compris Open-Meteo) : aucune réponse réelle n'a pu être testée, donc rien n'est branché à l'aveugle (`alerts: []` dans `getCompasData`).
+- Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants OK, 99 tests, build OK.
+
 ## 2026-10-01 — Compas, Lot 3 « Réserver » (périmètre sans paiement)
 
 - Flux **Nuits** (étape Résa) : une ligne par nuit, hébergement noté par l'éditeur (`compasSetStayAction` → `trip_steps.accommodation_name`, 0 ligne = échec). **Noter ne réserve rien** ; aucune commande, aucun paiement, aucun lien de paiement.

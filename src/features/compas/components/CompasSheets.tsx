@@ -1341,39 +1341,56 @@ function OffresFlow({ ctl }: { ctl: CompasCtl }) {
 }
 
 function RaisonsFlow({ ctl }: { ctl: CompasCtl }) {
+  const { danger } = ctl.data;
+  const dated = new Map(danger.signals.map((x) => [`${x.source}|${x.label}`, x.asOf]));
+  const unknown = (['physique', 'technique', 'conjoncturel'] as const).filter(
+    (a) => danger.axes[a].level === 'non_evalue'
+  );
   return (
-    <PagedList
-      label="Signaux du verdict"
-      items={ctl.data.model.verdict.reasons}
-      empty={<p className="cp-note">Aucun signal bloquant ni point de vigilance.</p>}
-      render={(r) => (
-        <div key={`${r.source}-${r.label}`} className="cp-row" style={staticRow}>
-          <span className="cp-thumb">
-            <Icon
-              name={
-                r.severity === 'block'
-                  ? 'shield-alert'
-                  : r.severity === 'warn'
-                    ? 'alert-triangle'
-                    : 'info'
-              }
-              size={20}
-            />
-          </span>
-          <span className="cp-row__t">
-            <b>{r.label}</b>
-            <span>Source : {r.source}</span>
-          </span>
-          <span className="cp-row__end">
-            <Chip
-              tone={r.severity === 'block' ? 'bad' : r.severity === 'warn' ? 'warn' : undefined}
-            >
-              {r.severity === 'block' ? 'Bloquant' : r.severity === 'warn' ? 'Vigilance' : 'Info'}
-            </Chip>
-          </span>
-        </div>
-      )}
-    />
+    <>
+      {unknown.map((a) => (
+        <p key={a} className="cp-note">
+          <b>{a[0].toUpperCase() + a.slice(1)} non évalué.</b> {danger.axes[a].note}
+        </p>
+      ))}
+      <PagedList
+        label="Signaux du verdict"
+        items={ctl.data.model.verdict.reasons}
+        empty={<p className="cp-note">Aucun signal bloquant ni point de vigilance.</p>}
+        render={(r) => (
+          <div key={`${r.source}-${r.label}`} className="cp-row" style={staticRow}>
+            <span className="cp-thumb">
+              <Icon
+                name={
+                  r.severity === 'block'
+                    ? 'shield-alert'
+                    : r.severity === 'warn'
+                      ? 'alert-triangle'
+                      : 'info'
+                }
+                size={20}
+              />
+            </span>
+            <span className="cp-row__t">
+              <b>{r.label}</b>
+              <span>
+                Source : {r.source}
+                {dated.get(`${r.source}|${r.label}`)
+                  ? ` · ${dated.get(`${r.source}|${r.label}`)}`
+                  : ''}
+              </span>
+            </span>
+            <span className="cp-row__end">
+              <Chip
+                tone={r.severity === 'block' ? 'bad' : r.severity === 'warn' ? 'warn' : undefined}
+              >
+                {r.severity === 'block' ? 'Bloquant' : r.severity === 'warn' ? 'Vigilance' : 'Info'}
+              </Chip>
+            </span>
+          </div>
+        )}
+      />
+    </>
   );
 }
 

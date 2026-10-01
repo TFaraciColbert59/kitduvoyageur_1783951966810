@@ -457,6 +457,18 @@ export function verdictMeta(level: CompasModel['verdict']['level']) {
   return VERDICT[level];
 }
 
+const AXIS_LABEL = {
+  physique: 'Physique',
+  technique: 'Technique',
+  conjoncturel: 'Conjoncturel',
+} as const;
+const AXIS_LEVEL = {
+  ok: 'RAS',
+  vigilance: 'Vigilance',
+  bloque: 'Bloquant',
+  non_evalue: 'Non évalué',
+} as const;
+
 export function VerdictCard({ ctl }: { ctl: CompasCtl }) {
   const { verdict } = ctl.data.model;
   const v = VERDICT[verdict.level];
@@ -470,6 +482,22 @@ export function VerdictCard({ ctl }: { ctl: CompasCtl }) {
           {v.label}
         </span>
         <span className="cp-sub">Signaux vérifiables · sans score</span>
+      </div>
+      <div className="cp-tchips" aria-label="Danger par axe">
+        {(['physique', 'technique', 'conjoncturel'] as const).map((axis) => {
+          const a = ctl.data.danger.axes[axis];
+          return (
+            <span
+              key={axis}
+              className="cp-tchip"
+              data-on={a.level === 'vigilance' || a.level === 'bloque' ? '1' : undefined}
+              title={a.note || undefined}
+            >
+              <span>{AXIS_LABEL[axis]}</span>
+              <span className="cp-tchip__bd">{AXIS_LEVEL[a.level]}</span>
+            </span>
+          );
+        })}
       </div>
       {shown.length ? (
         <ul className="cp-why">

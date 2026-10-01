@@ -1,6 +1,7 @@
 import 'server-only';
 
 import type { FxRate } from '../engine/currency';
+import { assessDanger, mergeDangerIntoVerdict, type DangerAssessment } from '../engine/danger';
 import { getEurRate } from './rates';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -92,6 +93,8 @@ export interface CompasData {
   providers: { routestack: ProviderCredentialMode; viator: ProviderCredentialMode };
   /** Taux EUR → devise du voyage (null si le voyage est en euros ou taux indisponible). */
   fx: FxRate | null;
+  /** Danger en trois axes, chaque signal sourcé et daté. */
+  danger: DangerAssessment;
   /** Météo Open-Meteo des jours du voyage et calendrier 6 semaines (null si indisponible). */
   weather: CompasWeather | null;
   /** Parcours du catalogue choisi pour le voyage. */
@@ -411,8 +414,21 @@ export async function getCompasData(): Promise<CompasData | null> {
 
   const routeId = compasMeta.routeId ?? num(hub.hiking?.routeId);
 
+  const baseModel = input.weather.length ? buildCompasModel(input) : draft;
+  const danger = assessDanger({
+    dayPlans: baseModel.route.dayPlans,
+    forecasts: (weather?.tripDays ?? []).map((d) => ({
+      day: d.day,
+      date: d.date,
+      forecast: d.forecast,
+    })),
+    // Alertes officielles : branchées dès que les flux sont joignables (voir MISSION_LOG).
+    alerts: [],
+  });
+
   return {
-    model: input.weather.length ? buildCompasModel(input) : draft,
+    model: { ...baseModel, verdict: mergeDangerIntoVerdict(baseModel.verdict, danger) },
+    danger,
     itinerary,
     bookings,
     routeGeojson: hub.hiking?.routeGeojson ?? null,

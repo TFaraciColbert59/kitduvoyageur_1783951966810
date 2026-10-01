@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { buildCompasModel, type CompasInput, type CompasItemInput } from '../engine/compasModel';
+import { assessDanger } from '../engine/danger';
 import type { CompasData } from '../server/getCompasData';
 
 /* Frontières réseau et navigateur uniquement : l'écran, les cartes, les
@@ -216,6 +217,7 @@ function makeData(overrides: Partial<CompasInput> = {}): CompasData {
     viewerId: U1,
     providers: { routestack: 'disabled', viator: 'disabled' },
     fx: null,
+    danger: assessDanger({ dayPlans: [], forecasts: [], alerts: [] }),
     weather: null,
     route: { id: 374, name: 'Tour des Vallées' },
     origin: { lat: 42.73, lon: -0.01 },
