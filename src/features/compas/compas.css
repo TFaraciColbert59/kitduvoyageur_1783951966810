@@ -2090,3 +2090,47 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ---------- Lots 2 à 6 : onglets nombreux, lignes à texte long, saisie dans une ligne ---------- */
+/* Plus de 4 onglets : chaque onglet garde sa largeur de contenu, la capsule défile. */
+.cp-seg {
+  grid-auto-columns: minmax(max-content, 1fr);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.cp-seg::-webkit-scrollbar {
+  display: none;
+}
+.cp-seg button {
+  padding-inline: 12px;
+}
+/* Lignes dont le texte doit se lire en entier (conseils, kits). */
+.cp-row__t--wrap span {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+/* Champ de saisie placé dans une ligne (hébergement d'une nuit). */
+.cp-row__t input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  margin-top: 4px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--cp-fill);
+  color: var(--cp-ink);
+  font: inherit;
+  font-size: 14px;
+}
+.cp-row__t input::placeholder {
+  color: var(--cp-ink2);
+}
+.cp-row--tall {
+  height: auto;
+  min-height: var(--cp-row-h);
+  padding-block: 8px;
+  align-items: flex-start;
+}

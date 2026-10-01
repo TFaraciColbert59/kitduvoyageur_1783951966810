@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import Icon from '@/components/ui/Icon';
 import { addToCart } from '@/lib/cart';
 import {
@@ -1497,6 +1497,26 @@ function KitListFlow({ ctl, flow }: { ctl: CompasCtl; flow: 'trouver' | 'emballe
   );
 }
 
+/** Liste à lignes de hauteur libre (texte long) : pas de pagination, le tiroir défile. */
+function TallList<T>({
+  label,
+  items,
+  empty,
+  render,
+}: {
+  label: string;
+  items: T[];
+  empty: ReactNode;
+  render: (item: T) => ReactNode;
+}) {
+  if (!items.length) return <>{empty}</>;
+  return (
+    <div className="cp-list__page" role="list" aria-label={label}>
+      {items.map(render)}
+    </div>
+  );
+}
+
 const ADVICE_ICON: Record<string, string> = {
   pluie: 'cloud-rain',
   froid: 'thermometer',
@@ -1515,7 +1535,7 @@ function ConseilsFlow({ ctl }: { ctl: CompasCtl }) {
         Des repères tirés de la météo et du parcours, pas des ordres : chacun cite la donnée qui le
         déclenche. « Couvert » veut dire qu’un objet de ton kit porte un nom qui correspond.
       </p>
-      <PagedList
+      <TallList
         label="Conseils de kit"
         items={advice}
         empty={
@@ -1524,11 +1544,11 @@ function ConseilsFlow({ ctl }: { ctl: CompasCtl }) {
           </p>
         }
         render={(a) => (
-          <div key={a.id} className="cp-row" style={staticRow}>
+          <div key={a.id} className="cp-row cp-row--tall" style={staticRow}>
             <span className="cp-thumb">
               <Icon name={ADVICE_ICON[a.need] ?? 'sparkles'} size={20} />
             </span>
-            <span className="cp-row__t">
+            <span className="cp-row__t cp-row__t--wrap">
               <b>{a.label}</b>
               <span>{a.reason}</span>
               <span>
@@ -1662,7 +1682,7 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
         Appliquer un kit ajoute au voyage les objets qui n’y sont pas déjà (même nom). Rien n’est
         retiré ni emballé.
       </p>
-      <PagedList
+      <TallList
         label="Mes kits"
         items={state.kits}
         empty={<p className="cp-note">Tu n’as encore aucun kit enregistré.</p>}
@@ -1676,11 +1696,11 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
             waterPointsCount: null,
           });
           return (
-            <div key={kit.id} className="cp-row" style={staticRow}>
+            <div key={kit.id} className="cp-row cp-row--tall" style={staticRow}>
               <span className="cp-thumb">
                 <Icon name="package" size={20} />
               </span>
-              <span className="cp-row__t">
+              <span className="cp-row__t cp-row__t--wrap">
                 <b>
                   {kit.name}
                   {kit.season ? ` · ${kit.season}` : ''}

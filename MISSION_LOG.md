@@ -1,5 +1,12 @@
 # MISSION LOG — LKDV
 
+## 2026-10-01 — Compas, contrôle visuel mobile (Chromium 390×844) et corrections
+
+- Page de test temporaire (supprimée, non commitée) avec des données de test : onglets Kit/Où/Résa/Verdict/Nous ouverts dans Chromium. 0 débordement horizontal de page. Seules erreurs console : tuiles de carte bloquées par le réseau du conteneur.
+- Trois défauts réels des Lots 3 à 6 corrigés : (1) 5 à 6 onglets de tiroir qui se chevauchaient → capsule défilante, onglets à largeur de contenu ; (2) champ d'hébergement qui recouvrait la pastille « À trouver » → champ stylé et contenu dans la ligne ; (3) texte des conseils et des kits tronqué par la hauteur fixe des lignes → lignes de hauteur libre (`TallList`), le tiroir défile.
+- Limite : le fond de la page de test n'est pas celui de `AppShell` ; contrastes de couleur non jugés, uniquement la mise en page.
+- Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants OK, 125 tests, build OK.
+
 ## 2026-10-01 — Compas, Lot 8 « Échelles » (version sobre)
 
 - `engine/scale.ts` : Sortie (< 8 h) → Journée (≤ 1 j) → Raid (2 à 4 j) → Expédition (5 à 30 j) → Monde (> 30 j). Convention de l'application, fondée sur la seule durée choisie ; sans durée, aucune échelle n'est affichée. Affichée dans l'en-tête de la carte Où.
