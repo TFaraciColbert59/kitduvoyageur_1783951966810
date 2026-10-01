@@ -1,5 +1,15 @@
 # MISSION LOG — LKDV
 
+## 2026-10-01 — Compas aligné sur la maquette finale (LKDV_Compas.html, reçue de Tony)
+
+Maquette rendue dans Chromium (390×844, les 5 étapes et le tiroir Où), comparée au Compas réel. Écarts corrigés :
+- « Dis-le » sur la carte Où (la phrase ouvre le tiroir Où, qui la comprend ; rien n'est appliqué sans coche) ; libellé « Préférences » (au lieu d'« Envies ») ; activités `cultural` / `mixed` en français.
+- Tiroir : fermer à gauche, titre centré, plein écran à droite ; pied Retour · Dis-le · Suivant (ordre de la maquette) ; plus d'anneau de focus autour du verre ; inset de 8 px.
+- Barres posées sur le paysage (capsule d'étapes, ☰, ☀) : couche lumineuse de la maquette. Barre d'onglets en verre clair sur le Compas et la création (onglet actif vert forêt). Pastilles de la carte en verre clair.
+- Kit : « 100 % » sur une ligne ; Verdict : l'état d'un axe sous son nom (il le recouvrait) ; Résa : tuiles au remplissage de la maquette.
+- **Écarts volontaires** (règles du projet) : pas de jauge « 56 sur 100 » au Verdict (« pas de score magique ») ; pas de paliers de budget « Serré / Confort / Libre » (ils inventeraient des montants) ; exemple de « Dis-le » réellement compris par le moteur (« petit budget » sans montant ne donnerait rien) ; carte réelle (tuiles OSM/IGN) au lieu du fond topographique dessiné ; onglets de l'application inchangés (Explorer / Compas / Matériel / Hub / Recherche dans la maquette) : changer la navigation de toute l'app est une décision à part.
+- Preuves : `tsc` 0 ; `eslint --max-warnings=0` sur `src/features/compas` et `src/app/compas` ; Compas 143 tests + matériau 7 ; `ci_invariants`, `icon-names` OK ; captures avant/après.
+
 ## 2026-10-01 — La création d'aventure prend le matériau du Compas (carte blanche de Tony)
 
 - `prep-compas.css` (portée `.prep-material-compas`, thème clair) : capsule d'étapes avec lentille et icônes, cartes en verre dépoli, lignes à tuile sage, boutons en verre teinté doux, tiroirs clairs, rail des jours clair, bandeau d'échec et notes ambrés, génération en verre dépoli. Aucune couleur littérale (primitives `--lkv-*` + `color-mix`).

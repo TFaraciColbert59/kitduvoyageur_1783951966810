@@ -2,7 +2,7 @@
 
 import { classifyScale } from '../engine/scale';
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import Icon from '@/components/ui/Icon';
 import type { CompasKitLine, CompasModel } from '../engine/compasModel';
 import {
@@ -180,6 +180,43 @@ const NIGHTS_SHORT = {
   mixte: 'nuits mixtes',
 } as const;
 
+/**
+ * « Dis-le » sur la carte Où (maquette finale) : la phrase ouvre le tiroir Où,
+ * dont le « Dis-le » la comprend aussitôt. Rien n'est appliqué sans coche.
+ * L'exemple est une phrase que le Compas sait réellement lire (un « petit
+ * budget » sans montant ne donnerait rien : aucun montant n'est inventé).
+ */
+function CardSay({ ctl }: { ctl: CompasCtl }) {
+  const [text, setText] = useState('');
+  return (
+    <form
+      className="cp-intent"
+      aria-label="Dis-le : décris ton aventure ou une modification"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const say = text.trim();
+        if (say.length < 2) return;
+        ctl.open({ kind: 'step', step: 'ou', flow: 'activite', hint: { say } });
+        setText('');
+      }}
+    >
+      <Icon name="search" size={15} aria-hidden="true" />
+      <label className="sr-only" htmlFor="cp-intent-input">
+        Dis-le
+      </label>
+      <input
+        id="cp-intent-input"
+        value={text}
+        maxLength={280}
+        autoComplete="off"
+        enterKeyHint="go"
+        placeholder="Dis-le : « 3 jours à 4, départ samedi »"
+        onChange={(e) => setText(e.target.value)}
+      />
+    </form>
+  );
+}
+
 export function OuCard({ ctl, onKit }: { ctl: CompasCtl; onKit: () => void }) {
   const m = ctl.data.model;
   const hours = tripHours(m);
@@ -217,6 +254,8 @@ export function OuCard({ ctl, onKit }: { ctl: CompasCtl; onKit: () => void }) {
         </p>
       </div>
 
+      {ctl.data.canEdit && <CardSay ctl={ctl} />}
+
       <DurationRuler ctl={ctl} />
 
       <div className="cp-fsum cp-glass">
@@ -234,7 +273,12 @@ export function OuCard({ ctl, onKit }: { ctl: CompasCtl; onKit: () => void }) {
           dot={worst == null ? undefined : worst >= 70 ? 'bad' : worst >= 40 ? 'warn' : 'good'}
           onClick={() => open('quand')}
         />
-        <SummaryRow icon="heart" label="Envies" value={prefs} onClick={() => open('preferences')} />
+        <SummaryRow
+          icon="heart"
+          label="Préférences"
+          value={prefs}
+          onClick={() => open('preferences')}
+        />
         <SummaryRow
           icon="backpack"
           label="Sac"
@@ -512,7 +556,7 @@ export function VerdictCard({ ctl }: { ctl: CompasCtl }) {
           return (
             <span
               key={axis}
-              className="cp-tchip"
+              className="cp-tchip cp-tchip--axis"
               data-on={a.level === 'vigilance' || a.level === 'bloque' ? '1' : undefined}
               title={a.note || a.partial || undefined}
             >

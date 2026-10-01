@@ -894,6 +894,38 @@ function StepSheet({
   hint?: FlowHint;
 }) {
   const flows = STEP_FLOWS[step];
+  // Maquette finale : le tiroir se parcourt dans l'ordre, « Retour » et
+  // « Suivant » au pied, de part et d'autre de « Dis-le ».
+  const at = flows.findIndex((f) => f.id === flow);
+  const before = at > 0 ? flows[at - 1] : null;
+  const after = at >= 0 && at < flows.length - 1 ? flows[at + 1] : null;
+  const prev = (
+    <button
+      type="button"
+      className="cp-ibtn cp-glass cp-sheet__prev"
+      disabled={!before}
+      aria-label="Onglet précédent"
+      title={before?.label}
+      onClick={() => before && ctl.replace({ kind: 'step', step, flow: before.id as StepFlow })}
+    >
+      <Icon name="chevron-left" size={18} />
+    </button>
+  );
+  const next = after ? (
+    <button
+      type="button"
+      className="cp-btn cp-btn--pg cp-sheet__next"
+      onClick={() => ctl.replace({ kind: 'step', step, flow: after.id as StepFlow })}
+    >
+      Suivant
+      <Icon name="chevron-right" size={16} />
+    </button>
+  ) : (
+    <button type="button" className="cp-btn cp-btn--pg cp-sheet__next" onClick={() => ctl.close()}>
+      Terminé
+      <Icon name="check" size={16} />
+    </button>
+  );
   return (
     <>
       <Segments
@@ -924,7 +956,20 @@ function StepSheet({
       {step === 'kit' && flow === 'conseils' && <ConseilsFlow ctl={ctl} />}
       {step === 'kit' && flow === 'mes-kits' && <MesKitsFlow ctl={ctl} />}
       {step === 'kit' && flow === 'sacs' && <SacsFlow ctl={ctl} />}
-      {ctl.data.canEdit && <DisLe ctl={ctl} />}
+      {ctl.data.canEdit ? (
+        <DisLe
+          key={hint?.say ?? 'disle'}
+          ctl={ctl}
+          initial={hint?.say}
+          before={prev}
+          after={next}
+        />
+      ) : (
+        <div className="cp-disle__row cp-disle__row--nav">
+          {prev}
+          {next}
+        </div>
+      )}
     </>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import Icon from '@/components/ui/Icon';
 import { planApplication, type CompasProposal } from '../engine/intent';
 import { compasInterpretAction } from '../server/compasActions';
@@ -17,15 +17,33 @@ type State =
  * « Dis-le » (maquette v8, en bas de chaque tiroir) : une phrase devient des
  * actions proposées. L'IA traduit, le moteur vérifie, l'utilisateur coche puis
  * applique. Rien n'est écrit sans ce dernier geste.
+ *
+ * `initial` : la phrase tapée dans le champ « Dis-le » de la carte Où. Le
+ * tiroir s'ouvre avec elle et la fait comprendre une fois, sans rien appliquer.
  */
-export function DisLe({ ctl }: { ctl: CompasCtl }) {
-  const [text, setText] = useState('');
+export function DisLe({
+  ctl,
+  initial,
+  before,
+  after,
+}: {
+  ctl: CompasCtl;
+  initial?: string;
+  /** Maquette finale : « Retour » et « Suivant » encadrent le champ. */
+  before?: ReactNode;
+  after?: ReactNode;
+}) {
+  const [text, setText] = useState(initial ?? '');
   const [state, setState] = useState<State>({ status: 'idle' });
   const [checked, setChecked] = useState<Record<string, boolean>>({});
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    const phrase = text.trim();
+    await interpret(text);
+  };
+
+  const interpret = async (raw: string) => {
+    const phrase = raw.trim();
     if (phrase.length < 2) return;
     setState({ status: 'loading' });
     try {
@@ -41,6 +59,15 @@ export function DisLe({ ctl }: { ctl: CompasCtl }) {
       setState({ status: 'error', error: 'Connexion perdue : réessaie.' });
     }
   };
+
+  // La phrase venue de la carte est comprise une seule fois, à l'ouverture.
+  const asked = useRef(false);
+  useEffect(() => {
+    if (asked.current || !initial) return;
+    asked.current = true;
+    void interpret(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initial]);
 
   const reset = () => {
     setState({ status: 'idle' });
@@ -132,6 +159,8 @@ export function DisLe({ ctl }: { ctl: CompasCtl }) {
           {state.error}
         </p>
       )}
+      <div className="cp-disle__row">
+      {before}
       <form className="cp-disle__in cp-glass" onSubmit={submit}>
         <Icon name="sparkles" size={15} />
         <label className="sr-only" htmlFor="cp-disle-input">
@@ -142,7 +171,8 @@ export function DisLe({ ctl }: { ctl: CompasCtl }) {
           value={text}
           maxLength={280}
           autoComplete="off"
-          placeholder="Dis-le : « 3 jours à 4, départ samedi »"
+          placeholder="Dis-le…"
+          title="Par exemple : « 3 jours à 4, départ samedi »"
           onChange={(e) => setText(e.target.value)}
         />
         <button
@@ -155,6 +185,8 @@ export function DisLe({ ctl }: { ctl: CompasCtl }) {
           <Icon name={state.status === 'loading' ? 'clock' : 'send'} size={14} />
         </button>
       </form>
+      {after}
+      </div>
     </div>
   );
 }

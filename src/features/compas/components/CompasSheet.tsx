@@ -101,16 +101,30 @@ export function CompasSheet({
               onDetent(detent === 'small' ? 'medium' : detent === 'medium' ? 'large' : 'medium');
           }}
         />
+        {/* Maquette finale : fermer à gauche, titre centré et discret,
+            plein écran à droite. Le retour, quand il existe, précède. */}
         <div className="cp-sheet__h">
-          {onBack && (
-            <button type="button" className="cp-ibtn cp-glass" onClick={onBack} aria-label="Retour">
-              <Icon name="chevron-left" size={18} />
+          <span className="cp-sheet__side">
+            {onBack && (
+              <button type="button" className="cp-ibtn cp-glass" onClick={onBack} aria-label="Retour">
+                <Icon name="chevron-left" size={18} />
+              </button>
+            )}
+            <button type="button" className="cp-ibtn cp-glass" onClick={onClose} aria-label="Fermer">
+              <Icon name="x" size={18} />
             </button>
-          )}
+          </span>
           <h3>{title}</h3>
-          <button type="button" className="cp-ibtn cp-glass" onClick={onClose} aria-label="Fermer">
-            <Icon name="x" size={18} />
-          </button>
+          <span className="cp-sheet__side cp-sheet__side--end">
+            <button
+              type="button"
+              className="cp-ibtn cp-glass"
+              onClick={() => onDetent(detent === 'large' ? 'medium' : 'large')}
+              aria-label={detent === 'large' ? 'Taille moyenne' : 'Plein écran'}
+            >
+              <Icon name={detent === 'large' ? 'chevron-down' : 'chevron-up'} size={18} />
+            </button>
+          </span>
         </div>
         <div className="cp-sheet__body" ref={body}>
           {children}

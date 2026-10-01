@@ -2186,3 +2186,213 @@
   padding-block: 8px;
   align-items: flex-start;
 }
+
+/* =============================================================================
+   Maquette finale (LKDV_Compas.html, 2026-10-01) — écarts relevés écran par
+   écran dans Chromium 390×844, maquette et Compas côte à côte.
+   ============================================================================= */
+
+/* « Dis-le » sur la carte Où (.intent de la maquette) : un champ discret dans
+   la carte, entre le titre et la règle de durée. */
+.cp-intent {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgb(23 43 36 / 0.06);
+  color: var(--cp-ink2);
+}
+.cp-intent input {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  border: 0;
+  background: none;
+  color: var(--cp-ink);
+  font-size: 14.5px;
+  outline: none;
+}
+.cp-intent input::placeholder {
+  color: var(--cp-ink2);
+}
+.cp-intent:focus-within {
+  box-shadow: 0 0 0 2px var(--cp-accent);
+}
+.dark .cp-intent,
+[data-theme='dark'] .cp-intent {
+  background: var(--cp-fill);
+}
+
+/* Barres posées sur le paysage : couche lumineuse (maquette : « .head .steps.lg,
+   .head .gbtn.lg »). Sans elle, la capsule d'étapes et les deux boutons ronds
+   prenaient la couleur de la photo (soleil jaune derrière ☰ et ☀). */
+:root:not([data-theme='dark']) .cp-headrow :is(.cp-steps, .cp-gbtn).cp-glass {
+  background: linear-gradient(
+    180deg,
+    rgb(255 255 255 / calc(var(--cp-ga) + 0.3)),
+    rgb(255 255 255 / calc(var(--cp-ga) + 0.14)) 55%,
+    rgb(255 255 255 / calc(var(--cp-ga) + 0.22))
+  );
+}
+
+/* Kit : le pourcentage reste sur une ligne (« 100 % » se coupait en deux). */
+.cp-ready b {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* Résa : tuiles de catégorie au remplissage d'encre léger de la maquette. */
+:root:not([data-theme='dark']) .cp-tchip:not([data-on='1']) {
+  background: rgb(23 43 36 / 0.06);
+}
+
+/* Carte : pastilles de lieu en verre clair, comme le reste de la maquette. */
+:root:not([data-theme='dark']) .cp-map__canvas .hub-globe-poi-chip {
+  color: var(--cp-ink);
+  background: rgb(255 255 255 / 0.78);
+  border-color: rgb(255 255 255 / 0.9);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.95),
+    0 0 0 0.5px rgb(23 43 36 / 0.12),
+    0 4px 12px rgb(23 43 36 / 0.12);
+}
+:root:not([data-theme='dark']) .cp-map__canvas .hub-globe-poi-chip[aria-pressed='true'] {
+  color: var(--lkv-primary);
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.7), rgb(255 255 255 / 0.4)),
+    rgb(150 186 142 / 0.4);
+}
+
+/* Barre d'onglets du Compas et de la création : verre clair de la maquette
+   (onglet actif vert forêt, les autres à l'encre). Les onglets eux-mêmes ne
+   changent pas : seule la matière suit l'écran. */
+:root:not([data-theme='dark']) body:has(.compas, .prep-material-compas) .lkv-nav-surface {
+  --hub-label-primary: var(--lkv-forest-700);
+  --hub-symbol: var(--lkv-ink-900);
+  --glass-label: var(--lkv-forest-700);
+  --glass-label-tertiary: var(--lkv-ink-900);
+  /* Matériau de la barre (.lkv-material-bar, variante non optique). */
+  --glass-fill-top: rgb(255 255 255 / 0.62);
+  --glass-fill-bottom: rgb(255 255 255 / 0.4);
+  --glass-base: rgb(255 255 255 / 0.16);
+  --material-bar-border: rgb(255 255 255 / 0.7);
+  --glass-shadow-final:
+    inset 0 1px 0 rgb(255 255 255 / 0.9), 0 0 0 0.5px rgb(23 43 36 / 0.14),
+    0 8px 22px rgb(23 43 36 / 0.14);
+}
+html[data-liquid-ios27]:not([data-theme='dark'])
+  body:has(.compas, .prep-material-compas)
+  .lkv-nav-surface[data-optical='true']
+  .lkv-material-bar {
+  background:
+    linear-gradient(
+      180deg,
+      rgb(255 255 255 / 0.62),
+      rgb(255 255 255 / 0.38) 55%,
+      rgb(255 255 255 / 0.5)
+    ),
+    rgb(255 255 255 / 0.16) !important;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    inset 0 -1px 1px rgb(255 255 255 / 0.45),
+    0 0 0 0.5px rgb(23 43 36 / 0.14),
+    0 8px 22px rgb(23 43 36 / 0.14) !important;
+}
+html[data-liquid-ios27]:not([data-theme='dark'])
+  body:has(.compas, .prep-material-compas)
+  .lkv-nav-surface[data-optical='true']
+  .lkv-nav-refraction
+  > span
+  > span:last-of-type {
+  background: rgb(255 255 255 / 0.12) !important;
+}
+html[data-liquid-ios27]:not([data-theme='dark'])
+  body:has(.compas, .prep-material-compas)
+  .lkv-nav-surface[data-optical='true']
+  .lkv-nav-active-lens {
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.62), rgb(255 255 255 / 0.3));
+  border-color: rgb(255 255 255 / 0.9);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 1),
+    inset 0 -1px 1px rgb(255 255 255 / 0.5),
+    0 0 0 0.5px rgb(23 43 36 / 0.08),
+    0 3px 10px rgb(23 43 36 / 0.1);
+}
+
+/* Verdict : l'état d'un axe se lit SOUS son nom. En pastille d'angle, un état
+   long (« RAS partiel », « Non évalué ») recouvrait le nom de l'axe. */
+.cp-tchip--axis {
+  height: auto;
+  min-height: 52px;
+  padding: 6px 4px;
+  gap: 3px;
+}
+.cp-tchip--axis .cp-tchip__bd {
+  position: static;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tiroir (maquette finale) : fermer à gauche, titre centré et discret, plein
+   écran à droite ; au pied, Retour · Dis-le · Suivant sur une seule ligne. */
+.cp-sheet__h {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 8px;
+}
+.cp-sheet__h h3 {
+  flex: none;
+  max-width: 100%;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.cp-sheet__side {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.cp-sheet__side--end {
+  justify-content: flex-end;
+}
+.cp-disle__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cp-disle__row > .cp-disle__in {
+  flex: 1;
+  min-width: 0;
+}
+.cp-disle__row--nav {
+  margin-top: auto;
+  justify-content: space-between;
+}
+.cp-sheet__prev:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.cp-sheet__next {
+  flex: none;
+  min-height: 42px;
+  gap: 4px;
+}
+/* Le tiroir reçoit le focus à l'ouverture pour l'accessibilité clavier : son
+   propre anneau entourait tout le verre (absent de la maquette). Les
+   contrôles qu'il contient gardent le leur. */
+.compas .cp-sheet:focus-visible {
+  outline: none;
+}
+/* Le tiroir flotte à 8 px des bords, comme dans la maquette. */
+.cp-sheet {
+  left: 8px;
+  right: 8px;
+}
