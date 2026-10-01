@@ -24,6 +24,7 @@ export const STEP_FLOWS = {
     { id: 'nuits', label: 'Nuits', icon: 'bed-double' },
     { id: 'reservations', label: 'Réservations', icon: 'ticket' },
     { id: 'offres', label: 'Offres', icon: 'tag' },
+    { id: 'etats', label: 'États', icon: 'check-check' },
   ],
   // Maquette finale : Risques → Météo → Veille → Sources (la veille suit).
   verdict: [

@@ -38,7 +38,7 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 |---|---|---|
 | Avatars, niveau, « en ligne » | 🟡 | avatars ; niveau et présence à brancher |
 | Qui : ajouter par @pseudo, glisser pour retirer | ⛔/🟡 | gestion du groupe = `/hub/groupe` (bouton Hub) |
-| Niveaux calculés (sorties, D+ moyen, allure, fiabilité) | ⬜ | `user_performance_profiles`, `hike_sessions` |
+| Niveaux calculés (sorties, D+ moyen, allure, fiabilité) | 🟡 | allure et niveau dans « Équipe » ; les sorties des autres membres (`hike_sessions`, RLS « own ») ne sont pas lisibles sans leur consentement : à cadrer avec l'Empreinte (`get_user_signature`) |
 | Rôles (pilules) | ⬜ | à cadrer avec la règle `/hub` |
 | Budget : postes, plafond par personne, partage, qui doit quoi | 🟡 | enveloppe, qui doit quoi faits ; postes et partage à compléter |
 | Paliers Serré / Confort / Libre | ⛔ | montants inventés |
@@ -50,7 +50,7 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 | Six catégories (Randos, Activités, Nuits, Vols, Trajets, Extras) | 🟡 | quatre aujourd'hui |
 | Jours avec cases (H, T, A…) | ✅ | |
 | Résumé choisies · à réserver · en attente | ✅ | |
-| Mes réservations : Mes choix · États | 🟡 | |
+| Mes réservations : Mes choix · États | ✅ | tiroir « Mes réservations » ; « Réservations » tient lieu de « Mes choix » ; « États » compte les réservations réelles par état et les nuits à trouver |
 
 ## Verdict
 | Élément | État | Note |

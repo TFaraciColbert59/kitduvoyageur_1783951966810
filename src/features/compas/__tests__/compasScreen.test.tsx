@@ -419,6 +419,28 @@ describe('CompasScreen', () => {
     expect(within(sheet).getByText(/peut être tarie/)).toBeTruthy();
   });
 
+  it('états : réservations réelles comptées par état, aucun clic ne confirme', async () => {
+    const bookings = [
+      { id: 'b1', vertical: 'hotel', provider: 'affiliate', status: 'pending', amountEur: 80 },
+      { id: 'b2', vertical: 'activity', provider: 'viator', status: 'confirmed', amountEur: 40 },
+      { id: 'b3', vertical: 'hotel', provider: 'affiliate', status: 'cancelled', amountEur: 60 },
+    ];
+    const data = makeData({ bookings });
+    render(<CompasScreen data={{ ...data, bookings }} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Mes réservations' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Mes réservations' });
+    const tabs = within(sheet).getByRole('group', { name: 'Parcours du tiroir' });
+    fireEvent.click(within(tabs).getByText('États'));
+    const value = (label: string) =>
+      within(sheet).getByText(label).closest('.cp-row')?.querySelector('.cp-row__end')?.textContent;
+    expect(value('En attente')).toBe('1');
+    expect(value('Confirmée')).toBe('1');
+    expect(value('Annulée')).toBe('1');
+    expect(within(sheet).queryByText('Expirée')).toBeNull();
+    expect(within(sheet).getByText(/ne confirme jamais/)).toBeTruthy();
+  });
+
   it('sans dates : aucun chiffre inventé, la décision demande les dates', () => {
     const data = makeData({
       trip: {
@@ -518,8 +540,8 @@ describe('CompasScreen', () => {
     ];
     render(<CompasScreen data={data} />);
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Détails : Réserver' }));
-    const sheet = await screen.findByRole('dialog', { name: 'Réserver' });
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Mes réservations' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Mes réservations' });
     fireEvent.click(within(sheet).getByRole('button', { name: /Nuits/ }));
     const input = within(sheet).getByLabelText('Hébergement de la nuit du jour 1');
     fireEvent.change(input, { target: { value: 'Gîte du col' } });
@@ -624,8 +646,8 @@ describe('CompasScreen', () => {
     data.providers = { routestack: 'sandbox', viator: 'disabled' };
     render(<CompasScreen data={data} />);
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Détails : Réserver' }));
-    const sheet = await screen.findByRole('dialog', { name: 'Réserver' });
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Mes réservations' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Mes réservations' });
     fireEvent.click(within(sheet).getByRole('button', { name: /Nuits/ }));
     fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
     await waitFor(() =>

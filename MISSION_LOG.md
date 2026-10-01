@@ -6,8 +6,9 @@
 - **Verdict, onglet Veille** : `engine/watch.ts` liste les seuils réels du moteur de danger (`DANGER_THRESHOLDS`, jamais recopiés à la main) avec ce que chacun a déclenché sur ce voyage. Décalage proposé seulement si les jours de **prévision** (jamais la tendance) donnent, à ±3 jours, une fenêtre sans jour « mauvais » ; rien ne change sans le geste « Décaler ». Onglet « Raisons » renommé « Risques » (maquette).
 - **Où** : tiroir intitulé « Préparer » ; activités en tuiles (grille 4 colonnes) ; onglet « Sac » (Mes kits) ; piste de la règle de durée remplie (elle était invisible : `--lkv-secondary` forcé clair par la couche iOS 27).
 - **Kit, onglet Eau** : besoin par personne et par jour (0,5 L par heure de marche, 0,75 L au-delà de 25 °C prévus), contenants du kit comptés seulement au volume écrit dans leur nom (`engine/water.ts`), comparaison avec la journée la plus longue pour tout le groupe, points d'eau OSM du tracé. Rien n'est supposé : une marche inconnue ou un volume non écrit reste « non renseigné ».
+- **Résa** : tiroir intitulé « Mes réservations » ; onglet « États » (réservations réelles comptées par état, nuits à trouver ; « un clic vers un partenaire ne confirme jamais une réservation »).
 - Suivi : `docs/compas/ECARTS_MAQUETTE.md` (écarts restants, écarts volontaires).
-- Preuves : `tsc` 0 ; `eslint --max-warnings=0 src/features/compas` 0 ; Compas 149 tests (dont 6 Veille) ; Météo vérifiée dans Chromium sur données réelles.
+- Preuves : `tsc` 0 ; `eslint --max-warnings=0 src/features/compas` 0 ; Compas 159 tests (dont 6 Veille, 8 Eau, 1 États) ; Météo vérifiée dans Chromium sur données réelles.
 
 ## 2026-10-01 — Compas aligné sur la maquette finale (LKDV_Compas.html, reçue de Tony)
 

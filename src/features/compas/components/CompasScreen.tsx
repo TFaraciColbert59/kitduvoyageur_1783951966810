@@ -27,7 +27,7 @@ const DISPLAY_KEY = 'lkdv.compas.affichage';
 const STEP_TITLES: Record<CompasStepId, string> = {
   ou: 'Préparer',
   nous: 'Nous',
-  resa: 'Réserver',
+  resa: 'Mes réservations',
   verdict: 'Verdict',
   kit: 'Kit',
 };

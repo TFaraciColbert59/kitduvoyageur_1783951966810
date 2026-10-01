@@ -58,7 +58,7 @@ import {
 const STEP_SHEET_TITLES: Record<CompasStepId, string> = {
   ou: 'Préparer',
   nous: 'Nous',
-  resa: 'Réserver',
+  resa: 'Mes réservations',
   verdict: 'Verdict',
   kit: 'Kit',
 };
@@ -952,6 +952,7 @@ function StepSheet({
       {step === 'resa' && flow === 'reservations' && <ReservationsFlow ctl={ctl} />}
       {step === 'resa' && flow === 'offres' && <OffresFlow ctl={ctl} />}
       {step === 'verdict' && flow === 'raisons' && <RaisonsFlow ctl={ctl} />}
+      {step === 'resa' && flow === 'etats' && <EtatsFlow ctl={ctl} />}
       {step === 'verdict' && flow === 'meteo' && <MeteoFlow ctl={ctl} />}
       {step === 'verdict' && flow === 'veille' && <VeilleFlow ctl={ctl} />}
       {step === 'verdict' && flow === 'sources' && <SourcesFlow ctl={ctl} />}
@@ -1513,6 +1514,57 @@ function ReservationsFlow({ ctl }: { ctl: CompasCtl }) {
           );
         }}
       />
+    </>
+  );
+}
+
+/** Ce que veut dire chaque état, dans l'ordre où une réservation avance. */
+const STATE_HELP: Array<[string, string]> = [
+  ['draft', 'Notée dans le plan et le budget, rien d’engagé.'],
+  ['held', 'Place retenue chez le fournisseur, pas encore payée.'],
+  ['pending', 'Demande envoyée, en attente du fournisseur.'],
+  ['confirmed', 'Validée par le fournisseur ou par toi.'],
+  ['cancelled', 'Annulée.'],
+  ['expired', 'Délai dépassé sans confirmation.'],
+  ['failed', 'Le fournisseur a refusé ou l’envoi a échoué.'],
+  ['refunded', 'Remboursée.'],
+];
+
+/**
+ * États (maquette finale, Mes réservations) : les réservations réelles du
+ * voyage comptées par état, et les nuits encore à trouver. Un clic vers un
+ * partenaire ne confirme jamais rien.
+ */
+function EtatsFlow({ ctl }: { ctl: CompasCtl }) {
+  const count = (s: string) => ctl.data.bookings.filter((b) => b.status === s).length;
+  const toFind = ctl.data.model.route.nightsToFind;
+  const rows = STATE_HELP.filter(([s], i) => i < 4 || count(s) > 0);
+  return (
+    <>
+      <div className="cp-row" style={staticRow}>
+        <span className="cp-thumb">
+          <Icon name="bed-double" size={20} />
+        </span>
+        <span className="cp-row__t">
+          <b>À réserver</b>
+          <span>Nuits du parcours sans hébergement noté.</span>
+        </span>
+        <span className="cp-row__end">
+          <b>{toFind}</b>
+        </span>
+      </div>
+      {rows.map(([s, help]) => (
+        <div key={s} className="cp-row" style={staticRow}>
+          <span className="cp-row__t">
+            <b>{BOOKING_STATUS[s]?.label ?? s}</b>
+            <span>{help}</span>
+          </span>
+          <span className="cp-row__end">
+            <b>{count(s)}</b>
+          </span>
+        </div>
+      ))}
+      <p className="cp-note">Un clic vers un partenaire ne confirme jamais une réservation.</p>
     </>
   );
 }
