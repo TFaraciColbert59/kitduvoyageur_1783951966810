@@ -212,7 +212,7 @@ const inventorySchema = z.object({
   brand: z.string().trim().max(120).optional(),
   category: z.string().trim().max(60).optional(),
   weightG: z.number().int().min(1).max(1_000_000).nullable().optional(),
-  condition: z.enum(['neuf', 'tres_bon', 'bon', 'use', 'a_remplacer']).optional(),
+  condition: z.enum(['neuf', 'bon', 'use', 'a_remplacer', 'pour_pieces']).optional(),
   fromShopProductId: uuid.optional(),
 });
 
