@@ -690,130 +690,147 @@ export default function UnifiedExplorerMap({
           throw new Error('GeoJSON pays invalide : propriété "features" absente');
         }
         const current = mapRef.current;
-        if (current.getSource('atlas-countries')) return;
-        const beforeId = current.getLayer('atlas-trails-selected')
-          ? 'atlas-trails-selected'
-          : undefined;
-        const collection = {
-          type: 'FeatureCollection',
-          features: (geojson.features ?? []).map(
-            (feature: { properties?: Record<string, unknown> } & Record<string, unknown>) => ({
-              ...feature,
-              properties: {
-                ...(feature.properties ?? {}),
-                atlas_iso: resolveIsoA2(feature.properties) ?? '',
-                atlas_name: resolveCountryName(feature.properties),
+        // Le GeoJSON peut arriver avant la fin du chargement du style :
+        // addSource lèverait « Style is not done loading » et la couche pays
+        // manquerait. On attend que le style soit prêt.
+        const apply = () => {
+          if (cancelled || current.getSource('atlas-countries')) return;
+          const beforeId = current.getLayer('atlas-trails-selected')
+            ? 'atlas-trails-selected'
+            : undefined;
+          const collection = {
+            type: 'FeatureCollection',
+            features: (geojson.features ?? []).map(
+              (feature: { properties?: Record<string, unknown> } & Record<string, unknown>) => ({
+                ...feature,
+                properties: {
+                  ...(feature.properties ?? {}),
+                  atlas_iso: resolveIsoA2(feature.properties) ?? '',
+                  atlas_name: resolveCountryName(feature.properties),
+                },
+              })
+            ),
+          };
+          current.addSource('atlas-countries', {
+            type: 'geojson',
+            data: collection as unknown as GeoJSON.GeoJSON,
+          });
+          current.addLayer(
+            {
+              id: 'atlas-country-fill',
+              type: 'fill',
+              source: 'atlas-countries',
+              paint: { 'fill-color': MAP_COLORS.sageLight, 'fill-opacity': 0.16 },
+            },
+            beforeId
+          );
+          current.addLayer(
+            {
+              id: 'atlas-country-line',
+              type: 'line',
+              source: 'atlas-countries',
+              paint: {
+                'line-color': MAP_COLORS.inkSecondary,
+                'line-opacity': 0.35,
+                'line-width': 0.6,
               },
-            })
-          ),
-        };
-        current.addSource('atlas-countries', {
-          type: 'geojson',
-          data: collection as unknown as GeoJSON.GeoJSON,
-        });
-        current.addLayer(
-          {
-            id: 'atlas-country-fill',
-            type: 'fill',
-            source: 'atlas-countries',
-            paint: { 'fill-color': MAP_COLORS.sageLight, 'fill-opacity': 0.16 },
-          },
-          beforeId
-        );
-        current.addLayer(
-          {
-            id: 'atlas-country-line',
-            type: 'line',
-            source: 'atlas-countries',
-            paint: {
-              'line-color': MAP_COLORS.inkSecondary,
-              'line-opacity': 0.35,
-              'line-width': 0.6,
             },
-          },
-          beforeId
-        );
-        current.addLayer(
-          {
-            id: 'atlas-country-selected',
-            type: 'line',
-            source: 'atlas-countries',
-            filter: ['==', ['get', 'atlas_iso'], '__none__'],
-            paint: {
-              'line-color': MAP_COLORS.ink,
-              'line-opacity': 0.9,
-              'line-width': 1.8,
-            },
-          },
-          beforeId
-        );
-
-        current.on('click', 'atlas-country-fill', (event: MapLayerMouseEvent) => {
-          // La sélection pays est un geste de vue monde/continent : on l'ignore
-          // en vue locale et dès qu'un sentier/POI est sous le doigt (évite
-          // d'ouvrir la carte pays en tapant un tracé).
-          if (current.getZoom() > 8) return;
-          const hitsInteractiveLayer = current.queryRenderedFeatures(event.point, {
-            layers: ['atlas-trails-points', 'atlas-pois-points', 'atlas-pois-clusters'],
-          });
-          if (hitsInteractiveLayer.length > 0) return;
-
-          const feature = event.features?.[0];
-          const iso = String(feature?.properties?.atlas_iso ?? '');
-          if (!iso) return;
-          const density = countryDensityRef.current.find(
-            (row) => String(row.iso_a2 ?? '').toUpperCase() === iso
+            beforeId
           );
-          setSelectedCountry({
-            iso,
-            name:
-              String(feature?.properties?.atlas_name ?? '') ||
-              String(density?.name ?? '') ||
+          current.addLayer(
+            {
+              id: 'atlas-country-selected',
+              type: 'line',
+              source: 'atlas-countries',
+              filter: ['==', ['get', 'atlas_iso'], '__none__'],
+              paint: {
+                'line-color': MAP_COLORS.ink,
+                'line-opacity': 0.9,
+                'line-width': 1.8,
+              },
+            },
+            beforeId
+          );
+
+          current.on('click', 'atlas-country-fill', (event: MapLayerMouseEvent) => {
+            // La sélection pays est un geste de vue monde/continent : on l'ignore
+            // en vue locale et dès qu'un sentier/POI est sous le doigt (évite
+            // d'ouvrir la carte pays en tapant un tracé).
+            if (current.getZoom() > 8) return;
+            const hitsInteractiveLayer = current.queryRenderedFeatures(event.point, {
+              layers: ['atlas-trails-points', 'atlas-pois-points', 'atlas-pois-clusters'],
+            });
+            if (hitsInteractiveLayer.length > 0) return;
+
+            const feature = event.features?.[0];
+            const iso = String(feature?.properties?.atlas_iso ?? '');
+            if (!iso) return;
+            const density = countryDensityRef.current.find(
+              (row) => String(row.iso_a2 ?? '').toUpperCase() === iso
+            );
+            setSelectedCountry({
               iso,
-            count:
-              density && Number.isFinite(Number(density.trail_count))
-                ? Number(density.trail_count)
-                : null,
+              name:
+                String(feature?.properties?.atlas_name ?? '') ||
+                String(density?.name ?? '') ||
+                iso,
+              count:
+                density && Number.isFinite(Number(density.trail_count))
+                  ? Number(density.trail_count)
+                  : null,
+            });
+            // FLUIDITÉ F1 : toute sélection pays déclenche désormais le vol
+            // courbe (avant, seuls les pays avec centroïde densité — FR/BE —
+            // bougeaient la caméra ; les autres ouvraient la carte sans vol).
+            // Centroïde densité en priorité (cadrage constant), sinon le point
+            // tapé. Un seul appel caméra.
+            const target: [number, number] =
+              density && isValidLatLng(density.centroid_lat, density.centroid_lng)
+                ? [Number(density.centroid_lng), Number(density.centroid_lat)]
+                : [event.lngLat.lng, event.lngLat.lat];
+            const currentCenter = current.getCenter();
+            const flight = computeCountryFlight(
+              {
+                center: [currentCenter.lng, currentCenter.lat],
+                zoom: current.getZoom(),
+              },
+              { center: target, zoom: 4.6 },
+              {
+                isMobile:
+                  typeof window !== 'undefined' && window.innerWidth < 768,
+              }
+            );
+            flyToTarget(current, {
+              center: target,
+              zoom: 4.6,
+              ...flight,
+            });
           });
-          // FLUIDITÉ F1 : toute sélection pays déclenche désormais le vol
-          // courbe (avant, seuls les pays avec centroïde densité — FR/BE —
-          // bougeaient la caméra ; les autres ouvraient la carte sans vol).
-          // Centroïde densité en priorité (cadrage constant), sinon le point
-          // tapé. Un seul appel caméra.
-          const target: [number, number] =
-            density && isValidLatLng(density.centroid_lat, density.centroid_lng)
-              ? [Number(density.centroid_lng), Number(density.centroid_lat)]
-              : [event.lngLat.lng, event.lngLat.lat];
-          const currentCenter = current.getCenter();
-          const flight = computeCountryFlight(
-            {
-              center: [currentCenter.lng, currentCenter.lat],
-              zoom: current.getZoom(),
-            },
-            { center: target, zoom: 4.6 },
-            {
-              isMobile:
-                typeof window !== 'undefined' && window.innerWidth < 768,
-            }
-          );
-          flyToTarget(current, {
-            center: target,
-            zoom: 4.6,
-            ...flight,
+          current.on('mouseenter', 'atlas-country-fill', () => {
+            current.getCanvas().style.cursor = 'pointer';
           });
-        });
-        current.on('mouseenter', 'atlas-country-fill', () => {
-          current.getCanvas().style.cursor = 'pointer';
-        });
-        current.on('mouseleave', 'atlas-country-fill', () => {
-          current.getCanvas().style.cursor = '';
-        });
+          current.on('mouseleave', 'atlas-country-fill', () => {
+            current.getCanvas().style.cursor = '';
+          });
+        };
+        if (current.isStyleLoaded()) {
+          apply();
+        } else {
+          const whenReady = () => {
+            if (!current.isStyleLoaded()) return;
+            current.off('styledata', whenReady);
+            apply();
+          };
+          current.on('styledata', whenReady);
+        }
       })
       .catch((error: unknown) => {
         if ((error as Error)?.name !== 'AbortError') {
+          // Un Error se sérialise en « {} » : nom et message sont journalisés à part.
           console.error('[UnifiedExplorerMap] GeoJSON pays indisponible', {
             url: COUNTRIES_GEOJSON_URL,
-            error,
+            name: (error as Error)?.name ?? null,
+            message: (error as Error)?.message ?? String(error),
           });
         }
       })

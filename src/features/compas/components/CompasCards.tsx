@@ -238,7 +238,15 @@ export function OuCard({ ctl, onKit }: { ctl: CompasCtl; onKit: () => void }) {
         <SummaryRow
           icon="backpack"
           label="Sac"
-          value={`${toFind ? `${toFind} à trouver` : ctl.lines.length ? 'Complet' : 'À composer'}${m.kit.packedPct != null ? ` · ${m.kit.packedPct} %` : ''}`}
+          // Jamais « Complet » : rien ne dit qu'un sac est complet, seulement
+          // ce qu'il contient et ce qui est emballé.
+          value={`${
+            toFind
+              ? `${toFind} à trouver`
+              : ctl.lines.length
+                ? `${ctl.lines.length} objet${ctl.lines.length > 1 ? 's' : ''}`
+                : 'À composer'
+          }${m.kit.packedPct != null ? ` · ${m.kit.packedPct} % emballé` : ''}`}
           onClick={onKit}
         />
       </div>
