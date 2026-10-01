@@ -13,6 +13,7 @@
 
 import { activityById } from '../catalog';
 import { hasEngineMinimum } from '../engine/steps';
+import { departureFromBrief } from '../engine/briefDeparture';
 import type { AdventurePrepDraft, ActivitySelection } from '../types';
 
 /* ------------------------------------------------------------------ */
@@ -375,5 +376,21 @@ export function stepOneReadySummary(
 ): string | null {
   const { blocking, optional } = stepOneMissing(draft, id);
   if (blocking.length > 0 || optional.length === 0) return null;
-  return `L’IA complètera : ${optional.join(', ')}`;
+  // Le depart n'est PAS complete par l'IA : il vient de la phrase (cherche
+  // comme une commune avant la generation) ou il manque. Le promettre a
+  // l'IA etait faux : le parcours partait sans position, sans carte ni
+  // distances. La date et l'arrivee, elles, sont des PROPOSITIONS.
+  const originLabel = PROFILE_LABELS[id].origin ?? DEFAULT_LABELS.origin;
+  const parts: string[] = [];
+  const proposed = optional.filter((label) => label !== originLabel);
+  if (proposed.length > 0) parts.push(`L’IA proposera : ${proposed.join(', ')}`);
+  if (optional.includes(originLabel)) {
+    const named = departureFromBrief(draft.brief);
+    parts.push(
+      named
+        ? `Départ lu dans ta phrase : ${named}`
+        : 'Sans lieu de départ, la carte et les distances resteront à vérifier'
+    );
+  }
+  return parts.join(' · ');
 }

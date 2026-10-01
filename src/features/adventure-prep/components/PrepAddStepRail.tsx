@@ -43,13 +43,13 @@ const SOURCE_REELLE: PlacesLoader = (points, signal) =>
 /** Les natures qu un rail peut proposer. Chacune a de vraies categories. */
 export const RAIL_KINDS: readonly { readonly id: ItineraryStepKind; readonly label: string }[] = [
   { id: 'arret', label: 'Lieu' },
-  { id: 'nuit', label: 'Hebergement' },
+  { id: 'nuit', label: 'Hébergement' },
   { id: 'ravitaillement', label: 'Ravitaillement' },
   { id: 'repos', label: 'Pause' },
 ];
 
 const SORTS: readonly { readonly id: RailSort; readonly label: string }[] = [
-  { id: 'distance', label: 'Plus proche du trace' },
+  { id: 'distance', label: 'Plus proche du tracé' },
   { id: 'nom', label: 'Par nom' },
 ];
 
@@ -132,18 +132,18 @@ export function AddStepRail({
 
   if (model === null) {
     return (
-      <DrawerSection title="Ajouter une etape">
-        <DrawerEmpty>Il faut d abord un programme pour y ajouter un lieu.</DrawerEmpty>
+      <DrawerSection title="Ajouter une étape">
+        <DrawerEmpty>Il faut d’abord un programme pour y ajouter un lieu.</DrawerEmpty>
       </DrawerSection>
     );
   }
 
   if (anchors.length === 0) {
     return (
-      <DrawerSection title="Ajouter une etape">
+      <DrawerSection title="Ajouter une étape">
         <DrawerEmpty>
-          Le jour {jour} n a encore aucun point reellement localise : aucun lieu ne peut
-          lui etre propose sans inventer une position.
+          Le jour {jour} n’a encore aucun point réellement localisé : aucun lieu ne peut
+          lui être proposé sans inventer une position.
         </DrawerEmpty>
       </DrawerSection>
     );
@@ -153,8 +153,8 @@ export function AddStepRail({
 
   return (
     <>
-      <DrawerSection title="Nature de l etape">
-        <div className="prep-sheet-rail__filters" role="group" aria-label="Nature de l etape">
+      <DrawerSection title="Nature de l’étape">
+        <div className="prep-sheet-rail__filters" role="group" aria-label="Nature de l’étape">
           {RAIL_KINDS.map((option) => (
             <button
               key={option.id}
@@ -199,17 +199,17 @@ export function AddStepRail({
         </div>
       </DrawerSection>
 
-      <DrawerSection title={`Lieux reels autour du jour ${jour}`}>
+      <DrawerSection title={`Lieux réels autour du jour ${jour}`}>
         {classes.length === 0 ? (
           <DrawerEmpty>
             {sourceMuette
-              ? "La source de lieux n'a pas repondu : rien n'est propose."
+              ? "La source de lieux n’a pas répondu : rien n’est proposé."
               : chargement
-                ? 'Recherche des lieux reels autour du trace…'
-                : `Aucun ${RAIL_KINDS.find((option) => option.id === kind)?.label.toLowerCase()} n'a ete rendu par la base autour du trace du jour ${jour}.`}
+                ? 'Recherche des lieux réels autour du tracé…'
+                : `Aucun ${RAIL_KINDS.find((option) => option.id === kind)?.label.toLowerCase()} n’a été rendu par la base autour du tracé du jour ${jour}.`}
           </DrawerEmpty>
         ) : (
-          <ul className="prep-sheet-rail" aria-label="Lieux proposes">
+          <ul className="prep-sheet-rail" aria-label="Lieux proposés">
             {classes.map((classe) => (
               <DrawerRow
                 key={classe.candidate.id}
@@ -236,8 +236,8 @@ export function AddStepRail({
         )}
         <p className="prep-drawer__note">
           {dernier
-            ? `Rayon maximal atteint (${withUnit(RAIL_MAX_REACH_KM, 'km', 0)} autour du trace) : au-dela, ce serait un autre voyage.`
-            : `Dejaja demandes jusqu a ${withUnit(reachForPage(page), 'km', 0)} du trace. Le rail continue au defilement.`}
+            ? `Rayon maximal atteint (${withUnit(RAIL_MAX_REACH_KM, 'km', 0)} autour du tracé) : au-delà, ce serait un autre voyage.`
+            : `Déjà demandés jusqu’à ${withUnit(reachForPage(page), 'km', 0)} du tracé. La liste continue au défilement.`}
         </p>
       </DrawerSection>
     </>

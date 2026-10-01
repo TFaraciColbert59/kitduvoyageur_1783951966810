@@ -1,0 +1,581 @@
+/* =============================================================================
+   Création d'aventure (/compas?nouvelle=1) — matériau du Compas (maquette v8)
+
+   Le flux de création a été dessiné sur un verre SOMBRE (adventure-prep.css,
+   encre blanche, plaques rgb(16 16 16)). Le Compas, qui est désormais la
+   référence visuelle (docs/compas/DESIGN_REFERENCE.md), est un verre CLAIR sur
+   le paysage éclairci. Les deux écrans se suivent : la création débouche sur
+   le Compas. Ils doivent donc parler le même matériau.
+
+   Cette couche ne réécrit pas la feuille du préparateur : elle REDÉFINIT ses
+   jetons dans une portée, puis donne aux quelques pièces structurantes (rail
+   d'étapes, barre d'action, champs) la forme du Compas. Hors de cette portée
+   (/partir-librement, thème sombre), le matériau d'origine reste intact.
+
+   Portée :
+   - `.prep-material-compas .adventure-prep` : l'écran ;
+   - `body:has(.prep-material-compas) .lkv-sheet-up` : les tiroirs, montés par
+     portail dans <body>, donc hors de l'écran ;
+   - thème clair seulement : en thème sombre le Compas est sombre lui aussi,
+     et le matériau sombre d'origine est le bon.
+
+   Aucune couleur littérale : tout part des primitives de tokens.css
+   (--lkv-on-dark = blanc, --lkv-ink-*, --lkv-sage-*, --lkv-primary…), mélangées
+   par color-mix pour les transparences du verre.
+   ============================================================================= */
+
+:root:not([data-theme='dark']) .prep-material-compas .adventure-prep,
+:root:not([data-theme='dark']) body:has(.prep-material-compas) .lkv-sheet-up {
+  /* --- Matières de base (verre clair du Compas) ----------------------- */
+  --prep-cp-white: var(--lkv-on-dark);
+  --prep-cp-ink: var(--lkv-ink-900);
+  --prep-cp-fill: color-mix(in srgb, var(--lkv-ink-900) 7%, transparent);
+  --prep-cp-sep: color-mix(in srgb, var(--lkv-ink-900) 10%, transparent);
+  --prep-cp-soft: color-mix(in srgb, var(--lkv-sage-300) 28%, transparent);
+  --prep-cp-soft-line: color-mix(in srgb, var(--lkv-sage-500) 38%, transparent);
+  --prep-cp-hi: color-mix(in srgb, var(--lkv-on-dark) 90%, transparent);
+  --prep-cp-rim: color-mix(in srgb, var(--lkv-on-dark) 62%, transparent);
+  --prep-cp-shadow: 0 8px 22px color-mix(in srgb, var(--lkv-ink-900) 12%, transparent);
+  /* Le reflet du verre, posé sur --prep-panel-bg. Plus dense que la carte
+     d'étape du Compas (alpha 0,19) : la création porte des blocs de texte
+     secondaire (« Arrivée », « Date »…) qui doivent tenir 4,5:1 sur n'importe
+     quelle zone de la photo ; c'est la densité du cadre des lignes du Compas. */
+  --prep-cp-glass:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--lkv-on-dark) 24%, transparent),
+      color-mix(in srgb, var(--lkv-on-dark) 6%, transparent) 50%,
+      color-mix(in srgb, var(--lkv-on-dark) 14%, transparent)
+    );
+  --prep-cp-glass-sheet:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--lkv-on-dark) 49%, transparent),
+      color-mix(in srgb, var(--lkv-on-dark) 39%, transparent)
+    );
+  --prep-cp-pg:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--lkv-on-dark) 62%, transparent),
+      color-mix(in srgb, var(--lkv-on-dark) 16%, transparent) 52%,
+      color-mix(in srgb, var(--lkv-on-dark) 30%, transparent)
+    );
+  --prep-cp-pg-base: color-mix(in srgb, var(--lkv-sage-300) 34%, transparent);
+  --prep-cp-pg-sh:
+    inset 0 1px 0 color-mix(in srgb, var(--lkv-on-dark) 95%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--lkv-on-dark) 40%, transparent),
+    inset 0 0 0 0.6px color-mix(in srgb, var(--lkv-on-dark) 50%, transparent),
+    0 0 0 0.6px color-mix(in srgb, var(--lkv-primary) 16%, transparent),
+    0 5px 14px color-mix(in srgb, var(--lkv-primary) 13%, transparent);
+
+  /* --- Encres : celles du Compas clair --------------------------------
+     La couche globale html[data-liquid-ios27] force ces jetons en blanc pour
+     le hub sombre ; on les rend à l'encre du verre clair. */
+  --lkv-text-primary: var(--lkv-ink-900);
+  --lkv-text-secondary: var(--lkv-ink-500);
+  --lkv-text-muted: var(--lkv-ink-500);
+  --lkv-text-subtle: var(--lkv-ink-500);
+  --lkv-secondary: var(--lkv-sage-500);
+  --glass-label: var(--lkv-ink-900);
+  --glass-label-secondary: var(--lkv-ink-500);
+  --glass-label-tertiary: var(--lkv-ink-500);
+  --glass-label-quaternary: color-mix(in srgb, var(--lkv-ink-900) 45%, transparent);
+  --lkv-action: var(--lkv-primary);
+  --lkv-action-hover: var(--lkv-forest-700);
+  --lkv-action-soft: var(--lkv-sage-100);
+  --lkv-action-rgb: var(--lkv-primary-rgb);
+  --lkv-on-action: var(--lkv-on-dark);
+  --btn-on-solid: var(--lkv-on-dark);
+  --lkv-on-primary: var(--lkv-on-dark);
+  --lkv-hover-surface: var(--prep-cp-fill);
+  --lkv-success: var(--lkv-sage-700);
+  --lkv-success-bg: color-mix(in srgb, var(--lkv-sage-700) 14%, transparent);
+  --lkv-warning-dark: var(--lkv-amber-800);
+  --lkv-warning-bg: color-mix(in srgb, var(--lkv-warning) 20%, transparent);
+  --lkv-danger: var(--lkv-brick-600);
+  --lkv-danger-bg: color-mix(in srgb, var(--lkv-brick-600) 14%, transparent);
+  --lkv-info: var(--lkv-sky-600);
+
+  --prep-ink-full: var(--lkv-ink-900);
+  --prep-ink-secondary: var(--lkv-ink-500);
+  --prep-ink-subtle: var(--lkv-ink-500);
+  --prep-ink-accent: var(--lkv-primary);
+  --prep-ink-accent-strong: var(--lkv-primary);
+  --prep-glass-label: var(--lkv-ink-900);
+  --prep-on-action: var(--lkv-on-dark);
+  --prep-drawer-row-selected-ink: var(--lkv-primary);
+
+  /* --- Surfaces -------------------------------------------------------- */
+  --prep-page-bg: transparent;
+  --prep-page-wash: none;
+  --prep-page-wash-landscape: none;
+  --prep-panel-bg: color-mix(in srgb, var(--lkv-on-dark) 44%, transparent);
+  --prep-panel-blur: 22px;
+  --prep-panel-saturate: 190%;
+  --prep-panel-brightness: 1.07;
+  --prep-sheet-bg: color-mix(in srgb, var(--lkv-on-dark) 44%, transparent);
+  --prep-sheet-sheen: var(--prep-cp-glass-sheet);
+  --prep-glass-bg: color-mix(in srgb, var(--lkv-on-dark) 46%, transparent);
+  --prep-glass-floor: color-mix(in srgb, var(--lkv-on-dark) 78%, transparent);
+  --prep-glass-opaque: color-mix(in srgb, var(--lkv-on-dark) 86%, transparent);
+  --prep-glass-blur: 25px;
+  --prep-glass-saturate: 180%;
+  --prep-glass-border: var(--prep-cp-rim);
+  --prep-glass-shadow: var(--prep-cp-shadow);
+  --prep-rail-plate: color-mix(in srgb, var(--lkv-on-dark) 58%, transparent);
+  --prep-row-bg: var(--prep-cp-fill);
+  --prep-row-edge: var(--prep-cp-sep);
+  --prep-drawer-row-bg: var(--prep-cp-fill);
+  --prep-drawer-row-edge: var(--prep-cp-sep);
+  --prep-drawer-row-hover: color-mix(in srgb, var(--lkv-ink-900) 10%, transparent);
+  /* Barre « Annuler / Appliquer » collée au bas d'un tiroir : le contenu qui
+     défile dessous s'efface dans le verre au lieu de traverser les boutons. */
+  --prep-actionrow-bg: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--lkv-on-dark) 0%, transparent) 0%,
+    color-mix(in srgb, var(--lkv-on-dark) 74%, transparent) 34%
+  );
+  --prep-notice-bg: color-mix(in srgb, var(--lkv-on-dark) 52%, transparent);
+  --prep-notice-edge: color-mix(in srgb, var(--lkv-warning) 42%, transparent);
+  --prep-notice-ink: var(--lkv-amber-800);
+  --prep-surface-elevated: color-mix(in srgb, var(--lkv-on-dark) 72%, transparent);
+  --lkv-surface-elevated: var(--prep-surface-elevated);
+  --lkv-surface: var(--prep-surface-elevated);
+  --lkv-surface-card: color-mix(in srgb, var(--lkv-on-dark) 46%, transparent);
+  --lkv-surface-raised: color-mix(in srgb, var(--lkv-on-dark) 56%, transparent);
+  --card-tint: color-mix(in srgb, var(--lkv-on-dark) 30%, transparent);
+  --card-tint-strong: color-mix(in srgb, var(--lkv-on-dark) 40%, transparent);
+  --card-tint-solid: var(--prep-surface-elevated);
+  --glass-tint: var(--card-tint);
+  --glass-bg-medium: var(--card-tint);
+  --prep-map-bg: var(--lkv-surface-paper);
+  --prep-map-wash: linear-gradient(transparent, transparent);
+  --prep-shadow-ink: var(--lkv-ink-900);
+  --prep-shadow-lift: 0 2px 10px color-mix(in srgb, var(--lkv-ink-900) 12%, transparent);
+  --prep-shadow-sm: 0 1px 2px color-mix(in srgb, var(--lkv-ink-900) 6%, transparent);
+  --prep-shadow-press: inset 0 1px 2px color-mix(in srgb, var(--lkv-ink-900) 10%, transparent);
+  --prep-shadow-float: var(--prep-cp-shadow);
+  --prep-shadow-card: var(--prep-cp-shadow);
+  --prep-sheen-top: var(--prep-cp-hi);
+  --prep-sheen-top-soft: color-mix(in srgb, var(--lkv-on-dark) 50%, transparent);
+  --prep-hairline-ink: var(--prep-cp-sep);
+  --prep-segmented-track: var(--prep-cp-fill);
+  --prep-segmented-shadow: 0 1px 2px color-mix(in srgb, var(--lkv-ink-900) 8%, transparent);
+  --prep-glass-sheen: inset 0 1px 0 var(--prep-cp-hi);
+  --prep-glass-bounce: inset 0 -1px 1px color-mix(in srgb, var(--lkv-on-dark) 45%, transparent);
+  --prep-glass-depth: var(--prep-cp-shadow);
+  --prep-glass-material:
+    inset 0 1px 0 var(--prep-cp-hi),
+    inset 0 -1px 1px color-mix(in srgb, var(--lkv-on-dark) 45%, transparent),
+    inset 1px 0 1px color-mix(in srgb, var(--lkv-on-dark) 28%, transparent),
+    inset -1px 0 1px color-mix(in srgb, var(--lkv-on-dark) 28%, transparent),
+    inset 0 0 12px color-mix(in srgb, var(--lkv-on-dark) 14%, transparent),
+    0 0 0 0.5px color-mix(in srgb, var(--lkv-ink-900) 14%, transparent),
+    var(--prep-cp-shadow);
+  --prep-missing-tone: color-mix(in srgb, var(--prep-kind-repos) 12%, transparent);
+
+  /* Boutons partagés (Button) : principal = verre teinté doux du Compas
+     (jamais une primaire pleine), secondaire = verre sage. */
+  --g3-bg: var(--prep-cp-pg-base);
+  --g3-text: var(--lkv-primary);
+  /* Inactif : verre blanc et encre secondaire. Posé sur la photo (« Continuer »
+     du catalogue), un aplat d'encre à 7 % disparaissait : il garde ici une
+     plaque lisible, sans rien d'une action disponible. */
+  --g3-bg-disabled: color-mix(in srgb, var(--lkv-on-dark) 46%, transparent);
+  --g3-text-disabled: var(--lkv-ink-500);
+  --g2-bg: var(--prep-cp-soft);
+  --g1-bg: var(--prep-rail-plate);
+  /* Bordure (et non ombre) du bouton secondaire partagé : une couleur, la
+     ligne sage du verre doux du Compas. */
+  --glass-rim: var(--prep-cp-soft-line);
+  --btn-tint: var(--prep-cp-fill);
+
+  /* --- Échelle typographique du Compas ---------------------------------- */
+  --prep-type-title: 22px;
+  --prep-type-body: 15px;
+  --prep-type-label: 14px;
+  --prep-type-meta: 12.5px;
+  --prep-radius-card: 22px;
+
+  letter-spacing: -0.01em;
+}
+
+/* Fond : la toile de l'écran est le paysage éclairci du Compas (.cp-bg, rendu
+   par AdventurePrepScreen) ; l'écran ne peint plus son propre voile sombre. */
+:root:not([data-theme='dark']) .prep-material-compas .adventure-prep {
+  background: transparent;
+}
+
+/* --- Le flou du verre doit voir la photo ----------------------------------
+   Le fondu bas du corps (P0.27) est un `mask-image` : un masque fait du
+   conteneur une « racine d'arrière-plan », et le `backdrop-filter` des
+   panneaux qu'il contient ne voit plus que le conteneur, vide. Mesuré : flou
+   de 22 px déclaré, photo nette à travers les panneaux. Le Compas n'a pas de
+   fondu ; sa carte et ses tiroirs coupent net. On fait de même ici. */
+:root:not([data-theme='dark']) .prep-material-compas .prep-body {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+/* --- Panneaux = carte de verre du Compas --------------------------------- */
+:root:not([data-theme='dark']) .prep-material-compas :is(.prep-block, .prep-footer, .prep-openpoints, .prep-body > div:has(> div > .prep-title)),
+:root:not([data-theme='dark']) .prep-material-compas :is(.prep-metric, .prep-programme__day, .prep-step, .prep-maphint) {
+  background-image: var(--prep-cp-glass);
+  border-color: var(--prep-cp-rim);
+}
+
+/* --- Lignes = lignes du Compas (.cp-row) ----------------------------------
+   L'icône d'une ligne vit dans une tuile sage (.cp-thumb), le chevron est
+   rejeté au bord droit. L'icône est un masque CSS : elle ne peut pas porter
+   sa propre tuile, la tuile est donc dessinée par la ligne, centrée sur
+   l'icône (padding gauche 22 px + 9 px = centre à 31 px). */
+:root:not([data-theme='dark']) .prep-material-compas .prep-block__row:has(> span[role='img']:first-child) {
+  position: relative;
+  padding-left: 22px;
+  gap: 20px;
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-block__row:has(> span[role='img']:first-child)::before {
+  content: '';
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  width: 36px;
+  height: 36px;
+  transform: translateY(-50%);
+  border-radius: 11px;
+  background: var(--prep-cp-soft);
+  box-shadow: inset 0 0 0 0.6px var(--prep-cp-soft-line);
+  pointer-events: none;
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-block__row > span[role='img'] {
+  position: relative;
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-block__row > span[role='img']:last-child:not(:first-child) {
+  margin-left: auto;
+  color: var(--lkv-ink-500);
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-act-icon {
+  border-radius: 11px;
+  background: var(--prep-cp-soft);
+  border: 0;
+  box-shadow: inset 0 0 0 0.6px var(--prep-cp-soft-line);
+  color: var(--lkv-ink-900);
+}
+
+/* --- Rail d'étapes = capsule des étapes du Compas --------------------------
+   Le bandeau sombre pleine largeur devient la capsule flottante de .cp-steps :
+   trois segments égaux, une lentille de verre sous l'étape courante, l'icône
+   au-dessus du libellé. Les icônes sont des masques CSS sur les fichiers de
+   public/icons/sf : aucune balise ajoutée au rail. */
+:root:not([data-theme='dark']) .prep-material-compas .prep-nav {
+  background-color: transparent !important;
+  background-image: none;
+  border: 0;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  padding: 4px 12px 0;
+  min-height: 0;
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-crumb {
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0;
+  width: 100%;
+  margin: 0;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--prep-cp-glass);
+  -webkit-backdrop-filter: blur(7px) saturate(1.9) brightness(1.07);
+  backdrop-filter: blur(7px) saturate(1.9) brightness(1.07);
+  box-shadow: var(--prep-glass-material);
+  list-style: none;
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-crumb__sep {
+  display: none;
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-crumb__item {
+  display: flex;
+  min-width: 0;
+}
+:root:not([data-theme='dark']) .prep-material-compas :is(.prep-crumb__label, .prep-crumb__link) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  height: 46px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  color: var(--lkv-ink-500);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-decoration: none;
+}
+:root:not([data-theme='dark']) .prep-material-compas :is(.prep-crumb__label, .prep-crumb__link)::before {
+  content: '';
+  flex: none;
+  width: 22px;
+  height: 22px;
+  background-color: currentColor;
+  -webkit-mask: var(--prep-crumb-icon) center / contain no-repeat;
+  mask: var(--prep-crumb-icon) center / contain no-repeat;
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-crumb__item:nth-child(1) {
+  --prep-crumb-icon: url('/icons/sf/sparkles.svg');
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-crumb__item:nth-child(3) {
+  --prep-crumb-icon: url('/icons/sf/map.svg');
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-crumb__item:nth-child(5) {
+  --prep-crumb-icon: url('/icons/sf/flag.svg');
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-crumb__label[data-state='active'] {
+  color: var(--lkv-primary);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--lkv-on-dark) 62%, transparent),
+    color-mix(in srgb, var(--lkv-on-dark) 26%, transparent)
+  );
+  box-shadow:
+    inset 0 1px 0 var(--lkv-on-dark),
+    inset 0 -1px 1px color-mix(in srgb, var(--lkv-on-dark) 50%, transparent),
+    0 0 0 0.5px color-mix(in srgb, var(--lkv-ink-900) 8%, transparent),
+    0 3px 10px color-mix(in srgb, var(--lkv-ink-900) 10%, transparent);
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-crumb__link {
+  cursor: pointer;
+  color: var(--lkv-ink-700);
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-crumb__label[data-state='locked'] {
+  color: color-mix(in srgb, var(--lkv-ink-900) 45%, transparent);
+}
+
+/* --- Bouton principal = verre teinté doux (.cp-btn--pg) -------------------
+   Dans le Compas ce bouton est posé sur une carte de verre clair. Ici il flotte
+   aussi sur la photo (« Ajuster », barre d'action) : il porte donc son propre
+   verre — flou, base blanche, teinte sage — pour que l'encre forêt garde son
+   contraste quelle que soit la zone du paysage dessous. */
+:root:not([data-theme='dark']) .prep-material-compas .button-primary:not(:disabled),
+:root:not([data-theme='dark']) body:has(.prep-material-compas) .lkv-sheet-up .button-primary:not(:disabled) {
+  color: var(--lkv-primary);
+  background-color: color-mix(in srgb, var(--lkv-on-dark) 42%, transparent);
+  background-image:
+    var(--prep-cp-pg), linear-gradient(var(--prep-cp-pg-base), var(--prep-cp-pg-base));
+  border-color: transparent;
+  box-shadow: var(--prep-cp-pg-sh);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8) brightness(1.07);
+  backdrop-filter: blur(16px) saturate(1.8) brightness(1.07);
+}
+
+/* --- Barre d'action basse : flotte sans plaque, comme les actions du Compas
+   Le bouton principal porte lui-même son verre (flou + teinte sage), comme les
+   boutons ronds du Compas posés sur le paysage. La « langue » de flou AN9
+   (au-dessus du pied) n'a plus d'objet : le corps ne s'efface plus, il coupe
+   net comme la carte du Compas. */
+:root:not([data-theme='dark']) .prep-material-compas .prep-footer {
+  background-color: transparent !important;
+  background-image: none;
+  border: 0;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  padding-inline: 12px;
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-footer::before {
+  display: none;
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-footer__primary:not(:disabled) {
+  color: var(--lkv-primary);
+  background-color: color-mix(in srgb, var(--lkv-on-dark) 42%, transparent);
+  background-image:
+    var(--prep-cp-pg), linear-gradient(var(--prep-cp-pg-base), var(--prep-cp-pg-base));
+  border-color: transparent;
+  box-shadow: var(--prep-cp-pg-sh);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8) brightness(1.07);
+  backdrop-filter: blur(16px) saturate(1.8) brightness(1.07);
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-footer__primary:disabled {
+  background-color: color-mix(in srgb, var(--lkv-on-dark) 46%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  backdrop-filter: blur(16px) saturate(1.6);
+}
+
+/* --- Boutons secondaires = verre doux du Compas (.cp-btn--soft) ----------- */
+:root:not([data-theme='dark']) .prep-material-compas .adventure-prep button[class*='--g2-bg'] {
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--lkv-on-dark) 34%, transparent),
+    color-mix(in srgb, var(--lkv-on-dark) 12%, transparent)
+  );
+  -webkit-backdrop-filter: blur(16px) saturate(1.8) brightness(1.07);
+  backdrop-filter: blur(16px) saturate(1.8) brightness(1.07);
+  color: var(--lkv-ink-900);
+}
+
+/* --- Notes (« Parcours enrichi par l'IA… ») : verre clair teinté ambre ---- */
+:root:not([data-theme='dark']) .prep-material-compas .prep-notice {
+  background-image: linear-gradient(
+    color-mix(in srgb, var(--lkv-warning) 16%, transparent),
+    color-mix(in srgb, var(--lkv-warning) 16%, transparent)
+  );
+  border-radius: 18px;
+}
+
+/* --- Rail des jours (dans la barre d'onglets, hors de l'écran) -------------
+   DayPlateau est rendu par la barre d'onglets : il vit dans `nav`, frère de
+   l'écran. Même verre clair que la capsule d'étapes, lentille sage, encre du
+   Compas. La barre d'onglets elle-même n'est pas touchée. */
+:root:not([data-theme='dark']) body:has(.prep-material-compas) nav.lkv-nav-surface [role='tablist'] {
+  --g1-bg: color-mix(in srgb, var(--lkv-on-dark) 58%, transparent);
+  --g3-bg: color-mix(in srgb, var(--lkv-sage-300) 40%, transparent);
+  --g3-text: var(--lkv-primary);
+  --glass-label-secondary: var(--lkv-ink-500);
+  --prep-ink-full: var(--lkv-ink-900);
+  --material-bar-border: color-mix(in srgb, var(--lkv-on-dark) 62%, transparent);
+  --glass-border-color: color-mix(in srgb, var(--lkv-sage-500) 38%, transparent);
+  --glass-shadow: 0 3px 10px color-mix(in srgb, var(--lkv-ink-900) 10%, transparent);
+  color: var(--lkv-ink-900);
+}
+
+/* --- Rien ne s'écrit à nu sur la photo -------------------------------------
+   Le Compas ne pose jamais de texte directement sur le paysage : tout texte vit
+   sur du verre. Mesure (2026-10-01, Chromium 390×844) : quatre textes de la
+   création restaient sur la photo, encre sombre sur forêt sombre — le grand
+   titre, les intertitres hors panneau, la ligne « L'IA proposera… » et les
+   deux actions du catalogue. Chacun reçoit sa pastille de verre clair. */
+:root:not([data-theme='dark']) .prep-material-compas .adventure-prep :is(.prep-title, .prep-section-title):not(:is(.prep-block, .prep-step, .prep-programme__day, .prep-metric, .prep-openpoints, .prep-body > div:has(> div > .prep-title)) *) {
+  width: fit-content;
+  max-width: 100%;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--lkv-on-dark) 58%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.8) brightness(1.07);
+  backdrop-filter: blur(18px) saturate(1.8) brightness(1.07);
+  box-shadow:
+    inset 0 1px 0 var(--prep-cp-hi),
+    0 0 0 0.5px color-mix(in srgb, var(--lkv-ink-900) 10%, transparent);
+}
+:root:not([data-theme='dark']) .prep-material-compas .adventure-prep .prep-title:not(:is(.prep-block, .prep-step, .prep-programme__day, .prep-metric, .prep-openpoints, .prep-body > div:has(> div > .prep-title)) *) {
+  padding: 6px 16px;
+  border-radius: 22px;
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-missing {
+  background-color: color-mix(in srgb, var(--lkv-on-dark) 58%, transparent);
+  background-image: linear-gradient(var(--prep-missing-tone), var(--prep-missing-tone));
+  -webkit-backdrop-filter: blur(18px) saturate(1.8) brightness(1.07);
+  backdrop-filter: blur(18px) saturate(1.8) brightness(1.07);
+  box-shadow:
+    inset 0 1px 0 var(--prep-cp-hi),
+    0 0 0 0.5px color-mix(in srgb, var(--lkv-ink-900) 10%, transparent);
+  border-radius: 16px;
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-footer-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  color: var(--lkv-ink-900);
+  background-color: color-mix(in srgb, var(--lkv-on-dark) 46%, transparent);
+  background-image: linear-gradient(var(--prep-cp-soft), var(--prep-cp-soft));
+  box-shadow: inset 0 0 0 0.6px var(--prep-cp-soft-line);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8) brightness(1.07);
+  backdrop-filter: blur(16px) saturate(1.8) brightness(1.07);
+}
+:root:not([data-theme='dark']) .prep-material-compas .button-primary:disabled {
+  color: var(--lkv-ink-500);
+  background-color: color-mix(in srgb, var(--lkv-on-dark) 46%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  backdrop-filter: blur(16px) saturate(1.6);
+}
+
+/* --- Écran de génération : un verre dépoli sur le paysage -----------------
+   Il recouvre l'étape en cours de construction (montée dessous, elle porte le
+   run). Le voile opaque `Canvas` (style en ligne) devient un verre clair très
+   flou : l'étape dessous reste illisible, le paysage reste visible, comme sous
+   un tiroir du Compas. */
+:root:not([data-theme='dark']) .prep-material-compas [data-generation-screen] {
+  background-color: color-mix(in srgb, var(--lkv-on-dark) 42%, transparent) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(1.6) brightness(1.05);
+  backdrop-filter: blur(30px) saturate(1.6) brightness(1.05);
+}
+
+/* --- Bandeau d'échec = note d'avertissement du Compas ----------------------
+   Le bandeau sombre pleine largeur devient une carte de verre flottante,
+   teintée ambre, sous la capsule d'étapes. Ses couleurs sont posées en style
+   en ligne par le composant (PrepOfflineNotice) : seule une règle
+   `!important` de cette portée peut les remplacer, sans toucher au bandeau
+   des autres matériaux. */
+:root:not([data-theme='dark']) .prep-material-compas .prep-faultbar {
+  margin: 8px 12px 0;
+  border-radius: 20px;
+  overflow: hidden;
+  background-color: color-mix(in srgb, var(--lkv-on-dark) 50%, transparent) !important;
+  background-image: linear-gradient(
+    color-mix(in srgb, var(--lkv-warning) 16%, transparent),
+    color-mix(in srgb, var(--lkv-warning) 16%, transparent)
+  );
+  border-bottom: 0 !important;
+  color: var(--lkv-ink-900) !important;
+  font-size: 13.5px;
+  -webkit-backdrop-filter: blur(22px) saturate(1.8) brightness(1.07);
+  backdrop-filter: blur(22px) saturate(1.8) brightness(1.07);
+  box-shadow: var(--prep-glass-material);
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-faultbar svg:first-child {
+  color: var(--lkv-amber-800);
+}
+
+/* --- Champs (.cp-field) ---------------------------------------------------- */
+:root:not([data-theme='dark']) .prep-material-compas .prep-brief__input,
+:root:not([data-theme='dark']) .prep-material-compas .prep-text-input,
+:root:not([data-theme='dark']) body:has(.prep-material-compas) .lkv-sheet-up .prep-text-input {
+  border-radius: 14px;
+  border: 0.5px solid var(--prep-cp-sep);
+  background: color-mix(in srgb, var(--lkv-on-dark) 55%, transparent);
+  color: var(--lkv-ink-900);
+}
+:root:not([data-theme='dark']) .prep-material-compas .prep-search {
+  border-radius: 14px;
+  border: 0.5px solid var(--prep-cp-sep);
+  background: color-mix(in srgb, var(--lkv-on-dark) 55%, transparent);
+}
+
+/* --- Tiroirs = verre de tiroir du Compas (.cp-sheet-glass) ----------------- */
+:root:not([data-theme='dark']) body:has(.prep-material-compas) .lkv-sheet-up {
+  background-color: var(--prep-sheet-bg);
+  background-image: var(--prep-cp-glass-sheet);
+  color: var(--lkv-ink-900);
+  box-shadow:
+    inset 0 1px 0 var(--prep-cp-hi),
+    inset 0 -1px 1px color-mix(in srgb, var(--lkv-on-dark) 40%, transparent),
+    inset 0 0 16px color-mix(in srgb, var(--lkv-on-dark) 12%, transparent),
+    0 0 0 0.5px color-mix(in srgb, var(--lkv-ink-900) 12%, transparent),
+    0 10px 30px color-mix(in srgb, var(--lkv-ink-900) 14%, transparent);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root:not([data-theme='dark']) .prep-material-compas .adventure-prep,
+  :root:not([data-theme='dark']) body:has(.prep-material-compas) .lkv-sheet-up {
+    --prep-panel-bg: var(--lkv-surface-paper);
+    --prep-sheet-bg: var(--lkv-surface-paper);
+    --prep-glass-bg: var(--lkv-surface-paper);
+    --prep-cp-glass: linear-gradient(var(--lkv-surface-paper), var(--lkv-surface-paper));
+    --prep-cp-glass-sheet: linear-gradient(var(--lkv-surface-paper), var(--lkv-surface-paper));
+  }
+}

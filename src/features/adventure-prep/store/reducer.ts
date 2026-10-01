@@ -29,6 +29,7 @@ import type { GenerationOutcome, PhaseRetry } from '../engine/itineraryPhases';
 import {
   clearPhaseOutcome,
   finishGeneration,
+  initialGeneration,
   interruptGeneration,
   markPhaseDone,
   resumeGeneration,
@@ -55,6 +56,22 @@ function commit(draft: AdventurePrepDraft, patch: Partial<AdventurePrepDraft>): 
   };
 }
 
+/**
+ * Une saisie qui change le parcours le JETTE, et avec lui ce que la generation
+ * precedente en disait. Ses verdicts decrivent un parcours qui n existe plus :
+ * les garder affichait « Échec : Météo des jours de ton aventure » au-dessus
+ * de « Générer mon parcours », sans aucun parcours (mesure du 2026-10-01).
+ * Une generation EN COURS est laissee a son run : c est lui qui ecrit la suite.
+ */
+function withoutItinerary(
+  draft: AdventurePrepDraft
+): Pick<AdventurePrepDraft, 'itinerary' | 'generation'> {
+  return {
+    itinerary: null,
+    generation: draft.generation.status === 'en_cours' ? draft.generation : initialGeneration(),
+  };
+}
+
 export const draftActions = {
   reset: (draft: AdventurePrepDraft): AdventurePrepDraft => ({
     ...emptyDraft(),
@@ -62,7 +79,7 @@ export const draftActions = {
   }),
 
   setActivities: (draft: AdventurePrepDraft, activities: ActivitySelection): AdventurePrepDraft => {
-    const chosen = commit(draft, { activities, itinerary: null });
+    const chosen = commit(draft, { activities, ...withoutItinerary(draft) });
     // Un brief qui NOMME une duree prime sur les heures du catalogue.
     // Sans cette regle, choisir « randonnee avec nuit de refuge » (24 h)
     // ecrivait 1 jour pendant que le brief demandait un week-end : l ecran
@@ -87,18 +104,18 @@ export const draftActions = {
   setRoute: (draft: AdventurePrepDraft, route: RouteBlock): AdventurePrepDraft =>
     commit(draft, {
       route: { ...route, shape: deriveRouteShape(route) },
-      itinerary: null,
+      ...withoutItinerary(draft),
     }),
 
   /** Invite libre de l'etape 1 : elle alimente la generation IA. */
   setBrief: (draft: AdventurePrepDraft, brief: string | null): AdventurePrepDraft =>
     commit(draft, {
       brief: brief && brief.trim().length > 0 ? brief.trim() : null,
-      itinerary: null,
+      ...withoutItinerary(draft),
     }),
 
   setCalendar: (draft: AdventurePrepDraft, calendar: CalendarBlock): AdventurePrepDraft =>
-    commit(draft, { calendar, itinerary: null }),
+    commit(draft, { calendar, ...withoutItinerary(draft) }),
 
   setGroup: (draft: AdventurePrepDraft, group: GroupBlock): AdventurePrepDraft =>
     commit(draft, { group }),

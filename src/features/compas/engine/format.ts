@@ -209,6 +209,11 @@ const ACTIVITIES: Record<string, string> = {
   travel: 'Voyage',
   voyage: 'Voyage',
   roadtrip: 'Road trip',
+  // Les valeurs de l'enum `trips` sont en anglais : sans elles, le tiroir
+  // Activité affichait « Cultural » et « Mixed » dans une interface française.
+  cultural: 'Culturel',
+  bushcraft: 'Bushcraft',
+  mixed: 'Mixte',
 };
 
 export function activityLabel(activity: string | null): string | null {

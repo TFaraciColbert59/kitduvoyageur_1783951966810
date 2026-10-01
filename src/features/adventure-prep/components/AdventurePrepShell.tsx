@@ -321,7 +321,7 @@ export function PrepOfflineNotice({
   const retry = noticeRetryHandler(onRetryPhase, failedPhase);
 
   return (
-    <details style={NOTICE_BOX} role="status" aria-live="polite">
+    <details className="prep-faultbar" style={NOTICE_BOX} role="status" aria-live="polite">
       <summary style={NOTICE_SUMMARY}>
         <Icon name={online ? 'alert-triangle' : 'wifi-off'} size={14} aria-hidden="true" />
         <span style={NOTICE_HEADLINE}>{headline}</span>

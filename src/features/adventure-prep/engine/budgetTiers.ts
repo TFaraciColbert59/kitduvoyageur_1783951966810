@@ -34,8 +34,8 @@ export interface BudgetTier {
 
 export const BUDGET_TIERS: readonly BudgetTier[] = [
   { id: 'economique', label: 'Rat', detail: 'Le strict minimum pour que la sortie tienne.' },
-  { id: 'modere', label: 'Confort', detail: 'L’equilibre : un gite, des repas, un vrai reservoir.' },
-  { id: 'confort', label: 'Luxe', detail: 'Le confort achete : nuces, tables, transport staking.' },
+  { id: 'modere', label: 'Confort', detail: 'L’équilibre : un gîte, des repas, une vraie marge.' },
+  { id: 'confort', label: 'Luxe', detail: 'Le confort acheté : de bonnes nuits, de bonnes tables, des trajets simples.' },
 ];
 
 /**

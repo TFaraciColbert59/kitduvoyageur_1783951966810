@@ -128,7 +128,7 @@ describe('AN7 — le manque se dit blockers et facultatifs, jamais melanges', ()
 
   it('AN7-4: plus rien ne bloque, l ecran dit ce que l IA completera', () => {
     expect(stepOneReadySummary(saufOptionnels(), 'trajet')).toBe(
-      'L’IA complètera : lieu d’arrivée, date'
+      'L’IA proposera : lieu d’arrivée, date'
     );
   });
 
@@ -136,7 +136,7 @@ describe('AN7 — le manque se dit blockers et facultatifs, jamais melanges', ()
     const text = visible(render(saufOptionnels()));
     expect(text).toContain('Créer mon parcours');
     expect(text).not.toContain('Il manque');
-    expect(text).toContain('L’IA complètera');
+    expect(text).toContain('L’IA proposera');
   });
 
   it('AN7-6: un depart manquant est un COMPLEMENT, jamais un arret nomme', () => {
@@ -162,8 +162,12 @@ describe('AN7 — le manque se dit blockers et facultatifs, jamais melanges', ()
     expect(stepOneMissing(sansDepart, 'trajet').blocking).toEqual([]);
 
     // Moitie 2 — le depart est bien nomme, et comme complement. Sans ce
-    // `toContain`, le test passerait sur un ecran entierement muet.
-    expect(text).toContain('L’IA complètera : lieu de départ, date');
+    // `toContain`, le test passerait sur un ecran entierement muet. L IA ne
+    // pose jamais d origine (2026-10-01) : la date lui est proposee, le depart
+    // est nomme par ce que son absence coute.
+    expect(text).toContain(
+      'L’IA proposera : date · Sans lieu de départ, la carte et les distances resteront à vérifier'
+    );
   });
 
   it('AN7-7: le resume historique reste disponible et complet', () => {

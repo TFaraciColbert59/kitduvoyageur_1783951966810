@@ -3769,6 +3769,28 @@ body:has(.app-shell--preparer) .lkv-sheet-up {
   flex-direction: column;
   gap: var(--space-1);
 }
+/* Champ texte libre d un tiroir (nom de l aventure). `.field` est un
+   conteneur : pose sur l input, il le laissait au style du navigateur, blanc
+   sur le tiroir sombre (mesure du 2026-10-01). Meme materiau que les champs
+   du tiroir Materiel. */
+.prep-text-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: var(--prep-hairline) solid var(--prep-hairline-ink);
+  border-radius: var(--prep-radius-card);
+  background: var(--prep-panel-bg);
+  color: var(--lkv-text-primary);
+  font-family: inherit;
+  font-size: var(--prep-type-body);
+}
+.prep-text-input::placeholder {
+  color: var(--prep-ink-secondary);
+}
+.prep-text-input:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
 .note {
   padding: var(--space-2) var(--space-3);
   border-radius: var(--prep-drawer-row-radius);

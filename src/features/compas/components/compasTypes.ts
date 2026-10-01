@@ -12,7 +12,7 @@ export const STEP_FLOWS = {
     { id: 'parcours', label: 'Parcours', icon: 'route' },
     { id: 'trace', label: 'Sur le tracé', icon: 'map-pin' },
     { id: 'quand', label: 'Quand', icon: 'calendar-days' },
-    { id: 'preferences', label: 'Envies', icon: 'heart' },
+    { id: 'preferences', label: 'Préférences', icon: 'heart' },
   ],
   nous: [
     { id: 'equipe', label: 'Équipe', icon: 'users' },
@@ -60,6 +60,8 @@ export interface FlowHint {
   query?: string;
   /** Jour touché (tuile de nuit) : le tiroir s'ouvre sur ce jour. */
   day?: number;
+  /** Phrase tapée dans « Dis-le » sur la carte : le tiroir la comprend aussitôt. */
+  say?: string;
 }
 
 export type ActionResult = { success: boolean; error?: string };

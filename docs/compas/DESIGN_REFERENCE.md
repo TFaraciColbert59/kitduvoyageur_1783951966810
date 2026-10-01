@@ -33,6 +33,9 @@ Les jetons de couleur restent ceux de `src/styles/tokens.css` (`--lkv-*`). Le Co
 ## 5. Accessibilité (état mesuré)
 Audit axe-core (WCAG 2 A/AA, Chromium 390×844, données de test) sur l'écran et six tiroirs : 0 violation après correction d'une. Limite : fond de page de test, contrastes de couleur à confirmer sur le vrai fond.
 
+## 5 bis. Création d'aventure (`/compas?nouvelle=1`)
+La création prend le même matériau via `src/features/adventure-prep/prep-compas.css` : une couche qui redéfinit les jetons du préparateur dans la portée `.prep-material-compas` (thème clair seulement) et donne la forme du Compas à la capsule d'étapes, aux cartes, lignes (tuile sage + chevron), boutons, tiroirs, notes et à l'écran de génération. `AdventurePrepScreen material="compas"` l'active ; `/partir-librement` et le thème sombre gardent le verre sombre d'origine. Règle tenue : aucun texte posé à nu sur la photo. Verrou : `prep-compas-material.test.ts`.
+
 ## 6. Dette connue avant que la référence soit réutilisable partout
 1. Les variables `--cp-*` sont limitées à `.compas`, et environ 90 valeurs `rgb(…)` y sont écrites en littéral. À promouvoir dans `tokens.css` pour les partager.
 2. Les classes `cp-*` ne s'appliquent que dans `.compas` : à extraire en primitives (`src/components/ui/`) pour d'autres écrans.

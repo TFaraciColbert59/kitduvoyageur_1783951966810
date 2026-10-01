@@ -69,5 +69,8 @@ describe('échelle de durée', () => {
     expect(activityLabel('hiking')).toBe('Randonnée');
     expect(activityLabel(null)).toBeNull();
     expect(activityLabel('packraft')).toBe('Packraft');
+    // Les 7 valeurs de l'enum `trips` ont toutes un libellé français.
+    expect(activityLabel('cultural')).toBe('Culturel');
+    expect(activityLabel('mixed')).toBe('Mixte');
   });
 });

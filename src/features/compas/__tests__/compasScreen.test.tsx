@@ -690,9 +690,9 @@ describe('CompasScreen', () => {
     );
   });
 
-  it('Envies : choisir le bivouac enregistre les préférences complètes', async () => {
+  it('Préférences : choisir le bivouac enregistre les préférences complètes', async () => {
     render(<CompasScreen data={makeData()} />);
-    const sheet = await openOu(/Envies/);
+    const sheet = await openOu(/Préférences/);
     fireEvent.click(within(sheet).getByRole('button', { name: /Bivouac/ }));
     await waitFor(() =>
       expect(compas.compasSetPreferencesAction).toHaveBeenCalledWith({
