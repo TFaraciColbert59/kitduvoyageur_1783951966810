@@ -506,10 +506,12 @@ export function VerdictCard({ ctl }: { ctl: CompasCtl }) {
               key={axis}
               className="cp-tchip"
               data-on={a.level === 'vigilance' || a.level === 'bloque' ? '1' : undefined}
-              title={a.note || undefined}
+              title={a.note || a.partial || undefined}
             >
               <span>{AXIS_LABEL[axis]}</span>
-              <span className="cp-tchip__bd">{AXIS_LEVEL[a.level]}</span>
+              <span className="cp-tchip__bd">
+                {a.level === 'ok' && a.partial ? 'RAS partiel' : AXIS_LEVEL[a.level]}
+              </span>
             </span>
           );
         })}

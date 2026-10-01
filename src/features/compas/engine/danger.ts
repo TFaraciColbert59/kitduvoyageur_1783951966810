@@ -42,8 +42,18 @@ export interface DangerSignal {
   day?: number;
 }
 
+export interface DangerAxisResult {
+  level: AxisLevel;
+  note: string;
+  /**
+   * Axe évalué EN PARTIE : ce qui n'a pas pu être vérifié (« dénivelé (J1, J2) »).
+   * Un « RAS » ne vaut que pour ce qui a été mesuré ; null quand tout l'a été.
+   */
+  partial: string | null;
+}
+
 export interface DangerAssessment {
-  axes: Record<DangerAxis, { level: AxisLevel; note: string }>;
+  axes: Record<DangerAxis, DangerAxisResult>;
   signals: DangerSignal[];
 }
 
@@ -87,14 +97,43 @@ export function assessDanger(input: {
   dayPlans: CompasDayPlan[];
   forecasts: Array<{ day: number; date: string; forecast: DayForecast | null }>;
   alerts: OfficialAlert[];
+  /** Le flux d'alertes officielles couvrant la zone a-t-il été lu ? Sinon, dit. */
+  alertsChecked?: boolean;
 }): DangerAssessment {
   const T = DANGER_THRESHOLDS;
   const signals: DangerSignal[] = [];
   const forecastOf = new Map(input.forecasts.map((f) => [f.day, f]));
   const evaluated = { physique: false, technique: false, conjoncturel: false };
+  // Ce qui manque, par axe, et pour quels jours : un « RAS » n'est jamais
+  // affiché sans dire ce qu'il ne couvre pas.
+  const gaps: Record<DangerAxis, Map<string, number[]>> = {
+    physique: new Map(),
+    technique: new Map(),
+    conjoncturel: new Map(),
+  };
+  const gap = (axis: DangerAxis, what: string, day?: number) => {
+    const days = gaps[axis].get(what) ?? [];
+    if (day != null) days.push(day);
+    gaps[axis].set(what, days);
+  };
+  // Aucune cotation du terrain n'existe dans les données du voyage.
+  gap('technique', 'cotation du terrain');
+  if (!input.alertsChecked) gap('conjoncturel', 'alertes officielles');
 
   for (const plan of input.dayPlans) {
     const f = forecastOf.get(plan.day);
+    if (plan.walkMin == null) gap('physique', 'durée de marche', plan.day);
+    if (plan.gainM == null) {
+      gap('physique', 'dénivelé', plan.day);
+      gap('technique', 'pente', plan.day);
+    } else if (plan.distanceKm == null || plan.distanceKm <= 0) {
+      gap('technique', 'pente', plan.day);
+    }
+    if (plan.lossM == null) gap('technique', 'descente', plan.day);
+    if (!f?.forecast) {
+      gap('physique', 'chaleur et froid', plan.day);
+      gap('conjoncturel', 'météo', plan.day);
+    }
     const date = plan.date ?? f?.date ?? '';
     const push = (
       axis: DangerAxis,
@@ -195,8 +234,14 @@ export function assessDanger(input: {
   }
 
   const rank: Record<DangerSeverity, number> = { info: 0, warn: 1, block: 2 };
-  const axisOf = (axis: DangerAxis, missing: string) => {
-    if (!evaluated[axis]) return { level: 'non_evalue' as const, note: missing };
+  const partialOf = (axis: DangerAxis): string | null => {
+    const parts = [...gaps[axis].entries()].map(([what, days]) =>
+      days.length ? `${what} (${[...new Set(days)].map((d) => `J${d}`).join(', ')})` : what
+    );
+    return parts.length ? `Non vérifié : ${parts.join(', ')}.` : null;
+  };
+  const axisOf = (axis: DangerAxis, missing: string): DangerAxisResult => {
+    if (!evaluated[axis]) return { level: 'non_evalue', note: missing, partial: null };
     const worst = signals
       .filter((s) => s.axis === axis)
       .reduce<DangerSeverity | null>(
@@ -204,7 +249,7 @@ export function assessDanger(input: {
         null
       );
     const level: AxisLevel = worst === 'block' ? 'bloque' : worst === 'warn' ? 'vigilance' : 'ok';
-    return { level, note: '' };
+    return { level, note: '', partial: partialOf(axis) };
   };
 
   return {

@@ -107,3 +107,44 @@ describe('mergeDangerIntoVerdict', () => {
     expect(mergeDangerIntoVerdict(verdict, d)).toEqual(verdict);
   });
 });
+
+describe('assessDanger — évaluation partielle', () => {
+  it('dénivelé inconnu : physique évalué sur la durée, mais dit ce qui manque', () => {
+    const d = run(plan({ gainM: null }), forecast());
+    expect(d.axes.physique.level).toBe('ok');
+    expect(d.axes.physique.partial).toBe('Non vérifié : dénivelé (J1).');
+    expect(d.axes.technique.partial).toContain('pente (J1)');
+  });
+
+  it('CONTRE-EXEMPLE — alertes officielles non lues : le conjoncturel ne prétend pas les couvrir', () => {
+    const d = run(plan(), forecast());
+    expect(d.axes.conjoncturel.level).toBe('ok');
+    expect(d.axes.conjoncturel.partial).toBe('Non vérifié : alertes officielles.');
+    const lu = assessDanger({
+      dayPlans: [plan()],
+      forecasts: [{ day: 1, date: '2026-10-12', forecast: forecast() }],
+      alerts: [],
+      alertsChecked: true,
+    });
+    expect(lu.axes.conjoncturel.partial).toBeNull();
+  });
+
+  it('jour sans prévision : chaleur, froid et météo de ce jour non vérifiés', () => {
+    const d = assessDanger({
+      dayPlans: [plan(), plan({ day: 2, date: '2026-10-13' })],
+      forecasts: [
+        { day: 1, date: '2026-10-12', forecast: forecast() },
+        { day: 2, date: '2026-10-13', forecast: null },
+      ],
+      alerts: [],
+      alertsChecked: true,
+    });
+    expect(d.axes.physique.partial).toBe('Non vérifié : chaleur et froid (J2).');
+    expect(d.axes.conjoncturel.partial).toBe('Non vérifié : météo (J2).');
+  });
+
+  it('un axe non évalué ne porte pas de partiel', () => {
+    const d = run(plan({ walkMin: null, gainM: null, lossM: null, distanceKm: null }), null);
+    expect(d.axes.physique).toMatchObject({ level: 'non_evalue', partial: null });
+  });
+});

@@ -445,8 +445,10 @@ export async function getCompasData(): Promise<CompasData | null> {
       date: d.date,
       forecast: d.forecast,
     })),
-    // Alertes officielles : branchées dès que les flux sont joignables (voir MISSION_LOG).
+    // Alertes officielles : pas encore lues (voir MISSION_LOG) ; l'axe
+    // conjoncturel le dit au lieu d'afficher un « RAS » complet.
     alerts: [],
+    alertsChecked: false,
   });
 
   return {

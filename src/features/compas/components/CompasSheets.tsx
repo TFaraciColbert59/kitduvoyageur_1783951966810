@@ -1485,14 +1485,21 @@ function OffresFlow({ ctl }: { ctl: CompasCtl }) {
 function RaisonsFlow({ ctl }: { ctl: CompasCtl }) {
   const { danger } = ctl.data;
   const dated = new Map(danger.signals.map((x) => [`${x.source}|${x.label}`, x.asOf]));
-  const unknown = (['physique', 'technique', 'conjoncturel'] as const).filter(
-    (a) => danger.axes[a].level === 'non_evalue'
+  const axes = ['physique', 'technique', 'conjoncturel'] as const;
+  const unknown = axes.filter((a) => danger.axes[a].level === 'non_evalue');
+  const partial = axes.filter(
+    (a) => danger.axes[a].level !== 'non_evalue' && danger.axes[a].partial
   );
   return (
     <>
       {unknown.map((a) => (
         <p key={a} className="cp-note">
           <b>{a[0].toUpperCase() + a.slice(1)} non évalué.</b> {danger.axes[a].note}
+        </p>
+      ))}
+      {partial.map((a) => (
+        <p key={a} className="cp-note">
+          <b>{a[0].toUpperCase() + a.slice(1)} évalué en partie.</b> {danger.axes[a].partial}
         </p>
       ))}
       <PagedList
