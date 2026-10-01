@@ -249,6 +249,7 @@ function makeData(overrides: Partial<CompasInput> = {}): CompasData {
     providers: { routestack: 'disabled', viator: 'disabled' },
     fx: null,
     kitAdvice: [],
+    routePois: [],
     danger: assessDanger({ dayPlans: [], forecasts: [], alerts: [] }),
     weather: null,
     route: { id: 374, name: 'Tour des Vallées' },
@@ -490,6 +491,32 @@ describe('CompasScreen', () => {
         kitId: '8d9c1a52-0000-4000-8000-000000000001',
       })
     );
+  });
+
+  it('sur le tracé : liste les points OSM, filtre par catégorie, cite la source', async () => {
+    const data = makeData();
+    data.routePois = [
+      { id: 1, name: null, category: 'water', lat: 42.7, lon: 0, distanceM: 80, elevationM: 1850 },
+      {
+        id: 2,
+        name: 'Refuge des Oulettes',
+        category: 'refuge',
+        lat: 42.7,
+        lon: 0.01,
+        distanceM: 300,
+        elevationM: null,
+      },
+    ];
+    render(<CompasScreen data={data} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Où et quand' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Où et quand' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Sur le tracé/ }));
+    expect(within(sheet).getByText('Refuge des Oulettes')).toBeTruthy();
+    expect(within(sheet).getByText('Point d’eau')).toBeTruthy();
+    fireEvent.click(within(sheet).getByRole('button', { name: /Refuge ou abri \(1\)/ }));
+    expect(within(sheet).queryByText('Point d’eau')).toBeNull();
+    expect(within(sheet).getByText(/contributeurs OpenStreetMap/)).toBeTruthy();
   });
 
   const openOu = async (flow: RegExp) => {

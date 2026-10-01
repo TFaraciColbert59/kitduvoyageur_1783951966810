@@ -10,6 +10,7 @@ export const STEP_FLOWS = {
   ou: [
     { id: 'activite', label: 'Activité', icon: 'flag' },
     { id: 'parcours', label: 'Parcours', icon: 'route' },
+    { id: 'trace', label: 'Sur le tracé', icon: 'map-pin' },
     { id: 'quand', label: 'Quand', icon: 'calendar-days' },
     { id: 'preferences', label: 'Envies', icon: 'heart' },
   ],

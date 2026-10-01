@@ -26,6 +26,12 @@ import {
 } from '../server/compasActions';
 import { KitRow, LIVE_BOOKING, MemberAvatar, lineStatus, verticalOf } from './CompasCards';
 import { AffiliateDisclosure } from '@/features/affiliation/components/AffiliateDisclosure';
+import {
+  ROUTE_POI_LABEL,
+  countByCategory,
+  poiLabel,
+  type RoutePoiCategory,
+} from '../engine/routePois';
 import { kitCompatibility, planKitApply, type MyKit } from '../engine/kitApply';
 import { convertFromEur } from '../engine/currency';
 import { Chip, PagedList, Segments, Thumb, useTextFilter } from './CompasPrimitives';
@@ -861,6 +867,7 @@ function StepSheet({
       {step === 'ou' && flow === 'parcours' && (
         <ParcoursFlow key={hint?.query ?? 'p'} ctl={ctl} hint={hint} />
       )}
+      {step === 'ou' && flow === 'trace' && <TraceFlow ctl={ctl} />}
       {step === 'ou' && flow === 'quand' && (
         <QuandFlow key={hint?.hours ?? 'q'} ctl={ctl} hint={hint} />
       )}
@@ -1547,6 +1554,69 @@ function ConseilsFlow({ ctl }: { ctl: CompasCtl }) {
           </div>
         )}
       />
+    </>
+  );
+}
+
+const POI_ICON: Record<RoutePoiCategory, string> = {
+  water: 'droplet',
+  refuge: 'home',
+  camping: 'tent',
+  viewpoint: 'eye',
+  peak: 'mountain',
+  parking: 'car',
+};
+
+function TraceFlow({ ctl }: { ctl: CompasCtl }) {
+  const pois = ctl.data.routePois;
+  const counts = countByCategory(pois);
+  const [filter, setFilter] = useState<'all' | RoutePoiCategory>('all');
+  if (ctl.data.route.id == null)
+    return (
+      <p className="cp-note">
+        Choisis d’abord un parcours du catalogue : les points d’eau, abris et points de vue sont
+        cherchés le long de son tracé.
+      </p>
+    );
+  const shown = filter === 'all' ? pois : pois.filter((p) => p.category === filter);
+  const present = (Object.keys(counts) as RoutePoiCategory[]).filter((c) => counts[c] > 0);
+  return (
+    <>
+      <p className="cp-note">
+        Points à moins de 1 km du tracé, jusqu’à 20 par catégorie. Données OpenStreetMap : une
+        source peut être tarie ou un refuge fermé, à vérifier avant de compter dessus.
+      </p>
+      {present.length > 0 && (
+        <Segments
+          label="Catégorie"
+          value={filter}
+          onChange={setFilter}
+          options={[
+            { id: 'all', label: `Tout (${pois.length})` },
+            ...present.map((c) => ({ id: c, label: `${ROUTE_POI_LABEL[c]} (${counts[c]})` })),
+          ]}
+        />
+      )}
+      <PagedList
+        label="Points sur le tracé"
+        items={shown}
+        empty={<p className="cp-note">Aucun point connu à moins de 1 km de ce tracé.</p>}
+        render={(p) => (
+          <div key={p.id} className="cp-row" style={staticRow}>
+            <span className="cp-thumb">
+              <Icon name={POI_ICON[p.category]} size={20} />
+            </span>
+            <span className="cp-row__t">
+              <b>{poiLabel(p)}</b>
+              <span>
+                {p.name ? `${ROUTE_POI_LABEL[p.category]} · ` : ''}à {p.distanceM} m du tracé
+                {p.elevationM != null ? ` · ${p.elevationM} m` : ''}
+              </span>
+            </span>
+          </div>
+        )}
+      />
+      <p className="cp-disc">© contributeurs OpenStreetMap (licence ODbL)</p>
     </>
   );
 }

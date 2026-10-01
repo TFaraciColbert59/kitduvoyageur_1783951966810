@@ -1,5 +1,14 @@
 # MISSION LOG — LKDV
 
+## 2026-10-01 — Compas, Lot 6 « Carte » (points sur le tracé)
+
+- Migration appliquée sur `icxyvwzfjbflcbqukpfz` : `20261001100000_compas_route_pois.sql` (fonction `compas_route_pois`, lecture seule, SECURITY INVOKER : eau, abris, camping, vues, sommets, parkings à moins de 1 km du tracé, 20 par catégorie, avec coordonnées et points sans nom). Testée sur un vrai parcours du catalogue.
+- `engine/routePois.ts` : lecture défensive des lignes (catégorie inconnue ou coordonnées hors limites écartées) ; un point sans nom garde sa catégorie, jamais un nom inventé.
+- UI : onglet « Sur le tracé » (étape Où), filtre par catégorie, avertissement « source tarie / refuge fermé », crédit © OpenStreetMap (ODbL) ; les points s'ajoutent à la carte.
+- Le décompte des points d'eau du tracé alimente désormais le conseil d'eau du kit (avant : valeur du hub, souvent absente).
+- **Volontairement non fait** : couches Tribu / Amis (positions d'autres personnes : demande consentement explicite et conception vie privée, pas de construction à l'aveugle) ; profil d'altitude (aucune altitude fiable le long du tracé dans les données du Compas).
+- Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants OK, 115 tests, build OK.
+
 ## 2026-10-01 — Compas, Lot 5 « Kit » (conseils météo, mes kits)
 
 - `engine/kitRules.ts` : conseils de kit (pluie, froid, gel → gants/bonnet, chaleur → soleil, marche > jour → frontale, repère d'eau 0,5 L/h). Chaque conseil cite jour, valeur et source ; « couvert » = un objet du kit porte un nom qui correspond. Seuils exportés (`KIT_THRESHOLDS`). Aucun conseil sans prévision.

@@ -3,6 +3,7 @@ import 'server-only';
 import type { FxRate } from '../engine/currency';
 import { assessDanger, mergeDangerIntoVerdict, type DangerAssessment } from '../engine/danger';
 import { adviseKit, type KitAdvice } from '../engine/kitRules';
+import { parseRoutePois, poiLabel, type RoutePoi } from '../engine/routePois';
 import { getEurRate } from './rates';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -98,6 +99,8 @@ export interface CompasData {
   danger: DangerAssessment;
   /** Conseils de kit selon la météo et le parcours, chacun avec sa donnée source. */
   kitAdvice: KitAdvice[];
+  /** Points OpenStreetMap à moins de 1 km du tracé choisi (vide sans parcours du catalogue). */
+  routePois: RoutePoi[];
   /** Météo Open-Meteo des jours du voyage et calendrier 6 semaines (null si indisponible). */
   weather: CompasWeather | null;
   /** Parcours du catalogue choisi pour le voyage. */
@@ -108,6 +111,18 @@ export interface CompasData {
 
 const TIME_ZONE = 'Europe/Paris';
 const SHOP_MODES = new Set(['achat', 'location', 'occasion', 'enchere']);
+
+async function loadRoutePois(client: SupabaseClient, routeId: number): Promise<RoutePoi[]> {
+  try {
+    const { data, error } = await client.rpc('compas_route_pois', {
+      p_route_id: routeId,
+      p_radius_m: 1000,
+    });
+    return error ? [] : parseRoutePois(data);
+  } catch {
+    return [];
+  }
+}
 
 function num(value: unknown): number | null {
   const n = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
@@ -416,6 +431,10 @@ export async function getCompasData(): Promise<CompasData | null> {
     }));
 
   const routeId = compasMeta.routeId ?? num(hub.hiking?.routeId);
+  const routePois = routeId != null ? await loadRoutePois(client, routeId) : [];
+  const waterOnRoute = routePois.filter((p) => p.category === 'water').length;
+  const waterPointsCount =
+    routeId != null && routePois.length ? waterOnRoute : input.waterPointsCount;
 
   const baseModel = input.weather.length ? buildCompasModel(input) : draft;
   const danger = assessDanger({
@@ -440,12 +459,23 @@ export async function getCompasData(): Promise<CompasData | null> {
         forecast: d.forecast,
       })),
       dayPlans: baseModel.route.dayPlans,
-      waterPointsCount: input.waterPointsCount,
+      waterPointsCount,
     }),
+    routePois,
     itinerary,
     bookings,
     routeGeojson: hub.hiking?.routeGeojson ?? null,
-    points,
+    points: [
+      ...points,
+      ...routePois.map((p) => ({
+        id: `r-${p.id}`,
+        lat: p.lat,
+        lon: p.lon,
+        label: poiLabel(p),
+        category: p.category,
+        kind: 'poi' as const,
+      })),
+    ],
     inventory,
     shop,
     affiliateLinks: (hub.affiliateLinks ?? []).map((l) => ({
