@@ -391,6 +391,34 @@ describe('CompasScreen', () => {
     );
   });
 
+  it('eau : besoin par personne, contenants au volume écrit, points d’eau du tracé', async () => {
+    const data = makeData({
+      items: [item({ id: SLEEP, name: 'Gourde 1 L', quantity: 2 })],
+    });
+    data.routePois = [
+      {
+        id: 9,
+        name: 'Source du Clot',
+        category: 'water',
+        lat: 42.7,
+        lon: 0,
+        distanceM: 120,
+        elevationM: null,
+      },
+    ];
+    render(<CompasScreen data={data} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Kit/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Kit' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Kit' });
+    const tabs = within(sheet).getByRole('group', { name: 'Parcours du tiroir' });
+    fireEvent.click(within(tabs).getByText('Eau'));
+    expect(within(sheet).getByText(/^Eau par personne/)).toBeTruthy();
+    expect(within(sheet).getByText('Gourde 1 L')).toBeTruthy();
+    expect(within(sheet).getByText(/2 × · 2 L/)).toBeTruthy();
+    expect(within(sheet).getByText('Source du Clot')).toBeTruthy();
+    expect(within(sheet).getByText(/peut être tarie/)).toBeTruthy();
+  });
+
   it('sans dates : aucun chiffre inventé, la décision demande les dates', () => {
     const data = makeData({
       trip: {

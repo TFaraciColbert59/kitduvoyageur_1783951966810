@@ -39,6 +39,7 @@ export const STEP_FLOWS = {
     { id: 'emballer', label: 'Emballer', icon: 'check-square' },
     { id: 'tout', label: 'Tout', icon: 'clipboard-list' },
     { id: 'sacs', label: 'Sacs', icon: 'backpack' },
+    { id: 'eau', label: 'Eau', icon: 'droplet' },
   ],
 } as const;
 

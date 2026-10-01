@@ -10,7 +10,7 @@ import {
   deleteTripItemAction,
 } from '@/app/voyages/kit-actions';
 import type { CompasKitLine, CompasStepId } from '../engine/compasModel';
-import { formatKg, formatMoney, weatherLabel } from '../engine/format';
+import { formatDuration, formatKg, formatMoney, weatherLabel } from '../engine/format';
 import type { CompasShopProduct } from '../server/getCompasData';
 import {
   compasAddInventoryItemAction,
@@ -40,6 +40,8 @@ import { convertFromEur } from '../engine/currency';
 import { Chip, PagedList, Segments, Thumb, useTextFilter } from './CompasPrimitives';
 import { DisLe } from './CompasDisLe';
 import { proposeShift, watchRules } from '../engine/watch';
+import { planWater } from '../engine/water';
+import { KIT_THRESHOLDS } from '../engine/kitRules';
 import { runOps } from './compasApply';
 import { ActiviteFlow, ParcoursFlow, PreferencesFlow, QuandFlow } from './CompasOuFlows';
 import {
@@ -672,9 +674,7 @@ function AddSheet({
           )}
         />
       )}
-      {source === 'libre' && (
-        <FreeItemForm ctl={ctl} target={target} defaultName={suggest?.name} />
-      )}
+      {source === 'libre' && <FreeItemForm ctl={ctl} target={target} defaultName={suggest?.name} />}
     </>
   );
 }
@@ -961,6 +961,7 @@ function StepSheet({
       {step === 'kit' && flow === 'conseils' && <ConseilsFlow ctl={ctl} />}
       {step === 'kit' && flow === 'mes-kits' && <MesKitsFlow ctl={ctl} />}
       {step === 'kit' && flow === 'sacs' && <SacsFlow ctl={ctl} />}
+      {step === 'kit' && flow === 'eau' && <EauFlow ctl={ctl} />}
       {ctl.data.canEdit ? (
         <DisLe
           key={hint?.say ?? 'disle'}
@@ -1773,18 +1774,16 @@ function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
   const apply = () => {
     if (!shift) return;
     const n = Math.abs(shift.offsetDays);
-    void ctl.run(
-      `Voyage décalé de ${n} jour${n > 1 ? 's' : ''}`,
-      () =>
-        runOps(ctl, [
-          {
-            op: 'dates',
-            startDate: shift.startDate,
-            endDate: shift.endDate,
-            durationHours: m.dates.hours != null && m.dates.hours < 24 ? m.dates.hours : null,
-            resplit: false,
-          },
-        ])
+    void ctl.run(`Voyage décalé de ${n} jour${n > 1 ? 's' : ''}`, () =>
+      runOps(ctl, [
+        {
+          op: 'dates',
+          startDate: shift.startDate,
+          endDate: shift.endDate,
+          durationHours: m.dates.hours != null && m.dates.hours < 24 ? m.dates.hours : null,
+          resplit: false,
+        },
+      ])
     );
   };
   return (
@@ -1803,12 +1802,7 @@ function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
             {shift.offsetDays > 0 ? ' plus tard' : ' plus tôt'} ?
           </p>
           <div className="cp-actions">
-            <button
-              type="button"
-              className="cp-btn cp-btn--pg"
-              disabled={ctl.busy}
-              onClick={apply}
-            >
+            <button type="button" className="cp-btn cp-btn--pg" disabled={ctl.busy} onClick={apply}>
               Décaler
             </button>
             <span className="cp-sub">L’agent propose, tu décides.</span>
@@ -2193,6 +2187,129 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
           );
         }}
       />
+    </>
+  );
+}
+
+const litres = (n: number) => `${String(n).replace('.', ',')} L`;
+
+/**
+ * Eau (maquette finale, onglet du Kit) : besoin par personne jour par jour
+ * (repère par heure de marche, chaud compris), contenants du kit au volume
+ * écrit, et points d'eau réels du tracé. Rien n'est supposé : un volume non
+ * écrit ou une marche inconnue reste « non renseigné ».
+ */
+function EauFlow({ ctl }: { ctl: CompasCtl }) {
+  const m = ctl.data.model;
+  const plan = planWater({
+    dayPlans: m.route.dayPlans,
+    forecasts: (ctl.data.weather?.tripDays ?? []).map((d) => ({
+      day: d.day,
+      forecast: d.forecast,
+    })),
+    lines: ctl.lines,
+  });
+  const people = m.crew.size;
+  const water = ctl.data.routePois
+    .filter((p) => p.category === 'water')
+    .sort((a, b) => a.distanceM - b.distanceM);
+  const peak = plan.peak;
+  const need = peak?.liters != null ? Math.round(peak.liters * people * 10) / 10 : null;
+  let verdict: string;
+  if (need == null) verdict = 'Durée de marche non renseignée : besoin en eau non calculé.';
+  else if (plan.containers.length === 0)
+    verdict = `Aucun contenant d’eau dans le kit pour ${litres(need)} le jour ${peak?.day}.`;
+  else if (plan.knownLiters == null)
+    verdict = 'Volume des contenants non écrit dans leur nom : couverture non vérifiable.';
+  else if (plan.knownLiters >= need)
+    verdict = `Contenants du kit (${litres(plan.knownLiters)}) suffisants pour la plus longue journée sans recharger.`;
+  else
+    verdict = `Il manque ${litres(Math.round((need - plan.knownLiters) * 10) / 10)} de contenants pour le jour ${peak?.day} sans recharger${water.length > 0 ? ', ou recharger aux points d’eau du tracé' : ''}.`;
+
+  return (
+    <>
+      <div className="cp-row" style={staticRow}>
+        <span className="cp-thumb">
+          <Icon name="droplet" size={20} />
+        </span>
+        <span className="cp-row__t">
+          <b>
+            {peak?.liters != null
+              ? `Eau par personne : jusqu’à ${litres(peak.liters)}`
+              : 'Eau par personne : non renseignée'}
+          </b>
+          <span>
+            {peak?.liters != null
+              ? `Jour ${peak.day}${people > 1 ? ` · ${litres(need as number)} pour ${people} personnes` : ''}`
+              : 'Il faut des étapes avec une durée de marche.'}
+          </span>
+        </span>
+      </div>
+      {plan.days.length > 0 && (
+        <div className="cp-wx">
+          {plan.days.map((d) => (
+            <div key={d.day}>
+              <b>
+                J{d.day}
+                {d.date ? ` · ${WX_DAY.format(new Date(`${d.date}T12:00:00Z`))}` : ''}
+              </b>
+              <span>{d.liters != null ? litres(d.liters) : 'non renseigné'}</span>
+              <span>
+                {d.walkMin != null ? `${formatDuration(d.walkMin)} de marche` : 'marche inconnue'}
+                {d.hot ? ' · chaud' : ''}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+      <p className="cp-note">{verdict}</p>
+      <PagedList
+        label="Contenants du kit"
+        items={plan.containers}
+        empty={<p className="cp-note">Aucune gourde, poche à eau ni bouteille dans le kit.</p>}
+        render={(c) => (
+          <div key={c.id} className="cp-row" style={staticRow}>
+            <Thumb category={null} name={c.name} />
+            <span className="cp-row__t">
+              <b>{c.name}</b>
+              <span>
+                {c.quantity > 1 ? `${c.quantity} × · ` : ''}
+                {c.liters != null ? litres(c.liters) : 'volume non écrit'}
+              </span>
+            </span>
+          </div>
+        )}
+      />
+      {ctl.data.route.id != null && (
+        <PagedList
+          label="Points d’eau sur le tracé"
+          items={water}
+          empty={
+            <p className="cp-note">
+              Aucun point d’eau connu à moins de 1 km du tracé : tout emporter.
+            </p>
+          }
+          render={(p) => (
+            <div key={p.id} className="cp-row" style={staticRow}>
+              <span className="cp-thumb">
+                <Icon name="droplet" size={20} />
+              </span>
+              <span className="cp-row__t">
+                <b>{poiLabel(p)}</b>
+                <span>
+                  à {p.distanceM} m du tracé{p.elevationM != null ? ` · ${p.elevationM} m` : ''}
+                </span>
+              </span>
+            </div>
+          )}
+        />
+      )}
+      <p className="cp-note">
+        Repère courant : {litres(KIT_THRESHOLDS.waterLPerHour)} par heure de marche,{' '}
+        {litres(KIT_THRESHOLDS.waterLPerHourHot)} au-delà de {KIT_THRESHOLDS.sunC} °C (prévision du
+        jour). Une source OpenStreetMap peut être tarie : à vérifier avant de compter dessus.
+      </p>
+      {water.length > 0 && <p className="cp-disc">© contributeurs OpenStreetMap (licence ODbL)</p>}
     </>
   );
 }
