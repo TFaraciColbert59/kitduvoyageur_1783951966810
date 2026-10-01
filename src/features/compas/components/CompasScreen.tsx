@@ -25,7 +25,7 @@ import type { ActionResult, CompasCtl, SheetState, StepFlow } from './compasType
 const DISPLAY_KEY = 'lkdv.compas.affichage';
 
 const STEP_TITLES: Record<CompasStepId, string> = {
-  ou: 'Où et quand',
+  ou: 'Préparer',
   nous: 'Nous',
   resa: 'Réserver',
   verdict: 'Verdict',

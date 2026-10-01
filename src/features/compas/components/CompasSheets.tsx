@@ -10,7 +10,7 @@ import {
   deleteTripItemAction,
 } from '@/app/voyages/kit-actions';
 import type { CompasKitLine, CompasStepId } from '../engine/compasModel';
-import { formatKg, formatMoney } from '../engine/format';
+import { formatKg, formatMoney, weatherLabel } from '../engine/format';
 import type { CompasShopProduct } from '../server/getCompasData';
 import {
   compasAddInventoryItemAction,
@@ -39,6 +39,8 @@ import { kitCompatibility, planKitApply, type MyKit } from '../engine/kitApply';
 import { convertFromEur } from '../engine/currency';
 import { Chip, PagedList, Segments, Thumb, useTextFilter } from './CompasPrimitives';
 import { DisLe } from './CompasDisLe';
+import { proposeShift, watchRules } from '../engine/watch';
+import { runOps } from './compasApply';
 import { ActiviteFlow, ParcoursFlow, PreferencesFlow, QuandFlow } from './CompasOuFlows';
 import {
   STEP_FLOWS,
@@ -52,7 +54,7 @@ import {
 /* ---------- Titre de chaque tiroir ---------- */
 
 const STEP_SHEET_TITLES: Record<CompasStepId, string> = {
-  ou: 'Où et quand',
+  ou: 'Préparer',
   nous: 'Nous',
   resa: 'Réserver',
   verdict: 'Verdict',
@@ -922,7 +924,7 @@ function StepSheet({
     </button>
   ) : (
     <button type="button" className="cp-btn cp-btn--pg cp-sheet__next" onClick={() => ctl.close()}>
-      Terminé
+      Terminer
       <Icon name="check" size={16} />
     </button>
   );
@@ -939,6 +941,7 @@ function StepSheet({
         <ParcoursFlow key={hint?.query ?? 'p'} ctl={ctl} hint={hint} />
       )}
       {step === 'ou' && flow === 'trace' && <TraceFlow ctl={ctl} />}
+      {step === 'ou' && flow === 'sac' && <MesKitsFlow ctl={ctl} />}
       {step === 'ou' && flow === 'quand' && (
         <QuandFlow key={hint?.hours ?? 'q'} ctl={ctl} hint={hint} />
       )}
@@ -949,6 +952,8 @@ function StepSheet({
       {step === 'resa' && flow === 'reservations' && <ReservationsFlow ctl={ctl} />}
       {step === 'resa' && flow === 'offres' && <OffresFlow ctl={ctl} />}
       {step === 'verdict' && flow === 'raisons' && <RaisonsFlow ctl={ctl} />}
+      {step === 'verdict' && flow === 'meteo' && <MeteoFlow ctl={ctl} />}
+      {step === 'verdict' && flow === 'veille' && <VeilleFlow ctl={ctl} />}
       {step === 'verdict' && flow === 'sources' && <SourcesFlow ctl={ctl} />}
       {step === 'kit' && (flow === 'trouver' || flow === 'emballer' || flow === 'tout') && (
         <KitListFlow ctl={ctl} flow={flow} />
@@ -1679,6 +1684,155 @@ function VerdictExplain({ ctl }: { ctl: CompasCtl }) {
         </button>
       )}
     </section>
+  );
+}
+
+const WX_DAY = new Intl.DateTimeFormat('fr-FR', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'UTC',
+});
+const deg = (v: number | null) => (v == null ? '—' : `${Math.round(v)} °C`);
+
+/**
+ * Météo des vrais jours du voyage (maquette finale : onglet « Météo » du
+ * verdict). Prévision Open-Meteo aux points réels de chaque journée ; au-delà
+ * de l'horizon de prévision, le jour le dit au lieu d'inventer une valeur.
+ */
+function MeteoFlow({ ctl }: { ctl: CompasCtl }) {
+  const w = ctl.data.weather;
+  const days = w?.tripDays ?? [];
+  if (!w || days.length === 0) {
+    return (
+      <p className="cp-note">
+        Météo non disponible : il faut des dates et au moins une étape localisée.
+      </p>
+    );
+  }
+  const horizon = WX_DAY.format(new Date(`${w.horizon}T12:00:00Z`));
+  return (
+    <>
+      <div className="cp-wx">
+        {days.map((d) => {
+          const f = d.forecast;
+          const freezing = f
+            ? f.hours.map((h) => h.freezingM).filter((v): v is number => v != null)
+            : [];
+          const lowFreeze = freezing.length ? Math.min(...freezing) : null;
+          return (
+            <div key={d.day}>
+              <b>
+                J{d.day} · {WX_DAY.format(new Date(`${d.date}T12:00:00Z`))}
+              </b>
+              {f ? (
+                <>
+                  {f.code != null && <span>{weatherLabel(f.code).label}</span>}
+                  <span>
+                    {deg(f.tMin)} / {deg(f.tMax)}
+                    {f.precipPct != null ? ` · pluie ${Math.round(f.precipPct)} %` : ''}
+                  </span>
+                  <span>
+                    {f.gustMax != null ? `Rafales ${Math.round(f.gustMax)} km/h` : 'Rafales —'}
+                    {lowFreeze != null
+                      ? ` · 0 °C à ${Math.round(lowFreeze).toLocaleString('fr-FR')} m`
+                      : ''}
+                  </span>
+                </>
+              ) : (
+                <span>Au-delà de la prévision (jusqu’au {horizon}).</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <p className="cp-note">
+        Prévisions {w.source} jusqu’au {horizon}, aux points réels de chaque journée. Elles ne
+        remplacent pas les bulletins officiels (vigilance Météo-France, bulletins avalanche).
+      </p>
+    </>
+  );
+}
+
+/**
+ * Veille (maquette finale) : les seuils réellement appliqués par le moteur de
+ * danger, ce que chacun a déclenché, et — seulement si le calendrier des
+ * conditions le justifie — une proposition de décalage. L'agent propose, la
+ * personne décide : le décalage n'est écrit qu'au clic.
+ */
+function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
+  const m = ctl.data.model;
+  const rules = watchRules(ctl.data.danger.signals);
+  const active = rules.filter((r) => r.hits.length > 0).length;
+  const shift = proposeShift({
+    start: m.dates.start,
+    end: m.dates.end,
+    calendar: ctl.data.weather?.calendar ?? [],
+  });
+  const fmt = (iso: string) => WX_DAY.format(new Date(`${iso}T12:00:00Z`));
+  const apply = () => {
+    if (!shift) return;
+    const n = Math.abs(shift.offsetDays);
+    void ctl.run(
+      `Voyage décalé de ${n} jour${n > 1 ? 's' : ''}`,
+      () =>
+        runOps(ctl, [
+          {
+            op: 'dates',
+            startDate: shift.startDate,
+            endDate: shift.endDate,
+            durationHours: m.dates.hours != null && m.dates.hours < 24 ? m.dates.hours : null,
+            resplit: false,
+          },
+        ])
+    );
+  };
+  return (
+    <>
+      {shift && ctl.data.canEdit && (
+        <div className="cp-vb">
+          <p className="cp-vb__h">
+            <span className="cp-pd" aria-hidden="true" />
+            Proposition de la veille
+          </p>
+          <p>
+            {shift.now.length ? `${shift.now.join(', ')} sur les dates actuelles. ` : ''}
+            Du {fmt(shift.startDate)} au {fmt(shift.endDate)}, la prévision ne montre aucun jour
+            mauvais. Décaler de {Math.abs(shift.offsetDays)} jour
+            {Math.abs(shift.offsetDays) > 1 ? 's' : ''}
+            {shift.offsetDays > 0 ? ' plus tard' : ' plus tôt'} ?
+          </p>
+          <div className="cp-actions">
+            <button
+              type="button"
+              className="cp-btn cp-btn--pg"
+              disabled={ctl.busy}
+              onClick={apply}
+            >
+              Décaler
+            </button>
+            <span className="cp-sub">L’agent propose, tu décides.</span>
+          </div>
+        </div>
+      )}
+      <ul className="cp-rules" aria-label="Règles de la veille">
+        {rules.map((r) => (
+          <li key={r.id} data-hit={r.hits.length ? '1' : undefined}>
+            <b>{r.label}</b>
+            <span>
+              {r.hits.length
+                ? r.hits.map((h) => h.label).join(' · ')
+                : 'Rien à signaler sur ce voyage.'}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="cp-note">
+        {active} règle{active > 1 ? 's' : ''} déclenchée{active > 1 ? 's' : ''} sur {rules.length}.
+        Vérifiées à chaque ouverture du Compas sur la prévision Open-Meteo et les alertes
+        officielles ; aucun seuil n’est une norme légale.
+      </p>
+    </>
   );
 }
 

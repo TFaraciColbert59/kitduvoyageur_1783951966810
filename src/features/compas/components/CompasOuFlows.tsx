@@ -69,33 +69,37 @@ export function ActiviteFlow({ ctl }: { ctl: CompasCtl }) {
       compasSetActivityAction({ tripId, tripSlug: slug, activity: a })
     );
   };
+  const current = COMPAS_ACTIVITIES.find((a) => a === activity);
+  // Maquette finale : les activités en tuiles (icône + nom), quatre par
+  // ligne ; la description de l'activité choisie se lit sous la grille.
   return (
-    <PagedList
-      label="Activités"
-      items={COMPAS_ACTIVITIES}
-      render={(a) => {
-        const on = a === activity;
-        return (
-          <button
-            key={a}
-            type="button"
-            className="cp-row"
-            aria-pressed={on}
-            disabled={!ctl.data.canEdit || ctl.busy}
-            onClick={() => pick(a)}
-          >
-            <span className="cp-thumb" data-on={on ? '1' : undefined}>
-              <Icon name={ACTIVITY_META[a].icon} size={19} />
-            </span>
-            <span className="cp-row__t">
-              <b>{activityLabel(a)}</b>
-              <span>{ACTIVITY_META[a].hint}</span>
-            </span>
-            <span className="cp-row__end">{on && <Icon name="check" size={17} />}</span>
-          </button>
-        );
-      }}
-    />
+    <>
+      <div className="cp-tiles" role="group" aria-label="Activités">
+        {COMPAS_ACTIVITIES.map((a) => {
+          const on = a === activity;
+          return (
+            <button
+              key={a}
+              type="button"
+              className="cp-tile"
+              aria-pressed={on}
+              title={ACTIVITY_META[a].hint}
+              disabled={!ctl.data.canEdit || ctl.busy}
+              onClick={() => pick(a)}
+            >
+              <Icon name={ACTIVITY_META[a].icon} size={20} />
+              <span>{activityLabel(a)}</span>
+            </button>
+          );
+        })}
+      </div>
+      <p className="cp-note">
+        {current
+          ? `${activityLabel(current)} : ${ACTIVITY_META[current].hint.toLowerCase()}.`
+          : 'Aucune activité choisie.'}{' '}
+        Le choix règle le matériel proposé et les règles de sécurité du verdict.
+      </p>
+    </>
   );
 }
 

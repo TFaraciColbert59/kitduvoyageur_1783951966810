@@ -1,5 +1,13 @@
 # MISSION LOG — LKDV
 
+## 2026-10-01 — Compas : Verdict Météo et Veille, activités en tuiles, tiroir « Préparer »
+
+- **Verdict, onglet Météo** : un bloc par jour du voyage (ciel, min/max, pluie, rafales, isotherme 0 °C), tiré des prévisions Open-Meteo déjà chargées aux points réels ; source et horizon affichés. Jour hors horizon : « non renseigné ».
+- **Verdict, onglet Veille** : `engine/watch.ts` liste les seuils réels du moteur de danger (`DANGER_THRESHOLDS`, jamais recopiés à la main) avec ce que chacun a déclenché sur ce voyage. Décalage proposé seulement si les jours de **prévision** (jamais la tendance) donnent, à ±3 jours, une fenêtre sans jour « mauvais » ; rien ne change sans le geste « Décaler ». Onglet « Raisons » renommé « Risques » (maquette).
+- **Où** : tiroir intitulé « Préparer » ; activités en tuiles (grille 4 colonnes) ; onglet « Sac » (Mes kits) ; piste de la règle de durée remplie (elle était invisible : `--lkv-secondary` forcé clair par la couche iOS 27).
+- Suivi : `docs/compas/ECARTS_MAQUETTE.md` (écarts restants, écarts volontaires).
+- Preuves : `tsc` 0 ; `eslint --max-warnings=0 src/features/compas` 0 ; Compas 149 tests (dont 6 Veille) ; Météo vérifiée dans Chromium sur données réelles.
+
 ## 2026-10-01 — Compas aligné sur la maquette finale (LKDV_Compas.html, reçue de Tony)
 
 Maquette rendue dans Chromium (390×844, les 5 étapes et le tiroir Où), comparée au Compas réel. Écarts corrigés :

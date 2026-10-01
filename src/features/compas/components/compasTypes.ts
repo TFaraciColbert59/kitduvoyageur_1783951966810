@@ -6,13 +6,15 @@ export type AcquireMode = 'emprunter' | 'louer' | 'acheter';
 
 /** Parcours internes du tiroir de chaque étape (capsule, comme les étapes). */
 export const STEP_FLOWS = {
-  // Ordre de la maquette : Activité → Parcours → Quand → Préférences.
+  // Ordre de la maquette finale : Activité → Parcours → Quand → Préférences
+  // → Sac. « Sur le tracé » (points OSM réels) suit, en dernier.
   ou: [
     { id: 'activite', label: 'Activité', icon: 'flag' },
     { id: 'parcours', label: 'Parcours', icon: 'route' },
-    { id: 'trace', label: 'Sur le tracé', icon: 'map-pin' },
     { id: 'quand', label: 'Quand', icon: 'calendar-days' },
     { id: 'preferences', label: 'Préférences', icon: 'heart' },
+    { id: 'sac', label: 'Sac', icon: 'backpack' },
+    { id: 'trace', label: 'Sur le tracé', icon: 'map-pin' },
   ],
   nous: [
     { id: 'equipe', label: 'Équipe', icon: 'users' },
@@ -23,8 +25,11 @@ export const STEP_FLOWS = {
     { id: 'reservations', label: 'Réservations', icon: 'ticket' },
     { id: 'offres', label: 'Offres', icon: 'tag' },
   ],
+  // Maquette finale : Risques → Météo → Veille → Sources (la veille suit).
   verdict: [
-    { id: 'raisons', label: 'Signaux', icon: 'shield-check' },
+    { id: 'raisons', label: 'Risques', icon: 'shield-check' },
+    { id: 'meteo', label: 'Météo', icon: 'cloud-sun' },
+    { id: 'veille', label: 'Veille', icon: 'bell' },
     { id: 'sources', label: 'Sources', icon: 'layers' },
   ],
   kit: [

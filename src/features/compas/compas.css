@@ -1082,9 +1082,11 @@
   right: 15px;
   background: rgb(23 43 36 / 0.14);
 }
+/* Piste remplie jusqu'au curseur (vert de la maquette). `--lkv-secondary`
+   est forcé en blanc par la couche globale du hub sombre : la piste était
+   invisible sur le verre clair. */
 .cp-ruler__fill {
-  background: var(--lkv-secondary);
-  opacity: 0.75;
+  background: var(--lkv-sage-300);
 }
 .cp-ruler__thumb {
   position: absolute;
@@ -2395,4 +2397,151 @@ html[data-liquid-ios27]:not([data-theme='dark'])
 .cp-sheet {
   left: 8px;
   right: 8px;
+}
+
+/* Tuiles (maquette finale : « .grid2 » / « .tile2 ») — activités du tiroir
+   Préparer : quatre par ligne, icône au-dessus du nom. */
+.cp-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.cp-tile {
+  min-width: 0;
+  min-height: 62px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px;
+  border: 0;
+  border-radius: 14px;
+  background: rgb(23 43 36 / 0.06);
+  color: var(--cp-ink);
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.cp-tile span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cp-tile[aria-pressed='true'] {
+  background: var(--cp-soft);
+  color: var(--lkv-primary);
+  font-weight: 600;
+  box-shadow:
+    inset 0 0 0 1px var(--cp-soft-line),
+    inset 0 1px 0 rgb(255 255 255 / 0.6);
+}
+.cp-tile:disabled {
+  cursor: default;
+}
+.dark .cp-tile,
+[data-theme='dark'] .cp-tile {
+  background: var(--cp-fill);
+}
+
+/* Météo du verdict (maquette : « .wx ») : une case par jour, deux colonnes. */
+.cp-wx {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+.cp-wx > div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  padding: 9px 11px;
+  border-radius: 14px;
+  background: rgb(23 43 36 / 0.06);
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--cp-ink2);
+}
+.cp-wx b {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cp-ink);
+}
+.dark .cp-wx > div,
+[data-theme='dark'] .cp-wx > div {
+  background: var(--cp-fill);
+}
+
+/* Veille du verdict (maquette : « .vb » et lignes à interrupteur). */
+.cp-vb {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 9px 11px;
+  border-radius: 14px;
+  background: rgb(23 43 36 / 0.06);
+}
+.cp-vb p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.35;
+}
+.cp-vb__h {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px !important;
+  font-weight: 600;
+  color: var(--cp-ink2);
+}
+.cp-pd {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cp-good);
+  animation: cp-pulse 1.6s infinite;
+}
+@keyframes cp-pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cp-pd {
+    animation: none;
+  }
+}
+.cp-rules {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cp-rules li {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 7px 2px;
+  border-top: 0.5px solid var(--cp-sep);
+}
+.cp-rules li:first-child {
+  border-top: 0;
+}
+.cp-rules b {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.cp-rules span {
+  font-size: 12px;
+  color: var(--cp-ink2);
+}
+.cp-rules li[data-hit='1'] span {
+  color: var(--cp-warn);
+}
+.dark .cp-vb,
+[data-theme='dark'] .cp-vb {
+  background: var(--cp-fill);
 }

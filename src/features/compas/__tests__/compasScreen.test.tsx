@@ -544,8 +544,8 @@ describe('CompasScreen', () => {
     ];
     render(<CompasScreen data={data} />);
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Détails : Où et quand' }));
-    const sheet = await screen.findByRole('dialog', { name: 'Où et quand' });
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
     fireEvent.click(within(sheet).getByRole('button', { name: /Sur le tracé/ }));
     expect(within(sheet).getByText('Refuge des Oulettes')).toBeTruthy();
     expect(within(sheet).getByText('Point d’eau')).toBeTruthy();
@@ -621,8 +621,8 @@ describe('CompasScreen', () => {
 
   const openOu = async (flow: RegExp) => {
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Détails : Où et quand' }));
-    const sheet = await screen.findByRole('dialog', { name: 'Où et quand' });
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
     fireEvent.click(within(sheet).getByRole('button', { name: flow }));
     return sheet;
   };
