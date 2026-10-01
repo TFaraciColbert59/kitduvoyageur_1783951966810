@@ -655,6 +655,50 @@ export async function compasSetPartySizeAction(
   }
 }
 
+const staySchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  day: z.number().int().min(1).max(60),
+  /** Nom de l'hébergement ; vide = retirer la mention. */
+  name: z.string().trim().max(120),
+});
+
+/** Déclare (ou retire) l'hébergement d'une nuit : aucune réservation n'est créée. */
+export async function compasSetStayAction(
+  input: z.input<typeof staySchema>
+): Promise<CompasActionResult> {
+  const parsed = staySchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Hébergement invalide' };
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    const { data: steps, error: readError } = await auth.supabase
+      .from('trip_steps')
+      .select('id')
+      .eq('trip_id', parsed.data.tripId)
+      .eq('day_number', parsed.data.day)
+      .order('order_index', { ascending: false })
+      .limit(1);
+    const target = (steps as Array<{ id: string }> | null)?.[0];
+    if (readError || !target) return { success: false, error: 'Aucune étape pour cette nuit.' };
+    const { data, error } = await auth.supabase
+      .from('trip_steps')
+      .update({
+        accommodation_name: parsed.data.name || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', target.id)
+      .select('id');
+    if (error || !data?.length)
+      return { success: false, error: 'Impossible d’enregistrer l’hébergement.' };
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true };
+  } catch (err) {
+    console.error('[compas] compasSetStayAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
 /* ---------- Parcours ---------- */
 
 export interface CompasRouteOption {

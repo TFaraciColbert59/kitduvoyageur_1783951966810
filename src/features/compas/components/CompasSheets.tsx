@@ -20,8 +20,11 @@ import {
   compasSetBudgetAction,
   compasSetCarrierAction,
   compasSetPartySizeAction,
+  compasSetStayAction,
 } from '../server/compasActions';
 import { KitRow, LIVE_BOOKING, MemberAvatar, lineStatus, verticalOf } from './CompasCards';
+import { AffiliateDisclosure } from '@/features/affiliation/components/AffiliateDisclosure';
+import { convertFromEur } from '../engine/currency';
 import { Chip, PagedList, Segments, Thumb, useTextFilter } from './CompasPrimitives';
 import { DisLe } from './CompasDisLe';
 import { ActiviteFlow, ParcoursFlow, PreferencesFlow, QuandFlow } from './CompasOuFlows';
@@ -861,6 +864,7 @@ function StepSheet({
       {step === 'ou' && flow === 'preferences' && <PreferencesFlow ctl={ctl} />}
       {step === 'nous' && flow === 'equipe' && <EquipeFlow ctl={ctl} />}
       {step === 'nous' && flow === 'budget' && <BudgetFlow ctl={ctl} />}
+      {step === 'resa' && flow === 'nuits' && <NuitsFlow ctl={ctl} />}
       {step === 'resa' && flow === 'reservations' && <ReservationsFlow ctl={ctl} />}
       {step === 'resa' && flow === 'offres' && <OffresFlow ctl={ctl} />}
       {step === 'verdict' && flow === 'raisons' && <RaisonsFlow ctl={ctl} />}
@@ -1107,50 +1111,179 @@ const VERTICAL_LABEL: Record<string, { label: string; icon: string }> = {
   activity: { label: 'Activité', icon: 'ticket' },
 };
 
+const STAY_OFFER = /h[ôo]tel|h[ée]berg|stay|refuge|g[îi]te|logement|nuit/i;
+
+function NuitsFlow({ ctl }: { ctl: CompasCtl }) {
+  const { tripId, slug } = ctl.data.model;
+  const byDay = new Map<number, string | null>();
+  for (const st of ctl.data.itinerary) byDay.set(st.day, byDay.get(st.day) ?? st.accommodation);
+  const days = [...byDay.entries()].sort((a, b) => a[0] - b[0]);
+  const lastDay = days.length ? days[days.length - 1][0] : 0;
+  const nights = days.filter(([day]) => day < lastDay);
+  const bivouac = ctl.data.model.preferences.nights === 'bivouac';
+  const offers = ctl.data.affiliateLinks.filter((l) => STAY_OFFER.test(l.category ?? ''));
+  const live = ctl.data.providers.routestack !== 'disabled';
+
+  const save = (day: number, name: string) =>
+    void ctl.run(name ? 'Hébergement noté' : 'Hébergement retiré', () =>
+      compasSetStayAction({ tripId, tripSlug: slug, day, name })
+    );
+
+  if (nights.length === 0)
+    return (
+      <p className="cp-note">
+        Pas de nuit à organiser : le voyage tient en une journée ou n’a pas encore d’étapes.
+      </p>
+    );
+
+  return (
+    <>
+      <PagedList
+        label="Nuits du voyage"
+        items={nights}
+        render={([day, stay]) => (
+          <form
+            key={day}
+            className="cp-row"
+            style={staticRow}
+            onSubmit={(e) => {
+              e.preventDefault();
+              save(day, String(new FormData(e.currentTarget).get('stay') ?? ''));
+            }}
+          >
+            <span className="cp-thumb">
+              <Icon name="bed-double" size={20} />
+            </span>
+            <span className="cp-row__t">
+              <b>Nuit du jour {day}</b>
+              {ctl.data.canEdit ? (
+                <input
+                  key={stay ?? 'vide'}
+                  name="stay"
+                  defaultValue={stay ?? ''}
+                  maxLength={120}
+                  placeholder={bivouac ? 'Bivouac, ou nom du lieu' : 'Nom de l’hébergement'}
+                  aria-label={`Hébergement de la nuit du jour ${day}`}
+                />
+              ) : (
+                <span>{stay ?? 'à trouver'}</span>
+              )}
+            </span>
+            <span className="cp-row__end">
+              {stay ? (
+                <Chip tone="good">Noté</Chip>
+              ) : (
+                <Chip tone={bivouac ? 'soft' : 'warn'}>À trouver</Chip>
+              )}
+              {ctl.data.canEdit && (
+                <button type="submit" className="cp-btn cp-btn--soft" disabled={ctl.busy}>
+                  OK
+                </button>
+              )}
+            </span>
+          </form>
+        )}
+      />
+      <p className="cp-note">
+        Noter un hébergement ne réserve rien : c’est ton repère. Aucune réservation ni paiement
+        n’est lancé d’ici.
+      </p>
+      {offers.length > 0 && (
+        <>
+          <AffiliateDisclosure />
+          <PagedList
+            label="Hébergements partenaires"
+            items={offers}
+            render={(l) => (
+              <a
+                key={l.id}
+                className="cp-row"
+                href={l.url}
+                target="_blank"
+                rel="sponsored nofollow noopener"
+              >
+                <span className="cp-thumb">
+                  <Icon name="bed-double" size={20} />
+                </span>
+                <span className="cp-row__t">
+                  <b>{l.label}</b>
+                  <span>{l.partner ?? 'Partenaire'}</span>
+                </span>
+                <span className="cp-row__end">
+                  <Icon name="external-link" size={16} />
+                </span>
+              </a>
+            )}
+          />
+        </>
+      )}
+      <p className="cp-disc">
+        {live
+          ? 'Recherche d’hébergements en direct : tarif revalidé avant tout paiement, jamais de commande sans ton accord.'
+          : 'Recherche d’hébergements en direct : active dès que les clés partenaires sont posées. Rien n’est simulé d’ici là.'}
+      </p>
+    </>
+  );
+}
+
 function ReservationsFlow({ ctl }: { ctl: CompasCtl }) {
   const list = [...ctl.data.bookings].sort(
     (a, b) => Number(LIVE_BOOKING(b.status)) - Number(LIVE_BOOKING(a.status))
   );
+  const { bookings, budget } = ctl.data.model;
+  const converted = convertFromEur(bookings.amountEur, ctl.data.fx);
   return (
-    <PagedList
-      label="Réservations du voyage"
-      items={list}
-      empty={
-        <p className="cp-note">
-          Aucune réservation pour ce voyage. Les offres partenaires sont dans l’onglet Offres.
+    <>
+      {bookings.total > 0 && (
+        <p className="cp-sub">
+          Total des réservations : <b>{formatMoney(bookings.amountEur)}</b>
+          {converted
+            ? ` ≈ ${formatMoney(converted.amount, converted.currency)} (1 € = ${String(converted.rate).replace('.', ',')} ${converted.currency}, taux BCE du ${converted.date})`
+            : budget.currency !== 'EUR'
+              ? ` · conversion en ${budget.currency} indisponible`
+              : ''}
         </p>
-      }
-      render={(b) => {
-        const v = VERTICAL_LABEL[b.vertical] ?? { label: b.vertical, icon: 'ticket' };
-        const st = BOOKING_STATUS[b.status] ?? { label: b.status };
-        return (
-          <div
-            key={b.id}
-            className="cp-row"
-            style={staticRow}
-            data-vertical={verticalOf(b.vertical)}
-          >
-            <span className="cp-thumb">
-              <Icon name={v.icon} size={20} />
-            </span>
-            <span className="cp-row__t">
-              <b>{v.label}</b>
-              <span>
-                {b.provider === 'affiliate'
-                  ? 'Partenaire affilié'
-                  : b.provider === 'routestack'
-                    ? 'RouteStack'
-                    : 'Viator'}
+      )}
+      <PagedList
+        label="Réservations du voyage"
+        items={list}
+        empty={
+          <p className="cp-note">
+            Aucune réservation pour ce voyage. Les offres partenaires sont dans l’onglet Offres.
+          </p>
+        }
+        render={(b) => {
+          const v = VERTICAL_LABEL[b.vertical] ?? { label: b.vertical, icon: 'ticket' };
+          const st = BOOKING_STATUS[b.status] ?? { label: b.status };
+          return (
+            <div
+              key={b.id}
+              className="cp-row"
+              style={staticRow}
+              data-vertical={verticalOf(b.vertical)}
+            >
+              <span className="cp-thumb">
+                <Icon name={v.icon} size={20} />
               </span>
-            </span>
-            <span className="cp-row__end">
-              {formatMoney(b.amountEur)}
-              <Chip tone={st.tone}>{st.label}</Chip>
-            </span>
-          </div>
-        );
-      }}
-    />
+              <span className="cp-row__t">
+                <b>{v.label}</b>
+                <span>
+                  {b.provider === 'affiliate'
+                    ? 'Partenaire affilié'
+                    : b.provider === 'routestack'
+                      ? 'RouteStack'
+                      : 'Viator'}
+                </span>
+              </span>
+              <span className="cp-row__end">
+                {formatMoney(b.amountEur)}
+                <Chip tone={st.tone}>{st.label}</Chip>
+              </span>
+            </div>
+          );
+        }}
+      />
+    </>
   );
 }
 
@@ -1170,6 +1303,7 @@ function OffresFlow({ ctl }: { ctl: CompasCtl }) {
   const live = ctl.data.providers.routestack !== 'disabled';
   return (
     <>
+      <AffiliateDisclosure />
       <PagedList
         label="Offres partenaires"
         items={ctl.data.affiliateLinks}
@@ -1177,7 +1311,13 @@ function OffresFlow({ ctl }: { ctl: CompasCtl }) {
           <p className="cp-note">Aucune offre partenaire pour cette destination pour l’instant.</p>
         }
         render={(l) => (
-          <a key={l.id} className="cp-row" href={l.url} target="_blank" rel="noopener sponsored">
+          <a
+            key={l.id}
+            className="cp-row"
+            href={l.url}
+            target="_blank"
+            rel="sponsored nofollow noopener"
+          >
             <span className="cp-thumb">
               <Icon name={offerIcon(l.category)} size={20} />
             </span>

@@ -392,7 +392,7 @@ export function ResaCard({ ctl }: { ctl: CompasCtl }) {
                 key={day}
                 type="button"
                 className="cp-day"
-                onClick={() => ctl.open({ kind: 'step', step: 'ou', flow: 'parcours' })}
+                onClick={() => ctl.open({ kind: 'step', step: 'resa', flow: 'nuits' })}
               >
                 <b>Jour {day}</b>
                 <small>{stay ?? (needNight ? 'nuit à trouver' : 'libre')}</small>

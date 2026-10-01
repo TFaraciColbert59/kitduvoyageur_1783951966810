@@ -34,6 +34,7 @@ const compas = vi.hoisted(() => ({
   compasSetActivityAction: vi.fn(async () => ({ success: true })),
   compasSetPreferencesAction: vi.fn(async () => ({ success: true })),
   compasSetPartySizeAction: vi.fn(async () => ({ success: true })),
+  compasSetStayAction: vi.fn(async () => ({ success: true })),
   compasApplyRouteAction: vi.fn(async () => ({ success: true, kept: 0 })),
   compasMyRoutesAction: vi.fn(async () => ({ success: true, routes: [] })),
   compasSearchRoutesAction: vi.fn(async () => ({ success: true, routes: [] as unknown[] })),
@@ -214,6 +215,7 @@ function makeData(overrides: Partial<CompasInput> = {}): CompasData {
     canEdit: true,
     viewerId: U1,
     providers: { routestack: 'disabled', viator: 'disabled' },
+    fx: null,
     weather: null,
     route: { id: 374, name: 'Tour des Vallées' },
     origin: { lat: 42.73, lon: -0.01 },
@@ -403,6 +405,39 @@ describe('CompasScreen', () => {
     expect(container.querySelector('.compas')?.getAttribute('data-map')).toBe('big');
     fireEvent.click(screen.getAllByRole('button', { name: 'Réduire la carte' })[0]);
     expect(container.querySelector('.compas')?.getAttribute('data-map')).toBeNull();
+  });
+
+  it('nuits : noter un hébergement écrit sans rien réserver, liens affiliés balisés', async () => {
+    const data = makeData();
+    data.affiliateLinks = [
+      {
+        id: 'a1',
+        label: 'Gîte du col',
+        category: 'Hébergement',
+        partner: 'Gîtes',
+        url: '/go/gite',
+      },
+    ];
+    render(<CompasScreen data={data} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Réserver' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Réserver' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Nuits/ }));
+    const input = within(sheet).getByLabelText('Hébergement de la nuit du jour 1');
+    fireEvent.change(input, { target: { value: 'Gîte du col' } });
+    fireEvent.click(within(sheet).getAllByRole('button', { name: 'OK' })[0]);
+    await waitFor(() =>
+      expect(compas.compasSetStayAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        day: 1,
+        name: 'Gîte du col',
+      })
+    );
+    const link = within(sheet).getByRole('link', { name: /Gîte du col/ });
+    expect(link.getAttribute('rel')).toContain('sponsored');
+    expect(link.getAttribute('rel')).toContain('nofollow');
+    expect(within(sheet).getByRole('note')).toBeTruthy();
   });
 
   const openOu = async (flow: RegExp) => {

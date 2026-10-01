@@ -1,5 +1,8 @@
 import 'server-only';
 
+import type { FxRate } from '../engine/currency';
+import { getEurRate } from './rates';
+
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { getHubAdventureData } from '@/features/hub/server/getHubAdventureData';
@@ -87,6 +90,8 @@ export interface CompasData {
   viewerId: string | null;
   /** Mode réel des fournisseurs de réservation (`disabled` tant que les clés manquent). */
   providers: { routestack: ProviderCredentialMode; viator: ProviderCredentialMode };
+  /** Taux EUR → devise du voyage (null si le voyage est en euros ou taux indisponible). */
+  fx: FxRate | null;
   /** Météo Open-Meteo des jours du voyage et calendrier 6 semaines (null si indisponible). */
   weather: CompasWeather | null;
   /** Parcours du catalogue choisi pour le voyage. */
@@ -424,6 +429,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     canEdit: Boolean(trip.permissions?.canEdit),
     viewerId,
     providers: getActiveProviderMode(),
+    fx: await getEurRate(input.trip.budgetCurrency ?? 'EUR'),
     weather,
     route: { id: routeId, name: hub.hiking?.routeName ?? null },
     origin,

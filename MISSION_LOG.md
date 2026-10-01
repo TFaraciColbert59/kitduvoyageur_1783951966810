@@ -1,5 +1,15 @@
 # MISSION LOG — LKDV
 
+## 2026-10-01 — Compas, Lot 3 « Réserver » (périmètre sans paiement)
+
+- Flux **Nuits** (étape Résa) : une ligne par nuit, hébergement noté par l'éditeur (`compasSetStayAction` → `trip_steps.accommodation_name`, 0 ligne = échec). **Noter ne réserve rien** ; aucune commande, aucun paiement, aucun lien de paiement.
+- Offres partenaires : composant obligatoire `AffiliateDisclosure` (DGCCRF) ajouté aux Offres et aux hébergements, `rel="sponsored nofollow noopener"` (avant : `noopener sponsored`).
+- Conversion Frankfurter (BCE, sans clé, revalidée 12 h) : `engine/currency.ts` + `server/rates.ts`. Total des réservations affiché en euros puis converti avec le taux et sa date ; sans taux, « conversion indisponible », jamais d'estimation.
+- RouteStack reste en mode désactivé tant que les clés manquent (message inchangé, rien de simulé). Viator : pas de changement.
+- La tuile « nuit à trouver » de la carte Résa ouvre désormais Nuits (avant : Parcours).
+- Aucune migration. Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants CI/identité/icônes OK, 90 tests (`src/features/compas` + `src/lib/ai`), `npm run build` OK.
+- Non fait : recherche d'hébergements en direct (attend les clés RouteStack), liens Viator par activité, test réel sur le compte démo.
+
 ## 2026-10-01 — Compas, Lot 2 « Nous »
 
 - Moteur pur `engine/crew.ts` : `settleExpenses` (soldes + remboursements simplifiés ; `equal` partagé entre membres, `individual` à la charge du payeur, **`custom` exclu et signalé, jamais deviné**, prévues ignorées) et `crewPace` (rythme du plus lent, « x sur y connues »).

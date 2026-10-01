@@ -18,6 +18,7 @@ export const STEP_FLOWS = {
     { id: 'budget', label: 'Budget', icon: 'coins' },
   ],
   resa: [
+    { id: 'nuits', label: 'Nuits', icon: 'bed-double' },
     { id: 'reservations', label: 'Réservations', icon: 'ticket' },
     { id: 'offres', label: 'Offres', icon: 'tag' },
   ],
