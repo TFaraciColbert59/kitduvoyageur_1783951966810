@@ -902,6 +902,34 @@ describe('CompasScreen', () => {
     expect(await screen.findByText('Durée : 5 j · parcours redécoupé')).toBeTruthy();
   });
 
+  it('Quand : toucher un jour du calendrier fixe le départ et l’enregistre aussitôt', async () => {
+    const calendar = Array.from({ length: 14 }, (_, i) => {
+      const date = `2026-10-${String(10 + i).padStart(2, '0')}`;
+      return {
+        date,
+        kind: 'prevision' as const,
+        quality: i === 6 ? ('moyen' as const) : ('bon' as const),
+        reasons: [],
+        tMin: 4,
+        tMax: 14,
+      };
+    });
+    const data = makeData();
+    data.weather = { source: 'Open-Meteo', horizon: '2026-10-23', tripDays: [], calendar };
+    render(<CompasScreen data={data} />);
+    const sheet = await openOu(/Quand/);
+    expect(within(sheet).getAllByText(/12 oct\.? → \S+ 15 oct/).length).toBeGreaterThan(0);
+    fireEvent.click(within(sheet).getByRole('button', { name: /14 oct\.? :/ }));
+    await waitFor(() =>
+      expect(compas.compasSetDatesAction).toHaveBeenCalledWith(
+        expect.objectContaining({ startDate: '2026-10-14', endDate: '2026-10-17' })
+      )
+    );
+    expect(
+      await screen.findByText(/^Quand : \S+ 14 oct\.? → \S+ 17 oct\.? · conditions moyennes/)
+    ).toBeTruthy();
+  });
+
   it('Parcours : chercher un lieu, voir la communauté, choisir découpé sur les dates', async () => {
     compas.compasSearchRoutesAction.mockResolvedValueOnce({
       success: true,
