@@ -111,7 +111,10 @@ const compas = vi.hoisted(() => ({
       },
     ],
   })),
-  compasAddMemberAction: vi.fn(async () => ({ success: true })),
+  compasInviteMemberAction: vi.fn(async () => ({ success: true, invitationId: 'inv-1' })),
+  compasCancelInvitationAction: vi.fn(async () => ({ success: true })),
+  compasInviteLinkAction: vi.fn(async () => ({ success: true, path: '/invitation/abcdef0123456789' })),
+  compasRestoreMemberAction: vi.fn(async () => ({ success: true })),
   compasSetMemberRoleAction: vi.fn(async () => ({ success: true })),
   compasRemoveMemberAction: vi.fn(async () => ({ success: true })),
   compasCreateKitFromTripAction: vi.fn(async () => ({ success: true, kitId: 'k', count: 3 })),
@@ -165,6 +168,23 @@ const bottle = vi.hoisted(() => ({
 }));
 vi.mock('../server/bottleActions', () => bottle);
 const resa = vi.hoisted(() => ({
+  compasNearbyActivitiesAction: vi.fn(async () => ({
+    success: true,
+    unavailable: false,
+    offers: [
+      {
+        id: 'v1',
+        title: 'Cirque de Gavarnie avec un guide',
+        untitled: false,
+        description: null,
+        amount: 45,
+        currency: 'EUR',
+        provider: 'viator',
+        url: 'https://example.test/activite',
+        requiresRevalidation: false,
+      },
+    ],
+  })),
   compasSearchOffersAction: vi.fn(async () => ({
     success: true,
     mode: 'sandbox',
@@ -185,6 +205,26 @@ const resa = vi.hoisted(() => ({
   })),
 }));
 vi.mock('../server/resaActions', () => resa);
+const autofill = vi.hoisted(() => ({
+  compasAutofillAction: vi.fn(async () => ({
+    success: true,
+    summary: {
+      nights: [
+        { night: 1, type: 'refuge', place: 'Refuge des Oulettes', reason: 'ton profil : confort' },
+        { night: 2, type: 'bivouac', place: null, reason: 'ta préférence' },
+      ],
+      transport: { km: 412.3, minutes: 250, walkKm: 0.8, fuelEur: 97, basis: '' },
+      kit: { inventaire: 2, pret: 0, location: 0, achat: 1, a_trouver: 1 },
+      budget: [],
+      total: 486,
+      notes: [],
+      usedAi: true,
+      stepsCreated: 0,
+    },
+  })),
+  compasUndoAutofillAction: vi.fn(async () => ({ success: true })),
+}));
+vi.mock('../server/autofillActions', () => autofill);
 
 const cart = vi.hoisted(() => ({ addToCart: vi.fn() }));
 vi.mock('@/lib/cart', () => cart);
@@ -355,6 +395,17 @@ function makeData(overrides: Partial<CompasInput> = {}): CompasData {
     affiliateLinks: [],
     canEdit: true,
     viewerId: U1,
+    autofill: 'done' as const,
+    pendingInvites: [
+      {
+        id: 'b1c2d3e4-0000-4000-8000-0000000000bb',
+        userId: '5c1d2e3f-0000-4000-8000-0000000000cc',
+        name: 'Sam Crête',
+        avatarUrl: null,
+        role: 'editor' as const,
+        createdAt: '2026-09-30T10:00:00Z',
+      },
+    ],
     providers: { routestack: 'disabled', viator: 'disabled' },
     fx: null,
     kitAdvice: [],
@@ -683,7 +734,31 @@ describe('CompasScreen', () => {
     expect(fd.get('tripId')).toBe(TRIP);
   });
 
-  it('Nous · Qui : propose les personnes suivies et les ajoute sans quitter le Compas', async () => {
+  it('Préremplissage : lieu et dates connus → écrit une fois, annonce le total, annulable', async () => {
+    render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+    expect(await screen.findByText('Je prépare ton aventure…')).toBeTruthy();
+    await waitFor(() =>
+      expect(autofill.compasAutofillAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        from: null,
+      })
+    );
+    expect(await screen.findByText(/Aventure préparée · 486/)).toBeTruthy();
+    expect(screen.getByText('1 refuge, 1 bivouac · 412 km de route · 4 objets au kit')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
+    await waitFor(() =>
+      expect(autofill.compasUndoAutofillAction).toHaveBeenCalledWith({ tripId: TRIP, tripSlug: 'trek-3-vallees' })
+    );
+    expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('Préremplissage : déjà fait ou annulé → ne se relance pas', () => {
+    render(<CompasScreen data={{ ...makeData(), autofill: 'undone' }} />);
+    expect(autofill.compasAutofillAction).not.toHaveBeenCalled();
+  });
+
+  it('Nous · Qui : invite les personnes suivies, compte présents / en attente / libres, annule une invitation', async () => {
     render(<CompasScreen data={makeData()} />);
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Détails : Nous' }));
@@ -695,15 +770,31 @@ describe('CompasScreen', () => {
     );
     expect(await within(sheet).findByText('Léa Montagne')).toBeTruthy();
     fireEvent.click(within(sheet).getByRole('button', { name: 'Lecture seule' }));
-    fireEvent.click(within(sheet).getByRole('button', { name: 'Ajouter Léa Montagne' }));
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Inviter Léa Montagne' }));
     await waitFor(() =>
-      expect(compas.compasAddMemberAction).toHaveBeenCalledWith({
+      expect(compas.compasInviteMemberAction).toHaveBeenCalledWith({
         tripId: TRIP,
         tripSlug: 'trek-3-vallees',
         userId: '5c1d2e3f-0000-4000-8000-0000000000aa',
         role: 'viewer',
+        source: 'friend',
       })
     );
+    // Compteur : présents · en attente · total (l'invitée n'est pas encore dans le voyage).
+    expect(within(sheet).getByText(/2 présents · 1 en attente/)).toBeTruthy();
+    expect(within(sheet).getByText('Sam Crête')).toBeTruthy();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Annuler l’invitation de Sam Crête' }));
+    await waitFor(() =>
+      expect(compas.compasCancelInvitationAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        invitationId: 'b1c2d3e4-0000-4000-8000-0000000000bb',
+      })
+    );
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Créer le lien d’invitation' }));
+    await waitFor(() =>
+      expect(compas.compasInviteLinkAction).toHaveBeenCalledWith({ tripId: TRIP, role: 'viewer' })
+    );
+    expect(await within(sheet).findByText(/\/invitation\/abcdef0123456789/)).toBeTruthy();
     expect(within(sheet).queryByRole('link', { name: /hub/i })).toBeNull();
   });
 
@@ -1125,6 +1216,11 @@ describe('CompasScreen', () => {
         query: 'Gavarnie',
       })
     );
+    // Activité partenaire (guidée) dans la même liste, badge discret, lien sponsorisé.
+    const partner = await within(sheet).findByRole('link', { name: /Cirque de Gavarnie avec un guide/ });
+    expect(partner.getAttribute('rel')).toContain('sponsored');
+    expect(within(partner).getByText('Partenaire')).toBeTruthy();
+    expect(resa.compasNearbyActivitiesAction).toHaveBeenLastCalledWith({ tripId: TRIP, place: 'Gavarnie' });
     fireEvent.click(await within(sheet).findByRole('button', { name: /GR 10 · Gavarnie/ }));
     expect(within(sheet).getByText('7 sorties publiques')).toBeTruthy();
     fireEvent.click(within(sheet).getByRole('button', { name: /Choisir ce parcours/ }));

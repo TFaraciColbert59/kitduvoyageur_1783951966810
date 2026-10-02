@@ -6,6 +6,8 @@ import { useState } from 'react';
 import Icon from '@/components/ui/Icon';
 import { compasOpenTripAction } from '../server/compasActions';
 import type { CompasTripChoice } from '../server/myTrips';
+import type { TripInvitationView } from '../server/invitationActions';
+import { TripInvitationsInbox } from './TripInvitations';
 
 const fmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 
@@ -21,7 +23,13 @@ function dates(t: CompasTripChoice): string {
  * préparer au lieu d'ouvrir d'office la création (qui donnait l'impression de
  * retomber sur l'ancien préparateur).
  */
-export function CompasTripPicker({ trips }: { trips: CompasTripChoice[] }) {
+export function CompasTripPicker({
+  trips,
+  invitations = [],
+}: {
+  trips: CompasTripChoice[];
+  invitations?: TripInvitationView[];
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -49,6 +57,7 @@ export function CompasTripPicker({ trips }: { trips: CompasTripChoice[] }) {
         <p className="cp-sub" style={{ margin: 0 }}>
           Choisis un de tes voyages : le Compas s’ouvre dessus.
         </p>
+        <TripInvitationsInbox invitations={invitations} title="On t’invite" />
         <div className="cp-list" style={{ width: '100%' }} role="group" aria-label="Mes voyages">
           {trips.map((t) => (
             <button

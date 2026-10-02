@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import Icon from '@/components/ui/Icon';
 import type { CompasNights } from '../engine/compasModel';
 import {
@@ -11,6 +11,7 @@ import {
   formatHours,
   formatKm,
   formatMeters,
+  formatMoney,
   weatherLabel,
 } from '../engine/format';
 import {
@@ -38,6 +39,10 @@ import {
 } from '../server/compasActions';
 import { applyCurrent, inverseOps, runOps } from './compasApply';
 import { Chip, PagedList, Segments } from './CompasPrimitives';
+import { compasNearbyActivitiesAction } from '../server/resaActions';
+import type { CompasStayOffer } from '../engine/stays';
+import { mixParcours } from '../engine/parcoursMix';
+import { AffiliateDisclosure } from '@/features/affiliation/components/AffiliateDisclosure';
 import type { CompasCtl, FlowHint } from './compasTypes';
 
 const TIME_ZONE = 'Europe/Paris';
@@ -113,7 +118,11 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
   const { data } = ctl;
   const m = data.model;
   const [mode, setMode] = useState<RouteMode>(() =>
-    hint?.query ? 'cherche' : data.itinerary.length ? 'etapes' : data.origin ? 'autour' : 'mes'
+    hint?.query ? 'cherche' : data.itinerary.length ? 'etapes' : 'autour'
+  );
+  // « Autour » part de la position GPS de l'appareil ; à défaut, du départ du voyage.
+  const [here, setHere] = useState<{ lat: number; lon: number; gps: boolean } | null>(
+    data.origin ? { ...data.origin, gps: false } : null
   );
   const [query, setQuery] = useState(hint?.query ?? '');
   const [results, setResults] = useState<{
@@ -125,19 +134,57 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
     routes: [],
   });
   const [picked, setPicked] = useState<CompasRouteOption | null>(null);
+  // Activités partenaires (dont sorties guidées), mélangées aux parcours.
+  const [partners, setPartners] = useState<CompasStayOffer[]>([]);
+  const partnerSeq = useRef(0);
+  const loadPartners = (place: string | null) => {
+    const mine = ++partnerSeq.current;
+    setPartners([]);
+    if (!place) return;
+    compasNearbyActivitiesAction({ tripId: m.tripId, place })
+      .then((res) => {
+        if (mine === partnerSeq.current && res.success) setPartners(res.offers);
+      })
+      .catch(() => {});
+  };
+
+  /** Position GPS (4 s au plus, mémorisée 10 min), sinon le départ du voyage. */
+  const locate = (): Promise<{ lat: number; lon: number; gps: boolean } | null> =>
+    new Promise((resolve) => {
+      if (typeof navigator === 'undefined' || !navigator.geolocation) return resolve(here);
+      navigator.geolocation.getCurrentPosition(
+        (p) => {
+          const pos = { lat: p.coords.latitude, lon: p.coords.longitude, gps: true };
+          setHere(pos);
+          resolve(pos);
+        },
+        () => resolve(here),
+        { enableHighAccuracy: false, timeout: 4000, maximumAge: 600_000 }
+      );
+    });
 
   const load = async (next: RouteMode, q = query) => {
     setMode(next);
     setPicked(null);
+    if (next === 'etapes' || next === 'mes') loadPartners(null);
     if (next === 'etapes') return;
     setResults({ status: 'loading', routes: [] });
     try {
+      const at = next === 'autour' ? await locate() : here;
+      if (next === 'autour' && !at) {
+        setResults({
+          status: 'error',
+          routes: [],
+          error: 'Position indisponible : autorise la localisation ou cherche un lieu.',
+        });
+        return;
+      }
       const res =
         next === 'mes'
           ? await compasMyRoutesAction()
           : await compasSearchRoutesAction({
-              lat: data.origin?.lat ?? null,
-              lon: data.origin?.lon ?? null,
+              lat: at?.lat ?? null,
+              lon: at?.lon ?? null,
               query: next === 'cherche' ? q.trim() || null : null,
             });
       setResults(
@@ -145,6 +192,12 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
           ? { status: 'ok', routes: res.routes }
           : { status: 'error', routes: [], error: res.error }
       );
+      if (next !== 'mes')
+        loadPartners(
+          next === 'cherche'
+            ? q.trim() || null
+            : (m.destination ?? (res.success ? (res.routes[0]?.region ?? null) : null))
+        );
     } catch {
       setResults({ status: 'error', routes: [], error: 'Connexion perdue : réessaie.' });
     }
@@ -165,7 +218,7 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
 
   const modes: Array<{ id: RouteMode; label: string }> = [
     { id: 'etapes', label: `Étapes${data.itinerary.length ? ` · ${data.itinerary.length}` : ''}` },
-    ...(data.origin ? [{ id: 'autour' as const, label: 'Autour' }] : []),
+    { id: 'autour' as const, label: 'Autour · 50 km' },
     { id: 'mes', label: 'Mes randos' },
   ];
 
@@ -270,49 +323,95 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
           {results.error}
         </p>
       ) : (
-        <PagedList
-          label="Parcours trouvés"
-          resetKey={`${mode}-${query}`}
-          items={results.routes}
-          empty={
-            <p className="cp-note">
-              {mode === 'mes'
-                ? 'Aucune sortie enregistrée sur un parcours du catalogue pour l’instant.'
-                : mode === 'autour'
-                  ? 'Aucun parcours du catalogue à moins de 80 km du départ.'
-                  : 'Aucun parcours ne correspond à cette recherche.'}
+        <>
+          {mode === 'autour' && (
+            <p className="cp-sub">
+              {results.routes.length} parcours à moins de 50 km{' '}
+              {here?.gps ? 'de toi' : 'du départ du voyage'}, du plus proche au plus loin
             </p>
-          }
-          render={(r) => (
-            <button key={r.routeId} type="button" className="cp-row" onClick={() => setPicked(r)}>
-              <span className="cp-thumb" aria-hidden="true">
-                <Icon name={r.mine ? 'footprints' : 'route'} size={18} />
-              </span>
-              <span className="cp-row__t">
-                <b>{r.name}</b>
-                <span>
-                  {[
-                    r.region,
-                    formatKm(r.distanceKm),
-                    r.elevationGainM ? `D+ ${formatMeters(r.elevationGainM)}` : null,
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </span>
-              </span>
-              <span className="cp-row__end">
-                {r.mine ? (
-                  <Chip tone="good">fait ×{r.mine.count}</Chip>
-                ) : r.communitySessions > 0 ? (
-                  <Chip icon="users">{r.communitySessions}</Chip>
-                ) : r.distanceFromKm != null ? (
-                  <span className="cp-sub">à {Math.round(r.distanceFromKm)} km</span>
-                ) : null}
-                <Icon name="chevron-right" size={16} />
-              </span>
-            </button>
           )}
-        />
+          <PagedList
+            label="Parcours trouvés"
+            resetKey={`${mode}-${query}`}
+            items={mixParcours(results.routes, mode === 'mes' ? [] : partners)}
+            empty={
+              <p className="cp-note">
+                {mode === 'mes'
+                  ? 'Aucune sortie enregistrée sur un parcours du catalogue pour l’instant.'
+                  : mode === 'autour'
+                    ? 'Aucun parcours du catalogue à moins de 50 km.'
+                    : 'Aucun parcours ne correspond à cette recherche.'}
+              </p>
+            }
+            render={(entry) => {
+              if (entry.kind === 'activity') {
+                const a = entry.item;
+                const body = (
+                  <>
+                    <span className="cp-thumb" aria-hidden="true">
+                      <Icon name="ticket" size={18} />
+                    </span>
+                    <span className="cp-row__t">
+                      <b>{a.title}</b>
+                      <span>
+                        {a.amount != null && a.currency
+                          ? `dès ${formatMoney(a.amount, a.currency)}`
+                          : 'prix chez le partenaire'}
+                      </span>
+                    </span>
+                    <span className="cp-row__end">
+                      <Chip>Partenaire</Chip>
+                    </span>
+                  </>
+                );
+                return a.url ? (
+                  <a
+                    key={`a-${a.id}`}
+                    className="cp-row"
+                    href={a.url}
+                    target="_blank"
+                    rel="sponsored nofollow noopener noreferrer"
+                  >
+                    {body}
+                  </a>
+                ) : (
+                  <div key={`a-${a.id}`} className="cp-row" style={staticRow}>
+                    {body}
+                  </div>
+                );
+              }
+              const r = entry.item;
+              return (<button key={r.routeId} type="button" className="cp-row" onClick={() => setPicked(r)}>
+                <span className="cp-thumb" aria-hidden="true">
+                  <Icon name={r.mine ? 'footprints' : 'route'} size={18} />
+                </span>
+                <span className="cp-row__t">
+                  <b>{r.name}</b>
+                  <span>
+                    {[
+                      r.region,
+                      formatKm(r.distanceKm),
+                      r.elevationGainM ? `D+ ${formatMeters(r.elevationGainM)}` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </span>
+                </span>
+                <span className="cp-row__end">
+                  {r.mine ? (
+                    <Chip tone="good">fait ×{r.mine.count}</Chip>
+                  ) : r.communitySessions > 0 ? (
+                    <Chip icon="users">{r.communitySessions}</Chip>
+                  ) : r.distanceFromKm != null ? (
+                    <span className="cp-sub">à {Math.round(r.distanceFromKm)} km</span>
+                  ) : null}
+                  <Icon name="chevron-right" size={16} />
+                </span>
+              </button>);
+            }}
+          />
+          {partners.length > 0 && mode !== 'mes' && <AffiliateDisclosure compact />}
+        </>
       )}
     </>
   );

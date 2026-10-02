@@ -106,4 +106,6 @@ export interface CompasCtl {
   product: (id: string | null) => CompasShopProduct | undefined;
   /** Annonce dans l'îlot : un titre, et une ligne de détail facultative. */
   notify: (message: string, tone?: 'bad', sub?: string) => void;
+  /** Préremplir le voyage (nuits, trajet, kit, budget) ; absent hors du Compas complet. */
+  autofill?: () => void;
 }

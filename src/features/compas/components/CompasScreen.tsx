@@ -13,7 +13,13 @@ import {
 import Icon from '@/components/ui/Icon';
 import { togglePackedAction } from '@/app/voyages/kit-actions';
 import { COMPAS_STEPS, type CompasKitLine, type CompasStepId } from '../engine/compasModel';
-import { activityLabel, formatHours } from '../engine/format';
+import { activityLabel, formatHours, formatMoney } from '../engine/format';
+import { NIGHT_LABEL } from '../engine/autofill';
+import {
+  compasAutofillAction,
+  compasUndoAutofillAction,
+  type CompasAutofillSummary,
+} from '../server/autofillActions';
 import type { CompasData } from '../server/getCompasData';
 import { KitCard, NousCard, OuCard, ResaCard, VerdictCard } from './CompasCards';
 import { CompasMap } from './CompasMap';
@@ -210,6 +216,58 @@ export function CompasScreen({
   const runRef = useRef(run);
   runRef.current = run;
 
+  // Préremplissage : dès que le lieu et les dates sont connus, une seule fois
+  // par voyage. Il écrit directement ; l'îlot montre l'avancée puis propose
+  // « Annuler » (aussi dans « Où » ensuite). Annulé, il ne se relance pas seul.
+  const autofillRunning = useRef(false);
+  const autofill = useCallback(() => {
+    if (autofillRunning.current) return;
+    autofillRunning.current = true;
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ message: 'Je prépare ton aventure…', sub: 'Nuits, trajet, kit et budget' });
+    setRunning(true);
+    const position = new Promise<{ lat: number; lon: number } | null>((resolve) => {
+      if (typeof navigator === 'undefined' || !navigator.geolocation) return resolve(null);
+      navigator.geolocation.getCurrentPosition(
+        (p) => resolve({ lat: p.coords.latitude, lon: p.coords.longitude }),
+        () => resolve(null),
+        { enableHighAccuracy: false, timeout: 5000, maximumAge: 600_000 }
+      );
+    });
+    void position
+      .then((from) => compasAutofillAction({ tripId: model.tripId, tripSlug: model.slug, from }))
+      .then((res) => {
+        if (!res.success) return notify(res.error, 'bad');
+        const undo = () =>
+          void runRef.current?.('Préparation annulée', () =>
+            compasUndoAutofillAction({ tripId: model.tripId, tripSlug: model.slug })
+          );
+        notify(
+          res.summary.total > 0
+            ? `Aventure préparée · ${formatMoney(res.summary.total, 'EUR')}`
+            : 'Aventure préparée',
+          undefined,
+          undo,
+          autofillDigest(res.summary)
+        );
+        startTransition(() => router.refresh());
+      })
+      .catch(() => notify('Connexion perdue : préparation interrompue.', 'bad'))
+      .finally(() => {
+        autofillRunning.current = false;
+        setRunning(false);
+      });
+  }, [model.tripId, model.slug, notify, router]);
+
+  const autofillStarted = useRef<string | null>(null);
+  useEffect(() => {
+    if (data.autofill !== 'none' || !data.canEdit) return;
+    if (!model.dates.start || !(model.destination || data.itinerary.length || data.origin)) return;
+    if (autofillStarted.current === model.tripId) return;
+    autofillStarted.current = model.tripId;
+    autofill();
+  }, [data, model, autofill]);
+
   // Ctrl/⌘+Z annule la dernière écriture annulable, hors champ de saisie
   // (où il garde son sens habituel).
   useEffect(() => {
@@ -333,6 +391,7 @@ export function CompasScreen({
     memberName: (id) => (id ? (members.get(id) ?? 'Membre') : 'Personne'),
     product: (id) => (id ? products.get(id) : undefined),
     notify: (message, tone, sub) => notify(message, tone, undefined, sub),
+    autofill,
   };
 
   const decision = model.nextDecision;
@@ -640,4 +699,20 @@ function LinesGlyph() {
       <path d="M4 7h16M4 12h16M4 17h16" />
     </svg>
   );
+}
+
+/** Une ligne pour l'îlot : nuits, trajet, kit. */
+function autofillDigest(s: CompasAutofillSummary): string {
+  const parts: string[] = [];
+  if (s.nights.length) {
+    const count = new Map<string, number>();
+    for (const n of s.nights) count.set(NIGHT_LABEL[n.type], (count.get(NIGHT_LABEL[n.type]) ?? 0) + 1);
+    parts.push(
+      [...count].map(([k, v]) => `${v} ${k.toLowerCase()}${v > 1 ? 's' : ''}`).join(', ')
+    );
+  }
+  if (s.transport) parts.push(`${Math.round(s.transport.km)} km de route`);
+  const kit = s.kit.inventaire + s.kit.pret + s.kit.location + s.kit.achat + s.kit.a_trouver;
+  if (kit) parts.push(`${kit} objet${kit > 1 ? 's' : ''} au kit`);
+  return parts.join(' · ') || 'Budget posé';
 }

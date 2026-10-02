@@ -8,6 +8,7 @@ import { listCompasTrips } from '@/features/compas/server/myTrips';
 import { CompasTripPicker } from '@/features/compas/components/CompasTripPicker';
 import { CompasStart } from '@/features/compas/components/CompasStart';
 import { createClient } from '@/lib/supabase/server';
+import { listMyTripInvitations } from '@/features/compas/server/invitationActions';
 import '@/features/compas/compas.css';
 
 /**
@@ -49,10 +50,11 @@ export default async function CompasPage({
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    const invitations = user ? await listMyTripInvitations() : [];
     return (
       <AppShell hasBottomNav videoBackground={false}>
         <CompasLightTheme />
-        <CompasStart signedIn={Boolean(user)} />
+        <CompasStart signedIn={Boolean(user)} invitations={invitations} />
       </AppShell>
     );
   };
@@ -64,12 +66,12 @@ export default async function CompasPage({
   const data = await getCompasData();
   if (!data) {
     // Aucune aventure active : choisir parmi ses voyages s'il y en a, sinon créer.
-    const trips = await listCompasTrips();
+    const [trips, invitations] = await Promise.all([listCompasTrips(), listMyTripInvitations()]);
     if (trips.length === 0) return start();
     return (
       <AppShell hasBottomNav videoBackground={false}>
         <CompasLightTheme />
-        <CompasTripPicker trips={trips} />
+        <CompasTripPicker trips={trips} invitations={invitations} />
       </AppShell>
     );
   }

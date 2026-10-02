@@ -133,3 +133,70 @@ export async function compasSearchOffersAction(
     return { success: false, error: 'Erreur serveur' };
   }
 }
+
+export type CompasNearbyActivitiesResult =
+  | { success: true; offers: CompasStayOffer[]; unavailable: boolean }
+  | { success: false; error: string };
+
+const nearbySchema = z.object({
+  tripId: z.string().uuid(),
+  /** Lieu (ville, massif) autour duquel chercher ; par défaut la destination du voyage. */
+  place: z.string().trim().max(80).optional(),
+});
+
+/**
+ * Activités partenaires (dont les sorties guidées) autour d'un lieu, pour les
+ * mélanger aux parcours dans « Où · Parcours ». Lecture seule. Partenaire non
+ * activé : liste vide, jamais d'exemple présenté comme réel.
+ */
+export async function compasNearbyActivitiesAction(
+  input: z.input<typeof nearbySchema>
+): Promise<CompasNearbyActivitiesResult> {
+  const parsed = nearbySchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Recherche invalide' };
+  try {
+    const provider = createBookingProvider({ env: process.env });
+    if (!provider.supports('activity')) return { success: true, offers: [], unavailable: true };
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Connecte-toi pour voir les activités.' };
+    const trip = (await getTripById(parsed.data.tripId, user.id)) as
+      | (Awaited<ReturnType<typeof getTripById>> & {
+          start_date?: string | null;
+          destination_name?: string | null;
+          party_size?: number | null;
+        })
+      | null;
+    if (!trip) return { success: false, error: 'Voyage introuvable ou non autorisé.' };
+    const destination = (parsed.data.place || trip.destination_name || '').trim();
+    if (!destination) return { success: true, offers: [], unavailable: false };
+    const today = new Date().toISOString().slice(0, 10);
+    const start = trip.start_date && ISO.test(trip.start_date) && trip.start_date >= today
+      ? trip.start_date
+      : today;
+    const limited = await enforceRateLimit(user.id, {
+      scope: 'booking-search',
+      limit: 30,
+      windowMs: 10 * 60_000,
+      failMode: 'closed',
+    });
+    if (limited) return { success: true, offers: [], unavailable: false };
+    const result = await provider.search({
+      vertical: 'activity',
+      destination,
+      date: start,
+      travelers: Math.max(1, Math.min(20, trip.party_size ?? 1)),
+      limit: 12,
+    });
+    return { success: true, offers: simplifyOffers(result.offers, 12), unavailable: false };
+  } catch (err) {
+    if (err instanceof BookingProviderError) {
+      console.warn('[compas] activités autour', err.provider, err.code, err.status ?? '');
+      return { success: true, offers: [], unavailable: false };
+    }
+    console.error('[compas] compasNearbyActivitiesAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
