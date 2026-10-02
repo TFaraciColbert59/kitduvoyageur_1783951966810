@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { shopRelevance } from '../engine/shopMatch';
 import {
   compasAnswerApplicantAction,
@@ -1162,17 +1162,22 @@ function QuiFlow({ ctl }: { ctl: CompasCtl }) {
     | { status: 'ok'; people: CompasPerson[]; searched: string }
   >({ status: 'idle' });
 
+  // Seule la dernière recherche s'affiche : une réponse en retard est ignorée.
+  const seq = useRef(0);
   const search = async (q: string) => {
+    const mine = ++seq.current;
     setState({ status: 'loading' });
     try {
       const res = await compasSearchPeopleAction({ tripId: model.tripId, query: q });
+      if (mine !== seq.current) return;
       setState(
         res.success
           ? { status: 'ok', people: res.people, searched: q }
           : { status: 'error', error: res.error }
       );
     } catch {
-      setState({ status: 'error', error: 'Connexion perdue : réessaie.' });
+      if (mine === seq.current)
+        setState({ status: 'error', error: 'Connexion perdue : réessaie.' });
     }
   };
 
@@ -1605,6 +1610,16 @@ const EXPENSE_CATEGORIES = [
  * frais annoncés, chaque profil validé) et la gestion du groupe reste au Hub :
  * le Compas y mène, il ne publie rien lui-même.
  */
+/** Nom du pays en français (« fr » → « France »), le code si inconnu. */
+function countryLabel(code: string | null): string {
+  if (!code) return 'non renseigné';
+  try {
+    return new Intl.DisplayNames(['fr'], { type: 'region' }).of(code.toUpperCase()) ?? code;
+  } catch {
+    return code.toUpperCase();
+  }
+}
+
 const MIXITE_LABEL = { all: 'Ouvert à tous', women_only: 'Femmes', men_only: 'Hommes' } as const;
 
 /**
@@ -1786,8 +1801,7 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
             </b>
           </div>
           <p className="cp-sub">
-            <b>Où</b> · communauté {st.countryName ? `« ${st.countryName} »` : 'du pays'} (
-            {st.country?.toUpperCase()})
+            <b>Où</b> · communauté du pays : {countryLabel(st.country)}
           </p>
           <label className="cp-field">
             Titre
@@ -2395,8 +2409,10 @@ function LiveSearch({ ctl, vertical }: { ctl: CompasCtl; vertical: CompasLiveVer
     | { status: 'ok'; mode: 'sandbox' | 'live'; offers: CompasStayOffer[] }
   >({ status: 'idle' });
 
+  const seq = useRef(0);
   const search = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const mine = ++seq.current;
     setState({ status: 'loading' });
     try {
       const res = await compasSearchOffersAction({
@@ -2405,6 +2421,7 @@ function LiveSearch({ ctl, vertical }: { ctl: CompasCtl; vertical: CompasLiveVer
         ...(vertical === 'flight' ? { from } : {}),
         ...(to.trim() ? { to: to.trim() } : {}),
       });
+      if (mine !== seq.current) return;
       setState(
         res.success
           ? { status: 'ok', mode: res.mode, offers: res.offers }
@@ -3066,6 +3083,14 @@ function TraceFlow({ ctl }: { ctl: CompasCtl }) {
   );
 }
 
+const SEASON_LABEL: Record<string, string> = {
+  printemps: 'printemps',
+  ete: 'été',
+  automne: 'automne',
+  hiver: 'hiver',
+  toute_saison: 'toute saison',
+};
+
 function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
   const [state, setState] = useState<
     { status: 'loading' } | { status: 'error'; error: string } | { status: 'ok'; kits: MyKit[] }
@@ -3212,7 +3237,7 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
               <span className="cp-row__t cp-row__t--wrap">
                 <b>
                   {kit.name}
-                  {kit.season ? ` · ${kit.season}` : ''}
+                  {kit.season ? ` · ${SEASON_LABEL[kit.season] ?? kit.season}` : ''}
                 </b>
                 <span>
                   {kit.items.length} objet{kit.items.length > 1 ? 's' : ''} · {plan.alreadyThere}{' '}

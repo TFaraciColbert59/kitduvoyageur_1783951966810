@@ -2885,3 +2885,6 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
 .cp-bottle textarea {
   resize: vertical;
 }
+.cp-bottle input[type='range'] {
+  accent-color: var(--lkv-primary);
+}
