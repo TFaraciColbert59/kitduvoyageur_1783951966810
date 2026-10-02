@@ -85,6 +85,8 @@ export interface CompasData {
   routeGeojson: Record<string, unknown> | null;
   /** Profil d'altitude réel du tracé (null : pas de tracé ou source injoignable). */
   elevation: ElevationProfile | null;
+  /** Pays de destination (ISO 3166-1 alpha-2), null s'il n'est pas renseigné. */
+  countryCode: string | null;
   points: CompasPoint[];
   inventory: CompasInventoryInput[];
   shop: CompasShopProduct[];
@@ -481,6 +483,9 @@ export async function getCompasData(): Promise<CompasData | null> {
     bookings,
     routeGeojson: hub.hiking?.routeGeojson ?? null,
     elevation,
+    countryCode: trip.destination_country_code
+      ? String(trip.destination_country_code).toLowerCase()
+      : null,
     points: [
       ...points,
       ...routePois.map((p) => ({

@@ -1,5 +1,15 @@
 # MISSION LOG — LKDV
 
+## 2026-10-02 — Compas : double-touche et annulation à deux doigts
+
+- **Double-touche** (maquette : « Double-touche une offre ou un produit pour le choisir ») : sur une ligne produit, déclenche « Choisir » / « Ajouter » comme le bouton ; sur une offre d'hébergement, « Noter » (ne réserve rien). Un lien partenaire n'est jamais ouvert par ce geste. `useDoubleTap` / `DoubleTapRow` (320 ms, les boutons de la ligne gardent leur sens).
+- **Annuler à deux doigts** : glisser deux doigts vers la gauche (> 60 px) lance la même annulation que « Annuler » et Ctrl/⌘+Z.
+- **Résa, six catégories** (Randos, Activités, Nuits, Vols, Trajets, Extras) : badge = réservations réelles ; une catégorie sans réservation ni offre est grisée (« aucune offre pour cette destination ») ; Offres s'ouvre filtré sur la catégorie touchée, réservations de la catégorie en tête.
+- **Nous · Budget** : « + Ajouter une dépense » (maquette) via l'action budget existante (permission `canManageBudget` vérifiée côté serveur) ; « Par pers. » = montant × taille réelle du groupe, total affiché avant d'enregistrer ; prévue ou payée.
+- **Nous · Annonce** : pont vers la Bouteille à la mer du pays (seuil de confiance, majorité, frais annoncés, chaque candidat validé) et vers `/hub/groupe` ; rien n'est publié depuis le Compas. La page Pays accepte `?section=communaute` (lu au montage côté client : la page reste statique).
+- **Carte · Personnaliser** : panneau de calques réels (`engine/mapLayers.ts`) avec le nombre de points ; calque sans donnée grisé ; « Carte nue » / « Tout afficher » ; le calque Profil masque l'accessoire ; réglage retenu sur l'appareil (`localStorage`, try/catch). Styles de fond (Relief/Satellite) non proposés : la carte n'en a qu'un.
+- Preuves : `tsc` 0 ; `eslint --max-warnings=0 src/features/compas` 0 ; Compas 183 tests.
+
 ## 2026-10-01 — Compas : Verdict Météo et Veille, activités en tuiles, tiroir « Préparer »
 
 - **Verdict, onglet Météo** : un bloc par jour du voyage (ciel, min/max, pluie, rafales, isotherme 0 °C), tiré des prévisions Open-Meteo déjà chargées aux points réels ; source et horizon affichés. Jour hors horizon : « non renseigné ».

@@ -20,7 +20,7 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 | Barre d'onglets qui se réduit au défilement | ✅ | défiler un tiroir vers le bas : seul l'onglet actif reste (portée Compas, navigation de l'app intacte) |
 | Lentille qui suit le doigt (maintenir et glisser) | ✅ | glisser sur la capsule : la lentille suit, l'étape sous elle est choisie au relâchement |
 | Îlot dynamique : prochaine décision, appliquer | ⬜ | |
-| Annuler (îlot, Ctrl/⌘+Z, deux doigts vers la gauche) | 🟡 | « Annuler » dans l'annonce + Ctrl/⌘+Z : activité, préférences, enveloppe, décalage de dates, « Dis-le » quand l'inverse est sûr ; geste à deux doigts à faire |
+| Annuler (îlot, Ctrl/⌘+Z, deux doigts vers la gauche) | ✅ | « Annuler » dans l'annonce, Ctrl/⌘+Z, deux doigts vers la gauche : activité, préférences, enveloppe, décalage de dates, « Dis-le » quand l'inverse est sûr |
 | Mode extérieur + intensité du verre (☀) | ✅ | |
 
 ## Où
@@ -40,14 +40,14 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 | Qui : ajouter par @pseudo, glisser pour retirer | ⛔/🟡 | gestion du groupe = `/hub/groupe` (bouton Hub) |
 | Niveaux calculés (sorties, D+ moyen, allure, fiabilité) | 🟡 | allure et niveau dans « Équipe » ; les sorties des autres membres (`hike_sessions`, RLS « own ») ne sont pas lisibles sans leur consentement : à cadrer avec l'Empreinte (`get_user_signature`) |
 | Rôles (pilules) | ⬜ | à cadrer avec la règle `/hub` |
-| Budget : postes, plafond par personne, partage, qui doit quoi | 🟡 | enveloppe, qui doit quoi faits ; postes et partage à compléter |
+| Budget : postes, plafond par personne, partage, qui doit quoi | ✅ | enveloppe, postes réels par catégorie, « + Ajouter une dépense » (groupe / par pers. × taille réelle, prévue / payée), qui doit quoi |
 | Paliers Serré / Confort / Libre | ⛔ | montants inventés |
-| Annonce (publier pour trouver des compagnons) | ⬜ | |
+| Annonce (publier pour trouver des compagnons) | ✅ | onglet « Annonce » : mène à la Bouteille à la mer du pays (`/pays/xx?section=communaute`) et au Hub ; le Compas ne publie rien (règle `/hub`) |
 
 ## Résa
 | Élément | État | Note |
 |---|---|---|
-| Six catégories (Randos, Activités, Nuits, Vols, Trajets, Extras) | 🟡 | quatre aujourd'hui |
+| Six catégories (Randos, Activités, Nuits, Vols, Trajets, Extras) | ✅ | réservations réelles et offres partenaires classées (`engine/resaCats.ts`) ; Randos ouvre Parcours, Nuits les nuits, les autres leurs offres filtrées ; catégorie vide grisée |
 | Jours avec cases (H, T, A…) | ✅ | |
 | Résumé choisies · à réserver · en attente | ✅ | |
 | Mes réservations : Mes choix · États | ✅ | tiroir « Mes réservations » ; « Réservations » tient lieu de « Mes choix » ; « États » compte les réservations réelles par état et les nuits à trouver |
@@ -71,14 +71,14 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 | Manques : Emprunter · Louer · Acheter, boutique | 🟡 | modes d'acquisition existants |
 | Eau par personne (minimum, contenants, points d'eau) | ✅ | onglet « Eau » : repère par heure de marche jour par jour, contenants au volume écrit (`engine/water.ts`), points d'eau OSM du tracé |
 | Appui long : fiche, historique, commandes | 🟡 | |
-| Double-touche pour choisir, glisser à gauche pour retirer | 🟡 | glisser à gauche : « Retirer » apparaît, le retrait demande ce second geste ; double-touche à cadrer (« choisir » ambigu) |
+| Double-touche pour choisir, glisser à gauche pour retirer | ✅ | double-touche = « Choisir » un produit / « Noter » une offre d'hébergement (comme la maquette : offre ou produit) ; glisser à gauche : « Retirer » apparaît, second geste requis |
 
 ## Carte
 | Élément | État | Note |
 |---|---|---|
 | Carte claire, tracé, étapes numérotées, D / A | 🟡 | carte réelle (tuiles), pastilles claires |
-| Contrôles (couches, recentrer) | 🟡 | |
-| Personnaliser la carte (couches) | ⬜ | |
+| Contrôles (couches, recentrer) | ✅ | agrandir, recentrer, calques |
+| Personnaliser la carte (couches) | ✅ | calques réels (étapes, eau, refuges, camping, vues, sommets, parkings, profil) avec leur nombre ; calque vide grisé ; « Carte nue » / « Tout afficher » ; retenu sur l'appareil. Styles Relief/Satellite : non (fond de carte unique) |
 | Encart du point touché (callout) | 🟡 | encart de la carte partagée (Explorer) à l'appui sur un point ; style maquette à vérifier sur appareil |
 
 ## Création d'aventure (`/compas?nouvelle=1`)

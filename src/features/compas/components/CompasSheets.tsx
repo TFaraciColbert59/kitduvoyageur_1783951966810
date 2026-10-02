@@ -10,7 +10,13 @@ import {
   deleteTripItemAction,
 } from '@/app/voyages/kit-actions';
 import type { CompasKitLine, CompasStepId } from '../engine/compasModel';
-import { formatDuration, formatKg, formatMoney, weatherLabel } from '../engine/format';
+import {
+  formatDayMonth,
+  formatDuration,
+  formatKg,
+  formatMoney,
+  weatherLabel,
+} from '../engine/format';
 import type { CompasShopProduct } from '../server/getCompasData';
 import {
   compasAddInventoryItemAction,
@@ -37,10 +43,20 @@ import {
 import type { CompasStayOffer } from '../engine/stays';
 import { kitCompatibility, planKitApply, type MyKit } from '../engine/kitApply';
 import { convertFromEur } from '../engine/currency';
-import { Chip, PagedList, Segments, Thumb, useTextFilter } from './CompasPrimitives';
+import {
+  Chip,
+  DoubleTapRow,
+  PagedList,
+  Segments,
+  Thumb,
+  useDoubleTap,
+  useTextFilter,
+} from './CompasPrimitives';
 import { DisLe } from './CompasDisLe';
 import { proposeShift, watchRules } from '../engine/watch';
 import { planWater } from '../engine/water';
+import { addExpenseAction } from '@/app/voyages/budget-actions';
+import { RESA_CATS, bookingCat, offerCat, type ResaCat } from '../engine/resaCats';
 import { KIT_THRESHOLDS } from '../engine/kitRules';
 import { inverseOps, runOps } from './compasApply';
 import type { ApplyOp } from '../engine/intent';
@@ -314,12 +330,20 @@ function ProductRow({
   onAction: () => void;
   disabled?: boolean;
 }) {
+  const tap = useDoubleTap(() => {
+    if (!disabled) onAction();
+  });
   const price =
     product.mode === 'location' && product.pricePerDay != null
       ? `${formatMoney(product.pricePerDay)} / jour`
       : formatMoney(product.priceEur);
   return (
-    <div className="cp-row" style={{ cursor: 'default' }}>
+    <div
+      className="cp-row"
+      style={{ cursor: 'default' }}
+      title={disabled ? undefined : `Double-touche : ${action.toLowerCase()}`}
+      {...tap}
+    >
       <Thumb
         image={product.image}
         alt={product.imageAlt}
@@ -951,8 +975,11 @@ function StepSheet({
       {step === 'nous' && flow === 'budget' && <BudgetFlow ctl={ctl} />}
       {step === 'resa' && flow === 'nuits' && <NuitsFlow ctl={ctl} focusDay={hint?.day} />}
       {step === 'resa' && flow === 'reservations' && <ReservationsFlow ctl={ctl} />}
-      {step === 'resa' && flow === 'offres' && <OffresFlow ctl={ctl} />}
+      {step === 'resa' && flow === 'offres' && (
+        <OffresFlow key={hint?.resa ?? 'all'} ctl={ctl} initialCat={hint?.resa} />
+      )}
       {step === 'verdict' && flow === 'raisons' && <RaisonsFlow ctl={ctl} />}
+      {step === 'nous' && flow === 'annonce' && <AnnonceFlow ctl={ctl} />}
       {step === 'resa' && flow === 'etats' && <EtatsFlow ctl={ctl} />}
       {step === 'verdict' && flow === 'meteo' && <MeteoFlow ctl={ctl} />}
       {step === 'verdict' && flow === 'veille' && <VeilleFlow ctl={ctl} />}
@@ -1178,6 +1205,7 @@ function BudgetFlow({ ctl }: { ctl: CompasCtl }) {
         <dt>Par personne</dt>
         <dd>{formatMoney(b.perPerson, b.currency)}</dd>
       </dl>
+      {ctl.data.canEdit && <ExpenseForm ctl={ctl} />}
       <SettlementBlock ctl={ctl} />
       <PagedList
         label="Dépenses par catégorie"
@@ -1198,6 +1226,186 @@ function BudgetFlow({ ctl }: { ctl: CompasCtl }) {
           </div>
         )}
       />
+    </>
+  );
+}
+
+/**
+ * « + Ajouter une dépense » (maquette finale) : nom, montant, pour le groupe
+ * ou par personne, prévue ou payée. « Par personne » est multiplié par la
+ * taille réelle du groupe, et le total est affiché avant d'enregistrer.
+ * Passe par l'action budget existante (permissions du voyage vérifiées).
+ */
+function ExpenseForm({ ctl }: { ctl: CompasCtl }) {
+  const { tripId, slug, budget, crew } = ctl.data.model;
+  const [open, setOpen] = useState(false);
+  const [unit, setUnit] = useState<'groupe' | 'pers'>('groupe');
+  const [paid, setPaid] = useState<'prevue' | 'payee'>('prevue');
+  const [amount, setAmount] = useState('');
+  const value = Number(amount.replace(',', '.'));
+  const total =
+    Number.isFinite(value) && value > 0
+      ? Math.round((unit === 'pers' ? value * crew.size : value) * 100) / 100
+      : null;
+  if (!open)
+    return (
+      <button type="button" className="cp-btn cp-btn--soft" onClick={() => setOpen(true)}>
+        <Icon name="plus" size={16} />
+        Ajouter une dépense
+      </button>
+    );
+  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    const title = String(f.get('title') ?? '').trim();
+    if (title.length < 2 || total == null) {
+      ctl.notify('Nom (2 lettres au moins) et montant positif', 'bad');
+      return;
+    }
+    const fd = new FormData();
+    fd.set('tripId', tripId);
+    fd.set('tripSlug', slug);
+    fd.set('title', title);
+    fd.set('amount', String(total));
+    fd.set('currency', budget.currency);
+    fd.set('category', String(f.get('category') ?? 'divers'));
+    fd.set('splitType', 'equal');
+    fd.set('isPlanned', paid === 'prevue' ? 'true' : 'false');
+    void ctl
+      .run(`Dépense ajoutée : ${title}`, () => addExpenseAction(null, fd))
+      .then((ok) => {
+        if (ok) {
+          setOpen(false);
+          setAmount('');
+        }
+      });
+  };
+  return (
+    <form onSubmit={onSubmit} className="cp-expense">
+      <label className="cp-field">
+        Nom
+        <input name="title" placeholder="Parking, guide, cadeau…" maxLength={100} required />
+      </label>
+      <div className="cp-actions" style={{ alignItems: 'flex-end' }}>
+        <label className="cp-field" style={{ flex: 1 }}>
+          Montant ({budget.currency})
+          <input
+            name="amount"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            step="any"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            required
+          />
+        </label>
+        <label className="cp-field" style={{ flex: 1 }}>
+          Catégorie
+          <select name="category" defaultValue="divers">
+            {EXPENSE_CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {c[0].toUpperCase() + c.slice(1)}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <Segments
+        label="Montant pour"
+        value={unit}
+        onChange={setUnit}
+        options={[
+          { id: 'groupe', label: 'Groupe' },
+          { id: 'pers', label: 'Par pers.' },
+        ]}
+      />
+      <Segments
+        label="État"
+        value={paid}
+        onChange={setPaid}
+        options={[
+          { id: 'prevue', label: 'Prévue' },
+          { id: 'payee', label: 'Payée par moi' },
+        ]}
+      />
+      <p className="cp-note">
+        {total == null
+          ? 'Montant à saisir.'
+          : unit === 'pers'
+            ? `Soit ${formatMoney(total, budget.currency)} pour ${crew.size} personne${crew.size > 1 ? 's' : ''}, partagé à parts égales.`
+            : `${formatMoney(total, budget.currency)}, partagé à parts égales.`}
+      </p>
+      <div className="cp-actions">
+        <button type="submit" className="cp-btn cp-btn--pg" disabled={ctl.busy}>
+          Ajouter
+        </button>
+        <button type="button" className="cp-btn" onClick={() => setOpen(false)}>
+          Annuler
+        </button>
+      </div>
+    </form>
+  );
+}
+
+/** Catégories du budget (mêmes valeurs que le Hub). */
+const EXPENSE_CATEGORIES = [
+  'hébergement',
+  'nourriture',
+  'transport',
+  'activités',
+  'matériel',
+  'divers',
+];
+
+/**
+ * Annonce (maquette finale : publier pour trouver des compagnons). Dans LKDV,
+ * c'est la « Bouteille à la mer » du pays (seuil de confiance, majorité,
+ * frais annoncés, chaque profil validé) et la gestion du groupe reste au Hub :
+ * le Compas y mène, il ne publie rien lui-même.
+ */
+function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
+  const { crew, dates } = ctl.data.model;
+  const code = ctl.data.countryCode;
+  const free = Math.max(0, crew.size - crew.loads.length);
+  return (
+    <>
+      <div className="cp-row" style={staticRow}>
+        <span className="cp-thumb">
+          <Icon name="users" size={20} />
+        </span>
+        <span className="cp-row__t">
+          <b>
+            {crew.loads.length} membre{crew.loads.length > 1 ? 's' : ''} sur {crew.size} prévu
+            {crew.size > 1 ? 's' : ''}
+          </b>
+          <span>
+            {free > 0
+              ? `${free} place${free > 1 ? 's' : ''} sans compte dans le groupe`
+              : 'Le groupe est complet'}
+            {dates.start ? ` · départ le ${formatDayMonth(dates.start)}` : ''}
+          </span>
+        </span>
+      </div>
+      {code ? (
+        <Link className="cp-btn cp-btn--pg" href={`/pays/${code}?section=communaute`}>
+          <Icon name="send" size={16} />
+          Lancer une bouteille à la mer
+        </Link>
+      ) : (
+        <p className="cp-note">
+          Pays de destination non renseigné : la bouteille à la mer se lance depuis la page du pays.
+        </p>
+      )}
+      <Link className="cp-btn" href="/hub/groupe">
+        <Icon name="users" size={16} />
+        Gérer le groupe dans le Hub
+      </Link>
+      <p className="cp-note">
+        La bouteille à la mer publie une annonce de groupe pour ce pays : dates, places, confiance
+        minimale, majorité et frais partagés annoncés. Tu acceptes ou refuses chaque candidat. Rien
+        n’est publié depuis le Compas.
+      </p>
     </>
   );
 }
@@ -1294,7 +1502,19 @@ function StaySearch({
             items={state.offers}
             empty={<p className="cp-note">Aucune offre trouvée pour cette nuit.</p>}
             render={(o) => (
-              <div key={o.id} className="cp-row cp-row--tall" style={staticRow}>
+              <DoubleTapRow
+                key={o.id}
+                className="cp-row cp-row--tall"
+                style={staticRow}
+                onDouble={
+                  o.untitled || ctl.busy
+                    ? null
+                    : () =>
+                        void ctl.run('Hébergement noté', () =>
+                          compasSetStayAction({ tripId, tripSlug: slug, day, name: o.title })
+                        )
+                }
+              >
                 <span className="cp-thumb">
                   <Icon name="bed-double" size={20} />
                 </span>
@@ -1336,7 +1556,7 @@ function StaySearch({
                     </a>
                   )}
                 </span>
-              </div>
+              </DoubleTapRow>
             )}
           />
         </>
@@ -1586,16 +1806,64 @@ function offerIcon(category: string | null): string {
   return 'ticket';
 }
 
-function OffresFlow({ ctl }: { ctl: CompasCtl }) {
+/**
+ * Offres (maquette finale : une catégorie touchée sur la carte Résa ouvre ses
+ * offres). Les réservations réelles de la catégorie passent devant ; les
+ * offres partenaires suivent, balisées, et ne réservent jamais rien.
+ */
+function OffresFlow({ ctl, initialCat }: { ctl: CompasCtl; initialCat?: ResaCat }) {
   const live = ctl.data.providers.routestack !== 'disabled';
+  const [cat, setCat] = useState<ResaCat | 'all'>(initialCat ?? 'all');
+  const present = RESA_CATS.filter(
+    (c) =>
+      c.id !== 'randos' &&
+      (ctl.data.affiliateLinks.some((l) => offerCat(l.category) === c.id) ||
+        ctl.data.bookings.some((b) => LIVE_BOOKING(b.status) && bookingCat(b.vertical) === c.id))
+  );
+  const offers =
+    cat === 'all'
+      ? ctl.data.affiliateLinks
+      : ctl.data.affiliateLinks.filter((l) => offerCat(l.category) === cat);
+  const booked =
+    cat === 'all'
+      ? []
+      : ctl.data.bookings.filter((b) => LIVE_BOOKING(b.status) && bookingCat(b.vertical) === cat);
   return (
     <>
       <AffiliateDisclosure />
+      {present.length > 0 && (
+        <Segments
+          label="Catégorie"
+          value={cat}
+          onChange={setCat}
+          options={[
+            { id: 'all', label: 'Tout' },
+            ...present.map((c) => ({ id: c.id, label: c.label, icon: c.icon })),
+          ]}
+        />
+      )}
+      {booked.length > 0 && (
+        <p className="cp-sub">
+          <b>
+            {booked.length} réservation{booked.length > 1 ? 's' : ''}
+          </b>{' '}
+          dans cette catégorie ·{' '}
+          {booked
+            .map((b) => BOOKING_STATUS[b.status]?.label ?? b.status)
+            .join(', ')
+            .toLowerCase()}
+        </p>
+      )}
       <PagedList
         label="Offres partenaires"
-        items={ctl.data.affiliateLinks}
+        resetKey={cat}
+        items={offers}
         empty={
-          <p className="cp-note">Aucune offre partenaire pour cette destination pour l’instant.</p>
+          <p className="cp-note">
+            {cat === 'all'
+              ? 'Aucune offre partenaire pour cette destination pour l’instant.'
+              : 'Aucune offre partenaire dans cette catégorie pour cette destination.'}
+          </p>
         }
         render={(l) => (
           <a

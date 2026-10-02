@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AppShell from '@/components/shell/AppShell';
 import { CountryDetail } from '@/lib/countryDetails';
@@ -27,6 +27,17 @@ function getFlagEmoji(code: string): string {
   return String.fromCodePoint(...codePoints);
 }
 
+const PAYS_SECTIONS = [
+  'presentation',
+  'destinations',
+  'activites',
+  'culture',
+  'gastronomie',
+  'hebergements',
+  'pratique',
+  'communaute',
+] as const satisfies readonly PaysSection[];
+
 interface CountryDetailClientProps {
   country: CountryDetail;
   klookBlock?: KlookBlock | null;
@@ -35,6 +46,14 @@ interface CountryDetailClientProps {
 export default function CountryDetailClient({ country, klookBlock }: CountryDetailClientProps) {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState<PaysSection>('presentation');
+
+  // Lien direct vers une section (`?section=communaute`, ex. depuis le Compas
+  // pour la Bouteille à la mer). Lu au montage : la page reste statique.
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get('section');
+    if (wanted && (PAYS_SECTIONS as readonly string[]).includes(wanted))
+      setActiveSection(wanted as PaysSection);
+  }, []);
 
   const handleCountryGlobeClick = useCallback(
     (targetCode: string) => {

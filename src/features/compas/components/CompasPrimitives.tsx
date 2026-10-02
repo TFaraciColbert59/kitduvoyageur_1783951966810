@@ -53,7 +53,6 @@ export function PagedList<T>({
   }, [height, items.length, rowH]);
   const pages = useMemo(() => paginate(items, perPage), [items, perPage]);
 
-
   // La page de l'élément demandé, une seule fois, quand la hauteur est connue :
   // ensuite la pagination appartient à la personne.
   useLayoutEffect(() => {
@@ -77,9 +76,7 @@ export function PagedList<T>({
       aria-label={label}
       // Jamais moins d'une ligne (et sa pagination) : en dessous, la ligne
       // débordait sur le bloc suivant ; c'est le tiroir qui défile alors.
-      style={
-        items.length ? { minHeight: rowH + (items.length > 1 ? PAGER_H : 0) } : undefined
-      }
+      style={items.length ? { minHeight: rowH + (items.length > 1 ? PAGER_H : 0) } : undefined}
     >
       {items.length === 0 ? (
         (empty ?? null)
@@ -154,6 +151,34 @@ export function useLongPress(onLongPress: () => void, onPress: () => void, ms = 
       onPress();
     },
   };
+}
+
+/**
+ * Double-touche (maquette finale, « geste Instagram ») : deux touchers en moins
+ * de 320 ms sur la même ligne déclenchent son action principale. Un toucher
+ * sur un bouton de la ligne garde son propre sens.
+ */
+export function useDoubleTap(onDouble: () => void, ms = 320) {
+  const last = useRef(0);
+  return {
+    onClick: (e: React.MouseEvent) => {
+      if ((e.target as Element).closest?.('button, a, input')) return;
+      const now = Date.now();
+      if (now - last.current < ms) {
+        last.current = 0;
+        onDouble();
+      } else last.current = now;
+    },
+  };
+}
+
+/** Ligne dont la double-touche déclenche `onDouble` (null : geste inactif). */
+export function DoubleTapRow({
+  onDouble,
+  ...rest
+}: React.HTMLAttributes<HTMLDivElement> & { onDouble: (() => void) | null }) {
+  const tap = useDoubleTap(() => onDouble?.());
+  return <div {...rest} {...(onDouble ? tap : {})} />;
 }
 
 /* ---------- Visuels ---------- */

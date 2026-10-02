@@ -24,6 +24,11 @@ const kit = vi.hoisted(() => ({
 }));
 vi.mock('@/app/voyages/kit-actions', () => kit);
 
+const budgetActions = vi.hoisted(() => ({
+  addExpenseAction: vi.fn(async (_prev: unknown, _fd: FormData) => ({ success: true })),
+}));
+vi.mock('@/app/voyages/budget-actions', () => budgetActions);
+
 const compas = vi.hoisted(() => ({
   compasSetCarrierAction: vi.fn(async () => ({ success: true })),
   compasPickShopProductAction: vi.fn(async () => ({ success: true })),
@@ -252,6 +257,7 @@ function makeData(overrides: Partial<CompasInput> = {}): CompasData {
     bookings: [],
     routeGeojson: null,
     elevation: null,
+    countryCode: 'fr',
     points: [],
     inventory: [],
     shop: [
@@ -328,6 +334,25 @@ describe('CompasScreen', () => {
     expect(screen.getByText('aucun objet prévu pour ce voyage')).toBeTruthy();
     expect(screen.queryByText('Prêt sur les points vérifiés')).toBeNull();
     expect(screen.queryByText(/rien de vital ne manque/)).toBeNull();
+  });
+
+  it('double-touche sur un produit : le choisit comme le bouton, un toucher seul ne fait rien', async () => {
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(screen.getByText('Trouver : sac de couchage'));
+    const kitSheet = await screen.findByRole('dialog', { name: 'Kit' });
+    fireEvent.click(within(kitSheet).getByText('Sac de couchage'));
+    const sheet = await screen.findByRole('dialog', { name: 'Sac de couchage' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Acheter/ }));
+    const shop = await screen.findByRole('dialog', { name: 'Trouver : Sac de couchage' });
+    const row = within(shop).getByText('Sac de couchage Trek 0°').closest('.cp-row') as HTMLElement;
+    fireEvent.click(row);
+    expect(compas.compasPickShopProductAction).not.toHaveBeenCalled();
+    fireEvent.click(row);
+    await waitFor(() =>
+      expect(compas.compasPickShopProductAction).toHaveBeenCalledWith(
+        expect.objectContaining({ itemId: SLEEP, shopProductId: PRODUCT })
+      )
+    );
   });
 
   it('décision → tiroir Kit → fiche → Acheter → produit précis relié et mis au panier', async () => {
@@ -562,6 +587,47 @@ describe('CompasScreen', () => {
     expect(screen.getAllByText('À choisir').length).toBe(2);
   });
 
+  it('Nous : ajouter une dépense par personne = montant × taille réelle du groupe', async () => {
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Nous' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Nous' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Budget/ }));
+    fireEvent.click(within(sheet).getByRole('button', { name: /Ajouter une dépense/ }));
+    fireEvent.change(within(sheet).getByLabelText('Nom'), { target: { value: 'Parking' } });
+    fireEvent.change(within(sheet).getByLabelText(/Montant \(/), { target: { value: '7.5' } });
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Par pers.' }));
+    expect(within(sheet).getByText(/pour 2 personnes/)).toBeTruthy();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Ajouter' }));
+    await waitFor(() => expect(budgetActions.addExpenseAction).toHaveBeenCalled());
+    const fd = budgetActions.addExpenseAction.mock.calls[0][1] as FormData;
+    expect(fd.get('title')).toBe('Parking');
+    expect(fd.get('amount')).toBe('15');
+    expect(fd.get('isPlanned')).toBe('true');
+    expect(fd.get('splitType')).toBe('equal');
+    expect(fd.get('tripId')).toBe(TRIP);
+  });
+
+  it('Nous · Annonce : mène à la bouteille à la mer du pays et au Hub, ne publie rien', async () => {
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Nous' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Nous' });
+    const tabs = within(sheet).getByRole('group', { name: 'Parcours du tiroir' });
+    fireEvent.click(within(tabs).getByText('Annonce'));
+    expect(
+      within(sheet)
+        .getByRole('link', { name: /Lancer une bouteille à la mer/ })
+        .getAttribute('href')
+    ).toBe('/pays/fr?section=communaute');
+    expect(
+      within(sheet)
+        .getByRole('link', { name: /Gérer le groupe/ })
+        .getAttribute('href')
+    ).toBe('/hub/groupe');
+    expect(within(sheet).getByText(/Rien n’est publié depuis le Compas/)).toBeTruthy();
+  });
+
   it('Nous : budget réel, aucune enveloppe inventée, l’équipe la fixe', async () => {
     render(<CompasScreen data={makeData({ trip: { ...baseTrip, estimatedBudget: null } })} />);
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
@@ -614,12 +680,55 @@ describe('CompasScreen', () => {
     );
   });
 
+  it('Personnaliser la carte : masquer le profil retire l’accessoire, le choix est retenu', () => {
+    const { unmount } = render(<CompasScreen data={makeData()} />);
+    expect(screen.getByText('dénivelé positif')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Personnaliser la carte' }));
+    const panel = screen.getByRole('dialog', { name: 'Personnaliser la carte' });
+    const profil = within(panel).getByRole('switch', { name: /Profil/ });
+    expect(profil.getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(profil);
+    expect(screen.queryByText('dénivelé positif')).toBeNull();
+    // Aucun point d'eau sur ce voyage : le calque est grisé, pas inventé.
+    expect((within(panel).getByRole('switch', { name: /Eau/ }) as HTMLButtonElement).disabled).toBe(
+      true
+    );
+    unmount();
+    render(<CompasScreen data={makeData()} />);
+    expect(screen.queryByText('dénivelé positif')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Personnaliser la carte' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tout afficher' }));
+    expect(screen.getByText('dénivelé positif')).toBeTruthy();
+  });
+
   it('agrandir la carte réduit le haut à une carte-titre', () => {
     const { container } = render(<CompasScreen data={makeData()} />);
     fireEvent.click(screen.getByRole('button', { name: 'Agrandir la carte' }));
     expect(container.querySelector('.compas')?.getAttribute('data-map')).toBe('big');
     fireEvent.click(screen.getAllByRole('button', { name: 'Réduire la carte' })[0]);
     expect(container.querySelector('.compas')?.getAttribute('data-map')).toBeNull();
+  });
+
+  it('Résa : six catégories, Vols ouvre ses offres filtrées, une catégorie vide est grisée', async () => {
+    const data = makeData();
+    data.affiliateLinks = [
+      { id: 'a1', label: 'Vols Lyon', category: 'flight', partner: 'Aviasales', url: '/go/vol' },
+      { id: 'a2', label: 'Assurance', category: 'insurance', partner: 'Heymondo', url: '/go/ass' },
+    ];
+    render(<CompasScreen data={data} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
+    for (const name of ['Randonnées', 'Activités', 'Hébergement', 'Vols', 'Transports', 'Extras'])
+      expect(screen.getByRole('button', { name: new RegExp(`^${name}`) })).toBeTruthy();
+    expect((screen.getByRole('button', { name: /^Activités/ }) as HTMLButtonElement).disabled).toBe(
+      true
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Vols' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Mes réservations' });
+    expect(within(sheet).getByText('Vols Lyon')).toBeTruthy();
+    expect(within(sheet).queryByText('Assurance')).toBeNull();
+    const cats = within(sheet).getByRole('group', { name: 'Catégorie' });
+    fireEvent.click(within(cats).getByText('Tout'));
+    expect(within(sheet).getByText('Assurance')).toBeTruthy();
   });
 
   it('nuits : noter un hébergement écrit sans rien réserver, liens affiliés balisés', async () => {
@@ -875,6 +984,29 @@ describe('CompasScreen', () => {
     );
     expect(compas.compasSetPreferencesAction).toHaveBeenLastCalledWith(
       expect.objectContaining({ preferences: before })
+    );
+  });
+
+  it('Annuler : deux doigts glissés vers la gauche rétablissent aussi', async () => {
+    render(<CompasScreen data={makeData()} />);
+    const sheet = await openOu(/Préférences/);
+    fireEvent.click(within(sheet).getByRole('button', { name: /Bivouac/ }));
+    await screen.findByRole('button', { name: 'Annuler' });
+    const calls = compas.compasSetPreferencesAction.mock.calls.length;
+    const touches = (x: number) => [
+      { clientX: x, clientY: 300, identifier: 1 },
+      { clientX: x + 40, clientY: 300, identifier: 2 },
+    ];
+    fireEvent.touchStart(window, { touches: touches(300) });
+    fireEvent.touchMove(window, { touches: touches(200) });
+    fireEvent.touchEnd(window, { touches: [] });
+    await waitFor(() =>
+      expect(compas.compasSetPreferencesAction.mock.calls.length).toBe(calls + 1)
+    );
+    expect(compas.compasSetPreferencesAction).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        preferences: { pace: 'normal', nights: null, avoid: [], wishes: [] },
+      })
     );
   });
 

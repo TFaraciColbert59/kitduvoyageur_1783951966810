@@ -18,12 +18,14 @@ import type { CompasData } from '../server/getCompasData';
 import { KitCard, NousCard, OuCard, ResaCard, VerdictCard } from './CompasCards';
 import { CompasMap } from './CompasMap';
 import { CompasAccessory } from './CompasAccessory';
+import { ALL_LAYERS, parseLayers, type LayerState } from '../engine/mapLayers';
 import { tripHours } from './CompasRuler';
 import { CompasSheet, type Detent } from './CompasSheet';
 import { SheetContent, sheetTitle } from './CompasSheets';
 import type { ActionResult, CompasCtl, SheetState, StepFlow } from './compasTypes';
 
 const DISPLAY_KEY = 'lkdv.compas.affichage';
+const LAYERS_KEY = 'lkdv.compas.calques';
 
 const STEP_TITLES: Record<CompasStepId, string> = {
   ou: 'Préparer',
@@ -102,6 +104,25 @@ export function CompasScreen({
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { model } = data;
+
+  // Calques de la carte : préférence personnelle, jamais indispensable.
+  const [layers, setLayers] = useState<LayerState>(ALL_LAYERS);
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(LAYERS_KEY);
+      if (raw) setLayers(parseLayers(JSON.parse(raw)));
+    } catch {
+      /* stockage indisponible : tout affiché */
+    }
+  }, []);
+  const updateLayers = (next: LayerState) => {
+    setLayers(next);
+    try {
+      window.localStorage.setItem(LAYERS_KEY, JSON.stringify(next));
+    } catch {
+      /* sans effet */
+    }
+  };
 
   // Réglage d'affichage : préférence personnelle, jamais indispensable.
   useEffect(() => {
@@ -192,6 +213,36 @@ export function CompasScreen({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // Maquette finale : deux doigts glissés vers la gauche annulent aussi.
+  useEffect(() => {
+    let start: number | null = null;
+    const mid = (t: TouchList) => (t[0].clientX + t[1].clientX) / 2;
+    const onStart = (e: TouchEvent) => {
+      start = e.touches.length === 2 ? mid(e.touches) : null;
+    };
+    const onMove = (e: TouchEvent) => {
+      if (start == null || e.touches.length !== 2) return;
+      if (mid(e.touches) - start < -60) {
+        start = null;
+        const undo = undoRef.current;
+        if (!undo) return;
+        undoRef.current = null;
+        undo();
+      }
+    };
+    const onEnd = () => {
+      start = null;
+    };
+    window.addEventListener('touchstart', onStart, { passive: true });
+    window.addEventListener('touchmove', onMove, { passive: true });
+    window.addEventListener('touchend', onEnd, { passive: true });
+    return () => {
+      window.removeEventListener('touchstart', onStart);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onEnd);
+    };
   }, []);
 
   const lines = useMemo<CompasKitLine[]>(
@@ -427,6 +478,8 @@ export function CompasScreen({
         routeGeojson={data.routeGeojson}
         points={data.points}
         big={mapBig}
+        layers={layers}
+        onLayers={updateLayers}
         onToggleBig={() => {
           setMapBig((v) => !v);
           setStack([]);
@@ -448,7 +501,7 @@ export function CompasScreen({
             <Icon name="chevron-right" size={14} />
           </button>
         )}
-        {model.route.stepsCount > 0 && (
+        {model.route.stepsCount > 0 && layers.profil && (
           <CompasAccessory
             profile={data.elevation}
             gainM={model.route.elevationGainM}
