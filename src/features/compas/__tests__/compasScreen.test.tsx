@@ -257,6 +257,7 @@ function makeData(overrides: Partial<CompasInput> = {}): CompasData {
     bookings: [],
     routeGeojson: null,
     elevation: null,
+    countryCode: 'fr',
     points: [],
     inventory: [],
     shop: [
@@ -605,6 +606,26 @@ describe('CompasScreen', () => {
     expect(fd.get('isPlanned')).toBe('true');
     expect(fd.get('splitType')).toBe('equal');
     expect(fd.get('tripId')).toBe(TRIP);
+  });
+
+  it('Nous · Annonce : mène à la bouteille à la mer du pays et au Hub, ne publie rien', async () => {
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Nous' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Nous' });
+    const tabs = within(sheet).getByRole('group', { name: 'Parcours du tiroir' });
+    fireEvent.click(within(tabs).getByText('Annonce'));
+    expect(
+      within(sheet)
+        .getByRole('link', { name: /Lancer une bouteille à la mer/ })
+        .getAttribute('href')
+    ).toBe('/pays/fr?section=communaute');
+    expect(
+      within(sheet)
+        .getByRole('link', { name: /Gérer le groupe/ })
+        .getAttribute('href')
+    ).toBe('/hub/groupe');
+    expect(within(sheet).getByText(/Rien n’est publié depuis le Compas/)).toBeTruthy();
   });
 
   it('Nous : budget réel, aucune enveloppe inventée, l’équipe la fixe', async () => {

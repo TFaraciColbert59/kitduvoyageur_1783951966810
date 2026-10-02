@@ -42,7 +42,7 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 | Rôles (pilules) | ⬜ | à cadrer avec la règle `/hub` |
 | Budget : postes, plafond par personne, partage, qui doit quoi | ✅ | enveloppe, postes réels par catégorie, « + Ajouter une dépense » (groupe / par pers. × taille réelle, prévue / payée), qui doit quoi |
 | Paliers Serré / Confort / Libre | ⛔ | montants inventés |
-| Annonce (publier pour trouver des compagnons) | ⬜ | |
+| Annonce (publier pour trouver des compagnons) | ✅ | onglet « Annonce » : mène à la Bouteille à la mer du pays (`/pays/xx?section=communaute`) et au Hub ; le Compas ne publie rien (règle `/hub`) |
 
 ## Résa
 | Élément | État | Note |

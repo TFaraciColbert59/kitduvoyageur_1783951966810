@@ -10,7 +10,13 @@ import {
   deleteTripItemAction,
 } from '@/app/voyages/kit-actions';
 import type { CompasKitLine, CompasStepId } from '../engine/compasModel';
-import { formatDuration, formatKg, formatMoney, weatherLabel } from '../engine/format';
+import {
+  formatDayMonth,
+  formatDuration,
+  formatKg,
+  formatMoney,
+  weatherLabel,
+} from '../engine/format';
 import type { CompasShopProduct } from '../server/getCompasData';
 import {
   compasAddInventoryItemAction,
@@ -973,6 +979,7 @@ function StepSheet({
         <OffresFlow key={hint?.resa ?? 'all'} ctl={ctl} initialCat={hint?.resa} />
       )}
       {step === 'verdict' && flow === 'raisons' && <RaisonsFlow ctl={ctl} />}
+      {step === 'nous' && flow === 'annonce' && <AnnonceFlow ctl={ctl} />}
       {step === 'resa' && flow === 'etats' && <EtatsFlow ctl={ctl} />}
       {step === 'verdict' && flow === 'meteo' && <MeteoFlow ctl={ctl} />}
       {step === 'verdict' && flow === 'veille' && <VeilleFlow ctl={ctl} />}
@@ -1350,6 +1357,58 @@ const EXPENSE_CATEGORIES = [
   'matériel',
   'divers',
 ];
+
+/**
+ * Annonce (maquette finale : publier pour trouver des compagnons). Dans LKDV,
+ * c'est la « Bouteille à la mer » du pays (seuil de confiance, majorité,
+ * frais annoncés, chaque profil validé) et la gestion du groupe reste au Hub :
+ * le Compas y mène, il ne publie rien lui-même.
+ */
+function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
+  const { crew, dates } = ctl.data.model;
+  const code = ctl.data.countryCode;
+  const free = Math.max(0, crew.size - crew.loads.length);
+  return (
+    <>
+      <div className="cp-row" style={staticRow}>
+        <span className="cp-thumb">
+          <Icon name="users" size={20} />
+        </span>
+        <span className="cp-row__t">
+          <b>
+            {crew.loads.length} membre{crew.loads.length > 1 ? 's' : ''} sur {crew.size} prévu
+            {crew.size > 1 ? 's' : ''}
+          </b>
+          <span>
+            {free > 0
+              ? `${free} place${free > 1 ? 's' : ''} sans compte dans le groupe`
+              : 'Le groupe est complet'}
+            {dates.start ? ` · départ le ${formatDayMonth(dates.start)}` : ''}
+          </span>
+        </span>
+      </div>
+      {code ? (
+        <Link className="cp-btn cp-btn--pg" href={`/pays/${code}?section=communaute`}>
+          <Icon name="send" size={16} />
+          Lancer une bouteille à la mer
+        </Link>
+      ) : (
+        <p className="cp-note">
+          Pays de destination non renseigné : la bouteille à la mer se lance depuis la page du pays.
+        </p>
+      )}
+      <Link className="cp-btn" href="/hub/groupe">
+        <Icon name="users" size={16} />
+        Gérer le groupe dans le Hub
+      </Link>
+      <p className="cp-note">
+        La bouteille à la mer publie une annonce de groupe pour ce pays : dates, places, confiance
+        minimale, majorité et frais partagés annoncés. Tu acceptes ou refuses chaque candidat. Rien
+        n’est publié depuis le Compas.
+      </p>
+    </>
+  );
+}
 
 const BOOKING_STATUS: Record<string, { label: string; tone?: 'good' | 'warn' | 'bad' | 'soft' }> = {
   confirmed: { label: 'Confirmée', tone: 'good' },
