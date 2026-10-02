@@ -159,3 +159,14 @@ p0*.mjs
 # Harnais de mesure local (Playwright 393x852). Meme nature que les
 # scripts p0*.mjs : des outils qui pilotent un navigateur de dev.
 qa-local/
+
+# Sorties de captures et d'audits (régénérées par les scripts, jamais versionnées)
+/screenshots/
+/screenshots_mobile/
+/audit/
+/docs/audit-global/
+/docs/h-captures/
+/docs/u-captures/
+/docs/visual/
+/docs/qa/
+/docs/explorer-mobile/
