@@ -10,7 +10,7 @@ import {
   deleteTripItemAction,
 } from '@/app/voyages/kit-actions';
 import type { CompasKitLine, CompasStepId } from '../engine/compasModel';
-import { formatKg, formatMoney } from '../engine/format';
+import { formatDuration, formatKg, formatMoney, weatherLabel } from '../engine/format';
 import type { CompasShopProduct } from '../server/getCompasData';
 import {
   compasAddInventoryItemAction,
@@ -39,6 +39,11 @@ import { kitCompatibility, planKitApply, type MyKit } from '../engine/kitApply';
 import { convertFromEur } from '../engine/currency';
 import { Chip, PagedList, Segments, Thumb, useTextFilter } from './CompasPrimitives';
 import { DisLe } from './CompasDisLe';
+import { proposeShift, watchRules } from '../engine/watch';
+import { planWater } from '../engine/water';
+import { KIT_THRESHOLDS } from '../engine/kitRules';
+import { inverseOps, runOps } from './compasApply';
+import type { ApplyOp } from '../engine/intent';
 import { ActiviteFlow, ParcoursFlow, PreferencesFlow, QuandFlow } from './CompasOuFlows';
 import {
   STEP_FLOWS,
@@ -52,9 +57,9 @@ import {
 /* ---------- Titre de chaque tiroir ---------- */
 
 const STEP_SHEET_TITLES: Record<CompasStepId, string> = {
-  ou: 'Où et quand',
+  ou: 'Préparer',
   nous: 'Nous',
-  resa: 'Réserver',
+  resa: 'Mes réservations',
   verdict: 'Verdict',
   kit: 'Kit',
 };
@@ -670,9 +675,7 @@ function AddSheet({
           )}
         />
       )}
-      {source === 'libre' && (
-        <FreeItemForm ctl={ctl} target={target} defaultName={suggest?.name} />
-      )}
+      {source === 'libre' && <FreeItemForm ctl={ctl} target={target} defaultName={suggest?.name} />}
     </>
   );
 }
@@ -922,7 +925,7 @@ function StepSheet({
     </button>
   ) : (
     <button type="button" className="cp-btn cp-btn--pg cp-sheet__next" onClick={() => ctl.close()}>
-      Terminé
+      Terminer
       <Icon name="check" size={16} />
     </button>
   );
@@ -939,6 +942,7 @@ function StepSheet({
         <ParcoursFlow key={hint?.query ?? 'p'} ctl={ctl} hint={hint} />
       )}
       {step === 'ou' && flow === 'trace' && <TraceFlow ctl={ctl} />}
+      {step === 'ou' && flow === 'sac' && <MesKitsFlow ctl={ctl} />}
       {step === 'ou' && flow === 'quand' && (
         <QuandFlow key={hint?.hours ?? 'q'} ctl={ctl} hint={hint} />
       )}
@@ -949,13 +953,18 @@ function StepSheet({
       {step === 'resa' && flow === 'reservations' && <ReservationsFlow ctl={ctl} />}
       {step === 'resa' && flow === 'offres' && <OffresFlow ctl={ctl} />}
       {step === 'verdict' && flow === 'raisons' && <RaisonsFlow ctl={ctl} />}
+      {step === 'resa' && flow === 'etats' && <EtatsFlow ctl={ctl} />}
+      {step === 'verdict' && flow === 'meteo' && <MeteoFlow ctl={ctl} />}
+      {step === 'verdict' && flow === 'veille' && <VeilleFlow ctl={ctl} />}
       {step === 'verdict' && flow === 'sources' && <SourcesFlow ctl={ctl} />}
       {step === 'kit' && (flow === 'trouver' || flow === 'emballer' || flow === 'tout') && (
         <KitListFlow ctl={ctl} flow={flow} />
       )}
       {step === 'kit' && flow === 'conseils' && <ConseilsFlow ctl={ctl} />}
       {step === 'kit' && flow === 'mes-kits' && <MesKitsFlow ctl={ctl} />}
+      {step === 'kit' && flow === 'inventaire' && <InventaireFlow ctl={ctl} />}
       {step === 'kit' && flow === 'sacs' && <SacsFlow ctl={ctl} />}
+      {step === 'kit' && flow === 'eau' && <EauFlow ctl={ctl} />}
       {ctl.data.canEdit ? (
         <DisLe
           key={hint?.say ?? 'disle'}
@@ -1130,8 +1139,11 @@ function BudgetFlow({ ctl }: { ctl: CompasCtl }) {
       ctl.notify('Montant invalide', 'bad');
       return;
     }
-    void ctl.run(amount == null ? 'Enveloppe retirée' : 'Enveloppe enregistrée', () =>
-      compasSetBudgetAction({ tripId, tripSlug: slug, amount })
+    const before = ctl.data.model.budget.target;
+    void ctl.run(
+      amount == null ? 'Enveloppe retirée' : 'Enveloppe enregistrée',
+      () => compasSetBudgetAction({ tripId, tripSlug: slug, amount }),
+      () => compasSetBudgetAction({ tripId, tripSlug: slug, amount: before })
     );
   };
   return (
@@ -1511,6 +1523,57 @@ function ReservationsFlow({ ctl }: { ctl: CompasCtl }) {
   );
 }
 
+/** Ce que veut dire chaque état, dans l'ordre où une réservation avance. */
+const STATE_HELP: Array<[string, string]> = [
+  ['draft', 'Notée dans le plan et le budget, rien d’engagé.'],
+  ['held', 'Place retenue chez le fournisseur, pas encore payée.'],
+  ['pending', 'Demande envoyée, en attente du fournisseur.'],
+  ['confirmed', 'Validée par le fournisseur ou par toi.'],
+  ['cancelled', 'Annulée.'],
+  ['expired', 'Délai dépassé sans confirmation.'],
+  ['failed', 'Le fournisseur a refusé ou l’envoi a échoué.'],
+  ['refunded', 'Remboursée.'],
+];
+
+/**
+ * États (maquette finale, Mes réservations) : les réservations réelles du
+ * voyage comptées par état, et les nuits encore à trouver. Un clic vers un
+ * partenaire ne confirme jamais rien.
+ */
+function EtatsFlow({ ctl }: { ctl: CompasCtl }) {
+  const count = (s: string) => ctl.data.bookings.filter((b) => b.status === s).length;
+  const toFind = ctl.data.model.route.nightsToFind;
+  const rows = STATE_HELP.filter(([s], i) => i < 4 || count(s) > 0);
+  return (
+    <>
+      <div className="cp-row" style={staticRow}>
+        <span className="cp-thumb">
+          <Icon name="bed-double" size={20} />
+        </span>
+        <span className="cp-row__t">
+          <b>À réserver</b>
+          <span>Nuits du parcours sans hébergement noté.</span>
+        </span>
+        <span className="cp-row__end">
+          <b>{toFind}</b>
+        </span>
+      </div>
+      {rows.map(([s, help]) => (
+        <div key={s} className="cp-row" style={staticRow}>
+          <span className="cp-row__t">
+            <b>{BOOKING_STATUS[s]?.label ?? s}</b>
+            <span>{help}</span>
+          </span>
+          <span className="cp-row__end">
+            <b>{count(s)}</b>
+          </span>
+        </div>
+      ))}
+      <p className="cp-note">Un clic vers un partenaire ne confirme jamais une réservation.</p>
+    </>
+  );
+}
+
 const OFFER_ICONS: Array<[RegExp, string]> = [
   [/vol|flight|avion/i, 'plane'],
   [/h[ôo]tel|h[ée]berg|stay|refuge|g[îi]te/i, 'bed-double'],
@@ -1679,6 +1742,152 @@ function VerdictExplain({ ctl }: { ctl: CompasCtl }) {
         </button>
       )}
     </section>
+  );
+}
+
+const WX_DAY = new Intl.DateTimeFormat('fr-FR', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'UTC',
+});
+const deg = (v: number | null) => (v == null ? '—' : `${Math.round(v)} °C`);
+
+/**
+ * Météo des vrais jours du voyage (maquette finale : onglet « Météo » du
+ * verdict). Prévision Open-Meteo aux points réels de chaque journée ; au-delà
+ * de l'horizon de prévision, le jour le dit au lieu d'inventer une valeur.
+ */
+function MeteoFlow({ ctl }: { ctl: CompasCtl }) {
+  const w = ctl.data.weather;
+  const days = w?.tripDays ?? [];
+  if (!w || days.length === 0) {
+    return (
+      <p className="cp-note">
+        Météo non disponible : il faut des dates et au moins une étape localisée.
+      </p>
+    );
+  }
+  const horizon = WX_DAY.format(new Date(`${w.horizon}T12:00:00Z`));
+  return (
+    <>
+      <div className="cp-wx">
+        {days.map((d) => {
+          const f = d.forecast;
+          const freezing = f
+            ? f.hours.map((h) => h.freezingM).filter((v): v is number => v != null)
+            : [];
+          const lowFreeze = freezing.length ? Math.min(...freezing) : null;
+          return (
+            <div key={d.day}>
+              <b>
+                J{d.day} · {WX_DAY.format(new Date(`${d.date}T12:00:00Z`))}
+              </b>
+              {f ? (
+                <>
+                  {f.code != null && <span>{weatherLabel(f.code).label}</span>}
+                  <span>
+                    {deg(f.tMin)} / {deg(f.tMax)}
+                    {f.precipPct != null ? ` · pluie ${Math.round(f.precipPct)} %` : ''}
+                  </span>
+                  <span>
+                    {f.gustMax != null ? `Rafales ${Math.round(f.gustMax)} km/h` : 'Rafales —'}
+                    {lowFreeze != null
+                      ? ` · 0 °C à ${Math.round(lowFreeze).toLocaleString('fr-FR')} m`
+                      : ''}
+                  </span>
+                </>
+              ) : (
+                <span>Au-delà de la prévision (jusqu’au {horizon}).</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <p className="cp-note">
+        Prévisions {w.source} jusqu’au {horizon}, aux points réels de chaque journée. Elles ne
+        remplacent pas les bulletins officiels (vigilance Météo-France, bulletins avalanche).
+      </p>
+    </>
+  );
+}
+
+/**
+ * Veille (maquette finale) : les seuils réellement appliqués par le moteur de
+ * danger, ce que chacun a déclenché, et — seulement si le calendrier des
+ * conditions le justifie — une proposition de décalage. L'agent propose, la
+ * personne décide : le décalage n'est écrit qu'au clic.
+ */
+function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
+  const m = ctl.data.model;
+  const rules = watchRules(ctl.data.danger.signals);
+  const active = rules.filter((r) => r.hits.length > 0).length;
+  const shift = proposeShift({
+    start: m.dates.start,
+    end: m.dates.end,
+    calendar: ctl.data.weather?.calendar ?? [],
+  });
+  const fmt = (iso: string) => WX_DAY.format(new Date(`${iso}T12:00:00Z`));
+  const apply = () => {
+    if (!shift) return;
+    const n = Math.abs(shift.offsetDays);
+    const ops: ApplyOp[] = [
+      {
+        op: 'dates',
+        startDate: shift.startDate,
+        endDate: shift.endDate,
+        durationHours: m.dates.hours != null && m.dates.hours < 24 ? m.dates.hours : null,
+        resplit: false,
+      },
+    ];
+    const undo = inverseOps(ctl, ops);
+    void ctl.run(
+      `Voyage décalé de ${n} jour${n > 1 ? 's' : ''}`,
+      () => runOps(ctl, ops),
+      undo ? () => runOps(ctl, undo) : undefined
+    );
+  };
+  return (
+    <>
+      {shift && ctl.data.canEdit && (
+        <div className="cp-vb">
+          <p className="cp-vb__h">
+            <span className="cp-pd" aria-hidden="true" />
+            Proposition de la veille
+          </p>
+          <p>
+            {shift.now.length ? `${shift.now.join(', ')} sur les dates actuelles. ` : ''}
+            Du {fmt(shift.startDate)} au {fmt(shift.endDate)}, la prévision ne montre aucun jour
+            mauvais. Décaler de {Math.abs(shift.offsetDays)} jour
+            {Math.abs(shift.offsetDays) > 1 ? 's' : ''}
+            {shift.offsetDays > 0 ? ' plus tard' : ' plus tôt'} ?
+          </p>
+          <div className="cp-actions">
+            <button type="button" className="cp-btn cp-btn--pg" disabled={ctl.busy} onClick={apply}>
+              Décaler
+            </button>
+            <span className="cp-sub">L’agent propose, tu décides.</span>
+          </div>
+        </div>
+      )}
+      <ul className="cp-rules" aria-label="Règles de la veille">
+        {rules.map((r) => (
+          <li key={r.id} data-hit={r.hits.length ? '1' : undefined}>
+            <b>{r.label}</b>
+            <span>
+              {r.hits.length
+                ? r.hits.map((h) => h.label).join(' · ')
+                : 'Rien à signaler sur ce voyage.'}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="cp-note">
+        {active} règle{active > 1 ? 's' : ''} déclenchée{active > 1 ? 's' : ''} sur {rules.length}.
+        Vérifiées à chaque ouverture du Compas sur la prévision Open-Meteo et les alertes
+        officielles ; aucun seuil n’est une norme légale.
+      </p>
+    </>
   );
 }
 
@@ -2039,6 +2248,242 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
           );
         }}
       />
+    </>
+  );
+}
+
+const litres = (n: number) => `${String(n).replace('.', ',')} L`;
+
+/**
+ * Eau (maquette finale, onglet du Kit) : besoin par personne jour par jour
+ * (repère par heure de marche, chaud compris), contenants du kit au volume
+ * écrit, et points d'eau réels du tracé. Rien n'est supposé : un volume non
+ * écrit ou une marche inconnue reste « non renseigné ».
+ */
+function EauFlow({ ctl }: { ctl: CompasCtl }) {
+  const m = ctl.data.model;
+  const plan = planWater({
+    dayPlans: m.route.dayPlans,
+    forecasts: (ctl.data.weather?.tripDays ?? []).map((d) => ({
+      day: d.day,
+      forecast: d.forecast,
+    })),
+    lines: ctl.lines,
+  });
+  const people = m.crew.size;
+  const water = ctl.data.routePois
+    .filter((p) => p.category === 'water')
+    .sort((a, b) => a.distanceM - b.distanceM);
+  const peak = plan.peak;
+  const need = peak?.liters != null ? Math.round(peak.liters * people * 10) / 10 : null;
+  let verdict: string;
+  if (need == null) verdict = 'Durée de marche non renseignée : besoin en eau non calculé.';
+  else if (plan.containers.length === 0)
+    verdict = `Aucun contenant d’eau dans le kit pour ${litres(need)} le jour ${peak?.day}.`;
+  else if (plan.knownLiters == null)
+    verdict = 'Volume des contenants non écrit dans leur nom : couverture non vérifiable.';
+  else if (plan.knownLiters >= need)
+    verdict = `Contenants du kit (${litres(plan.knownLiters)}) suffisants pour la plus longue journée sans recharger.`;
+  else
+    verdict = `Il manque ${litres(Math.round((need - plan.knownLiters) * 10) / 10)} de contenants pour le jour ${peak?.day} sans recharger${water.length > 0 ? ', ou recharger aux points d’eau du tracé' : ''}.`;
+
+  return (
+    <>
+      <div className="cp-row" style={staticRow}>
+        <span className="cp-thumb">
+          <Icon name="droplet" size={20} />
+        </span>
+        <span className="cp-row__t">
+          <b>
+            {peak?.liters != null
+              ? `Eau par personne : jusqu’à ${litres(peak.liters)}`
+              : 'Eau par personne : non renseignée'}
+          </b>
+          <span>
+            {peak?.liters != null
+              ? `Jour ${peak.day}${people > 1 ? ` · ${litres(need as number)} pour ${people} personnes` : ''}`
+              : 'Il faut des étapes avec une durée de marche.'}
+          </span>
+        </span>
+      </div>
+      {plan.days.length > 0 && (
+        <div className="cp-wx">
+          {plan.days.map((d) => (
+            <div key={d.day}>
+              <b>
+                J{d.day}
+                {d.date ? ` · ${WX_DAY.format(new Date(`${d.date}T12:00:00Z`))}` : ''}
+              </b>
+              <span>{d.liters != null ? litres(d.liters) : 'non renseigné'}</span>
+              <span>
+                {d.walkMin != null ? `${formatDuration(d.walkMin)} de marche` : 'marche inconnue'}
+                {d.hot ? ' · chaud' : ''}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+      <p className="cp-note">{verdict}</p>
+      <PagedList
+        label="Contenants du kit"
+        items={plan.containers}
+        empty={<p className="cp-note">Aucune gourde, poche à eau ni bouteille dans le kit.</p>}
+        render={(c) => (
+          <div key={c.id} className="cp-row" style={staticRow}>
+            <Thumb category={null} name={c.name} />
+            <span className="cp-row__t">
+              <b>{c.name}</b>
+              <span>
+                {c.quantity > 1 ? `${c.quantity} × · ` : ''}
+                {c.liters != null ? litres(c.liters) : 'volume non écrit'}
+              </span>
+            </span>
+          </div>
+        )}
+      />
+      {ctl.data.route.id != null && (
+        <PagedList
+          label="Points d’eau sur le tracé"
+          items={water}
+          empty={
+            <p className="cp-note">
+              Aucun point d’eau connu à moins de 1 km du tracé : tout emporter.
+            </p>
+          }
+          render={(p) => (
+            <div key={p.id} className="cp-row" style={staticRow}>
+              <span className="cp-thumb">
+                <Icon name="droplet" size={20} />
+              </span>
+              <span className="cp-row__t">
+                <b>{poiLabel(p)}</b>
+                <span>
+                  à {p.distanceM} m du tracé{p.elevationM != null ? ` · ${p.elevationM} m` : ''}
+                </span>
+              </span>
+            </div>
+          )}
+        />
+      )}
+      <p className="cp-note">
+        Repère courant : {litres(KIT_THRESHOLDS.waterLPerHour)} par heure de marche,{' '}
+        {litres(KIT_THRESHOLDS.waterLPerHourHot)} au-delà de {KIT_THRESHOLDS.sunC} °C (prévision du
+        jour). Une source OpenStreetMap peut être tarie : à vérifier avant de compter dessus.
+      </p>
+      {water.length > 0 && <p className="cp-disc">© contributeurs OpenStreetMap (licence ODbL)</p>}
+    </>
+  );
+}
+
+/**
+ * Inventaire (maquette finale, onglet du Kit) : l'inventaire réel classé par
+ * catégorie. Un objet déjà dans le kit ouvre sa fiche ; les autres s'ajoutent
+ * d'un geste. Prêté, à entretenir, périmé : dit, jamais caché.
+ */
+function InventaireFlow({ ctl }: { ctl: CompasCtl }) {
+  const { tripId, slug } = ctl.data.model;
+  const lineByInv = useMemo(
+    () =>
+      new Map(
+        ctl.lines
+          .filter((l) => l.inventoryItemId)
+          .map((l) => [l.inventoryItemId as string, l.id] as const)
+      ),
+    [ctl.lines]
+  );
+  const cats = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const i of ctl.data.inventory) {
+      const c = i.category ?? 'Sans catégorie';
+      m.set(c, (m.get(c) ?? 0) + 1);
+    }
+    return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'fr'));
+  }, [ctl.data.inventory]);
+  const [cat, setCat] = useState<string>('all');
+  const today = new Date().toISOString().slice(0, 10);
+  const shown = ctl.data.inventory
+    .filter((i) => cat === 'all' || (i.category ?? 'Sans catégorie') === cat)
+    .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+  if (ctl.data.inventory.length === 0)
+    return (
+      <p className="cp-note">
+        Ton inventaire est vide. <Link href="/hub/inventaire">Ouvrir l’inventaire</Link>
+      </p>
+    );
+  return (
+    <>
+      {cats.length > 1 && (
+        <Segments
+          label="Catégorie"
+          value={cat}
+          onChange={setCat}
+          options={[
+            { id: 'all', label: `Tout (${ctl.data.inventory.length})` },
+            ...cats.map(([c, n]) => ({ id: c, label: `${c} (${n})` })),
+          ]}
+        />
+      )}
+      <PagedList
+        label="Mon inventaire"
+        resetKey={cat}
+        items={shown}
+        render={(i) => {
+          const lineId = lineByInv.get(i.id) ?? null;
+          const notes = [
+            i.brand,
+            i.weightG != null ? formatKg(i.weightG) : 'à peser',
+            i.isLent ? 'prêté' : null,
+            i.maintenanceDueAt && i.maintenanceDueAt <= today ? 'entretien dû' : null,
+            i.expiryDate && i.expiryDate <= today ? 'périmé' : null,
+          ].filter(Boolean);
+          return (
+            <div key={i.id} className="cp-row" style={staticRow}>
+              <Thumb category={i.category} name={i.name} />
+              <span className="cp-row__t">
+                <b>{i.name}</b>
+                <span>{notes.join(' · ')}</span>
+              </span>
+              <span className="cp-row__end">
+                {lineId ? (
+                  <button
+                    type="button"
+                    className="cp-btn cp-btn--soft"
+                    onClick={() => ctl.open({ kind: 'item', lineId })}
+                    aria-label={`Fiche : ${i.name}`}
+                  >
+                    Dans le kit
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="cp-btn cp-btn--soft"
+                    disabled={ctl.busy || !ctl.data.canEdit}
+                    aria-label={`Ajouter au kit : ${i.name}`}
+                    onClick={() =>
+                      ctl.run(`${i.name} ajouté au kit`, () =>
+                        addInventoryItemToTripAction(
+                          tripId,
+                          slug,
+                          i.id,
+                          i.name,
+                          i.category ?? undefined,
+                          i.weightG ?? undefined
+                        )
+                      )
+                    }
+                  >
+                    Ajouter
+                  </button>
+                )}
+              </span>
+            </div>
+          );
+        }}
+      />
+      <p className="cp-note">
+        Les objets de ton inventaire (<Link href="/hub/inventaire">Hub</Link>). Ajouter au kit ne
+        change rien à l’inventaire.
+      </p>
     </>
   );
 }

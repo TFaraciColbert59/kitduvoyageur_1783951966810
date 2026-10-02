@@ -340,6 +340,13 @@
 [data-theme='dark'] .cp-ruler__thumb {
   background: rgb(236 237 232);
 }
+.cp-steps {
+  touch-action: pan-y;
+}
+/* Pendant le glissement, la lentille colle au doigt (pas de transition). */
+.cp-steps[data-drag] .cp-steps__lens {
+  transition: none;
+}
 .dark .cp-steps__lens,
 [data-theme='dark'] .cp-steps__lens {
   background: linear-gradient(180deg, rgb(255 255 255 / 0.22), rgb(255 255 255 / 0.08));
@@ -914,6 +921,33 @@
   background: var(--lkv-danger-dark);
 }
 
+/* « Annuler » dans l'annonce (îlot de la maquette). */
+.cp-toast:has(.cp-toast__undo) {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-right: 6px;
+}
+.cp-toast__undo {
+  flex: none;
+  pointer-events: auto;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cp-island-ink) 16%, transparent);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.cp-toast__undo:focus-visible {
+  outline: 2px solid var(--cp-island-ink);
+  outline-offset: 2px;
+}
+.cp-toast__undo:disabled {
+  opacity: 0.5;
+}
+
 /* Écran vide */
 .cp-empty {
   display: grid;
@@ -1082,9 +1116,11 @@
   right: 15px;
   background: rgb(23 43 36 / 0.14);
 }
+/* Piste remplie jusqu'au curseur (vert de la maquette). `--lkv-secondary`
+   est forcé en blanc par la couche globale du hub sombre : la piste était
+   invisible sur le verre clair. */
 .cp-ruler__fill {
-  background: var(--lkv-secondary);
-  opacity: 0.75;
+  background: var(--lkv-sage-300);
 }
 .cp-ruler__thumb {
   position: absolute;
@@ -1632,6 +1668,44 @@
   width: 1px;
   height: 26px;
   background: var(--cp-sep);
+}
+
+/* Profil d'altitude réel (maquette : .acc svg.spk) — glisser pour lire. */
+.cp-acc__ro {
+  flex: none;
+  width: 92px;
+}
+.cp-acc__ro span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cp-spk {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  overflow: visible;
+  cursor: ew-resize;
+  touch-action: none;
+  border-radius: 6px;
+}
+.cp-spk:focus-visible {
+  outline: 2px solid var(--lkv-primary);
+  outline-offset: 3px;
+}
+.cp-spk__line {
+  fill: none;
+  stroke: var(--lkv-primary);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+.cp-spk__fill {
+  fill: color-mix(in srgb, var(--lkv-sage-300) 38%, transparent);
+  stroke: none;
+}
+.cp-spk__cur {
+  stroke: var(--lkv-ink-900, currentColor);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
 }
 
 /* Réglage d'affichage (soleil) */
@@ -2395,4 +2469,187 @@ html[data-liquid-ios27]:not([data-theme='dark'])
 .cp-sheet {
   left: 8px;
   right: 8px;
+}
+
+/* Tuiles (maquette finale : « .grid2 » / « .tile2 ») — activités du tiroir
+   Préparer : quatre par ligne, icône au-dessus du nom. */
+.cp-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.cp-tile {
+  min-width: 0;
+  min-height: 62px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px;
+  border: 0;
+  border-radius: 14px;
+  background: rgb(23 43 36 / 0.06);
+  color: var(--cp-ink);
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.cp-tile span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cp-tile[aria-pressed='true'] {
+  background: var(--cp-soft);
+  color: var(--lkv-primary);
+  font-weight: 600;
+  box-shadow:
+    inset 0 0 0 1px var(--cp-soft-line),
+    inset 0 1px 0 rgb(255 255 255 / 0.6);
+}
+.cp-tile:disabled {
+  cursor: default;
+}
+.dark .cp-tile,
+[data-theme='dark'] .cp-tile {
+  background: var(--cp-fill);
+}
+
+/* Météo du verdict (maquette : « .wx ») : une case par jour, deux colonnes. */
+.cp-wx {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+.cp-wx > div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  padding: 9px 11px;
+  border-radius: 14px;
+  background: rgb(23 43 36 / 0.06);
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--cp-ink2);
+}
+.cp-wx b {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cp-ink);
+}
+.dark .cp-wx > div,
+[data-theme='dark'] .cp-wx > div {
+  background: var(--cp-fill);
+}
+
+/* Veille du verdict (maquette : « .vb » et lignes à interrupteur). */
+.cp-vb {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 9px 11px;
+  border-radius: 14px;
+  background: rgb(23 43 36 / 0.06);
+}
+.cp-vb p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.35;
+}
+.cp-vb__h {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px !important;
+  font-weight: 600;
+  color: var(--cp-ink2);
+}
+.cp-pd {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cp-good);
+  animation: cp-pulse 1.6s infinite;
+}
+@keyframes cp-pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cp-pd {
+    animation: none;
+  }
+}
+.cp-rules {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cp-rules li {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 7px 2px;
+  border-top: 0.5px solid var(--cp-sep);
+}
+.cp-rules li:first-child {
+  border-top: 0;
+}
+.cp-rules b {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.cp-rules span {
+  font-size: 12px;
+  color: var(--cp-ink2);
+}
+.cp-rules li[data-hit='1'] span {
+  color: var(--cp-warn);
+}
+.dark .cp-vb,
+[data-theme='dark'] .cp-vb {
+  background: var(--cp-fill);
+}
+
+/* Barre d'onglets réduite (maquette finale, .tabmin) : en défilant un tiroir
+   vers le bas, seul l'onglet actif reste, en bulle à gauche. Changement
+   instantané (aucune animation de largeur) ; remonter la rend entière. */
+body:has(.compas[data-tabmin]) .lkv-nav-surface > div {
+  width: auto !important;
+  align-self: flex-start;
+  margin-left: 14px;
+}
+body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-material-bar {
+  width: 64px !important;
+  justify-content: center !important;
+  padding: 0 !important;
+}
+body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='page']) {
+  display: none;
+}
+
+/* Glisser à gauche sur un objet du kit : « Retirer » apparaît, la ligne
+   recule légèrement (transform seul). */
+.cp-row[data-swiped] .cp-row__t {
+  transform: translateX(-6px);
+  transition: transform 0.2s ease;
+}
+.cp-row__swipe {
+  min-height: 36px;
+  padding: 0 12px;
+}
+.cp-row {
+  touch-action: pan-y;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cp-row[data-swiped] .cp-row__t {
+    transition: none;
+  }
 }

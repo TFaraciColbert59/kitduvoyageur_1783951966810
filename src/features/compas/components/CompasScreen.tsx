@@ -13,10 +13,11 @@ import {
 import Icon from '@/components/ui/Icon';
 import { togglePackedAction } from '@/app/voyages/kit-actions';
 import { COMPAS_STEPS, type CompasKitLine, type CompasStepId } from '../engine/compasModel';
-import { activityLabel, formatHours, formatKm, formatMeters } from '../engine/format';
+import { activityLabel, formatHours } from '../engine/format';
 import type { CompasData } from '../server/getCompasData';
 import { KitCard, NousCard, OuCard, ResaCard, VerdictCard } from './CompasCards';
 import { CompasMap } from './CompasMap';
+import { CompasAccessory } from './CompasAccessory';
 import { tripHours } from './CompasRuler';
 import { CompasSheet, type Detent } from './CompasSheet';
 import { SheetContent, sheetTitle } from './CompasSheets';
@@ -25,9 +26,9 @@ import type { ActionResult, CompasCtl, SheetState, StepFlow } from './compasType
 const DISPLAY_KEY = 'lkdv.compas.affichage';
 
 const STEP_TITLES: Record<CompasStepId, string> = {
-  ou: 'Où et quand',
+  ou: 'Préparer',
   nous: 'Nous',
-  resa: 'Réserver',
+  resa: 'Mes réservations',
   verdict: 'Verdict',
   kit: 'Kit',
 };
@@ -91,7 +92,13 @@ export function CompasScreen({
   const [popover, setPopover] = useState(false);
   const [stack, setStack] = useState<Array<{ sheet: SheetState; detent: Detent }>>([]);
   const [packed, setPacked] = useState<Record<string, boolean>>({});
-  const [toast, setToast] = useState<{ message: string; tone?: 'bad' } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    tone?: 'bad';
+    undo?: () => void;
+  } | null>(null);
+  /** Dernière écriture annulable (Ctrl/⌘+Z), le temps que l'annonce reste. */
+  const undoRef = useRef<(() => void) | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { model } = data;
@@ -123,14 +130,26 @@ export function CompasScreen({
   // Les données fraîches du serveur remplacent l'état optimiste.
   useEffect(() => setPacked({}), [data]);
 
-  const notify = useCallback((message: string, tone?: 'bad') => {
+  const notify = useCallback((message: string, tone?: 'bad', undo?: () => void) => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
-    setToast({ message, tone });
-    toastTimer.current = setTimeout(() => setToast(null), 2600);
+    undoRef.current = undo ?? null;
+    setToast({ message, tone, undo });
+    // Une annonce annulable reste plus longtemps : le temps de se raviser.
+    toastTimer.current = setTimeout(
+      () => {
+        undoRef.current = null;
+        setToast(null);
+      },
+      undo ? 6000 : 2600
+    );
   }, []);
 
   const run = useCallback(
-    async (success: string, action: () => Promise<ActionResult>) => {
+    async (
+      success: string,
+      action: () => Promise<ActionResult>,
+      undo?: () => Promise<ActionResult>
+    ): Promise<boolean> => {
       setRunning(true);
       try {
         const res = await action();
@@ -138,7 +157,11 @@ export function CompasScreen({
           notify(res.error ?? 'Action impossible', 'bad');
           return false;
         }
-        notify(success);
+        notify(
+          success,
+          undefined,
+          undo ? () => void runRef.current?.(`Annulé : ${success}`, undo) : undefined
+        );
         startTransition(() => router.refresh());
         return true;
       } catch {
@@ -150,6 +173,26 @@ export function CompasScreen({
     },
     [notify, router]
   );
+  const runRef = useRef(run);
+  runRef.current = run;
+
+  // Ctrl/⌘+Z annule la dernière écriture annulable, hors champ de saisie
+  // (où il garde son sens habituel).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.shiftKey || e.key.toLowerCase() !== 'z') return;
+      const t = e.target;
+      if (t instanceof Element && t.closest('input, textarea, select, [contenteditable="true"]'))
+        return;
+      const undo = undoRef.current;
+      if (!undo) return;
+      e.preventDefault();
+      undoRef.current = null;
+      undo();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const lines = useMemo<CompasKitLine[]>(
     () => model.kit.lines.map((l) => (l.id in packed ? { ...l, packed: packed[l.id] } : l)),
@@ -239,6 +282,14 @@ export function CompasScreen({
         : undefined,
   };
   const stepIndex = COMPAS_STEPS.findIndex((s) => s.id === step);
+  const [lensX, setLensX] = useState<number | null>(null);
+  const lensDrag = useRef<{ x: number; moved: boolean } | null>(null);
+  const suppressClick = useRef(false);
+  const selectStep = (id: CompasStepId) => {
+    setStep(id);
+    setStack([]);
+    setMapBig(false);
+  };
 
   const hours = tripHours(model);
   const miniLine = [
@@ -263,11 +314,55 @@ export function CompasScreen({
       <div className="cp-bg" aria-hidden="true" />
       <div className="cp-top">
         <div className="cp-headrow">
-          <nav className="cp-steps cp-glass" aria-label="Étapes du Compas">
+          <nav
+            className="cp-steps cp-glass"
+            aria-label="Étapes du Compas"
+            data-drag={lensX != null ? '' : undefined}
+            onPointerDown={(e) => {
+              if (e.pointerType === 'mouse' && e.button !== 0) return;
+              lensDrag.current = { x: e.clientX, moved: false };
+            }}
+            onPointerMove={(e) => {
+              const d = lensDrag.current;
+              if (!d) return;
+              if (!d.moved && Math.abs(e.clientX - d.x) < 8) return;
+              if (!d.moved) {
+                d.moved = true;
+                e.currentTarget.setPointerCapture?.(e.pointerId);
+              }
+              const r = e.currentTarget.getBoundingClientRect();
+              const n = COMPAS_STEPS.length;
+              const x = r.width > 0 ? ((e.clientX - r.left) / r.width) * n - 0.5 : stepIndex;
+              if (Number.isFinite(x)) setLensX(Math.min(n - 1, Math.max(0, x)));
+            }}
+            onPointerUp={() => {
+              const d = lensDrag.current;
+              lensDrag.current = null;
+              if (d?.moved && lensX != null) {
+                // Le clic qui suit le relâchement ne doit pas choisir une
+                // autre étape que celle sous la lentille.
+                suppressClick.current = true;
+                selectStep(COMPAS_STEPS[Math.round(lensX)].id);
+              }
+              setLensX(null);
+            }}
+            onPointerCancel={() => {
+              lensDrag.current = null;
+              setLensX(null);
+            }}
+            onClickCapture={(e) => {
+              if (!suppressClick.current) return;
+              suppressClick.current = false;
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
+            {/* Maquette finale : la lentille suit le doigt (maintenir et
+                glisser), l'étape sous la lentille est choisie au relâchement. */}
             <span
               className="cp-steps__lens"
               aria-hidden="true"
-              style={{ transform: `translateX(${stepIndex * 100}%)` }}
+              style={{ transform: `translateX(${(lensX ?? stepIndex) * 100}%)` }}
             />
             {COMPAS_STEPS.map((s) => (
               <button
@@ -275,11 +370,7 @@ export function CompasScreen({
                 type="button"
                 className="cp-step"
                 aria-current={step === s.id ? 'step' : undefined}
-                onClick={() => {
-                  setStep(s.id);
-                  setStack([]);
-                  setMapBig(false);
-                }}
+                onClick={() => selectStep(s.id)}
               >
                 <Icon name={s.icon} size={20} />
                 <span className="cp-step__l">{s.label}</span>
@@ -358,24 +449,13 @@ export function CompasScreen({
           </button>
         )}
         {model.route.stepsCount > 0 && (
-          <div className="cp-acc cp-glass">
-            <span className="cp-acc__i">
-              <Icon name="mountain" size={17} />
-            </span>
-            <span className="cp-acc__v">
-              <b>{formatMeters(model.route.elevationGainM)}</b>
-              <span>dénivelé positif</span>
-            </span>
-            <i className="cp-acc__sep" aria-hidden="true" />
-            <span className="cp-acc__v">
-              <b>{formatKm(model.route.distanceKm)}</b>
-              <span>
-                {model.route.days} jour{model.route.days > 1 ? 's' : ''} · {model.route.stepsCount}{' '}
-                étape
-                {model.route.stepsCount > 1 ? 's' : ''}
-              </span>
-            </span>
-          </div>
+          <CompasAccessory
+            profile={data.elevation}
+            gainM={model.route.elevationGainM}
+            distanceKm={model.route.distanceKm}
+            days={model.route.days}
+            stepsCount={model.route.stepsCount}
+          />
         )}
       </CompasMap>
 
@@ -428,6 +508,22 @@ export function CompasScreen({
       {toast && (
         <div className="cp-toast" role="status" data-tone={toast.tone}>
           {toast.message}
+          {toast.undo && (
+            <button
+              type="button"
+              className="cp-toast__undo"
+              disabled={running}
+              title="Ctrl/⌘ + Z"
+              onClick={() => {
+                const undo = toast.undo;
+                undoRef.current = null;
+                setToast(null);
+                undo?.();
+              }}
+            >
+              Annuler
+            </button>
+          )}
         </div>
       )}
     </div>

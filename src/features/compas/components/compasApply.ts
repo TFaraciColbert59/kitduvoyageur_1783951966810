@@ -1,5 +1,10 @@
 import { addCustomTripItemAction } from '@/app/voyages/kit-actions';
-import type { ApplyCurrent, ApplyOp } from '../engine/intent';
+import {
+  COMPAS_ACTIVITIES,
+  type ApplyCurrent,
+  type ApplyOp,
+  type CompasActivity,
+} from '../engine/intent';
 import {
   compasSetActivityAction,
   compasSetBudgetAction,
@@ -89,4 +94,47 @@ export async function runOps(
     done += 1;
   }
   return { success: true, done };
+}
+
+/**
+ * L'opération inverse des écritures, calculée sur l'état réel d'AVANT.
+ * Rien d'inventé : une écriture sans inverse sûr (objet ajouté, nombre de
+ * personnes non renseigné, dates redécoupées en étapes) rend l'ensemble
+ * non annulable, et « Annuler » n'est alors pas proposé.
+ */
+export function inverseOps(ctl: CompasCtl, ops: readonly ApplyOp[]): ApplyOp[] | null {
+  const m = ctl.data.model;
+  const out: ApplyOp[] = [];
+  for (const op of ops) {
+    switch (op.op) {
+      case 'dates':
+        if (op.resplit || !m.dates.start || !m.dates.end) return null;
+        out.push({
+          op: 'dates',
+          startDate: m.dates.start,
+          endDate: m.dates.end,
+          durationHours: m.dates.hours != null && m.dates.hours < 24 ? m.dates.hours : null,
+          resplit: false,
+        });
+        break;
+      case 'prefs':
+        out.push({ op: 'prefs', preferences: m.preferences });
+        break;
+      case 'activity':
+        if (!m.activity || !(COMPAS_ACTIVITIES as readonly string[]).includes(m.activity))
+          return null;
+        out.push({ op: 'activity', activity: m.activity as CompasActivity });
+        break;
+      case 'budget':
+        if (m.budget.target == null) return null;
+        out.push({ op: 'budget', amount: m.budget.target });
+        break;
+      case 'route':
+        break;
+      default:
+        return null;
+    }
+  }
+  // Dans l'ordre inverse : le dernier changement est défait en premier.
+  return out.reverse();
 }

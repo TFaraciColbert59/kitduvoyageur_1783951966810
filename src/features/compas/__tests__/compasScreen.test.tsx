@@ -251,6 +251,7 @@ function makeData(overrides: Partial<CompasInput> = {}): CompasData {
     })),
     bookings: [],
     routeGeojson: null,
+    elevation: null,
     points: [],
     inventory: [],
     shop: [
@@ -282,6 +283,20 @@ function makeData(overrides: Partial<CompasInput> = {}): CompasData {
     route: { id: 374, name: 'Tour des Vallées' },
     origin: { lat: 42.73, lon: -0.01 },
   };
+}
+
+// jsdom n'a pas PointerEvent : sans lui, les gestes perdent clientX/clientY.
+if (typeof window !== 'undefined' && !('PointerEvent' in window)) {
+  class TestPointerEvent extends MouseEvent {
+    pointerId: number;
+    pointerType: string;
+    constructor(type: string, init: PointerEventInit = {}) {
+      super(type, init);
+      this.pointerId = init.pointerId ?? 1;
+      this.pointerType = init.pointerType ?? 'mouse';
+    }
+  }
+  (window as unknown as { PointerEvent: unknown }).PointerEvent = TestPointerEvent;
 }
 
 beforeEach(() => {
@@ -361,6 +376,25 @@ describe('CompasScreen', () => {
     );
   });
 
+  it('glisser un objet à gauche fait apparaître « Retirer », qui seul retire', async () => {
+    render(<CompasScreen data={makeData()} />);
+    const sheet = await openAllKit();
+    const row = within(sheet)
+      .getByRole('button', { name: 'Emballer Sac de couchage' })
+      .closest('.cp-row') as HTMLElement;
+    fireEvent.pointerDown(row, { clientX: 300, clientY: 10, pointerType: 'touch' });
+    fireEvent.pointerMove(row, { clientX: 220, clientY: 12, pointerType: 'touch' });
+    fireEvent.pointerUp(row, { clientX: 220, clientY: 12, pointerType: 'touch' });
+    fireEvent.click(row);
+    // Le glissement n'ouvre pas la fiche et ne retire rien à lui seul.
+    expect(screen.queryByRole('dialog', { name: 'Sac de couchage' })).toBeNull();
+    expect(kit.deleteTripItemAction).not.toHaveBeenCalled();
+    fireEvent.click(within(row).getByRole('button', { name: 'Retirer du kit : Sac de couchage' }));
+    await waitFor(() =>
+      expect(kit.deleteTripItemAction).toHaveBeenCalledWith(SLEEP, 'trek-3-vallees')
+    );
+  });
+
   it('un échec serveur annule l’état optimiste et le dit', async () => {
     kit.togglePackedAction.mockResolvedValueOnce({
       success: false,
@@ -389,6 +423,117 @@ describe('CompasScreen', () => {
         shared: true,
       })
     );
+  });
+
+  it('eau : besoin par personne, contenants au volume écrit, points d’eau du tracé', async () => {
+    const data = makeData({
+      items: [item({ id: SLEEP, name: 'Gourde 1 L', quantity: 2 })],
+    });
+    data.routePois = [
+      {
+        id: 9,
+        name: 'Source du Clot',
+        category: 'water',
+        lat: 42.7,
+        lon: 0,
+        distanceM: 120,
+        elevationM: null,
+      },
+    ];
+    render(<CompasScreen data={data} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Kit/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Kit' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Kit' });
+    const tabs = within(sheet).getByRole('group', { name: 'Parcours du tiroir' });
+    fireEvent.click(within(tabs).getByText('Eau'));
+    expect(within(sheet).getByText(/^Eau par personne/)).toBeTruthy();
+    expect(within(sheet).getByText('Gourde 1 L')).toBeTruthy();
+    expect(within(sheet).getByText(/2 × · 2 L/)).toBeTruthy();
+    expect(within(sheet).getByText('Source du Clot')).toBeTruthy();
+    expect(within(sheet).getByText(/peut être tarie/)).toBeTruthy();
+  });
+
+  it('états : réservations réelles comptées par état, aucun clic ne confirme', async () => {
+    const bookings = [
+      { id: 'b1', vertical: 'hotel', provider: 'affiliate', status: 'pending', amountEur: 80 },
+      { id: 'b2', vertical: 'activity', provider: 'viator', status: 'confirmed', amountEur: 40 },
+      { id: 'b3', vertical: 'hotel', provider: 'affiliate', status: 'cancelled', amountEur: 60 },
+    ];
+    const data = makeData({ bookings });
+    render(<CompasScreen data={{ ...data, bookings }} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Mes réservations' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Mes réservations' });
+    const tabs = within(sheet).getByRole('group', { name: 'Parcours du tiroir' });
+    fireEvent.click(within(tabs).getByText('États'));
+    const value = (label: string) =>
+      within(sheet).getByText(label).closest('.cp-row')?.querySelector('.cp-row__end')?.textContent;
+    expect(value('En attente')).toBe('1');
+    expect(value('Confirmée')).toBe('1');
+    expect(value('Annulée')).toBe('1');
+    expect(within(sheet).queryByText('Expirée')).toBeNull();
+    expect(within(sheet).getByText(/ne confirme jamais/)).toBeTruthy();
+  });
+
+  it('inventaire : classé par catégorie, « Dans le kit » ouvre la fiche, le reste s’ajoute', async () => {
+    const INV1 = '88888888-8888-4888-8888-888888888881';
+    const INV2 = '88888888-8888-4888-8888-888888888882';
+    const inv = (id: string, name: string, category: string) => ({
+      id,
+      name,
+      brand: null,
+      category,
+      weightG: 300,
+      condition: 'bon',
+      isLent: false,
+      maintenanceDueAt: null,
+      expiryDate: '2020-01-01',
+      quantity: 1,
+    });
+    const inventory = [inv(INV1, 'Réchaud', 'Cuisine'), inv(INV2, 'Popote', 'Cuisine')];
+    const data = makeData({
+      items: [item({ id: SLEEP, name: 'Réchaud', inventoryItemId: INV1 })],
+      inventory,
+    });
+    render(<CompasScreen data={{ ...data, inventory }} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Kit/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Kit' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Kit' });
+    const tabs = within(sheet).getByRole('group', { name: 'Parcours du tiroir' });
+    fireEvent.click(within(tabs).getByText('Inventaire'));
+    expect(within(sheet).getAllByText(/périmé/)).toHaveLength(2);
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Ajouter au kit : Popote' }));
+    await waitFor(() =>
+      expect(kit.addInventoryItemToTripAction).toHaveBeenCalledWith(
+        TRIP,
+        'trek-3-vallees',
+        INV2,
+        'Popote',
+        'Cuisine',
+        300
+      )
+    );
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Fiche : Réchaud' }));
+    expect(await screen.findByRole('dialog', { name: 'Réchaud' })).toBeTruthy();
+  });
+
+  it('défiler un tiroir vers le bas réduit la barre d’onglets, le fermer la rend', async () => {
+    const { container } = render(<CompasScreen data={makeData()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Kit' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Kit' });
+    const body = sheet.querySelector('.cp-sheet__body') as HTMLElement;
+    const root = container.querySelector('.compas') as HTMLElement;
+    body.scrollTop = 120;
+    fireEvent.scroll(body);
+    expect(root.hasAttribute('data-tabmin')).toBe(true);
+    body.scrollTop = 40;
+    fireEvent.scroll(body);
+    expect(root.hasAttribute('data-tabmin')).toBe(false);
+    body.scrollTop = 160;
+    fireEvent.scroll(body);
+    expect(root.hasAttribute('data-tabmin')).toBe(true);
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Fermer' }));
+    await waitFor(() => expect(root.hasAttribute('data-tabmin')).toBe(false));
   });
 
   it('sans dates : aucun chiffre inventé, la décision demande les dates', () => {
@@ -490,8 +635,8 @@ describe('CompasScreen', () => {
     ];
     render(<CompasScreen data={data} />);
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Détails : Réserver' }));
-    const sheet = await screen.findByRole('dialog', { name: 'Réserver' });
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Mes réservations' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Mes réservations' });
     fireEvent.click(within(sheet).getByRole('button', { name: /Nuits/ }));
     const input = within(sheet).getByLabelText('Hébergement de la nuit du jour 1');
     fireEvent.change(input, { target: { value: 'Gîte du col' } });
@@ -544,8 +689,8 @@ describe('CompasScreen', () => {
     ];
     render(<CompasScreen data={data} />);
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Détails : Où et quand' }));
-    const sheet = await screen.findByRole('dialog', { name: 'Où et quand' });
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
     fireEvent.click(within(sheet).getByRole('button', { name: /Sur le tracé/ }));
     expect(within(sheet).getByText('Refuge des Oulettes')).toBeTruthy();
     expect(within(sheet).getByText('Point d’eau')).toBeTruthy();
@@ -596,8 +741,8 @@ describe('CompasScreen', () => {
     data.providers = { routestack: 'sandbox', viator: 'disabled' };
     render(<CompasScreen data={data} />);
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Détails : Réserver' }));
-    const sheet = await screen.findByRole('dialog', { name: 'Réserver' });
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Mes réservations' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Mes réservations' });
     fireEvent.click(within(sheet).getByRole('button', { name: /Nuits/ }));
     fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
     await waitFor(() =>
@@ -621,8 +766,8 @@ describe('CompasScreen', () => {
 
   const openOu = async (flow: RegExp) => {
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Détails : Où et quand' }));
-    const sheet = await screen.findByRole('dialog', { name: 'Où et quand' });
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
     fireEvent.click(within(sheet).getByRole('button', { name: flow }));
     return sheet;
   };
@@ -701,6 +846,60 @@ describe('CompasScreen', () => {
         preferences: { pace: 'normal', nights: 'bivouac', avoid: [], wishes: [] },
       })
     );
+  });
+
+  it('Annuler : l’annonce rétablit les préférences d’avant, Ctrl+Z aussi', async () => {
+    render(<CompasScreen data={makeData()} />);
+    const sheet = await openOu(/Préférences/);
+    const before = { pace: 'normal', nights: null, avoid: [], wishes: [] };
+    fireEvent.click(within(sheet).getByRole('button', { name: /Bivouac/ }));
+    const undo = await screen.findByRole('button', { name: 'Annuler' });
+    fireEvent.click(undo);
+    await waitFor(() =>
+      expect(compas.compasSetPreferencesAction).toHaveBeenLastCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        preferences: before,
+      })
+    );
+    expect(await screen.findByText(/^Annulé :/)).toBeTruthy();
+    // L'annulation elle-même ne s'annule pas.
+    expect(screen.queryByRole('button', { name: 'Annuler' })).toBeNull();
+
+    fireEvent.click(within(sheet).getByRole('button', { name: /Bivouac/ }));
+    await screen.findByRole('button', { name: 'Annuler' });
+    const calls = compas.compasSetPreferencesAction.mock.calls.length;
+    fireEvent.keyDown(window, { key: 'z', ctrlKey: true });
+    await waitFor(() =>
+      expect(compas.compasSetPreferencesAction.mock.calls.length).toBe(calls + 1)
+    );
+    expect(compas.compasSetPreferencesAction).toHaveBeenLastCalledWith(
+      expect.objectContaining({ preferences: before })
+    );
+  });
+
+  it('capsule d’étapes : la lentille suit le doigt, l’étape sous elle est choisie', () => {
+    render(<CompasScreen data={makeData()} />);
+    const nav = stepsNav();
+    nav.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 390, height: 50, right: 390, bottom: 50, x: 0, y: 0 }) as DOMRect;
+    fireEvent.click(within(nav).getByRole('button', { name: /Où/ }));
+    expect(within(nav).getByRole('button', { name: /Où/ }).getAttribute('aria-current')).toBe(
+      'step'
+    );
+    fireEvent.pointerDown(nav, { clientX: 20, pointerType: 'touch' });
+    fireEvent.pointerMove(nav, { clientX: 200, pointerType: 'touch' });
+    expect(nav.hasAttribute('data-drag')).toBe(true);
+    fireEvent.pointerMove(nav, { clientX: 250, pointerType: 'touch' });
+    fireEvent.pointerUp(nav, { clientX: 250, pointerType: 'touch' });
+    // Le clic qui suit le relâchement est absorbé.
+    fireEvent.click(within(nav).getByRole('button', { name: /Résa/ }));
+    expect(
+      within(nav)
+        .getByRole('button', { name: /Verdict/ })
+        .getAttribute('aria-current')
+    ).toBe('step');
+    expect(nav.hasAttribute('data-drag')).toBe(false);
   });
 
   it('Dis-le : les propositions refusées ne s’appliquent pas, les autres oui', async () => {

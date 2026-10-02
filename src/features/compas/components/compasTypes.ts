@@ -6,13 +6,15 @@ export type AcquireMode = 'emprunter' | 'louer' | 'acheter';
 
 /** Parcours internes du tiroir de chaque étape (capsule, comme les étapes). */
 export const STEP_FLOWS = {
-  // Ordre de la maquette : Activité → Parcours → Quand → Préférences.
+  // Ordre de la maquette finale : Activité → Parcours → Quand → Préférences
+  // → Sac. « Sur le tracé » (points OSM réels) suit, en dernier.
   ou: [
     { id: 'activite', label: 'Activité', icon: 'flag' },
     { id: 'parcours', label: 'Parcours', icon: 'route' },
-    { id: 'trace', label: 'Sur le tracé', icon: 'map-pin' },
     { id: 'quand', label: 'Quand', icon: 'calendar-days' },
     { id: 'preferences', label: 'Préférences', icon: 'heart' },
+    { id: 'sac', label: 'Sac', icon: 'backpack' },
+    { id: 'trace', label: 'Sur le tracé', icon: 'map-pin' },
   ],
   nous: [
     { id: 'equipe', label: 'Équipe', icon: 'users' },
@@ -22,18 +24,24 @@ export const STEP_FLOWS = {
     { id: 'nuits', label: 'Nuits', icon: 'bed-double' },
     { id: 'reservations', label: 'Réservations', icon: 'ticket' },
     { id: 'offres', label: 'Offres', icon: 'tag' },
+    { id: 'etats', label: 'États', icon: 'check-check' },
   ],
+  // Maquette finale : Risques → Météo → Veille → Sources (la veille suit).
   verdict: [
-    { id: 'raisons', label: 'Signaux', icon: 'shield-check' },
+    { id: 'raisons', label: 'Risques', icon: 'shield-check' },
+    { id: 'meteo', label: 'Météo', icon: 'cloud-sun' },
+    { id: 'veille', label: 'Veille', icon: 'bell' },
     { id: 'sources', label: 'Sources', icon: 'layers' },
   ],
   kit: [
     { id: 'conseils', label: 'Conseils', icon: 'sparkles' },
     { id: 'mes-kits', label: 'Mes kits', icon: 'package' },
+    { id: 'inventaire', label: 'Inventaire', icon: 'archive' },
     { id: 'trouver', label: 'Trouver', icon: 'search' },
     { id: 'emballer', label: 'Emballer', icon: 'check-square' },
     { id: 'tout', label: 'Tout', icon: 'clipboard-list' },
     { id: 'sacs', label: 'Sacs', icon: 'backpack' },
+    { id: 'eau', label: 'Eau', icon: 'droplet' },
   ],
 } as const;
 
@@ -79,7 +87,15 @@ export interface CompasCtl {
   close: () => void;
   /** Passe le tiroir du dessus en grande hauteur (contenu qui s'allonge). */
   enlarge: () => void;
-  run: (success: string, action: () => Promise<ActionResult>) => Promise<boolean>;
+  /**
+   * Exécute une écriture et l'annonce. `undo`, s'il est fourni, rétablit
+   * l'état d'avant : « Annuler » apparaît dans l'annonce et Ctrl/⌘+Z le lance.
+   */
+  run: (
+    success: string,
+    action: () => Promise<ActionResult>,
+    undo?: () => Promise<ActionResult>
+  ) => Promise<boolean>;
   togglePacked: (line: CompasKitLine) => void;
   memberName: (userId: string | null) => string;
   product: (id: string | null) => CompasShopProduct | undefined;
