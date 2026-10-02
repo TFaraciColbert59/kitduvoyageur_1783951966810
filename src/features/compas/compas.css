@@ -912,55 +912,97 @@
   white-space: nowrap;
 }
 
-/* Retour d'action */
-.cp-toast {
-  position: absolute;
-  z-index: 40;
+/* Annonces : elles sortent de l'îlot, en haut de l'écran (maquette finale :
+   l'îlot s'élargit en carte noire, puis s'y résorbe). Transform et opacité
+   seulement. */
+.cp-island {
+  position: fixed;
+  z-index: 90;
+  top: max(8px, calc(env(safe-area-inset-top, 0px) - 48px));
   left: 50%;
-  bottom: calc(var(--cp-map-h) + 20px);
-  transform: translateX(-50%);
-  max-width: calc(100% - 32px);
-  padding: 10px 16px;
-  border-radius: 999px;
-  background: var(--cp-island-bg);
-  color: var(--cp-island-ink);
-  font-size: 13px;
-  font-weight: 600;
-  box-shadow: 0 6px 18px rgb(0 0 0 / 0.2);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  pointer-events: none;
-}
-.cp-toast[data-tone='bad'] {
-  background: var(--lkv-danger-dark);
-}
-
-/* « Annuler » dans l'annonce (îlot de la maquette). */
-.cp-toast:has(.cp-toast__undo) {
+  width: min(366px, calc(100vw - 24px));
+  min-height: 56px;
+  margin-left: calc(min(366px, calc(100vw - 24px)) / -2);
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding-right: 6px;
+  gap: 10px;
+  padding: 11px 10px 11px 18px;
+  border-radius: 28px;
+  background: var(--cp-island-bg);
+  color: var(--cp-island-ink);
+  box-shadow: 0 10px 30px rgb(23 43 36 / 0.28);
+  cursor: pointer;
+  transform-origin: 50% 18px;
+  animation: cp-island-in 0.5s cubic-bezier(0.3, 1.25, 0.4, 1) both;
 }
-.cp-toast__undo {
+.cp-island[data-tone='bad'] {
+  background: var(--lkv-danger-dark);
+}
+.cp-island__t {
+  flex: 1;
+  min-width: 0;
+  animation: cp-island-txt 0.32s 0.14s ease both;
+}
+.cp-island__t b {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.cp-island__t span {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--cp-island-ink2);
+  font-variant-numeric: tabular-nums;
+}
+.cp-island__btn {
   flex: none;
-  pointer-events: auto;
-  min-height: 32px;
-  padding: 0 12px;
+  height: 32px;
+  padding: 0 13px;
   border: 0;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--cp-island-ink) 16%, transparent);
-  color: inherit;
+  background: rgb(255 255 255 / 0.16);
+  color: var(--cp-island-accent);
   font: inherit;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
+  animation: cp-island-txt 0.32s 0.14s ease both;
 }
-.cp-toast__undo:focus-visible {
+.cp-island__btn:focus-visible {
   outline: 2px solid var(--cp-island-ink);
   outline-offset: 2px;
 }
-.cp-toast__undo:disabled {
+.cp-island__btn:disabled {
   opacity: 0.5;
+}
+@keyframes cp-island-in {
+  from {
+    transform: scale(0.34, 0.6);
+    opacity: 0.4;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes cp-island-txt {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cp-island,
+  .cp-island__t,
+  .cp-island__btn {
+    animation: none;
+  }
 }
 
 /* Écran vide */

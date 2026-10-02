@@ -103,5 +103,6 @@ export interface CompasCtl {
   togglePacked: (line: CompasKitLine) => void;
   memberName: (userId: string | null) => string;
   product: (id: string | null) => CompasShopProduct | undefined;
-  notify: (message: string, tone?: 'bad') => void;
+  /** Annonce dans l'îlot : un titre, et une ligne de détail facultative. */
+  notify: (message: string, tone?: 'bad', sub?: string) => void;
 }
