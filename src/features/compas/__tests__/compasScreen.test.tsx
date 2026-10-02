@@ -853,7 +853,7 @@ describe('CompasScreen', () => {
       success: false,
       unavailable: true,
       error: 'Partenaire non activé pour cette catégorie : recherche en direct indisponible.',
-    });
+    } as never);
     render(<CompasScreen data={makeData()} />);
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Activités' }));
