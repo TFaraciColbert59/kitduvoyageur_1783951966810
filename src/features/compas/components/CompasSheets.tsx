@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { shopRelevance } from '../engine/shopMatch';
 import Icon from '@/components/ui/Icon';
 import { addToCart } from '@/lib/cart';
 import {
@@ -304,21 +305,8 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
 
 /* ---------- Emprunter / Louer / Acheter : l'objet précis ---------- */
 
-function tokens(value: string): string[] {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .split(/[^a-z0-9]+/)
-    .filter((t) => t.length > 2);
-}
-
 /** Pertinence d'un produit pour un objet du kit : mots communs, catégorie. */
-function relevance(line: CompasKitLine, p: CompasShopProduct): number {
-  const want = new Set(tokens(`${line.name} ${line.category ?? ''}`));
-  const have = tokens(`${p.name} ${p.category ?? ''} ${p.brand ?? ''}`);
-  return have.reduce((s, t) => s + (want.has(t) ? 1 : 0), 0);
-}
+const relevance = (line: CompasKitLine, p: CompasShopProduct) => shopRelevance(line, p);
 
 function ProductRow({
   product,

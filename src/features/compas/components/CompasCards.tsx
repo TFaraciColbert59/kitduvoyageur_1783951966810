@@ -2,7 +2,7 @@
 
 import { classifyScale } from '../engine/scale';
 import Link from 'next/link';
-import { useRef, useState, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { deleteTripItemAction } from '@/app/voyages/kit-actions';
 import Icon from '@/components/ui/Icon';
 import type { CompasKitLine, CompasModel } from '../engine/compasModel';
@@ -18,6 +18,7 @@ import { Thumb, useLongPress, type Tone } from './CompasPrimitives';
 import { DurationRuler, tripHours } from './CompasRuler';
 import type { CompasCtl } from './compasTypes';
 import { RESA_CATS, bookingCat, offerCat } from '../engine/resaCats';
+import { bestShopProduct } from '../engine/shopMatch';
 
 /* =============================================================================
    Cartes d'étape — un résumé par étape (maquette v8). Le détail et les actions
@@ -63,7 +64,16 @@ export function KitRow({ line, ctl }: { line: CompasKitLine; ctl: CompasCtl }) {
     }
   );
   const canRemove = ctl.data.canEdit;
-  const product = ctl.product(line.shopProductId);
+  const chosen = ctl.product(line.shopProductId);
+  // Objet à trouver : le produit réel de la boutique qui lui correspond le mieux.
+  const suggested = useMemo(
+    () =>
+      !chosen && (line.status === 'missing' || line.status === 'replace')
+        ? bestShopProduct(line, ctl.data.shop)
+        : null,
+    [chosen, line, ctl.data.shop]
+  );
+  const product = chosen ?? suggested ?? undefined;
   const status = lineStatus(line);
   const carrier = line.ownerId
     ? ctl.memberName(line.ownerId)
@@ -118,6 +128,9 @@ export function KitRow({ line, ctl }: { line: CompasKitLine; ctl: CompasCtl }) {
         <span>
           {weight} · {carrier} · {status.label}
           {line.vital ? ' · vital' : ''}
+          {suggested && suggested.priceEur != null
+            ? ` · boutique ${formatMoney(suggested.priceEur)}`
+            : ''}
         </span>
       </span>
       <span className="cp-row__end">
