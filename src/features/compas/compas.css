@@ -2653,3 +2653,15 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
     transition: none;
   }
 }
+
+/* Résa : six catégories (maquette finale) sur une ligne. */
+.cp-tchips--six {
+  gap: 4px;
+}
+.cp-tchips--six .cp-tchip span:not(.cp-tchip__bd) {
+  font-size: 10.5px;
+}
+.cp-tchip:disabled {
+  opacity: 0.45;
+  cursor: default;
+}

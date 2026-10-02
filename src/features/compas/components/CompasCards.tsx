@@ -17,6 +17,7 @@ import {
 import { Thumb, useLongPress, type Tone } from './CompasPrimitives';
 import { DurationRuler, tripHours } from './CompasRuler';
 import type { CompasCtl } from './compasTypes';
+import { RESA_CATS, bookingCat, offerCat } from '../engine/resaCats';
 
 /* =============================================================================
    Cartes d'étape — un résumé par étape (maquette v8). Le détail et les actions
@@ -452,14 +453,6 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
 
 export type VerticalId = 'hotel' | 'trajet' | 'activity';
 
-export const VERTICALS: ReadonlyArray<{ id: VerticalId | 'offres'; label: string; icon: string }> =
-  [
-    { id: 'hotel', label: 'Nuits', icon: 'bed-double' },
-    { id: 'trajet', label: 'Trajets', icon: 'car' },
-    { id: 'activity', label: 'Activités', icon: 'ticket' },
-    { id: 'offres', label: 'Offres', icon: 'tag' },
-  ];
-
 export function verticalOf(v: string): VerticalId {
   if (v === 'hotel') return 'hotel';
   if (v === 'activity') return 'activity';
@@ -480,29 +473,40 @@ export function ResaCard({ ctl }: { ctl: CompasCtl }) {
 
   return (
     <>
-      <div className="cp-tchips">
-        {VERTICALS.map((v) => {
-          const count =
-            v.id === 'offres'
-              ? ctl.data.affiliateLinks.length
-              : list.filter((b) => verticalOf(b.vertical) === v.id).length;
+      {/* Maquette finale : six catégories. Le badge compte les réservations
+          réelles ; une catégorie sans réservation ni offre est grisée. */}
+      <div className="cp-tchips cp-tchips--six">
+        {RESA_CATS.map((c) => {
+          const booked =
+            c.id === 'randos'
+              ? ctl.data.route.id != null
+                ? 1
+                : 0
+              : list.filter((b) => bookingCat(b.vertical) === c.id).length;
+          const offers = ctl.data.affiliateLinks.filter(
+            (l) => offerCat(l.category) === c.id
+          ).length;
+          const usable =
+            c.id === 'randos' || c.id === 'nuits' || c.id === 'trajets' || booked + offers > 0;
           return (
             <button
-              key={v.id}
+              key={c.id}
               type="button"
               className="cp-tchip"
-              data-on={count ? '1' : undefined}
+              data-on={booked ? '1' : undefined}
+              disabled={!usable}
+              aria-label={usable ? c.title : `${c.title} : aucune offre pour cette destination`}
               onClick={() =>
-                ctl.open({
-                  kind: 'step',
-                  step: 'resa',
-                  flow: v.id === 'offres' ? 'offres' : 'reservations',
-                })
+                c.id === 'randos'
+                  ? ctl.open({ kind: 'step', step: 'ou', flow: 'parcours' })
+                  : c.id === 'nuits'
+                    ? ctl.open({ kind: 'step', step: 'resa', flow: 'nuits' })
+                    : ctl.open({ kind: 'step', step: 'resa', flow: 'offres', hint: { resa: c.id } })
               }
             >
-              <Icon name={v.icon} size={17} />
-              <span>{v.label}</span>
-              {count > 0 && <span className="cp-tchip__bd">{count}</span>}
+              <Icon name={c.icon} size={17} />
+              <span>{c.label}</span>
+              {booked > 0 && <span className="cp-tchip__bd">{booked}</span>}
             </button>
           );
         })}

@@ -641,6 +641,28 @@ describe('CompasScreen', () => {
     expect(container.querySelector('.compas')?.getAttribute('data-map')).toBeNull();
   });
 
+  it('Résa : six catégories, Vols ouvre ses offres filtrées, une catégorie vide est grisée', async () => {
+    const data = makeData();
+    data.affiliateLinks = [
+      { id: 'a1', label: 'Vols Lyon', category: 'flight', partner: 'Aviasales', url: '/go/vol' },
+      { id: 'a2', label: 'Assurance', category: 'insurance', partner: 'Heymondo', url: '/go/ass' },
+    ];
+    render(<CompasScreen data={data} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
+    for (const name of ['Randonnées', 'Activités', 'Hébergement', 'Vols', 'Transports', 'Extras'])
+      expect(screen.getByRole('button', { name: new RegExp(`^${name}`) })).toBeTruthy();
+    expect((screen.getByRole('button', { name: /^Activités/ }) as HTMLButtonElement).disabled).toBe(
+      true
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Vols' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Mes réservations' });
+    expect(within(sheet).getByText('Vols Lyon')).toBeTruthy();
+    expect(within(sheet).queryByText('Assurance')).toBeNull();
+    const cats = within(sheet).getByRole('group', { name: 'Catégorie' });
+    fireEvent.click(within(cats).getByText('Tout'));
+    expect(within(sheet).getByText('Assurance')).toBeTruthy();
+  });
+
   it('nuits : noter un hébergement écrit sans rien réserver, liens affiliés balisés', async () => {
     const data = makeData();
     data.affiliateLinks = [

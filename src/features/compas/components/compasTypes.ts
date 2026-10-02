@@ -1,3 +1,4 @@
+import type { ResaCat } from '../engine/resaCats';
 import type { CompasKitLine, CompasStepId } from '../engine/compasModel';
 import type { CompasData, CompasShopProduct } from '../server/getCompasData';
 import type { Detent } from './CompasSheet';
@@ -70,6 +71,8 @@ export interface FlowHint {
   day?: number;
   /** Phrase tapée dans « Dis-le » sur la carte : le tiroir la comprend aussitôt. */
   say?: string;
+  /** Catégorie touchée sur la carte Résa : Offres s'ouvre filtré dessus. */
+  resa?: ResaCat;
 }
 
 export type ActionResult = { success: boolean; error?: string };

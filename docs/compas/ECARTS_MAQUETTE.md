@@ -47,7 +47,7 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 ## Résa
 | Élément | État | Note |
 |---|---|---|
-| Six catégories (Randos, Activités, Nuits, Vols, Trajets, Extras) | 🟡 | quatre aujourd'hui |
+| Six catégories (Randos, Activités, Nuits, Vols, Trajets, Extras) | ✅ | réservations réelles et offres partenaires classées (`engine/resaCats.ts`) ; Randos ouvre Parcours, Nuits les nuits, les autres leurs offres filtrées ; catégorie vide grisée |
 | Jours avec cases (H, T, A…) | ✅ | |
 | Résumé choisies · à réserver · en attente | ✅ | |
 | Mes réservations : Mes choix · États | ✅ | tiroir « Mes réservations » ; « Réservations » tient lieu de « Mes choix » ; « États » compte les réservations réelles par état et les nuits à trouver |

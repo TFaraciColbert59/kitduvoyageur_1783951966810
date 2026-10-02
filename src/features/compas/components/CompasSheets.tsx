@@ -49,6 +49,7 @@ import {
 import { DisLe } from './CompasDisLe';
 import { proposeShift, watchRules } from '../engine/watch';
 import { planWater } from '../engine/water';
+import { RESA_CATS, bookingCat, offerCat, type ResaCat } from '../engine/resaCats';
 import { KIT_THRESHOLDS } from '../engine/kitRules';
 import { inverseOps, runOps } from './compasApply';
 import type { ApplyOp } from '../engine/intent';
@@ -967,7 +968,9 @@ function StepSheet({
       {step === 'nous' && flow === 'budget' && <BudgetFlow ctl={ctl} />}
       {step === 'resa' && flow === 'nuits' && <NuitsFlow ctl={ctl} focusDay={hint?.day} />}
       {step === 'resa' && flow === 'reservations' && <ReservationsFlow ctl={ctl} />}
-      {step === 'resa' && flow === 'offres' && <OffresFlow ctl={ctl} />}
+      {step === 'resa' && flow === 'offres' && (
+        <OffresFlow key={hint?.resa ?? 'all'} ctl={ctl} initialCat={hint?.resa} />
+      )}
       {step === 'verdict' && flow === 'raisons' && <RaisonsFlow ctl={ctl} />}
       {step === 'resa' && flow === 'etats' && <EtatsFlow ctl={ctl} />}
       {step === 'verdict' && flow === 'meteo' && <MeteoFlow ctl={ctl} />}
@@ -1614,16 +1617,64 @@ function offerIcon(category: string | null): string {
   return 'ticket';
 }
 
-function OffresFlow({ ctl }: { ctl: CompasCtl }) {
+/**
+ * Offres (maquette finale : une catégorie touchée sur la carte Résa ouvre ses
+ * offres). Les réservations réelles de la catégorie passent devant ; les
+ * offres partenaires suivent, balisées, et ne réservent jamais rien.
+ */
+function OffresFlow({ ctl, initialCat }: { ctl: CompasCtl; initialCat?: ResaCat }) {
   const live = ctl.data.providers.routestack !== 'disabled';
+  const [cat, setCat] = useState<ResaCat | 'all'>(initialCat ?? 'all');
+  const present = RESA_CATS.filter(
+    (c) =>
+      c.id !== 'randos' &&
+      (ctl.data.affiliateLinks.some((l) => offerCat(l.category) === c.id) ||
+        ctl.data.bookings.some((b) => LIVE_BOOKING(b.status) && bookingCat(b.vertical) === c.id))
+  );
+  const offers =
+    cat === 'all'
+      ? ctl.data.affiliateLinks
+      : ctl.data.affiliateLinks.filter((l) => offerCat(l.category) === cat);
+  const booked =
+    cat === 'all'
+      ? []
+      : ctl.data.bookings.filter((b) => LIVE_BOOKING(b.status) && bookingCat(b.vertical) === cat);
   return (
     <>
       <AffiliateDisclosure />
+      {present.length > 0 && (
+        <Segments
+          label="Catégorie"
+          value={cat}
+          onChange={setCat}
+          options={[
+            { id: 'all', label: 'Tout' },
+            ...present.map((c) => ({ id: c.id, label: c.label, icon: c.icon })),
+          ]}
+        />
+      )}
+      {booked.length > 0 && (
+        <p className="cp-sub">
+          <b>
+            {booked.length} réservation{booked.length > 1 ? 's' : ''}
+          </b>{' '}
+          dans cette catégorie ·{' '}
+          {booked
+            .map((b) => BOOKING_STATUS[b.status]?.label ?? b.status)
+            .join(', ')
+            .toLowerCase()}
+        </p>
+      )}
       <PagedList
         label="Offres partenaires"
-        items={ctl.data.affiliateLinks}
+        resetKey={cat}
+        items={offers}
         empty={
-          <p className="cp-note">Aucune offre partenaire pour cette destination pour l’instant.</p>
+          <p className="cp-note">
+            {cat === 'all'
+              ? 'Aucune offre partenaire pour cette destination pour l’instant.'
+              : 'Aucune offre partenaire dans cette catégorie pour cette destination.'}
+          </p>
         }
         render={(l) => (
           <a
