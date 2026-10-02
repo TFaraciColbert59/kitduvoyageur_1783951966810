@@ -126,6 +126,44 @@ const compas = vi.hoisted(() => ({
   })),
 }));
 vi.mock('../server/compasActions', () => compas);
+const bottle = vi.hoisted(() => ({
+  compasBottleStateAction: vi.fn(async () => ({
+    success: true,
+    state: {
+      country: 'fr',
+      countryName: 'France',
+      trustScore: 80,
+      canLaunch: true,
+      blocked: null,
+      bottles: [
+        {
+          id: '9b9b9b9b-0000-4000-8000-000000000001',
+          name: 'GR en équipe',
+          description: null,
+          departure: '2026-10-12',
+          returnDate: '2026-10-15',
+          maxMembers: 6,
+          minTrust: 60,
+          mixite: 'all',
+          activeCount: 1,
+          applicants: [
+            {
+              memberId: '9b9b9b9b-0000-4000-8000-0000000000a1',
+              userId: '9b9b9b9b-0000-4000-8000-0000000000b1',
+              name: 'Noé Sentier',
+              avatarUrl: null,
+              trustScore: 72,
+            },
+          ],
+        },
+      ],
+    },
+  })),
+  compasLaunchBottleAction: vi.fn(async () => ({ success: true })),
+  compasAnswerApplicantAction: vi.fn(async () => ({ success: true })),
+  compasCloseBottleAction: vi.fn(async () => ({ success: true })),
+}));
+vi.mock('../server/bottleActions', () => bottle);
 
 const cart = vi.hoisted(() => ({ addToCart: vi.fn() }));
 vi.mock('@/lib/cart', () => cart);
@@ -646,6 +684,36 @@ describe('CompasScreen', () => {
       })
     );
     expect(within(sheet).queryByRole('link', { name: /hub/i })).toBeNull();
+  });
+
+  it('Nous · Bouteille : tiroir où / à qui / quand, lancer et accepter une candidature', async () => {
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Nous' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Nous' });
+    const tabs = within(sheet).getByRole('group', { name: 'Parcours du tiroir' });
+    fireEvent.click(within(tabs).getByText('Bouteille'));
+    expect(await within(sheet).findByText('Noé Sentier')).toBeTruthy();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Accepter Noé Sentier' }));
+    await waitFor(() =>
+      expect(bottle.compasAnswerApplicantAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        groupId: '9b9b9b9b-0000-4000-8000-000000000001',
+        memberId: '9b9b9b9b-0000-4000-8000-0000000000a1',
+        accept: true,
+      })
+    );
+    const form = within(sheet).getByRole('form', { name: 'Lancer une bouteille' });
+    fireEvent.click(within(form).getByRole('button', { name: 'Femmes' }));
+    fireEvent.click(within(form).getByLabelText(/18 ans/));
+    fireEvent.click(within(form).getByRole('button', { name: /Lancer$/ }));
+    await waitFor(() =>
+      expect(bottle.compasLaunchBottleAction).toHaveBeenCalledWith(
+        expect.objectContaining({ tripId: TRIP, mixite: 'women_only', minTrust: 60, isAdult: true })
+      )
+    );
+    expect(within(sheet).queryByRole('link', { name: /bouteille/i })).toBeNull();
   });
 
   it('Nous : budget réel, aucune enveloppe inventée, l’équipe la fixe', async () => {

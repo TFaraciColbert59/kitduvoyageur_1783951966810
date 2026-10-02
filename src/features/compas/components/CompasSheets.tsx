@@ -3,6 +3,14 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { shopRelevance } from '../engine/shopMatch';
+import {
+  compasAnswerApplicantAction,
+  compasBottleStateAction,
+  compasCloseBottleAction,
+  compasLaunchBottleAction,
+  type CompasBottleApplicant,
+  type CompasBottleState,
+} from '../server/bottleActions';
 import Icon from '@/components/ui/Icon';
 import { addToCart } from '@/lib/cart';
 import {
@@ -1595,10 +1603,94 @@ const EXPENSE_CATEGORIES = [
  * frais annoncés, chaque profil validé) et la gestion du groupe reste au Hub :
  * le Compas y mène, il ne publie rien lui-même.
  */
+const MIXITE_LABEL = { all: 'Ouvert à tous', women_only: 'Femmes', men_only: 'Hommes' } as const;
+
+/**
+ * Nous · Bouteille à la mer (maquette finale) : le tiroir où l'on règle
+ * l'annonce — où (le pays du voyage), à qui (confiance minimale, mixité,
+ * places), quand, le message — puis où l'on accepte ou refuse chaque
+ * candidature. Une personne acceptée rejoint aussi le voyage.
+ */
 function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
-  const { crew, dates } = ctl.data.model;
-  const code = ctl.data.countryCode;
+  const { crew, dates, tripId, slug, title } = ctl.data.model;
   const free = Math.max(0, crew.size - crew.loads.length);
+  const [reload, setReload] = useState(0);
+  const [state, setState] = useState<
+    | { status: 'loading' }
+    | { status: 'error'; error: string }
+    | { status: 'ok'; data: CompasBottleState }
+  >({ status: 'loading' });
+  const [minTrust, setMinTrust] = useState(60);
+  const [mixite, setMixite] = useState<'all' | 'women_only' | 'men_only'>('all');
+  const [places, setPlaces] = useState(Math.max(2, Math.min(20, free + crew.loads.length || 4)));
+
+  useEffect(() => {
+    let alive = true;
+    compasBottleStateAction({ tripId })
+      .then((res) => {
+        if (!alive) return;
+        setState(
+          res.success ? { status: 'ok', data: res.state } : { status: 'error', error: res.error }
+        );
+      })
+      .catch(() => alive && setState({ status: 'error', error: 'Connexion perdue : réessaie.' }));
+    return () => {
+      alive = false;
+    };
+  }, [tripId, reload]);
+
+  const launch = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    if (fd.get('bottleAdult') !== 'on') {
+      ctl.notify('Certifie avoir 18 ans ou plus', 'bad');
+      return;
+    }
+    const date = (k: string) => {
+      const v = String(fd.get(k) ?? '');
+      return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
+    };
+    const ok = await ctl.run('Bouteille à la mer lancée', () =>
+      compasLaunchBottleAction({
+        tripId,
+        tripSlug: slug,
+        name: String(fd.get('bottleName') ?? ''),
+        description: String(fd.get('bottleMsg') ?? ''),
+        departure: date('bottleFrom'),
+        returnDate: date('bottleTo'),
+        maxMembers: places,
+        minTrust,
+        mixite,
+        isAdult: true,
+      })
+    );
+    if (ok) {
+      ctl.notify(
+        'Bouteille à la mer lancée',
+        undefined,
+        `Visible dans la communauté du pays · confiance ≥ ${minTrust}`
+      );
+      setReload((n) => n + 1);
+    }
+  };
+
+  const answer = async (groupId: string, a: CompasBottleApplicant, accept: boolean) => {
+    const ok = await ctl.run(
+      accept ? `${a.name} rejoint le groupe et le voyage` : `Demande de ${a.name} refusée`,
+      () =>
+        compasAnswerApplicantAction({
+          tripId,
+          tripSlug: slug,
+          groupId,
+          memberId: a.memberId,
+          accept,
+        })
+    );
+    if (ok) setReload((n) => n + 1);
+  };
+
+  const st = state.status === 'ok' ? state.data : null;
+
   return (
     <>
       <div className="cp-row" style={staticRow}>
@@ -1611,36 +1703,181 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
             {crew.size > 1 ? 's' : ''}
           </b>
           <span>
-            {free > 0
-              ? `${free} place${free > 1 ? 's' : ''} sans compte dans le groupe`
-              : 'Le groupe est complet'}
+            {free > 0 ? `${free} place${free > 1 ? 's' : ''} à pourvoir` : 'Le groupe est complet'}
             {dates.start ? ` · départ le ${formatDayMonth(dates.start)}` : ''}
           </span>
         </span>
       </div>
-      {code ? (
-        <Link className="cp-btn cp-btn--pg" href={`/pays/${code}?section=communaute`}>
-          <Icon name="send" size={16} />
-          Lancer une bouteille à la mer
-        </Link>
-      ) : (
-        <p className="cp-note">
-          Pays de destination non renseigné : la bouteille à la mer se lance depuis la page du pays.
-        </p>
+
+      {state.status === 'loading' && <p className="cp-note">Lecture de tes bouteilles…</p>}
+      {state.status === 'error' && <p className="cp-note">{state.error}</p>}
+
+      {st?.bottles.map((b) => (
+        <section key={b.id} className="cp-bottle cp-glass" aria-label={`Bouteille : ${b.name}`}>
+          <div className="cp-bottle__h">
+            <b>{b.name}</b>
+            <Chip tone="good">En mer</Chip>
+          </div>
+          <span className="cp-sub">
+            {b.departure ? formatDayMonth(b.departure) : 'dates libres'}
+            {b.returnDate ? ` → ${formatDayMonth(b.returnDate)}` : ''} · {b.activeCount}/
+            {b.maxMembers} places · confiance ≥ {b.minTrust} · {MIXITE_LABEL[b.mixite]}
+          </span>
+          {b.applicants.length === 0 ? (
+            <p className="cp-note">Aucune candidature pour l’instant.</p>
+          ) : (
+            b.applicants.map((a) => (
+              <div key={a.memberId} className="cp-row" style={staticRow}>
+                <MemberAvatar name={a.name} url={a.avatarUrl} />
+                <span className="cp-row__t">
+                  <b>{a.name}</b>
+                  <span>
+                    {a.trustScore != null ? `confiance ${a.trustScore}/100` : 'confiance inconnue'}
+                  </span>
+                </span>
+                <span className="cp-row__end">
+                  <button
+                    type="button"
+                    className="cp-btn cp-btn--soft"
+                    disabled={ctl.busy}
+                    aria-label={`Refuser ${a.name}`}
+                    onClick={() => void answer(b.id, a, false)}
+                  >
+                    Refuser
+                  </button>
+                  <button
+                    type="button"
+                    className="cp-btn cp-btn--pg"
+                    disabled={ctl.busy}
+                    aria-label={`Accepter ${a.name}`}
+                    onClick={() => void answer(b.id, a, true)}
+                  >
+                    Accepter
+                  </button>
+                </span>
+              </div>
+            ))
+          )}
+          <button
+            type="button"
+            className="cp-linkbtn"
+            disabled={ctl.busy}
+            onClick={async () => {
+              const ok = await ctl.run('Bouteille retirée de la communauté', () =>
+                compasCloseBottleAction({ tripId, tripSlug: slug, groupId: b.id })
+              );
+              if (ok) setReload((n) => n + 1);
+            }}
+          >
+            Retirer de la communauté
+          </button>
+        </section>
+      ))}
+
+      {st && !st.canLaunch && st.blocked && <p className="cp-note">{st.blocked}</p>}
+
+      {st?.canLaunch && (
+        <form className="cp-bottle cp-glass" onSubmit={launch} aria-label="Lancer une bouteille">
+          <div className="cp-bottle__h">
+            <b>
+              <Icon name="send" size={15} aria-hidden="true" /> Lancer une bouteille à la mer
+            </b>
+          </div>
+          <p className="cp-sub">
+            <b>Où</b> · communauté {st.countryName ? `« ${st.countryName} »` : 'du pays'} (
+            {st.country?.toUpperCase()})
+          </p>
+          <label className="cp-field">
+            Titre
+            <input
+              name="bottleName"
+              required
+              minLength={3}
+              maxLength={80}
+              defaultValue={title.slice(0, 80)}
+            />
+          </label>
+          <p className="cp-sub">
+            <b>À qui</b>
+          </p>
+          <label className="cp-field">
+            Confiance minimale : {minTrust}/100
+            <input
+              type="range"
+              min={50}
+              max={100}
+              step={5}
+              value={minTrust}
+              onChange={(e) => setMinTrust(Number(e.target.value))}
+            />
+          </label>
+          <Segments
+            label="Mixité"
+            value={mixite}
+            onChange={setMixite}
+            options={[
+              { id: 'all', label: MIXITE_LABEL.all },
+              { id: 'women_only', label: MIXITE_LABEL.women_only },
+              { id: 'men_only', label: MIXITE_LABEL.men_only },
+            ]}
+          />
+          <label className="cp-field">
+            Places dans le groupe
+            <input
+              type="number"
+              inputMode="numeric"
+              min={2}
+              max={20}
+              value={places}
+              onChange={(e) =>
+                setPlaces(Math.max(2, Math.min(20, Math.round(Number(e.target.value) || 2))))
+              }
+            />
+          </label>
+          <p className="cp-sub">
+            <b>Quand</b>
+          </p>
+          <div className="cp-grid2">
+            <label className="cp-field">
+              Départ
+              <input name="bottleFrom" type="date" defaultValue={dates.start ?? ''} />
+            </label>
+            <label className="cp-field">
+              Retour
+              <input name="bottleTo" type="date" defaultValue={dates.end ?? ''} />
+            </label>
+          </div>
+          <label className="cp-field">
+            Message
+            <textarea
+              name="bottleMsg"
+              rows={3}
+              maxLength={600}
+              placeholder="Rythme, niveau, frais partagés, ce que tu cherches…"
+            />
+          </label>
+          <label className="cp-check">
+            <input type="checkbox" name="bottleAdult" required /> J’ai 18 ans ou plus
+          </label>
+          <button type="submit" className="cp-btn cp-btn--pg" disabled={ctl.busy}>
+            <Icon name="send" size={16} />
+            Lancer
+          </button>
+          <p className="cp-note">
+            Visible dans la communauté du pays. Tu acceptes ou refuses chaque candidature ici ; une
+            personne acceptée rejoint le groupe et le voyage, en lecture seule.
+          </p>
+        </form>
       )}
+
       <button
         type="button"
         className="cp-btn"
         onClick={() => ctl.replace({ kind: 'step', step: 'nous', flow: 'qui' })}
       >
         <Icon name="users" size={16} />
-        Ajouter quelqu’un ou gérer les rôles
+        Ajouter quelqu’un que je connais
       </button>
-      <p className="cp-note">
-        La bouteille à la mer publie une annonce de groupe pour ce pays : dates, places, confiance
-        minimale, majorité et frais partagés annoncés. Tu acceptes ou refuses chaque candidat. Rien
-        n’est publié depuis le Compas.
-      </p>
     </>
   );
 }

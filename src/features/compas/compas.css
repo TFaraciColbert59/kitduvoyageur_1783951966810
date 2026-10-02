@@ -2860,3 +2860,28 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
   font-size: 14px;
   font-weight: 600;
 }
+
+/* Bouteille à la mer (Nous) */
+.cp-bottle {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 20px;
+}
+.cp-bottle__h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.cp-bottle__h b {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.cp-bottle textarea {
+  resize: vertical;
+}

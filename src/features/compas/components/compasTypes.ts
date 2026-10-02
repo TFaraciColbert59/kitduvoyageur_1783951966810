@@ -21,7 +21,7 @@ export const STEP_FLOWS = {
     { id: 'equipe', label: 'Équipe', icon: 'users' },
     { id: 'qui', label: 'Qui', icon: 'user-plus' },
     { id: 'budget', label: 'Budget', icon: 'coins' },
-    { id: 'annonce', label: 'Annonce', icon: 'send' },
+    { id: 'annonce', label: 'Bouteille', icon: 'send' },
   ],
   resa: [
     { id: 'nuits', label: 'Nuits', icon: 'bed-double' },
