@@ -292,11 +292,13 @@ redirects() {
 }
 ```
 
-### `/prepare` → `/compas` (le Compas remplace le préparateur)
-- `/compas` est le préparateur de voyage canonique (étapes Où, Nous, Résa, Verdict, Kit). Sans aventure active, ou avec `?nouvelle=1`, il affiche le flux de création d'aventure.
-- `/prepare` n'est plus qu'une passerelle : redirection **308** vers `/compas` (`?nouvelle=1` conservé ; `?tab=equipement` → `/compas?etape=kit`). `src/app/prepare/actions.ts` reste : le flux de création l'importe.
-- `?etape=ou|nous|resa|verdict|kit` ouvre directement une étape. Anciens liens « configurateur » (`/configurateur`, `/ai-configurator`, `/rapport-kit`) → `/compas?etape=kit`.
-- `src/features/preparator/` n'est plus branché à aucune route ; conservé comme référence pour porter la recherche de réservation RouteStack dans le Compas.
+### Le Compas est le SEUL préparateur (décision de Tony, 2026-10-02)
+- `/compas` est l'unique préparateur et configurateur, pour tout type d'aventure (étapes Où, Nous, Résa, Verdict, Kit). Il sera renommé « Préparateur » à la fin du chantier.
+- Sans aventure, ou avec `?nouvelle=1` : le Compas **vide** (`CompasStart`). Le premier geste (une activité, ou une phrase « Dis-le ») crée l'aventure en brouillon (`compasCreateTripAction`) et ouvre le Compas complet.
+- Supprimés : l'ancien flux de création en trois étapes (`adventure-prep/components`, store, hooks, `saveAdventure`, `tripCommit`, `/api/adventure/commit`), l'assistant en cinq étapes et la génération IA de `/hub/nouveau` (`trips/wizard`, `trips/components/autoGen`, `/api/trips/autogen`), `features/preparator`, `features/preparation` (cockpit « Préparation » du Hub), `src/app/prepare/actions.ts`.
+- Redirections : `/prepare`, `/preparer` → `/compas` ; `/hub/nouveau`, `/voyages/nouveau`, `/voyage-ia` → `/compas?nouvelle=1` ; `/preparation`, `/materiel/preparation`, `/hub/preparation`, `/ai-configurator`, `/rapport-kit`, `/configurateur` → `/compas?etape=kit` ; `/preparer-sentier/[id]` crée l'aventure depuis le sentier puis ouvre `/compas`.
+- Conservés : « Partir librement » (départ immédiat, déplacé dans `features/free-departure`), et le moteur/services d'`adventure-prep` (`engine/`, `routingService`, `geocodeService`, `weatherService`, `adventure-prep.css`) utilisés par les routes `/api/*` et Partir librement.
+- `?etape=ou|nous|resa|verdict|kit` ouvre directement une étape. `/compas` force le thème clair (la maquette n'a pas de version sombre).
 
 
 ### transpilePackages (next.config.mjs)
@@ -586,4 +588,4 @@ Le **Module Voyage** fédère l'intégralité du cycle de vie du voyageur outdoo
 ### Conformité & Design System
 - **Palette Liquid Glass** : Forest `#17402C`, Sage `#5B7F55`, Stone `#FAF8F5`. Zéro orange `#E4501C`, zéro `#1C2620`.
 - **Composants Primitives** : `GlassCard`, `LkvButton`, `LkvChip`, `LkvIcon`, `AppShell` avec safe-areas. Touch targets $\ge 44\text{px}$.
-- **Transparence DGCCRF** : Composant obligatoire `<AffiliateDisclosure />` et balisage `rel="sponsored nofollow"`.
+- **Transparence DGCCRF** : Composant obligatoire `<AffiliateDisclosure />` et balisage `rel="sponsored nofollow"`.

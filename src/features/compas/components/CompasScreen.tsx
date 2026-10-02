@@ -18,6 +18,7 @@ import type { CompasData } from '../server/getCompasData';
 import { KitCard, NousCard, OuCard, ResaCard, VerdictCard } from './CompasCards';
 import { CompasMap } from './CompasMap';
 import { CompasAccessory } from './CompasAccessory';
+import { START_SAY_KEY } from './CompasStart';
 import { ALL_LAYERS, parseLayers, type LayerState } from '../engine/mapLayers';
 import { tripHours } from './CompasRuler';
 import { CompasSheet, type Detent } from './CompasSheet';
@@ -266,6 +267,20 @@ export function CompasScreen({
     );
   }, []);
   const back = useCallback(() => setStack((s) => s.slice(0, -1)), []);
+
+  // Phrase tapée dans le Compas vide avant la création : comprise ici, dans
+  // le tiroir Où (rien n'est appliqué sans coche).
+  useEffect(() => {
+    let say: string | null = null;
+    try {
+      say = window.sessionStorage.getItem(START_SAY_KEY);
+      if (say) window.sessionStorage.removeItem(START_SAY_KEY);
+    } catch {
+      /* stockage indisponible */
+    }
+    if (say) open({ kind: 'step', step: 'ou', flow: 'activite', hint: { say } });
+  }, [open]);
+
   const close = useCallback(() => setStack([]), []);
   const enlarge = useCallback(
     () => setStack((s) => s.map((x, i) => (i === s.length - 1 ? { ...x, detent: 'large' } : x))),

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import AppShell from '@/components/shell/AppShell';
-import PartirLibrementView from '@/features/adventure-prep/components/PartirLibrementView';
+import PartirLibrementView from '@/features/free-departure/components/PartirLibrementView';
 import '@/features/adventure-prep/adventure-prep.css';
 import '@/features/free-departure/free-departure.css';
 

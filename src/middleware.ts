@@ -155,6 +155,7 @@ export const config = {
     // Étape 2 — Hub unique : pages séparées supprimées
     '/voyages',
     '/voyages/nouveau',
+    '/voyage-ia',
     '/groupes',
     '/groupes/:path*',
     '/equipages',

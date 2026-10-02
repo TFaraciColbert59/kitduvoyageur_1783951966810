@@ -81,7 +81,7 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 | Personnaliser la carte (couches) | ✅ | calques réels (étapes, eau, refuges, camping, vues, sommets, parkings, profil) avec leur nombre ; calque vide grisé ; « Carte nue » / « Tout afficher » ; retenu sur l'appareil. Styles Relief/Satellite : non (fond de carte unique) |
 | Encart du point touché (callout) | 🟡 | encart de la carte partagée (Explorer) à l'appui sur un point ; style maquette à vérifier sur appareil |
 
-## Création d'aventure (`/compas?nouvelle=1`)
+## Création d'aventure
 | Élément | État | Note |
 |---|---|---|
-| Matériau du Compas | ✅ | `prep-compas.css` |
+| Le Compas est le seul préparateur | ✅ | Compas vide au premier passage, le premier geste crée l'aventure ; anciens préparateurs supprimés |

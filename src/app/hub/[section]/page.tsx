@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/ui';
 import { getHubAdventureData, getHubTripStats } from '@/features/hub/server/getHubAdventureData';
@@ -11,7 +11,6 @@ import { MenuBack } from '@/features/hub/components/menu/MenuBack';
 import { hubSectionRegistry } from '@/features/hub/registry/hubSectionRegistry';
 import { HubInventaireSection } from '@/features/hub/components/possession/HubInventaireSection';
 import { HubKitSection } from '@/features/hub/components/possession/HubKitSection';
-import { HubPreparationSection } from '@/features/hub/components/possession/HubPreparationSection';
 import { HubDepartSection } from '@/features/hub/components/possession/HubDepartSection';
 import { HubDisponibiliteSection } from '@/features/hub/components/possession/HubDisponibiliteSection';
 import { HubAlertesSection } from '@/features/hub/components/possession/HubAlertesSection';
@@ -61,6 +60,9 @@ export default async function HubSectionPage({
   const [{ section }, sp] = await Promise.all([params, searchParams]);
   const def = hubSectionRegistry.find((d) => d.segment === section);
   if (!def) notFound();
+  // Le Compas est le seul préparateur : l'ancien cockpit « Préparation »
+  // (matériel, poids, essai du sac) vit désormais dans son étape Kit.
+  if (def.id === 'preparation') redirect('/compas?etape=kit');
 
   const data = await getHubAdventureData();
   if (!def.natures.includes(data.adventure.nature)) notFound();
@@ -70,7 +72,6 @@ export default async function HubSectionPage({
       <PageHeader title={<span className="sr-only">{def.label}</span>} back={<MenuBack />} />
       {def.id === 'inventaire' && <HubInventaireSection />}
       {def.id === 'kit' && <HubKitSection />}
-      {def.id === 'preparation' && <HubPreparationSection />}
       {def.id === 'depart' && <HubDepartSection departId={sp.id} route={sp.route} />}
       {def.id === 'disponibilite' && <HubDisponibiliteSection />}
       {def.id === 'alertes' && <HubAlertesSection />}

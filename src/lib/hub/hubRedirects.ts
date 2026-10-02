@@ -29,18 +29,15 @@ export const LEGACY_REDIRECTS: Record<string, string> = {
   // profonds vers les sections canoniques du hub.
   '/materiel/inventaire': '/hub/inventaire',
   '/materiel/kits': '/hub/kit',
-  '/materiel/preparation': '/hub/preparation',
   '/materiel/depart': '/hub/depart',
   '/materiel/disponibilite': '/hub/disponibilite',
   '/materiel/alertes': '/hub/alertes',
   '/materiel/forget': '/hub/oublis',
   // ── Étape 2 — Hub unique : les pages séparées disparaissent ──
   '/voyages': '/hub',
-  '/voyages/nouveau': '/hub/nouveau',
   '/groupes': '/hub/groupe',
   '/equipages': '/hub/groupe',
   // ── Racines absorbées (H5) ──
-  '/preparation': '/hub/preparation',
   // Alias court de la route canonique du preparateur de voyage (le Compas).
   '/preparer': '/compas',
   '/alertes': '/hub/alertes',
@@ -71,8 +68,17 @@ export function resolveLegacyRedirect(pathname: string): LegacyRedirect | null {
   // du Compas. /rapport-kit et /ai-configurator ouvrent directement l'etape
   // Kit ; la query d'origine (country, groupId, carnetId, trail) est
   // conservee par le clone d'URL du middleware.
-  if (pathname === '/rapport-kit' || pathname === '/ai-configurator') {
+  if (
+    pathname === '/rapport-kit' ||
+    pathname === '/ai-configurator' ||
+    pathname === '/preparation' ||
+    pathname === '/materiel/preparation'
+  ) {
     return { destination: '/compas', setParams: { etape: 'kit' } };
+  }
+  // Le Compas est le seul préparateur : toute création d'aventure y mène.
+  if (pathname === '/voyages/nouveau' || pathname === '/voyage-ia') {
+    return { destination: '/compas', setParams: { nouvelle: '1' } };
   }
 
   const staticTarget = LEGACY_REDIRECTS[pathname];

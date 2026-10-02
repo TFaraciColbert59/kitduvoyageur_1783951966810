@@ -16,7 +16,11 @@ describe('H-AUTO-42 — resolveLegacyRedirect : table statique', () => {
     expect(resolveLegacyRedirect('/materiel')).toBeNull();
     expect(resolveLegacyRedirect('/materiel/inventaire')?.destination).toBe('/hub/inventaire');
     expect(resolveLegacyRedirect('/materiel/kits')?.destination).toBe('/hub/kit');
-    expect(resolveLegacyRedirect('/materiel/preparation')?.destination).toBe('/hub/preparation');
+    // L'ancien cockpit « Préparation » est l'étape Kit du Compas (préparateur unique).
+    expect(resolveLegacyRedirect('/materiel/preparation')).toEqual({
+      destination: '/compas',
+      setParams: { etape: 'kit' },
+    });
     expect(resolveLegacyRedirect('/materiel/disponibilite')?.destination).toBe('/hub/disponibilite');
     expect(resolveLegacyRedirect('/materiel/alertes')?.destination).toBe('/hub/alertes');
     expect(resolveLegacyRedirect('/materiel/forget')?.destination).toBe('/hub/oublis');
@@ -24,13 +28,24 @@ describe('H-AUTO-42 — resolveLegacyRedirect : table statique', () => {
 
   it('RED-2b: Étape 2 — les pages séparées voyages/groupes/équipages disparaissent', () => {
     expect(resolveLegacyRedirect('/voyages')?.destination).toBe('/hub');
-    expect(resolveLegacyRedirect('/voyages/nouveau')?.destination).toBe('/hub/nouveau');
+    // Toute création d'aventure passe par le Compas.
+    expect(resolveLegacyRedirect('/voyages/nouveau')).toEqual({
+      destination: '/compas',
+      setParams: { nouvelle: '1' },
+    });
+    expect(resolveLegacyRedirect('/voyage-ia')).toEqual({
+      destination: '/compas',
+      setParams: { nouvelle: '1' },
+    });
     expect(resolveLegacyRedirect('/groupes')?.destination).toBe('/hub/groupe');
     expect(resolveLegacyRedirect('/equipages')?.destination).toBe('/hub/groupe');
   });
 
   it('RED-2c: racines absorbées (H5) et mode live (D2)', () => {
-    expect(resolveLegacyRedirect('/preparation')?.destination).toBe('/hub/preparation');
+    expect(resolveLegacyRedirect('/preparation')).toEqual({
+      destination: '/compas',
+      setParams: { etape: 'kit' },
+    });
     expect(resolveLegacyRedirect('/alertes')?.destination).toBe('/hub/alertes');
     expect(resolveLegacyRedirect('/terrain')?.destination).toBe('/hub');
     expect(resolveLegacyRedirect('/mes-aventures')?.destination).toBe('/hub');

@@ -1186,7 +1186,9 @@ const explainSchema = z.object({ tripId: uuid });
  * change jamais ; une réponse qui invente un nombre, parle de score ou rassure
  * au-delà des faits est écartée et la raison est rendue.
  */
-export async function compasExplainVerdictAction(input: z.input<typeof explainSchema>): Promise<
+export async function compasExplainVerdictAction(
+  input: z.input<typeof explainSchema>
+): Promise<
   | { success: true; text: string | null; refused: string | null; note: string | null }
   | { success: false; error: string }
 > {
@@ -1239,6 +1241,102 @@ export async function compasExplainVerdictAction(input: z.input<typeof explainSc
 }
 
 /* ---------- Ouvrir une aventure dans le Compas ---------- */
+
+/* ---------- Créer une aventure depuis le Compas ---------- */
+
+const createTripSchema = z.object({ activity: z.enum(ACTIVITIES) });
+
+const CREATE_LABEL: Record<(typeof ACTIVITIES)[number], string> = {
+  hiking: 'Randonnée',
+  trekking: 'Trek',
+  bivouac: 'Bivouac',
+  roadtrip: 'Road trip',
+  cultural: 'Culturel',
+  bushcraft: 'Bushcraft',
+  mixed: 'Mixte',
+};
+
+/**
+ * Le Compas est le seul préparateur : la première décision (l'activité) crée
+ * le voyage en brouillon, sans date ni lieu inventés, puis l'ouvre comme
+ * aventure active. Le propriétaire est posé par le trigger
+ * `trg_trips_insert_owner` ; absent, le voyage est annulé.
+ */
+export async function compasCreateTripAction(
+  input: z.input<typeof createTripSchema>
+): Promise<CompasActionResult & { slug?: string }> {
+  const parsed = createTripSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Activité invalide' };
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Connecte-toi pour créer une aventure.' };
+    const limited = await enforceRateLimit(user.id, {
+      scope: 'compas-create-trip',
+      limit: 10,
+      windowMs: 60_000,
+      failMode: 'closed',
+    });
+    if (limited)
+      return { success: false, error: 'Trop de créations d’affilée : patiente une minute.' };
+
+    const label = CREATE_LABEL[parsed.data.activity];
+    const suffix = crypto.randomUUID().replace(/-/g, '').slice(0, 8);
+    const base = label
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    const { data: created, error } = await supabase
+      .from('trips')
+      .insert({
+        user_id: user.id,
+        slug: `${base}-${suffix}`,
+        title: `${label} · nouvelle aventure`,
+        status: 'draft',
+        visibility: 'private',
+        difficulty: 'moderate',
+        primary_activity: parsed.data.activity,
+        budget_currency: 'EUR',
+        metadata: { created_with: 'compas' },
+      })
+      .select('id, slug, title')
+      .single();
+    if (error || !created) {
+      console.error('[compas] compasCreateTripAction insert', error?.code);
+      return { success: false, error: 'L’aventure n’a pas pu être créée. Réessaie.' };
+    }
+    const { data: owner } = await supabase
+      .from('trip_collaborators')
+      .select('role')
+      .eq('trip_id', created.id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (owner?.role !== 'owner') {
+      await supabase.from('trips').delete().eq('id', created.id);
+      return { success: false, error: 'L’aventure n’a pas pu être créée. Réessaie.' };
+    }
+    const res = await setActiveAdventureAction({
+      nature: 'sortie',
+      id: created.id,
+      slug: created.slug,
+      title: created.title,
+    });
+    if (!res.success)
+      return {
+        success: false,
+        error: 'Aventure créée mais impossible de l’ouvrir : ouvre-la depuis le Hub.',
+      };
+    revalidatePath('/compas');
+    return { success: true, slug: created.slug };
+  } catch (err) {
+    console.error('[compas] compasCreateTripAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
 
 const openTripSchema = z.object({ tripId: uuid });
 

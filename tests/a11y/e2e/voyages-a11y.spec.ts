@@ -57,7 +57,7 @@ async function getDemoAuthCookie(): Promise<{ name: string; value: string; domai
 const SURFACES: Array<{ id: string; url: string }> = [
   // Étape 2 — Hub unique : les surfaces voyages vivent dans /hub.
   { id: 'hub-apercu', url: '/hub' },
-  { id: 'hub-nouveau', url: '/hub/nouveau' },
+  { id: 'compas-nouvelle', url: '/compas?nouvelle=1' },
   { id: 'hub-itineraire', url: '/hub/itineraire' },
   { id: 'hub-kit-voyage', url: '/hub/kit-voyage' },
   { id: 'hub-budget', url: '/hub/budget' },
