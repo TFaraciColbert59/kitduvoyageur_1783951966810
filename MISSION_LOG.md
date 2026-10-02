@@ -5,9 +5,10 @@
 - **Fluidité** : plus de `revalidatePath` dans les actions du Compas (pages dynamiques) ; l'îlot s'affiche au geste, l'enregistrement et le rafraîchissement suivent en arrière-plan ; chargements en parallèle ; droits vérifiés en une lecture (#62).
 - **Choisir un parcours** : un parcours tenu par un brouillon vide est libéré ; sinon le message nomme l'aventure concernée (#62).
 - **Parcours « Autour · 50 km »** : position GPS (repli : départ du voyage), parcours du catalogue à moins de 50 km, du plus proche au plus loin.
+- **Activités partenaires dans Parcours** : Viator (dont sorties guidées) mélangées aux parcours (`engine/parcoursMix.ts`, une activité après chaque paire de parcours), badge discret « Partenaire », lien `sponsored nofollow`, mention d'affiliation. Partenaire non activé (pas de clés Viator ; le bac à sable RouteStack n'expose pas d'activités) : rien n'est affiché, aucun exemple présenté comme réel.
 - **Invitations** (`trip_invitations`, `respond_trip_invitation`) : « Inviter » remplace l'ajout direct ; l'invité accède au voyage seulement après avoir accepté. Notification créée par déclencheur en base (`notify`), lue dès la réponse. Accepter / Refuser sur place (alertes du hub, départ du Compas), puis « Voir » sans redirection forcée. Lien d'invitation réutilisable 30 jours (`/invitation/[token]`, à coller dans un message, un club, un groupe, un commentaire ou hors de l'app ; copier / partager). Compteur « présents · en attente · places libres · total ». « Annuler » un retrait n'est possible que pour une personne ayant déjà accepté.
 - Base : migrations `20261002150000_trip_invitations`, `20261002160000_trip_invitations_flow` appliquées sur icxyvwzfjbflcbqukpfz ; parcours vérifié en transaction annulée (notification → liste de l'invité → acceptation → membre, notification lue, seconde réponse refusée).
-- Preuves : `tsc` 0 ; `eslint` 0 ; Compas 196 tests ; page du lien et « Voir » vérifiés dans Chromium.
+- Preuves : `tsc` 0 ; `eslint` 0 ; Compas 198 tests ; page du lien et « Voir » vérifiés dans Chromium.
 
 ## 2026-10-02 — Compas : retours de l'essai réel (10 points)
 

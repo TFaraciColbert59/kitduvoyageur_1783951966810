@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import Icon from '@/components/ui/Icon';
 import type { CompasNights } from '../engine/compasModel';
 import {
@@ -11,6 +11,7 @@ import {
   formatHours,
   formatKm,
   formatMeters,
+  formatMoney,
   weatherLabel,
 } from '../engine/format';
 import {
@@ -38,6 +39,10 @@ import {
 } from '../server/compasActions';
 import { applyCurrent, inverseOps, runOps } from './compasApply';
 import { Chip, PagedList, Segments } from './CompasPrimitives';
+import { compasNearbyActivitiesAction } from '../server/resaActions';
+import type { CompasStayOffer } from '../engine/stays';
+import { mixParcours } from '../engine/parcoursMix';
+import { AffiliateDisclosure } from '@/features/affiliation/components/AffiliateDisclosure';
 import type { CompasCtl, FlowHint } from './compasTypes';
 
 const TIME_ZONE = 'Europe/Paris';
@@ -129,6 +134,19 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
     routes: [],
   });
   const [picked, setPicked] = useState<CompasRouteOption | null>(null);
+  // Activités partenaires (dont sorties guidées), mélangées aux parcours.
+  const [partners, setPartners] = useState<CompasStayOffer[]>([]);
+  const partnerSeq = useRef(0);
+  const loadPartners = (place: string | null) => {
+    const mine = ++partnerSeq.current;
+    setPartners([]);
+    if (!place) return;
+    compasNearbyActivitiesAction({ tripId: m.tripId, place })
+      .then((res) => {
+        if (mine === partnerSeq.current && res.success) setPartners(res.offers);
+      })
+      .catch(() => {});
+  };
 
   /** Position GPS (4 s au plus, mémorisée 10 min), sinon le départ du voyage. */
   const locate = (): Promise<{ lat: number; lon: number; gps: boolean } | null> =>
@@ -148,6 +166,7 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
   const load = async (next: RouteMode, q = query) => {
     setMode(next);
     setPicked(null);
+    if (next === 'etapes' || next === 'mes') loadPartners(null);
     if (next === 'etapes') return;
     setResults({ status: 'loading', routes: [] });
     try {
@@ -173,6 +192,12 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
           ? { status: 'ok', routes: res.routes }
           : { status: 'error', routes: [], error: res.error }
       );
+      if (next !== 'mes')
+        loadPartners(
+          next === 'cherche'
+            ? q.trim() || null
+            : (m.destination ?? (res.success ? (res.routes[0]?.region ?? null) : null))
+        );
     } catch {
       setResults({ status: 'error', routes: [], error: 'Connexion perdue : réessaie.' });
     }
@@ -308,7 +333,7 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
           <PagedList
             label="Parcours trouvés"
             resetKey={`${mode}-${query}`}
-            items={results.routes}
+            items={mixParcours(results.routes, mode === 'mes' ? [] : partners)}
             empty={
               <p className="cp-note">
                 {mode === 'mes'
@@ -318,8 +343,45 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
                     : 'Aucun parcours ne correspond à cette recherche.'}
               </p>
             }
-            render={(r) => (
-              <button key={r.routeId} type="button" className="cp-row" onClick={() => setPicked(r)}>
+            render={(entry) => {
+              if (entry.kind === 'activity') {
+                const a = entry.item;
+                const body = (
+                  <>
+                    <span className="cp-thumb" aria-hidden="true">
+                      <Icon name="ticket" size={18} />
+                    </span>
+                    <span className="cp-row__t">
+                      <b>{a.title}</b>
+                      <span>
+                        {a.amount != null && a.currency
+                          ? `dès ${formatMoney(a.amount, a.currency)}`
+                          : 'prix chez le partenaire'}
+                      </span>
+                    </span>
+                    <span className="cp-row__end">
+                      <Chip>Partenaire</Chip>
+                    </span>
+                  </>
+                );
+                return a.url ? (
+                  <a
+                    key={`a-${a.id}`}
+                    className="cp-row"
+                    href={a.url}
+                    target="_blank"
+                    rel="sponsored nofollow noopener noreferrer"
+                  >
+                    {body}
+                  </a>
+                ) : (
+                  <div key={`a-${a.id}`} className="cp-row" style={staticRow}>
+                    {body}
+                  </div>
+                );
+              }
+              const r = entry.item;
+              return (<button key={r.routeId} type="button" className="cp-row" onClick={() => setPicked(r)}>
                 <span className="cp-thumb" aria-hidden="true">
                   <Icon name={r.mine ? 'footprints' : 'route'} size={18} />
                 </span>
@@ -345,9 +407,10 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
                   ) : null}
                   <Icon name="chevron-right" size={16} />
                 </span>
-              </button>
-            )}
+              </button>);
+            }}
           />
+          {partners.length > 0 && mode !== 'mes' && <AffiliateDisclosure compact />}
         </>
       )}
     </>

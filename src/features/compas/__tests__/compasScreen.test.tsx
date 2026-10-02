@@ -168,6 +168,23 @@ const bottle = vi.hoisted(() => ({
 }));
 vi.mock('../server/bottleActions', () => bottle);
 const resa = vi.hoisted(() => ({
+  compasNearbyActivitiesAction: vi.fn(async () => ({
+    success: true,
+    unavailable: false,
+    offers: [
+      {
+        id: 'v1',
+        title: 'Cirque de Gavarnie avec un guide',
+        untitled: false,
+        description: null,
+        amount: 45,
+        currency: 'EUR',
+        provider: 'viator',
+        url: 'https://example.test/activite',
+        requiresRevalidation: false,
+      },
+    ],
+  })),
   compasSearchOffersAction: vi.fn(async () => ({
     success: true,
     mode: 'sandbox',
@@ -1154,6 +1171,11 @@ describe('CompasScreen', () => {
         query: 'Gavarnie',
       })
     );
+    // Activité partenaire (guidée) dans la même liste, badge discret, lien sponsorisé.
+    const partner = await within(sheet).findByRole('link', { name: /Cirque de Gavarnie avec un guide/ });
+    expect(partner.getAttribute('rel')).toContain('sponsored');
+    expect(within(partner).getByText('Partenaire')).toBeTruthy();
+    expect(resa.compasNearbyActivitiesAction).toHaveBeenLastCalledWith({ tripId: TRIP, place: 'Gavarnie' });
     fireEvent.click(await within(sheet).findByRole('button', { name: /GR 10 · Gavarnie/ }));
     expect(within(sheet).getByText('7 sorties publiques')).toBeTruthy();
     fireEvent.click(within(sheet).getByRole('button', { name: /Choisir ce parcours/ }));
