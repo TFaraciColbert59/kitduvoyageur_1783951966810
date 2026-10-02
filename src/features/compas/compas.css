@@ -1318,6 +1318,8 @@
   display: grid;
   place-items: center;
   color: var(--cp-ink);
+  padding: 0;
+  cursor: pointer;
 }
 .cp-bigsum {
   display: flex;

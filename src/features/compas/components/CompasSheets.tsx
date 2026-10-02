@@ -29,6 +29,11 @@ import {
   compasApplyKitAction,
   compasListMyKitsAction,
   compasCreateKitFromTripAction,
+  compasSearchPeopleAction,
+  compasAddMemberAction,
+  compasSetMemberRoleAction,
+  compasRemoveMemberAction,
+  type CompasPerson,
   compasSetPartySizeAction,
   compasSearchStaysAction,
   compasSetStayAction,
@@ -439,7 +444,13 @@ function AcquireSheet({
             empty={
               <p className="cp-note">
                 Personne d’autre dans l’équipe pour l’instant.{' '}
-                <Link href="/hub/groupe">Inviter quelqu’un</Link>
+                <button
+                  type="button"
+                  className="cp-linkbtn"
+                  onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'qui' })}
+                >
+                  Ajouter quelqu’un
+                </button>
               </p>
             }
             render={(m) => (
@@ -607,7 +618,13 @@ function AddSheet({
               {ctl.data.inventory.length
                 ? 'Tout ton inventaire est déjà dans le kit.'
                 : 'Ton inventaire est vide.'}{' '}
-              <Link href="/hub/inventaire">Ouvrir l’inventaire</Link>
+              <button
+                type="button"
+                className="cp-linkbtn"
+                onClick={() => ctl.open({ kind: 'add', target: 'inventaire' })}
+              >
+                Ajouter à l’inventaire
+              </button>
             </p>
           }
           render={(i) => (
@@ -961,6 +978,7 @@ function StepSheet({
       )}
       {step === 'ou' && flow === 'preferences' && <PreferencesFlow ctl={ctl} />}
       {step === 'nous' && flow === 'equipe' && <EquipeFlow ctl={ctl} />}
+      {step === 'nous' && flow === 'qui' && <QuiFlow ctl={ctl} />}
       {step === 'nous' && flow === 'budget' && <BudgetFlow ctl={ctl} />}
       {step === 'resa' && flow === 'nuits' && <NuitsFlow ctl={ctl} focusDay={hint?.day} />}
       {step === 'resa' && flow === 'reservations' && <ReservationsFlow ctl={ctl} />}
@@ -1098,11 +1116,235 @@ function EquipeFlow({ ctl }: { ctl: CompasCtl }) {
         }}
       />
       <div className="cp-actions">
-        <Link className="cp-btn cp-btn--soft" href="/hub/groupe">
+        <button
+          type="button"
+          className="cp-btn cp-btn--soft"
+          onClick={() => ctl.replace({ kind: 'step', step: 'nous', flow: 'qui' })}
+        >
           <Icon name="user-plus" size={16} />
-          Inviter ou gérer les rôles dans le hub
-        </Link>
+          Ajouter quelqu’un ou gérer les rôles
+        </button>
       </div>
+    </>
+  );
+}
+
+const ROLE_LABEL: Record<string, string> = {
+  owner: 'Organisateur',
+  editor: 'Peut modifier',
+  viewer: 'Lecture seule',
+  member: 'Membre du groupe',
+};
+
+/**
+ * Nous · Qui (maquette finale) : ajouter qui on veut au voyage sans quitter
+ * le Compas. Sans recherche : les personnes que je suis ; sinon par nom.
+ * Rôles et retrait pour les personnes ajoutées au voyage (organisateur).
+ */
+function QuiFlow({ ctl }: { ctl: CompasCtl }) {
+  const { model, viewerId, canEdit } = ctl.data;
+  const isOwner = viewerId != null && viewerId === model.ownerId;
+  const [query, setQuery] = useState('');
+  const [role, setRole] = useState<'editor' | 'viewer'>('editor');
+  const [state, setState] = useState<
+    | { status: 'idle' | 'loading' }
+    | { status: 'error'; error: string }
+    | { status: 'ok'; people: CompasPerson[]; searched: string }
+  >({ status: 'idle' });
+
+  const search = async (q: string) => {
+    setState({ status: 'loading' });
+    try {
+      const res = await compasSearchPeopleAction({ tripId: model.tripId, query: q });
+      setState(
+        res.success
+          ? { status: 'ok', people: res.people, searched: q }
+          : { status: 'error', error: res.error }
+      );
+    } catch {
+      setState({ status: 'error', error: 'Connexion perdue : réessaie.' });
+    }
+  };
+
+  useEffect(() => {
+    if (canEdit) void search('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- suggestions à l'ouverture seulement
+  }, [canEdit]);
+
+  const add = async (p: CompasPerson) => {
+    const ok = await ctl.run(
+      `${p.name} ajouté${role === 'viewer' ? ' en lecture seule' : ''}`,
+      () =>
+        compasAddMemberAction({
+          tripId: model.tripId,
+          tripSlug: model.slug,
+          userId: p.userId,
+          role,
+        }),
+      () =>
+        compasRemoveMemberAction({ tripId: model.tripId, tripSlug: model.slug, userId: p.userId })
+    );
+    if (ok && state.status === 'ok')
+      setState({ ...state, people: state.people.filter((x) => x.userId !== p.userId) });
+  };
+
+  return (
+    <>
+      {canEdit ? (
+        <>
+          <form
+            className="cp-intent"
+            role="search"
+            aria-label="Chercher quelqu’un"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void search(query.trim());
+            }}
+          >
+            <Icon name="search" size={15} aria-hidden="true" />
+            <label className="sr-only" htmlFor="cp-qui-q">
+              Nom
+            </label>
+            <input
+              id="cp-qui-q"
+              type="search"
+              value={query}
+              maxLength={60}
+              autoComplete="off"
+              enterKeyHint="search"
+              placeholder="Nom d’un voyageur LKDV"
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </form>
+          <Segments
+            label="Rôle à l’ajout"
+            value={role}
+            onChange={setRole}
+            options={[
+              { id: 'editor', label: 'Peut modifier' },
+              { id: 'viewer', label: 'Lecture seule' },
+            ]}
+          />
+          {state.status === 'loading' && <p className="cp-note">Recherche…</p>}
+          {state.status === 'error' && <p className="cp-note">{state.error}</p>}
+          {state.status === 'ok' && (
+            <PagedList
+              label={state.searched ? 'Résultats' : 'Personnes que tu suis'}
+              items={state.people}
+              empty={
+                <p className="cp-note">
+                  {state.searched
+                    ? 'Personne à ce nom (ou déjà dans le voyage).'
+                    : 'Tape un nom pour trouver un voyageur LKDV.'}
+                </p>
+              }
+              render={(p) => (
+                <div key={p.userId} className="cp-row" style={staticRow}>
+                  <MemberAvatar name={p.name} url={p.avatarUrl} />
+                  <span className="cp-row__t">
+                    <b>{p.name}</b>
+                    <span>
+                      {[p.followed ? 'tu le suis' : null, p.location].filter(Boolean).join(' · ') ||
+                        'voyageur LKDV'}
+                    </span>
+                  </span>
+                  <span className="cp-row__end">
+                    <button
+                      type="button"
+                      className="cp-btn cp-btn--pg"
+                      disabled={ctl.busy}
+                      aria-label={`Ajouter ${p.name}`}
+                      onClick={() => void add(p)}
+                    >
+                      Ajouter
+                    </button>
+                  </span>
+                </div>
+              )}
+            />
+          )}
+        </>
+      ) : (
+        <p className="cp-note">Lecture seule : seuls les organisateurs ajoutent des personnes.</p>
+      )}
+
+      <p className="cp-sub">
+        <b>Dans le voyage</b> · {model.crew.loads.length} personne
+        {model.crew.loads.length > 1 ? 's' : ''}
+      </p>
+      <TallList
+        label="Membres du voyage"
+        items={model.crew.loads}
+        empty={<p className="cp-note">Personne pour l’instant.</p>}
+        render={(m) => {
+          const editable = isOwner && m.userId !== model.ownerId && m.role !== 'member';
+          return (
+            <div key={m.userId} className="cp-row" style={staticRow}>
+              <MemberAvatar name={m.name} url={m.avatarUrl} />
+              <span className="cp-row__t">
+                <b>
+                  {m.name}
+                  {m.userId === viewerId ? ' (moi)' : ''}
+                </b>
+                <span>
+                  {m.userId === model.ownerId
+                    ? ROLE_LABEL.owner
+                    : (ROLE_LABEL[m.role ?? ''] ?? 'Membre')}
+                </span>
+              </span>
+              {editable && (
+                <span className="cp-row__end">
+                  <select
+                    aria-label={`Rôle de ${m.name}`}
+                    value={m.role === 'viewer' ? 'viewer' : 'editor'}
+                    disabled={ctl.busy}
+                    onChange={(e) => {
+                      const next = e.target.value === 'viewer' ? 'viewer' : 'editor';
+                      void ctl.run(`${m.name} : ${ROLE_LABEL[next].toLowerCase()}`, () =>
+                        compasSetMemberRoleAction({
+                          tripId: model.tripId,
+                          tripSlug: model.slug,
+                          userId: m.userId,
+                          role: next,
+                        })
+                      );
+                    }}
+                  >
+                    <option value="editor">Peut modifier</option>
+                    <option value="viewer">Lecture seule</option>
+                  </select>
+                  <button
+                    type="button"
+                    className="cp-btn cp-btn--bad"
+                    disabled={ctl.busy}
+                    aria-label={`Retirer ${m.name} du voyage`}
+                    onClick={() =>
+                      void ctl.run(
+                        `${m.name} retiré du voyage`,
+                        () =>
+                          compasRemoveMemberAction({
+                            tripId: model.tripId,
+                            tripSlug: model.slug,
+                            userId: m.userId,
+                          }),
+                        () =>
+                          compasAddMemberAction({
+                            tripId: model.tripId,
+                            tripSlug: model.slug,
+                            userId: m.userId,
+                            role: m.role === 'viewer' ? 'viewer' : 'editor',
+                          })
+                      )
+                    }
+                  >
+                    Retirer
+                  </button>
+                </span>
+              )}
+            </div>
+          );
+        }}
+      />
     </>
   );
 }
@@ -1386,10 +1628,14 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
           Pays de destination non renseigné : la bouteille à la mer se lance depuis la page du pays.
         </p>
       )}
-      <Link className="cp-btn" href="/hub/groupe">
+      <button
+        type="button"
+        className="cp-btn"
+        onClick={() => ctl.replace({ kind: 'step', step: 'nous', flow: 'qui' })}
+      >
         <Icon name="users" size={16} />
-        Gérer le groupe dans le Hub
-      </Link>
+        Ajouter quelqu’un ou gérer les rôles
+      </button>
       <p className="cp-note">
         La bouteille à la mer publie une annonce de groupe pour ce pays : dates, places, confiance
         minimale, majorité et frais partagés annoncés. Tu acceptes ou refuses chaque candidat. Rien
@@ -2733,7 +2979,14 @@ function InventaireFlow({ ctl }: { ctl: CompasCtl }) {
   if (ctl.data.inventory.length === 0)
     return (
       <p className="cp-note">
-        Ton inventaire est vide. <Link href="/hub/inventaire">Ouvrir l’inventaire</Link>
+        Ton inventaire est vide.{' '}
+        <button
+          type="button"
+          className="cp-linkbtn"
+          onClick={() => ctl.open({ kind: 'add', target: 'inventaire' })}
+        >
+          Ajouter à l’inventaire
+        </button>
       </p>
     );
   return (
@@ -2807,8 +3060,7 @@ function InventaireFlow({ ctl }: { ctl: CompasCtl }) {
         }}
       />
       <p className="cp-note">
-        Les objets de ton inventaire (<Link href="/hub/inventaire">Hub</Link>). Ajouter au kit ne
-        change rien à l’inventaire.
+        Les objets de ton inventaire. Ajouter au kit ne change rien à l’inventaire.
       </p>
     </>
   );

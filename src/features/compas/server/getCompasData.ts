@@ -185,20 +185,23 @@ function toMembers(
   crew: Array<{ userId: string; role: string; fullName: string | null; avatarUrl: string | null }>
 ): CompasMemberInput[] {
   const profiles = new Map((trip.member_profiles ?? []).map((p) => [p.user_id, p]));
-  const base =
-    crew.length > 0
-      ? crew.map((m) => ({
-          userId: m.userId,
-          name: m.fullName,
-          avatarUrl: m.avatarUrl,
-          role: m.role,
-        }))
-      : (trip.collaborators ?? []).map((c) => ({
-          userId: c.user_id,
-          name: c.profile?.full_name ?? c.profile?.username ?? null,
-          avatarUrl: c.profile?.avatar_url ?? null,
-          role: String(c.role),
-        }));
+  // Équipage du groupe ET personnes ajoutées au voyage depuis le Compas
+  // (trip_collaborators) : une même personne n'apparaît qu'une fois.
+  const base = crew.map((m) => ({
+    userId: m.userId,
+    name: m.fullName,
+    avatarUrl: m.avatarUrl,
+    role: m.role,
+  }));
+  for (const c of trip.collaborators ?? []) {
+    if (base.some((m) => m.userId === c.user_id)) continue;
+    base.push({
+      userId: c.user_id,
+      name: c.profile?.full_name ?? c.profile?.username ?? null,
+      avatarUrl: c.profile?.avatar_url ?? null,
+      role: String(c.role),
+    });
+  }
   if (!base.some((m) => m.userId === trip.user_id)) {
     base.unshift({ userId: trip.user_id, name: null, avatarUrl: null, role: 'owner' });
   }

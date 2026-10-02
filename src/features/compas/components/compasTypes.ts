@@ -19,6 +19,7 @@ export const STEP_FLOWS = {
   ],
   nous: [
     { id: 'equipe', label: 'Équipe', icon: 'users' },
+    { id: 'qui', label: 'Qui', icon: 'user-plus' },
     { id: 'budget', label: 'Budget', icon: 'coins' },
     { id: 'annonce', label: 'Annonce', icon: 'send' },
   ],

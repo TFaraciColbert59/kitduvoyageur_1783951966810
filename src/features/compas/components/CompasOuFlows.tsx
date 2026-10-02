@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import Icon from '@/components/ui/Icon';
 import type { CompasNights } from '../engine/compasModel';
@@ -969,7 +968,13 @@ export function PreferencesFlow({ ctl }: { ctl: CompasCtl }) {
       {!edit && (
         <p className="cp-note">
           Lecture seule : seuls les organisateurs modifient le voyage.{' '}
-          <Link href="/hub/groupe">Voir le groupe</Link>
+          <button
+            type="button"
+            className="cp-linkbtn"
+            onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'qui' })}
+          >
+            Voir le groupe
+          </button>
         </p>
       )}
     </>

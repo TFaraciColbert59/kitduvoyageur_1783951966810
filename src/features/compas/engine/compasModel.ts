@@ -219,6 +219,8 @@ export interface CompasModel {
   tripId: string;
   slug: string;
   title: string;
+  /** Organisateur du voyage (trips.user_id). */
+  ownerId: string;
   activity: string | null;
   destination: string | null;
   dates: {
@@ -733,6 +735,7 @@ export function buildCompasModel(input: CompasInput): CompasModel {
     tripId: trip.id,
     slug: trip.slug,
     title: trip.title,
+    ownerId: trip.ownerId,
     activity: trip.primaryActivity,
     destination: trip.destinationName,
     dates: {

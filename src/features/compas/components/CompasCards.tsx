@@ -394,9 +394,14 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
           {crew.loads.slice(0, 6).map((m) => (
             <MemberAvatar key={m.userId} name={m.name} url={m.avatarUrl} />
           ))}
-          <Link className="cp-avadd" href="/hub/groupe" aria-label="Inviter quelqu’un">
+          <button
+            type="button"
+            className="cp-avadd"
+            aria-label="Ajouter quelqu’un"
+            onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'qui' })}
+          >
             <Icon name="plus" size={15} />
-          </Link>
+          </button>
         </div>
         <span className="cp-sub">
           {crew.size} personne{crew.size > 1 ? 's' : ''}

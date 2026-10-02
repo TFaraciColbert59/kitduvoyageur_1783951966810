@@ -99,6 +99,21 @@ const compas = vi.hoisted(() => ({
     ],
   })),
   compasApplyKitAction: vi.fn(async () => ({ success: true })),
+  compasSearchPeopleAction: vi.fn(async () => ({
+    success: true,
+    people: [
+      {
+        userId: '5c1d2e3f-0000-4000-8000-0000000000aa',
+        name: 'Léa Montagne',
+        avatarUrl: null,
+        location: 'Grenoble',
+        followed: true,
+      },
+    ],
+  })),
+  compasAddMemberAction: vi.fn(async () => ({ success: true })),
+  compasSetMemberRoleAction: vi.fn(async () => ({ success: true })),
+  compasRemoveMemberAction: vi.fn(async () => ({ success: true })),
   compasCreateKitFromTripAction: vi.fn(async () => ({ success: true, kitId: 'k', count: 3 })),
   compasApplyRouteAction: vi.fn(async () => ({ success: true, kept: 0 })),
   compasMyRoutesAction: vi.fn(async () => ({ success: true, routes: [] })),
@@ -609,24 +624,28 @@ describe('CompasScreen', () => {
     expect(fd.get('tripId')).toBe(TRIP);
   });
 
-  it('Nous · Annonce : mène à la bouteille à la mer du pays et au Hub, ne publie rien', async () => {
+  it('Nous · Qui : propose les personnes suivies et les ajoute sans quitter le Compas', async () => {
     render(<CompasScreen data={makeData()} />);
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Détails : Nous' }));
     const sheet = await screen.findByRole('dialog', { name: 'Nous' });
     const tabs = within(sheet).getByRole('group', { name: 'Parcours du tiroir' });
-    fireEvent.click(within(tabs).getByText('Annonce'));
-    expect(
-      within(sheet)
-        .getByRole('link', { name: /Lancer une bouteille à la mer/ })
-        .getAttribute('href')
-    ).toBe('/pays/fr?section=communaute');
-    expect(
-      within(sheet)
-        .getByRole('link', { name: /Gérer le groupe/ })
-        .getAttribute('href')
-    ).toBe('/hub/groupe');
-    expect(within(sheet).getByText(/Rien n’est publié depuis le Compas/)).toBeTruthy();
+    fireEvent.click(within(tabs).getByText('Qui'));
+    await waitFor(() =>
+      expect(compas.compasSearchPeopleAction).toHaveBeenCalledWith({ tripId: TRIP, query: '' })
+    );
+    expect(await within(sheet).findByText('Léa Montagne')).toBeTruthy();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Lecture seule' }));
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Ajouter Léa Montagne' }));
+    await waitFor(() =>
+      expect(compas.compasAddMemberAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        userId: '5c1d2e3f-0000-4000-8000-0000000000aa',
+        role: 'viewer',
+      })
+    );
+    expect(within(sheet).queryByRole('link', { name: /hub/i })).toBeNull();
   });
 
   it('Nous : budget réel, aucune enveloppe inventée, l’équipe la fixe', async () => {
