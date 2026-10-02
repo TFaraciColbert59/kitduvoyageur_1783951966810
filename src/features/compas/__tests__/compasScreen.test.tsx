@@ -925,7 +925,8 @@ describe('CompasScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Détails : Kit' }));
     const sheet = await screen.findByRole('dialog', { name: 'Kit' });
     fireEvent.click(within(sheet).getByRole('button', { name: /Mes kits/ }));
-    const form = await within(sheet).findByRole('form', { name: 'Créer mon kit' });
+    fireEvent.click(await within(sheet).findByRole('button', { name: /Créer mon kit/ }));
+    const form = within(sheet).getByRole('form', { name: 'Créer mon kit' });
     fireEvent.change(within(form).getByLabelText('Nom'), { target: { value: 'Mon kit GR' } });
     fireEvent.change(within(form).getByLabelText('Saison'), { target: { value: 'automne' } });
     const before = compas.compasListMyKitsAction.mock.calls.length;

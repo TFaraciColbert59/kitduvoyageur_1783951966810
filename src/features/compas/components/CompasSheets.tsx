@@ -3073,6 +3073,7 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
   const [pending, setPending] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
   const [creating, setCreating] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
   const model = ctl.data.model;
   const tripNames = useMemo(() => ctl.lines.map((l) => l.name), [ctl.lines]);
   const forecasts = useMemo(
@@ -3125,12 +3126,26 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
       })
     );
     setCreating(false);
-    if (ok) setReload((n) => n + 1);
+    if (ok) {
+      setReload((n) => n + 1);
+      setShowCreate(false);
+    }
   };
 
   return (
     <>
-      {ctl.data.canEdit && (
+      {ctl.data.canEdit && !showCreate && (
+        <button
+          type="button"
+          className="cp-btn cp-btn--soft"
+          aria-expanded={false}
+          onClick={() => setShowCreate(true)}
+        >
+          <Icon name="plus" size={16} />
+          Créer mon kit
+        </button>
+      )}
+      {ctl.data.canEdit && showCreate && (
         <form className="cp-mkkit cp-glass" onSubmit={createKit} aria-label="Créer mon kit">
           <b className="cp-mkkit__t">
             <Icon name="plus" size={15} aria-hidden="true" /> Créer mon kit
