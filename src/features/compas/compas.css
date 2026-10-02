@@ -2583,3 +2583,20 @@ html[data-liquid-ios27]:not([data-theme='dark'])
 [data-theme='dark'] .cp-vb {
   background: var(--cp-fill);
 }
+
+/* Barre d'onglets réduite (maquette finale, .tabmin) : en défilant un tiroir
+   vers le bas, seul l'onglet actif reste, en bulle à gauche. Changement
+   instantané (aucune animation de largeur) ; remonter la rend entière. */
+body:has(.compas[data-tabmin]) .lkv-nav-surface > div {
+  width: auto !important;
+  align-self: flex-start;
+  margin-left: 14px;
+}
+body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-material-bar {
+  width: 64px !important;
+  justify-content: center !important;
+  padding: 0 !important;
+}
+body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='page']) {
+  display: none;
+}

@@ -484,6 +484,25 @@ describe('CompasScreen', () => {
     expect(await screen.findByRole('dialog', { name: 'Réchaud' })).toBeTruthy();
   });
 
+  it('défiler un tiroir vers le bas réduit la barre d’onglets, le fermer la rend', async () => {
+    const { container } = render(<CompasScreen data={makeData()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Kit' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Kit' });
+    const body = sheet.querySelector('.cp-sheet__body') as HTMLElement;
+    const root = container.querySelector('.compas') as HTMLElement;
+    body.scrollTop = 120;
+    fireEvent.scroll(body);
+    expect(root.hasAttribute('data-tabmin')).toBe(true);
+    body.scrollTop = 40;
+    fireEvent.scroll(body);
+    expect(root.hasAttribute('data-tabmin')).toBe(false);
+    body.scrollTop = 160;
+    fireEvent.scroll(body);
+    expect(root.hasAttribute('data-tabmin')).toBe(true);
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Fermer' }));
+    await waitFor(() => expect(root.hasAttribute('data-tabmin')).toBe(false));
+  });
+
   it('sans dates : aucun chiffre inventé, la décision demande les dates', () => {
     const data = makeData({
       trip: {

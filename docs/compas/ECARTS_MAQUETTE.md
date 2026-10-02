@@ -17,7 +17,7 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 | Couche lumineuse sur les barres posées sur le paysage | ✅ | 2026-10-01 |
 | Barre d'onglets en verre clair, onglet actif vert | ✅ | onglets de l'app inchangés (⛔ Explorer / Compas / Matériel / Hub / Recherche) |
 | Accessoire au-dessus de la barre (altitude max + profil) | ✅ | profil réel (Open-Meteo, Copernicus GLO-90, 80 points), glisser ou flèches pour lire ; sans profil : D+ et km |
-| Barre d'onglets qui se réduit au défilement | ⬜ | |
+| Barre d'onglets qui se réduit au défilement | ✅ | défiler un tiroir vers le bas : seul l'onglet actif reste (portée Compas, navigation de l'app intacte) |
 | Lentille qui suit le doigt (maintenir et glisser) | ⬜ | |
 | Îlot dynamique : prochaine décision, appliquer | ⬜ | |
 | Annuler (îlot, Ctrl/⌘+Z, deux doigts vers la gauche) | ⬜ | |
@@ -79,7 +79,7 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 | Carte claire, tracé, étapes numérotées, D / A | 🟡 | carte réelle (tuiles), pastilles claires |
 | Contrôles (couches, recentrer) | 🟡 | |
 | Personnaliser la carte (couches) | ⬜ | |
-| Encart du point touché (callout) | ⬜ | |
+| Encart du point touché (callout) | 🟡 | encart de la carte partagée (Explorer) à l'appui sur un point ; style maquette à vérifier sur appareil |
 
 ## Création d'aventure (`/compas?nouvelle=1`)
 | Élément | État | Note |

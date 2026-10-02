@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, type ReactNode, type UIEvent } from 'react';
 import Icon from '@/components/ui/Icon';
 
 export type Detent = 'small' | 'medium' | 'large';
@@ -44,6 +44,25 @@ export function CompasSheet({
       onDetent('large');
     }
   });
+
+  // Maquette finale : défiler le tiroir vers le bas réduit la barre d'onglets
+  // à l'onglet actif ; remonter (ou fermer) la rend entière.
+  const lastTop = useRef(0);
+  const compasRoot = useRef<HTMLElement | null>(null);
+  const setTabMin = (on: boolean) => {
+    // La racine est mémorisée : au démontage, la ref du tiroir est déjà vide.
+    const root = (compasRoot.current ??= ref.current?.closest<HTMLElement>('.compas') ?? null);
+    if (!root) return;
+    if (on) root.setAttribute('data-tabmin', '');
+    else root.removeAttribute('data-tabmin');
+  };
+  useEffect(() => () => setTabMin(false), []);
+  const onBodyScroll = (e: UIEvent<HTMLDivElement>) => {
+    const top = e.currentTarget.scrollTop;
+    if (top > 24 && top > lastTop.current + 2) setTabMin(true);
+    else if (top < lastTop.current - 2 || top <= 24) setTabMin(false);
+    lastTop.current = top;
+  };
 
   useEffect(() => {
     ref.current?.focus({ preventScroll: true });
@@ -106,11 +125,21 @@ export function CompasSheet({
         <div className="cp-sheet__h">
           <span className="cp-sheet__side">
             {onBack && (
-              <button type="button" className="cp-ibtn cp-glass" onClick={onBack} aria-label="Retour">
+              <button
+                type="button"
+                className="cp-ibtn cp-glass"
+                onClick={onBack}
+                aria-label="Retour"
+              >
                 <Icon name="chevron-left" size={18} />
               </button>
             )}
-            <button type="button" className="cp-ibtn cp-glass" onClick={onClose} aria-label="Fermer">
+            <button
+              type="button"
+              className="cp-ibtn cp-glass"
+              onClick={onClose}
+              aria-label="Fermer"
+            >
               <Icon name="x" size={18} />
             </button>
           </span>
@@ -126,7 +155,7 @@ export function CompasSheet({
             </button>
           </span>
         </div>
-        <div className="cp-sheet__body" ref={body}>
+        <div className="cp-sheet__body" ref={body} onScroll={onBodyScroll}>
           {children}
         </div>
       </div>
