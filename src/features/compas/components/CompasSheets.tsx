@@ -72,6 +72,8 @@ import { proposeShift, watchRules } from '../engine/watch';
 import { planWater } from '../engine/water';
 import { addExpenseAction } from '@/app/voyages/budget-actions';
 import { RESA_CATS, bookingCat, offerCat, type ResaCat } from '../engine/resaCats';
+import { RESA_EXAMPLES, type CompasLiveVertical } from '../engine/resaExamples';
+import { compasSearchOffersAction } from '../server/resaActions';
 import { KIT_THRESHOLDS } from '../engine/kitRules';
 import { inverseOps, runOps } from './compasApply';
 import type { ApplyOp } from '../engine/intent';
@@ -2283,37 +2285,43 @@ function offerIcon(category: string | null): string {
  * offres). Les réservations réelles de la catégorie passent devant ; les
  * offres partenaires suivent, balisées, et ne réservent jamais rien.
  */
+const LIVE_OF: Partial<Record<ResaCat, CompasLiveVertical>> = {
+  activites: 'activity',
+  vols: 'flight',
+  trajets: 'car',
+};
+const PARTNER_OF: Record<CompasLiveVertical, string> = {
+  activity: 'Viator',
+  flight: 'RouteStack',
+  car: 'RouteStack',
+};
+
+/**
+ * Résa (maquette finale) : six catégories. Activités (Viator), Vols et
+ * Trajets (RouteStack) se cherchent en direct ici ; Nuits ouvre la recherche
+ * par nuit ; Extras liste les offres partenaires (assurance, eSIM…).
+ */
 function OffresFlow({ ctl, initialCat }: { ctl: CompasCtl; initialCat?: ResaCat }) {
-  const live = ctl.data.providers.routestack !== 'disabled';
-  const [cat, setCat] = useState<ResaCat | 'all'>(initialCat ?? 'all');
-  const present = RESA_CATS.filter(
-    (c) =>
-      c.id !== 'randos' &&
-      (ctl.data.affiliateLinks.some((l) => offerCat(l.category) === c.id) ||
-        ctl.data.bookings.some((b) => LIVE_BOOKING(b.status) && bookingCat(b.vertical) === c.id))
+  const [cat, setCat] = useState<ResaCat>(
+    initialCat && initialCat !== 'randos' ? initialCat : 'activites'
   );
-  const offers =
-    cat === 'all'
-      ? ctl.data.affiliateLinks
-      : ctl.data.affiliateLinks.filter((l) => offerCat(l.category) === cat);
-  const booked =
-    cat === 'all'
-      ? []
-      : ctl.data.bookings.filter((b) => LIVE_BOOKING(b.status) && bookingCat(b.vertical) === cat);
+  const offers = ctl.data.affiliateLinks.filter((l) => offerCat(l.category) === cat);
+  const booked = ctl.data.bookings.filter(
+    (b) => LIVE_BOOKING(b.status) && bookingCat(b.vertical) === cat
+  );
+  const live = LIVE_OF[cat];
   return (
     <>
-      <AffiliateDisclosure compact />
-      {present.length > 0 && (
-        <Segments
-          label="Catégorie"
-          value={cat}
-          onChange={setCat}
-          options={[
-            { id: 'all', label: 'Tout' },
-            ...present.map((c) => ({ id: c.id, label: c.label, icon: c.icon })),
-          ]}
-        />
-      )}
+      <Segments
+        label="Catégorie"
+        value={cat}
+        onChange={setCat}
+        options={RESA_CATS.filter((c) => c.id !== 'randos').map((c) => ({
+          id: c.id,
+          label: c.label,
+          icon: c.icon,
+        }))}
+      />
       {booked.length > 0 && (
         <p className="cp-sub">
           <b>
@@ -2326,43 +2334,215 @@ function OffresFlow({ ctl, initialCat }: { ctl: CompasCtl; initialCat?: ResaCat 
             .toLowerCase()}
         </p>
       )}
-      <PagedList
-        label="Offres partenaires"
-        resetKey={cat}
-        items={offers}
-        empty={
-          <p className="cp-note">
-            {cat === 'all'
-              ? 'Aucune offre partenaire pour cette destination pour l’instant.'
-              : 'Aucune offre partenaire dans cette catégorie pour cette destination.'}
-          </p>
-        }
-        render={(l) => (
-          <a
-            key={l.id}
-            className="cp-row"
-            href={l.url}
-            target="_blank"
-            rel="sponsored nofollow noopener"
-          >
-            <span className="cp-thumb">
-              <Icon name={offerIcon(l.category)} size={20} />
-            </span>
-            <span className="cp-row__t">
-              <b>{l.label}</b>
-              <span>{[l.partner, l.category].filter(Boolean).join(' · ') || 'Partenaire'}</span>
-            </span>
-            <span className="cp-row__end">
-              <Icon name="external-link" size={16} />
-            </span>
-          </a>
+      {live && <LiveSearch key={live} ctl={ctl} vertical={live} />}
+      {cat === 'nuits' && (
+        <button
+          type="button"
+          className="cp-btn cp-btn--pg"
+          onClick={() => ctl.replace({ kind: 'step', step: 'resa', flow: 'nuits' })}
+        >
+          <Icon name="bed-double" size={16} />
+          Chercher un hébergement nuit par nuit
+        </button>
+      )}
+      {(offers.length > 0 || cat === 'extras') && (
+        <>
+          <AffiliateDisclosure compact />
+          <PagedList
+            label="Offres partenaires"
+            resetKey={cat}
+            items={offers}
+            empty={
+              <p className="cp-note">
+                Aucune offre partenaire dans cette catégorie pour l’instant.
+              </p>
+            }
+            render={(l) => (
+              <a
+                key={l.id}
+                className="cp-row"
+                href={l.url}
+                target="_blank"
+                rel="sponsored nofollow noopener"
+              >
+                <span className="cp-thumb">
+                  <Icon name={offerIcon(l.category)} size={20} />
+                </span>
+                <span className="cp-row__t">
+                  <b>{l.label}</b>
+                  <span>{[l.partner, l.category].filter(Boolean).join(' · ') || 'Partenaire'}</span>
+                </span>
+                <span className="cp-row__end">
+                  <Icon name="external-link" size={16} />
+                </span>
+              </a>
+            )}
+          />
+        </>
+      )}
+    </>
+  );
+}
+
+/** Recherche en direct chez le partenaire de la catégorie ; rien n'est réservé d'ici. */
+function LiveSearch({ ctl, vertical }: { ctl: CompasCtl; vertical: CompasLiveVertical }) {
+  const { model } = ctl.data;
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState(model.destination ?? '');
+  const [state, setState] = useState<
+    | { status: 'idle' | 'loading' }
+    | { status: 'error'; error: string; unavailable: boolean }
+    | { status: 'ok'; mode: 'sandbox' | 'live'; offers: CompasStayOffer[] }
+  >({ status: 'idle' });
+
+  const search = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setState({ status: 'loading' });
+    try {
+      const res = await compasSearchOffersAction({
+        tripId: model.tripId,
+        vertical,
+        ...(vertical === 'flight' ? { from } : {}),
+        ...(to.trim() ? { to: to.trim() } : {}),
+      });
+      setState(
+        res.success
+          ? { status: 'ok', mode: res.mode, offers: res.offers }
+          : { status: 'error', error: res.error, unavailable: res.unavailable === true }
+      );
+    } catch {
+      setState({ status: 'error', error: 'Connexion perdue : réessaie.', unavailable: false });
+    }
+  };
+
+  const when = model.dates.start
+    ? `${formatDayMonth(model.dates.start)}${model.dates.end && vertical !== 'activity' ? ` → ${formatDayMonth(model.dates.end)}` : ''}`
+    : 'dates à choisir';
+
+  return (
+    <>
+      <form
+        className="cp-bottle cp-glass"
+        onSubmit={search}
+        aria-label={`Chercher : ${vertical === 'activity' ? 'activités' : vertical === 'flight' ? 'vols' : 'trajets'}`}
+      >
+        {vertical === 'flight' && (
+          <label className="cp-field">
+            Départ de
+            <input
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              placeholder="Ville ou aéroport"
+              maxLength={80}
+              required
+            />
+          </label>
         )}
-      />
-      <p className="cp-disc">
-        {live
-          ? 'Hôtels, vols et voitures en direct : tarif revalidé avant tout paiement, jamais de commande sans ton accord.'
-          : 'Recherche en direct (hôtels, vols, voitures) : active dès que les clés partenaires sont posées. Rien n’est simulé d’ici là.'}
-      </p>
+        <label className="cp-field">
+          {vertical === 'car' ? 'Prise du véhicule à' : vertical === 'flight' ? 'Vers' : 'Où'}
+          <input
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            placeholder="Destination"
+            maxLength={80}
+            required
+          />
+        </label>
+        <span className="cp-sub">
+          {when} · {model.crew.size} personne{model.crew.size > 1 ? 's' : ''} · via{' '}
+          {PARTNER_OF[vertical]}
+        </span>
+        <button
+          type="submit"
+          className="cp-btn cp-btn--pg"
+          disabled={state.status === 'loading' || !model.dates.start}
+        >
+          <Icon name="search" size={16} />
+          {state.status === 'loading' ? 'Recherche…' : 'Chercher en direct'}
+        </button>
+      </form>
+
+      {state.status === 'error' && <p className="cp-note">{state.error}</p>}
+      {state.status === 'error' && state.unavailable && (
+        <PagedList
+          label="Exemples"
+          items={[...RESA_EXAMPLES[vertical]]}
+          empty={null}
+          render={(x) => (
+            <div key={x.title} className="cp-row" style={staticRow}>
+              <span className="cp-thumb">
+                <Icon
+                  name={vertical === 'flight' ? 'plane' : vertical === 'car' ? 'car' : 'ticket'}
+                  size={20}
+                />
+              </span>
+              <span className="cp-row__t">
+                <b>{x.title}</b>
+                <span>{x.detail}</span>
+              </span>
+              <span className="cp-row__end">
+                <Chip tone="soft">Exemple</Chip>
+              </span>
+            </div>
+          )}
+        />
+      )}
+      {state.status === 'ok' && (
+        <>
+          {state.mode === 'sandbox' && (
+            <p className="cp-note">Mode test du partenaire : ces offres ne sont pas réservables.</p>
+          )}
+          <AffiliateDisclosure compact />
+          <PagedList
+            label="Offres en direct"
+            items={state.offers}
+            empty={<p className="cp-note">Aucune offre trouvée pour ces critères.</p>}
+            render={(o) => {
+              const body = (
+                <>
+                  <span className="cp-thumb">
+                    <Icon
+                      name={vertical === 'flight' ? 'plane' : vertical === 'car' ? 'car' : 'ticket'}
+                      size={20}
+                    />
+                  </span>
+                  <span className="cp-row__t">
+                    <b>{o.title}</b>
+                    <span>
+                      {o.amount != null && o.currency
+                        ? formatMoney(o.amount, o.currency)
+                        : 'prix confirmé chez le partenaire'}
+                      {o.requiresRevalidation ? ' · tarif à revalider' : ''}
+                    </span>
+                  </span>
+                </>
+              );
+              return o.url ? (
+                <a
+                  key={o.id}
+                  className="cp-row"
+                  href={o.url}
+                  target="_blank"
+                  rel="sponsored nofollow noopener"
+                >
+                  {body}
+                  <span className="cp-row__end">
+                    <Icon name="external-link" size={16} />
+                  </span>
+                </a>
+              ) : (
+                <div key={o.id} className="cp-row" style={staticRow}>
+                  {body}
+                </div>
+              );
+            }}
+          />
+          <p className="cp-disc">
+            Rien n’est réservé ni payé d’ici : l’offre s’ouvre chez le partenaire, tarif revalidé
+            avant tout paiement.
+          </p>
+        </>
+      )}
     </>
   );
 }

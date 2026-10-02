@@ -492,7 +492,7 @@ export function ResaCard({ ctl }: { ctl: CompasCtl }) {
   return (
     <>
       {/* Maquette finale : six catégories. Le badge compte les réservations
-          réelles ; une catégorie sans réservation ni offre est grisée. */}
+          réelles ; Extras sans offre partenaire est grisé. */}
       <div className="cp-tchips cp-tchips--six">
         {RESA_CATS.map((c) => {
           const booked =
@@ -504,8 +504,8 @@ export function ResaCard({ ctl }: { ctl: CompasCtl }) {
           const offers = ctl.data.affiliateLinks.filter(
             (l) => offerCat(l.category) === c.id
           ).length;
-          const usable =
-            c.id === 'randos' || c.id === 'nuits' || c.id === 'trajets' || booked + offers > 0;
+          // Activités, Vols, Trajets se cherchent en direct ; Extras liste les offres.
+          const usable = c.id !== 'extras' || booked + offers > 0;
           return (
             <button
               key={c.id}

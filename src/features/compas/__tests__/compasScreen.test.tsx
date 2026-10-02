@@ -164,6 +164,27 @@ const bottle = vi.hoisted(() => ({
   compasCloseBottleAction: vi.fn(async () => ({ success: true })),
 }));
 vi.mock('../server/bottleActions', () => bottle);
+const resa = vi.hoisted(() => ({
+  compasSearchOffersAction: vi.fn(async () => ({
+    success: true,
+    mode: 'sandbox',
+    fetchedAt: '2026-10-02T08:00:00Z',
+    offers: [
+      {
+        id: 'o1',
+        title: 'Lyon → Pau',
+        untitled: false,
+        description: null,
+        amount: 89,
+        currency: 'EUR',
+        provider: 'routestack',
+        url: 'https://example.test/offer',
+        requiresRevalidation: true,
+      },
+    ],
+  })),
+}));
+vi.mock('../server/resaActions', () => resa);
 
 const cart = vi.hoisted(() => ({ addToCart: vi.fn() }));
 vi.mock('@/lib/cart', () => cart);
@@ -797,10 +818,9 @@ describe('CompasScreen', () => {
     expect(container.querySelector('.compas')?.getAttribute('data-map')).toBeNull();
   });
 
-  it('Résa : six catégories, Vols ouvre ses offres filtrées, une catégorie vide est grisée', async () => {
+  it('Résa : six catégories, Vols cherche en direct (RouteStack), Extras liste les offres', async () => {
     const data = makeData();
     data.affiliateLinks = [
-      { id: 'a1', label: 'Vols Lyon', category: 'flight', partner: 'Aviasales', url: '/go/vol' },
       { id: 'a2', label: 'Assurance', category: 'insurance', partner: 'Heymondo', url: '/go/ass' },
     ];
     render(<CompasScreen data={data} />);
@@ -808,15 +828,40 @@ describe('CompasScreen', () => {
     for (const name of ['Randonnées', 'Activités', 'Hébergement', 'Vols', 'Transports', 'Extras'])
       expect(screen.getByRole('button', { name: new RegExp(`^${name}`) })).toBeTruthy();
     expect((screen.getByRole('button', { name: /^Activités/ }) as HTMLButtonElement).disabled).toBe(
-      true
+      false
     );
     fireEvent.click(screen.getByRole('button', { name: 'Vols' }));
     const sheet = await screen.findByRole('dialog', { name: 'Mes réservations' });
-    expect(within(sheet).getByText('Vols Lyon')).toBeTruthy();
+    const form = within(sheet).getByRole('form', { name: 'Chercher : vols' });
+    fireEvent.change(within(form).getByLabelText('Départ de'), { target: { value: 'Lyon' } });
+    fireEvent.click(within(form).getByRole('button', { name: /Chercher en direct/ }));
+    await waitFor(() =>
+      expect(resa.compasSearchOffersAction).toHaveBeenCalledWith(
+        expect.objectContaining({ tripId: TRIP, vertical: 'flight', from: 'Lyon' })
+      )
+    );
+    expect(await within(sheet).findByText('Lyon → Pau')).toBeTruthy();
+    expect(within(sheet).getByText(/Mode test du partenaire/)).toBeTruthy();
     expect(within(sheet).queryByText('Assurance')).toBeNull();
     const cats = within(sheet).getByRole('group', { name: 'Catégorie' });
-    fireEvent.click(within(cats).getByText('Tout'));
+    fireEvent.click(within(cats).getByText('Extras'));
     expect(within(sheet).getByText('Assurance')).toBeTruthy();
+  });
+
+  it('Résa : partenaire non activé, des exemples étiquetés et aucun lien', async () => {
+    resa.compasSearchOffersAction.mockResolvedValueOnce({
+      success: false,
+      unavailable: true,
+      error: 'Partenaire non activé pour cette catégorie : recherche en direct indisponible.',
+    });
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Activités' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Mes réservations' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Chercher en direct/ }));
+    expect(await within(sheet).findByText(/Partenaire non activé/)).toBeTruthy();
+    expect(within(sheet).getAllByText('Exemple').length).toBeGreaterThan(0);
+    expect(within(sheet).queryAllByRole('link')).toHaveLength(0);
   });
 
   it('nuits : noter un hébergement écrit sans rien réserver, liens affiliés balisés', async () => {
@@ -834,7 +879,11 @@ describe('CompasScreen', () => {
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Détails : Mes réservations' }));
     const sheet = await screen.findByRole('dialog', { name: 'Mes réservations' });
-    fireEvent.click(within(sheet).getByRole('button', { name: /Nuits/ }));
+    fireEvent.click(
+      within(within(sheet).getByRole('group', { name: 'Parcours du tiroir' })).getByRole('button', {
+        name: /Nuits/,
+      })
+    );
     const input = within(sheet).getByLabelText('Hébergement de la nuit du jour 1');
     fireEvent.change(input, { target: { value: 'Gîte du col' } });
     fireEvent.click(within(sheet).getAllByRole('button', { name: 'OK' })[0]);
@@ -964,7 +1013,11 @@ describe('CompasScreen', () => {
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Détails : Mes réservations' }));
     const sheet = await screen.findByRole('dialog', { name: 'Mes réservations' });
-    fireEvent.click(within(sheet).getByRole('button', { name: /Nuits/ }));
+    fireEvent.click(
+      within(within(sheet).getByRole('group', { name: 'Parcours du tiroir' })).getByRole('button', {
+        name: /Nuits/,
+      })
+    );
     fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
     await waitFor(() =>
       expect(compas.compasSearchStaysAction).toHaveBeenCalledWith({ tripId: TRIP, day: 1 })
