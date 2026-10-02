@@ -42,7 +42,8 @@ import { DisLe } from './CompasDisLe';
 import { proposeShift, watchRules } from '../engine/watch';
 import { planWater } from '../engine/water';
 import { KIT_THRESHOLDS } from '../engine/kitRules';
-import { runOps } from './compasApply';
+import { inverseOps, runOps } from './compasApply';
+import type { ApplyOp } from '../engine/intent';
 import { ActiviteFlow, ParcoursFlow, PreferencesFlow, QuandFlow } from './CompasOuFlows';
 import {
   STEP_FLOWS,
@@ -1138,8 +1139,11 @@ function BudgetFlow({ ctl }: { ctl: CompasCtl }) {
       ctl.notify('Montant invalide', 'bad');
       return;
     }
-    void ctl.run(amount == null ? 'Enveloppe retirée' : 'Enveloppe enregistrée', () =>
-      compasSetBudgetAction({ tripId, tripSlug: slug, amount })
+    const before = ctl.data.model.budget.target;
+    void ctl.run(
+      amount == null ? 'Enveloppe retirée' : 'Enveloppe enregistrée',
+      () => compasSetBudgetAction({ tripId, tripSlug: slug, amount }),
+      () => compasSetBudgetAction({ tripId, tripSlug: slug, amount: before })
     );
   };
   return (
@@ -1827,16 +1831,20 @@ function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
   const apply = () => {
     if (!shift) return;
     const n = Math.abs(shift.offsetDays);
-    void ctl.run(`Voyage décalé de ${n} jour${n > 1 ? 's' : ''}`, () =>
-      runOps(ctl, [
-        {
-          op: 'dates',
-          startDate: shift.startDate,
-          endDate: shift.endDate,
-          durationHours: m.dates.hours != null && m.dates.hours < 24 ? m.dates.hours : null,
-          resplit: false,
-        },
-      ])
+    const ops: ApplyOp[] = [
+      {
+        op: 'dates',
+        startDate: shift.startDate,
+        endDate: shift.endDate,
+        durationHours: m.dates.hours != null && m.dates.hours < 24 ? m.dates.hours : null,
+        resplit: false,
+      },
+    ];
+    const undo = inverseOps(ctl, ops);
+    void ctl.run(
+      `Voyage décalé de ${n} jour${n > 1 ? 's' : ''}`,
+      () => runOps(ctl, ops),
+      undo ? () => runOps(ctl, undo) : undefined
     );
   };
   return (

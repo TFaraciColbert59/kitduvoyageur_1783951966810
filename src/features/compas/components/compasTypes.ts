@@ -87,7 +87,15 @@ export interface CompasCtl {
   close: () => void;
   /** Passe le tiroir du dessus en grande hauteur (contenu qui s'allonge). */
   enlarge: () => void;
-  run: (success: string, action: () => Promise<ActionResult>) => Promise<boolean>;
+  /**
+   * Exécute une écriture et l'annonce. `undo`, s'il est fourni, rétablit
+   * l'état d'avant : « Annuler » apparaît dans l'annonce et Ctrl/⌘+Z le lance.
+   */
+  run: (
+    success: string,
+    action: () => Promise<ActionResult>,
+    undo?: () => Promise<ActionResult>
+  ) => Promise<boolean>;
   togglePacked: (line: CompasKitLine) => void;
   memberName: (userId: string | null) => string;
   product: (id: string | null) => CompasShopProduct | undefined;

@@ -92,7 +92,13 @@ export function CompasScreen({
   const [popover, setPopover] = useState(false);
   const [stack, setStack] = useState<Array<{ sheet: SheetState; detent: Detent }>>([]);
   const [packed, setPacked] = useState<Record<string, boolean>>({});
-  const [toast, setToast] = useState<{ message: string; tone?: 'bad' } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    tone?: 'bad';
+    undo?: () => void;
+  } | null>(null);
+  /** Dernière écriture annulable (Ctrl/⌘+Z), le temps que l'annonce reste. */
+  const undoRef = useRef<(() => void) | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { model } = data;
@@ -124,14 +130,26 @@ export function CompasScreen({
   // Les données fraîches du serveur remplacent l'état optimiste.
   useEffect(() => setPacked({}), [data]);
 
-  const notify = useCallback((message: string, tone?: 'bad') => {
+  const notify = useCallback((message: string, tone?: 'bad', undo?: () => void) => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
-    setToast({ message, tone });
-    toastTimer.current = setTimeout(() => setToast(null), 2600);
+    undoRef.current = undo ?? null;
+    setToast({ message, tone, undo });
+    // Une annonce annulable reste plus longtemps : le temps de se raviser.
+    toastTimer.current = setTimeout(
+      () => {
+        undoRef.current = null;
+        setToast(null);
+      },
+      undo ? 6000 : 2600
+    );
   }, []);
 
   const run = useCallback(
-    async (success: string, action: () => Promise<ActionResult>) => {
+    async (
+      success: string,
+      action: () => Promise<ActionResult>,
+      undo?: () => Promise<ActionResult>
+    ): Promise<boolean> => {
       setRunning(true);
       try {
         const res = await action();
@@ -139,7 +157,11 @@ export function CompasScreen({
           notify(res.error ?? 'Action impossible', 'bad');
           return false;
         }
-        notify(success);
+        notify(
+          success,
+          undefined,
+          undo ? () => void runRef.current?.(`Annulé : ${success}`, undo) : undefined
+        );
         startTransition(() => router.refresh());
         return true;
       } catch {
@@ -151,6 +173,26 @@ export function CompasScreen({
     },
     [notify, router]
   );
+  const runRef = useRef(run);
+  runRef.current = run;
+
+  // Ctrl/⌘+Z annule la dernière écriture annulable, hors champ de saisie
+  // (où il garde son sens habituel).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.shiftKey || e.key.toLowerCase() !== 'z') return;
+      const t = e.target;
+      if (t instanceof Element && t.closest('input, textarea, select, [contenteditable="true"]'))
+        return;
+      const undo = undoRef.current;
+      if (!undo) return;
+      e.preventDefault();
+      undoRef.current = null;
+      undo();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const lines = useMemo<CompasKitLine[]>(
     () => model.kit.lines.map((l) => (l.id in packed ? { ...l, packed: packed[l.id] } : l)),
@@ -418,6 +460,22 @@ export function CompasScreen({
       {toast && (
         <div className="cp-toast" role="status" data-tone={toast.tone}>
           {toast.message}
+          {toast.undo && (
+            <button
+              type="button"
+              className="cp-toast__undo"
+              disabled={running}
+              title="Ctrl/⌘ + Z"
+              onClick={() => {
+                const undo = toast.undo;
+                undoRef.current = null;
+                setToast(null);
+                undo?.();
+              }}
+            >
+              Annuler
+            </button>
+          )}
         </div>
       )}
     </div>

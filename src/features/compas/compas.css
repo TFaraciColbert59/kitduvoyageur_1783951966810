@@ -914,6 +914,33 @@
   background: var(--lkv-danger-dark);
 }
 
+/* « Annuler » dans l'annonce (îlot de la maquette). */
+.cp-toast:has(.cp-toast__undo) {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-right: 6px;
+}
+.cp-toast__undo {
+  flex: none;
+  pointer-events: auto;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cp-island-ink) 16%, transparent);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.cp-toast__undo:focus-visible {
+  outline: 2px solid var(--cp-island-ink);
+  outline-offset: 2px;
+}
+.cp-toast__undo:disabled {
+  opacity: 0.5;
+}
+
 /* Écran vide */
 .cp-empty {
   display: grid;

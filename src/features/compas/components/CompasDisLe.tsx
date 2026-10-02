@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'rea
 import Icon from '@/components/ui/Icon';
 import { planApplication, type CompasProposal } from '../engine/intent';
 import { compasInterpretAction } from '../server/compasActions';
-import { applyCurrent, runOps } from './compasApply';
+import { applyCurrent, inverseOps, runOps } from './compasApply';
 import type { CompasCtl } from './compasTypes';
 
 type State =
@@ -87,8 +87,11 @@ export function DisLe({
     let ok = true;
     if (writes.length) {
       const n = chosen.filter((p) => p.action.type !== 'search_route').length;
-      ok = await ctl.run(`${n} changement${n > 1 ? 's' : ''} appliqué${n > 1 ? 's' : ''}`, () =>
-        runOps(ctl, writes)
+      const undo = inverseOps(ctl, writes);
+      ok = await ctl.run(
+        `${n} changement${n > 1 ? 's' : ''} appliqué${n > 1 ? 's' : ''}`,
+        () => runOps(ctl, writes),
+        undo ? () => runOps(ctl, undo) : undefined
       );
     }
     if (!ok) return;
@@ -160,32 +163,32 @@ export function DisLe({
         </p>
       )}
       <div className="cp-disle__row">
-      {before}
-      <form className="cp-disle__in cp-glass" onSubmit={submit}>
-        <Icon name="sparkles" size={15} />
-        <label className="sr-only" htmlFor="cp-disle-input">
-          Dis-le
-        </label>
-        <input
-          id="cp-disle-input"
-          value={text}
-          maxLength={280}
-          autoComplete="off"
-          placeholder="Dis-le…"
-          title="Par exemple : « 3 jours à 4, départ samedi »"
-          onChange={(e) => setText(e.target.value)}
-        />
-        <button
-          type="submit"
-          className="cp-ibtn cp-ibtn--sm cp-ibtn--pg"
-          aria-label="Comprendre la phrase"
-          disabled={state.status === 'loading' || text.trim().length < 2}
-          aria-busy={state.status === 'loading'}
-        >
-          <Icon name={state.status === 'loading' ? 'clock' : 'send'} size={14} />
-        </button>
-      </form>
-      {after}
+        {before}
+        <form className="cp-disle__in cp-glass" onSubmit={submit}>
+          <Icon name="sparkles" size={15} />
+          <label className="sr-only" htmlFor="cp-disle-input">
+            Dis-le
+          </label>
+          <input
+            id="cp-disle-input"
+            value={text}
+            maxLength={280}
+            autoComplete="off"
+            placeholder="Dis-le…"
+            title="Par exemple : « 3 jours à 4, départ samedi »"
+            onChange={(e) => setText(e.target.value)}
+          />
+          <button
+            type="submit"
+            className="cp-ibtn cp-ibtn--sm cp-ibtn--pg"
+            aria-label="Comprendre la phrase"
+            disabled={state.status === 'loading' || text.trim().length < 2}
+            aria-busy={state.status === 'loading'}
+          >
+            <Icon name={state.status === 'loading' ? 'clock' : 'send'} size={14} />
+          </button>
+        </form>
+        {after}
       </div>
     </div>
   );

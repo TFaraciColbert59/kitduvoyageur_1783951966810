@@ -815,6 +815,36 @@ describe('CompasScreen', () => {
     );
   });
 
+  it('Annuler : l’annonce rétablit les préférences d’avant, Ctrl+Z aussi', async () => {
+    render(<CompasScreen data={makeData()} />);
+    const sheet = await openOu(/Préférences/);
+    const before = { pace: 'normal', nights: null, avoid: [], wishes: [] };
+    fireEvent.click(within(sheet).getByRole('button', { name: /Bivouac/ }));
+    const undo = await screen.findByRole('button', { name: 'Annuler' });
+    fireEvent.click(undo);
+    await waitFor(() =>
+      expect(compas.compasSetPreferencesAction).toHaveBeenLastCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        preferences: before,
+      })
+    );
+    expect(await screen.findByText(/^Annulé :/)).toBeTruthy();
+    // L'annulation elle-même ne s'annule pas.
+    expect(screen.queryByRole('button', { name: 'Annuler' })).toBeNull();
+
+    fireEvent.click(within(sheet).getByRole('button', { name: /Bivouac/ }));
+    await screen.findByRole('button', { name: 'Annuler' });
+    const calls = compas.compasSetPreferencesAction.mock.calls.length;
+    fireEvent.keyDown(window, { key: 'z', ctrlKey: true });
+    await waitFor(() =>
+      expect(compas.compasSetPreferencesAction.mock.calls.length).toBe(calls + 1)
+    );
+    expect(compas.compasSetPreferencesAction).toHaveBeenLastCalledWith(
+      expect.objectContaining({ preferences: before })
+    );
+  });
+
   it('Dis-le : les propositions refusées ne s’appliquent pas, les autres oui', async () => {
     compas.compasInterpretAction.mockResolvedValueOnce({
       success: true,

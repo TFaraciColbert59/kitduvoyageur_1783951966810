@@ -37,7 +37,7 @@ import {
   compasSetPreferencesAction,
   type CompasRouteOption,
 } from '../server/compasActions';
-import { applyCurrent, runOps } from './compasApply';
+import { applyCurrent, inverseOps, runOps } from './compasApply';
 import { Chip, PagedList, Segments } from './CompasPrimitives';
 import type { CompasCtl, FlowHint } from './compasTypes';
 
@@ -65,8 +65,11 @@ export function ActiviteFlow({ ctl }: { ctl: CompasCtl }) {
   const { activity, tripId, slug } = ctl.data.model;
   const pick = (a: CompasActivity) => {
     if (!ctl.data.canEdit || a === activity) return;
-    void ctl.run(`Activité : ${activityLabel(a)}`, () =>
-      compasSetActivityAction({ tripId, tripSlug: slug, activity: a })
+    const undo = inverseOps(ctl, [{ op: 'activity', activity: a }]);
+    void ctl.run(
+      `Activité : ${activityLabel(a)}`,
+      () => compasSetActivityAction({ tripId, tripSlug: slug, activity: a }),
+      undo ? () => runOps(ctl, undo) : undefined
     );
   };
   const current = COMPAS_ACTIVITIES.find((a) => a === activity);
@@ -845,8 +848,10 @@ export function PreferencesFlow({ ctl }: { ctl: CompasCtl }) {
   const prefs = m.preferences;
   const edit = ctl.data.canEdit;
   const save = (next: typeof prefs, message: string) =>
-    void ctl.run(message, () =>
-      compasSetPreferencesAction({ tripId: m.tripId, tripSlug: m.slug, preferences: next })
+    void ctl.run(
+      message,
+      () => compasSetPreferencesAction({ tripId: m.tripId, tripSlug: m.slug, preferences: next }),
+      () => compasSetPreferencesAction({ tripId: m.tripId, tripSlug: m.slug, preferences: prefs })
     );
 
   return (

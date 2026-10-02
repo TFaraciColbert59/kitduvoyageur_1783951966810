@@ -20,7 +20,7 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 | Barre d'onglets qui se réduit au défilement | ✅ | défiler un tiroir vers le bas : seul l'onglet actif reste (portée Compas, navigation de l'app intacte) |
 | Lentille qui suit le doigt (maintenir et glisser) | ⬜ | |
 | Îlot dynamique : prochaine décision, appliquer | ⬜ | |
-| Annuler (îlot, Ctrl/⌘+Z, deux doigts vers la gauche) | ⬜ | |
+| Annuler (îlot, Ctrl/⌘+Z, deux doigts vers la gauche) | 🟡 | « Annuler » dans l'annonce + Ctrl/⌘+Z : activité, préférences, enveloppe, décalage de dates, « Dis-le » quand l'inverse est sûr ; geste à deux doigts à faire |
 | Mode extérieur + intensité du verre (☀) | ✅ | |
 
 ## Où
