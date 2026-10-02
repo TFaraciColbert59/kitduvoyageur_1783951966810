@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import Icon from '@/components/ui/Icon';
 import type { HubRoutePoint } from '@/features/hub/components/mobile/HubRouteMap';
 import type { CompasPoint } from '../server/getCompasData';
@@ -58,6 +58,8 @@ export function CompasMap({
 }) {
   const [recenter, setRecenter] = useState(0);
   const [panel, setPanel] = useState(false);
+  const grabY = useRef<number | null>(null);
+  const grabClick = useRef(false);
   const counts = useMemo(() => {
     const c = new Map<MapLayer, number>();
     for (const p of points) {
@@ -99,7 +101,35 @@ export function CompasMap({
           Aucun point encore : trace le parcours dans le préparateur pour le voir ici.
         </p>
       )}
-      <span className="cp-map__grab" aria-hidden="true" />
+      <button
+        type="button"
+        className="cp-map__grab"
+        aria-label={big ? 'Glisser pour réduire la carte' : 'Glisser pour agrandir la carte'}
+        aria-pressed={big}
+        onPointerDown={(e) => {
+          grabY.current = e.clientY;
+          e.currentTarget.setPointerCapture?.(e.pointerId);
+        }}
+        onPointerUp={(e) => {
+          const from = grabY.current;
+          grabY.current = null;
+          if (from == null || !Number.isFinite(e.clientY)) return;
+          const dy = e.clientY - from;
+          // Tirer vers le haut agrandit, vers le bas réduit, un toucher bascule.
+          if (Math.abs(dy) < 16 || dy < 0 !== big) onToggleBig();
+          grabClick.current = true;
+        }}
+        onPointerCancel={() => {
+          grabY.current = null;
+        }}
+        onClick={() => {
+          // Clavier (Entrée, Espace) : le pointeur a déjà décidé sinon.
+          if (grabClick.current) grabClick.current = false;
+          else onToggleBig();
+        }}
+      >
+        <span />
+      </button>
       <div className="cp-map__actions cp-glass">
         <button
           type="button"

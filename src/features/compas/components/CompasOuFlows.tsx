@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import Icon from '@/components/ui/Icon';
 import type { CompasNights } from '../engine/compasModel';
@@ -481,15 +480,26 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
       (unit === 'heures' ? hours !== m.dates.hours : m.dates.hours != null && m.dates.hours < 24));
   const resplit = data.route.id != null && spanDays !== m.dates.days;
 
-  const save = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!start || start < today) {
-      ctl.notify(start ? 'Date passée' : 'Choisis un jour de départ', 'bad');
+  const calendar = weather?.calendar ?? [];
+
+  /** Qualité d'une fenêtre : la plus mauvaise journée connue (maquette : qWin). */
+  const windowQuality = (from: string, to: string) => {
+    const rank = { bon: 0, moyen: 1, mauvais: 2 } as const;
+    let worst: keyof typeof rank | null = null;
+    for (const c of calendar)
+      if (c.date >= from && c.date <= to && c.quality && (!worst || rank[c.quality] > rank[worst]))
+        worst = c.quality;
+    return worst;
+  };
+
+  const commit = async (from: string) => {
+    if (!from || from < today) {
+      ctl.notify(from ? 'Date passée' : 'Choisis un jour de départ', 'bad');
       return;
     }
     const ops = planApplication(
       [
-        { type: 'set_dates', start, end: null },
+        { type: 'set_dates', start: from, end: null },
         {
           type: 'set_duration',
           days: unit === 'jours' ? days : null,
@@ -498,13 +508,32 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
       ],
       applyCurrent(ctl)
     );
+    const to = addDaysIso(from, spanDays - 1);
+    const q = windowQuality(from, to);
+    // Annulable tant que le parcours n'est pas redécoupé (même règle que la règle de durée).
+    const undo = inverseOps(ctl, ops);
     await ctl.run(
-      `Dates enregistrées${ops.some((o) => o.op === 'dates' && o.resplit) ? ' · parcours redécoupé' : ''}`,
-      () => runOps(ctl, ops)
+      `Quand : ${
+        unit === 'heures'
+          ? `${formatDayMonth(from)} · ${formatHours(hours)}`
+          : `${formatDayMonth(from)} → ${formatDayMonth(to)}`
+      }${q ? ` · ${QUALITY_LABEL[q]}` : ''}${ops.some((o) => o.op === 'dates' && o.resplit) ? ' · parcours redécoupé' : ''}`,
+      () => runOps(ctl, ops),
+      undo ? () => runOps(ctl, undo) : undefined
     );
   };
 
-  const calendar = weather?.calendar ?? [];
+  const save = async (e: FormEvent) => {
+    e.preventDefault();
+    await commit(start);
+  };
+
+  /** Le calendrier EST le sélecteur de « Quand » : toucher un jour fixe le départ. */
+  const pickDay = (iso: string) => {
+    setStart(iso);
+    if (iso !== m.dates.start || unit === 'heures' || days !== m.dates.days) void commit(iso);
+  };
+
   const offset = calendar.length
     ? (new Date(`${calendar[0].date}T12:00:00Z`).getUTCDay() + 6) % 7
     : 0;
@@ -575,7 +604,7 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
           <p className="cp-note cp-when__note">
             {start && end
               ? `${unit === 'heures' ? `${formatDayMonth(start)} · ${formatHours(hours)}` : `${formatDayMonth(start)} → ${formatDayMonth(end)}`}${resplit ? ` · parcours redécoupé en ${spanDays} jour${spanDays > 1 ? 's' : ''}` : ''}`
-              : 'Touche un jour du calendrier pour choisir le départ.'}
+              : 'Touche un jour du calendrier : c’est ton départ.'}
           </p>
           <button type="submit" className="cp-btn cp-btn--pg" disabled={!changed || ctl.busy}>
             Enregistrer
@@ -600,10 +629,26 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
                 day={c}
                 selected={inRange(c.date)}
                 isStart={c.date === start}
-                onPick={ctl.data.canEdit ? () => setStart(c.date) : undefined}
+                onPick={ctl.data.canEdit && !ctl.busy ? () => void pickDay(c.date) : undefined}
               />
             ))}
           </div>
+          {start && end && (
+            <p className="cp-cal__sum" aria-live="polite">
+              <b>
+                {unit === 'heures'
+                  ? `${formatDayMonth(start)} · ${formatHours(hours)}`
+                  : `${formatDayMonth(start)} → ${formatDayMonth(end)}`}
+              </b>
+              {(() => {
+                const q = windowQuality(start, end);
+                return q ? ` · ${QUALITY_LABEL[q]}` : '';
+              })()}
+              {calendar.length > 0 && start > calendar[calendar.length - 1].date
+                ? ' · au-delà du calendrier (six semaines)'
+                : ''}
+            </p>
+          )}
           <p className="cp-cal__legend">
             <i data-q="bon" /> bon <i data-q="moyen" /> moyen <i data-q="mauvais" /> mauvais · plein
             : prévision 16 j · cerclé : tendance des 5 dernières années · Open-Meteo
@@ -926,7 +971,13 @@ export function PreferencesFlow({ ctl }: { ctl: CompasCtl }) {
       {!edit && (
         <p className="cp-note">
           Lecture seule : seuls les organisateurs modifient le voyage.{' '}
-          <Link href="/hub/groupe">Voir le groupe</Link>
+          <button
+            type="button"
+            className="cp-linkbtn"
+            onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'qui' })}
+          >
+            Voir le groupe
+          </button>
         </p>
       )}
     </>

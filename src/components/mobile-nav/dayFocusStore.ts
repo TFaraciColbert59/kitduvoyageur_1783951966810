@@ -33,10 +33,13 @@ import { create } from 'zustand';
  * (features/hub/context/adventureLists) : importer ce module ici tirerait
  * `hubSectionRegistry` — donc toutes les icones Lucide — dans `AppShell`,
  * monte sur TOUTES les pages. Le prefixe de route se paie en deux lignes de
- * plus plutot qu'en icones sur tout le site. Le hub garde la racine seule
- * (`/hub`) ; le preparateur garde la racine ET ses sous-ecrans.
+ * plus plutot qu'en icones sur tout le site.
+ *
+ * Le Compas (seul preparateur) n'a PAS ce plateau : la maquette finale ne
+ * met rien au-dessus de la barre d'onglets, les jours se lisent dans
+ * l'etape « Où ». `/prepare` redirige vers `/compas`.
  */
-const DAY_FOCUS_SURFACE_PREFIXES: readonly string[] = ['/hub', '/prepare', '/compas'];
+const DAY_FOCUS_SURFACE_PREFIXES: readonly string[] = ['/hub'];
 
 export function isDayFocusSurfacePathname(pathname: string | null | undefined): boolean {
   if (!pathname) return false;

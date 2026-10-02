@@ -1,5 +1,19 @@
 # MISSION LOG — LKDV
 
+## 2026-10-02 — Compas : retours de l'essai réel (10 points)
+
+- **Mention partenaires** réduite à une ligne « Liens partenaires ⓘ » (`AffiliateDisclosure compact`, `<details>`) : la mention DGCCRF reste visible au-dessus des liens, le texte complet s'ouvre au toucher.
+- **Plateau des jours** (Tout / J1 / J2…) retiré au-dessus de la barre d'onglets sur `/compas` (`dayFocusStore` : surface `/hub` seulement).
+- **Carte** : 48 % de l'écran (au lieu de 40 %) ; la poignée est un vrai bouton (glisser ↑ agrandit, ↓ réduit, toucher bascule, clavier) ; accessoire épuré : « 243 m max » + profil, ou « D+ · km ».
+- **Annonces** : elles sortent de l'îlot en haut de l'écran (carte noire, titre + détail, « Annuler ») ; transform/opacité seulement, `prefers-reduced-motion` respecté.
+- **Quand** : le calendrier est le sélecteur — toucher un jour enregistre le départ (durée conservée), plage et qualité de la fenêtre affichées sous la grille et dans l'îlot ; annulable sans redécoupage.
+- **Kit · Mes kits** : « Créer mon kit » enregistre le kit du voyage comme kit réutilisable privé (`compasCreateKitFromTripAction`, en-tête retiré si les objets échouent). Compte démo : deux kits.
+- **Vrais produits** : un objet à trouver est illustré par le produit du catalogue `shop_products` qui lui correspond (`engine/shopMatch.ts`, au moins un mot du nom en commun, achat seulement) avec son prix.
+- **Nous · Qui** : chercher un voyageur par nom (profils publics, jamais par e-mail), personnes suivies proposées, ajout avec rôle, changement de rôle et retrait (organisateur) — plus aucun lien vers le Hub dans le Compas. Les membres = équipage + personnes ajoutées au voyage.
+- **Nous · Bouteille** : tiroir complet — où (pays du voyage), à qui (confiance minimale ≥ 50, mixité, places), quand, message, majorité certifiée ; mêmes règles que la page pays (confiance 65 pour lancer, 3 annonces max) ; candidatures acceptées (rejoint le groupe et le voyage en lecture seule) ou refusées, bouteille retirable.
+- **Résa** : Activités (Viator), Vols et Trajets (RouteStack) cherchés en direct dans le Compas (`compasSearchOffersAction`, lecture seule, aucun lien de paiement) ; partenaire non activé → exemples étiquetés « Exemple », sans prix ni lien ; Extras = offres partenaires. Essai local : RouteStack joint, son bac à sable renvoie une erreur pour ces trajets ; Viator sans clés.
+- Preuves : `tsc` 0 ; `eslint src/features/compas` 0 ; Compas 190 tests ; suite complète 5 596 passés, 21 échecs = référence ; `next build` OK ; parcours vérifiés dans Chromium 390×844 avec le compte démo.
+
 ## 2026-10-02 — Le Compas, préparateur unique (décision de Tony)
 
 - **Compas vide** (`CompasStart`) sans aventure ou avec `?nouvelle=1` : capsule d'étapes, Dis-le, tuiles d'activité, lignes Où « Non renseigné ». Premier geste → `compasCreateTripAction` (brouillon, propriétaire vérifié, aventure active) → Compas complet ; la phrase Dis-le est reprise dans le tiroir Où.

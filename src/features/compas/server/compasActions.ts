@@ -904,6 +904,301 @@ export async function compasApplyKitAction(
   }
 }
 
+const createKitSchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  name: z.string().trim().min(2, 'Nom trop court').max(80, 'Nom trop long'),
+  season: z.enum(['printemps', 'ete', 'automne', 'hiver', 'toute_saison']).nullable(),
+});
+
+/**
+ * « Créer mon kit » : enregistre le kit du voyage comme un kit réutilisable
+ * (materiel_kits, origine manuelle, privé). Les objets sont copiés tels quels ;
+ * le lien d'inventaire n'est gardé que pour les objets de la personne.
+ */
+export async function compasCreateKitFromTripAction(
+  input: z.input<typeof createKitSchema>
+): Promise<CompasActionResult & { kitId?: string; count?: number }> {
+  const parsed = createKitSchema.safeParse(input);
+  if (!parsed.success)
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Requête invalide' };
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    const limited = await enforceRateLimit(auth.userId, {
+      scope: 'compas-create-kit',
+      limit: 10,
+      windowMs: 60_000,
+      failMode: 'closed',
+    });
+    if (limited) return { success: false, error: 'Trop de kits d’un coup : patiente une minute.' };
+    const { data: rows, error: readError } = await auth.supabase
+      .from('trip_items')
+      .select(
+        'item_name, category, quantity, weight_grams, is_vital, priority, owner_id, inventory_item_id'
+      )
+      .eq('trip_id', parsed.data.tripId)
+      .limit(500);
+    if (readError) return { success: false, error: 'Impossible de lire le kit du voyage.' };
+    const items = ((rows ?? []) as Array<Record<string, unknown>>).filter(
+      (r) => typeof r.item_name === 'string' && r.item_name.trim().length > 0
+    );
+    if (!items.length)
+      return { success: false, error: 'Le kit du voyage est vide : ajoute d’abord des objets.' };
+    const weight = (r: Record<string, unknown>) => {
+      const w = Number(r.weight_grams);
+      return Number.isFinite(w) && w > 0 ? Math.round(w) : null;
+    };
+    const qty = (r: Record<string, unknown>) => {
+      const q = Number(r.quantity);
+      return Number.isFinite(q) && q > 0 ? Math.round(q) : 1;
+    };
+    const total = items.reduce((t, r) => t + (weight(r) ?? 0) * qty(r), 0);
+    const { data: kit, error: kitError } = await auth.supabase
+      .from('materiel_kits')
+      .insert({
+        user_id: auth.userId,
+        name: parsed.data.name,
+        season: parsed.data.season,
+        origin: 'manuel',
+        total_weight_g: total,
+        description: `Créé depuis le Compas (${auth.trip.title ?? 'voyage'})`,
+      })
+      .select('id')
+      .single();
+    if (kitError || !kit) return { success: false, error: 'Impossible de créer le kit.' };
+    const kitId = (kit as { id: string }).id;
+    const { error: itemsError } = await auth.supabase.from('materiel_kit_items').insert(
+      items.map((r) => {
+        const vital = r.is_vital === true;
+        const priority =
+          r.priority === 'vital' || r.priority === 'optional' ? String(r.priority) : 'recommended';
+        return {
+          kit_id: kitId,
+          user_id: auth.userId,
+          name: String(r.item_name).trim().slice(0, 120),
+          category: typeof r.category === 'string' ? r.category : null,
+          quantity: qty(r),
+          weight_g: weight(r),
+          is_vital: vital,
+          priority: vital ? 'vital' : priority,
+          ownership: 'personal',
+          product_ownership_id:
+            r.owner_id === auth.userId && typeof r.inventory_item_id === 'string'
+              ? r.inventory_item_id
+              : null,
+        };
+      })
+    );
+    if (itemsError) {
+      // Pas de kit vide orphelin : on retire l'en-tête créé juste avant.
+      await auth.supabase.from('materiel_kits').delete().eq('id', kitId).eq('user_id', auth.userId);
+      return { success: false, error: 'Impossible d’enregistrer les objets du kit.' };
+    }
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true, kitId, count: items.length };
+  } catch (err) {
+    console.error('[compas] compasCreateKitFromTripAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+/* ---------- Équipe (Nous · Qui) ---------- */
+
+export interface CompasPerson {
+  userId: string;
+  name: string;
+  avatarUrl: string | null;
+  location: string | null;
+  /** Personne que je suis (user_follows) : proposée sans recherche. */
+  followed: boolean;
+}
+
+const peopleSchema = z.object({
+  tripId: uuid,
+  query: z.string().trim().max(60),
+});
+
+/**
+ * Personnes à ajouter au voyage : sans texte, celles que je suis ; avec un
+ * texte, recherche par nom sur les profils publics (jamais par e-mail : pas
+ * d'énumération). Les membres déjà présents sont écartés.
+ */
+export async function compasSearchPeopleAction(
+  input: z.input<typeof peopleSchema>
+): Promise<{ success: true; people: CompasPerson[] } | { success: false; error: string }> {
+  const parsed = peopleSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Recherche invalide' };
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    const limited = await enforceRateLimit(auth.userId, {
+      scope: 'compas-people',
+      limit: 40,
+      windowMs: 60_000,
+      failMode: 'closed',
+    });
+    if (limited) return { success: false, error: 'Trop de recherches : patiente une minute.' };
+    const present = await tripPeople(auth.supabase, auth.trip);
+    const { data: follows } = await auth.supabase
+      .from('user_follows')
+      .select('following_id')
+      .eq('follower_id', auth.userId)
+      .limit(200);
+    const followed = new Set(
+      ((follows ?? []) as Array<{ following_id: string }>).map((f) => f.following_id)
+    );
+    const q = parsed.data.query;
+    let rows: Array<Record<string, unknown>> = [];
+    if (q.length >= 2) {
+      const pattern = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+      const { data, error } = await auth.supabase
+        .from('public_profiles')
+        .select('id, full_name, avatar_url, location')
+        .ilike('full_name', pattern)
+        .limit(20);
+      if (error) return { success: false, error: 'Recherche indisponible.' };
+      rows = (data ?? []) as Array<Record<string, unknown>>;
+    } else if (followed.size) {
+      const { data, error } = await auth.supabase
+        .from('public_profiles')
+        .select('id, full_name, avatar_url, location')
+        .in('id', [...followed].slice(0, 50));
+      if (error) return { success: false, error: 'Recherche indisponible.' };
+      rows = (data ?? []) as Array<Record<string, unknown>>;
+    }
+    const people = rows
+      .filter((r) => typeof r.id === 'string' && !present.has(r.id) && r.id !== auth.userId)
+      .map((r) => ({
+        userId: String(r.id),
+        name:
+          typeof r.full_name === 'string' && r.full_name.trim() ? r.full_name.trim() : 'Voyageur',
+        avatarUrl: typeof r.avatar_url === 'string' ? r.avatar_url : null,
+        location: typeof r.location === 'string' && r.location.trim() ? r.location.trim() : null,
+        followed: followed.has(String(r.id)),
+      }))
+      .sort((a, b) => Number(b.followed) - Number(a.followed) || a.name.localeCompare(b.name, 'fr'))
+      .slice(0, 12);
+    return { success: true, people };
+  } catch (err) {
+    console.error('[compas] compasSearchPeopleAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+const memberSchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  userId: uuid,
+  role: z.enum(['editor', 'viewer']),
+});
+
+/** Ajoute une personne au voyage (trip_collaborators), avec son rôle. */
+export async function compasAddMemberAction(
+  input: z.input<typeof memberSchema>
+): Promise<CompasActionResult> {
+  const parsed = memberSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Requête invalide' };
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if (parsed.data.userId === auth.userId)
+      return { success: false, error: 'Tu fais déjà partie du voyage.' };
+    const limited = await enforceRateLimit(auth.userId, {
+      scope: 'compas-add-member',
+      limit: 20,
+      windowMs: 60_000,
+      failMode: 'closed',
+    });
+    if (limited) return { success: false, error: 'Trop d’ajouts d’un coup : patiente une minute.' };
+    const present = await tripPeople(auth.supabase, auth.trip);
+    if (present.has(parsed.data.userId))
+      return { success: false, error: 'Cette personne fait déjà partie du voyage.' };
+    const { data: profile } = await auth.supabase
+      .from('public_profiles')
+      .select('id')
+      .eq('id', parsed.data.userId)
+      .maybeSingle();
+    if (!profile) return { success: false, error: 'Personne introuvable.' };
+    const { error } = await auth.supabase.from('trip_collaborators').insert({
+      trip_id: parsed.data.tripId,
+      user_id: parsed.data.userId,
+      role: parsed.data.role,
+      invited_by: auth.userId,
+    });
+    if (error) return { success: false, error: 'Impossible d’ajouter cette personne.' };
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true };
+  } catch (err) {
+    console.error('[compas] compasAddMemberAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+/** Change le rôle d'un membre ajouté au voyage (organisateur seulement, RLS). */
+export async function compasSetMemberRoleAction(
+  input: z.input<typeof memberSchema>
+): Promise<CompasActionResult> {
+  const parsed = memberSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Requête invalide' };
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if (auth.trip.user_id !== auth.userId)
+      return { success: false, error: 'Seul l’organisateur change les rôles.' };
+    const { data, error } = await auth.supabase
+      .from('trip_collaborators')
+      .update({ role: parsed.data.role })
+      .eq('trip_id', parsed.data.tripId)
+      .eq('user_id', parsed.data.userId)
+      .select('id');
+    if (error || !data?.length)
+      return {
+        success: false,
+        error: 'Rôle modifiable seulement pour les personnes ajoutées au voyage.',
+      };
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true };
+  } catch (err) {
+    console.error('[compas] compasSetMemberRoleAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+const removeMemberSchema = memberSchema.omit({ role: true });
+
+/** Retire une personne ajoutée au voyage (organisateur seulement, RLS). */
+export async function compasRemoveMemberAction(
+  input: z.input<typeof removeMemberSchema>
+): Promise<CompasActionResult> {
+  const parsed = removeMemberSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Requête invalide' };
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if (auth.trip.user_id !== auth.userId)
+      return { success: false, error: 'Seul l’organisateur retire quelqu’un du voyage.' };
+    if (parsed.data.userId === auth.userId)
+      return { success: false, error: 'L’organisateur ne peut pas se retirer.' };
+    const { data, error } = await auth.supabase
+      .from('trip_collaborators')
+      .delete()
+      .eq('trip_id', parsed.data.tripId)
+      .eq('user_id', parsed.data.userId)
+      .select('id');
+    if (error || !data?.length)
+      return {
+        success: false,
+        error: 'Seules les personnes ajoutées au voyage peuvent être retirées ici.',
+      };
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true };
+  } catch (err) {
+    console.error('[compas] compasRemoveMemberAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
 /* ---------- Parcours ---------- */
 
 export interface CompasRouteOption {

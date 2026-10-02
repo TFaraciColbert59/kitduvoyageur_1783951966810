@@ -2,7 +2,7 @@
 
 import { classifyScale } from '../engine/scale';
 import Link from 'next/link';
-import { useRef, useState, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { deleteTripItemAction } from '@/app/voyages/kit-actions';
 import Icon from '@/components/ui/Icon';
 import type { CompasKitLine, CompasModel } from '../engine/compasModel';
@@ -18,6 +18,7 @@ import { Thumb, useLongPress, type Tone } from './CompasPrimitives';
 import { DurationRuler, tripHours } from './CompasRuler';
 import type { CompasCtl } from './compasTypes';
 import { RESA_CATS, bookingCat, offerCat } from '../engine/resaCats';
+import { bestShopProduct } from '../engine/shopMatch';
 
 /* =============================================================================
    Cartes d'étape — un résumé par étape (maquette v8). Le détail et les actions
@@ -63,7 +64,16 @@ export function KitRow({ line, ctl }: { line: CompasKitLine; ctl: CompasCtl }) {
     }
   );
   const canRemove = ctl.data.canEdit;
-  const product = ctl.product(line.shopProductId);
+  const chosen = ctl.product(line.shopProductId);
+  // Objet à trouver : le produit réel de la boutique qui lui correspond le mieux.
+  const suggested = useMemo(
+    () =>
+      !chosen && (line.status === 'missing' || line.status === 'replace')
+        ? bestShopProduct(line, ctl.data.shop)
+        : null,
+    [chosen, line, ctl.data.shop]
+  );
+  const product = chosen ?? suggested ?? undefined;
   const status = lineStatus(line);
   const carrier = line.ownerId
     ? ctl.memberName(line.ownerId)
@@ -118,6 +128,9 @@ export function KitRow({ line, ctl }: { line: CompasKitLine; ctl: CompasCtl }) {
         <span>
           {weight} · {carrier} · {status.label}
           {line.vital ? ' · vital' : ''}
+          {suggested && suggested.priceEur != null
+            ? ` · boutique ${formatMoney(suggested.priceEur)}`
+            : ''}
         </span>
       </span>
       <span className="cp-row__end">
@@ -381,9 +394,14 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
           {crew.loads.slice(0, 6).map((m) => (
             <MemberAvatar key={m.userId} name={m.name} url={m.avatarUrl} />
           ))}
-          <Link className="cp-avadd" href="/hub/groupe" aria-label="Inviter quelqu’un">
+          <button
+            type="button"
+            className="cp-avadd"
+            aria-label="Ajouter quelqu’un"
+            onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'qui' })}
+          >
             <Icon name="plus" size={15} />
-          </Link>
+          </button>
         </div>
         <span className="cp-sub">
           {crew.size} personne{crew.size > 1 ? 's' : ''}
@@ -474,7 +492,7 @@ export function ResaCard({ ctl }: { ctl: CompasCtl }) {
   return (
     <>
       {/* Maquette finale : six catégories. Le badge compte les réservations
-          réelles ; une catégorie sans réservation ni offre est grisée. */}
+          réelles ; Extras sans offre partenaire est grisé. */}
       <div className="cp-tchips cp-tchips--six">
         {RESA_CATS.map((c) => {
           const booked =
@@ -486,8 +504,8 @@ export function ResaCard({ ctl }: { ctl: CompasCtl }) {
           const offers = ctl.data.affiliateLinks.filter(
             (l) => offerCat(l.category) === c.id
           ).length;
-          const usable =
-            c.id === 'randos' || c.id === 'nuits' || c.id === 'trajets' || booked + offers > 0;
+          // Activités, Vols, Trajets se cherchent en direct ; Extras liste les offres.
+          const usable = c.id !== 'extras' || booked + offers > 0;
           return (
             <button
               key={c.id}

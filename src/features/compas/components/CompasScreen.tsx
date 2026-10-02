@@ -99,6 +99,7 @@ export function CompasScreen({
     message: string;
     tone?: 'bad';
     undo?: () => void;
+    sub?: string;
   } | null>(null);
   /** Dernière écriture annulable (Ctrl/⌘+Z), le temps que l'annonce reste. */
   const undoRef = useRef<(() => void) | null>(null);
@@ -152,17 +153,17 @@ export function CompasScreen({
   // Les données fraîches du serveur remplacent l'état optimiste.
   useEffect(() => setPacked({}), [data]);
 
-  const notify = useCallback((message: string, tone?: 'bad', undo?: () => void) => {
+  const notify = useCallback((message: string, tone?: 'bad', undo?: () => void, sub?: string) => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
     undoRef.current = undo ?? null;
-    setToast({ message, tone, undo });
+    setToast({ message, tone, undo, sub });
     // Une annonce annulable reste plus longtemps : le temps de se raviser.
     toastTimer.current = setTimeout(
       () => {
         undoRef.current = null;
         setToast(null);
       },
-      undo ? 6000 : 2600
+      undo || sub ? 6000 : 3800
     );
   }, []);
 
@@ -320,7 +321,7 @@ export function CompasScreen({
     togglePacked,
     memberName: (id) => (id ? (members.get(id) ?? 'Membre') : 'Personne'),
     product: (id) => (id ? products.get(id) : undefined),
-    notify,
+    notify: (message, tone, sub) => notify(message, tone, undefined, sub),
   };
 
   const decision = model.nextDecision;
@@ -574,12 +575,26 @@ export function CompasScreen({
       )}
 
       {toast && (
-        <div className="cp-toast" role="status" data-tone={toast.tone}>
-          {toast.message}
+        <div
+          className="cp-island"
+          role="status"
+          aria-live="polite"
+          data-tone={toast.tone}
+          onClick={(e) => {
+            // Toucher l'îlot le referme (maquette) ; ses boutons gardent leur rôle.
+            if ((e.target as Element).closest('button')) return;
+            undoRef.current = null;
+            setToast(null);
+          }}
+        >
+          <span className="cp-island__t">
+            <b>{toast.message}</b>
+            {toast.sub && <span>{toast.sub}</span>}
+          </span>
           {toast.undo && (
             <button
               type="button"
-              className="cp-toast__undo"
+              className="cp-island__btn"
               disabled={running}
               title="Ctrl/⌘ + Z"
               onClick={() => {

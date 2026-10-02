@@ -1,7 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { shopRelevance } from '../engine/shopMatch';
+import {
+  compasAnswerApplicantAction,
+  compasBottleStateAction,
+  compasCloseBottleAction,
+  compasLaunchBottleAction,
+  type CompasBottleApplicant,
+  type CompasBottleState,
+} from '../server/bottleActions';
 import Icon from '@/components/ui/Icon';
 import { addToCart } from '@/lib/cart';
 import {
@@ -27,6 +36,12 @@ import {
   compasSetCarrierAction,
   compasApplyKitAction,
   compasListMyKitsAction,
+  compasCreateKitFromTripAction,
+  compasSearchPeopleAction,
+  compasAddMemberAction,
+  compasSetMemberRoleAction,
+  compasRemoveMemberAction,
+  type CompasPerson,
   compasSetPartySizeAction,
   compasSearchStaysAction,
   compasSetStayAction,
@@ -57,6 +72,8 @@ import { proposeShift, watchRules } from '../engine/watch';
 import { planWater } from '../engine/water';
 import { addExpenseAction } from '@/app/voyages/budget-actions';
 import { RESA_CATS, bookingCat, offerCat, type ResaCat } from '../engine/resaCats';
+import { RESA_EXAMPLES, type CompasLiveVertical } from '../engine/resaExamples';
+import { compasSearchOffersAction } from '../server/resaActions';
 import { KIT_THRESHOLDS } from '../engine/kitRules';
 import { inverseOps, runOps } from './compasApply';
 import type { ApplyOp } from '../engine/intent';
@@ -303,21 +320,8 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
 
 /* ---------- Emprunter / Louer / Acheter : l'objet précis ---------- */
 
-function tokens(value: string): string[] {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .split(/[^a-z0-9]+/)
-    .filter((t) => t.length > 2);
-}
-
 /** Pertinence d'un produit pour un objet du kit : mots communs, catégorie. */
-function relevance(line: CompasKitLine, p: CompasShopProduct): number {
-  const want = new Set(tokens(`${line.name} ${line.category ?? ''}`));
-  const have = tokens(`${p.name} ${p.category ?? ''} ${p.brand ?? ''}`);
-  return have.reduce((s, t) => s + (want.has(t) ? 1 : 0), 0);
-}
+const relevance = (line: CompasKitLine, p: CompasShopProduct) => shopRelevance(line, p);
 
 function ProductRow({
   product,
@@ -450,7 +454,13 @@ function AcquireSheet({
             empty={
               <p className="cp-note">
                 Personne d’autre dans l’équipe pour l’instant.{' '}
-                <Link href="/hub/groupe">Inviter quelqu’un</Link>
+                <button
+                  type="button"
+                  className="cp-linkbtn"
+                  onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'qui' })}
+                >
+                  Ajouter quelqu’un
+                </button>
               </p>
             }
             render={(m) => (
@@ -618,7 +628,13 @@ function AddSheet({
               {ctl.data.inventory.length
                 ? 'Tout ton inventaire est déjà dans le kit.'
                 : 'Ton inventaire est vide.'}{' '}
-              <Link href="/hub/inventaire">Ouvrir l’inventaire</Link>
+              <button
+                type="button"
+                className="cp-linkbtn"
+                onClick={() => ctl.open({ kind: 'add', target: 'inventaire' })}
+              >
+                Ajouter à l’inventaire
+              </button>
             </p>
           }
           render={(i) => (
@@ -972,6 +988,7 @@ function StepSheet({
       )}
       {step === 'ou' && flow === 'preferences' && <PreferencesFlow ctl={ctl} />}
       {step === 'nous' && flow === 'equipe' && <EquipeFlow ctl={ctl} />}
+      {step === 'nous' && flow === 'qui' && <QuiFlow ctl={ctl} />}
       {step === 'nous' && flow === 'budget' && <BudgetFlow ctl={ctl} />}
       {step === 'resa' && flow === 'nuits' && <NuitsFlow ctl={ctl} focusDay={hint?.day} />}
       {step === 'resa' && flow === 'reservations' && <ReservationsFlow ctl={ctl} />}
@@ -1109,11 +1126,240 @@ function EquipeFlow({ ctl }: { ctl: CompasCtl }) {
         }}
       />
       <div className="cp-actions">
-        <Link className="cp-btn cp-btn--soft" href="/hub/groupe">
+        <button
+          type="button"
+          className="cp-btn cp-btn--soft"
+          onClick={() => ctl.replace({ kind: 'step', step: 'nous', flow: 'qui' })}
+        >
           <Icon name="user-plus" size={16} />
-          Inviter ou gérer les rôles dans le hub
-        </Link>
+          Ajouter quelqu’un ou gérer les rôles
+        </button>
       </div>
+    </>
+  );
+}
+
+const ROLE_LABEL: Record<string, string> = {
+  owner: 'Organisateur',
+  editor: 'Peut modifier',
+  viewer: 'Lecture seule',
+  member: 'Membre du groupe',
+};
+
+/**
+ * Nous · Qui (maquette finale) : ajouter qui on veut au voyage sans quitter
+ * le Compas. Sans recherche : les personnes que je suis ; sinon par nom.
+ * Rôles et retrait pour les personnes ajoutées au voyage (organisateur).
+ */
+function QuiFlow({ ctl }: { ctl: CompasCtl }) {
+  const { model, viewerId, canEdit } = ctl.data;
+  const isOwner = viewerId != null && viewerId === model.ownerId;
+  const [query, setQuery] = useState('');
+  const [role, setRole] = useState<'editor' | 'viewer'>('editor');
+  const [state, setState] = useState<
+    | { status: 'idle' | 'loading' }
+    | { status: 'error'; error: string }
+    | { status: 'ok'; people: CompasPerson[]; searched: string }
+  >({ status: 'idle' });
+
+  // Seule la dernière recherche s'affiche : une réponse en retard est ignorée.
+  const seq = useRef(0);
+  const search = async (q: string) => {
+    const mine = ++seq.current;
+    setState({ status: 'loading' });
+    try {
+      const res = await compasSearchPeopleAction({ tripId: model.tripId, query: q });
+      if (mine !== seq.current) return;
+      setState(
+        res.success
+          ? { status: 'ok', people: res.people, searched: q }
+          : { status: 'error', error: res.error }
+      );
+    } catch {
+      if (mine === seq.current)
+        setState({ status: 'error', error: 'Connexion perdue : réessaie.' });
+    }
+  };
+
+  useEffect(() => {
+    if (canEdit) void search('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- suggestions à l'ouverture seulement
+  }, [canEdit]);
+
+  const add = async (p: CompasPerson) => {
+    const ok = await ctl.run(
+      `${p.name} ajouté${role === 'viewer' ? ' en lecture seule' : ''}`,
+      () =>
+        compasAddMemberAction({
+          tripId: model.tripId,
+          tripSlug: model.slug,
+          userId: p.userId,
+          role,
+        }),
+      () =>
+        compasRemoveMemberAction({ tripId: model.tripId, tripSlug: model.slug, userId: p.userId })
+    );
+    if (ok && state.status === 'ok')
+      setState({ ...state, people: state.people.filter((x) => x.userId !== p.userId) });
+  };
+
+  return (
+    <>
+      {canEdit ? (
+        <>
+          <form
+            className="cp-intent"
+            role="search"
+            aria-label="Chercher quelqu’un"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void search(query.trim());
+            }}
+          >
+            <Icon name="search" size={15} aria-hidden="true" />
+            <label className="sr-only" htmlFor="cp-qui-q">
+              Nom
+            </label>
+            <input
+              id="cp-qui-q"
+              type="search"
+              value={query}
+              maxLength={60}
+              autoComplete="off"
+              enterKeyHint="search"
+              placeholder="Nom d’un voyageur LKDV"
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </form>
+          <Segments
+            label="Rôle à l’ajout"
+            value={role}
+            onChange={setRole}
+            options={[
+              { id: 'editor', label: 'Peut modifier' },
+              { id: 'viewer', label: 'Lecture seule' },
+            ]}
+          />
+          {state.status === 'loading' && <p className="cp-note">Recherche…</p>}
+          {state.status === 'error' && <p className="cp-note">{state.error}</p>}
+          {state.status === 'ok' && (
+            <PagedList
+              label={state.searched ? 'Résultats' : 'Personnes que tu suis'}
+              items={state.people}
+              empty={
+                <p className="cp-note">
+                  {state.searched
+                    ? 'Personne à ce nom (ou déjà dans le voyage).'
+                    : 'Tape un nom pour trouver un voyageur LKDV.'}
+                </p>
+              }
+              render={(p) => (
+                <div key={p.userId} className="cp-row" style={staticRow}>
+                  <MemberAvatar name={p.name} url={p.avatarUrl} />
+                  <span className="cp-row__t">
+                    <b>{p.name}</b>
+                    <span>
+                      {[p.followed ? 'tu le suis' : null, p.location].filter(Boolean).join(' · ') ||
+                        'voyageur LKDV'}
+                    </span>
+                  </span>
+                  <span className="cp-row__end">
+                    <button
+                      type="button"
+                      className="cp-btn cp-btn--pg"
+                      disabled={ctl.busy}
+                      aria-label={`Ajouter ${p.name}`}
+                      onClick={() => void add(p)}
+                    >
+                      Ajouter
+                    </button>
+                  </span>
+                </div>
+              )}
+            />
+          )}
+        </>
+      ) : (
+        <p className="cp-note">Lecture seule : seuls les organisateurs ajoutent des personnes.</p>
+      )}
+
+      <p className="cp-sub">
+        <b>Dans le voyage</b> · {model.crew.loads.length} personne
+        {model.crew.loads.length > 1 ? 's' : ''}
+      </p>
+      <TallList
+        label="Membres du voyage"
+        items={model.crew.loads}
+        empty={<p className="cp-note">Personne pour l’instant.</p>}
+        render={(m) => {
+          const editable = isOwner && m.userId !== model.ownerId && m.role !== 'member';
+          return (
+            <div key={m.userId} className="cp-row" style={staticRow}>
+              <MemberAvatar name={m.name} url={m.avatarUrl} />
+              <span className="cp-row__t">
+                <b>
+                  {m.name}
+                  {m.userId === viewerId ? ' (moi)' : ''}
+                </b>
+                <span>
+                  {m.userId === model.ownerId
+                    ? ROLE_LABEL.owner
+                    : (ROLE_LABEL[m.role ?? ''] ?? 'Membre')}
+                </span>
+              </span>
+              {editable && (
+                <span className="cp-row__end">
+                  <select
+                    aria-label={`Rôle de ${m.name}`}
+                    value={m.role === 'viewer' ? 'viewer' : 'editor'}
+                    disabled={ctl.busy}
+                    onChange={(e) => {
+                      const next = e.target.value === 'viewer' ? 'viewer' : 'editor';
+                      void ctl.run(`${m.name} : ${ROLE_LABEL[next].toLowerCase()}`, () =>
+                        compasSetMemberRoleAction({
+                          tripId: model.tripId,
+                          tripSlug: model.slug,
+                          userId: m.userId,
+                          role: next,
+                        })
+                      );
+                    }}
+                  >
+                    <option value="editor">Peut modifier</option>
+                    <option value="viewer">Lecture seule</option>
+                  </select>
+                  <button
+                    type="button"
+                    className="cp-btn cp-btn--bad"
+                    disabled={ctl.busy}
+                    aria-label={`Retirer ${m.name} du voyage`}
+                    onClick={() =>
+                      void ctl.run(
+                        `${m.name} retiré du voyage`,
+                        () =>
+                          compasRemoveMemberAction({
+                            tripId: model.tripId,
+                            tripSlug: model.slug,
+                            userId: m.userId,
+                          }),
+                        () =>
+                          compasAddMemberAction({
+                            tripId: model.tripId,
+                            tripSlug: model.slug,
+                            userId: m.userId,
+                            role: m.role === 'viewer' ? 'viewer' : 'editor',
+                          })
+                      )
+                    }
+                  >
+                    Retirer
+                  </button>
+                </span>
+              )}
+            </div>
+          );
+        }}
+      />
     </>
   );
 }
@@ -1364,10 +1610,104 @@ const EXPENSE_CATEGORIES = [
  * frais annoncés, chaque profil validé) et la gestion du groupe reste au Hub :
  * le Compas y mène, il ne publie rien lui-même.
  */
+/** Nom du pays en français (« fr » → « France »), le code si inconnu. */
+function countryLabel(code: string | null): string {
+  if (!code) return 'non renseigné';
+  try {
+    return new Intl.DisplayNames(['fr'], { type: 'region' }).of(code.toUpperCase()) ?? code;
+  } catch {
+    return code.toUpperCase();
+  }
+}
+
+const MIXITE_LABEL = { all: 'Ouvert à tous', women_only: 'Femmes', men_only: 'Hommes' } as const;
+
+/**
+ * Nous · Bouteille à la mer (maquette finale) : le tiroir où l'on règle
+ * l'annonce — où (le pays du voyage), à qui (confiance minimale, mixité,
+ * places), quand, le message — puis où l'on accepte ou refuse chaque
+ * candidature. Une personne acceptée rejoint aussi le voyage.
+ */
 function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
-  const { crew, dates } = ctl.data.model;
-  const code = ctl.data.countryCode;
+  const { crew, dates, tripId, slug, title } = ctl.data.model;
   const free = Math.max(0, crew.size - crew.loads.length);
+  const [reload, setReload] = useState(0);
+  const [state, setState] = useState<
+    | { status: 'loading' }
+    | { status: 'error'; error: string }
+    | { status: 'ok'; data: CompasBottleState }
+  >({ status: 'loading' });
+  const [minTrust, setMinTrust] = useState(60);
+  const [mixite, setMixite] = useState<'all' | 'women_only' | 'men_only'>('all');
+  const [places, setPlaces] = useState(Math.max(2, Math.min(20, free + crew.loads.length || 4)));
+
+  useEffect(() => {
+    let alive = true;
+    compasBottleStateAction({ tripId })
+      .then((res) => {
+        if (!alive) return;
+        setState(
+          res.success ? { status: 'ok', data: res.state } : { status: 'error', error: res.error }
+        );
+      })
+      .catch(() => alive && setState({ status: 'error', error: 'Connexion perdue : réessaie.' }));
+    return () => {
+      alive = false;
+    };
+  }, [tripId, reload]);
+
+  const launch = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    if (fd.get('bottleAdult') !== 'on') {
+      ctl.notify('Certifie avoir 18 ans ou plus', 'bad');
+      return;
+    }
+    const date = (k: string) => {
+      const v = String(fd.get(k) ?? '');
+      return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
+    };
+    const ok = await ctl.run('Bouteille à la mer lancée', () =>
+      compasLaunchBottleAction({
+        tripId,
+        tripSlug: slug,
+        name: String(fd.get('bottleName') ?? ''),
+        description: String(fd.get('bottleMsg') ?? ''),
+        departure: date('bottleFrom'),
+        returnDate: date('bottleTo'),
+        maxMembers: places,
+        minTrust,
+        mixite,
+        isAdult: true,
+      })
+    );
+    if (ok) {
+      ctl.notify(
+        'Bouteille à la mer lancée',
+        undefined,
+        `Visible dans la communauté du pays · confiance ≥ ${minTrust}`
+      );
+      setReload((n) => n + 1);
+    }
+  };
+
+  const answer = async (groupId: string, a: CompasBottleApplicant, accept: boolean) => {
+    const ok = await ctl.run(
+      accept ? `${a.name} rejoint le groupe et le voyage` : `Demande de ${a.name} refusée`,
+      () =>
+        compasAnswerApplicantAction({
+          tripId,
+          tripSlug: slug,
+          groupId,
+          memberId: a.memberId,
+          accept,
+        })
+    );
+    if (ok) setReload((n) => n + 1);
+  };
+
+  const st = state.status === 'ok' ? state.data : null;
+
   return (
     <>
       <div className="cp-row" style={staticRow}>
@@ -1380,32 +1720,180 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
             {crew.size > 1 ? 's' : ''}
           </b>
           <span>
-            {free > 0
-              ? `${free} place${free > 1 ? 's' : ''} sans compte dans le groupe`
-              : 'Le groupe est complet'}
+            {free > 0 ? `${free} place${free > 1 ? 's' : ''} à pourvoir` : 'Le groupe est complet'}
             {dates.start ? ` · départ le ${formatDayMonth(dates.start)}` : ''}
           </span>
         </span>
       </div>
-      {code ? (
-        <Link className="cp-btn cp-btn--pg" href={`/pays/${code}?section=communaute`}>
-          <Icon name="send" size={16} />
-          Lancer une bouteille à la mer
-        </Link>
-      ) : (
-        <p className="cp-note">
-          Pays de destination non renseigné : la bouteille à la mer se lance depuis la page du pays.
-        </p>
+
+      {state.status === 'loading' && <p className="cp-note">Lecture de tes bouteilles…</p>}
+      {state.status === 'error' && <p className="cp-note">{state.error}</p>}
+
+      {st?.bottles.map((b) => (
+        <section key={b.id} className="cp-bottle cp-glass" aria-label={`Bouteille : ${b.name}`}>
+          <div className="cp-bottle__h">
+            <b>{b.name}</b>
+            <Chip tone="good">En mer</Chip>
+          </div>
+          <span className="cp-sub">
+            {b.departure ? formatDayMonth(b.departure) : 'dates libres'}
+            {b.returnDate ? ` → ${formatDayMonth(b.returnDate)}` : ''} · {b.activeCount}/
+            {b.maxMembers} places · confiance ≥ {b.minTrust} · {MIXITE_LABEL[b.mixite]}
+          </span>
+          {b.applicants.length === 0 ? (
+            <p className="cp-note">Aucune candidature pour l’instant.</p>
+          ) : (
+            b.applicants.map((a) => (
+              <div key={a.memberId} className="cp-row" style={staticRow}>
+                <MemberAvatar name={a.name} url={a.avatarUrl} />
+                <span className="cp-row__t">
+                  <b>{a.name}</b>
+                  <span>
+                    {a.trustScore != null ? `confiance ${a.trustScore}/100` : 'confiance inconnue'}
+                  </span>
+                </span>
+                <span className="cp-row__end">
+                  <button
+                    type="button"
+                    className="cp-btn cp-btn--soft"
+                    disabled={ctl.busy}
+                    aria-label={`Refuser ${a.name}`}
+                    onClick={() => void answer(b.id, a, false)}
+                  >
+                    Refuser
+                  </button>
+                  <button
+                    type="button"
+                    className="cp-btn cp-btn--pg"
+                    disabled={ctl.busy}
+                    aria-label={`Accepter ${a.name}`}
+                    onClick={() => void answer(b.id, a, true)}
+                  >
+                    Accepter
+                  </button>
+                </span>
+              </div>
+            ))
+          )}
+          <button
+            type="button"
+            className="cp-linkbtn"
+            disabled={ctl.busy}
+            onClick={async () => {
+              const ok = await ctl.run('Bouteille retirée de la communauté', () =>
+                compasCloseBottleAction({ tripId, tripSlug: slug, groupId: b.id })
+              );
+              if (ok) setReload((n) => n + 1);
+            }}
+          >
+            Retirer de la communauté
+          </button>
+        </section>
+      ))}
+
+      {st && !st.canLaunch && st.blocked && <p className="cp-note">{st.blocked}</p>}
+
+      {st?.canLaunch && (
+        <form className="cp-bottle cp-glass" onSubmit={launch} aria-label="Lancer une bouteille">
+          <div className="cp-bottle__h">
+            <b>
+              <Icon name="send" size={15} aria-hidden="true" /> Lancer une bouteille à la mer
+            </b>
+          </div>
+          <p className="cp-sub">
+            <b>Où</b> · communauté du pays : {countryLabel(st.country)}
+          </p>
+          <label className="cp-field">
+            Titre
+            <input
+              name="bottleName"
+              required
+              minLength={3}
+              maxLength={80}
+              defaultValue={title.slice(0, 80)}
+            />
+          </label>
+          <p className="cp-sub">
+            <b>À qui</b>
+          </p>
+          <label className="cp-field">
+            Confiance minimale : {minTrust}/100
+            <input
+              type="range"
+              min={50}
+              max={100}
+              step={5}
+              value={minTrust}
+              onChange={(e) => setMinTrust(Number(e.target.value))}
+            />
+          </label>
+          <Segments
+            label="Mixité"
+            value={mixite}
+            onChange={setMixite}
+            options={[
+              { id: 'all', label: MIXITE_LABEL.all },
+              { id: 'women_only', label: MIXITE_LABEL.women_only },
+              { id: 'men_only', label: MIXITE_LABEL.men_only },
+            ]}
+          />
+          <label className="cp-field">
+            Places dans le groupe
+            <input
+              type="number"
+              inputMode="numeric"
+              min={2}
+              max={20}
+              value={places}
+              onChange={(e) =>
+                setPlaces(Math.max(2, Math.min(20, Math.round(Number(e.target.value) || 2))))
+              }
+            />
+          </label>
+          <p className="cp-sub">
+            <b>Quand</b>
+          </p>
+          <div className="cp-grid2">
+            <label className="cp-field">
+              Départ
+              <input name="bottleFrom" type="date" defaultValue={dates.start ?? ''} />
+            </label>
+            <label className="cp-field">
+              Retour
+              <input name="bottleTo" type="date" defaultValue={dates.end ?? ''} />
+            </label>
+          </div>
+          <label className="cp-field">
+            Message
+            <textarea
+              name="bottleMsg"
+              rows={3}
+              maxLength={600}
+              placeholder="Rythme, niveau, frais partagés, ce que tu cherches…"
+            />
+          </label>
+          <label className="cp-check">
+            <input type="checkbox" name="bottleAdult" required /> J’ai 18 ans ou plus
+          </label>
+          <button type="submit" className="cp-btn cp-btn--pg" disabled={ctl.busy}>
+            <Icon name="send" size={16} />
+            Lancer
+          </button>
+          <p className="cp-note">
+            Visible dans la communauté du pays. Tu acceptes ou refuses chaque candidature ici ; une
+            personne acceptée rejoint le groupe et le voyage, en lecture seule.
+          </p>
+        </form>
       )}
-      <Link className="cp-btn" href="/hub/groupe">
+
+      <button
+        type="button"
+        className="cp-btn"
+        onClick={() => ctl.replace({ kind: 'step', step: 'nous', flow: 'qui' })}
+      >
         <Icon name="users" size={16} />
-        Gérer le groupe dans le Hub
-      </Link>
-      <p className="cp-note">
-        La bouteille à la mer publie une annonce de groupe pour ce pays : dates, places, confiance
-        minimale, majorité et frais partagés annoncés. Tu acceptes ou refuses chaque candidat. Rien
-        n’est publié depuis le Compas.
-      </p>
+        Ajouter quelqu’un que je connais
+      </button>
     </>
   );
 }
@@ -1643,7 +2131,7 @@ function NuitsFlow({ ctl, focusDay }: { ctl: CompasCtl; focusDay?: number }) {
       </p>
       {offers.length > 0 && (
         <>
-          <AffiliateDisclosure />
+          <AffiliateDisclosure compact />
           <PagedList
             label="Hébergements partenaires"
             items={offers}
@@ -1811,37 +2299,43 @@ function offerIcon(category: string | null): string {
  * offres). Les réservations réelles de la catégorie passent devant ; les
  * offres partenaires suivent, balisées, et ne réservent jamais rien.
  */
+const LIVE_OF: Partial<Record<ResaCat, CompasLiveVertical>> = {
+  activites: 'activity',
+  vols: 'flight',
+  trajets: 'car',
+};
+const PARTNER_OF: Record<CompasLiveVertical, string> = {
+  activity: 'Viator',
+  flight: 'RouteStack',
+  car: 'RouteStack',
+};
+
+/**
+ * Résa (maquette finale) : six catégories. Activités (Viator), Vols et
+ * Trajets (RouteStack) se cherchent en direct ici ; Nuits ouvre la recherche
+ * par nuit ; Extras liste les offres partenaires (assurance, eSIM…).
+ */
 function OffresFlow({ ctl, initialCat }: { ctl: CompasCtl; initialCat?: ResaCat }) {
-  const live = ctl.data.providers.routestack !== 'disabled';
-  const [cat, setCat] = useState<ResaCat | 'all'>(initialCat ?? 'all');
-  const present = RESA_CATS.filter(
-    (c) =>
-      c.id !== 'randos' &&
-      (ctl.data.affiliateLinks.some((l) => offerCat(l.category) === c.id) ||
-        ctl.data.bookings.some((b) => LIVE_BOOKING(b.status) && bookingCat(b.vertical) === c.id))
+  const [cat, setCat] = useState<ResaCat>(
+    initialCat && initialCat !== 'randos' ? initialCat : 'activites'
   );
-  const offers =
-    cat === 'all'
-      ? ctl.data.affiliateLinks
-      : ctl.data.affiliateLinks.filter((l) => offerCat(l.category) === cat);
-  const booked =
-    cat === 'all'
-      ? []
-      : ctl.data.bookings.filter((b) => LIVE_BOOKING(b.status) && bookingCat(b.vertical) === cat);
+  const offers = ctl.data.affiliateLinks.filter((l) => offerCat(l.category) === cat);
+  const booked = ctl.data.bookings.filter(
+    (b) => LIVE_BOOKING(b.status) && bookingCat(b.vertical) === cat
+  );
+  const live = LIVE_OF[cat];
   return (
     <>
-      <AffiliateDisclosure />
-      {present.length > 0 && (
-        <Segments
-          label="Catégorie"
-          value={cat}
-          onChange={setCat}
-          options={[
-            { id: 'all', label: 'Tout' },
-            ...present.map((c) => ({ id: c.id, label: c.label, icon: c.icon })),
-          ]}
-        />
-      )}
+      <Segments
+        label="Catégorie"
+        value={cat}
+        onChange={setCat}
+        options={RESA_CATS.filter((c) => c.id !== 'randos').map((c) => ({
+          id: c.id,
+          label: c.label,
+          icon: c.icon,
+        }))}
+      />
       {booked.length > 0 && (
         <p className="cp-sub">
           <b>
@@ -1854,43 +2348,218 @@ function OffresFlow({ ctl, initialCat }: { ctl: CompasCtl; initialCat?: ResaCat 
             .toLowerCase()}
         </p>
       )}
-      <PagedList
-        label="Offres partenaires"
-        resetKey={cat}
-        items={offers}
-        empty={
-          <p className="cp-note">
-            {cat === 'all'
-              ? 'Aucune offre partenaire pour cette destination pour l’instant.'
-              : 'Aucune offre partenaire dans cette catégorie pour cette destination.'}
-          </p>
-        }
-        render={(l) => (
-          <a
-            key={l.id}
-            className="cp-row"
-            href={l.url}
-            target="_blank"
-            rel="sponsored nofollow noopener"
-          >
-            <span className="cp-thumb">
-              <Icon name={offerIcon(l.category)} size={20} />
-            </span>
-            <span className="cp-row__t">
-              <b>{l.label}</b>
-              <span>{[l.partner, l.category].filter(Boolean).join(' · ') || 'Partenaire'}</span>
-            </span>
-            <span className="cp-row__end">
-              <Icon name="external-link" size={16} />
-            </span>
-          </a>
+      {live && <LiveSearch key={live} ctl={ctl} vertical={live} />}
+      {cat === 'nuits' && (
+        <button
+          type="button"
+          className="cp-btn cp-btn--pg"
+          onClick={() => ctl.replace({ kind: 'step', step: 'resa', flow: 'nuits' })}
+        >
+          <Icon name="bed-double" size={16} />
+          Chercher un hébergement nuit par nuit
+        </button>
+      )}
+      {(offers.length > 0 || cat === 'extras') && (
+        <>
+          <AffiliateDisclosure compact />
+          <PagedList
+            label="Offres partenaires"
+            resetKey={cat}
+            items={offers}
+            empty={
+              <p className="cp-note">
+                Aucune offre partenaire dans cette catégorie pour l’instant.
+              </p>
+            }
+            render={(l) => (
+              <a
+                key={l.id}
+                className="cp-row"
+                href={l.url}
+                target="_blank"
+                rel="sponsored nofollow noopener"
+              >
+                <span className="cp-thumb">
+                  <Icon name={offerIcon(l.category)} size={20} />
+                </span>
+                <span className="cp-row__t">
+                  <b>{l.label}</b>
+                  <span>{[l.partner, l.category].filter(Boolean).join(' · ') || 'Partenaire'}</span>
+                </span>
+                <span className="cp-row__end">
+                  <Icon name="external-link" size={16} />
+                </span>
+              </a>
+            )}
+          />
+        </>
+      )}
+    </>
+  );
+}
+
+/** Recherche en direct chez le partenaire de la catégorie ; rien n'est réservé d'ici. */
+function LiveSearch({ ctl, vertical }: { ctl: CompasCtl; vertical: CompasLiveVertical }) {
+  const { model } = ctl.data;
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState(model.destination ?? '');
+  const [state, setState] = useState<
+    | { status: 'idle' | 'loading' }
+    | { status: 'error'; error: string; unavailable: boolean }
+    | { status: 'ok'; mode: 'sandbox' | 'live'; offers: CompasStayOffer[] }
+  >({ status: 'idle' });
+
+  const seq = useRef(0);
+  const search = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const mine = ++seq.current;
+    setState({ status: 'loading' });
+    try {
+      const res = await compasSearchOffersAction({
+        tripId: model.tripId,
+        vertical,
+        ...(vertical === 'flight' ? { from } : {}),
+        ...(to.trim() ? { to: to.trim() } : {}),
+      });
+      if (mine !== seq.current) return;
+      setState(
+        res.success
+          ? { status: 'ok', mode: res.mode, offers: res.offers }
+          : { status: 'error', error: res.error, unavailable: res.unavailable === true }
+      );
+    } catch {
+      setState({ status: 'error', error: 'Connexion perdue : réessaie.', unavailable: false });
+    }
+  };
+
+  const when = model.dates.start
+    ? `${formatDayMonth(model.dates.start)}${model.dates.end && vertical !== 'activity' ? ` → ${formatDayMonth(model.dates.end)}` : ''}`
+    : 'dates à choisir';
+
+  return (
+    <>
+      <form
+        className="cp-bottle cp-glass"
+        onSubmit={search}
+        aria-label={`Chercher : ${vertical === 'activity' ? 'activités' : vertical === 'flight' ? 'vols' : 'trajets'}`}
+      >
+        {vertical === 'flight' && (
+          <label className="cp-field">
+            Départ de
+            <input
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              placeholder="Ville ou aéroport"
+              maxLength={80}
+              required
+            />
+          </label>
         )}
-      />
-      <p className="cp-disc">
-        {live
-          ? 'Hôtels, vols et voitures en direct : tarif revalidé avant tout paiement, jamais de commande sans ton accord.'
-          : 'Recherche en direct (hôtels, vols, voitures) : active dès que les clés partenaires sont posées. Rien n’est simulé d’ici là.'}
-      </p>
+        <label className="cp-field">
+          {vertical === 'car' ? 'Prise du véhicule à' : vertical === 'flight' ? 'Vers' : 'Où'}
+          <input
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            placeholder="Destination"
+            maxLength={80}
+            required
+          />
+        </label>
+        <span className="cp-sub">
+          {when} · {model.crew.size} personne{model.crew.size > 1 ? 's' : ''} · via{' '}
+          {PARTNER_OF[vertical]}
+        </span>
+        <button
+          type="submit"
+          className="cp-btn cp-btn--pg"
+          disabled={state.status === 'loading' || !model.dates.start}
+        >
+          <Icon name="search" size={16} />
+          {state.status === 'loading' ? 'Recherche…' : 'Chercher en direct'}
+        </button>
+      </form>
+
+      {state.status === 'error' && <p className="cp-note">{state.error}</p>}
+      {state.status === 'error' && state.unavailable && (
+        <PagedList
+          label="Exemples"
+          items={[...RESA_EXAMPLES[vertical]]}
+          empty={null}
+          render={(x) => (
+            <div key={x.title} className="cp-row" style={staticRow}>
+              <span className="cp-thumb">
+                <Icon
+                  name={vertical === 'flight' ? 'plane' : vertical === 'car' ? 'car' : 'ticket'}
+                  size={20}
+                />
+              </span>
+              <span className="cp-row__t">
+                <b>{x.title}</b>
+                <span>{x.detail}</span>
+              </span>
+              <span className="cp-row__end">
+                <Chip tone="soft">Exemple</Chip>
+              </span>
+            </div>
+          )}
+        />
+      )}
+      {state.status === 'ok' && (
+        <>
+          {state.mode === 'sandbox' && (
+            <p className="cp-note">Mode test du partenaire : ces offres ne sont pas réservables.</p>
+          )}
+          <AffiliateDisclosure compact />
+          <PagedList
+            label="Offres en direct"
+            items={state.offers}
+            empty={<p className="cp-note">Aucune offre trouvée pour ces critères.</p>}
+            render={(o) => {
+              const body = (
+                <>
+                  <span className="cp-thumb">
+                    <Icon
+                      name={vertical === 'flight' ? 'plane' : vertical === 'car' ? 'car' : 'ticket'}
+                      size={20}
+                    />
+                  </span>
+                  <span className="cp-row__t">
+                    <b>{o.title}</b>
+                    <span>
+                      {o.amount != null && o.currency
+                        ? formatMoney(o.amount, o.currency)
+                        : 'prix confirmé chez le partenaire'}
+                      {o.requiresRevalidation ? ' · tarif à revalider' : ''}
+                    </span>
+                  </span>
+                </>
+              );
+              return o.url ? (
+                <a
+                  key={o.id}
+                  className="cp-row"
+                  href={o.url}
+                  target="_blank"
+                  rel="sponsored nofollow noopener"
+                >
+                  {body}
+                  <span className="cp-row__end">
+                    <Icon name="external-link" size={16} />
+                  </span>
+                </a>
+              ) : (
+                <div key={o.id} className="cp-row" style={staticRow}>
+                  {body}
+                </div>
+              );
+            }}
+          />
+          <p className="cp-disc">
+            Rien n’est réservé ni payé d’ici : l’offre s’ouvre chez le partenaire, tarif revalidé
+            avant tout paiement.
+          </p>
+        </>
+      )}
     </>
   );
 }
@@ -2414,11 +3083,22 @@ function TraceFlow({ ctl }: { ctl: CompasCtl }) {
   );
 }
 
+const SEASON_LABEL: Record<string, string> = {
+  printemps: 'printemps',
+  ete: 'été',
+  automne: 'automne',
+  hiver: 'hiver',
+  toute_saison: 'toute saison',
+};
+
 function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
   const [state, setState] = useState<
     { status: 'loading' } | { status: 'error'; error: string } | { status: 'ok'; kits: MyKit[] }
   >({ status: 'loading' });
   const [pending, setPending] = useState<string | null>(null);
+  const [reload, setReload] = useState(0);
+  const [creating, setCreating] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
   const model = ctl.data.model;
   const tripNames = useMemo(() => ctl.lines.map((l) => l.name), [ctl.lines]);
   const forecasts = useMemo(
@@ -2444,13 +3124,94 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [reload]);
 
   if (state.status === 'loading') return <p className="cp-note">Lecture de tes kits…</p>;
   if (state.status === 'error') return <p className="cp-note">{state.error}</p>;
 
+  const createKit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    const season = String(fd.get('season') ?? '');
+    setCreating(true);
+    const ok = await ctl.run(`Kit « ${String(fd.get('kitName') ?? '').trim()} » créé`, () =>
+      compasCreateKitFromTripAction({
+        tripId: model.tripId,
+        tripSlug: model.slug,
+        name: String(fd.get('kitName') ?? ''),
+        season:
+          season === 'printemps' ||
+          season === 'ete' ||
+          season === 'automne' ||
+          season === 'hiver' ||
+          season === 'toute_saison'
+            ? season
+            : null,
+      })
+    );
+    setCreating(false);
+    if (ok) {
+      setReload((n) => n + 1);
+      setShowCreate(false);
+    }
+  };
+
   return (
     <>
+      {ctl.data.canEdit && !showCreate && (
+        <button
+          type="button"
+          className="cp-btn cp-btn--soft"
+          aria-expanded={false}
+          onClick={() => setShowCreate(true)}
+        >
+          <Icon name="plus" size={16} />
+          Créer mon kit
+        </button>
+      )}
+      {ctl.data.canEdit && showCreate && (
+        <form className="cp-mkkit cp-glass" onSubmit={createKit} aria-label="Créer mon kit">
+          <b className="cp-mkkit__t">
+            <Icon name="plus" size={15} aria-hidden="true" /> Créer mon kit
+          </b>
+          <span className="cp-note">
+            Enregistre les {ctl.lines.length} objet{ctl.lines.length > 1 ? 's' : ''} du voyage comme
+            un kit réutilisable, privé.
+          </span>
+          <div className="cp-grid2">
+            <label className="cp-field">
+              Nom
+              <input
+                name="kitName"
+                required
+                minLength={2}
+                maxLength={80}
+                autoComplete="off"
+                defaultValue={`Kit · ${model.title}`.slice(0, 80)}
+              />
+            </label>
+            <label className="cp-field">
+              Saison
+              <select name="season" defaultValue="">
+                <option value="">Non précisée</option>
+                <option value="printemps">Printemps</option>
+                <option value="ete">Été</option>
+                <option value="automne">Automne</option>
+                <option value="hiver">Hiver</option>
+                <option value="toute_saison">Toute saison</option>
+              </select>
+            </label>
+          </div>
+          <button
+            type="submit"
+            className="cp-btn cp-btn--pg"
+            disabled={ctl.busy || creating || ctl.lines.length === 0}
+          >
+            {ctl.lines.length === 0 ? 'Ajoute d’abord des objets' : 'Créer le kit'}
+          </button>
+        </form>
+      )}
       <p className="cp-note">
         Appliquer un kit ajoute au voyage les objets qui n’y sont pas déjà (même nom). Rien n’est
         retiré ni emballé.
@@ -2476,7 +3237,7 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
               <span className="cp-row__t cp-row__t--wrap">
                 <b>
                   {kit.name}
-                  {kit.season ? ` · ${kit.season}` : ''}
+                  {kit.season ? ` · ${SEASON_LABEL[kit.season] ?? kit.season}` : ''}
                 </b>
                 <span>
                   {kit.items.length} objet{kit.items.length > 1 ? 's' : ''} · {plan.alreadyThere}{' '}
@@ -2675,7 +3436,14 @@ function InventaireFlow({ ctl }: { ctl: CompasCtl }) {
   if (ctl.data.inventory.length === 0)
     return (
       <p className="cp-note">
-        Ton inventaire est vide. <Link href="/hub/inventaire">Ouvrir l’inventaire</Link>
+        Ton inventaire est vide.{' '}
+        <button
+          type="button"
+          className="cp-linkbtn"
+          onClick={() => ctl.open({ kind: 'add', target: 'inventaire' })}
+        >
+          Ajouter à l’inventaire
+        </button>
       </p>
     );
   return (
@@ -2749,8 +3517,7 @@ function InventaireFlow({ ctl }: { ctl: CompasCtl }) {
         }}
       />
       <p className="cp-note">
-        Les objets de ton inventaire (<Link href="/hub/inventaire">Hub</Link>). Ajouter au kit ne
-        change rien à l’inventaire.
+        Les objets de ton inventaire. Ajouter au kit ne change rien à l’inventaire.
       </p>
     </>
   );

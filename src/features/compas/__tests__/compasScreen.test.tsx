@@ -99,6 +99,22 @@ const compas = vi.hoisted(() => ({
     ],
   })),
   compasApplyKitAction: vi.fn(async () => ({ success: true })),
+  compasSearchPeopleAction: vi.fn(async () => ({
+    success: true,
+    people: [
+      {
+        userId: '5c1d2e3f-0000-4000-8000-0000000000aa',
+        name: 'Léa Montagne',
+        avatarUrl: null,
+        location: 'Grenoble',
+        followed: true,
+      },
+    ],
+  })),
+  compasAddMemberAction: vi.fn(async () => ({ success: true })),
+  compasSetMemberRoleAction: vi.fn(async () => ({ success: true })),
+  compasRemoveMemberAction: vi.fn(async () => ({ success: true })),
+  compasCreateKitFromTripAction: vi.fn(async () => ({ success: true, kitId: 'k', count: 3 })),
   compasApplyRouteAction: vi.fn(async () => ({ success: true, kept: 0 })),
   compasMyRoutesAction: vi.fn(async () => ({ success: true, routes: [] })),
   compasSearchRoutesAction: vi.fn(async () => ({ success: true, routes: [] as unknown[] })),
@@ -110,6 +126,65 @@ const compas = vi.hoisted(() => ({
   })),
 }));
 vi.mock('../server/compasActions', () => compas);
+const bottle = vi.hoisted(() => ({
+  compasBottleStateAction: vi.fn(async () => ({
+    success: true,
+    state: {
+      country: 'fr',
+      countryName: 'France',
+      trustScore: 80,
+      canLaunch: true,
+      blocked: null,
+      bottles: [
+        {
+          id: '9b9b9b9b-0000-4000-8000-000000000001',
+          name: 'GR en équipe',
+          description: null,
+          departure: '2026-10-12',
+          returnDate: '2026-10-15',
+          maxMembers: 6,
+          minTrust: 60,
+          mixite: 'all',
+          activeCount: 1,
+          applicants: [
+            {
+              memberId: '9b9b9b9b-0000-4000-8000-0000000000a1',
+              userId: '9b9b9b9b-0000-4000-8000-0000000000b1',
+              name: 'Noé Sentier',
+              avatarUrl: null,
+              trustScore: 72,
+            },
+          ],
+        },
+      ],
+    },
+  })),
+  compasLaunchBottleAction: vi.fn(async () => ({ success: true })),
+  compasAnswerApplicantAction: vi.fn(async () => ({ success: true })),
+  compasCloseBottleAction: vi.fn(async () => ({ success: true })),
+}));
+vi.mock('../server/bottleActions', () => bottle);
+const resa = vi.hoisted(() => ({
+  compasSearchOffersAction: vi.fn(async () => ({
+    success: true,
+    mode: 'sandbox',
+    fetchedAt: '2026-10-02T08:00:00Z',
+    offers: [
+      {
+        id: 'o1',
+        title: 'Lyon → Pau',
+        untitled: false,
+        description: null,
+        amount: 89,
+        currency: 'EUR',
+        provider: 'routestack',
+        url: 'https://example.test/offer',
+        requiresRevalidation: true,
+      },
+    ],
+  })),
+}));
+vi.mock('../server/resaActions', () => resa);
 
 const cart = vi.hoisted(() => ({ addToCart: vi.fn() }));
 vi.mock('@/lib/cart', () => cart);
@@ -608,24 +683,58 @@ describe('CompasScreen', () => {
     expect(fd.get('tripId')).toBe(TRIP);
   });
 
-  it('Nous · Annonce : mène à la bouteille à la mer du pays et au Hub, ne publie rien', async () => {
+  it('Nous · Qui : propose les personnes suivies et les ajoute sans quitter le Compas', async () => {
     render(<CompasScreen data={makeData()} />);
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Détails : Nous' }));
     const sheet = await screen.findByRole('dialog', { name: 'Nous' });
     const tabs = within(sheet).getByRole('group', { name: 'Parcours du tiroir' });
-    fireEvent.click(within(tabs).getByText('Annonce'));
-    expect(
-      within(sheet)
-        .getByRole('link', { name: /Lancer une bouteille à la mer/ })
-        .getAttribute('href')
-    ).toBe('/pays/fr?section=communaute');
-    expect(
-      within(sheet)
-        .getByRole('link', { name: /Gérer le groupe/ })
-        .getAttribute('href')
-    ).toBe('/hub/groupe');
-    expect(within(sheet).getByText(/Rien n’est publié depuis le Compas/)).toBeTruthy();
+    fireEvent.click(within(tabs).getByText('Qui'));
+    await waitFor(() =>
+      expect(compas.compasSearchPeopleAction).toHaveBeenCalledWith({ tripId: TRIP, query: '' })
+    );
+    expect(await within(sheet).findByText('Léa Montagne')).toBeTruthy();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Lecture seule' }));
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Ajouter Léa Montagne' }));
+    await waitFor(() =>
+      expect(compas.compasAddMemberAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        userId: '5c1d2e3f-0000-4000-8000-0000000000aa',
+        role: 'viewer',
+      })
+    );
+    expect(within(sheet).queryByRole('link', { name: /hub/i })).toBeNull();
+  });
+
+  it('Nous · Bouteille : tiroir où / à qui / quand, lancer et accepter une candidature', async () => {
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Nous' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Nous' });
+    const tabs = within(sheet).getByRole('group', { name: 'Parcours du tiroir' });
+    fireEvent.click(within(tabs).getByText('Bouteille'));
+    expect(await within(sheet).findByText('Noé Sentier')).toBeTruthy();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Accepter Noé Sentier' }));
+    await waitFor(() =>
+      expect(bottle.compasAnswerApplicantAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        groupId: '9b9b9b9b-0000-4000-8000-000000000001',
+        memberId: '9b9b9b9b-0000-4000-8000-0000000000a1',
+        accept: true,
+      })
+    );
+    const form = within(sheet).getByRole('form', { name: 'Lancer une bouteille' });
+    fireEvent.click(within(form).getByRole('button', { name: 'Femmes' }));
+    fireEvent.click(within(form).getByLabelText(/18 ans/));
+    fireEvent.click(within(form).getByRole('button', { name: /Lancer$/ }));
+    await waitFor(() =>
+      expect(bottle.compasLaunchBottleAction).toHaveBeenCalledWith(
+        expect.objectContaining({ tripId: TRIP, mixite: 'women_only', minTrust: 60, isAdult: true })
+      )
+    );
+    expect(within(sheet).queryByRole('link', { name: /bouteille/i })).toBeNull();
   });
 
   it('Nous : budget réel, aucune enveloppe inventée, l’équipe la fixe', async () => {
@@ -682,23 +791,23 @@ describe('CompasScreen', () => {
 
   it('Personnaliser la carte : masquer le profil retire l’accessoire, le choix est retenu', () => {
     const { unmount } = render(<CompasScreen data={makeData()} />);
-    expect(screen.getByText('dénivelé positif')).toBeTruthy();
+    expect(screen.getByText(/^D\+ /)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Personnaliser la carte' }));
     const panel = screen.getByRole('dialog', { name: 'Personnaliser la carte' });
     const profil = within(panel).getByRole('switch', { name: /Profil/ });
     expect(profil.getAttribute('aria-checked')).toBe('true');
     fireEvent.click(profil);
-    expect(screen.queryByText('dénivelé positif')).toBeNull();
+    expect(screen.queryByText(/^D\+ /)).toBeNull();
     // Aucun point d'eau sur ce voyage : le calque est grisé, pas inventé.
     expect((within(panel).getByRole('switch', { name: /Eau/ }) as HTMLButtonElement).disabled).toBe(
       true
     );
     unmount();
     render(<CompasScreen data={makeData()} />);
-    expect(screen.queryByText('dénivelé positif')).toBeNull();
+    expect(screen.queryByText(/^D\+ /)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Personnaliser la carte' }));
     fireEvent.click(screen.getByRole('button', { name: 'Tout afficher' }));
-    expect(screen.getByText('dénivelé positif')).toBeTruthy();
+    expect(screen.getByText(/^D\+ /)).toBeTruthy();
   });
 
   it('agrandir la carte réduit le haut à une carte-titre', () => {
@@ -709,10 +818,9 @@ describe('CompasScreen', () => {
     expect(container.querySelector('.compas')?.getAttribute('data-map')).toBeNull();
   });
 
-  it('Résa : six catégories, Vols ouvre ses offres filtrées, une catégorie vide est grisée', async () => {
+  it('Résa : six catégories, Vols cherche en direct (RouteStack), Extras liste les offres', async () => {
     const data = makeData();
     data.affiliateLinks = [
-      { id: 'a1', label: 'Vols Lyon', category: 'flight', partner: 'Aviasales', url: '/go/vol' },
       { id: 'a2', label: 'Assurance', category: 'insurance', partner: 'Heymondo', url: '/go/ass' },
     ];
     render(<CompasScreen data={data} />);
@@ -720,15 +828,40 @@ describe('CompasScreen', () => {
     for (const name of ['Randonnées', 'Activités', 'Hébergement', 'Vols', 'Transports', 'Extras'])
       expect(screen.getByRole('button', { name: new RegExp(`^${name}`) })).toBeTruthy();
     expect((screen.getByRole('button', { name: /^Activités/ }) as HTMLButtonElement).disabled).toBe(
-      true
+      false
     );
     fireEvent.click(screen.getByRole('button', { name: 'Vols' }));
     const sheet = await screen.findByRole('dialog', { name: 'Mes réservations' });
-    expect(within(sheet).getByText('Vols Lyon')).toBeTruthy();
+    const form = within(sheet).getByRole('form', { name: 'Chercher : vols' });
+    fireEvent.change(within(form).getByLabelText('Départ de'), { target: { value: 'Lyon' } });
+    fireEvent.click(within(form).getByRole('button', { name: /Chercher en direct/ }));
+    await waitFor(() =>
+      expect(resa.compasSearchOffersAction).toHaveBeenCalledWith(
+        expect.objectContaining({ tripId: TRIP, vertical: 'flight', from: 'Lyon' })
+      )
+    );
+    expect(await within(sheet).findByText('Lyon → Pau')).toBeTruthy();
+    expect(within(sheet).getByText(/Mode test du partenaire/)).toBeTruthy();
     expect(within(sheet).queryByText('Assurance')).toBeNull();
     const cats = within(sheet).getByRole('group', { name: 'Catégorie' });
-    fireEvent.click(within(cats).getByText('Tout'));
+    fireEvent.click(within(cats).getByText('Extras'));
     expect(within(sheet).getByText('Assurance')).toBeTruthy();
+  });
+
+  it('Résa : partenaire non activé, des exemples étiquetés et aucun lien', async () => {
+    resa.compasSearchOffersAction.mockResolvedValueOnce({
+      success: false,
+      unavailable: true,
+      error: 'Partenaire non activé pour cette catégorie : recherche en direct indisponible.',
+    } as never);
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Activités' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Mes réservations' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Chercher en direct/ }));
+    expect(await within(sheet).findByText(/Partenaire non activé/)).toBeTruthy();
+    expect(within(sheet).getAllByText('Exemple').length).toBeGreaterThan(0);
+    expect(within(sheet).queryAllByRole('link')).toHaveLength(0);
   });
 
   it('nuits : noter un hébergement écrit sans rien réserver, liens affiliés balisés', async () => {
@@ -746,7 +879,11 @@ describe('CompasScreen', () => {
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Détails : Mes réservations' }));
     const sheet = await screen.findByRole('dialog', { name: 'Mes réservations' });
-    fireEvent.click(within(sheet).getByRole('button', { name: /Nuits/ }));
+    fireEvent.click(
+      within(within(sheet).getByRole('group', { name: 'Parcours du tiroir' })).getByRole('button', {
+        name: /Nuits/,
+      })
+    );
     const input = within(sheet).getByLabelText('Hébergement de la nuit du jour 1');
     fireEvent.change(input, { target: { value: 'Gîte du col' } });
     fireEvent.click(within(sheet).getAllByRole('button', { name: 'OK' })[0]);
@@ -779,6 +916,31 @@ describe('CompasScreen', () => {
         tripSlug: 'trek-3-vallees',
         kitId: '8d9c1a52-0000-4000-8000-000000000001',
       })
+    );
+  });
+
+  it('mes kits : « Créer mon kit » enregistre le kit du voyage et relit la liste', async () => {
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Kit/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Kit' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Kit' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Mes kits/ }));
+    fireEvent.click(await within(sheet).findByRole('button', { name: /Créer mon kit/ }));
+    const form = within(sheet).getByRole('form', { name: 'Créer mon kit' });
+    fireEvent.change(within(form).getByLabelText('Nom'), { target: { value: 'Mon kit GR' } });
+    fireEvent.change(within(form).getByLabelText('Saison'), { target: { value: 'automne' } });
+    const before = compas.compasListMyKitsAction.mock.calls.length;
+    fireEvent.click(within(form).getByRole('button', { name: 'Créer le kit' }));
+    await waitFor(() =>
+      expect(compas.compasCreateKitFromTripAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        name: 'Mon kit GR',
+        season: 'automne',
+      })
+    );
+    await waitFor(() =>
+      expect(compas.compasListMyKitsAction.mock.calls.length).toBeGreaterThan(before)
     );
   });
 
@@ -852,7 +1014,11 @@ describe('CompasScreen', () => {
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Détails : Mes réservations' }));
     const sheet = await screen.findByRole('dialog', { name: 'Mes réservations' });
-    fireEvent.click(within(sheet).getByRole('button', { name: /Nuits/ }));
+    fireEvent.click(
+      within(within(sheet).getByRole('group', { name: 'Parcours du tiroir' })).getByRole('button', {
+        name: /Nuits/,
+      })
+    );
     fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
     await waitFor(() =>
       expect(compas.compasSearchStaysAction).toHaveBeenCalledWith({ tripId: TRIP, day: 1 })
@@ -900,6 +1066,34 @@ describe('CompasScreen', () => {
       })
     );
     expect(await screen.findByText('Durée : 5 j · parcours redécoupé')).toBeTruthy();
+  });
+
+  it('Quand : toucher un jour du calendrier fixe le départ et l’enregistre aussitôt', async () => {
+    const calendar = Array.from({ length: 14 }, (_, i) => {
+      const date = `2026-10-${String(10 + i).padStart(2, '0')}`;
+      return {
+        date,
+        kind: 'prevision' as const,
+        quality: i === 6 ? ('moyen' as const) : ('bon' as const),
+        reasons: [],
+        tMin: 4,
+        tMax: 14,
+      };
+    });
+    const data = makeData();
+    data.weather = { source: 'Open-Meteo', horizon: '2026-10-23', tripDays: [], calendar };
+    render(<CompasScreen data={data} />);
+    const sheet = await openOu(/Quand/);
+    expect(within(sheet).getAllByText(/12 oct\.? → \S+ 15 oct/).length).toBeGreaterThan(0);
+    fireEvent.click(within(sheet).getByRole('button', { name: /14 oct\.? :/ }));
+    await waitFor(() =>
+      expect(compas.compasSetDatesAction).toHaveBeenCalledWith(
+        expect.objectContaining({ startDate: '2026-10-14', endDate: '2026-10-17' })
+      )
+    );
+    expect(
+      await screen.findByText(/^Quand : \S+ 14 oct\.? → \S+ 17 oct\.? · conditions moyennes/)
+    ).toBeTruthy();
   });
 
   it('Parcours : chercher un lieu, voir la communauté, choisir découpé sur les dates', async () => {

@@ -19,8 +19,9 @@ export const STEP_FLOWS = {
   ],
   nous: [
     { id: 'equipe', label: 'Équipe', icon: 'users' },
+    { id: 'qui', label: 'Qui', icon: 'user-plus' },
     { id: 'budget', label: 'Budget', icon: 'coins' },
-    { id: 'annonce', label: 'Annonce', icon: 'send' },
+    { id: 'annonce', label: 'Bouteille', icon: 'send' },
   ],
   resa: [
     { id: 'nuits', label: 'Nuits', icon: 'bed-double' },
@@ -103,5 +104,6 @@ export interface CompasCtl {
   togglePacked: (line: CompasKitLine) => void;
   memberName: (userId: string | null) => string;
   product: (id: string | null) => CompasShopProduct | undefined;
-  notify: (message: string, tone?: 'bad') => void;
+  /** Annonce dans l'îlot : un titre, et une ligne de détail facultative. */
+  notify: (message: string, tone?: 'bad', sub?: string) => void;
 }
