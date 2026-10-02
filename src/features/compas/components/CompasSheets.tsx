@@ -38,7 +38,10 @@ import {
   compasListMyKitsAction,
   compasCreateKitFromTripAction,
   compasSearchPeopleAction,
-  compasAddMemberAction,
+  compasInviteMemberAction,
+  compasCancelInvitationAction,
+  compasInviteLinkAction,
+  compasRestoreMemberAction,
   compasSetMemberRoleAction,
   compasRemoveMemberAction,
   type CompasPerson,
@@ -73,6 +76,7 @@ import { planWater } from '../engine/water';
 import { addExpenseAction } from '@/app/voyages/budget-actions';
 import { RESA_CATS, bookingCat, offerCat, type ResaCat } from '../engine/resaCats';
 import { RESA_EXAMPLES, type CompasLiveVertical } from '../engine/resaExamples';
+import { teamCount, teamCountLabel } from '../engine/team';
 import { compasSearchOffersAction } from '../server/resaActions';
 import { KIT_THRESHOLDS } from '../engine/kitRules';
 import { inverseOps, runOps } from './compasApply';
@@ -1147,12 +1151,88 @@ const ROLE_LABEL: Record<string, string> = {
 };
 
 /**
- * Nous · Qui (maquette finale) : ajouter qui on veut au voyage sans quitter
- * le Compas. Sans recherche : les personnes que je suis ; sinon par nom.
- * Rôles et retrait pour les personnes ajoutées au voyage (organisateur).
+ * Lien d'invitation pour l'extérieur : à coller dans un message, un club, un
+ * groupe, un commentaire ou une autre application. Qui l'ouvre accepte ou
+ * refuse ; l'accès au voyage vient seulement après acceptation.
+ */
+function InviteLinkBlock({ ctl, role }: { ctl: CompasCtl; role: 'editor' | 'viewer' }) {
+  const { model } = ctl.data;
+  const [link, setLink] = useState<{ url: string; role: 'editor' | 'viewer' } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const current = link?.role === role ? link.url : null;
+
+  const create = async () => {
+    setBusy(true);
+    try {
+      const res = await compasInviteLinkAction({ tripId: model.tripId, role });
+      if (!res.success) return ctl.notify(res.error, 'bad');
+      setLink({ url: `${window.location.origin}${res.path}`, role });
+    } catch {
+      ctl.notify('Connexion perdue : réessaie.', 'bad');
+    } finally {
+      setBusy(false);
+    }
+  };
+  const copy = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      ctl.notify('Lien copié', undefined, 'À coller dans un message, un club ou un groupe');
+    } catch {
+      ctl.notify('Copie impossible : sélectionne le lien.', 'bad');
+    }
+  };
+  const share = async (url: string) => {
+    if (typeof navigator.share !== 'function') return copy(url);
+    try {
+      await navigator.share({ title: model.title, text: `Rejoins « ${model.title} »`, url });
+    } catch {
+      /* partage refermé */
+    }
+  };
+
+  return (
+    <>
+      <p className="cp-sub">
+        <b>Lien d’invitation</b> · pour l’extérieur de l’app, un message, un club ou un groupe
+      </p>
+      {current ? (
+        <div className="cp-row" style={staticRow}>
+          <span className="cp-row__t">
+            <b style={{ wordBreak: 'break-all' }}>{current.replace(/^https?:\/\//, '')}</b>
+            <span>{ROLE_LABEL[role]} · valable 30 jours</span>
+          </span>
+          <span className="cp-row__end">
+            <button type="button" className="cp-btn" onClick={() => void copy(current)}>
+              Copier
+            </button>
+            <button type="button" className="cp-btn cp-btn--pg" onClick={() => void share(current)}>
+              Partager
+            </button>
+          </span>
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="cp-btn cp-btn--pg"
+          disabled={busy}
+          onClick={() => void create()}
+        >
+          {busy ? 'Création du lien…' : 'Créer le lien d’invitation'}
+        </button>
+      )}
+    </>
+  );
+}
+
+/**
+ * Nous · Qui (maquette finale) : inviter qui on veut sans quitter le Compas.
+ * Sans recherche : les personnes que je suis ; sinon par nom. L'invité
+ * accepte ou refuse (notification, lien) et n'accède qu'après avoir accepté.
  */
 function QuiFlow({ ctl }: { ctl: CompasCtl }) {
   const { model, viewerId, canEdit } = ctl.data;
+  const pending = ctl.data.pendingInvites ?? [];
+  const count = teamCountLabel(teamCount(model.crew.size, model.crew.loads.length, pending.length));
   const isOwner = viewerId != null && viewerId === model.ownerId;
   const [query, setQuery] = useState('');
   const [role, setRole] = useState<'editor' | 'viewer'>('editor');
@@ -1186,18 +1266,25 @@ function QuiFlow({ ctl }: { ctl: CompasCtl }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- suggestions à l'ouverture seulement
   }, [canEdit]);
 
-  const add = async (p: CompasPerson) => {
+  const invite = async (p: CompasPerson) => {
+    let invitationId: string | undefined;
     const ok = await ctl.run(
-      `${p.name} ajouté${role === 'viewer' ? ' en lecture seule' : ''}`,
-      () =>
-        compasAddMemberAction({
+      `Invitation envoyée à ${p.name}`,
+      async () => {
+        const res = await compasInviteMemberAction({
           tripId: model.tripId,
           tripSlug: model.slug,
           userId: p.userId,
           role,
-        }),
-      () =>
-        compasRemoveMemberAction({ tripId: model.tripId, tripSlug: model.slug, userId: p.userId })
+          source: p.followed ? 'friend' : 'direct',
+        });
+        if (res.success) invitationId = res.invitationId;
+        return res;
+      },
+      async () =>
+        invitationId
+          ? compasCancelInvitationAction({ tripId: model.tripId, invitationId })
+          : { success: false, error: 'Invitation introuvable.' }
     );
     if (ok && state.status === 'ok')
       setState({ ...state, people: state.people.filter((x) => x.userId !== p.userId) });
@@ -1232,7 +1319,7 @@ function QuiFlow({ ctl }: { ctl: CompasCtl }) {
             />
           </form>
           <Segments
-            label="Rôle à l’ajout"
+            label="Rôle proposé"
             value={role}
             onChange={setRole}
             options={[
@@ -1268,10 +1355,10 @@ function QuiFlow({ ctl }: { ctl: CompasCtl }) {
                       type="button"
                       className="cp-btn cp-btn--pg"
                       disabled={ctl.busy}
-                      aria-label={`Ajouter ${p.name}`}
-                      onClick={() => void add(p)}
+                      aria-label={`Inviter ${p.name}`}
+                      onClick={() => void invite(p)}
                     >
-                      Ajouter
+                      Inviter
                     </button>
                   </span>
                 </div>
@@ -1280,12 +1367,55 @@ function QuiFlow({ ctl }: { ctl: CompasCtl }) {
           )}
         </>
       ) : (
-        <p className="cp-note">Lecture seule : seuls les organisateurs ajoutent des personnes.</p>
+        <p className="cp-note">Lecture seule : seuls les organisateurs invitent des personnes.</p>
+      )}
+
+      {canEdit && <InviteLinkBlock ctl={ctl} role={role} />}
+
+      {pending.length > 0 && (
+        <>
+          <p className="cp-sub">
+            <b>En attente</b> · accès au voyage après acceptation
+          </p>
+          <TallList
+            label="Invitations en attente"
+            items={pending}
+            empty={null}
+            render={(inv) => (
+              <div key={inv.id} className="cp-row" style={staticRow}>
+                <MemberAvatar name={inv.name} url={inv.avatarUrl} />
+                <span className="cp-row__t">
+                  <b>{inv.name}</b>
+                  <span>Invité · {ROLE_LABEL[inv.role].toLowerCase()}</span>
+                </span>
+                {canEdit && (
+                  <span className="cp-row__end">
+                    <button
+                      type="button"
+                      className="cp-btn cp-btn--bad"
+                      disabled={ctl.busy}
+                      aria-label={`Annuler l’invitation de ${inv.name}`}
+                      onClick={() =>
+                        void ctl.run(`Invitation de ${inv.name} annulée`, () =>
+                          compasCancelInvitationAction({
+                            tripId: model.tripId,
+                            invitationId: inv.id,
+                          })
+                        )
+                      }
+                    >
+                      Annuler
+                    </button>
+                  </span>
+                )}
+              </div>
+            )}
+          />
+        </>
       )}
 
       <p className="cp-sub">
-        <b>Dans le voyage</b> · {model.crew.loads.length} personne
-        {model.crew.loads.length > 1 ? 's' : ''}
+        <b>Dans le voyage</b> · {count}
       </p>
       <TallList
         label="Membres du voyage"
@@ -1343,7 +1473,7 @@ function QuiFlow({ ctl }: { ctl: CompasCtl }) {
                             userId: m.userId,
                           }),
                         () =>
-                          compasAddMemberAction({
+                          compasRestoreMemberAction({
                             tripId: model.tripId,
                             tripSlug: model.slug,
                             userId: m.userId,

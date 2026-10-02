@@ -1,6 +1,7 @@
 import 'server-only';
 
 import type { FxRate } from '../engine/currency';
+import type { CompasPendingInvite } from '../engine/team';
 import { assessDanger, mergeDangerIntoVerdict, type DangerAssessment } from '../engine/danger';
 import { adviseKit, type KitAdvice } from '../engine/kitRules';
 import { parseRoutePois, poiLabel, type RoutePoi } from '../engine/routePois';
@@ -115,6 +116,8 @@ export interface CompasData {
   route: { id: number | null; name: string | null };
   /** Point de départ (première étape géolocalisée), pour chercher autour. */
   origin: { lat: number; lon: number } | null;
+  /** Invitations envoyées, en attente de réponse (accès au voyage après acceptation). */
+  pendingInvites: CompasPendingInvite[];
 }
 
 const TIME_ZONE = 'Europe/Paris';
@@ -309,6 +312,48 @@ async function loadShop(client: SupabaseClient): Promise<CompasShopProduct[]> {
   }
 }
 
+async function loadPendingInvites(
+  client: SupabaseClient,
+  tripId: string
+): Promise<CompasPendingInvite[]> {
+  try {
+    const { data, error } = await client
+      .from('trip_invitations')
+      .select('id, invitee_id, role, created_at')
+      .eq('trip_id', tripId)
+      .eq('status', 'pending')
+      .not('invitee_id', 'is', null)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: true })
+      .limit(50);
+    if (error || !data?.length) return [];
+    const rows = data as Array<{ id: string; invitee_id: string; role: string; created_at: string }>;
+    const { data: profiles } = await client
+      .from('public_profiles')
+      .select('id, full_name, avatar_url')
+      .in(
+        'id',
+        rows.map((r) => r.invitee_id)
+      );
+    const byId = new Map(
+      ((profiles ?? []) as Array<{ id: string; full_name: string | null; avatar_url: string | null }>).map(
+        (p) => [p.id, p]
+      )
+    );
+    return rows.map((r) => ({
+      id: r.id,
+      userId: r.invitee_id,
+      name: byId.get(r.invitee_id)?.full_name?.trim() || 'Voyageur',
+      avatarUrl: byId.get(r.invitee_id)?.avatar_url ?? null,
+      role: r.role === 'editor' ? 'editor' : 'viewer',
+      createdAt: r.created_at,
+    }));
+  } catch {
+    console.warn('[compas] invitations indisponibles');
+    return [];
+  }
+}
+
 export async function getCompasData(): Promise<CompasData | null> {
   const hub = await getHubAdventureData();
   const trip = hub.trip;
@@ -320,10 +365,11 @@ export async function getCompasData(): Promise<CompasData | null> {
   } = await client.auth.getUser();
   const viewerId = user?.id ?? null;
 
-  const [inventory, bookings, shop] = await Promise.all([
+  const [inventory, bookings, shop, pendingInvites] = await Promise.all([
     loadInventory(client, viewerId),
     loadBookings(client, trip.id),
     loadShop(client),
+    loadPendingInvites(client, trip.id),
   ]);
 
   const members = toMembers(trip, hub.group?.members ?? []);
@@ -523,5 +569,6 @@ export async function getCompasData(): Promise<CompasData | null> {
     weather,
     route: { id: routeId, name: hub.hiking?.routeName ?? null },
     origin,
+    pendingInvites,
   };
 }

@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { TripInvitationsInbox } from './TripInvitations';
+import type { TripInvitationView } from '../server/invitationActions';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import Icon from '@/components/ui/Icon';
@@ -19,7 +21,14 @@ export const START_SAY_KEY = 'lkdv.compas.say';
  * une phrase dans « Dis-le ») crée l'aventure en brouillon et ouvre le
  * Compas complet. Sans compte : le geste mène à la connexion, puis revient.
  */
-export function CompasStart({ signedIn }: { signedIn: boolean }) {
+export function CompasStart({
+  signedIn,
+  invitations = [],
+}: {
+  signedIn: boolean;
+  /** Invitations reçues : on peut rejoindre un voyage au lieu d'en créer un. */
+  invitations?: TripInvitationView[];
+}) {
   const router = useRouter();
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +90,12 @@ export function CompasStart({ signedIn }: { signedIn: boolean }) {
             ))}
           </nav>
         </div>
+
+        {invitations.length > 0 && (
+          <section className="cp-card cp-sheet-glass" aria-label="Invitations reçues">
+            <TripInvitationsInbox invitations={invitations} title="On t’invite" />
+          </section>
+        )}
 
         <section className="cp-card cp-sheet-glass" aria-label="Nouvelle aventure">
           <div>

@@ -1122,12 +1122,17 @@ const memberSchema = z.object({
   tripSlug: slug,
   userId: uuid,
   role: z.enum(['editor', 'viewer']),
+  source: z.enum(['direct', 'friend', 'club', 'group', 'message', 'comment']).optional(),
 });
 
-/** Ajoute une personne au voyage (trip_collaborators), avec son rôle. */
-export async function compasAddMemberAction(
+/**
+ * Invite une personne au voyage. Elle n'y accède qu'après avoir accepté
+ * (notification, accepter / refuser sur place). La notification part d'un
+ * déclencheur en base : aucune écriture dans les notifications d'autrui ici.
+ */
+export async function compasInviteMemberAction(
   input: z.input<typeof memberSchema>
-): Promise<CompasActionResult> {
+): Promise<CompasActionResult & { invitationId?: string }> {
   const parsed = memberSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: 'Requête invalide' };
   try {
@@ -1136,12 +1141,12 @@ export async function compasAddMemberAction(
     if (parsed.data.userId === auth.userId)
       return { success: false, error: 'Tu fais déjà partie du voyage.' };
     const limited = await enforceRateLimit(auth.userId, {
-      scope: 'compas-add-member',
+      scope: 'compas-invite',
       limit: 20,
       windowMs: 60_000,
       failMode: 'closed',
     });
-    if (limited) return { success: false, error: 'Trop d’ajouts d’un coup : patiente une minute.' };
+    if (limited) return { success: false, error: 'Trop d’invitations d’un coup : patiente une minute.' };
     const present = await tripPeople(auth.supabase, auth.trip);
     if (present.has(parsed.data.userId))
       return { success: false, error: 'Cette personne fait déjà partie du voyage.' };
@@ -1151,17 +1156,142 @@ export async function compasAddMemberAction(
       .eq('id', parsed.data.userId)
       .maybeSingle();
     if (!profile) return { success: false, error: 'Personne introuvable.' };
+    const { data, error } = await auth.supabase
+      .from('trip_invitations')
+      .insert({
+        trip_id: parsed.data.tripId,
+        invitee_id: parsed.data.userId,
+        invited_by: auth.userId,
+        role: parsed.data.role,
+        source: parsed.data.source ?? 'direct',
+      })
+      .select('id')
+      .single();
+    if (error) {
+      if (error.code === '23505')
+        return { success: false, error: 'Une invitation attend déjà sa réponse.' };
+      console.warn('[compas] invitation', error.code, error.message);
+      return { success: false, error: 'Impossible d’envoyer l’invitation.' };
+    }
+    return { success: true, invitationId: (data as { id: string }).id };
+  } catch (err) {
+    console.error('[compas] compasInviteMemberAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+const invitationSchema = z.object({ tripId: uuid, invitationId: uuid });
+
+/** Annule une invitation en attente (ou ferme le lien d'invitation). */
+export async function compasCancelInvitationAction(
+  input: z.input<typeof invitationSchema>
+): Promise<CompasActionResult> {
+  const parsed = invitationSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Requête invalide' };
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    const { data, error } = await auth.supabase
+      .from('trip_invitations')
+      .update({ status: 'cancelled', responded_at: new Date().toISOString() })
+      .eq('id', parsed.data.invitationId)
+      .eq('trip_id', parsed.data.tripId)
+      .eq('status', 'pending')
+      .select('id');
+    if (error || !data?.length)
+      return { success: false, error: 'Invitation déjà close ou introuvable.' };
+    return { success: true };
+  } catch (err) {
+    console.error('[compas] compasCancelInvitationAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+const linkSchema = z.object({ tripId: uuid, role: z.enum(['editor', 'viewer']) });
+
+/**
+ * Lien d'invitation pour l'extérieur (message, club, groupe, commentaire,
+ * autre application). Un seul lien ouvert par voyage et par rôle : on le
+ * réutilise. Chaque personne qui l'ouvre accepte ou refuse, puis seulement
+ * accède au voyage.
+ */
+export async function compasInviteLinkAction(
+  input: z.input<typeof linkSchema>
+): Promise<{ success: true; path: string } | { success: false; error: string }> {
+  const parsed = linkSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Requête invalide' };
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    const { data: open } = await auth.supabase
+      .from('trip_invitations')
+      .select('token')
+      .eq('trip_id', parsed.data.tripId)
+      .is('invitee_id', null)
+      .eq('role', parsed.data.role)
+      .eq('status', 'pending')
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    let token = (open as { token?: string } | null)?.token ?? null;
+    if (!token) {
+      const { data, error } = await auth.supabase
+        .from('trip_invitations')
+        .insert({
+          trip_id: parsed.data.tripId,
+          invitee_id: null,
+          invited_by: auth.userId,
+          role: parsed.data.role,
+          source: 'link',
+        })
+        .select('token')
+        .single();
+      if (error || !data) return { success: false, error: 'Impossible de créer le lien.' };
+      token = (data as { token: string }).token;
+    }
+    return { success: true, path: `/invitation/${token}` };
+  } catch (err) {
+    console.error('[compas] compasInviteLinkAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+/**
+ * Annuler un retrait (îlot « Annuler ») : la personne avait déjà accepté.
+ * Réservé aux personnes ayant une invitation acceptée pour ce voyage, pour
+ * qu'aucun ajout ne contourne le consentement.
+ */
+export async function compasRestoreMemberAction(
+  input: z.input<typeof memberSchema>
+): Promise<CompasActionResult> {
+  const parsed = memberSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Requête invalide' };
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if (auth.trip.user_id !== auth.userId)
+      return { success: false, error: 'Seul l’organisateur gère l’équipe.' };
+    const { data: consent } = await auth.supabase
+      .from('trip_invitations')
+      .select('id')
+      .eq('trip_id', parsed.data.tripId)
+      .eq('invitee_id', parsed.data.userId)
+      .eq('status', 'accepted')
+      .limit(1)
+      .maybeSingle();
+    if (!consent) return { success: false, error: 'Invite à nouveau cette personne.' };
     const { error } = await auth.supabase.from('trip_collaborators').insert({
       trip_id: parsed.data.tripId,
       user_id: parsed.data.userId,
       role: parsed.data.role,
       invited_by: auth.userId,
     });
-    if (error) return { success: false, error: 'Impossible d’ajouter cette personne.' };
-    revalidateTrip(parsed.data.tripSlug);
+    if (error && error.code !== '23505')
+      return { success: false, error: 'Impossible de remettre cette personne.' };
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasAddMemberAction', err);
+    console.error('[compas] compasRestoreMemberAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -1222,6 +1352,24 @@ export async function compasRemoveMemberAction(
         success: false,
         error: 'Seules les personnes ajoutées au voyage peuvent être retirées ici.',
       };
+    // Trace du consentement passé (membres d'avant les invitations) : elle
+    // seule autorise « Annuler » à remettre la personne dans le voyage.
+    const { data: consent } = await auth.supabase
+      .from('trip_invitations')
+      .select('id')
+      .eq('trip_id', parsed.data.tripId)
+      .eq('invitee_id', parsed.data.userId)
+      .eq('status', 'accepted')
+      .limit(1)
+      .maybeSingle();
+    if (!consent)
+      await auth.supabase.from('trip_invitations').insert({
+        trip_id: parsed.data.tripId,
+        invitee_id: parsed.data.userId,
+        invited_by: auth.userId,
+        status: 'accepted',
+        responded_at: new Date().toISOString(),
+      });
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {

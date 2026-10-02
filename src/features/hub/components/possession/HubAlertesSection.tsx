@@ -13,6 +13,8 @@ import { getInventory } from '@/features/materiel/services/getInventory';
 import { getOccasionProducts } from '@/features/materiel/services/getOccasionProducts';
 import { getWeather, weatherLabel } from '@/features/materiel/services/getWeather';
 import { currentSeason } from '@/lib/materiel/season';
+import { listMyTripInvitations } from '@/features/compas/server/invitationActions';
+import { TripInvitationsInbox } from '@/features/compas/components/TripInvitations';
 
 /**
  * H4.2 — Section alertes du hub (composition des composants canoniques
@@ -20,8 +22,8 @@ import { currentSeason } from '@/lib/materiel/season';
  * /materiel/alertes redirigent 307 ici (H-AUTO-42).
  */
 export async function HubAlertesSection() {
-  const [alerts, inventory, occasion, weather] = await Promise.all([
-    getAlerts(), getInventory(), getOccasionProducts(), getWeather(),
+  const [alerts, inventory, occasion, weather, invitations] = await Promise.all([
+    getAlerts(), getInventory(), getOccasionProducts(), getWeather(), listMyTripInvitations(),
   ]);
   const critical = alerts.filter((a) => a.severity === 'critical').length;
   const warning = alerts.filter((a) => a.severity === 'warning').length;
@@ -34,6 +36,9 @@ export async function HubAlertesSection() {
 
   return (
     <div className="grid grid-cols-12 gap-[var(--grid-gap)]">
+      {invitations.length > 0 && (
+        <div className="col-span-12"><TripInvitationsInbox invitations={invitations} /></div>
+      )}
       <div className="col-span-12 md:col-span-3"><ReliabilityScore score={score} critical={critical} warning={warning} /></div>
       <div className="col-span-12 md:col-span-9"><CategoryTabs alerts={alerts} /></div>
       <div className="col-span-12 md:col-span-6"><TopAlertsAccordion alerts={alerts} /></div>

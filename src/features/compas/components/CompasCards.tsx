@@ -19,6 +19,7 @@ import { DurationRuler, tripHours } from './CompasRuler';
 import type { CompasCtl } from './compasTypes';
 import { RESA_CATS, bookingCat, offerCat } from '../engine/resaCats';
 import { bestShopProduct } from '../engine/shopMatch';
+import { teamCount, teamCountLabel } from '../engine/team';
 
 /* =============================================================================
    Cartes d'étape — un résumé par étape (maquette v8). Le détail et les actions
@@ -404,8 +405,9 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
           </button>
         </div>
         <span className="cp-sub">
-          {crew.size} personne{crew.size > 1 ? 's' : ''}
-          {crew.guests > 0 ? ` (dont ${crew.guests} hors groupe)` : ''}
+          {teamCountLabel(
+            teamCount(crew.size, crew.loads.length, ctl.data.pendingInvites?.length ?? 0)
+          )}
         </span>
       </div>
       <p className="cp-sub">

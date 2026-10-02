@@ -111,7 +111,10 @@ const compas = vi.hoisted(() => ({
       },
     ],
   })),
-  compasAddMemberAction: vi.fn(async () => ({ success: true })),
+  compasInviteMemberAction: vi.fn(async () => ({ success: true, invitationId: 'inv-1' })),
+  compasCancelInvitationAction: vi.fn(async () => ({ success: true })),
+  compasInviteLinkAction: vi.fn(async () => ({ success: true, path: '/invitation/abcdef0123456789' })),
+  compasRestoreMemberAction: vi.fn(async () => ({ success: true })),
   compasSetMemberRoleAction: vi.fn(async () => ({ success: true })),
   compasRemoveMemberAction: vi.fn(async () => ({ success: true })),
   compasCreateKitFromTripAction: vi.fn(async () => ({ success: true, kitId: 'k', count: 3 })),
@@ -355,6 +358,16 @@ function makeData(overrides: Partial<CompasInput> = {}): CompasData {
     affiliateLinks: [],
     canEdit: true,
     viewerId: U1,
+    pendingInvites: [
+      {
+        id: 'b1c2d3e4-0000-4000-8000-0000000000bb',
+        userId: '5c1d2e3f-0000-4000-8000-0000000000cc',
+        name: 'Sam Crête',
+        avatarUrl: null,
+        role: 'editor' as const,
+        createdAt: '2026-09-30T10:00:00Z',
+      },
+    ],
     providers: { routestack: 'disabled', viator: 'disabled' },
     fx: null,
     kitAdvice: [],
@@ -683,7 +696,7 @@ describe('CompasScreen', () => {
     expect(fd.get('tripId')).toBe(TRIP);
   });
 
-  it('Nous · Qui : propose les personnes suivies et les ajoute sans quitter le Compas', async () => {
+  it('Nous · Qui : invite les personnes suivies, compte présents / en attente / libres, annule une invitation', async () => {
     render(<CompasScreen data={makeData()} />);
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Détails : Nous' }));
@@ -695,15 +708,31 @@ describe('CompasScreen', () => {
     );
     expect(await within(sheet).findByText('Léa Montagne')).toBeTruthy();
     fireEvent.click(within(sheet).getByRole('button', { name: 'Lecture seule' }));
-    fireEvent.click(within(sheet).getByRole('button', { name: 'Ajouter Léa Montagne' }));
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Inviter Léa Montagne' }));
     await waitFor(() =>
-      expect(compas.compasAddMemberAction).toHaveBeenCalledWith({
+      expect(compas.compasInviteMemberAction).toHaveBeenCalledWith({
         tripId: TRIP,
         tripSlug: 'trek-3-vallees',
         userId: '5c1d2e3f-0000-4000-8000-0000000000aa',
         role: 'viewer',
+        source: 'friend',
       })
     );
+    // Compteur : présents · en attente · total (l'invitée n'est pas encore dans le voyage).
+    expect(within(sheet).getByText(/2 présents · 1 en attente/)).toBeTruthy();
+    expect(within(sheet).getByText('Sam Crête')).toBeTruthy();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Annuler l’invitation de Sam Crête' }));
+    await waitFor(() =>
+      expect(compas.compasCancelInvitationAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        invitationId: 'b1c2d3e4-0000-4000-8000-0000000000bb',
+      })
+    );
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Créer le lien d’invitation' }));
+    await waitFor(() =>
+      expect(compas.compasInviteLinkAction).toHaveBeenCalledWith({ tripId: TRIP, role: 'viewer' })
+    );
+    expect(await within(sheet).findByText(/\/invitation\/abcdef0123456789/)).toBeTruthy();
     expect(within(sheet).queryByRole('link', { name: /hub/i })).toBeNull();
   });
 
