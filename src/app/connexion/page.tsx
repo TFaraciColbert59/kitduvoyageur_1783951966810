@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client';
 import AppShell from '@/components/shell/AppShell';
 import { Button } from '@/components/ui';
 import { useTranslation } from '@/lib/i18n/context';
+import { demoLoginAction, demoLoginAvailableAction } from '@/features/demo/demoLogin';
 
 type AuthMode = 'connexion' | 'inscription';
 
@@ -34,6 +35,40 @@ function AuthForm() {
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
+  // Bouton « Connexion démo » : visible seulement si le serveur a les identifiants.
+  const [demoAvailable, setDemoAvailable] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    demoLoginAvailableAction()
+      .then((ok) => alive && setDemoAvailable(ok))
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const handleDemoLogin = async () => {
+    setError('');
+    setDemoLoading(true);
+    try {
+      const res = await demoLoginAction();
+      if (!res.success) {
+        setError(res.error);
+        return;
+      }
+      // La session posée par le serveur (cookies) est relue par le client
+      // pour que le contexte d'auth se mette à jour sans recharger la page.
+      await createClient().auth.refreshSession();
+      toast(t('auth.toastWelcome'), 'success');
+      router.push(nextPath ?? '/compas');
+      router.refresh();
+    } catch {
+      setError(t('auth.errorGeneric'));
+    } finally {
+      setDemoLoading(false);
+    }
+  };
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -281,6 +316,23 @@ function AuthForm() {
                 {loading ? t(mode === 'connexion' ? 'auth.submittingSignIn' : 'auth.submittingSignUp') : t(mode === 'connexion' ? 'auth.submitSignIn' : 'auth.submitSignUp')}
               </Button>
             </form>
+          )}
+          {demoAvailable && mode === 'connexion' && !forgotPasswordOpen && (
+            <div className="mt-[var(--space-3)]">
+              <Button
+                type="button"
+                variant="secondary"
+                fullWidth
+                size="lg"
+                loading={demoLoading}
+                onClick={handleDemoLogin}
+              >
+                {demoLoading ? 'Connexion démo…' : 'Connexion démo'}
+              </Button>
+              <p className="mt-2 text-center text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
+                Compte de démonstration partagé : un voyage, une équipe et des kits déjà prêts.
+              </p>
+            </div>
           )}
           <div className="mt-[var(--space-4)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-4)] text-center">
             <p className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
