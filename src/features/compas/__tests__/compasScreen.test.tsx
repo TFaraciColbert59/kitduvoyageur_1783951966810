@@ -205,6 +205,26 @@ const resa = vi.hoisted(() => ({
   })),
 }));
 vi.mock('../server/resaActions', () => resa);
+const autofill = vi.hoisted(() => ({
+  compasAutofillAction: vi.fn(async () => ({
+    success: true,
+    summary: {
+      nights: [
+        { night: 1, type: 'refuge', place: 'Refuge des Oulettes', reason: 'ton profil : confort' },
+        { night: 2, type: 'bivouac', place: null, reason: 'ta préférence' },
+      ],
+      transport: { km: 412.3, minutes: 250, walkKm: 0.8, fuelEur: 97, basis: '' },
+      kit: { inventaire: 2, pret: 0, location: 0, achat: 1, a_trouver: 1 },
+      budget: [],
+      total: 486,
+      notes: [],
+      usedAi: true,
+      stepsCreated: 0,
+    },
+  })),
+  compasUndoAutofillAction: vi.fn(async () => ({ success: true })),
+}));
+vi.mock('../server/autofillActions', () => autofill);
 
 const cart = vi.hoisted(() => ({ addToCart: vi.fn() }));
 vi.mock('@/lib/cart', () => cart);
@@ -375,6 +395,7 @@ function makeData(overrides: Partial<CompasInput> = {}): CompasData {
     affiliateLinks: [],
     canEdit: true,
     viewerId: U1,
+    autofill: 'done' as const,
     pendingInvites: [
       {
         id: 'b1c2d3e4-0000-4000-8000-0000000000bb',
@@ -711,6 +732,30 @@ describe('CompasScreen', () => {
     expect(fd.get('isPlanned')).toBe('true');
     expect(fd.get('splitType')).toBe('equal');
     expect(fd.get('tripId')).toBe(TRIP);
+  });
+
+  it('Préremplissage : lieu et dates connus → écrit une fois, annonce le total, annulable', async () => {
+    render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+    expect(await screen.findByText('Je prépare ton aventure…')).toBeTruthy();
+    await waitFor(() =>
+      expect(autofill.compasAutofillAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        from: null,
+      })
+    );
+    expect(await screen.findByText(/Aventure préparée · 486/)).toBeTruthy();
+    expect(screen.getByText('1 refuge, 1 bivouac · 412 km de route · 4 objets au kit')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
+    await waitFor(() =>
+      expect(autofill.compasUndoAutofillAction).toHaveBeenCalledWith({ tripId: TRIP, tripSlug: 'trek-3-vallees' })
+    );
+    expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('Préremplissage : déjà fait ou annulé → ne se relance pas', () => {
+    render(<CompasScreen data={{ ...makeData(), autofill: 'undone' }} />);
+    expect(autofill.compasAutofillAction).not.toHaveBeenCalled();
   });
 
   it('Nous · Qui : invite les personnes suivies, compte présents / en attente / libres, annule une invitation', async () => {

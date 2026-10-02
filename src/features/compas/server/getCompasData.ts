@@ -118,6 +118,10 @@ export interface CompasData {
   origin: { lat: number; lon: number } | null;
   /** Invitations envoyées, en attente de réponse (accès au voyage après acceptation). */
   pendingInvites: CompasPendingInvite[];
+  /** Préremplissage : jamais lancé, déjà écrit, ou annulé (ne se relance pas seul). */
+  autofill: 'none' | 'done' | 'undone';
+  /** Conseils du spécialiste (IA) laissés par le préremplissage. */
+  autofillNotes?: string[];
 }
 
 const TIME_ZONE = 'Europe/Paris';
@@ -570,5 +574,27 @@ export async function getCompasData(): Promise<CompasData | null> {
     route: { id: routeId, name: hub.hiking?.routeName ?? null },
     origin,
     pendingInvites,
+    autofill: autofillState(trip.metadata),
+    autofillNotes: autofillNotes(trip.metadata),
   };
+}
+
+function autofillState(metadata: unknown): CompasData['autofill'] {
+  const compas =
+    metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).compas : null;
+  const run =
+    compas && typeof compas === 'object' ? (compas as Record<string, unknown>).autofill : null;
+  if (!run || typeof run !== 'object') return 'none';
+  return (run as Record<string, unknown>).runId ? 'done' : 'undone';
+}
+
+function autofillNotes(metadata: unknown): string[] {
+  const compas =
+    metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).compas : null;
+  const run =
+    compas && typeof compas === 'object' ? (compas as Record<string, unknown>).autofill : null;
+  const notes = run && typeof run === 'object' ? (run as Record<string, unknown>).notes : null;
+  return Array.isArray(notes)
+    ? notes.filter((n): n is string => typeof n === 'string').slice(0, 6)
+    : [];
 }

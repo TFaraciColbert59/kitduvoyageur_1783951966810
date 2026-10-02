@@ -2897,3 +2897,14 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
 .cp-bottle input[type='range'] {
   accent-color: var(--lkv-primary);
 }
+
+/* Trace du préremplissage (Où) : ce qui a été écrit, annulable. */
+.cp-autofill {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+.cp-autofill .cp-props li {
+  font-size: 13.5px;
+  color: var(--cp-ink2);
+}
