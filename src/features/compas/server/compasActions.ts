@@ -1343,6 +1343,51 @@ const applyRouteSchema = z.object({
   days: z.number().int().min(1).max(30),
 });
 
+/**
+ * Libère un parcours tenu par un brouillon vide du Compas du même compte
+ * (aucune étape, aucun objet) : ces brouillons naissent d'un geste abandonné.
+ * Une aventure qui contient quoi que ce soit n'est jamais modifiée.
+ */
+async function freeRouteFromEmptyDraft(
+  supabase: Supa,
+  userId: string,
+  tripId: string,
+  routeId: number
+): Promise<{ freed: boolean; title: string | null }> {
+  const { data: other } = await supabase
+    .from('trips')
+    .select('id, title, status, metadata')
+    .eq('user_id', userId)
+    .neq('id', tripId)
+    .eq('metadata->>route_id', String(routeId))
+    .maybeSingle();
+  if (!other) return { freed: false, title: null };
+  const o = other as {
+    id: string;
+    title: string | null;
+    status: string | null;
+    metadata: Record<string, unknown> | null;
+  };
+  const [{ count: steps }, { count: items }] = await Promise.all([
+    supabase.from('trip_steps').select('id', { count: 'exact', head: true }).eq('trip_id', o.id),
+    supabase.from('trip_items').select('id', { count: 'exact', head: true }).eq('trip_id', o.id),
+  ]);
+  const emptyDraft =
+    o.status === 'draft' &&
+    o.metadata?.created_with === 'compas' &&
+    (steps ?? 0) === 0 &&
+    (items ?? 0) === 0;
+  if (!emptyDraft) return { freed: false, title: o.title };
+  const meta = { ...(o.metadata ?? {}) };
+  delete meta.route_id;
+  const { error } = await supabase
+    .from('trips')
+    .update({ metadata: meta, updated_at: new Date().toISOString() })
+    .eq('id', o.id)
+    .eq('user_id', userId);
+  return { freed: !error, title: o.title };
+}
+
 /** Choisit un parcours du catalogue pour le voyage et le découpe en `days` jours. */
 export async function compasApplyRouteAction(
   input: z.input<typeof applyRouteSchema>
@@ -1363,13 +1408,31 @@ export async function compasApplyRouteAction(
       ...meta,
       route_id: routeId,
     }));
-    const { data, error } = await auth.supabase
-      .from('trips')
-      .update({ metadata, updated_at: new Date().toISOString() })
-      .eq('id', tripId)
-      .select('id');
-    if (error || !data?.length)
+    const write = () =>
+      auth.supabase
+        .from('trips')
+        .update({ metadata, updated_at: new Date().toISOString() })
+        .eq('id', tripId)
+        .select('id');
+    let { data, error } = await write();
+    // Un compte ne peut avoir qu'une aventure par parcours (index unique
+    // historique du flux « sentier »). Si le parcours est tenu par un de SES
+    // brouillons vides du Compas, on le libère ; sinon on nomme l'aventure.
+    if (error?.code === '23505') {
+      const freed = await freeRouteFromEmptyDraft(auth.supabase, auth.userId, tripId, routeId);
+      if (freed.freed) ({ data, error } = await write());
+      else
+        return {
+          success: false,
+          error: freed.title
+            ? `Ce parcours est déjà celui de ton aventure « ${freed.title} ». Ouvre-la depuis le menu des aventures.`
+            : 'Ce parcours est déjà utilisé par une autre de tes aventures.',
+        };
+    }
+    if (error || !data?.length) {
+      console.error('[compas] compasApplyRouteAction update', error?.code, error?.message);
       return { success: false, error: 'Impossible de choisir ce parcours.' };
+    }
     const { kept } = await resplitSteps(auth.supabase, tripId, routeId, days);
     revalidateTrip(tripSlug);
     return { success: true, kept };
