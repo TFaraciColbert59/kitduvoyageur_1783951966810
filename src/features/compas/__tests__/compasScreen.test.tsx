@@ -845,6 +845,30 @@ describe('CompasScreen', () => {
     );
   });
 
+  it('capsule d’étapes : la lentille suit le doigt, l’étape sous elle est choisie', () => {
+    render(<CompasScreen data={makeData()} />);
+    const nav = stepsNav();
+    nav.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 390, height: 50, right: 390, bottom: 50, x: 0, y: 0 }) as DOMRect;
+    fireEvent.click(within(nav).getByRole('button', { name: /Où/ }));
+    expect(within(nav).getByRole('button', { name: /Où/ }).getAttribute('aria-current')).toBe(
+      'step'
+    );
+    fireEvent.pointerDown(nav, { clientX: 20, pointerType: 'touch' });
+    fireEvent.pointerMove(nav, { clientX: 200, pointerType: 'touch' });
+    expect(nav.hasAttribute('data-drag')).toBe(true);
+    fireEvent.pointerMove(nav, { clientX: 250, pointerType: 'touch' });
+    fireEvent.pointerUp(nav, { clientX: 250, pointerType: 'touch' });
+    // Le clic qui suit le relâchement est absorbé.
+    fireEvent.click(within(nav).getByRole('button', { name: /Résa/ }));
+    expect(
+      within(nav)
+        .getByRole('button', { name: /Verdict/ })
+        .getAttribute('aria-current')
+    ).toBe('step');
+    expect(nav.hasAttribute('data-drag')).toBe(false);
+  });
+
   it('Dis-le : les propositions refusées ne s’appliquent pas, les autres oui', async () => {
     compas.compasInterpretAction.mockResolvedValueOnce({
       success: true,

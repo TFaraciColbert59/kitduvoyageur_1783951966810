@@ -282,6 +282,14 @@ export function CompasScreen({
         : undefined,
   };
   const stepIndex = COMPAS_STEPS.findIndex((s) => s.id === step);
+  const [lensX, setLensX] = useState<number | null>(null);
+  const lensDrag = useRef<{ x: number; moved: boolean } | null>(null);
+  const suppressClick = useRef(false);
+  const selectStep = (id: CompasStepId) => {
+    setStep(id);
+    setStack([]);
+    setMapBig(false);
+  };
 
   const hours = tripHours(model);
   const miniLine = [
@@ -306,11 +314,55 @@ export function CompasScreen({
       <div className="cp-bg" aria-hidden="true" />
       <div className="cp-top">
         <div className="cp-headrow">
-          <nav className="cp-steps cp-glass" aria-label="Étapes du Compas">
+          <nav
+            className="cp-steps cp-glass"
+            aria-label="Étapes du Compas"
+            data-drag={lensX != null ? '' : undefined}
+            onPointerDown={(e) => {
+              if (e.pointerType === 'mouse' && e.button !== 0) return;
+              lensDrag.current = { x: e.clientX, moved: false };
+            }}
+            onPointerMove={(e) => {
+              const d = lensDrag.current;
+              if (!d) return;
+              if (!d.moved && Math.abs(e.clientX - d.x) < 8) return;
+              if (!d.moved) {
+                d.moved = true;
+                e.currentTarget.setPointerCapture?.(e.pointerId);
+              }
+              const r = e.currentTarget.getBoundingClientRect();
+              const n = COMPAS_STEPS.length;
+              const x = r.width > 0 ? ((e.clientX - r.left) / r.width) * n - 0.5 : stepIndex;
+              setLensX(Math.min(n - 1, Math.max(0, x)));
+            }}
+            onPointerUp={() => {
+              const d = lensDrag.current;
+              lensDrag.current = null;
+              if (d?.moved && lensX != null) {
+                // Le clic qui suit le relâchement ne doit pas choisir une
+                // autre étape que celle sous la lentille.
+                suppressClick.current = true;
+                selectStep(COMPAS_STEPS[Math.round(lensX)].id);
+              }
+              setLensX(null);
+            }}
+            onPointerCancel={() => {
+              lensDrag.current = null;
+              setLensX(null);
+            }}
+            onClickCapture={(e) => {
+              if (!suppressClick.current) return;
+              suppressClick.current = false;
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
+            {/* Maquette finale : la lentille suit le doigt (maintenir et
+                glisser), l'étape sous la lentille est choisie au relâchement. */}
             <span
               className="cp-steps__lens"
               aria-hidden="true"
-              style={{ transform: `translateX(${stepIndex * 100}%)` }}
+              style={{ transform: `translateX(${(lensX ?? stepIndex) * 100}%)` }}
             />
             {COMPAS_STEPS.map((s) => (
               <button
@@ -318,11 +370,7 @@ export function CompasScreen({
                 type="button"
                 className="cp-step"
                 aria-current={step === s.id ? 'step' : undefined}
-                onClick={() => {
-                  setStep(s.id);
-                  setStack([]);
-                  setMapBig(false);
-                }}
+                onClick={() => selectStep(s.id)}
               >
                 <Icon name={s.icon} size={20} />
                 <span className="cp-step__l">{s.label}</span>

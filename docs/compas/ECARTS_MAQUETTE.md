@@ -18,7 +18,7 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 | Barre d'onglets en verre clair, onglet actif vert | ✅ | onglets de l'app inchangés (⛔ Explorer / Compas / Matériel / Hub / Recherche) |
 | Accessoire au-dessus de la barre (altitude max + profil) | ✅ | profil réel (Open-Meteo, Copernicus GLO-90, 80 points), glisser ou flèches pour lire ; sans profil : D+ et km |
 | Barre d'onglets qui se réduit au défilement | ✅ | défiler un tiroir vers le bas : seul l'onglet actif reste (portée Compas, navigation de l'app intacte) |
-| Lentille qui suit le doigt (maintenir et glisser) | ⬜ | |
+| Lentille qui suit le doigt (maintenir et glisser) | ✅ | glisser sur la capsule : la lentille suit, l'étape sous elle est choisie au relâchement |
 | Îlot dynamique : prochaine décision, appliquer | ⬜ | |
 | Annuler (îlot, Ctrl/⌘+Z, deux doigts vers la gauche) | 🟡 | « Annuler » dans l'annonce + Ctrl/⌘+Z : activité, préférences, enveloppe, décalage de dates, « Dis-le » quand l'inverse est sûr ; geste à deux doigts à faire |
 | Mode extérieur + intensité du verre (☀) | ✅ | |
