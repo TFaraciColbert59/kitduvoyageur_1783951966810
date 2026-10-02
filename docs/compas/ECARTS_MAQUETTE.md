@@ -16,7 +16,7 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 | Capsule d'étapes (icône + libellé, lentille, point de décision) | ✅ | |
 | Couche lumineuse sur les barres posées sur le paysage | ✅ | 2026-10-01 |
 | Barre d'onglets en verre clair, onglet actif vert | ✅ | onglets de l'app inchangés (⛔ Explorer / Compas / Matériel / Hub / Recherche) |
-| Accessoire au-dessus de la barre (altitude max + profil) | 🟡 | montre D+ et km ; profil d'altitude à brancher |
+| Accessoire au-dessus de la barre (altitude max + profil) | ✅ | profil réel (Open-Meteo, Copernicus GLO-90, 80 points), glisser ou flèches pour lire ; sans profil : D+ et km |
 | Barre d'onglets qui se réduit au défilement | ⬜ | |
 | Lentille qui suit le doigt (maintenir et glisser) | ⬜ | |
 | Îlot dynamique : prochaine décision, appliquer | ⬜ | |

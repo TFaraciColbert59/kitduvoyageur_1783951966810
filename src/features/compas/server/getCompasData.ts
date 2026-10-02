@@ -27,6 +27,8 @@ import {
 import { readCompasMeta } from '../engine/meta';
 import { relevantAffiliateLinks } from '../engine/affiliates';
 import { getOfficialAlerts } from './officialAlerts';
+import { getRouteElevation } from './elevation';
+import type { ElevationProfile } from '../engine/elevation';
 import { getCompasWeather, type CompasWeather } from './weather';
 
 /**
@@ -81,6 +83,8 @@ export interface CompasData {
   /** Réservations réelles du voyage. */
   bookings: CompasBookingInput[];
   routeGeojson: Record<string, unknown> | null;
+  /** Profil d'altitude réel du tracé (null : pas de tracé ou source injoignable). */
+  elevation: ElevationProfile | null;
   points: CompasPoint[];
   inventory: CompasInventoryInput[];
   shop: CompasShopProduct[];
@@ -439,11 +443,14 @@ export async function getCompasData(): Promise<CompasData | null> {
     routeId != null && routePois.length ? waterOnRoute : input.waterPointsCount;
 
   const baseModel = input.weather.length ? buildCompasModel(input) : draft;
-  const officialAlerts = await getOfficialAlerts({
-    point: origin,
-    from: trip.start_date ?? null,
-    to: trip.end_date ?? trip.start_date ?? null,
-  });
+  const [officialAlerts, elevation] = await Promise.all([
+    getOfficialAlerts({
+      point: origin,
+      from: trip.start_date ?? null,
+      to: trip.end_date ?? trip.start_date ?? null,
+    }),
+    getRouteElevation(baseModel.route.coords),
+  ]);
   const danger = assessDanger({
     dayPlans: baseModel.route.dayPlans,
     forecasts: (weather?.tripDays ?? []).map((d) => ({
@@ -473,6 +480,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     itinerary,
     bookings,
     routeGeojson: hub.hiking?.routeGeojson ?? null,
+    elevation,
     points: [
       ...points,
       ...routePois.map((p) => ({

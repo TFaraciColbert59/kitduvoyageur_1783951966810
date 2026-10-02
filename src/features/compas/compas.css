@@ -1636,6 +1636,44 @@
   background: var(--cp-sep);
 }
 
+/* Profil d'altitude réel (maquette : .acc svg.spk) — glisser pour lire. */
+.cp-acc__ro {
+  flex: none;
+  width: 92px;
+}
+.cp-acc__ro span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cp-spk {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  overflow: visible;
+  cursor: ew-resize;
+  touch-action: none;
+  border-radius: 6px;
+}
+.cp-spk:focus-visible {
+  outline: 2px solid var(--lkv-primary);
+  outline-offset: 3px;
+}
+.cp-spk__line {
+  fill: none;
+  stroke: var(--lkv-primary);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+.cp-spk__fill {
+  fill: color-mix(in srgb, var(--lkv-sage-300) 38%, transparent);
+  stroke: none;
+}
+.cp-spk__cur {
+  stroke: var(--lkv-ink-900, currentColor);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
 /* Réglage d'affichage (soleil) */
 .cp-popv {
   position: absolute;

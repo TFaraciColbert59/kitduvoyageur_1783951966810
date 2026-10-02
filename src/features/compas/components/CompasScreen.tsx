@@ -13,10 +13,11 @@ import {
 import Icon from '@/components/ui/Icon';
 import { togglePackedAction } from '@/app/voyages/kit-actions';
 import { COMPAS_STEPS, type CompasKitLine, type CompasStepId } from '../engine/compasModel';
-import { activityLabel, formatHours, formatKm, formatMeters } from '../engine/format';
+import { activityLabel, formatHours } from '../engine/format';
 import type { CompasData } from '../server/getCompasData';
 import { KitCard, NousCard, OuCard, ResaCard, VerdictCard } from './CompasCards';
 import { CompasMap } from './CompasMap';
+import { CompasAccessory } from './CompasAccessory';
 import { tripHours } from './CompasRuler';
 import { CompasSheet, type Detent } from './CompasSheet';
 import { SheetContent, sheetTitle } from './CompasSheets';
@@ -358,24 +359,13 @@ export function CompasScreen({
           </button>
         )}
         {model.route.stepsCount > 0 && (
-          <div className="cp-acc cp-glass">
-            <span className="cp-acc__i">
-              <Icon name="mountain" size={17} />
-            </span>
-            <span className="cp-acc__v">
-              <b>{formatMeters(model.route.elevationGainM)}</b>
-              <span>dénivelé positif</span>
-            </span>
-            <i className="cp-acc__sep" aria-hidden="true" />
-            <span className="cp-acc__v">
-              <b>{formatKm(model.route.distanceKm)}</b>
-              <span>
-                {model.route.days} jour{model.route.days > 1 ? 's' : ''} · {model.route.stepsCount}{' '}
-                étape
-                {model.route.stepsCount > 1 ? 's' : ''}
-              </span>
-            </span>
-          </div>
+          <CompasAccessory
+            profile={data.elevation}
+            gainM={model.route.elevationGainM}
+            distanceKm={model.route.distanceKm}
+            days={model.route.days}
+            stepsCount={model.route.stepsCount}
+          />
         )}
       </CompasMap>
 

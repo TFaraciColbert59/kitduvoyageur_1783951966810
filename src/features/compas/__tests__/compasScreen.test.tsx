@@ -251,6 +251,7 @@ function makeData(overrides: Partial<CompasInput> = {}): CompasData {
     })),
     bookings: [],
     routeGeojson: null,
+    elevation: null,
     points: [],
     inventory: [],
     shop: [
