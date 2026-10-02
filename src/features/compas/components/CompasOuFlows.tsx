@@ -51,7 +51,7 @@ const staticRow = { cursor: 'default' } as const;
 
 /* ---------- Activité ---------- */
 
-const ACTIVITY_META: Record<CompasActivity, { icon: string; hint: string }> = {
+export const ACTIVITY_META: Record<CompasActivity, { icon: string; hint: string }> = {
   hiking: { icon: 'footprints', hint: 'À la journée ou sur quelques jours' },
   trekking: { icon: 'mountain', hint: 'Itinérance, sac complet' },
   bivouac: { icon: 'tent', hint: 'Nuits sous tente' },

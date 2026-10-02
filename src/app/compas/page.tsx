@@ -6,7 +6,8 @@ import { CompasScreen } from '@/features/compas/components/CompasScreen';
 import { getCompasData } from '@/features/compas/server/getCompasData';
 import { listCompasTrips } from '@/features/compas/server/myTrips';
 import { CompasTripPicker } from '@/features/compas/components/CompasTripPicker';
-import AdventurePrepScreen from '@/features/adventure-prep/components/AdventurePrepScreen';
+import { CompasStart } from '@/features/compas/components/CompasStart';
+import { createClient } from '@/lib/supabase/server';
 import '@/features/compas/compas.css';
 
 /**
@@ -17,7 +18,8 @@ import '@/features/compas/compas.css';
  *   - aventure active   -> le Compas ;
  *   - aucune aventure active mais des voyages -> le choix du voyage à préparer ;
  *   - aucun voyage, ou `?nouvelle=1` (intention explicite de créer) ->
- *     le flux de création d'aventure.
+ *     le Compas vide : le premier geste crée l'aventure (préparateur unique,
+ *     l'ancien flux de création en trois étapes n'existe plus).
  *
  * `?etape=ou|nous|resa|verdict|kit` ouvre directement une étape (ex. `kit` pour
  * les anciens liens « configurateur »). Le rendu dépend de la session :
@@ -42,27 +44,28 @@ export default async function CompasPage({
 }) {
   const { nouvelle, etape } = await searchParams;
 
+  const start = async () => {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return (
+      <AppShell hasBottomNav videoBackground={false}>
+        <CompasLightTheme />
+        <CompasStart signedIn={Boolean(user)} />
+      </AppShell>
+    );
+  };
+
   // Intention explicite : elle gagne même si une aventure est déjà active, et
   // évite une lecture de base inutile.
-  if (NEW_FLOW_VALUES.has(nouvelle ?? ''))
-    return (
-      <>
-        <CompasLightTheme />
-        <AdventurePrepScreen material="compas" />
-      </>
-    );
+  if (NEW_FLOW_VALUES.has(nouvelle ?? '')) return start();
 
   const data = await getCompasData();
   if (!data) {
     // Aucune aventure active : choisir parmi ses voyages s'il y en a, sinon créer.
     const trips = await listCompasTrips();
-    if (trips.length === 0)
-      return (
-        <>
-          <CompasLightTheme />
-          <AdventurePrepScreen material="compas" />
-        </>
-      );
+    if (trips.length === 0) return start();
     return (
       <AppShell hasBottomNav videoBackground={false}>
         <CompasLightTheme />
