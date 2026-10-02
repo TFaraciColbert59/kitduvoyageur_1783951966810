@@ -904,6 +904,105 @@ export async function compasApplyKitAction(
   }
 }
 
+const createKitSchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  name: z.string().trim().min(2, 'Nom trop court').max(80, 'Nom trop long'),
+  season: z.enum(['printemps', 'ete', 'automne', 'hiver', 'toute_saison']).nullable(),
+});
+
+/**
+ * « Créer mon kit » : enregistre le kit du voyage comme un kit réutilisable
+ * (materiel_kits, origine manuelle, privé). Les objets sont copiés tels quels ;
+ * le lien d'inventaire n'est gardé que pour les objets de la personne.
+ */
+export async function compasCreateKitFromTripAction(
+  input: z.input<typeof createKitSchema>
+): Promise<CompasActionResult & { kitId?: string; count?: number }> {
+  const parsed = createKitSchema.safeParse(input);
+  if (!parsed.success)
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Requête invalide' };
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    const limited = await enforceRateLimit(auth.userId, {
+      scope: 'compas-create-kit',
+      limit: 10,
+      windowMs: 60_000,
+      failMode: 'closed',
+    });
+    if (limited) return { success: false, error: 'Trop de kits d’un coup : patiente une minute.' };
+    const { data: rows, error: readError } = await auth.supabase
+      .from('trip_items')
+      .select(
+        'item_name, category, quantity, weight_grams, is_vital, priority, owner_id, inventory_item_id'
+      )
+      .eq('trip_id', parsed.data.tripId)
+      .limit(500);
+    if (readError) return { success: false, error: 'Impossible de lire le kit du voyage.' };
+    const items = ((rows ?? []) as Array<Record<string, unknown>>).filter(
+      (r) => typeof r.item_name === 'string' && r.item_name.trim().length > 0
+    );
+    if (!items.length)
+      return { success: false, error: 'Le kit du voyage est vide : ajoute d’abord des objets.' };
+    const weight = (r: Record<string, unknown>) => {
+      const w = Number(r.weight_grams);
+      return Number.isFinite(w) && w > 0 ? Math.round(w) : null;
+    };
+    const qty = (r: Record<string, unknown>) => {
+      const q = Number(r.quantity);
+      return Number.isFinite(q) && q > 0 ? Math.round(q) : 1;
+    };
+    const total = items.reduce((t, r) => t + (weight(r) ?? 0) * qty(r), 0);
+    const { data: kit, error: kitError } = await auth.supabase
+      .from('materiel_kits')
+      .insert({
+        user_id: auth.userId,
+        name: parsed.data.name,
+        season: parsed.data.season,
+        origin: 'manuel',
+        total_weight_g: total,
+        description: `Créé depuis le Compas (${auth.trip.title ?? 'voyage'})`,
+      })
+      .select('id')
+      .single();
+    if (kitError || !kit) return { success: false, error: 'Impossible de créer le kit.' };
+    const kitId = (kit as { id: string }).id;
+    const { error: itemsError } = await auth.supabase.from('materiel_kit_items').insert(
+      items.map((r) => {
+        const vital = r.is_vital === true;
+        const priority =
+          r.priority === 'vital' || r.priority === 'optional' ? String(r.priority) : 'recommended';
+        return {
+          kit_id: kitId,
+          user_id: auth.userId,
+          name: String(r.item_name).trim().slice(0, 120),
+          category: typeof r.category === 'string' ? r.category : null,
+          quantity: qty(r),
+          weight_g: weight(r),
+          is_vital: vital,
+          priority: vital ? 'vital' : priority,
+          ownership: 'personal',
+          product_ownership_id:
+            r.owner_id === auth.userId && typeof r.inventory_item_id === 'string'
+              ? r.inventory_item_id
+              : null,
+        };
+      })
+    );
+    if (itemsError) {
+      // Pas de kit vide orphelin : on retire l'en-tête créé juste avant.
+      await auth.supabase.from('materiel_kits').delete().eq('id', kitId).eq('user_id', auth.userId);
+      return { success: false, error: 'Impossible d’enregistrer les objets du kit.' };
+    }
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true, kitId, count: items.length };
+  } catch (err) {
+    console.error('[compas] compasCreateKitFromTripAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
 /* ---------- Parcours ---------- */
 
 export interface CompasRouteOption {

@@ -27,6 +27,7 @@ import {
   compasSetCarrierAction,
   compasApplyKitAction,
   compasListMyKitsAction,
+  compasCreateKitFromTripAction,
   compasSetPartySizeAction,
   compasSearchStaysAction,
   compasSetStayAction,
@@ -2419,6 +2420,8 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
     { status: 'loading' } | { status: 'error'; error: string } | { status: 'ok'; kits: MyKit[] }
   >({ status: 'loading' });
   const [pending, setPending] = useState<string | null>(null);
+  const [reload, setReload] = useState(0);
+  const [creating, setCreating] = useState(false);
   const model = ctl.data.model;
   const tripNames = useMemo(() => ctl.lines.map((l) => l.name), [ctl.lines]);
   const forecasts = useMemo(
@@ -2444,13 +2447,80 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [reload]);
 
   if (state.status === 'loading') return <p className="cp-note">Lecture de tes kits…</p>;
   if (state.status === 'error') return <p className="cp-note">{state.error}</p>;
 
+  const createKit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    const season = String(fd.get('season') ?? '');
+    setCreating(true);
+    const ok = await ctl.run(`Kit « ${String(fd.get('kitName') ?? '').trim()} » créé`, () =>
+      compasCreateKitFromTripAction({
+        tripId: model.tripId,
+        tripSlug: model.slug,
+        name: String(fd.get('kitName') ?? ''),
+        season:
+          season === 'printemps' ||
+          season === 'ete' ||
+          season === 'automne' ||
+          season === 'hiver' ||
+          season === 'toute_saison'
+            ? season
+            : null,
+      })
+    );
+    setCreating(false);
+    if (ok) setReload((n) => n + 1);
+  };
+
   return (
     <>
+      {ctl.data.canEdit && (
+        <form className="cp-mkkit cp-glass" onSubmit={createKit} aria-label="Créer mon kit">
+          <b className="cp-mkkit__t">
+            <Icon name="plus" size={15} aria-hidden="true" /> Créer mon kit
+          </b>
+          <span className="cp-note">
+            Enregistre les {ctl.lines.length} objet{ctl.lines.length > 1 ? 's' : ''} du voyage comme
+            un kit réutilisable, privé.
+          </span>
+          <div className="cp-grid2">
+            <label className="cp-field">
+              Nom
+              <input
+                name="kitName"
+                required
+                minLength={2}
+                maxLength={80}
+                autoComplete="off"
+                defaultValue={`Kit · ${model.title}`.slice(0, 80)}
+              />
+            </label>
+            <label className="cp-field">
+              Saison
+              <select name="season" defaultValue="">
+                <option value="">Non précisée</option>
+                <option value="printemps">Printemps</option>
+                <option value="ete">Été</option>
+                <option value="automne">Automne</option>
+                <option value="hiver">Hiver</option>
+                <option value="toute_saison">Toute saison</option>
+              </select>
+            </label>
+          </div>
+          <button
+            type="submit"
+            className="cp-btn cp-btn--pg"
+            disabled={ctl.busy || creating || ctl.lines.length === 0}
+          >
+            {ctl.lines.length === 0 ? 'Ajoute d’abord des objets' : 'Créer le kit'}
+          </button>
+        </form>
+      )}
       <p className="cp-note">
         Appliquer un kit ajoute au voyage les objets qui n’y sont pas déjà (même nom). Rien n’est
         retiré ni emballé.

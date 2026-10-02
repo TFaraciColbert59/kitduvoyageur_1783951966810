@@ -99,6 +99,7 @@ const compas = vi.hoisted(() => ({
     ],
   })),
   compasApplyKitAction: vi.fn(async () => ({ success: true })),
+  compasCreateKitFromTripAction: vi.fn(async () => ({ success: true, kitId: 'k', count: 3 })),
   compasApplyRouteAction: vi.fn(async () => ({ success: true, kept: 0 })),
   compasMyRoutesAction: vi.fn(async () => ({ success: true, routes: [] })),
   compasSearchRoutesAction: vi.fn(async () => ({ success: true, routes: [] as unknown[] })),
@@ -779,6 +780,30 @@ describe('CompasScreen', () => {
         tripSlug: 'trek-3-vallees',
         kitId: '8d9c1a52-0000-4000-8000-000000000001',
       })
+    );
+  });
+
+  it('mes kits : « Créer mon kit » enregistre le kit du voyage et relit la liste', async () => {
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Kit/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Kit' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Kit' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Mes kits/ }));
+    const form = await within(sheet).findByRole('form', { name: 'Créer mon kit' });
+    fireEvent.change(within(form).getByLabelText('Nom'), { target: { value: 'Mon kit GR' } });
+    fireEvent.change(within(form).getByLabelText('Saison'), { target: { value: 'automne' } });
+    const before = compas.compasListMyKitsAction.mock.calls.length;
+    fireEvent.click(within(form).getByRole('button', { name: 'Créer le kit' }));
+    await waitFor(() =>
+      expect(compas.compasCreateKitFromTripAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        name: 'Mon kit GR',
+        season: 'automne',
+      })
+    );
+    await waitFor(() =>
+      expect(compas.compasListMyKitsAction.mock.calls.length).toBeGreaterThan(before)
     );
   });
 
