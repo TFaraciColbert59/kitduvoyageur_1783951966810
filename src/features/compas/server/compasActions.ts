@@ -5,8 +5,6 @@ import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { getTripById } from '@/lib/queries-trips';
 import { addTripItem } from '@/lib/queries-trip-kit';
-import { HUB_HOME_HREF, hubSectionHref } from '@/features/hub/registry/hubSectionRegistry';
-import { tripSegmentPath } from '@/features/trips/registry/tripPaths';
 import { askAI } from '@/lib/ai/askAI';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { createBookingProvider } from '@/features/booking/server/bookingProvider';
@@ -65,23 +63,53 @@ const slug = z
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug invalide')
   .max(120);
 
-function revalidateTrip(tripSlug: string) {
-  revalidatePath('/compas');
-  revalidatePath(tripSegmentPath(tripSlug, ''));
-  revalidatePath(tripSegmentPath(tripSlug, 'kit'));
-  revalidatePath(HUB_HOME_HREF);
-  revalidatePath(hubSectionHref({ nature: 'sortie', slug: tripSlug }, 'gear'));
+/**
+ * Volontairement vide. Les pages du voyage, du hub et du Compas sont
+ * dynamiques (aucun cache côté navigateur en Next 15) : un `revalidatePath`
+ * ne servait qu'à forcer le rendu COMPLET du Compas avant de répondre, soit
+ * plusieurs secondes par geste. Le Compas se rafraîchit lui-même en
+ * arrière-plan après chaque écriture (`router.refresh` dans une transition).
+ */
+function revalidateTrip(_tripSlug: string) {}
+
+/** Champs du voyage dont les actions du Compas ont besoin (lecture légère). */
+interface CompasTripRow {
+  id: string;
+  user_id: string;
+  title: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  destination_name: string | null;
+  destination_country_code: string | null;
+  party_size: number | null;
+  budget_currency: string | null;
+  metadata: Record<string, unknown> | null;
 }
 
+/**
+ * Droits d'écriture, en une lecture légère : la ligne du voyage et la
+ * fonction RLS `can_edit_trip` (propriétaire ou éditeur). Charger le voyage
+ * complet (étapes, kit, dépenses, profils) à chaque geste coûtait cher.
+ */
 async function requireEditor(tripId: string) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: 'Connecte-toi pour modifier le voyage.' } as const;
-  const trip = await getTripById(tripId, user.id);
+  const [{ data: row }, { data: canEdit }] = await Promise.all([
+    supabase
+      .from('trips')
+      .select(
+        'id, user_id, title, start_date, end_date, destination_name, destination_country_code, party_size, budget_currency, metadata'
+      )
+      .eq('id', tripId)
+      .maybeSingle(),
+    supabase.rpc('can_edit_trip', { p_trip_id: tripId }),
+  ]);
+  const trip = row as CompasTripRow | null;
   if (!trip) return { error: 'Voyage introuvable ou non autorisé.' } as const;
-  if (!trip.permissions.canEdit)
+  if (trip.user_id !== user.id && canEdit !== true)
     return { error: 'Seuls les organisateurs et éditeurs peuvent modifier le kit.' } as const;
   return { supabase, userId: user.id, trip } as const;
 }
@@ -89,9 +117,16 @@ async function requireEditor(tripId: string) {
 /** Personnes réellement rattachées au voyage : propriétaire, collaborateurs, équipage actif. */
 async function tripPeople(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  trip: { id: string; user_id: string; collaborators: Array<{ user_id: string }> }
+  trip: { id: string; user_id: string }
 ): Promise<Set<string>> {
-  const people = new Set<string>([trip.user_id, ...trip.collaborators.map((c) => c.user_id)]);
+  const { data: collabs } = await supabase
+    .from('trip_collaborators')
+    .select('user_id')
+    .eq('trip_id', trip.id);
+  const people = new Set<string>([
+    trip.user_id,
+    ...((collabs ?? []) as Array<{ user_id: string }>).map((c) => c.user_id),
+  ]);
   const { data: row } = await supabase
     .from('trips')
     .select('crew_id')
@@ -309,8 +344,6 @@ export async function compasAddInventoryItemAction(
       .single();
     if (error || !data)
       return { success: false, error: 'Impossible d’ajouter cet objet à l’inventaire.' };
-    revalidatePath('/compas');
-    revalidatePath('/hub/inventaire');
     return { success: true, itemId: String((data as { id: string }).id) };
   } catch (err) {
     console.error('[compas] compasAddInventoryItemAction', err);
@@ -340,8 +373,6 @@ export async function compasMarkReturnedAction(
       .select('id');
     if (error || !data?.length)
       return { success: false, error: 'Impossible de mettre à jour cet objet.' };
-    revalidatePath('/compas');
-    revalidatePath('/hub/inventaire');
     return { success: true };
   } catch (err) {
     console.error('[compas] compasMarkReturnedAction', err);
@@ -1484,7 +1515,14 @@ export async function compasInterpretAction(
           ) + 1
         : null;
     const prefs = readCompasMeta(trip.metadata).preferences;
-    const engaged = (trip.expenses ?? []).reduce((t, e) => t + (Number(e.amount) || 0), 0);
+    const { data: expenseRows } = await auth.supabase
+      .from('trip_expenses')
+      .select('amount')
+      .eq('trip_id', tripId);
+    const engaged = ((expenseRows ?? []) as Array<{ amount: unknown }>).reduce(
+      (t, e) => t + (Number(e.amount) || 0),
+      0
+    );
 
     const rules = parseIntentRules(text, today);
     let ai: CompasIntentAction[] = [];
