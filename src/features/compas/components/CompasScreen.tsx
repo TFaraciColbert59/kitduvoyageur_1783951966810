@@ -174,17 +174,28 @@ export function CompasScreen({
       undo?: () => Promise<ActionResult>
     ): Promise<boolean> => {
       setRunning(true);
+      // Retour immédiat : l'îlot annonce le geste sans attendre le serveur.
+      // La réponse ne fait que compléter l'annonce (« Annuler ») ou la
+      // remplacer par l'erreur.
+      notify(success);
       try {
         const res = await action();
         if (!res.success) {
           notify(res.error ?? 'Action impossible', 'bad');
+          startTransition(() => router.refresh());
           return false;
         }
-        notify(
-          success,
-          undefined,
-          undo ? () => void runRef.current?.(`Annulé : ${success}`, undo) : undefined
-        );
+        if (undo) {
+          const doUndo = () => void runRef.current?.(`Annulé : ${success}`, undo);
+          undoRef.current = doUndo;
+          setToast((t) => (t && t.message === success ? { ...t, undo: doUndo } : t));
+          // Une annonce annulable reste le temps de se raviser.
+          if (toastTimer.current) clearTimeout(toastTimer.current);
+          toastTimer.current = setTimeout(() => {
+            undoRef.current = null;
+            setToast(null);
+          }, 6000);
+        }
         startTransition(() => router.refresh());
         return true;
       } catch {

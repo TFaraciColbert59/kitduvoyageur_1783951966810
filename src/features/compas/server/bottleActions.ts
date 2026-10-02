@@ -86,8 +86,8 @@ async function requireOwner(tripId: string) {
   } as const;
 }
 
+/** La page pays est en cache (ISR) : elle seule doit être rafraîchie. */
 function revalidate(country: string | null) {
-  revalidatePath('/compas');
   if (country) revalidatePath(`/pays/${country}`);
 }
 

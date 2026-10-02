@@ -416,18 +416,32 @@ export async function getCompasData(): Promise<CompasData | null> {
     : firstPoint
       ? { lat: firstPoint.lat, lon: firstPoint.lon }
       : null;
-  const weather = await getCompasWeather({
-    origin,
-    tripDays: plans
-      .filter((d) => d.date != null && d.lat != null && d.lon != null)
-      .map((d) => ({
-        day: d.day,
-        date: d.date as string,
-        lat: d.lat as number,
-        lon: d.lon as number,
-      })),
-    timeZone: TIME_ZONE,
-  });
+  const routeId = compasMeta.routeId ?? num(hub.hiking?.routeId);
+  // Tout ce qui ne dépend que du brouillon part en même temps : chaque action
+  // du Compas recharge cette page, une chaîne d'attentes la rendait lente.
+  const [weather, routePois, officialAlerts, elevation, fx] = await Promise.all([
+    getCompasWeather({
+      origin,
+      tripDays: plans
+        .filter((d) => d.date != null && d.lat != null && d.lon != null)
+        .map((d) => ({
+          day: d.day,
+          date: d.date as string,
+          lat: d.lat as number,
+          lon: d.lon as number,
+        })),
+      timeZone: TIME_ZONE,
+    }),
+    routeId != null ? loadRoutePois(client, routeId) : Promise.resolve([]),
+    getOfficialAlerts({
+      point: origin,
+      from: trip.start_date ?? null,
+      to: trip.end_date ?? trip.start_date ?? null,
+    }),
+    // Le tracé ne dépend pas de la météo : le brouillon suffit.
+    getRouteElevation(draft.route.coords),
+    getEurRate(input.trip.budgetCurrency ?? 'EUR'),
+  ]);
   input.weather = toWeatherInput(weather);
 
   const itinerary: CompasItineraryStep[] = [...input.steps]
@@ -441,21 +455,11 @@ export async function getCompasData(): Promise<CompasData | null> {
       accommodation: s.accommodationName,
     }));
 
-  const routeId = compasMeta.routeId ?? num(hub.hiking?.routeId);
-  const routePois = routeId != null ? await loadRoutePois(client, routeId) : [];
   const waterOnRoute = routePois.filter((p) => p.category === 'water').length;
   const waterPointsCount =
     routeId != null && routePois.length ? waterOnRoute : input.waterPointsCount;
 
   const baseModel = input.weather.length ? buildCompasModel(input) : draft;
-  const [officialAlerts, elevation] = await Promise.all([
-    getOfficialAlerts({
-      point: origin,
-      from: trip.start_date ?? null,
-      to: trip.end_date ?? trip.start_date ?? null,
-    }),
-    getRouteElevation(baseModel.route.coords),
-  ]);
   const danger = assessDanger({
     dayPlans: baseModel.route.dayPlans,
     forecasts: (weather?.tripDays ?? []).map((d) => ({
@@ -515,7 +519,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     canEdit: Boolean(trip.permissions?.canEdit),
     viewerId,
     providers: getActiveProviderMode(),
-    fx: await getEurRate(input.trip.budgetCurrency ?? 'EUR'),
+    fx,
     weather,
     route: { id: routeId, name: hub.hiking?.routeName ?? null },
     origin,
