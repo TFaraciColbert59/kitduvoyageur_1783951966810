@@ -510,13 +510,16 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
     );
     const to = addDaysIso(from, spanDays - 1);
     const q = windowQuality(from, to);
+    // Annulable tant que le parcours n'est pas redécoupé (même règle que la règle de durée).
+    const undo = inverseOps(ctl, ops);
     await ctl.run(
       `Quand : ${
         unit === 'heures'
           ? `${formatDayMonth(from)} · ${formatHours(hours)}`
           : `${formatDayMonth(from)} → ${formatDayMonth(to)}`
       }${q ? ` · ${QUALITY_LABEL[q]}` : ''}${ops.some((o) => o.op === 'dates' && o.resplit) ? ' · parcours redécoupé' : ''}`,
-      () => runOps(ctl, ops)
+      () => runOps(ctl, ops),
+      undo ? () => runOps(ctl, undo) : undefined
     );
   };
 

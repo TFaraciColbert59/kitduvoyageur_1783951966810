@@ -118,8 +118,17 @@ export async function compasSearchOffersAction(
       fetchedAt: result.fetchedAt,
     };
   } catch (err) {
-    if (err instanceof BookingProviderError)
+    if (err instanceof BookingProviderError) {
+      // Code et statut seulement : jamais de clé ni de réponse brute du partenaire.
+      console.warn(
+        '[compas] recherche partenaire',
+        err.provider,
+        err.code,
+        err.status ?? '',
+        err.message
+      );
       return { success: false, error: 'Le partenaire n’a pas répondu : réessaie plus tard.' };
+    }
     console.error('[compas] compasSearchOffersAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
