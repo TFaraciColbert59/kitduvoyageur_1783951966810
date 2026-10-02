@@ -12,8 +12,9 @@
 - **Barre d'onglets réduite** : défiler un tiroir vers le bas ne laisse que l'onglet actif (maquette `.tabmin`) ; remonter ou fermer la rend entière. Portée Compas seulement (`.compas[data-tabmin]`), changement instantané (aucune animation de largeur).
 - **Annuler** : l'annonce d'une écriture propose « Annuler » (6 s) et Ctrl/⌘+Z la déclenche hors champ de saisie. L'inverse est calculé sur l'état réel d'avant (`inverseOps`) : activité, préférences, enveloppe, dates sans redécoupage ; un ajout d'objet, un nombre de personnes ou des dates redécoupées ne sont pas annulables (rien n'est rétabli à l'aveugle).
 - **Capsule d'étapes** : la lentille suit le doigt (glisser au-delà de 8 px), l'étape sous elle est choisie au relâchement ; le toucher simple reste inchangé.
+- **Glisser à gauche sur un objet du kit** : « Retirer » apparaît ; le retrait demande ce second geste (jamais le seul glissement). Tests : polyfill `PointerEvent` (absent de jsdom) — sans lui, le test de la lentille passait sans coordonnées ; garde `Number.isFinite` ajoutée côté code.
 - Suivi : `docs/compas/ECARTS_MAQUETTE.md` (écarts restants, écarts volontaires).
-- Preuves : `tsc` 0 ; `eslint --max-warnings=0 src/features/compas` 0 ; Compas 171 tests (dont 6 Veille, 9 Eau, 1 États, 1 Inventaire, 6 profil d'altitude) ; Météo vérifiée dans Chromium sur données réelles.
+- Preuves : `tsc` 0 ; `eslint --max-warnings=0 src/features/compas` 0 ; Compas 172 tests (dont 6 Veille, 9 Eau, 1 États, 1 Inventaire, 6 profil d'altitude) ; Météo vérifiée dans Chromium sur données réelles.
 
 ## 2026-10-01 — Compas aligné sur la maquette finale (LKDV_Compas.html, reçue de Tony)
 

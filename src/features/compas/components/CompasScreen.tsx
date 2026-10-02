@@ -333,7 +333,7 @@ export function CompasScreen({
               const r = e.currentTarget.getBoundingClientRect();
               const n = COMPAS_STEPS.length;
               const x = r.width > 0 ? ((e.clientX - r.left) / r.width) * n - 0.5 : stepIndex;
-              setLensX(Math.min(n - 1, Math.max(0, x)));
+              if (Number.isFinite(x)) setLensX(Math.min(n - 1, Math.max(0, x)));
             }}
             onPointerUp={() => {
               const d = lensDrag.current;

@@ -71,7 +71,7 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 | Manques : Emprunter · Louer · Acheter, boutique | 🟡 | modes d'acquisition existants |
 | Eau par personne (minimum, contenants, points d'eau) | ✅ | onglet « Eau » : repère par heure de marche jour par jour, contenants au volume écrit (`engine/water.ts`), points d'eau OSM du tracé |
 | Appui long : fiche, historique, commandes | 🟡 | |
-| Double-touche pour choisir, glisser à gauche pour retirer | ⬜ | |
+| Double-touche pour choisir, glisser à gauche pour retirer | 🟡 | glisser à gauche : « Retirer » apparaît, le retrait demande ce second geste ; double-touche à cadrer (« choisir » ambigu) |
 
 ## Carte
 | Élément | État | Note |

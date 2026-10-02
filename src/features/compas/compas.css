@@ -2634,3 +2634,22 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-material-bar {
 body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='page']) {
   display: none;
 }
+
+/* Glisser à gauche sur un objet du kit : « Retirer » apparaît, la ligne
+   recule légèrement (transform seul). */
+.cp-row[data-swiped] .cp-row__t {
+  transform: translateX(-6px);
+  transition: transform 0.2s ease;
+}
+.cp-row__swipe {
+  min-height: 36px;
+  padding: 0 12px;
+}
+.cp-row {
+  touch-action: pan-y;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cp-row[data-swiped] .cp-row__t {
+    transition: none;
+  }
+}

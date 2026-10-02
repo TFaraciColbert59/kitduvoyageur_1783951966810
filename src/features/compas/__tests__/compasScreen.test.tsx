@@ -285,6 +285,20 @@ function makeData(overrides: Partial<CompasInput> = {}): CompasData {
   };
 }
 
+// jsdom n'a pas PointerEvent : sans lui, les gestes perdent clientX/clientY.
+if (typeof window !== 'undefined' && !('PointerEvent' in window)) {
+  class TestPointerEvent extends MouseEvent {
+    pointerId: number;
+    pointerType: string;
+    constructor(type: string, init: PointerEventInit = {}) {
+      super(type, init);
+      this.pointerId = init.pointerId ?? 1;
+      this.pointerType = init.pointerType ?? 'mouse';
+    }
+  }
+  (window as unknown as { PointerEvent: unknown }).PointerEvent = TestPointerEvent;
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   class RO {
@@ -359,6 +373,25 @@ describe('CompasScreen', () => {
     expect(screen.getByRole('button', { name: 'Déballer Sac de couchage' })).toBeTruthy();
     await waitFor(() =>
       expect(kit.togglePackedAction).toHaveBeenCalledWith(SLEEP, true, 'trek-3-vallees')
+    );
+  });
+
+  it('glisser un objet à gauche fait apparaître « Retirer », qui seul retire', async () => {
+    render(<CompasScreen data={makeData()} />);
+    const sheet = await openAllKit();
+    const row = within(sheet)
+      .getByRole('button', { name: 'Emballer Sac de couchage' })
+      .closest('.cp-row') as HTMLElement;
+    fireEvent.pointerDown(row, { clientX: 300, clientY: 10, pointerType: 'touch' });
+    fireEvent.pointerMove(row, { clientX: 220, clientY: 12, pointerType: 'touch' });
+    fireEvent.pointerUp(row, { clientX: 220, clientY: 12, pointerType: 'touch' });
+    fireEvent.click(row);
+    // Le glissement n'ouvre pas la fiche et ne retire rien à lui seul.
+    expect(screen.queryByRole('dialog', { name: 'Sac de couchage' })).toBeNull();
+    expect(kit.deleteTripItemAction).not.toHaveBeenCalled();
+    fireEvent.click(within(row).getByRole('button', { name: 'Retirer du kit : Sac de couchage' }));
+    await waitFor(() =>
+      expect(kit.deleteTripItemAction).toHaveBeenCalledWith(SLEEP, 'trek-3-vallees')
     );
   });
 

@@ -2,7 +2,8 @@
 
 import { classifyScale } from '../engine/scale';
 import Link from 'next/link';
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
+import { deleteTripItemAction } from '@/app/voyages/kit-actions';
 import Icon from '@/components/ui/Icon';
 import type { CompasKitLine, CompasModel } from '../engine/compasModel';
 import {
@@ -39,12 +40,28 @@ export function lineStatus(line: CompasKitLine): { label: string; tone: Tone } {
   return STATUS[line.status];
 }
 
-/** Ligne d'objet des tiroirs : toucher = fiche, appui long = fiche en grand. */
+/**
+ * Ligne d'objet des tiroirs : toucher = fiche, appui long = fiche en grand,
+ * glisser à gauche = « Retirer » apparaît (maquette finale) ; le retrait
+ * demande ce second geste, jamais le seul glissement.
+ */
 export function KitRow({ line, ctl }: { line: CompasKitLine; ctl: CompasCtl }) {
+  const [swiped, setSwiped] = useState(false);
+  const swipe = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+  /** Le clic qui suit un glissement ne doit ni ouvrir la fiche ni refermer. */
+  const afterSwipe = useRef(false);
   const press = useLongPress(
     () => ctl.open({ kind: 'item', lineId: line.id }, 'large'),
-    () => ctl.open({ kind: 'item', lineId: line.id })
+    () => {
+      if (afterSwipe.current) {
+        afterSwipe.current = false;
+        return;
+      }
+      if (swiped) setSwiped(false);
+      else ctl.open({ kind: 'item', lineId: line.id });
+    }
   );
+  const canRemove = ctl.data.canEdit;
   const product = ctl.product(line.shopProductId);
   const status = lineStatus(line);
   const carrier = line.ownerId
@@ -58,7 +75,32 @@ export function KitRow({ line, ctl }: { line: CompasKitLine; ctl: CompasCtl }) {
       className="cp-row"
       role="button"
       tabIndex={0}
+      data-swiped={swiped ? '' : undefined}
       {...press}
+      onPointerDown={(e) => {
+        swipe.current = { x: e.clientX, y: e.clientY, moved: false };
+        afterSwipe.current = false;
+        press.onPointerDown(e);
+      }}
+      onPointerMove={(e) => {
+        press.onPointerMove(e);
+        const s0 = swipe.current;
+        if (!s0 || !canRemove) return;
+        const dx = e.clientX - s0.x;
+        if (Math.abs(e.clientY - s0.y) > 24) return;
+        if (dx < -48) {
+          s0.moved = true;
+          setSwiped(true);
+        } else if (dx > 24) {
+          s0.moved = true;
+          setSwiped(false);
+        }
+      }}
+      onPointerUp={() => {
+        afterSwipe.current = swipe.current?.moved ?? false;
+        swipe.current = null;
+        press.onPointerUp();
+      }}
       onKeyDown={(e) => e.key === 'Enter' && press.onClick()}
     >
       <Thumb
@@ -78,6 +120,25 @@ export function KitRow({ line, ctl }: { line: CompasKitLine; ctl: CompasCtl }) {
         </span>
       </span>
       <span className="cp-row__end">
+        {swiped && (
+          <button
+            type="button"
+            className="cp-btn cp-btn--bad cp-row__swipe"
+            disabled={ctl.busy}
+            aria-label={`Retirer du kit : ${line.name}`}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              void ctl
+                .run(`${line.name} retiré du kit`, () =>
+                  deleteTripItemAction(line.id, ctl.data.model.slug)
+                )
+                .then(() => setSwiped(false));
+            }}
+          >
+            Retirer
+          </button>
+        )}
         <button
           type="button"
           className="cp-ibtn"
