@@ -40,7 +40,7 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 | Qui : ajouter par @pseudo, glisser pour retirer | ⛔/🟡 | gestion du groupe = `/hub/groupe` (bouton Hub) |
 | Niveaux calculés (sorties, D+ moyen, allure, fiabilité) | 🟡 | allure et niveau dans « Équipe » ; les sorties des autres membres (`hike_sessions`, RLS « own ») ne sont pas lisibles sans leur consentement : à cadrer avec l'Empreinte (`get_user_signature`) |
 | Rôles (pilules) | ⬜ | à cadrer avec la règle `/hub` |
-| Budget : postes, plafond par personne, partage, qui doit quoi | 🟡 | enveloppe, qui doit quoi faits ; postes et partage à compléter |
+| Budget : postes, plafond par personne, partage, qui doit quoi | ✅ | enveloppe, postes réels par catégorie, « + Ajouter une dépense » (groupe / par pers. × taille réelle, prévue / payée), qui doit quoi |
 | Paliers Serré / Confort / Libre | ⛔ | montants inventés |
 | Annonce (publier pour trouver des compagnons) | ⬜ | |
 

@@ -49,6 +49,7 @@ import {
 import { DisLe } from './CompasDisLe';
 import { proposeShift, watchRules } from '../engine/watch';
 import { planWater } from '../engine/water';
+import { addExpenseAction } from '@/app/voyages/budget-actions';
 import { RESA_CATS, bookingCat, offerCat, type ResaCat } from '../engine/resaCats';
 import { KIT_THRESHOLDS } from '../engine/kitRules';
 import { inverseOps, runOps } from './compasApply';
@@ -1197,6 +1198,7 @@ function BudgetFlow({ ctl }: { ctl: CompasCtl }) {
         <dt>Par personne</dt>
         <dd>{formatMoney(b.perPerson, b.currency)}</dd>
       </dl>
+      {ctl.data.canEdit && <ExpenseForm ctl={ctl} />}
       <SettlementBlock ctl={ctl} />
       <PagedList
         label="Dépenses par catégorie"
@@ -1220,6 +1222,134 @@ function BudgetFlow({ ctl }: { ctl: CompasCtl }) {
     </>
   );
 }
+
+/**
+ * « + Ajouter une dépense » (maquette finale) : nom, montant, pour le groupe
+ * ou par personne, prévue ou payée. « Par personne » est multiplié par la
+ * taille réelle du groupe, et le total est affiché avant d'enregistrer.
+ * Passe par l'action budget existante (permissions du voyage vérifiées).
+ */
+function ExpenseForm({ ctl }: { ctl: CompasCtl }) {
+  const { tripId, slug, budget, crew } = ctl.data.model;
+  const [open, setOpen] = useState(false);
+  const [unit, setUnit] = useState<'groupe' | 'pers'>('groupe');
+  const [paid, setPaid] = useState<'prevue' | 'payee'>('prevue');
+  const [amount, setAmount] = useState('');
+  const value = Number(amount.replace(',', '.'));
+  const total =
+    Number.isFinite(value) && value > 0
+      ? Math.round((unit === 'pers' ? value * crew.size : value) * 100) / 100
+      : null;
+  if (!open)
+    return (
+      <button type="button" className="cp-btn cp-btn--soft" onClick={() => setOpen(true)}>
+        <Icon name="plus" size={16} />
+        Ajouter une dépense
+      </button>
+    );
+  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    const title = String(f.get('title') ?? '').trim();
+    if (title.length < 2 || total == null) {
+      ctl.notify('Nom (2 lettres au moins) et montant positif', 'bad');
+      return;
+    }
+    const fd = new FormData();
+    fd.set('tripId', tripId);
+    fd.set('tripSlug', slug);
+    fd.set('title', title);
+    fd.set('amount', String(total));
+    fd.set('currency', budget.currency);
+    fd.set('category', String(f.get('category') ?? 'divers'));
+    fd.set('splitType', 'equal');
+    fd.set('isPlanned', paid === 'prevue' ? 'true' : 'false');
+    void ctl
+      .run(`Dépense ajoutée : ${title}`, () => addExpenseAction(null, fd))
+      .then((ok) => {
+        if (ok) {
+          setOpen(false);
+          setAmount('');
+        }
+      });
+  };
+  return (
+    <form onSubmit={onSubmit} className="cp-expense">
+      <label className="cp-field">
+        Nom
+        <input name="title" placeholder="Parking, guide, cadeau…" maxLength={100} required />
+      </label>
+      <div className="cp-actions" style={{ alignItems: 'flex-end' }}>
+        <label className="cp-field" style={{ flex: 1 }}>
+          Montant ({budget.currency})
+          <input
+            name="amount"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            step="any"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            required
+          />
+        </label>
+        <label className="cp-field" style={{ flex: 1 }}>
+          Catégorie
+          <select name="category" defaultValue="divers">
+            {EXPENSE_CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {c[0].toUpperCase() + c.slice(1)}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <Segments
+        label="Montant pour"
+        value={unit}
+        onChange={setUnit}
+        options={[
+          { id: 'groupe', label: 'Groupe' },
+          { id: 'pers', label: 'Par pers.' },
+        ]}
+      />
+      <Segments
+        label="État"
+        value={paid}
+        onChange={setPaid}
+        options={[
+          { id: 'prevue', label: 'Prévue' },
+          { id: 'payee', label: 'Payée par moi' },
+        ]}
+      />
+      <p className="cp-note">
+        {total == null
+          ? 'Montant à saisir.'
+          : unit === 'pers'
+            ? `Soit ${formatMoney(total, budget.currency)} pour ${crew.size} personne${crew.size > 1 ? 's' : ''}, partagé à parts égales.`
+            : `${formatMoney(total, budget.currency)}, partagé à parts égales.`}
+      </p>
+      <div className="cp-actions">
+        <button type="submit" className="cp-btn cp-btn--pg" disabled={ctl.busy}>
+          Ajouter
+        </button>
+        <button type="button" className="cp-btn" onClick={() => setOpen(false)}>
+          Annuler
+        </button>
+      </div>
+    </form>
+  );
+}
+
+/** Catégories du budget (mêmes valeurs que le Hub). */
+const EXPENSE_CATEGORIES = [
+  'hébergement',
+  'nourriture',
+  'transport',
+  'activités',
+  'matériel',
+  'divers',
+];
 
 const BOOKING_STATUS: Record<string, { label: string; tone?: 'good' | 'warn' | 'bad' | 'soft' }> = {
   confirmed: { label: 'Confirmée', tone: 'good' },

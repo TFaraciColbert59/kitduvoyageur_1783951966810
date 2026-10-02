@@ -2665,3 +2665,10 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
   opacity: 0.45;
   cursor: default;
 }
+
+/* Formulaire de dépense (Nous · Budget). */
+.cp-expense {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 10px;
+}

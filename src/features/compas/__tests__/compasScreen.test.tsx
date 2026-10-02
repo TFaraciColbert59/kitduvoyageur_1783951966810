@@ -24,6 +24,11 @@ const kit = vi.hoisted(() => ({
 }));
 vi.mock('@/app/voyages/kit-actions', () => kit);
 
+const budgetActions = vi.hoisted(() => ({
+  addExpenseAction: vi.fn(async (_prev: unknown, _fd: FormData) => ({ success: true })),
+}));
+vi.mock('@/app/voyages/budget-actions', () => budgetActions);
+
 const compas = vi.hoisted(() => ({
   compasSetCarrierAction: vi.fn(async () => ({ success: true })),
   compasPickShopProductAction: vi.fn(async () => ({ success: true })),
@@ -579,6 +584,27 @@ describe('CompasScreen', () => {
     ).toBe('step');
     expect(screen.getAllByText(/Dates à choisir/).length).toBeGreaterThan(0);
     expect(screen.getAllByText('À choisir').length).toBe(2);
+  });
+
+  it('Nous : ajouter une dépense par personne = montant × taille réelle du groupe', async () => {
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Nous' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Nous' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Budget/ }));
+    fireEvent.click(within(sheet).getByRole('button', { name: /Ajouter une dépense/ }));
+    fireEvent.change(within(sheet).getByLabelText('Nom'), { target: { value: 'Parking' } });
+    fireEvent.change(within(sheet).getByLabelText(/Montant \(/), { target: { value: '7.5' } });
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Par pers.' }));
+    expect(within(sheet).getByText(/pour 2 personnes/)).toBeTruthy();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Ajouter' }));
+    await waitFor(() => expect(budgetActions.addExpenseAction).toHaveBeenCalled());
+    const fd = budgetActions.addExpenseAction.mock.calls[0][1] as FormData;
+    expect(fd.get('title')).toBe('Parking');
+    expect(fd.get('amount')).toBe('15');
+    expect(fd.get('isPlanned')).toBe('true');
+    expect(fd.get('splitType')).toBe('equal');
+    expect(fd.get('tripId')).toBe(TRIP);
   });
 
   it('Nous : budget réel, aucune enveloppe inventée, l’équipe la fixe', async () => {

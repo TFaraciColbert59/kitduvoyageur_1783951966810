@@ -5,7 +5,8 @@
 - **Double-touche** (maquette : « Double-touche une offre ou un produit pour le choisir ») : sur une ligne produit, déclenche « Choisir » / « Ajouter » comme le bouton ; sur une offre d'hébergement, « Noter » (ne réserve rien). Un lien partenaire n'est jamais ouvert par ce geste. `useDoubleTap` / `DoubleTapRow` (320 ms, les boutons de la ligne gardent leur sens).
 - **Annuler à deux doigts** : glisser deux doigts vers la gauche (> 60 px) lance la même annulation que « Annuler » et Ctrl/⌘+Z.
 - **Résa, six catégories** (Randos, Activités, Nuits, Vols, Trajets, Extras) : badge = réservations réelles ; une catégorie sans réservation ni offre est grisée (« aucune offre pour cette destination ») ; Offres s'ouvre filtré sur la catégorie touchée, réservations de la catégorie en tête.
-- Preuves : `tsc` 0 ; `eslint --max-warnings=0 src/features/compas` 0 ; Compas 177 tests.
+- **Nous · Budget** : « + Ajouter une dépense » (maquette) via l'action budget existante (permission `canManageBudget` vérifiée côté serveur) ; « Par pers. » = montant × taille réelle du groupe, total affiché avant d'enregistrer ; prévue ou payée.
+- Preuves : `tsc` 0 ; `eslint --max-warnings=0 src/features/compas` 0 ; Compas 178 tests.
 
 ## 2026-10-01 — Compas : Verdict Météo et Veille, activités en tuiles, tiroir « Préparer »
 
