@@ -1252,6 +1252,9 @@ const searchSchema = z.object({
   query: z.string().trim().max(80).nullable(),
 });
 
+/** « Autour » : tous les parcours du catalogue à moins de 50 km, du plus proche au plus loin. */
+const AROUND_RADIUS_KM = 50;
+
 export async function compasSearchRoutesAction(
   input: z.input<typeof searchSchema>
 ): Promise<{ success: true; routes: CompasRouteOption[] } | { success: false; error: string }> {
@@ -1268,9 +1271,9 @@ export async function compasSearchRoutesAction(
       supabase.rpc('compas_search_routes', {
         p_lat: lat,
         p_lng: lon,
-        p_radius_km: query ? 500 : 80,
+        p_radius_km: query ? 500 : AROUND_RADIUS_KM,
         p_query: query || null,
-        p_limit: 12,
+        p_limit: query ? 12 : 60,
       }),
       supabase
         .from('hike_sessions')
