@@ -1,5 +1,11 @@
 # MISSION LOG — LKDV
 
+## 2026-10-02 — Compas : double-touche et annulation à deux doigts
+
+- **Double-touche** (maquette : « Double-touche une offre ou un produit pour le choisir ») : sur une ligne produit, déclenche « Choisir » / « Ajouter » comme le bouton ; sur une offre d'hébergement, « Noter » (ne réserve rien). Un lien partenaire n'est jamais ouvert par ce geste. `useDoubleTap` / `DoubleTapRow` (320 ms, les boutons de la ligne gardent leur sens).
+- **Annuler à deux doigts** : glisser deux doigts vers la gauche (> 60 px) lance la même annulation que « Annuler » et Ctrl/⌘+Z.
+- Preuves : `tsc` 0 ; `eslint --max-warnings=0 src/features/compas` 0 ; Compas 174 tests.
+
 ## 2026-10-01 — Compas : Verdict Météo et Veille, activités en tuiles, tiroir « Préparer »
 
 - **Verdict, onglet Météo** : un bloc par jour du voyage (ciel, min/max, pluie, rafales, isotherme 0 °C), tiré des prévisions Open-Meteo déjà chargées aux points réels ; source et horizon affichés. Jour hors horizon : « non renseigné ».

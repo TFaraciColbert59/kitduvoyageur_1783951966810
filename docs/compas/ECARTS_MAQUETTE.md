@@ -20,7 +20,7 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 | Barre d'onglets qui se réduit au défilement | ✅ | défiler un tiroir vers le bas : seul l'onglet actif reste (portée Compas, navigation de l'app intacte) |
 | Lentille qui suit le doigt (maintenir et glisser) | ✅ | glisser sur la capsule : la lentille suit, l'étape sous elle est choisie au relâchement |
 | Îlot dynamique : prochaine décision, appliquer | ⬜ | |
-| Annuler (îlot, Ctrl/⌘+Z, deux doigts vers la gauche) | 🟡 | « Annuler » dans l'annonce + Ctrl/⌘+Z : activité, préférences, enveloppe, décalage de dates, « Dis-le » quand l'inverse est sûr ; geste à deux doigts à faire |
+| Annuler (îlot, Ctrl/⌘+Z, deux doigts vers la gauche) | ✅ | « Annuler » dans l'annonce, Ctrl/⌘+Z, deux doigts vers la gauche : activité, préférences, enveloppe, décalage de dates, « Dis-le » quand l'inverse est sûr |
 | Mode extérieur + intensité du verre (☀) | ✅ | |
 
 ## Où
@@ -71,7 +71,7 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 | Manques : Emprunter · Louer · Acheter, boutique | 🟡 | modes d'acquisition existants |
 | Eau par personne (minimum, contenants, points d'eau) | ✅ | onglet « Eau » : repère par heure de marche jour par jour, contenants au volume écrit (`engine/water.ts`), points d'eau OSM du tracé |
 | Appui long : fiche, historique, commandes | 🟡 | |
-| Double-touche pour choisir, glisser à gauche pour retirer | 🟡 | glisser à gauche : « Retirer » apparaît, le retrait demande ce second geste ; double-touche à cadrer (« choisir » ambigu) |
+| Double-touche pour choisir, glisser à gauche pour retirer | ✅ | double-touche = « Choisir » un produit / « Noter » une offre d'hébergement (comme la maquette : offre ou produit) ; glisser à gauche : « Retirer » apparaît, second geste requis |
 
 ## Carte
 | Élément | État | Note |

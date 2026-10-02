@@ -37,7 +37,15 @@ import {
 import type { CompasStayOffer } from '../engine/stays';
 import { kitCompatibility, planKitApply, type MyKit } from '../engine/kitApply';
 import { convertFromEur } from '../engine/currency';
-import { Chip, PagedList, Segments, Thumb, useTextFilter } from './CompasPrimitives';
+import {
+  Chip,
+  DoubleTapRow,
+  PagedList,
+  Segments,
+  Thumb,
+  useDoubleTap,
+  useTextFilter,
+} from './CompasPrimitives';
 import { DisLe } from './CompasDisLe';
 import { proposeShift, watchRules } from '../engine/watch';
 import { planWater } from '../engine/water';
@@ -314,12 +322,20 @@ function ProductRow({
   onAction: () => void;
   disabled?: boolean;
 }) {
+  const tap = useDoubleTap(() => {
+    if (!disabled) onAction();
+  });
   const price =
     product.mode === 'location' && product.pricePerDay != null
       ? `${formatMoney(product.pricePerDay)} / jour`
       : formatMoney(product.priceEur);
   return (
-    <div className="cp-row" style={{ cursor: 'default' }}>
+    <div
+      className="cp-row"
+      style={{ cursor: 'default' }}
+      title={disabled ? undefined : `Double-touche : ${action.toLowerCase()}`}
+      {...tap}
+    >
       <Thumb
         image={product.image}
         alt={product.imageAlt}
@@ -1294,7 +1310,19 @@ function StaySearch({
             items={state.offers}
             empty={<p className="cp-note">Aucune offre trouvée pour cette nuit.</p>}
             render={(o) => (
-              <div key={o.id} className="cp-row cp-row--tall" style={staticRow}>
+              <DoubleTapRow
+                key={o.id}
+                className="cp-row cp-row--tall"
+                style={staticRow}
+                onDouble={
+                  o.untitled || ctl.busy
+                    ? null
+                    : () =>
+                        void ctl.run('Hébergement noté', () =>
+                          compasSetStayAction({ tripId, tripSlug: slug, day, name: o.title })
+                        )
+                }
+              >
                 <span className="cp-thumb">
                   <Icon name="bed-double" size={20} />
                 </span>
@@ -1336,7 +1364,7 @@ function StaySearch({
                     </a>
                   )}
                 </span>
-              </div>
+              </DoubleTapRow>
             )}
           />
         </>

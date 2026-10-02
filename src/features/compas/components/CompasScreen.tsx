@@ -194,6 +194,36 @@ export function CompasScreen({
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  // Maquette finale : deux doigts glissés vers la gauche annulent aussi.
+  useEffect(() => {
+    let start: number | null = null;
+    const mid = (t: TouchList) => (t[0].clientX + t[1].clientX) / 2;
+    const onStart = (e: TouchEvent) => {
+      start = e.touches.length === 2 ? mid(e.touches) : null;
+    };
+    const onMove = (e: TouchEvent) => {
+      if (start == null || e.touches.length !== 2) return;
+      if (mid(e.touches) - start < -60) {
+        start = null;
+        const undo = undoRef.current;
+        if (!undo) return;
+        undoRef.current = null;
+        undo();
+      }
+    };
+    const onEnd = () => {
+      start = null;
+    };
+    window.addEventListener('touchstart', onStart, { passive: true });
+    window.addEventListener('touchmove', onMove, { passive: true });
+    window.addEventListener('touchend', onEnd, { passive: true });
+    return () => {
+      window.removeEventListener('touchstart', onStart);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onEnd);
+    };
+  }, []);
+
   const lines = useMemo<CompasKitLine[]>(
     () => model.kit.lines.map((l) => (l.id in packed ? { ...l, packed: packed[l.id] } : l)),
     [model.kit.lines, packed]

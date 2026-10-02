@@ -330,6 +330,25 @@ describe('CompasScreen', () => {
     expect(screen.queryByText(/rien de vital ne manque/)).toBeNull();
   });
 
+  it('double-touche sur un produit : le choisit comme le bouton, un toucher seul ne fait rien', async () => {
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(screen.getByText('Trouver : sac de couchage'));
+    const kitSheet = await screen.findByRole('dialog', { name: 'Kit' });
+    fireEvent.click(within(kitSheet).getByText('Sac de couchage'));
+    const sheet = await screen.findByRole('dialog', { name: 'Sac de couchage' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Acheter/ }));
+    const shop = await screen.findByRole('dialog', { name: 'Trouver : Sac de couchage' });
+    const row = within(shop).getByText('Sac de couchage Trek 0°').closest('.cp-row') as HTMLElement;
+    fireEvent.click(row);
+    expect(compas.compasPickShopProductAction).not.toHaveBeenCalled();
+    fireEvent.click(row);
+    await waitFor(() =>
+      expect(compas.compasPickShopProductAction).toHaveBeenCalledWith(
+        expect.objectContaining({ itemId: SLEEP, shopProductId: PRODUCT })
+      )
+    );
+  });
+
   it('décision → tiroir Kit → fiche → Acheter → produit précis relié et mis au panier', async () => {
     render(<CompasScreen data={makeData()} />);
     fireEvent.click(screen.getByText('Trouver : sac de couchage'));
@@ -875,6 +894,29 @@ describe('CompasScreen', () => {
     );
     expect(compas.compasSetPreferencesAction).toHaveBeenLastCalledWith(
       expect.objectContaining({ preferences: before })
+    );
+  });
+
+  it('Annuler : deux doigts glissés vers la gauche rétablissent aussi', async () => {
+    render(<CompasScreen data={makeData()} />);
+    const sheet = await openOu(/Préférences/);
+    fireEvent.click(within(sheet).getByRole('button', { name: /Bivouac/ }));
+    await screen.findByRole('button', { name: 'Annuler' });
+    const calls = compas.compasSetPreferencesAction.mock.calls.length;
+    const touches = (x: number) => [
+      { clientX: x, clientY: 300, identifier: 1 },
+      { clientX: x + 40, clientY: 300, identifier: 2 },
+    ];
+    fireEvent.touchStart(window, { touches: touches(300) });
+    fireEvent.touchMove(window, { touches: touches(200) });
+    fireEvent.touchEnd(window, { touches: [] });
+    await waitFor(() =>
+      expect(compas.compasSetPreferencesAction.mock.calls.length).toBe(calls + 1)
+    );
+    expect(compas.compasSetPreferencesAction).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        preferences: { pace: 'normal', nights: null, avoid: [], wishes: [] },
+      })
     );
   });
 
