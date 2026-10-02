@@ -98,7 +98,7 @@ export function CompasMap({
         </div>
       ) : (
         <p className="cp-map__empty">
-          Aucun point encore : trace le parcours dans le préparateur pour le voir ici.
+          Choisis un parcours dans « Où » : il s’affiche ici.
         </p>
       )}
       <button

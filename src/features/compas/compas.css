@@ -753,10 +753,19 @@
 
 .cp-map__empty {
   position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 24px;
+  z-index: 4;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: max-content;
+  max-width: calc(100% - 48px);
+  margin: 0;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.82);
+  box-shadow: 0 6px 18px rgb(23 43 36 / 0.14);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
   text-align: center;
   color: var(--cp-ink2);
   font-size: 13px;

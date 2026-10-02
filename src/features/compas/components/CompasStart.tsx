@@ -44,6 +44,9 @@ export function CompasStart({ signedIn }: { signedIn: boolean }) {
           /* la phrase sera à retaper : rien n'est perdu côté voyage */
         }
       }
+      // Quitter `?nouvelle=1` : sinon la page réaffiche le Compas vide et
+      // chaque toucher créerait un brouillon de plus.
+      router.replace('/compas');
       router.refresh();
     });
   };
