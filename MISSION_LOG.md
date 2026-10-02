@@ -7,7 +7,8 @@
 - **Résa, six catégories** (Randos, Activités, Nuits, Vols, Trajets, Extras) : badge = réservations réelles ; une catégorie sans réservation ni offre est grisée (« aucune offre pour cette destination ») ; Offres s'ouvre filtré sur la catégorie touchée, réservations de la catégorie en tête.
 - **Nous · Budget** : « + Ajouter une dépense » (maquette) via l'action budget existante (permission `canManageBudget` vérifiée côté serveur) ; « Par pers. » = montant × taille réelle du groupe, total affiché avant d'enregistrer ; prévue ou payée.
 - **Nous · Annonce** : pont vers la Bouteille à la mer du pays (seuil de confiance, majorité, frais annoncés, chaque candidat validé) et vers `/hub/groupe` ; rien n'est publié depuis le Compas. La page Pays accepte `?section=communaute` (lu au montage côté client : la page reste statique).
-- Preuves : `tsc` 0 ; `eslint --max-warnings=0 src/features/compas` 0 ; Compas 179 tests.
+- **Carte · Personnaliser** : panneau de calques réels (`engine/mapLayers.ts`) avec le nombre de points ; calque sans donnée grisé ; « Carte nue » / « Tout afficher » ; le calque Profil masque l'accessoire ; réglage retenu sur l'appareil (`localStorage`, try/catch). Styles de fond (Relief/Satellite) non proposés : la carte n'en a qu'un.
+- Preuves : `tsc` 0 ; `eslint --max-warnings=0 src/features/compas` 0 ; Compas 183 tests.
 
 ## 2026-10-01 — Compas : Verdict Météo et Veille, activités en tuiles, tiroir « Préparer »
 

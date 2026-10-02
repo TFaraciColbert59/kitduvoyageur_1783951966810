@@ -5,6 +5,15 @@ import { useMemo, useState, type ReactNode } from 'react';
 import Icon from '@/components/ui/Icon';
 import type { HubRoutePoint } from '@/features/hub/components/mobile/HubRouteMap';
 import type { CompasPoint } from '../server/getCompasData';
+import {
+  ALL_LAYERS,
+  MAP_LAYERS,
+  NO_LAYERS,
+  layerOf,
+  visiblePoints,
+  type LayerState,
+  type MapLayer,
+} from '../engine/mapLayers';
 
 /**
  * Carte du Compas : la carte MapLibre du hub, chargée à part (chunk lourd,
@@ -31,6 +40,8 @@ export function CompasMap({
   points,
   big,
   onToggleBig,
+  layers,
+  onLayers,
   children,
 }: {
   name: string;
@@ -39,13 +50,25 @@ export function CompasMap({
   points: CompasPoint[];
   big: boolean;
   onToggleBig: () => void;
+  /** Calques affichés (maquette : « Personnaliser la carte »). */
+  layers: LayerState;
+  onLayers: (next: LayerState) => void;
   /** Surcouches : prochaine décision, accessoire. */
   children?: ReactNode;
 }) {
   const [recenter, setRecenter] = useState(0);
+  const [panel, setPanel] = useState(false);
+  const counts = useMemo(() => {
+    const c = new Map<MapLayer, number>();
+    for (const p of points) {
+      const l = layerOf(p);
+      if (l) c.set(l, (c.get(l) ?? 0) + 1);
+    }
+    return c;
+  }, [points]);
   const mapPoints = useMemo<HubRoutePoint[]>(
     () =>
-      points.map((p) => ({
+      visiblePoints(points, layers).map((p) => ({
         id: p.id,
         lat: p.lat,
         lon: p.lon,
@@ -53,8 +76,9 @@ export function CompasMap({
         category: p.category,
         color: POINT_COLORS[p.kind === 'poi' ? 'poi' : p.category === 'stay' ? 'stay' : 'step'],
       })),
-    [points]
+    [points, layers]
   );
+  const shown = MAP_LAYERS.filter((l) => layers[l.id]).length;
   const hasSomething = coords.length > 0 || Boolean(routeGeojson) || points.length > 0;
 
   return (
@@ -90,7 +114,53 @@ export function CompasMap({
             <Icon name="navigation" size={17} />
           </button>
         )}
+        <button
+          type="button"
+          onClick={() => setPanel((v) => !v)}
+          aria-expanded={panel}
+          aria-label="Personnaliser la carte"
+        >
+          <Icon name="layers" size={17} />
+        </button>
       </div>
+      {panel && (
+        <div className="cp-mopts cp-sheet-glass" role="dialog" aria-label="Personnaliser la carte">
+          <div className="cp-mopts__h">
+            <b>Carte</b>
+            <span>
+              {shown} calque{shown > 1 ? 's' : ''} affiché{shown > 1 ? 's' : ''}
+            </span>
+          </div>
+          <div className="cp-mopts__grid">
+            {MAP_LAYERS.map((l) => {
+              const n = l.id === 'profil' ? null : (counts.get(l.id) ?? 0);
+              return (
+                <button
+                  key={l.id}
+                  type="button"
+                  role="switch"
+                  aria-checked={layers[l.id]}
+                  disabled={n === 0}
+                  title={n === 0 ? 'Aucun point de ce type sur ce voyage' : undefined}
+                  onClick={() => onLayers({ ...layers, [l.id]: !layers[l.id] })}
+                >
+                  <Icon name={l.icon} size={16} />
+                  <span>{l.label}</span>
+                  {n != null && n > 0 && <small>{n}</small>}
+                </button>
+              );
+            })}
+          </div>
+          <div className="cp-mopts__f">
+            <button type="button" onClick={() => onLayers(NO_LAYERS)}>
+              Carte nue
+            </button>
+            <button type="button" onClick={() => onLayers(ALL_LAYERS)}>
+              Tout afficher
+            </button>
+          </div>
+        </div>
+      )}
       {children}
     </section>
   );

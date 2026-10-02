@@ -77,8 +77,8 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 | Élément | État | Note |
 |---|---|---|
 | Carte claire, tracé, étapes numérotées, D / A | 🟡 | carte réelle (tuiles), pastilles claires |
-| Contrôles (couches, recentrer) | 🟡 | |
-| Personnaliser la carte (couches) | ⬜ | |
+| Contrôles (couches, recentrer) | ✅ | agrandir, recentrer, calques |
+| Personnaliser la carte (couches) | ✅ | calques réels (étapes, eau, refuges, camping, vues, sommets, parkings, profil) avec leur nombre ; calque vide grisé ; « Carte nue » / « Tout afficher » ; retenu sur l'appareil. Styles Relief/Satellite : non (fond de carte unique) |
 | Encart du point touché (callout) | 🟡 | encart de la carte partagée (Explorer) à l'appui sur un point ; style maquette à vérifier sur appareil |
 
 ## Création d'aventure (`/compas?nouvelle=1`)

@@ -2672,3 +2672,75 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
   gap: 8px;
   margin: 4px 0 10px;
 }
+
+/* Personnaliser la carte (maquette finale, .mopts) : calques réels. */
+.cp-mopts {
+  position: absolute;
+  z-index: 6;
+  top: 14px;
+  right: 58px;
+  width: min(280px, calc(100% - 76px));
+  padding: 10px;
+  border-radius: 22px;
+  display: grid;
+  gap: 8px;
+}
+.cp-mopts__h {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13px;
+}
+.cp-mopts__h span {
+  font-size: 11px;
+  color: var(--cp-ink2);
+}
+.cp-mopts__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+.cp-mopts__grid button {
+  position: relative;
+  min-height: 52px;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 3px;
+  border: 0;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--lkv-ink-900) 5%, transparent);
+  color: var(--cp-ink2);
+  font: inherit;
+  font-size: 10.5px;
+  cursor: pointer;
+}
+.cp-mopts__grid button[aria-checked='true'] {
+  background: color-mix(in srgb, var(--lkv-primary) 14%, transparent);
+  color: var(--lkv-primary);
+}
+.cp-mopts__grid button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.cp-mopts__grid small {
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+}
+.cp-mopts__f {
+  display: flex;
+  justify-content: space-between;
+}
+.cp-mopts__f button {
+  border: 0;
+  background: none;
+  color: var(--lkv-primary);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  min-height: 32px;
+  cursor: pointer;
+}
