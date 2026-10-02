@@ -42,7 +42,7 @@ import PartirLibrementView from '../components/PartirLibrementView';
 
 const FICHIER = join(
   process.cwd(),
-  'src/features/adventure-prep/components/PartirLibrementView.tsx'
+  'src/features/free-departure/components/PartirLibrementView.tsx'
 );
 
 type Etat = 'before' | 'during' | 'after';

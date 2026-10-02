@@ -197,7 +197,7 @@ test.describe('Profils Y — Decoupage & fidelite visuelle du Hub', () => {
 
   test('wizard /voyages/nouveau — creation guidee', async ({ page }) => {
     await page.context().addCookies([Y_LONG_GROUP]);
-    await prepareVisualPage(page, '/hub/nouveau');
+    await prepareVisualPage(page, '/compas?nouvelle=1');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
     await expectVisualSnapshot(page, 'voyages-nouveau.png');

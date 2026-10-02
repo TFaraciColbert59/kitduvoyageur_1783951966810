@@ -13,11 +13,9 @@ export function tripPath(slug: string): string {
   return `/voyages/${slug}`;
 }
 
-/** Chemin de création d'un voyage (wizard). */
+/** Chemin de création d'un voyage : le Compas, seul préparateur. */
 export function tripNewPath(): string {
-  // La page /voyages/nouveau n'existe plus (hub unique) : la création réelle
-  // est /hub/nouveau, le hub qui porte le parcours de création.
-  return '/hub/nouveau';
+  return '/compas?nouvelle=1';
 }
 
 /** Chemin complet d'une section par segment d'URL (ex: 'itineraire', 'kit', '' = racine). */

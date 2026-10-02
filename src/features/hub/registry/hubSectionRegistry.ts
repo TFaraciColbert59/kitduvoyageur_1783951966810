@@ -142,9 +142,9 @@ export const HUB_ALERTES_HREF = hubSectionHref({ nature: 'possession' }, 'alerte
 export const HUB_DEPART_HREF = hubSectionHref({ nature: 'possession' }, 'depart');
 
 /** H5 — Entrée du wizard de création (bouton « Nouvelle activité », R13). */
-export const HUB_NEW_HREF = '/hub/nouveau';
+export const HUB_NEW_HREF = '/compas?nouvelle=1';
 /** Mode Génération IA de la création (suite autoGen). */
-export const HUB_NEW_IA_HREF = '/hub/nouveau?mode=ia';
+export const HUB_NEW_IA_HREF = '/compas?nouvelle=1';
 /** Racine du hub = MENU de cartes-onglets (retour depuis n'importe quelle section). */
 export const HUB_HOME_HREF = '/hub';
 

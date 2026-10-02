@@ -48,7 +48,8 @@ export async function GET(
     );
   }
 
-  const response = NextResponse.redirect(new URL('/hub', request.url));
+  // Le Compas est le seul préparateur : le sentier préparé s'y ouvre.
+  const response = NextResponse.redirect(new URL('/compas', request.url));
   response.cookies.set(
     ACTIVE_ADVENTURE_COOKIE,
     serializeActiveAdventure({

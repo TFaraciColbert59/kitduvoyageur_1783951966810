@@ -46,7 +46,7 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import PartirLibrementView from '../components/PartirLibrementView';
 
-const FICHIER = join(process.cwd(), 'src/features/adventure-prep/components/PartirLibrementView.tsx');
+const FICHIER = join(process.cwd(), 'src/features/free-departure/components/PartirLibrementView.tsx');
 
 /** Les trois mesures qui n'etaient mesurees par rien. */
 const MESURES_FABRIQUEES = ['0.0 km', '2.4 km', '120 m'];

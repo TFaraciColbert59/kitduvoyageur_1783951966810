@@ -12,13 +12,6 @@ describe('CHANTIER X7 — CONFLIT DE BAS D\'ÉCRAN MOBILE ET HIÉRARCHIE Z-INDEX
     );
   });
 
-  it('PersistentMetricsBar se cale au-dessus de --bottom-nav-height sur la couche z-fab sans écraser la navigation', () => {
-    const bar = fs.readFileSync('src/features/trips/components/autoGen/PersistentMetricsBar.tsx', 'utf-8');
-    expect(bar).toContain('bottom-[var(--bottom-nav-height,0px)]');
-    // Lot 6 — l'échelle z est centralisée : plus de z-30 littéral.
-    expect(bar).toContain('z-[var(--z-fab)]');
-  });
-
   it('NavigationSurface opère sur la couche nav du registre zIndex avec pointer-events délégués', () => {
     const surface = fs.readFileSync('src/components/mobile-nav/navigation/NavigationSurface.tsx', 'utf-8');
     // M04 — plus de 9999 ad hoc : la barre consomme l'échelle partagée

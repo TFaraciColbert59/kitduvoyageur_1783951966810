@@ -1,5 +1,12 @@
 # MISSION LOG — LKDV
 
+## 2026-10-02 — Le Compas, préparateur unique (décision de Tony)
+
+- **Compas vide** (`CompasStart`) sans aventure ou avec `?nouvelle=1` : capsule d'étapes, Dis-le, tuiles d'activité, lignes Où « Non renseigné ». Premier geste → `compasCreateTripAction` (brouillon, propriétaire vérifié, aventure active) → Compas complet ; la phrase Dis-le est reprise dans le tiroir Où.
+- **Thème clair forcé sur /compas** (script d'init + `CompasLightTheme`) : la maquette est claire uniquement.
+- **Supprimé** : ancien flux de création en 3 étapes et son store/hooks/enregistrement, `/api/adventure/commit`, assistant en 5 étapes + génération IA (`/hub/nouveau`), `/api/trips/autogen`, `features/preparator`, `features/preparation`, `src/app/prepare/actions.ts`. Redirections vers `/compas?nouvelle=1` et `/compas?etape=kit` (table dans `CLAUDE.md`). Tests des écrans supprimés retirés avec eux (dont m4, m5, qui faisaient partie des échecs de référence).
+- Preuves : `tsc` 0 ; suite complète 5 589 tests passés, 21 échecs = référence (audit/design Playwright absent, trajectoire, registre IA, m53, n7) ; `ci_invariants`, `icon-names` OK ; écran de départ vérifié dans Chromium 390×844.
+
 ## 2026-10-02 — Compas : double-touche et annulation à deux doigts
 
 - **Double-touche** (maquette : « Double-touche une offre ou un produit pour le choisir ») : sur une ligne produit, déclenche « Choisir » / « Ajouter » comme le bouton ; sur une offre d'hébergement, « Noter » (ne réserve rien). Un lien partenaire n'est jamais ouvert par ce geste. `useDoubleTap` / `DoubleTapRow` (320 ms, les boutons de la ligne gardent leur sens).

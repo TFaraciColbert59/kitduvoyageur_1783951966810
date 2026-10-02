@@ -151,7 +151,7 @@ export function AddPlaceToTripModal({
                   <p className="mb-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-secondary)]">
                     Vous n’avez aucun voyage en cours de préparation.
                   </p>
-                  <Link href="/voyages/nouveau" className="no-underline">
+                  <Link href="/compas?nouvelle=1" className="no-underline">
                     <Button variant="primary" size="sm">
                       Créer un nouveau voyage
                     </Button>
