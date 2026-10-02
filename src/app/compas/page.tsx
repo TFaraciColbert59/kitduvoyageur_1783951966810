@@ -1,3 +1,4 @@
+import { CompasLightTheme } from '@/features/compas/components/CompasLightTheme';
 import type { Metadata } from 'next';
 import AppShell from '@/components/shell/AppShell';
 import { COMPAS_STEPS, type CompasStepId } from '@/features/compas/engine/compasModel';
@@ -43,15 +44,28 @@ export default async function CompasPage({
 
   // Intention explicite : elle gagne même si une aventure est déjà active, et
   // évite une lecture de base inutile.
-  if (NEW_FLOW_VALUES.has(nouvelle ?? '')) return <AdventurePrepScreen material="compas" />;
+  if (NEW_FLOW_VALUES.has(nouvelle ?? ''))
+    return (
+      <>
+        <CompasLightTheme />
+        <AdventurePrepScreen material="compas" />
+      </>
+    );
 
   const data = await getCompasData();
   if (!data) {
     // Aucune aventure active : choisir parmi ses voyages s'il y en a, sinon créer.
     const trips = await listCompasTrips();
-    if (trips.length === 0) return <AdventurePrepScreen material="compas" />;
+    if (trips.length === 0)
+      return (
+        <>
+          <CompasLightTheme />
+          <AdventurePrepScreen material="compas" />
+        </>
+      );
     return (
       <AppShell hasBottomNav videoBackground={false}>
+        <CompasLightTheme />
         <CompasTripPicker trips={trips} />
       </AppShell>
     );
@@ -63,6 +77,7 @@ export default async function CompasPage({
     // Fond peint par `.cp-bg` (paysage éclairci de la maquette) : la toile
     // globale assombrie n'est pas rendue sur cette route.
     <AppShell hasBottomNav videoBackground={false}>
+      <CompasLightTheme />
       <CompasScreen data={data} initialStep={initialStep} />
     </AppShell>
   );
