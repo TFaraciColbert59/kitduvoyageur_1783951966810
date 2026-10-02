@@ -71,12 +71,12 @@ describe('CompasAccessory', () => {
     fireEvent.keyDown(slider, { key: 'ArrowRight', shiftKey: true });
     fireEvent.keyDown(slider, { key: 'ArrowRight', shiftKey: true });
     expect(screen.getByText(/1\s?400 m/)).toBeTruthy();
-    expect(screen.getByText('au km 10,0')).toBeTruthy();
+    expect(screen.getByText('km 10,0')).toBeTruthy();
   });
 
   it('sans profil : dénivelé et distance, aucune altitude', () => {
     render(<CompasAccessory profile={null} gainM={800} distanceKm={12} days={2} stepsCount={3} />);
     expect(screen.queryByRole('slider')).toBeNull();
-    expect(screen.getByText('dénivelé positif')).toBeTruthy();
+    expect(screen.getByText(/D\+ 800/)).toBeTruthy();
   });
 });

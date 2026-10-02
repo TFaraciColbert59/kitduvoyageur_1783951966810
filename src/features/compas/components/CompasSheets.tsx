@@ -1643,7 +1643,7 @@ function NuitsFlow({ ctl, focusDay }: { ctl: CompasCtl; focusDay?: number }) {
       </p>
       {offers.length > 0 && (
         <>
-          <AffiliateDisclosure />
+          <AffiliateDisclosure compact />
           <PagedList
             label="Hébergements partenaires"
             items={offers}
@@ -1830,7 +1830,7 @@ function OffresFlow({ ctl, initialCat }: { ctl: CompasCtl; initialCat?: ResaCat 
       : ctl.data.bookings.filter((b) => LIVE_BOOKING(b.status) && bookingCat(b.vertical) === cat);
   return (
     <>
-      <AffiliateDisclosure />
+      <AffiliateDisclosure compact />
       {present.length > 0 && (
         <Segments
           label="Catégorie"

@@ -682,23 +682,23 @@ describe('CompasScreen', () => {
 
   it('Personnaliser la carte : masquer le profil retire l’accessoire, le choix est retenu', () => {
     const { unmount } = render(<CompasScreen data={makeData()} />);
-    expect(screen.getByText('dénivelé positif')).toBeTruthy();
+    expect(screen.getByText(/^D\+ /)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Personnaliser la carte' }));
     const panel = screen.getByRole('dialog', { name: 'Personnaliser la carte' });
     const profil = within(panel).getByRole('switch', { name: /Profil/ });
     expect(profil.getAttribute('aria-checked')).toBe('true');
     fireEvent.click(profil);
-    expect(screen.queryByText('dénivelé positif')).toBeNull();
+    expect(screen.queryByText(/^D\+ /)).toBeNull();
     // Aucun point d'eau sur ce voyage : le calque est grisé, pas inventé.
     expect((within(panel).getByRole('switch', { name: /Eau/ }) as HTMLButtonElement).disabled).toBe(
       true
     );
     unmount();
     render(<CompasScreen data={makeData()} />);
-    expect(screen.queryByText('dénivelé positif')).toBeNull();
+    expect(screen.queryByText(/^D\+ /)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Personnaliser la carte' }));
     fireEvent.click(screen.getByRole('button', { name: 'Tout afficher' }));
-    expect(screen.getByText('dénivelé positif')).toBeTruthy();
+    expect(screen.getByText(/^D\+ /)).toBeTruthy();
   });
 
   it('agrandir la carte réduit le haut à une carte-titre', () => {

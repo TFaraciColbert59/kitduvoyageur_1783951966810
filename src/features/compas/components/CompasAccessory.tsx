@@ -1,14 +1,13 @@
 'use client';
 
 import { useState, type KeyboardEvent, type PointerEvent } from 'react';
-import Icon from '@/components/ui/Icon';
 import { formatKm, formatMeters } from '../engine/format';
 import { pointAt, sparkPath, type ElevationProfile } from '../engine/elevation';
 
 /**
- * Accessoire au-dessus de la barre d'onglets (maquette finale) : altitude
+ * Accessoire de la carte (maquette finale), volontairement minimal : altitude
  * maximale et profil réel du tracé. Glisser sur le profil (ou les flèches au
- * clavier) lit l'altitude à chaque point. Sans profil : dénivelé et distance.
+ * clavier) lit l'altitude au kilomètre. Sans profil : dénivelé et distance.
  */
 export function CompasAccessory({
   profile,
@@ -27,20 +26,13 @@ export function CompasAccessory({
 
   if (!profile) {
     return (
-      <div className="cp-acc cp-glass">
-        <span className="cp-acc__i">
-          <Icon name="mountain" size={17} />
-        </span>
+      <div
+        className="cp-acc cp-glass"
+        aria-label={`${days} jour${days > 1 ? 's' : ''}, ${stepsCount} étape${stepsCount > 1 ? 's' : ''}`}
+      >
         <span className="cp-acc__v">
-          <b>{formatMeters(gainM)}</b>
-          <span>dénivelé positif</span>
-        </span>
-        <i className="cp-acc__sep" aria-hidden="true" />
-        <span className="cp-acc__v">
-          <b>{formatKm(distanceKm)}</b>
-          <span>
-            {days} jour{days > 1 ? 's' : ''} · {stepsCount} étape{stepsCount > 1 ? 's' : ''}
-          </span>
+          <b>D+ {formatMeters(gainM)}</b>
+          <span>{formatKm(distanceKm)}</span>
         </span>
       </div>
     );
@@ -64,16 +56,9 @@ export function CompasAccessory({
 
   return (
     <div className="cp-acc cp-glass">
-      <span className="cp-acc__i">
-        <Icon name="mountain" size={17} />
-      </span>
       <span className="cp-acc__v cp-acc__ro" aria-live="polite">
         <b>{formatMeters(at ? at.m : profile.maxM)}</b>
-        <span>
-          {at
-            ? `au km ${String(at.km.toFixed(1)).replace('.', ',')}`
-            : `alt. max · D+ ${formatMeters(gainM)}`}
-        </span>
+        <span>{at ? `km ${String(at.km.toFixed(1)).replace('.', ',')}` : 'max'}</span>
       </span>
       <svg
         className="cp-spk"

@@ -53,7 +53,7 @@
     0 5px 14px rgb(23 64 44 / 0.13);
   --cp-hi: rgb(255 255 255 / 0.9);
   --cp-shadow: 0 8px 22px rgb(23 43 36 / 0.12);
-  --cp-map-h: 40%;
+  --cp-map-h: 48%;
   --cp-gap: 8px;
   --cp-row-h: 48px;
   /* La barre d'onglets flotte AU-DESSUS de la carte (comme dans Plans et la
@@ -725,15 +725,30 @@
 }
 .cp-map__grab {
   position: absolute;
-  z-index: 5;
-  top: 6px;
+  z-index: 6;
+  top: 0;
   left: 50%;
+  width: 64px;
+  height: 22px;
+  margin-left: -32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: grab;
+  touch-action: none;
+}
+.cp-map__grab span {
   width: 36px;
   height: 5px;
-  margin-left: -18px;
   border-radius: 3px;
-  background: rgb(23 43 36 / 0.2);
-  pointer-events: none;
+  background: rgb(23 43 36 / 0.28);
+}
+.cp-map__grab:focus-visible {
+  outline: 2px solid var(--lkv-primary);
+  outline-offset: -2px;
+  border-radius: 8px;
 }
 
 .cp-map__empty {
@@ -1627,33 +1642,24 @@
   position: absolute;
   z-index: 5;
   left: 14px;
-  right: 14px;
   bottom: calc(var(--cp-nav-clear) - var(--space-6, 24px) + 10px);
   display: flex;
   align-items: center;
-  gap: 10px;
-  height: 44px;
-  padding: 0 14px 0 5px;
+  gap: 8px;
+  height: 36px;
+  max-width: 190px;
+  padding: 0 12px;
   border-radius: 999px;
-}
-.cp-acc__i {
-  flex: none;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: rgb(255 255 255 / 0.34);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9);
 }
 .cp-acc__v {
   display: flex;
-  flex-direction: column;
-  line-height: 1.1;
+  align-items: baseline;
+  gap: 4px;
   min-width: 0;
+  line-height: 1;
 }
 .cp-acc__v b {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -1663,26 +1669,20 @@
   color: var(--cp-ink2);
   white-space: nowrap;
 }
-.cp-acc__sep {
-  flex: none;
-  width: 1px;
-  height: 26px;
-  background: var(--cp-sep);
-}
 
 /* Profil d'altitude réel (maquette : .acc svg.spk) — glisser pour lire. */
 .cp-acc__ro {
   flex: none;
-  width: 92px;
+  min-width: 64px;
 }
 .cp-acc__ro span {
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .cp-spk {
-  flex: 1;
-  min-width: 0;
-  height: 28px;
+  flex: none;
+  width: 84px;
+  height: 20px;
   overflow: visible;
   cursor: ew-resize;
   touch-action: none;
@@ -2764,4 +2764,28 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
   -webkit-backdrop-filter: blur(14px) saturate(1.4);
   backdrop-filter: blur(14px) saturate(1.4);
   color: var(--cp-ink);
+}
+
+/* Mention partenaires (DGCCRF) : une ligne, le détail sur le « i » */
+.cp-aff {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--cp-ink3);
+}
+.cp-aff > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 500;
+}
+.cp-aff > summary::-webkit-details-marker {
+  display: none;
+}
+.cp-aff > p {
+  margin: 2px 0 0;
+  color: var(--cp-ink2);
 }
