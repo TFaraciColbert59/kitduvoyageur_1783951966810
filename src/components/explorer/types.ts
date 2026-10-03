@@ -107,7 +107,7 @@ export function getTrailImage(id: string, name?: string): string {
  */
 export function estimateHikingDurationHours(
   distanceKm: number | null | undefined,
-  elevationGainM: number | null | undefined
+  elevationGainM?: number | null | undefined
 ): number | null {
   if (!distanceKm || distanceKm <= 0) return null;
   const flatHours = distanceKm / 4.0;

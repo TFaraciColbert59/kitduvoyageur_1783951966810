@@ -34,6 +34,15 @@ const VALID_CATEGORIES: PoiCategory[] = [
   'transit',
 ];
 
+function normalizeCategoryParam(cat: string): PoiCategory | null {
+  const c = cat.trim().toLowerCase();
+  if (c === 'camping') return 'camp';
+  if (c === 'col') return 'summit';
+  if (c === 'waterfall') return 'viewpoint';
+  if (VALID_CATEGORIES.includes(c as PoiCategory)) return c as PoiCategory;
+  return null;
+}
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
 
@@ -50,9 +59,14 @@ export async function GET(request: NextRequest) {
 
   const { minLat, maxLat, minLng, maxLng } = viewport.bbox;
   const categoriesParam = searchParams.get('categories');
-  const requestedCategories: PoiCategory[] = categoriesParam
-    ? (categoriesParam.split(',').filter((c) => VALID_CATEGORIES.includes(c as PoiCategory)) as PoiCategory[])
-    : ['refuge', 'water', 'summit', 'viewpoint', 'camp'];
+  const parsedCats = categoriesParam
+    ? (categoriesParam.split(',').map(normalizeCategoryParam).filter(Boolean) as PoiCategory[])
+    : [];
+
+  const requestedCategories: PoiCategory[] =
+    parsedCats.length > 0
+      ? Array.from(new Set(parsedCats))
+      : ['refuge', 'shelter', 'water', 'summit', 'viewpoint', 'camp'];
 
   const limitParam = parseInt(searchParams.get('limit') || '60', 10);
   const limit = Math.min(Math.max(1, limitParam), 120);

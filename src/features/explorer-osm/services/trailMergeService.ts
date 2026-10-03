@@ -199,7 +199,43 @@ export function mergeAndDeduplicateTrails(
     }
   }
 
+  // Tri par priorité de prestige : Grands GR (iwn/nwn/GR) et parcours renommés en tête
+  combined.sort((a, b) => getTrailPriority(b) - getTrailPriority(a));
+
   return combined;
+}
+
+/**
+ * Calcule un score de priorité pour placer les GR et sentiers réputés en haut de liste.
+ */
+export function getTrailPriority(trail: Partial<MapTrail> | Record<string, unknown>): number {
+  let score = 0;
+  const net = String((trail as any).network || '').toLowerCase();
+  const ref = String((trail as any).ref || '').toUpperCase();
+  const name = String(trail.name || '').toUpperCase();
+
+  if (net === 'iwn') score += 100; // International (TMB, etc.)
+  else if (net === 'nwn') score += 90; // National (GR)
+  else if (net === 'rwn') score += 70; // Régional (GRP)
+  else if (net === 'lwn') score += 40; // PR local
+
+  if (ref.includes('GR') || ref.includes('TMB')) score += 80;
+  if (
+    name.includes('GR ') ||
+    name.includes('GR20') ||
+    name.includes('MONT-BLANC') ||
+    name.includes('MONT BLANC') ||
+    name.includes('TRAVERS') ||
+    name.includes('TOUR DU') ||
+    name.includes('TOUR DES')
+  ) {
+    score += 80;
+  }
+
+  if (name && !name.toLowerCase().includes('sans titre')) score += 30;
+  if ((trail as any).distance_km) score += 15;
+
+  return score;
 }
 
 /**
@@ -273,11 +309,18 @@ export function filterTrailsByViewport(
     if (!coords) return false;
 
     const [tLat, tLng] = coords;
-    const isOsm = (t as any).source === 'openstreetmap';
+    const isGrandGr =
+      (t as any).network === 'iwn' ||
+      (t as any).network === 'nwn' ||
+      (t as any).network === 'rwn' ||
+      String((t as any).ref || '').toUpperCase().includes('GR') ||
+      String((t as any).ref || '').toUpperCase().includes('TMB');
 
-    // Marge proportionnelle pour les grandes relations OSM traversant la bordure
-    const latMargin = isOsm ? Math.min(0.25, Math.max(0.05, latSpan * 0.25)) : 0;
-    const lngMargin = isOsm ? Math.min(0.25, Math.max(0.05, lngSpan * 0.25)) : 0;
+    // Marge proportionnelle : permet aux Grands GR qui traversent le massif d'être inclus
+    // même si leur centre global est décalé (jusqu'à ~0.8° soit ~80 km),
+    // tout en excluant rigoureusement les sentiers d'autres régions ou pays (ex: Nord à 500km, Dolomites à 400km, Japon à 9000km).
+    const latMargin = isGrandGr ? Math.min(0.8, Math.max(0.2, latSpan * 1.5)) : Math.min(0.25, Math.max(0.05, latSpan * 0.25));
+    const lngMargin = isGrandGr ? Math.min(0.8, Math.max(0.2, lngSpan * 1.5)) : Math.min(0.25, Math.max(0.05, lngSpan * 0.25));
 
     if (
       tLat < queriedBbox.minLat - latMargin ||

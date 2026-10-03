@@ -161,11 +161,13 @@ export async function queryRoutesInBbox(
   const n = bbox.north.toFixed(4);
   const e = bbox.east.toFixed(4);
 
-  // Demande les tags et le center de chaque relation de randonnée
+  // Demande les tags et le center de chaque relation de randonnée (itinéraires locaux et Grands GR / superroutes)
   const ql = `
 [out:json][timeout:${timeout}][maxsize:${maxsize}];
 (
-  relation["type"="route"]["route"~"^(hiking|foot)$"](${s},${w},${n},${e});
+  relation["route"~"^(hiking|foot)$"](${s},${w},${n},${e});
+  relation["type"="superroute"]["route"~"^(hiking|foot)$"](${s},${w},${n},${e});
+  relation["route_master"~"^(hiking|foot)$"](${s},${w},${n},${e});
 );
 out tags center ${limit + 1};
   `.trim();

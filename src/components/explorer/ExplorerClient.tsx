@@ -483,7 +483,7 @@ export default function ExplorerClient({
     },
     staleTime: 5 * 60_000,
     retry: false,
-    enabled: isOnline && Boolean(queriedBbox) && activePoiCategories.length > 0,
+    enabled: isOnline && Boolean(queriedBbox),
   });
 
   const handleSearchHere = useCallback(() => {
@@ -498,10 +498,8 @@ export default function ExplorerClient({
     setQueriedBbox({ ...liveViewportBbox });
     setShowSearchHereButton(false);
     void refetchOsmRoutes();
-    if (activePoiCategories.length > 0) {
-      void refetchOsmPois();
-    }
-  }, [liveViewportBbox, isViewportTooLarge, refetchOsmRoutes, refetchOsmPois, activePoiCategories]);
+    void refetchOsmPois();
+  }, [liveViewportBbox, isViewportTooLarge, refetchOsmRoutes, refetchOsmPois]);
 
   const worldSearchFetching = Boolean(trailsFetching || osmFetching || osmPoisFetching);
   const osmErrorMessage = useMemo(
@@ -604,25 +602,49 @@ export default function ExplorerClient({
       return baseTrails;
     }
 
-    const osmTrails: MapTrail[] = osmItems.map((r) => ({
-      id: r.id,
-      name: r.name,
-      lat: r.representativePoint ? r.representativePoint[1] : null,
-      lng: r.representativePoint ? r.representativePoint[0] : null,
-      distance_km: r.calculatedDistanceKm || r.declaredDistanceKm || null,
-      duration_hours: r.durationHours || null,
-      elevation_gain: r.elevationGainM || null,
-      ref: r.ref,
-      network: r.network,
-      difficulty: r.tags.sac_scale || null,
-      image_url: r.imageUrl || null,
-      description: r.description || null,
-      source: 'openstreetmap',
-      geometryStatus: r.geometryStatus,
-    } as any));
+    const osmTrails: MapTrail[] = osmItems.map((r) => {
+      let lat = r.representativePoint ? r.representativePoint[1] : null;
+      let lng = r.representativePoint ? r.representativePoint[0] : null;
+
+      // Si le centre global d'un Grand GR (ex: GR 20, GR 5, Tour du Mont-Blanc)
+      // est situé en dehors du viewport exploré ou non calculé (super-relation),
+      // on positionne son point d'interaction dans la zone explorée (au centre du viewport interrogé)
+      // pour qu'il soit directement visible sur la carte et immédiatement sélectionnable.
+      if (queriedBbox) {
+        const isOutsideOrNull =
+          lat == null ||
+          lng == null ||
+          lat < queriedBbox.minLat ||
+          lat > queriedBbox.maxLat ||
+          lng < queriedBbox.minLng ||
+          lng > queriedBbox.maxLng;
+
+        if (isOutsideOrNull) {
+          lat = (queriedBbox.minLat + queriedBbox.maxLat) / 2;
+          lng = (queriedBbox.minLng + queriedBbox.maxLng) / 2;
+        }
+      }
+
+      return {
+        id: r.id,
+        name: r.name,
+        lat,
+        lng,
+        distance_km: r.calculatedDistanceKm || r.declaredDistanceKm || null,
+        duration_hours: r.durationHours || null,
+        elevation_gain: r.elevationGainM || null,
+        ref: r.ref,
+        network: r.network,
+        difficulty: r.tags.sac_scale || null,
+        image_url: r.imageUrl || null,
+        description: r.description || null,
+        source: 'openstreetmap',
+        geometryStatus: r.geometryStatus,
+      } as any;
+    });
 
     return mergeAndDeduplicateTrails(baseTrails, osmTrails);
-  }, [unifiedMap, unifiedViewportData, trailsData, initialTrails, osmTrailsEnvelope]);
+  }, [unifiedMap, unifiedViewportData, trailsData, initialTrails, osmTrailsEnvelope, queriedBbox]);
 
   const filteredTrails = useMemo(() => {
     // 1. Filtrage spatial strict pour ne conserver que les sentiers appartenant au viewport actif
@@ -749,8 +771,13 @@ export default function ExplorerClient({
   }, [unifiedMap, unifiedViewportData, poisData, osmPoisEnvelope, queriedBbox]);
 
   const visiblePois = useMemo(() => {
-    if (!relevantPois || activePoiCategories.length === 0) return undefined;
-    return relevantPois.filter((poi) => activePoiCategories.includes(poi.category));
+    if (!relevantPois || relevantPois.length === 0) return undefined;
+    // Par défaut (aucun filtre sélectionné) : afficher tous les POIs pertinents de la zone
+    if (activePoiCategories.length === 0) return relevantPois;
+    return relevantPois.filter((poi) => {
+      const cat = poi.category === 'camping' ? 'camp' : poi.category;
+      return activePoiCategories.includes(poi.category) || activePoiCategories.includes(cat);
+    });
   }, [relevantPois, activePoiCategories]);
 
   const handlePoiClick = useCallback((poi: UnifiedPOI) => {

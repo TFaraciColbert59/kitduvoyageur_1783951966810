@@ -152,6 +152,40 @@ export async function GET(request: NextRequest) {
           if (summary) items.push(summary);
         }
 
+        // Priorisation des Grands GR et parcours emblématiques en tête de liste
+        items.sort((a, b) => {
+          const getScore = (item: ExternalRouteSummary) => {
+            let score = 0;
+            const net = (item.network || '').toLowerCase();
+            const ref = (item.ref || '').toUpperCase();
+            const name = (item.name || '').toUpperCase();
+
+            if (net === 'iwn') score += 100; // International (TMB, sentiers européens)
+            else if (net === 'nwn') score += 90; // National (Grandes Randonnées GR)
+            else if (net === 'rwn') score += 70; // Régional (GRP)
+            else if (net === 'lwn') score += 40; // Sentier local PR
+
+            if (ref.includes('GR') || ref.includes('TMB')) score += 80;
+            if (
+              name.includes('GR ') ||
+              name.includes('GR20') ||
+              name.includes('MONT-BLANC') ||
+              name.includes('MONT BLANC') ||
+              name.includes('TRAVERS') ||
+              name.includes('TOUR DU') ||
+              name.includes('TOUR DES')
+            ) {
+              score += 80;
+            }
+
+            if (item.name && !item.name.toLowerCase().includes('sans titre')) score += 30;
+            if (item.declaredDistanceKm || item.calculatedDistanceKm) score += 15;
+            return score;
+          };
+
+          return getScore(b) - getScore(a);
+        });
+
         const env: SearchEnvelope<ExternalRouteSummary> = {
           status: items.length > 0 ? 'ok' : 'empty',
           items,
