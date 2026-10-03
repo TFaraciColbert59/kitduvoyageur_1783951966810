@@ -441,17 +441,17 @@ export default function ExplorerClient({
           return res.json();
         })
         .then((data) => {
-          if (isMounted && data.geojson) {
+          if (isMounted && data) {
             setSelectedTrail((prev) =>
               prev && String(prev.id) === String(selectedTrailId)
                 ? ({
                     ...prev,
-                    geojson: data.geojson,
+                    geojson: data.geojson || null,
                     distance_km: data.calculatedDistanceKm || data.declaredDistanceKm || prev.distance_km,
                     elevation_gain: data.elevationGainM ?? prev.elevation_gain,
                     elevation_loss: data.elevationLossM ?? (prev as any).elevation_loss,
                     difficulty: data.difficulty || prev.difficulty,
-                    geometryStatus: data.geometryStatus,
+                    geometryStatus: data.geometryStatus || (data.geojson ? 'complete' : 'unavailable'),
                     detail: data,
                   } as any)
                 : prev

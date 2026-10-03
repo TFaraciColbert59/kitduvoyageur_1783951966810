@@ -30,6 +30,22 @@ describe('Compatibility Contracts — Démonstration de Réutilisation Multi-Dom
     expect(compasPayload.geometry).toEqual(sampleCanonicalRoute.geom);
   });
 
+  it('1b. Compas refuse expressément de démarrer une route sans tracé ou avec geometryStatus unavailable', () => {
+    expect(() =>
+      buildCompasPayload({
+        ...sampleCanonicalRoute,
+        geom: null,
+      })
+    ).toThrow('Impossible de lancer le Compas sans géométrie valide');
+
+    expect(() =>
+      buildCompasPayload({
+        ...sampleCanonicalRoute,
+        geometryStatus: 'unavailable',
+      })
+    ).toThrow('Impossible de lancer le Compas sans géométrie valide');
+  });
+
   it('2. HikeSession sépare strictement la route officielle de la trace GPS réelle de l’utilisateur', () => {
     const session: HikeSessionRecord = {
       id: 'session-uuid-123' as HikeSessionId,

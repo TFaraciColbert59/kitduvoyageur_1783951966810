@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  assembleContinuousLines,
   assembleOsmRelationGeometry,
   calculateBboxGeodesicAreaKm2,
   calculateLineDistanceKm,
@@ -46,6 +47,17 @@ describe('Geometry Assembler — Validation et Assemblage OSM', () => {
     expect(hierarchy.gapCount).toBe(0);
     expect(hierarchy.mainSegments).toHaveLength(2);
     expect(hierarchy.totalDistanceKm).toBeGreaterThan(0);
+
+    // Vérifie que les segments raccordés sont assemblés en un LineString continu
+    const lineString = hierarchyToMultiLineString(hierarchy);
+    expect(lineString?.type).toBe('LineString');
+    if (lineString?.type === 'LineString') {
+      expect(lineString.coordinates).toEqual([
+        [6.0, 45.0],
+        [6.01, 45.01],
+        [6.02, 45.02],
+      ]);
+    }
   });
 
   it('gère les segments inversés sans rupture', () => {

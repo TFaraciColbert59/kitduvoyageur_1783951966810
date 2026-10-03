@@ -510,6 +510,47 @@ export function computeGeometryHash(segments: RouteGeometrySegment[]): string {
 }
 
 /**
+ * Assemble les segments topologiquement continus en lignes continues de coordonnées.
+ * Une continuité topologique connue (écart <= 2.5m) est raccordée sans rupture.
+ * Une rupture réelle (> 2.5m, ex: 20m) reste strictement séparée en composantes disjointes.
+ * Zéro point fictif ajouté.
+ */
+export function assembleContinuousLines(segments: RouteGeometrySegment[]): [number, number][][] {
+  if (segments.length === 0) return [];
+  const valid = segments.filter((s) => s.coordinates && s.coordinates.length >= 2);
+  if (valid.length === 0) return [];
+
+  const lines: [number, number][][] = [];
+  let currentLine: [number, number][] = [...valid[0].coordinates];
+
+  for (let i = 1; i < valid.length; i++) {
+    const prevCoord = currentLine[currentLine.length - 1];
+    const nextSeg = valid[i];
+    const nextFirstCoord = nextSeg.coordinates[0];
+
+    const gapMeters = haversineDistanceKm(prevCoord, nextFirstCoord) * 1000;
+    if (gapMeters <= GAP_NUMERICAL_TOLERANCE_METERS) {
+      // Continuité topologique connue : les segments se raccordent dans la tolérance numérique
+      const isIdentical =
+        Math.abs(prevCoord[0] - nextFirstCoord[0]) < 1e-7 &&
+        Math.abs(prevCoord[1] - nextFirstCoord[1]) < 1e-7;
+      const startIndex = isIdentical || gapMeters < 0.1 ? 1 : 0;
+      currentLine.push(...nextSeg.coordinates.slice(startIndex));
+    } else {
+      // Rupture réelle : fin de la composante continue précédente
+      lines.push(currentLine);
+      currentLine = [...nextSeg.coordinates];
+    }
+  }
+
+  if (currentLine.length >= 2) {
+    lines.push(currentLine);
+  }
+
+  return lines;
+}
+
+/**
  * Construit un GeoJSON MultiLineString valide à partir de la hiérarchie
  * Compatible avec ST_GeomFromGeoJSON PostGIS et MapLibre / Leaflet.
  */
@@ -517,24 +558,17 @@ export function hierarchyToMultiLineString(
   hierarchy: RouteGeometryHierarchy,
   includeVariants = false
 ): GeoJSON.MultiLineString | GeoJSON.LineString | null {
-  const lines: [number, number][][] = [];
-
-  for (const seg of hierarchy.mainSegments) {
-    if (seg.coordinates.length >= 2) {
-      lines.push(seg.coordinates);
-    }
-  }
+  const lines: [number, number][][] = assembleContinuousLines(hierarchy.mainSegments);
 
   if (includeVariants) {
-    for (const seg of [
-      ...hierarchy.alternatives,
-      ...hierarchy.approaches,
-      ...hierarchy.excursions,
-      ...hierarchy.connections,
+    for (const group of [
+      hierarchy.alternatives,
+      hierarchy.approaches,
+      hierarchy.excursions,
+      hierarchy.connections,
     ]) {
-      if (seg.coordinates.length >= 2) {
-        lines.push(seg.coordinates);
-      }
+      const groupLines = assembleContinuousLines(group);
+      lines.push(...groupLines);
     }
   }
 
@@ -561,24 +595,17 @@ export function hierarchyToGeoJsonMultiLineString(
   hierarchy: RouteGeometryHierarchy,
   includeVariants = false
 ): GeoJSON.MultiLineString | null {
-  const lines: [number, number][][] = [];
-
-  for (const seg of hierarchy.mainSegments) {
-    if (seg.coordinates.length >= 2) {
-      lines.push(seg.coordinates);
-    }
-  }
+  const lines: [number, number][][] = assembleContinuousLines(hierarchy.mainSegments);
 
   if (includeVariants) {
-    for (const seg of [
-      ...hierarchy.alternatives,
-      ...hierarchy.approaches,
-      ...hierarchy.excursions,
-      ...hierarchy.connections,
+    for (const group of [
+      hierarchy.alternatives,
+      hierarchy.approaches,
+      hierarchy.excursions,
+      hierarchy.connections,
     ]) {
-      if (seg.coordinates.length >= 2) {
-        lines.push(seg.coordinates);
-      }
+      const groupLines = assembleContinuousLines(group);
+      lines.push(...groupLines);
     }
   }
 

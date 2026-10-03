@@ -68,6 +68,21 @@ describe('API Routes — Explorer OSM', () => {
       expect(json.items[0].name).toBe('Sentier du Lac');
       expect(json.items[0].declaredDistanceKm).toBe(12);
     });
+
+    it('retourne 400 avec message explicite si l’aire géodésique BBOX dépasse 400 km²', async () => {
+      // BBOX gigantesque (ex: 2° x 2° à l'équateur)
+      const req = new NextRequest(
+        'http://localhost:3000/api/explorer/osm/routes?min_lat=0.0&max_lat=2.0&min_lng=0.0&max_lng=2.0'
+      );
+      const res = await routesGET(req);
+      expect(res.status).toBe(400);
+
+      const json = await res.json();
+      expect(json.code).toBe('VIEWPORT_TOO_LARGE');
+      expect(json.error).toBe('Zoome pour rechercher des randonnées');
+      expect(json.maxAllowedKm2).toBe(400);
+      expect(json.areaKm2).toBeGreaterThan(400);
+    });
   });
 
   describe('GET /api/explorer/osm/route/[id]', () => {

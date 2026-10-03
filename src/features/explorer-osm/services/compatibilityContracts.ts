@@ -26,8 +26,9 @@ export function buildCompasPayload(route: {
   name: string;
   distanceKm: number;
   geom: GeoJSON.Geometry | null;
+  geometryStatus?: string;
 }): CompasRoutePayload {
-  if (!route.geom) {
+  if (!route.geom || route.geometryStatus === 'unavailable') {
     throw new Error('Impossible de lancer le Compas sans géométrie valide');
   }
   return {

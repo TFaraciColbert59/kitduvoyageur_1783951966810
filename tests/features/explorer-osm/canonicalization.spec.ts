@@ -122,6 +122,13 @@ describe('Canonical Route Service — Idempotence & Modèle Normalisé (sources 
             };
             return builder;
           },
+          delete: () => ({
+            eq: (col: string, val: any) => {
+              const idx = rows.findIndex((r: any) => String(r[col]) === String(val));
+              if (idx >= 0) rows.splice(idx, 1);
+              return Promise.resolve({ data: null, error: null });
+            },
+          }),
           insert: (payload: any) => {
             const arr = Array.isArray(payload) ? payload : [payload];
 
@@ -136,6 +143,30 @@ describe('Canonical Route Service — Idempotence & Modèle Normalisé (sources 
                         error: {
                           code: '23505',
                           message: 'duplicate key value violates unique constraint idx_hiking_routes_osm_relation_id',
+                        },
+                      }),
+                    }),
+                    then: (resolve: any) =>
+                      Promise.resolve({
+                        data: null,
+                        error: { code: '23505', message: 'duplicate key value' },
+                      }).then(resolve),
+                  };
+                }
+              }
+
+              if (table === 'hiking_route_sources' && item.provider != null && item.external_id != null) {
+                const dup = rows.find(
+                  (r: any) => r.provider === item.provider && String(r.external_id) === String(item.external_id)
+                );
+                if (dup) {
+                  return {
+                    select: () => ({
+                      single: async () => ({
+                        data: null,
+                        error: {
+                          code: '23505',
+                          message: 'duplicate key value violates unique constraint uq_hiking_route_sources_provider_external',
                         },
                       }),
                     }),
@@ -270,6 +301,39 @@ describe('Canonical Route Service — Idempotence & Modèle Normalisé (sources 
     // Les deux appels convergent vers le même RouteId canonique
     expect(resA.canonicalId).toBe(resB.canonicalId);
     expect(resA.canonicalId).toBe(1000);
+  });
+
+  it('TEST CONCURRENT MULTI-FOURNISSEUR (non-OSM / IGN) : deux matérialisations concurrentes retournent le même RouteId et nettoient l’orphelin', async () => {
+    const mockSupabase = createMockSupabase();
+
+    const ignDetail: ExternalRouteDetail = {
+      ...mockDetail,
+      id: 'osm:relation:0' as any,
+      osmRelationId: 0,
+      name: 'Traversée du Queyras (IGN)',
+      source: {
+        provider: 'ign',
+        externalId: 'ign_route_456',
+        sourceType: 'relation',
+        sourceVersion: '1',
+        fetchedAt: '2026-10-03T10:00:00Z',
+        license: 'Proprietary-LKDV',
+      },
+    };
+
+    const [resA, resB] = await Promise.all([
+      getOrCreateCanonicalRoute(mockSupabase as any, ignDetail),
+      getOrCreateCanonicalRoute(mockSupabase as any, ignDetail),
+    ]);
+
+    // Les deux appels concurrents retournent strictement le même RouteId canonique
+    expect(resA.canonicalId).toBe(resB.canonicalId);
+
+    // Une seule ligne dans hiking_routes (l'orphelin de la course a été nettoyé)
+    expect(mockSupabase._db.hiking_routes).toHaveLength(1);
+    expect(mockSupabase._db.hiking_route_sources).toHaveLength(1);
+    expect(mockSupabase._db.hiking_route_sources[0].provider).toBe('ign');
+    expect(mockSupabase._db.hiking_route_sources[0].external_id).toBe('ign_route_456');
   });
 
   it('mise à jour source (version & hash modifiés) : conserve le même RouteId et ajoute révision 2', async () => {

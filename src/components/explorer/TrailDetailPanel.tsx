@@ -110,7 +110,10 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
   const isOsm = String(trail.id).startsWith('osm:relation:') || (trail as any).source === 'openstreetmap';
   const rawGeomStatus = (trail as any).geometryStatus;
   const hasGeom = Boolean((trail as any).geom || (trail as any).geojson);
-  const isUnavailableGeometry = rawGeomStatus === 'unavailable' || (!hasGeom && !isOsm);
+  const isUnavailableGeometry =
+    rawGeomStatus === 'unavailable' ||
+    (!hasGeom && !isOsm) ||
+    (!hasGeom && (trail as any).detail !== undefined);
   const isPartialGeometry = rawGeomStatus === 'partial';
 
   const getCanonicalId = useCallback(async (): Promise<string | number | null> => {

@@ -387,32 +387,34 @@ export async function getOrCreateCanonicalRoute(
   if (insertErr) {
     // Si code 23505 (unique_violation) : course concurrente gagnée par une autre requête
     if (insertErr.code === '23505' || insertErr.message?.includes('duplicate key')) {
-      const { data: reSelected } = await supabase
-        .from('hiking_routes')
-        .select('id, osm_relation_id, name, ref, network, distance_km, geom, region, created_at')
-        .eq('osm_relation_id', osmId)
-        .single();
+      let winnerRouteId: number | null = null;
+      const { data: existingSrc } = await supabase
+        .from('hiking_route_sources')
+        .select('route_id')
+        .eq('provider', provider)
+        .eq('external_id', externalId)
+        .maybeSingle();
 
-      if (reSelected) {
-        return {
-          canonicalId: toRouteId(reSelected.id),
-          isNewlyCreated: false,
-          route: {
-            id: toRouteId(reSelected.id),
-            osmRelationId: Number(reSelected.osm_relation_id),
-            name: reSelected.name || externalDetail.name,
-            ref: reSelected.ref || externalDetail.ref,
-            network: reSelected.network || externalDetail.network,
-            distanceKm: Number(reSelected.distance_km || 0),
-            geom: reSelected.geom as any,
-            tags: {},
-            region: reSelected.region || null,
-            sourceStatus: 'active',
-            geometryStatus: externalDetail.geometryStatus,
-            currentRevisionHash: currentGeoHash,
-            createdAt: reSelected.created_at,
-          },
-        };
+      if (existingSrc) {
+        winnerRouteId = Number(existingSrc.route_id);
+      } else if (osmId && Number.isFinite(osmId)) {
+        const { data: reSelected } = await supabase
+          .from('hiking_routes')
+          .select('id')
+          .eq('osm_relation_id', osmId)
+          .maybeSingle();
+        if (reSelected) winnerRouteId = Number(reSelected.id);
+      }
+
+      if (winnerRouteId) {
+        const canonical = await getCanonicalRoute(supabase, winnerRouteId);
+        if (canonical) {
+          return {
+            canonicalId: canonical.id,
+            isNewlyCreated: false,
+            route: canonical,
+          };
+        }
       }
     }
 
@@ -422,7 +424,7 @@ export async function getOrCreateCanonicalRoute(
   const canonicalId = toRouteId(inserted.id);
 
   // 4. Enregistrement de la source externe normalisée
-  await supabase
+  const { error: sourceInsertErr } = await supabase
     .from('hiking_route_sources')
     .insert({
       route_id: inserted.id,
@@ -435,6 +437,34 @@ export async function getOrCreateCanonicalRoute(
       fetched_at: externalDetail.source.fetchedAt || nowIso,
       updated_at: nowIso,
     });
+
+  if (sourceInsertErr) {
+    if (sourceInsertErr.code === '23505' || sourceInsertErr.message?.includes('duplicate key')) {
+      // Course concurrente sur la source externe (ex. fournisseur multi-fournisseur IGN ou OSM)
+      // Nettoyer la ligne de route orpheline qu'on venait d'insérer dans hiking_routes
+      await supabase.from('hiking_routes').delete().eq('id', inserted.id);
+
+      // Récupérer la source gagnante
+      const { data: winningSrc } = await supabase
+        .from('hiking_route_sources')
+        .select('route_id')
+        .eq('provider', provider)
+        .eq('external_id', externalId)
+        .maybeSingle();
+
+      if (winningSrc) {
+        const canonical = await getCanonicalRoute(supabase, winningSrc.route_id);
+        if (canonical) {
+          return {
+            canonicalId: canonical.id,
+            isNewlyCreated: false,
+            route: canonical,
+          };
+        }
+      }
+    }
+    throw new Error(`Échec d'enregistrement de la source: ${sourceInsertErr.message}`);
+  }
 
   // 5. Enregistrement de la révision initiale (révision 1)
   await supabase
