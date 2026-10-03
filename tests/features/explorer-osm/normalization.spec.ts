@@ -5,7 +5,11 @@ import {
   normalizeOsmRelationDetail,
   normalizeOsmRelationSummary,
   parseDeclaredDistance,
+  parseOsmDuration,
+  resolveOsmImage,
+  calculateExperienceScores,
 } from '@/features/explorer-osm/services/normalizationService';
+import { estimateHikingDurationHours, getTrailImage } from '@/components/explorer/types';
 
 describe('Normalization Service — Données OSM et POIs', () => {
   describe('parseDeclaredDistance', () => {
@@ -142,6 +146,70 @@ describe('Normalization Service — Données OSM et POIs', () => {
       expect(poi?.elevationM).toBe(3835);
       expect(poi?.coordinates).toEqual([6.82, 45.85]);
       expect(poi?.source.license).toBe('ODbL-1.0');
+    });
+  });
+
+  describe('parseOsmDuration & estimateHikingDurationHours', () => {
+    it('parse correctement divers formats de durée OSM', () => {
+      expect(parseOsmDuration('02:30')).toBe(2.5);
+      expect(parseOsmDuration('2h30')).toBe(2.5);
+      expect(parseOsmDuration('3h')).toBe(3);
+      expect(parseOsmDuration('45 min')).toBe(0.75);
+      expect(parseOsmDuration('45m')).toBe(0.75);
+      expect(parseOsmDuration('1.5')).toBe(1.5);
+      expect(parseOsmDuration(undefined)).toBeNull();
+      expect(parseOsmDuration('invalide')).toBeNull();
+    });
+
+    it('estime la durée de randonnée via la formule Tobler/Naismith', () => {
+      // 10 km plat = 10 / 4 = 2.5h
+      expect(estimateHikingDurationHours(10)).toBe(2.5);
+      // 10 km avec 600m D+ = 2.5 + (600/300) = 4.5h
+      expect(estimateHikingDurationHours(10, 600)).toBe(4.5);
+      // retourne null si distance nulle ou négative
+      expect(estimateHikingDurationHours(0)).toBeNull();
+      expect(estimateHikingDurationHours(-5)).toBeNull();
+    });
+  });
+
+  describe('resolveOsmImage & getTrailImage', () => {
+    it('résout les tags d’image OSM ou wikimedia', () => {
+      expect(resolveOsmImage({ image_url: 'https://example.com/photo.jpg' })).toBe('https://example.com/photo.jpg');
+      expect(resolveOsmImage({ image: 'https://example.com/view.png' })).toBe('https://example.com/view.png');
+      expect(resolveOsmImage({ wikimedia_commons: 'File:Mont_Blanc_vue.jpg' })).toContain('commons.wikimedia.org');
+      expect(resolveOsmImage({})).toBeNull();
+    });
+
+    it('fournit une image thématique contextuelle via getTrailImage', () => {
+      const mountainImg = getTrailImage('1', 'Sentier du Pic des Aiguilles');
+      expect(mountainImg).toContain('unsplash.com');
+
+      const lakeImg = getTrailImage('2', 'Boucle du Lac Bleu et Cascade');
+      expect(lakeImg).toContain('unsplash.com');
+
+      const forestImg = getTrailImage('3', 'Forêt de Fontainebleau');
+      expect(forestImg).toContain('unsplash.com');
+    });
+  });
+
+  describe('calculateExperienceScores', () => {
+    it('calcule des scores dynamiques d’expérience selon la difficulté et le dénivelé', () => {
+      const easyScores = calculateExperienceScores({
+        sac_scale: 'hiking',
+        name: 'Sentier du Bois des Écureuils',
+      }, 4, 50, 'lwn');
+
+      expect(easyScores.adventure).toBeGreaterThanOrEqual(15);
+      expect(easyScores.adventure).toBeLessThan(70);
+      expect(easyScores.nature).toBeGreaterThan(60);
+
+      const alpineScores = calculateExperienceScores({
+        sac_scale: 'alpine_hiking',
+        name: 'Arête du Pic Sommet',
+      }, 18, 1200, 'iwn');
+
+      expect(alpineScores.adventure).toBeGreaterThan(80);
+      expect(alpineScores.panorama).toBeGreaterThan(85);
     });
   });
 });

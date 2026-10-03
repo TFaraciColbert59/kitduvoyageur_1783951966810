@@ -43,26 +43,76 @@ export interface MapTrail {
   price_per_night?: number | null;
   has_blankets?: boolean | null;
   description?: string | null;
+  image_url?: string | null;
+  operator?: string | null;
+  symbol?: string | null;
+  from?: string | null;
+  to?: string | null;
+  roundtrip?: boolean | null;
 }
 
 // Keep MapRefuge as alias for backwards compat
 export type MapRefuge = MapTrail;
 
 export const DEFAULT_TRAIL_IMAGES = [
-  'https://images.unsplash.com/photo-1508193638397-1c4234db14d8?w=600&q=80',
-  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&q=80',
-  'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=600&q=80',
-  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80',
-  'https://images.unsplash.com/photo-1511884642898-4c92249e20b6?w=600&q=80',
-  'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=600&q=80',
-  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&q=80',
-  'https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=600&q=80',
+  'https://images.unsplash.com/photo-1508193638397-1c4234db14d8?w=800&q=80',
+  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80',
+  'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=800&q=80',
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
+  'https://images.unsplash.com/photo-1511884642898-4c92249e20b6?w=800&q=80',
+  'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80',
+  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80',
+  'https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=800&q=80',
 ];
 
-export function getTrailImage(id: string): string {
+const FOREST_IMAGES = [
+  'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80',
+  'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=800&q=80',
+  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80',
+];
+
+const COASTAL_IMAGES = [
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80',
+  'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=800&q=80',
+];
+
+const WATER_IMAGES = [
+  'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&q=80',
+  'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?w=800&q=80',
+];
+
+export function getTrailImage(id: string, name?: string): string {
+  const n = (name || '').toLowerCase();
+  if (n.includes('bois') || n.includes('foret') || n.includes('forêt') || n.includes('sous-bois')) {
+    const idx = Math.abs(String(id).split('').reduce((s, c) => s + c.charCodeAt(0), 0)) % FOREST_IMAGES.length;
+    return FOREST_IMAGES[idx];
+  }
+  if (n.includes('mer') || n.includes('plage') || n.includes('cote') || n.includes('côte') || n.includes('littoral') || n.includes('douaniers')) {
+    const idx = Math.abs(String(id).split('').reduce((s, c) => s + c.charCodeAt(0), 0)) % COASTAL_IMAGES.length;
+    return COASTAL_IMAGES[idx];
+  }
+  if (n.includes('lac') || n.includes('cascade') || n.includes('riviere') || n.includes('rivière') || n.includes('torrent')) {
+    const idx = Math.abs(String(id).split('').reduce((s, c) => s + c.charCodeAt(0), 0)) % WATER_IMAGES.length;
+    return WATER_IMAGES[idx];
+  }
   if (!id) return DEFAULT_TRAIL_IMAGES[0];
   const sum = String(id).split('').reduce((s, c) => s + c.charCodeAt(0), 0);
-  return DEFAULT_TRAIL_IMAGES[sum % DEFAULT_TRAIL_IMAGES.length];
+  return DEFAULT_TRAIL_IMAGES[Math.abs(sum) % DEFAULT_TRAIL_IMAGES.length];
+}
+
+/**
+ * Estimation de la durée de randonnée selon la formule de Tobler / règle de Naismith :
+ * - 4.0 km/h sur le plat
+ * - +1 heure par tranche de 300 mètres de dénivelé positif
+ */
+export function estimateHikingDurationHours(
+  distanceKm: number | null | undefined,
+  elevationGainM: number | null | undefined
+): number | null {
+  if (!distanceKm || distanceKm <= 0) return null;
+  const flatHours = distanceKm / 4.0;
+  const climbHours = elevationGainM && elevationGainM > 0 ? elevationGainM / 300 : 0;
+  return Math.round((flatHours + climbHours) * 10) / 10;
 }
 
 /**

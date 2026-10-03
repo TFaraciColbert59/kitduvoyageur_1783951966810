@@ -20,6 +20,7 @@ import {
   getDifficultyLabel,
   formatDistance,
   formatDuration,
+  estimateHikingDurationHours,
 } from './types';
 
 interface Props {
@@ -66,13 +67,21 @@ function StatPill({ icon, label, value }: { icon: React.ReactNode; label: string
  */
 export default function TrailDetailPanel({ trail, onClose, open = true }: Props) {
   const router = useRouter();
-  const imgUrl = getTrailImage(trail.id);
+  const imgUrl = trail.image_url || getTrailImage(trail.id, trail.name);
   const diffColor = getDifficultyColor(trail.difficulty);
   const diffLabel = getDifficultyLabel(trail.difficulty);
 
-  const [description, setDescription] = useState<string | null>(trail.ai_description || null);
+  const [description, setDescription] = useState<string | null>(trail.description || trail.ai_description || null);
   const [isOfflineAvailable, setIsOfflineAvailable] = useState<boolean>(false);
   const offline = useOfflineDownload();
+
+  useEffect(() => {
+    setDescription(trail.description || trail.ai_description || null);
+  }, [trail.description, trail.ai_description]);
+
+  const effectiveDuration =
+    trail.duration_hours ||
+    estimateHikingDurationHours(trail.distance_km, trail.elevation_gain);
 
   // Check offline status
   useEffect(() => {
@@ -271,7 +280,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
             <StatPill
               icon={<Clock size={16} />}
               label="Durée estimée"
-              value={formatDuration(trail.duration_hours)}
+              value={formatDuration(effectiveDuration)}
             />
           </div>
 
@@ -310,6 +319,50 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
                 `Cet itinéraire de ${formatDistance(trail.distance_km)} offre une immersion complète au cœur de panoramas remarquables. Idéal pour les randonneurs en quête d'air pur et de sentiers balisés.`}
             </p>
           </Card>
+
+          {/* Caractéristiques du parcours */}
+          {(trail.roundtrip != null || trail.operator || trail.from || trail.to || trail.ref) && (
+            <Card variant="compact" className="flex flex-col gap-2.5 p-3.5">
+              <div className="flex items-center gap-1.5 text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-muted)]">
+                <Icon name="info" size={13} className="text-[color:var(--lkv-text-primary)]" />
+                <span>Caractéristiques du parcours</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-[length:var(--lkv-text-caption)]">
+                {trail.roundtrip != null && (
+                  <div className="flex flex-col">
+                    <span className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Type de tracé</span>
+                    <span className="font-semibold text-[color:var(--lkv-text-primary)]">
+                      {trail.roundtrip ? '🔄 Boucle' : '➡️ Aller simple'}
+                    </span>
+                  </div>
+                )}
+                {trail.ref && (
+                  <div className="flex flex-col">
+                    <span className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Référence</span>
+                    <span className="font-semibold text-[color:var(--lkv-text-primary)] font-mono">{trail.ref}</span>
+                  </div>
+                )}
+                {trail.from && (
+                  <div className="flex flex-col col-span-2">
+                    <span className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Départ</span>
+                    <span className="font-semibold text-[color:var(--lkv-text-primary)]">{trail.from}</span>
+                  </div>
+                )}
+                {trail.to && (
+                  <div className="flex flex-col col-span-2">
+                    <span className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Arrivée</span>
+                    <span className="font-semibold text-[color:var(--lkv-text-primary)]">{trail.to}</span>
+                  </div>
+                )}
+                {trail.operator && (
+                  <div className="flex flex-col col-span-2">
+                    <span className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Gestionnaire</span>
+                    <span className="font-semibold text-[color:var(--lkv-text-primary)]">{trail.operator}</span>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
 
           {/* Offline Storage Card */}
           <Card variant="compact" className="flex items-center justify-between gap-3 p-3">

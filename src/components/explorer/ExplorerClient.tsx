@@ -544,7 +544,19 @@ export default function ExplorerClient({
                     distance_km: data.calculatedDistanceKm || data.declaredDistanceKm || prev.distance_km,
                     elevation_gain: data.elevationGainM ?? prev.elevation_gain,
                     elevation_loss: data.elevationLossM ?? (prev as any).elevation_loss,
+                    duration_hours: data.durationHoursEstimated ?? data.durationHours ?? prev.duration_hours,
                     difficulty: data.difficulty || prev.difficulty,
+                    image_url: data.imageUrl || (prev as any).image_url,
+                    description: data.description || (prev as any).description,
+                    ai_description: data.description || prev.ai_description,
+                    adventure_score: data.experienceScores?.adventure ?? prev.adventure_score,
+                    nature_score: data.experienceScores?.nature ?? prev.nature_score,
+                    panorama_score: data.experienceScores?.panorama ?? prev.panorama_score,
+                    operator: data.operator || (prev as any).operator,
+                    symbol: data.symbol || (prev as any).symbol,
+                    from: data.from || (prev as any).from,
+                    to: data.to || (prev as any).to,
+                    roundtrip: data.roundtrip ?? (prev as any).roundtrip,
                     geometryStatus: data.geometryStatus || (data.geojson ? 'complete' : 'unavailable'),
                     detail: data,
                   } as any)
@@ -598,9 +610,13 @@ export default function ExplorerClient({
       lat: r.representativePoint ? r.representativePoint[1] : null,
       lng: r.representativePoint ? r.representativePoint[0] : null,
       distance_km: r.calculatedDistanceKm || r.declaredDistanceKm || null,
+      duration_hours: r.durationHours || null,
+      elevation_gain: r.elevationGainM || null,
       ref: r.ref,
       network: r.network,
       difficulty: r.tags.sac_scale || null,
+      image_url: r.imageUrl || null,
+      description: r.description || null,
       source: 'openstreetmap',
       geometryStatus: r.geometryStatus,
     } as any));
@@ -978,9 +994,8 @@ export default function ExplorerClient({
 
       {/* ── 3. BOUTON FILTRES FLOTTANT (bord droit, jamais coupé) ──
           P1 — rail droit DESKTOP (centré vertical) OU colonne mobile
-          (haut-droite sous les tuiles), jamais superposés. L'onglet reste à
-          droite sans croiser la colonne zoom carte (décalée right-14 mobile). */}
-      <div className="pointer-events-none fixed right-3 top-[calc(var(--safe-top)+64px)] z-[var(--z-fab)] flex items-center justify-end md:right-[var(--map-control-inset-x)] md:top-1/2 md:-translate-y-1/2">
+          (haut-droite aligné safe-top), jamais superposés. */}
+      <div className="pointer-events-none fixed right-3.5 top-[calc(var(--safe-top)+14px)] z-[var(--z-fab)] flex items-center justify-end md:right-[var(--map-control-inset-x)] md:top-1/2 md:-translate-y-1/2">
         <AnimatePresence mode="wait">
           {!filtersOpen ? (
             /* Onglet collé à la paroi droite */
@@ -1232,33 +1247,28 @@ export default function ExplorerClient({
   const bottomOverlays = (
     <>
       {/* ── 2C. SORTIE ÉCLAIR — mobile : ancre gauche, au-dessus du carrousel.
-          P1 — CTA unique et DÉPILÉ : masqué quand le badge live (2D) est
-          affiché (même ancre, même niveau) et remonté d'un cran (nav+100) pour
-          ne jamais chevaucher le CTA carte centré (nav+36). Offset canonique
-          --nav-offset. ── */}
+          Harmonisé à la même hauteur que le dock droit de zoom. ── */}
       {!liveSessionId && (
-      <div className="pointer-events-auto fixed left-4 bottom-[calc(var(--nav-offset)+100px+var(--explorer-carousel-height,0px))] z-[var(--z-fab)] md:hidden">
+      <div className="pointer-events-auto fixed left-3.5 bottom-[calc(var(--nav-offset)+14px+var(--explorer-carousel-height,0px))] z-[var(--z-fab)] md:hidden">
         <Button
           variant="secondary"
+          size="sm"
           onClick={() => setEphemeralOpen(true)}
-          className="min-h-[48px] px-3.5 shadow-lg"
+          className="h-10 px-3.5 shadow-lg backdrop-blur-[var(--blur-xl)]"
           aria-label="Créer une sortie avec des amis"
           data-testid="ephemeral-group-cta-mobile"
         >
           <span aria-hidden="true">👥</span>
-          <span className="whitespace-nowrap text-[length:var(--lkv-text-caption)] font-bold">Sortie entre amis</span>
+          <span className="whitespace-nowrap text-[length:var(--lkv-text-caption-2)] font-bold">Sortie entre amis</span>
         </Button>
       </div>
       )}
 
-      {/* ── 2D. SESSION LIVE — positions des membres (jamais public).
-          P1 — formule de position UNIQUE via --nav-offset, même ancre/niveau
-          que la sortie éclair (2C) qu'il remplace : un seul visible à la fois.
-          Garde overflow : jamais plus large que le viewport. ── */}
+      {/* ── 2D. SESSION LIVE — positions des membres (jamais public). ── */}
       {liveSessionId && (
         <Card
           variant="compact"
-          className="pointer-events-auto fixed left-4 bottom-[calc(var(--nav-offset)+100px+var(--explorer-carousel-height,0px))] z-[var(--z-fab)] flex max-w-[calc(100vw-32px)] items-center gap-2 overflow-hidden"
+          className="pointer-events-auto fixed left-3.5 bottom-[calc(var(--nav-offset)+14px+var(--explorer-carousel-height,0px))] z-[var(--z-fab)] flex max-w-[calc(100vw-32px)] items-center gap-2 overflow-hidden"
           data-testid="explorer-live-badge"
         >
           <Badge tone="sage" className="whitespace-nowrap font-mono">

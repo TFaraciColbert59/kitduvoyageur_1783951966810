@@ -123,6 +123,10 @@ export interface ExternalRouteSummary {
   geometryStatus: GeometryQualityStatus;
   source: SourceProvenance;
   tags: Record<string, string>;
+  imageUrl?: string | null;
+  elevationGainM?: number | null;
+  durationHours?: number | null;
+  description?: string | null;
 }
 
 export interface ExternalRouteDetail extends ExternalRouteSummary {
@@ -134,6 +138,16 @@ export interface ExternalRouteDetail extends ExternalRouteSummary {
   durationHoursEstimated?: number | null;
   roundtrip?: boolean | null;
   pois?: RoutePoiSummary[];
+  description?: string | null;
+  experienceScores?: {
+    adventure: number;
+    nature: number;
+    panorama: number;
+  };
+  operator?: string | null;
+  symbol?: string | null;
+  from?: string | null;
+  to?: string | null;
 }
 
 // ── 5. POINTS D'INTÉRÊT (POI) SOURCE ───────────────────────────────────────────
