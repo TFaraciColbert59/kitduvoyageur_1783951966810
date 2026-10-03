@@ -556,6 +556,15 @@ export default function ExplorerClient({
                     to: data.to || (prev as any).to,
                     roundtrip: data.roundtrip ?? (prev as any).roundtrip,
                     geometryStatus: data.geometryStatus || (data.geojson ? 'complete' : 'unavailable'),
+                    min_elevation: data.minElevationM ?? (prev as any).min_elevation,
+                    max_elevation: data.maxElevationM ?? (prev as any).max_elevation,
+                    avg_slope: data.avgSlopePercent ?? (prev as any).avg_slope,
+                    max_slope: data.maxSlopePercent ?? (prev as any).max_slope,
+                    elevation_profile: data.elevationProfile ?? (prev as any).elevation_profile,
+                    surface: data.surface ?? (prev as any).surface,
+                    trail_visibility: data.trailVisibility ?? (prev as any).trail_visibility,
+                    dog_friendly: data.dogFriendly ?? (prev as any).dog_friendly,
+                    ai_enrichment: data.aiEnrichment ?? (prev as any).ai_enrichment,
                     detail: data,
                   } as any)
                 : prev

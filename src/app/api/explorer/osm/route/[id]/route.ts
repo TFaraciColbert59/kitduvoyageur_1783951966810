@@ -9,6 +9,14 @@ import {
   upstreamRateLimiter,
   upstreamSingleFlight,
 } from '@/features/explorer-osm/services/cacheService';
+import { haversineDistanceKm } from '@/features/explorer-osm/domain/geometry';
+import { askAI } from '@/lib/ai/askAI';
+import {
+  buildTrailAiPrompt,
+  buildTrailAiFallback,
+  type TrailAiInput,
+} from '@/lib/ai/features/trailAiEnrichment';
+import type { ElevationProfilePoint } from '@/features/explorer-osm/domain/types';
 
 export const revalidate = 120;
 export const dynamic = 'force-dynamic';
@@ -100,11 +108,16 @@ export async function GET(
 
       const normalized = normalizeOsmRelationDetail(relationElem);
       if (normalized) {
-        // Enrichissement asynchrone sécurisé (DEM + Médias Wikidata/Wikipedia)
+        // Enrichissement asynchrone sécurisé (DEM + Médias Wikidata/Wikipedia + Adventure Intelligence)
         const tags = relationElem.tags || {};
 
-        // 1. Dénivelé via Open-Meteo DEM si non renseigné dans OSM
-        if (normalized.elevationGainM == null && normalized.geometryHierarchy?.mainSegments?.length > 0) {
+        // Attributs de terrain & praticabilité
+        normalized.surface = tags.surface || tags.tracktype || null;
+        normalized.trailVisibility = tags.trail_visibility || null;
+        normalized.dogFriendly = tags.dog || null;
+
+        // 1. Dénivelé, profil altimétrique et pentes via Open-Meteo DEM
+        if (normalized.geometryHierarchy?.mainSegments?.length > 0) {
           try {
             const allCoords: [number, number][] = [];
             for (const seg of normalized.geometryHierarchy.mainSegments) {
@@ -133,16 +146,60 @@ export async function GET(
                 if (elevs.length >= 2) {
                   let gain = 0;
                   let loss = 0;
-                  for (let i = 1; i < elevs.length; i++) {
-                    const diff = elevs[i] - elevs[i - 1];
-                    if (diff > 5) gain += diff;
-                    else if (diff < -5) loss += Math.abs(diff);
+                  let minEle = elevs[0];
+                  let maxEle = elevs[0];
+                  for (let i = 0; i < elevs.length; i++) {
+                    const e = elevs[i];
+                    if (e < minEle) minEle = e;
+                    if (e > maxEle) maxEle = e;
+                    if (i > 0) {
+                      const diff = elevs[i] - elevs[i - 1];
+                      if (diff > 5) gain += diff;
+                      else if (diff < -5) loss += Math.abs(diff);
+                    }
                   }
-                  normalized.elevationGainM = Math.round(gain);
-                  normalized.elevationLossM = Math.round(loss);
+
+                  if (normalized.elevationGainM == null) {
+                    normalized.elevationGainM = Math.round(gain);
+                  }
+                  if (normalized.elevationLossM == null) {
+                    normalized.elevationLossM = Math.round(loss);
+                  }
+                  normalized.minElevationM = Math.round(minEle);
+                  normalized.maxElevationM = Math.round(maxEle);
+
                   const dist = normalized.calculatedDistanceKm || normalized.declaredDistanceKm || 0;
-                  normalized.durationHoursEstimated = Math.round((dist / 4.0 + gain / 300) * 10) / 10;
-                  normalized.durationHours = normalized.durationHoursEstimated;
+                  if (!normalized.durationHoursEstimated) {
+                    normalized.durationHoursEstimated = Math.round((dist / 4.0 + (normalized.elevationGainM || 0) / 300) * 10) / 10;
+                    normalized.durationHours = normalized.durationHoursEstimated;
+                  }
+
+                  // Profil altimétrique échantillonné
+                  const profile: ElevationProfilePoint[] = [];
+                  let cumDist = 0;
+                  profile.push({ distanceKm: 0, elevationM: Math.round(elevs[0]) });
+                  let maxSlope = 0;
+                  for (let i = 1; i < sampled.length; i++) {
+                    const segDistKm = haversineDistanceKm(sampled[i - 1], sampled[i]);
+                    cumDist += segDistKm;
+                    profile.push({
+                      distanceKm: Math.round(cumDist * 10) / 10,
+                      elevationM: Math.round(elevs[i]),
+                    });
+                    const segDistM = segDistKm * 1000;
+                    if (segDistM >= 40) {
+                      const slope = (Math.max(0, elevs[i] - elevs[i - 1]) / segDistM) * 100;
+                      if (slope > maxSlope) maxSlope = slope;
+                    }
+                  }
+                  normalized.elevationProfile = profile;
+
+                  if (dist > 0 && normalized.elevationGainM) {
+                    normalized.avgSlopePercent = Math.round(((normalized.elevationGainM) / (dist * 1000)) * 100 * 10) / 10;
+                  }
+                  if (maxSlope > 0) {
+                    normalized.maxSlopePercent = Math.min(65, Math.round(maxSlope * 10) / 10);
+                  }
                 }
               }
             }
@@ -198,6 +255,66 @@ export async function GET(
           } catch {
             // Repli gracieux : conserve les images de contexte
           }
+        }
+
+        // 3. Adventure Intelligence & Enrichissement IA
+        const aiInput: TrailAiInput = {
+          name: normalized.name,
+          ref: normalized.ref,
+          network: normalized.network,
+          distanceKm: normalized.calculatedDistanceKm || normalized.declaredDistanceKm,
+          elevationGainM: normalized.elevationGainM,
+          elevationLossM: normalized.elevationLossM,
+          minElevationM: normalized.minElevationM,
+          maxElevationM: normalized.maxElevationM,
+          difficulty: normalized.difficulty || tags.sac_scale,
+          roundtrip: normalized.roundtrip,
+          surface: normalized.surface,
+          trailVisibility: normalized.trailVisibility,
+          dogFriendly: normalized.dogFriendly,
+          from: tags.from,
+          to: tags.to,
+          description: normalized.description || tags.description,
+        };
+
+        try {
+          const { system, prompt } = buildTrailAiPrompt(aiInput);
+          const aiRes = await askAI({
+            feature: 'trail-ai-enrichment',
+            tier: 'fast',
+            system,
+            prompt,
+            maxTokens: 1200,
+          });
+
+          if (aiRes.text) {
+            try {
+              const cleanJson = aiRes.text.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
+              const parsed = JSON.parse(cleanJson);
+              if (parsed.storyline) {
+                normalized.aiEnrichment = {
+                  storyline: parsed.storyline,
+                  idealSeason: parsed.idealSeason || { bestMonths: [], advice: '' },
+                  safetyTips: Array.isArray(parsed.safetyTips) ? parsed.safetyTips : [],
+                  gearChecklist: Array.isArray(parsed.gearChecklist) ? parsed.gearChecklist : [],
+                  biodiversity: parsed.biodiversity || '',
+                  effortPacing: parsed.effortPacing || { paceAdvice: '', breakAdvice: '', recommendedStartTime: '' },
+                  confidence: aiRes.degraded ? 92 : 98,
+                  model: aiRes.model,
+                  generatedAt: new Date().toISOString(),
+                  provenance: 'lkdv-adventure-intelligence',
+                };
+              } else {
+                normalized.aiEnrichment = buildTrailAiFallback(aiInput);
+              }
+            } catch {
+              normalized.aiEnrichment = buildTrailAiFallback(aiInput);
+            }
+          } else {
+            normalized.aiEnrichment = buildTrailAiFallback(aiInput);
+          }
+        } catch {
+          normalized.aiEnrichment = buildTrailAiFallback(aiInput);
         }
 
         osmRouteDetailCache.set(cacheKey, normalized);

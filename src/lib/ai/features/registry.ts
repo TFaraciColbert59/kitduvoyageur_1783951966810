@@ -6,6 +6,7 @@ import * as countryGuides from './countryGuides';
 import * as paysRecommendations from './paysRecommendations';
 import * as itinerary from './itinerary';
 import * as trajectoireNarration from './trajectoireNarration';
+import * as trailAiEnrichment from './trailAiEnrichment';
 
 /**
  * Registre des features IA — ajouter une feature IA = ajouter UN fichier
@@ -82,6 +83,13 @@ export const FEATURES: Record<string, FeatureSpec> = {
     cacheTtlSeconds: itinerary.ITINERARY_SPEC.cacheTtlSeconds,
     maxPerUserPerDay: itinerary.ITINERARY_SPEC.maxPerUserPerDay,
     fallbackResponse: itinerary.fallbackResponse,
+  },
+  'trail-ai-enrichment': {
+    tier: trailAiEnrichment.TRAIL_AI_ENRICHMENT_SPEC.tier,
+    maxReasoningBudget: trailAiEnrichment.TRAIL_AI_ENRICHMENT_SPEC.maxReasoningBudget,
+    cacheTtlSeconds: trailAiEnrichment.TRAIL_AI_ENRICHMENT_SPEC.cacheTtlSeconds,
+    maxPerUserPerDay: trailAiEnrichment.TRAIL_AI_ENRICHMENT_SPEC.maxPerUserPerDay,
+    fallbackResponse: trailAiEnrichment.fallbackResponse,
   },
   'country-practical-guide': {
     tier: 'fast',

@@ -49,6 +49,15 @@ export interface MapTrail {
   from?: string | null;
   to?: string | null;
   roundtrip?: boolean | null;
+  min_elevation?: number | null;
+  max_elevation?: number | null;
+  avg_slope?: number | null;
+  max_slope?: number | null;
+  elevation_profile?: import('@/features/explorer-osm/domain/types').ElevationProfilePoint[];
+  surface?: string | null;
+  trail_visibility?: string | null;
+  dog_friendly?: string | null;
+  ai_enrichment?: import('@/features/explorer-osm/domain/types').TrailAiEnrichment | null;
 }
 
 // Keep MapRefuge as alias for backwards compat

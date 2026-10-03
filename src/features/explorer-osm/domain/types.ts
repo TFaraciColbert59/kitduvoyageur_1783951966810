@@ -129,6 +129,31 @@ export interface ExternalRouteSummary {
   description?: string | null;
 }
 
+export interface ElevationProfilePoint {
+  distanceKm: number;
+  elevationM: number;
+}
+
+export interface TrailAiEnrichment {
+  storyline: string;
+  idealSeason: {
+    bestMonths: string[];
+    advice: string;
+  };
+  safetyTips: string[];
+  gearChecklist: string[];
+  biodiversity: string;
+  effortPacing: {
+    paceAdvice: string;
+    breakAdvice: string;
+    recommendedStartTime: string;
+  };
+  confidence: number;
+  model: string;
+  generatedAt: string;
+  provenance: 'lkdv-adventure-intelligence';
+}
+
 export interface ExternalRouteDetail extends ExternalRouteSummary {
   geometryHierarchy: RouteGeometryHierarchy;
   geojson: GeoJSON.FeatureCollection | GeoJSON.MultiLineString | GeoJSON.LineString | null;
@@ -148,6 +173,16 @@ export interface ExternalRouteDetail extends ExternalRouteSummary {
   symbol?: string | null;
   from?: string | null;
   to?: string | null;
+  // Attributs physiques et environnementaux enrichis
+  minElevationM?: number | null;
+  maxElevationM?: number | null;
+  avgSlopePercent?: number | null;
+  maxSlopePercent?: number | null;
+  elevationProfile?: ElevationProfilePoint[];
+  surface?: string | null;
+  trailVisibility?: string | null;
+  dogFriendly?: 'allowed' | 'leashed' | 'prohibited' | 'unknown' | null;
+  aiEnrichment?: TrailAiEnrichment | null;
 }
 
 // ── 5. POINTS D'INTÉRÊT (POI) SOURCE ───────────────────────────────────────────
