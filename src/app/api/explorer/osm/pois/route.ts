@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { parseOptionalBbox } from '@/lib/geo/requestViewport';
 import { clientIpFromHeaders } from '@/lib/rate-limit';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
-import { queryPoisInBbox } from '@/features/explorer-osm/adapters/overpassAdapter';
+import { queryPoisInBbox, OverpassError } from '@/features/explorer-osm/adapters/overpassAdapter';
 import { normalizeOsmPoi } from '@/features/explorer-osm/services/normalizationService';
 import {
   osmPoiCache,
@@ -115,8 +115,8 @@ export async function GET(request: NextRequest) {
   });
   if (limited) return limited;
 
-  // 6. Protection amont Overpass
-  const upstreamCheck = upstreamRateLimiter.canExecute();
+  // 6. Protection amont Overpass (canal pois)
+  const upstreamCheck = upstreamRateLimiter.canExecute('pois');
   if (!upstreamCheck.allowed) {
     if (cached) {
       return NextResponse.json(cached.data);
@@ -135,7 +135,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    upstreamRateLimiter.recordCall();
+    upstreamRateLimiter.recordCall('pois');
     const rawData = await queryPoisInBbox(bbox, requestedCategories, limit, { signal: request.signal });
     overpassCircuitBreaker.recordSuccess();
 
@@ -164,7 +164,33 @@ export async function GET(request: NextRequest) {
     response.headers.set('x-lkdv-cache', 'MISS');
     return response;
   } catch (error: any) {
-    overpassCircuitBreaker.recordFailure();
+    const isAborted =
+      (error instanceof OverpassError && error.code === 'ABORTED') ||
+      request.signal.aborted ||
+      error.name === 'AbortError';
+
+    if (!isAborted) {
+      overpassCircuitBreaker.recordFailure();
+    }
+
+    if (error instanceof OverpassError && error.code === 'RATE_LIMITED') {
+      upstreamRateLimiter.setRetryAfter(10);
+    }
+
+    if (isAborted) {
+      return NextResponse.json(
+        {
+          status: 'empty',
+          items: [],
+          fetchedAt: new Date().toISOString(),
+          stale: false,
+          limited: false,
+          fromCache: false,
+          warnings: ['Requête annulée par le client'],
+        },
+        { status: 200 }
+      );
+    }
 
     if (cached) {
       return NextResponse.json(cached.data);

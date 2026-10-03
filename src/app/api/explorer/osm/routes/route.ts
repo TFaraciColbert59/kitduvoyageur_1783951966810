@@ -107,8 +107,8 @@ export async function GET(request: NextRequest) {
   });
   if (limited) return limited;
 
-  // 3. Limiteur amont global et protection anti-rafale pour Overpass
-  const upstreamCheck = upstreamRateLimiter.canExecute();
+  // 3. Limiteur amont global et protection anti-rafale pour Overpass (canal routes)
+  const upstreamCheck = upstreamRateLimiter.canExecute('routes');
   if (!upstreamCheck.allowed) {
     if (cached) {
       const envelope: SearchEnvelope<ExternalRouteSummary> = {
@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
     const envelope = await upstreamSingleFlight.do<SearchEnvelope<ExternalRouteSummary>>(
       flightKey,
       async () => {
-        upstreamRateLimiter.recordCall();
+        upstreamRateLimiter.recordCall('routes');
         const rawData = await queryRoutesInBbox(bbox, limit, { signal: request.signal });
         overpassCircuitBreaker.recordSuccess();
 
@@ -172,10 +172,32 @@ export async function GET(request: NextRequest) {
     response.headers.set('x-lkdv-cache', 'MISS');
     return response;
   } catch (error: any) {
-    overpassCircuitBreaker.recordFailure();
+    const isAborted =
+      (error instanceof OverpassError && error.code === 'ABORTED') ||
+      request.signal.aborted ||
+      error.name === 'AbortError';
+
+    if (!isAborted) {
+      overpassCircuitBreaker.recordFailure();
+    }
 
     if (error instanceof OverpassError && error.code === 'RATE_LIMITED') {
-      upstreamRateLimiter.setRetryAfter(30);
+      upstreamRateLimiter.setRetryAfter(10);
+    }
+
+    if (isAborted) {
+      return NextResponse.json(
+        {
+          status: 'empty',
+          items: [],
+          fetchedAt: new Date().toISOString(),
+          stale: false,
+          limited: false,
+          fromCache: false,
+          warnings: ['Requête annulée par le client'],
+        },
+        { status: 200 }
+      );
     }
 
     // Repli sur le cache éventuel en cas d'erreur

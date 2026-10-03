@@ -64,8 +64,8 @@ export async function GET(
   });
   if (limited) return limited;
 
-  // Protection quota amont
-  const upstreamCheck = upstreamRateLimiter.canExecute();
+  // Protection quota amont (canal detail)
+  const upstreamCheck = upstreamRateLimiter.canExecute('detail');
   if (!upstreamCheck.allowed) {
     if (cached) {
       const response = NextResponse.json(cached.data);
@@ -85,7 +85,7 @@ export async function GET(
   try {
     const flightKey = `upstream:detail:${numericOsmId}`;
     const detail = await upstreamSingleFlight.do(flightKey, async () => {
-      upstreamRateLimiter.recordCall();
+      upstreamRateLimiter.recordCall('detail');
       const rawData = await queryRouteDetail(numericOsmId, { signal: request.signal });
       overpassCircuitBreaker.recordSuccess();
 
@@ -117,10 +117,24 @@ export async function GET(
     response.headers.set('x-lkdv-cache', 'MISS');
     return response;
   } catch (error: any) {
-    overpassCircuitBreaker.recordFailure();
+    const isAborted =
+      (error instanceof OverpassError && error.code === 'ABORTED') ||
+      request.signal.aborted ||
+      error.name === 'AbortError';
+
+    if (!isAborted) {
+      overpassCircuitBreaker.recordFailure();
+    }
 
     if (error instanceof OverpassError && error.code === 'RATE_LIMITED') {
-      upstreamRateLimiter.setRetryAfter(30);
+      upstreamRateLimiter.setRetryAfter(10);
+    }
+
+    if (isAborted) {
+      return NextResponse.json(
+        { error: 'Requête annulée par le client' },
+        { status: 499 }
+      );
     }
 
     if (cached) {

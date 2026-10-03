@@ -505,8 +505,8 @@ export default function ExplorerClient({
 
   const worldSearchFetching = Boolean(trailsFetching || osmFetching || osmPoisFetching);
   const osmErrorMessage = useMemo(
-    () => resolveOsmErrorMessage(osmError || osmPoisError),
-    [osmError, osmPoisError]
+    () => resolveOsmErrorMessage(osmError),
+    [osmError]
   );
 
   const activeBannerMessage = useMemo(() => {

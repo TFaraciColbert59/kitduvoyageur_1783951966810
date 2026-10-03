@@ -72,7 +72,7 @@ export class CircuitBreaker {
   private threshold: number;
   private resetTimeoutMs: number;
 
-  constructor(threshold = 3, resetTimeoutMs = 30_000) {
+  constructor(threshold = 5, resetTimeoutMs = 15_000) {
     this.threshold = threshold;
     this.resetTimeoutMs = resetTimeoutMs;
   }
@@ -117,7 +117,7 @@ export const osmRouteSummaryCache = new MemoryCache<any>(200, 5 * 60 * 1000); //
 export const osmRouteDetailCache = new MemoryCache<any>(100, 30 * 60 * 1000); // 30 min TTL
 export const osmPoiCache = new MemoryCache<any>(200, 10 * 60 * 1000); // 10 min TTL
 
-export const overpassCircuitBreaker = new CircuitBreaker(3, 20_000);
+export const overpassCircuitBreaker = new CircuitBreaker(5, 15_000);
 
 /**
  * Single-flight deduplication : regroupe les requêtes identiques concurrentes
@@ -149,26 +149,27 @@ export class SingleFlight {
 
 /**
  * Limiteur amont global pour Overpass (single upstream limiter)
- * - Empêche les rafales (espacement minimum de 500ms entre appels)
- * - Plafonne à maxRequestsPerMinute (ex: 12 appels amont/minute max au niveau serveur)
+ * - Empêche les rafales (espacement minimum entre appels sur un même canal)
+ * - Plafonne à maxRequestsPerMinute (ex: 30 appels amont/minute max au niveau serveur)
+ * - Supporte la séparation par canal pour que les routes et POIs simultanés ne se bloquent pas
  * - Respecte le Retry-After d'Overpass
  */
 export class UpstreamRateLimiter {
   private callTimestamps: number[] = [];
   private retryAfterUntil = 0;
-  private lastCallTime = 0;
+  private lastCallTimeByChannel = new Map<string, number>();
   private maxRequestsPerMinute: number;
   private minIntervalMs: number;
 
   constructor(
-    maxRequestsPerMinute = 12,
-    minIntervalMs = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test' ? 0 : 500
+    maxRequestsPerMinute = 30,
+    minIntervalMs = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test' ? 0 : 100
   ) {
     this.maxRequestsPerMinute = maxRequestsPerMinute;
     this.minIntervalMs = minIntervalMs;
   }
 
-  canExecute(): { allowed: boolean; retryAfterSeconds?: number; reason?: string } {
+  canExecute(channel = 'default'): { allowed: boolean; retryAfterSeconds?: number; reason?: string } {
     const now = Date.now();
 
     if (now < this.retryAfterUntil) {
@@ -194,7 +195,8 @@ export class UpstreamRateLimiter {
       };
     }
 
-    if (now - this.lastCallTime < this.minIntervalMs) {
+    const lastCallTime = this.lastCallTimeByChannel.get(channel) || 0;
+    if (now - lastCallTime < this.minIntervalMs) {
       return {
         allowed: false,
         retryAfterSeconds: 1,
@@ -205,9 +207,9 @@ export class UpstreamRateLimiter {
     return { allowed: true };
   }
 
-  recordCall(): void {
+  recordCall(channel = 'default'): void {
     const now = Date.now();
-    this.lastCallTime = now;
+    this.lastCallTimeByChannel.set(channel, now);
     this.callTimestamps.push(now);
   }
 
@@ -219,12 +221,12 @@ export class UpstreamRateLimiter {
   reset(): void {
     this.callTimestamps = [];
     this.retryAfterUntil = 0;
-    this.lastCallTime = 0;
+    this.lastCallTimeByChannel.clear();
   }
 }
 
 export const upstreamSingleFlight = new SingleFlight();
 export const upstreamRateLimiter = new UpstreamRateLimiter(
-  12,
-  typeof process !== 'undefined' && process.env?.NODE_ENV === 'test' ? 0 : 500
+  30,
+  typeof process !== 'undefined' && process.env?.NODE_ENV === 'test' ? 0 : 100
 );

@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { CircuitBreaker, MemoryCache } from '@/features/explorer-osm/services/cacheService';
+import {
+  CircuitBreaker,
+  MemoryCache,
+  UpstreamRateLimiter,
+} from '@/features/explorer-osm/services/cacheService';
 
 describe('Cache & Circuit Breaker — Résilience', () => {
   describe('MemoryCache', () => {
@@ -69,6 +73,37 @@ describe('Cache & Circuit Breaker — Résilience', () => {
           resolve();
         }, 60);
       });
+    });
+  });
+
+  describe('UpstreamRateLimiter', () => {
+    it('permet des requêtes quasi-simultanées sur des canaux différents sans collision anti-rafale', () => {
+      const limiter = new UpstreamRateLimiter(30, 200); // 200ms anti-burst par canal
+
+      // Canal routes
+      expect(limiter.canExecute('routes').allowed).toBe(true);
+      limiter.recordCall('routes');
+
+      // Même instant : canal pois -> NE DOIT PAS être bloqué par routes
+      expect(limiter.canExecute('pois').allowed).toBe(true);
+      limiter.recordCall('pois');
+
+      // En revanche, un 2ème appel immédiat sur le canal routes est freiné par l'anti-rafale
+      expect(limiter.canExecute('routes').allowed).toBe(false);
+      expect(limiter.canExecute('routes').reason).toContain('Anti-rafale actif');
+    });
+
+    it('respecte le plafond global maxRequestsPerMinute', () => {
+      const limiter = new UpstreamRateLimiter(2, 0); // 2 req/min max, pas d'anti-burst
+
+      expect(limiter.canExecute().allowed).toBe(true);
+      limiter.recordCall();
+      expect(limiter.canExecute().allowed).toBe(true);
+      limiter.recordCall();
+
+      const third = limiter.canExecute();
+      expect(third.allowed).toBe(false);
+      expect(third.reason).toContain('Quota amont Overpass saturé');
     });
   });
 });

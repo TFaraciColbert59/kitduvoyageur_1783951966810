@@ -14,8 +14,8 @@ export interface OverpassConfig {
 }
 
 export const DEFAULT_OVERPASS_CONFIG: OverpassConfig = {
-  endpoint: process.env.OVERPASS_API_URL || 'https://overpass-api.de/api/interpreter',
-  timeoutSeconds: 15,
+  endpoint: process.env.OVERPASS_API_URL || 'https://lz4.overpass-api.de/api/interpreter',
+  timeoutSeconds: 20,
   maxSizeBytes: 33554432, // 32 Mo max
   userAgent: 'LeKitDuVoyageur/1.0 (https://lekitduvoyageur.com; contact@lekitduvoyageur.com)',
 };
@@ -40,7 +40,7 @@ export class OverpassError extends Error {
 }
 
 /**
- * Exécute une requête Overpass QL brute en POST
+ * Exécute une requête Overpass QL brute en POST avec repli automatique sur miroirs officiels
  */
 export async function executeOverpassQuery(
   query: string,
@@ -50,69 +50,99 @@ export async function executeOverpassQuery(
   }
 ): Promise<any> {
   const config = options?.config || DEFAULT_OVERPASS_CONFIG;
+  const fallbackEndpoint = config.endpoint.includes('lz4')
+    ? 'https://overpass-api.de/api/interpreter'
+    : 'https://lz4.overpass-api.de/api/interpreter';
 
-  const body = new URLSearchParams();
-  body.set('data', query);
+  const endpoints = Array.from(new Set([config.endpoint, fallbackEndpoint]));
 
-  try {
-    const res = await fetch(config.endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': config.userAgent,
-        'Accept': 'application/json',
-      },
-      body: body.toString(),
-      signal: options?.signal,
-    });
+  let lastError: Error | null = null;
 
-    if (res.status === 429) {
-      throw new OverpassError('Quota Overpass atteint (429 Too Many Requests)', 'RATE_LIMITED', 429);
-    }
-
-    if (res.status === 504 || res.status === 408) {
-      throw new OverpassError('Délai d’attente Overpass dépassé (Timeout)', 'TIMEOUT', res.status);
-    }
-
-    if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      throw new OverpassError(
-        `Erreur serveur Overpass HTTP ${res.status}: ${text.slice(0, 200)}`,
-        'SERVER_ERROR',
-        res.status,
-        text
-      );
-    }
-
-    const contentType = res.headers.get('content-type') || '';
-    const rawText = await res.text();
-
-    if (!contentType.includes('json') && !rawText.trim().startsWith('{')) {
-      throw new OverpassError(
-        'Réponse Overpass inattendue (HTML ou texte au lieu de JSON)',
-        'INVALID_RESPONSE',
-        res.status,
-        rawText.slice(0, 300)
-      );
-    }
-
-    try {
-      return JSON.parse(rawText);
-    } catch (err: any) {
-      throw new OverpassError(
-        `JSON Overpass malformé: ${err.message}`,
-        'INVALID_RESPONSE',
-        res.status,
-        rawText.slice(0, 300)
-      );
-    }
-  } catch (err: any) {
-    if (err instanceof OverpassError) throw err;
-    if (err.name === 'AbortError' || options?.signal?.aborted) {
+  for (let i = 0; i < endpoints.length; i++) {
+    const currentEndpoint = endpoints[i];
+    if (options?.signal?.aborted) {
       throw new OverpassError('Requête annulée par le client', 'ABORTED');
     }
-    throw new OverpassError(`Erreur réseau vers Overpass: ${err.message}`, 'NETWORK_ERROR');
+
+    const body = new URLSearchParams();
+    body.set('data', query);
+
+    try {
+      const res = await fetch(currentEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': config.userAgent,
+          'Accept': 'application/json',
+        },
+        body: body.toString(),
+        signal: options?.signal,
+      });
+
+      if (res.status === 429) {
+        throw new OverpassError('Quota Overpass atteint (429 Too Many Requests)', 'RATE_LIMITED', 429);
+      }
+
+      if (res.status === 504 || res.status === 408) {
+        throw new OverpassError('Délai d’attente Overpass dépassé (Timeout)', 'TIMEOUT', res.status);
+      }
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new OverpassError(
+          `Erreur serveur Overpass HTTP ${res.status}: ${text.slice(0, 200)}`,
+          'SERVER_ERROR',
+          res.status,
+          text
+        );
+      }
+
+      const contentType = res.headers.get('content-type') || '';
+      const rawText = await res.text();
+
+      if (!contentType.includes('json') && !rawText.trim().startsWith('{')) {
+        throw new OverpassError(
+          'Réponse Overpass inattendue (HTML ou texte au lieu de JSON)',
+          'INVALID_RESPONSE',
+          res.status,
+          rawText.slice(0, 300)
+        );
+      }
+
+      try {
+        return JSON.parse(rawText);
+      } catch (err: any) {
+        throw new OverpassError(
+          `JSON Overpass malformé: ${err.message}`,
+          'INVALID_RESPONSE',
+          res.status,
+          rawText.slice(0, 300)
+        );
+      }
+    } catch (err: any) {
+      if (err.name === 'AbortError' || options?.signal?.aborted || (err instanceof OverpassError && err.code === 'ABORTED')) {
+        throw new OverpassError('Requête annulée par le client', 'ABORTED');
+      }
+
+      lastError = err instanceof OverpassError ? err : new OverpassError(`Erreur réseau vers Overpass: ${err.message}`, 'NETWORK_ERROR');
+
+      const isRetryable =
+        lastError instanceof OverpassError &&
+        (lastError.code === 'TIMEOUT' ||
+          lastError.code === 'SERVER_ERROR' ||
+          lastError.code === 'NETWORK_ERROR' ||
+          lastError.code === 'RATE_LIMITED' ||
+          lastError.code === 'INVALID_RESPONSE');
+
+      if (isRetryable && i < endpoints.length - 1 && !options?.signal?.aborted) {
+        continue;
+      }
+
+      throw lastError;
+    }
   }
+
+  throw lastError || new OverpassError('Aucun endpoint Overpass disponible', 'SERVER_ERROR');
 }
 
 /**
@@ -124,7 +154,7 @@ export async function queryRoutesInBbox(
   limit = 100,
   options?: { config?: OverpassConfig; signal?: AbortSignal }
 ): Promise<any> {
-  const timeout = options?.config?.timeoutSeconds ?? 12;
+  const timeout = options?.config?.timeoutSeconds ?? 20;
   const maxsize = options?.config?.maxSizeBytes ?? 33554432;
   const s = bbox.south.toFixed(4);
   const w = bbox.west.toFixed(4);
@@ -150,7 +180,7 @@ export async function queryRouteDetail(
   osmRelationId: number,
   options?: { config?: OverpassConfig; signal?: AbortSignal }
 ): Promise<any> {
-  const timeout = options?.config?.timeoutSeconds ?? 20;
+  const timeout = options?.config?.timeoutSeconds ?? 25;
   const maxsize = options?.config?.maxSizeBytes ?? 33554432;
 
   // Récupère la relation avec la géométrie intégrée de tous ses membres ways
@@ -172,7 +202,7 @@ export async function queryPoisInBbox(
   limit = 80,
   options?: { config?: OverpassConfig; signal?: AbortSignal }
 ): Promise<any> {
-  const timeout = options?.config?.timeoutSeconds ?? 12;
+  const timeout = options?.config?.timeoutSeconds ?? 20;
   const maxsize = options?.config?.maxSizeBytes ?? 33554432;
   const s = bbox.south.toFixed(4);
   const w = bbox.west.toFixed(4);

@@ -329,7 +329,17 @@ export function resolveOsmErrorMessage(error: unknown): string | null {
   if (!error) return null;
   const err = error as any;
 
-  if (err.code === 'VIEWPORT_TOO_LARGE' || err.message?.includes('Zoome') || err.status === 400 && String(err.message || '').includes('Zoome')) {
+  // Les annulations volontaires du client (ex: déplacement de carte) ne sont pas des erreurs
+  if (
+    err.name === 'AbortError' ||
+    err.code === 'ABORTED' ||
+    String(err.message || '').includes('aborted') ||
+    String(err.message || '').includes('annulée')
+  ) {
+    return null;
+  }
+
+  if (err.code === 'VIEWPORT_TOO_LARGE' || err.message?.includes('Zoome') || (err.status === 400 && String(err.message || '').includes('Zoome'))) {
     return 'Zoome davantage pour rechercher les randonnées de cette zone.';
   }
   if (err.status === 429 || err.code === 'RATE_LIMITED' || err.code === 'UPSTREAM_RATE_LIMITED') {

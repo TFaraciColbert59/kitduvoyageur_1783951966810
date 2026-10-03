@@ -51,6 +51,9 @@ describe('API Routes — Explorer OSM', () => {
     vi.clearAllMocks();
     upstreamRateLimiter.reset();
     upstreamSingleFlight.clear();
+    osmRouteSummaryCache.clear();
+    osmRouteDetailCache.clear();
+    osmPoiCache.clear();
   });
 
   describe('GET /api/explorer/osm/routes', () => {
@@ -127,6 +130,27 @@ describe('API Routes — Explorer OSM', () => {
       expect(res.status).toBe(200);
       expect(res.headers.get('x-lkdv-cache')).toBe('HIT');
       expect(enforceRateLimit).not.toHaveBeenCalled();
+    });
+
+    it('ne déclenche pas le disjoncteur (circuit breaker) en cas d’annulation client', async () => {
+      const { overpassCircuitBreaker } = await import('@/features/explorer-osm/services/cacheService');
+      const { OverpassError } = await import('@/features/explorer-osm/adapters/overpassAdapter');
+      overpassCircuitBreaker.reset();
+
+      vi.mocked(queryRoutesInBbox).mockRejectedValueOnce(
+        new (OverpassError as any)('Requête annulée par le client', 'ABORTED')
+      );
+
+      const req = new NextRequest(
+        'http://localhost:3000/api/explorer/osm/routes?min_lat=45.4&max_lat=45.6&min_lng=6.4&max_lng=6.6'
+      );
+      const res = await routesGET(req);
+      expect(res.status).toBe(200);
+
+      const json = await res.json();
+      expect(json.status).toBe('empty');
+      expect(overpassCircuitBreaker.getState()).toBe('CLOSED');
+      expect(overpassCircuitBreaker.isOpen()).toBe(false);
     });
   });
 
