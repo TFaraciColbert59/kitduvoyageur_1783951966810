@@ -15,11 +15,23 @@ vi.mock('@/features/explorer-osm/adapters/overpassAdapter', () => ({
   },
 }));
 
+vi.mock('@/features/explorer-osm/services/canonicalRouteService', () => ({
+  getOrCreateCanonicalRoute: vi.fn().mockResolvedValue({
+    canonicalId: 'canonical-777',
+    isNewlyCreated: true,
+    route: { id: 'canonical-777', name: 'Vrai Sentier Officiel OSM' },
+  }),
+}));
+vi.mock('@supabase/supabase-js', () => ({
+  createClient: vi.fn().mockReturnValue({}),
+}));
+
 import {
   queryRoutesInBbox,
   queryRouteDetail,
   queryPoisInBbox,
 } from '@/features/explorer-osm/adapters/overpassAdapter';
+import { getOrCreateCanonicalRoute } from '@/features/explorer-osm/services/canonicalRouteService';
 import { GET as routesGET } from '@/app/api/explorer/osm/routes/route';
 import { GET as detailGET } from '@/app/api/explorer/osm/route/[id]/route';
 import { GET as poisGET } from '@/app/api/explorer/osm/pois/route';
@@ -154,6 +166,11 @@ describe('API Routes — Explorer OSM', () => {
   });
 
   describe('POST /api/explorer/osm/materialize', () => {
+    beforeEach(() => {
+      process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://localhost:54321';
+      process.env.SUPABASE_SERVICE_ROLE_KEY = 'mock-key';
+    });
+
     it('retourne 400 sans osmRelationId', async () => {
       const req = new NextRequest('http://localhost:3000/api/explorer/osm/materialize', {
         method: 'POST',
@@ -161,6 +178,49 @@ describe('API Routes — Explorer OSM', () => {
       });
       const res = await materializePOST(req);
       expect(res.status).toBe(400);
+    });
+
+    it('ignore tout objet detail fourni par le client et interroge le serveur OSM pour la géométrie', async () => {
+      vi.mocked(queryRouteDetail).mockResolvedValueOnce({
+        elements: [
+          {
+            type: 'relation',
+            id: 777,
+            tags: { name: 'Vrai Sentier Officiel OSM' },
+            members: [
+              {
+                type: 'way',
+                ref: 1,
+                role: 'main',
+                geometry: [{ lat: 45.0, lon: 6.0 }, { lat: 45.1, lon: 6.1 }],
+              },
+            ],
+          },
+        ],
+      });
+
+      const fakeClientDetail = {
+        name: 'HACKED ROUTE NAME FROM CLIENT',
+        geojson: { type: 'LineString', coordinates: [[0, 0], [1, 1]] },
+      };
+
+      const req = new NextRequest('http://localhost:3000/api/explorer/osm/materialize', {
+        method: 'POST',
+        body: JSON.stringify({
+          osmRelationId: 777,
+          detail: fakeClientDetail, // NE DOIT PAS ÊTRE UTILISÉ
+        }),
+      });
+
+      const res = await materializePOST(req);
+      expect(res.status).toBe(200);
+      expect(queryRouteDetail).toHaveBeenCalledWith(777);
+      const json = await res.json();
+      expect(json.success).toBe(true);
+      expect(getOrCreateCanonicalRoute).toHaveBeenCalled();
+      const passedDetail = vi.mocked(getOrCreateCanonicalRoute).mock.calls[0][1];
+      expect(passedDetail.name).toBe('Vrai Sentier Officiel OSM');
+      expect(passedDetail.name).not.toBe('HACKED ROUTE NAME FROM CLIENT');
     });
   });
 });

@@ -44,6 +44,12 @@ import { getCurrentGeoPosition } from '@/lib/native/geolocation';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import OsmPoiSheet from '@/components/explorer/OsmPoiSheet';
 import type { RoutePoiSummary, SearchEnvelope, ExternalRouteSummary } from '@/features/explorer-osm/domain/types';
+import {
+  mergeAndDeduplicateTrails,
+  mergeAndDeduplicatePois,
+  filterTrailsByViewport,
+  resolveOsmErrorMessage,
+} from '@/features/explorer-osm/services/trailMergeService';
 import { Badge, Button, Card, EmptyState, IconButton, SearchField, Spinner } from '@/components/ui';
 import { MapPageLayout } from '@/design';
 
@@ -348,8 +354,8 @@ export default function ExplorerClient({
     enabled: !unifiedMap,
   });
 
-  // Data - OSM Routes discovery on mobile
-  const { data: osmTrailsEnvelope, isFetching: osmFetching } = useQuery<SearchEnvelope<ExternalRouteSummary>>({
+  // Data - OSM Routes discovery (mondial, actif sur les deux moteurs de carte)
+  const { data: osmTrailsEnvelope, isFetching: osmFetching, error: osmError } = useQuery<SearchEnvelope<ExternalRouteSummary>>({
     queryKey: [
       'osm-routes',
       queriedBbox?.minLat?.toFixed(3),
@@ -367,12 +373,24 @@ export default function ExplorerClient({
         params.set('limit', '50');
       }
       const res = await fetch(`/api/explorer/osm/routes?${params.toString()}`, { signal });
-      if (!res.ok) return { status: 'unavailable', items: [] } as any;
+      if (!res.ok) {
+        let errJson: any = null;
+        try {
+          errJson = await res.json();
+        } catch {}
+        const err = new Error(errJson?.error || `HTTP ${res.status}`);
+        (err as any).status = res.status;
+        (err as any).code = errJson?.code;
+        throw err;
+      }
       return (await res.json()) as SearchEnvelope<ExternalRouteSummary>;
     },
     staleTime: 5 * 60_000,
-    enabled: isMobile && !unifiedMap,
+    enabled: isOnline && Boolean(queriedBbox),
   });
+
+  const worldSearchFetching = Boolean(trailsFetching || osmFetching);
+  const osmErrorMessage = useMemo(() => resolveOsmErrorMessage(osmError), [osmError]);
 
   // Data - Unified POIs (with Viewport LOD)
   const { data: poisData } = useQuery<UnifiedPOI[]>({
@@ -398,7 +416,7 @@ export default function ExplorerClient({
     enabled: !unifiedMap,
   });
 
-  // Data - OSM POIs on mobile
+  // Data - OSM POIs (mondial, actif sur les deux moteurs de carte)
   const { data: osmPoisEnvelope } = useQuery<SearchEnvelope<RoutePoiSummary>>({
     queryKey: [
       'osm-pois',
@@ -424,7 +442,7 @@ export default function ExplorerClient({
       return (await res.json()) as SearchEnvelope<RoutePoiSummary>;
     },
     staleTime: 5 * 60_000,
-    enabled: isMobile && !unifiedMap && activePoiCategories.length > 0,
+    enabled: isOnline && Boolean(queriedBbox) && activePoiCategories.length > 0,
   });
 
   // Fetch real GeoJSON GPS track when a hike is selected (dispatch local vs OSM avec annulation AbortController)
@@ -488,14 +506,17 @@ export default function ExplorerClient({
   }, [selectedTrailId]);
 
   const trails = useMemo(() => {
-    if (unifiedMap && unifiedViewportData) {
-      return unifiedViewportData.trails;
+    const baseTrails =
+      unifiedMap && unifiedViewportData
+        ? unifiedViewportData.trails
+        : trailsData ?? initialTrails ?? [];
+
+    const osmItems = osmTrailsEnvelope?.items ?? [];
+    if (osmItems.length === 0) {
+      return baseTrails;
     }
-    const local = trailsData ?? initialTrails ?? [];
-    if (!isMobile || !osmTrailsEnvelope?.items || osmTrailsEnvelope.items.length === 0) {
-      return local;
-    }
-    const osmTrails: MapTrail[] = osmTrailsEnvelope.items.map((r) => ({
+
+    const osmTrails: MapTrail[] = osmItems.map((r) => ({
       id: r.id,
       name: r.name,
       lat: r.representativePoint ? r.representativePoint[1] : null,
@@ -508,37 +529,14 @@ export default function ExplorerClient({
       geometryStatus: r.geometryStatus,
     } as any));
 
-    const localNames = new Set(local.map((t) => (t.name || '').toLowerCase()));
-    const combined = [...local];
-    for (const ot of osmTrails) {
-      if (!localNames.has(ot.name.toLowerCase())) {
-        combined.push(ot);
-      }
-    }
-    return combined;
-  }, [unifiedMap, unifiedViewportData, trailsData, initialTrails, isMobile, osmTrailsEnvelope]);
+    return mergeAndDeduplicateTrails(baseTrails, osmTrails);
+  }, [unifiedMap, unifiedViewportData, trailsData, initialTrails, osmTrailsEnvelope]);
 
   const filteredTrails = useMemo(() => {
-    return trails.filter((t) => {
-      // Spatial restriction: only show hikes inside the active queried bounding box.
-      // En mode unifié (ATLAS), le serveur a déjà borné au viewport réel de la carte.
-      // Pour les sentiers OSM, la requête Overpass filtre déjà géographiquement les relations
-      // qui intersectent la BBOX. Le centre géométrique d'une grande traversée (ex. GR, TMB) peut être en dehors de la vue.
-      if (queriedBbox && !unifiedMap && (t as any).source !== 'openstreetmap') {
-        const tLat = t.lat != null ? Number(t.lat) : (t as any).start_lat != null ? Number((t as any).start_lat) : null;
-        const tLng = t.lng != null ? Number(t.lng) : (t as any).start_lng != null ? Number((t as any).start_lng) : null;
-        if (tLat != null && tLng != null && !isNaN(tLat) && !isNaN(tLng)) {
-          if (
-            tLat < queriedBbox.minLat ||
-            tLat > queriedBbox.maxLat ||
-            tLng < queriedBbox.minLng ||
-            tLng > queriedBbox.maxLng
-          ) {
-            return false;
-          }
-        }
-      }
+    // 1. Filtrage spatial strict pour ne conserver que les sentiers appartenant au viewport actif
+    const boundedTrails = filterTrailsByViewport(trails, queriedBbox);
 
+    return boundedTrails.filter((t) => {
       // Si la distance est renseignée, ignorer les micro-itinéraires (< 0.5 km) ;
       // Ne PAS filtrer si la distance n'est pas encore connue (cas fréquent des relations OSM avant consultation détaillée).
       if (t.distance_km != null && Number(t.distance_km) < 0.5) return false;
@@ -571,7 +569,7 @@ export default function ExplorerClient({
       }
       return true;
     });
-  }, [trails, queriedBbox, unifiedMap, searchQuery, activeDifficulties, activeDuration, familyOnly, activeCategory]);
+  }, [trails, queriedBbox, searchQuery, activeDifficulties, activeDuration, familyOnly, activeCategory]);
 
   // Handlers
   const handleTrailClick = useCallback((trail: MapTrail) => {
@@ -632,14 +630,17 @@ export default function ExplorerClient({
   }, []);
 
   const relevantPois = useMemo(() => {
-    if (unifiedMap && unifiedViewportData) {
-      return unifiedViewportData.pois;
+    const basePois =
+      unifiedMap && unifiedViewportData
+        ? unifiedViewportData.pois
+        : poisData ?? [];
+
+    const osmItems = osmPoisEnvelope?.items ?? [];
+    if (osmItems.length === 0) {
+      return basePois;
     }
-    const local = poisData ?? [];
-    if (!isMobile || !osmPoisEnvelope?.items) {
-      return local;
-    }
-    const mappedOsmPois: UnifiedPOI[] = osmPoisEnvelope.items.map((p) => ({
+
+    const mappedOsmPois: UnifiedPOI[] = osmItems.map((p) => ({
       id: p.id,
       name: p.name || 'Point d’intérêt',
       category: p.category === 'camp' ? 'camping' : (p.category as any),
@@ -649,8 +650,9 @@ export default function ExplorerClient({
       source: 'trail_pois',
       tags: p.tags,
     }));
-    return [...local, ...mappedOsmPois];
-  }, [unifiedMap, unifiedViewportData, poisData, isMobile, osmPoisEnvelope]);
+
+    return mergeAndDeduplicatePois(basePois, mappedOsmPois);
+  }, [unifiedMap, unifiedViewportData, poisData, osmPoisEnvelope]);
 
   const visiblePois = useMemo(() => {
     if (!relevantPois || activePoiCategories.length === 0) return undefined;
@@ -838,7 +840,7 @@ export default function ExplorerClient({
           P1 — CTA unique en haut : masqué quand le rail filtres est ouvert
           (filtres XOR recherche-ici, jamais superposés au header desktop). */}
       <AnimatePresence>
-        {showSearchHereButton && !unifiedMap && !filtersOpen && (
+        {showSearchHereButton && !filtersOpen && (
           <motion.div
             initial={{ opacity: 0, y: -16, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -846,27 +848,25 @@ export default function ExplorerClient({
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
             className="pointer-events-auto fixed left-1/2 top-[calc(var(--safe-top)+16px)] z-[var(--z-sticky)] -translate-x-1/2 sm:top-[76px]"
           >
-            {/* Icône seule (44px), même verre givré que les autres boutons carte.
-                Animation garantie : rotation continue pendant le fetch +
-                déclenchement impératif au tap (mouseenter ne bulle pas). */}
-            <IconButton
-              variant="glass"
-              size="lg"
+            <button
+              type="button"
               onClick={() => {
                 searchHereIconRef.current?.startAnimation();
                 handleSearchHere();
               }}
-              className="shadow-lg"
-              title="Rechercher les randonnées dans cette zone"
-              aria-label="Rechercher les randonnées dans cette zone"
-              aria-busy={trailsFetching}
+              className="flex items-center gap-2 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-4 py-2 text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-lg backdrop-blur-[var(--blur-xl)] transition-transform active:scale-95 hover:bg-[color:var(--lkv-hover-surface)]"
+              title="Explorer cette zone"
+              aria-label="Explorer cette zone"
+              data-testid="search-here-button"
+              aria-busy={worldSearchFetching}
             >
               <RotateCcwAnimated
                 ref={searchHereIconRef}
-                size={16}
-                className={trailsFetching ? 'animate-spin' : ''}
+                size={14}
+                className={worldSearchFetching ? 'animate-spin' : ''}
               />
-            </IconButton>
+              <span>{worldSearchFetching ? 'Recherche en cours…' : 'Explorer cette zone'}</span>
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -999,9 +999,9 @@ export default function ExplorerClient({
               <EmptyState
                 compact
                 icon={<Compass size={18} className="text-[color:var(--lkv-text-muted)]" />}
-                title="Aucun itinéraire trouvé"
-                actionLabel="Effacer les filtres"
-                onAction={resetFilters}
+                title={osmErrorMessage ?? "Aucun itinéraire trouvé"}
+                actionLabel={osmErrorMessage ? undefined : "Effacer les filtres"}
+                onAction={osmErrorMessage ? undefined : resetFilters}
               />
             </Card>
           ) : (
@@ -1215,6 +1215,23 @@ export default function ExplorerClient({
         <div className="pointer-events-none fixed top-[calc(var(--safe-top)+14px)] left-1/2 z-[var(--z-toast)] -translate-x-1/2">
           <Badge tone="warn" className="border border-[color:var(--glass-border)] bg-black/80 backdrop-blur-md px-3.5 py-1 text-[length:var(--lkv-text-caption-2)] font-semibold shadow-lg">
             📡 Mode hors-ligne · Données en cache
+          </Badge>
+        </div>
+      )}
+
+      {/* ── 6D. BANNIÈRE ERREUR OSM MONDIALE (ZOOM, 429, 503) ── */}
+      {osmErrorMessage && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="pointer-events-none fixed top-[calc(var(--safe-top)+14px)] left-1/2 z-[var(--z-toast)] -translate-x-1/2 max-w-[92vw]"
+        >
+          <Badge
+            tone="warn"
+            className="border border-[color:var(--glass-border)] bg-black/85 backdrop-blur-md px-3.5 py-1.5 text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-xl text-center"
+            data-testid="osm-error-banner"
+          >
+            ⚠️ {osmErrorMessage}
           </Badge>
         </div>
       )}

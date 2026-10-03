@@ -128,7 +128,6 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           osmRelationId,
-          detail: (trail as any).detail,
         }),
       });
       if (!res.ok) throw new Error('Échec de la matérialisation');

@@ -48,13 +48,12 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = getServiceClient();
 
-    // 1. Récupération ou utilisation du détail déjà fourni ou en cache
-    let detail = body.detail;
-    if (!detail) {
-      const cached = osmRouteDetailCache.get(`route-detail:${numericOsmId}`);
-      if (cached && !cached.isStale) {
-        detail = cached.data;
-      }
+    // 1. Récupération sécurisée du tracé côté serveur (cache serveur fiable OU Overpass live)
+    // Ne jamais faire confiance à un objet géographique complet envoyé par le navigateur.
+    let detail: any = null;
+    const cached = osmRouteDetailCache.get(`route-detail:${numericOsmId}`);
+    if (cached && !cached.isStale) {
+      detail = cached.data;
     }
 
     if (!detail) {
@@ -68,6 +67,9 @@ export async function POST(request: NextRequest) {
         );
       }
       detail = normalizeOsmRelationDetail(relationElem);
+      if (detail) {
+        osmRouteDetailCache.set(`route-detail:${numericOsmId}`, detail);
+      }
     }
 
     if (!detail) {
