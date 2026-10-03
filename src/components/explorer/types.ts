@@ -161,11 +161,11 @@ export function getDifficultyColor(difficulty: string | null | undefined): strin
 }
 
 export function getDifficultyLabel(difficulty: string | null | undefined): string {
-  return difficulty || 'Randonnée';
+  return difficulty || 'Non renseigné';
 }
 
 export function formatDuration(hours: number | null | undefined): string {
-  if (!hours || hours <= 0) return '—';
+  if (!hours || hours <= 0) return 'Non renseigné';
   if (hours < 1) return `${Math.round(hours * 60)} min`;
   if (hours >= 24) {
     const d = Math.floor(hours / 24);

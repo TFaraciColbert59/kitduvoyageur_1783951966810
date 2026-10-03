@@ -41,6 +41,9 @@ import {
   type LiveMemberPosition,
 } from '@/features/tribu/actions/livePosition';
 import { getCurrentGeoPosition } from '@/lib/native/geolocation';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import OsmPoiSheet from '@/components/explorer/OsmPoiSheet';
+import type { RoutePoiSummary, SearchEnvelope, ExternalRouteSummary } from '@/features/explorer-osm/domain/types';
 import { Badge, Button, Card, EmptyState, IconButton, SearchField, Spinner } from '@/components/ui';
 import { MapPageLayout } from '@/design';
 
@@ -148,6 +151,22 @@ export default function ExplorerClient({
   const [displayLimit, setDisplayLimit] = useState(30);
   const [sheetExpanded, setSheetExpanded] = useState(false);
   const listScrollRef = useRef<HTMLDivElement>(null);
+
+  // État réseau & POIs OSM mobile
+  const { isOnline } = useOnlineStatus();
+  const [selectedOsmPoi, setSelectedOsmPoi] = useState<RoutePoiSummary | null>(null);
+  const [osmPoiSheetOpen, setOsmPoiSheetOpen] = useState(false);
+
+  // Détection viewport mobile réactive
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 767px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   // Initial 2km radius default bbox (Chamonix: 45.9237, 6.8694) at zoom 14
   const [queriedBbox, setQueriedBbox] = useState<{ minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number }>({
@@ -329,6 +348,32 @@ export default function ExplorerClient({
     enabled: !unifiedMap,
   });
 
+  // Data - OSM Routes discovery on mobile
+  const { data: osmTrailsEnvelope, isFetching: osmFetching } = useQuery<SearchEnvelope<ExternalRouteSummary>>({
+    queryKey: [
+      'osm-routes',
+      queriedBbox?.minLat?.toFixed(3),
+      queriedBbox?.maxLat?.toFixed(3),
+      queriedBbox?.minLng?.toFixed(3),
+      queriedBbox?.maxLng?.toFixed(3),
+    ],
+    queryFn: async ({ signal }) => {
+      const params = new URLSearchParams();
+      if (queriedBbox) {
+        params.set('min_lat', queriedBbox.minLat.toFixed(4));
+        params.set('max_lat', queriedBbox.maxLat.toFixed(4));
+        params.set('min_lng', queriedBbox.minLng.toFixed(4));
+        params.set('max_lng', queriedBbox.maxLng.toFixed(4));
+        params.set('limit', '50');
+      }
+      const res = await fetch(`/api/explorer/osm/routes?${params.toString()}`, { signal });
+      if (!res.ok) return { status: 'unavailable', items: [] } as any;
+      return (await res.json()) as SearchEnvelope<ExternalRouteSummary>;
+    },
+    staleTime: 5 * 60_000,
+    enabled: isMobile && !unifiedMap,
+  });
+
   // Data - Unified POIs (with Viewport LOD)
   const { data: poisData } = useQuery<UnifiedPOI[]>({
     queryKey: ['pois', queriedBbox?.minLat?.toFixed(3), queriedBbox?.maxLat?.toFixed(3), queriedBbox?.minLng?.toFixed(3), queriedBbox?.maxLng?.toFixed(3), queriedBbox?.zoom],
@@ -353,33 +398,133 @@ export default function ExplorerClient({
     enabled: !unifiedMap,
   });
 
-  // Fetch real GeoJSON GPS track when a hike is selected
+  // Data - OSM POIs on mobile
+  const { data: osmPoisEnvelope } = useQuery<SearchEnvelope<RoutePoiSummary>>({
+    queryKey: [
+      'osm-pois',
+      queriedBbox?.minLat?.toFixed(3),
+      queriedBbox?.maxLat?.toFixed(3),
+      queriedBbox?.minLng?.toFixed(3),
+      queriedBbox?.maxLng?.toFixed(3),
+      activePoiCategories.sort().join(','),
+    ],
+    queryFn: async ({ signal }) => {
+      const params = new URLSearchParams();
+      if (queriedBbox) {
+        params.set('min_lat', queriedBbox.minLat.toFixed(4));
+        params.set('max_lat', queriedBbox.maxLat.toFixed(4));
+        params.set('min_lng', queriedBbox.minLng.toFixed(4));
+        params.set('max_lng', queriedBbox.maxLng.toFixed(4));
+        if (activePoiCategories.length > 0) {
+          params.set('categories', activePoiCategories.join(','));
+        }
+      }
+      const res = await fetch(`/api/explorer/osm/pois?${params.toString()}`, { signal });
+      if (!res.ok) return { status: 'unavailable', items: [] } as any;
+      return (await res.json()) as SearchEnvelope<RoutePoiSummary>;
+    },
+    staleTime: 5 * 60_000,
+    enabled: isMobile && !unifiedMap && activePoiCategories.length > 0,
+  });
+
+  // Fetch real GeoJSON GPS track when a hike is selected (dispatch local vs OSM avec annulation AbortController)
   useEffect(() => {
     if (!selectedTrailId) return;
+    const controller = new AbortController();
     let isMounted = true;
-    fetch(`/api/hikes/${selectedTrailId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (isMounted && data.geojson) {
-          setSelectedTrail((prev) => (prev && String(prev.id) === String(data.id) ? { ...prev, geojson: data.geojson } : prev));
-        }
-      })
-      .catch((err) => console.warn('Failed to load hike GeoJSON:', err));
+
+    if (selectedTrailId.startsWith('osm:relation:')) {
+      const osmId = selectedTrailId.replace('osm:relation:', '');
+      fetch(`/api/explorer/osm/route/${osmId}`, { signal: controller.signal })
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
+        .then((data) => {
+          if (isMounted && data.geojson) {
+            setSelectedTrail((prev) =>
+              prev && String(prev.id) === String(selectedTrailId)
+                ? ({
+                    ...prev,
+                    geojson: data.geojson,
+                    distance_km: data.calculatedDistanceKm || data.declaredDistanceKm || prev.distance_km,
+                    elevation_gain: data.elevationGainM ?? prev.elevation_gain,
+                    elevation_loss: data.elevationLossM ?? (prev as any).elevation_loss,
+                    difficulty: data.difficulty || prev.difficulty,
+                    geometryStatus: data.geometryStatus,
+                    detail: data,
+                  } as any)
+                : prev
+            );
+          }
+        })
+        .catch((err) => {
+          if (err.name !== 'AbortError') {
+            console.warn('Failed to load OSM hike GeoJSON:', err);
+          }
+        });
+    } else {
+      fetch(`/api/hikes/${selectedTrailId}`, { signal: controller.signal })
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
+        .then((data) => {
+          if (isMounted && data.geojson) {
+            setSelectedTrail((prev) => (prev && String(prev.id) === String(data.id) ? { ...prev, geojson: data.geojson } : prev));
+          }
+        })
+        .catch((err) => {
+          if (err.name !== 'AbortError') {
+            console.warn('Failed to load hike GeoJSON:', err);
+          }
+        });
+    }
+
     return () => {
       isMounted = false;
+      controller.abort();
     };
   }, [selectedTrailId]);
 
-  const trails =
-    unifiedMap && unifiedViewportData
-      ? unifiedViewportData.trails
-      : trailsData ?? initialTrails ?? [];
+  const trails = useMemo(() => {
+    if (unifiedMap && unifiedViewportData) {
+      return unifiedViewportData.trails;
+    }
+    const local = trailsData ?? initialTrails ?? [];
+    if (!isMobile || !osmTrailsEnvelope?.items || osmTrailsEnvelope.items.length === 0) {
+      return local;
+    }
+    const osmTrails: MapTrail[] = osmTrailsEnvelope.items.map((r) => ({
+      id: r.id,
+      name: r.name,
+      lat: r.representativePoint ? r.representativePoint[1] : null,
+      lng: r.representativePoint ? r.representativePoint[0] : null,
+      distance_km: r.calculatedDistanceKm || r.declaredDistanceKm || null,
+      ref: r.ref,
+      network: r.network,
+      difficulty: r.tags.sac_scale || null,
+      source: 'openstreetmap',
+      geometryStatus: r.geometryStatus,
+    } as any));
+
+    const localNames = new Set(local.map((t) => (t.name || '').toLowerCase()));
+    const combined = [...local];
+    for (const ot of osmTrails) {
+      if (!localNames.has(ot.name.toLowerCase())) {
+        combined.push(ot);
+      }
+    }
+    return combined;
+  }, [unifiedMap, unifiedViewportData, trailsData, initialTrails, isMobile, osmTrailsEnvelope]);
 
   const filteredTrails = useMemo(() => {
     return trails.filter((t) => {
       // Spatial restriction: only show hikes inside the active queried bounding box.
       // En mode unifié (ATLAS), le serveur a déjà borné au viewport réel de la carte.
-      if (queriedBbox && !unifiedMap) {
+      // Pour les sentiers OSM, la requête Overpass filtre déjà géographiquement les relations
+      // qui intersectent la BBOX. Le centre géométrique d'une grande traversée (ex. GR, TMB) peut être en dehors de la vue.
+      if (queriedBbox && !unifiedMap && (t as any).source !== 'openstreetmap') {
         const tLat = t.lat != null ? Number(t.lat) : (t as any).start_lat != null ? Number((t as any).start_lat) : null;
         const tLng = t.lng != null ? Number(t.lng) : (t as any).start_lng != null ? Number((t as any).start_lng) : null;
         if (tLat != null && tLng != null && !isNaN(tLat) && !isNaN(tLng)) {
@@ -394,8 +539,9 @@ export default function ExplorerClient({
         }
       }
 
-      const dist = t.distance_km != null ? Number(t.distance_km) : 0;
-      if (dist < 2.0) return false;
+      // Si la distance est renseignée, ignorer les micro-itinéraires (< 0.5 km) ;
+      // Ne PAS filtrer si la distance n'est pas encore connue (cas fréquent des relations OSM avant consultation détaillée).
+      if (t.distance_km != null && Number(t.distance_km) < 0.5) return false;
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         if (
@@ -485,13 +631,53 @@ export default function ExplorerClient({
     );
   }, []);
 
-  const relevantPois =
-    unifiedMap && unifiedViewportData ? unifiedViewportData.pois : poisData;
+  const relevantPois = useMemo(() => {
+    if (unifiedMap && unifiedViewportData) {
+      return unifiedViewportData.pois;
+    }
+    const local = poisData ?? [];
+    if (!isMobile || !osmPoisEnvelope?.items) {
+      return local;
+    }
+    const mappedOsmPois: UnifiedPOI[] = osmPoisEnvelope.items.map((p) => ({
+      id: p.id,
+      name: p.name || 'Point d’intérêt',
+      category: p.category === 'camp' ? 'camping' : (p.category as any),
+      lat: p.coordinates[1],
+      lng: p.coordinates[0],
+      altitude_m: p.elevationM,
+      source: 'trail_pois',
+      tags: p.tags,
+    }));
+    return [...local, ...mappedOsmPois];
+  }, [unifiedMap, unifiedViewportData, poisData, isMobile, osmPoisEnvelope]);
 
   const visiblePois = useMemo(() => {
     if (!relevantPois || activePoiCategories.length === 0) return undefined;
     return relevantPois.filter((poi) => activePoiCategories.includes(poi.category));
   }, [relevantPois, activePoiCategories]);
+
+  const handlePoiClick = useCallback((poi: UnifiedPOI) => {
+    if (String(poi.id).startsWith('osm:node:') || isMobile) {
+      const osmSummary: RoutePoiSummary = {
+        id: (String(poi.id).startsWith('osm:node:') ? poi.id : `osm:node:${poi.id}`) as any,
+        category: (poi.category === 'camping' ? 'camp' : poi.category) as any,
+        name: poi.name,
+        coordinates: [poi.lng, poi.lat],
+        elevationM: poi.altitude_m,
+        tags: (poi.tags as Record<string, string>) || {},
+        source: {
+          provider: 'openstreetmap',
+          externalId: String(poi.id),
+          sourceType: 'node',
+          fetchedAt: new Date().toISOString(),
+          license: 'ODbL-1.0',
+        },
+      };
+      setSelectedOsmPoi(osmSummary);
+      setOsmPoiSheetOpen(true);
+    }
+  }, [isMobile]);
 
   const handleSearchChange = useCallback((q: string) => {
     setSearchQuery(q);
@@ -531,6 +717,7 @@ export default function ExplorerClient({
       selectedTrailId={selectedTrailId}
       selectedTrail={selectedTrail}
       onTrailClick={handleTrailClick}
+      onPoiClick={handlePoiClick}
       userLocation={userLocation}
       onLocationUpdate={handleLocationUpdate}
       onViewportChange={handleViewportChange}
@@ -551,6 +738,7 @@ export default function ExplorerClient({
       pois={visiblePois}
       selectedTrailId={selectedTrailId}
       onTrailClick={handleTrailClick}
+      onPoiClick={handlePoiClick}
       userLocation={userLocation}
       onLocationUpdate={handleLocationUpdate}
       onViewportChange={handleViewportChange}
@@ -1013,6 +1201,22 @@ export default function ExplorerClient({
           open={detailPanelOpen}
           onClose={() => setDetailPanelOpen(false)}
         />
+      )}
+
+      {/* ── 6B. OSM POI DETAIL SHEET ── */}
+      <OsmPoiSheet
+        poi={selectedOsmPoi}
+        open={osmPoiSheetOpen}
+        onClose={() => setOsmPoiSheetOpen(false)}
+      />
+
+      {/* ── 6C. BANNIÈRE ÉTAT RÉSEAU (HORS-LIGNE) ── */}
+      {!isOnline && isMobile && (
+        <div className="pointer-events-none fixed top-[calc(var(--safe-top)+14px)] left-1/2 z-[var(--z-toast)] -translate-x-1/2">
+          <Badge tone="warn" className="border border-[color:var(--glass-border)] bg-black/80 backdrop-blur-md px-3.5 py-1 text-[length:var(--lkv-text-caption-2)] font-semibold shadow-lg">
+            📡 Mode hors-ligne · Données en cache
+          </Badge>
+        </div>
       )}
     </>
   );

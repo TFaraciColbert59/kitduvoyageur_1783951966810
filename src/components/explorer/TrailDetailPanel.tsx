@@ -106,6 +106,54 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
     }
   };
 
+  const [isMaterializing, setIsMaterializing] = useState(false);
+  const isOsm = String(trail.id).startsWith('osm:relation:') || (trail as any).source === 'openstreetmap';
+  const rawGeomStatus = (trail as any).geometryStatus;
+  const hasGeom = Boolean((trail as any).geom || (trail as any).geojson);
+  const isUnavailableGeometry = rawGeomStatus === 'unavailable' || (!hasGeom && !isOsm);
+  const isPartialGeometry = rawGeomStatus === 'partial';
+
+  const getCanonicalId = useCallback(async (): Promise<string | number | null> => {
+    if (!String(trail.id).startsWith('osm:relation:')) {
+      return trail.id;
+    }
+    const osmRelationId = parseInt(String(trail.id).replace('osm:relation:', ''), 10);
+    setIsMaterializing(true);
+    try {
+      const res = await fetch('/api/explorer/osm/materialize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          osmRelationId,
+          detail: (trail as any).detail,
+        }),
+      });
+      if (!res.ok) throw new Error('Échec de la matérialisation');
+      const data = await res.json();
+      return data.canonicalId;
+    } catch (err) {
+      console.error('Erreur matérialisation:', err);
+      return null;
+    } finally {
+      setIsMaterializing(false);
+    }
+  }, [trail]);
+
+  const handlePrepare = async () => {
+    const canonicalId = await getCanonicalId();
+    if (canonicalId) {
+      router.push(`/preparer-sentier/${canonicalId}`);
+    }
+  };
+
+  const handleStart = async () => {
+    if (isUnavailableGeometry) return;
+    const canonicalId = await getCanonicalId();
+    if (canonicalId) {
+      router.push(`/randonnee-active?routeId=${canonicalId}`);
+    }
+  };
+
   return (
     <Sheet
       open={open}
@@ -118,22 +166,29 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
       dragToDismiss
       footer={
         <div className="flex flex-col gap-2.5 sm:flex-row">
-          <Link
-            href={`/preparer-sentier/${trail.id}`}
-            prefetch={false}
-            className="inline-flex h-12 flex-1 select-none items-center justify-center whitespace-nowrap rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--card-content)] no-underline transition-transform active:scale-[var(--motion-press-scale)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+          <Button
+            variant="secondary"
+            className="h-12 flex-1"
+            disabled={isMaterializing}
+            onClick={handlePrepare}
           >
-            <span>Préparer le matériel</span>
-          </Link>
+            <span>{isMaterializing ? 'Préparation LKDV…' : 'Préparer le matériel'}</span>
+          </Button>
 
           <Button
             variant="primary"
             className="h-12 flex-1"
-            onClick={() => {
-              router.push(`/randonnee-active?routeId=${trail.id}`);
-            }}
+            disabled={isMaterializing || isUnavailableGeometry}
+            onClick={handleStart}
+            title={isUnavailableGeometry ? 'Tracé GPS non disponible pour la navigation' : 'Commencer tout de suite'}
           >
-            <span>Commencer tout de suite</span>
+            <span>
+              {isUnavailableGeometry
+                ? 'Tracé non disponible'
+                : isMaterializing
+                ? 'Initialisation…'
+                : 'Commencer tout de suite'}
+            </span>
           </Button>
         </div>
       }
@@ -145,9 +200,29 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
 
           <div className="absolute left-3.5 right-3.5 top-3.5 z-10 flex items-center justify-between">
-            <Badge className="border-transparent text-white" style={{ backgroundColor: diffColor }}>
-              {diffLabel}
-            </Badge>
+            <div className="flex items-center gap-1.5">
+              <Badge className="border-transparent text-white" style={{ backgroundColor: diffColor }}>
+                {diffLabel}
+              </Badge>
+              {isUnavailableGeometry && (
+                <Badge tone="warn" className="backdrop-blur-sm text-[length:var(--lkv-text-caption-2)]">
+                  Tracé indisponible
+                </Badge>
+              )}
+              {!isUnavailableGeometry && isOsm && (
+                <>
+                  <Badge tone="stone" className="border-white/30 bg-black/40 text-white backdrop-blur-sm text-[length:var(--lkv-text-caption-2)]">
+                    OSM · ODbL
+                  </Badge>
+                  <Badge
+                    tone={isPartialGeometry ? 'warn' : 'sage'}
+                    className="backdrop-blur-sm text-[length:var(--lkv-text-caption-2)]"
+                  >
+                    {isPartialGeometry ? 'Tracé partiel' : 'Tracé complet'}
+                  </Badge>
+                </>
+              )}
+            </div>
 
             <IconButton
               variant="glass"
@@ -188,7 +263,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
               value={
                 trail.elevation_gain !== null && trail.elevation_gain !== undefined
                   ? `+${Math.round(trail.elevation_gain)} m`
-                  : '—'
+                  : 'Non renseigné'
               }
             />
             <StatPill
