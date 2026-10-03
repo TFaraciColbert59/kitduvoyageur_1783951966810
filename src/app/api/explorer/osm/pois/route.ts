@@ -7,7 +7,12 @@ import { normalizeOsmPoi } from '@/features/explorer-osm/services/normalizationS
 import {
   osmPoiCache,
   overpassCircuitBreaker,
+  upstreamRateLimiter,
 } from '@/features/explorer-osm/services/cacheService';
+import {
+  calculateBboxGeodesicAreaKm2,
+  MAX_OVERPASS_GEODESIC_AREA_KM2,
+} from '@/features/explorer-osm/domain/geometry';
 import type {
   BoundingBox,
   PoiCategory,
@@ -32,14 +37,7 @@ const VALID_CATEGORIES: PoiCategory[] = [
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
 
-  const limited = await enforceRateLimit(clientIpFromHeaders(request.headers), {
-    scope: 'explorer-osm-pois',
-    limit: 40,
-    windowMs: 60_000,
-    failMode: 'open',
-  });
-  if (limited) return limited;
-
+  // 1. Validation stricte du viewport BBOX
   const viewport = parseOptionalBbox(searchParams);
   if (!viewport.ok) return viewport.response;
 
@@ -66,9 +64,24 @@ export async function GET(request: NextRequest) {
     east: maxLng,
   };
 
+  // 2. Garde-fou géodésique strict : l'aire réelle en km² doit être <= 400 km²
+  const areaKm2 = calculateBboxGeodesicAreaKm2(bbox);
+  if (areaKm2 > MAX_OVERPASS_GEODESIC_AREA_KM2) {
+    return NextResponse.json(
+      {
+        error: 'Zoome pour rechercher des points d’intérêt',
+        code: 'VIEWPORT_TOO_LARGE',
+        areaKm2,
+        maxAllowedKm2: MAX_OVERPASS_GEODESIC_AREA_KM2,
+      },
+      { status: 400 }
+    );
+  }
+
   const cacheKey = `pois:${minLat.toFixed(3)}:${maxLat.toFixed(3)}:${minLng.toFixed(3)}:${maxLng.toFixed(3)}:${requestedCategories.sort().join(',')}:${limit}`;
   const cached = osmPoiCache.get(cacheKey);
 
+  // 3. Réponse cache immédiate si fraiche
   if (cached && !cached.isStale) {
     const response = NextResponse.json(cached.data);
     response.headers.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=300');
@@ -76,6 +89,7 @@ export async function GET(request: NextRequest) {
     return response;
   }
 
+  // 4. Circuit Breaker
   if (overpassCircuitBreaker.isOpen()) {
     if (cached) {
       return NextResponse.json(cached.data);
@@ -87,12 +101,41 @@ export async function GET(request: NextRequest) {
       stale: false,
       limited: false,
       fromCache: false,
-      warnings: ['Service POI temporairement indisponible'],
+      warnings: ['Service POI temporairement indisponible (Circuit Breaker actif)'],
     };
     return NextResponse.json(emptyEnvelope, { status: 503 });
   }
 
+  // 5. Rate limiting par IP pour requêtes réelles amont
+  const limited = await enforceRateLimit(clientIpFromHeaders(request.headers), {
+    scope: 'explorer-osm-pois',
+    limit: 40,
+    windowMs: 60_000,
+    failMode: 'open',
+  });
+  if (limited) return limited;
+
+  // 6. Protection amont Overpass
+  const upstreamCheck = upstreamRateLimiter.canExecute();
+  if (!upstreamCheck.allowed) {
+    if (cached) {
+      return NextResponse.json(cached.data);
+    }
+    const res = NextResponse.json(
+      {
+        error: upstreamCheck.reason || 'Limite amont Overpass atteinte',
+        code: 'UPSTREAM_RATE_LIMITED',
+      },
+      { status: 429 }
+    );
+    if (upstreamCheck.retryAfterSeconds) {
+      res.headers.set('Retry-After', String(upstreamCheck.retryAfterSeconds));
+    }
+    return res;
+  }
+
   try {
+    upstreamRateLimiter.recordCall();
     const rawData = await queryPoisInBbox(bbox, requestedCategories, limit, { signal: request.signal });
     overpassCircuitBreaker.recordSuccess();
 

@@ -26,16 +26,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
 
-  // Rate limiting conservateur par IP : ~6 recherches utilisateur par minute
-  const limited = await enforceRateLimit(clientIpFromHeaders(request.headers), {
-    scope: 'explorer-osm-routes',
-    limit: 6,
-    windowMs: 60_000,
-    failMode: 'open',
-  });
-  if (limited) return limited;
-
-  // Validation stricte du viewport BBOX
+  // 1. Validation stricte du viewport BBOX
   const viewport = parseOptionalBbox(searchParams);
   if (!viewport.ok) return viewport.response;
 
@@ -57,7 +48,7 @@ export async function GET(request: NextRequest) {
     east: maxLng,
   };
 
-  // Garde-fou géodésique strict : l'aire réelle en km² (tenant compte de la latitude) doit être <= 400 km²
+  // 2. Garde-fou géodésique strict : l'aire réelle en km² (tenant compte de la latitude) doit être <= 400 km²
   const areaKm2 = calculateBboxGeodesicAreaKm2(bbox);
   if (areaKm2 > MAX_OVERPASS_GEODESIC_AREA_KM2) {
     return NextResponse.json(
@@ -74,7 +65,7 @@ export async function GET(request: NextRequest) {
   const cacheKey = `routes:${minLat.toFixed(3)}:${maxLat.toFixed(3)}:${minLng.toFixed(3)}:${maxLng.toFixed(3)}:${limit}`;
   const cached = osmRouteSummaryCache.get(cacheKey);
 
-  // 1. Si présent en cache LKDV local et frais : servi immédiatement (sans toucher Overpass)
+  // 3. Si présent en cache LKDV local et frais : servi immédiatement (sans toucher Overpass ni consommer de rate limit)
   if (cached && !cached.isStale) {
     const response = NextResponse.json(cached.data);
     response.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
@@ -82,7 +73,7 @@ export async function GET(request: NextRequest) {
     return response;
   }
 
-  // 2. Vérification disjoncteur
+  // 4. Vérification disjoncteur
   if (overpassCircuitBreaker.isOpen()) {
     if (cached) {
       const envelope: SearchEnvelope<ExternalRouteSummary> = {
@@ -106,6 +97,15 @@ export async function GET(request: NextRequest) {
     };
     return NextResponse.json(emptyEnvelope, { status: 503 });
   }
+
+  // 5. Rate limiting par IP pour les requêtes effectives amont (~30 recherches utilisateur par minute)
+  const limited = await enforceRateLimit(clientIpFromHeaders(request.headers), {
+    scope: 'explorer-osm-routes',
+    limit: 30,
+    windowMs: 60_000,
+    failMode: 'open',
+  });
+  if (limited) return limited;
 
   // 3. Limiteur amont global et protection anti-rafale pour Overpass
   const upstreamCheck = upstreamRateLimiter.canExecute();

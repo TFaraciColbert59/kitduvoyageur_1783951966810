@@ -31,18 +31,10 @@ export async function GET(
     );
   }
 
-  // Rate limiting par IP pour les détails
-  const limited = await enforceRateLimit(clientIpFromHeaders(request.headers), {
-    scope: 'explorer-osm-detail',
-    limit: 20,
-    windowMs: 60_000,
-    failMode: 'open',
-  });
-  if (limited) return limited;
-
   const cacheKey = `route-detail:${numericOsmId}`;
   const cached = osmRouteDetailCache.get(cacheKey);
 
+  // 1. Réponse cache immédiate si fraiche (ne consomme aucun quota rate limit)
   if (cached && !cached.isStale) {
     const response = NextResponse.json(cached.data);
     response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
@@ -50,6 +42,7 @@ export async function GET(
     return response;
   }
 
+  // 2. Circuit Breaker
   if (overpassCircuitBreaker.isOpen()) {
     if (cached) {
       const response = NextResponse.json(cached.data);
@@ -61,6 +54,15 @@ export async function GET(
       { status: 503 }
     );
   }
+
+  // 3. Rate limiting par IP pour les détails non mis en cache (~40/min)
+  const limited = await enforceRateLimit(clientIpFromHeaders(request.headers), {
+    scope: 'explorer-osm-detail',
+    limit: 40,
+    windowMs: 60_000,
+    failMode: 'open',
+  });
+  if (limited) return limited;
 
   // Protection quota amont
   const upstreamCheck = upstreamRateLimiter.canExecute();

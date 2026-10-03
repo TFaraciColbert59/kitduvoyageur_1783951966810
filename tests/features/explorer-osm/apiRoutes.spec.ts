@@ -40,7 +40,11 @@ import { POST as materializePOST } from '@/app/api/explorer/osm/materialize/rout
 import {
   upstreamRateLimiter,
   upstreamSingleFlight,
+  osmRouteSummaryCache,
+  osmRouteDetailCache,
+  osmPoiCache,
 } from '@/features/explorer-osm/services/cacheService';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
 
 describe('API Routes — Explorer OSM', () => {
   beforeEach(() => {
@@ -95,6 +99,35 @@ describe('API Routes — Explorer OSM', () => {
       expect(json.maxAllowedKm2).toBe(400);
       expect(json.areaKm2).toBeGreaterThan(400);
     });
+
+    it('ne consomme pas le rate limit si l’aire géodésique BBOX dépasse 400 km²', async () => {
+      const req = new NextRequest(
+        'http://localhost:3000/api/explorer/osm/routes?min_lat=0.0&max_lat=2.0&min_lng=0.0&max_lng=2.0'
+      );
+      const res = await routesGET(req);
+      expect(res.status).toBe(400);
+      expect(enforceRateLimit).not.toHaveBeenCalled();
+    });
+
+    it('ne consomme pas le rate limit si la réponse est servie depuis le cache', async () => {
+      osmRouteSummaryCache.set('routes:45.400:45.600:6.400:6.600:50', {
+        status: 'ok',
+        items: [{ id: 'osm:relation:123', name: 'Cached Route' } as any],
+        fetchedAt: new Date().toISOString(),
+        stale: false,
+        limited: false,
+        fromCache: true,
+        warnings: [],
+      });
+
+      const req = new NextRequest(
+        'http://localhost:3000/api/explorer/osm/routes?min_lat=45.4&max_lat=45.6&min_lng=6.4&max_lng=6.6'
+      );
+      const res = await routesGET(req);
+      expect(res.status).toBe(200);
+      expect(res.headers.get('x-lkdv-cache')).toBe('HIT');
+      expect(enforceRateLimit).not.toHaveBeenCalled();
+    });
   });
 
   describe('GET /api/explorer/osm/route/[id]', () => {
@@ -135,6 +168,19 @@ describe('API Routes — Explorer OSM', () => {
       expect(json.geometryStatus).toBe('complete');
       expect(json.geojson).not.toBeNull();
     });
+
+    it('ne consomme pas le rate limit si le détail est servi depuis le cache', async () => {
+      osmRouteDetailCache.set('route-detail:2222', {
+        id: 'osm:relation:2222',
+        name: 'Crête Blanche',
+      } as any);
+
+      const req = new NextRequest('http://localhost:3000/api/explorer/osm/route/2222');
+      const res = await detailGET(req, { params: Promise.resolve({ id: '2222' }) });
+      expect(res.status).toBe(200);
+      expect(res.headers.get('x-lkdv-cache')).toBe('HIT');
+      expect(enforceRateLimit).not.toHaveBeenCalled();
+    });
   });
 
   describe('GET /api/explorer/osm/pois', () => {
@@ -162,6 +208,38 @@ describe('API Routes — Explorer OSM', () => {
       expect(json.items).toHaveLength(1);
       expect(json.items[0].category).toBe('water');
       expect(json.items[0].name).toBe('Source Fraîche');
+    });
+
+    it('retourne 400 avec VIEWPORT_TOO_LARGE et ne consomme pas le rate limit si l’aire BBOX dépasse 400 km²', async () => {
+      const req = new NextRequest(
+        'http://localhost:3000/api/explorer/osm/pois?min_lat=0.0&max_lat=2.0&min_lng=0.0&max_lng=2.0'
+      );
+      const res = await poisGET(req);
+      expect(res.status).toBe(400);
+
+      const json = await res.json();
+      expect(json.code).toBe('VIEWPORT_TOO_LARGE');
+      expect(enforceRateLimit).not.toHaveBeenCalled();
+    });
+
+    it('ne consomme pas le rate limit si les POIs sont servis depuis le cache', async () => {
+      osmPoiCache.set('pois:45.400:45.600:6.400:6.600:water:60', {
+        status: 'ok',
+        items: [{ id: 'osm:node:888', name: 'Source Fraîche', category: 'water' } as any],
+        fetchedAt: new Date().toISOString(),
+        stale: false,
+        limited: false,
+        fromCache: true,
+        warnings: [],
+      });
+
+      const req = new NextRequest(
+        'http://localhost:3000/api/explorer/osm/pois?min_lat=45.4&max_lat=45.6&min_lng=6.4&max_lng=6.6&categories=water'
+      );
+      const res = await poisGET(req);
+      expect(res.status).toBe(200);
+      expect(res.headers.get('x-lkdv-cache')).toBe('HIT');
+      expect(enforceRateLimit).not.toHaveBeenCalled();
     });
   });
 

@@ -51,6 +51,10 @@ import {
   filterPoisByViewport,
   resolveOsmErrorMessage,
 } from '@/features/explorer-osm/services/trailMergeService';
+import {
+  calculateBboxGeodesicAreaKm2,
+  MAX_OVERPASS_GEODESIC_AREA_KM2,
+} from '@/features/explorer-osm/domain/geometry';
 import { Badge, Button, Card, EmptyState, IconButton, SearchField, Spinner } from '@/components/ui';
 import { MapPageLayout } from '@/design';
 
@@ -325,12 +329,36 @@ export default function ExplorerClient({
   }, []);
 
   const searchHereIconRef = useRef<RotateCCWIconHandle | null>(null);
-  const handleSearchHere = useCallback(() => {
-    if (liveViewportBbox) {
-      setQueriedBbox(liveViewportBbox);
-      setShowSearchHereButton(false);
-    }
+
+  // Vérification de pré-vol côté client : l'aire géodésique du viewport courant dépasse-t-elle le budget (400 km²) ?
+  const isViewportTooLarge = useMemo(() => {
+    if (!liveViewportBbox) return false;
+    const area = calculateBboxGeodesicAreaKm2({
+      south: liveViewportBbox.minLat,
+      west: liveViewportBbox.minLng,
+      north: liveViewportBbox.maxLat,
+      east: liveViewportBbox.maxLng,
+    });
+    return area > MAX_OVERPASS_GEODESIC_AREA_KM2;
   }, [liveViewportBbox]);
+
+  const [clientNotice, setClientNotice] = useState<string | null>(null);
+
+  // Auto-dismiss du message d'avertissement client après 4s
+  useEffect(() => {
+    if (!clientNotice) return;
+    const timer = setTimeout(() => {
+      setClientNotice(null);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [clientNotice]);
+
+  // Si l'utilisateur zoome dans une zone acceptable, effacer le message d'avertissement de zoom
+  useEffect(() => {
+    if (!isViewportTooLarge && clientNotice?.includes('Zoome')) {
+      setClientNotice(null);
+    }
+  }, [isViewportTooLarge, clientNotice]);
 
   // Data - Trails (with Viewport LOD)
   const { data: trailsData, isFetching: trailsFetching } = useQuery<MapTrail[]>({
@@ -356,7 +384,7 @@ export default function ExplorerClient({
   });
 
   // Data - OSM Routes discovery (mondial, actif sur les deux moteurs de carte)
-  const { data: osmTrailsEnvelope, isFetching: osmFetching, error: osmError } = useQuery<SearchEnvelope<ExternalRouteSummary>>({
+  const { data: osmTrailsEnvelope, isFetching: osmFetching, error: osmError, refetch: refetchOsmRoutes } = useQuery<SearchEnvelope<ExternalRouteSummary>>({
     queryKey: [
       'osm-routes',
       queriedBbox?.minLat?.toFixed(3),
@@ -418,7 +446,7 @@ export default function ExplorerClient({
   });
 
   // Data - OSM POIs (mondial, actif sur les deux moteurs de carte)
-  const { data: osmPoisEnvelope, isFetching: osmPoisFetching, error: osmPoisError } = useQuery<SearchEnvelope<RoutePoiSummary>>({
+  const { data: osmPoisEnvelope, isFetching: osmPoisFetching, error: osmPoisError, refetch: refetchOsmPois } = useQuery<SearchEnvelope<RoutePoiSummary>>({
     queryKey: [
       'osm-pois',
       queriedBbox?.minLat?.toFixed(3),
@@ -458,11 +486,40 @@ export default function ExplorerClient({
     enabled: isOnline && Boolean(queriedBbox) && activePoiCategories.length > 0,
   });
 
+  const handleSearchHere = useCallback(() => {
+    if (!liveViewportBbox) return;
+
+    if (isViewportTooLarge) {
+      setClientNotice('Zoome davantage pour rechercher les randonnées de cette zone.');
+      return;
+    }
+
+    setClientNotice(null);
+    setQueriedBbox({ ...liveViewportBbox });
+    setShowSearchHereButton(false);
+    void refetchOsmRoutes();
+    if (activePoiCategories.length > 0) {
+      void refetchOsmPois();
+    }
+  }, [liveViewportBbox, isViewportTooLarge, refetchOsmRoutes, refetchOsmPois, activePoiCategories]);
+
   const worldSearchFetching = Boolean(trailsFetching || osmFetching || osmPoisFetching);
   const osmErrorMessage = useMemo(
     () => resolveOsmErrorMessage(osmError || osmPoisError),
     [osmError, osmPoisError]
   );
+
+  const activeBannerMessage = useMemo(() => {
+    if (clientNotice) return clientNotice;
+    if (worldSearchFetching) return null;
+    if (osmErrorMessage) {
+      if (!isViewportTooLarge && osmErrorMessage.includes('Zoome')) {
+        return null;
+      }
+      return osmErrorMessage;
+    }
+    return null;
+  }, [clientNotice, worldSearchFetching, osmErrorMessage, isViewportTooLarge]);
 
   // Fetch real GeoJSON GPS track when a hike is selected (dispatch local vs OSM avec annulation AbortController)
   useEffect(() => {
@@ -869,7 +926,7 @@ export default function ExplorerClient({
             exit={{ opacity: 0, y: -16, scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
             className={`pointer-events-auto fixed left-1/2 z-[var(--z-sticky)] -translate-x-1/2 ${
-              osmErrorMessage ? 'top-[calc(var(--safe-top)+56px)] md:top-[124px]' : 'top-[calc(var(--safe-top)+16px)] sm:top-[76px]'
+              activeBannerMessage ? 'top-[calc(var(--safe-top)+56px)] md:top-[124px]' : 'top-[calc(var(--safe-top)+16px)] sm:top-[76px]'
             }`}
           >
             <button
@@ -880,9 +937,25 @@ export default function ExplorerClient({
                 searchHereIconRef.current?.startAnimation();
                 handleSearchHere();
               }}
-              className="flex items-center gap-2 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-4 py-2 text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-lg backdrop-blur-[var(--blur-xl)] transition-transform active:scale-95 hover:bg-[color:var(--lkv-hover-surface)] disabled:opacity-85 disabled:cursor-wait"
-              title={worldSearchFetching ? 'Recherche en cours…' : 'Explorer cette zone'}
-              aria-label={worldSearchFetching ? 'Recherche en cours…' : 'Explorer cette zone'}
+              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[length:var(--lkv-text-caption)] font-bold shadow-lg backdrop-blur-[var(--blur-xl)] transition-all active:scale-95 disabled:opacity-85 disabled:cursor-wait ${
+                isViewportTooLarge && !worldSearchFetching
+                  ? 'border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--lkv-text-secondary)] hover:text-[color:var(--lkv-text-primary)]'
+                  : 'border-[color:var(--lkv-primary)]/40 bg-[color:var(--card-tint-strong)] text-[color:var(--lkv-text-primary)] hover:bg-[color:var(--lkv-hover-surface)]'
+              }`}
+              title={
+                worldSearchFetching
+                  ? 'Recherche en cours…'
+                  : isViewportTooLarge
+                  ? 'Zoome pour explorer cette zone'
+                  : 'Explorer cette zone'
+              }
+              aria-label={
+                worldSearchFetching
+                  ? 'Recherche en cours…'
+                  : isViewportTooLarge
+                  ? 'Zoome pour explorer cette zone'
+                  : 'Explorer cette zone'
+              }
               data-testid="search-here-button"
               aria-busy={worldSearchFetching}
             >
@@ -891,7 +964,13 @@ export default function ExplorerClient({
                 size={14}
                 className={worldSearchFetching ? 'animate-spin' : ''}
               />
-              <span>{worldSearchFetching ? 'Recherche en cours…' : 'Explorer cette zone'}</span>
+              <span>
+                {worldSearchFetching
+                  ? 'Recherche en cours…'
+                  : isViewportTooLarge
+                  ? 'Zoome pour explorer'
+                  : 'Explorer cette zone'}
+              </span>
             </button>
           </motion.div>
         )}
@@ -1025,9 +1104,9 @@ export default function ExplorerClient({
               <EmptyState
                 compact
                 icon={<Compass size={18} className="text-[color:var(--lkv-text-muted)]" />}
-                title={osmErrorMessage ?? "Aucun itinéraire trouvé"}
-                actionLabel={osmErrorMessage ? undefined : "Effacer les filtres"}
-                onAction={osmErrorMessage ? undefined : resetFilters}
+                title={activeBannerMessage ?? "Aucun itinéraire trouvé"}
+                actionLabel={activeBannerMessage ? undefined : "Effacer les filtres"}
+                onAction={activeBannerMessage ? undefined : resetFilters}
               />
             </Card>
           ) : (
@@ -1246,7 +1325,7 @@ export default function ExplorerClient({
       )}
 
       {/* ── 6D. BANNIÈRE ERREUR OSM MONDIALE (ZOOM, 429, 503) ── */}
-      {osmErrorMessage && (
+      {activeBannerMessage && (
         <div
           role="status"
           aria-live="polite"
@@ -1257,7 +1336,7 @@ export default function ExplorerClient({
             className="border border-[color:var(--glass-border)] bg-black/85 backdrop-blur-md px-3.5 py-1.5 text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-xl text-center"
             data-testid="osm-error-banner"
           >
-            ⚠️ {osmErrorMessage}
+            ⚠️ {activeBannerMessage}
           </Badge>
         </div>
       )}
