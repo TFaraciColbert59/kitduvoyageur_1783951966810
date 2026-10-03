@@ -224,4 +224,7 @@ export class UpstreamRateLimiter {
 }
 
 export const upstreamSingleFlight = new SingleFlight();
-export const upstreamRateLimiter = new UpstreamRateLimiter(12, 500);
+export const upstreamRateLimiter = new UpstreamRateLimiter(
+  12,
+  typeof process !== 'undefined' && process.env?.NODE_ENV === 'test' ? 0 : 500
+);

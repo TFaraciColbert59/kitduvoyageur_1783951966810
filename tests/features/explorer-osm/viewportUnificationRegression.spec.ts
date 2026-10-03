@@ -5,6 +5,7 @@ import {
   mergeAndDeduplicateTrails,
   mergeAndDeduplicatePois,
   filterTrailsByViewport,
+  filterPoisByViewport,
   resolveOsmErrorMessage,
   type ViewportBbox,
 } from '@/features/explorer-osm/services/trailMergeService';
@@ -225,6 +226,91 @@ describe('Regression & Unification — Explorer OSM (Atlas & Legacy)', () => {
       expect(merged).toHaveLength(2);
       expect(merged[0].id).toBe('poi-local-1');
       expect(merged[1].id).toBe('osm:node:222222');
+    });
+
+    it('filtre les POIs hors du viewport lors d’un changement de zone (Nord → Japon)', () => {
+      const pois: UnifiedPOI[] = [
+        {
+          id: 'poi-lille-1',
+          name: 'Fontaine de Lille',
+          category: 'water',
+          lat: 50.63,
+          lng: 3.06,
+          source: 'trail_pois',
+        },
+        {
+          id: 'osm:node:japan-poi-1',
+          name: 'Kumano Shrine Fountain',
+          category: 'water',
+          lat: 33.84,
+          lng: 135.77,
+          source: 'trail_pois',
+        },
+      ];
+
+      const inJapan = filterPoisByViewport(pois, JAPAN_BBOX);
+      expect(inJapan).toHaveLength(1);
+      expect(inJapan[0].id).toBe('osm:node:japan-poi-1');
+      expect(inJapan.some((p) => p.name.includes('Lille'))).toBe(false);
+    });
+  });
+
+  describe('Robustesse du filtrage spatial — Sentiers sans coordonnées ou avec geojson', () => {
+    it('exclut rigoureusement un sentier dont lat et lng sont null / indéterminés', () => {
+      const trailWithoutCoords: MapTrail = {
+        id: 'corrupt-trail-1',
+        name: 'Sentier Fantôme sans Coordonnées',
+        lat: null,
+        lng: null,
+      };
+
+      const filtered = filterTrailsByViewport([trailWithoutCoords], JAPAN_BBOX);
+      expect(filtered).toHaveLength(0);
+    });
+
+    it('résout la position depuis t.geojson si lat/lng direct est null', () => {
+      const trailWithGeojsonOnly: MapTrail = {
+        id: 'osm:relation:geom-only',
+        name: 'Sentier du Soleil Levant',
+        lat: null,
+        lng: null,
+        geojson: {
+          type: 'LineString',
+          coordinates: [
+            [135.75, 33.82],
+            [135.78, 33.85],
+          ],
+        },
+      };
+
+      const inJapan = filterTrailsByViewport([trailWithGeojsonOnly], JAPAN_BBOX);
+      expect(inJapan).toHaveLength(1);
+      expect(inJapan[0].name).toBe('Sentier du Soleil Levant');
+
+      const inDolomites = filterTrailsByViewport([trailWithGeojsonOnly], DOLOMITES_BBOX);
+      expect(inDolomites).toHaveLength(0);
+    });
+
+    it('supporte camelCase osmRelationId et externalId pour la déduplication', () => {
+      const localCamel: MapTrail = {
+        id: 'camel-trail-1',
+        name: 'Sentier CamelCase',
+        lat: 45.8,
+        lng: 6.8,
+        osmRelationId: 998877,
+      } as any;
+
+      const discovered: MapTrail = {
+        id: 'osm:relation:998877',
+        name: 'Sentier CamelCase OSM',
+        lat: 45.8,
+        lng: 6.8,
+        source: 'openstreetmap',
+      } as any;
+
+      const merged = mergeAndDeduplicateTrails([localCamel], [discovered]);
+      expect(merged).toHaveLength(1);
+      expect(merged[0].id).toBe('camel-trail-1');
     });
   });
 

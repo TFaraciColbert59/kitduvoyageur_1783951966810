@@ -48,6 +48,7 @@ import {
   mergeAndDeduplicateTrails,
   mergeAndDeduplicatePois,
   filterTrailsByViewport,
+  filterPoisByViewport,
   resolveOsmErrorMessage,
 } from '@/features/explorer-osm/services/trailMergeService';
 import { Badge, Button, Card, EmptyState, IconButton, SearchField, Spinner } from '@/components/ui';
@@ -377,7 +378,9 @@ export default function ExplorerClient({
         let errJson: any = null;
         try {
           errJson = await res.json();
-        } catch {}
+        } catch {
+          // Corps de réponse non-JSON (ex: erreur 502/504 en texte brut)
+        }
         const err = new Error(errJson?.error || `HTTP ${res.status}`);
         (err as any).status = res.status;
         (err as any).code = errJson?.code;
@@ -386,11 +389,9 @@ export default function ExplorerClient({
       return (await res.json()) as SearchEnvelope<ExternalRouteSummary>;
     },
     staleTime: 5 * 60_000,
+    retry: false,
     enabled: isOnline && Boolean(queriedBbox),
   });
-
-  const worldSearchFetching = Boolean(trailsFetching || osmFetching);
-  const osmErrorMessage = useMemo(() => resolveOsmErrorMessage(osmError), [osmError]);
 
   // Data - Unified POIs (with Viewport LOD)
   const { data: poisData } = useQuery<UnifiedPOI[]>({
@@ -417,7 +418,7 @@ export default function ExplorerClient({
   });
 
   // Data - OSM POIs (mondial, actif sur les deux moteurs de carte)
-  const { data: osmPoisEnvelope } = useQuery<SearchEnvelope<RoutePoiSummary>>({
+  const { data: osmPoisEnvelope, isFetching: osmPoisFetching, error: osmPoisError } = useQuery<SearchEnvelope<RoutePoiSummary>>({
     queryKey: [
       'osm-pois',
       queriedBbox?.minLat?.toFixed(3),
@@ -438,12 +439,30 @@ export default function ExplorerClient({
         }
       }
       const res = await fetch(`/api/explorer/osm/pois?${params.toString()}`, { signal });
-      if (!res.ok) return { status: 'unavailable', items: [] } as any;
+      if (!res.ok) {
+        let errJson: any = null;
+        try {
+          errJson = await res.json();
+        } catch {
+          // Corps de réponse non-JSON (ex: erreur 502/504 en texte brut)
+        }
+        const err = new Error(errJson?.error || `HTTP ${res.status}`);
+        (err as any).status = res.status;
+        (err as any).code = errJson?.code;
+        throw err;
+      }
       return (await res.json()) as SearchEnvelope<RoutePoiSummary>;
     },
     staleTime: 5 * 60_000,
+    retry: false,
     enabled: isOnline && Boolean(queriedBbox) && activePoiCategories.length > 0,
   });
+
+  const worldSearchFetching = Boolean(trailsFetching || osmFetching || osmPoisFetching);
+  const osmErrorMessage = useMemo(
+    () => resolveOsmErrorMessage(osmError || osmPoisError),
+    [osmError, osmPoisError]
+  );
 
   // Fetch real GeoJSON GPS track when a hike is selected (dispatch local vs OSM avec annulation AbortController)
   useEffect(() => {
@@ -636,23 +655,25 @@ export default function ExplorerClient({
         : poisData ?? [];
 
     const osmItems = osmPoisEnvelope?.items ?? [];
+    let combinedPois: UnifiedPOI[];
     if (osmItems.length === 0) {
-      return basePois;
+      combinedPois = basePois;
+    } else {
+      const mappedOsmPois: UnifiedPOI[] = osmItems.map((p) => ({
+        id: p.id,
+        name: p.name || 'Point d’intérêt',
+        category: p.category === 'camp' ? 'camping' : (p.category as any),
+        lat: p.coordinates[1],
+        lng: p.coordinates[0],
+        altitude_m: p.elevationM,
+        source: 'trail_pois',
+        tags: p.tags,
+      }));
+      combinedPois = mergeAndDeduplicatePois(basePois, mappedOsmPois);
     }
 
-    const mappedOsmPois: UnifiedPOI[] = osmItems.map((p) => ({
-      id: p.id,
-      name: p.name || 'Point d’intérêt',
-      category: p.category === 'camp' ? 'camping' : (p.category as any),
-      lat: p.coordinates[1],
-      lng: p.coordinates[0],
-      altitude_m: p.elevationM,
-      source: 'trail_pois',
-      tags: p.tags,
-    }));
-
-    return mergeAndDeduplicatePois(basePois, mappedOsmPois);
-  }, [unifiedMap, unifiedViewportData, poisData, osmPoisEnvelope]);
+    return filterPoisByViewport(combinedPois, queriedBbox);
+  }, [unifiedMap, unifiedViewportData, poisData, osmPoisEnvelope, queriedBbox]);
 
   const visiblePois = useMemo(() => {
     if (!relevantPois || activePoiCategories.length === 0) return undefined;
@@ -838,25 +859,30 @@ export default function ExplorerClient({
 
       {/* ── 2B. BOUTON FLOTTANT DYNAMIQUE : « RECHERCHER DANS CETTE ZONE » ──
           P1 — CTA unique en haut : masqué quand le rail filtres est ouvert
-          (filtres XOR recherche-ici, jamais superposés au header desktop). */}
+          (filtres XOR recherche-ici, jamais superposés au header desktop).
+          Reste affiché avec spinner tant que la recherche mondiale est en cours. */}
       <AnimatePresence>
-        {showSearchHereButton && !filtersOpen && (
+        {(showSearchHereButton || worldSearchFetching) && !filtersOpen && (
           <motion.div
             initial={{ opacity: 0, y: -16, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -16, scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-            className="pointer-events-auto fixed left-1/2 top-[calc(var(--safe-top)+16px)] z-[var(--z-sticky)] -translate-x-1/2 sm:top-[76px]"
+            className={`pointer-events-auto fixed left-1/2 z-[var(--z-sticky)] -translate-x-1/2 ${
+              osmErrorMessage ? 'top-[calc(var(--safe-top)+56px)] md:top-[124px]' : 'top-[calc(var(--safe-top)+16px)] sm:top-[76px]'
+            }`}
           >
             <button
               type="button"
+              disabled={worldSearchFetching}
               onClick={() => {
+                if (worldSearchFetching) return;
                 searchHereIconRef.current?.startAnimation();
                 handleSearchHere();
               }}
-              className="flex items-center gap-2 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-4 py-2 text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-lg backdrop-blur-[var(--blur-xl)] transition-transform active:scale-95 hover:bg-[color:var(--lkv-hover-surface)]"
-              title="Explorer cette zone"
-              aria-label="Explorer cette zone"
+              className="flex items-center gap-2 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-4 py-2 text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-lg backdrop-blur-[var(--blur-xl)] transition-transform active:scale-95 hover:bg-[color:var(--lkv-hover-surface)] disabled:opacity-85 disabled:cursor-wait"
+              title={worldSearchFetching ? 'Recherche en cours…' : 'Explorer cette zone'}
+              aria-label={worldSearchFetching ? 'Recherche en cours…' : 'Explorer cette zone'}
               data-testid="search-here-button"
               aria-busy={worldSearchFetching}
             >
@@ -1224,7 +1250,7 @@ export default function ExplorerClient({
         <div
           role="status"
           aria-live="polite"
-          className="pointer-events-none fixed top-[calc(var(--safe-top)+14px)] left-1/2 z-[var(--z-toast)] -translate-x-1/2 max-w-[92vw]"
+          className="pointer-events-none fixed top-[calc(var(--safe-top)+14px)] left-1/2 z-[var(--z-toast)] -translate-x-1/2 max-w-[92vw] md:top-[calc(var(--safe-top)+68px)]"
         >
           <Badge
             tone="warn"

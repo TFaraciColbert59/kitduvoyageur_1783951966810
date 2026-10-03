@@ -1,17 +1,45 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 import {
   mergeAndDeduplicateTrails,
   filterTrailsByViewport,
   type ViewportBbox,
 } from '@/features/explorer-osm/services/trailMergeService';
-import { normalizeOsmRelationSummary, normalizeOsmRelationDetail } from '@/features/explorer-osm/services/normalizationService';
 import type { MapTrail } from '@/components/explorer/types';
+import type { SearchEnvelope, ExternalRouteSummary } from '@/features/explorer-osm/domain/types';
 
 vi.mock('@/lib/rate-limit/routes', () => ({
   enforceRateLimit: vi.fn().mockResolvedValue(null),
 }));
 
+vi.mock('@/features/explorer-osm/adapters/overpassAdapter', () => ({
+  queryRoutesInBbox: vi.fn(),
+  queryRouteDetail: vi.fn(),
+  OverpassError: class extends Error {
+    constructor(msg: string, public code: string) {
+      super(msg);
+    }
+  },
+}));
+
+import { queryRoutesInBbox, queryRouteDetail } from '@/features/explorer-osm/adapters/overpassAdapter';
+import { GET as routesGET } from '@/app/api/explorer/osm/routes/route';
+import { GET as detailGET } from '@/app/api/explorer/osm/route/[id]/route';
+import {
+  upstreamRateLimiter,
+  upstreamSingleFlight,
+  osmRouteSummaryCache,
+  osmRouteDetailCache,
+} from '@/features/explorer-osm/services/cacheService';
+
 describe('World Exploration Flow — Chamonix, Dolomites, Kumano (Japon), USA, Nouvelle-Zélande', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    upstreamRateLimiter.reset();
+    upstreamSingleFlight.clear();
+    osmRouteSummaryCache.clear();
+    osmRouteDetailCache.clear();
+  });
   // Définition des 5 zones mondiales canoniques
   const CHAMONIX_BBOX: ViewportBbox = {
     minLat: 45.89,
@@ -179,44 +207,64 @@ describe('World Exploration Flow — Chamonix, Dolomites, Kumano (Japon), USA, N
     ],
   };
 
-  function toMapTrail(rawOsm: any): MapTrail {
-    const summary = normalizeOsmRelationSummary(rawOsm)!;
-    return {
-      id: summary.id,
-      name: summary.name,
-      lat: summary.representativePoint ? summary.representativePoint[1] : null,
-      lng: summary.representativePoint ? summary.representativePoint[0] : null,
-      distance_km: summary.calculatedDistanceKm || summary.declaredDistanceKm || null,
-      ref: summary.ref,
-      network: summary.network,
-      difficulty: summary.tags.sac_scale || null,
+  async function searchZone(bbox: ViewportBbox, rawRelation: any): Promise<MapTrail[]> {
+    vi.mocked(queryRoutesInBbox).mockResolvedValueOnce({
+      elements: [rawRelation],
+    });
+    const url = `http://localhost:3000/api/explorer/osm/routes?min_lat=${bbox.minLat}&max_lat=${bbox.maxLat}&min_lng=${bbox.minLng}&max_lng=${bbox.maxLng}`;
+    const req = new NextRequest(url);
+    const res = await routesGET(req);
+    expect(res.status).toBe(200);
+    const json = (await res.json()) as SearchEnvelope<ExternalRouteSummary>;
+    expect(json.status).toBe('ok');
+    expect(json.items.length).toBeGreaterThan(0);
+
+    return json.items.map((r) => ({
+      id: r.id,
+      name: r.name,
+      lat: r.representativePoint ? r.representativePoint[1] : null,
+      lng: r.representativePoint ? r.representativePoint[0] : null,
+      distance_km: r.calculatedDistanceKm || r.declaredDistanceKm || null,
+      ref: r.ref,
+      network: r.network,
+      difficulty: r.tags.sac_scale || null,
       source: 'openstreetmap',
-      geometryStatus: summary.geometryStatus,
-    } as any as MapTrail;
+      geometryStatus: r.geometryStatus,
+    } as any as MapTrail));
   }
 
-  it('1. FRANCE (Chamonix) : découverte, affichage et chargement du tracé réel', () => {
-    const trail = toMapTrail(RAW_OSM_CHAMONIX);
-    const inViewport = filterTrailsByViewport([trail], CHAMONIX_BBOX);
+  async function fetchRouteDetail(relationId: number, rawRelation: any) {
+    vi.mocked(queryRouteDetail).mockResolvedValueOnce({
+      elements: [rawRelation],
+    });
+    const req = new NextRequest(`http://localhost:3000/api/explorer/osm/route/${relationId}`);
+    const res = await detailGET(req, { params: Promise.resolve({ id: String(relationId) }) });
+    expect(res.status).toBe(200);
+    const detail = await res.json();
+    return detail;
+  }
+
+  it('1. FRANCE (Chamonix) : découverte /api/explorer/osm/routes, affichage et chargement tracé réel', async () => {
+    const trails = await searchZone(CHAMONIX_BBOX, RAW_OSM_CHAMONIX);
+    const inViewport = filterTrailsByViewport(trails, CHAMONIX_BBOX);
     expect(inViewport).toHaveLength(1);
     expect(inViewport[0].name).toContain('Tour du Mont Blanc');
     expect(inViewport[0].ref).toBe('TMB');
 
-    // Vérification du tracé détaillé
-    const detail = normalizeOsmRelationDetail(RAW_OSM_CHAMONIX)!;
-    expect(detail).not.toBeNull();
+    // Vérification de la route détail /api/explorer/osm/route/:id
+    const detail = await fetchRouteDetail(111001, RAW_OSM_CHAMONIX);
     expect(detail.geometryStatus).toBe('complete');
     expect(detail.geojson).not.toBeNull();
-    expect(detail.geojson!.type).toBe('LineString');
-    expect((detail.geojson as any).coordinates.length).toBeGreaterThan(1);
+    expect(detail.geojson.type).toBe('LineString');
+    expect(detail.geojson.coordinates.length).toBeGreaterThan(1);
   });
 
-  it('2. ITALIE (Dolomites) : découverte et exclusion stricte des sentiers français', () => {
-    const chamonixTrail = toMapTrail(RAW_OSM_CHAMONIX);
-    const dolomitesTrail = toMapTrail(RAW_OSM_DOLOMITES);
+  it('2. ITALIE (Dolomites) : découverte et exclusion stricte des sentiers français', async () => {
+    const chamonixTrails = await searchZone(CHAMONIX_BBOX, RAW_OSM_CHAMONIX);
+    const dolomitesTrails = await searchZone(DOLOMITES_BBOX, RAW_OSM_DOLOMITES);
 
     // L'utilisateur déplace la carte vers les Dolomites et clique « Explorer cette zone »
-    const merged = mergeAndDeduplicateTrails([chamonixTrail], [dolomitesTrail]);
+    const merged = mergeAndDeduplicateTrails(chamonixTrails, dolomitesTrails);
     const inViewport = filterTrailsByViewport(merged, DOLOMITES_BBOX);
 
     // Chamonix DOIT avoir disparu, seules les Dolomites sont affichées
@@ -225,15 +273,15 @@ describe('World Exploration Flow — Chamonix, Dolomites, Kumano (Japon), USA, N
     expect(inViewport.some((t) => t.name.includes('Mont Blanc'))).toBe(false);
 
     // Vérification du tracé réel
-    const detail = normalizeOsmRelationDetail(RAW_OSM_DOLOMITES)!;
-    expect((detail.geojson as any).coordinates.length).toBeGreaterThan(1);
+    const detail = await fetchRouteDetail(222002, RAW_OSM_DOLOMITES);
+    expect(detail.geojson.coordinates.length).toBeGreaterThan(1);
   });
 
-  it('3. JAPON (Kumano Kodo) : découverte et exclusion des sentiers italiens', () => {
-    const dolomitesTrail = toMapTrail(RAW_OSM_DOLOMITES);
-    const kumanoTrail = toMapTrail(RAW_OSM_KUMANO);
+  it('3. JAPON (Kumano Kodo) : découverte et exclusion des sentiers italiens', async () => {
+    const dolomitesTrails = await searchZone(DOLOMITES_BBOX, RAW_OSM_DOLOMITES);
+    const kumanoTrails = await searchZone(KUMANO_BBOX, RAW_OSM_KUMANO);
 
-    const merged = mergeAndDeduplicateTrails([dolomitesTrail], [kumanoTrail]);
+    const merged = mergeAndDeduplicateTrails(dolomitesTrails, kumanoTrails);
     const inViewport = filterTrailsByViewport(merged, KUMANO_BBOX);
 
     expect(inViewport).toHaveLength(1);
@@ -241,15 +289,15 @@ describe('World Exploration Flow — Chamonix, Dolomites, Kumano (Japon), USA, N
     expect(inViewport[0].lat).toBeCloseTo(33.83, 1);
     expect(inViewport.some((t) => t.name.includes('Dolomiti'))).toBe(false);
 
-    const detail = normalizeOsmRelationDetail(RAW_OSM_KUMANO)!;
-    expect((detail.geojson as any).coordinates.length).toBeGreaterThan(1);
+    const detail = await fetchRouteDetail(333003, RAW_OSM_KUMANO);
+    expect(detail.geojson.coordinates.length).toBeGreaterThan(1);
   });
 
-  it('4. USA (Appalachian Trail) : découverte et exclusion des sentiers japonais', () => {
-    const kumanoTrail = toMapTrail(RAW_OSM_KUMANO);
-    const usaTrail = toMapTrail(RAW_OSM_USA);
+  it('4. USA (Appalachian Trail) : découverte et exclusion des sentiers japonais', async () => {
+    const kumanoTrails = await searchZone(KUMANO_BBOX, RAW_OSM_KUMANO);
+    const usaTrails = await searchZone(USA_APPALACHIAN_BBOX, RAW_OSM_USA);
 
-    const merged = mergeAndDeduplicateTrails([kumanoTrail], [usaTrail]);
+    const merged = mergeAndDeduplicateTrails(kumanoTrails, usaTrails);
     const inViewport = filterTrailsByViewport(merged, USA_APPALACHIAN_BBOX);
 
     expect(inViewport).toHaveLength(1);
@@ -257,15 +305,15 @@ describe('World Exploration Flow — Chamonix, Dolomites, Kumano (Japon), USA, N
     expect(inViewport[0].ref).toBe('AT');
     expect(inViewport.some((t) => t.name.includes('Kumano'))).toBe(false);
 
-    const detail = normalizeOsmRelationDetail(RAW_OSM_USA)!;
-    expect((detail.geojson as any).coordinates.length).toBeGreaterThan(1);
+    const detail = await fetchRouteDetail(444004, RAW_OSM_USA);
+    expect(detail.geojson.coordinates.length).toBeGreaterThan(1);
   });
 
-  it('5. NOUVELLE-ZÉLANDE (Routeburn Track) : découverte et exclusion des sentiers américains', () => {
-    const usaTrail = toMapTrail(RAW_OSM_USA);
-    const nzTrail = toMapTrail(RAW_OSM_NZ);
+  it('5. NOUVELLE-ZÉLANDE (Routeburn Track) : découverte et exclusion des sentiers américains', async () => {
+    const usaTrails = await searchZone(USA_APPALACHIAN_BBOX, RAW_OSM_USA);
+    const nzTrails = await searchZone(NZ_ROUTEBURN_BBOX, RAW_OSM_NZ);
 
-    const merged = mergeAndDeduplicateTrails([usaTrail], [nzTrail]);
+    const merged = mergeAndDeduplicateTrails(usaTrails, nzTrails);
     const inViewport = filterTrailsByViewport(merged, NZ_ROUTEBURN_BBOX);
 
     expect(inViewport).toHaveLength(1);
@@ -273,17 +321,23 @@ describe('World Exploration Flow — Chamonix, Dolomites, Kumano (Japon), USA, N
     expect(inViewport[0].ref).toBe('RBT');
     expect(inViewport.some((t) => t.name.includes('Appalachian'))).toBe(false);
 
-    const detail = normalizeOsmRelationDetail(RAW_OSM_NZ)!;
-    expect((detail.geojson as any).coordinates.length).toBeGreaterThan(1);
+    const detail = await fetchRouteDetail(555005, RAW_OSM_NZ);
+    expect(detail.geojson.coordinates.length).toBeGreaterThan(1);
   });
 
-  it('6. Chaîne complète continue : France → Italie → Japon → USA → NZ sans aucune persistance indésirable', () => {
+  it('6. Chaîne complète continue : France → Italie → Japon → USA → NZ sans aucune persistance indésirable', async () => {
+    const chamonix = await searchZone(CHAMONIX_BBOX, RAW_OSM_CHAMONIX);
+    const dolomites = await searchZone(DOLOMITES_BBOX, RAW_OSM_DOLOMITES);
+    const kumano = await searchZone(KUMANO_BBOX, RAW_OSM_KUMANO);
+    const usa = await searchZone(USA_APPALACHIAN_BBOX, RAW_OSM_USA);
+    const nz = await searchZone(NZ_ROUTEBURN_BBOX, RAW_OSM_NZ);
+
     const allTrails = [
-      toMapTrail(RAW_OSM_CHAMONIX),
-      toMapTrail(RAW_OSM_DOLOMITES),
-      toMapTrail(RAW_OSM_KUMANO),
-      toMapTrail(RAW_OSM_USA),
-      toMapTrail(RAW_OSM_NZ),
+      ...chamonix,
+      ...dolomites,
+      ...kumano,
+      ...usa,
+      ...nz,
     ];
 
     // Vérification que chaque viewport isole uniquement son propre sentier

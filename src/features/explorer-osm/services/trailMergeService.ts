@@ -15,25 +15,62 @@ export interface ViewportBbox {
 export function extractOsmRelationId(trail: Partial<MapTrail> | Record<string, unknown>): number | null {
   if (!trail) return null;
 
-  if (typeof (trail as any).osm_relation_id === 'number' && Number.isFinite((trail as any).osm_relation_id) && (trail as any).osm_relation_id > 0) {
-    return (trail as any).osm_relation_id;
+  // 1. osm_relation_id (snake_case) ou osmRelationId (camelCase)
+  const directOsm = (trail as any).osm_relation_id ?? (trail as any).osmRelationId;
+  if (typeof directOsm === 'number' && Number.isFinite(directOsm) && directOsm > 0) {
+    return directOsm;
   }
-  if ((trail as any).osm_relation_id) {
-    const parsed = parseInt(String((trail as any).osm_relation_id), 10);
+  if (directOsm) {
+    const parsed = parseInt(String(directOsm), 10);
     if (Number.isFinite(parsed) && parsed > 0) return parsed;
   }
 
+  // 2. id string : 'osm:relation:12345'
   const idStr = String(trail.id || '');
   if (idStr.startsWith('osm:relation:')) {
     const parsed = parseInt(idStr.replace('osm:relation:', ''), 10);
     if (Number.isFinite(parsed) && parsed > 0) return parsed;
   }
 
+  // 3. source 'openstreetmap' avec external_id ou source_external_id ou externalId
   if ((trail as any).source === 'openstreetmap') {
-    const ext = (trail as any).external_id || (trail as any).source_external_id;
+    const ext = (trail as any).external_id || (trail as any).source_external_id || (trail as any).externalId;
     if (ext) {
       const parsed = parseInt(String(ext), 10);
       if (Number.isFinite(parsed) && parsed > 0) return parsed;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Extrait les coordonnées d'un sentier (lat/lng, start_lat/start_lng ou premier point geojson).
+ */
+export function getTrailCoordinates(trail: Partial<MapTrail> | Record<string, unknown>): [number, number] | null {
+  if (!trail) return null;
+  const lat = trail.lat != null ? Number(trail.lat) : (trail as any).start_lat != null ? Number((trail as any).start_lat) : null;
+  const lng = trail.lng != null ? Number(trail.lng) : (trail as any).start_lng != null ? Number((trail as any).start_lng) : null;
+
+  if (lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng)) {
+    return [lat, lng];
+  }
+
+  // Extraction de repli depuis geojson si présent
+  const geojson = (trail as any).geojson;
+  if (geojson && typeof geojson === 'object') {
+    try {
+      const coords = geojson.coordinates;
+      if (Array.isArray(coords)) {
+        if (typeof coords[0] === 'number' && typeof coords[1] === 'number') {
+          return [Number(coords[1]), Number(coords[0])];
+        }
+        if (Array.isArray(coords[0]) && typeof coords[0][0] === 'number' && typeof coords[0][1] === 'number') {
+          return [Number(coords[0][1]), Number(coords[0][0])];
+        }
+      }
+    } catch {
+      // Ignorer les géométries GeoJSON non conformes ou corrompues
     }
   }
 
@@ -64,8 +101,8 @@ export function isSameTrail(
   }
 
   // 3. Même source + externalId
-  const aExt = (a as any).external_id || (a as any).source_external_id;
-  const bExt = (b as any).external_id || (b as any).source_external_id;
+  const aExt = (a as any).external_id || (a as any).source_external_id || (a as any).externalId;
+  const bExt = (b as any).external_id || (b as any).source_external_id || (b as any).externalId;
   const aSrc = (a as any).source || 'lkdv';
   const bSrc = (b as any).source || 'lkdv';
   if (aExt && bExt && aSrc === bSrc && String(aExt) === String(bExt)) {
@@ -77,14 +114,12 @@ export function isSameTrail(
   const aName = String((a as any).name || '').trim().toLowerCase();
   const bName = String((b as any).name || '').trim().toLowerCase();
   if (aName && bName && aName === bName) {
-    const aLat = a.lat != null ? Number(a.lat) : (a as any).start_lat != null ? Number((a as any).start_lat) : null;
-    const aLng = a.lng != null ? Number(a.lng) : (a as any).start_lng != null ? Number((a as any).start_lng) : null;
-    const bLat = b.lat != null ? Number(b.lat) : (b as any).start_lat != null ? Number((b as any).start_lat) : null;
-    const bLng = b.lng != null ? Number(b.lng) : (b as any).start_lng != null ? Number((b as any).start_lng) : null;
+    const aCoords = getTrailCoordinates(a as MapTrail);
+    const bCoords = getTrailCoordinates(b as MapTrail);
 
-    if (aLat !== null && aLng !== null && bLat !== null && bLng !== null) {
-      const dLat = Math.abs(aLat - bLat);
-      const dLng = Math.abs(aLng - bLng);
+    if (aCoords && bCoords) {
+      const dLat = Math.abs(aCoords[0] - bCoords[0]);
+      const dLng = Math.abs(aCoords[1] - bCoords[1]);
       // ~200m ≈ 0.002 degrés
       if (dLat < 0.002 && dLng < 0.002) {
         const aDist = a.distance_km != null ? Number(a.distance_km) : null;
@@ -123,7 +158,7 @@ export function mergeAndDeduplicateTrails(
     const osmId = extractOsmRelationId(t);
     if (osmId !== null) existingOsmRelationIds.add(osmId);
 
-    const ext = (t as any).external_id || (t as any).source_external_id;
+    const ext = (t as any).external_id || (t as any).source_external_id || (t as any).externalId;
     if (ext) {
       const src = (t as any).source || 'lkdv';
       existingSourceExternal.add(`${src}:${ext}`);
@@ -142,7 +177,7 @@ export function mergeAndDeduplicateTrails(
       continue;
     }
 
-    const otExt = (ot as any).external_id || (ot as any).source_external_id;
+    const otExt = (ot as any).external_id || (ot as any).source_external_id || (ot as any).externalId;
     if (otExt) {
       const otSrc = (ot as any).source || 'openstreetmap';
       if (existingSourceExternal.has(`${otSrc}:${otExt}`)) {
@@ -150,14 +185,18 @@ export function mergeAndDeduplicateTrails(
       }
     }
 
-    // Contrôle secondaire (géolocalisation coïncidente avec même nom)
-    if (baseTrails.some((bt) => isSameTrail(bt, ot))) {
+    // Contrôle secondaire (géolocalisation coïncidente avec même nom) contre TOUT élément déjà combiné
+    if (combined.some((bt) => isSameTrail(bt, ot))) {
       continue;
     }
 
     combined.push(ot);
     if (ot.id) existingIds.add(String(ot.id));
     if (otOsmId !== null) existingOsmRelationIds.add(otOsmId);
+    if (otExt) {
+      const otSrc = (ot as any).source || 'openstreetmap';
+      existingSourceExternal.add(`${otSrc}:${otExt}`);
+    }
   }
 
   return combined;
@@ -217,6 +256,7 @@ export function mergeAndDeduplicatePois(
  * Filtre les randonnées pour ne conserver que celles situées dans le viewport actif.
  * Évite qu'une randonnée d'une zone précédente (ex: Nord / Roubaix) reste affichée
  * lorsqu'on navigue vers une autre zone (ex: Japon, Dolomites).
+ * Tout tracé sans coordonnées résolvables est strictement exclu de la vue courante.
  */
 export function filterTrailsByViewport(
   trails: MapTrail[],
@@ -224,29 +264,60 @@ export function filterTrailsByViewport(
 ): MapTrail[] {
   if (!queriedBbox) return trails;
 
+  const latSpan = queriedBbox.maxLat - queriedBbox.minLat;
+  const lngSpan = queriedBbox.maxLng - queriedBbox.minLng;
+
   return trails.filter((t) => {
-    const tLat = t.lat != null ? Number(t.lat) : (t as any).start_lat != null ? Number((t as any).start_lat) : null;
-    const tLng = t.lng != null ? Number(t.lng) : (t as any).start_lng != null ? Number((t as any).start_lng) : null;
+    const coords = getTrailCoordinates(t);
+    // Un sentier sans aucune coordonnée ne peut pas appartenir au viewport géographique
+    if (!coords) return false;
 
-    if (tLat != null && tLng != null && !Number.isNaN(tLat) && !Number.isNaN(tLng)) {
-      const isOsm = (t as any).source === 'openstreetmap';
-      // Pour les tracés OSM, le centre géométrique d'une grande traversée (ex. GR, Kumano Kodo)
-      // peut se trouver légèrement en marge de la BBOX tout en intersectant la zone.
-      // On applique une marge de tolérance locale proportionnelle, mais qui rejette
-      // absolument tout ce qui se trouve hors de la région.
-      const latMargin = isOsm ? Math.max(0.5, (queriedBbox.maxLat - queriedBbox.minLat) * 0.5) : 0;
-      const lngMargin = isOsm ? Math.max(0.5, (queriedBbox.maxLng - queriedBbox.minLng) * 0.5) : 0;
+    const [tLat, tLng] = coords;
+    const isOsm = (t as any).source === 'openstreetmap';
 
-      if (
-        tLat < queriedBbox.minLat - latMargin ||
-        tLat > queriedBbox.maxLat + latMargin ||
-        tLng < queriedBbox.minLng - lngMargin ||
-        tLng > queriedBbox.maxLng + lngMargin
-      ) {
-        return false;
-      }
+    // Marge proportionnelle pour les grandes relations OSM traversant la bordure
+    const latMargin = isOsm ? Math.min(0.25, Math.max(0.05, latSpan * 0.25)) : 0;
+    const lngMargin = isOsm ? Math.min(0.25, Math.max(0.05, lngSpan * 0.25)) : 0;
+
+    if (
+      tLat < queriedBbox.minLat - latMargin ||
+      tLat > queriedBbox.maxLat + latMargin ||
+      tLng < queriedBbox.minLng - lngMargin ||
+      tLng > queriedBbox.maxLng + lngMargin
+    ) {
+      return false;
     }
 
+    return true;
+  });
+}
+
+/**
+ * Filtre les POIs pour ne conserver que ceux situés dans le viewport actif.
+ */
+export function filterPoisByViewport(
+  pois: UnifiedPOI[],
+  queriedBbox: ViewportBbox | null
+): UnifiedPOI[] {
+  if (!queriedBbox) return pois;
+
+  const latSpan = queriedBbox.maxLat - queriedBbox.minLat;
+  const lngSpan = queriedBbox.maxLng - queriedBbox.minLng;
+  const latMargin = Math.min(0.1, Math.max(0.02, latSpan * 0.15));
+  const lngMargin = Math.min(0.1, Math.max(0.02, lngSpan * 0.15));
+
+  return pois.filter((p) => {
+    if (p.lat == null || p.lng == null || !Number.isFinite(p.lat) || !Number.isFinite(p.lng)) {
+      return false;
+    }
+    if (
+      p.lat < queriedBbox.minLat - latMargin ||
+      p.lat > queriedBbox.maxLat + latMargin ||
+      p.lng < queriedBbox.minLng - lngMargin ||
+      p.lng > queriedBbox.maxLng + lngMargin
+    ) {
+      return false;
+    }
     return true;
   });
 }
@@ -258,7 +329,7 @@ export function resolveOsmErrorMessage(error: unknown): string | null {
   if (!error) return null;
   const err = error as any;
 
-  if (err.code === 'VIEWPORT_TOO_LARGE') {
+  if (err.code === 'VIEWPORT_TOO_LARGE' || err.message?.includes('Zoome') || err.status === 400 && String(err.message || '').includes('Zoome')) {
     return 'Zoome davantage pour rechercher les randonnées de cette zone.';
   }
   if (err.status === 429 || err.code === 'RATE_LIMITED' || err.code === 'UPSTREAM_RATE_LIMITED') {
