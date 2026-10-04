@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
         await logAdminAction({
           action: approve ? 'rewards.withdrawal.approve' : 'rewards.withdrawal.reject',
           actor_id: user.id,
-          target_table: 'withdrawals',
+          target_table: 'reward_withdrawals',
           target_id: withdrawal_id,
           diff: { reference, reason },
           ip,

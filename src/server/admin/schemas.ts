@@ -14,6 +14,11 @@ export const roleRevokeSchema = z.object({
   role: adminRoleNameSchema,
 });
 
+/** Identifiant période récompenses : TEXT 'YYYY-MM' (reward_periods.id). */
+export const periodIdSchema = z
+  .string()
+  .regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'période attendue au format AAAA-MM');
+
 export const paginationSchema = z.object({
   page: z.coerce.number().int().min(1).max(1000).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
@@ -34,7 +39,7 @@ const baseAdminActionSchema = z.object({
 export const rewardsActionSchema = z.discriminatedUnion('action', [
   baseAdminActionSchema.extend({
     action: z.literal('finalize_period'),
-    period_id: z.string().uuid(),
+    period_id: periodIdSchema,
     eligible_revenue: z.number().finite().min(0),
   }),
   baseAdminActionSchema.extend({

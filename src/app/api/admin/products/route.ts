@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logAdminAction } from '@/server/admin/audit';
 import { checkCsrfToken } from '@/server/admin/csrf';
 import { requireAdmin } from '@/server/admin/requireAdmin';
+import { sanitizeIlike } from '@/server/admin/sanitize';
 import { productCreateSchema } from '@/server/admin/productSchemas';
 import { paginationSchema } from '@/server/admin/schemas';
 import { slugify } from '@/features/admin/productUtils';
@@ -26,7 +27,8 @@ export async function GET(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: 'Requête invalide' }, { status: 400 });
   }
-  const { page, pageSize, q } = parsed.data;
+  const { page, pageSize } = parsed.data;
+  const q = sanitizeIlike(parsed.data.q);
   const from = (page - 1) * pageSize;
 
   let query = supabase

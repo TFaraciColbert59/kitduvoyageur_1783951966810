@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { requireAdmin } from '@/server/admin/requireAdmin';
+import { sanitizeIlike } from '@/server/admin/sanitize';
 import { paginationSchema } from '@/server/admin/schemas';
 
 export const runtime = 'nodejs';
@@ -30,7 +31,8 @@ export async function GET(req: NextRequest) {
       { status: 400 }
     );
   }
-  const { page, pageSize, q } = parsed.data;
+  const { page, pageSize } = parsed.data;
+  const q = sanitizeIlike(parsed.data.q);
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 

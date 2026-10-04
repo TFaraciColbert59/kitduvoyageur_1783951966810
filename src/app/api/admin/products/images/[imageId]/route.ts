@@ -52,7 +52,14 @@ export async function PATCH(
   }
   const productId = (image as { product_id: string }).product_id;
 
-  await supabase.from('product_images').update({ is_primary: false }).eq('product_id', productId);
+  const { error: resetError } = await supabase
+    .from('product_images')
+    .update({ is_primary: false })
+    .eq('product_id', productId);
+  if (resetError) {
+    console.error('[admin/images] reset principal impossible', { code: resetError.code });
+    return NextResponse.json({ error: 'Opération impossible' }, { status: 500 });
+  }
   const { error } = await supabase
     .from('product_images')
     .update({ is_primary: true })
@@ -109,10 +116,15 @@ export async function DELETE(
   }
 
   const service = getServiceSupabase();
-  if (service) {
-    await service.storage
-      .from(BUCKET)
-      .remove([(image as { storage_path: string }).storage_path]);
+  if (!service) {
+    return NextResponse.json({ error: 'Stockage indisponible' }, { status: 503 });
+  }
+  const { error: rmError } = await service.storage
+    .from(BUCKET)
+    .remove([(image as { storage_path: string }).storage_path]);
+  if (rmError) {
+    console.error('[admin/images] retrait storage impossible');
+    return NextResponse.json({ error: 'Suppression storage impossible' }, { status: 500 });
   }
   const { error } = await supabase.from('product_images').delete().eq('id', imageId);
   if (error) {

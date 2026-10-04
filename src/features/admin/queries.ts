@@ -3,6 +3,7 @@ import 'server-only';
 import { redirect } from 'next/navigation';
 
 import { requireAdmin, type AdminContext } from '@/server/admin/requireAdmin';
+import { sanitizeIlike } from '@/server/admin/sanitize';
 
 /**
  * Requêtes serveur du back-office — Server Components uniquement.
@@ -30,11 +31,12 @@ export interface AdminUserRow {
 }
 
 export async function listUsersPage(
-  q: string,
+  rawQ: string,
   page: number,
   pageSize: number
 ): Promise<{ data: AdminUserRow[]; total: number }> {
   const { supabase } = await requireAdminOrRedirect('users.read');
+  const q = sanitizeIlike(rawQ);
   const from = (page - 1) * pageSize;
   let query = supabase
     .from('user_profiles')
@@ -221,11 +223,12 @@ export interface ProductListRow {
 }
 
 export async function listProductsPage(
-  q: string,
+  rawQ: string,
   page: number,
   pageSize: number
 ): Promise<{ data: ProductListRow[]; total: number }> {
   const { supabase } = await requireAdminOrRedirect('products.read');
+  const q = sanitizeIlike(rawQ);
   const from = (page - 1) * pageSize;
   let query = supabase
     .from('shop_products')

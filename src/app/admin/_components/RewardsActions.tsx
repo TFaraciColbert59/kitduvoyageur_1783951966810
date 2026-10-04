@@ -118,12 +118,12 @@ export function FinalizePeriodForm() {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-end gap-2">
-        <AdminField label="Identifiant période (UUID)">
+        <AdminField label="Période (AAAA-MM)" hint="Identifiant reward_periods">
           <AdminInput
             value={periodId}
             onChange={(e) => setPeriodId(e.target.value)}
-            placeholder="uuid de la période"
-            maxLength={36}
+            placeholder="2026-09"
+            maxLength={7}
             disabled={busy}
           />
         </AdminField>

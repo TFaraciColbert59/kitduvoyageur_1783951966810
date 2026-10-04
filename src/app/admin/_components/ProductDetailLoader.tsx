@@ -56,6 +56,7 @@ export function ProductDetailLoader({ id }: { id: string }) {
   const [detail, setDetail] = useState<Detail | null>(null);
   const [failed, setFailed] = useState(false);
   const [archiving, setArchiving] = useState(false);
+  const [archiveError, setArchiveError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,9 +83,15 @@ export function ProductDetailLoader({ id }: { id: string }) {
 
   async function archive() {
     setArchiving(true);
+    setArchiveError(null);
     const res = await call(`/api/admin/products/${id}`, { method: 'DELETE' });
     setArchiving(false);
-    if (res.ok) router.push('/admin/produits');
+    if (res.ok) {
+      router.push('/admin/produits');
+    } else {
+      const j = await res.json().catch(() => null);
+      setArchiveError(j?.error ?? `Échec (${res.status})`);
+    }
   }
 
   return (
@@ -112,10 +119,17 @@ export function ProductDetailLoader({ id }: { id: string }) {
         />
       </section>
       {!archived ? (
-        <div>
-          <Button variant="destructive" size="sm" disabled={archiving} onClick={archive}>
-            Archiver le produit
-          </Button>
+        <div className="flex flex-col gap-1">
+          <div>
+            <Button variant="destructive" size="sm" disabled={archiving} onClick={archive}>
+              Archiver le produit
+            </Button>
+          </div>
+          {archiveError ? (
+            <p role="alert" className="text-xs text-[color:var(--lkv-danger)]">
+              {archiveError}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>

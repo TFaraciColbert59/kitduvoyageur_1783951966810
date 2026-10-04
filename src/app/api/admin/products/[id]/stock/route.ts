@@ -64,30 +64,19 @@ export async function POST(
     return NextResponse.json({ error: 'Stock résultant négatif' }, { status: 400 });
   }
 
-  const { error: stockError } = await supabase
-    .from('shop_products')
-    .update({ stock: after, updated_at: new Date().toISOString() })
-    .eq('id', id);
-  if (stockError) {
-    console.error('[admin/stock] stock impossible', { code: stockError.code });
-    return NextResponse.json({ error: 'Mouvement impossible' }, { status: 500 });
-  }
-
-  const { error: moveError } = await supabase.from('stock_movements').insert({
-    product_id: id,
-    product_slug: (product as { slug: string }).slug,
-    product_name: (product as { name: string }).name,
-    movement_type: body.data.movement_type,
-    quantity_change: body.data.quantity_change,
-    quantity_before: before,
-    quantity_after: after,
-    reference_type: body.data.reference_type,
-    reference_id: body.data.reference_id,
-    user_id: user.id,
-    notes: body.data.notes,
+  // Écriture atomique via RPC (pas de lost-update concurrent) ; la trace
+  // stock_movements est créée dans la même transaction serveur.
+  const { error: rpcError } = await supabase.rpc('increment_stock', {
+    p_product_id: id,
+    p_quantity: body.data.quantity_change,
+    p_reference_type: body.data.movement_type,
+    p_reference_id: body.data.reference_id,
+    p_user_id: user.id,
+    p_notes: body.data.notes || body.data.movement_type,
   });
-  if (moveError) {
-    console.error('[admin/stock] trace impossible', { code: moveError.code });
+  if (rpcError) {
+    console.error('[admin/stock] mouvement impossible', { code: rpcError.code });
+    return NextResponse.json({ error: 'Mouvement impossible' }, { status: 500 });
   }
 
   await logAdminAction({

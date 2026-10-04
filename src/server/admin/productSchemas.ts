@@ -65,7 +65,7 @@ export const productCreateSchema = z.object({
   alt_premium_id: z.string().trim().max(255).nullable().default(null),
   alt_budget_id: z.string().trim().max(255).nullable().default(null),
   available_europe: z.boolean().default(true),
-  available_usa: z.boolean().default(false),
+  available_usa: z.boolean().default(true),
   score_quality: score10,
   score_price: score10,
   score_durability: score10,
