@@ -16,12 +16,14 @@ test.describe('Back-office — matrice d’accès', () => {
   test('TEST-E2E-ADM-01: APIs admin sans session → 401', { tag: '@local-web' }, async ({
     request,
   }) => {
-    for (const url of ['/api/admin/overview', '/api/admin/users', '/api/admin/audit']) {
+    for (const url of ['/api/admin/overview', '/api/admin/users', '/api/admin/audit', '/api/admin/report?section=overview']) {
       const res = await request.get(url);
       expect(res.status(), url).toBe(401);
     }
     const post = await request.post('/api/admin/rewards', { data: {} });
     expect(post.status()).toBe(401);
+    const note = await request.post('/api/admin/notes', { data: {} });
+    expect(note.status()).toBe(401);
   });
 
   test('TEST-E2E-ADM-02: /admin sans session → 307 vers /connexion', { tag: '@local-web' }, async ({
