@@ -84,10 +84,10 @@ describe('zonePalette - aucune couleur libre', () => {
     }
   });
 
-  it('construit un fond en trois couches pour chaque zone', () => {
+  it('construit un fond en quatre couches pour chaque zone (lueur + ciel + profondeur + lit sombre)', () => {
     for (const zone of ZONES) {
       const layers = sceneBackground(zone.id).split('),');
-      expect(layers).toHaveLength(3);
+      expect(layers).toHaveLength(4);
     }
   });
 
