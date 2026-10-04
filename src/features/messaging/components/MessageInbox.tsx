@@ -1,7 +1,7 @@
 'use client';
 
 import Icon from '@/components/ui/Icon';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Button, Card, ErrorState } from '@/components/ui';
 import type { UserProfileSummary, Conversation } from '../types/messaging.types';
 import { useConversations } from '../hooks/useConversations';
@@ -27,6 +27,20 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
   const { haptic } = useHapticFeedback();
   const { conversations, loading, error, refreshConversations } = useConversations(currentUserId);
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
+  const deepLinkOpened = useRef(false);
+  useEffect(() => {
+    if (deepLinkOpened.current) return;
+    const id = new URLSearchParams(window.location.search).get('conversation');
+    if (
+      id &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) &&
+      conversations.some((c) => c.id === id)
+    ) {
+      deepLinkOpened.current = true;
+      setSelectedConvId(id);
+      onActiveConversationChange?.(true);
+    }
+  }, [conversations, onActiveConversationChange]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);

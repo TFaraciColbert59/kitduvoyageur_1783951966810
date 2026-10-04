@@ -1,3 +1,5 @@
+import CatalogLookup from '@/features/materiel/components/inventaire/CatalogLookup';
+import { MarketplaceWorkspace } from '@/features/marketplace/components/MarketplaceWorkspace';
 import { getInventoryStatus } from '@/features/materiel/domain/inventory';
 import { getInventoryCatalog } from '@/features/materiel/services/getInventoryCatalog';
 import { InventoryOverview } from '@/features/materiel/components/inventaire/InventoryOverview';
@@ -92,11 +94,15 @@ export async function HubInventaireSection({ productId }: { productId?: string }
         />
       </div>
       <div className="col-span-12">
+        <CatalogLookup />
         <InventoryWorkspace
           items={items}
           initialProduct={initialProduct}
           catalogLinks={catalogLinks}
         />
+      </div>
+      <div className="col-span-12">
+        <MarketplaceWorkspace items={items} />
       </div>
       <div className="col-span-12 md:col-span-6">
         <PurchasesInvest series={purchasesSeries} totalEur={totalInvestment / 100} />
