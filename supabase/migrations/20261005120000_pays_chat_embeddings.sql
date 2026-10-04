@@ -2,6 +2,9 @@
 -- POC mini-chat pays — store vectoriel RAG (phase RAG, §3/§4 du rapport)
 -- Table pays_chat_embeddings + RPC match_pays_chat_chunks (cosinus).
 -- Idempotent : IF NOT EXISTS / OR REPLACE / DROP POLICY IF EXISTS.
+-- NOTE version : initialement 20261005090000, renommée car le distant porte
+-- déjà une migration de même version (contenu tiers : table créée sans la
+-- RPC). Tout est réémis en idempotent pour converger quel que soit l'état.
 --
 -- Dimension 1536 = text-embedding-3-small (standard de facto, compatible
 -- OpenRouter). Si le modèle d'ingestion change, recréer la colonne avec la
