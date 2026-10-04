@@ -1,8 +1,6 @@
-import { PageLayout } from '@/design';
-import { AdminNav } from '../../_components/AdminNav';
 import { ProductDetailLoader } from '../../_components/ProductDetailLoader';
 
-/** GET /admin/produits/[id] — fiche complète (édition + visuels + stock). */
+/** GET /admin/produits/[id] — fiche complète (shell via layout). */
 export default async function AdminProductDetailPage({
   params,
 }: {
@@ -10,9 +8,19 @@ export default async function AdminProductDetailPage({
 }) {
   const { id } = await params;
   return (
-    <PageLayout title="Fiche produit" subtitle={id.slice(0, 8)}>
-      <AdminNav />
-      <ProductDetailLoader id={id} />
-    </PageLayout>
+    <section className="os-workspace">
+      <div className="os-workspace-primary">
+        <div className="os-panel">
+          <div className="os-panel-head">
+            <div>
+              <span className="os-eyebrow">Catalogue</span>
+              <h2>Fiche produit</h2>
+            </div>
+            <span className="os-chip os-clear">{id.slice(0, 8)}</span>
+          </div>
+          <ProductDetailLoader id={id} />
+        </div>
+      </div>
+    </section>
   );
 }

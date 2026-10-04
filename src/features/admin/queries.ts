@@ -84,7 +84,7 @@ export interface AuditRow {
 }
 
 export async function listAuditPage(
-  filters: { action?: string; target_table?: string },
+  filters: { action?: string; target_table?: string; from?: string; to?: string },
   page: number,
   pageSize: number
 ): Promise<{ data: AuditRow[]; total: number }> {
@@ -99,6 +99,8 @@ export async function listAuditPage(
     .range(from, from + pageSize - 1);
   if (filters.action) query = query.eq('action', filters.action);
   if (filters.target_table) query = query.eq('target_table', filters.target_table);
+  if (filters.from) query = query.gte('created_at', filters.from);
+  if (filters.to) query = query.lte('created_at', filters.to);
   const { data, count, error } = await query;
   if (error) throw new Error('audit_unavailable');
   return { data: (data ?? []) as unknown as AuditRow[], total: count ?? 0 };

@@ -7,6 +7,7 @@ import '@/styles/tokens.css';
 import '@/styles/tailwind.css';
 import '@/styles/liquid-glass.css';
 import '@/styles/liquid-ios27.css';
+import '@/app/admin/_os/admin-os.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';

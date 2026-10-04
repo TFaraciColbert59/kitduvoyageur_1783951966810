@@ -1,57 +1,168 @@
 import Link from 'next/link';
 
-import { DashboardPageLayout } from '@/design';
-import { EmptyState } from '@/components/ui';
-import { getOverviewCounts } from '@/features/admin/queries';
-import { formatPriceEur } from '@/features/admin/productUtils';
-import { AdminNav } from './_components/AdminNav';
+import { Button } from '@/components/ui';
+import { ROUTES } from './_os/routeConfig';
+import { Hero, MetricGrid, DataPanel, FilterPanel, PeriodPills } from './_os/panels';
+import { InspectorBox } from './_os/osUi';
+import { ReportButton } from './_os/ReportButton';
+import { AdminField, AdminInput } from './_components/AdminField';
+import {
+  getAccountBadge,
+  getActivitySeries,
+  getCopilotSignal,
+  getOverviewMetrics,
+  getPriorityQueue,
+} from '@/features/admin/osQueries';
+import { listAuditPage } from '@/features/admin/queries';
+import { greeting, parsePeriod } from './_os/period';
 
-/** GET /admin — tableau de bord temps réel, zéro mock. */
-export default async function AdminOverviewPage() {
-  const counts = await getOverviewCounts();
+interface SearchParams {
+  period?: string;
+  from?: string;
+  to?: string;
+  q?: string;
+}
 
-  const kpis = [
-    { label: 'Produits au catalogue', value: String(counts.products), href: '/admin/produits' },
-    { label: 'Commandes', value: String(counts.orders), href: '/admin/commandes' },
-    { label: 'Utilisateurs', value: String(counts.users), href: '/admin/utilisateurs' },
-    {
-      label: 'Retraits en attente',
-      value: String(counts.pendingWithdrawals),
-      href: '/admin/recompenses',
-    },
-  ];
+/** GET /admin — Mission Control sur données réelles. */
+export default async function AdminOverviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const sp = await searchParams;
+  const range = parsePeriod(sp);
+  const q = (sp.q ?? '').slice(0, 120).toLowerCase();
+  const cfg = ROUTES['overview'];
+
+  const [account, metrics, series, queue, copilot, audit] = await Promise.all([
+    getAccountBadge(),
+    getOverviewMetrics(),
+    getActivitySeries(30),
+    getPriorityQueue(50),
+    getCopilotSignal(),
+    listAuditPage({ from: range.from, to: range.to }, 1, 5),
+  ]);
+
+  const hour = new Date().getHours();
+  const totalActions = series.reduce((s, p) => s + p.count, 0);
+  const peak = series.reduce((m, p) => (p.count > m.count ? p : m), { day: '—', count: 0 });
+  const filtered = queue.filter(
+    (i) => !q || `${i.level} ${i.title} ${i.detail}`.toLowerCase().includes(q)
+  );
 
   return (
-    <DashboardPageLayout
-      title="Administration"
-      subtitle="Back-office LKDV — données temps réel, aucune donnée fictive"
-      columns={2}
-    >
-      <div className="col-span-full">
-        <AdminNav />
-      </div>
-      {kpis.map((kpi) => (
-        <Link
-          key={kpi.label}
-          href={kpi.href}
-          className="rounded-3xl border border-[color:var(--glass-rim)] bg-[color:var(--g2-bg)] p-5 backdrop-blur-md"
-        >
-          <p className="text-sm text-[color:var(--glass-label-secondary)]">{kpi.label}</p>
-          <p className="mt-1 text-3xl font-bold text-[color:var(--glass-label)]">{kpi.value}</p>
-        </Link>
-      ))}
-      <div className="col-span-full">
-        <EmptyState
-          title="Journal d'audit actif"
-          description="Chaque action sensible est journalisée côté serveur. Consultez les dernières entrées."
-          actionLabel="Voir l'audit"
-          actionHref="/admin/audit"
-          compact
+    <>
+      <Hero
+        eyebrow={cfg.eyebrow}
+        title={greeting(hour, account.name)}
+        subtitle={cfg.subtitle}
+        actions={
+          <>
+            <Link className="os-btn os-interactive" href="/admin/audit">
+              Voir l’audit
+            </Link>
+            <ReportButton section="overview" label={cfg.ctaLabel} />
+          </>
+        }
+      />
+      <PeriodPills base="/admin" current={range.current} />
+      {range.current === 'custom' ? (
+        <form method="get" className="os-panel" aria-label="Période personnalisée">
+          <input type="hidden" name="period" value="custom" />
+          <div className="flex flex-wrap items-end gap-2">
+            <AdminField label="Du">
+              <AdminInput type="date" name="from" defaultValue={range.from?.slice(0, 10) ?? ''} />
+            </AdminField>
+            <AdminField label="Au">
+              <AdminInput type="date" name="to" defaultValue={range.to?.slice(0, 10) ?? ''} />
+            </AdminField>
+            <Button variant="secondary" size="sm" type="submit">
+              Appliquer
+            </Button>
+          </div>
+        </form>
+      ) : null}
+      <MetricGrid
+        metrics={[
+          {
+            label: 'Utilisateurs',
+            value: metrics.users.toLocaleString('fr-FR'),
+            delta:
+              metrics.usersDeltaPct !== null
+                ? `${metrics.usersDeltaPct > 0 ? '+' : ''}${metrics.usersDeltaPct} % ce mois`
+                : `+${metrics.usersNewMonth} ce mois`,
+            icon: 'pulse',
+          },
+          {
+            label: 'Marketplace',
+            value: `${(metrics.gmv / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} k€`,
+            delta: `${metrics.orders} commandes`,
+            icon: 'bag',
+          },
+          {
+            label: 'Confiance moyenne',
+            value: metrics.trustAvg !== null ? metrics.trustAvg.toLocaleString('fr-FR') : '—',
+            delta: 'score / 100',
+            icon: 'check',
+          },
+          {
+            label: 'À traiter',
+            value: String(metrics.todo),
+            delta: metrics.todoBreakdown,
+            icon: 'warning',
+            tone: metrics.todo > 0 ? 'warn' : undefined,
+          },
+        ]}
+      />
+      <section className="os-workspace">
+        <div className="os-workspace-primary">
+          <DataPanel
+            label="TEMPS RÉEL"
+            title="Live Pulse"
+            chip={`${totalActions} actions · ${range.current}`}
+            kind="chart"
+            rows={[]}
+            series={series}
+            foot={[
+              {
+                title: String(totalActions),
+                detail: 'actions journalisées',
+                value: `pic ${peak.count} (${peak.day})`,
+                tone: 'info',
+              },
+              ...audit.data.slice(0, 2).map((a) => ({
+                title: a.action,
+                detail: new Date(a.created_at).toLocaleString('fr-FR'),
+                value: a.target_table ?? '',
+                tone: 'info' as const,
+              })),
+            ]}
+          />
+          <FilterPanel
+            label="DÉCISIONS"
+            title="Priority Queue"
+            filter={
+              <form method="get" className="os-filter os-clear" role="search">
+                {range.current !== "Aujourd'hui" ? <input type="hidden" name="period" value={range.current} /> : null}
+                <input name="q" defaultValue={sp.q ?? ''} placeholder="Filtrer…" aria-label="Filtrer la file" maxLength={120} />
+              </form>
+            }
+            rows={filtered.map((i) => ({ title: `${i.level} · ${i.title}`, detail: i.detail, value: '', tone: i.tone, href: i.href }))}
+            empty="File vide — rien ne requiert de décision."
+          />
+        </div>
+        <InspectorBox
+          content={{
+            title: 'Admin Copilot',
+            subtitle: copilot.subtitle,
+            headline: copilot.headline,
+            text: copilot.text,
+            rows: copilot.rows,
+          }}
+          noteTarget={{ table: 'dashboard', id: 'overview' }}
+          openHref="/admin/audit"
         />
-      </div>
-      <p className="col-span-full text-xs text-[color:var(--glass-label-tertiary)]">
-        Devises affichées en euros — exemple : {formatPriceEur(0)}.
-      </p>
-    </DashboardPageLayout>
+      </section>
+    </>
   );
 }
