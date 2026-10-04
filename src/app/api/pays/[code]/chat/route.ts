@@ -10,6 +10,7 @@ import {
   EMBEDDING_DIMENSIONS,
   type RagChunk,
 } from '@/features/pays/chat/paysChatRag';
+import { searchCountryImages, type PaysImage } from '@/features/pays/images/unsplash';
 import { clientIpFromHeaders, rateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
@@ -20,7 +21,12 @@ const CHAT_WINDOW_MS = 60 * 60_000;
 
 const chatBodySchema = z.object({
   question: z.string().min(1).max(2000),
+  /** Nom du pays pour la recherche d'images (la route détecte l'intent). */
+  countryName: z.string().min(1).max(100).optional(),
 });
+
+/** Intent visuel explicite (FR) : photos, illustrations, aperçus. */
+const VISUAL_INTENT = /photo|image|montre|voir|vois|paysage|illustre|apercu|appara[iî]t/i;
 
 /**
  * Embedding OpenRouter (API compatible OpenAI). Retourne null à la moindre
@@ -148,11 +154,17 @@ export async function POST(
       maxTokens: 1024,
       userId,
     });
+    // Images : intent explicite uniquement, jamais d'échec (helper dégradé).
+    let images: PaysImage[] = [];
+    if (VISUAL_INTENT.test(question) && parsed.data.countryName) {
+      images = await searchCountryImages(parsed.data.countryName, { perPage: 3 });
+    }
     return NextResponse.json({
       text: result.text,
       model: result.model,
       degraded: result.degraded,
       ragUsed,
+      images,
     });
   } catch (error) {
     return NextResponse.json(

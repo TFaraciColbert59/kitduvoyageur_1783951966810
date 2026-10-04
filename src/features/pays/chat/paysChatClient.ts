@@ -5,25 +5,44 @@
  * messages clairs francophones (pur, testé).
  */
 
+export interface PaysChatImage {
+  url: string;
+  thumbUrl: string;
+  alt: string;
+  authorName: string;
+  authorUrl: string;
+}
+
 export interface PaysChatReply {
   text: string;
   degraded: boolean;
   ragUsed: boolean;
+  images: PaysChatImage[];
 }
 
-export async function sendPaysChatMessage(countryCode: string, question: string): Promise<PaysChatReply> {
+export async function sendPaysChatMessage(
+  countryCode: string,
+  question: string,
+  opts: { countryName?: string } = {}
+): Promise<PaysChatReply> {
   const code = countryCode.trim().toUpperCase();
   let res: Response;
   try {
     res = await fetch(`/api/pays/${code}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({ question, ...(opts.countryName ? { countryName: opts.countryName } : {}) }),
     });
   } catch {
     throw new Error('Connexion impossible — vérifie ta connexion puis réessaie.');
   }
-  let data: { text?: string; degraded?: boolean; ragUsed?: boolean; error?: string };
+  let data: {
+    text?: string;
+    degraded?: boolean;
+    ragUsed?: boolean;
+    images?: PaysChatImage[];
+    error?: string;
+  };
   try {
     data = await res.json();
   } catch {
@@ -39,5 +58,6 @@ export async function sendPaysChatMessage(countryCode: string, question: string)
     text: data.text ?? '',
     degraded: !!data.degraded,
     ragUsed: !!data.ragUsed,
+    images: Array.isArray(data.images) ? data.images : [],
   };
 }

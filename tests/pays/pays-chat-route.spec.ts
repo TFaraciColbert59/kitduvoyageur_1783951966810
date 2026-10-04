@@ -107,6 +107,47 @@ describe('POST /api/pays/[code]/chat', () => {
     expect(arg.system).toContain('juillet-août');
   });
 
+  it('joint des images Unsplash sur intent visuel explicite', async () => {
+    vi.stubEnv('UNSPLASH_ACCESS_KEY', 'k-unsplash');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          results: [
+            {
+              urls: { regular: 'https://images.unsplash.com/p?w=800', thumb: 'https://images.unsplash.com/p?w=200' },
+              alt_description: 'Fjord',
+              user: { name: 'A B', username: 'ab' },
+            },
+          ],
+        }),
+      })
+    );
+    const res = await POST(
+      new Request('http://localhost/api/pays/IS/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: 'Montre-moi des photos', countryName: 'Islande' }),
+      }),
+      params('IS')
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.images).toHaveLength(1);
+    expect(body.images[0].authorUrl).toBe('https://unsplash.com/@ab');
+  });
+
+  it('omet les images sans intent visuel', async () => {
+    vi.stubEnv('UNSPLASH_ACCESS_KEY', 'k-unsplash');
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const res = await post('FR', { question: 'Quand partir ?', countryName: 'France' });
+    expect(res.status).toBe(200);
+    expect((await res.json()).images).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('degrade gracieusement si les embeddings echouent', async () => {
     vi.stubEnv('OPENROUTER_API_KEY', 'k-or');
     vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'k-svc');

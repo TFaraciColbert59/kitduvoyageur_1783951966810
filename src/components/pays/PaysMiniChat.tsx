@@ -3,13 +3,15 @@
 import React, { useState, useCallback } from 'react';
 import { useCountryPracticalGuide } from '@/hooks/useCountryPracticalGuide';
 import { extractKitItems } from '@/features/pays/chat/paysChatPrompt';
-import { sendPaysChatMessage } from '@/features/pays/chat/paysChatClient';
+import { sendPaysChatMessage, type PaysChatImage } from '@/features/pays/chat/paysChatClient';
+import SmartImage from '@/components/ui/SmartImage';
 
 interface ChatMsg {
   role: 'user' | 'assistant';
   text: string;
   degraded?: boolean;
   ragUsed?: boolean;
+  images?: PaysChatImage[];
 }
 
 interface PaysMiniChatProps {
@@ -46,10 +48,16 @@ export function PaysMiniChat({ countryCode, countryName }: PaysMiniChatProps) {
       setInput('');
       setLoading(true);
       try {
-        const reply = await sendPaysChatMessage(countryCode, q);
+        const reply = await sendPaysChatMessage(countryCode, q, { countryName });
         setMessages((prev) => [
           ...prev,
-          { role: 'assistant', text: reply.text, degraded: reply.degraded, ragUsed: reply.ragUsed },
+          {
+            role: 'assistant',
+            text: reply.text,
+            degraded: reply.degraded,
+            ragUsed: reply.ragUsed,
+            images: reply.images,
+          },
         ]);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Échec de la réponse. Réessaie.');
@@ -57,7 +65,7 @@ export function PaysMiniChat({ countryCode, countryName }: PaysMiniChatProps) {
         setLoading(false);
       }
     },
-    [countryCode, loading]
+    [countryCode, countryName, loading]
   );
 
   const copyKit = useCallback(async (text: string) => {
@@ -98,6 +106,32 @@ export function PaysMiniChat({ countryCode, countryName }: PaysMiniChatProps) {
                 )}
                 {m.role === 'assistant' && m.ragUsed && (
                   <p className="text-xs opacity-70">Réponse ancrée au guide pays.</p>
+                )}
+                {m.role === 'assistant' && m.images && m.images.length > 0 && (
+                  <div>
+                    <div className="mt-1 flex gap-2 overflow-x-auto">
+                      {m.images.map((img) => (
+                        <SmartImage
+                          key={img.url}
+                          src={img.thumbUrl}
+                          alt={img.alt}
+                          className="h-20 w-28 shrink-0 rounded-lg object-cover"
+                        />
+                      ))}
+                    </div>
+                    <p className="text-xs opacity-70">
+                      Photos :{' '}
+                      {m.images.map((img, j) => (
+                        <span key={img.url}>
+                          {j > 0 && ', '}
+                          <a href={img.authorUrl} target="_blank" rel="noreferrer">
+                            {img.authorName}
+                          </a>{' '}
+                          via Unsplash
+                        </span>
+                      ))}
+                    </p>
+                  </div>
                 )}
                 {m.role === 'assistant' && extractKitItems(m.text).length > 0 && (
                   <button
