@@ -148,6 +148,8 @@ export const en: TranslationKeys = {
     signUpTitle: 'Join the expedition',
     signInSubtitle: 'Sign in to access your kits.',
     signUpSubtitle: 'Create your digital expedition journal.',
+    ssoDivider: 'Or continue with',
+    ssoError: 'SSO sign-in failed. Check configuration or try again.',
     email: 'Email address',
     emailPlaceholder: 'name@example.com',
     password: 'Password',

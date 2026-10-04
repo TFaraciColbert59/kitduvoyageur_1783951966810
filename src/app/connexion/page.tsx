@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client';
 import AppShell from '@/components/shell/AppShell';
 import { Button } from '@/components/ui';
 import { useTranslation } from '@/lib/i18n/context';
+import { SsoButtons } from './_components/SsoButtons';
 
 type AuthMode = 'connexion' | 'inscription';
 
@@ -282,6 +283,7 @@ function AuthForm() {
               </Button>
             </form>
           )}
+          <SsoButtons nextPath={nextPath} />
           <div className="mt-[var(--space-4)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-4)] text-center">
             <p className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
               {mode === 'connexion' ? t('auth.noAccount') : t('auth.haveAccount')}{' '}

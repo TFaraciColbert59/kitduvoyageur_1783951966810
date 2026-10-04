@@ -148,6 +148,8 @@ export const fr = {
     signUpTitle: 'Rejoindre l’expédition',
     signInSubtitle: 'Connectez-vous pour accéder à vos kits.',
     signUpSubtitle: 'Créez votre carnet d’expédition numérique.',
+    ssoDivider: 'Ou continuer avec',
+    ssoError: 'Connexion SSO impossible. Vérifiez la configuration ou réessayez.',
     email: 'Adresse email',
     emailPlaceholder: 'nom@exemple.com',
     password: 'Mot de passe',
