@@ -271,3 +271,17 @@ Migration highlights (exact intent): `action_logs(actor_id uuid NULL, action tex
 - Spec coverage: RBAC (§7) → Task 2; audit trail (§1/§7) → Task 3; API sécurisée (§1) → Task 4; UX/UI (§5) → Task 5 (light Liquid Glass, primitives, responsive, no dark-mode fork day-1 — documented deferral); CI/CD+observabilité (§4) → Tasks 7+8; comparatifs technos (§3) → stack inchangée (Next.js+Supabase, SSO externe différé — justification: `is_admin`+MFA suffisent day-1, Keycloak/Auth0 = lock-in + coût); migration/roadmap (§6) → phased; risques (§8) → Task 6 + guards.
 - No placeholders: SQL exact in Task 2; Task 3/4/5 give exact file paths + function signatures + behaviors; tests named with assertions intent.
 - Type consistency: `requireAdmin` → `{ supabase, user }`; `logAdminAction` input shape reused in Tasks 3–5; `has_permission(text)` signature stable.
+
+## Résultat d'exécution (2026-10-04, autonome, branche `chantier/admin-rebuild`)
+
+- [x] P0 archive legacy (`archive/admin-legacy-20261004/`, git mv), baseline tsc verte.
+- [x] P1 `20261005000000_admin_rbac_core.sql` + pgTAP 16 asserts (validé statiquement ; `supabase db push` + run pgTAP à faire au déploiement).
+- [x] P2 `20261005010000_admin_action_logs.sql` + `src/server/admin/audit.ts` + pgTAP 10 asserts.
+- [x] P3 `requireAdmin` + zod + CSRF double-submit + 4 APIs + rewards durci ; vitest 17/17.
+- [x] P4 UI from scratch (7 pages, 11 îlots, APIs produits/moderation/upload) ; vitest 22/22 ; tsc vert.
+- [x] P5 XSS DOMPurify, redirects allowlist, og-preview DNS+redirects, indexnow admin-only, Stripe fail-closed, cookies Lax, CSP enforce, no-store /admin+/api/admin.
+- [x] P6 E2E `admin-access.spec.ts` (401/307 live verts sur build frais), Gate 5 étendu, Gate 0.2 secret-scan vert, eslint strict admin (0 erreur).
+- [x] P7 `next build` vert ; vitest complet 7373 passés, 5 échecs résiduels pré-existants hors périmètre (registry IA, palette trajectoire, capture n7) + 0 référence au code admin ; TEST-SRV-04 et U-D62 corrigés au passage.
+- Preuves live : `GET /api/admin/*` sans session → 401 ; `/admin` sans session → 307 `/connexion` ; prod build frais port 4029.
+- Correctifs collatéraux découverts : `withdrawals` → `reward_withdrawals` (legacy cassé), `transaction_type` enum sans accent, colonnes produits limitées au DDL vérifié.
+- Risques résiduels assumés : migrations non poussées ( içi `db push` requis), MFA admin non imposée (AAL loggé, à mandater), pgTAP/E2E-staging derrière secrets CI, nonces CSP à venir, colonnes boutique étendues (supplier/ean/tags) exclues v1.
