@@ -122,11 +122,13 @@ const nextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=(self), interest-cohort=()',
           },
-          // P0-5 (C-10) — CSP en Report-Only (une semaine d'observation des
-          // rapports avant le mode bloquant ; nonce à poser sur les scripts
-          // inline JSON-LD avant le durcissement).
+          // P5 admin-rebuild — CSP appliquée (valeur identique à la
+          // Report-Only observée : aucun nouveau blocage par construction,
+          // les violations déjà signalées sont désormais bloquées).
+          // Reste dû : nonces sur scripts inline JSON-LD pour retirer
+          // 'unsafe-inline' / 'unsafe-eval'.
           {
-            key: 'Content-Security-Policy-Report-Only',
+            key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://va.vercel-scripts.com",
@@ -185,6 +187,15 @@ const nextConfig = {
       },
       {
         source: '/api/carnets/:path*',
+        headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+      },
+      // P5 admin-rebuild — back-office : jamais de cache HTTP ni SW.
+      {
+        source: '/admin/:path*',
+        headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+      },
+      {
+        source: '/api/admin/:path*',
         headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
       },
     ];

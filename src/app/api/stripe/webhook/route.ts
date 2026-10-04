@@ -350,8 +350,16 @@ export async function POST(request: NextRequest) {
   const rawBody = await request.text();
   const signature = request.headers.get('stripe-signature') || '';
 
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  if (!stripeKey) {
+    return NextResponse.json(
+      { error: 'Clé Stripe manquante (fail-closed)' },
+      { status: 503 }
+    );
+  }
+
   const Stripe = (await import('stripe')).default;
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_phase8_unset', {
+  const stripe = new Stripe(stripeKey, {
     apiVersion: '2025-02-24.acacia' as const,
   });
 

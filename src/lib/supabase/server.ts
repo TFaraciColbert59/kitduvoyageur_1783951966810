@@ -49,12 +49,11 @@ export async function createClient() {
       },
       setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
         try {
+          // Pas de forçage SameSite=None : les défauts Supabase SSR (Lax,
+          // Secure en production) suffisent aux navigations top-level et
+          // évitent d'exposer la session aux requêtes cross-site (CSRF).
           cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, {
-              ...options,
-              sameSite: 'none',
-              secure: true,
-            })
+            cookieStore.set(name, value, options)
           );
         } catch {
           // Server Component read-only context — expected

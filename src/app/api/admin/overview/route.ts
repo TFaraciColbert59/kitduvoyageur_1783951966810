@@ -19,7 +19,7 @@ export async function GET() {
     supabase.from('orders').select('id', { count: 'exact', head: true }),
     supabase.from('user_profiles').select('id', { count: 'exact', head: true }),
     supabase
-      .from('withdrawals')
+      .from('reward_withdrawals')
       .select('id', { count: 'exact', head: true })
       .in('status', ['pending', 'under_review']),
     supabase

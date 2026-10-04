@@ -11,9 +11,9 @@ export const dynamic = 'force-dynamic';
 
 function getServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
-    throw new Error('Configuration Supabase manquante');
+    throw new Error('Configuration Supabase service_role manquante (fail-closed)');
   }
   return createSupabaseClient(url, key);
 }
@@ -28,17 +28,23 @@ export async function POST(request: NextRequest) {
   });
   if (limited) return limited;
 
-  let body: any;
+  let raw: unknown;
   try {
-    body = await request.json();
+    raw = await request.json();
   } catch {
     return NextResponse.json({ error: 'Corps de requête JSON invalide' }, { status: 400 });
   }
 
-  const osmRelationId = body.osmRelationId;
-  const numericOsmId = typeof osmRelationId === 'number' ? osmRelationId : parseInt(String(osmRelationId || ''), 10);
+  const relationId =
+    typeof raw === 'object' && raw !== null
+      ? (raw as { osmRelationId?: unknown }).osmRelationId
+      : undefined;
+  const numericOsmId =
+    typeof relationId === 'number'
+      ? relationId
+      : parseInt(String(relationId ?? ''), 10);
 
-  if (!Number.isFinite(numericOsmId) || numericOsmId <= 0) {
+  if (!Number.isInteger(numericOsmId) || numericOsmId <= 0 || numericOsmId > 2 ** 31) {
     return NextResponse.json(
       { error: 'osmRelationId numérique requis' },
       { status: 400 }
@@ -50,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     // 1. Récupération sécurisée du tracé côté serveur (cache serveur fiable OU Overpass live)
     // Ne jamais faire confiance à un objet géographique complet envoyé par le navigateur.
-    let detail: any = null;
+    let detail: unknown = null;
     const cached = osmRouteDetailCache.get(`route-detail:${numericOsmId}`);
     if (cached && !cached.isStale) {
       detail = cached.data;
@@ -59,7 +65,10 @@ export async function POST(request: NextRequest) {
     if (!detail) {
       const rawData = await queryRouteDetail(numericOsmId);
       const elements = rawData.elements || [];
-      const relationElem = elements.find((e: any) => e.type === 'relation' && e.id === numericOsmId) || elements[0];
+      const relationElem =
+        elements.find(
+          (e: { type?: unknown; id?: unknown }) => e.type === 'relation' && e.id === numericOsmId
+        ) || elements[0];
       if (!relationElem) {
         return NextResponse.json(
           { error: 'Relation introuvable sur OpenStreetMap' },
@@ -80,7 +89,10 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Matérialisation strictement idempotente
-    const result = await getOrCreateCanonicalRoute(supabase, detail);
+    const result = await getOrCreateCanonicalRoute(
+      supabase,
+      detail as Parameters<typeof getOrCreateCanonicalRoute>[1]
+    );
 
     return NextResponse.json({
       success: true,
@@ -88,8 +100,8 @@ export async function POST(request: NextRequest) {
       isNewlyCreated: result.isNewlyCreated,
       route: result.route,
     });
-  } catch (error: any) {
-    console.error('[materialize] Erreur:', error);
+  } catch (error: unknown) {
+    console.error('[materialize] Erreur:', error instanceof Error ? error.message : 'unknown');
     if (error instanceof OverpassError) {
       return NextResponse.json(
         { error: error.message, code: error.code },
@@ -97,7 +109,7 @@ export async function POST(request: NextRequest) {
       );
     }
     return NextResponse.json(
-      { error: error.message || 'Erreur lors de la matérialisation de la route' },
+      { error: 'Erreur lors de la matérialisation de la route' },
       { status: 500 }
     );
   }

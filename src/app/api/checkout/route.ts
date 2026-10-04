@@ -172,6 +172,20 @@ export async function POST(request: NextRequest) {
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.com';
 
+    // Anti open-redirect (CWE-601) : seules les URLs same-origin sont acceptées.
+    const sameOrigin = (raw: unknown, fallback: string): string => {
+      if (typeof raw !== 'string' || raw.length === 0 || raw.length > 2048) return fallback;
+      let parsed: URL;
+      try {
+        parsed = new URL(raw, siteUrl);
+      } catch {
+        return fallback;
+      }
+      return parsed.origin === new URL(siteUrl).origin
+        ? parsed.toString()
+        : fallback;
+    };
+
     // ── Metadata : construites UNIQUEMENT depuis les items validés serveur ──
     // user_id vient des cookies (jamais du body client).
     let userId: string | null = null;
@@ -233,8 +247,8 @@ export async function POST(request: NextRequest) {
         },
         quantity: item.quantity,
       })),
-      success_url: successUrl || `${siteUrl}/checkout?success=true`,
-      cancel_url: cancelUrl || `${siteUrl}/panier`,
+      success_url: sameOrigin(successUrl, `${siteUrl}/checkout?success=true`),
+      cancel_url: sameOrigin(cancelUrl, `${siteUrl}/panier`),
       shipping_address_collection: { allowed_countries: ['FR', 'BE', 'CH', 'LU', 'MC'] },
       metadata: plan.metadata,
     });

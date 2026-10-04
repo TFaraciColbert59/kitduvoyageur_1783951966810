@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import DOMPurify from 'isomorphic-dompurify';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -40,6 +41,12 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
   const [loading, setLoading] = useState(true);
   const [notFoundState, setNotFoundState] = useState(false);
   const supabase = useMemo(() => createClient(), []);
+
+  /** Contenu assaini (DOMPurify) — le HTML des guides vient de la base. */
+  const safeContent = useMemo(
+    () => (guide?.content ? DOMPurify.sanitize(guide.content) : ''),
+    [guide?.content]
+  );
 
   useEffect(() => {
     async function loadGuide() {
@@ -173,7 +180,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
 
       {/* Content */}
       {guide.content ? (
-        <div className="prose prose-sm max-w-none text-[color:var(--lkv-text-secondary)] leading-relaxed" dangerouslySetInnerHTML={{ __html: guide.content }} />
+        <div className="prose prose-sm max-w-none text-[color:var(--lkv-text-secondary)] leading-relaxed" dangerouslySetInnerHTML={{ __html: safeContent }} />
       ) : (
         <div className="space-y-6 text-[color:var(--lkv-text-secondary)] leading-relaxed">
           <p>
@@ -293,7 +300,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
       {/* Content */}
       <div className="text-[14px] leading-[1.7] text-[color:var(--lkv-text-primary)]">
         {guide.content ? (
-          <div dangerouslySetInnerHTML={{ __html: guide.content }} />
+          <div dangerouslySetInnerHTML={{ __html: safeContent }} />
         ) : (
           <div>
             <p>
