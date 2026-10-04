@@ -55,7 +55,7 @@ export default async function HubSectionPage({
   searchParams,
 }: {
   params: Promise<{ section: string }>;
-  searchParams: Promise<{ id?: string; route?: string; onglet?: string; jour?: string }>;
+  searchParams: Promise<{ product_id?: string; id?: string; route?: string; onglet?: string; jour?: string }>;
 }) {
   const [{ section }, sp] = await Promise.all([params, searchParams]);
   const def = hubSectionRegistry.find((d) => d.segment === section);
@@ -70,7 +70,7 @@ export default async function HubSectionPage({
   return (
     <div className="space-y-2.5">
       <PageHeader title={<span className="sr-only">{def.label}</span>} back={<MenuBack />} />
-      {def.id === 'inventaire' && <HubInventaireSection />}
+      {def.id === 'inventaire' && <HubInventaireSection productId={sp.product_id} />}
       {def.id === 'kit' && <HubKitSection />}
       {def.id === 'depart' && <HubDepartSection departId={sp.id} route={sp.route} />}
       {def.id === 'disponibilite' && <HubDisponibiliteSection />}

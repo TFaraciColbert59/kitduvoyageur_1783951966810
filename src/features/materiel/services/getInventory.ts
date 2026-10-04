@@ -1,7 +1,16 @@
+import type { InventoryMode, InventoryStatus } from '../domain/inventory';
 import { createClient } from '@/lib/supabase/server';
 import { resolveGearImage } from './gearImageResolver';
 
 export interface InventoryItem {
+  product_id?: string | null;
+  serial_number?: string | null;
+  description?: string | null;
+  location?: string | null;
+  listing_mode?: InventoryMode;
+  status?: InventoryStatus;
+  rental_price_cents?: number | null;
+  deposit_cents?: number | null;
   id: string;
   name: string;
   brand: string | null;

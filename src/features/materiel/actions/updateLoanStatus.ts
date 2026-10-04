@@ -28,16 +28,8 @@ export async function updateLoanStatus(loanId: string, status: 'en_cours' | 'ren
       .select('product_ownership_id')
       .maybeSingle();
 
-    if (updateErr) {
-      return { success: false, error: updateErr.message };
-    }
-
-    // Met aussi à jour le flag is_lent sur l'objet d'inventaire
-    if (loan?.product_ownership_id) {
-      await supabase
-        .from('product_ownership')
-        .update({ is_lent: status !== 'rendu' })
-        .eq('id', loan.product_ownership_id);
+    if (updateErr || !loan) {
+      return { success: false, error: updateErr?.message ?? 'Prêt introuvable' };
     }
 
     revalidatePath('/hub');

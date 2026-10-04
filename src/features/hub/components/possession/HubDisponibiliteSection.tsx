@@ -1,3 +1,4 @@
+import { getInventoryStatus } from '@/features/materiel/domain/inventory';
 import { createClient } from '@/lib/supabase/server';
 import { AvailabilityGauge } from '@/features/materiel/components/disponibilite/AvailabilityGauge';
 import { DispoKpis } from '@/features/materiel/components/disponibilite/DispoKpis';
@@ -21,7 +22,9 @@ import { detectConflicts } from '@/lib/materiel/conflicts';
  */
 export async function HubDisponibiliteSection() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const userId = user?.id ?? null;
 
   const [loans, inventory] = await Promise.all([getLoans(), getInventory()]);
@@ -29,7 +32,11 @@ export async function HubDisponibiliteSection() {
   const overdue = loans.filter((l) => l.status === 'en_retard').length;
   const returned = loans.filter((l) => l.status === 'rendu').length;
 
-  const available = inventory.length - active.length;
+  const owned = inventory.filter((i) => !['vendu', 'a_acheter'].includes(getInventoryStatus(i)));
+  const unavailable = owned.filter((i) =>
+    ['en_pret', 'en_location'].includes(getInventoryStatus(i))
+  ).length;
+  const available = owned.length - unavailable;
   const score = Math.max(0, 100 - active.length * 8 - overdue * 15);
 
   let kitProductIds = new Set<string>();
@@ -49,29 +56,74 @@ export async function HubDisponibiliteSection() {
     const m = (l.loaned_at ?? '').slice(0, 7);
     if (m) byMonth.set(m, (byMonth.get(m) ?? 0) + 1);
   }
-  const heatmap = Array.from(byMonth.entries()).map(([month, count]) => ({ month, count })).sort((a, b) => a.month.localeCompare(b.month)).slice(-6);
+  const heatmap = Array.from(byMonth.entries())
+    .map(([month, count]) => ({ month, count }))
+    .sort((a, b) => a.month.localeCompare(b.month))
+    .slice(-6);
 
   return (
     <div className="grid grid-cols-12 gap-[var(--grid-gap)]">
-      <Card className="col-span-12 md:col-span-4 p-4 flex items-center gap-4" ariaLabelledBy="hub-gauge-title">
-        <AvailabilityGauge availableCount={Math.max(0, available)} total={inventory.length} />
+      <Card
+        className="col-span-12 md:col-span-4 p-4 flex items-center gap-4"
+        ariaLabelledBy="hub-gauge-title"
+      >
+        <AvailabilityGauge availableCount={Math.max(0, available)} total={owned.length} />
         <div>
-          <h2 id="hub-gauge-title" className="sr-only">Disponibilité</h2>
-          <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">Objets disponibles</p>
-          <p className="text-sm text-[var(--lkv-text-secondary)]">{active.length} en prêt</p>
+          <h2 id="hub-gauge-title" className="sr-only">
+            Disponibilité
+          </h2>
+          <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">
+            Objets disponibles
+          </p>
+          <p className="text-sm text-[var(--lkv-text-secondary)]">
+            {unavailable} en prêt ou location
+          </p>
         </div>
       </Card>
       <div className="col-span-12 md:col-span-8">
-        <DispoKpis data={{ active: active.length, overdue, returned, totalObjects: inventory.length }} />
+        <DispoKpis
+          data={{ active: active.length, overdue, returned, totalObjects: owned.length }}
+        />
       </div>
-      <div className="col-span-12"><GanttTimeline loans={loans.map((l) => ({ id: l.id, label: l.borrower_contact ?? 'Prêt', start: l.loaned_at ?? '', end: l.due_date ?? l.loaned_at ?? '' }))} /></div>
-      <div className="col-span-12 md:col-span-6"><LoanTabs loans={loans} userId={userId} /></div>
-      <div className="col-span-12 md:col-span-6"><ConflictDetector conflicts={conflicts} /></div>
-      <div className="col-span-12 md:col-span-6"><LoanHeatmap byMonth={heatmap} /></div>
-      <div className="col-span-12 md:col-span-6"><DigitalLoanContract loan={active[0] ?? null} /></div>
-      <div className="col-span-12 md:col-span-6"><AutoReminders reminders={active.filter((l) => l.due_date).map((l) => ({ id: l.id, label: `Retour de ${l.borrower_contact ?? 'prêt'}`, due: l.due_date! }))} /></div>
-      <div className="col-span-12 md:col-span-6"><DispoScore score={score} overdue={overdue} /></div>
-      <div className="col-span-12"><CollectiveActions /></div>
+      <div className="col-span-12">
+        <GanttTimeline
+          loans={loans.map((l) => ({
+            id: l.id,
+            label: l.borrower_contact ?? 'Prêt',
+            start: l.loaned_at ?? '',
+            end: l.due_date ?? l.loaned_at ?? '',
+          }))}
+        />
+      </div>
+      <div className="col-span-12 md:col-span-6">
+        <LoanTabs loans={loans} userId={userId} />
+      </div>
+      <div className="col-span-12 md:col-span-6">
+        <ConflictDetector conflicts={conflicts} />
+      </div>
+      <div className="col-span-12 md:col-span-6">
+        <LoanHeatmap byMonth={heatmap} />
+      </div>
+      <div className="col-span-12 md:col-span-6">
+        <DigitalLoanContract loan={active[0] ?? null} />
+      </div>
+      <div className="col-span-12 md:col-span-6">
+        <AutoReminders
+          reminders={active
+            .filter((l) => l.due_date)
+            .map((l) => ({
+              id: l.id,
+              label: `Retour de ${l.borrower_contact ?? 'prêt'}`,
+              due: l.due_date!,
+            }))}
+        />
+      </div>
+      <div className="col-span-12 md:col-span-6">
+        <DispoScore score={score} overdue={overdue} />
+      </div>
+      <div className="col-span-12">
+        <CollectiveActions />
+      </div>
     </div>
   );
 }

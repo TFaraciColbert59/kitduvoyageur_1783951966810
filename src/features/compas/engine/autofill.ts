@@ -1,3 +1,4 @@
+import { isInventoryAvailable, type InventoryStatus } from '@/features/materiel/domain/inventory';
 /**
  * Préremplissage du Compas : moteur PUR et déterministe. Il décide du type de
  * chaque nuit (profil + terrain), chiffre le trajet depuis la position réelle,
@@ -160,6 +161,7 @@ export interface SourceInventory {
   id: string;
   name: string;
   isLent: boolean;
+  inventoryStatus?: InventoryStatus;
 }
 export interface SourceBorrowed {
   inventoryItemId: string;
@@ -221,7 +223,7 @@ export function sourceGear(
   const days = Math.max(1, Math.floor(ctx.days));
   for (const need of needs) {
     if (ctx.tripItemNames.some((n) => covers(need, n, false))) continue;
-    const own = ctx.inventory.find((i) => !i.isLent && !used.has(i.id) && covers(need, i.name, false));
+    const own = ctx.inventory.find((i) => isInventoryAvailable({status:i.inventoryStatus,is_lent:i.isLent}) && !used.has(i.id) && covers(need, i.name, false));
     if (own) {
       used.add(own.id);
       out.push({ need, source: 'inventaire', inventoryItemId: own.id, shopProductId: null, costEur: 0, label: own.name });
