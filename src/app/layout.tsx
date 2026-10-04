@@ -18,6 +18,7 @@ import MobileNavWrapper from '@/components/mobile-nav/MobileNavWrapper';
 import CookieConsentBanner from '@/components/CookieConsentBanner';
 import ConfirmHost from '@/components/ui/ConfirmHost';
 import PromptHost from '@/components/ui/PromptHost';
+import { SW_CLEANUP_JS, THEME_INIT_JS } from '@/lib/csp/inline-scripts';
 import RocketConsentScripts from '@/components/RocketConsentScripts';
 import TravelpayoutsDrive from '@/components/TravelpayoutsDrive';
 import MigrationEffect from '@/lib/storage/MigrationEffect';
@@ -202,7 +203,7 @@ export default async function RootLayout({
           id="lkdv-theme-init"
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
-            __html: `(function(){var r=document.documentElement;var t=null;try{t=localStorage.getItem('lkdv_theme');}catch(e){}var isDark=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(isDark){r.classList.add('dark');r.setAttribute('data-theme','dark');r.style.colorScheme='dark';}else{r.classList.remove('dark');r.setAttribute('data-theme','light');r.style.colorScheme='light';}try{var g=localStorage.getItem('lkdv_glass_intensity');if(g)r.style.setProperty('--glass-intensity',g);}catch(e){}})();`,
+            __html: THEME_INIT_JS,
           }}
         />
         {/* Preload critical images for LCP optimization */}
@@ -262,18 +263,7 @@ export default async function RootLayout({
             id="service-worker-dev-cleanup"
             suppressHydrationWarning
             dangerouslySetInnerHTML={{
-              __html: `
-                if ('serviceWorker' in navigator) {
-                  navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                    registrations.forEach(function(registration) { registration.unregister(); });
-                  }).catch(function() {});
-                  if (window.caches && caches.keys) {
-                    caches.keys().then(function(keys) {
-                      keys.forEach(function(key) { caches.delete(key); });
-                    }).catch(function() {});
-                  }
-                }
-              `,
+              __html: SW_CLEANUP_JS,
             }}
           />
         )}

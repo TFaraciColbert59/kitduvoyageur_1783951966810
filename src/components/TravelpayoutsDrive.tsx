@@ -1,6 +1,7 @@
 'use client';
 
 import { useCookieConsent } from '@/lib/cookieConsent';
+import { TRAVELPAYOUTS_LOADER_JS } from '@/lib/csp/inline-scripts';
 
 /**
  * Travelpayouts Drive (NTYxMTY5 — tag manuel fourni par Travelpayouts).
@@ -29,13 +30,7 @@ export default function TravelpayoutsDrive() {
         'data-cmp-ab': '2',
       }}
       dangerouslySetInnerHTML={{
-        __html: `(function () {
-      var script = document.createElement("script");
-      script.async = 1;
-      script.setAttribute("data-cmp-ab","2");
-      script.src = 'https://tpembars.com/NTYxMTY5.js?t=561169';
-      document.head.appendChild(script);
-  })();`,
+        __html: TRAVELPAYOUTS_LOADER_JS,
       }}
     />
   );

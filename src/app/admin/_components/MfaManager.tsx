@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import DOMPurify from 'isomorphic-dompurify';
 
 import { Button, EmptyState } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
@@ -186,10 +187,10 @@ export function MfaManager({ initialFactors }: { initialFactors: TotpFactor[] })
           <p className="text-sm font-semibold text-[color:var(--glass-label)]">
             Scannez ce QR avec votre application, puis saisissez le code
           </p>
-          {/* SVG généré par Supabase (aucune entrée utilisateur) */}
+          {/* SVG généré par Supabase, ré-assaini par principe (aucune entrée utilisateur) */}
           <div
             className="max-w-55 self-start bg-white p-2"
-            dangerouslySetInnerHTML={{ __html: qrSvg }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(qrSvg) }}
           />
           {manualSecret ? (
             <p className="text-xs text-[color:var(--glass-label-secondary)]">

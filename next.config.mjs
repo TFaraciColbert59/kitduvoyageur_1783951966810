@@ -125,17 +125,21 @@ const nextConfig = {
           // P5 admin-rebuild — CSP appliquée (valeur identique à la
           // Report-Only observée : aucun nouveau blocage par construction,
           // les violations déjà signalées sont désormais bloquées).
-          // Reste dû : nonces sur scripts inline JSON-LD pour retirer
-          // 'unsafe-inline' / 'unsafe-eval'.
+          // Chantier nonces — `unsafe-inline` RETIRÉ de script-src : seuls
+          // les 3 inlines first-party du registre `src/lib/csp/inline-scripts.ts`
+          // sont autorisés par hash (test `tests/lib/csp/inline-hashes.spec.ts`).
+          // Résiduels assumés : 'unsafe-eval' (libs), GA inline mort (GA_ID vide ;
+          // le jour où GA_ID est renseigné, hasher son bloc config), JSON-LD
+          // (non soumis à script-src).
           {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://va.vercel-scripts.com",
+              "script-src 'self' 'sha256-idlh8L5xHF+MwwQ0CHHWo4Sta7gs0VvNEo5ejccK1IA=' 'sha256-SSqGHb3IhWjl4c/XQK8VAedf6P12bBLiPkzHtwDljp4=' 'sha256-hfOn3sqzRN6oFXj4iau1wyQt7j6Z9v8wCcvUHlwxsP8=' 'unsafe-eval' https://www.googletagmanager.com https://va.vercel-scripts.com https://static.rocket.new https://tpembars.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com data:",
               "img-src 'self' data: blob: https:",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com https://va.vercel-scripts.com https://tile.openstreetmap.org https://tile.opentopomap.org https://*.arcgisonline.com https://api.stripe.com",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com https://va.vercel-scripts.com https://tile.openstreetmap.org https://tile.opentopomap.org https://*.arcgisonline.com https://api.stripe.com https://appanalytics.rocket.new",
               "frame-src https://js.stripe.com",
               "worker-src 'self' blob:",
               "report-uri /api/telemetry/hub",
