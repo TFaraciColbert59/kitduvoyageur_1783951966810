@@ -170,17 +170,25 @@ import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { PaysMiniChat } from '@/components/pays/PaysMiniChat';
 
+vi.mock('@/hooks/useCountryPracticalGuide', () => ({
+  useCountryPracticalGuide: () => ({ data: undefined, isLoading: false }),
+}));
+
 describe('PaysMiniChat', () => {
-  it('rend la barre fermee avec suggestions et input accessible', () => {
+  it('rend la barre fermee avec suggestions et toggle accessible', () => {
     const html = renderToStaticMarkup(
       React.createElement(PaysMiniChat, { countryCode: 'IS', countryName: 'Islande' })
     );
-    expect(html).toContain('Que voulez-vous savoir ?');
     expect(html).toContain('Crée mon kit');
     expect(html).toContain('Quand partir ?');
-    expect(html).toContain('role="log"');
+    expect(html).toContain('aria-expanded="false"');
+    expect(html).toContain('Ouvrir le mini-chat');
   });
 });
+
+// Limite assumée : le panneau ouvert (placeholder, role="log", aria-live)
+// n'est pas vérifiable en renderToStaticMarkup sans jsdom (env node).
+// Couverture E2E Playwright prévue hors POC.
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
