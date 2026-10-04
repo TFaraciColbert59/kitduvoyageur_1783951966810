@@ -11,6 +11,8 @@
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- ── 1. Extension pgvector (schema extensions, convention Supabase) ─────────
+-- Le schéma est créé si absent (no-op sur Supabase où il existe toujours).
+CREATE SCHEMA IF NOT EXISTS extensions;
 CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA extensions;
 
 -- ── 2. Store des chunks (guide pays + docs, texte public uniquement) ────────
