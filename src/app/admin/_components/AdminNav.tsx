@@ -11,6 +11,7 @@ const LINKS = [
   { href: '/admin/moderation', label: 'Modération' },
   { href: '/admin/recompenses', label: 'Récompenses' },
   { href: '/admin/audit', label: 'Audit' },
+  { href: '/admin/securite', label: 'Sécurité' },
 ];
 
 /** Navigation du back-office — onglets défilants canoniques. */

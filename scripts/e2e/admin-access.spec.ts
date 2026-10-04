@@ -32,7 +32,7 @@ test.describe('Back-office — matrice d’accès', () => {
     expect(res.headers()['location'] ?? '').toContain('/connexion');
   });
 
-  test('TEST-E2E-ADM-03: session admin → overview 200 + rewards 400 zod (pas 403)', { tag: '@staging-auth' }, async () => {
+  test('TEST-E2E-ADM-03: session admin → overview 200 + finances verrouillées sans AAL2', { tag: '@staging-auth' }, async () => {
     test.skip(
       !SUPABASE_URL || !SUPABASE_ANON_KEY || !ADMIN_EMAIL || !ADMIN_PASSWORD,
       'Identifiants admin de test absents (TEST_ADMIN_EMAIL / TEST_ADMIN_PASSWORD)'
@@ -72,11 +72,13 @@ test.describe('Back-office — matrice d’accès', () => {
       expect(typeof body[key]).toBe('number');
     }
 
-    // Corps invalide → 400 zod (prouve qu'on a passé le 403 admin).
+    // Corps invalide SANS session AAL2 → 403 mfa_required (garde MFA imposée,
+    // avant même la validation zod ; le 400 zod est couvert en unitaire).
     const bad = await ctx.post('/api/admin/rewards', { data: { action: 'nope' } });
-    expect(bad.status()).toBe(400);
+    expect(bad.status()).toBe(403);
+    expect((await bad.json()).code).toBe('mfa_required');
 
-    // Mutation sans CSRF → 403 (garde active).
+    // Mutation financière sans AAL2 → 403 (garde MFA avant CSRF et métier).
     const noCsrf = await ctx.post('/api/admin/rewards', {
       data: { action: 'finalize_period', period_id: '00000000-0000-4000-8000-000000000000', eligible_revenue: 1 },
     });

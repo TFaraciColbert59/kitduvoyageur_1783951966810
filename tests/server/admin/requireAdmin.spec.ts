@@ -10,10 +10,19 @@ const USER = { id: '11111111-1111-4111-8111-111111111111' };
 
 function clientWith(
   user: unknown,
-  rpcImpl: (name: string, args?: Record<string, unknown>) => { data: unknown; error: unknown }
+  rpcImpl: (name: string, args?: Record<string, unknown>) => { data: unknown; error: unknown },
+  mfaLevel: 'aal1' | 'aal2' | 'error' = 'aal1'
 ) {
   return {
-    auth: { getUser: vi.fn(async () => ({ data: { user } })) },
+    auth: {
+      getUser: vi.fn(async () => ({ data: { user } })),
+      mfa: {
+        getAuthenticatorAssuranceLevel: vi.fn(async () => {
+          if (mfaLevel === 'error') throw new Error('mfa indisponible');
+          return { data: { currentLevel: mfaLevel, nextLevel: mfaLevel }, error: null };
+        }),
+      },
+    },
     rpc: vi.fn(async (name: string, args?: Record<string, unknown>) => rpcImpl(name, args)),
   };
 }
@@ -72,6 +81,38 @@ describe('requireAdmin', () => {
       clientWith(USER, () => ({ data: null, error: { code: 'XX000' } }))
     );
     const res = await requireAdmin('audit.read');
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.response.status).toBe(403);
+  });
+
+  it('ok sur permission critique avec session AAL2', async () => {
+    mocks.createClient.mockResolvedValue(
+      clientWith(USER, () => ({ data: true, error: null }), 'aal2')
+    );
+    const res = await requireAdmin('rewards.write');
+    expect(res.ok).toBe(true);
+  });
+
+  it('403 mfa_required sur permission critique en AAL1', async () => {
+    mocks.createClient.mockResolvedValue(
+      clientWith(USER, () => ({ data: true, error: null }), 'aal1')
+    );
+    const res = await requireAdmin('roles.grant');
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.response.status).toBe(403);
+      expect(await res.response.json()).toEqual({
+        error: 'Authentification à deux facteurs requise',
+        code: 'mfa_required',
+      });
+    }
+  });
+
+  it('403 fail-closed quand la vérification MFA échoue', async () => {
+    mocks.createClient.mockResolvedValue(
+      clientWith(USER, () => ({ data: true, error: null }), 'error')
+    );
+    const res = await requireAdmin('rewards.write');
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.response.status).toBe(403);
   });
