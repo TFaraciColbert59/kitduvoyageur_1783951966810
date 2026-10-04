@@ -139,7 +139,9 @@ export async function POST(
     const base = buildPaysChatRequest({ countryCode, question });
     const system = ragUsed ? `${base.system}\n\nPassages vérifiés du guide :\n${ragContext}` : base.system;
     const result = await askAI({
-      feature: 'pays-chat',
+      // 'chat-completion' = point d'entrée générique du registre (pas de
+      // feature dédiée : askAI throw sur feature inconnue — registry.ts).
+      feature: 'chat-completion',
       tier: 'fast',
       system,
       prompt: question,

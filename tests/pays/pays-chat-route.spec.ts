@@ -70,7 +70,8 @@ describe('POST /api/pays/[code]/chat', () => {
     expect(body.text).toContain('25°C');
     expect(body.ragUsed).toBe(false);
     expect(askAI).toHaveBeenCalledOnce();
-    const arg = vi.mocked(askAI).mock.calls[0][0] as { system: string };
+    const arg = vi.mocked(askAI).mock.calls[0][0] as { system: string; feature: string };
+    expect(arg.feature).toBe('chat-completion');
     expect(arg.system).toContain('(FR)');
   });
 
