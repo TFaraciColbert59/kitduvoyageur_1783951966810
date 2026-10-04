@@ -15,7 +15,7 @@ do $$ begin
 end $$;
 select transition_inventory_item('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','vendu','en_stock');
 do $$ begin
- begin perform transition_inventory_item('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','en_stock','en_stock'); raise exception 'Stale write passed'; exception when serialization_failure then null; end;
+ begin perform transition_inventory_item('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','en_stock','en_stock'); raise exception 'Stale write passed'; exception when sqlstate 'PT409' then null; end;
  begin update product_ownership set name='Changed'; raise exception 'Sold edit passed'; exception when object_not_in_prerequisite_state then null; end;
  begin delete from product_ownership; raise exception 'Sold delete passed'; exception when object_not_in_prerequisite_state then null; end;
  begin delete from inventory_status_history; raise exception 'History delete passed'; exception when insufficient_privilege then null; end;

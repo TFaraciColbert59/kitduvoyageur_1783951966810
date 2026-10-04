@@ -35,7 +35,7 @@ Contrôler ensuite les prêts existants, l'affichage de leurs statuts, le retour
 
 Validation locale du 4 octobre 2026 :
 
-- 389 tests passent dans 56 fichiers : matériel, schémas, inventaire, lien catalogue et Compas. Commande : `npm test -- --maxWorkers=2 tests/materiel tests/schemas/materiel.spec.ts src/features/materiel/domain/__tests__ src/components/produit/__tests__ src/features/compas/__tests__`.
+- 390 tests passent dans 56 fichiers : matériel, schémas, inventaire, lien catalogue et Compas. Commande : `npm test -- --maxWorkers=2 tests/materiel tests/schemas/materiel.spec.ts src/features/materiel/domain/__tests__ src/components/produit/__tests__ src/features/compas/__tests__`.
 - Compilation production réussie avec `NODE_OPTIONS=--max-old-space-size=6144 DIST_DIR=.next-inventory-check npm run build`. Les avertissements ESLint existants et les replis de sources distantes pendant la génération restent visibles dans le journal ; aucun échec de compilation.
 - Vérification TypeScript réussie avec une limite mémoire Node de 6 Go ; la limite par défaut de 2 Go sature sur ce dépôt.
 - Invariants CI anti-dérive réussis.
@@ -46,4 +46,14 @@ Validation locale du 4 octobre 2026 :
 
 La migration `unified_inventory` est appliquée le 4 octobre 2026 au projet Supabase configuré, après vérification de compatibilité du schéma. Les 68 objets existants sont conservés et la table d’historique a sa RLS active. L’application complète est démarrée pour les essais de connexion et de persistance ; le déploiement frontend est distinct de l’activation du schéma.
 
-Pour reproduire les contrôles SQL : créer un conteneur PostgreSQL 17 jetable, appliquer `bootstrap.sql`, puis `supabase/migrations/20261004105314_unified_inventory.sql`, puis `unified-inventory.sql`, `return-compatibility.sql`, `foreign-key-deletion.sql` avec `psql -v ON_ERROR_STOP=1`. Exécuter ensuite `bash tests/materiel/sql/concurrency.sh <conteneur> <base-isolée>`. Ne jamais appliquer le bootstrap de test sur une base applicative.
+Pour reproduire les contrôles SQL : créer un conteneur PostgreSQL 17 jetable, appliquer `bootstrap.sql`, puis `supabase/migrations/20261004105314_unified_inventory.sql` et `supabase/migrations/20261004124950_inventory_conflict_http409.sql`, puis `unified-inventory.sql`, `return-compatibility.sql`, `foreign-key-deletion.sql` avec `psql -v ON_ERROR_STOP=1`. Exécuter ensuite `bash tests/materiel/sql/concurrency.sh <conteneur> <base-isolée>`. Ne jamais appliquer le bootstrap de test sur une base applicative.
+
+## Validation en base hébergée et essai
+
+Le 4 octobre 2026, l’application Next.js complète a été testée avec un compte jetable confirmé par l’API Auth, connecté à la base configurée. Création, prix de location (12,50 € → 1250 centimes), départs et retours location/prêt, modification, vente définitive après confirmation et persistance après rechargement sont vérifiés. La fiche catalogue ouvre le formulaire commun avec le produit prérempli. Un second compte ne peut ni lire ni modifier les objets du premier, ni lire son historique ; l’API refuse les requêtes sans session (401).
+
+Le test réel de statut périmé a révélé que PostgREST 14.5 retente une erreur `40001` de sérialisation. Le conflit métier utilise désormais `PT409`, avec réponse HTTP 409 immédiate (2,9 secondes sur le premier contrôle, compilation à froid incluse). La correction est une seconde migration additive, appliquée au même projet, qui préserve le verrouillage, les droits et le contrôle du propriétaire. Les tests de concurrence PostgreSQL 17 et la revue indépendante passent après cette correction.
+
+Version d’essai : https://kitduvoyageur-17839519668-git-0e3471-tonyfaracip-3325s-projects.vercel.app/connexion?next=/hub/inventaire ; branche `codex/unified-inventory`, PR #64. Vercel protège cet aperçu par la connexion au compte Vercel autorisé : cette protection est conservée. Les essais navigateur authentifiés sont réalisés sur Next.js dans l’environnement de travail, avec la base hébergée ; ils ne constituent pas une connexion de l’agent à l’aperçu Vercel protégé.
+
+Pour essayer : se connecter à Vercel si demandé, puis à l’application ; ajouter un objet en mode Location avec un tarif, démarrer la location, enregistrer le retour, puis recharger. Le suivi de vente reste manuel et ne déclenche aucun paiement. Les contrats GS1, KYC et assurance ainsi que Stripe Connect restent des dépendances commerciales non configurées.
