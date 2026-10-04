@@ -273,11 +273,15 @@ describe('P5 — échelles espacements, rayons et typographie', () => {
 describe('P5 — câblage du mode sombre et topographie', () => {
   it('layout.tsx initialise le thème depuis la préférence système ou le choix stocké', () => {
     expect(layout).toContain("colorScheme: 'light dark'");
-    expect(layout).toContain("localStorage.getItem('lkdv_theme')");
-    expect(layout).toContain("matchMedia('(prefers-color-scheme: dark)')");
-    expect(layout).toContain("classList.add('dark')");
-    expect(layout).toContain("classList.remove('dark')");
-    expect(layout).toContain("setAttribute('data-theme'");
+    // Corps externalisé au registre CSP (mêmes octets rendus) — vérifié ici.
+    expect(layout).toContain("THEME_INIT_JS");
+    expect(layout).toContain("@/lib/csp/inline-scripts");
+    const registry = readFileSync('src/lib/csp/inline-scripts.ts', 'utf8');
+    expect(registry).toContain("localStorage.getItem('lkdv_theme')");
+    expect(registry).toContain("matchMedia('(prefers-color-scheme: dark)')");
+    expect(registry).toContain("classList.add('dark')");
+    expect(registry).toContain("classList.remove('dark')");
+    expect(registry).toContain("setAttribute('data-theme'");
   });
 
   it('tailwind.css mappe le clair sur les tokens et ne fige plus de couleurs .dark', () => {

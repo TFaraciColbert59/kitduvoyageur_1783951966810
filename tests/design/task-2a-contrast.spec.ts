@@ -36,6 +36,10 @@ const tailwindStyles = read('src/styles/tailwind.css');
 const tailwind = read('tailwind.config.js');
 
 function getThemeScript(): string {
+  // Source unique : le layout consomme le registre (CSP hashes).
+  const registry = read('src/lib/csp/inline-scripts.ts');
+  const fromRegistry = registry.match(/THEME_INIT_JS = `([\s\S]*?)`;/);
+  if (fromRegistry) return fromRegistry[1];
   const match = layout.match(/id="lkdv-theme-init"[\s\S]*?__html: `([\s\S]*?)`/);
   if (!match) {
     throw new Error('Theme bootstrap introuvable');
@@ -260,7 +264,11 @@ describe('Task 2A fix rounds 1–5 — contraste systémique, thème et primitiv
     expect(layout).toContain("colorScheme: 'light dark'");
     expect(layout).toMatch(/<html[\s\S]*?suppressHydrationWarning[\s\S]*?>/);
     expect(layout).not.toContain('id="glass-intensity-bootstrap"');
-    expect((layout.match(/lkdv_glass_intensity/g) ?? []).length).toBe(1);
+    // Corps externalisé au registre CSP : une seule définition (registre),
+    // consommée par le layout (pas de duplication inline).
+    const registrySrc = read('src/lib/csp/inline-scripts.ts');
+    expect((registrySrc.match(/lkdv_glass_intensity/g) ?? []).length).toBe(1);
+    expect(layout).toContain('THEME_INIT_JS');
   });
 
   it('calcule les ratios G1/G2/G3 pour les deux thèmes et trois intensités', () => {
