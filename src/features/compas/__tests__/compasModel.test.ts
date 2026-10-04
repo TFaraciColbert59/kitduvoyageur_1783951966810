@@ -291,3 +291,14 @@ describe('formatDateRange', () => {
     expect(formatDateRange('2026-10-30', '2026-11-02')).toBe('30 oct. – 2 nov.');
   });
 });
+
+
+describe('canonical inventory lifecycle', () => {
+ it.each(['vendu', 'a_acheter', 'en_location'] as const)('overrides stale packed and owned flags for %s', (inventoryStatus) => {
+  const m = buildCompasModel(baseInput({items:[item({id:'kit-line',name:'Tente',inventoryItemId:'stock',isVital:true,isPacked:true,purchaseState:'owned'})],inventory:[{id:'stock',name:'Tente',brand:null,category:null,weightG:1000,condition:'bon',isLent:false,inventoryStatus,maintenanceDueAt:null,expiryDate:null,quantity:1}]}));
+  expect(m.kit.lines[0].status).toBe('missing');
+  expect(m.kit.lines[0].packed).toBe(false);
+  expect(m.kit.packedPct).toBe(0);
+  expect(m.kit.vitalMissing).toHaveLength(1);
+ });
+});

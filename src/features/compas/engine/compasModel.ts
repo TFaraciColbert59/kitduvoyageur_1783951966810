@@ -1,3 +1,4 @@
+import { isInventoryAvailable, type InventoryStatus } from '@/features/materiel/domain/inventory';
 /**
  * Compas — modèle dérivé du préparateur.
  *
@@ -114,6 +115,7 @@ export interface CompasInventoryInput {
   weightG: number | null;
   condition: string | null;
   isLent: boolean;
+  inventoryStatus?: InventoryStatus;
   maintenanceDueAt: string | null;
   expiryDate: string | null;
   quantity: number;
@@ -409,9 +411,10 @@ export function buildCompasModel(input: CompasInput): CompasModel {
   /* Kit */
   const lines: CompasKitLine[] = input.items.map((item) => {
     const inv = item.inventoryItemId ? inventoryById.get(item.inventoryItemId) : undefined;
-    const lent = Boolean(inv?.isLent);
+    const lent = inv?.inventoryStatus ? inv.inventoryStatus === 'en_pret' : Boolean(inv?.isLent);
+    const unavailable = inv ? !isInventoryAvailable({status:inv.inventoryStatus,is_lent:inv.isLent}) : false;
     const replace = item.condition === 'a_remplacer' || item.condition === 'pour_pieces';
-    const owned = Boolean(inv) || item.purchaseState === 'owned' || item.isPacked;
+    const owned = !unavailable && (Boolean(inv) || item.purchaseState === 'owned' || item.isPacked);
     const status: CompasKitLine['status'] = lent
       ? 'lent'
       : replace
@@ -425,7 +428,7 @@ export function buildCompasModel(input: CompasInput): CompasModel {
       category: item.category,
       weightGrams: item.weightGrams ?? inv?.weightG ?? null,
       quantity: Math.max(1, item.quantity || 1),
-      packed: item.isPacked,
+      packed: item.isPacked && !unavailable,
       vital: item.isVital,
       kind: kitKind(item),
       shared: item.ownership === 'shared',
@@ -584,7 +587,7 @@ export function buildCompasModel(input: CompasInput): CompasModel {
   /* Inventaire */
   const soon = input.now.getTime() + 60 * MS_DAY;
   const inventory = {
-    total: input.inventory.length,
+    total: input.inventory.filter((p) => p.inventoryStatus !== 'vendu' && p.inventoryStatus !== 'a_acheter').length,
     lent: input.inventory.filter((p) => p.isLent).length,
     maintenanceDue: input.inventory.filter((p) => dueBefore(p.maintenanceDueAt, soon)).length,
     expiringSoon: input.inventory.filter((p) => dueBefore(p.expiryDate, soon)).length,
