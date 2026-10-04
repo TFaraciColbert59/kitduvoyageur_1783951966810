@@ -29,6 +29,17 @@ export const slugSchema = z
 
 const score10 = z.number().min(0).max(10).default(0);
 
+const productVariantSchema = z.object({
+  id: z.string().max(120).default(''),
+  size: z.string().max(60).optional(),
+  color: z.string().max(60).optional(),
+  model: z.string().max(120).optional(),
+  sku: z.string().max(120).optional(),
+  price: z.number().finite().min(0).optional(),
+  stock: z.number().int().min(0).optional(),
+  image: z.string().max(2048).optional(),
+});
+
 export const productCreateSchema = z.object({
   name: z.string().trim().min(1).max(255),
   slug: slugSchema.optional(),
@@ -77,6 +88,15 @@ export const productCreateSchema = z.object({
   cabin_compatible: z.boolean().default(false),
   justification_ai: z.string().trim().max(8000).default(''),
   stock: z.number().int().min(0).default(0),
+  supplier: text120.default(''),
+  ean: z.string().trim().max(32).default(''),
+  min_stock: z.number().int().min(0).default(0),
+  tags: z.array(z.string().trim().max(60)).max(30).default([]),
+  variants: z.array(productVariantSchema).max(50).default([]),
+  meta_title: z.string().trim().max(255).default(''),
+  meta_description: z.string().trim().max(500).default(''),
+  cost_price_eur: z.number().finite().min(0).nullable().default(null),
+  vat_rate: z.number().finite().min(0).max(100).nullable().default(null),
 });
 
 export const productUpdateSchema = productCreateSchema

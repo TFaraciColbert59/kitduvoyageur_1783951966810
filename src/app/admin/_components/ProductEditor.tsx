@@ -32,6 +32,15 @@ export interface ProductFormState {
   rating: string;
   image: string;
   image_alt: string;
+  supplier: string;
+  ean: string;
+  min_stock: string;
+  tags: string;
+  variants_json: string;
+  meta_title: string;
+  meta_description: string;
+  cost_price_eur: string;
+  vat_rate: string;
   available: boolean;
   is_active: boolean;
   available_europe: boolean;
@@ -63,6 +72,15 @@ export const EMPTY_FORM: ProductFormState = {
   rating: '0',
   image: '',
   image_alt: '',
+  supplier: '',
+  ean: '',
+  min_stock: '0',
+  tags: '',
+  variants_json: '[]',
+  meta_title: '',
+  meta_description: '',
+  cost_price_eur: '',
+  vat_rate: '',
   available: true,
   is_active: true,
   available_europe: true,
@@ -80,6 +98,14 @@ function toPayload(form: ProductFormState): Record<string, unknown> {
       .split('\n')
       .map((l) => l.trim())
       .filter(Boolean);
+  let variants: unknown[] = [];
+  try {
+    const parsed: unknown = JSON.parse(form.variants_json.trim() || '[]');
+    if (!Array.isArray(parsed)) throw new Error('not-array');
+    variants = parsed;
+  } catch {
+    throw new Error('Variantes : JSON invalide (tableau attendu)');
+  }
   return {
     name: form.name.trim(),
     slug: form.slug.trim() || slugify(form.name),
@@ -105,6 +131,18 @@ function toPayload(form: ProductFormState): Record<string, unknown> {
     rating: num(form.rating),
     image: form.image,
     image_alt: form.image_alt,
+    supplier: form.supplier,
+    ean: form.ean,
+    min_stock: Math.trunc(num(form.min_stock)),
+    tags: form.tags
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean),
+    variants,
+    meta_title: form.meta_title,
+    meta_description: form.meta_description,
+    cost_price_eur: form.cost_price_eur === '' ? null : num(form.cost_price_eur),
+    vat_rate: form.vat_rate === '' ? null : num(form.vat_rate),
     available: form.available,
     is_active: form.is_active,
     available_europe: form.available_europe,
@@ -211,6 +249,24 @@ export function ProductEditor({
         <AdminField label="Texte alternatif image">
           <AdminInput value={form.image_alt} onChange={(e) => set('image_alt', e.target.value)} disabled={busy} maxLength={1024} />
         </AdminField>
+        <AdminField label="Fournisseur">
+          <AdminInput value={form.supplier} onChange={(e) => set('supplier', e.target.value)} disabled={busy} maxLength={120} />
+        </AdminField>
+        <AdminField label="EAN">
+          <AdminInput value={form.ean} onChange={(e) => set('ean', e.target.value)} disabled={busy} maxLength={32} />
+        </AdminField>
+        <AdminField label="Prix d'achat (€, optionnel)">
+          <AdminInput type="number" min="0" step="0.01" value={form.cost_price_eur} onChange={(e) => set('cost_price_eur', e.target.value)} disabled={busy} />
+        </AdminField>
+        <AdminField label="TVA (%, optionnel)">
+          <AdminInput type="number" min="0" max="100" step="0.1" value={form.vat_rate} onChange={(e) => set('vat_rate', e.target.value)} disabled={busy} />
+        </AdminField>
+        <AdminField label="Seuil d'alerte stock">
+          <AdminInput type="number" min="0" step="1" value={form.min_stock} onChange={(e) => set('min_stock', e.target.value)} disabled={busy} />
+        </AdminField>
+        <AdminField label="Tags (séparés par des virgules)">
+          <AdminInput value={form.tags} onChange={(e) => set('tags', e.target.value)} disabled={busy} maxLength={500} />
+        </AdminField>
       </div>
 
       <AdminField label="Pourquoi ce produit (description)">
@@ -228,6 +284,20 @@ export function ProductEditor({
         </AdminField>
         <AdminField label="Matériaux">
           <AdminInput value={form.materials} onChange={(e) => set('materials', e.target.value)} disabled={busy} maxLength={500} />
+        </AdminField>
+        <AdminField label="Titre SEO">
+          <AdminInput value={form.meta_title} onChange={(e) => set('meta_title', e.target.value)} disabled={busy} maxLength={255} />
+        </AdminField>
+        <AdminField label="Description SEO">
+          <AdminTextarea value={form.meta_description} onChange={(e) => set('meta_description', e.target.value)} disabled={busy} rows={2} />
+        </AdminField>
+        <AdminField label="Variantes (JSON : [{size, color, sku, price, stock}])">
+          <AdminTextarea
+            value={form.variants_json}
+            onChange={(e) => set('variants_json', e.target.value)}
+            disabled={busy}
+            rows={3}
+          />
         </AdminField>
       </div>
 
