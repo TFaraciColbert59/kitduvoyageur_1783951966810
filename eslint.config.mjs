@@ -79,6 +79,15 @@ const config = [
     },
   },
   {
+    name: 'lkdv/admin-strict',
+    files: ['src/app/admin/**/*.{ts,tsx}', 'src/server/admin/**/*.ts'],
+    rules: {
+      // Back-office reconstruit : typage strict, aucun `any`.
+      '@typescript-eslint/no-explicit-any': 'error',
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
+    },
+  },
+  {
     name: 'lkdv/shell-safe-area-canonical',
     files: [
       'src/components/shell/AppShell.tsx',

@@ -91,8 +91,8 @@ export function ProductDetailLoader({ id }: { id: string }) {
     <div className="flex flex-col gap-6">
       {archived ? (
         <p role="status" className="text-sm font-semibold text-[color:var(--lkv-danger)]">
-          Produit archivé — réactivez-le via l'édition (Actif coché + nouvel enregistrement ne
-          désarchive pas : contactez la base pour restauration).
+          Produit archivé (lecture seule) — la restauration se fait en base
+          (désarchivage volontairement absent de l&apos;UI).
         </p>
       ) : null}
       <section aria-label="Édition">

@@ -57,7 +57,7 @@ jobs:
 
       - name: Gate 5 — End-to-End Playwright Suite
         if: ${{ vars.LKDV_E2E_ENABLED == 'true' }}
-        run: npx playwright test scripts/e2e/voyage.spec.ts scripts/e2e/adventure-intelligence.spec.ts scripts/e2e/a13-journey.spec.ts
+        run: npx playwright test scripts/e2e/voyage.spec.ts scripts/e2e/adventure-intelligence.spec.ts scripts/e2e/a13-journey.spec.ts scripts/e2e/admin-access.spec.ts
         env:
           CI: true
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL }}
@@ -73,6 +73,14 @@ jobs:
 
       - name: Gate 0.1 — Icônes canoniques (noms résolus)
         run: npm run verify:icons
+
+      - name: Gate 0.2 — Balayage secrets (aucun secret en dur dans src/)
+        # rg sort en code 1 si rien trouvé (vert), 0 si un secret matche (rouge).
+        run: >
+          rg -n -g '!node_modules'
+          -e 'sk_live_[A-Za-z0-9]+' -e 'whsec_[A-Za-z0-9]+'
+          -e 'SUPABASE_SERVICE_ROLE_KEY.{0,3}[A-Za-z0-9._-]{20,}' src/ scripts/verify/;
+          test $? -eq 1
 
       - name: Gate G6 — Accessibilité axe (zéro critical/serious)
         if: ${{ vars.LKDV_E2E_ENABLED == 'true' }}
