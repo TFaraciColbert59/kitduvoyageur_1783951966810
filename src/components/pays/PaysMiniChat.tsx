@@ -2,12 +2,14 @@
 
 import React, { useState, useCallback } from 'react';
 import { useCountryPracticalGuide } from '@/hooks/useCountryPracticalGuide';
-import { buildPaysChatRequest, extractKitItems } from '@/features/pays/chat/paysChatPrompt';
+import { extractKitItems } from '@/features/pays/chat/paysChatPrompt';
+import { sendPaysChatMessage } from '@/features/pays/chat/paysChatClient';
 
 interface ChatMsg {
   role: 'user' | 'assistant';
   text: string;
   degraded?: boolean;
+  ragUsed?: boolean;
 }
 
 interface PaysMiniChatProps {
@@ -32,7 +34,6 @@ export function PaysMiniChat({ countryCode, countryName }: PaysMiniChatProps) {
   const [copied, setCopied] = useState(false);
 
   const { data: guide } = useCountryPracticalGuide(countryCode);
-  const seasonMd = guide?.sections?.meilleure_saison?.content_md;
   const guideSources = guide?.sections?.meilleure_saison?.sources ?? [];
 
   const send = useCallback(
@@ -45,23 +46,10 @@ export function PaysMiniChat({ countryCode, countryName }: PaysMiniChatProps) {
       setInput('');
       setLoading(true);
       try {
-        const req = buildPaysChatRequest({ countryCode, countryName, question: q, seasonMd });
-        const res = await fetch('/api/ai/chat-completion', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(req),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(
-            res.status === 429
-              ? 'Trop de requêtes — réessaie dans une heure.'
-              : (data.error as string) || `Erreur ${res.status}`
-          );
-        }
+        const reply = await sendPaysChatMessage(countryCode, q);
         setMessages((prev) => [
           ...prev,
-          { role: 'assistant', text: data.text as string, degraded: !!data.degraded },
+          { role: 'assistant', text: reply.text, degraded: reply.degraded, ragUsed: reply.ragUsed },
         ]);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Échec de la réponse. Réessaie.');
@@ -69,7 +57,7 @@ export function PaysMiniChat({ countryCode, countryName }: PaysMiniChatProps) {
         setLoading(false);
       }
     },
-    [countryCode, countryName, seasonMd, loading]
+    [countryCode, loading]
   );
 
   const copyKit = useCallback(async (text: string) => {
@@ -107,6 +95,9 @@ export function PaysMiniChat({ countryCode, countryName }: PaysMiniChatProps) {
                 <p className={m.role === 'user' ? 'text-sm font-semibold' : 'text-sm'}>{m.text}</p>
                 {m.role === 'assistant' && m.degraded && (
                   <p className="text-xs opacity-70">Réponse dégradée (IA hors-ligne).</p>
+                )}
+                {m.role === 'assistant' && m.ragUsed && (
+                  <p className="text-xs opacity-70">Réponse ancrée au guide pays.</p>
                 )}
                 {m.role === 'assistant' && extractKitItems(m.text).length > 0 && (
                   <button
