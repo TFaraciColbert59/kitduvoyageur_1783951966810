@@ -2,7 +2,8 @@ import { DEFAULT_LKDV_SYSTEM } from '@/lib/ai/requestMode';
 
 export interface PaysChatInput {
   countryCode: string;
-  countryName: string;
+  /** Optionnel : repli sur le code ISO quand le nom est inconnu (route API). */
+  countryName?: string;
   question: string;
   seasonMd?: string;
 }
@@ -20,7 +21,7 @@ const MAX_SEASON = 1500;
 
 export function buildPaysChatRequest(input: PaysChatInput): PaysChatRequest {
   const code = input.countryCode.trim().toUpperCase();
-  const name = input.countryName.trim();
+  const name = input.countryName?.trim() || code;
   const season = (input.seasonMd ?? '').slice(0, MAX_SEASON);
   const anchor =
     `Pays concerné : ${name} (${code}). ` +
