@@ -16,6 +16,7 @@ import PaysHebergementsView from '@/components/pays/PaysHebergementsView';
 import PaysPratiqueView from '@/components/pays/PaysPratiqueView';
 import PaysCommunauteView from '@/components/pays/PaysCommunauteView';
 import MobileCountryDetailView from '@/components/pays/MobileCountryDetailView';
+import { PaysMiniChat } from '@/components/pays/PaysMiniChat';
 import type { KlookBlock } from '@/features/discovery/providers/klook/klookTypes';
 
 function getFlagEmoji(code: string): string {
@@ -82,6 +83,7 @@ export default function CountryDetailClient({ country, klookBlock }: CountryDeta
   };
 
   return (
+    <>
     <AppShellDesktop
       mobileSlot={
         <AppShell videoBackground={true}>
@@ -107,5 +109,7 @@ export default function CountryDetailClient({ country, klookBlock }: CountryDeta
     >
       {renderSectionContent()}
     </AppShellDesktop>
+    <PaysMiniChat countryCode={country.code} countryName={country.nom} />
+    </>
   );
 }

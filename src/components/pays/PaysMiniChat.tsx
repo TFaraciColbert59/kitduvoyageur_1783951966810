@@ -92,7 +92,7 @@ export function PaysMiniChat({ countryCode, countryName }: PaysMiniChatProps) {
   return (
     <div
       className="fixed left-3 right-3 z-30 md:left-auto md:right-6 md:w-[380px]"
-      style={{ bottom: 'max(var(--bottom-nav-height, 0px), env(safe-area-inset-bottom, 0px))' }}
+      style={{ bottom: 'var(--bottom-nav-height, 12px)' }}
     >
       {open && (
         <div className="glass mb-2 flex max-h-[50vh] flex-col overflow-hidden rounded-2xl">
