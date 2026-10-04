@@ -66,7 +66,7 @@ describe('src/lib/supabase/server — configuration sécurisée (Chantier 0)', (
     );
   });
 
-  it('TEST-SRV-04: la logique cookies existante est préservée (sameSite none + secure)', async () => {
+  it('TEST-SRV-04: les options cookies Supabase sont transmises telles quelles (SameSite Lax par défaut, jamais de forçage None)', async () => {
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://test-ref.supabase.co');
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'test-anon-key');
 
@@ -80,10 +80,12 @@ describe('src/lib/supabase/server — configuration sécurisée (Chantier 0)', (
 
     config.cookies.setAll([{ name: 'sb-ref', value: 'tok', options: { path: '/' } }]);
 
-    expect(cookieSetMock).toHaveBeenCalledWith(
+    // Aucun forçage : les options décidées par @supabase/ssr (Lax) passent intactes.
+    expect(cookieSetMock).toHaveBeenCalledWith('sb-ref', 'tok', { path: '/' });
+    expect(cookieSetMock).not.toHaveBeenCalledWith(
       'sb-ref',
       'tok',
-      expect.objectContaining({ sameSite: 'none', secure: true }),
+      expect.objectContaining({ sameSite: 'none' })
     );
   });
 

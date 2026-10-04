@@ -34,7 +34,7 @@ export default async function AdminOverviewPage() {
         <Link
           key={kpi.label}
           href={kpi.href}
-          className="rounded-3xl border border-[color:var(--glass-rim)] bg-[color:var(--g2-bg)] p-5 shadow-[var(--glass-specular)] backdrop-blur-md"
+          className="rounded-3xl border border-[color:var(--glass-rim)] bg-[color:var(--g2-bg)] p-5 backdrop-blur-md"
         >
           <p className="text-sm text-[color:var(--glass-label-secondary)]">{kpi.label}</p>
           <p className="mt-1 text-3xl font-bold text-[color:var(--glass-label)]">{kpi.value}</p>
