@@ -1,5 +1,13 @@
 # MISSION LOG — LKDV
 
+## 2026-10-05 — Météo et relief libres partout ; deux bugs trouvés en essai réel
+
+- **Plus aucun appel Open-Meteo** (usage non commercial seulement) : pont MET Norway → format Open-Meteo (`src/lib/weather`), route `/api/weather/point` pour le cockpit, page Pays, Matériel, Hub, Adventure Intelligence, « Partir librement » (prévisions MET Norway, altitudes Terrain Tiles, géocodage Photon → Nominatim). Probabilité de pluie facultative partout (null hors Scandinavie), millimètres en relais. Chaque série nomme sa vraie source.
+- **Bug « Chamonix »** : le Compas retenait le seul lieu portant EXACTEMENT ce nom… une ferme d'Afrique du Sud, et toutes les étapes partaient au Cap. `pickDestination` : nom exact ou commençant par la requête, ordre de pertinence de la carte, jamais une ferme/lieu-dit/bâtiment. Essai : Chamonix-Mont-Blanc, Argentière, Le Tour.
+- **Bug activité** : « ski de rando » devenait « alpinisme » (l'IA passait devant la règle) et le kit oubliait le DVA. L'activité dite en toutes lettres prime désormais.
+- **Essais réels** : ski Chamonix 5 j (51 s, DVA), vélo Bretagne 7 j (39 s, casque), city trip Lisbonne 4 j (36 s, Sintra).
+- Preuves : tsc propre ; suite complète 21 échecs, tous préexistants ; build OK.
+
 ## 2026-10-05 — Lot 1 : tout type de sortie
 
 - **8 activités ajoutées** (enum `trip_activity_type`, migration additive appliquée) : vélo, ski, alpinisme, escalade, eau (kayak, canoë, voile, plongée), city trip, plage, van. « Mixte » couvre « autre ».

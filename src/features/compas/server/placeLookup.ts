@@ -1,5 +1,5 @@
 import 'server-only';
-import { parseNominatim, parsePhoton, type CompasPlace } from '../engine/places';
+import { parseNominatim, parsePhoton, pickDestination, type CompasPlace } from '../engine/places';
 import { cached, coordKey } from './sharedCache';
 
 /**
@@ -16,7 +16,7 @@ const NOISE = ['highway', 'amenity', 'shop', 'railway', 'public_transport', 'bui
   .map((t) => `&osm_tag=!${t}`)
   .join('');
 
-const plain = (v: string) =>
+export const plain = (v: string) =>
   v
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -84,8 +84,7 @@ export async function lookupDestination(query: string): Promise<CompasPlace | nu
   const q = query.trim().slice(0, 80);
   if (q.length < 2) return null;
   const found = (await search(q, 8)) ?? [];
-  const want = plain(q);
-  return found.find((p) => plain(p.name) === want) ?? null;
+  return pickDestination(found, q);
 }
 
 /** Un lieu de base réel (ville, village) dans un pays donné, pour ancrer une destination. */

@@ -1705,8 +1705,12 @@ export async function compasInterpretAction(
     const ruleTypes = new Set(rules.map((r) => r.type));
     const aiKept = grounded.filter(
       (a) =>
-        !ruleTypes.has(a.type) ||
-        validateActions([{ action: a, source: 'ia' as const }], ctx)[0]?.ok !== false
+        // Une activité nommée en toutes lettres (« ski », « vélo ») est lue par
+        // les règles : le modèle ne la remplace pas (2026-10-05, « ski de rando »
+        // devenait « alpinisme » et le kit oubliait le DVA).
+        !(RULES_FIRST.has(a.type) && ruleTypes.has(a.type)) &&
+        (!ruleTypes.has(a.type) ||
+          validateActions([{ action: a, source: 'ia' as const }], ctx)[0]?.ok !== false)
     );
     const merged = mergeActions(aiKept, rules);
     const taken = new Set(merged.map((m) => m.action.type));
@@ -1719,6 +1723,9 @@ export async function compasInterpretAction(
     return { success: false, error: 'Erreur serveur' };
   }
 }
+
+/** Réglages où le mot dit en toutes lettres (règles) prime sur l'IA. */
+const RULES_FIRST = new Set<CompasIntentAction['type']>(['set_activity']);
 
 /* ---------- Verdict expliqué par l'IA ---------- */
 

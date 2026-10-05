@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseIntentRules, planApplication, groundingIssue } from '../engine/intent';
 import { extractIntentJson } from '@/lib/ai/features/compasIntent';
 import { approachMode, keepRuleForActivity, movesFromSteps, nightsPrefFor, sanitizeAdvice, sanitizeStages } from '../engine/autofill';
-import { destinationRadiusKm, parseNominatim, parsePhoton, pickPlace } from '../engine/places';
+import { destinationRadiusKm, parseNominatim, parsePhoton, pickDestination, pickPlace } from '../engine/places';
 
 const TODAY = '2026-10-02';
 const current = {
@@ -223,5 +223,37 @@ describe('Spécialiste : formats de réponse observés avec Nemotron 3.5 Lightni
   it('un objet suivi de prose reste un seul objet', () => {
     expect(extractIntentJson('```json\n{"a":1}\n```\nVoilà.')).toEqual({ a: 1 });
     expect(extractIntentJson('pas de json')).toBeNull();
+  });
+});
+
+describe('Destination nommée : la ville que tout le monde entend, pas un homonyme', () => {
+  const place = (name: string, type: string, cc: string, key = 'place') => ({
+    type: 'Feature',
+    geometry: { coordinates: [0, 0] },
+    properties: { name, osm_key: key, osm_value: type, type, countrycode: cc },
+  });
+
+  it('« Chamonix » → Chamonix-Mont-Blanc (France), pas la ferme d’Afrique du Sud', () => {
+    // Réponse Photon réelle (2026-10-05), dans son ordre.
+    const found = parsePhoton({
+      features: [
+        place('Chamonix-Mont-Blanc', 'city', 'FR'),
+        place('Chamonix', 'locality', 'ZA'),
+        place('Chamonix', 'district', 'FR'),
+        place('Chamonix', 'locality', 'US', 'landuse'),
+      ],
+    });
+    expect(pickDestination(found, 'Chamonix')).toMatchObject({ name: 'Chamonix-Mont-Blanc', countryCode: 'FR' });
+  });
+
+  it('jamais un lieu-dit ni un bâtiment ; rien plutôt qu’un faux', () => {
+    const found = parsePhoton({ features: [place('Chamonix', 'locality', 'ZA'), place('Chamonix', 'house', 'JP')] });
+    expect(pickDestination(found, 'Chamonix')).toBeNull();
+    expect(pickDestination(parsePhoton({ features: [place('Moabit', 'district', 'DE')] }), 'Moab')).toBeNull();
+  });
+
+  it('nom exact gardé dans l’ordre de la carte (Banff Canada avant Banff Écosse)', () => {
+    const found = parsePhoton({ features: [place('Banff', 'city', 'CA'), place('Banff', 'city', 'GB')] });
+    expect(pickDestination(found, 'banff')?.countryCode).toBe('CA');
   });
 });
