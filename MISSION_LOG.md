@@ -1,5 +1,11 @@
 # MISSION LOG — LKDV
 
+## 2026-10-05 — Itinéraire : plus de zigzag
+
+- **`untangleStages`** (`src/features/compas/engine/stageOrder.ts`, pur, testé) : quand l'IA propose un circuit motorisé qui zigzague (Rennes → Brest → Saint-Malo → Quimper…), les séjours intermédiaires (lieu + nuits consécutives + notes) sont remis dans l'ordre le plus court ; arrivée et départ inchangés, jours renumérotés. Appliqué seulement si le gain est net (≥ 20 % et ≥ 15 km), jamais sur un trek ou un circuit à vélo (le tracé prime). Annoncé dans les notes (« environ N km de route en moins »).
+- Essai réel : road trip Bretagne 8 j à deux, itinéraire déjà cohérent → laissé tel quel (comportement attendu).
+- Preuves : tsc, eslint propres ; tests Compas 279/279.
+
 ## 2026-10-05 — Météo et relief libres partout ; deux bugs trouvés en essai réel
 
 - **Plus aucun appel Open-Meteo** (usage non commercial seulement) : pont MET Norway → format Open-Meteo (`src/lib/weather`), route `/api/weather/point` pour le cockpit, page Pays, Matériel, Hub, Adventure Intelligence, « Partir librement » (prévisions MET Norway, altitudes Terrain Tiles, géocodage Photon → Nominatim). Probabilité de pluie facultative partout (null hors Scandinavie), millimètres en relais. Chaque série nomme sa vraie source.

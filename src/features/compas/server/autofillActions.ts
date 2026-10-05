@@ -55,6 +55,7 @@ import {
 import { compasMeta, patchTripMetadata, requireEditor, resplitSteps, type Supa } from './compasServer';
 import { lookupDestination, lookupReverse, stageCandidates } from './placeLookup';
 import { destinationRadiusKm, distanceKm, maxLegKm, pickPlace, type CompasPlace } from '../engine/places';
+import { untangleStages } from '../engine/stageOrder';
 import { localToday } from './weather';
 
 const MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
@@ -371,7 +372,7 @@ export async function compasAutofillAction(
     let stepsCreated = resume?.stepIds.length ?? 0;
     let routeSet = resume?.routeSet ?? false;
     const createdStepIds: string[] = [...(resume?.stepIds ?? [])];
-    let stagePlaces: Array<{ day: number; name: string; lat: number; lon: number; move: StageMove }> = [];
+    let stagePlaces: Array<{ day: number; name: string; lat: number; lon: number; move: StageMove; note: string | null }> = [];
     if (steps.length === 0 && !resume) {
       if (HIKING_ACTIVITIES.has(activity) && compas.routeId == null && anchor.radiusKm <= 80) {
         const { data: near } = await supabase.rpc('compas_search_routes', {
@@ -438,7 +439,7 @@ export async function compasAutofillAction(
           if (hit) last = { name: p.place, lat: hit.lat, lon: hit.lon };
           else if (last?.name !== p.place) dropped += 1;
           const at = last ?? { name: anchor.name, lat: anchor.lat, lon: anchor.lon };
-          stagePlaces.push({ day: p.day, name: at.name, lat: at.lat, lon: at.lon, move: hit ? p.move : 'aucun' });
+          stagePlaces.push({ day: p.day, name: at.name, lat: at.lat, lon: at.lon, move: hit ? p.move : 'aucun', note: p.note });
         }
         if (!proposed.length) {
           notes.push('Itinéraire détaillé indisponible pour le moment : une étape par jour sur le lieu, à affiner dans Parcours.');
@@ -448,8 +449,20 @@ export async function compasAutofillAction(
             lat: anchor!.lat,
             lon: anchor!.lon,
             move: 'aucun' as StageMove,
+            note: null,
           }));
-        } else if (dropped) notes.push(`${dropped} lieu(x) proposé(s) introuvable(s) sur la carte : étape gardée au lieu précédent.`);
+        } else {
+          if (dropped) notes.push(`${dropped} lieu(x) proposé(s) introuvable(s) sur la carte : étape gardée au lieu précédent.`);
+          // Circuit motorisé qui zigzague : séjours remis dans l'ordre le plus court
+          // (arrivée et départ inchangés). Un trek ou un circuit à vélo suit son tracé.
+          if (!stagePlaces.some((st) => st.move === 'marche' || st.move === 'velo')) {
+            const tidy = untangleStages(stagePlaces);
+            if (tidy.reordered) {
+              stagePlaces = tidy.stages;
+              notes.push(`Étapes remises dans un ordre plus direct : environ ${tidy.savedKm} km de route en moins.`);
+            }
+          }
+        }
 
         // Distances réelles entre deux soirs (à pied, à vélo ou sur la route), en parallèle.
         const legs = await mapLimit(stagePlaces, 4, async (st, i) => {
@@ -479,13 +492,12 @@ export async function compasAutofillAction(
           if ((st.move === 'marche' && km > 45) || (st.move === 'velo' && km > 180)) return null;
           return { km: Math.round(km * 10) / 10, ascent: ascent != null ? Math.round(ascent) : null, measured: true };
         });
-        const proposedByDay = new Map(proposed.map((p) => [p.day, p]));
         const rows = stagePlaces.map((st, i) => ({
           trip_id: tripId,
           day_number: st.day,
           order_index: 0,
           title: `Jour ${st.day} · ${st.name}`,
-          description: proposedByDay.get(st.day)?.note ?? null,
+          description: st.note,
           transport_mode: STEP_TRANSPORT[st.move],
           source: 'compas',
           latitude: Math.round(st.lat * 1e5) / 1e5,
