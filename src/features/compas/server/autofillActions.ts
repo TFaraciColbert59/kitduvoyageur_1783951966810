@@ -139,6 +139,8 @@ interface Refuge {
 }
 
 const HIKING_ACTIVITIES = new Set(['hiking', 'trekking', 'bivouac', 'mixed']);
+/** Transfert en véhicule plausible entre deux étapes d'un trek ou d'un circuit à vélo. */
+const TRANSFER_MAX_KM = 250;
 /** Activités qui changent de lieu chaque jour ou presque : un itinéraire figé sur un lieu est un échec. */
 const ITINERANT_ACTIVITIES = new Set(['roadtrip', 'vanlife', 'trekking', 'cycling']);
 const MS_DAY = 86_400_000;
@@ -443,16 +445,33 @@ export async function compasAutofillAction(
         let last: { name: string; lat: number; lon: number } | null = null;
         let dropped = 0;
         for (const p of proposed) {
-          const hit = pickPlace(byName.get(p.place) ?? [], {
+          const candidates = byName.get(p.place) ?? [];
+          let move = p.move;
+          let hit = pickPlace(candidates, {
             near: last ?? anchor,
             maxKm: maxLegKm(p.move, last == null, anchor.radiusKm),
             query: p.place,
           });
+          // « À pied » depuis la ville d'arrivée jusqu'au départ du trek (Puerto
+          // Natales → Torres del Paine, 100 km) : c'est un transfert. Hors de
+          // portée à pied ou à vélo, un lieu à moins de 250 km reste l'étape,
+          // rejointe en véhicule ; sans cela tout le trek tombait.
+          if (!hit && last && (p.move === 'marche' || p.move === 'velo' || p.move === 'aucun')) {
+            hit = pickPlace(candidates, { near: last, maxKm: TRANSFER_MAX_KM, query: p.place });
+            if (hit) move = 'voiture';
+          }
           // Le titre garde le nom proposé (lisible) ; la position vient de la carte.
           if (hit) last = { name: p.place, lat: hit.lat, lon: hit.lon };
-          else if (last?.name !== p.place) dropped += 1;
+          else if (last?.name !== p.place) {
+            dropped += 1;
+            console.info('[compas] étape introuvable', {
+              place: p.place,
+              move: p.move,
+              candidates: candidates.length,
+            });
+          }
           const at = last ?? { name: anchor.name, lat: anchor.lat, lon: anchor.lon };
-          stagePlaces.push({ day: p.day, name: at.name, lat: at.lat, lon: at.lon, move: hit ? p.move : 'aucun', note: p.note });
+          stagePlaces.push({ day: p.day, name: at.name, lat: at.lat, lon: at.lon, move: hit ? move : 'aucun', note: p.note });
         }
         if (!proposed.length) {
           notes.push('Itinéraire détaillé indisponible pour le moment : une étape par jour sur le lieu, à affiner dans Parcours.');

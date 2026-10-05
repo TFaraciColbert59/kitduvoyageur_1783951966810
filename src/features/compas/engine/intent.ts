@@ -207,6 +207,9 @@ function nextWeekday(today: string, target: number, strict: boolean): string {
 function dateGrounded(text: string, iso: string): boolean {
   const plain = plainOf(text);
   if (RELATIVE_DATE.test(plain)) return true;
+  // Le mois est dit (« en janvier ») : un jour de ce mois est ancré.
+  const month = Number(iso.slice(5, 7));
+  for (const m of plain.matchAll(new RegExp(`\\b${MONTH_RE}`, 'g'))) if (monthOf(m[1]) === month) return true;
   const day = Number(iso.slice(8, 10));
   return numberInText(text, day);
 }
@@ -274,6 +277,29 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
   } else {
     const wd = new RegExp(`\\b(${WEEKDAYS.join('|')})\\b`).exec(plain);
     if (wd) start = nextWeekday(today, WEEKDAYS.indexOf(wd[1]), true);
+  }
+  // Un mois seul : « en janvier », « début mai », « fin août 2027 ». Le départ
+  // se pose au début (au 15 pour « mi », au 22 pour « fin ») ; un « week-end »
+  // dans ce mois tombe sur son premier samedi. Ce mois-ci : à partir d'aujourd'hui.
+  if (!range && !single && !slash) {
+    const monthOnly = new RegExp(
+      `\\b(?:(debut|mi|fin)[\\s-]+(?:de\\s+|d')?|en\\s+|au mois d[e']\\s*|courant\\s+)${MONTH_RE}(?:\\s+(\\d{4}))?`
+    ).exec(plain);
+    const month = monthOnly ? monthOf(monthOnly[2]) : null;
+    if (monthOnly && month) {
+      const day = monthOnly[1] === 'mi' ? 15 : monthOnly[1] === 'fin' ? 22 : 1;
+      const year = monthOnly[3] ? Number(monthOnly[3]) : null;
+      const thisMonth = !year && Number(today.slice(5, 7)) === month && Number(today.slice(8, 10)) >= day;
+      let base = thisMonth ? today : resolveDayMonth(today, day, month, year);
+      if (base && /\bweek-?end\b/.test(plain)) {
+        const sat = nextWeekday(base, 6, false);
+        if (Number(sat.slice(5, 7)) === month) base = sat;
+      }
+      if (base) {
+        start = base;
+        end = null;
+      }
+    }
   }
   if (start) out.push({ type: 'set_dates', start, end });
 
@@ -421,7 +447,12 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     const at = (m.index ?? 0) + m[0].length;
     const original = src.slice(at, at + 60);
     if (!/^\p{Lu}/u.test(original)) continue;
-    const place = clean(upToBreak(original).split(/\s(?:pour|avec|du|le|la|les|en|a|à|à partir|pendant|sur|et)\s/i)[0], 50);
+    const place = clean(
+      upToBreak(original).split(
+        /\s(?:pour|avec|du|le|la|les|en|a|à|à partir|pendant|durant|sur|et|un|une|cette|ce|tout|toute|week-?end|début|debut|mi|fin|janvier|février|fevrier|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre)(?:\s|$)/i
+      )[0],
+      50
+    );
     if (place.length >= 2 && !monthOf(plainOf(place)) && !WEEKDAYS.includes(plainOf(place))) {
       out.push({ type: 'set_destination', place });
       break;
