@@ -228,16 +228,39 @@ export function CompasScreen({
     setRunning(true);
     const position = new Promise<{ lat: number; lon: number } | null>((resolve) => {
       if (typeof navigator === 'undefined' || !navigator.geolocation) return resolve(null);
+      // Le délai du navigateur ne court qu'APRÈS l'accord : une demande
+      // d'autorisation laissée sans réponse bloquerait tout. Notre minuteur
+      // tranche à 8 s : on prépare sans la position (trajet à préciser).
+      const guard = setTimeout(() => resolve(null), 8000);
       navigator.geolocation.getCurrentPosition(
-        (p) => resolve({ lat: p.coords.latitude, lon: p.coords.longitude }),
-        () => resolve(null),
+        (p) => {
+          clearTimeout(guard);
+          resolve({ lat: p.coords.latitude, lon: p.coords.longitude });
+        },
+        () => {
+          clearTimeout(guard);
+          resolve(null);
+        },
         { enableHighAccuracy: false, timeout: 5000, maximumAge: 600_000 }
       );
     });
-    void position
-      .then((from) => compasAutofillAction({ tripId: model.tripId, tripSlug: model.slug, from }))
+    void Promise.resolve()
+      .then(async () => {
+        // Deux temps : l'itinéraire d'abord (il n'a pas besoin de la position,
+        // il part tout de suite et s'affiche dès qu'il est écrit), puis nuits,
+        // trajet depuis la position, kit et budget. Chaque appel reste court.
+        const first = await compasAutofillAction({ tripId: model.tripId, tripSlug: model.slug, from: null, phase: 'steps' });
+        if (!first.success || 'summary' in first) return first;
+        if ('pending' in first && first.stepsCreated > 0) {
+          notify('Itinéraire prêt · je prépare les nuits, le kit et le budget…');
+          startTransition(() => router.refresh());
+        }
+        const from = await position;
+        return compasAutofillAction({ tripId: model.tripId, tripSlug: model.slug, from, phase: 'rest' });
+      })
       .then((res) => {
         if (!res.success) return notify(res.error, 'bad');
+        if (!('summary' in res)) return;
         const undo = () =>
           void runRef.current?.('Préparation annulée', () =>
             compasUndoAutofillAction({ tripId: model.tripId, tripSlug: model.slug })

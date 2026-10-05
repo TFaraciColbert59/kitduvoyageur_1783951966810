@@ -1,5 +1,16 @@
 # MISSION LOG — LKDV
 
+## 2026-10-05 — Lot 0 (suite) : Explorer intégré, préremplissage en deux temps, cache partagé, relief libre
+
+- **Explorer** : `feat/explorer-mobile-osm` fusionnée (OSM mondial, POI, fiche sentier enrichie). Seul conflit : registre IA, les deux côtés gardés.
+- **Préremplissage en deux temps** (`phase: 'steps' | 'rest'`) : l'itinéraire part tout de suite (sans attendre la position) et s'affiche dès qu'il est écrit ; nuits, trajet, kit et budget suivent. Chaque appel reste loin des 60 s. Une préparation interrompue entre les deux est reprise ou annulée proprement (`autofill_pending`). Essai réel : Japon 12 jours, itinéraire en 17 s, reste en 16 s, chiffrage IA compris.
+- **Bug corrigé** : une demande de localisation laissée sans réponse bloquait le préremplissage pour toujours (le délai du navigateur ne court qu'après l'accord). Minuteur de 8 s : on prépare sans la position.
+- **« Dis-le »** : l'IA est bornée à 12 s (le signal d'annulation traverse enfin `askAI`) ; au-delà, les règles appliquent la phrase. Avant : jusqu'à 30 s d'attente.
+- **Cache partagé** `geo_cache` (Supabase, clé service seule, RLS sans policy, purge horaire) : recherches de lieux (7 j), lieu d'un point GPS (30 j), tronçons routés (30 j). L'itinéraire de base du spécialiste est partagé 7 j via le cache IA existant. Une panne n'est jamais gardée.
+- **Relief libre** : altitudes du Compas depuis les Terrain Tiles (AWS Open Data, usage commercial permis), décodées avec `sharp`. Mesures : Mont Blanc 4 779 m, camp de base de l'Everest 5 302 m, Chamonix 1 041 m. Open-Meteo n'est plus appelé par le Compas.
+- **Base** : migration `geo_cache` appliquée ; historique complété pour `trip_invitations_flow` et `hiking_route_sources_and_revisions` (objets déjà en place, vérifiés).
+- Preuves : tsc propre ; eslint propre (hors `console.log` préexistant de `askAI.ts`) ; tests Compas + IA 392/394 (`TEST-REG-01` préexistant ; « Annuler » passe 3/3 seul, lent sous charge).
+
 ## 2026-10-05 — IA NVIDIA en direct, météo gratuite usage commercial (lot 0, PR 1)
 
 Décisions de Tony : services 100 % gratuits, NVIDIA en direct au lieu d'OpenRouter, météo MET Norway, Vercel conservé.

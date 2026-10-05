@@ -735,13 +735,26 @@ describe('CompasScreen', () => {
   });
 
   it('Préremplissage : lieu et dates connus → écrit une fois, annonce le total, annulable', async () => {
+    autofill.compasAutofillAction.mockImplementationOnce(
+      async () => ({ success: true, pending: true, stepsCreated: 3 }) as never
+    );
     render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
     expect(await screen.findByText('Je prépare ton aventure…')).toBeTruthy();
+    // Deux temps : l'itinéraire, puis le reste.
     await waitFor(() =>
       expect(autofill.compasAutofillAction).toHaveBeenCalledWith({
         tripId: TRIP,
         tripSlug: 'trek-3-vallees',
         from: null,
+        phase: 'steps',
+      })
+    );
+    await waitFor(() =>
+      expect(autofill.compasAutofillAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        from: null,
+        phase: 'rest',
       })
     );
     expect(await screen.findByText(/Aventure préparée · 486/)).toBeTruthy();
@@ -750,7 +763,7 @@ describe('CompasScreen', () => {
     await waitFor(() =>
       expect(autofill.compasUndoAutofillAction).toHaveBeenCalledWith({ tripId: TRIP, tripSlug: 'trek-3-vallees' })
     );
-    expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1);
+    expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(2);
   });
 
   it('Préremplissage : déjà fait ou annulé → ne se relance pas', () => {

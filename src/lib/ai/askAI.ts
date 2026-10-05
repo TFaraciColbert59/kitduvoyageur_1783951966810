@@ -50,7 +50,8 @@ export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
     const fields = parsed.error.issues.map((i) => i.path.join('.') || 'root').join(', ');
     throw new Error(`[askAI] requête invalide (fields: ${fields})`);
   }
-  const req = parsed.data;
+  // Le signal d'annulation n'est pas une donnée à valider : zod le retirerait.
+  const req: AIRequest = { ...parsed.data, signal: rawRequest.signal };
 
   // (1) Registre : feature inconnue = bug programmeur → throw assumé.
   const spec = getFeature(req.feature);

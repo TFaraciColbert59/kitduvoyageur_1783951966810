@@ -1,5 +1,6 @@
 import 'server-only';
 import { parseNominatim, parsePhoton, type CompasPlace } from '../engine/places';
+import { cached, coordKey } from './sharedCache';
 
 /**
  * Recherche d'un lieu sur la carte (Photon, données OpenStreetMap), en
@@ -7,8 +8,8 @@ import { parseNominatim, parsePhoton, type CompasPlace } from '../engine/places'
  * qu'une fois. Réseau en panne → null, jamais un lieu deviné.
  */
 
-const cache = new Map<string, { at: number; places: CompasPlace[] }>();
-const TTL_MS = 6 * 3600_000;
+/** Les lieux bougent peu : une recherche est partagée une semaine. */
+const PLACE_TTL_S = 7 * 86_400;
 const TIMEOUT_MS = 8000;
 /** Arrêts de bus, routes, commerces, bâtiments : jamais une destination ni une étape. */
 const NOISE = ['highway', 'amenity', 'shop', 'railway', 'public_transport', 'building', 'office', 'craft']
@@ -62,18 +63,15 @@ function nominatim(query: string, limit: number): Promise<CompasPlace[] | null> 
  * (même carte OpenStreetMap), une requête par seconde. Les deux en panne → null.
  */
 async function search(query: string, limit: number): Promise<CompasPlace[] | null> {
-  const key = `${limit}:${query.toLowerCase()}`;
-  const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < TTL_MS) return hit.places;
-  const photon = await fetchJson(
-    `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=${limit}&lang=fr${NOISE}`,
-    { Accept: 'application/json' }
-  );
-  const places = photon != null ? parsePhoton(photon) : await nominatim(query, Math.min(limit, 8));
-  if (places == null) return null;
-  if (cache.size > 2000) cache.clear();
-  cache.set(key, { at: Date.now(), places });
-  return places;
+  // Partagé entre tous (mémoire puis Supabase) : Photon et Nominatim ne sont
+  // interrogés qu'une fois par recherche. Une panne (null) n'est pas gardée.
+  return cached('place', `${limit}:${plain(query)}`, PLACE_TTL_S, async () => {
+    const photon = await fetchJson(
+      `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=${limit}&lang=fr${NOISE}`,
+      { Accept: 'application/json' }
+    );
+    return photon != null ? parsePhoton(photon) : await nominatim(query, Math.min(limit, 8));
+  });
 }
 
 /**
@@ -121,24 +119,11 @@ export async function stageCandidates(
 
 /** Le lieu d'un point GPS (commune, pays) : sert à savoir d'où l'on part. */
 export async function lookupReverse(lat: number, lon: number): Promise<CompasPlace | null> {
-  const key = `rev:${lat.toFixed(2)},${lon.toFixed(2)}`;
-  const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < TTL_MS) return hit.places[0] ?? null;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  try {
-    const res = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}&limit=1&lang=fr`, {
-      headers: { Accept: 'application/json' },
-      signal: controller.signal,
-      cache: 'no-store',
+  const places = await cached('reverse', coordKey(lat, lon, 2), 30 * 86_400, async () => {
+    const payload = await fetchJson(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}&limit=1&lang=fr`, {
+      Accept: 'application/json',
     });
-    if (!res.ok) return null;
-    const places = parsePhoton(await res.json());
-    cache.set(key, { at: Date.now(), places });
-    return places[0] ?? null;
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(timer);
-  }
+    return payload == null ? null : parsePhoton(payload);
+  });
+  return places?.[0] ?? null;
 }

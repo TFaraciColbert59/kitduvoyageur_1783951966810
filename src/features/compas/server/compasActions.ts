@@ -1664,6 +1664,9 @@ export async function compasInterpretAction(
         cacheTtlSeconds: 0,
         userId: auth.userId,
         json: true,
+        // Les règles ont déjà compris l'essentiel : au-delà de 12 s, on applique
+        // sans l'IA plutôt que de faire attendre la personne.
+        signal: AbortSignal.timeout(12_000),
       });
       if (res.degraded || res.provider === 'fallback') {
         note = AI_NOTES[res.failureReason ?? 'provider_indisponible'];
