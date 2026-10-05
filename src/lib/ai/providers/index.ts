@@ -19,19 +19,17 @@ import { noopProvider } from './noop';
  * essai. Soixante-dix secondes d ecran fige, puis un parcours 100 % regles
  * presente comme une generation reussie.
  *
- * L ORDRE EST UNE DECISION, pas un effet de bord de l ordre de declaration :
- * le contact direct passe en premier quand il existe, parce que c est lui qui
- * evite un hop de routeur. Le routeur reste derriere — c est lui qui permet de
- * survivre a un contact direct muet.
+ * NVIDIA en appel direct est le seul provider (décision du 2026-10-05) :
+ * OpenRouter n'est plus appelé, même si une clé traîne dans l'environnement.
+ * Un NVIDIA muet tombe sur `noop`, donc sur les règles, jamais sur un tiers.
  *
  * `noop` ferme toujours la chaine : sans lui, `askAI` n aurait plus ou
  * tomber, et une exception remonterait jusqu au preparateur — exactement ce que
  * `askAI` interdit par construction.
  */
-export function providerChain(tier?: 'heavy' | 'fast'): AIProvider[] {
+export function providerChain(_tier?: 'heavy' | 'fast'): AIProvider[] {
   const disponibles: AIProvider[] = [];
   if (nvidiaProvider.isAvailable()) disponibles.push(nvidiaProvider);
-  if (openrouterProvider.isAvailable()) disponibles.push(openrouterProvider);
   if (disponibles.length === 0) return [noopProvider];
   return [...disponibles, noopProvider];
 }

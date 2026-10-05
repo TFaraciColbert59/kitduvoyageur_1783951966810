@@ -179,7 +179,7 @@ export function assessDanger(input: {
           'physique',
           'warn',
           `${hhmm(plan.walkMin)} de marche pour ${hhmm(light)} de jour`,
-          'DIN 33466 · Open-Meteo',
+          'DIN 33466 · MET Norway',
           'light'
         );
       } else if (plan.walkMin > T.longDayMin) {
@@ -215,7 +215,7 @@ export function assessDanger(input: {
     const fc = f?.forecast;
     if (!fc) continue;
     evaluated.conjoncturel = true;
-    const src = 'Open-Meteo';
+    const src = 'MET Norway';
     if (fc.tMax != null && fc.tMax >= T.heatC) {
       evaluated.physique = true;
       push('physique', 'warn', `chaleur (${Math.round(fc.tMax)} °C)`, src, 'heat');

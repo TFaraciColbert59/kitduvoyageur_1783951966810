@@ -1177,7 +1177,7 @@ describe('CompasScreen', () => {
       };
     });
     const data = makeData();
-    data.weather = { source: 'Open-Meteo', horizon: '2026-10-23', tripDays: [], calendar };
+    data.weather = { source: 'MET Norway', trendSource: 'NASA POWER', horizon: '2026-10-23', tripDays: [], calendar };
     render(<CompasScreen data={data} />);
     const sheet = await openOu(/Quand/);
     expect(within(sheet).getAllByText(/12 oct\.? → \S+ 15 oct/).length).toBeGreaterThan(0);

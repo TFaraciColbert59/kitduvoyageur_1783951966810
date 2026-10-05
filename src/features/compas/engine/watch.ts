@@ -5,7 +5,7 @@
  * - les RÈGLES : les seuils que le moteur de danger applique réellement
  *   (`DANGER_THRESHOLDS`), chacune avec ce qu'elle a déclenché sur ce voyage ;
  * - une PROPOSITION de décalage : seulement si le calendrier des conditions
- *   (prévision Open-Meteo, jamais la tendance) trouve, à quelques jours près,
+ *   (prévision MET Norway, jamais la tendance) trouve, à quelques jours près,
  *   une fenêtre sans aucun jour « mauvais » et meilleure que l'actuelle.
  *
  * L'agent propose, la personne décide : rien ici n'écrit quoi que ce soit.

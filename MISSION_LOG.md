@@ -1,5 +1,16 @@
 # MISSION LOG — LKDV
 
+## 2026-10-05 — IA NVIDIA en direct, météo gratuite usage commercial (lot 0, PR 1)
+
+Décisions de Tony : services 100 % gratuits, NVIDIA en direct au lieu d'OpenRouter, météo MET Norway, Vercel conservé.
+
+- **IA** : Nemotron 3.5 Lightning 30B-A3B sur les deux tiers, chaîne `nvidia → noop` (OpenRouter n'est plus appelé). Mesures du jour : 0,7 s sans raisonnement sur une question courte, 4 à 30 s sur un itinéraire, ~50 s avec raisonnement. Délai `fast` porté à 30 s.
+- **Formats** : Lightning ne respecte pas la clé demandée (« jours », objets indexés par jour, une ligne par objet, cases en trop). `json: true` (response_format json_object) garantit un JSON lisible ; `sanitizeStages` et `extractIntentJson` lisent toutes les variantes observées. Le schéma JSON strict marche mais coûte 42 s : écarté.
+- **Chiffrage** : sans raisonnement, lancé seulement si moins de 25 s sont passées (25 + 30 < 60 s) ; sinon les règles. Essai réel Islande 10 j : itinéraire IA en 5 s, chiffrage IA tombé à 30 s, règles en relais, 54 s au total. Le préremplissage en tâche de fond (suite du lot 0) supprimera cette course contre la limite.
+- **Météo** : MET Norway (`locationforecast/2.0/complete`, CC BY 4.0, usage commercial permis) pour la prévision ~9 jours, à l'heure locale du lieu (fuseau hors ligne `@photostructure/tz-lookup`) ; NASA POWER (domaine public) pour la tendance sur 5 ans, en un seul appel. Lever et coucher, jour ou nuit : SunCalc. Isotherme 0 °C estimée (altitude du point + gradient 6,5 °C/km). Probabilité de pluie et rafales : `null` hors des zones où MET les publie, jamais comblées ; le verdict lit alors les millimètres annoncés.
+- **Reste à migrer hors Compas** (suite du lot 0) : Open-Meteo dans `/api/pays/[code]/weather`, `materiel/getWeather`, `hiking/WeatherService`, `adventure-prep` (prévisions, géocodage, altitudes), `adventure-intelligence`, et les altitudes du Compas (`server/elevation.ts`).
+- Preuves : tsc propre ; eslint propre sur les fichiers touchés ; tests Compas + IA 386/387 (seul `TEST-REG-01`, préexistant) ; `npm run build` OK.
+
 ## 2026-10-05 — Compas : retours de revue (PR #66)
 
 - « 20 jours » dit sans départ, puis un départ seul : la durée retenue est reprise (`ApplyCurrent.plannedDays`), plus de voyage d'un jour.

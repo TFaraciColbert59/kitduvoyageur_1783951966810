@@ -12,44 +12,25 @@ import { ProviderError } from './types';
  * La cle n'est JAMAIS loggee ni incluse dans une erreur : `ProviderError` ne
  * transporte qu'un statut et un message redige, comme pour l'adapter OpenRouter.
  *
- * Portee : l'endpoint gratuit build.nvidia.com ne sert QUE ce modele. Le tier
- * `heavy` n'atteint donc cet adapter qu'en dernier recours, quand aucune cle
- * OpenRouter n'est configuree (cf. `getProvider(tier)`). C'est une degradation
- * assumee et documentee, jamais un silence : le modele remonte dans
- * `AIResponse.model` et la provenance l'affiche a l'utilisateur.
+ * Seul provider de la chaîne : les deux tiers passent par ici. Le tier
+ * `heavy` se distingue par le raisonnement activé, pas par le modèle.
  */
 
 const NIM_CHAT_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
 
 /**
- * Tier `fast` ET tier `heavy` : Nemotron 3 Super 120B-A12B.
+ * Tier `fast` ET tier `heavy` : Nemotron 3.5 Lightning 30B-A3B, en appel
+ * direct chez NVIDIA (décision de Tony, 2026-10-05 : plus d'OpenRouter).
  *
- * CHOISI SUR MESURE, pas sur documentation (2026-09-29). Sonde directe sur
- * `integrate.api.nvidia.com`, 30 s de budget par modele, cle de `.env.local` :
- *
- *   nvidia/nemotron-3.5-lightning-30b-a3b   ABORT   > 30,0 s   <-- avant
- *   nvidia/nemotron-3-super-120b-a12b       HTTP 200    0,5 s   <-- retenu
- *   nvidia/nemotron-3-nano-omni-30b-a3b    HTTP 200    0,5 s
- *   nvidia/llama-3.1-nemotron-51b-instruct  HTTP 404    0,2 s
- *   nvidia/mistral-nemo-minitron-8b-8k-inst HTTP 404    0,2 s
- *   deepseek-ai/deepseek-v4.1-flash        ABORT   > 30,0 s
- *
- * `GET /v1/models` repondait en 0,2 s sur la meme sonde : l hote etait
- * joignable et la cle valide. Le modele precedent ne rendait simplement
- * jamais son jet de fin. Consequence mesuree dans le preparateur : 70 s
- * d ecran fige a 0/7 phase, puis un parcours 100 % regles presente comme une
- * generation reussie. Le timeout de 45 s masquait la panne en la faisant
- * ressembler a un repli volontaire.
- *
- * Un modele Muet est un modele ABSENT : `/v1/models` ment sur ce qui est
- * reellement deploye (deux modeles y figuraient, tous deux en 404). La seule
- * preuve qui vaut est la reponse, et elle est ci-dessus, datee.
- *
- * Tier `heavy` : repli sur le meme modele (cf. note de portee ci-dessus).
+ * Mesure du 2026-10-05 sur `integrate.api.nvidia.com`, clé de `.env.local` :
+ *   sans raisonnement (tier fast)       HTTP 200   0,7 s
+ *   raisonnement 800 jetons (heavy)     HTTP 200   9,4 s
+ * Le 2026-09-29, ce même modèle ne rendait rien en 30 s (d'où l'intérim
+ * Nemotron 3 Super) : la seule preuve qui vaut reste la réponse, datée.
  */
 export const NIM_MODEL_BY_TIER: Record<AITier, string> = {
-  heavy: 'nvidia/nemotron-3-super-120b-a12b',
-  fast: 'nvidia/nemotron-3-super-120b-a12b',
+  heavy: 'nvidia/nemotron-3.5-lightning-30b-a3b',
+  fast: 'nvidia/nemotron-3.5-lightning-30b-a3b',
 };
 
 export function nvidiaModelFor(tier: AITier): string {
@@ -64,8 +45,10 @@ export function nvidiaModelFor(tier: AITier): string {
  * 20 s laisse trente fois la latence observee avant de conclure — et si le
  * provider retombe muet, l ecran rend la main en 20 s au lieu de 45.
  * `heavy` garde 60 s : la redaction longue est legitimement plus lente.
+ * 2026-10-05 : `fast` passe a 30 s. Lightning rend un itineraire de 7 a 20
+ * jours en 4 a 22 s (mesure sur les prompts du Compas) : 20 s en coupait.
  */
-const TIMEOUT_MS: Record<AITier, number> = { fast: 20_000, heavy: 60_000 };
+const TIMEOUT_MS: Record<AITier, number> = { fast: 30_000, heavy: 60_000 };
 
 /**
  * Le raisonnement compte DANS max_tokens chez Nemotron : sans buffer, le
@@ -134,6 +117,7 @@ export const nvidiaProvider: AIProvider = {
           ],
           chat_template_kwargs: { enable_thinking: !thinkingDisabled },
           ...(useReasoning ? { reasoning_budget: reasoningBudget } : {}),
+          ...(req.json ? { response_format: { type: 'json_object' } } : {}),
         }),
       });
 

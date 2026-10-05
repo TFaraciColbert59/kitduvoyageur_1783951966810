@@ -70,8 +70,8 @@ describe('src/lib/ai/providers/nvidia - adapter NVIDIA NIM direct', () => {
   // /v1/models` repondait en 0,2 s : l hote etait joignable, la cle valide, et
   // seul le modele etait muet.
   it('TEST-NIM-01: le modele NIM est un modele REELLEMENT mesure, sur les deux tiers', () => {
-    expect(NIM_MODEL_BY_TIER.fast).toBe('nvidia/nemotron-3-super-120b-a12b');
-    expect(NIM_MODEL_BY_TIER.heavy).toBe('nvidia/nemotron-3-super-120b-a12b');
+    expect(NIM_MODEL_BY_TIER.fast).toBe('nvidia/nemotron-3.5-lightning-30b-a3b');
+    expect(NIM_MODEL_BY_TIER.heavy).toBe('nvidia/nemotron-3.5-lightning-30b-a3b');
     expect(nvidiaModelFor('fast')).toBe(NIM_MODEL_BY_TIER.fast);
     expect(nvidiaModelFor('heavy')).toBe(NIM_MODEL_BY_TIER.heavy);
   });
@@ -215,23 +215,27 @@ describe('src/lib/ai/providers/nvidia - adapter NVIDIA NIM direct', () => {
     expect(getProvider().name).toBe('nvidia');
   });
 
+  it('TEST-NIM-15: json demande un objet JSON au modele, et seulement si demande', async () => {
+    fetchMock.mockResolvedValueOnce(nimOk('{"a":1}'));
+    await nvidiaProvider.complete({ ...makeReq(), json: true });
+    expect(bodyOf(0).response_format).toEqual({ type: 'json_object' });
+
+    fetchMock.mockResolvedValueOnce(nimOk('texte'));
+    await nvidiaProvider.complete(makeReq());
+    expect(bodyOf(1).response_format).toBeUndefined();
+  });
+
   it('TEST-NIM-12b: la chaine est ordonnee, sans doublon, et se termine toujours sur noop', () => {
     vi.stubEnv('NVIDIA_API_KEY', FAKE_KEY);
     vi.stubEnv('OPENROUTER_API_KEY', 'sk-or-test-key');
 
-    // Les deux cles presentes : les deux contacts sont essayes, dans cet ordre,
-    // puis noop ferme la chaine. `askAI` ne peut donc jamais n avoir ou tomber.
-    expect(providerChain('fast').map((p) => p.name)).toEqual(['nvidia', 'openrouter', 'noop']);
-    expect(providerChain('heavy').map((p) => p.name)).toEqual(['nvidia', 'openrouter', 'noop']);
-
-    // Une seule cle : pas de doublon, pas de trou.
-    vi.stubEnv('OPENROUTER_API_KEY', undefined);
+    // NVIDIA en direct est le seul provider : une cle OpenRouter restee dans
+    // l environnement n est jamais appelee, et noop ferme toujours la chaine.
     expect(providerChain('fast').map((p) => p.name)).toEqual(['nvidia', 'noop']);
+    expect(providerChain('heavy').map((p) => p.name)).toEqual(['nvidia', 'noop']);
 
-    // Symetrique : NVIDIA seule disparue, il reste OpenRouter puis noop.
     vi.stubEnv('NVIDIA_API_KEY', undefined);
-    vi.stubEnv('OPENROUTER_API_KEY', 'sk-or-test-key');
-    expect(providerChain('fast').map((p) => p.name)).toEqual(['openrouter', 'noop']);
+    expect(providerChain('fast').map((p) => p.name)).toEqual(['noop']);
   });
 
   it('TEST-NIM-13: getProvider degrade proprement jusqu a noop', () => {
@@ -246,7 +250,7 @@ describe('src/lib/ai/providers/nvidia - adapter NVIDIA NIM direct', () => {
   });
 
   it('TEST-NIM-14: modelNameFor mappe le provider sur le vrai identifiant de modele', () => {
-    expect(modelNameFor(nvidiaProvider, 'fast')).toBe('nvidia/nemotron-3-super-120b-a12b');
+    expect(modelNameFor(nvidiaProvider, 'fast')).toBe('nvidia/nemotron-3.5-lightning-30b-a3b');
     expect(modelNameFor(openrouterProvider, 'fast')).toMatch(/:free$/);
     expect(modelNameFor(noopProvider, 'fast')).toBe('noop');
   });

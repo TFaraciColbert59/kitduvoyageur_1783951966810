@@ -2822,7 +2822,7 @@ const deg = (v: number | null) => (v == null ? '—' : `${Math.round(v)} °C`);
 
 /**
  * Météo des vrais jours du voyage (maquette finale : onglet « Météo » du
- * verdict). Prévision Open-Meteo aux points réels de chaque journée ; au-delà
+ * verdict). Prévision MET Norway aux points réels de chaque journée ; au-delà
  * de l'horizon de prévision, le jour le dit au lieu d'inventer une valeur.
  */
 function MeteoFlow({ ctl }: { ctl: CompasCtl }) {
@@ -2951,7 +2951,7 @@ function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
       </ul>
       <p className="cp-note">
         {active} règle{active > 1 ? 's' : ''} déclenchée{active > 1 ? 's' : ''} sur {rules.length}.
-        Vérifiées à chaque ouverture du Compas sur la prévision Open-Meteo et les alertes
+        Vérifiées à chaque ouverture du Compas sur la prévision MET Norway et les alertes
         officielles ; aucun seuil n’est une norme légale.
       </p>
     </>
@@ -2963,7 +2963,7 @@ function SourcesFlow({ ctl }: { ctl: CompasCtl }) {
   const sources = [
     'Étapes et dépenses du voyage',
     'Ton inventaire',
-    m.weather.days.length ? 'Open-Meteo (météo)' : null,
+    m.weather.days.length ? 'MET Norway (météo, CC BY 4.0)' : null,
     m.daylight ? 'Calcul astronomique (lumière)' : null,
     ctl.data.shop.length ? 'Boutique LKDV' : null,
     ctl.data.affiliateLinks.length ? 'Partenaires affiliés' : null,

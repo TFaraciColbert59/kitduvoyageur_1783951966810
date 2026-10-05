@@ -8,7 +8,7 @@ const sig = (id: string, label: string, day?: number): DangerSignal => ({
   axis: id.startsWith('alert') ? 'conjoncturel' : (id.split('-')[0] as DangerSignal['axis']),
   severity: 'warn',
   label,
-  source: 'Open-Meteo',
+  source: 'MET Norway',
   asOf: '2026-10-10',
   ...(day != null ? { day } : {}),
 });

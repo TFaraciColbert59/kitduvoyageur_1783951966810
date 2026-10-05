@@ -91,7 +91,7 @@ export function daysBetweenIso(a: string, b: string): number {
   );
 }
 
-/** Libellé court d'un code météo WMO (Open-Meteo) et icône du registre LKDV. */
+/** Libellé court d'un code météo WMO et icône du registre LKDV. */
 export function weatherLabel(code: number): { label: string; icon: string } {
   if (code === 0) return { label: 'Dégagé', icon: 'sun' };
   if (code <= 2) return { label: 'Éclaircies', icon: 'cloud-sun' };

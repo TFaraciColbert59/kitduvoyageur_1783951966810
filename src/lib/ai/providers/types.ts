@@ -22,6 +22,12 @@ export interface AIRequest {
   userId?: string; // pour le quota (utilisé par askAI, pas le provider)
   plugins?: AIPluginConfig[]; // plugins OpenRouter optionnels (ex: web search)
   /**
+   * La feature attend un objet JSON : le provider le demande au modèle
+   * (`response_format: json_object` chez NVIDIA). Le JSON rendu est alors
+   * toujours lisible ; ses CLÉS restent à valider par la feature.
+   */
+  json?: boolean;
+  /**
    * Annulation cooperative, propagee du client jusqu a la socket.
    *
    * Elle manquait, et cette absence coutait deux fois. Le preparateur verifies

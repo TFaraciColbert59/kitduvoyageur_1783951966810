@@ -26,14 +26,41 @@ export const MAX_INTENT_CHARS = 280;
 /** Sortie brute : les actions inconnues ou mal formées sont écartées une à une. */
 export const compasIntentOutputSchema = z.object({ actions: z.array(z.unknown()).max(12) });
 
-/** Premier objet JSON d'une réponse (tolère un bloc markdown ou de la prose). */
+/**
+ * L'objet JSON d'une réponse (tolère un bloc markdown ou de la prose). Quand
+ * le modèle écrit plusieurs objets à la suite (une ligne par jour, observé
+ * avec Nemotron 3.5 Lightning), ils sont fusionnés en un seul.
+ */
 export function extractIntentJson(text: string): unknown {
   const body = text
     .trim()
     .replace(/^```(?:json)?\s*/i, '')
     .replace(/```\s*$/i, '');
-  const start = body.indexOf('{');
-  if (start === -1) return null;
+  const objects: Record<string, unknown>[] = [];
+  let from = body.indexOf('{');
+  while (from !== -1) {
+    const end = objectEnd(body, from);
+    if (end === -1) break;
+    try {
+      const parsed = JSON.parse(body.slice(from, end + 1)) as unknown;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        objects.push(parsed as Record<string, unknown>);
+      }
+    } catch {
+      break;
+    }
+    // Seuls des objets séparés par des blancs ou des virgules se fusionnent.
+    const rest = body.slice(end + 1);
+    const next = rest.search(/\S/);
+    if (next === -1 || !/^[\s,]*\{/.test(rest)) break;
+    from = body.indexOf('{', end + 1);
+  }
+  if (!objects.length) return null;
+  return objects.length === 1 ? objects[0] : Object.assign({}, ...objects);
+}
+
+/** Position de l'accolade fermante qui équilibre celle de `start`, ou -1. */
+function objectEnd(body: string, start: number): number {
   let depth = 0;
   let inString = false;
   let escaped = false;
@@ -45,16 +72,10 @@ export function extractIntentJson(text: string): unknown {
     else if (!inString && c === '{') depth += 1;
     else if (!inString && c === '}') {
       depth -= 1;
-      if (depth === 0) {
-        try {
-          return JSON.parse(body.slice(start, i + 1)) as unknown;
-        } catch {
-          return null;
-        }
-      }
+      if (depth === 0) return i;
     }
   }
-  return null;
+  return -1;
 }
 
 export function parseCompasIntentOutput(raw: unknown): CompasIntentAction[] {

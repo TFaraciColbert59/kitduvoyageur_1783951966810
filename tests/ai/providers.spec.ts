@@ -136,12 +136,13 @@ describe('src/lib/ai/providers — port IA + adapters', () => {
     expect(init.signal).toBeInstanceOf(AbortSignal);
   });
 
-  it('TEST-PRV-06: isAvailable dépend de la clé ; getProvider bascule vers noop sans clé', () => {
+  it('TEST-PRV-06: isAvailable dépend de la clé ; OpenRouter n est plus jamais choisi', () => {
     expect(openrouterProvider.isAvailable()).toBe(true);
-    expect(getProvider().name).toBe('openrouter');
+    expect(getProvider().name).not.toBe('openrouter');
 
     vi.stubEnv('OPENROUTER_API_KEY', undefined);
     expect(openrouterProvider.isAvailable()).toBe(false);
+    vi.stubEnv('NVIDIA_API_KEY', undefined);
     expect(getProvider().name).toBe('noop');
   });
 

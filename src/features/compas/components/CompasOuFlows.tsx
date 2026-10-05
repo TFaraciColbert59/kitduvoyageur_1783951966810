@@ -750,13 +750,13 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
           )}
           <p className="cp-cal__legend">
             <i data-q="bon" /> bon <i data-q="moyen" /> moyen <i data-q="mauvais" /> mauvais · plein
-            : prévision 16 j · cerclé : tendance des 5 dernières années · Open-Meteo
+            : prévision ~9 j (MET Norway) · cerclé : tendance des 5 dernières années (NASA POWER)
           </p>
         </div>
       ) : (
         <p className="cp-note">
           {data.origin
-            ? 'Conditions indisponibles pour l’instant (Open-Meteo ne répond pas).'
+            ? 'Conditions indisponibles pour l’instant (MET Norway ne répond pas).'
             : 'Ajoute un point de départ au parcours pour voir les conditions jour par jour.'}
         </p>
       )}
@@ -832,7 +832,7 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
 
   const light = useMemo(() => {
     if (forecast?.sunrise && forecast.sunset)
-      return { sunrise: forecast.sunrise, sunset: forecast.sunset, source: 'Open-Meteo' };
+      return { sunrise: forecast.sunrise, sunset: forecast.sunset, source: 'calcul astronomique (SunCalc)' };
     if (plan?.date && plan.lat != null && plan.lon != null) {
       return {
         ...daylightClock(plan.lat, plan.lon, plan.date, TIME_ZONE),
@@ -902,12 +902,12 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
       ) : (
         <p className="cp-note">
           {trend?.kind === 'tendance'
-            ? `Prévision 16 jours avant. Tendance des années passées : ${trend.quality ? QUALITY_LABEL[trend.quality] : 'inconnue'}${
+            ? `Prévision environ 9 jours avant. Tendance des années passées : ${trend.quality ? QUALITY_LABEL[trend.quality] : 'inconnue'}${
                 trend.tMin != null && trend.tMax != null
                   ? `, ${Math.round(trend.tMin)}° / ${Math.round(trend.tMax)}°`
                   : ''
               }${trend.reasons.length ? ` (${trend.reasons.join(', ')})` : ''}.`
-            : 'Prévision heure par heure disponible à 16 jours du départ.'}
+            : 'Prévision heure par heure disponible environ 9 jours avant le départ.'}
         </p>
       )}
 
@@ -970,7 +970,7 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
       )}
       <p className="cp-sub">
         Temps de marche DIN 33466 au pas du plus lent, pauses +15 %. Lumière :{' '}
-        {light?.source ?? '—'}. Météo : Open-Meteo.
+        {light?.source ?? '—'}. Météo : MET Norway (CC BY 4.0).
       </p>
     </section>
   );
