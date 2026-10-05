@@ -670,7 +670,13 @@ export async function compasAutofillAction(
     ]
       .filter(Boolean)
       .join('\n');
-    const rawAdvice = await askJson(userId, buildCompasAutofillSystem(), buildCompasAutofillPrompt(facts), 3000, true);
+    // Budget de temps : au-delà de 40 s (carte ou IA lentes), le chiffrage passe
+    // par les règles plutôt que de risquer la limite de 60 s du serveur.
+    const lateRun = Date.now() - startedAt > 40_000;
+    const rawAdvice = lateRun
+      ? null
+      : await askJson(userId, buildCompasAutofillSystem(), buildCompasAutofillPrompt(facts), 3000, true);
+    if (lateRun) notes.push('Préparation longue : chiffrage par les règles du Compas, relance « Tout préparer » pour l’avis du spécialiste.');
     const advice: AutofillAiAdvice = sanitizeAdvice(rawAdvice);
     const usedAi = rawAdvice != null;
     notes.push(...advice.notes);
