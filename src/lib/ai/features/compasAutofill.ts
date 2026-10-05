@@ -61,6 +61,14 @@ export function buildCompasStagesPrompt(input: {
     .join('\n');
 }
 
+export function buildCompasDestinationSystem(): string {
+  return [
+    'Tu identifies une destination de voyage ou d activite outdoor nommee par une personne (pays, region, massif, parc, ile, sentier, vallee, ville).',
+    'Reponds UNIQUEMENT par un objet JSON : {"label": "nom usuel en francais", "base": "ville ou village REEL qui sert de point de depart typique", "country_code": "code ISO 3166-1 alpha-2"}.',
+    'Si tu ne connais pas ce lieu avec certitude, reponds {"label": null, "base": null, "country_code": null}. N invente jamais un lieu.',
+  ].join('\n');
+}
+
 export function buildCompasAutofillSystem(): string {
   return [
     'Tu es le specialiste senior de la preparation de voyages et d activites outdoor d une application francaise.',

@@ -10,10 +10,12 @@ import {
   resplitSteps,
   type Supa,
 } from './compasServer';
-import { lookupDestination } from './placeLookup';
+import { lookupBase, lookupDestination, lookupLoose } from './placeLookup';
+import type { CompasPlace } from '../engine/places';
 import { getTripById } from '@/lib/queries-trips';
 import { addTripItem } from '@/lib/queries-trip-kit';
 import { askAI } from '@/lib/ai/askAI';
+import { buildCompasDestinationSystem } from '@/lib/ai/features/compasAutofill';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { createBookingProvider } from '@/features/booking/server/bookingProvider';
 import { BookingProviderError } from '@/features/booking/server/bookingProviderErrors';
@@ -516,6 +518,40 @@ export async function compasSetPreferencesAction(
   }
 }
 
+/**
+ * Trois temps : le nom exact sur la carte ; sinon le spécialiste donne la
+ * ville de base réelle (massif, parc, sentier : « Vercors » → Villard-de-Lans),
+ * vérifiée sur la carte dans le bon pays ; sinon le premier lieu habité du nom.
+ */
+async function resolveDestination(query: string, userId: string): Promise<CompasPlace | null> {
+  const exact = await lookupDestination(query);
+  if (exact) return exact;
+  try {
+    const res = await askAI({
+      feature: 'compas-autofill',
+      tier: 'fast',
+      system: buildCompasDestinationSystem(),
+      prompt: `Destination : « ${query.slice(0, 80)} »`,
+      maxTokens: 200,
+      cacheTtlSeconds: 0,
+      userId,
+    });
+    if (!res.degraded && res.provider !== 'fallback') {
+      const hint = extractIntentJson(res.text) as Record<string, unknown> | null;
+      const base = typeof hint?.base === 'string' ? hint.base : null;
+      const code = typeof hint?.country_code === 'string' ? hint.country_code.toUpperCase().slice(0, 2) : null;
+      const label = typeof hint?.label === 'string' && hint.label.trim() ? hint.label.trim() : query;
+      if (base) {
+        const at = await lookupBase(base, code);
+        if (at) return { ...at, name: label.slice(0, 80), kind: 'region', extent: null };
+      }
+    }
+  } catch {
+    /* repli : lieu habité du même nom */
+  }
+  return lookupLoose(query);
+}
+
 const destinationSchema = z.object({
   tripId: uuid,
   tripSlug: slug,
@@ -536,7 +572,7 @@ export async function compasSetDestinationAction(
   try {
     const auth = await requireEditor(parsed.data.tripId);
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
-    const place = parsed.data.place ? await lookupDestination(parsed.data.place) : null;
+    const place = parsed.data.place ? await resolveDestination(parsed.data.place, auth.userId) : null;
     if (parsed.data.place && !place)
       return { success: false, error: `« ${parsed.data.place} » introuvable sur la carte.` };
     const metadata = await patchTripMetadata(auth.supabase, parsed.data.tripId, (m) => {

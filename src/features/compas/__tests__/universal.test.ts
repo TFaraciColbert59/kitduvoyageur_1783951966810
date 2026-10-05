@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseIntentRules, planApplication, groundingIssue } from '../engine/intent';
 import { approachMode, keepRuleForActivity, nightsPrefFor, sanitizeAdvice, sanitizeStages } from '../engine/autofill';
-import { destinationRadiusKm, parsePhoton, pickPlace } from '../engine/places';
+import { destinationRadiusKm, parseNominatim, parsePhoton, pickPlace } from '../engine/places';
 
 const TODAY = '2026-10-02';
 const current = {
@@ -142,5 +142,22 @@ describe('selon l’activité', () => {
     expect(nightsPrefFor('cultural', null)).toBe('hebergement');
     expect(nightsPrefFor('roadtrip', 'bivouac')).toBe('bivouac');
     expect(nightsPrefFor('trekking', null)).toBeNull();
+  });
+});
+
+describe('carte de secours (Nominatim)', () => {
+  it('même forme que Photon : code pays, lieu habité, emprise réordonnée', () => {
+    const [p] = parseNominatim([
+      {
+        name: 'Villard-de-Lans',
+        lat: '45.07',
+        lon: '5.55',
+        addresstype: 'village',
+        type: 'administrative',
+        boundingbox: ['45.01', '45.12', '5.49', '5.62'],
+        address: { country_code: 'fr', country: 'France' },
+      },
+    ]);
+    expect(p).toMatchObject({ name: 'Villard-de-Lans', countryCode: 'FR', settlement: true, extent: [5.49, 45.12, 5.62, 45.01] });
   });
 });

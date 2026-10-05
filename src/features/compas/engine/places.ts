@@ -65,6 +65,33 @@ export function parsePhoton(payload: unknown): CompasPlace[] {
   return out;
 }
 
+/** Réponse Nominatim (jsonv2 + addressdetails), même forme que Photon. */
+export function parseNominatim(payload: unknown): CompasPlace[] {
+  const rows = Array.isArray(payload) ? (payload as Array<Record<string, unknown>>) : [];
+  const out: CompasPlace[] = [];
+  for (const r of rows) {
+    const lat = Number(r.lat);
+    const lon = Number(r.lon);
+    const name = typeof r.name === 'string' && r.name.trim() ? r.name.trim() : '';
+    if (!name || !Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+    const address = (r.address ?? {}) as Record<string, unknown>;
+    const bb = Array.isArray(r.boundingbox) ? r.boundingbox.map(Number) : null;
+    const type = String(r.addresstype ?? r.type ?? 'place');
+    out.push({
+      name,
+      lat,
+      lon,
+      countryCode: typeof address.country_code === 'string' ? address.country_code.toUpperCase() : null,
+      country: typeof address.country === 'string' ? address.country : null,
+      kind: type,
+      settlement: SETTLEMENTS.has(type) || SETTLEMENTS.has(String(r.type)),
+      // boundingbox Nominatim : [sud, nord, ouest, est] → emprise [ouest, nord, est, sud]
+      extent: bb && bb.length === 4 && bb.every((n) => Number.isFinite(n)) ? [bb[2], bb[1], bb[3], bb[0]] : null,
+    });
+  }
+  return out;
+}
+
 const toRad = (d: number) => (d * Math.PI) / 180;
 
 /** Distance orthodromique en km. */
