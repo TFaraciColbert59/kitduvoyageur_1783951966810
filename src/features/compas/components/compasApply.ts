@@ -24,6 +24,7 @@ export function applyCurrent(ctl: CompasCtl): ApplyCurrent {
     endDate: dates.end,
     days: dates.days,
     shortHours: dates.hours != null && dates.hours < 24 ? dates.hours : null,
+    plannedDays: ctl.data.plannedDays ?? null,
     preferences,
     hasRoute: ctl.data.route.id != null,
   };

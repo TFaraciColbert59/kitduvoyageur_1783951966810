@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseIntentRules, planApplication, groundingIssue } from '../engine/intent';
-import { approachMode, keepRuleForActivity, nightsPrefFor, sanitizeAdvice, sanitizeStages } from '../engine/autofill';
+import { approachMode, keepRuleForActivity, movesFromSteps, nightsPrefFor, sanitizeAdvice, sanitizeStages } from '../engine/autofill';
 import { destinationRadiusKm, parseNominatim, parsePhoton, pickPlace } from '../engine/places';
 
 const TODAY = '2026-10-02';
@@ -23,6 +23,20 @@ describe('Dis-le : destination et durée sans date', () => {
     expect(ops[0]).toEqual({ op: 'destination', place: 'Népal' });
     expect(ops).toContainEqual({ op: 'span', days: 20 });
     expect(ops.some((o) => o.op === 'dates')).toBe(false);
+  });
+
+  it('la durée retenue sans départ est gardée quand le départ arrive seul', () => {
+    const ops = planApplication([{ type: 'set_dates', start: '2026-11-01', end: null }], {
+      ...current,
+      plannedDays: 20,
+    });
+    expect(ops).toContainEqual({
+      op: 'dates',
+      startDate: '2026-11-01',
+      endDate: '2026-11-20',
+      durationHours: null,
+      resplit: false,
+    });
   });
 
   it('en Islande, à Chamonix, dans le Vercors ; jamais un mois ni un nombre', () => {
@@ -159,5 +173,18 @@ describe('carte de secours (Nominatim)', () => {
       },
     ]);
     expect(p).toMatchObject({ name: 'Villard-de-Lans', countryCode: 'FR', settlement: true, extent: [5.49, 45.12, 5.62, 45.01] });
+  });
+});
+
+describe('Préremplissage : étapes déjà en place', () => {
+  it('lit le moyen de transport enregistré de chaque étape', () => {
+    const moves = movesFromSteps([
+      { day_number: 1, title: 'Reykjavik', transport_mode: 'plane' },
+      { day_number: 2, title: 'Vík', transport_mode: 'car' },
+      { day_number: 3, title: 'Heimaey', transport_mode: 'boat' },
+      { day_number: 4, title: 'Sentier', transport_mode: null },
+    ]);
+    expect(moves.map((m) => m.move)).toEqual(['vol', 'voiture', 'bateau', 'aucun']);
+    expect(moves[2]).toEqual({ day: 3, name: 'Heimaey', move: 'bateau' });
   });
 });

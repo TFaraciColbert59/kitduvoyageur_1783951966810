@@ -434,6 +434,31 @@ export const STEP_TRANSPORT: Record<StageMove, 'foot' | 'car' | 'bus' | 'train' 
   aucun: 'foot',
 };
 
+const MOVE_OF_TRANSPORT: Record<string, StageMove> = {
+  plane: 'vol',
+  car: 'voiture',
+  bus: 'bus',
+  train: 'train',
+  boat: 'bateau',
+  foot: 'marche',
+  bike: 'velo',
+};
+
+/**
+ * Déplacements d'un itinéraire déjà en place (étapes saisies avant le
+ * préremplissage) : le moyen de transport enregistré de chaque étape, lu dans
+ * le même vocabulaire que les étapes proposées par le spécialiste.
+ */
+export function movesFromSteps(
+  steps: Array<{ day_number: number; title: string; transport_mode: string | null }>
+): Array<{ day: number; name: string; move: StageMove }> {
+  return steps.map((s) => ({
+    day: s.day_number,
+    name: s.title,
+    move: (s.transport_mode && MOVE_OF_TRANSPORT[s.transport_mode]) || 'aucun',
+  }));
+}
+
 /* ---------- Venir jusqu'au départ ---------- */
 
 /** Au-delà, la route n'est plus un trajet raisonnable : on part en avion. */

@@ -47,6 +47,7 @@ import {
   type NightPlan,
   type Priority,
   type SourceShop,
+  movesFromSteps,
 } from '../engine/autofill';
 import { compasMeta, patchTripMetadata, requireEditor, resplitSteps, type Supa } from './compasServer';
 import { lookupDestination, lookupReverse, stageCandidates } from './placeLookup';
@@ -546,9 +547,11 @@ export async function compasAutofillAction(
       }
     } else if (mode === 'sur_place') notes.push('Tu es déjà au départ : aucun trajet à prévoir.');
     const motorLegs = steps.filter((s, i) => i > 0 && s.distance_km != null && s.distance_km > 0).length;
-    const localMoves = stagePlaces.filter((s, i) => i > 0 && ['bus', 'train', 'bateau', 'vol'].includes(s.move));
+    // Étapes proposées à l'instant, sinon celles déjà en place avec leur moyen de transport.
+    const moves = stagePlaces.length ? stagePlaces : movesFromSteps(steps);
+    const localMoves = moves.filter((s, i) => i > 0 && ['bus', 'train', 'bateau', 'vol'].includes(s.move));
     // Road trip : kilomètres mesurés en voiture entre les étapes ; arrivé en avion, il faut louer.
-    const carDays = stagePlaces.filter((s, i) => i > 0 && s.move === 'voiture');
+    const carDays = moves.filter((s, i) => i > 0 && s.move === 'voiture');
     const carKmOnSite = steps
       .filter((st) => st.transport_mode === 'car' && st.distance_km != null)
       .reduce((t, st) => t + (st.distance_km ?? 0), 0);

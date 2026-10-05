@@ -638,6 +638,8 @@ export interface ApplyCurrent {
   days: number | null;
   /** Durée courte en heures si la sortie tient en moins d'un jour. */
   shortHours: number | null;
+  /** Durée retenue sans date de départ (« 20 jours ») : reprise quand le départ arrive. */
+  plannedDays?: number | null;
   preferences: CompasPreferences;
   hasRoute: boolean;
 }
@@ -679,8 +681,9 @@ export function planApplication(actions: CompasIntentAction[], current: ApplyCur
     } else if (dates?.end) {
       endDate = dates.end;
     } else {
-      endDate = addDaysIso(start, (current.days ?? 1) - 1);
-      durationHours = current.shortHours;
+      const keep = current.days ?? current.plannedDays ?? null;
+      endDate = addDaysIso(start, Math.min(MAX_TRIP_DAYS, keep ?? 1) - 1);
+      durationHours = keep == null || current.days != null ? current.shortHours : null;
     }
     const days = daysBetweenIso(start, endDate) + 1;
     ops.push({

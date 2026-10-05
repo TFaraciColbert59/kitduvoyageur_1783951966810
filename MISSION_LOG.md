@@ -1,5 +1,11 @@
 # MISSION LOG — LKDV
 
+## 2026-10-05 — Compas : retours de revue (PR #66)
+
+- « 20 jours » dit sans départ, puis un départ seul : la durée retenue est reprise (`ApplyCurrent.plannedDays`), plus de voyage d'un jour.
+- Préremplissage d'un itinéraire déjà saisi : les trajets bus/train/bateau/vol et voiture des étapes existantes comptent dans les transports sur place et la location (`movesFromSteps`).
+- Preuves : tests Compas 233/233, tsc et eslint propres.
+
 ## 2026-10-03 — Compas : préremplissage pour n'importe quelle destination
 
 - **Dis-le comprend la destination** (« au Népal », « en Islande », « à Chamonix », « dans le Vercors ») : `set_destination`, retrouvée sur la carte (Photon/OSM : nom, code pays ISO, emprise) par `compasSetDestinationAction` ; refusée si la carte ne la connaît pas. Durée sans date de départ gardée (`compasSetSpanAction`, « 20 jours »). La phrase du départ s'écrit directement (annulable). Une date proposée par l'IA et refusée ne masque plus la bonne lecture des règles.
