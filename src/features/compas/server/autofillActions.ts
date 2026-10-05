@@ -1,4 +1,5 @@
 'use server';
+import type { InventoryStatus } from '@/features/materiel/domain/inventory';
 
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
@@ -556,7 +557,7 @@ export async function compasAutofillAction(
     /* 6. Kit : règles contextuelles (pays, altitude réelle) + couchage selon les nuits. */
     const [{ data: itemRows }, { data: inv }, { data: loans }, { data: shopRows }] = await Promise.all([
       supabase.from('trip_items').select('item_name').eq('trip_id', tripId),
-      supabase.from('product_ownership').select('id, name, is_lent').eq('user_id', userId).limit(500),
+      supabase.from('product_ownership').select('id, name, is_lent, status').eq('user_id', userId).limit(500),
       supabase.from('materiel_loans').select('product_ownership_id, status').eq('borrower_id', userId).eq('status', 'en_cours').limit(50),
       supabase
         .from('shop_products')
@@ -597,10 +598,11 @@ export async function compasAutofillAction(
     }));
     const picks = sourceGear(needs, {
       tripItemNames,
-      inventory: ((inv ?? []) as Array<{ id: string; name: string; is_lent: boolean | null }>).map((i) => ({
+      inventory: ((inv ?? []) as Array<{ id: string; name: string; is_lent: boolean | null; status: InventoryStatus }>).map((i) => ({
         id: i.id,
         name: i.name,
         isLent: i.is_lent === true,
+        inventoryStatus: i.status,
       })),
       borrowed,
       shop,

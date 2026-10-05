@@ -331,13 +331,10 @@ export async function compasMarkReturnedAction(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Connecte-toi pour gérer ton inventaire.' };
-    const { data, error } = await supabase
-      .from('product_ownership')
-      .update({ is_lent: false, updated_at: new Date().toISOString() })
-      .eq('id', parsed.data.inventoryItemId)
-      .eq('user_id', user.id)
-      .select('id');
-    if (error || !data?.length)
+    const { data, error } = await supabase.rpc('return_inventory_item', {
+      p_id: parsed.data.inventoryItemId,
+    });
+    if (error || !data)
       return { success: false, error: 'Impossible de mettre à jour cet objet.' };
     return { success: true };
   } catch (err) {

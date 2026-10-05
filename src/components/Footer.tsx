@@ -15,7 +15,7 @@ const FOOTER_LINKS = [
 const LEGAL_LINKS = [
   { label: 'Mentions légales', href: '/mentions-legales' },
   { label: 'CGV / CGU', href: '/cgu' },
-  { label: 'Confidentialité', href: '/cookies' },
+  { label: 'Confidentialité', href: '/politique-confidentialite' },
 ];
 
 const glassCapsule: React.CSSProperties = {

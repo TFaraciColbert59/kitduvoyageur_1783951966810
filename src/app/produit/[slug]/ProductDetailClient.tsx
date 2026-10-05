@@ -1,6 +1,7 @@
 'use client';
 
 import ProductLineageCard from '@/components/kits/ProductLineageCard';
+import InventoryEntryButton from '@/components/produit/InventoryEntryButton';
 
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
@@ -400,6 +401,8 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                       </div>
                     </div>
 
+                    <div className="mb-[var(--space-4)]"><InventoryEntryButton productId={product.id} productSlug={product.slug} /></div>
+
                     {owned && (
                       <Card variant="compact" tone="sage" className="mb-[var(--space-4)] flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
                         <span aria-hidden="true">✓</span> Cet article est déjà enregistré dans votre sac / équipement
@@ -692,6 +695,8 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
               <ProductLineageCard productId={product.id} />
             </div>
           )}
+
+          <div className="px-[var(--space-5)] py-[var(--space-3)]"><InventoryEntryButton productId={product.id} productSlug={product.slug} /></div>
 
           {/* Specifications Grid */}
           <div className="px-[var(--space-5)] py-[var(--space-2)]">

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { inventoryValidation } from '@/features/materiel/domain/inventory';
 
 /** Schémas Zod pour Mon Matériel — validation stricte côté serveur (charte LKDV). */
 
@@ -32,7 +33,15 @@ export const sharePermissionSchema = z.enum(['lecture', 'fork', 'co_edition']);
 const dateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date invalide (AAAA-MM-JJ)').nullable().optional();
 
 /** Objet d'inventaire personnel (table product_ownership). */
-export const productOwnershipSchema = z.object({
+export const productOwnershipBaseSchema = z.object({
+  product_id: z.string().uuid().nullable().optional(),
+  serial_number: z.string().trim().max(120).nullable().optional(),
+  description: z.string().max(2000).nullable().optional(),
+  location: z.string().trim().max(160).nullable().optional(),
+  listing_mode: z.enum(['personnel','vente','location','pret']).default('personnel'),
+  status: z.enum(['en_stock','a_acheter','a_louer','a_preter','en_location','en_pret','vendu']).default('en_stock'),
+  rental_price_cents: z.number().int().min(0).max(100000000).nullable().optional(),
+  deposit_cents: z.number().int().min(0).max(100000000).nullable().optional(),
   name: z.string().min(1, 'Le nom est requis').max(120),
   brand: z.string().max(80).nullable().optional(),
   category: categorySchema.default('Autre'),
@@ -48,6 +57,14 @@ export const productOwnershipSchema = z.object({
   tags: z.array(z.string().max(40)).max(20).nullable().optional(),
   quantity: z.number().int().min(1).max(999).default(1),
 });
+
+export const productOwnershipSchema = productOwnershipBaseSchema.superRefine((item, ctx) => {
+ const message = inventoryValidation(item);
+ if (message) ctx.addIssue({ code: 'custom', message });
+ if (item.is_lent || ['en_location','en_pret','vendu'].includes(item.status)) ctx.addIssue({ code: 'custom', message: 'Utilisez une action de transition' });
+});
+export const productOwnershipPatchSchema = productOwnershipBaseSchema.omit({status:true,is_lent:true}).extend({category:categorySchema,weight_g:z.number().int().min(0).max(50000),condition:conditionSchema,quantity:z.number().int().min(1).max(999),listing_mode:z.enum(['personnel','vente','location','pret'])}).partial().strict();
+export const inventoryTransitionSchema = z.object({status:z.enum(['en_stock','a_acheter','a_louer','a_preter','en_location','en_pret','vendu']),expected_status:z.enum(['en_stock','a_acheter','a_louer','a_preter','en_location','en_pret','vendu'])}).strict();
 
 export type ProductOwnershipInput = z.infer<typeof productOwnershipSchema>;
 

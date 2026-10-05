@@ -1,0 +1,13 @@
+import{beforeEach,expect,it,vi}from'vitest';
+import{NextRequest}from'next/server';
+const m=vi.hoisted(()=>({user:{id:'owner'} as {id:string}|null,rpc:vi.fn()}));
+vi.mock('@/lib/supabase/server',()=>({createClient:async()=>({auth:{getUser:async()=>({data:{user:m.user}})},rpc:m.rpc})}));
+import{POST}from'@/app/api/support/tickets/route';
+import{PATCH}from'@/app/api/support/tickets/[id]/route';
+const req=(data:unknown)=>new NextRequest('http://localhost/api/support/tickets',{method:'POST',body:JSON.stringify(data)});
+beforeEach(()=>{m.user={id:'owner'};m.rpc.mockReset()});
+it('rejects anonymous requests before any write',async()=>{m.user=null;expect((await POST(req({subject:'autre',message:'Message suffisamment long'}))).status).toBe(401);expect(m.rpc).not.toHaveBeenCalled()});
+it('rejects spoofed owner and status',async()=>{expect((await POST(req({subject:'autre',message:'Message suffisamment long',user_id:'other',status:'resolved'}))).status).toBe(400);expect(m.rpc).not.toHaveBeenCalled()});
+it('returns persisted ticket instead of false email success',async()=>{m.rpc.mockResolvedValue({data:{id:'ticket',status:'open'}});const r=await POST(req({subject:'autre',message:'Message suffisamment long'}));expect(r.status).toBe(201);expect(await r.json()).toEqual({ticket:{id:'ticket',status:'open'}});expect(m.rpc).toHaveBeenCalledWith('create_support_ticket',{p_subject:'autre',p_message:'Message suffisamment long'})});
+it.each([['42501',403],['PT429',429]])('preserves database refusal %s',async(code,status)=>{m.rpc.mockResolvedValue({error:{code,message:'Refus'}});expect((await POST(req({subject:'autre',message:'Message suffisamment long'}))).status).toBe(status)});
+it('admin response cannot bypass database role enforcement',async()=>{m.rpc.mockResolvedValue({error:{code:'42501',message:'Accès interdit'}});const r=await PATCH(req({status:'resolved',response:'Réponse'}),{params:Promise.resolve({id:'b2cff5d6-37fc-43d5-bf6f-7d8dacb89922'})});expect(r.status).toBe(403)});

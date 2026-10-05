@@ -1,3 +1,4 @@
+import { inventoryErrorStatus } from '@/features/materiel/domain/apiErrors';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { productOwnershipSchema } from '@/lib/schemas/materiel';
@@ -26,13 +27,13 @@ export async function POST(req: NextRequest) {
       .select('*')
       .single();
 
-    if (error) throw error;
+    if (error) return NextResponse.json({error:error.message},{status:inventoryErrorStatus(error)});
     return NextResponse.json({ item: data }, { status: 201 });
   } catch (err) {
     console.error('POST /api/materiel/items', err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Erreur serveur' },
-      { status: 500 }
+      { status: err instanceof SyntaxError ? 400 : 500 }
     );
   }
 }
@@ -50,13 +51,13 @@ export async function GET() {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) return NextResponse.json({error:error.message},{status:inventoryErrorStatus(error)});
     return NextResponse.json({ items: data ?? [] });
   } catch (err) {
     console.error('GET /api/materiel/items', err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Erreur serveur' },
-      { status: 500 }
+      { status: err instanceof SyntaxError ? 400 : 500 }
     );
   }
 }

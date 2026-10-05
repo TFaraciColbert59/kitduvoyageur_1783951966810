@@ -1,3 +1,4 @@
+import type { InventoryStatus } from '@/features/materiel/domain/inventory';
 import 'server-only';
 
 import type { FxRate } from '../engine/currency';
@@ -240,7 +241,7 @@ async function loadInventory(
     const { data, error } = await client
       .from('product_ownership')
       .select(
-        'id, name, brand, category, weight_g, condition, is_lent, maintenance_due_at, expiry_date, quantity'
+        'id, name, brand, category, weight_g, condition, is_lent, status, maintenance_due_at, expiry_date, quantity'
       )
       .eq('user_id', userId)
       .order('category', { ascending: true })
@@ -254,6 +255,7 @@ async function loadInventory(
       weightG: num(r.weight_g),
       condition: str(r.condition),
       isLent: r.is_lent === true,
+      inventoryStatus: r.status as InventoryStatus,
       maintenanceDueAt: str(r.maintenance_due_at),
       expiryDate: str(r.expiry_date),
       quantity: num(r.quantity) ?? 1,

@@ -145,3 +145,13 @@ describe('règles contextuelles', () => {
     expect(sameNeed(gearForNights(['bivouac'])[0], rule('Tente de randonnée légère 2 personnes', 'shelter'))).toBe(true);
   });
 });
+
+
+describe('inventory lifecycle availability', () => {
+  it.each(['vendu', 'a_acheter', 'en_location', 'en_pret'] as const)('does not source unavailable %s gear', (inventoryStatus) => {
+    const picks = sourceGear(gearForNights(['bivouac']), {
+      tripItemNames: [], inventory: [{id:'item',name:'Tente deux places',isLent:false,inventoryStatus}], borrowed: [], shop: [], days:2,
+    });
+    expect(picks.find((p) => p.need.key === 'tent')?.source).toBe('a_trouver');
+  });
+});

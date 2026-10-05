@@ -38,12 +38,6 @@ export async function createLoan({ productOwnershipId, borrowerContact, dueDate 
       return { success: false, error: insertErr.message };
     }
 
-    // Marque l'objet en prêt
-    await supabase
-      .from('product_ownership')
-      .update({ is_lent: true })
-      .eq('id', productOwnershipId);
-
     revalidatePath('/hub');
     revalidatePath('/hub/depart');
     revalidatePath('/hub/disponibilite');

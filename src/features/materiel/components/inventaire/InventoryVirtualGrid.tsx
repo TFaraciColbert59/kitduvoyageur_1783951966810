@@ -5,27 +5,39 @@ import type { InventoryItem } from '@/features/materiel/services/getInventory';
 import { InventoryCard } from './InventoryCard';
 
 /** W-I-3 InventoryVirtualGrid — grille virtualisée 2 colonnes (TanStack Virtual). */
-export function InventoryVirtualGrid({ items, onSelect }: { items: InventoryItem[]; onSelect?: (item: InventoryItem) => void }) {
+export function InventoryVirtualGrid({
+  items,
+  onSelect,
+}: {
+  items: InventoryItem[];
+  onSelect?: (item: InventoryItem) => void;
+}) {
   const parentRef = useRef<HTMLDivElement>(null);
   const rowVirtualizer = useVirtualizer({
     count: Math.ceil(items.length / 2),
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 104,
+    estimateSize: () => 148,
     overscan: 6,
   });
 
   return (
-    <div ref={parentRef} className="h-[52vh] overflow-y-auto">
+    <div
+      ref={parentRef}
+      className="overflow-y-auto"
+      style={{ height: `min(52vh, ${Math.ceil(items.length / 2) * 148}px)` }}
+    >
       <div className="relative" style={{ height: rowVirtualizer.getTotalSize() }}>
         {rowVirtualizer.getVirtualItems().map((virtualRow) => {
           const pair = items.slice(virtualRow.index * 2, virtualRow.index * 2 + 2);
           return (
             <div
               key={virtualRow.key}
-              className="absolute left-0 top-0 grid h-24 w-full grid-cols-2 gap-3"
+              className="absolute left-0 top-0 grid h-[140px] w-full grid-cols-2 gap-3"
               style={{ transform: `translateY(${virtualRow.start}px)` }}
             >
-              {pair.map((item) => <InventoryCard key={item.id} item={item} onSelect={onSelect} />)}
+              {pair.map((item) => (
+                <InventoryCard key={item.id} item={item} onSelect={onSelect} />
+              ))}
             </div>
           );
         })}
