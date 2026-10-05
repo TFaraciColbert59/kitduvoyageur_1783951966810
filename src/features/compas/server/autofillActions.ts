@@ -1,7 +1,7 @@
 'use server';
 import type { InventoryStatus } from '@/features/materiel/domain/inventory';
 
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { askAI } from '@/lib/ai/askAI';
@@ -15,7 +15,7 @@ import {
 import { extractIntentJson } from '@/lib/ai/features/compasIntent';
 import { ARRIVAL_TOLERANCE_M, routeAttempt } from '@/features/adventure-prep/routingService';
 import { terrainElevations } from '@/lib/geo/terrainElevation';
-import { cached, coordKey } from './sharedCache';
+import { cached, coordKey, readShared, writeShared } from './sharedCache';
 import { haversineKm } from '@/features/adventure-prep/engine/routing';
 import { generateTripContextualKit } from '@/features/trips/engine/contextualKitEngine';
 import type { TripItem } from '@/features/trips/types/trip.types';
@@ -55,6 +55,7 @@ import {
 import { compasMeta, patchTripMetadata, requireEditor, resplitSteps, type Supa } from './compasServer';
 import { lookupDestination, lookupReverse, stageCandidates } from './placeLookup';
 import { destinationRadiusKm, distanceKm, maxLegKm, pickPlace, type CompasPlace } from '../engine/places';
+import { untangleStages } from '../engine/stageOrder';
 import { localToday } from './weather';
 
 const MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
@@ -138,6 +139,10 @@ interface Refuge {
 }
 
 const HIKING_ACTIVITIES = new Set(['hiking', 'trekking', 'bivouac', 'mixed']);
+/** Transfert en véhicule plausible entre deux étapes d'un trek ou d'un circuit à vélo. */
+const TRANSFER_MAX_KM = 250;
+/** Activités qui changent de lieu chaque jour ou presque : un itinéraire figé sur un lieu est un échec. */
+const ITINERANT_ACTIVITIES = new Set(['roadtrip', 'vanlife', 'trekking', 'cycling']);
 const MS_DAY = 86_400_000;
 
 function tripDays(start: string | null, end: string | null): number | null {
@@ -371,7 +376,7 @@ export async function compasAutofillAction(
     let stepsCreated = resume?.stepIds.length ?? 0;
     let routeSet = resume?.routeSet ?? false;
     const createdStepIds: string[] = [...(resume?.stepIds ?? [])];
-    let stagePlaces: Array<{ day: number; name: string; lat: number; lon: number; move: StageMove }> = [];
+    let stagePlaces: Array<{ day: number; name: string; lat: number; lon: number; move: StageMove; note: string | null }> = [];
     if (steps.length === 0 && !resume) {
       if (HIKING_ACTIVITIES.has(activity) && compas.routeId == null && anchor.radiusKm <= 80) {
         const { data: near } = await supabase.rpc('compas_search_routes', {
@@ -408,17 +413,27 @@ export async function compasAutofillAction(
           wishes: compas.preferences?.wishes ?? [],
           avoid: compas.preferences?.avoid ?? [],
         });
-        // Un second essai si le premier échoue (modèle lent ou réponse illisible),
-        // tant qu'il reste du temps avant la limite du serveur.
-        let proposed: ReturnType<typeof sanitizeStages> = [];
-        for (let attempt = 0; attempt < 2 && !proposed.length; attempt += 1) {
-          if (attempt && Date.now() - startedAt > 25_000) break;
-          proposed = sanitizeStages(
-            // Même destination, durée, activité, mois et envies : même itinéraire
-            // de base, partagé une semaine (le premier essai seulement).
-            await askJson(userId, buildCompasStagesSystem(), stagesPrompt, 2000, false, attempt ? 0 : 7 * 86_400),
-            days
-          );
+        // Itinéraire de base partagé une semaine (même destination, durée,
+        // activité, mois et envies), mais seulement s'il est exploitable : une
+        // réponse illisible ou figée sur un seul lieu pour un circuit n'est ni
+        // gardée ni servie. Sinon on redemande, tant qu'il reste du temps.
+        const minPlaces = ITINERANT_ACTIVITIES.has(activity) && days >= 4 ? 3 : 1;
+        const usable = (st: ReturnType<typeof sanitizeStages>) =>
+          st.length > 0 && new Set(st.map((x) => x.place)).size >= minPlaces;
+        const stagesKey = createHash('sha256').update(`${buildCompasStagesSystem()}\n${stagesPrompt}`).digest('hex');
+        let proposed: ReturnType<typeof sanitizeStages> =
+          (await readShared<ReturnType<typeof sanitizeStages>>('stages', stagesKey)) ?? [];
+        if (!usable(proposed)) proposed = [];
+        for (let attempt = 0; attempt < 3 && !usable(proposed); attempt += 1) {
+          if (attempt && Date.now() - startedAt > 20_000) break;
+          const next = sanitizeStages(await askJson(userId, buildCompasStagesSystem(), stagesPrompt, 2000, false), days);
+          if (usable(next)) {
+            proposed = next;
+            await writeShared('stages', stagesKey, next, 7 * 86_400);
+          } else if (new Set(next.map((x) => x.place)).size > new Set(proposed.map((x) => x.place)).size) {
+            // Le moins mauvais en attendant mieux (jamais partagé).
+            proposed = next;
+          }
         }
         // Chaque lieu proposé doit exister sur la carte, dans le pays, et à une
         // distance plausible de l'étape de la veille (village de préférence).
@@ -430,15 +445,33 @@ export async function compasAutofillAction(
         let last: { name: string; lat: number; lon: number } | null = null;
         let dropped = 0;
         for (const p of proposed) {
-          const hit = pickPlace(byName.get(p.place) ?? [], {
+          const candidates = byName.get(p.place) ?? [];
+          let move = p.move;
+          let hit = pickPlace(candidates, {
             near: last ?? anchor,
             maxKm: maxLegKm(p.move, last == null, anchor.radiusKm),
+            query: p.place,
           });
+          // « À pied » depuis la ville d'arrivée jusqu'au départ du trek (Puerto
+          // Natales → Torres del Paine, 100 km) : c'est un transfert. Hors de
+          // portée à pied ou à vélo, un lieu à moins de 250 km reste l'étape,
+          // rejointe en véhicule ; sans cela tout le trek tombait.
+          if (!hit && last && (p.move === 'marche' || p.move === 'velo' || p.move === 'aucun')) {
+            hit = pickPlace(candidates, { near: last, maxKm: TRANSFER_MAX_KM, query: p.place });
+            if (hit) move = 'voiture';
+          }
           // Le titre garde le nom proposé (lisible) ; la position vient de la carte.
           if (hit) last = { name: p.place, lat: hit.lat, lon: hit.lon };
-          else if (last?.name !== p.place) dropped += 1;
+          else if (last?.name !== p.place) {
+            dropped += 1;
+            console.info('[compas] étape introuvable', {
+              place: p.place,
+              move: p.move,
+              candidates: candidates.length,
+            });
+          }
           const at = last ?? { name: anchor.name, lat: anchor.lat, lon: anchor.lon };
-          stagePlaces.push({ day: p.day, name: at.name, lat: at.lat, lon: at.lon, move: hit ? p.move : 'aucun' });
+          stagePlaces.push({ day: p.day, name: at.name, lat: at.lat, lon: at.lon, move: hit ? move : 'aucun', note: p.note });
         }
         if (!proposed.length) {
           notes.push('Itinéraire détaillé indisponible pour le moment : une étape par jour sur le lieu, à affiner dans Parcours.');
@@ -448,8 +481,25 @@ export async function compasAutofillAction(
             lat: anchor!.lat,
             lon: anchor!.lon,
             move: 'aucun' as StageMove,
+            note: null,
           }));
-        } else if (dropped) notes.push(`${dropped} lieu(x) proposé(s) introuvable(s) sur la carte : étape gardée au lieu précédent.`);
+        } else {
+          if (dropped) notes.push(`${dropped} lieu(x) proposé(s) introuvable(s) sur la carte : étape gardée au lieu précédent.`);
+          // Circuit sur route qui zigzague : séjours remis dans l'ordre le plus court
+          // (arrivée et départ inchangés). Un trek ou un circuit à vélo suit son tracé.
+          // Un seul moyen de transport (hors arrivée) : le déplacement reste
+          // juste quel que soit l'ordre ; un vol ou un ferry, lui, est lié à
+          // l'étape d'avant et ne se déplace pas.
+          const legModes = new Set(stagePlaces.slice(1).map((st) => st.move).filter((m) => m !== 'aucun'));
+          const oneMode = legModes.size <= 1 && !legModes.has('vol') && !legModes.has('bateau');
+          if (oneMode && !legModes.has('marche') && !legModes.has('velo')) {
+            const tidy = untangleStages(stagePlaces);
+            if (tidy.reordered) {
+              stagePlaces = tidy.stages;
+              notes.push(`Étapes remises dans un ordre plus direct : environ ${tidy.savedKm} km de route en moins.`);
+            }
+          }
+        }
 
         // Distances réelles entre deux soirs (à pied, à vélo ou sur la route), en parallèle.
         const legs = await mapLimit(stagePlaces, 4, async (st, i) => {
@@ -479,13 +529,12 @@ export async function compasAutofillAction(
           if ((st.move === 'marche' && km > 45) || (st.move === 'velo' && km > 180)) return null;
           return { km: Math.round(km * 10) / 10, ascent: ascent != null ? Math.round(ascent) : null, measured: true };
         });
-        const proposedByDay = new Map(proposed.map((p) => [p.day, p]));
         const rows = stagePlaces.map((st, i) => ({
           trip_id: tripId,
           day_number: st.day,
           order_index: 0,
           title: `Jour ${st.day} · ${st.name}`,
-          description: proposedByDay.get(st.day)?.note ?? null,
+          description: st.note,
           transport_mode: STEP_TRANSPORT[st.move],
           source: 'compas',
           latitude: Math.round(st.lat * 1e5) / 1e5,

@@ -165,9 +165,18 @@ const MONTHS: Array<[RegExp, number]> = [
   [/^oct/, 10],
   [/^nov/, 11],
   [/^dec/, 12],
+  // Phrases en anglais (« Hiking in Iceland in July »).
+  [/^january/, 1],
+  [/^february/, 2],
+  [/^march/, 3],
+  [/^april/, 4],
+  [/^may$/, 5],
+  [/^june/, 6],
+  [/^july/, 7],
+  [/^august/, 8],
 ];
 const MONTH_RE =
-  '(janvier|janv\\.?|fevrier|fevr?\\.?|mars|avril|avr\\.?|mai|juin|juillet|juil\\.?|aout|septembre|sept\\.?|octobre|oct\\.?|novembre|nov\\.?|decembre|dec\\.?)';
+  '(janvier|janv\\.?|fevrier|fevr?\\.?|mars|avril|avr\\.?|mai|juin|juillet|juil\\.?|aout|septembre|sept\\.?|octobre|oct\\.?|novembre|nov\\.?|decembre|dec\\.?|january|february|march|april|may|june|july|august|september|october|november|december)';
 const WEEKDAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 const RELATIVE_DATE =
   /\b(aujourd'hui|demain|apres-demain|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|week-?end|semaine prochaine|mois prochain)\b/;
@@ -207,6 +216,9 @@ function nextWeekday(today: string, target: number, strict: boolean): string {
 function dateGrounded(text: string, iso: string): boolean {
   const plain = plainOf(text);
   if (RELATIVE_DATE.test(plain)) return true;
+  // Le mois est dit (« en janvier ») : un jour de ce mois est ancré.
+  const month = Number(iso.slice(5, 7));
+  for (const m of plain.matchAll(new RegExp(`\\b${MONTH_RE}`, 'g'))) if (monthOf(m[1]) === month) return true;
   const day = Number(iso.slice(8, 10));
   return numberInText(text, day);
 }
@@ -275,11 +287,34 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     const wd = new RegExp(`\\b(${WEEKDAYS.join('|')})\\b`).exec(plain);
     if (wd) start = nextWeekday(today, WEEKDAYS.indexOf(wd[1]), true);
   }
+  // Un mois seul : « en janvier », « début mai », « fin août 2027 ». Le départ
+  // se pose au début (au 15 pour « mi », au 22 pour « fin ») ; un « week-end »
+  // dans ce mois tombe sur son premier samedi. Ce mois-ci : à partir d'aujourd'hui.
+  if (!range && !single && !slash) {
+    const monthOnly = new RegExp(
+      `\\b(?:(debut|mi|fin)[\\s-]+(?:de\\s+|d')?|en\\s+|in\\s+|au mois d[e']\\s*|courant\\s+)${MONTH_RE}(?:\\s+(\\d{4}))?`
+    ).exec(plain);
+    const month = monthOnly ? monthOf(monthOnly[2]) : null;
+    if (monthOnly && month) {
+      const day = monthOnly[1] === 'mi' ? 15 : monthOnly[1] === 'fin' ? 22 : 1;
+      const year = monthOnly[3] ? Number(monthOnly[3]) : null;
+      const thisMonth = !year && Number(today.slice(5, 7)) === month && Number(today.slice(8, 10)) >= day;
+      let base = thisMonth ? today : resolveDayMonth(today, day, month, year);
+      if (base && /\bweek-?end\b/.test(plain)) {
+        const sat = nextWeekday(base, 6, false);
+        if (Number(sat.slice(5, 7)) === month) base = sat;
+      }
+      if (base) {
+        start = base;
+        end = null;
+      }
+    }
+  }
   if (start) out.push({ type: 'set_dates', start, end });
 
   /* Durée */
   const dur =
-    new RegExp(`\\b${NUM}\\s*(jours?|j|nuits?|semaines?)\\b`).exec(plain) ??
+    new RegExp(`\\b${NUM}\\s*(jours?|j|nuits?|semaines?|days?|nights?|weeks?)\\b`).exec(plain) ??
     (/\bdemi-journee\b/.test(plain) ? null : /\b(une|la|1)\s+journee\b/.exec(plain));
   const hoursMatch =
     /(?<!(?:\ba|\bvers|depart|depart a|des)\s)\b(\d{1,2})\s*h(?:eures?)?\s*(\d{2})?\b(?!\s*du matin)/.exec(
@@ -290,7 +325,7 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     const n = toNumber(dur[1]);
     const unit = dur[2];
     if (n != null && n > 0) {
-      const days = unit.startsWith('nuit') ? n + 1 : unit.startsWith('semaine') ? n * 7 : n;
+      const days = /^(nuit|night)/.test(unit) ? n + 1 : /^(semaine|week)/.test(unit) ? n * 7 : n;
       out.push({ type: 'set_duration', days: Math.round(days), hours: null });
     }
   } else if (dur) {
@@ -421,7 +456,12 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     const at = (m.index ?? 0) + m[0].length;
     const original = src.slice(at, at + 60);
     if (!/^\p{Lu}/u.test(original)) continue;
-    const place = clean(upToBreak(original).split(/\s(?:pour|avec|du|le|la|les|en|a|à|à partir|pendant|sur|et)\s/i)[0], 50);
+    const place = clean(
+      upToBreak(original).split(
+        /\s(?:pour|avec|du|le|la|les|en|a|à|à partir|pendant|durant|sur|et|un|une|cette|ce|tout|toute|week-?end|début|debut|mi|fin|janvier|février|fevrier|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre)(?:\s|$)/i
+      )[0],
+      50
+    );
     if (place.length >= 2 && !monthOf(plainOf(place)) && !WEEKDAYS.includes(plainOf(place))) {
       out.push({ type: 'set_destination', place });
       break;
@@ -499,6 +539,16 @@ export function groundingIssue(action: CompasIntentAction, text: string): string
       return tokensIn(text, action.query) ? null : 'Lieu absent de ta phrase';
     case 'set_destination':
       return tokensIn(text, action.place) ? null : 'Lieu absent de ta phrase';
+    // Rythme et nuits : seulement s'ils sont dits (l'IA posait « bivouac » et
+    // « rythme normal » sur « Hiking in Iceland 5 days »).
+    case 'set_pace':
+      return /\b(rythme|tranquille|tranquillement|doucement|cool|calme|pepere|lent|lentement|relax|normal|moyen|soutenu|sportif|rapide|intense|pace|slow|easy|fast)/.test(plain)
+        ? null
+        : 'Rythme absent de ta phrase';
+    case 'set_nights':
+      return /\b(bivouac|bivouaquer|tente|camping|camper|refuges?|hotels?|gites?|chambres?|auberges?|hebergements?|airbnb|tent|hut|hostel)/.test(plain)
+        ? null
+        : 'Nuits absentes de ta phrase';
     default:
       return null;
   }

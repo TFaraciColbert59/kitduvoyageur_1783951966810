@@ -472,9 +472,19 @@ export async function compasSetActivityAction(
   try {
     const auth = await requireEditor(parsed.data.tripId);
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    // Titre posé par le Compas (« Mixte · Lyon ») : il suit l'activité choisie.
+    const title = auth.trip.title ?? '';
+    const autoPrefix = Object.values(CREATE_LABEL).find((l) => title.startsWith(`${l} · `));
+    const nextTitle = autoPrefix
+      ? `${CREATE_LABEL[parsed.data.activity]}${title.slice(autoPrefix.length)}`
+      : null;
     const { data, error } = await auth.supabase
       .from('trips')
-      .update({ primary_activity: parsed.data.activity, updated_at: new Date().toISOString() })
+      .update({
+        primary_activity: parsed.data.activity,
+        ...(nextTitle && nextTitle !== title ? { title: nextTitle } : {}),
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', parsed.data.tripId)
       .select('id');
     if (error || !data?.length)

@@ -296,7 +296,7 @@ function CardSay({ ctl }: { ctl: CompasCtl }) {
 
 export function OuCard({ ctl, onKit }: { ctl: CompasCtl; onKit: () => void }) {
   const m = ctl.data.model;
-  const hours = tripHours(m);
+  const hours = tripHours(m, ctl.data.plannedDays);
   const act = activityLabel(m.activity);
   const worst = m.weather.worstPrecipPct;
   const toFind = ctl.lines.filter((l) => l.status !== 'owned').length;

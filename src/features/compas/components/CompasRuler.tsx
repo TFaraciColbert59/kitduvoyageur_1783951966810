@@ -17,8 +17,10 @@ import { applyCurrent, runOps } from './compasApply';
 import type { CompasCtl } from './compasTypes';
 
 /** Durée affichée : choisie (dates ou heures), sinon temps de marche du parcours. */
-export function tripHours(model: CompasModel): number | null {
+export function tripHours(model: CompasModel, plannedDays?: number | null): number | null {
   if (model.dates.hours != null) return model.dates.hours;
+  // Sans date, la durée dite (« 5 jours ») prime sur le temps de marche du tracé.
+  if (plannedDays) return plannedDays * 24;
   if (model.route.durationMin) return model.route.durationMin / 60;
   return null;
 }
@@ -31,7 +33,7 @@ export function tripHours(model: CompasModel): number | null {
  */
 export function DurationRuler({ ctl }: { ctl: CompasCtl }) {
   const m = ctl.data.model;
-  const current = tripHours(m);
+  const current = tripHours(m, ctl.data.plannedDays);
   const editable = ctl.data.canEdit;
   const [draft, setDraft] = useState<number | null>(null);
   const track = useRef<HTMLDivElement>(null);

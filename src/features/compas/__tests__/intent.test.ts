@@ -205,3 +205,51 @@ describe("plan d'application", () => {
     ]);
   });
 });
+
+describe('Mois seul (« en janvier », « début mai », « week-end en mai »)', () => {
+  const today = '2026-10-05';
+  const dates = (t: string) => parseIntentRules(t, today).find((a) => a.type === 'set_dates');
+  const place = (t: string) =>
+    (parseIntentRules(t, today).find((a) => a.type === 'set_destination') as { place: string } | undefined)?.place;
+
+  it('pose le départ au début du mois, l’année suivante si le mois est passé', () => {
+    expect(dates('Trek en Patagonie, 8 jours en janvier')).toMatchObject({ start: '2027-01-01' });
+    expect(dates('Van en Écosse 10 jours en juin')).toMatchObject({ start: '2027-06-01' });
+    expect(dates('Ski début février 2027 à Val Thorens')).toMatchObject({ start: '2027-02-01' });
+    expect(dates('Rando mi-novembre')).toMatchObject({ start: '2026-11-15' });
+  });
+  it('ce mois-ci : à partir d’aujourd’hui', () => {
+    expect(dates('Rando en octobre dans les Vosges')).toMatchObject({ start: today });
+  });
+  it('un week-end dans un mois tombe sur son premier samedi, pas ce week-end', () => {
+    expect(dates('Escalade, week-end de 3 jours en mai')).toMatchObject({ start: '2027-05-01' });
+    expect(dates('week-end à Annecy fin mai')).toMatchObject({ start: '2027-05-22' });
+  });
+  it('un jour précis prime sur le mois seul', () => {
+    expect(dates('le 12 mai en Corse')).toMatchObject({ start: '2027-05-12' });
+  });
+  it('la destination s’arrête avant la durée ou le mois', () => {
+    expect(place('Plage en Crète une semaine en juillet')).toBe('Crète');
+    expect(place('week-end à Annecy fin mai')).toBe('Annecy');
+  });
+  it('une date de l’IA dans le mois dit est ancrée', () => {
+    expect(groundingIssue({ type: 'set_dates', start: '2027-01-10', end: null }, '8 jours en janvier')).toBeNull();
+    expect(groundingIssue({ type: 'set_dates', start: '2027-03-10', end: null }, '8 jours en janvier')).not.toBeNull();
+  });
+});
+
+describe('Ce que l’IA ajoute sans que la phrase le dise', () => {
+  it('rythme et nuits refusés s’ils ne sont pas dits', () => {
+    const t = 'Hiking in Iceland 5 days in July';
+    expect(groundingIssue({ type: 'set_pace', pace: 'normal' }, t)).toMatch(/absent/);
+    expect(groundingIssue({ type: 'set_nights', nights: 'bivouac' }, t)).toMatch(/absentes/);
+    expect(groundingIssue({ type: 'set_pace', pace: 'tranquille' }, 'à un rythme tranquille')).toBeNull();
+    expect(groundingIssue({ type: 'set_nights', nights: 'refuge' }, 'nuits en gîte ou en refuge')).toBeNull();
+  });
+  it('anglais : durée et mois lus', () => {
+    const r = parseIntentRules('Hiking in Iceland 5 days in July', '2026-10-05');
+    expect(r).toContainEqual({ type: 'set_duration', days: 5, hours: null });
+    expect(r.find((a) => a.type === 'set_dates')).toMatchObject({ start: '2027-07-01' });
+    expect(parseIntentRules('2 weeks in Peru', '2026-10-05')).toContainEqual({ type: 'set_duration', days: 14, hours: null });
+  });
+});

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseIntentRules, planApplication, groundingIssue } from '../engine/intent';
 import { extractIntentJson } from '@/lib/ai/features/compasIntent';
 import { approachMode, keepRuleForActivity, movesFromSteps, nightsPrefFor, sanitizeAdvice, sanitizeStages } from '../engine/autofill';
-import { destinationRadiusKm, parseNominatim, parsePhoton, pickDestination, pickPlace } from '../engine/places';
+import { destinationRadiusKm, maxLegKm, parseNominatim, parsePhoton, pickDestination, pickPlace } from '../engine/places';
 
 const TODAY = '2026-10-02';
 const current = {
@@ -138,6 +138,40 @@ describe('carte (Photon)', () => {
     expect(pickPlace(list, { near, maxKm: 700 })?.lat).toBe(28.16);
   });
 
+  it('le lieu qui porte le nom passe devant un village au nom voisin (Glen Coe ≠ Corby Glen)', () => {
+    const list = parsePhoton({
+      features: [
+        { properties: { name: 'Glen Coe', countrycode: 'GB', osm_key: 'natural', osm_value: 'valley', type: 'other' }, geometry: { coordinates: [-5.02, 56.67] } },
+        { properties: { name: 'Corby Glen', countrycode: 'GB', osm_key: 'place', osm_value: 'village' }, geometry: { coordinates: [-0.52, 52.81] } },
+        { properties: { name: 'Glen', countrycode: 'GB', osm_key: 'place', osm_value: 'village' }, geometry: { coordinates: [-6.71, 54.85] } },
+      ],
+    });
+    const fortWilliam = { lat: 56.82, lon: -5.11 };
+    expect(pickPlace(list, { countryCode: 'GB', near: fortWilliam, maxKm: 700, query: 'Glen Coe' })?.lat).toBe(56.67);
+    // Nom traduit par la carte : aucun nom exact, la pertinence décide.
+    const skye = parsePhoton({
+      features: [
+        { properties: { name: 'Île de Skye', countrycode: 'GB', osm_key: 'place', osm_value: 'island' }, geometry: { coordinates: [-6.3, 57.36] } },
+        { properties: { name: 'Skye Village', countrycode: 'GB', osm_key: 'place', osm_value: 'village' }, geometry: { coordinates: [-4, 55] } },
+        { properties: { name: 'Isle Of Skye Quarry', countrycode: 'GB', osm_key: 'natural', osm_value: 'scrub' }, geometry: { coordinates: [-1.58, 53.49] } },
+      ],
+    });
+    expect(pickPlace(skye, { near: fortWilliam, maxKm: 700, query: 'Isle of Skye' })?.name).toBe('Île de Skye');
+    // Nom plus long accepté pour une localité seulement.
+    const chamonix = parsePhoton({
+      features: [
+        { properties: { name: 'Chamonix Lodge', countrycode: 'FR', osm_key: 'tourism', osm_value: 'hotel' }, geometry: { coordinates: [6.0, 45.0] } },
+        { properties: { name: 'Chamonix-Mont-Blanc', countrycode: 'FR', osm_key: 'place', osm_value: 'town' }, geometry: { coordinates: [6.87, 45.92] } },
+      ],
+    });
+    expect(pickPlace(chamonix, { query: 'Chamonix' })?.name).toBe('Chamonix-Mont-Blanc');
+    // Rien en commun avec le nom demandé : pas d'étape plutôt qu'un lieu au hasard.
+    const random = parsePhoton({
+      features: [{ properties: { name: 'Warwick', countrycode: 'GB', osm_key: 'place', osm_value: 'town' }, geometry: { coordinates: [-1.5, 52.3] } }],
+    });
+    expect(pickPlace(random, { query: 'Departure lounge' })).toBeNull();
+  });
+
   it('une étape doit être dans le pays et près de la destination', () => {
     const p = parsePhoton(payload);
     expect(pickPlace(p.slice(1), { countryCode: 'NP', near: { lat: 28.38, lon: 84 }, maxKm: 600 })?.name).toBe('Namche Bazar');
@@ -250,6 +284,27 @@ describe('Destination nommée : la ville que tout le monde entend, pas un homony
     const found = parsePhoton({ features: [place('Chamonix', 'locality', 'ZA'), place('Chamonix', 'house', 'JP')] });
     expect(pickDestination(found, 'Chamonix')).toBeNull();
     expect(pickDestination(parsePhoton({ features: [place('Moabit', 'district', 'DE')] }), 'Moab')).toBeNull();
+  });
+
+  it('« Mont Blanc » → le sommet (type « other » chez Photon), une ferme du même nom jamais', () => {
+    const peak = {
+      type: 'Feature',
+      geometry: { coordinates: [6.87, 45.83] },
+      properties: { name: 'Mont Blanc', osm_key: 'natural', osm_value: 'peak', type: 'other', countrycode: 'FR' },
+    };
+    const farm = {
+      type: 'Feature',
+      geometry: { coordinates: [0, 0] },
+      properties: { name: 'Mont Blanc', osm_key: 'place', osm_value: 'farm', type: 'other', countrycode: 'ZA' },
+    };
+    expect(pickDestination(parsePhoton({ features: [farm, peak] }), 'Mont-Blanc')).toMatchObject({ lat: 45.83 });
+    expect(pickDestination(parsePhoton({ features: [farm] }), 'Mont Blanc')).toBeNull();
+  });
+
+  it('première étape jusqu’à 400 km de la destination lue sur la carte (« Loire » → Orléans)', () => {
+    expect(maxLegKm('bus', true, 60)).toBe(400);
+    expect(maxLegKm('vol', true, 1500)).toBe(1500);
+    expect(maxLegKm('marche', false, 60)).toBe(40);
   });
 
   it('nom exact gardé dans l’ordre de la carte (Banff Canada avant Banff Écosse)', () => {
