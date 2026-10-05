@@ -37,10 +37,7 @@ export default async function AdminCommunityPage() {
       />
       <section className="os-workspace">
         <div className="os-workspace-primary">
-          <DataPanel label="CONTENUS" title="Community Pulse" chip="LIVE" kind="chart" rows={[]} series={[]} foot={[
-            { title: String(stats.carnets), detail: 'carnets publiés', value: `${stats.clubs} clubs`, tone: 'info' },
-            { title: String(stats.members), detail: 'membres de clubs', value: `${stats.reports} signalements`, tone: stats.reports > 0 ? 'warn' : 'good' },
-          ]} />
+          <DataPanel label="CONTENUS" title="Community Pulse" chip="Top clubs" kind="table" rows={stats.top.map((c) => ({ title: c.name, detail: `${c.members} membres`, value: '', tone: 'info' as const }))} />
           <FilterPanel
             label="CLUBS & GROUPES"
             title="Top Communities"

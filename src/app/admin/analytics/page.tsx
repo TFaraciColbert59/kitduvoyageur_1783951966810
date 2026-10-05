@@ -3,12 +3,15 @@ import { Hero, MetricGrid, DataPanel, FilterPanel } from '../_os/panels';
 import { InspectorBox } from '../_os/osUi';
 import { ReportButton } from '../_os/ReportButton';
 import { EmptyState } from '@/components/ui';
-import { getAnalytics } from '@/features/admin/osQueries';
+import { getAnalytics, getUserSignupSeries } from '@/features/admin/osQueries';
 
 /** GET /admin/analytics — Signals (Admin OS, agrégats réels). */
 export default async function AdminAnalyticsPage() {
   const cfg = ROUTES['analytics'];
-  const stats = await getAnalytics().catch(() => null);
+  const [stats, signups] = await Promise.all([
+    getAnalytics().catch(() => null),
+    getUserSignupSeries(30).catch(() => []),
+  ]);
 
   if (!stats) {
     return (
@@ -46,7 +49,7 @@ export default async function AdminAnalyticsPage() {
       />
       <section className="os-workspace">
         <div className="os-workspace-primary">
-          <DataPanel label="USAGE" title="Product Activity" chip="30 jours" kind="chart" rows={[]} series={[]} foot={[
+          <DataPanel label="USAGE" title="Product Activity" chip="Inscriptions 30 j" kind="chart" rows={[]} series={signups} foot={[
             { title: `+${stats.users30d}`, detail: 'nouveaux comptes', value: `${stats.users} au total`, tone: 'good' },
             { title: String(stats.carnets), detail: 'carnets publiés', value: `${stats.clubs} clubs`, tone: 'info' },
           ]} />

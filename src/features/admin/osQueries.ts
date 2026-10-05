@@ -626,6 +626,31 @@ export interface InboxItem {
   href: string;
 }
 
+/** Inscriptions par jour (30 derniers jours) — vrai carburant du graphe Analytics. */
+export async function getUserSignupSeries(days = 30): Promise<ActivityPoint[]> {
+  const { supabase } = await requireAdminOrRedirect('users.read');
+  const since = new Date();
+  since.setDate(since.getDate() - (days - 1));
+  since.setHours(0, 0, 0, 0);
+  const { data } = await supabase
+    .from('user_profiles')
+    .select('created_at')
+    .gte('created_at', since.toISOString())
+    .order('created_at', { ascending: true })
+    .limit(5000);
+  const buckets = new Map<string, number>();
+  for (let i = 0; i < days; i += 1) {
+    const d = new Date(since);
+    d.setDate(since.getDate() + i);
+    buckets.set(d.toISOString().slice(0, 10), 0);
+  }
+  for (const row of ((data ?? []) as { created_at: string }[])) {
+    const key = String(row.created_at).slice(0, 10);
+    if (buckets.has(key)) buckets.set(key, (buckets.get(key) ?? 0) + 1);
+  }
+  return [...buckets.entries()].map(([day, count]) => ({ day, count }));
+}
+
 /** Dossier unique : modération + retraits + stocks bas (sans table dédiée). */
 export async function getSupportInbox(): Promise<{ items: InboxItem[]; counts: { moderation: number; withdrawals: number; stock: number } }> {
   const { supabase } = await requireAdminOrRedirect('users.read');

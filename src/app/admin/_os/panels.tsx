@@ -176,8 +176,8 @@ export function FilterPanel({
 }
 
 function BarChart({ series, foot }: { series?: { day: string; count: number }[]; foot?: OsRow[] }) {
-  const fallback = [34, 42, 38, 55, 49, 66, 60, 78, 70, 90, 82, 103, 95, 114, 107, 127, 119, 139, 132, 151, 143, 166, 157, 181, 172, 195, 186, 207, 199, 221];
-  const values = series && series.length > 0 ? series.map((s) => s.count) : fallback;
+  const values = (series ?? []).map((s) => s.count);
+  if (values.length === 0) return null;
   const max = Math.max(1, ...values);
   const avg = values.reduce((s, v) => s + v, 0) / values.length;
   return (

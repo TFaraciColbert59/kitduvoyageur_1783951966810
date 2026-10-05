@@ -37,10 +37,10 @@ export default async function AdminOverviewPage({
   const [account, metrics, series, queue, copilot, audit] = await Promise.all([
     getAccountBadge(),
     getOverviewMetrics(),
-    getActivitySeries(30),
+    getActivitySeries(30).catch(() => []),
     getPriorityQueue(50),
     getCopilotSignal(),
-    listAuditPage({ from: range.from, to: range.to }, 1, 5),
+    listAuditPage({ from: range.from, to: range.to }, 1, 5).catch(() => ({ data: [], total: 0 })),
   ]);
 
   const hour = new Date().getHours();
@@ -137,7 +137,13 @@ export default async function AdminOverviewPage({
                 tone: 'info' as const,
               })),
             ]}
-          />
+          >
+            {totalActions === 0 ? (
+              <p className="os-row-copy">
+                <small>Pas encore d’activité journalisée — le graphique se remplit dès la première action auditée.</small>
+              </p>
+            ) : null}
+          </DataPanel>
           <FilterPanel
             label="DÉCISIONS"
             title="Priority Queue"
