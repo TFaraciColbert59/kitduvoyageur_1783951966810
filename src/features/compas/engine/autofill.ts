@@ -421,7 +421,9 @@ function plainMove(v: unknown): StageMove {
  * répondre n'importe quoi.
  */
 const STAGE_PREFIX =
-  /^(?:(?:jour|day)\s*\d+\s*[:\-–—]\s*)?(?:d[ée]part\s+(?:de|d['’]|du|des)|retour\s+(?:à|a|au|aux|vers)|arriv[ée]e\s+(?:à|a|au|aux|en)|nuit\s+(?:à|a|au|aux)|departure\s+from|return\s+to|arrival\s+(?:in|at)|back\s+to|drive\s+to|transfer\s+to)\s*/i;
+  // Prépositions de la plus longue à la plus courte, suivies d'un espace : « des
+  // Alpes » ne doit pas laisser « s Alpes », ni « au Havre » « u Havre ».
+  /^(?:(?:jour|day)\s*\d+\s*[:\-–—]\s*)?(?:(?:d[ée]part\s+(?:des|du|de)|retour\s+(?:aux|au|vers|à|a)|arriv[ée]e\s+(?:aux|au|en|à|a)|nuit\s+(?:aux|au|à|a)|departure\s+from|return\s+to|arrival\s+(?:in|at)|back\s+to|drive\s+to|transfer\s+to)\s+|d[ée]part\s+d['’]\s*)/i;
 
 export function stagePlaceName(raw: string | null): string | null {
   if (!raw) return raw;

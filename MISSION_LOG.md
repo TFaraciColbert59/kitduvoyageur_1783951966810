@@ -16,6 +16,7 @@
 - **Durée affichée** : sans date, l'en-tête montrait le temps de marche du tracé (« 7 j 18 h ») au lieu des 5 jours dits.
 - **Anglais** : « 5 days », « 2 weeks », « in July » compris par les règles.
 - **Bivouac / rando près d'une grande ville** : consigne au spécialiste de choisir un espace naturel à moins de 80 km, jamais le centre-ville (Lyon : Sathonay-Camp, Gleizé au lieu de Lyon/Villeurbanne).
+- Revue Codex : « Départ des Alpes » laissait « s Alpes » (prépositions de la plus longue à la plus courte, espace obligatoire) ; la remise en ordre n'a lieu que si l'itinéraire n'emploie qu'un moyen de transport (un vol ou un ferry reste lié à l'étape d'avant).
 - Note : en local sans `SUPABASE_SERVICE_ROLE_KEY`, le cache partagé reste en mémoire ; sur Vercel la clé est posée.
 - Preuves : tsc, eslint propres ; tests Compas 289/289 ; suite complète 21 échecs, tous préexistants.
 

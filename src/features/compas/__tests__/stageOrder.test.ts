@@ -61,5 +61,10 @@ describe('stagePlaceName', () => {
     expect(stagePlaceName('Jour 3 - Arrivée à Oban')).toBe('Oban');
     expect(stagePlaceName('Isle of Skye - Portree')).toBe('Isle of Skye - Portree');
     expect(stagePlaceName('Départementale')).toBe('Départementale');
+    expect(stagePlaceName('Départ des Alpes')).toBe('Alpes');
+    expect(stagePlaceName('Retour au Havre')).toBe('Havre');
+    expect(stagePlaceName('Arrivée aux Deux Alpes')).toBe('Deux Alpes');
+    expect(stagePlaceName("Départ d'Annecy")).toBe('Annecy');
+    expect(stagePlaceName('Départ du Puy')).toBe('Puy');
   });
 });

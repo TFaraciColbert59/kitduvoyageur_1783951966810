@@ -485,9 +485,14 @@ export async function compasAutofillAction(
           }));
         } else {
           if (dropped) notes.push(`${dropped} lieu(x) proposé(s) introuvable(s) sur la carte : étape gardée au lieu précédent.`);
-          // Circuit motorisé qui zigzague : séjours remis dans l'ordre le plus court
+          // Circuit sur route qui zigzague : séjours remis dans l'ordre le plus court
           // (arrivée et départ inchangés). Un trek ou un circuit à vélo suit son tracé.
-          if (!stagePlaces.some((st) => st.move === 'marche' || st.move === 'velo')) {
+          // Un seul moyen de transport (hors arrivée) : le déplacement reste
+          // juste quel que soit l'ordre ; un vol ou un ferry, lui, est lié à
+          // l'étape d'avant et ne se déplace pas.
+          const legModes = new Set(stagePlaces.slice(1).map((st) => st.move).filter((m) => m !== 'aucun'));
+          const oneMode = legModes.size <= 1 && !legModes.has('vol') && !legModes.has('bateau');
+          if (oneMode && !legModes.has('marche') && !legModes.has('velo')) {
             const tidy = untangleStages(stagePlaces);
             if (tidy.reordered) {
               stagePlaces = tidy.stages;
