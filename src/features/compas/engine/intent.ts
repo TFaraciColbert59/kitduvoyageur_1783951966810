@@ -34,6 +34,14 @@ export const COMPAS_ACTIVITIES = [
   'cultural',
   'bushcraft',
   'mixed',
+  'cycling',
+  'ski',
+  'mountaineering',
+  'climbing',
+  'water',
+  'citytrip',
+  'beach',
+  'vanlife',
 ] as const;
 export type CompasActivity = (typeof COMPAS_ACTIVITIES)[number];
 
@@ -349,7 +357,16 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
   else if (nights.size > 1) out.push({ type: 'set_nights', nights: 'mixte' });
 
   /* Activité (seulement quand elle est nommée) */
+  // Du plus précis au plus large : « ski de rando » est du ski, pas une rando.
   const activity: Array<[RegExp, CompasActivity]> = [
+    [/\b(ski|skis|skier|freeride|splitboard|raquettes?)\b/, 'ski'],
+    [/\b(alpinisme|alpi|cordee|glacier|course d'arete|4000)\b/, 'mountaineering'],
+    [/\b(escalade|grimpe|grimper|bloc|via ferrata|falaise)\b/, 'climbing'],
+    [/\b(velo|velos|bikepacking|cyclo|cyclotourisme|vtt|gravel)\b/, 'cycling'],
+    [/\b(kayak|canoe|canoes|paddle|packraft|rafting|voile|voilier|plongee|snorkeling|surf)\b/, 'water'],
+    [/\b(van|vanlife|camping[- ]car|fourgon|fourgonnette)\b/, 'vanlife'],
+    [/\b(city ?trip|citytrip)\b/, 'citytrip'],
+    [/\b(plage|plages|farniente|bord de mer|baignade)\b/, 'beach'],
     [/\b(rando|randos|randonnee|randonnees)\b/, 'hiking'],
     [/\btreks?\b|\btrekking\b/, 'trekking'],
     [/\broad ?trip\b/, 'roadtrip'],

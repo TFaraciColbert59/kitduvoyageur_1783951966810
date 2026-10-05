@@ -27,6 +27,7 @@ import {
   estimateCarTrip,
   estimateMeals,
   gearForNights,
+  gearForActivity,
   keepRuleForNights,
   keepRuleForActivity,
   nightsPrefFor,
@@ -661,7 +662,7 @@ export async function compasAutofillAction(
     const ruleNeeds = [...analysis.vitalGaps, ...analysis.recommendedGaps]
       .filter((g) => keepRuleForNights(g.category, nightTypes) && keepRuleForActivity(g.key, activity))
       .map(needFromRule);
-    for (const g of [...gearForNights(nightTypes), ...ruleNeeds])
+    for (const g of [...gearForActivity(activity), ...gearForNights(nightTypes), ...ruleNeeds])
       if (!needs.some((n) => sameNeed(n, g))) needs.push(g);
     const shop: SourceShop[] = ((shopRows ?? []) as Array<Record<string, unknown>>).map((p) => ({
       id: String(p.id),

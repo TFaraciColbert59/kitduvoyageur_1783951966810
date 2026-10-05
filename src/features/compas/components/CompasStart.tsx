@@ -7,10 +7,10 @@ import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import Icon from '@/components/ui/Icon';
 import { COMPAS_STEPS } from '../engine/compasModel';
-import { COMPAS_ACTIVITIES, parseIntentRules, type CompasActivity } from '../engine/intent';
+import { parseIntentRules, type CompasActivity } from '../engine/intent';
 import { activityLabel } from '../engine/format';
 import { compasCreateTripAction } from '../server/compasActions';
-import { ACTIVITY_META } from './CompasOuFlows';
+import { ACTIVITY_FIRST, ACTIVITY_META, ACTIVITY_ORDER } from './CompasOuFlows';
 
 /** Phrase tapée avant la création : le Compas la comprend juste après. */
 export const START_SAY_KEY = 'lkdv.compas.say';
@@ -31,6 +31,7 @@ export function CompasStart({
 }) {
   const router = useRouter();
   const [text, setText] = useState('');
+  const [allActivities, setAllActivities] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -131,7 +132,7 @@ export function CompasStart({
           </form>
 
           <div className="cp-tiles" role="group" aria-label="Activité">
-            {COMPAS_ACTIVITIES.map((a) => (
+            {(allActivities ? ACTIVITY_ORDER : ACTIVITY_FIRST).map((a) => (
               <button
                 key={a}
                 type="button"
@@ -144,6 +145,18 @@ export function CompasStart({
                 <span>{activityLabel(a)}</span>
               </button>
             ))}
+            {!allActivities && (
+              <button
+                type="button"
+                className="cp-tile"
+                disabled={pending}
+                aria-expanded={false}
+                onClick={() => setAllActivities(true)}
+              >
+                <Icon name="more-horizontal" size={22} />
+                <span>Plus</span>
+              </button>
+            )}
           </div>
 
           <div className="cp-fsum cp-glass">

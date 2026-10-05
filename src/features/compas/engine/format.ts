@@ -204,7 +204,7 @@ const ACTIVITIES: Record<string, string> = {
   climbing: 'Escalade',
   alpinisme: 'Alpinisme',
   mountaineering: 'Alpinisme',
-  ski: 'Ski de randonnée',
+  ski: 'Ski',
   kayak: 'Kayak',
   travel: 'Voyage',
   voyage: 'Voyage',
@@ -214,6 +214,10 @@ const ACTIVITIES: Record<string, string> = {
   cultural: 'Culturel',
   bushcraft: 'Bushcraft',
   mixed: 'Mixte',
+  water: 'Eau',
+  citytrip: 'City trip',
+  beach: 'Plage',
+  vanlife: 'Van',
 };
 
 export function activityLabel(activity: string | null): string | null {

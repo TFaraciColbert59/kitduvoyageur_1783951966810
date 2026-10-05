@@ -1,5 +1,14 @@
 # MISSION LOG — LKDV
 
+## 2026-10-05 — Lot 1 : tout type de sortie
+
+- **8 activités ajoutées** (enum `trip_activity_type`, migration additive appliquée) : vélo, ski, alpinisme, escalade, eau (kayak, canoë, voile, plongée), city trip, plage, van. « Mixte » couvre « autre ».
+- **« Dis-le »** les reconnaît (« ski de rando » → ski, « via ferrata » → escalade, « camping-car » → van…), l'IA aussi (liste de son schéma).
+- **Kit propre à l'activité** (avant les règles générales) : DVA/pelle/sonde au ski, crampons/piolet/baudrier/casque/lunettes cat. 4 en alpinisme, baudrier/casque/assurage en escalade, gilet et sac étanche sur l'eau, casque/réparation/éclairage à vélo, couchage en van. Les règles montagne sont filtrées en ville, à la plage et en van.
+- **Nuits** : sous un toit par défaut en ville, à la plage, en van et au ski (la préférence dite prime). **Itinéraires** : consignes par activité au spécialiste (vélo 50 à 100 km/j, base fixe pour ski/alpi/escalade/plage, côte ou rivière pour l'eau).
+- **Écran de départ** : 7 activités courantes + « Plus » (toutes, « Mixte » en dernier) ; la carte défile au lieu d'être coupée ; la pastille « La carte se remplit… » ne sort plus de l'écran à gauche.
+- Preuves : tsc, eslint propres ; tests Compas + IA + trips + hub 425/426 (`TEST-REG-01` préexistant) ; captures 390 px vérifiées.
+
 ## 2026-10-05 — Lot 0 (suite) : Explorer intégré, préremplissage en deux temps, cache partagé, relief libre
 
 - **Explorer** : `feat/explorer-mobile-osm` fusionnée (OSM mondial, POI, fiche sentier enrichie). Seul conflit : registre IA, les deux côtés gardés.

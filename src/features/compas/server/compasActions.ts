@@ -453,6 +453,14 @@ const ACTIVITIES = [
   'cultural',
   'bushcraft',
   'mixed',
+  'cycling',
+  'ski',
+  'mountaineering',
+  'climbing',
+  'water',
+  'citytrip',
+  'beach',
+  'vanlife',
 ] as const;
 const activitySchema = z.object({ tripId: uuid, tripSlug: slug, activity: z.enum(ACTIVITIES) });
 
@@ -1789,6 +1797,14 @@ const CREATE_LABEL: Record<(typeof ACTIVITIES)[number], string> = {
   cultural: 'Culturel',
   bushcraft: 'Bushcraft',
   mixed: 'Mixte',
+  cycling: 'Vélo',
+  ski: 'Ski',
+  mountaineering: 'Alpinisme',
+  climbing: 'Escalade',
+  water: 'Eau',
+  citytrip: 'City trip',
+  beach: 'Plage',
+  vanlife: 'Van',
 };
 
 /**

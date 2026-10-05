@@ -97,7 +97,7 @@ const CONTRACT = [
   '  {"type": "set_budget", "amount": 300},',
   '  {"type": "set_pace", "pace": "tranquille | normal | soutenu"},',
   '  {"type": "set_nights", "nights": "bivouac | refuge | hebergement | mixte"},',
-  '  {"type": "set_activity", "activity": "hiking | trekking | bivouac | roadtrip | cultural | bushcraft | mixed"},',
+  '  {"type": "set_activity", "activity": "hiking | trekking | bivouac | roadtrip | cultural | bushcraft | cycling | ski | mountaineering | climbing | water | citytrip | beach | vanlife | mixed"},',
   '  {"type": "avoid", "label": "ce qu il faut eviter, 1 a 5 mots"},',
   '  {"type": "wish", "label": "une envie, 1 a 5 mots"},',
   '  {"type": "add_item", "name": "objet a ajouter au sac", "quantity": 1},',

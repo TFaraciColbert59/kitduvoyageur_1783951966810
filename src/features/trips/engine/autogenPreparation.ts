@@ -323,7 +323,15 @@ export type AutogenTripActivity =
   | 'roadtrip'
   | 'cultural'
   | 'bushcraft'
-  | 'mixed';
+  | 'mixed'
+  | 'cycling'
+  | 'ski'
+  | 'mountaineering'
+  | 'climbing'
+  | 'water'
+  | 'citytrip'
+  | 'beach'
+  | 'vanlife';
 
 export type AutogenTripDifficulty = 'easy' | 'moderate' | 'hard' | 'expert';
 

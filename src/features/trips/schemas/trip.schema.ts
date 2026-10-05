@@ -21,6 +21,14 @@ export const tripActivityTypeEnum = z.enum([
   'cultural',
   'bushcraft',
   'mixed',
+  'cycling',
+  'ski',
+  'mountaineering',
+  'climbing',
+  'water',
+  'citytrip',
+  'beach',
+  'vanlife',
 ]);
 
 export const tripDifficultyEnum = z.enum([
