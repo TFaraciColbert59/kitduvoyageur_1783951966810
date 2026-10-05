@@ -14,6 +14,7 @@ import {
   getDifficultyLabel,
   formatDistance,
   formatDuration,
+  estimateHikingDurationHours,
 } from './types';
 
 interface Props {
@@ -24,11 +25,11 @@ interface Props {
 }
 
 export default function ExplorerListCard({ trail, isSelected, onClick }: Props) {
-  const imgUrl = getTrailImage(trail.id);
+  const imgUrl = trail.image_url || getTrailImage(trail.id, trail.name);
   const diffColor = getDifficultyColor(trail.difficulty);
   const diffLabel = getDifficultyLabel(trail.difficulty);
   const dist = formatDistance(trail.distance_km);
-  const dur = formatDuration(trail.duration_hours);
+  const dur = formatDuration(trail.duration_hours || estimateHikingDurationHours(trail.distance_km, trail.elevation_gain));
   const score = trail.adventure_score ? Math.round(trail.adventure_score) : null;
 
   return (

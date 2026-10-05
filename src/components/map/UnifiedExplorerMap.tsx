@@ -1331,7 +1331,7 @@ export default function UnifiedExplorerMap({
   const bottomControlsOffset = compact
     ? 'bottom-[calc(var(--safe-bottom)+10.5rem)]'
     : safeControls
-      ? 'bottom-[calc(var(--nav-offset)+36px+var(--explorer-carousel-height,0px))]'
+      ? 'bottom-[calc(var(--nav-offset)+14px+var(--explorer-carousel-height,0px))]'
       : 'bottom-4';
   const rightControlsPosition = compact
     ? 'right-[68px] top-[calc(var(--safe-top)+112px)]'
@@ -1339,7 +1339,7 @@ export default function UnifiedExplorerMap({
 
   const attributionPosition = compact
     ? 'right-3 top-[calc(var(--safe-top)+174px)]'
-    : 'right-3 top-[calc(var(--safe-top)+16px)] md:right-auto md:left-1/2 md:-translate-x-1/2 md:bottom-[calc(var(--safe-bottom)+2px)] md:top-auto';
+    : 'left-3.5 bottom-[calc(var(--nav-offset)+2px+var(--explorer-carousel-height,0px))] md:right-auto md:left-1/2 md:-translate-x-1/2 md:bottom-[calc(var(--safe-bottom)+2px)] md:top-auto';
 
   const desktopTilesOffset = safeControls
     ? 'md:bottom-[calc(var(--nav-offset)+36px)]'
@@ -1388,13 +1388,14 @@ export default function UnifiedExplorerMap({
         >
           <Button
             variant="secondary"
+            size="sm"
             onClick={handleToggleGlobe}
-            className="min-h-[48px] px-4 shadow-lg"
+            className="h-10 px-3.5 shadow-lg backdrop-blur-[var(--blur-xl)]"
             aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
             aria-pressed={viewMode === 'globe'}
           >
-            <Icon name="compass" size={15} />
-            <span className="whitespace-nowrap text-[length:var(--lkv-text-caption)] font-bold">
+            <Icon name="compass" size={14} />
+            <span className="whitespace-nowrap text-[length:var(--lkv-text-caption-2)] font-bold">
               {viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
             </span>
           </Button>
@@ -1508,10 +1509,10 @@ export default function UnifiedExplorerMap({
         </div>
       )}
 
-      {/* Fond de carte — mobile : icônes en haut à gauche ; desktop : libellés en bas à gauche */}
+      {/* Fond de carte — mobile : icônes compactes en haut à gauche ; desktop : libellés en bas à gauche */}
       {!compact && (
       <div
-        className={`absolute left-3 top-[calc(var(--safe-top)+10px)] md:top-auto ${desktopTilesOffset} z-[var(--z-fab)]`}
+        className={`absolute left-3.5 top-[calc(var(--safe-top)+14px)] md:top-auto ${desktopTilesOffset} z-[var(--z-fab)]`}
         data-atlas-controls="tiles"
       >
         <Tabs
@@ -1520,11 +1521,11 @@ export default function UnifiedExplorerMap({
           options={TILE_MODES.map((mode) => ({
             id: mode,
             label: mode === 'topo' ? 'Relief' : mode === 'osm' ? 'Plan' : 'Satellite',
-            icon: <Icon name={mode === 'topo' ? 'mountain' : mode === 'osm' ? 'map' : 'layers'} size={16} />,
+            icon: <Icon name={mode === 'topo' ? 'mountain' : mode === 'osm' ? 'map' : 'layers'} size={15} />,
           }))}
           value={tileMode}
           onChange={(id) => setTileMode(id as AtlasTileMode)}
-          className="shadow-lg"
+          className="shadow-lg max-w-[105px] sm:max-w-none [&_button]:px-2.5 sm:[&_button]:px-[var(--space-4)] [&_button>span]:hidden sm:[&_button>span]:inline"
         />
       </div>
       )}
