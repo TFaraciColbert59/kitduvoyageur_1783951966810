@@ -10,6 +10,7 @@ import {
   resplitSteps,
   type Supa,
 } from './compasServer';
+import { lookupDestination } from './placeLookup';
 import { getTripById } from '@/lib/queries-trips';
 import { addTripItem } from '@/lib/queries-trip-kit';
 import { askAI } from '@/lib/ai/askAI';
@@ -514,6 +515,98 @@ export async function compasSetPreferencesAction(
     return { success: true };
   } catch (err) {
     console.error('[compas] compasSetPreferencesAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+const destinationSchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  /** Lieu tel que nommé (pays, région, ville, massif) ; null efface la destination. */
+  place: z.string().trim().min(2).max(80).nullable(),
+});
+
+/**
+ * Destination du voyage, retrouvée sur la carte (OpenStreetMap) : nom, code
+ * pays et position servent ensuite au préremplissage. Un lieu que la carte ne
+ * connaît pas est refusé, jamais deviné.
+ */
+export async function compasSetDestinationAction(
+  input: z.input<typeof destinationSchema>
+): Promise<CompasActionResult> {
+  const parsed = destinationSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Lieu invalide' };
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    const place = parsed.data.place ? await lookupDestination(parsed.data.place) : null;
+    if (parsed.data.place && !place)
+      return { success: false, error: `« ${parsed.data.place} » introuvable sur la carte.` };
+    const metadata = await patchTripMetadata(auth.supabase, parsed.data.tripId, (m) => {
+      const c = compasMeta(m);
+      if (place)
+        c.anchor = {
+          name: place.name,
+          lat: Math.round(place.lat * 1e5) / 1e5,
+          lon: Math.round(place.lon * 1e5) / 1e5,
+          countryCode: place.countryCode,
+          country: place.country,
+          kind: place.kind,
+          extent: place.extent,
+        };
+      else delete c.anchor;
+      return { ...m, compas: c };
+    });
+    // Titre encore générique (« Trek · nouvelle aventure ») : il prend le nom du lieu.
+    const title = auth.trip.title ?? '';
+    const generic = title.endsWith('nouvelle aventure');
+    const { error } = await auth.supabase
+      .from('trips')
+      .update({
+        destination_name: place?.name ?? null,
+        destination_country_code: place?.countryCode ?? null,
+        metadata,
+        ...(place && generic ? { title: title.replace(/nouvelle aventure$/, place.name) } : {}),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', parsed.data.tripId);
+    if (error) return { success: false, error: 'Impossible d’enregistrer la destination.' };
+    return { success: true };
+  } catch (err) {
+    console.error('[compas] compasSetDestinationAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+const spanSchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  days: z.number().int().min(1).max(60).nullable(),
+});
+
+/** Durée voulue quand la date de départ n'est pas encore choisie (« 20 jours »). */
+export async function compasSetSpanAction(
+  input: z.input<typeof spanSchema>
+): Promise<CompasActionResult> {
+  const parsed = spanSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Durée invalide' };
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    const metadata = await patchTripMetadata(auth.supabase, parsed.data.tripId, (m) => {
+      const c = compasMeta(m);
+      if (parsed.data.days == null) delete c.planned_days;
+      else c.planned_days = parsed.data.days;
+      return { ...m, compas: c };
+    });
+    const { error } = await auth.supabase
+      .from('trips')
+      .update({ metadata, updated_at: new Date().toISOString() })
+      .eq('id', parsed.data.tripId);
+    if (error) return { success: false, error: 'Impossible d’enregistrer la durée.' };
+    return { success: true };
+  } catch (err) {
+    console.error('[compas] compasSetSpanAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -1552,11 +1645,7 @@ export async function compasInterpretAction(
     const refused = ai
       .filter((a) => groundingIssue(a, text) != null)
       .map((a) => ({ action: a, source: 'ia' as const, issue: groundingIssue(a, text) }));
-    const merged = mergeActions(grounded, rules);
-    const taken = new Set(merged.map((m) => m.action.type));
-    const list = [...merged, ...refused.filter((r) => !taken.has(r.action.type))];
-
-    const proposals = validateActions(list, {
+    const ctx = {
       today,
       startDate,
       endDate,
@@ -1564,7 +1653,20 @@ export async function compasInterpretAction(
       currency: trip.budget_currency ?? 'EUR',
       avoid: prefs?.avoid ?? [],
       wishes: prefs?.wishes ?? [],
-    });
+    };
+    // Une proposition de l'IA que le Compas refuse (date passée, mauvaise année…)
+    // ne masque pas la lecture correcte des règles pour le même réglage.
+    const ruleTypes = new Set(rules.map((r) => r.type));
+    const aiKept = grounded.filter(
+      (a) =>
+        !ruleTypes.has(a.type) ||
+        validateActions([{ action: a, source: 'ia' as const }], ctx)[0]?.ok !== false
+    );
+    const merged = mergeActions(aiKept, rules);
+    const taken = new Set(merged.map((m) => m.action.type));
+    const list = [...merged, ...refused.filter((r) => !taken.has(r.action.type))];
+
+    const proposals = validateActions(list, ctx);
     return { success: true, proposals, usedAi, note };
   } catch (err) {
     console.error('[compas] compasInterpretAction', err);

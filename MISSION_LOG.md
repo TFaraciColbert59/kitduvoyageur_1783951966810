@@ -1,5 +1,14 @@
 # MISSION LOG — LKDV
 
+## 2026-10-03 — Compas : préremplissage pour n'importe quelle destination
+
+- **Dis-le comprend la destination** (« au Népal », « en Islande », « à Chamonix », « dans le Vercors ») : `set_destination`, retrouvée sur la carte (Photon/OSM : nom, code pays ISO, emprise) par `compasSetDestinationAction` ; refusée si la carte ne la connaît pas. Durée sans date de départ gardée (`compasSetSpanAction`, « 20 jours »). La phrase du départ s'écrit directement (annulable). Une date proposée par l'IA et refusée ne masque plus la bonne lecture des règles.
+- **Itinéraire jour par jour** : Nemotron propose un lieu de nuit et un moyen de déplacement par jour (format compact, sans raisonnement : ~7 s), chaque lieu est retrouvé sur la carte dans le pays, à une distance plausible de la veille, village de préférence ; distances mesurées (marche, vélo, route), altitude réelle (Open-Meteo) → acclimatation et kit d'altitude.
+- **Venir et se déplacer** : route mesurée sous 900 km, sinon vol (estimation IA, à confirmer dans Résa · Vols) ; carburant sur place mesuré et location de voiture (road trip après un vol) ; transports sur place (bus, train, vol intérieur).
+- **Étranger** : visa, permis (TIMS, parcs…), assurance rapatriement chiffrés par l'IA, toujours « estimation ». Kit et nuits selon l'activité (culturel : sous un toit, ni bâtons ni sifflet).
+- Vérifié de bout en bout sur le compte démo : Népal 20 j (camp de base de l'Everest, Lukla en avion, 5 164 m, permis), Islande 7 j en road trip (Ring Road, 1 261 km mesurés, location), Japon 10 j culturel (Tokyo → Kyoto → Nara → Osaka → Hiroshima → Miyajima → Hakone, 4 objets au kit).
+- Preuves : `tsc` 0 ; `eslint` 0 ; Compas 223 tests.
+
 ## 2026-10-02 — Compas : gestes instantanés, Parcours autour de moi, invitations d'équipe, préremplissage
 
 - **Fluidité** : plus de `revalidatePath` dans les actions du Compas (pages dynamiques) ; l'îlot s'affiche au geste, l'enregistrement et le rafraîchissement suivent en arrière-plan ; chargements en parallèle ; droits vérifiés en une lecture (#62).

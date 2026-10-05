@@ -296,7 +296,7 @@ export function estimateMeals(input: {
 
 /* ---------- Budget ---------- */
 
-export type BudgetCategory = 'hébergement' | 'transport' | 'nourriture' | 'matériel' | 'activités';
+export type BudgetCategory = 'hébergement' | 'transport' | 'nourriture' | 'matériel' | 'activités' | 'divers';
 export type AmountSource = 'base' | 'mesure' | 'estimation';
 
 export interface BudgetLine {
@@ -323,7 +323,25 @@ export function budgetTotal(lines: BudgetLine[]): number {
 export interface AutofillAiAdvice {
   mealsPerPersonDay: number | null;
   lodgingPerPersonNight: number | null;
+  /** Vol aller-retour par personne depuis le départ (voyage lointain). */
+  flightPerPerson: number | null;
+  /** Déplacements sur place entre les étapes (bus, jeep, train, taxi…), par personne. */
+  localTransportPerPerson: number | null;
+  /** Location d'une voiture, par voiture et par jour (road trip après un vol). */
+  carRentalPerDay: number | null;
+  /** Visa, permis, taxes d'entrée, par personne. */
+  entryFeesPerPerson: number | null;
+  entryFeesDetail: string | null;
+  /** Assurance voyage / rapatriement conseillée, par personne. */
+  insurancePerPerson: number | null;
   notes: string[];
+}
+
+function cleanText(v: unknown, max: number): string | null {
+  if (typeof v !== 'string') return null;
+  const t = v.trim().replace(/\s+/g, ' ');
+  if (t.length < 3) return null;
+  return t.length > max ? `${t.slice(0, max - 1)}…` : t;
 }
 
 /** Ce que l'IA renvoie est borné : un chiffre hors des limites réalistes est ignoré. */
@@ -335,17 +353,94 @@ export function sanitizeAdvice(raw: unknown): AutofillAiAdvice {
   };
   const notes = Array.isArray(r.notes)
     ? r.notes
-        .filter((n): n is string => typeof n === 'string')
-        .map((n) => n.trim().replace(/\s+/g, ' '))
-        .filter((n) => n.length >= 8)
-        .map((n) => (n.length > 180 ? `${n.slice(0, 177)}…` : n))
+        .map((n) => cleanText(n, 180))
+        .filter((n): n is string => n != null && n.length >= 8)
         .slice(0, 3)
     : [];
   return {
     mealsPerPersonDay: num(r.meals_eur_per_person_day, 5, 80),
-    lodgingPerPersonNight: num(r.lodging_eur_per_person_night, 10, 250),
+    lodgingPerPersonNight: num(r.lodging_eur_per_person_night, 5, 250),
+    flightPerPerson: num(r.flight_eur_per_person, 40, 5000),
+    localTransportPerPerson: num(r.local_transport_eur_per_person, 1, 3000),
+    carRentalPerDay: num(r.car_rental_eur_per_day, 15, 500),
+    entryFeesPerPerson: num(r.entry_fees_eur_per_person, 1, 1500),
+    entryFeesDetail: cleanText(r.entry_fees_detail, 140),
+    insurancePerPerson: num(r.insurance_eur_per_person, 5, 800),
     notes,
   };
+}
+
+/* ---------- Itinéraire proposé par l'IA ---------- */
+
+export type StageMove = 'vol' | 'voiture' | 'bus' | 'train' | 'bateau' | 'marche' | 'velo' | 'aucun';
+const MOVES = new Set<StageMove>(['vol', 'voiture', 'bus', 'train', 'bateau', 'marche', 'velo', 'aucun']);
+
+export interface ProposedStage {
+  day: number;
+  place: string;
+  /** Comment on rejoint ce lieu depuis celui de la veille. */
+  move: StageMove;
+  note: string | null;
+}
+
+/**
+ * Une étape par jour, de 1 à `days`, chacune avec un lieu. Un jour manquant
+ * reprend le lieu de la veille (repos, acclimatation). Rien n'est inventé ici :
+ * le lieu sera ensuite retrouvé sur la carte, ou écarté.
+ */
+export function sanitizeStages(raw: unknown, days: number): ProposedStage[] {
+  const r = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+  // Format compact [jour, lieu, move, note] ou objet {day, place, move, note}.
+  const list = (Array.isArray(r.stages) ? (r.stages as unknown[]) : []).map((x) =>
+    Array.isArray(x) ? { day: x[0], place: x[1], move: x[2], note: x[3] } : (x as Record<string, unknown>)
+  );
+  const byDay = new Map<number, ProposedStage>();
+  for (const st of list) {
+    const day = Number(st?.day);
+    const place = cleanText(st?.place, 80);
+    if (!Number.isInteger(day) || day < 1 || day > days || !place || byDay.has(day)) continue;
+    const move = String(st?.move ?? '').toLowerCase() as StageMove;
+    byDay.set(day, {
+      day,
+      place,
+      move: MOVES.has(move) ? move : 'aucun',
+      note: cleanText(st?.note, 140),
+    });
+  }
+  if (!byDay.size) return [];
+  const out: ProposedStage[] = [];
+  let last: ProposedStage | null = null;
+  for (let d = 1; d <= days; d += 1) {
+    const st: ProposedStage | null =
+      byDay.get(d) ?? (last ? { day: d, place: last.place, move: 'aucun', note: null } : null);
+    if (st) {
+      out.push(st);
+      last = st;
+    }
+  }
+  return out;
+}
+
+export const STEP_TRANSPORT: Record<StageMove, 'foot' | 'car' | 'bus' | 'train' | 'plane' | 'boat' | 'bike' | 'other'> = {
+  vol: 'plane',
+  voiture: 'car',
+  bus: 'bus',
+  train: 'train',
+  bateau: 'boat',
+  marche: 'foot',
+  velo: 'bike',
+  aucun: 'foot',
+};
+
+/* ---------- Venir jusqu'au départ ---------- */
+
+/** Au-delà, la route n'est plus un trajet raisonnable : on part en avion. */
+export const FLIGHT_THRESHOLD_KM = 900;
+
+export function approachMode(input: { straightKm: number }): 'sur_place' | 'route' | 'avion' {
+  if (input.straightKm < 0.5) return 'sur_place';
+  if (input.straightKm > FLIGHT_THRESHOLD_KM) return 'avion';
+  return 'route';
 }
 
 /**
@@ -380,4 +475,43 @@ export function keepRuleForNights(category: string, types: NightType[]): boolean
 /** Deux besoins désignent le même objet (la tente du bivouac et celle des règles). */
 export function sameNeed(a: GearNeed, b: GearNeed): boolean {
   return a.key === b.key || covers(a, b.name) || covers(b, a.name);
+}
+
+/** Carburant pour des kilomètres mesurés sur place (mêmes hypothèses que le trajet). */
+export function fuelForKm(km: number, partySize: number): { fuelEur: number; cars: number } {
+  const cars = Math.max(1, Math.ceil(Math.max(1, partySize) / CAR_ASSUMPTIONS.seats));
+  return {
+    cars,
+    fuelEur: Math.round(((km * CAR_ASSUMPTIONS.litersPer100Km) / 100) * CAR_ASSUMPTIONS.fuelEurPerLiter * cars),
+  };
+}
+
+/**
+ * Les règles de matériel sont pensées pour la montagne : pour un séjour
+ * culturel ou un road trip, seules celles qui servent vraiment restent.
+ */
+const CITY_KEYS = new Set(['first-aid', 'powerbank', 'sunscreen', 'sunglasses', 'rain-poncho', 'water-bottle']);
+const ROAD_EXCLUDED = new Set([
+  'tent-2p',
+  'sleeping-mat',
+  'stove',
+  'fire-starter',
+  'trekking-poles',
+  'crampons',
+  'whistle',
+  'water-filter',
+  'backpack',
+]);
+
+export function keepRuleForActivity(key: string, activity: string): boolean {
+  if (activity === 'cultural') return CITY_KEYS.has(key);
+  if (activity === 'roadtrip') return !ROAD_EXCLUDED.has(key);
+  return true;
+}
+
+/** Un séjour culturel ou un road trip dort sous un toit, sauf préférence dite. */
+export function nightsPrefFor(activity: string, pref: NightsPref): NightsPref {
+  if ((activity === 'cultural' || activity === 'roadtrip') && (pref == null || pref === 'mixte'))
+    return 'hebergement';
+  return pref;
 }

@@ -3,14 +3,16 @@ import type { AIRequest, AIResponse } from '../providers/types';
 /**
  * Feature « compas-autofill » — le spécialiste senior de la préparation.
  *
- * Le moteur (`features/compas/engine/autofill.ts`) a déjà choisi les nuits,
- * mesuré le trajet, trouvé le matériel et lu les prix en base. Le modèle
- * relit ces faits comme un préparateur expérimenté : il chiffre ce que la base
- * ne connaît pas (repas, hébergement sans prix) et signale ce qui manque.
- * Sa réponse est bornée par `sanitizeAdvice` : un chiffre hors limites est
- * ignoré et le repli déterministe s'applique.
+ * Deux temps, deux appels :
+ *  1. ÉTAPES : il propose un itinéraire jour par jour (lieux réels, moyen de
+ *     déplacement, jours d'acclimatation). Chaque lieu est ensuite retrouvé
+ *     sur la carte dans le pays du voyage, ou écarté (`sanitizeStages`).
+ *  2. CHIFFRAGE : sur les faits calculés (nuits, trajet mesuré, matériel,
+ *     prix en base), il chiffre ce que la base ne connaît pas — repas,
+ *     hébergement, vol, transports sur place, visa et permis, assurance —
+ *     borné par `sanitizeAdvice` et toujours affiché comme une estimation.
  *
- * tier `heavy` (raisonnement utile pour chiffrer), cache 0 : chaque voyage est unique.
+ * tier `heavy` (raisonnement utile), cache 0 : chaque voyage est unique.
  */
 
 export const COMPAS_AUTOFILL_SPEC = {
@@ -20,17 +22,62 @@ export const COMPAS_AUTOFILL_SPEC = {
   maxPerUserPerDay: 20,
 };
 
+export function buildCompasStagesSystem(): string {
+  return [
+    'Tu es le specialiste senior de la preparation de voyages et d activites outdoor d une application francaise.',
+    'Tu construis un itineraire realiste JOUR PAR JOUR pour la destination, la duree et l activite donnees.',
+    'Regles imperatives :',
+    '1. Reponds UNIQUEMENT par un objet JSON compact, une ligne par jour : {"stages": [[1, "lieu", "move", "note"], [2, "lieu", "move", ""]]}.',
+    '2. Une ligne par jour, de 1 au nombre de jours, sans trou. "lieu" = le village, la ville, le refuge ou le hameau REEL ou l on DORT ce soir-la (le dernier jour : le dernier lieu), dans le pays de la destination, ecrit comme sur une carte, sans commentaire.',
+    '3. "move" = comment on rejoint ce lieu depuis celui de la veille : vol | voiture | bus | train | bateau | marche | velo | aucun (jour sur place, repos ou acclimatation). Le jour 1 : arrivee sur place.',
+    '4. Respecte l activite : un trek se fait a pied entre villages ou refuges ; un road trip en voiture ; un sejour culturel par villes.',
+    '5. Au-dessus de 2 500 m, prevois l acclimatation : pas plus de 300 a 500 m de denivele de couchage par jour au-dessus de 3 000 m, et un jour de repos tous les 3 a 4 jours.',
+    '6. Etapes faisables : 10 a 25 km par jour a pied selon le terrain, 300 km au plus par jour en voiture.',
+    '7. "note" : 0 a 6 mots utiles (sommet, col, visite, repos), sinon "". Aucun prix, aucun horaire.',
+  ].join('\n');
+}
+
+export function buildCompasStagesPrompt(input: {
+  destination: string;
+  country: string | null;
+  days: number;
+  activity: string;
+  partySize: number;
+  month: string | null;
+  pace: string | null;
+  wishes: string[];
+  avoid: string[];
+}): string {
+  return [
+    `Destination : ${input.destination}${input.country ? ` (${input.country})` : ''}.`,
+    `Duree : ${input.days} jour(s). Activite : ${input.activity}. Groupe : ${input.partySize} personne(s).`,
+    input.month ? `Periode : ${input.month}.` : 'Periode : non choisie.',
+    input.pace ? `Rythme : ${input.pace}.` : '',
+    input.wishes.length ? `Envies : ${input.wishes.join(', ')}.` : '',
+    input.avoid.length ? `A eviter : ${input.avoid.join(', ')}.` : '',
+    'Renvoie le JSON demande.',
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
 export function buildCompasAutofillSystem(): string {
   return [
     'Tu es le specialiste senior de la preparation de voyages et d activites outdoor d une application francaise.',
-    'Une application t envoie les faits deja calcules (lieu, dates, groupe, nuits, trajet mesure, materiel, prix lus en base).',
-    'Ta mission : completer le chiffrage et relire la preparation comme un professionnel.',
+    'Une application t envoie les faits deja calcules (lieu, dates, groupe, itineraire, nuits, trajet, materiel, prix lus en base).',
+    'Ta mission : completer le chiffrage en euros et relire la preparation comme un professionnel.',
     'Regles imperatives :',
-    '1. Reponds UNIQUEMENT par un objet JSON : {"meals_eur_per_person_day": number|null, "lodging_eur_per_person_night": number|null, "notes": string[]}.',
-    '2. meals_eur_per_person_day : cout realiste des repas par personne et par jour pour CE lieu, CETTE saison et CES nuits (refuge en demi-pension, bivouac auto-prepare, hebergement en ville).',
-    '3. lodging_eur_per_person_night : prix moyen realiste d une nuit pour les nuits « hebergement » sans prix connu, dans CETTE region ; null s il n y en a pas.',
-    '4. notes : 0 a 3 conseils d action courts en francais, chacun utile et fonde sur les faits (objet introuvable a se procurer, nuit a reserver, trajet long, altitude, saison). Ne repete pas les faits, ne decris pas le lieu, ne contredis jamais les listes de materiel. Pas de reassurance, pas de score. Mieux vaut aucune note qu une note vague.',
-    '5. N invente aucun lieu, produit, horaire ni prix de partenaire. Si tu ne sais pas, mets null.',
+    '1. Reponds UNIQUEMENT par un objet JSON avec ces cles (null si sans objet ou si tu ne sais pas) :',
+    '   {"meals_eur_per_person_day": number|null, "lodging_eur_per_person_night": number|null, "flight_eur_per_person": number|null, "local_transport_eur_per_person": number|null, "car_rental_eur_per_day": number|null, "entry_fees_eur_per_person": number|null, "entry_fees_detail": string|null, "insurance_eur_per_person": number|null, "notes": string[]}',
+    '2. meals : cout realiste des repas par personne et par jour pour CE pays, CETTE saison et CES nuits.',
+    '3. lodging : prix moyen d une nuit par personne pour les nuits « hebergement » sans prix connu, dans CE pays.',
+    '4. flight : SEULEMENT si les faits disent « vol a prevoir » : aller-retour par personne depuis le depart indique, prix moyen de la periode.',
+    '5. local_transport : SEULEMENT pour les deplacements en bus, jeep, train, vol interieur, bateau ou taxi listes dans les faits, total par personne (le carburant d une voiture est deja compte).',
+    '5b. car_rental : SEULEMENT si les faits disent « voiture de location a prevoir » : prix moyen d une voiture adaptee au groupe et au terrain, par jour, assurance de base comprise, pour CE pays et CETTE saison.',
+    '6. entry_fees : SEULEMENT si les faits disent « voyage a l etranger » : visa, permis de trek ou de parc, taxes d entree exigees pour CE pays et CETTE activite, total par personne ; entry_fees_detail les nomme en 12 mots au plus.',
+    '7. insurance : assurance voyage avec rapatriement adaptee (altitude, pays), par personne, si a l etranger ou en montagne.',
+    '8. notes : 0 a 3 conseils d action courts en francais, fondes sur les faits (objet introuvable a se procurer, reservation, vaccin, saison, altitude). Ne repete pas les faits, ne contredis jamais les listes de materiel, pas de reassurance, pas de score.',
+    '9. N invente aucun nom de prestataire, aucun horaire. Si tu ne sais pas, mets null.',
   ].join('\n');
 }
 

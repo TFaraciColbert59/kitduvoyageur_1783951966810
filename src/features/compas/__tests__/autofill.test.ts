@@ -102,7 +102,7 @@ describe('repas, budget, avis IA', () => {
   it('un chiffre irréaliste de l’IA est ignoré, les notes sont courtes', () => {
     expect(
       sanitizeAdvice({ meals_eur_per_person_day: 900, lodging_eur_per_person_night: '45', notes: ['ok', 'Prévoir la frontale : nuit tombée à 18 h.'] })
-    ).toEqual({ mealsPerPersonDay: null, lodgingPerPersonNight: 45, notes: ['Prévoir la frontale : nuit tombée à 18 h.'] });
+    ).toMatchObject({ mealsPerPersonDay: null, lodgingPerPersonNight: 45, notes: ['Prévoir la frontale : nuit tombée à 18 h.'] });
   });
 });
 

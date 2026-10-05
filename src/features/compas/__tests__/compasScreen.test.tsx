@@ -213,7 +213,7 @@ const autofill = vi.hoisted(() => ({
         { night: 1, type: 'refuge', place: 'Refuge des Oulettes', reason: 'ton profil : confort' },
         { night: 2, type: 'bivouac', place: null, reason: 'ta préférence' },
       ],
-      transport: { km: 412.3, minutes: 250, walkKm: 0.8, fuelEur: 97, basis: '' },
+      transport: { mode: 'voiture', km: 412.3, minutes: 250, walkKm: 0.8, fuelEur: 97, basis: '' },
       kit: { inventaire: 2, pret: 0, location: 0, achat: 1, a_trouver: 1 },
       budget: [],
       total: 486,
@@ -783,14 +783,19 @@ describe('CompasScreen', () => {
     // Compteur : présents · en attente · total (l'invitée n'est pas encore dans le voyage).
     expect(within(sheet).getByText(/2 présents · 1 en attente/)).toBeTruthy();
     expect(within(sheet).getByText('Sam Crête')).toBeTruthy();
-    fireEvent.click(within(sheet).getByRole('button', { name: 'Annuler l’invitation de Sam Crête' }));
+    // L'envoi de l'invitation occupe l'écran un instant : on attend que le bouton revienne.
+    const cancel = within(sheet).getByRole('button', { name: 'Annuler l’invitation de Sam Crête' });
+    await waitFor(() => expect((cancel as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(cancel);
     await waitFor(() =>
       expect(compas.compasCancelInvitationAction).toHaveBeenCalledWith({
         tripId: TRIP,
         invitationId: 'b1c2d3e4-0000-4000-8000-0000000000bb',
       })
     );
-    fireEvent.click(within(sheet).getByRole('button', { name: 'Créer le lien d’invitation' }));
+    const linkBtn = within(sheet).getByRole('button', { name: 'Créer le lien d’invitation' });
+    await waitFor(() => expect((linkBtn as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(linkBtn);
     await waitFor(() =>
       expect(compas.compasInviteLinkAction).toHaveBeenCalledWith({ tripId: TRIP, role: 'viewer' })
     );

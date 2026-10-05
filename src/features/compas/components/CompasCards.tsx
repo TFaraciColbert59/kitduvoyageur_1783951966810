@@ -410,7 +410,7 @@ function AutofillLine({ ctl }: { ctl: CompasCtl }) {
         </button>
       </div>
     );
-  if (autofill === 'undone' && ctl.autofill && model.dates.start)
+  if (autofill === 'undone' && ctl.autofill && (model.dates.start || ctl.data.plannedDays))
     return (
       <button type="button" className="cp-btn cp-btn--pg" disabled={ctl.busy} onClick={ctl.autofill}>
         Tout préparer pour moi
