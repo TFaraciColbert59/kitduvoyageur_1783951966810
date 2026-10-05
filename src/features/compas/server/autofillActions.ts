@@ -1,7 +1,7 @@
 'use server';
 import type { InventoryStatus } from '@/features/materiel/domain/inventory';
 
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { askAI } from '@/lib/ai/askAI';
@@ -15,7 +15,7 @@ import {
 import { extractIntentJson } from '@/lib/ai/features/compasIntent';
 import { ARRIVAL_TOLERANCE_M, routeAttempt } from '@/features/adventure-prep/routingService';
 import { terrainElevations } from '@/lib/geo/terrainElevation';
-import { cached, coordKey } from './sharedCache';
+import { cached, coordKey, readShared, writeShared } from './sharedCache';
 import { haversineKm } from '@/features/adventure-prep/engine/routing';
 import { generateTripContextualKit } from '@/features/trips/engine/contextualKitEngine';
 import type { TripItem } from '@/features/trips/types/trip.types';
@@ -139,6 +139,8 @@ interface Refuge {
 }
 
 const HIKING_ACTIVITIES = new Set(['hiking', 'trekking', 'bivouac', 'mixed']);
+/** Activités qui changent de lieu chaque jour ou presque : un itinéraire figé sur un lieu est un échec. */
+const ITINERANT_ACTIVITIES = new Set(['roadtrip', 'vanlife', 'trekking', 'cycling']);
 const MS_DAY = 86_400_000;
 
 function tripDays(start: string | null, end: string | null): number | null {
@@ -409,17 +411,27 @@ export async function compasAutofillAction(
           wishes: compas.preferences?.wishes ?? [],
           avoid: compas.preferences?.avoid ?? [],
         });
-        // Un second essai si le premier échoue (modèle lent ou réponse illisible),
-        // tant qu'il reste du temps avant la limite du serveur.
-        let proposed: ReturnType<typeof sanitizeStages> = [];
-        for (let attempt = 0; attempt < 2 && !proposed.length; attempt += 1) {
-          if (attempt && Date.now() - startedAt > 25_000) break;
-          proposed = sanitizeStages(
-            // Même destination, durée, activité, mois et envies : même itinéraire
-            // de base, partagé une semaine (le premier essai seulement).
-            await askJson(userId, buildCompasStagesSystem(), stagesPrompt, 2000, false, attempt ? 0 : 7 * 86_400),
-            days
-          );
+        // Itinéraire de base partagé une semaine (même destination, durée,
+        // activité, mois et envies), mais seulement s'il est exploitable : une
+        // réponse illisible ou figée sur un seul lieu pour un circuit n'est ni
+        // gardée ni servie. Sinon on redemande, tant qu'il reste du temps.
+        const minPlaces = ITINERANT_ACTIVITIES.has(activity) && days >= 4 ? 3 : 1;
+        const usable = (st: ReturnType<typeof sanitizeStages>) =>
+          st.length > 0 && new Set(st.map((x) => x.place)).size >= minPlaces;
+        const stagesKey = createHash('sha256').update(`${buildCompasStagesSystem()}\n${stagesPrompt}`).digest('hex');
+        let proposed: ReturnType<typeof sanitizeStages> =
+          (await readShared<ReturnType<typeof sanitizeStages>>('stages', stagesKey)) ?? [];
+        if (!usable(proposed)) proposed = [];
+        for (let attempt = 0; attempt < 3 && !usable(proposed); attempt += 1) {
+          if (attempt && Date.now() - startedAt > 20_000) break;
+          const next = sanitizeStages(await askJson(userId, buildCompasStagesSystem(), stagesPrompt, 2000, false), days);
+          if (usable(next)) {
+            proposed = next;
+            await writeShared('stages', stagesKey, next, 7 * 86_400);
+          } else if (new Set(next.map((x) => x.place)).size > new Set(proposed.map((x) => x.place)).size) {
+            // Le moins mauvais en attendant mieux (jamais partagé).
+            proposed = next;
+          }
         }
         // Chaque lieu proposé doit exister sur la carte, dans le pays, et à une
         // distance plausible de l'étape de la veille (village de préférence).
@@ -434,6 +446,7 @@ export async function compasAutofillAction(
           const hit = pickPlace(byName.get(p.place) ?? [], {
             near: last ?? anchor,
             maxKm: maxLegKm(p.move, last == null, anchor.radiusKm),
+            query: p.place,
           });
           // Le titre garde le nom proposé (lisible) ; la position vient de la carte.
           if (hit) last = { name: p.place, lat: hit.lat, lon: hit.lon };

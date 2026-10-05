@@ -121,19 +121,53 @@ export function destinationRadiusKm(place: CompasPlace): number {
  */
 export function pickPlace(
   candidates: CompasPlace[],
-  opts: { countryCode?: string | null; near?: { lat: number; lon: number } | null; maxKm?: number } = {}
+  opts: {
+    countryCode?: string | null;
+    near?: { lat: number; lon: number } | null;
+    maxKm?: number;
+    /** Le nom cherché : un lieu qui le porte passe devant un village au nom voisin. */
+    query?: string;
+  } = {}
 ): CompasPlace | null {
   let list = candidates;
   if (opts.countryCode) list = list.filter((c) => c.countryCode === opts.countryCode);
   const near = opts.near;
+  const want = opts.query ? plainName(opts.query) : '';
   const ranked = list
-    .map((c, i) => ({ c, i, d: near ? distanceKm(near, c) : 0 }))
+    .map((c, i) => {
+      const n = plainName(c.name);
+      // Nom exact, ou nom plus long pour une localité seulement (« Chamonix » →
+      // « Chamonix-Mont-Blanc »), jamais « Isle of Skye Quarry » pour « Isle of Skye ».
+      const named = !want || n === want || (Boolean(c.settlement) && n.startsWith(`${want} `));
+      return { c, i, d: near ? distanceKm(near, c) : 0, named };
+    })
     // La distance ne sert qu'à écarter l'impossible : parmi le possible, l'ordre
     // de pertinence de la carte décide (le plus proche homonyme est souvent faux).
-    .filter((x) => opts.maxKm == null || x.d <= opts.maxKm)
-    // Un village plutôt qu'un hôtel ou un sommet du même nom ; puis la pertinence.
-    .sort((a, b) => Number(Boolean(b.c.settlement)) - Number(Boolean(a.c.settlement)) || a.i - b.i);
-  return ranked[0]?.c ?? null;
+    .filter((x) => opts.maxKm == null || x.d <= opts.maxKm);
+  // Le lieu qui porte le nom demandé d'abord (« Glen Coe » la vallée, pas le
+  // village anglais « Corby Glen » à 650 km) ; un village plutôt qu'un hôtel ou
+  // un sommet du même nom ; puis la pertinence. Aucun lieu au nom exact (nom
+  // traduit, « Isle of Skye » → « Île de Skye ») : la pertinence seule.
+  const named = ranked.filter((x) => x.named);
+  if (named.length) {
+    named.sort((a, b) => Number(Boolean(b.c.settlement)) - Number(Boolean(a.c.settlement)) || a.i - b.i);
+    return named[0].c;
+  }
+  if (!want) return ranked[0]?.c ?? null;
+  // Sinon, au moins un mot distinctif en commun (« Skye ») : jamais un lieu
+  // sans rapport que la carte renvoie faute de mieux.
+  const keys = distinctiveWords(want);
+  return ranked.find((x) => distinctiveWords(plainName(x.c.name)).some((w) => keys.includes(w)))?.c ?? null;
+}
+
+/** Mots trop communs pour identifier un lieu (« Isle », « Loch », « Saint »…). */
+const COMMON_WORDS = new Set([
+  'isle', 'island', 'lake', 'loch', 'mont', 'mount', 'saint', 'sainte', 'river', 'glen', 'port', 'north', 'south',
+  'east', 'west', 'nord', 'sud', 'est', 'ouest', 'grand', 'grande', 'petit', 'petite', 'valley', 'vallee', 'from',
+  'with', 'avec', 'pres', 'near', 'centre', 'center', 'city', 'ville', 'village', 'parc', 'park', 'national',
+]);
+function distinctiveWords(plain: string): string[] {
+  return plain.split(' ').filter((w) => w.length >= 4 && !COMMON_WORDS.has(w));
 }
 
 /** Distance plausible d'une étape à la suivante, selon le moyen de déplacement. */

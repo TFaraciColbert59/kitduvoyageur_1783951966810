@@ -414,6 +414,24 @@ function plainMove(v: unknown): StageMove {
   return 'aucun';
 }
 
+/**
+ * Le lieu seul, sans la phrase autour : « Départ de Glasgow », « Departure from
+ * Glasgow », « Retour à Lyon », « Arrivée à Reykjavik (aéroport) » → le nom
+ * que la carte connaît. Sans quoi la carte cherche la phrase entière et peut
+ * répondre n'importe quoi.
+ */
+const STAGE_PREFIX =
+  /^(?:(?:jour|day)\s*\d+\s*[:\-–—]\s*)?(?:d[ée]part\s+(?:de|d['’]|du|des)|retour\s+(?:à|a|au|aux|vers)|arriv[ée]e\s+(?:à|a|au|aux|en)|nuit\s+(?:à|a|au|aux)|departure\s+from|return\s+to|arrival\s+(?:in|at)|back\s+to|drive\s+to|transfer\s+to)\s*/i;
+
+export function stagePlaceName(raw: string | null): string | null {
+  if (!raw) return raw;
+  const s = raw
+    .replace(STAGE_PREFIX, '')
+    .replace(/\s*\([^)]*\)\s*$/, '')
+    .trim();
+  return s || raw;
+}
+
 export function sanitizeStages(raw: unknown, days: number): ProposedStage[] {
   const r = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
   // Le modèle ne respecte pas toujours la clé demandée : « stages », mais aussi
@@ -465,7 +483,7 @@ export function sanitizeStages(raw: unknown, days: number): ProposedStage[] {
   const byDay = new Map<number, ProposedStage>();
   for (const st of list) {
     const day = Number(st.day);
-    const place = cleanText(st.place, 80);
+    const place = stagePlaceName(cleanText(st.place, 80));
     if (!Number.isInteger(day) || day < 1 || day > days || !place || byDay.has(day)) continue;
     const move = plainMove(st.move);
     byDay.set(day, {

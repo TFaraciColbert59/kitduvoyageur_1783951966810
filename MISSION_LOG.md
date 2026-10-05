@@ -1,10 +1,13 @@
 # MISSION LOG — LKDV
 
-## 2026-10-05 — Itinéraire : plus de zigzag
+## 2026-10-05 — Itinéraire : plus de zigzag, plus d'étape à l'autre bout du pays
 
 - **`untangleStages`** (`src/features/compas/engine/stageOrder.ts`, pur, testé) : quand l'IA propose un circuit motorisé qui zigzague (Rennes → Brest → Saint-Malo → Quimper…), les séjours intermédiaires (lieu + nuits consécutives + notes) sont remis dans l'ordre le plus court ; arrivée et départ inchangés, jours renumérotés. Appliqué seulement si le gain est net (≥ 20 % et ≥ 15 km), jamais sur un trek ou un circuit à vélo (le tracé prime). Annoncé dans les notes (« environ N km de route en moins »).
-- Essai réel : road trip Bretagne 8 j à deux, itinéraire déjà cohérent → laissé tel quel (comportement attendu).
-- Preuves : tsc, eslint propres ; tests Compas 279/279.
+- **Étape mal placée sur la carte** (matrice d'essais réels) : « Glen Coe » devenait le village anglais « Corby Glen » à 650 km (un village passait devant le lieu au nom exact), « Isle of Skye » une carrière près de Sheffield, « Departure from Glasgow » un lieu au hasard. `pickPlace` : le nom exact d'abord (un nom plus long seulement pour une localité : « Chamonix » → « Chamonix-Mont-Blanc ») ; sinon un mot distinctif en commun, sinon aucune étape plutôt qu'un lieu sans rapport. `stagePlaceName` retire « Départ de », « Retour à », « Departure from »…
+- **Itinéraire figé sur un lieu** : Nemotron rend parfois un JSON cassé (`{"day1": "[", …}`) → 10 jours à Édimbourg, gardé une semaine dans le cache. Désormais un circuit (road trip, van, trek, vélo, ≥ 4 j) doit compter au moins 3 lieux, sinon on redemande (3 essais, arrêt à 20 s) ; seul un itinéraire exploitable est partagé (cache `stages` des étapes nettoyées, plus la réponse brute).
+- Essais réels : road trip Bretagne 8 j (déjà cohérent, laissé tel quel) ; van Écosse 10 j (Glasgow → Loch Lomond → Fort William → Glen Coe 33 km → Mallaig → Skye → Inverness → Édimbourg) ; road trip Islande 10 j ; trek Annapurna 14 j ; kayak Ardèche 3 j à quatre (gilet, sac étanche).
+- Note : en local sans `SUPABASE_SERVICE_ROLE_KEY`, le cache partagé reste en mémoire ; sur Vercel la clé est posée.
+- Preuves : tsc, eslint propres ; tests Compas 277/277.
 
 ## 2026-10-05 — Météo et relief libres partout ; deux bugs trouvés en essai réel
 

@@ -51,3 +51,15 @@ describe('untangleStages', () => {
     expect(r.stages[r.stages.length - 1].name).toBe('rennes');
   });
 });
+
+describe('stagePlaceName', () => {
+  it('garde le lieu seul', async () => {
+    const { stagePlaceName } = await import('../engine/autofill');
+    expect(stagePlaceName('Departure from Glasgow')).toBe('Glasgow');
+    expect(stagePlaceName('Départ de Lyon')).toBe('Lyon');
+    expect(stagePlaceName("Retour à Reykjavik (aéroport)")).toBe('Reykjavik');
+    expect(stagePlaceName('Jour 3 - Arrivée à Oban')).toBe('Oban');
+    expect(stagePlaceName('Isle of Skye - Portree')).toBe('Isle of Skye - Portree');
+    expect(stagePlaceName('Départementale')).toBe('Départementale');
+  });
+});

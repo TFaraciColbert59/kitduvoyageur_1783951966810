@@ -138,6 +138,40 @@ describe('carte (Photon)', () => {
     expect(pickPlace(list, { near, maxKm: 700 })?.lat).toBe(28.16);
   });
 
+  it('le lieu qui porte le nom passe devant un village au nom voisin (Glen Coe ≠ Corby Glen)', () => {
+    const list = parsePhoton({
+      features: [
+        { properties: { name: 'Glen Coe', countrycode: 'GB', osm_key: 'natural', osm_value: 'valley', type: 'other' }, geometry: { coordinates: [-5.02, 56.67] } },
+        { properties: { name: 'Corby Glen', countrycode: 'GB', osm_key: 'place', osm_value: 'village' }, geometry: { coordinates: [-0.52, 52.81] } },
+        { properties: { name: 'Glen', countrycode: 'GB', osm_key: 'place', osm_value: 'village' }, geometry: { coordinates: [-6.71, 54.85] } },
+      ],
+    });
+    const fortWilliam = { lat: 56.82, lon: -5.11 };
+    expect(pickPlace(list, { countryCode: 'GB', near: fortWilliam, maxKm: 700, query: 'Glen Coe' })?.lat).toBe(56.67);
+    // Nom traduit par la carte : aucun nom exact, la pertinence décide.
+    const skye = parsePhoton({
+      features: [
+        { properties: { name: 'Île de Skye', countrycode: 'GB', osm_key: 'place', osm_value: 'island' }, geometry: { coordinates: [-6.3, 57.36] } },
+        { properties: { name: 'Skye Village', countrycode: 'GB', osm_key: 'place', osm_value: 'village' }, geometry: { coordinates: [-4, 55] } },
+        { properties: { name: 'Isle Of Skye Quarry', countrycode: 'GB', osm_key: 'natural', osm_value: 'scrub' }, geometry: { coordinates: [-1.58, 53.49] } },
+      ],
+    });
+    expect(pickPlace(skye, { near: fortWilliam, maxKm: 700, query: 'Isle of Skye' })?.name).toBe('Île de Skye');
+    // Nom plus long accepté pour une localité seulement.
+    const chamonix = parsePhoton({
+      features: [
+        { properties: { name: 'Chamonix Lodge', countrycode: 'FR', osm_key: 'tourism', osm_value: 'hotel' }, geometry: { coordinates: [6.0, 45.0] } },
+        { properties: { name: 'Chamonix-Mont-Blanc', countrycode: 'FR', osm_key: 'place', osm_value: 'town' }, geometry: { coordinates: [6.87, 45.92] } },
+      ],
+    });
+    expect(pickPlace(chamonix, { query: 'Chamonix' })?.name).toBe('Chamonix-Mont-Blanc');
+    // Rien en commun avec le nom demandé : pas d'étape plutôt qu'un lieu au hasard.
+    const random = parsePhoton({
+      features: [{ properties: { name: 'Warwick', countrycode: 'GB', osm_key: 'place', osm_value: 'town' }, geometry: { coordinates: [-1.5, 52.3] } }],
+    });
+    expect(pickPlace(random, { query: 'Departure lounge' })).toBeNull();
+  });
+
   it('une étape doit être dans le pays et près de la destination', () => {
     const p = parsePhoton(payload);
     expect(pickPlace(p.slice(1), { countryCode: 'NP', near: { lat: 28.38, lon: 84 }, maxKm: 600 })?.name).toBe('Namche Bazar');
