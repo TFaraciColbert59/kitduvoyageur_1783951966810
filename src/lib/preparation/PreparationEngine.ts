@@ -195,7 +195,7 @@ export function analyzeNeeds(context: HikeContext): GearRequirement[] {
     }
     
     // Pluie
-    const isRaining = w.precipitationProbability > 30 || w.condition.toLowerCase().includes('pluie') || w.condition.toLowerCase().includes('averses') || w.condition.toLowerCase().includes('orage');
+    const isRaining = (w.precipitationProbability ?? 0) > 30 || w.condition.toLowerCase().includes('pluie') || w.condition.toLowerCase().includes('averses') || w.condition.toLowerCase().includes('orage');
     if (isRaining) {
       needs.push({
         id: 'req-imper',
@@ -205,7 +205,7 @@ export function analyzeNeeds(context: HikeContext): GearRequirement[] {
         required: 1,
         unit: 'unité',
         priority: 'vital',
-        reason: `Probabilité de pluie : ${w.precipitationProbability}%. Condition : ${w.condition}.`,
+        reason: `${w.precipitationProbability != null ? `Probabilité de pluie : ${w.precipitationProbability}%. ` : ''}Condition : ${w.condition}.`,
       });
     }
 

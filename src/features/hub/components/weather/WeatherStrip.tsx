@@ -1,10 +1,10 @@
 import Icon from '@/components/ui/Icon';
-import { weatherLabel, type WeatherDay } from '@/features/materiel/services/getWeather';
+import { rainLabel, weatherLabel, type WeatherDay } from '@/features/materiel/services/getWeather';
 import { getWeatherIcon } from './getWeatherIcon';
 
 export interface WeatherStripProps {
   /** Prévisions réelles — null = météo indisponible (état honnête, jamais de fausse donnée). */
-  current: { tempC: number; weathercode: number; precipPct: number } | null;
+  current: { tempC: number; weathercode: number; precipPct: number | null; precipMm?: number | null } | null;
   days?: WeatherDay[];
   locationLabel?: string | null;
   /** strip = bloc pleine largeur · capsule = flottant compact (coin carte). */
@@ -71,7 +71,7 @@ export function WeatherStrip({
             <p className="text-xs font-bold text-[var(--lkv-text-primary)] leading-tight">
               {Math.round(current.tempC)}°C
               <span className="ml-1 font-medium text-[var(--lkv-text-secondary)]">
-                · {current.precipPct}%
+                · {rainLabel(current.precipPct, current.precipMm) ?? 'sec'}
               </span>
             </p>
           </div>
@@ -118,7 +118,7 @@ export function WeatherStrip({
         </div>
         <p className="shrink-0 flex items-center gap-1 text-[11px] font-semibold text-[var(--lkv-text-primary)]">
           <Icon name="droplets" size={12} aria-hidden="true" />
-          {current.precipPct}%
+          {rainLabel(current.precipPct, current.precipMm) ?? 'sec'}
         </p>
       </div>
 
@@ -147,7 +147,7 @@ export function WeatherStrip({
                 </p>
                 <p className="mt-0.5 flex items-center justify-center gap-0.5 text-[9px] font-semibold text-[var(--lkv-text-primary)] leading-none">
                   <Icon name="droplets" size={9} aria-hidden="true" />
-                  {d.precipPct}%
+                  {rainLabel(d.precipPct, d.precipMm) ?? '—'}
                 </p>
               </div>
             );

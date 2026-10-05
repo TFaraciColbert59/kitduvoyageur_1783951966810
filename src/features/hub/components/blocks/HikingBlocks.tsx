@@ -1,4 +1,5 @@
-﻿import Icon from '@/components/ui/Icon';
+import { rainLabel } from '@/features/materiel/services/getWeather';
+import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
@@ -153,7 +154,7 @@ export function MeteoBlock({ hiking }: { hiking: HubHikingContext | null }) {
         {current ? (
           <p className="text-sm font-semibold text-[var(--lkv-text-primary)] truncate">
             {Math.round(current.tempC)}°C · {weatherLabel(current.weathercode)}
-            {current.precipPct > 0 ? ` · ${Math.round(current.precipPct)}%` : ''}
+            {rainLabel(current.precipPct, current.precipMm) ? ` · ${rainLabel(current.precipPct, current.precipMm)}` : ''}
           </p>
         ) : (
           <p className="text-sm font-semibold text-[var(--lkv-text-primary)]">Météo indisponible</p>
@@ -180,7 +181,7 @@ export function MeteoBlock({ hiking }: { hiking: HubHikingContext | null }) {
               <p className="text-[10.5px] text-[var(--lkv-text-secondary)]">
                 {Math.round(d.tempMinC)}°
               </p>
-              <p className="text-[10.5px] text-[var(--lkv-text-secondary)]">{d.precipPct}%</p>
+              <p className="text-[10.5px] text-[var(--lkv-text-secondary)]">{rainLabel(d.precipPct, d.precipMm) ?? '—'}</p>
             </div>
           ))}
         </div>

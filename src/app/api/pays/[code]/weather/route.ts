@@ -1,8 +1,9 @@
 // src/app/api/pays/[code]/weather/route.ts
-// Météo réelle (Open-Meteo) au centroïde du pays. Aucune clé requise.
+// Météo réelle (MET Norway, CC BY 4.0) au centroïde du pays. Aucune clé requise.
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCountryCoordinates } from '@/lib/countryCoordinates';
+import { fetchMetnoAsOpenMeteo } from '@/lib/weather/metnoFetch';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,20 +58,14 @@ export async function GET(
     );
   }
 
-  const url =
-    'https://api.open-meteo.com/v1/forecast' +
-    `?latitude=${coords.lat}&longitude=${coords.lng}` +
-    '&current=temperature_2m,weather_code,wind_speed_10m' +
-    '&hourly=precipitation_probability,uv_index&forecast_days=1&timezone=auto';
-
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 5000);
   try {
-    const response = await fetch(url, { signal: controller.signal, cache: 'no-store' });
-    if (!response.ok) {
+    // Prévision MET Norway (gratuite, usage commercial permis), rendue au
+    // format Open-Meteo que lit le reste de la route.
+    const data = await fetchMetnoAsOpenMeteo(coords.lat, coords.lng, { timeoutMs: 5000 });
+    if (!data) {
       return NextResponse.json({ status: 'error', reason: 'upstream' }, { status: 502, headers: CACHE });
     }
-    const parsed = openMeteoSchema.safeParse(await response.json());
+    const parsed = openMeteoSchema.safeParse(data);
     if (!parsed.success) {
       return NextResponse.json({ status: 'error', reason: 'invalid_response' }, { status: 502, headers: CACHE });
     }
@@ -80,6 +75,7 @@ export async function GET(
         status: 'ok',
         latitude: coords.lat,
         longitude: coords.lng,
+        source: 'MET Norway',
         current: {
           temperatureC: Math.round(current.temperature_2m),
           condition: describeWeatherCode(current.weather_code),
@@ -92,10 +88,8 @@ export async function GET(
     );
   } catch {
     return NextResponse.json(
-      { status: 'error', reason: controller.signal.aborted ? 'timeout' : 'network' },
+      { status: 'error', reason: 'network' },
       { status: 504, headers: CACHE }
     );
-  } finally {
-    clearTimeout(timer);
   }
 }

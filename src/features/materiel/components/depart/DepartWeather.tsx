@@ -5,7 +5,7 @@ import { ClockIcon as Clock } from '@/components/icons/clock';
 import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Card } from '@/components/ui';
-import { weatherLabel, type WeatherForecast } from '@/features/materiel/services/getWeather';
+import { rainLabel, weatherLabel, type WeatherForecast } from '@/features/materiel/services/getWeather';
 import { cn } from '@/lib/utils';
 
 interface DepartWeatherProps {
@@ -75,7 +75,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
                 {weather.current.tempC}°C
               </div>
               <div className="text-[9px] text-[var(--lkv-text-muted)] mt-0.5">
-                {weather.current.precipPct}% pluie
+                {rainLabel(weather.current.precipPct, weather.current.precipMm) ?? 'sec'}
               </div>
             </div>
           </div>
@@ -106,10 +106,10 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
                   {day.tempMinC}°
                 </span>
               </div>
-              {day.precipPct > 0 && (
+              {(day.precipPct ?? day.precipMm ?? 0) > 0 && (
                 <div className="flex items-center justify-center gap-0.5 text-[9px] text-[var(--lkv-info)] font-medium">
                   <Icon name="droplets" size={8.5} />
-                  <span>{day.precipPct}%</span>
+                  <span>{rainLabel(day.precipPct, day.precipMm)}</span>
                 </div>
               )}
             </div>

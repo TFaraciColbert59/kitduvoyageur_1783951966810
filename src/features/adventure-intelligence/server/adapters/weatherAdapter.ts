@@ -1,5 +1,5 @@
 /**
- * A11 #15/#40 — Adaptateur météo réelle (Open-Meteo via le service existant).
+ * A11 #15/#40 — Adaptateur météo réelle (MET Norway via le service existant).
  *
  * Quand des coordonnées valides sont fournies, la prévision officielle est
  * récupérée par `getWeather` (client existant, aucun nouvel appelant API) et
@@ -22,8 +22,8 @@ import {
 import { EngineSkipSignal } from '@/features/adventure-intelligence/domain/engineRegistry';
 import { ADAPTER_VERSION } from './adapterSupport';
 
-/** Fournisseur officiel des prévisions (Open-Meteo, sans clé). */
-export const WEATHER_PROVIDER = 'open-meteo';
+/** Fournisseur officiel des prévisions (MET Norway, CC BY 4.0, sans clé). */
+export const WEATHER_PROVIDER = 'met-norway';
 export const DEFAULT_WEATHER_DAYS = 3;
 export const MIN_WEATHER_DAYS = 1;
 export const MAX_WEATHER_DAYS = 7;
@@ -122,9 +122,9 @@ export const weatherAdapter: AdventureEngine<WeatherAdapterInput, WeatherAdapter
       confidence: makeConfidence({
         score: 0.7,
         sampleCount: 0,
-        method: 'weather:open-meteo',
+        method: 'weather:met-norway',
         reasons: [
-          'Prévisions officielles Open-Meteo (fenêtre courte, non personnalisées).',
+          'Prévisions officielles MET Norway (fenêtre courte, non personnalisées).',
         ],
       }),
       provenance: [
@@ -138,7 +138,7 @@ export const weatherAdapter: AdventureEngine<WeatherAdapterInput, WeatherAdapter
       assumptions: [
         {
           id: 'weather_open_meteo',
-          label: 'Prévisions Open-Meteo',
+          label: 'Prévisions MET Norway',
           detail: `${days.length} jour(s) réellement disponibles, jamais complétés artificiellement.`,
         },
       ],

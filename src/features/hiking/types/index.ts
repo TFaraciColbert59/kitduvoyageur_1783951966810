@@ -113,7 +113,7 @@ export interface WeatherSnapshot {
   tempC: number;
   condition: string;
   windKmH: number;
-  precipitationProbability: number;
+  precipitationProbability: number | null;
   uvIndex?: number;
   altitudeM?: number;
   isAlert: boolean;

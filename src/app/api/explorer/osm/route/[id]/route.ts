@@ -11,6 +11,7 @@ import {
 } from '@/features/explorer-osm/services/cacheService';
 import { haversineDistanceKm } from '@/features/explorer-osm/domain/geometry';
 import { askAI } from '@/lib/ai/askAI';
+import { terrainElevations } from '@/lib/geo/terrainElevation';
 import {
   buildTrailAiPrompt,
   buildTrailAiFallback,
@@ -128,7 +129,7 @@ export async function GET(
         normalized.trailVisibility = tags.trail_visibility || null;
         normalized.dogFriendly = tags.dog || null;
 
-        // 1. Dénivelé, profil altimétrique et pentes via Open-Meteo DEM
+        // 1. Dénivelé, profil altimétrique et pentes via le relief libre (Terrain Tiles)
         if (normalized.geometryHierarchy?.mainSegments?.length > 0) {
           try {
             const allCoords: [number, number][] = [];
@@ -146,15 +147,13 @@ export async function GET(
                 sampled.push(allCoords[allCoords.length - 1]);
               }
 
-              const lats = sampled.map((p) => p[1].toFixed(5)).join(',');
-              const lons = sampled.map((p) => p[0].toFixed(5)).join(',');
-              const elevRes = await fetch(
-                `https://api.open-meteo.com/v1/elevation?latitude=${lats}&longitude=${lons}`,
-                { signal: AbortSignal.timeout(2500) }
-              );
-              if (elevRes.ok) {
-                const elevJson = await elevRes.json();
-                const elevs: number[] = Array.isArray(elevJson.elevation) ? elevJson.elevation : [];
+              // Relief libre (Terrain Tiles, usage commercial permis) : Open-Meteo
+              // n'est gratuit qu'en usage non commercial.
+              const terrain = await terrainElevations(sampled);
+              // Le profil apparie chaque altitude à son point : un trou décalerait
+              // tout le profil, on n'en construit un que si chaque point est lu.
+              if (terrain && terrain.every((v) => v != null)) {
+                const elevs = terrain as number[];
                 if (elevs.length >= 2) {
                   let gain = 0;
                   let loss = 0;
