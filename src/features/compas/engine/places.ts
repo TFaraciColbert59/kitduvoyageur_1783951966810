@@ -18,6 +18,18 @@ export interface CompasPlace {
   settlement?: boolean;
   /** Emprise [ouest, nord, est, sud] quand la carte la donne (pays, régions). */
   extent: [number, number, number, number] | null;
+  /** Lieu naturel ou géographique nommé (sommet, vallée, lac, massif, île, parc). */
+  landmark?: boolean;
+}
+
+/** Clés OSM d'un lieu géographique qu'on nomme comme destination. */
+const LANDMARK_KEYS = new Set(['natural', 'waterway', 'water', 'boundary']);
+const LANDMARK_PLACES = new Set(['island', 'islet', 'archipelago', 'region', 'peninsula', 'state', 'province', 'county']);
+const LANDMARK_LEISURE = new Set(['nature_reserve', 'park']);
+function isLandmark(key: unknown, value: unknown): boolean {
+  const k = String(key ?? '');
+  const v = String(value ?? '');
+  return LANDMARK_KEYS.has(k) || (k === 'place' && LANDMARK_PLACES.has(v)) || (k === 'leisure' && LANDMARK_LEISURE.has(v));
 }
 
 const BROAD = new Set(['country', 'state', 'region', 'county', 'district']);
@@ -56,6 +68,7 @@ export function parsePhoton(payload: unknown): CompasPlace[] {
       country: typeof p.country === 'string' ? p.country : null,
       kind: String(p.type ?? p.osm_value ?? 'place'),
       settlement: p.osm_key === 'place' && SETTLEMENTS.has(String(p.osm_value)),
+      landmark: isLandmark(p.osm_key, p.osm_value),
       extent:
         ext && ext.every((n) => Number.isFinite(n))
           ? (ext as [number, number, number, number])
@@ -85,6 +98,7 @@ export function parseNominatim(payload: unknown): CompasPlace[] {
       country: typeof address.country === 'string' ? address.country : null,
       kind: type,
       settlement: SETTLEMENTS.has(type) || SETTLEMENTS.has(String(r.type)),
+      landmark: isLandmark(r.category, r.type),
       // boundingbox Nominatim : [sud, nord, ouest, est] → emprise [ouest, nord, est, sud]
       extent: bb && bb.length === 4 && bb.every((n) => Number.isFinite(n)) ? [bb[2], bb[1], bb[3], bb[0]] : null,
     });
@@ -170,9 +184,14 @@ function distinctiveWords(plain: string): string[] {
   return plain.split(' ').filter((w) => w.length >= 4 && !COMMON_WORDS.has(w));
 }
 
+const FIRST_STAGE_MIN_KM = 400;
+
 /** Distance plausible d'une étape à la suivante, selon le moyen de déplacement. */
 export function maxLegKm(move: string, first: boolean, destinationKm: number): number {
-  if (first) return destinationKm;
+  // Première étape : dans le pays et au nom demandé, jusqu'à 400 km de la
+  // destination lue sur la carte (« Loire » est d'abord le département de
+  // Saint-Étienne ; le voyage commence à Orléans).
+  if (first) return Math.max(destinationKm, FIRST_STAGE_MIN_KM);
   switch (move) {
     case 'marche':
       return 40;
@@ -216,5 +235,8 @@ export function pickDestination(candidates: CompasPlace[], query: string): Compa
     const n = plainName(c.name);
     return n === want || n.startsWith(`${want} `);
   });
-  return named.find((c) => !WEAK_KINDS.has(c.kind)) ?? null;
+  // Un sommet, une vallée ou un lac (type « other » chez Photon) est une vraie
+  // destination ; une ferme ou un lieu-dit du même nom, jamais (« Mont Blanc »
+  // le sommet, pas une base au Québec).
+  return named.find((c) => !WEAK_KINDS.has(c.kind) || c.landmark) ?? null;
 }

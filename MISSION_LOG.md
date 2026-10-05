@@ -8,8 +8,11 @@
 - Essais réels : road trip Bretagne 8 j (déjà cohérent, laissé tel quel) ; van Écosse 10 j (Glasgow → Loch Lomond → Fort William → Glen Coe 33 km → Mallaig → Skye → Inverness → Édimbourg) ; road trip Islande 10 j ; trek Annapurna 14 j ; kayak Ardèche 3 j à quatre (gilet, sac étanche).
 - **Mois seul ignoré** : « 8 jours en janvier », « 10 jours en juin », « une semaine en juillet » ne posaient aucune date (ni météo ni réservation) ; « week-end de 3 jours en mai » partait CE week-end. Désormais « en <mois> » → début du mois (« mi » le 15, « fin » le 22, ce mois-ci : aujourd'hui, mois passé : l'an prochain), un week-end dans ce mois → son premier samedi ; une date de l'IA dans le mois dit est ancrée. La destination s'arrête avant « une semaine », « fin mai »… (« Crète une semaine » → « Crète »).
 - **Trek qui tombait** : « à pied » de Puerto Natales au parc (100 km de bus) dépassait la portée à pied → 6 étapes sur 8 écartées. Hors de portée à pied/vélo, un lieu à moins de 250 km reste l'étape, rejointe en véhicule. Patagonie 8 j : Puerto Natales → Los Cuernos → Grey → Paine Grande → Puerto Natales, 1–8 janv. Étape introuvable journalisée (`[compas] étape introuvable`) pour les suivre en production.
+- **« Mont Blanc » au Québec** : le sommet (type « other » chez Photon) était écarté comme une ferme, la base proposée ensuite tombait au Québec. Un lieu géographique nommé (sommet, vallée, lac, massif, île, parc, région) est désormais une vraie destination ; une ferme ou un lieu-dit du même nom, jamais. Essai : Les Houches → Refuge du Couvercle → Tête Rousse, 1–4 juil., 3 525 m max, lunettes cat. 4.
+- **« Loire » = le département de Saint-Étienne** : la 1re étape (Orléans) sortait du rayon et tout l'itinéraire tombait (6 j sur « Loire »). La 1re étape est acceptée jusqu'à 400 km de la destination lue (même pays, nom exact). Essai : Orléans → Beaugency → Blois → Amboise → Saumur → Nantes, 1–6 mai.
+- Autres essais : week-end city trip Rome fin mars à deux (27–28 mars) ; 3 semaines au Pérou en août (1–21 août, Lima → Cusco → Vallée sacrée → Machu Picchu → Huaraz).
 - Note : en local sans `SUPABASE_SERVICE_ROLE_KEY`, le cache partagé reste en mémoire ; sur Vercel la clé est posée.
-- Preuves : tsc, eslint propres ; tests Compas 283/283 ; suite complète 21 échecs, tous préexistants.
+- Preuves : tsc, eslint propres ; tests Compas 285/285 ; suite complète 21 échecs, tous préexistants.
 
 ## 2026-10-05 — Météo et relief libres partout ; deux bugs trouvés en essai réel
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseIntentRules, planApplication, groundingIssue } from '../engine/intent';
 import { extractIntentJson } from '@/lib/ai/features/compasIntent';
 import { approachMode, keepRuleForActivity, movesFromSteps, nightsPrefFor, sanitizeAdvice, sanitizeStages } from '../engine/autofill';
-import { destinationRadiusKm, parseNominatim, parsePhoton, pickDestination, pickPlace } from '../engine/places';
+import { destinationRadiusKm, maxLegKm, parseNominatim, parsePhoton, pickDestination, pickPlace } from '../engine/places';
 
 const TODAY = '2026-10-02';
 const current = {
@@ -284,6 +284,27 @@ describe('Destination nommée : la ville que tout le monde entend, pas un homony
     const found = parsePhoton({ features: [place('Chamonix', 'locality', 'ZA'), place('Chamonix', 'house', 'JP')] });
     expect(pickDestination(found, 'Chamonix')).toBeNull();
     expect(pickDestination(parsePhoton({ features: [place('Moabit', 'district', 'DE')] }), 'Moab')).toBeNull();
+  });
+
+  it('« Mont Blanc » → le sommet (type « other » chez Photon), une ferme du même nom jamais', () => {
+    const peak = {
+      type: 'Feature',
+      geometry: { coordinates: [6.87, 45.83] },
+      properties: { name: 'Mont Blanc', osm_key: 'natural', osm_value: 'peak', type: 'other', countrycode: 'FR' },
+    };
+    const farm = {
+      type: 'Feature',
+      geometry: { coordinates: [0, 0] },
+      properties: { name: 'Mont Blanc', osm_key: 'place', osm_value: 'farm', type: 'other', countrycode: 'ZA' },
+    };
+    expect(pickDestination(parsePhoton({ features: [farm, peak] }), 'Mont-Blanc')).toMatchObject({ lat: 45.83 });
+    expect(pickDestination(parsePhoton({ features: [farm] }), 'Mont Blanc')).toBeNull();
+  });
+
+  it('première étape jusqu’à 400 km de la destination lue sur la carte (« Loire » → Orléans)', () => {
+    expect(maxLegKm('bus', true, 60)).toBe(400);
+    expect(maxLegKm('vol', true, 1500)).toBe(1500);
+    expect(maxLegKm('marche', false, 60)).toBe(40);
   });
 
   it('nom exact gardé dans l’ordre de la carte (Banff Canada avant Banff Écosse)', () => {
