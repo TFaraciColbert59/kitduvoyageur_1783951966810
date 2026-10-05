@@ -186,28 +186,35 @@ export function parseMetNo(payload: unknown, timeZone: string): DayForecast[] {
       isDay: Number.isFinite(sunAlt) ? sunAlt > 0 : null,
     };
 
-    const acc = days.get(day) ?? {
-      hours: [],
-      temps: [],
-      precipMm: null,
-      precipPct: null,
-      gust: null,
-      code: null,
+    const accFor = (key: string): Acc => {
+      const a = days.get(key) ?? { hours: [], temps: [], precipMm: null, precipPct: null, gust: null, code: null };
+      days.set(key, a);
+      return a;
     };
+    // L'instant appartient à son jour ; la période qu'il ouvre (1 h ou 6 h)
+    // appartient au jour local qui contient son milieu : un pas de 6 h qui
+    // commence à 23 h 45 à Katmandou couvre le lendemain.
+    const acc = accFor(day);
     acc.hours.push(hour);
     if (tempC != null) acc.temps.push(tempC);
-    const six = d.next_1_hours ? null : d.next_6_hours?.details;
+    const span = d.next_1_hours ? 1 : 6;
+    const periodDay =
+      span === 1 ? day : localStamp(new Date(at.getTime() + 3 * 3_600_000), timeZone).slice(0, 10);
+    const pAcc = accFor(periodDay);
+    const six = span === 6 ? d.next_6_hours?.details : null;
     for (const v of [num(six?.air_temperature_min), num(six?.air_temperature_max)]) {
-      if (v != null) acc.temps.push(v);
+      if (v != null) pAcc.temps.push(v);
     }
-    if (precipMm != null) acc.precipMm = (acc.precipMm ?? 0) + precipMm;
-    if (hour.precipPct != null) acc.precipPct = Math.max(acc.precipPct ?? 0, hour.precipPct);
+    if (precipMm != null) pAcc.precipMm = (pAcc.precipMm ?? 0) + precipMm;
+    if (hour.precipPct != null) pAcc.precipPct = Math.max(pAcc.precipPct ?? 0, hour.precipPct);
     if (hour.gustKmh != null) acc.gust = Math.max(acc.gust ?? 0, hour.gustKmh);
-    if (code != null) acc.code = Math.max(acc.code ?? 0, code);
-    days.set(day, acc);
+    if (code != null) pAcc.code = Math.max(pAcc.code ?? 0, code);
   }
 
   return [...days.entries()]
+    // Un jour qui ne reçoit que la fin d'une période de 6 h, sans aucun
+    // instant prévu, n'est pas une prévision du jour : écarté.
+    .filter(([, a]) => a.hours.length > 0)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, a]): DayForecast => {
       const noon = new Date(`${date}T12:00:00Z`);

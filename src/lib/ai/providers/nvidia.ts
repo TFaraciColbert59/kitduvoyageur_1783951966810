@@ -78,6 +78,12 @@ export const nvidiaProvider: AIProvider = {
     if (!apiKey || apiKey.trim().length === 0) {
       throw new ProviderError('Cle NVIDIA absente', 503);
     }
+    // Pas de recherche web chez NVIDIA : une demande qui l'exige (formalités,
+    // alertes du moment) échoue franchement plutôt que de rendre le savoir
+    // figé du modèle comme une réponse fraîche.
+    if (req.plugins && req.plugins.length > 0) {
+      throw new ProviderError('NVIDIA NIM: recherche web non prise en charge', 501);
+    }
 
     // Tier `fast` : raisonnement DESACTIVE. Mesure relevee sur le meme modele
     // via OpenRouter (2026-09-03) — le CoT inline multipliait la latence par 6

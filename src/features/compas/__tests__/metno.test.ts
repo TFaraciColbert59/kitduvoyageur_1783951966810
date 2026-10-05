@@ -82,6 +82,34 @@ describe('MET Norway : réponse réelle (Chamonix, 5 octobre 2026)', () => {
     expect(d.code).toBe(63);
   });
 
+  it('un pas de 6 h compte pour le jour local qu’il couvre (Katmandou)', () => {
+    const step = (time: string, mm: number, symbol: string, six = false) => ({
+      time,
+      data: {
+        instant: { details: { air_temperature: 10 } },
+        ...(six ? {} : { next_1_hours: { summary: { symbol_code: 'cloudy' }, details: { precipitation_amount: 0 } } }),
+        next_6_hours: { summary: { symbol_code: symbol }, details: { precipitation_amount: mm } },
+      },
+    });
+    const payload = {
+      geometry: { coordinates: [85.32, 27.71, 1300] },
+      properties: {
+        timeseries: [
+          // 18:00 UTC = 23:45 à Katmandou : la pluie de 6 h tombe le lendemain.
+          step('2026-10-10T18:00:00Z', 8, 'heavyrainandthunder', true),
+          step('2026-10-11T06:00:00Z', 0, 'clearsky_day', true),
+        ],
+      },
+    };
+    const days = parseMetNo(payload, 'Asia/Kathmandu');
+    const d10 = days.find((d) => d.date === '2026-10-10')!;
+    const d11 = days.find((d) => d.date === '2026-10-11')!;
+    expect(d10.precipMm).toBeNull();
+    expect(d10.code).toBeNull();
+    expect(d11.precipMm).toBe(8);
+    expect(d11.code).toBe(95);
+  });
+
   it('réponse illisible : aucun jour', () => {
     expect(parseMetNo(null, 'UTC')).toEqual([]);
     expect(parseMetNo({ properties: {} }, 'UTC')).toEqual([]);

@@ -225,6 +225,13 @@ describe('src/lib/ai/providers/nvidia - adapter NVIDIA NIM direct', () => {
     expect(bodyOf(1).response_format).toBeUndefined();
   });
 
+  it('TEST-NIM-16: une demande avec recherche web echoue franchement, sans appel reseau', async () => {
+    await expect(
+      nvidiaProvider.complete({ ...makeReq(), plugins: [{ id: 'web', max_results: 5 }] })
+    ).rejects.toThrow(/recherche web/);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('TEST-NIM-12b: la chaine est ordonnee, sans doublon, et se termine toujours sur noop', () => {
     vi.stubEnv('NVIDIA_API_KEY', FAKE_KEY);
     vi.stubEnv('OPENROUTER_API_KEY', 'sk-or-test-key');
