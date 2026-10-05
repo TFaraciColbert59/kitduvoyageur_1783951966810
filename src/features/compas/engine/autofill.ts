@@ -390,23 +390,89 @@ export interface ProposedStage {
  * reprend le lieu de la veille (repos, acclimatation). Rien n'est inventé ici :
  * le lieu sera ensuite retrouvé sur la carte, ou écarté.
  */
+const STAGE_LIST_KEYS = ['stages', 'jours', 'etapes', 'étapes', 'itinerary', 'itineraire', 'days'];
+
+/** « Voiture », « vélo », « à pied » → le vocabulaire des étapes. */
+function normalizeMove(v: unknown): string {
+  return String(v ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function plainMove(v: unknown): StageMove {
+  const m = normalizeMove(v);
+  if (MOVES.has(m as StageMove)) return m as StageMove;
+  if (/pied|marche|trek|rando/.test(m)) return 'marche';
+  if (/velo|bike/.test(m)) return 'velo';
+  if (/avion|vol\b|flight/.test(m)) return 'vol';
+  if (/ferry|bateau|boat/.test(m)) return 'bateau';
+  if (/train|rail/.test(m)) return 'train';
+  if (/bus|car\b/.test(m)) return 'bus';
+  if (/voiture|auto|4x4|van|road/.test(m)) return 'voiture';
+  return 'aucun';
+}
+
 export function sanitizeStages(raw: unknown, days: number): ProposedStage[] {
   const r = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
-  // Format compact [jour, lieu, move, note] ou objet {day, place, move, note}.
-  const list = (Array.isArray(r.stages) ? (r.stages as unknown[]) : []).map((x) =>
-    Array.isArray(x) ? { day: x[0], place: x[1], move: x[2], note: x[3] } : (x as Record<string, unknown>)
-  );
+  // Le modèle ne respecte pas toujours la clé demandée : « stages », mais aussi
+  // « jours », « etapes », « itinerary »… ou un tableau nu. On prend la liste
+  // annoncée, sinon le premier tableau de la réponse.
+  // Ou encore un objet indexé par jour : {"1": [...]}, {"day1": {...}}, {"jour 1": ...}.
+  const byDayKey = Object.entries(r)
+    .map(([k, v]) => [/^(?:day|jour|j)?\s*_?(\d{1,3})$/i.exec(k)?.[1], v] as const)
+    .filter(([d]) => d != null)
+    .map(([d, v]) => {
+      let row: unknown = v;
+      // {"day1": {"stages": [[1, "Ajaccio", …]]}} : la première ligne du jour.
+      if (row && typeof row === 'object' && !Array.isArray(row)) {
+        const inner = Object.values(row as Record<string, unknown>).find(Array.isArray);
+        if (inner && Array.isArray((inner as unknown[])[0])) row = (inner as unknown[])[0];
+      }
+      if (Array.isArray(row)) {
+        const cells = typeof row[0] === 'number' ? row.slice(1) : row;
+        return [Number(d), ...cells];
+      }
+      return { ...(row as Record<string, unknown>), day: Number(d) };
+    });
+  const arr = Array.isArray(raw)
+    ? (raw as unknown[])
+    : ((STAGE_LIST_KEYS.map((k) => r[k]).find(Array.isArray) ??
+        (byDayKey.length ? byDayKey : null) ??
+        Object.values(r).find(Array.isArray) ??
+        []) as unknown[]);
+  // Format compact [jour, lieu, move, note] ou objet {day|jour, place|lieu, …}.
+  const list = arr.map((x): Record<string, unknown> => {
+    if (Array.isArray(x)) {
+      // [jour, lieu, move, note], parfois avec une case de trop : le moyen de
+      // déplacement est la case qui en est un, la note la dernière case libre.
+      const rest = x.slice(2).map((c) => (typeof c === 'string' ? c : ''));
+      const moveAt = rest.findIndex((c) => MOVES.has(normalizeMove(c) as StageMove));
+      const move = moveAt === -1 ? rest[0] : rest[moveAt];
+      const note = rest.filter((_, i) => i !== (moveAt === -1 ? 0 : moveAt)).pop();
+      return { day: x[0], place: x[1], move, note };
+    }
+    const o = x && typeof x === 'object' ? (x as Record<string, unknown>) : {};
+    const pick = (keys: string[]) => keys.map((k) => o[k]).find((v) => v != null);
+    return {
+      day: pick(['day', 'jour', 'j']),
+      place: pick(['place', 'lieu', 'ville', 'location', 'etape', 'name', 'nom']),
+      move: pick(['move', 'transport', 'deplacement', 'mode']),
+      note: pick(['note', 'notes', 'commentaire', 'description']),
+    };
+  });
   const byDay = new Map<number, ProposedStage>();
   for (const st of list) {
-    const day = Number(st?.day);
-    const place = cleanText(st?.place, 80);
+    const day = Number(st.day);
+    const place = cleanText(st.place, 80);
     if (!Number.isInteger(day) || day < 1 || day > days || !place || byDay.has(day)) continue;
-    const move = String(st?.move ?? '').toLowerCase() as StageMove;
+    const move = plainMove(st.move);
     byDay.set(day, {
       day,
       place,
       move: MOVES.has(move) ? move : 'aucun',
-      note: cleanText(st?.note, 140),
+      note: cleanText(st.note, 140),
     });
   }
   if (!byDay.size) return [];

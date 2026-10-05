@@ -133,7 +133,9 @@ export interface CompasWeatherDayInput {
   date: string;
   tempMinC: number;
   tempMaxC: number;
-  precipPct: number;
+  /** Absente hors des zones où MET Norway la publie : jamais comblée. */
+  precipPct: number | null;
+  precipMm: number | null;
   weathercode: number;
 }
 
@@ -595,9 +597,10 @@ export function buildCompasModel(input: CompasInput): CompasModel {
 
   /* Météo réelle */
   const weatherDays = input.weather;
-  const worstPrecipPct = weatherDays.length
-    ? Math.max(...weatherDays.map((d) => d.precipPct))
-    : null;
+  const pcts = weatherDays.map((d) => d.precipPct).filter((v): v is number => v != null);
+  const worstPrecipPct = pcts.length ? Math.max(...pcts) : null;
+  const mms = weatherDays.map((d) => d.precipMm).filter((v): v is number => v != null);
+  const worstPrecipMm = mms.length ? Math.max(...mms) : null;
   const minTempC = weatherDays.length ? Math.min(...weatherDays.map((d) => d.tempMinC)) : null;
   const maxTempC = weatherDays.length ? Math.max(...weatherDays.map((d) => d.tempMaxC)) : null;
 
@@ -617,14 +620,20 @@ export function buildCompasModel(input: CompasInput): CompasModel {
     reasons.push({
       label: `Pluie probable (${worstPrecipPct} %)`,
       severity: 'warn',
-      source: 'Open-Meteo',
+      source: 'MET Norway',
+    });
+  } else if (worstPrecipPct == null && worstPrecipMm != null && worstPrecipMm >= 5) {
+    reasons.push({
+      label: `Pluie annoncée (${worstPrecipMm} mm sur une journée)`,
+      severity: 'warn',
+      source: 'MET Norway',
     });
   }
   if (minTempC != null && minTempC <= 0) {
     reasons.push({
       label: `Gel possible (${Math.round(minTempC)} °C)`,
       severity: 'warn',
-      source: 'Open-Meteo',
+      source: 'MET Norway',
     });
   }
   const overloaded = loads.filter((l) => l.ratio != null && l.ratio > 1);

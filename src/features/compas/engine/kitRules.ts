@@ -92,7 +92,7 @@ export function adviseKit(input: {
       'pluie',
       'Veste imperméable',
       `Jour ${wet.day} (${dateFr(wet.date)}) : pluie ${f.precipPct != null ? `à ${Math.round(f.precipPct)} %` : 'annoncée'}${f.precipMm != null ? `, ${Math.round(f.precipMm)} mm` : ''}.`,
-      'Open-Meteo'
+      'MET Norway'
     );
   }
 
@@ -106,14 +106,14 @@ export function adviseKit(input: {
       'froid',
       'Couche chaude (polaire, doudoune)',
       `Jour ${cold.day} (${dateFr(cold.date)}) : minimum ${t} °C.`,
-      'Open-Meteo'
+      'MET Norway'
     );
     if ((cold.forecast.tMin as number) <= T.freezeC)
       add(
         'extremites',
         'Gants et bonnet',
         `Jour ${cold.day} (${dateFr(cold.date)}) : gel possible (${t} °C).`,
-        'Open-Meteo'
+        'MET Norway'
       );
   }
 
@@ -126,7 +126,7 @@ export function adviseKit(input: {
       'soleil',
       'Protection solaire (chapeau, crème, lunettes)',
       `Jour ${hot.day} (${dateFr(hot.date)}) : jusqu'à ${Math.round(hot.forecast.tMax as number)} °C.`,
-      'Open-Meteo'
+      'MET Norway'
     );
 
   /* Lumière : marche plus longue que le jour */
@@ -141,7 +141,7 @@ export function adviseKit(input: {
       'frontale',
       'Lampe frontale',
       `Jour ${dark.day} : la marche prévue dépasse la durée du jour.`,
-      'DIN 33466 · Open-Meteo'
+      'DIN 33466 · MET Norway'
     );
 
   /* Eau : repère par heure de marche, jamais une quantité « exacte » */

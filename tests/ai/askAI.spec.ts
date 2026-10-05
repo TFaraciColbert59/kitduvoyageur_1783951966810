@@ -67,6 +67,11 @@ describe('src/lib/ai/askAI — point d\'entrée unique (port IA + registre)', ()
     vi.unstubAllEnvs();
   });
 
+  it('TEST-ASK-JSON: le drapeau json traverse la validation jusqu au provider', async () => {
+    await askAI(makeReq({ json: true }));
+    expect(providerCompleteMock.mock.calls[0][0]).toMatchObject({ json: true });
+  });
+
   it('TEST-ASK-01: succès → texte du provider, model mappé par tier, degraded false', async () => {
     const result = await askAI(makeReq({ tier: 'heavy', userId: '11111111-1111-4111-8111-111111111111' }));
 

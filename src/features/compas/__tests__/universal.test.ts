@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseIntentRules, planApplication, groundingIssue } from '../engine/intent';
+import { extractIntentJson } from '@/lib/ai/features/compasIntent';
 import { approachMode, keepRuleForActivity, movesFromSteps, nightsPrefFor, sanitizeAdvice, sanitizeStages } from '../engine/autofill';
 import { destinationRadiusKm, parseNominatim, parsePhoton, pickPlace } from '../engine/places';
 
@@ -186,5 +187,41 @@ describe('Préremplissage : étapes déjà en place', () => {
     ]);
     expect(moves.map((m) => m.move)).toEqual(['vol', 'voiture', 'bateau', 'aucun']);
     expect(moves[2]).toEqual({ day: 3, name: 'Heimaey', move: 'bateau' });
+  });
+});
+
+describe('Spécialiste : formats de réponse observés avec Nemotron 3.5 Lightning', () => {
+  const show = (raw: unknown, days: number) =>
+    sanitizeStages(raw, days).map((st) => `${st.day}:${st.place}:${st.move}`);
+
+  it('clé demandée, clés françaises, tableau nu', () => {
+    expect(show({ stages: [[1, 'Reykjavik', 'vol', ''], [2, 'Vík', 'voiture', '']] }, 2)).toEqual([
+      '1:Reykjavik:vol',
+      '2:Vík:voiture',
+    ]);
+    expect(
+      show({ jours: [{ jour: 1, lieu: 'Reykjavik', move: 'aucun' }, { jour: 2, lieu: 'Vík', transport: 'Voiture' }] }, 2)
+    ).toEqual(['1:Reykjavik:aucun', '2:Vík:voiture']);
+    expect(show([{ day: 1, place: 'Ajaccio', move: 'à pied' }], 1)).toEqual(['1:Ajaccio:marche']);
+  });
+
+  it('objet indexé par jour, avec une case de trop ou imbriqué', () => {
+    expect(show({ '1': ['Kathmandu', 'bus station', 'aucun', 'arrivée'], '2': ['Godavari', 'voiture', 'bus', ''] }, 2)).toEqual([
+      '1:Kathmandu:aucun',
+      '2:Godavari:voiture',
+    ]);
+    expect(
+      show({ day1: { stages: [[1, 'Ajaccio', 'vol', 'arrivée']] }, day2: { stages: [[1, 'Vizzavona', 'train', '']] } }, 2)
+    ).toEqual(['1:Ajaccio:vol', '2:Vizzavona:train']);
+  });
+
+  it('plusieurs objets à la suite, une ligne par jour, deviennent un seul objet', () => {
+    const text = '{"1":["Ajaccio", "aucun", "arrivee"]}\n{"2":["Corte", "bus", ""]}\n{"3":["Vizzavona", "marche", ""]}';
+    expect(show(extractIntentJson(text), 3)).toEqual(['1:Ajaccio:aucun', '2:Corte:bus', '3:Vizzavona:marche']);
+  });
+
+  it('un objet suivi de prose reste un seul objet', () => {
+    expect(extractIntentJson('```json\n{"a":1}\n```\nVoilà.')).toEqual({ a: 1 });
+    expect(extractIntentJson('pas de json')).toBeNull();
   });
 });

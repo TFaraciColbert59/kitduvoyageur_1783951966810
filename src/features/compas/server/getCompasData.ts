@@ -111,7 +111,7 @@ export interface CompasData {
   kitAdvice: KitAdvice[];
   /** Points OpenStreetMap à moins de 1 km du tracé choisi (vide sans parcours du catalogue). */
   routePois: RoutePoi[];
-  /** Météo Open-Meteo des jours du voyage et calendrier 6 semaines (null si indisponible). */
+  /** Météo MET Norway des jours du voyage et calendrier 6 semaines (null si indisponible). */
   weather: CompasWeather | null;
   /** Parcours du catalogue choisi pour le voyage. */
   route: { id: number | null; name: string | null };
@@ -159,12 +159,13 @@ function toWeatherInput(weather: CompasWeather | null): CompasWeatherDayInput[] 
   const out: CompasWeatherDayInput[] = [];
   for (const d of weather.tripDays) {
     const f = d.forecast;
-    if (!f || f.tMin == null || f.tMax == null || f.precipPct == null || f.code == null) continue;
+    if (!f || f.tMin == null || f.tMax == null || f.code == null) continue;
     out.push({
       date: f.date,
       tempMinC: f.tMin,
       tempMaxC: f.tMax,
       precipPct: f.precipPct,
+      precipMm: f.precipMm,
       weathercode: f.code,
     });
   }

@@ -226,6 +226,7 @@ async function askJson(
       ...(think ? { reasoningBudget: COMPAS_AUTOFILL_SPEC.maxReasoningBudget } : {}),
       cacheTtlSeconds: 0,
       userId,
+      json: true,
     });
     if (res.degraded || res.provider === 'fallback') return null;
     return extractIntentJson(res.text);
@@ -366,7 +367,7 @@ export async function compasAutofillAction(
         // tant qu'il reste du temps avant la limite du serveur.
         let proposed: ReturnType<typeof sanitizeStages> = [];
         for (let attempt = 0; attempt < 2 && !proposed.length; attempt += 1) {
-          if (attempt && Date.now() - startedAt > 28_000) break;
+          if (attempt && Date.now() - startedAt > 25_000) break;
           proposed = sanitizeStages(
             await askJson(userId, buildCompasStagesSystem(), stagesPrompt, 2000, false),
             days
@@ -673,12 +674,14 @@ export async function compasAutofillAction(
     ]
       .filter(Boolean)
       .join('\n');
-    // Budget de temps : au-delà de 40 s (carte ou IA lentes), le chiffrage passe
-    // par les règles plutôt que de risquer la limite de 60 s du serveur.
-    const lateRun = Date.now() - startedAt > 40_000;
+    // Budget de temps : l'appel rapide peut durer jusqu'à 30 s ; au-delà de
+    // 25 s déjà passées (carte ou IA lentes), le chiffrage passe par les règles
+    // plutôt que de risquer la limite de 60 s du serveur. Sans raisonnement :
+    // avec, Nemotron 3.5 Lightning met ~50 s (mesure du 2026-10-05).
+    const lateRun = Date.now() - startedAt > 25_000;
     const rawAdvice = lateRun
       ? null
-      : await askJson(userId, buildCompasAutofillSystem(), buildCompasAutofillPrompt(facts), 3000, true);
+      : await askJson(userId, buildCompasAutofillSystem(), buildCompasAutofillPrompt(facts), 1200, false);
     if (lateRun) notes.push('Préparation longue : chiffrage par les règles du Compas, relance « Tout préparer » pour l’avis du spécialiste.');
     const advice: AutofillAiAdvice = sanitizeAdvice(rawAdvice);
     const usedAi = rawAdvice != null;

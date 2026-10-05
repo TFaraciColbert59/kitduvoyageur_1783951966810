@@ -3,32 +3,34 @@ import 'server-only';
 import {
   averageTrend,
   buildCalendar,
-  parseForecast,
   type CalendarDay,
   type DayForecast,
 } from '../engine/weather';
+import { METNO_SOURCE, POWER_SOURCE, parseMetNo, powerToDaily } from '../engine/metno';
+import tzLookup from '@photostructure/tz-lookup';
 
 /**
- * Compas — météo Open-Meteo (gratuit, sans clé, licence CC BY 4.0).
+ * Compas — météo gratuite, usage commercial permis :
  *
- * - Jours du voyage : prévision heure par heure au point de départ de CHAQUE
- *   jour (pluie, vent, rafales, orage, isotherme 0 °C, lever et coucher).
+ * - Jours du voyage : prévision MET Norway (Yr) au point de départ de CHAQUE
+ *   jour, à l'heure locale du lieu (fuseau retrouvé hors ligne).
  * - Calendrier des conditions sur 6 semaines au point de départ : prévision
- *   jusqu'à 16 jours, puis TENDANCE (moyenne des 5 dernières années aux mêmes
- *   dates, API d'archives). La tendance est toujours étiquetée comme telle.
+ *   tant qu'elle couvre (~9 jours), puis TENDANCE (moyenne des 5 dernières
+ *   années aux mêmes dates, NASA POWER). La tendance est toujours étiquetée.
+ *
+ * MET Norway demande un User-Agent qui identifie l'application et un cache :
+ * les coordonnées sont arrondies à 0,01° (~1 km) pour que tout le monde
+ * partage les mêmes réponses dans le cache de données de Vercel.
  *
  * Un appel qui échoue rend `null` pour sa partie : l'écran dit « indisponible »,
  * il ne comble rien.
  */
 
-const FORECAST = 'https://api.open-meteo.com/v1/forecast';
-const ARCHIVE = 'https://archive-api.open-meteo.com/v1/archive';
-const HOURLY =
-  'temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,freezing_level_height,is_day';
-const DAILY =
-  'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,wind_gusts_10m_max,sunrise,sunset';
-const ARCHIVE_DAILY = 'temperature_2m_max,temperature_2m_min,precipitation_sum,wind_gusts_10m_max';
-export const FORECAST_HORIZON_DAYS = 16;
+const FORECAST = 'https://api.met.no/weatherapi/locationforecast/2.0/complete';
+const POWER = 'https://power.larc.nasa.gov/api/temporal/daily/point';
+const USER_AGENT = 'kitduvoyageur/1.0 https://lekitduvoyageur.fr';
+/** Horizon annoncé : MET Norway couvre ~9 jours pleins après aujourd'hui. */
+export const FORECAST_HORIZON_DAYS = 10;
 export const CALENDAR_DAYS = 42;
 const TREND_YEARS = 5;
 
@@ -41,7 +43,9 @@ export interface CompasTripDayWeather {
 }
 
 export interface CompasWeather {
-  source: 'Open-Meteo';
+  /** Sources citées à l'écran (licence CC BY 4.0 pour MET Norway). */
+  source: typeof METNO_SOURCE;
+  trendSource: typeof POWER_SOURCE;
   /** Dernier jour couvert par la prévision. */
   horizon: string;
   tripDays: CompasTripDayWeather[];
@@ -71,41 +75,45 @@ export function localToday(timeZone: string, now = new Date()): string {
 
 /* ---------- URLs (exportées pour les tests) ---------- */
 
-export function forecastUrl(
-  lat: number,
-  lon: number,
-  start: string,
-  end: string,
-  hourly: boolean
-): string {
-  const q = new URLSearchParams({
-    latitude: lat.toFixed(4),
-    longitude: lon.toFixed(4),
-    daily: DAILY,
-    timezone: 'auto',
-    start_date: start,
-    end_date: end,
-  });
-  if (hourly) q.set('hourly', HOURLY);
-  return `${FORECAST}?${q.toString()}`;
+const at2 = (v: number) => (Math.round(v * 100) / 100).toFixed(2);
+
+export function forecastUrl(lat: number, lon: number): string {
+  return `${FORECAST}?lat=${at2(lat)}&lon=${at2(lon)}`;
 }
 
-export function archiveUrl(lat: number, lon: number, start: string, end: string): string {
+export function trendUrl(lat: number, lon: number, start: string, end: string): string {
   const q = new URLSearchParams({
-    latitude: lat.toFixed(4),
-    longitude: lon.toFixed(4),
-    daily: ARCHIVE_DAILY,
-    timezone: 'auto',
-    start_date: start,
-    end_date: end,
+    parameters: 'T2M_MAX,T2M_MIN,PRECTOTCORR,WS10M_MAX',
+    community: 'RE',
+    latitude: at2(lat),
+    longitude: at2(lon),
+    start: start.replaceAll('-', ''),
+    end: end.replaceAll('-', ''),
+    format: 'JSON',
   });
-  return `${ARCHIVE}?${q.toString()}`;
+  return `${POWER}?${q.toString()}`;
 }
 
-async function getJson(url: string, revalidate: number): Promise<unknown | null> {
+/** Fuseau horaire du lieu (hors ligne) ; celui de l'app si la mer ou l'erreur l'empêche. */
+export function zoneAt(lat: number, lon: number, fallback: string): string {
   try {
-    const res = await fetch(url, { next: { revalidate }, signal: AbortSignal.timeout(4000) });
-    if (!res.ok) return null;
+    return tzLookup(lat, lon) || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+async function getJson(url: string, revalidate: number, timeoutMs = 6000): Promise<unknown | null> {
+  try {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
+      next: { revalidate },
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    if (!res.ok) {
+      console.warn('[compas] météo', new URL(url).host, res.status);
+      return null;
+    }
     return (await res.json()) as unknown;
   } catch {
     return null;
@@ -130,22 +138,19 @@ export async function getCompasWeather(input: {
   const today = localToday(input.timeZone, input.now);
   const horizon = addDays(today, FORECAST_HORIZON_DAYS - 1);
 
-  // 1. Jours du voyage dans l'horizon : une requête par point, sur ses dates.
+  // 1. Jours du voyage dans l'horizon : une prévision par point (cache partagé).
   const inHorizon = input.tripDays.filter((d) => d.date >= today && d.date <= horizon);
   const byPoint = new Map<string, typeof inHorizon>();
   for (const d of inHorizon) {
-    const key = `${d.lat.toFixed(2)},${d.lon.toFixed(2)}`;
+    const key = `${at2(d.lat)},${at2(d.lon)}`;
     byPoint.set(key, [...(byPoint.get(key) ?? []), d]);
   }
   const tripForecasts = new Map<string, DayForecast>();
   await Promise.all(
     [...byPoint.values()].map(async (days) => {
-      const dates = days.map((d) => d.date).sort();
-      const payload = await getJson(
-        forecastUrl(days[0].lat, days[0].lon, dates[0], dates[dates.length - 1], true),
-        1800
-      );
-      for (const f of parseForecast(payload)) {
+      const { lat, lon } = days[0];
+      const payload = await getJson(forecastUrl(lat, lon), 1800);
+      for (const f of parseMetNo(payload, zoneAt(lat, lon, input.timeZone))) {
         for (const d of days) if (d.date === f.date) tripForecasts.set(`${d.day}`, f);
       }
     })
@@ -156,26 +161,29 @@ export async function getCompasWeather(input: {
   if (input.origin) {
     const { lat, lon } = input.origin;
     const dates = Array.from({ length: CALENDAR_DAYS }, (_, i) => addDays(today, i));
-    const trendStart = addDays(today, FORECAST_HORIZON_DAYS);
-    const trendEnd = dates[dates.length - 1];
-    const [forecastPayload, ...archives] = await Promise.all([
-      getJson(forecastUrl(lat, lon, today, horizon, false), 1800),
-      ...Array.from({ length: TREND_YEARS }, (_, k) =>
-        getJson(
-          archiveUrl(lat, lon, shiftYear(trendStart, k + 1), shiftYear(trendEnd, k + 1)),
-          86_400
-        )
+    const [forecastPayload, powerPayload] = await Promise.all([
+      getJson(forecastUrl(lat, lon), 1800),
+      getJson(
+        trendUrl(lat, lon, shiftYear(dates[0], TREND_YEARS), shiftYear(dates[dates.length - 1], 1)),
+        7 * 86_400,
+        8000
       ),
     ]);
-    const trend = averageTrend(
-      archives.filter((a) => a !== null),
-      dates.filter((d) => d >= trendStart)
+    const forecast = parseMetNo(forecastPayload, zoneAt(lat, lon, input.timeZone)).filter(
+      (f) => f.date >= today
     );
-    calendar = buildCalendar(dates, parseForecast(forecastPayload), trend);
+    const covered = new Set(forecast.map((f) => f.date));
+    const daily = powerToDaily(powerPayload);
+    const trend = averageTrend(
+      daily ? [daily] : [],
+      dates.filter((d) => !covered.has(d))
+    );
+    calendar = buildCalendar(dates, forecast, trend);
   }
 
   return {
-    source: 'Open-Meteo',
+    source: METNO_SOURCE,
+    trendSource: POWER_SOURCE,
     horizon,
     tripDays: input.tripDays.map((d) => ({
       ...d,

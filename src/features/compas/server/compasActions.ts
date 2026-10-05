@@ -535,6 +535,7 @@ async function resolveDestination(query: string, userId: string): Promise<Compas
       maxTokens: 200,
       cacheTtlSeconds: 0,
       userId,
+      json: true,
     });
     if (!res.degraded && res.provider !== 'fallback') {
       const hint = extractIntentJson(res.text) as Record<string, unknown> | null;
@@ -1662,6 +1663,7 @@ export async function compasInterpretAction(
         maxTokens: 700,
         cacheTtlSeconds: 0,
         userId: auth.userId,
+        json: true,
       });
       if (res.degraded || res.provider === 'fallback') {
         note = AI_NOTES[res.failureReason ?? 'provider_indisponible'];

@@ -39,6 +39,9 @@ const askAISchema = z.object({
       })
     )
     .optional(),
+  // Sans cette ligne, zod retire le drapeau et le provider ne demande jamais
+  // de JSON au modèle.
+  json: z.boolean().optional(),
 });
 
 export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {

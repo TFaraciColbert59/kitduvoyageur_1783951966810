@@ -76,7 +76,7 @@ describe('adviseKit', () => {
     expect(r?.covered).toBe(false);
     expect(r?.reason).toContain('12 mm');
     expect(r?.reason).toContain('12/10');
-    expect(r?.source).toBe('Open-Meteo');
+    expect(r?.source).toBe('MET Norway');
   });
 
   it('un objet du kit couvre le besoin', () => {
