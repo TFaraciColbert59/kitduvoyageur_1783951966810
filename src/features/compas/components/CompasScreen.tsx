@@ -262,7 +262,8 @@ export function CompasScreen({
   const autofillStarted = useRef<string | null>(null);
   useEffect(() => {
     if (data.autofill !== 'none' || !data.canEdit) return;
-    if (!model.dates.start || !(model.destination || data.itinerary.length || data.origin)) return;
+    if (!(model.dates.start || data.plannedDays)) return;
+    if (!(model.destination || data.anchorName || data.itinerary.length || data.origin)) return;
     if (autofillStarted.current === model.tripId) return;
     autofillStarted.current = model.tripId;
     autofill();
@@ -711,7 +712,10 @@ function autofillDigest(s: CompasAutofillSummary): string {
       [...count].map(([k, v]) => `${v} ${k.toLowerCase()}${v > 1 ? 's' : ''}`).join(', ')
     );
   }
-  if (s.transport) parts.push(`${Math.round(s.transport.km)} km de route`);
+  if (s.transport)
+    parts.push(
+      s.transport.mode === 'avion' ? 'vol à prévoir' : `${Math.round(s.transport.km)} km de route`
+    );
   const kit = s.kit.inventaire + s.kit.pret + s.kit.location + s.kit.achat + s.kit.a_trouver;
   if (kit) parts.push(`${kit} objet${kit > 1 ? 's' : ''} au kit`);
   return parts.join(' · ') || 'Budget posé';

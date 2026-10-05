@@ -11,6 +11,8 @@ import {
   compasSetDatesAction,
   compasSetPartySizeAction,
   compasSetPreferencesAction,
+  compasSetDestinationAction,
+  compasSetSpanAction,
 } from '../server/compasActions';
 import type { ActionResult, CompasCtl } from './compasTypes';
 
@@ -22,6 +24,7 @@ export function applyCurrent(ctl: CompasCtl): ApplyCurrent {
     endDate: dates.end,
     days: dates.days,
     shortHours: dates.hours != null && dates.hours < 24 ? dates.hours : null,
+    plannedDays: ctl.data.plannedDays ?? null,
     preferences,
     hasRoute: ctl.data.route.id != null,
   };
@@ -81,6 +84,12 @@ export async function runOps(
         // Une recherche n'écrit rien : l'écran ouvre Parcours avec la requête.
         res = { success: true };
         break;
+      case 'destination':
+        res = await compasSetDestinationAction({ tripId, tripSlug: slug, place: op.place });
+        break;
+      case 'span':
+        res = await compasSetSpanAction({ tripId, tripSlug: slug, days: op.days });
+        break;
     }
     if (!res.success) {
       return {
@@ -130,6 +139,12 @@ export function inverseOps(ctl: CompasCtl, ops: readonly ApplyOp[]): ApplyOp[] |
         out.push({ op: 'budget', amount: m.budget.target });
         break;
       case 'route':
+        break;
+      case 'destination':
+        out.push({ op: 'destination', place: m.destination ?? null });
+        break;
+      case 'span':
+        out.push({ op: 'span', days: ctl.data.plannedDays ?? null });
         break;
       default:
         return null;

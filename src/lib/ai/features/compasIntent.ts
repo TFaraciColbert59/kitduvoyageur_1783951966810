@@ -80,7 +80,8 @@ const CONTRACT = [
   '  {"type": "avoid", "label": "ce qu il faut eviter, 1 a 5 mots"},',
   '  {"type": "wish", "label": "une envie, 1 a 5 mots"},',
   '  {"type": "add_item", "name": "objet a ajouter au sac", "quantity": 1},',
-  '  {"type": "search_route", "query": "nom de lieu ou de parcours"}',
+  '  {"type": "search_route", "query": "nom de lieu ou de parcours"},',
+  '  {"type": "set_destination", "place": "pays, region, massif ou ville ou l on part, tel qu ecrit dans la phrase"}',
   ']}',
 ].join('\n');
 

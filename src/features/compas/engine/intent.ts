@@ -63,6 +63,7 @@ export const intentActionSchema = z.discriminatedUnion('type', [
     quantity: z.number().int().min(1).max(99).default(1),
   }),
   z.object({ type: z.literal('search_route'), query: label }),
+  z.object({ type: z.literal('set_destination'), place: label }),
 ]);
 
 export type CompasIntentAction = z.output<typeof intentActionSchema>;
@@ -398,6 +399,18 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     });
   }
 
+  /* Destination : « au Népal », « en Islande », « à Chamonix » (nom propre) */
+  for (const m of plain.matchAll(/(?:^|[\s,(])(?:au|aux|en|a|dans le|dans la|dans les)\s+/g)) {
+    const at = (m.index ?? 0) + m[0].length;
+    const original = src.slice(at, at + 60);
+    if (!/^\p{Lu}/u.test(original)) continue;
+    const place = clean(upToBreak(original).split(/\s(?:pour|avec|du|le|la|les|en|a|à|à partir|pendant|sur|et)\s/i)[0], 50);
+    if (place.length >= 2 && !monthOf(plainOf(place)) && !WEEKDAYS.includes(plainOf(place))) {
+      out.push({ type: 'set_destination', place });
+      break;
+    }
+  }
+
   /* Lieu → recherche de parcours (nom propre seulement) */
   const place =
     /\b(?:dans (?:le |la |les |l')|vers |autour (?:de |d')|du cote (?:de |d')|pres (?:de |d')|a cote (?:de |d'))/g;
@@ -467,6 +480,8 @@ export function groundingIssue(action: CompasIntentAction, text: string): string
         : 'Objet absent de ta phrase';
     case 'search_route':
       return tokensIn(text, action.query) ? null : 'Lieu absent de ta phrase';
+    case 'set_destination':
+      return tokensIn(text, action.place) ? null : 'Lieu absent de ta phrase';
     default:
       return null;
   }
@@ -512,6 +527,8 @@ export function actionLabel(action: CompasIntentAction, currency = 'EUR'): strin
       return `Ajouter au kit : ${action.quantity > 1 ? `${action.quantity} × ` : ''}${action.name}`;
     case 'search_route':
       return `Chercher un parcours : ${action.query}`;
+    case 'set_destination':
+      return `Destination : ${action.place}`;
   }
 }
 
@@ -552,7 +569,8 @@ export function validateActions(
   list: Array<{ action: CompasIntentAction; source: IntentSource; issue?: string | null }>,
   ctx: IntentContext
 ): CompasProposal[] {
-  const dates = list.find((x) => x.action.type === 'set_dates')?.action as
+  // Des dates refusées (absentes de la phrase) ne masquent ni la durée ni rien d'autre.
+  const dates = list.find((x) => x.action.type === 'set_dates' && !x.issue)?.action as
     Extract<CompasIntentAction, { type: 'set_dates' }> | undefined;
   const hasStart = Boolean(dates?.start ?? ctx.startDate);
   const known = (values: string[]) => new Set(values.map(plainOf));
@@ -578,7 +596,9 @@ export function validateActions(
           case 'set_duration':
             if (a.days != null && a.days > MAX_TRIP_DAYS) reason = `Plus de ${MAX_TRIP_DAYS} jours`;
             else if (a.days == null && a.hours == null) reason = 'Durée illisible';
-            else if (!hasStart) reason = 'Donne aussi le jour de départ';
+            // Sans date de départ, une durée en jours se garde (préremplissage) ;
+            // une durée en heures n'a de sens qu'avec un jour.
+            else if (!hasStart && a.days == null) reason = 'Donne aussi le jour de départ';
             break;
           case 'set_party_size':
             if (a.count > 50) reason = 'Plus de 50 personnes';
@@ -618,6 +638,8 @@ export interface ApplyCurrent {
   days: number | null;
   /** Durée courte en heures si la sortie tient en moins d'un jour. */
   shortHours: number | null;
+  /** Durée retenue sans date de départ (« 20 jours ») : reprise quand le départ arrive. */
+  plannedDays?: number | null;
   preferences: CompasPreferences;
   hasRoute: boolean;
 }
@@ -635,7 +657,10 @@ export type ApplyOp =
   | { op: 'prefs'; preferences: CompasPreferences }
   | { op: 'activity'; activity: CompasActivity }
   | { op: 'item'; name: string; quantity: number }
-  | { op: 'route'; query: string };
+  | { op: 'route'; query: string }
+  | { op: 'destination'; place: string | null }
+  /** Durée connue sans date de départ (« 20 jours ») ; null efface. */
+  | { op: 'span'; days: number | null };
 
 /** Regroupe les actions retenues en opérations serveur (une par réglage). */
 export function planApplication(actions: CompasIntentAction[], current: ApplyCurrent): ApplyOp[] {
@@ -656,8 +681,9 @@ export function planApplication(actions: CompasIntentAction[], current: ApplyCur
     } else if (dates?.end) {
       endDate = dates.end;
     } else {
-      endDate = addDaysIso(start, (current.days ?? 1) - 1);
-      durationHours = current.shortHours;
+      const keep = current.days ?? current.plannedDays ?? null;
+      endDate = addDaysIso(start, Math.min(MAX_TRIP_DAYS, keep ?? 1) - 1);
+      durationHours = keep == null || current.days != null ? current.shortHours : null;
     }
     const days = daysBetweenIso(start, endDate) + 1;
     ops.push({
@@ -667,7 +693,13 @@ export function planApplication(actions: CompasIntentAction[], current: ApplyCur
       durationHours,
       resplit: current.hasRoute && days !== current.days,
     });
+  } else if (!start && duration?.days != null) {
+    ops.push({ op: 'span', days: Math.min(MAX_TRIP_DAYS, duration.days) });
   }
+  // La destination d'abord : le reste (parcours, préremplissage) en dépend.
+  const destination = actions.find((a) => a.type === 'set_destination') as
+    Extract<CompasIntentAction, { type: 'set_destination' }> | undefined;
+  if (destination) ops.unshift({ op: 'destination', place: destination.place });
 
   const prefs: CompasPreferences = {
     ...current.preferences,

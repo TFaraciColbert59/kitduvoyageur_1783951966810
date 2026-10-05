@@ -9,10 +9,11 @@ import {
   COMPAS_AUTOFILL_SPEC,
   buildCompasAutofillPrompt,
   buildCompasAutofillSystem,
+  buildCompasStagesPrompt,
+  buildCompasStagesSystem,
 } from '@/lib/ai/features/compasAutofill';
 import { extractIntentJson } from '@/lib/ai/features/compasIntent';
-import { geocodePlace } from '@/features/adventure-prep/geocodeService';
-import { ARRIVAL_TOLERANCE_M, routeAttempt } from '@/features/adventure-prep/routingService';
+import { ARRIVAL_TOLERANCE_M, elevationsAt, routeAttempt } from '@/features/adventure-prep/routingService';
 import { haversineKm } from '@/features/adventure-prep/engine/routing';
 import { generateTripContextualKit } from '@/features/trips/engine/contextualKitEngine';
 import type { TripItem } from '@/features/trips/types/trip.types';
@@ -25,11 +26,19 @@ import {
   estimateMeals,
   gearForNights,
   keepRuleForNights,
+  keepRuleForActivity,
+  nightsPrefFor,
   needFromRule,
   sameNeed,
   planNights,
   sanitizeAdvice,
+  sanitizeStages,
   sourceGear,
+  approachMode,
+  fuelForKm,
+  CAR_ASSUMPTIONS,
+  STEP_TRANSPORT,
+  type StageMove,
   type AutofillAiAdvice,
   type Autonomy,
   type BudgetLine,
@@ -38,8 +47,14 @@ import {
   type NightPlan,
   type Priority,
   type SourceShop,
+  movesFromSteps,
 } from '../engine/autofill';
 import { compasMeta, patchTripMetadata, requireEditor, resplitSteps, type Supa } from './compasServer';
+import { lookupDestination, lookupReverse, stageCandidates } from './placeLookup';
+import { destinationRadiusKm, distanceKm, maxLegKm, pickPlace, type CompasPlace } from '../engine/places';
+import { localToday } from './weather';
+
+const MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 
 /**
  * Préremplissage du Compas. Dès que le lieu et les dates sont connus (ou après
@@ -54,7 +69,14 @@ import { compasMeta, patchTripMetadata, requireEditor, resplitSteps, type Supa }
 
 export interface CompasAutofillSummary {
   nights: Array<{ night: number; type: NightPlan['type']; place: string | null; reason: string }>;
-  transport: { km: number; minutes: number; walkKm: number; fuelEur: number; basis: string } | null;
+  transport: {
+    mode: 'voiture' | 'avion';
+    km: number;
+    minutes: number;
+    walkKm: number;
+    fuelEur: number;
+    basis: string;
+  } | null;
   kit: Record<GearSource, number>;
   budget: BudgetLine[];
   total: number;
@@ -83,6 +105,9 @@ interface StepRow {
   longitude: number | null;
   accommodation_name: string | null;
   source: string | null;
+  title: string;
+  distance_km: number | null;
+  transport_mode: string | null;
 }
 
 interface Refuge {
@@ -107,7 +132,7 @@ function tripDays(start: string | null, end: string | null): number | null {
 async function loadSteps(supabase: Supa, tripId: string): Promise<StepRow[]> {
   const { data } = await supabase
     .from('trip_steps')
-    .select('id, day_number, order_index, latitude, longitude, accommodation_name, source')
+    .select('id, day_number, order_index, latitude, longitude, accommodation_name, source, title, distance_km, transport_mode')
     .eq('trip_id', tripId)
     .order('day_number', { ascending: true })
     .order('order_index', { ascending: true });
@@ -115,10 +140,11 @@ async function loadSteps(supabase: Supa, tripId: string): Promise<StepRow[]> {
     ...s,
     latitude: s.latitude == null ? null : Number(s.latitude),
     longitude: s.longitude == null ? null : Number(s.longitude),
+    distance_km: s.distance_km == null ? null : Number(s.distance_km),
   }));
 }
 
-/** Refuges connus (base) à moins de ~12 km : la table tarifée d'abord, puis l'annuaire. */
+/** Refuges connus (base) à moins de 3 km : la table tarifée d'abord, puis l'annuaire. */
 async function refugesNear(supabase: Supa, p: { lat: number; lon: number }): Promise<Refuge[]> {
   const dLat = 0.11;
   const dLon = 0.11 / Math.max(0.2, Math.cos((p.lat * Math.PI) / 180));
@@ -159,9 +185,80 @@ async function refugesNear(supabase: Supa, p: { lat: number; lon: number }): Pro
   ].filter((r) => r.name && Number.isFinite(r.lat) && Number.isFinite(r.lon));
   return out
     .map((r) => ({ r, d: haversineKm(p, r) }))
-    .filter((x) => x.d <= 12)
-    .sort((a, b) => (a.r.pricePerNight == null ? 1 : 0) - (b.r.pricePerNight == null ? 1 : 0) || a.d - b.d)
+    .filter((x) => x.d <= 3)
+    .sort((a, b) => a.d - b.d)
     .map((x) => x.r);
+}
+
+/** Petit ordonnanceur : `limit` appels réseau en parallèle au plus. */
+async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T, i: number) => Promise<R>): Promise<R[]> {
+  const out: R[] = new Array(items.length);
+  let next = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (next < items.length) {
+      const i = next++;
+      out[i] = await fn(items[i], i);
+    }
+  });
+  await Promise.all(workers);
+  return out;
+}
+
+/**
+ * `think` : raisonnement du modèle (il compte dans `maxTokens`). Les étapes
+ * jour par jour sont une liste longue : sans raisonnement, la réponse tient
+ * en entier et arrive vite ; le chiffrage, court, garde le raisonnement.
+ */
+async function askJson(
+  userId: string,
+  system: string,
+  prompt: string,
+  maxTokens: number,
+  think: boolean
+): Promise<unknown | null> {
+  try {
+    const res = await askAI({
+      feature: 'compas-autofill',
+      tier: think ? COMPAS_AUTOFILL_SPEC.tier : 'fast',
+      system,
+      prompt,
+      maxTokens,
+      ...(think ? { reasoningBudget: COMPAS_AUTOFILL_SPEC.maxReasoningBudget } : {}),
+      cacheTtlSeconds: 0,
+      userId,
+    });
+    if (res.degraded || res.provider === 'fallback') return null;
+    return extractIntentJson(res.text);
+  } catch {
+    return null;
+  }
+}
+
+interface Anchor {
+  name: string;
+  lat: number;
+  lon: number;
+  countryCode: string | null;
+  country: string | null;
+  radiusKm: number;
+}
+
+function readAnchor(meta: Record<string, unknown>): Anchor | null {
+  const a = compasMeta(meta).anchor as Record<string, unknown> | undefined;
+  if (!a || typeof a !== 'object') return null;
+  const lat = Number(a.lat);
+  const lon = Number(a.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  const place: CompasPlace = {
+    name: String(a.name ?? ''),
+    lat,
+    lon,
+    countryCode: typeof a.countryCode === 'string' ? a.countryCode : null,
+    country: typeof a.country === 'string' ? a.country : null,
+    kind: String(a.kind ?? 'place'),
+    extent: Array.isArray(a.extent) && a.extent.length === 4 ? (a.extent.map(Number) as CompasPlace['extent']) : null,
+  };
+  return { ...place, radiusKm: destinationRadiusKm(place) };
 }
 
 export async function compasAutofillAction(
@@ -182,16 +279,21 @@ export async function compasAutofillAction(
     });
     if (limited) return { success: false, error: 'Préparation déjà lancée plusieurs fois : patiente quelques minutes.' };
 
-    const days = tripDays(trip.start_date, trip.end_date);
-    if (!days) return { success: false, error: 'Choisis d’abord les dates.' };
-    const nightsCount = Math.max(0, days - 1);
-    const party = Math.max(1, trip.party_size ?? 1);
     const meta = (trip.metadata ?? {}) as Record<string, unknown>;
     const compas = readCompasMeta(meta);
+    const planned = Number(compasMeta(meta).planned_days);
+    const days =
+      tripDays(trip.start_date, trip.end_date) ??
+      (Number.isInteger(planned) && planned >= 1 ? Math.min(60, planned) : null);
+    if (!days) return { success: false, error: 'Dis-moi combien de jours, ou choisis les dates.' };
+    const nightsCount = Math.max(0, days - 1);
+    const party = Math.max(1, trip.party_size ?? 1);
     const prev = compasMeta(meta).autofill as { runId?: string } | undefined;
     if (prev?.runId) return { success: false, error: 'Le voyage est déjà prérempli : annule d’abord pour relancer.' };
     const notes: string[] = [];
     const runId = randomUUID();
+    const today = localToday('Europe/Paris');
+    const startedAt = Date.now();
 
     const [{ data: tripRow }, { data: orientation }] = await Promise.all([
       supabase.from('trips').select('primary_activity, estimated_budget').eq('id', tripId).maybeSingle(),
@@ -200,23 +302,32 @@ export async function compasAutofillAction(
     const activity = String((tripRow as { primary_activity?: string } | null)?.primary_activity ?? 'hiking');
     const prevBudget = (tripRow as { estimated_budget?: number | null } | null)?.estimated_budget ?? null;
 
-    /* 1. Étapes : celles du voyage, sinon le parcours du catalogue le plus proche, sinon une étape par jour. */
+    /* 1. Où : la destination retrouvée sur la carte (Dis-le), sinon les étapes, sinon son nom. */
     let steps = await loadSteps(supabase, tripId);
-    let anchor: { lat: number; lon: number; label: string | null } | null = null;
+    let anchor = readAnchor(meta);
     const firstGeo = steps.find((s) => s.latitude != null && s.longitude != null);
-    if (firstGeo) anchor = { lat: firstGeo.latitude as number, lon: firstGeo.longitude as number, label: trip.destination_name };
+    if (!anchor && firstGeo)
+      anchor = {
+        name: trip.destination_name ?? 'Départ',
+        lat: firstGeo.latitude as number,
+        lon: firstGeo.longitude as number,
+        countryCode: trip.destination_country_code?.toUpperCase() ?? null,
+        country: null,
+        radiusKm: 60,
+      };
     if (!anchor && trip.destination_name) {
-      const geo = await geocodePlace(trip.destination_name);
-      const m = geo.status === 'ok' ? geo.matches[0] : null;
-      if (m) anchor = { lat: m.lat, lon: m.lon, label: m.name };
+      const place = await lookupDestination(trip.destination_name);
+      if (place) anchor = { ...place, radiusKm: destinationRadiusKm(place) };
     }
-    if (!anchor) return { success: false, error: 'Indique d’abord où tu vas (lieu introuvable).' };
+    if (!anchor) return { success: false, error: 'Dis-moi où tu pars (« au Népal », « dans le Vercors »…).' };
 
+    /* 2. Étapes : parcours du catalogue (destination locale), sinon itinéraire du spécialiste vérifié sur la carte. */
     let stepsCreated = 0;
     let routeSet = false;
     const createdStepIds: string[] = [];
+    let stagePlaces: Array<{ day: number; name: string; lat: number; lon: number; move: StageMove }> = [];
     if (steps.length === 0) {
-      if (HIKING_ACTIVITIES.has(activity) && compas.routeId == null) {
+      if (HIKING_ACTIVITIES.has(activity) && compas.routeId == null && anchor.radiusKm <= 80) {
         const { data: near } = await supabase.rpc('compas_search_routes', {
           p_lat: anchor.lat,
           p_lng: anchor.lon,
@@ -240,16 +351,85 @@ export async function compasAutofillAction(
         }
       }
       if (!routeSet) {
-        const rows = Array.from({ length: days }, (_, i) => ({
+        const stagesPrompt = buildCompasStagesPrompt({
+          destination: anchor.name,
+          country: anchor.country,
+          days,
+          activity,
+          partySize: party,
+          month: trip.start_date ? MONTHS_FR[Number(trip.start_date.slice(5, 7)) - 1] ?? null : null,
+          pace: compas.preferences?.pace ?? null,
+          wishes: compas.preferences?.wishes ?? [],
+          avoid: compas.preferences?.avoid ?? [],
+        });
+        // Un second essai si le premier échoue (modèle lent ou réponse illisible),
+        // tant qu'il reste du temps avant la limite du serveur.
+        let proposed: ReturnType<typeof sanitizeStages> = [];
+        for (let attempt = 0; attempt < 2 && !proposed.length; attempt += 1) {
+          if (attempt && Date.now() - startedAt > 28_000) break;
+          proposed = sanitizeStages(
+            await askJson(userId, buildCompasStagesSystem(), stagesPrompt, 2000, false),
+            days
+          );
+        }
+        // Chaque lieu proposé doit exister sur la carte, dans le pays, et à une
+        // distance plausible de l'étape de la veille (village de préférence).
+        const names = [...new Set(proposed.map((p) => p.place))];
+        const found = await mapLimit(names, 6, (n) =>
+          stageCandidates(n, { countryCode: anchor!.countryCode, country: anchor!.country })
+        );
+        const byName = new Map(names.map((n, i) => [n, found[i]]));
+        let last: { name: string; lat: number; lon: number } | null = null;
+        let dropped = 0;
+        for (const p of proposed) {
+          const hit = pickPlace(byName.get(p.place) ?? [], {
+            near: last ?? anchor,
+            maxKm: maxLegKm(p.move, last == null, anchor.radiusKm),
+          });
+          // Le titre garde le nom proposé (lisible) ; la position vient de la carte.
+          if (hit) last = { name: p.place, lat: hit.lat, lon: hit.lon };
+          else if (last?.name !== p.place) dropped += 1;
+          const at = last ?? { name: anchor.name, lat: anchor.lat, lon: anchor.lon };
+          stagePlaces.push({ day: p.day, name: at.name, lat: at.lat, lon: at.lon, move: hit ? p.move : 'aucun' });
+        }
+        if (!proposed.length) {
+          notes.push('Itinéraire détaillé indisponible pour le moment : une étape par jour sur le lieu, à affiner dans Parcours.');
+          stagePlaces = Array.from({ length: days }, (_, i) => ({
+            day: i + 1,
+            name: anchor!.name,
+            lat: anchor!.lat,
+            lon: anchor!.lon,
+            move: 'aucun' as StageMove,
+          }));
+        } else if (dropped) notes.push(`${dropped} lieu(x) proposé(s) introuvable(s) sur la carte : étape gardée au lieu précédent.`);
+
+        // Distances réelles entre deux soirs (à pied, à vélo ou sur la route), en parallèle.
+        const legs = await mapLimit(stagePlaces, 4, async (st, i) => {
+          const prevPlace = i > 0 ? stagePlaces[i - 1] : null;
+          if (!prevPlace || distanceKm(prevPlace, st) < 0.3) return null;
+          const mode = st.move === 'marche' ? 'pieton' : st.move === 'velo' ? 'velo' : 'voiture';
+          if (st.move === 'vol' || st.move === 'bateau') return { km: Math.round(distanceKm(prevPlace, st)), ascent: null, measured: false };
+          const r = await routeAttempt([prevPlace, st], mode);
+          const km = r.legs?.reduce((t, l) => t + l.distanceKm, 0);
+          const ascent = r.legs?.every((l) => l.ascentM != null) ? r.legs.reduce((t, l) => t + (l.ascentM ?? 0), 0) : null;
+          if (km == null) return null;
+          // Une journée à pied ou à vélo hors de portée : distance non retenue plutôt que fausse.
+          if ((st.move === 'marche' && km > 45) || (st.move === 'velo' && km > 180)) return null;
+          return { km: Math.round(km * 10) / 10, ascent: ascent != null ? Math.round(ascent) : null, measured: true };
+        });
+        const proposedByDay = new Map(proposed.map((p) => [p.day, p]));
+        const rows = stagePlaces.map((st, i) => ({
           trip_id: tripId,
-          day_number: i + 1,
+          day_number: st.day,
           order_index: 0,
-          title: `Jour ${i + 1} · ${anchor!.label ?? trip.destination_name ?? 'Sur place'}`,
-          description: 'Étape posée par le Compas sur le lieu du voyage : choisis un parcours pour la détailler.',
-          transport_mode: 'foot',
+          title: `Jour ${st.day} · ${st.name}`,
+          description: proposedByDay.get(st.day)?.note ?? null,
+          transport_mode: STEP_TRANSPORT[st.move],
           source: 'compas',
-          latitude: Math.round(anchor.lat * 1e5) / 1e5,
-          longitude: Math.round(anchor.lon * 1e5) / 1e5,
+          latitude: Math.round(st.lat * 1e5) / 1e5,
+          longitude: Math.round(st.lon * 1e5) / 1e5,
+          distance_km: legs[i]?.km ?? null,
+          elevation_gain_m: legs[i]?.ascent ?? null,
         }));
         await supabase.from('trip_steps').insert(rows);
       }
@@ -258,54 +438,85 @@ export async function compasAutofillAction(
       stepsCreated = steps.length;
     }
 
-    /* 2. Nuits : profil + terrain + refuges connus. */
+    /* 3. Altitude réelle des étapes : acclimatation et kit en dépendent. */
+    const geoSteps = steps.filter((s) => s.latitude != null && s.longitude != null);
+    const altitudes =
+      geoSteps.length > 0
+        ? await elevationsAt(geoSteps.map((s) => [s.longitude as number, s.latitude as number] as const))
+        : null;
+    const maxStepAltitude = altitudes ? Math.max(0, ...altitudes.filter((a): a is number => a != null)) || null : null;
+
+    /* 4. Nuits : profil + terrain + refuges connus (en parallèle). */
     const dayStep = (day: number) => steps.find((s) => s.day_number === day) ?? null;
     const nightPoint = (night: number) => {
-      const s = dayStep(night + 1) ?? dayStep(night);
+      const s = dayStep(night) ?? dayStep(night + 1);
       return s?.latitude != null && s.longitude != null ? { lat: s.latitude, lon: s.longitude } : anchor!;
     };
-    const refugesByNight: Refuge[][] = [];
-    for (let n = 1; n <= nightsCount; n += 1) refugesByNight.push(await refugesNear(supabase, nightPoint(n)));
-    const maxAltitude = Math.max(0, ...refugesByNight.flat().map((r) => r.altitudeM ?? 0)) || null;
+    const refugesByNight: Refuge[][] = await mapLimit(
+      Array.from({ length: nightsCount }, (_, i) => i + 1),
+      6,
+      (n) => refugesNear(supabase, nightPoint(n))
+    );
+    const maxAltitude =
+      Math.max(maxStepAltitude ?? 0, ...refugesByNight.flat().map((r) => r.altitudeM ?? 0)) || null;
     const o = (orientation ?? {}) as { autonomy?: string | null; priority?: string | null };
     const plan = planNights({
       nights: nightsCount,
-      pref: compas.preferences?.nights ?? null,
+      pref: nightsPrefFor(activity, compas.preferences?.nights ?? null),
       autonomy: (o.autonomy ?? null) as Autonomy,
       priority: (o.priority ?? null) as Priority,
       maxAltitudeM: maxAltitude,
       refugeNear: refugesByNight.map((r) => r.length > 0),
     });
+    if (maxAltitude != null && maxAltitude >= 2500)
+      notes.push(
+        `Altitude jusqu’à ${Math.round(maxAltitude)} m : monte progressivement (300 à 500 m de couchage par jour au-dessus de 3 000 m) et garde un jour de repos tous les 3 à 4 jours.`
+      );
 
     const stays: Array<{ stepId: string; name: string }> = [];
     const nightsOut: CompasAutofillSummary['nights'] = [];
     for (const n of plan) {
       const refuge = n.type === 'refuge' ? refugesByNight[n.night - 1][0] ?? null : null;
+      const step = dayStep(n.night);
+      const where = step?.title?.split(' · ').slice(1).join(' · ') || null;
       const name =
         n.type === 'refuge' && refuge
           ? `Refuge · ${refuge.name}`
           : n.type === 'bivouac'
             ? 'Bivouac'
-            : 'Hébergement à réserver';
-      nightsOut.push({ night: n.night, type: n.type, place: refuge?.name ?? null, reason: n.reason });
-      const step = dayStep(n.night);
+            : `Hébergement à réserver${where ? ` · ${where}` : ''}`;
+      nightsOut.push({ night: n.night, type: n.type, place: refuge?.name ?? where, reason: n.reason });
       if (step && !step.accommodation_name) {
         const { error } = await supabase
           .from('trip_steps')
-          .update({ accommodation_name: name, updated_at: new Date().toISOString() })
+          .update({ accommodation_name: name.slice(0, 120), updated_at: new Date().toISOString() })
           .eq('id', step.id);
-        if (!error) stays.push({ stepId: step.id, name });
+        if (!error) stays.push({ stepId: step.id, name: name.slice(0, 120) });
       }
     }
 
-    /* 3. Trajet depuis la position réelle : voiture jusqu'au point le plus proche, puis à pied jusqu'au départ. */
+    /* 5. Venir : route mesurée si c'est raisonnable, sinon avion (chiffré par le spécialiste). */
     let transport: CompasAutofillSummary['transport'] = null;
     let carFuel: ReturnType<typeof estimateCarTrip> = null;
     const start = dayStep(1);
     const target = start?.latitude != null && start.longitude != null ? { lat: start.latitude, lon: start.longitude } : anchor;
-    if (!from) notes.push('Position non partagée : le trajet jusqu’au départ n’est pas chiffré.');
-    else if (haversineKm(from, target) < 0.5) notes.push('Tu es déjà au départ : aucun trajet à prévoir.');
-    else {
+    const origin = from ? await lookupReverse(from.lat, from.lon) : null;
+    const abroad =
+      anchor.countryCode != null && (origin?.countryCode ?? 'FR') !== anchor.countryCode;
+    let flightNeeded = false;
+    if (!from) notes.push('Position non partagée : le trajet jusqu’au départ est chiffré depuis la France, à ajuster.');
+    const mode = from ? approachMode({ straightKm: distanceKm(from, target) }) : abroad ? 'avion' : 'route';
+    if (mode === 'avion') {
+      flightNeeded = true;
+      transport = {
+        mode: 'avion',
+        km: Math.round(from ? distanceKm(from, target) : 0),
+        minutes: 0,
+        walkKm: 0,
+        fuelEur: 0,
+        basis: `vol aller-retour ${origin?.name ? `depuis ${origin.name}` : 'depuis la France'} vers ${anchor.name}`,
+      };
+    } else if (mode === 'route' && from) {
       const car = await routeAttempt([from, target], 'voiture');
       if (car.legs?.length) {
         const km = car.legs.reduce((t, l) => t + l.distanceKm, 0);
@@ -322,16 +533,31 @@ export async function compasAutofillAction(
         carFuel = estimateCarTrip({ oneWayKm: km, oneWayMin: min, partySize: party });
         if (carFuel)
           transport = {
+            mode: 'voiture',
             km: carFuel.oneWayKm,
             minutes: carFuel.oneWayMin,
             walkKm: Math.round(walkKm * 10) / 10,
             fuelEur: carFuel.fuelEur,
             basis: carFuel.basis,
           };
-      } else notes.push('Itinéraire routier indisponible pour le moment : trajet non chiffré.');
-    }
+      } else {
+        // Pas de route (île, autre continent) : l'avion ou le bateau s'imposent.
+        flightNeeded = true;
+        transport = { mode: 'avion', km: Math.round(distanceKm(from, target)), minutes: 0, walkKm: 0, fuelEur: 0, basis: `aucune route praticable vers ${anchor.name}` };
+      }
+    } else if (mode === 'sur_place') notes.push('Tu es déjà au départ : aucun trajet à prévoir.');
+    const motorLegs = steps.filter((s, i) => i > 0 && s.distance_km != null && s.distance_km > 0).length;
+    // Étapes proposées à l'instant, sinon celles déjà en place avec leur moyen de transport.
+    const moves = stagePlaces.length ? stagePlaces : movesFromSteps(steps);
+    const localMoves = moves.filter((s, i) => i > 0 && ['bus', 'train', 'bateau', 'vol'].includes(s.move));
+    // Road trip : kilomètres mesurés en voiture entre les étapes ; arrivé en avion, il faut louer.
+    const carDays = moves.filter((s, i) => i > 0 && s.move === 'voiture');
+    const carKmOnSite = steps
+      .filter((st) => st.transport_mode === 'car' && st.distance_km != null)
+      .reduce((t, st) => t + (st.distance_km ?? 0), 0);
+    const rentalNeeded = carDays.length > 0 && flightNeeded;
 
-    /* 4. Kit : règles contextuelles + couchage selon les nuits, trouvés dans l'ordre voulu. */
+    /* 6. Kit : règles contextuelles (pays, altitude réelle) + couchage selon les nuits. */
     const [{ data: itemRows }, { data: inv }, { data: loans }, { data: shopRows }] = await Promise.all([
       supabase.from('trip_items').select('item_name').eq('trip_id', tripId),
       supabase.from('product_ownership').select('id, name, is_lent, status').eq('user_id', userId).limit(500),
@@ -352,16 +578,17 @@ export async function compasAutofillAction(
     }
     const month = Number(trip.start_date?.slice(5, 7)) || undefined;
     const analysis = generateTripContextualKit({
-      countryCode: trip.destination_country_code,
+      countryCode: anchor.countryCode ?? trip.destination_country_code,
       activity,
       durationDays: days,
       seasonMonth: month,
       currentItems: tripItemNames.map((item_name) => ({ item_name }) as unknown as TripItem),
+      ...(maxAltitude ? { elevationProfile: { maxM: maxAltitude } as never } : {}),
     });
     const needs: GearNeed[] = [];
     const nightTypes = plan.map((n) => n.type);
     const ruleNeeds = [...analysis.vitalGaps, ...analysis.recommendedGaps]
-      .filter((g) => keepRuleForNights(g.category, nightTypes))
+      .filter((g) => keepRuleForNights(g.category, nightTypes) && keepRuleForActivity(g.key, activity))
       .map(needFromRule);
     for (const g of [...gearForNights(nightTypes), ...ruleNeeds])
       if (!needs.some((n) => sameNeed(n, g))) needs.push(g);
@@ -418,45 +645,46 @@ export async function compasAutofillAction(
     const kitCount: Record<GearSource, number> = { inventaire: 0, pret: 0, location: 0, achat: 0, a_trouver: 0 };
     for (const p of picks) kitCount[p.source] += 1;
 
-    /* 5. L'IA relit et chiffre ce que la base ne connaît pas. */
+    /* 7. Le spécialiste chiffre ce que la base ne connaît pas. */
     const hebergementNights = plan.filter((n) => n.type === 'hebergement').length;
+    const stageLine = steps
+      .map((s) => `J${s.day_number} ${s.title.split(' · ').slice(1).join(' · ')}${s.distance_km ? ` (${s.distance_km} km)` : ''}`)
+      .join(' ; ');
     const facts = [
-      `Lieu : ${anchor.label ?? trip.destination_name ?? 'inconnu'} (${trip.destination_country_code ?? 'pays inconnu'}), lat ${anchor.lat.toFixed(3)}, lon ${anchor.lon.toFixed(3)}.`,
-      `Dates : ${trip.start_date} au ${trip.end_date ?? trip.start_date} (${days} jour(s)), groupe de ${party}, activité ${activity}.`,
+      `Destination : ${anchor.name}${anchor.country ? `, ${anchor.country}` : ''} (code ${anchor.countryCode ?? 'inconnu'}).`,
+      `Départ de la personne : ${origin?.name ? `${origin.name}${origin.country ? `, ${origin.country}` : ''}` : 'France (position non partagée)'}.`,
+      `${trip.start_date ? `Dates : ${trip.start_date} au ${trip.end_date ?? trip.start_date}` : 'Dates non choisies'} (${days} jour(s)), groupe de ${party}, activité ${activity}.`,
+      abroad ? 'Voyage à l’étranger : oui.' : 'Voyage à l’étranger : non.',
+      flightNeeded ? 'Vol à prévoir : oui (aller-retour).' : transport?.mode === 'voiture' ? `Trajet d’approche mesuré : ${transport.km} km en voiture (${transport.minutes} min) puis ${transport.walkKm} km à pied.` : 'Trajet d’approche : non mesuré.',
+      `Itinéraire : ${stageLine || 'non détaillé'}.`,
+      rentalNeeded
+        ? `Voiture de location à prévoir : ${days} jour(s), ${fuelForKm(carKmOnSite, party).cars} voiture(s), ${Math.round(carKmOnSite)} km mesurés sur place.`
+        : '',
+      localMoves.length
+        ? `Déplacements en transport entre étapes : ${localMoves.map((m) => `J${m.day} ${m.move} vers ${m.name}`).join(' ; ')}.`
+        : motorLegs
+          ? 'Déplacements entre étapes : à pied surtout.'
+          : 'Déplacements entre étapes : aucun.',
       `Nuits : ${plan.map((n) => `nuit ${n.night} ${NIGHT_LABEL[n.type]}${refugesByNight[n.night - 1]?.[0] && n.type === 'refuge' ? ` (${refugesByNight[n.night - 1][0].name}${refugesByNight[n.night - 1][0].pricePerNight != null ? `, ${refugesByNight[n.night - 1][0].pricePerNight} €/pers en base` : ''})` : ''}`).join(' ; ') || 'aucune'}.`,
-      transport
-        ? `Trajet d’approche mesuré : ${transport.km} km en voiture (${transport.minutes} min) puis ${transport.walkKm} km à pied jusqu’au départ.`
-        : 'Trajet non mesuré.',
+      maxAltitude ? `Altitude maximale mesurée : ${Math.round(maxAltitude)} m.` : '',
       `Matériel déjà possédé ou prêté (NE PAS le conseiller à l’achat) : ${picks.filter((p) => p.source === 'inventaire' || p.source === 'pret').map((p) => p.need.name).join(', ') || 'aucun'}.`,
       `Matériel à louer ou acheter : ${picks.filter((p) => p.source === 'location' || p.source === 'achat').map((p) => p.need.name).join(', ') || 'aucun'}.`,
       `Matériel introuvable en boutique : ${picks.filter((p) => p.source === 'a_trouver').map((p) => p.need.name).join(', ') || 'aucun'}.`,
-      maxAltitude ? `Altitude des refuges proches : jusqu’à ${maxAltitude} m.` : '',
     ]
       .filter(Boolean)
       .join('\n');
-    let advice: AutofillAiAdvice = { mealsPerPersonDay: null, lodgingPerPersonNight: null, notes: [] };
-    let usedAi = false;
-    try {
-      const res = await askAI({
-        feature: 'compas-autofill',
-        tier: COMPAS_AUTOFILL_SPEC.tier,
-        system: buildCompasAutofillSystem(),
-        prompt: buildCompasAutofillPrompt(facts),
-        maxTokens: 700,
-        reasoningBudget: COMPAS_AUTOFILL_SPEC.maxReasoningBudget,
-        cacheTtlSeconds: 0,
-        userId,
-      });
-      if (!res.degraded && res.provider !== 'fallback') {
-        advice = sanitizeAdvice(extractIntentJson(res.text));
-        usedAi = true;
-      }
-    } catch {
-      /* repli déterministe */
-    }
+    // Budget de temps : au-delà de 40 s (carte ou IA lentes), le chiffrage passe
+    // par les règles plutôt que de risquer la limite de 60 s du serveur.
+    const lateRun = Date.now() - startedAt > 40_000;
+    const rawAdvice = lateRun
+      ? null
+      : await askJson(userId, buildCompasAutofillSystem(), buildCompasAutofillPrompt(facts), 3000, true);
+    if (lateRun) notes.push('Préparation longue : chiffrage par les règles du Compas, relance « Tout préparer » pour l’avis du spécialiste.');
+    const advice: AutofillAiAdvice = sanitizeAdvice(rawAdvice);
+    const usedAi = rawAdvice != null;
     notes.push(...advice.notes);
 
-    /* 6. Budget complet, chaque ligne avec sa source. */
+    /* 8. Budget complet, chaque ligne avec sa source. */
     const refugeCost = plan.reduce((t, n) => {
       const r = n.type === 'refuge' ? refugesByNight[n.night - 1][0] : null;
       return t + (r?.pricePerNight ?? 0) * party;
@@ -467,6 +695,7 @@ export async function compasAutofillAction(
     if (unpricedRefuges) notes.push(`${unpricedRefuges} nuit(s) en refuge sans prix connu : à vérifier auprès du refuge.`);
     if (hebergementNights && advice.lodgingPerPersonNight == null)
       notes.push('Hébergement sans prix connu : cherche une offre dans Résa · Nuits.');
+    if (flightNeeded && advice.flightPerPerson == null) notes.push('Vol non chiffré : cherche-le dans Résa · Vols.');
     const meals = estimateMeals({
       days,
       partySize: party,
@@ -485,19 +714,73 @@ export async function compasAutofillAction(
             title: `${hebergementNights} nuit(s) en hébergement`,
             amount: advice.lodgingPerPersonNight * hebergementNights * party,
             source: 'estimation',
-            basis: 'estimation de l’IA pour la région',
+            basis: `estimation de l’IA pour ${anchor.country ?? anchor.name}`,
+          }
+        : null,
+      flightNeeded && advice.flightPerPerson != null
+        ? {
+            category: 'transport',
+            title: `Vol aller-retour × ${party}`,
+            amount: advice.flightPerPerson * party,
+            source: 'estimation',
+            basis: `estimation de l’IA · ${transport?.basis ?? 'vol'} · à confirmer dans Résa · Vols`,
           }
         : null,
       carFuel
         ? { category: 'transport', title: `Carburant aller-retour (${carFuel.roundTripKm} km)`, amount: carFuel.fuelEur, source: 'mesure', basis: carFuel.basis }
         : null,
+      carKmOnSite > 0
+        ? {
+            category: 'transport',
+            title: `Carburant sur place (${Math.round(carKmOnSite)} km)`,
+            amount: fuelForKm(carKmOnSite, party).fuelEur,
+            source: 'mesure',
+            basis: `kilomètres mesurés entre les étapes · ${CAR_ASSUMPTIONS.litersPer100Km} L/100 km à ${CAR_ASSUMPTIONS.fuelEurPerLiter.toFixed(2).replace('.', ',')} €/L`,
+          }
+        : null,
+      rentalNeeded && advice.carRentalPerDay != null
+        ? {
+            category: 'transport',
+            title: `Location de voiture · ${days} jour(s)`,
+            amount: advice.carRentalPerDay * days * fuelForKm(carKmOnSite, party).cars,
+            source: 'estimation',
+            basis: `estimation de l’IA pour ${anchor.country ?? anchor.name} · à comparer dans Résa · Trajets`,
+          }
+        : null,
+      localMoves.length && advice.localTransportPerPerson != null
+        ? {
+            category: 'transport',
+            title: `Transports sur place (${localMoves.length} trajet${localMoves.length > 1 ? 's' : ''})`,
+            amount: advice.localTransportPerPerson * party,
+            source: 'estimation',
+            basis: 'estimation de l’IA pour les trajets entre étapes',
+          }
+        : null,
       { category: 'nourriture', title: `Repas · ${days} jour(s) × ${party}`, amount: meals.amount, source: 'estimation', basis: meals.basis },
       rental ? { category: 'matériel', title: 'Location de matériel', amount: rental, source: 'base', basis: 'prix par jour de la boutique × jours' } : null,
       purchase ? { category: 'matériel', title: 'Matériel à acheter', amount: purchase, source: 'base', basis: 'prix de la boutique' } : null,
+      abroad && advice.entryFeesPerPerson != null
+        ? {
+            category: 'divers',
+            title: advice.entryFeesDetail ? `Formalités : ${advice.entryFeesDetail}` : 'Visa, permis et taxes',
+            amount: advice.entryFeesPerPerson * party,
+            source: 'estimation',
+            basis: 'estimation de l’IA · vérifie les montants officiels avant de partir',
+          }
+        : null,
+      advice.insurancePerPerson != null && (abroad || (maxAltitude ?? 0) >= 2500)
+        ? {
+            category: 'divers',
+            title: 'Assurance voyage et rapatriement',
+            amount: advice.insurancePerPerson * party,
+            source: 'estimation',
+            basis: 'estimation de l’IA',
+          }
+        : null,
     ]);
     let createdExpenseIds: string[] = [];
     if (lines.length) {
-      const { data: inserted } = await supabase
+      const { data: inserted, error: expenseError } = await supabase
         .from('trip_expenses')
         .insert(
           lines.map((l) => ({
@@ -507,19 +790,20 @@ export async function compasAutofillAction(
             amount: l.amount,
             currency: 'EUR',
             category: l.category,
-            expense_date: trip.start_date,
+            expense_date: trip.start_date ?? today,
             split_type: 'equal',
             is_planned: true,
             metadata: { autofill: runId, source: l.source, basis: l.basis },
           }))
         )
         .select('id');
+      if (expenseError) console.warn('[compas] autofill dépenses', expenseError.code, expenseError.message);
       createdExpenseIds = ((inserted ?? []) as Array<{ id: string }>).map((r) => r.id);
     }
     const total = budgetTotal(lines);
     const setBudget = prevBudget == null && total > 0;
 
-    /* 7. Trace pour l'annulation, puis budget cible si aucun n'était fixé. */
+    /* 9. Trace pour l'annulation, puis budget cible si aucun n'était fixé. */
     const metadata = await patchTripMetadata(supabase, tripId, (m) => ({
       ...m,
       compas: {

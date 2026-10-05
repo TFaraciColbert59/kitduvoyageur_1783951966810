@@ -27,6 +27,8 @@ import '@/features/compas/compas.css';
  * jamais prérendu.
  */
 export const dynamic = 'force-dynamic';
+/** Le préremplissage d'un long voyage (étapes, cartes, IA) peut prendre près d'une minute. */
+export const maxDuration = 60;
 
 export const metadata: Metadata = {
   title: 'Compas — Kit du Voyageur',

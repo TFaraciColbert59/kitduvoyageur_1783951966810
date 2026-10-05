@@ -42,7 +42,7 @@ export function DisLe({
     await interpret(text);
   };
 
-  const interpret = async (raw: string) => {
+  const interpret = async (raw: string, autoApply = false) => {
     const phrase = raw.trim();
     if (phrase.length < 2) return;
     setState({ status: 'loading' });
@@ -55,6 +55,11 @@ export function DisLe({
       setState({ status: 'done', proposals: res.proposals, usedAi: res.usedAi, note: res.note });
       if (res.proposals.length) ctl.enlarge();
       setChecked(Object.fromEntries(res.proposals.map((p) => [p.id, p.ok])));
+      // Phrase du départ : écrite directement (annulable), sans « Appliquer ».
+      if (autoApply) {
+        const ok = res.proposals.filter((p) => p.ok);
+        if (ok.length) await apply(ok);
+      }
     } catch {
       setState({ status: 'error', error: 'Connexion perdue : réessaie.' });
     }
@@ -65,7 +70,7 @@ export function DisLe({
   useEffect(() => {
     if (asked.current || !initial) return;
     asked.current = true;
-    void interpret(initial);
+    void interpret(initial, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial]);
 
@@ -77,16 +82,16 @@ export function DisLe({
   const proposals = state.status === 'done' ? state.proposals : [];
   const chosen = proposals.filter((p) => p.ok && checked[p.id]);
 
-  const apply = async () => {
+  const apply = async (list: CompasProposal[] = chosen) => {
     const ops = planApplication(
-      chosen.map((p) => p.action),
+      list.map((p) => p.action),
       applyCurrent(ctl)
     );
     const route = ops.find((o) => o.op === 'route');
     const writes = ops.filter((o) => o.op !== 'route');
     let ok = true;
     if (writes.length) {
-      const n = chosen.filter((p) => p.action.type !== 'search_route').length;
+      const n = list.filter((p) => p.action.type !== 'search_route').length;
       const undo = inverseOps(ctl, writes);
       ok = await ctl.run(
         `${n} changement${n > 1 ? 's' : ''} appliqué${n > 1 ? 's' : ''}`,

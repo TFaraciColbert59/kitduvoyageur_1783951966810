@@ -123,6 +123,10 @@ export interface CompasData {
   autofill: 'none' | 'done' | 'undone';
   /** Conseils du spécialiste (IA) laissés par le préremplissage. */
   autofillNotes?: string[];
+  /** Durée voulue quand la date de départ n'est pas choisie (« 20 jours »). */
+  plannedDays?: number | null;
+  /** Destination retrouvée sur la carte (Dis-le). */
+  anchorName?: string | null;
 }
 
 const TIME_ZONE = 'Europe/Paris';
@@ -578,6 +582,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     pendingInvites,
     autofill: autofillState(trip.metadata),
     autofillNotes: autofillNotes(trip.metadata),
+    ...compasPlan(trip.metadata),
   };
 }
 
@@ -599,4 +604,16 @@ function autofillNotes(metadata: unknown): string[] {
   return Array.isArray(notes)
     ? notes.filter((n): n is string => typeof n === 'string').slice(0, 6)
     : [];
+}
+
+function compasPlan(metadata: unknown): { plannedDays: number | null; anchorName: string | null } {
+  const compas =
+    metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).compas : null;
+  const c = compas && typeof compas === 'object' ? (compas as Record<string, unknown>) : {};
+  const days = Number(c.planned_days);
+  const anchor = c.anchor && typeof c.anchor === 'object' ? (c.anchor as Record<string, unknown>) : null;
+  return {
+    plannedDays: Number.isInteger(days) && days >= 1 ? days : null,
+    anchorName: typeof anchor?.name === 'string' ? anchor.name : null,
+  };
 }

@@ -128,7 +128,8 @@ describe('limites réelles', () => {
       ctx
     );
     expect(p[0]).toMatchObject({ ok: false, reason: expect.stringMatching(/240/) });
-    expect(p[1]).toMatchObject({ ok: false, reason: 'Donne aussi le jour de départ' });
+    // Une durée en jours se garde sans date de départ : le préremplissage s'en sert.
+    expect(p[1]).toMatchObject({ ok: true, reason: null });
     expect(p[2]).toMatchObject({ ok: true, label: '4 personnes', source: 'ia' });
     const past = validateActions(
       [{ action: { type: 'set_dates', start: '2026-09-01', end: null }, source: 'ia' }],
