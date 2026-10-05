@@ -3,7 +3,7 @@
  *
  * Deux fournisseurs libres, sans cle :
  *   - OSRM       `router.project-osrm.org` : distance, duree et trace routiers ;
- *   - Open-Meteo `api.open-meteo.com`     : altitude reelle de chaque point.
+ *   - (altitudes : servies par /api/elevation, relief libre Terrain Tiles)
  *
  * Regle unique, identique a celle du geocodage : une reponse malformee, trop
  * courte ou incoherentente vaut `null`. Aucune distance approchee ne se glisse
