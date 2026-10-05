@@ -57,6 +57,8 @@ export interface OpenMeteoLike {
     precipitation_sum: (number | null)[];
     precipitation_probability_max: (number | null)[];
     wind_gusts_10m_max: (number | null)[];
+    /** Vent moyen maximal du jour (km/h), sur les pas horaires seulement ; null au-delà. */
+    wind_speed_10m_max: (number | null)[];
     sunrise: (string | null)[];
     sunset: (string | null)[];
   };
@@ -125,6 +127,12 @@ export function metnoToOpenMeteo(payload: unknown, timeZone: string): OpenMeteoL
     precipitation_sum: days.map((d) => d.precipMm),
     precipitation_probability_max: days.map((d) => d.precipPct),
     wind_gusts_10m_max: days.map((d) => d.gustMax),
+    wind_speed_10m_max: days.map((d) => {
+      const winds = hourly.time
+        .map((t, i) => (t.startsWith(d.date) ? hourly.wind_speed_10m[i] : null))
+        .filter((v): v is number => v != null);
+      return winds.length ? Math.max(...winds) : null;
+    }),
     sunrise: days.map((d) => (d.sunrise ? `${d.date}T${d.sunrise}` : null)),
     sunset: days.map((d) => (d.sunset ? `${d.date}T${d.sunset}` : null)),
   };

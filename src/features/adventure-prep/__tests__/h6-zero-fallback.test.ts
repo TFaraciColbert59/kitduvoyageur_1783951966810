@@ -64,7 +64,15 @@ function openMeteoPayload(): unknown {
   };
 }
 
+// getWeather lit MET Norway via un pont qui rend la forme Open-Meteo : le
+// test fournit directement cette forme, comme le pont la rendrait.
+const metno = vi.hoisted(() => ({ payload: null as unknown }));
+vi.mock('@/lib/weather/metnoFetch', () => ({
+  fetchMetnoAsOpenMeteo: vi.fn(async () => metno.payload),
+}));
+
 function stubFetch(payload: unknown): void {
+  metno.payload = payload;
   vi.stubGlobal(
     'fetch',
     vi.fn(async () => ({ ok: true, json: async () => payload })),

@@ -94,10 +94,10 @@ describe('normalizePhoton', () => {
 });
 
 describe('geocodePlace', () => {
-  it('utilise le fournisseur principal quand il repond', async () => {
+  it('utilise le fournisseur principal (Photon) quand il repond', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ results: [{ id: 1, name: 'Chamonix', latitude: 45.92, longitude: 6.87, country: 'France' }] }),
+      json: () => Promise.resolve({ features: [{ geometry: { coordinates: [6.87, 45.92] }, properties: { name: 'Chamonix', country: 'France', type: 'town' } }] }),
     } as Response);
     const res = await geocodePlace('Chamonix');
     expect(res.status).toBe('ok');
@@ -110,11 +110,14 @@ describe('geocodePlace', () => {
       .mockResolvedValueOnce({ ok: false, status: 500 } as Response)
       .mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ features: [{ geometry: { coordinates: [6.87, 45.92] }, properties: { name: 'Chamonix', country: 'France' } }] }),
+        json: () =>
+          Promise.resolve([
+            { lat: '45.92', lon: '6.87', name: 'Chamonix', type: 'town', addresstype: 'town', address: { country: 'France' } },
+          ]),
       } as Response);
     const res = await geocodePlace('Chamonix');
     expect(res.status).toBe('ok');
-    expect(res.matches[0].provider).toBe('photon');
+    expect(res.matches[0].provider).toBe('nominatim');
   });
 
   it('repond no_result sans inventer de coordonnee quand personne ne trouve', async () => {
@@ -140,7 +143,7 @@ describe('geocodePlace', () => {
   it('met en cache les requetes repetées', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ results: [{ id: 1, name: 'Chamonix', latitude: 45.92, longitude: 6.87, country: 'France' }] }),
+      json: () => Promise.resolve({ features: [{ geometry: { coordinates: [6.87, 45.92] }, properties: { name: 'Chamonix', country: 'France', type: 'town' } }] }),
     } as Response);
     await geocodePlace('Chamonix');
     await geocodePlace('chamonix');

@@ -38,8 +38,8 @@ export type DataSourceId =
   | 'osrm'
   | 'valhalla'
   | 'brouter'
-  | 'open-meteo-elevation'
-  | 'open-meteo';
+  | 'terrain-tiles'
+  | 'met-norway';
 
 /**
  * Le fournisseur du routage, tel que `routingService.ts` le nomme.
@@ -69,8 +69,8 @@ export const DATA_SOURCE_LABELS: Readonly<Record<DataSourceId, string>> = {
   osrm: 'OpenStreetMap (OSRM)',
   valhalla: 'OpenStreetMap (Valhalla)',
   brouter: 'BRouter (profil randonnée)',
-  'open-meteo-elevation': 'Open-Meteo (altitudes)',
-  'open-meteo': 'Open-Meteo (prévisions)',
+  'terrain-tiles': 'Terrain Tiles (altitudes)',
+  'met-norway': 'MET Norway (prévisions)',
 };
 
 const METRIC_LABELS: Readonly<Record<PrepDataSourceId, string>> = {
@@ -111,7 +111,7 @@ export function dataSourceLabel(source: DataSourceId | null | undefined): string
  * meme regle que `readRouteProvider` cote routage, et elle sert la meme
  * raison : le credit vient du CORPS de la reponse, jamais d'une intention.
  */
-export type MeasureProviderId = 'open-meteo';
+export type MeasureProviderId = 'met-norway' | 'terrain-tiles';
 
 /**
  * Le fournisseur nomme par une reponse de mesure, ou `null`.
@@ -130,37 +130,28 @@ export type MeasureProviderId = 'open-meteo';
 export function readMeasureProvider(payload: unknown): MeasureProviderId | null {
   const body = payload as { provider?: { id?: unknown } | null } | null;
   const id = body?.provider?.id;
-  return id === 'open-meteo' ? id : null;
+  return id === 'met-norway' || id === 'terrain-tiles' ? id : null;
 }
 
 /**
  * La source affichee de l'ALTITUDE, ou `null`.
  *
- * `METEO_PROVIDER` et `ELEVATION_PROVIDER` sont volontairement le meme objet
- * (`dataProviders.ts`) : les deux series viennent d Open-Meteo, donc un seul
- * credit a l'ecran serait coherent. Ce choix a une contrepartie qu'il faut
- * dire ici plutot que dans l'appelant : l'identifiant seul ne dit pas quelle
- * SERIE a ete mesuree, et il ne le peut pas — `'open-meteo'` designe les
- * deux.
- *
- * C'est donc la route qui a repondu qui tranche, exactement comme le routeur
- * qui a repondu tranche pour la distance : un `200` sur `/api/elevation`
- * suivi de `open-meteo` est une altitude Open-Meteo, et c'est donc
- * `'open-meteo-elevation'` qui s'affiche. Sans cette fonction, un ecran qui
- * lirait le `id` brut afficherait « Open-Meteo (previsions) » sous un
- * denivele : un credit juste en apparence, faux dans sa precision.
+ * Depuis le 2026-10-05, les deux series ont chacune leur source :
+ * MET Norway pour la prevision, Terrain Tiles (AWS Open Data) pour
+ * l'altitude — Open-Meteo n'etant gratuit qu'en usage non commercial.
+ * La source affichee reste celle que nomme la reponse, jamais une intention.
  */
 export function elevationDataSource(
   provider: MeasureProviderId | null | undefined,
 ): DataSourceId | null {
-  return provider === 'open-meteo' ? 'open-meteo-elevation' : null;
+  return provider === 'terrain-tiles' ? 'terrain-tiles' : null;
 }
 
 /** La source affichee de la METEO, ou `null`. */
 export function weatherDataSource(
   provider: MeasureProviderId | null | undefined,
 ): DataSourceId | null {
-  return provider === 'open-meteo' ? 'open-meteo' : null;
+  return provider === 'met-norway' ? 'met-norway' : null;
 }
 
 /**

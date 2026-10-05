@@ -1,6 +1,6 @@
 /**
- * Service meteo cote serveur — Open-Meteo, sans cle, avec la fenetre de dates
- * de l aventure.
+ * Service meteo cote serveur — MET Norway (CC BY 4.0, usage commercial
+ * permis), sans cle, avec la fenetre de dates de l aventure.
  *
  * Contrainte reelle du fournisseur : la prevision ne couvre qu'une fenetre
  * glissante autour d'aujourd'hui. Une date hors de cette fenetre n'est pas
@@ -10,16 +10,6 @@
 import type { DayWeather } from './engine/weather';
 import { weatherLabel } from './engine/weather';
 
-const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
-
-const DAILY_FIELDS = [
-  'temperature_2m_max',
-  'temperature_2m_min',
-  'precipitation_sum',
-  'precipitation_probability_max',
-  'wind_speed_10m_max',
-  'weather_code',
-].join(',');
 
 const TIMEOUT_MS = 8000;
 const CACHE_TTL_MS = 30 * 60 * 1000;
@@ -77,16 +67,6 @@ export function normalizeDailyForecast(payload: unknown, expectedDays: number): 
   });
 }
 
-async function fetchJson(url: string, signal: AbortSignal): Promise<unknown | null> {
-  try {
-    const response = await fetch(url, { signal, headers: { Accept: 'application/json' } });
-    if (!response.ok) return null;
-    return (await response.json()) as unknown;
-  } catch {
-    return null;
-  }
-}
-
 /**
  * Prevision pour une plage de dates precise. Hors fenetre du fournisseur,
  * la reponse est refusee et l'appelant garde `null` : « meteo indisponible »
@@ -112,10 +92,12 @@ export async function fetchDayWeather(
   const onAbort = () => controller.abort();
   signal?.addEventListener('abort', onAbort, { once: true });
   try {
-    const url =
-      `${FORECAST_URL}?latitude=${round(lat)}&longitude=${round(lon)}` +
-      `&daily=${DAILY_FIELDS}&timezone=auto&start_date=${first}&end_date=${last}`;
-    const days = normalizeDailyForecast(await fetchJson(url, controller.signal), dates.length);
+    // MET Norway (CC BY 4.0) au format Open-Meteo ; on ne garde que les jours
+    // demandés. Une date hors de la prévision (~9 jours) laisse la plage
+    // incomplète : refusée, donc « inconnue », jamais décalée.
+    const { fetchMetnoAsOpenMeteo } = await import('@/lib/weather/metnoFetch');
+    const all = await fetchMetnoAsOpenMeteo(lat, lon, { signal: controller.signal, timeoutMs: TIMEOUT_MS });
+    const days = normalizeDailyForecast(all ? windowOf(all.daily, dates) : null, dates.length);
     if (cache.size >= CACHE_MAX) {
       const oldest = cache.keys().next();
       if (!oldest.done) cache.delete(oldest.value);
@@ -126,6 +108,15 @@ export async function fetchDayWeather(
     clearTimeout(timer);
     signal?.removeEventListener('abort', onAbort);
   }
+}
+
+/** Les colonnes journalières restreintes aux dates demandées, dans leur ordre. */
+function windowOf(daily: Record<string, unknown[]>, dates: readonly string[]): { daily: Record<string, unknown[]> } {
+  const times = (daily.time ?? []) as unknown[];
+  const idx = dates.map((d) => times.indexOf(d)).filter((i) => i >= 0);
+  const out: Record<string, unknown[]> = {};
+  for (const [key, col] of Object.entries(daily)) out[key] = idx.map((i) => (Array.isArray(col) ? col[i] : null));
+  return { daily: out };
 }
 
 function round(value: number): number {
