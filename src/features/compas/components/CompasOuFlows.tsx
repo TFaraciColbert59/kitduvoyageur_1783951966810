@@ -62,8 +62,38 @@ export const ACTIVITY_META: Record<CompasActivity, { icon: string; hint: string 
   roadtrip: { icon: 'car', hint: 'Étapes en véhicule' },
   cultural: { icon: 'building', hint: 'Villes et visites' },
   bushcraft: { icon: 'flame', hint: 'Vie en forêt' },
-  mixed: { icon: 'compass', hint: 'Plusieurs activités' },
+  mixed: { icon: 'compass', hint: 'Plusieurs activités, ou autre chose' },
+  cycling: { icon: 'bike', hint: 'Vélo, bikepacking, VTT' },
+  ski: { icon: 'cloud-snow', hint: 'Ski de rando, hors-piste, raquettes' },
+  mountaineering: { icon: 'flag', hint: 'Glacier, arête, sommet' },
+  climbing: { icon: 'trending-up', hint: 'Falaise, grande voie, via ferrata' },
+  water: { icon: 'droplets', hint: 'Kayak, canoë, voile, plongée' },
+  citytrip: { icon: 'building2', hint: 'Une ville, à pied et en transports' },
+  beach: { icon: 'sun', hint: 'Plage et repos' },
+  vanlife: { icon: 'bus', hint: 'Itinérance en van ou camping-car' },
 };
+
+/** Ordre d'affichage : de la marche au repos, « Mixte / autre » en dernier. */
+export const ACTIVITY_ORDER: CompasActivity[] = [
+  'hiking',
+  'trekking',
+  'bivouac',
+  'cycling',
+  'mountaineering',
+  'climbing',
+  'ski',
+  'water',
+  'roadtrip',
+  'vanlife',
+  'cultural',
+  'citytrip',
+  'beach',
+  'bushcraft',
+  'mixed',
+];
+
+/** Les plus demandées, visibles d'emblée au départ ; le reste derrière « Plus ». */
+export const ACTIVITY_FIRST: CompasActivity[] = ['hiking', 'trekking', 'cycling', 'roadtrip', 'citytrip', 'beach', 'ski'];
 
 export function ActiviteFlow({ ctl }: { ctl: CompasCtl }) {
   const { activity, tripId, slug } = ctl.data.model;
@@ -82,7 +112,7 @@ export function ActiviteFlow({ ctl }: { ctl: CompasCtl }) {
   return (
     <>
       <div className="cp-tiles" role="group" aria-label="Activités">
-        {COMPAS_ACTIVITIES.map((a) => {
+        {ACTIVITY_ORDER.map((a) => {
           const on = a === activity;
           return (
             <button

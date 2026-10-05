@@ -104,7 +104,7 @@ export interface HubHikingContext {
   routeGeojson?: Record<string, unknown> | null;
   coords: { lat: number; lon: number } | null;
   weather: {
-    current: { tempC: number; weathercode: number; precipPct: number };
+    current: { tempC: number; weathercode: number; precipPct: number | null; precipMm?: number | null };
     days: WeatherDay[];
     locationLabel: string | null;
   } | null;

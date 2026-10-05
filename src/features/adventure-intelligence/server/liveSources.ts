@@ -264,7 +264,7 @@ export function buildLiveConditionsSection(input: LiveConditionsInput): {
         method: weather ? 'live-sources:weather+terrain' : 'live-sources:terrain',
         reasons: [
           `${reports.length} signalement(s) Terrain Live`,
-          ...(weather ? ['Prévisions officielles Open-Meteo'] : []),
+          ...(weather ? ['Prévisions officielles MET Norway'] : []),
         ],
       }),
       provenance,

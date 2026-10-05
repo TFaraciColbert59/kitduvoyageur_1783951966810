@@ -11,7 +11,7 @@ import { ExportShareBar } from '@/features/materiel/components/alertes/ExportSha
 import { getAlerts } from '@/features/materiel/services/getAlerts';
 import { getInventory } from '@/features/materiel/services/getInventory';
 import { getOccasionProducts } from '@/features/materiel/services/getOccasionProducts';
-import { getWeather, weatherLabel } from '@/features/materiel/services/getWeather';
+import { rainLabel, getWeather, weatherLabel } from '@/features/materiel/services/getWeather';
 import { currentSeason } from '@/lib/materiel/season';
 import { listMyTripInvitations } from '@/features/compas/server/invitationActions';
 import { TripInvitationsInbox } from '@/features/compas/components/TripInvitations';
@@ -68,7 +68,7 @@ export async function HubAlertesSection() {
           meteoCount={meteoCount}
           message={
             weather
-              ? `${weatherLabel(weather.current.weathercode)} · ${weather.current.tempC}°C, précip ${weather.current.precipPct}% (${weather.location.label})`
+              ? `${weatherLabel(weather.current.weathercode)} · ${weather.current.tempC}°C, précip ${rainLabel(weather.current.precipPct, weather.current.precipMm) ?? '0'} (${weather.location.label})`
               : 'Prévisions météo indisponibles.'
           }
         />

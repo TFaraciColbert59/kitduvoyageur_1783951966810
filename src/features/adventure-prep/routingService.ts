@@ -3,7 +3,7 @@
  *
  * Deux fournisseurs libres, sans cle :
  *   - OSRM       `router.project-osrm.org` : distance, duree et trace routiers ;
- *   - Open-Meteo `api.open-meteo.com`     : altitude reelle de chaque point.
+ *   - (altitudes : servies par /api/elevation, relief libre Terrain Tiles)
  *
  * Regle unique, identique a celle du geocodage : une reponse malformee, trop
  * courte ou incoherentente vaut `null`. Aucune distance approchee ne se glisse
@@ -62,7 +62,6 @@ const OSRM_PROFIL: Readonly<Partial<Record<TravelMode, string>>> = {
 };
 
 const VALHALLA_URL = 'https://valhalla1.openstreetmap.de/route';
-const ELEVATION_URL = 'https://api.open-meteo.com/v1/elevation';
 
 /**
  * BRouter : le seul des trois fournisseurs qui sache monter.
@@ -127,7 +126,6 @@ export const VALHALLA_COSTING: Readonly<Record<TravelMode, string>> = {
 export const MAX_ROUTE_POINTS = 12;
 
 /** Open-Meteo n'accepte que 100 coordonnees par requete d altitude. */
-const ELEVATION_CHUNK = 100;
 
 const TIMEOUT_MS = 8000;
 const CACHE_TTL_MS = 60 * 60 * 1000;
@@ -1124,33 +1122,8 @@ export async function routeThrough(
   return (await routeAttempt(points, mode, signal)).legs;
 }
 
-/** Altitude reelle, par lots de 100. `null` des qu'un lot echoue. */
-export async function elevationsAt(
-  points: readonly (readonly [number, number])[],
-  signal?: AbortSignal,
-): Promise<(number | null)[] | null> {
-  if (points.length === 0) return null;
-  const out: (number | null)[] = [];
-  for (let index = 0; index < points.length; index += ELEVATION_CHUNK) {
-    const chunk = points.slice(index, index + ELEVATION_CHUNK);
-    const key = chunk.map((pair) => coord(pair)).join(',');
-    let cached = readCache(`elev:${key}`) as (number | null)[] | null | undefined;
-    if (cached === undefined) {
-      const { signal: local, done } = withTimeout(signal);
-      try {
-        const lat = chunk.map((p) => round6(p[1])).join(',');
-        const lon = chunk.map((p) => round6(p[0])).join(',');
-        cached = normalizeElevation(
-          await fetchJson(`${ELEVATION_URL}?latitude=${lat}&longitude=${lon}`, local),
-          chunk.length,
-        );
-      } finally {
-        done();
-      }
-      if (cached) writeCache(`elev:${key}`, cached);
-    }
-    if (!cached) return null;
-    out.push(...cached);
-  }
-  return out;
-}
+/*
+ * L'altitude des points n'est plus servie ici : `/api/elevation` lit le relief
+ * libre (Terrain Tiles) cote serveur via `@/lib/geo/terrainElevation`. Ce
+ * module reste chargeable dans le navigateur, sans decodeur d'image.
+ */

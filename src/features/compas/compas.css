@@ -2809,6 +2809,10 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
 /* Texte de la carte vide : jamais à nu sur la photo, dans une pastille. */
 .compas--start .cp-map__empty {
   inset: auto 16px 50% 16px;
+  /* La règle de base centre par translate(-50 %) : avec des bords fixés, ce
+     décalage poussait la pastille hors de l'écran à gauche. */
+  transform: none;
+  text-align: center;
   justify-self: center;
   padding: 10px 16px;
   border-radius: 999px;
@@ -2907,4 +2911,11 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
 .cp-autofill .cp-props li {
   font-size: 13.5px;
   color: var(--cp-ink2);
+}
+
+/* Compas vide : toutes les activités dépliées restent atteignables. La carte
+   (conteneur de taille fixée par la colonne) défile elle-même. */
+.compas--start .cp-top > .cp-card {
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }

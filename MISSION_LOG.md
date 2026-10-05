@@ -1,5 +1,33 @@
 # MISSION LOG — LKDV
 
+## 2026-10-05 — Météo et relief libres partout ; deux bugs trouvés en essai réel
+
+- **Plus aucun appel Open-Meteo** (usage non commercial seulement) : pont MET Norway → format Open-Meteo (`src/lib/weather`), route `/api/weather/point` pour le cockpit, page Pays, Matériel, Hub, Adventure Intelligence, « Partir librement » (prévisions MET Norway, altitudes Terrain Tiles, géocodage Photon → Nominatim). Probabilité de pluie facultative partout (null hors Scandinavie), millimètres en relais. Chaque série nomme sa vraie source.
+- **Bug « Chamonix »** : le Compas retenait le seul lieu portant EXACTEMENT ce nom… une ferme d'Afrique du Sud, et toutes les étapes partaient au Cap. `pickDestination` : nom exact ou commençant par la requête, ordre de pertinence de la carte, jamais une ferme/lieu-dit/bâtiment. Essai : Chamonix-Mont-Blanc, Argentière, Le Tour.
+- **Bug activité** : « ski de rando » devenait « alpinisme » (l'IA passait devant la règle) et le kit oubliait le DVA. L'activité dite en toutes lettres prime désormais.
+- **Essais réels** : ski Chamonix 5 j (51 s, DVA), vélo Bretagne 7 j (39 s, casque), city trip Lisbonne 4 j (36 s, Sintra).
+- Preuves : tsc propre ; suite complète 21 échecs, tous préexistants ; build OK.
+
+## 2026-10-05 — Lot 1 : tout type de sortie
+
+- **8 activités ajoutées** (enum `trip_activity_type`, migration additive appliquée) : vélo, ski, alpinisme, escalade, eau (kayak, canoë, voile, plongée), city trip, plage, van. « Mixte » couvre « autre ».
+- **« Dis-le »** les reconnaît (« ski de rando » → ski, « via ferrata » → escalade, « camping-car » → van…), l'IA aussi (liste de son schéma).
+- **Kit propre à l'activité** (avant les règles générales) : DVA/pelle/sonde au ski, crampons/piolet/baudrier/casque/lunettes cat. 4 en alpinisme, baudrier/casque/assurage en escalade, gilet et sac étanche sur l'eau, casque/réparation/éclairage à vélo, couchage en van. Les règles montagne sont filtrées en ville, à la plage et en van.
+- **Nuits** : sous un toit par défaut en ville, à la plage, en van et au ski (la préférence dite prime). **Itinéraires** : consignes par activité au spécialiste (vélo 50 à 100 km/j, base fixe pour ski/alpi/escalade/plage, côte ou rivière pour l'eau).
+- **Écran de départ** : 7 activités courantes + « Plus » (toutes, « Mixte » en dernier) ; la carte défile au lieu d'être coupée ; la pastille « La carte se remplit… » ne sort plus de l'écran à gauche.
+- Preuves : tsc, eslint propres ; tests Compas + IA + trips + hub 425/426 (`TEST-REG-01` préexistant) ; captures 390 px vérifiées.
+
+## 2026-10-05 — Lot 0 (suite) : Explorer intégré, préremplissage en deux temps, cache partagé, relief libre
+
+- **Explorer** : `feat/explorer-mobile-osm` fusionnée (OSM mondial, POI, fiche sentier enrichie). Seul conflit : registre IA, les deux côtés gardés.
+- **Préremplissage en deux temps** (`phase: 'steps' | 'rest'`) : l'itinéraire part tout de suite (sans attendre la position) et s'affiche dès qu'il est écrit ; nuits, trajet, kit et budget suivent. Chaque appel reste loin des 60 s. Une préparation interrompue entre les deux est reprise ou annulée proprement (`autofill_pending`). Essai réel : Japon 12 jours, itinéraire en 17 s, reste en 16 s, chiffrage IA compris.
+- **Bug corrigé** : une demande de localisation laissée sans réponse bloquait le préremplissage pour toujours (le délai du navigateur ne court qu'après l'accord). Minuteur de 8 s : on prépare sans la position.
+- **« Dis-le »** : l'IA est bornée à 12 s (le signal d'annulation traverse enfin `askAI`) ; au-delà, les règles appliquent la phrase. Avant : jusqu'à 30 s d'attente.
+- **Cache partagé** `geo_cache` (Supabase, clé service seule, RLS sans policy, purge horaire) : recherches de lieux (7 j), lieu d'un point GPS (30 j), tronçons routés (30 j). L'itinéraire de base du spécialiste est partagé 7 j via le cache IA existant. Une panne n'est jamais gardée.
+- **Relief libre** : altitudes du Compas depuis les Terrain Tiles (AWS Open Data, usage commercial permis), décodées avec `sharp`. Mesures : Mont Blanc 4 779 m, camp de base de l'Everest 5 302 m, Chamonix 1 041 m. Open-Meteo n'est plus appelé par le Compas.
+- **Base** : migration `geo_cache` appliquée ; historique complété pour `trip_invitations_flow` et `hiking_route_sources_and_revisions` (objets déjà en place, vérifiés).
+- Preuves : tsc propre ; eslint propre (hors `console.log` préexistant de `askAI.ts`) ; tests Compas + IA 392/394 (`TEST-REG-01` préexistant ; « Annuler » passe 3/3 seul, lent sous charge).
+
 ## 2026-10-05 — IA NVIDIA en direct, météo gratuite usage commercial (lot 0, PR 1)
 
 Décisions de Tony : services 100 % gratuits, NVIDIA en direct au lieu d'OpenRouter, météo MET Norway, Vercel conservé.

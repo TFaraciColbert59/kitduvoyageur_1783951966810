@@ -20,6 +20,7 @@ const HIKING_ACTIVITIES: ReadonlySet<string> = new Set([
   'trekking',
   'bivouac',
   'bushcraft',
+  'mountaineering',
 ]);
 
 /**

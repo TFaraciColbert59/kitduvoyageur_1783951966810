@@ -399,12 +399,8 @@ interface ProviderSpec {
 }
 
 const PROVIDERS: readonly ProviderSpec[] = [
-  {
-    id: 'open-meteo',
-    build: (q) =>
-      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=8&language=fr&format=json`,
-    normalize: (payload) => normalizeOpenMeteo((payload ?? {}) as RawOpenMeteo),
-  },
+  // Open-Meteo retiré (gratuit seulement en usage non commercial) : Photon
+  // puis Nominatim, mêmes données OpenStreetMap.
   {
     id: 'photon',
     build: (q) => `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=8&lang=fr`,

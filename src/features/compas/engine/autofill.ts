@@ -596,15 +596,81 @@ const ROAD_EXCLUDED = new Set([
   'backpack',
 ]);
 
+const WATER_EXCLUDED = new Set(['trekking-poles', 'crampons']);
+
 export function keepRuleForActivity(key: string, activity: string): boolean {
-  if (activity === 'cultural') return CITY_KEYS.has(key);
-  if (activity === 'roadtrip') return !ROAD_EXCLUDED.has(key);
+  if (activity === 'cultural' || activity === 'citytrip' || activity === 'beach') return CITY_KEYS.has(key);
+  if (activity === 'roadtrip' || activity === 'vanlife') return !ROAD_EXCLUDED.has(key);
+  if (activity === 'water' || activity === 'cycling') return !WATER_EXCLUDED.has(key);
   return true;
 }
 
-/** Un séjour culturel ou un road trip dort sous un toit, sauf préférence dite. */
+/** Activités qui dorment sous un toit (ou dans le véhicule), sauf préférence dite. */
+const ROOF_ACTIVITIES = new Set(['cultural', 'roadtrip', 'citytrip', 'beach', 'vanlife', 'ski']);
+
+/** Un séjour culturel, un road trip, une ville ou la plage dort sous un toit, sauf préférence dite. */
 export function nightsPrefFor(activity: string, pref: NightsPref): NightsPref {
-  if ((activity === 'cultural' || activity === 'roadtrip') && (pref == null || pref === 'mixte'))
-    return 'hebergement';
+  if (ROOF_ACTIVITIES.has(activity) && (pref == null || pref === 'mixte')) return 'hebergement';
   return pref;
+}
+
+const gear = (
+  key: string,
+  name: string,
+  category: string,
+  vital: boolean,
+  reason: string,
+  match: string[],
+  require?: string[]
+): GearNeed => ({ key, name, category, vital, reason, match, ...(require ? { require } : {}) });
+
+/**
+ * Matériel propre à l'activité, en plus des règles générales (météo, altitude,
+ * pays) et du couchage. « Vital » = sans lui, l'activité n'est pas sûre.
+ */
+const ACTIVITY_GEAR: Record<string, GearNeed[]> = {
+  cycling: [
+    gear('bike-helmet', 'Casque de vélo', 'safety', true, 'vélo : protection de la tête', ['casque'], ['casque']),
+    gear('bike-repair', 'Kit de réparation (chambre à air, démonte-pneus, pompe)', 'tools', true, 'vélo : crevaison loin de tout', ['chambre', 'pompe', 'reparation', 'rustine']),
+    gear('bike-lights', 'Éclairage avant et arrière', 'safety', true, 'vélo : être vu sur la route', ['eclairage', 'feu', 'lampe velo']),
+    gear('bike-lock', 'Antivol', 'tools', false, 'vélo : étapes en ville et nuits', ['antivol']),
+  ],
+  ski: [
+    gear('avalanche-transceiver', 'DVA (détecteur de victimes d’avalanche)', 'safety', true, 'hors-piste : à porter allumé', ['dva', 'arva', 'detecteur']),
+    gear('avalanche-shovel', 'Pelle à neige', 'safety', true, 'hors-piste : dégager une victime', ['pelle']),
+    gear('avalanche-probe', 'Sonde', 'safety', true, 'hors-piste : localiser une victime', ['sonde']),
+    gear('ski-goggles', 'Masque de ski', 'clothing', false, 'neige et vent', ['masque']),
+    gear('ski-helmet', 'Casque de ski', 'safety', false, 'chutes', ['casque'], ['casque']),
+  ],
+  mountaineering: [
+    gear('climbing-helmet', 'Casque d’alpinisme', 'safety', true, 'chutes de pierres et de glace', ['casque'], ['casque']),
+    gear('harness', 'Baudrier', 'safety', true, 'encordement sur glacier', ['baudrier', 'harnais']),
+    gear('crampons', 'Crampons', 'safety', true, 'neige dure et glace', ['crampon']),
+    gear('ice-axe', 'Piolet', 'safety', true, 'pentes de neige', ['piolet']),
+    gear('glacier-glasses', 'Lunettes catégorie 4', 'clothing', true, 'réverbération du glacier', ['lunettes', 'glacier']),
+  ],
+  climbing: [
+    gear('harness', 'Baudrier', 'safety', true, 'escalade', ['baudrier', 'harnais']),
+    gear('climbing-helmet', 'Casque d’escalade', 'safety', true, 'chutes de pierres', ['casque'], ['casque']),
+    gear('belay-device', 'Système d’assurage et mousqueton à vis', 'safety', true, 'assurer son partenaire', ['assurage', 'reverso', 'grigri', 'huit']),
+    gear('climbing-shoes', 'Chaussons d’escalade', 'clothing', false, 'grimper', ['chausson']),
+  ],
+  water: [
+    gear('life-jacket', 'Gilet d’aide à la flottabilité', 'safety', true, 'activité nautique', ['gilet', 'flottabilite']),
+    gear('dry-bag', 'Sac étanche', 'tools', true, 'garder affaires et papiers au sec', ['etanche', 'dry']),
+    gear('wetsuit', 'Combinaison ou lycra', 'clothing', false, 'eau froide et soleil', ['combinaison', 'lycra']),
+  ],
+  beach: [
+    gear('swimsuit', 'Maillot de bain', 'clothing', false, 'plage', ['maillot']),
+    gear('beach-towel', 'Serviette', 'tools', false, 'plage', ['serviette']),
+  ],
+  vanlife: [
+    gear('sleeping-bag', 'Sac de couchage', 'sleep', true, 'nuits dans le véhicule', ['couchage', 'duvet', 'quilt']),
+    gear('stove', 'Réchaud', 'cook', false, 'repas sur place', ['rechaud', 'stove']),
+    gear('headlamp', 'Lampe frontale', 'tools', false, 'soirées sans éclairage', ['frontale'], ['frontale']),
+  ],
+};
+
+export function gearForActivity(activity: string): GearNeed[] {
+  return ACTIVITY_GEAR[activity] ?? [];
 }

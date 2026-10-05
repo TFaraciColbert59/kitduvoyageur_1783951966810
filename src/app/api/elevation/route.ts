@@ -1,7 +1,7 @@
 // Altitudes reelles du trace, via Open-Meteo. Point de controle jumeau de
 // /api/route : meme allowlist, meme rate limit, meme honnetete des statuts.
 import { NextRequest, NextResponse } from 'next/server';
-import { elevationsAt } from '@/features/adventure-prep/routingService';
+import { terrainElevations } from '@/lib/geo/terrainElevation';
 import { ELEVATION_PROVIDER } from '@/features/adventure-prep/dataProviders';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { clientIpFromHeaders } from '@/lib/rate-limit';
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const elevations = await elevationsAt(points, request.signal);
+  const elevations = await terrainElevations(points);
   if (!elevations) {
     return NextResponse.json(
       { status: 'unavailable', elevations: [] },

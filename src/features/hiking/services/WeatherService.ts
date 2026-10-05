@@ -16,11 +16,12 @@ import { WeatherSnapshot } from '../types';
  * entier : la meteo est « indisponible », jamais inventee.
  */
 export class WeatherService {
-  private static readonly OPEN_METEO_BASE = 'https://api.open-meteo.com/v1/forecast';
+  /** Route serveur : MET Norway (CC BY 4.0) au format Open-Meteo. */
+  private static readonly WEATHER_POINT = '/api/weather/point';
 
   public static async fetchWeather(lat: number, lon: number): Promise<WeatherSnapshot | null> {
     try {
-      const url = `${this.OPEN_METEO_BASE}?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&hourly=precipitation_probability,uv_index&forecast_days=1`;
+      const url = `${this.WEATHER_POINT}?lat=${lat}&lon=${lon}`;
       const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
 
       if (!res.ok) return null;
@@ -37,13 +38,9 @@ export class WeatherService {
 
       // Un seul champ manquant et la meteo est inexploitable : la refuse entierement
       // plutot que de publication un snapshot partiellement fabrique.
-      if (
-        tempC === null ||
-        weatherCode === null ||
-        windKmH === null ||
-        precipProb === null ||
-        uvIndex === null
-      ) {
+      // La probabilité de pluie n'est publiée qu'en Scandinavie : son absence
+      // reste `null` (inconnue), elle n'invalide pas le reste.
+      if (tempC === null || weatherCode === null || windKmH === null || uvIndex === null) {
         return null;
       }
 

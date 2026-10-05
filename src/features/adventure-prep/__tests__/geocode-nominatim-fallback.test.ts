@@ -343,22 +343,23 @@ describe('NOM-06 : chaque fournisseur a SON budget de temps', () => {
     fetchMock.mockImplementation((url: string, init: RequestInit) => {
       const signal = init.signal as AbortSignal;
       signals.push(signal);
-      if (url.includes('open-meteo')) {
-        // Le premier fournisseur ne repond jamais : il consomme son budget.
+      if (isPhoton(url)) {
+        // Le premier fournisseur (Photon, depuis le retrait d'Open-Meteo) ne
+        // repond jamais : il consomme son budget.
         return new Promise((_resolve, reject) => {
           signal.addEventListener('abort', () => reject(new Error('aborted')));
         });
       }
-      return Promise.resolve(json({ features: [{ geometry: { coordinates: [6.869, 45.923] }, properties: { name: 'Chamonix-Mont-Blanc', country: 'France', type: 'city' } }] }));
+      return Promise.resolve(json(NOMINATIM_SEARCH));
     });
 
     const pending = geocodePlace('Chamonix');
     await vi.advanceTimersByTimeAsync(6001);
     const res = await pending;
 
-    // Photon a repondu alors que le minuteur d open-meteo etait epuise.
+    // Nominatim a repondu alors que le minuteur de Photon etait epuise.
     expect(res.status).toBe('ok');
-    expect(res.provider).toBe('photon');
+    expect(res.provider).toBe('nominatim');
 
     // La parade est STRUCTURELLE, pas seulement succes : chaque fournisseur
     // recoit son propre signal. Un `AbortController` partage donnerait

@@ -453,6 +453,14 @@ const ACTIVITIES = [
   'cultural',
   'bushcraft',
   'mixed',
+  'cycling',
+  'ski',
+  'mountaineering',
+  'climbing',
+  'water',
+  'citytrip',
+  'beach',
+  'vanlife',
 ] as const;
 const activitySchema = z.object({ tripId: uuid, tripSlug: slug, activity: z.enum(ACTIVITIES) });
 
@@ -1664,6 +1672,9 @@ export async function compasInterpretAction(
         cacheTtlSeconds: 0,
         userId: auth.userId,
         json: true,
+        // Les règles ont déjà compris l'essentiel : au-delà de 12 s, on applique
+        // sans l'IA plutôt que de faire attendre la personne.
+        signal: AbortSignal.timeout(12_000),
       });
       if (res.degraded || res.provider === 'fallback') {
         note = AI_NOTES[res.failureReason ?? 'provider_indisponible'];
@@ -1694,8 +1705,12 @@ export async function compasInterpretAction(
     const ruleTypes = new Set(rules.map((r) => r.type));
     const aiKept = grounded.filter(
       (a) =>
-        !ruleTypes.has(a.type) ||
-        validateActions([{ action: a, source: 'ia' as const }], ctx)[0]?.ok !== false
+        // Une activité nommée en toutes lettres (« ski », « vélo ») est lue par
+        // les règles : le modèle ne la remplace pas (2026-10-05, « ski de rando »
+        // devenait « alpinisme » et le kit oubliait le DVA).
+        !(RULES_FIRST.has(a.type) && ruleTypes.has(a.type)) &&
+        (!ruleTypes.has(a.type) ||
+          validateActions([{ action: a, source: 'ia' as const }], ctx)[0]?.ok !== false)
     );
     const merged = mergeActions(aiKept, rules);
     const taken = new Set(merged.map((m) => m.action.type));
@@ -1708,6 +1723,9 @@ export async function compasInterpretAction(
     return { success: false, error: 'Erreur serveur' };
   }
 }
+
+/** Réglages où le mot dit en toutes lettres (règles) prime sur l'IA. */
+const RULES_FIRST = new Set<CompasIntentAction['type']>(['set_activity']);
 
 /* ---------- Verdict expliqué par l'IA ---------- */
 
@@ -1786,6 +1804,14 @@ const CREATE_LABEL: Record<(typeof ACTIVITIES)[number], string> = {
   cultural: 'Culturel',
   bushcraft: 'Bushcraft',
   mixed: 'Mixte',
+  cycling: 'Vélo',
+  ski: 'Ski',
+  mountaineering: 'Alpinisme',
+  climbing: 'Escalade',
+  water: 'Eau',
+  citytrip: 'City trip',
+  beach: 'Plage',
+  vanlife: 'Van',
 };
 
 /**

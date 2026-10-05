@@ -1,4 +1,5 @@
-﻿import type { ChecklistItem } from '../types/trekHub';
+import { isRainy } from '@/features/materiel/services/getWeather';
+import type { ChecklistItem } from '../types/trekHub';
 import type { WeatherForecast } from '../services/getWeather';
 
 const VITAL_KEYWORDS = [
@@ -130,8 +131,8 @@ export function calcWeightedReadinessScore(
   }
 
   // Analyse météo pluie
-  const rainExpected = (weather?.current?.precipPct ?? 0) > 40 ||
-    (weather?.days && weather.days.some((d) => d.precipPct > 50));
+  const rainExpected = isRainy(weather?.current?.precipPct, weather?.current?.precipMm, 41) ||
+    (weather?.days && weather.days.some((d) => isRainy(d.precipPct, d.precipMm, 51)));
   const hasRainGear = items.some((i) => {
     const isRainItem = i.name.toLowerCase().includes('veste') ||
       i.name.toLowerCase().includes('pluie') ||

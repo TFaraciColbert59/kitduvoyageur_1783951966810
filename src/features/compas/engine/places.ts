@@ -155,3 +155,32 @@ export function maxLegKm(move: string, first: boolean, destinationKm: number): n
       return 25;
   }
 }
+
+const plainName = (v: string) =>
+  v
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+/** Ferme, lieu-dit, bâtiment, quartier résidentiel : jamais une destination. */
+const WEAK_KINDS = new Set(['locality', 'house', 'other', 'street']);
+
+/**
+ * La destination qu'une personne nomme : un lieu dont le nom est la requête,
+ * ou commence par elle (« Chamonix » → « Chamonix-Mont-Blanc »), dans l'ordre
+ * de pertinence de la carte, en écartant fermes, lieux-dits et bâtiments.
+ * Un homonyme minuscule à l'autre bout du monde ne passe jamais devant la
+ * ville que tout le monde entend (2026-10-05 : « Chamonix » donnait une ferme
+ * d'Afrique du Sud, seule à porter exactement ce nom).
+ */
+export function pickDestination(candidates: CompasPlace[], query: string): CompasPlace | null {
+  const want = plainName(query);
+  if (!want) return null;
+  const named = candidates.filter((c) => {
+    const n = plainName(c.name);
+    return n === want || n.startsWith(`${want} `);
+  });
+  return named.find((c) => !WEAK_KINDS.has(c.kind)) ?? null;
+}

@@ -47,6 +47,14 @@ const ACTIVITY_CONFIG: Record<TripActivityType, { label: string; tone: BadgeTone
   cultural: { label: 'Culture', tone: 'stone' },
   bushcraft: { label: 'Bushcraft', tone: 'warn' },
   mixed: { label: 'Mixte', tone: 'stone' },
+  cycling: { label: 'Vélo', tone: 'sage' },
+  ski: { label: 'Ski', tone: 'info' },
+  mountaineering: { label: 'Alpinisme', tone: 'warn' },
+  climbing: { label: 'Escalade', tone: 'warn' },
+  water: { label: 'Eau', tone: 'info' },
+  citytrip: { label: 'City trip', tone: 'stone' },
+  beach: { label: 'Plage', tone: 'stone' },
+  vanlife: { label: 'Van', tone: 'stone' },
 };
 
 const ROLE_CONFIG: Record<TripRole, { label: string; tone: BadgeTone }> = {

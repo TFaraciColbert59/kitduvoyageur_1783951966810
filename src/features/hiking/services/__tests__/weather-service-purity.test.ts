@@ -83,10 +83,20 @@ describe('WeatherService — refus de toute valeur meteo inventee', () => {
     expect(await WeatherService.fetchWeather(LAT, LON)).toBeNull();
   });
 
-  it('NE FABRIQUE PAS 0 % de pluie quand la probabilite est absente', async () => {
+  it('NE FABRIQUE PAS 0 % de pluie quand la probabilite est absente : elle reste inconnue', async () => {
+    // MET Norway ne publie la probabilite qu'en Scandinavie : ailleurs elle
+    // manque, le reste du snapshot est mesure et reste utile.
     mockFetchOk({ ...SNAPSHOT_COMPLET, hourly: { uv_index: [4.1] } });
 
-    expect(await WeatherService.fetchWeather(LAT, LON)).toBeNull();
+    const snap = await WeatherService.fetchWeather(LAT, LON);
+    expect(snap).not.toBeNull();
+    expect(snap?.precipitationProbability).toBeNull();
+  });
+
+  it('interroge la route serveur (MET Norway), jamais Open-Meteo depuis le navigateur', async () => {
+    const spy = mockFetchOk(SNAPSHOT_COMPLET);
+    await WeatherService.fetchWeather(LAT, LON);
+    expect(String(spy.mock.calls[0][0])).toBe(`/api/weather/point?lat=${LAT}&lon=${LON}`);
   });
 
   it('NE FABRIQUE PAS un indice UV de 0 quand uv_index est absent', async () => {

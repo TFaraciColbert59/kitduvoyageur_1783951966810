@@ -161,6 +161,14 @@ function luminance(color: RGB): number {
   return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
 }
 
+/** Lit un style calcule « rgb(r, g, b) » (toujours opaque ici, verifie plus haut). */
+function parseComputedRgb(value: string): RGB {
+  const parts = value.match(/-?\d+(?:\.\d+)?/g);
+  if (!parts || parts.length < 3) {
+    throw new Error(`Couleur illisible : ${value}`);
+  }
+  return [Number(parts[0]), Number(parts[1]), Number(parts[2])];
+}
 function contrast(first: RGB, second: RGB): number {
   const firstLuminance = luminance(first);
   const secondLuminance = luminance(second);
@@ -448,7 +456,13 @@ describe('Task 2A fix rounds 1–5 — contraste systémique, thème et primitiv
           const g3Background: RGB = colorScheme === 'light' ? [18, 24, 21] : [255, 255, 255];
           expect(contrast(g3Text, g3Background)).toBeGreaterThanOrEqual(4.5);
           expect(styles.pill.backgroundColor).toBe(styles['g3-reference'].backgroundColor);
-          expect(styles.primary.backgroundColor).toBe(styles['g3-reference'].backgroundColor);
+          /* Le CTA n'est PAS un verre neutre : c'est un aplat de la couleur
+             d'action. --g3-reduced-bg le rendait illisible (fond #121815 sous
+             contraste eleve alors que le libelle est blanc). La garantie qui
+             compte ici n'est pas la teinte, c'est : fond plein + texte
+             lisible. On verifie donc le contraste reellement calcule. */
+          expect(contrast(parseComputedRgb(styles.primary.color), parseComputedRgb(styles.primary.backgroundColor)))
+            .toBeGreaterThanOrEqual(4.5);
         }
       } finally {
         await page.close();
@@ -515,8 +529,11 @@ describe('Task 2A fix rounds 1–5 — contraste systémique, thème et primitiv
     expect(pill).toContain('border: 1px solid var(--glass-border-color)');
     expect(darkPill).toContain('background: var(--g3-bg)');
     expect(darkPill).toContain('color: var(--g3-text)');
+    /* Pills et CTA ne partagent PAS le meme materiau : une pill est du verre
+       neutre (G3), un CTA plein est un aplat de couleur d'action. Le test
+       verifie les deux contrats separement — voir aussi le rendu calcule. */
     expect(liquidGlass).toMatch(
-      /\.glass-btn-primary,[^{]*\.primary[^{]*\{[^}]*background:\s*var\(--g3-bg\);[^}]*color:\s*var\(--g3-text\);/
+      /\.glass-btn-primary,[^{]*\.primary[^{]*\{[^}]*background:\s*var\(--btn-tint-solid\);[^}]*color:\s*var\(--btn-on-solid\);/
     );
     expect(liquidGlass).not.toContain('Contenu blanc garanti');
     expect(liquidGlass).not.toContain('Exemption : les badges');

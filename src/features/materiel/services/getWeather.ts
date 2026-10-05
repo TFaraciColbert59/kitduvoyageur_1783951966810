@@ -1,7 +1,13 @@
+/**
+ * Pluie : probabilité (%) quand la source la publie, sinon quantité annoncée
+ * (mm). MET Norway ne publie la probabilité qu'en Scandinavie : ailleurs elle
+ * reste `null`, jamais devinée.
+ */
 export interface WeatherCell {
   hour: string;
   tempC: number;
-  precipPct: number;
+  precipPct: number | null;
+  precipMm?: number | null;
   weathercode: number;
 }
 
@@ -10,15 +16,31 @@ export interface WeatherDay {
   day: string;
   tempMinC: number;
   tempMaxC: number;
-  precipPct: number;
+  precipPct: number | null;
+  precipMm?: number | null;
   weathercode: number;
 }
 
 export interface WeatherForecast {
   cells: WeatherCell[];
   days: WeatherDay[];
-  current: { tempC: number; weathercode: number; precipPct: number };
+  current: { tempC: number; weathercode: number; precipPct: number | null; precipMm?: number | null };
   location: { latitude: number; longitude: number; label: string };
+  /** Source citée (licence CC BY 4.0). */
+  source?: string;
+}
+
+/** « 20 % » si la probabilité est connue, sinon « 3 mm » si de la pluie est annoncée, sinon null. */
+export function rainLabel(pct: number | null | undefined, mm?: number | null): string | null {
+  if (pct != null) return `${Math.round(pct)} %`;
+  if (mm != null && mm > 0) return `${Math.round(mm * 10) / 10} mm`;
+  return null;
+}
+
+/** Pluie à prévoir : probabilité au-dessus du seuil, ou au moins 1 mm annoncé. */
+export function isRainy(pct: number | null | undefined, mm: number | null | undefined, pctThreshold = 40): boolean {
+  if (pct != null) return pct >= pctThreshold;
+  return mm != null && mm >= 1;
 }
 
 export function weatherLabel(code: number): string {
@@ -88,10 +110,12 @@ export async function getWeather(
     : 5;
 
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,precipitation_probability,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&current_weather=true&forecast_days=${requestedDays}&timezone=auto`;
-    const res = await fetch(url, { next: { revalidate: 900 }, signal: AbortSignal.timeout(1500) });
-    if (!res.ok) return null;
-    const data = await res.json();
+    // MET Norway (gratuit, usage commercial permis), au format Open-Meteo.
+    // Import à la demande : ce module sert aussi des composants client (libellés),
+    // le client n'embarque ni le fuseau horaire ni l'appel réseau.
+    const { fetchMetnoAsOpenMeteo } = await import('@/lib/weather/metnoFetch');
+    const data = await fetchMetnoAsOpenMeteo(latitude, longitude, { timeoutMs: 4000 });
+    if (!data) return null;
 
     const allHours = stringColumn(data.hourly?.time);
     if (allHours === null) return null;
@@ -102,16 +126,23 @@ export async function getWeather(
 
     const hours = allHours.slice(0, 24);
     const temps = measuredColumn(data.hourly?.temperature_2m, windowSize);
-    const precips = measuredColumn(data.hourly?.precipitation_probability, windowSize);
     const codes = measuredColumn(data.hourly?.weathercode, windowSize);
-    if (temps === null || precips === null || codes === null) return null;
+    if (temps === null || codes === null) return null;
+    // Pluie : facultative, case par case (jamais comblée).
+    const pctAt = (i: number) => measuredValue(data.hourly?.precipitation_probability?.[i]);
+    const mmAt = (i: number) => measuredValue(data.hourly?.precipitation?.[i]);
 
-    const cells: WeatherCell[] = hours.map((t: string, i: number) => ({
-      hour: new Date(t).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-      tempC: Math.round(temps[i]),
-      precipPct: Math.round(precips[i]),
-      weathercode: codes[i],
-    }));
+    const cells: WeatherCell[] = hours.map((t: string, i: number) => {
+      const pct = pctAt(i);
+      return {
+        // Heure locale du lieu, déjà écrite « YYYY-MM-DDTHH:MM » par la source.
+        hour: t.slice(11, 16),
+        tempC: Math.round(temps[i]),
+        precipPct: pct == null ? null : Math.round(pct),
+        precipMm: mmAt(i),
+        weathercode: codes[i],
+      };
+    });
 
     const allDayTimes = stringColumn(data.daily?.time);
     if (allDayTimes === null) return null;
@@ -119,8 +150,7 @@ export async function getWeather(
     const dayCodes = measuredColumn(data.daily?.weathercode, dayCount);
     const dayMax = measuredColumn(data.daily?.temperature_2m_max, dayCount);
     const dayMin = measuredColumn(data.daily?.temperature_2m_min, dayCount);
-    const dayPrecip = measuredColumn(data.daily?.precipitation_probability_max, dayCount);
-    if (dayCount === 0 || dayCodes === null || dayMax === null || dayMin === null || dayPrecip === null) {
+    if (dayCount === 0 || dayCodes === null || dayMax === null || dayMin === null) {
       return null;
     }
 
@@ -132,7 +162,11 @@ export async function getWeather(
         day: i === 0 ? 'Auj.' : DAY_LABELS[d.getDay()] ?? '—',
         tempMinC: Math.round(dayMin[i]),
         tempMaxC: Math.round(dayMax[i]),
-        precipPct: Math.round(dayPrecip[i]),
+        precipPct: (() => {
+          const v = measuredValue(data.daily?.precipitation_probability_max?.[i]);
+          return v == null ? null : Math.round(v);
+        })(),
+        precipMm: measuredValue(data.daily?.precipitation_sum?.[i]),
         weathercode: dayCodes[i],
       };
     });
@@ -153,8 +187,10 @@ export async function getWeather(
         tempC: Math.round(curTemp),
         weathercode: curCode,
         precipPct: currentPrecip.precipPct,
+        precipMm: currentPrecip.precipMm,
       },
       location: { latitude, longitude, label: label ?? '' },
+      source: 'MET Norway',
     };
   } catch (err) {
     console.error('getWeather error, météo indisponible', err);

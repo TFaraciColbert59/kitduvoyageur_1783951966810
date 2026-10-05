@@ -1,3 +1,4 @@
+import { isRainy, rainLabel } from '@/features/materiel/services/getWeather';
 import type { SmartPromptAlert, ChecklistItem, Participant } from '../types/trekHub';
 import type { WeatherForecast } from './getWeather';
 import type { AlertItem } from './getAlerts';
@@ -90,7 +91,7 @@ export function generateSmartPrompts({
 
   // 3. Analyse Météo Temps Réel
   if (weather && weather.days && weather.days.length > 0) {
-    const rainyDay = weather.days.find((d) => d.precipPct >= 40 || (d.weathercode >= 51 && d.weathercode <= 82));
+    const rainyDay = weather.days.find((d) => isRainy(d.precipPct, d.precipMm) || (d.weathercode >= 51 && d.weathercode <= 82));
     const stormyDay = weather.days.find((d) => d.weathercode >= 95);
     const coldDay = weather.days.find((d) => d.tempMinC <= 4);
 
@@ -117,13 +118,13 @@ export function generateSmartPrompts({
           id: 'alert-weather-rain',
           category: 'weather',
           severity: 'warning',
-          title: `Pluie prévue (${rainyDay.day} : ${rainyDay.precipPct}%)`,
+          title: `Pluie prévue (${rainyDay.day}${rainLabel(rainyDay.precipPct, rainyDay.precipMm) ? ` : ${rainLabel(rainyDay.precipPct, rainyDay.precipMm)}` : ''})`,
           message: `Averses attendues (${rainyDay.day}). Emportez votre veste imperméable.`,
           targetSection: 'checklist',
           targetItemId: rainGear?.id,
           actionLabel: rainGear ? `Cocher ${rainGear.name}` : 'Voir les vestes',
           actionType: rainGear ? 'check_item' : 'scroll_checklist',
-          whyExplanation: `Des précipitations sont prévues (${rainyDay.precipPct}%) et aucun vêtement de pluie n'est encore validé dans votre sac.`,
+          whyExplanation: `Des précipitations sont prévues (${rainLabel(rainyDay.precipPct, rainyDay.precipMm) ?? 'averses'}) et aucun vêtement de pluie n'est encore validé dans votre sac.`,
         });
       }
     }

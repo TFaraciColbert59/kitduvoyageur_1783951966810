@@ -13,7 +13,9 @@ import {
   buildCompasStagesSystem,
 } from '@/lib/ai/features/compasAutofill';
 import { extractIntentJson } from '@/lib/ai/features/compasIntent';
-import { ARRIVAL_TOLERANCE_M, elevationsAt, routeAttempt } from '@/features/adventure-prep/routingService';
+import { ARRIVAL_TOLERANCE_M, routeAttempt } from '@/features/adventure-prep/routingService';
+import { terrainElevations } from '@/lib/geo/terrainElevation';
+import { cached, coordKey } from './sharedCache';
 import { haversineKm } from '@/features/adventure-prep/engine/routing';
 import { generateTripContextualKit } from '@/features/trips/engine/contextualKitEngine';
 import type { TripItem } from '@/features/trips/types/trip.types';
@@ -25,6 +27,7 @@ import {
   estimateCarTrip,
   estimateMeals,
   gearForNights,
+  gearForActivity,
   keepRuleForNights,
   keepRuleForActivity,
   nightsPrefFor,
@@ -87,7 +90,17 @@ export interface CompasAutofillSummary {
 
 export type CompasAutofillResult =
   | { success: true; summary: CompasAutofillSummary }
+  /** Phase « étapes » terminée : l'itinéraire est écrit, la suite reste à lancer. */
+  | { success: true; pending: true; stepsCreated: number }
   | { success: false; error: string };
+
+/** Itinéraire écrit par la phase « étapes », en attente de la phase « reste ». */
+interface PendingRun {
+  runId: string;
+  stepIds: string[];
+  routeSet: boolean;
+  notes: string[];
+}
 
 const point = z.object({ lat: z.number().min(-90).max(90), lon: z.number().min(-180).max(180) });
 const schema = z.object({
@@ -95,6 +108,12 @@ const schema = z.object({
   tripSlug: z.string().min(1).max(200),
   /** Position actuelle de l'appareil (départ du trajet) ; null si refusée. */
   from: point.nullable(),
+  /**
+   * Deux appels courts plutôt qu'un long : « steps » écrit l'itinéraire,
+   * « rest » les nuits, le trajet, le kit et le budget. Chaque appel tient
+   * largement sous la limite de 60 s du serveur, même quand l'IA est lente.
+   */
+  phase: z.enum(['steps', 'rest', 'all']).default('all'),
 });
 
 interface StepRow {
@@ -214,7 +233,9 @@ async function askJson(
   system: string,
   prompt: string,
   maxTokens: number,
-  think: boolean
+  think: boolean,
+  /** Réponse partagée entre tous ceux qui posent la même question (0 = jamais). */
+  cacheTtlSeconds = 0
 ): Promise<unknown | null> {
   try {
     const res = await askAI({
@@ -224,7 +245,7 @@ async function askJson(
       prompt,
       maxTokens,
       ...(think ? { reasoningBudget: COMPAS_AUTOFILL_SPEC.maxReasoningBudget } : {}),
-      cacheTtlSeconds: 0,
+      cacheTtlSeconds,
       userId,
       json: true,
     });
@@ -262,23 +283,43 @@ function readAnchor(meta: Record<string, unknown>): Anchor | null {
   return { ...place, radiusKm: destinationRadiusKm(place) };
 }
 
+function readPending(meta: Record<string, unknown>): PendingRun | null {
+  const p = compasMeta(meta).autofill_pending as Partial<PendingRun> | undefined;
+  if (!p || typeof p.runId !== 'string') return null;
+  return {
+    runId: p.runId,
+    stepIds: Array.isArray(p.stepIds) ? p.stepIds.filter((x): x is string => typeof x === 'string') : [],
+    routeSet: p.routeSet === true,
+    notes: Array.isArray(p.notes) ? p.notes.filter((x): x is string => typeof x === 'string') : [],
+  };
+}
+
+function withoutPending(c: Record<string, unknown>): Record<string, unknown> {
+  const rest = { ...c };
+  delete rest.autofill_pending;
+  return rest;
+}
+
 export async function compasAutofillAction(
   input: z.input<typeof schema>
 ): Promise<CompasAutofillResult> {
   const parsed = schema.safeParse(input);
   if (!parsed.success) return { success: false, error: 'Requête invalide' };
-  const { tripId, from } = parsed.data;
+  const { tripId, from, phase } = parsed.data;
   try {
     const auth = await requireEditor(tripId);
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
     const { supabase, userId, trip } = auth;
-    const limited = await enforceRateLimit(userId, {
-      scope: 'compas-autofill',
-      limit: 6,
-      windowMs: 10 * 60_000,
-      failMode: 'closed',
-    });
-    if (limited) return { success: false, error: 'Préparation déjà lancée plusieurs fois : patiente quelques minutes.' };
+    // La phase « rest » continue une préparation déjà comptée.
+    if (phase !== 'rest') {
+      const limited = await enforceRateLimit(userId, {
+        scope: 'compas-autofill',
+        limit: 6,
+        windowMs: 10 * 60_000,
+        failMode: 'closed',
+      });
+      if (limited) return { success: false, error: 'Préparation déjà lancée plusieurs fois : patiente quelques minutes.' };
+    }
 
     const meta = (trip.metadata ?? {}) as Record<string, unknown>;
     const compas = readCompasMeta(meta);
@@ -291,8 +332,12 @@ export async function compasAutofillAction(
     const party = Math.max(1, trip.party_size ?? 1);
     const prev = compasMeta(meta).autofill as { runId?: string } | undefined;
     if (prev?.runId) return { success: false, error: 'Le voyage est déjà prérempli : annule d’abord pour relancer.' };
-    const notes: string[] = [];
-    const runId = randomUUID();
+    const pending = readPending(meta);
+    // Une phase « steps » relancée alors qu'un itinéraire attend déjà : on le garde.
+    if (phase === 'steps' && pending) return { success: true, pending: true, stepsCreated: pending.stepIds.length };
+    const resume = phase === 'rest' ? pending : null;
+    const notes: string[] = [...(resume?.notes ?? [])];
+    const runId = resume?.runId ?? randomUUID();
     const today = localToday('Europe/Paris');
     const startedAt = Date.now();
 
@@ -323,11 +368,11 @@ export async function compasAutofillAction(
     if (!anchor) return { success: false, error: 'Dis-moi où tu pars (« au Népal », « dans le Vercors »…).' };
 
     /* 2. Étapes : parcours du catalogue (destination locale), sinon itinéraire du spécialiste vérifié sur la carte. */
-    let stepsCreated = 0;
-    let routeSet = false;
-    const createdStepIds: string[] = [];
+    let stepsCreated = resume?.stepIds.length ?? 0;
+    let routeSet = resume?.routeSet ?? false;
+    const createdStepIds: string[] = [...(resume?.stepIds ?? [])];
     let stagePlaces: Array<{ day: number; name: string; lat: number; lon: number; move: StageMove }> = [];
-    if (steps.length === 0) {
+    if (steps.length === 0 && !resume) {
       if (HIKING_ACTIVITIES.has(activity) && compas.routeId == null && anchor.radiusKm <= 80) {
         const { data: near } = await supabase.rpc('compas_search_routes', {
           p_lat: anchor.lat,
@@ -369,7 +414,9 @@ export async function compasAutofillAction(
         for (let attempt = 0; attempt < 2 && !proposed.length; attempt += 1) {
           if (attempt && Date.now() - startedAt > 25_000) break;
           proposed = sanitizeStages(
-            await askJson(userId, buildCompasStagesSystem(), stagesPrompt, 2000, false),
+            // Même destination, durée, activité, mois et envies : même itinéraire
+            // de base, partagé une semaine (le premier essai seulement).
+            await askJson(userId, buildCompasStagesSystem(), stagesPrompt, 2000, false, attempt ? 0 : 7 * 86_400),
             days
           );
         }
@@ -410,9 +457,23 @@ export async function compasAutofillAction(
           if (!prevPlace || distanceKm(prevPlace, st) < 0.3) return null;
           const mode = st.move === 'marche' ? 'pieton' : st.move === 'velo' ? 'velo' : 'voiture';
           if (st.move === 'vol' || st.move === 'bateau') return { km: Math.round(distanceKm(prevPlace, st)), ascent: null, measured: false };
-          const r = await routeAttempt([prevPlace, st], mode);
-          const km = r.legs?.reduce((t, l) => t + l.distanceKm, 0);
-          const ascent = r.legs?.every((l) => l.ascentM != null) ? r.legs.reduce((t, l) => t + (l.ascentM ?? 0), 0) : null;
+          // Mesure partagée : le même tronçon n'est routé qu'une fois pour tout le monde.
+          const leg = await cached(
+            'leg',
+            `${mode}:${coordKey(prevPlace.lat, prevPlace.lon)}>${coordKey(st.lat, st.lon)}`,
+            30 * 86_400,
+            async () => {
+              const r = await routeAttempt([prevPlace, st], mode);
+              const total = r.legs?.reduce((t, l) => t + l.distanceKm, 0);
+              if (total == null) return null;
+              const up = r.legs?.every((l) => l.ascentM != null)
+                ? r.legs.reduce((t, l) => t + (l.ascentM ?? 0), 0)
+                : null;
+              return { km: total, ascent: up };
+            }
+          );
+          const km = leg?.km;
+          const ascent = leg?.ascent ?? null;
           if (km == null) return null;
           // Une journée à pied ou à vélo hors de portée : distance non retenue plutôt que fausse.
           if ((st.move === 'marche' && km > 45) || (st.move === 'velo' && km > 180)) return null;
@@ -439,11 +500,21 @@ export async function compasAutofillAction(
       stepsCreated = steps.length;
     }
 
+    if (phase === 'steps') {
+      const run: PendingRun = { runId, stepIds: createdStepIds, routeSet, notes: notes.slice(0, 6) };
+      const metadata = await patchTripMetadata(supabase, tripId, (m) => ({
+        ...m,
+        compas: { ...compasMeta(m), autofill_pending: run },
+      }));
+      await supabase.from('trips').update({ metadata, updated_at: new Date().toISOString() }).eq('id', tripId);
+      return { success: true, pending: true, stepsCreated };
+    }
+
     /* 3. Altitude réelle des étapes : acclimatation et kit en dépendent. */
     const geoSteps = steps.filter((s) => s.latitude != null && s.longitude != null);
     const altitudes =
       geoSteps.length > 0
-        ? await elevationsAt(geoSteps.map((s) => [s.longitude as number, s.latitude as number] as const))
+        ? await terrainElevations(geoSteps.map((s) => [s.longitude as number, s.latitude as number] as const))
         : null;
     const maxStepAltitude = altitudes ? Math.max(0, ...altitudes.filter((a): a is number => a != null)) || null : null;
 
@@ -591,7 +662,7 @@ export async function compasAutofillAction(
     const ruleNeeds = [...analysis.vitalGaps, ...analysis.recommendedGaps]
       .filter((g) => keepRuleForNights(g.category, nightTypes) && keepRuleForActivity(g.key, activity))
       .map(needFromRule);
-    for (const g of [...gearForNights(nightTypes), ...ruleNeeds])
+    for (const g of [...gearForActivity(activity), ...gearForNights(nightTypes), ...ruleNeeds])
       if (!needs.some((n) => sameNeed(n, g))) needs.push(g);
     const shop: SourceShop[] = ((shopRows ?? []) as Array<Record<string, unknown>>).map((p) => ({
       id: String(p.id),
@@ -810,7 +881,7 @@ export async function compasAutofillAction(
     const metadata = await patchTripMetadata(supabase, tripId, (m) => ({
       ...m,
       compas: {
-        ...compasMeta(m),
+        ...withoutPending(compasMeta(m)),
         autofill: {
           runId,
           at: new Date().toISOString(),
@@ -852,7 +923,10 @@ export async function compasUndoAutofillAction(
     const auth = await requireEditor(tripId);
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
     const { supabase } = auth;
-    const run = compasMeta((auth.trip.metadata ?? {}) as Record<string, unknown>).autofill as
+    const tripMeta = (auth.trip.metadata ?? {}) as Record<string, unknown>;
+    const done = compasMeta(tripMeta).autofill as { runId?: string } | undefined;
+    // Une préparation interrompue après l'itinéraire s'annule aussi.
+    const run = (done?.runId ? done : readPending(tripMeta)) as
       | {
           runId?: string;
           stepIds?: string[];
@@ -875,7 +949,10 @@ export async function compasUndoAutofillAction(
         .eq('accommodation_name', s.name);
     if (run.stepIds?.length) await supabase.from('trip_steps').delete().eq('trip_id', tripId).in('id', run.stepIds);
     const metadata = await patchTripMetadata(supabase, tripId, (m) => {
-      const next: Record<string, unknown> = { ...m, compas: { ...compasMeta(m), autofill: { undone: true } } };
+      const next: Record<string, unknown> = {
+        ...m,
+        compas: { ...withoutPending(compasMeta(m)), autofill: { undone: true } },
+      };
       if (run.routeSet) delete next.route_id;
       return next;
     });

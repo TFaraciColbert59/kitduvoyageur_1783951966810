@@ -15,7 +15,15 @@ export type TripActivityType =
   | 'roadtrip'
   | 'cultural'
   | 'bushcraft'
-  | 'mixed';
+  | 'mixed'
+  | 'cycling'
+  | 'ski'
+  | 'mountaineering'
+  | 'climbing'
+  | 'water'
+  | 'citytrip'
+  | 'beach'
+  | 'vanlife';
 export type TripDifficulty = 'easy' | 'moderate' | 'hard' | 'expert';
 export type TripItemStatus = 'packed' | 'needed' | 'optional' | 'missing';
 

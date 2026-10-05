@@ -18,6 +18,7 @@ import {
   formatDistance,
   formatDuration,
   getTrailImage,
+  estimateHikingDurationHours,
 } from './types';
 import ExplorerListCard from './ExplorerListCard';
 import { Badge, Button, Card, IconButton } from '@/components/ui';
@@ -170,7 +171,7 @@ export default function ExplorerMobileHikeCarousel({
                 {/* Photo Header */}
                 <div className="relative h-20 w-full overflow-hidden bg-[color:var(--glass-bg-medium)]">
                   <img
-                    src={getTrailImage(trail.id)}
+                    src={trail.image_url || getTrailImage(trail.id, trail.name)}
                     alt={trail.name}
                     className="h-full w-full object-cover"
                     loading="lazy"
@@ -203,7 +204,7 @@ export default function ExplorerMobileHikeCarousel({
                     <span aria-hidden="true" className="opacity-40">·</span>
                     <span className="flex items-center gap-0.5 text-[color:var(--lkv-text-muted)]">
                       <Clock size={9} />
-                      {formatDuration(trail.duration_hours)}
+                      {formatDuration(trail.duration_hours || estimateHikingDurationHours(trail.distance_km, trail.elevation_gain))}
                     </span>
                     {trail.elevation_gain != null && (
                       <>

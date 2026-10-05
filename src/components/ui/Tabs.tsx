@@ -125,7 +125,7 @@ export function Tabs({
             )}
           >
             {option.icon}
-            {option.label}
+            <span className="truncate">{option.label}</span>
             {option.badge ?? (typeof option.count === 'number' && option.count > 0 && (
               <span className="ml-[var(--space-1)] rounded-full bg-black/10 px-[6px] text-[length:var(--lkv-text-caption-2)]">
                 {option.count > 9 ? '9+' : option.count}

@@ -21,8 +21,8 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/features/adventure-prep/weatherService', () => ({
   fetchDayWeather: mocks.fetchDayWeather,
 }));
-vi.mock('@/features/adventure-prep/routingService', () => ({
-  elevationsAt: mocks.elevationsAt,
+vi.mock('@/lib/geo/terrainElevation', () => ({
+  terrainElevations: mocks.elevationsAt,
 }));
 vi.mock('@/lib/rate-limit/routes', () => ({ enforceRateLimit: mocks.enforceRateLimit }));
 
@@ -68,11 +68,12 @@ describe('PROV-API — la source est nommee des les donnees reelles', () => {
     expect(provider?.url ?? '').toMatch(/^https:\/\//);
   });
 
-  it('PROV-API-03: le fournisseur est le MEME pour meteo et altitude, sinon l UI ment deux fois', async () => {
+  it('PROV-API-03: chaque serie nomme SA source (MET Norway / Terrain Tiles), jamais l autre', async () => {
     const w = await providerOf(await weatherGet(new NextRequest(`http://localhost/api/weather${WEATHER_OK}`)));
     const e = await providerOf(await elevationGet(new NextRequest(`http://localhost/api/elevation${ELEVATION_OK}`)));
-    expect(w?.name).toBe(e?.name);
-    expect(w?.url).toBe(e?.url);
+    expect(w?.name).toBe('MET Norway');
+    expect(e?.name).toMatch(/Terrain Tiles/);
+    expect(w?.url).not.toBe(e?.url);
   });
 
   it('PROV-API-04: 503 ne credit aucune source — il n y a rien a credited', async () => {
