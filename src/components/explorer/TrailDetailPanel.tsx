@@ -239,6 +239,11 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
           osmRelationId,
         }),
       });
+      if (res.status === 401) {
+        // Préparer ou démarrer un sentier se fait connecté : on revient ici après.
+        router.push(`/connexion?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+        return null;
+      }
       if (!res.ok) throw new Error('Échec de la matérialisation');
       const data = await res.json();
       return data.canonicalId;
@@ -248,7 +253,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
     } finally {
       setIsMaterializing(false);
     }
-  }, [trail]);
+  }, [trail, router]);
 
   const handlePrepare = async () => {
     const canonicalId = await getCanonicalId();

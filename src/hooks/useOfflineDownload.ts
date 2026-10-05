@@ -70,11 +70,20 @@ function tileUrl({ z, x, y }: TileCoord): string {
 
 // ── Bbox depuis un GeoJSON LineString ────────────────────────────────────────
 
-function bboxFromGeojson(geojson: { type: string; coordinates: number[][] } | null | undefined): {
+function bboxFromGeojson(
+  geojson: { type: string; coordinates: number[][] | number[][][] } | null | undefined
+): {
   minLat: number; maxLat: number; minLon: number; maxLon: number;
 } | null {
-  if (!geojson || geojson.type !== 'LineString') return null;
-  const coords = geojson.coordinates;
+  if (!geojson) return null;
+  // Une relation OSM en plusieurs morceaux (variantes, tronçons disjoints) est
+  // une MultiLineString : son emprise réelle couvre tous les morceaux.
+  const coords: number[][] =
+    geojson.type === 'LineString'
+      ? (geojson.coordinates as number[][])
+      : geojson.type === 'MultiLineString'
+        ? (geojson.coordinates as number[][][]).flat()
+        : [];
   if (!coords || coords.length === 0) return null;
 
   let minLon = Infinity, maxLon = -Infinity;

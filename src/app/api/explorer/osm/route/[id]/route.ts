@@ -18,6 +18,18 @@ import {
 } from '@/lib/ai/features/trailAiEnrichment';
 import type { ElevationProfilePoint } from '@/features/explorer-osm/domain/types';
 
+import { createClient as createServerSupabase } from '@/lib/supabase/server';
+
+async function viewerUserId(): Promise<string | null> {
+  try {
+    const supabase = await createServerSupabase();
+    const { data } = await supabase.auth.getUser();
+    return data.user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export const revalidate = 120;
 export const dynamic = 'force-dynamic';
 
@@ -279,15 +291,22 @@ export async function GET(
 
         try {
           const { system, prompt } = buildTrailAiPrompt(aiInput);
-          const aiRes = await askAI({
-            feature: 'trail-ai-enrichment',
-            tier: 'fast',
-            system,
-            prompt,
-            maxTokens: 1200,
-          });
+          // L'IA est comptée par personne (quota du registre) : un visiteur non
+          // connecté reçoit la fiche sans IA, jamais un appel anonyme illimité.
+          const viewerId = await viewerUserId();
+          const aiRes = viewerId
+            ? await askAI({
+                feature: 'trail-ai-enrichment',
+                tier: 'fast',
+                system,
+                prompt,
+                maxTokens: 1200,
+                userId: viewerId,
+                json: true,
+              })
+            : null;
 
-          if (aiRes.text) {
+          if (aiRes?.text) {
             try {
               const cleanJson = aiRes.text.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
               const parsed = JSON.parse(cleanJson);

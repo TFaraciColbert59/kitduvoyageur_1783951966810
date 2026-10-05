@@ -535,3 +535,13 @@ describe('Geometry Assembler — Validation et Assemblage OSM', () => {
   });
 });
 
+
+describe('computeGeometryHash — chaque sommet compte (revue Codex)', () => {
+  it('déplacer un point intérieur change le hash', async () => {
+    const { computeGeometryHash } = await import('@/features/explorer-osm/domain/geometry');
+    const base = [{ id: 'w1', coordinates: [[6.1, 45.1], [6.2, 45.2], [6.3, 45.3]] }];
+    const moved = [{ id: 'w1', coordinates: [[6.1, 45.1], [6.25, 45.2], [6.3, 45.3]] }];
+    expect(computeGeometryHash(base as never)).not.toBe(computeGeometryHash(moved as never));
+    expect(computeGeometryHash(base as never)).toBe(computeGeometryHash(base as never));
+  });
+});

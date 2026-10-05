@@ -25,6 +25,13 @@ vi.mock('@/features/explorer-osm/services/canonicalRouteService', () => ({
 vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn().mockReturnValue({}),
 }));
+// Personne connectée par défaut ; un test la retire pour vérifier le 401.
+const viewer = vi.hoisted(() => ({ id: 'user-1' as string | null }));
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(async () => ({
+    auth: { getUser: async () => ({ data: { user: viewer.id ? { id: viewer.id } : null } }) },
+  })),
+}));
 
 import {
   queryRoutesInBbox,
@@ -271,6 +278,18 @@ describe('API Routes — Explorer OSM', () => {
     beforeEach(() => {
       process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://localhost:54321';
       process.env.SUPABASE_SERVICE_ROLE_KEY = 'mock-key';
+    });
+
+    it('refuse une personne non connectée (401), sans toucher au catalogue', async () => {
+      viewer.id = null;
+      const req = new NextRequest('http://localhost:3000/api/explorer/osm/materialize', {
+        method: 'POST',
+        body: JSON.stringify({ osmRelationId: 777 }),
+      });
+      const res = await materializePOST(req);
+      viewer.id = 'user-1';
+      expect(res.status).toBe(401);
+      expect(queryRouteDetail).not.toHaveBeenCalled();
     });
 
     it('retourne 400 sans osmRelationId', async () => {

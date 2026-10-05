@@ -6,6 +6,7 @@ import { queryRouteDetail, OverpassError } from '@/features/explorer-osm/adapter
 import { normalizeOsmRelationDetail } from '@/features/explorer-osm/services/normalizationService';
 import { getOrCreateCanonicalRoute } from '@/features/explorer-osm/services/canonicalRouteService';
 import { osmRouteDetailCache } from '@/features/explorer-osm/services/cacheService';
+import { createClient as createServerSupabase } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,8 +20,22 @@ function getServiceClient() {
 }
 
 export async function POST(request: NextRequest) {
+  // Écrire dans le catalogue partagé (clé service, hors RLS) est réservé aux
+  // personnes connectées : la limite par IP n'est pas une autorisation.
+  let userId: string | null = null;
+  try {
+    const auth = await createServerSupabase();
+    const { data } = await auth.auth.getUser();
+    userId = data.user?.id ?? null;
+  } catch {
+    userId = null;
+  }
+  if (!userId) {
+    return NextResponse.json({ error: 'Connexion requise' }, { status: 401 });
+  }
+
   // Rate limiting par IP pour éviter les abus de création
-  const limited = await enforceRateLimit(clientIpFromHeaders(request.headers), {
+  const limited = await enforceRateLimit(`${userId}:${clientIpFromHeaders(request.headers)}`, {
     scope: 'explorer-osm-materialize',
     limit: 20,
     windowMs: 60_000,

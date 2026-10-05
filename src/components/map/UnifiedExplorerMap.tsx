@@ -1390,7 +1390,7 @@ export default function UnifiedExplorerMap({
             variant="secondary"
             size="sm"
             onClick={handleToggleGlobe}
-            className="h-10 px-3.5 shadow-lg backdrop-blur-[var(--blur-xl)]"
+            className="h-11 px-3.5 shadow-lg backdrop-blur-[var(--blur-xl)]"
             aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
             aria-pressed={viewMode === 'globe'}
           >

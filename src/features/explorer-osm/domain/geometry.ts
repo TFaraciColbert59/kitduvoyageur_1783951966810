@@ -495,11 +495,10 @@ export function assembleOsmRelationGeometry(
  */
 export function computeGeometryHash(segments: RouteGeometrySegment[]): string {
   if (segments.length === 0) return 'geo_empty';
+  // Chaque point compte : déplacer un sommet intérieur d'un chemin (sans
+  // changer le nombre de points ni les extrémités) doit changer le hash.
   const sample = segments
-    .map(
-      (s) =>
-        `${s.id}:${s.coordinates.length}:${s.coordinates[0]?.join(',')}:${s.coordinates[s.coordinates.length - 1]?.join(',')}`
-    )
+    .map((s) => `${s.id}:${s.coordinates.map((c) => `${c[0]},${c[1]}`).join(';')}`)
     .join('|');
 
   let hash = 5381;
