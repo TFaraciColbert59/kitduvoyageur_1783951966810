@@ -11,8 +11,13 @@
 - **« Mont Blanc » au Québec** : le sommet (type « other » chez Photon) était écarté comme une ferme, la base proposée ensuite tombait au Québec. Un lieu géographique nommé (sommet, vallée, lac, massif, île, parc, région) est désormais une vraie destination ; une ferme ou un lieu-dit du même nom, jamais. Essai : Les Houches → Refuge du Couvercle → Tête Rousse, 1–4 juil., 3 525 m max, lunettes cat. 4.
 - **« Loire » = le département de Saint-Étienne** : la 1re étape (Orléans) sortait du rayon et tout l'itinéraire tombait (6 j sur « Loire »). La 1re étape est acceptée jusqu'à 400 km de la destination lue (même pays, nom exact). Essai : Orléans → Beaugency → Blois → Amboise → Saumur → Nantes, 1–6 mai.
 - Autres essais : week-end city trip Rome fin mars à deux (27–28 mars) ; 3 semaines au Pérou en août (1–21 août, Lima → Cusco → Vallée sacrée → Machu Picchu → Huaraz).
+- **Titre figé sur « Mixte »** : une aventure créée par une phrase gardait « Mixte · Lyon » après le choix de l'activité ; le titre posé par le Compas suit maintenant l'activité (« Bivouac · Lyon »).
+- **IA qui ajoute ce qui n'est pas dit** : « rythme normal » et « nuits en bivouac » étaient acceptés sans contrôle ; ils doivent désormais figurer dans la phrase.
+- **Durée affichée** : sans date, l'en-tête montrait le temps de marche du tracé (« 7 j 18 h ») au lieu des 5 jours dits.
+- **Anglais** : « 5 days », « 2 weeks », « in July » compris par les règles.
+- **Bivouac / rando près d'une grande ville** : consigne au spécialiste de choisir un espace naturel à moins de 80 km, jamais le centre-ville (Lyon : Sathonay-Camp, Gleizé au lieu de Lyon/Villeurbanne).
 - Note : en local sans `SUPABASE_SERVICE_ROLE_KEY`, le cache partagé reste en mémoire ; sur Vercel la clé est posée.
-- Preuves : tsc, eslint propres ; tests Compas 285/285 ; suite complète 21 échecs, tous préexistants.
+- Preuves : tsc, eslint propres ; tests Compas 289/289 ; suite complète 21 échecs, tous préexistants.
 
 ## 2026-10-05 — Météo et relief libres partout ; deux bugs trouvés en essai réel
 

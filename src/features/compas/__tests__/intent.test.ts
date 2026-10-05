@@ -237,3 +237,19 @@ describe('Mois seul (« en janvier », « début mai », « week-end en mai »)'
     expect(groundingIssue({ type: 'set_dates', start: '2027-03-10', end: null }, '8 jours en janvier')).not.toBeNull();
   });
 });
+
+describe('Ce que l’IA ajoute sans que la phrase le dise', () => {
+  it('rythme et nuits refusés s’ils ne sont pas dits', () => {
+    const t = 'Hiking in Iceland 5 days in July';
+    expect(groundingIssue({ type: 'set_pace', pace: 'normal' }, t)).toMatch(/absent/);
+    expect(groundingIssue({ type: 'set_nights', nights: 'bivouac' }, t)).toMatch(/absentes/);
+    expect(groundingIssue({ type: 'set_pace', pace: 'tranquille' }, 'à un rythme tranquille')).toBeNull();
+    expect(groundingIssue({ type: 'set_nights', nights: 'refuge' }, 'nuits en gîte ou en refuge')).toBeNull();
+  });
+  it('anglais : durée et mois lus', () => {
+    const r = parseIntentRules('Hiking in Iceland 5 days in July', '2026-10-05');
+    expect(r).toContainEqual({ type: 'set_duration', days: 5, hours: null });
+    expect(r.find((a) => a.type === 'set_dates')).toMatchObject({ start: '2027-07-01' });
+    expect(parseIntentRules('2 weeks in Peru', '2026-10-05')).toContainEqual({ type: 'set_duration', days: 14, hours: null });
+  });
+});

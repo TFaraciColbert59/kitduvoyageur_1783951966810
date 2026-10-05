@@ -34,6 +34,7 @@ export function buildCompasStagesSystem(): string {
     '5. Au-dessus de 2 500 m, prevois l acclimatation : pas plus de 300 a 500 m de denivele de couchage par jour au-dessus de 3 000 m, et un jour de repos tous les 3 a 4 jours.',
     '6. Etapes faisables : 10 a 25 km par jour a pied selon le terrain, 300 km au plus par jour en voiture.',
     '7. "note" : 0 a 6 mots utiles (sommet, col, visite, repos), sinon "". Aucun prix, aucun horaire.',
+    '8. Randonnee, trek, bivouac ou bushcraft pres d une grande ville : choisis un espace naturel proche (massif, parc, foret, a moins de 80 km) et ses villages, refuges ou aires de bivouac ; jamais le centre-ville ni sa banlieue pour dormir.',
   ].join('\n');
 }
 

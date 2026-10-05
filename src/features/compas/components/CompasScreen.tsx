@@ -452,7 +452,7 @@ export function CompasScreen({
     setMapBig(false);
   };
 
-  const hours = tripHours(model);
+  const hours = tripHours(model, data.plannedDays);
   const miniLine = [
     activityLabel(model.activity),
     hours != null ? formatHours(hours) : null,
