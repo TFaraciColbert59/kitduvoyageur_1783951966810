@@ -249,10 +249,14 @@ async function askJson(
   maxTokens: number,
   think: boolean,
   /** Réponse partagée entre tous ceux qui posent la même question (0 = jamais). */
-  cacheTtlSeconds = 0
+  cacheTtlSeconds = 0,
+  /** Temps maximal accordé à cet appel (ms) : la fonction serveur s'arrête à 60 s. */
+  timeoutMs?: number
 ): Promise<unknown | null> {
+  if (timeoutMs != null && timeoutMs < 4000) return null;
   try {
     const res = await askAI({
+      ...(timeoutMs != null ? { signal: AbortSignal.timeout(timeoutMs) } : {}),
       feature: 'compas-autofill',
       tier: think ? COMPAS_AUTOFILL_SPEC.tier : 'fast',
       system,
@@ -399,7 +403,8 @@ export async function compasAutofillAction(
     // préparation, n'écrivent jamais deux fois les objets et les dépenses.
     if (phase === 'rest' && pending) {
       const claimed = Number(pending.restAt ?? 0);
-      if (Date.now() - claimed < 150_000) return { success: true, pending: true, stepsCreated: 0 };
+      // Une fonction serveur ne dépasse jamais 60 s : passé 65 s, l'autre « rest » est mort.
+      if (Date.now() - claimed < 65_000) return { success: true, pending: true, stepsCreated: 0 };
       const md = await patchTripMetadata(supabase, tripId, (m) => ({
         ...m,
         compas: { ...compasMeta(m), autofill_pending: { ...pending, restAt: Date.now() } },
@@ -410,6 +415,16 @@ export async function compasAutofillAction(
     const runId = resume?.runId ?? randomUUID();
     const today = localToday('Europe/Paris');
     const startedAt = Date.now();
+    // Durée de chaque étape (journal serveur) : la limite d'une fonction est de 60 s.
+    const laps: Record<string, number> = {};
+    let lapAt = startedAt;
+    // Ce qu'il reste avant 48 s (marge pour écrire avant la limite de 60 s).
+    const remaining = () => 48_000 - (Date.now() - startedAt);
+    const lap = (name: string) => {
+      const now = Date.now();
+      laps[name] = now - lapAt;
+      lapAt = now;
+    };
 
     const [{ data: tripRow }, profile] = await Promise.all([
       supabase.from('trips').select('primary_activity, estimated_budget').eq('id', tripId).maybeSingle(),
@@ -564,7 +579,11 @@ export async function compasAutofillAction(
         if (!usable(proposed)) proposed = [];
         for (let attempt = 0; attempt < 3 && !usable(proposed); attempt += 1) {
           if (attempt && Date.now() - startedAt > 20_000) break;
-          const next = sanitizeStages(await askJson(userId, buildCompasStagesSystem(), stagesPrompt, 2000, false), days);
+          // La suite (carte, distances) a besoin d'environ 15 s : l'IA n'a que le reste.
+          const next = sanitizeStages(
+            await askJson(userId, buildCompasStagesSystem(), stagesPrompt, 2000, false, 0, Math.min(30_000, remaining() - 15_000)),
+            days
+          );
           if (usable(next)) {
             proposed = next;
             await writeShared('stages', stagesKey, next, 7 * 86_400);
@@ -746,6 +765,7 @@ export async function compasAutofillAction(
       return { success: true, pending: true, stepsCreated };
     }
 
+    lap('3');
     /* 3. Altitude réelle des étapes : acclimatation et kit en dépendent. */
     const geoSteps = steps.filter((s) => s.latitude != null && s.longitude != null);
     const altitudes =
@@ -754,6 +774,7 @@ export async function compasAutofillAction(
         : null;
     const maxStepAltitude = altitudes ? Math.max(0, ...altitudes.filter((a): a is number => a != null)) || null : null;
 
+    lap('4');
     /* 4. Nuits : profil + terrain + refuges connus (en parallèle). */
     const dayStep = (day: number) => steps.find((s) => s.day_number === day) ?? null;
     const nightPoint = (night: number) => {
@@ -818,6 +839,7 @@ export async function compasAutofillAction(
       }
     }
 
+    lap('5');
     /* 5. Venir : route mesurée si c'est raisonnable, sinon avion (chiffré par le spécialiste). */
     let transport: CompasAutofillSummary['transport'] = null;
     let carFuel: ReturnType<typeof estimateCarTrip> = null;
@@ -888,6 +910,7 @@ export async function compasAutofillAction(
       .reduce((t, st) => t + (st.distance_km ?? 0), 0);
     const rentalNeeded = carDays.length > 0 && flightNeeded;
 
+    lap('6');
     /* 6. Kit : règles contextuelles (pays, altitude réelle) + couchage selon les nuits. */
     const [{ data: itemRows }, { data: inv }, { data: loans }, { data: shopRows }] = await Promise.all([
       supabase.from('trip_items').select('item_name').eq('trip_id', tripId),
@@ -976,6 +999,7 @@ export async function compasAutofillAction(
     const kitCount: Record<GearSource, number> = { inventaire: 0, pret: 0, location: 0, achat: 0, a_trouver: 0 };
     for (const p of picks) kitCount[p.source] += 1;
 
+    lap('7');
     /* 7. Le spécialiste chiffre ce que la base ne connaît pas. */
     const hebergementNights = plan.filter((n) => n.type === 'hebergement').length;
     const stageLine = steps
@@ -1008,15 +1032,24 @@ export async function compasAutofillAction(
     // 25 s déjà passées (carte ou IA lentes), le chiffrage passe par les règles
     // plutôt que de risquer la limite de 60 s du serveur. Sans raisonnement :
     // avec, Nemotron 3.5 Lightning met ~50 s (mesure du 2026-10-05).
-    const lateRun = Date.now() - startedAt > 25_000;
+    const lateRun = remaining() < 12_000;
     const rawAdvice = lateRun
       ? null
-      : await askJson(userId, buildCompasAutofillSystem(), buildCompasAutofillPrompt(facts), 1200, false);
+      : await askJson(
+          userId,
+          buildCompasAutofillSystem(),
+          buildCompasAutofillPrompt(facts),
+          1200,
+          false,
+          0,
+          Math.min(25_000, remaining() - 6_000)
+        );
     if (lateRun) notes.push('Préparation longue : chiffrage par les règles du Compas, relance « Tout préparer » pour l’avis du spécialiste.');
     const advice: AutofillAiAdvice = sanitizeAdvice(rawAdvice);
     const usedAi = rawAdvice != null;
     notes.push(...advice.notes);
 
+    lap('8');
     /* 8. Budget complet, chaque ligne avec sa source. */
     const refugeCost = plan.reduce((t, n) => {
       const r = n.type === 'refuge' ? refugesByNight[n.night - 1][0] : null;
@@ -1142,6 +1175,7 @@ export async function compasAutofillAction(
     const total = budgetTotal(lines);
     const setBudget = prevBudget == null && total > 0;
 
+    lap('9');
     /* 9. Trace pour l'annulation et la réadaptation, puis budget cible si aucun n'était fixé. */
     const merged = (a: string[], b: string[] | undefined) => [...new Set([...a, ...(b ?? [])])];
     const metadata = await patchTripMetadata(supabase, tripId, (m) => ({
@@ -1170,6 +1204,8 @@ export async function compasAutofillAction(
       .update({ metadata, ...(setBudget ? { estimated_budget: total } : {}), updated_at: new Date().toISOString() })
       .eq('id', tripId);
 
+    lap('fin');
+    console.info('[compas] préremplissage', { phase, ms: Date.now() - startedAt, laps });
     return {
       success: true,
       summary: { nights: nightsOut, transport, kit: kitCount, budget: lines, total, notes: notes.slice(0, 6), usedAi, stepsCreated },

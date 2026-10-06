@@ -260,6 +260,8 @@ export function CompasScreen({
   // par voyage. Il écrit directement ; l'îlot montre l'avancée puis propose
   // « Annuler » (aussi dans « Où » ensuite). Annulé, il ne se relance pas seul.
   const autofillRunning = useRef(false);
+  /** Une reprise automatique après une coupure (réseau, limite serveur), pas plus. */
+  const autofillRetried = useRef(false);
   const autofill = useCallback((redo?: { label: string; kept: string[] }) => {
     if (autofillRunning.current) return;
     autofillRunning.current = true;
@@ -330,12 +332,21 @@ export function CompasScreen({
         );
         startTransition(() => router.refresh());
       })
-      .catch(() => notify('Connexion perdue : préparation interrompue.', 'bad'))
+      .catch(() => {
+        if (autofillRetried.current) return notify('Connexion perdue : préparation interrompue.', 'bad');
+        // Le serveur a coupé (limite de temps) ou le réseau a sauté : ce qui est
+        // écrit reste, on reprend une fois là où ça s'est arrêté.
+        autofillRetried.current = true;
+        notify('Préparation interrompue · je reprends dans une minute…');
+        setTimeout(() => autofillRef.current?.(redo), 66_000);
+      })
       .finally(() => {
         autofillRunning.current = false;
         setRunning(false);
       });
   }, [model.tripId, model.slug, model.destination, data.context?.scope, data.anchorName, notify, router]);
+  const autofillRef = useRef(autofill);
+  autofillRef.current = autofill;
 
   // Réadaptation : un changement (durée, lieu, activité, nuits, personnes…)
   // rend une partie du préremplissage caduque. Seules ces parties sont
