@@ -680,7 +680,7 @@ export function VerdictCard({ ctl }: { ctl: CompasCtl }) {
         </span>
         <span className="cp-sub">Signaux vérifiables · sans score</span>
       </div>
-      <div className="cp-tchips" aria-label="Danger par axe">
+      <div className="cp-tchips" role="group" aria-label="Danger par axe">
         {(['physique', 'technique', 'conjoncturel'] as const).map((axis) => {
           const a = ctl.data.danger.axes[axis];
           return (

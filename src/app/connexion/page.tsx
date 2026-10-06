@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useId, useState, Suspense } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -16,6 +16,9 @@ import { demoLoginAction, demoLoginAvailableAction } from '@/features/demo/demoL
 type AuthMode = 'connexion' | 'inscription';
 
 function AuthForm() {
+  // Le formulaire est rendu deux fois (vue ordinateur et vue mobile) : des
+  // identifiants propres à chaque rendu gardent chaque label sur son champ.
+  const uid = useId();
   const searchParams = useSearchParams();
   const initialMode = (searchParams?.get('mode') as AuthMode) || 'connexion';
   const requestedNext = searchParams?.get('next');
@@ -217,11 +220,11 @@ function AuthForm() {
               ) : (
                 <>
                   <div>
-                    <label htmlFor="reset-email" className="mb-1 block text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-text-primary)]">
+                    <label htmlFor={`${uid}-reset-email`} className="mb-1 block text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-text-primary)]">
                       {t('auth.email')}
                     </label>
                     <input
-                      id="reset-email"
+                      id={`${uid}-reset-email`}
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -253,22 +256,22 @@ function AuthForm() {
              <form method="post" onSubmit={handleSubmit} className="flex flex-col gap-[14px]">
               {mode === 'inscription' && (
                 <div>
-                  <label htmlFor="name" className="mb-1 block text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-text-primary)]">
+                  <label htmlFor={`${uid}-name`} className="mb-1 block text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-text-primary)]">
                     {t('auth.name')}
                   </label>
-                  <input id="name" type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('auth.namePlaceholder')} className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] px-[14px] py-2.5 text-[length:var(--lkv-text-body-sm)] text-[color:var(--glass-label)] placeholder:text-[color:var(--glass-label-muted)] backdrop-blur-[var(--glass-blur-sm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30" />
+                  <input id={`${uid}-name`} type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('auth.namePlaceholder')} className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] px-[14px] py-2.5 text-[length:var(--lkv-text-body-sm)] text-[color:var(--glass-label)] placeholder:text-[color:var(--glass-label-muted)] backdrop-blur-[var(--glass-blur-sm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30" />
                 </div>
               )}
               <div>
-                <label htmlFor="email" className="mb-1 block text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-text-primary)]">
+                <label htmlFor={`${uid}-email`} className="mb-1 block text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-text-primary)]">
                   {t('auth.email')}
                 </label>
-                <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('auth.emailPlaceholder')} autoComplete="email" required className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] px-[14px] py-2.5 text-[length:var(--lkv-text-body-sm)] text-[color:var(--glass-label)] placeholder:text-[color:var(--glass-label-muted)] backdrop-blur-[var(--glass-blur-sm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30" />
+                <input id={`${uid}-email`} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('auth.emailPlaceholder')} autoComplete="email" required className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] px-[14px] py-2.5 text-[length:var(--lkv-text-body-sm)] text-[color:var(--glass-label)] placeholder:text-[color:var(--glass-label-muted)] backdrop-blur-[var(--glass-blur-sm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30" />
               </div>
 
               <div>
                 <div className="mb-1 flex items-center justify-between">
-                  <label htmlFor="password" className="text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-text-primary)]">
+                  <label htmlFor={`${uid}-password`} className="text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-text-primary)]">
                     {mode === 'inscription' ? t('auth.passwordWithMin') : t('auth.password')}
                   </label>
                   {mode === 'connexion' && (
@@ -283,7 +286,7 @@ function AuthForm() {
                 </div>
                 <div className="relative">
                   <input
-                    id="password"
+                    id={`${uid}-password`}
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}

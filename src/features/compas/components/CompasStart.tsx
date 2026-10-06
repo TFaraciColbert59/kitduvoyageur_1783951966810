@@ -100,7 +100,7 @@ export function CompasStart({
 
         <section className="cp-card cp-sheet-glass" aria-label="Nouvelle aventure">
           <div>
-            <h2 className="cp-t2">Nouvelle aventure</h2>
+            <h1 className="cp-t2">Nouvelle aventure</h1>
             <p className="cp-sub">
               Rien n’est encore renseigné. Choisis une activité ou dis-le : l’aventure se crée et
               tout le reste se prépare ici.

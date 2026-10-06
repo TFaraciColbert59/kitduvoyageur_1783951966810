@@ -1,5 +1,12 @@
 # MISSION LOG — LKDV
 
+## 2026-10-06 — Accessibilité du Compas (WCAG 2.2 AA)
+
+- Audit axe-core (7 écrans réels, compte démo) + contraste mesuré au pixel sur le verre + parcours clavier : rapport complet dans `docs/compas/ACCESSIBILITE.md`.
+- Avant : 47 textes sous le seuil de contraste (verre à 19 % sur carte sombre), bannière cookies blanc sur clair, ARIA sur `div` sans rôle, identifiants en double sur `/connexion`, poignée 64×22, arrêts de tabulation vides (framer-motion), deux liens d'évitement, pas de `h1`, carte « Map ».
+- Après : 0 violation axe, 0 contraste sous le seuil, clavier propre. Verre par défaut 60 % (réglage ☀ inchangé).
+- Preuves : tsc, eslint propres ; tests 364/364 (Compas + composants) ; suite complète 21 échecs, tous préexistants.
+
 ## 2026-10-06 — Essais en production (lien Vercel) : deux corrections
 
 - Production testée de bout en bout avec le compte démo (mot de passe réinitialisé) : Islande, Patagonie, randonnée en anglais ; itinéraire, dates, nuits, kit, budget et conseils de l'IA NVIDIA OK, météo MET Norway OK.

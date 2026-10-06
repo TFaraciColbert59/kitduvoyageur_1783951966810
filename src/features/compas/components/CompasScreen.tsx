@@ -79,6 +79,10 @@ const DECISION_FLOWS: Record<string, { step: CompasStepId; flow: StepFlow }> = {
  * Les tiroirs s'empilent au-dessus de la zone haute sans déborder sur la carte,
  * ou en grand.
  */
+/** Intensité du verre par défaut : texte lisible (WCAG AA, audit du
+ *  2026-10-06) même sur une carte sombre. Le curseur ☀ reste réglable. */
+const DEFAULT_GLASS = 0.6;
+
 export function CompasScreen({
   data,
   initialStep,
@@ -96,7 +100,7 @@ export function CompasScreen({
   const [mapBig, setMapBig] = useState(false);
   const [display, setDisplay] = useState<{ outdoor: boolean; glass: number }>({
     outdoor: false,
-    glass: 0.19,
+    glass: DEFAULT_GLASS,
   });
   const [popover, setPopover] = useState(false);
   const [stack, setStack] = useState<Array<{ sheet: SheetState; detent: Detent }>>([]);
@@ -140,7 +144,7 @@ export function CompasScreen({
         const v = JSON.parse(raw) as { outdoor?: unknown; glass?: unknown };
         setDisplay({
           outdoor: v.outdoor === true,
-          glass: typeof v.glass === 'number' && v.glass >= 0.05 && v.glass <= 0.7 ? v.glass : 0.19,
+          glass: typeof v.glass === 'number' && v.glass >= 0.05 && v.glass <= 0.7 ? v.glass : DEFAULT_GLASS,
         });
       }
     } catch {
@@ -473,6 +477,9 @@ export function CompasScreen({
       style={style}
     >
       <div className="cp-bg" aria-hidden="true" />
+      {/* Titre de page pour les lecteurs d'écran (WCAG 2.4.6) ; l'en-tête
+          visible est porté par la capsule d'étapes et la carte « Où ». */}
+      <h1 className="sr-only">Compas · {model.title}</h1>
       <div className="cp-top">
         <div className="cp-headrow">
           <nav

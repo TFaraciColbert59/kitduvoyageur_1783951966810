@@ -484,6 +484,8 @@ export default function UnifiedExplorerMap({
           attributionControl: false,
           dragRotate: true,
           pitchWithRotate: true,
+          // Nom du canevas pour les lecteurs d'écran (MapLibre dit « Map »).
+          locale: { 'Map.Title': 'Carte' },
         });
       } catch (caught) {
         // Jamais de spinner infini : erreur journalisée avec contexte, UI débloquée.

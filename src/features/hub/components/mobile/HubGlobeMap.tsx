@@ -224,7 +224,7 @@ export function HubGlobeMap({
       )}
 
       {unifiedPois.length > 0 ? (
-        <div className="hub-globe-poi-rail" aria-label="Points d’intérêt de l’itinéraire">
+        <div className="hub-globe-poi-rail" role="group" aria-label="Points d’intérêt de l’itinéraire">
           {unifiedPois.map((poi, index) => {
             const point = validPoints[index];
             return (
