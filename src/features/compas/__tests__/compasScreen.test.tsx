@@ -130,6 +130,10 @@ const compas = vi.hoisted(() => ({
   compasClearStartSayAction: vi.fn(async () => ({ success: true })),
 }));
 vi.mock('../server/compasActions', () => compas);
+const poi = vi.hoisted(() => ({
+  compasStagePoisAction: vi.fn(async () => ({ success: true, pois: [] as unknown[] })),
+}));
+vi.mock('../server/poiActions', () => poi);
 const bottle = vi.hoisted(() => ({
   compasBottleStateAction: vi.fn(async () => ({
     success: true,
@@ -1072,7 +1076,7 @@ describe('CompasScreen', () => {
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
     const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
-    fireEvent.click(within(sheet).getByRole('button', { name: /Sur le tracé/ }));
+    fireEvent.click(within(sheet).getByRole('button', { name: /Sur place/ }));
     expect(within(sheet).getByText('Refuge des Oulettes')).toBeTruthy();
     expect(within(sheet).getByText('Point d’eau')).toBeTruthy();
     fireEvent.click(within(sheet).getByRole('button', { name: /Refuge ou abri \(1\)/ }));

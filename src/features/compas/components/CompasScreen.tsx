@@ -26,6 +26,9 @@ import { KitCard, NousCard, OuCard, ResaCard, VerdictCard } from './CompasCards'
 import { CompasMap } from './CompasMap';
 import { CompasAccessory } from './CompasAccessory';
 import { ALL_LAYERS, parseLayers, type LayerState } from '../engine/mapLayers';
+import { poiLabel, type RoutePoi } from '../engine/routePois';
+import { mergeStagePois } from '../engine/stagePois';
+import { compasStagePoisAction } from '../server/poiActions';
 import { tripHours } from './CompasRuler';
 import { buildCompasSnapshot, snapshotFingerprint, warmOfflinePage } from '../offline/snapshot';
 import { CompasSheet, type Detent } from './CompasSheet';
@@ -87,13 +90,41 @@ const DEFAULT_GLASS = 0.6;
 const DISPLAY_VERSION = 2;
 
 export function CompasScreen({
-  data,
+  data: rawData,
   initialStep,
 }: {
   data: CompasData;
   /** Étape ouverte à l'arrivée (lien `?etape=`) ; sinon la prochaine décision. */
   initialStep?: CompasStepId;
 }) {
+  // Points utiles autour des étapes (restos, commerces, santé, eau…) : chargés
+  // après l'affichage, pour tout itinéraire, puis mêlés aux points du tracé.
+  const [stagePois, setStagePois] = useState<RoutePoi[]>([]);
+  const poiKey = useMemo(
+    () =>
+      rawData.points
+        .filter((p) => p.kind === 'step')
+        .map((p) => `${p.lat.toFixed(3)},${p.lon.toFixed(3)}`)
+        .join('|'),
+    [rawData.points]
+  );
+  useEffect(() => {
+    if (!poiKey || (typeof navigator !== 'undefined' && navigator.onLine === false)) return;
+    let alive = true;
+    void compasStagePoisAction({ tripId: rawData.model.tripId })
+      .then((res) => {
+        if (alive && res.success) setStagePois(res.pois);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [poiKey, rawData.model.tripId]);
+  const data = useMemo<CompasData>(() => {
+    if (!stagePois.length) return rawData;
+    return { ...rawData, ...mergeStagePois(rawData.routePois, rawData.points, stagePois, poiLabel) };
+  }, [rawData, stagePois]);
+
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [running, setRunning] = useState(false);

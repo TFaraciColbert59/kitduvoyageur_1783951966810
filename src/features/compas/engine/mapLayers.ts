@@ -5,13 +5,32 @@
  */
 
 export type MapLayer =
-  'etapes' | 'water' | 'refuge' | 'camping' | 'viewpoint' | 'peak' | 'parking' | 'profil';
+  | 'etapes'
+  | 'resto'
+  | 'commerce'
+  | 'sante'
+  | 'hebergement'
+  | 'transport'
+  | 'water'
+  | 'refuge'
+  | 'camping'
+  | 'toilets'
+  | 'viewpoint'
+  | 'peak'
+  | 'parking'
+  | 'profil';
 
 export const MAP_LAYERS: ReadonlyArray<{ id: MapLayer; label: string; icon: string }> = [
   { id: 'etapes', label: 'Étapes', icon: 'route' },
+  { id: 'resto', label: 'Restos', icon: 'flame' },
+  { id: 'commerce', label: 'Commerces', icon: 'shopping-cart' },
+  { id: 'sante', label: 'Santé', icon: 'heart-pulse' },
+  { id: 'hebergement', label: 'Hébergements', icon: 'bed-double' },
+  { id: 'transport', label: 'Transports', icon: 'bus' },
   { id: 'water', label: 'Eau', icon: 'droplet' },
   { id: 'refuge', label: 'Refuges', icon: 'home' },
   { id: 'camping', label: 'Camping', icon: 'tent' },
+  { id: 'toilets', label: 'Toilettes', icon: 'droplets' },
   { id: 'viewpoint', label: 'Vues', icon: 'eye' },
   { id: 'peak', label: 'Sommets', icon: 'mountain' },
   { id: 'parking', label: 'Parkings', icon: 'car' },
