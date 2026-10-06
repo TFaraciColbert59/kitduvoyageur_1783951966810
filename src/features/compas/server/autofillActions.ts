@@ -52,8 +52,9 @@ import {
   type SourceShop,
   movesFromSteps,
 } from '../engine/autofill';
-import { compasMeta, patchTripMetadata, readProfile, requireEditor, resplitSteps, type Supa } from './compasServer';
+import { compasMeta, patchTripMetadata, readProfile, requireEditor, resplitSteps, tripBasis, type Supa } from './compasServer';
 import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
+import { partsText, staleParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { lookupDestination, lookupReverse, stageCandidates } from './placeLookup';
 import { destinationRadiusKm, distanceKm, maxLegKm, pickPlace, type CompasPlace } from '../engine/places';
 import { untangleStages } from '../engine/stageOrder';
@@ -305,8 +306,42 @@ function readPending(meta: Record<string, unknown>): PendingRun | null {
 function withoutPending(c: Record<string, unknown>): Record<string, unknown> {
   const rest = { ...c };
   delete rest.autofill_pending;
+  delete rest.autofill_carry;
   return rest;
 }
+
+/** Ce qu'une réadaptation a gardé du préremplissage précédent (retouché ou encore juste). */
+interface Carry {
+  stepIds: string[];
+  routeSet: boolean;
+  itemIds: string[];
+  expenseIds: string[];
+  expenseTitles: string[];
+  stays: Array<{ stepId: string; name: string }>;
+}
+
+function strIds(v: unknown): string[] {
+  return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+}
+
+function readCarry(meta: Record<string, unknown>): Carry | null {
+  const c = compasMeta(meta).autofill_carry as Record<string, unknown> | undefined;
+  if (!c || typeof c !== 'object') return null;
+  return {
+    stepIds: strIds(c.stepIds),
+    routeSet: c.routeSet === true,
+    itemIds: strIds(c.itemIds),
+    expenseIds: strIds(c.expenseIds),
+    expenseTitles: strIds(c.expenseTitles),
+    stays: Array.isArray(c.stays)
+      ? (c.stays as Array<Record<string, unknown>>)
+          .filter((s) => typeof s?.stepId === 'string' && typeof s?.name === 'string')
+          .map((s) => ({ stepId: String(s.stepId), name: String(s.name) }))
+      : [],
+  };
+}
+
+
 
 export async function compasAutofillAction(
   input: z.input<typeof schema>
@@ -341,6 +376,7 @@ export async function compasAutofillAction(
     const prev = compasMeta(meta).autofill as { runId?: string } | undefined;
     if (prev?.runId) return { success: false, error: 'Le voyage est déjà prérempli : annule d’abord pour relancer.' };
     const pending = readPending(meta);
+    const carry = readCarry(meta);
     // Une phase « steps » relancée alors qu'un itinéraire attend déjà : on le garde.
     if (phase === 'steps' && pending) return { success: true, pending: true, stepsCreated: pending.stepIds.length };
     const resume = phase === 'rest' ? pending : null;
@@ -926,7 +962,7 @@ export async function compasAutofillAction(
     });
     const rental = picks.filter((p) => p.source === 'location').reduce((t, p) => t + (p.costEur ?? 0), 0);
     const purchase = picks.filter((p) => p.source === 'achat').reduce((t, p) => t + (p.costEur ?? 0), 0);
-    const lines = budgetLines([
+    let lines = budgetLines([
       refugeCost
         ? { category: 'hébergement', title: 'Nuits en refuge', amount: refugeCost, source: 'base', basis: 'prix des refuges en base × personnes' }
         : null,
@@ -1001,6 +1037,9 @@ export async function compasAutofillAction(
         : null,
     ]);
     let createdExpenseIds: string[] = [];
+    // Une ligne de budget retouchée lors d'une réadaptation reste ; on ne la double pas.
+    const keptTitles = new Set(carry?.expenseTitles ?? []);
+    if (keptTitles.size) lines = lines.filter((l) => !keptTitles.has(l.title.slice(0, 100)));
     if (lines.length) {
       const { data: inserted, error: expenseError } = await supabase
         .from('trip_expenses')
@@ -1025,7 +1064,8 @@ export async function compasAutofillAction(
     const total = budgetTotal(lines);
     const setBudget = prevBudget == null && total > 0;
 
-    /* 9. Trace pour l'annulation, puis budget cible si aucun n'était fixé. */
+    /* 9. Trace pour l'annulation et la réadaptation, puis budget cible si aucun n'était fixé. */
+    const merged = (a: string[], b: string[] | undefined) => [...new Set([...a, ...(b ?? [])])];
     const metadata = await patchTripMetadata(supabase, tripId, (m) => ({
       ...m,
       compas: {
@@ -1033,13 +1073,16 @@ export async function compasAutofillAction(
         autofill: {
           runId,
           at: new Date().toISOString(),
-          stepIds: createdStepIds,
-          routeSet,
-          itemIds: createdItemIds,
-          expenseIds: createdExpenseIds,
-          stays,
+          // Ce que ce préremplissage a écrit, plus ce qu'une réadaptation a gardé du précédent.
+          stepIds: merged(createdStepIds, carry?.stepIds),
+          routeSet: routeSet || (carry?.routeSet ?? false),
+          itemIds: merged(createdItemIds, carry?.itemIds),
+          expenseIds: merged(createdExpenseIds, carry?.expenseIds),
+          stays: [...stays, ...(carry?.stays ?? []).filter((s) => !stays.some((x) => x.stepId === s.stepId))],
           budgetSet: setBudget,
           notes: notes.slice(0, 6),
+          // Réglages qui ont produit ce préremplissage : un changement dit quoi refaire.
+          basis: tripBasis(trip, activity),
         },
       },
     }));
@@ -1111,6 +1154,153 @@ export async function compasUndoAutofillAction(
     return { success: true };
   } catch (err) {
     console.error('[compas] compasUndoAutofillAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+const refreshSchema = z.object({ tripId: z.string().uuid(), tripSlug: z.string().min(1).max(200) });
+
+export type CompasRefreshResult =
+  | { success: true; parts: AutofillPart[]; kept: string[]; label: string }
+  | { success: false; error: string };
+
+/**
+ * Réadapte le préremplissage après un changement du projet (durée,
+ * destination, activité, nuits, personnes…) : seules les parties qui en
+ * dépendent sont refaites. Ce que le préremplissage avait écrit et que
+ * personne n'a retouché depuis est retiré ; ce qui a été retouché est gardé
+ * (c'est devenu un choix). Le préremplissage repasse ensuite normalement et
+ * ne réécrit que ce qui manque.
+ */
+export async function compasRefreshAutofillAction(
+  input: z.input<typeof refreshSchema>
+): Promise<CompasRefreshResult> {
+  const parsed = refreshSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Requête invalide' };
+  const { tripId } = parsed.data;
+  try {
+    const auth = await requireEditor(tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    const { supabase, userId, trip } = auth;
+    const limited = await enforceRateLimit(userId, {
+      scope: 'compas-refresh',
+      limit: 10,
+      windowMs: 10 * 60_000,
+      failMode: 'closed',
+    });
+    if (limited) return { success: false, error: 'Beaucoup de changements d’affilée : patiente quelques minutes.' };
+    const meta = (trip.metadata ?? {}) as Record<string, unknown>;
+    if (readPending(meta)) return { success: false, error: 'Une préparation est déjà en cours.' };
+    const run = compasMeta(meta).autofill as
+      | {
+          runId?: string;
+          at?: string;
+          stepIds?: string[];
+          routeSet?: boolean;
+          itemIds?: string[];
+          expenseIds?: string[];
+          stays?: Array<{ stepId: string; name: string }>;
+          budgetSet?: boolean;
+          basis?: Partial<ProjectBasis>;
+        }
+      | undefined;
+    if (!run?.runId || !run.basis) return { success: true, parts: [], kept: [], label: '' };
+    const { data: tripRow } = await supabase.from('trips').select('primary_activity').eq('id', tripId).maybeSingle();
+    const activity = (tripRow as { primary_activity?: string } | null)?.primary_activity ?? null;
+    let parts = staleParts(run.basis, tripBasis(trip, activity));
+    if (!parts.length) return { success: true, parts: [], kept: [], label: '' };
+
+    const kept: string[] = [];
+    const carry: Carry = { stepIds: [], routeSet: false, itemIds: [], expenseIds: [], expenseTitles: [], stays: [] };
+    const at = run.at ?? null;
+    const now = new Date().toISOString();
+
+    /* Itinéraire : refait seulement si personne n'a touché aux étapes du préremplissage. */
+    const stepIds = run.stepIds ?? [];
+    if (parts.includes('steps') && stepIds.length) {
+      const { data } = await supabase.from('trip_steps').select('id, updated_at').eq('trip_id', tripId).in('id', stepIds);
+      const rows = (data ?? []) as Array<{ id: string; updated_at: string | null }>;
+      if (rows.every((r) => untouchedSince(r.updated_at, at))) {
+        await supabase.from('trip_steps').delete().eq('trip_id', tripId).in('id', rows.map((r) => r.id));
+      } else {
+        // Étapes retouchées : l'itinéraire est à toi, on garde tout et on refait le reste.
+        parts = parts.filter((p) => p !== 'steps');
+        carry.stepIds = stepIds;
+        carry.routeSet = run.routeSet === true;
+        kept.push('itinéraire retouché, gardé');
+      }
+    } else {
+      carry.stepIds = stepIds;
+      carry.routeSet = run.routeSet === true;
+    }
+    const stepsRedone = parts.includes('steps');
+
+    /* Nuits : un hébergement posé par le préremplissage et resté tel quel est libéré. */
+    let staysKept = 0;
+    for (const s of run.stays ?? []) {
+      if (stepsRedone) continue; // l'étape elle-même est refaite
+      if (!parts.includes('nights')) {
+        carry.stays.push(s);
+        continue;
+      }
+      const { data } = await supabase
+        .from('trip_steps')
+        .update({ accommodation_name: null, updated_at: now })
+        .eq('id', s.stepId)
+        .eq('accommodation_name', s.name)
+        .select('id');
+      if (!data?.length) staysKept += 1;
+    }
+    if (staysKept) kept.push(`${staysKept} nuit${staysKept > 1 ? 's' : ''} choisie${staysKept > 1 ? 's' : ''} par toi, gardée${staysKept > 1 ? 's' : ''}`);
+
+    /* Sac : objets ajoutés par le préremplissage et jamais touchés (ni cochés, ni modifiés). */
+    const itemIds = run.itemIds ?? [];
+    if (parts.includes('kit') && itemIds.length) {
+      const { data } = await supabase.from('trip_items').select('id, updated_at').eq('trip_id', tripId).in('id', itemIds);
+      const rows = (data ?? []) as Array<{ id: string; updated_at: string | null }>;
+      const drop = rows.filter((r) => untouchedSince(r.updated_at, at)).map((r) => r.id);
+      carry.itemIds = rows.filter((r) => !drop.includes(r.id)).map((r) => r.id);
+      if (drop.length) await supabase.from('trip_items').delete().eq('trip_id', tripId).in('id', drop);
+      if (carry.itemIds.length)
+        kept.push(`${carry.itemIds.length} objet${carry.itemIds.length > 1 ? 's' : ''} du sac déjà touché${carry.itemIds.length > 1 ? 's' : ''}, gardé${carry.itemIds.length > 1 ? 's' : ''}`);
+    } else carry.itemIds = itemIds;
+
+    /* Budget : lignes estimées par le préremplissage, sauf celles modifiées depuis. */
+    const expenseIds = run.expenseIds ?? [];
+    if (parts.includes('budget') && expenseIds.length) {
+      const { data } = await supabase
+        .from('trip_expenses')
+        .select('id, title, updated_at')
+        .eq('trip_id', tripId)
+        .in('id', expenseIds);
+      const rows = (data ?? []) as Array<{ id: string; title: string; updated_at: string | null }>;
+      const drop = rows.filter((r) => untouchedSince(r.updated_at, at));
+      const keep = rows.filter((r) => !drop.includes(r));
+      carry.expenseIds = keep.map((r) => r.id);
+      carry.expenseTitles = keep.map((r) => r.title);
+      if (drop.length) await supabase.from('trip_expenses').delete().eq('trip_id', tripId).in('id', drop.map((r) => r.id));
+      if (keep.length) kept.push(`${keep.length} ligne${keep.length > 1 ? 's' : ''} de budget modifiée${keep.length > 1 ? 's' : ''}, gardée${keep.length > 1 ? 's' : ''}`);
+    } else carry.expenseIds = expenseIds;
+
+    const metadata = await patchTripMetadata(supabase, tripId, (m) => {
+      const c = { ...compasMeta(m) };
+      delete c.autofill; // le préremplissage repasse
+      const next: Record<string, unknown> = { ...m, compas: { ...c, autofill_carry: carry } };
+      if (stepsRedone && run.routeSet) delete next.route_id;
+      return next;
+    });
+    await supabase
+      .from('trips')
+      .update({
+        metadata,
+        // Une enveloppe posée par le préremplissage se recalcule avec le reste.
+        ...(run.budgetSet && parts.includes('budget') ? { estimated_budget: null } : {}),
+        updated_at: now,
+      })
+      .eq('id', tripId);
+    return { success: true, parts, kept, label: `${partsText(parts)} réadapté${parts.length > 1 ? 's' : ''}` };
+  } catch (err) {
+    console.error('[compas] compasRefreshAutofillAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }

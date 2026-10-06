@@ -18,6 +18,7 @@ import { NIGHT_LABEL } from '../engine/autofill';
 import {
   compasAutofillAction,
   compasUndoAutofillAction,
+  compasRefreshAutofillAction,
   type CompasAutofillSummary,
 } from '../server/autofillActions';
 import type { CompasData } from '../server/getCompasData';
@@ -259,11 +260,15 @@ export function CompasScreen({
   // par voyage. Il écrit directement ; l'îlot montre l'avancée puis propose
   // « Annuler » (aussi dans « Où » ensuite). Annulé, il ne se relance pas seul.
   const autofillRunning = useRef(false);
-  const autofill = useCallback(() => {
+  const autofill = useCallback((redo?: { label: string; kept: string[] }) => {
     if (autofillRunning.current) return;
     autofillRunning.current = true;
     if (toastTimer.current) clearTimeout(toastTimer.current);
-    setToast({ message: 'Je prépare ton aventure…', sub: 'Nuits, trajet, kit et budget' });
+    setToast(
+      redo
+        ? { message: 'Je réadapte ton aventure…', sub: redo.label }
+        : { message: 'Je prépare ton aventure…', sub: 'Nuits, trajet, kit et budget' }
+    );
     setRunning(true);
     const position = new Promise<{ lat: number; lon: number } | null>((resolve) => {
       if (typeof navigator === 'undefined' || !navigator.geolocation) return resolve(null);
@@ -311,13 +316,12 @@ export function CompasScreen({
           void runRef.current?.('Préparation annulée', () =>
             compasUndoAutofillAction({ tripId: model.tripId, tripSlug: model.slug })
           );
+        const done = redo ? redo.label : 'Aventure préparée';
         notify(
-          res.summary.total > 0
-            ? `Aventure préparée · ${formatMoney(res.summary.total, 'EUR')}`
-            : 'Aventure préparée',
+          res.summary.total > 0 ? `${done} · ${formatMoney(res.summary.total, 'EUR')}` : done,
           undefined,
           undo,
-          autofillDigest(res.summary)
+          redo?.kept.length ? `Gardé : ${redo.kept.join(' · ')}` : autofillDigest(res.summary)
         );
         startTransition(() => router.refresh());
       })
@@ -327,6 +331,24 @@ export function CompasScreen({
         setRunning(false);
       });
   }, [model.tripId, model.slug, model.destination, data.context?.scope, data.anchorName, notify, router]);
+
+  // Réadaptation : un changement (durée, lieu, activité, nuits, personnes…)
+  // rend une partie du préremplissage caduque. Seules ces parties sont
+  // refaites ; ce que tu as retouché est gardé. Une fois par changement.
+  const refreshedFor = useRef<string | null>(null);
+  useEffect(() => {
+    const stale = data.autofillStale ?? [];
+    if (data.autofill !== 'done' || !data.canEdit || !stale.length) return;
+    const key = `${model.tripId}:${stale.join(',')}:${JSON.stringify(data.context?.scope)}:${model.dates.days}:${model.destination}`;
+    if (refreshedFor.current === key || autofillRunning.current) return;
+    refreshedFor.current = key;
+    void compasRefreshAutofillAction({ tripId: model.tripId, tripSlug: model.slug })
+      .then((res) => {
+        if (!res.success) return notify(res.error, 'bad');
+        if (res.parts.length) autofill({ label: res.label, kept: res.kept });
+      })
+      .catch(() => notify('Connexion perdue : réadaptation interrompue.', 'bad'));
+  }, [data, model, autofill, notify]);
 
   const autofillStarted = useRef<string | null>(null);
   useEffect(() => {

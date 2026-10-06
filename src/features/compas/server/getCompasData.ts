@@ -28,7 +28,8 @@ import {
 } from '../engine/compasModel';
 import { readCompasMeta } from '../engine/meta';
 import { resolveProjectContext, type ProjectContext } from '../engine/projectContext';
-import { readProfile } from './compasServer';
+import { readProfile, tripBasis } from './compasServer';
+import { staleParts, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { relevantAffiliateLinks } from '../engine/affiliates';
 import { getOfficialAlerts } from './officialAlerts';
 import { getRouteElevation } from './elevation';
@@ -131,6 +132,8 @@ export interface CompasData {
   anchorName?: string | null;
   /** Contexte projet résolu (projet > sélection > profil > défaut), avec la source de chaque valeur. */
   context?: ProjectContext;
+  /** Parties du préremplissage dépassées par un changement du projet (à réadapter). */
+  autofillStale?: AutofillPart[];
 }
 
 const TIME_ZONE = 'Europe/Paris';
@@ -589,6 +592,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     autofill: autofillState(trip.metadata),
     autofillNotes: autofillNotes(trip.metadata),
     ...compasPlan(trip.metadata),
+    autofillStale: autofillStale(trip),
     context: resolveProjectContext({
       activity: trip.primary_activity ?? null,
       days: baseModel.dates.days ?? compasPlan(trip.metadata).plannedDays,
@@ -600,6 +604,27 @@ export async function getCompasData(): Promise<CompasData | null> {
       profile,
     }),
   };
+}
+
+function autofillStale(trip: TripFull): AutofillPart[] {
+  const compas =
+    trip.metadata && typeof trip.metadata === 'object' ? (trip.metadata as Record<string, unknown>).compas : null;
+  const run = compas && typeof compas === 'object' ? (compas as Record<string, unknown>).autofill : null;
+  const basis = run && typeof run === 'object' ? (run as Record<string, unknown>).basis : null;
+  if (!basis || typeof basis !== 'object' || !(run as Record<string, unknown>).runId) return [];
+  return staleParts(
+    basis as Partial<ProjectBasis>,
+    tripBasis(
+      {
+        start_date: trip.start_date,
+        end_date: trip.end_date,
+        destination_name: trip.destination_name,
+        party_size: trip.party_size ?? null,
+        metadata: (trip.metadata ?? null) as Record<string, unknown> | null,
+      },
+      trip.primary_activity ?? null
+    )
+  );
 }
 
 function autofillState(metadata: unknown): CompasData['autofill'] {

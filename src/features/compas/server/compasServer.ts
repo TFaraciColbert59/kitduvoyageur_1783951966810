@@ -1,6 +1,8 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import type { ProfileInput } from '../engine/projectContext';
+import { projectBasis, type ProjectBasis } from '../engine/dependencies';
+import { readCompasMeta } from '../engine/meta';
 
 /**
  * Briques serveur partagées par les actions du Compas (droits, métadonnées,
@@ -196,4 +198,48 @@ export async function readProfile(
   } catch {
     return null;
   }
+}
+
+/**
+ * Empreinte des réglages du projet, calculée de la même façon au moment du
+ * préremplissage et à l'affichage : la comparer dit quoi réadapter.
+ */
+export function tripBasis(
+  trip: {
+    start_date: string | null;
+    end_date: string | null;
+    destination_name: string | null;
+    party_size: number | null;
+    metadata: Record<string, unknown> | null;
+  },
+  activity: string | null
+): ProjectBasis {
+  const meta = (trip.metadata ?? {}) as Record<string, unknown>;
+  const c = compasMeta(meta);
+  const a = (c.anchor ?? null) as Record<string, unknown> | null;
+  const lat = Number(a?.lat);
+  const lon = Number(a?.lon);
+  const anchor =
+    a && Number.isFinite(lat) && Number.isFinite(lon) ? { name: String(a.name ?? ''), lat, lon } : null;
+  const planned = Number(c.planned_days);
+  // Même lecture que le préremplissage : les dates, sinon la durée retenue sans date.
+  const a0 = trip.start_date ? Date.parse(`${trip.start_date}T12:00:00Z`) : NaN;
+  const b0 = trip.start_date ? Date.parse(`${trip.end_date ?? trip.start_date}T12:00:00Z`) : NaN;
+  const days =
+    Number.isFinite(a0) && Number.isFinite(b0) && b0 >= a0
+      ? Math.round((b0 - a0) / 86_400_000) + 1
+      : Number.isInteger(planned) && planned >= 1
+        ? planned
+        : null;
+  const compas = readCompasMeta(meta);
+  return projectBasis({
+    anchor,
+    destinationName: trip.destination_name,
+    days,
+    hours: compas.durationHours,
+    startDate: trip.start_date,
+    activity,
+    partySize: trip.party_size,
+    prefs: compas.preferences,
+  });
 }

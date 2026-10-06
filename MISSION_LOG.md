@@ -1,5 +1,12 @@
 # MISSION LOG — LKDV
 
+## 2026-10-06 — Compas copilote, lot 2 : réadaptation ciblée
+
+- **`engine/dependencies.ts`** (pur, testé) : le préremplissage garde l'empreinte des réglages qui l'ont produit (`basis` : lieu arrondi à ~1 km, jours, heures, mois, activité, personnes, nuits, nuits dehors, autonomie, priorité, rythme, niveau, terrain, distance). Un changement → seules les parties qui en dépendent : 7 → 10 jours refait itinéraire, nuits, trajet, sac, budget ; une personne de plus : trajet, sac, budget (pas l'itinéraire) ; « 3 nuits dehors » : nuits, sac, budget.
+- **`compasRefreshAutofillAction`** : retire seulement ce que le préremplissage avait écrit ET que personne n'a touché depuis (`updated_at` tenu par trigger, marge 5 s) ; ce qui a été retouché (étape renommée, objet coché, ligne de budget modifiée, nuit choisie) est gardé et compté ; le préremplissage repasse et ne réécrit que ce qui manque (pas de doublon de ligne de budget).
+- **Écran** : le changement est détecté au chargement (`autofillStale`), la réadaptation se lance seule une fois, l'îlot dit « Itinéraire, nuits et budget réadaptés » et ce qui a été gardé. Verdict et Kit suivent sans recalcul (dérivés).
+- Preuves : tsc, eslint propres ; tests Compas 327/327 (11 nouveaux).
+
 ## 2026-10-06 — Compas copilote, lot 1 : contexte projet unique
 
 - Analyse d'architecture et plan : `docs/compas/COPILOTE.md` (source de vérité = `trips` + `metadata.compas`, profil jamais recopié, ordre phrase > projet > Compas > profil > défaut, dépendances, portée des modules).
