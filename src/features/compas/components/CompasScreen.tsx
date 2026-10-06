@@ -27,6 +27,7 @@ import { CompasAccessory } from './CompasAccessory';
 import { START_SAY_KEY } from './CompasStart';
 import { ALL_LAYERS, parseLayers, type LayerState } from '../engine/mapLayers';
 import { tripHours } from './CompasRuler';
+import { buildCompasSnapshot, snapshotFingerprint, warmOfflinePage } from '../offline/snapshot';
 import { CompasSheet, type Detent } from './CompasSheet';
 import { SheetContent, sheetTitle } from './CompasSheets';
 import type { ActionResult, CompasCtl, SheetState, StepFlow } from './compasTypes';
@@ -113,6 +114,35 @@ export function CompasScreen({
   } | null>(null);
   /** Dernière écriture annulable (Ctrl/⌘+Z), le temps que l'annonce reste. */
   const undoRef = useRef<(() => void) | null>(null);
+
+  // Hors ligne : l'aventure affichée est gardée sur l'appareil (IndexedDB) pour
+  // être relue sans réseau sur /hors-ligne. Écrite seulement si elle change.
+  const [offlineSavedAt, setOfflineSavedAt] = useState<string | null>(null);
+  const offlinePrint = useRef<string | null>(null);
+  useEffect(() => {
+    const userId = data.viewerId;
+    if (!userId || typeof indexedDB === 'undefined') return;
+    const timer = window.setTimeout(() => {
+      const snap = buildCompasSnapshot({
+        userId,
+        model: data.model,
+        countryCode: data.countryCode,
+        itinerary: data.itinerary,
+        weatherSource: data.weather?.source ?? null,
+      });
+      const print = snapshotFingerprint(snap);
+      if (print === offlinePrint.current) return;
+      void import('@/lib/offlineStorage')
+        .then((m) => m.saveCompasSnapshot(snap))
+        .then(() => {
+          offlinePrint.current = print;
+          setOfflineSavedAt(snap.savedAt);
+          void warmOfflinePage();
+        })
+        .catch(() => undefined);
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [data.viewerId, data.model, data.countryCode, data.itinerary, data.weather]);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { model } = data;
@@ -657,6 +687,16 @@ export function CompasScreen({
               <span>Opaque</span>
             </span>
           </label>
+          <p className="cp-popv__note">
+            {offlineSavedAt ? (
+              <>
+                Disponible hors ligne sur cet appareil ·{' '}
+                <a href="/hors-ligne">voir la version hors ligne</a>
+              </>
+            ) : (
+              'Préparation de la version hors ligne…'
+            )}
+          </p>
         </div>
       )}
 

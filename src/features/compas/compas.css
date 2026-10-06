@@ -1812,6 +1812,18 @@
   font-size: 11.5px;
   color: var(--cp-ink2);
 }
+.cp-popv__note {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--cp-ink2);
+}
+.cp-popv__note a {
+  color: var(--cp-ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .cp-switch {
   flex: none;
   position: relative;
