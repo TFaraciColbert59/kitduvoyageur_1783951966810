@@ -100,6 +100,7 @@ export function CompasScreen({
   // Points utiles autour des étapes (restos, commerces, santé, eau…) : chargés
   // après l'affichage, pour tout itinéraire, puis mêlés aux points du tracé.
   const [stagePois, setStagePois] = useState<RoutePoi[]>([]);
+  const [stagePoisDone, setStagePoisDone] = useState(false);
   const poiKey = useMemo(
     () =>
       rawData.points
@@ -111,19 +112,27 @@ export function CompasScreen({
   useEffect(() => {
     if (!poiKey || (typeof navigator !== 'undefined' && navigator.onLine === false)) return;
     let alive = true;
+    setStagePoisDone(false);
     void compasStagePoisAction({ tripId: rawData.model.tripId })
       .then((res) => {
         if (alive && res.success) setStagePois(res.pois);
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => {
+        if (alive) setStagePoisDone(true);
+      });
     return () => {
       alive = false;
     };
   }, [poiKey, rawData.model.tripId]);
   const data = useMemo<CompasData>(() => {
-    if (!stagePois.length) return rawData;
-    return { ...rawData, ...mergeStagePois(rawData.routePois, rawData.points, stagePois, poiLabel) };
-  }, [rawData, stagePois]);
+    if (!stagePois.length) return { ...rawData, stagePoisDone };
+    return {
+      ...rawData,
+      stagePoisDone,
+      ...mergeStagePois(rawData.routePois, rawData.points, stagePois, poiLabel),
+    };
+  }, [rawData, stagePois, stagePoisDone]);
 
   const router = useRouter();
   const [pending, startTransition] = useTransition();

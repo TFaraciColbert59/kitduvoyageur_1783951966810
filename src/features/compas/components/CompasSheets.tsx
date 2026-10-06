@@ -3174,9 +3174,11 @@ function TraceFlow({ ctl }: { ctl: CompasCtl }) {
   if (!onRoute && pois.length === 0)
     return (
       <p className="cp-note">
-        {ctl.data.itinerary.length
-          ? 'Je cherche les restos, commerces, points d’eau, hébergements et transports autour de tes étapes…'
-          : 'Dès que ton itinéraire a ses étapes, les restos, commerces, points d’eau, hébergements et transports autour s’affichent ici.'}
+        {!ctl.data.itinerary.length
+          ? 'Dès que ton itinéraire a ses étapes, les restos, commerces, points d’eau, hébergements et transports autour s’affichent ici.'
+          : ctl.data.stagePoisDone
+            ? 'Aucun point trouvé autour de tes étapes pour le moment (la carte ouverte ne répond pas toujours) : réessaie un peu plus tard.'
+            : 'Je cherche les restos, commerces, points d’eau, hébergements et transports autour de tes étapes…'}
       </p>
     );
   const shown = filter === 'all' ? pois : pois.filter((p) => p.category === filter);

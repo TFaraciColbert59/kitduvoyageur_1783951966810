@@ -3,6 +3,7 @@ import {
   buildOverpassQuery,
   distinctPlaces,
   mergeStagePois,
+  overpassUsable,
   parseOverpass,
   poiCategoryOf,
   STAGE_POI_MAX_PLACES,
@@ -19,13 +20,23 @@ describe('Points autour des étapes (OpenStreetMap)', () => {
     expect(distinctPlaces([{ lat: Number.NaN, lon: 6 }, { lat: 120, lon: 6 }])).toEqual([]);
   });
 
-  it('une requête : chaque catégorie autour de chaque lieu', () => {
-    const q = buildOverpassQuery([annecy]);
+  it('une requête par lieu, un plafond par catégorie (une ville dense ne noie rien)', () => {
+    const q = buildOverpassQuery(annecy);
     expect(q).toContain('[out:json]');
-    expect(q).toContain('nwr["amenity"~"^(restaurant|cafe|fast_food|pub|bar|food_court)$"](around:1500,45.8992,6.1294);');
+    expect(q).toContain(
+      'nwr["amenity"~"^(restaurant|cafe|fast_food|pub|bar|food_court)$"](around:1500,45.8992,6.1294);out center tags 25;'
+    );
     expect(q).toContain('"shop"~"^(supermarket');
     expect(q).toContain('"amenity"~"^(pharmacy');
-    expect(q).toContain('out center tags');
+  });
+
+  it('réponse coupée (remarque d’erreur) : inexploitable, jamais prise pour « aucun point »', () => {
+    expect(overpassUsable({ elements: [] })).toBe(true);
+    expect(
+      overpassUsable({ elements: [], remark: 'runtime error: Query timed out in "query" at line 1 after 26 seconds.' })
+    ).toBe(false);
+    expect(overpassUsable(null)).toBe(false);
+    expect(overpassUsable({})).toBe(false);
   });
 
   it('catégorie lue depuis les étiquettes OSM', () => {

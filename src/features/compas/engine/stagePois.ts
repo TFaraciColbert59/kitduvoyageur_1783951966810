@@ -54,13 +54,32 @@ export function distinctPlaces(points: readonly StagePoint[], minKm = 2): StageP
   return out;
 }
 
-/** Requête Overpass : chaque catégorie autour de chaque lieu, en une fois. */
-export function buildOverpassQuery(places: readonly StagePoint[], radiusM = STAGE_POI_RADIUS_M): string {
-  const parts: string[] = [];
-  for (const p of places)
-    for (const f of FILTERS)
-      parts.push(`nwr["${f.key}"~"^(${f.values})$"](around:${radiusM},${p.lat},${p.lon});`);
-  return `[out:json][timeout:20];(${parts.join('')});out center tags 1500;`;
+/**
+ * Requête Overpass pour UN lieu : chaque catégorie avec son propre plafond
+ * (`out … N`), pour qu'une ville dense (Tokyo, des milliers de restos) ne
+ * noie ni ne fasse expirer la requête, et que chaque catégorie soit servie.
+ */
+export function buildOverpassQuery(
+  place: StagePoint,
+  radiusM = STAGE_POI_RADIUS_M,
+  perFilter = 25
+): string {
+  const parts = FILTERS.map(
+    (f) => `nwr["${f.key}"~"^(${f.values})$"](around:${radiusM},${place.lat},${place.lon});out center tags ${perFilter};`
+  );
+  return `[out:json][timeout:25];${parts.join('')}`;
+}
+
+/**
+ * Une réponse Overpass exploitable : une liste d'éléments, sans erreur
+ * signalée (une requête coupée renvoie une liste vide ET une remarque : ce
+ * n'est pas « aucun point », et ça ne se garde pas en cache).
+ */
+export function overpassUsable(payload: unknown): boolean {
+  if (!payload || typeof payload !== 'object') return false;
+  const p = payload as { elements?: unknown; remark?: unknown };
+  if (!Array.isArray(p.elements)) return false;
+  return !(typeof p.remark === 'string' && /error|timed out|out of memory/i.test(p.remark));
 }
 
 /** Catégorie d'un objet OpenStreetMap (null : rien d'utile pour le Compas). */

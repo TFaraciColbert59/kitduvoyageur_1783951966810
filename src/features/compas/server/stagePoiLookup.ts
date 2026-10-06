@@ -1,6 +1,11 @@
 import 'server-only';
-import { createHash } from 'node:crypto';
-import { buildOverpassQuery, distinctPlaces, parseOverpass, type StagePoint } from '../engine/stagePois';
+import {
+  buildOverpassQuery,
+  distinctPlaces,
+  overpassUsable,
+  parseOverpass,
+  type StagePoint,
+} from '../engine/stagePois';
 import type { RoutePoi } from '../engine/routePois';
 import { cached, coordKey } from './sharedCache';
 
@@ -46,15 +51,26 @@ async function overpass(query: string): Promise<unknown | null> {
   return null;
 }
 
+/** Points autour d'UN lieu, partagés une semaine (même village, tous les voyages). */
+async function poisAround(place: StagePoint): Promise<RoutePoi[] | null> {
+  return cached<RoutePoi[] | null>('place', `pois:v2:${coordKey(place.lat, place.lon, 3)}`, TTL_S, async () => {
+    const payload = await overpass(buildOverpassQuery(place));
+    if (!overpassUsable(payload)) {
+      if (payload) console.warn('[compas] points autour : réponse coupée', (payload as { remark?: unknown }).remark);
+      return null; // jamais gardé : on réessaiera
+    }
+    return parseOverpass(payload, [place]);
+  });
+}
+
 export async function lookupStagePois(points: readonly StagePoint[]): Promise<RoutePoi[]> {
   const places = distinctPlaces(points);
   if (!places.length) return [];
-  const key = createHash('sha256')
-    .update(places.map((p) => coordKey(p.lat, p.lon, 3)).join('|'))
-    .digest('hex');
-  const pois = await cached<RoutePoi[] | null>('place', `pois:v1:${key}`, TTL_S, async () => {
-    const payload = await overpass(buildOverpassQuery(places));
-    return payload == null ? null : parseOverpass(payload, places);
-  });
-  return pois ?? [];
+  // Deux à la fois au plus : le service public limite les requêtes simultanées.
+  const out: RoutePoi[] = [];
+  for (let i = 0; i < places.length; i += 2) {
+    const batch = await Promise.all(places.slice(i, i + 2).map((p) => poisAround(p)));
+    for (const list of batch) for (const p of list ?? []) if (!out.some((q) => q.id === p.id)) out.push(p);
+  }
+  return out;
 }

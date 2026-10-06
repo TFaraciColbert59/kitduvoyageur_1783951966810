@@ -128,6 +128,8 @@ export interface CompasData {
   autofillNotes?: string[];
   /** Durée voulue quand la date de départ n'est pas choisie (« 20 jours »). */
   plannedDays?: number | null;
+  /** Points autour des étapes : recherche en cours ou faite (rempli côté écran). */
+  stagePoisDone?: boolean;
   /** Phrase du Compas vide pas encore appliquée (reprise à l'ouverture). */
   startSay?: string | null;
   /** Destination retrouvée sur la carte (Dis-le). */
