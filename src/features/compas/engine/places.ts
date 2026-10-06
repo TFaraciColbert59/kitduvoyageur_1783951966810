@@ -202,7 +202,9 @@ export function pickPlace(
   if (named.length) {
     // Lieu habité d'abord, le plus grand d'abord (« Cuzco » la ville, pas la
     // maison isolée « Cusco » du nord du Pérou), puis la pertinence.
-    const rank = (c: CompasPlace) => (c.settlement ? 10 + (c.settlementRank ?? 2) : 0);
+    // Le nom exact compte un peu (« Pisac » avant « Pisaca »), moins que la taille.
+    const rank = (c: CompasPlace) =>
+      c.settlement ? 10 + (c.settlementRank ?? 2) + (plainName(c.name) === want ? 3 : 0) : 0;
     named.sort((a, b) => rank(b.c) - rank(a.c) || a.i - b.i);
     return named[0].c;
   }

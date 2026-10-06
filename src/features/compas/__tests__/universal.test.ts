@@ -466,5 +466,9 @@ describe('Homonymes : la ville avant la maison isolée', () => {
       ],
     });
     expect(pickPlace(found, { query: 'Cusco', maxKm: 1500, near: { lat: -9.2, lon: -75 } })).toMatchObject({ lat: -13.52 });
+    const pisac = parsePhoton({
+      features: [f('Pisaca', 'hamlet', 'district', -71.5, -14.1), f('Pisac', 'town', 'district', -71.85, -13.42)],
+    });
+    expect(pickPlace(pisac, { query: 'Pisac', maxKm: 1500 })).toMatchObject({ name: 'Pisac' });
   });
 });

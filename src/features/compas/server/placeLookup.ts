@@ -75,7 +75,8 @@ async function search(
   // `near` : les homonymes proches d'abord (« Le Tour » le hameau de Chamonix,
   // pas le lieu-dit du Var) ; sans repli Nominatim, qui ignore ce biais.
   const bias = near ? `&lat=${near.lat.toFixed(3)}&lon=${near.lon.toFixed(3)}&location_bias_scale=0.5` : '';
-  const key = near ? `near:${coordKey(near.lat, near.lon, 1)}:${limit}:${plain(query)}` : `${limit}:${plain(query)}`;
+  // « v2 » : lieux lus avec leur taille (ville, village, hameau…), absente des entrées d'avant.
+  const key = near ? `v2:near:${coordKey(near.lat, near.lon, 1)}:${limit}:${plain(query)}` : `v2:${limit}:${plain(query)}`;
   return cached('place', key, PLACE_TTL_S, async () => {
     const photon = await fetchJson(
       `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=${limit}&lang=fr${bias}${NOISE}`,
