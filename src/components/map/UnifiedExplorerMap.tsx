@@ -927,11 +927,21 @@ export default function UnifiedExplorerMap({
       const bounds = new LngLatBounds();
       extendBoundsFromCoordinates(bounds, feature.geometry.coordinates);
       if (!bounds.isEmpty()) {
-        map.fitBounds(bounds, {
-          padding: 60,
-          maxZoom: 15,
-          duration: prefersReducedMotion() ? 0 : 700,
-        });
+        const duration = prefersReducedMotion() ? 0 : 700;
+        const sw = bounds.getSouthWest();
+        const ne = bounds.getNorthEast();
+        const box = map.getContainer().getBoundingClientRect();
+        try {
+          // Un seul lieu (sortie courte) ou une carte trop petite pour la marge :
+          // MapLibre calcule alors un cadrage NaN et la page entière tombait.
+          if ((sw.lng === ne.lng && sw.lat === ne.lat) || box.width <= 140 || box.height <= 140) {
+            map.easeTo({ center: bounds.getCenter(), zoom: Math.min(map.getZoom() > 3 ? map.getZoom() : 13, 15), duration });
+          } else {
+            map.fitBounds(bounds, { padding: 60, maxZoom: 15, duration });
+          }
+        } catch (err) {
+          console.warn('[map] cadrage impossible, carte laissée telle quelle', err);
+        }
       }
     }
   }, [selectedTrail, ready]);
