@@ -6,8 +6,9 @@
 - **« 7 jours en juillet » donnait 8 jours** : une date de FIN de l'IA était acceptée dès que le mois était dit, et écrasait la durée. Le mois seul n'ancre plus que le départ.
 - **Destination à cheval sur une frontière** (Patagonie lue argentine → étapes chiliennes écartées, trek parti vers El Calafate) : une étape introuvable dans le pays est cherchée chez le voisin, à 300 km au plus de la précédente.
 - **Lieu précis ignoré** (« Trek en Patagonie, Torres del Paine » partait côté argentin, El Chaltén) : le lieu en majuscule qui suit la destination après une virgule devient une envie transmise au spécialiste de l'itinéraire, sans resserrer la destination.
+- **« Puerto Natales » devenait « Puerto Madryn »** (1 100 km, Argentine) : la correspondance par mot commun passait avant la recherche chez le voisin. Ordre désormais : nom exact dans le pays → nom exact chez le voisin → correspondances approchées ; mots génériques (Puerto, Base, Refugio, Cerro…) exclus. Patagonie : Puerto Natales → Glaciar Grey → Los Cuernos → Base Torres → Paine Grande.
 - Vérifié sur l'aperçu Vercel de la PR : bouton « Connexion démo » OK (identifiants posés dans Vercel), Islande 7 j → 1–7 juil.
-- Preuves : tsc, eslint propres ; tests Compas 291/291.
+- Preuves : tsc, eslint propres ; tests Compas 292/292.
 
 ## 2026-10-05 — Itinéraire : plus de zigzag, plus d'étape à l'autre bout du pays
 

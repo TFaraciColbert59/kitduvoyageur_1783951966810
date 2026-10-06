@@ -141,6 +141,8 @@ export function pickPlace(
     maxKm?: number;
     /** Le nom cherché : un lieu qui le porte passe devant un village au nom voisin. */
     query?: string;
+    /** Nom exact seulement (pas de correspondance par mot commun). */
+    strict?: boolean;
   } = {}
 ): CompasPlace | null {
   let list = candidates;
@@ -168,6 +170,7 @@ export function pickPlace(
     return named[0].c;
   }
   if (!want) return ranked[0]?.c ?? null;
+  if (opts.strict) return null;
   // Sinon, au moins un mot distinctif en commun (« Skye ») : jamais un lieu
   // sans rapport que la carte renvoie faute de mieux.
   const keys = distinctiveWords(want);
@@ -179,6 +182,11 @@ const COMMON_WORDS = new Set([
   'isle', 'island', 'lake', 'loch', 'mont', 'mount', 'saint', 'sainte', 'river', 'glen', 'port', 'north', 'south',
   'east', 'west', 'nord', 'sud', 'est', 'ouest', 'grand', 'grande', 'petit', 'petite', 'valley', 'vallee', 'from',
   'with', 'avec', 'pres', 'near', 'centre', 'center', 'city', 'ville', 'village', 'parc', 'park', 'national',
+  // « Puerto Natales » n'est pas « Puerto Madryn » (2026-10-06) : mots de lieu génériques.
+  'puerto', 'porto', 'puerta', 'santa', 'santo', 'cerro', 'monte', 'lago', 'lake', 'laguna', 'playa', 'praia',
+  'base', 'camp', 'camping', 'campamento', 'refuge', 'refugio', 'rifugio', 'mirador', 'hotel', 'hostel', 'lodge',
+  'station', 'estacion', 'gare', 'airport', 'aeroport', 'aeropuerto', 'beach', 'plage', 'bahia', 'baie', 'bay',
+  'nueva', 'nuevo', 'new', 'old', 'vieux', 'vieille', 'upper', 'lower', 'haut', 'haute', 'bas', 'basse',
 ]);
 function distinctiveWords(plain: string): string[] {
   return plain.split(' ').filter((w) => w.length >= 4 && !COMMON_WORDS.has(w));
