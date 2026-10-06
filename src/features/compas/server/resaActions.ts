@@ -11,6 +11,40 @@ import {
 } from '@/features/booking/server/bookingProvider';
 import { simplifyOffers, type CompasStayOffer } from '../engine/stays';
 import type { CompasLiveVertical } from '../engine/resaExamples';
+import { viatorDestinationNear } from './viatorDestinations';
+
+/**
+ * Le lieu du voyage sur la carte : la destination retrouvée par Dis-le, sinon
+ * la première étape placée. `broad` : le voyage est un pays entier.
+ */
+function tripPoint(trip: unknown): { at: { lat: number; lon: number } | null; broad: boolean } {
+  const t = (trip ?? {}) as { metadata?: unknown; steps?: unknown };
+  const meta = (t.metadata && typeof t.metadata === 'object' ? t.metadata : {}) as Record<string, unknown>;
+  const compas = (meta.compas && typeof meta.compas === 'object' ? meta.compas : {}) as Record<string, unknown>;
+  const anchor = (compas.anchor && typeof compas.anchor === 'object' ? compas.anchor : null) as Record<
+    string,
+    unknown
+  > | null;
+  const lat = Number(anchor?.lat);
+  const lon = Number(anchor?.lon);
+  if (anchor && Number.isFinite(lat) && Number.isFinite(lon))
+    return { at: { lat, lon }, broad: anchor.kind === 'country' };
+  const steps = Array.isArray(t.steps) ? (t.steps as Array<Record<string, unknown>>) : [];
+  const first = steps.find((st) => st.latitude != null && st.longitude != null);
+  return first
+    ? { at: { lat: Number(first.latitude), lon: Number(first.longitude) }, broad: false }
+    : { at: null, broad: false };
+}
+
+/**
+ * Destination Viator : la plus proche du lieu du voyage (« Vercors » →
+ * Grenoble, jamais Paris par défaut), sinon le nom tel quel.
+ */
+async function activityDestination(trip: unknown, name: string, typed: boolean): Promise<string> {
+  if (typed) return name;
+  const { at, broad } = tripPoint(trip);
+  return (await viatorDestinationNear(at, { broad })) ?? name;
+}
 
 /**
  * Résa du Compas : recherche en direct chez les partenaires (Viator pour les
@@ -68,7 +102,13 @@ export async function compasSearchOffersAction(
 
     let request: BookingSearchRequest;
     if (d.vertical === 'activity') {
-      request = { vertical: 'activity', destination, date: start, travelers, limit: 8 };
+      request = {
+        vertical: 'activity',
+        destination: await activityDestination(trip, destination, Boolean(d.to)),
+        date: start,
+        travelers,
+        limit: 8,
+      };
     } else if (d.vertical === 'flight') {
       const origin = d.from?.trim();
       if (!origin) return { success: false, error: 'Indique ta ville ou ton aéroport de départ.' };
@@ -185,7 +225,7 @@ export async function compasNearbyActivitiesAction(
     if (limited) return { success: true, offers: [], unavailable: false };
     const result = await provider.search({
       vertical: 'activity',
-      destination,
+      destination: await activityDestination(trip, destination, Boolean(parsed.data.place)),
       date: start,
       travelers: Math.max(1, Math.min(20, trip.party_size ?? 1)),
       limit: 12,
