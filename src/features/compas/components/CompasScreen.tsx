@@ -113,14 +113,17 @@ export function CompasScreen({
     if (!poiKey || (typeof navigator !== 'undefined' && navigator.onLine === false)) return;
     let alive = true;
     setStagePoisDone(false);
-    void compasStagePoisAction({ tripId: rawData.model.tripId })
-      .then((res) => {
-        if (alive && res.success) setStagePois(res.pois);
-      })
-      .catch(() => undefined)
-      .finally(() => {
-        if (alive) setStagePoisDone(true);
-      });
+    // Recherche longue (beaucoup d'étapes, service lent) : le serveur rend ce
+    // qu'il a trouvé et dit qu'il en reste ; on redemande la suite (3 fois au plus).
+    void (async () => {
+      for (let round = 0; round < 3 && alive; round += 1) {
+        const res = await compasStagePoisAction({ tripId: rawData.model.tripId }).catch(() => null);
+        if (!alive) return;
+        if (res?.success) setStagePois(res.pois);
+        if (!res?.success || !res.partial) break;
+      }
+      if (alive) setStagePoisDone(true);
+    })();
     return () => {
       alive = false;
     };

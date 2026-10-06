@@ -14,7 +14,7 @@ import { lookupStagePois } from './stagePoiLookup';
  */
 
 export type CompasStagePoisResult =
-  | { success: true; pois: RoutePoi[] }
+  | { success: true; pois: RoutePoi[]; partial?: boolean }
   | { success: false; error: string };
 
 const schema = z.object({ tripId: z.string().uuid() });
@@ -47,7 +47,8 @@ export async function compasStagePoisAction(
       .filter((st) => st.latitude != null && st.longitude != null)
       .map((st) => ({ lat: Number(st.latitude), lon: Number(st.longitude) }))
       .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lon));
-    return { success: true, pois: await lookupStagePois(points) };
+    const found = await lookupStagePois(points);
+    return { success: true, pois: found.pois, partial: found.partial };
   } catch (err) {
     console.error('[compas] compasStagePoisAction', err);
     return { success: false, error: 'Erreur serveur' };
