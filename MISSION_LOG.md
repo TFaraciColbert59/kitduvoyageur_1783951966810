@@ -1,5 +1,15 @@
 # MISSION LOG — LKDV
 
+## 2026-10-06 — Compas : 20 parcours complets aléatoires (preview), corrigés en boucle
+
+- **Méthode** : 20 phrases tirées au hasard (graine 2026) dans un pool de 30, chacune jouée de bout en bout sur la preview (`/compas?nouvelle=1`, phrase de départ, préremplissage complet), puis contrôlée en base (ancre, dates, activité, étapes et coordonnées, objets, dépenses, conseils). Quatre tours de reprise sur les parcours encore imparfaits.
+- **Lecture de la phrase** : « sur la Dordogne », « autour du lac d'Annecy », « traversée des Pyrénées », « in the Swiss Alps », « dans les calanques de Marseille » ; « Maroc dans l'Atlas » → Maroc + envie Atlas ; « Jura dimanche » → Jura ; GR20, chemin de l'Inca, Tour du Mont-Blanc → trek et envie ; « bivouac 1 nuit » → bivouac ; « 4 jours » n'est plus un groupe de 4 (Dolomites chiffrées pour 4) ; envies qui redisent la destination ou l'activité écartées.
+- **Lieux** : « Vietnam » donnait le Vietnam Veterans Memorial (Washington) → nom sans espaces (« Viêt Nam »), nom plus long réservé aux villes et régions ; « Le Tour » (Chamonix) placé dans le Var → recherche biaisée vers une destination compacte ; « Cusco » donnait une maison isolée du nord du Pérou → ville avant hameau avant maison, Cuzco = Cusco ; nom d'étape pris sur la carte quand le nom proposé n'existe pas ou porte un commentaire.
+- **Itinéraire** : on avance chaque jour, une traversée va d'un bout à l'autre, un grand massif n'est pas figé sur un pays ; itinéraire figé (> 3 jours au même lieu) ou à moitié inventé redemandé à la visite suivante sans relire le partagé.
+- **Trajet, kit, conseils** : trajet estimé en voiture à moins de 900 km quand le calcul de route échoue (plus de vol pour les Dolomites) ; préparation relancée seule après la limite de fréquence (Chamonix, Jura restaient vides) ; échelle « Journée/Sortie » au lieu de « Raid » pour un jour ; kit d'une sortie courte allégé ; gants selon la latitude et l'hémisphère, crampons selon saison et activité ; conseils accentués, vrais depuis la France (pas d'adaptateur en Europe, passeport hors Schengen, pas de permis inventé).
+- **Laissé tel quel (choix documentés)** : pas de période proposée sous les tropiques (Pérou, Vietnam : « Dates à choisir ») ; « en octobre » ce mois-ci part d'aujourd'hui.
+- Preuves : tsc et eslint propres ; tests Compas 1335/1335 ; parcours rejoués sur la preview après chaque correction.
+
 ## 2026-10-06 — Résa : clés partenaires reliées, diagnostics affichés
 
 - Variables Vercel « Shared » reliées au projet par Tony ; vérifié en direct sur la preview : RouteStack (sandbox) répond — hôtels de test sans nom ni prix, voitures en erreur du bac à sable ; Viator (sandbox) accepte la clé (3 394 destinations lues) mais sa recherche d'activités ne répond pas en 15 s.
