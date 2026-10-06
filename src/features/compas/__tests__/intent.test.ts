@@ -235,6 +235,18 @@ describe('Mois seul (« en janvier », « début mai », « week-end en mai »)'
   it('une date de l’IA dans le mois dit est ancrée', () => {
     expect(groundingIssue({ type: 'set_dates', start: '2027-01-10', end: null }, '8 jours en janvier')).toBeNull();
     expect(groundingIssue({ type: 'set_dates', start: '2027-03-10', end: null }, '8 jours en janvier')).not.toBeNull();
+    // Une fin inventée dans le mois ne passe pas : « 7 jours en juillet » ≠ 1–8 juillet.
+    expect(
+      groundingIssue({ type: 'set_dates', start: '2027-07-01', end: '2027-07-08' }, 'Road trip en Islande 7 jours en juillet')
+    ).not.toBeNull();
+    expect(groundingIssue({ type: 'set_dates', start: '2027-07-01', end: '2027-07-08' }, 'du 1er au 8 juillet')).toBeNull();
+    // Fin donnée par un mois : acceptée.
+    expect(
+      groundingIssue({ type: 'set_dates', start: '2027-06-28', end: '2027-07-03' }, 'du 28 juin à début juillet')
+    ).toBeNull();
+    expect(
+      groundingIssue({ type: 'set_dates', start: '2027-07-01', end: '2027-07-31' }, "en juillet, jusqu'à fin juillet")
+    ).toBeNull();
   });
 });
 
@@ -251,5 +263,19 @@ describe('Ce que l’IA ajoute sans que la phrase le dise', () => {
     expect(r).toContainEqual({ type: 'set_duration', days: 5, hours: null });
     expect(r.find((a) => a.type === 'set_dates')).toMatchObject({ start: '2027-07-01' });
     expect(parseIntentRules('2 weeks in Peru', '2026-10-05')).toContainEqual({ type: 'set_duration', days: 14, hours: null });
+  });
+});
+
+describe('Lieu précis après la destination', () => {
+  it('« en Patagonie, Torres del Paine » : Torres del Paine devient une envie', () => {
+    const r = parseIntentRules('Trek en Patagonie, Torres del Paine, 8 jours en janvier', '2026-10-06');
+    expect(r).toContainEqual({ type: 'set_destination', place: 'Patagonie' });
+    expect(r).toContainEqual({ type: 'wish', label: 'Torres del Paine' });
+  });
+  it('rien ajouté sans lieu après la virgule', () => {
+    const r = parseIntentRules('Trek en Patagonie, 8 jours en janvier', '2026-10-06');
+    expect(r.some((a) => a.type === 'wish')).toBe(false);
+    const r2 = parseIntentRules('Road trip en Islande, en juillet', '2026-10-06');
+    expect(r2.some((a) => a.type === 'wish')).toBe(false);
   });
 });

@@ -213,12 +213,21 @@ function nextWeekday(today: string, target: number, strict: boolean): string {
 }
 
 /** La date proposée est-elle ancrée dans la phrase ? */
-function dateGrounded(text: string, iso: string): boolean {
+function dateGrounded(text: string, iso: string, end = false): boolean {
   const plain = plainOf(text);
   if (RELATIVE_DATE.test(plain)) return true;
-  // Le mois est dit (« en janvier ») : un jour de ce mois est ancré.
   const month = Number(iso.slice(5, 7));
-  for (const m of plain.matchAll(new RegExp(`\\b${MONTH_RE}`, 'g'))) if (monthOf(m[1]) === month) return true;
+  // Le mois est dit (« en janvier ») : un départ dans ce mois est ancré. Une
+  // date de FIN seulement si le mois est donné comme fin (« jusqu'à fin
+  // juillet », « du 28 juin à début juillet ») : « 7 jours en juillet » ne
+  // dit pas « jusqu'au 8 ».
+  const monthRe = end
+    ? new RegExp(
+        `(?:jusqu'?(?:a|au|en)|\\ba\\b|\\bau\\b|\\bvers\\b|->|–|—)\\s*(?:(?:debut|mi|fin)[\\s-]+(?:de\\s+|d')?)?${MONTH_RE}`,
+        'g'
+      )
+    : new RegExp(`\\b${MONTH_RE}`, 'g');
+  for (const m of plain.matchAll(monthRe)) if (monthOf(m[1]) === month) return true;
   const day = Number(iso.slice(8, 10));
   return numberInText(text, day);
 }
@@ -464,6 +473,13 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     );
     if (place.length >= 2 && !monthOf(plainOf(place)) && !WEEKDAYS.includes(plainOf(place))) {
       out.push({ type: 'set_destination', place });
+      // « en Patagonie, Torres del Paine » : le lieu précis qui suit devient une
+      // envie, transmise au spécialiste de l'itinéraire (sans resserrer la
+      // destination : « Japon, Tokyo et Kyoto » reste un voyage au Japon).
+      const after = /^\s*,\s*(\p{Lu}[^,.;!?\d]*)/u.exec(original.slice(original.indexOf(place) + place.length));
+      const precise = after ? clean(after[1].split(/\s(?:et|pour|avec|en|du|pendant|durant|à|a)\s/i)[0], 40) : '';
+      if (precise.length >= 3 && !monthOf(plainOf(precise)) && !WEEKDAYS.includes(plainOf(precise)))
+        out.push({ type: 'wish', label: precise });
       break;
     }
   }
@@ -500,7 +516,7 @@ export function groundingIssue(action: CompasIntentAction, text: string): string
   const plain = plainOf(text);
   switch (action.type) {
     case 'set_dates':
-      return dateGrounded(text, action.start) && (!action.end || dateGrounded(text, action.end))
+      return dateGrounded(text, action.start) && (!action.end || dateGrounded(text, action.end, true))
         ? null
         : 'Date absente de ta phrase';
     case 'set_duration': {

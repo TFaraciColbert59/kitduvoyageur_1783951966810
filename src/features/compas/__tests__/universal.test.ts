@@ -301,6 +301,24 @@ describe('Destination nommée : la ville que tout le monde entend, pas un homony
     expect(pickDestination(parsePhoton({ features: [farm] }), 'Mont Blanc')).toBeNull();
   });
 
+  it('« Puerto Natales » n’est pas « Puerto Madryn » : mot générique, et nom exact seulement en mode strict', () => {
+    const ar = parsePhoton({
+      features: [
+        { properties: { name: 'Puerto Madryn', countrycode: 'AR', osm_key: 'place', osm_value: 'city' }, geometry: { coordinates: [-65.04, -42.77] } },
+      ],
+    });
+    const patagonie = { lat: -46.15, lon: -70.47 };
+    expect(pickPlace(ar, { near: patagonie, maxKm: 1500, query: 'Puerto Natales' })).toBeNull();
+    const cl = parsePhoton({
+      features: [
+        { properties: { name: 'Glaciar Grey', countrycode: 'CL', osm_key: 'natural', osm_value: 'glacier' }, geometry: { coordinates: [-73.38, -50.86] } },
+      ],
+    });
+    const natales = { lat: -51.73, lon: -72.5 };
+    expect(pickPlace(cl, { near: natales, maxKm: 250, query: 'Grey Glacier', strict: true })).toBeNull();
+    expect(pickPlace(cl, { near: natales, maxKm: 250, query: 'Grey Glacier' })?.name).toBe('Glaciar Grey');
+  });
+
   it('première étape jusqu’à 400 km de la destination lue sur la carte (« Loire » → Orléans)', () => {
     expect(maxLegKm('bus', true, 60)).toBe(400);
     expect(maxLegKm('vol', true, 1500)).toBe(1500);

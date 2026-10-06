@@ -141,6 +141,8 @@ interface Refuge {
 const HIKING_ACTIVITIES = new Set(['hiking', 'trekking', 'bivouac', 'mixed']);
 /** Transfert en véhicule plausible entre deux étapes d'un trek ou d'un circuit à vélo. */
 const TRANSFER_MAX_KM = 250;
+/** Étape de l'autre côté d'une frontière : au plus 300 km de la précédente. */
+const BORDER_MAX_KM = 300;
 /** Activités qui changent de lieu chaque jour ou presque : un itinéraire figé sur un lieu est un échec. */
 const ITINERANT_ACTIVITIES = new Set(['roadtrip', 'vanlife', 'trekking', 'cycling']);
 const MS_DAY = 86_400_000;
@@ -447,18 +449,53 @@ export async function compasAutofillAction(
         for (const p of proposed) {
           const candidates = byName.get(p.place) ?? [];
           let move = p.move;
-          let hit = pickPlace(candidates, {
-            near: last ?? anchor,
-            maxKm: maxLegKm(p.move, last == null, anchor.radiusKm),
-            query: p.place,
-          });
-          // « À pied » depuis la ville d'arrivée jusqu'au départ du trek (Puerto
-          // Natales → Torres del Paine, 100 km) : c'est un transfert. Hors de
-          // portée à pied ou à vélo, un lieu à moins de 250 km reste l'étape,
-          // rejointe en véhicule ; sans cela tout le trek tombait.
-          if (!hit && last && (p.move === 'marche' || p.move === 'velo' || p.move === 'aucun')) {
-            hit = pickPlace(candidates, { near: last, maxKm: TRANSFER_MAX_KM, query: p.place });
-            if (hit) move = 'voiture';
+          const walkLike = p.move === 'marche' || p.move === 'velo' || p.move === 'aucun';
+          const legKm = maxLegKm(p.move, last == null, anchor.radiusKm);
+          // Destination à cheval sur une frontière (Patagonie, Alpes, Pyrénées) :
+          // le lieu est cherché aussi chez le voisin, toujours à distance
+          // plausible de l'étape d'avant (jamais un homonyme lointain).
+          let across: CompasPlace[] | null = null;
+          const acrossCandidates = async () =>
+            (across ??= anchor!.countryCode
+              ? (await stageCandidates(p.place, { countryCode: null, country: null })).filter(
+                  (c) => c.countryCode !== anchor!.countryCode
+                )
+              : []);
+          // Du plus sûr au moins sûr : le nom exact dans le pays, puis chez le
+          // voisin, avant toute correspondance approchée (« Puerto Natales »
+          // n'est pas « Puerto Madryn » à 1 100 km). « À pied » depuis la ville
+          // d'arrivée jusqu'au départ du trek (Puerto Natales → Torres del
+          // Paine, 100 km) : c'est un transfert, un lieu à moins de 250 km reste
+          // l'étape, rejointe en véhicule.
+          const attempts: Array<{ from: () => Promise<CompasPlace[]> | CompasPlace[]; strict: boolean; transfer: boolean }> = [
+            { from: () => candidates, strict: true, transfer: false },
+            { from: () => candidates, strict: true, transfer: true },
+            { from: acrossCandidates, strict: true, transfer: false },
+            { from: acrossCandidates, strict: true, transfer: true },
+            { from: () => candidates, strict: false, transfer: false },
+            { from: () => candidates, strict: false, transfer: true },
+            { from: acrossCandidates, strict: false, transfer: false },
+            { from: acrossCandidates, strict: false, transfer: true },
+          ];
+          let hit: CompasPlace | null = null;
+          for (const a of attempts) {
+            if (a.transfer && !(last && walkLike)) continue;
+            const list = await a.from();
+            if (!list.length) continue;
+            const isAcross = list !== candidates;
+            const maxKm = a.transfer ? TRANSFER_MAX_KM : legKm;
+            hit = pickPlace(list, {
+              near: a.transfer ? last : (last ?? anchor),
+              // La première étape se mesure au rayon de la destination (une région
+              // entière) ; les suivantes, à 300 km au plus de la veille.
+              maxKm: isAcross && last ? Math.min(BORDER_MAX_KM, maxKm) : maxKm,
+              query: p.place,
+              strict: a.strict,
+            });
+            if (hit) {
+              if (a.transfer) move = 'voiture';
+              break;
+            }
           }
           // Le titre garde le nom proposé (lisible) ; la position vient de la carte.
           if (hit) last = { name: p.place, lat: hit.lat, lon: hit.lon };
