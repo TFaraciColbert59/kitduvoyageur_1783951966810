@@ -152,6 +152,8 @@ interface Refuge {
 const HIKING_ACTIVITIES = new Set(['hiking', 'trekking', 'bivouac', 'mixed', 'trail', 'running']);
 /** Transfert en véhicule plausible entre deux étapes d'un trek ou d'un circuit à vélo. */
 const TRANSFER_MAX_KM = 250;
+/** Au-delà de ce rayon (un pays, une grande région), les étapes ne sont pas cherchées « près du centre ». */
+const STAGE_BIAS_MAX_KM = 120;
 /** Étape de l'autre côté d'une frontière : au plus 300 km de la précédente. */
 const BORDER_MAX_KM = 300;
 /** Activités qui changent de lieu chaque jour ou presque : un itinéraire figé sur un lieu est un échec. */
@@ -285,6 +287,8 @@ interface Anchor {
   countryCode: string | null;
   country: string | null;
   radiusKm: number;
+  /** Nature OSM (« other » : massif, lac, vallée…), absente des anciennes ancres. */
+  kind?: string;
 }
 
 function readAnchor(meta: Record<string, unknown>): Anchor | null {
@@ -574,7 +578,9 @@ export async function compasAutofillAction(
       if (!routeSet) {
         const stagesPrompt = buildCompasStagesPrompt({
           destination: anchor.name,
-          country: anchor.country,
+          // Grand massif ou chaîne (Pyrénées, Alpes) : son « pays » n'est que
+          // celui de son centre ; l'itinéraire peut passer d'un versant à l'autre.
+          country: anchor.kind === 'other' && anchor.radiusKm > STAGE_BIAS_MAX_KM ? null : anchor.country,
           days,
           activity,
           partySize: party,
@@ -617,7 +623,14 @@ export async function compasAutofillAction(
         // distance plausible de l'étape de la veille (village de préférence).
         const names = [...new Set(proposed.map((p) => p.place))];
         const found = await mapLimit(names, 6, (n) =>
-          stageCandidates(n, { countryCode: anchor!.countryCode, country: anchor!.country }, anchor)
+          // Recherche biaisée vers la destination seulement si elle est compacte
+          // (une ville, un massif) : vers le centre d'un pays, elle ferait
+          // préférer un hameau homonyme (« Cusco » au nord du Pérou).
+          stageCandidates(
+            n,
+            { countryCode: anchor!.countryCode, country: anchor!.country },
+            anchor!.radiusKm <= STAGE_BIAS_MAX_KM ? anchor : null
+          )
         );
         const byName = new Map(names.map((n, i) => [n, found[i]]));
         let last: { name: string; lat: number; lon: number } | null = null;
@@ -920,14 +933,15 @@ export async function compasAutofillAction(
             fuelEur: carFuel.fuelEur,
             basis: carFuel.basis,
           };
-      } else if (car.reason !== 'off_network' && distanceKm(from, target) <= FLIGHT_THRESHOLD_KM) {
-        // Service de calcul indisponible (panne, débit) mais destination à portée
-        // de route : trajet estimé (vol d'oiseau × 1,3 à 80 km/h), jamais un vol.
+      } else if (distanceKm(from, target) <= FLIGHT_THRESHOLD_KM) {
+        // Itinéraire non calculé (panne, débit, tracé qui n'arrive pas pile au
+        // lieu) mais destination à portée de route : trajet estimé (vol
+        // d'oiseau × 1,3 à 80 km/h), jamais un vol à 450 km.
         const km = Math.round(distanceKm(from, target) * 1.3);
         carFuel = estimateCarTrip({ oneWayKm: km, oneWayMin: Math.round((km / 80) * 60), partySize: party });
         if (carFuel) {
           transport = { mode: 'voiture', km: carFuel.oneWayKm, minutes: carFuel.oneWayMin, walkKm: 0, fuelEur: carFuel.fuelEur, basis: carFuel.basis };
-          notes.push('Trajet en voiture estimé (calcul d’itinéraire indisponible à l’instant) : à affiner avec « Tout préparer ».');
+          notes.push('Trajet en voiture estimé (itinéraire routier non calculé) : à vérifier, traversée en ferry éventuelle non comptée.');
         }
       } else {
         // Pas de route (île, autre continent) : l'avion ou le bateau s'imposent.
