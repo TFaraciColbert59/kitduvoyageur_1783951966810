@@ -288,7 +288,14 @@ export function CompasScreen({
         // Deux temps : l'itinéraire d'abord (il n'a pas besoin de la position,
         // il part tout de suite et s'affiche dès qu'il est écrit), puis nuits,
         // trajet depuis la position, kit et budget. Chaque appel reste court.
-        const first = await compasAutofillAction({ tripId: model.tripId, tripSlug: model.slug, from: null, phase: 'steps' });
+        // Sortie courte sans lieu : elle part d'ici, la position sert de départ.
+        const local = data.context?.scope === 'sortie' && !(model.destination || data.anchorName);
+        const first = await compasAutofillAction({
+          tripId: model.tripId,
+          tripSlug: model.slug,
+          from: local ? await position : null,
+          phase: 'steps',
+        });
         if (!first.success || 'summary' in first) return first;
         if ('pending' in first && first.stepsCreated > 0) {
           notify('Itinéraire prêt · je prépare les nuits, le kit et le budget…');
@@ -319,13 +326,17 @@ export function CompasScreen({
         autofillRunning.current = false;
         setRunning(false);
       });
-  }, [model.tripId, model.slug, notify, router]);
+  }, [model.tripId, model.slug, model.destination, data.context?.scope, data.anchorName, notify, router]);
 
   const autofillStarted = useRef<string | null>(null);
   useEffect(() => {
     if (data.autofill !== 'none' || !data.canEdit) return;
     if (!(model.dates.start || data.plannedDays)) return;
-    if (!(model.destination || data.anchorName || data.itinerary.length || data.origin)) return;
+    if (
+      !(model.destination || data.anchorName || data.itinerary.length || data.origin) &&
+      data.context?.scope !== 'sortie'
+    )
+      return;
     if (autofillStarted.current === model.tripId) return;
     autofillStarted.current = model.tripId;
     autofill();

@@ -1,5 +1,15 @@
 # MISSION LOG — LKDV
 
+## 2026-10-06 — Compas copilote, lot 1 : contexte projet unique
+
+- Analyse d'architecture et plan : `docs/compas/COPILOTE.md` (source de vérité = `trips` + `metadata.compas`, profil jamais recopié, ordre phrase > projet > Compas > profil > défaut, dépendances, portée des modules).
+- **`resolveProjectContext`** (`engine/projectContext.ts`, pur, testé) : chaque valeur porte sa source ; une valeur héritée du profil qui ne tient pas pour CE projet est adaptée et dite (« Habituellement tu préfères l’itinérance en autonomie, mais pour ce projet : les sorties à la journée ») ; un choix du projet n'est jamais changé en silence.
+- **Personnalisations projet** (`metadata.compas.prefs`) : niveau, autonomie, priorité, terrain, poids max du sac, nuits dehors, distance visée. Affichées dans Préférences avec leur source, modifiables, « comme mon profil » en retirant le réglage.
+- **Dis-le** comprend « dormir dehors 3 nuits » (contrainte, plus une durée), « rester sous 12 kg », « surtout de la montagne », « je débute », « trail de 20 km », « courir 1h » (aujourd’hui par défaut, décochable), « cet après-midi ».
+- **Course à pied et trail** : nouvelles activités (enum appliqué en prod, migration `20261006080449`), matériel propre (pas de couchage ni de cuisine), sortie sans lieu → autour de la position partagée, parcours du catalogue choisi à la distance attendue (durée × vitesse, ou distance dite), pas de trajet ni de nuit pour une sortie de quelques heures.
+- **Préremplissage** : nuits, rythme, niveau, terrain et distance viennent du contexte résolu (hiver en altitude : un toit plutôt que le bivouac du profil « budget »), nuits dehors placées d'abord là où aucun refuge n'est connu. **Verdict** : sac au-dessus du poids max du projet.
+- Preuves : tsc, eslint propres ; garde identité OK ; tests 24 nouveaux, Compas 316/316 ; suite complète 21 échecs, tous préexistants.
+
 ## 2026-10-06 — Accessibilité du Compas (WCAG 2.2 AA)
 
 - Audit axe-core (7 écrans réels, compte démo) + contraste mesuré au pixel sur le verre + parcours clavier : rapport complet dans `docs/compas/ACCESSIBILITE.md`.

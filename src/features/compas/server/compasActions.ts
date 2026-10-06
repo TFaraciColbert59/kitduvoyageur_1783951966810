@@ -461,6 +461,8 @@ const ACTIVITIES = [
   'citytrip',
   'beach',
   'vanlife',
+  'running',
+  'trail',
 ] as const;
 const activitySchema = z.object({ tripId: uuid, tripSlug: slug, activity: z.enum(ACTIVITIES) });
 
@@ -506,6 +508,16 @@ const prefsSchema = z.object({
     nights: z.enum(['bivouac', 'refuge', 'hebergement', 'mixte']).nullable(),
     avoid: shortList,
     wishes: shortList,
+    level: z.enum(['debut', 'regulier', 'aguerri']).nullable().optional(),
+    autonomy: z.enum(['journee', 'bivouac_1_2', 'itinerance_longue']).nullable().optional(),
+    priority: z.enum(['legerete', 'confort', 'budget', 'securite']).nullable().optional(),
+    terrain: z
+      .enum(['sentier', 'montagne', 'hors_sentier', 'itinerance', 'urbain_transit'])
+      .nullable()
+      .optional(),
+    maxPackKg: z.number().min(1).max(40).nullable().optional(),
+    outdoorNights: z.number().int().min(0).max(60).nullable().optional(),
+    targetKm: z.number().min(1).max(300).nullable().optional(),
   }),
 });
 
@@ -1822,6 +1834,8 @@ const CREATE_LABEL: Record<(typeof ACTIVITIES)[number], string> = {
   citytrip: 'City trip',
   beach: 'Plage',
   vanlife: 'Van',
+  running: 'Course à pied',
+  trail: 'Trail',
 };
 
 /**

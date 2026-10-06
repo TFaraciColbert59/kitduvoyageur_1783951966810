@@ -2198,6 +2198,26 @@
   color: var(--cp-ink2);
 }
 
+/* Contexte projet : source de chaque valeur, adaptations au projet */
+.cp-src {
+  margin-left: 6px;
+  font-weight: 400;
+  color: var(--cp-ink3);
+}
+.cp-adapt {
+  margin: 0;
+  padding: 8px 12px;
+  list-style: none;
+  border-radius: 12px;
+  background: var(--lkv-sage-100);
+  color: var(--cp-ink2);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.cp-adapt li + li {
+  margin-top: 4px;
+}
+
 /* Dis-le : toujours en bas du tiroir */
 .cp-disle {
   margin-top: auto;

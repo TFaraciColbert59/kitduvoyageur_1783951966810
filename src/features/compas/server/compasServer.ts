@@ -1,5 +1,6 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
+import type { ProfileInput } from '../engine/projectContext';
 
 /**
  * Briques serveur partagées par les actions du Compas (droits, métadonnées,
@@ -167,3 +168,32 @@ export async function resplitSteps(supabase: Supa, tripId: string, routeId: numb
   return { kept };
 }
 
+
+/**
+ * Préférences habituelles (`user_orientation`, RLS : la personne seule).
+ * Lues à chaque fois, jamais recopiées dans le projet : ce sont des
+ * hypothèses de départ que le contexte projet peut dépasser.
+ */
+export async function readProfile(
+  supabase: { from: Supa['from'] } | Supa,
+  userId: string | null
+): Promise<ProfileInput | null> {
+  if (!userId) return null;
+  try {
+    const { data } = await (supabase as Supa)
+      .from('user_orientation')
+      .select('terrain, autonomy, priority, experience')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (!data) return null;
+    const row = data as Record<string, string | null>;
+    return {
+      terrain: (row.terrain as ProfileInput['terrain']) ?? null,
+      autonomy: (row.autonomy as ProfileInput['autonomy']) ?? null,
+      priority: (row.priority as ProfileInput['priority']) ?? null,
+      experience: (row.experience as ProfileInput['experience']) ?? null,
+    };
+  } catch {
+    return null;
+  }
+}

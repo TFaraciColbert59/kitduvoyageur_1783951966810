@@ -42,6 +42,8 @@ export const COMPAS_ACTIVITIES = [
   'citytrip',
   'beach',
   'vanlife',
+  'running',
+  'trail',
 ] as const;
 export type CompasActivity = (typeof COMPAS_ACTIVITIES)[number];
 
@@ -72,6 +74,14 @@ export const intentActionSchema = z.discriminatedUnion('type', [
   }),
   z.object({ type: z.literal('search_route'), query: label }),
   z.object({ type: z.literal('set_destination'), place: label }),
+  z.object({ type: z.literal('set_outdoor_nights'), nights: z.number().int().min(1).max(60) }),
+  z.object({ type: z.literal('set_max_pack'), kg: z.number().min(1).max(40) }),
+  z.object({ type: z.literal('set_distance'), km: z.number().min(1).max(300) }),
+  z.object({ type: z.literal('set_level'), level: z.enum(['debut', 'regulier', 'aguerri']) }),
+  z.object({
+    type: z.literal('set_terrain'),
+    terrain: z.enum(['sentier', 'montagne', 'hors_sentier', 'itinerance', 'urbain_transit']),
+  }),
 ]);
 
 export type CompasIntentAction = z.output<typeof intentActionSchema>;
@@ -288,6 +298,8 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     start = addDaysIso(today, 2);
   } else if (/\bdemain\b/.test(plain)) {
     start = addDaysIso(today, 1);
+  } else if (/\b(aujourd'?hui|ce matin|cet apres-?midi|ce soir|tout a l'heure|maintenant|tout de suite)\b/.test(plain)) {
+    start = today;
   } else if (/\bweek-?end\b/.test(plain)) {
     const next = /week-?end prochain|prochain week-?end/.test(plain) && weekday(today) >= 5;
     start = addDaysIso(nextWeekday(today, 6, false), next ? 7 : 0);
@@ -319,11 +331,44 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
       }
     }
   }
-  if (start) out.push({ type: 'set_dates', start, end });
+  /* Nuits dehors (« dormir dehors 3 nuits », « 3 nuits en bivouac ») : une
+     contrainte du projet, pas une durée. Le passage est retiré avant la durée. */
+  const OUTSIDE = `(?:dehors|a la belle etoile|en bivouac|sous (?:la )?tente)`;
+  const outdoor =
+    new RegExp(`\\b${NUM}\\s+nuits?\\s+${OUTSIDE}`).exec(plain) ??
+    new RegExp(`\\b(?:dormir|coucher|bivouaquer|passer)\\s+${OUTSIDE}\\s+${NUM}\\s+nuits?\\b`).exec(plain) ??
+    new RegExp(`\\b(?:dormir|coucher|passer)\\s+${NUM}\\s+nuits?\\s+${OUTSIDE}`).exec(plain);
+  const outdoorCount = outdoor ? toNumber(outdoor[1]) : null;
+  if (outdoor && outdoorCount != null && Number.isInteger(outdoorCount) && outdoorCount > 0)
+    out.push({ type: 'set_outdoor_nights', nights: outdoorCount });
+  const durPlain = outdoor
+    ? plain.slice(0, outdoor.index) + ' '.repeat(outdoor[0].length) + plain.slice(outdoor.index + outdoor[0].length)
+    : plain;
+
+  /* Poids maximal du sac (« rester sous 12 kg ») */
+  const pack =
+    /\b(?:sous|moins de|max(?:imum)?|pas plus de|au plus|en dessous de|ne pas depasser|limite a|limite de)\s+(\d{1,2}(?:[.,]\d)?)\s*(?:kg|kilos?)\b/.exec(
+      plain
+    );
+  if (pack) {
+    const kg = Number(pack[1].replace(',', '.'));
+    if (kg >= 1 && kg <= 40) out.push({ type: 'set_max_pack', kg });
+  }
+
+  /* Niveau et terrain (seulement quand ils sont dits) */
+  if (/\b(debutante?s?|je debute|premiere fois|novices?)\b/.test(plain))
+    out.push({ type: 'set_level', level: 'debut' });
+  else if (/\b(experimentee?s?|aguerrie?s?|confirmee?s?|experte?s?)\b/.test(plain))
+    out.push({ type: 'set_level', level: 'aguerri' });
+  else if (/\b(niveau moyen|intermediaire|regulier|reguliere)\b/.test(plain))
+    out.push({ type: 'set_level', level: 'regulier' });
+  if (/\b(montagnes?|haute altitude|sommets?)\b/.test(plain))
+    out.push({ type: 'set_terrain', terrain: 'montagne' });
+  else if (/\bhors[- ]sentiers?\b/.test(plain)) out.push({ type: 'set_terrain', terrain: 'hors_sentier' });
 
   /* Durée */
   const dur =
-    new RegExp(`\\b${NUM}\\s*(jours?|j|nuits?|semaines?|days?|nights?|weeks?)\\b`).exec(plain) ??
+    new RegExp(`\\b${NUM}\\s*(jours?|j|nuits?|semaines?|days?|nights?|weeks?)\\b`).exec(durPlain) ??
     (/\bdemi-journee\b/.test(plain) ? null : /\b(une|la|1)\s+journee\b/.exec(plain));
   const hoursMatch =
     /(?<!(?:\ba|\bvers|depart|depart a|des)\s)\b(\d{1,2})\s*h(?:eures?)?\s*(\d{2})?\b(?!\s*du matin)/.exec(
@@ -351,6 +396,17 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
       out.push({ type: 'set_duration', days: null, hours: Math.round(h * 4) / 4 });
   } else if (/\bweek-?end\b/.test(plain)) {
     out.push({ type: 'set_duration', days: 2, hours: null });
+  }
+
+  // Une sortie de quelques heures sans jour dit : aujourd'hui (proposé, décochable).
+  if (!start && out.some((a) => a.type === 'set_duration' && a.days == null && a.hours != null)) start = today;
+  if (start) out.unshift({ type: 'set_dates', start, end });
+
+  /* Distance visée (« trail de 20 km ») */
+  const km = /\b(\d{1,3}(?:[.,]\d)?)\s*(?:km|kilometres?)\b/.exec(plain);
+  if (km) {
+    const n = Number(km[1].replace(',', '.'));
+    if (n >= 1 && n <= 300) out.push({ type: 'set_distance', km: n });
   }
 
   /* Personnes */
@@ -392,7 +448,7 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
 
   /* Nuits */
   const nights = new Set<CompasNights>();
-  if (/\b(bivouac|bivouaquer|bivouaque|sous (?:la )?tente|camper)\b/.test(plain))
+  if (!outdoor && /\b(bivouac|bivouaquer|bivouaque|sous (?:la )?tente|camper|dormir dehors|belle etoile)\b/.test(plain))
     nights.add('bivouac');
   if (/\brefuges?\b/.test(plain)) nights.add('refuge');
   if (/\b(gites?|hotels?|chambres? d'hotes?|auberges?|hebergements?)\b/.test(plain))
@@ -405,6 +461,8 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
   const activity: Array<[RegExp, CompasActivity]> = [
     [/\b(ski|skis|skier|freeride|splitboard|raquettes?)\b/, 'ski'],
     [/\b(alpinisme|alpi|cordee|glacier|course d'arete|4000)\b/, 'mountaineering'],
+    [/\b(trail|ultra-?trail|skyrace)\b/, 'trail'],
+    [/\b(courir|course a pied|footing|jogging|running|fractionne)\b/, 'running'],
     [/\b(escalade|grimpe|grimper|bloc|via ferrata|falaise)\b/, 'climbing'],
     [/\b(velo|velos|bikepacking|cyclo|cyclotourisme|vtt|gravel)\b/, 'cycling'],
     [/\b(kayak|canoe|canoes|paddle|packraft|rafting|voile|voilier|plongee|snorkeling|surf)\b/, 'water'],
@@ -561,8 +619,20 @@ export function groundingIssue(action: CompasIntentAction, text: string): string
       return /\b(rythme|tranquille|tranquillement|doucement|cool|calme|pepere|lent|lentement|relax|normal|moyen|soutenu|sportif|rapide|intense|pace|slow|easy|fast)/.test(plain)
         ? null
         : 'Rythme absent de ta phrase';
+    case 'set_outdoor_nights':
+      return numberInText(text, action.nights) ? null : 'Nombre de nuits absent de ta phrase';
+    case 'set_max_pack':
+      return numberInText(text, action.kg) ? null : 'Poids absent de ta phrase';
+    case 'set_distance':
+      return numberInText(text, action.km) ? null : 'Distance absente de ta phrase';
+    case 'set_level':
+      return /\b(debut|novice|premiere fois|experiment|aguerri|confirme|expert|niveau|intermediaire|regulier|beginner|experienced)/.test(plain)
+        ? null
+        : 'Niveau absent de ta phrase';
+    case 'set_terrain':
+      return /\b(montagne|altitude|sommet|hors[- ]sentier|sentier|mountain)/.test(plain) ? null : 'Terrain absent de ta phrase';
     case 'set_nights':
-      return /\b(bivouac|bivouaquer|tente|camping|camper|refuges?|hotels?|gites?|chambres?|auberges?|hebergements?|airbnb|tent|hut|hostel)/.test(plain)
+      return /\b(dehors|belle etoile|bivouac|bivouaquer|tente|camping|camper|refuges?|hotels?|gites?|chambres?|auberges?|hebergements?|airbnb|tent|hut|hostel)/.test(plain)
         ? null
         : 'Nuits absentes de ta phrase';
     default:
@@ -612,8 +682,27 @@ export function actionLabel(action: CompasIntentAction, currency = 'EUR'): strin
       return `Chercher un parcours : ${action.query}`;
     case 'set_destination':
       return `Destination : ${action.place}`;
+    case 'set_outdoor_nights':
+      return `${action.nights} nuit${action.nights > 1 ? 's' : ''} dehors`;
+    case 'set_distance':
+      return `Distance visée : ${String(action.km).replace('.', ',')} km`;
+    case 'set_max_pack':
+      return `Sac de base sous ${String(action.kg).replace('.', ',')} kg`;
+    case 'set_level':
+      return `Niveau : ${LEVEL_LABEL[action.level]}`;
+    case 'set_terrain':
+      return `Terrain : ${TERRAIN_LABEL[action.terrain]}`;
   }
 }
+
+const LEVEL_LABEL = { debut: 'débutant', regulier: 'régulier', aguerri: 'aguerri' } as const;
+const TERRAIN_LABEL = {
+  sentier: 'sentiers',
+  montagne: 'montagne',
+  hors_sentier: 'hors sentier',
+  itinerance: 'itinérance',
+  urbain_transit: 'ville et transports',
+} as const;
 
 function key(a: CompasIntentAction): string {
   switch (a.type) {
@@ -821,6 +910,26 @@ export function planApplication(actions: CompasIntentAction[], current: ApplyCur
         break;
       case 'wish':
         prefs.wishes = [...prefs.wishes, a.label].slice(0, 8);
+        prefsChanged = true;
+        break;
+      case 'set_outdoor_nights':
+        prefs.outdoorNights = a.nights;
+        prefsChanged = true;
+        break;
+      case 'set_distance':
+        prefs.targetKm = a.km;
+        prefsChanged = true;
+        break;
+      case 'set_max_pack':
+        prefs.maxPackKg = a.kg;
+        prefsChanged = true;
+        break;
+      case 'set_level':
+        prefs.level = a.level;
+        prefsChanged = true;
+        break;
+      case 'set_terrain':
+        prefs.terrain = a.terrain;
         prefsChanged = true;
         break;
       default:

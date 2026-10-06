@@ -52,7 +52,8 @@ import {
   type SourceShop,
   movesFromSteps,
 } from '../engine/autofill';
-import { compasMeta, patchTripMetadata, requireEditor, resplitSteps, type Supa } from './compasServer';
+import { compasMeta, patchTripMetadata, readProfile, requireEditor, resplitSteps, type Supa } from './compasServer';
+import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
 import { lookupDestination, lookupReverse, stageCandidates } from './placeLookup';
 import { destinationRadiusKm, distanceKm, maxLegKm, pickPlace, type CompasPlace } from '../engine/places';
 import { untangleStages } from '../engine/stageOrder';
@@ -138,7 +139,7 @@ interface Refuge {
   pricePerNight: number | null;
 }
 
-const HIKING_ACTIVITIES = new Set(['hiking', 'trekking', 'bivouac', 'mixed']);
+const HIKING_ACTIVITIES = new Set(['hiking', 'trekking', 'bivouac', 'mixed', 'trail', 'running']);
 /** Transfert en véhicule plausible entre deux étapes d'un trek ou d'un circuit à vélo. */
 const TRANSFER_MAX_KM = 250;
 /** Étape de l'autre côté d'une frontière : au plus 300 km de la précédente. */
@@ -348,11 +349,22 @@ export async function compasAutofillAction(
     const today = localToday('Europe/Paris');
     const startedAt = Date.now();
 
-    const [{ data: tripRow }, { data: orientation }] = await Promise.all([
+    const [{ data: tripRow }, profile] = await Promise.all([
       supabase.from('trips').select('primary_activity, estimated_budget').eq('id', tripId).maybeSingle(),
-      supabase.from('user_orientation').select('autonomy, priority').eq('user_id', userId).maybeSingle(),
+      readProfile(supabase, userId),
     ]);
     const activity = String((tripRow as { primary_activity?: string } | null)?.primary_activity ?? 'hiking');
+    // Contexte projet : la phrase et les réglages du projet priment, le profil
+    // n'est qu'un point de départ (adapté s'il ne tient pas pour CE projet).
+    const ctx = resolveProjectContext({
+      activity,
+      days,
+      hours: compas.durationHours,
+      partySize: party,
+      month: trip.start_date ? Number(trip.start_date.slice(5, 7)) : null,
+      project: compas.preferences,
+      profile,
+    });
     const prevBudget = (tripRow as { estimated_budget?: number | null } | null)?.estimated_budget ?? null;
 
     /* 1. Où : la destination retrouvée sur la carte (Dis-le), sinon les étapes, sinon son nom. */
@@ -372,7 +384,26 @@ export async function compasAutofillAction(
       const place = await lookupDestination(trip.destination_name);
       if (place) anchor = { ...place, radiusKm: destinationRadiusKm(place) };
     }
-    if (!anchor) return { success: false, error: 'Dis-moi où tu pars (« au Népal », « dans le Vercors »…).' };
+    // Sortie de quelques heures sans lieu dit : autour de la position partagée.
+    if (!anchor && from && ctx.scope === 'sortie') {
+      const here = await lookupReverse(from.lat, from.lon);
+      anchor = {
+        name: here?.name ?? 'Autour de toi',
+        lat: from.lat,
+        lon: from.lon,
+        countryCode: here?.countryCode ?? null,
+        country: here?.country ?? null,
+        radiusKm: 15,
+      };
+    }
+    if (!anchor)
+      return {
+        success: false,
+        error:
+          ctx.scope === 'sortie'
+            ? 'Partage ta position ou dis où tu sors (« à Annecy », « en forêt de Fontainebleau »…).'
+            : 'Dis-moi où tu pars (« au Népal », « dans le Vercors »…).',
+      };
 
     /* 2. Étapes : parcours du catalogue (destination locale), sinon itinéraire du spécialiste vérifié sur la carte. */
     let stepsCreated = resume?.stepIds.length ?? 0;
@@ -386,9 +417,13 @@ export async function compasAutofillAction(
           p_lng: anchor.lon,
           p_radius_km: 50,
           p_query: null,
-          p_limit: 5,
+          p_limit: 12,
         });
-        const best = ((near ?? []) as Array<{ route_id: number; name: string | null }>)[0];
+        // Le parcours qui épouse le projet (distance dite, durée, rythme, niveau), pas le premier venu.
+        const best = pickCatalogRoute(
+          (near ?? []) as Array<{ route_id: number; name: string | null; distance_km: number | null; distance_from_m: number | null }>,
+          expectedKm(ctx, { hours: compas.durationHours, days, targetKm: compas.preferences?.targetKm ?? null })
+        );
         if (best) {
           const { error } = await supabase
             .from('trips')
@@ -411,9 +446,13 @@ export async function compasAutofillAction(
           activity,
           partySize: party,
           month: trip.start_date ? MONTHS_FR[Number(trip.start_date.slice(5, 7)) - 1] ?? null : null,
-          pace: compas.preferences?.pace ?? null,
+          pace: ctx.pace.value,
           wishes: compas.preferences?.wishes ?? [],
           avoid: compas.preferences?.avoid ?? [],
+          level: ctx.level.value,
+          terrain: ctx.terrain.value,
+          targetKm: compas.preferences?.targetKm ?? null,
+          outdoorNights: ctx.outdoorNights.value,
         });
         // Itinéraire de base partagé une semaine (même destination, durée,
         // activité, mois et envies), mais seulement s'il est exploitable : une
@@ -617,15 +656,30 @@ export async function compasAutofillAction(
     );
     const maxAltitude =
       Math.max(maxStepAltitude ?? 0, ...refugesByNight.flat().map((r) => r.altitudeM ?? 0)) || null;
-    const o = (orientation ?? {}) as { autonomy?: string | null; priority?: string | null };
-    const plan = planNights({
-      nights: nightsCount,
-      pref: nightsPrefFor(activity, compas.preferences?.nights ?? null),
-      autonomy: (o.autonomy ?? null) as Autonomy,
-      priority: (o.priority ?? null) as Priority,
+    // Contexte revu avec l'altitude mesurée (hiver en altitude : un toit).
+    const nightCtx = resolveProjectContext({
+      activity,
+      days,
+      hours: compas.durationHours,
+      partySize: party,
+      month: trip.start_date ? Number(trip.start_date.slice(5, 7)) : null,
       maxAltitudeM: maxAltitude,
-      refugeNear: refugesByNight.map((r) => r.length > 0),
+      project: compas.preferences,
+      profile,
     });
+    for (const a of nightCtx.adaptations) notes.push(adaptationText(a));
+    const plan = ctx.modules.nights
+      ? planNights({
+          nights: nightsCount,
+          pref: nightsPrefFor(activity, nightCtx.nights.value),
+          autonomy: nightCtx.autonomy.value as Autonomy,
+          // Le profil a déjà parlé dans `nights` : la priorité ne rejoue que si rien n'est décidé.
+          priority: nightCtx.nights.value ? null : (nightCtx.priority.value as Priority),
+          maxAltitudeM: maxAltitude,
+          refugeNear: refugesByNight.map((r) => r.length > 0),
+          outdoorNights: nightCtx.outdoorNights.value,
+        })
+      : [];
     if (maxAltitude != null && maxAltitude >= 2500)
       notes.push(
         `Altitude jusqu’à ${Math.round(maxAltitude)} m : monte progressivement (300 à 500 m de couchage par jour au-dessus de 3 000 m) et garde un jour de repos tous les 3 à 4 jours.`
@@ -662,8 +716,16 @@ export async function compasAutofillAction(
     const abroad =
       anchor.countryCode != null && (origin?.countryCode ?? 'FR') !== anchor.countryCode;
     let flightNeeded = false;
-    if (!from) notes.push('Position non partagée : le trajet jusqu’au départ est chiffré depuis la France, à ajuster.');
-    const mode = from ? approachMode({ straightKm: distanceKm(from, target) }) : abroad ? 'avion' : 'route';
+    // Sortie de quelques heures : pas de trajet à chiffrer (on part de chez soi).
+    if (!from && ctx.modules.transport)
+      notes.push('Position non partagée : le trajet jusqu’au départ est chiffré depuis la France, à ajuster.');
+    const mode = !ctx.modules.transport
+      ? 'aucun'
+      : from
+        ? approachMode({ straightKm: distanceKm(from, target) })
+        : abroad
+          ? 'avion'
+          : 'route';
     if (mode === 'avion') {
       flightNeeded = true;
       transport = {

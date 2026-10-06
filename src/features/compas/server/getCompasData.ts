@@ -27,6 +27,8 @@ import {
   type CompasWeatherDayInput,
 } from '../engine/compasModel';
 import { readCompasMeta } from '../engine/meta';
+import { resolveProjectContext, type ProjectContext } from '../engine/projectContext';
+import { readProfile } from './compasServer';
 import { relevantAffiliateLinks } from '../engine/affiliates';
 import { getOfficialAlerts } from './officialAlerts';
 import { getRouteElevation } from './elevation';
@@ -127,6 +129,8 @@ export interface CompasData {
   plannedDays?: number | null;
   /** Destination retrouvée sur la carte (Dis-le). */
   anchorName?: string | null;
+  /** Contexte projet résolu (projet > sélection > profil > défaut), avec la source de chaque valeur. */
+  context?: ProjectContext;
 }
 
 const TIME_ZONE = 'Europe/Paris';
@@ -376,11 +380,12 @@ export async function getCompasData(): Promise<CompasData | null> {
   } = await client.auth.getUser();
   const viewerId = user?.id ?? null;
 
-  const [inventory, bookings, shop, pendingInvites] = await Promise.all([
+  const [inventory, bookings, shop, pendingInvites, profile] = await Promise.all([
     loadInventory(client, viewerId),
     loadBookings(client, trip.id),
     loadShop(client),
     loadPendingInvites(client, trip.id),
+    readProfile(client as never, viewerId),
   ]);
 
   const members = toMembers(trip, hub.group?.members ?? []);
@@ -584,6 +589,16 @@ export async function getCompasData(): Promise<CompasData | null> {
     autofill: autofillState(trip.metadata),
     autofillNotes: autofillNotes(trip.metadata),
     ...compasPlan(trip.metadata),
+    context: resolveProjectContext({
+      activity: trip.primary_activity ?? null,
+      days: baseModel.dates.days ?? compasPlan(trip.metadata).plannedDays,
+      hours: baseModel.dates.hours != null && baseModel.dates.hours < 24 ? baseModel.dates.hours : null,
+      partySize: num(trip.party_size),
+      month: trip.start_date ? Number(String(trip.start_date).slice(5, 7)) : null,
+      maxAltitudeM: elevation?.maxM ?? null,
+      project: compasMeta.preferences,
+      profile,
+    }),
   };
 }
 

@@ -32,6 +32,8 @@ export interface NightsInput {
   maxAltitudeM: number | null;
   /** Un refuge connu (base) près du lieu de chaque nuit. */
   refugeNear: boolean[];
+  /** Nuits dehors demandées pour ce projet : elles priment sur le reste. */
+  outdoorNights?: number | null;
 }
 
 export const NIGHT_LABEL: Record<NightType, string> = {
@@ -44,8 +46,26 @@ export function planNights(input: NightsInput): NightPlan[] {
   const n = Math.max(0, Math.min(60, Math.floor(input.nights)));
   const out: NightPlan[] = [];
   const high = (input.maxAltitudeM ?? 0) >= 2000;
+  // « Dormir dehors 3 nuits » : d'abord les nuits sans refuge connu, puis les autres.
+  const outside = new Set<number>();
+  const want = Math.min(n, Math.max(0, Math.floor(input.outdoorNights ?? 0)));
+  if (want > 0) {
+    const order = Array.from({ length: n }, (_, k) => k + 1).sort(
+      (a, b) => Number(input.refugeNear[a - 1] === true) - Number(input.refugeNear[b - 1] === true) || a - b
+    );
+    for (const night of order.slice(0, want)) outside.add(night);
+  }
   for (let i = 1; i <= n; i += 1) {
     const refuge = input.refugeNear[i - 1] === true;
+    if (outside.has(i)) {
+      out.push({ night: i, type: 'bivouac', reason: `${want} nuit${want > 1 ? 's' : ''} dehors demandée${want > 1 ? 's' : ''}` });
+      continue;
+    }
+    if (want > 0 && input.pref === 'bivouac') {
+      // Le reste des nuits n'est pas dehors : un toit.
+      out.push(refuge ? { night: i, type: 'refuge', reason: 'nuit sous un toit' } : { night: i, type: 'hebergement', reason: 'nuit sous un toit ; aucun refuge connu à proximité' });
+      continue;
+    }
     const refugeOr = (why: string): NightPlan =>
       refuge
         ? { night: i, type: 'refuge', reason: why }
@@ -617,11 +637,14 @@ const ROAD_EXCLUDED = new Set([
 ]);
 
 const WATER_EXCLUDED = new Set(['trekking-poles', 'crampons']);
+/** Course et trail : on court léger, sans couchage ni cuisine ni gros sac. */
+const RUN_KEYS = new Set(['first-aid', 'sunscreen', 'sunglasses', 'water-bottle', 'whistle', 'rain-poncho']);
 
 export function keepRuleForActivity(key: string, activity: string): boolean {
   if (activity === 'cultural' || activity === 'citytrip' || activity === 'beach') return CITY_KEYS.has(key);
   if (activity === 'roadtrip' || activity === 'vanlife') return !ROAD_EXCLUDED.has(key);
   if (activity === 'water' || activity === 'cycling') return !WATER_EXCLUDED.has(key);
+  if (activity === 'running' || activity === 'trail') return RUN_KEYS.has(key);
   return true;
 }
 
@@ -683,6 +706,18 @@ const ACTIVITY_GEAR: Record<string, GearNeed[]> = {
   beach: [
     gear('swimsuit', 'Maillot de bain', 'clothing', false, 'plage', ['maillot']),
     gear('beach-towel', 'Serviette', 'tools', false, 'plage', ['serviette']),
+  ],
+  running: [
+    gear('run-shoes', 'Chaussures de course', 'clothing', true, 'course : amorti et accroche', ['chaussure', 'running', 'basket']),
+    gear('run-hydration', 'Flasque ou bouteille souple', 'tools', false, 'course : boire sans s’arrêter', ['flasque', 'gourde', 'bouteille']),
+    gear('run-light', 'Lampe ou brassard réfléchissant', 'safety', false, 'course : être vu à l’aube et au crépuscule', ['frontale', 'reflechissant', 'brassard']),
+  ],
+  trail: [
+    gear('trail-shoes', 'Chaussures de trail', 'clothing', true, 'trail : accroche sur sentier', ['chaussure', 'trail'], ['chaussure']),
+    gear('trail-vest', 'Gilet d’hydratation', 'tools', true, 'trail : eau et ravitaillement sur soi', ['gilet', 'flasque', 'poche a eau', 'camelbak']),
+    gear('trail-jacket', 'Veste imperméable légère', 'clothing', true, 'trail : protection si le temps tourne en crête', ['veste', 'impermeable', 'coupe-vent']),
+    gear('trail-blanket', 'Couverture de survie', 'safety', true, 'trail : en cas d’arrêt forcé', ['couverture de survie', 'survie']),
+    gear('trail-phone', 'Téléphone chargé avec la trace', 'safety', true, 'trail : se repérer, appeler les secours', ['telephone', 'smartphone', 'gps']),
   ],
   vanlife: [
     gear('sleeping-bag', 'Sac de couchage', 'sleep', true, 'nuits dans le véhicule', ['couchage', 'duvet', 'quilt']),

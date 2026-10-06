@@ -97,7 +97,12 @@ const CONTRACT = [
   '  {"type": "set_budget", "amount": 300},',
   '  {"type": "set_pace", "pace": "tranquille | normal | soutenu"},',
   '  {"type": "set_nights", "nights": "bivouac | refuge | hebergement | mixte"},',
-  '  {"type": "set_activity", "activity": "hiking | trekking | bivouac | roadtrip | cultural | bushcraft | cycling | ski | mountaineering | climbing | water | citytrip | beach | vanlife | mixed"},',
+  '  {"type": "set_activity", "activity": "hiking | trekking | bivouac | roadtrip | cultural | bushcraft | cycling | ski | mountaineering | climbing | water | citytrip | beach | vanlife | running | trail | mixed"},',
+  '  {"type": "set_outdoor_nights", "nights": 3},',
+  '  {"type": "set_max_pack", "kg": 12},',
+  '  {"type": "set_distance", "km": 20},',
+  '  {"type": "set_level", "level": "debut | regulier | aguerri"},',
+  '  {"type": "set_terrain", "terrain": "sentier | montagne | hors_sentier | itinerance | urbain_transit"},',
   '  {"type": "avoid", "label": "ce qu il faut eviter, 1 a 5 mots"},',
   '  {"type": "wish", "label": "une envie, 1 a 5 mots"},',
   '  {"type": "add_item", "name": "objet a ajouter au sac", "quantity": 1},',
@@ -117,7 +122,8 @@ export function buildCompasIntentSystem(): string {
     '3. Les dates sont absolues (AAAA-MM-JJ), calculees depuis la date du jour fournie. « samedi » = le prochain samedi.',
     '4. « 2 nuits » = 3 jours. « une semaine » = 7 jours. « ce week-end » = samedi, 2 jours.',
     '5. Ne mets jamais de prix, de disponibilite ni de lieu que la phrase ne nomme pas.',
-    '6. Phrase vide de demande : {"actions": []}.',
+    '6. « dormir dehors 3 nuits » ou « 3 nuits en bivouac » = set_outdoor_nights (ce n est PAS une duree). « sous 12 kg » = set_max_pack. « surtout de la montagne » = set_terrain montagne. « je debute » = set_level debut. « courir », « footing » = running.',
+    '7. Phrase vide de demande : {"actions": []}.',
   ].join('\n');
 }
 

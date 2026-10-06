@@ -48,7 +48,24 @@ export function buildCompasStagesPrompt(input: {
   pace: string | null;
   wishes: string[];
   avoid: string[];
+  /** Contexte propre au projet (jamais le profil brut : déjà résolu). */
+  level?: string | null;
+  terrain?: string | null;
+  targetKm?: number | null;
+  outdoorNights?: number | null;
 }): string {
+  const LEVEL: Record<string, string> = {
+    debut: 'debutant : etapes courtes, peu de denivele, journee plus legere tous les 2 a 3 jours',
+    regulier: 'regulier : etapes moyennes',
+    aguerri: 'aguerri : etapes longues possibles',
+  };
+  const TERRAIN: Record<string, string> = {
+    montagne: 'surtout de la montagne : choisis la region montagneuse la plus pertinente du pays',
+    sentier: 'sentiers balises',
+    hors_sentier: 'hors sentier accepte',
+    itinerance: 'itinerance d un point a un autre',
+    urbain_transit: 'villes reliees en transports',
+  };
   return [
     `Destination : ${input.destination}${input.country ? ` (${input.country})` : ''}.`,
     `Duree : ${input.days} jour(s). Activite : ${input.activity}. Groupe : ${input.partySize} personne(s).`,
@@ -56,6 +73,13 @@ export function buildCompasStagesPrompt(input: {
     input.pace ? `Rythme : ${input.pace}.` : '',
     input.wishes.length ? `Envies : ${input.wishes.join(', ')}.` : '',
     input.avoid.length ? `A eviter : ${input.avoid.join(', ')}.` : '',
+    input.level && LEVEL[input.level] ? `Niveau : ${LEVEL[input.level]}.` : '',
+    input.terrain && TERRAIN[input.terrain] ? `Terrain : ${TERRAIN[input.terrain]}.` : '',
+    input.targetKm ? `Distance visee : environ ${input.targetKm} km${input.days > 1 ? ' par jour' : ''}.` : '',
+    input.outdoorNights ? `Nuits dehors : ${input.outdoorNights} (places de bivouac autorisees ou tolerees).` : '',
+    input.activity === 'mixed'
+      ? 'Mixte : compose le melange qui sert CE projet (marche, decouverte locale, repos, baignade, velo, visite) selon la destination, la saison et la duree ; pas une recette fixe.'
+      : '',
     'Renvoie le JSON demande.',
   ]
     .filter(Boolean)
