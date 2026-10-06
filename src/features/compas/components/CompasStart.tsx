@@ -12,9 +12,6 @@ import { activityLabel } from '../engine/format';
 import { compasCreateTripAction } from '../server/compasActions';
 import { ACTIVITY_FIRST, ACTIVITY_META, ACTIVITY_ORDER } from './CompasOuFlows';
 
-/** Phrase tapée avant la création : le Compas la comprend juste après. */
-export const START_SAY_KEY = 'lkdv.compas.say';
-
 /**
  * Le Compas avant toute aventure (préparateur unique). Même écran que la
  * maquette, vide : rien n'est renseigné. Le premier geste (une activité, ou
@@ -42,17 +39,12 @@ export function CompasStart({
     }
     setError(null);
     startTransition(async () => {
-      const res = await compasCreateTripAction({ activity });
+      // La phrase part avec la création : elle est gardée sur le voyage jusqu'à
+      // son application (quitter la page trop tôt ne la perd plus).
+      const res = await compasCreateTripAction({ activity, ...(say ? { say } : {}) });
       if (!res.success) {
         setError(res.error ?? 'L’aventure n’a pas pu être créée.');
         return;
-      }
-      if (say) {
-        try {
-          window.sessionStorage.setItem(START_SAY_KEY, say);
-        } catch {
-          /* la phrase sera à retaper : rien n'est perdu côté voyage */
-        }
       }
       // Quitter `?nouvelle=1` : sinon la page réaffiche le Compas vide et
       // chaque toucher créerait un brouillon de plus.

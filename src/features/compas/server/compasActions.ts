@@ -1820,7 +1820,11 @@ export async function compasExplainVerdictAction(
 
 /* ---------- Créer une aventure depuis le Compas ---------- */
 
-const createTripSchema = z.object({ activity: z.enum(ACTIVITIES) });
+const createTripSchema = z.object({
+  activity: z.enum(ACTIVITIES),
+  /** Phrase « Dis-le » du Compas vide : gardée sur le voyage jusqu'à son application. */
+  say: z.string().trim().min(2).max(280).optional(),
+});
 
 const CREATE_LABEL: Record<(typeof ACTIVITIES)[number], string> = {
   hiking: 'Randonnée',
@@ -1887,7 +1891,12 @@ export async function compasCreateTripAction(
         difficulty: 'moderate',
         primary_activity: parsed.data.activity,
         budget_currency: 'EUR',
-        metadata: { created_with: 'compas' },
+        // La phrase vit sur le voyage, pas dans l'onglet : quitter la page avant
+        // qu'elle soit appliquée ne la perd pas, elle est reprise à l'ouverture.
+        metadata: {
+          created_with: 'compas',
+          ...(parsed.data.say ? { compas: { start_say: parsed.data.say } } : {}),
+        },
       })
       .select('id, slug, title')
       .single();
@@ -1920,6 +1929,31 @@ export async function compasCreateTripAction(
     return { success: true, slug: created.slug };
   } catch (err) {
     console.error('[compas] compasCreateTripAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+const clearSaySchema = z.object({ tripId: uuid });
+
+/** La phrase de départ a été appliquée (ou ne disait rien d'applicable) : on l'oublie. */
+export async function compasClearStartSayAction(
+  input: z.input<typeof clearSaySchema>
+): Promise<CompasActionResult> {
+  const parsed = clearSaySchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Voyage invalide' };
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    const metadata = await patchTripMetadata(auth.supabase, parsed.data.tripId, (m) => {
+      const c = compasMeta(m);
+      if (!('start_say' in c)) return m;
+      delete c.start_say;
+      return { ...m, compas: c };
+    });
+    await auth.supabase.from('trips').update({ metadata }).eq('id', parsed.data.tripId);
+    return { success: true };
+  } catch (err) {
+    console.error('[compas] compasClearStartSayAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }

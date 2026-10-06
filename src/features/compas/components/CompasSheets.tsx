@@ -1018,6 +1018,7 @@ function StepSheet({
           key={hint?.say ?? 'disle'}
           ctl={ctl}
           initial={hint?.say}
+          initialIsStart={hint?.start === true}
           before={prev}
           after={next}
         />

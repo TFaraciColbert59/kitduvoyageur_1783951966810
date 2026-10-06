@@ -127,6 +127,7 @@ const compas = vi.hoisted(() => ({
     usedAi: false,
     note: null,
   })),
+  compasClearStartSayAction: vi.fn(async () => ({ success: true })),
 }));
 vi.mock('../server/compasActions', () => compas);
 const bottle = vi.hoisted(() => ({
@@ -1340,6 +1341,59 @@ describe('CompasScreen', () => {
         .getAttribute('aria-current')
     ).toBe('step');
     expect(nav.hasAttribute('data-drag')).toBe(false);
+  });
+
+  it('Phrase de départ gardée sur le voyage : appliquée à l’ouverture, puis oubliée', async () => {
+    compas.compasInterpretAction.mockResolvedValueOnce({
+      success: true,
+      usedAi: false,
+      note: null,
+      proposals: [
+        {
+          id: '0-set_party_size',
+          action: { type: 'set_party_size', count: 4 },
+          label: '4 personnes',
+          ok: true,
+          reason: null,
+          source: 'regles',
+        },
+      ],
+    });
+    render(<CompasScreen data={{ ...makeData(), startSay: 'rando à 4' }} />);
+    await waitFor(() =>
+      expect(compas.compasInterpretAction).toHaveBeenCalledWith({ tripId: TRIP, text: 'rando à 4' })
+    );
+    await waitFor(() =>
+      expect(compas.compasSetPartySizeAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        partySize: 4,
+      })
+    );
+    await waitFor(() => expect(compas.compasClearStartSayAction).toHaveBeenCalledWith({ tripId: TRIP }));
+  });
+
+  it('Phrase de départ : l’écriture échoue, elle reste sur le voyage pour la prochaine visite', async () => {
+    compas.compasInterpretAction.mockResolvedValueOnce({
+      success: true,
+      usedAi: false,
+      note: null,
+      proposals: [
+        {
+          id: '0-set_party_size',
+          action: { type: 'set_party_size', count: 4 },
+          label: '4 personnes',
+          ok: true,
+          reason: null,
+          source: 'regles',
+        },
+      ],
+    });
+    compas.compasSetPartySizeAction.mockResolvedValueOnce({ success: false, error: 'Connexion perdue' });
+    render(<CompasScreen data={{ ...makeData(), startSay: 'rando à 4' }} />);
+    await waitFor(() => expect(compas.compasSetPartySizeAction).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 50));
+    expect(compas.compasClearStartSayAction).not.toHaveBeenCalled();
   });
 
   it('Dis-le : les propositions refusées ne s’appliquent pas, les autres oui', async () => {

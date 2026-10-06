@@ -25,7 +25,6 @@ import type { CompasData } from '../server/getCompasData';
 import { KitCard, NousCard, OuCard, ResaCard, VerdictCard } from './CompasCards';
 import { CompasMap } from './CompasMap';
 import { CompasAccessory } from './CompasAccessory';
-import { START_SAY_KEY } from './CompasStart';
 import { ALL_LAYERS, parseLayers, type LayerState } from '../engine/mapLayers';
 import { tripHours } from './CompasRuler';
 import { buildCompasSnapshot, snapshotFingerprint, warmOfflinePage } from '../offline/snapshot';
@@ -450,18 +449,16 @@ export function CompasScreen({
   }, []);
   const back = useCallback(() => setStack((s) => s.slice(0, -1)), []);
 
-  // Phrase tapée dans le Compas vide avant la création : comprise ici, dans
-  // le tiroir Où (rien n'est appliqué sans coche).
+  // Phrase tapée dans le Compas vide : gardée sur le voyage tant qu'elle n'est
+  // pas appliquée, comprise ici dans le tiroir Où (une fois par ouverture).
+  // Partie avant d'être appliquée, elle est reprise à la prochaine visite.
+  const startSaid = useRef<string | null>(null);
+  const startSay = data.canEdit ? (data.startSay ?? null) : null;
   useEffect(() => {
-    let say: string | null = null;
-    try {
-      say = window.sessionStorage.getItem(START_SAY_KEY);
-      if (say) window.sessionStorage.removeItem(START_SAY_KEY);
-    } catch {
-      /* stockage indisponible */
-    }
-    if (say) open({ kind: 'step', step: 'ou', flow: 'activite', hint: { say } });
-  }, [open]);
+    if (!startSay || startSaid.current === model.tripId) return;
+    startSaid.current = model.tripId;
+    open({ kind: 'step', step: 'ou', flow: 'activite', hint: { say: startSay, start: true } });
+  }, [open, startSay, model.tripId]);
 
   const close = useCallback(() => setStack([]), []);
   const enlarge = useCallback(

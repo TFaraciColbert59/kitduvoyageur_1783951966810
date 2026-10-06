@@ -73,6 +73,8 @@ export interface FlowHint {
   day?: number;
   /** Phrase tapée dans « Dis-le » sur la carte : le tiroir la comprend aussitôt. */
   say?: string;
+  /** La phrase est celle du Compas vide, gardée sur le voyage : effacée une fois appliquée. */
+  start?: boolean;
   /** Catégorie touchée sur la carte Résa : Offres s'ouvre filtré dessus. */
   resa?: ResaCat;
 }

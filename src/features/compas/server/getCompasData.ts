@@ -128,6 +128,8 @@ export interface CompasData {
   autofillNotes?: string[];
   /** Durée voulue quand la date de départ n'est pas choisie (« 20 jours »). */
   plannedDays?: number | null;
+  /** Phrase du Compas vide pas encore appliquée (reprise à l'ouverture). */
+  startSay?: string | null;
   /** Destination retrouvée sur la carte (Dis-le). */
   anchorName?: string | null;
   /** Contexte projet résolu (projet > sélection > profil > défaut), avec la source de chaque valeur. */
@@ -649,7 +651,11 @@ function autofillNotes(metadata: unknown): string[] {
     : [];
 }
 
-function compasPlan(metadata: unknown): { plannedDays: number | null; anchorName: string | null } {
+function compasPlan(metadata: unknown): {
+  plannedDays: number | null;
+  anchorName: string | null;
+  startSay: string | null;
+} {
   const compas =
     metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).compas : null;
   const c = compas && typeof compas === 'object' ? (compas as Record<string, unknown>) : {};
@@ -658,5 +664,6 @@ function compasPlan(metadata: unknown): { plannedDays: number | null; anchorName
   return {
     plannedDays: Number.isInteger(days) && days >= 1 ? days : null,
     anchorName: typeof anchor?.name === 'string' ? anchor.name : null,
+    startSay: typeof c.start_say === 'string' && c.start_say.trim() ? c.start_say.trim().slice(0, 280) : null,
   };
 }
