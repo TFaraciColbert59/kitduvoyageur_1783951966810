@@ -1,5 +1,12 @@
 # MISSION LOG — LKDV
 
+## 2026-10-06 — Résa : clés partenaires reliées, diagnostics affichés
+
+- Variables Vercel « Shared » reliées au projet par Tony ; vérifié en direct sur la preview : RouteStack (sandbox) répond — hôtels de test sans nom ni prix, voitures en erreur du bac à sable ; Viator (sandbox) accepte la clé (3 394 destinations lues) mais sa recherche d'activités ne répond pas en 15 s.
+- Résa nomme désormais la cause d'un échec, sans jamais de clé : variable manquante, code et statut du partenaire, message, cause (délai, réseau, format).
+- Viator : le lieu du champ « Où » (pré-rempli) passe par la carte → destination Viator la plus proche (Rome → 511) ; repli sur l'identifiant du pays, jamais Paris pour une autre région de France. Délai de recherche Viator 15 s par défaut.
+- Décision de Tony : RouteStack reste en sandbox ; Viator passe en `full` pour la recherche (lecture seule, réservation verrouillée par `VIATOR_BOOKING_ENABLED`).
+
 ## 2026-10-06 — Compas : phrase de départ, points sur place, Résa
 
 - **Phrase de départ** : elle ne vivait que dans l'onglet (sessionStorage), effacée dès la lecture ; quitter la page trop tôt la perdait. Elle est maintenant gardée sur le voyage (`metadata.compas.start_say`), reprise à chaque ouverture et effacée seulement une fois appliquée (`compasClearStartSayAction`). Tests : appliquée puis oubliée ; écriture en échec → gardée.
