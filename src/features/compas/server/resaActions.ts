@@ -11,7 +11,7 @@ import {
 } from '@/features/booking/server/bookingProvider';
 import { simplifyOffers, type CompasStayOffer } from '../engine/stays';
 import type { CompasLiveVertical } from '../engine/resaExamples';
-import { viatorDestinationNear } from './viatorDestinations';
+import { viatorDestinationNear, viatorDestinationsFailure } from './viatorDestinations';
 import { resolveProviderCredentials } from '@/features/booking/server/providerCredentials';
 
 /**
@@ -183,7 +183,7 @@ export async function compasSearchOffersAction(
       // configuration, jamais une clé ni la réponse brute du partenaire.
       return {
         success: false,
-        error: `Le partenaire n’a pas répondu : réessaie plus tard. (${err.provider ?? 'partenaire'} ${err.code}${err.status ? ` ${err.status}` : ''})`,
+        error: `Le partenaire n’a pas répondu : réessaie plus tard. (${err.provider ?? 'partenaire'} ${err.code}${err.status ? ` ${err.status}` : ''}${err.provider === 'viator' && viatorDestinationsFailure() ? ` · ${viatorDestinationsFailure()}` : ''})`,
       };
     }
     console.error('[compas] compasSearchOffersAction', err);

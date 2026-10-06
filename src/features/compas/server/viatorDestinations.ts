@@ -10,18 +10,27 @@ import { cached } from './sharedCache';
  */
 
 const TTL_S = 7 * 86_400;
+/** Dernière raison d'échec (statut HTTP ou type d'erreur), affichable : jamais de clé. */
+let lastFailure: string | null = null;
+export const viatorDestinationsFailure = () => lastFailure;
 const HOSTS = new Set(['api.viator.com', 'api.sandbox.viator.com']);
 
 async function loadDestinations(): Promise<ViatorDestination[] | null> {
   const cred = resolveProviderCredentials('viator', process.env);
-  if (cred.reason !== null || !cred.apiKey || !cred.baseUrl) return null;
+  if (cred.reason !== null || !cred.apiKey || !cred.baseUrl) {
+    lastFailure = 'clé ou adresse absente';
+    return null;
+  }
   let base: URL;
   try {
     base = new URL(cred.baseUrl.replace(/\/+$/, ''));
   } catch {
     return null;
   }
-  if (base.protocol !== 'https:' || !HOSTS.has(base.hostname)) return null;
+  if (base.protocol !== 'https:' || !HOSTS.has(base.hostname)) {
+    lastFailure = 'adresse API non reconnue';
+    return null;
+  }
   return cached<ViatorDestination[] | null>('place', `viator:destinations:v1:${cred.slot}`, TTL_S, async () => {
     try {
       const res = await fetch(`${base.toString().replace(/\/+$/, '')}/destinations`, {
@@ -36,12 +45,15 @@ async function loadDestinations(): Promise<ViatorDestination[] | null> {
       });
       if (!res.ok) {
         console.warn('[compas] destinations Viator', res.status);
+        lastFailure = `destinations ${res.status}`;
         return null;
       }
       const list = parseViatorDestinations(await res.json());
+      lastFailure = list.length ? null : 'destinations : réponse vide';
       return list.length ? list : null;
     } catch (err) {
       console.warn('[compas] destinations Viator injoignables', err instanceof Error ? err.message : 'erreur');
+      lastFailure = `destinations ${err instanceof Error ? err.name : 'erreur'}`;
       return null;
     }
   });
