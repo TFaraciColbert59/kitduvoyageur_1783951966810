@@ -280,6 +280,13 @@ describe('Destination nommée : la ville que tout le monde entend, pas un homony
     expect(pickDestination(found, 'Chamonix')).toMatchObject({ name: 'Chamonix-Mont-Blanc', countryCode: 'FR' });
   });
 
+  it('« Vietnam » → le pays « Viêt Nam », jamais le Vietnam Veterans Memorial de Washington', () => {
+    const memorial = place('Vietnam Veterans Memorial', 'memorial', 'US', 'historic');
+    const country = place('Viêt Nam', 'country', 'VN');
+    expect(pickDestination(parsePhoton({ features: [memorial, country] }), 'Vietnam')).toMatchObject({ countryCode: 'VN' });
+    expect(pickDestination(parsePhoton({ features: [memorial] }), 'Vietnam')).toBeNull();
+  });
+
   it('jamais un lieu-dit ni un bâtiment ; rien plutôt qu’un faux', () => {
     const found = parsePhoton({ features: [place('Chamonix', 'locality', 'ZA'), place('Chamonix', 'house', 'JP')] });
     expect(pickDestination(found, 'Chamonix')).toBeNull();

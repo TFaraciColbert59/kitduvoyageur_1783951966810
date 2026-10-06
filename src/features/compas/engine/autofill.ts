@@ -367,6 +367,36 @@ function cleanText(v: unknown, max: number): string | null {
 }
 
 /** Ce que l'IA renvoie est borné : un chiffre hors des limites réalistes est ignoré. */
+/**
+ * Mots courants des conseils que le modèle écrit sans accent ou mal
+ * (« Reserver l'hëergement ») : corrigés, le reste est laissé tel quel.
+ */
+const ACCENT_FIXES: Array<[RegExp, string]> = [
+  [/\bh[ëe]?e?rgements?\b/gi, 'hébergement'],
+  [/\bhebergement/gi, 'hébergement'],
+  [/\breserver\b/gi, 'réserver'],
+  [/\breservation(s?)\b/gi, 'réservation$1'],
+  [/\bprevoir\b/gi, 'prévoir'],
+  [/\bverifier\b/gi, 'vérifier'],
+  [/\bdepart\b/gi, 'départ'],
+  [/\bpriviligier\b|\bprivilegier\b/gi, 'privilégier'],
+  [/\bregion(s?)\b/gi, 'région$1'],
+  [/\bmeteo\b/gi, 'météo'],
+  [/\betape(s?)\b/gi, 'étape$1'],
+  [/\bequipement(s?)\b/gi, 'équipement$1'],
+  [/\bsecurite\b/gi, 'sécurité'],
+  [/\bmateriel\b/gi, 'matériel'],
+];
+export function repairAccents(text: string): string {
+  let out = text;
+  for (const [re, fix] of ACCENT_FIXES)
+    out = out.replace(re, (m, ...g) => {
+      const word = fix.replace('$1', typeof g[0] === 'string' ? g[0] : '');
+      return m[0] === m[0].toUpperCase() ? word[0].toUpperCase() + word.slice(1) : word;
+    });
+  return out;
+}
+
 export function sanitizeAdvice(raw: unknown): AutofillAiAdvice {
   const r = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
   const num = (v: unknown, min: number, max: number) => {
@@ -377,6 +407,7 @@ export function sanitizeAdvice(raw: unknown): AutofillAiAdvice {
     ? r.notes
         .map((n) => cleanText(n, 180))
         .filter((n): n is string => n != null && n.length >= 8)
+        .map(repairAccents)
         // Une phrase commence par une majuscule (« appliquer un indice… »).
         .map((n) => n[0].toLocaleUpperCase('fr') + n.slice(1))
         .slice(0, 3)

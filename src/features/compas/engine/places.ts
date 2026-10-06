@@ -251,6 +251,9 @@ const plainName = (v: string) =>
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
 
+/** Ville, pays, région : un nom plus long que celui demandé reste ce lieu. */
+const ADMIN_KINDS = new Set(['city', 'town', 'village', 'country', 'state', 'county', 'region', 'province']);
+
 /** Ferme, lieu-dit, bâtiment, quartier résidentiel : jamais une destination. */
 const WEAK_KINDS = new Set(['locality', 'house', 'other', 'street']);
 
@@ -265,9 +268,15 @@ const WEAK_KINDS = new Set(['locality', 'house', 'other', 'street']);
 export function pickDestination(candidates: CompasPlace[], query: string): CompasPlace | null {
   const want = plainName(query);
   if (!want) return null;
+  const compact = (v: string) => v.replace(/ /g, '');
   const named = candidates.filter((c) => {
     const n = plainName(c.name);
-    return n === want || n.startsWith(`${want} `);
+    // Même nom, espaces mis à part (« Viêt Nam » pour « Vietnam »).
+    if (n === want || compact(n) === compact(want)) return true;
+    // Nom plus long : seulement une ville ou une région (« Chamonix » →
+    // « Chamonix-Mont-Blanc »), jamais un monument (« Vietnam » → « Vietnam
+    // Veterans Memorial » à Washington).
+    return n.startsWith(`${want} `) && (Boolean(c.settlement) || ADMIN_KINDS.has(c.kind));
   });
   // Un sommet, une vallée ou un lac (type « other » chez Photon) est une vraie
   // destination ; une ferme ou un lieu-dit du même nom, jamais (« Mont Blanc »
