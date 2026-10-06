@@ -12,6 +12,7 @@ import {
 import { simplifyOffers, type CompasStayOffer } from '../engine/stays';
 import type { CompasLiveVertical } from '../engine/resaExamples';
 import { viatorCountryFallback, viatorDestinationNear, viatorDestinationsFailure } from './viatorDestinations';
+import { lookupDestination } from './placeLookup';
 import { resolveProviderCredentials } from '@/features/booking/server/providerCredentials';
 
 /**
@@ -53,10 +54,24 @@ function partnerReason(vertical: 'activity' | 'flight' | 'car' | 'hotel'): strin
  * Grenoble, jamais Paris par défaut), sinon le nom tel quel.
  */
 async function activityDestination(trip: unknown, name: string, typed: boolean): Promise<string> {
-  if (typed) return name;
-  const { at, broad } = tripPoint(trip);
-  const code = ((trip ?? {}) as { destination_country_code?: string | null }).destination_country_code;
-  return (await viatorDestinationNear(at, { broad })) ?? viatorCountryFallback(code, at) ?? name;
+  const t = (trip ?? {}) as { destination_name?: string | null; destination_country_code?: string | null };
+  // Le champ « Où » est pré-rempli avec la destination du voyage : même nom = même lieu.
+  const own = !typed || name.trim().toLowerCase() === (t.destination_name ?? '').trim().toLowerCase();
+  if (own) {
+    const { at, broad } = tripPoint(trip);
+    return (
+      (await viatorDestinationNear(at, { broad })) ?? viatorCountryFallback(t.destination_country_code, at) ?? name
+    );
+  }
+  // Un autre lieu tapé : cherché sur la carte, puis la destination Viator la plus proche.
+  const place = await lookupDestination(name).catch(() => null);
+  if (!place) return name;
+  const at = { lat: place.lat, lon: place.lon };
+  return (
+    (await viatorDestinationNear(at, { broad: place.kind === 'country' })) ??
+    viatorCountryFallback(place.countryCode, at) ??
+    name
+  );
 }
 
 /**
