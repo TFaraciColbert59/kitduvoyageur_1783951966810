@@ -7,7 +7,7 @@ import {
   type StagePoint,
 } from '../engine/stagePois';
 import type { RoutePoi } from '../engine/routePois';
-import { cached, coordKey } from './sharedCache';
+import { cached, coordKey, writeShared } from './sharedCache';
 
 /**
  * Points utiles autour des étapes, depuis OpenStreetMap (Overpass). Partagés
@@ -25,7 +25,10 @@ const ENDPOINTS = [
 ];
 const UA = 'kitduvoyageur/1.0 (Compas, preparation de voyage)';
 
+// DIAG TEMPORAIRE (à retirer) : dernier échec, lisible en base, 1 h.
+const diag: string[] = [];
 async function overpass(query: string): Promise<unknown | null> {
+  diag.length = 0;
   for (const url of ENDPOINTS) {
     try {
       const res = await fetch(url, {
@@ -41,13 +44,16 @@ async function overpass(query: string): Promise<unknown | null> {
       });
       if (!res.ok) {
         console.warn('[compas] points autour', new URL(url).host, res.status);
+        diag.push(`${new URL(url).host} ${res.status} ${(await res.text().catch(() => '')).slice(0, 200)}`);
         continue;
       }
       return await res.json();
     } catch (err) {
       console.warn('[compas] points autour injoignable', new URL(url).host, err instanceof Error ? err.message : 'erreur');
+      diag.push(`${new URL(url).host} ${err instanceof Error ? `${err.name}: ${err.message}` : 'erreur'}`);
     }
   }
+  await writeShared('place', 'pois:diag', diag.slice(), 3600).catch(() => undefined);
   return null;
 }
 
@@ -56,7 +62,10 @@ async function poisAround(place: StagePoint): Promise<RoutePoi[] | null> {
   return cached<RoutePoi[] | null>('place', `pois:v2:${coordKey(place.lat, place.lon, 3)}`, TTL_S, async () => {
     const payload = await overpass(buildOverpassQuery(place));
     if (!overpassUsable(payload)) {
-      if (payload) console.warn('[compas] points autour : réponse coupée', (payload as { remark?: unknown }).remark);
+      if (payload) {
+        console.warn('[compas] points autour : réponse coupée', (payload as { remark?: unknown }).remark);
+        await writeShared('place', 'pois:diag', [`remark ${String((payload as { remark?: unknown }).remark).slice(0, 300)}`], 3600).catch(() => undefined);
+      }
       return null; // jamais gardé : on réessaiera
     }
     return parseOverpass(payload, [place]);
