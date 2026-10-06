@@ -18,6 +18,8 @@ export interface CompasPlace {
   settlement?: boolean;
   /** Emprise [ouest, nord, est, sud] quand la carte la donne (pays, régions). */
   extent: [number, number, number, number] | null;
+  /** Commune qui contient le lieu (un point GPS tombe souvent sur un bâtiment ou un chantier). */
+  locality?: string | null;
   /** Lieu naturel ou géographique nommé (sommet, vallée, lac, massif, île, parc). */
   landmark?: boolean;
 }
@@ -69,6 +71,9 @@ export function parsePhoton(payload: unknown): CompasPlace[] {
       kind: String(p.type ?? p.osm_value ?? 'place'),
       settlement: p.osm_key === 'place' && SETTLEMENTS.has(String(p.osm_value)),
       landmark: isLandmark(p.osm_key, p.osm_value),
+      locality:
+        [p.city, p.town, p.village, p.locality].find((v): v is string => typeof v === 'string' && v.trim() !== '')?.trim() ??
+        null,
       extent:
         ext && ext.every((n) => Number.isFinite(n))
           ? (ext as [number, number, number, number])

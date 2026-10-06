@@ -436,7 +436,7 @@ export async function compasAutofillAction(
     if (!anchor && from && ctx.scope === 'sortie') {
       const here = await lookupReverse(from.lat, from.lon);
       anchor = {
-        name: here?.name ?? 'Autour de toi',
+        name: here?.locality ?? here?.name ?? 'Autour de toi',
         lat: from.lat,
         lon: from.lon,
         countryCode: here?.countryCode ?? null,
