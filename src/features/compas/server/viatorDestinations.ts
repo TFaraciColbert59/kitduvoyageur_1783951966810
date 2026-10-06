@@ -2,6 +2,8 @@ import 'server-only';
 import { resolveProviderCredentials } from '@/features/booking/server/providerCredentials';
 import { nearestViatorDestination, parseViatorDestinations, type ViatorDestination } from '../engine/viatorDest';
 import { cached } from './sharedCache';
+import { VIATOR_DESTINATION_IDS } from '@/features/discovery/providers/viator/viatorData';
+import { distanceKm } from '../engine/places';
 
 /**
  * Les destinations Viator (API partenaire v2, `GET /destinations`), lues une
@@ -66,5 +68,35 @@ export async function viatorDestinationNear(
 ): Promise<string | null> {
   if (!at) return null;
   const list = await loadDestinations();
-  return list ? (nearestViatorDestination(list, at, opts)?.id ?? null) : null;
+  if (!list) return null;
+  const hit = nearestViatorDestination(list, at, opts);
+  if (!hit) {
+    // Pour le diagnostic affiché : taille de la liste et types rencontrés (aucune donnée sensible).
+    const types = [...new Set(list.map((d) => d.type))].slice(0, 6).join('/');
+    lastFailure = `liste ${list.length} (${types}), aucune à moins de 120 km`;
+  }
+  return hit?.id ?? null;
+}
+
+/**
+ * Repli quand la carte ne trouve rien : l'identifiant du PAYS (table officielle),
+ * sauf pour les pays dont l'entrée est une seule ville (Paris, Tokyo,
+ * Reykjavik), retenue seulement à moins de 150 km de cette ville.
+ */
+const CITY_PILOTS: Record<string, { lat: number; lon: number }> = {
+  FR: { lat: 48.8566, lon: 2.3522 },
+  JP: { lat: 35.6762, lon: 139.6503 },
+  IS: { lat: 64.1466, lon: -21.9426 },
+};
+export function viatorCountryFallback(
+  countryCode: string | null | undefined,
+  at: { lat: number; lon: number } | null
+): string | null {
+  const code = countryCode?.trim().toUpperCase();
+  if (!code) return null;
+  const id = VIATOR_DESTINATION_IDS[code];
+  if (!id || !/^\d+$/.test(id)) return null;
+  const pilot = CITY_PILOTS[code];
+  if (pilot && (!at || distanceKm(at, pilot) > 150)) return null;
+  return id;
 }

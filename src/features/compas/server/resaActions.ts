@@ -11,7 +11,7 @@ import {
 } from '@/features/booking/server/bookingProvider';
 import { simplifyOffers, type CompasStayOffer } from '../engine/stays';
 import type { CompasLiveVertical } from '../engine/resaExamples';
-import { viatorDestinationNear, viatorDestinationsFailure } from './viatorDestinations';
+import { viatorCountryFallback, viatorDestinationNear, viatorDestinationsFailure } from './viatorDestinations';
 import { resolveProviderCredentials } from '@/features/booking/server/providerCredentials';
 
 /**
@@ -55,7 +55,8 @@ function partnerReason(vertical: 'activity' | 'flight' | 'car' | 'hotel'): strin
 async function activityDestination(trip: unknown, name: string, typed: boolean): Promise<string> {
   if (typed) return name;
   const { at, broad } = tripPoint(trip);
-  return (await viatorDestinationNear(at, { broad })) ?? name;
+  const code = ((trip ?? {}) as { destination_country_code?: string | null }).destination_country_code;
+  return (await viatorDestinationNear(at, { broad })) ?? viatorCountryFallback(code, at) ?? name;
 }
 
 /**
