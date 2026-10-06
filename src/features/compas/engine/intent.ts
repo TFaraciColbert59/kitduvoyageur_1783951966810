@@ -371,7 +371,8 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     new RegExp(`\\b${NUM}\\s*(jours?|j|nuits?|semaines?|days?|nights?|weeks?)\\b`).exec(durPlain) ??
     (/\bdemi-journee\b/.test(plain) ? null : /\b(une|la|1)\s+journee\b/.exec(plain));
   const hoursMatch =
-    /(?<!(?:\ba|\bvers|depart|depart a|des)\s)\b(\d{1,2})\s*h(?:eures?)?\s*(\d{2})?\b(?!\s*du matin)/.exec(
+    // « 1h30 », « 2 h 15 » ; jamais les minutes d'un nombre suivi d'une unité (« 1h 10 km »).
+    /(?<!(?:\ba|\bvers|depart|depart a|des)\s)\b(\d{1,2})\s*h(?:eures?)?(?:\s*(\d{2})(?!\s*(?:km|kilo|m\b|€|eur|kg|g\b|%|pers|min)))?\b(?!\s*du matin)/.exec(
       plain
     );
   const hoursWord = new RegExp(`\\b${NUM}\\s+heures?(\\s+et\\s+demie)?\\b`).exec(plain);
@@ -459,17 +460,17 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
   /* Activité (seulement quand elle est nommée) */
   // Du plus précis au plus large : « ski de rando » est du ski, pas une rando.
   const activity: Array<[RegExp, CompasActivity]> = [
-    [/\b(ski|skis|skier|freeride|splitboard|raquettes?)\b/, 'ski'],
-    [/\b(alpinisme|alpi|cordee|glacier|course d'arete|4000)\b/, 'mountaineering'],
+    [/\b(ski|skis|skier|skiing|freeride|splitboard|raquettes?|snowshoeing)\b/, 'ski'],
+    [/\b(alpinisme|alpi|cordee|glacier|course d'arete|4000|mountaineering)\b/, 'mountaineering'],
     [/\b(trail|ultra-?trail|skyrace)\b/, 'trail'],
-    [/\b(courir|course a pied|footing|jogging|running|fractionne)\b/, 'running'],
-    [/\b(escalade|grimpe|grimper|bloc|via ferrata|falaise)\b/, 'climbing'],
-    [/\b(velo|velos|bikepacking|cyclo|cyclotourisme|vtt|gravel)\b/, 'cycling'],
-    [/\b(kayak|canoe|canoes|paddle|packraft|rafting|voile|voilier|plongee|snorkeling|surf)\b/, 'water'],
+    [/\b(courir|course a pied|footing|jogging|running|fractionne|run)\b/, 'running'],
+    [/\b(escalade|grimpe|grimper|bloc|via ferrata|falaise|climbing|bouldering)\b/, 'climbing'],
+    [/\b(velo|velos|bikepacking|cyclo|cyclotourisme|vtt|gravel|cycling|biking|bike)\b/, 'cycling'],
+    [/\b(kayak|kayaking|canoe|canoes|canoeing|paddle|paddling|packraft|rafting|voile|voilier|sailing|plongee|diving|snorkeling|surf|surfing)\b/, 'water'],
     [/\b(van|vanlife|camping[- ]car|fourgon|fourgonnette)\b/, 'vanlife'],
     [/\b(city ?trip|citytrip)\b/, 'citytrip'],
-    [/\b(plage|plages|farniente|bord de mer|baignade)\b/, 'beach'],
-    [/\b(rando|randos|randonnee|randonnees)\b/, 'hiking'],
+    [/\b(plage|plages|farniente|bord de mer|baignade|beach)\b/, 'beach'],
+    [/\b(rando|randos|randonnee|randonnees|hiking|hike)\b/, 'hiking'],
     [/\btreks?\b|\btrekking\b/, 'trekking'],
     [/\broad ?trip\b/, 'roadtrip'],
     [/\bbushcraft\b/, 'bushcraft'],
@@ -519,13 +520,18 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
   }
 
   /* Destination : « au Népal », « en Islande », « à Chamonix » (nom propre) */
-  for (const m of plain.matchAll(/(?:^|[\s,(])(?:au|aux|en|a|dans le|dans la|dans les)\s+/g)) {
+  // « à la Réunion », « à l’Île de Ré », « dans l’Ain » ; « in Iceland » (anglais).
+  for (const m of plain.matchAll(/(?:^|[\s,(])(?:(?:a|dans) l'\s*|(?:au|aux|en|in|a la|a|dans le|dans la|dans les)\s+)/g)) {
     const at = (m.index ?? 0) + m[0].length;
     const original = src.slice(at, at + 60);
     if (!/^\p{Lu}/u.test(original)) continue;
+    // Coupe à la ponctuation ou au premier chiffre, puis au premier mot d'une autre idée.
     const place = clean(
-      upToBreak(original).split(
-        /\s(?:pour|avec|du|le|la|les|en|a|à|à partir|pendant|durant|sur|et|un|une|cette|ce|tout|toute|week-?end|début|debut|mi|fin|janvier|février|fevrier|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre)(?:\s|$)/i
+      original.split(/[,.;!?\d]/)[0].split(
+        // Fin du nom : un mot qui ouvre une autre idée (durée, date, compagnie).
+        // « du », « le », « la » ne coupent que devant un nombre (« Afrique du Sud »,
+        // mais « Vercors du 3 au 10 juin »).
+        /\s(?:(?:du|le|la|les)(?=\s+\d)|pour|avec|en|a|à|à partir|pendant|durant|sur|et|un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|quinze|vingt|cette|ce|tout|toute|semaines?|jours?|nuits?|days?|weeks?|nights?|for|week-?end|début|debut|mi|fin|demain|après-demain|apres-demain|aujourd['’]hui|prochain|prochaine|janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre)(?=[\s-]|$)/i
       )[0],
       50
     );

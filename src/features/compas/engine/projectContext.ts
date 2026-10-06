@@ -302,7 +302,16 @@ export function adaptationText(a: ContextAdaptation): string {
 /* ---------- Distance attendue et choix d'un parcours du catalogue ---------- */
 
 /** Vitesse moyenne réaliste par activité (km/h, pauses comprises). */
-const SPEED_KMH: Record<string, number> = { running: 9, trail: 7, hiking: 3.5, trekking: 3.5, bivouac: 3.5, mixed: 3.5 };
+const SPEED_KMH: Record<string, number> = {
+  running: 9,
+  trail: 7,
+  hiking: 3.5,
+  trekking: 3.5,
+  bivouac: 3.5,
+  mixed: 3.5,
+  cycling: 18,
+  water: 5,
+};
 const PER_DAY_KM: Record<Pace, number> = { tranquille: 12, normal: 16, soutenu: 22 };
 
 /**
