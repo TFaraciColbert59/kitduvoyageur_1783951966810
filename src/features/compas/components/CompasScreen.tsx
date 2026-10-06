@@ -113,14 +113,18 @@ export function CompasScreen({
     if (!poiKey || (typeof navigator !== 'undefined' && navigator.onLine === false)) return;
     let alive = true;
     setStagePoisDone(false);
-    // Recherche longue (beaucoup d'étapes, service lent) : le serveur rend ce
-    // qu'il a trouvé et dit qu'il en reste ; on redemande la suite (3 fois au plus).
+    // Chaque appel cherche deux nouveaux lieux au plus (les connus reviennent
+    // du cache) : les points s'ajoutent au fil des appels. Un appel en échec
+    // n'arrête pas les suivants ; 8 appels au plus (8 lieux d'étape).
     void (async () => {
-      for (let round = 0; round < 3 && alive; round += 1) {
+      let failures = 0;
+      for (let round = 0; round < 8 && alive; round += 1) {
         const res = await compasStagePoisAction({ tripId: rawData.model.tripId }).catch(() => null);
         if (!alive) return;
-        if (res?.success) setStagePois(res.pois);
-        if (!res?.success || !res.partial) break;
+        if (res?.success) {
+          if (res.pois.length) setStagePois(res.pois);
+          if (!res.partial) break;
+        } else if (++failures >= 2) break;
       }
       if (alive) setStagePoisDone(true);
     })();

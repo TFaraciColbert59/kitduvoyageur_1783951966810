@@ -7,7 +7,7 @@ import {
   type StagePoint,
 } from '../engine/stagePois';
 import type { RoutePoi } from '../engine/routePois';
-import { cached, coordKey } from './sharedCache';
+import { cached, coordKey, readShared } from './sharedCache';
 
 /**
  * Points utiles autour des étapes, depuis OpenStreetMap (Overpass). Partagés
@@ -17,8 +17,8 @@ import { cached, coordKey } from './sharedCache';
 
 const TTL_S = 7 * 86_400;
 const TIMEOUT_MS = 12_000;
-/** Une fonction Vercel s'arrête à 60 s : on rend ce qu'on a avant, l'écran redemande la suite. */
-const BUDGET_MS = 38_000;
+/** Une fonction Vercel s'arrête à 60 s : un appel ne cherche jamais plus de ~30 s. */
+const BUDGET_MS = 28_000;
 /** Instances publiques, essayées dans l'ordre (la première qui répond). */
 const ENDPOINTS = [
   'https://overpass-api.de/api/interpreter',
@@ -55,9 +55,11 @@ async function overpass(query: string, deadline: number): Promise<unknown | null
   return null;
 }
 
+const keyOf = (place: StagePoint) => `pois:v2:${coordKey(place.lat, place.lon, 3)}`;
+
 /** Points autour d'UN lieu, partagés une semaine (même village, tous les voyages). */
 async function poisAround(place: StagePoint, deadline: number): Promise<RoutePoi[] | null> {
-  return cached<RoutePoi[] | null>('place', `pois:v2:${coordKey(place.lat, place.lon, 3)}`, TTL_S, async () => {
+  return cached<RoutePoi[] | null>('place', keyOf(place), TTL_S, async () => {
     const payload = await overpass(buildOverpassQuery(place), deadline);
     if (!overpassUsable(payload)) {
       if (payload) console.warn('[compas] points autour : réponse coupée', (payload as { remark?: unknown }).remark);
@@ -67,29 +69,26 @@ async function poisAround(place: StagePoint, deadline: number): Promise<RoutePoi
   });
 }
 
+/** Lieux cherchés sur le réseau par appel : chaque appel reste court, l'écran enchaîne. */
+const FRESH_PER_CALL = 2;
+
 /**
- * `partial` : des lieux restent à chercher (temps écoulé, ou service muet) ;
- * l'écran redemande, les lieux déjà trouvés reviennent du cache aussitôt.
+ * Lieux déjà connus : servis du cache aussitôt. Lieux nouveaux : deux au plus
+ * par appel (une fonction Vercel s'arrête à 60 s). `partial` : il en reste,
+ * l'écran redemande et les points s'ajoutent au fil des appels.
  */
 export async function lookupStagePois(
   points: readonly StagePoint[]
 ): Promise<{ pois: RoutePoi[]; partial: boolean }> {
   const places = distinctPlaces(points);
   if (!places.length) return { pois: [], partial: false };
+  const known = await Promise.all(places.map((p) => readShared<RoutePoi[] | null>('place', keyOf(p))));
+  const fresh = places.filter((_, i) => known[i] == null);
+  const now = fresh.slice(0, FRESH_PER_CALL);
   const deadline = Date.now() + BUDGET_MS;
+  const found = await Promise.all(now.map((p) => poisAround(p, deadline)));
   const out: RoutePoi[] = [];
-  let partial = false;
-  // Deux à la fois au plus : le service public limite les requêtes simultanées.
-  for (let i = 0; i < places.length; i += 2) {
-    if (deadline - Date.now() < 4000) {
-      partial = true;
-      break;
-    }
-    const batch = await Promise.all(places.slice(i, i + 2).map((p) => poisAround(p, deadline)));
-    for (const list of batch) {
-      if (list == null) partial = true;
-      for (const p of list ?? []) if (!out.some((q) => q.id === p.id)) out.push(p);
-    }
-  }
-  return { pois: out, partial };
+  for (const list of [...known, ...found])
+    for (const p of list ?? []) if (!out.some((q) => q.id === p.id)) out.push(p);
+  return { pois: out, partial: fresh.length > now.length || found.some((l) => l == null) };
 }
