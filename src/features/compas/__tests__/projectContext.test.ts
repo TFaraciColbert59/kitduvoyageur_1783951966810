@@ -112,6 +112,8 @@ describe('Contexte projet : adaptation au projet, jamais un preset', () => {
     expect(scopeOf({ activity: 'hiking', days: 1, hours: null })).toBe('journee');
     expect(scopeOf({ activity: 'hiking', days: 7, hours: null })).toBe('sejour');
     expect(scopeOf({ activity: 'trail', days: null, hours: null })).toBe('sortie');
+    // « trail de 25 km samedi » : un jour, sans heure dite.
+    expect(scopeOf({ activity: 'trail', days: 1, hours: null })).toBe('sortie');
   });
 });
 

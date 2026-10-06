@@ -123,7 +123,9 @@ const AUTONOMY_TEXT: Record<CompasAutonomy, string> = {
 
 export function scopeOf(input: Pick<ContextInput, 'activity' | 'days' | 'hours'>): ProjectScope {
   if (input.hours != null && input.hours < 24) return 'sortie';
-  if (input.days == null) return SHORT_ACTIVITIES.has(input.activity ?? '') ? 'sortie' : 'sejour';
+  // Course et trail d'un jour : une sortie (quelques heures, sans nuit).
+  if (SHORT_ACTIVITIES.has(input.activity ?? '') && (input.days == null || input.days <= 1)) return 'sortie';
+  if (input.days == null) return 'sejour';
   return input.days <= 1 ? 'journee' : 'sejour';
 }
 
