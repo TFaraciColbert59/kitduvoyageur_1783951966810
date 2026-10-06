@@ -12,6 +12,7 @@ import {
 import { simplifyOffers, type CompasStayOffer } from '../engine/stays';
 import type { CompasLiveVertical } from '../engine/resaExamples';
 import { viatorDestinationNear } from './viatorDestinations';
+import { resolveProviderCredentials } from '@/features/booking/server/providerCredentials';
 
 /**
  * Le lieu du voyage sur la carte : la destination retrouvée par Dis-le, sinon
@@ -34,6 +35,17 @@ function tripPoint(trip: unknown): { at: { lat: number; lon: number } | null; br
   return first
     ? { at: { lat: Number(first.latitude), lon: Number(first.longitude) }, broad: false }
     : { at: null, broad: false };
+}
+
+/**
+ * Pourquoi le partenaire de cette catégorie est inactif, pour le corriger sur
+ * Vercel : uniquement des NOMS de variables (jamais une valeur de clé).
+ */
+function partnerReason(vertical: 'activity' | 'flight' | 'car' | 'hotel'): string {
+  const requested = (process.env.BOOKING_PROVIDER || 'auto').trim().toLowerCase();
+  if (requested === 'disabled') return ' (BOOKING_PROVIDER=disabled)';
+  const cred = resolveProviderCredentials(vertical === 'activity' ? 'viator' : 'routestack', process.env);
+  return cred.reason ? ` (${cred.message})` : '';
 }
 
 /**
@@ -138,7 +150,7 @@ export async function compasSearchOffersAction(
       return {
         success: false,
         unavailable: true,
-        error: 'Partenaire non activé pour cette catégorie : recherche en direct indisponible.',
+        error: `Partenaire non activé pour cette catégorie : recherche en direct indisponible.${partnerReason(request.vertical)}`,
       };
 
     const limited = await enforceRateLimit(user.id, {

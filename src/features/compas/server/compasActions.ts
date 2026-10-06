@@ -19,6 +19,7 @@ import { buildCompasDestinationSystem } from '@/lib/ai/features/compasAutofill';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { createBookingProvider } from '@/features/booking/server/bookingProvider';
 import { BookingProviderError } from '@/features/booking/server/bookingProviderErrors';
+import { resolveProviderCredentials } from '@/features/booking/server/providerCredentials';
 import type { AIFailureReason } from '@/lib/ai/providers/types';
 import {
   MAX_INTENT_CHARS,
@@ -789,7 +790,13 @@ export async function compasSearchStaysAction(
     if (!provider.supports('hotel'))
       return {
         success: false,
-        error: 'Recherche en direct indisponible : les clés partenaires ne sont pas activées.',
+        error: `Recherche en direct indisponible : les clés partenaires ne sont pas activées.${(() => {
+          // Noms de variables seulement, jamais une valeur : de quoi corriger sur Vercel.
+          if ((process.env.BOOKING_PROVIDER || '').trim().toLowerCase() === 'disabled')
+            return ' (BOOKING_PROVIDER=disabled)';
+          const cred = resolveProviderCredentials('routestack', process.env);
+          return cred.reason ? ` (${cred.message})` : '';
+        })()}`,
       };
 
     const limited = await enforceRateLimit(auth.userId, {
