@@ -115,7 +115,9 @@ function defaultSearchProducts(env: BookingProviderEnv): ViatorSearchProductsLik
   const config: ViatorClientConfig = {
     apiKey: key,
     baseUrl: resolved.baseUrl ?? undefined,
-    timeoutMs: Number(env.VIATOR_TIMEOUT_MS) || undefined,
+    // Une recherche sur un pays entier dépasse souvent 6 s (essai réel, Italie) :
+    // 15 s par défaut pour la réservation, VIATOR_TIMEOUT_MS reste prioritaire.
+    timeoutMs: Number(env.VIATOR_TIMEOUT_MS) || 15_000,
   };
   const search = createViatorProductSearch(config);
   return async (params) =>
