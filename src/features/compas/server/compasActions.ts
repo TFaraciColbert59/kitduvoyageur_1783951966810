@@ -824,7 +824,11 @@ export async function compasSearchStaysAction(
     };
   } catch (err) {
     if (err instanceof BookingProviderError)
-      return { success: false, error: 'Le fournisseur n’a pas répondu : réessaie plus tard.' };
+      return {
+        success: false,
+        // Code et statut seulement, jamais une clé ni la réponse brute.
+        error: `Le fournisseur n’a pas répondu : réessaie plus tard. (${err.provider ?? 'partenaire'} ${err.code}${err.status ? ` ${err.status}` : ''})`,
+      };
     console.error('[compas] compasSearchStaysAction', err);
     return { success: false, error: 'Erreur serveur' };
   }

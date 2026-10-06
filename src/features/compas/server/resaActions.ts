@@ -179,7 +179,12 @@ export async function compasSearchOffersAction(
         err.status ?? '',
         err.message
       );
-      return { success: false, error: 'Le partenaire n’a pas répondu : réessaie plus tard.' };
+      // Code et statut seulement (« viator upstream 401 ») : de quoi corriger la
+      // configuration, jamais une clé ni la réponse brute du partenaire.
+      return {
+        success: false,
+        error: `Le partenaire n’a pas répondu : réessaie plus tard. (${err.provider ?? 'partenaire'} ${err.code}${err.status ? ` ${err.status}` : ''})`,
+      };
     }
     console.error('[compas] compasSearchOffersAction', err);
     return { success: false, error: 'Erreur serveur' };
