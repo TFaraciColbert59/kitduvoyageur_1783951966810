@@ -105,6 +105,11 @@ hydratation, sécurité.
    activité, fréquentation ; rien d'inventé sous les tropiques), dates posées par le
    préremplissage, annoncées, modifiables dans « Quand », retirées par « Annuler ».
 
+4. **Phrase de départ, points sur place, Résa** — fait : la phrase du Compas vide est
+   gardée sur le voyage jusqu'à son application ; restos, commerces, santé, eau,
+   hébergements, transports autour de chaque étape (OpenStreetMap) ; destination Viator
+   choisie par la carte ; Résa nomme la variable manquante quand un partenaire est inactif.
+
 ### Suite proposée
 - Sac : optimisation sous le poids max (alléger, remplacer par plus léger de l'inventaire
   ou de la boutique), doublons et objets inutiles signalés.
