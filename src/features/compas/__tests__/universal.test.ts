@@ -380,3 +380,46 @@ describe('Géocodage inverse de secours (Nominatim)', () => {
     expect(p).toMatchObject({ locality: 'Annecy', countryCode: 'FR' });
   });
 });
+
+describe('Phrases tirées au hasard (20 parcours) : lecture sans IA', () => {
+  const read = (t: string) => {
+    const a = parseIntentRules(t, TODAY);
+    const one = <K extends string>(k: K) => a.find((x) => x.type === k) as Record<string, unknown> | undefined;
+    return {
+      dest: one('set_destination')?.place,
+      act: one('set_activity')?.activity,
+      route: one('search_route')?.query,
+      wishes: a.filter((x) => x.type === 'wish').map((x) => (x as { label: string }).label),
+    };
+  };
+
+  it('« sur la », « autour du lac de », « traversée des », « in the » ouvrent une destination', () => {
+    expect(read('canoë 3 jours sur la Dordogne')).toMatchObject({ dest: 'Dordogne', act: 'water' });
+    expect(read('week-end à vélo autour du lac d’Annecy').dest).toBe('Lac d’Annecy');
+    expect(read('traversée des Pyrénées 15 jours')).toMatchObject({ dest: 'Pyrénées', act: 'trekking' });
+    expect(read('Hiking 5 days in the Swiss Alps')).toMatchObject({ dest: 'Swiss Alps', act: 'hiking' });
+  });
+  it('un nom commun de lieu suivi d’un nom propre compte (« calanques de Marseille »)', () => {
+    expect(read('randonnée 3h dans les calanques de Marseille')).toMatchObject({
+      dest: 'Calanques de Marseille',
+      route: 'Calanques de Marseille',
+    });
+    // Un nom commun seul n'est pas un lieu.
+    expect(read('rando dans les bois demain').dest).toBeUndefined();
+  });
+  it('« pays dans l’endroit » : le pays est la destination, l’endroit une envie et une recherche', () => {
+    expect(read('7 jours de rando au Maroc dans l’Atlas')).toMatchObject({ dest: 'Maroc', route: 'Atlas', wishes: ['Atlas'] });
+    expect(read('road trip 10 jours aux États-Unis dans l’Utah')).toMatchObject({ dest: 'États-Unis', act: 'roadtrip' });
+    expect(read('une semaine en Grèce dans les Cyclades')).toMatchObject({ dest: 'Grèce', wishes: ['Cyclades'] });
+  });
+  it('un jour de la semaine ne colle pas au lieu', () => {
+    expect(read('trail de 30 km dans le Jura dimanche')).toMatchObject({ dest: 'Jura', route: 'Jura', act: 'trail' });
+  });
+  it('un code de sentier n’est pas une destination ; GR, chemin de l’Inca, bivouac seul', () => {
+    expect(read('6 jours sur le GR20 en Corse')).toMatchObject({ dest: 'Corse', act: 'trekking' });
+    expect(read('5 jours au Pérou sur le chemin de l’Inca')).toMatchObject({ dest: 'Pérou', act: 'trekking' });
+    expect(read('bivouac 1 nuit dans le Vercors')).toMatchObject({ dest: 'Vercors', act: 'bivouac' });
+    // Une rando avec bivouac reste une rando.
+    expect(read('rando 2 jours avec bivouac dans le Vercors').act).toBe('hiking');
+  });
+});

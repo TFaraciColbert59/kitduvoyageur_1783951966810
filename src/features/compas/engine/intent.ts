@@ -256,10 +256,23 @@ function clean(fragment: string, max = 40): string {
 /** Coupe un fragment au premier mot qui ouvre une autre idée. */
 function upToBreak(fragment: string): string {
   const cut = fragment.search(
-    /\s(?:et|puis|mais|pour|avec|en|du|le|la|a|au|à|on|depart|départ|des|dès)\s|[,.;!?]|\d/i
+    /\s(?:et|puis|mais|pour|avec|en|du|le|la|a|au|à|on|depart|départ|des|dès)\s|\s(?:lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|demain|ce|cette|prochain|prochaine)(?=\s|$)|[,.;!?]|\d/i
   );
   return cut >= 0 ? fragment.slice(0, cut) : fragment;
 }
+
+/** Nom commun de lieu qui peut ouvrir un nom propre (« lac d'Annecy »). */
+const PLACE_NOUN =
+  /^(?:lacs?|calanques?|massifs?|parc(?: national| naturel(?: régional)?)?|gorges|vallée|vallee|îles?|iles?|côte|cote|monts?|col|forêt|foret|plateau|baie|golfe|cirque|presqu['’]île|presqu['’]ile|canyon|désert|desert|volcans?|aiguilles?|dents?)\s+(?:de la |de l['’]|du |des |de |d['’])/iu;
+
+/** Le fragment commence-t-il par un nom de lieu (nom propre, ou « lac de X ») ? */
+function properLead(fragment: string): boolean {
+  if (/^\p{Lu}/u.test(fragment)) return true;
+  const lead = PLACE_NOUN.exec(fragment);
+  return !!lead && /^\p{Lu}/u.test(fragment.slice(lead[0].length));
+}
+
+const capitalized = (s: string) => (s ? s[0].toLocaleUpperCase('fr') + s.slice(1) : s);
 
 export function parseIntentRules(text: string, today: string): CompasIntentAction[] {
   const src = text.normalize('NFC').slice(0, 400);
@@ -471,10 +484,12 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     [/\b(city ?trip|citytrip)\b/, 'citytrip'],
     [/\b(plage|plages|farniente|bord de mer|baignade|beach)\b/, 'beach'],
     [/\b(rando|randos|randonnee|randonnees|hiking|hike)\b/, 'hiking'],
-    [/\btreks?\b|\btrekking\b/, 'trekking'],
+    [/\btreks?\b|\btrekking\b|\bgr ?\d{1,3}\b|\btraversee\b|\btour du mont|\bchemin de l'inca\b|\binca trail\b|\bcompostelle\b/, 'trekking'],
     [/\broad ?trip\b/, 'roadtrip'],
     [/\bbushcraft\b/, 'bushcraft'],
     [/\b(culturel|culturelle|musees?)\b/, 'cultural'],
+    // En dernier : « rando avec bivouac » reste une rando, « bivouac 1 nuit » est un bivouac.
+    [/\b(bivouac|bivouacs|bivouaquer)\b/, 'bivouac'],
   ];
   const act = activity.find(([re]) => re.test(plain));
   if (act) out.push({ type: 'set_activity', activity: act[1] });
@@ -521,22 +536,40 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
 
   /* Destination : « au Népal », « en Islande », « à Chamonix » (nom propre) */
   // « à la Réunion », « à l’Île de Ré », « dans l’Ain » ; « in Iceland » (anglais).
-  for (const m of plain.matchAll(/(?:^|[\s,(])(?:(?:a|dans) l'\s*|(?:au|aux|en|in|a la|a|dans le|dans la|dans les)\s+)/g)) {
+  // « sur la Dordogne », « autour du lac d'Annecy », « traversée des Pyrénées »,
+  // « in the Swiss Alps » ; un nom commun de lieu (« lac », « calanques ») suivi
+  // d'un nom propre compte (« dans les calanques de Marseille »).
+  for (const m of plain.matchAll(
+    /(?:^|[\s,(])(?:(?:a|dans|sur|autour de) l'\s*|(?:au|aux|en|in the|in|a la|a|dans le|dans la|dans les|sur le|sur la|sur les|autour du|autour de|autour des|(?:traversee|tour) (?:des|du|de la))\s+)/g
+  )) {
     const at = (m.index ?? 0) + m[0].length;
     const original = src.slice(at, at + 60);
-    if (!/^\p{Lu}/u.test(original)) continue;
+    if (!properLead(original)) continue;
+    // « sur le GR20 » : un code de sentier, pas une destination.
+    if (/^\p{Lu}{1,4}\s?\d/u.test(original)) continue;
     // Coupe à la ponctuation ou au premier chiffre, puis au premier mot d'une autre idée.
     const place = clean(
       original.split(/[,.;!?\d]/)[0].split(
         // Fin du nom : un mot qui ouvre une autre idée (durée, date, compagnie).
         // « du », « le », « la » ne coupent que devant un nombre (« Afrique du Sud »,
         // mais « Vercors du 3 au 10 juin »).
-        /\s(?:(?:du|le|la|les)(?=\s+\d)|pour|avec|en|a|à|à partir|pendant|durant|sur|et|un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|quinze|vingt|cette|ce|tout|toute|semaines?|jours?|nuits?|days?|weeks?|nights?|for|week-?end|début|debut|mi|fin|demain|après-demain|apres-demain|aujourd['’]hui|prochain|prochaine|janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre)(?=[\s-]|$)/i
+        /\s(?:(?:du|le|la|les)(?=\s+\d)|pour|avec|en|a|à|à partir|pendant|durant|sur|et|un|une|deux|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|quinze|vingt|cette|ce|tout|toute|semaines?|jours?|nuits?|days?|weeks?|nights?|for|week-?end|début|debut|mi|fin|demain|après-demain|apres-demain|aujourd['’]hui|prochain|prochaine|janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre)(?=[\s-]|$)/i
       )[0],
       50
     );
     if (place.length >= 2 && !monthOf(plainOf(place)) && !WEEKDAYS.includes(plainOf(place))) {
-      out.push({ type: 'set_destination', place });
+      // « Maroc dans l'Atlas » : la destination est le pays, le lieu précis une
+      // envie (la recherche de parcours le reprend plus bas).
+      const inner = /\s+dans\s+(?:l'|l’|le\s|la\s|les\s)\s*(\p{Lu}.*)$/u.exec(place);
+      if (inner) {
+        const country = clean(place.slice(0, inner.index), 50);
+        if (country.length >= 2) {
+          out.push({ type: 'set_destination', place: capitalized(country) });
+          if (inner[1].trim().length >= 3) out.push({ type: 'wish', label: clean(inner[1], 40) });
+          break;
+        }
+      }
+      out.push({ type: 'set_destination', place: capitalized(place) });
       // « en Patagonie, Torres del Paine » : le lieu précis qui suit devient une
       // envie, transmise au spécialiste de l'itinéraire (sans resserrer la
       // destination : « Japon, Tokyo et Kyoto » reste un voyage au Japon).
@@ -554,8 +587,9 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
   for (const m of plain.matchAll(place)) {
     const at = (m.index ?? 0) + m[0].length;
     const original = src.slice(at, at + 60);
-    if (!/^\p{Lu}/u.test(original)) continue;
-    const query = clean(upToBreak(original), 50);
+    if (!properLead(original)) continue;
+    const lead = /^\p{Lu}/u.test(original) ? '' : (PLACE_NOUN.exec(original)?.[0] ?? '');
+    const query = capitalized(clean(lead + upToBreak(original.slice(lead.length)), 50));
     if (query.length >= 3 && !monthOf(plainOf(query))) {
       out.push({ type: 'search_route', query });
       break;
