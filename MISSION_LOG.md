@@ -7,8 +7,10 @@
 - **Lieux** : « Vietnam » donnait le Vietnam Veterans Memorial (Washington) → nom sans espaces (« Viêt Nam »), nom plus long réservé aux villes et régions ; « Le Tour » (Chamonix) placé dans le Var → recherche biaisée vers une destination compacte ; « Cusco » donnait une maison isolée du nord du Pérou → ville avant hameau avant maison, Cuzco = Cusco ; nom d'étape pris sur la carte quand le nom proposé n'existe pas ou porte un commentaire.
 - **Itinéraire** : on avance chaque jour, une traversée va d'un bout à l'autre, un grand massif n'est pas figé sur un pays ; itinéraire figé (> 3 jours au même lieu) ou à moitié inventé redemandé à la visite suivante sans relire le partagé.
 - **Trajet, kit, conseils** : trajet estimé en voiture à moins de 900 km quand le calcul de route échoue (plus de vol pour les Dolomites) ; préparation relancée seule après la limite de fréquence (Chamonix, Jura restaient vides) ; échelle « Journée/Sortie » au lieu de « Raid » pour un jour ; kit d'une sortie courte allégé ; gants selon la latitude et l'hémisphère, crampons selon saison et activité ; conseils accentués, vrais depuis la France (pas d'adaptateur en Europe, passeport hors Schengen, pas de permis inventé).
+- **Tours 4 à 6** : « Cusco » donnait encore une maison isolée → la province avant la maison isolée, un nom plus long seulement pour un bourg, recherches de lieux relues avec leur taille (cache v2), nom exact préféré (Pisac, pas Pisaca) ; jamais un hôtel comme nom d'étape approché ; pas de crampons à 4 300 m sous les tropiques. Vérifié : Pérou → Cusco, Pisac, Chinchero ; Chamonix et Vietnam inchangés.
+- **Limite connue** : la qualité de l'itinéraire dépend du modèle (traversée des Pyrénées encore en allers-retours côté français) ; un itinéraire figé ou inventé est redemandé à la visite suivante.
 - **Laissé tel quel (choix documentés)** : pas de période proposée sous les tropiques (Pérou, Vietnam : « Dates à choisir ») ; « en octobre » ce mois-ci part d'aujourd'hui.
-- Preuves : tsc et eslint propres ; tests Compas 1335/1335 ; parcours rejoués sur la preview après chaque correction.
+- Preuves : tsc et eslint propres ; tests Compas et kit 1340/1340 ; parcours rejoués sur la preview après chaque correction.
 
 ## 2026-10-06 — Résa : clés partenaires reliées, diagnostics affichés
 
