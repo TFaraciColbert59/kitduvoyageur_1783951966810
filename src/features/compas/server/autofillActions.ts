@@ -316,6 +316,10 @@ function withoutPending(c: Record<string, unknown>): Record<string, unknown> {
 
 /** Ce qu'une réadaptation a gardé du préremplissage précédent (retouché ou encore juste). */
 interface Carry {
+  /** Étapes du préremplissage à remplacer, mais seulement par un itinéraire exploitable. */
+  replaceStepIds?: string[];
+  /** Le parcours du catalogue posé par le préremplissage part avec ces étapes. */
+  replaceRoute?: boolean;
   stepIds: string[];
   routeSet: boolean;
   itemIds: string[];
@@ -332,6 +336,8 @@ function readCarry(meta: Record<string, unknown>): Carry | null {
   const c = compasMeta(meta).autofill_carry as Record<string, unknown> | undefined;
   if (!c || typeof c !== 'object') return null;
   return {
+    replaceStepIds: strIds(c.replaceStepIds),
+    replaceRoute: c.replaceRoute === true,
     stepIds: strIds(c.stepIds),
     routeSet: c.routeSet === true,
     itemIds: strIds(c.itemIds),
@@ -378,6 +384,8 @@ export async function compasAutofillAction(
     const nightsCount = Math.max(0, days - 1);
     const party = Math.max(1, trip.party_size ?? 1);
     const prev = compasMeta(meta).autofill as { runId?: string } | undefined;
+    // Un second appel « rest » (onglet rouvert, double déclenchement) arrive après la fin : rien à dire.
+    if (prev?.runId && phase === 'rest') return { success: true, pending: true, stepsCreated: 0 };
     if (prev?.runId) return { success: false, error: 'Le voyage est déjà prérempli : annule d’abord pour relancer.' };
     const pending = readPending(meta);
     const carry = readCarry(meta);
@@ -470,8 +478,22 @@ export async function compasAutofillAction(
     let routeSet = resume?.routeSet ?? false;
     const createdStepIds: string[] = [...(resume?.stepIds ?? [])];
     let stagePlaces: Array<{ day: number; name: string; lat: number; lon: number; move: StageMove; note: string | null }> = [];
-    if (steps.length === 0 && !resume) {
-      if (HIKING_ACTIVITIES.has(activity) && compas.routeId == null && anchor.radiusKm <= 80) {
+    // Réadaptation : l'ancien itinéraire n'est remplacé que par un meilleur.
+    const replacing = !resume ? (carry?.replaceStepIds ?? []) : [];
+    const dropReplaced = async () => {
+      if (!replacing.length) return;
+      await supabase.from('trip_steps').delete().eq('trip_id', tripId).in('id', replacing);
+      if (carry?.replaceRoute) {
+        const md = await patchTripMetadata(supabase, tripId, (m) => {
+          const next = { ...m };
+          delete next.route_id;
+          return next;
+        });
+        await supabase.from('trips').update({ metadata: md }).eq('id', tripId);
+      }
+    };
+    if ((steps.length === 0 || replacing.length > 0) && !resume) {
+      if (HIKING_ACTIVITIES.has(activity) && (compas.routeId == null || carry?.replaceRoute) && anchor.radiusKm <= 80) {
         const { data: near } = await supabase.rpc('compas_search_routes', {
           p_lat: anchor.lat,
           p_lng: anchor.lon,
@@ -485,6 +507,7 @@ export async function compasAutofillAction(
           expectedKm(ctx, { hours: compas.durationHours, days, targetKm: compas.preferences?.targetKm ?? null })
         );
         if (best) {
+          await dropReplaced();
           const { error } = await supabase
             .from('trips')
             .update({
@@ -609,7 +632,11 @@ export async function compasAutofillAction(
           const at = last ?? { name: anchor.name, lat: anchor.lat, lon: anchor.lon };
           stagePlaces.push({ day: p.day, name: at.name, lat: at.lat, lon: at.lon, move: hit ? move : 'aucun', note: p.note });
         }
-        if (!proposed.length) {
+        if (!proposed.length && replacing.length) {
+          // L'IA n'a pas répondu : on garde l'itinéraire d'avant plutôt qu'un moins bon.
+          notes.push('Itinéraire gardé tel quel : la nouvelle proposition n’est pas arrivée à temps. Réessaie plus tard depuis « Parcours ».');
+          stagePlaces = [];
+        } else if (!proposed.length) {
           notes.push('Itinéraire détaillé indisponible pour le moment : une étape par jour sur le lieu, à affiner dans Parcours.');
           stagePlaces = Array.from({ length: days }, (_, i) => ({
             day: i + 1,
@@ -665,6 +692,7 @@ export async function compasAutofillAction(
           if ((st.move === 'marche' && km > 45) || (st.move === 'velo' && km > 180)) return null;
           return { km: Math.round(km * 10) / 10, ascent: ascent != null ? Math.round(ascent) : null, measured: true };
         });
+        if (stagePlaces.length) await dropReplaced();
         const rows = stagePlaces.map((st, i) => ({
           trip_id: tripId,
           day_number: st.day,
@@ -678,7 +706,7 @@ export async function compasAutofillAction(
           distance_km: legs[i]?.km ?? null,
           elevation_gain_m: legs[i]?.ascent ?? null,
         }));
-        await supabase.from('trip_steps').insert(rows);
+        if (rows.length) await supabase.from('trip_steps').insert(rows);
       }
       steps = await loadSteps(supabase, tripId);
       createdStepIds.push(...steps.map((s) => s.id));
@@ -1252,7 +1280,9 @@ export async function compasRefreshAutofillAction(
       const { data } = await supabase.from('trip_steps').select('id, updated_at').eq('trip_id', tripId).in('id', stepIds);
       const rows = (data ?? []) as Array<{ id: string; updated_at: string | null }>;
       if (rows.every((r) => untouchedSince(r.updated_at, at))) {
-        await supabase.from('trip_steps').delete().eq('trip_id', tripId).in('id', rows.map((r) => r.id));
+        // Remplacées seulement si le nouvel itinéraire est exploitable (sinon gardées).
+        carry.replaceStepIds = rows.map((r) => r.id);
+        carry.replaceRoute = run.routeSet === true;
       } else {
         // Étapes retouchées : l'itinéraire est à toi, on garde tout et on refait le reste.
         parts = parts.filter((p) => p !== 'steps');
@@ -1264,12 +1294,10 @@ export async function compasRefreshAutofillAction(
       carry.stepIds = stepIds;
       carry.routeSet = run.routeSet === true;
     }
-    const stepsRedone = parts.includes('steps');
 
     /* Nuits : un hébergement posé par le préremplissage et resté tel quel est libéré. */
     let staysKept = 0;
     for (const s of run.stays ?? []) {
-      if (stepsRedone) continue; // l'étape elle-même est refaite
       if (!parts.includes('nights')) {
         carry.stays.push(s);
         continue;
@@ -1317,7 +1345,6 @@ export async function compasRefreshAutofillAction(
       const c = { ...compasMeta(m) };
       delete c.autofill; // le préremplissage repasse
       const next: Record<string, unknown> = { ...m, compas: { ...c, autofill_carry: carry } };
-      if (stepsRedone && run.routeSet) delete next.route_id;
       return next;
     });
     await supabase
