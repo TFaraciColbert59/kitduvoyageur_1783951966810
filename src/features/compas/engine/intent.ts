@@ -473,6 +473,13 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     );
     if (place.length >= 2 && !monthOf(plainOf(place)) && !WEEKDAYS.includes(plainOf(place))) {
       out.push({ type: 'set_destination', place });
+      // « en Patagonie, Torres del Paine » : le lieu précis qui suit devient une
+      // envie, transmise au spécialiste de l'itinéraire (sans resserrer la
+      // destination : « Japon, Tokyo et Kyoto » reste un voyage au Japon).
+      const after = /^\s*,\s*(\p{Lu}[^,.;!?\d]*)/u.exec(original.slice(original.indexOf(place) + place.length));
+      const precise = after ? clean(after[1].split(/\s(?:et|pour|avec|en|du|pendant|durant|à|a)\s/i)[0], 40) : '';
+      if (precise.length >= 3 && !monthOf(plainOf(precise)) && !WEEKDAYS.includes(plainOf(precise)))
+        out.push({ type: 'wish', label: precise });
       break;
     }
   }

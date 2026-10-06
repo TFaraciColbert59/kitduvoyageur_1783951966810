@@ -265,3 +265,17 @@ describe('Ce que l’IA ajoute sans que la phrase le dise', () => {
     expect(parseIntentRules('2 weeks in Peru', '2026-10-05')).toContainEqual({ type: 'set_duration', days: 14, hours: null });
   });
 });
+
+describe('Lieu précis après la destination', () => {
+  it('« en Patagonie, Torres del Paine » : Torres del Paine devient une envie', () => {
+    const r = parseIntentRules('Trek en Patagonie, Torres del Paine, 8 jours en janvier', '2026-10-06');
+    expect(r).toContainEqual({ type: 'set_destination', place: 'Patagonie' });
+    expect(r).toContainEqual({ type: 'wish', label: 'Torres del Paine' });
+  });
+  it('rien ajouté sans lieu après la virgule', () => {
+    const r = parseIntentRules('Trek en Patagonie, 8 jours en janvier', '2026-10-06');
+    expect(r.some((a) => a.type === 'wish')).toBe(false);
+    const r2 = parseIntentRules('Road trip en Islande, en juillet', '2026-10-06');
+    expect(r2.some((a) => a.type === 'wish')).toBe(false);
+  });
+});

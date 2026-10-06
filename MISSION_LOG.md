@@ -5,7 +5,9 @@
 - Production testée de bout en bout avec le compte démo (mot de passe réinitialisé) : Islande, Patagonie, randonnée en anglais ; itinéraire, dates, nuits, kit, budget et conseils de l'IA NVIDIA OK, météo MET Norway OK.
 - **« 7 jours en juillet » donnait 8 jours** : une date de FIN de l'IA était acceptée dès que le mois était dit, et écrasait la durée. Le mois seul n'ancre plus que le départ.
 - **Destination à cheval sur une frontière** (Patagonie lue argentine → étapes chiliennes écartées, trek parti vers El Calafate) : une étape introuvable dans le pays est cherchée chez le voisin, à 300 km au plus de la précédente.
-- Preuves : tsc, eslint propres ; tests Compas 289/289.
+- **Lieu précis ignoré** (« Trek en Patagonie, Torres del Paine » partait côté argentin, El Chaltén) : le lieu en majuscule qui suit la destination après une virgule devient une envie transmise au spécialiste de l'itinéraire, sans resserrer la destination.
+- Vérifié sur l'aperçu Vercel de la PR : bouton « Connexion démo » OK (identifiants posés dans Vercel), Islande 7 j → 1–7 juil.
+- Preuves : tsc, eslint propres ; tests Compas 291/291.
 
 ## 2026-10-05 — Itinéraire : plus de zigzag, plus d'étape à l'autre bout du pays
 
