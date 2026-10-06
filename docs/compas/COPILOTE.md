@@ -95,11 +95,19 @@ hydratation, sécurité.
 
 ## 6. Lots
 
-1. **Contexte projet** : résolution + provenance + adaptations, personnalisations projet
-   étendues, compréhension des contraintes (« 3 nuits dehors », « sous 12 kg »,
-   « surtout de la montagne »), activités course à pied et trail, portée des modules,
-   Verdict sur le poids max. Le préremplissage lit le contexte résolu.
-2. **Recalcul ciblé** : relancer seulement les parties dépendantes d'un changement,
-   en conservant les choix de l'utilisateur.
-3. **Meilleure période** : sans date, une période proposée (saison, activité,
-   destination), visible et modifiable.
+1. **Contexte projet** — fait (2026-10-06) : résolution + provenance + adaptations,
+   personnalisations projet, contraintes (« 3 nuits dehors », « sous 12 kg », « surtout de
+   la montagne », niveau, distance), course à pied et trail, portée des modules, Verdict
+   sur le poids max, préremplissage lu depuis le contexte.
+2. **Recalcul ciblé** — fait : empreinte `basis`, `staleParts`, `compasRefreshAutofillAction`
+   (seules les lignes jamais retouchées sont refaites), réadaptation annoncée à l'écran.
+3. **Meilleure période** — fait : `engine/period.ts` (saison, hémisphère, latitude,
+   activité, fréquentation ; rien d'inventé sous les tropiques), dates posées par le
+   préremplissage, annoncées, modifiables dans « Quand », retirées par « Annuler ».
+
+### Suite proposée
+- Sac : optimisation sous le poids max (alléger, remplacer par plus léger de l'inventaire
+  ou de la boutique), doublons et objets inutiles signalés.
+- Groupe : matériel individuel / collectif selon le mode de nuit (hôtel ≠ autonomie).
+- Portée à l'écran : masquer Résa et l'hébergement pour une sortie de quelques heures.
+- Mixte : afficher le mélange retenu (marche, découverte, repos…) par jour.

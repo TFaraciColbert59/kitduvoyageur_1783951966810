@@ -54,6 +54,7 @@ import {
 } from '../engine/autofill';
 import { compasMeta, patchTripMetadata, readProfile, requireEditor, resplitSteps, tripBasis, type Supa } from './compasServer';
 import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
+import { bestPeriod, monthName } from '../engine/period';
 import { partsText, staleParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { lookupDestination, lookupReverse, stageCandidates } from './placeLookup';
 import { destinationRadiusKm, distanceKm, maxLegKm, pickPlace, type CompasPlace } from '../engine/places';
@@ -103,6 +104,8 @@ interface PendingRun {
   stepIds: string[];
   routeSet: boolean;
   notes: string[];
+  /** Dates posées par le préremplissage (meilleure période) : l'annulation les retire. */
+  datesSet?: boolean;
 }
 
 const point = z.object({ lat: z.number().min(-90).max(90), lon: z.number().min(-180).max(180) });
@@ -299,6 +302,7 @@ function readPending(meta: Record<string, unknown>): PendingRun | null {
     runId: p.runId,
     stepIds: Array.isArray(p.stepIds) ? p.stepIds.filter((x): x is string => typeof x === 'string') : [],
     routeSet: p.routeSet === true,
+    datesSet: p.datesSet === true,
     notes: Array.isArray(p.notes) ? p.notes.filter((x): x is string => typeof x === 'string') : [],
   };
 }
@@ -440,6 +444,26 @@ export async function compasAutofillAction(
             ? 'Partage ta position ou dis où tu sors (« à Annecy », « en forêt de Fontainebleau »…).'
             : 'Dis-moi où tu pars (« au Népal », « dans le Vercors »…).',
       };
+
+    /* 1 bis. Quand : sans date, la meilleure période pour CE projet (annoncée, modifiable). */
+    let datesSet = resume?.datesSet ?? false;
+    if (!trip.start_date && !resume && ctx.scope === 'sejour') {
+      const period = bestPeriod({ activity, lat: anchor.lat, today, days });
+      if (period) {
+        const { error } = await supabase
+          .from('trips')
+          .update({ start_date: period.start, end_date: period.end, updated_at: new Date().toISOString() })
+          .eq('id', tripId);
+        if (!error) {
+          trip.start_date = period.start;
+          trip.end_date = period.end;
+          datesSet = true;
+          notes.push(
+            `Période proposée : ${monthName(period.month)} (${period.why}). Change-la dans « Quand » si elle ne te va pas.`
+          );
+        }
+      }
+    }
 
     /* 2. Étapes : parcours du catalogue (destination locale), sinon itinéraire du spécialiste vérifié sur la carte. */
     let stepsCreated = resume?.stepIds.length ?? 0;
@@ -662,7 +686,7 @@ export async function compasAutofillAction(
     }
 
     if (phase === 'steps') {
-      const run: PendingRun = { runId, stepIds: createdStepIds, routeSet, notes: notes.slice(0, 6) };
+      const run: PendingRun = { runId, stepIds: createdStepIds, routeSet, notes: notes.slice(0, 6), datesSet };
       const metadata = await patchTripMetadata(supabase, tripId, (m) => ({
         ...m,
         compas: { ...compasMeta(m), autofill_pending: run },
@@ -1080,6 +1104,7 @@ export async function compasAutofillAction(
           expenseIds: merged(createdExpenseIds, carry?.expenseIds),
           stays: [...stays, ...(carry?.stays ?? []).filter((s) => !stays.some((x) => x.stepId === s.stepId))],
           budgetSet: setBudget,
+          datesSet,
           notes: notes.slice(0, 6),
           // Réglages qui ont produit ce préremplissage : un changement dit quoi refaire.
           basis: tripBasis(trip, activity),
@@ -1126,6 +1151,7 @@ export async function compasUndoAutofillAction(
           expenseIds?: string[];
           stays?: Array<{ stepId: string; name: string }>;
           budgetSet?: boolean;
+          datesSet?: boolean;
         }
       | undefined;
     if (!run?.runId) return { success: false, error: 'Rien à annuler.' };
@@ -1149,7 +1175,12 @@ export async function compasUndoAutofillAction(
     });
     await supabase
       .from('trips')
-      .update({ metadata, ...(run.budgetSet ? { estimated_budget: null } : {}), updated_at: new Date().toISOString() })
+      .update({
+        metadata,
+        ...(run.budgetSet ? { estimated_budget: null } : {}),
+        ...(run.datesSet ? { start_date: null, end_date: null } : {}),
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', tripId);
     return { success: true };
   } catch (err) {

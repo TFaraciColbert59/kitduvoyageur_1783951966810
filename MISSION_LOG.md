@@ -1,5 +1,11 @@
 # MISSION LOG — LKDV
 
+## 2026-10-06 — Compas copilote, lot 3 : meilleure période sans date
+
+- **`engine/period.ts`** (pur, testé) : sans date, un mois conseillé selon l'activité, l'hémisphère, la latitude et la fréquentation (Allemagne en randonnée → septembre, Norvège → juillet, ski → février, ville → mai, Patagonie → mars) ; départ un samedi, au moins trois semaines devant ; sous les tropiques, rien plutôt qu'une fausse certitude.
+- Le préremplissage pose ces dates (séjour seulement), l'annonce (« Période proposée : septembre (sentiers déneigés, moins de monde qu’en août). Change-la dans « Quand » ») ; « Annuler » les retire.
+- Preuves : tsc, eslint propres ; tests Compas 334/334.
+
 ## 2026-10-06 — Compas copilote, lot 2 : réadaptation ciblée
 
 - **`engine/dependencies.ts`** (pur, testé) : le préremplissage garde l'empreinte des réglages qui l'ont produit (`basis` : lieu arrondi à ~1 km, jours, heures, mois, activité, personnes, nuits, nuits dehors, autonomie, priorité, rythme, niveau, terrain, distance). Un changement → seules les parties qui en dépendent : 7 → 10 jours refait itinéraire, nuits, trajet, sac, budget ; une personne de plus : trajet, sac, budget (pas l'itinéraire) ; « 3 nuits dehors » : nuits, sac, budget.
