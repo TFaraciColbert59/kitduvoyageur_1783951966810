@@ -1389,7 +1389,7 @@ describe('CompasScreen', () => {
         },
       ],
     });
-    compas.compasSetPartySizeAction.mockResolvedValueOnce({ success: false, error: 'Connexion perdue' });
+    compas.compasSetPartySizeAction.mockResolvedValueOnce({ success: false, error: 'Connexion perdue' } as never);
     render(<CompasScreen data={{ ...makeData(), startSay: 'rando à 4' }} />);
     await waitFor(() => expect(compas.compasSetPartySizeAction).toHaveBeenCalled());
     await new Promise((r) => setTimeout(r, 50));
