@@ -137,6 +137,20 @@ describe('limites réelles', () => {
     );
     expect(past[0].reason).toBe('Date passée');
   });
+  it('une envie qui redit la destination est écartée (« voyage au Japon »)', () => {
+    const p = validateActions(
+      [
+        { action: { type: 'set_destination', place: 'Japon' }, source: 'ia' },
+        { action: { type: 'wish', label: 'voyage au Japon' }, source: 'ia' },
+        { action: { type: 'wish', label: 'temples de Kyoto' }, source: 'ia' },
+        { action: { type: 'wish', label: 'plaisir du trail' }, source: 'ia' },
+      ],
+      ctx
+    );
+    expect(p[1]).toMatchObject({ ok: false, reason: 'Rien de plus que la destination ou l’activité' });
+    expect(p[2]).toMatchObject({ ok: true });
+    expect(p[3]).toMatchObject({ ok: false, reason: 'Rien de plus que la destination ou l’activité' });
+  });
 
   it("l'IA passe d'abord, les règles complètent sans doublon", () => {
     const merged = mergeActions(

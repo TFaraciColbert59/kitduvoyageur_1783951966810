@@ -308,6 +308,8 @@ export function CompasScreen({
   const autofillRunning = useRef(false);
   /** Une reprise automatique après une coupure (réseau, limite serveur), pas plus. */
   const autofillRetried = useRef(false);
+  /** Une relance différée après la limite de fréquence, pas plus. */
+  const autofillDeferred = useRef(false);
   const autofill = useCallback((redo?: { label: string; kept: string[] }) => {
     if (autofillRunning.current) return;
     autofillRunning.current = true;
@@ -358,7 +360,16 @@ export function CompasScreen({
         return compasAutofillAction({ tripId: model.tripId, tripSlug: model.slug, from, phase: 'rest' });
       })
       .then((res) => {
-        if (!res.success) return notify(res.error, 'bad');
+        if (!res.success) {
+          // Limite de fréquence : l'aventure n'est pas laissée vide, la
+          // préparation repart seule à la fin de la fenêtre (une fois).
+          if (res.retryInS && !autofillDeferred.current) {
+            autofillDeferred.current = true;
+            setTimeout(() => autofillRef.current?.(redo), res.retryInS * 1000 + 2000);
+            return notify(res.error);
+          }
+          return notify(res.error, 'bad');
+        }
         if (!('summary' in res)) {
           // Une autre préparation du même voyage est en cours (autre onglet,
           // écran remonté) : on relit le voyage quand elle aura écrit.

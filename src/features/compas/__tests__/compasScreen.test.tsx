@@ -771,6 +771,24 @@ describe('CompasScreen', () => {
     expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(2);
   });
 
+  it('Préremplissage : limite de fréquence → annoncé, relancé seul à la fin de la fenêtre', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      autofill.compasAutofillAction.mockImplementationOnce(
+        async () =>
+          ({ success: false, error: 'Beaucoup de préparations d’affilée : je reprends seul dans 2 min.', retryInS: 90 }) as never
+      );
+      render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+      expect(await screen.findByText(/je reprends seul dans 2 min/)).toBeTruthy();
+      expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(93_000);
+      await waitFor(() => expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(2));
+      expect(await screen.findByText(/Aventure préparée/)).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('Préremplissage : déjà fait ou annulé → ne se relance pas', () => {
     render(<CompasScreen data={{ ...makeData(), autofill: 'undone' }} />);
     expect(autofill.compasAutofillAction).not.toHaveBeenCalled();

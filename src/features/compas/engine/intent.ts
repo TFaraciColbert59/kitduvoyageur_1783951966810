@@ -788,6 +788,21 @@ export function validateActions(
   const known = (values: string[]) => new Set(values.map(plainOf));
   const avoid = known(ctx.avoid);
   const wishes = known(ctx.wishes);
+  // Une « envie » qui ne fait que redire la destination ou l'activité
+  // (« voyage au Japon », « plaisir du trail ») n'apporte rien au spécialiste.
+  const places = list
+    .filter((x) => x.action.type === 'set_destination' && !x.issue)
+    .map((x) => plainOf((x.action as { place: string }).place));
+  const restatesPlace = (label: string) => {
+    const core = plainOf(label)
+      .replace(
+        /\b(voyage|voyages|sejour|sejours|trip|vacances|visite|visiter|decouvrir|decouverte|plaisir|profiter|fun|kiffer|aventure|activite|sortie|trail|rando|randonnee|trek|trekking|ski|velo|course|courir|escalade|kayak|canoe|plage|bivouac|road|city|au|aux|en|a|le|la|les|l|du|de|des|d|dans|un|une)\b/g,
+        ' '
+      )
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+    return !core || places.some((p) => p.replace(/[^a-z0-9]+/g, ' ').trim() === core);
+  };
 
   return list
     .filter((x) => !(x.action.type === 'set_duration' && dates?.end && x.action.hours == null))
@@ -825,6 +840,7 @@ export function validateActions(
             break;
           case 'wish':
             if (wishes.has(plainOf(a.label))) reason = 'Déjà noté';
+            else if (restatesPlace(a.label)) reason = 'Rien de plus que la destination ou l’activité';
             else if (wishes.size >= 8) reason = 'Déjà 8 envies';
             break;
           default:

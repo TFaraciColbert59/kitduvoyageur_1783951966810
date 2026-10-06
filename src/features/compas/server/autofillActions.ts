@@ -96,7 +96,8 @@ export type CompasAutofillResult =
   | { success: true; summary: CompasAutofillSummary }
   /** Phase « étapes » terminée : l'itinéraire est écrit, la suite reste à lancer. */
   | { success: true; pending: true; stepsCreated: number }
-  | { success: false; error: string };
+  /** `retryInS` : limite de fréquence atteinte, l'écran relance seul après ce délai. */
+  | { success: false; error: string; retryInS?: number };
 
 /** Itinéraire écrit par la phase « étapes », en attente de la phase « reste ». */
 interface PendingRun {
@@ -385,7 +386,17 @@ export async function compasAutofillAction(
         windowMs: 10 * 60_000,
         failMode: 'closed',
       });
-      if (limited) return { success: false, error: 'Préparation déjà lancée plusieurs fois : patiente quelques minutes.' };
+      if (limited) {
+        const wait = Number(limited.headers.get('Retry-After'));
+        const retryInS = limited.status === 429 && Number.isFinite(wait) && wait > 0 ? Math.min(wait, 900) : undefined;
+        return {
+          success: false,
+          error: retryInS
+            ? `Beaucoup de préparations d’affilée : je reprends seul dans ${Math.max(1, Math.ceil(retryInS / 60))} min.`
+            : 'Préparation déjà lancée plusieurs fois : patiente quelques minutes.',
+          retryInS,
+        };
+      }
     }
 
     const meta = (trip.metadata ?? {}) as Record<string, unknown>;
