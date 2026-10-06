@@ -616,7 +616,7 @@ export async function compasAutofillAction(
         // distance plausible de l'étape de la veille (village de préférence).
         const names = [...new Set(proposed.map((p) => p.place))];
         const found = await mapLimit(names, 6, (n) =>
-          stageCandidates(n, { countryCode: anchor!.countryCode, country: anchor!.country })
+          stageCandidates(n, { countryCode: anchor!.countryCode, country: anchor!.country }, anchor)
         );
         const byName = new Map(names.map((n, i) => [n, found[i]]));
         let last: { name: string; lat: number; lon: number } | null = null;

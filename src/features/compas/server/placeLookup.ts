@@ -65,15 +65,24 @@ function nominatim(query: string, limit: number): Promise<CompasPlace[] | null> 
  * Photon d'abord (rapide, sans quota strict) ; s'il ne répond pas, Nominatim
  * (même carte OpenStreetMap), une requête par seconde. Les deux en panne → null.
  */
-async function search(query: string, limit: number): Promise<CompasPlace[] | null> {
+async function search(
+  query: string,
+  limit: number,
+  near?: { lat: number; lon: number } | null
+): Promise<CompasPlace[] | null> {
   // Partagé entre tous (mémoire puis Supabase) : Photon et Nominatim ne sont
   // interrogés qu'une fois par recherche. Une panne (null) n'est pas gardée.
-  return cached('place', `${limit}:${plain(query)}`, PLACE_TTL_S, async () => {
+  // `near` : les homonymes proches d'abord (« Le Tour » le hameau de Chamonix,
+  // pas le lieu-dit du Var) ; sans repli Nominatim, qui ignore ce biais.
+  const bias = near ? `&lat=${near.lat.toFixed(3)}&lon=${near.lon.toFixed(3)}&location_bias_scale=0.5` : '';
+  const key = near ? `near:${coordKey(near.lat, near.lon, 1)}:${limit}:${plain(query)}` : `${limit}:${plain(query)}`;
+  return cached('place', key, PLACE_TTL_S, async () => {
     const photon = await fetchJson(
-      `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=${limit}&lang=fr${NOISE}`,
+      `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=${limit}&lang=fr${bias}${NOISE}`,
       { Accept: 'application/json' }
     );
-    return photon != null ? parsePhoton(photon) : await nominatim(query, Math.min(limit, 8));
+    if (photon != null) return parsePhoton(photon);
+    return near ? null : await nominatim(query, Math.min(limit, 8));
   });
 }
 
@@ -111,12 +120,19 @@ export async function lookupLoose(query: string): Promise<CompasPlace | null> {
  */
 export async function stageCandidates(
   name: string,
-  ctx: { countryCode: string | null; country: string | null }
+  ctx: { countryCode: string | null; country: string | null },
+  near?: { lat: number; lon: number } | null
 ): Promise<CompasPlace[]> {
   const q = name.trim().slice(0, 80);
   if (q.length < 2) return [];
-  const found = (await search(ctx.country ? `${q}, ${ctx.country}` : q, 10)) ?? (await search(q, 10)) ?? [];
-  return ctx.countryCode ? found.filter((p) => p.countryCode === ctx.countryCode) : found;
+  const [found, close] = await Promise.all([
+    search(ctx.country ? `${q}, ${ctx.country}` : q, 10).then(async (r) => r ?? (await search(q, 10)) ?? []),
+    near ? search(q, 10, near).then((r) => r ?? []) : Promise.resolve([] as CompasPlace[]),
+  ]);
+  // Les lieux proches de la destination d'abord, puis le reste du pays, sans doublon.
+  const merged = [...close];
+  for (const p of found) if (!merged.some((m) => Math.abs(m.lat - p.lat) < 1e-3 && Math.abs(m.lon - p.lon) < 1e-3)) merged.push(p);
+  return ctx.countryCode ? merged.filter((p) => p.countryCode === ctx.countryCode) : merged;
 }
 
 /** Le lieu d'un point GPS (commune, pays) : sert à savoir d'où l'on part. */
