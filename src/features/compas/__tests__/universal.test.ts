@@ -417,9 +417,24 @@ describe('Phrases tirées au hasard (20 parcours) : lecture sans IA', () => {
   });
   it('un code de sentier n’est pas une destination ; GR, chemin de l’Inca, bivouac seul', () => {
     expect(read('6 jours sur le GR20 en Corse')).toMatchObject({ dest: 'Corse', act: 'trekking' });
-    expect(read('5 jours au Pérou sur le chemin de l’Inca')).toMatchObject({ dest: 'Pérou', act: 'trekking' });
+    expect(read('5 jours au Pérou sur le chemin de l’Inca')).toMatchObject({ dest: 'Pérou', act: 'trekking', wishes: ['chemin de l’Inca'] });
+    expect(read('6 jours sur le GR20 en Corse').wishes).toEqual(['GR20']);
+    expect(read('7 jours sur le Tour du Mont-Blanc').wishes).toEqual(['Tour du Mont-Blanc']);
+    // « sur la route » sans nom propre : rien.
+    expect(read('3 jours sur la route en Bretagne').wishes).toEqual([]);
     expect(read('bivouac 1 nuit dans le Vercors')).toMatchObject({ dest: 'Vercors', act: 'bivouac' });
     // Une rando avec bivouac reste une rando.
     expect(read('rando 2 jours avec bivouac dans le Vercors').act).toBe('hiking');
+  });
+});
+
+describe('Nom d’étape : jamais un nom qui n’existe pas', () => {
+  it('garde le nom proposé s’il est sur la carte, sinon prend celui de la carte', async () => {
+    const { stageTitleFor } = await import('../engine/places');
+    expect(stageTitleFor('Chamonix', 'Chamonix-Mont-Blanc')).toBe('Chamonix');
+    expect(stageTitleFor('Bielsa', 'Bielsa')).toBe('Bielsa');
+    expect(stageTitleFor("Villar-d'Arnave", "Villar-d'Arène")).toBe("Villar-d'Arène");
+    expect(stageTitleFor('Kathmandu', 'Katmandou')).toBe('Katmandou');
+    expect(stageTitleFor('Imlil', null)).toBe('Imlil');
   });
 });

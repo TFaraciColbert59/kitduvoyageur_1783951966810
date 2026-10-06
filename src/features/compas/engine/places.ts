@@ -274,3 +274,17 @@ export function pickDestination(candidates: CompasPlace[], query: string): Compa
   // le sommet, pas une base au Québec).
   return named.find((c) => !WEAK_KINDS.has(c.kind) || c.landmark) ?? null;
 }
+
+/**
+ * Le nom affiché d'une étape : celui proposé quand la carte le porte (même nom,
+ * ou nom plus long : « Chamonix » → « Chamonix-Mont-Blanc »), sinon celui de la
+ * carte (« Villar-d'Arnave » proposé, « Villar-d'Arène » trouvé) : jamais un
+ * nom qui n'existe pas.
+ */
+export function stageTitleFor(proposed: string, mapName: string | null | undefined): string {
+  if (!mapName) return proposed;
+  const a = plainName(proposed);
+  const b = plainName(mapName);
+  if (!a || !b || a === b || b.startsWith(`${a} `) || a.startsWith(`${b} `)) return proposed;
+  return mapName;
+}

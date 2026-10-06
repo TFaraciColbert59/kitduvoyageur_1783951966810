@@ -581,6 +581,21 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     }
   }
 
+  /* Sentier nommé : « sur le GR20 », « sur le chemin de l'Inca », « le Tour du
+     Mont-Blanc » : une envie transmise au spécialiste de l'itinéraire. */
+  const trail = /\b(?:sur|par) (?:le |la |les |l')\s*((?:gr|hrp)\s?\d+\w*|(?:chemin|tour|sentier|haute route|route|camino|via)\s[^,.;!?]+)/.exec(plain);
+  if (trail) {
+    const at = (trail.index ?? 0) + trail[0].length - trail[1].length;
+    const label = clean(
+      src
+        .slice(at, at + trail[1].length)
+        .split(/\s(?:en|pour|avec|pendant|durant|et|à|a|dans)\s/i)[0]
+        .replace(/\s+\d.*$/, ''),
+      40
+    );
+    if (label.length >= 3 && /\p{Lu}|\d/u.test(label)) out.push({ type: 'wish', label });
+  }
+
   /* Lieu → recherche de parcours (nom propre seulement) */
   const place =
     /\b(?:dans (?:le |la |les |l')|vers |autour (?:de |d')|du cote (?:de |d')|pres (?:de |d')|a cote (?:de |d'))/g;

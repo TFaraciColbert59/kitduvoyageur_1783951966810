@@ -57,7 +57,7 @@ import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } f
 import { bestPeriod, monthName } from '../engine/period';
 import { partsText, retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { lookupDestination, lookupReverse, stageCandidates } from './placeLookup';
-import { destinationRadiusKm, distanceKm, maxLegKm, pickPlace, type CompasPlace } from '../engine/places';
+import { destinationRadiusKm, distanceKm, maxLegKm, pickPlace, stageTitleFor, type CompasPlace } from '../engine/places';
 import { untangleStages } from '../engine/stageOrder';
 import { localToday } from './weather';
 
@@ -620,6 +620,8 @@ export async function compasAutofillAction(
         );
         const byName = new Map(names.map((n, i) => [n, found[i]]));
         let last: { name: string; lat: number; lon: number } | null = null;
+        /** Le nom proposé de la dernière étape trouvée (le titre peut venir de la carte). */
+        let lastProposed: string | null = null;
         let dropped = 0;
         for (const p of proposed) {
           const candidates = byName.get(p.place) ?? [];
@@ -675,8 +677,10 @@ export async function compasAutofillAction(
             }
           }
           // Le titre garde le nom proposé (lisible) ; la position vient de la carte.
-          if (hit) last = { name: p.place, lat: hit.lat, lon: hit.lon };
-          else if (last?.name !== p.place) {
+          if (hit) {
+            last = { name: stageTitleFor(p.place, hit.name), lat: hit.lat, lon: hit.lon };
+            lastProposed = p.place;
+          } else if (lastProposed !== p.place) {
             dropped += 1;
             console.info('[compas] étape introuvable', {
               place: p.place,
