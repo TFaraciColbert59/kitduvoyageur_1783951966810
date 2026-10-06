@@ -462,6 +462,7 @@ describe('Homonymes : la ville avant la maison isolée', () => {
         f('Cusco', 'region', 'county', -71.99, -13.55),
         f('Cusco', 'isolated_dwelling', 'locality', -79.78, -4.58),
         f('Cusco Puquio', 'hamlet', 'district', -71.76, -15.18),
+        f('Cusco Riogo', 'hamlet', 'district', -71.76, -15.18),
         f('Cuzco', 'city', 'district', -71.98, -13.52),
       ],
     });
@@ -470,5 +471,23 @@ describe('Homonymes : la ville avant la maison isolée', () => {
       features: [f('Pisaca', 'hamlet', 'district', -71.5, -14.1), f('Pisac', 'town', 'district', -71.85, -13.42)],
     });
     expect(pickPlace(pisac, { query: 'Pisac', maxKm: 1500 })).toMatchObject({ name: 'Pisac' });
+    // Sans la ville (« Cusco, Pérou ») : la province du même nom, jamais la maison isolée ni un hameau « Cusco Riogo ».
+    const noCity = parsePhoton({
+      features: [
+        f('Cusco', 'region', 'county', -71.99, -13.55),
+        f('Cusco', 'isolated_dwelling', 'locality', -79.78, -4.58),
+        f('Cusco Riogo', 'hamlet', 'district', -71.76, -15.18),
+      ],
+    });
+    expect(pickPlace(noCity, { query: 'Cusco', maxKm: 1500 })).toMatchObject({ lat: -13.55 });
+  });
+  it('« Chamonix » : le bourg Chamonix-Mont-Blanc avant un hameau « Chamonix »', () => {
+    const fr = (name: string, value: string, lat: number) => ({
+      type: 'Feature',
+      geometry: { coordinates: [6.8, lat] },
+      properties: { name, osm_key: 'place', osm_value: value, type: 'district', countrycode: 'FR' },
+    });
+    const found = parsePhoton({ features: [fr('Chamonix', 'hamlet', 46.03), fr('Chamonix-Mont-Blanc', 'town', 45.92)] });
+    expect(pickPlace(found, { query: 'Chamonix', maxKm: 500 })).toMatchObject({ name: 'Chamonix-Mont-Blanc' });
   });
 });

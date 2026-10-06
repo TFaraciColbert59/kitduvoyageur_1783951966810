@@ -203,8 +203,19 @@ export function pickPlace(
     // Lieu habité d'abord, le plus grand d'abord (« Cuzco » la ville, pas la
     // maison isolée « Cusco » du nord du Pérou), puis la pertinence.
     // Le nom exact compte un peu (« Pisac » avant « Pisaca »), moins que la taille.
-    const rank = (c: CompasPlace) =>
-      c.settlement ? 10 + (c.settlementRank ?? 2) + (plainName(c.name) === want ? 3 : 0) : 0;
+    // Une maison isolée ou un lieu-dit passe après la province du même nom
+    // (« Cusco » la province, pas la maison du nord du Pérou à 1 000 km).
+    // Un nom plus long (« Cusco Riogo ») ne compte que pour une ville ou un bourg
+    // (« Chamonix-Mont-Blanc ») ; sinon c'est un hameau voisin de nom.
+    const rank = (c: CompasPlace) => {
+      const n = plainName(c.name);
+      const longer = n !== want && n.startsWith(`${want} `);
+      const size = c.settlementRank ?? 2;
+      if (c.settlement && size >= 1 && (!longer || size >= 4)) return 10 + size + (n === want ? 1 : 0);
+      if (c.kind === 'county' || c.kind === 'city' || c.kind === 'district') return 3;
+      if (c.kind === 'state') return 2;
+      return c.settlement ? 1 : 0;
+    };
     named.sort((a, b) => rank(b.c) - rank(a.c) || a.i - b.i);
     return named[0].c;
   }
