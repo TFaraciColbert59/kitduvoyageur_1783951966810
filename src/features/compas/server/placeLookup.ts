@@ -45,17 +45,20 @@ async function fetchJson(url: string, headers: Record<string, string>): Promise<
 /** Nominatim exige au plus une requête par seconde et un User-Agent identifiant l'application. */
 const NOMINATIM_UA = 'kitduvoyageur/1.0 (Compas, preparation de voyage)';
 let nominatimChain: Promise<unknown> = Promise.resolve();
-function nominatim(query: string, limit: number): Promise<CompasPlace[] | null> {
+function nominatimQueued(url: string): Promise<CompasPlace[] | null> {
   const run = nominatimChain.then(async () => {
-    const payload = await fetchJson(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=jsonv2&addressdetails=1&limit=${limit}&accept-language=fr`,
-      { Accept: 'application/json', 'User-Agent': NOMINATIM_UA }
-    );
+    const payload = await fetchJson(url, { Accept: 'application/json', 'User-Agent': NOMINATIM_UA });
     await new Promise((r) => setTimeout(r, 1100));
-    return payload == null ? null : parseNominatim(payload);
+    // La recherche renvoie une liste, le géocodage inverse un seul lieu.
+    return payload == null ? null : parseNominatim(Array.isArray(payload) ? payload : [payload]);
   });
   nominatimChain = run.catch(() => null);
   return run;
+}
+function nominatim(query: string, limit: number): Promise<CompasPlace[] | null> {
+  return nominatimQueued(
+    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=jsonv2&addressdetails=1&limit=${limit}&accept-language=fr`
+  );
 }
 
 /**
@@ -123,7 +126,12 @@ export async function lookupReverse(lat: number, lon: number): Promise<CompasPla
     const payload = await fetchJson(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}&limit=1&lang=fr`, {
       Accept: 'application/json',
     });
-    return payload == null ? null : parsePhoton(payload);
+    const photon = payload == null ? [] : parsePhoton(payload);
+    if (photon.length) return photon;
+    // Photon muet (depuis certains serveurs) : Nominatim, même carte, à l'échelle de la commune.
+    return nominatimQueued(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=jsonv2&addressdetails=1&zoom=14&accept-language=fr`
+    );
   });
   return places?.[0] ?? null;
 }

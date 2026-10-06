@@ -106,6 +106,10 @@ export function parseNominatim(payload: unknown): CompasPlace[] {
       landmark: isLandmark(r.category, r.type),
       // boundingbox Nominatim : [sud, nord, ouest, est] → emprise [ouest, nord, est, sud]
       extent: bb && bb.length === 4 && bb.every((n) => Number.isFinite(n)) ? [bb[2], bb[1], bb[3], bb[0]] : null,
+      locality:
+        [address.city, address.town, address.village, address.municipality].find(
+          (v): v is string => typeof v === 'string' && v.trim() !== ''
+        )?.trim() ?? null,
     });
   }
   return out;

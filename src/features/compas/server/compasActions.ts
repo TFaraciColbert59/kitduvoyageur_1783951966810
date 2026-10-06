@@ -1746,8 +1746,12 @@ export async function compasInterpretAction(
   }
 }
 
-/** Réglages où le mot dit en toutes lettres (règles) prime sur l'IA. */
-const RULES_FIRST = new Set<CompasIntentAction['type']>(['set_activity']);
+/**
+ * Réglages où le mot dit en toutes lettres (règles) prime sur l'IA. La durée
+ * aussi : « bivouac 2 nuits » fait 3 jours, le modèle lisait « 2 jours »
+ * (essais aléatoires, 2026-10-06).
+ */
+const RULES_FIRST = new Set<CompasIntentAction['type']>(['set_activity', 'set_duration']);
 
 /* ---------- Verdict expliqué par l'IA ---------- */
 

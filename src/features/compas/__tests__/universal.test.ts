@@ -365,3 +365,18 @@ describe('Étapes : noms transcrits, écritures locales, tronçons (essais aléa
     expect(stagePlaceName(raw)).toBe(want);
   });
 });
+
+describe('Géocodage inverse de secours (Nominatim)', () => {
+  it('la commune du point sert de nom de départ', () => {
+    const [p] = parseNominatim([
+      {
+        lat: '45.8992',
+        lon: '6.1294',
+        name: 'Chantier Hotel de Ville',
+        addresstype: 'construction',
+        address: { city: 'Annecy', country: 'France', country_code: 'fr' },
+      },
+    ]);
+    expect(p).toMatchObject({ locality: 'Annecy', countryCode: 'FR' });
+  });
+});

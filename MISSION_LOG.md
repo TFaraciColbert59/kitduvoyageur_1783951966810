@@ -10,8 +10,11 @@
   - reprise d'une préparation déjà comptée bloquée par la limite « 6 par 10 min » → la reprise n'est plus comptée ;
   - départ d'une sortie nommé « Chantier Hotel de Ville » : ancien cache de géocodage inverse sans la localité → clé versionnée (Annecy) ;
   - course et trail d'un jour sans heure (« trail de 25 km samedi ») traités comme une sortie (position, pas de nuit) ;
-  - « 3 nuits sous tente en Ardèche » sans durée → 4 jours (un projet qui a déjà sa durée la garde).
-- Preuves : tsc, eslint propres ; tests Compas 1304/1304.
+  - « 3 nuits sous tente en Ardèche » sans durée → 4 jours (un projet qui a déjà sa durée la garde) ;
+  - « bivouac 2 nuits » : l'IA lisait 2 jours → la durée lue par les règles prime (3 jours) ;
+  - géocodage inverse muet depuis Vercel (« Autour de toi ») → secours Nominatim, commune du point.
+- Second passage réel sur la preview (déploiement `ea903694`) : Népal, Japon 14 j, Ardèche, trail, Vercors, Corse → 6/6 préparés en 43 à 130 s, itinéraires réels (Kathmandu → Syabru Besi ; Tokyo → Nikko → … → Kyoto → Nara), sac et budget écrits, aucun itinéraire de secours.
+- Preuves : tsc, eslint propres ; tests Compas 1305/1305.
 
 ## 2026-10-06 — Compas copilote, lot 3 : meilleure période sans date
 
