@@ -83,6 +83,8 @@ const DECISION_FLOWS: Record<string, { step: CompasStepId; flow: StepFlow }> = {
 /** Intensité du verre par défaut : texte lisible (WCAG AA, audit du
  *  2026-10-06) même sur une carte sombre. Le curseur ☀ reste réglable. */
 const DEFAULT_GLASS = 0.6;
+/** Version du réglage d'affichage : 2 = verre accessible (WCAG AA). */
+const DISPLAY_VERSION = 2;
 
 export function CompasScreen({
   data,
@@ -171,10 +173,13 @@ export function CompasScreen({
     try {
       const raw = window.localStorage.getItem(DISPLAY_KEY);
       if (raw) {
-        const v = JSON.parse(raw) as { outdoor?: unknown; glass?: unknown };
+        const v = JSON.parse(raw) as { outdoor?: unknown; glass?: unknown; v?: unknown };
+        // Un réglage d'avant DISPLAY_VERSION garde l'ancien verre peu lisible : on le remplace.
+        const current = v.v === DISPLAY_VERSION;
         setDisplay({
           outdoor: v.outdoor === true,
-          glass: typeof v.glass === 'number' && v.glass >= 0.05 && v.glass <= 0.7 ? v.glass : DEFAULT_GLASS,
+          glass:
+            current && typeof v.glass === 'number' && v.glass >= 0.05 && v.glass <= 0.7 ? v.glass : DEFAULT_GLASS,
         });
       }
     } catch {
@@ -184,7 +189,7 @@ export function CompasScreen({
   const updateDisplay = (next: { outdoor: boolean; glass: number }) => {
     setDisplay(next);
     try {
-      window.localStorage.setItem(DISPLAY_KEY, JSON.stringify(next));
+      window.localStorage.setItem(DISPLAY_KEY, JSON.stringify({ ...next, v: DISPLAY_VERSION }));
     } catch {
       /* sans effet */
     }

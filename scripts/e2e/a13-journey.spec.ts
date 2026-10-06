@@ -91,8 +91,8 @@ test.describe('A13 — certification parcours bout-en-bout (S9)', { tag: '@exter
   });
       await page.goto('/connexion', { waitUntil: 'domcontentloaded' });
       const loginForm = page.locator('main form:visible').first();
-      await loginForm.locator('#email').fill(email);
-      await loginForm.locator('#password').fill(password);
+      await loginForm.locator('input[type="email"]').fill(email);
+      await loginForm.locator('input[type="password"]').fill(password);
       await loginForm.locator('button[type="submit"]').click();
       await expect
         .poll(
@@ -346,8 +346,8 @@ test.describe('A13 — certification parcours bout-en-bout (S9)', { tag: '@exter
       // 3. Session réelle par l'écran de connexion (cookies @supabase/ssr).
       await page.goto('/connexion', { waitUntil: 'domcontentloaded' });
       const loginForm = page.locator('main form:visible').first();
-      await loginForm.locator('#email').fill(email);
-      await loginForm.locator('#password').fill(password);
+      await loginForm.locator('input[type="email"]').fill(email);
+      await loginForm.locator('input[type="password"]').fill(password);
       await loginForm.locator('button[type="submit"]').click();
       await expect
         .poll(
