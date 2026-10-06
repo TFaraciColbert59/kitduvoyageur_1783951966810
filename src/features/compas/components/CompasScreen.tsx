@@ -311,7 +311,12 @@ export function CompasScreen({
       })
       .then((res) => {
         if (!res.success) return notify(res.error, 'bad');
-        if (!('summary' in res)) return;
+        if (!('summary' in res)) {
+          // Une autre préparation du même voyage est en cours (autre onglet,
+          // écran remonté) : on relit le voyage quand elle aura écrit.
+          for (const wait of [20_000, 45_000, 90_000]) setTimeout(() => startTransition(() => router.refresh()), wait);
+          return;
+        }
         const undo = () =>
           void runRef.current?.('Préparation annulée', () =>
             compasUndoAutofillAction({ tripId: model.tripId, tripSlug: model.slug })

@@ -106,6 +106,8 @@ interface PendingRun {
   notes: string[];
   /** Dates posées par le préremplissage (meilleure période) : l'annulation les retire. */
   datesSet?: boolean;
+  /** Heure (ms) à laquelle une phase « rest » a pris la main. */
+  restAt?: number;
 }
 
 const point = z.object({ lat: z.number().min(-90).max(90), lon: z.number().min(-180).max(180) });
@@ -303,6 +305,7 @@ function readPending(meta: Record<string, unknown>): PendingRun | null {
     stepIds: Array.isArray(p.stepIds) ? p.stepIds.filter((x): x is string => typeof x === 'string') : [],
     routeSet: p.routeSet === true,
     datesSet: p.datesSet === true,
+    restAt: typeof p.restAt === 'number' ? p.restAt : undefined,
     notes: Array.isArray(p.notes) ? p.notes.filter((x): x is string => typeof x === 'string') : [],
   };
 }
@@ -392,6 +395,17 @@ export async function compasAutofillAction(
     // Une phase « steps » relancée alors qu'un itinéraire attend déjà : on le garde.
     if (phase === 'steps' && pending) return { success: true, pending: true, stepsCreated: pending.stepIds.length };
     const resume = phase === 'rest' ? pending : null;
+    // Un seul « rest » à la fois : deux onglets, ou l'écran remonté pendant la
+    // préparation, n'écrivent jamais deux fois les objets et les dépenses.
+    if (phase === 'rest' && pending) {
+      const claimed = Number(pending.restAt ?? 0);
+      if (Date.now() - claimed < 150_000) return { success: true, pending: true, stepsCreated: 0 };
+      const md = await patchTripMetadata(supabase, tripId, (m) => ({
+        ...m,
+        compas: { ...compasMeta(m), autofill_pending: { ...pending, restAt: Date.now() } },
+      }));
+      await supabase.from('trips').update({ metadata: md }).eq('id', tripId);
+    }
     const notes: string[] = [...(resume?.notes ?? [])];
     const runId = resume?.runId ?? randomUUID();
     const today = localToday('Europe/Paris');
