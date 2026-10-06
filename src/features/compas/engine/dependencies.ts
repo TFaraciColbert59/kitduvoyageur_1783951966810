@@ -118,6 +118,26 @@ export function changedFields(before: Partial<ProjectBasis>, now: ProjectBasis):
 }
 
 /** Parties à refaire, dans l'ordre où le préremplissage les écrit. */
+/** Essais au plus pour remplacer un itinéraire de secours (une étape par jour sur le lieu). */
+export const STAGES_RETRY_MAX = 3;
+
+/**
+ * Itinéraire de secours (le spécialiste n'a pas répondu à temps) : retenté à
+ * l'ouverture suivante, avec ce qui en dépend, au plus `STAGES_RETRY_MAX` fois
+ * d'affilée. `fallbackRuns` = nombre de préremplissages d'affilée restés en secours.
+ */
+export function retryParts(fallbackRuns: unknown): AutofillPart[] {
+  const n = Number(fallbackRuns);
+  if (!Number.isInteger(n) || n < 1 || n >= STAGES_RETRY_MAX) return [];
+  return ORDER.filter((p) => p === 'steps' || (FOLLOWS.steps ?? []).includes(p));
+}
+
+/** Union ordonnée de parties à refaire. */
+export function unionParts(...lists: AutofillPart[][]): AutofillPart[] {
+  const all = new Set(lists.flat());
+  return ORDER.filter((p) => all.has(p));
+}
+
 export function staleParts(before: Partial<ProjectBasis> | null, now: ProjectBasis): AutofillPart[] {
   if (!before) return [];
   const out = new Set<AutofillPart>();

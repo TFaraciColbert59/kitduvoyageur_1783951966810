@@ -118,7 +118,8 @@ export async function stageCandidates(
 
 /** Le lieu d'un point GPS (commune, pays) : sert à savoir d'où l'on part. */
 export async function lookupReverse(lat: number, lon: number): Promise<CompasPlace | null> {
-  const places = await cached('reverse', coordKey(lat, lon, 2), 30 * 86_400, async () => {
+  // « v2 » : les entrées d'avant la localité (ville, bourg) ne sont plus servies.
+  const places = await cached('reverse', `v2:${coordKey(lat, lon, 2)}`, 30 * 86_400, async () => {
     const payload = await fetchJson(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}&limit=1&lang=fr`, {
       Accept: 'application/json',
     });

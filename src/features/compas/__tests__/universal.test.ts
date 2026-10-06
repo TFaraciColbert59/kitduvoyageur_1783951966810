@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseIntentRules, planApplication, groundingIssue } from '../engine/intent';
 import { extractIntentJson } from '@/lib/ai/features/compasIntent';
-import { approachMode, keepRuleForActivity, movesFromSteps, nightsPrefFor, sanitizeAdvice, sanitizeStages } from '../engine/autofill';
+import { approachMode, keepRuleForActivity, movesFromSteps, nightsPrefFor, sanitizeAdvice, sanitizeStages, stagePlaceName } from '../engine/autofill';
 import { destinationRadiusKm, maxLegKm, parseNominatim, parsePhoton, pickDestination, pickPlace } from '../engine/places';
 
 const TODAY = '2026-10-02';
@@ -328,5 +328,40 @@ describe('Destination nommée : la ville que tout le monde entend, pas un homony
   it('nom exact gardé dans l’ordre de la carte (Banff Canada avant Banff Écosse)', () => {
     const found = parsePhoton({ features: [place('Banff', 'city', 'CA'), place('Banff', 'city', 'GB')] });
     expect(pickDestination(found, 'banff')?.countryCode).toBe('CA');
+  });
+});
+
+describe('Étapes : noms transcrits, écritures locales, tronçons (essais aléatoires, Népal)', () => {
+  const near = { lat: 28.38, lon: 84 };
+  it('« Kathmandu » retrouve « Katmandou »', () => {
+    const list = parsePhoton({
+      features: [
+        { properties: { name: 'Katmandou', countrycode: 'NP', osm_key: 'place', osm_value: 'city' }, geometry: { coordinates: [85.32, 27.71] } },
+      ],
+    });
+    expect(pickPlace(list, { countryCode: 'NP', near, maxKm: 400, query: 'Kathmandu', strict: true })?.name).toBe('Katmandou');
+  });
+  it('une localité connue seulement dans son écriture est gardée hors du mode strict', () => {
+    const list = parsePhoton({
+      features: [
+        { properties: { name: 'स्याफ्रु बेसी', countrycode: 'NP', osm_key: 'place', osm_value: 'hamlet' }, geometry: { coordinates: [85.34, 28.16] } },
+      ],
+    });
+    expect(pickPlace(list, { countryCode: 'NP', near, maxKm: 400, query: 'Syabru Besi', strict: true })).toBeNull();
+    expect(pickPlace(list, { countryCode: 'NP', near, maxKm: 400, query: 'Syabru Besi' })?.lat).toBe(28.16);
+    // Jamais un nom latin sans rapport.
+    const other = parsePhoton({
+      features: [{ properties: { name: 'Pokhara', countrycode: 'NP', osm_key: 'place', osm_value: 'city' }, geometry: { coordinates: [83.98, 28.21] } }],
+    });
+    expect(pickPlace(other, { countryCode: 'NP', near, maxKm: 400, query: 'Syabru Besi' })).toBeNull();
+  });
+  it.each([
+    ['Syabru Besi to Gatlang', 'Gatlang'],
+    ['Chamonix → Argentière', 'Argentière'],
+    ['de Zermatt à Täsch', 'Täsch'],
+    ['Saint-Jean-Pied-de-Port', 'Saint-Jean-Pied-de-Port'],
+    ['Torre a Mare', 'Torre a Mare'],
+  ])('tronçon « %s » → étape du soir « %s »', (raw, want) => {
+    expect(stagePlaceName(raw)).toBe(want);
   });
 });

@@ -1,5 +1,18 @@
 # MISSION LOG — LKDV
 
+## 2026-10-06 — Compas : essais aléatoires réels (preview Vercel) et corrections
+
+- **Essais** : 960 phrases aléatoires (graine fixe, `__tests__/fuzz.test.ts`) puis 15 voyages tirés au hasard créés pour de vrai sur la preview (Écosse, Népal, Vercors, Ardèche, Rome, ski Alpes, Crète, trail, Japon, rando 3 h, Islande, Mont Blanc, Corse, Norvège, Fontainebleau), contrôlés en base (étapes, objets, dépenses, fin du préremplissage).
+- **Trouvé et corrigé** :
+  - phase « nuits, kit, budget » au-delà des 60 s de Vercel → budgets de temps par appel IA, verrou 65 s, reprise automatique côté écran ;
+  - étapes rejetées « introuvables » (Népal : 6 sur 6) : nom transcrit (« Kathmandu » / « Katmandou », squelette consonantique), localité connue seulement en écriture locale (devanagari), tronçon « Syabru Besi to Gatlang » → étape du soir ;
+  - itinéraire de secours (« Jour N · Japon ») quand l'IA ne répond pas à temps (latence NVIDIA de 2 à 45 s) → retenté à l'ouverture suivante, au plus 2 fois, seulement s'il n'a pas été retouché ;
+  - reprise d'une préparation déjà comptée bloquée par la limite « 6 par 10 min » → la reprise n'est plus comptée ;
+  - départ d'une sortie nommé « Chantier Hotel de Ville » : ancien cache de géocodage inverse sans la localité → clé versionnée (Annecy) ;
+  - course et trail d'un jour sans heure (« trail de 25 km samedi ») traités comme une sortie (position, pas de nuit) ;
+  - « 3 nuits sous tente en Ardèche » sans durée → 4 jours (un projet qui a déjà sa durée la garde).
+- Preuves : tsc, eslint propres ; tests Compas 1304/1304.
+
 ## 2026-10-06 — Compas copilote, lot 3 : meilleure période sans date
 
 - **`engine/period.ts`** (pur, testé) : sans date, un mois conseillé selon l'activité, l'hémisphère, la latitude et la fréquentation (Allemagne en randonnée → septembre, Norvège → juillet, ski → février, ville → mai, Patagonie → mars) ; départ un samedi, au moins trois semaines devant ; sous les tropiques, rien plutôt qu'une fausse certitude.

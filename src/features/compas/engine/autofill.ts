@@ -447,10 +447,19 @@ const STAGE_PREFIX =
 
 export function stagePlaceName(raw: string | null): string | null {
   if (!raw) return raw;
-  const s = raw
+  let s = raw
     .replace(STAGE_PREFIX, '')
     .replace(/\s*\([^)]*\)\s*$/, '')
     .trim();
+  // Un tronçon (« Syabru Besi to Gatlang », « Chamonix → Argentière », « de
+  // Zermatt à Täsch ») : l'étape est le lieu du soir, la fin du tronçon. Le
+  // tiret reste un nom (« Isle of Skye - Portree »).
+  const parts = s.split(/\s+(?:to|→|->|>|vers)\s+/i);
+  if (parts.length > 1) s = parts[parts.length - 1].trim();
+  else if (/^(?:de|from)\s/i.test(s)) {
+    const end = s.split(/\s+(?:à|a|to)\s+/i);
+    if (end.length > 1) s = end[end.length - 1].trim();
+  }
   return s || raw;
 }
 

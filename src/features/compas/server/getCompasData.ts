@@ -29,7 +29,7 @@ import {
 import { readCompasMeta } from '../engine/meta';
 import { resolveProjectContext, type ProjectContext } from '../engine/projectContext';
 import { readProfile, tripBasis } from './compasServer';
-import { staleParts, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
+import { retryParts, staleParts, unionParts, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { relevantAffiliateLinks } from '../engine/affiliates';
 import { getOfficialAlerts } from './officialAlerts';
 import { getRouteElevation } from './elevation';
@@ -612,7 +612,7 @@ function autofillStale(trip: TripFull): AutofillPart[] {
   const run = compas && typeof compas === 'object' ? (compas as Record<string, unknown>).autofill : null;
   const basis = run && typeof run === 'object' ? (run as Record<string, unknown>).basis : null;
   if (!basis || typeof basis !== 'object' || !(run as Record<string, unknown>).runId) return [];
-  return staleParts(
+  const changed = staleParts(
     basis as Partial<ProjectBasis>,
     tripBasis(
       {
@@ -625,6 +625,8 @@ function autofillStale(trip: TripFull): AutofillPart[] {
       trip.primary_activity ?? null
     )
   );
+  // Itinéraire de secours : retenté à l'ouverture (au plus quelques fois).
+  return unionParts(changed, retryParts((run as Record<string, unknown>).stagesFallback));
 }
 
 function autofillState(metadata: unknown): CompasData['autofill'] {

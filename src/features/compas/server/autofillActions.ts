@@ -55,7 +55,7 @@ import {
 import { compasMeta, patchTripMetadata, readProfile, requireEditor, resplitSteps, tripBasis, type Supa } from './compasServer';
 import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
 import { bestPeriod, monthName } from '../engine/period';
-import { partsText, staleParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
+import { partsText, retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { lookupDestination, lookupReverse, stageCandidates } from './placeLookup';
 import { destinationRadiusKm, distanceKm, maxLegKm, pickPlace, type CompasPlace } from '../engine/places';
 import { untangleStages } from '../engine/stageOrder';
@@ -108,6 +108,8 @@ interface PendingRun {
   datesSet?: boolean;
   /** Heure (ms) à laquelle une phase « rest » a pris la main. */
   restAt?: number;
+  /** Préremplissages d'affilée restés sur l'itinéraire de secours (0 : itinéraire réel). */
+  stagesFallback?: number;
 }
 
 const point = z.object({ lat: z.number().min(-90).max(90), lon: z.number().min(-180).max(180) });
@@ -310,6 +312,7 @@ function readPending(meta: Record<string, unknown>): PendingRun | null {
     routeSet: p.routeSet === true,
     datesSet: p.datesSet === true,
     restAt: typeof p.restAt === 'number' ? p.restAt : undefined,
+    stagesFallback: Number.isInteger(p.stagesFallback) ? Number(p.stagesFallback) : 0,
     notes: Array.isArray(p.notes) ? p.notes.filter((x): x is string => typeof x === 'string') : [],
   };
 }
@@ -333,6 +336,8 @@ interface Carry {
   expenseIds: string[];
   expenseTitles: string[];
   stays: Array<{ stepId: string; name: string }>;
+  /** Préremplissages d'affilée restés sur l'itinéraire de secours. */
+  stagesFallback?: number;
 }
 
 function strIds(v: unknown): string[] {
@@ -355,6 +360,7 @@ function readCarry(meta: Record<string, unknown>): Carry | null {
           .filter((s) => typeof s?.stepId === 'string' && typeof s?.name === 'string')
           .map((s) => ({ stepId: String(s.stepId), name: String(s.name) }))
       : [],
+    stagesFallback: Number.isInteger(c.stagesFallback) ? Number(c.stagesFallback) : 0,
   };
 }
 
@@ -370,8 +376,9 @@ export async function compasAutofillAction(
     const auth = await requireEditor(tripId);
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
     const { supabase, userId, trip } = auth;
-    // La phase « rest » continue une préparation déjà comptée.
-    if (phase !== 'rest') {
+    // La phase « rest », ou une reprise (itinéraire déjà écrit, en attente),
+    // continue une préparation déjà comptée.
+    if (phase !== 'rest' && !readPending((trip.metadata ?? {}) as Record<string, unknown>)) {
       const limited = await enforceRateLimit(userId, {
         scope: 'compas-autofill',
         limit: 6,
@@ -505,6 +512,8 @@ export async function compasAutofillAction(
     /* 2. Étapes : parcours du catalogue (destination locale), sinon itinéraire du spécialiste vérifié sur la carte. */
     let stepsCreated = resume?.stepIds.length ?? 0;
     let routeSet = resume?.routeSet ?? false;
+    // Itinéraire de secours (aucune proposition à temps) : retenté à l'ouverture suivante.
+    let stagesFallback = resume?.stagesFallback ?? 0;
     const createdStepIds: string[] = [...(resume?.stepIds ?? [])];
     let stagePlaces: Array<{ day: number; name: string; lat: number; lon: number; move: StageMove; note: string | null }> = [];
     // Réadaptation : l'ancien itinéraire n'est remplacé que par un meilleur.
@@ -669,10 +678,12 @@ export async function compasAutofillAction(
         }
         if (!proposed.length && replacing.length) {
           // L'IA n'a pas répondu : on garde l'itinéraire d'avant plutôt qu'un moins bon.
-          notes.push('Itinéraire gardé tel quel : la nouvelle proposition n’est pas arrivée à temps. Réessaie plus tard depuis « Parcours ».');
+          notes.push('Itinéraire gardé tel quel : la nouvelle proposition n’est pas arrivée à temps. Je réessaie à ta prochaine visite.');
           stagePlaces = [];
+          stagesFallback = (carry?.stagesFallback ?? 0) + 1;
         } else if (!proposed.length) {
-          notes.push('Itinéraire détaillé indisponible pour le moment : une étape par jour sur le lieu, à affiner dans Parcours.');
+          notes.push('Itinéraire détaillé indisponible pour le moment : une étape par jour sur le lieu. Je réessaie à ta prochaine visite, ou affine-le dans Parcours.');
+          stagesFallback = (carry?.stagesFallback ?? 0) + 1;
           stagePlaces = Array.from({ length: days }, (_, i) => ({
             day: i + 1,
             name: anchor!.name,
@@ -756,7 +767,7 @@ export async function compasAutofillAction(
     }
 
     if (phase === 'steps') {
-      const run: PendingRun = { runId, stepIds: createdStepIds, routeSet, notes: notes.slice(0, 6), datesSet };
+      const run: PendingRun = { runId, stepIds: createdStepIds, routeSet, notes: notes.slice(0, 6), datesSet, stagesFallback };
       const metadata = await patchTripMetadata(supabase, tripId, (m) => ({
         ...m,
         compas: { ...compasMeta(m), autofill_pending: run },
@@ -1196,6 +1207,7 @@ export async function compasAutofillAction(
           notes: notes.slice(0, 6),
           // Réglages qui ont produit ce préremplissage : un changement dit quoi refaire.
           basis: tripBasis(trip, activity),
+          ...(stagesFallback ? { stagesFallback } : {}),
         },
       },
     }));
@@ -1323,16 +1335,25 @@ export async function compasRefreshAutofillAction(
           stays?: Array<{ stepId: string; name: string }>;
           budgetSet?: boolean;
           basis?: Partial<ProjectBasis>;
+          stagesFallback?: number;
         }
       | undefined;
     if (!run?.runId || !run.basis) return { success: true, parts: [], kept: [], label: '' };
     const { data: tripRow } = await supabase.from('trips').select('primary_activity').eq('id', tripId).maybeSingle();
     const activity = (tripRow as { primary_activity?: string } | null)?.primary_activity ?? null;
-    let parts = staleParts(run.basis, tripBasis(trip, activity));
+    let parts = unionParts(staleParts(run.basis, tripBasis(trip, activity)), retryParts(run.stagesFallback));
     if (!parts.length) return { success: true, parts: [], kept: [], label: '' };
 
     const kept: string[] = [];
-    const carry: Carry = { stepIds: [], routeSet: false, itemIds: [], expenseIds: [], expenseTitles: [], stays: [] };
+    const carry: Carry = {
+      stepIds: [],
+      routeSet: false,
+      itemIds: [],
+      expenseIds: [],
+      expenseTitles: [],
+      stays: [],
+      stagesFallback: Number.isInteger(run.stagesFallback) ? Number(run.stagesFallback) : 0,
+    };
     const at = run.at ?? null;
     const now = new Date().toISOString();
 

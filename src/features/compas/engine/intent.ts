@@ -845,8 +845,17 @@ export function planApplication(actions: CompasIntentAction[], current: ApplyCur
   const ops: ApplyOp[] = [];
   const dates = actions.find((a) => a.type === 'set_dates') as
     Extract<CompasIntentAction, { type: 'set_dates' }> | undefined;
-  const duration = actions.find((a) => a.type === 'set_duration') as
+  const said = actions.find((a) => a.type === 'set_duration') as
     Extract<CompasIntentAction, { type: 'set_duration' }> | undefined;
+  // « 3 nuits sous tente en Ardèche » sur un projet sans durée : 3 nuits = 4 jours.
+  // Un projet qui a déjà sa durée la garde (les nuits dehors s'y répartissent).
+  const outdoor = actions.find((a) => a.type === 'set_outdoor_nights') as
+    Extract<CompasIntentAction, { type: 'set_outdoor_nights' }> | undefined;
+  const implied =
+    !said && outdoor && !dates?.end && current.days == null && current.plannedDays == null && current.shortHours == null
+      ? { type: 'set_duration' as const, days: outdoor.nights + 1, hours: null }
+      : undefined;
+  const duration = said ?? implied;
   const start = dates?.start ?? current.startDate;
   if (start && (dates || duration)) {
     let endDate: string;

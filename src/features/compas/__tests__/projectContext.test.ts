@@ -194,6 +194,8 @@ describe('Dis-le : demandes très courtes', () => {
       }
     );
     expect(ops).toEqual([
+      // Projet sans durée : 3 nuits dehors = 4 jours.
+      { op: 'span', days: 4 },
       {
         op: 'prefs',
         preferences: { pace: 'normal', nights: null, avoid: [], wishes: [], outdoorNights: 3, maxPackKg: 12, terrain: 'montagne' },
@@ -222,5 +224,24 @@ describe('Nuits : « dormir dehors » prime', () => {
     });
     expect(plan.filter((n) => n.type === 'bivouac').map((n) => n.night)).toEqual([2, 4, 6]);
     expect(plan.filter((n) => n.type !== 'bivouac').every((n) => n.type === 'refuge')).toBe(true);
+  });
+});
+
+describe('Nuits dehors sans durée : la durée s’en déduit', () => {
+  const blank = {
+    startDate: null,
+    endDate: null,
+    days: null,
+    shortHours: null,
+    preferences: { pace: 'normal' as const, nights: null, avoid: [], wishes: [] },
+    hasRoute: false,
+  };
+  it('« 3 nuits sous tente en Ardèche » : 4 jours', () => {
+    const ops = planApplication(parseIntentRules('3 nuits sous tente en Ardèche', '2026-10-06'), blank);
+    expect(ops).toContainEqual({ op: 'span', days: 4 });
+  });
+  it('un projet de 7 jours garde sa durée', () => {
+    const ops = planApplication([{ type: 'set_outdoor_nights', nights: 3 }], { ...blank, days: 7, startDate: '2027-07-01', endDate: '2027-07-07' });
+    expect(ops.some((o) => o.op === 'span' || o.op === 'dates')).toBe(false);
   });
 });

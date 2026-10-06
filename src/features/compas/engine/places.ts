@@ -159,7 +159,12 @@ export function pickPlace(
       const n = plainName(c.name);
       // Nom exact, ou nom plus long pour une localité seulement (« Chamonix » →
       // « Chamonix-Mont-Blanc »), jamais « Isle of Skye Quarry » pour « Isle of Skye ».
-      const named = !want || n === want || (Boolean(c.settlement) && n.startsWith(`${want} `));
+      const named =
+        !want ||
+        n === want ||
+        (Boolean(c.settlement) && n.startsWith(`${want} `)) ||
+        // Même nom transcrit autrement (« Kathmandu » / « Katmandou »).
+        sameSkeleton(n, want);
       return { c, i, d: near ? distanceKm(near, c) : 0, named };
     })
     // La distance ne sert qu'à écarter l'impossible : parmi le possible, l'ordre
@@ -179,7 +184,19 @@ export function pickPlace(
   // Sinon, au moins un mot distinctif en commun (« Skye ») : jamais un lieu
   // sans rapport que la carte renvoie faute de mieux.
   const keys = distinctiveWords(want);
-  return ranked.find((x) => distinctiveWords(plainName(x.c.name)).some((w) => keys.includes(w)))?.c ?? null;
+  const shared = ranked.find((x) => distinctiveWords(plainName(x.c.name)).some((w) => keys.includes(w)))?.c;
+  if (shared) return shared;
+  // Localité que la carte ne connaît que dans son écriture (« स्याफ्रु बेसी »
+  // pour « Syabru Besi ») : trouvée en cherchant ce nom, à distance plausible.
+  return ranked.find((x) => x.c.settlement && !plainName(x.c.name))?.c ?? null;
+}
+
+/** Squelette consonantique : deux transcriptions d'un même nom se rejoignent. */
+function sameSkeleton(a: string, b: string): boolean {
+  if (a.length < 4 || b.length < 4) return false;
+  const k = (v: string) => v.replace(/[aeiouyhw ]/g, '').replace(/(.)\1+/g, '$1');
+  const ka = k(a);
+  return ka.length >= 3 && ka === k(b);
 }
 
 /** Mots trop communs pour identifier un lieu (« Isle », « Loch », « Saint »…). */

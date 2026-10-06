@@ -80,3 +80,15 @@ describe('Choix de l’utilisateur préservés', () => {
     expect(partsText(['kit'])).toBe('Sac');
   });
 });
+
+describe('Itinéraire de secours retenté', () => {
+  it('retente l’itinéraire et ce qui en dépend, au plus 2 fois d’affilée', async () => {
+    const { retryParts, unionParts } = await import('../engine/dependencies');
+    expect(retryParts(undefined)).toEqual([]);
+    expect(retryParts(0)).toEqual([]);
+    expect(retryParts(1)).toEqual(['steps', 'nights', 'transport', 'budget']);
+    expect(retryParts(2)).toEqual(['steps', 'nights', 'transport', 'budget']);
+    expect(retryParts(3)).toEqual([]);
+    expect(unionParts(['kit', 'budget'], retryParts(1))).toEqual(['steps', 'nights', 'transport', 'kit', 'budget']);
+  });
+});
