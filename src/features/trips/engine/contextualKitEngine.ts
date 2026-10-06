@@ -13,6 +13,8 @@ export interface ContextualKitInput {
   activity?: string | null;
   durationDays: number;
   seasonMonth?: number; // 1 to 12
+  /** Latitude du lieu : le froid de saison dépend de l'hémisphère et du climat. */
+  latitude?: number | null;
   steps?: TripStep[];
   currentItems?: TripItem[];
   availableProducts?: ShopProductReference[];
@@ -232,10 +234,19 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     defaultPriority: 'recommended',
     baseWeightGrams: 100,
     condition: (input, maxAlt) => {
+      // Hiver de l'hémisphère (décembre à février au nord, juin à août au sud) :
+      // froid partout hors tropiques. Intersaison (mars-avril, octobre-novembre) :
+      // seulement au-dessus de 44° ou en altitude (pas une balade aux Calanques).
+      const lat = input.latitude ?? null;
+      const month = input.seasonMonth && lat != null && lat < 0 ? ((input.seasonMonth + 5) % 12) + 1 : input.seasonMonth;
+      const tropical = lat != null && Math.abs(lat) < 23.5;
+      const winter = Boolean(month && (month === 12 || month <= 2));
+      const shoulder = Boolean(month && (month === 3 || month === 4 || month === 10 || month === 11));
       const coldExpected = Boolean(
         maxAlt >= 2000 ||
         input.countryCode === 'IS' ||
-        (input.seasonMonth && (input.seasonMonth <= 4 || input.seasonMonth >= 10))
+        (!tropical && winter) ||
+        (shoulder && (lat == null || Math.abs(lat) >= 44 || maxAlt >= 1000))
       );
       return {
         match: coldExpected,

@@ -649,7 +649,11 @@ const WATER_EXCLUDED = new Set(['trekking-poles', 'crampons']);
 /** Course et trail : on court léger, sans couchage ni cuisine ni gros sac. */
 const RUN_KEYS = new Set(['first-aid', 'sunscreen', 'sunglasses', 'water-bottle', 'whistle', 'rain-poncho']);
 
-export function keepRuleForActivity(key: string, activity: string): boolean {
+/** Sortie de quelques heures, sans nuit : pas de quoi réparer ni de thermos. */
+const SHORT_EXCLUDED = new Set(['repair-kit', 'thermos', 'water-filter', 'stove', 'tent-2p', 'sleeping-mat']);
+
+export function keepRuleForActivity(key: string, activity: string, short = false): boolean {
+  if (short && SHORT_EXCLUDED.has(key)) return false;
   if (activity === 'cultural' || activity === 'citytrip' || activity === 'beach') return CITY_KEYS.has(key);
   if (activity === 'roadtrip' || activity === 'vanlife') return !ROAD_EXCLUDED.has(key);
   if (activity === 'water' || activity === 'cycling') return !WATER_EXCLUDED.has(key);

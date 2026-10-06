@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { COMPAS_ACTIVITIES, parseIntentRules } from '../engine/intent';
 import { gearForActivity, keepRuleForActivity, nightsPrefFor } from '../engine/autofill';
+import { generateTripContextualKit } from '@/features/trips/engine/contextualKitEngine';
 import { activityLabel } from '../engine/format';
 import { ACTIVITY_META } from '../components/CompasOuFlows';
 
@@ -58,5 +59,26 @@ describe('Matériel et nuits selon l’activité', () => {
     expect(nightsPrefFor('ski', 'mixte')).toBe('hebergement');
     expect(nightsPrefFor('ski', 'refuge')).toBe('refuge');
     expect(nightsPrefFor('mountaineering', null)).toBeNull();
+  });
+});
+
+describe('Kit d’une sortie courte et froid de saison selon le lieu', () => {
+  it('quelques heures sans nuit : ni kit de réparation ni thermos', () => {
+    expect(keepRuleForActivity('repair-kit', 'hiking', true)).toBe(false);
+    expect(keepRuleForActivity('thermos', 'hiking', true)).toBe(false);
+    expect(keepRuleForActivity('first-aid', 'hiking', true)).toBe(true);
+    expect(keepRuleForActivity('repair-kit', 'hiking')).toBe(true);
+  });
+  it('gants : pas aux Calanques en octobre, oui dans les Vosges en octobre ou à Marseille en janvier', () => {
+    const gloves = (latitude: number, seasonMonth: number, countryCode = 'FR') =>
+      [...generateTripContextualKit({ countryCode, activity: 'hiking', durationDays: 1, seasonMonth, latitude }).vitalGaps,
+       ...generateTripContextualKit({ countryCode, activity: 'hiking', durationDays: 1, seasonMonth, latitude }).recommendedGaps]
+        .some((g) => g.key === 'cold-gloves');
+    expect(gloves(43.21, 10)).toBe(false);
+    expect(gloves(48.0, 10)).toBe(true);
+    expect(gloves(43.21, 1)).toBe(true);
+    // Hémisphère sud : juillet est l'hiver en Patagonie, janvier l'été.
+    expect(gloves(-50.9, 7, 'AR')).toBe(true);
+    expect(gloves(-33.9, 1, 'ZA')).toBe(false);
   });
 });

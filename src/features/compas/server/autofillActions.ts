@@ -953,18 +953,20 @@ export async function compasAutofillAction(
       borrowed = ((data ?? []) as Array<{ id: string; name: string }>).map((b) => ({ inventoryItemId: b.id, name: b.name, lender: null }));
     }
     const month = Number(trip.start_date?.slice(5, 7)) || undefined;
+    const shortOuting = days <= 1 && plan.length === 0;
     const analysis = generateTripContextualKit({
       countryCode: anchor.countryCode ?? trip.destination_country_code,
       activity,
       durationDays: days,
       seasonMonth: month,
+      latitude: anchor.lat,
       currentItems: tripItemNames.map((item_name) => ({ item_name }) as unknown as TripItem),
       ...(maxAltitude ? { elevationProfile: { maxM: maxAltitude } as never } : {}),
     });
     const needs: GearNeed[] = [];
     const nightTypes = plan.map((n) => n.type);
     const ruleNeeds = [...analysis.vitalGaps, ...analysis.recommendedGaps]
-      .filter((g) => keepRuleForNights(g.category, nightTypes) && keepRuleForActivity(g.key, activity))
+      .filter((g) => keepRuleForNights(g.category, nightTypes) && keepRuleForActivity(g.key, activity, shortOuting))
       .map(needFromRule);
     for (const g of [...gearForActivity(activity), ...gearForNights(nightTypes), ...ruleNeeds])
       if (!needs.some((n) => sameNeed(n, g))) needs.push(g);
