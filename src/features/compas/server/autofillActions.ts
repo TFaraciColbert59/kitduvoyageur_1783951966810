@@ -1035,7 +1035,7 @@ export async function compasAutofillAction(
       maxAltitude ? `Altitude maximale mesurée : ${Math.round(maxAltitude)} m.` : '',
       `Matériel déjà possédé ou prêté (NE PAS le conseiller à l’achat) : ${picks.filter((p) => p.source === 'inventaire' || p.source === 'pret').map((p) => p.need.name).join(', ') || 'aucun'}.`,
       `Matériel à louer ou acheter : ${picks.filter((p) => p.source === 'location' || p.source === 'achat').map((p) => p.need.name).join(', ') || 'aucun'}.`,
-      `Matériel introuvable en boutique : ${picks.filter((p) => p.source === 'a_trouver').map((p) => p.need.name).join(', ') || 'aucun'}.`,
+      `Matériel à se procurer (absent de la boutique de l’application) : ${picks.filter((p) => p.source === 'a_trouver').map((p) => p.need.name).join(', ') || 'aucun'}.`,
     ]
       .filter(Boolean)
       .join('\n');

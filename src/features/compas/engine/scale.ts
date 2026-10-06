@@ -28,3 +28,14 @@ export function classifyScale(hours: number | null): TripScale | null {
   if (hours < 10 * H) return { id: 'expedition', label: 'Expédition', rule: '2 à 10 jours' };
   return { id: 'monde', label: 'Monde', rule: '10 jours et plus' };
 }
+
+/**
+ * Durée qui fixe l'échelle affichée. Une seule journée au calendrier (24 h)
+ * n'est pas un raid : on prend le temps d'effort du tracé quand il est connu
+ * (10 km de course ≈ 1 h → Sortie), sinon une journée d'activité (Journée).
+ */
+export function scaleHours(hours: number | null, routeMinutes: number | null | undefined): number | null {
+  if (hours !== 24) return hours;
+  if (routeMinutes != null && routeMinutes > 0 && routeMinutes < 24 * 60) return routeMinutes / 60;
+  return 8;
+}

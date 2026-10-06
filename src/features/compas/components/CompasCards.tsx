@@ -1,6 +1,6 @@
 'use client';
 
-import { classifyScale } from '../engine/scale';
+import { classifyScale, scaleHours } from '../engine/scale';
 import Link from 'next/link';
 import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { deleteTripItemAction } from '@/app/voyages/kit-actions';
@@ -322,7 +322,7 @@ export function OuCard({ ctl, onKit }: { ctl: CompasCtl; onKit: () => void }) {
         <p className="cp-sub">
           {[
             act,
-            classifyScale(hours)?.label ?? null,
+            classifyScale(scaleHours(hours, m.route.durationMin))?.label ?? null,
             hours != null ? formatHours(hours) : null,
             m.dates.label,
           ]

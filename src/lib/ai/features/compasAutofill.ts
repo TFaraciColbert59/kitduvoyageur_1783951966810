@@ -109,7 +109,8 @@ export function buildCompasAutofillSystem(): string {
     '5b. car_rental : SEULEMENT si les faits disent « voiture de location a prevoir » : prix moyen d une voiture adaptee au groupe et au terrain, par jour, assurance de base comprise, pour CE pays et CETTE saison.',
     '6. entry_fees : SEULEMENT si les faits disent « voyage a l etranger » : visa, permis de trek ou de parc, taxes d entree exigees pour CE pays et CETTE activite, total par personne ; entry_fees_detail les nomme en 12 mots au plus.',
     '7. insurance : assurance voyage avec rapatriement adaptee (altitude, pays), par personne, si a l etranger ou en montagne.',
-    '8. notes : 0 a 3 conseils d action courts en francais, fondes sur les faits (objet introuvable a se procurer, reservation, vaccin, saison, altitude). Ne repete pas les faits, ne contredis jamais les listes de materiel, pas de reassurance, pas de score.',
+    '8. notes : 0 a 3 conseils d action courts, en francais correct AVEC les accents (é, è, à, ç), fondes sur les faits (objet a se procurer, reservation, vaccin, saison, altitude). Ne repete pas les faits, ne contredis jamais les listes de materiel, pas de reassurance, pas de score. N ecris jamais « introuvable en boutique » : dis « a se procurer ».',
+    '8b. N invente aucune obligation (permis, licence, visa, certificat) qui n est pas reellement exigee pour CE pays et CETTE activite : par exemple aucun permis pour le canoe, le kayak, la randonnee ou le velo en France.',
     '9. N invente aucun nom de prestataire, aucun horaire. Si tu ne sais pas, mets null.',
   ].join('\n');
 }
