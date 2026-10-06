@@ -235,6 +235,11 @@ describe('Mois seul (« en janvier », « début mai », « week-end en mai »)'
   it('une date de l’IA dans le mois dit est ancrée', () => {
     expect(groundingIssue({ type: 'set_dates', start: '2027-01-10', end: null }, '8 jours en janvier')).toBeNull();
     expect(groundingIssue({ type: 'set_dates', start: '2027-03-10', end: null }, '8 jours en janvier')).not.toBeNull();
+    // Une fin inventée dans le mois ne passe pas : « 7 jours en juillet » ≠ 1–8 juillet.
+    expect(
+      groundingIssue({ type: 'set_dates', start: '2027-07-01', end: '2027-07-08' }, 'Road trip en Islande 7 jours en juillet')
+    ).not.toBeNull();
+    expect(groundingIssue({ type: 'set_dates', start: '2027-07-01', end: '2027-07-08' }, 'du 1er au 8 juillet')).toBeNull();
   });
 });
 

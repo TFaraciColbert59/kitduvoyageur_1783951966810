@@ -1,5 +1,12 @@
 # MISSION LOG — LKDV
 
+## 2026-10-06 — Essais en production (lien Vercel) : deux corrections
+
+- Production testée de bout en bout avec le compte démo (mot de passe réinitialisé) : Islande, Patagonie, randonnée en anglais ; itinéraire, dates, nuits, kit, budget et conseils de l'IA NVIDIA OK, météo MET Norway OK.
+- **« 7 jours en juillet » donnait 8 jours** : une date de FIN de l'IA était acceptée dès que le mois était dit, et écrasait la durée. Le mois seul n'ancre plus que le départ.
+- **Destination à cheval sur une frontière** (Patagonie lue argentine → étapes chiliennes écartées, trek parti vers El Calafate) : une étape introuvable dans le pays est cherchée chez le voisin, à 300 km au plus de la précédente.
+- Preuves : tsc, eslint propres ; tests Compas 289/289.
+
 ## 2026-10-05 — Itinéraire : plus de zigzag, plus d'étape à l'autre bout du pays
 
 - **`untangleStages`** (`src/features/compas/engine/stageOrder.ts`, pur, testé) : quand l'IA propose un circuit motorisé qui zigzague (Rennes → Brest → Saint-Malo → Quimper…), les séjours intermédiaires (lieu + nuits consécutives + notes) sont remis dans l'ordre le plus court ; arrivée et départ inchangés, jours renumérotés. Appliqué seulement si le gain est net (≥ 20 % et ≥ 15 km), jamais sur un trek ou un circuit à vélo (le tracé prime). Annoncé dans les notes (« environ N km de route en moins »).

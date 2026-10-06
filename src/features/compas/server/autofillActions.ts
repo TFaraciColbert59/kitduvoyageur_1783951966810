@@ -141,6 +141,8 @@ interface Refuge {
 const HIKING_ACTIVITIES = new Set(['hiking', 'trekking', 'bivouac', 'mixed']);
 /** Transfert en véhicule plausible entre deux étapes d'un trek ou d'un circuit à vélo. */
 const TRANSFER_MAX_KM = 250;
+/** Étape de l'autre côté d'une frontière : au plus 300 km de la précédente. */
+const BORDER_MAX_KM = 300;
 /** Activités qui changent de lieu chaque jour ou presque : un itinéraire figé sur un lieu est un échec. */
 const ITINERANT_ACTIVITIES = new Set(['roadtrip', 'vanlife', 'trekking', 'cycling']);
 const MS_DAY = 86_400_000;
@@ -459,6 +461,23 @@ export async function compasAutofillAction(
           if (!hit && last && (p.move === 'marche' || p.move === 'velo' || p.move === 'aucun')) {
             hit = pickPlace(candidates, { near: last, maxKm: TRANSFER_MAX_KM, query: p.place });
             if (hit) move = 'voiture';
+          }
+          // Destination à cheval sur une frontière (Patagonie, Alpes, Pyrénées) :
+          // le lieu est cherché aussi chez le voisin, toujours à distance
+          // plausible de l'étape d'avant (jamais un homonyme lointain).
+          if (!hit && anchor.countryCode) {
+            const across = (await stageCandidates(p.place, { countryCode: null, country: null })).filter(
+              (c) => c.countryCode !== anchor!.countryCode
+            );
+            hit = pickPlace(across, {
+              near: last ?? anchor,
+              maxKm: Math.min(BORDER_MAX_KM, maxLegKm(p.move, last == null, anchor.radiusKm)),
+              query: p.place,
+            });
+            if (!hit && last && (p.move === 'marche' || p.move === 'velo' || p.move === 'aucun')) {
+              hit = pickPlace(across, { near: last, maxKm: Math.min(BORDER_MAX_KM, TRANSFER_MAX_KM), query: p.place });
+              if (hit) move = 'voiture';
+            }
           }
           // Le titre garde le nom proposé (lisible) ; la position vient de la carte.
           if (hit) last = { name: p.place, lat: hit.lat, lon: hit.lon };

@@ -213,12 +213,14 @@ function nextWeekday(today: string, target: number, strict: boolean): string {
 }
 
 /** La date proposée est-elle ancrée dans la phrase ? */
-function dateGrounded(text: string, iso: string): boolean {
+function dateGrounded(text: string, iso: string, monthOnly = true): boolean {
   const plain = plainOf(text);
   if (RELATIVE_DATE.test(plain)) return true;
-  // Le mois est dit (« en janvier ») : un jour de ce mois est ancré.
+  // Le mois est dit (« en janvier ») : un départ dans ce mois est ancré. Une
+  // date de FIN, non : « 7 jours en juillet » ne dit pas « jusqu'au 8 ».
   const month = Number(iso.slice(5, 7));
-  for (const m of plain.matchAll(new RegExp(`\\b${MONTH_RE}`, 'g'))) if (monthOf(m[1]) === month) return true;
+  if (monthOnly)
+    for (const m of plain.matchAll(new RegExp(`\\b${MONTH_RE}`, 'g'))) if (monthOf(m[1]) === month) return true;
   const day = Number(iso.slice(8, 10));
   return numberInText(text, day);
 }
@@ -500,7 +502,7 @@ export function groundingIssue(action: CompasIntentAction, text: string): string
   const plain = plainOf(text);
   switch (action.type) {
     case 'set_dates':
-      return dateGrounded(text, action.start) && (!action.end || dateGrounded(text, action.end))
+      return dateGrounded(text, action.start) && (!action.end || dateGrounded(text, action.end, false))
         ? null
         : 'Date absente de ta phrase';
     case 'set_duration': {
