@@ -775,3 +775,14 @@ const ACTIVITY_GEAR: Record<string, GearNeed[]> = {
 export function gearForActivity(activity: string): GearNeed[] {
   return ACTIVITY_GEAR[activity] ?? [];
 }
+
+/** Le plus long séjour d'affilée au même lieu (en jours) dans une suite d'étapes. */
+export function longestStay(places: readonly string[]): number {
+  let best = 0;
+  let run = 0;
+  places.forEach((p, i) => {
+    run = i > 0 && p === places[i - 1] ? run + 1 : 1;
+    best = Math.max(best, run);
+  });
+  return best;
+}

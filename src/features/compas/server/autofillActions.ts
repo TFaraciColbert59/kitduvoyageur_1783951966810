@@ -22,6 +22,7 @@ import type { TripItem } from '@/features/trips/types/trip.types';
 import { readCompasMeta } from '../engine/meta';
 import {
   NIGHT_LABEL,
+  longestStay,
   budgetLines,
   budgetTotal,
   estimateCarTrip,
@@ -599,10 +600,17 @@ export async function compasAutofillAction(
         // gardée ni servie. Sinon on redemande, tant qu'il reste du temps.
         const minPlaces = ITINERANT_ACTIVITIES.has(activity) && days >= 4 ? 3 : 1;
         const usable = (st: ReturnType<typeof sanitizeStages>) =>
-          st.length > 0 && new Set(st.map((x) => x.place)).size >= minPlaces;
+          st.length > 0 &&
+          new Set(st.map((x) => x.place)).size >= minPlaces &&
+          // Un trek de 15 jours figé 8 jours au même refuge n'est pas un itinéraire.
+          (minPlaces === 1 || longestStay(st.map((x) => x.place)) <= 3);
         const stagesKey = createHash('sha256').update(`${buildCompasStagesSystem()}\n${stagesPrompt}`).digest('hex');
+        // Une reprise (itinéraire précédent jugé mauvais) ne relit pas le partagé :
+        // elle redemande au spécialiste.
         let proposed: ReturnType<typeof sanitizeStages> =
-          (await readShared<ReturnType<typeof sanitizeStages>>('stages', stagesKey)) ?? [];
+          (carry?.stagesFallback ?? 0) > 0
+            ? []
+            : ((await readShared<ReturnType<typeof sanitizeStages>>('stages', stagesKey)) ?? []);
         if (!usable(proposed)) proposed = [];
         for (let attempt = 0; attempt < 3 && !usable(proposed); attempt += 1) {
           if (attempt && Date.now() - startedAt > 20_000) break;
@@ -723,6 +731,12 @@ export async function compasAutofillAction(
           }));
         } else {
           if (dropped) notes.push(`${dropped} lieu(x) proposé(s) introuvable(s) sur la carte : étape gardée au lieu précédent.`);
+          // La moitié des lieux introuvables : itinéraire gardé mais redemandé à
+          // la prochaine visite (lieux inventés par le modèle).
+          if (dropped * 2 >= new Set(proposed.map((x) => x.place)).size) {
+            stagesFallback = (carry?.stagesFallback ?? 0) + 1;
+            notes.push('Plusieurs lieux de l’itinéraire n’existent pas sur la carte : je le redemande à ta prochaine visite.');
+          }
           // Circuit sur route qui zigzague : séjours remis dans l'ordre le plus court
           // (arrivée et départ inchangés). Un trek ou un circuit à vélo suit son tracé.
           // Un seul moyen de transport (hors arrivée) : le déplacement reste

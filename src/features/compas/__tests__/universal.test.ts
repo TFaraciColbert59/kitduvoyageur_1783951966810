@@ -447,3 +447,24 @@ describe('Nom d’étape : jamais un nom qui n’existe pas', () => {
     expect(stageTitleFor('Retour Salt Lake City', 'Salt Lake City')).toBe('Salt Lake City');
   });
 });
+
+describe('Homonymes : la ville avant la maison isolée', () => {
+  const f = (name: string, value: string, type: string, lon: number, lat: number) => ({
+    type: 'Feature',
+    geometry: { coordinates: [lon, lat] },
+    properties: { name, osm_key: 'place', osm_value: value, type, countrycode: 'PE' },
+  });
+  it('« Cusco » → Cuzco la ville (-13,5), jamais la maison isolée du nord du Pérou', () => {
+    // Réponse Photon réelle (2026-10-06), dans son ordre.
+    const found = parsePhoton({
+      features: [
+        f('Cusco', 'state', 'state', -72.5, -12.5),
+        f('Cusco', 'region', 'county', -71.99, -13.55),
+        f('Cusco', 'isolated_dwelling', 'locality', -79.78, -4.58),
+        f('Cusco Puquio', 'hamlet', 'district', -71.76, -15.18),
+        f('Cuzco', 'city', 'district', -71.98, -13.52),
+      ],
+    });
+    expect(pickPlace(found, { query: 'Cusco', maxKm: 1500, near: { lat: -9.2, lon: -75 } })).toMatchObject({ lat: -13.52 });
+  });
+});

@@ -10,6 +10,7 @@ import {
   needFromRule,
   sameNeed,
   sanitizeAdvice,
+  longestStay,
   sourceGear,
 } from '../engine/autofill';
 
@@ -160,5 +161,13 @@ describe('inventory lifecycle availability', () => {
       tripItemNames: [], inventory: [{id:'item',name:'Tente deux places',isLent:false,inventoryStatus}], borrowed: [], shop: [], days:2,
     });
     expect(picks.find((p) => p.need.key === 'tent')?.source).toBe('a_trouver');
+  });
+});
+
+describe('itinéraire figé', () => {
+  it('compte le plus long séjour d’affilée au même lieu', () => {
+    expect(longestStay(['A', 'B', 'B', 'C'])).toBe(2);
+    expect(longestStay(['A', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S'])).toBe(8);
+    expect(longestStay([])).toBe(0);
   });
 });

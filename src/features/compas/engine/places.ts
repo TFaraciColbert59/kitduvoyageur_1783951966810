@@ -22,6 +22,8 @@ export interface CompasPlace {
   locality?: string | null;
   /** Lieu naturel ou géographique nommé (sommet, vallée, lac, massif, île, parc). */
   landmark?: boolean;
+  /** Taille du lieu habité : 5 ville … 0 maison isolée ; absent si ce n'en est pas un. */
+  settlementRank?: number;
 }
 
 /** Clés OSM d'un lieu géographique qu'on nomme comme destination. */
@@ -35,6 +37,18 @@ function isLandmark(key: unknown, value: unknown): boolean {
 }
 
 const BROAD = new Set(['country', 'state', 'region', 'county', 'district']);
+/** Une ville avant un village, un village avant un hameau, un hameau avant une maison isolée. */
+const SETTLEMENT_RANK: Record<string, number> = {
+  city: 5,
+  town: 4,
+  village: 3,
+  hamlet: 2,
+  suburb: 1,
+  quarter: 1,
+  neighbourhood: 1,
+  locality: 0,
+  isolated_dwelling: 0,
+};
 const SETTLEMENTS = new Set([
   'city',
   'town',
@@ -70,6 +84,9 @@ export function parsePhoton(payload: unknown): CompasPlace[] {
       country: typeof p.country === 'string' ? p.country : null,
       kind: String(p.type ?? p.osm_value ?? 'place'),
       settlement: p.osm_key === 'place' && SETTLEMENTS.has(String(p.osm_value)),
+      ...(p.osm_key === 'place' && String(p.osm_value) in SETTLEMENT_RANK
+        ? { settlementRank: SETTLEMENT_RANK[String(p.osm_value)] }
+        : {}),
       landmark: isLandmark(p.osm_key, p.osm_value),
       locality:
         [p.city, p.town, p.village, p.locality].find((v): v is string => typeof v === 'string' && v.trim() !== '')?.trim() ??
@@ -103,6 +120,9 @@ export function parseNominatim(payload: unknown): CompasPlace[] {
       country: typeof address.country === 'string' ? address.country : null,
       kind: type,
       settlement: SETTLEMENTS.has(type) || SETTLEMENTS.has(String(r.type)),
+      ...(SETTLEMENT_RANK[type] != null || SETTLEMENT_RANK[String(r.type)] != null
+        ? { settlementRank: SETTLEMENT_RANK[type] ?? SETTLEMENT_RANK[String(r.type)] }
+        : {}),
       landmark: isLandmark(r.category, r.type),
       // boundingbox Nominatim : [sud, nord, ouest, est] → emprise [ouest, nord, est, sud]
       extent: bb && bb.length === 4 && bb.every((n) => Number.isFinite(n)) ? [bb[2], bb[1], bb[3], bb[0]] : null,
@@ -180,7 +200,10 @@ export function pickPlace(
   // traduit, « Isle of Skye » → « Île de Skye ») : la pertinence seule.
   const named = ranked.filter((x) => x.named);
   if (named.length) {
-    named.sort((a, b) => Number(Boolean(b.c.settlement)) - Number(Boolean(a.c.settlement)) || a.i - b.i);
+    // Lieu habité d'abord, le plus grand d'abord (« Cuzco » la ville, pas la
+    // maison isolée « Cusco » du nord du Pérou), puis la pertinence.
+    const rank = (c: CompasPlace) => (c.settlement ? 10 + (c.settlementRank ?? 2) : 0);
+    named.sort((a, b) => rank(b.c) - rank(a.c) || a.i - b.i);
     return named[0].c;
   }
   if (!want) return ranked[0]?.c ?? null;
@@ -198,7 +221,13 @@ export function pickPlace(
 /** Squelette consonantique : deux transcriptions d'un même nom se rejoignent. */
 function sameSkeleton(a: string, b: string): boolean {
   if (a.length < 4 || b.length < 4) return false;
-  const k = (v: string) => v.replace(/[aeiouyhw ]/g, '').replace(/(.)\1+/g, '$1');
+  // z/s et k/q/c se valent (« Cuzco » / « Cusco », « Kathmandu » / « Qathmandu »).
+  const k = (v: string) =>
+    v
+      .replace(/[aeiouyhw ]/g, '')
+      .replace(/z/g, 's')
+      .replace(/[kq]/g, 'c')
+      .replace(/(.)\1+/g, '$1');
   const ka = k(a);
   return ka.length >= 3 && ka === k(b);
 }
