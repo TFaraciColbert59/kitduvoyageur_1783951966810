@@ -572,7 +572,9 @@ export async function compasAutofillAction(
           const candidates = byName.get(p.place) ?? [];
           let move = p.move;
           const walkLike = p.move === 'marche' || p.move === 'velo' || p.move === 'aucun';
-          const legKm = maxLegKm(p.move, last == null, anchor.radiusKm);
+          // Sortie de quelques heures : tout reste autour du départ (jamais la grande ville voisine).
+          const legKm =
+            ctx.scope === 'sortie' ? anchor.radiusKm : maxLegKm(p.move, last == null, anchor.radiusKm);
           // Destination à cheval sur une frontière (Patagonie, Alpes, Pyrénées) :
           // le lieu est cherché aussi chez le voisin, toujours à distance
           // plausible de l'étape d'avant (jamais un homonyme lointain).
@@ -693,17 +695,24 @@ export async function compasAutofillAction(
           return { km: Math.round(km * 10) / 10, ascent: ascent != null ? Math.round(ascent) : null, measured: true };
         });
         if (stagePlaces.length) await dropReplaced();
+        // Sortie courte sur un seul lieu : la boucle visée (durée × allure, ou distance dite), annoncée comme estimation.
+        const loopKm =
+          ctx.scope === 'sortie' && stagePlaces.length === 1
+            ? expectedKm(ctx, { hours: compas.durationHours, days, targetKm: compas.preferences?.targetKm ?? null })
+            : null;
         const rows = stagePlaces.map((st, i) => ({
           trip_id: tripId,
           day_number: st.day,
           order_index: 0,
           title: `Jour ${st.day} · ${st.name}`,
-          description: st.note,
+          description: loopKm
+            ? [st.note, `Boucle d’environ ${String(loopKm).replace('.', ',')} km (estimation selon la durée et l’allure).`].filter(Boolean).join(' ')
+            : st.note,
           transport_mode: STEP_TRANSPORT[st.move],
           source: 'compas',
           latitude: Math.round(st.lat * 1e5) / 1e5,
           longitude: Math.round(st.lon * 1e5) / 1e5,
-          distance_km: legs[i]?.km ?? null,
+          distance_km: legs[i]?.km ?? (loopKm && i === 0 ? loopKm : null),
           elevation_gain_m: legs[i]?.ascent ?? null,
         }));
         if (rows.length) await supabase.from('trip_steps').insert(rows);
@@ -1066,7 +1075,10 @@ export async function compasAutofillAction(
             basis: 'estimation de l’IA pour les trajets entre étapes',
           }
         : null,
-      { category: 'nourriture', title: `Repas · ${days} jour(s) × ${party}`, amount: meals.amount, source: 'estimation', basis: meals.basis },
+      // Une sortie de quelques heures ne compte pas de repas.
+      ctx.scope === 'sortie'
+        ? null
+        : { category: 'nourriture', title: `Repas · ${days} jour(s) × ${party}`, amount: meals.amount, source: 'estimation', basis: meals.basis },
       rental ? { category: 'matériel', title: 'Location de matériel', amount: rental, source: 'base', basis: 'prix par jour de la boutique × jours' } : null,
       purchase ? { category: 'matériel', title: 'Matériel à acheter', amount: purchase, source: 'base', basis: 'prix de la boutique' } : null,
       abroad && advice.entryFeesPerPerson != null
