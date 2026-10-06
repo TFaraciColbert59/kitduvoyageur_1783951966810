@@ -81,4 +81,14 @@ describe('Kit d’une sortie courte et froid de saison selon le lieu', () => {
     expect(gloves(-50.9, 7, 'AR')).toBe(true);
     expect(gloves(-33.9, 1, 'ZA')).toBe(false);
   });
+  it('crampons : pas pour une rando d’été à 2 700 m, oui hors été, en alpinisme ou très haut', () => {
+    const crampons = (seasonMonth: number, maxM: number, activity = 'hiking') => {
+      const k = generateTripContextualKit({ countryCode: 'IT', activity, durationDays: 4, seasonMonth, latitude: 46.5, elevationProfile: { maxM } as never });
+      return [...k.vitalGaps, ...k.recommendedGaps].some((g) => g.key === 'crampons');
+    };
+    expect(crampons(7, 2749)).toBe(false);
+    expect(crampons(10, 2749)).toBe(true);
+    expect(crampons(7, 2749, 'mountaineering')).toBe(true);
+    expect(crampons(7, 3200)).toBe(true);
+  });
 });

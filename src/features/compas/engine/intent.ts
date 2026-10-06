@@ -624,6 +624,15 @@ function tokensIn(text: string, value: string): boolean {
     .some((t) => plain.includes(t));
 }
 
+/** Le nombre de personnes est-il dit comme tel dans la phrase (texte « plain ») ? */
+function partyGrounded(plain: string, count: number): boolean {
+  const patterns = [
+    `\\b${NUM}\\s+(?:personnes?|pers\\b|randonneurs?|adultes?|enfants?|amis|amies|copains|copines|potes|participants|voyageurs?|people|persons|friends|adults)`,
+    `\\b(?:a|pour|on est|on sera|nous sommes|nous serons|groupe de|famille de|entre|we are|for)\\s+${NUM}\\b(?!\\s*(?:jours?|j\\b|h\\b|heures?|nuits?|km|kilos?|kg|g\\b|m\\b|metres?|€|euros?|eur\\b|semaines?|min|%|ans|days?|nights?))`,
+  ];
+  return patterns.some((p) => [...plain.matchAll(new RegExp(p, 'g'))].some((m) => toNumber(m[1]) === count));
+}
+
 /** Refuse ce que la phrase ne dit pas. Renvoie la raison, ou null si ancré. */
 export function groundingIssue(action: CompasIntentAction, text: string): string | null {
   const plain = plainOf(text);
@@ -649,7 +658,9 @@ export function groundingIssue(action: CompasIntentAction, text: string): string
       return ok ? null : 'Durée absente de ta phrase';
     }
     case 'set_party_size':
-      return numberInText(text, action.count) ||
+      // Le nombre doit être dit À PROPOS DES PERSONNES (« à 4 », « 4 amis ») :
+      // « 4 jours de rando » ne fait pas un groupe de 4.
+      return partyGrounded(plain, action.count) ||
         (action.count === 1 && /\b(seul|seule|solo)\b/.test(plain)) ||
         (action.count === 2 && /\b(couple|duo)\b/.test(plain))
         ? null

@@ -285,6 +285,8 @@ export function stageTitleFor(proposed: string, mapName: string | null | undefin
   if (!mapName) return proposed;
   const a = plainName(proposed);
   const b = plainName(mapName);
-  if (!a || !b || a === b || b.startsWith(`${a} `) || a.startsWith(`${b} `)) return proposed;
+  // Nom proposé plus long que celui de la carte : un commentaire collé
+  // (« Springdale repos », « Retour Salt Lake City ») : le nom de la carte.
+  if (!a || !b || a === b || b.startsWith(`${a} `)) return proposed;
   return mapName;
 }

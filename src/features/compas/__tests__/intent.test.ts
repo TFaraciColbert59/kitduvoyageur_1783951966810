@@ -107,6 +107,12 @@ describe('ancrage : rien qui ne soit dans la phrase', () => {
       /absent/
     );
     expect(groundingIssue({ type: 'set_budget', amount: 500 }, 'pas trop cher')).toMatch(/absent/);
+    // Un nombre de jours n'est pas un groupe.
+    expect(groundingIssue({ type: 'set_party_size', count: 4 }, '4 jours de rando dans les Dolomites')).toMatch(/absent/);
+    expect(groundingIssue({ type: 'set_party_size', count: 4 }, 'on part à quatre')).toBeNull();
+    expect(groundingIssue({ type: 'set_party_size', count: 3 }, 'rando 2 jours, nous sommes 3')).toBeNull();
+    expect(groundingIssue({ type: 'set_party_size', count: 5 }, 'week-end en famille de 5')).toBeNull();
+    expect(groundingIssue({ type: 'set_party_size', count: 4 }, 'Hiking 5 days for 4 people')).toBeNull();
     expect(groundingIssue({ type: 'set_duration', days: 3, hours: null }, 'deux nuits')).toBeNull();
     expect(
       groundingIssue({ type: 'set_dates', start: '2026-10-03', end: null }, 'samedi')

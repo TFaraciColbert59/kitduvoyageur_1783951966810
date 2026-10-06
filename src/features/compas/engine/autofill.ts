@@ -377,6 +377,8 @@ export function sanitizeAdvice(raw: unknown): AutofillAiAdvice {
     ? r.notes
         .map((n) => cleanText(n, 180))
         .filter((n): n is string => n != null && n.length >= 8)
+        // Une phrase commence par une majuscule (« appliquer un indice… »).
+        .map((n) => n[0].toLocaleUpperCase('fr') + n.slice(1))
         .slice(0, 3)
     : [];
   return {

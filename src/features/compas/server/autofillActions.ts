@@ -38,6 +38,7 @@ import {
   sanitizeStages,
   sourceGear,
   approachMode,
+  FLIGHT_THRESHOLD_KM,
   fuelForKm,
   CAR_ASSUMPTIONS,
   STEP_TRANSPORT,
@@ -919,6 +920,15 @@ export async function compasAutofillAction(
             fuelEur: carFuel.fuelEur,
             basis: carFuel.basis,
           };
+      } else if (car.reason !== 'off_network' && distanceKm(from, target) <= FLIGHT_THRESHOLD_KM) {
+        // Service de calcul indisponible (panne, débit) mais destination à portée
+        // de route : trajet estimé (vol d'oiseau × 1,3 à 80 km/h), jamais un vol.
+        const km = Math.round(distanceKm(from, target) * 1.3);
+        carFuel = estimateCarTrip({ oneWayKm: km, oneWayMin: Math.round((km / 80) * 60), partySize: party });
+        if (carFuel) {
+          transport = { mode: 'voiture', km: carFuel.oneWayKm, minutes: carFuel.oneWayMin, walkKm: 0, fuelEur: carFuel.fuelEur, basis: carFuel.basis };
+          notes.push('Trajet en voiture estimé (calcul d’itinéraire indisponible à l’instant) : à affiner avec « Tout préparer ».');
+        }
       } else {
         // Pas de route (île, autre continent) : l'avion ou le bateau s'imposent.
         flightNeeded = true;

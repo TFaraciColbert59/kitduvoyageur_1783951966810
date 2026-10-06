@@ -436,5 +436,7 @@ describe('Nom d’étape : jamais un nom qui n’existe pas', () => {
     expect(stageTitleFor("Villar-d'Arnave", "Villar-d'Arène")).toBe("Villar-d'Arène");
     expect(stageTitleFor('Kathmandu', 'Katmandou')).toBe('Katmandou');
     expect(stageTitleFor('Imlil', null)).toBe('Imlil');
+    expect(stageTitleFor('Springdale repos', 'Springdale')).toBe('Springdale');
+    expect(stageTitleFor('Retour Salt Lake City', 'Salt Lake City')).toBe('Salt Lake City');
   });
 });

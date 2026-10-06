@@ -216,7 +216,18 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     defaultPriority: 'vital',
     baseWeightGrams: 400,
     condition: (input, maxAlt) => {
-      const isHighAltitude = maxAlt >= 2400 || input.countryCode === 'IS' || input.countryCode === 'NP';
+      // Névés et verglas : très haut, ou haut hors été (octobre à mai au nord,
+      // avril à novembre au sud), ou pour l'alpinisme et le ski. Pas une rando
+      // de juillet à 2 500 m dans les Dolomites.
+      const lat = input.latitude ?? null;
+      const month = input.seasonMonth && lat != null && lat < 0 ? ((input.seasonMonth + 5) % 12) + 1 : input.seasonMonth;
+      const summer = Boolean(month && month >= 6 && month <= 9);
+      const snowSport = input.activity === 'mountaineering' || input.activity === 'ski';
+      const isHighAltitude =
+        maxAlt >= 3000 ||
+        input.countryCode === 'IS' ||
+        input.countryCode === 'NP' ||
+        (maxAlt >= 2400 && (!summer || snowSport));
       return {
         match: isHighAltitude,
         reason: isHighAltitude
