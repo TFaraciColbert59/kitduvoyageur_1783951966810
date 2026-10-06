@@ -1,5 +1,13 @@
 # MISSION LOG — LKDV
 
+## 2026-10-06 — Compas : phrase de départ, points sur place, Résa
+
+- **Phrase de départ** : elle ne vivait que dans l'onglet (sessionStorage), effacée dès la lecture ; quitter la page trop tôt la perdait. Elle est maintenant gardée sur le voyage (`metadata.compas.start_say`), reprise à chaque ouverture et effacée seulement une fois appliquée (`compasClearStartSayAction`). Tests : appliquée puis oubliée ; écriture en échec → gardée.
+- **Points sur place** : la carte n'avait que `trail_pois` (~1 800 points, parcours du catalogue seulement). Désormais, autour de chaque lieu d'étape (1,5 km, 8 lieux) : restos et cafés, commerces, pharmacie et soins, eau, hébergements, refuges, campings, gares et bus, toilettes, points de vue, sommets, parkings (OpenStreetMap via Overpass, ODbL). Une requête par lieu avec un plafond par catégorie, deux nouveaux lieux par appel, cache partagé d'une semaine par lieu, réponse coupée jamais gardée, chargement après l'affichage et au fil des appels. Nouvelles couches de carte et onglet « Sur place ». Vérifié sur la preview : Japon 332 points, Ardèche 128, Rome 56, Annecy 59.
+- **Résa · Activités** : Viator recevait le nom tapé (« Rome », « Vercors »), que sa table ne connaît pas. La destination Viator est maintenant la plus proche du lieu du voyage (liste officielle `GET /destinations`, ville ou région à moins de 120 km ; jamais Paris par défaut pour le Vercors).
+- **Résa · raison affichée** : un partenaire inactif nomme la variable qui manque (noms seulement, jamais une valeur). Constaté sur la preview : ni `VIATOR_MODE` + `VIATOR_SANDBOX_API_KEY` ni `VIATOR_API_KEY` ; ni `ROUTESTACK_MODE` + `ROUTESTACK_SANDBOX_API_KEY` ni `ROUTESTACK_API_KEY`. Même « non activé » en production.
+- Preuves : tsc, eslint propres ; tests Compas 1320/1320 ; essais réels sur la preview.
+
 ## 2026-10-06 — Compas : essais aléatoires réels (preview Vercel) et corrections
 
 - **Essais** : 960 phrases aléatoires (graine fixe, `__tests__/fuzz.test.ts`) puis 15 voyages tirés au hasard créés pour de vrai sur la preview (Écosse, Népal, Vercors, Ardèche, Rome, ski Alpes, Crète, trail, Japon, rando 3 h, Islande, Mont Blanc, Corse, Norvège, Fontainebleau), contrôlés en base (étapes, objets, dépenses, fin du préremplissage).
