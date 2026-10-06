@@ -183,7 +183,7 @@ export async function compasSearchOffersAction(
       // configuration, jamais une clé ni la réponse brute du partenaire.
       return {
         success: false,
-        error: `Le partenaire n’a pas répondu : réessaie plus tard. (${err.provider ?? 'partenaire'} ${err.code}${err.status ? ` ${err.status}` : ''}${err.provider === 'viator' && viatorDestinationsFailure() ? ` · ${viatorDestinationsFailure()}` : ''})`,
+        error: `Le partenaire n’a pas répondu : réessaie plus tard. (${err.provider ?? 'partenaire'} ${err.code}${err.status ? ` ${err.status}` : ''}${err.provider === 'viator' && viatorDestinationsFailure() ? ` · ${viatorDestinationsFailure()}` : ''}${err.message ? ` · ${err.message.slice(0, 160)}` : ''})`,
       };
     }
     console.error('[compas] compasSearchOffersAction', err);
