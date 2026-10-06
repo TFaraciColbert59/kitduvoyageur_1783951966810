@@ -240,6 +240,13 @@ describe('Mois seul (« en janvier », « début mai », « week-end en mai »)'
       groundingIssue({ type: 'set_dates', start: '2027-07-01', end: '2027-07-08' }, 'Road trip en Islande 7 jours en juillet')
     ).not.toBeNull();
     expect(groundingIssue({ type: 'set_dates', start: '2027-07-01', end: '2027-07-08' }, 'du 1er au 8 juillet')).toBeNull();
+    // Fin donnée par un mois : acceptée.
+    expect(
+      groundingIssue({ type: 'set_dates', start: '2027-06-28', end: '2027-07-03' }, 'du 28 juin à début juillet')
+    ).toBeNull();
+    expect(
+      groundingIssue({ type: 'set_dates', start: '2027-07-01', end: '2027-07-31' }, "en juillet, jusqu'à fin juillet")
+    ).toBeNull();
   });
 });
 
