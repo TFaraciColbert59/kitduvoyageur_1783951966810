@@ -90,5 +90,8 @@ describe('Kit d’une sortie courte et froid de saison selon le lieu', () => {
     expect(crampons(10, 2749)).toBe(true);
     expect(crampons(7, 2749, 'mountaineering')).toBe(true);
     expect(crampons(7, 3200)).toBe(true);
+    // Andes (Cusco, -13,5°) : 4 300 m n'est pas un glacier.
+    const peru = generateTripContextualKit({ countryCode: 'PE', activity: 'trekking', durationDays: 5, seasonMonth: 6, latitude: -13.5, elevationProfile: { maxM: 4318 } as never });
+    expect([...peru.vitalGaps, ...peru.recommendedGaps].some((g) => g.key === 'crampons')).toBe(false);
   });
 });

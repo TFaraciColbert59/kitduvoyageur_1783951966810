@@ -223,11 +223,13 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
       const month = input.seasonMonth && lat != null && lat < 0 ? ((input.seasonMonth + 5) % 12) + 1 : input.seasonMonth;
       const summer = Boolean(month && month >= 6 && month <= 9);
       const snowSport = input.activity === 'mountaineering' || input.activity === 'ski';
+      // Sous les tropiques, la neige commence vers 5 000 m (Andes, Kilimandjaro).
+      const tropical = lat != null && Math.abs(lat) < 23.5;
       const isHighAltitude =
-        maxAlt >= 3000 ||
+        maxAlt >= (tropical ? 5000 : 3000) ||
         input.countryCode === 'IS' ||
         input.countryCode === 'NP' ||
-        (maxAlt >= 2400 && (!summer || snowSport));
+        (maxAlt >= 2400 && (snowSport || (!tropical && !summer)));
       return {
         match: isHighAltitude,
         reason: isHighAltitude

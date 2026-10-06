@@ -480,6 +480,12 @@ describe('Homonymes : la ville avant la maison isolée', () => {
       ],
     });
     expect(pickPlace(noCity, { query: 'Cusco', maxKm: 1500 })).toMatchObject({ lat: -13.55 });
+    const hotel = {
+      type: 'Feature',
+      geometry: { coordinates: [-72.04, -13.33] },
+      properties: { name: 'Madre Tierra Resort Sacred Valley', osm_key: 'tourism', osm_value: 'hotel', type: 'house', countrycode: 'PE' },
+    };
+    expect(pickPlace(parsePhoton({ features: [hotel] }), { query: 'Sacred Valley', maxKm: 1500 })).toBeNull();
   });
   it('« Chamonix » : le bourg Chamonix-Mont-Blanc avant un hameau « Chamonix »', () => {
     const fr = (name: string, value: string, lat: number) => ({

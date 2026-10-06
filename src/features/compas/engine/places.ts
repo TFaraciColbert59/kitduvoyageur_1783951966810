@@ -224,7 +224,10 @@ export function pickPlace(
   // Sinon, au moins un mot distinctif en commun (« Skye ») : jamais un lieu
   // sans rapport que la carte renvoie faute de mieux.
   const keys = distinctiveWords(want);
-  const shared = ranked.find((x) => distinctiveWords(plainName(x.c.name)).some((w) => keys.includes(w)))?.c;
+  // Jamais un bâtiment (« Madre Tierra Resort Sacred Valley » pour « Sacred Valley »).
+  const shared = ranked.find(
+    (x) => x.c.kind !== 'house' && distinctiveWords(plainName(x.c.name)).some((w) => keys.includes(w))
+  )?.c;
   if (shared) return shared;
   // Localité que la carte ne connaît que dans son écriture (« स्याफ्रु बेसी »
   // pour « Syabru Besi ») : trouvée en cherchant ce nom, à distance plausible.
