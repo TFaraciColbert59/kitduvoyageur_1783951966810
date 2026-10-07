@@ -1889,7 +1889,10 @@ export async function compasAutofillAction(
           datesSet,
           notes: notes.slice(0, 6),
           // Réglages qui ont produit ce préremplissage : un changement dit quoi refaire.
-          basis: tripBasis(trip, activity),
+          // Lus sur les métadonnées à jour : le lieu naturel retenu en cours de route
+          // (Ardennes, département → massif) ne passe pas pour un changement de lieu,
+          // qui relançait aussitôt toute la préparation.
+          basis: tripBasis({ ...trip, metadata: m }, activity),
           ...(stagesFallback ? { stagesFallback } : {}),
         },
       },
