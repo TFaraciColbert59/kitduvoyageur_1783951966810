@@ -410,6 +410,8 @@ const SLEEP_TAGS = /^(tourism=(hotel|hostel|guest_house|alpine_hut|wilderness_hu
 const NATURE_TAG = /^(natural|waterway|mountain_pass)=|^place=(island|islet)$|^leisure=nature_reserve$/;
 /** « Province de Ninh Bình », « Distrito de Cusco » : le nom sans son préfixe administratif. */
 const ADMIN_PREFIX = /^(province|region|région|departement|département|district|distrito|provincia|regione|comté|county|prefecture|préfecture|municipalité|municipality|commune)\s+(de\s+la\s+|de\s+l['’]|du\s+|des\s+|de\s+|d['’]|of\s+)?/i;
+/** « West Clare Municipal District », « Kerry County » : le nom sans son suffixe administratif. */
+const ADMIN_SUFFIX = /\s+(municipal district|district|county|municipality|province|region|prefecture|regional unit|borough)$/i;
 
 /**
  * Où l'on dort ce soir-là, si l'étape trouvée n'est pas un lieu où dormir :
@@ -423,7 +425,7 @@ export function sleepPlaceFix(place: CompasPlace): { locality: string } | { sear
   const tag = place.osmTag ?? '';
   if (SLEEP_TAGS.test(tag) || NATURE_TAG.test(tag)) return null;
   if (BROAD.has(place.kind) || /^boundary=administrative$/.test(tag)) {
-    const bare = place.name.replace(ADMIN_PREFIX, '').trim();
+    const bare = place.name.replace(ADMIN_PREFIX, '').replace(ADMIN_SUFFIX, '').trim();
     return bare && bare !== place.name ? { search: bare } : place.locality ? { locality: place.locality } : null;
   }
   // Bâtiment, monument, gare, point d'intérêt : la commune qui le contient.

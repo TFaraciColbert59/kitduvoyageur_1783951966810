@@ -533,6 +533,9 @@ describe('On dort dans une commune : monument, gare ou province remplacés', () 
     const { sleepPlaceFix } = await import('../engine/places');
     expect(sleepPlaceFix(photon('Prison Hoa Lo (Maison centrale)', 'tourism', 'museum', 'house', { city: 'Hanoï' }))).toEqual({ locality: 'Hanoï' });
     expect(sleepPlaceFix(photon('Province de Ninh Bình', 'place', 'state', 'state'))).toEqual({ search: 'Ninh Bình' });
+    // Passage du 7 octobre au soir : étape « West Clare Municipal District » (Irlande).
+    expect(sleepPlaceFix(photon('West Clare Municipal District', 'boundary', 'administrative', 'county'))).toEqual({ search: 'West Clare' });
+    expect(sleepPlaceFix(photon('Kerry County', 'boundary', 'administrative', 'county'))).toEqual({ search: 'Kerry' });
   });
   it('refuge, camping, lac, sommet et village restent l’étape', async () => {
     const { sleepPlaceFix } = await import('../engine/places');

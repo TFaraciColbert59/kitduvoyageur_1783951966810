@@ -1096,7 +1096,7 @@ export async function compasAutofillAction(
               if (town) {
                 name = town.name;
                 at = { lat: town.lat, lon: town.lon };
-              }
+              } else name = fix.search;
             }
             last = { name, ...at };
             lastProposed = p.place;

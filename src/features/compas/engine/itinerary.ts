@@ -542,10 +542,21 @@ export function buildAreaQuery(q: AreaQuery): string {
   return `[out:json][timeout:25];(${parts.join('')});out center tags 4000;`;
 }
 
-/** Nom lisible : français, sinon anglais, sinon le nom local. */
+/**
+ * Un nom qui n'est qu'un nom commun (« shanty », « Cabane », « Refuge 2 ») :
+ * OSM en porte, ce n'est pas un lieu qu'on peut nommer comme étape.
+ */
+const GENERIC_NAME =
+  /^(?:the |l['’] ?|la |le )?(?:shanty|shack|shed|shelter|hut|cabin|cottage|barn|bothy|cabane|cabanon|abri|refuge|refugio|rifugio|bivouac|bivacco|baita|hutte|h[uü]tte|schutzh[uü]tte|unterstand|bergerie|buron|grange|chalet|camping|campsite|camp site|camp|aire de bivouac|ruine|ruines|maison|house|lieu-dit|hameau|village)(?:\s*\d+)?$/i;
+
+export function isGenericName(name: string): boolean {
+  return GENERIC_NAME.test(name.trim());
+}
+
+/** Nom lisible : français, sinon anglais, sinon le nom local ; jamais un nom commun. */
 function readableName(tags: Record<string, string>): string | null {
-  const n = tags['name:fr'] || tags['name:en'] || tags.name || '';
-  return n.trim() || null;
+  const n = (tags['name:fr'] || tags['name:en'] || tags.name || '').trim();
+  return n && !isGenericName(n) ? n : null;
 }
 
 export function parseAreaPlaces(payload: unknown): AreaPlace[] {
@@ -638,7 +649,7 @@ export function parsePhotonArea(payload: unknown): AreaPlace[] {
     const kind = PHOTON_KIND[`${String(p.osm_key ?? '')}:${String(p.osm_value ?? '')}`];
     const name = typeof p.name === 'string' ? latinName(p.name) : '';
     const [lon, lat] = f.geometry?.coordinates ?? [NaN, NaN];
-    if (!kind || !name || !Number.isFinite(lat) || !Number.isFinite(lon)) return;
+    if (!kind || !name || isGenericName(name) || !Number.isFinite(lat) || !Number.isFinite(lon)) return;
     out.push({
       id: `${String(p.osm_type ?? 'N').toLowerCase()[0]}${String(p.osm_id ?? `${lat},${lon}`)}`,
       name,
@@ -699,7 +710,7 @@ export function parseGeoapifyArea(payload: unknown): AreaPlace[] {
     const name = typeof p.name === 'string' ? latinName(p.name) : '';
     const lat = Number(p.lat);
     const lon = Number(p.lon);
-    if (!kind || !name || !Number.isFinite(lat) || !Number.isFinite(lon)) return;
+    if (!kind || !name || isGenericName(name) || !Number.isFinite(lat) || !Number.isFinite(lon)) return;
     const osm = ((p.datasource as { raw?: Record<string, unknown> } | undefined)?.raw ?? {}) as Record<string, unknown>;
     const pop = Number(osm.population);
     const ele = Number(osm.ele);

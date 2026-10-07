@@ -224,6 +224,16 @@ describe('Photon — lieux d’une emprise', () => {
     ]);
     expect(places[0].population).toBeGreaterThan(places[1].population!);
   });
+  it('un nom générique n’est pas une étape (« shanty », « Cabane », « Refuge 2 »)', () => {
+    const f = (id: number, name: string) => ({
+      geometry: { coordinates: [3.9, 44.3] },
+      properties: { osm_type: 'N', osm_id: id, osm_key: 'tourism', osm_value: 'wilderness_hut', name },
+    });
+    const places = parsePhotonArea({ features: [f(1, 'shanty'), f(2, 'Cabane'), f(3, 'Refuge 2'), f(4, 'Abri'), f(5, 'Chalet de l’Aigle'), f(6, 'Cabane de Rascas')] });
+    expect(places.map((p) => p.name)).toEqual(['Chalet de l’Aigle', 'Cabane de Rascas']);
+    const osm = parseAreaPlaces({ elements: [{ type: 'node', id: 7, lat: 44.3, lon: 3.9, tags: { tourism: 'wilderness_hut', name: 'Shelter' } }] });
+    expect(osm).toEqual([]);
+  });
   it('garde le pays de la destination quand la zone y est presque entière', () => {
     const mk = (id: string, cc: string): AreaPlace => ({ id, name: id, lat: 0, lon: 0, kind: 'village', population: null, eleM: null, countryCode: cc });
     const jura = [...Array.from({ length: 9 }, (_, i) => mk(`f${i}`, 'FR')), mk('morges', 'CH')];
