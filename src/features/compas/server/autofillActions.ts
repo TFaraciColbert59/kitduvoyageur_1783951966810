@@ -455,7 +455,10 @@ async function plannedStages(opts: {
     radiusKm: zoneKm,
     places,
     waypoints,
-    shape,
+    // Une ville dite (« 4 jours à Amsterdam à vélo ») : on en part, et sans
+    // forme demandée la boucle y revient.
+    shape: shape ?? (settlement ? 'loop' : null),
+    startAt: settlement ? { name: anchor.name, lat: anchor.lat, lon: anchor.lon } : null,
     natural,
     // Une région (Bretagne, Jura) : les étapes restent dans son emprise ; un
     // lac ou un sommet n'en a pas d'utile (on dort autour).

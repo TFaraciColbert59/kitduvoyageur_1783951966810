@@ -255,3 +255,22 @@ describe('séjour sans activité dite', () => {
     expect(shapeFor({ activity: 'mixed', days: 3, radiusKm: 25 })).toBe('base');
   });
 });
+
+describe('planItinerary — départ d’une ville dite', () => {
+  it('« 4 jours à Amsterdam à vélo » : part d’Amsterdam et y revient, jamais d’un bout de la zone', () => {
+    const places = grid({ lat0: 52.37, lon0: 4.9, cols: 12, rows: 12, stepKm: 12 });
+    const amsterdam = { name: 'Amsterdam', lat: 52.37, lon: 4.9 };
+    const plan = planItinerary({
+      days: 4,
+      activity: 'cycling',
+      center: amsterdam,
+      radiusKm: 80,
+      places,
+      shape: 'loop',
+      startAt: amsterdam,
+    })!;
+    expect(plan.start?.name).toBe('Amsterdam');
+    expect(distanceKm(plan.stages[0], amsterdam)).toBeLessThan(120);
+    expect(plan.stages[plan.stages.length - 1].name).toBe('Amsterdam');
+  });
+});

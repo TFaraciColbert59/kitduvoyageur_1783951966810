@@ -55,6 +55,12 @@ export interface ItineraryInput {
   natural?: boolean;
   /** Emprise réelle de la destination [ouest, nord, est, sud] : les étapes y restent. */
   extent?: [number, number, number, number] | null;
+  /**
+   * La destination est une ville (« 4 jours à Amsterdam à vélo ») : on en part
+   * et une boucle y revient. Sans cela, l'itinéraire partait d'un bout de la
+   * zone (Brielle → Schagen) sans jamais passer par Amsterdam.
+   */
+  startAt?: { name: string; lat: number; lon: number } | null;
 }
 
 export interface PlannedStage {
@@ -352,11 +358,22 @@ function planMoving(
 
   // Départ : un lieu habité (accès), au bout de l'axe pour une traversée, près du centre pour une boucle.
   const starts = inZone.filter((p) => p.kind !== 'hut' && p.kind !== 'camp');
-  const start = best(starts.length ? starts : inZone, (p) =>
-    shape === 'traverse'
-      ? (-along(axis, p) / Math.max(1, input.radiusKm)) * 4 + RANK[p.kind] * 0.3
-      : (-distanceKm(input.center, p) / Math.max(1, input.radiusKm)) * 4 + RANK[p.kind] * 0.5
-  );
+  const fixed = input.startAt;
+  const start: AreaPlace | null = fixed
+    ? (starts.find((p) => p.name === fixed.name && distanceKm(p, fixed) <= 3) ?? {
+        id: `start:${fixed.lat.toFixed(4)},${fixed.lon.toFixed(4)}`,
+        name: fixed.name,
+        lat: fixed.lat,
+        lon: fixed.lon,
+        kind: 'city',
+        population: null,
+        eleM: null,
+      })
+    : best(starts.length ? starts : inZone, (p) =>
+        shape === 'traverse'
+          ? (-along(axis, p) / Math.max(1, input.radiusKm)) * 4 + RANK[p.kind] * 0.3
+          : (-distanceKm(input.center, p) / Math.max(1, input.radiusKm)) * 4 + RANK[p.kind] * 0.5
+      );
   if (!start) return { stages: [], start: null };
 
   // Étapes voulues : dans l'ordre le plus court depuis le départ.
