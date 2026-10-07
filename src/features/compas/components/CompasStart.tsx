@@ -111,7 +111,7 @@ export function CompasStart({
           </div>
 
           <form
-            className="cp-intent cp-ask"
+            className="cp-ask"
             aria-label="Ta demande"
             onSubmit={(e) => {
               e.preventDefault();
