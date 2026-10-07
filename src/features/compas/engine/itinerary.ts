@@ -140,6 +140,16 @@ const BASE: Profile = {
 /** Base dans un village (ski, escalade, alpinisme) plutôt qu'en ville. */
 const MOUNTAIN_BASE = new Set(['ski', 'climbing', 'mountaineering', 'trail', 'running']);
 
+/** Activité de montagne : l'altitude des lieux compte (base, hauteurs). */
+export function isMountainActivity(activity: string): boolean {
+  return MOUNTAIN_BASE.has(activity);
+}
+
+/** Bonus d'altitude d'une base de montagne : 0 sous 400 m, plafonné à 1 400 m. */
+function altitudeBonus(eleM: number | null): number {
+  return eleM == null ? 0 : Math.min(2, Math.max(0, (eleM - 400) / 500));
+}
+
 export function profileFor(activity: string): Profile {
   const p = PROFILES[activity];
   if (p) return p;
@@ -312,8 +322,13 @@ function planBase(input: ItineraryInput, prof: Profile): PlannedStage[] {
       if (bases.some((b) => distanceKm(b, p) < spacing)) return -Infinity;
       const fromCenter = distanceKm(input.center, p) / Math.max(1, input.radiusKm);
       if (fromCenter > 1.1) return -Infinity;
-      // Une seule base : la plus proche du centre. Plusieurs : les lieux les plus importants.
-      return count === 1 ? kindScore(p, prof, input.nights) - 3 * fromCenter : RANK[p.kind] + Math.min(2, Math.log10(p.population ?? 1) / 3);
+      // Une seule base : la plus proche du centre. Dans un grand lieu naturel, le
+      // centre de l'emprise ne dit rien (Dolomites : près de Belluno, en plaine) :
+      // il pèse moins, et en montagne l'altitude compte (Canazei, pas Brugnàch).
+      // Plusieurs bases : les lieux les plus importants.
+      if (count > 1) return RANK[p.kind] + Math.min(2, Math.log10(p.population ?? 1) / 3);
+      const mountain = MOUNTAIN_BASE.has(input.activity) ? altitudeBonus(p.eleM) : 0;
+      return kindScore(p, prof, input.nights) + mountain - (input.natural ? 1 : 3) * fromCenter;
     });
     if (!pick) break;
     bases.push({ name: pick.name, lat: pick.lat, lon: pick.lon, id: pick.id });

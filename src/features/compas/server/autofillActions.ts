@@ -71,6 +71,7 @@ import { trainTrip, type TrainTrip } from '../engine/rail';
 import { trailRegion } from '../engine/intent';
 import {
   dayStartVillage,
+  isMountainActivity,
   keepAdminArea,
   keepHighlands,
   keepHomeCountry,
@@ -434,8 +435,9 @@ async function plannedStages(opts: {
   else if (anchor.kind === 'county') places = keepAdminArea(places, anchor.name, 'county');
   // Altitudes réelles (tuiles de relief, quelques tuiles pour toute la zone) :
   // acclimatation au-dessus de 3 000 m, et à pied, le massif plutôt que la plaine.
-  // Le ski aussi : une station, pas le village de la vallée (Jura : Crotenay, 600 m).
-  const foot = profileFor(activity).move === 'marche' || activity === 'ski';
+  // Le ski aussi : une station, pas le village de la vallée (Jura : Crotenay, 600 m) ;
+  // l'escalade et l'alpinisme : une base d'altitude (Dolomites : Canazei, pas Brugnàch).
+  const foot = profileFor(activity).move === 'marche' || isMountainActivity(activity);
   // Beaucoup de lieux (les Alpes suisses entières) : relief lu plus large
   // (moins de tuiles) plutôt que pas de filtre (Genève, Lausanne, Montreux).
   if (foot && places.length <= 3000) {

@@ -326,3 +326,26 @@ describe('planItinerary — traversée plus longue que la zone (Jura à vélo, 7
     expect(plan.stages.some((s) => /Retour par un autre chemin/.test(s.note ?? ''))).toBe(true);
   });
 });
+
+describe('planItinerary — base d’un séjour en montagne dans un grand lieu naturel (Dolomites, 7 octobre)', () => {
+  // Centre de l'emprise près de Belluno (plaine) ; les vraies bases sont en altitude, à ~30 km.
+  const center = { lat: 46.29, lon: 12.05 };
+  const village = (id: string, name: string, lat: number, lon: number, eleM: number, population: number): AreaPlace => ({
+    id, name, lat, lon, kind: 'village', population, eleM,
+  });
+  const places = [
+    village('n1', 'Brugnàch', 46.286, 12.02, 520, 300),
+    village('n2', 'Canazei', 46.477, 11.77, 1465, 6000),
+    village('n3', 'Corvara', 46.55, 11.87, 1568, 1800),
+    village('n4', 'Trichiana', 46.08, 12.13, 330, 4000),
+  ];
+  it('escalade : le village d’altitude connu, pas le hameau au centre de l’emprise', () => {
+    const plan = planItinerary({ days: 6, activity: 'climbing', center, radiusKm: 40, places, natural: true })!;
+    expect(plan.shape).toBe('base');
+    expect(plan.stages[0].name).toBe('Canazei');
+  });
+  it('autour d’une ville dite (pas un lieu naturel) : toujours le plus proche du centre', () => {
+    const plan = planItinerary({ days: 6, activity: 'climbing', center, radiusKm: 40, places })!;
+    expect(plan.stages[0].name).toBe('Brugnàch');
+  });
+});
