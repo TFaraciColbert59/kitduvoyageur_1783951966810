@@ -30,5 +30,7 @@ describe('lieu naturel pour une activité de plein air', () => {
   it('« Calanques » : le parc national (le plus étendu), pas une crique de Corse', () => {
     const p = pickNatural(parsePhoton(calanques), 'Calanques', 'FR');
     expect(p?.name).toMatch(/Parc national des Calanques/);
+    // Sans pays connu (repli d'une destination sans nom exact) : idem.
+    expect(pickNatural(parsePhoton(calanques), 'Calanques', null)?.name).toMatch(/Parc national des Calanques/);
   });
 });

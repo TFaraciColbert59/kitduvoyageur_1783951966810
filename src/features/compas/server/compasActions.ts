@@ -11,7 +11,7 @@ import {
   tripPartySize,
   type Supa,
 } from './compasServer';
-import { lookupBase, lookupDestination, lookupLoose } from './placeLookup';
+import { lookupBase, lookupDestination, lookupLoose, lookupNatural } from './placeLookup';
 import type { CompasPlace } from '../engine/places';
 import { getTripById } from '@/lib/queries-trips';
 import { addTripItem } from '@/lib/queries-trip-kit';
@@ -558,6 +558,10 @@ export async function compasSetPreferencesAction(
 async function resolveDestination(query: string, userId: string): Promise<CompasPlace | null> {
   const exact = await lookupDestination(query);
   if (exact) return exact;
+  // Aucun lieu à ce nom exact : le lieu naturel qui le porte (« Calanques » :
+  // le parc national, pas le récif de Piana en Corse, premier venu de la carte).
+  const natural = await lookupNatural(query, null).catch(() => null);
+  if (natural) return { ...natural, name: query.trim().slice(0, 80) };
   try {
     const res = await askAI({
       feature: 'compas-autofill',
