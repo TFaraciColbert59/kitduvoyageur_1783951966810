@@ -179,3 +179,11 @@ describe('planningZoneKm — la zone où tient le voyage', () => {
     expect(buildAreaQuery({ center: { lat: 45, lon: 5.4 }, radiusKm: 20, activity: 'trekking' })).toContain('hamlet');
   });
 });
+
+describe('planningZoneKm — séjour sur une base', () => {
+  it('alpinisme au pied d’un sommet : une base à moins de 40 km, jamais 190', () => {
+    expect(planningZoneKm({ activity: 'mountaineering', days: 3, halfExtentKm: 0.01, settlement: false })).toBe(12);
+    expect(planningZoneKm({ activity: 'ski', days: 6, halfExtentKm: null, settlement: false })).toBe(35);
+    expect(planningZoneKm({ activity: 'citytrip', days: 3, halfExtentKm: 60, settlement: true })).toBe(40);
+  });
+});

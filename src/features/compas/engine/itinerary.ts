@@ -445,6 +445,10 @@ export function planningZoneKm(input: {
   settlement: boolean;
 }): number {
   const prof = profileFor(input.activity);
+  const own0 = input.halfExtentKm ?? (input.settlement ? 10 : 25);
+  // Séjour sur une base (ski, escalade, alpinisme, ville) : on ne voyage pas,
+  // la base se cherche tout près (une vallée, un village au pied du sommet).
+  if (!prof.itinerant) return Math.round(Math.min(40, Math.max(12, own0 + 10)));
   const crowDay = prof.dayKm[1] * prof.crow;
   const span = crowDay * Math.max(1, input.days - 1);
   const own = input.halfExtentKm ?? (input.settlement ? 10 : 25);
