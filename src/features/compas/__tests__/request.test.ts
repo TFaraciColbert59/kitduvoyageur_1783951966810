@@ -51,6 +51,12 @@ describe('understandRequest — « voici ce que j’ai compris »', () => {
     ['alpinisme 4 jours Mont Blanc', 'Mont Blanc'],
     ['randoo 3 jour dans les vosges', 'Vosges'],
     ['séjour 7 jours au Maroc à Marrakech', 'Marrakech'],
+    ['trek 7 jours au Népal autour des Annapurnas', 'Népal'],
+    ['6 jours dans les Dolomites via ferrata', 'Dolomites'],
+    ['weekend à Barcelone pas cher', 'Barcelone'],
+    ['9 jours au Kenya safari', 'Kenya'],
+    ['vélo 7 jours de Nantes à la mer', 'Nantes'],
+    ['randonnée 5 jours en Corse sur le Mare a Mare', 'Corse'],
   ])('lieu de « %s » : %s', (text, place) => {
     expect(line(understandRequest(text, TODAY), 'lieu')).toMatchObject({ value: place, state: 'compris' });
   });
@@ -61,6 +67,8 @@ describe('understandRequest — « voici ce que j’ai compris »', () => {
     ['balade de 3h en forêt de Fontainebleau', 'Randonnée'],
     ['tour du Queyras en 6 jours', 'Trek'],
     ['5 jours dans les Dolomites en refuge', 'Randonnée'],
+    ['4 jours dans les Cévennes à pied avec un âne', 'Randonnée'],
+    ['marche 3 heures en forêt près de Paris', 'Randonnée'],
   ])('activité de « %s » : %s', (text, activity) => {
     expect(line(understandRequest(text, TODAY), 'activite')).toMatchObject({ value: activity, state: 'compris' });
   });
@@ -111,5 +119,13 @@ describe('ancrage des nuits dehors proposées par l’IA', () => {
     expect(groundingIssue({ type: 'set_outdoor_nights', nights: 4 }, 'hiking 5 days in the Swiss Alps')).not.toBeNull();
     expect(groundingIssue({ type: 'set_outdoor_nights', nights: 3 }, 'rando 4 jours avec 3 nuits en bivouac')).toBeNull();
     expect(groundingIssue({ type: 'set_outdoor_nights', nights: 2 }, 'dormir dehors 2 nuits dans le Vercors')).toBeNull();
+  });
+});
+
+describe('sans lieu dit', () => {
+  it('« week-end bivouac au bord d’un lac » : aucun lieu inventé (préparé près de chez toi)', async () => {
+    const { understandRequest } = await import('../engine/request');
+    const r = understandRequest('week-end bivouac au bord d’un lac', '2026-10-07');
+    expect(r.lines.find((l) => l.key === 'lieu')?.state).toBe('a_trouver');
   });
 });

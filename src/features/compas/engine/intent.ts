@@ -299,7 +299,7 @@ const FAMOUS_TRAILS: Array<[RegExp, string]> = [
 
 /** Noms communs de paysage ou de moment : jamais une destination à eux seuls. */
 const COMMON_PLACE_WORDS =
-  /^(?:bois|foret|forets|montagnes?|campagne|nature|mer|plage|plages|neige|environs|alentours|coin|region|parc|fjords?|calanques?|lacs?|riviere|vallee|ville|famille|couple|groupe|solo|van|velo|pied|cheval|ski|journee|semaine|soiree|matinee|apres-?midi|hiver|ete|automne|printemps)$/;
+  /^(?:bois|foret|forets|montagnes?|campagne|nature|mer|plage|plages|neige|environs|alentours|coin|region|parc|fjords?|calanques?|lacs?|riviere|vallee|ville|famille|couple|groupe|solo|van|velo|pied|cheval|ski|bord|mer|lac|journee|semaine|soiree|matinee|apres-?midi|hiver|ete|automne|printemps)$/;
 
 export function parseIntentRules(text: string, today: string): CompasIntentAction[] {
   const src = text.normalize('NFC').slice(0, 400);
@@ -523,7 +523,7 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     [/\b(van|vanlife|camping[- ]car|fourgon|fourgonnette)\b/, 'vanlife'],
     [/\b(city ?trip|citytrip)\b/, 'citytrip'],
     [/\b(plage|plages|farniente|bord de mer|baignade|beach)\b/, 'beach'],
-    [/\b(rando+s?|randon+ee?s?|hiking|hike|marche nordique|marche a pied|balades?|promenades?)\b/, 'hiking'],
+    [/\b(rando+s?|randon+ee?s?|hiking|hike|marche nordique|marche a pied|a pied|balades?|promenades?)\b|(?<!\b(?:au|du|le|un|des) )\bmarcher?\b/, 'hiking'],
     [/\btreks?\b|\btrekking\b|\bgr ?\d{1,3}\b|\bhrp\b|\btmb\b|\btraversee\b|\btour (?:du|des|de la|de l') ?\S|\bchemin de l'inca\b|\binca trail\b|\bcompostelle\b|\b[a-z]+ way\b|\bkilimandjaro\b/, 'trekking'],
     [/\broad ?trip\b/, 'roadtrip'],
     [/\bbushcraft\b/, 'bushcraft'],
@@ -595,7 +595,7 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
         // Fin du nom : un mot qui ouvre une autre idée (durée, date, compagnie).
         // « du », « le », « la » ne coupent que devant un nombre (« Afrique du Sud »,
         // mais « Vercors du 3 au 10 juin »).
-        /\s(?:(?:du|le|la|les)(?=\s+\d)|pour|avec|en|a|à|à partir|pendant|durant|sur|et|sans|budget|plage|plages|temples?|musees?|fjords?|un|une|deux|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|quinze|vingt|cette|ce|tout|toute|semaines?|jours?|nuits?|days?|weeks?|nights?|for|week[- ]?end|début|debut|mi|fin|demain|après-demain|apres-demain|aujourd['’]hui|prochain|prochaine|janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre)(?=[\s-]|$)/i
+        /\s(?:(?:du|le|la|les)(?=\s+\d)|pour|avec|en|a|à|à partir|pendant|durant|sur|et|sans|budget|plage|plages|temples?|musees?|fjords?|autour|via|pas|safari|un|une|deux|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|quinze|vingt|cette|ce|tout|toute|semaines?|jours?|nuits?|days?|weeks?|nights?|for|week[- ]?end|début|debut|mi|fin|demain|après-demain|apres-demain|aujourd['’]hui|prochain|prochaine|janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre)(?=[\s-]|$)/i
       )[0],
       50
     )
@@ -615,7 +615,7 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
       }
       // « au Maroc à Marrakech » : la ville dite ensuite précise le pays.
       const city = /^(?:en|au|aux)\s/.test(m[0].trimStart())
-        ? /\s(?:à|a)\s+(\p{Lu}[\p{L}'’-]+(?:[\s-]\p{Lu}[\p{L}'’-]+)*)/u.exec(src.slice(at + place.length, at + place.length + 60))
+        ? /^\s*,?\s*(?:à|a)\s+(\p{Lu}[\p{L}'’-]+(?:[\s-]\p{Lu}[\p{L}'’-]+)*)/u.exec(src.slice(at + place.length, at + place.length + 60))
         : null;
       if (city && !monthOf(plainOf(city[1])) && !WEEKDAYS.includes(plainOf(city[1]))) {
         out.push({ type: 'set_destination', place: clean(city[1], 50) });
@@ -656,7 +656,7 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
      (« alpinisme 4 jours Mont Blanc »). */
   if (!out.some((a) => a.type === 'set_destination')) {
     // Jamais une personne (« rando avec Paul ») : pas après « avec », « et », « chez »…
-    for (const m of src.matchAll(/(?<!\b(?:avec|et|chez|pour|par|de|mon|ma|mes|ton|ta|copain|copine|ami|amie)\s)(?<=\s)(\p{Lu}[\p{L}'’-]+(?:[\s-]+\p{Lu}[\p{L}'’-]+)*)/gu)) {
+    for (const m of src.matchAll(/(?<!\b(?:avec|et|chez|pour|par|mon|ma|mes|ton|ta|copain|copine|ami|amie)\s)(?<=\s)(\p{Lu}[\p{L}'’-]+(?:[\s-]+\p{Lu}[\p{L}'’-]+)*)/gu)) {
       const name = clean(m[1], 50);
       if (name.length >= 3 && !monthOf(plainOf(name)) && !WEEKDAYS.includes(plainOf(name)) && !/^(?:je|j|on|nous|il|elle)$/i.test(name)) {
         out.push({ type: 'set_destination', place: name });
