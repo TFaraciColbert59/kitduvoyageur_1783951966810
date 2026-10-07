@@ -57,6 +57,8 @@ describe('understandRequest — « voici ce que j’ai compris »', () => {
     ['9 jours au Kenya safari', 'Kenya'],
     ['vélo 7 jours de Nantes à la mer', 'Nantes'],
     ['randonnée 5 jours en Corse sur le Mare a Mare', 'Corse'],
+    ["descente de l'Ardèche en canoë 2 jours en août", 'Ardèche'],
+    ['descente du Tarn en kayak 3 jours', 'Tarn'],
   ])('lieu de « %s » : %s', (text, place) => {
     expect(line(understandRequest(text, TODAY), 'lieu')).toMatchObject({ value: place, state: 'compris' });
   });

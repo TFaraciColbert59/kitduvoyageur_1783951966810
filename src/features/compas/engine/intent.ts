@@ -590,7 +590,7 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
   // « in the Swiss Alps » ; un nom commun de lieu (« lac », « calanques ») suivi
   // d'un nom propre compte (« dans les calanques de Marseille »).
   for (const m of plain.matchAll(
-    /(?:^|[\s,(])(?:(?:a|dans|sur|autour de|le long de) l'\s*|autour d'\s*|(?:au|aux|en|in the|in|a la|a|dans le|dans la|dans les|sur le|sur la|sur les|autour du|autour de|autour des|le long (?:du|des|de la)|(?:traversee|tour|trek|ascension|circuit|rando|randonnee|boucle) (?:des|du|de la|de))\s+)/g
+    /(?:^|[\s,(])(?:(?:a|dans|sur|autour de|le long de|descente de) l'\s*|autour d'\s*|(?:au|aux|en|in the|in|a la|a|dans le|dans la|dans les|sur le|sur la|sur les|autour du|autour de|autour des|le long (?:du|des|de la)|(?:traversee|tour|trek|ascension|circuit|rando|randonnee|boucle|descente) (?:des|du|de la|de))\s+)/g
   )) {
     const at = (m.index ?? 0) + m[0].length;
     const original = src.slice(at, at + 60);
