@@ -1,9 +1,11 @@
 import 'server-only';
 import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, pickDestination, type CompasPlace } from '../engine/places';
 import { cached, coordKey } from './sharedCache';
+import { geoapifyReverse, geoapifySearch } from './geoapify';
 
 /**
- * Recherche d'un lieu sur la carte (Photon, données OpenStreetMap), en
+ * Recherche d'un lieu sur la carte (Photon, puis Nominatim, puis Geoapify ;
+ * toujours des données OpenStreetMap), en
  * français. Mémoire courte côté serveur : une même étape n'est cherchée
  * qu'une fois. Réseau en panne → null, jamais un lieu deviné.
  */
@@ -83,7 +85,9 @@ async function search(
       { Accept: 'application/json' }
     );
     // Une liste vide n'est jamais gardée (null) : la carte a pu mal répondre, on réessaiera.
-    const list = photon != null ? parsePhoton(photon) : near ? null : await nominatim(query, Math.min(limit, 8));
+    let list = photon != null ? parsePhoton(photon) : near ? null : await nominatim(query, Math.min(limit, 8));
+    // Photon et Nominatim muets : Geoapify (offre gratuite) en dernier secours.
+    if (list == null) list = await geoapifySearch(query, limit);
     return list && list.length ? list : null;
   });
 }
@@ -192,9 +196,12 @@ export async function lookupReverse(lat: number, lon: number): Promise<CompasPla
     const photon = payload == null ? [] : parsePhoton(payload);
     if (photon.length) return photon;
     // Photon muet (depuis certains serveurs) : Nominatim, même carte, à l'échelle de la commune.
-    return nominatimQueued(
+    const fromNominatim = await nominatimQueued(
       `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=jsonv2&addressdetails=1&zoom=14&accept-language=fr`
     );
+    if (fromNominatim?.length) return fromNominatim;
+    // Les deux muets : Geoapify (offre gratuite), à l'échelle de la commune.
+    return geoapifyReverse(lat, lon);
   });
   return places?.[0] ?? null;
 }

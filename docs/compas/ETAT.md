@@ -15,7 +15,7 @@ Mis à jour : 7 octobre 2026.
 | P0.3 | Itinéraire déterministe | Partiel | Lieux réels (Photon), traversée / boucle / base, zone ajustée ; vérifié Vercors, Annecy, Bretagne, Pyrénées catalanes, Mont Rose. Reste : régression ville sans activité (Rome), descente de rivière (canoë), plaine au lieu du massif, échelle d'un pays |
 | P0.4 | Dates et trajets | Partiel | Période proposée, route mesurée ou vol estimé ; à revérifier sur P2 |
 | P0.5 | Budget et conseils | Partiel | Barèmes par pays dans le code ; reste : niveau de prix tous pays, visas tous pays, conseils par règles |
-| P0.6 | Fallbacks propres | Partiel | Raison d'un repli écrite dans les notes ; reste : résultat complet garanti, secours Geoapify |
+| P0.6 | Fallbacks propres | Partiel | Raison d'un repli écrite dans les notes ; secours Geoapify branché (recherche, position, lieux de zone ; testé en direct) — actif dès que `GEOAPIFY_API_KEY` est posée sur Vercel ; reste : résultat complet garanti |
 | P0.7 | IA production : NVIDIA NIM direct (Nemotron 3.5 Lightning) | Fait | Décision de Tony (7 oct., soir) : on reste sur NVIDIA ; le passage OpenRouter est annulé |
 | — | Contexte du voyage unique (`buildTripContext`) | **Fait** | `engine/tripContext.ts`, testé |
 | — | Fiabilité (prises atomiques, écritures vérifiées, annulation, arrondis) | **Fait** | Testé |

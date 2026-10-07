@@ -639,6 +639,55 @@ export function parsePhotonArea(payload: unknown): AreaPlace[] {
   return out;
 }
 
+/** Natures du Compas → catégories Geoapify Places. */
+const GEOAPIFY_CATEGORY: Record<AreaPlaceKind, string> = {
+  city: 'populated_place.city',
+  town: 'populated_place.town',
+  village: 'populated_place.village',
+  hamlet: 'populated_place.hamlet',
+  hut: 'accommodation.hut',
+  camp: 'camping.camp_site',
+};
+export function geoapifyCategories(kinds: AreaPlaceKind[]): string {
+  return kinds.map((k) => GEOAPIFY_CATEGORY[k]).join(',');
+}
+
+/**
+ * Lieux d'une zone lus dans Geoapify Places (secours de Photon et d'Overpass,
+ * mêmes données OpenStreetMap) : nature, population et altitude quand OSM
+ * les donne, sinon le rang dans la réponse comme ordre de grandeur.
+ */
+export function parseGeoapifyArea(payload: unknown): AreaPlace[] {
+  const fs = (payload as { features?: unknown[] } | null)?.features;
+  if (!Array.isArray(fs)) return [];
+  const out: AreaPlace[] = [];
+  fs.forEach((raw, i) => {
+    const p = ((raw as { properties?: Record<string, unknown> }).properties ?? {}) as Record<string, unknown>;
+    const cats = Array.isArray(p.categories) ? p.categories.map(String) : [];
+    const kind = (Object.keys(GEOAPIFY_CATEGORY) as AreaPlaceKind[]).find((k) => cats.includes(GEOAPIFY_CATEGORY[k]));
+    const name = typeof p.name === 'string' ? p.name.trim() : '';
+    const lat = Number(p.lat);
+    const lon = Number(p.lon);
+    if (!kind || !name || !Number.isFinite(lat) || !Number.isFinite(lon)) return;
+    const osm = ((p.datasource as { raw?: Record<string, unknown> } | undefined)?.raw ?? {}) as Record<string, unknown>;
+    const pop = Number(osm.population);
+    const ele = Number(osm.ele);
+    out.push({
+      id: osm.osm_id != null ? `${String(osm.osm_type ?? 'n').toLowerCase()[0]}${String(osm.osm_id)}` : `g${lat.toFixed(5)},${lon.toFixed(5)}`,
+      name,
+      lat: Math.round(lat * 1e5) / 1e5,
+      lon: Math.round(lon * 1e5) / 1e5,
+      kind,
+      population: Number.isFinite(pop) && pop > 0 ? pop : Math.round(20000 / (1 + i)),
+      eleM: Number.isFinite(ele) ? ele : null,
+      countryCode: typeof p.country_code === 'string' ? p.country_code.toUpperCase() : null,
+      region: typeof p.state === 'string' ? p.state : null,
+      county: typeof p.county === 'string' ? p.county : null,
+    });
+  });
+  return out;
+}
+
 /** Fusionne plusieurs listes sans doublon, ordre stable par identifiant. */
 export function mergeAreaPlaces(lists: AreaPlace[][]): AreaPlace[] {
   const byId = new Map<string, AreaPlace>();

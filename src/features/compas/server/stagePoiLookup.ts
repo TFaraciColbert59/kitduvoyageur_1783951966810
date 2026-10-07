@@ -8,6 +8,7 @@ import {
   type StagePoint,
 } from '../engine/stagePois';
 import type { RoutePoi } from '../engine/routePois';
+import { geoapifyArea } from './geoapify';
 import {
   areaKinds,
   areaTiles,
@@ -180,7 +181,7 @@ async function photonAreaPlaces(q: AreaQuery, timeoutMs: number): Promise<AreaPl
 /**
  * Lieux réels où l'on peut dormir dans une zone (villes, villages, hameaux,
  * refuges), pour l'itinéraire déterministe : Photon d'abord (rapide, sans
- * quota strict), Overpass en secours. Partagés un mois (une zone ne change
+ * quota strict), Overpass en secours, Geoapify en dernier. Partagés un mois (une zone ne change
  * pas). Rien trouvé : jamais gardé, null.
  */
 export async function lookupAreaPlaces(q: AreaQuery, deadline: number): Promise<AreaPlace[] | null> {
@@ -198,7 +199,11 @@ export async function lookupAreaPlaces(q: AreaQuery, deadline: number): Promise<
       if (left() < 4000) return fromPhoton;
       const payload = await overpassRace(query, Math.min(15_000, left()));
       const places = payload ? parseAreaPlaces(payload) : [];
-      return places.length ? places : fromPhoton;
+      if (places.length) return places;
+      // Photon trop maigre et Overpass muet (fréquent depuis Vercel) : Geoapify.
+      if (left() < 3000) return fromPhoton;
+      const fromGeoapify = await geoapifyArea(q, Math.min(10_000, left()));
+      return fromGeoapify && fromGeoapify.length > (fromPhoton?.length ?? 0) ? fromGeoapify : fromPhoton;
     },
     (v) => Array.isArray(v) && v.length > 0
   );

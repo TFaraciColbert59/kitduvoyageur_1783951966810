@@ -426,3 +426,50 @@ export function sleepPlaceFix(place: CompasPlace): { locality: string } | { sear
     return place.locality && plainName(place.locality) !== plainName(place.name) ? { locality: place.locality } : null;
   return null;
 }
+
+/** Natures Geoapify (`result_type`) → nature OSM du Compas. */
+const GEOAPIFY_KIND: Record<string, string> = {
+  country: 'country',
+  state: 'state',
+  county: 'county',
+  city: 'city',
+  suburb: 'suburb',
+};
+
+/**
+ * Réponse Geoapify (géocodage, `format=json`), même forme que Photon. Secours
+ * quand Photon et Nominatim ne répondent pas ; mêmes données OpenStreetMap.
+ * Une rue, un code postal, un bâtiment ne sont jamais un lieu de voyage ; un
+ * lieu naturel (sommet, parc, lac) l'est.
+ */
+export function parseGeoapify(payload: unknown): CompasPlace[] {
+  const rows = (payload as { results?: unknown } | null)?.results;
+  if (!Array.isArray(rows)) return [];
+  const out: CompasPlace[] = [];
+  for (const raw of rows as Array<Record<string, unknown>>) {
+    const lat = Number(raw.lat);
+    const lon = Number(raw.lon);
+    const name = typeof raw.name === 'string' ? raw.name.trim() : '';
+    if (!name || !Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+    const category = typeof raw.category === 'string' ? raw.category : '';
+    const natural = /^natural\b/.test(category);
+    const kind = GEOAPIFY_KIND[String(raw.result_type)] ?? (natural ? category.split('.').pop()! : null);
+    if (!kind) continue;
+    const bb = raw.bbox as { lon1?: unknown; lat1?: unknown; lon2?: unknown; lat2?: unknown } | undefined;
+    const box = bb ? [bb.lon1, bb.lat2, bb.lon2, bb.lat1].map(Number) : null;
+    out.push({
+      name,
+      lat,
+      lon,
+      countryCode: typeof raw.country_code === 'string' ? raw.country_code.toUpperCase() : null,
+      country: typeof raw.country === 'string' ? raw.country : null,
+      kind,
+      settlement: SETTLEMENTS.has(kind),
+      ...(SETTLEMENT_RANK[kind] != null ? { settlementRank: SETTLEMENT_RANK[kind] } : {}),
+      landmark: natural || LANDMARK_PLACES.has(kind),
+      extent: box && box.every((n) => Number.isFinite(n)) ? (box as [number, number, number, number]) : null,
+      locality: typeof raw.city === 'string' && raw.city.trim() ? raw.city.trim() : null,
+    });
+  }
+  return out;
+}
