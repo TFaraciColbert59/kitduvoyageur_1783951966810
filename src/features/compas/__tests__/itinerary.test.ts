@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { distanceKm } from '../engine/places';
 import {
+  areaTiles,
   buildAreaQuery,
+  keepAdminArea,
+  keepHighlands,
+  keepHomeCountry,
+  parsePhotonArea,
+  photonIncludes,
   mainAxis,
   parseAreaPlaces,
   planItinerary,
@@ -68,9 +74,10 @@ describe('planItinerary — boucle', () => {
     const places = grid({ lat0: 45.9, lon0: 6.9, cols: 9, rows: 9, stepKm: 5 });
     const plan = planItinerary({ days: 6, activity: 'hiking', center: { lat: 45.9, lon: 6.9 }, radiusKm: 25, places, shape: 'loop' })!;
     expect(plan.shape).toBe('loop');
-    const first = plan.stages[0];
     const last = plan.stages[plan.stages.length - 1];
-    expect(last.placeId).toBe(first.placeId);
+    expect(plan.start).not.toBeNull();
+    expect(distanceKm(last, plan.start!)).toBeLessThan(0.01);
+    expect(plan.stages[0].note).toContain('Départ de');
     expect(plan.distinct).toBeGreaterThanOrEqual(4);
   });
 });
@@ -185,5 +192,60 @@ describe('planningZoneKm — séjour sur une base', () => {
     expect(planningZoneKm({ activity: 'mountaineering', days: 3, halfExtentKm: 0.01, settlement: false })).toBe(12);
     expect(planningZoneKm({ activity: 'ski', days: 6, halfExtentKm: null, settlement: false })).toBe(35);
     expect(planningZoneKm({ activity: 'citytrip', days: 3, halfExtentKm: 60, settlement: true })).toBe(40);
+  });
+});
+
+describe('Photon — lieux d’une emprise', () => {
+  it('quatre tuiles au-delà de 25 km, une en deçà', () => {
+    expect(areaTiles({ lat: 45, lon: 5.5 }, 20)).toHaveLength(1);
+    const t = areaTiles({ lat: 45, lon: 5.5 }, 40);
+    expect(t).toHaveLength(4);
+    expect(t[0][0]).toBeLessThan(5.5);
+    expect(t[3][3]).toBeGreaterThan(45);
+  });
+  it('catégories : lieux habités et abris séparés', () => {
+    expect(photonIncludes(['town', 'village', 'hut'])).toEqual({
+      places: 'osm.place.town,osm.place.village',
+      shelters: 'osm.tourism.alpine_hut,osm.tourism.wilderness_hut',
+    });
+    expect(photonIncludes(['city', 'town']).shelters).toBeNull();
+  });
+  it('lit les lieux, le rang donne un ordre de grandeur, le pays est gardé', () => {
+    const places = parsePhotonArea({
+      features: [
+        { geometry: { coordinates: [5.55, 45.07] }, properties: { osm_type: 'R', osm_id: 225502, osm_key: 'place', osm_value: 'village', name: 'Villard-de-Lans', countrycode: 'FR' } },
+        { geometry: { coordinates: [5.6, 45.1] }, properties: { osm_type: 'N', osm_id: 9, osm_key: 'tourism', osm_value: 'alpine_hut', name: 'Refuge X', countrycode: 'FR' } },
+        { geometry: { coordinates: [5.6, 45.1] }, properties: { osm_type: 'N', osm_id: 10, osm_key: 'place', osm_value: 'locality', name: 'Lieu-dit' } },
+      ],
+    });
+    expect(places.map((p) => [p.id, p.kind, p.countryCode])).toEqual([
+      ['r225502', 'village', 'FR'],
+      ['n9', 'hut', 'FR'],
+    ]);
+    expect(places[0].population).toBeGreaterThan(places[1].population!);
+  });
+  it('garde le pays de la destination quand la zone y est presque entière', () => {
+    const mk = (id: string, cc: string): AreaPlace => ({ id, name: id, lat: 0, lon: 0, kind: 'village', population: null, eleM: null, countryCode: cc });
+    const jura = [...Array.from({ length: 9 }, (_, i) => mk(`f${i}`, 'FR')), mk('morges', 'CH')];
+    expect(keepHomeCountry(jura, 'FR').some((p) => p.id === 'morges')).toBe(false);
+    const pyr = [...Array.from({ length: 5 }, (_, i) => mk(`f${i}`, 'FR')), ...Array.from({ length: 5 }, (_, i) => mk(`e${i}`, 'ES'))];
+    expect(keepHomeCountry(pyr, 'FR')).toHaveLength(10);
+  });
+});
+
+describe('zone : région administrative et massif', () => {
+  const mk = (id: string, extra: Partial<AreaPlace>): AreaPlace => ({ id, name: id, lat: 0, lon: 0, kind: 'village', population: null, eleM: null, ...extra });
+  it('« Bretagne » garde les lieux de la région Bretagne', () => {
+    const list = [...Array.from({ length: 6 }, (_, i) => mk(`b${i}`, { region: 'Bretagne' })), mk('saintlo', { region: 'Normandie' })];
+    expect(keepAdminArea(list, 'Bretagne', 'region').map((p) => p.id)).not.toContain('saintlo');
+    expect(keepAdminArea(list.slice(5), 'Bretagne', 'region')).toHaveLength(2);
+  });
+  it('à pied, la moitié haute quand plaine et montagne se mêlent', () => {
+    const list = Array.from({ length: 20 }, (_, i) => mk(`v${i}`, { eleM: i < 12 ? 300 : 900 + i * 20 }));
+    const high = keepHighlands(list);
+    expect(high.every((p) => (p.eleM ?? 0) >= 300)).toBe(true);
+    expect(high.length).toBeLessThan(list.length);
+    const flat = Array.from({ length: 20 }, (_, i) => mk(`f${i}`, { eleM: 200 + i * 10 }));
+    expect(keepHighlands(flat)).toHaveLength(20);
   });
 });

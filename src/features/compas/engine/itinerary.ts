@@ -28,6 +28,11 @@ export interface AreaPlace {
   kind: AreaPlaceKind;
   population: number | null;
   eleM: number | null;
+  /** Code pays ISO alpha-2 quand la source le donne. */
+  countryCode?: string | null;
+  /** Région et département (Photon : `state`, `county`), quand la source les donne. */
+  region?: string | null;
+  county?: string | null;
 }
 
 export type ItineraryShape = 'base' | 'traverse' | 'loop';
@@ -48,6 +53,8 @@ export interface ItineraryInput {
   targetKmPerDay?: number | null;
   /** La destination est un lieu naturel (lac, sommet, île) : boucle par défaut. */
   natural?: boolean;
+  /** Emprise réelle de la destination [ouest, nord, est, sud] : les étapes y restent. */
+  extent?: [number, number, number, number] | null;
 }
 
 export interface PlannedStage {
@@ -63,6 +70,8 @@ export interface PlannedStage {
 
 export interface ItineraryPlan {
   shape: ItineraryShape;
+  /** Point de départ d'un itinéraire itinérant (null pour un séjour sur base). */
+  start: { name: string; lat: number; lon: number } | null;
   stages: PlannedStage[];
   /** Lieux différents où l'on dort. */
   distinct: number;
@@ -155,6 +164,37 @@ function offset(p: { lat: number; lon: number }, deg: number, km: number): { lat
   const dLat = (km * Math.cos(rad)) / 111;
   const dLon = (km * Math.sin(rad)) / (111 * Math.max(0.1, Math.cos((p.lat * Math.PI) / 180)));
   return { lat: p.lat + dLat, lon: p.lon + dLon };
+}
+
+/** Rayon réel d'une zone : 90 % de ses lieux sont à moins de ce rayon de leur centre. */
+export function zoneSpreadKm(places: ReadonlyArray<{ lat: number; lon: number }>): number {
+  if (!places.length) return 0;
+  const c = {
+    lat: places.reduce((t, p) => t + p.lat, 0) / places.length,
+    lon: places.reduce((t, p) => t + p.lon, 0) / places.length,
+  };
+  const d = places.map((p) => distanceKm(c, p)).sort((a, b) => a - b);
+  return d[Math.min(d.length - 1, Math.floor(d.length * 0.9))];
+}
+
+/** Facteur (0,4 à 1) qui ramène la distance du jour à ce que la zone peut contenir. */
+function fitScale(places: AreaPlace[], shape: 'traverse' | 'loop', crowTarget: number, moves: number, adjustable: boolean): number {
+  if (!adjustable) return 1;
+  const r = zoneSpreadKm(places);
+  if (r <= 0) return 1;
+  // Boucle : périmètre ≤ celui d'un cercle de 60 % du rayon ; traversée : longueur ≤ 1,6 rayon.
+  const room = shape === 'loop' ? 2 * Math.PI * 0.6 * r : 1.6 * r;
+  const need = crowTarget * Math.max(1, moves);
+  return need > room ? Math.max(0.4, room / need) : 1;
+}
+
+/** Dans l'emprise de la destination (marge de 10 %), quand on la connaît. */
+function withinExtent(p: { lat: number; lon: number }, extent: ItineraryInput['extent']): boolean {
+  if (!extent) return true;
+  const [w, n, e, s] = extent;
+  const mx = Math.abs(e - w) * 0.1;
+  const my = Math.abs(n - s) * 0.1;
+  return p.lon >= Math.min(w, e) - mx && p.lon <= Math.max(w, e) + mx && p.lat >= Math.min(s, n) - my && p.lat <= Math.max(s, n) + my;
 }
 
 /** Ordre stable : score décroissant, puis identifiant (jamais de hasard). */
@@ -288,30 +328,35 @@ const HIGH_M = 3000;
 const MAX_NIGHT_GAIN_M = 500;
 
 /** Itinéraire itinérant (trek, vélo, road trip) : un lieu réel par soir, choisi par calcul. */
-function planMoving(input: ItineraryInput, prof: Profile, shape: 'traverse' | 'loop'): PlannedStage[] {
+function planMoving(
+  input: ItineraryInput,
+  prof: Profile,
+  shape: 'traverse' | 'loop'
+): { stages: PlannedStage[]; start: AreaPlace | null } {
   const [minKm, targetKm, maxKm] = input.targetKmPerDay
     ? [input.targetKmPerDay * 0.6, input.targetKmPerDay, input.targetKmPerDay * 1.4]
     : prof.dayKm;
-  const crowMin = minKm * prof.crow;
-  const crowTarget = targetKm * prof.crow;
-  const crowMax = maxKm * prof.crow;
   const inZone = input.places.filter(
-    (p) => sleepOk(p, input.nights) && distanceKm(input.center, p) <= input.radiusKm * 1.15
+    (p) => sleepOk(p, input.nights) && distanceKm(input.center, p) <= input.radiusKm * 1.15 && withinExtent(p, input.extent)
   );
-  if (inZone.length < 2) return [];
+  if (inZone.length < 2) return { stages: [], start: null };
+  // La distance du jour s'adapte à la taille réelle de la zone (mesurée sur ses
+  // lieux) : une boucle doit y tenir, une traversée ne pas la dépasser. Jamais
+  // sous 40 % du barème (un road trip reste un road trip).
+  const fit = fitScale(inZone, shape, targetKm * prof.crow, input.days, !input.targetKmPerDay);
+  const crowMin = minKm * prof.crow * fit;
+  const crowTarget = targetKm * prof.crow * fit;
+  const crowMax = maxKm * prof.crow * fit;
   const axis = mainAxis(inZone);
 
   // Départ : un lieu habité (accès), au bout de l'axe pour une traversée, près du centre pour une boucle.
   const starts = inZone.filter((p) => p.kind !== 'hut' && p.kind !== 'camp');
-  const first = input.waypoints?.[0];
-  const start =
-    (first && best(starts, (p) => -distanceKm(first, p))) ??
-    best(starts.length ? starts : inZone, (p) =>
-      shape === 'traverse'
-        ? -along(axis, p) / Math.max(1, input.radiusKm) * 4 + RANK[p.kind] * 0.3
-        : -distanceKm(input.center, p) / Math.max(1, input.radiusKm) * 4 + RANK[p.kind] * 0.5
-    );
-  if (!start) return [];
+  const start = best(starts.length ? starts : inZone, (p) =>
+    shape === 'traverse'
+      ? (-along(axis, p) / Math.max(1, input.radiusKm)) * 4 + RANK[p.kind] * 0.3
+      : (-distanceKm(input.center, p) / Math.max(1, input.radiusKm)) * 4 + RANK[p.kind] * 0.5
+  );
+  if (!start) return { stages: [], start: null };
 
   // Étapes voulues : dans l'ordre le plus court depuis le départ.
   const pending = [...(input.waypoints ?? [])].filter((w) => distanceKm(w, start) > crowMin);
@@ -323,11 +368,11 @@ function planMoving(input: ItineraryInput, prof: Profile, shape: 'traverse' | 'l
     orderedWays.push(probe as { name: string; lat: number; lon: number });
   }
 
-  const stages: PlannedStage[] = [
-    { day: 1, name: start.name, lat: start.lat, lon: start.lon, move: 'aucun', note: 'Départ.', placeId: start.id },
-  ];
+  // Chaque jour finit ailleurs : le jour 1 part du point de départ (dit en note),
+  // une boucle finit le dernier jour au départ.
+  const stages: PlannedStage[] = [];
   const used = new Set<string>([start.id]);
-  const moves = input.days - 1;
+  const moves = input.days;
   // Cercle de la boucle : périmètre ≈ distance totale, tourné vers le centre de la zone.
   const loopCircle =
     shape === 'loop' && moves >= 2
@@ -341,7 +386,7 @@ function planMoving(input: ItineraryInput, prof: Profile, shape: 'traverse' | 'l
       : null;
   let cur: AreaPlace = start;
   let highStreak = (start.eleM ?? 0) >= HIGH_M ? 1 : 0;
-  for (let day = 2; day <= input.days; day += 1) {
+  for (let day = 1; day <= input.days; day += 1) {
     const left = input.days - day; // déplacements restants après celui-ci
     // Acclimatation : au-dessus de 3 000 m, un jour sur place tous les trois.
     if (prof.move === 'marche' && (cur.eleM ?? 0) >= HIGH_M && highStreak >= 3) {
@@ -350,7 +395,7 @@ function planMoving(input: ItineraryInput, prof: Profile, shape: 'traverse' | 'l
       continue;
     }
     const goal = orderedWays[0] ?? null;
-    const ideal = loopCircle ? loopCircle(day - 1) : null;
+    const ideal = loopCircle ? loopCircle(day) : null;
     const pickWith = (lo: number, hi: number) =>
       best(inZone, (p) => {
         if (used.has(p.id)) return -Infinity;
@@ -389,11 +434,19 @@ function planMoving(input: ItineraryInput, prof: Profile, shape: 'traverse' | 'l
       continue;
     }
     used.add(next.id);
-    stages.push({ day, name: next.name, lat: next.lat, lon: next.lon, move: prof.move, note: null, placeId: next.id.startsWith('w:') ? null : next.id });
+    stages.push({
+      day,
+      name: next.name,
+      lat: next.lat,
+      lon: next.lon,
+      move: prof.move,
+      note: day === 1 ? `Départ de ${start.name}.` : null,
+      placeId: next.id.startsWith('w:') ? null : next.id,
+    });
     highStreak = (next.eleM ?? 0) >= HIGH_M ? highStreak + 1 : 0;
     cur = next;
   }
-  return stages;
+  return { stages, start };
 }
 
 /** Itinéraire complet ; null si la zone ne fournit pas assez de lieux réels (l'appelant se replie). */
@@ -401,10 +454,12 @@ export function planItinerary(input: ItineraryInput): ItineraryPlan | null {
   if (!Number.isInteger(input.days) || input.days < 1) return null;
   const prof = profileFor(input.activity);
   const shape = shapeFor(input);
-  const stages = shape === 'base' ? planBase(input, prof) : planMoving(input, prof, shape);
+  const moving = shape === 'base' ? null : planMoving(input, prof, shape);
+  const stages = moving ? moving.stages : planBase(input, prof);
   if (!stages.length) return null;
   const distinct = new Set(stages.map((s) => s.placeId ?? s.name)).size;
-  return { shape, stages, distinct };
+  const start = moving?.start ? { name: moving.start.name, lat: moving.start.lat, lon: moving.start.lon } : null;
+  return { shape, start, stages, distinct };
 }
 
 /* ---------- Lecture d'OpenStreetMap (Overpass), pure ---------- */
@@ -510,4 +565,128 @@ export function parseAreaPlaces(payload: unknown): AreaPlace[] {
     });
   }
   return out.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+}
+
+/* ---------- Lecture de Photon (lieux d'une emprise par catégorie), pure ---------- */
+
+/** Emprises à interroger : une seule pour une petite zone, quatre tuiles au-delà de 25 km (50 lieux par tuile). */
+export function areaTiles(center: { lat: number; lon: number }, radiusKm: number): Array<[number, number, number, number]> {
+  const dLat = radiusKm / 111;
+  const dLon = radiusKm / (111 * Math.max(0.1, Math.cos((center.lat * Math.PI) / 180)));
+  const [w, s, e, n] = [center.lon - dLon, center.lat - dLat, center.lon + dLon, center.lat + dLat];
+  if (radiusKm <= 25) return [[w, s, e, n]];
+  const mx = center.lon;
+  const my = center.lat;
+  return [
+    [w, s, mx, my],
+    [mx, s, e, my],
+    [w, my, mx, n],
+    [mx, my, e, n],
+  ];
+}
+
+const PHOTON_KIND: Record<string, AreaPlaceKind> = {
+  'place:city': 'city',
+  'place:town': 'town',
+  'place:village': 'village',
+  'place:hamlet': 'hamlet',
+  'tourism:alpine_hut': 'hut',
+  'tourism:wilderness_hut': 'hut',
+  'tourism:camp_site': 'camp',
+};
+
+/** Catégories Photon (`include=`) pour les natures voulues. */
+export function photonIncludes(kinds: AreaPlaceKind[]): { places: string; shelters: string | null } {
+  const places = kinds.filter((k) => k !== 'hut' && k !== 'camp').map((k) => `osm.place.${k}`);
+  const shelters = [
+    ...(kinds.includes('hut') ? ['osm.tourism.alpine_hut', 'osm.tourism.wilderness_hut'] : []),
+    ...(kinds.includes('camp') ? ['osm.tourism.camp_site'] : []),
+  ];
+  return { places: places.join(','), shelters: shelters.length ? shelters.join(',') : null };
+}
+
+/**
+ * Lieux d'une réponse Photon (GeoJSON). Photon les classe par notoriété : le
+ * rang sert de population approchée (un bourg connu passe devant un village
+ * perdu), jamais affichée.
+ */
+export function parsePhotonArea(payload: unknown): AreaPlace[] {
+  const fs = (payload as { features?: unknown[] } | null)?.features;
+  if (!Array.isArray(fs)) return [];
+  const out: AreaPlace[] = [];
+  fs.forEach((raw, i) => {
+    const f = raw as { geometry?: { coordinates?: [number, number] }; properties?: Record<string, unknown> };
+    const p = f.properties ?? {};
+    const kind = PHOTON_KIND[`${String(p.osm_key ?? '')}:${String(p.osm_value ?? '')}`];
+    const name = typeof p.name === 'string' ? p.name.trim() : '';
+    const [lon, lat] = f.geometry?.coordinates ?? [NaN, NaN];
+    if (!kind || !name || !Number.isFinite(lat) || !Number.isFinite(lon)) return;
+    out.push({
+      id: `${String(p.osm_type ?? 'N').toLowerCase()[0]}${String(p.osm_id ?? `${lat},${lon}`)}`,
+      name,
+      lat: Math.round(lat * 1e5) / 1e5,
+      lon: Math.round(lon * 1e5) / 1e5,
+      kind,
+      // Rang de notoriété dans la tuile → ordre de grandeur (jamais montré).
+      population: Math.round(20000 / (1 + i)),
+      eleM: null,
+      countryCode: typeof p.countrycode === 'string' ? p.countrycode.toUpperCase() : null,
+      region: typeof p.state === 'string' ? p.state : null,
+      county: typeof p.county === 'string' ? p.county : null,
+    });
+  });
+  return out;
+}
+
+/** Fusionne plusieurs listes sans doublon, ordre stable par identifiant. */
+export function mergeAreaPlaces(lists: AreaPlace[][]): AreaPlace[] {
+  const byId = new Map<string, AreaPlace>();
+  for (const list of lists) for (const p of list) if (!byId.has(p.id)) byId.set(p.id, p);
+  return [...byId.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+}
+
+/**
+ * Garder le voyage dans le pays de la destination quand la zone y est presque
+ * entière (≥ 70 % des lieux) : un tour du Jura ne finit pas à Morges. Une zone
+ * frontalière (Pyrénées, Alpes) garde les deux versants.
+ */
+export function keepHomeCountry(places: AreaPlace[], countryCode: string | null): AreaPlace[] {
+  if (!countryCode) return places;
+  const known = places.filter((p) => p.countryCode);
+  if (known.length < 5) return places;
+  const home = known.filter((p) => p.countryCode === countryCode).length;
+  return home / known.length >= 0.7 ? places.filter((p) => !p.countryCode || p.countryCode === countryCode) : places;
+}
+
+const plainAdmin = (v: string) =>
+  v.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+/**
+ * Destination administrative (une région, un département) : les étapes restent
+ * dedans (« Bretagne » ne passe pas par Saint-Lô). Seulement si assez de lieux
+ * portent ce nom de région ou de département ; sinon la liste est gardée.
+ */
+export function keepAdminArea(places: AreaPlace[], name: string, level: 'region' | 'county'): AreaPlace[] {
+  const want = plainAdmin(name);
+  if (!want) return places;
+  const inside = places.filter((p) => {
+    const v = level === 'region' ? p.region : p.county;
+    return v != null && plainAdmin(v) === want;
+  });
+  return inside.length >= 5 ? inside : places;
+}
+
+/**
+ * À pied dans une zone qui mêle plaine et montagne (plus de 600 m d'écart) :
+ * on randonne dans la moitié haute (le massif des Vosges, pas la plaine du
+ * département). Altitudes inconnues : liste inchangée.
+ */
+export function keepHighlands(places: AreaPlace[]): AreaPlace[] {
+  const eles = places.map((p) => p.eleM).filter((e): e is number => e != null).sort((a, b) => a - b);
+  if (eles.length < 10) return places;
+  const median = eles[Math.floor(eles.length / 2)];
+  const top = eles[Math.floor(eles.length * 0.9)];
+  if (top - median < 600) return places;
+  const high = places.filter((p) => p.eleM == null || p.eleM > median);
+  return high.length >= 5 ? high : places;
 }

@@ -63,7 +63,16 @@ import { bestPeriod, monthName } from '../engine/period';
 import { partsText, retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { lookupDestination, lookupReverse, stageAliasCandidates, stageCandidates } from './placeLookup';
 import { lookupAreaPlaces, lookupStagePois } from './stagePoiLookup';
-import { planItinerary, planningZoneKm, shapeFor, type ItineraryShape } from '../engine/itinerary';
+import {
+  keepAdminArea,
+  keepHighlands,
+  keepHomeCountry,
+  planItinerary,
+  planningZoneKm,
+  profileFor,
+  shapeFor,
+  type ItineraryShape,
+} from '../engine/itinerary';
 import {
   COSTS_VERSION,
   carRentalPerDay,
@@ -358,14 +367,15 @@ async function plannedStages(opts: {
   if (opts.scope === 'sortie' || days === 1) return { stages: base, note: '' };
   const natural = anchor.kind === 'other' || NATURAL_KINDS.has(anchor.kind ?? '');
   const settlement = SETTLEMENT_KINDS.has(anchor.kind ?? '');
-  const zoneKm = planningZoneKm({
-    activity,
-    days,
-    halfExtentKm: anchor.extent
-      ? distanceKm({ lat: anchor.extent[1], lon: anchor.extent[0] }, { lat: anchor.extent[3], lon: anchor.extent[2] }) / 2
-      : null,
-    settlement,
-  });
+  const halfExtentKm = anchor.extent
+    ? distanceKm({ lat: anchor.extent[1], lon: anchor.extent[0] }, { lat: anchor.extent[3], lon: anchor.extent[2] }) / 2
+    : null;
+  // Autour d'un lac, d'une île : la zone est le lieu et ses rives (le tour s'y
+  // adapte), pas une journée de vélo dans toutes les directions.
+  const zoneKm =
+    natural && halfExtentKm != null && halfExtentKm < 20
+      ? Math.max(10, Math.round(halfExtentKm + 8))
+      : planningZoneKm({ activity, days, halfExtentKm, settlement });
   const shape: ItineraryShape | null = wantsTraverse(opts.wishes)
     ? 'traverse'
     : opts.wishes.some((w) => LOOP_WISH.test(w))
@@ -374,11 +384,22 @@ async function plannedStages(opts: {
   // Séjour sur place autour d'une ville ou d'un village : ce lieu est la base.
   if (shapeFor({ activity, days, radiusKm: zoneKm, shape, natural }) === 'base' && settlement)
     return { stages: base, note: '' };
-  const places = await lookupAreaPlaces(
+  const found = await lookupAreaPlaces(
     { center: anchor, radiusKm: zoneKm, activity },
     opts.deadline
   );
-  if (!places) return { fallback: 'lieux de la zone indisponibles (service de carte injoignable)' };
+  if (!found) return { fallback: 'lieux de la zone indisponibles (service de carte injoignable)' };
+  let places = keepHomeCountry(found, anchor.countryCode);
+  if (anchor.kind === 'state' || anchor.kind === 'region') places = keepAdminArea(places, anchor.name, 'region');
+  else if (anchor.kind === 'county') places = keepAdminArea(places, anchor.name, 'county');
+  // Altitudes réelles (tuiles de relief, quelques tuiles pour toute la zone) :
+  // acclimatation au-dessus de 3 000 m, et à pied, le massif plutôt que la plaine.
+  const foot = profileFor(activity).move === 'marche';
+  if (foot && places.length <= 400) {
+    const eles = await terrainElevations(places.map((p) => [p.lon, p.lat] as const)).catch(() => null);
+    if (eles) places = places.map((p, i) => (p.eleM == null && eles[i] != null ? { ...p, eleM: eles[i] } : p));
+    places = keepHighlands(places);
+  }
   // Lieux dits par la personne, cherchés sur la carte dans la zone (quatre au plus).
   const waypoints: Array<{ name: string; lat: number; lon: number }> = [];
   for (const w of opts.wishes.slice(0, 4)) {
@@ -399,6 +420,9 @@ async function plannedStages(opts: {
     waypoints,
     shape,
     natural,
+    // Une région (Bretagne, Jura) : les étapes restent dans son emprise ; un
+    // lac ou un sommet n'en a pas d'utile (on dort autour).
+    extent: anchor.extent && (halfExtentKm ?? 0) >= 15 ? anchor.extent : null,
     nights: opts.nights,
   });
   if (!plan) return { fallback: `trop peu de lieux où dormir dans la zone (${places.length} trouvés)` };

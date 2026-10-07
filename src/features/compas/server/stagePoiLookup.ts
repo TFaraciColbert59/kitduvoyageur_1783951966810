@@ -8,7 +8,17 @@ import {
   type StagePoint,
 } from '../engine/stagePois';
 import type { RoutePoi } from '../engine/routePois';
-import { buildAreaQuery, parseAreaPlaces, type AreaPlace, type AreaQuery } from '../engine/itinerary';
+import {
+  areaKinds,
+  areaTiles,
+  buildAreaQuery,
+  mergeAreaPlaces,
+  parseAreaPlaces,
+  parsePhotonArea,
+  photonIncludes,
+  type AreaPlace,
+  type AreaQuery,
+} from '../engine/itinerary';
 import { cached, coordKey, readShared } from './sharedCache';
 
 /**
@@ -139,25 +149,56 @@ export async function lookupStagePois(
   return { pois: out, partial: fresh.length > now.length || found.some((l) => l == null) };
 }
 
+/** Photon : lieux d'une emprise par catégorie, sans quota strict (OpenStreetMap). */
+async function photonArea(bbox: [number, number, number, number], include: string, signal: AbortSignal): Promise<AreaPlace[]> {
+  const url = `https://photon.komoot.io/api/?limit=50&lang=fr&include=${include}&bbox=${bbox.map((v) => v.toFixed(4)).join(',')}`;
+  const res = await fetch(url, { headers: { Accept: 'application/json', 'User-Agent': UA }, signal, cache: 'no-store' });
+  if (!res.ok) throw new Error(`photon ${res.status}`);
+  return parsePhotonArea(await res.json());
+}
+
+/** Toutes les tuiles de la zone (lieux habités) + abris à part (moins connus, sinon noyés). */
+async function photonAreaPlaces(q: AreaQuery, timeoutMs: number): Promise<AreaPlace[] | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const { places, shelters } = photonIncludes(areaKinds(q));
+    const tiles = areaTiles(q.center, Math.min(q.radiusKm, 400));
+    const jobs = tiles.map((t) => photonArea(t, places, controller.signal));
+    if (shelters) jobs.push(...areaTiles(q.center, Math.min(q.radiusKm, 60)).map((t) => photonArea(t, shelters, controller.signal)));
+    const lists = await Promise.all(jobs);
+    const merged = mergeAreaPlaces(lists);
+    return merged.length ? merged : null;
+  } catch (err) {
+    console.warn('[compas] lieux de la zone (Photon)', err instanceof Error ? err.message : 'erreur');
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /**
  * Lieux réels où l'on peut dormir dans une zone (villes, villages, hameaux,
- * refuges), pour l'itinéraire déterministe. Partagés un mois (une zone ne
- * change pas). Liste vide ou réponse coupée : jamais gardée, null.
+ * refuges), pour l'itinéraire déterministe : Photon d'abord (rapide, sans
+ * quota strict), Overpass en secours. Partagés un mois (une zone ne change
+ * pas). Rien trouvé : jamais gardé, null.
  */
 export async function lookupAreaPlaces(q: AreaQuery, deadline: number): Promise<AreaPlace[] | null> {
   const query = buildAreaQuery(q);
-  const key = `area:v1:${createHash('sha256').update(query).digest('hex').slice(0, 32)}`;
+  const key = `area:v2:${createHash('sha256').update(query).digest('hex').slice(0, 32)}`;
   return cached<AreaPlace[] | null>(
     'place',
     key,
     30 * 86_400,
     async () => {
-      const left = deadline - Date.now();
-      if (left < 4000) return null;
-      const payload = await overpassRace(query, Math.min(15_000, left));
-      if (!payload) return null;
-      const places = parseAreaPlaces(payload);
-      return places.length ? places : null;
+      const left = () => deadline - Date.now();
+      if (left() < 4000) return null;
+      const fromPhoton = await photonAreaPlaces(q, Math.min(10_000, left()));
+      if (fromPhoton && fromPhoton.length >= 3) return fromPhoton;
+      if (left() < 4000) return fromPhoton;
+      const payload = await overpassRace(query, Math.min(15_000, left()));
+      const places = payload ? parseAreaPlaces(payload) : [];
+      return places.length ? places : fromPhoton;
     },
     (v) => Array.isArray(v) && v.length > 0
   );
