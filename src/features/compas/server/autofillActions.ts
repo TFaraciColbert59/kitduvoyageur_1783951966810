@@ -1395,7 +1395,7 @@ export async function compasAutofillAction(
     // Train plutôt qu'avion quand la route est trop longue mais le rail à portée (Ardennes, Bruges).
     let trainNeeded = null as TrainTrip | null;
     const byTrain = (roadKm: number | null) =>
-      from ? trainTrip({ fromCountry: origin?.countryCode ?? 'FR', toCountry: anchor.countryCode, straightKm: distanceKm(from, target), roadKm, days }) : null;
+      from ? trainTrip({ fromCountry: origin?.countryCode ?? 'FR', toCountry: anchor.countryCode, straightKm: distanceKm(from, target), roadKm, days, to: target }) : null;
     const takeTrain = (rail: TrainTrip) => {
       trainNeeded = rail;
       transport = { mode: 'train', km: rail.railKm, minutes: rail.minutesOneWay, walkKm: 0, fuelEur: 0, basis: rail.basis };

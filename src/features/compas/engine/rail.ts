@@ -13,6 +13,24 @@ import { COSTS_VERSION } from './costs';
 /** Pays reliés entre eux par un réseau à grande vitesse (Royaume-Uni par l'Eurostar). */
 const RAIL = new Set('FR BE NL LU DE CH IT ES AT GB'.split(' '));
 
+/**
+ * Grandes îles des pays reliés, sans train depuis le continent : la route
+ * mesurée y passe par un ferry sans toujours paraître plus longue (Annecy →
+ * Cagliari : 1,6 fois le vol d'oiseau), d'où ces emprises [sud, ouest, nord, est].
+ */
+const ISLANDS: Array<[number, number, number, number]> = [
+  [41.3, 8.5, 43.1, 9.6], // Corse
+  [38.8, 8.1, 41.35, 9.9], // Sardaigne
+  [36.6, 12.4, 38.35, 15.7], // Sicile
+  [38.6, 1.15, 40.1, 4.35], // Baléares
+  [27.6, -18.2, 29.5, -13.3], // Canaries
+  [42.7, 10.0, 42.9, 10.45], // Elbe
+];
+
+function onIsland(p: { lat: number; lon: number }): boolean {
+  return ISLANDS.some(([s, w, n, e]) => p.lat >= s && p.lat <= n && p.lon >= w && p.lon <= e);
+}
+
 /** Distance par la voie ≈ vol d'oiseau × 1,25. */
 const RAIL_DETOUR = 1.25;
 /** Billet réservé 1 à 3 mois avant, par km de voie (barème Compas). */
@@ -53,12 +71,15 @@ export function trainTrip(input: {
   roadKm?: number | null;
   /** Durée du voyage (jours), pour le temps de train admissible. */
   days?: number | null;
+  /** Lieu d'arrivée : une grande île n'a pas de train depuis le continent. */
+  to?: { lat: number; lon: number } | null;
 }): TrainTrip | null {
   const from = (input.fromCountry ?? '').toUpperCase();
   const to = (input.toCountry ?? '').toUpperCase();
   if (!RAIL.has(from) || !RAIL.has(to)) return null;
   if (!(input.straightKm >= 150 && input.straightKm <= 1200)) return null;
   if (input.roadKm == null || input.roadKm > input.straightKm * 1.8) return null;
+  if (input.to && onIsland(input.to)) return null;
   const railKm = Math.round(input.straightKm * RAIL_DETOUR);
   const minutesOneWay = Math.round((railKm / RAIL_KMH) * 60 + 30);
   if (minutesOneWay > maxTrainMinutes(input.days)) return null;

@@ -22,6 +22,11 @@ describe('trainTrip — le train plutôt que l’avion en Europe de l’Ouest', 
     expect(trainTrip({ fromCountry: 'FR', toCountry: 'FR', straightKm: 480, roadKm: 1783 })).toBeNull();
   });
 
+  it('Sardaigne : ferry pas assez long pour se voir (1,6 fois), l’île l’écarte (7 octobre)', () => {
+    expect(trainTrip({ fromCountry: 'FR', toCountry: 'IT', straightKm: 830, roadKm: 1300, days: 5, to: { lat: 39.22, lon: 9.11 } })).toBeNull();
+    expect(trainTrip({ fromCountry: 'FR', toCountry: 'IT', straightKm: 830, roadKm: 1000, days: 5, to: { lat: 43.77, lon: 11.25 } })).not.toBeNull();
+  });
+
   it('route non mesurée, pays non relié, trop près ou trop loin : rien', () => {
     expect(trainTrip({ fromCountry: 'FR', toCountry: 'FR', straightKm: 500, roadKm: null })).toBeNull();
     expect(trainTrip({ fromCountry: 'FR', toCountry: 'PT', straightKm: 1100, roadKm: 1400 })).toBeNull();
