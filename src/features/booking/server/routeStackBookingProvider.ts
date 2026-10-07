@@ -385,7 +385,6 @@ function normalizeOffers(
       'fareCode',
       'vehicleId',
     ]);
-    const id = (rawId ?? stableFallbackId(record)).slice(0, MAX_ID_LENGTH);
     const providerTitle = readString(record, [
       'name',
       'title',
@@ -394,8 +393,6 @@ function normalizeOffers(
       'carType',
       'description',
     ]);
-    const title = (providerTitle ?? fallbackTitle(record, request))?.slice(0, MAX_TITLE_LENGTH);
-    if (!title || seen.has(id)) continue;
 
     const rawDeeplink = record.deeplink ?? record.booking_url ?? record.checkoutUrl ?? record.url;
     const deeplink = isAllowedDeeplink(rawDeeplink, env);
@@ -414,6 +411,12 @@ function normalizeOffers(
       'rate',
     ]);
     const currency = normalizeCurrency(readString(record, ['currency', 'currencyCode']) ?? payloadCurrency);
+    // Ni identifiant, ni nom, ni prix : l'enveloppe d'une réponse vide, pas une
+    // offre (« Hôtel · Annecy » sans prix ni lien, 7 octobre).
+    if (!rawId && !providerTitle && amount == null) continue;
+    const id = (rawId ?? stableFallbackId(record)).slice(0, MAX_ID_LENGTH);
+    const title = (providerTitle ?? fallbackTitle(record, request))?.slice(0, MAX_TITLE_LENGTH);
+    if (!title || seen.has(id)) continue;
 
     seen.add(id);
     offers.push({
@@ -508,10 +511,11 @@ async function readJsonLimited(response: Response): Promise<unknown> {
 
 function parseToolPayload(result: RouteStackToolResult): unknown {
   if (result.isError) {
+    const said = (result.content ?? []).find((item) => item.type === 'text' && typeof item.text === 'string')?.text;
     throw new BookingProviderError({
       code: BOOKING_PROVIDER_ERROR_CODES.upstream,
       provider: 'routestack',
-      message: 'RouteStack a renvoyé une erreur.',
+      message: `RouteStack a renvoyé une erreur${said ? ` : ${said.slice(0, 200)}` : '.'}`,
       retryable: true,
     });
   }
@@ -524,11 +528,22 @@ function parseToolPayload(result: RouteStackToolResult): unknown {
         message: 'Réponse RouteStack trop volumineuse.',
       });
     }
+    let parsed: unknown;
     try {
-      return JSON.parse(item.text) as unknown;
+      parsed = JSON.parse(item.text) as unknown;
     } catch {
       continue;
     }
+    // Enveloppe { success: false, message } : une erreur, jamais une offre.
+    if (isRecord(parsed) && parsed.success === false) {
+      const message = typeof parsed.message === 'string' ? parsed.message.slice(0, 200) : null;
+      throw new BookingProviderError({
+        code: BOOKING_PROVIDER_ERROR_CODES.upstream,
+        provider: 'routestack',
+        message: `RouteStack a refusé la recherche${message ? ` : ${message}` : '.'}`,
+      });
+    }
+    return parsed;
   }
   throw new BookingProviderError({
     code: BOOKING_PROVIDER_ERROR_CODES.upstream,
@@ -752,6 +767,9 @@ function createDefaultToolCaller(env: BookingProviderEnv): RouteStackToolCaller 
 interface ResolvedLocation {
   id: string;
   code: string;
+  /** Coordonnées de la destination (search-destinations), exigées par search-hotels. */
+  lat?: number;
+  long?: number;
 }
 
 async function resolveLocation(
@@ -785,7 +803,14 @@ async function resolveLocation(
       message: `Destination RouteStack sans identifiant : ${trimmed}.`,
     });
   }
-  return { id, code: readString(record, ['code', 'iata', 'id']) ?? id };
+  const coordinates = isRecord(record.coordinates) ? record.coordinates : record;
+  const lat = readNumber(coordinates, ['lat', 'latitude']);
+  const long = readNumber(coordinates, ['long', 'lng', 'lon', 'longitude']);
+  return {
+    id,
+    code: readString(record, ['code', 'iata', 'id']) ?? id,
+    ...(lat != null && long != null ? { lat, long } : {}),
+  };
 }
 
 async function argumentsForRequest(
@@ -812,13 +837,17 @@ async function argumentsForRequest(
   }
   if (request.vertical === 'hotel') {
     const destination = await resolveLocation(callTool, 'hotel', request.destination);
+    const rooms = [{ adults: travelers, children: 0 }];
     return {
       destinationId: destination.id,
       checkIn: request.checkIn,
       checkOut: request.checkOut,
-      rooms: [{ adults: travelers, children: 0 }],
-      lat: 0,
-      long: 0,
+      rooms,
+      // Exigé par search-hotels (OpenAPI RouteStack), égal au nombre de chambres.
+      roomCount: rooms.length,
+      // Coordonnées de search-destinations (0 seulement pour un identifiant donné tel quel).
+      lat: destination.lat ?? 0,
+      long: destination.long ?? 0,
       currency,
       page: 1,
       limit,
