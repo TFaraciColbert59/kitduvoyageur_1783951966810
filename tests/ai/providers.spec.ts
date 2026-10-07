@@ -38,9 +38,9 @@ describe('src/lib/ai/providers — port IA + adapters', () => {
   });
 
   it('TEST-PRV-01: les IDs de modèles sont exacts', () => {
-    expect(MODEL_BY_TIER.heavy).toBe('nvidia/nemotron-3.5-lightning');
+    expect(MODEL_BY_TIER.heavy).toBe('nvidia/nemotron-3-ultra-550b-a55b:free');
     // nano :free a été retiré d'OpenRouter (404 le 2026-09-03) → lightning 3.5
-    expect(MODEL_BY_TIER.fast).toBe('nvidia/nemotron-3.5-lightning');
+    expect(MODEL_BY_TIER.fast).toBe('nvidia/nemotron-3.5-lightning:free');
     expect(modelFor('heavy')).toBe(MODEL_BY_TIER.heavy);
   });
 
@@ -136,9 +136,9 @@ describe('src/lib/ai/providers — port IA + adapters', () => {
     expect(init.signal).toBeInstanceOf(AbortSignal);
   });
 
-  it('TEST-PRV-06: isAvailable dépend de la clé ; OpenRouter est choisi en premier', () => {
+  it('TEST-PRV-06: isAvailable dépend de la clé ; OpenRouter n est plus jamais choisi', () => {
     expect(openrouterProvider.isAvailable()).toBe(true);
-    expect(getProvider().name).toBe('openrouter');
+    expect(getProvider().name).not.toBe('openrouter');
 
     vi.stubEnv('OPENROUTER_API_KEY', undefined);
     expect(openrouterProvider.isAvailable()).toBe(false);

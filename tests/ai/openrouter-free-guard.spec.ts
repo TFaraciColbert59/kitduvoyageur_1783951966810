@@ -1,25 +1,30 @@
 import { describe, it, expect } from 'vitest';
-import { assertAllowedModel, MODEL_BY_TIER } from '../../src/lib/ai/providers/openrouter';
+import { assertFreeModel, MODEL_BY_TIER } from '../../src/lib/ai/providers/openrouter';
 import { ProviderError } from '../../src/lib/ai/providers/types';
 
 /**
- * Garde-fou de coût (décision du 2026-10-07 : Nemotron 3.5 Lightning payant
- * sur OpenRouter) : seul le modèle de la liste blanche part sur le réseau.
+ * Garde-fou « free uniquement » (Vague D — décision produit 2026-09-11) :
+ * aucun appel OpenRouter ne doit jamais partir sur un modèle payant, même si
+ * MODEL_BY_TIER est modifié par erreur.
  */
-describe('openrouter — liste blanche de modèles', () => {
-  it('les modèles configurés sont Nemotron 3.5 Lightning (payant)', () => {
+describe('openrouter — garde-fou :free', () => {
+  it('tous les modèles configurés sont en tier :free', () => {
     for (const [tier, model] of Object.entries(MODEL_BY_TIER)) {
-      expect(model, tier).toBe('nvidia/nemotron-3.5-lightning');
+      expect(model.endsWith(':free'), `${tier} -> ${model}`).toBe(true);
     }
   });
 
-  it('accepte le modèle autorisé et le retourne tel quel', () => {
-    expect(assertAllowedModel('nvidia/nemotron-3.5-lightning')).toBe('nvidia/nemotron-3.5-lightning');
+  it('accepte un modèle :free et le retourne tel quel', () => {
+    const model = 'nvidia/nemotron-3-ultra-550b-a55b:free';
+    expect(assertFreeModel(model)).toBe(model);
   });
 
-  it('refuse tout autre modèle avant tout appel réseau', () => {
-    expect(() => assertAllowedModel('openai/gpt-4o')).toThrow(ProviderError);
-    expect(() => assertAllowedModel('nvidia/nemotron-3-ultra-550b-a55b')).toThrow(ProviderError);
-    expect(() => assertAllowedModel('nvidia/nemotron-3.5-lightning:free-tier')).toThrow(ProviderError);
+  it('refuse un modèle payant avant tout appel réseau', () => {
+    expect(() => assertFreeModel('openai/gpt-4o')).toThrow(ProviderError);
+    expect(() => assertFreeModel('nvidia/nemotron-3-ultra-550b-a55b')).toThrow(ProviderError);
+  });
+
+  it('refuse aussi un suffixe approchant (:free-tier ne matche pas)', () => {
+    expect(() => assertFreeModel('vendor/model:free-tier')).toThrow(ProviderError);
   });
 });

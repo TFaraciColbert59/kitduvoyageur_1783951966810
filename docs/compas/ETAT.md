@@ -16,7 +16,7 @@ Mis à jour : 7 octobre 2026.
 | P0.4 | Dates et trajets | Partiel | Période proposée, route mesurée ou vol estimé ; à revérifier sur P2 |
 | P0.5 | Budget et conseils | Partiel | Barèmes par pays dans le code ; reste : niveau de prix tous pays, visas tous pays, conseils par règles |
 | P0.6 | Fallbacks propres | Partiel | Raison d'un repli écrite dans les notes ; reste : résultat complet garanti, secours Geoapify |
-| P0.7 | IA production : OpenRouter + Nemotron 3.5 Lightning | Code fait | OpenRouter en premier (modèle verrouillé), NVIDIA en secours ; reste : `OPENROUTER_API_KEY` créditée sur Vercel (Tony) |
+| P0.7 | IA production : NVIDIA NIM direct (Nemotron 3.5 Lightning) | Fait | Décision de Tony (7 oct., soir) : on reste sur NVIDIA ; le passage OpenRouter est annulé |
 | — | Contexte du voyage unique (`buildTripContext`) | **Fait** | `engine/tripContext.ts`, testé |
 | — | Fiabilité (prises atomiques, écritures vérifiées, annulation, arrondis) | **Fait** | Testé |
 | — | Phrase de départ persistée | **Fait** | — |
@@ -45,8 +45,8 @@ l'instant.
 
 ## Décisions en vigueur
 
-- IA production : **OpenRouter + Nemotron 3.5 Lightning (payant)**. L'ancienne décision « NVIDIA direct sans OpenRouter » est abandonnée.
-- Cartes : services OSM gratuits + **Geoapify free tier** en secours ; pas d'abonnement à 59 $ pour l'instant.
+- IA production : **NVIDIA NIM direct** (décision de Tony du 7 octobre au soir, remplace le passage à OpenRouter).
+- Cartes : services OSM gratuits + **Geoapify free tier** en secours (clé fournie, variable `GEOAPIFY_API_KEY` à poser sur Vercel) ; pas d'abonnement à 59 $ pour l'instant.
 - Référentiel géographique : accord de principe ; **aucune migration avant le plan chiffré** (taille DB, volumes filtrés, mise à jour, espace final).
 - Réservations : branchées après la stabilisation du moteur.
 

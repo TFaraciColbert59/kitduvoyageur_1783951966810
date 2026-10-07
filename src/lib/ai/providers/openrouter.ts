@@ -2,31 +2,31 @@ import type { AIProvider, AIRequest, AITier } from './types';
 import { ProviderError } from './types';
 
 /**
- * Adapter OpenRouter — NVIDIA Nemotron 3.5 Lightning, offre PAYANTE (décision
- * du 2026-10-07 : production sur OpenRouter ; l'accès NVIDIA direct est une
- * offre d'évaluation). Tarif constaté : 0,049 $ / M tokens en entrée,
- * 0,14 $ / M en sortie. La clé n'est JAMAIS loggée ni incluse dans une erreur.
+ * Adapter OpenRouter — NVIDIA Nemotron (tier :free).
+ * 20 req/min, 50/jour par défaut (1000/jour avec ≥ 10 $ de crédits).
+ * La clé n'est JAMAIS loggée ni incluse dans une erreur.
  */
 
 export const MODEL_BY_TIER: Record<AITier, string> = {
-  heavy: 'nvidia/nemotron-3.5-lightning',
-  fast: 'nvidia/nemotron-3.5-lightning',
+  heavy: 'nvidia/nemotron-3-ultra-550b-a55b:free',
+  // NB : nemotron-3-nano-30b-a3b:free a été retiré d'OpenRouter (404, 2026-09-03)
+  // → remplacé par la génération 3.5 la plus rapide disponible en :free.
+  fast: 'nvidia/nemotron-3.5-lightning:free',
 };
-
-/** Seuls modèles autorisés : un identifiant modifié par erreur (modèle coûteux) est refusé avant le réseau. */
-export const ALLOWED_MODELS = new Set<string>(['nvidia/nemotron-3.5-lightning']);
 
 export function modelFor(tier: AITier): string {
   return MODEL_BY_TIER[tier];
 }
 
 /**
- * Garde-fou de coût : seul un modèle de la liste blanche part sur le réseau,
- * même si MODEL_BY_TIER est modifié par erreur.
+ * Garde-fou « free uniquement » (décision produit 2026-09-11) : aucun appel
+ * OpenRouter ne doit partir sur un modèle payant. Tout identifiant de modèle
+ * qui ne se termine pas par `:free` est refusé AVANT le réseau, même si
+ * MODEL_BY_TIER est modifié par erreur.
  */
-export function assertAllowedModel(model: string): string {
-  if (!ALLOWED_MODELS.has(model)) {
-    throw new ProviderError(`Modèle OpenRouter non autorisé : ${model}`, 400);
+export function assertFreeModel(model: string): string {
+  if (!model.endsWith(':free')) {
+    throw new ProviderError(`Modèle OpenRouter non gratuit interdit : ${model}`, 400);
   }
   return model;
 }
@@ -86,8 +86,8 @@ export const openrouterProvider: AIProvider = {
       else req.signal.addEventListener('abort', surAbandon, { once: true });
     }
 
-    // Liste blanche : refuse tout autre modèle avant l'appel réseau.
-    const model = assertAllowedModel(MODEL_BY_TIER[req.tier]);
+    // Free uniquement : refuse tout modèle payant avant l'appel réseau.
+    const model = assertFreeModel(MODEL_BY_TIER[req.tier]);
 
     try {
       const res = await fetch(OPENROUTER_URL, {

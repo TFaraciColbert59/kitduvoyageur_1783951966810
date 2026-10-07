@@ -3,7 +3,7 @@
 **Stack:** Next.js 15 (App Router) / React 19 / TypeScript strict / Tailwind CSS  
 **Backend:** Supabase (PostgreSQL + PostGIS), Row-Level Security obligatoire  
 **Paiement:** Stripe (server-side, webhooks async)  
-**IA:** cible production OpenRouter + Nemotron 3.5 Lightning (payant) ; NVIDIA NIM direct = offre d'évaluation, à remplacer  
+**IA:** NVIDIA NIM en direct (Nemotron 3.5 Lightning) — décision de Tony du 2026-10-07, pas d'OpenRouter dans l'app  
 **Météo (Compas):** MET Norway (prévision, CC BY 4.0) + NASA POWER (tendance) — gratuits, usage commercial permis  
 **3D:** react-globe.gl + three.js (globe interactif page Pays)  
 **Cartes:** Leaflet + tuiles OSM  

@@ -64,20 +64,19 @@ describe('AI-P0.1 — le modele NVIDIA configure doit repondre', () => {
   });
 });
 
-describe('AI-P0.2 — OpenRouter en production, NVIDIA direct en secours (decision du 2026-10-07)', () => {
-  it('AI-P0.2a avec la seule cle NVIDIA, la chaine est nvidia puis noop', () => {
-    vi.stubEnv('OPENROUTER_API_KEY', '');
+describe('AI-P0.2 — NVIDIA en direct, seul provider (decision du 2026-10-05)', () => {
+  it('AI-P0.2a avec la cle NVIDIA, la chaine est nvidia puis noop', () => {
     vi.stubEnv('NVIDIA_API_KEY', 'cle-nvidia');
     expect(providerChain('fast').map((p) => p.name)).toEqual(['nvidia', 'noop']);
     expect(providerChain('heavy').map((p) => p.name)).toEqual(['nvidia', 'noop']);
   });
 
-  it('AI-P0.2b OpenRouter (production) passe avant NVIDIA direct (secours)', () => {
+  it('AI-P0.2b une cle OpenRouter restee dans l environnement n est jamais appelee', () => {
     vi.stubEnv('NVIDIA_API_KEY', 'cle-nvidia');
     vi.stubEnv('OPENROUTER_API_KEY', 'cle-openrouter');
-    expect(providerChain('fast').map((p) => p.name)).toEqual(['openrouter', 'nvidia', 'noop']);
+    expect(providerChain('fast').map((p) => p.name)).not.toContain('openrouter');
     vi.stubEnv('NVIDIA_API_KEY', '');
-    expect(providerChain('fast').map((p) => p.name)).toEqual(['openrouter', 'noop']);
+    expect(providerChain('fast').map((p) => p.name)).toEqual(['noop']);
   });
 
   it('AI-P0.2c la chaine ne contient jamais deux fois le meme provider', () => {
