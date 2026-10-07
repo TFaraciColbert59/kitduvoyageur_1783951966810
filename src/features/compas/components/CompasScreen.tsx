@@ -16,7 +16,8 @@ import { COMPAS_STEPS, type CompasKitLine, type CompasStepId } from '../engine/c
 import { activityLabel, formatHours, formatMoney } from '../engine/format';
 import { NIGHT_LABEL } from '../engine/autofill';
 import {
-  compasAutofillAction,
+  compasAutofillOutcomeAction,
+  compasAutofillStartAction,
   compasUndoAutofillAction,
   compasRefreshAutofillAction,
   type CompasAutofillSummary,
@@ -95,6 +96,8 @@ const DISPLAY_VERSION = 2;
 
 /** Durée maximale d'une préparation côté serveur (300 s) et une marge. */
 const AUTOFILL_MAX_MS = 310_000;
+/** Cadence à laquelle l'écran demande l'issue de la préparation. */
+const AUTOFILL_POLL_MS = 4000;
 
 export function CompasScreen({
   data: rawData,
@@ -315,8 +318,6 @@ export function CompasScreen({
   const autofillRunning = useRef(false);
   /** Une reprise automatique après une coupure (réseau, limite serveur), pas plus. */
   const autofillRetried = useRef(false);
-  /** Réponse perdue en route : on relit le voyage jusqu'à ce que le serveur ait écrit. */
-  const autofillLost = useRef<{ poll: ReturnType<typeof setInterval>; timer: ReturnType<typeof setTimeout> } | null>(null);
   /** Une relance différée après la limite de fréquence, pas plus. */
   const autofillDeferred = useRef(false);
   // Préparation pilotée depuis la demande (« Où ») : un panneau montre chaque
@@ -378,12 +379,19 @@ export function CompasScreen({
         // la carte se dessine dès que l'itinéraire est écrit.
         // La position sert au trajet d'approche et au départ d'une sortie sans lieu.
         const from = await position;
-        const poll = setInterval(() => startTransition(() => router.refresh()), 6000);
-        try {
-          return await compasAutofillAction({ tripId: model.tripId, tripSlug: model.slug, from, phase: 'all' });
-        } finally {
-          clearInterval(poll);
+        // Lancée, la préparation tourne côté serveur sans tenir de requête
+        // ouverte (un réseau mobile coupe une longue requête muette) : l'écran
+        // demande son issue toutes les 4 s et se relit pour dessiner la carte.
+        const started = await compasAutofillStartAction({ tripId: model.tripId, tripSlug: model.slug, from, phase: 'all' });
+        if (!started.success) return started;
+        while (Date.now() - startedAt < AUTOFILL_MAX_MS) {
+          if (stopped.current) return null;
+          const outcome = await compasAutofillOutcomeAction({ tripId: model.tripId, token: started.token }).catch(() => null);
+          if (outcome) return outcome;
+          startTransition(() => router.refresh());
+          await new Promise((r) => setTimeout(r, AUTOFILL_POLL_MS));
         }
+        throw new Error('préparation sans réponse');
       })
       .then((res) => {
         if (!res) return;
@@ -430,31 +438,17 @@ export function CompasScreen({
         startTransition(() => router.refresh());
       })
       .catch(() => {
-        const giveUp = () => {
-          prepFail(
-            autofillRetried.current
-              ? 'Connexion perdue : ce qui est fait est gardé. Reprends quand tu veux.'
-              : 'Préparation coupée : je reprends dans une minute, ce qui est fait est gardé.'
-          );
-          if (autofillRetried.current) return notify('Connexion perdue : préparation interrompue.', 'bad');
-          // Le serveur a coupé (limite de temps) ou le réseau a sauté : ce qui est
-          // écrit reste, on reprend une fois là où ça s'est arrêté.
-          autofillRetried.current = true;
-          notify('Préparation interrompue · je reprends dans une minute…');
-          setTimeout(() => autofillRef.current?.(redo), 66_000);
-        };
-        // La connexion a lâché, pas forcément le serveur (un réseau mobile coupe
-        // une requête longue et muette) : il finit seul, jusqu'à 300 s. On relit
-        // le voyage ; dès qu'il est écrit, l'aventure est prête. Sinon, reprise.
-        const left = AUTOFILL_MAX_MS - (Date.now() - startedAt);
-        if (redo || left <= 0 || autofillLost.current) return giveUp();
-        const poll = setInterval(() => startTransition(() => router.refresh()), 6000);
-        const timer = setTimeout(() => {
-          clearInterval(poll);
-          autofillLost.current = null;
-          giveUp();
-        }, left);
-        autofillLost.current = { poll, timer };
+        prepFail(
+          autofillRetried.current
+            ? 'Connexion perdue : ce qui est fait est gardé. Reprends quand tu veux.'
+            : 'Préparation coupée : je reprends dans une minute, ce qui est fait est gardé.'
+        );
+        if (autofillRetried.current) return notify('Connexion perdue : préparation interrompue.', 'bad');
+        // Le serveur a coupé (limite de temps) ou le réseau a sauté : ce qui est
+        // écrit reste, on reprend une fois là où ça s'est arrêté.
+        autofillRetried.current = true;
+        notify('Préparation interrompue · je reprends dans une minute…');
+        setTimeout(() => autofillRef.current?.(redo), 66_000);
       })
       .finally(() => {
         autofillRunning.current = false;
@@ -464,26 +458,6 @@ export function CompasScreen({
   const autofillRef = useRef(autofill);
   autofillRef.current = autofill;
 
-  // Connexion perdue pendant la préparation : le serveur a écrit → c'est prêt.
-  useEffect(() => {
-    const lost = autofillLost.current;
-    if (!lost || data.autofill !== 'done') return;
-    clearInterval(lost.poll);
-    clearTimeout(lost.timer);
-    autofillLost.current = null;
-    if (prepRef.current && prepRef.current.stage !== 'stopped') setPrep({ stage: 'done', total: null, digest: null });
-    notify('Aventure préparée');
-  }, [data.autofill, notify, setPrep]);
-  useEffect(
-    () => () => {
-      const lost = autofillLost.current;
-      if (lost) {
-        clearInterval(lost.poll);
-        clearTimeout(lost.timer);
-      }
-    },
-    []
-  );
 
   // Réadaptation : un changement (durée, lieu, activité, nuits, personnes…)
   // rend une partie du préremplissage caduque. Seules ces parties sont

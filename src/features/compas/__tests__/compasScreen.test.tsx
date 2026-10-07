@@ -211,7 +211,7 @@ const resa = vi.hoisted(() => ({
 }));
 vi.mock('../server/resaActions', () => resa);
 const autofill = vi.hoisted(() => ({
-  compasAutofillAction: vi.fn(async () => ({
+  compasAutofillAction: vi.fn(async (_input?: unknown) => ({
     success: true,
     summary: {
       nights: [
@@ -228,7 +228,18 @@ const autofill = vi.hoisted(() => ({
     },
   })),
   compasUndoAutofillAction: vi.fn(async () => ({ success: true })),
+  // Lancement immédiat, issue relue ensuite (comme en production, sans requête longue).
+  compasAutofillStartAction: vi.fn(async (input: unknown) => {
+    const token = `t${++outcomes.n}`;
+    outcomes.byToken.set(token, autofill.compasAutofillAction(input as never));
+    return { success: true, token };
+  }),
+  compasAutofillOutcomeAction: vi.fn(async ({ token }: { token: string }) => {
+    const res = await outcomes.byToken.get(token);
+    return res ? { ...res, token, at: Date.now() } : null;
+  }),
 }));
+const outcomes = vi.hoisted(() => ({ n: 0, byToken: new Map<string, Promise<unknown>>() }));
 vi.mock('../server/autofillActions', () => autofill);
 
 const cart = vi.hoisted(() => ({ addToCart: vi.fn() }));
@@ -778,19 +789,22 @@ describe('CompasScreen', () => {
     }
   });
 
-  it('Préremplissage : connexion perdue mais serveur fini → relu, annoncé prêt, sans relance', async () => {
-    autofill.compasAutofillAction.mockImplementationOnce(async () => {
-      throw new Error('network');
-    });
-    const { rerender } = render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
-    await waitFor(() => expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1));
-    // Pas d'échec annoncé tant que le serveur peut encore écrire.
-    await new Promise((r) => setTimeout(r, 50));
-    expect(screen.queryByText(/interrompue|reprends dans une minute/)).toBeNull();
-    // Le voyage relu est écrit : l'aventure est prête.
-    rerender(<CompasScreen data={{ ...makeData(), autofill: 'done' }} />);
-    expect(await screen.findByText('Aventure préparée')).toBeTruthy();
-    expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1);
+  it('Préremplissage : lancé puis issue relue, sans tenir de requête ouverte', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      autofill.compasAutofillOutcomeAction.mockResolvedValueOnce(null as never).mockResolvedValueOnce(null as never);
+      render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+      await waitFor(() => expect(autofill.compasAutofillStartAction).toHaveBeenCalledTimes(1));
+      // Toujours en cours : rien d'annoncé, ni succès ni échec.
+      await vi.advanceTimersByTimeAsync(4_100);
+      expect(screen.queryByText(/Aventure préparée|interrompue/)).toBeNull();
+      await vi.advanceTimersByTimeAsync(4_100);
+      expect(await screen.findByText(/Aventure préparée · 486/)).toBeTruthy();
+      expect(autofill.compasAutofillOutcomeAction.mock.calls.length).toBeGreaterThanOrEqual(3);
+      expect(autofill.compasAutofillStartAction).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('Préremplissage : déjà fait ou annulé → ne se relance pas', () => {

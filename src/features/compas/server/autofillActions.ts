@@ -569,6 +569,65 @@ async function claimPhase(supabase: Supa, tripId: string, phase: 'steps' | 'rest
   return Boolean(won?.length);
 }
 
+/** Issue d'une préparation lancée en arrière-plan, relue par l'écran. */
+export type CompasAutofillOutcome = CompasAutofillResult & { token: string; at: number };
+
+/**
+ * Lance la préparation et rend la main tout de suite : le travail (jusqu'à
+ * 300 s) continue après la réponse (`after`), son issue est écrite sur le
+ * voyage (`metadata.compas.autofill_result`, avec le jeton rendu ici). Aucune
+ * requête n'est tenue ouverte : un réseau mobile qui coupe une longue requête
+ * muette ne fait plus échouer une préparation que le serveur réussit.
+ */
+export async function compasAutofillStartAction(
+  input: z.input<typeof schema>
+): Promise<{ success: true; token: string } | { success: false; error: string; retryInS?: number }> {
+  const parsed = schema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Requête invalide' };
+  const { tripId } = parsed.data;
+  try {
+    const auth = await requireEditor(tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    const token = randomUUID();
+    after(async () => {
+      const res: CompasAutofillResult = await compasAutofillAction(parsed.data).catch((err) => {
+        console.error('[compas] préparation', err instanceof Error ? err.message : err);
+        return { success: false as const, error: 'Erreur serveur' };
+      });
+      const outcome: CompasAutofillOutcome = { ...res, token, at: Date.now() };
+      try {
+        const { supabase } = auth;
+        const metadata = await patchTripMetadata(supabase, tripId, (m) => ({
+          ...m,
+          compas: { ...compasMeta(m), autofill_result: outcome },
+        }));
+        await supabase.from('trips').update({ metadata, updated_at: new Date().toISOString() }).eq('id', tripId);
+      } catch (err) {
+        console.error('[compas] issue de la préparation non écrite', err instanceof Error ? err.message : err);
+      }
+    });
+    return { success: true, token };
+  } catch (err) {
+    console.error('[compas] lancement de la préparation', err instanceof Error ? err.message : err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+const outcomeSchema = z.object({ tripId: z.string().uuid(), token: z.string().uuid() });
+
+/** Issue d'une préparation lancée par `compasAutofillStartAction` ; null tant qu'elle tourne. */
+export async function compasAutofillOutcomeAction(
+  input: z.input<typeof outcomeSchema>
+): Promise<CompasAutofillOutcome | null> {
+  const parsed = outcomeSchema.safeParse(input);
+  if (!parsed.success) return null;
+  const auth = await requireEditor(parsed.data.tripId).catch(() => null);
+  if (!auth || 'error' in auth) return null;
+  const { data } = await auth.supabase.from('trips').select('metadata').eq('id', parsed.data.tripId).maybeSingle();
+  const r = compasMeta((data?.metadata ?? {}) as Record<string, unknown>).autofill_result as CompasAutofillOutcome | undefined;
+  return r && r.token === parsed.data.token ? r : null;
+}
+
 export async function compasAutofillAction(
   input: z.input<typeof schema>
 ): Promise<CompasAutofillResult> {
