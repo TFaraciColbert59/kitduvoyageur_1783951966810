@@ -883,11 +883,14 @@ export async function compasAutofillAction(
         // Itinérant : 3 lieux au moins sur 4 jours, 2 sur 2 jours (un week-end
         // à vélo autour du lac ne reste pas deux jours à Annecy).
         const minPlaces = ITINERANT_ACTIVITIES.has(activity) ? (days >= 4 ? 3 : days >= 2 ? 2 : 1) : 1;
+        // Une semaine dans tout un pays (Costa Rica : San José puis six jours
+        // à Arenal) : deux bases au moins, quatre jours au plus au même endroit.
+        const wideStay = (anchor.kind === 'country' || anchor.radiusKm >= 300) && days >= 5;
         const usable = (st: ReturnType<typeof sanitizeStages>) =>
           st.length > 0 &&
-          new Set(st.map((x) => x.place)).size >= minPlaces &&
+          new Set(st.map((x) => x.place)).size >= Math.max(minPlaces, wideStay ? 2 : 1) &&
           // Un trek de 15 jours figé 8 jours au même refuge n'est pas un itinéraire.
-          (minPlaces === 1 || longestStay(st.map((x) => x.place)) <= 3);
+          (minPlaces > 1 ? longestStay(st.map((x) => x.place)) <= 3 : !wideStay || longestStay(st.map((x) => x.place)) <= 4);
         const stagesKey = createHash('sha256').update(`${buildCompasStagesSystem()}\n${stagesPrompt}`).digest('hex');
         // Une reprise (itinéraire précédent jugé mauvais) ne relit pas le partagé :
         // elle redemande au spécialiste.
