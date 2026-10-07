@@ -29,6 +29,21 @@ const PRICE_LEVEL: Record<string, number> = {
   GT: 0.45, TH: 0.45, PH: 0.45, KZ: 0.45, MN: 0.45, TN: 0.4, ID: 0.4, LK: 0.4, UZ: 0.4, ET: 0.4,
   VN: 0.35, KH: 0.35, LA: 0.35, BO: 0.35, EG: 0.35, MG: 0.35, KG: 0.35, IR: 0.35, TJ: 0.35,
   NP: 0.3, IN: 0.3, BD: 0.3, PK: 0.3, MM: 0.35,
+  // Îles, territoires et pays du Golfe (coût touristique)
+  BM: 1.6, KY: 1.4, BL: 1.5, AI: 1.3, VG: 1.3, TC: 1.3, GL: 1.3, SJ: 1.4, BS: 1.25, BB: 1.2,
+  VI: 1.2, WF: 1.2, FK: 1.2, JE: 1.15, GG: 1.15, GU: 1.15, IM: 1.1, AX: 1.1, PM: 1.1, MF: 1.1,
+  SX: 1.1, SH: 1.1, GF: 1.05, GI: 1.05, AW: 1.05, AG: 1.05, YT: 1, PR: 1, MP: 1, AS: 1, KN: 1,
+  LC: 1, MS: 1, HK: 1, SC: 1, MV: 1, PW: 1, CK: 1, NR: 1, NU: 1, SM: 0.95, VA: 0.95, MO: 0.95,
+  QA: 0.95, CW: 0.95, GD: 0.95, VC: 0.9, BT: 0.9, FM: 0.9, MH: 0.9, TV: 0.9, VU: 0.9, DM: 0.85,
+  KW: 0.85, SB: 0.85, BH: 0.8, PG: 0.8, KI: 0.8, SA: 0.75, OM: 0.75, JM: 0.75, TO: 0.75, WS: 0.75,
+  // Amériques, Afrique, Europe de l'Est, Asie
+  TT: 0.7, BZ: 0.7, FJ: 0.7, GQ: 0.7, PA: 0.6, CV: 0.6, MU: 0.6, GA: 0.65, CG: 0.6, DJ: 0.6,
+  ZW: 0.6, HT: 0.6, GY: 0.6, LB: 0.6, PS: 0.6, SS: 0.6, BN: 0.6, CD: 0.55, AO: 0.55, TD: 0.55,
+  CF: 0.55, ST: 0.55, KM: 0.55, TL: 0.55, CI: 0.5, SN: 0.5, ZM: 0.5, MZ: 0.5, SZ: 0.5, LR: 0.5,
+  ER: 0.5, SO: 0.5, SR: 0.5, VE: 0.5, HN: 0.5, SV: 0.5, TM: 0.5, IQ: 0.5, CM: 0.45, GH: 0.45,
+  LS: 0.45, BJ: 0.45, TG: 0.45, BF: 0.45, ML: 0.45, NE: 0.45, GN: 0.45, GW: 0.45, GM: 0.45,
+  SL: 0.45, EH: 0.45, PY: 0.45, NI: 0.45, RU: 0.45, XK: 0.45, NG: 0.4, MW: 0.4, BI: 0.4, SD: 0.4,
+  MR: 0.4, LY: 0.4, MD: 0.4, BY: 0.4, AZ: 0.4, DZ: 0.35, UA: 0.35, YE: 0.35, AF: 0.3, SY: 0.3,
 };
 /** Pays inconnu du barème : niveau moyen, annoncé comme tel. */
 const DEFAULT_LEVEL = 0.7;
