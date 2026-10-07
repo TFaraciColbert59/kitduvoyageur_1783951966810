@@ -3,6 +3,8 @@ import { distanceKm } from '../engine/places';
 import {
   areaTiles,
   buildAreaQuery,
+  dayStartVillage,
+  fromPlace,
   keepAdminArea,
   keepHighlands,
   keepHomeCountry,
@@ -282,5 +284,25 @@ describe('planItinerary — départ d’une ville dite', () => {
     expect(plan.start?.name).toBe('Amsterdam');
     expect(distanceKm(plan.stages[0], amsterdam)).toBeLessThan(120);
     expect(plan.stages[plan.stages.length - 1].name).toBe('Amsterdam');
+  });
+});
+
+describe('journée dans un massif : le village de départ', () => {
+  const center = { lat: 45.711, lon: 6.566 };
+  const albertville: AreaPlace = { id: 'n1', name: 'Albertville', lat: 45.675, lon: 6.393, kind: 'town', population: 19000, eleM: null };
+  const beaufort: AreaPlace = { id: 'n2', name: 'Beaufort', lat: 45.719, lon: 6.573, kind: 'village', population: 2000, eleM: null };
+  it('le village au cœur passe devant la ville au bord (Beaufortain)', () => {
+    expect(dayStartVillage([albertville, beaufort], center)).toMatchObject({ place: { name: 'Beaufort' }, note: 'Départ de Beaufort, au cœur du lieu.' });
+  });
+  it('seule la ville au bord : la distance est dite, avec l’élision', () => {
+    expect(dayStartVillage([albertville], center)?.note).toBe('Départ d’Albertville, à 14 km du centre du lieu.');
+  });
+  it('rien d’habité à 15 km : null', () => {
+    expect(dayStartVillage([{ ...beaufort, kind: 'hut' }], center)).toBeNull();
+  });
+  it('élision', () => {
+    expect(fromPlace('Annecy')).toBe('d’Annecy');
+    expect(fromPlace('Île-Rousse')).toBe('d’Île-Rousse');
+    expect(fromPlace('Chamonix')).toBe('de Chamonix');
   });
 });

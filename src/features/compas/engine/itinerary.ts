@@ -458,13 +458,42 @@ function planMoving(
       lat: next.lat,
       lon: next.lon,
       move: prof.move,
-      note: day === 1 ? `Départ de ${start.name}.` : null,
+      note: day === 1 ? `Départ ${fromPlace(start.name)}.` : null,
       placeId: next.id.startsWith('w:') ? null : next.id,
     });
     highStreak = (next.eleM ?? 0) >= HIGH_M ? highStreak + 1 : 0;
     cur = next;
   }
   return { stages, start };
+}
+
+/** « de Beaufort », « d'Albertville » (élision devant une voyelle). */
+export function fromPlace(name: string): string {
+  return /^[aeiouyàâäéèêëîïôöùûü]/i.test(name.trim()) ? `d’${name}` : `de ${name}`;
+}
+
+/**
+ * Départ d'une journée dans un lieu naturel (massif, parc) : un village
+ * proche du centre, la notoriété comptant moins que la distance (5 km coûtent
+ * un facteur 10). Albertville (19 000 hab., 13 km) n'est pas « au cœur » du
+ * Beaufortain : Beaufort (2 000 hab., 1 km) l'est.
+ */
+export function dayStartVillage(
+  places: AreaPlace[],
+  center: { lat: number; lon: number },
+  maxKm = 15
+): { place: AreaPlace; km: number; note: string } | null {
+  const pick = best(
+    places.filter((p) => (p.kind === 'town' || p.kind === 'village' || p.kind === 'city') && distanceKm(center, p) <= maxKm),
+    (p) => Math.log10(Math.max(10, p.population ?? 10)) - distanceKm(center, p) / 5
+  );
+  if (!pick) return null;
+  const km = distanceKm(center, pick);
+  return {
+    place: pick,
+    km,
+    note: km <= 5 ? `Départ ${fromPlace(pick.name)}, au cœur du lieu.` : `Départ ${fromPlace(pick.name)}, à ${Math.round(km)} km du centre du lieu.`,
+  };
 }
 
 /** Itinéraire complet ; null si la zone ne fournit pas assez de lieux réels (l'appelant se replie). */

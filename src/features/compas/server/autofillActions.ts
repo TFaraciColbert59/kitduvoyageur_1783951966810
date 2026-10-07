@@ -69,6 +69,7 @@ import { buildTrack, simplifyLine, trackKey } from '../engine/track';
 import { keepAiNote, travelPapers } from '../engine/papers';
 import { trailRegion } from '../engine/intent';
 import {
+  dayStartVillage,
   keepAdminArea,
   keepHighlands,
   keepHomeCountry,
@@ -381,13 +382,11 @@ async function plannedStages(opts: {
   if (opts.scope === 'sortie' || days === 1) {
     if (anchor.kind !== 'other' && !NATURAL_KINDS.has(anchor.kind ?? '')) return { stages: base, note: '' };
     const near = await lookupAreaPlaces({ center: anchor, radiusKm: 15, activity }, opts.deadline).catch(() => null);
-    const village = (near ?? [])
-      .filter((p) => (p.kind === 'town' || p.kind === 'village' || p.kind === 'city') && distanceKm(anchor, p) <= 15)
-      .sort((a, b) => (b.population ?? 0) - (a.population ?? 0))[0];
-    if (!village) return { stages: base, note: '' };
+    const start = dayStartVillage(near ?? [], anchor);
+    if (!start) return { stages: base, note: '' };
     return {
-      stages: base.map((st) => ({ ...st, name: village.name, lat: village.lat, lon: village.lon })),
-      note: `Départ de ${village.name}, au cœur du lieu.`,
+      stages: base.map((st) => ({ ...st, name: start.place.name, lat: start.place.lat, lon: start.place.lon })),
+      note: start.note,
     };
   }
   // À pied, un département ou une région qui porte le nom d'un massif (Vosges,
