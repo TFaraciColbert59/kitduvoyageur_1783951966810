@@ -116,13 +116,14 @@ const plain = (v: string) =>
 /**
  * Un même lieu porte un seul nom d'un bout à l'autre du voyage : « Seville »
  * puis « Séville », « Malaga » puis « Málaga » (Andalousie, 7 octobre) se
- * lisaient comme deux étapes. Même nom aux accents près, ou même point (moins
- * de 300 m) : le premier nom reste, avec sa position.
+ * lisaient comme deux étapes. Même nom aux accents près à moins de 30 km, ou
+ * même point (moins de 300 m) : le premier nom reste, avec sa position.
  */
 export function unifyStageNames<T extends OrderableStage>(stages: T[]): T[] {
   const seen: T[] = [];
   return stages.map((st) => {
-    const twin = seen.find((s) => plain(s.name) === plain(st.name) || distanceKm(s, st) < 0.3);
+    // Un homonyme lointain (deux « Saint-Martin » à 200 km) reste un autre lieu.
+    const twin = seen.find((s) => (plain(s.name) === plain(st.name) && distanceKm(s, st) < 30) || distanceKm(s, st) < 0.3);
     if (!twin) {
       seen.push(st);
       return st;

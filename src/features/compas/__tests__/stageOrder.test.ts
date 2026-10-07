@@ -90,4 +90,11 @@ describe('unifyStageNames', () => {
     ]);
     expect(out.map((s) => s.name)).toEqual(['Grenade', 'Grenade', 'Alhambra Palace']);
   });
+  it('un homonyme lointain reste un autre lieu (deux « Saint-Martin » à 200 km)', () => {
+    const out = unifyStageNames([
+      { day: 1, name: 'Saint-Martin', lat: 45.0, lon: 6.0 },
+      { day: 2, name: 'Saint Martin', lat: 46.8, lon: 6.0 },
+    ]);
+    expect(out[1]).toMatchObject({ name: 'Saint Martin', lat: 46.8 });
+  });
 });
