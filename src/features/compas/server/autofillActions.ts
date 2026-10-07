@@ -1034,7 +1034,10 @@ export async function compasAutofillAction(
           ];
           let hit: CompasPlace | null = null;
           for (const a of attempts) {
-            if (a.transfer && !(last && walkLike)) continue;
+            // Transfert en véhicule (jusqu'à 250 km) : seulement de la ville
+            // d'arrivée au départ du trek (jour 2), jamais au milieu (Argentière →
+            // Castellania Coppi, dans le Piémont, au jour 5 d'une traversée).
+            if (a.transfer && !(last && walkLike && located.filter(Boolean).length <= 1)) continue;
             const list = await a.from();
             if (!list.length) continue;
             const isAcross = list !== candidates;
@@ -1059,7 +1062,7 @@ export async function compasAutofillAction(
             const aliases = await stageAliasCandidates(p.place, anchor.countryCode);
             hit = pickPlace(aliases, {
               near: last ?? anchor,
-              maxKm: last && walkLike ? TRANSFER_MAX_KM : legKm,
+              maxKm: last && walkLike && located.filter(Boolean).length <= 1 ? TRANSFER_MAX_KM : legKm,
             });
           }
           // Le titre garde le nom proposé (lisible) ; la position vient de la carte.
