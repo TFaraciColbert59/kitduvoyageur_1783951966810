@@ -62,6 +62,8 @@ import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } f
 import { bestPeriod, monthName } from '../engine/period';
 import { partsText, retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { lookupDestination, lookupReverse, stageAliasCandidates, stageCandidates } from './placeLookup';
+import { lookupStagePois } from './stagePoiLookup';
+import { after } from 'next/server';
 import { destinationRadiusKm, distanceKm, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, type CompasPlace } from '../engine/places';
 import { untangleStages } from '../engine/stageOrder';
 import { localToday } from './weather';
@@ -855,6 +857,19 @@ export async function compasAutofillAction(
         compas: { ...compasMeta(m), autofill_pending: run },
       }));
       await supabase.from('trips').update({ metadata, updated_at: new Date().toISOString() }).eq('id', tripId);
+      // Points sur place (restos, commerces, eau…) cherchés dès maintenant, après
+      // la réponse : ils sont en cache quand l'écran s'ouvre. Trois appels au plus
+      // (deux lieux chacun), arrêtés par la limite de la fonction sans rien casser.
+      const points = steps
+        .filter((st) => st.latitude != null && st.longitude != null)
+        .map((st) => ({ lat: Number(st.latitude), lon: Number(st.longitude) }));
+      if (points.length)
+        after(async () => {
+          for (let i = 0; i < 3; i += 1) {
+            const found = await lookupStagePois(points).catch(() => null);
+            if (!found || !found.partial) break;
+          }
+        });
       return { success: true, pending: true, stepsCreated };
     }
 
