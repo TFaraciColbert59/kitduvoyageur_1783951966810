@@ -103,3 +103,13 @@ describe('understandRequest — « voici ce que j’ai compris »', () => {
     expect(defaultDays(null)).toBe(7);
   });
 });
+
+describe('ancrage des nuits dehors proposées par l’IA', () => {
+  it('« tour du Queyras en 6 jours » : 6 nuits dehors refusées (le nombre est celui des jours)', async () => {
+    const { groundingIssue } = await import('../engine/intent');
+    expect(groundingIssue({ type: 'set_outdoor_nights', nights: 6 }, 'tour du Queyras en 6 jours')).not.toBeNull();
+    expect(groundingIssue({ type: 'set_outdoor_nights', nights: 4 }, 'hiking 5 days in the Swiss Alps')).not.toBeNull();
+    expect(groundingIssue({ type: 'set_outdoor_nights', nights: 3 }, 'rando 4 jours avec 3 nuits en bivouac')).toBeNull();
+    expect(groundingIssue({ type: 'set_outdoor_nights', nights: 2 }, 'dormir dehors 2 nuits dans le Vercors')).toBeNull();
+  });
+});

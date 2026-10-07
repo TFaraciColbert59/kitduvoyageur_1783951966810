@@ -790,7 +790,11 @@ export function groundingIssue(action: CompasIntentAction, text: string): string
       return /\b(rythme|tranquille|tranquillement|doucement|cool|calme|pepere|lent|lentement|relax|normal|moyen|soutenu|sportif|rapide|intense|pace|slow|easy|fast)/.test(plain)
         ? null
         : 'Rythme absent de ta phrase';
+    // Nuits dehors : le nombre ET le dehors doivent être dits. L'IA posait
+    // « 6 nuits dehors » sur « tour du Queyras en 6 jours » (le nombre de jours).
     case 'set_outdoor_nights':
+      if (!/\b(dehors|bivouac\w*|tente|belle etoile|camper|camping|outside|wild ?camp\w*)\b/.test(plain))
+        return 'Nuits dehors absentes de ta phrase';
       return numberInText(text, action.nights) ? null : 'Nombre de nuits absent de ta phrase';
     case 'set_max_pack':
       return numberInText(text, action.kg) ? null : 'Poids absent de ta phrase';
