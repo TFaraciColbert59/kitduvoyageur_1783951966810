@@ -1295,6 +1295,11 @@ describe('CompasScreen', () => {
     // L'annulation elle-même ne s'annule pas.
     expect(screen.queryByRole('button', { name: 'Annuler' })).toBeNull();
 
+    // L'annonce paraît avant la fin de l'action : le bouton reste grisé un
+    // instant, comme pour une vraie personne. On attend qu'il soit actif.
+    await waitFor(() =>
+      expect((within(sheet).getByRole('button', { name: /Bivouac/ }) as HTMLButtonElement).disabled).toBe(false)
+    );
     fireEvent.click(within(sheet).getByRole('button', { name: /Bivouac/ }));
     await screen.findByRole('button', { name: 'Annuler' });
     const calls = compas.compasSetPreferencesAction.mock.calls.length;
