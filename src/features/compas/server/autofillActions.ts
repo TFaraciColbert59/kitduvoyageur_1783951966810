@@ -677,8 +677,9 @@ export async function compasAutofillAction(
       const place = await lookupDestination(trip.destination_name);
       if (place) anchor = { ...place, radiusKm: destinationRadiusKm(place) };
     }
-    // Sortie de quelques heures sans lieu dit : autour de la position partagée.
-    if (!anchor && from && ctx.scope === 'sortie') {
+    // Aucun lieu dit : on part de la position partagée (une sortie autour de
+    // soi, ou un voyage « près de chez toi »), et on le dit.
+    if (!anchor && from) {
       const here = await lookupReverse(from.lat, from.lon);
       anchor = {
         name: here?.locality ?? here?.name ?? 'Autour de toi',
@@ -686,8 +687,11 @@ export async function compasAutofillAction(
         lon: from.lon,
         countryCode: here?.countryCode ?? null,
         country: here?.country ?? null,
-        radiusKm: 15,
+        radiusKm: ctx.scope === 'sortie' ? 15 : 60,
+        kind: 'town',
       };
+      if (ctx.scope !== 'sortie')
+        notes.push(`Lieu non précisé : préparé près de chez toi (${anchor.name}). Change-le dans « Où » si tu pensais à un autre endroit.`);
     }
     if (!anchor)
       return {

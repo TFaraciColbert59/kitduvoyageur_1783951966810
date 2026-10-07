@@ -466,9 +466,12 @@ export function CompasScreen({
   useEffect(() => {
     if (data.autofill !== 'none' || !data.canEdit) return;
     if (!(model.dates.start || data.plannedDays)) return;
+    // Sans lieu dit, seule une demande en cours de préparation part quand même :
+    // le serveur prend alors la position partagée (« près de chez toi »).
     if (
       !(model.destination || data.anchorName || data.itinerary.length || data.origin) &&
-      data.context?.scope !== 'sortie'
+      data.context?.scope !== 'sortie' &&
+      !prepRef.current
     )
       return;
     if (autofillStarted.current === model.tripId || stopped.current) return;
@@ -596,8 +599,6 @@ export function CompasScreen({
     if (prep?.stage !== 'itinerary' || startSay || autofillRunning.current || data.autofill !== 'none') return;
     if (!(model.dates.start || data.plannedDays))
       return prepFail('Il me manque la durée : dis « 3 jours » ou choisis des dates.');
-    if (!(model.destination || data.anchorName || data.itinerary.length || data.origin) && data.context?.scope !== 'sortie')
-      prepFail('Je n’ai pas trouvé où tu pars : précise le lieu (« dans le Vercors », « au Pérou »…).');
   }, [prep?.stage, startSay, data, model.dates.start, model.destination, prepFail]);
 
   const close = useCallback(() => setStack([]), []);
