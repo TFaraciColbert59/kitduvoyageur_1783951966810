@@ -232,7 +232,7 @@ const autofill = vi.hoisted(() => ({
   compasAutofillStartAction: vi.fn(async (input: unknown) => {
     const token = `t${++outcomes.n}`;
     outcomes.byToken.set(token, autofill.compasAutofillAction(input as never));
-    return { success: true, token };
+    return { success: true, token, at: Date.now() };
   }),
   compasAutofillOutcomeAction: vi.fn(async ({ token }: { token: string }) => {
     const res = await outcomes.byToken.get(token);

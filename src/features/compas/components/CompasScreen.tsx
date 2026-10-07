@@ -386,7 +386,9 @@ export function CompasScreen({
         if (!started.success) return started;
         while (Date.now() - startedAt < AUTOFILL_MAX_MS) {
           if (stopped.current) return null;
-          const outcome = await compasAutofillOutcomeAction({ tripId: model.tripId, token: started.token }).catch(() => null);
+          const outcome = await compasAutofillOutcomeAction({ tripId: model.tripId, token: started.token, since: started.at }).catch(
+            () => null
+          );
           if (outcome) return outcome;
           startTransition(() => router.refresh());
           await new Promise((r) => setTimeout(r, AUTOFILL_POLL_MS));

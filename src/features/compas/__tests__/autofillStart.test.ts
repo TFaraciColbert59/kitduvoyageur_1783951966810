@@ -51,4 +51,20 @@ describe('préparation en arrière-plan', () => {
     // Un autre jeton (préparation plus ancienne) ne lit pas cette issue.
     expect(await compasAutofillOutcomeAction({ tripId: TRIP, token: '99999999-9999-4999-8999-999999999999' })).toBeNull();
   });
+
+  it('deux lancements ensemble (écran remonté) : le second lit la réussite du premier', async () => {
+    const a = await compasAutofillStartAction({ tripId: TRIP, tripSlug: 'x', from: null, phase: 'all' });
+    const b = await compasAutofillStartAction({ tripId: TRIP, tripSlug: 'x', from: null, phase: 'all' });
+    if (!a.success || !b.success) throw new Error('lancement refusé');
+    // Le premier a réussi (issue écrite à son jeton) ; le second a trouvé la place prise.
+    h.meta = {
+      compas: {
+        autofill_result: { success: true, summary: { total: 1 }, token: a.token, at: a.at + 1000 },
+      },
+    };
+    expect(await compasAutofillOutcomeAction({ tripId: TRIP, token: b.token, since: b.at })).toMatchObject({ token: a.token });
+    // Sans heure de lancement, ou avant elle : rien.
+    expect(await compasAutofillOutcomeAction({ tripId: TRIP, token: b.token })).toBeNull();
+    expect(await compasAutofillOutcomeAction({ tripId: TRIP, token: b.token, since: a.at + 60_000 })).toBeNull();
+  });
 });

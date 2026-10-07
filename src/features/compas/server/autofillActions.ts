@@ -607,7 +607,7 @@ export type CompasAutofillOutcome = CompasAutofillResult & { token: string; at: 
  */
 export async function compasAutofillStartAction(
   input: z.input<typeof schema>
-): Promise<{ success: true; token: string } | { success: false; error: string; retryInS?: number }> {
+): Promise<{ success: true; token: string; at: number } | { success: false; error: string; retryInS?: number }> {
   const parsed = schema.safeParse(input);
   if (!parsed.success) return { success: false, error: 'Requête invalide' };
   const { tripId } = parsed.data;
@@ -620,6 +620,8 @@ export async function compasAutofillStartAction(
         console.error('[compas] préparation', err instanceof Error ? err.message : err);
         return { success: false as const, error: 'Erreur serveur' };
       });
+      // Place prise par une autre préparation du même voyage : son issue fera foi.
+      if (res.success && 'pending' in res && res.stepsCreated === 0) return;
       const outcome: CompasAutofillOutcome = { ...res, token, at: Date.now() };
       try {
         const { supabase } = auth;
@@ -632,14 +634,20 @@ export async function compasAutofillStartAction(
         console.error('[compas] issue de la préparation non écrite', err instanceof Error ? err.message : err);
       }
     });
-    return { success: true, token };
+    // Heure du serveur : l'écran la rend telle quelle (jamais son horloge à lui).
+    return { success: true, token, at: Date.now() };
   } catch (err) {
     console.error('[compas] lancement de la préparation', err instanceof Error ? err.message : err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
 
-const outcomeSchema = z.object({ tripId: z.string().uuid(), token: z.string().uuid() });
+const outcomeSchema = z.object({
+  tripId: z.string().uuid(),
+  token: z.string().uuid(),
+  /** Heure (ms, serveur) du lancement : une préparation réussie depuis vaut aussi. */
+  since: z.number().int().nonnegative().optional(),
+});
 
 /** Issue d'une préparation lancée par `compasAutofillStartAction` ; null tant qu'elle tourne. */
 export async function compasAutofillOutcomeAction(
@@ -651,7 +659,12 @@ export async function compasAutofillOutcomeAction(
   if (!auth || 'error' in auth) return null;
   const { data } = await auth.supabase.from('trips').select('metadata').eq('id', parsed.data.tripId).maybeSingle();
   const r = compasMeta((data?.metadata ?? {}) as Record<string, unknown>).autofill_result as CompasAutofillOutcome | undefined;
-  return r && r.token === parsed.data.token ? r : null;
+  if (!r) return null;
+  if (r.token === parsed.data.token) return r;
+  // Deux préparations lancées ensemble (écran remonté) : celle qui a trouvé la
+  // place prise n'écrit rien ; celle qui a réussi depuis notre lancement vaut.
+  const since = parsed.data.since;
+  return since != null && r.success && 'summary' in r && r.at >= since - 5_000 ? r : null;
 }
 
 export async function compasAutofillAction(
