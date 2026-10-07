@@ -91,6 +91,13 @@ describe('venir jusqu’au départ', () => {
     expect(approachMode({ straightKm: 650 })).toBe('route');
     expect(approachMode({ straightKm: 7000 })).toBe('avion');
   });
+
+  it('un week-end ne passe pas 9 h au volant : Annecy → Biarritz (650 km) en avion pour 2 jours, en voiture pour 8', () => {
+    expect(approachMode({ straightKm: 650, days: 2 })).toBe('avion');
+    expect(approachMode({ straightKm: 650, days: 3 })).toBe('avion');
+    expect(approachMode({ straightKm: 650, days: 8 })).toBe('route');
+    expect(approachMode({ straightKm: 300, days: 2 })).toBe('route');
+  });
 });
 
 describe('chiffrage du spécialiste', () => {

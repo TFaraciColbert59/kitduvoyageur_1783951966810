@@ -617,9 +617,16 @@ export function movesFromSteps(
 /** Au-delà, la route n'est plus un trajet raisonnable : on part en avion. */
 export const FLIGHT_THRESHOLD_KM = 900;
 
-export function approachMode(input: { straightKm: number }): 'sur_place' | 'route' | 'avion' {
+/**
+ * La route reste raisonnable selon la durée du voyage : un week-end ne passe
+ * pas 9 h au volant à l'aller (Annecy → Biarritz, 650 km à vol d'oiseau).
+ * 450 km à vol d'oiseau (≈ 5 h de route) pour 2 jours, 600 km pour 3, 900 au-delà.
+ */
+export function approachMode(input: { straightKm: number; days?: number | null }): 'sur_place' | 'route' | 'avion' {
   if (input.straightKm < 0.5) return 'sur_place';
-  if (input.straightKm > FLIGHT_THRESHOLD_KM) return 'avion';
+  const days = input.days ?? 99;
+  const limit = days <= 2 ? 450 : days === 3 ? 600 : FLIGHT_THRESHOLD_KM;
+  if (input.straightKm > limit) return 'avion';
   return 'route';
 }
 

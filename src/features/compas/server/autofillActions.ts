@@ -1328,7 +1328,7 @@ export async function compasAutofillAction(
     const mode = !ctx.modules.transport
       ? 'aucun'
       : from
-        ? approachMode({ straightKm: distanceKm(from, target) })
+        ? approachMode({ straightKm: distanceKm(from, target), days })
         : abroad
           ? 'avion'
           : 'route';
