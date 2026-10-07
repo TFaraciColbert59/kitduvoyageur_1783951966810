@@ -293,6 +293,12 @@ redirects() {
 }
 ```
 
+### Compas : des calculs et des choix dans un contexte (audit du 2026-10-07)
+- « Où » est LA demande (phrase libre + précisions facultatives) ; « Préparer mon aventure » crée le voyage et lance une préparation visible (`CompasPrep`). Tout le reste est la réponse.
+- Une seule lecture des réglages : `engine/tripContext.ts` (jours, nuits, heures, groupe, ancre). Ne jamais recalculer les jours ou le groupe ailleurs.
+- Itinéraire : `engine/itinerary.ts` (pur) sur les lieux RÉELS de la zone (Overpass via `lookupAreaPlaces`). Budget : `engine/costs.ts` (barèmes versionnés). L'IA ne donne jamais un lieu, un prix ou une date : elle relit et conseille. Seule exception restante : itinéraire à l'échelle d'un pays (noms de l'IA vérifiés sur la carte).
+- Détail et avancement : `docs/compas/AUDIT-2026-10-07.md`.
+
 ### Le Compas est le SEUL préparateur (décision de Tony, 2026-10-02)
 - `/compas` est l'unique préparateur et configurateur, pour tout type d'aventure (étapes Où, Nous, Résa, Verdict, Kit). Il sera renommé « Préparateur » à la fin du chantier.
 - Sans aventure, ou avec `?nouvelle=1` : le Compas **vide** (`CompasStart`). Le premier geste (une activité, ou une phrase « Dis-le ») crée l'aventure en brouillon (`compasCreateTripAction`) et ouvre le Compas complet.
