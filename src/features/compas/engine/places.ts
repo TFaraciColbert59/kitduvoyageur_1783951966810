@@ -311,6 +311,20 @@ const plainName = (v: string) =>
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
 
+/**
+ * Le cœur d'un nom de lieu, sans article ni nature (« Les Pyrénées catalanes »,
+ * « Parc naturel régional des Pyrénées catalanes », « Massif du Mont Rose ») :
+ * la personne dit « Pyrénées catalanes », « Mont Rose ».
+ */
+const ARTICLE = /^(le|la|les|l|the)\s+/;
+const NATURE_PREFIX =
+  /^(parc naturel regional|parc naturel|parc national|parc regional|parc|massif|reserve naturelle|reserve|chaine|vallee|plateau|pays|region|lac)\s+(du|de la|des|de l|de|d)?\s*/;
+export function nameCore(v: string): string {
+  let n = plainName(v).replace(ARTICLE, '');
+  n = n.replace(NATURE_PREFIX, '').replace(ARTICLE, '');
+  return n.trim();
+}
+
 /** Ville, pays, région : un nom plus long que celui demandé reste ce lieu. */
 const ADMIN_KINDS = new Set(['city', 'town', 'village', 'country', 'state', 'county', 'region', 'province']);
 
@@ -333,6 +347,8 @@ export function pickDestination(candidates: CompasPlace[], query: string): Compa
     const n = plainName(c.name);
     // Même nom, espaces mis à part (« Viêt Nam » pour « Vietnam »).
     if (n === want || compact(n) === compact(want)) return true;
+    // Même lieu dit autrement (article, nature) : seulement un lieu naturel ou administratif.
+    if ((c.landmark || ADMIN_KINDS.has(c.kind)) && nameCore(c.name) === nameCore(query) && nameCore(query)) return true;
     // Nom plus long : seulement une ville ou une région (« Chamonix » →
     // « Chamonix-Mont-Blanc »), jamais un monument (« Vietnam » → « Vietnam
     // Veterans Memorial » à Washington).

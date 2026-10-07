@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseIntentRules, planApplication, groundingIssue } from '../engine/intent';
 import { extractIntentJson } from '@/lib/ai/features/compasIntent';
 import { approachMode, keepRuleForActivity, movesFromSteps, nightsPrefFor, sanitizeAdvice, sanitizeStages, stagePlaceName } from '../engine/autofill';
-import { destinationRadiusKm, homonymsFarApart, maxLegKm, parseNominatim, parsePhoton, pickDestination, pickPlace } from '../engine/places';
+import { destinationRadiusKm, homonymsFarApart, maxLegKm, nameCore, parseNominatim, parsePhoton, pickDestination, pickPlace } from '../engine/places';
 
 const TODAY = '2026-10-02';
 const current = {
@@ -574,5 +574,22 @@ describe('homonymsFarApart — départager les homonymes', () => {
       { ...base, name: 'Chamonix', lat: 45.93, lon: 6.88, kind: 'locality' },
     ];
     expect(homonymsFarApart(list, 'Chamonix')).toBe(false);
+  });
+});
+
+describe('pickDestination — article et nature du lieu', () => {
+  const base = { countryCode: 'FR', country: 'France', extent: null } as const;
+  it('« Pyrénées catalanes » = le parc naturel / « Les Pyrénées catalanes », jamais une rue', () => {
+    const list = [
+      { ...base, name: 'Parc naturel régional des Pyrénées catalanes', lat: 42.53, lon: 2.1, kind: 'other', landmark: true },
+      { ...base, name: 'Rue des Pyrénées Catalanes', lat: 42.49, lon: 2.03, kind: 'street' },
+    ];
+    expect(pickDestination(list, 'Pyrénées catalanes')?.lat).toBe(42.53);
+    expect(pickDestination([list[1]], 'Pyrénées catalanes')).toBeNull();
+  });
+  it('nameCore enlève article et nature', () => {
+    expect(nameCore('Les Pyrénées catalanes')).toBe('pyrenees catalanes');
+    expect(nameCore('Massif du Mont Rose')).toBe('mont rose');
+    expect(nameCore('Lac d’Annecy')).toBe('annecy');
   });
 });
