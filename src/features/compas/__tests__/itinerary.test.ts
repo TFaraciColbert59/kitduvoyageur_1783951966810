@@ -236,6 +236,12 @@ describe('Photon — lieux d’une emprise', () => {
     const osm = parseAreaPlaces({ elements: [{ type: 'node', id: 7, lat: 44.3, lon: 3.9, tags: { tourism: 'wilderness_hut', name: 'Shelter' } }] });
     expect(osm).toEqual([]);
   });
+  it('lieux déjà en cache (lus avant le filtre) : « shanty » n’est toujours pas une étape', () => {
+    const places = grid({ lat0: 44.35, lon0: 3.86, cols: 6, rows: 6, stepKm: 4 });
+    places[0] = { ...places[0], name: 'shanty', kind: 'hut' };
+    const plan = planItinerary({ days: 4, activity: 'hiking', center: { lat: 44.35, lon: 3.86 }, radiusKm: 20, places, shape: 'loop' })!;
+    expect(plan.stages.some((s) => s.name === 'shanty')).toBe(false);
+  });
   it('garde le pays de la destination quand la zone y est presque entière', () => {
     const mk = (id: string, cc: string): AreaPlace => ({ id, name: id, lat: 0, lon: 0, kind: 'village', population: null, eleM: null, countryCode: cc });
     const jura = [...Array.from({ length: 9 }, (_, i) => mk(`f${i}`, 'FR')), mk('morges', 'CH')];

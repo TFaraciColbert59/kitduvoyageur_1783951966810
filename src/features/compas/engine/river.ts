@@ -10,7 +10,7 @@
  */
 
 import { distanceKm } from './places';
-import type { AreaPlace } from './itinerary';
+import { isGenericName, type AreaPlace } from './itinerary';
 import type { LngLat } from './track';
 
 /** Distance de pagaie d'une journée (km), randonnée nautique en eau calme à vive. */
@@ -139,7 +139,7 @@ export function planRiverDescent(input: {
   };
   // Lieux au bord de l'eau, avec leur kilomètre de rivière.
   const bank = input.places
-    .filter((p) => KIND_SCORE[p.kind] != null)
+    .filter((p) => KIND_SCORE[p.kind] != null && !isGenericName(p.name))
     .map((p) => ({ p, ...nearest(p) }))
     .filter((b) => b.off <= BANK_KM)
     .map((b) => ({ ...b, km: cum[b.idx] }));

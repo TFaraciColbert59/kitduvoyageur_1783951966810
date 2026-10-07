@@ -554,8 +554,10 @@ export function dayStartVillage(
 }
 
 /** Itinéraire complet ; null si la zone ne fournit pas assez de lieux réels (l'appelant se replie). */
-export function planItinerary(input: ItineraryInput): ItineraryPlan | null {
-  if (!Number.isInteger(input.days) || input.days < 1) return null;
+export function planItinerary(raw: ItineraryInput): ItineraryPlan | null {
+  if (!Number.isInteger(raw.days) || raw.days < 1) return null;
+  // Aussi ici : les lieux d'une zone sont gardés un mois en cache, lus avant ce filtre.
+  const input = { ...raw, places: raw.places.filter((p) => !isGenericName(p.name)) };
   const prof = profileFor(input.activity);
   const shape = shapeFor(input);
   const moving = shape === 'base' ? null : planMoving(input, prof, shape);
