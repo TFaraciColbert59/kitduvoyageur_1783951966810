@@ -520,3 +520,15 @@ export function pickNatural(
   const order = (list: CompasPlace[]) => [...list].sort((a, b) => rank(a) - rank(b) || extentArea(b) - extentArea(a));
   return order(exact)[0] ?? order(containing)[0] ?? null;
 }
+
+/**
+ * Un lieu qu'on choisit sans hésiter entre homonymes lointains : pays, région,
+ * département, ville ou bourg, grand lieu naturel. Un hameau ou un quartier
+ * (« Alsace », quartier de Los Angeles) n'en est pas un : sans lieu notable,
+ * on ne choisit pas au hasard.
+ */
+export function isNotablePlace(p: CompasPlace): boolean {
+  if (['country', 'state', 'region', 'province', 'county', 'continent'].includes(p.kind)) return true;
+  if ((p.settlementRank ?? 0) >= 4) return true;
+  return Boolean(p.landmark && p.extent && extentArea(p) >= 0.01);
+}

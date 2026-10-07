@@ -558,10 +558,6 @@ export async function compasSetPreferencesAction(
 async function resolveDestination(query: string, userId: string): Promise<CompasPlace | null> {
   const exact = await lookupDestination(query);
   if (exact) return exact;
-  // Aucun lieu à ce nom exact : le lieu naturel qui le porte (« Calanques » :
-  // le parc national, pas le récif de Piana en Corse, premier venu de la carte).
-  const natural = await lookupNatural(query, null).catch(() => null);
-  if (natural) return { ...natural, name: query.trim().slice(0, 80) };
   try {
     const res = await askAI({
       feature: 'compas-autofill',
@@ -584,8 +580,12 @@ async function resolveDestination(query: string, userId: string): Promise<Compas
       }
     }
   } catch {
-    /* repli : lieu habité du même nom */
+    /* repli : lieu naturel, puis lieu habité du même nom */
   }
+  // Sans réponse du spécialiste : le lieu naturel qui porte le nom (« Calanques » :
+  // le parc national, pas le récif de Piana en Corse, premier venu de la carte).
+  const natural = await lookupNatural(query, null).catch(() => null);
+  if (natural) return { ...natural, name: query.trim().slice(0, 80) };
   return lookupLoose(query);
 }
 

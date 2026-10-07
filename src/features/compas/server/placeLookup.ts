@@ -1,5 +1,5 @@
 import 'server-only';
-import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, pickDestination, pickNatural, type CompasPlace } from '../engine/places';
+import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, isNotablePlace, pickDestination, pickNatural, type CompasPlace } from '../engine/places';
 import { cached, coordKey } from './sharedCache';
 import { geoapifyReverse, geoapifySearch } from './geoapify';
 
@@ -108,6 +108,10 @@ export async function lookupDestination(query: string): Promise<CompasPlace | nu
   if (pick && homonymsFarApart(found, q)) {
     const known = (await stageAliasCandidates(q, null)).find((p) => p.landmark || (p.settlementRank ?? 0) >= 2);
     if (known && distanceKm(known, pick) > 50) return { ...known, name: q };
+    // Homonymes lointains sans lieu notable (« Alsace » : un quartier de Los
+    // Angeles, la carte nommant la région « Collectivité européenne
+    // d'Alsace ») : pas de tirage au sort, l'appelant cherche autrement.
+    if (!isNotablePlace(pick)) return null;
   }
   return pick;
 }

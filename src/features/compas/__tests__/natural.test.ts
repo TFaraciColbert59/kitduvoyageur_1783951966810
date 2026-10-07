@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { parsePhoton, pickNatural } from '../engine/places';
+import { homonymsFarApart, isNotablePlace, parsePhoton, pickDestination, pickNatural } from '../engine/places';
+import alsace from './fixtures/photon-alsace.json';
 import chartreuse from './fixtures/photon-natural-chartreuse.json';
 import loire from './fixtures/photon-natural-loire.json';
 import jura from './fixtures/photon-natural-jura.json';
@@ -32,5 +33,12 @@ describe('lieu naturel pour une activité de plein air', () => {
     expect(p?.name).toMatch(/Parc national des Calanques/);
     // Sans pays connu (repli d'une destination sans nom exact) : idem.
     expect(pickNatural(parsePhoton(calanques), 'Calanques', null)?.name).toMatch(/Parc national des Calanques/);
+  });
+
+  it('« Alsace » : homonymes lointains sans lieu notable → pas de tirage au sort (jamais Los Angeles)', () => {
+    const found = parsePhoton(alsace);
+    const pick = pickDestination(found, 'Alsace');
+    expect(homonymsFarApart(found, 'Alsace')).toBe(true);
+    expect(pick && isNotablePlace(pick)).toBe(false);
   });
 });
