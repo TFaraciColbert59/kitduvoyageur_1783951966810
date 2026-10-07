@@ -432,7 +432,8 @@ export function sanitizeAdvice(raw: unknown): AutofillAiAdvice {
 
 /* ---------- Itinéraire proposé par l'IA ---------- */
 
-export type StageMove = 'vol' | 'voiture' | 'bus' | 'train' | 'bateau' | 'marche' | 'velo' | 'aucun';
+/** « pagaie » : descente de rivière (canoë, kayak), jamais proposé par le spécialiste. */
+export type StageMove = 'vol' | 'voiture' | 'bus' | 'train' | 'bateau' | 'marche' | 'velo' | 'pagaie' | 'aucun';
 const MOVES = new Set<StageMove>(['vol', 'voiture', 'bus', 'train', 'bateau', 'marche', 'velo', 'aucun']);
 
 export interface ProposedStage {
@@ -584,6 +585,8 @@ export const STEP_TRANSPORT: Record<StageMove, 'foot' | 'car' | 'bus' | 'train' 
   bateau: 'boat',
   marche: 'foot',
   velo: 'bike',
+  // Le reste de l'application ne connaît que ces modes : un canoë est un bateau.
+  pagaie: 'boat',
   aucun: 'foot',
 };
 
@@ -603,13 +606,14 @@ const MOVE_OF_TRANSPORT: Record<string, StageMove> = {
  * le même vocabulaire que les étapes proposées par le spécialiste.
  */
 export function movesFromSteps(
-  steps: Array<{ day_number: number; title: string; transport_mode: string | null }>
+  steps: Array<{ day_number: number; title: string; transport_mode: string | null }>,
+  activity?: string
 ): Array<{ day: number; name: string; move: StageMove }> {
-  return steps.map((s) => ({
-    day: s.day_number,
-    name: s.title,
-    move: (s.transport_mode && MOVE_OF_TRANSPORT[s.transport_mode]) || 'aucun',
-  }));
+  return steps.map((s) => {
+    const move = (s.transport_mode && MOVE_OF_TRANSPORT[s.transport_mode]) || 'aucun';
+    // Sur l'eau, un tronçon en bateau est la descente elle-même (pas un ferry payant).
+    return { day: s.day_number, name: s.title, move: activity === 'water' && move === 'bateau' ? 'pagaie' : move };
+  });
 }
 
 /* ---------- Venir jusqu'au départ ---------- */

@@ -21,6 +21,8 @@ import {
   type AreaQuery,
 } from '../engine/itinerary';
 import { cached, coordKey, readShared } from './sharedCache';
+import { chainRiver, parseRiverWays } from '../engine/river';
+import { simplifyLine, type LngLat } from '../engine/track';
 
 /**
  * Points utiles autour des étapes, depuis OpenStreetMap (Overpass). Partagés
@@ -176,6 +178,37 @@ async function photonAreaPlaces(q: AreaQuery, timeoutMs: number): Promise<AreaPl
   } finally {
     clearTimeout(timer);
   }
+}
+
+/**
+ * Tracé d'une rivière (tronçons OSM bout à bout, de l'amont vers l'aval) dans
+ * son emprise, pour une descente en canoë. Partagé un mois ; rien → null.
+ */
+export async function lookupRiverLine(
+  name: string,
+  extent: [number, number, number, number],
+  deadline: number
+): Promise<LngLat[] | null> {
+  const n = name.trim().replace(/["\\]/g, '');
+  if (n.length < 2) return null;
+  const [w, north, e, south] = extent;
+  const bbox = `${Math.min(south, north).toFixed(3)},${Math.min(w, e).toFixed(3)},${Math.max(south, north).toFixed(3)},${Math.max(w, e).toFixed(3)}`;
+  const query = `[out:json][timeout:25];(way["waterway"="river"]["name"="${n}"](${bbox});way["waterway"="river"]["name:fr"="${n}"](${bbox}););out geom;`;
+  const key = `river:v1:${createHash('sha256').update(query).digest('hex').slice(0, 32)}`;
+  return cached<LngLat[] | null>(
+    'place',
+    key,
+    30 * 86_400,
+    async () => {
+      const left = deadline - Date.now();
+      if (left < 5000) return null;
+      const payload = await overpassRace(query, Math.min(20_000, left));
+      const line = payload ? chainRiver(parseRiverWays(payload)) : [];
+      // ~1 point par 300 m sur une grande rivière : assez fin pour placer les soirs.
+      return line.length >= 2 ? simplifyLine(line, 1500) : null;
+    },
+    (v) => Array.isArray(v) && v.length >= 2
+  );
 }
 
 /**

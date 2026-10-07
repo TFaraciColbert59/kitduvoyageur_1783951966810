@@ -64,8 +64,9 @@ import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } f
 import { bestPeriod, monthName } from '../engine/period';
 import { partsText, retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { lookupDestination, lookupMassif, lookupNatural, lookupReverse, stageAliasCandidates, stageCandidates } from './placeLookup';
-import { lookupAreaPlaces, lookupStagePois } from './stagePoiLookup';
-import { buildTrack, simplifyLine, trackKey } from '../engine/track';
+import { lookupAreaPlaces, lookupRiverLine, lookupStagePois } from './stagePoiLookup';
+import { buildTrack, simplifyLine, trackKey, type LngLat } from '../engine/track';
+import { descentWindow, planRiverDescent } from '../engine/river';
 import { keepAiNote, travelPapers } from '../engine/papers';
 import { trainTrip, type TrainTrip } from '../engine/rail';
 import { trailRegion } from '../engine/intent';
@@ -331,7 +332,7 @@ const OUTDOOR_ACTIVITIES = new Set(['hiking', 'trekking', 'trail', 'running', 'c
 /** Lieux lus « administratifs » ou « urbains » qu'un lieu naturel du même nom remplace. */
 const REPLACEABLE_ANCHOR_KINDS = new Set(['county', 'state', 'region', 'province', 'district', 'suburb', 'quarter', 'neighbourhood', 'city_district', 'borough']);
 /** Natures OSM d'un lieu naturel : on en fait le tour plutôt que le traverser. */
-const NATURAL_KINDS = new Set(['water', 'lake', 'peak', 'island', 'islet', 'bay', 'mountain_range', 'volcano', 'glacier']);
+const NATURAL_KINDS = new Set(['water', 'lake', 'peak', 'island', 'islet', 'bay', 'mountain_range', 'volcano', 'glacier', 'river']);
 const LOOP_WISH = /\btour d(?:u|e|es|['’])|\bautour\b|\bboucle\b/i;
 
 interface StagePlace {
@@ -341,6 +342,9 @@ interface StagePlace {
   lon: number;
   move: StageMove;
   note: string | null;
+  /** Descente de rivière : km d'eau du jour et tracé de la rivière (pas de calcul de route). */
+  riverKm?: number | null;
+  geometry?: LngLat[] | null;
 }
 
 /**
@@ -359,6 +363,23 @@ async function plannedStages(opts: {
 }): Promise<{ stages: StagePlace[]; note: string } | { fallback: string } | null> {
   const { activity, days } = opts;
   let anchor = opts.anchor;
+  // Descente de rivière (canoë, kayak) : le tracé de l'eau fixe les soirs, vers
+  // l'aval (« 3 jours de canoë sur la Dordogne » donnait Sarlat → Périgueux →
+  // Sarlat). Avant le plafond de taille : une grande rivière dépasse 150 km.
+  if (activity === 'water' && anchor.kind === 'river' && anchor.extent && days >= 2) {
+    const line = await lookupRiverLine(anchor.name, anchor.extent, opts.deadline).catch(() => null);
+    const win = line ? descentWindow(line, days, anchor) : null;
+    const near = win ? await lookupAreaPlaces({ center: win.center, radiusKm: win.radiusKm, activity }, opts.deadline).catch(() => null) : null;
+    const river = line && near ? planRiverDescent({ line, places: near, days, center: anchor }) : null;
+    if (river) {
+      const end = river.stages[river.stages.length - 1];
+      return {
+        stages: river.stages.map((st) => ({ ...st, move: st.move as StageMove })),
+        note: `Descente de rivière (${anchor.name}) : ${String(river.sectionKm).replace('.', ',')} km d’eau en ${days} jours, de ${river.start.name} à ${end.name}, un soir au bord de l’eau.`,
+      };
+    }
+    // Tracé ou rives introuvables : séjour sur l'eau depuis une base, comme avant.
+  }
   // Road trip et van : une région entière se parcourt en voiture ; à pied ou à
   // vélo, au-delà d'un massif, il faut savoir où sont les grands itinéraires.
   const roadScale = activity === 'roadtrip' || activity === 'vanlife';
@@ -789,7 +810,9 @@ export async function compasAutofillAction(
     if (anchor && OUTDOOR_ACTIVITIES.has(activity) && REPLACEABLE_ANCHOR_KINDS.has(anchor.kind ?? '')) {
       const nat = await lookupNatural(anchor.name, anchor.countryCode, activity === 'cycling' || activity === 'water').catch(() => null);
       if (nat) {
-        anchor = { ...anchor, lat: nat.lat, lon: nat.lon, kind: 'other', extent: nat.extent, radiusKm: destinationRadiusKm(nat) };
+        // Une rivière le reste (« river ») : la descente en canoë suit son tracé.
+        const kind = /^waterway=/.test(nat.osmTag ?? '') ? 'river' : 'other';
+        anchor = { ...anchor, lat: nat.lat, lon: nat.lon, kind, extent: nat.extent, radiusKm: destinationRadiusKm(nat) };
         const fixed = anchor;
         const md = await patchTripMetadata(supabase, tripId, (m) => ({
           ...m,
@@ -1182,6 +1205,11 @@ export async function compasAutofillAction(
           if (!prevPlace || distanceKm(prevPlace, st) < 0.3) return null;
           const mode = st.move === 'marche' ? 'pieton' : st.move === 'velo' ? 'velo' : 'voiture';
           if (st.move === 'vol' || st.move === 'bateau') return { km: Math.round(distanceKm(prevPlace, st)), ascent: null, measured: false };
+          // Descente de rivière : la distance et le tracé de l'eau, déjà connus.
+          if (st.move === 'pagaie') {
+            legGeometry[i] = st.geometry ?? null;
+            return st.riverKm != null ? { km: st.riverKm, ascent: null, measured: true } : null;
+          }
           // Mesure partagée : le même tronçon n'est routé qu'une fois pour tout le monde.
           // « v2 » : le tronçon garde sa géométrie (tracé réel sur la carte).
           const leg = await cached(
@@ -1466,7 +1494,7 @@ export async function compasAutofillAction(
     } else if (mode === 'sur_place') notes.push('Tu es déjà au départ : aucun trajet à prévoir.');
     const motorLegs = steps.filter((s, i) => i > 0 && s.distance_km != null && s.distance_km > 0).length;
     // Étapes proposées à l'instant, sinon celles déjà en place avec leur moyen de transport.
-    const moves = stagePlaces.length ? stagePlaces : movesFromSteps(steps);
+    const moves = stagePlaces.length ? stagePlaces : movesFromSteps(steps, activity);
     const localMoves = moves.filter((s, i) => i > 0 && ['bus', 'train', 'bateau', 'vol'].includes(s.move));
     // Road trip : kilomètres mesurés en voiture entre les étapes ; arrivé en avion, il faut louer.
     const carDays = moves.filter((s, i) => i > 0 && s.move === 'voiture');
