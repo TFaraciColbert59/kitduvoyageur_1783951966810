@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultDays, understandRequest } from '../engine/request';
+import { defaultDays, precisionActions, understandRequest } from '../engine/request';
 
 const TODAY = '2026-10-07';
 const line = (r: ReturnType<typeof understandRequest>, key: string) => r.lines.find((l) => l.key === key);
@@ -28,7 +28,21 @@ describe('understandRequest — « voici ce que j’ai compris »', () => {
     expect(line(r, 'activite')?.state).toBe('precise');
     expect(line(r, 'quand')).toMatchObject({ value: '4 jours', state: 'precise' });
     expect(line(r, 'groupe')).toMatchObject({ value: '2 personnes', state: 'precise' });
-    expect(r.say).toBe('rando dans les Vosges · 4 jours · à 2');
+    expect(r.say).toBe('rando dans les Vosges · 4 jours · à 2 · activité : trekking');
+  });
+
+  it('les précisions priment sur la phrase à la lecture (« 3 jours … à 4 » puis 5 jours, 2 personnes)', () => {
+    const r = understandRequest('3 jours de rando dans le Vercors à 4', TODAY, { days: 5, party: 2, activity: 'trekking' });
+    expect(r.say).toBe('3 jours de rando dans le Vercors à 4 · 5 jours · à 2 · activité : trekking');
+    expect(precisionActions(r.say)).toEqual([
+      { type: 'set_duration', days: 5, hours: null },
+      { type: 'set_party_size', count: 2 },
+      { type: 'set_activity', activity: 'trekking' },
+    ]);
+    // Sans précision : rien d'imposé (la durée par défaut ajoutée vaut précision).
+    expect(precisionActions('5 jours de trek dans le Vercors à 3')).toEqual([]);
+    expect(precisionActions('escalade à Kalymnos · 3 jours')).toEqual([{ type: 'set_duration', days: 3, hours: null }]);
+    expect(precisionActions('Japon · activité : inconnue')).toEqual([]);
   });
 
   it('nom propre sans préposition : lu comme le lieu', () => {
@@ -104,7 +118,7 @@ describe('understandRequest — « voici ce que j’ai compris »', () => {
   it('vide sans phrase ni activité', () => {
     expect(understandRequest('  ', TODAY).empty).toBe(true);
     expect(understandRequest('', TODAY, { activity: 'ski' }).empty).toBe(false);
-    expect(understandRequest('', TODAY, { activity: 'ski' }).say).toBe('6 jours');
+    expect(understandRequest('', TODAY, { activity: 'ski' }).say).toBe('6 jours · activité : ski');
   });
 
   it('durées par défaut cohérentes', () => {

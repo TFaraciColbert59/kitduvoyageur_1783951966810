@@ -40,6 +40,7 @@ import {
   type CompasProposal,
 } from '../engine/intent';
 import { planKitApply, type MyKit } from '../engine/kitApply';
+import { precisionActions } from '../engine/request';
 import { simplifyOffers, stayDates, type CompasStayOffer } from '../engine/stays';
 import { readCompasMeta } from '../engine/meta';
 import { localToday } from './weather';
@@ -1699,7 +1700,10 @@ export async function compasInterpretAction(
       0
     );
 
-    const rules = parseIntentRules(text, today);
+    // Précisions choisies sous « Préciser » (fin de phrase) : avant la phrase et l'IA.
+    const forced = precisionActions(text);
+    const forcedTypes = new Set(forced.map((a) => a.type));
+    const rules = [...forced, ...parseIntentRules(text, today).filter((a) => !forcedTypes.has(a.type))];
     let ai: CompasIntentAction[] = [];
     let usedAi = false;
     let note: string | null = null;
@@ -1746,6 +1750,7 @@ export async function compasInterpretAction(
     const ruleTypes = new Set(rules.map((r) => r.type));
     const aiKept = grounded.filter(
       (a) =>
+        !forcedTypes.has(a.type) &&
         // Une activité nommée en toutes lettres (« ski », « vélo ») est lue par
         // les règles : le modèle ne la remplace pas (2026-10-05, « ski de rando »
         // devenait « alpinisme » et le kit oubliait le DVA).

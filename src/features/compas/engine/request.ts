@@ -5,7 +5,7 @@
  * préparation : précisions ajoutées à la fin, durée par défaut annoncée.
  */
 
-import { parseIntentRules, type CompasActivity, type CompasIntentAction } from './intent';
+import { COMPAS_ACTIVITIES, parseIntentRules, type CompasActivity, type CompasIntentAction } from './intent';
 import { activityLabel, daysBetweenIso } from './format';
 import { formatDateRange } from './compasModel';
 
@@ -148,11 +148,36 @@ export function understandRequest(text: string, today: string, p: RequestPrecisi
   const budget = first(actions, 'set_budget')?.amount ?? null;
   if (budget) lines.push({ key: 'budget', label: 'Budget', value: `${Math.round(budget).toLocaleString('fr-FR')} €`, state: 'compris' });
 
-  // Précisions ajoutées en fin de phrase, dans la langue que les règles comprennent.
+  // Précisions ajoutées en fin de phrase, sous une forme fixe que la lecture
+  // fait passer avant la phrase (`precisionActions`).
   const extra: string[] = [];
   if (addDays) extra.push(plural(addDays, 'jour', 'jours'));
   if (p.party && p.party !== party) extra.push(`à ${p.party}`);
+  if (p.activity && p.activity !== parsedActivity) extra.push(`activité : ${p.activity}`);
   const say = [phrase, ...extra].filter(Boolean).join(' · ');
 
   return { lines, activity, say, empty: !phrase && !p.activity };
+}
+
+/**
+ * Précisions en fin de phrase (« · 5 jours · à 2 · activité : trekking ») :
+ * elles priment sur la phrase et sur l'IA. Sans cela, « 3 jours … à 4 »
+ * suivi des précisions 5 jours, 2 personnes donnait 3 jours à 4 (la première
+ * durée lue l'emportait).
+ */
+export function precisionActions(say: string): CompasIntentAction[] {
+  const parts = say.split(' · ');
+  const out: CompasIntentAction[] = [];
+  for (let i = parts.length - 1; i >= 1; i -= 1) {
+    const seg = parts[i].trim();
+    const d = /^(\d{1,3}) jours?$/.exec(seg);
+    const g = /^à (\d{1,3})$/.exec(seg);
+    const a = /^activité : ([a-z]+)$/.exec(seg);
+    if (d && !out.some((x) => x.type === 'set_duration')) out.push({ type: 'set_duration', days: Number(d[1]), hours: null });
+    else if (g && !out.some((x) => x.type === 'set_party_size')) out.push({ type: 'set_party_size', count: Number(g[1]) });
+    else if (a && (COMPAS_ACTIVITIES as readonly string[]).includes(a[1]) && !out.some((x) => x.type === 'set_activity'))
+      out.push({ type: 'set_activity', activity: a[1] as CompasActivity });
+    else break;
+  }
+  return out.reverse();
 }
