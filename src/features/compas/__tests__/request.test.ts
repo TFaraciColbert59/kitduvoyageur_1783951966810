@@ -31,10 +31,58 @@ describe('understandRequest — « voici ce que j’ai compris »', () => {
     expect(r.say).toBe('rando dans les Vosges · 4 jours · à 2');
   });
 
-  it('lieu non lu par les règles : cherché dans la phrase (l’IA le trouvera)', () => {
+  it('nom propre sans préposition : lu comme le lieu', () => {
     const r = understandRequest('Le Népal en trek, 3 semaines', TODAY);
-    expect(line(r, 'lieu')).toMatchObject({ state: 'a_trouver' });
+    expect(line(r, 'lieu')).toMatchObject({ value: 'Népal', state: 'compris' });
     expect(line(r, 'quand')?.value).toBe('21 jours');
+  });
+
+  it('lieu non lu par les règles : cherché dans la phrase (l’IA le trouvera)', () => {
+    const r = understandRequest('trek 5 jours', TODAY);
+    expect(line(r, 'lieu')).toMatchObject({ state: 'a_trouver' });
+  });
+
+  // Jeu P2 des 50 demandes nouvelles (7 octobre) : chaque écart corrigé à la règle.
+  it.each([
+    ['10 jours en Norvège dans les fjords', 'Norvège'],
+    ['vélo 3 jours le long de la Loire', 'Loire'],
+    ['tour de Bretagne à vélo en 8 jours', 'Bretagne'],
+    ['GR20 en 12 jours', 'Corse'],
+    ['alpinisme 4 jours Mont Blanc', 'Mont Blanc'],
+    ['randoo 3 jour dans les vosges', 'Vosges'],
+    ['séjour 7 jours au Maroc à Marrakech', 'Marrakech'],
+  ])('lieu de « %s » : %s', (text, place) => {
+    expect(line(understandRequest(text, TODAY), 'lieu')).toMatchObject({ value: place, state: 'compris' });
+  });
+
+  it.each([
+    ['randoo 3 jour dans les vosges', 'Randonnée'],
+    ['marche nordique 2 heures', 'Randonnée'],
+    ['balade de 3h en forêt de Fontainebleau', 'Randonnée'],
+    ['tour du Queyras en 6 jours', 'Trek'],
+    ['5 jours dans les Dolomites en refuge', 'Randonnée'],
+  ])('activité de « %s » : %s', (text, activity) => {
+    expect(line(understandRequest(text, TODAY), 'activite')).toMatchObject({ value: activity, state: 'compris' });
+  });
+
+  it('week-end, avec ou sans tiret : 2 jours, jamais « une week » de 7 jours', () => {
+    for (const text of ['un week-end à Lisbonne', 'week end surf à Biarritz', 'weekend camping dans le Morvan'])
+      expect(line(understandRequest(text, TODAY), 'quand')?.value).toBe('10 oct. · 2 jours');
+  });
+
+  it('départ seul et durée dite : les deux sont affichés', () => {
+    expect(line(understandRequest('10 jours au Japon en avril', TODAY), 'quand')?.value).toBe('1 avr. · 10 jours');
+  });
+
+  it('moment de la journée sans durée : quelques heures, aujourd’hui', () => {
+    expect(line(understandRequest('activité cet après-midi', TODAY), 'quand')?.value).toBe('7 oct. · 3 h');
+    expect(line(understandRequest('course à pied 10 km ce soir', TODAY), 'quand')?.value).toBe('7 oct. · 2 h');
+    expect(line(understandRequest('course à pied 10 km ce soir', TODAY), 'lieu')?.state).toBe('a_trouver');
+  });
+
+  it('sortie sans durée : une journée ; camping : nuits en bivouac', () => {
+    expect(line(understandRequest('sortie vélo route 80 km', TODAY), 'quand')?.value).toBe('1 jour');
+    expect(line(understandRequest('weekend camping dans le Morvan', TODAY), 'nuits')?.value).toBe('Bivouac');
   });
 
   it('sortie de quelques heures : pas de durée par défaut', () => {

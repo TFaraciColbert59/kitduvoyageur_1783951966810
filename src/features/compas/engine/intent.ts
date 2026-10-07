@@ -189,7 +189,7 @@ const MONTH_RE =
   '(janvier|janv\\.?|fevrier|fevr?\\.?|mars|avril|avr\\.?|mai|juin|juillet|juil\\.?|aout|septembre|sept\\.?|octobre|oct\\.?|novembre|nov\\.?|decembre|dec\\.?|january|february|march|april|may|june|july|august|september|october|november|december)';
 const WEEKDAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 const RELATIVE_DATE =
-  /\b(aujourd'hui|demain|apres-demain|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|week-?end|semaine prochaine|mois prochain)\b/;
+  /\b(aujourd'hui|demain|apres-demain|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|week[- ]?end|semaine prochaine|mois prochain)\b/;
 
 function monthOf(token: string): number | null {
   return MONTHS.find(([re]) => re.test(token))?.[1] ?? null;
@@ -276,13 +276,30 @@ const capitalized = (s: string) => (s ? s[0].toLocaleUpperCase('fr') + s.slice(1
 
 /** Voyage de plusieurs jours (3 jours ou plus, 2 nuits ou plus, une semaine…) ? */
 function longTrip(plain: string): boolean {
-  if (/\b(semaines?|quinzaine|weeks?)\b/.test(plain)) return true;
+  if (/\b(semaines?|quinzaine|weeks?)\b(?![- ]?end)/.test(plain)) return true;
   for (const m of plain.matchAll(new RegExp(`\\b${NUM}\\s+(jours?|nuits?|days?|nights?)\\b`, 'g'))) {
     const n = toNumber(m[1]);
     if (n != null && n >= (/^n/.test(m[2]) ? 2 : 3)) return true;
   }
   return false;
 }
+
+/** Sentiers célèbres → région où les préparer (le sentier reste une envie). */
+const FAMOUS_TRAILS: Array<[RegExp, string]> = [
+  [/\bgr ?20\b/, 'Corse'],
+  [/\b(?:gr ?10|hrp|haute route pyreneenne)\b/, 'Pyrénées'],
+  [/\bgr ?54\b|\btour de l'oisans\b/, 'Écrins'],
+  [/\bgr ?34\b|\bsentier des douaniers\b/, 'Bretagne'],
+  [/\bgr ?5\b/, 'Alpes'],
+  [/\btmb\b|\btour du mont[- ]blanc\b/, 'Mont Blanc'],
+  [/\bchemin de l'inca\b|\binca trail\b/, 'Machu Picchu'],
+  [/\bkungsleden\b/, 'Laponie suédoise'],
+  [/\bwest highland way\b/, 'Écosse'],
+];
+
+/** Noms communs de paysage ou de moment : jamais une destination à eux seuls. */
+const COMMON_PLACE_WORDS =
+  /^(?:bois|foret|forets|montagnes?|campagne|nature|mer|plage|plages|neige|environs|alentours|coin|region|parc|fjords?|calanques?|lacs?|riviere|vallee|ville|famille|couple|groupe|solo|van|velo|pied|cheval|ski|journee|semaine|soiree|matinee|apres-?midi|hiver|ete|automne|printemps)$/;
 
 export function parseIntentRules(text: string, today: string): CompasIntentAction[] {
   const src = text.normalize('NFC').slice(0, 400);
@@ -323,8 +340,8 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     start = addDaysIso(today, 1);
   } else if (/\b(aujourd'?hui|ce matin|cet apres-?midi|ce soir|tout a l'heure|maintenant|tout de suite)\b/.test(plain)) {
     start = today;
-  } else if (/\bweek-?end\b/.test(plain)) {
-    const next = /week-?end prochain|prochain week-?end/.test(plain) && weekday(today) >= 5;
+  } else if (/\bweek[- ]?end\b/.test(plain)) {
+    const next = /week[- ]?end prochain|prochain week[- ]?end/.test(plain) && weekday(today) >= 5;
     start = addDaysIso(nextWeekday(today, 6, false), next ? 7 : 0);
     if (weekday(today) === 0) start = addDaysIso(today, 6);
   } else {
@@ -351,7 +368,7 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
         const sat = nextWeekday(addDaysIso(today, 14), 6, false);
         if (Number(sat.slice(5, 7)) === month) base = sat;
       }
-      if (base && /\bweek-?end\b/.test(plain)) {
+      if (base && /\bweek[- ]?end\b/.test(plain)) {
         const sat = nextWeekday(base, 6, false);
         if (Number(sat.slice(5, 7)) === month) base = sat;
       }
@@ -398,7 +415,7 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
 
   /* Durée */
   const dur =
-    new RegExp(`\\b${NUM}\\s*(jours?|j|nuits?|semaines?|days?|nights?|weeks?)\\b`).exec(durPlain) ??
+    new RegExp(`\\b${NUM}\\s*(jours?|j|nuits?|semaines?|days?|nights?|weeks?)\\b(?![- ]?end)`).exec(durPlain) ??
     (/\bdemi-journee\b/.test(plain) ? null : /\b(une|la|1)\s+journee\b/.exec(plain));
   const hoursMatch =
     // « 1h30 », « 2 h 15 » ; jamais les minutes d'un nombre suivi d'une unité (« 1h 10 km »).
@@ -425,8 +442,14 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     const h = Number(hoursMatch[1]) + (hoursMatch[2] ? Number(hoursMatch[2]) / 60 : 0);
     if (h > 0 && h < 24)
       out.push({ type: 'set_duration', days: null, hours: Math.round(h * 4) / 4 });
-  } else if (/\bweek-?end\b/.test(plain)) {
+  } else if (/\bweek[- ]?end\b/.test(plain)) {
     out.push({ type: 'set_duration', days: 2, hours: null });
+  } else if (/\b(cet apres-?midi|ce matin|ce soir)\b/.test(plain)) {
+    // Un moment de la journée sans durée dite : quelques heures, pas un séjour.
+    out.push({ type: 'set_duration', days: null, hours: /\bce soir\b/.test(plain) ? 2 : 3 });
+  } else if (/\bsortie\b/.test(plain)) {
+    // « sortie vélo route 80 km » : une sortie sans durée dite tient dans la journée.
+    out.push({ type: 'set_duration', days: 1, hours: null });
   }
 
   // Une sortie de quelques heures sans jour dit : aujourd'hui (proposé, décochable).
@@ -479,7 +502,7 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
 
   /* Nuits */
   const nights = new Set<CompasNights>();
-  if (!outdoor && /\b(bivouac|bivouaquer|bivouaque|sous (?:la )?tente|camper|dormir dehors|belle etoile)\b/.test(plain))
+  if (!outdoor && /\b(bivouac|bivouaquer|bivouaque|sous (?:la )?tente|camper|camping(?![- ]car)|dormir dehors|belle etoile)\b/.test(plain))
     nights.add('bivouac');
   if (/\brefuges?\b/.test(plain)) nights.add('refuge');
   if (/\b(gites?|hotels?|chambres? d'hotes?|auberges?|hebergements?)\b/.test(plain))
@@ -500,8 +523,8 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     [/\b(van|vanlife|camping[- ]car|fourgon|fourgonnette)\b/, 'vanlife'],
     [/\b(city ?trip|citytrip)\b/, 'citytrip'],
     [/\b(plage|plages|farniente|bord de mer|baignade|beach)\b/, 'beach'],
-    [/\b(rando|randos|randonnee|randonnees|hiking|hike)\b/, 'hiking'],
-    [/\btreks?\b|\btrekking\b|\bgr ?\d{1,3}\b|\btraversee\b|\btour du mont|\bchemin de l'inca\b|\binca trail\b|\bcompostelle\b|\b[a-z]+ way\b|\bkilimandjaro\b/, 'trekking'],
+    [/\b(rando+s?|randon+ee?s?|hiking|hike|marche nordique|marche a pied|balades?|promenades?)\b/, 'hiking'],
+    [/\btreks?\b|\btrekking\b|\bgr ?\d{1,3}\b|\bhrp\b|\btmb\b|\btraversee\b|\btour (?:du|des|de la|de l') ?\S|\bchemin de l'inca\b|\binca trail\b|\bcompostelle\b|\b[a-z]+ way\b|\bkilimandjaro\b/, 'trekking'],
     [/\broad ?trip\b/, 'roadtrip'],
     [/\bbushcraft\b/, 'bushcraft'],
     [/\b(culturel|culturelle|musees?)\b/, 'cultural'],
@@ -510,6 +533,8 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
   ];
   const act = activity.find(([re]) => re.test(plain));
   if (act) out.push({ type: 'set_activity', activity: act[1] });
+  // « 5 jours dans les Dolomites en refuge » : dormir en refuge, c'est marcher.
+  else if (nights.has('refuge')) out.push({ type: 'set_activity', activity: 'hiking' });
 
   /* Éviter, envies */
   for (const m of plain.matchAll(
@@ -557,7 +582,7 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
   // « in the Swiss Alps » ; un nom commun de lieu (« lac », « calanques ») suivi
   // d'un nom propre compte (« dans les calanques de Marseille »).
   for (const m of plain.matchAll(
-    /(?:^|[\s,(])(?:(?:a|dans|sur|autour de) l'\s*|autour d'\s*|(?:au|aux|en|in the|in|a la|a|dans le|dans la|dans les|sur le|sur la|sur les|autour du|autour de|autour des|(?:traversee|tour|trek|ascension|circuit|rando|randonnee|boucle) (?:des|du|de la))\s+)/g
+    /(?:^|[\s,(])(?:(?:a|dans|sur|autour de|le long de) l'\s*|autour d'\s*|(?:au|aux|en|in the|in|a la|a|dans le|dans la|dans les|sur le|sur la|sur les|autour du|autour de|autour des|le long (?:du|des|de la)|(?:traversee|tour|trek|ascension|circuit|rando|randonnee|boucle) (?:des|du|de la|de))\s+)/g
   )) {
     const at = (m.index ?? 0) + m[0].length;
     const original = src.slice(at, at + 60);
@@ -570,10 +595,12 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
         // Fin du nom : un mot qui ouvre une autre idée (durée, date, compagnie).
         // « du », « le », « la » ne coupent que devant un nombre (« Afrique du Sud »,
         // mais « Vercors du 3 au 10 juin »).
-        /\s(?:(?:du|le|la|les)(?=\s+\d)|pour|avec|en|a|à|à partir|pendant|durant|sur|et|sans|budget|plage|plages|temples?|musees?|fjords?|un|une|deux|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|quinze|vingt|cette|ce|tout|toute|semaines?|jours?|nuits?|days?|weeks?|nights?|for|week-?end|début|debut|mi|fin|demain|après-demain|apres-demain|aujourd['’]hui|prochain|prochaine|janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre)(?=[\s-]|$)/i
+        /\s(?:(?:du|le|la|les)(?=\s+\d)|pour|avec|en|a|à|à partir|pendant|durant|sur|et|sans|budget|plage|plages|temples?|musees?|fjords?|un|une|deux|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|quinze|vingt|cette|ce|tout|toute|semaines?|jours?|nuits?|days?|weeks?|nights?|for|week[- ]?end|début|debut|mi|fin|demain|après-demain|apres-demain|aujourd['’]hui|prochain|prochaine|janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre)(?=[\s-]|$)/i
       )[0],
       50
-    );
+    )
+      // « Norvège dans les fjords » : le nom s'arrête avant la préposition restée seule.
+      .replace(/\s+(?:dans|in|sur|vers|près|pres)$/i, '');
     if (place.length >= 2 && !monthOf(plainOf(place)) && !WEEKDAYS.includes(plainOf(place))) {
       // « Maroc dans l'Atlas » : la destination est le pays, le lieu précis une
       // envie (la recherche de parcours le reprend plus bas).
@@ -585,6 +612,14 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
           if (inner[1].trim().length >= 3) out.push({ type: 'wish', label: clean(inner[1], 40) });
           break;
         }
+      }
+      // « au Maroc à Marrakech » : la ville dite ensuite précise le pays.
+      const city = /^(?:en|au|aux)\s/.test(m[0].trimStart())
+        ? /\s(?:à|a)\s+(\p{Lu}[\p{L}'’-]+(?:[\s-]\p{Lu}[\p{L}'’-]+)*)/u.exec(src.slice(at + place.length, at + place.length + 60))
+        : null;
+      if (city && !monthOf(plainOf(city[1])) && !WEEKDAYS.includes(plainOf(city[1]))) {
+        out.push({ type: 'set_destination', place: clean(city[1], 50) });
+        break;
       }
       out.push({ type: 'set_destination', place: capitalized(place) });
       // « en Patagonie, Torres del Paine » : le lieu précis qui suit devient une
@@ -601,7 +636,7 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
   /* Sans préposition, juste après le genre de voyage : « road trip Norvège
      fjords », « city trip Tokyo et Kyoto » (nom propre seulement). */
   if (!out.some((a) => a.type === 'set_destination')) {
-    const kind = /\b(?:road ?trip|city ?trip|van|voyage|sejour|vacances|week-?end|trek|rando|randonnee)\s+/.exec(plain);
+    const kind = /\b(?:road ?trip|city ?trip|van|voyage|sejour|vacances|week[- ]?end|trek|rando|randonnee)\s+/.exec(plain);
     if (kind) {
       const at = (kind.index ?? 0) + kind[0].length;
       const bare = /^(\p{Lu}[\p{L}'’-]+(?:\s+\p{Lu}[\p{L}'’-]+)*)/u.exec(src.slice(at, at + 50));
@@ -609,6 +644,34 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
       if (name.length >= 3 && !monthOf(plainOf(name)) && !WEEKDAYS.includes(plainOf(name)))
         out.push({ type: 'set_destination', place: name });
     }
+  }
+
+  /* Sentier célèbre sans lieu dit (« GR20 en 12 jours ») : sa région. */
+  if (!out.some((a) => a.type === 'set_destination')) {
+    const known = FAMOUS_TRAILS.find(([re]) => re.test(plain));
+    if (known) out.push({ type: 'set_destination', place: known[1] });
+  }
+
+  /* Dernier recours : un nom propre composé hors du premier mot
+     (« alpinisme 4 jours Mont Blanc »). */
+  if (!out.some((a) => a.type === 'set_destination')) {
+    // Jamais une personne (« rando avec Paul ») : pas après « avec », « et », « chez »…
+    for (const m of src.matchAll(/(?<!\b(?:avec|et|chez|pour|par|de|mon|ma|mes|ton|ta|copain|copine|ami|amie)\s)(?<=\s)(\p{Lu}[\p{L}'’-]+(?:[\s-]+\p{Lu}[\p{L}'’-]+)*)/gu)) {
+      const name = clean(m[1], 50);
+      if (name.length >= 3 && !monthOf(plainOf(name)) && !WEEKDAYS.includes(plainOf(name)) && !/^(?:je|j|on|nous|il|elle)$/i.test(name)) {
+        out.push({ type: 'set_destination', place: name });
+        break;
+      }
+    }
+  }
+
+  /* Phrase tapée sans majuscule (« randoo 3 jour dans les vosges ») : le nom
+     après une préposition de lieu, hors noms communs de paysage. */
+  if (!out.some((a) => a.type === 'set_destination') && !/\p{Lu}/u.test(src)) {
+    const low = /\b(?:dans l'\s*|(?:dans les|dans le|dans la|en|au|aux|a|vers|pres de)\s+)([a-z][a-z'-]{2,}(?:\s(?!(?:pour|avec|en|a|et|du|de|des|le|la|les|sans|dans|ce|cet|cette|demain|apres-demain|aujourd'hui|prochain|prochaine|matin|soir)\b)[a-z][a-z'-]{2,})?)/.exec(plain);
+    const word = low ? low[1].trim() : '';
+    if (word && !COMMON_PLACE_WORDS.test(word.split(/\s/)[0]) && !monthOf(word) && !WEEKDAYS.includes(word))
+      out.push({ type: 'set_destination', place: word.split(/\s/).map(capitalized).join(' ') });
   }
 
   /* Sentier nommé : « sur le GR20 », « sur le chemin de l'Inca », « le Tour du
@@ -695,7 +758,7 @@ export function groundingIssue(action: CompasIntentAction, text: string): string
         numberInText(text, d) ||
         (/nuit/.test(plain) && numberInText(text, d - 1)) ||
         (/semaine/.test(plain) && d % 7 === 0 && numberInText(text, d / 7)) ||
-        (d === 2 && /week-?end/.test(plain)) ||
+        (d === 2 && /week[- ]?end/.test(plain)) ||
         (d === 1 && /journee/.test(plain));
       return ok ? null : 'Durée absente de ta phrase';
     }

@@ -108,7 +108,8 @@ export function understandRequest(text: string, today: string, p: RequestPrecisi
     quand = {
       key: 'quand',
       label: 'Quand',
-      value: `${formatDateRange(dates.start, dates.end)}${days ? ` · ${plural(days, 'jour', 'jours')}` : ''}${duration?.hours ? ` · ${duration.hours} h` : ''}`,
+      // Départ seul et durée dite (« 10 jours en avril », « un week-end ») : les deux.
+      value: `${formatDateRange(dates.start, dates.end)}${days ? ` · ${plural(days, 'jour', 'jours')}` : duration?.days ? ` · ${plural(duration.days, 'jour', 'jours')}` : ''}${duration?.hours ? ` · ${String(duration.hours).replace('.', ',')} h` : ''}`,
       state: 'compris',
     };
   } else if (duration?.days || duration?.hours) {
