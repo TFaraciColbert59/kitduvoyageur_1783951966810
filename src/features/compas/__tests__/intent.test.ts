@@ -238,8 +238,13 @@ describe('Mois seul (« en janvier », « début mai », « week-end en mai »)'
     expect(dates('Ski début février 2027 à Val Thorens')).toMatchObject({ start: '2027-02-01' });
     expect(dates('Rando mi-novembre')).toMatchObject({ start: '2026-11-15' });
   });
-  it('ce mois-ci : à partir d’aujourd’hui', () => {
+  it('ce mois-ci : à partir d’aujourd’hui pour une sortie, dans deux semaines pour un voyage', () => {
     expect(dates('Rando en octobre dans les Vosges')).toMatchObject({ start: today });
+    // 2026-10-05 (lundi) : premier samedi à 14 jours ou plus = 2026-10-24.
+    expect(dates('trek de 12 jours au Népal en octobre')).toMatchObject({ start: '2026-10-24' });
+    expect(dates('une semaine en Corse en octobre')).toMatchObject({ start: '2026-10-24' });
+    // Fin de mois : plus de samedi dans le mois → à partir d'aujourd'hui.
+    expect(parseIntentRules('5 jours en Crète en octobre', '2026-10-25').find((a) => a.type === 'set_dates')).toMatchObject({ start: '2026-10-25' });
   });
   it('un week-end dans un mois tombe sur son premier samedi, pas ce week-end', () => {
     expect(dates('Escalade, week-end de 3 jours en mai')).toMatchObject({ start: '2027-05-01' });

@@ -31,8 +31,16 @@ describe('Meilleure période sans date', () => {
     expect(bestPeriod({ activity: 'citytrip', lat: 41.9, today, days: 3 })?.month).toBe(5);
   });
 
-  it('tropiques : aucune période inventée', () => {
+  it('tropiques : la saison sèche du pays, sinon aucune période inventée', () => {
     expect(bestPeriod({ activity: 'hiking', lat: 9.7, today, days: 7 })).toBeNull();
+    expect(bestPeriod({ activity: 'hiking', lat: 9.7, countryCode: 'XX', today, days: 7 })).toBeNull();
+    // Pérou (hémisphère sud) : juin, saison sèche andine — pas de décalage austral.
+    expect(bestPeriod({ activity: 'trekking', lat: -9.2, countryCode: 'PE', today, days: 5 })).toMatchObject({
+      month: 6,
+      start: '2027-06-05',
+      why: expect.stringMatching(/saison sèche/),
+    });
+    expect(bestPeriod({ activity: 'mixed', lat: 14.06, countryCode: 'VN', today, days: 14 })?.month).toBe(3);
   });
 
   it('jamais moins de trois semaines devant', () => {

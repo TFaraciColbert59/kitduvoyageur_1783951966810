@@ -274,6 +274,16 @@ function properLead(fragment: string): boolean {
 
 const capitalized = (s: string) => (s ? s[0].toLocaleUpperCase('fr') + s.slice(1) : s);
 
+/** Voyage de plusieurs jours (3 jours ou plus, 2 nuits ou plus, une semaine…) ? */
+function longTrip(plain: string): boolean {
+  if (/\b(semaines?|quinzaine|weeks?)\b/.test(plain)) return true;
+  for (const m of plain.matchAll(new RegExp(`\\b${NUM}\\s+(jours?|nuits?|days?|nights?)\\b`, 'g'))) {
+    const n = toNumber(m[1]);
+    if (n != null && n >= (/^n/.test(m[2]) ? 2 : 3)) return true;
+  }
+  return false;
+}
+
 export function parseIntentRules(text: string, today: string): CompasIntentAction[] {
   const src = text.normalize('NFC').slice(0, 400);
   const plain = plainOf(src);
@@ -334,6 +344,13 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
       const year = monthOnly[3] ? Number(monthOnly[3]) : null;
       const thisMonth = !year && Number(today.slice(5, 7)) === month && Number(today.slice(8, 10)) >= day;
       let base = thisMonth ? today : resolveDayMonth(today, day, month, year);
+      // Ce mois-ci pour un voyage de plusieurs jours (« trek de 12 jours au
+      // Népal en octobre », dit en octobre) : pas de départ aujourd'hui, le
+      // premier samedi dans deux semaines au moins, s'il est encore dans le mois.
+      if (thisMonth && longTrip(plain)) {
+        const sat = nextWeekday(addDaysIso(today, 14), 6, false);
+        if (Number(sat.slice(5, 7)) === month) base = sat;
+      }
       if (base && /\bweek-?end\b/.test(plain)) {
         const sat = nextWeekday(base, 6, false);
         if (Number(sat.slice(5, 7)) === month) base = sat;

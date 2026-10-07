@@ -511,7 +511,7 @@ export async function compasAutofillAction(
     /* 1 bis. Quand : sans date, la meilleure période pour CE projet (annoncée, modifiable). */
     let datesSet = resume?.datesSet ?? false;
     if (!trip.start_date && !resume && ctx.scope === 'sejour') {
-      const period = bestPeriod({ activity, lat: anchor.lat, today, days });
+      const period = bestPeriod({ activity, lat: anchor.lat, countryCode: anchor.countryCode, today, days });
       if (period) {
         const { error } = await supabase
           .from('trips')
@@ -993,7 +993,15 @@ export async function compasAutofillAction(
         carFuel = estimateCarTrip({ oneWayKm: km, oneWayMin: Math.round((km / 80) * 60), partySize: party });
         if (carFuel) {
           transport = { mode: 'voiture', km: carFuel.oneWayKm, minutes: carFuel.oneWayMin, walkKm: 0, fuelEur: carFuel.fuelEur, basis: carFuel.basis };
-          notes.push('Trajet en voiture estimé (itinéraire routier non calculé) : à vérifier, traversée en ferry éventuelle non comptée.');
+          const why: Record<string, string> = {
+            off_network: 'tracé qui n’arrive pas au lieu',
+            provider_unavailable: 'service de calcul injoignable',
+            rate_limited: 'trop de calculs d’affilée',
+          };
+          console.warn('[compas] trajet d’approche non calculé', car.reason ?? 'inconnu');
+          notes.push(
+            `Trajet en voiture estimé (itinéraire routier non calculé : ${why[car.reason ?? ''] ?? 'raison inconnue'}) : à vérifier, traversée en ferry éventuelle non comptée.`
+          );
         }
       } else {
         // Pas de route (île, autre continent) : l'avion ou le bateau s'imposent.
