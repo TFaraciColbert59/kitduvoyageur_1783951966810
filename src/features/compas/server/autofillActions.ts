@@ -371,8 +371,21 @@ async function plannedStages(opts: {
     move: 'aucun' as StageMove,
     note: i === 0 && days > 1 ? 'Base du séjour.' : null,
   }));
-  // Sortie ou journée : tout se passe au lieu dit.
-  if (opts.scope === 'sortie' || days === 1) return { stages: base, note: '' };
+  // Sortie ou journée : tout se passe au lieu dit. Un lieu naturel (massif,
+  // parc) n'est pas un point de départ : le village le plus important à moins
+  // de 15 km de son centre (« Massif du Luberon » → un vrai village).
+  if (opts.scope === 'sortie' || days === 1) {
+    if (anchor.kind !== 'other' && !NATURAL_KINDS.has(anchor.kind ?? '')) return { stages: base, note: '' };
+    const near = await lookupAreaPlaces({ center: anchor, radiusKm: 15, activity }, opts.deadline).catch(() => null);
+    const village = (near ?? [])
+      .filter((p) => (p.kind === 'town' || p.kind === 'village' || p.kind === 'city') && distanceKm(anchor, p) <= 15)
+      .sort((a, b) => (b.population ?? 0) - (a.population ?? 0))[0];
+    if (!village) return { stages: base, note: '' };
+    return {
+      stages: base.map((st) => ({ ...st, name: village.name, lat: village.lat, lon: village.lon })),
+      note: `Départ de ${village.name}, au cœur du lieu.`,
+    };
+  }
   // À pied, un département ou une région qui porte le nom d'un massif (Vosges,
   // Jura) : on randonne dans le massif, pas dans la plaine administrative.
   if (profileFor(activity).move === 'marche' && ADMIN_ANCHOR_KINDS.has(anchor.kind ?? '')) {
@@ -417,7 +430,8 @@ async function plannedStages(opts: {
   else if (anchor.kind === 'county') places = keepAdminArea(places, anchor.name, 'county');
   // Altitudes réelles (tuiles de relief, quelques tuiles pour toute la zone) :
   // acclimatation au-dessus de 3 000 m, et à pied, le massif plutôt que la plaine.
-  const foot = profileFor(activity).move === 'marche';
+  // Le ski aussi : une station, pas le village de la vallée (Jura : Crotenay, 600 m).
+  const foot = profileFor(activity).move === 'marche' || activity === 'ski';
   if (foot && places.length <= 400) {
     const eles = await terrainElevations(places.map((p) => [p.lon, p.lat] as const)).catch(() => null);
     if (eles) places = places.map((p, i) => (p.eleM == null && eles[i] != null ? { ...p, eleM: eles[i] } : p));
