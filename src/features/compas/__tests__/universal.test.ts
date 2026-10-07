@@ -403,7 +403,8 @@ describe('Phrases tirées au hasard (20 parcours) : lecture sans IA', () => {
   it('« sur la », « autour du lac de », « traversée des », « in the » ouvrent une destination', () => {
     expect(read('canoë 3 jours sur la Dordogne')).toMatchObject({ dest: 'Dordogne', act: 'water' });
     expect(read('week-end à vélo autour du lac d’Annecy').dest).toBe('Lac d’Annecy');
-    expect(read('traversée des Pyrénées 15 jours')).toMatchObject({ dest: 'Pyrénées', act: 'trekking' });
+    expect(read('traversée des Pyrénées 15 jours')).toMatchObject({ dest: 'Pyrénées', act: 'trekking', wishes: ['traversée des Pyrénées'] });
+    expect(read('week-end à vélo, tour du lac d’Annecy').wishes).toEqual(['tour du lac d’Annecy']);
     expect(read('Hiking 5 days in the Swiss Alps')).toMatchObject({ dest: 'Swiss Alps', act: 'hiking' });
   });
   it('un nom commun de lieu suivi d’un nom propre compte (« calanques de Marseille »)', () => {
@@ -495,5 +496,36 @@ describe('Homonymes : la ville avant la maison isolée', () => {
     });
     const found = parsePhoton({ features: [fr('Chamonix', 'hamlet', 46.03), fr('Chamonix-Mont-Blanc', 'town', 45.92)] });
     expect(pickPlace(found, { query: 'Chamonix', maxKm: 500 })).toMatchObject({ name: 'Chamonix-Mont-Blanc' });
+  });
+});
+
+describe('On dort dans une commune : monument, gare ou province remplacés', () => {
+  const photon = (name: string, key: string, value: string, type: string, extra: Record<string, unknown> = {}) =>
+    parsePhoton({
+      features: [{ type: 'Feature', geometry: { coordinates: [105.85, 21.03] }, properties: { name, osm_key: key, osm_value: value, type, countrycode: 'VN', ...extra } }],
+    })[0];
+  it('monument ou musée → sa commune ; province → la ville du même nom', async () => {
+    const { sleepPlaceFix } = await import('../engine/places');
+    expect(sleepPlaceFix(photon('Prison Hoa Lo (Maison centrale)', 'tourism', 'museum', 'house', { city: 'Hanoï' }))).toEqual({ locality: 'Hanoï' });
+    expect(sleepPlaceFix(photon('Province de Ninh Bình', 'place', 'state', 'state'))).toEqual({ search: 'Ninh Bình' });
+  });
+  it('refuge, camping, lac, sommet et village restent l’étape', async () => {
+    const { sleepPlaceFix } = await import('../engine/places');
+    expect(sleepPlaceFix(photon('Refuge des Bans', 'tourism', 'alpine_hut', 'house', { city: 'Vallouise-Pelvoux' }))).toBeNull();
+    expect(sleepPlaceFix(photon('Lago di Misurina', 'water', 'lake', 'other', { city: 'Auronzo' }))).toBeNull();
+    expect(sleepPlaceFix(photon('Gèdre', 'place', 'village', 'district'))).toBeNull();
+  });
+  it('autres noms (Nominatim) : « Machu Picchu Pueblo » = Aguas Calientes', async () => {
+    const { aliasMatches } = await import('../engine/places');
+    const [station] = parseNominatim([
+      {
+        name: 'Machu Picchu Pueblo', lat: '-13.16', lon: '-72.52', category: 'railway', type: 'station',
+        namedetails: { name: 'Machu Picchu Pueblo', alt_name: 'Aguas Calientes' },
+        address: { country_code: 'pe', town: 'Machupicchu' },
+      },
+    ]);
+    expect(aliasMatches(station, 'Aguas Calientes')).toBe(true);
+    expect(aliasMatches(station, 'Machu Picchu Pueblo')).toBe(true);
+    expect(aliasMatches(station, 'Cusco')).toBe(false);
   });
 });

@@ -24,6 +24,10 @@ export interface CompasPlace {
   landmark?: boolean;
   /** Taille du lieu habité : 5 ville … 0 maison isolée ; absent si ce n'en est pas un. */
   settlementRank?: number;
+  /** Étiquette OSM (« tourism=alpine_hut », « historic=monument »…), quand la carte la donne. */
+  osmTag?: string;
+  /** Autres noms du lieu (anglais, local, ancien : « Aguas Calientes »), quand la carte les donne. */
+  aliases?: string[];
 }
 
 /** Clés OSM d'un lieu géographique qu'on nomme comme destination. */
@@ -88,6 +92,7 @@ export function parsePhoton(payload: unknown): CompasPlace[] {
         ? { settlementRank: SETTLEMENT_RANK[String(p.osm_value)] }
         : {}),
       landmark: isLandmark(p.osm_key, p.osm_value),
+      ...(p.osm_key && p.osm_value ? { osmTag: `${String(p.osm_key)}=${String(p.osm_value)}` } : {}),
       locality:
         [p.city, p.town, p.village, p.locality].find((v): v is string => typeof v === 'string' && v.trim() !== '')?.trim() ??
         null,
@@ -124,6 +129,16 @@ export function parseNominatim(payload: unknown): CompasPlace[] {
         ? { settlementRank: SETTLEMENT_RANK[type] ?? SETTLEMENT_RANK[String(r.type)] }
         : {}),
       landmark: isLandmark(r.category, r.type),
+      ...(r.category && r.type ? { osmTag: `${String(r.category)}=${String(r.type)}` } : {}),
+      ...(r.namedetails && typeof r.namedetails === 'object'
+        ? {
+            aliases: Object.entries(r.namedetails as Record<string, unknown>)
+              .filter(([k, v]) => /^(name|alt_name|old_name|official_name|short_name|loc_name|name:(en|fr|es|de|it))$/.test(k) && typeof v === 'string')
+              .flatMap(([, v]) => String(v).split(';'))
+              .map((v) => v.trim())
+              .filter(Boolean),
+          }
+        : {}),
       // boundingbox Nominatim : [sud, nord, ouest, est] → emprise [ouest, nord, est, sud]
       extent: bb && bb.length === 4 && bb.every((n) => Number.isFinite(n)) ? [bb[2], bb[1], bb[3], bb[0]] : null,
       locality:
@@ -343,4 +358,43 @@ export function stageTitleFor(proposed: string, mapName: string | null | undefin
   // (« Springdale repos », « Retour Salt Lake City ») : le nom de la carte.
   if (!a || !b || a === b || b.startsWith(`${a} `)) return proposed;
   return mapName;
+}
+
+
+/** Un des noms connus du lieu (nom, anglais, ancien, alternatif) est-il le nom cherché ? */
+export function aliasMatches(place: CompasPlace, query: string): boolean {
+  const want = plainName(query);
+  if (!want) return false;
+  return [place.name, ...(place.aliases ?? [])].some((n) => {
+    const p = plainName(n);
+    return p === want || p.replace(/ /g, '') === want.replace(/ /g, '') || sameSkeleton(p, want);
+  });
+}
+
+/** Hébergements et abris : on y dort, ils restent l'étape. */
+const SLEEP_TAGS = /^(tourism=(hotel|hostel|guest_house|alpine_hut|wilderness_hut|camp_site|caravan_site|chalet|motel|apartment)|amenity=shelter)$/;
+/** Nature : sommet, lac, col, vallée… restent l'étape d'un trek (bivouac, refuge voisin). */
+const NATURE_TAG = /^(natural|waterway|mountain_pass)=|^place=(island|islet)$|^leisure=nature_reserve$/;
+/** « Province de Ninh Bình », « Distrito de Cusco » : le nom sans son préfixe administratif. */
+const ADMIN_PREFIX = /^(province|region|région|departement|département|district|distrito|provincia|regione|comté|county|prefecture|préfecture|municipalité|municipality|commune)\s+(de\s+la\s+|de\s+l['’]|du\s+|des\s+|de\s+|d['’]|of\s+)?/i;
+
+/**
+ * Où l'on dort ce soir-là, si l'étape trouvée n'est pas un lieu où dormir :
+ * - un monument, un musée, une gare (« Prison Hoa Lo ») → sa commune (« Hanoï ») ;
+ * - une province ou un district (« Province de Ninh Bình ») → le nom à chercher
+ *   comme ville (« Ninh Bình ») ;
+ * - sinon null : le lieu reste l'étape (village, refuge, camping, sommet, lac).
+ */
+export function sleepPlaceFix(place: CompasPlace): { locality: string } | { search: string } | null {
+  if (place.settlement && (place.settlementRank ?? 2) >= 1) return null;
+  const tag = place.osmTag ?? '';
+  if (SLEEP_TAGS.test(tag) || NATURE_TAG.test(tag)) return null;
+  if (BROAD.has(place.kind) || /^boundary=administrative$/.test(tag)) {
+    const bare = place.name.replace(ADMIN_PREFIX, '').trim();
+    return bare && bare !== place.name ? { search: bare } : place.locality ? { locality: place.locality } : null;
+  }
+  // Bâtiment, monument, gare, point d'intérêt : la commune qui le contient.
+  if (place.kind === 'house' || /^(historic|tourism|railway|amenity|building|leisure)=/.test(tag))
+    return place.locality && plainName(place.locality) !== plainName(place.name) ? { locality: place.locality } : null;
+  return null;
 }

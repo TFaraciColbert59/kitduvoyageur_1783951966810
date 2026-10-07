@@ -1,5 +1,5 @@
 import 'server-only';
-import { parseNominatim, parsePhoton, pickDestination, type CompasPlace } from '../engine/places';
+import { aliasMatches, parseNominatim, parsePhoton, pickDestination, type CompasPlace } from '../engine/places';
 import { cached, coordKey } from './sharedCache';
 
 /**
@@ -75,8 +75,8 @@ async function search(
   // `near` : les homonymes proches d'abord (« Le Tour » le hameau de Chamonix,
   // pas le lieu-dit du Var) ; sans repli Nominatim, qui ignore ce biais.
   const bias = near ? `&lat=${near.lat.toFixed(3)}&lon=${near.lon.toFixed(3)}&location_bias_scale=0.5` : '';
-  // « v2 » : lieux lus avec leur taille (ville, village, hameau…), absente des entrées d'avant.
-  const key = near ? `v2:near:${coordKey(near.lat, near.lon, 1)}:${limit}:${plain(query)}` : `v2:${limit}:${plain(query)}`;
+  // « v3 » : lieux lus avec leur taille et leur étiquette OSM, absentes des entrées d'avant.
+  const key = near ? `v3:near:${coordKey(near.lat, near.lon, 1)}:${limit}:${plain(query)}` : `v3:${limit}:${plain(query)}`;
   return cached('place', key, PLACE_TTL_S, async () => {
     const photon = await fetchJson(
       `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=${limit}&lang=fr${bias}${NOISE}`,
@@ -134,6 +134,23 @@ export async function stageCandidates(
   const merged = [...close];
   for (const p of found) if (!merged.some((m) => Math.abs(m.lat - p.lat) < 1e-3 && Math.abs(m.lon - p.lon) < 1e-3)) merged.push(p);
   return ctx.countryCode ? merged.filter((p) => p.countryCode === ctx.countryCode) : merged;
+}
+
+/**
+ * Dernier recours pour une étape introuvable : Nominatim connaît les autres
+ * noms d'un lieu (anglais, ancien, alternatif : « Machu Picchu Pueblo » =
+ * Aguas Calientes). Seulement les lieux dont un nom est celui cherché.
+ */
+export async function stageAliasCandidates(name: string, countryCode: string | null): Promise<CompasPlace[]> {
+  const q = name.trim().slice(0, 80);
+  if (q.length < 3) return [];
+  const cc = countryCode ? `&countrycodes=${countryCode.toLowerCase()}` : '';
+  const found = await cached('place', `alias:v1:${countryCode ?? 'any'}:${plain(q)}`, PLACE_TTL_S, () =>
+    nominatimQueued(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=jsonv2&addressdetails=1&namedetails=1&limit=5&accept-language=fr${cc}`
+    )
+  );
+  return (found ?? []).filter((p) => aliasMatches(p, q));
 }
 
 /** Le lieu d'un point GPS (commune, pays) : sert à savoir d'où l'on part. */

@@ -596,6 +596,18 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     if (label.length >= 3 && /\p{Lu}|\d/u.test(label)) out.push({ type: 'wish', label });
   }
 
+  /* « traversée des Pyrénées », « tour du lac d'Annecy » : une envie de forme
+     d'itinéraire (ligne ou boucle), transmise au spécialiste. */
+  const shape = /\b(traversee|tour) (?:de la |des |du |de l'|d')\s*/.exec(plain);
+  if (shape) {
+    const at = (shape.index ?? 0) + shape[0].length;
+    if (properLead(src.slice(at, at + 60))) {
+      const label = clean(src.slice(shape.index ?? 0, at) + upToBreak(src.slice(at, at + 60)), 40);
+      const known = out.some((a) => a.type === 'wish' && plainOf(a.label) === plainOf(label));
+      if (label.length >= 8 && !known) out.push({ type: 'wish', label });
+    }
+  }
+
   /* Lieu → recherche de parcours (nom propre seulement) */
   const place =
     /\b(?:dans (?:le |la |les |l')|vers |autour (?:de |d')|du cote (?:de |d')|pres (?:de |d')|a cote (?:de |d'))/g;

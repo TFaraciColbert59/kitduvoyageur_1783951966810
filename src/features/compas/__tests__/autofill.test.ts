@@ -171,3 +171,22 @@ describe('itinéraire figé', () => {
     expect(longestStay([])).toBe(0);
   });
 });
+
+describe('traversée qui avance', () => {
+  it('mesure les allers-retours le long de l’axe départ → arrivée', async () => {
+    const { backtrackShare, wantsTraverse } = await import('../engine/autofill');
+    // Pyrénées, ouest → est sans retour (Hendaye, Lescun, Gavarnie, Luchon, Banyuls).
+    const straight = [
+      { lat: 43.36, lon: -1.77 }, { lat: 42.93, lon: -0.64 }, { lat: 42.73, lon: -0.01 }, { lat: 42.79, lon: 0.59 }, { lat: 42.48, lon: 3.13 },
+    ];
+    expect(backtrackShare(straight)).toBeLessThan(0.1);
+    // Lourdes, Gavarnie, Oloron, Lourdes, Luchon : allers-retours.
+    const zigzag = [
+      { lat: 43.1, lon: -0.05 }, { lat: 42.73, lon: -0.01 }, { lat: 43.19, lon: -0.61 }, { lat: 43.1, lon: -0.05 }, { lat: 42.79, lon: 0.59 },
+    ];
+    expect(backtrackShare(zigzag)).toBeGreaterThan(0.35);
+    expect(wantsTraverse(['traversée des Pyrénées'])).toBe(true);
+    expect(wantsTraverse(['GR20'])).toBe(true);
+    expect(wantsTraverse(['Cyclades'])).toBe(false);
+  });
+});

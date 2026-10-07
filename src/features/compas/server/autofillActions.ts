@@ -22,6 +22,8 @@ import type { TripItem } from '@/features/trips/types/trip.types';
 import { readCompasMeta } from '../engine/meta';
 import {
   NIGHT_LABEL,
+  backtrackShare,
+  wantsTraverse,
   longestStay,
   budgetLines,
   budgetTotal,
@@ -58,8 +60,8 @@ import { compasMeta, patchTripMetadata, readProfile, requireEditor, resplitSteps
 import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
 import { bestPeriod, monthName } from '../engine/period';
 import { partsText, retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
-import { lookupDestination, lookupReverse, stageCandidates } from './placeLookup';
-import { destinationRadiusKm, distanceKm, maxLegKm, pickPlace, stageTitleFor, type CompasPlace } from '../engine/places';
+import { lookupDestination, lookupReverse, stageAliasCandidates, stageCandidates } from './placeLookup';
+import { destinationRadiusKm, distanceKm, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, type CompasPlace } from '../engine/places';
 import { untangleStages } from '../engine/stageOrder';
 import { localToday } from './weather';
 
@@ -598,7 +600,9 @@ export async function compasAutofillAction(
         // activité, mois et envies), mais seulement s'il est exploitable : une
         // réponse illisible ou figée sur un seul lieu pour un circuit n'est ni
         // gardée ni servie. Sinon on redemande, tant qu'il reste du temps.
-        const minPlaces = ITINERANT_ACTIVITIES.has(activity) && days >= 4 ? 3 : 1;
+        // Itinérant : 3 lieux au moins sur 4 jours, 2 sur 2 jours (un week-end
+        // à vélo autour du lac ne reste pas deux jours à Annecy).
+        const minPlaces = ITINERANT_ACTIVITIES.has(activity) ? (days >= 4 ? 3 : days >= 2 ? 2 : 1) : 1;
         const usable = (st: ReturnType<typeof sanitizeStages>) =>
           st.length > 0 &&
           new Set(st.map((x) => x.place)).size >= minPlaces &&
@@ -644,6 +648,8 @@ export async function compasAutofillAction(
         let last: { name: string; lat: number; lon: number } | null = null;
         /** Le nom proposé de la dernière étape trouvée (le titre peut venir de la carte). */
         let lastProposed: string | null = null;
+        let aliasLookups = 0;
+        let townLookups = 0;
         let dropped = 0;
         for (const p of proposed) {
           const candidates = byName.get(p.place) ?? [];
@@ -698,9 +704,33 @@ export async function compasAutofillAction(
               break;
             }
           }
+          // Introuvable sous ce nom : ses autres noms (anglais, ancien, alternatif),
+          // trois recherches au plus par préparation (Nominatim, 1 par seconde).
+          if (!hit && lastProposed !== p.place && aliasLookups < 3) {
+            aliasLookups += 1;
+            const aliases = await stageAliasCandidates(p.place, anchor.countryCode);
+            hit = pickPlace(aliases, {
+              near: last ?? anchor,
+              maxKm: last && walkLike ? TRANSFER_MAX_KM : legKm,
+            });
+          }
           // Le titre garde le nom proposé (lisible) ; la position vient de la carte.
           if (hit) {
-            last = { name: stageTitleFor(p.place, hit.name), lat: hit.lat, lon: hit.lon };
+            let name = stageTitleFor(p.place, hit.name);
+            let at = { lat: hit.lat, lon: hit.lon };
+            // On dort dans une commune, pas dans un musée ni une province.
+            const fix = sleepPlaceFix(hit);
+            if (fix && 'locality' in fix) name = fix.locality;
+            else if (fix && townLookups < 4) {
+              townLookups += 1;
+              const towns = await stageCandidates(fix.search, { countryCode: anchor.countryCode, country: anchor.country }, hit);
+              const town = pickPlace(towns.filter((t) => t.settlement), { near: hit, maxKm: 80, query: fix.search, strict: false });
+              if (town) {
+                name = town.name;
+                at = { lat: town.lat, lon: town.lon };
+              }
+            }
+            last = { name, ...at };
             lastProposed = p.place;
           } else if (lastProposed !== p.place) {
             dropped += 1;
@@ -736,6 +766,14 @@ export async function compasAutofillAction(
           if (dropped * 2 >= new Set(proposed.map((x) => x.place)).size) {
             stagesFallback = (carry?.stagesFallback ?? 0) + 1;
             notes.push('Plusieurs lieux de l’itinéraire n’existent pas sur la carte : je le redemande à ta prochaine visite.');
+          } else if (
+            wantsTraverse(compas.preferences?.wishes ?? []) &&
+            stagePlaces.length >= 4 &&
+            backtrackShare(stagePlaces) > 0.35
+          ) {
+            // Une traversée qui fait des allers-retours n'en est pas une.
+            stagesFallback = (carry?.stagesFallback ?? 0) + 1;
+            notes.push('Itinéraire en allers-retours pour une traversée : je le redemande à ta prochaine visite.');
           }
           // Circuit sur route qui zigzague : séjours remis dans l'ordre le plus court
           // (arrivée et départ inchangés). Un trek ou un circuit à vélo suit son tracé.

@@ -37,6 +37,7 @@ export function buildCompasStagesSystem(): string {
     '8. Randonnee, trek, bivouac ou bushcraft pres d une grande ville : choisis un espace naturel proche (massif, parc, foret, a moins de 80 km) et ses villages, refuges ou aires de bivouac ; jamais le centre-ville ni sa banlieue pour dormir.',
     '9. Trek ou randonnee itinerante : on avance chaque jour vers un nouveau lieu, sans revenir en arriere ; deux nuits au meme lieu seulement pour un jour de repos ou d acclimatation ("aucun").',
     '10. Une « traversee » (ou un GR, une haute route) va d un bout a l autre du massif ou du trace, d ouest en est ou dans le sens classique, sur des etapes consecutives.',
+    '10b. « autour de » (un lac, un massif) sur plusieurs jours : une boucle de village en village autour, retour au depart le dernier jour, jamais deux jours au meme lieu.',
     '11. Un massif ou une chaine a cheval sur une frontiere (Pyrenees, Alpes, Andes, Himalaya) : le pays donne n est qu un indice ; prends le versant le plus pertinent pour l activite (pour un voyageur francais, souvent le versant francais) ou passe d un versant a l autre.',
   ].join('\n');
 }

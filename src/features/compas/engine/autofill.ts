@@ -786,3 +786,33 @@ export function longestStay(places: readonly string[]): number {
   });
   return best;
 }
+
+/**
+ * Part des allers-retours d'une suite d'étapes le long de l'axe départ → arrivée :
+ * 0 = on avance toujours, 1 = autant de recul que d'avance. Sert à vérifier
+ * qu'une traversée traverse (Pyrénées : Lourdes → Oloron → Lourdes, non).
+ */
+export function backtrackShare(points: ReadonlyArray<{ lat: number; lon: number }>): number {
+  if (points.length < 3) return 0;
+  const a = points[0];
+  const b = points[points.length - 1];
+  const kx = Math.cos(((a.lat + b.lat) / 2) * (Math.PI / 180));
+  const ax = (b.lon - a.lon) * kx;
+  const ay = b.lat - a.lat;
+  const len = Math.hypot(ax, ay);
+  if (len < 1e-6) return 1; // départ = arrivée : une boucle, pas une traversée
+  const proj = points.map((p) => ((p.lon - a.lon) * kx * ax + (p.lat - a.lat) * ay) / len);
+  let forward = 0;
+  let backward = 0;
+  for (let i = 1; i < proj.length; i += 1) {
+    const d = proj[i] - proj[i - 1];
+    if (d > 0) forward += d;
+    else backward -= d;
+  }
+  return forward > 0 ? backward / forward : 1;
+}
+
+/** L'envie dit-elle une traversée ou un itinéraire linéaire (GR, haute route) ? */
+export function wantsTraverse(wishes: readonly string[]): boolean {
+  return wishes.some((w) => /\btravers[ée]e\b|\btraverse\b|\bgr ?\d{1,3}\b|haute route|\bhrp\b/i.test(w.normalize('NFC')));
+}
