@@ -66,6 +66,7 @@ import { partsText, retryParts, staleParts, unionParts, untouchedSince, type Aut
 import { lookupDestination, lookupMassif, lookupNatural, lookupReverse, stageAliasCandidates, stageCandidates } from './placeLookup';
 import { lookupAreaPlaces, lookupStagePois } from './stagePoiLookup';
 import { buildTrack, simplifyLine, trackKey } from '../engine/track';
+import { keepAiNote, travelPapers } from '../engine/papers';
 import {
   keepAdminArea,
   keepHighlands,
@@ -1602,7 +1603,9 @@ export async function compasAutofillAction(
         );
     const advice: AutofillAiAdvice = sanitizeAdvice(rawAdvice);
     const usedAi = rawAdvice != null;
-    notes.push(...advice.notes);
+    // Papiers, change et prises : la règle parle, l'IA se tait sur ces sujets.
+    const papers = travelPapers(anchor.countryCode, anchor.country);
+    notes.push(...papers.notes, ...advice.notes.filter((n) => keepAiNote(n, papers)));
 
     lap('8');
     /* 8. Budget complet, chaque ligne avec sa source. */
