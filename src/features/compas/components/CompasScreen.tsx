@@ -18,6 +18,7 @@ import { NIGHT_LABEL } from '../engine/autofill';
 import {
   compasAutofillOutcomeAction,
   compasAutofillStartAction,
+  compasAutofillStopAction,
   compasUndoAutofillAction,
   compasRefreshAutofillAction,
   type CompasAutofillSummary,
@@ -405,7 +406,7 @@ export function CompasScreen({
             autofillDeferred.current = true;
             if (prepRef.current && prepRef.current.stage !== 'stopped')
               setPrep({ stage: prepAt() ?? 'itinerary', message: res.error });
-            setTimeout(() => autofillRef.current?.(redo), res.retryInS * 1000 + 2000);
+            setTimeout(() => !stopped.current && autofillRef.current?.(redo), res.retryInS * 1000 + 2000);
             return notify(res.error);
           }
           prepFail(res.error);
@@ -453,7 +454,7 @@ export function CompasScreen({
         // écrit reste, on reprend une fois là où ça s'est arrêté.
         autofillRetried.current = true;
         notify('Préparation interrompue · je reprends dans une minute…');
-        setTimeout(() => autofillRef.current?.(redo), 66_000);
+        setTimeout(() => !stopped.current && autofillRef.current?.(redo), 66_000);
       })
       .finally(() => {
         autofillRunning.current = false;
@@ -933,6 +934,8 @@ export function CompasScreen({
           prep={prep}
           onStop={() => {
             stopped.current = true;
+            // Le serveur aussi : la préparation en arrière-plan saute ce qui reste à écrire.
+            void compasAutofillStopAction({ tripId: model.tripId }).catch(() => undefined);
             setPrep({ stage: 'stopped', at: prepAt(), message: 'Ce qui est fait est gardé. Reprends quand tu veux.' });
           }}
           onClose={() => setPrep(null)}

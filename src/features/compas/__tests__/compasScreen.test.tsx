@@ -228,6 +228,7 @@ const autofill = vi.hoisted(() => ({
     },
   })),
   compasUndoAutofillAction: vi.fn(async () => ({ success: true })),
+  compasAutofillStopAction: vi.fn(async () => ({ success: true })),
   // Lancement immédiat, issue relue ensuite (comme en production, sans requête longue).
   compasAutofillStartAction: vi.fn(async (input: unknown) => {
     const token = `t${++outcomes.n}`;
@@ -784,6 +785,26 @@ describe('CompasScreen', () => {
       await vi.advanceTimersByTimeAsync(93_000);
       await waitFor(() => expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(2));
       expect(await screen.findByText(/Aventure préparée/)).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('Préremplissage : « Arrêter » prévient le serveur et la relance prévue ne part pas', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      autofill.compasAutofillAction.mockImplementationOnce(
+        async () =>
+          ({ success: false, error: 'Beaucoup de préparations d’affilée : je reprends seul dans 2 min.', retryInS: 90 }) as never
+      );
+      // Depuis la demande (« Où ») : le panneau de préparation et son bouton « Arrêter ».
+      render(<CompasScreen data={{ ...makeData(), autofill: 'none', startSay: 'rando à 4' }} />);
+      const panel = await screen.findByRole('status', { name: 'Préparation de l’aventure' });
+      await waitFor(() => expect(within(panel).getByText(/je reprends seul dans 2 min/)).toBeTruthy());
+      fireEvent.click(within(panel).getByRole('button', { name: 'Arrêter' }));
+      await waitFor(() => expect(autofill.compasAutofillStopAction).toHaveBeenCalledWith({ tripId: TRIP }));
+      await vi.advanceTimersByTimeAsync(93_000);
+      expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1);
     } finally {
       vi.useRealTimers();
     }
