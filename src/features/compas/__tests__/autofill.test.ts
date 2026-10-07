@@ -10,6 +10,7 @@ import {
   needFromRule,
   sameNeed,
   sanitizeAdvice,
+  longestStay,
   sourceGear,
 } from '../engine/autofill';
 
@@ -103,6 +104,17 @@ describe('repas, budget, avis IA', () => {
     expect(
       sanitizeAdvice({ meals_eur_per_person_day: 900, lodging_eur_per_person_night: '45', notes: ['ok', 'Prévoir la frontale : nuit tombée à 18 h.'] })
     ).toMatchObject({ mealsPerPersonDay: null, lodgingPerPersonNight: 45, notes: ['Prévoir la frontale : nuit tombée à 18 h.'] });
+    expect(sanitizeAdvice({ notes: ["Reserver l'hëergement pour la nuit du 5 juin.", 'Reserver le JR Pass avant depart'] }).notes).toEqual([
+      "Réserver l'hébergement pour la nuit du 5 juin.",
+      'Réserver le JR Pass avant départ',
+    ]);
+    expect(sanitizeAdvice({ notes: ['Prévoir des vêtements légers pour lhumidité', 'Réserver le train davance'] }).notes).toEqual([
+      "Prévoir des vêtements légers pour l'humidité",
+      "Réserver le train d'avance",
+    ]);
+    expect(sanitizeAdvice({ notes: ['appliquer un indice SPF 50+ toutes les 2 h'] }).notes).toEqual([
+      'Appliquer un indice SPF 50+ toutes les 2 h',
+    ]);
   });
 });
 
@@ -153,5 +165,45 @@ describe('inventory lifecycle availability', () => {
       tripItemNames: [], inventory: [{id:'item',name:'Tente deux places',isLent:false,inventoryStatus}], borrowed: [], shop: [], days:2,
     });
     expect(picks.find((p) => p.need.key === 'tent')?.source).toBe('a_trouver');
+  });
+});
+
+describe('itinéraire figé', () => {
+  it('compte le plus long séjour d’affilée au même lieu', () => {
+    expect(longestStay(['A', 'B', 'B', 'C'])).toBe(2);
+    expect(longestStay(['A', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S'])).toBe(8);
+    expect(longestStay([])).toBe(0);
+  });
+});
+
+describe('traversée qui avance', () => {
+  it('mesure les allers-retours le long de l’axe départ → arrivée', async () => {
+    const { backtrackShare, wantsTraverse } = await import('../engine/autofill');
+    // Pyrénées, ouest → est sans retour (Hendaye, Lescun, Gavarnie, Luchon, Banyuls).
+    const straight = [
+      { lat: 43.36, lon: -1.77 }, { lat: 42.93, lon: -0.64 }, { lat: 42.73, lon: -0.01 }, { lat: 42.79, lon: 0.59 }, { lat: 42.48, lon: 3.13 },
+    ];
+    expect(backtrackShare(straight)).toBeLessThan(0.1);
+    // Lourdes, Gavarnie, Oloron, Lourdes, Luchon : allers-retours.
+    const zigzag = [
+      { lat: 43.1, lon: -0.05 }, { lat: 42.73, lon: -0.01 }, { lat: 43.19, lon: -0.61 }, { lat: 43.1, lon: -0.05 }, { lat: 42.79, lon: 0.59 },
+    ];
+    expect(backtrackShare(zigzag)).toBeGreaterThan(0.35);
+    expect(wantsTraverse(['traversée des Pyrénées'])).toBe(true);
+    expect(wantsTraverse(['GR20'])).toBe(true);
+    expect(wantsTraverse(['Cyclades'])).toBe(false);
+  });
+});
+
+describe('budgetLines — arrondi avant filtre', () => {
+  it('écarte une ligne qui s’arrondit à 0 € (sinon tout l’insert échoue)', () => {
+    const base = { category: 'divers' as const, title: 'x', source: 'base' as const, basis: 'b' };
+    const out = budgetLines([
+      { ...base, amount: 0.4 },
+      { ...base, amount: 12.6 },
+      { ...base, amount: Number.NaN },
+      null,
+    ]);
+    expect(out.map((l) => l.amount)).toEqual([13]);
   });
 });

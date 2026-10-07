@@ -20,8 +20,10 @@
    reprend les jetons de texte. */
 .compas {
   --cp-ink: var(--lkv-ink-900);
-  --cp-ink2: var(--lkv-ink-500);
-  --cp-ink3: rgb(23 43 36 / 0.5);
+  /* Contraste WCAG AA (4,5:1) mesuré au pixel sur la carte réelle (audit du
+     2026-10-06) : ink-500 et 50 % tombaient entre 1,8 et 4,4 sur le verre. */
+  --cp-ink2: var(--lkv-ink-700);
+  --cp-ink3: rgb(23 43 36 / 0.78);
   --cp-sep: rgb(23 43 36 / 0.1);
   --cp-fill: rgb(23 43 36 / 0.07);
   --cp-accent: var(--lkv-sage-500);
@@ -33,8 +35,10 @@
   --cp-bad-bg: rgb(168 68 58 / 0.14);
   --cp-info: var(--lkv-sky-600);
   --cp-water: var(--lkv-sky-600);
-  --cp-ga: 0.19;
-  --cp-gb: 7px;
+  /* Verre assez dense pour garder le texte lisible sur une carte sombre
+     (forêt, relief) ; le mode extérieur (☀) monte à 0,9. */
+  --cp-ga: 0.6;
+  --cp-gb: 10px;
   --cp-la: 140deg;
   --cp-soft: rgb(150 186 142 / 0.28);
   --cp-soft-line: rgb(91 127 85 / 0.38);
@@ -90,8 +94,8 @@
 .compas[data-outdoor='1'] {
   --cp-ga: 0.9;
   --cp-gb: 30px;
-  --cp-ink2: var(--lkv-ink-700);
-  --cp-ink3: rgb(23 43 36 / 0.72);
+  --cp-ink2: var(--lkv-ink-900);
+  --cp-ink3: rgb(23 43 36 / 0.85);
   font-size: 15px;
 }
 .dark .compas,
@@ -728,9 +732,10 @@
   z-index: 6;
   top: 0;
   left: 50%;
-  width: 64px;
-  height: 22px;
-  margin-left: -32px;
+  /* Cible tactile de 44 px (WCAG 2.5.8, règle LKDV), la barre reste fine. */
+  width: 88px;
+  height: 44px;
+  margin-left: -44px;
   display: grid;
   place-items: center;
   padding: 0;
@@ -1807,6 +1812,18 @@
   font-size: 11.5px;
   color: var(--cp-ink2);
 }
+.cp-popv__note {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--cp-ink2);
+}
+.cp-popv__note a {
+  color: var(--cp-ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .cp-switch {
   flex: none;
   position: relative;
@@ -2179,6 +2196,26 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--cp-ink2);
+}
+
+/* Contexte projet : source de chaque valeur, adaptations au projet */
+.cp-src {
+  margin-left: 6px;
+  font-weight: 400;
+  color: var(--cp-ink3);
+}
+.cp-adapt {
+  margin: 0;
+  padding: 8px 12px;
+  list-style: none;
+  border-radius: 12px;
+  background: var(--lkv-sage-100);
+  color: var(--cp-ink2);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.cp-adapt li + li {
+  margin-top: 4px;
 }
 
 /* Dis-le : toujours en bas du tiroir */
@@ -2918,4 +2955,158 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
 .compas--start .cp-top > .cp-card {
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+
+/* ---------- « Où » = la demande (phrase libre + compris + précisions) ---------- */
+.cp-ask {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cp-ask__in {
+  width: 100%;
+  min-height: 84px;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--cp-fill);
+  color: var(--cp-ink);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.4;
+  resize: vertical;
+}
+.cp-ask__in:focus-visible {
+  outline: 2px solid var(--cp-accent);
+  outline-offset: 2px;
+}
+.cp-understood__h {
+  margin: 2px 0 0;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cp-ink3);
+}
+.cp-fr[data-state='defaut'] .cp-fr__v,
+.cp-fr[data-state='a_trouver'] .cp-fr__v {
+  color: var(--cp-ink3);
+  font-style: italic;
+}
+.cp-fr[data-state='precise'] .cp-fr__v {
+  color: var(--cp-accent);
+}
+.cp-precise > summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: var(--cp-ink2);
+}
+.cp-precise__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 14px;
+}
+.cp-precise .cp-stepper output {
+  min-width: 4.5em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.cp-tile[aria-pressed='true'] {
+  outline: 2px solid var(--cp-accent);
+  outline-offset: -2px;
+}
+
+/* ---------- Préparation visible ---------- */
+.cp-prep {
+  position: fixed;
+  z-index: 85;
+  left: 50%;
+  bottom: calc(var(--cp-nav-clear, 96px) + 8px);
+  width: min(420px, calc(100vw - 32px));
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 24px;
+  box-shadow: var(--cp-shadow);
+  animation: cp-prep-in 0.35s ease-out both;
+}
+@keyframes cp-prep-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+.cp-prep__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cp-prep__step {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+}
+.cp-prep__t {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 14px;
+}
+.cp-prep__t > span {
+  font-size: 12.5px;
+  color: var(--cp-ink2);
+}
+.cp-prep__step[data-state='todo'] .cp-prep__t {
+  opacity: 0.55;
+}
+.cp-prep__dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--cp-fill);
+  color: var(--cp-pg-ink);
+}
+.cp-prep__step[data-state='done'] .cp-prep__dot {
+  background: var(--cp-pg);
+}
+.cp-prep__step[data-state='halt'] .cp-prep__dot {
+  background: var(--cp-warn-bg);
+}
+.cp-prep__spin {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid var(--cp-sep);
+  border-top-color: var(--cp-accent);
+  animation: cp-prep-spin 0.9s linear infinite;
+}
+@keyframes cp-prep-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cp-prep {
+    animation: none;
+  }
+  .cp-prep__spin {
+    animation-duration: 3s;
+  }
 }

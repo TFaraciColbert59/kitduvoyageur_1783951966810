@@ -5,6 +5,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { listOfflineRoutes, getOfflineTileSize, formatSize, type OfflineRoute } from '@/lib/offlineStorage';
 import { useOfflineDownload } from '@/hooks/useOfflineDownload';
 import Link from 'next/link';
+import { OfflineTrips } from '@/features/compas/offline/OfflineTrips';
 import AppShell from '@/components/shell/AppShell';
 import {
   Badge,
@@ -81,11 +82,13 @@ export default function HorsLignePage() {
           back
           backHref="/explorer"
           title="Hors-ligne"
-          subtitle="Randonnées disponibles sans connexion"
+          subtitle="Aventures et randonnées disponibles sans connexion"
         />
       }
     >
       <div className="space-y-[var(--space-3)] px-[var(--space-4)] pb-[var(--space-8)] pt-[var(--space-4)]">
+        <OfflineTrips />
+
         {/* Résumé stockage */}
         {!loading && routes.length > 0 && (
           <Card className="flex items-center gap-[var(--space-4)]">

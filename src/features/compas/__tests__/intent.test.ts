@@ -107,6 +107,12 @@ describe('ancrage : rien qui ne soit dans la phrase', () => {
       /absent/
     );
     expect(groundingIssue({ type: 'set_budget', amount: 500 }, 'pas trop cher')).toMatch(/absent/);
+    // Un nombre de jours n'est pas un groupe.
+    expect(groundingIssue({ type: 'set_party_size', count: 4 }, '4 jours de rando dans les Dolomites')).toMatch(/absent/);
+    expect(groundingIssue({ type: 'set_party_size', count: 4 }, 'on part à quatre')).toBeNull();
+    expect(groundingIssue({ type: 'set_party_size', count: 3 }, 'rando 2 jours, nous sommes 3')).toBeNull();
+    expect(groundingIssue({ type: 'set_party_size', count: 5 }, 'week-end en famille de 5')).toBeNull();
+    expect(groundingIssue({ type: 'set_party_size', count: 4 }, 'Hiking 5 days for 4 people')).toBeNull();
     expect(groundingIssue({ type: 'set_duration', days: 3, hours: null }, 'deux nuits')).toBeNull();
     expect(
       groundingIssue({ type: 'set_dates', start: '2026-10-03', end: null }, 'samedi')
@@ -136,6 +142,20 @@ describe('limites réelles', () => {
       ctx
     );
     expect(past[0].reason).toBe('Date passée');
+  });
+  it('une envie qui redit la destination est écartée (« voyage au Japon »)', () => {
+    const p = validateActions(
+      [
+        { action: { type: 'set_destination', place: 'Japon' }, source: 'ia' },
+        { action: { type: 'wish', label: 'voyage au Japon' }, source: 'ia' },
+        { action: { type: 'wish', label: 'temples de Kyoto' }, source: 'ia' },
+        { action: { type: 'wish', label: 'plaisir du trail' }, source: 'ia' },
+      ],
+      ctx
+    );
+    expect(p[1]).toMatchObject({ ok: false, reason: 'Rien de plus que la destination ou l’activité' });
+    expect(p[2]).toMatchObject({ ok: true });
+    expect(p[3]).toMatchObject({ ok: false, reason: 'Rien de plus que la destination ou l’activité' });
   });
 
   it("l'IA passe d'abord, les règles complètent sans doublon", () => {
@@ -218,8 +238,13 @@ describe('Mois seul (« en janvier », « début mai », « week-end en mai »)'
     expect(dates('Ski début février 2027 à Val Thorens')).toMatchObject({ start: '2027-02-01' });
     expect(dates('Rando mi-novembre')).toMatchObject({ start: '2026-11-15' });
   });
-  it('ce mois-ci : à partir d’aujourd’hui', () => {
+  it('ce mois-ci : à partir d’aujourd’hui pour une sortie, dans deux semaines pour un voyage', () => {
     expect(dates('Rando en octobre dans les Vosges')).toMatchObject({ start: today });
+    // 2026-10-05 (lundi) : premier samedi à 14 jours ou plus = 2026-10-24.
+    expect(dates('trek de 12 jours au Népal en octobre')).toMatchObject({ start: '2026-10-24' });
+    expect(dates('une semaine en Corse en octobre')).toMatchObject({ start: '2026-10-24' });
+    // Fin de mois : plus de samedi dans le mois → à partir d'aujourd'hui.
+    expect(parseIntentRules('5 jours en Crète en octobre', '2026-10-25').find((a) => a.type === 'set_dates')).toMatchObject({ start: '2026-10-25' });
   });
   it('un week-end dans un mois tombe sur son premier samedi, pas ce week-end', () => {
     expect(dates('Escalade, week-end de 3 jours en mai')).toMatchObject({ start: '2027-05-01' });

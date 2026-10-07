@@ -162,6 +162,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     lastUserIdRef.current = currentId;
     if (prevId === undefined || prevId === currentId) return;
     navigator.serviceWorker?.controller?.postMessage({ type: 'LKDV_PURGE_PRIVATE' });
+    // Aventures gardées pour le hors ligne : un autre compte les efface ; une
+    // session qui expire HORS LIGNE ne doit pas les effacer (on en a besoin
+    // justement là) — seulement une déconnexion en ligne.
+    if (currentId || navigator.onLine) {
+      void import('@/lib/offlineStorage')
+        .then((m) => m.purgeCompasSnapshots(currentId))
+        .catch(() => undefined);
+    }
   }, [user?.id]);
 
   const signUp = useCallback(async (email: string, password: string, metadata: { fullName?: string; avatarUrl?: string } = {}) => {
@@ -190,6 +198,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     setProfile(null);
+    // Déconnexion volontaire : rien du compte ne reste sur l'appareil.
+    void import('@/lib/offlineStorage')
+      .then((m) => m.purgeCompasSnapshots(null))
+      .catch(() => undefined);
   }, [supabase]);
 
   const getCurrentUser = useCallback(async () => {

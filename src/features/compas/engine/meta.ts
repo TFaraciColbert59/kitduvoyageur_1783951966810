@@ -1,4 +1,11 @@
-import type { CompasNights, CompasPreferences } from './compasModel';
+import type {
+  CompasAutonomy,
+  CompasLevel,
+  CompasNights,
+  CompasPreferences,
+  CompasPriority,
+  CompasTerrain,
+} from './compasModel';
 import type { Pace } from './weather';
 
 /**
@@ -14,6 +21,19 @@ function num(value: unknown): number | null {
 
 const PACES = new Set<Pace>(['tranquille', 'normal', 'soutenu']);
 const NIGHTS = new Set<CompasNights>(['bivouac', 'refuge', 'hebergement', 'mixte']);
+const LEVELS = new Set<CompasLevel>(['debut', 'regulier', 'aguerri']);
+const AUTONOMIES = new Set<CompasAutonomy>(['journee', 'bivouac_1_2', 'itinerance_longue']);
+const PRIORITIES = new Set<CompasPriority>(['legerete', 'confort', 'budget', 'securite']);
+const TERRAINS = new Set<CompasTerrain>(['sentier', 'montagne', 'hors_sentier', 'itinerance', 'urbain_transit']);
+
+function oneOf<T extends string>(set: Set<T>, value: unknown): T | null {
+  return set.has(value as T) ? (value as T) : null;
+}
+
+function bounded(value: unknown, min: number, max: number): number | null {
+  const n = num(value);
+  return n != null && n >= min && n <= max ? n : null;
+}
 
 function obj(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value)
@@ -48,6 +68,13 @@ export function readCompasMeta(metadata: unknown): {
           nights: NIGHTS.has(p.nights as CompasNights) ? (p.nights as CompasNights) : null,
           avoid: strList(p.avoid),
           wishes: strList(p.wishes),
+          level: oneOf(LEVELS, p.level),
+          autonomy: oneOf(AUTONOMIES, p.autonomy),
+          priority: oneOf(PRIORITIES, p.priority),
+          terrain: oneOf(TERRAINS, p.terrain),
+          maxPackKg: bounded(p.maxPackKg, 1, 40),
+          outdoorNights: bounded(p.outdoorNights, 0, 60),
+          targetKm: bounded(p.targetKm, 1, 300),
         }
       : null,
   };

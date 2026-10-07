@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import Icon from '@/components/ui/Icon';
 import { planApplication, type CompasProposal } from '../engine/intent';
-import { compasInterpretAction } from '../server/compasActions';
+import { compasClearStartSayAction, compasInterpretAction } from '../server/compasActions';
 import { applyCurrent, inverseOps, runOps } from './compasApply';
 import type { CompasCtl } from './compasTypes';
 
@@ -26,12 +26,15 @@ export function DisLe({
   initial,
   before,
   after,
+  initialIsStart = false,
 }: {
   ctl: CompasCtl;
   initial?: string;
   /** Maquette finale : « Retour » et « Suivant » encadrent le champ. */
   before?: ReactNode;
   after?: ReactNode;
+  /** `initial` est la phrase du Compas vide, gardée sur le voyage jusqu'à son application. */
+  initialIsStart?: boolean;
 }) {
   const [text, setText] = useState(initial ?? '');
   const [state, setState] = useState<State>({ status: 'idle' });
@@ -58,7 +61,11 @@ export function DisLe({
       // Phrase du départ : écrite directement (annulable), sans « Appliquer ».
       if (autoApply) {
         const ok = res.proposals.filter((p) => p.ok);
-        if (ok.length) await apply(ok);
+        const applied = ok.length ? await apply(ok) : true;
+        // Gardée sur le voyage tant qu'elle n'est pas écrite : une coupure ou un
+        // départ de la page la laisse en place, reprise à la prochaine ouverture.
+        if (applied && initialIsStart)
+          void compasClearStartSayAction({ tripId: ctl.data.model.tripId }).catch(() => undefined);
       }
     } catch {
       setState({ status: 'error', error: 'Connexion perdue : réessaie.' });
@@ -82,7 +89,7 @@ export function DisLe({
   const proposals = state.status === 'done' ? state.proposals : [];
   const chosen = proposals.filter((p) => p.ok && checked[p.id]);
 
-  const apply = async (list: CompasProposal[] = chosen) => {
+  const apply = async (list: CompasProposal[] = chosen): Promise<boolean> => {
     const ops = planApplication(
       list.map((p) => p.action),
       applyCurrent(ctl)
@@ -99,12 +106,13 @@ export function DisLe({
         undo ? () => runOps(ctl, undo) : undefined
       );
     }
-    if (!ok) return;
+    if (!ok) return false;
     setText('');
     reset();
     if (route && route.op === 'route') {
       ctl.replace({ kind: 'step', step: 'ou', flow: 'parcours', hint: { query: route.query } });
     }
+    return true;
   };
 
   return (

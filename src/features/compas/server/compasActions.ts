@@ -8,9 +8,10 @@ import {
   patchTripMetadata,
   requireEditor,
   resplitSteps,
+  tripPartySize,
   type Supa,
 } from './compasServer';
-import { lookupBase, lookupDestination, lookupLoose } from './placeLookup';
+import { lookupBase, lookupDestination, lookupLoose, lookupNatural } from './placeLookup';
 import type { CompasPlace } from '../engine/places';
 import { getTripById } from '@/lib/queries-trips';
 import { addTripItem } from '@/lib/queries-trip-kit';
@@ -19,6 +20,7 @@ import { buildCompasDestinationSystem } from '@/lib/ai/features/compasAutofill';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { createBookingProvider } from '@/features/booking/server/bookingProvider';
 import { BookingProviderError } from '@/features/booking/server/bookingProviderErrors';
+import { resolveProviderCredentials } from '@/features/booking/server/providerCredentials';
 import type { AIFailureReason } from '@/lib/ai/providers/types';
 import {
   MAX_INTENT_CHARS,
@@ -461,6 +463,8 @@ const ACTIVITIES = [
   'citytrip',
   'beach',
   'vanlife',
+  'running',
+  'trail',
 ] as const;
 const activitySchema = z.object({ tripId: uuid, tripSlug: slug, activity: z.enum(ACTIVITIES) });
 
@@ -506,6 +510,16 @@ const prefsSchema = z.object({
     nights: z.enum(['bivouac', 'refuge', 'hebergement', 'mixte']).nullable(),
     avoid: shortList,
     wishes: shortList,
+    level: z.enum(['debut', 'regulier', 'aguerri']).nullable().optional(),
+    autonomy: z.enum(['journee', 'bivouac_1_2', 'itinerance_longue']).nullable().optional(),
+    priority: z.enum(['legerete', 'confort', 'budget', 'securite']).nullable().optional(),
+    terrain: z
+      .enum(['sentier', 'montagne', 'hors_sentier', 'itinerance', 'urbain_transit'])
+      .nullable()
+      .optional(),
+    maxPackKg: z.number().min(1).max(40).nullable().optional(),
+    outdoorNights: z.number().int().min(0).max(60).nullable().optional(),
+    targetKm: z.number().min(1).max(300).nullable().optional(),
   }),
 });
 
@@ -566,8 +580,12 @@ async function resolveDestination(query: string, userId: string): Promise<Compas
       }
     }
   } catch {
-    /* repli : lieu habité du même nom */
+    /* repli : lieu naturel, puis lieu habité du même nom */
   }
+  // Sans réponse du spécialiste : le lieu naturel qui porte le nom (« Calanques » :
+  // le parc national, pas le récif de Piana en Corse, premier venu de la carte).
+  const natural = await lookupNatural(query, null).catch(() => null);
+  if (natural) return { ...natural, name: query.trim().slice(0, 80) };
   return lookupLoose(query);
 }
 
@@ -777,7 +795,13 @@ export async function compasSearchStaysAction(
     if (!provider.supports('hotel'))
       return {
         success: false,
-        error: 'Recherche en direct indisponible : les clés partenaires ne sont pas activées.',
+        error: `Recherche en direct indisponible : les clés partenaires ne sont pas activées.${(() => {
+          // Noms de variables seulement, jamais une valeur : de quoi corriger sur Vercel.
+          if ((process.env.BOOKING_PROVIDER || '').trim().toLowerCase() === 'disabled')
+            return ' (BOOKING_PROVIDER=disabled)';
+          const cred = resolveProviderCredentials('routestack', process.env);
+          return cred.reason ? ` (${cred.message})` : '';
+        })()}`,
       };
 
     const limited = await enforceRateLimit(auth.userId, {
@@ -794,7 +818,7 @@ export async function compasSearchStaysAction(
       destination,
       checkIn: dates.checkIn,
       checkOut: dates.checkOut,
-      travelers: Math.max(1, Math.min(20, trip.party_size ?? 1)),
+      travelers: await tripPartySize(auth.supabase, auth.trip),
       limit: 8,
     });
     return {
@@ -805,7 +829,11 @@ export async function compasSearchStaysAction(
     };
   } catch (err) {
     if (err instanceof BookingProviderError)
-      return { success: false, error: 'Le fournisseur n’a pas répondu : réessaie plus tard.' };
+      return {
+        success: false,
+        // Code et statut seulement, jamais une clé ni la réponse brute.
+        error: `Le fournisseur n’a pas répondu : réessaie plus tard. (${err.provider ?? 'partenaire'} ${err.code}${err.status ? ` ${err.status}` : ''})`,
+      };
     console.error('[compas] compasSearchStaysAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
@@ -1734,8 +1762,12 @@ export async function compasInterpretAction(
   }
 }
 
-/** Réglages où le mot dit en toutes lettres (règles) prime sur l'IA. */
-const RULES_FIRST = new Set<CompasIntentAction['type']>(['set_activity']);
+/**
+ * Réglages où le mot dit en toutes lettres (règles) prime sur l'IA. La durée
+ * aussi : « bivouac 2 nuits » fait 3 jours, le modèle lisait « 2 jours »
+ * (essais aléatoires, 2026-10-06).
+ */
+const RULES_FIRST = new Set<CompasIntentAction['type']>(['set_activity', 'set_duration']);
 
 /* ---------- Verdict expliqué par l'IA ---------- */
 
@@ -1804,7 +1836,11 @@ export async function compasExplainVerdictAction(
 
 /* ---------- Créer une aventure depuis le Compas ---------- */
 
-const createTripSchema = z.object({ activity: z.enum(ACTIVITIES) });
+const createTripSchema = z.object({
+  activity: z.enum(ACTIVITIES),
+  /** Phrase « Dis-le » du Compas vide : gardée sur le voyage jusqu'à son application. */
+  say: z.string().trim().min(2).max(280).optional(),
+});
 
 const CREATE_LABEL: Record<(typeof ACTIVITIES)[number], string> = {
   hiking: 'Randonnée',
@@ -1822,6 +1858,8 @@ const CREATE_LABEL: Record<(typeof ACTIVITIES)[number], string> = {
   citytrip: 'City trip',
   beach: 'Plage',
   vanlife: 'Van',
+  running: 'Course à pied',
+  trail: 'Trail',
 };
 
 /**
@@ -1869,7 +1907,12 @@ export async function compasCreateTripAction(
         difficulty: 'moderate',
         primary_activity: parsed.data.activity,
         budget_currency: 'EUR',
-        metadata: { created_with: 'compas' },
+        // La phrase vit sur le voyage, pas dans l'onglet : quitter la page avant
+        // qu'elle soit appliquée ne la perd pas, elle est reprise à l'ouverture.
+        metadata: {
+          created_with: 'compas',
+          ...(parsed.data.say ? { compas: { start_say: parsed.data.say } } : {}),
+        },
       })
       .select('id, slug, title')
       .single();
@@ -1902,6 +1945,31 @@ export async function compasCreateTripAction(
     return { success: true, slug: created.slug };
   } catch (err) {
     console.error('[compas] compasCreateTripAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+const clearSaySchema = z.object({ tripId: uuid });
+
+/** La phrase de départ a été appliquée (ou ne disait rien d'applicable) : on l'oublie. */
+export async function compasClearStartSayAction(
+  input: z.input<typeof clearSaySchema>
+): Promise<CompasActionResult> {
+  const parsed = clearSaySchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Voyage invalide' };
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    const metadata = await patchTripMetadata(auth.supabase, parsed.data.tripId, (m) => {
+      const c = compasMeta(m);
+      if (!('start_say' in c)) return m;
+      delete c.start_say;
+      return { ...m, compas: c };
+    });
+    await auth.supabase.from('trips').update({ metadata }).eq('id', parsed.data.tripId);
+    return { success: true };
+  } catch (err) {
+    console.error('[compas] compasClearStartSayAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }

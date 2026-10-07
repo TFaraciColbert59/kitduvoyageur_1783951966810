@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
 import { cookies, headers } from 'next/headers';
-import { Manrope, IBM_Plex_Mono, Instrument_Serif, Inter } from 'next/font/google';
+import localFont from 'next/font/local';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import '@/styles/tokens.css';
 import '@/styles/tailwind.css';
@@ -38,28 +38,33 @@ import { LOCALE_COOKIE, resolveLocale } from '@/lib/i18n/locale';
 
 // Fonts — Phase 2 : SF Pro (système) pour toute l'UI (--font-sans/--font-display
 // définis dans tokens.css), Manrope conservée comme police de marque (--font-brand).
-const manrope = Manrope({
-  subsets: ['latin'],
+// Auto-hébergées (src/app/fonts, licence OFL) : la construction ne dépend plus
+// du réseau vers Google Fonts.
+const manrope = localFont({
+  src: [{ path: './fonts/manrope.woff2', weight: '400 800', style: 'normal' }],
   variable: '--font-brand',
   display: 'swap',
-  weight: ['400', '500', '600', '700', '800'],
   preload: false,
 });
 
-const ibmPlexMono = IBM_Plex_Mono({
-  subsets: ['latin'],
+const ibmPlexMono = localFont({
+  src: [
+    { path: './fonts/plexmono-400.woff2', weight: '400', style: 'normal' },
+    { path: './fonts/plexmono-500.woff2', weight: '500', style: 'normal' },
+    { path: './fonts/plexmono-600.woff2', weight: '600', style: 'normal' },
+  ],
   variable: '--font-mono',
   display: 'swap',
-  weight: ['400', '500', '600'],
   preload: false,
 });
 
-const instrumentSerif = Instrument_Serif({
-  subsets: ['latin'],
+const instrumentSerif = localFont({
+  src: [
+    { path: './fonts/instrumentserif.woff2', weight: '400', style: 'normal' },
+    { path: './fonts/instrumentserif-italic.woff2', weight: '400', style: 'italic' },
+  ],
   variable: '--font-serif',
   display: 'swap',
-  weight: ['400'],
-  style: ['normal', 'italic'],
   preload: false,
 });
 
@@ -67,11 +72,10 @@ const instrumentSerif = Instrument_Serif({
 // Apple. Sur iOS/macOS, `-apple-system` resout SF Pro en amont et l empilement
 // ci-dessous ne sert donc jamais. Sur Windows/Linux, c est Inter qui paint,
 // ce qui evite la chute sur Segoe UI.
-const inter = Inter({
-  subsets: ['latin'],
+const inter = localFont({
+  src: [{ path: './fonts/inter.woff2', weight: '400 900', style: 'normal' }],
   variable: '--font-inter',
   display: 'swap',
-  weight: ['400', '500', '600', '700', '800', '900'],
   preload: false,
 });
 
@@ -223,16 +227,7 @@ export default async function RootLayout({
 
         {/* DNS prefetch for external domains */}
         <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
-        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
-
-        {/* Preconnect to critical third-party origins */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
 
         {/* JSON-LD Structured Data */}
         <script

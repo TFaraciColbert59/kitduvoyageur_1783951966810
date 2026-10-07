@@ -13,6 +13,8 @@ export interface ContextualKitInput {
   activity?: string | null;
   durationDays: number;
   seasonMonth?: number; // 1 to 12
+  /** Latitude du lieu : le froid de saison dépend de l'hémisphère et du climat. */
+  latitude?: number | null;
   steps?: TripStep[];
   currentItems?: TripItem[];
   availableProducts?: ShopProductReference[];
@@ -177,8 +179,16 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     category: 'clothing',
     defaultPriority: 'vital',
     baseWeightGrams: 380,
-    condition: (_input, maxAlt) => {
-      const extremeCold = maxAlt > 2400;
+    condition: (input, maxAlt) => {
+      // Nuits froides : très haut, ou haut hors été, ou l'alpinisme ; sous les
+      // tropiques, à partir de 3 500 m (Cusco, Quito : gel nocturne).
+      const lat = input.latitude ?? null;
+      const month = input.seasonMonth && lat != null && lat < 0 ? ((input.seasonMonth + 5) % 12) + 1 : input.seasonMonth;
+      const summer = Boolean(month && month >= 6 && month <= 9);
+      const tropical = lat != null && Math.abs(lat) < 23.5;
+      const extremeCold = tropical
+        ? maxAlt >= 3500
+        : maxAlt >= 3000 || (maxAlt > 2400 && (!summer || input.activity === 'mountaineering'));
       return {
         match: extremeCold,
         reason: extremeCold
@@ -214,7 +224,20 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     defaultPriority: 'vital',
     baseWeightGrams: 400,
     condition: (input, maxAlt) => {
-      const isHighAltitude = maxAlt >= 2400 || input.countryCode === 'IS' || input.countryCode === 'NP';
+      // Névés et verglas : très haut, ou haut hors été (octobre à mai au nord,
+      // avril à novembre au sud), ou pour l'alpinisme et le ski. Pas une rando
+      // de juillet à 2 500 m dans les Dolomites.
+      const lat = input.latitude ?? null;
+      const month = input.seasonMonth && lat != null && lat < 0 ? ((input.seasonMonth + 5) % 12) + 1 : input.seasonMonth;
+      const summer = Boolean(month && month >= 6 && month <= 9);
+      const snowSport = input.activity === 'mountaineering' || input.activity === 'ski';
+      // Sous les tropiques, la neige commence vers 5 000 m (Andes, Kilimandjaro).
+      const tropical = lat != null && Math.abs(lat) < 23.5;
+      const isHighAltitude =
+        maxAlt >= (tropical ? 5000 : 3000) ||
+        input.countryCode === 'IS' ||
+        input.countryCode === 'NP' ||
+        (maxAlt >= 2400 && (snowSport || (!tropical && !summer)));
       return {
         match: isHighAltitude,
         reason: isHighAltitude
@@ -232,10 +255,19 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     defaultPriority: 'recommended',
     baseWeightGrams: 100,
     condition: (input, maxAlt) => {
+      // Hiver de l'hémisphère (décembre à février au nord, juin à août au sud) :
+      // froid partout hors tropiques. Intersaison (mars-avril, octobre-novembre) :
+      // seulement au-dessus de 44° ou en altitude (pas une balade aux Calanques).
+      const lat = input.latitude ?? null;
+      const month = input.seasonMonth && lat != null && lat < 0 ? ((input.seasonMonth + 5) % 12) + 1 : input.seasonMonth;
+      const tropical = lat != null && Math.abs(lat) < 23.5;
+      const winter = Boolean(month && (month === 12 || month <= 2));
+      const shoulder = Boolean(month && (month === 3 || month === 4 || month === 10 || month === 11));
       const coldExpected = Boolean(
-        maxAlt >= 2000 ||
+        (maxAlt >= 2000 && (!tropical || maxAlt >= 3500) && (maxAlt >= 3000 || !(month && month >= 6 && month <= 9))) ||
         input.countryCode === 'IS' ||
-        (input.seasonMonth && (input.seasonMonth <= 4 || input.seasonMonth >= 10))
+        (!tropical && winter) ||
+        (shoulder && (lat == null || Math.abs(lat) >= 44 || maxAlt >= 1000))
       );
       return {
         match: coldExpected,

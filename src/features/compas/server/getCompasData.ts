@@ -1,5 +1,6 @@
 import type { InventoryStatus } from '@/features/materiel/domain/inventory';
 import 'server-only';
+import { partySizeOf, shortHoursOf, tripLengthDays } from '../engine/tripContext';
 
 import type { FxRate } from '../engine/currency';
 import type { CompasPendingInvite } from '../engine/team';
@@ -27,6 +28,10 @@ import {
   type CompasWeatherDayInput,
 } from '../engine/compasModel';
 import { readCompasMeta } from '../engine/meta';
+import { trackKey } from '../engine/track';
+import { resolveProjectContext, type ProjectContext } from '../engine/projectContext';
+import { readProfile, tripBasis } from './compasServer';
+import { retryParts, staleParts, unionParts, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { relevantAffiliateLinks } from '../engine/affiliates';
 import { getOfficialAlerts } from './officialAlerts';
 import { getRouteElevation } from './elevation';
@@ -125,8 +130,16 @@ export interface CompasData {
   autofillNotes?: string[];
   /** Durée voulue quand la date de départ n'est pas choisie (« 20 jours »). */
   plannedDays?: number | null;
+  /** Points autour des étapes : recherche en cours ou faite (rempli côté écran). */
+  stagePoisDone?: boolean;
+  /** Phrase du Compas vide pas encore appliquée (reprise à l'ouverture). */
+  startSay?: string | null;
   /** Destination retrouvée sur la carte (Dis-le). */
   anchorName?: string | null;
+  /** Contexte projet résolu (projet > sélection > profil > défaut), avec la source de chaque valeur. */
+  context?: ProjectContext;
+  /** Parties du préremplissage dépassées par un changement du projet (à réadapter). */
+  autofillStale?: AutofillPart[];
 }
 
 const TIME_ZONE = 'Europe/Paris';
@@ -376,11 +389,12 @@ export async function getCompasData(): Promise<CompasData | null> {
   } = await client.auth.getUser();
   const viewerId = user?.id ?? null;
 
-  const [inventory, bookings, shop, pendingInvites] = await Promise.all([
+  const [inventory, bookings, shop, pendingInvites, profile] = await Promise.all([
     loadInventory(client, viewerId),
     loadBookings(client, trip.id),
     loadShop(client),
     loadPendingInvites(client, trip.id),
+    readProfile(client as never, viewerId),
   ]);
 
   const members = toMembers(trip, hub.group?.members ?? []);
@@ -545,7 +559,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     routePois,
     itinerary,
     bookings,
-    routeGeojson: hub.hiking?.routeGeojson ?? null,
+    routeGeojson: hub.hiking?.routeGeojson ?? preparedTrack(trip.metadata, baseModel.route.coords),
     elevation,
     countryCode: trip.destination_country_code
       ? String(trip.destination_country_code).toLowerCase()
@@ -584,7 +598,59 @@ export async function getCompasData(): Promise<CompasData | null> {
     autofill: autofillState(trip.metadata),
     autofillNotes: autofillNotes(trip.metadata),
     ...compasPlan(trip.metadata),
+    autofillStale: autofillStale(trip),
+    context: resolveProjectContext({
+      activity: trip.primary_activity ?? null,
+      days: baseModel.dates.days ?? compasPlan(trip.metadata).plannedDays,
+      hours: shortHoursOf(
+        baseModel.dates.days ?? compasPlan(trip.metadata).plannedDays,
+        compasMeta.durationHours
+      ),
+      // Même groupe que l'écran et la préparation : party_size, sinon les membres.
+      partySize: partySizeOf(num(trip.party_size), members.length),
+      month: trip.start_date ? Number(String(trip.start_date).slice(5, 7)) : null,
+      maxAltitudeM: elevation?.maxM ?? null,
+      project: compasMeta.preferences,
+      profile,
+    }),
   };
+}
+
+function autofillStale(trip: TripFull): AutofillPart[] {
+  const compas =
+    trip.metadata && typeof trip.metadata === 'object' ? (trip.metadata as Record<string, unknown>).compas : null;
+  const run = compas && typeof compas === 'object' ? (compas as Record<string, unknown>).autofill : null;
+  const basis = run && typeof run === 'object' ? (run as Record<string, unknown>).basis : null;
+  if (!basis || typeof basis !== 'object' || !(run as Record<string, unknown>).runId) return [];
+  const changed = staleParts(
+    basis as Partial<ProjectBasis>,
+    tripBasis(
+      {
+        start_date: trip.start_date,
+        end_date: trip.end_date,
+        destination_name: trip.destination_name,
+        party_size: trip.party_size ?? null,
+        metadata: (trip.metadata ?? null) as Record<string, unknown> | null,
+      },
+      trip.primary_activity ?? null
+    )
+  );
+  // Itinéraire de secours : retenté à l'ouverture (au plus quelques fois).
+  return unionParts(changed, retryParts((run as Record<string, unknown>).stagesFallback));
+}
+
+/**
+ * Tracé réel de l'itinéraire préparé (routes, chemins), tant que les étapes
+ * n'ont pas bougé depuis : sinon null, la carte relie les étapes.
+ */
+function preparedTrack(metadata: unknown, coords: Array<[number, number]>): Record<string, unknown> | null {
+  const compas =
+    metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).compas : null;
+  const t = compas && typeof compas === 'object' ? (compas as Record<string, unknown>).track : null;
+  if (!t || typeof t !== 'object') return null;
+  const { key, geojson } = t as { key?: unknown; geojson?: unknown };
+  if (typeof key !== 'string' || !geojson || typeof geojson !== 'object') return null;
+  return key === trackKey(coords.map(([lat, lon]) => ({ lat, lon }))) ? (geojson as Record<string, unknown>) : null;
 }
 
 function autofillState(metadata: unknown): CompasData['autofill'] {
@@ -607,14 +673,18 @@ function autofillNotes(metadata: unknown): string[] {
     : [];
 }
 
-function compasPlan(metadata: unknown): { plannedDays: number | null; anchorName: string | null } {
+function compasPlan(metadata: unknown): {
+  plannedDays: number | null;
+  anchorName: string | null;
+  startSay: string | null;
+} {
   const compas =
     metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).compas : null;
   const c = compas && typeof compas === 'object' ? (compas as Record<string, unknown>) : {};
-  const days = Number(c.planned_days);
   const anchor = c.anchor && typeof c.anchor === 'object' ? (c.anchor as Record<string, unknown>) : null;
   return {
-    plannedDays: Number.isInteger(days) && days >= 1 ? days : null,
+    plannedDays: tripLengthDays(null, null, c.planned_days),
     anchorName: typeof anchor?.name === 'string' ? anchor.name : null,
+    startSay: typeof c.start_say === 'string' && c.start_say.trim() ? c.start_say.trim().slice(0, 280) : null,
   };
 }

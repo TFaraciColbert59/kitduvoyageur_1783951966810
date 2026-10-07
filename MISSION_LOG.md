@@ -1,5 +1,78 @@
 # MISSION LOG — LKDV
 
+## 2026-10-06 — Compas : 20 parcours complets aléatoires (preview), corrigés en boucle
+
+- **Méthode** : 20 phrases tirées au hasard (graine 2026) dans un pool de 30, chacune jouée de bout en bout sur la preview (`/compas?nouvelle=1`, phrase de départ, préremplissage complet), puis contrôlée en base (ancre, dates, activité, étapes et coordonnées, objets, dépenses, conseils). Quatre tours de reprise sur les parcours encore imparfaits.
+- **Lecture de la phrase** : « sur la Dordogne », « autour du lac d'Annecy », « traversée des Pyrénées », « in the Swiss Alps », « dans les calanques de Marseille » ; « Maroc dans l'Atlas » → Maroc + envie Atlas ; « Jura dimanche » → Jura ; GR20, chemin de l'Inca, Tour du Mont-Blanc → trek et envie ; « bivouac 1 nuit » → bivouac ; « 4 jours » n'est plus un groupe de 4 (Dolomites chiffrées pour 4) ; envies qui redisent la destination ou l'activité écartées.
+- **Lieux** : « Vietnam » donnait le Vietnam Veterans Memorial (Washington) → nom sans espaces (« Viêt Nam »), nom plus long réservé aux villes et régions ; « Le Tour » (Chamonix) placé dans le Var → recherche biaisée vers une destination compacte ; « Cusco » donnait une maison isolée du nord du Pérou → ville avant hameau avant maison, Cuzco = Cusco ; nom d'étape pris sur la carte quand le nom proposé n'existe pas ou porte un commentaire.
+- **Itinéraire** : on avance chaque jour, une traversée va d'un bout à l'autre, un grand massif n'est pas figé sur un pays ; itinéraire figé (> 3 jours au même lieu) ou à moitié inventé redemandé à la visite suivante sans relire le partagé.
+- **Trajet, kit, conseils** : trajet estimé en voiture à moins de 900 km quand le calcul de route échoue (plus de vol pour les Dolomites) ; préparation relancée seule après la limite de fréquence (Chamonix, Jura restaient vides) ; échelle « Journée/Sortie » au lieu de « Raid » pour un jour ; kit d'une sortie courte allégé ; gants selon la latitude et l'hémisphère, crampons selon saison et activité ; conseils accentués, vrais depuis la France (pas d'adaptateur en Europe, passeport hors Schengen, pas de permis inventé).
+- **Tours 4 à 6** : « Cusco » donnait encore une maison isolée → la province avant la maison isolée, un nom plus long seulement pour un bourg, recherches de lieux relues avec leur taille (cache v2), nom exact préféré (Pisac, pas Pisaca) ; jamais un hôtel comme nom d'étape approché ; pas de crampons à 4 300 m sous les tropiques. Vérifié : Pérou → Cusco, Pisac, Chinchero ; Chamonix et Vietnam inchangés.
+- **Limite connue** : la qualité de l'itinéraire dépend du modèle (traversée des Pyrénées encore en allers-retours côté français) ; un itinéraire figé ou inventé est redemandé à la visite suivante.
+- **Laissé tel quel (choix documentés)** : pas de période proposée sous les tropiques (Pérou, Vietnam : « Dates à choisir ») ; « en octobre » ce mois-ci part d'aujourd'hui.
+- Preuves : tsc et eslint propres ; tests Compas et kit 1340/1340 ; parcours rejoués sur la preview après chaque correction.
+
+## 2026-10-06 — Résa : clés partenaires reliées, diagnostics affichés
+
+- Variables Vercel « Shared » reliées au projet par Tony ; vérifié en direct sur la preview : RouteStack (sandbox) répond — hôtels de test sans nom ni prix, voitures en erreur du bac à sable ; Viator (sandbox) accepte la clé (3 394 destinations lues) mais sa recherche d'activités ne répond pas en 15 s.
+- Résa nomme désormais la cause d'un échec, sans jamais de clé : variable manquante, code et statut du partenaire, message, cause (délai, réseau, format).
+- Viator : le lieu du champ « Où » (pré-rempli) passe par la carte → destination Viator la plus proche (Rome → 511) ; repli sur l'identifiant du pays, jamais Paris pour une autre région de France. Délai de recherche Viator 15 s par défaut.
+- Décision de Tony : RouteStack reste en sandbox ; Viator passe en `full` pour la recherche (lecture seule, réservation verrouillée par `VIATOR_BOOKING_ENABLED`).
+
+## 2026-10-06 — Compas : phrase de départ, points sur place, Résa
+
+- **Phrase de départ** : elle ne vivait que dans l'onglet (sessionStorage), effacée dès la lecture ; quitter la page trop tôt la perdait. Elle est maintenant gardée sur le voyage (`metadata.compas.start_say`), reprise à chaque ouverture et effacée seulement une fois appliquée (`compasClearStartSayAction`). Tests : appliquée puis oubliée ; écriture en échec → gardée.
+- **Points sur place** : la carte n'avait que `trail_pois` (~1 800 points, parcours du catalogue seulement). Désormais, autour de chaque lieu d'étape (1,5 km, 8 lieux) : restos et cafés, commerces, pharmacie et soins, eau, hébergements, refuges, campings, gares et bus, toilettes, points de vue, sommets, parkings (OpenStreetMap via Overpass, ODbL). Une requête par lieu avec un plafond par catégorie, deux nouveaux lieux par appel, cache partagé d'une semaine par lieu, réponse coupée jamais gardée, chargement après l'affichage et au fil des appels. Nouvelles couches de carte et onglet « Sur place ». Vérifié sur la preview : Japon 332 points, Ardèche 128, Rome 56, Annecy 59.
+- **Résa · Activités** : Viator recevait le nom tapé (« Rome », « Vercors »), que sa table ne connaît pas. La destination Viator est maintenant la plus proche du lieu du voyage (liste officielle `GET /destinations`, ville ou région à moins de 120 km ; jamais Paris par défaut pour le Vercors).
+- **Résa · raison affichée** : un partenaire inactif nomme la variable qui manque (noms seulement, jamais une valeur). Constaté sur la preview : ni `VIATOR_MODE` + `VIATOR_SANDBOX_API_KEY` ni `VIATOR_API_KEY` ; ni `ROUTESTACK_MODE` + `ROUTESTACK_SANDBOX_API_KEY` ni `ROUTESTACK_API_KEY`. Même « non activé » en production.
+- Preuves : tsc, eslint propres ; tests Compas 1320/1320 ; essais réels sur la preview.
+
+## 2026-10-06 — Compas : essais aléatoires réels (preview Vercel) et corrections
+
+- **Essais** : 960 phrases aléatoires (graine fixe, `__tests__/fuzz.test.ts`) puis 15 voyages tirés au hasard créés pour de vrai sur la preview (Écosse, Népal, Vercors, Ardèche, Rome, ski Alpes, Crète, trail, Japon, rando 3 h, Islande, Mont Blanc, Corse, Norvège, Fontainebleau), contrôlés en base (étapes, objets, dépenses, fin du préremplissage).
+- **Trouvé et corrigé** :
+  - phase « nuits, kit, budget » au-delà des 60 s de Vercel → budgets de temps par appel IA, verrou 65 s, reprise automatique côté écran ;
+  - étapes rejetées « introuvables » (Népal : 6 sur 6) : nom transcrit (« Kathmandu » / « Katmandou », squelette consonantique), localité connue seulement en écriture locale (devanagari), tronçon « Syabru Besi to Gatlang » → étape du soir ;
+  - itinéraire de secours (« Jour N · Japon ») quand l'IA ne répond pas à temps (latence NVIDIA de 2 à 45 s) → retenté à l'ouverture suivante, au plus 2 fois, seulement s'il n'a pas été retouché ;
+  - reprise d'une préparation déjà comptée bloquée par la limite « 6 par 10 min » → la reprise n'est plus comptée ;
+  - départ d'une sortie nommé « Chantier Hotel de Ville » : ancien cache de géocodage inverse sans la localité → clé versionnée (Annecy) ;
+  - course et trail d'un jour sans heure (« trail de 25 km samedi ») traités comme une sortie (position, pas de nuit) ;
+  - « 3 nuits sous tente en Ardèche » sans durée → 4 jours (un projet qui a déjà sa durée la garde) ;
+  - « bivouac 2 nuits » : l'IA lisait 2 jours → la durée lue par les règles prime (3 jours) ;
+  - géocodage inverse muet depuis Vercel (« Autour de toi ») → secours Nominatim, commune du point.
+- Second passage réel sur la preview (déploiement `ea903694`) : Népal, Japon 14 j, Ardèche, trail, Vercors, Corse → 6/6 préparés en 43 à 130 s, itinéraires réels (Kathmandu → Syabru Besi ; Tokyo → Nikko → … → Kyoto → Nara), sac et budget écrits, aucun itinéraire de secours.
+- Preuves : tsc, eslint propres ; tests Compas 1305/1305.
+
+## 2026-10-06 — Compas copilote, lot 3 : meilleure période sans date
+
+- **`engine/period.ts`** (pur, testé) : sans date, un mois conseillé selon l'activité, l'hémisphère, la latitude et la fréquentation (Allemagne en randonnée → septembre, Norvège → juillet, ski → février, ville → mai, Patagonie → mars) ; départ un samedi, au moins trois semaines devant ; sous les tropiques, rien plutôt qu'une fausse certitude.
+- Le préremplissage pose ces dates (séjour seulement), l'annonce (« Période proposée : septembre (sentiers déneigés, moins de monde qu’en août). Change-la dans « Quand » ») ; « Annuler » les retire.
+- Preuves : tsc, eslint propres ; tests Compas 334/334.
+
+## 2026-10-06 — Compas copilote, lot 2 : réadaptation ciblée
+
+- **`engine/dependencies.ts`** (pur, testé) : le préremplissage garde l'empreinte des réglages qui l'ont produit (`basis` : lieu arrondi à ~1 km, jours, heures, mois, activité, personnes, nuits, nuits dehors, autonomie, priorité, rythme, niveau, terrain, distance). Un changement → seules les parties qui en dépendent : 7 → 10 jours refait itinéraire, nuits, trajet, sac, budget ; une personne de plus : trajet, sac, budget (pas l'itinéraire) ; « 3 nuits dehors » : nuits, sac, budget.
+- **`compasRefreshAutofillAction`** : retire seulement ce que le préremplissage avait écrit ET que personne n'a touché depuis (`updated_at` tenu par trigger, marge 5 s) ; ce qui a été retouché (étape renommée, objet coché, ligne de budget modifiée, nuit choisie) est gardé et compté ; le préremplissage repasse et ne réécrit que ce qui manque (pas de doublon de ligne de budget).
+- **Écran** : le changement est détecté au chargement (`autofillStale`), la réadaptation se lance seule une fois, l'îlot dit « Itinéraire, nuits et budget réadaptés » et ce qui a été gardé. Verdict et Kit suivent sans recalcul (dérivés).
+- Preuves : tsc, eslint propres ; tests Compas 327/327 (11 nouveaux).
+
+## 2026-10-06 — Compas copilote, lot 1 : contexte projet unique
+
+- Analyse d'architecture et plan : `docs/compas/COPILOTE.md` (source de vérité = `trips` + `metadata.compas`, profil jamais recopié, ordre phrase > projet > Compas > profil > défaut, dépendances, portée des modules).
+- **`resolveProjectContext`** (`engine/projectContext.ts`, pur, testé) : chaque valeur porte sa source ; une valeur héritée du profil qui ne tient pas pour CE projet est adaptée et dite (« Habituellement tu préfères l’itinérance en autonomie, mais pour ce projet : les sorties à la journée ») ; un choix du projet n'est jamais changé en silence.
+- **Personnalisations projet** (`metadata.compas.prefs`) : niveau, autonomie, priorité, terrain, poids max du sac, nuits dehors, distance visée. Affichées dans Préférences avec leur source, modifiables, « comme mon profil » en retirant le réglage.
+- **Dis-le** comprend « dormir dehors 3 nuits » (contrainte, plus une durée), « rester sous 12 kg », « surtout de la montagne », « je débute », « trail de 20 km », « courir 1h » (aujourd’hui par défaut, décochable), « cet après-midi ».
+- **Course à pied et trail** : nouvelles activités (enum appliqué en prod, migration `20261006080449`), matériel propre (pas de couchage ni de cuisine), sortie sans lieu → autour de la position partagée, parcours du catalogue choisi à la distance attendue (durée × vitesse, ou distance dite), pas de trajet ni de nuit pour une sortie de quelques heures.
+- **Préremplissage** : nuits, rythme, niveau, terrain et distance viennent du contexte résolu (hiver en altitude : un toit plutôt que le bivouac du profil « budget »), nuits dehors placées d'abord là où aucun refuge n'est connu. **Verdict** : sac au-dessus du poids max du projet.
+- Preuves : tsc, eslint propres ; garde identité OK ; tests 24 nouveaux, Compas 316/316 ; suite complète 21 échecs, tous préexistants.
+
+## 2026-10-06 — Accessibilité du Compas (WCAG 2.2 AA)
+
+- Audit axe-core (7 écrans réels, compte démo) + contraste mesuré au pixel sur le verre + parcours clavier : rapport complet dans `docs/compas/ACCESSIBILITE.md`.
+- Avant : 47 textes sous le seuil de contraste (verre à 19 % sur carte sombre), bannière cookies blanc sur clair, ARIA sur `div` sans rôle, identifiants en double sur `/connexion`, poignée 64×22, arrêts de tabulation vides (framer-motion), deux liens d'évitement, pas de `h1`, carte « Map ».
+- Après : 0 violation axe, 0 contraste sous le seuil, clavier propre. Verre par défaut 60 % (réglage ☀ inchangé).
+- Preuves : tsc, eslint propres ; tests 364/364 (Compas + composants) ; suite complète 21 échecs, tous préexistants.
+
 ## 2026-10-06 — Essais en production (lien Vercel) : deux corrections
 
 - Production testée de bout en bout avec le compte démo (mot de passe réinitialisé) : Islande, Patagonie, randonnée en anglais ; itinéraire, dates, nuits, kit, budget et conseils de l'IA NVIDIA OK, météo MET Norway OK.

@@ -23,7 +23,9 @@ export type TripActivityType =
   | 'water'
   | 'citytrip'
   | 'beach'
-  | 'vanlife';
+  | 'vanlife'
+  | 'running'
+  | 'trail';
 export type TripDifficulty = 'easy' | 'moderate' | 'hard' | 'expert';
 export type TripItemStatus = 'packed' | 'needed' | 'optional' | 'missing';
 

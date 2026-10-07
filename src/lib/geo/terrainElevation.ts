@@ -22,8 +22,8 @@ const MAX_TILES = 64;
 
 const tiles = new Map<string, Promise<Uint8Array | null>>();
 
-function tileOf(lon: number, lat: number): { x: number; y: number; px: number; py: number } {
-  const n = 2 ** ZOOM;
+function tileOf(lon: number, lat: number, zoom = ZOOM): { x: number; y: number; px: number; py: number } {
+  const n = 2 ** zoom;
   const latRad = (Math.max(-85.05, Math.min(85.05, lat)) * Math.PI) / 180;
   const fx = ((lon + 180) / 360) * n;
   const fy = ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n;
@@ -37,9 +37,9 @@ function tileOf(lon: number, lat: number): { x: number; y: number; px: number; p
   };
 }
 
-async function loadTile(x: number, y: number): Promise<Uint8Array | null> {
+async function loadTile(x: number, y: number, zoom: number): Promise<Uint8Array | null> {
   try {
-    const res = await fetch(`${TILE_URL}/${ZOOM}/${x}/${y}.png`, {
+    const res = await fetch(`${TILE_URL}/${zoom}/${x}/${y}.png`, {
       // Le relief ne change pas : un mois de cache de données Vercel.
       next: { revalidate: 60 * 60 * 24 * 30 },
       signal: AbortSignal.timeout(6000),
@@ -54,12 +54,12 @@ async function loadTile(x: number, y: number): Promise<Uint8Array | null> {
   }
 }
 
-function tile(x: number, y: number): Promise<Uint8Array | null> {
-  const key = `${x}/${y}`;
+function tile(x: number, y: number, zoom = ZOOM): Promise<Uint8Array | null> {
+  const key = `${zoom}/${x}/${y}`;
   let p = tiles.get(key);
   if (!p) {
     if (tiles.size >= MAX_TILES) tiles.delete(tiles.keys().next().value as string);
-    p = loadTile(x, y);
+    p = loadTile(x, y, zoom);
     tiles.set(key, p);
     // Une tuile en échec ne reste pas en mémoire : on réessaiera.
     void p.then((t) => {
@@ -74,16 +74,21 @@ export function decodeTerrarium(r: number, g: number, b: number): number {
   return r * 256 + g + b / 256 - 32768;
 }
 
-/** Altitudes des points [lon, lat], dans l'ordre ; null si rien n'a pu être lu. */
+/**
+ * Altitudes des points [lon, lat], dans l'ordre ; null si rien n'a pu être lu.
+ * `zoom` plus bas pour beaucoup de points étalés (une région entière) : moins
+ * de tuiles, environ 150 m par pixel au zoom 10, assez pour un village.
+ */
 export async function terrainElevations(
-  points: ReadonlyArray<readonly [number, number]>
+  points: ReadonlyArray<readonly [number, number]>,
+  zoom = ZOOM
 ): Promise<(number | null)[] | null> {
   if (points.length === 0) return null;
   const out = await Promise.all(
     points.map(async ([lon, lat]) => {
       if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
-      const t = tileOf(lon, lat);
-      const data = await tile(t.x, t.y);
+      const t = tileOf(lon, lat, zoom);
+      const data = await tile(t.x, t.y, zoom);
       if (!data) return null;
       const i = (t.py * SIZE + t.px) * 3;
       const h = decodeTerrarium(data[i], data[i + 1], data[i + 2]);

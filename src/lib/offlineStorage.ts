@@ -9,10 +9,12 @@
 import { newId } from '@/lib/uuid';
 
 const DB_NAME = 'lkdv-offline';
-const DB_VERSION = 2; // Incremented for new stores
+const DB_VERSION = 3; // 3 : instantanés hors ligne du Compas
 const STORE_ROUTES = 'routes';
 export const STORE_INVENTORY = 'inventory';
 export const STORE_OFFLINE_ACTIONS = 'offline_actions';
+/** Instantanés hors ligne des aventures du Compas (clé `${userId}:${tripId}`). */
+export const STORE_COMPAS_SNAPSHOTS = 'compas_snapshots';
 
 export interface OfflineRoute {
   routeId: string;
@@ -59,6 +61,9 @@ function openDB(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(STORE_OFFLINE_ACTIONS)) {
         db.createObjectStore(STORE_OFFLINE_ACTIONS, { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains(STORE_COMPAS_SNAPSHOTS)) {
+        db.createObjectStore(STORE_COMPAS_SNAPSHOTS, { keyPath: 'key' });
       }
     };
 
@@ -207,5 +212,36 @@ export async function getOfflineActions(): Promise<OfflineAction[]> {
 export async function clearOfflineAction(id: string): Promise<void> {
   const db = await openDB();
   await storeDelete(db, STORE_OFFLINE_ACTIONS, id);
+  db.close();
+}
+
+// ── Instantanés hors ligne du Compas ───────────────────────────────────────────
+// Données d'un compte : jamais dans le cache du service worker (SEC-1), seulement
+// ici, sur l'appareil, et effacées au changement de compte ou à la déconnexion.
+
+export async function saveCompasSnapshot(snapshot: { key: string; userId: string }): Promise<void> {
+  const db = await openDB();
+  await storePut(db, STORE_COMPAS_SNAPSHOTS, snapshot);
+  db.close();
+}
+
+export async function listCompasSnapshots<T extends { userId: string }>(): Promise<T[]> {
+  const db = await openDB();
+  const all = await storeGetAll<T>(db, STORE_COMPAS_SNAPSHOTS);
+  db.close();
+  return all;
+}
+
+export async function deleteCompasSnapshot(key: string): Promise<void> {
+  const db = await openDB();
+  await storeDelete(db, STORE_COMPAS_SNAPSHOTS, key);
+  db.close();
+}
+
+/** Garde seulement les instantanés du compte connecté (aucun si `keepUserId` est null). */
+export async function purgeCompasSnapshots(keepUserId: string | null): Promise<void> {
+  const db = await openDB();
+  const all = await storeGetAll<{ key: string; userId: string }>(db, STORE_COMPAS_SNAPSHOTS);
+  for (const s of all) if (s.userId !== keepUserId) await storeDelete(db, STORE_COMPAS_SNAPSHOTS, s.key);
   db.close();
 }
