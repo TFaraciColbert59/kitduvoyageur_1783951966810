@@ -28,6 +28,7 @@ import {
   type CompasWeatherDayInput,
 } from '../engine/compasModel';
 import { readCompasMeta } from '../engine/meta';
+import { trackKey } from '../engine/track';
 import { resolveProjectContext, type ProjectContext } from '../engine/projectContext';
 import { readProfile, tripBasis } from './compasServer';
 import { retryParts, staleParts, unionParts, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
@@ -558,7 +559,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     routePois,
     itinerary,
     bookings,
-    routeGeojson: hub.hiking?.routeGeojson ?? null,
+    routeGeojson: hub.hiking?.routeGeojson ?? preparedTrack(trip.metadata, baseModel.route.coords),
     elevation,
     countryCode: trip.destination_country_code
       ? String(trip.destination_country_code).toLowerCase()
@@ -636,6 +637,20 @@ function autofillStale(trip: TripFull): AutofillPart[] {
   );
   // Itinéraire de secours : retenté à l'ouverture (au plus quelques fois).
   return unionParts(changed, retryParts((run as Record<string, unknown>).stagesFallback));
+}
+
+/**
+ * Tracé réel de l'itinéraire préparé (routes, chemins), tant que les étapes
+ * n'ont pas bougé depuis : sinon null, la carte relie les étapes.
+ */
+function preparedTrack(metadata: unknown, coords: Array<[number, number]>): Record<string, unknown> | null {
+  const compas =
+    metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).compas : null;
+  const t = compas && typeof compas === 'object' ? (compas as Record<string, unknown>).track : null;
+  if (!t || typeof t !== 'object') return null;
+  const { key, geojson } = t as { key?: unknown; geojson?: unknown };
+  if (typeof key !== 'string' || !geojson || typeof geojson !== 'object') return null;
+  return key === trackKey(coords.map(([lat, lon]) => ({ lat, lon }))) ? (geojson as Record<string, unknown>) : null;
 }
 
 function autofillState(metadata: unknown): CompasData['autofill'] {

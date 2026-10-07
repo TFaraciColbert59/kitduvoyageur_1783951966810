@@ -65,6 +65,7 @@ import { bestPeriod, monthName } from '../engine/period';
 import { partsText, retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { lookupDestination, lookupMassif, lookupNatural, lookupReverse, stageAliasCandidates, stageCandidates } from './placeLookup';
 import { lookupAreaPlaces, lookupStagePois } from './stagePoiLookup';
+import { buildTrack, simplifyLine, trackKey } from '../engine/track';
 import {
   keepAdminArea,
   keepHighlands,
@@ -1169,15 +1170,17 @@ export async function compasAutofillAction(
       }
       if (!routeSet) {
         // Distances réelles entre deux soirs (à pied, à vélo ou sur la route), en parallèle.
+        const legGeometry: Array<Array<[number, number]> | null> = stagePlaces.map(() => null);
         const legs = await mapLimit(stagePlaces, 4, async (st, i) => {
           const prevPlace = i > 0 ? stagePlaces[i - 1] : null;
           if (!prevPlace || distanceKm(prevPlace, st) < 0.3) return null;
           const mode = st.move === 'marche' ? 'pieton' : st.move === 'velo' ? 'velo' : 'voiture';
           if (st.move === 'vol' || st.move === 'bateau') return { km: Math.round(distanceKm(prevPlace, st)), ascent: null, measured: false };
           // Mesure partagée : le même tronçon n'est routé qu'une fois pour tout le monde.
+          // « v2 » : le tronçon garde sa géométrie (tracé réel sur la carte).
           const leg = await cached(
             'leg',
-            `${mode}:${coordKey(prevPlace.lat, prevPlace.lon)}>${coordKey(st.lat, st.lon)}`,
+            `v2:${mode}:${coordKey(prevPlace.lat, prevPlace.lon)}>${coordKey(st.lat, st.lon)}`,
             30 * 86_400,
             async () => {
               const r = await routeAttempt([prevPlace, st], mode);
@@ -1186,12 +1189,14 @@ export async function compasAutofillAction(
               const up = r.legs?.every((l) => l.ascentM != null)
                 ? r.legs.reduce((t, l) => t + (l.ascentM ?? 0), 0)
                 : null;
-              return { km: total, ascent: up };
+              const geometry = simplifyLine((r.legs ?? []).flatMap((l) => [...l.geometry]));
+              return { km: total, ascent: up, geometry };
             }
           );
           const km = leg?.km;
           const ascent = leg?.ascent ?? null;
           if (km == null) return null;
+          legGeometry[i] = leg?.geometry ?? null;
           // Une journée à pied ou à vélo hors de portée : distance non retenue plutôt que fausse.
           if ((st.move === 'marche' && km > 45) || (st.move === 'velo' && km > 180)) return null;
           return { km: Math.round(km * 10) / 10, ascent: ascent != null ? Math.round(ascent) : null, measured: true };
@@ -1225,6 +1230,20 @@ export async function compasAutofillAction(
           }
           // Seulement les étapes écrites ici : l'annulation ne touche jamais celles de la personne.
           createdStepIds.push(...((insertedSteps ?? []) as Array<{ id: string }>).map((r) => r.id));
+          // Tracé réel (routes, chemins) pour la carte, lié aux positions des étapes :
+          // une étape déplacée ensuite le rend caduc, la carte revient aux segments.
+          const track = buildTrack(
+            rows.map((r) => ({ lat: r.latitude, lon: r.longitude })),
+            legGeometry
+          );
+          if (track) {
+            const key = trackKey(rows.map((r) => ({ lat: r.latitude, lon: r.longitude })));
+            const md = await patchTripMetadata(supabase, tripId, (m) => ({
+              ...m,
+              compas: { ...compasMeta(m), track: { key, geojson: track } },
+            }));
+            await supabase.from('trips').update({ metadata: md }).eq('id', tripId);
+          }
         }
       }
       steps = await loadSteps(supabase, tripId);
