@@ -194,3 +194,16 @@ describe('traversée qui avance', () => {
     expect(wantsTraverse(['Cyclades'])).toBe(false);
   });
 });
+
+describe('budgetLines — arrondi avant filtre', () => {
+  it('écarte une ligne qui s’arrondit à 0 € (sinon tout l’insert échoue)', () => {
+    const base = { category: 'divers' as const, title: 'x', source: 'base' as const, basis: 'b' };
+    const out = budgetLines([
+      { ...base, amount: 0.4 },
+      { ...base, amount: 12.6 },
+      { ...base, amount: Number.NaN },
+      null,
+    ]);
+    expect(out.map((l) => l.amount)).toEqual([13]);
+  });
+});

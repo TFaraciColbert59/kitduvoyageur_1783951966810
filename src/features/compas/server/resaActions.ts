@@ -13,6 +13,7 @@ import { simplifyOffers, type CompasStayOffer } from '../engine/stays';
 import type { CompasLiveVertical } from '../engine/resaExamples';
 import { viatorCountryFallback, viatorDestinationNear, viatorDestinationsFailure } from './viatorDestinations';
 import { lookupDestination } from './placeLookup';
+import { tripPartySize } from './compasServer';
 import { resolveProviderCredentials } from '@/features/booking/server/providerCredentials';
 
 /**
@@ -138,7 +139,11 @@ export async function compasSearchOffersAction(
     if (!start || !ISO.test(start))
       return { success: false, error: 'Choisis d’abord la date de départ du voyage.' };
     const end = d.returnDate ?? trip.end_date ?? null;
-    const travelers = Math.max(1, Math.min(20, trip.party_size ?? 1));
+    const travelers = await tripPartySize(supabase, {
+      id: d.tripId,
+      user_id: (trip as { user_id?: string }).user_id ?? user.id,
+      party_size: trip.party_size ?? null,
+    });
 
     let request: BookingSearchRequest;
     if (d.vertical === 'activity') {
@@ -272,7 +277,11 @@ export async function compasNearbyActivitiesAction(
       vertical: 'activity',
       destination: await activityDestination(trip, destination, Boolean(parsed.data.place)),
       date: start,
-      travelers: Math.max(1, Math.min(20, trip.party_size ?? 1)),
+      travelers: await tripPartySize(supabase, {
+        id: parsed.data.tripId,
+        user_id: (trip as { user_id?: string }).user_id ?? user.id,
+        party_size: trip.party_size ?? null,
+      }),
       limit: 12,
     });
     return { success: true, offers: simplifyOffers(result.offers, 12), unavailable: false };

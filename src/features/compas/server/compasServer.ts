@@ -55,6 +55,22 @@ export async function requireEditor(tripId: string) {
   return { supabase, userId: user.id, trip } as const;
 }
 
+/**
+ * Taille du groupe, comme l'écran la compte : `party_size` s'il est posé,
+ * sinon le propriétaire + les personnes ajoutées au voyage (distinctes).
+ * Bornée à 1–20 (les recherches de réservation n'acceptent pas plus).
+ */
+export async function tripPartySize(
+  supabase: Supa,
+  trip: Pick<CompasTripRow, 'id' | 'user_id' | 'party_size'>
+): Promise<number> {
+  if (trip.party_size != null && trip.party_size >= 1) return Math.min(20, trip.party_size);
+  const { data } = await supabase.from('trip_collaborators').select('user_id').eq('trip_id', trip.id);
+  const ids = new Set<string>([trip.user_id]);
+  for (const row of (data ?? []) as Array<{ user_id: string | null }>) if (row.user_id) ids.add(row.user_id);
+  return Math.max(1, Math.min(20, ids.size));
+}
+
 /** Fusionne une clé dans trips.metadata sans écraser le reste. */
 export async function patchTripMetadata(
   supabase: Supa,

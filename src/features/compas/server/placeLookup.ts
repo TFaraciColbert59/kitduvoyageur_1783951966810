@@ -82,8 +82,9 @@ async function search(
       `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=${limit}&lang=fr${bias}${NOISE}`,
       { Accept: 'application/json' }
     );
-    if (photon != null) return parsePhoton(photon);
-    return near ? null : await nominatim(query, Math.min(limit, 8));
+    // Une liste vide n'est jamais gardée (null) : la carte a pu mal répondre, on réessaiera.
+    const list = photon != null ? parsePhoton(photon) : near ? null : await nominatim(query, Math.min(limit, 8));
+    return list && list.length ? list : null;
   });
 }
 

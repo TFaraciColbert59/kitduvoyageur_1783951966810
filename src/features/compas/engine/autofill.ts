@@ -331,9 +331,12 @@ export interface BudgetLine {
 
 /** Arrondi à l'euro ; une ligne à 0 € n'est pas écrite. */
 export function budgetLines(lines: Array<BudgetLine | null>): BudgetLine[] {
+  // Arrondi AVANT le filtre : une ligne à 0,4 € devient 0 € et ne doit pas partir
+  // (contrainte amount > 0 : tout l'insert du budget échouerait).
   return lines
-    .filter((l): l is BudgetLine => l != null && Number.isFinite(l.amount) && l.amount > 0)
-    .map((l) => ({ ...l, amount: Math.round(l.amount) }));
+    .filter((l): l is BudgetLine => l != null && Number.isFinite(l.amount))
+    .map((l) => ({ ...l, amount: Math.round(l.amount) }))
+    .filter((l) => l.amount > 0);
 }
 
 export function budgetTotal(lines: BudgetLine[]): number {

@@ -8,6 +8,7 @@ import {
   patchTripMetadata,
   requireEditor,
   resplitSteps,
+  tripPartySize,
   type Supa,
 } from './compasServer';
 import { lookupBase, lookupDestination, lookupLoose } from './placeLookup';
@@ -813,7 +814,7 @@ export async function compasSearchStaysAction(
       destination,
       checkIn: dates.checkIn,
       checkOut: dates.checkOut,
-      travelers: Math.max(1, Math.min(20, trip.party_size ?? 1)),
+      travelers: await tripPartySize(auth.supabase, auth.trip),
       limit: 8,
     });
     return {
