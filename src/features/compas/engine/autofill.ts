@@ -622,6 +622,18 @@ export const FLIGHT_THRESHOLD_KM = 900;
  * pas 9 h au volant à l'aller (Annecy → Biarritz, 650 km à vol d'oiseau).
  * 450 km à vol d'oiseau (≈ 5 h de route) pour 2 jours, 600 km pour 3, 900 au-delà.
  */
+/**
+ * Durée de route à l'aller qu'un voyage supporte (trajet mesuré, ferry
+ * compris) : 5 h pour 2 jours, 7 h pour 3, 10 h pour 4 ou 5 jours ; au-delà,
+ * sans limite. « 3 jours en Corse » depuis Annecy : 14 h de route et de ferry.
+ */
+export function maxDriveMinutes(days: number): number {
+  if (days <= 2) return 300;
+  if (days === 3) return 420;
+  if (days <= 5) return 600;
+  return Number.POSITIVE_INFINITY;
+}
+
 export function approachMode(input: { straightKm: number; days?: number | null }): 'sur_place' | 'route' | 'avion' {
   if (input.straightKm < 0.5) return 'sur_place';
   const days = input.days ?? 99;

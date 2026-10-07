@@ -42,6 +42,7 @@ import {
   sanitizeStages,
   sourceGear,
   approachMode,
+  maxDriveMinutes,
   FLIGHT_THRESHOLD_KM,
   fuelForKm,
   CAR_ASSUMPTIONS,
@@ -1372,16 +1373,29 @@ export async function compasAutofillAction(
             walkKm = walk.legs?.reduce((t, l) => t + l.distanceKm, 0) ?? haversineKm(end, target);
           }
         }
-        carFuel = estimateCarTrip({ oneWayKm: km, oneWayMin: min, partySize: party });
-        if (carFuel)
+        if (min > maxDriveMinutes(days)) {
+          // Route trop longue pour la durée du voyage : l'avion.
+          flightNeeded = true;
           transport = {
-            mode: 'voiture',
-            km: carFuel.oneWayKm,
-            minutes: carFuel.oneWayMin,
-            walkKm: Math.round(walkKm * 10) / 10,
-            fuelEur: carFuel.fuelEur,
-            basis: carFuel.basis,
+            mode: 'avion',
+            km: Math.round(distanceKm(from, target)),
+            minutes: 0,
+            walkKm: 0,
+            fuelEur: 0,
+            basis: `${Math.round(min / 60)} h de route à l’aller pour ${days} jour${days > 1 ? 's' : ''} : vol vers ${anchor.name}`,
           };
+        } else {
+          carFuel = estimateCarTrip({ oneWayKm: km, oneWayMin: min, partySize: party });
+          if (carFuel)
+            transport = {
+              mode: 'voiture',
+              km: carFuel.oneWayKm,
+              minutes: carFuel.oneWayMin,
+              walkKm: Math.round(walkKm * 10) / 10,
+              fuelEur: carFuel.fuelEur,
+              basis: carFuel.basis,
+            };
+        }
       } else if (distanceKm(from, target) <= FLIGHT_THRESHOLD_KM) {
         // Itinéraire non calculé (panne, débit, tracé qui n'arrive pas pile au
         // lieu) mais destination à portée de route : trajet estimé (vol

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseIntentRules, planApplication, groundingIssue } from '../engine/intent';
 import { extractIntentJson } from '@/lib/ai/features/compasIntent';
-import { approachMode, keepRuleForActivity, movesFromSteps, nightsPrefFor, sanitizeAdvice, sanitizeStages, stagePlaceName } from '../engine/autofill';
+import { approachMode, maxDriveMinutes, keepRuleForActivity, movesFromSteps, nightsPrefFor, sanitizeAdvice, sanitizeStages, stagePlaceName } from '../engine/autofill';
 import { destinationRadiusKm, homonymsFarApart, maxLegKm, nameCore, parseNominatim, parsePhoton, pickDestination, pickPlace } from '../engine/places';
 
 const TODAY = '2026-10-02';
@@ -97,6 +97,12 @@ describe('venir jusqu’au départ', () => {
     expect(approachMode({ straightKm: 650, days: 3 })).toBe('avion');
     expect(approachMode({ straightKm: 650, days: 8 })).toBe('route');
     expect(approachMode({ straightKm: 300, days: 2 })).toBe('route');
+  });
+
+  it('route mesurée trop longue pour la durée (3 jours en Corse, 14 h avec le ferry) : l’avion', () => {
+    expect(840 > maxDriveMinutes(3)).toBe(true);
+    expect(240 > maxDriveMinutes(2)).toBe(false);
+    expect(maxDriveMinutes(10)).toBe(Number.POSITIVE_INFINITY);
   });
 });
 
