@@ -306,3 +306,23 @@ describe('journée dans un massif : le village de départ', () => {
     expect(fromPlace('Chamonix')).toBe('de Chamonix');
   });
 });
+
+describe('planItinerary — traversée plus longue que la zone (Jura à vélo, 7 octobre)', () => {
+  // Emprise du Parc du Haut-Jura (~80 km du sud au nord) ; le massif continue au nord.
+  const extent: [number, number, number, number] = [5.6, 46.81, 6.46, 46.09];
+  const inside = grid({ lat0: 46.45, lon0: 6.0, cols: 4, rows: 8, stepKm: 10 });
+  const north = grid({ lat0: 47.2, lon0: 6.4, cols: 4, rows: 8, stepKm: 10 }).map((p) => ({ ...p, id: `x${p.id}`, name: `Nord ${p.name}` }));
+  const stuck = (stages: Array<{ note: string | null }>) => stages.filter((s) => /Journée sur place/.test(s.note ?? '')).length;
+
+  it('sort de l’emprise quand la traversée n’y tient pas, sans journée bloquée', () => {
+    const plan = planItinerary({ days: 5, activity: 'cycling', center: { lat: 46.45, lon: 6.0 }, radiusKm: 118, places: [...inside, ...north], shape: 'traverse', extent })!;
+    expect(stuck(plan.stages)).toBe(0);
+    expect(plan.distinct).toBe(5);
+  });
+
+  it('rien au-delà : retour par un autre chemin plutôt que des jours sur place', () => {
+    const plan = planItinerary({ days: 5, activity: 'cycling', center: { lat: 46.45, lon: 6.0 }, radiusKm: 118, places: inside, shape: 'traverse', extent })!;
+    expect(stuck(plan.stages)).toBe(0);
+    expect(plan.stages.some((s) => /Retour par un autre chemin/.test(s.note ?? ''))).toBe(true);
+  });
+});

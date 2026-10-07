@@ -252,6 +252,20 @@ function along(axis: ReturnType<typeof mainAxis>, p: { lat: number; lon: number 
   return ((p.lon - axis.lon) * k * axis.dx + (p.lat - axis.lat) * axis.dy) * 111;
 }
 
+/** Longueur d'un ensemble de lieux le long de son axe principal (km). */
+function axisSpan(points: ReadonlyArray<{ lat: number; lon: number }>): number {
+  if (points.length < 2) return 0;
+  const axis = mainAxis(points);
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (const p of points) {
+    const v = along(axis, p);
+    if (v < lo) lo = v;
+    if (v > hi) hi = v;
+  }
+  return hi - lo;
+}
+
 /** Forme par défaut : base pour les activités sur place ; traversée si la zone est longue ; sinon boucle. */
 export function shapeFor(
   input: Pick<ItineraryInput, 'activity' | 'days' | 'radiusKm' | 'shape' | 'targetKmPerDay' | 'natural'>
@@ -343,9 +357,15 @@ function planMoving(
   const [minKm, targetKm, maxKm] = input.targetKmPerDay
     ? [input.targetKmPerDay * 0.6, input.targetKmPerDay, input.targetKmPerDay * 1.4]
     : prof.dayKm;
-  const inZone = input.places.filter(
-    (p) => sleepOk(p, input.nights) && distanceKm(input.center, p) <= input.radiusKm * 1.15 && withinExtent(p, input.extent)
-  );
+  const reachable = input.places.filter((p) => sleepOk(p, input.nights) && distanceKm(input.center, p) <= input.radiusKm * 1.15);
+  let inZone = reachable.filter((p) => withinExtent(p, input.extent));
+  // Traversée plus longue que l'emprise (« traversée du Jura » à vélo en
+  // 5 jours dans le seul Parc du Haut-Jura, 80 km : bloquée au 3e soir) : on
+  // en sort, dans la zone du voyage, quand celle-ci va plus loin.
+  if (input.extent && shape === 'traverse' && !input.targetKmPerDay) {
+    const need = prof.dayKm[0] * prof.crow * input.days;
+    if (axisSpan(inZone) < need && axisSpan(reachable) > axisSpan(inZone)) inZone = reachable;
+  }
   if (inZone.length < 2) return { stages: [], start: null };
   // La distance du jour s'adapte à la taille réelle de la zone (mesurée sur ses
   // lieux) : une boucle doit y tenir, une traversée ne pas la dépasser. Jamais
@@ -404,6 +424,8 @@ function planMoving(
       : null;
   let cur: AreaPlace = start;
   let highStreak = (start.eleM ?? 0) >= HIGH_M ? 1 : 0;
+  // Traversée qui a fait demi-tour (bout de la zone) : la note n'est dite qu'une fois.
+  let returning = false;
   for (let day = 1; day <= input.days; day += 1) {
     const left = input.days - day; // déplacements restants après celui-ci
     // Acclimatation : au-dessus de 3 000 m, un jour sur place tous les trois.
@@ -441,6 +463,20 @@ function planMoving(
     // Dernier soir d'une boucle : retour au départ.
     let next: AreaPlace | null =
       shape === 'loop' && left === 0 && !goal ? start : pickWith(crowMin, crowMax) ?? pickWith(crowMin * 0.5, crowMax * 1.4);
+    let back = false;
+    if (!next && shape === 'traverse' && !goal) {
+      // Bout de la zone atteint : on revient vers le départ par d'autres lieux,
+      // plutôt que de rester sur place les jours qui restent.
+      next = best(inZone, (p) => {
+        if (used.has(p.id)) return -Infinity;
+        const d = distanceKm(cur, p);
+        if (d < crowMin * 0.5 || d > crowMax * 1.4) return -Infinity;
+        const gain = distanceKm(cur, start) - distanceKm(p, start);
+        if (gain <= 0) return -Infinity;
+        return 2 * (1 - Math.abs(d - crowTarget) / crowTarget) + kindScore(p, prof, input.nights);
+      });
+      back = next != null;
+    }
     if (goal && distanceKm(cur, goal) <= crowMax) {
       // L'étape voulue est à portée : on y dort (le lieu réel le plus proche, sinon le point lui-même).
       const at = best(inZone, (p) => (used.has(p.id) ? -Infinity : -distanceKm(goal, p)));
@@ -458,10 +494,11 @@ function planMoving(
       lat: next.lat,
       lon: next.lon,
       move: prof.move,
-      note: day === 1 ? `Départ ${fromPlace(start.name)}.` : null,
+      note: day === 1 ? `Départ ${fromPlace(start.name)}.` : back && !returning ? 'Retour par un autre chemin : la zone s’arrête ici.' : null,
       placeId: next.id.startsWith('w:') ? null : next.id,
     });
     highStreak = (next.eleM ?? 0) >= HIGH_M ? highStreak + 1 : 0;
+    returning = returning || back;
     cur = next;
   }
   return { stages, start };
