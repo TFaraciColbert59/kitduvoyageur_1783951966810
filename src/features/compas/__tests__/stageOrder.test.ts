@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { untangleStages } from '../engine/stageOrder';
+import { unifyStageNames, untangleStages } from '../engine/stageOrder';
 
 const P = {
   rennes: { lat: 48.11, lon: -1.68 },
@@ -66,5 +66,28 @@ describe('stagePlaceName', () => {
     expect(stagePlaceName('Arrivée aux Deux Alpes')).toBe('Deux Alpes');
     expect(stagePlaceName("Départ d'Annecy")).toBe('Annecy');
     expect(stagePlaceName('Départ du Puy')).toBe('Puy');
+  });
+});
+
+describe('unifyStageNames', () => {
+  it('un même lieu garde un seul nom (Seville / Séville, Malaga / Málaga)', () => {
+    const st = (day: number, name: string, lat: number, lon: number) => ({ day, name, lat, lon, move: 'voiture' });
+    const out = unifyStageNames([
+      st(1, 'Seville', 37.389, -5.984),
+      st(2, 'Cordoue', 37.884, -4.779),
+      st(5, 'Malaga', 36.721, -4.421),
+      st(6, 'Málaga', 36.7213, -4.4214),
+      st(8, 'Séville', 37.3891, -5.9845),
+    ]);
+    expect(out.map((s) => s.name)).toEqual(['Seville', 'Cordoue', 'Malaga', 'Malaga', 'Seville']);
+    expect(out[4]).toMatchObject({ lat: 37.389, lon: -5.984, move: 'voiture', day: 8 });
+  });
+  it('même point, autre nom : le premier nom', () => {
+    const out = unifyStageNames([
+      { day: 1, name: 'Grenade', lat: 37.1773, lon: -3.5986 },
+      { day: 2, name: 'Granada', lat: 37.1775, lon: -3.5985 },
+      { day: 3, name: 'Alhambra Palace', lat: 37.176, lon: -3.588 },
+    ]);
+    expect(out.map((s) => s.name)).toEqual(['Grenade', 'Grenade', 'Alhambra Palace']);
   });
 });

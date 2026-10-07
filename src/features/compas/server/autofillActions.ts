@@ -93,7 +93,7 @@ import {
 } from '../engine/costs';
 import { after } from 'next/server';
 import { destinationRadiusKm, distanceKm, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, type CompasPlace } from '../engine/places';
-import { untangleStages } from '../engine/stageOrder';
+import { unifyStageNames, untangleStages } from '../engine/stageOrder';
 import { localToday } from './weather';
 
 const MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
@@ -1119,6 +1119,8 @@ export async function compasAutofillAction(
           for (let i = 0; i < firstFound; i += 1)
             stagePlaces[i] = { ...stagePlaces[i], name: f.name, lat: f.lat, lon: f.lon };
         }
+        // « Malaga » puis « Málaga » : un même lieu, un seul nom.
+        stagePlaces = unifyStageNames(stagePlaces);
         if (!proposed.length && replacing.length) {
           // L'IA n'a pas répondu : on garde l'itinéraire d'avant plutôt qu'un moins bon.
           notes.push('Itinéraire gardé tel quel : la nouvelle proposition n’est pas arrivée à temps. Je réessaie à ta prochaine visite.');
