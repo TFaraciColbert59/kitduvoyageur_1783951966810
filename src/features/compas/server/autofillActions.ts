@@ -432,8 +432,11 @@ async function plannedStages(opts: {
   // acclimatation au-dessus de 3 000 m, et à pied, le massif plutôt que la plaine.
   // Le ski aussi : une station, pas le village de la vallée (Jura : Crotenay, 600 m).
   const foot = profileFor(activity).move === 'marche' || activity === 'ski';
-  if (foot && places.length <= 400) {
-    const eles = await terrainElevations(places.map((p) => [p.lon, p.lat] as const)).catch(() => null);
+  // Beaucoup de lieux (les Alpes suisses entières) : relief lu plus large
+  // (moins de tuiles) plutôt que pas de filtre (Genève, Lausanne, Montreux).
+  if (foot && places.length <= 3000) {
+    const zoom = places.length <= 400 ? 12 : 10;
+    const eles = await terrainElevations(places.map((p) => [p.lon, p.lat] as const), zoom).catch(() => null);
     if (eles) places = places.map((p, i) => (p.eleM == null && eles[i] != null ? { ...p, eleM: eles[i] } : p));
     places = keepHighlands(places);
   }
@@ -785,7 +788,8 @@ export async function compasAutofillAction(
           },
         }));
         await supabase.from('trips').update({ metadata: md }).eq('id', tripId);
-        notes.push(`« ${nat.name} » retenu pour ${anchor.name} (lieu naturel, adapté à l’activité).`);
+        if (nat.name !== anchor.name)
+          notes.push(`« ${nat.name} » retenu pour ${anchor.name} (lieu naturel, adapté à l’activité).`);
       }
     }
     // Aucun lieu dit : on part de la position partagée (une sortie autour de
