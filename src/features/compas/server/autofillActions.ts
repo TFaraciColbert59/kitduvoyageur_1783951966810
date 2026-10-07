@@ -401,11 +401,12 @@ async function plannedStages(opts: {
   // Séjour sur place autour d'une ville ou d'un village : ce lieu est la base.
   if (shapeFor({ activity, days, radiusKm: zoneKm, shape, natural }) === 'base' && settlement)
     return { stages: base, note: '' };
-  const found = await lookupAreaPlaces(
-    { center: anchor, radiusKm: zoneKm, activity },
-    opts.deadline
-  );
-  if (!found) return { fallback: 'lieux de la zone indisponibles (service de carte injoignable)' };
+  const diag: string[] = [];
+  const found = await lookupAreaPlaces({ center: anchor, radiusKm: zoneKm, activity }, opts.deadline, diag);
+  if (!found)
+    return {
+      fallback: `lieux de la zone indisponibles (service de carte injoignable${diag.length ? ` : ${diag.join(', ')}` : ''})`,
+    };
   let places = keepHomeCountry(found, anchor.countryCode);
   if (anchor.kind === 'state' || anchor.kind === 'region') places = keepAdminArea(places, anchor.name, 'region');
   else if (anchor.kind === 'county') places = keepAdminArea(places, anchor.name, 'county');
@@ -931,13 +932,17 @@ export async function compasAutofillAction(
         let aliasLookups = 0;
         let townLookups = 0;
         let dropped = 0;
+        /** Étape posée sur un lieu trouvé (sinon : centre de la destination). */
+        const located: boolean[] = [];
         for (const p of proposed) {
           const candidates = byName.get(p.place) ?? [];
           let move = p.move;
           const walkLike = p.move === 'marche' || p.move === 'velo' || p.move === 'aucun';
           // Sortie de quelques heures : tout reste autour du départ (jamais la grande ville voisine).
           const legKm =
-            ctx.scope === 'sortie' ? anchor.radiusKm : maxLegKm(p.move, last == null, anchor.radiusKm);
+            ctx.scope === 'sortie'
+              ? anchor.radiusKm
+              : maxLegKm(p.move, last == null, anchor.radiusKm, anchor.kind === 'country' && !!anchor.countryCode);
           // Destination à cheval sur une frontière (Patagonie, Alpes, Pyrénées) :
           // le lieu est cherché aussi chez le voisin, toujours à distance
           // plausible de l'étape d'avant (jamais un homonyme lointain).
@@ -1021,7 +1026,16 @@ export async function compasAutofillAction(
             });
           }
           const at = last ?? { name: anchor.name, lat: anchor.lat, lon: anchor.lon };
+          located.push(last != null);
           stagePlaces.push({ day: p.day, name: at.name, lat: at.lat, lon: at.lon, move: hit ? move : 'aucun', note: p.note });
+        }
+        // Premières étapes introuvables : elles partent de la première étape
+        // trouvée, jamais du centre de la destination (« États-Unis », au Kansas).
+        const firstFound = located.indexOf(true);
+        if (firstFound > 0) {
+          const f = stagePlaces[firstFound];
+          for (let i = 0; i < firstFound; i += 1)
+            stagePlaces[i] = { ...stagePlaces[i], name: f.name, lat: f.lat, lon: f.lon };
         }
         if (!proposed.length && replacing.length) {
           // L'IA n'a pas répondu : on garde l'itinéraire d'avant plutôt qu'un moins bon.

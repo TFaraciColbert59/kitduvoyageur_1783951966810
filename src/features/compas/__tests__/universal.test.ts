@@ -332,6 +332,18 @@ describe('Destination nommée : la ville que tout le monde entend, pas un homony
     expect(maxLegKm('marche', false, 60)).toBe(40);
   });
 
+  it('voyage dans tout un pays : la première étape peut être n’importe où dans le pays (San Francisco, pas Monterey Kentucky)', () => {
+    const us = [
+      { name: 'Monterey', lat: 38.42, lon: -84.87, countryCode: 'US', country: 'US', kind: 'town', settlement: true, settlementRank: 4, extent: null },
+      { name: 'Monterey', lat: 36.6, lon: -121.89, countryCode: 'US', country: 'US', kind: 'city', settlement: true, settlementRank: 5, extent: null },
+    ];
+    const centre = { lat: 39.78, lon: -100.45 };
+    expect(maxLegKm('voiture', true, 1500, true)).toBe(Number.POSITIVE_INFINITY);
+    expect(pickPlace(us, { near: centre, maxKm: maxLegKm('voiture', true, 1500, true), query: 'Monterey' })?.lon).toBeCloseTo(-121.89);
+    // Les étapes suivantes restent mesurées à la veille.
+    expect(maxLegKm('voiture', false, 1500, true)).toBe(700);
+  });
+
   it('nom exact gardé dans l’ordre de la carte (Banff Canada avant Banff Écosse)', () => {
     const found = parsePhoton({ features: [place('Banff', 'city', 'CA'), place('Banff', 'city', 'GB')] });
     expect(pickDestination(found, 'banff')?.countryCode).toBe('CA');

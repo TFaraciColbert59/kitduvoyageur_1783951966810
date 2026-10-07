@@ -619,7 +619,7 @@ export function parsePhotonArea(payload: unknown): AreaPlace[] {
     const f = raw as { geometry?: { coordinates?: [number, number] }; properties?: Record<string, unknown> };
     const p = f.properties ?? {};
     const kind = PHOTON_KIND[`${String(p.osm_key ?? '')}:${String(p.osm_value ?? '')}`];
-    const name = typeof p.name === 'string' ? p.name.trim() : '';
+    const name = typeof p.name === 'string' ? latinName(p.name) : '';
     const [lon, lat] = f.geometry?.coordinates ?? [NaN, NaN];
     if (!kind || !name || !Number.isFinite(lat) || !Number.isFinite(lon)) return;
     out.push({
@@ -637,6 +637,20 @@ export function parsePhotonArea(payload: unknown): AreaPlace[] {
     });
   });
   return out;
+}
+
+/**
+ * Nom lisible : au Maroc, OSM écrit « Imlil ⵉⵎⵍⵉⵍ إمليل » (latin, tifinagh,
+ * arabe). Quand le nom a une partie en alphabet latin, seule celle-ci reste.
+ */
+export function latinName(raw: string): string {
+  const name = raw.trim();
+  if (!/\p{Script=Latin}/u.test(name)) return name;
+  return name
+    .split(/\s+/)
+    .filter((w) => !/[\p{Script=Tifinagh}\p{Script=Arabic}\p{Script=Cyrillic}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Greek}\p{Script=Hebrew}\p{Script=Thai}\p{Script=Devanagari}]/u.test(w))
+    .join(' ')
+    .trim() || name;
 }
 
 /** Natures du Compas → catégories Geoapify Places. */
@@ -665,7 +679,7 @@ export function parseGeoapifyArea(payload: unknown): AreaPlace[] {
     const p = ((raw as { properties?: Record<string, unknown> }).properties ?? {}) as Record<string, unknown>;
     const cats = Array.isArray(p.categories) ? p.categories.map(String) : [];
     const kind = (Object.keys(GEOAPIFY_CATEGORY) as AreaPlaceKind[]).find((k) => cats.includes(GEOAPIFY_CATEGORY[k]));
-    const name = typeof p.name === 'string' ? p.name.trim() : '';
+    const name = typeof p.name === 'string' ? latinName(p.name) : '';
     const lat = Number(p.lat);
     const lon = Number(p.lon);
     if (!kind || !name || !Number.isFinite(lat) || !Number.isFinite(lon)) return;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseGeoapify } from '../engine/places';
-import { areaKinds, geoapifyCategories, parseGeoapifyArea } from '../engine/itinerary';
+import { areaKinds, geoapifyCategories, latinName, parseGeoapifyArea } from '../engine/itinerary';
 import search from './fixtures/geoapify-queyras.json';
 import area from './fixtures/geoapify-queyras-area.json';
 
@@ -41,5 +41,12 @@ describe('Geoapify : secours de la carte', () => {
     expect(geoapifyCategories(areaKinds({ center: { lat: 44.7, lon: 6.8 }, radiusKm: 300, activity: 'roadtrip' }))).toBe(
       'populated_place.city,populated_place.town'
     );
+  });
+
+  it('nom lisible : la partie latine d’un nom écrit en plusieurs alphabets (Maroc)', () => {
+    expect(latinName('Imlil ⵉⵎⵍⵉⵍ إمليل')).toBe('Imlil');
+    expect(latinName('Tnine Ourika ⵓⵔⵉⴽⴰ أوريكة')).toBe('Tnine Ourika');
+    expect(latinName('إمليل')).toBe('إمليل');
+    expect(latinName('Saint-Véran')).toBe('Saint-Véran');
   });
 });

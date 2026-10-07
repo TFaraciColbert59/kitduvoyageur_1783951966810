@@ -8,7 +8,7 @@ import {
   type StagePoint,
 } from '../engine/stagePois';
 import type { RoutePoi } from '../engine/routePois';
-import { geoapifyArea } from './geoapify';
+import { geoapifyArea, geoapifyAvailable } from './geoapify';
 import {
   areaKinds,
   areaTiles,
@@ -184,19 +184,32 @@ async function photonAreaPlaces(q: AreaQuery, timeoutMs: number): Promise<AreaPl
  * quota strict), Overpass en secours, Geoapify en dernier. Partagés un mois (une zone ne change
  * pas). Rien trouvé : jamais gardé, null.
  */
-export async function lookupAreaPlaces(q: AreaQuery, deadline: number): Promise<AreaPlace[] | null> {
+export async function lookupAreaPlaces(
+  q: AreaQuery,
+  deadline: number,
+  /** Ce que chaque carte a répondu (écrit dans la note d'un repli, pour le diagnostic). */
+  diag?: string[]
+): Promise<AreaPlace[] | null> {
   const query = buildAreaQuery(q);
   const key = `area:v2:${createHash('sha256').update(query).digest('hex').slice(0, 32)}`;
+  const say = (s: string) => diag?.push(s);
   return cached<AreaPlace[] | null>(
     'place',
     key,
     30 * 86_400,
     async () => {
       const left = () => deadline - Date.now();
-      if (left() < 4000) return null;
+      if (left() < 4000) {
+        say('plus de temps');
+        return null;
+      }
       const fromPhoton = await photonAreaPlaces(q, Math.min(10_000, left()));
+      say(fromPhoton ? `Photon ${fromPhoton.length}` : 'Photon muet');
       if (fromPhoton && fromPhoton.length >= 3) return fromPhoton;
-      if (left() < 4000) return fromPhoton;
+      if (left() < 4000) {
+        say('plus de temps');
+        return fromPhoton;
+      }
       // Photon trop maigre : Overpass et Geoapify en même temps (Overpass est
       // souvent muet depuis Vercel ; l'attendre d'abord privait Geoapify de temps).
       const budget = Math.min(15_000, left());
@@ -205,6 +218,8 @@ export async function lookupAreaPlaces(q: AreaQuery, deadline: number): Promise<
         geoapifyArea(q, Math.min(10_000, budget)),
       ]);
       const places = payload ? parseAreaPlaces(payload) : [];
+      say(payload ? `Overpass ${places.length}` : 'Overpass muet');
+      say(!geoapifyAvailable() ? 'Geoapify sans clé' : fromGeoapify ? `Geoapify ${fromGeoapify.length}` : 'Geoapify muet');
       if (places.length) return places;
       return fromGeoapify && fromGeoapify.length > (fromPhoton?.length ?? 0) ? fromGeoapify : fromPhoton;
     },

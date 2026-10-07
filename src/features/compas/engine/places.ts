@@ -281,7 +281,12 @@ function distinctiveWords(plain: string): string[] {
 const FIRST_STAGE_MIN_KM = 400;
 
 /** Distance plausible d'une étape à la suivante, selon le moyen de déplacement. */
-export function maxLegKm(move: string, first: boolean, destinationKm: number): number {
+export function maxLegKm(move: string, first: boolean, destinationKm: number, wholeCountry = false): number {
+  // Première étape d'un voyage dans tout un pays : n'importe où dans le pays
+  // (le filtre du pays suffit). Mesurée au centre du pays, elle écartait San
+  // Francisco (1 900 km du centre des États-Unis) et prenait le Monterey du
+  // Kentucky ; toutes les étapes californiennes suivantes tombaient ensuite.
+  if (first && wholeCountry) return Number.POSITIVE_INFINITY;
   // Première étape : dans le pays et au nom demandé, jusqu'à 400 km de la
   // destination lue sur la carte (« Loire » est d'abord le département de
   // Saint-Étienne ; le voyage commence à Orléans).
