@@ -1321,7 +1321,7 @@ export async function compasAutofillAction(
           userId,
           buildCompasAutofillSystem(),
           buildCompasAutofillPrompt(facts),
-          1200,
+          500,
           false,
           0,
           Math.min(15_000, remaining() - 6_000)
