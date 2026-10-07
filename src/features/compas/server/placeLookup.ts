@@ -1,5 +1,5 @@
 import 'server-only';
-import { aliasMatches, distanceKm, homonymsFarApart, parseNominatim, parsePhoton, pickDestination, type CompasPlace } from '../engine/places';
+import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, pickDestination, type CompasPlace } from '../engine/places';
 import { cached, coordKey } from './sharedCache';
 
 /**
@@ -159,6 +159,27 @@ export async function stageAliasCandidates(name: string, countryCode: string | n
     )
   );
   return (found ?? []).filter((p) => aliasMatches(p, q));
+}
+
+/**
+ * Le massif qui porte le nom d'une entité administrative (« Vosges » le
+ * département → le massif des Vosges ; « Jura » → le massif du Jura). Pour une
+ * activité à pied, c'est là qu'on randonne. Seulement un lieu naturel du même
+ * nom, à moins de 150 km : sinon null (on garde l'entité administrative).
+ */
+export async function lookupMassif(name: string, near: { lat: number; lon: number }): Promise<CompasPlace | null> {
+  const q = name.trim().slice(0, 60);
+  if (q.length < 3) return null;
+  const found = await cached('place', `massif:v1:${plain(q)}`, PLACE_TTL_S, () =>
+    nominatimQueued(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(`massif ${q}`)}&format=jsonv2&addressdetails=1&namedetails=1&limit=5&accept-language=fr`
+    )
+  );
+  return (
+    (found ?? []).find(
+      (p) => p.landmark && p.extent && nameCore(p.name) === nameCore(q) && distanceKm(p, near) <= 150
+    ) ?? null
+  );
 }
 
 /** Le lieu d'un point GPS (commune, pays) : sert à savoir d'où l'on part. */

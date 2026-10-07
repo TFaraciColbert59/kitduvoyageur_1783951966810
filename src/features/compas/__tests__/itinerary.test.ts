@@ -249,3 +249,9 @@ describe('zone : région administrative et massif', () => {
     expect(keepHighlands(flat)).toHaveLength(20);
   });
 });
+
+describe('séjour sans activité dite', () => {
+  it('« 3 jours à Rome » (mixed) : base fixe, jamais une traversée de banlieue', () => {
+    expect(shapeFor({ activity: 'mixed', days: 3, radiusKm: 25 })).toBe('base');
+  });
+});

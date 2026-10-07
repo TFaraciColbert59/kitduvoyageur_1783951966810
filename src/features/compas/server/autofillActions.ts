@@ -61,7 +61,7 @@ import { compasMeta, patchTripMetadata, readProfile, requireEditor, resplitSteps
 import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
 import { bestPeriod, monthName } from '../engine/period';
 import { partsText, retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
-import { lookupDestination, lookupReverse, stageAliasCandidates, stageCandidates } from './placeLookup';
+import { lookupDestination, lookupMassif, lookupReverse, stageAliasCandidates, stageCandidates } from './placeLookup';
 import { lookupAreaPlaces, lookupStagePois } from './stagePoiLookup';
 import {
   keepAdminArea,
@@ -316,6 +316,8 @@ interface Anchor {
 const PLANNED_MAX_KM = 150;
 /** Natures de lieux habités : une ancre de ce type est déjà une base où dormir. */
 const SETTLEMENT_KINDS = new Set(['city', 'town', 'village', 'hamlet', 'suburb', 'municipality', 'borough', 'quarter', 'neighbourhood']);
+/** Entités administratives qui peuvent porter le nom d'un massif. */
+const ADMIN_ANCHOR_KINDS = new Set(['county', 'state', 'region', 'province', 'district']);
 /** Natures OSM d'un lieu naturel : on en fait le tour plutôt que le traverser. */
 const NATURAL_KINDS = new Set(['water', 'lake', 'peak', 'island', 'islet', 'bay', 'mountain_range', 'volcano', 'glacier']);
 const LOOP_WISH = /\btour d(?:u|e|es|['’])|\bautour\b|\bboucle\b/i;
@@ -343,7 +345,8 @@ async function plannedStages(opts: {
   nights: string | null;
   deadline: number;
 }): Promise<{ stages: StagePlace[]; note: string } | { fallback: string } | null> {
-  const { anchor, activity, days } = opts;
+  const { activity, days } = opts;
+  let anchor = opts.anchor;
   // Road trip et van : une région entière se parcourt en voiture ; à pied ou à
   // vélo, au-delà d'un massif, il faut savoir où sont les grands itinéraires.
   const roadScale = activity === 'roadtrip' || activity === 'vanlife';
@@ -365,6 +368,20 @@ async function plannedStages(opts: {
   }));
   // Sortie ou journée : tout se passe au lieu dit.
   if (opts.scope === 'sortie' || days === 1) return { stages: base, note: '' };
+  // À pied, un département ou une région qui porte le nom d'un massif (Vosges,
+  // Jura) : on randonne dans le massif, pas dans la plaine administrative.
+  if (profileFor(activity).move === 'marche' && ADMIN_ANCHOR_KINDS.has(anchor.kind ?? '')) {
+    const massif = await lookupMassif(anchor.name, anchor).catch(() => null);
+    if (massif)
+      anchor = {
+        ...anchor,
+        lat: massif.lat,
+        lon: massif.lon,
+        kind: 'other',
+        extent: massif.extent,
+        radiusKm: destinationRadiusKm(massif),
+      };
+  }
   const natural = anchor.kind === 'other' || NATURAL_KINDS.has(anchor.kind ?? '');
   const settlement = SETTLEMENT_KINDS.has(anchor.kind ?? '');
   const halfExtentKm = anchor.extent

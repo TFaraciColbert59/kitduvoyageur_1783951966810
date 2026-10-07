@@ -95,11 +95,12 @@ const FOOT: Profile = {
   prefer: { village: 3, hamlet: 2.5, hut: 2.5, town: 2, camp: 1.5, city: 0.5 },
   itinerant: true,
 };
+// « mixed » (aucune activité dite) n'est pas ici : un séjour sans activité se
+// fait depuis une base (une ville, une région), jamais en randonnée d'étape en étape.
 const PROFILES: Record<string, Profile> = {
   trekking: FOOT,
   hiking: FOOT,
   bivouac: { ...FOOT, prefer: { ...FOOT.prefer, camp: 3, hut: 3 } },
-  mixed: FOOT,
   bushcraft: { ...FOOT, dayKm: [6, 10, 15] },
   cycling: {
     move: 'velo',
