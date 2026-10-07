@@ -323,7 +323,11 @@ describe('planItinerary — traversée plus longue que la zone (Jura à vélo, 7
   it('rien au-delà : retour par un autre chemin plutôt que des jours sur place', () => {
     const plan = planItinerary({ days: 5, activity: 'cycling', center: { lat: 46.45, lon: 6.0 }, radiusKm: 118, places: inside, shape: 'traverse', extent })!;
     expect(stuck(plan.stages)).toBe(0);
-    expect(plan.stages.some((s) => /Retour par un autre chemin/.test(s.note ?? ''))).toBe(true);
+    const turn = plan.stages.findIndex((s) => /Retour par un autre chemin/.test(s.note ?? ''));
+    expect(turn).toBeGreaterThan(0);
+    // Après le demi-tour, chaque soir est plus près du départ que la veille.
+    const toStart = plan.stages.slice(turn - 1).map((s) => distanceKm(s, plan.start!));
+    for (let i = 1; i < toStart.length; i += 1) expect(toStart[i]).toBeLessThan(toStart[i - 1]);
   });
 });
 

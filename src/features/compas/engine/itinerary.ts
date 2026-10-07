@@ -476,8 +476,13 @@ function planMoving(
         return s;
       });
     // Dernier soir d'une boucle : retour au départ.
+    // Une fois le demi-tour fait, on continue de revenir (pas de zigzag).
     let next: AreaPlace | null =
-      shape === 'loop' && left === 0 && !goal ? start : pickWith(crowMin, crowMax) ?? pickWith(crowMin * 0.5, crowMax * 1.4);
+      shape === 'loop' && left === 0 && !goal
+        ? start
+        : returning
+          ? null
+          : (pickWith(crowMin, crowMax) ?? pickWith(crowMin * 0.5, crowMax * 1.4));
     let back = false;
     if (!next && shape === 'traverse' && !goal) {
       // Bout de la zone atteint : on revient vers le départ par d'autres lieux,
