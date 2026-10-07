@@ -1,4 +1,5 @@
 import 'server-only';
+import { createHash } from 'node:crypto';
 import {
   buildOverpassQuery,
   distinctPlaces,
@@ -7,6 +8,7 @@ import {
   type StagePoint,
 } from '../engine/stagePois';
 import type { RoutePoi } from '../engine/routePois';
+import { buildAreaQuery, parseAreaPlaces, type AreaPlace, type AreaQuery } from '../engine/itinerary';
 import { cached, coordKey, readShared } from './sharedCache';
 
 /**
@@ -91,4 +93,26 @@ export async function lookupStagePois(
   for (const list of [...known, ...found])
     for (const p of list ?? []) if (!out.some((q) => q.id === p.id)) out.push(p);
   return { pois: out, partial: fresh.length > now.length || found.some((l) => l == null) };
+}
+
+/**
+ * Lieux réels où l'on peut dormir dans une zone (villes, villages, hameaux,
+ * refuges), pour l'itinéraire déterministe. Partagés un mois (une zone ne
+ * change pas). Liste vide ou réponse coupée : jamais gardée, null.
+ */
+export async function lookupAreaPlaces(q: AreaQuery, deadline: number): Promise<AreaPlace[] | null> {
+  const query = buildAreaQuery(q);
+  const key = `area:v1:${createHash('sha256').update(query).digest('hex').slice(0, 32)}`;
+  return cached<AreaPlace[] | null>(
+    'place',
+    key,
+    30 * 86_400,
+    async () => {
+      const payload = await overpass(query, deadline);
+      if (!overpassUsable(payload)) return null;
+      const places = parseAreaPlaces(payload);
+      return places.length ? places : null;
+    },
+    (v) => Array.isArray(v) && v.length > 0
+  );
 }

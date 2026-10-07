@@ -63,7 +63,8 @@ import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } f
 import { bestPeriod, monthName } from '../engine/period';
 import { partsText, retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { lookupDestination, lookupReverse, stageAliasCandidates, stageCandidates } from './placeLookup';
-import { lookupStagePois } from './stagePoiLookup';
+import { lookupAreaPlaces, lookupStagePois } from './stagePoiLookup';
+import { planItinerary, shapeFor, type ItineraryShape } from '../engine/itinerary';
 import { after } from 'next/server';
 import { destinationRadiusKm, distanceKm, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, type CompasPlace } from '../engine/places';
 import { untangleStages } from '../engine/stageOrder';
@@ -287,6 +288,92 @@ interface Anchor {
   radiusKm: number;
   /** Nature OSM (« other » : massif, lac, vallée…), absente des anciennes ancres. */
   kind?: string;
+}
+
+/** Au-delà de ce rayon (un pays), l'itinéraire déterministe ne sait pas encore choisir les lieux marquants. */
+const PLANNED_MAX_KM = 150;
+/** Natures de lieux habités : une ancre de ce type est déjà une base où dormir. */
+const SETTLEMENT_KINDS = new Set(['city', 'town', 'village', 'hamlet', 'suburb', 'municipality', 'borough', 'quarter', 'neighbourhood']);
+const LOOP_WISH = /\btour d(?:u|e|es|['’])|\bautour\b|\bboucle\b/i;
+
+interface StagePlace {
+  day: number;
+  name: string;
+  lat: number;
+  lon: number;
+  move: StageMove;
+  note: string | null;
+}
+
+/**
+ * Itinéraire déterministe : lieux RÉELS de la zone (OpenStreetMap) choisis par
+ * calcul (distance du jour selon l'activité, forme, altitude). null quand la
+ * zone est un pays entier ou que la carte ne répond pas : l'appelant se replie.
+ */
+async function plannedStages(opts: {
+  anchor: Anchor;
+  activity: string;
+  days: number;
+  scope: string;
+  wishes: string[];
+  nights: string | null;
+  deadline: number;
+}): Promise<{ stages: StagePlace[]; note: string } | null> {
+  const { anchor, activity, days } = opts;
+  if (anchor.radiusKm > PLANNED_MAX_KM) return null;
+  const base: StagePlace[] = Array.from({ length: days }, (_, i) => ({
+    day: i + 1,
+    name: anchor.name,
+    lat: anchor.lat,
+    lon: anchor.lon,
+    move: 'aucun' as StageMove,
+    note: i === 0 && days > 1 ? 'Base du séjour.' : null,
+  }));
+  // Sortie ou journée : tout se passe au lieu dit.
+  if (opts.scope === 'sortie' || days === 1) return { stages: base, note: '' };
+  const shape: ItineraryShape | null = wantsTraverse(opts.wishes)
+    ? 'traverse'
+    : opts.wishes.some((w) => LOOP_WISH.test(w))
+      ? 'loop'
+      : null;
+  // Séjour sur place autour d'une ville ou d'un village : ce lieu est la base.
+  if (shapeFor({ activity, days, radiusKm: anchor.radiusKm, shape }) === 'base' && SETTLEMENT_KINDS.has(anchor.kind ?? ''))
+    return { stages: base, note: '' };
+  const places = await lookupAreaPlaces(
+    { center: anchor, radiusKm: Math.max(10, anchor.radiusKm), activity },
+    opts.deadline
+  );
+  if (!places) return null;
+  // Lieux dits par la personne, cherchés sur la carte dans la zone (quatre au plus).
+  const waypoints: Array<{ name: string; lat: number; lon: number }> = [];
+  for (const w of opts.wishes.slice(0, 4)) {
+    if (LOOP_WISH.test(w) || wantsTraverse([w])) continue;
+    const found = await stageCandidates(w, { countryCode: anchor.countryCode, country: anchor.country }, anchor).catch(() => []);
+    const hit = pickPlace(
+      found.filter((f) => f.settlement || f.landmark),
+      { near: anchor, maxKm: anchor.radiusKm * 1.1 + 5, query: w, strict: true }
+    );
+    if (hit) waypoints.push({ name: stageTitleFor(w, hit.name), lat: hit.lat, lon: hit.lon });
+  }
+  const plan = planItinerary({
+    days,
+    activity,
+    center: anchor,
+    radiusKm: Math.max(10, anchor.radiusKm),
+    places,
+    waypoints,
+    shape,
+    nights: opts.nights,
+  });
+  if (!plan) return null;
+  // Itinérant figé sur un ou deux lieux : la carte n'en offre pas assez, on se replie.
+  const minPlaces = ITINERANT_ACTIVITIES.has(activity) ? (days >= 4 ? 3 : 2) : 1;
+  if (plan.distinct < minPlaces) return null;
+  const shapeText = plan.shape === 'traverse' ? 'en traversée' : plan.shape === 'loop' ? 'en boucle' : 'depuis une base';
+  return {
+    stages: plan.stages.map((st) => ({ day: st.day, name: st.name, lat: st.lat, lon: st.lon, move: st.move, note: st.note })),
+    note: `Itinéraire ${shapeText} construit sur des lieux réels de la carte (${plan.distinct} lieu${plan.distinct > 1 ? 'x' : ''} où dormir)${waypoints.length ? `, en passant par ${waypoints.map((w) => w.name).join(', ')}` : ''}.`,
+  };
 }
 
 function readAnchor(meta: Record<string, unknown>): Anchor | null {
@@ -554,7 +641,7 @@ export async function compasAutofillAction(
     // Itinéraire de secours (aucune proposition à temps) : retenté à l'ouverture suivante.
     let stagesFallback = resume?.stagesFallback ?? 0;
     const createdStepIds: string[] = [...(resume?.stepIds ?? [])];
-    let stagePlaces: Array<{ day: number; name: string; lat: number; lon: number; move: StageMove; note: string | null }> = [];
+    let stagePlaces: StagePlace[] = [];
     // Réadaptation : l'ancien itinéraire n'est remplacé que par un meilleur.
     const replacing = !resume ? (carry?.replaceStepIds ?? []) : [];
     const dropReplaced = async () => {
@@ -598,7 +685,27 @@ export async function compasAutofillAction(
           }
         }
       }
-      if (!routeSet) {
+      // Itinéraire déterministe d'abord : lieux réels de la zone, choisis par calcul.
+      // L'IA n'est consultée que si la zone est un pays entier ou que la carte ne répond pas.
+      const planned = routeSet
+        ? null
+        : await plannedStages({
+            anchor,
+            activity,
+            days,
+            scope: ctx.scope,
+            wishes: compas.preferences?.wishes ?? [],
+            nights: ctx.nights.value ?? null,
+            deadline: startedAt + 30_000,
+          }).catch((err) => {
+            console.warn('[compas] itinéraire calculé indisponible', err instanceof Error ? err.message : err);
+            return null;
+          });
+      if (planned) {
+        stagePlaces = planned.stages;
+        if (planned.note) notes.push(planned.note);
+      }
+      if (!routeSet && !planned) {
         const stagesPrompt = buildCompasStagesPrompt({
           destination: anchor.name,
           // Grand massif ou chaîne (Pyrénées, Alpes) : son « pays » n'est que
@@ -814,7 +921,8 @@ export async function compasAutofillAction(
             }
           }
         }
-
+      }
+      if (!routeSet) {
         // Distances réelles entre deux soirs (à pied, à vélo ou sur la route), en parallèle.
         const legs = await mapLimit(stagePlaces, 4, async (st, i) => {
           const prevPlace = i > 0 ? stagePlaces[i - 1] : null;
