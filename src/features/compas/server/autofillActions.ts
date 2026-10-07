@@ -57,6 +57,7 @@ import {
   type SourceShop,
   movesFromSteps,
 } from '../engine/autofill';
+import { shortHoursOf, tripLengthDays } from '../engine/tripContext';
 import { compasMeta, patchTripMetadata, readProfile, requireEditor, resplitSteps, tripBasis, tripPartySize, type Supa } from './compasServer';
 import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
 import { bestPeriod, monthName } from '../engine/period';
@@ -164,15 +165,6 @@ const STAGE_BIAS_MAX_KM = 120;
 const BORDER_MAX_KM = 300;
 /** Activités qui changent de lieu chaque jour ou presque : un itinéraire figé sur un lieu est un échec. */
 const ITINERANT_ACTIVITIES = new Set(['roadtrip', 'vanlife', 'trekking', 'cycling']);
-const MS_DAY = 86_400_000;
-
-function tripDays(start: string | null, end: string | null): number | null {
-  if (!start) return null;
-  const a = Date.parse(`${start}T12:00:00Z`);
-  const b = Date.parse(`${end ?? start}T12:00:00Z`);
-  if (!Number.isFinite(a) || !Number.isFinite(b) || b < a) return null;
-  return Math.round((b - a) / MS_DAY) + 1;
-}
 
 async function loadSteps(supabase: Supa, tripId: string): Promise<StepRow[]> {
   const { data } = await supabase
@@ -420,10 +412,8 @@ export async function compasAutofillAction(
     const { supabase, userId, trip } = auth;
     const meta = (trip.metadata ?? {}) as Record<string, unknown>;
     const compas = readCompasMeta(meta);
-    const planned = Number(compasMeta(meta).planned_days);
-    const days =
-      tripDays(trip.start_date, trip.end_date) ??
-      (Number.isInteger(planned) && planned >= 1 ? Math.min(60, planned) : null);
+    // Une seule règle pour les jours (dates, sinon durée retenue) : tripContext.
+    const days = tripLengthDays(trip.start_date, trip.end_date, compasMeta(meta).planned_days);
     if (!days) return { success: false, error: 'Dis-moi combien de jours, ou choisis les dates.' };
     const nightsCount = Math.max(0, days - 1);
     const party = await tripPartySize(supabase, trip);
@@ -492,7 +482,7 @@ export async function compasAutofillAction(
     const ctx = resolveProjectContext({
       activity,
       days,
-      hours: compas.durationHours,
+      hours: shortHoursOf(days, compas.durationHours),
       partySize: party,
       month: trip.start_date ? Number(trip.start_date.slice(5, 7)) : null,
       project: compas.preferences,
@@ -939,7 +929,7 @@ export async function compasAutofillAction(
     const nightCtx = resolveProjectContext({
       activity,
       days,
-      hours: compas.durationHours,
+      hours: shortHoursOf(days, compas.durationHours),
       partySize: party,
       month: trip.start_date ? Number(trip.start_date.slice(5, 7)) : null,
       maxAltitudeM: maxAltitude,

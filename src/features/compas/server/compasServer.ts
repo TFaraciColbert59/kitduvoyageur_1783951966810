@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import type { ProfileInput } from '../engine/projectContext';
 import { projectBasis, type ProjectBasis } from '../engine/dependencies';
 import { readCompasMeta } from '../engine/meta';
+import { partySizeOf, tripContextFromRow } from '../engine/tripContext';
 
 /**
  * Briques serveur partagées par les actions du Compas (droits, métadonnées,
@@ -64,11 +65,11 @@ export async function tripPartySize(
   supabase: Supa,
   trip: Pick<CompasTripRow, 'id' | 'user_id' | 'party_size'>
 ): Promise<number> {
-  if (trip.party_size != null && trip.party_size >= 1) return Math.min(20, trip.party_size);
+  if (trip.party_size != null && trip.party_size >= 1) return partySizeOf(trip.party_size);
   const { data } = await supabase.from('trip_collaborators').select('user_id').eq('trip_id', trip.id);
   const ids = new Set<string>([trip.user_id]);
   for (const row of (data ?? []) as Array<{ user_id: string | null }>) if (row.user_id) ids.add(row.user_id);
-  return Math.max(1, Math.min(20, ids.size));
+  return partySizeOf(null, ids.size);
 }
 
 /** Fusionne une clé dans trips.metadata sans écraser le reste. */
@@ -231,27 +232,13 @@ export function tripBasis(
   activity: string | null
 ): ProjectBasis {
   const meta = (trip.metadata ?? {}) as Record<string, unknown>;
-  const c = compasMeta(meta);
-  const a = (c.anchor ?? null) as Record<string, unknown> | null;
-  const lat = Number(a?.lat);
-  const lon = Number(a?.lon);
-  const anchor =
-    a && Number.isFinite(lat) && Number.isFinite(lon) ? { name: String(a.name ?? ''), lat, lon } : null;
-  const planned = Number(c.planned_days);
-  // Même lecture que le préremplissage : les dates, sinon la durée retenue sans date.
-  const a0 = trip.start_date ? Date.parse(`${trip.start_date}T12:00:00Z`) : NaN;
-  const b0 = trip.start_date ? Date.parse(`${trip.end_date ?? trip.start_date}T12:00:00Z`) : NaN;
-  const days =
-    Number.isFinite(a0) && Number.isFinite(b0) && b0 >= a0
-      ? Math.round((b0 - a0) / 86_400_000) + 1
-      : Number.isInteger(planned) && planned >= 1
-        ? planned
-        : null;
+  // Même lecture que le préremplissage et l'écran : une seule règle (tripContext).
+  const ctx = tripContextFromRow(trip, { activity });
   const compas = readCompasMeta(meta);
   return projectBasis({
-    anchor,
+    anchor: ctx.destination.anchor,
     destinationName: trip.destination_name,
-    days,
+    days: ctx.days,
     hours: compas.durationHours,
     startDate: trip.start_date,
     activity,

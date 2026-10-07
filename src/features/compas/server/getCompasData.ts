@@ -1,5 +1,6 @@
 import type { InventoryStatus } from '@/features/materiel/domain/inventory';
 import 'server-only';
+import { partySizeOf, shortHoursOf, tripLengthDays } from '../engine/tripContext';
 
 import type { FxRate } from '../engine/currency';
 import type { CompasPendingInvite } from '../engine/team';
@@ -600,8 +601,12 @@ export async function getCompasData(): Promise<CompasData | null> {
     context: resolveProjectContext({
       activity: trip.primary_activity ?? null,
       days: baseModel.dates.days ?? compasPlan(trip.metadata).plannedDays,
-      hours: baseModel.dates.hours != null && baseModel.dates.hours < 24 ? baseModel.dates.hours : null,
-      partySize: num(trip.party_size),
+      hours: shortHoursOf(
+        baseModel.dates.days ?? compasPlan(trip.metadata).plannedDays,
+        compasMeta.durationHours
+      ),
+      // Même groupe que l'écran et la préparation : party_size, sinon les membres.
+      partySize: partySizeOf(num(trip.party_size), members.length),
       month: trip.start_date ? Number(String(trip.start_date).slice(5, 7)) : null,
       maxAltitudeM: elevation?.maxM ?? null,
       project: compasMeta.preferences,
@@ -661,10 +666,9 @@ function compasPlan(metadata: unknown): {
   const compas =
     metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).compas : null;
   const c = compas && typeof compas === 'object' ? (compas as Record<string, unknown>) : {};
-  const days = Number(c.planned_days);
   const anchor = c.anchor && typeof c.anchor === 'object' ? (c.anchor as Record<string, unknown>) : null;
   return {
-    plannedDays: Number.isInteger(days) && days >= 1 ? days : null,
+    plannedDays: tripLengthDays(null, null, c.planned_days),
     anchorName: typeof anchor?.name === 'string' ? anchor.name : null,
     startSay: typeof c.start_say === 'string' && c.start_say.trim() ? c.start_say.trim().slice(0, 280) : null,
   };

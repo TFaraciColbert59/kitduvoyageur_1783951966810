@@ -1,4 +1,5 @@
 import { isInventoryAvailable, type InventoryStatus } from '@/features/materiel/domain/inventory';
+import { partySizeOf, shortHoursOf, tripLengthDays } from './tripContext';
 /**
  * Compas — modèle dérivé du préparateur.
  *
@@ -394,15 +395,9 @@ export function buildCompasModel(input: CompasInput): CompasModel {
   /* Dates */
   const start = parseDate(trip.startDate);
   const end = parseDate(trip.endDate);
-  const days =
-    start && end ? Math.max(1, Math.round((end.getTime() - start.getTime()) / MS_DAY) + 1) : null;
-  const shortHours =
-    trip.durationHours != null &&
-    trip.durationHours > 0 &&
-    trip.durationHours < 24 &&
-    (days == null || days === 1)
-      ? trip.durationHours
-      : null;
+  // Jours datés uniquement (la durée sans date est lue à part par l'écran) — règle unique.
+  const days = start && end ? tripLengthDays(trip.startDate, trip.endDate) : null;
+  const shortHours = shortHoursOf(days, trip.durationHours);
   const hours = shortHours ?? (days != null ? days * 24 : null);
 
   /* Préférences (valeurs par défaut explicites, jamais devinées) */
@@ -590,7 +585,7 @@ export function buildCompasModel(input: CompasInput): CompasModel {
   const shelterInKit = lines.some((l) => /tente|tarp|abri|hamac|bivy|bivouac/i.test(l.name));
 
   /* Budget */
-  const partySize = Math.max(1, trip.partySize ?? members.length);
+  const partySize = partySizeOf(trip.partySize, members.length);
   const planned = sumBy(
     input.expenses.filter((e) => e.isPlanned),
     (e) => e.amount
