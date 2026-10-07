@@ -536,6 +536,8 @@ describe('On dort dans une commune : monument, gare ou province remplacés', () 
     // Passage du 7 octobre au soir : étape « West Clare Municipal District » (Irlande).
     expect(sleepPlaceFix(photon('West Clare Municipal District', 'boundary', 'administrative', 'county'))).toEqual({ search: 'West Clare' });
     expect(sleepPlaceFix(photon('Kerry County', 'boundary', 'administrative', 'county'))).toEqual({ search: 'Kerry' });
+    // Un site dont la « commune » est une circonscription : cherché sous le nom nu.
+    expect(sleepPlaceFix(photon('Cliffs of Moher', 'tourism', 'attraction', 'house', { city: 'West Clare Municipal District' }))).toEqual({ search: 'West Clare' });
   });
   it('refuge, camping, lac, sommet et village restent l’étape', async () => {
     const { sleepPlaceFix } = await import('../engine/places');

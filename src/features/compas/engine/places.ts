@@ -428,9 +428,15 @@ export function sleepPlaceFix(place: CompasPlace): { locality: string } | { sear
     const bare = place.name.replace(ADMIN_PREFIX, '').replace(ADMIN_SUFFIX, '').trim();
     return bare && bare !== place.name ? { search: bare } : place.locality ? { locality: place.locality } : null;
   }
-  // Bâtiment, monument, gare, point d'intérêt : la commune qui le contient.
-  if (place.kind === 'house' || /^(historic|tourism|railway|amenity|building|leisure)=/.test(tag))
-    return place.locality && plainName(place.locality) !== plainName(place.name) ? { locality: place.locality } : null;
+  // Bâtiment, monument, gare, point d'intérêt : la commune qui le contient. Une
+  // « commune » administrative (Irlande : « West Clare Municipal District ») est
+  // cherchée sous son nom nu, jamais donnée telle quelle comme étape.
+  if (place.kind === 'house' || /^(historic|tourism|railway|amenity|building|leisure)=/.test(tag)) {
+    const loc = place.locality;
+    if (!loc || plainName(loc) === plainName(place.name)) return null;
+    const bare = loc.replace(ADMIN_PREFIX, '').replace(ADMIN_SUFFIX, '').trim();
+    return bare && bare !== loc ? { search: bare } : { locality: loc };
+  }
   return null;
 }
 
