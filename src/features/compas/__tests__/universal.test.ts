@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseIntentRules, planApplication, groundingIssue } from '../engine/intent';
 import { extractIntentJson } from '@/lib/ai/features/compasIntent';
 import { approachMode, keepRuleForActivity, movesFromSteps, nightsPrefFor, sanitizeAdvice, sanitizeStages, stagePlaceName } from '../engine/autofill';
-import { destinationRadiusKm, maxLegKm, parseNominatim, parsePhoton, pickDestination, pickPlace } from '../engine/places';
+import { destinationRadiusKm, homonymsFarApart, maxLegKm, parseNominatim, parsePhoton, pickDestination, pickPlace } from '../engine/places';
 
 const TODAY = '2026-10-02';
 const current = {
@@ -555,5 +555,24 @@ describe('Phrases du second tirage (50) : lecture sans IA', () => {
   });
   it('sentier nommé à l’anglaise : West Highland Way = trek', () => {
     expect(read('6 jours en Écosse sur la West Highland Way')).toMatchObject({ dest: 'Écosse', act: 'trekking', wishes: ['West Highland Way'] });
+  });
+});
+
+describe('homonymsFarApart — départager les homonymes', () => {
+  const base = { countryCode: 'FR', country: 'France', extent: null } as const;
+  it('« Mont Rose » : la colline de Marseille et le massif des Alpes', () => {
+    const list = [
+      { ...base, name: 'Mont Rose', lat: 43.23, lon: 5.35, kind: 'other', landmark: true },
+      { ...base, name: 'Mont Rose', lat: -66.66, lon: 140.0, kind: 'other', landmark: true },
+      { ...base, name: 'Massif du Mont Rose', lat: 46.04, lon: 7.86, kind: 'region' },
+    ];
+    expect(homonymsFarApart(list, 'Mont Rose')).toBe(true);
+  });
+  it('un seul lieu de ce nom (ou des homonymes voisins) : pas d’ambiguïté', () => {
+    const list = [
+      { ...base, name: 'Chamonix', lat: 45.92, lon: 6.87, kind: 'town', settlement: true },
+      { ...base, name: 'Chamonix', lat: 45.93, lon: 6.88, kind: 'locality' },
+    ];
+    expect(homonymsFarApart(list, 'Chamonix')).toBe(false);
   });
 });

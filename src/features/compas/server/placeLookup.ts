@@ -1,5 +1,5 @@
 import 'server-only';
-import { aliasMatches, parseNominatim, parsePhoton, pickDestination, type CompasPlace } from '../engine/places';
+import { aliasMatches, distanceKm, homonymsFarApart, parseNominatim, parsePhoton, pickDestination, type CompasPlace } from '../engine/places';
 import { cached, coordKey } from './sharedCache';
 
 /**
@@ -98,7 +98,14 @@ export async function lookupDestination(query: string): Promise<CompasPlace | nu
   const q = query.trim().slice(0, 80);
   if (q.length < 2) return null;
   const found = (await search(q, 8)) ?? [];
-  return pickDestination(found, q);
+  const pick = pickDestination(found, q);
+  // Homonymes éloignés : le lieu le plus connu qui porte ce nom (ou l'un de
+  // ses autres noms) l'emporte — « Mont Rose » est le massif des Alpes.
+  if (pick && homonymsFarApart(found, q)) {
+    const known = (await stageAliasCandidates(q, null)).find((p) => p.landmark || (p.settlementRank ?? 0) >= 2);
+    if (known && distanceKm(known, pick) > 50) return { ...known, name: q };
+  }
+  return pick;
 }
 
 /** Un lieu de base réel (ville, village) dans un pays donné, pour ancrer une destination. */

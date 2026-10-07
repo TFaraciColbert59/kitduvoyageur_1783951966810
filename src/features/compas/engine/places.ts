@@ -345,6 +345,18 @@ export function pickDestination(candidates: CompasPlace[], query: string): Compa
 }
 
 /**
+ * Plusieurs lieux portent ce nom, loin les uns des autres (« Mont Rose » : la
+ * colline de Marseille et le massif des Alpes) : le premier venu n'est pas
+ * forcément le bon, il faut départager (notoriété du lieu).
+ */
+export function homonymsFarApart(candidates: CompasPlace[], query: string, km = 100): boolean {
+  const want = plainName(query);
+  if (!want) return false;
+  const named = candidates.filter((c) => plainName(c.name) === want && !(WEAK_KINDS.has(c.kind) && !c.landmark));
+  return named.some((a, i) => named.slice(i + 1).some((b) => distanceKm(a, b) > km));
+}
+
+/**
  * Le nom affiché d'une étape : celui proposé quand la carte le porte (même nom,
  * ou nom plus long : « Chamonix » → « Chamonix-Mont-Blanc »), sinon celui de la
  * carte (« Villar-d'Arnave » proposé, « Villar-d'Arène » trouvé) : jamais un

@@ -4,19 +4,30 @@ import Link from 'next/link';
 import { TripInvitationsInbox } from './TripInvitations';
 import type { TripInvitationView } from '../server/invitationActions';
 import { useRouter } from 'next/navigation';
-import { useState, useTransition } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import Icon from '@/components/ui/Icon';
 import { COMPAS_STEPS } from '../engine/compasModel';
-import { parseIntentRules, type CompasActivity } from '../engine/intent';
+import { understandRequest, type RequestLine, type RequestPrecisions } from '../engine/request';
 import { activityLabel } from '../engine/format';
 import { compasCreateTripAction } from '../server/compasActions';
 import { ACTIVITY_FIRST, ACTIVITY_META, ACTIVITY_ORDER } from './CompasOuFlows';
 
+const LINE_ICON: Record<RequestLine['key'], string> = {
+  activite: 'compass',
+  lieu: 'map-pin',
+  quand: 'calendar',
+  groupe: 'users',
+  nuits: 'moon',
+  envies: 'heart',
+  budget: 'euro',
+};
+
 /**
- * Le Compas avant toute aventure (préparateur unique). Même écran que la
- * maquette, vide : rien n'est renseigné. Le premier geste (une activité, ou
- * une phrase dans « Dis-le ») crée l'aventure en brouillon et ouvre le
- * Compas complet. Sans compte : le geste mène à la connexion, puis revient.
+ * Le Compas avant toute aventure : « Où » est LA demande. Une phrase libre
+ * (le principal), un résumé « voici ce que j'ai compris » à la frappe, des
+ * précisions facultatives, puis « Préparer mon aventure » : le voyage est créé
+ * à ce moment-là et tout le reste se construit comme réponse, avec un
+ * chargement visible. Sans compte : le bouton mène à la connexion.
  */
 export function CompasStart({
   signedIn,
@@ -28,38 +39,38 @@ export function CompasStart({
 }) {
   const router = useRouter();
   const [text, setText] = useState('');
+  const [precise, setPrecise] = useState<RequestPrecisions>({});
   const [allActivities, setAllActivities] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  // « Voici ce que j'ai compris » : règles du Compas, à la frappe, sans réseau.
+  const understood = useMemo(() => understandRequest(text, today, precise), [text, today, precise]);
+  const ready = text.trim().length >= 2;
 
-  const create = (activity: CompasActivity, say?: string) => {
+  // La demande part entière : le voyage est créé à ce moment-là, avec elle ;
+  // la préparation (visible) commence dès l'ouverture du Compas.
+  const prepare = () => {
+    if (!ready || pending) return;
     if (!signedIn) {
       router.push(`/connexion?next=${encodeURIComponent('/compas')}`);
       return;
     }
     setError(null);
     startTransition(async () => {
-      // La phrase part avec la création : elle est gardée sur le voyage jusqu'à
-      // son application (quitter la page trop tôt ne la perd plus).
-      const res = await compasCreateTripAction({ activity, ...(say ? { say } : {}) });
+      const res = await compasCreateTripAction({ activity: understood.activity, say: understood.say.slice(0, 280) });
       if (!res.success) {
         setError(res.error ?? 'L’aventure n’a pas pu être créée.');
         return;
       }
-      // Quitter `?nouvelle=1` : sinon la page réaffiche le Compas vide et
-      // chaque toucher créerait un brouillon de plus.
+      // Quitter `?nouvelle=1` : sinon la page réaffiche le Compas vide.
       router.replace('/compas');
       router.refresh();
     });
   };
 
-  const onSay = () => {
-    const say = text.trim();
-    if (say.length < 2) return;
-    const today = new Date().toISOString().slice(0, 10);
-    const act = parseIntentRules(say, today).find((a) => a.type === 'set_activity');
-    create(act && act.type === 'set_activity' ? act.activity : 'mixed', say);
-  };
+  const setNum = (key: 'days' | 'party', value: number | null) =>
+    setPrecise((p) => ({ ...p, [key]: value }));
 
   return (
     <div className="compas compas--start">
@@ -90,97 +101,146 @@ export function CompasStart({
           </section>
         )}
 
-        <section className="cp-card cp-sheet-glass" aria-label="Nouvelle aventure">
+        <section className="cp-card cp-sheet-glass" aria-label="Ta demande">
           <div>
-            <h1 className="cp-t2">Nouvelle aventure</h1>
+            <h1 className="cp-t2">Où veux-tu aller ?</h1>
             <p className="cp-sub">
-              Rien n’est encore renseigné. Choisis une activité ou dis-le : l’aventure se crée et
-              tout le reste se prépare ici.
+              Décris ton aventure avec tes mots. Le Compas prépare tout le reste : parcours, dates,
+              nuits, trajet, kit, budget.
             </p>
           </div>
 
           <form
-            className="cp-intent"
-            aria-label="Dis-le : décris ton aventure"
+            className="cp-intent cp-ask"
+            aria-label="Ta demande"
             onSubmit={(e) => {
               e.preventDefault();
-              onSay();
+              prepare();
             }}
           >
-            <Icon name="search" size={15} aria-hidden="true" />
             <label className="sr-only" htmlFor="cp-start-say">
-              Dis-le
+              Ta demande
             </label>
-            <input
+            <textarea
               id="cp-start-say"
+              className="cp-ask__in"
               value={text}
-              maxLength={280}
+              maxLength={240}
+              rows={3}
               autoComplete="off"
               enterKeyHint="go"
-              placeholder="Dis-le : « 3 jours de rando à 4 dans le Vercors »"
+              placeholder="« 5 jours de trek dans le Vercors à 3, en refuge, début juillet »"
               onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                // Entrée prépare ; Maj + Entrée passe à la ligne.
+                if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+                  e.preventDefault();
+                  prepare();
+                }
+              }}
               disabled={pending}
             />
-          </form>
 
-          <div className="cp-tiles" role="group" aria-label="Activité">
-            {(allActivities ? ACTIVITY_ORDER : ACTIVITY_FIRST).map((a) => (
-              <button
-                key={a}
-                type="button"
-                className="cp-tile"
-                disabled={pending}
-                title={ACTIVITY_META[a].hint}
-                onClick={() => create(a)}
-              >
-                <Icon name={ACTIVITY_META[a].icon} size={22} />
-                <span>{activityLabel(a)}</span>
-              </button>
-            ))}
-            {!allActivities && (
-              <button
-                type="button"
-                className="cp-tile"
-                disabled={pending}
-                aria-expanded={false}
-                onClick={() => setAllActivities(true)}
-              >
-                <Icon name="more-horizontal" size={22} />
-                <span>Plus</span>
-              </button>
+            {ready && (
+              <div aria-live="polite">
+                <p className="cp-understood__h">Voici ce que j’ai compris</p>
+                <div className="cp-fsum cp-glass">
+                  {understood.lines.map((l) => (
+                    <div key={l.key} className="cp-fr" data-state={l.state}>
+                      <span className="cp-fr__i">
+                        <Icon name={LINE_ICON[l.key]} size={15} />
+                      </span>
+                      <span className="cp-fr__l">{l.label}</span>
+                      <span className="cp-fr__v">
+                        <span>{l.value}</span>
+                      </span>
+                      <span aria-hidden="true" />
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
-          </div>
 
-          <div className="cp-fsum cp-glass">
-            {(
-              [
-                ['route', 'Parcours'],
-                ['calendar', 'Quand'],
-                ['heart', 'Préférences'],
-                ['backpack', 'Sac'],
-              ] as const
-            ).map(([icon, label]) => (
-              <button key={label} type="button" className="cp-fr" disabled>
-                <span className="cp-fr__i">
-                  <Icon name={icon} size={15} />
-                </span>
-                <span className="cp-fr__l">{label}</span>
-                <span className="cp-fr__v">
-                  <span>Non renseigné</span>
-                </span>
-                <Icon name="chevron-right" size={12} />
-              </button>
-            ))}
-          </div>
+            <details className="cp-precise">
+              <summary>Préciser (facultatif)</summary>
+              <div className="cp-tiles" role="group" aria-label="Activité">
+                {(allActivities ? ACTIVITY_ORDER : ACTIVITY_FIRST).map((a) => (
+                  <button
+                    key={a}
+                    type="button"
+                    className="cp-tile"
+                    disabled={pending}
+                    aria-pressed={precise.activity === a}
+                    title={ACTIVITY_META[a].hint}
+                    onClick={() => setPrecise((p) => ({ ...p, activity: p.activity === a ? null : a }))}
+                  >
+                    <Icon name={ACTIVITY_META[a].icon} size={22} />
+                    <span>{activityLabel(a)}</span>
+                  </button>
+                ))}
+                {!allActivities && (
+                  <button
+                    type="button"
+                    className="cp-tile"
+                    disabled={pending}
+                    aria-expanded={false}
+                    onClick={() => setAllActivities(true)}
+                  >
+                    <Icon name="more-horizontal" size={22} />
+                    <span>Plus</span>
+                  </button>
+                )}
+              </div>
+              {(
+                [
+                  ['days', 'Durée', 'jour', 'jours', 60],
+                  ['party', 'Personnes', 'personne', 'personnes', 20],
+                ] as const
+              ).map(([key, label, one, many, max]) => {
+                const v = precise[key] ?? null;
+                return (
+                  <div key={key} className="cp-precise__row">
+                    <span>{label}</span>
+                    <span className="cp-stepper" role="group" aria-label={label}>
+                      <button
+                        type="button"
+                        className="cp-ibtn cp-ibtn--sm cp-glass"
+                        aria-label={`${label} : moins`}
+                        disabled={pending || v == null}
+                        onClick={() => setNum(key, v != null && v > 1 ? v - 1 : null)}
+                      >
+                        <Icon name="minus" size={14} />
+                      </button>
+                      <output aria-live="polite">{v == null ? 'auto' : `${v} ${v > 1 ? many : one}`}</output>
+                      <button
+                        type="button"
+                        className="cp-ibtn cp-ibtn--sm cp-glass"
+                        aria-label={`${label} : plus`}
+                        disabled={pending || (v ?? 0) >= max}
+                        onClick={() => setNum(key, (v ?? 0) + 1)}
+                      >
+                        <Icon name="plus" size={14} />
+                      </button>
+                    </span>
+                  </div>
+                );
+              })}
+            </details>
+
+            <button
+              type="submit"
+              className="cp-btn cp-btn--pg cp-btn--block"
+              disabled={!ready || pending}
+              aria-busy={pending}
+            >
+              <Icon name="sparkles" size={16} />
+              {pending ? 'Création de l’aventure…' : 'Préparer mon aventure'}
+            </button>
+          </form>
 
           {error && (
             <p className="cp-note" role="alert">
               {error}
-            </p>
-          )}
-          {pending && (
-            <p className="cp-note" role="status">
-              Création de l’aventure…
             </p>
           )}
           {!signedIn && (

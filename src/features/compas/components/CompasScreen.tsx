@@ -34,6 +34,10 @@ import { buildCompasSnapshot, snapshotFingerprint, warmOfflinePage } from '../of
 import { CompasSheet, type Detent } from './CompasSheet';
 import { SheetContent, sheetTitle } from './CompasSheets';
 import type { ActionResult, CompasCtl, SheetState, StepFlow } from './compasTypes';
+import { CompasPrep, type PrepState } from './CompasPrep';
+import { planApplication } from '../engine/intent';
+import { applyCurrent, runOps } from './compasApply';
+import { compasClearStartSayAction, compasInterpretAction } from '../server/compasActions';
 
 const DISPLAY_KEY = 'lkdv.compas.affichage';
 const LAYERS_KEY = 'lkdv.compas.calques';
@@ -310,15 +314,38 @@ export function CompasScreen({
   const autofillRetried = useRef(false);
   /** Une relance différée après la limite de fréquence, pas plus. */
   const autofillDeferred = useRef(false);
+  // Préparation pilotée depuis la demande (« Où ») : un panneau montre chaque
+  // étape. « Arrêter » garde ce qui est fait et n'enchaîne pas la suite.
+  const [prep, setPrepState] = useState<PrepState | null>(null);
+  const prepRef = useRef<PrepState | null>(null);
+  const setPrep = useCallback((next: PrepState | null) => {
+    prepRef.current = next;
+    setPrepState(next);
+  }, []);
+  /** Étape en cours, pour dire où une erreur ou un arrêt a eu lieu. */
+  const prepAt = () => {
+    const st = prepRef.current?.stage;
+    return st === 'understand' || st === 'itinerary' || st === 'rest' ? st : prepRef.current?.at;
+  };
+  const prepFail = useCallback(
+    (message: string) => {
+      if (prepRef.current && prepRef.current.stage !== 'stopped')
+        setPrep({ stage: 'error', at: prepAt(), message });
+    },
+    [setPrep]
+  );
+  const stopped = useRef(false);
   const autofill = useCallback((redo?: { label: string; kept: string[] }) => {
     if (autofillRunning.current) return;
     autofillRunning.current = true;
     if (toastTimer.current) clearTimeout(toastTimer.current);
-    setToast(
-      redo
-        ? { message: 'Je réadapte ton aventure…', sub: redo.label }
-        : { message: 'Je prépare ton aventure…', sub: 'Nuits, trajet, kit et budget' }
-    );
+    if (prepRef.current) setPrep({ stage: 'itinerary' });
+    else
+      setToast(
+        redo
+          ? { message: 'Je réadapte ton aventure…', sub: redo.label }
+          : { message: 'Je prépare ton aventure…', sub: 'Nuits, trajet, kit et budget' }
+      );
     setRunning(true);
     const position = new Promise<{ lat: number; lon: number } | null>((resolve) => {
       if (typeof navigator === 'undefined' || !navigator.geolocation) return resolve(null);
@@ -353,14 +380,19 @@ export function CompasScreen({
         });
         if (!first.success || 'summary' in first) return first;
         if ('pending' in first && first.stepsCreated > 0) {
-          notify('Itinéraire prêt · je prépare les nuits, le kit et le budget…');
+          if (prepRef.current) setPrep({ stage: 'rest' });
+          else notify('Itinéraire prêt · je prépare les nuits, le kit et le budget…');
           startTransition(() => router.refresh());
-        }
+        } else if (prepRef.current) setPrep({ stage: 'rest' });
+        // Arrêtée : l'itinéraire écrit reste, la suite n'est pas lancée.
+        if (stopped.current) return null;
         const from = await position;
         return compasAutofillAction({ tripId: model.tripId, tripSlug: model.slug, from, phase: 'rest' });
       })
       .then((res) => {
+        if (!res) return;
         if (!res.success) {
+          prepFail(res.error);
           // Limite de fréquence : l'aventure n'est pas laissée vide, la
           // préparation repart seule à la fin de la fenêtre (une fois).
           if (res.retryInS && !autofillDeferred.current) {
@@ -371,6 +403,12 @@ export function CompasScreen({
           return notify(res.error, 'bad');
         }
         if (!('summary' in res)) {
+          if (prepRef.current)
+            setPrep({
+              stage: 'stopped',
+              at: 'rest',
+              message: 'Une autre préparation de cette aventure est en cours (autre onglet) : la page se mettra à jour seule.',
+            });
           // Une autre préparation du même voyage est en cours (autre onglet,
           // écran remonté) : on relit le voyage quand elle aura écrit.
           for (const wait of [20_000, 45_000, 90_000]) setTimeout(() => startTransition(() => router.refresh()), wait);
@@ -381,6 +419,12 @@ export function CompasScreen({
             compasUndoAutofillAction({ tripId: model.tripId, tripSlug: model.slug })
           );
         const done = redo ? redo.label : 'Aventure préparée';
+        if (prepRef.current && prepRef.current.stage !== 'stopped')
+          setPrep({
+            stage: 'done',
+            total: res.summary.total > 0 ? `Budget ${formatMoney(res.summary.total, 'EUR')}` : null,
+            digest: autofillDigest(res.summary),
+          });
         notify(
           res.summary.total > 0 ? `${done} · ${formatMoney(res.summary.total, 'EUR')}` : done,
           undefined,
@@ -390,6 +434,11 @@ export function CompasScreen({
         startTransition(() => router.refresh());
       })
       .catch(() => {
+        prepFail(
+          autofillRetried.current
+            ? 'Connexion perdue : ce qui est fait est gardé. Reprends quand tu veux.'
+            : 'Préparation coupée : je reprends dans une minute, ce qui est fait est gardé.'
+        );
         if (autofillRetried.current) return notify('Connexion perdue : préparation interrompue.', 'bad');
         // Le serveur a coupé (limite de temps) ou le réseau a sauté : ce qui est
         // écrit reste, on reprend une fois là où ça s'est arrêté.
@@ -401,7 +450,7 @@ export function CompasScreen({
         autofillRunning.current = false;
         setRunning(false);
       });
-  }, [model.tripId, model.slug, model.destination, data.context?.scope, data.anchorName, notify, router]);
+  }, [model.tripId, model.slug, model.destination, data.context?.scope, data.anchorName, notify, router, setPrep, prepFail]);
   const autofillRef = useRef(autofill);
   autofillRef.current = autofill;
 
@@ -432,7 +481,7 @@ export function CompasScreen({
       data.context?.scope !== 'sortie'
     )
       return;
-    if (autofillStarted.current === model.tripId) return;
+    if (autofillStarted.current === model.tripId || stopped.current) return;
     autofillStarted.current = model.tripId;
     autofill();
   }, [data, model, autofill]);
@@ -507,16 +556,54 @@ export function CompasScreen({
   }, []);
   const back = useCallback(() => setStack((s) => s.slice(0, -1)), []);
 
-  // Phrase tapée dans le Compas vide : gardée sur le voyage tant qu'elle n'est
-  // pas appliquée, comprise ici dans le tiroir Où (une fois par ouverture).
-  // Partie avant d'être appliquée, elle est reprise à la prochaine visite.
+  // La demande (« Où ») : gardée sur le voyage tant qu'elle n'est pas
+  // appliquée. Comprise ici, appliquée d'un geste, puis la préparation suit
+  // (panneau visible). Partie avant d'être appliquée, elle est reprise à la
+  // prochaine visite.
   const startSaid = useRef<string | null>(null);
   const startSay = data.canEdit ? (data.startSay ?? null) : null;
+  const ctlRef = useRef<CompasCtl | null>(null);
+  const understand = useCallback(
+    async (say: string) => {
+      stopped.current = false;
+      setPrep({ stage: 'understand' });
+      try {
+        const res = await compasInterpretAction({ tripId: model.tripId, text: say });
+        if (stopped.current) return;
+        if (!res.success) return prepFail(res.error);
+        const ctl = ctlRef.current;
+        if (!ctl) return prepFail('Écran pas encore prêt : réessaie.');
+        // Tout ce qui est compris et valide est appliqué ; le parcours du
+        // catalogue est choisi par la préparation (pas de tiroir à ouvrir).
+        const actions = res.proposals.filter((p) => p.ok && p.action.type !== 'search_route').map((p) => p.action);
+        const ops = planApplication(actions, applyCurrent(ctl)).filter((o) => o.op !== 'route');
+        if (ops.length) {
+          const done = await runOps(ctl, ops);
+          if (!done.success) return prepFail(done.error ?? 'Ta demande n’a pas pu être appliquée : réessaie.');
+        }
+        await compasClearStartSayAction({ tripId: model.tripId }).catch(() => undefined);
+        setPrep({ stage: 'itinerary' });
+        startTransition(() => router.refresh());
+      } catch {
+        prepFail('Connexion perdue : ta demande est gardée, reprends quand tu veux.');
+      }
+    },
+    [model.tripId, router, setPrep, prepFail]
+  );
   useEffect(() => {
     if (!startSay || startSaid.current === model.tripId) return;
     startSaid.current = model.tripId;
-    open({ kind: 'step', step: 'ou', flow: 'activite', hint: { say: startSay, start: true } });
-  }, [open, startSay, model.tripId]);
+    void understand(startSay);
+  }, [understand, startSay, model.tripId]);
+
+  // Demande comprise mais incomplète : la préparation ne peut pas partir, on le dit.
+  useEffect(() => {
+    if (prep?.stage !== 'itinerary' || startSay || autofillRunning.current || data.autofill !== 'none') return;
+    if (!(model.dates.start || data.plannedDays))
+      return prepFail('Il me manque la durée : dis « 3 jours » ou choisis des dates.');
+    if (!(model.destination || data.anchorName || data.itinerary.length || data.origin) && data.context?.scope !== 'sortie')
+      prepFail('Je n’ai pas trouvé où tu pars : précise le lieu (« dans le Vercors », « au Pérou »…).');
+  }, [prep?.stage, startSay, data, model.dates.start, model.destination, prepFail]);
 
   const close = useCallback(() => setStack([]), []);
   const enlarge = useCallback(
@@ -560,6 +647,7 @@ export function CompasScreen({
     notify: (message, tone, sub) => notify(message, tone, undefined, sub),
     autofill,
   };
+  ctlRef.current = ctl;
 
   const decision = model.nextDecision;
   const followDecision = () => {
@@ -822,6 +910,31 @@ export function CompasScreen({
         >
           <SheetContent sheet={top.sheet} ctl={ctl} />
         </CompasSheet>
+      )}
+
+      {prep && (
+        <CompasPrep
+          prep={prep}
+          onStop={() => {
+            stopped.current = true;
+            setPrep({ stage: 'stopped', at: prepAt(), message: 'Ce qui est fait est gardé. Reprends quand tu veux.' });
+          }}
+          onClose={() => setPrep(null)}
+          onRetry={() => {
+            const at = prepRef.current?.at;
+            stopped.current = false;
+            if (at === 'understand' && startSay) return void understand(startSay);
+            autofillRetried.current = false;
+            setPrep({ stage: 'itinerary' });
+            autofill();
+          }}
+          onEditRequest={() => {
+            setPrep(null);
+            setStep('ou');
+            setStack([]);
+            open({ kind: 'step', step: 'ou', flow: 'activite', ...(startSay ? { hint: { say: startSay, start: true } } : {}) });
+          }}
+        />
       )}
 
       {toast && (
