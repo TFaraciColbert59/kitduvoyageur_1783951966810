@@ -333,7 +333,7 @@ async function plannedStages(opts: {
   wishes: string[];
   nights: string | null;
   deadline: number;
-}): Promise<{ stages: StagePlace[]; note: string } | null> {
+}): Promise<{ stages: StagePlace[]; note: string } | { fallback: string } | null> {
   const { anchor, activity, days } = opts;
   // Road trip et van : une région entière se parcourt en voiture ; à pied ou à
   // vélo, au-delà d'un massif, il faut savoir où sont les grands itinéraires.
@@ -371,7 +371,7 @@ async function plannedStages(opts: {
     { center: anchor, radiusKm: zoneKm, activity },
     opts.deadline
   );
-  if (!places) return null;
+  if (!places) return { fallback: 'lieux de la zone indisponibles (service de carte injoignable)' };
   // Lieux dits par la personne, cherchés sur la carte dans la zone (quatre au plus).
   const waypoints: Array<{ name: string; lat: number; lon: number }> = [];
   for (const w of opts.wishes.slice(0, 4)) {
@@ -394,10 +394,11 @@ async function plannedStages(opts: {
     natural,
     nights: opts.nights,
   });
-  if (!plan) return null;
+  if (!plan) return { fallback: `trop peu de lieux où dormir dans la zone (${places.length} trouvés)` };
   // Itinérant figé sur un ou deux lieux : la carte n'en offre pas assez, on se replie.
   const minPlaces = ITINERANT_ACTIVITIES.has(activity) ? (days >= 4 ? 3 : 2) : 1;
-  if (plan.distinct < minPlaces) return null;
+  if (plan.distinct < minPlaces)
+    return { fallback: `${plan.distinct} lieu(x) où dormir seulement à distance d’étape (${places.length} lieux dans la zone)` };
   const shapeText = plan.shape === 'traverse' ? 'en traversée' : plan.shape === 'loop' ? 'en boucle' : 'depuis une base';
   return {
     stages: plan.stages.map((st) => ({ day: st.day, name: st.name, lat: st.lat, lon: st.lon, move: st.move, note: st.note })),
@@ -726,15 +727,18 @@ export async function compasAutofillAction(
             wishes: compas.preferences?.wishes ?? [],
             nights: ctx.nights.value ?? null,
             deadline: startedAt + 30_000,
-          }).catch((err) => {
-            console.warn('[compas] itinéraire calculé indisponible', err instanceof Error ? err.message : err);
-            return null;
-          });
-      if (planned) {
-        stagePlaces = planned.stages;
-        if (planned.note) notes.push(planned.note);
+          }).catch((err) => ({
+            fallback: `erreur de calcul (${err instanceof Error ? err.message.slice(0, 80) : 'inconnue'})`,
+          }));
+      const plannedOk = planned && 'stages' in planned ? planned : null;
+      if (plannedOk) {
+        stagePlaces = plannedOk.stages;
+        if (plannedOk.note) notes.push(plannedOk.note);
+      } else if (planned && 'fallback' in planned) {
+        console.warn('[compas] itinéraire calculé : repli', planned.fallback);
+        notes.push(`Itinéraire calculé impossible : ${planned.fallback}. Itinéraire proposé par le spécialiste, chaque lieu vérifié sur la carte.`);
       }
-      if (!routeSet && !planned) {
+      if (!routeSet && !plannedOk) {
         const stagesPrompt = buildCompasStagesPrompt({
           destination: anchor.name,
           // Grand massif ou chaîne (Pyrénées, Alpes) : son « pays » n'est que
