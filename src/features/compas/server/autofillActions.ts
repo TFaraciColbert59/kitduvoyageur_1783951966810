@@ -62,7 +62,7 @@ import { compasMeta, patchTripMetadata, readProfile, requireEditor, resplitSteps
 import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
 import { bestPeriod, monthName } from '../engine/period';
 import { partsText, retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
-import { lookupDestination, lookupMassif, lookupReverse, stageAliasCandidates, stageCandidates } from './placeLookup';
+import { lookupDestination, lookupMassif, lookupNatural, lookupReverse, stageAliasCandidates, stageCandidates } from './placeLookup';
 import { lookupAreaPlaces, lookupStagePois } from './stagePoiLookup';
 import {
   keepAdminArea,
@@ -319,6 +319,10 @@ const PLANNED_MAX_KM = 150;
 const SETTLEMENT_KINDS = new Set(['city', 'town', 'village', 'hamlet', 'suburb', 'municipality', 'borough', 'quarter', 'neighbourhood']);
 /** Entités administratives qui peuvent porter le nom d'un massif. */
 const ADMIN_ANCHOR_KINDS = new Set(['county', 'state', 'region', 'province', 'district']);
+/** Activités de plein air : une destination y est un massif, un parc, un fleuve plutôt qu'un quartier. */
+const OUTDOOR_ACTIVITIES = new Set(['hiking', 'trekking', 'trail', 'running', 'climbing', 'mountaineering', 'ski', 'bivouac', 'bushcraft', 'cycling', 'water']);
+/** Lieux lus « administratifs » ou « urbains » qu'un lieu naturel du même nom remplace. */
+const REPLACEABLE_ANCHOR_KINDS = new Set(['county', 'state', 'region', 'province', 'district', 'suburb', 'quarter', 'neighbourhood', 'city_district', 'borough']);
 /** Natures OSM d'un lieu naturel : on en fait le tour plutôt que le traverser. */
 const NATURAL_KINDS = new Set(['water', 'lake', 'peak', 'island', 'islet', 'bay', 'mountain_range', 'volcano', 'glacier']);
 const LOOP_WISH = /\btour d(?:u|e|es|['’])|\bautour\b|\bboucle\b/i;
@@ -737,6 +741,35 @@ export async function compasAutofillAction(
     if (!anchor && trip.destination_name) {
       const place = await lookupDestination(trip.destination_name);
       if (place) anchor = { ...place, radiusKm: destinationRadiusKm(place) };
+    }
+    // Plein air, destination lue comme un quartier ou un département
+    // (« Chartreuse » : un quartier de Toulouse ; « Loire » : le département de
+    // Saint-Étienne pour un voyage à vélo le long du fleuve) : le lieu naturel
+    // du même nom dans le pays (massif, parc, fleuve). Gardé sur le voyage :
+    // carte, météo et trajet s'en servent aussi.
+    if (anchor && OUTDOOR_ACTIVITIES.has(activity) && REPLACEABLE_ANCHOR_KINDS.has(anchor.kind ?? '')) {
+      const nat = await lookupNatural(anchor.name, anchor.countryCode, activity === 'cycling' || activity === 'water').catch(() => null);
+      if (nat) {
+        anchor = { ...anchor, lat: nat.lat, lon: nat.lon, kind: 'other', extent: nat.extent, radiusKm: destinationRadiusKm(nat) };
+        const fixed = anchor;
+        const md = await patchTripMetadata(supabase, tripId, (m) => ({
+          ...m,
+          compas: {
+            ...compasMeta(m),
+            anchor: {
+              name: fixed.name,
+              lat: Math.round(fixed.lat * 1e5) / 1e5,
+              lon: Math.round(fixed.lon * 1e5) / 1e5,
+              countryCode: fixed.countryCode,
+              country: fixed.country,
+              kind: fixed.kind,
+              extent: fixed.extent,
+            },
+          },
+        }));
+        await supabase.from('trips').update({ metadata: md }).eq('id', tripId);
+        notes.push(`« ${nat.name} » retenu pour ${anchor.name} (lieu naturel, adapté à l’activité).`);
+      }
     }
     // Aucun lieu dit : on part de la position partagée (une sortie autour de
     // soi, ou un voyage « près de chez toi »), et on le dit.

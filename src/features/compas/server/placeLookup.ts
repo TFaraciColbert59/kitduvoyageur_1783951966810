@@ -1,5 +1,5 @@
 import 'server-only';
-import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, pickDestination, type CompasPlace } from '../engine/places';
+import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, pickDestination, pickNatural, type CompasPlace } from '../engine/places';
 import { cached, coordKey } from './sharedCache';
 import { geoapifyReverse, geoapifySearch } from './geoapify';
 
@@ -204,4 +204,27 @@ export async function lookupReverse(lat: number, lon: number): Promise<CompasPla
     return geoapifyReverse(lat, lon);
   });
   return places?.[0] ?? null;
+}
+
+/** Lieux naturels seulement (massifs, régions naturelles, parcs, réserves, rivières). */
+const NATURAL_TAGS = ['natural', 'boundary:protected_area', 'boundary:national_park', 'place:region', 'leisure:nature_reserve', 'waterway:river']
+  .map((t) => `&osm_tag=${t}`)
+  .join('');
+
+/**
+ * Le lieu naturel de ce nom dans le pays (voir `pickNatural`), pour une
+ * activité de plein air dont la destination a été lue comme un quartier ou un
+ * département. Carte injoignable ou rien de naturel : null.
+ */
+export async function lookupNatural(name: string, countryCode: string | null, rivers = false): Promise<CompasPlace | null> {
+  const q = name.trim().slice(0, 60);
+  if (q.length < 3) return null;
+  const found = await cached('place', `natural:v1:${plain(q)}`, PLACE_TTL_S, async () => {
+    const payload = await fetchJson(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=10&lang=fr${NATURAL_TAGS}`, {
+      Accept: 'application/json',
+    });
+    const list = payload == null ? null : parsePhoton(payload);
+    return list && list.length ? list : null;
+  });
+  return pickNatural(found ?? [], q, countryCode, rivers);
 }

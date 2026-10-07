@@ -478,3 +478,45 @@ export function parseGeoapify(payload: unknown): CompasPlace[] {
   }
   return out;
 }
+
+/** Étiquettes OSM d'un lieu naturel, du plus « destination » au moins. */
+const NATURAL_TAG_RANK: Array<[RegExp, number]> = [
+  [/^place=region$/, 0],
+  [/^natural=mountain_range$/, 0],
+  [/^boundary=(national_park|protected_area)$/, 1],
+  [/^leisure=nature_reserve$/, 2],
+  [/^waterway=river$/, 3],
+  [/^natural=/, 4],
+];
+const extentArea = (p: CompasPlace) =>
+  p.extent ? Math.abs((p.extent[2] - p.extent[0]) * (p.extent[1] - p.extent[3])) : 0;
+
+/**
+ * Le lieu naturel qu'une activité de plein air vise sous ce nom (« Chartreuse »
+ * le massif, pas le quartier de Toulouse ; « Loire » le fleuve pour le vélo ;
+ * « Jura » le parc du Haut-Jura ; « Calanques » le parc national) : dans le
+ * pays, avec une emprise, au nom exact d'abord puis contenant le nom ; un
+ * massif ou une région naturelle avant un parc, un parc avant une rivière ; à
+ * égalité, le plus étendu. Les rivières seulement si `rivers` (vélo, eau).
+ */
+export function pickNatural(
+  candidates: CompasPlace[],
+  query: string,
+  countryCode: string | null,
+  rivers = false
+): CompasPlace | null {
+  const core = nameCore(query);
+  if (core.length < 3) return null;
+  const rank = (p: CompasPlace) => NATURAL_TAG_RANK.find(([re]) => re.test(p.osmTag ?? ''))?.[1] ?? 9;
+  const usable = candidates.filter(
+    (p) =>
+      p.extent &&
+      (!countryCode || p.countryCode === countryCode) &&
+      rank(p) < 9 &&
+      (rivers || !/^waterway=/.test(p.osmTag ?? ''))
+  );
+  const exact = usable.filter((p) => nameCore(p.name) === core);
+  const containing = usable.filter((p) => ` ${nameCore(p.name)} `.includes(` ${core} `));
+  const order = (list: CompasPlace[]) => [...list].sort((a, b) => rank(a) - rank(b) || extentArea(b) - extentArea(a));
+  return order(exact)[0] ?? order(containing)[0] ?? null;
+}
