@@ -529,3 +529,31 @@ describe('On dort dans une commune : monument, gare ou province remplacés', () 
     expect(aliasMatches(station, 'Cusco')).toBe(false);
   });
 });
+
+describe('Phrases du second tirage (50) : lecture sans IA', () => {
+  const read = (t: string) => {
+    const a = parseIntentRules(t, '2026-10-07');
+    return {
+      dest: (a.find((x) => x.type === 'set_destination') as { place: string } | undefined)?.place,
+      act: (a.find((x) => x.type === 'set_activity') as { activity: string } | undefined)?.activity,
+      wishes: a.filter((x) => x.type === 'wish').map((x) => (x as { label: string }).label),
+    };
+  };
+  it('le mot qui suit le lieu ne s’y colle pas', () => {
+    expect(read('une semaine de kayak en Grèce budget 1200 €').dest).toBe('Grèce');
+    expect(read('10 jours en Thaïlande plage et temples').dest).toBe('Thaïlande');
+    expect(read('trek 7 jours au Maroc dans le Haut Atlas sans voiture')).toMatchObject({ dest: 'Maroc', wishes: ['Haut Atlas'] });
+    expect(read('une semaine au Maroc dans le désert')).toMatchObject({ dest: 'Maroc', wishes: ['désert'] });
+  });
+  it('« trek du », « autour d’ », et sans préposition après le genre de voyage', () => {
+    expect(read('trek du Kilimandjaro 7 jours')).toMatchObject({ dest: 'Kilimandjaro', act: 'trekking' });
+    expect(read('sortie vélo 60 km dimanche autour d’Annecy').dest).toBe('Annecy');
+    expect(read('road trip Norvège fjords 2 semaines')).toMatchObject({ dest: 'Norvège', act: 'roadtrip' });
+    expect(read('city trip Tokyo et Kyoto 8 jours').dest).toBe('Tokyo');
+    // Pas de nom propre après « rando avec » : pas de destination inventée.
+    expect(read('rando avec Paul demain').dest).toBeUndefined();
+  });
+  it('sentier nommé à l’anglaise : West Highland Way = trek', () => {
+    expect(read('6 jours en Écosse sur la West Highland Way')).toMatchObject({ dest: 'Écosse', act: 'trekking', wishes: ['West Highland Way'] });
+  });
+});

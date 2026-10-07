@@ -256,7 +256,7 @@ function clean(fragment: string, max = 40): string {
 /** Coupe un fragment au premier mot qui ouvre une autre idée. */
 function upToBreak(fragment: string): string {
   const cut = fragment.search(
-    /\s(?:et|puis|mais|pour|avec|en|du|le|la|a|au|à|on|depart|départ|des|dès)\s|\s(?:lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|demain|ce|cette|prochain|prochaine)(?=\s|$)|[,.;!?]|\d/i
+    /\s(?:et|puis|mais|pour|avec|sans|en|du|le|la|a|au|à|on|depart|départ|des|dès)\s|\s(?:lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|demain|ce|cette|prochain|prochaine)(?=\s|$)|[,.;!?]|\d/i
   );
   return cut >= 0 ? fragment.slice(0, cut) : fragment;
 }
@@ -501,7 +501,7 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     [/\b(city ?trip|citytrip)\b/, 'citytrip'],
     [/\b(plage|plages|farniente|bord de mer|baignade|beach)\b/, 'beach'],
     [/\b(rando|randos|randonnee|randonnees|hiking|hike)\b/, 'hiking'],
-    [/\btreks?\b|\btrekking\b|\bgr ?\d{1,3}\b|\btraversee\b|\btour du mont|\bchemin de l'inca\b|\binca trail\b|\bcompostelle\b/, 'trekking'],
+    [/\btreks?\b|\btrekking\b|\bgr ?\d{1,3}\b|\btraversee\b|\btour du mont|\bchemin de l'inca\b|\binca trail\b|\bcompostelle\b|\b[a-z]+ way\b|\bkilimandjaro\b/, 'trekking'],
     [/\broad ?trip\b/, 'roadtrip'],
     [/\bbushcraft\b/, 'bushcraft'],
     [/\b(culturel|culturelle|musees?)\b/, 'cultural'],
@@ -557,7 +557,7 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
   // « in the Swiss Alps » ; un nom commun de lieu (« lac », « calanques ») suivi
   // d'un nom propre compte (« dans les calanques de Marseille »).
   for (const m of plain.matchAll(
-    /(?:^|[\s,(])(?:(?:a|dans|sur|autour de) l'\s*|(?:au|aux|en|in the|in|a la|a|dans le|dans la|dans les|sur le|sur la|sur les|autour du|autour de|autour des|(?:traversee|tour) (?:des|du|de la))\s+)/g
+    /(?:^|[\s,(])(?:(?:a|dans|sur|autour de) l'\s*|autour d'\s*|(?:au|aux|en|in the|in|a la|a|dans le|dans la|dans les|sur le|sur la|sur les|autour du|autour de|autour des|(?:traversee|tour|trek|ascension|circuit|rando|randonnee|boucle) (?:des|du|de la))\s+)/g
   )) {
     const at = (m.index ?? 0) + m[0].length;
     const original = src.slice(at, at + 60);
@@ -570,14 +570,14 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
         // Fin du nom : un mot qui ouvre une autre idée (durée, date, compagnie).
         // « du », « le », « la » ne coupent que devant un nombre (« Afrique du Sud »,
         // mais « Vercors du 3 au 10 juin »).
-        /\s(?:(?:du|le|la|les)(?=\s+\d)|pour|avec|en|a|à|à partir|pendant|durant|sur|et|un|une|deux|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|quinze|vingt|cette|ce|tout|toute|semaines?|jours?|nuits?|days?|weeks?|nights?|for|week-?end|début|debut|mi|fin|demain|après-demain|apres-demain|aujourd['’]hui|prochain|prochaine|janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre)(?=[\s-]|$)/i
+        /\s(?:(?:du|le|la|les)(?=\s+\d)|pour|avec|en|a|à|à partir|pendant|durant|sur|et|sans|budget|plage|plages|temples?|musees?|fjords?|un|une|deux|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|quinze|vingt|cette|ce|tout|toute|semaines?|jours?|nuits?|days?|weeks?|nights?|for|week-?end|début|debut|mi|fin|demain|après-demain|apres-demain|aujourd['’]hui|prochain|prochaine|janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre)(?=[\s-]|$)/i
       )[0],
       50
     );
     if (place.length >= 2 && !monthOf(plainOf(place)) && !WEEKDAYS.includes(plainOf(place))) {
       // « Maroc dans l'Atlas » : la destination est le pays, le lieu précis une
       // envie (la recherche de parcours le reprend plus bas).
-      const inner = /\s+dans\s+(?:l'|l’|le\s|la\s|les\s)\s*(\p{Lu}.*)$/u.exec(place);
+      const inner = /\s+dans\s+(?:l'|l’|le\s|la\s|les\s)\s*(\S.*)$/u.exec(place);
       if (inner) {
         const country = clean(place.slice(0, inner.index), 50);
         if (country.length >= 2) {
@@ -598,9 +598,22 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     }
   }
 
+  /* Sans préposition, juste après le genre de voyage : « road trip Norvège
+     fjords », « city trip Tokyo et Kyoto » (nom propre seulement). */
+  if (!out.some((a) => a.type === 'set_destination')) {
+    const kind = /\b(?:road ?trip|city ?trip|van|voyage|sejour|vacances|week-?end|trek|rando|randonnee)\s+/.exec(plain);
+    if (kind) {
+      const at = (kind.index ?? 0) + kind[0].length;
+      const bare = /^(\p{Lu}[\p{L}'’-]+(?:\s+\p{Lu}[\p{L}'’-]+)*)/u.exec(src.slice(at, at + 50));
+      const name = bare ? clean(bare[1], 50) : '';
+      if (name.length >= 3 && !monthOf(plainOf(name)) && !WEEKDAYS.includes(plainOf(name)))
+        out.push({ type: 'set_destination', place: name });
+    }
+  }
+
   /* Sentier nommé : « sur le GR20 », « sur le chemin de l'Inca », « le Tour du
      Mont-Blanc » : une envie transmise au spécialiste de l'itinéraire. */
-  const trail = /\b(?:sur|par) (?:le |la |les |l')\s*((?:gr|hrp)\s?\d+\w*|(?:chemin|tour|sentier|haute route|route|camino|via)\s[^,.;!?]+)/.exec(plain);
+  const trail = /\b(?:sur|par) (?:le |la |les |l')\s*((?:gr|hrp)\s?\d+\w*|(?:chemin|tour|sentier|haute route|route|camino|via)\s[^,.;!?]+|[a-z][^,.;!?]* (?:way|trail|path|track)\b)/.exec(plain);
   if (trail) {
     const at = (trail.index ?? 0) + trail[0].length - trail[1].length;
     const label = clean(
