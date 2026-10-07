@@ -531,13 +531,17 @@ function withoutClaim(c: Record<string, unknown>): Record<string, unknown> {
   return rest;
 }
 
+/** Durée d'une prise : la durée maximale d'une préparation en une passe. */
+const CLAIM_MS = 290_000;
+
 async function claimPhase(supabase: Supa, tripId: string, phase: 'steps' | 'rest'): Promise<boolean> {
   const { data: row } = await supabase.from('trips').select('metadata, updated_at').eq('id', tripId).maybeSingle();
   if (!row) return false;
   const meta = ((row as { metadata: unknown }).metadata ?? {}) as Record<string, unknown>;
   const c = compasMeta(meta);
   const claims = (c.autofill_claim ?? {}) as Record<string, number>;
-  if (Date.now() - Number(claims[phase] ?? 0) < 65_000) return false;
+  // Une préparation dure au plus ~280 s : la prise reste valable ce temps-là.
+  if (Date.now() - Number(claims[phase] ?? 0) < CLAIM_MS) return false;
   const metadata = { ...meta, compas: { ...c, autofill_claim: { ...claims, [phase]: Date.now() } } };
   const { data: won } = await supabase
     .from('trips')
@@ -613,7 +617,8 @@ export async function compasAutofillAction(
     const laps: Record<string, number> = {};
     let lapAt = startedAt;
     // Ce qu'il reste avant 48 s (marge pour écrire avant la limite de 60 s).
-    const remaining = () => 48_000 - (Date.now() - startedAt);
+    // Une passe : 270 s de budget (la fonction s'arrête à 300 s).
+    const remaining = () => (phase === 'all' ? 270_000 : 48_000) - (Date.now() - startedAt);
     const lap = (name: string) => {
       const now = Date.now();
       laps[name] = now - lapAt;
@@ -757,7 +762,7 @@ export async function compasAutofillAction(
             scope: ctx.scope,
             wishes: compas.preferences?.wishes ?? [],
             nights: ctx.nights.value ?? null,
-            deadline: startedAt + 30_000,
+            deadline: startedAt + (phase === 'all' ? 60_000 : 30_000),
           }).catch((err) => ({
             fallback: `erreur de calcul (${err instanceof Error ? err.message.slice(0, 80) : 'inconnue'})`,
           }));
@@ -810,10 +815,10 @@ export async function compasAutofillAction(
         /** Proposition neuve du spécialiste : partagée seulement une fois vérifiée sur la carte. */
         let freshStages = false;
         for (let attempt = 0; attempt < 3 && !usable(proposed); attempt += 1) {
-          if (attempt && Date.now() - startedAt > 20_000) break;
+          if (attempt && Date.now() - startedAt > (phase === 'all' ? 120_000 : 20_000)) break;
           // La suite (carte, distances) a besoin d'environ 15 s : l'IA n'a que le reste.
           const next = sanitizeStages(
-            await askJson(userId, buildCompasStagesSystem(), stagesPrompt, 2000, false, 0, Math.min(30_000, remaining() - 15_000)),
+            await askJson(userId, buildCompasStagesSystem(), stagesPrompt, 2000, false, 0, Math.min(phase === 'all' ? 45_000 : 30_000, remaining() - 15_000)),
             days
           );
           if (usable(next)) {
@@ -1377,7 +1382,7 @@ export async function compasAutofillAction(
           500,
           false,
           0,
-          Math.min(15_000, remaining() - 6_000)
+          Math.min(phase === 'all' ? 30_000 : 15_000, remaining() - 6_000)
         );
     const advice: AutofillAiAdvice = sanitizeAdvice(rawAdvice);
     const usedAi = rawAdvice != null;

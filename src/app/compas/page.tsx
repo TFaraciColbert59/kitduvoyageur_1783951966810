@@ -27,8 +27,11 @@ import '@/features/compas/compas.css';
  * jamais prérendu.
  */
 export const dynamic = 'force-dynamic';
-/** Le préremplissage d'un long voyage (étapes, cartes, IA) peut prendre près d'une minute. */
-export const maxDuration = 60;
+/**
+ * La préparation se fait en une seule passe (carte, lieux, IA, budget) : jusqu'à
+ * 300 s, la limite de Vercel avec Fluid Compute sur toutes les offres.
+ */
+export const maxDuration = 300;
 
 export const metadata: Metadata = {
   title: 'Compas — Kit du Voyageur',

@@ -367,27 +367,17 @@ export function CompasScreen({
     });
     void Promise.resolve()
       .then(async () => {
-        // Deux temps : l'itinéraire d'abord (il n'a pas besoin de la position,
-        // il part tout de suite et s'affiche dès qu'il est écrit), puis nuits,
-        // trajet depuis la position, kit et budget. Chaque appel reste court.
-        // Sortie courte sans lieu : elle part d'ici, la position sert de départ.
-        const local = data.context?.scope === 'sortie' && !(model.destination || data.anchorName);
-        const first = await compasAutofillAction({
-          tripId: model.tripId,
-          tripSlug: model.slug,
-          from: local ? await position : null,
-          phase: 'steps',
-        });
-        if (!first.success || 'summary' in first) return first;
-        if ('pending' in first && first.stepsCreated > 0) {
-          if (prepRef.current) setPrep({ stage: 'rest' });
-          else notify('Itinéraire prêt · je prépare les nuits, le kit et le budget…');
-          startTransition(() => router.refresh());
-        } else if (prepRef.current) setPrep({ stage: 'rest' });
-        // Arrêtée : l'itinéraire écrit reste, la suite n'est pas lancée.
-        if (stopped.current) return null;
+        // Une seule passe côté serveur (jusqu'à 300 s) : itinéraire, nuits, trajet,
+        // kit et budget. Pendant ce temps, l'écran se relit toutes les 6 s :
+        // la carte se dessine dès que l'itinéraire est écrit.
+        // La position sert au trajet d'approche et au départ d'une sortie sans lieu.
         const from = await position;
-        return compasAutofillAction({ tripId: model.tripId, tripSlug: model.slug, from, phase: 'rest' });
+        const poll = setInterval(() => startTransition(() => router.refresh()), 6000);
+        try {
+          return await compasAutofillAction({ tripId: model.tripId, tripSlug: model.slug, from, phase: 'all' });
+        } finally {
+          clearInterval(poll);
+        }
       })
       .then((res) => {
         if (!res) return;
@@ -450,7 +440,7 @@ export function CompasScreen({
         autofillRunning.current = false;
         setRunning(false);
       });
-  }, [model.tripId, model.slug, model.destination, data.context?.scope, data.anchorName, notify, router, setPrep, prepFail]);
+  }, [model.tripId, model.slug, notify, router, setPrep, prepFail]);
   const autofillRef = useRef(autofill);
   autofillRef.current = autofill;
 
@@ -595,6 +585,11 @@ export function CompasScreen({
     startSaid.current = model.tripId;
     void understand(startSay);
   }, [understand, startSay, model.tripId]);
+
+  // Progression réelle : l'itinéraire est coché dès que ses étapes sont écrites.
+  useEffect(() => {
+    if (prep?.stage === 'itinerary' && autofillRunning.current && data.itinerary.length > 0) setPrep({ stage: 'rest' });
+  }, [prep?.stage, data.itinerary.length, setPrep]);
 
   // Demande comprise mais incomplète : la préparation ne peut pas partir, on le dit.
   useEffect(() => {
