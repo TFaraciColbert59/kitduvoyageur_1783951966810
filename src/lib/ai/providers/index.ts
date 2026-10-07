@@ -19,9 +19,9 @@ import { noopProvider } from './noop';
  * essai. Soixante-dix secondes d ecran fige, puis un parcours 100 % regles
  * presente comme une generation reussie.
  *
- * NVIDIA en appel direct est le seul provider (décision du 2026-10-05) :
- * OpenRouter n'est plus appelé, même si une clé traîne dans l'environnement.
- * Un NVIDIA muet tombe sur `noop`, donc sur les règles, jamais sur un tiers.
+ * Décision du 2026-10-07 : OpenRouter (Nemotron 3.5 Lightning payant) d'abord,
+ * NVIDIA direct en secours (offre d'évaluation, pas pour la production).
+ * Une chaîne muette tombe sur `noop`, donc sur les règles.
  *
  * `noop` ferme toujours la chaine : sans lui, `askAI` n aurait plus ou
  * tomber, et une exception remonterait jusqu au preparateur — exactement ce que
@@ -29,6 +29,9 @@ import { noopProvider } from './noop';
  */
 export function providerChain(_tier?: 'heavy' | 'fast'): AIProvider[] {
   const disponibles: AIProvider[] = [];
+  // Production : OpenRouter (Nemotron 3.5 Lightning payant) d'abord ; NVIDIA
+  // direct (offre d'évaluation) seulement en secours.
+  if (openrouterProvider.isAvailable()) disponibles.push(openrouterProvider);
   if (nvidiaProvider.isAvailable()) disponibles.push(nvidiaProvider);
   if (disponibles.length === 0) return [noopProvider];
   return [...disponibles, noopProvider];
