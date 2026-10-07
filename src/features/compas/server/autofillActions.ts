@@ -987,13 +987,18 @@ export async function compasAutofillAction(
         const located: boolean[] = [];
         for (const p of proposed) {
           const candidates = byName.get(p.place) ?? [];
-          let move = p.move;
-          const walkLike = p.move === 'marche' || p.move === 'velo' || p.move === 'aucun';
+          // Lieu nouveau mais déplacement « aucun » ou absent (l'IA l'omet
+          // souvent) : le moyen de l'activité, jamais 25 km. « Van 2 semaines au
+          // Portugal » perdait ainsi Sintra, Cascais, Porto… (13 étapes sur 14).
+          const changesPlace = lastProposed != null && p.place !== lastProposed;
+          const pMove: StageMove = p.move === 'aucun' && changesPlace ? (profileFor(activity).move as StageMove) : p.move;
+          let move = pMove;
+          const walkLike = pMove === 'marche' || pMove === 'velo' || pMove === 'aucun';
           // Sortie de quelques heures : tout reste autour du départ (jamais la grande ville voisine).
           const legKm =
             ctx.scope === 'sortie'
               ? anchor.radiusKm
-              : maxLegKm(p.move, last == null, anchor.radiusKm, anchor.kind === 'country' && !!anchor.countryCode);
+              : maxLegKm(pMove, last == null, anchor.radiusKm, anchor.kind === 'country' && !!anchor.countryCode);
           // Destination à cheval sur une frontière (Patagonie, Alpes, Pyrénées) :
           // le lieu est cherché aussi chez le voisin, toujours à distance
           // plausible de l'étape d'avant (jamais un homonyme lointain).
