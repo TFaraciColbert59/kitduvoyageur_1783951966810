@@ -63,7 +63,7 @@ import { bestPeriod, monthName } from '../engine/period';
 import { partsText, retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { lookupDestination, lookupReverse, stageAliasCandidates, stageCandidates } from './placeLookup';
 import { lookupAreaPlaces, lookupStagePois } from './stagePoiLookup';
-import { planItinerary, shapeFor, type ItineraryShape } from '../engine/itinerary';
+import { planItinerary, planningZoneKm, shapeFor, type ItineraryShape } from '../engine/itinerary';
 import {
   COSTS_VERSION,
   carRentalPerDay,
@@ -299,12 +299,16 @@ interface Anchor {
   radiusKm: number;
   /** Nature OSM (« other » : massif, lac, vallée…), absente des anciennes ancres. */
   kind?: string;
+  /** Emprise [ouest, nord, est, sud] quand la carte la donne. */
+  extent?: [number, number, number, number] | null;
 }
 
 /** Au-delà de ce rayon (un pays), l'itinéraire déterministe ne sait pas encore choisir les lieux marquants. */
 const PLANNED_MAX_KM = 150;
 /** Natures de lieux habités : une ancre de ce type est déjà une base où dormir. */
 const SETTLEMENT_KINDS = new Set(['city', 'town', 'village', 'hamlet', 'suburb', 'municipality', 'borough', 'quarter', 'neighbourhood']);
+/** Natures OSM d'un lieu naturel : on en fait le tour plutôt que le traverser. */
+const NATURAL_KINDS = new Set(['water', 'lake', 'peak', 'island', 'islet', 'bay', 'mountain_range', 'volcano', 'glacier']);
 const LOOP_WISH = /\btour d(?:u|e|es|['’])|\bautour\b|\bboucle\b/i;
 
 interface StagePlace {
@@ -331,7 +335,10 @@ async function plannedStages(opts: {
   deadline: number;
 }): Promise<{ stages: StagePlace[]; note: string } | null> {
   const { anchor, activity, days } = opts;
-  if (anchor.radiusKm > PLANNED_MAX_KM) return null;
+  // Road trip et van : une région entière se parcourt en voiture ; à pied ou à
+  // vélo, au-delà d'un massif, il faut savoir où sont les grands itinéraires.
+  const roadScale = activity === 'roadtrip' || activity === 'vanlife';
+  if (anchor.radiusKm > (roadScale ? 260 : PLANNED_MAX_KM)) return null;
   const base: StagePlace[] = Array.from({ length: days }, (_, i) => ({
     day: i + 1,
     name: anchor.name,
@@ -342,16 +349,26 @@ async function plannedStages(opts: {
   }));
   // Sortie ou journée : tout se passe au lieu dit.
   if (opts.scope === 'sortie' || days === 1) return { stages: base, note: '' };
+  const natural = anchor.kind === 'other' || NATURAL_KINDS.has(anchor.kind ?? '');
+  const settlement = SETTLEMENT_KINDS.has(anchor.kind ?? '');
+  const zoneKm = planningZoneKm({
+    activity,
+    days,
+    halfExtentKm: anchor.extent
+      ? distanceKm({ lat: anchor.extent[1], lon: anchor.extent[0] }, { lat: anchor.extent[3], lon: anchor.extent[2] }) / 2
+      : null,
+    settlement,
+  });
   const shape: ItineraryShape | null = wantsTraverse(opts.wishes)
     ? 'traverse'
     : opts.wishes.some((w) => LOOP_WISH.test(w))
       ? 'loop'
       : null;
   // Séjour sur place autour d'une ville ou d'un village : ce lieu est la base.
-  if (shapeFor({ activity, days, radiusKm: anchor.radiusKm, shape }) === 'base' && SETTLEMENT_KINDS.has(anchor.kind ?? ''))
+  if (shapeFor({ activity, days, radiusKm: zoneKm, shape, natural }) === 'base' && settlement)
     return { stages: base, note: '' };
   const places = await lookupAreaPlaces(
-    { center: anchor, radiusKm: Math.max(10, anchor.radiusKm), activity },
+    { center: anchor, radiusKm: zoneKm, activity },
     opts.deadline
   );
   if (!places) return null;
@@ -362,7 +379,7 @@ async function plannedStages(opts: {
     const found = await stageCandidates(w, { countryCode: anchor.countryCode, country: anchor.country }, anchor).catch(() => []);
     const hit = pickPlace(
       found.filter((f) => f.settlement || f.landmark),
-      { near: anchor, maxKm: anchor.radiusKm * 1.1 + 5, query: w, strict: true }
+      { near: anchor, maxKm: zoneKm * 1.1 + 5, query: w, strict: true }
     );
     if (hit) waypoints.push({ name: stageTitleFor(w, hit.name), lat: hit.lat, lon: hit.lon });
   }
@@ -370,10 +387,11 @@ async function plannedStages(opts: {
     days,
     activity,
     center: anchor,
-    radiusKm: Math.max(10, anchor.radiusKm),
+    radiusKm: zoneKm,
     places,
     waypoints,
     shape,
+    natural,
     nights: opts.nights,
   });
   if (!plan) return null;

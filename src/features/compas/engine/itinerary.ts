@@ -46,6 +46,8 @@ export interface ItineraryInput {
   nights?: string | null;
   /** Distance du jour dite (km), prioritaire sur le barème de l'activité. */
   targetKmPerDay?: number | null;
+  /** La destination est un lieu naturel (lac, sommet, île) : boucle par défaut. */
+  natural?: boolean;
 }
 
 export interface PlannedStage {
@@ -204,10 +206,14 @@ function along(axis: ReturnType<typeof mainAxis>, p: { lat: number; lon: number 
 }
 
 /** Forme par défaut : base pour les activités sur place ; traversée si la zone est longue ; sinon boucle. */
-export function shapeFor(input: Pick<ItineraryInput, 'activity' | 'days' | 'radiusKm' | 'shape' | 'targetKmPerDay'>): ItineraryShape {
+export function shapeFor(
+  input: Pick<ItineraryInput, 'activity' | 'days' | 'radiusKm' | 'shape' | 'targetKmPerDay' | 'natural'>
+): ItineraryShape {
   const prof = profileFor(input.activity);
   if (!prof.itinerant) return 'base';
   if (input.shape) return input.shape;
+  // Autour d'un lieu naturel (lac, sommet, île) : on en fait le tour.
+  if (input.natural) return 'loop';
   const crowDay = (input.targetKmPerDay ?? prof.dayKm[1]) * prof.crow;
   // La zone peut contenir le trajet en ligne : traversée ; sinon on tourne.
   return input.radiusKm * 2 >= crowDay * Math.max(1, input.days - 1) * 0.6 ? 'traverse' : 'loop';
@@ -416,7 +422,34 @@ export function areaKinds(q: AreaQuery): AreaPlaceKind[] {
   const foot = profileFor(q.activity).move === 'marche';
   if (q.radiusKm > 250) return ['city', 'town'];
   if (q.radiusKm > 90) return foot ? ['town', 'village', 'hut'] : ['city', 'town', 'village'];
+  // Hameaux et campings : seulement sur une petite zone (sinon la requête est trop lourde).
+  if (q.radiusKm > 25) return foot ? ['town', 'village', 'hut'] : ['city', 'town', 'village'];
   return foot ? ['town', 'village', 'hamlet', 'hut', 'camp'] : ['city', 'town', 'village', 'hamlet'];
+}
+
+/** Plafond de la zone d'itinéraire selon le moyen de progression (km autour du centre). */
+const ZONE_CAP: Record<string, number> = { marche: 45, velo: 120, voiture: 250 };
+
+/**
+ * Zone où chercher les lieux de l'itinéraire : l'emprise réelle du lieu (un lac,
+ * un massif), élargie juste assez pour que le voyage y tienne, bornée selon
+ * l'activité. Jamais le rayon de recherche (60 km au moins), trop large pour un
+ * week-end autour d'un lac.
+ */
+export function planningZoneKm(input: {
+  activity: string;
+  days: number;
+  /** Demi-diagonale de l'emprise du lieu, si la carte la donne. */
+  halfExtentKm: number | null;
+  /** Le lieu est une ville ou un village (sinon un massif, une région…). */
+  settlement: boolean;
+}): number {
+  const prof = profileFor(input.activity);
+  const crowDay = prof.dayKm[1] * prof.crow;
+  const span = crowDay * Math.max(1, input.days - 1);
+  const own = input.halfExtentKm ?? (input.settlement ? 10 : 25);
+  const cap = ZONE_CAP[prof.move] ?? 150;
+  return Math.round(Math.min(cap, Math.max(8, own, span * 0.5) + crowDay * 0.25));
 }
 
 export function buildAreaQuery(q: AreaQuery): string {

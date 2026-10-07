@@ -29,7 +29,7 @@ const ENDPOINTS = [
 ];
 const UA = 'kitduvoyageur/1.0 (Compas, preparation de voyage)';
 
-async function overpass(query: string, deadline: number): Promise<unknown | null> {
+async function overpass(query: string, deadline: number, timeoutMs = TIMEOUT_MS): Promise<unknown | null> {
   for (const url of ENDPOINTS) {
     const left = deadline - Date.now();
     if (left < 3000) break;
@@ -42,7 +42,7 @@ async function overpass(query: string, deadline: number): Promise<unknown | null
           'User-Agent': UA,
         },
         body: `data=${encodeURIComponent(query)}`,
-        signal: AbortSignal.timeout(Math.min(TIMEOUT_MS, left)),
+        signal: AbortSignal.timeout(Math.min(timeoutMs, left)),
         cache: 'no-store',
       });
       if (!res.ok) {
@@ -108,8 +108,12 @@ export async function lookupAreaPlaces(q: AreaQuery, deadline: number): Promise<
     key,
     30 * 86_400,
     async () => {
-      const payload = await overpass(query, deadline);
-      if (!overpassUsable(payload)) return null;
+      // Requête de zone plus lourde qu'un point : 20 s par instance.
+      const payload = await overpass(query, deadline, 20_000);
+      if (!overpassUsable(payload)) {
+        console.warn('[compas] lieux de la zone indisponibles', q.activity, q.radiusKm, payload ? 'réponse coupée' : 'injoignable');
+        return null;
+      }
       const places = parseAreaPlaces(payload);
       return places.length ? places : null;
     },

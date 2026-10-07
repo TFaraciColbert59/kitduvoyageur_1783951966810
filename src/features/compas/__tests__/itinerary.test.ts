@@ -5,6 +5,7 @@ import {
   mainAxis,
   parseAreaPlaces,
   planItinerary,
+  planningZoneKm,
   shapeFor,
   type AreaPlace,
   type AreaPlaceKind,
@@ -151,5 +152,30 @@ describe('Overpass', () => {
       { id: 'w9', name: 'Refuge X', lat: 28.1, lon: 84.1, kind: 'hut', population: null, eleM: 4130 },
     ]);
     expect(parseAreaPlaces(null)).toEqual([]);
+  });
+});
+
+describe('planningZoneKm — la zone où tient le voyage', () => {
+  it('week-end vélo autour d’un lac : l’emprise du lac + une demi-étape, pas 60 km', () => {
+    const z = planningZoneKm({ activity: 'cycling', days: 2, halfExtentKm: 8, settlement: false });
+    expect(z).toBeGreaterThanOrEqual(30);
+    expect(z).toBeLessThan(45);
+  });
+  it('trek de 5 jours dans un massif sans emprise : ~30 km', () => {
+    const z = planningZoneKm({ activity: 'trekking', days: 5, halfExtentKm: null, settlement: false });
+    expect(z).toBeGreaterThanOrEqual(25);
+    expect(z).toBeLessThanOrEqual(35);
+  });
+  it('bornée par le moyen de progression', () => {
+    expect(planningZoneKm({ activity: 'trekking', days: 20, halfExtentKm: 300, settlement: false })).toBe(45);
+    expect(planningZoneKm({ activity: 'roadtrip', days: 7, halfExtentKm: 170, settlement: false })).toBeLessThanOrEqual(250);
+  });
+  it('lieu naturel : boucle par défaut (« autour du lac »)', () => {
+    expect(shapeFor({ activity: 'cycling', days: 2, radiusKm: 35, natural: true })).toBe('loop');
+    expect(shapeFor({ activity: 'cycling', days: 2, radiusKm: 35, natural: true, shape: 'traverse' })).toBe('traverse');
+  });
+  it('grande zone : pas de hameaux ni de campings dans la requête', () => {
+    expect(buildAreaQuery({ center: { lat: 45, lon: 5.4 }, radiusKm: 33, activity: 'trekking' })).not.toContain('hamlet');
+    expect(buildAreaQuery({ center: { lat: 45, lon: 5.4 }, radiusKm: 20, activity: 'trekking' })).toContain('hamlet');
   });
 });
