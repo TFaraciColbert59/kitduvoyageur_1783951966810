@@ -93,6 +93,9 @@ const DEFAULT_GLASS = 0.6;
 /** Version du réglage d'affichage : 2 = verre accessible (WCAG AA). */
 const DISPLAY_VERSION = 2;
 
+/** Durée maximale d'une préparation côté serveur (300 s) et une marge. */
+const AUTOFILL_MAX_MS = 310_000;
+
 export function CompasScreen({
   data: rawData,
   initialStep,
@@ -312,6 +315,8 @@ export function CompasScreen({
   const autofillRunning = useRef(false);
   /** Une reprise automatique après une coupure (réseau, limite serveur), pas plus. */
   const autofillRetried = useRef(false);
+  /** Réponse perdue en route : on relit le voyage jusqu'à ce que le serveur ait écrit. */
+  const autofillLost = useRef<{ poll: ReturnType<typeof setInterval>; timer: ReturnType<typeof setTimeout> } | null>(null);
   /** Une relance différée après la limite de fréquence, pas plus. */
   const autofillDeferred = useRef(false);
   // Préparation pilotée depuis la demande (« Où ») : un panneau montre chaque
@@ -347,6 +352,7 @@ export function CompasScreen({
           : { message: 'Je prépare ton aventure…', sub: 'Nuits, trajet, kit et budget' }
       );
     setRunning(true);
+    const startedAt = Date.now();
     const position = new Promise<{ lat: number; lon: number } | null>((resolve) => {
       if (typeof navigator === 'undefined' || !navigator.geolocation) return resolve(null);
       // Le délai du navigateur ne court qu'APRÈS l'accord : une demande
@@ -424,17 +430,31 @@ export function CompasScreen({
         startTransition(() => router.refresh());
       })
       .catch(() => {
-        prepFail(
-          autofillRetried.current
-            ? 'Connexion perdue : ce qui est fait est gardé. Reprends quand tu veux.'
-            : 'Préparation coupée : je reprends dans une minute, ce qui est fait est gardé.'
-        );
-        if (autofillRetried.current) return notify('Connexion perdue : préparation interrompue.', 'bad');
-        // Le serveur a coupé (limite de temps) ou le réseau a sauté : ce qui est
-        // écrit reste, on reprend une fois là où ça s'est arrêté.
-        autofillRetried.current = true;
-        notify('Préparation interrompue · je reprends dans une minute…');
-        setTimeout(() => autofillRef.current?.(redo), 66_000);
+        const giveUp = () => {
+          prepFail(
+            autofillRetried.current
+              ? 'Connexion perdue : ce qui est fait est gardé. Reprends quand tu veux.'
+              : 'Préparation coupée : je reprends dans une minute, ce qui est fait est gardé.'
+          );
+          if (autofillRetried.current) return notify('Connexion perdue : préparation interrompue.', 'bad');
+          // Le serveur a coupé (limite de temps) ou le réseau a sauté : ce qui est
+          // écrit reste, on reprend une fois là où ça s'est arrêté.
+          autofillRetried.current = true;
+          notify('Préparation interrompue · je reprends dans une minute…');
+          setTimeout(() => autofillRef.current?.(redo), 66_000);
+        };
+        // La connexion a lâché, pas forcément le serveur (un réseau mobile coupe
+        // une requête longue et muette) : il finit seul, jusqu'à 300 s. On relit
+        // le voyage ; dès qu'il est écrit, l'aventure est prête. Sinon, reprise.
+        const left = AUTOFILL_MAX_MS - (Date.now() - startedAt);
+        if (redo || left <= 0 || autofillLost.current) return giveUp();
+        const poll = setInterval(() => startTransition(() => router.refresh()), 6000);
+        const timer = setTimeout(() => {
+          clearInterval(poll);
+          autofillLost.current = null;
+          giveUp();
+        }, left);
+        autofillLost.current = { poll, timer };
       })
       .finally(() => {
         autofillRunning.current = false;
@@ -443,6 +463,27 @@ export function CompasScreen({
   }, [model.tripId, model.slug, notify, router, setPrep, prepFail]);
   const autofillRef = useRef(autofill);
   autofillRef.current = autofill;
+
+  // Connexion perdue pendant la préparation : le serveur a écrit → c'est prêt.
+  useEffect(() => {
+    const lost = autofillLost.current;
+    if (!lost || data.autofill !== 'done') return;
+    clearInterval(lost.poll);
+    clearTimeout(lost.timer);
+    autofillLost.current = null;
+    if (prepRef.current && prepRef.current.stage !== 'stopped') setPrep({ stage: 'done', total: null, digest: null });
+    notify('Aventure préparée');
+  }, [data.autofill, notify, setPrep]);
+  useEffect(
+    () => () => {
+      const lost = autofillLost.current;
+      if (lost) {
+        clearInterval(lost.poll);
+        clearTimeout(lost.timer);
+      }
+    },
+    []
+  );
 
   // Réadaptation : un changement (durée, lieu, activité, nuits, personnes…)
   // rend une partie du préremplissage caduque. Seules ces parties sont

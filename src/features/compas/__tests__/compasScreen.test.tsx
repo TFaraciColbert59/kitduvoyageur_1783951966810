@@ -778,6 +778,21 @@ describe('CompasScreen', () => {
     }
   });
 
+  it('Préremplissage : connexion perdue mais serveur fini → relu, annoncé prêt, sans relance', async () => {
+    autofill.compasAutofillAction.mockImplementationOnce(async () => {
+      throw new Error('network');
+    });
+    const { rerender } = render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+    await waitFor(() => expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1));
+    // Pas d'échec annoncé tant que le serveur peut encore écrire.
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.queryByText(/interrompue|reprends dans une minute/)).toBeNull();
+    // Le voyage relu est écrit : l'aventure est prête.
+    rerender(<CompasScreen data={{ ...makeData(), autofill: 'done' }} />);
+    expect(await screen.findByText('Aventure préparée')).toBeTruthy();
+    expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1);
+  });
+
   it('Préremplissage : déjà fait ou annulé → ne se relance pas', () => {
     render(<CompasScreen data={{ ...makeData(), autofill: 'undone' }} />);
     expect(autofill.compasAutofillAction).not.toHaveBeenCalled();

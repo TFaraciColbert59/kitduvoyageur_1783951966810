@@ -197,12 +197,15 @@ export async function lookupAreaPlaces(q: AreaQuery, deadline: number): Promise<
       const fromPhoton = await photonAreaPlaces(q, Math.min(10_000, left()));
       if (fromPhoton && fromPhoton.length >= 3) return fromPhoton;
       if (left() < 4000) return fromPhoton;
-      const payload = await overpassRace(query, Math.min(15_000, left()));
+      // Photon trop maigre : Overpass et Geoapify en même temps (Overpass est
+      // souvent muet depuis Vercel ; l'attendre d'abord privait Geoapify de temps).
+      const budget = Math.min(15_000, left());
+      const [payload, fromGeoapify] = await Promise.all([
+        overpassRace(query, budget),
+        geoapifyArea(q, Math.min(10_000, budget)),
+      ]);
       const places = payload ? parseAreaPlaces(payload) : [];
       if (places.length) return places;
-      // Photon trop maigre et Overpass muet (fréquent depuis Vercel) : Geoapify.
-      if (left() < 3000) return fromPhoton;
-      const fromGeoapify = await geoapifyArea(q, Math.min(10_000, left()));
       return fromGeoapify && fromGeoapify.length > (fromPhoton?.length ?? 0) ? fromGeoapify : fromPhoton;
     },
     (v) => Array.isArray(v) && v.length > 0

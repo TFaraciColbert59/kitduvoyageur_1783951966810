@@ -783,7 +783,9 @@ export async function compasAutofillAction(
             scope: ctx.scope,
             wishes: compas.preferences?.wishes ?? [],
             nights: ctx.nights.value ?? null,
-            deadline: startedAt + (phase === 'all' ? 60_000 : 30_000),
+            // Passe unique (270 s) : l'itinéraire a le temps d'essayer toutes les
+            // cartes (Photon, Overpass, Geoapify) même après une compréhension lente.
+            deadline: startedAt + (phase === 'all' ? 120_000 : 30_000),
           }).catch((err) => ({
             fallback: `erreur de calcul (${err instanceof Error ? err.message.slice(0, 80) : 'inconnue'})`,
           }));
