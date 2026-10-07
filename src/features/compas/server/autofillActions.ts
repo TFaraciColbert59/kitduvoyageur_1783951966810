@@ -1577,7 +1577,13 @@ export async function compasAutofillAction(
     const entry = abroad ? entryFees(anchor.countryCode) : null;
     const mealsAmount = mealsTotal({ days, party, nights: plan.map((n) => n.type), level: lvl.level });
     const rental = picks.filter((p) => p.source === 'location').reduce((t, p) => t + (p.costEur ?? 0), 0);
-    const purchase = picks.filter((p) => p.source === 'achat').reduce((t, p) => t + (p.costEur ?? 0), 0);
+    // Le budget compte l'indispensable qui manque ; le conseillé (crème
+    // solaire, poncho pour une course du soir : 103 €) reste au kit, facultatif.
+    const toBuy = picks.filter((p) => p.source === 'achat');
+    const purchase = toBuy.filter((p) => p.need.vital).reduce((t, p) => t + (p.costEur ?? 0), 0);
+    const optionalBuy = toBuy.filter((p) => !p.need.vital).reduce((t, p) => t + (p.costEur ?? 0), 0);
+    if (optionalBuy > 0)
+      notes.push(`Matériel conseillé non compté au budget : ${Math.round(optionalBuy)} € à la boutique si tu ne l’as pas (facultatif).`);
     let lines = budgetLines([
       refugeCost
         ? { category: 'hébergement', title: 'Nuits en refuge', amount: refugeCost, source: 'base', basis: 'prix des refuges en base × personnes' }
