@@ -690,6 +690,20 @@ const RUN_KEYS = new Set(['first-aid', 'sunscreen', 'sunglasses', 'water-bottle'
 /** Sortie de quelques heures, sans nuit : pas de quoi réparer ni de thermos. */
 const SHORT_EXCLUDED = new Set(['repair-kit', 'thermos', 'water-filter', 'stove', 'tent-2p', 'sleeping-mat']);
 
+/**
+ * Sortie de quelques heures (6 h au plus) près de chez soi : ni lampe, ni
+ * couteau, ni sifflet, ni couverture de survie, ni batterie. Le froid (gants,
+ * doudoune, chaufferettes, crampons) seulement au-dessus de 1 500 m. Une
+ * marche nordique de 2 h à 450 m recevait gants thermiques et frontale.
+ */
+const BRIEF_EXCLUDED = new Set(['whistle', 'headlamp', 'folding-knife', 'survival-blanket', 'fire-starter', 'powerbank']);
+const COLD_KEYS = new Set(['cold-gloves', 'cold-down-jacket', 'hand-warmers', 'crampons']);
+export function keepRuleForBrief(key: string, maxAltitudeM: number | null): boolean {
+  if (BRIEF_EXCLUDED.has(key)) return false;
+  if (COLD_KEYS.has(key)) return (maxAltitudeM ?? 0) >= 1500;
+  return true;
+}
+
 export function keepRuleForActivity(key: string, activity: string, short = false): boolean {
   if (short && SHORT_EXCLUDED.has(key)) return false;
   // Sur l'eau : un sac étanche (matériel de l'activité), pas un sac de randonnée ni un thermos.

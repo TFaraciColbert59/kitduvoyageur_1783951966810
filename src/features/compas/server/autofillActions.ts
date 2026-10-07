@@ -33,6 +33,7 @@ import {
   gearForActivity,
   keepRuleForNights,
   keepRuleForActivity,
+  keepRuleForBrief,
   nightsPrefFor,
   needFromRule,
   sameNeed,
@@ -1360,6 +1361,9 @@ export async function compasAutofillAction(
     }
     const month = Number(trip.start_date?.slice(5, 7)) || undefined;
     const shortOuting = days <= 1 && plan.length === 0;
+    // Quelques heures (6 h au plus) : le kit d'une sortie, pas d'une expédition.
+    const outingHours = shortHoursOf(days, compas.durationHours);
+    const briefOuting = shortOuting && outingHours != null && outingHours <= 6;
     const analysis = generateTripContextualKit({
       countryCode: anchor.countryCode ?? trip.destination_country_code,
       activity,
@@ -1372,7 +1376,12 @@ export async function compasAutofillAction(
     const needs: GearNeed[] = [];
     const nightTypes = plan.map((n) => n.type);
     const ruleNeeds = [...analysis.vitalGaps, ...analysis.recommendedGaps]
-      .filter((g) => keepRuleForNights(g.category, nightTypes) && keepRuleForActivity(g.key, activity, shortOuting))
+      .filter(
+        (g) =>
+          keepRuleForNights(g.category, nightTypes) &&
+          keepRuleForActivity(g.key, activity, shortOuting) &&
+          (!briefOuting || keepRuleForBrief(g.key, maxAltitude ?? null))
+      )
       .map((g) => needFromRule({ ...g, reason: contextualReason(g.key, g.reason, activity, shortOuting) }));
     for (const g of [...gearForActivity(activity), ...gearForNights(nightTypes), ...ruleNeeds])
       if (!needs.some((n) => sameNeed(n, g))) needs.push(g);

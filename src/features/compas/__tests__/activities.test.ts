@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { COMPAS_ACTIVITIES, parseIntentRules } from '../engine/intent';
-import { gearForActivity, keepRuleForActivity, nightsPrefFor } from '../engine/autofill';
+import { gearForActivity, keepRuleForActivity, keepRuleForBrief, nightsPrefFor } from '../engine/autofill';
 import { generateTripContextualKit } from '@/features/trips/engine/contextualKitEngine';
 import { activityLabel } from '../engine/format';
 import { ACTIVITY_META } from '../components/CompasOuFlows';
@@ -119,5 +119,14 @@ describe('Raisons et saison des objets, dites pour CE voyage', () => {
     expect(has('cold-down-jacket', 10, 2749, 46.5)).toBe(true);
     expect(has('cold-down-jacket', 6, 3722, -13.5)).toBe(true);
     expect(has('cold-down-jacket', 7, 2688, 44.9, 'mountaineering')).toBe(true);
+  });
+
+  it('sortie de quelques heures : le kit d’une balade, pas d’une expédition (froid seulement en altitude)', () => {
+    // Marche nordique de 2 h à 450 m : ni frontale, ni couteau, ni sifflet, ni gants.
+    for (const k of ['headlamp', 'folding-knife', 'whistle', 'survival-blanket', 'powerbank', 'cold-gloves'])
+      expect(keepRuleForBrief(k, 451)).toBe(false);
+    for (const k of ['first-aid', 'water-bottle', 'sunscreen', 'rain-poncho', 'trekking-poles'])
+      expect(keepRuleForBrief(k, 451)).toBe(true);
+    expect(keepRuleForBrief('cold-gloves', 2100)).toBe(true);
   });
 });
