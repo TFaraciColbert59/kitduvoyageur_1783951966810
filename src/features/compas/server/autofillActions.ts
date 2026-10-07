@@ -29,7 +29,6 @@ import {
   budgetLines,
   budgetTotal,
   estimateCarTrip,
-  estimateMeals,
   gearForNights,
   gearForActivity,
   keepRuleForNights,
@@ -65,6 +64,18 @@ import { partsText, retryParts, staleParts, unionParts, untouchedSince, type Aut
 import { lookupDestination, lookupReverse, stageAliasCandidates, stageCandidates } from './placeLookup';
 import { lookupAreaPlaces, lookupStagePois } from './stagePoiLookup';
 import { planItinerary, shapeFor, type ItineraryShape } from '../engine/itinerary';
+import {
+  COSTS_VERSION,
+  carRentalPerDay,
+  entryFees,
+  flightRoundTrip,
+  insurance,
+  localTripPerLeg,
+  lodgingPerNight,
+  mealsTotal,
+  priceLevel,
+  refugePerNight,
+} from '../engine/costs';
 import { after } from 'next/server';
 import { destinationRadiusKm, distanceKm, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, type CompasPlace } from '../engine/places';
 import { untangleStages } from '../engine/stageOrder';
@@ -1301,6 +1312,8 @@ export async function compasAutofillAction(
     // 25 s déjà passées (carte ou IA lentes), le chiffrage passe par les règles
     // plutôt que de risquer la limite de 60 s du serveur. Sans raisonnement :
     // avec, Nemotron 3.5 Lightning met ~50 s (mesure du 2026-10-05).
+    // L'IA ne chiffre plus rien (barèmes du Compas) : elle ne donne que des conseils,
+    // et seulement s'il reste du temps.
     const lateRun = remaining() < 12_000;
     const rawAdvice = lateRun
       ? null
@@ -1311,15 +1324,16 @@ export async function compasAutofillAction(
           1200,
           false,
           0,
-          Math.min(25_000, remaining() - 6_000)
+          Math.min(15_000, remaining() - 6_000)
         );
-    if (lateRun) notes.push('Préparation longue : chiffrage par les règles du Compas, relance « Tout préparer » pour l’avis du spécialiste.');
     const advice: AutofillAiAdvice = sanitizeAdvice(rawAdvice);
     const usedAi = rawAdvice != null;
     notes.push(...advice.notes);
 
     lap('8');
     /* 8. Budget complet, chaque ligne avec sa source. */
+    // Barèmes du Compas : même voyage, même budget, chaque ligne avec sa base.
+    const lvl = priceLevel(anchor.countryCode, anchor.country);
     const refugeCost = plan.reduce((t, n) => {
       const r = n.type === 'refuge' ? refugesByNight[n.night - 1][0] : null;
       return t + (r?.pricePerNight ?? 0) * party;
@@ -1327,38 +1341,44 @@ export async function compasAutofillAction(
     const unpricedRefuges = plan.filter(
       (n) => n.type === 'refuge' && refugesByNight[n.night - 1][0]?.pricePerNight == null
     ).length;
-    if (unpricedRefuges) notes.push(`${unpricedRefuges} nuit(s) en refuge sans prix connu : à vérifier auprès du refuge.`);
-    if (hebergementNights && advice.lodgingPerPersonNight == null)
-      notes.push('Hébergement sans prix connu : cherche une offre dans Résa · Nuits.');
-    if (flightNeeded && advice.flightPerPerson == null) notes.push('Vol non chiffré : cherche-le dans Résa · Vols.');
-    const meals = estimateMeals({
-      days,
-      partySize: party,
-      nights: plan.map((n) => n.type),
-      aiPerPersonDay: advice.mealsPerPersonDay,
-    });
+    // Vol : distance à vol d'oiseau depuis la position partagée, sinon depuis Paris.
+    const flightKm = distanceKm(from ?? { lat: 48.8566, lon: 2.3522 }, target);
+    const flight = flightRoundTrip(flightKm);
+    const rentalCars = fuelForKm(carKmOnSite, party).cars;
+    const localTrips = localMoves.reduce((t, m) => t + localTripPerLeg(m.move, lvl.level), 0);
+    const entry = abroad ? entryFees(anchor.countryCode) : null;
+    const mealsAmount = mealsTotal({ days, party, nights: plan.map((n) => n.type), level: lvl.level });
     const rental = picks.filter((p) => p.source === 'location').reduce((t, p) => t + (p.costEur ?? 0), 0);
     const purchase = picks.filter((p) => p.source === 'achat').reduce((t, p) => t + (p.costEur ?? 0), 0);
     let lines = budgetLines([
       refugeCost
         ? { category: 'hébergement', title: 'Nuits en refuge', amount: refugeCost, source: 'base', basis: 'prix des refuges en base × personnes' }
         : null,
-      hebergementNights && advice.lodgingPerPersonNight != null
+      unpricedRefuges
+        ? {
+            category: 'hébergement',
+            title: `${unpricedRefuges} nuit(s) en refuge (prix à confirmer)`,
+            amount: refugePerNight(lvl.level) * unpricedRefuges * party,
+            source: 'estimation',
+            basis: `${lvl.basis} · demi-pension en refuge gardé`,
+          }
+        : null,
+      hebergementNights
         ? {
             category: 'hébergement',
             title: `${hebergementNights} nuit(s) en hébergement`,
-            amount: advice.lodgingPerPersonNight * hebergementNights * party,
+            amount: lodgingPerNight(lvl.level) * hebergementNights * party,
             source: 'estimation',
-            basis: `estimation de l’IA pour ${anchor.country ?? anchor.name}`,
+            basis: `${lvl.basis} · chambre partagée à deux · vrais prix dans Résa · Nuits`,
           }
         : null,
-      flightNeeded && advice.flightPerPerson != null
+      flightNeeded
         ? {
             category: 'transport',
             title: `Vol aller-retour × ${party}`,
-            amount: advice.flightPerPerson * party,
+            amount: flight.eur * party,
             source: 'estimation',
-            basis: `estimation de l’IA · ${transport?.basis ?? 'vol'} · à confirmer dans Résa · Vols`,
+            basis: `${flight.basis} · ${transport?.basis ?? 'vol'} · vrai prix dans Résa · Vols`,
           }
         : null,
       carFuel
@@ -1373,46 +1393,52 @@ export async function compasAutofillAction(
             basis: `kilomètres mesurés entre les étapes · ${CAR_ASSUMPTIONS.litersPer100Km} L/100 km à ${CAR_ASSUMPTIONS.fuelEurPerLiter.toFixed(2).replace('.', ',')} €/L`,
           }
         : null,
-      rentalNeeded && advice.carRentalPerDay != null
+      rentalNeeded
         ? {
             category: 'transport',
             title: `Location de voiture · ${days} jour(s)`,
-            amount: advice.carRentalPerDay * days * fuelForKm(carKmOnSite, party).cars,
+            amount: carRentalPerDay(lvl.level) * days * rentalCars,
             source: 'estimation',
-            basis: `estimation de l’IA pour ${anchor.country ?? anchor.name} · à comparer dans Résa · Trajets`,
+            basis: `${lvl.basis} · catégorie économique · à comparer dans Résa · Trajets`,
           }
         : null,
-      localMoves.length && advice.localTransportPerPerson != null
+      localMoves.length
         ? {
             category: 'transport',
             title: `Transports sur place (${localMoves.length} trajet${localMoves.length > 1 ? 's' : ''})`,
-            amount: advice.localTransportPerPerson * party,
+            amount: localTrips * party,
             source: 'estimation',
-            basis: 'estimation de l’IA pour les trajets entre étapes',
+            basis: `${lvl.basis} · ${localMoves.map((m) => m.move).join(', ')}`,
           }
         : null,
       // Une sortie de quelques heures ne compte pas de repas.
       ctx.scope === 'sortie'
         ? null
-        : { category: 'nourriture', title: `Repas · ${days} jour(s) × ${party}`, amount: meals.amount, source: 'estimation', basis: meals.basis },
+        : {
+            category: 'nourriture',
+            title: `Repas · ${days} jour(s) × ${party}`,
+            amount: mealsAmount,
+            source: 'estimation',
+            basis: `${lvl.basis} · selon la nuit (bivouac, refuge, hébergement)`,
+          },
       rental ? { category: 'matériel', title: 'Location de matériel', amount: rental, source: 'base', basis: 'prix par jour de la boutique × jours' } : null,
       purchase ? { category: 'matériel', title: 'Matériel à acheter', amount: purchase, source: 'base', basis: 'prix de la boutique' } : null,
-      abroad && advice.entryFeesPerPerson != null
+      entry
         ? {
             category: 'divers',
-            title: advice.entryFeesDetail ? `Formalités : ${advice.entryFeesDetail}` : 'Visa, permis et taxes',
-            amount: advice.entryFeesPerPerson * party,
+            title: `Formalités : ${entry.detail}`,
+            amount: entry.eur * party,
             source: 'estimation',
-            basis: 'estimation de l’IA · vérifie les montants officiels avant de partir',
+            basis: `barème Compas ${COSTS_VERSION} · tarif officiel connu, à vérifier avant de partir`,
           }
         : null,
-      advice.insurancePerPerson != null && (abroad || (maxAltitude ?? 0) >= 2500)
+      abroad || (maxAltitude ?? 0) >= 2500
         ? {
             category: 'divers',
             title: 'Assurance voyage et rapatriement',
-            amount: advice.insurancePerPerson * party,
+            amount: insurance(days, { abroad, altitudeM: maxAltitude }) * party,
             source: 'estimation',
-            basis: 'estimation de l’IA',
+            basis: `barème Compas ${COSTS_VERSION} · forfait par jour${(maxAltitude ?? 0) >= 4000 ? ', haute altitude' : ''}`,
           }
         : null,
     ]);
