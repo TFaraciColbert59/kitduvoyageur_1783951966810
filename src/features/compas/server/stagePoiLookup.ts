@@ -28,6 +28,50 @@ const ENDPOINTS = [
   'https://overpass.kumi.systems/api/interpreter',
 ];
 const UA = 'kitduvoyageur/1.0 (Compas, preparation de voyage)';
+/** Miroirs en plus pour les lieux d'une zone (interrogés ensemble, la première bonne réponse gagne). */
+const AREA_ENDPOINTS = [
+  ...ENDPOINTS,
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+  'https://overpass.openstreetmap.ru/api/interpreter',
+];
+
+/**
+ * Les instances publiques limitent par adresse (Vercel partage les siennes) :
+ * pour l'itinéraire, toutes sont interrogées en même temps et la première
+ * réponse complète l'emporte ; les autres sont abandonnées. Rien → null.
+ */
+async function overpassRace(query: string, timeoutMs: number): Promise<unknown | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await Promise.any(
+      AREA_ENDPOINTS.map(async (url) => {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Accept: 'application/json',
+            'User-Agent': UA,
+          },
+          body: `data=${encodeURIComponent(query)}`,
+          signal: controller.signal,
+          cache: 'no-store',
+        });
+        if (!res.ok) throw new Error(`${new URL(url).host} ${res.status}`);
+        const json = await res.json();
+        if (!overpassUsable(json)) throw new Error(`${new URL(url).host} réponse coupée`);
+        return json;
+      })
+    );
+  } catch (err) {
+    const reasons = err instanceof AggregateError ? err.errors.map((e) => (e instanceof Error ? e.message : 'erreur')) : [];
+    console.warn('[compas] lieux de la zone : aucune instance', reasons.join(' · '));
+    return null;
+  } finally {
+    clearTimeout(timer);
+    controller.abort();
+  }
+}
 
 async function overpass(query: string, deadline: number, timeoutMs = TIMEOUT_MS): Promise<unknown | null> {
   for (const url of ENDPOINTS) {
@@ -108,12 +152,10 @@ export async function lookupAreaPlaces(q: AreaQuery, deadline: number): Promise<
     key,
     30 * 86_400,
     async () => {
-      // Requête de zone plus lourde qu'un point : 20 s par instance.
-      const payload = await overpass(query, deadline, 20_000);
-      if (!overpassUsable(payload)) {
-        console.warn('[compas] lieux de la zone indisponibles', q.activity, q.radiusKm, payload ? 'réponse coupée' : 'injoignable');
-        return null;
-      }
+      const left = deadline - Date.now();
+      if (left < 4000) return null;
+      const payload = await overpassRace(query, Math.min(15_000, left));
+      if (!payload) return null;
       const places = parseAreaPlaces(payload);
       return places.length ? places : null;
     },

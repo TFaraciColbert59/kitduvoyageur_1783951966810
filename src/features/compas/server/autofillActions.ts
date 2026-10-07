@@ -338,7 +338,14 @@ async function plannedStages(opts: {
   // Road trip et van : une région entière se parcourt en voiture ; à pied ou à
   // vélo, au-delà d'un massif, il faut savoir où sont les grands itinéraires.
   const roadScale = activity === 'roadtrip' || activity === 'vanlife';
-  if (anchor.radiusKm > (roadScale ? 260 : PLANNED_MAX_KM)) return null;
+  // Échelle réelle du lieu : son emprise ; sans emprise, un pays reste un pays,
+  // mais une « région » nommée (Vercors, Pyrénées catalanes) est un massif.
+  const scaleKm = anchor.extent
+    ? anchor.radiusKm
+    : anchor.kind === 'country'
+      ? 1000
+      : Math.min(anchor.radiusKm, 60);
+  if (scaleKm > (roadScale ? 260 : PLANNED_MAX_KM)) return null;
   const base: StagePlace[] = Array.from({ length: days }, (_, i) => ({
     day: i + 1,
     name: anchor.name,
