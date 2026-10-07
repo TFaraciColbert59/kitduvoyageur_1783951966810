@@ -73,6 +73,8 @@ export function CompasPrep({
           );
         })}
       </ol>
+      {/* En cours avec un message : une attente annoncée (limite de fréquence, reprise seule). */}
+      {!failed && !stopped && !finished && prep.message && <p className="cp-note">{prep.message}</p>}
       {(failed || stopped) && prep.message && (
         <p className="cp-note" role={failed ? 'alert' : undefined}>
           {prep.message}

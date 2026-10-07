@@ -396,14 +396,17 @@ export function CompasScreen({
       .then((res) => {
         if (!res) return;
         if (!res.success) {
-          prepFail(res.error);
           // Limite de fréquence : l'aventure n'est pas laissée vide, la
-          // préparation repart seule à la fin de la fenêtre (une fois).
+          // préparation repart seule à la fin de la fenêtre (une fois). C'est
+          // une attente annoncée, pas une interruption.
           if (res.retryInS && !autofillDeferred.current) {
             autofillDeferred.current = true;
+            if (prepRef.current && prepRef.current.stage !== 'stopped')
+              setPrep({ stage: prepAt() ?? 'itinerary', message: res.error });
             setTimeout(() => autofillRef.current?.(redo), res.retryInS * 1000 + 2000);
             return notify(res.error);
           }
+          prepFail(res.error);
           return notify(res.error, 'bad');
         }
         if (!('summary' in res)) {
