@@ -291,11 +291,19 @@ const FAMOUS_TRAILS: Array<[RegExp, string]> = [
   [/\bgr ?54\b|\btour de l'oisans\b/, 'Écrins'],
   [/\bgr ?34\b|\bsentier des douaniers\b/, 'Bretagne'],
   [/\bgr ?5\b/, 'Alpes'],
+  [/\bgr ?65\b|\bchemin du puy\b|\bvia podiensis\b/, 'Le Puy-en-Velay'],
+  [/\bgr ?70\b|\bchemin de stevenson\b/, 'Cévennes'],
   [/\btmb\b|\btour du mont[- ]blanc\b/, 'Mont Blanc'],
   [/\bchemin de l'inca\b|\binca trail\b/, 'Machu Picchu'],
   [/\bkungsleden\b/, 'Laponie suédoise'],
   [/\bwest highland way\b/, 'Écosse'],
 ];
+
+/** Région d'un sentier célèbre nommé comme un lieu (« GR34 », « Tour du Mont-Blanc »), sinon null. */
+export function trailRegion(place: string): string | null {
+  const plain = plainOf(place);
+  return FAMOUS_TRAILS.find(([re]) => re.test(plain))?.[1] ?? null;
+}
 
 /** Noms communs de paysage ou de moment : jamais une destination à eux seuls. */
 const COMMON_PLACE_WORDS =
@@ -898,8 +906,11 @@ export function mergeActions(
 ): Array<{ action: CompasIntentAction; source: IntentSource }> {
   const seen = new Set<string>();
   const out: Array<{ action: CompasIntentAction; source: IntentSource }> = [];
+  // « GR34 » n'est pas un lieu sur la carte (l'IA le donnait comme destination :
+  // étapes dans l'Indre) : la région du sentier, comme pour les règles.
+  const placed = ai.map((a) => (a.type === 'set_destination' ? { ...a, place: trailRegion(a.place) ?? a.place } : a));
   for (const [list, source] of [
-    [ai, 'ia'],
+    [placed, 'ia'],
     [rules, 'regles'],
   ] as const) {
     for (const action of list) {

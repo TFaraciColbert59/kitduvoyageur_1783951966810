@@ -171,6 +171,28 @@ describe('limites réelles', () => {
       { action: { type: 'set_pace', pace: 'tranquille' }, source: 'regles' },
     ]);
   });
+
+  it('un sentier célèbre donné comme destination par l’IA devient sa région (GR34 → Bretagne)', () => {
+    const merged = mergeActions(
+      [{ type: 'set_destination', place: 'GR34' }],
+      [
+        { type: 'set_destination', place: 'Bretagne' },
+        { type: 'wish', label: 'GR34' },
+      ]
+    );
+    expect(merged).toEqual([
+      { action: { type: 'set_destination', place: 'Bretagne' }, source: 'ia' },
+      { action: { type: 'wish', label: 'GR34' }, source: 'regles' },
+    ]);
+    expect(mergeActions([{ type: 'set_destination', place: 'Tour du Mont-Blanc' }], [])[0].action).toEqual({
+      type: 'set_destination',
+      place: 'Mont Blanc',
+    });
+    expect(mergeActions([{ type: 'set_destination', place: 'Chamonix' }], [])[0].action).toEqual({
+      type: 'set_destination',
+      place: 'Chamonix',
+    });
+  });
 });
 
 describe("plan d'application", () => {

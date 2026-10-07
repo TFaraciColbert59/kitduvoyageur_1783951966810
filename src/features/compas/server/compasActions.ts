@@ -33,6 +33,7 @@ import {
 import {
   groundingIssue,
   mergeActions,
+  trailRegion,
   parseIntentRules,
   validateActions,
   type CompasIntentAction,
@@ -609,7 +610,9 @@ export async function compasSetDestinationAction(
   try {
     const auth = await requireEditor(parsed.data.tripId);
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
-    const place = parsed.data.place ? await resolveDestination(parsed.data.place, auth.userId) : null;
+    // « GR34 » n'est pas un lieu : la région du sentier (sinon un point dans l'Indre).
+    const wanted = parsed.data.place ? (trailRegion(parsed.data.place) ?? parsed.data.place) : null;
+    const place = wanted ? await resolveDestination(wanted, auth.userId) : null;
     if (parsed.data.place && !place)
       return { success: false, error: `« ${parsed.data.place} » introuvable sur la carte.` };
     const metadata = await patchTripMetadata(auth.supabase, parsed.data.tripId, (m) => {

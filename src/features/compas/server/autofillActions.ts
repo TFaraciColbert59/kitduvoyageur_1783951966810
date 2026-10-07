@@ -67,6 +67,7 @@ import { lookupDestination, lookupMassif, lookupNatural, lookupReverse, stageAli
 import { lookupAreaPlaces, lookupStagePois } from './stagePoiLookup';
 import { buildTrack, simplifyLine, trackKey } from '../engine/track';
 import { keepAiNote, travelPapers } from '../engine/papers';
+import { trailRegion } from '../engine/intent';
 import {
   keepAdminArea,
   keepHighlands,
@@ -775,7 +776,7 @@ export async function compasAutofillAction(
         radiusKm: 60,
       };
     if (!anchor && trip.destination_name) {
-      const place = await lookupDestination(trip.destination_name);
+      const place = await lookupDestination(trailRegion(trip.destination_name) ?? trip.destination_name);
       if (place) anchor = { ...place, radiusKm: destinationRadiusKm(place) };
     }
     // Plein air, destination lue comme un quartier ou un département
