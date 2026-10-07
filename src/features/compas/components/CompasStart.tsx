@@ -8,6 +8,7 @@ import { useMemo, useState, useTransition } from 'react';
 import Icon from '@/components/ui/Icon';
 import { COMPAS_STEPS } from '../engine/compasModel';
 import { understandRequest, type RequestLine, type RequestPrecisions } from '../engine/request';
+import { MAX_TRIP_DAYS } from '../engine/intent';
 import { activityLabel } from '../engine/format';
 import { compasCreateTripAction } from '../server/compasActions';
 import { ACTIVITY_FIRST, ACTIVITY_META, ACTIVITY_ORDER } from './CompasOuFlows';
@@ -193,7 +194,8 @@ export function CompasStart({
               </div>
               {(
                 [
-                  ['days', 'Durée', 'jour', 'jours', 60],
+                  // Au-delà, la lecture refuse la durée (« Il me manque la durée »).
+                  ['days', 'Durée', 'jour', 'jours', MAX_TRIP_DAYS],
                   ['party', 'Personnes', 'personne', 'personnes', 20],
                 ] as const
               ).map(([key, label, one, many, max]) => {
