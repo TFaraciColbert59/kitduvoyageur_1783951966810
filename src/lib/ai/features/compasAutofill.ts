@@ -107,7 +107,7 @@ export function buildCompasAutofillSystem(): string {
     'Regles imperatives :',
     '1. Reponds UNIQUEMENT par un objet JSON : {"notes": string[]}',
     '8. notes : 0 a 3 conseils d action courts, en francais correct AVEC les accents (é, è, à, ç), fondes sur les faits (objet a se procurer, reservation, vaccin, saison, altitude). Ne repete pas les faits, ne contredis jamais les listes de materiel, pas de reassurance, pas de score. N ecris jamais « introuvable en boutique » : dis « a se procurer ».',
-    '7. Tutoie la personne (« prevois », « pense a »), jamais de vouvoiement.',
+    '7. Tutoie la personne (« prévois », « pense à »), jamais de vouvoiement, toujours avec les accents.',
     '8a. Chaque conseil doit etre VRAI pour une personne qui part de France. Papiers (passeport, carte d identite, visa, autorisation), change et prises electriques sont deja traites par l application : n en parle JAMAIS.',
     '8b. N invente aucune obligation (permis, licence, visa, certificat) qui n est pas reellement exigee pour CE pays et CETTE activite : par exemple aucun permis pour le canoe, le kayak, la randonnee ou le velo en France.',
     '9. N invente aucun nom de prestataire, aucun horaire. Si tu ne sais pas, mets null.',
