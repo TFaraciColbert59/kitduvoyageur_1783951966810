@@ -1022,7 +1022,11 @@ function autofillDigest(s: CompasAutofillSummary): string {
   }
   if (s.transport)
     parts.push(
-      s.transport.mode === 'avion' ? 'vol à prévoir' : `${Math.round(s.transport.km)} km de route`
+      s.transport.mode === 'avion'
+        ? 'vol à prévoir'
+        : s.transport.mode === 'train'
+          ? `train, environ ${String(Math.round(s.transport.minutes / 30) / 2).replace('.', ',')} h`
+          : `${Math.round(s.transport.km)} km de route`
     );
   const kit = s.kit.inventaire + s.kit.pret + s.kit.location + s.kit.achat + s.kit.a_trouver;
   if (kit) parts.push(`${kit} objet${kit > 1 ? 's' : ''} au kit`);
