@@ -179,8 +179,16 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     category: 'clothing',
     defaultPriority: 'vital',
     baseWeightGrams: 380,
-    condition: (_input, maxAlt) => {
-      const extremeCold = maxAlt > 2400;
+    condition: (input, maxAlt) => {
+      // Nuits froides : très haut, ou haut hors été, ou l'alpinisme ; sous les
+      // tropiques, à partir de 3 500 m (Cusco, Quito : gel nocturne).
+      const lat = input.latitude ?? null;
+      const month = input.seasonMonth && lat != null && lat < 0 ? ((input.seasonMonth + 5) % 12) + 1 : input.seasonMonth;
+      const summer = Boolean(month && month >= 6 && month <= 9);
+      const tropical = lat != null && Math.abs(lat) < 23.5;
+      const extremeCold = tropical
+        ? maxAlt >= 3500
+        : maxAlt >= 3000 || (maxAlt > 2400 && (!summer || input.activity === 'mountaineering'));
       return {
         match: extremeCold,
         reason: extremeCold
@@ -256,7 +264,7 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
       const winter = Boolean(month && (month === 12 || month <= 2));
       const shoulder = Boolean(month && (month === 3 || month === 4 || month === 10 || month === 11));
       const coldExpected = Boolean(
-        maxAlt >= 2000 ||
+        (maxAlt >= 2000 && (!tropical || maxAlt >= 3500) && (maxAlt >= 3000 || !(month && month >= 6 && month <= 9))) ||
         input.countryCode === 'IS' ||
         (!tropical && winter) ||
         (shoulder && (lat == null || Math.abs(lat) >= 44 || maxAlt >= 1000))

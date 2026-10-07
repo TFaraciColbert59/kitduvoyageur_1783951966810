@@ -372,6 +372,8 @@ function cleanText(v: unknown, max: number): string | null {
  * (« Reserver l'hëergement ») : corrigés, le reste est laissé tel quel.
  */
 const ACCENT_FIXES: Array<[RegExp, string]> = [
+  // Apostrophe perdue : « lhumidité », « davance », « leau ».
+  [/\b(l|d|qu|j|n)(avance|humidit[ée]|h[ée]bergement|eau|altitude|acclimatation|arriv[ée]e|achat|acc[èe]s|itin[ée]raire|entr[ée]e|ascension|aube|hiver|automne|avion|a[ée]roport|assurance|[ée]quipement|[ée]tape|orage|ombre|essence|emplacement|office)(?![\p{L}\d])/giu, "$1'$2"],
   [/\bh[ëe]?e?rgements?\b/gi, 'hébergement'],
   [/\bhebergement/gi, 'hébergement'],
   [/\breserver\b/gi, 'réserver'],
@@ -391,7 +393,7 @@ export function repairAccents(text: string): string {
   let out = text;
   for (const [re, fix] of ACCENT_FIXES)
     out = out.replace(re, (m, ...g) => {
-      const word = fix.replace('$1', typeof g[0] === 'string' ? g[0] : '');
+      const word = fix.replace(/\$(\d)/g, (_d, i: string) => (typeof g[Number(i) - 1] === 'string' ? (g[Number(i) - 1] as string) : ''));
       return m[0] === m[0].toUpperCase() ? word[0].toUpperCase() + word.slice(1) : word;
     });
   return out;
@@ -687,6 +689,8 @@ const SHORT_EXCLUDED = new Set(['repair-kit', 'thermos', 'water-filter', 'stove'
 
 export function keepRuleForActivity(key: string, activity: string, short = false): boolean {
   if (short && SHORT_EXCLUDED.has(key)) return false;
+  // Sur l'eau : un sac étanche (matériel de l'activité), pas un sac de randonnée ni un thermos.
+  if (activity === 'water' && (key === 'backpack' || key === 'thermos')) return false;
   if (activity === 'cultural' || activity === 'citytrip' || activity === 'beach') return CITY_KEYS.has(key);
   if (activity === 'roadtrip' || activity === 'vanlife') return !ROAD_EXCLUDED.has(key);
   if (activity === 'water' || activity === 'cycling') return !WATER_EXCLUDED.has(key);
@@ -815,4 +819,38 @@ export function backtrackShare(points: ReadonlyArray<{ lat: number; lon: number 
 /** L'envie dit-elle une traversée ou un itinéraire linéaire (GR, haute route) ? */
 export function wantsTraverse(wishes: readonly string[]): boolean {
   return wishes.some((w) => /\btravers[ée]e\b|\btraverse\b|\bgr ?\d{1,3}\b|haute route|\bhrp\b/i.test(w.normalize('NFC')));
+}
+
+
+const CITY_LIKE = new Set(['cultural', 'citytrip', 'beach']);
+
+/**
+ * La raison d'un objet des règles générales, dite pour CE voyage : une
+ * trousse de secours n'est pas « pour le milieu isolé » à Lisbonne, un kit de
+ * réparation n'est pas « en plein trek » sur l'eau.
+ */
+export function contextualReason(key: string, reason: string, activity: string, short: boolean): string {
+  const city = CITY_LIKE.has(activity);
+  switch (key) {
+    case 'first-aid':
+      if (city) return 'Petits soins du voyage : pansements, ampoules, antidouleur, désinfectant.';
+      if (short) return 'Ampoules, coupures, piqûres : de quoi soigner sur place.';
+      return reason;
+    case 'water-bottle':
+      if (city) return 'Rester hydraté pendant les visites, à remplir aux fontaines.';
+      if (activity === 'water') return 'Boire sur l’eau entre deux pauses.';
+      return reason;
+    case 'headlamp':
+      if (short) return 'Au cas où la sortie se termine à la tombée de la nuit.';
+      return reason;
+    case 'repair-kit':
+      if (activity === 'water') return 'Réparer une sangle, un sac ou une pagaie sans écourter la descente.';
+      if (activity === 'cycling') return 'Réparer une sangle ou une sacoche sans abandonner l’étape.';
+      return reason.replace('en plein trek', 'en cours de route');
+    case 'backpack':
+      if (short) return 'Un sac de journée pour l’eau, le pique-nique et une couche chaude.';
+      return reason;
+    default:
+      return reason;
+  }
 }

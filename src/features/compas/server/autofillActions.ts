@@ -23,6 +23,7 @@ import { readCompasMeta } from '../engine/meta';
 import {
   NIGHT_LABEL,
   backtrackShare,
+  contextualReason,
   wantsTraverse,
   longestStay,
   budgetLines,
@@ -1055,7 +1056,7 @@ export async function compasAutofillAction(
     const nightTypes = plan.map((n) => n.type);
     const ruleNeeds = [...analysis.vitalGaps, ...analysis.recommendedGaps]
       .filter((g) => keepRuleForNights(g.category, nightTypes) && keepRuleForActivity(g.key, activity, shortOuting))
-      .map(needFromRule);
+      .map((g) => needFromRule({ ...g, reason: contextualReason(g.key, g.reason, activity, shortOuting) }));
     for (const g of [...gearForActivity(activity), ...gearForNights(nightTypes), ...ruleNeeds])
       if (!needs.some((n) => sameNeed(n, g))) needs.push(g);
     const shop: SourceShop[] = ((shopRows ?? []) as Array<Record<string, unknown>>).map((p) => ({

@@ -108,6 +108,10 @@ describe('repas, budget, avis IA', () => {
       "Réserver l'hébergement pour la nuit du 5 juin.",
       'Réserver le JR Pass avant départ',
     ]);
+    expect(sanitizeAdvice({ notes: ['Prévoir des vêtements légers pour lhumidité', 'Réserver le train davance'] }).notes).toEqual([
+      "Prévoir des vêtements légers pour l'humidité",
+      "Réserver le train d'avance",
+    ]);
     expect(sanitizeAdvice({ notes: ['appliquer un indice SPF 50+ toutes les 2 h'] }).notes).toEqual([
       'Appliquer un indice SPF 50+ toutes les 2 h',
     ]);

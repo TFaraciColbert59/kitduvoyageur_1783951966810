@@ -95,3 +95,29 @@ describe('Kit d’une sortie courte et froid de saison selon le lieu', () => {
     expect([...peru.vitalGaps, ...peru.recommendedGaps].some((g) => g.key === 'crampons')).toBe(false);
   });
 });
+
+describe('Raisons et saison des objets, dites pour CE voyage', () => {
+  it('une trousse de secours n’est pas « pour le milieu isolé » à Lisbonne', async () => {
+    const { contextualReason } = await import('../engine/autofill');
+    const generic = 'Indispensable pour faire face aux traumatismes, coupures et ampoules en milieu isolé.';
+    expect(contextualReason('first-aid', generic, 'citytrip', false)).not.toMatch(/isolé/);
+    expect(contextualReason('first-aid', generic, 'trekking', false)).toBe(generic);
+    expect(contextualReason('repair-kit', 'Permet de réparer en plein trek sans abandonner.', 'hiking', false)).not.toMatch(/trek/);
+  });
+  it('sur l’eau : ni sac de randonnée ni thermos', () => {
+    expect(keepRuleForActivity('backpack', 'water')).toBe(false);
+    expect(keepRuleForActivity('thermos', 'water')).toBe(false);
+    expect(keepRuleForActivity('backpack', 'hiking')).toBe(true);
+  });
+  it('doudoune et gants : pas en juillet à 2 700 m (Dolomites, Utah), oui à 3 400 m dans les Andes ou en octobre', () => {
+    const has = (key: string, seasonMonth: number, maxM: number, latitude: number, activity = 'hiking') => {
+      const k = generateTripContextualKit({ countryCode: 'XX', activity, durationDays: 4, seasonMonth, latitude, elevationProfile: { maxM } as never });
+      return [...k.vitalGaps, ...k.recommendedGaps].some((g) => g.key === key);
+    };
+    expect(has('cold-down-jacket', 7, 2749, 46.5)).toBe(false);
+    expect(has('cold-gloves', 6, 2617, 38.5)).toBe(false);
+    expect(has('cold-down-jacket', 10, 2749, 46.5)).toBe(true);
+    expect(has('cold-down-jacket', 6, 3722, -13.5)).toBe(true);
+    expect(has('cold-down-jacket', 7, 2688, 44.9, 'mountaineering')).toBe(true);
+  });
+});
