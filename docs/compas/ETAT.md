@@ -10,13 +10,13 @@ Mis à jour : 7 octobre 2026.
 
 | # | Sujet | État | Preuve / reste |
 |---|---|---|---|
-| P0.1 | Préparation en une seule passe (300 s) | **En cours** | Avant : deux appels de 60 s, coupures |
-| P0.2 | Compréhension de la demande et résolution du lieu | Partiel | Homonymes (Mont Rose) et « Pyrénées catalanes » corrigés et vérifiés ; reste : massif ou département selon l'activité (Vosges), sorties sans lieu, demandes floues (« activité cet après-midi ») |
+| P0.1 | Préparation en une seule passe (300 s) | Code fait | `maxDuration = 300`, un seul appel `phase: 'all'` (budget 270 s) ; reste : preuve sur la preview |
+| P0.2 | Compréhension de la demande et résolution du lieu | Partiel | Homonymes, massif selon l'activité (Vosges), demande sans lieu → près de chez toi : faits. Lecture des 50 demandes P2 : 50/50 cohérentes hors ligne (week-end = 2 j, GR20 → Corse, « au Maroc à Marrakech », minuscules…). Reste : preuve en ligne sur les 50 |
 | P0.3 | Itinéraire déterministe | Partiel | Lieux réels (Photon), traversée / boucle / base, zone ajustée ; vérifié Vercors, Annecy, Bretagne, Pyrénées catalanes, Mont Rose. Reste : régression ville sans activité (Rome), descente de rivière (canoë), plaine au lieu du massif, échelle d'un pays |
 | P0.4 | Dates et trajets | Partiel | Période proposée, route mesurée ou vol estimé ; à revérifier sur P2 |
 | P0.5 | Budget et conseils | Partiel | Barèmes par pays dans le code ; reste : niveau de prix tous pays, visas tous pays, conseils par règles |
 | P0.6 | Fallbacks propres | Partiel | Raison d'un repli écrite dans les notes ; reste : résultat complet garanti, secours Geoapify |
-| P0.7 | IA production : OpenRouter + Nemotron 3.5 Lightning | À faire | Aujourd'hui NVIDIA NIM direct (offre d'évaluation) |
+| P0.7 | IA production : OpenRouter + Nemotron 3.5 Lightning | Code fait | OpenRouter en premier (modèle verrouillé), NVIDIA en secours ; reste : `OPENROUTER_API_KEY` créditée sur Vercel (Tony) |
 | — | Contexte du voyage unique (`buildTripContext`) | **Fait** | `engine/tripContext.ts`, testé |
 | — | Fiabilité (prises atomiques, écritures vérifiées, annulation, arrondis) | **Fait** | Testé |
 | — | Phrase de départ persistée | **Fait** | — |
@@ -35,7 +35,7 @@ Mis à jour : 7 octobre 2026.
 |---|---|
 | 10 parcours de zone (7 octobre) | 9 sur lieux réels ; 2 défauts (Rome, Vosges), 3 partiels (Vercors, Jura, canoë) |
 | 20 parcours réels | À rejouer après P0 |
-| 50 demandes entièrement nouvelles | À faire |
+| 50 demandes entièrement nouvelles | Hors ligne : 14 écarts de lecture corrigés, 50/50 ; en ligne : à faire |
 
 ## P3 — Après stabilisation (gelé)
 
