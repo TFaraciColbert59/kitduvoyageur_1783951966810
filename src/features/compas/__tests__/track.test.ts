@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildTrack, simplifyLine, trackKey } from '../engine/track';
+import { buildTrack, MAX_TRACK_POINTS, simplifyLine, trackKey } from '../engine/track';
 
 describe('tracé réel de l’itinéraire', () => {
   it('garde la géométrie routée de chaque tronçon, segment droit seulement sans elle', () => {
@@ -51,5 +51,21 @@ describe('tracé réel de l’itinéraire', () => {
     expect(s[0]).toEqual([0, 45]);
     expect(s[149]).toEqual([0.999, 45]);
     expect(trackKey([{ lat: 45.12345, lon: 6.98765 }])).toBe('45.123,6.988');
+  });
+  it('600 points au plus pour tout le voyage, extrémités de chaque tronçon gardées (base gratuite)', () => {
+    // 14 soirs, chaque tronçon routé de 400 points : 5 600 avant plafond.
+    const stops = Array.from({ length: 15 }, (_, i) => ({ lat: 45 + i * 0.1, lon: 6 + i * 0.1 }));
+    const legs = stops.map((s, i) =>
+      i === 0 ? null : Array.from({ length: 400 }, (_, k) => [6 + (i - 1) * 0.1 + (k / 399) * 0.1, 45 + (i - 1) * 0.1 + (k / 399) * 0.1] as [number, number])
+    );
+    const track = buildTrack(stops, legs)!;
+    const total = track.coordinates.reduce((n, l) => n + l.length, 0);
+    expect(track.coordinates).toHaveLength(14);
+    expect(total).toBeLessThanOrEqual(MAX_TRACK_POINTS);
+    // Chaque tronçon part et arrive toujours au bon endroit (arrondi à 1e-5).
+    const near = (a: readonly number[], b: readonly number[]) =>
+      a.forEach((v, k) => expect(v).toBeCloseTo(b[k], 5));
+    near(track.coordinates[3][0], legs[4]![0]);
+    near(track.coordinates[3].at(-1)!, legs[4]!.at(-1)!);
   });
 });

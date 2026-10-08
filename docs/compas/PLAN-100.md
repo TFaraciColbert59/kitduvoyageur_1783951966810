@@ -60,25 +60,33 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 1.1 Base Supabase gratuite (500 Mo, pas de sauvegarde)
 
-- [ ] **Budget de place** écrit et suivi : cible ≤ 400 Mo en régime (marge de 100 Mo).
-      Preuve : requête de taille dans le rapport quotidien (1.1.6).
-- [ ] **Plafonds des caches** : `geo_cache` (par type : place, reverse, leg, stages) et
-      `route_cache` bornés en nombre de lignes et en taille ; purge planifiée (cron
-      `pg_cron` gratuit ou GitHub Actions) ; `purge_route_cache` réellement appelée.
-      Preuve : taille stable sur 7 jours.
-- [ ] **Tracé dans `trips.metadata`** : géométrie simplifiée plafonnée (≤ 300 points par
-      voyage) ; ancien tracé effacé à la réadaptation.
+- [~] **Budget de place** écrit et suivi : cible ≤ 400 Mo en régime (marge de 100 Mo).
+      Suivi dans `ops_daily_reports` (8 oct. : 371 Mo, dont `places_geo` 232 Mo).
+- [~] **Plafonds des caches** : `cap_shared_caches` (1 000 trajets, 25 000 lieux), purges
+      `purge_geo_cache` / `purge_route_cache` (119 trajets tous expirés, jamais purgés) et
+      des journaux, planifiées en base (`pg_cron`, `docs/compas/SAUVEGARDES.md`).
+      🔒 Suppressions : `20261008190000_base_scheduled_purges.sql` à lancer par Tony dans
+      le SQL Editor. Preuve : taille stable sur 7 jours.
+- [x] **Tracé dans `trips.metadata`** : 600 points au plus pour tout le voyage
+      (`MAX_TRACK_POINTS`, ~12 Ko ; 150 par tronçon avant), réécrit à chaque
+      préparation (8 oct. : 23 Ko au plus, 3 Ko en moyenne).
 - [ ] **Retrait de `places_geo`** (232 Mo) une fois les pages Pays branchées sur
       `geo_places` (3.8). Preuve : base ≤ 250 Mo avant import des lots 3.3 à 3.7.
-- [ ] **Sauvegardes gratuites** : GitHub Actions planifié (quotidien) → `pg_dump`
-      (schéma + données hors caches) chiffré, conservé en artefact 30 jours ; procédure de
-      restauration écrite et testée une fois sur une base locale. Preuve : un artefact par
-      jour, une restauration réussie.
-- [ ] **Rapport quotidien** (GitHub Actions, gratuit) : taille de la base, lignes des
-      caches, préparations du jour (réussies / échouées), erreurs ; une issue GitHub
-      ouverte si un seuil est franchi (base > 430 Mo, échecs > 10 %).
-- [ ] **Pause pour inactivité** (7 jours sans requête) : le rapport quotidien suffit à
-      garder le projet actif. Preuve : aucune pause en 14 jours.
+- [~] **Sauvegardes gratuites** : `.github/workflows/db-backup.yml`, chaque nuit,
+      `pg_dump` (`public` + `auth`, hors caches et référentiels réimportables), chiffré
+      AES-256, artefact 7 jours ; restauration écrite (`docs/compas/SAUVEGARDES.md`).
+      🔒 Tony : secrets GitHub `SUPABASE_DB_URL` et `BACKUP_PASSPHRASE`. Preuve : un
+      artefact, une restauration réussie sur une base de test.
+- [~] **Rapport quotidien** en base : `ops_daily_report()` chaque nuit à 4 h 07 UTC
+      (`pg_cron`), table `ops_daily_reports` (taille, caches, compteurs, essais,
+      préparations réussies / échouées de la veille) ; premier rapport : 7 oct., 128
+      réussies, 4 échouées. Reste : alerte si un seuil est franchi (base > 430 Mo,
+      échecs > 10 %).
+- [ ] **Pause pour inactivité** (7 jours sans requête) : le trafic et les tâches de nuit
+      gardent le projet actif. Preuve : aucune pause en 14 jours.
+- [ ] Aucune des 15 routes `/api/cron/*` du site n'est planifiée (ni `vercel.json`, ni
+      tâche GitHub ; 8 oct.) : les brancher sur `pg_cron` + `pg_net` ou les retirer
+      (hors Compas, phase 9).
 
 ### 1.2 Hébergement Vercel
 
@@ -117,7 +125,8 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       créé par Tony (8 oct.) ; avec `LOCATIONIQ_API_KEY`, **tous les appels Nominatim du
       Compas passent par LocationIQ** (même moteur, `src/features/compas/server/locationIq.ts`,
       2 req/s) ; « Search by LocationIQ.com » cliquable dans les mentions légales.
-      Preuve en production après fusion (`/api/compas/sources`).
+      **Prouvé en production le 8 oct.** : `/api/compas/sources` → `locationiq: true` ;
+      préparation réelle (Bauges, 41 s) réussie après la bascule.
 - [ ] **Photon public** (pas de clause commerciale, « usage raisonnable ») : dernier
       recours seulement ; User-Agent `koosmoweb.fr` + contact ; rythme global limité
       (jeton en base) ; cache 30 j.
@@ -167,8 +176,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [~] Relief, standard et satellite : **ArcGIS Location Platform** gratuit (2 M tuiles
       et 1 000 sessions par mois, commercial autorisé avec clé ; coupé au-delà) ; compte
       et clé créés par Tony (8 oct.) ; `arcgis/outdoor` (relief), `open/osm-style`
-      (standard), `World_Imagery` (satellite) ; « Powered by Esri » sur la carte et dans
-      les mentions. Reste : compteur de sessions, preuve visuelle en production.
+      (standard), `World_Imagery` (satellite) ; « Powered by Esri » sur la carte (mention
+      complète dépliable) et dans les mentions. **Prouvé en production le 8 oct.** :
+      10 tuiles `static-map-tiles-api.arcgis.com` en 200 sur `/explorer`, plus aucune
+      tuile sans clé. Reste : compteur de sessions.
 
 ### 1.7 IA à 0 €
 
