@@ -538,6 +538,10 @@ describe('On dort dans une commune : monument, gare ou province remplacés', () 
     expect(sleepPlaceFix(photon('Kerry County', 'boundary', 'administrative', 'county'))).toEqual({ search: 'Kerry' });
     // Un site dont la « commune » est une circonscription : cherché sous le nom nu.
     expect(sleepPlaceFix(photon('Cliffs of Moher', 'tourism', 'attraction', 'house', { city: 'West Clare Municipal District' }))).toEqual({ search: 'West Clare' });
+    // Passage du 8 octobre : la carte la classait comme lieu habité, elle restait l'étape.
+    expect(sleepPlaceFix(photon('West Clare Municipal District', 'place', 'municipality', 'city'))).toEqual({ search: 'West Clare' });
+    // Un parc national n'est pas une circonscription.
+    expect(sleepPlaceFix(photon('Peak District', 'boundary', 'national_park', 'other'))).toBeNull();
   });
   it('refuge, camping, lac, sommet et village restent l’étape', async () => {
     const { sleepPlaceFix } = await import('../engine/places');

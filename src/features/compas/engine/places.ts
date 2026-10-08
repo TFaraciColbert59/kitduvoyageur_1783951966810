@@ -426,8 +426,15 @@ export function isAdminName(name: string): boolean {
  * - sinon null : le lieu reste l'étape (village, refuge, camping, sommet, lac).
  */
 export function sleepPlaceFix(place: CompasPlace): { locality: string } | { search: string } | null {
-  if (place.settlement && (place.settlementRank ?? 2) >= 1) return null;
   const tag = place.osmTag ?? '';
+  // Une circonscription reste à remplacer même si la carte la classe comme lieu
+  // habité (Irlande, 8 oct. : « West Clare Municipal District » gardé trois
+  // nuits). Un parc (« Peak District ») n'en est pas une.
+  if (isAdminName(place.name) && !SLEEP_TAGS.test(tag) && !NATURE_TAG.test(tag) && !/^boundary=(national_park|protected_area)$/.test(tag)) {
+    const bare = place.name.replace(ADMIN_PREFIX, '').replace(ADMIN_SUFFIX, '').trim();
+    return bare ? { search: bare } : null;
+  }
+  if (place.settlement && (place.settlementRank ?? 2) >= 1) return null;
   if (SLEEP_TAGS.test(tag) || NATURE_TAG.test(tag)) return null;
   if (BROAD.has(place.kind) || /^boundary=administrative$/.test(tag)) {
     const bare = place.name.replace(ADMIN_PREFIX, '').replace(ADMIN_SUFFIX, '').trim();
