@@ -19,7 +19,7 @@ vi.mock('../server/compasServer', async (orig) => {
     requireEditor: vi.fn(async () => ({
       supabase,
       userId: 'u1',
-      trip: { id: '11111111-1111-4111-8111-111111111111', start_date: null, end_date: null, metadata: {} },
+      trip: { id: '11111111-1111-4111-8111-111111111111', start_date: null, end_date: null, party_size: 1, metadata: h.meta },
     })),
     patchTripMetadata: vi.fn(async (_s: unknown, _id: string, fn: (m: Record<string, unknown>) => Record<string, unknown>) => {
       h.meta = fn(h.meta);
@@ -66,5 +66,28 @@ describe('préparation en arrière-plan', () => {
     // Sans heure de lancement, ou avant elle : rien.
     expect(await compasAutofillOutcomeAction({ tripId: TRIP, token: b.token })).toBeNull();
     expect(await compasAutofillOutcomeAction({ tripId: TRIP, token: b.token, since: a.at + 60_000 })).toBeNull();
+  });
+
+  it('lancé en double juste après une réussite : l’issue réussie vaut pour les deux, jamais « déjà prérempli »', async () => {
+    const A = '22222222-2222-4222-8222-222222222222';
+    const success = { success: true, summary: { total: 320 }, token: A, at: 1_000 };
+    h.meta = { compas: { planned_days: 3, autofill: { runId: 'run-a' }, autofill_result: success } };
+    const b = await compasAutofillStartAction({ tripId: TRIP, tripSlug: 'x', from: null, phase: 'all' });
+    if (!b.success) throw new Error('lancement refusé');
+    await Promise.all(h.later.map((fn) => fn()));
+    // Le second écran lit la réussite sous son jeton ; le premier la lit encore (même heure).
+    expect(await compasAutofillOutcomeAction({ tripId: TRIP, token: b.token })).toMatchObject({ success: true, summary: { total: 320 }, at: 1_000 });
+    expect(await compasAutofillOutcomeAction({ tripId: TRIP, token: A, since: 500 })).toMatchObject({ success: true, summary: { total: 320 } });
+  });
+
+  it('relance d’une préparation arrêtée : l’erreur reste dite', async () => {
+    h.meta = { compas: { planned_days: 3, autofill: { runId: 'run-a', stopped: true } } };
+    const b = await compasAutofillStartAction({ tripId: TRIP, tripSlug: 'x', from: null, phase: 'all' });
+    if (!b.success) throw new Error('lancement refusé');
+    await Promise.all(h.later.map((fn) => fn()));
+    expect(await compasAutofillOutcomeAction({ tripId: TRIP, token: b.token })).toMatchObject({
+      success: false,
+      error: expect.stringMatching(/arrêtée en cours de route/),
+    });
   });
 });

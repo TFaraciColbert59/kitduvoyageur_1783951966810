@@ -135,8 +135,11 @@ export type CompasAutofillResult =
   | { success: true; summary: CompasAutofillSummary }
   /** Phase « étapes » terminée : l'itinéraire est écrit, la suite reste à lancer. */
   | { success: true; pending: true; stepsCreated: number }
-  /** `retryInS` : limite de fréquence atteinte, l'écran relance seul après ce délai. */
-  | { success: false; error: string; retryInS?: number };
+  /**
+   * `retryInS` : limite de fréquence atteinte, l'écran relance seul après ce délai.
+   * `already` : le voyage est déjà prérempli (lancement en double, écran remonté).
+   */
+  | { success: false; error: string; retryInS?: number; already?: true };
 
 /** Itinéraire écrit par la phase « étapes », en attente de la phase « reste ». */
 interface PendingRun {
@@ -653,10 +656,18 @@ export async function compasAutofillStartAction(
       const outcome: CompasAutofillOutcome = { ...res, token, at: Date.now() };
       try {
         const { supabase } = auth;
-        const metadata = await patchTripMetadata(supabase, tripId, (m) => ({
-          ...m,
-          compas: { ...compasMeta(m), autofill_result: outcome },
-        }));
+        const metadata = await patchTripMetadata(supabase, tripId, (m) => {
+          // Lancement en double juste après une préparation réussie (écran
+          // remonté, Ardennes du 8 oct.) : « déjà prérempli » écrasait l'issue
+          // réussie et les deux écrans attendaient sans fin. L'issue réussie
+          // vaut pour les deux : même résumé, sous ce jeton, à son heure.
+          const prevOutcome = compasMeta(m).autofill_result as CompasAutofillOutcome | undefined;
+          const kept =
+            !res.success && 'already' in res && res.already && prevOutcome?.success && 'summary' in prevOutcome
+              ? { ...prevOutcome, token }
+              : outcome;
+          return { ...m, compas: { ...compasMeta(m), autofill_result: kept } };
+        });
         await supabase.from('trips').update({ metadata, updated_at: new Date().toISOString() }).eq('id', tripId);
       } catch (err) {
         console.error('[compas] issue de la préparation non écrite', err instanceof Error ? err.message : err);
@@ -736,12 +747,9 @@ export async function compasAutofillAction(
     // Un second appel « rest » (onglet rouvert, double déclenchement) arrive après la fin : rien à dire.
     if (prev?.runId && phase === 'rest') return { success: true, pending: true, stepsCreated: 0 };
     if (prev?.runId)
-      return {
-        success: false,
-        error: prev.stopped
-          ? 'Préparation arrêtée en cours de route : « Annuler » retire ce qui est fait, puis relance.'
-          : 'Le voyage est déjà prérempli : annule d’abord pour relancer.',
-      };
+      return prev.stopped
+        ? { success: false, error: 'Préparation arrêtée en cours de route : « Annuler » retire ce qui est fait, puis relance.' }
+        : { success: false, error: 'Le voyage est déjà prérempli : annule d’abord pour relancer.', already: true };
     const pending = readPending(meta);
     const carry = readCarry(meta);
     // Une phase « steps » relancée alors qu'un itinéraire attend déjà : on le garde.
