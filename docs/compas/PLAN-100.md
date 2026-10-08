@@ -115,8 +115,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       étapes reprenables (2.6) pour ne jamais dépendre d'une seule fonction longue.
 - [ ] **Coût de calcul** : supprimer le rafraîchissement complet de page toutes les 4 s
       (2.8) ; mettre en cache les données de page (météo 30 min, altitudes 30 j).
-- [ ] **Région des fonctions** : tester `cdg1` (Paris, proche de Supabase eu-west-3) ;
-      mesurer avant/après. Preuve : temps de préparation médian.
+- [~] **Région des fonctions** : `vercel.json` → `cdg1` (Paris). Les fonctions
+      tournaient à `iad1` (Washington) alors que la base est à Paris (`eu-west-3`), comme
+      Geoapify, Photon, Valhalla et MET Norway : chaque requête traversait l'Atlantique.
+      L'offre Hobby permet une région au choix. Mesure avant/après à faire sur la même
+      demande (Bauges, 3 jours : 48 s à `iad1` en production le 8 oct.).
 
 ### 1.3 Recherche de lieux (géocodage) sans serveur de démonstration
 
