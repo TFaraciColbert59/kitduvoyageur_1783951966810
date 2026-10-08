@@ -1056,9 +1056,11 @@ export async function compasAutofillAction(
             // cartes (Photon, Overpass, Geoapify) même après une compréhension lente.
             deadline: startedAt + (phase === 'all' ? 120_000 : 30_000),
             notes,
-          }).catch((err) => ({
-            fallback: `erreur de calcul (${err instanceof Error ? err.message.slice(0, 80) : 'inconnue'})`,
-          }));
+          }).catch((err) => {
+            // Le message interne reste dans le journal, jamais dans les notes (plan 2.9).
+            console.error('[compas] itinéraire calculé', err instanceof Error ? err.message : err);
+            return { fallback: 'erreur de calcul' };
+          });
       const plannedOk = planned && 'stages' in planned ? planned : null;
       if (plannedOk) {
         stagePlaces = plannedOk.stages;

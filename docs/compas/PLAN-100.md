@@ -367,7 +367,9 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [x] `src/app/compas/error.tsx` (aucun message interne, référence `digest` des
       journaux Vercel, « Réessayer » relit le serveur) et `loading.tsx` ;
       `global-error.tsx` ne dit plus « l'équipe a été notifiée ».
-- [ ] Erreurs internes jamais affichées dans les notes (`autofillActions.ts`).
+- [x] Erreurs internes jamais affichées : l'échec du calcul d'itinéraire dit « erreur de
+      calcul » (le message va au journal) ; la recherche partenaire ne montre plus que
+      le code et le statut (message brut, cause et échec Viator au journal).
 
 ### 2.10 RGPD
 
