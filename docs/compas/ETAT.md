@@ -49,6 +49,19 @@ Réservations réelles (Travelpayouts, RouteStack, Viator), équipe / social, bo
 hors ligne, affiliation, animations, polish de maquette et desktop. Accessibilité : close pour
 l'instant.
 
+## Lancement mondial (audit du 8 octobre)
+
+`AUDIT-LANCEMENT-MONDIAL-2026-10-08.md` : **≈ 35 % prêt pour le monde, ≈ 50 % pour un
+lancement francophone** (≈ 65 % après passage aux offres payantes). 97 % des
+préparations réussies en production (151/156), mais aucun vrai utilisateur encore.
+Corrigé pendant l'audit : quota IA jamais appliqué (appliqué et prouvé en production),
+lien d'invitation lisible par un simple lecteur (appliqué en base), noms non latins
+partageant une clé de cache, mention OpenStreetMap sans position. Bloquants restants :
+services gratuits interdits en commercial, Supabase gratuit, écriture publique du cache
+d'itinéraires, limite de fréquence non distribuée, connexion démo ouverte, voyageur
+supposé français (papiers, départ, fuseau, langue). Décisions attendues de Tony : cible,
+budget, offre Vercel, IA, démo.
+
 ## Blocages (8 octobre)
 
 - Réseau ouvert : la preview, Photon et Supabase répondent depuis le conteneur ; Overpass reste instable depuis ici (miroirs en 500/504).
