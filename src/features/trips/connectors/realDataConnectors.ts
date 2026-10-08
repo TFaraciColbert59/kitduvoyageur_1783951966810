@@ -1,4 +1,5 @@
 import type { Provenance } from '../schemas/autoGen.schema';
+import { appUserAgent } from '@/lib/userAgent';
 
 export interface BivouacRule {
   countryCode: string;
@@ -224,7 +225,7 @@ export async function lookupWaterSources(bounds: GeoBounds): Promise<WaterSource
     const response = await fetch(
       'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(overpassQuery),
       {
-        headers: { 'User-Agent': 'LKDV-Voyage-Engine/1.0' },
+        headers: { 'User-Agent': appUserAgent('voyages') },
         signal: AbortSignal.timeout(4000),
       }
     );

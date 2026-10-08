@@ -1,4 +1,5 @@
 import 'server-only';
+import { appUserAgent } from '@/lib/userAgent';
 
 /**
  * Le nom anglais d'une ville, d'après OpenStreetMap (Photon, `lang=en`) :
@@ -11,7 +12,7 @@ import 'server-only';
  */
 
 const PHOTON = 'https://photon.komoot.io/api/';
-const UA = 'kitduvoyageur/1.0 (reservation, nom de lieu)';
+const UA = appUserAgent('reservation, nom de lieu');
 const TIMEOUT_MS = 4000;
 /** Lieux habités et régions ; jamais un lieu-dit homonyme (« Lisbonne », hameau du Gers). Villes : nom français. */
 const CITY_TYPES = new Set(['city', 'town']);

@@ -6,6 +6,7 @@ import {
   withinPublishedHorizon,
   type AlertsStatus,
 } from '../engine/officialAlerts';
+import { appUserAgent } from '@/lib/userAgent';
 
 /**
  * Compas — alertes officielles du voyage (France : Météo-France via Meteoalarm).
@@ -19,7 +20,7 @@ import {
  */
 
 const FEED_URL = 'https://feeds.meteoalarm.org/api/v1/warnings/feeds-france';
-const NOMINATIM_UA = 'kitduvoyageur-compas/1.0 (+https://lekitduvoyageur.fr)';
+const NOMINATIM_UA = appUserAgent('Compas, alertes');
 const TIME_ZONE = 'Europe/Paris';
 
 export interface OfficialAlertsResult {

@@ -231,14 +231,23 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 1.8 Météo et données ouvertes
 
-- [ ] MET Norway (CC BY 4.0, commercial autorisé) : User-Agent `koosmoweb.fr` +
-      courriel de contact (sinon 403) ; 20 req/s pour toute l'application ; respect de
-      `Expires` ; cache 30 min (déjà) ; crédit + lien CC BY.
-- [ ] NASA POWER (« no restrictions », citation demandée) : clé de cache par mois (et
-      non par jour) pour partager le cache.
+- [~] MET Norway (CC BY 4.0, commercial autorisé) : User-Agent unique du site
+      (`src/lib/userAgent.ts`, `kitduvoyageur/1.0 (…; +https://koosmoweb.fr)`) sur MET
+      Norway, Nominatim, Photon, Overpass, Valhalla : des appels annonçaient encore
+      `lekitduvoyageur.fr` ou `kitduvoyageur.fr`, qui ne sont pas nos domaines ; crédit
+      et lien CC BY 4.0 dans les mentions ; cache 30 min (déjà). Reste : `Expires` et
+      plafond de 20 req/s pour toute l'application.
+- [x] NASA POWER (« no restrictions », citation demandée) : fenêtre de la tendance
+      calée sur des mois entiers (`trendWindow`), la même URL sert tout le mois au lieu
+      d'une de plus chaque jour ; citation du projet POWER dans les mentions. Test
+      `trendWindow.test.ts`.
 - [ ] Meteoalarm : conditions à vérifier ; attribution.
-- [ ] Taux de change : **Frankfurter v2** (sans clé ni quota, 223 devises ; « Source:
-      ECB statistics. » pour les taux BCE), secours **fawazahmed0** (CC0) ; cache 12 h.
+- [x] Taux de change : **Frankfurter v2** (`/v2/rates`, 104 banques centrales, 223
+      devises ; la v1 n'avait que la trentaine de la BCE : dong, peso argentin, shilling
+      kényan restaient en euros), secours **currency-api** (CC0) ; cache 12 h ; la source
+      est dite à côté du montant (plus « taux BCE » pour un taux qui n'en est pas) ;
+      mentions : « Source: ECB statistics. » et currency-api. Vérifié le 8 oct. : VND,
+      ARS, KES, XPF servis. Tests `currency.test.ts`.
 - [ ] Carburant : bulletin pétrolier de l'UE (CC BY 4.0) pour l'UE-27 ; ailleurs barème
       versionné et daté, affiché comme « estimation » (aucune source mondiale gratuite).
 

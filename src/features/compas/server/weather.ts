@@ -8,6 +8,7 @@ import {
 } from '../engine/weather';
 import { METNO_SOURCE, POWER_SOURCE, parseMetNo, powerToDaily } from '../engine/metno';
 import tzLookup from '@photostructure/tz-lookup';
+import { appUserAgent } from '@/lib/userAgent';
 
 /**
  * Compas — météo gratuite, usage commercial permis :
@@ -28,7 +29,7 @@ import tzLookup from '@photostructure/tz-lookup';
 
 const FORECAST = 'https://api.met.no/weatherapi/locationforecast/2.0/complete';
 const POWER = 'https://power.larc.nasa.gov/api/temporal/daily/point';
-const USER_AGENT = 'kitduvoyageur/1.0 https://lekitduvoyageur.fr';
+const USER_AGENT = appUserAgent('Compas, meteo');
 /** Horizon annoncé : MET Norway couvre ~9 jours pleins après aujourd'hui. */
 export const FORECAST_HORIZON_DAYS = 10;
 export const CALENDAR_DAYS = 42;
@@ -126,6 +127,21 @@ function shiftYear(iso: string, years: number): string {
   return `${y}-${md}`;
 }
 
+/**
+ * Fenêtre de la tendance (NASA POWER), calée sur des mois entiers (plan 1.8) :
+ * du premier jour du mois, `TREND_YEARS` ans avant le premier jour voulu, au
+ * dernier jour du mois, un an avant le dernier. La même URL, donc le même cache,
+ * sert tout le mois à tous les voyages du même point, au lieu d'une URL (et
+ * d'un appel) de plus chaque jour. La fenêtre couvre toujours les jours voulus.
+ */
+export function trendWindow(first: string, last: string): { start: string; end: string } {
+  const start = `${shiftYear(first, TREND_YEARS).slice(0, 7)}-01`;
+  const endMonth = shiftYear(last, 1).slice(0, 7);
+  const [y, m] = endMonth.split('-').map(Number);
+  const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return { start, end: `${endMonth}-${String(lastDay).padStart(2, '0')}` };
+}
+
 /* ---------- Chargement ---------- */
 
 export async function getCompasWeather(input: {
@@ -161,13 +177,10 @@ export async function getCompasWeather(input: {
   if (input.origin) {
     const { lat, lon } = input.origin;
     const dates = Array.from({ length: CALENDAR_DAYS }, (_, i) => addDays(today, i));
+    const span = trendWindow(dates[0], dates[dates.length - 1]);
     const [forecastPayload, powerPayload] = await Promise.all([
       getJson(forecastUrl(lat, lon), 1800),
-      getJson(
-        trendUrl(lat, lon, shiftYear(dates[0], TREND_YEARS), shiftYear(dates[dates.length - 1], 1)),
-        7 * 86_400,
-        8000
-      ),
+      getJson(trendUrl(lat, lon, span.start, span.end), 7 * 86_400, 8000),
     ]);
     const forecast = parseMetNo(forecastPayload, zoneAt(lat, lon, input.timeZone)).filter(
       (f) => f.date >= today

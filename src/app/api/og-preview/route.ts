@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { SITE_CONTACT_URL } from '@/lib/userAgent';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
     const res = await fetch(parsedUrl.toString(), {
       signal: controller.signal,
       headers: {
-        'User-Agent': 'LKDV-LinkPreviewBot/1.0 (+https://kitduvoyageur.fr)',
+        'User-Agent': `LKDV-LinkPreviewBot/1.0 (+${SITE_CONTACT_URL})`,
         Accept: 'text/html,application/xhtml+xml',
       },
     });

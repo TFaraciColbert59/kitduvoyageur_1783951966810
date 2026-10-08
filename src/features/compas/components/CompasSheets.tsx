@@ -2313,7 +2313,7 @@ function ReservationsFlow({ ctl }: { ctl: CompasCtl }) {
         <p className="cp-sub">
           Total des réservations : <b>{formatMoney(bookings.amountEur)}</b>
           {converted
-            ? ` ≈ ${formatMoney(converted.amount, converted.currency)} (1 € = ${String(converted.rate).replace('.', ',')} ${converted.currency}, taux BCE du ${converted.date})`
+            ? ` ≈ ${formatMoney(converted.amount, converted.currency)} (1 € = ${String(converted.rate).replace('.', ',')} ${converted.currency}, taux du ${converted.date}, ${converted.source})`
             : budget.currency !== 'EUR'
               ? ` · conversion en ${budget.currency} indisponible`
               : ''}

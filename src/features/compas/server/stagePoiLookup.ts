@@ -26,6 +26,7 @@ import {
 import { cached, coordKey, readShared } from './sharedCache';
 import { chainRiver, parseRiverWays, riverNamePattern } from '../engine/river';
 import { simplifyLine, type LngLat } from '../engine/track';
+import { appUserAgent } from '@/lib/userAgent';
 
 /**
  * Points utiles autour des étapes, depuis OpenStreetMap (Overpass). Partagés
@@ -45,7 +46,7 @@ const BUDGET_MS = 28_000;
  * d'éviter les requêtes simultanées : une à la fois, jamais en course.
  */
 export const OVERPASS_ENDPOINTS = ['https://overpass.private.coffee/api/interpreter'] as const;
-const UA = 'kitduvoyageur/1.0 (Compas, preparation de voyage; koosmoweb.fr)';
+const UA = appUserAgent('Compas, preparation de voyage');
 
 /** Lieux d'une zone : le même serveur, une requête, une seule réponse attendue. Rien → null. */
 async function overpassArea(query: string, timeoutMs: number): Promise<unknown | null> {

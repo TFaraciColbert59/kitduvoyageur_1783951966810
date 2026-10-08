@@ -54,7 +54,22 @@ const DATA_SOURCES: Array<{ label: string; parts: Array<string | { text: string;
     parts: [
       'Prévisions ',
       { text: 'MET Norway', href: 'https://api.met.no/' },
-      ' (licence CC BY 4.0) ; tendances : projet POWER du NASA Langley Research Center.',
+      ' (licence ',
+      { text: 'CC BY 4.0', href: 'https://creativecommons.org/licenses/by/4.0/' },
+      ') ; tendances : données du projet ',
+      { text: 'POWER', href: 'https://power.larc.nasa.gov/' },
+      ' du NASA Langley Research Center (LaRC), financé par le programme NASA Earth Science/Applied Science.',
+    ],
+  },
+  {
+    label: 'Taux de change',
+    parts: [
+      { text: 'Frankfurter', href: 'https://frankfurter.dev/' },
+      ' (taux de référence publiés par les banques centrales et sources officielles ; taux de la ',
+      { text: 'BCE', href: 'https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html' },
+      ' : « Source: ECB statistics. ») ; en secours, ',
+      { text: 'currency-api', href: 'https://github.com/fawazahmed0/exchange-api' },
+      ' (CC0). Taux donnés à titre indicatif.',
     ],
   },
 ];
