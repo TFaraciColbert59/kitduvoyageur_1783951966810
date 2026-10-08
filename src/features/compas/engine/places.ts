@@ -418,6 +418,11 @@ export function isAdminName(name: string): boolean {
   return ADMIN_SUFFIX.test(name.trim()) || ADMIN_PREFIX.test(name.trim());
 }
 
+/** Le nom sans son préfixe ni son suffixe administratif (« West Clare »). */
+export function bareAdminName(name: string): string {
+  return name.trim().replace(ADMIN_PREFIX, '').replace(ADMIN_SUFFIX, '').trim();
+}
+
 /**
  * Où l'on dort ce soir-là, si l'étape trouvée n'est pas un lieu où dormir :
  * - un monument, un musée, une gare (« Prison Hoa Lo ») → sa commune (« Hanoï ») ;
@@ -438,7 +443,13 @@ export function sleepPlaceFix(place: CompasPlace): { locality: string } | { sear
   if (SLEEP_TAGS.test(tag) || NATURE_TAG.test(tag)) return null;
   if (BROAD.has(place.kind) || /^boundary=administrative$/.test(tag)) {
     const bare = place.name.replace(ADMIN_PREFIX, '').replace(ADMIN_SUFFIX, '').trim();
-    return bare && bare !== place.name ? { search: bare } : place.locality ? { locality: place.locality } : null;
+    if (bare && bare !== place.name) return { search: bare };
+    // Sa « commune » peut être elle-même une circonscription (« Burren » →
+    // « West Clare Municipal District », 8 oct.) : cherchée sous son nom nu.
+    const loc = place.locality;
+    if (!loc) return null;
+    const bareLoc = loc.replace(ADMIN_PREFIX, '').replace(ADMIN_SUFFIX, '').trim();
+    return bareLoc && bareLoc !== loc ? { search: bareLoc } : { locality: loc };
   }
   // Bâtiment, monument, gare, point d'intérêt : la commune qui le contient. Une
   // « commune » administrative (Irlande : « West Clare Municipal District ») est

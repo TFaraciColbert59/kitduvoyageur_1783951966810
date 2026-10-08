@@ -542,6 +542,8 @@ describe('On dort dans une commune : monument, gare ou province remplacés', () 
     expect(sleepPlaceFix(photon('West Clare Municipal District', 'place', 'municipality', 'city'))).toEqual({ search: 'West Clare' });
     // Un parc national n'est pas une circonscription.
     expect(sleepPlaceFix(photon('Peak District', 'boundary', 'national_park', 'other'))).toBeNull();
+    // Une région dont la « commune » est une circonscription (Irlande, 8 oct.).
+    expect(sleepPlaceFix(photon('Burren', 'place', 'region', 'region', { city: 'West Clare Municipal District' }))).toEqual({ search: 'West Clare' });
   });
   it('refuge, camping, lac, sommet et village restent l’étape', async () => {
     const { sleepPlaceFix } = await import('../engine/places');

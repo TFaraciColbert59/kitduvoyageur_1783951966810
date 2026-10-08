@@ -97,7 +97,7 @@ import {
   refugePerNight,
 } from '../engine/costs';
 import { after } from 'next/server';
-import { destinationRadiusKm, distanceKm, isAdminName, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, type CompasPlace } from '../engine/places';
+import { bareAdminName, destinationRadiusKm, distanceKm, isAdminName, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, type CompasPlace } from '../engine/places';
 import { unifyStageNames, untangleStages } from '../engine/stageOrder';
 import { localToday } from './weather';
 
@@ -1199,6 +1199,8 @@ export async function compasAutofillAction(
                 at = { lat: village.place.lat, lon: village.place.lon };
               } else name = fix.search;
             }
+            // Filet : jamais une circonscription comme nom d'étape.
+            if (isAdminName(name)) name = bareAdminName(name) || name;
             last = { name, ...at };
             lastProposed = p.place;
           } else if (lastProposed !== p.place) {
