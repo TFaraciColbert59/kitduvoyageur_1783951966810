@@ -1,4 +1,5 @@
 import 'server-only';
+import { createHash } from 'node:crypto';
 import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, isNotablePlace, pickDestination, pickNatural, type CompasPlace } from '../engine/places';
 import { cached, coordKey } from './sharedCache';
 import { geoapifyReverse, geoapifySearch } from './geoapify';
@@ -25,6 +26,15 @@ export const plain = (v: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
+
+/**
+ * Clé de cache d'une recherche : sa forme simple, ou, pour un nom sans lettre
+ * latine (« Москва », « 東京 »), l'empreinte du texte entier. `plain` les
+ * réduisait tous à « » : une même clé partagée par toutes ces recherches.
+ */
+export const queryKey = (v: string) =>
+  plain(v) ||
+  `u:${createHash('sha256').update(v.normalize('NFKC').toLowerCase().trim()).digest('hex').slice(0, 24)}`;
 
 async function fetchJson(url: string, headers: Record<string, string>): Promise<unknown | null> {
   const controller = new AbortController();
@@ -78,7 +88,7 @@ async function search(
   // pas le lieu-dit du Var) ; sans repli Nominatim, qui ignore ce biais.
   const bias = near ? `&lat=${near.lat.toFixed(3)}&lon=${near.lon.toFixed(3)}&location_bias_scale=0.5` : '';
   // « v3 » : lieux lus avec leur taille et leur étiquette OSM, absentes des entrées d'avant.
-  const key = near ? `v3:near:${coordKey(near.lat, near.lon, 1)}:${limit}:${plain(query)}` : `v3:${limit}:${plain(query)}`;
+  const key = near ? `v3:near:${coordKey(near.lat, near.lon, 1)}:${limit}:${queryKey(query)}` : `v3:${limit}:${queryKey(query)}`;
   return cached('place', key, PLACE_TTL_S, async () => {
     const photon = await fetchJson(
       `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=${limit}&lang=fr${bias}${NOISE}`,
@@ -161,7 +171,7 @@ export async function stageAliasCandidates(name: string, countryCode: string | n
   const q = name.trim().slice(0, 80);
   if (q.length < 3) return [];
   const cc = countryCode ? `&countrycodes=${countryCode.toLowerCase()}` : '';
-  const found = await cached('place', `alias:v1:${countryCode ?? 'any'}:${plain(q)}`, PLACE_TTL_S, () =>
+  const found = await cached('place', `alias:v1:${countryCode ?? 'any'}:${queryKey(q)}`, PLACE_TTL_S, () =>
     nominatimQueued(
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=jsonv2&addressdetails=1&namedetails=1&limit=5&accept-language=fr${cc}`
     )
@@ -178,7 +188,7 @@ export async function stageAliasCandidates(name: string, countryCode: string | n
 export async function lookupMassif(name: string, near: { lat: number; lon: number }): Promise<CompasPlace | null> {
   const q = name.trim().slice(0, 60);
   if (q.length < 3) return null;
-  const found = await cached('place', `massif:v1:${plain(q)}`, PLACE_TTL_S, () =>
+  const found = await cached('place', `massif:v1:${queryKey(q)}`, PLACE_TTL_S, () =>
     nominatimQueued(
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(`massif ${q}`)}&format=jsonv2&addressdetails=1&namedetails=1&limit=5&accept-language=fr`
     )
@@ -239,7 +249,7 @@ const NATURAL_TAGS = ['natural', 'boundary:protected_area', 'boundary:national_p
 export async function lookupNatural(name: string, countryCode: string | null, rivers = false): Promise<CompasPlace | null> {
   const q = name.trim().slice(0, 60);
   if (q.length < 3) return null;
-  const found = await cached('place', `natural:v1:${plain(q)}`, PLACE_TTL_S, async () => {
+  const found = await cached('place', `natural:v1:${queryKey(q)}`, PLACE_TTL_S, async () => {
     const payload = await fetchJson(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=10&lang=fr${NATURAL_TAGS}`, {
       Accept: 'application/json',
     });
