@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { readFileSync } from 'node:fs';
 import {
@@ -302,23 +302,27 @@ describe('P0.24 — le credit : nommer le fournisseur qui a reellement repondu',
     const requete = new NextRequest(
       'http://localhost/api/amenities?min_lng=6.7&min_lat=45.8&max_lng=7.2&max_lat=46.05',
     );
-    // La route est branchee sur le vrai `fetch` : on verifie sa FORME, pas sa
-    // disponibilite reseau. Le credit est donc mesure, lui.
-    const reponseRoute = await GET(requete);
-    const corps = (await reponseRoute.json()) as {
-      status: string;
-      amenities: unknown[];
-      provider: { id: string } | null;
-    };
+    // La route utilise le `fetch` global. Il est remplace ici : le test verifie
+    // sa FORME, pas la disponibilite des serveurs publics (le vrai reseau
+    // depassait parfois le delai de vitest en CI, 8 oct.). Overpass repond :
+    // le credit est le sien, et un seul.
+    const espion = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(fauxFetch(() => repond(elemsHotel('Hotel Mont-Blanc')), photonPlein));
+    try {
+      const reponseRoute = await GET(requete);
+      const corps = (await reponseRoute.json()) as {
+        status: string;
+        amenities: unknown[];
+        provider: { id: string } | null;
+      };
 
-    expect(corps.status).toBe('ok');
-    expect(Array.isArray(corps.amenities)).toBe(true);
-    // Si le reseau a reponde, le credit existe et il est identifie ; sinon il
-    // est absent. Il n'y a pas de Troisieme cas, et surtout pas de nom impose.
-    if (corps.amenities.length > 0) {
-      expect(['overpass', 'photon']).toContain(corps.provider?.id);
-    } else {
-      expect(corps.provider).toBeNull();
+      expect(corps.status).toBe('ok');
+      expect(Array.isArray(corps.amenities)).toBe(true);
+      expect(corps.amenities.length).toBeGreaterThan(0);
+      expect(corps.provider?.id).toBe('overpass');
+    } finally {
+      espion.mockRestore();
     }
   });
 

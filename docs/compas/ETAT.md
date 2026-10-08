@@ -4,9 +4,10 @@
 > kit / budget / conseils → résultat final. Rien de P3 tant que P0/P1 ne passent pas P2.
 > « Fait » = prouvé de bout en bout sur la preview et contrôlé en base, pas « le code compile ».
 
-Mis à jour : 8 octobre 2026 (midi). **La PR #72 est en production** depuis 12 h 01 UTC
-(`972a14d`, koosmoweb.fr), après la PR #73 (CI de `main` de nouveau verte). Suite sur la
-branche `claude/optimistic-albattani-i06ge7` (PR #74).
+Mis à jour : 8 octobre 2026 (13 h). **En production** (koosmoweb.fr) : PR #72 (`972a14d`,
+12 h 01 UTC) puis PR #74 (`8d5aac4`, 12 h 47 : villes en français pour RouteStack, premier
+jour de pagaie compté), après la PR #73 (CI de `main` de nouveau verte). Branche de travail
+`claude/optimistic-albattani-i06ge7`.
 
 ## P0 — Moteur fiable
 
@@ -39,7 +40,7 @@ branche `claude/optimistic-albattani-i06ge7` (PR #74).
 | 20 parcours réels | À rejouer après P0 |
 | 50 demandes entièrement nouvelles | En ligne (7 oct.) : 47/50 prêtes au premier passage, 15 défauts corrigés à la racine pendant le test, 17 rejouées : toutes préparées (2 bloquées par la limite de fréquence, rejouées) |
 | Passage du 7 oct. 19 h 17 – 20 h 30 (preview `ce534c0`, lu en base) | 38 voyages : 36 préparés, 1 en attente de la limite de fréquence, 1 sans dates (raquettes). Défauts relevés → corrigés la nuit, reprouvés le 8 (lignes ci-dessous) |
-| Production, 8 oct. 12 h 05 (`972a14d`, lu en base) | Descente de la Dordogne en canoë, 3 jours : prête en 42 s, Lanzac → Sainte-Mondane → Domme → Allas-les-Mines, conseils au tutoiement. Défaut lu en base : parcours de 36,1 km pour 54,1 km d'eau (premier jour non compté) → corrigé (PR #74) |
+| Production, 8 oct. 12 h 05 (`972a14d`, lu en base) | Descente de la Dordogne en canoë, 3 jours : prête en 42 s, Lanzac → Sainte-Mondane → Domme → Allas-les-Mines, conseils au tutoiement. Défaut lu en base : parcours de 36,1 km pour 54,1 km d'eau (premier jour non compté) → corrigé (PR #74, en production) |
 | Passages du 7 oct. 21 h et du 8 oct. 5 h 39 – 7 h 06 (preview PR #72, lus en base) | 31 voyages, dont 26 au premier passage : 25 préparés ; Ardennes (21 h 11) défait aussitôt puis bloqué par la limite de fréquence, et un écran resté en attente sur un lancement en double (données écrites) → **deux causes corrigées**. **Prouvés** : papiers, train, Jura, Beaufortain, Mercantour, Dolomites, Vercors en janvier, Cévennes, Malaga, Dordogne en canoë, tutoiement (Bruges reprouvé à 6 h 27). Tarn et Ardèche en canoë reprouvés à 6 h 47, « West Clare » à 7 h 04 (Shannon). Ouverts : Kalymnos, Patagonie, Sardaigne, journée lointaine |
 
 ## P3 — Après stabilisation (gelé)
@@ -48,11 +49,24 @@ Réservations réelles (Travelpayouts, RouteStack, Viator), équipe / social, bo
 hors ligne, affiliation, animations, polish de maquette et desktop. Accessibilité : close pour
 l'instant.
 
+## Lancement mondial (audit du 8 octobre)
+
+`AUDIT-LANCEMENT-MONDIAL-2026-10-08.md` : **≈ 35 % prêt pour le monde, ≈ 50 % pour un
+lancement francophone** (≈ 65 % après passage aux offres payantes). 97 % des
+préparations réussies en production (151/156), mais aucun vrai utilisateur encore.
+Corrigé pendant l'audit : quota IA jamais appliqué (appliqué et prouvé en production),
+lien d'invitation lisible par un simple lecteur (appliqué en base), noms non latins
+partageant une clé de cache, mention OpenStreetMap sans position. Bloquants restants :
+services gratuits interdits en commercial, Supabase gratuit, écriture publique du cache
+d'itinéraires, limite de fréquence non distribuée, connexion démo ouverte, voyageur
+supposé français (papiers, départ, fuseau, langue). Décisions attendues de Tony : cible,
+budget, offre Vercel, IA, démo.
+
 ## Blocages (8 octobre)
 
 - Réseau ouvert : la preview, Photon et Supabase répondent depuis le conteneur ; Overpass reste instable depuis ici (miroirs en 500/504).
 - Vercel : connecteur reconnecté par Tony le 8 oct. (déploiements, journaux et variables lisibles).
-- Réservations (P3, gelé) : **RouteStack en direct sur le site de production** (8 oct., 12 h 03, mode `live`) : hôtels à Annecy (Logis Hôtel Annecy Nord, Hotel du Midi…), Lisbonne (Sheraton…) et Paris ; vols Genève → Lisbonne (3 offres dès 128,93 USD, 12 s). **Villes en français prouvées sur la preview de la PR #74** (8 oct., 12 h 31) : vol Paris → Lisbonne (PAR → LIS, dès 47,07 USD), Genève → Londres (GVA → LON : Gatwick, Luton), Nice → Lyon (NCE → LYS), voiture à Lisbonne (3 offres). Aéroport de la ville d'après la réponse de RouteStack (« All Airports » d'abord, jamais une gare), nom anglais d'OpenStreetMap en secours. Un vol peut prendre jusqu'à 29 s.
+- Réservations (P3, gelé) : **RouteStack en direct sur le site de production** (8 oct., 12 h 03, mode `live`) : hôtels à Annecy (Logis Hôtel Annecy Nord, Hotel du Midi…), Lisbonne (Sheraton…) et Paris ; vols Genève → Lisbonne (3 offres dès 128,93 USD, 12 s). **Villes en français en production** (PR #74, `8d5aac4`, reprouvées sur le site le 8 oct. à 12 h 49) : vol Paris → Lisbonne (PAR → LIS, dès 47,07 USD), Genève → Londres (GVA → LON : Gatwick, Luton), Nice → Lyon (NCE → LYS), voiture à Lisbonne (3 offres). Aéroport de la ville d'après la réponse de RouteStack (« All Airports » d'abord, jamais une gare), nom anglais d'OpenStreetMap en secours. Un vol peut prendre jusqu'à 29 s.
 - Supabase : la migration de suppression d'index (−70 Mo) attend la confirmation de Tony ; l'import des lieux habités attend cette place.
 
 ## Décisions en vigueur
