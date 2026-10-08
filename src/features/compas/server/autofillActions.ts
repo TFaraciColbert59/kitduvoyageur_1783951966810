@@ -1677,8 +1677,23 @@ export async function compasAutofillAction(
     lap('7');
     /* 7. Le spécialiste chiffre ce que la base ne connaît pas. */
     const hebergementNights = plan.filter((n) => n.type === 'hebergement').length;
+    // Le moyen de chaque journée : sans lui, l'IA lisait les 18 km de pagaie
+    // d'une descente de la Dordogne comme des « randonnées » (8 oct.).
+    const BY: Record<string, string> = {
+      foot: 'à pied',
+      bike: 'à vélo',
+      car: 'en voiture',
+      bus: 'en bus',
+      train: 'en train',
+      plane: 'en avion',
+      boat: activity === 'water' ? 'en canoë' : 'en bateau',
+    };
     const stageLine = steps
-      .map((s) => `J${s.day_number} ${s.title.split(' · ').slice(1).join(' · ')}${s.distance_km ? ` (${s.distance_km} km)` : ''}`)
+      .map((s) => {
+        const by = s.transport_mode ? BY[s.transport_mode] : undefined;
+        const leg = s.distance_km ? ` (${s.distance_km} km${by ? ` ${by}` : ''})` : '';
+        return `J${s.day_number} ${s.title.split(' · ').slice(1).join(' · ')}${leg}`;
+      })
       .join(' ; ');
     const facts = [
       `Destination : ${anchor.name}${anchor.country ? `, ${anchor.country}` : ''} (code ${anchor.countryCode ?? 'inconnu'}).`,
