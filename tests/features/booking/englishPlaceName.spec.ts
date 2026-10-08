@@ -31,6 +31,37 @@ describe('englishPlaceName (Photon, lang=en)', () => {
     await expect(englishPlaceName('Londres', fetchImpl)).resolves.toBe('London');
   });
 
+  it('nom déjà le bon : null, la saisie est gardée avec sa précision (revue Codex)', async () => {
+    const fetchImpl = photon([
+      { type: 'city', name: 'Cambridge', extent: [-71.16, 42.4, -71.06, 42.35] },
+      { type: 'city', name: 'Cambridge', extent: [0.05, 52.24, 0.2, 52.15] },
+    ]);
+    await expect(englishPlaceName('Cambridge, Massachusetts', fetchImpl)).resolves.toBeNull();
+    await expect(
+      englishPlaceName('Paris', photon([{ type: 'city', name: 'Paris' }]))
+    ).resolves.toBeNull();
+  });
+
+  it('un village reste lui-même, pas la première ville de la liste', async () => {
+    const fetchImpl = photon([
+      { type: 'village', name: 'Allas-les-Mines' },
+      { type: 'town', name: 'Sarlat-la-Canéda', extent: [1.1, 44.95, 1.3, 44.85] },
+    ]);
+    await expect(englishPlaceName('Allas-les-Mines', fetchImpl)).resolves.toBeNull();
+  });
+
+  it('même nom sans accent : la graphie anglaise (« Séville » → « Seville »)', async () => {
+    await expect(
+      englishPlaceName('Séville', photon([{ type: 'city', name: 'Seville' }]))
+    ).resolves.toBe('Seville');
+  });
+
+  it('précision gardée après la traduction (« Lisbonne, Portugal » → « Lisbon, Portugal »)', async () => {
+    await expect(
+      englishPlaceName('Lisbonne, Portugal', photon([{ type: 'city', name: 'Lisbon' }]))
+    ).resolves.toBe('Lisbon, Portugal');
+  });
+
   it('rien d’inventé : aucun lieu habité ou région → null ; panne → null', async () => {
     await expect(
       englishPlaceName('Chez Paulo', photon([{ type: 'house', name: 'Chez Paulo' }]))
