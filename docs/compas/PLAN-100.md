@@ -363,8 +363,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 2.8 Attente de la préparation
 
-- [ ] Plus de rendu complet toutes les 4 s : Supabase Realtime (gratuit) ou attente
-      à intervalle croissant + rafraîchissement seulement si `updated_at` change.
+- [x] Plus de rendu complet toutes les 4 s : la relecture de l'issue rend aussi un
+      repère du voyage (`updated_at` et nombre d'étapes) ; la page n'est relue que s'il
+      a changé (étapes écrites, tracé, issue). Tests : repère (autofillStart), une seule
+      relecture pour un voyage inchangé (compasScreen).
 
 ### 2.9 Observabilité à 0 €
 

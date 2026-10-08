@@ -762,21 +762,39 @@ const outcomeSchema = z.object({
 });
 
 /** Issue d'une préparation lancée par `compasAutofillStartAction` ; null tant qu'elle tourne. */
+/** Ce que l'écran relit pendant une préparation. */
+export interface CompasAutofillPoll {
+  outcome: CompasAutofillOutcome | null;
+  /**
+   * Repère du voyage (`updated_at` et nombre d'étapes) : l'écran ne relit la
+   * page entière que s'il a changé (plan 2.8), au lieu d'un rendu complet
+   * toutes les 4 s.
+   */
+  stamp: string | null;
+}
+
 export async function compasAutofillOutcomeAction(
   input: z.input<typeof outcomeSchema>
-): Promise<CompasAutofillOutcome | null> {
+): Promise<CompasAutofillPoll> {
+  const none: CompasAutofillPoll = { outcome: null, stamp: null };
   const parsed = outcomeSchema.safeParse(input);
-  if (!parsed.success) return null;
+  if (!parsed.success) return none;
   const auth = await requireEditor(parsed.data.tripId).catch(() => null);
-  if (!auth || 'error' in auth) return null;
-  const { data } = await auth.supabase.from('trips').select('metadata').eq('id', parsed.data.tripId).maybeSingle();
-  const r = compasMeta((data?.metadata ?? {}) as Record<string, unknown>).autofill_result as CompasAutofillOutcome | undefined;
-  if (!r) return null;
-  if (r.token === parsed.data.token) return r;
+  if (!auth || 'error' in auth) return none;
+  const [{ data }, { count }] = await Promise.all([
+    auth.supabase.from('trips').select('metadata, updated_at').eq('id', parsed.data.tripId).maybeSingle(),
+    auth.supabase.from('trip_steps').select('id', { count: 'exact', head: true }).eq('trip_id', parsed.data.tripId),
+  ]);
+  const row = data as { metadata?: unknown; updated_at?: string | null } | null;
+  const stamp = row?.updated_at ? `${row.updated_at}|${count ?? 0}` : null;
+  const r = compasMeta((row?.metadata ?? {}) as Record<string, unknown>).autofill_result as CompasAutofillOutcome | undefined;
+  if (!r) return { outcome: null, stamp };
+  if (r.token === parsed.data.token) return { outcome: r, stamp };
   // Deux préparations lancées ensemble (écran remonté) : celle qui a trouvé la
   // place prise n'écrit rien ; celle qui a réussi depuis notre lancement vaut.
   const since = parsed.data.since;
-  return since != null && r.success && 'summary' in r && r.at >= since - 5_000 ? r : null;
+  const theirs = since != null && r.success && 'summary' in r && r.at >= since - 5_000;
+  return { outcome: theirs ? r : null, stamp };
 }
 
 const stopSchema = z.object({ tripId: z.string().uuid() });
