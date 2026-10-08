@@ -84,10 +84,13 @@ describe('zonePalette - aucune couleur libre', () => {
     }
   });
 
-  it('construit un fond en trois couches pour chaque zone', () => {
+  it('construit un fond en quatre couches pour chaque zone, posé sur un lit sombre', () => {
     for (const zone of ZONES) {
       const layers = sceneBackground(zone.id).split('),');
-      expect(layers).toHaveLength(3);
+      // Lueur de zone, rappel de ciel, profondeur, puis le lit sombre qui
+      // empêche la scène de blanchir (zonePalette.ts).
+      expect(layers).toHaveLength(4);
+      expect(layers[3]).toMatch(/^linear-gradient\(180deg, .*var\(--lkv-ink-900\)/);
     }
   });
 
