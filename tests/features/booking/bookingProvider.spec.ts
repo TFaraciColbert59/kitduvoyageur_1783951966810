@@ -398,7 +398,13 @@ describe('RouteStackBookingProvider', () => {
           type: 'text',
           text: JSON.stringify(
             name === 'flight_locations'
-              ? { result: [{ code: (args as { term: string }).term === 'Genève' ? 'GVA' : 'LIS' }] }
+              ? {
+                  result: [
+                    (args as { term: string }).term === 'Genève'
+                      ? { code: 'GVA', name: 'Geneva', city: 'Genève' }
+                      : { code: 'LIS', name: 'Portela', city: 'Lisbonne' },
+                  ],
+                }
               : { result: [] }
           ),
         },
@@ -407,6 +413,7 @@ describe('RouteStackBookingProvider', () => {
     const provider = createRouteStackBookingProvider({
       env: env({ ROUTESTACK_API_KEY: 'term-key' }),
       callTool,
+      localizeName: async () => null,
     });
 
     await provider.search({ vertical: 'flight', origin: 'Genève', destination: 'Lisbonne', departure: '2027-06-05', travelers: 1 });
@@ -423,54 +430,84 @@ describe('RouteStackBookingProvider', () => {
     expect((callTool.mock.calls[2][1] as { filter: object }).filter).not.toHaveProperty('returnDate');
   });
 
-  it('retient le lieu de vol qui porte un code IATA, au nom cherché', async () => {
-    const callTool = vi.fn<RouteStackToolCaller>(async (name) => ({
+  // Réponses réelles de flight_locations (journal de la preview, 8 oct.).
+  const PARIS = [
+    { name: 'Charles De Gaulle', code: 'CDG', city: 'Paris', country: 'France' },
+    { name: 'All Airports', code: 'PAR', city: 'Paris', country: 'France' },
+    { name: 'Paris Cergy Pontoise', code: 'POX', city: 'Paris', country: 'France' },
+    { name: 'Orly', code: 'ORY', city: 'Paris', country: 'France' },
+  ];
+  const LISBON = [
+    { name: 'Lisbon TP', code: 'ZYD', city: 'Lisbon', country: 'Portugal' },
+    { name: 'Portela', code: 'LIS', city: 'Lisbon', country: 'Portugal' },
+    { name: 'Cape Lisburne', code: 'LUR', city: 'Cape Lisburne', country: 'United States' },
+  ];
+  const LONDRINA = [{ name: 'Londrina', code: 'LDB', city: 'Londrina', country: 'Brazil' }];
+  const LONDON = [
+    { name: 'London Heathrow', code: 'LHR', city: 'London', country: 'United Kingdom' },
+    { name: 'All Airports', code: 'LON', city: 'London', country: 'United Kingdom' },
+  ];
+  const flightLocations = (byTerm: Record<string, unknown[]>) =>
+    vi.fn<RouteStackToolCaller>(async (name, args) => ({
       content: [
         {
           type: 'text',
           text: JSON.stringify(
-            name === 'flight_locations'
-              ? {
-                  result: [
-                    { id: '8841', name: 'Île-de-France' },
-                    { code: 'BVA', name: 'Beauvais-Tillé' },
-                    { code: 'PAR', name: 'Paris (toutes les villes)' },
-                  ],
-                }
-              : { result: [] }
+            name === 'flight_locations' ? { result: byTerm[(args as { term: string }).term] ?? [] } : { result: [] }
           ),
         },
       ],
     }));
-    const provider = createRouteStackBookingProvider({ env: env({ ROUTESTACK_API_KEY: 'pick-key' }), callTool });
 
-    await provider.search({ vertical: 'flight', origin: 'Paris', destination: 'Paris', departure: '2027-06-05', travelers: 1 });
+  it('aéroport de la ville : « All Airports » d’abord, jamais une gare (Paris → PAR, Lisbonne → LIS)', async () => {
+    const callTool = flightLocations({ Paris: PARIS, Lisbonne: LISBON });
+    const localizeName = vi.fn(async (n: string) => (n === 'Lisbonne' ? 'Lisbon' : null));
+    const provider = createRouteStackBookingProvider({ env: env({ ROUTESTACK_API_KEY: 'pick-key' }), callTool, localizeName });
 
-    expect(callTool).toHaveBeenNthCalledWith(
-      3,
+    await provider.search({ vertical: 'flight', origin: 'Paris', destination: 'Lisbonne', departure: '2027-06-05', travelers: 1 });
+
+    // « Lisbon » trouvé dans la même liste : pas de seconde recherche de lieux.
+    expect(callTool).not.toHaveBeenCalledWith('flight_locations', { term: 'Lisbon' });
+    expect(callTool).toHaveBeenLastCalledWith(
       'flight_search',
-      { filter: expect.objectContaining({ origin: 'PAR', destination: 'PAR' }) },
+      { filter: expect.objectContaining({ origin: 'PAR', destination: 'LIS' }) },
       { timeoutMs: 30_000 }
     );
   });
 
-  it('nom français inconnu de RouteStack (« Lisbonne ») : son nom anglais, une fois', async () => {
-    const callTool = vi.fn<RouteStackToolCaller>(async (name, args) => {
-      const term = (args as { term?: string }).term;
-      const result = term === 'Lisbon' ? [{ code: 'LIS', name: 'Lisbon' }] : term === 'Genève' ? [{ code: 'GVA', name: 'Geneva' }] : [];
-      return { content: [{ type: 'text', text: JSON.stringify(name === 'flight_locations' ? { result } : { result: [] }) }] };
+  it('« Nice », « Lyon » : des villes à chercher, pas des codes d’aéroport', async () => {
+    const callTool = flightLocations({
+      Nice: [{ name: "Côte d'Azur", code: 'NCE', city: 'Nice', country: 'France' }],
+      Lyon: [{ name: 'Saint-Exupéry', code: 'LYS', city: 'Lyon', country: 'France' }],
     });
-    const localizeName = vi.fn(async (n: string) => (n === 'Lisbonne' ? 'Lisbon' : n === 'Genève' ? 'Geneva' : n));
-    const provider = createRouteStackBookingProvider({ env: env({ ROUTESTACK_API_KEY: 'en-key' }), callTool, localizeName });
+    const provider = createRouteStackBookingProvider({
+      env: env({ ROUTESTACK_API_KEY: 'city-key' }),
+      callTool,
+      localizeName: async () => null,
+    });
 
-    await provider.search({ vertical: 'flight', origin: 'Genève', destination: 'Lisbonne', departure: '2027-06-05', travelers: 1 });
+    await provider.search({ vertical: 'flight', origin: 'Nice', destination: 'Lyon', departure: '2027-06-05', travelers: 1 });
 
-    // Genève est connu tel quel : pas de traduction demandée.
-    expect(localizeName).toHaveBeenCalledTimes(1);
-    expect(callTool).toHaveBeenCalledWith('flight_locations', { term: 'Lisbon' });
     expect(callTool).toHaveBeenLastCalledWith(
       'flight_search',
-      { filter: expect.objectContaining({ origin: 'GVA', destination: 'LIS' }) },
+      { filter: expect.objectContaining({ origin: 'NCE', destination: 'LYS' }) },
+      { timeoutMs: 30_000 }
+    );
+  });
+
+  it('ville absente sous son nom français (« Londres » → Londrina) : cherchée sous son nom anglais', async () => {
+    const callTool = flightLocations({ Paris: PARIS, Londres: LONDRINA, London: LONDON });
+    const localizeName = vi.fn(async (n: string) => (n === 'Londres' ? 'London' : null));
+    const provider = createRouteStackBookingProvider({ env: env({ ROUTESTACK_API_KEY: 'en-key' }), callTool, localizeName });
+
+    await provider.search({ vertical: 'flight', origin: 'Paris', destination: 'Londres', departure: '2027-06-05', travelers: 1 });
+
+    // Paris est trouvé tel quel : pas de traduction demandée.
+    expect(localizeName).toHaveBeenCalledTimes(1);
+    expect(callTool).toHaveBeenCalledWith('flight_locations', { term: 'London' });
+    expect(callTool).toHaveBeenLastCalledWith(
+      'flight_search',
+      { filter: expect.objectContaining({ origin: 'PAR', destination: 'LON' }) },
       { timeoutMs: 30_000 }
     );
   });
@@ -514,13 +551,17 @@ describe('RouteStackBookingProvider', () => {
           type: 'text',
           text: JSON.stringify(
             name === 'flight_locations'
-              ? { result: [{ code: (args as { term: string }).term === 'Paris' ? 'PAR' : 'LIS' }] }
+              ? { result: (args as { term: string }).term === 'Paris' ? PARIS : LISBON }
               : { success: false, message: 'Flights not found for the given search condition' }
           ),
         },
       ],
     }));
-    const provider = createRouteStackBookingProvider({ env: env({ ROUTESTACK_API_KEY: 'refusal-key' }), callTool });
+    const provider = createRouteStackBookingProvider({
+      env: env({ ROUTESTACK_API_KEY: 'refusal-key' }),
+      callTool,
+      localizeName: async (n) => (n === 'Lisbonne' ? 'Lisbon' : null),
+    });
 
     await expect(
       provider.search({ vertical: 'flight', origin: 'Paris', destination: 'Lisbonne', departure: '2027-06-05', travelers: 1 })

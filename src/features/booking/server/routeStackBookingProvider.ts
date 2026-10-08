@@ -782,18 +782,30 @@ const IATA_CODE = /^[A-Z]{3}$/;
 const foldName = (value: string) =>
   value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
+const flightCode = (r: Record<string, unknown>) => readString(r, ['code', 'iata', 'iataCode']) ?? '';
+/** Une gare ou un port dans la liste des lieux de vol (« [ZYD] Lisbon TP » avant l'aéroport « Portela »). */
+const NOT_AIRPORT = /\b(tp|rail|railway|station|bus|gare|hbf|bahnhof|ferry|heliport)\b/i;
+
 /**
- * Le lieu de vol à retenir : celui qui porte un code IATA (la recherche de vols
- * n'accepte que ce code), au nom cherché de préférence ; sinon le premier.
+ * L'aéroport d'une ville, d'après les lieux de RouteStack
+ * (`{ name, code, city, country, fullname }`, 8 octobre) : ceux dont la ville
+ * est celle demandée ; « All Airports » d'abord (PAR, LON : tous ses aéroports,
+ * accepté par la recherche), sinon le premier vrai aéroport, sinon le premier.
  */
-function pickFlightLocation(records: Record<string, unknown>[], term: string): Record<string, unknown> | undefined {
-  const coded = records.filter((r) => IATA_CODE.test(readString(r, ['code', 'iata', 'iataCode']) ?? ''));
-  const wanted = foldName(term);
-  const named = coded.find((r) => {
-    const label = readString(r, ['name', 'city', 'cityName', 'label']);
-    return label != null && foldName(label).startsWith(wanted);
-  });
-  return named ?? coded[0] ?? records[0];
+function pickFlightLocation(
+  records: Record<string, unknown>[],
+  cityNames: string[]
+): Record<string, unknown> | undefined {
+  const wanted = new Set(cityNames.map(foldName));
+  const inCity = records.filter(
+    (r) => IATA_CODE.test(flightCode(r)) && wanted.has(foldName(readString(r, ['city', 'cityName']) ?? ''))
+  );
+  const name = (r: Record<string, unknown>) => readString(r, ['name']) ?? '';
+  return (
+    inCity.find((r) => /all airports/i.test(name(r))) ??
+    inCity.find((r) => !NOT_AIRPORT.test(name(r))) ??
+    inCity[0]
+  );
 }
 
 async function resolveLocation(
@@ -805,8 +817,9 @@ async function resolveLocation(
   trail?: string[]
 ): Promise<ResolvedLocation> {
   const trimmed = value.trim();
-  if (vertical === 'flight' && /^[A-Z]{3,4}$/i.test(trimmed)) {
-    return { id: trimmed.toUpperCase(), code: trimmed.toUpperCase() };
+  // Un code IATA tel quel (« LIS ») ; « Nice », « Lyon », « Oslo » sont des villes à chercher.
+  if (vertical === 'flight' && IATA_CODE.test(trimmed)) {
+    return { id: trimmed, code: trimmed };
   }
   if (vertical !== 'flight' && /^\d+$/.test(trimmed)) {
     return { id: trimmed, code: trimmed };
@@ -815,23 +828,43 @@ async function resolveLocation(
   // OpenAPI RouteStack : `term` pour les lieux de vol et de voiture, `query` pour les destinations d'hôtel.
   const lookup = async (term: string) => {
     const payload = parseToolPayload(await callTool(tool, vertical === 'hotel' ? { query: term } : { term }));
-    const records = findRecords(payload, ['result', 'results', 'locations', 'destinations', 'data']);
-    const picked = vertical === 'flight' ? pickFlightLocation(records, term) : records[0];
-    // Données publiques (codes et noms de lieux) : de quoi voir pourquoi un lieu est mal choisi.
-    trail?.push(JSON.stringify({ tool, term, picked: picked ?? null, candidates: records.slice(0, 6) }).slice(0, 1500));
-    return picked;
+    return findRecords(payload, ['result', 'results', 'locations', 'destinations', 'data']);
   };
-  let record = await lookup(trimmed);
-  // Nom français inconnu de RouteStack (« Lisbonne ») : son nom anglais, une fois.
-  const usable = (r: Record<string, unknown> | undefined) =>
-    r != null && (vertical !== 'flight' || IATA_CODE.test(readString(r, ['code', 'iata', 'iataCode']) ?? ''));
-  if (!usable(record)) {
-    const english = await localize(trimmed);
-    if (english && foldName(english) !== foldName(trimmed)) {
-      const again = await lookup(english);
-      if (usable(again) || !record) record = again ?? record;
+  // Données publiques (codes et noms de lieux) : de quoi voir pourquoi un lieu est mal choisi.
+  const note = (term: string, records: Record<string, unknown>[], picked: Record<string, unknown> | undefined) =>
+    trail?.push(JSON.stringify({ tool, term, picked: picked ?? null, candidates: records.slice(0, 6) }).slice(0, 1500));
+
+  let records = await lookup(trimmed);
+  let record: Record<string, unknown> | undefined;
+  if (vertical === 'flight') {
+    record = pickFlightLocation(records, [trimmed]);
+    // Ville absente sous ce nom (« Lisbonne » : RouteStack répond « Lisbon » ;
+    // « Londres » : Londrina) : son nom anglais, dans la même liste puis cherché.
+    if (!record) {
+      const english = await localize(trimmed);
+      if (english && foldName(english) !== foldName(trimmed)) {
+        record = pickFlightLocation(records, [english]);
+        if (!record) {
+          const again = await lookup(english);
+          record = pickFlightLocation(again, [english]);
+          if (again.length) records = again;
+        }
+      }
+    }
+    // Aucune ville reconnue : le premier lieu muni d'un code, plutôt que rien.
+    record ??= records.find((r) => IATA_CODE.test(flightCode(r))) ?? records[0];
+  } else {
+    record = records[0];
+    // Nom français inconnu de RouteStack : son nom anglais, une fois.
+    if (!record) {
+      const english = await localize(trimmed);
+      if (english && foldName(english) !== foldName(trimmed)) {
+        records = await lookup(english);
+        record = records[0];
+      }
     }
   }
+  note(trimmed, records, record);
   if (!record) {
     throw new BookingProviderError({
       code: BOOKING_PROVIDER_ERROR_CODES.validation,
