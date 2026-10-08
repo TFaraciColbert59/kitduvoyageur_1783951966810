@@ -11,6 +11,81 @@ import {
 } from '@/features/booking/server/bookingProvider';
 import { simplifyOffers, type CompasStayOffer } from '../engine/stays';
 import type { CompasLiveVertical } from '../engine/resaExamples';
+import { viatorCountryFallback, viatorDestinationNear, viatorDestinationsFailure } from './viatorDestinations';
+import { lookupDestination } from './placeLookup';
+import { tripPartySize } from './compasServer';
+import { resolveProviderCredentials } from '@/features/booking/server/providerCredentials';
+
+/**
+ * Le lieu du voyage sur la carte : la destination retrouvée par Dis-le, sinon
+ * la première étape placée. `broad` : le voyage est un pays entier.
+ */
+function tripPoint(trip: unknown): { at: { lat: number; lon: number } | null; broad: boolean } {
+  const t = (trip ?? {}) as { metadata?: unknown; steps?: unknown };
+  const meta = (t.metadata && typeof t.metadata === 'object' ? t.metadata : {}) as Record<string, unknown>;
+  const compas = (meta.compas && typeof meta.compas === 'object' ? meta.compas : {}) as Record<string, unknown>;
+  const anchor = (compas.anchor && typeof compas.anchor === 'object' ? compas.anchor : null) as Record<
+    string,
+    unknown
+  > | null;
+  const lat = Number(anchor?.lat);
+  const lon = Number(anchor?.lon);
+  if (anchor && Number.isFinite(lat) && Number.isFinite(lon))
+    return { at: { lat, lon }, broad: anchor.kind === 'country' };
+  const steps = Array.isArray(t.steps) ? (t.steps as Array<Record<string, unknown>>) : [];
+  const first = steps.find((st) => st.latitude != null && st.longitude != null);
+  return first
+    ? { at: { lat: Number(first.latitude), lon: Number(first.longitude) }, broad: false }
+    : { at: null, broad: false };
+}
+
+/** La cause sous-jacente (message de notre client partenaire, statut) : jamais de clé. */
+function causeText(cause: unknown): string {
+  if (!cause || typeof cause !== 'object') return '';
+  const c = cause as { message?: unknown; status?: unknown; name?: unknown };
+  const bits = [
+    typeof c.name === 'string' && c.name !== 'Error' ? c.name : '',
+    typeof c.status === 'number' ? String(c.status) : '',
+    typeof c.message === 'string' ? c.message.slice(0, 120) : '',
+  ].filter(Boolean);
+  return bits.length ? ` · cause : ${bits.join(' ')}` : '';
+}
+
+/**
+ * Pourquoi le partenaire de cette catégorie est inactif, pour le corriger sur
+ * Vercel : uniquement des NOMS de variables (jamais une valeur de clé).
+ */
+function partnerReason(vertical: 'activity' | 'flight' | 'car' | 'hotel'): string {
+  const requested = (process.env.BOOKING_PROVIDER || 'auto').trim().toLowerCase();
+  if (requested === 'disabled') return ' (BOOKING_PROVIDER=disabled)';
+  const cred = resolveProviderCredentials(vertical === 'activity' ? 'viator' : 'routestack', process.env);
+  return cred.reason ? ` (${cred.message})` : '';
+}
+
+/**
+ * Destination Viator : la plus proche du lieu du voyage (« Vercors » →
+ * Grenoble, jamais Paris par défaut), sinon le nom tel quel.
+ */
+async function activityDestination(trip: unknown, name: string, typed: boolean): Promise<string> {
+  const t = (trip ?? {}) as { destination_name?: string | null; destination_country_code?: string | null };
+  // Le champ « Où » est pré-rempli avec la destination du voyage : même nom = même lieu.
+  const own = !typed || name.trim().toLowerCase() === (t.destination_name ?? '').trim().toLowerCase();
+  if (own) {
+    const { at, broad } = tripPoint(trip);
+    return (
+      (await viatorDestinationNear(at, { broad })) ?? viatorCountryFallback(t.destination_country_code, at) ?? name
+    );
+  }
+  // Un autre lieu tapé : cherché sur la carte, puis la destination Viator la plus proche.
+  const place = await lookupDestination(name).catch(() => null);
+  if (!place) return name;
+  const at = { lat: place.lat, lon: place.lon };
+  return (
+    (await viatorDestinationNear(at, { broad: place.kind === 'country' })) ??
+    viatorCountryFallback(place.countryCode, at) ??
+    name
+  );
+}
 
 /**
  * Résa du Compas : recherche en direct chez les partenaires (Viator pour les
@@ -64,11 +139,21 @@ export async function compasSearchOffersAction(
     if (!start || !ISO.test(start))
       return { success: false, error: 'Choisis d’abord la date de départ du voyage.' };
     const end = d.returnDate ?? trip.end_date ?? null;
-    const travelers = Math.max(1, Math.min(20, trip.party_size ?? 1));
+    const travelers = await tripPartySize(supabase, {
+      id: d.tripId,
+      user_id: (trip as { user_id?: string }).user_id ?? user.id,
+      party_size: trip.party_size ?? null,
+    });
 
     let request: BookingSearchRequest;
     if (d.vertical === 'activity') {
-      request = { vertical: 'activity', destination, date: start, travelers, limit: 8 };
+      request = {
+        vertical: 'activity',
+        destination: await activityDestination(trip, destination, Boolean(d.to)),
+        date: start,
+        travelers,
+        limit: 8,
+      };
     } else if (d.vertical === 'flight') {
       const origin = d.from?.trim();
       if (!origin) return { success: false, error: 'Indique ta ville ou ton aéroport de départ.' };
@@ -98,7 +183,7 @@ export async function compasSearchOffersAction(
       return {
         success: false,
         unavailable: true,
-        error: 'Partenaire non activé pour cette catégorie : recherche en direct indisponible.',
+        error: `Partenaire non activé pour cette catégorie : recherche en direct indisponible.${partnerReason(request.vertical)}`,
       };
 
     const limited = await enforceRateLimit(user.id, {
@@ -127,7 +212,12 @@ export async function compasSearchOffersAction(
         err.status ?? '',
         err.message
       );
-      return { success: false, error: 'Le partenaire n’a pas répondu : réessaie plus tard.' };
+      // Code et statut seulement (« viator upstream 401 ») : de quoi corriger la
+      // configuration, jamais une clé ni la réponse brute du partenaire.
+      return {
+        success: false,
+        error: `Le partenaire n’a pas répondu : réessaie plus tard. (${err.provider ?? 'partenaire'} ${err.code}${err.status ? ` ${err.status}` : ''}${err.provider === 'viator' && viatorDestinationsFailure() ? ` · ${viatorDestinationsFailure()}` : ''}${err.message ? ` · ${err.message.slice(0, 160)}` : ''}${causeText(err.cause)})`,
+      };
     }
     console.error('[compas] compasSearchOffersAction', err);
     return { success: false, error: 'Erreur serveur' };
@@ -185,9 +275,13 @@ export async function compasNearbyActivitiesAction(
     if (limited) return { success: true, offers: [], unavailable: false };
     const result = await provider.search({
       vertical: 'activity',
-      destination,
+      destination: await activityDestination(trip, destination, Boolean(parsed.data.place)),
       date: start,
-      travelers: Math.max(1, Math.min(20, trip.party_size ?? 1)),
+      travelers: await tripPartySize(supabase, {
+        id: parsed.data.tripId,
+        user_id: (trip as { user_id?: string }).user_id ?? user.id,
+        party_size: trip.party_size ?? null,
+      }),
       limit: 12,
     });
     return { success: true, offers: simplifyOffers(result.offers, 12), unavailable: false };

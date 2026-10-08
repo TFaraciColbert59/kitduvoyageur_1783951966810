@@ -127,8 +127,13 @@ const compas = vi.hoisted(() => ({
     usedAi: false,
     note: null,
   })),
+  compasClearStartSayAction: vi.fn(async () => ({ success: true })),
 }));
 vi.mock('../server/compasActions', () => compas);
+const poi = vi.hoisted(() => ({
+  compasStagePoisAction: vi.fn(async () => ({ success: true, pois: [] as unknown[] })),
+}));
+vi.mock('../server/poiActions', () => poi);
 const bottle = vi.hoisted(() => ({
   compasBottleStateAction: vi.fn(async () => ({
     success: true,
@@ -206,7 +211,7 @@ const resa = vi.hoisted(() => ({
 }));
 vi.mock('../server/resaActions', () => resa);
 const autofill = vi.hoisted(() => ({
-  compasAutofillAction: vi.fn(async () => ({
+  compasAutofillAction: vi.fn(async (_input?: unknown) => ({
     success: true,
     summary: {
       nights: [
@@ -223,7 +228,19 @@ const autofill = vi.hoisted(() => ({
     },
   })),
   compasUndoAutofillAction: vi.fn(async () => ({ success: true })),
+  compasAutofillStopAction: vi.fn(async () => ({ success: true })),
+  // Lancement immédiat, issue relue ensuite (comme en production, sans requête longue).
+  compasAutofillStartAction: vi.fn(async (input: unknown) => {
+    const token = `t${++outcomes.n}`;
+    outcomes.byToken.set(token, autofill.compasAutofillAction(input as never));
+    return { success: true, token, at: Date.now() };
+  }),
+  compasAutofillOutcomeAction: vi.fn(async ({ token }: { token: string }) => {
+    const res = await outcomes.byToken.get(token);
+    return res ? { ...res, token, at: Date.now() } : null;
+  }),
 }));
+const outcomes = vi.hoisted(() => ({ n: 0, byToken: new Map<string, Promise<unknown>>() }));
 vi.mock('../server/autofillActions', () => autofill);
 
 const cart = vi.hoisted(() => ({ addToCart: vi.fn() }));
@@ -734,27 +751,16 @@ describe('CompasScreen', () => {
     expect(fd.get('tripId')).toBe(TRIP);
   });
 
-  it('Préremplissage : lieu et dates connus → écrit une fois, annonce le total, annulable', async () => {
-    autofill.compasAutofillAction.mockImplementationOnce(
-      async () => ({ success: true, pending: true, stepsCreated: 3 }) as never
-    );
+  it('Préremplissage : lieu et dates connus → écrit une fois, en une passe, annonce le total, annulable', async () => {
     render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
     expect(await screen.findByText('Je prépare ton aventure…')).toBeTruthy();
-    // Deux temps : l'itinéraire, puis le reste.
+    // Une seule passe côté serveur (jusqu'à 300 s).
     await waitFor(() =>
       expect(autofill.compasAutofillAction).toHaveBeenCalledWith({
         tripId: TRIP,
         tripSlug: 'trek-3-vallees',
         from: null,
-        phase: 'steps',
-      })
-    );
-    await waitFor(() =>
-      expect(autofill.compasAutofillAction).toHaveBeenCalledWith({
-        tripId: TRIP,
-        tripSlug: 'trek-3-vallees',
-        from: null,
-        phase: 'rest',
+        phase: 'all',
       })
     );
     expect(await screen.findByText(/Aventure préparée · 486/)).toBeTruthy();
@@ -763,7 +769,63 @@ describe('CompasScreen', () => {
     await waitFor(() =>
       expect(autofill.compasUndoAutofillAction).toHaveBeenCalledWith({ tripId: TRIP, tripSlug: 'trek-3-vallees' })
     );
-    expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(2);
+    expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('Préremplissage : limite de fréquence → annoncé, relancé seul à la fin de la fenêtre', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      autofill.compasAutofillAction.mockImplementationOnce(
+        async () =>
+          ({ success: false, error: 'Beaucoup de préparations d’affilée : je reprends seul dans 2 min.', retryInS: 90 }) as never
+      );
+      render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+      expect(await screen.findByText(/je reprends seul dans 2 min/)).toBeTruthy();
+      expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(93_000);
+      await waitFor(() => expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(2));
+      expect(await screen.findByText(/Aventure préparée/)).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('Préremplissage : « Arrêter » prévient le serveur et la relance prévue ne part pas', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      autofill.compasAutofillAction.mockImplementationOnce(
+        async () =>
+          ({ success: false, error: 'Beaucoup de préparations d’affilée : je reprends seul dans 2 min.', retryInS: 90 }) as never
+      );
+      // Depuis la demande (« Où ») : le panneau de préparation et son bouton « Arrêter ».
+      render(<CompasScreen data={{ ...makeData(), autofill: 'none', startSay: 'rando à 4' }} />);
+      const panel = await screen.findByRole('status', { name: 'Préparation de l’aventure' });
+      await waitFor(() => expect(within(panel).getByText(/je reprends seul dans 2 min/)).toBeTruthy());
+      fireEvent.click(within(panel).getByRole('button', { name: 'Arrêter' }));
+      await waitFor(() => expect(autofill.compasAutofillStopAction).toHaveBeenCalledWith({ tripId: TRIP }));
+      await vi.advanceTimersByTimeAsync(93_000);
+      expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('Préremplissage : lancé puis issue relue, sans tenir de requête ouverte', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      autofill.compasAutofillOutcomeAction.mockResolvedValueOnce(null as never).mockResolvedValueOnce(null as never);
+      render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+      await waitFor(() => expect(autofill.compasAutofillStartAction).toHaveBeenCalledTimes(1));
+      // Toujours en cours : rien d'annoncé, ni succès ni échec.
+      await vi.advanceTimersByTimeAsync(4_100);
+      expect(screen.queryByText(/Aventure préparée|interrompue/)).toBeNull();
+      await vi.advanceTimersByTimeAsync(4_100);
+      expect(await screen.findByText(/Aventure préparée · 486/)).toBeTruthy();
+      expect(autofill.compasAutofillOutcomeAction.mock.calls.length).toBeGreaterThanOrEqual(3);
+      expect(autofill.compasAutofillStartAction).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('Préremplissage : déjà fait ou annulé → ne se relance pas', () => {
@@ -1071,7 +1133,7 @@ describe('CompasScreen', () => {
     fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
     const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
-    fireEvent.click(within(sheet).getByRole('button', { name: /Sur le tracé/ }));
+    fireEvent.click(within(sheet).getByRole('button', { name: /Sur place/ }));
     expect(within(sheet).getByText('Refuge des Oulettes')).toBeTruthy();
     expect(within(sheet).getByText('Point d’eau')).toBeTruthy();
     fireEvent.click(within(sheet).getByRole('button', { name: /Refuge ou abri \(1\)/ }));
@@ -1283,6 +1345,11 @@ describe('CompasScreen', () => {
     // L'annulation elle-même ne s'annule pas.
     expect(screen.queryByRole('button', { name: 'Annuler' })).toBeNull();
 
+    // L'annonce paraît avant la fin de l'action : le bouton reste grisé un
+    // instant, comme pour une vraie personne. On attend qu'il soit actif.
+    await waitFor(() =>
+      expect((within(sheet).getByRole('button', { name: /Bivouac/ }) as HTMLButtonElement).disabled).toBe(false)
+    );
     fireEvent.click(within(sheet).getByRole('button', { name: /Bivouac/ }));
     await screen.findByRole('button', { name: 'Annuler' });
     const calls = compas.compasSetPreferencesAction.mock.calls.length;
@@ -1340,6 +1407,59 @@ describe('CompasScreen', () => {
         .getAttribute('aria-current')
     ).toBe('step');
     expect(nav.hasAttribute('data-drag')).toBe(false);
+  });
+
+  it('Phrase de départ gardée sur le voyage : appliquée à l’ouverture, puis oubliée', async () => {
+    compas.compasInterpretAction.mockResolvedValueOnce({
+      success: true,
+      usedAi: false,
+      note: null,
+      proposals: [
+        {
+          id: '0-set_party_size',
+          action: { type: 'set_party_size', count: 4 },
+          label: '4 personnes',
+          ok: true,
+          reason: null,
+          source: 'regles',
+        },
+      ],
+    });
+    render(<CompasScreen data={{ ...makeData(), startSay: 'rando à 4' }} />);
+    await waitFor(() =>
+      expect(compas.compasInterpretAction).toHaveBeenCalledWith({ tripId: TRIP, text: 'rando à 4' })
+    );
+    await waitFor(() =>
+      expect(compas.compasSetPartySizeAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        partySize: 4,
+      })
+    );
+    await waitFor(() => expect(compas.compasClearStartSayAction).toHaveBeenCalledWith({ tripId: TRIP }));
+  });
+
+  it('Phrase de départ : l’écriture échoue, elle reste sur le voyage pour la prochaine visite', async () => {
+    compas.compasInterpretAction.mockResolvedValueOnce({
+      success: true,
+      usedAi: false,
+      note: null,
+      proposals: [
+        {
+          id: '0-set_party_size',
+          action: { type: 'set_party_size', count: 4 },
+          label: '4 personnes',
+          ok: true,
+          reason: null,
+          source: 'regles',
+        },
+      ],
+    });
+    compas.compasSetPartySizeAction.mockResolvedValueOnce({ success: false, error: 'Connexion perdue' } as never);
+    render(<CompasScreen data={{ ...makeData(), startSay: 'rando à 4' }} />);
+    await waitFor(() => expect(compas.compasSetPartySizeAction).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 50));
+    expect(compas.compasClearStartSayAction).not.toHaveBeenCalled();
   });
 
   it('Dis-le : les propositions refusées ne s’appliquent pas, les autres oui', async () => {

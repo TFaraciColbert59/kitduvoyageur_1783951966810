@@ -32,6 +32,8 @@ export interface NightsInput {
   maxAltitudeM: number | null;
   /** Un refuge connu (base) près du lieu de chaque nuit. */
   refugeNear: boolean[];
+  /** Nuits dehors demandées pour ce projet : elles priment sur le reste. */
+  outdoorNights?: number | null;
 }
 
 export const NIGHT_LABEL: Record<NightType, string> = {
@@ -44,8 +46,26 @@ export function planNights(input: NightsInput): NightPlan[] {
   const n = Math.max(0, Math.min(60, Math.floor(input.nights)));
   const out: NightPlan[] = [];
   const high = (input.maxAltitudeM ?? 0) >= 2000;
+  // « Dormir dehors 3 nuits » : d'abord les nuits sans refuge connu, puis les autres.
+  const outside = new Set<number>();
+  const want = Math.min(n, Math.max(0, Math.floor(input.outdoorNights ?? 0)));
+  if (want > 0) {
+    const order = Array.from({ length: n }, (_, k) => k + 1).sort(
+      (a, b) => Number(input.refugeNear[a - 1] === true) - Number(input.refugeNear[b - 1] === true) || a - b
+    );
+    for (const night of order.slice(0, want)) outside.add(night);
+  }
   for (let i = 1; i <= n; i += 1) {
     const refuge = input.refugeNear[i - 1] === true;
+    if (outside.has(i)) {
+      out.push({ night: i, type: 'bivouac', reason: `${want} nuit${want > 1 ? 's' : ''} dehors demandée${want > 1 ? 's' : ''}` });
+      continue;
+    }
+    if (want > 0 && input.pref === 'bivouac') {
+      // Le reste des nuits n'est pas dehors : un toit.
+      out.push(refuge ? { night: i, type: 'refuge', reason: 'nuit sous un toit' } : { night: i, type: 'hebergement', reason: 'nuit sous un toit ; aucun refuge connu à proximité' });
+      continue;
+    }
     const refugeOr = (why: string): NightPlan =>
       refuge
         ? { night: i, type: 'refuge', reason: why }
@@ -311,9 +331,12 @@ export interface BudgetLine {
 
 /** Arrondi à l'euro ; une ligne à 0 € n'est pas écrite. */
 export function budgetLines(lines: Array<BudgetLine | null>): BudgetLine[] {
+  // Arrondi AVANT le filtre : une ligne à 0,4 € devient 0 € et ne doit pas partir
+  // (contrainte amount > 0 : tout l'insert du budget échouerait).
   return lines
-    .filter((l): l is BudgetLine => l != null && Number.isFinite(l.amount) && l.amount > 0)
-    .map((l) => ({ ...l, amount: Math.round(l.amount) }));
+    .filter((l): l is BudgetLine => l != null && Number.isFinite(l.amount))
+    .map((l) => ({ ...l, amount: Math.round(l.amount) }))
+    .filter((l) => l.amount > 0);
 }
 
 export function budgetTotal(lines: BudgetLine[]): number {
@@ -347,6 +370,38 @@ function cleanText(v: unknown, max: number): string | null {
 }
 
 /** Ce que l'IA renvoie est borné : un chiffre hors des limites réalistes est ignoré. */
+/**
+ * Mots courants des conseils que le modèle écrit sans accent ou mal
+ * (« Reserver l'hëergement ») : corrigés, le reste est laissé tel quel.
+ */
+const ACCENT_FIXES: Array<[RegExp, string]> = [
+  // Apostrophe perdue : « lhumidité », « davance », « leau ».
+  [/\b(l|d|qu|j|n)(avance|humidit[ée]|h[ée]bergement|eau|altitude|acclimatation|arriv[ée]e|achat|acc[èe]s|itin[ée]raire|entr[ée]e|ascension|aube|hiver|automne|avion|a[ée]roport|assurance|[ée]quipement|[ée]tape|orage|ombre|essence|emplacement|office)(?![\p{L}\d])/giu, "$1'$2"],
+  [/\bh[ëe]?e?rgements?\b/gi, 'hébergement'],
+  [/\bhebergement/gi, 'hébergement'],
+  [/\breserver\b/gi, 'réserver'],
+  [/\breservation(s?)\b/gi, 'réservation$1'],
+  [/\bprevoir\b/gi, 'prévoir'],
+  [/\bverifier\b/gi, 'vérifier'],
+  [/\bdepart\b/gi, 'départ'],
+  [/\bpriviligier\b|\bprivilegier\b/gi, 'privilégier'],
+  [/\bregion(s?)\b/gi, 'région$1'],
+  [/\bmeteo\b/gi, 'météo'],
+  [/\betape(s?)\b/gi, 'étape$1'],
+  [/\bequipement(s?)\b/gi, 'équipement$1'],
+  [/\bsecurite\b/gi, 'sécurité'],
+  [/\bmateriel\b/gi, 'matériel'],
+];
+export function repairAccents(text: string): string {
+  let out = text;
+  for (const [re, fix] of ACCENT_FIXES)
+    out = out.replace(re, (m, ...g) => {
+      const word = fix.replace(/\$(\d)/g, (_d, i: string) => (typeof g[Number(i) - 1] === 'string' ? (g[Number(i) - 1] as string) : ''));
+      return m[0] === m[0].toUpperCase() ? word[0].toUpperCase() + word.slice(1) : word;
+    });
+  return out;
+}
+
 export function sanitizeAdvice(raw: unknown): AutofillAiAdvice {
   const r = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
   const num = (v: unknown, min: number, max: number) => {
@@ -357,6 +412,9 @@ export function sanitizeAdvice(raw: unknown): AutofillAiAdvice {
     ? r.notes
         .map((n) => cleanText(n, 180))
         .filter((n): n is string => n != null && n.length >= 8)
+        .map(repairAccents)
+        // Une phrase commence par une majuscule (« appliquer un indice… »).
+        .map((n) => n[0].toLocaleUpperCase('fr') + n.slice(1))
         .slice(0, 3)
     : [];
   return {
@@ -374,7 +432,8 @@ export function sanitizeAdvice(raw: unknown): AutofillAiAdvice {
 
 /* ---------- Itinéraire proposé par l'IA ---------- */
 
-export type StageMove = 'vol' | 'voiture' | 'bus' | 'train' | 'bateau' | 'marche' | 'velo' | 'aucun';
+/** « pagaie » : descente de rivière (canoë, kayak), jamais proposé par le spécialiste. */
+export type StageMove = 'vol' | 'voiture' | 'bus' | 'train' | 'bateau' | 'marche' | 'velo' | 'pagaie' | 'aucun';
 const MOVES = new Set<StageMove>(['vol', 'voiture', 'bus', 'train', 'bateau', 'marche', 'velo', 'aucun']);
 
 export interface ProposedStage {
@@ -427,10 +486,19 @@ const STAGE_PREFIX =
 
 export function stagePlaceName(raw: string | null): string | null {
   if (!raw) return raw;
-  const s = raw
+  let s = raw
     .replace(STAGE_PREFIX, '')
     .replace(/\s*\([^)]*\)\s*$/, '')
     .trim();
+  // Un tronçon (« Syabru Besi to Gatlang », « Chamonix → Argentière », « de
+  // Zermatt à Täsch ») : l'étape est le lieu du soir, la fin du tronçon. Le
+  // tiret reste un nom (« Isle of Skye - Portree »).
+  const parts = s.split(/\s+(?:to|→|->|>|vers)\s+/i);
+  if (parts.length > 1) s = parts[parts.length - 1].trim();
+  else if (/^(?:de|from)\s/i.test(s)) {
+    const end = s.split(/\s+(?:à|a|to)\s+/i);
+    if (end.length > 1) s = end[end.length - 1].trim();
+  }
   return s || raw;
 }
 
@@ -517,6 +585,8 @@ export const STEP_TRANSPORT: Record<StageMove, 'foot' | 'car' | 'bus' | 'train' 
   bateau: 'boat',
   marche: 'foot',
   velo: 'bike',
+  // Le reste de l'application ne connaît que ces modes : un canoë est un bateau.
+  pagaie: 'boat',
   aucun: 'foot',
 };
 
@@ -536,13 +606,14 @@ const MOVE_OF_TRANSPORT: Record<string, StageMove> = {
  * le même vocabulaire que les étapes proposées par le spécialiste.
  */
 export function movesFromSteps(
-  steps: Array<{ day_number: number; title: string; transport_mode: string | null }>
+  steps: Array<{ day_number: number; title: string; transport_mode: string | null }>,
+  activity?: string
 ): Array<{ day: number; name: string; move: StageMove }> {
-  return steps.map((s) => ({
-    day: s.day_number,
-    name: s.title,
-    move: (s.transport_mode && MOVE_OF_TRANSPORT[s.transport_mode]) || 'aucun',
-  }));
+  return steps.map((s) => {
+    const move = (s.transport_mode && MOVE_OF_TRANSPORT[s.transport_mode]) || 'aucun';
+    // Sur l'eau, un tronçon en bateau est la descente elle-même (pas un ferry payant).
+    return { day: s.day_number, name: s.title, move: activity === 'water' && move === 'bateau' ? 'pagaie' : move };
+  });
 }
 
 /* ---------- Venir jusqu'au départ ---------- */
@@ -550,9 +621,28 @@ export function movesFromSteps(
 /** Au-delà, la route n'est plus un trajet raisonnable : on part en avion. */
 export const FLIGHT_THRESHOLD_KM = 900;
 
-export function approachMode(input: { straightKm: number }): 'sur_place' | 'route' | 'avion' {
+/**
+ * La route reste raisonnable selon la durée du voyage : un week-end ne passe
+ * pas 9 h au volant à l'aller (Annecy → Biarritz, 650 km à vol d'oiseau).
+ * 450 km à vol d'oiseau (≈ 5 h de route) pour 2 jours, 600 km pour 3, 900 au-delà.
+ */
+/**
+ * Durée de route à l'aller qu'un voyage supporte (trajet mesuré, ferry
+ * compris) : 5 h pour 2 jours, 7 h pour 3, 10 h pour 4 ou 5 jours ; au-delà,
+ * sans limite. « 3 jours en Corse » depuis Annecy : 14 h de route et de ferry.
+ */
+export function maxDriveMinutes(days: number): number {
+  if (days <= 2) return 300;
+  if (days === 3) return 420;
+  if (days <= 5) return 600;
+  return Number.POSITIVE_INFINITY;
+}
+
+export function approachMode(input: { straightKm: number; days?: number | null }): 'sur_place' | 'route' | 'avion' {
   if (input.straightKm < 0.5) return 'sur_place';
-  if (input.straightKm > FLIGHT_THRESHOLD_KM) return 'avion';
+  const days = input.days ?? 99;
+  const limit = days <= 2 ? 450 : days === 3 ? 600 : FLIGHT_THRESHOLD_KM;
+  if (input.straightKm > limit) return 'avion';
   return 'route';
 }
 
@@ -617,11 +707,34 @@ const ROAD_EXCLUDED = new Set([
 ]);
 
 const WATER_EXCLUDED = new Set(['trekking-poles', 'crampons']);
+/** Course et trail : on court léger, sans couchage ni cuisine ni gros sac. */
+const RUN_KEYS = new Set(['first-aid', 'sunscreen', 'sunglasses', 'water-bottle', 'whistle', 'rain-poncho']);
 
-export function keepRuleForActivity(key: string, activity: string): boolean {
+/** Sortie de quelques heures, sans nuit : pas de quoi réparer ni de thermos. */
+const SHORT_EXCLUDED = new Set(['repair-kit', 'thermos', 'water-filter', 'stove', 'tent-2p', 'sleeping-mat']);
+
+/**
+ * Sortie de quelques heures (6 h au plus) près de chez soi : ni lampe, ni
+ * couteau, ni sifflet, ni couverture de survie, ni batterie. Le froid (gants,
+ * doudoune, chaufferettes, crampons) seulement au-dessus de 1 500 m. Une
+ * marche nordique de 2 h à 450 m recevait gants thermiques et frontale.
+ */
+const BRIEF_EXCLUDED = new Set(['whistle', 'headlamp', 'folding-knife', 'survival-blanket', 'fire-starter', 'powerbank']);
+const COLD_KEYS = new Set(['cold-gloves', 'cold-down-jacket', 'hand-warmers', 'crampons']);
+export function keepRuleForBrief(key: string, maxAltitudeM: number | null): boolean {
+  if (BRIEF_EXCLUDED.has(key)) return false;
+  if (COLD_KEYS.has(key)) return (maxAltitudeM ?? 0) >= 1500;
+  return true;
+}
+
+export function keepRuleForActivity(key: string, activity: string, short = false): boolean {
+  if (short && SHORT_EXCLUDED.has(key)) return false;
+  // Sur l'eau : un sac étanche (matériel de l'activité), pas un sac de randonnée ni un thermos.
+  if (activity === 'water' && (key === 'backpack' || key === 'thermos')) return false;
   if (activity === 'cultural' || activity === 'citytrip' || activity === 'beach') return CITY_KEYS.has(key);
   if (activity === 'roadtrip' || activity === 'vanlife') return !ROAD_EXCLUDED.has(key);
   if (activity === 'water' || activity === 'cycling') return !WATER_EXCLUDED.has(key);
+  if (activity === 'running' || activity === 'trail') return RUN_KEYS.has(key);
   return true;
 }
 
@@ -684,6 +797,18 @@ const ACTIVITY_GEAR: Record<string, GearNeed[]> = {
     gear('swimsuit', 'Maillot de bain', 'clothing', false, 'plage', ['maillot']),
     gear('beach-towel', 'Serviette', 'tools', false, 'plage', ['serviette']),
   ],
+  running: [
+    gear('run-shoes', 'Chaussures de course', 'clothing', true, 'course : amorti et accroche', ['chaussure', 'running', 'basket']),
+    gear('run-hydration', 'Flasque ou bouteille souple', 'tools', false, 'course : boire sans s’arrêter', ['flasque', 'gourde', 'bouteille']),
+    gear('run-light', 'Lampe ou brassard réfléchissant', 'safety', false, 'course : être vu à l’aube et au crépuscule', ['frontale', 'reflechissant', 'brassard']),
+  ],
+  trail: [
+    gear('trail-shoes', 'Chaussures de trail', 'clothing', true, 'trail : accroche sur sentier', ['chaussure', 'trail'], ['chaussure']),
+    gear('trail-vest', 'Gilet d’hydratation', 'tools', true, 'trail : eau et ravitaillement sur soi', ['gilet', 'flasque', 'poche a eau', 'camelbak']),
+    gear('trail-jacket', 'Veste imperméable légère', 'clothing', true, 'trail : protection si le temps tourne en crête', ['veste', 'impermeable', 'coupe-vent']),
+    gear('trail-blanket', 'Couverture de survie', 'safety', true, 'trail : en cas d’arrêt forcé', ['couverture de survie', 'survie']),
+    gear('trail-phone', 'Téléphone chargé avec la trace', 'safety', true, 'trail : se repérer, appeler les secours', ['telephone', 'smartphone', 'gps']),
+  ],
   vanlife: [
     gear('sleeping-bag', 'Sac de couchage', 'sleep', true, 'nuits dans le véhicule', ['couchage', 'duvet', 'quilt']),
     gear('stove', 'Réchaud', 'cook', false, 'repas sur place', ['rechaud', 'stove']),
@@ -693,4 +818,79 @@ const ACTIVITY_GEAR: Record<string, GearNeed[]> = {
 
 export function gearForActivity(activity: string): GearNeed[] {
   return ACTIVITY_GEAR[activity] ?? [];
+}
+
+/** Le plus long séjour d'affilée au même lieu (en jours) dans une suite d'étapes. */
+export function longestStay(places: readonly string[]): number {
+  let best = 0;
+  let run = 0;
+  places.forEach((p, i) => {
+    run = i > 0 && p === places[i - 1] ? run + 1 : 1;
+    best = Math.max(best, run);
+  });
+  return best;
+}
+
+/**
+ * Part des allers-retours d'une suite d'étapes le long de l'axe départ → arrivée :
+ * 0 = on avance toujours, 1 = autant de recul que d'avance. Sert à vérifier
+ * qu'une traversée traverse (Pyrénées : Lourdes → Oloron → Lourdes, non).
+ */
+export function backtrackShare(points: ReadonlyArray<{ lat: number; lon: number }>): number {
+  if (points.length < 3) return 0;
+  const a = points[0];
+  const b = points[points.length - 1];
+  const kx = Math.cos(((a.lat + b.lat) / 2) * (Math.PI / 180));
+  const ax = (b.lon - a.lon) * kx;
+  const ay = b.lat - a.lat;
+  const len = Math.hypot(ax, ay);
+  if (len < 1e-6) return 1; // départ = arrivée : une boucle, pas une traversée
+  const proj = points.map((p) => ((p.lon - a.lon) * kx * ax + (p.lat - a.lat) * ay) / len);
+  let forward = 0;
+  let backward = 0;
+  for (let i = 1; i < proj.length; i += 1) {
+    const d = proj[i] - proj[i - 1];
+    if (d > 0) forward += d;
+    else backward -= d;
+  }
+  return forward > 0 ? backward / forward : 1;
+}
+
+/** L'envie dit-elle une traversée ou un itinéraire linéaire (GR, haute route) ? */
+export function wantsTraverse(wishes: readonly string[]): boolean {
+  return wishes.some((w) => /\btravers[ée]e\b|\btraverse\b|\bgr ?\d{1,3}\b|haute route|\bhrp\b/i.test(w.normalize('NFC')));
+}
+
+
+const CITY_LIKE = new Set(['cultural', 'citytrip', 'beach']);
+
+/**
+ * La raison d'un objet des règles générales, dite pour CE voyage : une
+ * trousse de secours n'est pas « pour le milieu isolé » à Lisbonne, un kit de
+ * réparation n'est pas « en plein trek » sur l'eau.
+ */
+export function contextualReason(key: string, reason: string, activity: string, short: boolean): string {
+  const city = CITY_LIKE.has(activity);
+  switch (key) {
+    case 'first-aid':
+      if (city) return 'Petits soins du voyage : pansements, ampoules, antidouleur, désinfectant.';
+      if (short) return 'Ampoules, coupures, piqûres : de quoi soigner sur place.';
+      return reason;
+    case 'water-bottle':
+      if (city) return 'Rester hydraté pendant les visites, à remplir aux fontaines.';
+      if (activity === 'water') return 'Boire sur l’eau entre deux pauses.';
+      return reason;
+    case 'headlamp':
+      if (short) return 'Au cas où la sortie se termine à la tombée de la nuit.';
+      return reason;
+    case 'repair-kit':
+      if (activity === 'water') return 'Réparer une sangle, un sac ou une pagaie sans écourter la descente.';
+      if (activity === 'cycling') return 'Réparer une sangle ou une sacoche sans abandonner l’étape.';
+      return reason.replace('en plein trek', 'en cours de route');
+    case 'backpack':
+      if (short) return 'Un sac de journée pour l’eau, le pique-nique et une couche chaude.';
+      return reason;
+    default:
+      return reason;
+  }
 }

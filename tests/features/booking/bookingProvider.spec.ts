@@ -233,6 +233,7 @@ describe('RouteStackBookingProvider', () => {
       checkIn: '2026-11-12',
       checkOut: '2026-11-21',
       rooms: [{ adults: 2, children: 0 }],
+      roomCount: 1,
       lat: 0,
       long: 0,
       currency: 'EUR',
@@ -250,6 +251,48 @@ describe('RouteStackBookingProvider', () => {
     });
     expect(result.offers[1]).toMatchObject({ id: 'hotel-2', deeplink: null });
     expect(result.offers[0].untitled).toBeUndefined();
+  });
+
+  it('hôtels : coordonnées de search-destinations et roomCount (OpenAPI RouteStack)', async () => {
+    const text = (v: unknown) => ({ isError: false, content: [{ type: 'text' as const, text: JSON.stringify(v) }] });
+    const callTool = vi.fn<RouteStackToolCaller>(async (name) =>
+      name === 'hotel_search_destinations'
+        ? text({ success: true, result: [{ id: 'D-74010', fullName: 'Annecy, France', coordinates: { lat: 45.8992, long: 6.1294 } }] })
+        : text({
+            success: true,
+            result: {
+              correlationId: 'c-1',
+              token: 't-1',
+              currency: 'EUR',
+              result: [{ id: 'H-1', name: 'Hôtel du Lac', ourprice: 142.5, starRating: 3 }],
+            },
+          })
+    );
+    const provider = createRouteStackBookingProvider({ env: env({ ROUTESTACK_API_KEY: 'k' }), callTool });
+    const result = await provider.search({ vertical: 'hotel', destination: 'Annecy', checkIn: '2027-06-05', checkOut: '2027-06-07', travelers: 2 });
+    expect(callTool).toHaveBeenCalledWith('hotel_search', expect.objectContaining({ destinationId: 'D-74010', lat: 45.8992, long: 6.1294, roomCount: 1 }));
+    expect(result.offers).toEqual([expect.objectContaining({ id: 'H-1', title: 'Hôtel du Lac', amount: 142.5, currency: 'EUR' })]);
+  });
+
+  it('réponse vide : aucune offre, jamais « Hôtel · Annecy » inventé', async () => {
+    const callTool = vi.fn<RouteStackToolCaller>().mockResolvedValue({
+      isError: false,
+      content: [{ type: 'text', text: JSON.stringify({ success: true, result: { correlationId: 'c', token: 't', result: [], count: 0 } }) }],
+    });
+    const provider = createRouteStackBookingProvider({ env: env({ ROUTESTACK_API_KEY: 'k' }), callTool });
+    const result = await provider.search({ vertical: 'hotel', destination: '235402', checkIn: '2027-06-05', checkOut: '2027-06-07' });
+    expect(result.offers).toEqual([]);
+  });
+
+  it('refus de RouteStack ({ success: false }) : une erreur avec son message, pas une offre', async () => {
+    const callTool = vi.fn<RouteStackToolCaller>().mockResolvedValue({
+      isError: false,
+      content: [{ type: 'text', text: JSON.stringify({ success: false, message: 'roomCount is required' }) }],
+    });
+    const provider = createRouteStackBookingProvider({ env: env({ ROUTESTACK_API_KEY: 'k' }), callTool });
+    await expect(
+      provider.search({ vertical: 'hotel', destination: '235402', checkIn: '2027-06-05', checkOut: '2027-06-07' })
+    ).rejects.toMatchObject({ code: BOOKING_PROVIDER_ERROR_CODES.upstream, message: expect.stringContaining('roomCount is required') });
   });
 
   it('signale une offre que RouteStack ne nomme pas (titre de repli)', async () => {
@@ -310,9 +353,6 @@ describe('RouteStackBookingProvider', () => {
         content: [{ type: 'text', text: JSON.stringify({ result: [] }) }],
       })
       .mockResolvedValueOnce({
-        content: [{ type: 'text', text: JSON.stringify({ result: [{ id: 'TYO', code: 'Tokyo' }] }) }],
-      })
-      .mockResolvedValueOnce({
         content: [{ type: 'text', text: JSON.stringify({ result: [] }) }],
       });
     const provider = createRouteStackBookingProvider({
@@ -323,15 +363,17 @@ describe('RouteStackBookingProvider', () => {
     await provider.search(flightRequest);
     expect(callTool).toHaveBeenNthCalledWith(1, 'flight_search', {
       filter: {
+        type: 'RoundTrip',
         origin: 'CDG',
         destination: 'NRT',
         departureDate: '2026-11-12',
         returnDate: '2026-11-21',
         adults: 2,
-        cabinClass: 'economy',
-        tripType: 'round_trip',
+        children: 0,
+        infants: 0,
+        cabin: 'Economy',
       },
-    });
+    }, { timeoutMs: 30_000 });
 
     await provider.search({
       vertical: 'car',
@@ -340,16 +382,44 @@ describe('RouteStackBookingProvider', () => {
       dropoffAt: '2026-11-21T10:00:00Z',
       travelers: 1,
     });
-    expect(callTool).toHaveBeenNthCalledWith(2, 'car_locations', { query: 'Tokyo' });
-    expect(callTool).toHaveBeenNthCalledWith(3, 'car_search', {
+    expect(callTool).toHaveBeenNthCalledWith(2, 'car_search', {
       filter: {
-        pickup: { type: 'city', code: 'Tokyo' },
-        dropoff: { type: 'city', code: 'Tokyo' },
-        pickupDate: '2026-11-12T10:00:00Z',
-        dropoffDate: '2026-11-21T10:00:00Z',
-        driverAge: 30,
+        pickup: { name: 'Tokyo', date: '2026-11-12', time: '10:00' },
+        dropoff: { name: 'Tokyo', date: '2026-11-21', time: '10:00' },
       },
     });
+  });
+
+  it('résout un lieu de vol par `term` (flight_locations), un aller simple en OneWay', async () => {
+    const callTool = vi.fn<RouteStackToolCaller>(async (name, args) => ({
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(
+            name === 'flight_locations'
+              ? { result: [{ code: (args as { term: string }).term === 'Genève' ? 'GVA' : 'LIS' }] }
+              : { result: [] }
+          ),
+        },
+      ],
+    }));
+    const provider = createRouteStackBookingProvider({
+      env: env({ ROUTESTACK_API_KEY: 'term-key' }),
+      callTool,
+    });
+
+    await provider.search({ vertical: 'flight', origin: 'Genève', destination: 'Lisbonne', departure: '2027-06-05', travelers: 1 });
+
+    expect(callTool).toHaveBeenNthCalledWith(1, 'flight_locations', { term: 'Genève' });
+    expect(callTool).toHaveBeenNthCalledWith(2, 'flight_locations', { term: 'Lisbonne' });
+    // La recherche de vols a son propre délai (plus de 12 s en ligne, 8 oct.).
+    expect(callTool).toHaveBeenNthCalledWith(
+      3,
+      'flight_search',
+      { filter: expect.objectContaining({ type: 'OneWay', origin: 'GVA', destination: 'LIS' }) },
+      { timeoutMs: 30_000 }
+    );
+    expect((callTool.mock.calls[2][1] as { filter: object }).filter).not.toHaveProperty('returnDate');
   });
 
   it('normalise les structures RouteStack imbriquées sans inventer de prix', async () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { classifyScale } from '../engine/scale';
+import { classifyScale, scaleHours } from '../engine/scale';
 
 describe('classifyScale', () => {
   it.each([
@@ -28,5 +28,15 @@ describe('classifyScale', () => {
     expect(classifyScale(null)).toBeNull();
     expect(classifyScale(0)).toBeNull();
     expect(classifyScale(Number.NaN)).toBeNull();
+  });
+});
+
+describe('scaleHours : une journée au calendrier', () => {
+  it('prend le temps d’effort du tracé, sinon une journée d’activité', () => {
+    expect(classifyScale(scaleHours(24, 60))?.label).toBe('Sortie');
+    expect(classifyScale(scaleHours(24, 300))?.label).toBe('Journée');
+    expect(classifyScale(scaleHours(24, null))?.label).toBe('Journée');
+    expect(scaleHours(48, 60)).toBe(48);
+    expect(scaleHours(3, null)).toBe(3);
   });
 });

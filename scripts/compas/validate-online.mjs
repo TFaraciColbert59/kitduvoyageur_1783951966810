@@ -1,9 +1,8 @@
 // Compas — passage de validation en ligne (P2, docs/compas/ETAT.md).
 //
 // Chaque demande est préparée sur un déploiement (preview Vercel) comme le
-// ferait une personne sur son téléphone : connexion démo, phrase « Dis-le »
-// saisie dans le Compas vide (CompasStart), création de l'aventure, phrase
-// comprise et appliquée dans le tiroir Où, attente de l'issue, capture.
+// ferait une personne sur son téléphone : connexion démo, phrase saisie dans
+// « Où », « Préparer mon aventure », attente de l'issue, capture de l'écran.
 // Les captures et le journal vont dans proof/ (non versionné, .gitignore) ;
 // le contrôle se fait ensuite en base (voyages, étapes, kit, budget).
 //
@@ -71,33 +70,23 @@ for (const [i, say] of phrases.entries()) {
     await page.waitForLoadState('networkidle', { timeout: 60_000 }).catch(() => undefined);
     const cookies = page.getByRole('button', { name: 'Refuser' });
     if (await cookies.isVisible().catch(() => false)) await cookies.click().catch(() => undefined);
-    // Compas vide : un seul champ « Dis-le », envoyé par Entrée (pas de bouton).
-    const box = page.locator('#cp-start-say');
+    const box = page.locator('textarea').first();
     await box.waitFor({ timeout: 60_000 });
     // La saisie ne tient qu'une fois la page interactive (hydratation) : on vérifie.
-    for (let k = 0; k < 5 && (await box.inputValue().catch(() => '')) !== say; k += 1) {
+    const go = page.getByRole('button', { name: 'Préparer mon aventure' });
+    for (let k = 0; k < 5 && !(await go.isEnabled().catch(() => false)); k += 1) {
       await box.fill('');
       await box.pressSequentially(say, { delay: 10 });
       await page.waitForTimeout(1500);
     }
-    await box.press('Enter');
-    // L'aventure créée, la page quitte `?nouvelle=1` et ouvre le Compas complet.
-    await page.waitForURL(
-      (u) => u.pathname.startsWith('/compas') && !u.searchParams.has('nouvelle'),
-      {
-        timeout: 90_000,
-      }
-    );
-    // La phrase est comprise dans le tiroir Où puis appliquée d'office (îlot
-    // « N changements appliqués »), ou rien n'est à appliquer, ou une erreur.
+    await go.click({ timeout: 30_000 });
+    const status = page.getByRole('status', { name: 'Préparation de l’aventure' });
+    await status.waitFor({ timeout: 90_000 });
     await page
-      .locator('.cp-island, .cp-disle__out, [role="alert"]')
-      .filter({ hasText: /appliqué|Rien de précis|Action impossible|Connexion perdue|n’a pas pu/ })
+      .getByText(/Ton aventure est prête|Préparation interrompue|Préparation arrêtée/)
       .first()
       .waitFor({ timeout: 330_000 });
-    await page.waitForTimeout(2000);
-    const outcome = page.locator('.cp-island, .cp-disle__out, [role="alert"]');
-    const head = (await outcome.allInnerTexts().catch(() => [])).join('\n').slice(0, 600);
+    const head = (await status.innerText().catch(() => '')).slice(0, 600);
     await page.screenshot({ path: path.join(outDir, `${slug}.png`), fullPage: false });
     log({ i: i + 1, say, url: page.url(), seconds: Math.round((Date.now() - t0) / 1000), head });
     console.info(slug, Math.round((Date.now() - t0) / 1000), 's', say);

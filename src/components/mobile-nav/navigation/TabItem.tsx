@@ -204,7 +204,11 @@ const TabItem = memo(function TabItem({
           transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 450, damping: 32 }}
         />
       )}
+      {/* framer-motion rend focalisable un élément muni de whileTap : l'icône
+          n'est pas un arrêt de tabulation à part (le lien l'est déjà). */}
       <motion.span
+        tabIndex={-1}
+        aria-hidden="true"
         whileTap={reduceMotion ? undefined : { scale: optical ? 0.9 : 0.97 }}
         transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 25 }}
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1 }}

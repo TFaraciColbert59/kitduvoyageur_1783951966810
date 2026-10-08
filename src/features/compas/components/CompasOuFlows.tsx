@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import Icon from '@/components/ui/Icon';
-import type { CompasNights } from '../engine/compasModel';
+import type { CompasLevel, CompasNights, CompasTerrain } from '../engine/compasModel';
+import { SOURCE_LABEL, adaptationText, type CtxField } from '../engine/projectContext';
 import {
   activityLabel,
   addDaysIso,
@@ -71,12 +72,16 @@ export const ACTIVITY_META: Record<CompasActivity, { icon: string; hint: string 
   citytrip: { icon: 'building2', hint: 'Une ville, à pied et en transports' },
   beach: { icon: 'sun', hint: 'Plage et repos' },
   vanlife: { icon: 'bus', hint: 'Itinérance en van ou camping-car' },
+  running: { icon: 'heart-pulse', hint: 'Footing, sortie courte, fractionné' },
+  trail: { icon: 'zap', hint: 'Course nature, dénivelé, sentiers' },
 };
 
 /** Ordre d'affichage : de la marche au repos, « Mixte / autre » en dernier. */
 export const ACTIVITY_ORDER: CompasActivity[] = [
   'hiking',
   'trekking',
+  'trail',
+  'running',
   'bivouac',
   'cycling',
   'mountaineering',
@@ -1080,6 +1085,8 @@ export function PreferencesFlow({ ctl }: { ctl: CompasCtl }) {
         )}
       </div>
 
+      <ProjectBlock ctl={ctl} save={save} />
+
       <TagEditor
         title="Éviter"
         values={prefs.avoid}
@@ -1108,6 +1115,165 @@ export function PreferencesFlow({ ctl }: { ctl: CompasCtl }) {
             Voir le groupe
           </button>
         </p>
+      )}
+    </>
+  );
+}
+
+const LEVEL_OPTIONS: Array<{ id: CompasLevel; label: string }> = [
+  { id: 'debut', label: 'Débutant' },
+  { id: 'regulier', label: 'Régulier' },
+  { id: 'aguerri', label: 'Aguerri' },
+];
+const TERRAIN_OPTIONS: Array<{ id: CompasTerrain; label: string }> = [
+  { id: 'sentier', label: 'Sentiers' },
+  { id: 'montagne', label: 'Montagne' },
+  { id: 'hors_sentier', label: 'Hors sentier' },
+  { id: 'itinerance', label: 'Itinérance' },
+];
+
+/** D'où vient la valeur : « ton profil », « réglé pour ce projet », « proposé ». */
+function SourceNote({ field }: { field: CtxField<unknown> }) {
+  if (field.value == null) return null;
+  return (
+    <span className="cp-src" data-src={field.source}>
+      {SOURCE_LABEL[field.source]}
+      {field.why ? ` · ${field.why}` : ''}
+    </span>
+  );
+}
+
+/**
+ * Ce projet : niveau, terrain, nuits dehors, poids max. Chaque valeur montre
+ * sa source ; le profil propose, le projet décide (« Comme mon profil » retire
+ * le réglage propre au projet).
+ */
+function ProjectBlock({
+  ctl,
+  save,
+}: {
+  ctl: CompasCtl;
+  save: (next: CompasCtl['data']['model']['preferences'], message: string) => void;
+}) {
+  const ctx = ctl.data.context;
+  const prefs = ctl.data.model.preferences;
+  const edit = ctl.data.canEdit && !ctl.busy;
+  const [kg, setKg] = useState(prefs.maxPackKg != null ? String(prefs.maxPackKg) : '');
+  if (!ctx) return null;
+  const nightsCount = ctx.modules.nights ? Math.max(0, (ctl.data.model.dates.days ?? ctl.data.plannedDays ?? 1) - 1) : 0;
+  const setKgValue = () => {
+    const n = Number(kg.replace(',', '.'));
+    const next = kg.trim() === '' ? null : Number.isFinite(n) && n >= 1 && n <= 40 ? Math.round(n * 10) / 10 : undefined;
+    if (next === undefined || next === (prefs.maxPackKg ?? null)) return;
+    save({ ...prefs, maxPackKg: next }, next == null ? 'Poids max retiré' : `Sac de base sous ${String(next).replace('.', ',')} kg`);
+  };
+  return (
+    <>
+      {ctx.adaptations.length > 0 && (
+        <ul className="cp-adapt" aria-label="Adapté à ce projet">
+          {ctx.adaptations.map((a) => (
+            <li key={a.field}>{adaptationText(a)}</li>
+          ))}
+        </ul>
+      )}
+
+      <div className="cp-prefs__block">
+        <span className="cp-prefs__l">
+          Niveau <SourceNote field={ctx.level} />
+        </span>
+        <div className="cp-chiprow" role="group" aria-label="Niveau">
+          {LEVEL_OPTIONS.map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              className="cp-pill"
+              aria-pressed={ctx.level.value === o.id}
+              disabled={!edit}
+              onClick={() =>
+                save(
+                  { ...prefs, level: prefs.level === o.id ? null : o.id },
+                  prefs.level === o.id ? 'Niveau : comme ton profil' : `Niveau : ${o.label.toLowerCase()}`
+                )
+              }
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {ctx.scope !== 'sortie' && (
+        <div className="cp-prefs__block">
+          <span className="cp-prefs__l">
+            Terrain <SourceNote field={ctx.terrain} />
+          </span>
+          <div className="cp-chiprow" role="group" aria-label="Terrain">
+            {TERRAIN_OPTIONS.map((o) => (
+              <button
+                key={o.id}
+                type="button"
+                className="cp-pill"
+                aria-pressed={ctx.terrain.value === o.id}
+                disabled={!edit}
+                onClick={() =>
+                  save(
+                    { ...prefs, terrain: prefs.terrain === o.id ? null : o.id },
+                    prefs.terrain === o.id ? 'Terrain : comme ton profil' : `Terrain : ${o.label.toLowerCase()}`
+                  )
+                }
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {nightsCount > 0 && (
+        <div className="cp-prefs__block">
+          <span className="cp-prefs__l">Nuits dehors</span>
+          <div className="cp-chiprow" role="group" aria-label="Nuits dehors">
+            {Array.from({ length: Math.min(nightsCount, 7) + 1 }, (_, n) => n).map((n) => (
+              <button
+                key={n}
+                type="button"
+                className="cp-pill"
+                aria-pressed={(prefs.outdoorNights ?? 0) === n}
+                disabled={!edit}
+                onClick={() =>
+                  (prefs.outdoorNights ?? 0) !== n &&
+                  save(
+                    { ...prefs, outdoorNights: n === 0 ? null : n },
+                    n === 0 ? 'Aucune nuit dehors imposée' : `${n} nuit${n > 1 ? 's' : ''} dehors`
+                  )
+                }
+              >
+                {n === 0 ? 'Libre' : n}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {ctx.modules.fullPack && (
+        <div className="cp-prefs__block">
+          <span className="cp-prefs__l" id="cp-maxpack-l">
+            Poids max du sac de base (kg)
+          </span>
+          <label className="cp-field">
+            <input
+              aria-labelledby="cp-maxpack-l"
+              inputMode="decimal"
+              placeholder="Sans limite"
+              value={kg}
+              disabled={!edit}
+              onChange={(e) => setKg(e.target.value)}
+              onBlur={setKgValue}
+              onKeyDown={(e) => e.key === 'Enter' && setKgValue()}
+            />
+          </label>
+          <p className="cp-sub">Sans eau ni nourriture. Le Verdict prévient si le sac dépasse.</p>
+        </div>
       )}
     </>
   );

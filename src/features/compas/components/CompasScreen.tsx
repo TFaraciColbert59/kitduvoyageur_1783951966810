@@ -16,20 +16,30 @@ import { COMPAS_STEPS, type CompasKitLine, type CompasStepId } from '../engine/c
 import { activityLabel, formatHours, formatMoney } from '../engine/format';
 import { NIGHT_LABEL } from '../engine/autofill';
 import {
-  compasAutofillAction,
+  compasAutofillOutcomeAction,
+  compasAutofillStartAction,
+  compasAutofillStopAction,
   compasUndoAutofillAction,
+  compasRefreshAutofillAction,
   type CompasAutofillSummary,
 } from '../server/autofillActions';
 import type { CompasData } from '../server/getCompasData';
 import { KitCard, NousCard, OuCard, ResaCard, VerdictCard } from './CompasCards';
 import { CompasMap } from './CompasMap';
 import { CompasAccessory } from './CompasAccessory';
-import { START_SAY_KEY } from './CompasStart';
 import { ALL_LAYERS, parseLayers, type LayerState } from '../engine/mapLayers';
+import { poiLabel, type RoutePoi } from '../engine/routePois';
+import { mergeStagePois } from '../engine/stagePois';
+import { compasStagePoisAction } from '../server/poiActions';
 import { tripHours } from './CompasRuler';
+import { buildCompasSnapshot, snapshotFingerprint, warmOfflinePage } from '../offline/snapshot';
 import { CompasSheet, type Detent } from './CompasSheet';
 import { SheetContent, sheetTitle } from './CompasSheets';
 import type { ActionResult, CompasCtl, SheetState, StepFlow } from './compasTypes';
+import { CompasPrep, type PrepState } from './CompasPrep';
+import { planApplication } from '../engine/intent';
+import { applyCurrent, runOps } from './compasApply';
+import { compasClearStartSayAction, compasInterpretAction } from '../server/compasActions';
 
 const DISPLAY_KEY = 'lkdv.compas.affichage';
 const LAYERS_KEY = 'lkdv.compas.calques';
@@ -79,14 +89,69 @@ const DECISION_FLOWS: Record<string, { step: CompasStepId; flow: StepFlow }> = {
  * Les tiroirs s'empilent au-dessus de la zone haute sans déborder sur la carte,
  * ou en grand.
  */
+/** Intensité du verre par défaut : texte lisible (WCAG AA, audit du
+ *  2026-10-06) même sur une carte sombre. Le curseur ☀ reste réglable. */
+const DEFAULT_GLASS = 0.6;
+/** Version du réglage d'affichage : 2 = verre accessible (WCAG AA). */
+const DISPLAY_VERSION = 2;
+
+/** Durée maximale d'une préparation côté serveur (300 s) et une marge. */
+const AUTOFILL_MAX_MS = 310_000;
+/** Cadence à laquelle l'écran demande l'issue de la préparation. */
+const AUTOFILL_POLL_MS = 4000;
+
 export function CompasScreen({
-  data,
+  data: rawData,
   initialStep,
 }: {
   data: CompasData;
   /** Étape ouverte à l'arrivée (lien `?etape=`) ; sinon la prochaine décision. */
   initialStep?: CompasStepId;
 }) {
+  // Points utiles autour des étapes (restos, commerces, santé, eau…) : chargés
+  // après l'affichage, pour tout itinéraire, puis mêlés aux points du tracé.
+  const [stagePois, setStagePois] = useState<RoutePoi[]>([]);
+  const [stagePoisDone, setStagePoisDone] = useState(false);
+  const poiKey = useMemo(
+    () =>
+      rawData.points
+        .filter((p) => p.kind === 'step')
+        .map((p) => `${p.lat.toFixed(3)},${p.lon.toFixed(3)}`)
+        .join('|'),
+    [rawData.points]
+  );
+  useEffect(() => {
+    if (!poiKey || (typeof navigator !== 'undefined' && navigator.onLine === false)) return;
+    let alive = true;
+    setStagePoisDone(false);
+    // Chaque appel cherche deux nouveaux lieux au plus (les connus reviennent
+    // du cache) : les points s'ajoutent au fil des appels. Un appel en échec
+    // n'arrête pas les suivants ; 8 appels au plus (8 lieux d'étape).
+    void (async () => {
+      let failures = 0;
+      for (let round = 0; round < 8 && alive; round += 1) {
+        const res = await compasStagePoisAction({ tripId: rawData.model.tripId }).catch(() => null);
+        if (!alive) return;
+        if (res?.success) {
+          if (res.pois.length) setStagePois(res.pois);
+          if (!res.partial) break;
+        } else if (++failures >= 2) break;
+      }
+      if (alive) setStagePoisDone(true);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [poiKey, rawData.model.tripId]);
+  const data = useMemo<CompasData>(() => {
+    if (!stagePois.length) return { ...rawData, stagePoisDone };
+    return {
+      ...rawData,
+      stagePoisDone,
+      ...mergeStagePois(rawData.routePois, rawData.points, stagePois, poiLabel),
+    };
+  }, [rawData, stagePois, stagePoisDone]);
+
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [running, setRunning] = useState(false);
@@ -96,7 +161,7 @@ export function CompasScreen({
   const [mapBig, setMapBig] = useState(false);
   const [display, setDisplay] = useState<{ outdoor: boolean; glass: number }>({
     outdoor: false,
-    glass: 0.19,
+    glass: DEFAULT_GLASS,
   });
   const [popover, setPopover] = useState(false);
   const [stack, setStack] = useState<Array<{ sheet: SheetState; detent: Detent }>>([]);
@@ -109,6 +174,35 @@ export function CompasScreen({
   } | null>(null);
   /** Dernière écriture annulable (Ctrl/⌘+Z), le temps que l'annonce reste. */
   const undoRef = useRef<(() => void) | null>(null);
+
+  // Hors ligne : l'aventure affichée est gardée sur l'appareil (IndexedDB) pour
+  // être relue sans réseau sur /hors-ligne. Écrite seulement si elle change.
+  const [offlineSavedAt, setOfflineSavedAt] = useState<string | null>(null);
+  const offlinePrint = useRef<string | null>(null);
+  useEffect(() => {
+    const userId = data.viewerId;
+    if (!userId || typeof indexedDB === 'undefined') return;
+    const timer = window.setTimeout(() => {
+      const snap = buildCompasSnapshot({
+        userId,
+        model: data.model,
+        countryCode: data.countryCode,
+        itinerary: data.itinerary,
+        weatherSource: data.weather?.source ?? null,
+      });
+      const print = snapshotFingerprint(snap);
+      if (print === offlinePrint.current) return;
+      void import('@/lib/offlineStorage')
+        .then((m) => m.saveCompasSnapshot(snap))
+        .then(() => {
+          offlinePrint.current = print;
+          setOfflineSavedAt(snap.savedAt);
+          void warmOfflinePage();
+        })
+        .catch(() => undefined);
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [data.viewerId, data.model, data.countryCode, data.itinerary, data.weather]);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { model } = data;
@@ -137,10 +231,13 @@ export function CompasScreen({
     try {
       const raw = window.localStorage.getItem(DISPLAY_KEY);
       if (raw) {
-        const v = JSON.parse(raw) as { outdoor?: unknown; glass?: unknown };
+        const v = JSON.parse(raw) as { outdoor?: unknown; glass?: unknown; v?: unknown };
+        // Un réglage d'avant DISPLAY_VERSION garde l'ancien verre peu lisible : on le remplace.
+        const current = v.v === DISPLAY_VERSION;
         setDisplay({
           outdoor: v.outdoor === true,
-          glass: typeof v.glass === 'number' && v.glass >= 0.05 && v.glass <= 0.7 ? v.glass : 0.19,
+          glass:
+            current && typeof v.glass === 'number' && v.glass >= 0.05 && v.glass <= 0.7 ? v.glass : DEFAULT_GLASS,
         });
       }
     } catch {
@@ -150,7 +247,7 @@ export function CompasScreen({
   const updateDisplay = (next: { outdoor: boolean; glass: number }) => {
     setDisplay(next);
     try {
-      window.localStorage.setItem(DISPLAY_KEY, JSON.stringify(next));
+      window.localStorage.setItem(DISPLAY_KEY, JSON.stringify({ ...next, v: DISPLAY_VERSION }));
     } catch {
       /* sans effet */
     }
@@ -220,12 +317,44 @@ export function CompasScreen({
   // par voyage. Il écrit directement ; l'îlot montre l'avancée puis propose
   // « Annuler » (aussi dans « Où » ensuite). Annulé, il ne se relance pas seul.
   const autofillRunning = useRef(false);
-  const autofill = useCallback(() => {
+  /** Une reprise automatique après une coupure (réseau, limite serveur), pas plus. */
+  const autofillRetried = useRef(false);
+  /** Une relance différée après la limite de fréquence, pas plus. */
+  const autofillDeferred = useRef(false);
+  // Préparation pilotée depuis la demande (« Où ») : un panneau montre chaque
+  // étape. « Arrêter » garde ce qui est fait et n'enchaîne pas la suite.
+  const [prep, setPrepState] = useState<PrepState | null>(null);
+  const prepRef = useRef<PrepState | null>(null);
+  const setPrep = useCallback((next: PrepState | null) => {
+    prepRef.current = next;
+    setPrepState(next);
+  }, []);
+  /** Étape en cours, pour dire où une erreur ou un arrêt a eu lieu. */
+  const prepAt = () => {
+    const st = prepRef.current?.stage;
+    return st === 'understand' || st === 'itinerary' || st === 'rest' ? st : prepRef.current?.at;
+  };
+  const prepFail = useCallback(
+    (message: string) => {
+      if (prepRef.current && prepRef.current.stage !== 'stopped')
+        setPrep({ stage: 'error', at: prepAt(), message });
+    },
+    [setPrep]
+  );
+  const stopped = useRef(false);
+  const autofill = useCallback((redo?: { label: string; kept: string[] }) => {
     if (autofillRunning.current) return;
     autofillRunning.current = true;
     if (toastTimer.current) clearTimeout(toastTimer.current);
-    setToast({ message: 'Je prépare ton aventure…', sub: 'Nuits, trajet, kit et budget' });
+    if (prepRef.current) setPrep({ stage: 'itinerary' });
+    else
+      setToast(
+        redo
+          ? { message: 'Je réadapte ton aventure…', sub: redo.label }
+          : { message: 'Je prépare ton aventure…', sub: 'Nuits, trajet, kit et budget' }
+      );
     setRunning(true);
+    const startedAt = Date.now();
     const position = new Promise<{ lat: number; lon: number } | null>((resolve) => {
       if (typeof navigator === 'undefined' || !navigator.geolocation) return resolve(null);
       // Le délai du navigateur ne court qu'APRÈS l'accord : une demande
@@ -246,48 +375,127 @@ export function CompasScreen({
     });
     void Promise.resolve()
       .then(async () => {
-        // Deux temps : l'itinéraire d'abord (il n'a pas besoin de la position,
-        // il part tout de suite et s'affiche dès qu'il est écrit), puis nuits,
-        // trajet depuis la position, kit et budget. Chaque appel reste court.
-        const first = await compasAutofillAction({ tripId: model.tripId, tripSlug: model.slug, from: null, phase: 'steps' });
-        if (!first.success || 'summary' in first) return first;
-        if ('pending' in first && first.stepsCreated > 0) {
-          notify('Itinéraire prêt · je prépare les nuits, le kit et le budget…');
-          startTransition(() => router.refresh());
-        }
+        // Une seule passe côté serveur (jusqu'à 300 s) : itinéraire, nuits, trajet,
+        // kit et budget. Pendant ce temps, l'écran se relit toutes les 6 s :
+        // la carte se dessine dès que l'itinéraire est écrit.
+        // La position sert au trajet d'approche et au départ d'une sortie sans lieu.
         const from = await position;
-        return compasAutofillAction({ tripId: model.tripId, tripSlug: model.slug, from, phase: 'rest' });
+        // Lancée, la préparation tourne côté serveur sans tenir de requête
+        // ouverte (un réseau mobile coupe une longue requête muette) : l'écran
+        // demande son issue toutes les 4 s et se relit pour dessiner la carte.
+        const started = await compasAutofillStartAction({ tripId: model.tripId, tripSlug: model.slug, from, phase: 'all' });
+        if (!started.success) return started;
+        while (Date.now() - startedAt < AUTOFILL_MAX_MS) {
+          if (stopped.current) return null;
+          const outcome = await compasAutofillOutcomeAction({ tripId: model.tripId, token: started.token, since: started.at }).catch(
+            () => null
+          );
+          if (outcome) return outcome;
+          startTransition(() => router.refresh());
+          await new Promise((r) => setTimeout(r, AUTOFILL_POLL_MS));
+        }
+        throw new Error('préparation sans réponse');
       })
       .then((res) => {
-        if (!res.success) return notify(res.error, 'bad');
-        if (!('summary' in res)) return;
+        if (!res) return;
+        if (!res.success) {
+          // Limite de fréquence : l'aventure n'est pas laissée vide, la
+          // préparation repart seule à la fin de la fenêtre (une fois). C'est
+          // une attente annoncée, pas une interruption.
+          if (res.retryInS && !autofillDeferred.current) {
+            autofillDeferred.current = true;
+            if (prepRef.current && prepRef.current.stage !== 'stopped')
+              setPrep({ stage: prepAt() ?? 'itinerary', message: res.error });
+            setTimeout(() => !stopped.current && autofillRef.current?.(redo), res.retryInS * 1000 + 2000);
+            return notify(res.error);
+          }
+          prepFail(res.error);
+          return notify(res.error, 'bad');
+        }
+        if (!('summary' in res)) {
+          if (prepRef.current)
+            setPrep({
+              stage: 'stopped',
+              at: 'rest',
+              message: 'Une autre préparation de cette aventure est en cours (autre onglet) : la page se mettra à jour seule.',
+            });
+          // Une autre préparation du même voyage est en cours (autre onglet,
+          // écran remonté) : on relit le voyage quand elle aura écrit.
+          for (const wait of [20_000, 45_000, 90_000]) setTimeout(() => startTransition(() => router.refresh()), wait);
+          return;
+        }
         const undo = () =>
           void runRef.current?.('Préparation annulée', () =>
             compasUndoAutofillAction({ tripId: model.tripId, tripSlug: model.slug })
           );
+        const done = redo ? redo.label : 'Aventure préparée';
+        if (prepRef.current && prepRef.current.stage !== 'stopped')
+          setPrep({
+            stage: 'done',
+            total: res.summary.total > 0 ? `Budget ${formatMoney(res.summary.total, 'EUR')}` : null,
+            digest: autofillDigest(res.summary),
+          });
         notify(
-          res.summary.total > 0
-            ? `Aventure préparée · ${formatMoney(res.summary.total, 'EUR')}`
-            : 'Aventure préparée',
+          res.summary.total > 0 ? `${done} · ${formatMoney(res.summary.total, 'EUR')}` : done,
           undefined,
           undo,
-          autofillDigest(res.summary)
+          redo?.kept.length ? `Gardé : ${redo.kept.join(' · ')}` : autofillDigest(res.summary)
         );
         startTransition(() => router.refresh());
       })
-      .catch(() => notify('Connexion perdue : préparation interrompue.', 'bad'))
+      .catch(() => {
+        prepFail(
+          autofillRetried.current
+            ? 'Connexion perdue : ce qui est fait est gardé. Reprends quand tu veux.'
+            : 'Préparation coupée : je reprends dans une minute, ce qui est fait est gardé.'
+        );
+        if (autofillRetried.current) return notify('Connexion perdue : préparation interrompue.', 'bad');
+        // Le serveur a coupé (limite de temps) ou le réseau a sauté : ce qui est
+        // écrit reste, on reprend une fois là où ça s'est arrêté.
+        autofillRetried.current = true;
+        notify('Préparation interrompue · je reprends dans une minute…');
+        setTimeout(() => !stopped.current && autofillRef.current?.(redo), 66_000);
+      })
       .finally(() => {
         autofillRunning.current = false;
         setRunning(false);
       });
-  }, [model.tripId, model.slug, notify, router]);
+  }, [model.tripId, model.slug, notify, router, setPrep, prepFail]);
+  const autofillRef = useRef(autofill);
+  autofillRef.current = autofill;
+
+
+  // Réadaptation : un changement (durée, lieu, activité, nuits, personnes…)
+  // rend une partie du préremplissage caduque. Seules ces parties sont
+  // refaites ; ce que tu as retouché est gardé. Une fois par changement.
+  const refreshedFor = useRef<string | null>(null);
+  useEffect(() => {
+    const stale = data.autofillStale ?? [];
+    if (data.autofill !== 'done' || !data.canEdit || !stale.length) return;
+    const key = `${model.tripId}:${stale.join(',')}:${JSON.stringify(data.context?.scope)}:${model.dates.days}:${model.destination}`;
+    if (refreshedFor.current === key || autofillRunning.current) return;
+    refreshedFor.current = key;
+    void compasRefreshAutofillAction({ tripId: model.tripId, tripSlug: model.slug })
+      .then((res) => {
+        if (!res.success) return notify(res.error, 'bad');
+        if (res.parts.length) autofill({ label: res.label, kept: res.kept });
+      })
+      .catch(() => notify('Connexion perdue : réadaptation interrompue.', 'bad'));
+  }, [data, model, autofill, notify]);
 
   const autofillStarted = useRef<string | null>(null);
   useEffect(() => {
     if (data.autofill !== 'none' || !data.canEdit) return;
     if (!(model.dates.start || data.plannedDays)) return;
-    if (!(model.destination || data.anchorName || data.itinerary.length || data.origin)) return;
-    if (autofillStarted.current === model.tripId) return;
+    // Sans lieu dit, seule une demande en cours de préparation part quand même :
+    // le serveur prend alors la position partagée (« près de chez toi »).
+    if (
+      !(model.destination || data.anchorName || data.itinerary.length || data.origin) &&
+      data.context?.scope !== 'sortie' &&
+      !prepRef.current
+    )
+      return;
+    if (autofillStarted.current === model.tripId || stopped.current) return;
     autofillStarted.current = model.tripId;
     autofill();
   }, [data, model, autofill]);
@@ -362,18 +570,57 @@ export function CompasScreen({
   }, []);
   const back = useCallback(() => setStack((s) => s.slice(0, -1)), []);
 
-  // Phrase tapée dans le Compas vide avant la création : comprise ici, dans
-  // le tiroir Où (rien n'est appliqué sans coche).
+  // La demande (« Où ») : gardée sur le voyage tant qu'elle n'est pas
+  // appliquée. Comprise ici, appliquée d'un geste, puis la préparation suit
+  // (panneau visible). Partie avant d'être appliquée, elle est reprise à la
+  // prochaine visite.
+  const startSaid = useRef<string | null>(null);
+  const startSay = data.canEdit ? (data.startSay ?? null) : null;
+  const ctlRef = useRef<CompasCtl | null>(null);
+  const understand = useCallback(
+    async (say: string) => {
+      stopped.current = false;
+      setPrep({ stage: 'understand' });
+      try {
+        const res = await compasInterpretAction({ tripId: model.tripId, text: say });
+        if (stopped.current) return;
+        if (!res.success) return prepFail(res.error);
+        const ctl = ctlRef.current;
+        if (!ctl) return prepFail('Écran pas encore prêt : réessaie.');
+        // Tout ce qui est compris et valide est appliqué ; le parcours du
+        // catalogue est choisi par la préparation (pas de tiroir à ouvrir).
+        const actions = res.proposals.filter((p) => p.ok && p.action.type !== 'search_route').map((p) => p.action);
+        const ops = planApplication(actions, applyCurrent(ctl)).filter((o) => o.op !== 'route');
+        if (ops.length) {
+          const done = await runOps(ctl, ops);
+          if (!done.success) return prepFail(done.error ?? 'Ta demande n’a pas pu être appliquée : réessaie.');
+        }
+        await compasClearStartSayAction({ tripId: model.tripId }).catch(() => undefined);
+        setPrep({ stage: 'itinerary' });
+        startTransition(() => router.refresh());
+      } catch {
+        prepFail('Connexion perdue : ta demande est gardée, reprends quand tu veux.');
+      }
+    },
+    [model.tripId, router, setPrep, prepFail]
+  );
   useEffect(() => {
-    let say: string | null = null;
-    try {
-      say = window.sessionStorage.getItem(START_SAY_KEY);
-      if (say) window.sessionStorage.removeItem(START_SAY_KEY);
-    } catch {
-      /* stockage indisponible */
-    }
-    if (say) open({ kind: 'step', step: 'ou', flow: 'activite', hint: { say } });
-  }, [open]);
+    if (!startSay || startSaid.current === model.tripId) return;
+    startSaid.current = model.tripId;
+    void understand(startSay);
+  }, [understand, startSay, model.tripId]);
+
+  // Progression réelle : l'itinéraire est coché dès que ses étapes sont écrites.
+  useEffect(() => {
+    if (prep?.stage === 'itinerary' && autofillRunning.current && data.itinerary.length > 0) setPrep({ stage: 'rest' });
+  }, [prep?.stage, data.itinerary.length, setPrep]);
+
+  // Demande comprise mais incomplète : la préparation ne peut pas partir, on le dit.
+  useEffect(() => {
+    if (prep?.stage !== 'itinerary' || startSay || autofillRunning.current || data.autofill !== 'none') return;
+    if (!(model.dates.start || data.plannedDays))
+      return prepFail('Il me manque la durée : dis « 3 jours » ou choisis des dates.');
+  }, [prep?.stage, startSay, data, model.dates.start, model.destination, prepFail]);
 
   const close = useCallback(() => setStack([]), []);
   const enlarge = useCallback(
@@ -417,6 +664,7 @@ export function CompasScreen({
     notify: (message, tone, sub) => notify(message, tone, undefined, sub),
     autofill,
   };
+  ctlRef.current = ctl;
 
   const decision = model.nextDecision;
   const followDecision = () => {
@@ -473,6 +721,9 @@ export function CompasScreen({
       style={style}
     >
       <div className="cp-bg" aria-hidden="true" />
+      {/* Titre de page pour les lecteurs d'écran (WCAG 2.4.6) ; l'en-tête
+          visible est porté par la capsule d'étapes et la carte « Où ». */}
+      <h1 className="sr-only">Compas · {model.title}</h1>
       <div className="cp-top">
         <div className="cp-headrow">
           <nav
@@ -650,6 +901,16 @@ export function CompasScreen({
               <span>Opaque</span>
             </span>
           </label>
+          <p className="cp-popv__note">
+            {offlineSavedAt ? (
+              <>
+                Disponible hors ligne sur cet appareil ·{' '}
+                <a href="/hors-ligne">voir la version hors ligne</a>
+              </>
+            ) : (
+              'Préparation de la version hors ligne…'
+            )}
+          </p>
         </div>
       )}
 
@@ -666,6 +927,33 @@ export function CompasScreen({
         >
           <SheetContent sheet={top.sheet} ctl={ctl} />
         </CompasSheet>
+      )}
+
+      {prep && (
+        <CompasPrep
+          prep={prep}
+          onStop={() => {
+            stopped.current = true;
+            // Le serveur aussi : la préparation en arrière-plan saute ce qui reste à écrire.
+            void compasAutofillStopAction({ tripId: model.tripId }).catch(() => undefined);
+            setPrep({ stage: 'stopped', at: prepAt(), message: 'Ce qui est fait est gardé. Reprends quand tu veux.' });
+          }}
+          onClose={() => setPrep(null)}
+          onRetry={() => {
+            const at = prepRef.current?.at;
+            stopped.current = false;
+            if (at === 'understand' && startSay) return void understand(startSay);
+            autofillRetried.current = false;
+            setPrep({ stage: 'itinerary' });
+            autofill();
+          }}
+          onEditRequest={() => {
+            setPrep(null);
+            setStep('ou');
+            setStack([]);
+            open({ kind: 'step', step: 'ou', flow: 'activite', ...(startSay ? { hint: { say: startSay, start: true } } : {}) });
+          }}
+        />
       )}
 
       {toast && (
@@ -737,7 +1025,11 @@ function autofillDigest(s: CompasAutofillSummary): string {
   }
   if (s.transport)
     parts.push(
-      s.transport.mode === 'avion' ? 'vol à prévoir' : `${Math.round(s.transport.km)} km de route`
+      s.transport.mode === 'avion'
+        ? 'vol à prévoir'
+        : s.transport.mode === 'train'
+          ? `train, environ ${String(Math.round(s.transport.minutes / 30) / 2).replace('.', ',')} h`
+          : `${Math.round(s.transport.km)} km de route`
     );
   const kit = s.kit.inventaire + s.kit.pret + s.kit.location + s.kit.achat + s.kit.a_trouver;
   if (kit) parts.push(`${kit} objet${kit > 1 ? 's' : ''} au kit`);

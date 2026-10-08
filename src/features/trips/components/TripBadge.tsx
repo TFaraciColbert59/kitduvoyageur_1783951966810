@@ -55,6 +55,8 @@ const ACTIVITY_CONFIG: Record<TripActivityType, { label: string; tone: BadgeTone
   citytrip: { label: 'City trip', tone: 'stone' },
   beach: { label: 'Plage', tone: 'stone' },
   vanlife: { label: 'Van', tone: 'stone' },
+  running: { label: 'Course à pied', tone: 'sage' },
+  trail: { label: 'Trail', tone: 'sage' },
 };
 
 const ROLE_CONFIG: Record<TripRole, { label: string; tone: BadgeTone }> = {

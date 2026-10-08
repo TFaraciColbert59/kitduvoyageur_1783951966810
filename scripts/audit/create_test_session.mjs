@@ -67,7 +67,7 @@ export function loadAuditStorageState(storagePath = auditStorageStatePath(), bas
 }
 
 export async function fillVisibleLoginForm(page, credentials, baseUrl) {
-  const form = page.locator('form:visible:has(input#email:visible):has(input#password:visible)');
+  const form = page.locator('form:visible:has(input[type="email"]:visible):has(input[type="password"]:visible)');
   if (await form.count() !== 1) {
     throw new Error('Formulaire de connexion audit attendu unique');
   }
@@ -95,8 +95,8 @@ export async function fillVisibleLoginForm(page, credentials, baseUrl) {
       throw new Error('Action de soumission hors origine refusée');
     }
   }
-  await form.locator('input#email:visible').fill(credentials.email);
-  await form.locator('input#password:visible').fill(credentials.password);
+  await form.locator('input[type="email"]:visible').fill(credentials.email);
+  await form.locator('input[type="password"]:visible').fill(credentials.password);
   return form;
 }
 

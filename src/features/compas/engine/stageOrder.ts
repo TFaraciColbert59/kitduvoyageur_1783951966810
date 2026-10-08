@@ -109,3 +109,25 @@ export function untangleStages<T extends OrderableStage>(stages: T[]): { stages:
   });
   return { stages: out, reordered: true, savedKm: Math.round(saved) };
 }
+
+const plain = (v: string) =>
+  v.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+/**
+ * Un même lieu porte un seul nom d'un bout à l'autre du voyage : « Seville »
+ * puis « Séville », « Malaga » puis « Málaga » (Andalousie, 7 octobre) se
+ * lisaient comme deux étapes. Même nom aux accents près à moins de 30 km, ou
+ * même point (moins de 300 m) : le premier nom reste, avec sa position.
+ */
+export function unifyStageNames<T extends OrderableStage>(stages: T[]): T[] {
+  const seen: T[] = [];
+  return stages.map((st) => {
+    // Un homonyme lointain (deux « Saint-Martin » à 200 km) reste un autre lieu.
+    const twin = seen.find((s) => (plain(s.name) === plain(st.name) && distanceKm(s, st) < 30) || distanceKm(s, st) < 0.3);
+    if (!twin) {
+      seen.push(st);
+      return st;
+    }
+    return twin.name === st.name && twin.lat === st.lat && twin.lon === st.lon ? st : { ...st, name: twin.name, lat: twin.lat, lon: twin.lon };
+  });
+}

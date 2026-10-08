@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { parseIntentRules, planApplication, groundingIssue } from '../engine/intent';
 import { extractIntentJson } from '@/lib/ai/features/compasIntent';
-import { approachMode, keepRuleForActivity, movesFromSteps, nightsPrefFor, sanitizeAdvice, sanitizeStages } from '../engine/autofill';
-import { destinationRadiusKm, maxLegKm, parseNominatim, parsePhoton, pickDestination, pickPlace } from '../engine/places';
+import { approachMode, maxDriveMinutes, keepRuleForActivity, movesFromSteps, nightsPrefFor, sanitizeAdvice, sanitizeStages, stagePlaceName } from '../engine/autofill';
+import { destinationRadiusKm, homonymsFarApart, isAdminName, maxLegKm, nameCore, parseNominatim, parsePhoton, pickDestination, pickPlace } from '../engine/places';
 
 const TODAY = '2026-10-02';
 const current = {
@@ -90,6 +90,19 @@ describe('venir jusqu’au départ', () => {
     expect(approachMode({ straightKm: 0.2 })).toBe('sur_place');
     expect(approachMode({ straightKm: 650 })).toBe('route');
     expect(approachMode({ straightKm: 7000 })).toBe('avion');
+  });
+
+  it('un week-end ne passe pas 9 h au volant : Annecy → Biarritz (650 km) en avion pour 2 jours, en voiture pour 8', () => {
+    expect(approachMode({ straightKm: 650, days: 2 })).toBe('avion');
+    expect(approachMode({ straightKm: 650, days: 3 })).toBe('avion');
+    expect(approachMode({ straightKm: 650, days: 8 })).toBe('route');
+    expect(approachMode({ straightKm: 300, days: 2 })).toBe('route');
+  });
+
+  it('route mesurée trop longue pour la durée (3 jours en Corse, 14 h avec le ferry) : l’avion', () => {
+    expect(840 > maxDriveMinutes(3)).toBe(true);
+    expect(240 > maxDriveMinutes(2)).toBe(false);
+    expect(maxDriveMinutes(10)).toBe(Number.POSITIVE_INFINITY);
   });
 });
 
@@ -280,6 +293,13 @@ describe('Destination nommée : la ville que tout le monde entend, pas un homony
     expect(pickDestination(found, 'Chamonix')).toMatchObject({ name: 'Chamonix-Mont-Blanc', countryCode: 'FR' });
   });
 
+  it('« Vietnam » → le pays « Viêt Nam », jamais le Vietnam Veterans Memorial de Washington', () => {
+    const memorial = place('Vietnam Veterans Memorial', 'memorial', 'US', 'historic');
+    const country = place('Viêt Nam', 'country', 'VN');
+    expect(pickDestination(parsePhoton({ features: [memorial, country] }), 'Vietnam')).toMatchObject({ countryCode: 'VN' });
+    expect(pickDestination(parsePhoton({ features: [memorial] }), 'Vietnam')).toBeNull();
+  });
+
   it('jamais un lieu-dit ni un bâtiment ; rien plutôt qu’un faux', () => {
     const found = parsePhoton({ features: [place('Chamonix', 'locality', 'ZA'), place('Chamonix', 'house', 'JP')] });
     expect(pickDestination(found, 'Chamonix')).toBeNull();
@@ -325,8 +345,297 @@ describe('Destination nommée : la ville que tout le monde entend, pas un homony
     expect(maxLegKm('marche', false, 60)).toBe(40);
   });
 
+  it('voyage dans tout un pays : la première étape peut être n’importe où dans le pays (San Francisco, pas Monterey Kentucky)', () => {
+    const us = [
+      { name: 'Monterey', lat: 38.42, lon: -84.87, countryCode: 'US', country: 'US', kind: 'town', settlement: true, settlementRank: 4, extent: null },
+      { name: 'Monterey', lat: 36.6, lon: -121.89, countryCode: 'US', country: 'US', kind: 'city', settlement: true, settlementRank: 5, extent: null },
+    ];
+    const centre = { lat: 39.78, lon: -100.45 };
+    expect(maxLegKm('voiture', true, 1500, true)).toBe(Number.POSITIVE_INFINITY);
+    expect(pickPlace(us, { near: centre, maxKm: maxLegKm('voiture', true, 1500, true), query: 'Monterey' })?.lon).toBeCloseTo(-121.89);
+    // Les étapes suivantes restent mesurées à la veille.
+    expect(maxLegKm('voiture', false, 1500, true)).toBe(700);
+  });
+
   it('nom exact gardé dans l’ordre de la carte (Banff Canada avant Banff Écosse)', () => {
     const found = parsePhoton({ features: [place('Banff', 'city', 'CA'), place('Banff', 'city', 'GB')] });
     expect(pickDestination(found, 'banff')?.countryCode).toBe('CA');
+  });
+});
+
+describe('Étapes : noms transcrits, écritures locales, tronçons (essais aléatoires, Népal)', () => {
+  const near = { lat: 28.38, lon: 84 };
+  it('« Kathmandu » retrouve « Katmandou »', () => {
+    const list = parsePhoton({
+      features: [
+        { properties: { name: 'Katmandou', countrycode: 'NP', osm_key: 'place', osm_value: 'city' }, geometry: { coordinates: [85.32, 27.71] } },
+      ],
+    });
+    expect(pickPlace(list, { countryCode: 'NP', near, maxKm: 400, query: 'Kathmandu', strict: true })?.name).toBe('Katmandou');
+  });
+  it('une localité connue seulement dans son écriture est gardée hors du mode strict', () => {
+    const list = parsePhoton({
+      features: [
+        { properties: { name: 'स्याफ्रु बेसी', countrycode: 'NP', osm_key: 'place', osm_value: 'hamlet' }, geometry: { coordinates: [85.34, 28.16] } },
+      ],
+    });
+    expect(pickPlace(list, { countryCode: 'NP', near, maxKm: 400, query: 'Syabru Besi', strict: true })).toBeNull();
+    expect(pickPlace(list, { countryCode: 'NP', near, maxKm: 400, query: 'Syabru Besi' })?.lat).toBe(28.16);
+    // Jamais un nom latin sans rapport.
+    const other = parsePhoton({
+      features: [{ properties: { name: 'Pokhara', countrycode: 'NP', osm_key: 'place', osm_value: 'city' }, geometry: { coordinates: [83.98, 28.21] } }],
+    });
+    expect(pickPlace(other, { countryCode: 'NP', near, maxKm: 400, query: 'Syabru Besi' })).toBeNull();
+  });
+  it.each([
+    ['Syabru Besi to Gatlang', 'Gatlang'],
+    ['Chamonix → Argentière', 'Argentière'],
+    ['de Zermatt à Täsch', 'Täsch'],
+    ['Saint-Jean-Pied-de-Port', 'Saint-Jean-Pied-de-Port'],
+    ['Torre a Mare', 'Torre a Mare'],
+  ])('tronçon « %s » → étape du soir « %s »', (raw, want) => {
+    expect(stagePlaceName(raw)).toBe(want);
+  });
+});
+
+describe('Géocodage inverse de secours (Nominatim)', () => {
+  it('la commune du point sert de nom de départ', () => {
+    const [p] = parseNominatim([
+      {
+        lat: '45.8992',
+        lon: '6.1294',
+        name: 'Chantier Hotel de Ville',
+        addresstype: 'construction',
+        address: { city: 'Annecy', country: 'France', country_code: 'fr' },
+      },
+    ]);
+    expect(p).toMatchObject({ locality: 'Annecy', countryCode: 'FR' });
+  });
+});
+
+describe('Phrases tirées au hasard (20 parcours) : lecture sans IA', () => {
+  const read = (t: string) => {
+    const a = parseIntentRules(t, TODAY);
+    const one = <K extends string>(k: K) => a.find((x) => x.type === k) as Record<string, unknown> | undefined;
+    return {
+      dest: one('set_destination')?.place,
+      act: one('set_activity')?.activity,
+      route: one('search_route')?.query,
+      wishes: a.filter((x) => x.type === 'wish').map((x) => (x as { label: string }).label),
+    };
+  };
+
+  it('« sur la », « autour du lac de », « traversée des », « in the » ouvrent une destination', () => {
+    expect(read('canoë 3 jours sur la Dordogne')).toMatchObject({ dest: 'Dordogne', act: 'water' });
+    expect(read('week-end à vélo autour du lac d’Annecy').dest).toBe('Lac d’Annecy');
+    expect(read('traversée des Pyrénées 15 jours')).toMatchObject({ dest: 'Pyrénées', act: 'trekking', wishes: ['traversée des Pyrénées'] });
+    expect(read('week-end à vélo, tour du lac d’Annecy').wishes).toEqual(['tour du lac d’Annecy']);
+    expect(read('Hiking 5 days in the Swiss Alps')).toMatchObject({ dest: 'Swiss Alps', act: 'hiking' });
+  });
+  it('un nom commun de lieu suivi d’un nom propre compte (« calanques de Marseille »)', () => {
+    expect(read('randonnée 3h dans les calanques de Marseille')).toMatchObject({
+      dest: 'Calanques de Marseille',
+      route: 'Calanques de Marseille',
+    });
+    // Un nom commun seul n'est pas un lieu.
+    expect(read('rando dans les bois demain').dest).toBeUndefined();
+  });
+  it('« pays dans l’endroit » : le pays est la destination, l’endroit une envie et une recherche', () => {
+    expect(read('7 jours de rando au Maroc dans l’Atlas')).toMatchObject({ dest: 'Maroc', route: 'Atlas', wishes: ['Atlas'] });
+    expect(read('road trip 10 jours aux États-Unis dans l’Utah')).toMatchObject({ dest: 'États-Unis', act: 'roadtrip' });
+    expect(read('une semaine en Grèce dans les Cyclades')).toMatchObject({ dest: 'Grèce', wishes: ['Cyclades'] });
+  });
+  it('un jour de la semaine ne colle pas au lieu', () => {
+    expect(read('trail de 30 km dans le Jura dimanche')).toMatchObject({ dest: 'Jura', route: 'Jura', act: 'trail' });
+  });
+  it('un code de sentier n’est pas une destination ; GR, chemin de l’Inca, bivouac seul', () => {
+    expect(read('6 jours sur le GR20 en Corse')).toMatchObject({ dest: 'Corse', act: 'trekking' });
+    expect(read('5 jours au Pérou sur le chemin de l’Inca')).toMatchObject({ dest: 'Pérou', act: 'trekking', wishes: ['chemin de l’Inca'] });
+    expect(read('6 jours sur le GR20 en Corse').wishes).toEqual(['GR20']);
+    expect(read('7 jours sur le Tour du Mont-Blanc').wishes).toEqual(['Tour du Mont-Blanc']);
+    // « sur la route » sans nom propre : rien.
+    expect(read('3 jours sur la route en Bretagne').wishes).toEqual([]);
+    expect(read('bivouac 1 nuit dans le Vercors')).toMatchObject({ dest: 'Vercors', act: 'bivouac' });
+    // Une rando avec bivouac reste une rando.
+    expect(read('rando 2 jours avec bivouac dans le Vercors').act).toBe('hiking');
+  });
+});
+
+describe('Nom d’étape : jamais un nom qui n’existe pas', () => {
+  it('garde le nom proposé s’il est sur la carte, sinon prend celui de la carte', async () => {
+    const { stageTitleFor } = await import('../engine/places');
+    expect(stageTitleFor('Chamonix', 'Chamonix-Mont-Blanc')).toBe('Chamonix');
+    expect(stageTitleFor('Bielsa', 'Bielsa')).toBe('Bielsa');
+    expect(stageTitleFor("Villar-d'Arnave", "Villar-d'Arène")).toBe("Villar-d'Arène");
+    expect(stageTitleFor('Kathmandu', 'Katmandou')).toBe('Katmandou');
+    expect(stageTitleFor('Imlil', null)).toBe('Imlil');
+    expect(stageTitleFor('Springdale repos', 'Springdale')).toBe('Springdale');
+    expect(stageTitleFor('Retour Salt Lake City', 'Salt Lake City')).toBe('Salt Lake City');
+  });
+});
+
+describe('Homonymes : la ville avant la maison isolée', () => {
+  const f = (name: string, value: string, type: string, lon: number, lat: number) => ({
+    type: 'Feature',
+    geometry: { coordinates: [lon, lat] },
+    properties: { name, osm_key: 'place', osm_value: value, type, countrycode: 'PE' },
+  });
+  it('« Cusco » → Cuzco la ville (-13,5), jamais la maison isolée du nord du Pérou', () => {
+    // Réponse Photon réelle (2026-10-06), dans son ordre.
+    const found = parsePhoton({
+      features: [
+        f('Cusco', 'state', 'state', -72.5, -12.5),
+        f('Cusco', 'region', 'county', -71.99, -13.55),
+        f('Cusco', 'isolated_dwelling', 'locality', -79.78, -4.58),
+        f('Cusco Puquio', 'hamlet', 'district', -71.76, -15.18),
+        f('Cusco Riogo', 'hamlet', 'district', -71.76, -15.18),
+        f('Cuzco', 'city', 'district', -71.98, -13.52),
+      ],
+    });
+    expect(pickPlace(found, { query: 'Cusco', maxKm: 1500, near: { lat: -9.2, lon: -75 } })).toMatchObject({ lat: -13.52 });
+    const pisac = parsePhoton({
+      features: [f('Pisaca', 'hamlet', 'district', -71.5, -14.1), f('Pisac', 'town', 'district', -71.85, -13.42)],
+    });
+    expect(pickPlace(pisac, { query: 'Pisac', maxKm: 1500 })).toMatchObject({ name: 'Pisac' });
+    // Sans la ville (« Cusco, Pérou ») : la province du même nom, jamais la maison isolée ni un hameau « Cusco Riogo ».
+    const noCity = parsePhoton({
+      features: [
+        f('Cusco', 'region', 'county', -71.99, -13.55),
+        f('Cusco', 'isolated_dwelling', 'locality', -79.78, -4.58),
+        f('Cusco Riogo', 'hamlet', 'district', -71.76, -15.18),
+      ],
+    });
+    expect(pickPlace(noCity, { query: 'Cusco', maxKm: 1500 })).toMatchObject({ lat: -13.55 });
+    const hotel = {
+      type: 'Feature',
+      geometry: { coordinates: [-72.04, -13.33] },
+      properties: { name: 'Madre Tierra Resort Sacred Valley', osm_key: 'tourism', osm_value: 'hotel', type: 'house', countrycode: 'PE' },
+    };
+    expect(pickPlace(parsePhoton({ features: [hotel] }), { query: 'Sacred Valley', maxKm: 1500 })).toBeNull();
+  });
+  it('« Chamonix » : le bourg Chamonix-Mont-Blanc avant un hameau « Chamonix »', () => {
+    const fr = (name: string, value: string, lat: number) => ({
+      type: 'Feature',
+      geometry: { coordinates: [6.8, lat] },
+      properties: { name, osm_key: 'place', osm_value: value, type: 'district', countrycode: 'FR' },
+    });
+    const found = parsePhoton({ features: [fr('Chamonix', 'hamlet', 46.03), fr('Chamonix-Mont-Blanc', 'town', 45.92)] });
+    expect(pickPlace(found, { query: 'Chamonix', maxKm: 500 })).toMatchObject({ name: 'Chamonix-Mont-Blanc' });
+  });
+});
+
+describe('On dort dans une commune : monument, gare ou province remplacés', () => {
+  const photon = (name: string, key: string, value: string, type: string, extra: Record<string, unknown> = {}) =>
+    parsePhoton({
+      features: [{ type: 'Feature', geometry: { coordinates: [105.85, 21.03] }, properties: { name, osm_key: key, osm_value: value, type, countrycode: 'VN', ...extra } }],
+    })[0];
+  it('monument ou musée → sa commune ; province → la ville du même nom', async () => {
+    const { sleepPlaceFix } = await import('../engine/places');
+    expect(sleepPlaceFix(photon('Prison Hoa Lo (Maison centrale)', 'tourism', 'museum', 'house', { city: 'Hanoï' }))).toEqual({ locality: 'Hanoï' });
+    expect(sleepPlaceFix(photon('Province de Ninh Bình', 'place', 'state', 'state'))).toEqual({ search: 'Ninh Bình' });
+    // Passage du 7 octobre au soir : étape « West Clare Municipal District » (Irlande).
+    expect(sleepPlaceFix(photon('West Clare Municipal District', 'boundary', 'administrative', 'county'))).toEqual({ search: 'West Clare' });
+    expect(sleepPlaceFix(photon('Kerry County', 'boundary', 'administrative', 'county'))).toEqual({ search: 'Kerry' });
+    // Un site dont la « commune » est une circonscription : cherché sous le nom nu.
+    expect(sleepPlaceFix(photon('Cliffs of Moher', 'tourism', 'attraction', 'house', { city: 'West Clare Municipal District' }))).toEqual({ search: 'West Clare' });
+    // Passage du 8 octobre : la carte la classait comme lieu habité, elle restait l'étape.
+    expect(sleepPlaceFix(photon('West Clare Municipal District', 'place', 'municipality', 'city'))).toEqual({ search: 'West Clare' });
+    // Un parc national n'est pas une circonscription.
+    expect(sleepPlaceFix(photon('Peak District', 'boundary', 'national_park', 'other'))).toBeNull();
+    // Une région dont la « commune » est une circonscription (Irlande, 8 oct.).
+    expect(sleepPlaceFix(photon('Burren', 'place', 'region', 'region', { city: 'West Clare Municipal District' }))).toEqual({ search: 'West Clare' });
+  });
+  it('refuge, camping, lac, sommet et village restent l’étape', async () => {
+    const { sleepPlaceFix } = await import('../engine/places');
+    expect(sleepPlaceFix(photon('Refuge des Bans', 'tourism', 'alpine_hut', 'house', { city: 'Vallouise-Pelvoux' }))).toBeNull();
+    expect(sleepPlaceFix(photon('Lago di Misurina', 'water', 'lake', 'other', { city: 'Auronzo' }))).toBeNull();
+    expect(sleepPlaceFix(photon('Gèdre', 'place', 'village', 'district'))).toBeNull();
+  });
+  it('autres noms (Nominatim) : « Machu Picchu Pueblo » = Aguas Calientes', async () => {
+    const { aliasMatches } = await import('../engine/places');
+    const [station] = parseNominatim([
+      {
+        name: 'Machu Picchu Pueblo', lat: '-13.16', lon: '-72.52', category: 'railway', type: 'station',
+        namedetails: { name: 'Machu Picchu Pueblo', alt_name: 'Aguas Calientes' },
+        address: { country_code: 'pe', town: 'Machupicchu' },
+      },
+    ]);
+    expect(aliasMatches(station, 'Aguas Calientes')).toBe(true);
+    expect(aliasMatches(station, 'Machu Picchu Pueblo')).toBe(true);
+    expect(aliasMatches(station, 'Cusco')).toBe(false);
+  });
+});
+
+describe('Phrases du second tirage (50) : lecture sans IA', () => {
+  const read = (t: string) => {
+    const a = parseIntentRules(t, '2026-10-07');
+    return {
+      dest: (a.find((x) => x.type === 'set_destination') as { place: string } | undefined)?.place,
+      act: (a.find((x) => x.type === 'set_activity') as { activity: string } | undefined)?.activity,
+      wishes: a.filter((x) => x.type === 'wish').map((x) => (x as { label: string }).label),
+    };
+  };
+  it('le mot qui suit le lieu ne s’y colle pas', () => {
+    expect(read('une semaine de kayak en Grèce budget 1200 €').dest).toBe('Grèce');
+    expect(read('10 jours en Thaïlande plage et temples').dest).toBe('Thaïlande');
+    expect(read('trek 7 jours au Maroc dans le Haut Atlas sans voiture')).toMatchObject({ dest: 'Maroc', wishes: ['Haut Atlas'] });
+    expect(read('une semaine au Maroc dans le désert')).toMatchObject({ dest: 'Maroc', wishes: ['désert'] });
+  });
+  it('« trek du », « autour d’ », et sans préposition après le genre de voyage', () => {
+    expect(read('trek du Kilimandjaro 7 jours')).toMatchObject({ dest: 'Kilimandjaro', act: 'trekking' });
+    expect(read('sortie vélo 60 km dimanche autour d’Annecy').dest).toBe('Annecy');
+    expect(read('road trip Norvège fjords 2 semaines')).toMatchObject({ dest: 'Norvège', act: 'roadtrip' });
+    expect(read('city trip Tokyo et Kyoto 8 jours').dest).toBe('Tokyo');
+    // Pas de nom propre après « rando avec » : pas de destination inventée.
+    expect(read('rando avec Paul demain').dest).toBeUndefined();
+  });
+  it('sentier nommé à l’anglaise : West Highland Way = trek', () => {
+    expect(read('6 jours en Écosse sur la West Highland Way')).toMatchObject({ dest: 'Écosse', act: 'trekking', wishes: ['West Highland Way'] });
+  });
+});
+
+describe('homonymsFarApart — départager les homonymes', () => {
+  const base = { countryCode: 'FR', country: 'France', extent: null } as const;
+  it('« Mont Rose » : la colline de Marseille et le massif des Alpes', () => {
+    const list = [
+      { ...base, name: 'Mont Rose', lat: 43.23, lon: 5.35, kind: 'other', landmark: true },
+      { ...base, name: 'Mont Rose', lat: -66.66, lon: 140.0, kind: 'other', landmark: true },
+      { ...base, name: 'Massif du Mont Rose', lat: 46.04, lon: 7.86, kind: 'region' },
+    ];
+    expect(homonymsFarApart(list, 'Mont Rose')).toBe(true);
+  });
+  it('un seul lieu de ce nom (ou des homonymes voisins) : pas d’ambiguïté', () => {
+    const list = [
+      { ...base, name: 'Chamonix', lat: 45.92, lon: 6.87, kind: 'town', settlement: true },
+      { ...base, name: 'Chamonix', lat: 45.93, lon: 6.88, kind: 'locality' },
+    ];
+    expect(homonymsFarApart(list, 'Chamonix')).toBe(false);
+  });
+});
+
+describe('pickDestination — article et nature du lieu', () => {
+  const base = { countryCode: 'FR', country: 'France', extent: null } as const;
+  it('« Pyrénées catalanes » = le parc naturel / « Les Pyrénées catalanes », jamais une rue', () => {
+    const list = [
+      { ...base, name: 'Parc naturel régional des Pyrénées catalanes', lat: 42.53, lon: 2.1, kind: 'other', landmark: true },
+      { ...base, name: 'Rue des Pyrénées Catalanes', lat: 42.49, lon: 2.03, kind: 'street' },
+    ];
+    expect(pickDestination(list, 'Pyrénées catalanes')?.lat).toBe(42.53);
+    expect(pickDestination([list[1]], 'Pyrénées catalanes')).toBeNull();
+  });
+  it('nameCore enlève article et nature', () => {
+    expect(nameCore('Les Pyrénées catalanes')).toBe('pyrenees catalanes');
+    expect(nameCore('Massif du Mont Rose')).toBe('mont rose');
+    expect(nameCore('Lac d’Annecy')).toBe('annecy');
+  });
+});
+
+describe('isAdminName — une circonscription n’est pas un lieu où dormir', () => {
+  it('reconnaît les suffixes et préfixes administratifs, jamais un village', () => {
+    expect(isAdminName('West Clare Municipal District')).toBe(true);
+    expect(isAdminName('Kerry County')).toBe(true);
+    expect(isAdminName('Province de Ninh Bình')).toBe(true);
+    expect(isAdminName('Doolin')).toBe(false);
+    expect(isAdminName('Ennistymon')).toBe(false);
   });
 });

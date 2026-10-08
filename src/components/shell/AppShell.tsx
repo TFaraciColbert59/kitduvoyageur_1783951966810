@@ -115,13 +115,8 @@ export default function AppShell({
         scrollPaddingBottom: 'max(var(--bottom-nav-height), var(--cookie-banner-h, 0px))',
       }}
     >
-      {/* Skip Link pour navigation clavier et lecteurs d'écran (WCAG AA 2.4.1) */}
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-[var(--glass-label)] focus:text-[var(--g3-text)] focus:text-sm focus:font-semibold focus:rounded-xl focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-white/60"
-      >
-        Aller au contenu principal
-      </a>
+      {/* Le lien « Aller au contenu principal » vit dans le layout racine :
+          un second ici faisait deux arrêts de tabulation identiques. */}
 
       {videoBackground && <CompteBackground />}
 

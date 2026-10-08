@@ -11,7 +11,7 @@
    réponses API privées (/api/hub, /api/materiel, /api/voyages…) en cache.
    ============================================================ */
 
-const CACHE_VERSION = 'lkdv-v4';
+const CACHE_VERSION = 'lkdv-v5';
 const STATIC_CACHE = `lkdv-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `lkdv-runtime-${CACHE_VERSION}`;
 const IMAGE_CACHE = `lkdv-images-${CACHE_VERSION}`;
@@ -225,6 +225,12 @@ self.addEventListener('fetch', (event) => {
           if (publicNav) {
             const cached = await caches.match(request);
             if (cached) return cached;
+          }
+          // Compas sans réseau : la page hors ligne relit l'aventure gardée sur
+          // l'appareil (IndexedDB) ; aucune page privée n'est en cache.
+          if (url.pathname.startsWith('/compas')) {
+            const horsLigne = await caches.match('/hors-ligne');
+            if (horsLigne) return horsLigne;
           }
           const offlinePage = await caches.match('/offline.html');
           return offlinePage || caches.match('/hors-ligne');

@@ -1,0 +1,276 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "osm_type": "W",
+    "osm_id": 86608377,
+    "osm_key": "natural",
+    "osm_value": "water",
+    "type": "other",
+    "name": "Tarn",
+    "district": "Passe",
+    "city": "Saint-Sulpice-la-Pointe",
+    "county": "Tarn",
+    "state": "Occitanie",
+    "country": "France",
+    "postcode": "81370",
+    "countrycode": "FR",
+    "extent": [
+     1.6615821,
+     43.7856678,
+     1.6826858,
+     43.7825312
+    ]
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     1.6702878,
+     43.784087
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "osm_type": "W",
+    "osm_id": 93233078,
+    "osm_key": "natural",
+    "osm_value": "water",
+    "type": "other",
+    "name": "Tarn",
+    "city": "Rabastens",
+    "county": "Tarn",
+    "state": "Occitanie",
+    "country": "France",
+    "postcode": "81800",
+    "countrycode": "FR",
+    "extent": [
+     1.682611,
+     43.8214847,
+     1.7282884,
+     43.7849127
+    ]
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     1.6997968,
+     43.8033761
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "osm_type": "W",
+    "osm_id": 1422110195,
+    "osm_key": "natural",
+    "osm_value": "water",
+    "type": "other",
+    "name": "Tarn",
+    "district": "Simkot-01",
+    "city": "Simkot",
+    "county": "हुम्ला",
+    "state": "Karnali",
+    "country": "Népal",
+    "countrycode": "NP",
+    "extent": [
+     81.9142956,
+     30.2376649,
+     81.9147147,
+     30.2366002
+    ]
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     81.9145096,
+     30.237247
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "osm_type": "W",
+    "osm_id": 49989558,
+    "osm_key": "natural",
+    "osm_value": "water",
+    "type": "other",
+    "name": "Tarn",
+    "district": "Passe",
+    "city": "Saint-Sulpice-la-Pointe",
+    "county": "Tarn",
+    "state": "Occitanie",
+    "country": "France",
+    "postcode": "81370",
+    "countrycode": "FR",
+    "extent": [
+     1.651044,
+     43.783701,
+     1.6624058,
+     43.7753528
+    ]
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     1.6564307,
+     43.7793245
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "osm_type": "R",
+    "osm_id": 13048901,
+    "osm_key": "waterway",
+    "osm_value": "river",
+    "type": "other",
+    "name": "Tarna",
+    "state": "Grande plaine et nord",
+    "country": "Hongrie",
+    "countrycode": "HU",
+    "extent": [
+     19.9364793,
+     48.1507398,
+     20.2456124,
+     47.5113507
+    ]
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     20.1924202,
+     47.8886094
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "osm_type": "N",
+    "osm_id": 29764877,
+    "osm_key": "natural",
+    "osm_value": "peak",
+    "type": "other",
+    "name": "Tarn Crag",
+    "county": "Westmorland and Furness",
+    "state": "Angleterre",
+    "country": "Royaume-Uni",
+    "countrycode": "GB"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -2.7915439,
+     54.4635896
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "osm_type": "N",
+    "osm_id": 1347929065,
+    "osm_key": "natural",
+    "osm_value": "peak",
+    "type": "other",
+    "name": "Tarnica",
+    "city": "Wołosate",
+    "county": "powiat bieszczadzki",
+    "state": "Basses-Carpates",
+    "country": "Pologne",
+    "postcode": "38-714",
+    "countrycode": "PL"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     22.726323,
+     49.0747705
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "osm_type": "N",
+    "osm_id": 13994768879,
+    "osm_key": "natural",
+    "osm_value": "peak",
+    "type": "other",
+    "name": "Tarnawska Góra",
+    "city": "Tarnawa Dolna",
+    "county": "powiat suski",
+    "state": "Petite-Pologne",
+    "country": "Pologne",
+    "postcode": "34-106",
+    "countrycode": "PL"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     19.5528392,
+     49.7854628
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "osm_type": "R",
+    "osm_id": 6275128,
+    "osm_key": "waterway",
+    "osm_value": "river",
+    "type": "other",
+    "name": "Târnava Mare",
+    "country": "Roumanie",
+    "countrycode": "RO",
+    "extent": [
+     23.8913292,
+     46.5940033,
+     25.4122536,
+     46.0780504
+    ]
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     24.7610481,
+     46.2420798
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "osm_type": "R",
+    "osm_id": 6274658,
+    "osm_key": "waterway",
+    "osm_value": "river",
+    "type": "other",
+    "name": "Târnava Mică",
+    "country": "Roumanie",
+    "countrycode": "RO",
+    "extent": [
+     23.8913292,
+     46.5788087,
+     25.2180229,
+     46.1705661
+    ]
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     24.5281954,
+     46.3881505
+    ]
+   }
+  }
+ ]
+}

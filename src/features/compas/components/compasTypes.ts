@@ -8,14 +8,14 @@ export type AcquireMode = 'emprunter' | 'louer' | 'acheter';
 /** Parcours internes du tiroir de chaque étape (capsule, comme les étapes). */
 export const STEP_FLOWS = {
   // Ordre de la maquette finale : Activité → Parcours → Quand → Préférences
-  // → Sac. « Sur le tracé » (points OSM réels) suit, en dernier.
+  // → Sac. « Sur place » (points OSM réels : tracé et autour des étapes) suit, en dernier.
   ou: [
     { id: 'activite', label: 'Activité', icon: 'flag' },
     { id: 'parcours', label: 'Parcours', icon: 'route' },
     { id: 'quand', label: 'Quand', icon: 'calendar-days' },
     { id: 'preferences', label: 'Préférences', icon: 'heart' },
     { id: 'sac', label: 'Sac', icon: 'backpack' },
-    { id: 'trace', label: 'Sur le tracé', icon: 'map-pin' },
+    { id: 'trace', label: 'Sur place', icon: 'map-pin' },
   ],
   nous: [
     { id: 'equipe', label: 'Équipe', icon: 'users' },
@@ -73,6 +73,8 @@ export interface FlowHint {
   day?: number;
   /** Phrase tapée dans « Dis-le » sur la carte : le tiroir la comprend aussitôt. */
   say?: string;
+  /** La phrase est celle du Compas vide, gardée sur le voyage : effacée une fois appliquée. */
+  start?: boolean;
   /** Catégorie touchée sur la carte Résa : Offres s'ouvre filtré dessus. */
   resa?: ResaCat;
 }

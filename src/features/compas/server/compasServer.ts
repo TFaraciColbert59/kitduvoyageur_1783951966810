@@ -1,5 +1,9 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
+import type { ProfileInput } from '../engine/projectContext';
+import { projectBasis, type ProjectBasis } from '../engine/dependencies';
+import { readCompasMeta } from '../engine/meta';
+import { partySizeOf, tripContextFromRow } from '../engine/tripContext';
 
 /**
  * Briques serveur partagées par les actions du Compas (droits, métadonnées,
@@ -50,6 +54,22 @@ export async function requireEditor(tripId: string) {
   if (trip.user_id !== user.id && canEdit !== true)
     return { error: 'Seuls les organisateurs et éditeurs peuvent modifier le kit.' } as const;
   return { supabase, userId: user.id, trip } as const;
+}
+
+/**
+ * Taille du groupe, comme l'écran la compte : `party_size` s'il est posé,
+ * sinon le propriétaire + les personnes ajoutées au voyage (distinctes).
+ * Bornée à 1–20 (les recherches de réservation n'acceptent pas plus).
+ */
+export async function tripPartySize(
+  supabase: Supa,
+  trip: Pick<CompasTripRow, 'id' | 'user_id' | 'party_size'>
+): Promise<number> {
+  if (trip.party_size != null && trip.party_size >= 1) return partySizeOf(trip.party_size);
+  const { data } = await supabase.from('trip_collaborators').select('user_id').eq('trip_id', trip.id);
+  const ids = new Set<string>([trip.user_id]);
+  for (const row of (data ?? []) as Array<{ user_id: string | null }>) if (row.user_id) ids.add(row.user_id);
+  return partySizeOf(null, ids.size);
 }
 
 /** Fusionne une clé dans trips.metadata sans écraser le reste. */
@@ -167,3 +187,62 @@ export async function resplitSteps(supabase: Supa, tripId: string, routeId: numb
   return { kept };
 }
 
+
+/**
+ * Préférences habituelles (`user_orientation`, RLS : la personne seule).
+ * Lues à chaque fois, jamais recopiées dans le projet : ce sont des
+ * hypothèses de départ que le contexte projet peut dépasser.
+ */
+export async function readProfile(
+  supabase: { from: Supa['from'] } | Supa,
+  userId: string | null
+): Promise<ProfileInput | null> {
+  if (!userId) return null;
+  try {
+    const { data } = await (supabase as Supa)
+      .from('user_orientation')
+      .select('terrain, autonomy, priority, experience')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (!data) return null;
+    const row = data as Record<string, string | null>;
+    return {
+      terrain: (row.terrain as ProfileInput['terrain']) ?? null,
+      autonomy: (row.autonomy as ProfileInput['autonomy']) ?? null,
+      priority: (row.priority as ProfileInput['priority']) ?? null,
+      experience: (row.experience as ProfileInput['experience']) ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Empreinte des réglages du projet, calculée de la même façon au moment du
+ * préremplissage et à l'affichage : la comparer dit quoi réadapter.
+ */
+export function tripBasis(
+  trip: {
+    start_date: string | null;
+    end_date: string | null;
+    destination_name: string | null;
+    party_size: number | null;
+    metadata: Record<string, unknown> | null;
+  },
+  activity: string | null
+): ProjectBasis {
+  const meta = (trip.metadata ?? {}) as Record<string, unknown>;
+  // Même lecture que le préremplissage et l'écran : une seule règle (tripContext).
+  const ctx = tripContextFromRow(trip, { activity });
+  const compas = readCompasMeta(meta);
+  return projectBasis({
+    anchor: ctx.destination.anchor,
+    destinationName: trip.destination_name,
+    days: ctx.days,
+    hours: compas.durationHours,
+    startDate: trip.start_date,
+    activity,
+    partySize: trip.party_size,
+    prefs: compas.preferences,
+  });
+}

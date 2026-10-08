@@ -5,7 +5,20 @@
  * sans nom reste sans nom : on affiche sa catégorie, jamais un nom inventé.
  */
 
-export type RoutePoiCategory = 'water' | 'refuge' | 'camping' | 'viewpoint' | 'peak' | 'parking';
+export type RoutePoiCategory =
+  | 'water'
+  | 'refuge'
+  | 'camping'
+  | 'viewpoint'
+  | 'peak'
+  | 'parking'
+  // Autour des étapes (OpenStreetMap via Overpass) : vivre sur place.
+  | 'resto'
+  | 'commerce'
+  | 'sante'
+  | 'hebergement'
+  | 'transport'
+  | 'toilets';
 
 export interface RoutePoi {
   id: number;
@@ -24,6 +37,12 @@ export const ROUTE_POI_LABEL: Record<RoutePoiCategory, string> = {
   viewpoint: 'Point de vue',
   peak: 'Sommet',
   parking: 'Parking',
+  resto: 'Restaurant ou café',
+  commerce: 'Commerce',
+  sante: 'Pharmacie ou soins',
+  hebergement: 'Hébergement',
+  transport: 'Gare ou bus',
+  toilets: 'Toilettes',
 };
 
 const CATEGORIES = new Set<string>(Object.keys(ROUTE_POI_LABEL));
@@ -58,7 +77,9 @@ export function parseRoutePois(rows: unknown): RoutePoi[] {
 }
 
 export function countByCategory(pois: RoutePoi[]): Record<RoutePoiCategory, number> {
-  const counts = { water: 0, refuge: 0, camping: 0, viewpoint: 0, peak: 0, parking: 0 };
+  const counts = Object.fromEntries(
+    (Object.keys(ROUTE_POI_LABEL) as RoutePoiCategory[]).map((c) => [c, 0])
+  ) as Record<RoutePoiCategory, number>;
   for (const p of pois) counts[p.category] += 1;
   return counts;
 }

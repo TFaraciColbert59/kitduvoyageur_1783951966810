@@ -26,10 +26,11 @@ import type {
 
 const DEFAULT_MCP_URL = 'https://mcp.routestack.ai/sse';
 const DEFAULT_LIMIT = 5;
-const DEFAULT_DRIVER_AGE = 30;
 const PARTNER_TOKEN_TIMEOUT_MS = 10_000;
 const MCP_CONNECT_TIMEOUT_MS = 8_000;
 const MCP_TOOL_TIMEOUT_MS = 12_000;
+/** La recherche de vols RouteStack (Alpha `newsearch`) dépasse souvent 12 s (Genève → Lisbonne, 8 oct.). */
+const FLIGHT_SEARCH_TIMEOUT_MS = 30_000;
 const SESSION_TTL_MS = 5 * 60 * 1_000;
 const MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
 const MAX_TRAVERSAL_NODES = 5_000;
@@ -385,7 +386,6 @@ function normalizeOffers(
       'fareCode',
       'vehicleId',
     ]);
-    const id = (rawId ?? stableFallbackId(record)).slice(0, MAX_ID_LENGTH);
     const providerTitle = readString(record, [
       'name',
       'title',
@@ -394,8 +394,6 @@ function normalizeOffers(
       'carType',
       'description',
     ]);
-    const title = (providerTitle ?? fallbackTitle(record, request))?.slice(0, MAX_TITLE_LENGTH);
-    if (!title || seen.has(id)) continue;
 
     const rawDeeplink = record.deeplink ?? record.booking_url ?? record.checkoutUrl ?? record.url;
     const deeplink = isAllowedDeeplink(rawDeeplink, env);
@@ -414,6 +412,12 @@ function normalizeOffers(
       'rate',
     ]);
     const currency = normalizeCurrency(readString(record, ['currency', 'currencyCode']) ?? payloadCurrency);
+    // Ni identifiant, ni nom, ni prix : l'enveloppe d'une réponse vide, pas une
+    // offre (« Hôtel · Annecy » sans prix ni lien, 7 octobre).
+    if (!rawId && !providerTitle && amount == null) continue;
+    const id = (rawId ?? stableFallbackId(record)).slice(0, MAX_ID_LENGTH);
+    const title = (providerTitle ?? fallbackTitle(record, request))?.slice(0, MAX_TITLE_LENGTH);
+    if (!title || seen.has(id)) continue;
 
     seen.add(id);
     offers.push({
@@ -508,10 +512,11 @@ async function readJsonLimited(response: Response): Promise<unknown> {
 
 function parseToolPayload(result: RouteStackToolResult): unknown {
   if (result.isError) {
+    const said = (result.content ?? []).find((item) => item.type === 'text' && typeof item.text === 'string')?.text;
     throw new BookingProviderError({
       code: BOOKING_PROVIDER_ERROR_CODES.upstream,
       provider: 'routestack',
-      message: 'RouteStack a renvoyé une erreur.',
+      message: `RouteStack a renvoyé une erreur${said ? ` : ${said.slice(0, 200)}` : '.'}`,
       retryable: true,
     });
   }
@@ -524,11 +529,22 @@ function parseToolPayload(result: RouteStackToolResult): unknown {
         message: 'Réponse RouteStack trop volumineuse.',
       });
     }
+    let parsed: unknown;
     try {
-      return JSON.parse(item.text) as unknown;
+      parsed = JSON.parse(item.text) as unknown;
     } catch {
       continue;
     }
+    // Enveloppe { success: false, message } : une erreur, jamais une offre.
+    if (isRecord(parsed) && parsed.success === false) {
+      const message = typeof parsed.message === 'string' ? parsed.message.slice(0, 200) : null;
+      throw new BookingProviderError({
+        code: BOOKING_PROVIDER_ERROR_CODES.upstream,
+        provider: 'routestack',
+        message: `RouteStack a refusé la recherche${message ? ` : ${message}` : '.'}`,
+      });
+    }
+    return parsed;
   }
   throw new BookingProviderError({
     code: BOOKING_PROVIDER_ERROR_CODES.upstream,
@@ -752,6 +768,9 @@ function createDefaultToolCaller(env: BookingProviderEnv): RouteStackToolCaller 
 interface ResolvedLocation {
   id: string;
   code: string;
+  /** Coordonnées de la destination (search-destinations), exigées par search-hotels. */
+  lat?: number;
+  long?: number;
 }
 
 async function resolveLocation(
@@ -767,7 +786,8 @@ async function resolveLocation(
     return { id: trimmed, code: trimmed };
   }
   const tool = vertical === 'flight' ? 'flight_locations' : vertical === 'hotel' ? 'hotel_search_destinations' : 'car_locations';
-  const payload = parseToolPayload(await callTool(tool, { query: trimmed }));
+  // OpenAPI RouteStack : `term` pour les lieux de vol et de voiture, `query` pour les destinations d'hôtel.
+  const payload = parseToolPayload(await callTool(tool, vertical === 'hotel' ? { query: trimmed } : { term: trimmed }));
   const records = findRecords(payload, ['result', 'results', 'locations', 'destinations', 'data']);
   const record = records[0];
   if (!record) {
@@ -785,7 +805,14 @@ async function resolveLocation(
       message: `Destination RouteStack sans identifiant : ${trimmed}.`,
     });
   }
-  return { id, code: readString(record, ['code', 'iata', 'id']) ?? id };
+  const coordinates = isRecord(record.coordinates) ? record.coordinates : record;
+  const lat = readNumber(coordinates, ['lat', 'latitude']);
+  const long = readNumber(coordinates, ['long', 'lng', 'lon', 'longitude']);
+  return {
+    id,
+    code: readString(record, ['code', 'iata', 'id']) ?? id,
+    ...(lat != null && long != null ? { lat, long } : {}),
+  };
 }
 
 async function argumentsForRequest(
@@ -798,41 +825,50 @@ async function argumentsForRequest(
   if (request.vertical === 'flight') {
     const origin = await resolveLocation(callTool, 'flight', request.origin);
     const destination = await resolveLocation(callTool, 'flight', request.destination);
+    // Corps de POST /mcp/flight/search (collection Postman RouteStack), que
+    // l'outil MCP `flight_search` attend sous `filter`.
     return {
       filter: {
+        type: request.return ? 'RoundTrip' : 'OneWay',
         origin: origin.code,
         destination: destination.code,
         departureDate: request.departure,
         ...(request.return ? { returnDate: request.return } : {}),
         adults: travelers,
-        cabinClass: 'economy',
-        tripType: request.return ? 'round_trip' : 'one_way',
+        children: 0,
+        infants: 0,
+        cabin: 'Economy',
       },
     };
   }
   if (request.vertical === 'hotel') {
     const destination = await resolveLocation(callTool, 'hotel', request.destination);
+    const rooms = [{ adults: travelers, children: 0 }];
     return {
       destinationId: destination.id,
       checkIn: request.checkIn,
       checkOut: request.checkOut,
-      rooms: [{ adults: travelers, children: 0 }],
-      lat: 0,
-      long: 0,
+      rooms,
+      // Exigé par search-hotels (OpenAPI RouteStack), égal au nombre de chambres.
+      roomCount: rooms.length,
+      // Coordonnées de search-destinations (0 seulement pour un identifiant donné tel quel).
+      lat: destination.lat ?? 0,
+      long: destination.long ?? 0,
       currency,
       page: 1,
       limit,
     };
   }
   if (request.vertical === 'car') {
-    const destination = await resolveLocation(callTool, 'car', request.destination);
+    // Corps de POST /mcp/car/search (collection Postman RouteStack), sous `filter`
+    // comme pour les vols : le lieu par son nom, date et heure séparées (heure
+    // telle qu'écrite dans la demande).
+    const at = (iso: string) => ({ date: iso.slice(0, 10), time: iso.slice(11, 16) });
+    const place = request.destination.trim();
     return {
       filter: {
-        pickup: { type: 'city', code: destination.code },
-        dropoff: { type: 'city', code: destination.code },
-        pickupDate: request.pickupAt,
-        dropoffDate: request.dropoffAt,
-        driverAge: DEFAULT_DRIVER_AGE,
+        pickup: { name: place, ...at(request.pickupAt) },
+        dropoff: { name: place, ...at(request.dropoffAt) },
       },
     };
   }
@@ -971,7 +1007,11 @@ export function createRouteStackBookingProvider(
       let payload: unknown;
       try {
         args = await argumentsForRequest(validated, callTool);
-        payload = parseToolPayload(await callTool(name, args));
+        payload = parseToolPayload(
+          validated.vertical === 'flight'
+            ? await callTool(name, args, { timeoutMs: FLIGHT_SEARCH_TIMEOUT_MS })
+            : await callTool(name, args)
+        );
       } catch (error) {
         throw normalizeBookingProviderError(error, 'routestack');
       }

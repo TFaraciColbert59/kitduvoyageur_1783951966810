@@ -1,4 +1,5 @@
 import { isInventoryAvailable, type InventoryStatus } from '@/features/materiel/domain/inventory';
+import { partySizeOf, shortHoursOf, tripLengthDays } from './tripContext';
 /**
  * Compas — modèle dérivé du préparateur.
  *
@@ -43,11 +44,31 @@ export interface CompasTripInput {
 
 export type CompasNights = 'bivouac' | 'refuge' | 'hebergement' | 'mixte';
 
+export type CompasLevel = 'debut' | 'regulier' | 'aguerri';
+export type CompasAutonomy = 'journee' | 'bivouac_1_2' | 'itinerance_longue';
+export type CompasPriority = 'legerete' | 'confort' | 'budget' | 'securite';
+export type CompasTerrain = 'sentier' | 'montagne' | 'hors_sentier' | 'itinerance' | 'urbain_transit';
+
+/**
+ * Personnalisations PROPRES à ce projet (`trips.metadata.compas.prefs`).
+ * Elles priment sur le profil (`user_orientation`), qui n'est jamais recopié
+ * ici : un champ absent laisse le profil, puis un défaut, décider.
+ */
 export interface CompasPreferences {
   pace: Pace;
   nights: CompasNights | null;
   avoid: string[];
   wishes: string[];
+  level?: CompasLevel | null;
+  autonomy?: CompasAutonomy | null;
+  priority?: CompasPriority | null;
+  terrain?: CompasTerrain | null;
+  /** Poids maximal du sac de base (sans eau ni nourriture), en kg. */
+  maxPackKg?: number | null;
+  /** Nombre de nuits à passer dehors (bivouac), quel que soit le reste. */
+  outdoorNights?: number | null;
+  /** Distance visée (km) : la sortie entière, ou par jour pour un séjour. */
+  targetKm?: number | null;
 }
 
 export interface CompasStepInput {
@@ -374,15 +395,9 @@ export function buildCompasModel(input: CompasInput): CompasModel {
   /* Dates */
   const start = parseDate(trip.startDate);
   const end = parseDate(trip.endDate);
-  const days =
-    start && end ? Math.max(1, Math.round((end.getTime() - start.getTime()) / MS_DAY) + 1) : null;
-  const shortHours =
-    trip.durationHours != null &&
-    trip.durationHours > 0 &&
-    trip.durationHours < 24 &&
-    (days == null || days === 1)
-      ? trip.durationHours
-      : null;
+  // Jours datés uniquement (la durée sans date est lue à part par l'écran) — règle unique.
+  const days = start && end ? tripLengthDays(trip.startDate, trip.endDate) : null;
+  const shortHours = shortHoursOf(days, trip.durationHours);
   const hours = shortHours ?? (days != null ? days * 24 : null);
 
   /* Préférences (valeurs par défaut explicites, jamais devinées) */
@@ -391,6 +406,13 @@ export function buildCompasModel(input: CompasInput): CompasModel {
     nights: trip.preferences?.nights ?? null,
     avoid: trip.preferences?.avoid ?? [],
     wishes: trip.preferences?.wishes ?? [],
+    // Personnalisations du projet : présentes seulement si elles sont choisies
+    // (un champ absent laisse le profil, puis un défaut, décider).
+    ...Object.fromEntries(
+      (['level', 'autonomy', 'priority', 'terrain', 'maxPackKg', 'outdoorNights', 'targetKm'] as const)
+        .filter((k) => trip.preferences?.[k] != null)
+        .map((k) => [k, trip.preferences?.[k]])
+    ),
   };
 
   /* Lumière du jour : premier jour, première étape géolocalisée */
@@ -563,7 +585,7 @@ export function buildCompasModel(input: CompasInput): CompasModel {
   const shelterInKit = lines.some((l) => /tente|tarp|abri|hamac|bivy|bivouac/i.test(l.name));
 
   /* Budget */
-  const partySize = Math.max(1, trip.partySize ?? members.length);
+  const partySize = partySizeOf(trip.partySize, members.length);
   const planned = sumBy(
     input.expenses.filter((e) => e.isPlanned),
     (e) => e.amount
@@ -643,6 +665,23 @@ export function buildCompasModel(input: CompasInput): CompasModel {
       severity: 'warn',
       source: 'répartition',
     });
+  }
+  // Poids maximal choisi pour ce projet : sac de base (sans eau ni nourriture).
+  if (prefs.maxPackKg != null) {
+    const limitG = prefs.maxPackKg * 1000;
+    const kg = (g: number) => (Math.round(g / 100) / 10).toString().replace('.', ',');
+    const heavy =
+      loads.length > 1
+        ? loads.filter((l) => l.carriedGrams > limitG).map((l) => `${l.name} ${kg(l.carriedGrams)} kg`)
+        : baseGrams > limitG
+          ? [`${kg(baseGrams)} kg`]
+          : [];
+    if (heavy.length)
+      reasons.push({
+        label: `Sac au-dessus de ${kg(limitG)} kg : ${heavy.join(', ')}`,
+        severity: 'warn',
+        source: 'poids max du projet',
+      });
   }
   if (target != null && totalBudget > target) {
     reasons.push({ label: 'Budget dépassé', severity: 'warn', source: 'dépenses' });

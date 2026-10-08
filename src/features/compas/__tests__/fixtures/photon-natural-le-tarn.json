@@ -1,0 +1,295 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "osm_type": "R",
+    "osm_id": 416433,
+    "osm_key": "waterway",
+    "osm_value": "river",
+    "type": "other",
+    "name": "Le Tarn",
+    "state": "France métropolitaine",
+    "country": "France",
+    "countrycode": "FR",
+    "extent": [
+     1.0365114,
+     44.4152666,
+     3.8257507,
+     43.775532
+    ]
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.5471439,
+     43.9963841
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "osm_type": "W",
+    "osm_id": 1496561076,
+    "osm_key": "waterway",
+    "osm_value": "river",
+    "type": "other",
+    "name": "Le Tarn",
+    "district": "Sapiac",
+    "city": "Montauban",
+    "county": "Tarn-et-Garonne",
+    "state": "Occitanie",
+    "country": "France",
+    "postcode": "82000",
+    "countrycode": "FR",
+    "extent": [
+     1.344865,
+     44.0109314,
+     1.3475364,
+     44.0081161
+    ]
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     1.3461875,
+     44.0095358
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "osm_type": "W",
+    "osm_id": 1497024359,
+    "osm_key": "waterway",
+    "osm_value": "river",
+    "type": "other",
+    "name": "Le Tarn",
+    "district": "Sapiac",
+    "city": "Montauban",
+    "county": "Tarn-et-Garonne",
+    "state": "Occitanie",
+    "country": "France",
+    "postcode": "82000",
+    "countrycode": "FR",
+    "extent": [
+     1.3445109,
+     44.0077588,
+     1.3446174,
+     44.0066404
+    ]
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     1.3445529,
+     44.0072069
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "osm_type": "W",
+    "osm_id": 81147214,
+    "osm_key": "waterway",
+    "osm_value": "river",
+    "type": "other",
+    "name": "Le Tarn",
+    "district": "Marsal",
+    "city": "Bellegarde-Marsal",
+    "county": "Tarn",
+    "state": "Occitanie",
+    "country": "France",
+    "postcode": "81430",
+    "countrycode": "FR",
+    "extent": [
+     2.2984701,
+     43.9433655,
+     2.3022482,
+     43.9426137
+    ]
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.30041,
+     43.9426251
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "osm_type": "R",
+    "osm_id": 1345835,
+    "osm_key": "waterway",
+    "osm_value": "river",
+    "type": "other",
+    "name": "Le Thoré",
+    "county": "Tarn",
+    "state": "Occitanie",
+    "country": "France",
+    "countrycode": "FR",
+    "extent": [
+     2.2173981,
+     43.5812632,
+     2.7208006,
+     43.4391005
+    ]
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.4475548,
+     43.4926621
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "osm_type": "R",
+    "osm_id": 453454,
+    "osm_key": "waterway",
+    "osm_value": "river",
+    "type": "other",
+    "name": "Le Cérou",
+    "county": "Tarn",
+    "state": "Occitanie",
+    "country": "France",
+    "countrycode": "FR",
+    "extent": [
+     1.8731038,
+     44.139648,
+     2.473189,
+     44.0258691
+    ]
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.1528777,
+     44.0578039
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "osm_type": "R",
+    "osm_id": 1687732,
+    "osm_key": "waterway",
+    "osm_value": "river",
+    "type": "other",
+    "name": "Le Sor",
+    "county": "Tarn",
+    "state": "Occitanie",
+    "country": "France",
+    "countrycode": "FR",
+    "extent": [
+     1.9629296,
+     43.6173094,
+     2.19265,
+     43.3961423
+    ]
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.0568333,
+     43.5155331
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "osm_type": "R",
+    "osm_id": 6820096,
+    "osm_key": "waterway",
+    "osm_value": "river",
+    "type": "other",
+    "name": "Le Tescou",
+    "county": "Tarn",
+    "state": "Occitanie",
+    "country": "France",
+    "countrycode": "FR",
+    "extent": [
+     1.3496517,
+     44.0164382,
+     1.8641151,
+     43.9093097
+    ]
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     1.6080432,
+     43.9185083
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "osm_type": "R",
+    "osm_id": 5598089,
+    "osm_key": "waterway",
+    "osm_value": "river",
+    "type": "other",
+    "name": "Le Gijou",
+    "county": "Tarn",
+    "state": "Occitanie",
+    "country": "France",
+    "countrycode": "FR",
+    "extent": [
+     2.4049437,
+     43.7432214,
+     2.7171233,
+     43.6770007
+    ]
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.5446935,
+     43.7294161
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "osm_type": "R",
+    "osm_id": 7673520,
+    "osm_key": "waterway",
+    "osm_value": "river",
+    "type": "other",
+    "name": "Le Bernazobre",
+    "city": "Saint-Affrique-les-Montagnes",
+    "county": "Tarn",
+    "state": "Occitanie",
+    "country": "France",
+    "postcode": "81290",
+    "countrycode": "FR",
+    "extent": [
+     2.11817,
+     43.5780551,
+     2.244063,
+     43.454
+    ]
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.20174,
+     43.54944
+    ]
+   }
+  }
+ ]
+}

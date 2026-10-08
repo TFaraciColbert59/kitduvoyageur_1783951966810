@@ -1018,6 +1018,7 @@ function StepSheet({
           key={hint?.say ?? 'disle'}
           ctl={ctl}
           initial={hint?.say}
+          initialIsStart={hint?.start === true}
           before={prev}
           after={next}
         />
@@ -3157,17 +3158,27 @@ const POI_ICON: Record<RoutePoiCategory, string> = {
   viewpoint: 'eye',
   peak: 'mountain',
   parking: 'car',
+  resto: 'flame',
+  commerce: 'shopping-cart',
+  sante: 'heart-pulse',
+  hebergement: 'bed-double',
+  transport: 'bus',
+  toilets: 'droplets',
 };
 
 function TraceFlow({ ctl }: { ctl: CompasCtl }) {
   const pois = ctl.data.routePois;
   const counts = countByCategory(pois);
   const [filter, setFilter] = useState<'all' | RoutePoiCategory>('all');
-  if (ctl.data.route.id == null)
+  const onRoute = ctl.data.route.id != null;
+  if (!onRoute && pois.length === 0)
     return (
       <p className="cp-note">
-        Choisis d’abord un parcours du catalogue : les points d’eau, abris et points de vue sont
-        cherchés le long de son tracé.
+        {!ctl.data.itinerary.length
+          ? 'Dès que ton itinéraire a ses étapes, les restos, commerces, points d’eau, hébergements et transports autour s’affichent ici.'
+          : ctl.data.stagePoisDone
+            ? 'Aucun point trouvé autour de tes étapes pour le moment (la carte ouverte ne répond pas toujours) : réessaie un peu plus tard.'
+            : 'Je cherche les restos, commerces, points d’eau, hébergements et transports autour de tes étapes…'}
       </p>
     );
   const shown = filter === 'all' ? pois : pois.filter((p) => p.category === filter);
@@ -3175,8 +3186,9 @@ function TraceFlow({ ctl }: { ctl: CompasCtl }) {
   return (
     <>
       <p className="cp-note">
-        Points à moins de 1 km du tracé, jusqu’à 20 par catégorie. Données OpenStreetMap : une
-        source peut être tarie ou un refuge fermé, à vérifier avant de compter dessus.
+        {onRoute ? 'Points à moins de 1 km du tracé et autour des étapes.' : 'Points autour de tes étapes (1,5 km).'}{' '}
+        Données OpenStreetMap : un resto peut avoir fermé, une source être tarie, à vérifier avant
+        de compter dessus.
       </p>
       {present.length > 0 && (
         <Segments
@@ -3192,7 +3204,7 @@ function TraceFlow({ ctl }: { ctl: CompasCtl }) {
       <PagedList
         label="Points sur le tracé"
         items={shown}
-        empty={<p className="cp-note">Aucun point connu à moins de 1 km de ce tracé.</p>}
+        empty={<p className="cp-note">Aucun point connu dans cette catégorie.</p>}
         render={(p) => (
           <div key={p.id} className="cp-row" style={staticRow}>
             <span className="cp-thumb">
@@ -3201,7 +3213,8 @@ function TraceFlow({ ctl }: { ctl: CompasCtl }) {
             <span className="cp-row__t">
               <b>{poiLabel(p)}</b>
               <span>
-                {p.name ? `${ROUTE_POI_LABEL[p.category]} · ` : ''}à {p.distanceM} m du tracé
+                {p.name ? `${ROUTE_POI_LABEL[p.category]} · ` : ''}à {p.distanceM} m
+                {onRoute ? ' du tracé' : ' de l’étape'}
                 {p.elevationM != null ? ` · ${p.elevationM} m` : ''}
               </span>
             </span>

@@ -1,9 +1,11 @@
 import 'server-only';
-import { parseNominatim, parsePhoton, pickDestination, type CompasPlace } from '../engine/places';
+import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, isNotablePlace, pickDestination, pickNatural, type CompasPlace } from '../engine/places';
 import { cached, coordKey } from './sharedCache';
+import { geoapifyReverse, geoapifySearch } from './geoapify';
 
 /**
- * Recherche d'un lieu sur la carte (Photon, données OpenStreetMap), en
+ * Recherche d'un lieu sur la carte (Photon, puis Nominatim, puis Geoapify ;
+ * toujours des données OpenStreetMap), en
  * français. Mémoire courte côté serveur : une même étape n'est cherchée
  * qu'une fois. Réseau en panne → null, jamais un lieu deviné.
  */
@@ -45,32 +47,48 @@ async function fetchJson(url: string, headers: Record<string, string>): Promise<
 /** Nominatim exige au plus une requête par seconde et un User-Agent identifiant l'application. */
 const NOMINATIM_UA = 'kitduvoyageur/1.0 (Compas, preparation de voyage)';
 let nominatimChain: Promise<unknown> = Promise.resolve();
-function nominatim(query: string, limit: number): Promise<CompasPlace[] | null> {
+function nominatimQueued(url: string): Promise<CompasPlace[] | null> {
   const run = nominatimChain.then(async () => {
-    const payload = await fetchJson(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=jsonv2&addressdetails=1&limit=${limit}&accept-language=fr`,
-      { Accept: 'application/json', 'User-Agent': NOMINATIM_UA }
-    );
+    const payload = await fetchJson(url, { Accept: 'application/json', 'User-Agent': NOMINATIM_UA });
     await new Promise((r) => setTimeout(r, 1100));
-    return payload == null ? null : parseNominatim(payload);
+    // La recherche renvoie une liste, le géocodage inverse un seul lieu.
+    return payload == null ? null : parseNominatim(Array.isArray(payload) ? payload : [payload]);
   });
   nominatimChain = run.catch(() => null);
   return run;
+}
+function nominatim(query: string, limit: number): Promise<CompasPlace[] | null> {
+  return nominatimQueued(
+    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=jsonv2&addressdetails=1&limit=${limit}&accept-language=fr`
+  );
 }
 
 /**
  * Photon d'abord (rapide, sans quota strict) ; s'il ne répond pas, Nominatim
  * (même carte OpenStreetMap), une requête par seconde. Les deux en panne → null.
  */
-async function search(query: string, limit: number): Promise<CompasPlace[] | null> {
+async function search(
+  query: string,
+  limit: number,
+  near?: { lat: number; lon: number } | null
+): Promise<CompasPlace[] | null> {
   // Partagé entre tous (mémoire puis Supabase) : Photon et Nominatim ne sont
   // interrogés qu'une fois par recherche. Une panne (null) n'est pas gardée.
-  return cached('place', `${limit}:${plain(query)}`, PLACE_TTL_S, async () => {
+  // `near` : les homonymes proches d'abord (« Le Tour » le hameau de Chamonix,
+  // pas le lieu-dit du Var) ; sans repli Nominatim, qui ignore ce biais.
+  const bias = near ? `&lat=${near.lat.toFixed(3)}&lon=${near.lon.toFixed(3)}&location_bias_scale=0.5` : '';
+  // « v3 » : lieux lus avec leur taille et leur étiquette OSM, absentes des entrées d'avant.
+  const key = near ? `v3:near:${coordKey(near.lat, near.lon, 1)}:${limit}:${plain(query)}` : `v3:${limit}:${plain(query)}`;
+  return cached('place', key, PLACE_TTL_S, async () => {
     const photon = await fetchJson(
-      `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=${limit}&lang=fr${NOISE}`,
+      `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=${limit}&lang=fr${bias}${NOISE}`,
       { Accept: 'application/json' }
     );
-    return photon != null ? parsePhoton(photon) : await nominatim(query, Math.min(limit, 8));
+    // Une liste vide n'est jamais gardée (null) : la carte a pu mal répondre, on réessaiera.
+    let list = photon != null ? parsePhoton(photon) : near ? null : await nominatim(query, Math.min(limit, 8));
+    // Photon et Nominatim muets : Geoapify (offre gratuite) en dernier secours.
+    if (list == null) list = await geoapifySearch(query, limit);
+    return list && list.length ? list : null;
   });
 }
 
@@ -84,7 +102,18 @@ export async function lookupDestination(query: string): Promise<CompasPlace | nu
   const q = query.trim().slice(0, 80);
   if (q.length < 2) return null;
   const found = (await search(q, 8)) ?? [];
-  return pickDestination(found, q);
+  const pick = pickDestination(found, q);
+  // Homonymes éloignés : le lieu le plus connu qui porte ce nom (ou l'un de
+  // ses autres noms) l'emporte — « Mont Rose » est le massif des Alpes.
+  if (pick && homonymsFarApart(found, q)) {
+    const known = (await stageAliasCandidates(q, null)).find((p) => p.landmark || (p.settlementRank ?? 0) >= 2);
+    if (known && distanceKm(known, pick) > 50) return { ...known, name: q };
+    // Homonymes lointains sans lieu notable (« Alsace » : un quartier de Los
+    // Angeles, la carte nommant la région « Collectivité européenne
+    // d'Alsace ») : pas de tirage au sort, l'appelant cherche autrement.
+    if (!isNotablePlace(pick)) return null;
+  }
+  return pick;
 }
 
 /** Un lieu de base réel (ville, village) dans un pays donné, pour ancrer une destination. */
@@ -108,21 +137,114 @@ export async function lookupLoose(query: string): Promise<CompasPlace | null> {
  */
 export async function stageCandidates(
   name: string,
-  ctx: { countryCode: string | null; country: string | null }
+  ctx: { countryCode: string | null; country: string | null },
+  near?: { lat: number; lon: number } | null
 ): Promise<CompasPlace[]> {
   const q = name.trim().slice(0, 80);
   if (q.length < 2) return [];
-  const found = (await search(ctx.country ? `${q}, ${ctx.country}` : q, 10)) ?? (await search(q, 10)) ?? [];
-  return ctx.countryCode ? found.filter((p) => p.countryCode === ctx.countryCode) : found;
+  const [found, close] = await Promise.all([
+    search(ctx.country ? `${q}, ${ctx.country}` : q, 10).then(async (r) => r ?? (await search(q, 10)) ?? []),
+    near ? search(q, 10, near).then((r) => r ?? []) : Promise.resolve([] as CompasPlace[]),
+  ]);
+  // Les lieux proches de la destination d'abord, puis le reste du pays, sans doublon.
+  const merged = [...close];
+  for (const p of found) if (!merged.some((m) => Math.abs(m.lat - p.lat) < 1e-3 && Math.abs(m.lon - p.lon) < 1e-3)) merged.push(p);
+  return ctx.countryCode ? merged.filter((p) => p.countryCode === ctx.countryCode) : merged;
+}
+
+/**
+ * Dernier recours pour une étape introuvable : Nominatim connaît les autres
+ * noms d'un lieu (anglais, ancien, alternatif : « Machu Picchu Pueblo » =
+ * Aguas Calientes). Seulement les lieux dont un nom est celui cherché.
+ */
+export async function stageAliasCandidates(name: string, countryCode: string | null): Promise<CompasPlace[]> {
+  const q = name.trim().slice(0, 80);
+  if (q.length < 3) return [];
+  const cc = countryCode ? `&countrycodes=${countryCode.toLowerCase()}` : '';
+  const found = await cached('place', `alias:v1:${countryCode ?? 'any'}:${plain(q)}`, PLACE_TTL_S, () =>
+    nominatimQueued(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=jsonv2&addressdetails=1&namedetails=1&limit=5&accept-language=fr${cc}`
+    )
+  );
+  return (found ?? []).filter((p) => aliasMatches(p, q));
+}
+
+/**
+ * Le massif qui porte le nom d'une entité administrative (« Vosges » le
+ * département → le massif des Vosges ; « Jura » → le massif du Jura). Pour une
+ * activité à pied, c'est là qu'on randonne. Seulement un lieu naturel du même
+ * nom, à moins de 150 km : sinon null (on garde l'entité administrative).
+ */
+export async function lookupMassif(name: string, near: { lat: number; lon: number }): Promise<CompasPlace | null> {
+  const q = name.trim().slice(0, 60);
+  if (q.length < 3) return null;
+  const found = await cached('place', `massif:v1:${plain(q)}`, PLACE_TTL_S, () =>
+    nominatimQueued(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(`massif ${q}`)}&format=jsonv2&addressdetails=1&namedetails=1&limit=5&accept-language=fr`
+    )
+  );
+  return (
+    (found ?? []).find(
+      (p) => p.landmark && p.extent && nameCore(p.name) === nameCore(q) && distanceKm(p, near) <= 150
+    ) ?? null
+  );
 }
 
 /** Le lieu d'un point GPS (commune, pays) : sert à savoir d'où l'on part. */
 export async function lookupReverse(lat: number, lon: number): Promise<CompasPlace | null> {
-  const places = await cached('reverse', coordKey(lat, lon, 2), 30 * 86_400, async () => {
+  // « v2 » : les entrées d'avant la localité (ville, bourg) ne sont plus servies.
+  const places = await cached('reverse', `v2:${coordKey(lat, lon, 2)}`, 30 * 86_400, async () => {
     const payload = await fetchJson(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}&limit=1&lang=fr`, {
       Accept: 'application/json',
     });
-    return payload == null ? null : parsePhoton(payload);
+    const photon = payload == null ? [] : parsePhoton(payload);
+    if (photon.length) return photon;
+    // Photon muet (depuis certains serveurs) : Nominatim, même carte, à l'échelle de la commune.
+    const fromNominatim = await nominatimQueued(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=jsonv2&addressdetails=1&zoom=14&accept-language=fr`
+    );
+    if (fromNominatim?.length) return fromNominatim;
+    // Les deux muets : Geoapify (offre gratuite), à l'échelle de la commune.
+    return geoapifyReverse(lat, lon);
   });
   return places?.[0] ?? null;
+}
+
+/**
+ * La rivière de ce nom dans le pays. La carte (Photon) ne la donne souvent
+ * qu'avec son article : « Tarn » rend des plans d'eau, « Le Tarn » la rivière
+ * entière (de même « La Dordogne », « L'Ardèche »). Rien : null.
+ */
+export async function lookupRiver(name: string, countryCode: string | null): Promise<CompasPlace | null> {
+  const bare = name.trim().replace(/^(?:(?:la|le|les)\s+|l['’]\s*)/i, '');
+  if (bare.length < 2) return null;
+  const variants = /^[aeiouyhàâäéèêëîïôöûüù]/i.test(bare) ? [bare, `L'${bare}`] : [bare, `Le ${bare}`, `La ${bare}`];
+  for (const q of variants) {
+    const p = await lookupNatural(q, countryCode, true).catch(() => null);
+    if (p && /^waterway=/.test(p.osmTag ?? '')) return p;
+  }
+  return null;
+}
+
+/** Lieux naturels seulement (massifs, régions naturelles, parcs, réserves, rivières). */
+const NATURAL_TAGS = ['natural', 'boundary:protected_area', 'boundary:national_park', 'place:region', 'leisure:nature_reserve', 'waterway:river']
+  .map((t) => `&osm_tag=${t}`)
+  .join('');
+
+/**
+ * Le lieu naturel de ce nom dans le pays (voir `pickNatural`), pour une
+ * activité de plein air dont la destination a été lue comme un quartier ou un
+ * département. Carte injoignable ou rien de naturel : null.
+ */
+export async function lookupNatural(name: string, countryCode: string | null, rivers = false): Promise<CompasPlace | null> {
+  const q = name.trim().slice(0, 60);
+  if (q.length < 3) return null;
+  const found = await cached('place', `natural:v1:${plain(q)}`, PLACE_TTL_S, async () => {
+    const payload = await fetchJson(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=10&lang=fr${NATURAL_TAGS}`, {
+      Accept: 'application/json',
+    });
+    const list = payload == null ? null : parsePhoton(payload);
+    return list && list.length ? list : null;
+  });
+  return pickNatural(found ?? [], q, countryCode, rivers);
 }

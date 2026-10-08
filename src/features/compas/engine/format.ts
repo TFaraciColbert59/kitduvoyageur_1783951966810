@@ -197,7 +197,7 @@ const ACTIVITIES: Record<string, string> = {
   trekking: 'Trek',
   bivouac: 'Bivouac',
   trail: 'Trail',
-  running: 'Course',
+  running: 'Course à pied',
   cycling: 'Vélo',
   velo: 'Vélo',
   bikepacking: 'Bikepacking',
