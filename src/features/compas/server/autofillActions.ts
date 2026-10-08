@@ -106,6 +106,16 @@ import { preparationEventKind, recordPreparationEvent } from './opsEvents';
 import { coarsePosition } from '../engine/privacy';
 import { routeAscentM } from './elevation';
 import { estimatedLegKm, estimationNote, stepDistanceMetadata, type LegDistanceSource, type LegMove } from '../engine/legDistance';
+import {
+  CLAIM_MS,
+  pendingIsStale,
+  readPending,
+  resumableRun,
+  withoutClaim,
+  withoutPending,
+  withStepsWritten,
+  type PendingRun,
+} from './autofillState';
 
 const MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 
@@ -147,20 +157,6 @@ export type CompasAutofillResult =
    * `already` : le voyage est déjà prérempli (lancement en double, écran remonté).
    */
   | { success: false; error: string; retryInS?: number; already?: true };
-
-/** Itinéraire écrit par la phase « étapes », en attente de la phase « reste ». */
-interface PendingRun {
-  runId: string;
-  stepIds: string[];
-  routeSet: boolean;
-  notes: string[];
-  /** Dates posées par le préremplissage (meilleure période) : l'annulation les retire. */
-  datesSet?: boolean;
-  /** Heure (ms) à laquelle une phase « rest » a pris la main. */
-  restAt?: number;
-  /** Préremplissages d'affilée restés sur l'itinéraire de secours (0 : itinéraire réel). */
-  stagesFallback?: number;
-}
 
 const point = z.object({ lat: z.number().min(-90).max(90), lon: z.number().min(-180).max(180) });
 const schema = z.object({
@@ -506,6 +502,8 @@ async function plannedStages(opts: {
   // Lieux dits par la personne, cherchés sur la carte dans la zone (quatre au plus).
   const waypoints: Array<{ name: string; lat: number; lon: number }> = [];
   for (const w of opts.wishes.slice(0, 4)) {
+    // Budget de la recherche d'itinéraire : un lieu dit de plus ne passe pas la limite.
+    if (Date.now() > opts.deadline - 5_000) break;
     if (LOOP_WISH.test(w) || wantsTraverse([w])) continue;
     const found = await stageCandidates(w, { countryCode: anchor.countryCode, country: anchor.country }, anchor).catch(() => []);
     const hit = pickPlace(
@@ -561,27 +559,6 @@ function readAnchor(meta: Record<string, unknown>): Anchor | null {
   return { ...place, radiusKm: destinationRadiusKm(place) };
 }
 
-function readPending(meta: Record<string, unknown>): PendingRun | null {
-  const p = compasMeta(meta).autofill_pending as Partial<PendingRun> | undefined;
-  if (!p || typeof p.runId !== 'string') return null;
-  return {
-    runId: p.runId,
-    stepIds: Array.isArray(p.stepIds) ? p.stepIds.filter((x): x is string => typeof x === 'string') : [],
-    routeSet: p.routeSet === true,
-    datesSet: p.datesSet === true,
-    restAt: typeof p.restAt === 'number' ? p.restAt : undefined,
-    stagesFallback: Number.isInteger(p.stagesFallback) ? Number(p.stagesFallback) : 0,
-    notes: Array.isArray(p.notes) ? p.notes.filter((x): x is string => typeof x === 'string') : [],
-  };
-}
-
-function withoutPending(c: Record<string, unknown>): Record<string, unknown> {
-  const rest = { ...c };
-  delete rest.autofill_pending;
-  delete rest.autofill_carry;
-  return rest;
-}
-
 /** Ce qu'une réadaptation a gardé du préremplissage précédent (retouché ou encore juste). */
 interface Carry {
   /** Étapes du préremplissage à remplacer, mais seulement par un itinéraire exploitable. */
@@ -630,16 +607,6 @@ function readCarry(meta: Record<string, unknown>): Carry | null {
  * Deux onglets ou un F5 : un seul gagne, l'autre attend le résultat. Une prise
  * plus vieille que `CLAIM_MS` est morte (la fonction s'arrête à 300 s).
  */
-/** Les prises de phase sont rendues dès que la phase a écrit son résultat. */
-function withoutClaim(c: Record<string, unknown>): Record<string, unknown> {
-  const { autofill_claim: _claim, ...rest } = c;
-  void _claim;
-  return rest;
-}
-
-/** Durée d'une prise : la durée maximale d'une préparation en une passe. */
-const CLAIM_MS = 290_000;
-
 async function claimPhase(supabase: Supa, tripId: string, phase: 'steps' | 'rest'): Promise<boolean> {
   const { data: row } = await supabase.from('trips').select('metadata, updated_at').eq('id', tripId).maybeSingle();
   if (!row) return false;
@@ -844,7 +811,9 @@ export async function compasAutofillAction(
     const carry = readCarry(meta);
     // Une phase « steps » relancée alors qu'un itinéraire attend déjà : on le garde.
     if (phase === 'steps' && pending) return { success: true, pending: true, stepsCreated: pending.stepIds.length };
-    const resume = phase === 'rest' ? pending : null;
+    // Itinéraire déjà écrit : la phase « reste », ou une passe unique relancée
+    // après une coupure, le reprend (plan 2.6) au lieu d'en écrire un second.
+    const resume = resumableRun(phase, pending);
     // La limite de fréquence ne compte qu'une préparation réellement lancée :
     // après les refus et retours ci-dessus (déjà prérempli, déjà en attente…).
     // Une reprise (phase « rest », itinéraire déjà écrit) a sa propre limite :
@@ -860,7 +829,7 @@ export async function compasAutofillAction(
       return { success: true, pending: true, stepsCreated: 0 };
     // Un seul « rest » à la fois : deux onglets, ou l'écran remonté pendant la
     // préparation, n'écrivent jamais deux fois les objets et les dépenses.
-    if (phase === 'rest' && pending && !(await claimPhase(supabase, tripId, 'rest')))
+    if (resume && !(await claimPhase(supabase, tripId, 'rest')))
       return { success: true, pending: true, stepsCreated: 0 };
     const notes: string[] = [...(resume?.notes ?? [])];
     const runId = resume?.runId ?? randomUUID();
@@ -1156,6 +1125,9 @@ export async function compasAutofillAction(
         let lastProposed: string | null = null;
         let aliasLookups = 0;
         let townLookups = 0;
+        // Recherches de secours (pays voisin, autres noms, commune) : seulement
+        // s'il reste de quoi finir la préparation après (plan 2.6).
+        const searchLeft = () => remaining() > (phase === 'all' ? 90_000 : 15_000);
         let dropped = 0;
         /** Étape posée sur un lieu trouvé (sinon : centre de la destination). */
         const located: boolean[] = [];
@@ -1178,7 +1150,7 @@ export async function compasAutofillAction(
           // plausible de l'étape d'avant (jamais un homonyme lointain).
           let across: CompasPlace[] | null = null;
           const acrossCandidates = async () =>
-            (across ??= anchor!.countryCode
+            (across ??= anchor!.countryCode && searchLeft()
               ? (await stageCandidates(p.place, { countryCode: null, country: null })).filter(
                   (c) => c.countryCode !== anchor!.countryCode
                 )
@@ -1224,7 +1196,7 @@ export async function compasAutofillAction(
           }
           // Introuvable sous ce nom : ses autres noms (anglais, ancien, alternatif),
           // trois recherches au plus par préparation (Nominatim, 1 par seconde).
-          if (!hit && lastProposed !== p.place && aliasLookups < 3) {
+          if (!hit && lastProposed !== p.place && aliasLookups < 3 && searchLeft()) {
             aliasLookups += 1;
             const aliases = await stageAliasCandidates(p.place, anchor.countryCode);
             hit = pickPlace(aliases, {
@@ -1239,7 +1211,7 @@ export async function compasAutofillAction(
             // On dort dans une commune, pas dans un musée ni une province.
             const fix = sleepPlaceFix(hit);
             if (fix && 'locality' in fix) name = fix.locality;
-            else if (fix && townLookups < 4) {
+            else if (fix && townLookups < 4 && searchLeft()) {
               townLookups += 1;
               const towns = await stageCandidates(fix.search, { countryCode: anchor.countryCode, country: anchor.country }, hit);
               // La circonscription elle-même revenait comme « ville » (« West Clare
@@ -1447,6 +1419,13 @@ export async function compasAutofillAction(
       }
       steps = await loadSteps(supabase, tripId);
       stepsCreated = createdStepIds.length;
+      // Passe unique : l'itinéraire écrit est inscrit tout de suite (plan 2.6).
+      // Coupée plus loin, la préparation laisse un état qu'« Annuler » retrouve
+      // et qu'une relance reprend, au lieu d'étapes orphelines.
+      if (phase === 'all' && (createdStepIds.length > 0 || routeSet)) {
+        const written = { runId, stepIds: createdStepIds, routeSet, notes: notes.slice(0, 6), datesSet, stagesFallback };
+        await updateTripMetadata(supabase, tripId, (m) => withStepsWritten(m, written, Date.now()));
+      }
     }
 
     if (phase === 'steps') {
@@ -2160,7 +2139,14 @@ export async function compasRefreshAutofillAction(
     });
     if (limited) return { success: false, error: 'Beaucoup de changements d’affilée : patiente quelques minutes.' };
     const meta = (trip.metadata ?? {}) as Record<string, unknown>;
-    if (readPending(meta)) return { success: false, error: 'Une préparation est déjà en cours.' };
+    const pendingRun = readPending(meta);
+    if (pendingRun)
+      return {
+        success: false,
+        error: pendingIsStale(pendingRun, Date.now())
+          ? 'Préparation coupée en cours de route : relance « Tout préparer » pour la finir, ou annule-la.'
+          : 'Une préparation est déjà en cours.',
+      };
     const run = compasMeta(meta).autofill as
       | {
           runId?: string;

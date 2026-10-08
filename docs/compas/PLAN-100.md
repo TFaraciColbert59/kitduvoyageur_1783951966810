@@ -360,11 +360,18 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 2.6 Préparation durable
 
-- [ ] Étapes écrites et **tracées au fil de l'eau** (aussi en phase `all`) : une
-      coupure ne laisse plus d'étapes orphelines ; « Annuler » les retrouve toutes.
-- [ ] Budget interne vérifié dans la boucle de recherche des étapes.
-- [ ] Reprise idempotente après coupure (même plan, pas de doublon). Preuve : test de
-      coupure simulée à chaque phase.
+- [x] Étapes écrites et **tracées au fil de l'eau** (aussi en passe unique) : dès
+      l'itinéraire écrit, il est inscrit comme en attente et le reste est pris
+      (`withStepsWritten`, `server/autofillState.ts`) ; une coupure ne laisse plus
+      d'étapes orphelines, « Annuler » les retrouve toutes.
+- [x] Budget interne vérifié dans la boucle de recherche des étapes : recherches de
+      secours (pays voisin, autres noms, commune) seulement s'il reste 90 s (passe
+      unique) ; lieux dits arrêtés 5 s avant l'échéance de la recherche.
+- [x] Reprise idempotente après coupure : une passe unique relancée reprend
+      l'itinéraire en attente (`resumableRun`) au lieu d'en écrire un second ; pendant
+      la préparation, la prise du reste fait attendre une relance ; une attente
+      coupée est dite « coupée », plus « en cours ». Tests `autofillState.test.ts`
+      (coupure simulée après l'itinéraire : annulation, reprise, prise, expiration).
 - [x] Commentaires « 60 s » mis à jour (300 s ; 48 s par phase gardés et expliqués).
 
 ### 2.7 Écritures concurrentes
