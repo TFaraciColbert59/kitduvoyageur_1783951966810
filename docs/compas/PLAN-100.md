@@ -82,6 +82,8 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 1.2 Hébergement Vercel
 
+- [x] ⚖️ **Décision de Tony (8 oct.) : Hobby pour l'instant, Stripe reste éteint.**
+      Passer en Pro (20 $/mois) le jour où le site vend.
 - [ ] ⚖️ **Offre Hobby et usage commercial** (vérifié le 8 oct., `SERVICES-GRATUITS.md`) :
       « Hobby teams are restricted to non-commercial personal use only » ; sont
       commerciaux « any method of requesting or processing payment » et un site dont
@@ -162,6 +164,8 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 1.7 IA à 0 €
 
+- [x] ⚖️ **Décision de Tony (8 oct.) : IA NVIDIA gardée allumée.** Le Compas garde
+      quand même un chemin complet sans IA (repli si la clé gratuite est coupée).
 - [ ] ⚖️ **Licence** (vérifié le 8 oct.) : l'essai NVIDIA ne couvre pas la production
       (« any non-testing activity including activity serving real end-users » exige une
       licence AI Enterprise). **Aucune IA gratuite n'est utilisable en production
@@ -201,26 +205,30 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 2.1 Caches partagés
 
-- [~] **`POST /api/route/cache` fermé au public** : écriture signée HMAC par le serveur
-      (`src/lib/routeCacheSignature.ts`), 5 000 points au plus par tronçon ; sur la
-      branche (42c7e16), preuve en production après fusion.
+- [x] **`POST /api/route/cache` fermé au public** : écriture signée HMAC par le serveur
+      (`src/lib/routeCacheSignature.ts`), 5 000 points au plus par tronçon. PR #76 ;
+      **prouvé en production le 8 oct.** : écriture non signée → 403
+      `signature_expected` ; trajet mesuré par `/api/route` écrit (signé) dans
+      `route_cache`.
 - [x] Test : une écriture sans signature est refusée (403), rien n'entre en base
       (`tests/routing/route-signature.spec.ts`, I4-CACHE-01b).
 
 ### 2.2 Limite de fréquence et abus
 
-- [~] **Limite distribuée gratuite** : fenêtre fixe en base (`rate_limit_consume`,
+- [x] **Limite distribuée gratuite** : fenêtre fixe en base (`rate_limit_consume`,
       table non journalisée, clés hachées, exécutable par le seul rôle de service ;
-      migration `20261008164423` appliquée et vérifiée le 8 oct.) au lieu de la
-      mémoire par instance, pour **toutes** les routes limitées (Upstash reste
-      prioritaire s'il est un jour configuré). Preuve en production après fusion.
-- [~] **Contournement par `autofill_pending` fermé** : une reprise (phase « rest »)
-      a sa propre limite par personne (12 / 10 min) ; réécrire l'état ne relance plus
-      rien sans compter (test `autofillLimits.test.ts`). L'état reste dans
-      `trips.metadata` (son déplacement relève de 2.7, écritures concurrentes).
-- [~] Plafond global : 120 préparations par heure pour tout le site, message propre.
+      migration `20261008164423`) au lieu de la mémoire par instance, pour **toutes**
+      les routes limitées (Upstash reste prioritaire s'il est un jour configuré).
+      **Prouvé en production le 8 oct.** : une préparation réelle = 10 fenêtres en base
+      (essai, lancement, site…). Les appels internes signés (`/api/route` → cache) ne
+      passent plus par le compteur par adresse (sortie Vercel commune, revue Codex).
+- [x] **Contournement par `autofill_pending` fermé** : une reprise (phase « rest »)
+      a sa propre limite par personne (12 / 10 min) et pour le site (240 / h) ;
+      réécrire l'état ne relance plus rien sans compter (`autofillLimits.test.ts`).
+      L'état reste dans `trips.metadata` (son déplacement relève de 2.7).
+- [x] Plafond global : 120 lancements par heure pour tout le site, message propre.
 - [ ] Limite sur `compasSetDestinationAction` et les actions qui appellent la carte.
-- [~] Message juste quand la limite est atteinte (plus « déjà lancée plusieurs fois ») :
+- [x] Message juste quand la limite est atteinte (plus « déjà lancée plusieurs fois ») :
       personne, site, ou compteur indisponible, chacun dit.
 - [ ] Protection des inscriptions et des sessions anonymes contre les comptes en série :
       **hCaptcha gratuit** branché sur Supabase Auth (Turnstile exclu : Cloudflare) ;
@@ -229,19 +237,24 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 2.3 Connexion démo
 
-- [~] **Essai sans compte** (sessions anonymes Supabase, gratuites) à la place du compte
+- [x] **Essai sans compte** (sessions anonymes Supabase, gratuites) à la place du compte
       démo partagé : bouton « Essayer sans compte » sur `/connexion`, compté par
       adresse (5/h) et pour le site (300/jour) ; la connexion démo se ferme d'elle-même
       dès que Supabase ouvre les connexions anonymes (`/auth/v1/settings`, relu toutes
       les 5 min). En base (`20261008165901`, appliquée le 8 oct.) : profil sans e-mail
       (`<id>@essai.invalid`), 38 politiques restrictives « rien de public ni de social
       depuis un essai », invitations refusées avec un message clair.
-- [ ] 🔒 **Tony, dans Supabase** (rien d'autre ne l'ouvre) : (1) lancer
-      `20261008180000_anonymous_trial_purge.sql` dans le SQL Editor (purge des essais
-      inactifs depuis 7 jours, chaque nuit, `pg_cron`) ; (2) Authentication → Sign In /
-      Providers → **Allow anonymous sign-ins**. Puis Claude prouve l'essai en
-      production et retire le compte démo (mot de passe remplacé par une valeur
-      aléatoire tirée en base, variables `DEMO_LOGIN_*` à retirer).
+      **Prouvé en production le 8 oct.** : « Essayer sans compte » → compte anonyme,
+      profil `…@essai.invalid` « Voyageur à l'essai », voyage « Randonnée · Vercors »
+      préparé en 65 s (3 étapes, 253 €, 13 objets) ; une session anonyme qui écrit
+      dans `community_posts`, `trip_invitations` ou `messages` reçoit 403 (RLS).
+- [x] Tony (8 oct.) : purge lancée dans le SQL Editor (`purge_anonymous_users`, tâche
+      `pg_cron` « purge-essais-anonymes » chaque nuit à 3 h 17, migration
+      `20261008180000` inscrite) ; **Allow anonymous sign-ins** allumé.
+- [x] Compte démo fermé : mot de passe remplacé par une valeur aléatoire tirée en
+      base (personne ne la connaît) ; l'ancien mot de passe, publié dans le code,
+      est refusé (8 oct.). Reste : retirer `DEMO_LOGIN_*` de Vercel (Tony, sans
+      urgence : le bouton démo ne s'affiche plus).
 - [ ] Captcha hCaptcha sur l'essai et l'inscription (compte gratuit à créer par Tony).
 - [ ] Garder son essai : lier un e-mail à la session anonyme (« manual linking » à
       allumer dans Supabase) au lieu de créer un nouveau compte qui perd le voyage.
@@ -591,14 +604,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ## Décisions de Tony (⚖️)
 
-| # | Sujet | Recommandation de Claude (0 €) |
-|---|---|---|
-| 1 | Vercel Hobby et usage commercial (Stripe = commercial, vérifié) | Couper paiement et affiliation en production par drapeau tant que l'offre est Hobby |
-| 2 | IA en production (aucune offre gratuite conforme, vérifié) | Compas complet sans IA ; IA éteinte pour les vrais utilisateurs |
-| 5 | Comptes gratuits (sans carte) : Geoapify, LocationIQ, ArcGIS Location Platform, hCaptcha | Tony les crée et pose les clés dans Vercel lui-même |
-| 6 | Essai sans compte : purge (SQL Editor) puis « Allow anonymous sign-ins » | Oui : ferme le compte démo partagé (2.3) |
-| 3 | Applications sur les stores | PWA à la place (0 €) |
-| 4 | Cible de lancement | Francophone d'abord (phase 7), puis monde (phase 6) |
+| # | Sujet | Recommandation de Claude (0 €) | Décision |
+|---|---|---|---|
+| 1 | Vercel Hobby et usage commercial (Stripe = commercial, vérifié) | Couper paiement et affiliation en production par drapeau tant que l'offre est Hobby | **Hobby pour l'instant, Stripe éteint** (8 oct.) |
+| 2 | IA en production (aucune offre gratuite conforme, vérifié) | Compas complet sans IA ; IA éteinte pour les vrais utilisateurs | **IA NVIDIA gardée allumée** (8 oct.) ; repli sans IA maintenu |
+| 5 | Comptes gratuits (sans carte) : Geoapify, LocationIQ, ArcGIS Location Platform, hCaptcha | Tony les crée et pose les clés dans Vercel lui-même | **Faits** (8 oct.) ; branchement par Claude |
+| 6 | Essai sans compte : purge (SQL Editor) puis « Allow anonymous sign-ins » | Oui : ferme le compte démo partagé (2.3) | **Fait** (8 oct.), prouvé en production |
+| 3 | Applications sur les stores | PWA à la place (0 €) | à venir |
+| 4 | Cible de lancement | Francophone d'abord (phase 7), puis monde (phase 6) | à venir |
 
 ## Ordre d'exécution
 
