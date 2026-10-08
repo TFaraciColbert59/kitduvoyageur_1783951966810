@@ -50,7 +50,7 @@ l'instant.
 
 - Réseau ouvert : la preview, Photon et Supabase répondent depuis le conteneur ; Overpass reste instable depuis ici (miroirs en 500/504).
 - Vercel refuse toujours les journaux du projet (403 sur `tonyfaracip-3325s-projects`) : le diagnostic passe par les notes écrites en base.
-- Réservations (P3, gelé) : RouteStack donne de **vraies offres d'hôtels** en ligne (Annecy : B&B Hotel, Moxy, Campanile…) et des **vols en aller simple** avec des codes d'aéroport (Genève → Lisbonne, 133,99 USD). Restent : aller-retour au-delà de 12 s, noms de villes en français (« Lisbonne ») non résolus, voiture à nommer en anglais. Le « sandbox » est l'étiquette de l'app (Résa affiche « Mode test… pas de vraies offres ») : le serveur appelé est déjà la production RouteStack (`mcp.routestack.ai`). Passage en production : `ROUTESTACK_MODE=production`, `ROUTESTACK_FULL_API_KEY`, `ROUTESTACK_FULL_PARTNER_SECRET` posés par Tony le 8 oct. (variables partagées de l'équipe, Production et Preview) ; actifs pour les déploiements créés ensuite.
+- Réservations (P3, gelé) : **RouteStack en production** depuis le 8 oct. (variables posées par Tony, preview en mode `live`) : vraies offres d'hôtels (Annecy : Logis Hotel Annecy Nord, Ibis…) et **vols aller simple et aller-retour** avec des codes d'aéroport (Genève → Lisbonne ; jusqu'à 20 s, délai porté à 30 s). Restent : noms de villes en français (« Lisbonne », « Paris ») non résolus par la recherche de lieux, voiture à nommer en anglais ; le site de production tourne encore sur `main`, sans ces correctifs.
 
 ## Décisions en vigueur
 
