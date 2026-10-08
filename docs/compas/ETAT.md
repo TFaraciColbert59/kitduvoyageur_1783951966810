@@ -52,7 +52,7 @@ l'instant.
 
 - Réseau ouvert : la preview, Photon et Supabase répondent depuis le conteneur ; Overpass reste instable depuis ici (miroirs en 500/504).
 - Vercel : connecteur reconnecté par Tony le 8 oct. (déploiements, journaux et variables lisibles).
-- Réservations (P3, gelé) : **RouteStack en direct sur le site de production** (8 oct., 12 h 03, mode `live`) : hôtels à Annecy (Logis Hôtel Annecy Nord, Hotel du Midi…), Lisbonne (Sheraton…) et Paris ; vols Genève → Lisbonne (3 offres dès 128,93 USD, 12 s). Villes écrites en français (« Lisbonne », « Londres ») et voiture : nom anglais d'après OpenStreetMap (PR #74, à prouver sur sa preview).
+- Réservations (P3, gelé) : **RouteStack en direct sur le site de production** (8 oct., 12 h 03, mode `live`) : hôtels à Annecy (Logis Hôtel Annecy Nord, Hotel du Midi…), Lisbonne (Sheraton…) et Paris ; vols Genève → Lisbonne (3 offres dès 128,93 USD, 12 s). **Villes en français prouvées sur la preview de la PR #74** (8 oct., 12 h 31) : vol Paris → Lisbonne (PAR → LIS, dès 47,07 USD), Genève → Londres (GVA → LON : Gatwick, Luton), Nice → Lyon (NCE → LYS), voiture à Lisbonne (3 offres). Aéroport de la ville d'après la réponse de RouteStack (« All Airports » d'abord, jamais une gare), nom anglais d'OpenStreetMap en secours. Un vol peut prendre jusqu'à 29 s.
 - Supabase : la migration de suppression d'index (−70 Mo) attend la confirmation de Tony ; l'import des lieux habités attend cette place.
 
 ## Décisions en vigueur
