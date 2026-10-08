@@ -1,6 +1,7 @@
 """Lieux habités GeoNames -> TSV compact pour public.geo_places (lot E).
-Usage : python3 -I prep_places.py <dossier des dumps> <sortie.tsv>
-cities500 (monde) + tous les lieux habités de FR, CH, IT, AT."""
+Usage : python3 -I scripts/geo/prep_geo_places.py <dossier des dumps> <sortie.tsv>
+cities500 (monde) + tous les lieux habités de FR, CH, IT, AT.
+Ensuite : npx tsx scripts/geo/import_geo_places.ts <sortie.tsv>."""
 import sys, os
 src, out = sys.argv[1], sys.argv[2]
 DETAIL = ['FR', 'CH', 'IT', 'AT']

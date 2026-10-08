@@ -112,4 +112,8 @@ Option Pro (25 $ par mois, 8 Go inclus) : tous les lieux habités du monde (~4,7
   retirés). **Étape 4 à faire par Tony** (suppression, SQL Editor) :
   `drop table public.places_geo;` après vérification des pages Pays en ligne (−232 Mo,
   base vers ~200 Mo).
-
+- **Import reproductible** (base neuve, réimport mensuel) : télécharger `cities500`, `FR`,
+  `CH`, `IT`, `AT` depuis download.geonames.org, puis
+  `python3 -I scripts/geo/prep_geo_places.py <dossier> geo_places.tsv` et
+  `npx tsx scripts/geo/import_geo_places.ts geo_places.tsv` (clé de service dans
+  l'environnement ; upsert idempotent sur `geoname_id`).
