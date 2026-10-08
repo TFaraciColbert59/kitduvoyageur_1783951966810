@@ -1544,7 +1544,7 @@ export default function UnifiedExplorerMap({
 
       {/* Attribution légère (obligatoire pour les tuiles) — mobile : haut droite ; desktop : bas centre.
           P1 — compteur lisible : token caption-2 (11px), jamais text-[9px]. */}
-      <div className="pointer-events-none absolute z-[var(--z-sticky)] rounded-full bg-[color:var(--card-tint-strong)] px-2 py-1 text-[length:var(--lkv-text-caption-2)] leading-none text-[color:var(--lkv-text-muted)] ${attributionPosition}">
+      <div className={`pointer-events-none absolute z-[var(--z-sticky)] rounded-full bg-[color:var(--card-tint-strong)] px-2 py-1 text-[length:var(--lkv-text-caption-2)] leading-none text-[color:var(--lkv-text-muted)] ${attributionPosition}`}>
         © OpenStreetMap France · Esri
       </div>
 
