@@ -55,7 +55,20 @@ async function overpassArea(query: string, timeoutMs: number): Promise<unknown |
   return payload;
 }
 
-async function overpass(query: string, deadline: number, timeoutMs = TIMEOUT_MS): Promise<unknown | null> {
+/**
+ * File d'attente unique : tous les appels Overpass de cette instance passent
+ * un par un (l'opérateur de private.coffee demande d'éviter les requêtes
+ * simultanées ; `lookupStagePois` cherchait deux lieux en même temps).
+ */
+let overpassChain: Promise<unknown> = Promise.resolve();
+
+function overpass(query: string, deadline: number, timeoutMs = TIMEOUT_MS): Promise<unknown | null> {
+  const run = overpassChain.then(() => overpassNow(query, deadline, timeoutMs));
+  overpassChain = run.catch(() => null);
+  return run;
+}
+
+async function overpassNow(query: string, deadline: number, timeoutMs: number): Promise<unknown | null> {
   for (const url of OVERPASS_ENDPOINTS) {
     const left = deadline - Date.now();
     if (left < 3000) break;

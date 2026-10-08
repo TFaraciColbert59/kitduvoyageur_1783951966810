@@ -1,4 +1,5 @@
 import 'server-only';
+import { rateLimit, type RateLimitResult } from '@/lib/rate-limit';
 
 /**
  * LocationIQ (offre gratuite : 5 000 requêtes par jour, 2 par seconde ; usage
@@ -54,4 +55,28 @@ export function normalizeLocationIq(payload: unknown): Array<Record<string, unkn
       addresstype: r.addresstype ?? r.type,
     };
   });
+}
+
+/**
+ * Un créneau LocationIQ pour tout le site : l'offre gratuite accepte 2
+ * requêtes par seconde pour la clé, quel que soit le nombre d'instances
+ * Vercel (au-delà : 429). Le compteur partagé en base décide ; une seconde
+ * pleine fait attendre la suivante, quatre fois au plus. Sans créneau :
+ * false, l'appelant passe au service suivant (Geoapify).
+ */
+export async function locationIqSlot(
+  deps: {
+    consume?: () => Promise<Pick<RateLimitResult, 'allowed' | 'retryAfterSeconds'>>;
+    sleep?: (ms: number) => Promise<void>;
+  } = {}
+): Promise<boolean> {
+  const consume =
+    deps.consume ?? (() => rateLimit({ key: 'locationiq:site', limit: 2, windowMs: 1000, failMode: 'open' }));
+  const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const slot = await consume();
+    if (slot.allowed) return true;
+    await sleep(Math.max(250, Math.min(1000, slot.retryAfterSeconds * 1000)));
+  }
+  return false;
 }

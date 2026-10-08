@@ -14,6 +14,8 @@ interface AtlasTileSource {
   attribution: string;
   /** Mention courte de la pastille visible sur la carte. */
   short: string;
+  /** Mention complète en texte (dépliée depuis la pastille). */
+  credits: string;
   maxzoom: number;
   tileSize: 256 | 512;
 }
@@ -37,6 +39,7 @@ export function arcgisTiles(key: string): Record<AtlasTileMode, AtlasTileSource>
       tiles: [`${ARCGIS_STATIC}/arcgis/outdoor/static/tile/{z}/{y}/{x}${token}`],
       attribution: `${POWERED_BY_ESRI} | Esri, TomTom, Garmin, FAO, NOAA, USGS, ${OSM_COPYRIGHT} contributors, GIS User Community`,
       short: 'Powered by Esri · © OpenStreetMap',
+      credits: 'Powered by Esri · Esri, TomTom, Garmin, FAO, NOAA, USGS, © OpenStreetMap contributors, GIS User Community',
       maxzoom: 19,
       tileSize: 512,
     },
@@ -44,6 +47,7 @@ export function arcgisTiles(key: string): Record<AtlasTileMode, AtlasTileSource>
       tiles: [`${ARCGIS_STATIC}/open/osm-style/static/tile/{z}/{y}/{x}${token}`],
       attribution: `${POWERED_BY_ESRI} | ${OSM_COPYRIGHT} contributors, Microsoft, Esri Community Maps contributors`,
       short: 'Powered by Esri · © OpenStreetMap',
+      credits: 'Powered by Esri · © OpenStreetMap contributors, Microsoft, Esri Community Maps contributors',
       maxzoom: 19,
       tileSize: 512,
     },
@@ -51,6 +55,7 @@ export function arcgisTiles(key: string): Record<AtlasTileMode, AtlasTileSource>
       tiles: [`${ARCGIS_IMAGERY}/{z}/{y}/{x}${token}`],
       attribution: `${POWERED_BY_ESRI} | Esri, Maxar, Earthstar Geographics, GIS User Community`,
       short: 'Powered by Esri · Maxar, Earthstar',
+      credits: 'Powered by Esri · Esri, Maxar, Earthstar Geographics, GIS User Community',
       maxzoom: 19,
       tileSize: 256,
     },
@@ -66,6 +71,7 @@ const KEYLESS_TILES: Record<AtlasTileMode, AtlasTileSource> = {
     tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'],
     attribution: '&copy; Esri, USGS, NOAA',
     short: '© Esri',
+    credits: '© Esri, USGS, NOAA',
     maxzoom: 19,
     tileSize: 256,
   },
@@ -77,6 +83,7 @@ const KEYLESS_TILES: Record<AtlasTileMode, AtlasTileSource> = {
     ],
     attribution: '&copy; OpenStreetMap contributors | OSM France',
     short: '© OpenStreetMap France',
+    credits: '© OpenStreetMap contributors · OSM France',
     maxzoom: 19,
     tileSize: 256,
   },
@@ -84,6 +91,7 @@ const KEYLESS_TILES: Record<AtlasTileMode, AtlasTileSource> = {
     tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
     attribution: '&copy; Esri, Earthstar Geographics',
     short: '© Esri',
+    credits: '© Esri, Earthstar Geographics',
     maxzoom: 19,
     tileSize: 256,
   },

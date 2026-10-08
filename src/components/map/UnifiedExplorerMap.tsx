@@ -372,6 +372,8 @@ export default function UnifiedExplorerMap({
 
   const [ready, setReady] = useState(false);
   const [tileMode, setTileMode] = useState<AtlasTileMode>('topo');
+  // Mention complète des fournisseurs (Esri l'exige), dépliée depuis la pastille.
+  const [creditsOpen, setCreditsOpen] = useState(false);
   const [viewport, setViewport] = useState<ViewportQuery | null>(null);
   const [viewMode, setViewMode] = useState<'local' | 'globe'>('globe');
   const [globeNotice, setGlobeNotice] = useState<string | null>(null);
@@ -1544,9 +1546,15 @@ export default function UnifiedExplorerMap({
 
       {/* Attribution légère (obligatoire pour les tuiles) — mobile : haut droite ; desktop : bas centre.
           P1 — compteur lisible : token caption-2 (11px), jamais text-[9px]. */}
-      <div className={`pointer-events-none absolute z-[var(--z-sticky)] rounded-full bg-[color:var(--card-tint-strong)] px-2 py-1 text-[length:var(--lkv-text-caption-2)] leading-none text-[color:var(--lkv-text-muted)] ${attributionPosition}`}>
-        {ATLAS_TILES[tileMode].short}
-      </div>
+      <button
+        type="button"
+        aria-expanded={creditsOpen}
+        aria-label={creditsOpen ? 'Masquer les sources de la carte' : 'Sources de la carte'}
+        onClick={() => setCreditsOpen((v) => !v)}
+        className={`absolute z-[var(--z-sticky)] max-w-[min(320px,calc(100vw-24px))] rounded-[var(--lkv-radius-sm)] bg-[color:var(--card-tint-strong)] px-2 py-1 text-left text-[length:var(--lkv-text-caption-2)] leading-tight text-[color:var(--lkv-text-muted)] ${attributionPosition}`}
+      >
+        {creditsOpen ? ATLAS_TILES[tileMode].credits : `${ATLAS_TILES[tileMode].short} ⓘ`}
+      </button>
 
       {/* Sélection pays (couche monde) — données réelles, jamais inventées. */}
       {!compact && selectedCountry && (

@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, isNotablePlace, pickDestination, pickNatural, type CompasPlace } from '../engine/places';
 import { cached, coordKey } from './sharedCache';
 import { geoapifyReverse, geoapifySearch } from './geoapify';
-import { locationIqKey, locationIqUrl, normalizeLocationIq } from './locationIq';
+import { locationIqKey, locationIqSlot, locationIqUrl, normalizeLocationIq } from './locationIq';
 
 /**
  * Recherche d'un lieu sur la carte (Photon, puis Nominatim — par LocationIQ
@@ -68,6 +68,11 @@ function nominatimQueued(url: string): Promise<CompasPlace[] | null> {
   const key = locationIqKey();
   const viaLocationIq = key ? locationIqUrl(url, key) : null;
   const run = nominatimChain.then(async () => {
+    // LocationIQ : 2 requêtes/s pour tout le site (créneau partagé en base).
+    if (viaLocationIq && !(await locationIqSlot())) {
+      console.warn('[compas] LocationIQ : pas de créneau libre, service suivant');
+      return null;
+    }
     const payload = viaLocationIq
       ? await fetchJson(viaLocationIq, { Accept: 'application/json' })
       : await fetchJson(url, { Accept: 'application/json', 'User-Agent': NOMINATIM_UA });

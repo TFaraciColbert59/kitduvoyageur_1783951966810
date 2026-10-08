@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('server-only', () => ({}));
-import { locationIqKey, locationIqUrl, normalizeLocationIq } from '../server/locationIq';
+import { locationIqKey, locationIqSlot, locationIqUrl, normalizeLocationIq } from '../server/locationIq';
 import { parseNominatim } from '../engine/places';
 
 /**
@@ -64,5 +64,27 @@ describe('LocationIQ à la place du Nominatim public', () => {
     expect(places[0].aliases).toContain('Aguas Calientes');
     // Géocodage inverse : un seul objet, pas une liste.
     expect(normalizeLocationIq({ lat: '1', lon: '2', display_name: 'Annecy, France', class: 'place', type: 'city' })).toHaveLength(1);
+  });
+  it('2 requêtes par seconde pour tout le site : créneau partagé, attente, puis abandon (revue Codex)', async () => {
+    const waits: number[] = [];
+    const sleep = async (ms: number) => {
+      waits.push(ms);
+    };
+    // Seconde pleine, puis créneau libre : on attend une fois et on passe.
+    const answers = [
+      { allowed: false, retryAfterSeconds: 1 },
+      { allowed: true, retryAfterSeconds: 0 },
+    ];
+    expect(await locationIqSlot({ consume: async () => answers.shift()!, sleep })).toBe(true);
+    expect(waits).toEqual([1000]);
+    // Toujours plein : quatre essais, puis le service suivant.
+    waits.length = 0;
+    let calls = 0;
+    const full = async () => {
+      calls += 1;
+      return { allowed: false, retryAfterSeconds: 1 };
+    };
+    expect(await locationIqSlot({ consume: full, sleep })).toBe(false);
+    expect(calls).toBe(4);
   });
 });

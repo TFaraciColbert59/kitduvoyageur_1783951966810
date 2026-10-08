@@ -20,7 +20,11 @@ describe('fonds de carte autorisés en commercial', () => {
     for (const t of Object.values(tiles)) {
       expect(t.attribution).toContain('Powered by');
       expect(t.short).toContain('Powered by Esri');
+      // Mention complète des fournisseurs, dépliable depuis la pastille (revue Codex).
+      expect(t.credits).toMatch(/^Powered by Esri · /);
     }
+    expect(tiles.topo.credits).toContain('TomTom, Garmin, FAO, NOAA, USGS');
+    expect(tiles.satellite.credits).toContain('Maxar, Earthstar Geographics');
   });
 
   it('la clé est encodée dans l’adresse (jamais d’URL cassée)', () => {
