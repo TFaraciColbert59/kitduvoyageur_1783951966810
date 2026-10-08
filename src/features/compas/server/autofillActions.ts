@@ -1439,7 +1439,10 @@ export async function compasAutofillAction(
     let carFuel: ReturnType<typeof estimateCarTrip> = null;
     const start = dayStep(1);
     const target = start?.latitude != null && start.longitude != null ? { lat: start.latitude, lon: start.longitude } : anchor;
-    const origin = from ? await lookupReverse(from.lat, from.lon) : null;
+    const near = from ? await lookupReverse(from.lat, from.lon) : null;
+    // La commune, pas le lieu le plus proche du point (« depuis Chantier Hotel
+    // de Ville » au lieu d'Annecy, 8 oct.).
+    const origin = near ? { ...near, name: near.locality ?? near.name } : null;
     const abroad =
       anchor.countryCode != null && (origin?.countryCode ?? 'FR') !== anchor.countryCode;
     let flightNeeded = false;
