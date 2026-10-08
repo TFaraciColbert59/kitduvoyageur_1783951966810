@@ -84,6 +84,19 @@ Option Pro (25 $ par mois, 8 Go inclus) : tous les lieux habités du monde (~4,7
 1. **Offre gratuite retenue** (Tony, 8 octobre) : référentiel compact, ~300 Mo au final ;
    pas de passage en Pro.
 
-Encore attendues :
-2. Feu vert pour la migration 1 (index doublon, −22 Mo) dès maintenant ?
-3. Feu vert pour `geo_places` et l'import 1 (lieux habités) ?
+2. **Feu vert** par le mandat de Tony (8 octobre, carte blanche) pour les étapes 1 à 3.
+
+### Où on en est (8 octobre, midi)
+
+- `places_geo` relu : l'import du 11 août s'est arrêté dans l'ordre alphabétique après les
+  pays en A–C (Chine 85 112 lieux, Brésil 72 391), et **aucun lieu n'a de région**
+  (`admin_region_id` nul sur les 592 816 lignes). `fetchPlaces` (lecture par région des
+  pages Pays) ne trouve donc rien ; seule la lecture par pays sert.
+- Migration 1 élargie à **9 index jamais lus ou en double** (−70 Mo environ, mesurés dans
+  `pg_stat_user_indexes`) : `places_geo` (`geoname_id` en double, plein texte, admin1,
+  admin2, pays seul couvert par pays + population), `admin_regions_geo` (`geoname_id` en
+  double, plein texte, `admin_code`), `countries_geo` (`geoname_id` en double). Gardés :
+  géométrie (future recherche spatiale du Compas), trigrammes (12 lectures).
+- **Bloquée** : l'outil de migration Supabase n'exécute pas ces `DROP INDEX` (il attend
+  une confirmation de Tony ; rien n'arrive en base). L'import des lieux habités attend
+  cette place : sans elle, la base passerait de 424 à ~480 Mo sur 500.
