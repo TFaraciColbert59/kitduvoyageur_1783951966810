@@ -127,7 +127,8 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       zone ramenés de 500 à 200 (10 crédits) ; **compteur de crédits du jour en base**
       (`take_api_credits`, lot F) commun au géocodage, aux lieux et au routage, arrêt à
       2 700 ; le routage a en plus son plafond de 1 500, au coût réel (un crédit par
-      tranche de 500 km). Preuve : `api_credit_days`.
+      tranche de 500 km). Preuve en production (8 oct., 23 h 20) : `api_credit_days`
+      passe de 1 à 4 crédits Geoapify et de 0 à 3 crédits de routage sur une préparation.
 - [~] **LocationIQ gratuit** (5 000 req/jour, commercial avec lien visible) : compte
       créé par Tony (8 oct.) ; avec `LOCATIONIQ_API_KEY`, **tous les appels Nominatim du
       Compas passent par LocationIQ** (même moteur, `src/features/compas/server/locationIq.ts`,
@@ -419,11 +420,13 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       (`scripts/geo/prep_geo_places.py`), écriture par une fonction Supabase temporaire
       protégée par un secret à usage unique, désactivée ensuite (410). Réimport mensuel :
       tâche GitHub Actions à brancher sur `SUPABASE_DB_URL` (secret de Tony).
-- [~] `lookupAreaPlaces` lit le référentiel d'abord ; Photon n'est demandé que pour les
+- [x] `lookupAreaPlaces` lit le référentiel d'abord ; Photon n'est demandé que pour les
       refuges et campings (absents de GeoNames), ou pour compléter une zone maigre hors
       des pays détaillés. Pages Pays (`fetchPlacesByCountry`) sur `geo_places` ;
       `places_geo` n'est plus lu nulle part (lecteurs morts retirés). Preuve en ligne : préparations Vercors, Dolomites,
-      Patagonie (journal « Référentiel N », sans « Photon » pour les lieux habités).
+      Patagonie (journal « Référentiel N », sans « Photon » pour les lieux habités) ;
+      **production** (8 oct., 23 h 20, `f5b5ac9`) : Bauges, 263 lieux sur 374 tirés du
+      référentiel (cache `area:v3`), préparation prête en 48 s.
 
 ### 3.3 Massifs, parcs, régions naturelles
 
@@ -452,7 +455,8 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 3.8 Pages Pays et retrait de `places_geo`
 
-- [ ] Pages Pays lues dans `geo_places` (par région et par pays).
+- [x] Pages Pays lues dans `geo_places` (par pays ; `fetchPlacesByCountry`), en
+      production depuis `f5b5ac9` (France, Italie, Népal : 200).
 - [ ] Suppression de `places_geo` (−232 Mo), via SQL Editor si le connecteur refuse.
 
 ### 3.9 Mise à jour
