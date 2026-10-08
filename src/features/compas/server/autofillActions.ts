@@ -63,7 +63,7 @@ import { compasMeta, patchTripMetadata, readProfile, requireEditor, resplitSteps
 import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
 import { bestPeriod, monthName } from '../engine/period';
 import { partsText, retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
-import { lookupDestination, lookupMassif, lookupNatural, lookupReverse, stageAliasCandidates, stageCandidates } from './placeLookup';
+import { lookupDestination, lookupMassif, lookupNatural, lookupReverse, lookupRiver, stageAliasCandidates, stageCandidates } from './placeLookup';
 import { lookupAreaPlaces, lookupRiverLine, lookupStagePois } from './stagePoiLookup';
 import { buildTrack, simplifyLine, trackKey, type LngLat } from '../engine/track';
 import { descentWindow, planRiverDescent } from '../engine/river';
@@ -859,8 +859,18 @@ export async function compasAutofillAction(
     // Saint-Étienne pour un voyage à vélo le long du fleuve) : le lieu naturel
     // du même nom dans le pays (massif, parc, fleuve). Gardé sur le voyage :
     // carte, météo et trajet s'en servent aussi.
-    if (anchor && OUTDOOR_ACTIVITIES.has(activity) && REPLACEABLE_ANCHOR_KINDS.has(anchor.kind ?? '')) {
-      const nat = await lookupNatural(anchor.name, anchor.countryCode, activity === 'cycling' || activity === 'water').catch(() => null);
+    // Sur l'eau, la rivière du même nom prime aussi sur un autre lieu naturel
+    // (« kayak sur le Tarn » : un bois de 4 km près de Saint-Sulpice-la-Pointe,
+    // pris pour la destination, 8 oct.).
+    const replaceable = REPLACEABLE_ANCHOR_KINDS.has(anchor?.kind ?? '');
+    const seekRiver =
+      activity === 'water' && anchor != null && anchor.kind !== 'river' && !replaceable && !SETTLEMENT_KINDS.has(anchor.kind ?? '');
+    if (anchor && OUTDOOR_ACTIVITIES.has(activity) && (replaceable || seekRiver)) {
+      const isRiver = (p: CompasPlace | null) => /^waterway=/.test(p?.osmTag ?? '');
+      const found = await lookupNatural(anchor.name, anchor.countryCode, activity === 'cycling' || activity === 'water').catch(() => null);
+      let nat = found && (replaceable || isRiver(found)) ? found : null;
+      // Sur l'eau, la rivière cherchée aussi sous son article (« Le Tarn »).
+      if (activity === 'water' && !isRiver(nat)) nat = (await lookupRiver(anchor.name, anchor.countryCode)) ?? nat;
       if (nat) {
         // Une rivière le reste (« river ») : la descente en canoë suit son tracé.
         const kind = /^waterway=/.test(nat.osmTag ?? '') ? 'river' : 'other';

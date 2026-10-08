@@ -210,6 +210,22 @@ export async function lookupReverse(lat: number, lon: number): Promise<CompasPla
   return places?.[0] ?? null;
 }
 
+/**
+ * La rivière de ce nom dans le pays. La carte (Photon) ne la donne souvent
+ * qu'avec son article : « Tarn » rend des plans d'eau, « Le Tarn » la rivière
+ * entière (de même « La Dordogne », « L'Ardèche »). Rien : null.
+ */
+export async function lookupRiver(name: string, countryCode: string | null): Promise<CompasPlace | null> {
+  const bare = name.trim().replace(/^(?:(?:la|le|les)\s+|l['’]\s*)/i, '');
+  if (bare.length < 2) return null;
+  const variants = /^[aeiouyhàâäéèêëîïôöûüù]/i.test(bare) ? [bare, `L'${bare}`] : [bare, `Le ${bare}`, `La ${bare}`];
+  for (const q of variants) {
+    const p = await lookupNatural(q, countryCode, true).catch(() => null);
+    if (p && /^waterway=/.test(p.osmTag ?? '')) return p;
+  }
+  return null;
+}
+
 /** Lieux naturels seulement (massifs, régions naturelles, parcs, réserves, rivières). */
 const NATURAL_TAGS = ['natural', 'boundary:protected_area', 'boundary:national_park', 'place:region', 'leisure:nature_reserve', 'waterway:river']
   .map((t) => `&osm_tag=${t}`)
