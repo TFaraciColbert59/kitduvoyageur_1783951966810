@@ -26,7 +26,6 @@ import type {
 
 const DEFAULT_MCP_URL = 'https://mcp.routestack.ai/sse';
 const DEFAULT_LIMIT = 5;
-const DEFAULT_DRIVER_AGE = 30;
 const PARTNER_TOKEN_TIMEOUT_MS = 10_000;
 const MCP_CONNECT_TIMEOUT_MS = 8_000;
 const MCP_TOOL_TIMEOUT_MS = 12_000;
@@ -785,7 +784,8 @@ async function resolveLocation(
     return { id: trimmed, code: trimmed };
   }
   const tool = vertical === 'flight' ? 'flight_locations' : vertical === 'hotel' ? 'hotel_search_destinations' : 'car_locations';
-  const payload = parseToolPayload(await callTool(tool, { query: trimmed }));
+  // OpenAPI RouteStack : `term` pour les lieux de vol et de voiture, `query` pour les destinations d'hôtel.
+  const payload = parseToolPayload(await callTool(tool, vertical === 'hotel' ? { query: trimmed } : { term: trimmed }));
   const records = findRecords(payload, ['result', 'results', 'locations', 'destinations', 'data']);
   const record = records[0];
   if (!record) {
@@ -823,16 +823,17 @@ async function argumentsForRequest(
   if (request.vertical === 'flight') {
     const origin = await resolveLocation(callTool, 'flight', request.origin);
     const destination = await resolveLocation(callTool, 'flight', request.destination);
+    // Corps de POST /mcp/flight/search (collection Postman RouteStack) : à plat, sans `filter`.
     return {
-      filter: {
-        origin: origin.code,
-        destination: destination.code,
-        departureDate: request.departure,
-        ...(request.return ? { returnDate: request.return } : {}),
-        adults: travelers,
-        cabinClass: 'economy',
-        tripType: request.return ? 'round_trip' : 'one_way',
-      },
+      type: request.return ? 'RoundTrip' : 'OneWay',
+      origin: origin.code,
+      destination: destination.code,
+      departureDate: request.departure,
+      ...(request.return ? { returnDate: request.return } : {}),
+      adults: travelers,
+      children: 0,
+      infants: 0,
+      cabin: 'Economy',
     };
   }
   if (request.vertical === 'hotel') {
@@ -854,15 +855,13 @@ async function argumentsForRequest(
     };
   }
   if (request.vertical === 'car') {
-    const destination = await resolveLocation(callTool, 'car', request.destination);
+    // Corps de POST /mcp/car/search (collection Postman RouteStack) : le lieu par
+    // son nom, date et heure séparées (heure telle qu'écrite dans la demande).
+    const at = (iso: string) => ({ date: iso.slice(0, 10), time: iso.slice(11, 16) });
+    const place = request.destination.trim();
     return {
-      filter: {
-        pickup: { type: 'city', code: destination.code },
-        dropoff: { type: 'city', code: destination.code },
-        pickupDate: request.pickupAt,
-        dropoffDate: request.dropoffAt,
-        driverAge: DEFAULT_DRIVER_AGE,
-      },
+      pickup: { name: place, ...at(request.pickupAt) },
+      dropoff: { name: place, ...at(request.dropoffAt) },
     };
   }
   throw new BookingProviderError({
