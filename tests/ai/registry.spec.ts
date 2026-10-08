@@ -24,8 +24,8 @@ const EXPECTED_SPECS: Record<string, { tier: string; maxReasoningBudget: number;
   'chat-completion': { tier: 'heavy', maxReasoningBudget: 4096, cacheTtlSeconds: 0, maxPerUserPerDay: 100 },
   diagnostic: { tier: 'heavy', maxReasoningBudget: 512, cacheTtlSeconds: 0, maxPerUserPerDay: 50 },
   'compas-autofill': { tier: 'heavy', maxReasoningBudget: 2000, cacheTtlSeconds: 0, maxPerUserPerDay: 20 },
-  'compas-intent': { tier: 'fast', maxReasoningBudget: 0, cacheTtlSeconds: 0, maxPerUserPerDay: 60 },
-  'compas-verdict': { tier: 'fast', maxReasoningBudget: 0, cacheTtlSeconds: 0, maxPerUserPerDay: 30 },
+  'compas-intent': { tier: 'fast', maxReasoningBudget: 0, cacheTtlSeconds: 86_400, maxPerUserPerDay: 60 },
+  'compas-verdict': { tier: 'fast', maxReasoningBudget: 0, cacheTtlSeconds: 86_400, maxPerUserPerDay: 30 },
   'trajectoire-narration': { tier: 'fast', maxReasoningBudget: 0, cacheTtlSeconds: 3_600, maxPerUserPerDay: 100 },
   'trail-ai-enrichment': { tier: 'fast', maxReasoningBudget: 1500, cacheTtlSeconds: 2_592_000, maxPerUserPerDay: 60 },
 };

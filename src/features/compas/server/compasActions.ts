@@ -1700,7 +1700,7 @@ export async function compasInterpretAction(
         system: buildCompasIntentSystem(),
         prompt: buildCompasIntentPrompt({ text, today, startDate, days }),
         maxTokens: 700,
-        cacheTtlSeconds: 0,
+        cacheTtlSeconds: COMPAS_INTENT_SPEC.cacheTtlSeconds,
         userId: auth.userId,
         json: true,
         // Les règles ont déjà compris l'essentiel : au-delà de 12 s, on applique
@@ -1802,7 +1802,7 @@ export async function compasExplainVerdictAction(
       system: buildCompasVerdictSystem(),
       prompt: buildCompasVerdictPrompt(facts),
       maxTokens: 400,
-      cacheTtlSeconds: 0,
+      cacheTtlSeconds: COMPAS_VERDICT_SPEC.cacheTtlSeconds,
       userId: user.id,
     });
     if (res.degraded || res.provider === 'fallback') {

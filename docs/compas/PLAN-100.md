@@ -227,7 +227,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [ ] Conseils par règles (4.12) pour que l'absence d'IA ne retire rien d'essentiel.
 - [x] Plafond global quotidien d'appels IA (`AI_DAILY_CAP`, 2 000 par défaut, en plus du
       plafond par personne) ; compteur en panne = refus (fail-closed), lot F.
-- [ ] Cache des réponses IA identiques (même demande, même jour).
+- [x] Cache des réponses IA identiques (même demande, même jour) : « Dis-le »
+      (`compas-intent`) et explication du verdict (`compas-verdict`) gardées un jour ; la
+      date du jour, les dates du voyage et les faits font partie de la demande, donc de
+      la clé. Une réponse en cache ne consomme ni quota ni appel. La préparation reste
+      sans cache (chaque voyage est unique).
 
 ### 1.8 Météo et données ouvertes
 
