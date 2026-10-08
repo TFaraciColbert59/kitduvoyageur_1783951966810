@@ -59,7 +59,7 @@ import {
   movesFromSteps,
 } from '../engine/autofill';
 import { shortHoursOf, tripLengthDays } from '../engine/tripContext';
-import { compasMeta, patchTripMetadata, readProfile, requireEditor, resplitSteps, tripBasis, tripPartySize, type Supa } from './compasServer';
+import { compasMeta, readProfile, requireEditor, resplitSteps, tripBasis, tripPartySize, updateTripMetadata, type Supa } from './compasServer';
 import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
 import { bestPeriod, monthName } from '../engine/period';
 import { partsText, retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
@@ -729,7 +729,7 @@ export async function compasAutofillStartAction(
       const outcome: CompasAutofillOutcome = { ...res, token, at: Date.now() };
       try {
         const { supabase } = auth;
-        const metadata = await patchTripMetadata(supabase, tripId, (m) => {
+        const { error: writeError } = await updateTripMetadata(supabase, tripId, (m) => {
           // Lancement en double juste après une préparation réussie (écran
           // remonté, Ardennes du 8 oct.) : « déjà prérempli » écrasait l'issue
           // réussie et les deux écrans attendaient sans fin. L'issue réussie
@@ -741,7 +741,7 @@ export async function compasAutofillStartAction(
               : outcome;
           return { ...m, compas: { ...compasMeta(m), autofill_result: kept } };
         });
-        await supabase.from('trips').update({ metadata, updated_at: new Date().toISOString() }).eq('id', tripId);
+        if (writeError) console.error('[compas] issue de la préparation non écrite', writeError.code, writeError.message);
       } catch (err) {
         console.error('[compas] issue de la préparation non écrite', err instanceof Error ? err.message : err);
       }
@@ -791,11 +791,10 @@ export async function compasAutofillStopAction(input: z.input<typeof stopSchema>
   if (!parsed.success) return { success: false };
   const auth = await requireEditor(parsed.data.tripId).catch(() => null);
   if (!auth || 'error' in auth) return { success: false };
-  const metadata = await patchTripMetadata(auth.supabase, parsed.data.tripId, (m) => ({
+  const { error } = await updateTripMetadata(auth.supabase, parsed.data.tripId, (m) => ({
     ...m,
     compas: { ...compasMeta(m), autofill_stop: Date.now() },
   }));
-  const { error } = await auth.supabase.from('trips').update({ metadata }).eq('id', parsed.data.tripId);
   return { success: !error };
 }
 
@@ -926,7 +925,7 @@ export async function compasAutofillAction(
         const kind = /^waterway=/.test(nat.osmTag ?? '') ? 'river' : 'other';
         anchor = { ...anchor, lat: nat.lat, lon: nat.lon, kind, extent: nat.extent, radiusKm: destinationRadiusKm(nat) };
         const fixed = anchor;
-        const md = await patchTripMetadata(supabase, tripId, (m) => ({
+        await updateTripMetadata(supabase, tripId, (m) => ({
           ...m,
           compas: {
             ...compasMeta(m),
@@ -941,7 +940,6 @@ export async function compasAutofillAction(
             },
           },
         }));
-        await supabase.from('trips').update({ metadata: md }).eq('id', tripId);
         if (nat.name !== anchor.name)
           notes.push(`« ${nat.name} » retenu pour ${anchor.name} (lieu naturel, adapté à l’activité).`);
       }
@@ -1004,12 +1002,11 @@ export async function compasAutofillAction(
       if (!replacing.length) return;
       await supabase.from('trip_steps').delete().eq('trip_id', tripId).in('id', replacing);
       if (carry?.replaceRoute) {
-        const md = await patchTripMetadata(supabase, tripId, (m) => {
+        await updateTripMetadata(supabase, tripId, (m) => {
           const next = { ...m };
           delete next.route_id;
           return next;
         });
-        await supabase.from('trips').update({ metadata: md }).eq('id', tripId);
       }
     };
     if ((steps.length === 0 || replacing.length > 0) && !resume) {
@@ -1028,12 +1025,7 @@ export async function compasAutofillAction(
         );
         if (best) {
           await dropReplaced();
-          const { error } = await supabase
-            .from('trips')
-            .update({
-              metadata: await patchTripMetadata(supabase, tripId, (m) => ({ ...m, route_id: Number(best.route_id) })),
-            })
-            .eq('id', tripId);
+          const { error } = await updateTripMetadata(supabase, tripId, (m) => ({ ...m, route_id: Number(best.route_id) }));
           if (!error) {
             await resplitSteps(supabase, tripId, Number(best.route_id), days);
             routeSet = true;
@@ -1386,8 +1378,7 @@ export async function compasAutofillAction(
           );
         // Arrêtée avant d'écrire l'itinéraire : rien n'est écrit, la place est rendue.
         if (stagePlaces.length && (await stopAsked())) {
-          const md = await patchTripMetadata(supabase, tripId, (m) => ({ ...m, compas: withoutClaim(compasMeta(m)) }));
-          await supabase.from('trips').update({ metadata: md }).eq('id', tripId);
+          await updateTripMetadata(supabase, tripId, (m) => ({ ...m, compas: withoutClaim(compasMeta(m)) }));
           return { success: false, error: 'Préparation arrêtée : rien n’a été écrit.' };
         }
         if (stagePlaces.length) await dropReplaced();
@@ -1429,11 +1420,10 @@ export async function compasAutofillAction(
           );
           if (track) {
             const key = trackKey(rows.map((r) => ({ lat: r.latitude, lon: r.longitude })));
-            const md = await patchTripMetadata(supabase, tripId, (m) => ({
+            await updateTripMetadata(supabase, tripId, (m) => ({
               ...m,
               compas: { ...compasMeta(m), track: { key, geojson: track } },
             }));
-            await supabase.from('trips').update({ metadata: md }).eq('id', tripId);
           }
         }
       }
@@ -1443,12 +1433,11 @@ export async function compasAutofillAction(
 
     if (phase === 'steps') {
       const run: PendingRun = { runId, stepIds: createdStepIds, routeSet, notes: notes.slice(0, 6), datesSet, stagesFallback };
-      const metadata = await patchTripMetadata(supabase, tripId, (m) => ({
+      await updateTripMetadata(supabase, tripId, (m) => ({
         ...m,
         // Itinéraire écrit : la prise « steps » est rendue.
         compas: { ...withoutClaim(compasMeta(m)), autofill_pending: run },
       }));
-      await supabase.from('trips').update({ metadata, updated_at: new Date().toISOString() }).eq('id', tripId);
       // Points sur place (restos, commerces, eau…) cherchés dès maintenant, après
       // la réponse : ils sont en cache quand l'écran s'ouvre. Trois appels au plus
       // (deux lieux chacun), arrêtés par la limite de la fonction sans rien casser.
@@ -2010,37 +1999,38 @@ export async function compasAutofillAction(
     lap('9');
     /* 9. Trace pour l'annulation et la réadaptation, puis budget cible si aucun n'était fixé. */
     const merged = (a: string[], b: string[] | undefined) => [...new Set([...a, ...(b ?? [])])];
-    const metadata = await patchTripMetadata(supabase, tripId, (m) => ({
-      ...m,
-      compas: {
-        ...withoutClaim(withoutPending(compasMeta(m))),
-        autofill: {
-          runId,
-          at: new Date().toISOString(),
-          // Ce que ce préremplissage a écrit, plus ce qu'une réadaptation a gardé du précédent.
-          stepIds: merged(createdStepIds, carry?.stepIds),
-          routeSet: routeSet || (carry?.routeSet ?? false),
-          itemIds: merged(createdItemIds, carry?.itemIds),
-          expenseIds: merged(createdExpenseIds, carry?.expenseIds),
-          stays: [...stays, ...(carry?.stays ?? []).filter((s) => !stays.some((x) => x.stepId === s.stepId))],
-          budgetSet: setBudget,
-          // Arrêtée en cours : la relance demande d'abord « Annuler ».
-          ...(halted ? { stopped: true } : {}),
-          datesSet,
-          notes: notes.slice(0, 6),
-          // Réglages qui ont produit ce préremplissage : un changement dit quoi refaire.
-          // Lus sur les métadonnées à jour : le lieu naturel retenu en cours de route
-          // (Ardennes, département → massif) ne passe pas pour un changement de lieu,
-          // qui relançait aussitôt toute la préparation.
-          basis: tripBasis({ ...trip, metadata: m }, activity),
-          ...(stagesFallback ? { stagesFallback } : {}),
+    const { error: traceError } = await updateTripMetadata(
+      supabase,
+      tripId,
+      (m) => ({
+        ...m,
+        compas: {
+          ...withoutClaim(withoutPending(compasMeta(m))),
+          autofill: {
+            runId,
+            at: new Date().toISOString(),
+            // Ce que ce préremplissage a écrit, plus ce qu'une réadaptation a gardé du précédent.
+            stepIds: merged(createdStepIds, carry?.stepIds),
+            routeSet: routeSet || (carry?.routeSet ?? false),
+            itemIds: merged(createdItemIds, carry?.itemIds),
+            expenseIds: merged(createdExpenseIds, carry?.expenseIds),
+            stays: [...stays, ...(carry?.stays ?? []).filter((s) => !stays.some((x) => x.stepId === s.stepId))],
+            budgetSet: setBudget,
+            // Arrêtée en cours : la relance demande d'abord « Annuler ».
+            ...(halted ? { stopped: true } : {}),
+            datesSet,
+            notes: notes.slice(0, 6),
+            // Réglages qui ont produit ce préremplissage : un changement dit quoi refaire.
+            // Lus sur les métadonnées à jour : le lieu naturel retenu en cours de route
+            // (Ardennes, département → massif) ne passe pas pour un changement de lieu,
+            // qui relançait aussitôt toute la préparation.
+            basis: tripBasis({ ...trip, metadata: m }, activity),
+            ...(stagesFallback ? { stagesFallback } : {}),
+          },
         },
-      },
-    }));
-    const { error: traceError } = await supabase
-      .from('trips')
-      .update({ metadata, ...(setBudget ? { estimated_budget: total } : {}), updated_at: new Date().toISOString() })
-      .eq('id', tripId);
+      }),
+      { columns: setBudget ? { estimated_budget: total } : {} }
+    );
     if (traceError) console.error('[compas] autofill trace', traceError.code, traceError.message);
 
     lap('fin');
@@ -2094,23 +2084,25 @@ export async function compasUndoAutofillAction(
         .eq('id', s.stepId)
         .eq('accommodation_name', s.name);
     if (run.stepIds?.length) await supabase.from('trip_steps').delete().eq('trip_id', tripId).in('id', run.stepIds);
-    const metadata = await patchTripMetadata(supabase, tripId, (m) => {
-      const next: Record<string, unknown> = {
-        ...m,
-        compas: { ...withoutPending(compasMeta(m)), autofill: { undone: true } },
-      };
-      if (run.routeSet) delete next.route_id;
-      return next;
-    });
-    await supabase
-      .from('trips')
-      .update({
-        metadata,
-        ...(run.budgetSet ? { estimated_budget: null } : {}),
-        ...(run.datesSet ? { start_date: null, end_date: null } : {}),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', tripId);
+    const { error: undoError } = await updateTripMetadata(
+      supabase,
+      tripId,
+      (m) => {
+        const next: Record<string, unknown> = {
+          ...m,
+          compas: { ...withoutPending(compasMeta(m)), autofill: { undone: true } },
+        };
+        if (run.routeSet) delete next.route_id;
+        return next;
+      },
+      {
+        columns: {
+          ...(run.budgetSet ? { estimated_budget: null } : {}),
+          ...(run.datesSet ? { start_date: null, end_date: null } : {}),
+        },
+      }
+    );
+    if (undoError) console.error('[compas] annulation : métadonnées non écrites', undoError.code, undoError.message);
     return { success: true };
   } catch (err) {
     console.error('[compas] compasUndoAutofillAction', err);
@@ -2251,21 +2243,19 @@ export async function compasRefreshAutofillAction(
       if (keep.length) kept.push(`${keep.length} ligne${keep.length > 1 ? 's' : ''} de budget modifiée${keep.length > 1 ? 's' : ''}, gardée${keep.length > 1 ? 's' : ''}`);
     } else carry.expenseIds = expenseIds;
 
-    const metadata = await patchTripMetadata(supabase, tripId, (m) => {
-      const c = { ...compasMeta(m) };
-      delete c.autofill; // le préremplissage repasse
-      const next: Record<string, unknown> = { ...m, compas: { ...c, autofill_carry: carry } };
-      return next;
-    });
-    await supabase
-      .from('trips')
-      .update({
-        metadata,
-        // Une enveloppe posée par le préremplissage se recalcule avec le reste.
-        ...(run.budgetSet && parts.includes('budget') ? { estimated_budget: null } : {}),
-        updated_at: now,
-      })
-      .eq('id', tripId);
+    const { error: carryError } = await updateTripMetadata(
+      supabase,
+      tripId,
+      (m) => {
+        const c = { ...compasMeta(m) };
+        delete c.autofill; // le préremplissage repasse
+        const next: Record<string, unknown> = { ...m, compas: { ...c, autofill_carry: carry } };
+        return next;
+      },
+      // Une enveloppe posée par le préremplissage se recalcule avec le reste.
+      { columns: run.budgetSet && parts.includes('budget') ? { estimated_budget: null } : {} }
+    );
+    if (carryError) return { success: false, error: 'Réadaptation non enregistrée : réessaie.' };
     return { success: true, parts, kept, label: `${partsText(parts)} réadapté${parts.length > 1 ? 's' : ''}` };
   } catch (err) {
     console.error('[compas] compasRefreshAutofillAction', err);

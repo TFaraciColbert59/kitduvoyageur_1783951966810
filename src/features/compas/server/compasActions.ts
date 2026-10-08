@@ -5,10 +5,10 @@ import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import {
   compasMeta,
-  patchTripMetadata,
   requireEditor,
   resplitSteps,
   tripPartySize,
+  updateTripMetadata,
   type Supa,
 } from './compasServer';
 import { lookupBase, lookupDestination, lookupLoose, lookupNatural } from './placeLookup';
@@ -413,23 +413,18 @@ export async function compasSetDatesAction(
   try {
     const auth = await requireEditor(tripId);
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
-    const metadata = await patchTripMetadata(auth.supabase, tripId, (meta) => {
-      const c = compasMeta(meta);
-      if (durationHours != null) c.duration_h = durationHours;
-      else delete c.duration_h;
-      return { ...meta, compas: c };
-    });
-    const { data, error } = await auth.supabase
-      .from('trips')
-      .update({
-        start_date: startDate,
-        end_date: endDate,
-        metadata,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', tripId)
-      .select('id');
-    if (error || !data?.length)
+    const { metadata, error } = await updateTripMetadata(
+      auth.supabase,
+      tripId,
+      (meta) => {
+        const c = compasMeta(meta);
+        if (durationHours != null) c.duration_h = durationHours;
+        else delete c.duration_h;
+        return { ...meta, compas: c };
+      },
+      { columns: { start_date: startDate, end_date: endDate } }
+    );
+    if (error || !metadata)
       return { success: false, error: 'Impossible d’enregistrer les dates.' };
 
     let kept = 0;
@@ -533,17 +528,11 @@ export async function compasSetPreferencesAction(
   try {
     const auth = await requireEditor(parsed.data.tripId);
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
-    const metadata = await patchTripMetadata(auth.supabase, parsed.data.tripId, (meta) => ({
+    const { error } = await updateTripMetadata(auth.supabase, parsed.data.tripId, (meta) => ({
       ...meta,
       compas: { ...compasMeta(meta), prefs: parsed.data.preferences },
     }));
-    const { data, error } = await auth.supabase
-      .from('trips')
-      .update({ metadata, updated_at: new Date().toISOString() })
-      .eq('id', parsed.data.tripId)
-      .select('id');
-    if (error || !data?.length)
-      return { success: false, error: 'Impossible d’enregistrer les préférences.' };
+    if (error) return { success: false, error: 'Impossible d’enregistrer les préférences.' };
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
@@ -616,34 +605,35 @@ export async function compasSetDestinationAction(
     const place = wanted ? await resolveDestination(wanted, auth.userId) : null;
     if (parsed.data.place && !place)
       return { success: false, error: `« ${parsed.data.place} » introuvable sur la carte.` };
-    const metadata = await patchTripMetadata(auth.supabase, parsed.data.tripId, (m) => {
-      const c = compasMeta(m);
-      if (place)
-        c.anchor = {
-          name: place.name,
-          lat: Math.round(place.lat * 1e5) / 1e5,
-          lon: Math.round(place.lon * 1e5) / 1e5,
-          countryCode: place.countryCode,
-          country: place.country,
-          kind: place.kind,
-          extent: place.extent,
-        };
-      else delete c.anchor;
-      return { ...m, compas: c };
-    });
     // Titre encore générique (« Trek · nouvelle aventure ») : il prend le nom du lieu.
     const title = auth.trip.title ?? '';
     const generic = title.endsWith('nouvelle aventure');
-    const { error } = await auth.supabase
-      .from('trips')
-      .update({
-        destination_name: place?.name ?? null,
-        destination_country_code: place?.countryCode ?? null,
-        metadata,
-        ...(place && generic ? { title: title.replace(/nouvelle aventure$/, place.name) } : {}),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', parsed.data.tripId);
+    const { error } = await updateTripMetadata(
+      auth.supabase,
+      parsed.data.tripId,
+      (m) => {
+        const c = compasMeta(m);
+        if (place)
+          c.anchor = {
+            name: place.name,
+            lat: Math.round(place.lat * 1e5) / 1e5,
+            lon: Math.round(place.lon * 1e5) / 1e5,
+            countryCode: place.countryCode,
+            country: place.country,
+            kind: place.kind,
+            extent: place.extent,
+          };
+        else delete c.anchor;
+        return { ...m, compas: c };
+      },
+      {
+        columns: {
+          destination_name: place?.name ?? null,
+          destination_country_code: place?.countryCode ?? null,
+          ...(place && generic ? { title: title.replace(/nouvelle aventure$/, place.name) } : {}),
+        },
+      }
+    );
     if (error) return { success: false, error: 'Impossible d’enregistrer la destination.' };
     return { success: true };
   } catch (err) {
@@ -667,16 +657,12 @@ export async function compasSetSpanAction(
   try {
     const auth = await requireEditor(parsed.data.tripId);
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
-    const metadata = await patchTripMetadata(auth.supabase, parsed.data.tripId, (m) => {
+    const { error } = await updateTripMetadata(auth.supabase, parsed.data.tripId, (m) => {
       const c = compasMeta(m);
       if (parsed.data.days == null) delete c.planned_days;
       else c.planned_days = parsed.data.days;
       return { ...m, compas: c };
     });
-    const { error } = await auth.supabase
-      .from('trips')
-      .update({ metadata, updated_at: new Date().toISOString() })
-      .eq('id', parsed.data.tripId);
     if (error) return { success: false, error: 'Impossible d’enregistrer la durée.' };
     return { success: true };
   } catch (err) {
@@ -1590,13 +1576,16 @@ async function freeRouteFromEmptyDraft(
     (steps ?? 0) === 0 &&
     (items ?? 0) === 0;
   if (!emptyDraft) return { freed: false, title: o.title };
-  const meta = { ...(o.metadata ?? {}) };
-  delete meta.route_id;
-  const { error } = await supabase
-    .from('trips')
-    .update({ metadata: meta, updated_at: new Date().toISOString() })
-    .eq('id', o.id)
-    .eq('user_id', userId);
+  const { error } = await updateTripMetadata(
+    supabase,
+    o.id,
+    (m) => {
+      const meta = { ...m };
+      delete meta.route_id;
+      return meta;
+    },
+    { match: { user_id: userId } }
+  );
   return { freed: !error, title: o.title };
 }
 
@@ -1616,23 +1605,14 @@ export async function compasApplyRouteAction(
       .eq('id', routeId)
       .maybeSingle();
     if (!exists) return { success: false, error: 'Parcours introuvable.' };
-    const metadata = await patchTripMetadata(auth.supabase, tripId, (meta) => ({
-      ...meta,
-      route_id: routeId,
-    }));
-    const write = () =>
-      auth.supabase
-        .from('trips')
-        .update({ metadata, updated_at: new Date().toISOString() })
-        .eq('id', tripId)
-        .select('id');
-    let { data, error } = await write();
+    const write = () => updateTripMetadata(auth.supabase, tripId, (meta) => ({ ...meta, route_id: routeId }));
+    let { error } = await write();
     // Un compte ne peut avoir qu'une aventure par parcours (index unique
     // historique du flux « sentier »). Si le parcours est tenu par un de SES
     // brouillons vides du Compas, on le libère ; sinon on nomme l'aventure.
     if (error?.code === '23505') {
       const freed = await freeRouteFromEmptyDraft(auth.supabase, auth.userId, tripId, routeId);
-      if (freed.freed) ({ data, error } = await write());
+      if (freed.freed) ({ error } = await write());
       else
         return {
           success: false,
@@ -1641,8 +1621,8 @@ export async function compasApplyRouteAction(
             : 'Ce parcours est déjà utilisé par une autre de tes aventures.',
         };
     }
-    if (error || !data?.length) {
-      console.error('[compas] compasApplyRouteAction update', error?.code, error?.message);
+    if (error) {
+      console.error('[compas] compasApplyRouteAction update', error.code, error.message);
       return { success: false, error: 'Impossible de choisir ce parcours.' };
     }
     const { kept } = await resplitSteps(auth.supabase, tripId, routeId, days);
@@ -1974,13 +1954,13 @@ export async function compasClearStartSayAction(
   try {
     const auth = await requireEditor(parsed.data.tripId);
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
-    const metadata = await patchTripMetadata(auth.supabase, parsed.data.tripId, (m) => {
+    // Rien à effacer : `m` rendu tel quel, aucune écriture.
+    await updateTripMetadata(auth.supabase, parsed.data.tripId, (m) => {
       const c = compasMeta(m);
       if (!('start_say' in c)) return m;
       delete c.start_say;
       return { ...m, compas: c };
     });
-    await auth.supabase.from('trips').update({ metadata }).eq('id', parsed.data.tripId);
     return { success: true };
   } catch (err) {
     console.error('[compas] compasClearStartSayAction', err);

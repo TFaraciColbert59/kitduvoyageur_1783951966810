@@ -73,16 +73,66 @@ export async function tripPartySize(
   return partySizeOf(null, ids.size);
 }
 
-/** Fusionne une clé dans trips.metadata sans écraser le reste. */
-export async function patchTripMetadata(
+export interface TripMetadataWriteOptions {
+  /** Autres colonnes du voyage écrites dans la même mise à jour. */
+  columns?: Record<string, unknown>;
+  /** Filtres d'égalité en plus de l'identifiant (garde-fou, ex. `user_id`). */
+  match?: Record<string, string>;
+  /** Essais au plus quand une autre écriture passe entre la lecture et l'écriture. */
+  attempts?: number;
+}
+
+export interface TripMetadataWriteResult {
+  /** Les métadonnées écrites ; null si rien n'a été écrit. */
+  metadata: Record<string, unknown> | null;
+  error: { code?: string; message: string } | null;
+}
+
+/**
+ * Change `trips.metadata` sans écraser une écriture concurrente (plan 2.7).
+ *
+ * La préparation (jusqu'à 270 s en arrière-plan) et les gestes de l'équipe
+ * réécrivent tous la colonne entière : une lecture suivie d'une écriture
+ * aveugle effaçait ce que l'autre venait d'écrire. Ici l'écriture est
+ * conditionnée à `updated_at` tel qu'il a été lu (le trigger
+ * `trg_trips_updated_at` le remet à `now()` à chaque mise à jour du voyage,
+ * par n'importe quel chemin) ; perdue, la lecture est refaite et `patch`
+ * rejoué sur l'état à jour. `patch` doit donc être pure (rejouable).
+ *
+ * Une écriture refusée sans que le voyage ait bougé n'est pas une course
+ * (droits, voyage disparu) : rendue aussitôt, sans boucler.
+ */
+export async function updateTripMetadata(
   supabase: Supa,
   tripId: string,
-  patch: (meta: Record<string, unknown>) => Record<string, unknown>
-) {
-  const { data } = await supabase.from('trips').select('metadata').eq('id', tripId).maybeSingle();
-  const meta = ((data as { metadata?: Record<string, unknown> | null } | null)?.metadata ??
-    {}) as Record<string, unknown>;
-  return patch({ ...meta });
+  patch: (meta: Record<string, unknown>) => Record<string, unknown>,
+  options: TripMetadataWriteOptions = {}
+): Promise<TripMetadataWriteResult> {
+  const { columns = {}, match = {}, attempts = 4 } = options;
+  let lost: string | null = null;
+  for (let i = 0; i < attempts; i += 1) {
+    const { data, error } = await supabase.from('trips').select('metadata, updated_at').eq('id', tripId).maybeSingle();
+    if (error) return { metadata: null, error };
+    const row = data as { metadata?: Record<string, unknown> | null; updated_at?: string | null } | null;
+    if (!row || !row.updated_at) return { metadata: null, error: { code: 'not_found', message: 'Voyage introuvable.' } };
+    if (lost !== null && row.updated_at === lost)
+      return { metadata: null, error: { code: 'not_written', message: 'Métadonnées du voyage non écrites (droits).' } };
+    const before = { ...(row.metadata ?? {}) };
+    const metadata = patch(before);
+    // Rien à changer (même objet rendu, aucune autre colonne) : aucune écriture.
+    if (metadata === before && Object.keys(columns).length === 0) return { metadata, error: null };
+    let query = supabase
+      .from('trips')
+      .update({ ...columns, metadata })
+      .eq('id', tripId)
+      .eq('updated_at', row.updated_at);
+    for (const [key, value] of Object.entries(match)) query = query.eq(key, value);
+    const { data: won, error: writeError } = await query.select('id');
+    if (writeError) return { metadata: null, error: writeError };
+    if (won?.length) return { metadata, error: null };
+    lost = row.updated_at;
+  }
+  return { metadata: null, error: { code: 'conflict', message: 'Métadonnées du voyage non écrites (écritures concurrentes).' } };
 }
 
 export function compasMeta(meta: Record<string, unknown>): Record<string, unknown> {

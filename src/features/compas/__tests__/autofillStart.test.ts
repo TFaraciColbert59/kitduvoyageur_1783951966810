@@ -21,9 +21,9 @@ vi.mock('../server/compasServer', async (orig) => {
       userId: 'u1',
       trip: { id: '11111111-1111-4111-8111-111111111111', start_date: null, end_date: null, party_size: 1, metadata: h.meta },
     })),
-    patchTripMetadata: vi.fn(async (_s: unknown, _id: string, fn: (m: Record<string, unknown>) => Record<string, unknown>) => {
+    updateTripMetadata: vi.fn(async (_s: unknown, _id: string, fn: (m: Record<string, unknown>) => Record<string, unknown>) => {
       h.meta = fn(h.meta);
-      return h.meta;
+      return { metadata: h.meta, error: null };
     }),
   };
 });

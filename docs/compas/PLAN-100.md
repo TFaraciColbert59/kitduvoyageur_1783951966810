@@ -353,8 +353,13 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 2.7 Écritures concurrentes
 
-- [ ] `patchTripMetadata` atomique (RPC `jsonb` côté SQL) : la préparation et les
-      gestes de l'équipe ne s'écrasent plus.
+- [x] Écritures de `trips.metadata` conditionnées (`updateTripMetadata`) : écriture
+      seulement si `updated_at` n'a pas bougé depuis la lecture (le trigger
+      `trg_trips_updated_at` le remet à `now()` à chaque mise à jour, par n'importe quel
+      chemin), sinon relecture et patch rejoué (4 essais) ; refus sans course (droits)
+      rendu aussitôt. Les 18 écritures du Compas y passent, `patchTripMetadata` retiré.
+      Sans migration. Tests `tripMetadata.test.ts` (écriture concurrente gardée,
+      colonnes jointes, rien à écrire, droits, course sans fin, filtre propriétaire).
 
 ### 2.8 Attente de la préparation
 
