@@ -229,12 +229,26 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 2.3 Connexion démo
 
-- [ ] Remplacer le compte démo partagé par des **sessions anonymes Supabase**
-      (gratuites) : chaque visiteur a son espace, purgé après 7 jours ; actions
-      sensibles (mot de passe, suppression, invitations) bloquées en anonyme.
-- [ ] Supprimer `DemoLoginButton.tsx` (identifiants en dur) et son exclusion du scan ;
-      changer le mot de passe du compte démo (Tony ou Claude via Supabase Auth).
-- [ ] Adapter `scripts/compas/validate-online.mjs` aux sessions anonymes.
+- [~] **Essai sans compte** (sessions anonymes Supabase, gratuites) à la place du compte
+      démo partagé : bouton « Essayer sans compte » sur `/connexion`, compté par
+      adresse (5/h) et pour le site (300/jour) ; la connexion démo se ferme d'elle-même
+      dès que Supabase ouvre les connexions anonymes (`/auth/v1/settings`, relu toutes
+      les 5 min). En base (`20261008165901`, appliquée le 8 oct.) : profil sans e-mail
+      (`<id>@essai.invalid`), 38 politiques restrictives « rien de public ni de social
+      depuis un essai », invitations refusées avec un message clair.
+- [ ] 🔒 **Tony, dans Supabase** (rien d'autre ne l'ouvre) : (1) lancer
+      `20261008180000_anonymous_trial_purge.sql` dans le SQL Editor (purge des essais
+      inactifs depuis 7 jours, chaque nuit, `pg_cron`) ; (2) Authentication → Sign In /
+      Providers → **Allow anonymous sign-ins**. Puis Claude prouve l'essai en
+      production et retire le compte démo (mot de passe remplacé par une valeur
+      aléatoire tirée en base, variables `DEMO_LOGIN_*` à retirer).
+- [ ] Captcha hCaptcha sur l'essai et l'inscription (compte gratuit à créer par Tony).
+- [ ] Garder son essai : lier un e-mail à la session anonyme (« manual linking » à
+      allumer dans Supabase) au lieu de créer un nouveau compte qui perd le voyage.
+- [x] `DemoLoginButton.tsx` retiré (mot de passe du compte démo en clair, **encore
+      valable** le 8 oct.) ; plus aucune exclusion du scan de secrets.
+- [x] `scripts/compas/validate-online.mjs` : « Essayer sans compte » dès qu'il existe,
+      sinon « Connexion démo ».
 
 ### 2.4 Données et droits
 
@@ -582,6 +596,7 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 | 1 | Vercel Hobby et usage commercial (Stripe = commercial, vérifié) | Couper paiement et affiliation en production par drapeau tant que l'offre est Hobby |
 | 2 | IA en production (aucune offre gratuite conforme, vérifié) | Compas complet sans IA ; IA éteinte pour les vrais utilisateurs |
 | 5 | Comptes gratuits (sans carte) : Geoapify, LocationIQ, ArcGIS Location Platform, hCaptcha | Tony les crée et pose les clés dans Vercel lui-même |
+| 6 | Essai sans compte : purge (SQL Editor) puis « Allow anonymous sign-ins » | Oui : ferme le compte démo partagé (2.3) |
 | 3 | Applications sur les stores | PWA à la place (0 €) |
 | 4 | Cible de lancement | Francophone d'abord (phase 7), puis monde (phase 6) |
 

@@ -1,7 +1,8 @@
 // Compas — passage de validation en ligne (P2, docs/compas/ETAT.md).
 //
 // Chaque demande est préparée sur un déploiement (preview Vercel) comme le
-// ferait une personne sur son téléphone : connexion démo, phrase saisie dans
+// ferait une personne sur son téléphone : essai sans compte (ou connexion
+// démo tant que l'essai n'est pas ouvert), phrase saisie dans
 // « Où », « Préparer mon aventure », attente de l'issue, capture de l'écran.
 // Les captures et le journal vont dans proof/ (non versionné, .gitignore) ;
 // le contrôle se fait ensuite en base (voyages, étapes, kit, budget).
@@ -53,7 +54,12 @@ await page.goto(`${base}/connexion?next=/compas`, {
   waitUntil: 'domcontentloaded',
   timeout: 90_000,
 });
-await page.getByRole('button', { name: 'Connexion démo' }).click({ timeout: 60_000 });
+// Essai sans compte (un espace propre à chaque passage) dès qu'il est ouvert ;
+// sinon le compte démo partagé.
+await page
+  .getByRole('button', { name: /^(Essayer sans compte|Connexion démo)$/ })
+  .first()
+  .click({ timeout: 60_000 });
 // Le chemin, pas l'URL entière (« /connexion?next=%2Fcompas » contient « compas »).
 await page.waitForURL((u) => u.pathname.startsWith('/compas'), { timeout: 90_000 });
 console.info('connecté');
