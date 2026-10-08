@@ -21,6 +21,23 @@ const BANK_KM = 2.5;
 const key = (c: LngLat) => `${c[0].toFixed(6)},${c[1].toFixed(6)}`;
 const pt = (c: LngLat) => ({ lat: c[1], lon: c[0] });
 
+/**
+ * Motif Overpass (expression régulière, sans casse) du nom d'une rivière, avec
+ * ou sans article : OpenStreetMap écrit « La Dordogne », « L'Ardèche »,
+ * « Le Tarn », la demande dit « Dordogne ». Null si le nom est vide.
+ */
+export function riverNamePattern(name: string): string | null {
+  const bare = name
+    .trim()
+    .replace(/^(?:(?:la|le|les)\s+|l['’]\s*)/i, '')
+    .replace(/["\\]/g, '')
+    .trim();
+  if (bare.length < 2) return null;
+  const escaped = bare.replace(/[.^$*+?()[\]{}|]/g, (c) => `\\\\${c}`);
+  // Alternative plutôt que classe de caractères : « ’ » tient sur plusieurs octets.
+  return `^((la|le|les) |l'|l’)?${escaped}$`;
+}
+
 /** Tronçons d'une réponse Overpass (`out geom`) : [lon, lat] dans le sens du tracé OSM (le courant). */
 export function parseRiverWays(payload: unknown): LngLat[][] {
   const els = (payload as { elements?: unknown[] } | null)?.elements;

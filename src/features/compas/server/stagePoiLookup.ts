@@ -21,7 +21,7 @@ import {
   type AreaQuery,
 } from '../engine/itinerary';
 import { cached, coordKey, readShared } from './sharedCache';
-import { chainRiver, parseRiverWays } from '../engine/river';
+import { chainRiver, parseRiverWays, riverNamePattern } from '../engine/river';
 import { simplifyLine, type LngLat } from '../engine/track';
 
 /**
@@ -189,11 +189,13 @@ export async function lookupRiverLine(
   extent: [number, number, number, number],
   deadline: number
 ): Promise<LngLat[] | null> {
-  const n = name.trim().replace(/["\\]/g, '');
-  if (n.length < 2) return null;
+  // Avec ou sans article : OSM écrit « La Dordogne », la demande « Dordogne »
+  // (le nom exact ne trouvait rien : Périgueux et Sarlat, loin de l'eau, 8 oct.).
+  const pattern = riverNamePattern(name);
+  if (!pattern) return null;
   const [w, north, e, south] = extent;
   const bbox = `${Math.min(south, north).toFixed(3)},${Math.min(w, e).toFixed(3)},${Math.max(south, north).toFixed(3)},${Math.max(w, e).toFixed(3)}`;
-  const query = `[out:json][timeout:25];(way["waterway"="river"]["name"="${n}"](${bbox});way["waterway"="river"]["name:fr"="${n}"](${bbox}););out geom;`;
+  const query = `[out:json][timeout:25];(way["waterway"="river"]["name"~"${pattern}",i](${bbox});way["waterway"="river"]["name:fr"~"${pattern}",i](${bbox}););out geom;`;
   const key = `river:v1:${createHash('sha256').update(query).digest('hex').slice(0, 32)}`;
   return cached<LngLat[] | null>(
     'place',

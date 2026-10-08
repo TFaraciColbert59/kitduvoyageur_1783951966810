@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { distanceKm } from '../engine/places';
-import { chainRiver, parseRiverWays, planRiverDescent } from '../engine/river';
+import { chainRiver, parseRiverWays, planRiverDescent, riverNamePattern } from '../engine/river';
 import type { AreaPlace } from '../engine/itinerary';
 import type { LngLat } from '../engine/track';
 
@@ -78,5 +78,25 @@ describe('planRiverDescent — 3 jours de canoë', () => {
     const sparse = places.filter((p) => !['Bord 66', 'Bord 75', 'Bord 84'].includes(p.name));
     const p = planRiverDescent({ line, places: sparse, days: 3, center: { lat: LAT, lon: 1 + 57 * kmLon } })!;
     expect(p.stages.some((s) => s.move === 'aucun' && /journée sur place/.test(s.note ?? ''))).toBe(true);
+  });
+});
+
+describe('riverNamePattern', () => {
+  // Motif tel qu'écrit dans la requête Overpass, où la barre oblique inverse est doublée.
+  const matches = (pattern: string, name: string) => new RegExp(pattern.replace(/\\\\/g, '\\'), 'i').test(name);
+  it('accepte le nom OSM avec article (« La Dordogne », « L’Ardèche », « Le Tarn »)', () => {
+    expect(matches(riverNamePattern('Dordogne')!, 'La Dordogne')).toBe(true);
+    expect(matches(riverNamePattern('Dordogne')!, 'Dordogne')).toBe(true);
+    expect(matches(riverNamePattern('Ardèche')!, "L'Ardèche")).toBe(true);
+    expect(matches(riverNamePattern('Ardèche')!, 'L’Ardèche')).toBe(true);
+    expect(matches(riverNamePattern('le Tarn')!, 'Le Tarn')).toBe(true);
+  });
+  it('jamais une autre rivière qui contient le nom', () => {
+    expect(matches(riverNamePattern('Dordogne')!, 'Petite Dordogne')).toBe(false);
+    expect(matches(riverNamePattern('Tarn')!, 'Tarnon')).toBe(false);
+  });
+  it('échappe les caractères spéciaux, rien pour un nom vide', () => {
+    expect(riverNamePattern('St. Lawrence')).toContain('St\\\\. Lawrence');
+    expect(riverNamePattern('  ')).toBeNull();
   });
 });
