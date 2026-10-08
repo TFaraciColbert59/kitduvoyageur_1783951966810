@@ -23,6 +23,23 @@ describe('tracé réel de l’itinéraire', () => {
     ]);
   });
 
+  it('tronçon d’avant le premier soir (mise à l’eau d’une descente) tracé en tête', () => {
+    const water: Array<[number, number]> = [
+      [1.2, 44.9],
+      [1.25, 44.87],
+      [1.3, 44.85],
+    ];
+    const t = buildTrack(
+      [
+        { lat: 44.85, lon: 1.3 },
+        { lat: 44.8, lon: 1.4 },
+      ],
+      [water, null]
+    )!;
+    expect(t.coordinates).toHaveLength(2);
+    expect(t.coordinates[0]).toEqual(water);
+  });
+
   it('rien de routé : pas de tracé (la carte relie les étapes elle-même)', () => {
     expect(buildTrack([{ lat: 1, lon: 1 }, { lat: 2, lon: 2 }], [null, null])).toBeNull();
   });
