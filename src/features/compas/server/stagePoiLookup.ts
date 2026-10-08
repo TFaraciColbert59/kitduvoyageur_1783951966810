@@ -9,6 +9,8 @@ import {
 } from '../engine/stagePois';
 import type { RoutePoi } from '../engine/routePois';
 import { geoapifyArea, geoapifyAvailable } from './geoapify';
+import { referentialAreaPlaces } from './geoPlaces';
+import { mergeReferential, referentialEnough } from '../engine/geoPlaces';
 import {
   areaKinds,
   areaTiles,
@@ -142,14 +144,18 @@ async function photonArea(bbox: [number, number, number, number], include: strin
   return parsePhotonArea(await res.json());
 }
 
-/** Toutes les tuiles de la zone (lieux habités) + abris à part (moins connus, sinon noyés). */
-async function photonAreaPlaces(q: AreaQuery, timeoutMs: number): Promise<AreaPlace[] | null> {
+/**
+ * Toutes les tuiles de la zone (lieux habités) + abris à part (moins connus,
+ * sinon noyés). `sheltersOnly` : les abris seulement (le référentiel a déjà
+ * les lieux habités).
+ */
+async function photonAreaPlaces(q: AreaQuery, timeoutMs: number, sheltersOnly = false): Promise<AreaPlace[] | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const { places, shelters } = photonIncludes(areaKinds(q));
     const tiles = areaTiles(q.center, Math.min(q.radiusKm, 400));
-    const jobs = tiles.map((t) => photonArea(t, places, controller.signal));
+    const jobs = sheltersOnly || !places ? [] : tiles.map((t) => photonArea(t, places, controller.signal));
     if (shelters) jobs.push(...areaTiles(q.center, Math.min(q.radiusKm, 60)).map((t) => photonArea(t, shelters, controller.signal)));
     const lists = await Promise.all(jobs);
     const merged = mergeAreaPlaces(lists);
@@ -197,9 +203,11 @@ export async function lookupRiverLine(
 
 /**
  * Lieux réels où l'on peut dormir dans une zone (villes, villages, hameaux,
- * refuges), pour l'itinéraire déterministe : Photon d'abord (rapide, sans
- * quota strict), Overpass en secours, Geoapify en dernier. Partagés un mois (une zone ne change
- * pas). Rien trouvé : jamais gardé, null.
+ * refuges), pour l'itinéraire déterministe. Le référentiel d'abord (plan 3.2,
+ * `geo_places`, sans carte en ligne) ; Photon n'est alors demandé que pour les
+ * refuges et campings. Référentiel trop maigre : Photon, puis Overpass et
+ * Geoapify en secours, complétés par le référentiel. Partagés un mois (une
+ * zone ne change pas). Rien trouvé : jamais gardé, null.
  */
 export async function lookupAreaPlaces(
   q: AreaQuery,
@@ -208,7 +216,8 @@ export async function lookupAreaPlaces(
   diag?: string[]
 ): Promise<AreaPlace[] | null> {
   const query = buildAreaQuery(q);
-  const key = `area:v2:${createHash('sha256').update(query).digest('hex').slice(0, 32)}`;
+  // « v3 » : le référentiel d'abord (les zones déjà gardées venaient de Photon seul).
+  const key = `area:v3:${createHash('sha256').update(query).digest('hex').slice(0, 32)}`;
   const say = (s: string) => diag?.push(s);
   return cached<AreaPlace[] | null>(
     'place',
@@ -220,12 +229,27 @@ export async function lookupAreaPlaces(
         say('plus de temps');
         return null;
       }
-      const fromPhoton = await photonAreaPlaces(q, Math.min(10_000, left()));
-      say(fromPhoton ? `Photon ${fromPhoton.length}` : 'Photon muet');
-      if (fromPhoton && fromPhoton.length >= 3) return fromPhoton;
+      const fromRef = await referentialAreaPlaces(q);
+      say(fromRef ? `Référentiel ${fromRef.length}` : 'Référentiel vide');
+      const withRef = (list: AreaPlace[] | null) => (fromRef ? mergeReferential(fromRef, list ?? []) : list);
+      if (fromRef && referentialEnough(fromRef)) {
+        const wantsShelters = areaKinds(q).some((k) => k === 'hut' || k === 'camp');
+        if (!wantsShelters || left() < 4000) return fromRef;
+        // Refuges et campings : absents de GeoNames, seuls demandés à la carte en ligne.
+        const shelters = await photonAreaPlaces(q, Math.min(8000, left()), true);
+        say(shelters ? `Photon (abris) ${shelters.length}` : 'Photon (abris) muet');
+        return withRef(shelters);
+      }
       if (left() < 4000) {
         say('plus de temps');
-        return fromPhoton;
+        return fromRef;
+      }
+      const fromPhoton = await photonAreaPlaces(q, Math.min(10_000, left()));
+      say(fromPhoton ? `Photon ${fromPhoton.length}` : 'Photon muet');
+      if (fromPhoton && fromPhoton.length >= 3) return withRef(fromPhoton);
+      if (left() < 4000) {
+        say('plus de temps');
+        return withRef(fromPhoton);
       }
       // Photon trop maigre : Overpass et Geoapify en même temps (Overpass est
       // souvent muet depuis Vercel ; l'attendre d'abord privait Geoapify de temps).
@@ -237,8 +261,8 @@ export async function lookupAreaPlaces(
       const places = payload ? parseAreaPlaces(payload) : [];
       say(payload ? `Overpass ${places.length}` : 'Overpass muet');
       say(!geoapifyAvailable() ? 'Geoapify sans clé' : fromGeoapify ? `Geoapify ${fromGeoapify.length}` : 'Geoapify muet');
-      if (places.length) return places;
-      return fromGeoapify && fromGeoapify.length > (fromPhoton?.length ?? 0) ? fromGeoapify : fromPhoton;
+      if (places.length) return withRef(places);
+      return withRef(fromGeoapify && fromGeoapify.length > (fromPhoton?.length ?? 0) ? fromGeoapify : fromPhoton);
     },
     (v) => Array.isArray(v) && v.length > 0
   );

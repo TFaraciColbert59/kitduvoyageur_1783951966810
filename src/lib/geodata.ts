@@ -1,5 +1,5 @@
 // src/lib/geodata.ts — Helpers pour le référentiel géographique GeoNames
-// (tables countries_geo / admin_regions_geo / places_geo / place_names_geo)
+// (tables countries_geo / admin_regions_geo / geo_places)
 //
 // Robustesse (Étape 0-A) :
 //   • client Supabase créé PARESSEUSEMENT (jamais à l'import : le build Next.js
@@ -18,7 +18,6 @@ import type {
   CountryGeo,
   CountryContent,
   PlaceGeo,
-  PlaceNameGeo,
 } from "./supabase/types";
 
 let cachedClient: SupabaseClient | null = null;
@@ -175,25 +174,6 @@ export async function fetchAdminRegions(
   return (data ?? []) as AdminRegionGeo[];
 }
 
-/** Retourne les lieux (villes) d'une région admin (par id UUID). */
-export async function fetchPlaces(
-  adminRegionId: string
-): Promise<PlaceGeo[]> {
-  const supabase = getClientForRead();
-  if (!supabase) return [];
-  const { data, error } = await supabase
-    .from("places_geo")
-    .select("*")
-    .eq("admin_region_id", adminRegionId)
-    .order("population", { ascending: false });
-  if (error) {
-    if (classifyGeodataError(error) === 'contract') throw error;
-    warnTransient(`fetchPlaces(${adminRegionId})`, error);
-    return [];
-  }
-  return (data ?? []) as PlaceGeo[];
-}
-
 /**
  * Retourne les lieux géolocalisés d'un pays (coordonnées non nulles).
  * Utile pour dériver une emprise (bbox) quand `countries_geo.geometry` est vide.
@@ -204,12 +184,14 @@ export async function fetchPlacesByCountry(
 ): Promise<Pick<PlaceGeo, "name" | "latitude" | "longitude" | "population">[]> {
   const supabase = getClientForRead();
   if (!supabase) return [];
+  // Référentiel des lieux habités (`geo_places`, plan 3.2 : cities500 pour le
+  // monde). `places_geo` (import interrompu en août) n'est plus lu : il peut
+  // être retiré.
   const { data, error } = await supabase
-    .from("places_geo")
-    .select("name, latitude, longitude, population")
-    .eq("country_iso_a2", isoA2.toUpperCase())
-    .not("latitude", "is", null)
-    .not("longitude", "is", null)
+    .from("geo_places")
+    .select("name, lat, lon, population")
+    .eq("country_code", isoA2.toUpperCase())
+    .gte("population", 1000)
     .order("population", { ascending: false })
     .limit(limit);
   if (error) {
@@ -217,24 +199,12 @@ export async function fetchPlacesByCountry(
     warnTransient(`fetchPlacesByCountry(${isoA2})`, error);
     return [];
   }
-  return data ?? [];
-}
-
-/** Retourne les noms alternatifs d'un lieu (par id UUID). */
-export async function fetchPlaceNames(placeId: string): Promise<PlaceNameGeo[]> {
-  const supabase = getClientForRead();
-  if (!supabase) return [];
-  const { data, error } = await supabase
-    .from("place_names_geo")
-    .select("*")
-    .eq("place_id", placeId)
-    .order("is_preferred", { ascending: false });
-  if (error) {
-    if (classifyGeodataError(error) === 'contract') throw error;
-    warnTransient(`fetchPlaceNames(${placeId})`, error);
-    return [];
-  }
-  return (data ?? []) as PlaceNameGeo[];
+  return ((data ?? []) as Array<{ name: string; lat: number; lon: number; population: number | null }>).map((r) => ({
+    name: r.name,
+    latitude: r.lat,
+    longitude: r.lon,
+    population: r.population,
+  }));
 }
 
 /** Exemple d'utilisation côté serveur (composition pays → régions). */

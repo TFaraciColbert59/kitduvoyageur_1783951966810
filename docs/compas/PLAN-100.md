@@ -72,8 +72,9 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [x] **Tracé dans `trips.metadata`** : 600 points au plus pour tout le voyage
       (`MAX_TRACK_POINTS`, ~12 Ko ; 150 par tronçon avant), réécrit à chaque
       préparation (8 oct. : 23 Ko au plus, 3 Ko en moyenne).
-- [ ] **Retrait de `places_geo`** (232 Mo) une fois les pages Pays branchées sur
-      `geo_places` (3.8). Preuve : base ≤ 250 Mo avant import des lots 3.3 à 3.7.
+- [~] **Retrait de `places_geo`** (232 Mo) : plus aucun lecteur depuis le lot E (pages
+      Pays sur `geo_places`). 🔒 Tony : `drop table public.places_geo;` dans le SQL
+      Editor. Preuve : base ≤ 250 Mo avant import des lots 3.3 à 3.7.
 - [~] **Sauvegardes gratuites** : `.github/workflows/db-backup.yml`, chaque nuit,
       `pg_dump` (`public` + `auth` + `marketplace_private`, hors caches et référentiels
       réimportables), chiffré
@@ -163,14 +164,19 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       (« open to the public », identification demandée) sont les seules utilisables ;
       OpenRouteService flou (à demander : enquiry@openrouteservice.org).
 - [~] Ordre : cache (mémoire, `route_cache`, et `geo_cache` « leg v3 » 30 j) →
-      **Geoapify Routing** (`hike` / `bicycle` / `drive`, plafond du site 1 500 trajets
-      par jour sur les 3 000 crédits partagés) → **Valhalla FOSSGIS** sur panne, avec
+      **Geoapify Routing** (`hike` / `bicycle` / `drive`, plafond du site 1 500 crédits
+      par jour sur les 3 000 partagés, un crédit par tranche de 500 km) → **Valhalla FOSSGIS** sur panne, avec
       `X-Client-Id: koosmoweb.fr` → **estimation annoncée** (vol d'oiseau × 1,4 à pied,
       × 1,3 à vélo ou sur route, « ≈ … km (estimée) » à l'écran, phrase dans l'étape et
       note de préparation). Chaque étape garde sa source (`trip_steps.metadata.distance`).
       Le dénivelé d'une journée à pied ou à vélo, que seul BRouter donnait, se lit sur le
-      relief (Terrain Tiles) le long du tracé. Reste : l'annonce sur GitHub Discussions
-      de Valhalla (compte de Tony) ; preuve en ligne ci-dessous.
+      relief (Terrain Tiles) le long du tracé. **Prouvé sur l'aperçu (PR #79, 8 oct.)** :
+      Chamonix → Les Houches à pied 7,4 km / 1 h 51, à vélo 7,3 km, en voiture 8,05 km
+      (source Geoapify, arrivée dans la tolérance) ; refuge des Grands Mulets atteint à
+      pied (14,9 km, arrivée à 18 m : seul BRouter y arrivait), sommet du Mont Blanc
+      28,0 km ; trek de 3 jours dans le Vercors préparé en 41 s, jours 2 et 3 mesurés par
+      Geoapify (17,5 km / D+ 756 m, 10,8 km / D+ 623 m lus sur le relief), source gardée
+      dans l'étape. Reste : l'annonce sur GitHub Discussions de Valhalla (Tony).
 - [x] User-Agent sur tous les appels de routage (Geoapify et Valhalla).
 
 ### 1.6 Fond de carte
@@ -370,21 +376,30 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 3.1 Table et accès
 
-- [ ] Migration `geo_places` (source, identifiant source, nom, nom français, nom anglais,
-      nature, pays, région, latitude, longitude, altitude, population, rang, emprise,
-      date de mise à jour) ; 3 index ; lecture publique, écriture `service_role`.
-- [ ] RPC `geo_places_in_bbox(w, s, e, n, kinds, limit)` et
-      `geo_places_search(q, cc, limit)` (nom normalisé, trigrammes bornés).
-- [ ] Budget de place par lot mesuré avant et après chaque import.
+- [x] Migration `geo_places` (`20261008190319`) : identifiant GeoNames, nom, nature
+      (ville, bourg, village, hameau), pays, région (code admin1), latitude, longitude,
+      altitude, population, fuseau horaire, date de mise à jour ; compacte (sans
+      géométrie PostGIS ni trigrammes) : index point GiST et pays × population (≥ 1 000).
+      Lecture publique, écriture par la clé de service seule.
+- [x] RPC `geo_places_in_box(w, s, e, n, kinds, limit)` : 20 ms pour le Vercors (357
+      lieux). [ ] `geo_places_search(q, cc, limit)` (noms français : `alternateNamesV2`)
+      reste à faire ; la recherche de destination passe encore par Photon, LocationIQ
+      et Geoapify.
+- [x] Budget mesuré : 367 747 lieux, 74 Mo ; base de 354 à 428 Mo. 🔒 Retrait de
+      `places_geo` (−232 Mo) par Tony maintenant que les pages Pays lisent `geo_places`.
 
 ### 3.2 Import des lieux habités
 
-- [ ] Script d'import (Node, exécuté par GitHub Actions, gratuit) : GeoNames `cities500`
-      (CC BY 4.0) + tous les lieux habités de France et des pays alpins ; noms français
-      et anglais (`alternateNamesV2`) ; région rattachée.
-- [ ] Brancher `lookupAreaPlaces` et la recherche de destination sur la table, Photon en
-      secours. Preuve : préparations Vercors, Dolomites, Patagonie sans appel Photon pour
-      la zone.
+- [x] Import du 8 octobre : GeoNames `cities500` (CC BY 4.0, 246 pays) + tous les lieux
+      habités de France (80 299), Suisse, Italie et Autriche ; préparation locale
+      (`scripts/geo/prep_geo_places.py`), écriture par une fonction Supabase temporaire
+      protégée par un secret à usage unique, désactivée ensuite (410). Réimport mensuel :
+      tâche GitHub Actions à brancher sur `SUPABASE_DB_URL` (secret de Tony).
+- [~] `lookupAreaPlaces` lit le référentiel d'abord ; Photon n'est demandé que pour les
+      refuges et campings (absents de GeoNames), ou pour compléter une zone maigre hors
+      des pays détaillés. Pages Pays (`fetchPlacesByCountry`) sur `geo_places` ;
+      `places_geo` n'est plus lu nulle part (lecteurs morts retirés). Preuve en ligne : préparations Vercors, Dolomites,
+      Patagonie (journal « Référentiel N », sans « Photon » pour les lieux habités).
 
 ### 3.3 Massifs, parcs, régions naturelles
 

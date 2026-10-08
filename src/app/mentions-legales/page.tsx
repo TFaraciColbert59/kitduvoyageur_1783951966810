@@ -32,6 +32,15 @@ const DATA_SOURCES: Array<{ label: string; parts: Array<string | { text: string;
     ],
   },
   {
+    label: 'Lieux habités, régions et pays',
+    parts: [
+      { text: 'GeoNames', href: 'https://www.geonames.org/' },
+      ' (licence ',
+      { text: 'CC BY 4.0', href: 'https://creativecommons.org/licenses/by/4.0/' },
+      '), données importées et réduites aux lieux habités.',
+    ],
+  },
+  {
     label: 'Calcul d’itinéraires',
     parts: [
       { text: 'Powered by Geoapify', href: 'https://www.geoapify.com/' },
