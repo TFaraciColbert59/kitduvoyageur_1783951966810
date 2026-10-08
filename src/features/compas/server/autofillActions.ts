@@ -68,6 +68,7 @@ import { lookupAreaPlaces, lookupRiverLine, lookupStagePois } from './stagePoiLo
 import { buildTrack, simplifyLine, trackKey, type LngLat } from '../engine/track';
 import { descentWindow, planRiverDescent } from '../engine/river';
 import { keepAiNote, travelPapers } from '../engine/papers';
+import { tutoyer } from '../engine/voice';
 import { trainTrip, type TrainTrip } from '../engine/rail';
 import { trailRegion } from '../engine/intent';
 import {
@@ -1702,8 +1703,13 @@ export async function compasAutofillAction(
     const advice: AutofillAiAdvice = sanitizeAdvice(rawAdvice);
     const usedAi = rawAdvice != null;
     // Papiers, change et prises : la règle parle, l'IA se tait sur ces sujets.
+    // Le tutoiement aussi est une règle : un conseil qui vouvoie encore est écarté.
     const papers = travelPapers(anchor.countryCode, anchor.country);
-    notes.push(...papers.notes, ...advice.notes.filter((n) => keepAiNote(n, papers)));
+    const aiNotes = advice.notes
+      .filter((n) => keepAiNote(n, papers))
+      .map(tutoyer)
+      .filter((n): n is string => n != null);
+    notes.push(...papers.notes, ...aiNotes);
 
     lap('8');
     /* 8. Budget complet, chaque ligne avec sa source. */
