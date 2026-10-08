@@ -29,6 +29,8 @@ const DEFAULT_LIMIT = 5;
 const PARTNER_TOKEN_TIMEOUT_MS = 10_000;
 const MCP_CONNECT_TIMEOUT_MS = 8_000;
 const MCP_TOOL_TIMEOUT_MS = 12_000;
+/** La recherche de vols RouteStack (Alpha `newsearch`) dépasse souvent 12 s (Genève → Lisbonne, 8 oct.). */
+const FLIGHT_SEARCH_TIMEOUT_MS = 30_000;
 const SESSION_TTL_MS = 5 * 60 * 1_000;
 const MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
 const MAX_TRAVERSAL_NODES = 5_000;
@@ -1005,7 +1007,11 @@ export function createRouteStackBookingProvider(
       let payload: unknown;
       try {
         args = await argumentsForRequest(validated, callTool);
-        payload = parseToolPayload(await callTool(name, args));
+        payload = parseToolPayload(
+          validated.vertical === 'flight'
+            ? await callTool(name, args, { timeoutMs: FLIGHT_SEARCH_TIMEOUT_MS })
+            : await callTool(name, args)
+        );
       } catch (error) {
         throw normalizeBookingProviderError(error, 'routestack');
       }

@@ -373,7 +373,7 @@ describe('RouteStackBookingProvider', () => {
         infants: 0,
         cabin: 'Economy',
       },
-    });
+    }, { timeoutMs: 30_000 });
 
     await provider.search({
       vertical: 'car',
@@ -412,9 +412,13 @@ describe('RouteStackBookingProvider', () => {
 
     expect(callTool).toHaveBeenNthCalledWith(1, 'flight_locations', { term: 'Genève' });
     expect(callTool).toHaveBeenNthCalledWith(2, 'flight_locations', { term: 'Lisbonne' });
-    expect(callTool).toHaveBeenNthCalledWith(3, 'flight_search', {
-      filter: expect.objectContaining({ type: 'OneWay', origin: 'GVA', destination: 'LIS' }),
-    });
+    // La recherche de vols a son propre délai (plus de 12 s en ligne, 8 oct.).
+    expect(callTool).toHaveBeenNthCalledWith(
+      3,
+      'flight_search',
+      { filter: expect.objectContaining({ type: 'OneWay', origin: 'GVA', destination: 'LIS' }) },
+      { timeoutMs: 30_000 }
+    );
     expect((callTool.mock.calls[2][1] as { filter: object }).filter).not.toHaveProperty('returnDate');
   });
 
