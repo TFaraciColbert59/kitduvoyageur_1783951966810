@@ -365,6 +365,8 @@ async function plannedStages(opts: {
   wishes: string[];
   nights: string | null;
   deadline: number;
+  /** Notes du préremplissage : un repli y est dit (descente de rivière impossible). */
+  notes?: string[];
 }): Promise<{ stages: StagePlace[]; note: string } | { fallback: string } | null> {
   const { activity, days } = opts;
   let anchor = opts.anchor;
@@ -383,7 +385,13 @@ async function plannedStages(opts: {
         note: `Descente de rivière (${anchor.name}) : ${String(river.sectionKm).replace('.', ',')} km d’eau en ${days} jours, de ${river.start.name} à ${end.name}, un soir au bord de l’eau.`,
       };
     }
-    // Tracé ou rives introuvables : séjour sur l'eau depuis une base, comme avant.
+    // Tracé ou rives introuvables : séjour sur l'eau depuis une base, comme avant,
+    // et dit (sans journaux, la note en base est le seul diagnostic).
+    opts.notes?.push(
+      `Descente de rivière impossible (${
+        !line ? `tracé de « ${anchor.name} » introuvable sur la carte` : !near ? 'aucun lieu trouvé le long du tronçon' : 'aucun village au bord de l’eau sur le tronçon'
+      }) : séjour sur l’eau depuis une base.`
+    );
   }
   // Road trip et van : une région entière se parcourt en voiture ; à pied ou à
   // vélo, au-delà d'un massif, il faut savoir où sont les grands itinéraires.
@@ -987,6 +995,7 @@ export async function compasAutofillAction(
             // Passe unique (270 s) : l'itinéraire a le temps d'essayer toutes les
             // cartes (Photon, Overpass, Geoapify) même après une compréhension lente.
             deadline: startedAt + (phase === 'all' ? 120_000 : 30_000),
+            notes,
           }).catch((err) => ({
             fallback: `erreur de calcul (${err instanceof Error ? err.message.slice(0, 80) : 'inconnue'})`,
           }));
