@@ -49,10 +49,12 @@ l'instant.
 ## Blocages (8 octobre)
 
 - Réseau ouvert : la preview, Photon et Supabase répondent depuis le conteneur ; Overpass reste instable depuis ici (miroirs en 500/504).
-- Vercel refuse toujours les journaux du projet (403 sur `tonyfaracip-3325s-projects`) : le diagnostic passe par les notes écrites en base.
+- Vercel : connecteur reconnecté par Tony le 8 oct. (déploiements, journaux et variables lisibles).
 - Réservations (P3, gelé) : **RouteStack en production** depuis le 8 oct. (variables posées par Tony, preview en mode `live`) : vraies offres d'hôtels (Annecy : Logis Hotel Annecy Nord, Ibis…) et **vols aller simple et aller-retour** avec des codes d'aéroport (Genève → Lisbonne ; jusqu'à 20 s, délai porté à 30 s). Restent : noms de villes en français (« Lisbonne », « Paris ») non résolus par la recherche de lieux, voiture à nommer en anglais ; le site de production tourne encore sur `main`, sans ces correctifs.
 
 ## Décisions en vigueur
+
+- **Mandat (Tony, 8 octobre)** : carte blanche. Claude mène le chantier seul : migrations, corrections de tests, fusion des PR quand la CI est verte, déploiements Vercel (connecteur reconnecté sur l'équipe `tonyfaracip-3325s-projects`). Chaque étape reste prouvée en ligne et contrôlée en base, et dite dans ce fichier.
 
 - IA production : **NVIDIA NIM direct** (décision de Tony du 7 octobre au soir, remplace le passage à OpenRouter).
 - Cartes : services OSM gratuits + **Geoapify free tier** en secours (clé fournie, variable `GEOAPIFY_API_KEY` à poser sur Vercel) ; pas d'abonnement à 59 $ pour l'instant.
