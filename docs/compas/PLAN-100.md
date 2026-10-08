@@ -320,16 +320,25 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       `authenticated`). **Deux failles fermées** (`20261008225921`) :
       `claim_reward_points` (n'importe qui créditait des points à n'importe quel compte)
       et `log_materiel_history` (historique écrit au nom d'un autre), réservées à la clé de
-      service. Les révocations des migrations du 17 et du 22 septembre n'avaient jamais
-      été appliquées en production : reste à rejouer la revue fonction par fonction
-      (vue `public_profiles` en SECURITY DEFINER, 2 `search_path` mobiles).
+      service. Revue rejouée fonction par fonction le 8 oct. (`20261008231512`) : la
+      migration du 21 septembre était bien passée, mais neuf fonctions avaient retrouvé
+      `EXECUTE` pour PUBLIC. Refermées : `request_withdrawal`, `record_hike_gear_usage`,
+      `toggle_community_post_like`, `get_user_badges_progress` (session requise, chacune
+      vérifie `auth.uid()`) ; `get_comparable_sales`, `get_occasion_listing_for_product`,
+      `get_hiking_routes_geojson`, `get_trail_pois_geojson`, `refresh_user_field_signature`
+      (une session d'essai relançait à volonté une vue matérialisée) réservées au serveur ;
+      7 fonctions trigger retirées à tous ; 2 `search_path` verrouillés (vérifié : mêmes
+      résultats). Ouvertes à `anon` : 29 → 14 (droits de voyage et de groupe utilisés
+      par les policies, drapeaux, données publiques, 3 PostGIS). ⚖️ Reste : vue `public_profiles` (nom, ville, bio et
+      points de chaque compte lisibles sans connexion), décision de Tony.
 - [ ] Revue des policies « public » restantes (conseiller Supabase `get_advisors`).
 
 ### 2.5 Quota IA
 
 - [x] Quota par personne appliqué (8 oct.).
-- [ ] Palier : la préparation est comptée en `heavy` (aujourd'hui `fast`) comme le
-      prévoit sa fiche.
+- [x] Palier : la préparation est comptée en `heavy` comme le prévoit sa fiche
+      (`quotaTier`), tout en gardant le modèle rapide (réponse longue, temps compté).
+      Test TEST-ASK-04b.
 - [ ] Plafond global et fail-closed (1.7).
 
 ### 2.6 Préparation durable
@@ -339,7 +348,7 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [ ] Budget interne vérifié dans la boucle de recherche des étapes.
 - [ ] Reprise idempotente après coupure (même plan, pas de doublon). Preuve : test de
       coupure simulée à chaque phase.
-- [ ] Commentaires « 60 s » mis à jour (300 s).
+- [x] Commentaires « 60 s » mis à jour (300 s ; 48 s par phase gardés et expliqués).
 
 ### 2.7 Écritures concurrentes
 
@@ -355,8 +364,9 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 - [ ] Table `app_errors` (erreurs serveur du Compas, sans donnée personnelle) + rapport
       quotidien (1.1) ; ou Sentry offre gratuite si ses conditions le permettent.
-- [ ] `src/app/compas/error.tsx` et `loading.tsx` ; `global-error.tsx` ne dit plus
-      « l'équipe a été notifiée » sans que ce soit vrai.
+- [x] `src/app/compas/error.tsx` (aucun message interne, référence `digest` des
+      journaux Vercel, « Réessayer » relit le serveur) et `loading.tsx` ;
+      `global-error.tsx` ne dit plus « l'équipe a été notifiée ».
 - [ ] Erreurs internes jamais affichées dans les notes (`autofillActions.ts`).
 
 ### 2.10 RGPD
