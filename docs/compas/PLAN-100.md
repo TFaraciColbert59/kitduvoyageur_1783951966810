@@ -241,10 +241,15 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [~] Protection des inscriptions et des sessions anonymes contre les comptes en série :
       **hCaptcha gratuit** invisible (`src/lib/captcha/hcaptcha.ts`, sans dépendance) ;
       jeton joint à la connexion, l'inscription (deux pages), l'essai sans compte et le
-      mot de passe oublié (lot B). Ensuite **Tony allume le captcha dans Supabase**
-      (Authentication → Bot and Abuse Protection → hCaptcha, clé secrète), après la
-      fusion seulement. BotID de Vercel sur les actions coûteuses : à faire. Limite d'IP
-      de Supabase Auth (30 sessions anonymes/heure) gardée.
+      mot de passe oublié (lot B), défi en français. **Éteint pendant le chantier** :
+      prouvé sur l'aperçu le 8 oct. (un navigateur automatique reçoit un défi visuel),
+      donc une fois imposé, plus aucune vérification automatique en production ne
+      pourrait se connecter. Interrupteur `NEXT_PUBLIC_AUTH_CAPTCHA=on` (Vercel) ;
+      **allumé au lancement (phase 7)** en même temps que la protection de Supabase
+      (Authentication → Bot and Abuse Protection → hCaptcha, clé secrète). D'ici là :
+      limite d'IP de Supabase Auth (30 sessions anonymes/heure), nos limites (5 essais
+      par heure et par adresse, 300 par jour pour le site) et la purge à 7 jours.
+      BotID de Vercel sur les actions coûteuses : à faire.
 
 ### 2.3 Connexion démo
 
@@ -587,6 +592,9 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [ ] Charge simulée : 1 000 préparations/jour dans les quotas gratuits (Geoapify,
       Photon, routage, MET Norway, Supabase) ; marge mesurée.
 - [ ] Bêta : 10 vrais voyageurs, retours lus en base ; taux de réussite ≥ 97 %.
+- [ ] Au lancement, dans cet ordre : protection hCaptcha allumée dans Supabase (clé
+      secrète), puis `NEXT_PUBLIC_AUTH_CAPTCHA=on` dans Vercel et redéploiement ;
+      vérifier une connexion, une inscription et un essai à la main.
 - [ ] Critère de lancement francophone : phases 1, 2, 3.2, 4.1 à 4.7, 5 terminées.
 - [ ] Critère de lancement mondial : phase 6 terminée, jeu « monde » ≥ 95 %.
 

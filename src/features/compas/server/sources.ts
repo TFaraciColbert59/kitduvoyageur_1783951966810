@@ -12,6 +12,8 @@ export interface CompasSources {
   locationiq: boolean;
   arcgis: boolean;
   hcaptcha: boolean;
+  /** Captcha demandé aux visiteurs (`NEXT_PUBLIC_AUTH_CAPTCHA=on`). */
+  captcha: boolean;
   nvidia: boolean;
   database: boolean;
 }
@@ -22,6 +24,7 @@ export function compasSources(env: Record<string, string | undefined> = process.
     locationiq: present(env.LOCATIONIQ_API_KEY),
     arcgis: present(env.NEXT_PUBLIC_ARCGIS_API_KEY),
     hcaptcha: present(env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY),
+    captcha: env.NEXT_PUBLIC_AUTH_CAPTCHA?.trim() === 'on' && present(env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY),
     nvidia: present(env.NVIDIA_API_KEY),
     database: present(env.NEXT_PUBLIC_SUPABASE_URL) && present(env.SUPABASE_SERVICE_ROLE_KEY),
   };

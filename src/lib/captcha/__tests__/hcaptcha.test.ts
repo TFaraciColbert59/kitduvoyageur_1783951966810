@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getCaptchaToken, resetCaptchaForTests } from '../hcaptcha';
+import { getCaptchaToken, hcaptchaSiteKey, resetCaptchaForTests } from '../hcaptcha';
 
 /**
  * hCaptcha invisible (plan 2.2) : un jeton à usage unique par geste
@@ -48,5 +48,11 @@ describe('jeton hCaptcha', () => {
       reset: () => undefined,
     };
     await expect(getCaptchaToken('cle-site')).resolves.toBeUndefined();
+  });
+  it('éteint tant que le réglage n’est pas « on » (un défi sans vérification Supabase gêne sans protéger)', () => {
+    expect(hcaptchaSiteKey(undefined, 'cle-site')).toBeNull();
+    expect(hcaptchaSiteKey('off', 'cle-site')).toBeNull();
+    expect(hcaptchaSiteKey('on', '')).toBeNull();
+    expect(hcaptchaSiteKey('on', 'cle-site')).toBe('cle-site');
   });
 });

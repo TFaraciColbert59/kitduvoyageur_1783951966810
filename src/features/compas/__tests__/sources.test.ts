@@ -18,6 +18,7 @@ describe('sources gratuites du déploiement', () => {
       locationiq: false,
       arcgis: true,
       hcaptcha: false,
+      captcha: false,
       nvidia: false,
       database: true,
     });

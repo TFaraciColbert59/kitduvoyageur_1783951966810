@@ -4,12 +4,16 @@
  * compte, mot de passe oublié). Supabase le vérifie dès que la protection est
  * allumée dans Authentication → Bot and Abuse Protection.
  *
- * Sans clé de site (`NEXT_PUBLIC_HCAPTCHA_SITE_KEY`), ou côté serveur : aucun
- * jeton, rien ne change. Le script officiel est chargé à la première demande
- * seulement (aucun tiers contacté avant un geste d'authentification).
+ * Allumé seulement avec `NEXT_PUBLIC_AUTH_CAPTCHA=on` ET la clé de site
+ * (`NEXT_PUBLIC_HCAPTCHA_SITE_KEY`) : un défi n'a de sens que si Supabase
+ * vérifie le jeton (sinon il gêne sans protéger), et tant qu'il est éteint les
+ * passages de validation automatiques peuvent encore se connecter. Au
+ * lancement : protection allumée dans Supabase et réglage `on` dans Vercel,
+ * ensemble. Côté serveur : aucun jeton. Le script officiel n'est chargé qu'à
+ * la première demande (aucun tiers contacté avant un geste d'authentification).
  */
 
-const SCRIPT_SRC = 'https://js.hcaptcha.com/1/api.js?render=explicit&recaptchacompat=off';
+const SCRIPT_SRC = 'https://js.hcaptcha.com/1/api.js?render=explicit&recaptchacompat=off&hl=fr';
 const LOAD_TIMEOUT_MS = 10_000;
 
 interface HCaptchaApi {
@@ -24,8 +28,13 @@ declare global {
   }
 }
 
-export function hcaptchaSiteKey(): string | null {
-  const k = process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY?.trim();
+/** La clé de site si le captcha est allumé (`NEXT_PUBLIC_AUTH_CAPTCHA=on`), sinon null. */
+export function hcaptchaSiteKey(
+  enabled: string | undefined = process.env.NEXT_PUBLIC_AUTH_CAPTCHA,
+  key: string | undefined = process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY
+): string | null {
+  if (enabled?.trim() !== 'on') return null;
+  const k = key?.trim();
   return k ? k : null;
 }
 
