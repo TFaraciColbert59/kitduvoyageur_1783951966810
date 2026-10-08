@@ -46,12 +46,28 @@ export const GEOAPIFY_MODE: Readonly<Record<TravelMode, string>> = {
  * L'offre gratuite donne 3 000 credits par jour pour TOUT Geoapify (lieux,
  * geocodage, routage), et `/api/route` est public : sans plafond, une seule
  * personne pourrait vider les credits du jour et priver le Compas de ses lieux.
- * Le routage en prend donc au plus la moitie ; au-dela, Valhalla repond.
+ * Le routage en prend donc au plus la moitie (1 500 credits) ; au-dela,
+ * Valhalla repond. Le compteur compte des CREDITS, pas des appels : un trajet
+ * de plus de 500 km en coute plusieurs (voir `geoapifyRouteCredits`).
  * Compteur partage en base (toutes les instances Vercel), ouvert en cas de
  * panne du compteur : Geoapify refuse alors lui-meme (429) et Valhalla prend
  * le relais.
  */
 export const GEOAPIFY_ROUTING_DAILY_BUDGET = 1500;
+
+/**
+ * Les credits Geoapify qu'un trajet coutera : un par tranche de 500 km
+ * commencee (tarif Geoapify Routing : un trajet de 630 km en coute deux). La
+ * distance n'est connue qu'apres l'appel : on la prend au vol d'oiseau × 1,3,
+ * le detour moyen d'une route, pour ne jamais sous-compter de beaucoup.
+ */
+export function geoapifyRouteCredits(points: readonly RoutePoint[]): number {
+  let km = 0;
+  for (let index = 1; index < points.length; index += 1) {
+    km += haversineKm(points[index - 1], points[index]);
+  }
+  return Math.max(1, Math.ceil((km * 1.3) / 500));
+}
 
 const VALHALLA_URL = 'https://valhalla1.openstreetmap.de/route';
 
@@ -797,10 +813,16 @@ export function __setGeoapifyBudgetForTests(budget: GeoapifyBudget | null): void
   geoapifyBudget = budget ?? defaultGeoapifyBudget;
 }
 
-/** Un credit Geoapify pour ce trajet ? Un compteur en panne ne bloque rien. */
-async function geoapifyAllowed(): Promise<boolean> {
+/**
+ * Les credits Geoapify de ce trajet, pris un a un sur le compteur du site ;
+ * un seul refus et Geoapify n'est pas appele. Un compteur en panne ne bloque rien.
+ */
+async function geoapifyAllowed(credits: number): Promise<boolean> {
   try {
-    return (await geoapifyBudget()).allowed;
+    for (let taken = 0; taken < credits; taken += 1) {
+      if (!(await geoapifyBudget()).allowed) return false;
+    }
+    return true;
   } catch {
     return true;
   }
@@ -883,7 +905,7 @@ export async function routeAttempt(
 
   const apiKey = geoapifyKey();
   const fromGeoapify =
-    apiKey && (await geoapifyAllowed())
+    apiKey && (await geoapifyAllowed(geoapifyRouteCredits(points)))
       ? normalizeGeoapifyRouteDetailed(
           await callProvider(geoapifyRouteUrl(points, mode, apiKey), signal, { 'User-Agent': USER_AGENT }),
           points,

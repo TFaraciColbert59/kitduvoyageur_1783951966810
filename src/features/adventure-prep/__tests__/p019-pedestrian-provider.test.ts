@@ -28,6 +28,7 @@ import {
   __resetRouteCache,
   __resetRouteLimiter,
   __setGeoapifyBudgetForTests,
+  geoapifyRouteCredits,
   routeAttempt,
 } from '../routingService';
 import type { RoutePoint } from '../routingService';
@@ -375,6 +376,33 @@ describe('P1.9 - le fournisseur pieton repond', () => {
     const attempt = await routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton');
 
     expect(attempt.provider).toBe('valhalla');
+    expect(urlsDe(mock).some(isGeoapify)).toBe(false);
+  });
+
+  it('P019-17 : un long trajet coute plusieurs credits, et le compteur les compte tous', async () => {
+    // Tarif Geoapify : un credit par tranche de 500 km commencee (630 km : deux).
+    const PARIS: RoutePoint = { lat: 48.8566, lon: 2.3522 };
+    const NICE: RoutePoint = { lat: 43.7102, lon: 7.262 };
+    expect(geoapifyRouteCredits([CHAMONIX, LES_HOUCHES])).toBe(1);
+    // 686 km a vol d'oiseau, ~890 km de route : deux credits.
+    expect(geoapifyRouteCredits([PARIS, NICE])).toBe(2);
+
+    let pris = 0;
+    __setGeoapifyBudgetForTests(async () => {
+      pris += 1;
+      return { allowed: true };
+    });
+    vi.stubGlobal('fetch', fetchQuiRepond((url) => (isGeoapify(url) ? panne() : valhalla(url))));
+    await routeAttempt([PARIS, NICE], 'voiture');
+    expect(pris).toBe(2);
+
+    // Le deuxieme credit refuse : Geoapify n'est pas appele du tout.
+    __resetRouteCache();
+    let restant = 1;
+    __setGeoapifyBudgetForTests(async () => ({ allowed: restant-- > 0 }));
+    const mock = fetchQuiRepond((url) => valhalla(url));
+    vi.stubGlobal('fetch', mock);
+    await routeAttempt([PARIS, NICE], 'voiture');
     expect(urlsDe(mock).some(isGeoapify)).toBe(false);
   });
 });
