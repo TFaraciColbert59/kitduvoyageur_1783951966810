@@ -97,6 +97,7 @@ Option Pro (25 $ par mois, 8 Go inclus) : tous les lieux habités du monde (~4,7
   admin2, pays seul couvert par pays + population), `admin_regions_geo` (`geoname_id` en
   double, plein texte, `admin_code`), `countries_geo` (`geoname_id` en double). Gardés :
   géométrie (future recherche spatiale du Compas), trigrammes (12 lectures).
-- **Bloquée** : l'outil de migration Supabase n'exécute pas ces `DROP INDEX` (il attend
-  une confirmation de Tony ; rien n'arrive en base). L'import des lieux habités attend
-  cette place : sans elle, la base passerait de 424 à ~480 Mo sur 500.
+- **Faite le 8 octobre** (Tony, SQL Editor ; migration `20261008162452`) : base de
+  **424 à 353 Mo**.
+- **Budget 0 € (Tony, 8 octobre)** : suite dans `PLAN-100.md`, phase 3 (`geo_places`,
+  import par GitHub Actions, retrait de `places_geo`).
