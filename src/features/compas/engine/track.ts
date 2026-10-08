@@ -57,5 +57,16 @@ export function buildTrack(
       ]);
     }
   }
-  return routed ? { type: 'MultiLineString', coordinates: lines } : null;
+  if (!routed) return null;
+  // Le tracé vit dans `trips.metadata` (base gratuite de 500 Mo) : 600 points
+  // au plus pour tout le voyage (~12 Ko), partagés entre ses tronçons.
+  const total = lines.reduce((n, l) => n + l.length, 0);
+  const coordinates =
+    total > MAX_TRACK_POINTS
+      ? lines.map((l) => simplifyLine(l, Math.max(2, Math.floor(MAX_TRACK_POINTS / lines.length))))
+      : lines;
+  return { type: 'MultiLineString', coordinates };
 }
+
+/** Points au plus dans le tracé d'un voyage (plan 1.1). */
+export const MAX_TRACK_POINTS = 600;

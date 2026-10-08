@@ -1,0 +1,80 @@
+name: Sauvegarde de la base
+
+# Plan 1.1 (8 octobre) : l'offre gratuite de Supabase ne sauvegarde rien.
+# Chaque nuit, un pg_dump des données utiles (hors caches et référentiels
+# réimportables), chiffré, gardé 7 jours en artefact GitHub (gratuit).
+# Restauration : docs/compas/SAUVEGARDES.md.
+#
+# Secrets à poser par Tony (Settings → Secrets and variables → Actions) :
+#   SUPABASE_DB_URL   chaîne de connexion « Session pooler » de Supabase
+#   BACKUP_PASSPHRASE phrase de chiffrement (gardée hors du dépôt)
+# Sans eux, la tâche s'arrête proprement en le disant.
+
+on:
+  schedule:
+    - cron: '23 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Secrets présents ?
+        id: secrets
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          if [ -z "$DB_URL" ] || [ -z "$PASSPHRASE" ]; then
+            echo "::notice::Sauvegarde non configurée : poser SUPABASE_DB_URL et BACKUP_PASSPHRASE (docs/compas/SAUVEGARDES.md)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Client PostgreSQL 17
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+
+      - name: Dump chiffré
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          day=$(date -u +%F)
+          # Schémas de l'application et des comptes ; sans les données des
+          # caches et des référentiels réimportables (structure gardée).
+          /usr/lib/postgresql/17/bin/pg_dump "$DB_URL" \
+            --format=custom --no-owner --no-privileges \
+            --schema=public --schema=auth \
+            --exclude-table-data=public.geo_cache \
+            --exclude-table-data=public.route_cache \
+            --exclude-table-data=public.rate_limit_windows \
+            --exclude-table-data=public.places_geo \
+            --exclude-table-data=public.admin_regions_geo \
+            --exclude-table-data=public.hub_telemetry \
+            --file="lkdv-$day.dump"
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$PASSPHRASE" \
+            --symmetric --cipher-algo AES256 --output "lkdv-$day.dump.gpg" "lkdv-$day.dump"
+          rm "lkdv-$day.dump"
+          ls -lh "lkdv-$day.dump.gpg"
+
+      - name: Artefact (7 jours)
+        if: steps.secrets.outputs.ready == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: sauvegarde-base
+          path: lkdv-*.dump.gpg
+          retention-days: 7
+          if-no-files-found: error
