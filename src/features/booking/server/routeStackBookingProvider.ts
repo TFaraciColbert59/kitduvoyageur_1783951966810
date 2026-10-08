@@ -823,17 +823,20 @@ async function argumentsForRequest(
   if (request.vertical === 'flight') {
     const origin = await resolveLocation(callTool, 'flight', request.origin);
     const destination = await resolveLocation(callTool, 'flight', request.destination);
-    // Corps de POST /mcp/flight/search (collection Postman RouteStack) : à plat, sans `filter`.
+    // Corps de POST /mcp/flight/search (collection Postman RouteStack), que
+    // l'outil MCP `flight_search` attend sous `filter`.
     return {
-      type: request.return ? 'RoundTrip' : 'OneWay',
-      origin: origin.code,
-      destination: destination.code,
-      departureDate: request.departure,
-      ...(request.return ? { returnDate: request.return } : {}),
-      adults: travelers,
-      children: 0,
-      infants: 0,
-      cabin: 'Economy',
+      filter: {
+        type: request.return ? 'RoundTrip' : 'OneWay',
+        origin: origin.code,
+        destination: destination.code,
+        departureDate: request.departure,
+        ...(request.return ? { returnDate: request.return } : {}),
+        adults: travelers,
+        children: 0,
+        infants: 0,
+        cabin: 'Economy',
+      },
     };
   }
   if (request.vertical === 'hotel') {
@@ -855,13 +858,16 @@ async function argumentsForRequest(
     };
   }
   if (request.vertical === 'car') {
-    // Corps de POST /mcp/car/search (collection Postman RouteStack) : le lieu par
-    // son nom, date et heure séparées (heure telle qu'écrite dans la demande).
+    // Corps de POST /mcp/car/search (collection Postman RouteStack), sous `filter`
+    // comme pour les vols : le lieu par son nom, date et heure séparées (heure
+    // telle qu'écrite dans la demande).
     const at = (iso: string) => ({ date: iso.slice(0, 10), time: iso.slice(11, 16) });
     const place = request.destination.trim();
     return {
-      pickup: { name: place, ...at(request.pickupAt) },
-      dropoff: { name: place, ...at(request.dropoffAt) },
+      filter: {
+        pickup: { name: place, ...at(request.pickupAt) },
+        dropoff: { name: place, ...at(request.dropoffAt) },
+      },
     };
   }
   throw new BookingProviderError({

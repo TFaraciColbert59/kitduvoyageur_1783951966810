@@ -362,15 +362,17 @@ describe('RouteStackBookingProvider', () => {
 
     await provider.search(flightRequest);
     expect(callTool).toHaveBeenNthCalledWith(1, 'flight_search', {
-      type: 'RoundTrip',
-      origin: 'CDG',
-      destination: 'NRT',
-      departureDate: '2026-11-12',
-      returnDate: '2026-11-21',
-      adults: 2,
-      children: 0,
-      infants: 0,
-      cabin: 'Economy',
+      filter: {
+        type: 'RoundTrip',
+        origin: 'CDG',
+        destination: 'NRT',
+        departureDate: '2026-11-12',
+        returnDate: '2026-11-21',
+        adults: 2,
+        children: 0,
+        infants: 0,
+        cabin: 'Economy',
+      },
     });
 
     await provider.search({
@@ -381,8 +383,10 @@ describe('RouteStackBookingProvider', () => {
       travelers: 1,
     });
     expect(callTool).toHaveBeenNthCalledWith(2, 'car_search', {
-      pickup: { name: 'Tokyo', date: '2026-11-12', time: '10:00' },
-      dropoff: { name: 'Tokyo', date: '2026-11-21', time: '10:00' },
+      filter: {
+        pickup: { name: 'Tokyo', date: '2026-11-12', time: '10:00' },
+        dropoff: { name: 'Tokyo', date: '2026-11-21', time: '10:00' },
+      },
     });
   });
 
@@ -408,8 +412,10 @@ describe('RouteStackBookingProvider', () => {
 
     expect(callTool).toHaveBeenNthCalledWith(1, 'flight_locations', { term: 'Genève' });
     expect(callTool).toHaveBeenNthCalledWith(2, 'flight_locations', { term: 'Lisbonne' });
-    expect(callTool).toHaveBeenNthCalledWith(3, 'flight_search', expect.objectContaining({ type: 'OneWay', origin: 'GVA', destination: 'LIS' }));
-    expect(callTool.mock.calls[2][1]).not.toHaveProperty('returnDate');
+    expect(callTool).toHaveBeenNthCalledWith(3, 'flight_search', {
+      filter: expect.objectContaining({ type: 'OneWay', origin: 'GVA', destination: 'LIS' }),
+    });
+    expect((callTool.mock.calls[2][1] as { filter: object }).filter).not.toHaveProperty('returnDate');
   });
 
   it('normalise les structures RouteStack imbriquées sans inventer de prix', async () => {
