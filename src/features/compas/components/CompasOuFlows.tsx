@@ -340,7 +340,8 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
               <span className="cp-row__t">
                 <b>{s.title}</b>
                 <span>
-                  Jour {s.day} · {formatKm(s.distanceKm)} · D+ {formatMeters(s.elevationGainM)}
+                  Jour {s.day} · {s.distanceEstimated && s.distanceKm != null ? `≈ ${formatKm(s.distanceKm)} (estimée)` : formatKm(s.distanceKm)} · D+{' '}
+                  {formatMeters(s.elevationGainM)}
                 </span>
               </span>
               <span className="cp-row__end">

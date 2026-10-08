@@ -1,86 +1,66 @@
 /**
- * Service de routage cote serveur — le point de controle avant OSRM.
+ * Service de routage cote serveur — le point de controle avant les routeurs.
  *
- * Deux fournisseurs libres, sans cle :
- *   - OSRM       `router.project-osrm.org` : distance, duree et trace routiers ;
+ * Deux fournisseurs, tous deux autorises pour un usage commercial (plan 1.5,
+ * conditions verifiees le 8 octobre, `docs/compas/SERVICES-GRATUITS.md`) :
+ *   - Geoapify Routing (cle `GEOAPIFY_API_KEY`, offre gratuite) : le premier ;
+ *   - Valhalla FOSSGIS `valhalla1.openstreetmap.de` (sans cle, identifie par
+ *     `X-Client-Id`) : le repli sur panne, credits epuises ou cle absente.
  *   - (altitudes : servies par /api/elevation, relief libre Terrain Tiles)
  *
+ * Retires le 8 octobre : le serveur de demonstration d'OSRM (« non-commercial
+ * use-cases »), `routing.openstreetmap.de` et `brouter.de` (aucune condition
+ * d'usage publiee). Leurs mesures deja en cache restent lisibles, avec leur
+ * vrai nom de source.
+ *
  * Regle unique, identique a celle du geocodage : une reponse malformee, trop
- * courte ou incoherentente vaut `null`. Aucune distance approchee ne se glisse
- * a la place d'une mesure.
+ * courte ou incoherente vaut `null`. Aucune distance approchee ne se glisse
+ * a la place d'une mesure : l'estimation, quand il en faut une, se fait chez
+ * l'appelant et se dit estimation.
  */
 
 import { haversineKm } from './engine/routing';
 import { TRAVEL_MODES } from './engine/routing';
 import type { RouteLeg, TravelMode } from './engine/routing';
 import type { RouteProvider } from './engine/provenance';
+import { rateLimit, type RateLimitResult } from '@/lib/rate-limit';
 
 /**
- * Deux serveurs OSRM, et pourquoi.
- *
- * La VOITURE reste sur le serveur de demonstration d'OSRM (FOSSGIS e.V.) :
- * c'est lui qui fait autorite depuis le debut, et son graphe routier est le
- * plus complet.
- *
- * La MARCHE et le VELO ne peuvent PAS y aller : ce serveur n'expose que le
- * graphe routier. Un trajet de marche calcule sur des routes mesurees n'est
- * pas un trajet de marche, c'est un trajet de voiture deguise. Ils vont donc
- * sur FOSSGIS, sous le prefixe de PROFIL — un graphe construit pour ce mode
- * la :
- *
- *   `routed-foot` reseau pieton, `routed-bike` reseau cyclable.
- *
- * MESURE du 2026-09-28, c'est ce qui a ouvert P1.9 :
- *   - `routing.openstreetmap.de`    : **HTTP 200, 132 ms** (7 385 m / 98,5 min
- *     pour Chamonix -> Les Houches a pied, arrivee a 7 m du but)
- *
- * CORRECTION DU 2026-09-28, meme jour : les deux Valhalla, notes plus tot
- * comme INJOIGNABLES, repondent de nouveau en `200` (252 ms). La note est donc
- * FAUSE et ne doit plus etre reprise. Valhalla reste le repli sur panne, mais
- * il ne sauve pas P0.23 : son graphe pieton s'arrete a 2 875 m du refuge des
- * Grands Mulets, exactement comme celui de FOSSGIS a 2 878 m. Deux graphes
- * incomplets ne se rattrapent pas l'un l'autre. C'est BRouter, moteur de
- * randonnee, qui couvre enfin l'altitude - voir P1.10.
- *
- * Un service qui tombe ne doit pas supprimer les distances, et un service qui
- * repond sans atteindre le lieu ne doit pas en inventer une.
+ * Geoapify Routing : un appel pour tout le trajet, un troncon par paire de
+ * points (`legs`), une ligne par troncon (`MultiLineString`). Le mode de
+ * Geoapify qui correspond a chacun des notres : `hike` suit les sentiers (et
+ * pas seulement la voirie pietonne), `bicycle` le reseau cyclable, `drive` la
+ * route.
  */
-const OSRM_BASE = 'https://router.project-osrm.org/route/v1/driving';
-const OSRM_PROFIL_BASE = 'https://routing.openstreetmap.de';
+const GEOAPIFY_ROUTING_URL = 'https://api.geoapify.com/v1/routing';
 
-/**
- * Le prefixe de profil de chaque mode qui n'a pas de graphe routier.
- *
- * Le chemin se lit `routed-foot/route/v1/driving/<points>` : le mot `driving`
- * est le format de l'API OSRM, pas le mode demande. C'est le PREFIXE qui
- * choisit le graphe, et c'est lui qui fait toute la difference entre une
- * reponse correcte et une reponse qui parle d'un autre trajet.
- */
-const OSRM_PROFIL: Readonly<Partial<Record<TravelMode, string>>> = {
-  pieton: 'routed-foot',
-  velo: 'routed-bike',
+export const GEOAPIFY_MODE: Readonly<Record<TravelMode, string>> = {
+  pieton: 'hike',
+  velo: 'bicycle',
+  voiture: 'drive',
 };
+
+/**
+ * Budget du site pour le routage Geoapify, par jour.
+ *
+ * L'offre gratuite donne 3 000 credits par jour pour TOUT Geoapify (lieux,
+ * geocodage, routage), et `/api/route` est public : sans plafond, une seule
+ * personne pourrait vider les credits du jour et priver le Compas de ses lieux.
+ * Le routage en prend donc au plus la moitie ; au-dela, Valhalla repond.
+ * Compteur partage en base (toutes les instances Vercel), ouvert en cas de
+ * panne du compteur : Geoapify refuse alors lui-meme (429) et Valhalla prend
+ * le relais.
+ */
+export const GEOAPIFY_ROUTING_DAILY_BUDGET = 1500;
 
 const VALHALLA_URL = 'https://valhalla1.openstreetmap.de/route';
 
 /**
- * BRouter : le seul des trois fournisseurs qui sache monter.
- *
- * OSRM et Valhalla sont des graphes de voirie. Ils s accrochent au point le
- * plus proche de leur reseau, qui peut etre 2,9 km plus bas qu un refuge
- * d altitude. BRouter est un moteur de randonnee, avec son propre modele
- * d elevation, et il monte jusqu au lieu demande.
- *
- * Mesure du 2026-09-28, Chamonix -> refuge des Grands Mulets :
- *   - `routed-foot`    :  8 718 m, arrivee a 2 878 m, refuse
- *   - Valhalla         :  9 128 m, arrivee a 2 875 m, refuse
- *   - BRouter trekking : 14 424 m, D+ 2 100 m, arrivee a 18 m, accepte
- *
- * Il est donc le DERNIER recours du mode `pieton`, jamais un substitut : un
- * seul appel par troncon, et seulement quand les deux autres ont refuse.
+ * L'identification demandee par FOSSGIS pour son Valhalla public : un
+ * `X-Client-Id` qui nomme l'application, et un User-Agent joignable.
  */
-const BROUTER_URL = 'https://brouter.de/brouter';
-const BROUTER_PROFILE = 'trekking';
+const CLIENT_ID = 'koosmoweb.fr';
+const USER_AGENT = 'kitduvoyageur/1.0 (Compas, preparation de voyage; koosmoweb.fr)';
 
 /**
  * Tolerance d'accrochage, en metres.
@@ -122,10 +102,8 @@ export const VALHALLA_COSTING: Readonly<Record<TravelMode, string>> = {
   voiture: 'auto',
 };
 
-/** Au-dela, OSRM refuse la requete : on refuse aussi, proprement. */
+/** Au-dela, les routeurs refusent la requete : on refuse aussi, proprement. */
 export const MAX_ROUTE_POINTS = 12;
-
-/** Open-Meteo n'accepte que 100 coordonnees par requete d altitude. */
 
 const TIMEOUT_MS = 8000;
 const CACHE_TTL_MS = 60 * 60 * 1000;
@@ -218,9 +196,12 @@ function decodeStoredRoute(stored: unknown): RouteAttempt | undefined {
   // `legs` DOIT etre un tableau non vide : une trace mesuree a au moins un
   // troncon. Ni `null`, ni absent, ni vide ne sont des mesures.
   if (!Array.isArray(candidate.legs) || candidate.legs.length === 0) return undefined;
+  // `osrm` et `brouter` ne sont plus interroges, mais une mesure deja en
+  // cache garde le nom du moteur qui l'a faite.
   const provider =
-    candidate.provider === 'osrm' ||
+    candidate.provider === 'geoapify' ||
     candidate.provider === 'valhalla' ||
+    candidate.provider === 'osrm' ||
     candidate.provider === 'brouter'
       ? candidate.provider
       : undefined;
@@ -402,8 +383,9 @@ function writeCache(key: string, value: unknown): void {
 
 /**
  * `MAX_ROUTE_POINTS = 12` borne la TAILLE d une requete. Rien ne bornait le
- * NOMBRE de requetes, et c est la le vrai risque : les trois fournisseurs sont
- * des services publics et sans cle, partages avec tous les autres. Une journee
+ * NOMBRE de requetes, et c est la le vrai risque : Valhalla est un service
+ * public partage avec tous les autres, et les credits Geoapify sont comptes
+ * (voir aussi `GEOAPIFY_ROUTING_DAILY_BUDGET`, partage par le site). Une journee
  * de N etapes, regeneree apres chaque ajustement, peut faire partir des
  * dizaines d appels en quelques secondes et epuiser un quota qui n est pas le
  * notre. Le symptome n est pas une donnee fausse : c est une panne, et une panne
@@ -471,18 +453,22 @@ function finite(value: unknown): number | null {
 /**
  * Le corps JSON, meme quand le statut HTTP est mauvais.
  *
- * `if (!response.ok) return null` etait un raccourci pratique, mais il
- * jettait avec le statut l'information la plus utile : `NoRoute`. Sur une
- * reponse 400 d'OSRM, le statut est constant et sans valeur, alors que le
- * corps dit pourquoi. C'est ce corps qui distingue un fait mesure d'une
- * panne, et l'ignorer revenait a traiter les deux de la meme facon.
- *
- * Une page d'erreur HTML — un 502 de nginx — n'a pas de `code` : `JSON.parse`
- * echoue, donc `null`, ce qui reste une panne. Rien n'est invente.
+ * `if (!response.ok) return null` jetterait avec le statut le corps qui dit
+ * pourquoi : c'est lui qui distingue un fait mesure d'une panne. Une page
+ * d'erreur HTML — un 502 de nginx — n'est pas du JSON : `null`, ce qui reste
+ * une panne. Rien n'est invente.
  */
-async function fetchJson(url: string, signal: AbortSignal): Promise<unknown | null> {
+async function fetchJson(
+  url: string,
+  signal: AbortSignal,
+  headers: Record<string, string> = {},
+): Promise<unknown | null> {
   try {
-    const response = await fetch(url, { signal, headers: { Accept: 'application/json' } });
+    const response = await fetch(url, {
+      signal,
+      cache: 'no-store',
+      headers: { Accept: 'application/json', ...headers },
+    });
     const raw = await response.text();
     if (raw.length === 0) return null;
     return JSON.parse(raw) as unknown;
@@ -516,121 +502,6 @@ function readGeometry(value: unknown): Pair[] | null {
     out.push(pair);
   }
   return out;
-}
-
-/**
- * Longueurs cumulees (en km) le long d une polyligne `[lon, lat]`.
- *
- * Sert a couper le trace au bon endroit : couper par index reviendrait a
- * revenir a faire la densite de points, qui est un choix de simplification d OSRM,
- * alors que la distance routiere mesuree est elle seule geographique.
- */
-function cumulativeKm(geometry: readonly Pair[]): number[] {
-  const out: number[] = [0];
-  for (let index = 1; index < geometry.length; index += 1) {
-    const previous = geometry[index - 1];
-    const current = geometry[index];
-    out.push(
-      out[index - 1] +
-        haversineKm({ lon: previous[0], lat: previous[1] }, { lon: current[0], lat: current[1] }),
-    );
-  }
-  return out;
-}
-
-/**
- * Decoupe le trace d une route en une portion par troncon.
- *
- * OSRM ne livre la geometrie qu au niveau de la route : c est sa reponse
- * reelle, verifiee sur `router.project-osrm.org`. Chaque troncon ne portant
- * donc AUCUN trace propre, on repartit la ligne globale selon la distance
- * routiere mesuree de chaque troncon.
- *
- * `null` quand la coupure est impossible sans inventer un point : mieux vaut
- * aucun trace qu un trace qui ne passe pas par les etapes demandees.
- */
-export function splitGeometryByLegs(
-  geometry: readonly Pair[],
-  legDistancesM: readonly number[],
-): Pair[][] | null {
-  const legCount = legDistancesM.length;
-  if (legCount === 0) return null;
-  if (legCount === 1) return [[...geometry]];
-  // Un point de raccord par troncon : il en faut au moins legCount + 1.
-  if (geometry.length < legCount + 1) return null;
-
-  const cum = cumulativeKm(geometry);
-  const totalGeom = cum[cum.length - 1];
-  const totalMeasured = legDistancesM.reduce((sum, value) => sum + value, 0);
-  if (!(totalGeom > 0) || !(totalMeasured > 0)) return null;
-
-  const pieces: Pair[][] = [];
-  let startIndex = 0;
-  let measured = 0;
-  for (let leg = 0; leg < legCount; leg += 1) {
-    measured += legDistancesM[leg];
-    const isLast = leg === legCount - 1;
-    // Cible proportionnelle a la distance routiere du troncon, convertie dans
-    // l unite du trace (km) plutot que dans une fraction de points.
-    const targetKm = (measured / totalMeasured) * totalGeom;
-    let endIndex = cum.length - 1;
-    if (!isLast) {
-      endIndex = startIndex + 1;
-      while (endIndex < cum.length - 1 && cum[endIndex] < targetKm) endIndex += 1;
-      // Il doit rester un point pour le troncon suivant.
-      if (endIndex > cum.length - 2) endIndex = cum.length - 2;
-      if (endIndex < startIndex + 1) endIndex = startIndex + 1;
-    }
-    pieces.push(geometry.slice(startIndex, endIndex + 1) as Pair[]);
-    startIndex = endIndex;
-  }
-  return pieces;
-}
-
-/**
- * Convertit une reponse OSRM en troncons. Le nombre de troncons doit
- * correspondre au nombre de points, sinon la reponse ne decrit pas le trajet
- * demande et n'est pas utilisee.
- *
- * La geometrie est lue la ou OSRM la place vraiment : sur la route. Certains
- * appels (segments demandes explicitement) la repliquent sur chaque troncon ;
- * ce cas reste accepte, mais il n est plus le cas nominal.
- */
-export function normalizeOsrmRoute(payload: unknown, pointCount: number): RouteLeg[] | null {
-  const body = payload as { code?: unknown; routes?: unknown } | null;
-  if (!body || body.code !== 'Ok' || !Array.isArray(body.routes) || body.routes.length === 0) {
-    return null;
-  }
-  const raw = body.routes[0] as { legs?: unknown; geometry?: unknown };
-  if (!Array.isArray(raw.legs)) return null;
-  if (raw.legs.length !== Math.max(0, pointCount - 1)) return null;
-
-  const measured: { distanceKm: number; durationMin: number }[] = [];
-  for (const entry of raw.legs) {
-    const leg = entry as { distance?: unknown; duration?: unknown };
-    const distanceM = finite(leg.distance);
-    const durationS = finite(leg.duration);
-    if (distanceM === null || durationS === null) return null;
-    measured.push({ distanceKm: distanceM / 1000, durationMin: durationS / 60 });
-  }
-
-  // Cas nominal : une geometrie pour toute la route, a decouper.
-  const routeGeometry = readGeometry(raw.geometry);
-  if (routeGeometry) {
-    const pieces = splitGeometryByLegs(routeGeometry, measured.map((leg) => leg.distanceKm * 1000));
-    if (!pieces || pieces.length !== measured.length) return null;
-    return measured.map((leg, index) => ({ ...leg, geometry: pieces[index] }));
-  }
-
-  // Cas secondaire : chaque troncon porte son propre trace.
-  const legs: RouteLeg[] = [];
-  for (const entry of raw.legs) {
-    const leg = entry as { geometry?: unknown };
-    const geometry = readGeometry(leg.geometry);
-    if (!geometry) return null;
-    legs.push({ ...measured[legs.length], geometry });
-  }
-  return legs;
 }
 
 /**
@@ -723,22 +594,6 @@ export type RouteFailure =
   | 'mode_expected'
   | 'rate_limited';
 
-/**
- * Une reponse OSRM qui dit explicitement « pas de chemin ».
- *
- * C'est la seule reponse de fournisseur qui soit un FAIT sur le reseau plutot
- * qu'un etat du service. Mesure le 2026-09-28 :
- * `routing.openstreetmap.de` repond `HTTP 400 {"code":"NoRoute"}` pour deux
- * points du Pacifique. Le service va bien, il repond ; il dit que son
- * graphe ne relie pas ces deux points.
- *
- * Le confondre avec une panne serait une erreur de sens : on jetterait des
- * lieux parfaitement valides parce qu'un serveur a eu un souci. Et l'inverse
- * serait plus grave : on accepterait des lieux qu'aucun chemin pieton ne
- * dessert.
- */
-const OSRM_NO_ROUTE = 'NoRoute';
-
 export interface RouteAttempt {
   readonly legs: RouteLeg[] | null;
   readonly reason: RouteFailure | null;
@@ -748,8 +603,8 @@ export interface RouteAttempt {
    * C est ce qui permet a l ecran de nommer la source d une distance
    * au lieu de la deviner. Un refus n en porte pas : personne n a mesure,
    * donc personne n a de source a nommer. Sans cette distinction, un
-   * repli Valhalla apres une panne OSRM serait affiche comme une mesure
-   * OSRM — une provenance inventee, soit le meme vice qu un repli de
+   * repli Valhalla apres une panne Geoapify serait affiche comme une mesure
+   * Geoapify — une provenance inventee, soit le meme vice qu un repli de
    * temperature code en dur.
    */
   readonly provider?: RouteProvider;
@@ -800,153 +655,72 @@ export function normalizeValhallaRoute(
   return normalizeValhallaRouteDetailed(payload, points).legs;
 }
 
+/** Les lignes d'une geometrie GeoJSON, une par troncon ; `null` des qu'un point manque. */
+function readLines(value: unknown): Pair[][] | null {
+  const geometry = value as { type?: unknown; coordinates?: unknown } | null;
+  if (!geometry || !Array.isArray(geometry.coordinates)) return null;
+  const raw =
+    geometry.type === 'MultiLineString'
+      ? geometry.coordinates
+      : geometry.type === 'LineString'
+        ? [geometry.coordinates]
+        : null;
+  if (!raw) return null;
+  const lines: Pair[][] = [];
+  for (const line of raw) {
+    const read = readGeometry({ coordinates: line });
+    if (!read) return null;
+    lines.push(read);
+  }
+  return lines;
+}
+
 /**
- * La reponse OSRM, lue sans invention — et en disant POURQUOI elle refuse.
+ * La reponse Geoapify, lue sans invention — et en disant POURQUOI elle refuse.
  *
- * Meme exigence que `normalizeValhallaRouteDetailed`, pour une raison qui
- * compte plus encore : **le garde-fou d'arrivee s'applique ici aussi**.
+ * Forme : une `FeatureCollection` d'une seule `Feature`, dont la geometrie
+ * porte une ligne par troncon (`MultiLineString`) et les proprietes un
+ * troncon par paire de points (`legs[i].distance` en metres, `legs[i].time`
+ * en secondes).
  *
- * C'etait le piege de ce lot. Un OSRM de profil pied ACCROCHE une demande sur
- * le point le plus proche de son graphe. Sur le sommet du Mont Blanc, il
- * repond `Ok`, avec un trace de 115 km et une arrivee a 5 065 m du but — la
- * mesure est parfaitement valide, elle ne parle simplement pas du lieu
- * demande. Sans le garde-fou, l'ecran aurait affiche « 115 km, 26 h de
- * marche » vers un sommet : le mensonge exact que P0.23 combat, et pire que
- * le 503 muet d'avant, parce qu'il aurait eu l'air d'une reponse.
+ * Memes exigences que Valhalla, et surtout MEME GARDE-FOU D'ARRIVEE : Geoapify
+ * accroche lui aussi une demande hors reseau au point le plus proche de son
+ * graphe, et sa distance ne mene alors pas au lieu demande. Un zero kilometre
+ * dirait « vous y etes deja » : refuse aussi.
  *
- * `NoRoute` passe avant ce garde-fou : quand le reseau affirme qu'il n'existe
- * aucun chemin, il n'y a pas de trace a examiner, et c'est deja une mesure.
+ * Une reponse d'erreur (cle refusee, credits epuises, `statusCode` 4xx ou 5xx)
+ * n'est pas une mesure : `provider_unavailable`, et Valhalla est consulte.
  */
-export function normalizeOsrmRouteDetailed(
+export function normalizeGeoapifyRouteDetailed(
   payload: unknown,
   points: readonly RoutePoint[],
 ): RouteAttempt {
-  const body = payload as { code?: unknown; routes?: unknown } | null;
-  if (!body) return { legs: null, reason: 'provider_unavailable' };
-  if (body.code === OSRM_NO_ROUTE) return { legs: null, reason: 'off_network' };
-  if (body.code !== 'Ok' || !Array.isArray(body.routes) || body.routes.length === 0) {
-    return { legs: null, reason: 'provider_unavailable' };
-  }
-  const raw = body.routes[0] as { legs?: unknown; geometry?: unknown };
-  if (!Array.isArray(raw.legs) || raw.legs.length !== Math.max(0, points.length - 1)) {
-    return { legs: null, reason: 'provider_unavailable' };
-  }
+  const unavailable: RouteAttempt = { legs: null, reason: 'provider_unavailable' };
+  const features = (payload as { features?: unknown } | null)?.features;
+  if (!Array.isArray(features) || features.length === 0) return unavailable;
+  const feature = features[0] as { geometry?: unknown; properties?: unknown } | null;
+  const rawLegs = (feature?.properties as { legs?: unknown } | undefined)?.legs;
+  const expected = Math.max(0, points.length - 1);
+  if (!Array.isArray(rawLegs) || rawLegs.length !== expected) return unavailable;
+  const lines = readLines(feature?.geometry);
+  if (!lines || lines.length !== expected) return unavailable;
 
-  const measured: { distanceKm: number; durationMin: number }[] = [];
-  for (const entry of raw.legs) {
-    const leg = entry as { distance?: unknown; duration?: unknown };
-    const distanceM = finite(leg.distance);
-    const durationS = finite(leg.duration);
-    if (distanceM === null || durationS === null) {
-      return { legs: null, reason: 'provider_unavailable' };
-    }
-    // Un zero kilometre n'est pas un trajet reussi : c'est ce que rend le
-    // fournisseur pour deux points hors reseau. L'afficher, ce serait dire
-    // « vous etes deja arrive » — le mensonge le plus discret du lot, parce
-    // qu'il a l'air d'une bonne nouvelle.
-    if (!(distanceM > 0)) return { legs: null, reason: 'off_network' };
-    measured.push({ distanceKm: distanceM / 1000, durationMin: durationS / 60 });
-  }
-
-  // Cas nominal : une geometrie pour toute la route, a decouper.
-  const routeGeometry = readGeometry(raw.geometry);
-  if (!routeGeometry) return { legs: null, reason: 'provider_unavailable' };
-  const pieces = splitGeometryByLegs(
-    routeGeometry,
-    measured.map((leg) => leg.distanceKm * 1000),
-  );
-  if (!pieces || pieces.length !== measured.length) {
-    return { legs: null, reason: 'provider_unavailable' };
-  }
-
-  // LE GARDE-FOU D'ARRIVEE. Chaque extremite de troncon doit etre le lieu
-  // demande, a `ARRIVAL_TOLERANCE_M` pres. Meme regle, meme constante, meme
-  // raison `off_network` que pour Valhalla : un seul vocabulaire pour
-  // decrire « inatteignable », quel que soit le fournisseur qui l'a vu.
-  for (let index = 0; index < pieces.length; index += 1) {
-    const geometry = pieces[index];
+  const legs: RouteLeg[] = [];
+  for (let index = 0; index < expected; index += 1) {
+    const leg = rawLegs[index] as { distance?: unknown; time?: unknown } | null;
+    const meters = finite(leg?.distance);
+    const seconds = finite(leg?.time);
+    if (meters === null || seconds === null || seconds < 0) return unavailable;
+    if (!(meters > 0)) return { legs: null, reason: 'off_network' };
+    const geometry = lines[index];
     const from = points[index];
     const to = points[index + 1];
-    if (!from || !to) return { legs: null, reason: 'provider_unavailable' };
+    if (!from || !to) return unavailable;
     if (!reaches(geometry[0], from)) return { legs: null, reason: 'off_network' };
     if (!reaches(geometry[geometry.length - 1], to)) return { legs: null, reason: 'off_network' };
+    legs.push({ distanceKm: meters / 1000, durationMin: seconds / 60, geometry });
   }
-
-  return {
-    legs: measured.map((leg, index) => ({ ...leg, geometry: pieces[index] })),
-    reason: null,
-    provider: 'osrm',
-  };
-}
-
-/**
- * Un nombre mesure, lu dans une chaine si besoin.
- *
- * BRouter rend ses chiffres en texte : `"track-length": "14424"`. Lire cette
- * chaine, c est lire une mesure. La remplacer par une estimation serait
- * exactement ce que ce service interdit.
- */
-function mesureNumerique(value: unknown): number | null {
-  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
-  if (typeof value !== 'string' || value.trim().length === 0) return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-/**
- * La reponse BRouter d UN troncon, lue sans invention.
- *
- * Meme exigence que les deux autres fournisseurs, et surtout MEME GARDE-FOU
- * D ARRIVEE. Il est indispensable ici plus qu ailleurs : BRouter est le
- * dernier ressort, et un dernier ressort qui ne verifie pas ce qu il recoit
- * n est pas un ressort. Le refuge du Gouter en donne la mesure : BRouter y
- * aboutit a 870 m du lieu demande, et le parcours est refuse.
- *
- * Le provider nomme le moteur qui a repondu, pas celui qu on aurait
- * aime interroger. C est ce que l appelant affiche a cote de la distance :
- * nommer le moteur PREVU aurait ete nommer une source inventee.
- */
-export function normalizeBrouterLegDetailed(
-  payload: unknown,
-  from: RoutePoint,
-  to: RoutePoint,
-): RouteAttempt {
-  const features = (payload as { features?: unknown } | null)?.features;
-  if (!Array.isArray(features) || features.length === 0) {
-    return { legs: null, reason: 'provider_unavailable' };
-  }
-  const feature = features[0] as { geometry?: unknown; properties?: unknown } | null;
-  const properties = feature?.properties as Record<string, unknown> | undefined;
-  const meters = mesureNumerique(properties?.['track-length']);
-  const seconds = mesureNumerique(properties?.['total-time']);
-  // Un zero kilometre dirait « vous y etes deja ». Refus, comme partout ailleurs.
-  if (meters === null || seconds === null || !(meters > 0) || !(seconds > 0)) {
-    return { legs: null, reason: 'off_network' };
-  }
-  const geometry = readGeometry(feature?.geometry);
-  if (!geometry) return { legs: null, reason: 'provider_unavailable' };
-  if (!reaches(geometry[0], from)) return { legs: null, reason: 'off_network' };
-  if (!reaches(geometry[geometry.length - 1], to)) return { legs: null, reason: 'off_network' };
-  const ascent = mesureNumerique(properties?.['filtered ascend']);
-  const leg: RouteLeg = {
-    distanceKm: meters / 1000,
-    durationMin: seconds / 60,
-    geometry,
-    ...(ascent !== null && ascent >= 0 ? { ascentM: ascent } : {}),
-  };
-  return { legs: [leg], reason: null, provider: 'brouter' };
-}
-
-/**
- * L URL BRouter d UN troncon, en profil de randonnee.
- *
- * Le profil se nomme explicitement : sans lui BRouter applique son profil par
- * defaut, qui n est pas le notre. `lonlats` separe les deux points par `|`.
- */
-function brouterUrl(from: RoutePoint, to: RoutePoint): string {
-  const lonlats = `${round6(from.lon)},${round6(from.lat)}|${round6(to.lon)},${round6(to.lat)}`;
-  const query = `lonlats=${encodeURIComponent(lonlats)}&profile=${BROUTER_PROFILE}&alternativeidx=0&format=geojson`;
-  return `${BROUTER_URL}?${query}`;
+  return { legs, reason: null, provider: 'geoapify' };
 }
 
 /** Aligne les altitudes sur les points demandes ; un trou reste un trou. */
@@ -986,10 +760,64 @@ function withTimeout(signal?: AbortSignal): { signal: AbortSignal; done: () => v
   } };
 }
 
-function osrmUrl(key: string, mode: TravelMode): string {
-  const profil = OSRM_PROFIL[mode];
-  if (profil === undefined) return `${OSRM_BASE}/${key}?overview=full&geometries=geojson`;
-  return `${OSRM_PROFIL_BASE}/${profil}/route/v1/driving/${key}?overview=full&geometries=geojson`;
+function geoapifyKey(env: Record<string, string | undefined> = process.env): string | null {
+  const key = env.GEOAPIFY_API_KEY?.trim();
+  return key ? key : null;
+}
+
+/**
+ * L URL Geoapify du trajet entier. Les points se donnent `lat,lon`, separes
+ * par `|` ; le mode est nomme (jamais un defaut) et les unites explicites.
+ * Elle porte la cle : jamais journalisee.
+ */
+export function geoapifyRouteUrl(points: readonly RoutePoint[], mode: TravelMode, key: string): string {
+  const params = new URLSearchParams({
+    waypoints: points.map((p) => `${round6(p.lat)},${round6(p.lon)}`).join('|'),
+    mode: GEOAPIFY_MODE[mode],
+    units: 'metric',
+    apiKey: key,
+  });
+  return `${GEOAPIFY_ROUTING_URL}?${params.toString()}`;
+}
+
+type GeoapifyBudget = () => Promise<Pick<RateLimitResult, 'allowed'>>;
+
+const defaultGeoapifyBudget: GeoapifyBudget = () =>
+  rateLimit({
+    key: 'geoapify:routing:day',
+    limit: GEOAPIFY_ROUTING_DAILY_BUDGET,
+    windowMs: 86_400_000,
+    failMode: 'open',
+  });
+
+let geoapifyBudget: GeoapifyBudget = defaultGeoapifyBudget;
+
+/** Reserve aux tests : remplace (ou rend, avec `null`) le compteur du site. */
+export function __setGeoapifyBudgetForTests(budget: GeoapifyBudget | null): void {
+  geoapifyBudget = budget ?? defaultGeoapifyBudget;
+}
+
+/** Un credit Geoapify pour ce trajet ? Un compteur en panne ne bloque rien. */
+async function geoapifyAllowed(): Promise<boolean> {
+  try {
+    return (await geoapifyBudget()).allowed;
+  } catch {
+    return true;
+  }
+}
+
+/** Un appel fournisseur, avec son propre delai : une lenteur ne prive pas le repli du sien. */
+async function callProvider(
+  url: string,
+  signal: AbortSignal | undefined,
+  headers: Record<string, string>,
+): Promise<unknown | null> {
+  const { signal: local, done } = withTimeout(signal);
+  try {
+    return await fetchJson(url, local, headers);
+  } finally {
+    done();
+  }
 }
 
 /**
@@ -1013,55 +841,19 @@ function valhallaUrl(key: string, mode: TravelMode): string {
 }
 
 /**
- * Le dernier recours : un moteur de randonnee, pour le mode pieton seulement.
- *
- * Il n est consulte QUE sur un `off_network`, jamais apres une reponse deja
- * reussie : le chemin courant ne paye donc aucun aller-retour supplementaire.
- *
- * Deux regles, toutes deux mesurees :
- *   - un seul appel par TRONCON. BRouter ne renvoie aucun index de jalon, donc
- *     un appel multi-points ne permettrait pas d attribuer une distance a chaque
- *     etape, et l ecran a besoin du denivele par jour ;
- *   - si un seul troncon echoue, on rend le `off_network` d origine. Perdre une
- *     mesure deja obtenue parce qu un second fournisseur n a pas su afficherait
- *     « service indisponible » la ou l on sait que le lieu est hors reseau.
- */
-async function avecRandonnee(
-  points: readonly RoutePoint[],
-  mode: TravelMode,
-  signal: AbortSignal,
-  refuse: RouteAttempt,
-): Promise<RouteAttempt> {
-  if (mode !== 'pieton' || refuse.reason !== 'off_network') return refuse;
-  const legs: RouteLeg[] = [];
-  for (let index = 0; index < points.length - 1; index += 1) {
-    const from = points[index];
-    const to = points[index + 1];
-    if (!from || !to) return refuse;
-    const un = normalizeBrouterLegDetailed(
-      await fetchJson(brouterUrl(from, to), signal),
-      from,
-      to,
-    );
-    const leg = un.legs?.[0];
-    if (!leg) return refuse;
-    legs.push(leg);
-  }
-  return legs.length > 0 ? { legs, reason: null } : refuse;
-}
-
-/**
  * Trace reelle, sur le reseau du mode demande, avec la RAISON d un eventuel refus.
  *
  * `legs: null` ne dit rien par lui-meme : un sommet hors reseau et une panne
  * du fournisseur se ressemblent. `reason` les separe, et c est ce qui permet
- * a l appelant de STDYER un lieu irrattrapable a pied au lieu de l abandonner
+ * a l appelant d ECARTER un lieu irrattrapable a pied au lieu de l abandonner
  * pour une panne passagere.
  *
- * Choix des fournisseurs, mesure : OSRM ne sert que `voiture` (c est son
- * serveur de demonstration, et son graphe pedestre n existe pas), donc
- * `pieton` et `velo` passent par Valhalla. Pour `voiture`, OSRM reste la
- * reference et Valhalla ne sert qu en repli.
+ * Ordre, plan 1.5 : cache (memoire puis base) → Geoapify (cle et credits du
+ * jour) → Valhalla FOSSGIS. Valhalla ne repond QUE sur une panne de Geoapify
+ * (ou sans cle, ou credits epuises) : `off_network` est une mesure, et une
+ * mesure ne se remplace pas par une seconde opinion sur les memes donnees
+ * OpenStreetMap. Le mode ne se negocie jamais : `pieton` sur un graphe routier
+ * afficherait des kilometres exacts pour un trajet que personne ne fera.
  */
 export async function routeAttempt(
   points: readonly RoutePoint[],
@@ -1071,7 +863,7 @@ export async function routeAttempt(
   /** Signature serveur d'une clé de cache (`signRouteCacheKey`) : sans elle, rien n'est écrit en base. */
   signCacheKey?: (key: string) => string,
 ): Promise<RouteAttempt> {
-  // Un mode inconnu et une liste de points inexploitable sont des REFAUX de
+  // Un mode inconnu et une liste de points inexploitable sont des REFUS de
   // l appelant, pas une panne du fournisseur : ils se distinguent, parce
   // qu ils se corrigent chez l appelant.
   if (!isTravelMode(mode)) return { legs: null, reason: 'mode_expected' };
@@ -1088,41 +880,32 @@ export async function routeAttempt(
   // Apres le cache, avant le reseau : une reponse qu on a deja ne coute rien,
   // et un budget epuise doit s arreter AVANT de partir, pas en revenant.
   if (!consumeRateToken()) return { legs: null, reason: 'rate_limited' };
-  const { signal: local, done } = withTimeout(signal);
-  try {
-    // Le mode ne se negotiate jamais : `pieton` sur un graphe routier afficherait
-    // des kilometres exacts pour un trajet que personne ne fera.
-    const byOsrm = async (): Promise<RouteAttempt> =>
-      normalizeOsrmRouteDetailed(await fetchJson(osrmUrl(key, mode), local), points);
-    const byValhalla = async (): Promise<RouteAttempt> =>
-      normalizeValhallaRouteDetailed(await fetchJson(valhallaUrl(key, mode), local), points);
 
-    // Trois fournisseurs, trois roles, et une regle par role.
-    //
-    // OSRM d'abord pour les trois modes. Valhalla ensuite, mais UNIQUEMENT sur
-    // une panne : `off_network` est une mesure, et une mesure ne se remplace pas
-    // par une seconde opinion sur le meme graphe.
-    //
-    // Cette regle etait juste tant que les deux fournisseurs partagent le meme
-    // terrain. Elle ne l'est plus : `off_network` prouve que LE GRAPHE de celui
-    // qui repond ne dessert pas le lieu, pas que le lieu est injoignable. La
-    // suite ne demande donc pas une seconde opinion, elle demande le juge
-    // COMPETENT - et `avecRandonnee` ne rend jamais la main sur une mesure
-    // deja obtenue, seulement sur une panne.
-    const fromOsrm = await byOsrm();
-    const apresValhalla =
-      fromOsrm.legs !== null || fromOsrm.reason === 'off_network' ? fromOsrm : await byValhalla();
-    const attempt = await avecRandonnee(points, mode, local, apresValhalla);
-    // Seule une trace REUSSIE est memorisee — cote memoire ET cote base. Un
-    // echec ne doit pas etre fige : une panne de cinq minutes finirait par etre
-    // servie comme une reponse Mesuree pendant toute la duree du TTL.
-    if (attempt.legs) {
-      await writeRouteCache(cacheEndpoint(cacheBaseUrl), cacheKey, mode, attempt, signCacheKey);
-    }
-    return attempt;
-  } finally {
-    done();
+  const apiKey = geoapifyKey();
+  const fromGeoapify =
+    apiKey && (await geoapifyAllowed())
+      ? normalizeGeoapifyRouteDetailed(
+          await callProvider(geoapifyRouteUrl(points, mode, apiKey), signal, { 'User-Agent': USER_AGENT }),
+          points,
+        )
+      : null;
+  const attempt =
+    fromGeoapify && (fromGeoapify.legs !== null || fromGeoapify.reason === 'off_network')
+      ? fromGeoapify
+      : normalizeValhallaRouteDetailed(
+          await callProvider(valhallaUrl(key, mode), signal, {
+            'User-Agent': USER_AGENT,
+            'X-Client-Id': CLIENT_ID,
+          }),
+          points,
+        );
+  // Seule une trace REUSSIE est memorisee — cote memoire ET cote base. Un
+  // echec ne doit pas etre fige : une panne de cinq minutes finirait par etre
+  // servie comme une reponse mesuree pendant toute la duree du TTL.
+  if (attempt.legs) {
+    await writeRouteCache(cacheEndpoint(cacheBaseUrl), cacheKey, mode, attempt, signCacheKey);
   }
+  return attempt;
 }
 
 /**

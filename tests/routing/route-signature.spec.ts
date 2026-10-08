@@ -31,7 +31,7 @@ function post(headers: Record<string, string> = {}): NextRequest {
   return new NextRequest('http://localhost/api/route/cache', {
     method: 'POST',
     headers: { 'content-type': 'application/json', ...headers },
-    body: JSON.stringify({ key: KEY, mode: 'pieton', provider: 'osrm', legs: LEGS }),
+    body: JSON.stringify({ key: KEY, mode: 'pieton', provider: 'geoapify', legs: LEGS }),
   });
 }
 
@@ -72,12 +72,25 @@ describe('cache de routage : seul le serveur écrit (audit du 8 octobre)', () =>
     expect(res.status).toBe(200);
   });
 
+  it('un routeur retiré (serveur de démonstration OSRM, BRouter) ne s’écrit plus, même signé', async () => {
+    for (const provider of ['osrm', 'brouter']) {
+      const req = new NextRequest('http://localhost/api/route/cache', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-route-cache-signature': signRouteCacheKey(KEY) },
+        body: JSON.stringify({ key: KEY, mode: 'pieton', provider, legs: LEGS }),
+      });
+      const res = await POST(req);
+      expect(res.status).toBe(400);
+      await expect(res.json()).resolves.toMatchObject({ reason: 'provider_expected' });
+    }
+  });
+
   it('géométrie démesurée refusée même signée (base gratuite de 500 Mo)', async () => {
     const big = Array.from({ length: 6_000 }, (_, i) => [6 + i / 1e5, 45]);
     const req = new NextRequest('http://localhost/api/route/cache', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-route-cache-signature': signRouteCacheKey(KEY) },
-      body: JSON.stringify({ key: KEY, mode: 'pieton', provider: 'osrm', legs: [{ ...LEGS[0], geometry: big }] }),
+      body: JSON.stringify({ key: KEY, mode: 'pieton', provider: 'geoapify', legs: [{ ...LEGS[0], geometry: big }] }),
     });
     const res = await POST(req);
     expect(res.status).toBe(400);

@@ -103,6 +103,8 @@ import { bareAdminName, destinationRadiusKm, distanceKm, isAdminName, maxLegKm, 
 import { unifyStageNames, untangleStages } from '../engine/stageOrder';
 import { localToday } from './weather';
 import { preparationEventKind, recordPreparationEvent } from './opsEvents';
+import { routeAscentM } from './elevation';
+import { estimatedLegKm, estimationNote, type LegDistanceSource, type LegMove } from '../engine/legDistance';
 
 const MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 
@@ -342,6 +344,14 @@ const REPLACEABLE_ANCHOR_KINDS = new Set(['county', 'state', 'region', 'province
 /** Natures OSM d'un lieu naturel : on en fait le tour plutôt que le traverser. */
 const NATURAL_KINDS = new Set(['water', 'lake', 'peak', 'island', 'islet', 'bay', 'mountain_range', 'volcano', 'glacier', 'river']);
 const LOOP_WISH = /\btour d(?:u|e|es|['’])|\bautour\b|\bboucle\b/i;
+
+/** Distance d'un tronçon entre deux soirs, avec sa source (plan 1.5) et, estimée, son annonce. */
+interface StageLeg {
+  km: number;
+  ascent: number | null;
+  source: LegDistanceSource | null;
+  note?: string;
+}
 
 interface StagePlace {
   day: number;
@@ -1308,43 +1318,60 @@ export async function compasAutofillAction(
       if (!routeSet) {
         // Distances réelles entre deux soirs (à pied, à vélo ou sur la route), en parallèle.
         const legGeometry: Array<Array<[number, number]> | null> = stagePlaces.map(() => null);
-        const legs = await mapLimit(stagePlaces, 4, async (st, i) => {
+        const legs = await mapLimit(stagePlaces, 4, async (st, i): Promise<StageLeg | null> => {
           // Descente de rivière : la distance et le tracé de l'eau, déjà connus,
           // dès le premier soir (depuis la mise à l'eau, qui n'est pas une étape :
           // sans elle, Dordogne 8 oct. « 54,1 km d'eau » mais parcours de 36,1 km).
           if (st.move === 'pagaie') {
             legGeometry[i] = st.geometry ?? null;
-            return st.riverKm != null ? { km: st.riverKm, ascent: null, measured: true } : null;
+            return st.riverKm != null ? { km: st.riverKm, ascent: null, source: 'riviere' } : null;
           }
           const prevPlace = i > 0 ? stagePlaces[i - 1] : null;
           if (!prevPlace || distanceKm(prevPlace, st) < 0.3) return null;
           const mode = st.move === 'marche' ? 'pieton' : st.move === 'velo' ? 'velo' : 'voiture';
-          if (st.move === 'vol' || st.move === 'bateau') return { km: Math.round(distanceKm(prevPlace, st)), ascent: null, measured: false };
+          if (st.move === 'vol' || st.move === 'bateau') return { km: Math.round(distanceKm(prevPlace, st)), ascent: null, source: 'vol_oiseau' };
           // Mesure partagée : le même tronçon n'est routé qu'une fois pour tout le monde.
-          // « v2 » : le tronçon garde sa géométrie (tracé réel sur la carte).
+          // « v3 » (plan 1.5) : routeurs autorisés seulement, la source et le
+          // dénivelé du relief gardés avec la mesure.
           const leg = await cached(
             'leg',
-            `v2:${mode}:${coordKey(prevPlace.lat, prevPlace.lon)}>${coordKey(st.lat, st.lon)}`,
+            `v3:${mode}:${coordKey(prevPlace.lat, prevPlace.lon)}>${coordKey(st.lat, st.lon)}`,
             30 * 86_400,
             async () => {
               const r = await routeAttempt([prevPlace, st], mode);
               const total = r.legs?.reduce((t, l) => t + l.distanceKm, 0);
-              if (total == null) return null;
-              const up = r.legs?.every((l) => l.ascentM != null)
+              if (total == null || !r.legs) return null;
+              const geometry = simplifyLine(r.legs.flatMap((l) => [...l.geometry]));
+              // Le dénivelé d'une journée à pied ou à vélo, lu sur le relief le long du tracé.
+              const up = r.legs.every((l) => l.ascentM != null)
                 ? r.legs.reduce((t, l) => t + (l.ascentM ?? 0), 0)
-                : null;
-              const geometry = simplifyLine((r.legs ?? []).flatMap((l) => [...l.geometry]));
-              return { km: total, ascent: up, geometry };
+                : mode !== 'voiture'
+                  ? await routeAscentM(r.legs.flatMap((l) => [...l.geometry]))
+                  : null;
+              return { km: total, ascent: up, geometry, source: r.provider ?? null };
             }
           );
-          const km = leg?.km;
-          const ascent = leg?.ascent ?? null;
+          const legMove: LegMove = st.move === 'marche' ? 'marche' : st.move === 'velo' ? 'velo' : 'voiture';
+          const km = leg?.km ?? estimatedLegKm(distanceKm(prevPlace, st), legMove);
           if (km == null) return null;
-          legGeometry[i] = leg?.geometry ?? null;
+          if (leg) legGeometry[i] = leg.geometry ?? null;
           // Une journée à pied ou à vélo hors de portée : distance non retenue plutôt que fausse.
           if ((st.move === 'marche' && km > 45) || (st.move === 'velo' && km > 180)) return null;
-          return { km: Math.round(km * 10) / 10, ascent: ascent != null ? Math.round(ascent) : null, measured: true };
+          if (!leg) {
+            // Aucun routeur n'a mesuré ce tronçon : une distance quand même, annoncée.
+            return { km, ascent: null, source: 'estimation', note: estimationNote(km, legMove) };
+          }
+          return {
+            km: Math.round(km * 10) / 10,
+            ascent: leg.ascent != null ? Math.round(leg.ascent) : null,
+            source: leg.source ?? null,
+          };
         });
+        const estimated = legs.filter((l) => l?.source === 'estimation').length;
+        if (estimated)
+          notes.push(
+            `${estimated} étape${estimated > 1 ? 's' : ''} avec une distance estimée (itinéraire non calculé) : à vérifier.`
+          );
         // Arrêtée avant d'écrire l'itinéraire : rien n'est écrit, la place est rendue.
         if (stagePlaces.length && (await stopAsked())) {
           const md = await patchTripMetadata(supabase, tripId, (m) => ({ ...m, compas: withoutClaim(compasMeta(m)) }));
@@ -1364,13 +1391,19 @@ export async function compasAutofillAction(
           title: `Jour ${st.day} · ${st.name}`,
           description: loopKm
             ? [st.note, `Boucle d’environ ${String(loopKm).replace('.', ',')} km (estimation selon la durée et l’allure).`].filter(Boolean).join(' ')
-            : st.note,
+            : [st.note, legs[i]?.note].filter(Boolean).join(' ') || null,
           transport_mode: STEP_TRANSPORT[st.move],
           source: 'compas',
           latitude: Math.round(st.lat * 1e5) / 1e5,
           longitude: Math.round(st.lon * 1e5) / 1e5,
           distance_km: legs[i]?.km ?? (loopKm && i === 0 ? loopKm : null),
           elevation_gain_m: legs[i]?.ascent ?? null,
+          // D'où vient la distance (plan 1.5) : le routeur qui l'a mesurée, ou « estimation ».
+          metadata: legs[i]?.source
+            ? { distance: { source: legs[i]?.source } }
+            : loopKm && i === 0
+              ? { distance: { source: 'estimation' } }
+              : null,
         }));
         if (rows.length) {
           const { data: insertedSteps, error: stepsError } = await supabase.from('trip_steps').insert(rows).select('id');

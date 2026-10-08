@@ -14,7 +14,7 @@ import type { RejectionReason } from './itineraryEngine';
  * travail reel, jamais une animation : aucune n'est cochee a la construction.
  *
  * `trace` et `meteo` mesurent ce que les regles ne peuvent pas inventer : le
- * Kilometrage vient d OSRM sur le reseau routier, la meteo d Open-Meteo sur
+ * Kilometrage vient du routeur (Geoapify, Valhalla), la meteo d Open-Meteo sur
  * les dates reelles de l aventure. Un fournisseur muet laisse la phase
  * cochee et la mesure a `null` — l'ecran affiche « a verifier ».
  */

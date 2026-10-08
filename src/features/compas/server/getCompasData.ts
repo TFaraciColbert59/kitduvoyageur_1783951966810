@@ -79,6 +79,8 @@ export interface CompasItineraryStep {
   day: number;
   title: string;
   distanceKm: number | null;
+  /** Distance estimée (aucun routeur n'a pu la mesurer, plan 1.5) : l'écran le dit. */
+  distanceEstimated?: boolean;
   elevationGainM: number | null;
   accommodation: string | null;
 }
@@ -515,6 +517,9 @@ export async function getCompasData(): Promise<CompasData | null> {
   ]);
   input.weather = toWeatherInput(weather);
 
+  const estimatedIds = new Set(
+    (trip.steps ?? []).filter((s) => distanceSource(s.metadata) === 'estimation').map((s) => s.id)
+  );
   const itinerary: CompasItineraryStep[] = [...input.steps]
     .sort((a, b) => a.dayNumber - b.dayNumber || a.orderIndex - b.orderIndex)
     .map((s) => ({
@@ -522,6 +527,7 @@ export async function getCompasData(): Promise<CompasData | null> {
       day: s.dayNumber,
       title: s.title,
       distanceKm: s.distanceKm,
+      distanceEstimated: estimatedIds.has(s.id),
       elevationGainM: s.elevationGainM,
       accommodation: s.accommodationName,
     }));
@@ -643,6 +649,13 @@ function autofillStale(trip: TripFull): AutofillPart[] {
  * Tracé réel de l'itinéraire préparé (routes, chemins), tant que les étapes
  * n'ont pas bougé depuis : sinon null, la carte relie les étapes.
  */
+/** La source de la distance d'une étape (`metadata.distance.source`), ou null. */
+function distanceSource(metadata: unknown): string | null {
+  const d = metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).distance : null;
+  const source = d && typeof d === 'object' ? (d as Record<string, unknown>).source : null;
+  return typeof source === 'string' ? source : null;
+}
+
 function preparedTrack(metadata: unknown, coords: Array<[number, number]>): Record<string, unknown> | null {
   const compas =
     metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).compas : null;

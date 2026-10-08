@@ -1,151 +1,161 @@
 /**
- * Service de routage — normaliseurs purs verifies contre des charges utiles
- * reelles. Le contrat tient en une regle : une reponse mal formee vaut
- * `null`, jamais un z ero ni une distance approchee.
+ * Service de routage — normaliseurs purs verifies contre la forme reelle des
+ * reponses. Le contrat tient en une regle : une reponse mal formee vaut
+ * `null`, jamais un zero ni une distance approchee.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { normalizeElevation, normalizeOsrmRoute } from '../routingService';
+import {
+  geoapifyRouteUrl,
+  normalizeElevation,
+  normalizeGeoapifyRouteDetailed,
+} from '../routingService';
 import type { RoutePoint } from '../routingService';
+import { geoapifyReply, isGeoapify, jsonResponse, valhallaReply } from './fakeRouters';
 
-/**
- * Reponse reelle d'OSRM : deux points, un troncon.
- *
- * Attention, `geometry` vit sur la ROUTE, pas sur le troncon : c est ce que
- * renvoie `router.project-osrm.org` avec `overview=full`, verifie en direct.
- * Une fixture qui recopierait la geometrie sur chaque troncon testerait un
- * cas qui n existe pas et laisserait passer le bug le plus costly du
- * preparateur (toute distance affichee « à vérifier »).
- */
-const OSRM_OK = {
-  code: 'Ok',
-  routes: [
+const DEPART: RoutePoint = { lat: 45.923, lon: 6.869 };
+const MILIEU: RoutePoint = { lat: 45.923, lon: 6.899 };
+const ARRIVEE: RoutePoint = { lat: 45.93, lon: 6.95 };
+
+/** Reponse Geoapify : deux points, un troncon (forme reelle, `MultiLineString`). */
+const GEOAPIFY_OK = {
+  type: 'FeatureCollection',
+  features: [
     {
-      distance: 2398.2,
-      duration: 341.9,
-      geometry: { type: 'LineString', coordinates: [[6.869, 45.923], [6.899, 45.923]] },
-      legs: [{ distance: 2398.2, duration: 341.9 }],
+      type: 'Feature',
+      properties: {
+        mode: 'hike',
+        distance: 2398.2,
+        time: 2159.5,
+        legs: [{ distance: 2398.2, time: 2159.5, steps: [] }],
+      },
+      geometry: {
+        type: 'MultiLineString',
+        coordinates: [[[6.869, 45.923], [6.884, 45.9232], [6.899, 45.923]]],
+      },
     },
   ],
 };
 
 /** Trois points, deux troncons : la forme multi-etapes du preparateur. */
-const OSRM_TWO_LEGS = {
-  code: 'Ok',
-  routes: [
+const GEOAPIFY_TWO_LEGS = {
+  type: 'FeatureCollection',
+  features: [
     {
-      distance: 3000,
-      duration: 600,
-      geometry: {
-        type: 'LineString',
-        coordinates: [[6.8, 45.9], [6.85, 45.91], [6.9, 45.92], [6.95, 45.93]],
+      type: 'Feature',
+      properties: {
+        distance: 7000,
+        time: 6300,
+        legs: [
+          { distance: 2400, time: 2160 },
+          { distance: 4600, time: 4140 },
+        ],
       },
-      legs: [
-        { distance: 1000, duration: 200 },
-        { distance: 2000, duration: 400 },
-      ],
+      geometry: {
+        type: 'MultiLineString',
+        coordinates: [
+          [[6.869, 45.923], [6.899, 45.923]],
+          [[6.899, 45.923], [6.92, 45.927], [6.95, 45.93]],
+        ],
+      },
     },
   ],
 };
 
-describe('OSRM', () => {
+describe('Geoapify', () => {
   it('convertit metres et secondes en kilometres et minutes', () => {
-    const legs = normalizeOsrmRoute(OSRM_OK, 2);
-    expect(legs).toHaveLength(1);
-    expect(legs?.[0].distanceKm).toBeCloseTo(2.3982, 4);
-    expect(legs?.[0].durationMin).toBeCloseTo(5.698, 3);
+    const r = normalizeGeoapifyRouteDetailed(GEOAPIFY_OK, [DEPART, MILIEU]);
+    expect(r.reason).toBeNull();
+    expect(r.provider).toBe('geoapify');
+    expect(r.legs?.[0].distanceKm).toBeCloseTo(2.3982, 4);
+    expect(r.legs?.[0].durationMin).toBeCloseTo(35.99, 1);
   });
 
-  it('conserve la geometrie reelle au format OSRM', () => {
-    expect(normalizeOsrmRoute(OSRM_OK, 2)?.[0].geometry).toEqual([
+  it('conserve la geometrie reelle de chaque troncon, au format [lon, lat]', () => {
+    const r = normalizeGeoapifyRouteDetailed(GEOAPIFY_OK, [DEPART, MILIEU]);
+    expect(r.legs?.[0].geometry).toEqual([
       [6.869, 45.923],
+      [6.884, 45.9232],
       [6.899, 45.923],
     ]);
   });
 
-  it('un code different de Ok vaut absence, pas erreur bruitee', () => {
-    expect(normalizeOsrmRoute({ ...OSRM_OK, code: 'NoRoute' }, 2)).toBeNull();
-    expect(normalizeOsrmRoute({ code: 'Ok', routes: [] }, 2)).toBeNull();
+  it('une ligne par troncon : chacun garde la sienne, jamais le trace entier', () => {
+    const r = normalizeGeoapifyRouteDetailed(GEOAPIFY_TWO_LEGS, [DEPART, MILIEU, ARRIVEE]);
+    expect(r.legs).toHaveLength(2);
+    expect(r.legs?.map((l) => l.distanceKm)).toEqual([2.4, 4.6]);
+    expect(r.legs?.[0].geometry.at(-1)).toEqual(r.legs?.[1].geometry[0]);
+    expect(r.legs?.[1].geometry).toHaveLength(3);
   });
 
-  it('un nombre de troncons incoherent avec les points est refuse', () => {
-    expect(normalizeOsrmRoute(OSRM_OK, 5)).toBeNull();
-  });
-
-  it('une geometrie non finie est refusee plutot que propagee', () => {
-    const broken = {
-      ...OSRM_OK,
-      routes: [
-        {
-          ...OSRM_OK.routes[0],
-          geometry: { type: 'LineString', coordinates: [[NaN, 45]] },
-        },
-      ],
+  it('une LineString seule vaut un troncon', () => {
+    const one = structuredClone(GEOAPIFY_OK) as typeof GEOAPIFY_OK;
+    (one.features[0].geometry as { type: string; coordinates: unknown }) = {
+      type: 'LineString',
+      coordinates: [[6.869, 45.923], [6.899, 45.923]],
     };
-    expect(normalizeOsrmRoute(broken, 2)).toBeNull();
+    expect(normalizeGeoapifyRouteDetailed(one, [DEPART, MILIEU]).legs).toHaveLength(1);
   });
 
-  it('une geometrie de route manquante vaut absence, pas un trace vide', () => {
-    const noGeometry = { code: 'Ok', routes: [{ distance: 10, duration: 10, legs: [{ distance: 10, duration: 10 }] }] };
-    expect(normalizeOsrmRoute(noGeometry, 2)).toBeNull();
-  });
-});
-
-describe('OSRM — la geometrie vit sur la route, il faut la decouper', () => {
-  it('OSRM-GEO-01: un trace porte la geometrie de route la ou OSRM la met', () => {
-    const legs = normalizeOsrmRoute(OSRM_OK, 2);
-    expect(legs).toHaveLength(1);
-    expect(legs?.[0].geometry.length).toBeGreaterThanOrEqual(2);
-  });
-
-  it('OSRM-GEO-02: la distance du troncon reste celle mesuree par OSRM', () => {
-    const legs = normalizeOsrmRoute(OSRM_TWO_LEGS, 3);
-    expect(legs?.[0].distanceKm).toBeCloseTo(1, 6);
-    expect(legs?.[1].distanceKm).toBeCloseTo(2, 6);
-    expect(legs?.[0].durationMin).toBeCloseTo(10 / 3, 6);
-    expect(legs?.[1].durationMin).toBeCloseTo(20 / 3, 6);
-  });
-
-  it('OSRM-GEO-03: chaque troncon recoit une portion du trace, jamais le trace entier', () => {
-    const legs = normalizeOsrmRoute(OSRM_TWO_LEGS, 3);
-    expect(legs).toHaveLength(2);
-    for (const leg of legs ?? []) expect(leg.geometry.length).toBeGreaterThanOrEqual(2);
-    const total = (legs ?? []).reduce((sum, leg) => sum + leg.geometry.length, 0);
-    // Decouper ajoute les points de raccord, pas plus : 4 points -> 5 au total.
-    expect(total).toBeLessThanOrEqual(OSRM_TWO_LEGS.routes[0].geometry.coordinates.length + 1);
-  });
-
-  it('OSRM-GEO-04: les portions sont contigues et reconstruisent le trace complet', () => {
-    const legs = normalizeOsrmRoute(OSRM_TWO_LEGS, 3) ?? [];
-    const rebuilt = legs[0]?.geometry.slice();
-    for (const leg of legs.slice(1)) rebuilt?.push(...leg.geometry.slice(1));
-
-    expect(rebuilt).toEqual(OSRM_TWO_LEGS.routes[0].geometry.coordinates);
-
-  });
-
-  it('OSRM-GEO-05: chaque portion demarre la ou la precedente finit', () => {
-    const legs = normalizeOsrmRoute(OSRM_TWO_LEGS, 3) ?? [];
-    for (let i = 1; i < legs.length; i += 1) {
-      expect(legs[i].geometry[0]).toEqual(legs[i - 1].geometry[legs[i - 1].geometry.length - 1]);
+  it('une reponse d erreur (cle, credits) est une panne, pas une mesure', () => {
+    for (const body of [
+      { statusCode: 401, error: 'Unauthorized', message: 'Invalid apiKey' },
+      { statusCode: 429, error: 'Too Many Requests' },
+      { type: 'FeatureCollection', features: [] },
+      null,
+    ]) {
+      expect(normalizeGeoapifyRouteDetailed(body, [DEPART, MILIEU])).toEqual({
+        legs: null,
+        reason: 'provider_unavailable',
+      });
     }
   });
 
-  it('OSRM-GEO-06: un trace plus court que les troncons ne se deduit pas', () => {
-    const tiny = {
-      code: 'Ok',
-      routes: [
-        {
-          distance: 3000,
-          duration: 600,
-          geometry: { type: 'LineString', coordinates: [[6.8, 45.9], [6.95, 45.93]] },
-          legs: [{ distance: 1000, duration: 200 }, { distance: 2000, duration: 400 }],
-        },
-      ],
+  it('un nombre de troncons incoherent avec les points est refuse', () => {
+    expect(normalizeGeoapifyRouteDetailed(GEOAPIFY_OK, [DEPART, MILIEU, ARRIVEE]).legs).toBeNull();
+    expect(normalizeGeoapifyRouteDetailed(GEOAPIFY_TWO_LEGS, [DEPART, MILIEU]).legs).toBeNull();
+  });
+
+  it('une geometrie non finie ou absente est refusee plutot que propagee', () => {
+    const broken = structuredClone(GEOAPIFY_OK);
+    broken.features[0].geometry.coordinates = [[[6.869, Number.NaN], [6.899, 45.923]]];
+    expect(normalizeGeoapifyRouteDetailed(broken, [DEPART, MILIEU]).reason).toBe('provider_unavailable');
+    const none = structuredClone(GEOAPIFY_OK) as unknown as { features: Array<{ geometry?: unknown }> };
+    delete none.features[0].geometry;
+    expect(normalizeGeoapifyRouteDetailed(none, [DEPART, MILIEU]).reason).toBe('provider_unavailable');
+  });
+
+  it('une duree ou une distance non finie est refusee', () => {
+    const noTime = structuredClone(GEOAPIFY_OK) as unknown as {
+      features: Array<{ properties: { legs: Array<Record<string, unknown>> } }>;
     };
-    const legs = normalizeOsrmRoute(tiny, 3);
-    // Deux points ne peuvent pas describe deux troncons : on refuse plutot
-    // que d inventer un point de raccord.
-    expect(legs === null || legs.every((leg) => leg.geometry.length >= 2)).toBe(true);
+    noTime.features[0].properties.legs[0].time = 'bientot';
+    expect(normalizeGeoapifyRouteDetailed(noTime, [DEPART, MILIEU]).reason).toBe('provider_unavailable');
+  });
+
+  it('zero kilometre ne vaut pas zero : « vous y etes deja » ment', () => {
+    const zero = structuredClone(GEOAPIFY_OK);
+    zero.features[0].properties.legs[0].distance = 0;
+    expect(normalizeGeoapifyRouteDetailed(zero, [DEPART, MILIEU])).toEqual({ legs: null, reason: 'off_network' });
+  });
+
+  it('le garde-fou d arrivee : un trace qui s arrete loin du lieu est off_network', () => {
+    const loin: RoutePoint = { lat: 45.95, lon: 6.899 };
+    expect(normalizeGeoapifyRouteDetailed(GEOAPIFY_OK, [DEPART, loin])).toEqual({
+      legs: null,
+      reason: 'off_network',
+    });
+    const autreDepart: RoutePoint = { lat: 45.9, lon: 6.869 };
+    expect(normalizeGeoapifyRouteDetailed(GEOAPIFY_OK, [autreDepart, MILIEU]).reason).toBe('off_network');
+  });
+
+  it('l URL nomme le mode, les unites, et les points en lat,lon', () => {
+    const url = new URL(geoapifyRouteUrl([DEPART, MILIEU], 'pieton', 'k'));
+    expect(url.origin + url.pathname).toBe('https://api.geoapify.com/v1/routing');
+    expect(url.searchParams.get('waypoints')).toBe('45.923,6.869|45.923,6.899');
+    expect(url.searchParams.get('mode')).toBe('hike');
+    expect(url.searchParams.get('units')).toBe('metric');
+    expect(new URL(geoapifyRouteUrl([DEPART, MILIEU], 'velo', 'k')).searchParams.get('mode')).toBe('bicycle');
+    expect(new URL(geoapifyRouteUrl([DEPART, MILIEU], 'voiture', 'k')).searchParams.get('mode')).toBe('drive');
   });
 });
 
@@ -262,33 +272,14 @@ async function fetchRoute(
   throw new Error('methode inattendue : ' + methode);
 }
 
-/** Les appels vers les FOURNISSEURS (OSRM, Valhalla, BRouter, meteo). */
+/** Les appels vers les ROUTEURS : Geoapify d'abord, Valhalla en repli, meme mesure. */
 async function fetchFournisseur(input: string | URL | Request): Promise<Response> {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
-  const chemin = url.split('?')[0] ?? '';
-  const coords = (chemin.split('/').pop() ?? '')
-    .split(';')
-    .map((pair) => pair.split(',').map(Number))
-    .filter((p) => p.length === 2 && p.every((n) => Number.isFinite(n)))
-    .map((p) => [p[0], p[1]] as [number, number]);
-  return {
-    ok: true,
-    text: async () =>
-      JSON.stringify({
-        code: 'Ok',
-        routes: [
-          {
-            distance: 2398.2,
-            duration: 341.9,
-            geometry: { type: 'LineString', coordinates: coords },
-            legs: [{ distance: 2398.2, duration: 341.9 }],
-          },
-        ],
-      }),
-  } as unknown as Response;
+  const options = { meters: 2398.2, speedKmh: 4 };
+  return jsonResponse(isGeoapify(url) ? geoapifyReply(url, options) : valhallaReply(url, options));
 }
 
-/** Un `fetch` unique : cache vers la Route Handler, le reste vers OSRM. */
+/** Un `fetch` unique : cache vers la Route Handler, le reste vers les routeurs. */
 function installerFetch() {
   vi.stubGlobal(
     'fetch',
@@ -311,6 +302,7 @@ async function chargerService(): Promise<Service> {
   const mod = await import('../routingService');
   mod.__resetRouteCache();
   mod.__resetRouteLimiter();
+  mod.__setGeoapifyBudgetForTests(async () => ({ allowed: true }));
   return mod;
 }
 
@@ -324,11 +316,13 @@ beforeEach(() => {
   requetesVues.length = 0;
   panne = null;
   refuseEcriture = false;
+  vi.stubEnv('GEOAPIFY_API_KEY', 'cle-de-test');
   installerFetch();
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 describe('I4 — le cache de routage survit a un redeploiement', () => {
@@ -345,7 +339,7 @@ describe('I4 — le cache de routage survit a un redeploiement', () => {
     expect(ecriture?.url).toContain('/api/route/cache');
     expect(base.size).toBe(1);
     const entree = [...base.values()][0];
-    expect(entree.payload).toMatchObject({ provider: 'osrm', reason: null });
+    expect(entree.payload).toMatchObject({ provider: 'geoapify', reason: null });
     expect((entree.payload as { legs: unknown }).legs).toHaveLength(1);
   });
 
@@ -498,14 +492,14 @@ describe('I4 — le cache de routage survit a un redeploiement', () => {
   it('I4-CACHE-09: le provider survit au redemarrage — la base de H5', async () => {
     const svc = await chargerService();
     const premier = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
-    expect(premier.provider).toBe('osrm');
+    expect(premier.provider).toBe('geoapify');
 
     svc.__resetRouteCache();
     svc.__resetRouteLimiter();
     const relu = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
     // Le provider relu n est pas undefined : il vient bien de la base. Perdre
     // ce credit de source au redemarrage serait une regression de H5.
-    expect(relu.provider).toBe('osrm');
+    expect(relu.provider).toBe('geoapify');
     expect(relu.reason).toBeNull();
   });
 });

@@ -3,8 +3,8 @@
  *
  * `MAX_ROUTE_POINTS = 12` borne la taille d UNE requete. Rien ne boundait le
  * nombre de requetes : une journee de N etapes, regeneree apres chaque
- * ajustement, pouvait aligner le quota public d OSRM, qui est partage avec
- * tous les autres utilisateurs de la demo. Un quota epuise ne rend pas de
+ * ajustement, pouvait aligner le quota d un routeur public (Valhalla
+ * FOSSGIS), partage avec tous ses autres utilisateurs. Un quota epuise ne rend pas de
  * donnee fausse, il rend une panne : la regle du service est qu un refus vaut
  * `null`, jamais une distance approchee. C est ce que ces tests verrouillent.
  *
@@ -27,6 +27,7 @@ import {
   routeAttempt,
 } from '../routingService';
 import type { RoutePoint } from '../routingService';
+import { geoapifyReply, isGeoapify, jsonResponse, valhallaReply } from './fakeRouters';
 
 const CHAMONIX: RoutePoint = { lat: 45.9237, lon: 6.8693 };
 const LES_HOUCHES: RoutePoint = { lat: 45.8917, lon: 6.7983 };
@@ -38,12 +39,10 @@ const HORS_CACHE = 100_000;
 let urls: string[] = [];
 
 /**
- * La geometrie est RECONSTITUEE depuis les points demandes.
- *
- * Une reponse OSRM rend toujours la trace du trajet qu on lui a demande. Servir
- * une geometrie figee ferait tomber chaque appel decale en `off_network` — le
- * service repondrait `NoRoute` pour une raison qui n existe pas, et le test
- * mesurerait cette fiction au lieu du debit.
+ * La geometrie est RECONSTITUEE depuis les points demandes (`fakeRouters`) :
+ * un routeur rend toujours la trace du trajet qu on lui a demande. Sans cle
+ * Geoapify, chaque mesure part vers Valhalla, en UNE requete : le compte des
+ * URL est donc le compte des mesures.
  */
 function installerFetch() {
   urls = [];
@@ -52,25 +51,7 @@ function installerFetch() {
     vi.fn(async (url: string) => {
       const texte = String(url);
       urls.push(texte);
-      const chemin = texte.split('?')[0] ?? texte;
-      const points = chemin.split('/').pop() ?? '';
-      const coords = points
-        .split(';')
-        .map((pair) => pair.split(',').map(Number))
-        .filter((p) => p.length === 2 && p.every((n) => Number.isFinite(n)))
-        .map((p) => [p[0], p[1]] as [number, number]);
-      const corps = {
-        code: 'Ok',
-        routes: [
-          {
-            distance: 2398.2,
-            duration: 341.9,
-            geometry: { type: 'LineString', coordinates: coords },
-            legs: [{ distance: 2398.2, duration: 341.9 }],
-          },
-        ],
-      };
-      return { ok: true, text: async () => JSON.stringify(corps) } as unknown as Response;
+      return jsonResponse(isGeoapify(texte) ? geoapifyReply(texte) : valhallaReply(texte));
     }),
   );
 }
@@ -98,12 +79,14 @@ beforeEach(() => {
   vi.setSystemTime(new Date('2026-09-29T08:00:00Z'));
   __resetRouteCache();
   __resetRouteLimiter();
+  vi.stubEnv('GEOAPIFY_API_KEY', '');
   installerFetch();
 });
 
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 describe('I5 — le debit de routage est borne', () => {
