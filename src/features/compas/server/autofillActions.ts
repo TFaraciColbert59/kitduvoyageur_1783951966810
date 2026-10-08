@@ -641,14 +641,17 @@ async function claimPhase(supabase: Supa, tripId: string, phase: 'steps' | 'rest
  * Limites d'une préparation (audit du 8 octobre), partagées par toutes les
  * instances (`src/lib/rate-limit`, compteur en base) :
  * - par personne : 6 lancements et 12 reprises par 10 min ;
- * - pour tout le site : 120 préparations par heure. Les services gratuits
- *   (géocodage, routage, IA) ont des quotas par application, pas par personne :
- *   au-delà, chacun attendrait de toute façon un service qui refuse.
+ * - pour tout le site : 120 lancements et 240 reprises par heure. Les services
+ *   gratuits (géocodage, routage, IA) ont des quotas par application, pas par
+ *   personne : au-delà, chacun attendrait de toute façon un service qui refuse.
+ *   Une reprise a son propre plafond : son état vit dans `trips.metadata`, une
+ *   reprise forgée n'a donc jamais été comptée au lancement.
  */
 const COMPAS_AUTOFILL_LIMITS = {
   start: { scope: 'compas-autofill', limit: 6, windowMs: 10 * 60_000 },
   resume: { scope: 'compas-autofill-resume', limit: 12, windowMs: 10 * 60_000 },
-  global: { scope: 'compas-autofill-global', limit: 120, windowMs: 60 * 60_000 },
+  startSite: { scope: 'compas-autofill-global', limit: 120, windowMs: 60 * 60_000 },
+  resumeSite: { scope: 'compas-autofill-resume-global', limit: 240, windowMs: 60 * 60_000 },
 } as const;
 
 async function enforceCompasAutofillLimits(
@@ -656,9 +659,9 @@ async function enforceCompasAutofillLimits(
   resuming: boolean
 ): Promise<Extract<CompasAutofillResult, { success: false }> | null> {
   const personal = resuming ? COMPAS_AUTOFILL_LIMITS.resume : COMPAS_AUTOFILL_LIMITS.start;
+  const siteWide = resuming ? COMPAS_AUTOFILL_LIMITS.resumeSite : COMPAS_AUTOFILL_LIMITS.startSite;
   const mine = await enforceRateLimit(userId, { ...personal, failMode: 'closed' });
-  // Une reprise continue une préparation déjà comptée dans le plafond du site.
-  const site = mine || resuming ? null : await enforceRateLimit('site', { ...COMPAS_AUTOFILL_LIMITS.global, failMode: 'closed' });
+  const site = mine ? null : await enforceRateLimit('site', { ...siteWide, failMode: 'closed' });
   const limited = mine ?? site;
   if (!limited) return null;
   const wait = Number(limited.headers.get('Retry-After'));

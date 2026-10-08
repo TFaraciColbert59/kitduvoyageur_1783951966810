@@ -137,11 +137,23 @@ function isMeasuredLeg(leg: unknown): boolean {
   });
 }
 
+/**
+ * Un appel signé vient du serveur (`/api/route`), qui est déjà limité par
+ * voyageur : il ne passe pas par le compteur par adresse. Sans cela, avec le
+ * compteur partagé entre instances, tous les voyageurs tombaient dans la même
+ * case (l'adresse de sortie de Vercel) et se partageaient 300 appels/min.
+ */
+async function limitUnsigned(request: NextRequest, key: string | null): Promise<NextResponse | null> {
+  if (key && verifyRouteCacheSignature(key, request.headers.get(ROUTE_CACHE_SIGNATURE_HEADER))) return null;
+  return enforceRateLimit(clientIpFromHeaders(request.headers), RATE_LIMIT);
+}
+
 export async function GET(request: NextRequest) {
-  const limited = await enforceRateLimit(clientIpFromHeaders(request.headers), RATE_LIMIT);
+  const rawKey = request.nextUrl.searchParams.get('key');
+  const limited = await limitUnsigned(request, rawKey);
   if (limited) return limited;
 
-  const parsed = readKey(request.nextUrl.searchParams.get('key'));
+  const parsed = readKey(rawKey);
   if (!parsed) {
     return NextResponse.json(
       { status: 'invalid', reason: 'key_expected' },
@@ -198,25 +210,27 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const limited = await enforceRateLimit(clientIpFromHeaders(request.headers), RATE_LIMIT);
-  if (limited) return limited;
-
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { status: 'invalid', reason: 'body_expected' },
-      { status: 400, headers: { 'Cache-Control': 'no-store' } },
-    );
+    body = undefined;
   }
-
   const { key: rawKey, mode, provider, legs } = (body ?? {}) as {
     key?: unknown;
     mode?: unknown;
     provider?: unknown;
     legs?: unknown;
   };
+  const limited = await limitUnsigned(request, typeof rawKey === 'string' ? rawKey : null);
+  if (limited) return limited;
+  if (body === undefined) {
+    return NextResponse.json(
+      { status: 'invalid', reason: 'body_expected' },
+      { status: 400, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
+
   const parsed = typeof rawKey === 'string' ? readKey(rawKey) : null;
   if (!parsed || parsed.mode !== mode) {
     return NextResponse.json(

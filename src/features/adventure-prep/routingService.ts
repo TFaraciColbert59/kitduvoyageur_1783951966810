@@ -244,10 +244,15 @@ function decodeStoredRoute(stored: unknown): RouteAttempt | undefined {
 async function readRouteCacheRemote(
   endpoint: string,
   key: string,
+  signature?: string,
 ): Promise<RouteAttempt | undefined> {
   try {
+    // Signée par le serveur : la route ne la compte pas sur l'adresse de sortie
+    // de Vercel, commune à tous les voyageurs (sinon 300/min pour tout le site).
     const reponse = await fetch(`${endpoint}?key=${encodeURIComponent(key)}`, {
-      headers: { accept: 'application/json' },
+      headers: signature
+        ? { accept: 'application/json', 'x-route-cache-signature': signature }
+        : { accept: 'application/json' },
     });
     if (reponse.status === 404) return undefined;
     if (!reponse.ok) {
@@ -322,12 +327,13 @@ async function writeRouteCacheRemote(
 async function readRouteCache(
   endpoint: string | null,
   key: string,
+  sign?: (key: string) => string,
 ): Promise<RouteAttempt | undefined> {
   const memoire = readCache(key) as RouteAttempt | undefined;
   if (memoire !== undefined) return memoire;
   if (endpoint === null) return undefined;
 
-  const persistee = await readRouteCacheRemote(endpoint, key);
+  const persistee = await readRouteCacheRemote(endpoint, key, sign?.(key) || undefined);
   if (persistee !== undefined) {
     // On la remet en memoire : le prochain appel ne paie meme plus le
     // aller-retour vers la base.
@@ -1077,7 +1083,7 @@ export async function routeAttempt(
   // Memoire PUIS base, toutes deux avant le debit et avant le reseau. Une
   // reponse deja connue ne coute rien, quel que soit l endroit ou elle a ete
   // mesuree — et c est ce qui survit au redeploiement.
-  const cached = await readRouteCache(cacheEndpoint(cacheBaseUrl), cacheKey);
+  const cached = await readRouteCache(cacheEndpoint(cacheBaseUrl), cacheKey, signCacheKey);
   if (cached !== undefined) return cached;
   // Apres le cache, avant le reseau : une reponse qu on a deja ne coute rien,
   // et un budget epuise doit s arreter AVANT de partir, pas en revenant.

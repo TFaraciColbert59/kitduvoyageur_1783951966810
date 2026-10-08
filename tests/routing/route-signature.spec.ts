@@ -1,12 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
+const limiter = vi.hoisted(() => ({ calls: [] as string[] }));
 vi.mock('@/lib/ai/serviceClient', () => ({
   getServiceSupabase: () => ({ rpc: vi.fn(async () => ({ data: null, error: null })) }),
 }));
+vi.mock('@/lib/rate-limit/routes', () => ({
+  enforceRateLimit: vi.fn(async (identifier: string) => {
+    limiter.calls.push(identifier);
+    return null;
+  }),
+}));
 
 import { signRouteCacheKey, verifyRouteCacheSignature } from '@/lib/routeCacheSignature';
-import { POST } from '@/app/api/route/cache/route';
+import { GET, POST } from '@/app/api/route/cache/route';
 
 const KEY = 'route:pieton:6.8693,45.9237;6.7983,45.8917';
 const LEGS = [
@@ -33,6 +40,7 @@ describe('cache de routage : seul le serveur écrit (audit du 8 octobre)', () =>
   beforeEach(() => {
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'cle-de-test';
     delete process.env.ROUTE_CACHE_SECRET;
+    limiter.calls = [];
   });
   afterEach(() => {
     process.env = { ...env };
@@ -73,5 +81,20 @@ describe('cache de routage : seul le serveur écrit (audit du 8 octobre)', () =>
     });
     const res = await POST(req);
     expect(res.status).toBe(400);
+  });
+  it('appel signé par le serveur : hors du compteur par adresse (sortie Vercel commune)', async () => {
+    const get = (headers: Record<string, string> = {}) =>
+      new NextRequest(`http://localhost/api/route/cache?key=${encodeURIComponent(KEY)}`, {
+        headers: { 'x-forwarded-for': '76.76.21.21', ...headers },
+      });
+    // Lecture et écriture signées : le compteur par adresse n'est pas touché.
+    expect((await GET(get({ 'x-route-cache-signature': signRouteCacheKey(KEY) }))).status).toBe(404);
+    await POST(post({ 'x-route-cache-signature': signRouteCacheKey(KEY), 'x-forwarded-for': '76.76.21.21' }));
+    expect(limiter.calls).toEqual([]);
+    // Sans signature (navigateur, inconnu) : compté par adresse, comme avant.
+    expect((await GET(get())).status).toBe(404);
+    expect((await POST(post({ 'x-forwarded-for': '76.76.21.21' }))).status).toBe(403);
+    expect((await GET(get({ 'x-route-cache-signature': 'faux' }))).status).toBe(404);
+    expect(limiter.calls).toEqual(['76.76.21.21', '76.76.21.21', '76.76.21.21']);
   });
 });

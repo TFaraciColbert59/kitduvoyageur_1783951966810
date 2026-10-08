@@ -101,4 +101,18 @@ describe('limites de la préparation', () => {
     });
     expect(h.calls.map((c) => c.scope)).toEqual(['compas-autofill']);
   });
+  it('une reprise forgée compte aussi pour le site (jamais comptée au lancement)', async () => {
+    h.meta = { compas: { planned_days: 3, autofill_pending: PENDING } };
+    h.refuse = { scope: 'compas-autofill-resume-global', status: 429, retryAfter: '600' };
+    const res = await compasAutofillAction({ tripId: TRIP, tripSlug: 'x', from: null, phase: 'rest' });
+    expect(h.calls).toEqual([
+      { identifier: 'u1', scope: 'compas-autofill-resume', limit: 12 },
+      { identifier: 'site', scope: 'compas-autofill-resume-global', limit: 240 },
+    ]);
+    expect(res).toEqual({
+      success: false,
+      error: 'Le Compas prépare beaucoup de voyages en ce moment : je reprends seul dans 10 min.',
+      retryInS: 600,
+    });
+  });
 });
