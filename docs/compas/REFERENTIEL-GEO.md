@@ -79,8 +79,11 @@ Option Pro (25 $ par mois, 8 Go inclus) : tous les lieux habités du monde (~4,7
 6. **Import 3** : rivières navigables et grands itinéraires (descente en canoë,
    itinéraire d'un pays sans noms de l'IA).
 
-## 6. Décisions attendues
+## 6. Décisions
 
-1. Rester en offre gratuite (référentiel compact, ~300 Mo au final) ou passer en Pro ?
+1. **Offre gratuite retenue** (Tony, 8 octobre) : référentiel compact, ~300 Mo au final ;
+   pas de passage en Pro.
+
+Encore attendues :
 2. Feu vert pour la migration 1 (index doublon, −22 Mo) dès maintenant ?
 3. Feu vert pour `geo_places` et l'import 1 (lieux habités) ?

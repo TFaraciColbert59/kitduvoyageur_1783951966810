@@ -50,13 +50,13 @@ l'instant.
 
 - Réseau ouvert : la preview, Photon et Supabase répondent depuis le conteneur ; Overpass reste instable depuis ici (miroirs en 500/504).
 - Vercel refuse toujours les journaux du projet (403 sur `tonyfaracip-3325s-projects`) : le diagnostic passe par les notes écrites en base.
-- Réservations (P3, gelé) : RouteStack donne de **vraies offres d'hôtels** en ligne (Annecy : B&B Hotel, Moxy, Campanile…) et des **vols en aller simple** avec des codes d'aéroport (Genève → Lisbonne, 133,99 USD). Restent : aller-retour au-delà de 12 s, noms de villes en français (« Lisbonne ») non résolus, voiture à nommer en anglais ; `ROUTESTACK_MODE` est en `sandbox` sur Vercel.
+- Réservations (P3, gelé) : RouteStack donne de **vraies offres d'hôtels** en ligne (Annecy : B&B Hotel, Moxy, Campanile…) et des **vols en aller simple** avec des codes d'aéroport (Genève → Lisbonne, 133,99 USD). Restent : aller-retour au-delà de 12 s, noms de villes en français (« Lisbonne ») non résolus, voiture à nommer en anglais. Le « sandbox » est l'étiquette de l'app (Résa affiche « Mode test… pas de vraies offres ») : le serveur appelé est déjà la production RouteStack (`mcp.routestack.ai`). Passage en production : `ROUTESTACK_MODE=production`, `ROUTESTACK_FULL_API_KEY`, `ROUTESTACK_FULL_PARTNER_SECRET` sur Vercel, puis redéploiement.
 
 ## Décisions en vigueur
 
 - IA production : **NVIDIA NIM direct** (décision de Tony du 7 octobre au soir, remplace le passage à OpenRouter).
 - Cartes : services OSM gratuits + **Geoapify free tier** en secours (clé fournie, variable `GEOAPIFY_API_KEY` à poser sur Vercel) ; pas d'abonnement à 59 $ pour l'instant.
-- Référentiel géographique : accord de principe ; **aucune migration avant le plan chiffré** (taille DB, volumes filtrés, mise à jour, espace final).
+- Référentiel géographique : **offre gratuite Supabase** (décision de Tony du 8 octobre), référentiel compact `geo_places` (~300 Mo au final, `places_geo` retiré). Migrations (index doublon, `geo_places`, import des lieux habités) : feu vert attendu, voir `REFERENTIEL-GEO.md`.
 - Réservations : branchées après la stabilisation du moteur.
 
 Détail : `AUDIT-2026-10-07.md` (architecture), `AUDIT-DONNEES-2026-10-07.md` (sources), `REFERENTIEL-GEO.md` (plan chiffré P1.1).
