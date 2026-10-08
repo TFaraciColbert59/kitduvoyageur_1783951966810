@@ -102,6 +102,7 @@ import { after } from 'next/server';
 import { bareAdminName, destinationRadiusKm, distanceKm, isAdminName, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, type CompasPlace } from '../engine/places';
 import { unifyStageNames, untangleStages } from '../engine/stageOrder';
 import { localToday } from './weather';
+import { preparationEventKind, recordPreparationEvent } from './opsEvents';
 
 const MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 
@@ -704,6 +705,7 @@ export async function compasAutofillStartAction(
       });
       // Place prise par une autre préparation du même voyage : son issue fera foi.
       if (res.success && 'pending' in res && res.stepsCreated === 0) return;
+      await recordPreparationEvent(preparationEventKind(res));
       const outcome: CompasAutofillOutcome = { ...res, token, at: Date.now() };
       try {
         const { supabase } = auth;

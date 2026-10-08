@@ -53,11 +53,13 @@ jobs:
         run: |
           set -euo pipefail
           day=$(date -u +%F)
-          # Schémas de l'application et des comptes ; sans les données des
-          # caches et des référentiels réimportables (structure gardée).
+          # Schémas de l'application et des comptes (et `marketplace_private`,
+          # dont les fonctions servent les RPC du marché : pg_dump par schéma
+          # n'emporte pas les dépendances des autres schémas) ; sans les
+          # données des caches et des référentiels réimportables.
           /usr/lib/postgresql/17/bin/pg_dump "$DB_URL" \
             --format=custom --no-owner --no-privileges \
-            --schema=public --schema=auth \
+            --schema=public --schema=auth --schema=marketplace_private \
             --exclude-table-data=public.geo_cache \
             --exclude-table-data=public.route_cache \
             --exclude-table-data=public.rate_limit_windows \
