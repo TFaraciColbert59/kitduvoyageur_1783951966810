@@ -72,8 +72,9 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [x] **Tracé dans `trips.metadata`** : 600 points au plus pour tout le voyage
       (`MAX_TRACK_POINTS`, ~12 Ko ; 150 par tronçon avant), réécrit à chaque
       préparation (8 oct. : 23 Ko au plus, 3 Ko en moyenne).
-- [ ] **Retrait de `places_geo`** (232 Mo) une fois les pages Pays branchées sur
-      `geo_places` (3.8). Preuve : base ≤ 250 Mo avant import des lots 3.3 à 3.7.
+- [~] **Retrait de `places_geo`** (232 Mo) : plus aucun lecteur depuis le lot E (pages
+      Pays sur `geo_places`). 🔒 Tony : `drop table public.places_geo;` dans le SQL
+      Editor. Preuve : base ≤ 250 Mo avant import des lots 3.3 à 3.7.
 - [~] **Sauvegardes gratuites** : `.github/workflows/db-backup.yml`, chaque nuit,
       `pg_dump` (`public` + `auth` + `marketplace_private`, hors caches et référentiels
       réimportables), chiffré
@@ -121,23 +122,26 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 - [ ] **Référentiel local d'abord** (phase 3) : destination, villages, refuges, lieux
       naturels lus dans `geo_places` ; réseau seulement en secours.
-- [ ] **Geoapify gratuit** (3 000 crédits/jour, « we do not restrict » l'usage
-      commercial) en premier secours : **attribution « Powered by Geoapify »** affichée ;
-      `limit=500` ramené au nécessaire ; compteur de crédits du jour en base (géocodage
-      et routage ensemble), arrêt à 2 700. Preuve : compteur, attribution visible.
+- [x] **Geoapify gratuit** (3 000 crédits/jour, « we do not restrict » l'usage
+      commercial) : **« Powered by Geoapify »** dans les mentions légales ; lieux d'une
+      zone ramenés de 500 à 200 (10 crédits) ; **compteur de crédits du jour en base**
+      (`take_api_credits`, lot F) commun au géocodage, aux lieux et au routage, arrêt à
+      2 700 ; le routage a en plus son plafond de 1 500, au coût réel (un crédit par
+      tranche de 500 km). Preuve : `api_credit_days`.
 - [~] **LocationIQ gratuit** (5 000 req/jour, commercial avec lien visible) : compte
       créé par Tony (8 oct.) ; avec `LOCATIONIQ_API_KEY`, **tous les appels Nominatim du
       Compas passent par LocationIQ** (même moteur, `src/features/compas/server/locationIq.ts`,
       2 req/s) ; « Search by LocationIQ.com » cliquable dans les mentions légales.
       **Prouvé en production le 8 oct.** : `/api/compas/sources` → `locationiq: true` ;
       préparation réelle (Bauges, 41 s) réussie après la bascule.
-- [ ] **Photon public** (pas de clause commerciale, « usage raisonnable ») : dernier
-      recours seulement ; User-Agent `koosmoweb.fr` + contact ; rythme global limité
-      (jeton en base) ; cache 30 j.
+- [x] **Photon public** (pas de clause commerciale, « usage raisonnable ») : après le
+      référentiel (lot E) ; User-Agent `koosmoweb.fr` ; **trois requêtes par seconde pour
+      tout le site** (`siteSlot`, compteur en base, lot F) ; cache 30 j.
 - [~] **Nominatim public retiré du trafic courant** (« periodic requests from apps are
       considered bulk geocoding ») : remplacé par LocationIQ dans le Compas dès que la
       clé est lue (lot B). Reste : `officialAlerts` et les modules hors Compas.
-- [ ] Positions envoyées arrondies à 0,01° (RGPD, 2.10).
+- [x] Positions envoyées arrondies à 0,01° (RGPD, 2.10) : `coarsePosition` dès l'entrée
+      de la préparation (lot F).
 
 ### 1.4 Points autour des étapes (Overpass)
 
@@ -163,14 +167,19 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       (« open to the public », identification demandée) sont les seules utilisables ;
       OpenRouteService flou (à demander : enquiry@openrouteservice.org).
 - [~] Ordre : cache (mémoire, `route_cache`, et `geo_cache` « leg v3 » 30 j) →
-      **Geoapify Routing** (`hike` / `bicycle` / `drive`, plafond du site 1 500 trajets
-      par jour sur les 3 000 crédits partagés) → **Valhalla FOSSGIS** sur panne, avec
+      **Geoapify Routing** (`hike` / `bicycle` / `drive`, plafond du site 1 500 crédits
+      par jour sur les 3 000 partagés, un crédit par tranche de 500 km) → **Valhalla FOSSGIS** sur panne, avec
       `X-Client-Id: koosmoweb.fr` → **estimation annoncée** (vol d'oiseau × 1,4 à pied,
       × 1,3 à vélo ou sur route, « ≈ … km (estimée) » à l'écran, phrase dans l'étape et
       note de préparation). Chaque étape garde sa source (`trip_steps.metadata.distance`).
       Le dénivelé d'une journée à pied ou à vélo, que seul BRouter donnait, se lit sur le
-      relief (Terrain Tiles) le long du tracé. Reste : l'annonce sur GitHub Discussions
-      de Valhalla (compte de Tony) ; preuve en ligne ci-dessous.
+      relief (Terrain Tiles) le long du tracé. **Prouvé sur l'aperçu (PR #79, 8 oct.)** :
+      Chamonix → Les Houches à pied 7,4 km / 1 h 51, à vélo 7,3 km, en voiture 8,05 km
+      (source Geoapify, arrivée dans la tolérance) ; refuge des Grands Mulets atteint à
+      pied (14,9 km, arrivée à 18 m : seul BRouter y arrivait), sommet du Mont Blanc
+      28,0 km ; trek de 3 jours dans le Vercors préparé en 41 s, jours 2 et 3 mesurés par
+      Geoapify (17,5 km / D+ 756 m, 10,8 km / D+ 623 m lus sur le relief), source gardée
+      dans l'étape. Reste : l'annonce sur GitHub Discussions de Valhalla (Tony).
 - [x] User-Agent sur tous les appels de routage (Geoapify et Valhalla).
 
 ### 1.6 Fond de carte
@@ -206,13 +215,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       les conseils) ; l'IA reste allumée pour les tests (aucun vrai utilisateur
       aujourd'hui) et s'éteint par drapeau pour le lancement, sauf décision contraire de
       Tony.
-- [ ] Drapeau `COMPAS_AI` (on/off) lu partout où l'IA est appelée ; Compas testé de bout
-      en bout avec l'IA éteinte (jeu de validation P2 rejoué sans IA).
+- [~] Drapeau **`AI_MODE=off`** lu dans `askAI`, le point d'entrée unique de l'IA (lot F) :
+      chaque usage rend son repli par règles, raison « ia_eteinte » dite à l'écran. Reste :
+      Compas testé de bout en bout avec l'IA éteinte (jeu de validation P2 rejoué).
 - [ ] Compréhension de la phrase sans IA (4.10) : parseur par règles au niveau du parseur
       actuel avec l'IA.
 - [ ] Conseils par règles (4.12) pour que l'absence d'IA ne retire rien d'essentiel.
-- [ ] Plafond global quotidien d'appels IA (en plus du plafond par personne) ; refus
-      en cas d'erreur du quota pour les appels lourds (fail-closed).
+- [x] Plafond global quotidien d'appels IA (`AI_DAILY_CAP`, 2 000 par défaut, en plus du
+      plafond par personne) ; compteur en panne = refus (fail-closed), lot F.
 - [ ] Cache des réponses IA identiques (même demande, même jour).
 
 ### 1.8 Météo et données ouvertes
@@ -305,7 +315,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [x] Liens d'invitation invisibles des simples lecteurs (8 oct.).
 - [ ] Tests pgTAP : `trip_invitations`, `geo_cache`, `route_cache`, `trips`,
       `trip_steps` (lecteur, éditeur, anonyme) ; CI `database-gates` activée.
-- [ ] Revue de toutes les fonctions `SECURITY DEFINER` (search_path, droits `EXECUTE`).
+- [~] Revue de toutes les fonctions `SECURITY DEFINER` (search_path, droits `EXECUTE`) :
+      conseiller Supabase lu le 8 oct. (31 fonctions ouvertes à `anon`, 67 à
+      `authenticated`). **Deux failles fermées** (`20261008225921`) :
+      `claim_reward_points` (n'importe qui créditait des points à n'importe quel compte)
+      et `log_materiel_history` (historique écrit au nom d'un autre), réservées à la clé de
+      service. Les révocations des migrations du 17 et du 22 septembre n'avaient jamais
+      été appliquées en production : reste à rejouer la revue fonction par fonction
+      (vue `public_profiles` en SECURITY DEFINER, 2 `search_path` mobiles).
 - [ ] Revue des policies « public » restantes (conseiller Supabase `get_advisors`).
 
 ### 2.5 Quota IA
@@ -344,8 +361,9 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 2.10 RGPD
 
-- [ ] Position GPS arrondie (≈ 1 km) avant tout envoi à un tiers ; jamais enregistrée au
-      mètre ; base d'un séjour sans lieu dit = commune, pas le point GPS.
+- [~] Position GPS arrondie (≈ 1 km) avant tout envoi à un tiers : fait pour la
+      préparation du Compas (lot F). Reste : jamais enregistrée au mètre ailleurs ; base
+      d'un séjour sans lieu dit = commune, pas le point GPS.
 - [ ] Explication avant la demande de position (pourquoi, ce qui est envoyé) ; refus
       possible sans perdre la préparation (origine demandée en texte, 4.3).
 - [ ] Politique de confidentialité à jour : Vercel, Supabase, NVIDIA (si gardé),
@@ -370,21 +388,30 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 3.1 Table et accès
 
-- [ ] Migration `geo_places` (source, identifiant source, nom, nom français, nom anglais,
-      nature, pays, région, latitude, longitude, altitude, population, rang, emprise,
-      date de mise à jour) ; 3 index ; lecture publique, écriture `service_role`.
-- [ ] RPC `geo_places_in_bbox(w, s, e, n, kinds, limit)` et
-      `geo_places_search(q, cc, limit)` (nom normalisé, trigrammes bornés).
-- [ ] Budget de place par lot mesuré avant et après chaque import.
+- [x] Migration `geo_places` (`20261008190319`) : identifiant GeoNames, nom, nature
+      (ville, bourg, village, hameau), pays, région (code admin1), latitude, longitude,
+      altitude, population, fuseau horaire, date de mise à jour ; compacte (sans
+      géométrie PostGIS ni trigrammes) : index point GiST et pays × population (≥ 1 000).
+      Lecture publique, écriture par la clé de service seule.
+- [x] RPC `geo_places_in_box(w, s, e, n, kinds, limit)` : 20 ms pour le Vercors (357
+      lieux). [ ] `geo_places_search(q, cc, limit)` (noms français : `alternateNamesV2`)
+      reste à faire ; la recherche de destination passe encore par Photon, LocationIQ
+      et Geoapify.
+- [x] Budget mesuré : 367 747 lieux, 74 Mo ; base de 354 à 428 Mo. 🔒 Retrait de
+      `places_geo` (−232 Mo) par Tony maintenant que les pages Pays lisent `geo_places`.
 
 ### 3.2 Import des lieux habités
 
-- [ ] Script d'import (Node, exécuté par GitHub Actions, gratuit) : GeoNames `cities500`
-      (CC BY 4.0) + tous les lieux habités de France et des pays alpins ; noms français
-      et anglais (`alternateNamesV2`) ; région rattachée.
-- [ ] Brancher `lookupAreaPlaces` et la recherche de destination sur la table, Photon en
-      secours. Preuve : préparations Vercors, Dolomites, Patagonie sans appel Photon pour
-      la zone.
+- [x] Import du 8 octobre : GeoNames `cities500` (CC BY 4.0, 246 pays) + tous les lieux
+      habités de France (80 299), Suisse, Italie et Autriche ; préparation locale
+      (`scripts/geo/prep_geo_places.py`), écriture par une fonction Supabase temporaire
+      protégée par un secret à usage unique, désactivée ensuite (410). Réimport mensuel :
+      tâche GitHub Actions à brancher sur `SUPABASE_DB_URL` (secret de Tony).
+- [~] `lookupAreaPlaces` lit le référentiel d'abord ; Photon n'est demandé que pour les
+      refuges et campings (absents de GeoNames), ou pour compléter une zone maigre hors
+      des pays détaillés. Pages Pays (`fetchPlacesByCountry`) sur `geo_places` ;
+      `places_geo` n'est plus lu nulle part (lecteurs morts retirés). Preuve en ligne : préparations Vercors, Dolomites,
+      Patagonie (journal « Référentiel N », sans « Photon » pour les lieux habités).
 
 ### 3.3 Massifs, parcs, régions naturelles
 

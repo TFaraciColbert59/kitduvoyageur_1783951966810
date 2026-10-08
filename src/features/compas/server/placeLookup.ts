@@ -4,6 +4,7 @@ import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, p
 import { cached, coordKey } from './sharedCache';
 import { geoapifyReverse, geoapifySearch } from './geoapify';
 import { locationIqKey, locationIqSlot, locationIqUrl, normalizeLocationIq } from './locationIq';
+import { photonSlot } from '@/lib/siteSlot';
 
 /**
  * Recherche d'un lieu sur la carte (Photon, puis Nominatim — par LocationIQ
@@ -39,6 +40,15 @@ export const queryKey = (v: string) =>
   `u:${createHash('sha256').update(v.normalize('NFKC').toLowerCase().trim()).digest('hex').slice(0, 24)}`;
 
 async function fetchJson(url: string, headers: Record<string, string>): Promise<unknown | null> {
+  // Photon public (plan 1.3) : créneau partagé par tout le site, et l'application
+  // nommée. Sans créneau : comme une panne, le service suivant répond.
+  if (url.startsWith('https://photon.komoot.io/')) {
+    if (!(await photonSlot())) {
+      console.warn('[compas] Photon : créneau du site plein');
+      return null;
+    }
+    headers = { ...headers, 'User-Agent': NOMINATIM_UA };
+  }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {

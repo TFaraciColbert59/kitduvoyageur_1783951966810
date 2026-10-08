@@ -103,6 +103,7 @@ import { bareAdminName, destinationRadiusKm, distanceKm, isAdminName, maxLegKm, 
 import { unifyStageNames, untangleStages } from '../engine/stageOrder';
 import { localToday } from './weather';
 import { preparationEventKind, recordPreparationEvent } from './opsEvents';
+import { coarsePosition } from '../engine/privacy';
 import { routeAscentM } from './elevation';
 import { estimatedLegKm, estimationNote, stepDistanceMetadata, type LegDistanceSource, type LegMove } from '../engine/legDistance';
 
@@ -165,8 +166,14 @@ const point = z.object({ lat: z.number().min(-90).max(90), lon: z.number().min(-
 const schema = z.object({
   tripId: z.string().uuid(),
   tripSlug: z.string().min(1).max(200),
-  /** Position actuelle de l'appareil (départ du trajet) ; null si refusée. */
-  from: point.nullable(),
+  /**
+   * Position actuelle de l'appareil (départ du trajet) ; null si refusée.
+   * Arrondie à 0,01° (~1 km, plan 2.10) dès l'entrée : aucun service tiers
+   * (routage, géocodage) ne reçoit la position exacte de la personne.
+   */
+  from: point
+    .nullable()
+    .transform(coarsePosition),
   /**
    * Deux appels courts plutôt qu'un long : « steps » écrit l'itinéraire,
    * « rest » les nuits, le trajet, le kit et le budget. Chaque appel tient

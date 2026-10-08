@@ -4,10 +4,21 @@
 > kit / budget / conseils → résultat final. Rien de P3 tant que P0/P1 ne passent pas P2.
 > « Fait » = prouvé de bout en bout sur la preview et contrôlé en base, pas « le code compile ».
 
-Mis à jour : 8 octobre 2026 (13 h). **En production** (koosmoweb.fr) : PR #72 (`972a14d`,
-12 h 01 UTC) puis PR #74 (`8d5aac4`, 12 h 47 : villes en français pour RouteStack, premier
-jour de pagaie compté), après la PR #73 (CI de `main` de nouveau verte). Branche de travail
-`claude/optimistic-albattani-i06ge7`.
+Mis à jour : 8 octobre 2026 (soir). **En production** (koosmoweb.fr) : lot A (PR #76,
+sécurité), lot B (PR #77, clés gratuites), lot C (PR #78, `195a47f` : rapport quotidien,
+sauvegarde, purges), lot D (PR #79, `153ddfc` : routage Geoapify puis Valhalla, estimation
+annoncée, OSRM démo et BRouter retirés). En revue : lot E (référentiel des lieux habités).
+Plan à 0 € et cases
+à cocher : `PLAN-100.md`. Branche de travail `claude/optimistic-albattani-i06ge7`.
+
+**À faire par Tony** (rien d'autre ne bloque) :
+1. SQL Editor : `supabase/migrations/20261008190000_base_scheduled_purges.sql` (purges
+   planifiées), puis `drop table public.places_geo;` (−232 Mo, plus aucun lecteur).
+2. GitHub → Settings → Secrets → Actions : `SUPABASE_DB_URL` (Session pooler) et
+   `BACKUP_PASSPHRASE` (sauvegarde chiffrée de la nuit, `SAUVEGARDES.md`).
+3. Identité légale réelle pour les mentions légales ; retirer `DEMO_LOGIN_*` de Vercel.
+4. Valhalla FOSSGIS : un mot sur GitHub Discussions (identification demandée).
+5. Au lancement : protection hCaptcha dans Supabase + `NEXT_PUBLIC_AUTH_CAPTCHA=on`.
 
 ## P0 — Moteur fiable
 
@@ -29,7 +40,7 @@ jour de pagaie compté), après la PR #73 (CI de `main` de nouveau verte). Branc
 
 | # | Sujet | État |
 |---|---|---|
-| P1.1 | Référentiel géographique local : lieux habités, massifs / parcs, lieux importants, randonnées mondiales, refuges | **Plan chiffré écrit** : `REFERENTIEL-GEO.md`. Base à 424 Mo sur 500 (offre gratuite), **353 Mo depuis la suppression des 9 index inutiles (Tony, SQL Editor, 8 oct.)**. `places_geo` (294 Mo) : import alphabétique arrêté après les pays en A–C (Chine 85 112 lieux, France 692), **aucun lieu rattaché à sa région** (`admin_region_id` nul partout : la lecture par région des pages Pays ne trouve rien). Index inutiles retirés (−71 Mo, migration `20261008162452`). Suite : `geo_places` et import des lieux habités (`PLAN-100.md`, phase 3) |
+| P1.1 | Référentiel géographique local : lieux habités, massifs / parcs, lieux importants, randonnées mondiales, refuges | **Lieux habités faits (8 oct., soir)** : `geo_places` (367 747 lieux GeoNames : cities500 pour 246 pays, tous les lieux habités de France, Suisse, Italie, Autriche ; 74 Mo, base à 428 Mo), lue d'abord par `lookupAreaPlaces` et les pages Pays ; Vercors : 357 lieux en 20 ms. `places_geo` n'est plus lu (retrait par Tony). Reste : massifs et parcs, refuges, escalade, rivières, grands itinéraires (`PLAN-100.md`, 3.3 à 3.7) ; noms français pour la recherche |
 | P1.2 | Activités, POI, météo | Partiel (MET Norway, NASA POWER, POI Overpass) |
 
 ## P2 — Validation
@@ -77,7 +88,7 @@ budget, offre Vercel, IA, démo.
 - **Mandat (Tony, 8 octobre)** : carte blanche. Claude mène le chantier seul : migrations, corrections de tests, fusion des PR quand la CI est verte, déploiements Vercel (connecteur reconnecté sur l'équipe `tonyfaracip-3325s-projects`). Chaque étape reste prouvée en ligne et contrôlée en base, et dite dans ce fichier.
 
 - IA production : **NVIDIA NIM direct** (décision de Tony du 7 octobre au soir, remplace le passage à OpenRouter).
-- Cartes : services OSM gratuits + **Geoapify free tier** en secours (clé fournie, variable `GEOAPIFY_API_KEY` à poser sur Vercel) ; pas d'abonnement à 59 $ pour l'instant.
+- Cartes et routage : comptes gratuits de Tony (Geoapify, LocationIQ, ArcGIS, hCaptcha ; clés dans Vercel). Routage : Geoapify puis Valhalla FOSSGIS ; plus aucun serveur de démonstration (OSRM, BRouter retirés, lot D).
 - Référentiel géographique : **offre gratuite Supabase** (décision de Tony du 8 octobre), référentiel compact `geo_places` (~300 Mo au final, `places_geo` retiré), feu vert donné par le mandat. Ordre : index inutiles retirés, puis `geo_places` et import des lieux habités, voir `REFERENTIEL-GEO.md`.
 - Réservations : branchées après la stabilisation du moteur.
 

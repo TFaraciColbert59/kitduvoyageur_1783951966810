@@ -53,6 +53,8 @@ export interface AIRequest {
 export type AIFailureReason =
   | 'delai_depasse'
   | 'quota_epuise'
+  /** IA éteinte par le site (`AI_MODE=off`, plan 1.7) : rien n'est appelé. */
+  | 'ia_eteinte'
   | 'provider_indisponible'
   | 'reponse_invalide';
 

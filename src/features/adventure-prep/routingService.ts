@@ -23,7 +23,7 @@ import { haversineKm } from './engine/routing';
 import { TRAVEL_MODES } from './engine/routing';
 import type { RouteLeg, TravelMode } from './engine/routing';
 import type { RouteProvider } from './engine/provenance';
-import { rateLimit, type RateLimitResult } from '@/lib/rate-limit';
+import { GEOAPIFY_DAILY_CREDITS, takeApiCredits } from '@/lib/apiCredits';
 
 /**
  * Geoapify Routing : un appel pour tout le trajet, un troncon par paire de
@@ -49,9 +49,10 @@ export const GEOAPIFY_MODE: Readonly<Record<TravelMode, string>> = {
  * Le routage en prend donc au plus la moitie (1 500 credits) ; au-dela,
  * Valhalla repond. Le compteur compte des CREDITS, pas des appels : un trajet
  * de plus de 500 km en coute plusieurs (voir `geoapifyRouteCredits`).
- * Compteur partage en base (toutes les instances Vercel), ouvert en cas de
- * panne du compteur : Geoapify refuse alors lui-meme (429) et Valhalla prend
- * le relais.
+ * Compteurs partages en base (`take_api_credits`) : celui du routage, puis
+ * celui de tout Geoapify (`GEOAPIFY_DAILY_CREDITS`, lieux et geocodage
+ * compris). Ouverts en cas de panne du compteur : Geoapify refuse alors
+ * lui-meme (429) et Valhalla prend le relais.
  */
 export const GEOAPIFY_ROUTING_DAILY_BUDGET = 1500;
 
@@ -796,15 +797,12 @@ export function geoapifyRouteUrl(points: readonly RoutePoint[], mode: TravelMode
   return `${GEOAPIFY_ROUTING_URL}?${params.toString()}`;
 }
 
-type GeoapifyBudget = () => Promise<Pick<RateLimitResult, 'allowed'>>;
+/** Prend `credits` credits Geoapify pour un trajet ; false = pas de Geoapify. */
+type GeoapifyBudget = (credits: number) => Promise<boolean>;
 
-const defaultGeoapifyBudget: GeoapifyBudget = () =>
-  rateLimit({
-    key: 'geoapify:routing:day',
-    limit: GEOAPIFY_ROUTING_DAILY_BUDGET,
-    windowMs: 86_400_000,
-    failMode: 'open',
-  });
+const defaultGeoapifyBudget: GeoapifyBudget = async (credits) =>
+  (await takeApiCredits('geoapify-routing', credits, GEOAPIFY_ROUTING_DAILY_BUDGET)) &&
+  takeApiCredits('geoapify', credits, GEOAPIFY_DAILY_CREDITS);
 
 let geoapifyBudget: GeoapifyBudget = defaultGeoapifyBudget;
 
@@ -814,15 +812,12 @@ export function __setGeoapifyBudgetForTests(budget: GeoapifyBudget | null): void
 }
 
 /**
- * Les credits Geoapify de ce trajet, pris un a un sur le compteur du site ;
- * un seul refus et Geoapify n'est pas appele. Un compteur en panne ne bloque rien.
+ * Les credits Geoapify de ce trajet, pris d'un coup sur les compteurs du site ;
+ * un refus et Geoapify n'est pas appele. Un compteur en panne ne bloque rien.
  */
 async function geoapifyAllowed(credits: number): Promise<boolean> {
   try {
-    for (let taken = 0; taken < credits; taken += 1) {
-      if (!(await geoapifyBudget()).allowed) return false;
-    }
-    return true;
+    return await geoapifyBudget(credits);
   } catch {
     return true;
   }

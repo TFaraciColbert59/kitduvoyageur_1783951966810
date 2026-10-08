@@ -302,7 +302,7 @@ async function chargerService(): Promise<Service> {
   const mod = await import('../routingService');
   mod.__resetRouteCache();
   mod.__resetRouteLimiter();
-  mod.__setGeoapifyBudgetForTests(async () => ({ allowed: true }));
+  mod.__setGeoapifyBudgetForTests(async () => true);
   return mod;
 }
 

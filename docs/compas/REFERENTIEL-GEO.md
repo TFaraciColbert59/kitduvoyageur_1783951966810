@@ -101,3 +101,19 @@ Option Pro (25 $ par mois, 8 Go inclus) : tous les lieux habités du monde (~4,7
   **424 à 353 Mo**.
 - **Budget 0 € (Tony, 8 octobre)** : suite dans `PLAN-100.md`, phase 3 (`geo_places`,
   import par GitHub Actions, retrait de `places_geo`).
+
+### Import 1 fait (8 octobre, soir)
+
+- `geo_places` créée (migration `20261008190319`, sans géométrie PostGIS ni trigrammes) et
+  remplie : **367 747 lieux** (cities500 pour 246 pays ; tous les lieux habités de France,
+  Suisse, Italie, Autriche), **74 Mo** ; base **428 Mo**. Vercors : 357 lieux en 20 ms.
+- Le Compas (`lookupAreaPlaces`) et les pages Pays la lisent d'abord.
+- `places_geo` n'est plus lu nulle part (`fetchPlaces` et `fetchPlaceNames`, sans appelant,
+  retirés). **Étape 4 à faire par Tony** (suppression, SQL Editor) :
+  `drop table public.places_geo;` après vérification des pages Pays en ligne (−232 Mo,
+  base vers ~200 Mo).
+- **Import reproductible** (base neuve, réimport mensuel) : télécharger `cities500`, `FR`,
+  `CH`, `IT`, `AT` depuis download.geonames.org, puis
+  `python3 -I scripts/geo/prep_geo_places.py <dossier> geo_places.tsv` et
+  `npx tsx scripts/geo/import_geo_places.ts geo_places.tsv` (clé de service dans
+  l'environnement ; upsert idempotent sur `geoname_id`).

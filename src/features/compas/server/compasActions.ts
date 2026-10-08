@@ -1659,6 +1659,7 @@ export async function compasApplyRouteAction(
 const AI_NOTES: Record<AIFailureReason, string> = {
   delai_depasse: 'L’IA a mis trop de temps : lu par les règles du Compas.',
   quota_epuise: 'Quota IA du jour atteint : lu par les règles du Compas.',
+  ia_eteinte: 'Lu par les règles du Compas (IA éteinte).',
   provider_indisponible: 'IA indisponible : lu par les règles du Compas.',
   reponse_invalide: 'Réponse IA inexploitable : lu par les règles du Compas.',
 };
