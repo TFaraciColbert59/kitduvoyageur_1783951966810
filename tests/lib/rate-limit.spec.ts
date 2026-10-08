@@ -8,7 +8,11 @@
  *   • TEST-PHASE6-RL-05 : Upstash injoignable + failMode closed ⇒ unavailable (503) ;
  *   • TEST-PHASE6-RL-06 : réponse HTTP en erreur / invalide ⇒ fail-safe ;
  *   • TEST-PHASE6-RL-07 : timeout ⇒ fail-safe sans requête bloquante ;
- *   • TEST-PHASE6-RL-08 : helpers clé/IP/en-têtes.
+ *   • TEST-PHASE6-RL-08 : helpers clé/IP/en-têtes ;
+ *   • TEST-PHASE6-RL-09 : sans Upstash, Supabase configuré ⇒ fenêtre en base (RPC), clé hachée ;
+ *   • TEST-PHASE6-RL-10 : quota en base dépassé ⇒ limited + Retry-After (reset_at) ;
+ *   • TEST-PHASE6-RL-11 : Upstash prioritaire quand les deux sont configurés ;
+ *   • TEST-PHASE6-RL-12 : base injoignable ou réponse invalide ⇒ fail-safe.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
@@ -20,6 +24,14 @@ import {
 } from '@/lib/rate-limit';
 
 const ENV_CONFIGURED = { url: 'https://redis.example.upstash.io', token: 'jeton-test' };
+const ENV_POSTGRES = { supabaseUrl: 'https://projet.supabase.co/', serviceRoleKey: 'cle-service-test' };
+
+function rpcResponse(currentHits: number, resetAt: string): Response {
+  return new Response(JSON.stringify([{ current_hits: currentHits, reset_at: resetAt }]), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
 
 function pipelineResponse(results: number[]): Response {
   return new Response(
@@ -292,5 +304,117 @@ describe('Phase 6 — rate limiting distribué (TEST-PHASE6-RL)', () => {
       'X-RateLimit-Remaining': '0',
       'Retry-After': '42',
     });
+  });
+  it('TEST-PHASE6-RL-09: sans Upstash, Supabase configuré ⇒ fenêtre en base, clé hachée', async () => {
+    const fetchImpl = vi.fn(async () =>
+      rpcResponse(1, new Date(2_000_000 + 600_000).toISOString())
+    ) as unknown as typeof fetch;
+
+    const result = await rateLimit({
+      key: 'compas-autofill:user-1',
+      limit: 6,
+      windowMs: 600_000,
+      env: ENV_POSTGRES,
+      fetchImpl,
+      now: () => 2_000_000,
+    });
+
+    expect(result.outcome).toBe('allowed');
+    expect(result.backend).toBe('postgres');
+    expect(result.degraded).toBe(false);
+    expect(result.remaining).toBe(5);
+
+    const [url, init] = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as [
+      string,
+      RequestInit,
+    ];
+    expect(url).toBe('https://projet.supabase.co/rest/v1/rpc/rate_limit_consume');
+    const headers = init.headers as Record<string, string>;
+    expect(headers.apikey).toBe('cle-service-test');
+    expect(headers.Authorization).toBe('Bearer cle-service-test');
+    const body = JSON.parse(String(init.body)) as { p_key: string; p_window_ms: number };
+    // Ni identifiant ni IP en clair dans la base : SHA-256 de la clé logique.
+    expect(body.p_key).toMatch(/^[0-9a-f]{64}$/);
+    expect(body.p_key).not.toContain('user-1');
+    expect(body.p_window_ms).toBe(600_000);
+
+    // Même clé logique ⇒ même compteur ; autre clé ⇒ autre compteur.
+    await rateLimit({ key: 'compas-autofill:user-1', limit: 6, windowMs: 600_000, env: ENV_POSTGRES, fetchImpl });
+    await rateLimit({ key: 'compas-autofill:user-2', limit: 6, windowMs: 600_000, env: ENV_POSTGRES, fetchImpl });
+    const keys = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls.map(
+      (call) => (JSON.parse(String((call as [string, RequestInit])[1].body)) as { p_key: string }).p_key
+    );
+    expect(keys[1]).toBe(keys[0]);
+    expect(keys[2]).not.toBe(keys[0]);
+  });
+
+  it('TEST-PHASE6-RL-10: quota en base dépassé ⇒ limited + Retry-After (reset_at)', async () => {
+    const now = Date.parse('2026-10-08T17:00:00.000Z');
+    const fetchImpl = vi.fn(async () =>
+      rpcResponse(7, '2026-10-08T17:04:00.500Z')
+    ) as unknown as typeof fetch;
+
+    const result = await rateLimit({
+      key: 'compas-autofill:user-3',
+      limit: 6,
+      windowMs: 600_000,
+      failMode: 'closed',
+      env: ENV_POSTGRES,
+      fetchImpl,
+      now: () => now,
+    });
+
+    expect(result.outcome).toBe('limited');
+    expect(result.backend).toBe('postgres');
+    expect(result.remaining).toBe(0);
+    expect(result.retryAfterSeconds).toBe(241);
+  });
+
+  it('TEST-PHASE6-RL-11: Upstash prioritaire quand les deux sont configurés', async () => {
+    const fetchImpl = vi.fn(async () => pipelineResponse([1, 1, 60_000])) as unknown as typeof fetch;
+
+    const result = await rateLimit({
+      key: 'scope:both',
+      limit: 2,
+      windowMs: 60_000,
+      env: { ...ENV_CONFIGURED, ...ENV_POSTGRES },
+      fetchImpl,
+      now: () => 1_000,
+    });
+
+    expect(result.backend).toBe('redis');
+    const [url] = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    expect(url).toBe('https://redis.example.upstash.io/pipeline');
+  });
+
+  it('TEST-PHASE6-RL-12: base injoignable ou réponse invalide ⇒ fail-safe', async () => {
+    const down = vi.fn(async () => new Response('{"message":"boom"}', { status: 500 })) as unknown as typeof fetch;
+    const closed = await rateLimit({
+      key: 'scope:pg-down',
+      limit: 1,
+      windowMs: 10_000,
+      failMode: 'closed',
+      env: ENV_POSTGRES,
+      fetchImpl: down,
+      now: () => 6_000_000,
+    });
+    expect(closed.outcome).toBe('unavailable');
+    expect(closed.backend).toBe('postgres');
+    expect(closed.detail).toContain('postgres_http_500');
+
+    const malformed = vi.fn(async () => new Response('[]', { status: 200 })) as unknown as typeof fetch;
+    const open = await rateLimit({
+      key: 'scope:pg-malformed',
+      limit: 1,
+      windowMs: 10_000,
+      failMode: 'open',
+      env: ENV_POSTGRES,
+      fetchImpl: malformed,
+      now: () => 6_000_000,
+    });
+    expect(open.outcome).toBe('allowed');
+    expect(open.backend).toBe('memory');
+    expect(open.degraded).toBe(true);
+    expect(open.detail).toContain('postgres_reponse_invalide');
   });
 });

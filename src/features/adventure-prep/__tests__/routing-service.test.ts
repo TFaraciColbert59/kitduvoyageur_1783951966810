@@ -250,6 +250,11 @@ async function fetchRoute(
       legs: unknown;
       provider: string | null;
     };
+    // Comme la vraie route : une ecriture non signee est refusee (403).
+    const signature = new Headers(init?.headers).get('x-route-cache-signature');
+    if (signature !== `sig:${corps.key}`) {
+      return reponseRoute(403, { status: 'forbidden', reason: 'signature_expected' });
+    }
     base.set(corps.key, { payload: { ...corps, reason: null }, expires_at: Date.now() + 3_600_000 });
     return reponseRoute(200, { status: 'stored' });
   }
@@ -311,6 +316,8 @@ async function chargerService(): Promise<Service> {
 
 /** L origine que le service utilise pour joindre la Route Handler. */
 const ORIGINE = 'http://localhost:4000';
+/** La signature serveur d'une cle (ce que `/api/route` passe : `signRouteCacheKey`). */
+const SIGNE = (key: string) => `sig:${key}`;
 
 beforeEach(() => {
   base.clear();
@@ -327,7 +334,7 @@ afterEach(() => {
 describe('I4 — le cache de routage survit a un redeploiement', () => {
   it('I4-CACHE-01: une trace mesuree est persistee en base, provider compris', async () => {
     const svc = await chargerService();
-    const mesure = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE);
+    const mesure = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
     expect(mesure.legs).not.toBeNull();
 
     // La base a ete ecrite, et l ENTREE porte le provider : c est la base de
@@ -342,9 +349,19 @@ describe('I4 — le cache de routage survit a un redeploiement', () => {
     expect((entree.payload as { legs: unknown }).legs).toHaveLength(1);
   });
 
+  it('I4-CACHE-01b: sans signature serveur (navigateur), la mesure reste en memoire, rien en base', async () => {
+    const svc = await chargerService();
+    const mesure = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE);
+    expect(mesure.legs).not.toBeNull();
+    expect(requetesVues.some((r) => r.methode === 'POST')).toBe(false);
+    expect(base.size).toBe(0);
+    // La lecture de la base, elle, reste ouverte : une mesure du serveur sert a tous.
+    expect(requetesVues.some((r) => r.methode === 'GET' && r.url.includes('/api/route/cache'))).toBe(true);
+  });
+
   it('I4-CACHE-02: le Map vide, la reponse vient de la base et NON du reseau', async () => {
     const svc = await chargerService();
-    const premier = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE);
+    const premier = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
     expect(premier.legs?.[0].distanceKm).toBeCloseTo(2.3982, 4);
 
     // REDEPLOIEMENT SIMULE : le Map repart a zero, le budget est rendu. C est
@@ -355,7 +372,7 @@ describe('I4 — le cache de routage survit a un redeploiement', () => {
     const fetchSpy = globalThis.fetch as ReturnType<typeof vi.fn>;
     fetchSpy.mockClear();
 
-    const relu = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE);
+    const relu = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
     expect(relu.legs?.[0].distanceKm).toBeCloseTo(2.3982, 4);
     // La preuve : la reponse a traverse la Route Handler, et AUCUN
     // fournisseur n a ete appele — sinon elle aurait ete RE-MESUREE.
@@ -374,11 +391,11 @@ describe('I4 — le cache de routage survit a un redeploiement', () => {
     // Budget epuise : la seule voie qui doit encore repondre est le cache.
     for (let i = 0; i < 200; i++) {
       svc.__resetRouteCache();
-      await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE);
+      await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
     }
     svc.__resetRouteCache();
     svc.__resetRouteLimiter();
-    await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE);
+    await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
 
     // La lecture de la base est la PREMIERE requete de cette derniere passe :
     // elle passe donc avant le limiteur et avant tout appel fournisseur.
@@ -401,7 +418,7 @@ describe('I4 — le cache de routage survit a un redeploiement', () => {
       }),
     );
 
-    const refus = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE);
+    const refus = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
     expect(refus.legs).toBeNull();
     expect(refus.reason).not.toBeNull();
 
@@ -409,7 +426,7 @@ describe('I4 — le cache de routage survit a un redeploiement', () => {
     // republiee comme une MESURE pendant toute la duree du TTL.
     expect(base.size).toBe(0);
     svc.__resetRouteCache();
-    const relu = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE);
+    const relu = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
     expect(relu.legs).toBeNull();
     expect(relu.provider).toBeUndefined();
   });
@@ -424,7 +441,7 @@ describe('I4 — le cache de routage survit a un redeploiement', () => {
       expires_at: Date.now() + 3_600_000,
     });
 
-    const mesure = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE);
+    const mesure = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
 
     // L entree refusee est traitee comme ABSENTE : le service remesure, et la
     // reponse vient du fournisseur — jamais d un echec memorise.
@@ -435,7 +452,7 @@ describe('I4 — le cache de routage survit a un redeploiement', () => {
 
   it('I4-CACHE-06: une entree EXPIREE vaut absence, meme si elle est encore la', async () => {
     const svc = await chargerService();
-    await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE);
+    await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
     // L entree est la, et sa charge utile est honnete — seule l expiration
     // compte. Le TTL doit rester RESPECTE cote base, pas seulement en memoire :
     // sinon une mesure d il y a deux heures serait republiée comme neuve.
@@ -445,7 +462,7 @@ describe('I4 — le cache de routage survit a un redeploiement', () => {
     const fetchSpy = globalThis.fetch as ReturnType<typeof vi.fn>;
     fetchSpy.mockClear();
 
-    const apres = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE);
+    const apres = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
     // Elle a donc ete remesuree : c est la seule preuve que le TTL compte.
     expect(fetchSpy).toHaveBeenCalled();
     expect(apres.legs).not.toBeNull();
@@ -457,12 +474,12 @@ describe('I4 — le cache de routage survit a un redeploiement', () => {
     // en panne ne doit JAMAIS faire perdre une mesure. C est le seul echec que
     // ce module n a pas le droit de produire, donc on l ecrit.
     panne = 'connection refused';
-    const mesure = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE);
+    const mesure = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
     expect(mesure.legs).not.toBeNull();
     expect(mesure.legs?.[0].distanceKm).toBeCloseTo(2.3982, 4);
 
     // Et il continue de fonctionner en memoire derriere l echec.
-    const relu = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE);
+    const relu = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
     expect(relu.legs).not.toBeNull();
   });
 
@@ -471,7 +488,7 @@ describe('I4 — le cache de routage survit a un redeploiement', () => {
     // L ACCELERATION future se perd, jamais la mesure : le service doit
     // repondre, et la reponse doit rester juste.
     refuseEcriture = true;
-    const mesure = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE);
+    const mesure = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
     expect(mesure.legs).not.toBeNull();
     expect(mesure.legs?.[0].distanceKm).toBeCloseTo(2.3982, 4);
     // Et rien n a ete ecrit : pas de trace fantome en base.
@@ -480,12 +497,12 @@ describe('I4 — le cache de routage survit a un redeploiement', () => {
 
   it('I4-CACHE-09: le provider survit au redemarrage — la base de H5', async () => {
     const svc = await chargerService();
-    const premier = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE);
+    const premier = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
     expect(premier.provider).toBe('osrm');
 
     svc.__resetRouteCache();
     svc.__resetRouteLimiter();
-    const relu = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE);
+    const relu = await svc.routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton', undefined, ORIGINE, SIGNE);
     // Le provider relu n est pas undefined : il vient bien de la base. Perdre
     // ce credit de source au redemarrage serait une regression de H5.
     expect(relu.provider).toBe('osrm');

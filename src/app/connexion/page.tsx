@@ -12,6 +12,7 @@ import AppShell from '@/components/shell/AppShell';
 import { Button } from '@/components/ui';
 import { useTranslation } from '@/lib/i18n/context';
 import { demoLoginAction, demoLoginAvailableAction } from '@/features/demo/demoLogin';
+import { trialLoginAction, trialLoginAvailableAction } from '@/features/demo/trialSession';
 
 type AuthMode = 'connexion' | 'inscription';
 
@@ -38,11 +39,16 @@ function AuthForm() {
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
-  // Bouton « Connexion démo » : visible seulement si le serveur a les identifiants.
+  // « Essayer sans compte » (un espace à soi) dès que Supabase le permet ;
+  // sinon « Connexion démo », visible seulement si le serveur a les identifiants.
+  const [trialAvailable, setTrialAvailable] = useState(false);
   const [demoAvailable, setDemoAvailable] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
   useEffect(() => {
     let alive = true;
+    trialLoginAvailableAction()
+      .then((ok) => alive && setTrialAvailable(ok))
+      .catch(() => undefined);
     demoLoginAvailableAction()
       .then((ok) => alive && setDemoAvailable(ok))
       .catch(() => undefined);
@@ -55,7 +61,7 @@ function AuthForm() {
     setError('');
     setDemoLoading(true);
     try {
-      const res = await demoLoginAction();
+      const res = trialAvailable ? await trialLoginAction() : await demoLoginAction();
       if (!res.success) {
         setError(res.error);
         return;
@@ -320,7 +326,7 @@ function AuthForm() {
               </Button>
             </form>
           )}
-          {demoAvailable && mode === 'connexion' && !forgotPasswordOpen && (
+          {(trialAvailable || demoAvailable) && mode === 'connexion' && !forgotPasswordOpen && (
             <div className="mt-[var(--space-3)]">
               <Button
                 type="button"
@@ -330,10 +336,18 @@ function AuthForm() {
                 loading={demoLoading}
                 onClick={handleDemoLogin}
               >
-                {demoLoading ? 'Connexion démo…' : 'Connexion démo'}
+                {trialAvailable
+                  ? demoLoading
+                    ? 'Ouverture de l’essai…'
+                    : 'Essayer sans compte'
+                  : demoLoading
+                    ? 'Connexion démo…'
+                    : 'Connexion démo'}
               </Button>
               <p className="mt-2 text-center text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
-                Compte de démonstration partagé : un voyage, une équipe et des kits déjà prêts.
+                {trialAvailable
+                  ? 'Un espace rien qu’à toi, sans e-mail. Gardé 7 jours sans visite ; rien n’est publié.'
+                  : 'Compte de démonstration partagé : un voyage, une équipe et des kits déjà prêts.'}
               </p>
             </div>
           )}

@@ -29,7 +29,7 @@ jour de pagaie compté), après la PR #73 (CI de `main` de nouveau verte). Branc
 
 | # | Sujet | État |
 |---|---|---|
-| P1.1 | Référentiel géographique local : lieux habités, massifs / parcs, lieux importants, randonnées mondiales, refuges | **Plan chiffré écrit** : `REFERENTIEL-GEO.md`. Base à 424 Mo sur 500 (offre gratuite). `places_geo` (294 Mo) : import alphabétique arrêté après les pays en A–C (Chine 85 112 lieux, France 692), **aucun lieu rattaché à sa région** (`admin_region_id` nul partout : la lecture par région des pages Pays ne trouve rien). **Bloqué** : la migration qui retire 9 index en double ou jamais lus (−70 Mo) n'atteint pas la base (l'outil de migration attend une confirmation de Tony, 8 oct. midi) ; sans elle, l'import des lieux habités (~55 Mo) porterait la base vers 480 Mo |
+| P1.1 | Référentiel géographique local : lieux habités, massifs / parcs, lieux importants, randonnées mondiales, refuges | **Plan chiffré écrit** : `REFERENTIEL-GEO.md`. Base à 424 Mo sur 500 (offre gratuite), **353 Mo depuis la suppression des 9 index inutiles (Tony, SQL Editor, 8 oct.)**. `places_geo` (294 Mo) : import alphabétique arrêté après les pays en A–C (Chine 85 112 lieux, France 692), **aucun lieu rattaché à sa région** (`admin_region_id` nul partout : la lecture par région des pages Pays ne trouve rien). Index inutiles retirés (−71 Mo, migration `20261008162452`). Suite : `geo_places` et import des lieux habités (`PLAN-100.md`, phase 3) |
 | P1.2 | Activités, POI, météo | Partiel (MET Norway, NASA POWER, POI Overpass) |
 
 ## P2 — Validation
@@ -67,10 +67,13 @@ budget, offre Vercel, IA, démo.
 - Réseau ouvert : la preview, Photon et Supabase répondent depuis le conteneur ; Overpass reste instable depuis ici (miroirs en 500/504).
 - Vercel : connecteur reconnecté par Tony le 8 oct. (déploiements, journaux et variables lisibles).
 - Réservations (P3, gelé) : **RouteStack en direct sur le site de production** (8 oct., 12 h 03, mode `live`) : hôtels à Annecy (Logis Hôtel Annecy Nord, Hotel du Midi…), Lisbonne (Sheraton…) et Paris ; vols Genève → Lisbonne (3 offres dès 128,93 USD, 12 s). **Villes en français en production** (PR #74, `8d5aac4`, reprouvées sur le site le 8 oct. à 12 h 49) : vol Paris → Lisbonne (PAR → LIS, dès 47,07 USD), Genève → Londres (GVA → LON : Gatwick, Luton), Nice → Lyon (NCE → LYS), voiture à Lisbonne (3 offres). Aéroport de la ville d'après la réponse de RouteStack (« All Airports » d'abord, jamais une gare), nom anglais d'OpenStreetMap en secours. Un vol peut prendre jusqu'à 29 s.
-- Supabase : la migration de suppression d'index (−70 Mo) attend la confirmation de Tony ; l'import des lieux habités attend cette place.
+- Supabase : le connecteur de la session refuse toute suppression (DROP) ; ces opérations passent par le SQL Editor (Tony).
 
 ## Décisions en vigueur
 
+- **Budget 0 € (Tony, 8 octobre, après-midi)** : carte blanche complète, Claude est le
+  patron du chantier ; seule règle : **aucune dépense**. Plan et tâches :
+  **`PLAN-100.md`** (phases, sous-phases, preuves attendues).
 - **Mandat (Tony, 8 octobre)** : carte blanche. Claude mène le chantier seul : migrations, corrections de tests, fusion des PR quand la CI est verte, déploiements Vercel (connecteur reconnecté sur l'équipe `tonyfaracip-3325s-projects`). Chaque étape reste prouvée en ligne et contrôlée en base, et dite dans ce fichier.
 
 - IA production : **NVIDIA NIM direct** (décision de Tony du 7 octobre au soir, remplace le passage à OpenRouter).

@@ -3,6 +3,7 @@ import { getServiceSupabase } from '@/lib/ai/serviceClient';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { clientIpFromHeaders } from '@/lib/rate-limit';
 import { isTravelMode, MAX_ROUTE_POINTS } from '@/features/adventure-prep/routingService';
+import { ROUTE_CACHE_SIGNATURE_HEADER, verifyRouteCacheSignature } from '@/lib/routeCacheSignature';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -73,6 +74,9 @@ function readKey(raw: string | null): { key: string; mode: string } | null {
 
 const PROVIDERS = new Set(['osrm', 'valhalla', 'brouter']);
 
+/** Points au plus par tronçon écrit (un tronçon d'une journée en compte quelques milliers). */
+const MAX_LEG_POINTS = 5_000;
+
 /**
  * Une panne de base ne doit JAMAIS se voir comme un 500.
  *
@@ -114,7 +118,9 @@ function isMeasuredLeg(leg: unknown): boolean {
   if (typeof durationMin !== 'number' || !Number.isFinite(durationMin) || durationMin < 0) {
     return false;
   }
-  if (!Array.isArray(geometry) || geometry.length < 2) return false;
+  // Borne de taille : un tronçon mesuré reste raisonnable, une géométrie géante
+  // remplirait la base gratuite (500 Mo).
+  if (!Array.isArray(geometry) || geometry.length < 2 || geometry.length > MAX_LEG_POINTS) return false;
   return geometry.every((point) => {
     if (!Array.isArray(point) || point.length !== 2) return false;
     const [lon, lat] = point as [unknown, unknown];
@@ -131,11 +137,23 @@ function isMeasuredLeg(leg: unknown): boolean {
   });
 }
 
+/**
+ * Un appel signé vient du serveur (`/api/route`), qui est déjà limité par
+ * voyageur : il ne passe pas par le compteur par adresse. Sans cela, avec le
+ * compteur partagé entre instances, tous les voyageurs tombaient dans la même
+ * case (l'adresse de sortie de Vercel) et se partageaient 300 appels/min.
+ */
+async function limitUnsigned(request: NextRequest, key: string | null): Promise<NextResponse | null> {
+  if (key && verifyRouteCacheSignature(key, request.headers.get(ROUTE_CACHE_SIGNATURE_HEADER))) return null;
+  return enforceRateLimit(clientIpFromHeaders(request.headers), RATE_LIMIT);
+}
+
 export async function GET(request: NextRequest) {
-  const limited = await enforceRateLimit(clientIpFromHeaders(request.headers), RATE_LIMIT);
+  const rawKey = request.nextUrl.searchParams.get('key');
+  const limited = await limitUnsigned(request, rawKey);
   if (limited) return limited;
 
-  const parsed = readKey(request.nextUrl.searchParams.get('key'));
+  const parsed = readKey(rawKey);
   if (!parsed) {
     return NextResponse.json(
       { status: 'invalid', reason: 'key_expected' },
@@ -192,30 +210,41 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const limited = await enforceRateLimit(clientIpFromHeaders(request.headers), RATE_LIMIT);
-  if (limited) return limited;
-
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { status: 'invalid', reason: 'body_expected' },
-      { status: 400, headers: { 'Cache-Control': 'no-store' } },
-    );
+    body = undefined;
   }
-
   const { key: rawKey, mode, provider, legs } = (body ?? {}) as {
     key?: unknown;
     mode?: unknown;
     provider?: unknown;
     legs?: unknown;
   };
+  const limited = await limitUnsigned(request, typeof rawKey === 'string' ? rawKey : null);
+  if (limited) return limited;
+  if (body === undefined) {
+    return NextResponse.json(
+      { status: 'invalid', reason: 'body_expected' },
+      { status: 400, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
+
   const parsed = typeof rawKey === 'string' ? readKey(rawKey) : null;
   if (!parsed || parsed.mode !== mode) {
     return NextResponse.json(
       { status: 'invalid', reason: 'key_expected' },
       { status: 400, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
+  // Seul le serveur qui vient de mesurer écrit (audit du 8 octobre : sans cette
+  // signature, n'importe qui déposait une distance inventée, servie ensuite
+  // comme une mesure).
+  if (!verifyRouteCacheSignature(parsed.key, request.headers.get(ROUTE_CACHE_SIGNATURE_HEADER))) {
+    return NextResponse.json(
+      { status: 'forbidden', reason: 'signature_expected' },
+      { status: 403, headers: { 'Cache-Control': 'no-store' } },
     );
   }
   // Le mode de la cle et celui du corps doivent etre le MEME : sinon on

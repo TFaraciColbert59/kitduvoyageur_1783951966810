@@ -244,10 +244,15 @@ function decodeStoredRoute(stored: unknown): RouteAttempt | undefined {
 async function readRouteCacheRemote(
   endpoint: string,
   key: string,
+  signature?: string,
 ): Promise<RouteAttempt | undefined> {
   try {
+    // Signée par le serveur : la route ne la compte pas sur l'adresse de sortie
+    // de Vercel, commune à tous les voyageurs (sinon 300/min pour tout le site).
     const reponse = await fetch(`${endpoint}?key=${encodeURIComponent(key)}`, {
-      headers: { accept: 'application/json' },
+      headers: signature
+        ? { accept: 'application/json', 'x-route-cache-signature': signature }
+        : { accept: 'application/json' },
     });
     if (reponse.status === 404) return undefined;
     if (!reponse.ok) {
@@ -281,11 +286,12 @@ async function writeRouteCacheRemote(
   key: string,
   mode: TravelMode,
   value: RouteAttempt,
+  signature: string,
 ): Promise<void> {
   try {
     await fetch(endpoint, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-route-cache-signature': signature },
       body: JSON.stringify({
         key,
         mode,
@@ -321,12 +327,13 @@ async function writeRouteCacheRemote(
 async function readRouteCache(
   endpoint: string | null,
   key: string,
+  sign?: (key: string) => string,
 ): Promise<RouteAttempt | undefined> {
   const memoire = readCache(key) as RouteAttempt | undefined;
   if (memoire !== undefined) return memoire;
   if (endpoint === null) return undefined;
 
-  const persistee = await readRouteCacheRemote(endpoint, key);
+  const persistee = await readRouteCacheRemote(endpoint, key, sign?.(key) || undefined);
   if (persistee !== undefined) {
     // On la remet en memoire : le prochain appel ne paie meme plus le
     // aller-retour vers la base.
@@ -360,10 +367,16 @@ async function writeRouteCache(
   key: string,
   mode: TravelMode,
   value: RouteAttempt,
+  sign?: (key: string) => string,
 ): Promise<void> {
   writeCache(key, value);
-  if (endpoint === null) return;
-  await writeRouteCacheRemote(endpoint, key, mode, value);
+  // Seul le serveur, qui vient de mesurer, écrit en base : la route refuse une
+  // écriture non signée (audit du 8 octobre : écriture ouverte à tous). Le
+  // navigateur garde sa mesure en mémoire et lit toujours la base.
+  if (endpoint === null || !sign) return;
+  const signature = sign(key);
+  if (!signature) return;
+  await writeRouteCacheRemote(endpoint, key, mode, value, signature);
 }
 
 function readCache(key: string): unknown {
@@ -1055,6 +1068,8 @@ export async function routeAttempt(
   mode: TravelMode,
   signal?: AbortSignal,
   cacheBaseUrl?: string,
+  /** Signature serveur d'une clé de cache (`signRouteCacheKey`) : sans elle, rien n'est écrit en base. */
+  signCacheKey?: (key: string) => string,
 ): Promise<RouteAttempt> {
   // Un mode inconnu et une liste de points inexploitable sont des REFAUX de
   // l appelant, pas une panne du fournisseur : ils se distinguent, parce
@@ -1068,7 +1083,7 @@ export async function routeAttempt(
   // Memoire PUIS base, toutes deux avant le debit et avant le reseau. Une
   // reponse deja connue ne coute rien, quel que soit l endroit ou elle a ete
   // mesuree — et c est ce qui survit au redeploiement.
-  const cached = await readRouteCache(cacheEndpoint(cacheBaseUrl), cacheKey);
+  const cached = await readRouteCache(cacheEndpoint(cacheBaseUrl), cacheKey, signCacheKey);
   if (cached !== undefined) return cached;
   // Apres le cache, avant le reseau : une reponse qu on a deja ne coute rien,
   // et un budget epuise doit s arreter AVANT de partir, pas en revenant.
@@ -1102,7 +1117,7 @@ export async function routeAttempt(
     // echec ne doit pas etre fige : une panne de cinq minutes finirait par etre
     // servie comme une reponse Mesuree pendant toute la duree du TTL.
     if (attempt.legs) {
-      await writeRouteCache(cacheEndpoint(cacheBaseUrl), cacheKey, mode, attempt);
+      await writeRouteCache(cacheEndpoint(cacheBaseUrl), cacheKey, mode, attempt, signCacheKey);
     }
     return attempt;
   } finally {

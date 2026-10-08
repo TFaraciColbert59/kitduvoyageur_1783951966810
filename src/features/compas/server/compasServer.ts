@@ -53,7 +53,8 @@ export async function requireEditor(tripId: string) {
   if (!trip) return { error: 'Voyage introuvable ou non autorisé.' } as const;
   if (trip.user_id !== user.id && canEdit !== true)
     return { error: 'Seuls les organisateurs et éditeurs peuvent modifier le kit.' } as const;
-  return { supabase, userId: user.id, trip } as const;
+  // Essai sans compte (session anonyme) : rien de partagé ni de public.
+  return { supabase, userId: user.id, trip, anonymous: user.is_anonymous === true } as const;
 }
 
 /**

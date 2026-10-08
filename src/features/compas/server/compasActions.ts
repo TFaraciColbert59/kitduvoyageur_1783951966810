@@ -1150,6 +1150,9 @@ const memberSchema = z.object({
   source: z.enum(['direct', 'friend', 'club', 'group', 'message', 'comment']).optional(),
 });
 
+/** Essai sans compte : l'espace reste à soi seul (aucune invitation, aucun lien). */
+const TRIAL_NO_INVITE = 'Inviter demande un compte : l’essai sans compte reste à toi seul.';
+
 /**
  * Invite une personne au voyage. Elle n'y accède qu'après avoir accepté
  * (notification, accepter / refuser sur place). La notification part d'un
@@ -1165,6 +1168,7 @@ export async function compasInviteMemberAction(
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
     if (parsed.data.userId === auth.userId)
       return { success: false, error: 'Tu fais déjà partie du voyage.' };
+    if (auth.anonymous) return { success: false, error: TRIAL_NO_INVITE };
     const limited = await enforceRateLimit(auth.userId, {
       scope: 'compas-invite',
       limit: 20,
@@ -1248,6 +1252,7 @@ export async function compasInviteLinkAction(
   try {
     const auth = await requireEditor(parsed.data.tripId);
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if (auth.anonymous) return { success: false, error: TRIAL_NO_INVITE };
     const { data: open } = await auth.supabase
       .from('trip_invitations')
       .select('token')
