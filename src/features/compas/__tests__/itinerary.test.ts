@@ -5,6 +5,7 @@ import {
   buildAreaQuery,
   dayStartVillage,
   fromPlace,
+  toPlace,
   keepAdminArea,
   keepHighlands,
   keepHomeCountry,
@@ -310,6 +311,13 @@ describe('journée dans un massif : le village de départ', () => {
     expect(fromPlace('Annecy')).toBe('d’Annecy');
     expect(fromPlace('Île-Rousse')).toBe('d’Île-Rousse');
     expect(fromPlace('Chamonix')).toBe('de Chamonix');
+    // Tarn en canoë (8 oct.) : « de Le Truel » → « du Truel ».
+    expect(fromPlace('Le Truel')).toBe('du Truel');
+    expect(fromPlace('Les Vans')).toBe('des Vans');
+    expect(fromPlace('La Roque-Gageac')).toBe('de La Roque-Gageac');
+    expect(toPlace('Le Truel')).toBe('au Truel');
+    expect(toPlace('Les Vans')).toBe('aux Vans');
+    expect(toPlace('Sampzon')).toBe('à Sampzon');
   });
 });
 

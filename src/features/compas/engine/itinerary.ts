@@ -526,7 +526,19 @@ function planMoving(
 
 /** « de Beaufort », « d'Albertville » (élision devant une voyelle). */
 export function fromPlace(name: string): string {
-  return /^[aeiouyàâäéèêëîïôöùûü]/i.test(name.trim()) ? `d’${name}` : `de ${name}`;
+  const n = name.trim();
+  // « Le Truel » → « du Truel », « Les Vans » → « des Vans ».
+  if (/^le\s/i.test(n)) return `du ${n.slice(3)}`;
+  if (/^les\s/i.test(n)) return `des ${n.slice(4)}`;
+  return /^[aeiouyàâäéèêëîïôöùûü]/i.test(n) ? `d’${n}` : `de ${n}`;
+}
+
+/** « à Sampzon », « au Truel », « aux Vans ». */
+export function toPlace(name: string): string {
+  const n = name.trim();
+  if (/^le\s/i.test(n)) return `au ${n.slice(3)}`;
+  if (/^les\s/i.test(n)) return `aux ${n.slice(4)}`;
+  return `à ${n}`;
 }
 
 /**

@@ -73,12 +73,14 @@ import { trainTrip, type TrainTrip } from '../engine/rail';
 import { trailRegion } from '../engine/intent';
 import {
   dayStartVillage,
+  fromPlace,
   isGenericName,
   isMountainActivity,
   keepAdminArea,
   keepHighlands,
   keepHomeCountry,
   planItinerary,
+  toPlace,
   planningZoneKm,
   profileFor,
   shapeFor,
@@ -382,7 +384,7 @@ async function plannedStages(opts: {
       const end = river.stages[river.stages.length - 1];
       return {
         stages: river.stages.map((st) => ({ ...st, move: st.move as StageMove })),
-        note: `Descente de rivière (${anchor.name}) : ${String(river.sectionKm).replace('.', ',')} km d’eau en ${days} jours, de ${river.start.name} à ${end.name}, un soir au bord de l’eau.`,
+        note: `Descente de rivière (${anchor.name}) : ${String(river.sectionKm).replace('.', ',')} km d’eau en ${days} jours, ${fromPlace(river.start.name)} ${toPlace(end.name)}, un soir au bord de l’eau.`,
       };
     }
     // Tracé ou rives introuvables : séjour sur l'eau depuis une base, comme avant,
