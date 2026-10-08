@@ -72,7 +72,8 @@ function readKey(raw: string | null): { key: string; mode: string } | null {
   return { key: raw, mode };
 }
 
-const PROVIDERS = new Set(['osrm', 'valhalla', 'brouter']);
+/** Les routeurs actuels ; `osrm` et `brouter` ne sont plus interroges, donc plus ecrits. */
+const PROVIDERS = new Set(['geoapify', 'valhalla']);
 
 /** Points au plus par tronçon écrit (un tronçon d'une journée en compte quelques milliers). */
 const MAX_LEG_POINTS = 5_000;
@@ -263,7 +264,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Un point de trop donne un troncon de trop : c est la meme coherence que
-  // `normalizeOsrmRouteDetailed` exige d OSRM, on la rejoue a l ecriture.
+  // les lecteurs de `routingService` exigent des routeurs, rejouee a l ecriture.
   const expected = parsed.key.split(':')[2].split(';').length - 1;
   if (!Array.isArray(legs) || legs.length !== expected || !legs.every((l) => isMeasuredLeg(l))) {
     return NextResponse.json(

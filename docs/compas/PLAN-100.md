@@ -63,8 +63,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [~] **Budget de place** écrit et suivi : cible ≤ 400 Mo en régime (marge de 100 Mo).
       Suivi dans `ops_daily_reports` (8 oct. : 371 Mo, dont `places_geo` 232 Mo).
 - [~] **Plafonds des caches** : `cap_shared_caches` (1 000 trajets, 25 000 lieux), purges
-      `purge_geo_cache` / `purge_route_cache` (119 trajets tous expirés, jamais purgés) et
-      des journaux, planifiées en base (`pg_cron`, `docs/compas/SAUVEGARDES.md`).
+      `purge_geo_cache` / `purge_route_cache` (119 trajets tous expirés, jamais purgés),
+      des journaux et des kits à la corbeille (`purge_expired_trash_kits`, sans session,
+      car `cleanup_expired_trash_kits` en exige une), planifiées en base (`pg_cron`,
+      `docs/compas/SAUVEGARDES.md`).
       🔒 Suppressions : `20261008190000_base_scheduled_purges.sql` à lancer par Tony dans
       le SQL Editor. Preuve : taille stable sur 7 jours.
 - [x] **Tracé dans `trips.metadata`** : 600 points au plus pour tout le voyage
@@ -73,15 +75,17 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [ ] **Retrait de `places_geo`** (232 Mo) une fois les pages Pays branchées sur
       `geo_places` (3.8). Preuve : base ≤ 250 Mo avant import des lots 3.3 à 3.7.
 - [~] **Sauvegardes gratuites** : `.github/workflows/db-backup.yml`, chaque nuit,
-      `pg_dump` (`public` + `auth`, hors caches et référentiels réimportables), chiffré
+      `pg_dump` (`public` + `auth` + `marketplace_private`, hors caches et référentiels
+      réimportables), chiffré
       AES-256, artefact 7 jours ; restauration écrite (`docs/compas/SAUVEGARDES.md`).
       🔒 Tony : secrets GitHub `SUPABASE_DB_URL` et `BACKUP_PASSPHRASE`. Preuve : un
       artefact, une restauration réussie sur une base de test.
 - [~] **Rapport quotidien** en base : `ops_daily_report()` chaque nuit à 4 h 07 UTC
       (`pg_cron`), table `ops_daily_reports` (taille, caches, compteurs, essais,
-      préparations réussies / échouées de la veille) ; premier rapport : 7 oct., 128
-      réussies, 4 échouées. Reste : alerte si un seuil est franchi (base > 430 Mo,
-      échecs > 10 %).
+      préparations réussies / échouées de la veille). Depuis le 8 oct., les préparations
+      se comptent sur un journal (`ops_preparation_events`, une ligne par issue, écrite
+      par le serveur) : l'ancien compte (dernière issue de chaque voyage) ignorait les
+      relances. Reste : alerte si un seuil est franchi (base > 430 Mo, échecs > 10 %).
 - [ ] **Pause pour inactivité** (7 jours sans requête) : le trafic et les tâches de nuit
       gardent le projet actif. Preuve : aucune pause en 14 jours.
 - [ ] Aucune des 15 routes `/api/cron/*` du site n'est planifiée (ni `vercel.json`, ni
@@ -150,18 +154,24 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 1.5 Calcul d'itinéraire (routage)
 
-- [ ] **Retrait du serveur de démonstration OSRM** (« non-commercial use-cases »,
-      vérifié), de `routing.openstreetmap.de` et de `brouter.de` (conditions introuvables).
+- [x] **Retrait du serveur de démonstration OSRM** (« non-commercial use-cases »,
+      vérifié), de `routing.openstreetmap.de` et de `brouter.de` (conditions introuvables) :
+      plus aucun appel (lot D, `routingService.ts`). Leurs mesures déjà en cache gardent
+      leur nom ; la route du cache n'accepte plus de nouvelle écriture à leur nom.
 - [x] Conditions vérifiées (8 oct.) : aucune offre de routage gratuite n'accorde par
       écrit l'usage commercial ; Geoapify (« not restricted ») et Valhalla FOSSGIS
       (« open to the public », identification demandée) sont les seules utilisables ;
       OpenRouteService flou (à demander : enquiry@openrouteservice.org).
-- [ ] Ordre : cache partagé (`geo_cache` leg, 90 j) → **Geoapify Routing** (crédits du
-      jour) → **Valhalla FOSSGIS** avec `X-Client-Id` (annonce faite sur GitHub
-      Discussions) → **estimation annoncée** (distance à vol d'oiseau × coefficient du
-      terrain, marquée « estimation »). Preuve : aucune étape sans distance, chaque
-      distance dit sa source.
-- [ ] User-Agent sur tous les appels de routage.
+- [~] Ordre : cache (mémoire, `route_cache`, et `geo_cache` « leg v3 » 30 j) →
+      **Geoapify Routing** (`hike` / `bicycle` / `drive`, plafond du site 1 500 trajets
+      par jour sur les 3 000 crédits partagés) → **Valhalla FOSSGIS** sur panne, avec
+      `X-Client-Id: koosmoweb.fr` → **estimation annoncée** (vol d'oiseau × 1,4 à pied,
+      × 1,3 à vélo ou sur route, « ≈ … km (estimée) » à l'écran, phrase dans l'étape et
+      note de préparation). Chaque étape garde sa source (`trip_steps.metadata.distance`).
+      Le dénivelé d'une journée à pied ou à vélo, que seul BRouter donnait, se lit sur le
+      relief (Terrain Tiles) le long du tracé. Reste : l'annonce sur GitHub Discussions
+      de Valhalla (compte de Tony) ; preuve en ligne ci-dessous.
+- [x] User-Agent sur tous les appels de routage (Geoapify et Valhalla).
 
 ### 1.6 Fond de carte
 

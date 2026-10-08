@@ -32,6 +32,15 @@ const DATA_SOURCES: Array<{ label: string; parts: Array<string | { text: string;
     ],
   },
   {
+    label: 'Calcul d’itinéraires',
+    parts: [
+      { text: 'Powered by Geoapify', href: 'https://www.geoapify.com/' },
+      ' ; en secours, Valhalla (',
+      { text: 'FOSSGIS e.V.', href: 'https://www.fossgis.de/' },
+      ') ; données © contributeurs OpenStreetMap ; altitudes Terrain Tiles (AWS Open Data).',
+    ],
+  },
+  {
     label: 'Météo',
     parts: [
       'Prévisions ',

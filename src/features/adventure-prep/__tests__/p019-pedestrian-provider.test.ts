@@ -1,35 +1,38 @@
 /**
- * P1.9 - un fournisseur PIETON doit repondre, sinon aucune distance de marche
- * n'est affichable a l'ecran (c'est ce qui bloquait P0.23).
+ * P1.9, revu au plan 1.5 (8 octobre) - un fournisseur PIETON doit repondre,
+ * sinon aucune distance de marche n'est affichable a l'ecran.
  *
- * Mesure a la source, le 2026-09-28, depuis cette machine :
- *   - routing.openstreetmap.de/routed-foot : **HTTP 200, 132 ms**
+ * Les fournisseurs ont change : le serveur de demonstration d'OSRM et
+ * `routing.openstreetmap.de` (non autorises pour un usage commercial, ou sans
+ * conditions publiees) ont laisse la place a Geoapify Routing (cle, offre
+ * gratuite, usage commercial permis) puis a Valhalla FOSSGIS en repli,
+ * identifie par `X-Client-Id`.
  *
- * NOTE CORRECTE LE 2026-09-28 : les deux Valhalla repondent de nouveau en
- * `200` (252 ms). Ils etaient bien morts quand cette mesure a ete prise. Ils
- * ne suffisent pas pour autant - voir P1.10, ou le refuge des Grands Mulets
- * reste a 2 875 m de leur trace, contre 18 m pour un moteur de randonnee.
+ * Ce qui ne change pas, et que ces tests verrouillent :
+ *   - repondre n'est pas assez : un sommet n'est PAS joignable, et le
+ *     fournisseur le dit en renvoyant une trace qui s'arrete des kilometres
+ *     plus loin. Le garde-fou d'arrivee (ARRIVAL_TOLERANCE_M) s'applique a
+ *     Geoapify comme a Valhalla. Sans lui, le Mont Blanc repondrait 115 km /
+ *     26 h de marche - le mensonge exact que P0.23 combat ;
+ *   - un refus mesure (`off_network`) ne se confond jamais avec une panne
+ *     (`provider_unavailable`), et seule la panne fait consulter le repli ;
+ *   - le mode ne se negocie jamais : `pieton` part en `hike`, jamais en `drive`.
  *
- * Le nouveau fournisseur est un OSRM de PROFIL, par FOSSGIS e.V. - le meme
- * exploitant que le serveur de demonstration OSRM deja utilise pour la voiture.
- * Meme reponse, meme geometrie geojson, donc meme lecture.
- *
- * Le point qui decide de ce lot : repondre n'est pas assez. Sur un vrai reseau
- * pieton, un sommet n'est PAS joignable, et le fournisseur le dit en renvoyant
- * une trace qui s'arrete des kilometres plus loin. Le garde-fou d'arrivee
- * (ARRIVAL_TOLERANCE_M) doit donc s'appliquer a OSRM comme a Valhalla. Sans
- * cela, Mont Blanc repond Ok avec 115 km / 26 h de marche affiches - le
- * mensonge exact que P0.23 combat, et plus mefiant que le 503 muet d'avant,
- * parce qu'il aurait eu l'air d'une reponse.
- *
- * Les reponses sont de vrais objets Response, servis sur les vraies URL du
- * service : c'est le seul moyen de capturer une distinction que le code tient
- * a faire - un corps lu sur une erreur 400 (NoRoute), ce qu'un mock sans
- * .text() ne peut pas rendre.
+ * Les reponses ont la forme REELLE de Geoapify (GeoJSON, une ligne par
+ * troncon, metres et secondes) ; les chiffres de distance et de duree sont
+ * ceux mesures le 2026-09-28 sur les memes points (Chamonix -> Les Houches).
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ARRIVAL_TOLERANCE_M, __resetRouteCache, routeAttempt } from '../routingService';
+import {
+  ARRIVAL_TOLERANCE_M,
+  __resetRouteCache,
+  __resetRouteLimiter,
+  __setGeoapifyBudgetForTests,
+  geoapifyRouteCredits,
+  routeAttempt,
+} from '../routingService';
 import type { RoutePoint } from '../routingService';
+import { geoapifyMode, isGeoapify, isValhalla, valhallaCosting, valhallaReply } from './fakeRouters';
 
 const CHAMONIX: RoutePoint = { lat: 45.9237, lon: 6.8693 };
 const LES_HOUCHES: RoutePoint = { lat: 45.8917, lon: 6.7983 };
@@ -42,11 +45,11 @@ function vitesseKmh(distanceKm: number, durationMin: number): number {
 
 /**
  * Les trois modes, mesures le 2026-09-28 sur les memes points
- * (Chamonix -> Les Houches), tous en HTTP 200 du service :
+ * (Chamonix -> Les Houches) :
  *
- *     pieton   7,385 km / 98,5 min = 4,50 km/h   ecarter d arrivee 7 m
- *     velo     7,139 km / 29,8 min = 14,37 km/h  ecarter d arrivee 7 m
- *     voiture  8,030 km /  9,1 min = 52,95 km/h  ecarter d arrivee 7 m
+ *     pieton   7,385 km / 98,5 min = 4,50 km/h
+ *     velo     7,139 km / 29,8 min = 14,37 km/h
+ *     voiture  8,030 km /  9,1 min = 52,95 km/h
  */
 const MESURE = {
   pieton: { distanceM: 7385.0, durationS: 5910.0, kmh: 4.5 },
@@ -54,118 +57,72 @@ const MESURE = {
   voiture: { distanceM: 8030.0, durationS: 546.0, kmh: 52.95 },
 } as const;
 
-/**
- * Une reponse OSRM de profil, copie sur une reponse reelle du 2026-09-28.
- *
- * Les Houches a pied depuis Chamonix : 7 385 m / 98,5 min, arrivee a 7 m du
- * but. Le trace est echantillonne a trois points : le garde-fou d'arrivee ne
- * regarde que les extremites, et un trace reel en compte des centaines.
- */
-function marcheReelle(distanceM = 7385.4, durationS = 5912.0): Response {
+type LonLat = [number, number];
+
+/** Une reponse Geoapify d'un troncon (forme reelle : FeatureCollection, MultiLineString). */
+function geoapify(distanceM: number, durationS: number, line: LonLat[], status = 200): Response {
   return new Response(
     JSON.stringify({
-      code: 'Ok',
-      routes: [
+      type: 'FeatureCollection',
+      features: [
         {
-          legs: [{ distance: distanceM, duration: durationS, steps: [], weight: 390.82, summary: '' }],
-          weight_name: 'routability',
-          geometry: {
-            type: 'LineString',
-            coordinates: [
-              [6.8693, 45.9237],
-              [6.8331, 45.9044],
-              [6.7983, 45.8917],
-            ],
+          type: 'Feature',
+          properties: {
+            distance: distanceM,
+            time: durationS,
+            legs: [{ distance: distanceM, time: durationS, steps: [] }],
           },
+          geometry: { type: 'MultiLineString', coordinates: [line] },
         },
       ],
     }),
-    { status: 200, headers: { 'content-type': 'application/json' } },
+    { status, headers: { 'content-type': 'application/json' } },
   );
 }
 
+/** Les Houches a pied depuis Chamonix : trois points, l'arrivee a quelques metres du but. */
+function marcheReelle(distanceM = 7385.4, durationS = 5912.0): Response {
+  return geoapify(distanceM, durationS, [
+    [6.8693, 45.9237],
+    [6.8331, 45.9044],
+    [6.7983, 45.8917],
+  ]);
+}
+
 /**
- * Un sommet, sur le meme fournisseur - reelle reponse du 2026-09-28.
- *
- * La fin REELLE du trace, relevee le 2026-09-28 : [6.914489, 45.80269],
- * soit 5 065 m du sommet. Le debut reel, lui, est a 12 m de Chamonix :
- * c'est donc bien le depart qui est fidele, et l'arrivee qui ne l'est pas.
- * Le trace s'arrete a 5 065 m du but : c'est le Mont Blanc, que le reseau
- * pieton ne dessert pas. Le fournisseur ne dit pas NON - il repond OUI a une
- * autre question. C'est exactement le piege que le garde-fou ferme.
+ * Un sommet : le trace s'arrete a 5 065 m du Mont Blanc (fin relevee le
+ * 2026-09-28 : [6.914489, 45.80269]). Le fournisseur ne dit pas NON - il
+ * repond OUI a une autre question. C'est le piege que le garde-fou ferme.
  */
 function sommet(): Response {
-  return new Response(
-    JSON.stringify({
-      code: 'Ok',
-      routes: [
-        {
-          legs: [{ distance: 115429, duration: 95274.0, steps: [], weight: 6200.1, summary: '' }],
-          weight_name: 'routability',
-          geometry: {
-            type: 'LineString',
-            coordinates: [
-              [6.869204, 45.923615],
-              [6.914489, 45.80269],
-            ],
-          },
-        },
-      ],
-    }),
-    { status: 200, headers: { 'content-type': 'application/json' } },
-  );
+  return geoapify(115429, 95274.0, [
+    [6.869204, 45.923615],
+    [6.914489, 45.80269],
+  ]);
 }
 
 /** Un point a 330 m du but : DANS la tolerance de 500 m. */
 function quasiArrivee(): Response {
-  return new Response(
-    JSON.stringify({
-      code: 'Ok',
-      routes: [
-        {
-          legs: [{ distance: 7385.4, duration: 5912.0, steps: [], weight: 390.82, summary: '' }],
-          geometry: {
-            type: 'LineString',
-            coordinates: [
-              [6.8693, 45.9237],
-              [6.7983, 45.8947],
-            ],
-          },
-        },
-      ],
-    }),
-    { status: 200, headers: { 'content-type': 'application/json' } },
-  );
+  return geoapify(7385.4, 5912.0, [
+    [6.8693, 45.9237],
+    [6.7983, 45.8947],
+  ]);
 }
 
-/** Reelle : deux points du Pacifique. Le service va bien, il dit non. */
-function noRoute(): Response {
-  return new Response(JSON.stringify({ code: 'NoRoute' }), {
+/** Hors reseau : 0 m / 0 s. */
+function zero(): Response {
+  return geoapify(0, 0, [
+    [6.8693, 45.9237],
+    [6.8693, 45.9237],
+  ]);
+}
+
+/** Une erreur Geoapify (requete refusee) : un corps JSON, mais pas une mesure. */
+function erreurGeoapify(): Response {
+  return new Response(JSON.stringify({ statusCode: 400, error: 'Bad Request', message: 'Route not found' }), {
     status: 400,
     headers: { 'content-type': 'application/json' },
   });
-}
-
-/** Reelle : hors reseau, le fournisseur repond Ok avec 0 m / 0 s. */
-function zero(): Response {
-  return new Response(
-    JSON.stringify({
-      code: 'Ok',
-      routes: [
-        {
-          legs: [{ distance: 0, duration: 0, steps: [], weight: 0, summary: '' }],
-          geometry: {
-            type: 'LineString',
-            coordinates: [
-              [6.8693, 45.9237],
-              [6.8693, 45.9237],
-            ],
-          },
-        },
-      ],
-    }),
-    { status: 200, headers: { 'content-type': 'application/json' } },
-  );
 }
 
 /** Une panne du fournisseur : une page d'HTML, pas une reponse JSON. */
@@ -173,14 +130,30 @@ function panne(): Response {
   return new Response('<html>502 Bad Gateway</html>', { status: 502 });
 }
 
-/** Un mock qui repond selon l'URL, et note tous les appels. */
+/** Valhalla qui repond sur les points demandes (repli). */
+function valhalla(url: string, stopShortDeg = 0): Response {
+  return new Response(JSON.stringify(valhallaReply(url, { meters: 7612, speedKmh: 4.9, stopShortDeg })), {
+    status: 200,
+    headers: { 'content-type': 'application/json' },
+  });
+}
+
+/** Un mock qui repond selon l'URL, et note tous les appels (en-tetes compris). */
 function fetchQuiRepond(cette: (url: string) => Response) {
-  return vi.fn(async (url: string) => cette(String(url)));
+  return vi.fn(async (url: string, _init?: RequestInit) => cette(String(url)));
+}
+
+function urlsDe(mock: ReturnType<typeof fetchQuiRepond>): string[] {
+  return mock.mock.calls.map((c) => String(c[0]));
 }
 
 beforeEach(() => {
   __resetRouteCache();
+  __resetRouteLimiter();
+  __setGeoapifyBudgetForTests(async () => ({ allowed: true }));
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
+  vi.stubEnv('GEOAPIFY_API_KEY', 'cle-de-test');
 });
 
 describe('P1.9 - le fournisseur pieton repond', () => {
@@ -190,45 +163,38 @@ describe('P1.9 - le fournisseur pieton repond', () => {
     const attempt = await routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton');
 
     expect(attempt.reason).toBeNull();
+    expect(attempt.provider).toBe('geoapify');
     expect(attempt.legs).toHaveLength(1);
     // La distance vient du fournisseur, on ne la recalcule pas.
     expect(attempt.legs?.[0].distanceKm).toBeCloseTo(7.3854, 4);
     expect(attempt.legs?.[0].durationMin).toBeCloseTo(98.53, 2);
   });
 
-  it('P019-02 : la marche passe par le profil PIETON, et Valhalla n est pas appele', async () => {
+  it('P019-02 : la marche part en mode RANDONNEE, et Valhalla n est pas appele', async () => {
     const mock = fetchQuiRepond(() => marcheReelle());
     vi.stubGlobal('fetch', mock);
 
     await routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton');
 
-    const urls = mock.mock.calls.map((c) => String(c[0]));
-    expect(urls.some((u) => u.includes('routed-foot'))).toBe(true);
-    // OSRM repond : rien ne justifie un second fournisseur. Un appel a
-    // Valhalla prouverait que le repli se declenche sur une reponse reussie.
-    expect(urls.some((u) => u.includes('valhalla'))).toBe(false);
+    const urls = urlsDe(mock);
+    expect(urls).toHaveLength(1);
+    expect(isGeoapify(urls[0])).toBe(true);
+    expect(geoapifyMode(urls[0])).toBe('hike');
+    // Geoapify repond : rien ne justifie un second fournisseur.
+    expect(urls.some(isValhalla)).toBe(false);
   });
 
-  it('P019-03 : un sommet reste refuse PAR LA MESURE quand personne n y arrive', async () => {
-    // Le mot « sommet » ne doit plus faire partie du nom du test. Ce qui est
-    // refuse ici, c est une REPONSE QUI N ARRIVE PAS a 5 km du but — pas le
-    // Mont Blanc en tant que lieu.
-    //
-    // Et il faut le dire, parce que le produit a change : sur ce meme sommet,
-    // le moteur de randonnee de P1.10 aboutit reellement (27 788 m / D+ 3 896 m,
-    // mesures le 2026-09-28). L ecran affiche donc desormais une marche
-    // credible vers le Mont Blanc, la ou il affichait 115 km / 26 h. Le
-    // garde-fou ne s est pas assoupli : c est le juge qui a change de
-    // competence. Ici, les deux fournisseurs echouent, donc la mesure tient.
+  it('P019-03 : une trace qui n arrive pas a 5 km du but est refusee PAR LA MESURE', async () => {
     vi.stubGlobal('fetch', fetchQuiRepond(() => sommet()));
 
     const attempt = await routeAttempt([CHAMONIX, MONT_BLANC], 'pieton');
 
     expect(attempt.legs).toBeNull();
     expect(attempt.reason).toBe('off_network');
+    expect(attempt.provider).toBeUndefined();
   });
 
-  it('P019-04 : une arrivee a 330 m passe - le garde-fou n est pas un coupe-gout', async () => {
+  it('P019-04 : une arrivee a 330 m passe - le garde-fou n est pas un coupe-gorge', async () => {
     vi.stubGlobal('fetch', fetchQuiRepond(quasiArrivee));
 
     const attempt = await routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton');
@@ -238,47 +204,34 @@ describe('P1.9 - le fournisseur pieton repond', () => {
     expect(ARRIVAL_TOLERANCE_M).toBe(500);
   });
 
-  it('P019-05 : un NoRoute est un FAIT MESURE, pas une panne du fournisseur', async () => {
-    vi.stubGlobal('fetch', fetchQuiRepond(noRoute));
+  it('P019-05 : une erreur Geoapify n est pas une mesure - Valhalla tranche', async () => {
+    // Un corps d'erreur ne dit rien de fiable sur le lieu : c'est le repli qui
+    // mesure, et SON verdict hors reseau est garde tel quel.
+    const mock = fetchQuiRepond((url) => (isGeoapify(url) ? erreurGeoapify() : valhalla(url, 0.05)));
+    vi.stubGlobal('fetch', mock);
 
     const attempt = await routeAttempt([CHAMONIX, MONT_BLANC], 'pieton');
 
     expect(attempt.legs).toBeNull();
     expect(attempt.reason).toBe('off_network');
+    expect(urlsDe(mock).some(isValhalla)).toBe(true);
   });
 
-  it('P019-06 : un NoRoute ne declenche PAS de seconde opinion sur le MEME reseau', async () => {
-    // Ce test a change de politique, et il faut assumer pourquoi.
-    //
-    // Avant : un seul fournisseur decideait, meme sur `off_network`. La regle
-    // etait saine — demander une seconde opinion sur le meme graphe ne prouve
-    // rien, et afficherait un trajet que le premier reseau nie.
-    //
-    // Elle devient FAUX des que les fournisseurs n ont plus le meme reseau.
-    // `off_network` prouve que LE GRAPHE de celui qui repond ne dessert pas le
-    // lieu, pas que le lieu est injoignable. On demande donc le juge
-    // COMPETENT — un moteur de randonnee, P1.10 — et on s arrete la. Ni
-    // Valhalla, ni un troisieme : deux fournisseurs suffisent, et c est borne.
-    const mock = fetchQuiRepond(noRoute);
+  it('P019-06 : un hors-reseau mesure ne declenche PAS de seconde opinion sur les memes donnees', async () => {
+    // Geoapify et Valhalla lisent tous deux OpenStreetMap : demander a l'un
+    // ce que l'autre vient de mesurer afficherait un trajet que le premier nie.
+    const mock = fetchQuiRepond(() => sommet());
     vi.stubGlobal('fetch', mock);
 
     const attempt = await routeAttempt([CHAMONIX, MONT_BLANC], 'pieton');
 
-    // Le refus reste une MESURE, jamais une panne.
     expect(attempt.reason).toBe('off_network');
-    const urls = mock.mock.calls.map((c) => String(c[0]));
-    // Le profil pieton d abord...
-    expect(urls[0]).toContain('routed-foot');
-    // ...puis le moteur de randonnee, et rien d autre.
-    expect(urls).toHaveLength(2);
-    expect(urls[1]).toContain('brouter.de');
-    // Valhalla n est pas un juge de randonnee : le consulter n ajouterait rien.
-    expect(urls.some((u) => u.includes('valhalla'))).toBe(false);
+    const urls = urlsDe(mock);
+    expect(urls).toHaveLength(1);
+    expect(isGeoapify(urls[0])).toBe(true);
   });
 
-  it('P019-07 : une panne declenche le repli, et se distingue d un refus', async () => {
-    // FOSSGIS tombe, Valhalla ne repond pas non plus : c est une panne, et
-    // elle ne doit surtout pas se lire comme un lieu inatteignable.
+  it('P019-07 : une panne declenche le repli identifie, et se distingue d un refus', async () => {
     const mock = fetchQuiRepond(panne);
     vi.stubGlobal('fetch', mock);
 
@@ -286,11 +239,17 @@ describe('P1.9 - le fournisseur pieton repond', () => {
 
     expect(attempt.legs).toBeNull();
     expect(attempt.reason).toBe('provider_unavailable');
-    const urls = mock.mock.calls.map((c) => String(c[0]));
-    expect(urls.some((u) => u.includes('valhalla'))).toBe(true);
+    const repli = mock.mock.calls.find((c) => isValhalla(String(c[0])));
+    expect(repli).toBeDefined();
+    // FOSSGIS demande que l'application s'identifie.
+    const entetes = new Headers(repli?.[1]?.headers);
+    expect(entetes.get('x-client-id')).toBe('koosmoweb.fr');
+    expect(entetes.get('user-agent')).toContain('koosmoweb.fr');
+    // La cle Geoapify ne part jamais chez un autre fournisseur.
+    expect(String(repli?.[0])).not.toContain('cle-de-test');
   });
 
-  it('P019-08 : une reponse Ok a zero kilometre ne vaut pas zero', async () => {
+  it('P019-08 : une reponse a zero kilometre ne vaut pas zero', async () => {
     // Un zero affiche dirait « vous etes deja arrive » - le mensonge le plus
     // discret du lot, parce qu il a l air d une bonne nouvelle.
     vi.stubGlobal('fetch', fetchQuiRepond(zero));
@@ -301,41 +260,40 @@ describe('P1.9 - le fournisseur pieton repond', () => {
     expect(attempt.reason).toBe('off_network');
   });
 
-  it('P019-09 : le velo a son PROPRE profil, et refuse un sommet lui aussi', async () => {
-    const mock = fetchQuiRepond((url) =>
-      url.includes('MONT') ? sommet() : marcheReelle(7139.0, 1788.0),
-    );
+  it('P019-09 : le velo a son PROPRE profil, chez Geoapify comme chez Valhalla', async () => {
+    const mock = fetchQuiRepond(() => marcheReelle(7139.0, 1788.0));
     vi.stubGlobal('fetch', mock);
 
     const velo = await routeAttempt([CHAMONIX, LES_HOUCHES], 'velo');
     expect(velo.reason).toBeNull();
     expect(velo.legs?.[0].distanceKm).toBeCloseTo(7.139, 3);
+    expect(geoapifyMode(urlsDe(mock)[0])).toBe('bicycle');
 
-    const urls = mock.mock.calls.map((c) => String(c[0]));
-    expect(urls.some((u) => u.includes('routed-bike'))).toBe(true);
+    __resetRouteCache();
+    const enPanne = fetchQuiRepond((url) => (isGeoapify(url) ? panne() : valhalla(url)));
+    vi.stubGlobal('fetch', enPanne);
+    await routeAttempt([CHAMONIX, LES_HOUCHES], 'velo');
+    const repli = urlsDe(enPanne).find(isValhalla);
+    expect(repli && valhallaCosting(repli)).toBe('bicycle');
   });
 
-  it('P019-10 : la voiture continue de passer par son OSRM routier', async () => {
+  it('P019-10 : la voiture passe par la route, jamais par un sentier', async () => {
     const mock = fetchQuiRepond(() => marcheReelle(MESURE.voiture.distanceM, MESURE.voiture.durationS));
     vi.stubGlobal('fetch', mock);
 
     const voiture = await routeAttempt([CHAMONIX, LES_HOUCHES], 'voiture');
     expect(voiture.legs?.[0].distanceKm).toBeCloseTo(8.03, 3);
 
-    const urls = mock.mock.calls.map((c) => String(c[0]));
-    expect(urls.some((u) => u.includes('router.project-osrm.org'))).toBe(true);
-    expect(urls.some((u) => u.includes('routed-foot'))).toBe(false);
+    const urls = urlsDe(mock);
+    expect(geoapifyMode(urls[0])).toBe('drive');
+    expect(urls.some((u) => geoapifyMode(u) === 'hike')).toBe(false);
   });
 
   it('P019-11 : chaque mode donne sa VITESSE, pas celle d un autre', async () => {
     // L invariant qui compte n est pas « la marche est plus longue que la
-    // voiture » : c est FAUX sur ces points, la marche y est plus courte
-    // (7,4 km de sentier contre 8,0 km de route). L invariant est la vitesse :
-    // un pieton qui avance a 53 km/h, c est une voiture deguisee.
-    //
-    // Les trois valeurs sont MESUREES sur le service, le 2026-09-28. C est
-    // cet ecart d ordre de grandeur qui prouve que le mode change bien de
-    // reseau, et non pas un rapport de distance qui depends du sentier.
+    // voiture » : c est FAUX sur ces points (7,4 km de sentier contre 8,0 km
+    // de route). L invariant est la vitesse : un pieton qui avance a 53 km/h,
+    // c est une voiture deguisee.
     const mesure = async (mode: 'pieton' | 'velo' | 'voiture') => {
       __resetRouteCache();
       const m = MESURE[mode];
@@ -354,12 +312,8 @@ describe('P1.9 - le fournisseur pieton repond', () => {
     expect(pieton).toBeCloseTo(MESURE.pieton.kmh, 1);
     expect(velo).toBeCloseTo(MESURE.velo.kmh, 1);
     expect(voiture).toBeCloseTo(MESURE.voiture.kmh, 1);
-    // Un pieton sous 25 km/h et au-dessus de 2 : hors de cette plage, ce n
-    // est plus une marche.
     expect(pieton).toBeGreaterThan(2);
     expect(pieton).toBeLessThan(25);
-    // L ordre est sans discussion : on ne pedals pas moins qu on ne marche,
-    // et on ne conduit pas a la vitesse d un pedeston.
     expect(velo).toBeGreaterThan(pieton);
     expect(voiture).toBeGreaterThan(velo);
   });
@@ -395,5 +349,60 @@ describe('P1.9 - le fournisseur pieton repond', () => {
     await routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton');
 
     expect(mock.mock.calls.length).toBeGreaterThan(premier);
+  });
+
+  it('P019-15 : sans cle Geoapify, Valhalla repond seul, et le dit', async () => {
+    vi.stubEnv('GEOAPIFY_API_KEY', '');
+    const mock = fetchQuiRepond((url) => valhalla(url));
+    vi.stubGlobal('fetch', mock);
+
+    const attempt = await routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton');
+
+    expect(attempt.reason).toBeNull();
+    expect(attempt.provider).toBe('valhalla');
+    const urls = urlsDe(mock);
+    expect(urls).toHaveLength(1);
+    expect(isValhalla(urls[0])).toBe(true);
+    expect(valhallaCosting(urls[0])).toBe('pedestrian');
+  });
+
+  it('P019-16 : credits du jour epuises, Geoapify n est plus appele', async () => {
+    // L'offre gratuite est partagee avec les lieux et le geocodage : le routage
+    // s'arrete a son budget du jour, et Valhalla prend le relais.
+    __setGeoapifyBudgetForTests(async () => ({ allowed: false }));
+    const mock = fetchQuiRepond((url) => (isGeoapify(url) ? marcheReelle() : valhalla(url)));
+    vi.stubGlobal('fetch', mock);
+
+    const attempt = await routeAttempt([CHAMONIX, LES_HOUCHES], 'pieton');
+
+    expect(attempt.provider).toBe('valhalla');
+    expect(urlsDe(mock).some(isGeoapify)).toBe(false);
+  });
+
+  it('P019-17 : un long trajet coute plusieurs credits, et le compteur les compte tous', async () => {
+    // Tarif Geoapify : un credit par tranche de 500 km commencee (630 km : deux).
+    const PARIS: RoutePoint = { lat: 48.8566, lon: 2.3522 };
+    const NICE: RoutePoint = { lat: 43.7102, lon: 7.262 };
+    expect(geoapifyRouteCredits([CHAMONIX, LES_HOUCHES])).toBe(1);
+    // 686 km a vol d'oiseau, ~890 km de route : deux credits.
+    expect(geoapifyRouteCredits([PARIS, NICE])).toBe(2);
+
+    let pris = 0;
+    __setGeoapifyBudgetForTests(async () => {
+      pris += 1;
+      return { allowed: true };
+    });
+    vi.stubGlobal('fetch', fetchQuiRepond((url) => (isGeoapify(url) ? panne() : valhalla(url))));
+    await routeAttempt([PARIS, NICE], 'voiture');
+    expect(pris).toBe(2);
+
+    // Le deuxieme credit refuse : Geoapify n'est pas appele du tout.
+    __resetRouteCache();
+    let restant = 1;
+    __setGeoapifyBudgetForTests(async () => ({ allowed: restant-- > 0 }));
+    const mock = fetchQuiRepond((url) => valhalla(url));
+    vi.stubGlobal('fetch', mock);
+    await routeAttempt([PARIS, NICE], 'voiture');
+    expect(urlsDe(mock).some(isGeoapify)).toBe(false);
   });
 });

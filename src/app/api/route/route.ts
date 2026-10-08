@@ -1,9 +1,9 @@
 // Frontiere reseud du routage du preparateur.
 //
-// Meme contrat que /api/geocode : le navigateur ne parle jamais directement a
-// OSRM ni a Open-Meteo. Cette route est le seul point de controle (allowlist,
-// rate limit, forme de reponse). Aucun secret : les deux fournisseurs sont
-// libres et sans cle.
+// Meme contrat que /api/geocode : le navigateur ne parle jamais directement aux
+// routeurs. Cette route est le seul point de controle (allowlist, rate limit,
+// forme de reponse). La cle Geoapify reste cote serveur ; son budget du jour
+// est partage par le site (`GEOAPIFY_ROUTING_DAILY_BUDGET`).
 import { NextRequest, NextResponse } from 'next/server';
 import {
   isTravelMode,

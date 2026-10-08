@@ -66,7 +66,7 @@ function MobilePCContent() {
           Vos données peuvent être transmises à Supabase (hébergement DB, Europe), Stripe (paiement),
           Vercel (hébergement web), Google Analytics (avec consentement), les services IA
           (NVIDIA, Anthropic, Google Gemini), et, pour les lieux et positions que vous recherchez,
-          aux services de carte et de météo (Photon, LocationIQ, Geoapify, Esri, MET Norway), ainsi
+          aux services de carte, d&apos;itinéraire et de météo (Photon, LocationIQ, Geoapify, FOSSGIS, Esri, MET Norway), ainsi
           qu&apos;à hCaptcha (protection contre les robots lors de la connexion et de l&apos;inscription).
           Aucune donnée n&apos;est vendue à des tiers.
         </p>

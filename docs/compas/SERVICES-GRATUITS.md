@@ -17,7 +17,7 @@
 | Hébergement | Vercel Hobby (aucune facture sur le compte) | **Non** : Hobby réservé à l'usage personnel non commercial ; « tout moyen de demander ou traiter un paiement » et un site d'affiliation sont commerciaux | ⚖️ Tony (voir « Décisions ») |
 | IA | NVIDIA, clé d'essai | **Non** en production : l'essai sert à l'évaluation ; « production » = toute activité qui sert de vrais utilisateurs | Compas complet sans IA ; IA allumée seulement pour les tests tant qu'aucune offre conforme n'existe à 0 € |
 | Fond de carte | Esri sans clé, OSM France, OpenTopoMap | **Non** (Esri sans clé : usage commercial sur accord écrit ; OSM France : sites sans but lucratif) | OpenFreeMap (standard) + ArcGIS Location Platform gratuit (relief, satellite) |
-| Routage | OSRM démo, FOSSGIS, Valhalla, BRouter | OSRM démo **Non** (vérifié) ; les autres **?** | Cache → Geoapify Routing → Valhalla FOSSGIS (identifié) → estimation annoncée |
+| Routage | ~~OSRM démo, FOSSGIS OSRM, BRouter~~ (retirés le 8 oct.) ; Geoapify, Valhalla | OSRM démo **Non** (vérifié) ; BRouter **?** | **Fait (lot D)** : cache → Geoapify Routing → Valhalla FOSSGIS (identifié) → estimation annoncée |
 | Overpass | 5 serveurs en course | overpass-api.de **Non** pour une application ; private.coffee **Oui** *(extrait)* | private.coffee seul, en série |
 | Géocodage | Photon, Nominatim, Geoapify | Nominatim **Non** pour le trafic d'une application ; Photon **?** | Référentiel local → Geoapify → LocationIQ → Photon (faible volume) |
 | Papiers par passeport | Règles internes | Jeux « Passport Index » **Non** (recherche académique seulement, même republiés sous MIT) | travelrequirements.info (CC BY 4.0) |
