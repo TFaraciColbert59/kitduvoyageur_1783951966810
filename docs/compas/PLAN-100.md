@@ -82,13 +82,17 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 1.2 Hébergement Vercel
 
-- [ ] ⚖️ **Offre Hobby et usage commercial** : Hobby interdit l'usage commercial
-      (paiement Stripe, affiliation). À 0 €, deux voies conformes seulement :
-      (a) désactiver en production ce qui est commercial (paiement, liens d'affiliation)
-      tant que l'offre est Hobby ; (b) accepter le risque. **Recommandation : (a)**, par
-      un drapeau d'environnement, sans supprimer le code. Décision de Tony attendue ;
-      en attendant, rien n'est changé.
-- [ ] Vérifier l'offre réelle du compte (tableau de bord Vercel, Tony).
+- [ ] ⚖️ **Offre Hobby et usage commercial** (vérifié le 8 oct., `SERVICES-GRATUITS.md`) :
+      « Hobby teams are restricted to non-commercial personal use only » ; sont
+      commerciaux « any method of requesting or processing payment » et un site dont
+      l'affiliation est le but premier. Sanction : fonction coupée 30 jours ou
+      déploiement en pause (503). À 0 €, deux voies seulement : (a) désactiver en
+      production ce qui est commercial (paiement, liens d'affiliation) tant que l'offre
+      est Hobby ; (b) accepter le risque. **Recommandation : (a)**, par un drapeau
+      d'environnement, sans supprimer le code. Décision de Tony attendue ; en attendant,
+      rien n'est changé.
+- [x] Offre réelle du compte : **Hobby très probable** (aucune facture sur l'équipe,
+      `costs_not_found`, 8 oct.) ; à confirmer par Tony dans le tableau de bord.
 - [ ] **Durée des fonctions** : rester ≤ 300 s (maximum Hobby) ; préparation découpée en
       étapes reprenables (2.6) pour ne jamais dépendre d'une seule fonction longue.
 - [ ] **Coût de calcul** : supprimer le rafraîchissement complet de page toutes les 4 s
@@ -100,51 +104,76 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 - [ ] **Référentiel local d'abord** (phase 3) : destination, villages, refuges, lieux
       naturels lus dans `geo_places` ; réseau seulement en secours.
-- [ ] **Geoapify gratuit** (3 000 crédits/jour, usage commercial limité autorisé) en
-      premier secours : vérifier les conditions à jour ; **attribution « Powered by
-      Geoapify »** affichée ; `limit=500` ramené au nécessaire ; compteur de crédits du
-      jour en base, arrêt à 2 700. Preuve : compteur, attribution visible.
-- [ ] **Photon public** : User-Agent `koosmoweb.fr` + contact ; rythme global limité
-      (jeton en base partagé par toutes les instances) ; cache 30 j.
-- [ ] **Nominatim public** : 1 requête/s **pour toute l'application** (jeton en base) ;
-      User-Agent ; `officialAlerts` passe par la même file ; ou remplacé par le
-      référentiel (département d'un point = `admin_regions_geo`).
+- [ ] **Geoapify gratuit** (3 000 crédits/jour, « we do not restrict » l'usage
+      commercial) en premier secours : **attribution « Powered by Geoapify »** affichée ;
+      `limit=500` ramené au nécessaire ; compteur de crédits du jour en base (géocodage
+      et routage ensemble), arrêt à 2 700. Preuve : compteur, attribution visible.
+- [ ] **LocationIQ gratuit** (5 000 req/jour, commercial avec lien visible) en second
+      secours ; « Search by LocationIQ.com » dans les mentions. Compte à créer par Tony.
+- [ ] **Photon public** (pas de clause commerciale, « usage raisonnable ») : dernier
+      recours seulement ; User-Agent `koosmoweb.fr` + contact ; rythme global limité
+      (jeton en base) ; cache 30 j.
+- [ ] **Nominatim public retiré du trafic courant** (« periodic requests from apps are
+      considered bulk geocoding ») : département d'un point = `admin_regions_geo` ;
+      `officialAlerts` et le reste passent par le référentiel ou Geoapify.
 - [ ] Positions envoyées arrondies à 0,01° (RGPD, 2.10).
 
 ### 1.4 Points autour des étapes (Overpass)
 
-- [ ] **Fin de la course à 5 instances** ; plus aucun miroir russe.
-- [ ] Un seul fournisseur autorisé en commercial : **private.coffee**, après les avoir
-      prévenus (courriel) ; requêtes en série, jamais en parallèle.
+- [ ] **Fin de la course à 5 instances** ; plus aucun miroir russe ; retrait
+      d'overpass-api.de, `lz4`, kumi.systems (non autorisés ou non vérifiés).
+- [ ] Un seul fournisseur autorisé en commercial : **private.coffee** (« including
+      commercial use », pas de limite, éviter les requêtes simultanées), après les avoir
+      prévenus (support@private.coffee) ; requêtes en série, jamais en parallèle.
 - [ ] Refuges, campings, eau, sommets lus d'abord dans le référentiel (3.4) ; Overpass
       seulement pour une zone absente.
 
 ### 1.5 Calcul d'itinéraire (routage)
 
-- [ ] **Retrait du serveur de démonstration OSRM** (interdit en commercial).
-- [ ] Vérifier les conditions des options gratuites, garder celles qui permettent
-      l'usage commercial : OpenRouteService (offre gratuite), Geoapify Routing (crédits),
-      Valhalla FOSSGIS, BRouter (logiciel libre, serveur personnel : demander l'accord).
-- [ ] Ordre : cache partagé (`geo_cache` leg, 90 j) → fournisseur autorisé → **estimation
-      annoncée** (distance à vol d'oiseau × coefficient du terrain, marquée
-      « estimation »). Preuve : aucune étape sans distance, chaque distance dit sa source.
+- [ ] **Retrait du serveur de démonstration OSRM** (« non-commercial use-cases »,
+      vérifié), de `routing.openstreetmap.de` et de `brouter.de` (conditions introuvables).
+- [x] Conditions vérifiées (8 oct.) : aucune offre de routage gratuite n'accorde par
+      écrit l'usage commercial ; Geoapify (« not restricted ») et Valhalla FOSSGIS
+      (« open to the public », identification demandée) sont les seules utilisables ;
+      OpenRouteService flou (à demander : enquiry@openrouteservice.org).
+- [ ] Ordre : cache partagé (`geo_cache` leg, 90 j) → **Geoapify Routing** (crédits du
+      jour) → **Valhalla FOSSGIS** avec `X-Client-Id` (annonce faite sur GitHub
+      Discussions) → **estimation annoncée** (distance à vol d'oiseau × coefficient du
+      terrain, marquée « estimation »). Preuve : aucune étape sans distance, chaque
+      distance dit sa source.
 - [ ] User-Agent sur tous les appels de routage.
 
 ### 1.6 Fond de carte
 
-- [ ] Remplacer les tuiles Esri sans clé (usage commercial non couvert) par un fond
-      gratuit autorisé : **OpenFreeMap** (vecteur, sans clé) ou **ArcGIS Location
-      Platform** offre gratuite avec clé ; vérifier les conditions ; attribution exacte.
-- [ ] Tuiles OSM France : respecter la politique d'usage (pas d'usage intensif) ou les
-      retirer.
+- [ ] Retirer les fonds non autorisés en commercial : Esri sans clé
+      (`server.arcgisonline.com`, 10 usages), OSM France (« site sans but lucratif »,
+      10 usages), OpenTopoMap (conditions non vérifiées).
+- [ ] Fond standard : **OpenFreeMap** (vecteur, sans clé ni limite, commercial
+      autorisé) via MapLibre (ou extension MapLibre de Leaflet) ; attribution
+      « OpenFreeMap © OpenMapTiles Data from OpenStreetMap ». Prévoir un repli : il peut
+      s'arrêter sans préavis.
+- [ ] Relief et satellite : **ArcGIS Location Platform** gratuit (2 M tuiles et
+      1 000 sessions par mois, commercial autorisé avec clé ; coupé au-delà) ; clé
+      restreinte au domaine ; « Powered by Esri » + crédits ; compteur de sessions.
+      Compte à créer par Tony.
 
 ### 1.7 IA à 0 €
 
-- [ ] ⚖️ **Licence** : la clé NVIDIA gratuite sert au prototypage, pas à des utilisateurs
-      réels. À 0 €, voie conforme : **le Compas fonctionne entièrement sans IA** (règles
-      pour la phrase, l'itinéraire, le budget, les conseils) ; l'IA reste une option
-      désactivable par drapeau. Décision de Tony : garder NVIDIA en production malgré
-      les conditions, ou l'éteindre pour les vrais utilisateurs.
+- [ ] ⚖️ **Licence** (vérifié le 8 oct.) : l'essai NVIDIA ne couvre pas la production
+      (« any non-testing activity including activity serving real end-users » exige une
+      licence AI Enterprise). **Aucune IA gratuite n'est utilisable en production
+      commerciale pour des utilisateurs européens** : Gemini gratuit interdit dans
+      l'EEE et entraîne sur les requêtes ; Mistral Experiment, OpenRouter, Hugging Face,
+      Cerebras = essai ou quotas symboliques ; Groq « not for consumer use » ;
+      Cloudflare exclu par la règle du dépôt. À 0 €, voie conforme : **le Compas
+      fonctionne entièrement sans IA** (règles pour la phrase, l'itinéraire, le budget,
+      les conseils) ; l'IA reste allumée pour les tests (aucun vrai utilisateur
+      aujourd'hui) et s'éteint par drapeau pour le lancement, sauf décision contraire de
+      Tony.
+- [ ] Drapeau `COMPAS_AI` (on/off) lu partout où l'IA est appelée ; Compas testé de bout
+      en bout avec l'IA éteinte (jeu de validation P2 rejoué sans IA).
+- [ ] Compréhension de la phrase sans IA (4.10) : parseur par règles au niveau du parseur
+      actuel avec l'IA.
 - [ ] Conseils par règles (4.12) pour que l'absence d'IA ne retire rien d'essentiel.
 - [ ] Plafond global quotidien d'appels IA (en plus du plafond par personne) ; refus
       en cas d'erreur du quota pour les appels lourds (fail-closed).
@@ -152,12 +181,16 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 1.8 Météo et données ouvertes
 
-- [ ] MET Norway : User-Agent `koosmoweb.fr` + courriel de contact ; respect de
-      `Expires` ; cache 30 min (déjà) ; contact MET avant 10 000 préparations/jour.
-- [ ] NASA POWER : clé de cache par mois (et non par jour) pour partager le cache.
-- [ ] Meteoalarm, Frankfurter : conditions vérifiées, attribution.
-- [ ] Taux de change : source gratuite couvrant toutes les devises (BCE ne couvre que
-      ~30 devises) ; vérifier conditions ; cache 12 h.
+- [ ] MET Norway (CC BY 4.0, commercial autorisé) : User-Agent `koosmoweb.fr` +
+      courriel de contact (sinon 403) ; 20 req/s pour toute l'application ; respect de
+      `Expires` ; cache 30 min (déjà) ; crédit + lien CC BY.
+- [ ] NASA POWER (« no restrictions », citation demandée) : clé de cache par mois (et
+      non par jour) pour partager le cache.
+- [ ] Meteoalarm : conditions à vérifier ; attribution.
+- [ ] Taux de change : **Frankfurter v2** (sans clé ni quota, 223 devises ; « Source:
+      ECB statistics. » pour les taux BCE), secours **fawazahmed0** (CC0) ; cache 12 h.
+- [ ] Carburant : bulletin pétrolier de l'UE (CC BY 4.0) pour l'UE-27 ; ailleurs barème
+      versionné et daté, affiché comme « estimation » (aucune source mondiale gratuite).
 
 ---
 
@@ -165,10 +198,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 2.1 Caches partagés
 
-- [ ] **`POST /api/route/cache` fermé au public** : écriture côté serveur seulement
-      (ou signée HMAC) ; taille et nombre de points bornés. Preuve : écriture anonyme
-      refusée (test), aucune régression de « Partir librement ».
-- [ ] Test : une distance inventée ne peut plus être servie comme « mesurée ».
+- [~] **`POST /api/route/cache` fermé au public** : écriture signée HMAC par le serveur
+      (`src/lib/routeCacheSignature.ts`), 5 000 points au plus par tronçon ; sur la
+      branche (42c7e16), preuve en production après fusion.
+- [x] Test : une écriture sans signature est refusée (403), rien n'entre en base
+      (`tests/routing/route-signature.spec.ts`, I4-CACHE-01b).
 
 ### 2.2 Limite de fréquence et abus
 
@@ -179,9 +213,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [ ] Plafond global de préparations simultanées.
 - [ ] Limite sur `compasSetDestinationAction` et les actions qui appellent la carte.
 - [ ] Message juste quand la limite est atteinte (plus « déjà lancée plusieurs fois »).
-- [ ] Protection des inscriptions contre les comptes en série : captcha gratuit
-      compatible Supabase Auth (hCaptcha gratuit) ou BotID Vercel ; vérifier les
-      conditions gratuites.
+- [ ] Protection des inscriptions et des sessions anonymes contre les comptes en série :
+      **hCaptcha gratuit** branché sur Supabase Auth (Turnstile exclu : Cloudflare) ;
+      BotID basique de Vercel sur les actions coûteuses ; limite d'IP de Supabase Auth
+      (30 sessions anonymes/heure par défaut) gardée.
 
 ### 2.3 Connexion démo
 
@@ -326,7 +361,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 4.2 Papiers, prises, change
 
-- [ ] Table passeport × destination (jeu ouvert CC BY, versionné dans le code).
+- [ ] Table passeport × destination tirée de **travelrequirements.info v1.3.0**
+      (CC BY 4.0, commercial autorisé, crédit exact de l'éditeur), versionnée dans le
+      code. Les jeux dérivés de Passport Index sont exclus (recherche académique
+      seulement).
 - [ ] Prises et change selon le pays de résidence ; « France Diplomatie » pour les
       Français seulement, le service officiel du pays sinon.
 - [ ] `keepAiNote` ne retire plus les conseils justes pour un non-Français.
@@ -532,8 +570,9 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 | # | Sujet | Recommandation de Claude (0 €) |
 |---|---|---|
-| 1 | Vercel Hobby et usage commercial | Couper paiement et affiliation en production par drapeau tant que l'offre est Hobby |
-| 2 | IA NVIDIA gratuite en production | Compas complet sans IA ; IA désactivée pour les vrais utilisateurs tant que la licence n'est pas réglée |
+| 1 | Vercel Hobby et usage commercial (Stripe = commercial, vérifié) | Couper paiement et affiliation en production par drapeau tant que l'offre est Hobby |
+| 2 | IA en production (aucune offre gratuite conforme, vérifié) | Compas complet sans IA ; IA éteinte pour les vrais utilisateurs |
+| 5 | Comptes gratuits (sans carte) : Geoapify, LocationIQ, ArcGIS Location Platform, hCaptcha | Tony les crée et pose les clés dans Vercel lui-même |
 | 3 | Applications sur les stores | PWA à la place (0 €) |
 | 4 | Cible de lancement | Francophone d'abord (phase 7), puis monde (phase 6) |
 
