@@ -3,6 +3,7 @@ import 'server-only';
 import { createHash, createHmac, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { validateBookingSearchRequest } from './bookingSchemas';
+import { englishPlaceName } from './englishPlaceName';
 import {
   BOOKING_PROVIDER_ERROR_CODES,
   BookingProviderError,
@@ -66,10 +67,14 @@ export type RouteStackToolCaller = (
   options?: RouteStackCallOptions
 ) => Promise<RouteStackToolResult>;
 
+/** Nom anglais d'un lieu (RouteStack ne connaît que l'anglais), ou null. */
+export type PlaceNameLocalizer = (name: string) => Promise<string | null>;
+
 interface RouteStackProviderOptions {
   env?: BookingProviderEnv;
   callTool?: RouteStackToolCaller;
   now?: () => Date;
+  localizeName?: PlaceNameLocalizer;
 }
 
 interface RouteStackSession {
@@ -773,23 +778,93 @@ interface ResolvedLocation {
   long?: number;
 }
 
+const IATA_CODE = /^[A-Z]{3}$/;
+const foldName = (value: string) =>
+  value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+const flightCode = (r: Record<string, unknown>) => readString(r, ['code', 'iata', 'iataCode']) ?? '';
+/** Une gare ou un port dans la liste des lieux de vol (« [ZYD] Lisbon TP » avant l'aéroport « Portela »). */
+const NOT_AIRPORT = /\b(tp|rail|railway|station|bus|gare|hbf|bahnhof|ferry|heliport)\b/i;
+
+/**
+ * L'aéroport d'une ville, d'après les lieux de RouteStack
+ * (`{ name, code, city, country, fullname }`, 8 octobre) : ceux dont la ville
+ * est celle demandée ; « All Airports » d'abord (PAR, LON : tous ses aéroports,
+ * accepté par la recherche), sinon le premier vrai aéroport, sinon le premier.
+ */
+function pickFlightLocation(
+  records: Record<string, unknown>[],
+  cityNames: string[]
+): Record<string, unknown> | undefined {
+  const wanted = new Set(cityNames.map(foldName));
+  const inCity = records.filter(
+    (r) => IATA_CODE.test(flightCode(r)) && wanted.has(foldName(readString(r, ['city', 'cityName']) ?? ''))
+  );
+  const name = (r: Record<string, unknown>) => readString(r, ['name']) ?? '';
+  return (
+    inCity.find((r) => /all airports/i.test(name(r))) ??
+    inCity.find((r) => !NOT_AIRPORT.test(name(r))) ??
+    inCity[0]
+  );
+}
+
 async function resolveLocation(
   callTool: RouteStackToolCaller,
   vertical: BookingVertical,
-  value: string
+  value: string,
+  localize: PlaceNameLocalizer,
+  /** Lieux proposés et retenus, écrits au journal si RouteStack refuse la recherche. */
+  trail?: string[]
 ): Promise<ResolvedLocation> {
   const trimmed = value.trim();
-  if (vertical === 'flight' && /^[A-Z]{3,4}$/i.test(trimmed)) {
-    return { id: trimmed.toUpperCase(), code: trimmed.toUpperCase() };
+  // Un code IATA tel quel (« LIS ») ; « Nice », « Lyon », « Oslo » sont des villes à chercher.
+  if (vertical === 'flight' && IATA_CODE.test(trimmed)) {
+    return { id: trimmed, code: trimmed };
   }
   if (vertical !== 'flight' && /^\d+$/.test(trimmed)) {
     return { id: trimmed, code: trimmed };
   }
   const tool = vertical === 'flight' ? 'flight_locations' : vertical === 'hotel' ? 'hotel_search_destinations' : 'car_locations';
   // OpenAPI RouteStack : `term` pour les lieux de vol et de voiture, `query` pour les destinations d'hôtel.
-  const payload = parseToolPayload(await callTool(tool, vertical === 'hotel' ? { query: trimmed } : { term: trimmed }));
-  const records = findRecords(payload, ['result', 'results', 'locations', 'destinations', 'data']);
-  const record = records[0];
+  const lookup = async (term: string) => {
+    const payload = parseToolPayload(await callTool(tool, vertical === 'hotel' ? { query: term } : { term }));
+    return findRecords(payload, ['result', 'results', 'locations', 'destinations', 'data']);
+  };
+  // Données publiques (codes et noms de lieux) : de quoi voir pourquoi un lieu est mal choisi.
+  const note = (term: string, records: Record<string, unknown>[], picked: Record<string, unknown> | undefined) =>
+    trail?.push(JSON.stringify({ tool, term, picked: picked ?? null, candidates: records.slice(0, 6) }).slice(0, 1500));
+
+  let records = await lookup(trimmed);
+  let record: Record<string, unknown> | undefined;
+  if (vertical === 'flight') {
+    record = pickFlightLocation(records, [trimmed]);
+    // Ville absente sous ce nom (« Lisbonne » : RouteStack répond « Lisbon » ;
+    // « Londres » : Londrina) : son nom anglais, dans la même liste puis cherché.
+    if (!record) {
+      const english = await localize(trimmed);
+      if (english && foldName(english) !== foldName(trimmed)) {
+        record = pickFlightLocation(records, [english]);
+        if (!record) {
+          const again = await lookup(english);
+          record = pickFlightLocation(again, [english]);
+          if (again.length) records = again;
+        }
+      }
+    }
+    // Aucune ville reconnue : le premier lieu muni d'un code, plutôt que rien.
+    record ??= records.find((r) => IATA_CODE.test(flightCode(r))) ?? records[0];
+  } else {
+    record = records[0];
+    // Nom français inconnu de RouteStack : son nom anglais, une fois.
+    if (!record) {
+      const english = await localize(trimmed);
+      if (english && foldName(english) !== foldName(trimmed)) {
+        records = await lookup(english);
+        record = records[0];
+      }
+    }
+  }
+  note(trimmed, records, record);
   if (!record) {
     throw new BookingProviderError({
       code: BOOKING_PROVIDER_ERROR_CODES.validation,
@@ -817,14 +892,16 @@ async function resolveLocation(
 
 async function argumentsForRequest(
   request: BookingSearchRequest,
-  callTool: RouteStackToolCaller
+  callTool: RouteStackToolCaller,
+  localize: PlaceNameLocalizer,
+  trail?: string[]
 ): Promise<Record<string, unknown>> {
   const travelers = request.travelers ?? 1;
   const currency = request.currency ?? 'EUR';
   const limit = request.limit ?? DEFAULT_LIMIT;
   if (request.vertical === 'flight') {
-    const origin = await resolveLocation(callTool, 'flight', request.origin);
-    const destination = await resolveLocation(callTool, 'flight', request.destination);
+    const origin = await resolveLocation(callTool, 'flight', request.origin, localize, trail);
+    const destination = await resolveLocation(callTool, 'flight', request.destination, localize, trail);
     // Corps de POST /mcp/flight/search (collection Postman RouteStack), que
     // l'outil MCP `flight_search` attend sous `filter`.
     return {
@@ -842,7 +919,7 @@ async function argumentsForRequest(
     };
   }
   if (request.vertical === 'hotel') {
-    const destination = await resolveLocation(callTool, 'hotel', request.destination);
+    const destination = await resolveLocation(callTool, 'hotel', request.destination, localize);
     const rooms = [{ adults: travelers, children: 0 }];
     return {
       destinationId: destination.id,
@@ -862,9 +939,11 @@ async function argumentsForRequest(
   if (request.vertical === 'car') {
     // Corps de POST /mcp/car/search (collection Postman RouteStack), sous `filter`
     // comme pour les vols : le lieu par son nom, date et heure séparées (heure
-    // telle qu'écrite dans la demande).
+    // telle qu'écrite dans la demande). RouteStack ne résout que le nom
+    // anglais (« Lisbonne » refusé, 8 octobre) : celui de la carte, sinon tel quel.
     const at = (iso: string) => ({ date: iso.slice(0, 10), time: iso.slice(11, 16) });
-    const place = request.destination.trim();
+    const asked = request.destination.trim();
+    const place = (await localize(asked)) ?? asked;
     return {
       filter: {
         pickup: { name: place, ...at(request.pickupAt) },
@@ -981,6 +1060,7 @@ export function createRouteStackBookingProvider(
   const env = options.env ?? process.env;
   const callTool = options.callTool ?? createDefaultToolCaller(env);
   const now = options.now ?? (() => new Date());
+  const localize = options.localizeName ?? ((name: string) => englishPlaceName(name));
   const credentials = resolveProviderCredentials('routestack', env);
   const mode = credentials.mode;
   const isConfigured = () => credentials.reason === null && Boolean(credentials.apiKey);
@@ -1003,17 +1083,38 @@ export function createRouteStackBookingProvider(
       }
       const validated = validateBookingSearchRequest(request);
       const name = toolNameForVertical(validated.vertical);
-      let args: Record<string, unknown>;
+      let args: Record<string, unknown> | undefined;
       let payload: unknown;
+      const trail: string[] = [];
       try {
-        args = await argumentsForRequest(validated, callTool);
+        args = await argumentsForRequest(validated, callTool, localize, trail);
         payload = parseToolPayload(
           validated.vertical === 'flight'
             ? await callTool(name, args, { timeoutMs: FLIGHT_SEARCH_TIMEOUT_MS })
             : await callTool(name, args)
         );
       } catch (error) {
-        throw normalizeBookingProviderError(error, 'routestack');
+        const normalized = normalizeBookingProviderError(error, 'routestack');
+        // Vol ou voiture refusés : les lieux retenus disent si la recherche de
+        // lieux s'est trompée (« Paris = PAR, Lisbonne = LIS »).
+        const filter = args?.filter as Record<string, unknown> | undefined;
+        const used =
+          filter && validated.vertical === 'flight'
+            ? `${validated.origin} = ${String(filter.origin)}, ${validated.destination} = ${String(filter.destination)}`
+            : filter && validated.vertical === 'car'
+              ? `${validated.destination} = ${String((filter.pickup as Record<string, unknown> | undefined)?.name)}`
+              : null;
+        if (used && normalized.code === BOOKING_PROVIDER_ERROR_CODES.upstream) {
+          if (trail.length) console.warn('[routestack] recherche refusée, lieux', trail.join(' | '));
+          throw new BookingProviderError({
+            code: normalized.code,
+            provider: 'routestack',
+            status: normalized.status,
+            retryable: normalized.retryable,
+            message: `${normalized.message} (${used})`,
+          });
+        }
+        throw normalized;
       }
       return {
         provider: 'routestack',
@@ -1037,7 +1138,7 @@ export function createRouteStackBookingProvider(
       if (!request) return { ...candidate, requiresRevalidation: true };
       try {
         const name = toolNameForVertical(candidate.vertical);
-        const args = await argumentsForRequest(request, callTool);
+        const args = await argumentsForRequest(request, callTool, localize);
         const payload = parseToolPayload(await callTool(name, args));
         const offers = normalizeOffers(payload, request, env);
         const fresh = offers.find(

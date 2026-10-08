@@ -1281,15 +1281,17 @@ export async function compasAutofillAction(
         // Distances réelles entre deux soirs (à pied, à vélo ou sur la route), en parallèle.
         const legGeometry: Array<Array<[number, number]> | null> = stagePlaces.map(() => null);
         const legs = await mapLimit(stagePlaces, 4, async (st, i) => {
-          const prevPlace = i > 0 ? stagePlaces[i - 1] : null;
-          if (!prevPlace || distanceKm(prevPlace, st) < 0.3) return null;
-          const mode = st.move === 'marche' ? 'pieton' : st.move === 'velo' ? 'velo' : 'voiture';
-          if (st.move === 'vol' || st.move === 'bateau') return { km: Math.round(distanceKm(prevPlace, st)), ascent: null, measured: false };
-          // Descente de rivière : la distance et le tracé de l'eau, déjà connus.
+          // Descente de rivière : la distance et le tracé de l'eau, déjà connus,
+          // dès le premier soir (depuis la mise à l'eau, qui n'est pas une étape :
+          // sans elle, Dordogne 8 oct. « 54,1 km d'eau » mais parcours de 36,1 km).
           if (st.move === 'pagaie') {
             legGeometry[i] = st.geometry ?? null;
             return st.riverKm != null ? { km: st.riverKm, ascent: null, measured: true } : null;
           }
+          const prevPlace = i > 0 ? stagePlaces[i - 1] : null;
+          if (!prevPlace || distanceKm(prevPlace, st) < 0.3) return null;
+          const mode = st.move === 'marche' ? 'pieton' : st.move === 'velo' ? 'velo' : 'voiture';
+          if (st.move === 'vol' || st.move === 'bateau') return { km: Math.round(distanceKm(prevPlace, st)), ascent: null, measured: false };
           // Mesure partagée : le même tronçon n'est routé qu'une fois pour tout le monde.
           // « v2 » : le tronçon garde sa géométrie (tracé réel sur la carte).
           const leg = await cached(

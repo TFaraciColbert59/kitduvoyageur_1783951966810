@@ -26,8 +26,10 @@ export function trackKey(points: ReadonlyArray<{ lat: number; lon: number }>): s
 
 /**
  * Tronçons d'un soir au suivant : la géométrie routée quand elle existe, sinon
- * un segment droit (vol, bateau, tronçon non calculé). Null s'il n'y a rien à
- * tracer de plus que des segments droits.
+ * un segment droit (vol, bateau, tronçon non calculé). `legs[0]`, quand il
+ * existe, mène au premier soir depuis un départ qui n'est pas une étape (mise
+ * à l'eau d'une descente de rivière). Null s'il n'y a rien à tracer de plus
+ * que des segments droits.
  */
 export function buildTrack(
   stops: ReadonlyArray<{ lat: number; lon: number }>,
@@ -35,6 +37,11 @@ export function buildTrack(
 ): { type: 'MultiLineString'; coordinates: LngLat[][] } | null {
   const lines: LngLat[][] = [];
   let routed = false;
+  const lead = legs[0];
+  if (stops.length && lead && lead.length >= 2) {
+    lines.push(simplifyLine(lead));
+    routed = true;
+  }
   for (let i = 1; i < stops.length; i += 1) {
     const a = stops[i - 1];
     const b = stops[i];
