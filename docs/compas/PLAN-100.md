@@ -127,7 +127,8 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       zone ramenés de 500 à 200 (10 crédits) ; **compteur de crédits du jour en base**
       (`take_api_credits`, lot F) commun au géocodage, aux lieux et au routage, arrêt à
       2 700 ; le routage a en plus son plafond de 1 500, au coût réel (un crédit par
-      tranche de 500 km). Preuve : `api_credit_days`.
+      tranche de 500 km). Preuve en production (8 oct., 23 h 20) : `api_credit_days`
+      passe de 1 à 4 crédits Geoapify et de 0 à 3 crédits de routage sur une préparation.
 - [~] **LocationIQ gratuit** (5 000 req/jour, commercial avec lien visible) : compte
       créé par Tony (8 oct.) ; avec `LOCATIONIQ_API_KEY`, **tous les appels Nominatim du
       Compas passent par LocationIQ** (même moteur, `src/features/compas/server/locationIq.ts`,
@@ -320,16 +321,25 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       `authenticated`). **Deux failles fermées** (`20261008225921`) :
       `claim_reward_points` (n'importe qui créditait des points à n'importe quel compte)
       et `log_materiel_history` (historique écrit au nom d'un autre), réservées à la clé de
-      service. Les révocations des migrations du 17 et du 22 septembre n'avaient jamais
-      été appliquées en production : reste à rejouer la revue fonction par fonction
-      (vue `public_profiles` en SECURITY DEFINER, 2 `search_path` mobiles).
+      service. Revue rejouée fonction par fonction le 8 oct. (`20261008231512`) : la
+      migration du 21 septembre était bien passée, mais neuf fonctions avaient retrouvé
+      `EXECUTE` pour PUBLIC. Refermées : `request_withdrawal`, `record_hike_gear_usage`,
+      `toggle_community_post_like`, `get_user_badges_progress` (session requise, chacune
+      vérifie `auth.uid()`) ; `get_comparable_sales`, `get_occasion_listing_for_product`,
+      `get_hiking_routes_geojson`, `get_trail_pois_geojson`, `refresh_user_field_signature`
+      (une session d'essai relançait à volonté une vue matérialisée) réservées au serveur ;
+      7 fonctions trigger retirées à tous ; 2 `search_path` verrouillés (vérifié : mêmes
+      résultats). Ouvertes à `anon` : 29 → 14 (droits de voyage et de groupe utilisés
+      par les policies, drapeaux, données publiques, 3 PostGIS). ⚖️ Reste : vue `public_profiles` (nom, ville, bio et
+      points de chaque compte lisibles sans connexion), décision de Tony.
 - [ ] Revue des policies « public » restantes (conseiller Supabase `get_advisors`).
 
 ### 2.5 Quota IA
 
 - [x] Quota par personne appliqué (8 oct.).
-- [ ] Palier : la préparation est comptée en `heavy` (aujourd'hui `fast`) comme le
-      prévoit sa fiche.
+- [x] Palier : la préparation est comptée en `heavy` comme le prévoit sa fiche
+      (`quotaTier`), tout en gardant le modèle rapide (réponse longue, temps compté).
+      Test TEST-ASK-04b.
 - [ ] Plafond global et fail-closed (1.7).
 
 ### 2.6 Préparation durable
@@ -339,7 +349,7 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [ ] Budget interne vérifié dans la boucle de recherche des étapes.
 - [ ] Reprise idempotente après coupure (même plan, pas de doublon). Preuve : test de
       coupure simulée à chaque phase.
-- [ ] Commentaires « 60 s » mis à jour (300 s).
+- [x] Commentaires « 60 s » mis à jour (300 s ; 48 s par phase gardés et expliqués).
 
 ### 2.7 Écritures concurrentes
 
@@ -355,9 +365,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 - [ ] Table `app_errors` (erreurs serveur du Compas, sans donnée personnelle) + rapport
       quotidien (1.1) ; ou Sentry offre gratuite si ses conditions le permettent.
-- [ ] `src/app/compas/error.tsx` et `loading.tsx` ; `global-error.tsx` ne dit plus
-      « l'équipe a été notifiée » sans que ce soit vrai.
-- [ ] Erreurs internes jamais affichées dans les notes (`autofillActions.ts`).
+- [x] `src/app/compas/error.tsx` (aucun message interne, référence `digest` des
+      journaux Vercel, « Réessayer » relit le serveur) et `loading.tsx` ;
+      `global-error.tsx` ne dit plus « l'équipe a été notifiée ».
+- [x] Erreurs internes jamais affichées : l'échec du calcul d'itinéraire dit « erreur de
+      calcul » (le message va au journal) ; la recherche partenaire ne montre plus que
+      le code et le statut (message brut, cause et échec Viator au journal).
 
 ### 2.10 RGPD
 
@@ -407,11 +420,13 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       (`scripts/geo/prep_geo_places.py`), écriture par une fonction Supabase temporaire
       protégée par un secret à usage unique, désactivée ensuite (410). Réimport mensuel :
       tâche GitHub Actions à brancher sur `SUPABASE_DB_URL` (secret de Tony).
-- [~] `lookupAreaPlaces` lit le référentiel d'abord ; Photon n'est demandé que pour les
+- [x] `lookupAreaPlaces` lit le référentiel d'abord ; Photon n'est demandé que pour les
       refuges et campings (absents de GeoNames), ou pour compléter une zone maigre hors
       des pays détaillés. Pages Pays (`fetchPlacesByCountry`) sur `geo_places` ;
       `places_geo` n'est plus lu nulle part (lecteurs morts retirés). Preuve en ligne : préparations Vercors, Dolomites,
-      Patagonie (journal « Référentiel N », sans « Photon » pour les lieux habités).
+      Patagonie (journal « Référentiel N », sans « Photon » pour les lieux habités) ;
+      **production** (8 oct., 23 h 20, `f5b5ac9`) : Bauges, 263 lieux sur 374 tirés du
+      référentiel (cache `area:v3`), préparation prête en 48 s.
 
 ### 3.3 Massifs, parcs, régions naturelles
 
@@ -440,7 +455,8 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 3.8 Pages Pays et retrait de `places_geo`
 
-- [ ] Pages Pays lues dans `geo_places` (par région et par pays).
+- [x] Pages Pays lues dans `geo_places` (par pays ; `fetchPlacesByCountry`), en
+      production depuis `f5b5ac9` (France, Italie, Népal : 200).
 - [ ] Suppression de `places_geo` (−232 Mo), via SQL Editor si le connecteur refuse.
 
 ### 3.9 Mise à jour

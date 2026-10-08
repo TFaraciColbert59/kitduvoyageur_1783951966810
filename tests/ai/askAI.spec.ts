@@ -123,6 +123,22 @@ describe('src/lib/ai/askAI — point d\'entrée unique (port IA + registre)', ()
     );
   });
 
+  it('TEST-ASK-04b: quotaTier décompte un autre palier que le modèle appelé', async () => {
+    await askAI(
+      makeReq({
+        feature: 'compas-autofill',
+        tier: 'fast',
+        quotaTier: 'heavy',
+        userId: '33333333-3333-4333-8333-333333333333',
+      })
+    );
+
+    expect(consumeQuotaMock).toHaveBeenCalledWith(
+      '33333333-3333-4333-8333-333333333333', 'heavy', 'compas-autofill', 20
+    );
+    expect(providerChainMock).toHaveBeenCalledWith('fast');
+  });
+
   it('TEST-ASK-05: reasoningBudget borné par le registre, transmis au provider', async () => {
     await askAI(makeReq({ feature: 'kit-configurator', reasoningBudget: 90_000 }));
 

@@ -35,7 +35,7 @@ import { simplifyLine, type LngLat } from '../engine/track';
 
 const TTL_S = 7 * 86_400;
 const TIMEOUT_MS = 12_000;
-/** Une fonction Vercel s'arrête à 60 s : un appel ne cherche jamais plus de ~30 s. */
+/** Un appel ne cherche jamais plus de ~30 s : l'écran attend la réponse. */
 const BUDGET_MS = 28_000;
 /**
  * Un seul serveur Overpass : private.coffee, le seul qui autorise l'usage
@@ -118,7 +118,7 @@ const FRESH_PER_CALL = 2;
 
 /**
  * Lieux déjà connus : servis du cache aussitôt. Lieux nouveaux : deux au plus
- * par appel (une fonction Vercel s'arrête à 60 s). `partial` : il en reste,
+ * par appel (l'écran attend la réponse). `partial` : il en reste,
  * l'écran redemande et les points s'ajoutent au fil des appels.
  */
 export async function lookupStagePois(

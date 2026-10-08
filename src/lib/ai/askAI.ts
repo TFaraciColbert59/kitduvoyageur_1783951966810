@@ -49,6 +49,7 @@ async function siteAllowsAi(): Promise<boolean> {
 const askAISchema = z.object({
   feature: z.string().min(1).max(64),
   tier: z.enum(['heavy', 'fast']),
+  quotaTier: z.enum(['heavy', 'fast']).optional(),
   system: z.string().min(1).max(8_000),
   prompt: z.string().min(1).max(64_000),
   maxTokens: z.number().int().min(64).max(8_192).default(2_048),
@@ -94,7 +95,7 @@ export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
 
   // (3) Quota : tier (20/100) + plafond feature du registre.
   if (req.userId) {
-    const allowed = await consumeQuota(req.userId, req.tier, req.feature, spec.maxPerUserPerDay);
+    const allowed = await consumeQuota(req.userId, req.quotaTier ?? req.tier, req.feature, spec.maxPerUserPerDay);
     if (!allowed) {
       // La cause est attachee ICI : sans elle, l'appelant ne peut pas
       // distinguer un quota epuise d'une panne, et afficher les deux comme une

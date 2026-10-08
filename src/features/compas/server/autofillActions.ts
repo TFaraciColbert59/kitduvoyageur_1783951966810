@@ -176,8 +176,9 @@ const schema = z.object({
     .transform(coarsePosition),
   /**
    * Deux appels courts plutôt qu'un long : « steps » écrit l'itinéraire,
-   * « rest » les nuits, le trajet, le kit et le budget. Chaque appel tient
-   * largement sous la limite de 60 s du serveur, même quand l'IA est lente.
+   * « rest » les nuits, le trajet, le kit et le budget. Chaque appel garde
+   * un budget de 48 s (hérité de l'ancienne limite de 60 s ; la fonction du
+   * Compas va aujourd'hui jusqu'à 300 s), même quand l'IA est lente.
    */
   phase: z.enum(['steps', 'rest', 'all']).default('all'),
 });
@@ -301,7 +302,7 @@ async function askJson(
   think: boolean,
   /** Réponse partagée entre tous ceux qui posent la même question (0 = jamais). */
   cacheTtlSeconds = 0,
-  /** Temps maximal accordé à cet appel (ms) : la fonction serveur s'arrête à 60 s. */
+  /** Temps maximal accordé à cet appel (ms), pris sur le budget de la passe. */
   timeoutMs?: number
 ): Promise<unknown | null> {
   if (timeoutMs != null && timeoutMs < 4000) return null;
@@ -310,6 +311,8 @@ async function askJson(
       ...(timeoutMs != null ? { signal: AbortSignal.timeout(timeoutMs) } : {}),
       feature: 'compas-autofill',
       tier: think ? COMPAS_AUTOFILL_SPEC.tier : 'fast',
+      // Le modèle rapide répond, mais une préparation coûte un appel lourd (plan 2.5).
+      quotaTier: COMPAS_AUTOFILL_SPEC.tier,
       system,
       prompt,
       maxTokens,
@@ -625,7 +628,7 @@ function readCarry(meta: Record<string, unknown>): Carry | null {
  * Prise d'une phase (« steps » ou « rest ») de façon atomique : l'écriture ne
  * passe que si le voyage n'a pas changé depuis la lecture (`updated_at`).
  * Deux onglets ou un F5 : un seul gagne, l'autre attend le résultat. Une prise
- * de plus de 65 s est morte (une fonction serveur s'arrête à 60 s).
+ * plus vieille que `CLAIM_MS` est morte (la fonction s'arrête à 300 s).
  */
 /** Les prises de phase sont rendues dès que la phase a écrit son résultat. */
 function withoutClaim(c: Record<string, unknown>): Record<string, unknown> {
@@ -854,11 +857,11 @@ export async function compasAutofillAction(
       halted = Number(compasMeta(((data as { metadata?: unknown } | null)?.metadata ?? {}) as Record<string, unknown>).autofill_stop ?? 0) >= startedAt;
       return halted;
     };
-    // Durée de chaque étape (journal serveur) : la limite d'une fonction est de 60 s.
+    // Durée de chaque étape (journal serveur) : la fonction s'arrête à 300 s.
     const laps: Record<string, number> = {};
     let lapAt = startedAt;
-    // Ce qu'il reste avant 48 s (marge pour écrire avant la limite de 60 s).
-    // Une passe : 270 s de budget (la fonction s'arrête à 300 s).
+    // Ce qu'il reste du budget : 48 s par phase (« steps », « rest »), 270 s
+    // pour une passe entière ; la fonction s'arrête à 300 s.
     const remaining = () => (phase === 'all' ? 270_000 : 48_000) - (Date.now() - startedAt);
     const lap = (name: string) => {
       const now = Date.now();
@@ -1053,9 +1056,11 @@ export async function compasAutofillAction(
             // cartes (Photon, Overpass, Geoapify) même après une compréhension lente.
             deadline: startedAt + (phase === 'all' ? 120_000 : 30_000),
             notes,
-          }).catch((err) => ({
-            fallback: `erreur de calcul (${err instanceof Error ? err.message.slice(0, 80) : 'inconnue'})`,
-          }));
+          }).catch((err) => {
+            // Le message interne reste dans le journal, jamais dans les notes (plan 2.9).
+            console.error('[compas] itinéraire calculé', err instanceof Error ? err.message : err);
+            return { fallback: 'erreur de calcul' };
+          });
       const plannedOk = planned && 'stages' in planned ? planned : null;
       if (plannedOk) {
         stagePlaces = plannedOk.stages;
@@ -1813,7 +1818,7 @@ export async function compasAutofillAction(
       .join('\n');
     // Budget de temps : l'appel rapide peut durer jusqu'à 30 s ; au-delà de
     // 25 s déjà passées (carte ou IA lentes), le chiffrage passe par les règles
-    // plutôt que de risquer la limite de 60 s du serveur. Sans raisonnement :
+    // plutôt que de risquer la fin du budget de la passe. Sans raisonnement :
     // avec, Nemotron 3.5 Lightning met ~50 s (mesure du 2026-10-05).
     // L'IA ne chiffre plus rien (barèmes du Compas) : elle ne donne que des conseils,
     // et seulement s'il reste du temps.

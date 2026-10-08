@@ -4,11 +4,15 @@
 > kit / budget / conseils → résultat final. Rien de P3 tant que P0/P1 ne passent pas P2.
 > « Fait » = prouvé de bout en bout sur la preview et contrôlé en base, pas « le code compile ».
 
-Mis à jour : 8 octobre 2026 (soir). **En production** (koosmoweb.fr) : lot A (PR #76,
+Mis à jour : 8 octobre 2026 (nuit). **En production** (koosmoweb.fr) : lot A (PR #76,
 sécurité), lot B (PR #77, clés gratuites), lot C (PR #78, `195a47f` : rapport quotidien,
 sauvegarde, purges), lot D (PR #79, `153ddfc` : routage Geoapify puis Valhalla, estimation
-annoncée, OSRM démo et BRouter retirés). En revue : lot E (référentiel des lieux habités).
-Plan à 0 € et cases
+annoncée, OSRM démo et BRouter retirés), lots E et F (PR #80, `f5b5ac9` : référentiel des
+lieux habités ; interrupteur et plafond IA, crédits Geoapify comptés en base, rythme
+Photon, position arrondie). Prouvés en production à 23 h 20 : Bauges, 3 jours, prêt en
+48 s, 263 lieux sur 374 tirés du référentiel, distances Geoapify avec dénivelé du relief
+(19,5 km et 1 302 m D+), crédits du jour comptés en base. En revue : lot G (PR #81, pages
+d'erreur, droits des fonctions, palier heavy). Plan à 0 € et cases
 à cocher : `PLAN-100.md`. Branche de travail `claude/optimistic-albattani-i06ge7`.
 
 **À faire par Tony** (rien d'autre ne bloque) :
@@ -18,7 +22,11 @@ Plan à 0 € et cases
    `BACKUP_PASSPHRASE` (sauvegarde chiffrée de la nuit, `SAUVEGARDES.md`).
 3. Identité légale réelle pour les mentions légales ; retirer `DEMO_LOGIN_*` de Vercel.
 4. Valhalla FOSSGIS : un mot sur GitHub Discussions (identification demandée).
-5. Au lancement : protection hCaptcha dans Supabase + `NEXT_PUBLIC_AUTH_CAPTCHA=on`.
+5. Au lancement : protection hCaptcha dans Supabase + `NEXT_PUBLIC_AUTH_CAPTCHA=on` ;
+   Authentication → « Leaked password protection » activée.
+6. Décision : la vue `public_profiles` montre sans connexion le nom, la ville, la bio et
+   les points de chaque compte. Proposition : la réserver aux comptes connectés et n'y
+   laisser que le pseudonyme et l'avatar (`PLAN-100.md`, 2.4).
 
 ## P0 — Moteur fiable
 
