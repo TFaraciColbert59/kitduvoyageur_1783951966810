@@ -4,19 +4,18 @@
 > kit / budget / conseils → résultat final. Rien de P3 tant que P0/P1 ne passent pas P2.
 > « Fait » = prouvé de bout en bout sur la preview et contrôlé en base, pas « le code compile ».
 
-Mis à jour : 7 octobre 2026 (nuit, reprise après le passage en ligne de 19 h 17 – 20 h 30).
-Les correctifs de la nuit sont sur la branche `claude/optimistic-albattani-i06ge7`, **pas encore
-prouvés en ligne** (conteneur sans accès à la preview ni aux services de carte, voir « Blocages »).
+Mis à jour : 8 octobre 2026 (matin, après cinq passages en ligne sur la preview de la PR #72,
+lus en base). Branche `claude/optimistic-albattani-i06ge7`.
 
 ## P0 — Moteur fiable
 
 | # | Sujet | État | Preuve / reste |
 |---|---|---|---|
-| P0.1 | Préparation en une seule passe (300 s) | **Fait** (preuve preview) | Travail en arrière-plan (`after`), l'écran relit l'issue toutes les 4 s : plus de requête longue coupée par le réseau. Deux préparations simultanées gérées. 50 demandes : de 12 s à 4 min 40 s (20 jours de trek) |
-| P0.2 | Compréhension de la demande et résolution du lieu | Partiel | 50/50 lues correctement hors ligne. En ligne corrigés : plein air → lieu naturel (Chartreuse massif, Loire fleuve, Calanques parc), pays entier (États-Unis Ouest), « nuits dehors » inventées par l'IA. Nuit du 7 : « GR34 » donné comme lieu par l'IA (étapes dans l'Indre) → région du sentier ; GR65, GR70 ajoutés. Reste : vérifier Jura/Calanques ; « raquettes Vercors en janvier » arrêté après la destination, dates non posées (cause non trouvée sans journaux) |
-| P0.3 | Itinéraire déterministe | Partiel | Lieux réels (Photon → Overpass + Geoapify), hauteurs pour marche et ski (relief zoom 10 sur grande zone), départ d'une ville dite, journée dans un massif → village. Nuit du 7 : traversée plus longue que l'emprise (Jura à vélo, 2 jours bloqués) → elle en sort ou revient ; village de départ au cœur du massif (Beaufort, plus Albertville) ; noms communs (« shanty ») et circonscriptions écartés ; un même lieu, un seul nom (Malaga / Málaga). Reste : base d'un grand massif (Dolomites → Brugnàch, Kalymnos → Vathýs), descente de rivière en canoë, vrai tracé des grands itinéraires (TMB), échelle d'un pays (l'IA nomme : Patagonie 8 lieux introuvables, Islande en zigzag, 7 nuits à Chiang Rai), randonnée dans une grande île (Sardaigne : Cagliari → Alghero) |
-| P0.4 | Dates et trajets | Partiel | Route plafonnée selon la durée (week-end ≤ 450 km, sinon avion). Nuit du 7 : **train** en Europe de l'Ouest (150 à 1 200 km, trajet tenant dans le voyage, île écartée par la route mesurée) avant l'avion (Ardennes, Mercantour). Reste : choix d'aéroport |
-| P0.5 | Budget et conseils | Partiel | Kit d'une sortie de quelques heures allégé ; le budget ne compte que le matériel indispensable. Nuit du 7 : **papiers, change et prises par règles** (l'IA écrivait « passeport obligatoire » pour l'Italie, la Grèce, la Belgique, l'Irlande et même la Dordogne) ; niveaux de prix pour tous les pays de l'ONU ; l'IA tutoie. Reste : les autres conseils restent du texte libre de l'IA |
+| P0.1 | Préparation en une seule passe (300 s) | **Fait** (preuve preview) | Travail en arrière-plan (`after`), l'écran relit l'issue toutes les 4 s. 8 oct. : « Arrêter » arrête aussi le serveur (retour Codex) ; une préparation n'est plus relancée parce qu'elle a elle-même retenu un lieu naturel (Ardennes), ni écrasée par un lancement en double juste après sa réussite (écran bloqué) |
+| P0.2 | Compréhension de la demande et résolution du lieu | Partiel | 50/50 lues correctement hors ligne. En ligne corrigés : plein air → lieu naturel (Chartreuse massif, Loire fleuve, Calanques parc), pays entier (États-Unis Ouest), « nuits dehors » inventées par l'IA ; « GR34 » → région du sentier (GR65, GR70 ajoutés). 8 oct. : **raquettes Vercors en janvier prouvé en ligne** (dates posées, base Gresse-en-Vercors) ; les précisions choisies (durée, groupe, activité) priment sur la phrase et l'IA (retour Codex) ; sur l'eau, la rivière homonyme cherchée avec son article (« Le Tarn ») |
+| P0.3 | Itinéraire déterministe | Partiel | Lieux réels (Photon → Overpass + Geoapify), hauteurs pour marche et ski, départ d'une ville dite. **Prouvés en ligne le 8 oct.** : Jura à vélo (5 lieux distincts), Beaufortain (parcours du catalogue), journée Mercantour (départ Saint-Étienne-de-Tinée « au cœur »), Dolomites (base Pecol, village d'altitude, plus Brugnàch), Cévennes (boucle Portes → Concoules → Génolhac), Malaga en un seul nom, **descentes de rivière en canoë** : Dordogne (54 km en 3 jours, Sainte-Mondane → Domme → Allas-les-Mines), Tarn (46 km, Brousse-le-Château → Trébas → Ambialet, après avoir cherché « Le Tarn » sous son article), Ardèche (34 km en 2 jours, Balazuc → Sampzon), un soir au bord de l'eau ; un repli dit sa cause. Irlande : plus de « West Clare Municipal District » (reprouvé à 7 h 04 : Shannon). Reste : Kalymnos (base Vathýs, sans données de falaises), échelle d'un pays (Patagonie : nuits au « Lago de los Tres », « Canal de Beagle »), randonnée dans une grande île (Sardaigne en voiture d'étape en étape, « Mòguru/Mogoro »), vrai tracé des grands itinéraires (TMB) |
+| P0.4 | Dates et trajets | Partiel | Route plafonnée selon la durée. **Train prouvé en ligne** (Ardennes, environ 6 h ; Mercantour) ; Sardaigne en avion (plus en train). Départ au nom de la commune (plus « Chantier Hotel de Ville »). Reste : journée à plus de 3 h de trajet non signalée (Mercantour depuis Annecy : train 2 × 3 h 20 pour une journée, gare absente à Saint-Étienne-de-Tinée), choix d'aéroport |
+| P0.5 | Budget et conseils | Partiel | **Papiers, change et prises par règles, prouvés en ligne** (Italie, Espagne, Grèce, Belgique : carte d'identité ; Irlande : adaptateur G ; Argentine : passeport). Niveaux de prix pour tous les pays de l'ONU. Conseils de l'IA : accents et **tutoiement par règle** (Bruges vouvoyait encore : impératifs mis au tutoiement, un conseil qui vouvoie est écarté) ; chaque journée dit son moyen (pagaie ≠ randonnée). Reste : les autres conseils restent du texte libre de l'IA |
 | P0.6 | Fallbacks propres | Partiel | Geoapify actif (clé sur Vercel) ; la note d'un repli dit ce que chaque carte a répondu ; limite de fréquence affichée comme une attente. Reste : résultat complet garanti |
 | P0.7 | IA production : NVIDIA NIM direct (Nemotron 3.5 Lightning) | Fait | Décision de Tony (7 oct., soir) : on reste sur NVIDIA ; le passage OpenRouter est annulé |
 | — | Contexte du voyage unique (`buildTripContext`) | **Fait** | `engine/tripContext.ts`, testé |
@@ -38,7 +37,8 @@ prouvés en ligne** (conteneur sans accès à la preview ni aux services de cart
 | 10 parcours de zone (7 octobre) | 9 sur lieux réels ; 2 défauts (Rome, Vosges), 3 partiels (Vercors, Jura, canoë) |
 | 20 parcours réels | À rejouer après P0 |
 | 50 demandes entièrement nouvelles | En ligne (7 oct.) : 47/50 prêtes au premier passage, 15 défauts corrigés à la racine pendant le test, 17 rejouées : toutes préparées (2 bloquées par la limite de fréquence, rejouées) |
-| Passage du 7 oct. 19 h 17 – 20 h 30 (preview `ce534c0`, lu en base) | 38 voyages : 36 préparés, 1 en attente de la limite de fréquence, 1 sans dates (raquettes). Défauts relevés : papiers faux (7 voyages), GR34 dans l'Indre, « shanty », « West Clare Municipal District », Albertville « au cœur », Jura bloqué 2 jours, Malaga / Málaga, avion pour les Ardennes et le Mercantour → **corrigés la nuit, à reprouver en ligne** ; base Dolomites et Kalymnos, canoë Dordogne, TMB, échelle d'un pays → ouverts (P0.3, P1.1) |
+| Passage du 7 oct. 19 h 17 – 20 h 30 (preview `ce534c0`, lu en base) | 38 voyages : 36 préparés, 1 en attente de la limite de fréquence, 1 sans dates (raquettes). Défauts relevés → corrigés la nuit, reprouvés le 8 (lignes ci-dessous) |
+| Passages du 7 oct. 21 h et du 8 oct. 5 h 39 – 7 h 06 (preview PR #72, lus en base) | 31 voyages, dont 26 au premier passage : 25 préparés ; Ardennes (21 h 11) défait aussitôt puis bloqué par la limite de fréquence, et un écran resté en attente sur un lancement en double (données écrites) → **deux causes corrigées**. **Prouvés** : papiers, train, Jura, Beaufortain, Mercantour, Dolomites, Vercors en janvier, Cévennes, Malaga, Dordogne en canoë, tutoiement (Bruges reprouvé à 6 h 27). Tarn et Ardèche en canoë reprouvés à 6 h 47, « West Clare » à 7 h 04 (Shannon). Ouverts : Kalymnos, Patagonie, Sardaigne, journée lointaine |
 
 ## P3 — Après stabilisation (gelé)
 
@@ -46,11 +46,11 @@ Réservations réelles (Travelpayouts, RouteStack, Viator), équipe / social, bo
 hors ligne, affiliation, animations, polish de maquette et desktop. Accessibilité : close pour
 l'instant.
 
-## Blocages (nuit du 7 octobre)
+## Blocages (8 octobre)
 
-- Le conteneur cloud n'atteint ni la preview (`*.vercel.app`), ni Supabase en direct, ni NVIDIA, Photon, Overpass, MET Norway, Geoapify : à ouvrir dans les réglages réseau de l'environnement (accès complet, ou ces domaines).
-- Vercel refuse l'accès au projet (403 sur `tonyfaracip-3325s-projects`) : ni déploiements, ni journaux.
-- Supabase reste lisible (outil MCP) : les passages en ligne se contrôlent en base.
+- Réseau ouvert : la preview, Photon et Supabase répondent depuis le conteneur ; Overpass reste instable depuis ici (miroirs en 500/504).
+- Vercel refuse toujours les journaux du projet (403 sur `tonyfaracip-3325s-projects`) : le diagnostic passe par les notes écrites en base.
+- Réservations (P3, gelé) : RouteStack donne de **vraies offres d'hôtels** en ligne (Annecy : B&B Hotel, Moxy, Campanile…) et des **vols en aller simple** avec des codes d'aéroport (Genève → Lisbonne, 133,99 USD). Restent : aller-retour au-delà de 12 s, noms de villes en français (« Lisbonne ») non résolus, voiture à nommer en anglais ; `ROUTESTACK_MODE` est en `sandbox` sur Vercel.
 
 ## Décisions en vigueur
 
