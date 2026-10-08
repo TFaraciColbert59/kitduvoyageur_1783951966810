@@ -800,7 +800,9 @@ async function resolveLocation(
   callTool: RouteStackToolCaller,
   vertical: BookingVertical,
   value: string,
-  localize: PlaceNameLocalizer
+  localize: PlaceNameLocalizer,
+  /** Lieux proposés et retenus, écrits au journal si RouteStack refuse la recherche. */
+  trail?: string[]
 ): Promise<ResolvedLocation> {
   const trimmed = value.trim();
   if (vertical === 'flight' && /^[A-Z]{3,4}$/i.test(trimmed)) {
@@ -816,10 +818,7 @@ async function resolveLocation(
     const records = findRecords(payload, ['result', 'results', 'locations', 'destinations', 'data']);
     const picked = vertical === 'flight' ? pickFlightLocation(records, term) : records[0];
     // Données publiques (codes et noms de lieux) : de quoi voir pourquoi un lieu est mal choisi.
-    console.info(
-      '[routestack] lieux',
-      JSON.stringify({ tool, term, picked: picked ?? null, candidates: records.slice(0, 5) }).slice(0, 1500)
-    );
+    trail?.push(JSON.stringify({ tool, term, picked: picked ?? null, candidates: records.slice(0, 6) }).slice(0, 1500));
     return picked;
   };
   let record = await lookup(trimmed);
@@ -861,14 +860,15 @@ async function resolveLocation(
 async function argumentsForRequest(
   request: BookingSearchRequest,
   callTool: RouteStackToolCaller,
-  localize: PlaceNameLocalizer
+  localize: PlaceNameLocalizer,
+  trail?: string[]
 ): Promise<Record<string, unknown>> {
   const travelers = request.travelers ?? 1;
   const currency = request.currency ?? 'EUR';
   const limit = request.limit ?? DEFAULT_LIMIT;
   if (request.vertical === 'flight') {
-    const origin = await resolveLocation(callTool, 'flight', request.origin, localize);
-    const destination = await resolveLocation(callTool, 'flight', request.destination, localize);
+    const origin = await resolveLocation(callTool, 'flight', request.origin, localize, trail);
+    const destination = await resolveLocation(callTool, 'flight', request.destination, localize, trail);
     // Corps de POST /mcp/flight/search (collection Postman RouteStack), que
     // l'outil MCP `flight_search` attend sous `filter`.
     return {
@@ -1052,8 +1052,9 @@ export function createRouteStackBookingProvider(
       const name = toolNameForVertical(validated.vertical);
       let args: Record<string, unknown> | undefined;
       let payload: unknown;
+      const trail: string[] = [];
       try {
-        args = await argumentsForRequest(validated, callTool, localize);
+        args = await argumentsForRequest(validated, callTool, localize, trail);
         payload = parseToolPayload(
           validated.vertical === 'flight'
             ? await callTool(name, args, { timeoutMs: FLIGHT_SEARCH_TIMEOUT_MS })
@@ -1071,6 +1072,7 @@ export function createRouteStackBookingProvider(
               ? `${validated.destination} = ${String((filter.pickup as Record<string, unknown> | undefined)?.name)}`
               : null;
         if (used && normalized.code === BOOKING_PROVIDER_ERROR_CODES.upstream) {
+          if (trail.length) console.warn('[routestack] recherche refusée, lieux', trail.join(' | '));
           throw new BookingProviderError({
             code: normalized.code,
             provider: 'routestack',
