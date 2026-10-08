@@ -7,6 +7,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
+import { getCaptchaToken } from '@/lib/captcha/hcaptcha';
 import { useAuth } from '@/contexts/AuthContext';
 import AppShell from '@/components/shell/AppShell';
 import { Button, Card } from '@/components/ui';
@@ -34,7 +35,12 @@ export default function InscriptionPage() {
     setLoading(true);
     try {
       const supabase = createClient();
-      const { error: signUpError } = await supabase.auth.signUp({ email: form.email, password: form.password, options: { data: { full_name: form.fullName } } });
+      const captchaToken = await getCaptchaToken();
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: { data: { full_name: form.fullName }, ...(captchaToken ? { captchaToken } : {}) },
+      });
       if (signUpError) throw signUpError;
       setSuccess(true);
     } catch (err: unknown) {

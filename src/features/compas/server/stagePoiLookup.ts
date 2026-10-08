@@ -34,60 +34,42 @@ const TTL_S = 7 * 86_400;
 const TIMEOUT_MS = 12_000;
 /** Une fonction Vercel s'arrête à 60 s : un appel ne cherche jamais plus de ~30 s. */
 const BUDGET_MS = 28_000;
-/** Instances publiques, essayées dans l'ordre (la première qui répond). */
-const ENDPOINTS = [
-  'https://overpass-api.de/api/interpreter',
-  'https://overpass.private.coffee/api/interpreter',
-  'https://overpass.kumi.systems/api/interpreter',
-];
-const UA = 'kitduvoyageur/1.0 (Compas, preparation de voyage)';
-/** Miroirs en plus pour les lieux d'une zone (interrogés ensemble, la première bonne réponse gagne). */
-const AREA_ENDPOINTS = [
-  ...ENDPOINTS,
-  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
-  'https://overpass.openstreetmap.ru/api/interpreter',
-];
-
 /**
- * Les instances publiques limitent par adresse (Vercel partage les siennes) :
- * pour l'itinéraire, toutes sont interrogées en même temps et la première
- * réponse complète l'emporte ; les autres sont abandonnées. Rien → null.
+ * Un seul serveur Overpass : private.coffee, le seul qui autorise l'usage
+ * commercial (« including commercial use », vérifié le 8 octobre,
+ * `docs/compas/SERVICES-GRATUITS.md`). overpass-api.de et ses miroirs renvoient
+ * les usages commerciaux vers leurs propres serveurs. L'opérateur demande
+ * d'éviter les requêtes simultanées : une à la fois, jamais en course.
  */
-async function overpassRace(query: string, timeoutMs: number): Promise<unknown | null> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await Promise.any(
-      AREA_ENDPOINTS.map(async (url) => {
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            Accept: 'application/json',
-            'User-Agent': UA,
-          },
-          body: `data=${encodeURIComponent(query)}`,
-          signal: controller.signal,
-          cache: 'no-store',
-        });
-        if (!res.ok) throw new Error(`${new URL(url).host} ${res.status}`);
-        const json = await res.json();
-        if (!overpassUsable(json)) throw new Error(`${new URL(url).host} réponse coupée`);
-        return json;
-      })
-    );
-  } catch (err) {
-    const reasons = err instanceof AggregateError ? err.errors.map((e) => (e instanceof Error ? e.message : 'erreur')) : [];
-    console.warn('[compas] lieux de la zone : aucune instance', reasons.join(' · '));
+export const OVERPASS_ENDPOINTS = ['https://overpass.private.coffee/api/interpreter'] as const;
+const UA = 'kitduvoyageur/1.0 (Compas, preparation de voyage; koosmoweb.fr)';
+
+/** Lieux d'une zone : le même serveur, une requête, une seule réponse attendue. Rien → null. */
+async function overpassArea(query: string, timeoutMs: number): Promise<unknown | null> {
+  const payload = await overpass(query, Date.now() + timeoutMs, timeoutMs);
+  if (payload && !overpassUsable(payload)) {
+    console.warn('[compas] lieux de la zone : réponse coupée');
     return null;
-  } finally {
-    clearTimeout(timer);
-    controller.abort();
   }
+  if (!payload) console.warn('[compas] lieux de la zone : Overpass sans réponse');
+  return payload;
 }
 
-async function overpass(query: string, deadline: number, timeoutMs = TIMEOUT_MS): Promise<unknown | null> {
-  for (const url of ENDPOINTS) {
+/**
+ * File d'attente unique : tous les appels Overpass de cette instance passent
+ * un par un (l'opérateur de private.coffee demande d'éviter les requêtes
+ * simultanées ; `lookupStagePois` cherchait deux lieux en même temps).
+ */
+let overpassChain: Promise<unknown> = Promise.resolve();
+
+function overpass(query: string, deadline: number, timeoutMs = TIMEOUT_MS): Promise<unknown | null> {
+  const run = overpassChain.then(() => overpassNow(query, deadline, timeoutMs));
+  overpassChain = run.catch(() => null);
+  return run;
+}
+
+async function overpassNow(query: string, deadline: number, timeoutMs: number): Promise<unknown | null> {
+  for (const url of OVERPASS_ENDPOINTS) {
     const left = deadline - Date.now();
     if (left < 3000) break;
     try {
@@ -204,7 +186,7 @@ export async function lookupRiverLine(
     async () => {
       const left = deadline - Date.now();
       if (left < 5000) return null;
-      const payload = await overpassRace(query, Math.min(20_000, left));
+      const payload = await overpassArea(query, Math.min(20_000, left));
       const line = payload ? chainRiver(parseRiverWays(payload)) : [];
       // ~1 point par 300 m sur une grande rivière : assez fin pour placer les soirs.
       return line.length >= 2 ? simplifyLine(line, 1500) : null;
@@ -249,7 +231,7 @@ export async function lookupAreaPlaces(
       // souvent muet depuis Vercel ; l'attendre d'abord privait Geoapify de temps).
       const budget = Math.min(15_000, left());
       const [payload, fromGeoapify] = await Promise.all([
-        overpassRace(query, budget),
+        overpassArea(query, budget),
         geoapifyArea(q, Math.min(10_000, budget)),
       ]);
       const places = payload ? parseAreaPlaces(payload) : [];

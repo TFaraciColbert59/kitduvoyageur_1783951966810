@@ -93,4 +93,13 @@ describe('essai sans compte', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     expect(await trialLoginAction()).toEqual({ success: false, error: 'Essai sans compte impossible pour le moment.' });
   });
+
+  it('jeton hCaptcha du navigateur transmis à Supabase (protection anti-robots)', async () => {
+    h.anonymousOn = true;
+    await trialLoginAction('jeton-hcaptcha');
+    expect(h.signIn).toHaveBeenCalledWith({ options: { captchaToken: 'jeton-hcaptcha' } });
+    h.signIn.mockClear();
+    await trialLoginAction();
+    expect(h.signIn).toHaveBeenCalledWith(undefined);
+  });
 });

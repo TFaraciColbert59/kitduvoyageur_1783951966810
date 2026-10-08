@@ -82,6 +82,8 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 1.2 Hébergement Vercel
 
+- [x] ⚖️ **Décision de Tony (8 oct.) : Hobby pour l'instant, Stripe reste éteint.**
+      Passer en Pro (20 $/mois) le jour où le site vend.
 - [ ] ⚖️ **Offre Hobby et usage commercial** (vérifié le 8 oct., `SERVICES-GRATUITS.md`) :
       « Hobby teams are restricted to non-commercial personal use only » ; sont
       commerciaux « any method of requesting or processing payment » et un site dont
@@ -111,20 +113,26 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       commercial) en premier secours : **attribution « Powered by Geoapify »** affichée ;
       `limit=500` ramené au nécessaire ; compteur de crédits du jour en base (géocodage
       et routage ensemble), arrêt à 2 700. Preuve : compteur, attribution visible.
-- [ ] **LocationIQ gratuit** (5 000 req/jour, commercial avec lien visible) en second
-      secours ; « Search by LocationIQ.com » dans les mentions. Compte à créer par Tony.
+- [~] **LocationIQ gratuit** (5 000 req/jour, commercial avec lien visible) : compte
+      créé par Tony (8 oct.) ; avec `LOCATIONIQ_API_KEY`, **tous les appels Nominatim du
+      Compas passent par LocationIQ** (même moteur, `src/features/compas/server/locationIq.ts`,
+      2 req/s) ; « Search by LocationIQ.com » cliquable dans les mentions légales.
+      Preuve en production après fusion (`/api/compas/sources`).
 - [ ] **Photon public** (pas de clause commerciale, « usage raisonnable ») : dernier
       recours seulement ; User-Agent `koosmoweb.fr` + contact ; rythme global limité
       (jeton en base) ; cache 30 j.
-- [ ] **Nominatim public retiré du trafic courant** (« periodic requests from apps are
-      considered bulk geocoding ») : département d'un point = `admin_regions_geo` ;
-      `officialAlerts` et le reste passent par le référentiel ou Geoapify.
+- [~] **Nominatim public retiré du trafic courant** (« periodic requests from apps are
+      considered bulk geocoding ») : remplacé par LocationIQ dans le Compas dès que la
+      clé est lue (lot B). Reste : `officialAlerts` et les modules hors Compas.
 - [ ] Positions envoyées arrondies à 0,01° (RGPD, 2.10).
 
 ### 1.4 Points autour des étapes (Overpass)
 
-- [ ] **Fin de la course à 5 instances** ; plus aucun miroir russe ; retrait
-      d'overpass-api.de, `lz4`, kumi.systems (non autorisés ou non vérifiés).
+- [~] **Fin de la course à 5 instances** dans le Compas (`stagePoiLookup.ts`, lot B) :
+      private.coffee seul, une requête à la fois, test de garde
+      (`overpassEndpoints.test.ts`). Reste hors Compas : `lib/queries/amenities.ts`
+      (Partir librement), `explorer-osm/adapters/overpassAdapter.ts`,
+      `trips/connectors/realDataConnectors.ts`.
 - [ ] Un seul fournisseur autorisé en commercial : **private.coffee** (« including
       commercial use », pas de limite, éviter les requêtes simultanées), après les avoir
       prévenus (support@private.coffee) ; requêtes en série, jamais en parallèle.
@@ -148,20 +156,24 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 1.6 Fond de carte
 
-- [ ] Retirer les fonds non autorisés en commercial : Esri sans clé
-      (`server.arcgisonline.com`, 10 usages), OSM France (« site sans but lucratif »,
-      10 usages), OpenTopoMap (conditions non vérifiées).
+- [~] Retirer les fonds non autorisés en commercial : fait dans le moteur commun
+      (`components/map/engine/createMapStyle.ts` : carte du Compas, Explorer, globe Pays),
+      lot B. Reste les cartes Leaflet (Explorer historique, carnet, hub, départ, groupes,
+      hors ligne : `server.arcgisonline.com`, OSM France, OpenTopoMap).
 - [ ] Fond standard : **OpenFreeMap** (vecteur, sans clé ni limite, commercial
       autorisé) via MapLibre (ou extension MapLibre de Leaflet) ; attribution
       « OpenFreeMap © OpenMapTiles Data from OpenStreetMap ». Prévoir un repli : il peut
       s'arrêter sans préavis.
-- [ ] Relief et satellite : **ArcGIS Location Platform** gratuit (2 M tuiles et
-      1 000 sessions par mois, commercial autorisé avec clé ; coupé au-delà) ; clé
-      restreinte au domaine ; « Powered by Esri » + crédits ; compteur de sessions.
-      Compte à créer par Tony.
+- [~] Relief, standard et satellite : **ArcGIS Location Platform** gratuit (2 M tuiles
+      et 1 000 sessions par mois, commercial autorisé avec clé ; coupé au-delà) ; compte
+      et clé créés par Tony (8 oct.) ; `arcgis/outdoor` (relief), `open/osm-style`
+      (standard), `World_Imagery` (satellite) ; « Powered by Esri » sur la carte et dans
+      les mentions. Reste : compteur de sessions, preuve visuelle en production.
 
 ### 1.7 IA à 0 €
 
+- [x] ⚖️ **Décision de Tony (8 oct.) : IA NVIDIA gardée allumée.** Le Compas garde
+      quand même un chemin complet sans IA (repli si la clé gratuite est coupée).
 - [ ] ⚖️ **Licence** (vérifié le 8 oct.) : l'essai NVIDIA ne couvre pas la production
       (« any non-testing activity including activity serving real end-users » exige une
       licence AI Enterprise). **Aucune IA gratuite n'est utilisable en production
@@ -201,47 +213,64 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 2.1 Caches partagés
 
-- [~] **`POST /api/route/cache` fermé au public** : écriture signée HMAC par le serveur
-      (`src/lib/routeCacheSignature.ts`), 5 000 points au plus par tronçon ; sur la
-      branche (42c7e16), preuve en production après fusion.
+- [x] **`POST /api/route/cache` fermé au public** : écriture signée HMAC par le serveur
+      (`src/lib/routeCacheSignature.ts`), 5 000 points au plus par tronçon. PR #76 ;
+      **prouvé en production le 8 oct.** : écriture non signée → 403
+      `signature_expected` ; trajet mesuré par `/api/route` écrit (signé) dans
+      `route_cache`.
 - [x] Test : une écriture sans signature est refusée (403), rien n'entre en base
       (`tests/routing/route-signature.spec.ts`, I4-CACHE-01b).
 
 ### 2.2 Limite de fréquence et abus
 
-- [~] **Limite distribuée gratuite** : fenêtre fixe en base (`rate_limit_consume`,
+- [x] **Limite distribuée gratuite** : fenêtre fixe en base (`rate_limit_consume`,
       table non journalisée, clés hachées, exécutable par le seul rôle de service ;
-      migration `20261008164423` appliquée et vérifiée le 8 oct.) au lieu de la
-      mémoire par instance, pour **toutes** les routes limitées (Upstash reste
-      prioritaire s'il est un jour configuré). Preuve en production après fusion.
-- [~] **Contournement par `autofill_pending` fermé** : une reprise (phase « rest »)
-      a sa propre limite par personne (12 / 10 min) ; réécrire l'état ne relance plus
-      rien sans compter (test `autofillLimits.test.ts`). L'état reste dans
-      `trips.metadata` (son déplacement relève de 2.7, écritures concurrentes).
-- [~] Plafond global : 120 préparations par heure pour tout le site, message propre.
+      migration `20261008164423`) au lieu de la mémoire par instance, pour **toutes**
+      les routes limitées (Upstash reste prioritaire s'il est un jour configuré).
+      **Prouvé en production le 8 oct.** : une préparation réelle = 10 fenêtres en base
+      (essai, lancement, site…). Les appels internes signés (`/api/route` → cache) ne
+      passent plus par le compteur par adresse (sortie Vercel commune, revue Codex).
+- [x] **Contournement par `autofill_pending` fermé** : une reprise (phase « rest »)
+      a sa propre limite par personne (12 / 10 min) et pour le site (240 / h) ;
+      réécrire l'état ne relance plus rien sans compter (`autofillLimits.test.ts`).
+      L'état reste dans `trips.metadata` (son déplacement relève de 2.7).
+- [x] Plafond global : 120 lancements par heure pour tout le site, message propre.
 - [ ] Limite sur `compasSetDestinationAction` et les actions qui appellent la carte.
-- [~] Message juste quand la limite est atteinte (plus « déjà lancée plusieurs fois ») :
+- [x] Message juste quand la limite est atteinte (plus « déjà lancée plusieurs fois ») :
       personne, site, ou compteur indisponible, chacun dit.
-- [ ] Protection des inscriptions et des sessions anonymes contre les comptes en série :
-      **hCaptcha gratuit** branché sur Supabase Auth (Turnstile exclu : Cloudflare) ;
-      BotID basique de Vercel sur les actions coûteuses ; limite d'IP de Supabase Auth
-      (30 sessions anonymes/heure par défaut) gardée.
+- [~] Protection des inscriptions et des sessions anonymes contre les comptes en série :
+      **hCaptcha gratuit** invisible (`src/lib/captcha/hcaptcha.ts`, sans dépendance) ;
+      jeton joint à la connexion, l'inscription (deux pages), l'essai sans compte et le
+      mot de passe oublié (lot B), défi en français. **Éteint pendant le chantier** :
+      prouvé sur l'aperçu le 8 oct. (un navigateur automatique reçoit un défi visuel),
+      donc une fois imposé, plus aucune vérification automatique en production ne
+      pourrait se connecter. Interrupteur `NEXT_PUBLIC_AUTH_CAPTCHA=on` (Vercel) ;
+      **allumé au lancement (phase 7)** en même temps que la protection de Supabase
+      (Authentication → Bot and Abuse Protection → hCaptcha, clé secrète). D'ici là :
+      limite d'IP de Supabase Auth (30 sessions anonymes/heure), nos limites (5 essais
+      par heure et par adresse, 300 par jour pour le site) et la purge à 7 jours.
+      BotID de Vercel sur les actions coûteuses : à faire.
 
 ### 2.3 Connexion démo
 
-- [~] **Essai sans compte** (sessions anonymes Supabase, gratuites) à la place du compte
+- [x] **Essai sans compte** (sessions anonymes Supabase, gratuites) à la place du compte
       démo partagé : bouton « Essayer sans compte » sur `/connexion`, compté par
       adresse (5/h) et pour le site (300/jour) ; la connexion démo se ferme d'elle-même
       dès que Supabase ouvre les connexions anonymes (`/auth/v1/settings`, relu toutes
       les 5 min). En base (`20261008165901`, appliquée le 8 oct.) : profil sans e-mail
       (`<id>@essai.invalid`), 38 politiques restrictives « rien de public ni de social
       depuis un essai », invitations refusées avec un message clair.
-- [ ] 🔒 **Tony, dans Supabase** (rien d'autre ne l'ouvre) : (1) lancer
-      `20261008180000_anonymous_trial_purge.sql` dans le SQL Editor (purge des essais
-      inactifs depuis 7 jours, chaque nuit, `pg_cron`) ; (2) Authentication → Sign In /
-      Providers → **Allow anonymous sign-ins**. Puis Claude prouve l'essai en
-      production et retire le compte démo (mot de passe remplacé par une valeur
-      aléatoire tirée en base, variables `DEMO_LOGIN_*` à retirer).
+      **Prouvé en production le 8 oct.** : « Essayer sans compte » → compte anonyme,
+      profil `…@essai.invalid` « Voyageur à l'essai », voyage « Randonnée · Vercors »
+      préparé en 65 s (3 étapes, 253 €, 13 objets) ; une session anonyme qui écrit
+      dans `community_posts`, `trip_invitations` ou `messages` reçoit 403 (RLS).
+- [x] Tony (8 oct.) : purge lancée dans le SQL Editor (`purge_anonymous_users`, tâche
+      `pg_cron` « purge-essais-anonymes » chaque nuit à 3 h 17, migration
+      `20261008180000` inscrite) ; **Allow anonymous sign-ins** allumé.
+- [x] Compte démo fermé : mot de passe remplacé par une valeur aléatoire tirée en
+      base (personne ne la connaît) ; l'ancien mot de passe, publié dans le code,
+      est refusé (8 oct.). Reste : retirer `DEMO_LOGIN_*` de Vercel (Tony, sans
+      urgence : le bouton démo ne s'affiche plus).
 - [ ] Captcha hCaptcha sur l'essai et l'inscription (compte gratuit à créer par Tony).
 - [ ] Garder son essai : lier un e-mail à la session anonyme (« manual linking » à
       allumer dans Supabase) au lieu de créer un nouveau compte qui perd le voyage.
@@ -479,14 +508,20 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 5.3 Légal visible
 
-- [ ] Attributions complètes et cliquables : OpenStreetMap (lien copyright), fond de
-      carte retenu (1.6), Geoapify, MET Norway, NASA POWER, Terrain Tiles, GeoNames,
-      Meteoalarm, BCE.
+- [~] Attributions complètes et cliquables : section « Sources des données et
+      licences » des mentions légales (OpenStreetMap, Esri, Photon, LocationIQ, Geoapify,
+      Overpass, MET Norway, NASA POWER), lot B. Reste : Terrain Tiles, GeoNames,
+      Meteoalarm, BCE ; « Powered by Geoapify » là où ses résultats s'affichent.
 - [ ] Mention IA au démarrage, sur les conseils et sur toute étape proposée par l'IA
       (AI Act art. 50).
 - [ ] Mention d'affiliation dans la recherche d'hébergement en direct ; placée avant la
       liste dans Parcours.
-- [ ] Politique de confidentialité et mentions légales (2.10).
+- [~] Politique de confidentialité et mentions légales (2.10) : hébergeur corrigé
+      (Vercel et non Netlify ; base à Paris et non Francfort), NVIDIA, services de carte et
+      hCaptcha ajoutés aux destinataires (lot B).
+- [ ] ⚖️ **Identité de l'éditeur à fournir par Tony** : les mentions légales affichent
+      une société d'exemple (« 1 Rue de la Paix », SIRET 123 456 789). Obligatoire (LCEN)
+      avant toute ouverture au public ; Claude n'invente rien ici.
 
 ### 5.4 Mobile (Capacitor)
 
@@ -557,6 +592,9 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [ ] Charge simulée : 1 000 préparations/jour dans les quotas gratuits (Geoapify,
       Photon, routage, MET Norway, Supabase) ; marge mesurée.
 - [ ] Bêta : 10 vrais voyageurs, retours lus en base ; taux de réussite ≥ 97 %.
+- [ ] Au lancement, dans cet ordre : protection hCaptcha allumée dans Supabase (clé
+      secrète), puis `NEXT_PUBLIC_AUTH_CAPTCHA=on` dans Vercel et redéploiement ;
+      vérifier une connexion, une inscription et un essai à la main.
 - [ ] Critère de lancement francophone : phases 1, 2, 3.2, 4.1 à 4.7, 5 terminées.
 - [ ] Critère de lancement mondial : phase 6 terminée, jeu « monde » ≥ 95 %.
 
@@ -591,14 +629,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ## Décisions de Tony (⚖️)
 
-| # | Sujet | Recommandation de Claude (0 €) |
-|---|---|---|
-| 1 | Vercel Hobby et usage commercial (Stripe = commercial, vérifié) | Couper paiement et affiliation en production par drapeau tant que l'offre est Hobby |
-| 2 | IA en production (aucune offre gratuite conforme, vérifié) | Compas complet sans IA ; IA éteinte pour les vrais utilisateurs |
-| 5 | Comptes gratuits (sans carte) : Geoapify, LocationIQ, ArcGIS Location Platform, hCaptcha | Tony les crée et pose les clés dans Vercel lui-même |
-| 6 | Essai sans compte : purge (SQL Editor) puis « Allow anonymous sign-ins » | Oui : ferme le compte démo partagé (2.3) |
-| 3 | Applications sur les stores | PWA à la place (0 €) |
-| 4 | Cible de lancement | Francophone d'abord (phase 7), puis monde (phase 6) |
+| # | Sujet | Recommandation de Claude (0 €) | Décision |
+|---|---|---|---|
+| 1 | Vercel Hobby et usage commercial (Stripe = commercial, vérifié) | Couper paiement et affiliation en production par drapeau tant que l'offre est Hobby | **Hobby pour l'instant, Stripe éteint** (8 oct.) |
+| 2 | IA en production (aucune offre gratuite conforme, vérifié) | Compas complet sans IA ; IA éteinte pour les vrais utilisateurs | **IA NVIDIA gardée allumée** (8 oct.) ; repli sans IA maintenu |
+| 5 | Comptes gratuits (sans carte) : Geoapify, LocationIQ, ArcGIS Location Platform, hCaptcha | Tony les crée et pose les clés dans Vercel lui-même | **Faits** (8 oct.) ; branchement par Claude |
+| 6 | Essai sans compte : purge (SQL Editor) puis « Allow anonymous sign-ins » | Oui : ferme le compte démo partagé (2.3) | **Fait** (8 oct.), prouvé en production |
+| 3 | Applications sur les stores | PWA à la place (0 €) | à venir |
+| 4 | Cible de lancement | Francophone d'abord (phase 7), puis monde (phase 6) | à venir |
 
 ## Ordre d'exécution
 

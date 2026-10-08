@@ -63,9 +63,12 @@ function MobilePCContent() {
       <section className={s}>
         <h2 className={h2}>4. Destinataires</h2>
         <p className={p}>
-          Vos données peuvent être transmises à Supabase (hébergement DB), Stripe (paiement),
-          Netlify (hébergement web), Google Analytics (avec consentement), et les services IA
-          (Anthropic, Google Gemini). Aucune donnée n&apos;est vendue à des tiers.
+          Vos données peuvent être transmises à Supabase (hébergement DB, Europe), Stripe (paiement),
+          Vercel (hébergement web), Google Analytics (avec consentement), les services IA
+          (NVIDIA, Anthropic, Google Gemini), et, pour les lieux et positions que vous recherchez,
+          aux services de carte et de météo (Photon, LocationIQ, Geoapify, Esri, MET Norway), ainsi
+          qu&apos;à hCaptcha (protection contre les robots lors de la connexion et de l&apos;inscription).
+          Aucune donnée n&apos;est vendue à des tiers.
         </p>
       </section>
       <section className={s}>

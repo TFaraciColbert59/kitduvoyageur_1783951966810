@@ -20,7 +20,7 @@ export async function trialLoginAvailableAction(): Promise<boolean> {
   return anonymousSignInsEnabled();
 }
 
-export async function trialLoginAction(): Promise<
+export async function trialLoginAction(captchaToken?: string): Promise<
   { success: true } | { success: false; error: string }
 > {
   if (!(await anonymousSignInsEnabled()))
@@ -51,7 +51,9 @@ export async function trialLoginAction(): Promise<
           : 'Beaucoup d’essais aujourd’hui : crée un compte pour commencer tout de suite.',
       };
     const supabase = await createClient();
-    const { error } = await supabase.auth.signInAnonymously();
+    // Jeton hCaptcha du navigateur : Supabase le vérifie si la protection est allumée.
+    const token = typeof captchaToken === 'string' && captchaToken.length <= 10_000 ? captchaToken : undefined;
+    const { error } = await supabase.auth.signInAnonymously(token ? { options: { captchaToken: token } } : undefined);
     if (error) {
       console.warn('[essai] signInAnonymously', error.message);
       return { success: false, error: 'Essai sans compte impossible pour le moment.' };

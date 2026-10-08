@@ -13,6 +13,7 @@ import { Button } from '@/components/ui';
 import { useTranslation } from '@/lib/i18n/context';
 import { demoLoginAction, demoLoginAvailableAction } from '@/features/demo/demoLogin';
 import { trialLoginAction, trialLoginAvailableAction } from '@/features/demo/trialSession';
+import { getCaptchaToken, hcaptchaSiteKey } from '@/lib/captcha/hcaptcha';
 
 type AuthMode = 'connexion' | 'inscription';
 
@@ -61,7 +62,7 @@ function AuthForm() {
     setError('');
     setDemoLoading(true);
     try {
-      const res = trialAvailable ? await trialLoginAction() : await demoLoginAction();
+      const res = trialAvailable ? await trialLoginAction(await getCaptchaToken()) : await demoLoginAction();
       if (!res.success) {
         setError(res.error);
         return;
@@ -89,8 +90,10 @@ function AuthForm() {
     setLoading(true);
     try {
       const supabase = createClient();
+      const captchaToken = await getCaptchaToken();
       const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/connexion`,
+        ...(captchaToken ? { captchaToken } : {}),
       });
       if (resetErr) throw resetErr;
       setResetSent(true);
@@ -122,7 +125,7 @@ function AuthForm() {
     setLoading(true);
     try {
       if (mode === 'connexion') {
-        const result = (await signIn(email, password)) as { user?: { id: string; email?: string } };
+        const result = (await signIn(email, password, await getCaptchaToken())) as { user?: { id: string; email?: string } };
         if (result?.user) await ensureProfile(result.user.id, result.user.email ?? email, '');
         trackEvent('login', { method: 'email' });
         toast(t('auth.toastWelcome'), 'success');
@@ -130,7 +133,7 @@ function AuthForm() {
         // concurrent de la destination (course → page « indisponible »).
         router.push(nextPath ?? '/compte');
       } else {
-        const result = (await signUp(email, password, { fullName: name })) as { user?: { id: string; email?: string }; session?: unknown };
+        const result = (await signUp(email, password, { fullName: name }, await getCaptchaToken())) as { user?: { id: string; email?: string }; session?: unknown };
         if (result?.session) {
           if (result?.user) await ensureProfile(result.user.id, result.user.email ?? email, name);
           trackEvent('sign_up', { method: 'email' });
@@ -324,6 +327,18 @@ function AuthForm() {
               <Button type="submit" loading={loading} fullWidth size="lg">
                 {loading ? t(mode === 'connexion' ? 'auth.submittingSignIn' : 'auth.submittingSignUp') : t(mode === 'connexion' ? 'auth.submitSignIn' : 'auth.submitSignUp')}
               </Button>
+              {hcaptchaSiteKey() && (
+                <p className="text-center text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                  Protégé par hCaptcha :{' '}
+                  <a href="https://www.hcaptcha.com/privacy" target="_blank" rel="noopener noreferrer" className="underline">
+                    confidentialité
+                  </a>{' '}
+                  ·{' '}
+                  <a href="https://www.hcaptcha.com/terms" target="_blank" rel="noopener noreferrer" className="underline">
+                    conditions
+                  </a>
+                </p>
+              )}
             </form>
           )}
           {(trialAvailable || demoAvailable) && mode === 'connexion' && !forgotPasswordOpen && (
