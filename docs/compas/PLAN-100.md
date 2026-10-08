@@ -113,20 +113,26 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       commercial) en premier secours : **attribution « Powered by Geoapify »** affichée ;
       `limit=500` ramené au nécessaire ; compteur de crédits du jour en base (géocodage
       et routage ensemble), arrêt à 2 700. Preuve : compteur, attribution visible.
-- [ ] **LocationIQ gratuit** (5 000 req/jour, commercial avec lien visible) en second
-      secours ; « Search by LocationIQ.com » dans les mentions. Compte à créer par Tony.
+- [~] **LocationIQ gratuit** (5 000 req/jour, commercial avec lien visible) : compte
+      créé par Tony (8 oct.) ; avec `LOCATIONIQ_API_KEY`, **tous les appels Nominatim du
+      Compas passent par LocationIQ** (même moteur, `src/features/compas/server/locationIq.ts`,
+      2 req/s) ; « Search by LocationIQ.com » cliquable dans les mentions légales.
+      Preuve en production après fusion (`/api/compas/sources`).
 - [ ] **Photon public** (pas de clause commerciale, « usage raisonnable ») : dernier
       recours seulement ; User-Agent `koosmoweb.fr` + contact ; rythme global limité
       (jeton en base) ; cache 30 j.
-- [ ] **Nominatim public retiré du trafic courant** (« periodic requests from apps are
-      considered bulk geocoding ») : département d'un point = `admin_regions_geo` ;
-      `officialAlerts` et le reste passent par le référentiel ou Geoapify.
+- [~] **Nominatim public retiré du trafic courant** (« periodic requests from apps are
+      considered bulk geocoding ») : remplacé par LocationIQ dans le Compas dès que la
+      clé est lue (lot B). Reste : `officialAlerts` et les modules hors Compas.
 - [ ] Positions envoyées arrondies à 0,01° (RGPD, 2.10).
 
 ### 1.4 Points autour des étapes (Overpass)
 
-- [ ] **Fin de la course à 5 instances** ; plus aucun miroir russe ; retrait
-      d'overpass-api.de, `lz4`, kumi.systems (non autorisés ou non vérifiés).
+- [~] **Fin de la course à 5 instances** dans le Compas (`stagePoiLookup.ts`, lot B) :
+      private.coffee seul, une requête à la fois, test de garde
+      (`overpassEndpoints.test.ts`). Reste hors Compas : `lib/queries/amenities.ts`
+      (Partir librement), `explorer-osm/adapters/overpassAdapter.ts`,
+      `trips/connectors/realDataConnectors.ts`.
 - [ ] Un seul fournisseur autorisé en commercial : **private.coffee** (« including
       commercial use », pas de limite, éviter les requêtes simultanées), après les avoir
       prévenus (support@private.coffee) ; requêtes en série, jamais en parallèle.
@@ -150,17 +156,19 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 1.6 Fond de carte
 
-- [ ] Retirer les fonds non autorisés en commercial : Esri sans clé
-      (`server.arcgisonline.com`, 10 usages), OSM France (« site sans but lucratif »,
-      10 usages), OpenTopoMap (conditions non vérifiées).
+- [~] Retirer les fonds non autorisés en commercial : fait dans le moteur commun
+      (`components/map/engine/createMapStyle.ts` : carte du Compas, Explorer, globe Pays),
+      lot B. Reste les cartes Leaflet (Explorer historique, carnet, hub, départ, groupes,
+      hors ligne : `server.arcgisonline.com`, OSM France, OpenTopoMap).
 - [ ] Fond standard : **OpenFreeMap** (vecteur, sans clé ni limite, commercial
       autorisé) via MapLibre (ou extension MapLibre de Leaflet) ; attribution
       « OpenFreeMap © OpenMapTiles Data from OpenStreetMap ». Prévoir un repli : il peut
       s'arrêter sans préavis.
-- [ ] Relief et satellite : **ArcGIS Location Platform** gratuit (2 M tuiles et
-      1 000 sessions par mois, commercial autorisé avec clé ; coupé au-delà) ; clé
-      restreinte au domaine ; « Powered by Esri » + crédits ; compteur de sessions.
-      Compte à créer par Tony.
+- [~] Relief, standard et satellite : **ArcGIS Location Platform** gratuit (2 M tuiles
+      et 1 000 sessions par mois, commercial autorisé avec clé ; coupé au-delà) ; compte
+      et clé créés par Tony (8 oct.) ; `arcgis/outdoor` (relief), `open/osm-style`
+      (standard), `World_Imagery` (satellite) ; « Powered by Esri » sur la carte et dans
+      les mentions. Reste : compteur de sessions, preuve visuelle en production.
 
 ### 1.7 IA à 0 €
 
@@ -230,10 +238,13 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [ ] Limite sur `compasSetDestinationAction` et les actions qui appellent la carte.
 - [x] Message juste quand la limite est atteinte (plus « déjà lancée plusieurs fois ») :
       personne, site, ou compteur indisponible, chacun dit.
-- [ ] Protection des inscriptions et des sessions anonymes contre les comptes en série :
-      **hCaptcha gratuit** branché sur Supabase Auth (Turnstile exclu : Cloudflare) ;
-      BotID basique de Vercel sur les actions coûteuses ; limite d'IP de Supabase Auth
-      (30 sessions anonymes/heure par défaut) gardée.
+- [~] Protection des inscriptions et des sessions anonymes contre les comptes en série :
+      **hCaptcha gratuit** invisible (`src/lib/captcha/hcaptcha.ts`, sans dépendance) ;
+      jeton joint à la connexion, l'inscription (deux pages), l'essai sans compte et le
+      mot de passe oublié (lot B). Ensuite **Tony allume le captcha dans Supabase**
+      (Authentication → Bot and Abuse Protection → hCaptcha, clé secrète), après la
+      fusion seulement. BotID de Vercel sur les actions coûteuses : à faire. Limite d'IP
+      de Supabase Auth (30 sessions anonymes/heure) gardée.
 
 ### 2.3 Connexion démo
 
@@ -492,14 +503,20 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 5.3 Légal visible
 
-- [ ] Attributions complètes et cliquables : OpenStreetMap (lien copyright), fond de
-      carte retenu (1.6), Geoapify, MET Norway, NASA POWER, Terrain Tiles, GeoNames,
-      Meteoalarm, BCE.
+- [~] Attributions complètes et cliquables : section « Sources des données et
+      licences » des mentions légales (OpenStreetMap, Esri, Photon, LocationIQ, Geoapify,
+      Overpass, MET Norway, NASA POWER), lot B. Reste : Terrain Tiles, GeoNames,
+      Meteoalarm, BCE ; « Powered by Geoapify » là où ses résultats s'affichent.
 - [ ] Mention IA au démarrage, sur les conseils et sur toute étape proposée par l'IA
       (AI Act art. 50).
 - [ ] Mention d'affiliation dans la recherche d'hébergement en direct ; placée avant la
       liste dans Parcours.
-- [ ] Politique de confidentialité et mentions légales (2.10).
+- [~] Politique de confidentialité et mentions légales (2.10) : hébergeur corrigé
+      (Vercel et non Netlify ; base à Paris et non Francfort), NVIDIA, services de carte et
+      hCaptcha ajoutés aux destinataires (lot B).
+- [ ] ⚖️ **Identité de l'éditeur à fournir par Tony** : les mentions légales affichent
+      une société d'exemple (« 1 Rue de la Paix », SIRET 123 456 789). Obligatoire (LCEN)
+      avant toute ouverture au public ; Claude n'invente rien ici.
 
 ### 5.4 Mobile (Capacitor)
 

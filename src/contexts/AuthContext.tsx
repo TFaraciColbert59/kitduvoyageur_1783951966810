@@ -24,8 +24,13 @@ interface AuthContextValue {
   session: Session | null;
   profile: UserProfile | null;
   loading: boolean;
-  signUp: (email: string, password: string, metadata?: { fullName?: string; avatarUrl?: string }) => Promise<unknown>;
-  signIn: (email: string, password: string) => Promise<unknown>;
+  signUp: (
+    email: string,
+    password: string,
+    metadata?: { fullName?: string; avatarUrl?: string },
+    captchaToken?: string
+  ) => Promise<unknown>;
+  signIn: (email: string, password: string, captchaToken?: string) => Promise<unknown>;
   signOut: () => Promise<void>;
   getCurrentUser: () => Promise<User | null>;
   isEmailVerified: () => boolean;
@@ -172,7 +177,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user?.id]);
 
-  const signUp = useCallback(async (email: string, password: string, metadata: { fullName?: string; avatarUrl?: string } = {}) => {
+  // `captchaToken` : jeton hCaptcha (`getCaptchaToken`), exigé par Supabase dès
+  // que la protection anti-robots est allumée ; absent, rien ne change.
+  const signUp = useCallback(async (
+    email: string,
+    password: string,
+    metadata: { fullName?: string; avatarUrl?: string } = {},
+    captchaToken?: string
+  ) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -182,14 +194,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           avatar_url: metadata?.avatarUrl || '',
         },
         emailRedirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`,
+        ...(captchaToken ? { captchaToken } : {}),
       },
     });
     if (error) throw error;
     return data;
   }, [supabase]);
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const signIn = useCallback(async (email: string, password: string, captchaToken?: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+      ...(captchaToken ? { options: { captchaToken } } : {}),
+    });
     if (error) throw error;
     return data;
   }, [supabase]);

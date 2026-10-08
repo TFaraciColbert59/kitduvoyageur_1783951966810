@@ -17,7 +17,7 @@ import { Badge, Button, Card, IconButton, Spinner, Tabs } from '@/components/ui'
 import type { MapTrail } from '@/components/explorer/types';
 import { getDifficultyColor, isValidLatLng, sanitizeGeoJSON } from '@/components/explorer/types';
 import type { UnifiedPOI } from '@/lib/queries/pois';
-import { createMapStyle, type AtlasTileMode } from './engine/createMapStyle';
+import { ATLAS_TILES, createMapStyle, type AtlasTileMode } from './engine/createMapStyle';
 import {
   computeCountryFlight,
   prefersReducedMotion,
@@ -1545,7 +1545,7 @@ export default function UnifiedExplorerMap({
       {/* Attribution légère (obligatoire pour les tuiles) — mobile : haut droite ; desktop : bas centre.
           P1 — compteur lisible : token caption-2 (11px), jamais text-[9px]. */}
       <div className={`pointer-events-none absolute z-[var(--z-sticky)] rounded-full bg-[color:var(--card-tint-strong)] px-2 py-1 text-[length:var(--lkv-text-caption-2)] leading-none text-[color:var(--lkv-text-muted)] ${attributionPosition}`}>
-        © OpenStreetMap France · Esri
+        {ATLAS_TILES[tileMode].short}
       </div>
 
       {/* Sélection pays (couche monde) — données réelles, jamais inventées. */}

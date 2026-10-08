@@ -3,9 +3,11 @@ import { createHash } from 'node:crypto';
 import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, isNotablePlace, pickDestination, pickNatural, type CompasPlace } from '../engine/places';
 import { cached, coordKey } from './sharedCache';
 import { geoapifyReverse, geoapifySearch } from './geoapify';
+import { locationIqKey, locationIqUrl, normalizeLocationIq } from './locationIq';
 
 /**
- * Recherche d'un lieu sur la carte (Photon, puis Nominatim, puis Geoapify ;
+ * Recherche d'un lieu sur la carte (Photon, puis Nominatim — par LocationIQ
+ * quand sa clé existe —, puis Geoapify ;
  * toujours des données OpenStreetMap), en
  * français. Mémoire courte côté serveur : une même étape n'est cherchée
  * qu'une fois. Réseau en panne → null, jamais un lieu deviné.
@@ -55,14 +57,24 @@ async function fetchJson(url: string, headers: Record<string, string>): Promise<
 }
 
 /** Nominatim exige au plus une requête par seconde et un User-Agent identifiant l'application. */
-const NOMINATIM_UA = 'kitduvoyageur/1.0 (Compas, preparation de voyage)';
+const NOMINATIM_UA = 'kitduvoyageur/1.0 (Compas, preparation de voyage; koosmoweb.fr)';
 let nominatimChain: Promise<unknown> = Promise.resolve();
+/**
+ * Une requête Nominatim, une à la fois. Avec la clé LocationIQ (même moteur,
+ * usage commercial autorisé), elle part chez LocationIQ (2 requêtes/s) ; sans,
+ * chez Nominatim (1 requête/s, trafic d'application déconseillé).
+ */
 function nominatimQueued(url: string): Promise<CompasPlace[] | null> {
+  const key = locationIqKey();
+  const viaLocationIq = key ? locationIqUrl(url, key) : null;
   const run = nominatimChain.then(async () => {
-    const payload = await fetchJson(url, { Accept: 'application/json', 'User-Agent': NOMINATIM_UA });
-    await new Promise((r) => setTimeout(r, 1100));
+    const payload = viaLocationIq
+      ? await fetchJson(viaLocationIq, { Accept: 'application/json' })
+      : await fetchJson(url, { Accept: 'application/json', 'User-Agent': NOMINATIM_UA });
+    await new Promise((r) => setTimeout(r, viaLocationIq ? 550 : 1100));
+    if (payload == null) return null;
     // La recherche renvoie une liste, le géocodage inverse un seul lieu.
-    return payload == null ? null : parseNominatim(Array.isArray(payload) ? payload : [payload]);
+    return parseNominatim(viaLocationIq ? normalizeLocationIq(payload) : Array.isArray(payload) ? payload : [payload]);
   });
   nominatimChain = run.catch(() => null);
   return run;
