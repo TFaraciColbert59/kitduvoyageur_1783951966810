@@ -104,7 +104,7 @@ import { unifyStageNames, untangleStages } from '../engine/stageOrder';
 import { localToday } from './weather';
 import { preparationEventKind, recordPreparationEvent } from './opsEvents';
 import { routeAscentM } from './elevation';
-import { estimatedLegKm, estimationNote, type LegDistanceSource, type LegMove } from '../engine/legDistance';
+import { estimatedLegKm, estimationNote, stepDistanceMetadata, type LegDistanceSource, type LegMove } from '../engine/legDistance';
 
 const MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 
@@ -1399,11 +1399,7 @@ export async function compasAutofillAction(
           distance_km: legs[i]?.km ?? (loopKm && i === 0 ? loopKm : null),
           elevation_gain_m: legs[i]?.ascent ?? null,
           // D'où vient la distance (plan 1.5) : le routeur qui l'a mesurée, ou « estimation ».
-          metadata: legs[i]?.source
-            ? { distance: { source: legs[i]?.source } }
-            : loopKm && i === 0
-              ? { distance: { source: 'estimation' } }
-              : null,
+          metadata: stepDistanceMetadata(legs[i]?.source ?? (loopKm && i === 0 ? 'estimation' : null)),
         }));
         if (rows.length) {
           const { data: insertedSteps, error: stepsError } = await supabase.from('trip_steps').insert(rows).select('id');

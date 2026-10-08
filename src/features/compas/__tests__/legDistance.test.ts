@@ -9,7 +9,7 @@
  *     le relief (Terrain Tiles) le long du tracé mesuré.
  */
 import { describe, expect, it, vi } from 'vitest';
-import { ascentFromElevations, estimatedLegKm, estimationNote, LEG_DETOUR } from '../engine/legDistance';
+import { ascentFromElevations, estimatedLegKm, estimationNote, LEG_DETOUR, stepDistanceMetadata } from '../engine/legDistance';
 
 const terrain = vi.hoisted(() => ({ calls: [] as Array<ReadonlyArray<readonly [number, number]>>, values: null as (number | null)[] | null }));
 vi.mock('@/lib/geo/terrainElevation', () => ({
@@ -43,6 +43,15 @@ describe('distance estimée, annoncée', () => {
     expect(note).toContain('vol d’oiseau × 1,4');
     expect(note).toContain('à vérifier');
     expect(estimationNote(12.5, 'velo')).toContain('12,5 km');
+  });
+});
+
+describe('source de la distance gardée avec l’étape', () => {
+  it('le routeur ou « estimation », et jamais null (colonne NOT NULL)', () => {
+    expect(stepDistanceMetadata('geoapify')).toEqual({ distance: { source: 'geoapify' } });
+    expect(stepDistanceMetadata('estimation')).toEqual({ distance: { source: 'estimation' } });
+    expect(stepDistanceMetadata(null)).toEqual({});
+    expect(stepDistanceMetadata(undefined)).toEqual({});
   });
 });
 

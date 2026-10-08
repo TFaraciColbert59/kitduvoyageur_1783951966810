@@ -65,3 +65,12 @@ export function ascentFromElevations(values: ReadonlyArray<number | null>, thres
   }
   return Math.round(gain);
 }
+
+/**
+ * Le `metadata` d'une étape écrite par le Compas : la source de sa distance,
+ * ou un objet vide (la colonne `trip_steps.metadata` est NOT NULL ; un null
+ * faisait échouer l'écriture de tout l'itinéraire).
+ */
+export function stepDistanceMetadata(source: LegDistanceSource | null | undefined): Record<string, unknown> {
+  return source ? { distance: { source } } : {};
+}
