@@ -12,6 +12,7 @@ import {
 } from '@/features/adventure-prep/routingService';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { clientIpFromHeaders } from '@/lib/rate-limit';
+import { signRouteCacheKey } from '@/lib/routeCacheSignature';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,7 +88,7 @@ export async function GET(request: NextRequest) {
   // L origine de la requete donne au cache persistant une URL ABSOLUE : cote
   // serveur, etch('/api/...') serait une URL invalide. Sans elle, le cache
   // resterait muet et l on retomberait sur la seule memoire.
-  const attempt = await routeAttempt(points, mode, request.signal, request.nextUrl.origin);
+  const attempt = await routeAttempt(points, mode, request.signal, request.nextUrl.origin, signRouteCacheKey);
   if (!attempt.legs) {
     // Panne, reponse malformee, ou LIEU HORS RESEAU : « indisponible », jamais
     // « 0 km ». La raison est公开发 : sans elle, un sommet a 4 000 m et une

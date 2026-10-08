@@ -3,6 +3,7 @@ import { getServiceSupabase } from '@/lib/ai/serviceClient';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { clientIpFromHeaders } from '@/lib/rate-limit';
 import { isTravelMode, MAX_ROUTE_POINTS } from '@/features/adventure-prep/routingService';
+import { ROUTE_CACHE_SIGNATURE_HEADER, verifyRouteCacheSignature } from '@/lib/routeCacheSignature';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -73,6 +74,9 @@ function readKey(raw: string | null): { key: string; mode: string } | null {
 
 const PROVIDERS = new Set(['osrm', 'valhalla', 'brouter']);
 
+/** Points au plus par tronçon écrit (un tronçon d'une journée en compte quelques milliers). */
+const MAX_LEG_POINTS = 5_000;
+
 /**
  * Une panne de base ne doit JAMAIS se voir comme un 500.
  *
@@ -114,7 +118,9 @@ function isMeasuredLeg(leg: unknown): boolean {
   if (typeof durationMin !== 'number' || !Number.isFinite(durationMin) || durationMin < 0) {
     return false;
   }
-  if (!Array.isArray(geometry) || geometry.length < 2) return false;
+  // Borne de taille : un tronçon mesuré reste raisonnable, une géométrie géante
+  // remplirait la base gratuite (500 Mo).
+  if (!Array.isArray(geometry) || geometry.length < 2 || geometry.length > MAX_LEG_POINTS) return false;
   return geometry.every((point) => {
     if (!Array.isArray(point) || point.length !== 2) return false;
     const [lon, lat] = point as [unknown, unknown];
@@ -216,6 +222,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { status: 'invalid', reason: 'key_expected' },
       { status: 400, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
+  // Seul le serveur qui vient de mesurer écrit (audit du 8 octobre : sans cette
+  // signature, n'importe qui déposait une distance inventée, servie ensuite
+  // comme une mesure).
+  if (!verifyRouteCacheSignature(parsed.key, request.headers.get(ROUTE_CACHE_SIGNATURE_HEADER))) {
+    return NextResponse.json(
+      { status: 'forbidden', reason: 'signature_expected' },
+      { status: 403, headers: { 'Cache-Control': 'no-store' } },
     );
   }
   // Le mode de la cle et celui du corps doivent etre le MEME : sinon on

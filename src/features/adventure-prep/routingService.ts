@@ -281,11 +281,12 @@ async function writeRouteCacheRemote(
   key: string,
   mode: TravelMode,
   value: RouteAttempt,
+  signature: string,
 ): Promise<void> {
   try {
     await fetch(endpoint, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-route-cache-signature': signature },
       body: JSON.stringify({
         key,
         mode,
@@ -360,10 +361,16 @@ async function writeRouteCache(
   key: string,
   mode: TravelMode,
   value: RouteAttempt,
+  sign?: (key: string) => string,
 ): Promise<void> {
   writeCache(key, value);
-  if (endpoint === null) return;
-  await writeRouteCacheRemote(endpoint, key, mode, value);
+  // Seul le serveur, qui vient de mesurer, écrit en base : la route refuse une
+  // écriture non signée (audit du 8 octobre : écriture ouverte à tous). Le
+  // navigateur garde sa mesure en mémoire et lit toujours la base.
+  if (endpoint === null || !sign) return;
+  const signature = sign(key);
+  if (!signature) return;
+  await writeRouteCacheRemote(endpoint, key, mode, value, signature);
 }
 
 function readCache(key: string): unknown {
@@ -1055,6 +1062,8 @@ export async function routeAttempt(
   mode: TravelMode,
   signal?: AbortSignal,
   cacheBaseUrl?: string,
+  /** Signature serveur d'une clé de cache (`signRouteCacheKey`) : sans elle, rien n'est écrit en base. */
+  signCacheKey?: (key: string) => string,
 ): Promise<RouteAttempt> {
   // Un mode inconnu et une liste de points inexploitable sont des REFAUX de
   // l appelant, pas une panne du fournisseur : ils se distinguent, parce
@@ -1102,7 +1111,7 @@ export async function routeAttempt(
     // echec ne doit pas etre fige : une panne de cinq minutes finirait par etre
     // servie comme une reponse Mesuree pendant toute la duree du TTL.
     if (attempt.legs) {
-      await writeRouteCache(cacheEndpoint(cacheBaseUrl), cacheKey, mode, attempt);
+      await writeRouteCache(cacheEndpoint(cacheBaseUrl), cacheKey, mode, attempt, signCacheKey);
     }
     return attempt;
   } finally {
