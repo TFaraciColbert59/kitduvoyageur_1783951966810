@@ -814,7 +814,13 @@ async function resolveLocation(
   const lookup = async (term: string) => {
     const payload = parseToolPayload(await callTool(tool, vertical === 'hotel' ? { query: term } : { term }));
     const records = findRecords(payload, ['result', 'results', 'locations', 'destinations', 'data']);
-    return vertical === 'flight' ? pickFlightLocation(records, term) : records[0];
+    const picked = vertical === 'flight' ? pickFlightLocation(records, term) : records[0];
+    // Données publiques (codes et noms de lieux) : de quoi voir pourquoi un lieu est mal choisi.
+    console.info(
+      '[routestack] lieux',
+      JSON.stringify({ tool, term, picked: picked ?? null, candidates: records.slice(0, 5) }).slice(0, 1500)
+    );
+    return picked;
   };
   let record = await lookup(trimmed);
   // Nom français inconnu de RouteStack (« Lisbonne ») : son nom anglais, une fois.
