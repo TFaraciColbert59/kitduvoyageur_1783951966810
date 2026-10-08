@@ -637,6 +637,43 @@ async function claimPhase(supabase: Supa, tripId: string, phase: 'steps' | 'rest
   return Boolean(won?.length);
 }
 
+/**
+ * Limites d'une préparation (audit du 8 octobre), partagées par toutes les
+ * instances (`src/lib/rate-limit`, compteur en base) :
+ * - par personne : 6 lancements et 12 reprises par 10 min ;
+ * - pour tout le site : 120 préparations par heure. Les services gratuits
+ *   (géocodage, routage, IA) ont des quotas par application, pas par personne :
+ *   au-delà, chacun attendrait de toute façon un service qui refuse.
+ */
+const COMPAS_AUTOFILL_LIMITS = {
+  start: { scope: 'compas-autofill', limit: 6, windowMs: 10 * 60_000 },
+  resume: { scope: 'compas-autofill-resume', limit: 12, windowMs: 10 * 60_000 },
+  global: { scope: 'compas-autofill-global', limit: 120, windowMs: 60 * 60_000 },
+} as const;
+
+async function enforceCompasAutofillLimits(
+  userId: string,
+  resuming: boolean
+): Promise<Extract<CompasAutofillResult, { success: false }> | null> {
+  const personal = resuming ? COMPAS_AUTOFILL_LIMITS.resume : COMPAS_AUTOFILL_LIMITS.start;
+  const mine = await enforceRateLimit(userId, { ...personal, failMode: 'closed' });
+  // Une reprise continue une préparation déjà comptée dans le plafond du site.
+  const site = mine || resuming ? null : await enforceRateLimit('site', { ...COMPAS_AUTOFILL_LIMITS.global, failMode: 'closed' });
+  const limited = mine ?? site;
+  if (!limited) return null;
+  const wait = Number(limited.headers.get('Retry-After'));
+  const retryInS = limited.status === 429 && Number.isFinite(wait) && wait > 0 ? Math.min(wait, 900) : undefined;
+  const minutes = retryInS ? Math.max(1, Math.ceil(retryInS / 60)) : null;
+  if (limited.status !== 429) return { success: false, error: 'Préparation momentanément indisponible : réessaie dans quelques minutes.' };
+  return {
+    success: false,
+    error: site
+      ? `Le Compas prépare beaucoup de voyages en ce moment : je reprends seul dans ${minutes ?? 15} min.`
+      : `Beaucoup de préparations d’affilée : je reprends seul dans ${minutes ?? 10} min.`,
+    retryInS,
+  };
+}
+
 /** Issue d'une préparation lancée en arrière-plan, relue par l'écran. */
 export type CompasAutofillOutcome = CompasAutofillResult & { token: string; at: number };
 
@@ -768,26 +805,12 @@ export async function compasAutofillAction(
     const resume = phase === 'rest' ? pending : null;
     // La limite de fréquence ne compte qu'une préparation réellement lancée :
     // après les refus et retours ci-dessus (déjà prérempli, déjà en attente…).
-    // La phase « rest », ou une reprise (itinéraire déjà écrit), continue une préparation déjà comptée.
-    if (phase !== 'rest' && !readPending((trip.metadata ?? {}) as Record<string, unknown>)) {
-      const limited = await enforceRateLimit(userId, {
-        scope: 'compas-autofill',
-        limit: 6,
-        windowMs: 10 * 60_000,
-        failMode: 'closed',
-      });
-      if (limited) {
-        const wait = Number(limited.headers.get('Retry-After'));
-        const retryInS = limited.status === 429 && Number.isFinite(wait) && wait > 0 ? Math.min(wait, 900) : undefined;
-        return {
-          success: false,
-          error: retryInS
-            ? `Beaucoup de préparations d’affilée : je reprends seul dans ${Math.max(1, Math.ceil(retryInS / 60))} min.`
-            : 'Préparation déjà lancée plusieurs fois : patiente quelques minutes.',
-          retryInS,
-        };
-      }
-    }
+    // Une reprise (phase « rest », itinéraire déjà écrit) a sa propre limite :
+    // l'état de reprise vit dans `trips.metadata`, que l'éditeur peut écrire ;
+    // sans limite, réécrire cet état relançait la préparation sans compter.
+    const resuming = phase === 'rest' || Boolean(pending);
+    const limited = await enforceCompasAutofillLimits(userId, resuming);
+    if (limited) return limited;
 
     // Un seul « steps » à la fois (deux onglets, F5) : prise atomique, sinon
     // deux itinéraires complets seraient écrits.

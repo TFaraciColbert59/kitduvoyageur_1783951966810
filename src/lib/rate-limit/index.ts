@@ -5,8 +5,11 @@
  *
  * - **Upstash Redis REST** si `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`
  *   sont configurés (compteur partagé entre instances, fenêtre fixe) ;
- * - **repli mémoire** (fenêtre fixe locale, best-effort) si non configuré —
- *   le comportement historique est conservé ;
+ * - sinon **Postgres (Supabase)** si `NEXT_PUBLIC_SUPABASE_URL` +
+ *   `SUPABASE_SERVICE_ROLE_KEY` sont présents : même fenêtre fixe, partagée,
+ *   gratuite (audit du 8 octobre : la mémoire par instance ne limitait rien) ;
+ * - **repli mémoire** (fenêtre fixe locale, best-effort) si rien n'est
+ *   configuré (tests, développement) ;
  * - **si configuré mais injoignable** : fail-safe explicite, jamais silencieux :
  *   • `failMode: 'closed'` (routes sensibles : génération IA payante) ⇒ refus
  *     `unavailable` (à traduire en 503 par la route) sans laisser passer la
@@ -14,9 +17,15 @@
  *   • `failMode: 'open'` (lectures publiques, synchronisation de données) ⇒
  *     repli mémoire dégradé, journalisé via `degraded: true` et `detail`.
  *
- * Aucune dépendance externe : Upstash est appelé en REST via `fetch`.
+ * Aucune dépendance externe : Upstash et PostgREST sont appelés via `fetch`.
  */
 import { consumeMemoryWindow } from './memoryStore';
+import {
+  consumePostgresWindow,
+  isPostgresConfigured,
+  readPostgresEnv,
+  type PostgresRateLimitEnv,
+} from './postgresStore';
 import {
   consumeUpstashWindow,
   isUpstashConfigured,
@@ -30,6 +39,16 @@ export {
 } from './memoryStore';
 export { isUpstashConfigured, readUpstashEnv } from './upstashStore';
 export type { UpstashEnv } from './upstashStore';
+export { isPostgresConfigured, readPostgresEnv } from './postgresStore';
+export type { PostgresRateLimitEnv } from './postgresStore';
+
+/** Configuration des backends partagés (Upstash, puis Postgres). */
+export type RateLimitEnv = UpstashEnv & PostgresRateLimitEnv;
+
+/** Lit la configuration des deux backends partagés dans l'environnement. */
+export function readRateLimitEnv(): RateLimitEnv {
+  return { ...readUpstashEnv(), ...readPostgresEnv() };
+}
 
 /** Politique en cas d'indisponibilité d'Upstash configuré. */
 export type RateLimitFailMode = 'open' | 'closed';
@@ -38,10 +57,12 @@ export type RateLimitFailMode = 'open' | 'closed';
 export type RateLimitOutcome = 'allowed' | 'limited' | 'unavailable';
 
 /** Backend effectivement utilisé. */
-export type RateLimitBackend = 'redis' | 'memory';
+export type RateLimitBackend = 'redis' | 'postgres' | 'memory';
 
 /** Délai par défaut d'un appel Upstash avant bascule fail-safe (ms). */
 export const DEFAULT_RATE_LIMIT_TIMEOUT_MS = 750;
+/** Délai par défaut d'un appel Postgres (base à Paris, fonctions parfois loin). */
+export const DEFAULT_POSTGRES_RATE_LIMIT_TIMEOUT_MS = 1_500;
 
 export interface RateLimitOptions {
   /** Clé logique complète (`scope:identifiant`). */
@@ -50,16 +71,16 @@ export interface RateLimitOptions {
   limit: number;
   /** Durée de la fenêtre (ms). */
   windowMs: number;
-  /** Comportement si Upstash configuré mais injoignable (défaut `open`). */
+  /** Comportement si le backend partagé est injoignable (défaut `open`). */
   failMode?: RateLimitFailMode;
   /** Horloge injectable (tests). */
   now?: () => number;
   /** `fetch` injectable (tests). */
   fetchImpl?: typeof fetch;
-  /** Délai maximal d'un appel Upstash (défaut `DEFAULT_RATE_LIMIT_TIMEOUT_MS`). */
+  /** Délai maximal d'un appel au backend partagé (défaut selon le backend). */
   timeoutMs?: number;
-  /** Configuration Upstash injectable (défaut : variables d'environnement). */
-  env?: UpstashEnv;
+  /** Configuration injectable (défaut : variables d'environnement). */
+  env?: RateLimitEnv;
 }
 
 export interface RateLimitResult {
@@ -71,7 +92,7 @@ export interface RateLimitResult {
   /** Secondes avant réessai (0 si autorisé). */
   retryAfterSeconds: number;
   backend: RateLimitBackend;
-  /** Vrai si le résultat provient d'un repli dégradé (Upstash en échec). */
+  /** Vrai si le résultat provient d'un repli dégradé (backend partagé en échec). */
   degraded: boolean;
   /** Détail technique non sensible (journalisation). */
   detail: string;
@@ -120,26 +141,43 @@ export async function rateLimit(options: RateLimitOptions): Promise<RateLimitRes
   const now = options.now ?? Date.now;
   const nowMs = now();
   const normalized = { key: options.key, limit, windowMs };
-  const env = options.env ?? readUpstashEnv();
+  const env = options.env ?? readRateLimitEnv();
 
-  if (!isUpstashConfigured(env)) {
+  const backend: RateLimitBackend | null = isUpstashConfigured(env)
+    ? 'redis'
+    : isPostgresConfigured(env)
+      ? 'postgres'
+      : null;
+  if (!backend) {
     return memoryResult(normalized, nowMs, false, 'memoire_locale');
   }
 
   const fetchImpl = options.fetchImpl ?? (typeof fetch === 'function' ? fetch : undefined);
   if (!fetchImpl) {
-    return failSafe(options.key, limit, windowMs, failMode, 'fetch_indisponible', nowMs);
+    return failSafe(options.key, limit, windowMs, failMode, 'fetch_indisponible', nowMs, backend);
   }
 
   try {
-    const { count, resetAtMs } = await consumeUpstashWindow({
-      key: options.key,
-      windowMs,
-      env,
-      fetchImpl,
-      timeoutMs: positiveInt(options.timeoutMs ?? DEFAULT_RATE_LIMIT_TIMEOUT_MS, 750),
-      nowMs,
-    });
+    const { count, resetAtMs } =
+      backend === 'redis'
+        ? await consumeUpstashWindow({
+            key: options.key,
+            windowMs,
+            env,
+            fetchImpl,
+            timeoutMs: positiveInt(options.timeoutMs ?? DEFAULT_RATE_LIMIT_TIMEOUT_MS, 750),
+            nowMs,
+          })
+        : await consumePostgresWindow({
+            key: options.key,
+            windowMs,
+            env,
+            fetchImpl,
+            timeoutMs: positiveInt(
+              options.timeoutMs ?? DEFAULT_POSTGRES_RATE_LIMIT_TIMEOUT_MS,
+              DEFAULT_POSTGRES_RATE_LIMIT_TIMEOUT_MS
+            ),
+          });
     const allowed = count <= limit;
     return {
       outcome: allowed ? 'allowed' : 'limited',
@@ -147,13 +185,18 @@ export async function rateLimit(options: RateLimitOptions): Promise<RateLimitRes
       limit,
       remaining: Math.max(0, limit - count),
       retryAfterSeconds: allowed ? 0 : Math.max(1, secondsUntil(resetAtMs, nowMs)),
-      backend: 'redis',
+      backend,
       degraded: false,
-      detail: 'upstash_redis',
+      detail: backend === 'redis' ? 'upstash_redis' : 'postgres',
     };
   } catch (error) {
-    const detail = error instanceof Error ? error.message : 'upstash_indisponible';
-    return failSafe(options.key, limit, windowMs, failMode, detail, nowMs);
+    const detail =
+      error instanceof Error
+        ? error.message
+        : backend === 'redis'
+          ? 'upstash_indisponible'
+          : 'postgres_indisponible';
+    return failSafe(options.key, limit, windowMs, failMode, detail, nowMs, backend);
   }
 }
 
@@ -163,7 +206,8 @@ function failSafe(
   windowMs: number,
   failMode: RateLimitFailMode,
   detail: string,
-  nowMs: number
+  nowMs: number,
+  backend: RateLimitBackend
 ): RateLimitResult {
   if (failMode === 'closed') {
     return {
@@ -172,7 +216,7 @@ function failSafe(
       limit,
       remaining: 0,
       retryAfterSeconds: Math.max(1, Math.ceil(windowMs / 1000)),
-      backend: 'redis',
+      backend,
       degraded: true,
       detail: `fail_closed:${detail}`,
     };

@@ -93,6 +93,9 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       rien n'est changé.
 - [x] Offre réelle du compte : **Hobby très probable** (aucune facture sur l'équipe,
       `costs_not_found`, 8 oct.) ; à confirmer par Tony dans le tableau de bord.
+- [x] **Aucune clé Stripe en production** (variables Vercel lues sans leurs valeurs,
+      8 oct.) : aucun paiement n'est traité aujourd'hui. Tant que l'offre est Hobby,
+      Stripe reste éteint ; l'allumer impose l'offre Pro (20 $/mois).
 - [ ] **Durée des fonctions** : rester ≤ 300 s (maximum Hobby) ; préparation découpée en
       étapes reprenables (2.6) pour ne jamais dépendre d'une seule fonction longue.
 - [ ] **Coût de calcul** : supprimer le rafraîchissement complet de page toutes les 4 s
@@ -206,13 +209,19 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 2.2 Limite de fréquence et abus
 
-- [ ] **Limite distribuée gratuite** : jeton en base (RPC atomique) au lieu de la
-      mémoire par instance ; appliquée dès `compasAutofillStartAction`.
-- [ ] **État de préparation hors de `trips.metadata`** (table réservée au service ou
-      RPC `SECURITY DEFINER`) : plus de contournement en écrivant `autofill_pending`.
-- [ ] Plafond global de préparations simultanées.
+- [~] **Limite distribuée gratuite** : fenêtre fixe en base (`rate_limit_consume`,
+      table non journalisée, clés hachées, exécutable par le seul rôle de service ;
+      migration `20261008164423` appliquée et vérifiée le 8 oct.) au lieu de la
+      mémoire par instance, pour **toutes** les routes limitées (Upstash reste
+      prioritaire s'il est un jour configuré). Preuve en production après fusion.
+- [~] **Contournement par `autofill_pending` fermé** : une reprise (phase « rest »)
+      a sa propre limite par personne (12 / 10 min) ; réécrire l'état ne relance plus
+      rien sans compter (test `autofillLimits.test.ts`). L'état reste dans
+      `trips.metadata` (son déplacement relève de 2.7, écritures concurrentes).
+- [~] Plafond global : 120 préparations par heure pour tout le site, message propre.
 - [ ] Limite sur `compasSetDestinationAction` et les actions qui appellent la carte.
-- [ ] Message juste quand la limite est atteinte (plus « déjà lancée plusieurs fois »).
+- [~] Message juste quand la limite est atteinte (plus « déjà lancée plusieurs fois ») :
+      personne, site, ou compteur indisponible, chacun dit.
 - [ ] Protection des inscriptions et des sessions anonymes contre les comptes en série :
       **hCaptcha gratuit** branché sur Supabase Auth (Turnstile exclu : Cloudflare) ;
       BotID basique de Vercel sur les actions coûteuses ; limite d'IP de Supabase Auth
