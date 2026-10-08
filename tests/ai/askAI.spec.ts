@@ -35,7 +35,7 @@ vi.mock('@/lib/ai/quota', () => ({
   consumeQuota: consumeQuotaMock,
 }));
 
-import { askAI } from '../../src/lib/ai/askAI';
+import { aiDailyCap, aiEnabled, askAI } from '../../src/lib/ai/askAI';
 import type { AIRequest, AIProvider } from '../../src/lib/ai/providers/types';
 
 function makeProvider(partial: Partial<AIProvider>): AIProvider {
@@ -185,5 +185,48 @@ describe('src/lib/ai/askAI — point d\'entrée unique (port IA + registre)', ()
     expect(result.degraded).toBe(true);
     expect(result.provider).toBe('fallback');
     expect(result.text).toMatch(/assistant IA/);
+  });
+});
+
+describe('src/lib/ai/askAI — interrupteur et plafond du site (plan 1.7)', () => {
+  beforeEach(() => {
+    providerCompleteMock.mockReset().mockResolvedValue('réponse IA');
+    providerChainMock.mockReset().mockReturnValue([makeProvider({})]);
+    getCachedMock.mockReset().mockResolvedValue(null);
+    consumeQuotaMock.mockReset().mockResolvedValue(true);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('TEST-ASK-OFF: AI_MODE=off → repli de la feature, ni cache ni fournisseur ni quota', async () => {
+    vi.stubEnv('AI_MODE', 'off');
+    const result = await askAI(makeReq({ userId: '11111111-1111-4111-8111-111111111111' }));
+    expect(result.provider).toBe('fallback');
+    expect(result.failureReason).toBe('ia_eteinte');
+    expect(providerCompleteMock).not.toHaveBeenCalled();
+    expect(getCachedMock).not.toHaveBeenCalled();
+    expect(consumeQuotaMock).not.toHaveBeenCalled();
+  });
+
+  it('TEST-ASK-ON: toute autre valeur garde l’IA allumée', () => {
+    expect(aiEnabled({})).toBe(true);
+    expect(aiEnabled({ AI_MODE: 'on' })).toBe(true);
+    expect(aiEnabled({ AI_MODE: ' OFF ' })).toBe(false);
+  });
+
+  it('TEST-ASK-CAP: plafond du site atteint → repli « quota », fournisseur jamais appelé', async () => {
+    vi.stubEnv('AI_DAILY_CAP', '2');
+    // Le compteur du site (mémoire en test) a déjà au moins deux appels du
+    // jour : le suivant est refusé, quel que soit l'ordre des tests.
+    await askAI(makeReq());
+    await askAI(makeReq());
+    providerCompleteMock.mockClear();
+    const third = await askAI(makeReq());
+    expect(third.failureReason).toBe('quota_epuise');
+    expect(providerCompleteMock).not.toHaveBeenCalled();
+    expect(aiDailyCap({})).toBe(2000);
+    expect(aiDailyCap({ AI_DAILY_CAP: 'abc' })).toBe(2000);
   });
 });

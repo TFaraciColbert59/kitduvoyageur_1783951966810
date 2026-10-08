@@ -150,7 +150,7 @@ function urlsDe(mock: ReturnType<typeof fetchQuiRepond>): string[] {
 beforeEach(() => {
   __resetRouteCache();
   __resetRouteLimiter();
-  __setGeoapifyBudgetForTests(async () => ({ allowed: true }));
+  __setGeoapifyBudgetForTests(async () => true);
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
   vi.stubEnv('GEOAPIFY_API_KEY', 'cle-de-test');
@@ -369,7 +369,7 @@ describe('P1.9 - le fournisseur pieton repond', () => {
   it('P019-16 : credits du jour epuises, Geoapify n est plus appele', async () => {
     // L'offre gratuite est partagee avec les lieux et le geocodage : le routage
     // s'arrete a son budget du jour, et Valhalla prend le relais.
-    __setGeoapifyBudgetForTests(async () => ({ allowed: false }));
+    __setGeoapifyBudgetForTests(async () => false);
     const mock = fetchQuiRepond((url) => (isGeoapify(url) ? marcheReelle() : valhalla(url)));
     vi.stubGlobal('fetch', mock);
 
@@ -388,9 +388,9 @@ describe('P1.9 - le fournisseur pieton repond', () => {
     expect(geoapifyRouteCredits([PARIS, NICE])).toBe(2);
 
     let pris = 0;
-    __setGeoapifyBudgetForTests(async () => {
-      pris += 1;
-      return { allowed: true };
+    __setGeoapifyBudgetForTests(async (credits) => {
+      pris += credits;
+      return true;
     });
     vi.stubGlobal('fetch', fetchQuiRepond((url) => (isGeoapify(url) ? panne() : valhalla(url))));
     await routeAttempt([PARIS, NICE], 'voiture');
@@ -398,8 +398,8 @@ describe('P1.9 - le fournisseur pieton repond', () => {
 
     // Le deuxieme credit refuse : Geoapify n'est pas appele du tout.
     __resetRouteCache();
-    let restant = 1;
-    __setGeoapifyBudgetForTests(async () => ({ allowed: restant-- > 0 }));
+    // Il ne reste qu'un credit du jour : le trajet en demande deux.
+    __setGeoapifyBudgetForTests(async (credits) => credits <= 1);
     const mock = fetchQuiRepond((url) => valhalla(url));
     vi.stubGlobal('fetch', mock);
     await routeAttempt([PARIS, NICE], 'voiture');

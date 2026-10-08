@@ -122,23 +122,26 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 - [ ] **Référentiel local d'abord** (phase 3) : destination, villages, refuges, lieux
       naturels lus dans `geo_places` ; réseau seulement en secours.
-- [ ] **Geoapify gratuit** (3 000 crédits/jour, « we do not restrict » l'usage
-      commercial) en premier secours : **attribution « Powered by Geoapify »** affichée ;
-      `limit=500` ramené au nécessaire ; compteur de crédits du jour en base (géocodage
-      et routage ensemble), arrêt à 2 700. Preuve : compteur, attribution visible.
+- [x] **Geoapify gratuit** (3 000 crédits/jour, « we do not restrict » l'usage
+      commercial) : **« Powered by Geoapify »** dans les mentions légales ; lieux d'une
+      zone ramenés de 500 à 200 (10 crédits) ; **compteur de crédits du jour en base**
+      (`take_api_credits`, lot F) commun au géocodage, aux lieux et au routage, arrêt à
+      2 700 ; le routage a en plus son plafond de 1 500, au coût réel (un crédit par
+      tranche de 500 km). Preuve : `api_credit_days`.
 - [~] **LocationIQ gratuit** (5 000 req/jour, commercial avec lien visible) : compte
       créé par Tony (8 oct.) ; avec `LOCATIONIQ_API_KEY`, **tous les appels Nominatim du
       Compas passent par LocationIQ** (même moteur, `src/features/compas/server/locationIq.ts`,
       2 req/s) ; « Search by LocationIQ.com » cliquable dans les mentions légales.
       **Prouvé en production le 8 oct.** : `/api/compas/sources` → `locationiq: true` ;
       préparation réelle (Bauges, 41 s) réussie après la bascule.
-- [ ] **Photon public** (pas de clause commerciale, « usage raisonnable ») : dernier
-      recours seulement ; User-Agent `koosmoweb.fr` + contact ; rythme global limité
-      (jeton en base) ; cache 30 j.
+- [x] **Photon public** (pas de clause commerciale, « usage raisonnable ») : après le
+      référentiel (lot E) ; User-Agent `koosmoweb.fr` ; **trois requêtes par seconde pour
+      tout le site** (`siteSlot`, compteur en base, lot F) ; cache 30 j.
 - [~] **Nominatim public retiré du trafic courant** (« periodic requests from apps are
       considered bulk geocoding ») : remplacé par LocationIQ dans le Compas dès que la
       clé est lue (lot B). Reste : `officialAlerts` et les modules hors Compas.
-- [ ] Positions envoyées arrondies à 0,01° (RGPD, 2.10).
+- [x] Positions envoyées arrondies à 0,01° (RGPD, 2.10) : `coarsePosition` dès l'entrée
+      de la préparation (lot F).
 
 ### 1.4 Points autour des étapes (Overpass)
 
@@ -212,13 +215,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       les conseils) ; l'IA reste allumée pour les tests (aucun vrai utilisateur
       aujourd'hui) et s'éteint par drapeau pour le lancement, sauf décision contraire de
       Tony.
-- [ ] Drapeau `COMPAS_AI` (on/off) lu partout où l'IA est appelée ; Compas testé de bout
-      en bout avec l'IA éteinte (jeu de validation P2 rejoué sans IA).
+- [~] Drapeau **`AI_MODE=off`** lu dans `askAI`, le point d'entrée unique de l'IA (lot F) :
+      chaque usage rend son repli par règles, raison « ia_eteinte » dite à l'écran. Reste :
+      Compas testé de bout en bout avec l'IA éteinte (jeu de validation P2 rejoué).
 - [ ] Compréhension de la phrase sans IA (4.10) : parseur par règles au niveau du parseur
       actuel avec l'IA.
 - [ ] Conseils par règles (4.12) pour que l'absence d'IA ne retire rien d'essentiel.
-- [ ] Plafond global quotidien d'appels IA (en plus du plafond par personne) ; refus
-      en cas d'erreur du quota pour les appels lourds (fail-closed).
+- [x] Plafond global quotidien d'appels IA (`AI_DAILY_CAP`, 2 000 par défaut, en plus du
+      plafond par personne) ; compteur en panne = refus (fail-closed), lot F.
 - [ ] Cache des réponses IA identiques (même demande, même jour).
 
 ### 1.8 Météo et données ouvertes
@@ -311,7 +315,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [x] Liens d'invitation invisibles des simples lecteurs (8 oct.).
 - [ ] Tests pgTAP : `trip_invitations`, `geo_cache`, `route_cache`, `trips`,
       `trip_steps` (lecteur, éditeur, anonyme) ; CI `database-gates` activée.
-- [ ] Revue de toutes les fonctions `SECURITY DEFINER` (search_path, droits `EXECUTE`).
+- [~] Revue de toutes les fonctions `SECURITY DEFINER` (search_path, droits `EXECUTE`) :
+      conseiller Supabase lu le 8 oct. (31 fonctions ouvertes à `anon`, 67 à
+      `authenticated`). **Deux failles fermées** (`20261008225921`) :
+      `claim_reward_points` (n'importe qui créditait des points à n'importe quel compte)
+      et `log_materiel_history` (historique écrit au nom d'un autre), réservées à la clé de
+      service. Les révocations des migrations du 17 et du 22 septembre n'avaient jamais
+      été appliquées en production : reste à rejouer la revue fonction par fonction
+      (vue `public_profiles` en SECURITY DEFINER, 2 `search_path` mobiles).
 - [ ] Revue des policies « public » restantes (conseiller Supabase `get_advisors`).
 
 ### 2.5 Quota IA
@@ -350,8 +361,9 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 2.10 RGPD
 
-- [ ] Position GPS arrondie (≈ 1 km) avant tout envoi à un tiers ; jamais enregistrée au
-      mètre ; base d'un séjour sans lieu dit = commune, pas le point GPS.
+- [~] Position GPS arrondie (≈ 1 km) avant tout envoi à un tiers : fait pour la
+      préparation du Compas (lot F). Reste : jamais enregistrée au mètre ailleurs ; base
+      d'un séjour sans lieu dit = commune, pas le point GPS.
 - [ ] Explication avant la demande de position (pourquoi, ce qui est envoyé) ; refus
       possible sans perdre la préparation (origine demandée en texte, 4.3).
 - [ ] Politique de confidentialité à jour : Vercel, Supabase, NVIDIA (si gardé),

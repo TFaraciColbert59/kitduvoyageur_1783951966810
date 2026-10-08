@@ -10,6 +10,7 @@ import {
 import type { RoutePoi } from '../engine/routePois';
 import { geoapifyArea, geoapifyAvailable } from './geoapify';
 import { referentialAreaPlaces } from './geoPlaces';
+import { photonSlot } from '@/lib/siteSlot';
 import { mergeReferential, referentialEnough } from '../engine/geoPlaces';
 import {
   areaKinds,
@@ -138,6 +139,9 @@ export async function lookupStagePois(
 
 /** Photon : lieux d'une emprise par catégorie, sans quota strict (OpenStreetMap). */
 async function photonArea(bbox: [number, number, number, number], include: string, signal: AbortSignal): Promise<AreaPlace[]> {
+  // Créneau du site (plan 1.3) : les tuiles d'une zone partent en parallèle,
+  // mais jamais plus de trois requêtes Photon par seconde pour tout le site.
+  if (!(await photonSlot())) throw new Error('photon créneau plein');
   const url = `https://photon.komoot.io/api/?limit=50&lang=fr&include=${include}&bbox=${bbox.map((v) => v.toFixed(4)).join(',')}`;
   const res = await fetch(url, { headers: { Accept: 'application/json', 'User-Agent': UA }, signal, cache: 'no-store' });
   if (!res.ok) throw new Error(`photon ${res.status}`);
