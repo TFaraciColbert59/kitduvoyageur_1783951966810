@@ -29,7 +29,7 @@ import { InventoryVirtualGrid } from './InventoryVirtualGrid';
 type View = 'grid' | 'table';
 
 const FIELD_CLASS =
-  'min-h-11 rounded-[var(--lkv-radius-control)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--glass-label)] [&_option]:bg-[#16251D] [&_option]:text-[#F1F5F1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+  'min-h-11 rounded-[var(--lkv-radius-control)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--glass-label)] [&_option]:bg-[color:var(--lkv-field-bg)] [&_option]:text-[color:var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
 
 const CATEGORIES = [
   'Sacs & Portage',
