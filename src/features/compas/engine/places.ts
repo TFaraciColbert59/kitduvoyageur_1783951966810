@@ -413,6 +413,11 @@ const ADMIN_PREFIX = /^(province|region|région|departement|département|distric
 /** « West Clare Municipal District », « Kerry County » : le nom sans son suffixe administratif. */
 const ADMIN_SUFFIX = /\s+(municipal district|district|county|municipality|province|region|prefecture|regional unit|borough)$/i;
 
+/** Une circonscription (« West Clare Municipal District », « Province de Cusco ») : jamais un lieu où dormir. */
+export function isAdminName(name: string): boolean {
+  return ADMIN_SUFFIX.test(name.trim()) || ADMIN_PREFIX.test(name.trim());
+}
+
 /**
  * Où l'on dort ce soir-là, si l'étape trouvée n'est pas un lieu où dormir :
  * - un monument, un musée, une gare (« Prison Hoa Lo ») → sa commune (« Hanoï ») ;

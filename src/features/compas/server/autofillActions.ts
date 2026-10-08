@@ -73,6 +73,7 @@ import { trainTrip, type TrainTrip } from '../engine/rail';
 import { trailRegion } from '../engine/intent';
 import {
   dayStartVillage,
+  isGenericName,
   isMountainActivity,
   keepAdminArea,
   keepHighlands,
@@ -96,7 +97,7 @@ import {
   refugePerNight,
 } from '../engine/costs';
 import { after } from 'next/server';
-import { destinationRadiusKm, distanceKm, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, type CompasPlace } from '../engine/places';
+import { destinationRadiusKm, distanceKm, isAdminName, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, type CompasPlace } from '../engine/places';
 import { unifyStageNames, untangleStages } from '../engine/stageOrder';
 import { localToday } from './weather';
 
@@ -1160,10 +1161,23 @@ export async function compasAutofillAction(
             else if (fix && townLookups < 4) {
               townLookups += 1;
               const towns = await stageCandidates(fix.search, { countryCode: anchor.countryCode, country: anchor.country }, hit);
-              const town = pickPlace(towns.filter((t) => t.settlement), { near: hit, maxKm: 80, query: fix.search, strict: false });
+              // La circonscription elle-même revenait comme « ville » (« West Clare
+              // Municipal District », trois nuits en Irlande, 8 oct.) : écartée.
+              const town = pickPlace(
+                towns.filter((t) => t.settlement && !isAdminName(t.name)),
+                { near: hit, maxKm: 80, query: fix.search, strict: false }
+              );
+              // Sinon le bourg réel le plus proche du site (Cliffs of Moher → un village voisin).
+              const around = town
+                ? null
+                : await lookupAreaPlaces({ center: hit, radiusKm: 15, activity }, Date.now() + Math.min(8_000, Math.max(0, remaining() - 20_000))).catch(() => null);
+              const village = around ? dayStartVillage(around.filter((v) => !isGenericName(v.name) && !isAdminName(v.name)), hit, 15) : null;
               if (town) {
                 name = town.name;
                 at = { lat: town.lat, lon: town.lon };
+              } else if (village) {
+                name = village.place.name;
+                at = { lat: village.place.lat, lon: village.place.lon };
               } else name = fix.search;
             }
             last = { name, ...at };

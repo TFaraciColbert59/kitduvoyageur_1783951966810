@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseIntentRules, planApplication, groundingIssue } from '../engine/intent';
 import { extractIntentJson } from '@/lib/ai/features/compasIntent';
 import { approachMode, maxDriveMinutes, keepRuleForActivity, movesFromSteps, nightsPrefFor, sanitizeAdvice, sanitizeStages, stagePlaceName } from '../engine/autofill';
-import { destinationRadiusKm, homonymsFarApart, maxLegKm, nameCore, parseNominatim, parsePhoton, pickDestination, pickPlace } from '../engine/places';
+import { destinationRadiusKm, homonymsFarApart, isAdminName, maxLegKm, nameCore, parseNominatim, parsePhoton, pickDestination, pickPlace } from '../engine/places';
 
 const TODAY = '2026-10-02';
 const current = {
@@ -621,5 +621,15 @@ describe('pickDestination — article et nature du lieu', () => {
     expect(nameCore('Les Pyrénées catalanes')).toBe('pyrenees catalanes');
     expect(nameCore('Massif du Mont Rose')).toBe('mont rose');
     expect(nameCore('Lac d’Annecy')).toBe('annecy');
+  });
+});
+
+describe('isAdminName — une circonscription n’est pas un lieu où dormir', () => {
+  it('reconnaît les suffixes et préfixes administratifs, jamais un village', () => {
+    expect(isAdminName('West Clare Municipal District')).toBe(true);
+    expect(isAdminName('Kerry County')).toBe(true);
+    expect(isAdminName('Province de Ninh Bình')).toBe(true);
+    expect(isAdminName('Doolin')).toBe(false);
+    expect(isAdminName('Ennistymon')).toBe(false);
   });
 });
