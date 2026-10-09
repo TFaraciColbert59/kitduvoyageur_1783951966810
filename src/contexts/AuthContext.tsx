@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState, ReactNode, useMemo, useCallback } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, Fragment, ReactNode, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { purgePrivateCaches } from '@/lib/pwa/purgePrivateData';
 import { purgeClientStateOnUserChange, decidePurgeOnAuth, LAST_AUTHED_USER_KEY } from '@/lib/security/purgeClientState';
@@ -266,5 +266,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     ]
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      <Fragment key={user?.id ?? 'guest'}>{children}</Fragment>
+    </AuthContext.Provider>
+  );
 };
