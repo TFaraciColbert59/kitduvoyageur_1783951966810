@@ -337,8 +337,9 @@ describe('Task 2A fix rounds 1–5 — contraste systémique, thème et primitiv
       <div id="inline-g2" class="backdrop-blur-md" style="--g2-bg: rgba(1, 2, 3, 0.2); background: var(--g2-bg)"></div>
       <div id="inline-g3" class="backdrop-blur-md" style="--g3-bg: rgba(1, 2, 3, 0.2); background: var(--g3-bg)"></div>
       <span id="pill" class="glass-pill backdrop-blur-md">Pill</span>
-      <button id="primary" class="primary backdrop-blur-md">Primary</button>
+      <button id="primary" class="glass-capsule-btn primary backdrop-blur-md">Primary</button>
       <div id="solid-reference" style="background: var(--glass-solid)"></div>
+      <div id="primary-reference" style="background: var(--btn-tint-solid); color: var(--btn-on-solid)"></div>
       <div id="g1-reference" style="background: var(--g1-reduced-bg)"></div>
       <div id="g2-reference" style="background: var(--g2-reduced-bg)"></div>
       <div id="g3-reference" style="background: var(--g3-reduced-bg)"></div>
@@ -384,6 +385,7 @@ describe('Task 2A fix rounds 1–5 — contraste systémique, thème et primitiv
               'pill',
               'primary',
               'solid-reference',
+              'primary-reference',
               'g1-reference',
               'g2-reference',
               'g3-reference',
@@ -448,7 +450,8 @@ describe('Task 2A fix rounds 1–5 — contraste systémique, thème et primitiv
           const g3Background: RGB = colorScheme === 'light' ? [18, 24, 21] : [255, 255, 255];
           expect(contrast(g3Text, g3Background)).toBeGreaterThanOrEqual(4.5);
           expect(styles.pill.backgroundColor).toBe(styles['g3-reference'].backgroundColor);
-          expect(styles.primary.backgroundColor).toBe(styles['g3-reference'].backgroundColor);
+          expect(styles.primary.backgroundColor).toBe(styles['primary-reference'].backgroundColor);
+          expect(styles.primary.color).toBe(styles['primary-reference'].color);
         }
       } finally {
         await page.close();
@@ -507,7 +510,7 @@ describe('Task 2A fix rounds 1–5 — contraste systémique, thème et primitiv
     expect(tabs).not.toContain('glass-specular');
   });
 
-  it('utilise G3 pour les pills et les actions primary en light et dark', () => {
+  it('utilise G3 pour les pills et la couleur d action pour l action primary', () => {
     const pill = cssBlock(liquidGlass, '.glass-pill {');
     const darkPill = cssBlock(liquidGlass, '.dark .glass-pill {');
     expect(pill).toContain('background: var(--g3-bg)');
@@ -516,7 +519,7 @@ describe('Task 2A fix rounds 1–5 — contraste systémique, thème et primitiv
     expect(darkPill).toContain('background: var(--g3-bg)');
     expect(darkPill).toContain('color: var(--g3-text)');
     expect(liquidGlass).toMatch(
-      /\.glass-btn-primary,[^{]*\.primary[^{]*\{[^}]*background:\s*var\(--g3-bg\);[^}]*color:\s*var\(--g3-text\);/
+      /\.glass-btn-primary,[^{]*\{[^}]*background:\s*var\(--btn-tint-solid\);[^}]*color:\s*var\(--btn-on-solid\);/
     );
     expect(liquidGlass).not.toContain('Contenu blanc garanti');
     expect(liquidGlass).not.toContain('Exemption : les badges');

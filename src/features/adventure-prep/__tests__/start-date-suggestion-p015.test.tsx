@@ -181,12 +181,12 @@ describe('P0.15 — la generation depose la date proposee dans le brouillon', ()
       phases: [],
       infeasible: [],
       toVerify: [],
-      suggestedStartDate: '2026-10-05',
+      suggestedStartDate: '2099-01-05',
       suggestedDurationDays: null,
     });
-    expect(next.calendar.startDate).toBe('2026-10-05');
+    expect(next.calendar.startDate).toBe('2099-01-05');
     expect(next.calendar.startDateIsSuggested).toBe(true);
-    expect(next.calendar.returnDate).toBe('2026-10-07');
+    expect(next.calendar.returnDate).toBe('2099-01-07');
   });
 
   it('P015-15: une generation sans date laisse le champ intact', () => {
