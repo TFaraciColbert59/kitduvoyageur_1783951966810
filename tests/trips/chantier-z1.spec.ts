@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
+import { overpassWaterFetch } from './overpassWaterStub';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
@@ -356,6 +357,14 @@ describe('CHANTIER Z — Phase Z1 : Neutralisation Immédiate des Risques', () =
   // Z1.3 : Lignes rouges réellement armées (D14, D15)
   // ==========================================================================
   describe('Z1.3 : Lignes rouges réellement armées (D14, D15)', () => {
+    // Plan 100, 2.12 : Overpass simulé, jamais overpass-api.de depuis un test.
+    beforeEach(() => {
+      vi.stubGlobal('fetch', overpassWaterFetch());
+    });
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
     it('Z-D14: lookupWaterSources sans points d’eau réels retourne un tableau vide et déclenche l’alerte hydrique vitale', async () => {
       // Zone aride sans points d'eau
       const aridBounds = {
