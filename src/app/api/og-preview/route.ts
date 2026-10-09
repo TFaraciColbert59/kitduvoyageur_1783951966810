@@ -1,38 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isBlockedRequestTarget } from '@/lib/security/urlSafety';
 
 export const dynamic = 'force-dynamic';
 
-function isPrivateIp(urlStr: string): boolean {
-  try {
-    const parsed = new URL(urlStr);
-    const hostname = parsed.hostname;
-
-    if (
-      hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname === '::1' ||
-      hostname === '0.0.0.0' ||
-      hostname.endsWith('.local')
-    ) {
-      return true;
-    }
-
-    // Check private IPv4 ranges
-    const ipv4Regex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
-    const match = hostname.match(ipv4Regex);
-    if (match) {
-      const [, p1, p2] = match.map(Number);
-      if (p1 === 10) return true;
-      if (p1 === 172 && p2 >= 16 && p2 <= 31) return true;
-      if (p1 === 192 && p2 === 168) return true;
-      if (p1 === 169 && p2 === 254) return true; // Link-local
-    }
-
-    return false;
-  } catch {
-    return true;
-  }
-}
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
+const MAX_REDIRECTS = 2;
 
 export async function POST(req: NextRequest) {
   try {
@@ -49,26 +21,54 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'URL invalide' }, { status: 400 });
     }
 
-    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
-      return NextResponse.json({ error: 'Protocole non supporté' }, { status: 400 });
-    }
-
-    if (isPrivateIp(url)) {
-      return NextResponse.json({ error: 'Adresse privée non autorisée' }, { status: 403 });
+    if (isBlockedRequestTarget(parsedUrl.toString())) {
+      return NextResponse.json({ error: 'Adresse non autorisée' }, { status: 403 });
     }
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-    const res = await fetch(parsedUrl.toString(), {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'LKDV-LinkPreviewBot/1.0 (+https://kitduvoyageur.fr)',
-        Accept: 'text/html,application/xhtml+xml',
-      },
-    });
+    let res: Response | null = null;
+    let currentUrl = parsedUrl;
 
-    clearTimeout(timeoutId);
+    try {
+      for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
+        if (isBlockedRequestTarget(currentUrl.toString())) {
+          return NextResponse.json({ error: 'Adresse non autorisée' }, { status: 403 });
+        }
+
+        const response = await fetch(currentUrl.toString(), {
+          signal: controller.signal,
+          redirect: 'manual',
+          headers: {
+            'User-Agent': 'LKDV-LinkPreviewBot/1.0 (+https://kitduvoyageur.fr)',
+            Accept: 'text/html,application/xhtml+xml',
+          },
+        });
+
+        if (REDIRECT_STATUSES.has(response.status)) {
+          const location = response.headers.get('location');
+          if (!location) {
+            return NextResponse.json({ error: 'Redirection invalide' }, { status: 502 });
+          }
+          try {
+            currentUrl = new URL(location, currentUrl);
+          } catch {
+            return NextResponse.json({ error: 'Redirection invalide' }, { status: 502 });
+          }
+          continue;
+        }
+
+        res = response;
+        break;
+      }
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
+    if (!res) {
+      return NextResponse.json({ error: 'Trop de redirections' }, { status: 502 });
+    }
 
     if (!res.ok) {
       return NextResponse.json({ error: 'Erreur de réponse serveur' }, { status: 502 });
@@ -117,12 +117,12 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({
-      title: title || parsedUrl.hostname,
+      title: title || currentUrl.hostname,
       description: description || null,
       image: image || null,
-      siteName: siteName || parsedUrl.hostname,
-      domain: parsedUrl.hostname.replace(/^www\./, ''),
-      url: parsedUrl.toString(),
+      siteName: siteName || currentUrl.hostname,
+      domain: currentUrl.hostname.replace(/^www\./, ''),
+      url: currentUrl.toString(),
     });
   } catch (err: any) {
     if (err.name === 'AbortError') {
