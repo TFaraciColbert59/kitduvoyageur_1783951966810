@@ -52,8 +52,10 @@ export async function createClient() {
           cookiesToSet.forEach(({ name, value, options }) =>
             cookieStore.set(name, value, {
               ...options,
-              sameSite: 'none',
-              secure: true,
+              // Plan 2.11 : session en SameSite=Lax (le site n'est jamais dans un
+              // cadre : X-Frame-Options DENY) ; Secure en production.
+              sameSite: 'lax',
+              secure: process.env.NODE_ENV === 'production',
             })
           );
         } catch {
