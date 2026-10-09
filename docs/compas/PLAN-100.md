@@ -413,8 +413,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [~] Position GPS arrondie (≈ 1 km) avant tout envoi à un tiers : fait pour la
       préparation du Compas (lot F). Reste : jamais enregistrée au mètre ailleurs ; base
       d'un séjour sans lieu dit = commune, pas le point GPS.
-- [ ] Explication avant la demande de position (pourquoi, ce qui est envoyé) ; refus
-      possible sans perdre la préparation (origine demandée en texte, 4.3).
+- [~] Explication de la demande de position : pendant la préparation (le navigateur
+      la demande au lancement), « sert au trajet d'approche, arrondie à environ 1 km,
+      sans elle le trajet reste à préciser » ; refuser ne bloque rien (déjà le cas).
+      Reste : origine demandée en texte (4.3).
 - [x] Politique de confidentialité à jour, **une seule version** (`PrivacyPolicySections`,
       rendue par les vues mobile et ordinateur, qui se contredisaient) : chaque
       prestataire appelé par le code, ce qu'il reçoit et où (Supabase, Vercel, NVIDIA et
