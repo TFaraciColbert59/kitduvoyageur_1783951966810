@@ -604,20 +604,23 @@ export async function compasSetDestinationAction(
     const auth = await requireEditor(parsed.data.tripId);
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
     // La carte (Photon, LocationIQ, Geoapify) et parfois l'IA : comptées par personne (plan 2.2).
-    const limited = await enforceRateLimit(auth.userId, {
-      scope: 'compas-destination',
-      limit: 20,
-      windowMs: 600_000,
-      failMode: 'closed',
-    });
-    if (limited)
-      return {
-        success: false,
-        error:
-          limited.status === 429
-            ? 'Trop de lieux cherchés d’affilée : patiente quelques minutes.'
-            : 'Recherche de lieux indisponible pour le moment : réessaie dans un instant.',
-      };
+    // Effacer la destination (aussi « Annuler ») ne cherche rien : ni compté, ni refusé.
+    if (parsed.data.place) {
+      const limited = await enforceRateLimit(auth.userId, {
+        scope: 'compas-destination',
+        limit: 20,
+        windowMs: 600_000,
+        failMode: 'closed',
+      });
+      if (limited)
+        return {
+          success: false,
+          error:
+            limited.status === 429
+              ? 'Trop de lieux cherchés d’affilée : patiente quelques minutes.'
+              : 'Recherche de lieux indisponible pour le moment : réessaie dans un instant.',
+        };
+    }
     // « GR34 » n'est pas un lieu : la région du sentier (sinon un point dans l'Indre).
     const wanted = parsed.data.place ? (trailRegion(parsed.data.place) ?? parsed.data.place) : null;
     const place = wanted ? await resolveDestination(wanted, auth.userId) : null;

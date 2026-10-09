@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { getTripById } from '@/lib/queries-trips';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import { reportServerError } from '@/lib/observability/appErrors';
 import {
   BookingProviderError,
   createBookingProvider,
@@ -222,7 +223,7 @@ export async function compasSearchOffersAction(
         error: `Le partenaire n’a pas répondu : réessaie plus tard. (${err.provider ?? 'partenaire'} ${err.code}${err.status ? ` ${err.status}` : ''})`,
       };
     }
-    console.error('[compas] compasSearchOffersAction', err);
+    await reportServerError('compas.compasSearchOffersAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -293,7 +294,7 @@ export async function compasNearbyActivitiesAction(
       console.warn('[compas] activités autour', err.provider, err.code, err.status ?? '');
       return { success: true, offers: [], unavailable: false };
     }
-    console.error('[compas] compasNearbyActivitiesAction', err);
+    await reportServerError('compas.compasNearbyActivitiesAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }

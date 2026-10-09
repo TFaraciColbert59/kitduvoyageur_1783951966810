@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import { reportServerError } from '@/lib/observability/appErrors';
 import type { RoutePoi } from '../engine/routePois';
 import { lookupStagePois } from './stagePoiLookup';
 
@@ -50,7 +51,7 @@ export async function compasStagePoisAction(
     const found = await lookupStagePois(points);
     return { success: true, pois: found.pois, partial: found.partial };
   } catch (err) {
-    console.error('[compas] compasStagePoisAction', err);
+    await reportServerError('compas.compasStagePoisAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }

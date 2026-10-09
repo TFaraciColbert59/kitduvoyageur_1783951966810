@@ -140,6 +140,16 @@ describe('limites de la destination et de la phrase', () => {
     });
   });
 
+  it('destination : effacer (place: null) ne compte pas et n’est jamais refusé', async () => {
+    h.refuse = { scope: 'compas-destination', status: 429 };
+    const res = await compasSetDestinationAction({ tripId: TRIP, tripSlug: 'x', place: null });
+    expect(h.calls.some((c) => c.scope === 'compas-destination')).toBe(false);
+    expect(res.success === false ? res.error : '').not.toBe(
+      'Trop de lieux cherchés d’affilée : patiente quelques minutes.'
+    );
+    expect(lookupDestination).not.toHaveBeenCalled();
+  });
+
   it('destination : accès refusé → rien n’est compté', async () => {
     h.denied = true;
     const res = await compasSetDestinationAction({ tripId: TRIP, tripSlug: 'x', place: 'Vercors' });

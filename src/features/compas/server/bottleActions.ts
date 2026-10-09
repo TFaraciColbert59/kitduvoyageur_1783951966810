@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { getTripById } from '@/lib/queries-trips';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import { reportServerError } from '@/lib/observability/appErrors';
 
 /**
  * Bouteille à la mer depuis le Compas : une annonce de groupe publique
@@ -213,7 +214,7 @@ export async function compasBottleStateAction(
       },
     };
   } catch (err) {
-    console.error('[compas] compasBottleStateAction', err);
+    await reportServerError('compas.compasBottleStateAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -278,7 +279,7 @@ export async function compasLaunchBottleAction(
     revalidate(auth.country);
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasLaunchBottleAction', err);
+    await reportServerError('compas.compasLaunchBottleAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -365,7 +366,7 @@ export async function compasAnswerApplicantAction(
     revalidate(auth.country);
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasAnswerApplicantAction', err);
+    await reportServerError('compas.compasAnswerApplicantAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -391,7 +392,7 @@ export async function compasCloseBottleAction(
     revalidate(auth.country);
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasCloseBottleAction', err);
+    await reportServerError('compas.compasCloseBottleAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }

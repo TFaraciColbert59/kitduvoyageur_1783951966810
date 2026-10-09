@@ -14,9 +14,10 @@ alter table public.app_errors enable row level security;
 revoke all on table public.app_errors from anon, authenticated;
 
 -- Rapport quotidien (plan 1.1) : erreurs de la veille et alertes de seuil.
+-- Sans valeur par défaut : les jours d'avant restent « non renseignés », jamais un 0 inventé.
 alter table public.ops_daily_reports
-  add column if not exists app_errors integer not null default 0,
-  add column if not exists alerts text[] not null default '{}';
+  add column if not exists app_errors integer,
+  add column if not exists alerts text[];
 
 create or replace function public.ops_daily_report()
 returns public.ops_daily_reports
