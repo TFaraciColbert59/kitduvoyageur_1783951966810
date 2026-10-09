@@ -18,6 +18,7 @@ import { addTripItem } from '@/lib/queries-trip-kit';
 import { askAI } from '@/lib/ai/askAI';
 import { buildCompasDestinationSystem } from '@/lib/ai/features/compasAutofill';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import { reportServerError } from '@/lib/observability/appErrors';
 import { createBookingProvider } from '@/features/booking/server/bookingProvider';
 import { BookingProviderError } from '@/features/booking/server/bookingProviderErrors';
 import { resolveProviderCredentials } from '@/features/booking/server/providerCredentials';
@@ -157,7 +158,7 @@ export async function compasSetCarrierAction(
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasSetCarrierAction', err);
+    await reportServerError('compas.compasSetCarrierAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -221,7 +222,7 @@ export async function compasPickShopProductAction(
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasPickShopProductAction', err);
+    await reportServerError('compas.compasPickShopProductAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -260,7 +261,7 @@ export async function compasAddShopProductToTripAction(
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasAddShopProductToTripAction', err);
+    await reportServerError('compas.compasAddShopProductToTripAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -320,7 +321,7 @@ export async function compasAddInventoryItemAction(
       return { success: false, error: 'Impossible d’ajouter cet objet à l’inventaire.' };
     return { success: true, itemId: String((data as { id: string }).id) };
   } catch (err) {
-    console.error('[compas] compasAddInventoryItemAction', err);
+    await reportServerError('compas.compasAddInventoryItemAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -346,7 +347,7 @@ export async function compasMarkReturnedAction(
       return { success: false, error: 'Impossible de mettre à jour cet objet.' };
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasMarkReturnedAction', err);
+    await reportServerError('compas.compasMarkReturnedAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -380,7 +381,7 @@ export async function compasSetBudgetAction(
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasSetBudgetAction', err);
+    await reportServerError('compas.compasSetBudgetAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -441,7 +442,7 @@ export async function compasSetDatesAction(
     revalidateTrip(tripSlug);
     return { success: true, kept };
   } catch (err) {
-    console.error('[compas] compasSetDatesAction', err);
+    await reportServerError('compas.compasSetDatesAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -495,7 +496,7 @@ export async function compasSetActivityAction(
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasSetActivityAction', err);
+    await reportServerError('compas.compasSetActivityAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -538,7 +539,7 @@ export async function compasSetPreferencesAction(
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasSetPreferencesAction', err);
+    await reportServerError('compas.compasSetPreferencesAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -654,7 +655,7 @@ export async function compasSetDestinationAction(
     if (error) return { success: false, error: 'Impossible d’enregistrer la destination.' };
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasSetDestinationAction', err);
+    await reportServerError('compas.compasSetDestinationAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -683,7 +684,7 @@ export async function compasSetSpanAction(
     if (error) return { success: false, error: 'Impossible d’enregistrer la durée.' };
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasSetSpanAction', err);
+    await reportServerError('compas.compasSetSpanAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -712,7 +713,7 @@ export async function compasSetPartySizeAction(
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasSetPartySizeAction', err);
+    await reportServerError('compas.compasSetPartySizeAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -756,7 +757,7 @@ export async function compasSetStayAction(
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasSetStayAction', err);
+    await reportServerError('compas.compasSetStayAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -841,7 +842,7 @@ export async function compasSearchStaysAction(
         // Code et statut seulement, jamais une clé ni la réponse brute.
         error: `Le fournisseur n’a pas répondu : réessaie plus tard. (${err.provider ?? 'partenaire'} ${err.code}${err.status ? ` ${err.status}` : ''})`,
       };
-    console.error('[compas] compasSearchStaysAction', err);
+    await reportServerError('compas.compasSearchStaysAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -902,7 +903,7 @@ export async function compasListMyKitsAction(): Promise<CompasMyKitsResult> {
       })),
     };
   } catch (err) {
-    console.error('[compas] compasListMyKitsAction', err);
+    await reportServerError('compas.compasListMyKitsAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -958,7 +959,7 @@ export async function compasApplyKitAction(
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasApplyKitAction', err);
+    await reportServerError('compas.compasApplyKitAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -1057,7 +1058,7 @@ export async function compasCreateKitFromTripAction(
     revalidateTrip(parsed.data.tripSlug);
     return { success: true, kitId, count: items.length };
   } catch (err) {
-    console.error('[compas] compasCreateKitFromTripAction', err);
+    await reportServerError('compas.compasCreateKitFromTripAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -1140,7 +1141,7 @@ export async function compasSearchPeopleAction(
       .slice(0, 12);
     return { success: true, people };
   } catch (err) {
-    console.error('[compas] compasSearchPeopleAction', err);
+    await reportServerError('compas.compasSearchPeopleAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -1207,7 +1208,7 @@ export async function compasInviteMemberAction(
     }
     return { success: true, invitationId: (data as { id: string }).id };
   } catch (err) {
-    console.error('[compas] compasInviteMemberAction', err);
+    await reportServerError('compas.compasInviteMemberAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -1234,7 +1235,7 @@ export async function compasCancelInvitationAction(
       return { success: false, error: 'Invitation déjà close ou introuvable.' };
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasCancelInvitationAction', err);
+    await reportServerError('compas.compasCancelInvitationAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -1285,7 +1286,7 @@ export async function compasInviteLinkAction(
     }
     return { success: true, path: `/invitation/${token}` };
   } catch (err) {
-    console.error('[compas] compasInviteLinkAction', err);
+    await reportServerError('compas.compasInviteLinkAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -1324,7 +1325,7 @@ export async function compasRestoreMemberAction(
       return { success: false, error: 'Impossible de remettre cette personne.' };
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasRestoreMemberAction', err);
+    await reportServerError('compas.compasRestoreMemberAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -1354,7 +1355,7 @@ export async function compasSetMemberRoleAction(
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasSetMemberRoleAction', err);
+    await reportServerError('compas.compasSetMemberRoleAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -1406,7 +1407,7 @@ export async function compasRemoveMemberAction(
     revalidateTrip(parsed.data.tripSlug);
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasRemoveMemberAction', err);
+    await reportServerError('compas.compasRemoveMemberAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -1486,7 +1487,7 @@ export async function compasSearchRoutesAction(
     }));
     return { success: true, routes };
   } catch (err) {
-    console.error('[compas] compasSearchRoutesAction', err);
+    await reportServerError('compas.compasSearchRoutesAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -1546,7 +1547,7 @@ export async function compasMyRoutesAction(): Promise<
       .sort((a, b) => (b.mine?.last ?? '').localeCompare(a.mine?.last ?? ''));
     return { success: true, routes: out };
   } catch (err) {
-    console.error('[compas] compasMyRoutesAction', err);
+    await reportServerError('compas.compasMyRoutesAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -1646,7 +1647,7 @@ export async function compasApplyRouteAction(
     revalidateTrip(tripSlug);
     return { success: true, kept };
   } catch (err) {
-    console.error('[compas] compasApplyRouteAction', err);
+    await reportServerError('compas.compasApplyRouteAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -1789,7 +1790,7 @@ export async function compasInterpretAction(
     const proposals = validateActions(priced, ctx);
     return { success: true, proposals, usedAi, note };
   } catch (err) {
-    console.error('[compas] compasInterpretAction', err);
+    await reportServerError('compas.compasInterpretAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -1881,7 +1882,7 @@ export async function compasExplainVerdictAction(
       ? { success: true, text: check.text, refused: null, note: null }
       : { success: true, text: null, refused: check.reason, note: null };
   } catch (err) {
-    console.error('[compas] compasExplainVerdictAction', err);
+    await reportServerError('compas.compasExplainVerdictAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -1998,7 +1999,7 @@ export async function compasCreateTripAction(
     revalidatePath('/compas');
     return { success: true, slug: created.slug };
   } catch (err) {
-    console.error('[compas] compasCreateTripAction', err);
+    await reportServerError('compas.compasCreateTripAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -2023,7 +2024,7 @@ export async function compasClearStartSayAction(
     });
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasClearStartSayAction', err);
+    await reportServerError('compas.compasClearStartSayAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -2057,7 +2058,7 @@ export async function compasOpenTripAction(
     revalidatePath('/compas');
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasOpenTripAction', err);
+    await reportServerError('compas.compasOpenTripAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }

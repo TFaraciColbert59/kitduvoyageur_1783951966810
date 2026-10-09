@@ -4,6 +4,7 @@ import type { InventoryStatus } from '@/features/materiel/domain/inventory';
 import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import { reportServerError } from '@/lib/observability/appErrors';
 import { aiEnabled, askAI } from '@/lib/ai/askAI';
 import {
   COMPAS_AUTOFILL_SPEC,
@@ -2055,7 +2056,7 @@ export async function compasAutofillAction(
       summary: { nights: nightsOut, transport, kit: kitCount, budget: lines, total, notes: orderNotes(essential, notes, aiNotes), usedAi, stepsCreated },
     };
   } catch (err) {
-    console.error('[compas] compasAutofillAction', err);
+    await reportServerError('compas.compasAutofillAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -2120,7 +2121,7 @@ export async function compasUndoAutofillAction(
     if (undoError) console.error('[compas] annulation : métadonnées non écrites', undoError.code, undoError.message);
     return { success: true };
   } catch (err) {
-    console.error('[compas] compasUndoAutofillAction', err);
+    await reportServerError('compas.compasUndoAutofillAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -2280,7 +2281,7 @@ export async function compasRefreshAutofillAction(
     if (carryError) return { success: false, error: 'Réadaptation non enregistrée : réessaie.' };
     return { success: true, parts, kept, label: `${partsText(parts)} réadapté${parts.length > 1 ? 's' : ''}` };
   } catch (err) {
-    console.error('[compas] compasRefreshAutofillAction', err);
+    await reportServerError('compas.compasRefreshAutofillAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
