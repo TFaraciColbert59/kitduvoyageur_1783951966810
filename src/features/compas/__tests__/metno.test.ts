@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { localStamp, parseMetNo, powerToDaily, symbolToWmo } from '../engine/metno';
+import { localStamp, parseMetNo, powerClimatology, powerToDaily, symbolToWmo } from '../engine/metno';
 import { averageTrend, buildCalendar } from '../engine/weather';
 import chamonix from './fixtures/metno-chamonix.json';
 
@@ -147,5 +147,46 @@ describe('NASA POWER : tendance des années passées', () => {
   it('réponse vide : pas de tendance', () => {
     expect(powerToDaily(null)).toBeNull();
     expect(powerToDaily({ properties: { parameter: {} } })).toBeNull();
+  });
+});
+
+describe('NASA POWER : normales mensuelles (climatologie 2001-2020)', () => {
+  /** Réponse réelle pour Manaus (9 oct. 2026), réduite à ce qui est lu. */
+  const manaus = {
+    properties: {
+      parameter: {
+        PRECTOTCORR: {
+          JAN: 7.24,
+          FEB: 8.36,
+          MAR: 8.63,
+          APR: 8.72,
+          MAY: 6.62,
+          JUN: 3.97,
+          JUL: 2.44,
+          AUG: 1.61,
+          SEP: 2.26,
+          OCT: 3.33,
+          NOV: 4.5,
+          DEC: 6.87,
+          ANN: 5.36,
+        } as Record<string, number>,
+      },
+    },
+    header: { fill_value: -999.0 },
+  };
+
+  it('douze mois dans l’ordre, la moyenne annuelle ignorée', () => {
+    expect(powerClimatology(manaus)).toEqual([7.24, 8.36, 8.63, 8.72, 6.62, 3.97, 2.44, 1.61, 2.26, 3.33, 4.5, 6.87]);
+  });
+
+  it('valeur de remplissage (-999) ou mois manquant : null, rien de comblé', () => {
+    const filled = structuredClone(manaus);
+    filled.properties.parameter.PRECTOTCORR.AUG = -999;
+    expect(powerClimatology(filled)).toBeNull();
+    const missing = structuredClone(manaus);
+    delete missing.properties.parameter.PRECTOTCORR.AUG;
+    expect(powerClimatology(missing)).toBeNull();
+    expect(powerClimatology(null)).toBeNull();
+    expect(powerClimatology({ messages: ['erreur'] })).toBeNull();
   });
 });

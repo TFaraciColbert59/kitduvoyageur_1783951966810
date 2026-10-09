@@ -84,6 +84,24 @@ describe('Contexte projet : adaptation au projet, jamais un preset', () => {
     ]);
   });
 
+  it('hiver selon l’hémisphère : juillet est l’hiver au sud, janvier l’été', () => {
+    const july = resolveProjectContext(base({ profile, month: 7, lat: -45, maxAltitudeM: 2200 }));
+    expect(july.nights).toMatchObject({ value: 'refuge', source: 'defaut' });
+    expect(july.adaptations).toEqual([
+      expect.objectContaining({ field: 'nights', why: 'nuits d’hiver en altitude' }),
+    ]);
+    const january = resolveProjectContext(base({ profile, month: 1, lat: -45, maxAltitudeM: 2200 }));
+    expect(january.nights).toMatchObject({ value: 'bivouac', source: 'profil' });
+    expect(january.adaptations).toEqual([]);
+    // Hémisphère nord : inchangé.
+    expect(resolveProjectContext(base({ profile, month: 1, lat: 45.9, maxAltitudeM: 2200 })).nights.value).toBe(
+      'refuge'
+    );
+    expect(resolveProjectContext(base({ profile, month: 7, lat: 45.9, maxAltitudeM: 2200 })).nights.value).toBe(
+      'bivouac'
+    );
+  });
+
   it('un choix du projet n’est jamais adapté en silence', () => {
     const ctx = resolveProjectContext(
       base({ profile, month: 1, maxAltitudeM: 2200, project: { pace: 'normal', nights: 'bivouac', avoid: [], wishes: [] } })

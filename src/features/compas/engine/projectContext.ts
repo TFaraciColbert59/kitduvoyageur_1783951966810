@@ -61,6 +61,8 @@ export interface ContextInput {
   partySize: number | null;
   /** Mois du départ (1-12), si connu. */
   month: number | null;
+  /** Latitude de la destination, si connue : au sud, les saisons sont décalées de six mois. */
+  lat?: number | null;
   /** Altitude maximale connue du parcours, si mesurée. */
   maxAltitudeM?: number | null;
   /** Personnalisations du projet (metadata.compas.prefs). */
@@ -140,7 +142,13 @@ function pick<T>(
   return fallback;
 }
 
+/** Mois d'hiver dans l'hémisphère nord. */
 const WINTER = new Set([11, 12, 1, 2, 3]);
+
+/** Le mois équivalent dans l'hémisphère nord : au sud, six mois de décalage (juillet ↔ janvier). */
+function northernEquivalent(month: number, lat: number | null | undefined): number {
+  return lat != null && lat < 0 ? ((month + 5) % 12) + 1 : month;
+}
 
 export function resolveProjectContext(input: ContextInput): ProjectContext {
   const project = input.project ?? {};
@@ -257,7 +265,7 @@ export function resolveProjectContext(input: ContextInput): ProjectContext {
     else if (ROOF_ACTIVITIES.has(act))
       nights = { value: 'hebergement', source: 'defaut', why: 'activité qui dort sous un toit' };
     else if (priority.value === 'budget' && priority.source === 'profil') {
-      const cold = input.month != null && WINTER.has(input.month);
+      const cold = input.month != null && WINTER.has(northernEquivalent(input.month, input.lat));
       const high = (input.maxAltitudeM ?? 0) >= 1500;
       if (cold && (high || level.value === 'debut')) {
         adaptations.push({

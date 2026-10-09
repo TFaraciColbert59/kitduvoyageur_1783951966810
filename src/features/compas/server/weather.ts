@@ -6,7 +6,7 @@ import {
   type CalendarDay,
   type DayForecast,
 } from '../engine/weather';
-import { METNO_SOURCE, POWER_SOURCE, parseMetNo, powerToDaily } from '../engine/metno';
+import { METNO_SOURCE, POWER_SOURCE, parseMetNo, powerClimatology, powerToDaily } from '../engine/metno';
 import tzLookup from '@photostructure/tz-lookup';
 import { appUserAgent } from '@/lib/userAgent';
 import { metnoForecastUrl, metnoGet } from '@/lib/weather/metnoRequest';
@@ -20,6 +20,9 @@ import { localToday } from '../engine/zone';
  * - Calendrier des conditions sur 6 semaines au point de départ : prévision
  *   tant qu'elle couvre (~9 jours), puis TENDANCE (moyenne des 5 dernières
  *   années aux mêmes dates, NASA POWER). La tendance est toujours étiquetée.
+ * - Normales mensuelles (NASA POWER, climatologie 2001-2020, gardées 30 jours) :
+ *   le mois le plus sec d'une destination tropicale absente de la table des
+ *   saisons sèches (`getPrecipNormals`, une demande par préparation).
  *
  * MET Norway passe par un seul point d'accès (`metnoGet`, `metnoForecastUrl`) :
  * User-Agent unique du site, 20 requêtes par seconde au plus, cache au-delà
@@ -32,6 +35,9 @@ import { localToday } from '../engine/zone';
  */
 
 const POWER = 'https://power.larc.nasa.gov/api/temporal/daily/point';
+const POWER_CLIMATOLOGY = 'https://power.larc.nasa.gov/api/temporal/climatology/point';
+/** Les normales 2001-2020 ne bougent pas : une réponse sert 30 jours. */
+const NORMALS_REVALIDATE_S = 30 * 86_400;
 const USER_AGENT = appUserAgent('Compas, meteo');
 /** Horizon annoncé : MET Norway couvre ~9 jours pleins après aujourd'hui. */
 export const FORECAST_HORIZON_DAYS = 10;
@@ -89,6 +95,18 @@ export function trendUrl(lat: number, lon: number, start: string, end: string): 
   return `${POWER}?${q.toString()}`;
 }
 
+/** Normales mensuelles de précipitations (climatologie 2001-2020) au point arrondi à 0,01°. */
+export function climatologyUrl(lat: number, lon: number): string {
+  const q = new URLSearchParams({
+    parameters: 'PRECTOTCORR',
+    community: 'RE',
+    longitude: at2(lon),
+    latitude: at2(lat),
+    format: 'JSON',
+  });
+  return `${POWER_CLIMATOLOGY}?${q.toString()}`;
+}
+
 /** Fuseau horaire du lieu (hors ligne) ; celui de l'app si la mer ou l'erreur l'empêche. */
 export function zoneAt(lat: number, lon: number, fallback: string): string {
   try {
@@ -121,6 +139,16 @@ async function getJson(url: string, revalidate: number, timeoutMs = 6000): Promi
   } catch {
     return null;
   }
+}
+
+/**
+ * Normales mensuelles de précipitations au point (mm/jour, janvier → décembre),
+ * ou null (service injoignable, mois manquant) : la période reste alors non
+ * proposée, comme avant.
+ */
+export async function getPrecipNormals(lat: number, lon: number): Promise<{ precip: number[] } | null> {
+  const precip = powerClimatology(await getJson(climatologyUrl(lat, lon), NORMALS_REVALIDATE_S, 8000));
+  return precip ? { precip } : null;
 }
 
 function shiftYear(iso: string, years: number): string {

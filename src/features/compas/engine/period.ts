@@ -18,6 +18,11 @@ export interface PeriodInput {
   /** Aujourd'hui (AAAA-MM-JJ). */
   today: string;
   days: number;
+  /**
+   * Normales mensuelles de précipitations (mm/jour, janvier → décembre, NASA
+   * POWER 2001-2020) : servent seulement aux tropiques absents de la table.
+   */
+  normals?: { precip: number[] } | null;
 }
 
 export interface BestPeriod {
@@ -80,8 +85,9 @@ function addDays(isoDate: string, n: number): string {
 /**
  * Tropiques : la saison sèche, pays par pays (sources : climats généraux,
  * conseillée par les offices de tourisme), le mois le plus sûr au cœur de
- * cette saison. Un pays absent de la table : aucune période plutôt qu'une
- * fausse certitude.
+ * cette saison. Un pays absent de la table : le mois le plus sec des normales
+ * NASA POWER 2001-2020 au point même (`driestMonth`), sinon aucune période
+ * plutôt qu'une fausse certitude. Aucune ligne n'est ajoutée à la main.
  */
 const TROPICAL_DRY: Record<string, { month: number; why: string }> = {
   PE: { month: 6, why: 'saison sèche dans les Andes (mai à septembre)' },
@@ -119,9 +125,56 @@ const TROPICAL_DRY: Record<string, { month: number; why: string }> = {
   OM: { month: 12, why: 'hiver doux, avant la chaleur' },
 };
 
+/** Raison affichée quand le mois vient des normales (et non de la table). */
+export const NORMALS_WHY = 'mois le plus sec selon les normales 2001-2020 (NASA POWER)';
+
+function isTropical(input: Pick<PeriodInput, 'activity' | 'lat'>): boolean {
+  return input.lat != null && Math.abs(input.lat) < 23.5 && input.activity !== 'ski';
+}
+
+function dryRow(countryCode: string | null | undefined): { month: number; why: string } | null {
+  return TROPICAL_DRY[(countryCode ?? '').toUpperCase()] ?? null;
+}
+
+/**
+ * Tropiques hors de la table : seules les normales climatiques peuvent dire
+ * la saison sèche (le serveur ne les demande que dans ce cas).
+ */
+export function needsDryNormals(input: Pick<PeriodInput, 'activity' | 'lat' | 'countryCode'>): boolean {
+  return isTropical(input) && !dryRow(input.countryCode);
+}
+
+/**
+ * Mois (1-12) au centre de la fenêtre de trois mois la plus sèche, en boucle
+ * sur l'année (décembre-janvier-février compte). À égalité, le premier.
+ */
+export function driestMonth(precip: number[]): number {
+  let best = 0;
+  let bestSum = Infinity;
+  for (let i = 0; i < 12; i += 1) {
+    const sum = precip[(i + 11) % 12] + precip[i] + precip[(i + 1) % 12];
+    if (sum < bestSum) {
+      bestSum = sum;
+      best = i;
+    }
+  }
+  return best + 1;
+}
+
+/** Douze valeurs lisibles, sinon rien : aucune normale n'est comblée. */
+function usableNormals(normals: PeriodInput['normals']): number[] | null {
+  const p = normals?.precip;
+  return Array.isArray(p) && p.length === 12 && p.every((v) => Number.isFinite(v) && v >= 0) ? p : null;
+}
+
 export function bestPeriod(input: PeriodInput): BestPeriod | null {
-  const tropical = input.lat != null && Math.abs(input.lat) < 23.5 && input.activity !== 'ski';
-  const dry = tropical ? TROPICAL_DRY[(input.countryCode ?? '').toUpperCase()] : null;
+  const tropical = isTropical(input);
+  // La table garde la priorité ; hors d'elle, le mois le plus sec des normales
+  // NASA POWER ; sans normales lisibles, aucune période plutôt qu'une supposition.
+  const precip = tropical ? usableNormals(input.normals) : null;
+  const dry = tropical
+    ? (dryRow(input.countryCode) ?? (precip ? { month: driestMonth(precip), why: NORMALS_WHY } : null))
+    : null;
   if (tropical && !dry) return null;
   const north = dry ? null : northernMonth(input);
   if (!dry && !north) return null;

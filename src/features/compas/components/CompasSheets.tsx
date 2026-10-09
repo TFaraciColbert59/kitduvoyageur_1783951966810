@@ -2962,10 +2962,16 @@ function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
 
 function SourcesFlow({ ctl }: { ctl: CompasCtl }) {
   const m = ctl.data.model;
+  // NASA POWER (domaine public, citation demandée) : tendance du calendrier au-delà
+  // de la prévision, et normales 2001-2020 d'une période proposée par la préparation.
+  const usesPower =
+    Boolean(ctl.data.weather?.calendar.some((c) => c.kind === 'tendance')) ||
+    Boolean(ctl.data.autofillNotes?.some((n) => n.includes('NASA POWER')));
   const sources = [
     'Étapes et dépenses du voyage',
     'Ton inventaire',
     m.weather.days.length ? 'MET Norway (météo, CC BY 4.0)' : null,
+    usesPower ? 'NASA POWER (tendance, normales 2001-2020)' : null,
     m.daylight ? 'Calcul astronomique (lumière)' : null,
     ctl.data.shop.length ? 'Boutique LKDV' : null,
     ctl.data.affiliateLinks.length ? 'Partenaires affiliés' : null,

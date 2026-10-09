@@ -1318,6 +1318,47 @@ describe('CompasScreen', () => {
     expect(within(sheet).queryByText(/heure locale/)).toBeNull();
   });
 
+  const openSources = async () => {
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Sources/ }));
+    return sheet;
+  };
+
+  it('Sources : NASA POWER cité quand sa tendance sert au calendrier', async () => {
+    const data = makeData();
+    data.weather = {
+      source: 'MET Norway',
+      trendSource: 'NASA POWER',
+      horizon: '2026-10-21',
+      tripDays: [],
+      calendar: [
+        { date: '2026-10-30', kind: 'tendance' as const, quality: 'bon' as const, reasons: [], tMin: 3, tMax: 12 },
+      ],
+    };
+    render(<CompasScreen data={data} />);
+    const sheet = await openSources();
+    expect(await within(sheet).findByText('NASA POWER (tendance, normales 2001-2020)')).toBeTruthy();
+  });
+
+  it('Sources : période tirée des normales (note de la préparation) : NASA POWER cité', async () => {
+    const data = makeData();
+    data.autofillNotes = [
+      'Période proposée : août (mois le plus sec selon les normales 2001-2020 (NASA POWER)). Change-la dans « Quand » si elle ne te va pas.',
+    ];
+    render(<CompasScreen data={data} />);
+    const sheet = await openSources();
+    expect(await within(sheet).findByText('NASA POWER (tendance, normales 2001-2020)')).toBeTruthy();
+  });
+
+  it('Sources : ni tendance ni normales, NASA POWER n’est pas cité', async () => {
+    render(<CompasScreen data={makeData()} />);
+    const sheet = await openSources();
+    expect(await within(sheet).findByText('Étapes et dépenses du voyage')).toBeTruthy();
+    expect(within(sheet).queryByText(/NASA POWER/)).toBeNull();
+  });
+
   it('Parcours : chercher un lieu, voir la communauté, choisir découpé sur les dates', async () => {
     compas.compasSearchRoutesAction.mockResolvedValueOnce({
       success: true,

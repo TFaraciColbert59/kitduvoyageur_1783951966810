@@ -628,6 +628,8 @@ export async function getCompasData(): Promise<CompasData | null> {
       // Même groupe que l'écran et la préparation : party_size, sinon les membres.
       partySize: partySizeOf(num(trip.party_size), members.length),
       month: trip.start_date ? Number(String(trip.start_date).slice(5, 7)) : null,
+      // Hiver selon l'hémisphère : latitude du départ, sinon du lieu retrouvé sur la carte.
+      lat: origin?.lat ?? anchorPoint(trip.metadata)?.lat ?? null,
       maxAltitudeM: elevation?.maxM ?? null,
       project: compasMeta.preferences,
       profile,
