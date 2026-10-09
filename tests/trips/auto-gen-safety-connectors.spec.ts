@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
+import { overpassWaterFetch } from './overpassWaterStub';
 import {
   checkSafetyRedLines,
   blurSensitiveCoordinates,
@@ -111,6 +112,14 @@ describe('Phase E — Connecteurs Données Réelles & Lignes Rouges Infranchissa
   });
 
   describe('E.2 : Connecteurs Données Réelles (Connectors)', () => {
+    // Plan 100, 2.12 : Overpass simulé, jamais overpass-api.de depuis un test.
+    beforeEach(() => {
+      vi.stubGlobal('fetch', overpassWaterFetch());
+    });
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
     it('TEST-CONNECTOR-01: Fournit la réglementation bivouac certifiée avec provenance officielle', () => {
       const ruleVanoise = lookupBivouacRegulation('FR', 'Vanoise');
 

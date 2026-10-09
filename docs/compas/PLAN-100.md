@@ -335,6 +335,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       limite d'IP de Supabase Auth (30 sessions anonymes/heure), nos limites (5 essais
       par heure et par adresse, 300 par jour pour le site) et la purge à 7 jours.
       BotID de Vercel sur les actions coûteuses : à faire.
+- [ ] `compasExplainVerdictAction` appelle l'IA sans `enforceRateLimit` : bornée par le
+      seul quota IA par personne (lot O).
+- [ ] Clés par adresse (essai sans compte, routes `/api` publiques) lues sur le premier
+      `x-forwarded-for` : sûres sur Vercel (en-tête réécrit) seulement (lot O).
 
 ### 2.3 Connexion démo
 
@@ -410,6 +414,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       coupée est dite « coupée », plus « en cours ». Tests `autofillState.test.ts`
       (coupure simulée après l'itinéraire : annulation, reprise, prise, expiration).
 - [x] Commentaires « 60 s » mis à jour (300 s ; 48 s par phase gardés et expliqués).
+- [ ] Prise `steps` jamais rendue sur les sorties anticipées (« Dis-moi où tu pars »,
+      « Itinéraire non enregistré », `catch`) : une relance attend jusqu'à 290 s (lot O).
+- [ ] « Annuler » garde `autofill_claim` : juste après, une relance attend jusqu'à 290 s
+      (lot O).
 
 ### 2.7 Écritures concurrentes
 
@@ -480,9 +488,18 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 ### 2.12 Tests
 
 - [ ] Tests d'autorisation réels de `requireEditor` (sans simulation).
-- [ ] Test du contournement de la limite (2.2) et de la coupure (2.6).
+- [x] Test du contournement de la limite (2.2) et de la coupure (2.6) (lot O) :
+      `limitBypass.test.ts` (14 tests, session et compteur en base réels : clé HMAC de la
+      session, voyage, lieu, texte ou slug sans effet, compteur en panne ou muet → refus)
+      a trouvé un **contournement réel, fermé** : une préparation en phase « rest » sans
+      itinéraire en attente échappait à la limite des lancements ; `autofillCut.test.ts`
+      (6 tests : coupure, reprise sans étape en double, « Annuler », « Arrêter »).
 - [ ] **E2E Compas bloquant en CI** (préparation simulée, sans réseau externe).
-- [ ] Plus aucun test unitaire qui appelle un serveur public (comme P024-09, corrigé).
+- [x] Plus aucun test unitaire qui appelle un serveur public (comme P024-09, corrigé)
+      (lot O) : garde imposé à chaque fichier (`tests/setup/no-network.ts` dans
+      `setupFiles` : fetch, http, https, net, tls, WebSocket ; un appel rattrapé par le code
+      fait aussi échouer le test), 8 fichiers corrigés (Overpass, MET Norway, Terrain Tiles
+      simulés), preuve `tests/config/no-network.spec.ts`.
 
 ---
 
