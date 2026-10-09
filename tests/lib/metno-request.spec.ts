@@ -3,18 +3,22 @@
  * `Expires` (cache de 45 min, Expires mesuré à ~32 min), User-Agent du site.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { memoryRateLimitSize, resetMemoryRateLimits } from '@/lib/rate-limit';
 import {
   METNO_MAX_PER_SECOND,
   METNO_REVALIDATE_S,
   metnoForecastUrl,
   metnoGet,
+  metnoSiteSlot,
   metnoSlot,
   resetMetnoSlots,
 } from '@/lib/weather/metnoRequest';
 
 afterEach(() => {
   resetMetnoSlots();
+  resetMemoryRateLimits();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe('rythme MET Norway', () => {
@@ -31,6 +35,87 @@ describe('rythme MET Norway', () => {
     await metnoSlot(now, sleep);
     expect(waits.length).toBe(1);
     expect(t).toBeGreaterThanOrEqual(1000);
+  });
+});
+
+describe('plafond MET à l’échelle du site (fenêtre partagée, clé metno:site)', () => {
+  type Outcome = 'allowed' | 'limited' | 'unavailable';
+  const fakeConsume = (outcomes: Outcome[], opts: { degraded?: boolean; retryAfterSeconds?: number } = {}) => {
+    const queue = [...outcomes];
+    return vi.fn(async (_options: unknown) => ({
+      outcome: queue.shift() ?? 'allowed',
+      retryAfterSeconds: opts.retryAfterSeconds ?? 1,
+      degraded: opts.degraded ?? false,
+    }));
+  };
+
+  it('limité deux fois puis autorisé : attend deux fois, 3 appels avec la bonne clé et le bon plafond', async () => {
+    const consume = fakeConsume(['limited', 'limited', 'allowed']);
+    const sleep = vi.fn(async (_ms: number) => {});
+    await metnoSiteSlot({ consume, sleep });
+    expect(sleep).toHaveBeenCalledTimes(2);
+    expect(consume).toHaveBeenCalledTimes(3);
+    for (const [options] of consume.mock.calls) {
+      expect(options).toMatchObject({
+        key: 'metno:site',
+        limit: METNO_MAX_PER_SECOND,
+        windowMs: 1000,
+        failMode: 'open',
+      });
+      expect(options).toMatchObject({ timeoutMs: 500 });
+    }
+  });
+
+  it('l’attente suit retryAfterSeconds, plafonnée à une seconde', async () => {
+    const sleep = vi.fn(async (_ms: number) => {});
+    await metnoSiteSlot({ consume: fakeConsume(['limited', 'allowed'], { retryAfterSeconds: 1 }), sleep });
+    expect(sleep).toHaveBeenLastCalledWith(1000);
+    sleep.mockClear();
+    await metnoSiteSlot({ consume: fakeConsume(['limited', 'allowed'], { retryAfterSeconds: 30 }), sleep });
+    expect(sleep).toHaveBeenLastCalledWith(1000);
+  });
+
+  it('autorisé du premier coup : aucune attente, un seul appel', async () => {
+    const consume = fakeConsume(['allowed']);
+    const sleep = vi.fn(async (_ms: number) => {});
+    await metnoSiteSlot({ consume, sleep });
+    expect(consume).toHaveBeenCalledTimes(1);
+    expect(sleep).not.toHaveBeenCalled();
+  });
+
+  it('indisponible (ouvert) : on laisse passer tout de suite, sans attendre', async () => {
+    const consume = fakeConsume(['unavailable']);
+    const sleep = vi.fn(async (_ms: number) => {});
+    await metnoSiteSlot({ consume, sleep });
+    expect(consume).toHaveBeenCalledTimes(1);
+    expect(sleep).not.toHaveBeenCalled();
+  });
+
+  it('repli dégradé (base injoignable) : on laisse passer tout de suite, même « limité »', async () => {
+    const consume = fakeConsume(['limited'], { degraded: true });
+    const sleep = vi.fn(async (_ms: number) => {});
+    await metnoSiteSlot({ consume, sleep });
+    expect(consume).toHaveBeenCalledTimes(1);
+    expect(sleep).not.toHaveBeenCalled();
+  });
+
+  it('toujours limité : rend la main après 3 tentatives et le dit une seule fois', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const consume = fakeConsume(['limited', 'limited', 'limited', 'limited', 'limited']);
+    const sleep = vi.fn(async (_ms: number) => {});
+    await expect(metnoSiteSlot({ consume, sleep })).resolves.toBeUndefined();
+    expect(consume).toHaveBeenCalledTimes(3);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith('[meteo] plafond MET du site atteint');
+  });
+
+  it('metnoGet consomme la fenêtre du site (repli mémoire sans base) avant chaque requête MET', async () => {
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => new Response(JSON.stringify({ ok: 1 }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    expect(memoryRateLimitSize()).toBe(0);
+    await metnoGet('https://api.met.no/x');
+    expect(memoryRateLimitSize()).toBe(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
 
