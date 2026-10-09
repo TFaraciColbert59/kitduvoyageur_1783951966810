@@ -140,6 +140,20 @@ $fn$;
 
 -- 2. get_user_badges_progress : lecture des badges d'autrui possible avec un
 --    p_user_id arbitraire. Garde : seul le titulaire du JWT peut se lire.
+-- Rejouabilite : le type composite legacy n'est cree par aucune migration du
+-- depot (il existe en production, cf. baseline). Recree a l'identique si absent.
+DO $$
+BEGIN
+  IF to_regtype('public.badge_progress_result') IS NULL THEN
+    EXECUTE $t$CREATE TYPE public.badge_progress_result AS (
+      id uuid, name text, slug text, description text, icon text, category text,
+      rarity text, points_reward integer, requirement_type text, requirement_value integer,
+      current_value integer, percentage integer, is_unlocked boolean,
+      earned_at timestamp with time zone
+    )$t$;
+  END IF;
+END $$;
+
 CREATE OR REPLACE FUNCTION public.get_user_badges_progress(p_user_id uuid)
  RETURNS SETOF badge_progress_result
  LANGUAGE plpgsql

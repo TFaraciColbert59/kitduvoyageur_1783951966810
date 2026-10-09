@@ -168,7 +168,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.products TO anon, authenticated, 
 
 DO $$
 BEGIN
-  IF to_regclass('public._deprecated_gear_items') IS NOT NULL THEN
+  IF to_regclass('public._deprecated_gear_items') IS NOT NULL
+     AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '_deprecated_gear_items' AND column_name = 'quantity') THEN
     INSERT INTO public.product_ownership (
       id, user_id, name, brand, category, weight_g, price_cents, condition, tags, quantity, created_at
     )
@@ -184,6 +185,16 @@ BEGIN
   END IF;
 
   IF to_regclass('public.gear_items') IS NOT NULL AND (SELECT relkind FROM pg_class WHERE oid = to_regclass('public.gear_items')) = 'r' THEN
+    -- Rejouabilite : la colonne quantity peut manquer sur une base vierge
+    -- (elle n'est ajoutee par aucune migration du depot). La table est droppee
+    -- juste apres la copie : l'ajout est donc sans effet durable.
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'gear_items' AND column_name = 'quantity'
+    ) THEN
+      EXECUTE 'ALTER TABLE public.gear_items ADD COLUMN quantity integer';
+    END IF;
+
     INSERT INTO public.product_ownership (
       id, user_id, name, brand, category, weight_g, price_cents, condition, tags, quantity, created_at
     )

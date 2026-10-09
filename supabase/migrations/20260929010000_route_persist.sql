@@ -132,7 +132,7 @@ AS $$
   INSERT INTO public.route_cache
     (cache_key, route_mode, provider, payload, hit_count, created_at, expires_at)
   VALUES (
-    p_cache_key, p_route_mode, p_payload, p_provider, 0, now(),
+    p_cache_key, p_route_mode, p_provider, p_payload, 0, now(),
     now() + make_interval(secs => greatest(p_ttl_seconds, 60))
   )
   ON CONFLICT (cache_key) DO UPDATE SET
