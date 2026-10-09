@@ -102,6 +102,7 @@ import { after } from 'next/server';
 import { bareAdminName, destinationRadiusKm, distanceKm, isAdminName, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, type CompasPlace } from '../engine/places';
 import { unifyStageNames, untangleStages } from '../engine/stageOrder';
 import { localToday } from './weather';
+import { aiSuggestion, essentialAdvice, orderNotes, repeatsRule } from '../engine/advice';
 import { preparationEventKind, recordPreparationEvent } from './opsEvents';
 import { coarsePosition } from '../engine/privacy';
 import { routeAscentM } from './elevation';
@@ -1825,11 +1826,24 @@ export async function compasAutofillAction(
     // Papiers, change et prises : la règle parle, l'IA se tait sur ces sujets.
     // Le tutoiement aussi est une règle : un conseil qui vouvoie encore est écarté.
     const papers = travelPapers(anchor.countryCode, anchor.country);
+    // L'essentiel (papiers, sécurité) vient des règles, avec ou sans IA (plan 4.11).
+    const safety = essentialAdvice({
+      activity,
+      nights: plan.map((n) => n.type),
+      maxAltitudeM: maxAltitude,
+      party,
+      startDate: trip.start_date ?? null,
+      lat: anchor.lat ?? null,
+      countryCode: anchor.countryCode ?? null,
+    });
+    const essential = [...papers.notes, ...safety];
+    // L'IA n'ajoute que des suggestions facultatives, dites comme telles.
     const aiNotes = advice.notes
       .filter((n) => keepAiNote(n, papers))
       .map(tutoyer)
-      .filter((n): n is string => n != null);
-    notes.push(...papers.notes, ...aiNotes);
+      .filter((n): n is string => n != null)
+      .filter((n) => !repeatsRule(n, safety))
+      .map(aiSuggestion);
 
     lap('8');
     /* 8. Budget complet, chaque ligne avec sa source. */
@@ -2016,7 +2030,7 @@ export async function compasAutofillAction(
             // Arrêtée en cours : la relance demande d'abord « Annuler ».
             ...(halted ? { stopped: true } : {}),
             datesSet,
-            notes: notes.slice(0, 6),
+            notes: orderNotes(essential, notes, aiNotes),
             // Réglages qui ont produit ce préremplissage : un changement dit quoi refaire.
             // Lus sur les métadonnées à jour : le lieu naturel retenu en cours de route
             // (Ardennes, département → massif) ne passe pas pour un changement de lieu,
@@ -2034,7 +2048,7 @@ export async function compasAutofillAction(
     console.info('[compas] préremplissage', { phase, ms: Date.now() - startedAt, laps });
     return {
       success: true,
-      summary: { nights: nightsOut, transport, kit: kitCount, budget: lines, total, notes: notes.slice(0, 6), usedAi, stepsCreated },
+      summary: { nights: nightsOut, transport, kit: kitCount, budget: lines, total, notes: orderNotes(essential, notes, aiNotes), usedAi, stepsCreated },
     };
   } catch (err) {
     console.error('[compas] compasAutofillAction', err);

@@ -6,7 +6,7 @@
  */
 
 import { COMPAS_ACTIVITIES, parseIntentRules, type CompasActivity, type CompasIntentAction } from './intent';
-import { activityLabel, daysBetweenIso } from './format';
+import { activityLabel, daysBetweenIso, formatMoney } from './format';
 import { formatDateRange } from './compasModel';
 
 export interface RequestPrecisions {
@@ -145,8 +145,15 @@ export function understandRequest(text: string, today: string, p: RequestPrecisi
   const wishes = actions.filter((a): a is Extract<CompasIntentAction, { type: 'wish' }> => a.type === 'wish').map((a) => a.label);
   if (wishes.length) lines.push({ key: 'envies', label: 'Envies', value: wishes.join(' · '), state: 'compris' });
 
-  const budget = first(actions, 'set_budget')?.amount ?? null;
-  if (budget) lines.push({ key: 'budget', label: 'Budget', value: `${Math.round(budget).toLocaleString('fr-FR')} €`, state: 'compris' });
+  const budget = first(actions, 'set_budget');
+  if (budget)
+    lines.push({
+      key: 'budget',
+      label: 'Budget',
+      // Tel que dit (« 2 000 $ ») : la conversion se fait à l'application, au taux du jour.
+      value: formatMoney(Math.round(budget.amount), budget.currency ?? 'EUR'),
+      state: 'compris',
+    });
 
   // Précisions ajoutées en fin de phrase, sous une forme fixe que la lecture
   // fait passer avant la phrase (`precisionActions`).

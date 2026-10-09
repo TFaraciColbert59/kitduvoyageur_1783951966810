@@ -44,6 +44,8 @@ import { precisionActions } from '../engine/request';
 import { simplifyOffers, stayDates, type CompasStayOffer } from '../engine/stays';
 import { readCompasMeta } from '../engine/meta';
 import { localToday } from './weather';
+import { getEurRate } from './rates';
+import { convertBetween } from '../engine/currency';
 import {
   COMPAS_VERDICT_SPEC,
   buildCompasVerdictPrompt,
@@ -1748,7 +1750,13 @@ export async function compasInterpretAction(
     const taken = new Set(merged.map((m) => m.action.type));
     const list = [...merged, ...refused.filter((r) => !taken.has(r.action.type))];
 
-    const proposals = validateActions(list, ctx);
+    type Listed = { action: CompasIntentAction; source: 'ia' | 'regles'; issue?: string | null };
+    const priced: Listed[] = await Promise.all(
+      (list as Listed[]).map(async (x) =>
+        x.issue ? x : { ...x, action: await budgetInTripCurrency(x.action, ctx.currency) }
+      )
+    );
+    const proposals = validateActions(priced, ctx);
     return { success: true, proposals, usedAi, note };
   } catch (err) {
     console.error('[compas] compasInterpretAction', err);
@@ -1761,7 +1769,27 @@ export async function compasInterpretAction(
  * aussi : « bivouac 2 nuits » fait 3 jours, le modèle lisait « 2 jours »
  * (essais aléatoires, 2026-10-06).
  */
-const RULES_FIRST = new Set<CompasIntentAction['type']>(['set_activity', 'set_duration']);
+const RULES_FIRST = new Set<CompasIntentAction['type']>(['set_activity', 'set_duration', 'set_budget']);
+
+/**
+ * Budget dit dans une autre devise que celle du voyage (« 2000 $ ») : converti
+ * au taux du jour (Frankfurter, currency-api en secours), le montant dit et le
+ * taux restent dans le libellé. Sans taux, l'action reste dans sa devise et le
+ * moteur la refuse en le disant (« taux de change indisponible »).
+ */
+async function budgetInTripCurrency(action: CompasIntentAction, tripCurrency: string): Promise<CompasIntentAction> {
+  if (action.type !== 'set_budget' || !action.currency || action.currency === tripCurrency) return action;
+  const codes = [action.currency, tripCurrency].filter((c) => c !== 'EUR');
+  const rates = Object.fromEntries(await Promise.all(codes.map(async (c) => [c, await getEurRate(c)] as const)));
+  const converted = convertBetween(action.amount, action.currency, tripCurrency, rates);
+  if (!converted) return action;
+  return {
+    type: 'set_budget',
+    amount: Math.max(1, Math.round(converted.amount)),
+    currency: tripCurrency,
+    said: { amount: action.amount, currency: action.currency, date: converted.date, source: converted.source },
+  };
+}
 
 /* ---------- Verdict expliqué par l'IA ---------- */
 

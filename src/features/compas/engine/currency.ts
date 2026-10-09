@@ -40,6 +40,39 @@ export function convertFromEur(amountEur: number, fx: FxRate | null): ConvertedA
   };
 }
 
+/**
+ * Montant d'une devise dans une autre en passant par l'euro (« 2 000 $ » dit
+ * pour un voyage en euros). `rates` : taux EUR → devise, l'euro n'en a pas
+ * besoin. Un taux manquant ou faux : `null`, jamais un montant deviné. La date
+ * rendue est celle du plus ancien des taux employés.
+ */
+export function convertBetween(
+  amount: number,
+  from: string,
+  to: string,
+  rates: Partial<Record<string, FxRate | null>>
+): ConvertedAmount | null {
+  if (!Number.isFinite(amount) || amount <= 0 || from === to) return null;
+  const leg = (code: string): FxRate | null | undefined => {
+    if (code === 'EUR') return null;
+    const fx = rates[code];
+    return fx && fx.currency === code && usable(fx.rate) ? fx : undefined;
+  };
+  const a = leg(from);
+  const b = leg(to);
+  if (a === undefined || b === undefined) return null;
+  const inEur = a ? amount / a.rate : amount;
+  const out = b ? inEur * b.rate : inEur;
+  const used = [a, b].filter((r): r is FxRate => r != null);
+  return {
+    amount: Math.round(out * 100) / 100,
+    currency: to,
+    rate: out / amount,
+    date: used.map((r) => r.date).sort()[0],
+    source: [...new Set(used.map((r) => r.source))].join(' · '),
+  };
+}
+
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const usable = (rate: unknown): rate is number => typeof rate === 'number' && Number.isFinite(rate) && rate > 0;
 
