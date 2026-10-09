@@ -586,8 +586,12 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
   const { data } = ctl;
   const m = data.model;
   const weather = data.weather;
-  // Premier jour du calendrier (date de la destination), sinon le jour du navigateur.
-  const today = weather?.calendar[0]?.date ?? browserToday();
+  // Le plus tôt des deux « aujourd'hui » : celui du voyageur (navigateur, le
+  // même que le serveur pour « Date passée ») et celui de la destination
+  // (premier jour du calendrier). Aucun des deux n'est refusé ici.
+  const own = browserToday();
+  const destinationDay = weather?.calendar[0]?.date;
+  const today = destinationDay && destinationDay < own ? destinationDay : own;
   const initialHours =
     hint?.hours ?? (m.dates.hours != null && m.dates.hours < 24 ? m.dates.hours : null);
   const [start, setStart] = useState(m.dates.start ?? '');

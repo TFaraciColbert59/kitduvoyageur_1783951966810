@@ -17,10 +17,16 @@ vi.mock('next/navigation', () => ({
 }));
 vi.mock('next/dynamic', () => ({ default: () => () => <div data-testid="map" /> }));
 // Fuseau du navigateur fixé : les appels comparés plus bas ne dépendent pas de la machine.
-vi.mock('../engine/zone', async (orig) => ({
-  ...(await orig<typeof import('../engine/zone')>()),
-  browserTimeZone: () => 'Europe/Paris',
-}));
+// Le jour du navigateur peut être fixé par un test (`browserDay.today`), sinon le vrai.
+const browserDay = vi.hoisted(() => ({ today: null as string | null }));
+vi.mock('../engine/zone', async (orig) => {
+  const real = await orig<typeof import('../engine/zone')>();
+  return {
+    ...real,
+    browserTimeZone: () => 'Europe/Paris',
+    browserToday: (now?: Date) => browserDay.today ?? real.browserToday(now),
+  };
+});
 
 const kit = vi.hoisted(() => ({
   togglePackedAction: vi.fn(async () => ({ success: true })),
@@ -456,6 +462,7 @@ if (typeof window !== 'undefined' && !('PointerEvent' in window)) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  browserDay.today = null;
   class RO {
     observe() {}
     disconnect() {}
@@ -1280,6 +1287,50 @@ describe('CompasScreen', () => {
     ).toBeTruthy();
   });
 
+  it('Quand : destination déjà au lendemain, le jour du voyageur reste choisissable (le plus tôt des deux)', async () => {
+    // Auckland a déjà passé minuit, Paris non : le serveur accepte le 10 (jour du voyageur).
+    browserDay.today = '2026-10-10';
+    const calendar = Array.from({ length: 14 }, (_, i) => ({
+      date: `2026-10-${String(11 + i).padStart(2, '0')}`,
+      kind: 'prevision' as const,
+      quality: 'bon' as const,
+      reasons: [],
+      tMin: 4,
+      tMax: 14,
+    }));
+    const data = makeData();
+    data.weather = { source: 'MET Norway', trendSource: 'NASA POWER', horizon: '2026-10-24', tripDays: [], calendar };
+    render(<CompasScreen data={data} />);
+    const sheet = await openOu(/Quand/);
+    const input = within(sheet).getByLabelText('Départ') as HTMLInputElement;
+    expect(input.min).toBe('2026-10-10');
+    fireEvent.change(input, { target: { value: '2026-10-10' } });
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Enregistrer' }));
+    await waitFor(() =>
+      expect(compas.compasSetDatesAction).toHaveBeenCalledWith(
+        expect.objectContaining({ startDate: '2026-10-10' })
+      )
+    );
+    expect(screen.queryByText('Date passée')).toBeNull();
+  });
+
+  it('Quand : destination encore la veille, son jour reste choisissable (le plus tôt des deux)', async () => {
+    browserDay.today = '2026-10-11';
+    const calendar = Array.from({ length: 14 }, (_, i) => ({
+      date: `2026-10-${String(10 + i).padStart(2, '0')}`,
+      kind: 'prevision' as const,
+      quality: 'bon' as const,
+      reasons: [],
+      tMin: 4,
+      tMax: 14,
+    }));
+    const data = makeData();
+    data.weather = { source: 'MET Norway', trendSource: 'NASA POWER', horizon: '2026-10-23', tripDays: [], calendar };
+    render(<CompasScreen data={data} />);
+    const sheet = await openOu(/Quand/);
+    expect((within(sheet).getByLabelText('Départ') as HTMLInputElement).min).toBe('2026-10-10');
+  });
+
   it('Quand : lever et coucher à l’heure de la destination, « heure locale » quand elle diffère du navigateur', async () => {
     const data = makeData({
       steps: [
@@ -1326,27 +1377,40 @@ describe('CompasScreen', () => {
     return sheet;
   };
 
-  it('Sources : NASA POWER cité quand sa tendance sert au calendrier', async () => {
+  const trendWeather = (): CompasData['weather'] => ({
+    source: 'MET Norway',
+    trendSource: 'NASA POWER',
+    horizon: '2026-10-21',
+    tripDays: [],
+    calendar: [
+      { date: '2026-10-30', kind: 'tendance' as const, quality: 'bon' as const, reasons: [], tMin: 3, tMax: 12 },
+    ],
+  });
+  const normalsNote =
+    'Période proposée : août (mois le plus sec selon les normales 2001-2020 (NASA POWER)). Change-la dans « Quand » si elle ne te va pas.';
+
+  it('Sources : tendance seule au calendrier : NASA POWER cité pour la tendance seulement', async () => {
     const data = makeData();
-    data.weather = {
-      source: 'MET Norway',
-      trendSource: 'NASA POWER',
-      horizon: '2026-10-21',
-      tripDays: [],
-      calendar: [
-        { date: '2026-10-30', kind: 'tendance' as const, quality: 'bon' as const, reasons: [], tMin: 3, tMax: 12 },
-      ],
-    };
+    data.weather = trendWeather();
     render(<CompasScreen data={data} />);
     const sheet = await openSources();
-    expect(await within(sheet).findByText('NASA POWER (tendance, normales 2001-2020)')).toBeTruthy();
+    expect(await within(sheet).findByText('NASA POWER (tendance)')).toBeTruthy();
+    expect(within(sheet).queryByText(/normales 2001-2020/)).toBeNull();
   });
 
-  it('Sources : période tirée des normales (note de la préparation) : NASA POWER cité', async () => {
+  it('Sources : période tirée des normales seules (note de la préparation) : NASA POWER cité pour les normales', async () => {
     const data = makeData();
-    data.autofillNotes = [
-      'Période proposée : août (mois le plus sec selon les normales 2001-2020 (NASA POWER)). Change-la dans « Quand » si elle ne te va pas.',
-    ];
+    data.autofillNotes = [normalsNote];
+    render(<CompasScreen data={data} />);
+    const sheet = await openSources();
+    expect(await within(sheet).findByText('NASA POWER (normales 2001-2020)')).toBeTruthy();
+    expect(within(sheet).queryByText(/tendance/)).toBeNull();
+  });
+
+  it('Sources : tendance et normales : les deux usages cités', async () => {
+    const data = makeData();
+    data.weather = trendWeather();
+    data.autofillNotes = [normalsNote];
     render(<CompasScreen data={data} />);
     const sheet = await openSources();
     expect(await within(sheet).findByText('NASA POWER (tendance, normales 2001-2020)')).toBeTruthy();
