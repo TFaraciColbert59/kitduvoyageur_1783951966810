@@ -4,9 +4,10 @@ import { isBlockedRequestTarget } from '@/lib/security/urlSafety';
 export const dynamic = 'force-dynamic';
 
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
-const MAX_REDIRECTS = 2;
+const MAX_REDIRECTS = 4;
 
 export async function POST(req: NextRequest) {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
     const { url } = await req.json();
 
@@ -26,44 +27,40 @@ export async function POST(req: NextRequest) {
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    timeoutId = setTimeout(() => controller.abort(), 3000);
 
     let res: Response | null = null;
     let currentUrl = parsedUrl;
 
-    try {
-      for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
-        if (isBlockedRequestTarget(currentUrl.toString())) {
-          return NextResponse.json({ error: 'Adresse non autorisée' }, { status: 403 });
-        }
-
-        const response = await fetch(currentUrl.toString(), {
-          signal: controller.signal,
-          redirect: 'manual',
-          headers: {
-            'User-Agent': 'LKDV-LinkPreviewBot/1.0 (+https://kitduvoyageur.fr)',
-            Accept: 'text/html,application/xhtml+xml',
-          },
-        });
-
-        if (REDIRECT_STATUSES.has(response.status)) {
-          const location = response.headers.get('location');
-          if (!location) {
-            return NextResponse.json({ error: 'Redirection invalide' }, { status: 502 });
-          }
-          try {
-            currentUrl = new URL(location, currentUrl);
-          } catch {
-            return NextResponse.json({ error: 'Redirection invalide' }, { status: 502 });
-          }
-          continue;
-        }
-
-        res = response;
-        break;
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
+      if (isBlockedRequestTarget(currentUrl.toString())) {
+        return NextResponse.json({ error: 'Adresse non autorisée' }, { status: 403 });
       }
-    } finally {
-      clearTimeout(timeoutId);
+
+      const response = await fetch(currentUrl.toString(), {
+        signal: controller.signal,
+        redirect: 'manual',
+        headers: {
+          'User-Agent': 'LKDV-LinkPreviewBot/1.0 (+https://kitduvoyageur.fr)',
+          Accept: 'text/html,application/xhtml+xml',
+        },
+      });
+
+      if (REDIRECT_STATUSES.has(response.status)) {
+        const location = response.headers.get('location');
+        if (!location) {
+          return NextResponse.json({ error: 'Redirection invalide' }, { status: 502 });
+        }
+        try {
+          currentUrl = new URL(location, currentUrl);
+        } catch {
+          return NextResponse.json({ error: 'Redirection invalide' }, { status: 502 });
+        }
+        continue;
+      }
+
+      res = response;
+      break;
     }
 
     if (!res) {
@@ -93,8 +90,9 @@ export async function POST(req: NextRequest) {
       }
       reader.cancel().catch(() => {});
     } else {
-      html = await res.text();
+      html = (await res.text()).slice(0, 102400);
     }
+    html = html.slice(0, 102400);
 
     const getMetaTag = (property: string): string | null => {
       const match =
@@ -129,5 +127,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Délai d\'attente dépassé (3s max)' }, { status: 540 });
     }
     return NextResponse.json({ error: 'Erreur de traitement' }, { status: 500 });
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
   }
 }

@@ -42,6 +42,13 @@ describe('urlSafety — destinations interdites (F-010)', () => {
     expect(isBlockedRequestTarget('pas-une-url')).toBe(true);
   });
 
+  it('bloque les FQDN à point final et les IPv6 de transition (2002::/16, 2001::/32)', () => {
+    expect(isBlockedRequestTarget('http://localhost./')).toBe(true);
+    expect(isBlockedRequestTarget('http://x.local./')).toBe(true);
+    expect(isBlockedRequestTarget('http://[2002:7f00:1::]/')).toBe(true);
+    expect(isBlockedRequestTarget('http://[2001:0000:4136:e378:8000:63bf:3fff:fdd2]/')).toBe(true);
+  });
+
   it('autorise les destinations publiques', () => {
     expect(isBlockedRequestTarget('https://example.com/')).toBe(false);
     expect(isBlockedRequestTarget('http://93.184.216.34/')).toBe(false);
@@ -100,6 +107,37 @@ describe('POST /api/og-preview — garde SSRF effective (F-010)', () => {
     const body = await res.json();
     expect(body.title).toBe('Titre final');
     expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('suit une chaîne de 3 redirections revalidées (cap 4)', async () => {
+    const fetchSpy = vi.fn(async (url: string) => {
+      if (url === 'https://example.com/a') {
+        return new Response(null, { status: 302, headers: { location: '/b' } });
+      }
+      if (url === 'https://example.com/b') {
+        return new Response(null, { status: 303, headers: { location: 'https://example.com/c' } });
+      }
+      if (url === 'https://example.com/c') {
+        return new Response(null, { status: 301, headers: { location: 'https://example.com/final' } });
+      }
+      return new Response(
+        '<html><head><meta property="og:title" content="Bout" /></head></html>',
+        { status: 200, headers: { 'content-type': 'text/html' } }
+      );
+    });
+    vi.stubGlobal('fetch', fetchSpy);
+    const res = await ogPreviewPOST(buildRequest('https://example.com/a'));
+    expect(res.status).toBe(200);
+    expect((await res.json()).title).toBe('Bout');
+    expect(fetchSpy).toHaveBeenCalledTimes(4);
+  });
+
+  it('bloque localhost. (point final) sans fetch', async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+    const res = await ogPreviewPOST(buildRequest('http://localhost./'));
+    expect(res.status).toBe(403);
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   it('cas autorisé direct : 200 avec métadonnées', async () => {

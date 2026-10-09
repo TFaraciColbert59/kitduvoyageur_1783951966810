@@ -43,6 +43,8 @@ function isBlockedIpv6(hostname: string): boolean {
   if (address === '::' || address === '::1') return true;
   if (/^fe[89ab]/.test(address)) return true;
   if (/^f[cd]/.test(address)) return true;
+  if (address.startsWith('2002:')) return true;
+  if (address.startsWith('2001:0')) return true;
   if (address.startsWith('::ffff:')) {
     const tail = address.slice('::ffff:'.length);
     if (tail.includes('.')) return isBlockedIpv4(tail);
@@ -70,8 +72,9 @@ export function isBlockedRequestTarget(rawUrl: string): boolean {
 
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return true;
 
-  const hostname = parsed.hostname.toLowerCase();
-  if (!hostname) return true;
+  const rawHostname = parsed.hostname.toLowerCase();
+  if (!rawHostname) return true;
+  const hostname = rawHostname.endsWith('.') ? rawHostname.slice(0, -1) : rawHostname;
   if (hostname === 'localhost' || hostname.endsWith('.localhost')) return true;
   if (hostname.endsWith('.local') || hostname.endsWith('.internal')) return true;
 
