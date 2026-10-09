@@ -9,7 +9,7 @@ import {
 import { METNO_SOURCE, POWER_SOURCE, parseMetNo, powerToDaily } from '../engine/metno';
 import tzLookup from '@photostructure/tz-lookup';
 import { appUserAgent } from '@/lib/userAgent';
-import { metnoGet } from '@/lib/weather/metnoRequest';
+import { metnoForecastUrl, metnoGet } from '@/lib/weather/metnoRequest';
 
 /**
  * Compas — météo gratuite, usage commercial permis :
@@ -20,16 +20,16 @@ import { metnoGet } from '@/lib/weather/metnoRequest';
  *   tant qu'elle couvre (~9 jours), puis TENDANCE (moyenne des 5 dernières
  *   années aux mêmes dates, NASA POWER). La tendance est toujours étiquetée.
  *
- * MET Norway passe par un seul point d'accès (`metnoGet`) : User-Agent du site,
- * 20 requêtes par seconde au plus, cache au-delà d'`Expires`. Les coordonnées
- * sont arrondies à 0,01° (~1 km) pour que tout le monde partage les mêmes
- * réponses dans le cache de données de Vercel. NASA POWER garde `getJson`.
+ * MET Norway passe par un seul point d'accès (`metnoGet`, `metnoForecastUrl`) :
+ * User-Agent unique du site, 20 requêtes par seconde au plus, cache au-delà
+ * d'`Expires`. Les coordonnées sont arrondies à 0,01° (~1 km) pour que tout le
+ * monde partage les mêmes réponses dans le cache de données de Vercel. NASA
+ * POWER garde `getJson`.
  *
  * Un appel qui échoue rend `null` pour sa partie : l'écran dit « indisponible »,
  * il ne comble rien.
  */
 
-const FORECAST = 'https://api.met.no/weatherapi/locationforecast/2.0/complete';
 const POWER = 'https://power.larc.nasa.gov/api/temporal/daily/point';
 const USER_AGENT = appUserAgent('Compas, meteo');
 /** Horizon annoncé : MET Norway couvre ~9 jours pleins après aujourd'hui. */
@@ -80,8 +80,9 @@ export function localToday(timeZone: string, now = new Date()): string {
 
 const at2 = (v: number) => (Math.round(v * 100) / 100).toFixed(2);
 
+/** Même constructeur que le reste du site : une seule entrée de cache par point (voir `metnoRequest`). */
 export function forecastUrl(lat: number, lon: number): string {
-  return `${FORECAST}?lat=${at2(lat)}&lon=${at2(lon)}`;
+  return metnoForecastUrl(lat, lon);
 }
 
 export function trendUrl(lat: number, lon: number, start: string, end: string): string {
@@ -167,7 +168,7 @@ export async function getCompasWeather(input: {
   await Promise.all(
     [...byPoint.values()].map(async (days) => {
       const { lat, lon } = days[0];
-      const payload = await metnoGet(forecastUrl(lat, lon), { purpose: 'Compas, meteo', timeoutMs: 6000 });
+      const payload = await metnoGet(forecastUrl(lat, lon), { timeoutMs: 6000 });
       for (const f of parseMetNo(payload, zoneAt(lat, lon, input.timeZone))) {
         for (const d of days) if (d.date === f.date) tripForecasts.set(`${d.day}`, f);
       }
@@ -181,7 +182,7 @@ export async function getCompasWeather(input: {
     const dates = Array.from({ length: CALENDAR_DAYS }, (_, i) => addDays(today, i));
     const span = trendWindow(dates[0], dates[dates.length - 1]);
     const [forecastPayload, powerPayload] = await Promise.all([
-      metnoGet(forecastUrl(lat, lon), { purpose: 'Compas, meteo', timeoutMs: 6000 }),
+      metnoGet(forecastUrl(lat, lon), { timeoutMs: 6000 }),
       getJson(trendUrl(lat, lon, span.start, span.end), 7 * 86_400, 8000),
     ]);
     const forecast = parseMetNo(forecastPayload, zoneAt(lat, lon, input.timeZone)).filter(
