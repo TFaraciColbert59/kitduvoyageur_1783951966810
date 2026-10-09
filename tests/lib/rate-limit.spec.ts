@@ -22,6 +22,7 @@ import {
   rateLimitKey,
   resetMemoryRateLimits,
 } from '@/lib/rate-limit';
+import { hashRateLimitKey } from '@/lib/rate-limit/postgresStore';
 
 const ENV_CONFIGURED = { url: 'https://redis.example.upstash.io', token: 'jeton-test' };
 const ENV_POSTGRES = { supabaseUrl: 'https://projet.supabase.co/', serviceRoleKey: 'cle-service-test' };
@@ -333,9 +334,12 @@ describe('Phase 6 — rate limiting distribué (TEST-PHASE6-RL)', () => {
     expect(headers.apikey).toBe('cle-service-test');
     expect(headers.Authorization).toBe('Bearer cle-service-test');
     const body = JSON.parse(String(init.body)) as { p_key: string; p_window_ms: number };
-    // Ni identifiant ni IP en clair dans la base : SHA-256 de la clé logique.
+    // Ni identifiant ni IP en clair dans la base : HMAC-SHA-256 de la clé logique,
+    // avec la clé de service (un SHA-256 seul d'une IPv4 se retrouve par essais).
     expect(body.p_key).toMatch(/^[0-9a-f]{64}$/);
     expect(body.p_key).not.toContain('user-1');
+    expect(body.p_key).toBe(await hashRateLimitKey('compas-autofill:user-1', 'cle-service-test'));
+    expect(body.p_key).not.toBe(await hashRateLimitKey('compas-autofill:user-1'));
     expect(body.p_window_ms).toBe(600_000);
 
     // Même clé logique ⇒ même compteur ; autre clé ⇒ autre compteur.

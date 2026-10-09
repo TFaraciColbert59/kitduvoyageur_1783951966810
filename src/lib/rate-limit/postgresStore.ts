@@ -8,8 +8,9 @@
  *
  * - Appel PostgREST en `fetch` (aucune dépendance, compatible Edge) avec la clé
  *   du rôle de service : la fonction n'est exécutable que par lui.
- * - La clé est hachée (SHA-256) avant d'être envoyée : aucune IP ni identifiant
- *   lisible en base.
+ * - La clé est hachée avant d'être envoyée : aucune IP ni identifiant lisible
+ *   en base. HMAC-SHA-256 avec la clé de service (plan 2.10) : un simple
+ *   SHA-256 d'une adresse IPv4 se retrouve en essayant les 2³² adresses.
  * - Toute réponse invalide ou non-2xx lève : l'appelant décide du fail-safe,
  *   comme pour Upstash.
  */
@@ -40,9 +41,21 @@ function hasText(value: string | undefined): value is string {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
-/** SHA-256 hexadécimal (Web Crypto : Node et Edge). */
-export async function hashRateLimitKey(key: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key));
+/**
+ * Empreinte hexadécimale de la clé (Web Crypto : Node et Edge) : HMAC-SHA-256
+ * avec `secret` (la clé de service, connue du serveur seul), SHA-256 sans lui.
+ */
+export async function hashRateLimitKey(key: string, secret?: string): Promise<string> {
+  const data = new TextEncoder().encode(key);
+  const digest = secret
+    ? await crypto.subtle.sign(
+        'HMAC',
+        await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, [
+          'sign',
+        ]),
+        data
+      )
+    : await crypto.subtle.digest('SHA-256', data);
   return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
@@ -73,7 +86,7 @@ export async function consumePostgresWindow(
   const baseUrl = (options.env.supabaseUrl ?? '').trim().replace(/\/+$/, '');
   const serviceKey = (options.env.serviceRoleKey ?? '').trim();
   const windowMs = Math.min(MAX_WINDOW_MS, Math.max(MIN_WINDOW_MS, options.windowMs));
-  const hashedKey = await hashRateLimitKey(options.key);
+  const hashedKey = await hashRateLimitKey(options.key, serviceKey || undefined);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), Math.max(1, options.timeoutMs));
 

@@ -415,9 +415,19 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       d'un séjour sans lieu dit = commune, pas le point GPS.
 - [ ] Explication avant la demande de position (pourquoi, ce qui est envoyé) ; refus
       possible sans perdre la préparation (origine demandée en texte, 4.3).
-- [ ] Politique de confidentialité à jour : Vercel, Supabase, NVIDIA (si gardé),
-      Photon/Nominatim/Geoapify, MET Norway, RouteStack, Viator ; une seule version.
-- [ ] Durées de conservation écrites (caches, voyages anonymes, journaux).
+- [x] Politique de confidentialité à jour, **une seule version** (`PrivacyPolicySections`,
+      rendue par les vues mobile et ordinateur, qui se contredisaient) : chaque
+      prestataire appelé par le code, ce qu'il reçoit et où (Supabase, Vercel, NVIDIA et
+      OpenRouter, Gemini, Photon, LocationIQ, Geoapify, FOSSGIS, Overpass, Esri, MET
+      Norway, NASA POWER, Terrain Tiles, RouteStack, Viator, hCaptcha, Google Analytics) ;
+      bases légales ; date de mise à jour.
+- [~] Durées de conservation écrites : essai sans compte 7 jours sans usage (purge
+      nocturne en production) ; caches 1 h à 30 jours (récits de sentiers 1 an) ;
+      statistiques 90 jours ; compte + 3 ans. 🔒 Effacement effectif des caches et
+      journaux expirés : migration `20261008190000` à lancer par Tony.
+- [x] Compteurs anti-abus : la clé (identifiant ou adresse IP) n'est stockée qu'en
+      HMAC-SHA-256 avec la clé de service (un SHA-256 seul d'une IPv4 se retrouvait en
+      essayant les 2³² adresses). Test `rate-limit.spec.ts`.
 
 ### 2.11 En-têtes et cookies
 

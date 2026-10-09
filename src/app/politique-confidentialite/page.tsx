@@ -1,4 +1,5 @@
 import MarketplacePrivacyNotice from '@/components/legal/MarketplacePrivacyNotice';
+import { PRIVACY_UPDATED_AT, privacySections } from '@/components/legal/PrivacyPolicySections';
 import React from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
@@ -34,89 +35,13 @@ function MobilePCContent() {
       </p>
 
       <MarketplacePrivacyNotice />
-      <section className={s}>
-        <h2 className={h2}>1. Responsable du traitement</h2>
-        <p className={p}>
-          Le Kit du Voyageur (SAS). DPO :{' '}
-          <a href="mailto:dpo@lekitduvoyageur.fr" className={link}>
-            dpo@lekitduvoyageur.fr
-          </a>
-        </p>
-      </section>
-      <section className={s}>
-        <h2 className={h2}>2. Données collectées</h2>
-        <p className={p}>
-          Nous collectons : données d&apos;identification (nom, email), données de navigation (IP
-          anonymisée), données de transaction (historique commandes), données de profil (préférences
-          voyage), données générées par l&apos;IA. Aucune donnée sensible (Art. 9 RGPD) n&apos;est
-          collectée.
-        </p>
-      </section>
-      <section className={s}>
-        <h2 className={h2}>3. Finalités</h2>
-        <p className={p}>
-          Les données sont traitées pour : gestion du compte, traitement des commandes,
-          personnalisation IA, envoi d&apos;emails transactionnels, communications marketing (avec
-          consentement), statistiques d&apos;audience, prévention de la fraude.
-        </p>
-      </section>
-      <section className={s}>
-        <h2 className={h2}>4. Destinataires</h2>
-        <p className={p}>
-          Vos données peuvent être transmises à Supabase (hébergement DB, Europe), Stripe (paiement),
-          Vercel (hébergement web), Google Analytics (avec consentement), les services IA
-          (NVIDIA, Anthropic, Google Gemini), et, pour les lieux et positions que vous recherchez,
-          aux services de carte, d&apos;itinéraire et de météo (Photon, LocationIQ, Geoapify, FOSSGIS, Esri, MET Norway), ainsi
-          qu&apos;à hCaptcha (protection contre les robots lors de la connexion et de l&apos;inscription).
-          Aucune donnée n&apos;est vendue à des tiers.
-        </p>
-      </section>
-      <section className={s}>
-        <h2 className={h2}>5. Transferts hors UE</h2>
-        <p className={p}>
-          Encadrés par les Clauses Contractuelles Types (CCT) et le Data Privacy Framework
-          UE-États-Unis.
-        </p>
-      </section>
-      <section className={s}>
-        <h2 className={h2}>6. Durée de conservation</h2>
-        <p className={p}>
-          Compte : durée + 3 ans. Commandes : 10 ans. Cookies analytics : 13 mois max. Consentement
-          cookies : 6 mois.
-        </p>
-      </section>
-      <section className={s}>
-        <h2 className={h2}>7. Vos droits</h2>
-        <p className={p}>
-          Accès, rectification, effacement, portabilité, opposition, limitation, retrait du
-          consentement. Contact :{' '}
-          <a href="mailto:privacy@lekitduvoyageur.fr" className={link}>
-            privacy@lekitduvoyageur.fr
-          </a>
-          . Réclamation auprès de la{' '}
-          <a href="https://www.cnil.fr" className={link} target="_blank" rel="noopener noreferrer">
-            CNIL
-          </a>
-          .
-        </p>
-      </section>
-      <section className={s}>
-        <h2 className={h2}>8. Sécurité</h2>
-        <p className={p}>
-          Les accès aux données privées sont contrôlés par authentification et par les règles
-          d’accès Supabase. Ne partagez pas vos identifiants.
-        </p>
-      </section>
-      <section className={s}>
-        <h2 className={h2}>9. Cookies</h2>
-        <p className={p}>
-          Voir notre{' '}
-          <Link href="/cookies" className={link}>
-            Politique de gestion des cookies
-          </Link>
-          .
-        </p>
-      </section>
+      <p className={`${p} mb-[var(--space-4)]`}>Dernière mise à jour : {PRIVACY_UPDATED_AT}.</p>
+      {privacySections(link).map((section) => (
+        <section key={section.title} className={s}>
+          <h2 className={h2}>{section.title}</h2>
+          <div className={p}>{section.body}</div>
+        </section>
+      ))}
 
       <div className="flex flex-wrap gap-[var(--space-2)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-4)]">
         <Link href="/mentions-legales" className={link}>
@@ -199,130 +124,15 @@ export default function PolitiqueConfidentialitePage() {
             </p>
             <div className="space-y-10 text-sm text-foreground/80 leading-relaxed">
               <MarketplacePrivacyNotice />
-              <section>
-                <h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">
-                  1. Responsable du traitement
-                </h2>
-                <div className="bg-foreground/3 rounded-xl p-4 space-y-1">
-                  <p>
-                    <strong className="text-foreground">Le Kit du Voyageur</strong> (SAS)
-                  </p>
-                  <p>
-                    Email :{' '}
-                    <a
-                      href="mailto:privacy@lekitduvoyageur.fr"
-                      className="text-primary hover:underline"
-                    >
-                      privacy@lekitduvoyageur.fr
-                    </a>
-                  </p>
-                  <p className="mt-2 pt-2 border-t border-border/50">
-                    <strong className="text-foreground">DPO :</strong>{' '}
-                    <a
-                      href="mailto:dpo@lekitduvoyageur.fr"
-                      className="text-primary hover:underline"
-                    >
-                      dpo@lekitduvoyageur.fr
-                    </a>
-                  </p>
-                </div>
-              </section>
-              <section>
-                <h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">
-                  2. Données personnelles collectées
-                </h2>
-                <p className="mb-3">
-                  Nous collectons : données d&apos;identification (nom, email), données de
-                  navigation (IP anonymisée), données de transaction (historique commandes, aucun
-                  stockage bancaire), données de profil (préférences voyage), données générées par
-                  l&apos;IA. Aucune donnée sensible (Art. 9 RGPD).
-                </p>
-              </section>
-              <section>
-                <h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">
-                  3. Finalités du traitement
-                </h2>
-                <p>
-                  Gestion du compte, commandes, personnalisation IA, emails transactionnels,
-                  marketing (consentement), analytics (consentement), prévention de la fraude,
-                  obligations légales.
-                </p>
-              </section>
-              <section>
-                <h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">
-                  4. Destinataires
-                </h2>
-                <p>
-                  Les données d’inventaire, d’échange et de support utilisent Supabase ;
-                  l’application est hébergée sur Vercel. Aucun prestataire de paiement n’est activé
-                  pour les échanges entre particuliers.
-                </p>
-              </section>
-              <section>
-                <h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">
-                  5. Transferts hors UE
-                </h2>
-                <p>
-                  Les traitements dépendent des régions et conditions contractuelles des
-                  prestataires. Contactez le support pour les informations applicables à votre
-                  demande.
-                </p>
-              </section>
-              <section>
-                <h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">
-                  6. Durées de conservation
-                </h2>
-                <p>
-                  Compte : durée + 3 ans. Commandes : 10 ans (comptable). Cookies analytics : 13
-                  mois. Consentement cookies : 6 mois.
-                </p>
-              </section>
-              <section>
-                <h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">
-                  7. Vos droits (RGPD)
-                </h2>
-                <p>
-                  Accès, rectification, effacement, portabilité, opposition, limitation, retrait du
-                  consentement. Contact :{' '}
-                  <a
-                    href="mailto:privacy@lekitduvoyageur.fr"
-                    className="text-primary hover:underline"
-                  >
-                    privacy@lekitduvoyageur.fr
-                  </a>
-                  . Réclamation :{' '}
-                  <a
-                    href="https://www.cnil.fr"
-                    className="text-primary hover:underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    CNIL
-                  </a>
-                  .
-                </p>
-              </section>
-              <section>
-                <h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">
-                  8. Sécurité
-                </h2>
-                <p>
-                  Authentification et règles d’accès Supabase pour les données privées. Les échanges
-                  entre particuliers ne collectent aucune donnée bancaire.
-                </p>
-              </section>
-              <section>
-                <h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">
-                  9. Cookies
-                </h2>
-                <p>
-                  Voir notre{' '}
-                  <Link href="/cookies" className="text-primary hover:underline">
-                    Politique de gestion des cookies
-                  </Link>
-                  .
-                </p>
-              </section>
+              <p className="text-foreground/50">Dernière mise à jour : {PRIVACY_UPDATED_AT}.</p>
+              {privacySections('text-primary hover:underline').map((section) => (
+                <section key={section.title}>
+                  <h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">
+                    {section.title}
+                  </h2>
+                  {section.body}
+                </section>
+              ))}
               <div className="flex flex-wrap gap-3 pt-6 border-t border-border">
                 <Link href="/mentions-legales" className="text-primary hover:underline text-xs">
                   Mentions légales
