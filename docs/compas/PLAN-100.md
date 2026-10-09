@@ -115,8 +115,16 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       étapes reprenables (2.6) pour ne jamais dépendre d'une seule fonction longue.
 - [ ] **Coût de calcul** : supprimer le rafraîchissement complet de page toutes les 4 s
       (2.8) ; mettre en cache les données de page (météo 30 min, altitudes 30 j).
-- [ ] **Région des fonctions** : tester `cdg1` (Paris, proche de Supabase eu-west-3) ;
-      mesurer avant/après. Preuve : temps de préparation médian.
+- [~] **Région des fonctions** : `vercel.json` → `cdg1` (Paris). Les fonctions
+      tournaient à `iad1` (Washington) alors que la base est à Paris (`eu-west-3`), comme
+      Geoapify, Photon, Valhalla et MET Norway : chaque requête traversait l'Atlantique.
+      L'offre Hobby permet une région au choix (déploiement d'aperçu : `regions:
+      ["cdg1"]`). Mesures du 9 oct., depuis un client aux États-Unis : route lisant la
+      base (`/api/compas/sources`) 0,32 s à Paris contre 0,5 à 0,8 s à `iad1` ; page
+      statique 0,1 s plus lente (le client est loin de Paris) ; préparation des Bauges,
+      cache chaud, un essai chacun : 40 s (Paris) contre 35 s (`iad1`), itinéraires
+      différents, non concluant (services externes et IA dominent). Reste : médiane sur
+      5 préparations après la mise en production.
 
 ### 1.3 Recherche de lieux (géocodage) sans serveur de démonstration
 
@@ -224,18 +232,32 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [ ] Conseils par règles (4.12) pour que l'absence d'IA ne retire rien d'essentiel.
 - [x] Plafond global quotidien d'appels IA (`AI_DAILY_CAP`, 2 000 par défaut, en plus du
       plafond par personne) ; compteur en panne = refus (fail-closed), lot F.
-- [ ] Cache des réponses IA identiques (même demande, même jour).
+- [x] Cache des réponses IA identiques (même demande, même jour) : « Dis-le »
+      (`compas-intent`) et explication du verdict (`compas-verdict`) gardées un jour ; la
+      date du jour, les dates du voyage et les faits font partie de la demande, donc de
+      la clé. Une réponse en cache ne consomme ni quota ni appel. La préparation reste
+      sans cache (chaque voyage est unique).
 
 ### 1.8 Météo et données ouvertes
 
-- [ ] MET Norway (CC BY 4.0, commercial autorisé) : User-Agent `koosmoweb.fr` +
-      courriel de contact (sinon 403) ; 20 req/s pour toute l'application ; respect de
-      `Expires` ; cache 30 min (déjà) ; crédit + lien CC BY.
-- [ ] NASA POWER (« no restrictions », citation demandée) : clé de cache par mois (et
-      non par jour) pour partager le cache.
+- [~] MET Norway (CC BY 4.0, commercial autorisé) : User-Agent unique du site
+      (`src/lib/userAgent.ts`, `kitduvoyageur/1.0 (…; +https://koosmoweb.fr)`) sur MET
+      Norway, Nominatim, Photon, Overpass, Valhalla : des appels annonçaient encore
+      `lekitduvoyageur.fr` ou `kitduvoyageur.fr`, qui ne sont pas nos domaines ; crédit
+      et lien CC BY 4.0 dans les mentions ; cache 30 min (déjà). Reste : `Expires` et
+      plafond de 20 req/s pour toute l'application.
+- [x] NASA POWER (« no restrictions », citation demandée) : fenêtre de la tendance
+      calée sur des mois entiers (`trendWindow`), la même URL sert tout le mois au lieu
+      d'une de plus chaque jour ; citation du projet POWER dans les mentions. Test
+      `trendWindow.test.ts`.
 - [ ] Meteoalarm : conditions à vérifier ; attribution.
-- [ ] Taux de change : **Frankfurter v2** (sans clé ni quota, 223 devises ; « Source:
-      ECB statistics. » pour les taux BCE), secours **fawazahmed0** (CC0) ; cache 12 h.
+- [x] Taux de change : **Frankfurter v2** (`/v2/rates`, 104 banques centrales, 223
+      devises ; vérifié le 8 oct. : VND, ARS, KES, XPF servis), secours **currency-api**
+      (CC0) ; cache 12 h ; la source est dite à côté du montant ; mentions : « Source:
+      ECB statistics. » et currency-api. Tests `currency.test.ts`. ⚠️ Un voyage
+      n'enregistre encore que six devises (enum `trip_budget_currency`) et le Compas le
+      crée en euros (retour Codex sur #82) : la conversion dans la devise du pays de
+      destination est à faire en 4.2.
 - [ ] Carburant : bulletin pétrolier de l'UE (CC BY 4.0) pour l'UE-27 ; ailleurs barème
       versionné et daté, affiché comme « estimation » (aucune source mondiale gratuite).
 
@@ -344,22 +366,36 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 2.6 Préparation durable
 
-- [ ] Étapes écrites et **tracées au fil de l'eau** (aussi en phase `all`) : une
-      coupure ne laisse plus d'étapes orphelines ; « Annuler » les retrouve toutes.
-- [ ] Budget interne vérifié dans la boucle de recherche des étapes.
-- [ ] Reprise idempotente après coupure (même plan, pas de doublon). Preuve : test de
-      coupure simulée à chaque phase.
+- [x] Étapes écrites et **tracées au fil de l'eau** (aussi en passe unique) : dès
+      l'itinéraire écrit, il est inscrit comme en attente et le reste est pris
+      (`withStepsWritten`, `server/autofillState.ts`) ; une coupure ne laisse plus
+      d'étapes orphelines, « Annuler » les retrouve toutes.
+- [x] Budget interne vérifié dans la boucle de recherche des étapes : recherches de
+      secours (pays voisin, autres noms, commune) seulement s'il reste 90 s (passe
+      unique) ; lieux dits arrêtés 5 s avant l'échéance de la recherche.
+- [x] Reprise idempotente après coupure : une passe unique relancée reprend
+      l'itinéraire en attente (`resumableRun`) au lieu d'en écrire un second ; pendant
+      la préparation, la prise du reste fait attendre une relance ; une attente
+      coupée est dite « coupée », plus « en cours ». Tests `autofillState.test.ts`
+      (coupure simulée après l'itinéraire : annulation, reprise, prise, expiration).
 - [x] Commentaires « 60 s » mis à jour (300 s ; 48 s par phase gardés et expliqués).
 
 ### 2.7 Écritures concurrentes
 
-- [ ] `patchTripMetadata` atomique (RPC `jsonb` côté SQL) : la préparation et les
-      gestes de l'équipe ne s'écrasent plus.
+- [x] Écritures de `trips.metadata` conditionnées (`updateTripMetadata`) : écriture
+      seulement si `updated_at` n'a pas bougé depuis la lecture (le trigger
+      `trg_trips_updated_at` le remet à `now()` à chaque mise à jour, par n'importe quel
+      chemin), sinon relecture et patch rejoué (4 essais) ; refus sans course (droits)
+      rendu aussitôt. Les 18 écritures du Compas y passent, `patchTripMetadata` retiré.
+      Sans migration. Tests `tripMetadata.test.ts` (écriture concurrente gardée,
+      colonnes jointes, rien à écrire, droits, course sans fin, filtre propriétaire).
 
 ### 2.8 Attente de la préparation
 
-- [ ] Plus de rendu complet toutes les 4 s : Supabase Realtime (gratuit) ou attente
-      à intervalle croissant + rafraîchissement seulement si `updated_at` change.
+- [x] Plus de rendu complet toutes les 4 s : la relecture de l'issue rend aussi un
+      repère du voyage (`updated_at` et nombre d'étapes) ; la page n'est relue que s'il
+      a changé (étapes écrites, tracé, issue). Tests : repère (autofillStart), une seule
+      relecture pour un voyage inchangé (compasScreen).
 
 ### 2.9 Observabilité à 0 €
 
@@ -377,11 +413,23 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [~] Position GPS arrondie (≈ 1 km) avant tout envoi à un tiers : fait pour la
       préparation du Compas (lot F). Reste : jamais enregistrée au mètre ailleurs ; base
       d'un séjour sans lieu dit = commune, pas le point GPS.
-- [ ] Explication avant la demande de position (pourquoi, ce qui est envoyé) ; refus
-      possible sans perdre la préparation (origine demandée en texte, 4.3).
-- [ ] Politique de confidentialité à jour : Vercel, Supabase, NVIDIA (si gardé),
-      Photon/Nominatim/Geoapify, MET Norway, RouteStack, Viator ; une seule version.
-- [ ] Durées de conservation écrites (caches, voyages anonymes, journaux).
+- [~] Explication de la demande de position : pendant la préparation (le navigateur
+      la demande au lancement), « sert au trajet d'approche, arrondie à environ 1 km,
+      sans elle le trajet reste à préciser » ; refuser ne bloque rien (déjà le cas).
+      Reste : origine demandée en texte (4.3).
+- [x] Politique de confidentialité à jour, **une seule version** (`PrivacyPolicySections`,
+      rendue par les vues mobile et ordinateur, qui se contredisaient) : chaque
+      prestataire appelé par le code, ce qu'il reçoit et où (Supabase, Vercel, NVIDIA et
+      OpenRouter, Gemini, Photon, LocationIQ, Geoapify, FOSSGIS, Overpass, Esri, MET
+      Norway, NASA POWER, Terrain Tiles, RouteStack, Viator, hCaptcha, Google Analytics) ;
+      bases légales ; date de mise à jour.
+- [~] Durées de conservation écrites : essai sans compte 7 jours sans usage (purge
+      nocturne en production) ; caches 1 h à 30 jours (récits de sentiers 1 an) ;
+      statistiques 90 jours ; compte + 3 ans. 🔒 Effacement effectif des caches et
+      journaux expirés : migration `20261008190000` à lancer par Tony.
+- [x] Compteurs anti-abus : la clé (identifiant ou adresse IP) n'est stockée qu'en
+      HMAC-SHA-256 avec la clé de service (un SHA-256 seul d'une IPv4 se retrouvait en
+      essayant les 2³² adresses). Test `rate-limit.spec.ts`.
 
 ### 2.11 En-têtes et cookies
 
@@ -481,6 +529,9 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       (CC BY 4.0, commercial autorisé, crédit exact de l'éditeur), versionnée dans le
       code. Les jeux dérivés de Passport Index sont exclus (recherche académique
       seulement).
+- [ ] Budget aussi dans la devise du pays de destination (taux Frankfurter v2, 223
+      devises, déjà branché) : aujourd'hui seulement si la devise du voyage est l'une des
+      six de l'enum `trip_budget_currency`, et le Compas ne la change jamais.
 - [ ] Prises et change selon le pays de résidence ; « France Diplomatie » pour les
       Français seulement, le service officiel du pays sinon.
 - [ ] `keepAiNote` ne retire plus les conseils justes pour un non-Français.

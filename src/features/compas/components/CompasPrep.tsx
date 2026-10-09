@@ -75,6 +75,13 @@ export function CompasPrep({
       </ol>
       {/* En cours avec un message : une attente annoncée (limite de fréquence, reprise seule). */}
       {!failed && !stopped && !finished && prep.message && <p className="cp-note">{prep.message}</p>}
+      {/* Le navigateur demande la position au lancement (plan 2.10) : pourquoi, ce qui part, et refuser ne bloque rien. */}
+      {!failed && !stopped && !finished && !prep.message && (
+        <p className="cp-note">
+          Ta position, si tu l’autorises, sert au trajet d’approche ; elle est arrondie à environ 1 km avant tout envoi.
+          Sans elle, le trajet reste à préciser.
+        </p>
+      )}
       {(failed || stopped) && prep.message && (
         <p className="cp-note" role={failed ? 'alert' : undefined}>
           {prep.message}

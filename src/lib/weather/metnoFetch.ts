@@ -1,5 +1,6 @@
 import tzLookup from '@photostructure/tz-lookup';
 import { metnoToOpenMeteo, type OpenMeteoLike } from './metnoCompat';
+import { appUserAgent } from '@/lib/userAgent';
 
 /**
  * Prévision MET Norway au format Open-Meteo, côté serveur. MET demande un
@@ -8,7 +9,7 @@ import { metnoToOpenMeteo, type OpenMeteoLike } from './metnoCompat';
  * Vercel, 30 min). Échec : null, l'appelant dit « indisponible ».
  */
 const FORECAST = 'https://api.met.no/weatherapi/locationforecast/2.0/complete';
-const USER_AGENT = 'kitduvoyageur/1.0 https://lekitduvoyageur.fr';
+const USER_AGENT = appUserAgent('meteo');
 
 export async function fetchMetnoAsOpenMeteo(
   lat: number,

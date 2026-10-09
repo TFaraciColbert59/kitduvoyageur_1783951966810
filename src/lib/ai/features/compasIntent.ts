@@ -11,13 +11,15 @@ import { intentActionSchema, type CompasIntentAction } from '@/features/compas/e
  * l'utilisateur. Un repli sans IA (lecteur de règles) couvre l'essentiel.
  *
  * tier `fast`, raisonnement coupé : c'est de l'extraction, pas de la
- * réflexion. Cache 0 : la date du jour et le voyage font partie du contexte.
+ * réflexion. Cache d'un jour (plan 1.7) : la date du jour et les dates du
+ * voyage font partie de la demande, donc de la clé ; seule la même demande, le
+ * même jour, sur le même voyage, reprend la réponse déjà donnée.
  */
 
 export const COMPAS_INTENT_SPEC = {
   tier: 'fast' as const,
   maxReasoningBudget: 0,
-  cacheTtlSeconds: 0,
+  cacheTtlSeconds: 86_400,
   maxPerUserPerDay: 60,
 };
 

@@ -20,6 +20,7 @@ import {
 import type { ElevationProfilePoint } from '@/features/explorer-osm/domain/types';
 
 import { createClient as createServerSupabase } from '@/lib/supabase/server';
+import { appUserAgent } from '@/lib/userAgent';
 
 async function viewerUserId(): Promise<string | null> {
   try {
@@ -227,7 +228,7 @@ export async function GET(
               const wikiRes = await fetch(
                 `https://www.wikidata.org/wiki/Special:EntityData/${qid}.json`,
                 {
-                  headers: { 'User-Agent': 'KitDuVoyageur/1.0 (https://kitduvoyageur.fr)' },
+                  headers: { 'User-Agent': appUserAgent('Explorer') },
                   signal: AbortSignal.timeout(2000),
                 }
               );
@@ -248,7 +249,7 @@ export async function GET(
                 const summaryRes = await fetch(
                   `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
                   {
-                    headers: { 'User-Agent': 'KitDuVoyageur/1.0 (https://kitduvoyageur.fr)' },
+                    headers: { 'User-Agent': appUserAgent('Explorer') },
                     signal: AbortSignal.timeout(2000),
                   }
                 );

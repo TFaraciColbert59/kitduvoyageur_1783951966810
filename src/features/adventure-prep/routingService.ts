@@ -24,6 +24,7 @@ import { TRAVEL_MODES } from './engine/routing';
 import type { RouteLeg, TravelMode } from './engine/routing';
 import type { RouteProvider } from './engine/provenance';
 import { GEOAPIFY_DAILY_CREDITS, takeApiCredits } from '@/lib/apiCredits';
+import { appUserAgent } from '@/lib/userAgent';
 
 /**
  * Geoapify Routing : un appel pour tout le trajet, un troncon par paire de
@@ -77,7 +78,7 @@ const VALHALLA_URL = 'https://valhalla1.openstreetmap.de/route';
  * `X-Client-Id` qui nomme l'application, et un User-Agent joignable.
  */
 const CLIENT_ID = 'koosmoweb.fr';
-const USER_AGENT = 'kitduvoyageur/1.0 (Compas, preparation de voyage; koosmoweb.fr)';
+const USER_AGENT = appUserAgent('Compas, preparation de voyage');
 
 /**
  * Tolerance d'accrochage, en metres.

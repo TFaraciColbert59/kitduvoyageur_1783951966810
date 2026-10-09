@@ -382,16 +382,21 @@ export function CompasScreen({
         const from = await position;
         // Lancée, la préparation tourne côté serveur sans tenir de requête
         // ouverte (un réseau mobile coupe une longue requête muette) : l'écran
-        // demande son issue toutes les 4 s et se relit pour dessiner la carte.
+        // demande son issue toutes les 4 s, et ne se relit (carte, étapes) que
+        // si le voyage a changé depuis la dernière fois (plan 2.8).
         const started = await compasAutofillStartAction({ tripId: model.tripId, tripSlug: model.slug, from, phase: 'all' });
         if (!started.success) return started;
+        let seen: string | null = null;
         while (Date.now() - startedAt < AUTOFILL_MAX_MS) {
           if (stopped.current) return null;
-          const outcome = await compasAutofillOutcomeAction({ tripId: model.tripId, token: started.token, since: started.at }).catch(
+          const poll = await compasAutofillOutcomeAction({ tripId: model.tripId, token: started.token, since: started.at }).catch(
             () => null
           );
-          if (outcome) return outcome;
-          startTransition(() => router.refresh());
+          if (poll?.outcome) return poll.outcome;
+          if (poll?.stamp && poll.stamp !== seen) {
+            seen = poll.stamp;
+            startTransition(() => router.refresh());
+          }
           await new Promise((r) => setTimeout(r, AUTOFILL_POLL_MS));
         }
         throw new Error('préparation sans réponse');

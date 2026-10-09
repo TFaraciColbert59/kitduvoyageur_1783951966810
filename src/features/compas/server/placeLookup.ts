@@ -5,6 +5,7 @@ import { cached, coordKey } from './sharedCache';
 import { geoapifyReverse, geoapifySearch } from './geoapify';
 import { locationIqKey, locationIqSlot, locationIqUrl, normalizeLocationIq } from './locationIq';
 import { photonSlot } from '@/lib/siteSlot';
+import { appUserAgent } from '@/lib/userAgent';
 
 /**
  * Recherche d'un lieu sur la carte (Photon, puis Nominatim — par LocationIQ
@@ -67,7 +68,7 @@ async function fetchJson(url: string, headers: Record<string, string>): Promise<
 }
 
 /** Nominatim exige au plus une requête par seconde et un User-Agent identifiant l'application. */
-const NOMINATIM_UA = 'kitduvoyageur/1.0 (Compas, preparation de voyage; koosmoweb.fr)';
+const NOMINATIM_UA = appUserAgent('Compas, preparation de voyage');
 let nominatimChain: Promise<unknown> = Promise.resolve();
 /**
  * Une requête Nominatim, une à la fois. Avec la clé LocationIQ (même moteur,

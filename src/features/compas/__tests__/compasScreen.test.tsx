@@ -237,7 +237,7 @@ const autofill = vi.hoisted(() => ({
   }),
   compasAutofillOutcomeAction: vi.fn(async ({ token }: { token: string }) => {
     const res = await outcomes.byToken.get(token);
-    return res ? { ...res, token, at: Date.now() } : null;
+    return { outcome: res ? { ...res, token, at: Date.now() } : null, stamp: 'fin' };
   }),
 }));
 const outcomes = vi.hoisted(() => ({ n: 0, byToken: new Map<string, Promise<unknown>>() }));
@@ -813,12 +813,18 @@ describe('CompasScreen', () => {
   it('Préremplissage : lancé puis issue relue, sans tenir de requête ouverte', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
-      autofill.compasAutofillOutcomeAction.mockResolvedValueOnce(null as never).mockResolvedValueOnce(null as never);
+      // Deux relectures sans issue, sur un voyage qui n'a pas bougé entre elles.
+      autofill.compasAutofillOutcomeAction
+        .mockResolvedValueOnce({ outcome: null, stamp: 'v1' } as never)
+        .mockResolvedValueOnce({ outcome: null, stamp: 'v1' } as never);
       render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
       await waitFor(() => expect(autofill.compasAutofillStartAction).toHaveBeenCalledTimes(1));
+      const refreshesAtStart = refresh.mock.calls.length;
       // Toujours en cours : rien d'annoncé, ni succès ni échec.
       await vi.advanceTimersByTimeAsync(4_100);
       expect(screen.queryByText(/Aventure préparée|interrompue/)).toBeNull();
+      // Plan 2.8 : la page n'est relue qu'une fois pour un voyage inchangé.
+      expect(refresh.mock.calls.length - refreshesAtStart).toBeLessThanOrEqual(1);
       await vi.advanceTimersByTimeAsync(4_100);
       expect(await screen.findByText(/Aventure préparée · 486/)).toBeTruthy();
       expect(autofill.compasAutofillOutcomeAction.mock.calls.length).toBeGreaterThanOrEqual(3);
