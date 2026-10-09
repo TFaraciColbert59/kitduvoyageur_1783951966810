@@ -115,7 +115,7 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       étapes reprenables (2.6) pour ne jamais dépendre d'une seule fonction longue.
 - [ ] **Coût de calcul** : supprimer le rafraîchissement complet de page toutes les 4 s
       (2.8) ; mettre en cache les données de page (météo 30 min, altitudes 30 j).
-- [~] **Région des fonctions** : `vercel.json` → `cdg1` (Paris). Les fonctions
+- [x] **Région des fonctions** : `vercel.json` → `cdg1` (Paris). Les fonctions
       tournaient à `iad1` (Washington) alors que la base est à Paris (`eu-west-3`), comme
       Geoapify, Photon, Valhalla et MET Norway : chaque requête traversait l'Atlantique.
       L'offre Hobby permet une région au choix (déploiement d'aperçu : `regions:
@@ -123,8 +123,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       base (`/api/compas/sources`) 0,32 s à Paris contre 0,5 à 0,8 s à `iad1` ; page
       statique 0,1 s plus lente (le client est loin de Paris) ; préparation des Bauges,
       cache chaud, un essai chacun : 40 s (Paris) contre 35 s (`iad1`), itinéraires
-      différents, non concluant (services externes et IA dominent). Reste : médiane sur
-      5 préparations après la mise en production.
+      différents, non concluant (services externes et IA dominent). **Production, 9 oct.
+      4 h 15 (`ee7ae6f`, Paris), cache chaud : 5 préparations sur 5 réussies, médiane
+      25 s** (Bauges 25 et 25 s, Vercors 27 s, Dolomites 45 s, Patagonie 23 s) ; même
+      demande des Bauges à `iad1` la veille : 35 s.
 
 ### 1.3 Recherche de lieux (géocodage) sans serveur de démonstration
 

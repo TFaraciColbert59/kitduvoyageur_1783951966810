@@ -13,10 +13,12 @@ Photon, position arrondie). Prouvés en production à 23 h 20 : Bauges, 3 jours,
 48 s, 263 lieux sur 374 tirés du référentiel, distances Geoapify avec dénivelé du relief
 (19,5 km et 1 302 m D+), crédits du jour comptés en base. Lot G (PR #81, `cdffeee` :
 pages d'erreur honnêtes, droits des fonctions refermés en base, préparation comptée en
-heavy). En revue : lot H (PR #82 : préparation durable, écritures de `metadata` sans
-écrasement, relecture économe, fonctions à Paris, User-Agent du site, change sur 223
-devises, cache IA d'un jour). Prêt ensuite : lot I (politique de confidentialité unique
-et exacte, clés anti-abus en HMAC, demande de position expliquée). Constat du 9 oct. :
+heavy). Lots H et I (PR #82, `ee7ae6f` : préparation durable, écritures de `metadata`
+sans écrasement, relecture économe, fonctions à Paris, User-Agent du site, change Frankfurter
+v2, cache IA d'un jour, politique de confidentialité unique et exacte, clés anti-abus en
+HMAC, demande de position expliquée). Prouvés en production le 9 oct. à 4 h 15 :
+5 préparations sur 5 (médiane 25 s, contre 35 s à Washington pour les Bauges), aucune
+attente ni prise laissée en base, compteurs en empreinte, politique et mentions servies. Constat du 9 oct. :
 Overpass private.coffee répond souvent 500 (points autour des étapes dégradés) ; le
 référentiel des refuges et points d'eau (3.4) retirera cette dépendance. Plan à 0 € et cases
 à cocher : `PLAN-100.md`. Branche de travail `claude/optimistic-albattani-i06ge7`.
