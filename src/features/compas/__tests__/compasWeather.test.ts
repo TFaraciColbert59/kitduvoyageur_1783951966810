@@ -44,8 +44,10 @@ describe('météo du Compas : « aujourd’hui » de la destination', () => {
   });
 
   it('le premier jour du voyage donne le fuseau, avant le point de départ', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response('{}', { status: 200 }));
+    // Départ en Californie (encore le 9), voyage en Nouvelle-Zélande (déjà le 10) : le voyage l'emporte.
     const w = await getCompasWeather({
-      origin: null,
+      origin: YOSEMITE,
       tripDays: [{ day: 1, date: '2026-10-10', ...TONGARIRO }],
       timeZone: 'Europe/Paris',
       now: NOW,

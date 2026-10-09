@@ -8,7 +8,7 @@
  *   envoyé (ancien écran, tests).
  * - Les dates de la météo et du soleil sont celles de la DESTINATION : son
  *   fuseau se retrouve côté serveur (`destinationZone`, `server/weather.ts`).
- *   `@photostructure/tz-lookup` n'entre jamais ici (poids du navigateur).
+ *   La recherche du fuseau par coordonnées n'entre jamais ici (poids du navigateur).
  */
 
 /** Repli quand le navigateur n'a envoyé aucun fuseau valable. */
