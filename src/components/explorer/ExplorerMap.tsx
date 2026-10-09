@@ -10,6 +10,7 @@ import { Card, Divider, IconButton } from '@/components/ui';
 import type { UnifiedPOI } from '@/lib/queries/pois';
 import TerrainLiveLayer from '@/features/terrain-live/components/TerrainLiveLayer';
 import type { TerrainLiveReport } from '@/features/terrain-live/lib/terrainDisplay';
+import { leafletTiles } from '@/components/map/engine/leafletTiles';
 
 interface ExplorerMapProps {
   trails: MapTrail[];
@@ -42,21 +43,6 @@ interface ExplorerMapProps {
   /** A13 (S7) — sélection d'un signalement (ouverture de sa fiche). */
   onTerrainReportSelect?: (reportId: string) => void;
 }
-
-const TOPO_TILE = {
-  url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
-  attribution: '&copy; <a href="https://www.esri.com">Esri</a>, USGS, NOAA',
-};
-
-const OSM_TILE = {
-  url: 'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | <a href="https://www.openstreetmap.fr">OSM France</a>',
-};
-
-const SATELLITE_TILE = {
-  url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-  attribution: '&copy; <a href="https://www.esri.com">Esri</a>, Earthstar Geographics',
-};
 
 type TileMode = 'topo' | 'osm' | 'satellite';
 type LocationState = 'idle' | 'locating' | 'located' | 'denied' | 'unavailable';
@@ -191,7 +177,8 @@ export default function ExplorerMap({
         preferCanvas: true,
       });
 
-      L.control.attribution({ prefix: false }).addAttribution('© OSM France').addTo(map);
+      // Le crédit vient du fond affiché (plan 1.6) : « Powered by Esri » et les données.
+      L.control.attribution({ prefix: false }).addTo(map);
 
       const handleUserMove = () => {
         userDraggingRef.current = true;
@@ -209,11 +196,10 @@ export default function ExplorerMap({
         userDraggingRef.current = false;
       });
 
-      const initialCfg = TOPO_TILE;
+      const initialCfg = leafletTiles('topo');
       const tile = L.tileLayer(initialCfg.url, {
-        attribution: initialCfg.attribution,
+        ...initialCfg.options,
         maxZoom: 18,
-        maxNativeZoom: 18,
         keepBuffer: 6,
       });
       tile.addTo(map);
@@ -335,11 +321,10 @@ export default function ExplorerMap({
       if (tileLayerRef.current) {
         try { mapRef.current!.removeLayer(tileLayerRef.current as unknown as import('leaflet').Layer); } catch { /* ignore */ }
       }
-      const cfg = tileMode === 'topo' ? TOPO_TILE : tileMode === 'satellite' ? SATELLITE_TILE : OSM_TILE;
+      const cfg = leafletTiles(tileMode);
       const tile = L.tileLayer(cfg.url, {
-        attribution: cfg.attribution,
+        ...cfg.options,
         maxZoom: 18,
-        maxNativeZoom: 18,
         keepBuffer: 6,
       });
       tile.addTo(mapRef.current!);

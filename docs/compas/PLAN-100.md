@@ -115,7 +115,7 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       étapes reprenables (2.6) pour ne jamais dépendre d'une seule fonction longue.
 - [ ] **Coût de calcul** : supprimer le rafraîchissement complet de page toutes les 4 s
       (2.8) ; mettre en cache les données de page (météo 30 min, altitudes 30 j).
-- [~] **Région des fonctions** : `vercel.json` → `cdg1` (Paris). Les fonctions
+- [x] **Région des fonctions** : `vercel.json` → `cdg1` (Paris). Les fonctions
       tournaient à `iad1` (Washington) alors que la base est à Paris (`eu-west-3`), comme
       Geoapify, Photon, Valhalla et MET Norway : chaque requête traversait l'Atlantique.
       L'offre Hobby permet une région au choix (déploiement d'aperçu : `regions:
@@ -123,8 +123,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       base (`/api/compas/sources`) 0,32 s à Paris contre 0,5 à 0,8 s à `iad1` ; page
       statique 0,1 s plus lente (le client est loin de Paris) ; préparation des Bauges,
       cache chaud, un essai chacun : 40 s (Paris) contre 35 s (`iad1`), itinéraires
-      différents, non concluant (services externes et IA dominent). Reste : médiane sur
-      5 préparations après la mise en production.
+      différents, non concluant (services externes et IA dominent). **Production, 9 oct.
+      4 h 15 (`ee7ae6f`, Paris), cache chaud : 5 préparations sur 5 réussies, médiane
+      25 s** (Bauges 25 et 25 s, Vercors 27 s, Dolomites 45 s, Patagonie 23 s) ; même
+      demande des Bauges à `iad1` la veille : 35 s.
 
 ### 1.3 Recherche de lieux (géocodage) sans serveur de démonstration
 
@@ -193,10 +195,19 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 1.6 Fond de carte
 
-- [~] Retirer les fonds non autorisés en commercial : fait dans le moteur commun
+- [x] Retirer les fonds non autorisés en commercial : moteur commun
       (`components/map/engine/createMapStyle.ts` : carte du Compas, Explorer, globe Pays),
-      lot B. Reste les cartes Leaflet (Explorer historique, carnet, hub, départ, groupes,
-      hors ligne : `server.arcgisonline.com`, OSM France, OpenTopoMap).
+      lot B ; **cartes Leaflet** (Explorer historique, carte interactive, carnet, hub,
+      départ, groupes) sur `leafletTiles` (mêmes fonds ArcGIS avec clé), lot J. Plusieurs
+      n'affichaient aucun crédit (`attributionControl: false`) : crédit visible et
+      **complet** partout, chaque fournisseur de données nommé (revue Codex : un crédit
+      court oubliait TomTom, Garmin…, et Leaflet n'a pas de crédit repliable). **Hors
+      ligne** : plus aucune tuile téléchargée en masse (OSM France et OpenTopoMap
+      l'interdisent, ArcGIS ne le permet que par ses kits) ; le tracé et les points
+      restent sur l'appareil, l'écran le dit, et la place affichée est la leur.
+      Module mort `lib/offline/tiles.ts` (OpenTopoMap) retiré. Garde
+      `tests/map/leafletTiles.spec.ts` : aucune URL de fond non autorisée hors du repli
+      de développement.
 - [ ] Fond standard : **OpenFreeMap** (vecteur, sans clé ni limite, commercial
       autorisé) via MapLibre (ou extension MapLibre de Leaflet) ; attribution
       « OpenFreeMap © OpenMapTiles Data from OpenStreetMap ». Prévoir un repli : il peut
@@ -224,12 +235,21 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       les conseils) ; l'IA reste allumée pour les tests (aucun vrai utilisateur
       aujourd'hui) et s'éteint par drapeau pour le lancement, sauf décision contraire de
       Tony.
-- [~] Drapeau **`AI_MODE=off`** lu dans `askAI`, le point d'entrée unique de l'IA (lot F) :
-      chaque usage rend son repli par règles, raison « ia_eteinte » dite à l'écran. Reste :
-      Compas testé de bout en bout avec l'IA éteinte (jeu de validation P2 rejoué).
-- [ ] Compréhension de la phrase sans IA (4.10) : parseur par règles au niveau du parseur
-      actuel avec l'IA.
-- [ ] Conseils par règles (4.12) pour que l'absence d'IA ne retire rien d'essentiel.
+- [x] Drapeau **`AI_MODE=off`** lu dans `askAI`, le point d'entrée unique de l'IA (lot F) :
+      chaque usage rend son repli par règles, raison « ia_eteinte » dite à l'écran.
+      **Prouvé de bout en bout le 9 oct.** (lot K, aperçu `edf1b5b`, `AI_MODE=off` posé
+      pour cette seule branche) : 6 demandes sur 6 préparées en 15 à 16 s (contre 17 à 34 s
+      avec l'IA), **aucune ligne dans `ai_usage_daily`** pour ces comptes ; lu en base :
+      « dans 3 semaines » → départ le 30 oct., « 1,500 € » → enveloppe de 1 500 €,
+      « 2000 $ » → 1 785 € au taux du jour, « 2 adultes et 3 enfants » → 5, « à
+      vingt-deux » → 22, conseils des règles en tête (112 en solo, BERA en Vanoise en
+      février, lâchers de barrage sur l'Ardèche). Défauts relevés pendant le passage et
+      corrigés : date de l'IA qui l'emportait sur le calcul des règles (le 23 au lieu du
+      30 oct.), « week-end de la Toussaint » posé le dimanche, note « pas arrivée à temps »
+      quand l'IA est éteinte. Reste sans IA : itinéraire à l'échelle d'un pays (Écosse :
+      une étape par jour sur le pays, dit comme tel ; 4.5).
+- [x] Compréhension de la phrase sans IA (4.10), lot K : voir 4.10.
+- [x] Conseils par règles (4.11), lot K : l'absence d'IA ne retire rien d'essentiel.
 - [x] Plafond global quotidien d'appels IA (`AI_DAILY_CAP`, 2 000 par défaut, en plus du
       plafond par personne) ; compteur en panne = refus (fail-closed), lot F.
 - [x] Cache des réponses IA identiques (même demande, même jour) : « Dis-le »
@@ -536,7 +556,9 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       Français seulement, le service officiel du pays sinon.
 - [ ] `keepAiNote` ne retire plus les conseils justes pour un non-Français.
 - [ ] Mise à jour des barèmes périmés (ESTA, exemption Vietnam) avec date de vérification.
-- [ ] Note de papiers jamais perdue par la troncature à 6 notes.
+- [x] Note de papiers jamais perdue par la troncature : l'essentiel (papiers, sécurité)
+      passe avant les notes de préparation et les suggestions de l'IA (`orderNotes`, 8
+      notes), lot K.
 
 ### 4.3 Origine du voyage
 
@@ -594,13 +616,26 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 4.10 Compréhension de la demande
 
-- [ ] Nombres en lettres, dates relatives, budgets en devises (« 2000 $ »,
-      « 1,500 € »), dates numériques selon la langue.
+- [x] Lot K (`engine/intentWords.ts`, `intentWords.test.ts`) : nombres en lettres
+      composés ou grands (« dix-huit » lu 8 avant, « trois cents », « une dizaine de »),
+      montants (« 1,500 € » lu 1,50 € avant, « 3k€ ») et devise dite (« 2000 $ »,
+      « £800 », « CHF », « 50 000 ISK ») convertie au taux du jour dans la devise du
+      voyage, montant dit et taux gardés dans le libellé ; « dans 3 semaines » (un
+      départ, plus une durée de 21 jours), semaine et mois prochains, jours fériés
+      (jamais une destination : « à Noël en Laponie »), « 12/11 au 15/11 », ISO, mois
+      avant le jour en anglais ; « famille de 5 », adultes + enfants. L'ancrage de l'IA
+      suit les mêmes lectures (18 est dans « dix-huit », 8 n'y est plus).
+- [ ] Reste : dates numériques selon la langue de la personne (phase 6) ; montant « par
+      personne » multiplié par le groupe ; « quelques jours ».
 
 ### 4.11 Notes et conseils
 
-- [ ] Conseils essentiels par règles (sécurité, eau, saison, papiers) ; l'IA n'ajoute que
-      du facultatif, signalé comme tel.
+- [x] Lot K (`engine/advice.ts`, `advice.test.ts`) : altitude (au-dessus de 2 500 m),
+      avalanches en hiver selon l'hémisphère (BERA en France), orages d'été en montagne,
+      sortie seul·e (112 seulement là où il répond), refuges à réserver, règles du bivouac
+      à vérifier (sans horaire inventé), rivière ; trois au plus, le plus grave d'abord.
+      L'IA ne donne plus que des « Suggestion de l'IA (facultatif) », jamais une redite
+      d'une règle. Reste : eau (filtre selon la source, tropiques), avec 4.8.
 
 ---
 
@@ -627,7 +662,7 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       licences » des mentions légales (OpenStreetMap, Esri, Photon, LocationIQ, Geoapify,
       Overpass, MET Norway, NASA POWER), lot B. Reste : Terrain Tiles, GeoNames,
       Meteoalarm, BCE ; « Powered by Geoapify » là où ses résultats s'affichent.
-- [ ] Mention IA au démarrage, sur les conseils et sur toute étape proposée par l'IA
+- [~] Mention IA au démarrage, sur les conseils et sur toute étape proposée par l'IA
       (AI Act art. 50).
 - [ ] Mention d'affiliation dans la recherche d'hébergement en direct ; placée avant la
       liste dans Parcours.

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card } from '@/components/ui';
 import 'leaflet/dist/leaflet.css';
+import { leafletTiles } from '@/components/map/engine/leafletTiles';
 
 interface ParcoursCardProps {
   groupId?: string;
@@ -52,12 +53,10 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
         attributionControl: false,
       });
 
-      L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors | OSM France',
-        subdomains: ['a', 'b', 'c'],
-        maxZoom: 18,
-        keepBuffer: 6,
-      }).addTo(map);
+      // Crédit visible et complet (plan 1.6) : « Powered by Esri » et chaque fournisseur de données.
+      L.control.attribution({ prefix: false }).addTo(map);
+      const tiles = leafletTiles('osm');
+      L.tileLayer(tiles.url, { ...tiles.options, maxZoom: 18, keepBuffer: 6 }).addTo(map);
 
       let routeCoords: [number, number][] = [];
       if (trail?.geojson?.coordinates && Array.isArray(trail.geojson.coordinates)) {

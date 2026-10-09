@@ -34,7 +34,7 @@ describe('lecteur de règles (sans IA)', () => {
         { type: 'set_dates', start: '2026-10-03', end: null },
         { type: 'set_duration', days: 3, hours: null },
         { type: 'set_party_size', count: 4 },
-        { type: 'set_budget', amount: 300 },
+        { type: 'set_budget', amount: 300, currency: 'EUR' },
         { type: 'set_pace', pace: 'tranquille' },
         { type: 'set_nights', nights: 'bivouac' },
         { type: 'search_route', query: 'Vercors' },

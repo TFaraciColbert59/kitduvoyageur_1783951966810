@@ -1,5 +1,6 @@
 import type { InventoryStatus } from '@/features/materiel/domain/inventory';
 import 'server-only';
+import { MAX_NOTES } from '../engine/advice';
 import { partySizeOf, shortHoursOf, tripLengthDays } from '../engine/tripContext';
 
 import type { FxRate } from '../engine/currency';
@@ -682,7 +683,7 @@ function autofillNotes(metadata: unknown): string[] {
     compas && typeof compas === 'object' ? (compas as Record<string, unknown>).autofill : null;
   const notes = run && typeof run === 'object' ? (run as Record<string, unknown>).notes : null;
   return Array.isArray(notes)
-    ? notes.filter((n): n is string => typeof n === 'string').slice(0, 6)
+    ? notes.filter((n): n is string => typeof n === 'string').slice(0, MAX_NOTES)
     : [];
 }
 
