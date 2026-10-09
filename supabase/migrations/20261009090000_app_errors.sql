@@ -41,14 +41,15 @@ begin
   select count(*) into v_errors
     from public.app_errors a
    where a.at >= v_since and a.at < v_until;
+  -- array_append : « tableau || 'texte' » lirait le texte comme un tableau.
   if v_bytes > 430::bigint * 1024 * 1024 then
-    v_alerts := v_alerts || 'base au-dessus de 430 Mo';
+    v_alerts := array_append(v_alerts, 'base au-dessus de 430 Mo');
   end if;
   if v_ok + v_failed >= 10 and v_failed * 10 > v_ok + v_failed then
-    v_alerts := v_alerts || 'plus de 10 % de préparations échouées';
+    v_alerts := array_append(v_alerts, 'plus de 10 % de préparations échouées');
   end if;
   if v_errors >= 50 then
-    v_alerts := v_alerts || 'au moins 50 erreurs serveur';
+    v_alerts := array_append(v_alerts, 'au moins 50 erreurs serveur');
   end if;
 
   insert into public.ops_daily_reports as o (
