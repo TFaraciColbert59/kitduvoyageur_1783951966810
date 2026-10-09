@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'rea
 import Icon from '@/components/ui/Icon';
 import { planApplication, type CompasProposal } from '../engine/intent';
 import { compasClearStartSayAction, compasInterpretAction } from '../server/compasActions';
+import { browserTimeZone } from '../engine/zone';
 import { applyCurrent, inverseOps, runOps } from './compasApply';
 import type { CompasCtl } from './compasTypes';
 
@@ -50,7 +51,11 @@ export function DisLe({
     if (phrase.length < 2) return;
     setState({ status: 'loading' });
     try {
-      const res = await compasInterpretAction({ tripId: ctl.data.model.tripId, text: phrase });
+      const res = await compasInterpretAction({
+        tripId: ctl.data.model.tripId,
+        text: phrase,
+        timeZone: browserTimeZone() ?? undefined,
+      });
       if (!res.success) {
         setState({ status: 'error', error: res.error });
         return;

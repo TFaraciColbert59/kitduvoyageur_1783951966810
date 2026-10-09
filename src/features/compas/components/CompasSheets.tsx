@@ -79,6 +79,7 @@ import { RESA_EXAMPLES, type CompasLiveVertical } from '../engine/resaExamples';
 import { teamCount, teamCountLabel } from '../engine/team';
 import { compasSearchOffersAction } from '../server/resaActions';
 import { KIT_THRESHOLDS } from '../engine/kitRules';
+import { browserToday } from '../engine/zone';
 import { inverseOps, runOps } from './compasApply';
 import type { ApplyOp } from '../engine/intent';
 import { ActiviteFlow, ParcoursFlow, PreferencesFlow, QuandFlow } from './CompasOuFlows';
@@ -3572,7 +3573,8 @@ function InventaireFlow({ ctl }: { ctl: CompasCtl }) {
     return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'fr'));
   }, [ctl.data.inventory]);
   const [cat, setCat] = useState<string>('all');
-  const today = new Date().toISOString().slice(0, 10);
+  // Entretien et péremption : la date du jour du navigateur, pas celle d'UTC.
+  const today = browserToday();
   const shown = ctl.data.inventory
     .filter((i) => cat === 'all' || (i.category ?? 'Sans catégorie') === cat)
     .sort((a, b) => a.name.localeCompare(b.name, 'fr'));

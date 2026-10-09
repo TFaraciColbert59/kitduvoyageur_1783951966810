@@ -15,6 +15,11 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/compas',
 }));
 vi.mock('next/dynamic', () => ({ default: () => () => <div data-testid="map" /> }));
+// Fuseau du navigateur fixé : les appels comparés plus bas ne dépendent pas de la machine.
+vi.mock('../engine/zone', async (orig) => ({
+  ...(await orig<typeof import('../engine/zone')>()),
+  browserTimeZone: () => 'Europe/Paris',
+}));
 
 const kit = vi.hoisted(() => ({
   togglePackedAction: vi.fn(async () => ({ success: true })),
@@ -761,6 +766,7 @@ describe('CompasScreen', () => {
         tripSlug: 'trek-3-vallees',
         from: null,
         phase: 'all',
+        timeZone: 'Europe/Paris',
       })
     );
     expect(await screen.findByText(/Aventure préparée · 486/)).toBeTruthy();
@@ -1433,7 +1439,11 @@ describe('CompasScreen', () => {
     });
     render(<CompasScreen data={{ ...makeData(), startSay: 'rando à 4' }} />);
     await waitFor(() =>
-      expect(compas.compasInterpretAction).toHaveBeenCalledWith({ tripId: TRIP, text: 'rando à 4' })
+      expect(compas.compasInterpretAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        text: 'rando à 4',
+        timeZone: 'Europe/Paris',
+      })
     );
     await waitFor(() =>
       expect(compas.compasSetPartySizeAction).toHaveBeenCalledWith({
@@ -1510,6 +1520,7 @@ describe('CompasScreen', () => {
       expect(compas.compasInterpretAction).toHaveBeenCalledWith({
         tripId: TRIP,
         text: 'à 4, tranquille, 50 €',
+        timeZone: 'Europe/Paris',
       })
     );
     expect(await within(sheet).findByText('Sous les 240 € déjà engagés')).toBeTruthy();

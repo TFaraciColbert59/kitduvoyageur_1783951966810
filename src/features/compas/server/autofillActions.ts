@@ -102,7 +102,7 @@ import {
 import { after } from 'next/server';
 import { bareAdminName, destinationRadiusKm, distanceKm, isAdminName, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, type CompasPlace } from '../engine/places';
 import { unifyStageNames, untangleStages } from '../engine/stageOrder';
-import { localToday } from './weather';
+import { travellerToday } from '../engine/zone';
 import { aiSuggestion, essentialAdvice, orderNotes, repeatsRule } from '../engine/advice';
 import { preparationEventKind, recordPreparationEvent } from './opsEvents';
 import { coarsePosition } from '../engine/privacy';
@@ -179,6 +179,12 @@ const schema = z.object({
    * Compas va aujourd'hui jusqu'à 300 s), même quand l'IA est lente.
    */
   phase: z.enum(['steps', 'rest', 'all']).default('all'),
+  /**
+   * Fuseau du navigateur (IANA) : « aujourd'hui » du voyageur (meilleure
+   * période, date des dépenses prévues). Rien n'est gardé pour une reprise :
+   * chaque relance vient de l'écran, avec son fuseau.
+   */
+  timeZone: z.string().max(64).optional(),
 });
 
 interface StepRow {
@@ -790,7 +796,7 @@ export async function compasAutofillAction(
 ): Promise<CompasAutofillResult> {
   const parsed = schema.safeParse(input);
   if (!parsed.success) return { success: false, error: 'Requête invalide' };
-  const { tripId, from, phase } = parsed.data;
+  const { tripId, from, phase, timeZone } = parsed.data;
   try {
     const auth = await requireEditor(tripId);
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
@@ -835,7 +841,7 @@ export async function compasAutofillAction(
       return { success: true, pending: true, stepsCreated: 0 };
     const notes: string[] = [...(resume?.notes ?? [])];
     const runId = resume?.runId ?? randomUUID();
-    const today = localToday('Europe/Paris');
+    const today = travellerToday(timeZone);
     const startedAt = Date.now();
     // « Arrêter » demandé après ce lancement : les écritures qui restent sont sautées.
     let halted = false;

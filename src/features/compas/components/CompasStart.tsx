@@ -10,6 +10,7 @@ import { COMPAS_STEPS } from '../engine/compasModel';
 import { understandRequest, type RequestLine, type RequestPrecisions } from '../engine/request';
 import { MAX_TRIP_DAYS } from '../engine/intent';
 import { activityLabel } from '../engine/format';
+import { browserToday } from '../engine/zone';
 import { compasCreateTripAction } from '../server/compasActions';
 import { ACTIVITY_FIRST, ACTIVITY_META, ACTIVITY_ORDER } from './CompasOuFlows';
 
@@ -44,7 +45,8 @@ export function CompasStart({
   const [allActivities, setAllActivities] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  // La date du navigateur (pas celle d'UTC) : « demain » dit à 23 h reste demain.
+  const today = useMemo(() => browserToday(), []);
   // « Voici ce que j'ai compris » : règles du Compas, à la frappe, sans réseau.
   const understood = useMemo(() => understandRequest(text, today, precise), [text, today, precise]);
   const ready = text.trim().length >= 2;

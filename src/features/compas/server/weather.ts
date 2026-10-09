@@ -10,6 +10,7 @@ import { METNO_SOURCE, POWER_SOURCE, parseMetNo, powerToDaily } from '../engine/
 import tzLookup from '@photostructure/tz-lookup';
 import { appUserAgent } from '@/lib/userAgent';
 import { metnoForecastUrl, metnoGet } from '@/lib/weather/metnoRequest';
+import { localToday } from '../engine/zone';
 
 /**
  * Compas — météo gratuite, usage commercial permis :
@@ -63,18 +64,8 @@ export function addDays(iso: string, n: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-export function localToday(timeZone: string, now = new Date()): string {
-  try {
-    return new Intl.DateTimeFormat('en-CA', {
-      timeZone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(now);
-  } catch {
-    return now.toISOString().slice(0, 10);
-  }
-}
+/** « Aujourd'hui » dans un fuseau : vit dans `engine/zone.ts` (module pur), réexporté ici. */
+export { localToday };
 
 /* ---------- URLs (exportées pour les tests) ---------- */
 
@@ -105,6 +96,14 @@ export function zoneAt(lat: number, lon: number, fallback: string): string {
   } catch {
     return fallback;
   }
+}
+
+/**
+ * Fuseau de la destination : celui du point donné (premier jour du voyage,
+ * sinon le départ), le repli sans point. Côté serveur seulement (tz-lookup).
+ */
+export function destinationZone(point: { lat: number; lon: number } | null, fallback: string): string {
+  return point ? zoneAt(point.lat, point.lon, fallback) : fallback;
 }
 
 async function getJson(url: string, revalidate: number, timeoutMs = 6000): Promise<unknown | null> {
@@ -150,11 +149,15 @@ export function trendWindow(first: string, last: string): { start: string; end: 
 export async function getCompasWeather(input: {
   origin: { lat: number; lon: number } | null;
   tripDays: Array<{ day: number; date: string; lat: number; lon: number }>;
+  /** Repli quand le lieu ne donne aucun fuseau. */
   timeZone: string;
   now?: Date;
 }): Promise<CompasWeather | null> {
   if (!input.origin && input.tripDays.length === 0) return null;
-  const today = localToday(input.timeZone, input.now);
+  // Les dates du calendrier et des jours du voyage sont celles de la
+  // DESTINATION : « aujourd'hui » s'y lit aussi (premier jour, sinon départ).
+  const zone = destinationZone(input.tripDays[0] ?? input.origin, input.timeZone);
+  const today = localToday(zone, input.now);
   const horizon = addDays(today, FORECAST_HORIZON_DAYS - 1);
 
   // 1. Jours du voyage dans l'horizon : une prévision par point (cache partagé).

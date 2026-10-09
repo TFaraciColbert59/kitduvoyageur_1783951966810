@@ -44,7 +44,7 @@ import { planKitApply, type MyKit } from '../engine/kitApply';
 import { precisionActions } from '../engine/request';
 import { simplifyOffers, stayDates, type CompasStayOffer } from '../engine/stays';
 import { readCompasMeta } from '../engine/meta';
-import { localToday } from './weather';
+import { travellerToday } from '../engine/zone';
 import { getEurRate } from './rates';
 import { convertBetween } from '../engine/currency';
 import {
@@ -1668,6 +1668,8 @@ const AI_NOTES: Record<AIFailureReason, string> = {
 const interpretSchema = z.object({
   tripId: uuid,
   text: z.string().trim().min(2).max(MAX_INTENT_CHARS),
+  /** Fuseau du navigateur (IANA) : « aujourd'hui » du voyageur. */
+  timeZone: z.string().max(64).optional(),
 });
 
 /**
@@ -1683,7 +1685,7 @@ export async function compasInterpretAction(
 > {
   const parsed = interpretSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: 'Phrase trop courte ou trop longue' };
-  const { tripId, text } = parsed.data;
+  const { tripId, text, timeZone } = parsed.data;
   try {
     const auth = await requireEditor(tripId);
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
@@ -1703,7 +1705,8 @@ export async function compasInterpretAction(
             : 'Compréhension indisponible pour le moment : réessaie dans un instant.',
       };
     const trip = auth.trip;
-    const today = localToday('Europe/Paris');
+    // « Aujourd'hui » du voyageur : le fuseau de son navigateur (Paris sans lui).
+    const today = travellerToday(timeZone);
     const startDate = trip.start_date ?? null;
     const endDate = trip.end_date ?? null;
     const days =

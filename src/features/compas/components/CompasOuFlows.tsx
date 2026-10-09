@@ -22,6 +22,7 @@ import {
   type CompasActivity,
 } from '../engine/intent';
 import { daylightClock } from '../engine/sun';
+import { browserToday } from '../engine/zone';
 import {
   dayQuality,
   departureAdvice,
@@ -576,24 +577,12 @@ const QUALITY_LABEL = {
   mauvais: 'mauvaises conditions',
 } as const;
 
-function todayParis(): string {
-  try {
-    return new Intl.DateTimeFormat('en-CA', {
-      timeZone: TIME_ZONE,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(new Date());
-  } catch {
-    return new Date().toISOString().slice(0, 10);
-  }
-}
-
 export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
   const { data } = ctl;
   const m = data.model;
   const weather = data.weather;
-  const today = weather?.calendar[0]?.date ?? todayParis();
+  // Premier jour du calendrier (date de la destination), sinon le jour du navigateur.
+  const today = weather?.calendar[0]?.date ?? browserToday();
   const initialHours =
     hint?.hours ?? (m.dates.hours != null && m.dates.hours < 24 ? m.dates.hours : null);
   const [start, setStart] = useState(m.dates.start ?? '');

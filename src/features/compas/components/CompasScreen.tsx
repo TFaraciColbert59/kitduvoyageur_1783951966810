@@ -40,6 +40,7 @@ import { CompasPrep, type PrepState } from './CompasPrep';
 import { planApplication } from '../engine/intent';
 import { applyCurrent, runOps } from './compasApply';
 import { compasClearStartSayAction, compasInterpretAction } from '../server/compasActions';
+import { browserTimeZone } from '../engine/zone';
 
 const DISPLAY_KEY = 'lkdv.compas.affichage';
 const LAYERS_KEY = 'lkdv.compas.calques';
@@ -384,7 +385,14 @@ export function CompasScreen({
         // ouverte (un réseau mobile coupe une longue requête muette) : l'écran
         // demande son issue toutes les 4 s, et ne se relit (carte, étapes) que
         // si le voyage a changé depuis la dernière fois (plan 2.8).
-        const started = await compasAutofillStartAction({ tripId: model.tripId, tripSlug: model.slug, from, phase: 'all' });
+        // Fuseau du navigateur : « aujourd'hui » du voyageur côté serveur.
+        const started = await compasAutofillStartAction({
+          tripId: model.tripId,
+          tripSlug: model.slug,
+          from,
+          phase: 'all',
+          timeZone: browserTimeZone() ?? undefined,
+        });
         if (!started.success) return started;
         let seen: string | null = null;
         while (Date.now() - startedAt < AUTOFILL_MAX_MS) {
@@ -587,7 +595,11 @@ export function CompasScreen({
       stopped.current = false;
       setPrep({ stage: 'understand' });
       try {
-        const res = await compasInterpretAction({ tripId: model.tripId, text: say });
+        const res = await compasInterpretAction({
+          tripId: model.tripId,
+          text: say,
+          timeZone: browserTimeZone() ?? undefined,
+        });
         if (stopped.current) return;
         if (!res.success) return prepFail(res.error);
         const ctl = ctlRef.current;
