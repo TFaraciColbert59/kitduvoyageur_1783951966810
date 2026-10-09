@@ -160,7 +160,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/',
-    // CSRF : toutes les mutations API passent par la garde d'origine.
+    // CSRF : mutations API refusees hors origine connue.
     '/api/:path*',
     '/admin',
     '/admin/:path*',
