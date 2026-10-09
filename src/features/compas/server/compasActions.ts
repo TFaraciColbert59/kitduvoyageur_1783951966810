@@ -602,6 +602,21 @@ export async function compasSetDestinationAction(
   try {
     const auth = await requireEditor(parsed.data.tripId);
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    // La carte (Photon, LocationIQ, Geoapify) et parfois l'IA : comptées par personne (plan 2.2).
+    const limited = await enforceRateLimit(auth.userId, {
+      scope: 'compas-destination',
+      limit: 20,
+      windowMs: 600_000,
+      failMode: 'closed',
+    });
+    if (limited)
+      return {
+        success: false,
+        error:
+          limited.status === 429
+            ? 'Trop de lieux cherchés d’affilée : patiente quelques minutes.'
+            : 'Recherche de lieux indisponible pour le moment : réessaie dans un instant.',
+      };
     // « GR34 » n'est pas un lieu : la région du sentier (sinon un point dans l'Indre).
     const wanted = parsed.data.place ? (trailRegion(parsed.data.place) ?? parsed.data.place) : null;
     const place = wanted ? await resolveDestination(wanted, auth.userId) : null;
@@ -1668,6 +1683,21 @@ export async function compasInterpretAction(
   try {
     const auth = await requireEditor(tripId);
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    // L'IA et les taux de change : comptés par personne (plan 2.2).
+    const limited = await enforceRateLimit(auth.userId, {
+      scope: 'compas-interpret',
+      limit: 30,
+      windowMs: 600_000,
+      failMode: 'closed',
+    });
+    if (limited)
+      return {
+        success: false,
+        error:
+          limited.status === 429
+            ? 'Trop de demandes d’affilée : patiente quelques minutes.'
+            : 'Compréhension indisponible pour le moment : réessaie dans un instant.',
+      };
     const trip = auth.trip;
     const today = localToday('Europe/Paris');
     const startDate = trip.start_date ?? null;
