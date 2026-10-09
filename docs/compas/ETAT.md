@@ -27,10 +27,18 @@ sans tuiles téléchargées ; demande comprise et conseils essentiels **sans IA*
 lettres, montants et devises, dates relatives, jours fériés, groupe ; altitude, avalanches,
 solo, refuges, bivouac, rivière), suggestions de l'IA dites facultatives. Prouvé sur
 l'aperçu le 9 oct. avec `AI_MODE=off` : 6/6 préparées en 15 s, aucun appel IA en base.
+Lot L (PR suivante, plan `docs/superpowers/plans/2026-10-09-compas-lot-l.md`, mené par
+sous-agents avec revue de chaque tâche et revue finale) : MET Norway par un seul point
+(20 req/s, rien avant `Expires`), limites sur la destination et la phrase, erreurs
+serveur du Compas en base sans donnée personnelle (`app_errors`) et alertes du rapport
+quotidien, cookies de session `Lax`. Migration appliquée ; le rapport du 8 oct. lève
+« plus de 10 % de préparations échouées » (4 sur 11).
 
 **À faire par Tony** (rien d'autre ne bloque) :
 1. SQL Editor : `supabase/migrations/20261008190000_base_scheduled_purges.sql` (purges
-   planifiées), puis `drop table public.places_geo;` (−232 Mo, plus aucun lecteur).
+   planifiées), puis `20261009100000_app_errors_purge.sql`, puis
+   `drop table public.places_geo;` (−232 Mo, plus aucun lecteur). **Urgent** : la base
+   est à 429,3 Mio le 9 oct., l'alerte du rapport se lève à 430.
 2. GitHub → Settings → Secrets → Actions : `SUPABASE_DB_URL` (Session pooler) et
    `BACKUP_PASSPHRASE` (sauvegarde chiffrée de la nuit, `SAUVEGARDES.md`).
 3. Identité légale réelle pour les mentions légales ; retirer `DEMO_LOGIN_*` de Vercel.
