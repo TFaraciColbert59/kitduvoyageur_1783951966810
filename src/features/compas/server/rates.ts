@@ -18,9 +18,12 @@ async function getJson(url: string): Promise<unknown | null> {
 /**
  * Taux de change EUR → devise du voyage (plan 1.8), sans clé, en cache 12 h.
  * Frankfurter v2 d'abord (banques centrales et sources officielles, 223
- * devises, quand la v1 ne connaissait que la trentaine de devises de la BCE :
- * dong, peso argentin ou shilling kényan restaient en euros) ; currency-api en
- * secours. Rien d'exploitable : `null`, l'écran reste en euros.
+ * devises), currency-api en secours. Rien d'exploitable : `null`, l'écran reste
+ * en euros.
+ *
+ * Aujourd'hui un voyage n'enregistre que six devises (`trip_budget_currency` :
+ * EUR, USD, GBP, CHF, CAD, JPY), et le Compas le crée en euros : la couverture
+ * large sert à la devise du pays de destination, à venir (plan 4.2).
  */
 export async function getEurRate(currency: string): Promise<FxRate | null> {
   const code = currency.trim().toUpperCase();

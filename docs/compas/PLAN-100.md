@@ -247,11 +247,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       `trendWindow.test.ts`.
 - [ ] Meteoalarm : conditions à vérifier ; attribution.
 - [x] Taux de change : **Frankfurter v2** (`/v2/rates`, 104 banques centrales, 223
-      devises ; la v1 n'avait que la trentaine de la BCE : dong, peso argentin, shilling
-      kényan restaient en euros), secours **currency-api** (CC0) ; cache 12 h ; la source
-      est dite à côté du montant (plus « taux BCE » pour un taux qui n'en est pas) ;
-      mentions : « Source: ECB statistics. » et currency-api. Vérifié le 8 oct. : VND,
-      ARS, KES, XPF servis. Tests `currency.test.ts`.
+      devises ; vérifié le 8 oct. : VND, ARS, KES, XPF servis), secours **currency-api**
+      (CC0) ; cache 12 h ; la source est dite à côté du montant ; mentions : « Source:
+      ECB statistics. » et currency-api. Tests `currency.test.ts`. ⚠️ Un voyage
+      n'enregistre encore que six devises (enum `trip_budget_currency`) et le Compas le
+      crée en euros (retour Codex sur #82) : la conversion dans la devise du pays de
+      destination est à faire en 4.2.
 - [ ] Carburant : bulletin pétrolier de l'UE (CC BY 4.0) pour l'UE-27 ; ailleurs barème
       versionné et daté, affiché comme « estimation » (aucune source mondiale gratuite).
 
@@ -511,6 +512,9 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       (CC BY 4.0, commercial autorisé, crédit exact de l'éditeur), versionnée dans le
       code. Les jeux dérivés de Passport Index sont exclus (recherche académique
       seulement).
+- [ ] Budget aussi dans la devise du pays de destination (taux Frankfurter v2, 223
+      devises, déjà branché) : aujourd'hui seulement si la devise du voyage est l'une des
+      six de l'enum `trip_budget_currency`, et le Compas ne la change jamais.
 - [ ] Prises et change selon le pays de résidence ; « France Diplomatie » pour les
       Français seulement, le service officiel du pays sinon.
 - [ ] `keepAiNote` ne retire plus les conseils justes pour un non-Français.
