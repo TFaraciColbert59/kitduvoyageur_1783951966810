@@ -821,13 +821,17 @@ export async function compasAutofillAction(
     // Une reprise (phase « rest », itinéraire déjà écrit) a sa propre limite :
     // l'état de reprise vit dans `trips.metadata`, que l'éditeur peut écrire ;
     // sans limite, réécrire cet état relançait la préparation sans compter.
-    const resuming = phase === 'rest' || Boolean(pending);
+    // La reprise, c'est l'itinéraire en attente, jamais la phase envoyée par le
+    // navigateur : une phase « rest » sans attente écrit tout un itinéraire et
+    // échappait à la limite des lancements (6 par 10 min, 120 par heure).
+    const resuming = Boolean(pending);
     const limited = await enforceCompasAutofillLimits(userId, resuming);
     if (limited) return limited;
 
     // Un seul « steps » à la fois (deux onglets, F5) : prise atomique, sinon
-    // deux itinéraires complets seraient écrits.
-    if (phase !== 'rest' && !pending && !(await claimPhase(supabase, tripId, 'steps')))
+    // deux itinéraires complets seraient écrits. Toute préparation sans
+    // itinéraire en attente en écrit un, quelle que soit la phase demandée.
+    if (!pending && !(await claimPhase(supabase, tripId, 'steps')))
       return { success: true, pending: true, stepsCreated: 0 };
     // Un seul « rest » à la fois : deux onglets, ou l'écran remonté pendant la
     // préparation, n'écrivent jamais deux fois les objets et les dépenses.

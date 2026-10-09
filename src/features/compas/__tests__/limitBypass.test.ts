@@ -255,6 +255,43 @@ describe('compteur en panne : refus, jamais de passage (failMode closed)', () =>
 });
 
 describe('préparation : la phase envoyée ne change pas de compteur', () => {
+  it('six lancements comptés : une 7e demandée en phase « rest » sans itinéraire en attente est refusée', async () => {
+    const start = await keyOf('compas-autofill:editor-2');
+    h.counter.set(start, { hits: 6, resetAt: Date.now() + 600_000 });
+    const res = await compasAutofillAction({ tripId: TRIP_B, tripSlug: 'b', from: null, phase: 'rest' });
+    expect(res).toEqual({
+      success: false,
+      error: 'Beaucoup de préparations d’affilée : je reprends seul dans 10 min.',
+      retryInS: 600,
+    });
+    expect(h.bodies.map((b) => b.p_key)).toEqual([start]);
+    expect(h.db.writes).toEqual([]);
+  });
+
+  it('phase « steps » ou « all » : le même compteur de lancements, par personne puis pour le site', async () => {
+    const start = await keyOf('compas-autofill:editor-2');
+    h.counter.set(start, { hits: 6, resetAt: Date.now() + 600_000 });
+    for (const phase of ['steps', 'all'] as const) {
+      const res = await compasAutofillAction({ tripId: TRIP_B, tripSlug: 'b', from: null, phase });
+      expect(res).toMatchObject({ success: false, retryInS: 600 });
+    }
+    expect(h.bodies.map((b) => b.p_key)).toEqual([start, start]);
+
+    h.counter.clear();
+    h.bodies = [];
+    h.counter.set(await keyOf('compas-autofill-global:site'), { hits: 120, resetAt: Date.now() + 3_600_000 });
+    const res = await compasAutofillAction({ tripId: TRIP_B, tripSlug: 'b', from: null, phase: 'rest' });
+    expect(res).toMatchObject({ success: false, error: expect.stringMatching(/^Le Compas prépare beaucoup de voyages/) });
+    expect(h.bodies.map((b) => b.p_key)).toEqual([start, await keyOf('compas-autofill-global:site')]);
+  });
+
+  it('phase « rest » sans attente pendant qu’une autre préparation écrit l’itinéraire : elle attend, rien en double', async () => {
+    h.db.rows('trips')[1].metadata = { compas: { planned_days: 2, autofill_claim: { steps: Date.now() - 5_000 } } };
+    const res = await compasAutofillAction({ tripId: TRIP_B, tripSlug: 'b', from: null, phase: 'rest' });
+    expect(res).toEqual({ success: true, pending: true, stepsCreated: 0 });
+    expect(h.db.writes.filter((w) => w.table !== 'trips')).toEqual([]);
+  });
+
   it('une vraie reprise (itinéraire en attente) reste comptée comme reprise', async () => {
     const pending = { runId: 'run-x', stepIds: ['s1'], routeSet: false, notes: [] };
     h.db.rows('trips')[1].metadata = { compas: { planned_days: 2, autofill_pending: pending } };
