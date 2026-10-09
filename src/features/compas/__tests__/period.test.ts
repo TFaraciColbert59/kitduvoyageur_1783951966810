@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NORMALS_WHY, bestPeriod, driestMonth, monthName, needsDryNormals } from '../engine/period';
+import { NORMALS_WHY, bestPeriod, driestMonth, isTropical, monthName, needsDryNormals } from '../engine/period';
 
 const today = '2026-10-06';
 
@@ -75,12 +75,33 @@ describe('Saison sèche par les normales NASA POWER (tropiques hors de la table)
     expect(bestPeriod({ ...br, normals: { precip: [...MANAUS.slice(0, 11), Number.NaN] } })).toBeNull();
   });
 
+  it('désert tropical (moyenne annuelle < 0,5 mm/jour) : aucune saison sèche à proposer', () => {
+    // Djeddah : pluies rares et d'hiver ; le « trimestre le plus sec » serait le plein été.
+    const JEDDAH = [0.35, 0.08, 0.1, 0.12, 0.03, 0, 0.01, 0.03, 0.02, 0.06, 0.42, 0.38];
+    expect(
+      bestPeriod({ activity: 'hiking', lat: 21.49, countryCode: 'SA', today, days: 7, normals: { precip: JEDDAH } })
+    ).toBeNull();
+    // Climat humide : inchangé.
+    expect(
+      bestPeriod({ activity: 'hiking', lat: -3.12, countryCode: 'BR', today, days: 7, normals: { precip: MANAUS } })
+    ).toMatchObject({ month: 8, why: NORMALS_WHY });
+  });
+
   it('la table garde la priorité ; hors des tropiques, les normales ne changent rien', () => {
     expect(
       bestPeriod({ activity: 'trekking', lat: -9.2, countryCode: 'PE', today, days: 5, normals: { precip: MANAUS } })
         ?.month
     ).toBe(6);
     expect(bestPeriod({ activity: 'hiking', lat: 51.17, today, days: 7, normals: { precip: MANAUS } })?.month).toBe(9);
+  });
+
+  it('isTropical : |latitude| < 23,5°, latitude inconnue jamais tropicale', () => {
+    expect(isTropical(-8.4)).toBe(true);
+    expect(isTropical(21.49)).toBe(true);
+    expect(isTropical(23.5)).toBe(false);
+    expect(isTropical(-50)).toBe(false);
+    expect(isTropical(null)).toBe(false);
+    expect(isTropical(undefined)).toBe(false);
   });
 
   it('needsDryNormals : sous les tropiques, hors de la table, hors ski', () => {

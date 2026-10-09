@@ -23,6 +23,7 @@ import type {
   CompasPriority,
   CompasTerrain,
 } from './compasModel';
+import { isTropical } from './period';
 import type { Pace } from './weather';
 
 export type ContextSource = 'phrase' | 'projet' | 'compas' | 'profil' | 'defaut';
@@ -150,6 +151,14 @@ function northernEquivalent(month: number, lat: number | null | undefined): numb
   return lat != null && lat < 0 ? ((month + 5) % 12) + 1 : month;
 }
 
+/**
+ * Mois d'hiver au lieu du voyage : selon l'hémisphère, et jamais entre les
+ * tropiques (saisons sèche et humide). Latitude inconnue : le mois seul.
+ */
+function isWinter(month: number | null, lat: number | null | undefined): boolean {
+  return month != null && !isTropical(lat) && WINTER.has(northernEquivalent(month, lat));
+}
+
 export function resolveProjectContext(input: ContextInput): ProjectContext {
   const project = input.project ?? {};
   const phrase = input.phrase ?? {};
@@ -265,7 +274,7 @@ export function resolveProjectContext(input: ContextInput): ProjectContext {
     else if (ROOF_ACTIVITIES.has(act))
       nights = { value: 'hebergement', source: 'defaut', why: 'activité qui dort sous un toit' };
     else if (priority.value === 'budget' && priority.source === 'profil') {
-      const cold = input.month != null && WINTER.has(northernEquivalent(input.month, input.lat));
+      const cold = isWinter(input.month, input.lat);
       const high = (input.maxAltitudeM ?? 0) >= 1500;
       if (cold && (high || level.value === 'debut')) {
         adaptations.push({

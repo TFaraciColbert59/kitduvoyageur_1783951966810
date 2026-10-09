@@ -634,17 +634,22 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 - [x] « Aujourd'hui » au fuseau du voyageur (navigateur) partout (serveur, calendrier,
       `CompasStart`). Lot M : fuseau du navigateur envoyé au serveur (repli Paris), météo
-      datée au fuseau de la destination (`zone.test.ts`, `compasWeather.test.ts`).
+      datée au fuseau de la destination (`zone.test.ts`, `compasWeather.test.ts`) ;
+      « Quand » accepte le plus tôt des deux jours (voyageur, destination)
+      (`compasScreen.test.tsx`).
 - [x] Lever et coucher du soleil au fuseau de la destination (`tz-lookup`) au-delà de la
       prévision ; départ conseillé juste. Lot M : « heure locale », départ à l'aube si 7 h
-      ne suffit pas, « HH:MM » enfin lu (`sun.test.ts`, `weather.test.ts`, `danger.test.ts`).
+      ne suffit pas (même quand l'aube ne suffit pas non plus : le moins de nuit),
+      « HH:MM » enfin lu ; frontale et « X de marche pour Y de jour » au-delà de la
+      prévision par le calcul astronomique (`sun.test.ts`, `weather.test.ts`,
+      `danger.test.ts`, `kitRules.test.ts`).
       Limite connue : un seul fuseau par voyage, celui de la première étape placée.
 - [x] Hiver selon l'hémisphère ; saison sèche des tropiques hors table (Brésil, nord de
       l'Australie, Caraïbes, Afrique de l'Ouest, Guyane, Mayotte). Lot M : la table n'est
       pas complétée à la main (aucune ligne inventée) ; hors table, mois le plus sec des
-      normales NASA POWER 2001-2020 au point retenu (`period.test.ts`,
-      `powerNormals.test.ts`, `metno.test.ts`) ; hiver décalé de six mois au sud
-      (`projectContext.test.ts`).
+      normales NASA POWER 2001-2020 au point retenu, aucune période en désert (moins de
+      0,5 mm/jour en moyenne) (`period.test.ts`, `powerNormals.test.ts`, `metno.test.ts`) ;
+      hiver décalé de six mois au sud, jamais sous les tropiques (`projectContext.test.ts`).
 
 ### 4.8 Kit
 

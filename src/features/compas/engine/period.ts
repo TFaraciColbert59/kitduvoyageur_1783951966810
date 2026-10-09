@@ -128,9 +128,22 @@ const TROPICAL_DRY: Record<string, { month: number; why: string }> = {
 /** Raison affichée quand le mois vient des normales (et non de la table). */
 export const NORMALS_WHY = 'mois le plus sec selon les normales 2001-2020 (NASA POWER)';
 
-function isTropical(input: Pick<PeriodInput, 'activity' | 'lat'>): boolean {
-  return input.lat != null && Math.abs(input.lat) < 23.5 && input.activity !== 'ski';
+/** Latitude entre les tropiques (|lat| < 23,5°) : saisons sèche et humide, pas d'hiver. */
+export function isTropical(lat: number | null | undefined): boolean {
+  return lat != null && Math.abs(lat) < 23.5;
 }
+
+/** La période suit la saison sèche : tropiques, hors ski. */
+function drySeason(input: Pick<PeriodInput, 'activity' | 'lat'>): boolean {
+  return isTropical(input.lat) && input.activity !== 'ski';
+}
+
+/**
+ * Désert : moins de 0,5 mm/jour en moyenne sur l'année. Ses rares pluies
+ * tombent souvent l'hiver ; le « trimestre le plus sec » y serait le plein
+ * été, jamais un bon conseil.
+ */
+const ARID_MEAN_MM_PER_DAY = 0.5;
 
 function dryRow(countryCode: string | null | undefined): { month: number; why: string } | null {
   return TROPICAL_DRY[(countryCode ?? '').toUpperCase()] ?? null;
@@ -141,7 +154,7 @@ function dryRow(countryCode: string | null | undefined): { month: number; why: s
  * la saison sèche (le serveur ne les demande que dans ce cas).
  */
 export function needsDryNormals(input: Pick<PeriodInput, 'activity' | 'lat' | 'countryCode'>): boolean {
-  return isTropical(input) && !dryRow(input.countryCode);
+  return drySeason(input) && !dryRow(input.countryCode);
 }
 
 /**
@@ -167,11 +180,18 @@ function usableNormals(normals: PeriodInput['normals']): number[] | null {
   return Array.isArray(p) && p.length === 12 && p.every((v) => Number.isFinite(v) && v >= 0) ? p : null;
 }
 
+/** Normales d'un climat aride (moyenne annuelle sous le seuil) : aucune saison sèche à en tirer. */
+function arid(precip: number[]): boolean {
+  return precip.reduce((t, v) => t + v, 0) / 12 < ARID_MEAN_MM_PER_DAY;
+}
+
 export function bestPeriod(input: PeriodInput): BestPeriod | null {
-  const tropical = isTropical(input);
+  const tropical = drySeason(input);
   // La table garde la priorité ; hors d'elle, le mois le plus sec des normales
-  // NASA POWER ; sans normales lisibles, aucune période plutôt qu'une supposition.
-  const precip = tropical ? usableNormals(input.normals) : null;
+  // NASA POWER ; sans normales lisibles, ou en désert, aucune période plutôt
+  // qu'une supposition.
+  const normals = tropical ? usableNormals(input.normals) : null;
+  const precip = normals && !arid(normals) ? normals : null;
   const dry = tropical
     ? (dryRow(input.countryCode) ?? (precip ? { month: driestMonth(precip), why: NORMALS_WHY } : null))
     : null;
