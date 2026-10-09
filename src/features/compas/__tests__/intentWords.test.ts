@@ -227,3 +227,12 @@ describe('fin des noms de lieu', () => {
     expect(find(parseIntentRules('en Corse la semaine prochaine', TODAY), 'set_destination')?.place).toBe('Corse');
   });
 });
+
+describe('week-end ou semaine d’un mois', () => {
+  it('« premier week-end de novembre » : le premier samedi du mois ; « première semaine de mars » : le 1er', () => {
+    const d = (text: string) => find(parseIntentRules(text, TODAY), 'set_dates')?.start;
+    expect(d('premier week-end de novembre dans le Jura')).toBe('2026-11-07');
+    expect(d('week-end de décembre en Chartreuse')).toBe('2026-12-05');
+    expect(d('la première semaine de mars au Maroc')).toBe('2027-03-01');
+  });
+});

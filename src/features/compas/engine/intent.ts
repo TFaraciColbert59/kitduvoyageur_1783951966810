@@ -452,7 +452,7 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
   // dans ce mois tombe sur son premier samedi. Ce mois-ci : à partir d'aujourd'hui.
   if (!range && !single && !slash && !iso[0] && !slashRange && !enRange && !enSingle && !inN && !holiday) {
     const monthOnly = new RegExp(
-      `\\b(?:(debut|mi|fin)[\\s-]+(?:de\\s+|d')?|en\\s+|in\\s+|au mois d[e']\\s*|courant\\s+)${MONTH_RE}(?:\\s+(\\d{4}))?`
+      `\\b(?:(debut|mi|fin)[\\s-]+(?:de\\s+|d')?|en\\s+|in\\s+|au mois d[e']\\s*|courant\\s+|(?:premier\\s+|1er\\s+)?week[- ]?end\\s+(?:de\\s+|d')|(?:premiere\\s+)?semaine\\s+(?:de\\s+|d'))${MONTH_RE}(?:\\s+(\\d{4}))?`
     ).exec(plain);
     const month = monthOnly ? monthOf(monthOnly[2]) : null;
     if (monthOnly && month) {
