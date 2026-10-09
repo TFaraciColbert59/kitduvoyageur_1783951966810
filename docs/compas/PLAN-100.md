@@ -615,12 +615,16 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 4.7 Temps
 
-- [ ] « Aujourd'hui » au fuseau du voyageur (navigateur) partout (serveur, calendrier,
-      `CompasStart`).
-- [ ] Lever et coucher du soleil au fuseau de la destination (`tz-lookup`) au-delà de la
-      prévision ; départ conseillé juste.
-- [ ] Hiver selon l'hémisphère ; table des saisons sèches complétée (Brésil, nord de
-      l'Australie, Caraïbes, Afrique de l'Ouest, Guyane, Mayotte).
+- [x] « Aujourd'hui » au fuseau du voyageur (navigateur) partout (serveur, calendrier,
+      `CompasStart`). Lot M : fuseau du navigateur envoyé au serveur (repli Paris), météo
+      datée au fuseau de la destination (`zone.test.ts`, `compasWeather.test.ts`).
+- [x] Lever et coucher du soleil au fuseau de la destination (`tz-lookup`) au-delà de la
+      prévision ; départ conseillé juste. Lot M : « heure locale », départ à l'aube si 7 h
+      ne suffit pas, « HH:MM » enfin lu (`sun.test.ts`, `weather.test.ts`, `danger.test.ts`).
+      Limite connue : un seul fuseau par voyage, celui de la première étape placée.
+- [x] Hiver selon l'hémisphère ; table des saisons sèches complétée (Brésil, nord de
+      l'Australie, Caraïbes, Afrique de l'Ouest, Guyane, Mayotte). Lot M : hors table, mois
+      le plus sec des normales NASA POWER, sans ligne inventée (`period.test.ts`).
 
 ### 4.8 Kit
 
