@@ -1,8 +1,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: vi.fn(() => ({ rpc: vi.fn(async () => ({ data: 3, error: null })) })),
-}));
+vi.mock('@supabase/supabase-js', () => {
+  const chain: Record<string, unknown> = {};
+  chain.select = () => chain;
+  chain.eq = () => chain;
+  chain.limit = async () => ({ data: [], error: null });
+  return {
+    createClient: vi.fn(() => ({
+      from: () => chain,
+      rpc: async () => ({ data: 3, error: null }),
+    })),
+  };
+});
 
 import { NextRequest } from 'next/server';
 import { POST as processPOST } from '@/app/api/notifications/process/route';
@@ -39,9 +48,11 @@ describe('notifications — accès cron (F-003)', () => {
     expect(res.status).toBe(401);
   });
 
-  it('POST /api/notifications/process — passe le contrôle avec le bon secret', async () => {
+  it('POST /api/notifications/process — passe le contrôle avec le bon secret (200, file vide)', async () => {
     const res = await processPOST(buildRequest('POST', '/api/notifications/process', SECRET));
-    expect(res.status).not.toBe(401);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.processed).toBe(0);
   });
 
   it('GET /api/notifications/digest — 401 sans en-tête', async () => {
