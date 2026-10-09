@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { purgePrivateCaches } from '@/lib/pwa/purgePrivateData';
+import { purgeClientStateOnUserChange } from '@/lib/security/purgeClientState';
 import type { User, Session } from '@supabase/supabase-js';
 
 interface UserProfile {
@@ -165,6 +166,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     purgePrivateCaches(
       typeof navigator !== 'undefined' ? navigator.serviceWorker : null
     );
+    purgeClientStateOnUserChange(prevId, currentId);
   }, [user?.id]);
 
   const signUp = useCallback(async (email: string, password: string, metadata: { fullName?: string; avatarUrl?: string } = {}) => {
