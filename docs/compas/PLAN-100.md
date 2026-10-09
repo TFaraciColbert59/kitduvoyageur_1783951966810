@@ -622,9 +622,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       prévision ; départ conseillé juste. Lot M : « heure locale », départ à l'aube si 7 h
       ne suffit pas, « HH:MM » enfin lu (`sun.test.ts`, `weather.test.ts`, `danger.test.ts`).
       Limite connue : un seul fuseau par voyage, celui de la première étape placée.
-- [x] Hiver selon l'hémisphère ; table des saisons sèches complétée (Brésil, nord de
-      l'Australie, Caraïbes, Afrique de l'Ouest, Guyane, Mayotte). Lot M : hors table, mois
-      le plus sec des normales NASA POWER, sans ligne inventée (`period.test.ts`).
+- [x] Hiver selon l'hémisphère ; saison sèche des tropiques hors table (Brésil, nord de
+      l'Australie, Caraïbes, Afrique de l'Ouest, Guyane, Mayotte). Lot M : la table n'est
+      pas complétée à la main (aucune ligne inventée) ; hors table, mois le plus sec des
+      normales NASA POWER 2001-2020 au point retenu (`period.test.ts`,
+      `powerNormals.test.ts`, `metno.test.ts`) ; hiver décalé de six mois au sud
+      (`projectContext.test.ts`).
 
 ### 4.8 Kit
 

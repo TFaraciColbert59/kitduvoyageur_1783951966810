@@ -35,6 +35,7 @@ quotidien, cookies de session `Lax`. Migration appliquée ; le rapport du 8 oct.
 « plus de 10 % de préparations échouées » (4 sur 11). Prouvé en production le 9 oct. à 13 h 45 : cookie de session `SameSite=Lax; Secure`
 après « Essayer sans compte », `/compas` ouvert sans redirection, météo MET servie, aucune erreur
 serveur en base ; base à 429,4 Mio.
+
 Lot M (plan `docs/superpowers/plans/2026-10-09-compas-lot-m.md`, PLAN-100 4.7) : « aujourd'hui » au fuseau du navigateur, soleil et départ au fuseau de la destination, hiver selon l'hémisphère, saison sèche des tropiques hors table par les normales NASA POWER ; tests verts, à prouver sur l'aperçu.
 
 **À faire par Tony** (rien d'autre ne bloque) :
