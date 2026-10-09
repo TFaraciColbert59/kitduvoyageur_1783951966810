@@ -123,7 +123,7 @@
     "leaflet.markercluster": "^1.5.3",
     "lucide-react": "^1.7.0",
     "maplibre-gl": "^6.4.1",
-    "next": "^15.5.27",
+    "next": "15.5.27",
     "pg": "^8.23.0",
     "react": "19.0.3",
     "react-dom": "19.0.3",

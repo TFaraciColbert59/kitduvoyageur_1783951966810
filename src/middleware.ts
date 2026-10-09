@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { getCountryCodeByName, getCountryByCode } from '@/lib/countries';
 import { resolveLegacyRedirect } from '@/lib/hub/hubRedirects';
-import { isCrossSiteMutation } from '@/lib/security/sameOrigin';
+import { isCrossSiteMutation, allowedHostsFromSiteUrl } from '@/lib/security/sameOrigin';
 
 const PROTECTED_ROUTES = ['/admin', '/checkout'];
 const ADMIN_ROUTES = ['/admin'];
@@ -26,22 +26,13 @@ export async function middleware(request: NextRequest) {
   // Les cookies de session sont SameSite=None (compatibilité Capacitor) : un
   // POST cross-site les enverrait. Les appels machine (webhooks signés, crons
   // Bearer) n'ont pas d'Origin et conservent leur propre authentification.
-  if (pathname.startsWith('/api/')) {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-    let allowedHosts: string[] = [];
-    if (siteUrl) {
-      try {
-        allowedHosts = [new URL(siteUrl).host];
-      } catch {
-        allowedHosts = [];
-      }
-    }
+  if (pathname === '/api' || pathname.startsWith('/api/')) {
     if (
       isCrossSiteMutation({
         method: request.method,
         origin: request.headers.get('origin'),
         host: request.headers.get('host'),
-        allowedHosts,
+        allowedHosts: allowedHostsFromSiteUrl(),
       })
     ) {
       return NextResponse.json({ error: 'Origine non autorisée' }, { status: 403 });

@@ -44,3 +44,47 @@ export function isCrossSiteMutation({
 
   return !candidates.includes(originHost);
 }
+
+export function allowedHostsFromSiteUrl(
+  siteUrl: string | undefined = process.env.NEXT_PUBLIC_SITE_URL
+): string[] {
+  if (!siteUrl) return [];
+  try {
+    return [new URL(siteUrl).host];
+  } catch {
+    return [];
+  }
+}
+
+export interface SameSiteSignalInput {
+  origin: string | null;
+  referer: string | null;
+  host: string | null;
+  allowedHosts?: string[];
+}
+
+/**
+ * Vrai si la requête porte un signal d'origine SAME-SITE fiable (Origin ou
+ * Referer). Utilisé par les routes à effet hors `/api` : un POST de formulaire
+ * cross-site envoie un Origin étranger ; une navigation/image cross-site envoie
+ * un Referer étranger ; sans aucun des deux (accès direct), on refuse.
+ */
+export function hasValidSameSiteSignal({
+  origin,
+  referer,
+  host,
+  allowedHosts = [],
+}: SameSiteSignalInput): boolean {
+  const candidates = [host, ...allowedHosts]
+    .filter((value): value is string => Boolean(value))
+    .map((value) => hostnameOf(value))
+    .filter((value): value is string => Boolean(value));
+
+  const matches = (value: string | null): boolean => {
+    if (!value) return false;
+    const hostname = hostnameOf(value);
+    return hostname !== null && candidates.includes(hostname);
+  };
+
+  return matches(origin) || matches(referer);
+}
