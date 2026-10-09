@@ -192,6 +192,7 @@ describe('coupure par la limite de la fonction, juste après l’itinéraire', (
     expect(stepIds()).toEqual([]);
     expect(readPending(tripRow().metadata)).toBeNull();
 
+    // Saut au-delà de CLAIM_MS : contourne le défaut connu (« Annuler » garde la prise, PLAN-100 §2.6).
     vi.setSystemTime(T0 + CLAIM_MS + 1_000);
     expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
     expect(stepIds()).toHaveLength(3);

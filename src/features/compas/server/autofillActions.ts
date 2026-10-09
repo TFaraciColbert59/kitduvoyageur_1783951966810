@@ -818,12 +818,12 @@ export async function compasAutofillAction(
     const resume = resumableRun(phase, pending);
     // La limite de fréquence ne compte qu'une préparation réellement lancée :
     // après les refus et retours ci-dessus (déjà prérempli, déjà en attente…).
-    // Une reprise (phase « rest », itinéraire déjà écrit) a sa propre limite :
+    // Une reprise (un itinéraire déjà écrit attend le reste) a sa propre limite :
     // l'état de reprise vit dans `trips.metadata`, que l'éditeur peut écrire ;
     // sans limite, réécrire cet état relançait la préparation sans compter.
-    // La reprise, c'est l'itinéraire en attente, jamais la phase envoyée par le
-    // navigateur : une phase « rest » sans attente écrit tout un itinéraire et
-    // échappait à la limite des lancements (6 par 10 min, 120 par heure).
+    // C'est l'itinéraire en attente qui fait la reprise, jamais la phase envoyée
+    // par le navigateur : sans attente, une phase « rest » écrit tout un
+    // itinéraire et compte comme un lancement (6 par 10 min, 120 par heure).
     const resuming = Boolean(pending);
     const limited = await enforceCompasAutofillLimits(userId, resuming);
     if (limited) return limited;

@@ -335,6 +335,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       limite d'IP de Supabase Auth (30 sessions anonymes/heure), nos limites (5 essais
       par heure et par adresse, 300 par jour pour le site) et la purge à 7 jours.
       BotID de Vercel sur les actions coûteuses : à faire.
+- [ ] `compasExplainVerdictAction` appelle l'IA sans `enforceRateLimit` : bornée par le
+      seul quota IA par personne (lot O).
+- [ ] Clés par adresse (essai sans compte, routes `/api` publiques) lues sur le premier
+      `x-forwarded-for` : sûres sur Vercel (en-tête réécrit) seulement (lot O).
 
 ### 2.3 Connexion démo
 
@@ -410,6 +414,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       coupée est dite « coupée », plus « en cours ». Tests `autofillState.test.ts`
       (coupure simulée après l'itinéraire : annulation, reprise, prise, expiration).
 - [x] Commentaires « 60 s » mis à jour (300 s ; 48 s par phase gardés et expliqués).
+- [ ] Prise `steps` jamais rendue sur les sorties anticipées (« Dis-moi où tu pars »,
+      « Itinéraire non enregistré », `catch`) : une relance attend jusqu'à 290 s (lot O).
+- [ ] « Annuler » garde `autofill_claim` : juste après, une relance attend jusqu'à 290 s
+      (lot O).
 
 ### 2.7 Écritures concurrentes
 

@@ -11,6 +11,16 @@
  *
  * `onQuery` est appelé avant chaque requête : un test y simule un geste
  * concurrent (« Arrêter » pendant la préparation).
+ *
+ * Limites de fidélité (à garder en tête avant d'en tirer une conclusion) :
+ * - `maybeSingle` sur plusieurs lignes rend la première, là où PostgREST
+ *   renvoie l'erreur PGRST116 ;
+ * - `order` ne trie que des valeurs numériques ;
+ * - `insert` n'applique ni valeurs par défaut ni contraintes (clés, unicité,
+ *   NOT NULL, RLS) : seul un `id` est ajouté ;
+ * - les prises de phase montrent la fenêtre de temps (`CLAIM_MS`), pas une
+ *   vraie course entre deux écritures conditionnées concurrentes (aucun test
+ *   n'y entrelace deux préparations entre une lecture et son écriture).
  */
 import { randomUUID } from 'node:crypto';
 
