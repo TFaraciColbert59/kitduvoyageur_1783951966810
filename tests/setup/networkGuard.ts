@@ -12,6 +12,9 @@
  *   et `vi.unstubAllGlobals()` la remet) ;
  * - `http.request`/`http.get`, `https.request`/`https.get`, `net.connect`/
  *   `net.createConnection`, `tls.connect` (axios, clients Node, undici) ;
+ * - `net.Socket#connect`, le chemin brut de `pg` et de tout client qui ouvre
+ *   sa propre socket (les enveloppes ci-dessus refusent avant d'y arriver :
+ *   un appel n'est jamais noté deux fois) ;
  * - `WebSocket` global.
  *
  * Chaque refus est noté : un refus que le code testé rattrape en silence
@@ -30,8 +33,11 @@ export const NETWORK_FORBIDDEN_PREFIX = 'Réseau interdit dans les tests unitair
 /** Erreur levée (ou promesse rejetée) pour un appel vers un serveur public. */
 export class NetworkForbiddenError extends Error {
   readonly code = 'LKDV_NETWORK_FORBIDDEN';
-  constructor(readonly host: string) {
-    super(`${NETWORK_FORBIDDEN_PREFIX}${host}`);
+  constructor(
+    readonly host: string,
+    detail?: string
+  ) {
+    super(`${NETWORK_FORBIDDEN_PREFIX}${host}${detail ? ` (${detail})` : ''}`);
     this.name = 'NetworkForbiddenError';
   }
 }
@@ -153,8 +159,13 @@ function forbiddenRequestHost(args: unknown[], defaultPort: number): string | nu
   return `${host}${shownPort}`;
 }
 
-/** Hôte visé par `net.connect`/`tls.connect` ; null s'il est local ou un socket Unix. */
+/**
+ * Hôte visé par `net.connect`, `tls.connect` ou `net.Socket#connect` ; null s'il
+ * est local ou un socket Unix. Formes : (options), (port, host), (chemin), et
+ * le tableau d'arguments déjà normalisés que Node passe à `Socket#connect`.
+ */
 function forbiddenConnectHost(args: unknown[]): string | null {
+  if (Array.isArray(args[0])) return forbiddenConnectHost(args[0] as unknown[]);
   const [first, second] = args;
   if (typeof first === 'string' && !/^\d+$/.test(first)) return null; // chemin de socket Unix
   if (typeof first === 'number' || (typeof first === 'string' && /^\d+$/.test(first))) {
@@ -224,6 +235,8 @@ export function installNetworkGuard(): void {
   guardFunction(netMod, 'connect', 'net.connect', forbiddenConnectHost);
   guardFunction(netMod, 'createConnection', 'net.createConnection', forbiddenConnectHost);
   guardFunction(tls as unknown as Record<string, unknown>, 'connect', 'tls.connect', forbiddenConnectHost);
+  // Dernier rempart : toute socket TCP (pg, agents http, undici, TLS) passe par là.
+  guardFunction(net.Socket.prototype as unknown as Record<string, unknown>, 'connect', 'net.Socket#connect', forbiddenConnectHost);
   // Les imports nommés (`import { request } from 'node:https'`) voient aussi le garde.
   syncBuiltinESMExports();
 }
@@ -233,8 +246,11 @@ export function failOnBlocked(when: string): void {
   const blocked = takeBlockedNetworkCalls();
   if (blocked.length === 0) return;
   const hosts = [...new Set(blocked.map((b) => b.host))].join(', ');
+  const s = blocked.length > 1 ? 's' : '';
+  const calls = blocked.map((b) => `${b.via} → ${b.host}${b.test ? ` dans « ${b.test} »` : ''}`).join(' ; ');
   throw new NetworkForbiddenError(
-    `${hosts} (${blocked.length} appel${blocked.length > 1 ? 's' : ''} ${when}, refusé${blocked.length > 1 ? 's' : ''} puis rattrapé${blocked.length > 1 ? 's' : ''} par le code testé : simuler l'appel à sa frontière)`
+    hosts,
+    `${blocked.length} appel${s} ${when}, refusé${s} puis rattrapé${s} par le code testé : ${calls} ; simuler l'appel à sa frontière`
   );
 }
 

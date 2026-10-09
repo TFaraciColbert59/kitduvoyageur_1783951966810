@@ -6,8 +6,15 @@
 import http from 'node:http';
 import https from 'node:https';
 import net from 'node:net';
+import tls from 'node:tls';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { isLoopbackHost, networkGuardInstalled, takeBlockedNetworkCalls } from '../setup/networkGuard';
+import {
+  NetworkForbiddenError,
+  failOnBlocked,
+  isLoopbackHost,
+  networkGuardInstalled,
+  takeBlockedNetworkCalls,
+} from '../setup/networkGuard';
 
 const FORBIDDEN = /^Réseau interdit dans les tests unitaires : /;
 
@@ -62,6 +69,50 @@ describe('garde réseau des tests unitaires', () => {
       'Réseau interdit dans les tests unitaires : example.com:443'
     );
     expect(takeBlockedNetworkCalls()).toHaveLength(3);
+  });
+
+  it('net.Socket#connect brut (chemin de pg) : serveur public refusé, machine locale laissée passer', async () => {
+    expect(() => new net.Socket().connect(9, '192.0.2.1')).toThrow(
+      'Réseau interdit dans les tests unitaires : 192.0.2.1:9'
+    );
+    expect(() => new net.Socket().connect({ host: 'example.com', port: 5432 })).toThrow(
+      'Réseau interdit dans les tests unitaires : example.com:5432'
+    );
+    // tls.connect finit aussi dans Socket#connect : refusé une seule fois, par l'enveloppe extérieure.
+    expect(() => tls.connect({ host: 'example.com', port: 443 })).toThrow(FORBIDDEN);
+    expect(takeBlockedNetworkCalls().map((b) => b.via)).toEqual([
+      'net.Socket#connect',
+      'net.Socket#connect',
+      'tls.connect',
+    ]);
+
+    const local = new net.Socket();
+    const err = await new Promise<Error>((resolve) => {
+      local.once('error', resolve);
+      expect(() => local.connect(1, '127.0.0.1')).not.toThrow();
+    });
+    local.destroy();
+    expect(err.message).not.toMatch(FORBIDDEN);
+    expect(takeBlockedNetworkCalls()).toEqual([]);
+  });
+
+  it('un refus avalé par le code testé fait échouer le test, l’appel et le test nommés', async () => {
+    expect(await fetch('https://example.com/avale').catch(() => null)).toBeNull();
+    let err: unknown = null;
+    try {
+      failOnBlocked('pendant ce test');
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(NetworkForbiddenError);
+    expect((err as NetworkForbiddenError).host).toBe('example.com');
+    expect((err as Error).message).toMatch(
+      /^Réseau interdit dans les tests unitaires : example\.com \(1 appel pendant ce test, refusé puis rattrapé/
+    );
+    expect((err as Error).message).toContain(
+      'fetch → example.com dans « garde réseau des tests unitaires > un refus avalé par le code testé'
+    );
+    expect(takeBlockedNetworkCalls()).toEqual([]);
   });
 
   it('WebSocket vers un serveur public : refusé', () => {
