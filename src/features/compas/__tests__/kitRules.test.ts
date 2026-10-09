@@ -106,6 +106,32 @@ describe('adviseKit', () => {
     expect(run([], hhmm, plan({ walkMin: 300 })).some((x) => x.need === 'frontale')).toBe(false);
   });
 
+  it('au-delà de la prévision (J+30, sans lever ni coucher) : durée du jour calculée sur place', () => {
+    // 8 novembre à 45° N : un peu moins de 10 h de jour.
+    const later = plan({ date: '2026-11-08', walkMin: 700 });
+    const r = run([], null, later).find((x) => x.need === 'frontale');
+    expect(r?.reason).toBe('Jour 1 : la marche prévue dépasse la durée du jour.');
+    expect(r?.source).toBe('DIN 33466 · calcul astronomique');
+    expect(
+      run([], null, plan({ date: '2026-11-08', walkMin: 300 })).some((x) => x.need === 'frontale')
+    ).toBe(false);
+  });
+
+  it('au-delà de la prévision : nuit ou jour polaire, ou étape sans coordonnées, aucune règle', () => {
+    const polar = { lat: 78.2, lon: 15.6, walkMin: 700 };
+    expect(
+      run([], null, plan({ ...polar, date: '2026-12-15' })).some((x) => x.need === 'frontale')
+    ).toBe(false);
+    expect(
+      run([], null, plan({ ...polar, date: '2026-06-21' })).some((x) => x.need === 'frontale')
+    ).toBe(false);
+    expect(
+      run([], null, plan({ date: '2026-11-08', walkMin: 700, lat: null, lon: null })).some(
+        (x) => x.need === 'frontale'
+      )
+    ).toBe(false);
+  });
+
   it('eau : repère par heure et points d’eau dits tels quels', () => {
     const a = run([], fc(), plan({ walkMin: 360 }), 0).find((x) => x.need === 'eau');
     expect(a?.reason).toContain('3 L');

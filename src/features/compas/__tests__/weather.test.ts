@@ -193,7 +193,7 @@ describe('temps de marche et départ', () => {
     expect(a.latestStart).toBe('06:45');
   });
 
-  it('confort de 7 h gardé quand l’étape tient ; avertissement quand même l’aube ne suffit pas', () => {
+  it('confort de 7 h gardé quand l’étape tient à partir de 7 h', () => {
     const short = departureAdvice({
       walkMin: 300,
       sunrise: '05:45',
@@ -201,14 +201,37 @@ describe('temps de marche et départ', () => {
       hours: hoursOf('2026-10-10'),
     });
     expect(short.start).toBe('07:00');
+    expect(short.warning).toBeNull();
+  });
+
+  it('même l’aube ne suffit pas : départ à la première lumière (moins de marche de nuit), avertissement gardé', () => {
+    // 700 min de marche, +15 % = 805 min : 05 h 45 + 805 min = 19 h 10, coucher à 18 h.
     const long = departureAdvice({
       walkMin: 700,
       sunrise: '05:45',
       sunset: '18:00',
       hours: hoursOf('2026-10-10'),
     });
-    expect(long.start).toBe('07:00');
-    expect(long.warning).toMatch(/lumière du jour/);
+    expect(long.start).toBe('05:45');
+    expect(long.arrival).toBe('19:10');
+    expect(long.latestStart).toBeNull();
+    expect(long.warning).toBe(
+      "L'étape dépasse la lumière du jour : arrivée vers 19:10, coucher à 18:00."
+    );
+  });
+
+  it('jour ou nuit polaire (ni lever ni coucher) : aucun conseil de départ', () => {
+    for (const [sunrise, sunset] of [
+      [null, null],
+      ['05:45', null],
+    ] as const)
+      expect(departureAdvice({ walkMin: 700, sunrise, sunset, hours: [] })).toEqual({
+        start: null,
+        arrival: null,
+        latestStart: null,
+        stormFrom: null,
+        warning: null,
+      });
   });
 
   it('isotherme 0 °C du matin', () => {
