@@ -14,6 +14,7 @@
 import type { AlertsStatus } from './officialAlerts';
 
 import type { CompasDayPlan } from './compasModel';
+import { clockMinutes } from './sun';
 import type { DayForecast } from './weather';
 
 export type DangerAxis = 'physique' | 'technique' | 'conjoncturel';
@@ -101,13 +102,11 @@ const ALERT_SEVERITY: Record<OfficialAlert['level'], DangerSeverity> = {
 
 const hhmm = (min: number) => `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')}`;
 
+/** Durée du jour entre lever et coucher (« HH:MM » ou ISO), en minutes ; null si illisible. */
 function minutesBetween(a: string | null, b: string | null): number | null {
-  if (!a || !b) return null;
-  const ta = Date.parse(a);
-  const tb = Date.parse(b);
-  return Number.isFinite(ta) && Number.isFinite(tb) && tb > ta
-    ? Math.round((tb - ta) / 60000)
-    : null;
+  const ta = clockMinutes(a);
+  const tb = clockMinutes(b);
+  return ta != null && tb != null && tb > ta ? tb - ta : null;
 }
 
 export function assessDanger(input: {

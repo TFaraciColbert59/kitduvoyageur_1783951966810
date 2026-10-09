@@ -3,6 +3,7 @@ import {
   DEFAULT_TRAVELLER_ZONE,
   browserTimeZone,
   browserToday,
+  differentClock,
   localToday,
   safeTimeZone,
   travellerToday,
@@ -54,5 +55,25 @@ describe('« aujourd’hui » selon le fuseau', () => {
     expect(withTz('Pacific/Auckland', () => browserToday(AT))).toBe('2026-10-10');
     expect(withTz('America/Los_Angeles', () => browserToday(AT))).toBe('2026-10-09');
     expect(withTz('Pacific/Auckland', () => browserTimeZone())).toBe('Pacific/Auckland');
+  });
+});
+
+describe('même heure ou pas (« heure locale »)', () => {
+  const at = new Date('2026-10-12T12:00:00Z');
+
+  it('deux fuseaux à la même heure ce jour-là : pas de mention', () => {
+    expect(differentClock('Europe/Paris', 'Europe/Brussels', at)).toBe(false);
+    expect(differentClock('Europe/Paris', 'Europe/Paris', at)).toBe(false);
+  });
+
+  it('une autre heure : la mention', () => {
+    expect(differentClock('Pacific/Auckland', 'Europe/Paris', at)).toBe(true);
+    expect(differentClock('Europe/London', 'Europe/Paris', at)).toBe(true);
+  });
+
+  it('un fuseau inconnu : jamais de mention', () => {
+    expect(differentClock(undefined, 'Europe/Paris', at)).toBe(false);
+    expect(differentClock('Pacific/Auckland', null, at)).toBe(false);
+    expect(differentClock('Mars/Olympus', 'Europe/Paris', at)).toBe(false);
   });
 });

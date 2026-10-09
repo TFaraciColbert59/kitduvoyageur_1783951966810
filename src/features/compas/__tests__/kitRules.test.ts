@@ -100,6 +100,12 @@ describe('adviseKit', () => {
     expect(run([], fc(), plan({ walkMin: 700 })).some((x) => x.need === 'frontale')).toBe(true);
   });
 
+  it('lever et coucher en « HH:MM » (format réel des prévisions) : la frontale part aussi', () => {
+    const hhmm = fc({ sunrise: '07:40', sunset: '19:00' });
+    expect(run([], hhmm, plan({ walkMin: 700 })).some((x) => x.need === 'frontale')).toBe(true);
+    expect(run([], hhmm, plan({ walkMin: 300 })).some((x) => x.need === 'frontale')).toBe(false);
+  });
+
   it('eau : repère par heure et points d’eau dits tels quels', () => {
     const a = run([], fc(), plan({ walkMin: 360 }), 0).find((x) => x.need === 'eau');
     expect(a?.reason).toContain('3 L');

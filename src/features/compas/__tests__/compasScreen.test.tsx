@@ -5,6 +5,7 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { buildCompasModel, type CompasInput, type CompasItemInput } from '../engine/compasModel';
 import { assessDanger } from '../engine/danger';
+import { daylightClock } from '../engine/sun';
 import type { CompasData } from '../server/getCompasData';
 
 /* Frontières réseau et navigateur uniquement : l'écran, les cartes, les
@@ -1277,6 +1278,44 @@ describe('CompasScreen', () => {
     expect(
       await screen.findByText(/^Quand : \S+ 14 oct\.? → \S+ 17 oct\.? · conditions moyennes/)
     ).toBeTruthy();
+  });
+
+  it('Quand : lever et coucher à l’heure de la destination, « heure locale » quand elle diffère du navigateur', async () => {
+    const data = makeData({
+      steps: [
+        {
+          id: 's1',
+          dayNumber: 1,
+          orderIndex: 0,
+          title: 'Tongariro',
+          locationName: 'Tongariro',
+          lat: -39.2,
+          lon: 175.58,
+          distanceKm: 19.4,
+          elevationGainM: 800,
+          elevationLossM: 1100,
+          accommodationName: null,
+          transportMode: 'foot',
+          startTime: null,
+        },
+      ],
+    });
+    data.zone = 'Pacific/Auckland';
+    render(<CompasScreen data={data} />);
+    const sheet = await openOu(/Quand/);
+    const sun = daylightClock(-39.2, 175.58, '2026-10-12', 'Pacific/Auckland');
+    expect(sun.sunrise).toMatch(/^06:/);
+    expect(within(sheet).getByText(`${sun.sunrise} – ${sun.sunset} · heure locale`)).toBeTruthy();
+  });
+
+  it('Quand : destination à la même heure que le navigateur, aucune mention', async () => {
+    const data = makeData();
+    data.zone = 'Europe/Paris';
+    render(<CompasScreen data={data} />);
+    const sheet = await openOu(/Quand/);
+    const sun = daylightClock(42.73, -0.01, '2026-10-12', 'Europe/Paris');
+    expect(within(sheet).getByText(`${sun.sunrise} – ${sun.sunset}`)).toBeTruthy();
+    expect(within(sheet).queryByText(/heure locale/)).toBeNull();
   });
 
   it('Parcours : chercher un lieu, voir la communauté, choisir découpé sur les dates', async () => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
 import Icon from '@/components/ui/Icon';
 import type { CompasLevel, CompasNights, CompasTerrain } from '../engine/compasModel';
 import { SOURCE_LABEL, adaptationText, type CtxField } from '../engine/projectContext';
@@ -22,7 +22,7 @@ import {
   type CompasActivity,
 } from '../engine/intent';
 import { daylightClock } from '../engine/sun';
-import { browserToday } from '../engine/zone';
+import { DEFAULT_TRAVELLER_ZONE, browserTimeZone, browserToday, differentClock } from '../engine/zone';
 import {
   dayQuality,
   departureAdvice,
@@ -47,8 +47,13 @@ import { mixParcours } from '../engine/parcoursMix';
 import { AffiliateDisclosure } from '@/features/affiliation/components/AffiliateDisclosure';
 import type { CompasCtl, FlowHint } from './compasTypes';
 
-const TIME_ZONE = 'Europe/Paris';
 const staticRow = { cursor: 'default' } as const;
+
+const noSubscribe = () => () => {};
+/** Fuseau du navigateur, lu côté navigateur seulement (null au rendu serveur : aucun écart d'hydratation). */
+function useBrowserZone(): string | null {
+  return useSyncExternalStore(noSubscribe, browserTimeZone, () => null);
+}
 
 /* =============================================================================
    Où et quand — les quatre parcours du tiroir, dans l'ordre de la maquette :
@@ -854,20 +859,27 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
   const trend = plan?.date
     ? ctl.data.weather?.calendar.find((c) => c.date === plan.date)
     : undefined;
+  // Heure de la destination (fuseau retrouvé par le serveur), au-delà de la prévision aussi.
+  const zone = ctl.data.zone ?? DEFAULT_TRAVELLER_ZONE;
+  const here = useBrowserZone();
 
   const light = useMemo(() => {
     if (forecast?.sunrise && forecast.sunset)
       return { sunrise: forecast.sunrise, sunset: forecast.sunset, source: 'calcul astronomique (SunCalc)' };
     if (plan?.date && plan.lat != null && plan.lon != null) {
       return {
-        ...daylightClock(plan.lat, plan.lon, plan.date, TIME_ZONE),
+        ...daylightClock(plan.lat, plan.lon, plan.date, zone),
         source: 'calcul astronomique',
       };
     }
     return null;
-  }, [forecast, plan]);
+  }, [forecast, plan, zone]);
 
   if (!plan) return null;
+  // Destination à une autre heure que le navigateur : on le dit (« heure locale »).
+  const away = plan.date
+    ? differentClock(ctl.data.zone, here, new Date(`${plan.date}T12:00:00Z`))
+    : false;
   const advice = departureAdvice({
     walkMin: plan.walkMin,
     sunrise: light?.sunrise ?? null,
@@ -948,6 +960,7 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
             <dt>Lumière</dt>
             <dd>
               {light.sunrise ?? '—'} – {light.sunset ?? '—'}
+              {away ? ' · heure locale' : ''}
             </dd>
           </>
         )}

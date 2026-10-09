@@ -333,7 +333,10 @@ function toClock(min: number): string {
 }
 
 export interface DepartureAdvice {
-  /** Départ conseillé : dès qu'il fait jour (pas avant 7 h). */
+  /**
+   * Départ conseillé : dès qu'il fait jour, pas avant 7 h par confort ; à la
+   * première lumière quand l'étape ne tiendrait plus de jour en partant à 7 h.
+   */
   start: string | null;
   /** Arrivée estimée avec les pauses (+15 %). */
   arrival: string | null;
@@ -371,7 +374,11 @@ export function departureAdvice(input: {
 
   const total = Math.round(input.walkMin * 1.15);
   const deadline = Math.min(sunset - 30, stormFrom != null ? stormFrom - 30 : Infinity);
-  const start = Math.ceil(Math.max(sunrise, 7 * 60) / 15) * 15;
+  // 7 h par confort ; mais sous les tropiques (lever vers 5 h 45) ou par jour
+  // court, partir à 7 h peut faire arriver de nuit quand l'aube suffisait.
+  const comfort = Math.ceil(Math.max(sunrise, 7 * 60) / 15) * 15;
+  const firstLight = Math.ceil(sunrise / 15) * 15;
+  const start = comfort + total > deadline && firstLight + total <= deadline ? firstLight : comfort;
   const arrival = start + total;
   const latest = Math.floor((deadline - total) / 15) * 15;
 

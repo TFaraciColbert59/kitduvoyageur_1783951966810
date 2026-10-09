@@ -8,6 +8,7 @@
  */
 
 import type { CompasDayPlan, CompasKitLine } from './compasModel';
+import { clockMinutes } from './sun';
 import type { DayForecast } from './weather';
 
 export type KitNeed = 'pluie' | 'chaud' | 'froid' | 'extremites' | 'soleil' | 'frontale' | 'eau';
@@ -132,9 +133,12 @@ export function adviseKit(input: {
   /* Lumière : marche plus longue que le jour */
   const dark = input.dayPlans.find((p) => {
     const f = days.find((d) => d.day === p.day)?.forecast;
-    if (!f?.sunrise || !f.sunset || p.walkMin == null) return false;
-    const light = Math.round((Date.parse(f.sunset) - Date.parse(f.sunrise)) / 60000);
-    return Number.isFinite(light) && p.walkMin > light;
+    // Lever et coucher arrivent en « HH:MM » (heure locale du lieu) : lus par
+    // `clockMinutes` (`Date.parse` rendait NaN et la règle ne partait jamais).
+    const rise = clockMinutes(f?.sunrise);
+    const set = clockMinutes(f?.sunset);
+    if (rise == null || set == null || set <= rise || p.walkMin == null) return false;
+    return p.walkMin > set - rise;
   });
   if (dark)
     add(

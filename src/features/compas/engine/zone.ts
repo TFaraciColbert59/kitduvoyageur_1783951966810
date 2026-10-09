@@ -11,6 +11,8 @@
  *   La recherche du fuseau par coordonnées n'entre jamais ici (poids du navigateur).
  */
 
+import { tzOffsetMinutes } from './sun';
+
 /** Repli quand le navigateur n'a envoyé aucun fuseau valable. */
 export const DEFAULT_TRAVELLER_ZONE = 'Europe/Paris';
 
@@ -58,4 +60,20 @@ export function browserTimeZone(): string | null {
 export function browserToday(now = new Date()): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
+/**
+ * Deux fuseaux qui n'affichent pas la même heure ce jour-là (heure d'été
+ * comprise) : l'écran précise alors « heure locale ». Un fuseau inconnu ne
+ * déclenche jamais la mention.
+ */
+export function differentClock(
+  a: string | null | undefined,
+  b: string | null | undefined,
+  at: Date
+): boolean {
+  const za = safeTimeZone(a);
+  const zb = safeTimeZone(b);
+  if (!za || !zb || za === zb) return false;
+  return tzOffsetMinutes(za, at) !== tzOffsetMinutes(zb, at);
 }

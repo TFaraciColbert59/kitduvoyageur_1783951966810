@@ -74,6 +74,22 @@ export function formatClock(minutes: number): string {
   return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 }
 
+/**
+ * Minutes depuis minuit d'une heure « HH:MM » (format des prévisions du
+ * Compas, heure locale du lieu) ou d'un horodatage ISO « AAAA-MM-JJTHH:MM… »
+ * (heure lue telle qu'écrite, décalage ignoré). null si illisible, jamais NaN.
+ */
+export function clockMinutes(s: string | null | undefined): number | null {
+  if (typeof s !== 'string') return null;
+  const m = /^(?:\d{4}-\d{2}-\d{2}T)?(\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?$/.exec(
+    s.trim()
+  );
+  if (!m) return null;
+  const h = Number(m[1]);
+  const min = Number(m[2]);
+  return h < 24 && min < 60 ? h * 60 + min : null;
+}
+
 /** Lever et coucher locaux (« HH:MM ») d'un jour donné, calculés sur place. */
 export function daylightClock(
   lat: number,

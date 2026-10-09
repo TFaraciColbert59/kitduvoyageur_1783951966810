@@ -62,6 +62,13 @@ describe('assessDanger', () => {
     expect(s?.label).toContain('11 h 40');
   });
 
+  it('lever et coucher en « HH:MM » (format réel) : « X de marche pour Y de jour »', () => {
+    const d = run(plan({ walkMin: 700 }), forecast({ sunrise: '07:40', sunset: '19:00' }));
+    expect(d.signals.find((x) => x.id === 'physique-light-1')?.label).toBe(
+      'Jour 1 : 11 h 40 de marche pour 11 h 20 de jour'
+    );
+  });
+
   it('rafales : warn puis block selon le seuil', () => {
     expect(run(plan(), forecast({ gustMax: 70 })).axes.conjoncturel.level).toBe('vigilance');
     expect(run(plan(), forecast({ gustMax: 95 })).axes.conjoncturel.level).toBe('bloque');

@@ -179,6 +179,38 @@ describe('temps de marche et départ', () => {
     expect(a.warning).toMatch(/lumière du jour/);
   });
 
+  it('tropiques : départ à la première lumière quand 7 h ne laisse plus arriver de jour', () => {
+    // 560 min de marche, +15 % = 644 min ; arrivée au plus tard 17 h 30 (coucher − 30 min).
+    const a = departureAdvice({
+      walkMin: 560,
+      sunrise: '05:45',
+      sunset: '18:00',
+      hours: hoursOf('2026-10-10'),
+    });
+    expect(a.start).toBe('05:45');
+    expect(a.arrival).toBe('16:29');
+    expect(a.warning).toBeNull();
+    expect(a.latestStart).toBe('06:45');
+  });
+
+  it('confort de 7 h gardé quand l’étape tient ; avertissement quand même l’aube ne suffit pas', () => {
+    const short = departureAdvice({
+      walkMin: 300,
+      sunrise: '05:45',
+      sunset: '18:00',
+      hours: hoursOf('2026-10-10'),
+    });
+    expect(short.start).toBe('07:00');
+    const long = departureAdvice({
+      walkMin: 700,
+      sunrise: '05:45',
+      sunset: '18:00',
+      hours: hoursOf('2026-10-10'),
+    });
+    expect(long.start).toBe('07:00');
+    expect(long.warning).toMatch(/lumière du jour/);
+  });
+
   it('isotherme 0 °C du matin', () => {
     expect(morningFreezingLevel(hoursOf('2026-10-10', { 7: { freezingM: 1240 } }))).toBe(1240);
     expect(morningFreezingLevel([])).toBeNull();

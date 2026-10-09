@@ -175,6 +175,11 @@ export interface CompasInput {
   waterPointsCount: number | null;
   viewerId: string | null;
   now: Date;
+  /**
+   * Fuseau IANA de la DESTINATION (lever et coucher du soleil), retrouvé par le
+   * serveur (`destinationZone`, `server/weather.ts`) ; `Europe/Paris` seulement
+   * tant que le lieu n'est pas placé sur la carte.
+   */
   timeZone: string;
 }
 
