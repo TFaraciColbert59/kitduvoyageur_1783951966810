@@ -86,7 +86,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       préparations réussies / échouées de la veille). Depuis le 8 oct., les préparations
       se comptent sur un journal (`ops_preparation_events`, une ligne par issue, écrite
       par le serveur) : l'ancien compte (dernière issue de chaque voyage) ignorait les
-      relances. Reste : alerte si un seuil est franchi (base > 430 Mo, échecs > 10 %).
+      relances. **Alertes** (lot L, migration `20261009093721`) : colonnes `app_errors`
+      et `alerts` (base > 430 Mio, plus de 10 % d'échecs sur 10 préparations au moins,
+      50 erreurs serveur) ; les jours d'avant restent « non renseignés ». Prouvé en base
+      le 9 oct. : le 8 oct. lève « plus de 10 % de préparations échouées » (7 réussies,
+      4 échouées) ; base à 429,3 Mio, juste sous le seuil. Reste : être prévenu sans
+      lire la table (notification gratuite).
 - [ ] **Pause pour inactivité** (7 jours sans requête) : le trafic et les tâches de nuit
       gardent le projet actif. Preuve : aucune pause en 14 jours.
 - [ ] Aucune des 15 routes `/api/cron/*` du site n'est planifiée (ni `vercel.json`, ni
@@ -260,12 +265,15 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 1.8 Météo et données ouvertes
 
-- [~] MET Norway (CC BY 4.0, commercial autorisé) : User-Agent unique du site
+- [x] MET Norway (CC BY 4.0, commercial autorisé) : User-Agent unique du site
       (`src/lib/userAgent.ts`, `kitduvoyageur/1.0 (…; +https://koosmoweb.fr)`) sur MET
       Norway, Nominatim, Photon, Overpass, Valhalla : des appels annonçaient encore
       `lekitduvoyageur.fr` ou `kitduvoyageur.fr`, qui ne sont pas nos domaines ; crédit
-      et lien CC BY 4.0 dans les mentions ; cache 30 min (déjà). Reste : `Expires` et
-      plafond de 20 req/s pour toute l'application.
+      et lien CC BY 4.0 dans les mentions. **Lot L** : un seul point d'accès
+      (`src/lib/weather/metnoRequest.ts`), un seul User-Agent et une seule URL par point
+      (une entrée de cache partagée ; deux auparavant, Compas et le reste), 20 départs
+      par seconde au plus par instance, cache de 45 min (`Expires` mesuré à ~32 min le
+      9 oct.) : rien n'est redemandé avant `Expires`.
 - [x] NASA POWER (« no restrictions », citation demandée) : fenêtre de la tendance
       calée sur des mois entiers (`trendWindow`), la même URL sert tout le mois au lieu
       d'une de plus chaque jour ; citation du projet POWER dans les mentions. Test
@@ -309,7 +317,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       réécrire l'état ne relance plus rien sans compter (`autofillLimits.test.ts`).
       L'état reste dans `trips.metadata` (son déplacement relève de 2.7).
 - [x] Plafond global : 120 lancements par heure pour tout le site, message propre.
-- [ ] Limite sur `compasSetDestinationAction` et les actions qui appellent la carte.
+- [x] Limite sur `compasSetDestinationAction` (20 lieux par 10 min et par personne,
+      jamais pour effacer ou annuler) et `compasInterpretAction` (30 phrases par
+      10 min) ; les autres actions qui appellent la carte ou l'IA étaient déjà limitées
+      (lot L, `actionLimits.test.ts`).
 - [x] Message juste quand la limite est atteinte (plus « déjà lancée plusieurs fois ») :
       personne, site, ou compteur indisponible, chacun dit.
 - [~] Protection des inscriptions et des sessions anonymes contre les comptes en série :
@@ -419,8 +430,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 2.9 Observabilité à 0 €
 
-- [ ] Table `app_errors` (erreurs serveur du Compas, sans donnée personnelle) + rapport
-      quotidien (1.1) ; ou Sentry offre gratuite si ses conditions le permettent.
+- [x] Table `app_errors` (lot L) : chaque erreur des actions serveur du Compas (42
+      blocs : préparation, phrase, destination, équipe, Résa, bouteille, points),
+      rédigée (ni e-mail, ni jeton, ni identifiant, ni adresse IP, ni coordonnée à
+      3 décimales ou plus), tronquée à 300 caractères, 60 lignes par minute et par
+      instance au plus, enregistrement borné à 2 s ; lisible par la seule clé de service
+      (RLS, aucun droit pour `anon` ni `authenticated`, vérifié en base). Comptée par le
+      rapport quotidien (1.1). 🔒 Purge à 30 jours : `20261009100000_app_errors_purge.sql`
+      à lancer par Tony.
 - [x] `src/app/compas/error.tsx` (aucun message interne, référence `digest` des
       journaux Vercel, « Réessayer » relit le serveur) et `loading.tsx` ;
       `global-error.tsx` ne dit plus « l'équipe a été notifiée ».
@@ -454,7 +471,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 ### 2.11 En-têtes et cookies
 
 - [ ] CSP appliquée (plus seulement `Report-Only`) après une semaine de rapports propres.
-- [ ] Cookies `SameSite` revus.
+- [x] Cookies `SameSite` revus (lot L) : session Supabase en `Lax` côté navigateur et
+      côté serveur (essai sans compte, retour OAuth, rafraîchissements) — elle était en
+      `None` partout ; le site envoie `X-Frame-Options: DENY`, `None` ne servait à
+      rien. Les autres cookies (`lkdv_kit_ref`, aventure active, langue) étaient déjà
+      `Lax`.
 
 ### 2.12 Tests
 
