@@ -27,12 +27,14 @@ sans tuiles téléchargées ; demande comprise et conseils essentiels **sans IA*
 lettres, montants et devises, dates relatives, jours fériés, groupe ; altitude, avalanches,
 solo, refuges, bivouac, rivière), suggestions de l'IA dites facultatives. Prouvé sur
 l'aperçu le 9 oct. avec `AI_MODE=off` : 6/6 préparées en 15 s, aucun appel IA en base.
-Lot L (PR suivante, plan `docs/superpowers/plans/2026-10-09-compas-lot-l.md`, mené par
+Lot L (PR #84, `ba5166e`, plan `docs/superpowers/plans/2026-10-09-compas-lot-l.md`, mené par
 sous-agents avec revue de chaque tâche et revue finale) : MET Norway par un seul point
 (20 req/s, rien avant `Expires`), limites sur la destination et la phrase, erreurs
 serveur du Compas en base sans donnée personnelle (`app_errors`) et alertes du rapport
 quotidien, cookies de session `Lax`. Migration appliquée ; le rapport du 8 oct. lève
-« plus de 10 % de préparations échouées » (4 sur 11).
+« plus de 10 % de préparations échouées » (4 sur 11). Prouvé en production le 9 oct. à 13 h 45 : cookie de session `SameSite=Lax; Secure`
+après « Essayer sans compte », `/compas` ouvert sans redirection, météo MET servie, aucune erreur
+serveur en base ; base à 429,4 Mio.
 
 **À faire par Tony** (rien d'autre ne bloque) :
 1. SQL Editor : `supabase/migrations/20261008190000_base_scheduled_purges.sql` (purges
