@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useRef, useState, ReactNode, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { purgePrivateCaches } from '@/lib/pwa/purgePrivateData';
 import type { User, Session } from '@supabase/supabase-js';
 
 interface UserProfile {
@@ -161,7 +162,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const prevId = lastUserIdRef.current;
     lastUserIdRef.current = currentId;
     if (prevId === undefined || prevId === currentId) return;
-    navigator.serviceWorker?.controller?.postMessage({ type: 'LKDV_PURGE_PRIVATE' });
+    purgePrivateCaches(
+      typeof navigator !== 'undefined' ? navigator.serviceWorker : null
+    );
   }, [user?.id]);
 
   const signUp = useCallback(async (email: string, password: string, metadata: { fullName?: string; avatarUrl?: string } = {}) => {
