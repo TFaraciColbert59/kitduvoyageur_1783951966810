@@ -24,9 +24,13 @@ describe('fonds des cartes Leaflet', () => {
     expect(sat.options).toMatchObject({ tileSize: 256, zoomOffset: 0 });
   });
 
-  it('petites cartes : crédit court, mais toujours Esri et OpenStreetMap', () => {
-    const osm = leafletTiles('osm', { key: 'cle-test', compact: true });
-    expect(osm.options.attribution).toBe('Powered by Esri · © OpenStreetMap');
+  it('toutes les cartes, même petites : crédit complet, chaque fournisseur de données nommé', () => {
+    // Leaflet n'a pas de crédit repliable : un crédit court oubliait TomTom, Garmin… (revue Codex, #83).
+    const topo = leafletTiles('topo', { key: 'cle-test' }).options.attribution;
+    for (const provider of ['Powered by', 'TomTom', 'Garmin', 'FAO', 'NOAA', 'USGS', 'OpenStreetMap', 'GIS User Community'])
+      expect(topo).toContain(provider);
+    expect(leafletTiles('satellite', { key: 'cle-test' }).options.attribution).toContain('Earthstar Geographics');
+    expect(leafletTiles('osm', { key: 'cle-test' }).options.attribution).toContain('Esri Community Maps');
   });
 
   it('sans clé (développement) : un seul modèle {s} pour les sous-domaines', () => {

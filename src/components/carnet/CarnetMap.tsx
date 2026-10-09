@@ -72,9 +72,9 @@ export default function CarnetMap({
 
       mapInstance.current = map;
 
-      // Crédit court et visible (plan 1.6) : « Powered by Esri » et les données.
+      // Crédit visible et complet (plan 1.6) : « Powered by Esri » et chaque fournisseur de données.
       L.control.attribution({ prefix: false }).addTo(map);
-      const tiles = leafletTiles('osm', { compact: true });
+      const tiles = leafletTiles('osm');
       L.tileLayer(tiles.url, { ...tiles.options, keepBuffer: 8 }).addTo(map);
 
       // Extract coordinates — aucune trace synthétique : sans géométrie

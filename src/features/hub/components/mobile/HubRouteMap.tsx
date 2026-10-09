@@ -125,9 +125,9 @@ export default function HubRouteMap({
         zoomSnap: 0.25,
       });
 
-      // Crédit court et visible (plan 1.6) : « Powered by Esri » et les données.
+      // Crédit visible et complet (plan 1.6) : « Powered by Esri » et chaque fournisseur de données.
       L.control.attribution({ prefix: false }).addTo(map);
-      const base = leafletTiles('topo', { compact: true });
+      const base = leafletTiles('topo');
       const tiles = L.tileLayer(base.url, { ...base.options, keepBuffer: 4 }).addTo(map);
       tiles.once('load', () => setReady(true));
       readyTimer = setTimeout(() => setReady(true), 2600);

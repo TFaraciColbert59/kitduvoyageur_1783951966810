@@ -2,7 +2,7 @@
 import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { listOfflineRoutes, getOfflineTileSize, formatSize, type OfflineRoute } from '@/lib/offlineStorage';
+import { listOfflineRoutes, getOfflineRouteSize, formatSize, type OfflineRoute } from '@/lib/offlineStorage';
 import { useOfflineDownload } from '@/hooks/useOfflineDownload';
 import Link from 'next/link';
 import { OfflineTrips } from '@/features/compas/offline/OfflineTrips';
@@ -34,7 +34,7 @@ export default function HorsLignePage() {
       const withSizes = await Promise.all(
         list.map(async (r) => ({
           ...r,
-          sizeBytes: await getOfflineTileSize(r.routeId),
+          sizeBytes: await getOfflineRouteSize(r),
         }))
       );
       // Plus récentes en premier

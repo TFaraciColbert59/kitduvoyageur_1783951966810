@@ -116,9 +116,9 @@ export default function NouveauGroupePage() {
 
       leafletMap.current = map;
 
-      // Crédit court et visible (plan 1.6) : « Powered by Esri » et les données.
+      // Crédit visible et complet (plan 1.6) : « Powered by Esri » et chaque fournisseur de données.
       L.control.attribution({ prefix: false }).addTo(map);
-      const tiles = leafletTiles('osm', { compact: true });
+      const tiles = leafletTiles('osm');
       L.tileLayer(tiles.url, { ...tiles.options, maxZoom: 18 }).addTo(map);
 
       const r = (selectedTrail.distance_km / 111) * 0.35;

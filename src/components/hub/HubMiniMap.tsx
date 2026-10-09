@@ -86,9 +86,9 @@ export default function HubMiniMap({ steps, distanceKm = 0, reserveBottom = 0, c
         zoomSnap: 0.25,
       });
 
-      // Crédit court et visible (plan 1.6) : « Powered by Esri » et les données.
+      // Crédit visible et complet (plan 1.6) : « Powered by Esri » et chaque fournisseur de données.
       L.control.attribution({ prefix: false }).addTo(map);
-      const tiles = leafletTiles('topo', { compact: true });
+      const tiles = leafletTiles('topo');
       L.tileLayer(tiles.url, { ...tiles.options, keepBuffer: 6 }).addTo(map);
 
       // Halo blanc + trace foncée (lisibilité maximale sur tuiles).

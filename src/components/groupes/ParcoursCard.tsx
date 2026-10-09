@@ -53,9 +53,9 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
         attributionControl: false,
       });
 
-      // Crédit court et visible (plan 1.6) : « Powered by Esri » et les données.
+      // Crédit visible et complet (plan 1.6) : « Powered by Esri » et chaque fournisseur de données.
       L.control.attribution({ prefix: false }).addTo(map);
-      const tiles = leafletTiles('osm', { compact: true });
+      const tiles = leafletTiles('osm');
       L.tileLayer(tiles.url, { ...tiles.options, maxZoom: 18, keepBuffer: 6 }).addTo(map);
 
       let routeCoords: [number, number][] = [];

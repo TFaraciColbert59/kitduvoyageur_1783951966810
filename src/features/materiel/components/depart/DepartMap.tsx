@@ -81,9 +81,9 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
         zoom: 12,
       });
 
-      // Crédit court et visible (plan 1.6) : « Powered by Esri » et les données.
+      // Crédit visible et complet (plan 1.6) : « Powered by Esri » et chaque fournisseur de données.
       L.control.attribution({ prefix: false }).addTo(map);
-      const initialTiles = leafletTiles(tileMode, { compact: true });
+      const initialTiles = leafletTiles(tileMode);
       const tileLayer = L.tileLayer(initialTiles.url, { ...initialTiles.options, maxZoom: 18 }).addTo(map);
 
       tileLayerRef.current = tileLayer;
@@ -206,7 +206,7 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
     if (!mapRef.current || !tileLayerRef.current) return;
     // Taille de tuile différente selon le fond (512 ou 256 px) : la couche est remplacée.
     const L = (await import('leaflet')).default;
-    const next = leafletTiles(mode, { compact: true });
+    const next = leafletTiles(mode);
     mapRef.current.removeLayer(tileLayerRef.current);
     tileLayerRef.current = L.tileLayer(next.url, { ...next.options, maxZoom: 18 }).addTo(mapRef.current);
   };
