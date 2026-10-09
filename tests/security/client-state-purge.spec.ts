@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
+  decidePurgeOnAuth,
   purgeClientStateOnUserChange,
   type PurgeStorageLike,
 } from '@/lib/security/purgeClientState';
@@ -33,6 +34,28 @@ function createIdb() {
   };
 }
 
+describe('decidePurgeOnAuth — transitions de compte (F-011)', () => {
+  it('première connexion connue : aucune purge', () => {
+    expect(decidePurgeOnAuth(null, 'user-a')).toBe('none');
+  });
+
+  it('déconnexion (courant null) : aucune purge, mémoire conservée', () => {
+    expect(decidePurgeOnAuth('user-a', null)).toBe('none');
+  });
+
+  it('reconnexion du même compte (y compris après déconnexion) : aucune purge', () => {
+    expect(decidePurgeOnAuth('user-a', 'user-a')).toBe('none');
+  });
+
+  it('changement de compte A→B : purge', () => {
+    expect(decidePurgeOnAuth('user-a', 'user-b')).toBe('purge');
+  });
+
+  it('session persistée différente au démarrage (A stocké, B connecté) : purge', () => {
+    expect(decidePurgeOnAuth('user-a', 'user-b')).toBe('purge');
+  });
+});
+
 describe('purgeClientStateOnUserChange — isolation inter-comptes (F-011)', () => {
   it('purge les clés privées exactes et préfixées, garde les préférences d’appareil', () => {
     const ls = createStorage([
@@ -43,30 +66,66 @@ describe('purgeClientStateOnUserChange — isolation inter-comptes (F-011)', () 
       'lkdv_compte_cache_profile_aaa',
       'lkdv_compte_cache_dashboard_aaa',
       'lkdv:offline:trip:mont-blanc',
+      'lkdv:offline:manifest',
+      'lkdv_offline_reports_queue',
+      'lkdv_offline_decisions_queue',
       'lkdv_cache_boutique',
       'lkdv-critical-query:aaa',
+      'lkdv_active_trip:aaa',
+      'lkdv_user_trips_cache:aaa',
+      'lkdv_trip_last_section:aaa',
+      'lkdv_active_adventure:aaa',
+      'lkdv_hub_adventures_cache:aaa',
+      'lkdv_adventure_last_section:aaa',
       'lkdv_recent_searches',
+      'lkdv-depart-order',
+      'lkdv-kits-cockpit-order',
+      'lkdv-materiel-cockpit-order-v3',
+      'lkdv_pref_theme',
       'lkdv_theme',
       'lkdv_cookie_consent',
       'lkdv_glass_intensity',
+      'lkdv_last_authed_user',
     ]);
 
     purgeClientStateOnUserChange('user-a', 'user-b', { localStorage: ls, indexedDB: null });
 
-    expect(ls.has('kdv_cart')).toBe(false);
-    expect(ls.has('kdv_wishlist')).toBe(false);
-    expect(ls.has('lkdv_participants_state_v1')).toBe(false);
-    expect(ls.has('lkdv_adventure_prep_v3')).toBe(false);
-    expect(ls.has('lkdv_compte_cache_profile_aaa')).toBe(false);
-    expect(ls.has('lkdv_compte_cache_dashboard_aaa')).toBe(false);
-    expect(ls.has('lkdv:offline:trip:mont-blanc')).toBe(false);
-    expect(ls.has('lkdv_cache_boutique')).toBe(false);
-    expect(ls.has('lkdv-critical-query:aaa')).toBe(false);
-    expect(ls.has('lkdv_recent_searches')).toBe(false);
+    for (const purged of [
+      'kdv_cart',
+      'kdv_wishlist',
+      'lkdv_participants_state_v1',
+      'lkdv_adventure_prep_v3',
+      'lkdv_compte_cache_profile_aaa',
+      'lkdv_compte_cache_dashboard_aaa',
+      'lkdv:offline:trip:mont-blanc',
+      'lkdv:offline:manifest',
+      'lkdv_offline_reports_queue',
+      'lkdv_offline_decisions_queue',
+      'lkdv_cache_boutique',
+      'lkdv-critical-query:aaa',
+      'lkdv_active_trip:aaa',
+      'lkdv_user_trips_cache:aaa',
+      'lkdv_trip_last_section:aaa',
+      'lkdv_active_adventure:aaa',
+      'lkdv_hub_adventures_cache:aaa',
+      'lkdv_adventure_last_section:aaa',
+      'lkdv_recent_searches',
+    ]) {
+      expect(ls.has(purged), purged).toBe(false);
+    }
 
-    expect(ls.has('lkdv_theme')).toBe(true);
-    expect(ls.has('lkdv_cookie_consent')).toBe(true);
-    expect(ls.has('lkdv_glass_intensity')).toBe(true);
+    for (const preserved of [
+      'lkdv-depart-order',
+      'lkdv-kits-cockpit-order',
+      'lkdv-materiel-cockpit-order-v3',
+      'lkdv_pref_theme',
+      'lkdv_theme',
+      'lkdv_cookie_consent',
+      'lkdv_glass_intensity',
+      'lkdv_last_authed_user',
+    ]) {
+      expect(ls.has(preserved), preserved).toBe(true);
+    }
   });
 
   it('purge sessionStorage et supprime les bases IndexedDB connues + celle du compte précédent', () => {
@@ -91,13 +150,7 @@ describe('purgeClientStateOnUserChange — isolation inter-comptes (F-011)', () 
     expect(idb.deleted).toContain('lkdv-adventure-offline-v2-user-a');
   });
 
-  it('déconnexion (précédent A, courant null) : purge déclenchée', () => {
-    const ls = createStorage(['kdv_cart']);
-    purgeClientStateOnUserChange('user-a', null, { localStorage: ls, indexedDB: null });
-    expect(ls.has('kdv_cart')).toBe(false);
-  });
-
-  it('aucun changement (même utilisateur) : no-op', () => {
+  it('même utilisateur : no-op', () => {
     const ls = createStorage(['kdv_cart']);
     const idb = createIdb();
     purgeClientStateOnUserChange('user-a', 'user-a', { localStorage: ls, indexedDB: idb });
@@ -105,8 +158,15 @@ describe('purgeClientStateOnUserChange — isolation inter-comptes (F-011)', () 
     expect(idb.deleted).toEqual([]);
   });
 
-  it('premier passage (précédent undefined) : no-op', () => {
+  it('déconnexion seule (courant null) : no-op', () => {
     const ls = createStorage(['kdv_cart']);
+    purgeClientStateOnUserChange('user-a', null, { localStorage: ls, indexedDB: null });
+    expect(ls.has('kdv_cart')).toBe(true);
+  });
+
+  it('premier passage (précédent null/undefined) : no-op', () => {
+    const ls = createStorage(['kdv_cart']);
+    purgeClientStateOnUserChange(null, 'user-b', { localStorage: ls, indexedDB: null });
     purgeClientStateOnUserChange(undefined, 'user-b', { localStorage: ls, indexedDB: null });
     expect(ls.has('kdv_cart')).toBe(true);
   });
