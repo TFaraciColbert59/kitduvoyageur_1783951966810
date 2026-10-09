@@ -118,8 +118,13 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [~] **Région des fonctions** : `vercel.json` → `cdg1` (Paris). Les fonctions
       tournaient à `iad1` (Washington) alors que la base est à Paris (`eu-west-3`), comme
       Geoapify, Photon, Valhalla et MET Norway : chaque requête traversait l'Atlantique.
-      L'offre Hobby permet une région au choix. Mesure avant/après à faire sur la même
-      demande (Bauges, 3 jours : 48 s à `iad1` en production le 8 oct.).
+      L'offre Hobby permet une région au choix (déploiement d'aperçu : `regions:
+      ["cdg1"]`). Mesures du 9 oct., depuis un client aux États-Unis : route lisant la
+      base (`/api/compas/sources`) 0,32 s à Paris contre 0,5 à 0,8 s à `iad1` ; page
+      statique 0,1 s plus lente (le client est loin de Paris) ; préparation des Bauges,
+      cache chaud, un essai chacun : 40 s (Paris) contre 35 s (`iad1`), itinéraires
+      différents, non concluant (services externes et IA dominent). Reste : médiane sur
+      5 préparations après la mise en production.
 
 ### 1.3 Recherche de lieux (géocodage) sans serveur de démonstration
 
