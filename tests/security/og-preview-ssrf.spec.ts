@@ -153,4 +153,25 @@ describe('POST /api/og-preview — garde SSRF effective (F-010)', () => {
     const body = await res.json();
     expect(body.title).toBe('Direct');
   });
+
+  it('limite les appels par IP (429 après 20 requêtes dans la fenêtre)', async () => {
+    const fetchSpy = vi.fn(async () =>
+      new Response(
+        '<html><head><meta property="og:title" content="Limite" /></head></html>',
+        { status: 200, headers: { 'content-type': 'text/html' } }
+      )
+    );
+    vi.stubGlobal('fetch', fetchSpy);
+    const request = () => {
+      const req = buildRequest('https://example.com/page');
+      req.headers.set('x-forwarded-for', '203.0.113.77');
+      return req;
+    };
+    for (let i = 0; i < 20; i += 1) {
+      const res = await ogPreviewPOST(request());
+      expect(res.status).toBe(200);
+    }
+    const limited = await ogPreviewPOST(request());
+    expect(limited.status).toBe(429);
+  });
 });

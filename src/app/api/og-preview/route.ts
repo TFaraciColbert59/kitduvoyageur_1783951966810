@@ -1,12 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isBlockedRequestTarget } from '@/lib/security/urlSafety';
+import { clientIpFromHeaders, rateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 const MAX_REDIRECTS = 4;
+const OG_PREVIEW_LIMIT = 20;
+const OG_PREVIEW_WINDOW_MS = 60_000;
 
 export async function POST(req: NextRequest) {
+  const limited = await rateLimit({
+    key: `og-preview:${clientIpFromHeaders(req.headers)}`,
+    limit: OG_PREVIEW_LIMIT,
+    windowMs: OG_PREVIEW_WINDOW_MS,
+    failMode: 'open',
+  });
+  if (limited.outcome === 'limited') {
+    return NextResponse.json(
+      { error: 'Trop de requêtes' },
+      { status: 429, headers: rateLimitHeaders(limited) }
+    );
+  }
+
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
     const { url } = await req.json();

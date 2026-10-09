@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { getCountryCodeByName, getCountryByCode } from '@/lib/countries';
 import { resolveLegacyRedirect } from '@/lib/hub/hubRedirects';
+import { isCrossSiteMutation } from '@/lib/security/sameOrigin';
 
 const PROTECTED_ROUTES = ['/admin', '/checkout'];
 const ADMIN_ROUTES = ['/admin'];
@@ -20,6 +21,32 @@ function isAdmin(pathname: string) {
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+
+  // ─── CSRF — mutations API cross-site refusées ─────────────────────────────
+  // Les cookies de session sont SameSite=None (compatibilité Capacitor) : un
+  // POST cross-site les enverrait. Les appels machine (webhooks signés, crons
+  // Bearer) n'ont pas d'Origin et conservent leur propre authentification.
+  if (pathname.startsWith('/api/')) {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    let allowedHosts: string[] = [];
+    if (siteUrl) {
+      try {
+        allowedHosts = [new URL(siteUrl).host];
+      } catch {
+        allowedHosts = [];
+      }
+    }
+    if (
+      isCrossSiteMutation({
+        method: request.method,
+        origin: request.headers.get('origin'),
+        host: request.headers.get('host'),
+        allowedHosts,
+      })
+    ) {
+      return NextResponse.json({ error: 'Origine non autorisée' }, { status: 403 });
+    }
+  }
 
   // ─── Mobile landing redirect to the hub ────────────────────────────────────
   if (pathname === '/') {
@@ -133,6 +160,8 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/',
+    // CSRF : toutes les mutations API passent par la garde d'origine.
+    '/api/:path*',
     '/admin',
     '/admin/:path*',
     '/checkout/:path*',
