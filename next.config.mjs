@@ -133,7 +133,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://hcaptcha.com https://*.hcaptcha.com",
               "font-src 'self' https://fonts.gstatic.com data:",
               "img-src 'self' data: blob: https:",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com https://va.vercel-scripts.com https://tile.openstreetmap.org https://tile.opentopomap.org https://*.arcgisonline.com https://*.arcgis.com https://hcaptcha.com https://*.hcaptcha.com https://api.stripe.com",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com https://va.vercel-scripts.com https://*.arcgis.com https://hcaptcha.com https://*.hcaptcha.com https://api.stripe.com",
               "frame-src https://js.stripe.com https://hcaptcha.com https://*.hcaptcha.com",
               "worker-src 'self' blob:",
               "report-uri /api/telemetry/hub",

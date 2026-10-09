@@ -195,10 +195,17 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 1.6 Fond de carte
 
-- [~] Retirer les fonds non autorisés en commercial : fait dans le moteur commun
+- [x] Retirer les fonds non autorisés en commercial : moteur commun
       (`components/map/engine/createMapStyle.ts` : carte du Compas, Explorer, globe Pays),
-      lot B. Reste les cartes Leaflet (Explorer historique, carnet, hub, départ, groupes,
-      hors ligne : `server.arcgisonline.com`, OSM France, OpenTopoMap).
+      lot B ; **cartes Leaflet** (Explorer historique, carte interactive, carnet, hub,
+      départ, groupes) sur `leafletTiles` (mêmes fonds ArcGIS avec clé), lot J. Plusieurs
+      n'affichaient aucun crédit (`attributionControl: false`) : crédit court visible
+      partout (« Powered by Esri · © OpenStreetMap »). **Hors ligne** : plus aucune tuile
+      téléchargée en masse (OSM France et OpenTopoMap l'interdisent, ArcGIS ne le permet
+      que par ses kits) ; le tracé et les points restent sur l'appareil, l'écran le dit.
+      Module mort `lib/offline/tiles.ts` (OpenTopoMap) retiré. Garde
+      `tests/map/leafletTiles.spec.ts` : aucune URL de fond non autorisée hors du repli
+      de développement.
 - [ ] Fond standard : **OpenFreeMap** (vecteur, sans clé ni limite, commercial
       autorisé) via MapLibre (ou extension MapLibre de Leaflet) ; attribution
       « OpenFreeMap © OpenMapTiles Data from OpenStreetMap ». Prévoir un repli : il peut

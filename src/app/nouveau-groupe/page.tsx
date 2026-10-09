@@ -13,6 +13,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import 'leaflet/dist/leaflet.css';
+import { leafletTiles } from '@/components/map/engine/leafletTiles';
 
 const FIELD_CLASS =
   'w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
@@ -115,11 +116,10 @@ export default function NouveauGroupePage() {
 
       leafletMap.current = map;
 
-      L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors | OSM France',
-        subdomains: ['a', 'b', 'c'],
-        maxZoom: 18,
-      }).addTo(map);
+      // Crédit court et visible (plan 1.6) : « Powered by Esri » et les données.
+      L.control.attribution({ prefix: false }).addTo(map);
+      const tiles = leafletTiles('osm', { compact: true });
+      L.tileLayer(tiles.url, { ...tiles.options, maxZoom: 18 }).addTo(map);
 
       const r = (selectedTrail.distance_km / 111) * 0.35;
       const routeCoords: [number, number][] = [

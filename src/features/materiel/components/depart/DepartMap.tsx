@@ -14,6 +14,7 @@ import { Card, Chip, EmptyState, IconButton } from '@/components/ui';
 import { formatDistanceKm } from '@/features/materiel/domain/departCalculations';
 import { cn } from '@/lib/utils';
 import type { MapTrail } from '@/components/explorer/types';
+import { leafletTiles } from '@/components/map/engine/leafletTiles';
 
 interface DepartMapProps {
   trail: MapTrail | null;
@@ -24,21 +25,6 @@ interface DepartMapProps {
 }
 
 type TileMode = 'topo' | 'osm' | 'satellite';
-
-const TILES: Record<TileMode, { url: string; attribution: string }> = {
-  topo: {
-    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
-    attribution: '© Esri, USGS, NOAA',
-  },
-  osm: {
-    url: 'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
-    attribution: '© OpenStreetMap contributors',
-  },
-  satellite: {
-    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attribution: '© Esri, Earthstar Geographics',
-  },
-};
 
 function extractCoords(geojson: any): [number, number][][] {
   if (!geojson) return [];
@@ -95,9 +81,10 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
         zoom: 12,
       });
 
-      const tileLayer = L.tileLayer(TILES[tileMode].url, {
-        maxZoom: 18,
-      }).addTo(map);
+      // Crédit court et visible (plan 1.6) : « Powered by Esri » et les données.
+      L.control.attribution({ prefix: false }).addTo(map);
+      const initialTiles = leafletTiles(tileMode, { compact: true });
+      const tileLayer = L.tileLayer(initialTiles.url, { ...initialTiles.options, maxZoom: 18 }).addTo(map);
 
       tileLayerRef.current = tileLayer;
 
@@ -217,7 +204,11 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
     setTileMode(mode);
     setShowTilePicker(false);
     if (!mapRef.current || !tileLayerRef.current) return;
-    tileLayerRef.current.setUrl(TILES[mode].url);
+    // Taille de tuile différente selon le fond (512 ou 256 px) : la couche est remplacée.
+    const L = (await import('leaflet')).default;
+    const next = leafletTiles(mode, { compact: true });
+    mapRef.current.removeLayer(tileLayerRef.current);
+    tileLayerRef.current = L.tileLayer(next.url, { ...next.options, maxZoom: 18 }).addTo(mapRef.current);
   };
 
   const handleRecenter = () => {

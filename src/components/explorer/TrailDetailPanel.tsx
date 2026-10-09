@@ -717,8 +717,8 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
                 </p>
                 <p className="truncate text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                   {isOfflineAvailable
-                    ? 'Tracé GPS & carte préchargés'
-                    : 'Télécharger pour naviguer sans réseau'}
+                    ? 'Tracé GPS gardé sur l’appareil (fond de carte en ligne)'
+                    : 'Garder le tracé GPS sur l’appareil'}
                 </p>
               </div>
             </div>

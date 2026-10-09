@@ -71,7 +71,6 @@ export default function HorsLignePage() {
   }
 
   const totalBytes = routes.reduce((sum, r) => sum + r.sizeBytes, 0);
-  const totalTiles = routes.reduce((sum, r) => sum + r.tileCount, 0);
 
   return (
     <AppShell
@@ -100,7 +99,7 @@ export default function HorsLignePage() {
                 {routes.length} randonnée{routes.length > 1 ? 's' : ''} stockée{routes.length > 1 ? 's' : ''}
               </p>
               <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
-                {totalTiles} tuiles · {formatSize(totalBytes)}
+                {formatSize(totalBytes)}
               </p>
             </div>
           </Card>
@@ -144,7 +143,7 @@ export default function HorsLignePage() {
                         </span>
                       )}
                       <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
-                        💾 {formatSize(route.sizeBytes)} · {route.tileCount} tuiles
+                        💾 {formatSize(route.sizeBytes)}
                       </span>
                     </div>
                     <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
@@ -185,8 +184,8 @@ export default function HorsLignePage() {
 
         {/* Note légale */}
         <p className="px-[var(--space-1)] pb-[var(--space-4)] text-center text-[length:var(--lkv-text-caption-2)] leading-relaxed text-[color:var(--lkv-text-muted)]">
-          Les tuiles de carte sont fournies par CartoDB / OpenStreetMap.
-          Le cache est limité à 400 tuiles par randonnée.
+          Le tracé et les points de la randonnée restent sur cet appareil. Le fond de carte,
+          lui, n’est pas enregistré : aucun fond gratuit n’en autorise le stockage hors ligne.
         </p>
       </div>
     </AppShell>

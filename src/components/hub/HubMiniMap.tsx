@@ -8,6 +8,7 @@
 // lien. Fallback synthétique (comme ParcoursCard) si < 2 points géo.
 import React, { useEffect, useRef } from 'react';
 import 'leaflet/dist/leaflet.css';
+import { leafletTiles } from '@/components/map/engine/leafletTiles';
 
 // Boost de zoom après fitBounds (zoomSnap 0.25 → boost fractionnaire possible).
 const ZOOM_BOOST = 1;
@@ -85,11 +86,10 @@ export default function HubMiniMap({ steps, distanceKm = 0, reserveBottom = 0, c
         zoomSnap: 0.25,
       });
 
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-        attribution: '&copy; <a href="https://www.esri.com">Esri</a>, USGS, NOAA',
-        maxZoom: 19,
-        keepBuffer: 6,
-      }).addTo(map);
+      // Crédit court et visible (plan 1.6) : « Powered by Esri » et les données.
+      L.control.attribution({ prefix: false }).addTo(map);
+      const tiles = leafletTiles('topo', { compact: true });
+      L.tileLayer(tiles.url, { ...tiles.options, keepBuffer: 6 }).addTo(map);
 
       // Halo blanc + trace foncée (lisibilité maximale sur tuiles).
       L.polyline(routeCoords, {

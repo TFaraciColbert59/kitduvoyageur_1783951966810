@@ -23,6 +23,7 @@ import {
   Spinner,
   Tabs,
 } from '@/components/ui';
+import { leafletTiles } from '@/components/map/engine/leafletTiles';
 
 interface MapTrail {
   id: string;
@@ -236,18 +237,8 @@ export default function InteractiveMap() {
       if (tileLayerRef.current && mapRef.current) {
         mapRef.current.removeLayer(tileLayerRef.current);
       }
-      const url = mode === 'topo'
-        ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'
-        : mode === 'satellite'
-        ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-        : 'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png';
-      
-      const newLayer = L.tileLayer(url, {
-        attribution: '&copy; OpenStreetMap / CARTO / Esri',
-        maxZoom: 19,
-        maxNativeZoom: 18,
-        keepBuffer: 4,
-      }).addTo(mapRef.current!);
+      const cfg = leafletTiles(mode);
+      const newLayer = L.tileLayer(cfg.url, { ...cfg.options, keepBuffer: 4 }).addTo(mapRef.current!);
       tileLayerRef.current = newLayer;
     });
   };
@@ -286,15 +277,11 @@ export default function InteractiveMap() {
         markerZoomAnimation: true,
       } as any);
 
-      L.control.attribution({ prefix: false }).addAttribution('© OSM France').addTo(map);
+      // Le crédit vient du fond affiché (plan 1.6) : « Powered by Esri » et les données.
+      L.control.attribution({ prefix: false }).addTo(map);
 
-      const initialLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | <a href="https://www.openstreetmap.fr">OSM France</a>',
-        subdomains: ['a', 'b', 'c'],
-        maxZoom: 19,
-        maxNativeZoom: 18,
-        keepBuffer: 4,
-      }).addTo(map);
+      const initialCfg = leafletTiles('osm');
+      const initialLayer = L.tileLayer(initialCfg.url, { ...initialCfg.options, keepBuffer: 4 }).addTo(map);
 
       tileLayerRef.current = initialLayer;
       mapRef.current = map;

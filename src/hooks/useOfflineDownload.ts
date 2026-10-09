@@ -3,10 +3,13 @@
 /**
  * LKDV — Hook de téléchargement hors-ligne (Prompt #4)
  *
- * - Calcule les tuiles Leaflet z=14 dans la bbox du tracé GeoJSON
- * - Limite à 400 tuiles max, débit ≤ 3 req/s (politique OSM/OpenTopoMap)
- * - Stocke les données de la route dans IndexedDB via offlineStorage
+ * - Stocke les données de la route (tracé, points) dans IndexedDB via offlineStorage
  * - Pilote le Service Worker via postMessage (lkdv:set-active-route)
+ *
+ * Plus aucune tuile de fond n'est téléchargée (plan 1.6, 9 oct.) : OSM France et
+ * OpenTopoMap interdisent le téléchargement en masse, et ArcGIS ne permet le
+ * stockage hors ligne que par ses propres kits. Le calcul des tuiles reste pour
+ * refuser une emprise démesurée, sans aucune requête.
  */
 
 import { useState, useCallback } from 'react';
@@ -21,7 +24,6 @@ import {
 
 const ZOOM = 14;
 const MAX_TILES = 400;
-const REQUESTS_PER_SEC = 3;
 const MARGIN_TILES = 2; // ~1 tuile ≈ 3 km à z14 → 2 tuiles ≈ ~500m de marge
 
 /** Lon → tile X at given zoom */
@@ -58,14 +60,6 @@ function tilesForBbox(
     }
   }
   return tiles;
-}
-
-/**
- * URL OSM pour une tuile (on utilise OSM/CARTO comme tuile par défaut).
- * OpenTopoMap ne gère pas les sous-domaines pour ce pattern simplifié.
- */
-function tileUrl({ z, x, y }: TileCoord): string {
-  return `https://a.tile.openstreetmap.fr/osmfr/${z}/${x}/${y}.png`;
 }
 
 // ── Bbox depuis un GeoJSON LineString ────────────────────────────────────────
@@ -176,7 +170,7 @@ export function useOfflineDownload(): UseOfflineDownloadReturn {
         return;
       }
 
-      setTotal(tiles.length);
+      setTotal(0);
       setStatus('downloading');
 
       // 3. Informer le SW quelle route est active (pour qu'il la mette en cache)
@@ -187,24 +181,8 @@ export function useOfflineDownload(): UseOfflineDownloadReturn {
         });
       }
 
-      // 4. Télécharger séquentiellement à ≤ 3 req/s
-      const DELAY_MS = Math.ceil(1000 / REQUESTS_PER_SEC);
-      let done = 0;
-
-      for (const tile of tiles) {
-        try {
-          await fetch(tileUrl(tile), { mode: 'cors', cache: 'reload' });
-        } catch {
-          // Tuile inaccessible (hors réseau temporairement) → on continue
-        }
-
-        done++;
-        setDownloaded(done);
-        setProgress(Math.round((done / tiles.length) * 100));
-
-        // Attendre entre chaque requête pour respecter la limite de débit
-        await new Promise<void>((res) => setTimeout(res, DELAY_MS));
-      }
+      // 4. Aucun fond de carte téléchargé (voir l'en-tête) : seulement la route.
+      setProgress(100);
 
       // 5. Sauvegarder les métadonnées dans IndexedDB
       await saveRouteOffline({
@@ -215,7 +193,7 @@ export function useOfflineDownload(): UseOfflineDownloadReturn {
         geojson: trail.geojson ?? null,
         pois,
         cachedAt: new Date().toISOString(),
-        tileCount: tiles.length,
+        tileCount: 0,
       });
 
       setStatus('done');
