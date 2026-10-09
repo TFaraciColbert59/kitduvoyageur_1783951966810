@@ -17,6 +17,8 @@ describe('clockMinutes', () => {
     expect(clockMinutes('25:00')).toBeNull();
     expect(clockMinutes('07:60')).toBeNull();
     expect(clockMinutes('7h40')).toBeNull();
+    expect(clockMinutes('24:00')).toBeNull();
+    expect(clockMinutes('7:5')).toBeNull();
     expect(clockMinutes('')).toBeNull();
     expect(clockMinutes(null)).toBeNull();
     expect(clockMinutes(undefined)).toBeNull();
