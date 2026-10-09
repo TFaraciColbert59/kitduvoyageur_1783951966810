@@ -138,3 +138,14 @@ jobs:
 
       - name: Gate DB.2 — Suites pgTAP
         run: npx --yes supabase@2 test db --db-url "${{ secrets.LKDV_TEST_DATABASE_URL }}"
+
+      # Gate DB.3 — RLS réelles : rôles anon/authenticated, claims JWT et
+      # fixtures synthétiques (14 scénarios). Remplace la confiance accordée aux
+      # miroirs TypeScript : la décision testée est celle de PostgreSQL.
+      - name: Install dependencies (runner RLS)
+        run: npm ci
+
+      - name: Gate DB.3 — RLS réelles (rôles anon/authenticated)
+        run: node scripts/verify/rls-real-tests.mjs
+        env:
+          LKDV_TEST_DATABASE_URL: ${{ secrets.LKDV_TEST_DATABASE_URL }}
