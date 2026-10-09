@@ -22,6 +22,11 @@ attente ni prise laissée en base, compteurs en empreinte, politique et mentions
 Overpass private.coffee répond souvent 500 (points autour des étapes dégradés) ; le
 référentiel des refuges et points d'eau (3.4) retirera cette dépendance. Plan à 0 € et cases
 à cocher : `PLAN-100.md`. Branche de travail `claude/optimistic-albattani-i06ge7`.
+Lots J et K (PR #83) : cartes Leaflet sur les fonds ArcGIS avec crédit complet, hors ligne
+sans tuiles téléchargées ; demande comprise et conseils essentiels **sans IA** (nombres en
+lettres, montants et devises, dates relatives, jours fériés, groupe ; altitude, avalanches,
+solo, refuges, bivouac, rivière), suggestions de l'IA dites facultatives. Prouvé sur
+l'aperçu le 9 oct. avec `AI_MODE=off` : 6/6 préparées en 15 s, aucun appel IA en base.
 
 **À faire par Tony** (rien d'autre ne bloque) :
 1. SQL Editor : `supabase/migrations/20261008190000_base_scheduled_purges.sql` (purges

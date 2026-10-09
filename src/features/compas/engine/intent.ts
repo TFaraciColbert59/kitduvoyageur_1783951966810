@@ -424,7 +424,9 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
       start = addDaysIso(today, n);
     }
   } else if (holiday) {
-    start = holiday;
+    // « Week-end de la Toussaint » (un dimanche), « de Pâques » : le samedi qui l'ouvre.
+    const wd = weekday(holiday);
+    start = /\bweek[- ]?end\b/.test(plain) && (wd === 0 || wd === 1) ? addDaysIso(holiday, -(wd + 1)) : holiday;
   } else if (/\bfin de (?:la )?semaine prochaine\b/.test(plain)) {
     start = addDaysIso(nextWeekday(today, 1, true), 5);
   } else if (/\bsemaine prochaine\b|\bnext week\b/.test(plain)) {

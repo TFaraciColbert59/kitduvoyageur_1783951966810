@@ -172,7 +172,10 @@ describe('dates relatives et numériques', () => {
     expect(find(a, 'set_dates')?.start).toBe('2026-12-25');
     expect(find(a, 'set_destination')?.place).toBe('Laponie');
     expect(dates('pour la Toussaint, 4 jours dans les Cévennes')?.start).toBe('2026-11-01');
-    expect(dates('week-end de Pâques dans le Lubéron')?.start).toBe('2027-03-28');
+    // Un week-end autour d'une fête du dimanche ou du lundi : le samedi qui l'ouvre.
+    expect(dates('week-end de Pâques dans le Lubéron')?.start).toBe('2027-03-27');
+    expect(dates('week-end en Chartreuse pour la Toussaint')?.start).toBe('2026-10-31');
+    expect(dates('Pâques dans le Lubéron')?.start).toBe('2027-03-28');
     expect(dates('Noël 2027 au Québec')?.start).toBe('2027-12-25');
     // Les vacances durent et changent selon les zones : aucun jour inventé.
     expect(holidayDate('vacances de noel en laponie', TODAY)).toBeNull();

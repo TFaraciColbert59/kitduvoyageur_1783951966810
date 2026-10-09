@@ -4,7 +4,7 @@ import type { InventoryStatus } from '@/features/materiel/domain/inventory';
 import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
-import { askAI } from '@/lib/ai/askAI';
+import { aiEnabled, askAI } from '@/lib/ai/askAI';
 import {
   COMPAS_AUTOFILL_SPEC,
   buildCompasAutofillPrompt,
@@ -1260,14 +1260,18 @@ export async function compasAutofillAction(
         }
         // « Malaga » puis « Málaga » : un même lieu, un seul nom.
         stagePlaces = unifyStageNames(stagePlaces);
+        // IA éteinte (plan 1.7) : rien ne viendra à la prochaine visite, on le dit
+        // et on dit quoi faire, au lieu de promettre un nouvel essai.
+        const aiOff = !aiEnabled();
+        const aiOffNote = `Sans IA, pas d’étapes détaillées pour « ${anchor.name} » : une étape par jour sur le lieu. Précise une région ou une ville dans « Où » pour des étapes sur des lieux réels.`;
         if (!proposed.length && replacing.length) {
           // L'IA n'a pas répondu : on garde l'itinéraire d'avant plutôt qu'un moins bon.
-          notes.push('Itinéraire gardé tel quel : la nouvelle proposition n’est pas arrivée à temps. Je réessaie à ta prochaine visite.');
+          notes.push(aiOff ? aiOffNote : 'Itinéraire gardé tel quel : la nouvelle proposition n’est pas arrivée à temps. Je réessaie à ta prochaine visite.');
           stagePlaces = [];
-          stagesFallback = (carry?.stagesFallback ?? 0) + 1;
+          if (!aiOff) stagesFallback = (carry?.stagesFallback ?? 0) + 1;
         } else if (!proposed.length) {
-          notes.push('Itinéraire détaillé indisponible pour le moment : une étape par jour sur le lieu. Je réessaie à ta prochaine visite, ou affine-le dans Parcours.');
-          stagesFallback = (carry?.stagesFallback ?? 0) + 1;
+          notes.push(aiOff ? aiOffNote : 'Itinéraire détaillé indisponible pour le moment : une étape par jour sur le lieu. Je réessaie à ta prochaine visite, ou affine-le dans Parcours.');
+          if (!aiOff) stagesFallback = (carry?.stagesFallback ?? 0) + 1;
           stagePlaces = Array.from({ length: days }, (_, i) => ({
             day: i + 1,
             name: anchor!.name,
