@@ -480,9 +480,18 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 ### 2.12 Tests
 
 - [ ] Tests d'autorisation réels de `requireEditor` (sans simulation).
-- [ ] Test du contournement de la limite (2.2) et de la coupure (2.6).
+- [x] Test du contournement de la limite (2.2) et de la coupure (2.6) (lot O) :
+      `limitBypass.test.ts` (14 tests, session et compteur en base réels : clé HMAC de la
+      session, voyage, lieu, texte ou slug sans effet, compteur en panne ou muet → refus)
+      a trouvé un **contournement réel, fermé** : une préparation en phase « rest » sans
+      itinéraire en attente échappait à la limite des lancements ; `autofillCut.test.ts`
+      (6 tests : coupure, reprise sans étape en double, « Annuler », « Arrêter »).
 - [ ] **E2E Compas bloquant en CI** (préparation simulée, sans réseau externe).
-- [ ] Plus aucun test unitaire qui appelle un serveur public (comme P024-09, corrigé).
+- [x] Plus aucun test unitaire qui appelle un serveur public (comme P024-09, corrigé)
+      (lot O) : garde imposé à chaque fichier (`tests/setup/no-network.ts` dans
+      `setupFiles` : fetch, http, https, net, tls, WebSocket ; un appel rattrapé par le code
+      fait aussi échouer le test), 8 fichiers corrigés (Overpass, MET Norway, Terrain Tiles
+      simulés), preuve `tests/config/no-network.spec.ts`.
 
 ---
 
