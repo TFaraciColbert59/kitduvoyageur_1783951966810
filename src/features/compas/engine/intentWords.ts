@@ -168,7 +168,8 @@ const CURRENCY_TOKEN =
 const AMOUNT = '(\\d{1,3}(?:[\\s\\u202f\\u00a0.,]\\d{3})+(?!\\d)|\\d+)(?:[.,](\\d{1,2}))?(?!\\d)\\s*(k\\b)?';
 
 let isoCodes: Set<string> | null = null;
-function knownIsoCode(code: string): boolean {
+/** Codes ISO 4217 connus du moteur `Intl` (repli : 14 devises courantes s'il ne les liste pas). */
+export function isoCurrencyCodes(): ReadonlySet<string> {
   if (!isoCodes) {
     try {
       isoCodes = new Set((Intl as unknown as { supportedValuesOf(k: string): string[] }).supportedValuesOf('currency'));
@@ -176,7 +177,10 @@ function knownIsoCode(code: string): boolean {
       isoCodes = new Set(['EUR', 'USD', 'GBP', 'CHF', 'CAD', 'JPY', 'AUD', 'NZD', 'NOK', 'SEK', 'DKK', 'ISK', 'MAD', 'THB']);
     }
   }
-  return isoCodes.has(code);
+  return isoCodes;
+}
+export function knownIsoCode(code: string): boolean {
+  return isoCurrencyCodes().has(code);
 }
 
 /** Code ISO d'un symbole ou d'un mot de devise ; `src` = le même passage tel qu'écrit. */
