@@ -9,6 +9,7 @@ import { CompasTripPicker } from '@/features/compas/components/CompasTripPicker'
 import { CompasStart } from '@/features/compas/components/CompasStart';
 import { createClient } from '@/lib/supabase/server';
 import { listMyTripInvitations } from '@/features/compas/server/invitationActions';
+import { readTravellerState } from '@/features/compas/server/traveller';
 import '@/features/compas/compas.css';
 
 /**
@@ -56,10 +57,16 @@ export default async function CompasPage({
       data: { user },
     } = await supabase.auth.getUser();
     const invitations = user ? await listMyTripInvitations() : [];
+    // Profil voyageur demandé une fois (PLAN-100 4.1) : jamais à un essai sans compte.
+    const traveller = user && user.is_anonymous !== true ? await readTravellerState(supabase, user.id) : null;
     return (
       <AppShell hasBottomNav videoBackground={false}>
         <CompasLightTheme />
-        <CompasStart signedIn={Boolean(user)} invitations={invitations} />
+        <CompasStart
+          signedIn={Boolean(user)}
+          invitations={invitations}
+          askTraveller={traveller != null && !traveller.asked}
+        />
       </AppShell>
     );
   };

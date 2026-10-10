@@ -1134,6 +1134,7 @@ export default function MobileCompteV2() {
         <div className="space-y-[var(--space-1)]">
           {([
             { label: 'Modifier mon profil', icon: '👤', href: '/compte/modifier' },
+            { label: 'Profil voyageur (nationalité, domicile)', icon: '🧭', href: '/compte/voyageur' },
             { label: 'Ma progression & classements', icon: '🏆', href: '/progression' },
             { label: 'Mon Compte', icon: '🎒', href: '/compte' },
             { label: 'Mes commandes & factures', icon: '📦', href: '/boutique' },
