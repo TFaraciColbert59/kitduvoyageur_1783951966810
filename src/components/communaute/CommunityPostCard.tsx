@@ -8,6 +8,9 @@ import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card, Divider, IconButton } from '@/components/ui';
 import SmartImage from '@/components/ui/SmartImage';
 import ReportSheet from '@/components/social/ReportSheet';
+import TransparencySheet from '@/components/communaute/TransparencySheet';
+import PostActionSheet from '@/components/communaute/PostActionSheet';
+import type { RecommendationTransparency } from '@/features/community/feed/types/feed.types';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -42,17 +45,37 @@ export interface CommunityPostItem {
   id: string;
   user_id?: string;
   author_id?: string;
+  authorId?: string;
   content: string;
   author?: PostAuthor;
   image_url?: string | null;
+  imageUrl?: string | null;
   likes_count?: number;
+  likesCount?: number;
   comments_count?: number;
+  commentsCount?: number;
   created_at?: string;
+  createdAt?: string;
   user_liked?: boolean;
+  userLiked?: boolean;
   user_saved?: boolean;
+  userSaved?: boolean;
   linked_carnet_id?: string | null;
+  linkedCarnetId?: string | null;
   snapshot_payload?: Record<string, any> | null;
   snapshot_at?: string | null;
+  transparency?: RecommendationTransparency;
+  postType?: string;
+  isTrending?: boolean;
+}
+
+export interface CommunityPostCardProps {
+  post: CommunityPostItem;
+  user?: any;
+  transparency?: RecommendationTransparency | null;
+  onHide?: (postId: string) => void;
+  onFeedback?: (postId: string, type: 'less_like_this' | 'hide' | 'report') => void;
+  onSaveToggle?: (postId: string, isSaved: boolean) => void;
 }
 
 export const timeAgo = (dateStr: string) => {
@@ -94,20 +117,24 @@ export function HeartSvg({ filled = false, className = '' }: { filled?: boolean;
 export default function CommunityPostCard({
   post,
   user,
-}: {
-  post: CommunityPostItem;
-  user?: any;
-}) {
-  const [isLiked, setIsLiked] = useState(Boolean(post.user_liked));
-  const [likesCount, setLikesCount] = useState<number>(post.likes_count ?? 0);
-  const [commentsCount, setCommentsCount] = useState<number>(post.comments_count ?? 0);
+  transparency,
+  onHide,
+  onFeedback,
+  onSaveToggle,
+}: CommunityPostCardProps) {
+  const [isLiked, setIsLiked] = useState(Boolean(post.user_liked ?? post.userLiked));
+  const [likesCount, setLikesCount] = useState<number>(post.likes_count ?? post.likesCount ?? 0);
+  const [commentsCount, setCommentsCount] = useState<number>(post.comments_count ?? post.commentsCount ?? 0);
   const [showComments, setShowComments] = useState(false);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
-  const [isSaved, setIsSaved] = useState(Boolean(post.user_saved));
+  const [isSaved, setIsSaved] = useState(Boolean(post.user_saved ?? post.userSaved));
   const [isHidden, setIsHidden] = useState(false);
+  const [isLessLiked, setIsLessLiked] = useState(false);
+  const [actionSheetOpen, setActionSheetOpen] = useState(false);
+  const [transparencySheetOpen, setTransparencySheetOpen] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [parentCommentId, setParentCommentId] = useState<string | null>(null);
@@ -118,7 +145,9 @@ export default function CommunityPostCard({
   const commentInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const gpxInputRef = useRef<HTMLInputElement>(null);
-  const { haptic } = useHapticFeedback();
+  const { haptic, triggerHaptic } = useHapticFeedback();
+
+  const effectiveTransparency = transparency ?? post.transparency;
 
   // ── Gestes feed niveau Instagram (mission gestes, Phase 4) ──
   const [heartBurst, setHeartBurst] = useState(0);
@@ -343,16 +372,112 @@ export default function CommunityPostCard({
     }
   };
 
-  const handleToggleSave = () => {
-    setIsSaved(!isSaved);
+  const handleToggleSave = async () => {
+    const nextSaved = !isSaved;
+    setIsSaved(nextSaved);
     setShowMoreMenu(false);
-    showToast(isSaved ? 'Retiré de vos favoris' : 'Enregistré dans vos favoris ⭐');
+    triggerHaptic('selection');
+    showToast(nextSaved ? 'Enregistré dans vos favoris ⭐' : 'Retiré de vos favoris');
+
+    try {
+      const res = await fetch('/api/community/interactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'save', postId: post.id }),
+      });
+      if (!res.ok) {
+        setIsSaved(!nextSaved);
+        triggerHaptic('error');
+        if (res.status === 401) {
+          showToast('Veuillez vous connecter pour enregistrer vos favoris');
+        } else {
+          showToast('Erreur lors de l’enregistrement');
+        }
+      } else {
+        onSaveToggle?.(post.id, nextSaved);
+      }
+    } catch {
+      setIsSaved(!nextSaved);
+      triggerHaptic('error');
+      showToast('Erreur de connexion');
+    }
   };
 
-  const handleHidePost = () => {
+  const handleHidePost = async () => {
     setIsHidden(true);
     setShowMoreMenu(false);
+    triggerHaptic('medium');
     showToast('Publication masquée de votre fil.');
+
+    try {
+      const res = await fetch('/api/community/interactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'feedback',
+          targetType: 'post',
+          targetId: post.id,
+          feedbackType: 'hide',
+        }),
+      });
+
+      if (!res.ok) {
+        setIsHidden(false);
+        triggerHaptic('error');
+        if (res.status === 401) {
+          showToast('Veuillez vous connecter pour masquer une publication');
+        } else {
+          showToast('Impossible de masquer cette publication');
+        }
+        return;
+      }
+
+      onHide?.(post.id);
+      onFeedback?.(post.id, 'hide');
+    } catch (err) {
+      console.error('[CommunityPostCard] Erreur hide:', err);
+      setIsHidden(false);
+      triggerHaptic('error');
+      showToast('Erreur de connexion');
+    }
+  };
+
+  const handleLessLikeThis = async () => {
+    setIsLessLiked(true);
+    setShowMoreMenu(false);
+    triggerHaptic('medium');
+    showToast('Nous afficherons moins de contenus de ce type.');
+
+    try {
+      const res = await fetch('/api/community/interactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'feedback',
+          targetType: 'post',
+          targetId: post.id,
+          feedbackType: 'less_like_this',
+        }),
+      });
+
+      if (!res.ok) {
+        setIsLessLiked(false);
+        triggerHaptic('error');
+        if (res.status === 401) {
+          showToast('Veuillez vous connecter pour enregistrer votre préférence');
+        } else {
+          showToast('Impossible d’enregistrer votre préférence');
+        }
+        return;
+      }
+
+      onFeedback?.(post.id, 'less_like_this');
+    } catch (err) {
+      console.error('[CommunityPostCard] Erreur less_like_this:', err);
+      setIsLessLiked(false);
+      triggerHaptic('error');
+      showToast('Erreur de connexion');
+    }
   };
 
   const handleReport = () => {
@@ -473,6 +598,36 @@ export default function CommunityPostCard({
               Copier le lien direct
             </Button>
 
+            {effectiveTransparency && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                fullWidth
+                className="justify-start text-[color:var(--lkv-action)]"
+                onClick={() => {
+                  setShowMoreMenu(false);
+                  triggerHaptic('light');
+                  setTransparencySheetOpen(true);
+                }}
+                icon={<Icon name="sparkles" size={14} className="text-[color:var(--lkv-action)]" aria-hidden="true" />}
+              >
+                Pourquoi ce contenu
+              </Button>
+            )}
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              fullWidth
+              className="justify-start"
+              onClick={handleLessLikeThis}
+              icon={<Icon name="minus-circle" size={14} className={isLessLiked ? 'text-[color:var(--lkv-action)]' : 'text-[color:var(--lkv-text-secondary)]'} aria-hidden="true" />}
+            >
+              {isLessLiked ? 'Moins de contenus (enregistré)' : 'Moins comme ceci'}
+            </Button>
+
             <Button
               type="button"
               variant="ghost"
@@ -560,7 +715,10 @@ export default function CommunityPostCard({
           <IconButton
             type="button"
             variant="glass"
-            onClick={() => setShowMoreMenu(!showMoreMenu)}
+            onClick={() => {
+              triggerHaptic('light');
+              setActionSheetOpen(true);
+            }}
             aria-label="Options de la publication"
             className={onImage ? 'border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)]' : ''}
           >
@@ -649,38 +807,58 @@ export default function CommunityPostCard({
       {/* Header author & Badge */}
       <div className="flex items-center justify-between">
         <Link
-          href={post.author?.id ? `/profil/${post.author.id}` : post.user_id ? `/profil/${post.user_id}` : '/communaute'}
+          href={post.author?.id ? `/profil/${post.author.id}` : post.author_id ? `/profil/${post.author_id}` : post.authorId ? `/profil/${post.authorId}` : post.user_id ? `/profil/${post.user_id}` : '/communaute'}
           className="group/author flex cursor-pointer items-center gap-[var(--space-3)]"
         >
-          {post.author?.avatar_url ? (
+          {post.author?.avatar_url || (post.author as any)?.avatarUrl ? (
             <img
-              src={post.author.avatar_url}
-              alt={post.author?.full_name || 'Auteur'}
+              src={post.author?.avatar_url || (post.author as any)?.avatarUrl}
+              alt={post.author?.full_name || (post.author as any)?.fullName || 'Auteur'}
               className="size-10 rounded-full border border-[color:var(--lkv-border)] object-cover transition-transform group-hover/author:scale-105"
             />
           ) : (
             <div className="flex size-10 items-center justify-center rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)] transition-transform group-hover/author:scale-105">
-              {(post.author?.full_name?.charAt(0) || 'V').toUpperCase()}
+              {((post.author?.full_name || (post.author as any)?.fullName)?.charAt(0) || 'V').toUpperCase()}
             </div>
           )}
           <div>
             <div className="flex items-center gap-[var(--space-2)]">
               <span className="text-[length:var(--lkv-text-subheadline)] font-semibold tracking-[-0.01em] text-[color:var(--lkv-text-primary)] group-hover/author:underline">
-                {post.author?.full_name || 'Voyageur LKDV'}
+                {post.author?.full_name || (post.author as any)?.fullName || 'Voyageur LKDV'}
               </span>
-              {post.author?.loyalty_level && (
+              {(post.author?.loyalty_level || (post.author as any)?.loyaltyLevel) && (
                 <Badge tone="sage" className="font-mono uppercase">
-                  {post.author.loyalty_level}
+                  {post.author?.loyalty_level || (post.author as any)?.loyaltyLevel}
                 </Badge>
               )}
             </div>
             <span className="mt-0.5 block font-mono text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
-              {timeAgo(post.created_at || new Date().toISOString())}
+              {timeAgo(post.created_at || (post as any).createdAt || new Date().toISOString())}
             </span>
           </div>
         </Link>
 
-        <Badge tone="stone" className="font-mono">FIL</Badge>
+        <div className="flex items-center gap-[var(--space-2)]">
+          {effectiveTransparency ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                triggerHaptic('light');
+                setTransparencySheetOpen(true);
+              }}
+              className="inline-flex min-h-[32px] cursor-pointer items-center gap-1 rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--glass-bg-subtle)] px-2.5 py-1 text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-action)] shadow-sm backdrop-blur-[var(--blur-sm)] transition-all active:scale-95 hover:bg-[color:var(--lkv-hover-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+              aria-label={`Pourquoi ce contenu : ${effectiveTransparency.badgeLabel || 'Recommandation terrain'}`}
+            >
+              <Icon name="sparkles" size={12} className="shrink-0 text-[color:var(--lkv-action)]" aria-hidden="true" />
+              <span>{effectiveTransparency.badgeLabel || 'Pour vous'}</span>
+              <Icon name="info" size={11} className="shrink-0 opacity-60" aria-hidden="true" />
+            </button>
+          ) : (
+            <Badge tone="stone" className="font-mono">FIL</Badge>
+          )}
+        </div>
       </div>
 
       {/* Content — 200 caractères max, expansion façon Twitter ; respiration haut/bas */}
@@ -1199,6 +1377,27 @@ export default function CommunityPostCard({
           });
           if (error) throw error;
         }}
+      />
+
+      <PostActionSheet
+        open={actionSheetOpen}
+        onOpenChange={setActionSheetOpen}
+        isSaved={isSaved}
+        onToggleSave={handleToggleSave}
+        onWhyThis={() => setTransparencySheetOpen(true)}
+        onLessLikeThis={handleLessLikeThis}
+        onHide={handleHidePost}
+        onShare={handleShare}
+        onReport={handleReport}
+        hasTransparency={Boolean(effectiveTransparency)}
+      />
+
+      <TransparencySheet
+        open={transparencySheetOpen}
+        onOpenChange={setTransparencySheetOpen}
+        transparency={effectiveTransparency}
+        postTitle={displayContent ? displayContent.slice(0, 50) : undefined}
+        authorName={post.author?.full_name || (post.author as any)?.fullName}
       />
     </Card>
   );

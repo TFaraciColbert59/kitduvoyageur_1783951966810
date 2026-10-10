@@ -39,38 +39,77 @@ function CommunautePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Tab mapping
-  const paramTab = searchParams?.get('tab') || 'fil';
-  const initialTab = (['fil', 'carnets', 'clubs', 'groupes', 'evenements', 'entraide'].includes(paramTab)
-    ? paramTab
-    : 'fil') as CommunityHubTab;
+  // Tab mapping with 4 operational tabs (Requirement R4)
+  const paramTab = searchParams?.get('tab') || 'pour-toi';
+  const initialTab = (['pour-toi', 'abonnements', 'autour-de-moi', 'clubs', 'fil', 'carnets', 'groupes', 'evenements', 'entraide'].includes(paramTab)
+    ? (paramTab === 'fil' ? 'pour-toi' : paramTab)
+    : 'pour-toi') as CommunityHubTab;
 
   const [activeTab, setActiveTab] = useState<CommunityHubTab>(initialTab);
 
   useEffect(() => {
     if (searchParams?.get('tab')) {
       const t = searchParams.get('tab') as CommunityHubTab;
-      if (['fil', 'carnets', 'clubs', 'groupes', 'evenements', 'entraide'].includes(t)) {
-        setActiveTab(t);
+      if (['pour-toi', 'abonnements', 'autour-de-moi', 'clubs', 'fil', 'carnets', 'groupes', 'evenements', 'entraide'].includes(t)) {
+        setActiveTab(t === 'fil' ? 'pour-toi' : t);
       }
     }
   }, [searchParams]);
 
-  // P2 — mécanisme UNIQUE (miroir du plateau mobile `useNavigationPlateau`) :
-  // carnets/clubs/groupes vivent sur leurs vraies routes ; seuls
-  // fil/evenements/entraide restent des états `?tab=` du hub.
+  // Fluid in-place tab switching for operational tabs (R4) without full page reload
   const handleTabSelect = (tab: CommunityHubTab) => {
-    setActiveTab(tab);
-    if (tab === 'carnets') {
+    const normalized = tab === 'fil' ? 'pour-toi' : tab;
+    setActiveTab(normalized);
+    if (['pour-toi', 'abonnements', 'autour-de-moi', 'clubs'].includes(normalized)) {
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', `/communaute?tab=${normalized}`);
+      }
+    } else if (normalized === 'carnets') {
       router.push('/carnets');
-    } else if (tab === 'clubs') {
-      router.push('/clubs');
-    } else if (tab === 'groupes') {
+    } else if (normalized === 'groupes') {
       router.push('/groupes');
     } else {
-      router.push(`/communaute?tab=${tab}`);
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', `/communaute?tab=${normalized}`);
+      }
     }
   };
+
+  // Feed V1 (R3/R4) — flux scoré servi par /api/community/feed pour les
+  // onglets opérationnels (Pour toi, Abonnements, Autour de moi).
+  const [feedItems, setFeedItems] = useState<any[]>([]);
+  const [feedLoading, setFeedLoading] = useState(false);
+  const [feedError, setFeedError] = useState<string | null>(null);
+
+  const fetchFeedForTab = useCallback(async (tab: CommunityHubTab) => {
+    if (!['pour-toi', 'abonnements', 'autour-de-moi'].includes(tab)) return;
+    setFeedLoading(true);
+    setFeedError(null);
+    try {
+      const res = await fetch(`/api/community/feed?tab=${tab}&limit=20`);
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      setFeedItems(Array.isArray(data.items) ? data.items : []);
+    } catch (err) {
+      console.error('[CommunautePage] feed fetch error:', err);
+      setFeedError('Le fil recommandé est momentanément indisponible.');
+      setFeedItems([]);
+    } finally {
+      setFeedLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (['pour-toi', 'abonnements', 'autour-de-moi'].includes(activeTab)) {
+      fetchFeedForTab(activeTab);
+    }
+  }, [activeTab, fetchFeedForTab]);
+
+  const handleRemoveFeedPost = useCallback((postId: string) => {
+    setFeedItems((prev) => prev.filter((item) => item?.post?.id !== postId));
+  }, []);
 
   // Data States — uniquement alimentés par le serveur (aucune donnée fictive).
   const [posts, setPosts] = useState<any[]>([]);
@@ -301,38 +340,69 @@ function CommunautePageContent() {
               </Card>
 
               {/* DÉCOUVERTE LIGNÉES (Lot 7) — ce qui revient du terrain + lignées endurantes */}
-              {activeTab === 'fil' && (
+              {(activeTab === 'fil' || activeTab === 'pour-toi') && (
                 <Card variant="featured" className="p-[var(--space-4)]">
                   <LineageDiscovery />
                 </Card>
               )}
 
-              {/* ONGLET 1: FIL D'ACTUALITÉ */}
-              {activeTab === 'fil' && (
+              {/* ONGLETS OPÉRATIONNELS DU FIL (Feed V1) : Pour toi / Abonnements / Autour de moi */}
+              {(activeTab === 'fil' ||
+                activeTab === 'pour-toi' ||
+                activeTab === 'abonnements' ||
+                activeTab === 'autour-de-moi') && (
                 <div className="space-y-[var(--space-4)]">
                   <div className="flex items-center justify-between px-1">
                     <h3 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
-                      Derniers échos des sentiers
+                      {activeTab === 'abonnements'
+                        ? 'Explorateurs suivis'
+                        : activeTab === 'autour-de-moi'
+                          ? 'Près de vous'
+                          : 'Derniers échos des sentiers'}
                     </h3>
                     <Badge tone="stone" className="font-mono">
-                      {posts.length} publications
+                      {feedLoading ? 'Chargement…' : `${feedItems.length} publications`}
                     </Badge>
                   </div>
 
-                  <div className="space-y-[var(--space-4)]">
-                    {posts.map((post, i) => (
-                      <CommunityPostCard key={post.id || i} post={post} user={user} />
-                    ))}
-                    {!loading && posts.length === 0 && (
-                      <Card className="text-center">
-                        <EmptyState
-                          icon={<span className="text-3xl">🌲</span>}
-                          title="Le fil est calme"
-                          description="Aucune publication pour le moment. Partagez votre première sortie."
+                  {activeTab === 'abonnements' && !user ? (
+                    <Card className="text-center">
+                      <EmptyState
+                        icon={<span className="text-3xl">👤</span>}
+                        title="Connectez-vous pour voir vos abonnements"
+                        description="Suivez vos compagnons d’expédition pour ne manquer aucun de leurs récits."
+                        actionLabel="Se connecter"
+                        actionHref="/connexion"
+                      />
+                    </Card>
+                  ) : feedLoading && feedItems.length === 0 ? (
+                    <LoadingState label="Chargement du fil…" compact />
+                  ) : feedItems.length === 0 && posts.length === 0 ? (
+                    <Card className="text-center">
+                      <EmptyState
+                        icon={<span className="text-3xl">🌲</span>}
+                        title={feedError ? 'Fil momentanément indisponible' : 'Le fil est calme'}
+                        description={
+                          feedError ?? 'Aucune publication pour le moment. Partagez votre première sortie.'
+                        }
+                      />
+                    </Card>
+                  ) : (
+                    <div className="space-y-[var(--space-4)]">
+                      {(feedItems.length > 0
+                        ? feedItems
+                        : posts.map((p) => ({ post: p, transparency: p.transparency || null }))
+                      ).map((item: any, i: number) => (
+                        <CommunityPostCard
+                          key={item?.post?.id || i}
+                          post={item?.post}
+                          transparency={item?.transparency}
+                          user={user}
+                          onHide={handleRemoveFeedPost}
                         />
-                      </Card>
-                    )}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 

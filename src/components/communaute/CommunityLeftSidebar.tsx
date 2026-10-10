@@ -15,7 +15,9 @@ interface CommunityLeftSidebarProps {
 }
 
 const tabs: { id: CommunityHubTab; label: string; icon: string }[] = [
-  { id: 'fil', label: "Fil d’actualité", icon: 'layers' },
+  { id: 'pour-toi', label: 'Pour toi', icon: 'sparkles' },
+  { id: 'abonnements', label: 'Abonnements', icon: 'users' },
+  { id: 'autour-de-moi', label: 'Autour de moi', icon: 'map-pin' },
   { id: 'carnets', label: 'Carnets de voyage', icon: 'book-open' },
   { id: 'clubs', label: 'Clubs & collectifs', icon: 'users' },
   { id: 'groupes', label: 'Expéditions', icon: 'map' },
