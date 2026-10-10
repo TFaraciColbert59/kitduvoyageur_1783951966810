@@ -2,7 +2,7 @@
 /**
  * CI INVARIANTS — Garde-fous anti-dérive stricts
  * ============================================
- * Vérifie automatiquement les 5 invariants obligatoires :
+ * Vérifie automatiquement les invariants obligatoires :
  * 1. Aucun token couleur hors palette ou --role-*
  * 2. Aucun terme monétaire dans kit_trust_scores
  * 3. Aucun compteur de partage (share_count, partages) dans l'UI
@@ -10,6 +10,10 @@
  * 5. Aucun fichier .env* stagé ni secret en dur (sk_live_, whsec_, service_role)
  * 6. Tous les noms d’icônes résolus via le registre canonique
  * 7. Aucune constante de démonstration dans le préparateur (src/features/adventure-prep)
+ * 8. Aucune écriture cliente de colonnes de solde sur user_profiles
+ *    (hors src/app/api/ et modules server-only src/features/<feature>/server*)
+ * 9. Aucune écriture cliente directe des journaux/commandes
+ *    (loyalty_history, loyalty_redemptions, orders — hors src/app/api/)
  *
  * Usage : node scripts/verify/ci_invariants.mjs
  */
@@ -228,6 +232,85 @@ if (demoLeaks.length > 0) {
   demoLeaks.forEach((f) => fail(`Constante de démonstration dans le préparateur : ${f}`));
 } else {
   ok('Invariant 7 : Aucune constante de démonstration dans src/features/adventure-prep (hors __tests__)');
+}
+
+// 8. AUCUNE ÉCRITURE CLIENTE DE COLONNES DE SOLDE SUR user_profiles
+//
+// Depuis la phase 1 « balance lockdown », la base refuse elle-même toute
+// écriture cliente de loyalty_points / loyalty_level / xp / level (trigger +
+// policies). Cet invariant fait échouer la CI AVANT l'exécution : hors routes
+// API (src/app/api/) et hors modules server-only (src/features/*/server*),
+// aucun fichier de src/ ne doit contenir un .from('user_profiles') suivi à
+// moins de ~300 caractères d'un .update()/.upsert()/.insert() écrivant l'une
+// de ces colonnes.
+function relativePath(file) {
+  return path.relative(root, file).split(path.sep).join('/');
+}
+
+function lineOf(content, index) {
+  return content.slice(0, index).split(/\r?\n/).length;
+}
+
+const BALANCE_EXCLUDES = [
+  /^src\/app\/api\//,
+  /^src\/features\/[^/]+\/server/,
+];
+const BALANCE_FROM = /\.from\(\s*['"]user_profiles['"]\s*\)/g;
+const CLIENT_WRITE = /\.(?:update|upsert|insert)\s*\(/;
+const BALANCE_FIELDS = /\b(?:loyalty_points|loyalty_level|xp\s*:|level\s*:)/;
+
+const balanceHits = [];
+for (const file of grep('user_profiles', src)) {
+  const rel = relativePath(file);
+  if (BALANCE_EXCLUDES.some((re) => re.test(rel))) continue;
+  const content = fs.readFileSync(file, 'utf8');
+  let fromMatch;
+  BALANCE_FROM.lastIndex = 0;
+  while ((fromMatch = BALANCE_FROM.exec(content)) !== null) {
+    const window = content.slice(fromMatch.index, fromMatch.index + 300);
+    const writeMatch = CLIENT_WRITE.exec(window);
+    if (!writeMatch) continue;
+    // Colonnes interdites cherchées dans les arguments de l'écriture elle-même.
+    const args = content.slice(
+      fromMatch.index + writeMatch.index,
+      fromMatch.index + writeMatch.index + 300,
+    );
+    if (!BALANCE_FIELDS.test(args)) continue;
+    balanceHits.push(`${rel}:${lineOf(content, fromMatch.index)}`);
+  }
+}
+if (balanceHits.length > 0) {
+  balanceHits.forEach((f) => fail(`Écriture cliente de colonne de solde sur user_profiles : ${f}`));
+} else {
+  ok('Invariant 8 : Aucune écriture cliente de colonne de solde sur user_profiles (hors src/app/api et src/features/*/server*)');
+}
+
+// 9. AUCUNE ÉCRITURE CLIENTE DIRECTE DES JOURNAUX / COMMANDES
+//
+// loyalty_history, loyalty_redemptions et orders ne s'écrivent que côté
+// serveur (routes API, RPC SECURITY DEFINER). Les lectures clientes restent
+// autorisées : seules les écritures .insert()/.update()/.upsert() suivant le
+// .from(...) à moins de ~200 caractères déclenchent l'échec, dans tout fichier
+// de src/ hors src/app/api/.
+const JOURNAL_FROM = /\.from\(\s*['"](?:loyalty_history|loyalty_redemptions|orders)['"]\s*\)/g;
+
+const journalHits = [];
+for (const file of grep('loyalty_history|loyalty_redemptions|orders', src)) {
+  const rel = relativePath(file);
+  if (rel.startsWith('src/app/api/')) continue;
+  const content = fs.readFileSync(file, 'utf8');
+  let fromMatch;
+  JOURNAL_FROM.lastIndex = 0;
+  while ((fromMatch = JOURNAL_FROM.exec(content)) !== null) {
+    const window = content.slice(fromMatch.index, fromMatch.index + 200);
+    if (!CLIENT_WRITE.test(window)) continue;
+    journalHits.push(`${rel}:${lineOf(content, fromMatch.index)}`);
+  }
+}
+if (journalHits.length > 0) {
+  journalHits.forEach((f) => fail(`Écriture cliente directe d'un journal/commande : ${f}`));
+} else {
+  ok('Invariant 9 : Aucune écriture cliente de loyalty_history/loyalty_redemptions/orders (hors src/app/api)');
 }
 
 // RÉSULTAT GLOBAL
