@@ -10,8 +10,42 @@
 import type { CompasDayPlan, CompasKitLine } from './compasModel';
 import { tripDayLight } from './sun';
 import type { DayForecast } from './weather';
+import {
+  celsius,
+  mmPerDay,
+  monthNameFr,
+  readClimate,
+  type ClimateWindow,
+} from '@/features/trips/engine/climate';
 
-export type KitNeed = 'pluie' | 'chaud' | 'froid' | 'extremites' | 'soleil' | 'frontale' | 'eau';
+export type KitNeed =
+  | 'pluie'
+  | 'etanche'
+  | 'chaud'
+  | 'froid'
+  | 'extremites'
+  | 'soleil'
+  | 'frontale'
+  | 'eau';
+
+/**
+ * Ce que les règles savent du lieu en plus de la météo des jours : normales
+ * climatiques des mois du voyage SANS prévision (NASA POWER, plan 4.8). Aucun
+ * nom de pays : le mois, la valeur et la source.
+ */
+export interface KitContext {
+  /** Latitude du lieu, si connue. */
+  lat: number | null;
+  /** Altitude maximale mesurée du parcours (m), si connue. */
+  maxAltitudeM: number | null;
+  /** Normales des mois du voyage non couverts par la prévision ; null : aucune lisible. */
+  climate: ClimateWindow | null;
+  /** Activité du voyage. */
+  activity?: string | null;
+}
+
+/** Source citée pour un conseil tiré des normales. */
+export const CLIMATE_SOURCE = 'NASA POWER · normales mensuelles';
 
 export interface KitAdvice {
   id: string;
@@ -40,6 +74,7 @@ export const KIT_THRESHOLDS = {
 
 const MATCH: Record<KitNeed, RegExp> = {
   pluie: /veste|imperm|gore|poncho|coupe-?pluie|k-?way|shell|cape/i,
+  etanche: /[ée]tanche|dry ?-?bag|housse|pack ?liner|rain ?cover|sursac/i,
   chaud: /polaire|doudoune|isolant|fleece|down|primaloft|puffy|pull|laine|m[ée]rinos/i,
   froid: /polaire|doudoune|isolant|fleece|down|primaloft|puffy|pull|laine|m[ée]rinos/i,
   extremites: /gant|bonnet|mitaine|tour de cou|buff/i,
@@ -58,8 +93,12 @@ export function adviseKit(input: {
   forecasts: Array<{ day: number; date: string; forecast: DayForecast | null }>;
   dayPlans: CompasDayPlan[];
   waterPointsCount: number | null;
+  context?: KitContext;
 }): KitAdvice[] {
   const T = KIT_THRESHOLDS;
+  const ctx = input.context;
+  const climate = readClimate(ctx?.climate);
+  const has = (need: KitNeed) => out.some((a) => a.need === need);
   const out: KitAdvice[] = [];
   const find = (need: KitNeed) => input.lines.find((l) => MATCH[need].test(l.name)) ?? null;
   const add = (need: KitNeed, label: string, reason: string, source: string) => {
@@ -95,7 +134,22 @@ export function adviseKit(input: {
       `Jour ${wet.day} (${dateFr(wet.date)}) : pluie ${f.precipPct != null ? `à ${Math.round(f.precipPct)} %` : 'annoncée'}${f.precipMm != null ? `, ${Math.round(f.precipMm)} mm` : ''}.`,
       'MET Norway'
     );
+  } else if (climate?.rainy) {
+    const w = climate.wettest;
+    add(
+      'pluie',
+      'Veste imperméable',
+      `En ${monthNameFr(w.month)} : ${mmPerDay(w.precipMmDay)} en moyenne${climate.heavyRain ? ', pluies abondantes (mousson ou saison des pluies)' : ''}.`,
+      CLIMATE_SOURCE
+    );
   }
+  if (climate?.heavyRain)
+    add(
+      'etanche',
+      'Housse ou sac étanche',
+      `En ${monthNameFr(climate.wettest.month)} : ${mmPerDay(climate.wettest.precipMmDay)}, pluies abondantes (mousson ou saison des pluies) : protège le sac, l’électronique et les papiers.`,
+      CLIMATE_SOURCE
+    );
 
   /* Froid : le jour le plus froid */
   const cold = days
@@ -117,6 +171,24 @@ export function adviseKit(input: {
         'MET Norway'
       );
   }
+  if (!has('froid') && climate?.cool) {
+    const c = climate.coldest;
+    add(
+      'froid',
+      'Couche chaude (polaire, doudoune)',
+      `En ${monthNameFr(c.month)} : température moyenne de ${celsius(c.tMeanC)} autour du lieu (minimum déjà relevé : ${celsius(c.tMinC)}). Moyenne sur une zone d’environ 50 km : plus froid en altitude.`,
+      CLIMATE_SOURCE
+    );
+  }
+  if (!has('extremites') && climate?.frost) {
+    const c = climate.coldest;
+    add(
+      'extremites',
+      'Gants et bonnet',
+      `En ${monthNameFr(c.month)} : gel déjà relevé (${celsius(c.tMinC)}), température moyenne de ${celsius(c.tMeanC)}.`,
+      CLIMATE_SOURCE
+    );
+  }
 
   /* Chaleur et soleil : le jour le plus chaud */
   const hot = days
@@ -128,6 +200,13 @@ export function adviseKit(input: {
       'Protection solaire (chapeau, crème, lunettes)',
       `Jour ${hot.day} (${dateFr(hot.date)}) : jusqu'à ${Math.round(hot.forecast.tMax as number)} °C.`,
       'MET Norway'
+    );
+  else if (climate?.warm)
+    add(
+      'soleil',
+      'Protection solaire (chapeau, crème, lunettes)',
+      `En ${monthNameFr(climate.hottest.month)} : température moyenne de ${celsius(climate.hottest.tMeanC)}${climate.hot ? ', mois chaud' : ''}.`,
+      CLIMATE_SOURCE
     );
 
   /* Lumière : marche plus longue que le jour (prévision, sinon calcul astronomique) */
@@ -161,11 +240,14 @@ export function adviseKit(input: {
         : input.waterPointsCount === 0
           ? 'aucun point d’eau connu sur le tracé : tout emporter'
           : `${input.waterPointsCount} point${input.waterPointsCount > 1 ? 's' : ''} d’eau connu${input.waterPointsCount > 1 ? 's' : ''}`;
+    // Mois chaud d'après les normales et pas déjà chaud d'après la prévision : le
+    // repère par heure ne change pas (même chiffre que l'onglet Eau), on le dit.
+    const warmMonth = climate?.hot && perHour === T.waterLPerHour ? climate.hottest : null;
     add(
       'eau',
       'Contenants d’eau',
-      `Jour ${longest.day} : environ ${String(liters).replace('.', ',')} L par personne (repère ${String(perHour).replace('.', ',')} L par heure de marche) ; ${points}.`,
-      'repère courant · parcours'
+      `Jour ${longest.day} : environ ${String(liters).replace('.', ',')} L par personne (repère ${String(perHour).replace('.', ',')} L par heure de marche) ; ${points}${warmMonth ? `. ${monthNameFr(warmMonth.month)} est un mois chaud (${celsius(warmMonth.tMeanC)} de moyenne) : prévois plus que ce repère` : ''}.`,
+      warmMonth ? `repère courant · parcours · ${CLIMATE_SOURCE}` : 'repère courant · parcours'
     );
   }
 

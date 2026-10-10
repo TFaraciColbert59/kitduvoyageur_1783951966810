@@ -3083,6 +3083,7 @@ function TallList<T>({
 
 const ADVICE_ICON: Record<string, string> = {
   pluie: 'cloud-rain',
+  etanche: 'package',
   froid: 'thermometer',
   chaud: 'thermometer',
   extremites: 'cloud-snow',
@@ -3094,6 +3095,7 @@ const ADVICE_ICON: Record<string, string> = {
 /** Mot cherché dans la boutique quand on ajoute depuis un conseil (sous-chaîne, sans accent). */
 const ADVICE_QUERY: Record<string, string> = {
   pluie: 'imperm',
+  etanche: 'etanche',
   froid: 'polaire',
   chaud: 'polaire',
   extremites: 'gant',
@@ -3107,8 +3109,9 @@ function ConseilsFlow({ ctl }: { ctl: CompasCtl }) {
   return (
     <>
       <p className="cp-note">
-        Des repères tirés de la météo et du parcours, pas des ordres : chacun cite la donnée qui le
-        déclenche. « Couvert » veut dire qu’un objet de ton kit porte un nom qui correspond.
+        Des repères tirés de la météo, des normales du mois (quand la prévision ne couvre pas tes
+        dates) et du parcours, pas des ordres : chacun cite la donnée qui le déclenche. « Couvert »
+        veut dire qu’un objet de ton kit porte un nom qui correspond.
       </p>
       <TallList
         label="Conseils de kit"
@@ -3382,6 +3385,7 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
             forecasts,
             dayPlans: model.route.dayPlans,
             waterPointsCount: null,
+            context: ctl.data.kitContext,
           });
           return (
             <div key={kit.id} className="cp-row cp-row--tall" style={staticRow}>

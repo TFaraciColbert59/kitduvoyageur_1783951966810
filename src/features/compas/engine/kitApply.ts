@@ -6,7 +6,7 @@
  * décomptes que l'utilisateur peut recompter.
  */
 
-import { adviseKit } from './kitRules';
+import { adviseKit, type KitContext } from './kitRules';
 import type { CompasDayPlan } from './compasModel';
 import type { DayForecast } from './weather';
 
@@ -65,11 +65,14 @@ export function kitCompatibility(input: {
   forecasts: Array<{ day: number; date: string; forecast: DayForecast | null }>;
   dayPlans: CompasDayPlan[];
   waterPointsCount: number | null;
+  /** Même contexte que les conseils du voyage : sinon le décompte ne compare pas la même liste. */
+  context?: KitContext;
 }): KitCompatibility {
   const base = {
     forecasts: input.forecasts,
     dayPlans: input.dayPlans,
     waterPointsCount: input.waterPointsCount,
+    context: input.context,
   };
   const withKit = adviseKit({ ...base, lines: input.kit.items });
   const now = adviseKit({ ...base, lines: input.tripNames.map((name) => ({ name })) });

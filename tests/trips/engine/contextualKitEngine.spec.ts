@@ -3,8 +3,23 @@ import {
   generateTripContextualKit,
   type ContextualKitInput,
 } from '@/features/trips/engine/contextualKitEngine';
+import { climateWindow } from '@/features/trips/engine/climate';
+import { powerClimateNormals } from '@/features/compas/engine/metno';
+import climatology from '@/features/compas/__tests__/fixtures/power-climatology.json';
 import type { ShopProductReference } from '@/features/trips/types/kit.types';
 import type { TripItem, TripStep } from '@/features/trips/types/trip.types';
+
+/**
+ * Plan 4.8 : le climat vient des normales NASA POWER du lieu et du mois (vraies
+ * réponses de l'API, fixtures du Compas), plus d'une liste de pays.
+ */
+const climateOf = (place: keyof typeof climatology, month: number) => ({
+  latitude: climatology[place].lat,
+  seasonMonth: month,
+  climate: climateWindow(powerClimateNormals(climatology[place].payload), [
+    `2027-${String(month).padStart(2, '0')}-10`,
+  ]),
+});
 
 describe('Contextual Kit Engine (Chantier 6 — IA & Kit Contextuel)', () => {
   const dummyProducts: ShopProductReference[] = [
@@ -129,34 +144,33 @@ describe('Contextual Kit Engine (Chantier 6 — IA & Kit Contextuel)', () => {
     expect(crampons?.shopProduct?.slug).toBe('crampons-a-neigeglace-baton-trekking-black-diamond-bd110045');
   });
 
-  it('recommends rain protection for wet destinations like Iceland', () => {
+  it('recommends rain protection for wet and cold destinations like Iceland (Reykjavik in September)', () => {
     const input: ContextualKitInput = {
-      countryCode: 'IS',
       durationDays: 6,
+      ...climateOf('reykjavik', 9),
       currentItems: [],
       availableProducts: dummyProducts,
     };
 
     const analysis = generateTripContextualKit(input);
 
-    expect(analysis.climateWarnings.some((w) => w.includes('Islande'))).toBe(true);
+    expect(analysis.climateWarnings.some((w) => w.includes('Pluie froide en septembre'))).toBe(true);
     const poncho = analysis.vitalGaps.find((g) => g.id === 'rec-rain-poncho');
     expect(poncho).toBeDefined();
     expect(poncho?.priority).toBe('vital');
   });
 
-  it('recommends sun & hydration protection for hot destinations (Morocco summer)', () => {
+  it('recommends sun & hydration protection for hot destinations (Marrakech in July)', () => {
     const input: ContextualKitInput = {
-      countryCode: 'MA',
       durationDays: 7,
-      seasonMonth: 7, // Juillet
+      ...climateOf('marrakech', 7),
       currentItems: [],
       availableProducts: dummyProducts,
     };
 
     const analysis = generateTripContextualKit(input);
 
-    expect(analysis.climateWarnings.some((w) => w.includes('Maroc'))).toBe(true);
+    expect(analysis.climateWarnings.some((w) => w.includes('Chaleur en juillet'))).toBe(true);
     const sunscreen = analysis.vitalGaps.find((g) => g.id === 'rec-sunscreen');
     expect(sunscreen).toBeDefined();
     expect(sunscreen?.priority).toBe('vital');
