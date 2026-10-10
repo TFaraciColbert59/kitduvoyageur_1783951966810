@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { planApplication, type ApplyCurrent } from '../engine/intent';
+import { samePlaceName } from '../engine/places';
 import { applyCurrent } from '../components/compasApply';
 import type { CompasCtl } from '../components/compasTypes';
 
@@ -18,6 +19,14 @@ describe('redire le même départ ne le cherche pas une seconde fois', () => {
     expect(planApplication(said, { ...current, originName: 'Lyon' })).toEqual([]);
     expect(planApplication(said, { ...current, originName: 'lyon' })).toEqual([]);
     expect(planApplication([{ type: 'set_origin', place: 'Genève' }], { ...current, originName: 'Geneve' })).toEqual([]);
+  });
+
+  it('trait d’union et apostrophe ne changent pas le nom (« Bourg en Bresse » = « Bourg-en-Bresse »)', () => {
+    const bourg = [{ type: 'set_origin' as const, place: 'Bourg en Bresse' }];
+    expect(planApplication(bourg, { ...current, originName: 'Bourg-en-Bresse' })).toEqual([]);
+    expect(planApplication(bourg, { ...current, originName: 'Bourg-en-Bresse-sud' })).toEqual([
+      { op: 'origin', place: 'Bourg en Bresse' },
+    ]);
   });
 
   it('autre nom, ou aucun départ rangé : l’opération est émise', () => {
@@ -49,5 +58,20 @@ describe('redire le même départ ne le cherche pas une seconde fois', () => {
       }) as unknown as CompasCtl;
     expect(applyCurrent(ctl({ name: 'Lyon', lat: 45.76, lon: 4.83, countryCode: 'FR' })).originName).toBe('Lyon');
     expect(applyCurrent(ctl(null)).originName).toBeNull();
+  });
+});
+
+describe('samePlaceName', () => {
+  it('même nom écrit autrement : accents, casse, trait d’union, apostrophe', () => {
+    expect(samePlaceName('Bourg en Bresse', 'Bourg-en-Bresse')).toBe(true);
+    expect(samePlaceName('Châlons en Champagne', 'chalons-en-champagne')).toBe(true);
+    expect(samePlaceName("L'Isle-sur-la-Sorgue", 'L’Isle sur la Sorgue')).toBe(true);
+  });
+
+  it('un nom plus long ou différent n’est pas le même, ni le vide', () => {
+    expect(samePlaceName('Lyon', 'Lyon en Corse')).toBe(false);
+    expect(samePlaceName('Bourg', 'Bourg-en-Bresse')).toBe(false);
+    expect(samePlaceName('', '')).toBe(false);
+    expect(samePlaceName('--', '  ')).toBe(false);
   });
 });

@@ -3,8 +3,10 @@ import {
   actionLabel,
   groundingIssue,
   intentActionSchema,
+  linkedOriginOf,
   mergeActions,
   parseIntentRules,
+  settleLinkedOrigin,
   validateActions,
   type IntentContext,
 } from '../engine/intent';
@@ -436,7 +438,103 @@ describe('phrase tapée sans majuscule : séjour, passage, relief, liaison et po
     expect(origins('rando au départ de clermont-ferrand')).toEqual([{ type: 'set_origin', place: 'Clermont-ferrand' }]);
     expect(origins('depuis port-vendres')).toEqual([{ type: 'set_origin', place: 'Port-vendres' }]);
     expect(origins('depuis bordeaux vendredi')).toEqual([{ type: 'set_origin', place: 'Bordeaux' }]);
-    expect(origins('depuis neuilly sur seine')).toEqual([{ type: 'set_origin', place: 'Neuilly' }]);
+    expect(origins('depuis neuilly sur seine')).toEqual([
+      { type: 'set_origin', place: 'Neuilly', longer: 'Neuilly sur seine' },
+    ]);
+  });
+});
+
+describe('« depuis Bourg en Bresse » : « en » et « sur » peuvent faire partie du nom', () => {
+  const origin = (text: string) => places(text).find((a) => a.type === 'set_origin');
+
+  it('le nom court reste le départ, le nom long est proposé à côté (la carte tranche)', () => {
+    expect(origin('rando 3 jours depuis Bourg en Bresse')).toEqual({
+      type: 'set_origin',
+      place: 'Bourg',
+      longer: 'Bourg en Bresse',
+    });
+    expect(origin('un week-end depuis La Roche sur Yon')).toEqual({
+      type: 'set_origin',
+      place: 'La Roche',
+      longer: 'La Roche sur Yon',
+    });
+    expect(origin('depuis Aix en Provence pour 3 jours')).toEqual({
+      type: 'set_origin',
+      place: 'Aix',
+      longer: 'Aix en Provence',
+    });
+  });
+
+  it('« depuis Lyon en Corse » : même forme, la destination reste lue', () => {
+    const a = parseIntentRules('5 jours depuis Lyon en Corse', TODAY);
+    expect(a).toContainEqual({ type: 'set_origin', place: 'Lyon', longer: 'Lyon en Corse' });
+    expect(a).toContainEqual({ type: 'set_destination', place: 'Corse' });
+  });
+
+  it('tapé en minuscules, avec les mêmes garde-fous', () => {
+    expect(origin('rando depuis bourg en bresse')).toEqual({
+      type: 'set_origin',
+      place: 'Bourg',
+      longer: 'Bourg en bresse',
+    });
+    expect(origin('depuis aix en provence')).toMatchObject({ place: 'Aix', longer: 'Aix en provence' });
+  });
+
+  it.each([
+    'rando depuis Lyon en voiture',
+    'rando depuis Lyon en juin',
+    'rando depuis Lyon en Juin',
+    'rando depuis Lyon en famille',
+    'rando depuis Lyon sur 3 jours',
+    'depuis Lyon en train',
+    'depuis lyon en voiture',
+    'depuis lyon en juin',
+    'depuis lyon en famille',
+    'depuis lyon en camping car',
+    'depuis lyon en rando',
+    'depuis lyon sur 3 jours',
+    'depuis Lyon',
+  ])('« %s » : pas de nom long à proposer', (text) => {
+    expect(origin(text)).not.toHaveProperty('longer');
+  });
+});
+
+describe('départ à nom long : ce que la carte a tranché', () => {
+  const rules = (text: string) => parseIntentRules(text, TODAY);
+
+  it('nom long confirmé : il devient le départ, son bout n’est plus une destination', () => {
+    const actions = rules('rando 3 jours depuis Bourg en Bresse');
+    expect(actions).toContainEqual({ type: 'set_destination', place: 'Bresse' });
+    const link = linkedOriginOf(actions);
+    expect(link).toEqual({ place: 'Bourg', longer: 'Bourg en Bresse' });
+    const settled = settleLinkedOrigin(actions, link, true);
+    expect(settled).toContainEqual({ type: 'set_origin', place: 'Bourg en Bresse' });
+    expect(settled.filter((a) => a.type === 'set_destination')).toEqual([]);
+  });
+
+  it('nom long inconnu de la carte : le départ est le nom court, la destination reste', () => {
+    const actions = rules('5 jours depuis Lyon en Corse');
+    const settled = settleLinkedOrigin(actions, linkedOriginOf(actions), false);
+    expect(settled).toContainEqual({ type: 'set_origin', place: 'Lyon' });
+    expect(settled).toContainEqual({ type: 'set_destination', place: 'Corse' });
+    expect(settled.some((a) => a.type === 'set_origin' && 'longer' in a)).toBe(false);
+  });
+
+  it('la destination que l’IA tire du même bout tombe aussi, et rien ne bouge sans nom long', () => {
+    const actions = rules('depuis La Roche sur Yon');
+    const link = linkedOriginOf(actions);
+    expect(settleLinkedOrigin([{ type: 'set_destination', place: 'Yon' }], link, true)).toEqual([]);
+    expect(settleLinkedOrigin([{ type: 'set_destination', place: 'Corse' }], link, true)).toEqual([
+      { type: 'set_destination', place: 'Corse' },
+    ]);
+    const plain = rules('rando depuis Lyon');
+    expect(linkedOriginOf(plain)).toBeNull();
+    expect(settleLinkedOrigin(plain, null, false)).toEqual(plain);
+  });
+
+  it('schéma : le nom long est facultatif, de 1 à 80 caractères', () => {
+    expect(intentActionSchema.safeParse({ type: 'set_origin', place: 'Bourg', longer: 'Bourg en Bresse' }).success).toBe(true);
+    expect(intentActionSchema.safeParse({ type: 'set_origin', place: 'Bourg', longer: 'x'.repeat(81) }).success).toBe(false);
   });
 });
 

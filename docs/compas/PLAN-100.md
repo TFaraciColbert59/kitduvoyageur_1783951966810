@@ -625,6 +625,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       serait appliqué sans validation au démarrage). **Pas fait : voir et effacer le départ
       dit à l'écran** (seul « Annuler » juste après l'application le retire ;
       `CompasData.originSaid` n'est pas encore affiché).
+      « en » et « sur » dans le nom (« Bourg en Bresse », « La Roche sur Yon », « Neuilly sur
+      Seine ») : le nom court reste le départ, le nom long est confirmé par la carte
+      seulement s'il existe tel quel, sinon « depuis Lyon en Corse » donne départ Lyon et
+      destination Corse (`settleLinkedOrigin`, `originInterpret.test.ts`). **Pas fait : le
+      même découpage pour une destination** (« à Bourg en Bresse » se lit « Bourg ») et la
+      ligne « Lieu » de l'aperçu de `CompasStart`, qui lit encore « Bresse » avant l'envoi.
 - [x] Aéroport le plus proche de l'origine et de la destination (OurAirports, CC0). Lot N :
       3 244 aéroports desservis (domaine public), un aéroport moyen compte 1,6 fois sa
       distance, vol d'aéroport à aéroport (« LYS → CAG », `airports.test.ts`, `travel.test.ts`).

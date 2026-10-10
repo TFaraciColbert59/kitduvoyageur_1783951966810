@@ -330,6 +330,15 @@ export function nameCore(v: string): string {
   return n.trim();
 }
 
+/**
+ * Le même nom de lieu écrit autrement : sans accent, sans casse, trait d'union et
+ * apostrophe comptés comme des espaces (« Bourg en Bresse » = « Bourg-en-Bresse »).
+ */
+export function samePlaceName(a: string, b: string): boolean {
+  const key = plainName(a);
+  return key !== '' && key === plainName(b);
+}
+
 /** Ville, pays, région : un nom plus long que celui demandé reste ce lieu. */
 const ADMIN_KINDS = new Set(['city', 'town', 'village', 'country', 'state', 'county', 'region', 'province']);
 

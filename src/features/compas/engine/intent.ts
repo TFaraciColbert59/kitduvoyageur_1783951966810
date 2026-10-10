@@ -10,6 +10,7 @@ import {
 } from './format';
 import type { Pace } from './weather';
 import { HOLIDAY_RE, HOLIDAY_WORD, holidayDate, readMoney, spellNumbers } from './intentWords';
+import { samePlaceName } from './places';
 
 /**
  * Compas — « Dis-le » : une phrase devient des actions PROPOSÉES.
@@ -91,7 +92,15 @@ export const intentActionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('search_route'), query: label }),
   z.object({ type: z.literal('set_destination'), place: label }),
   /** Lieu d'où l'on part (« depuis Lyon ») : le trajet d'approche se chiffre depuis là. */
-  z.object({ type: z.literal('set_origin'), place: z.string().trim().min(1).max(80) }),
+  z.object({
+    type: z.literal('set_origin'),
+    place: z.string().trim().min(1).max(80),
+    /**
+     * « Bourg en Bresse » quand le départ lu est « Bourg » : la carte dit si « en … » fait
+     * partie du nom (`settleLinkedOrigin`). Jamais montré ni appliqué tel quel.
+     */
+    longer: z.string().trim().min(1).max(80).optional(),
+  }),
   z.object({ type: z.literal('set_outdoor_nights'), nights: z.number().int().min(1).max(60) }),
   z.object({ type: z.literal('set_max_pack'), kg: z.number().min(1).max(40) }),
   z.object({ type: z.literal('set_distance'), km: z.number().min(1).max(300) }),
@@ -431,6 +440,45 @@ const LOWER_ORIGIN = new RegExp(
   `^([a-z][a-z'-]{2,}(?:\\s(?!(?:${LOWER_ORIGIN_STOP.join('|')})\\b)[a-z][a-z'-]{2,})?)`
 );
 
+const LOWER_STOP_FIRST = new RegExp(`^(?:${LOWER_ORIGIN_STOP.join('|')})$`);
+
+/**
+ * « Bourg en Bresse », « La Roche sur Yon », « Neuilly sur Seine » : « en » ou « sur »
+ * suivi d'un nom propre peut faire partie du nom du départ, ou ouvrir une autre idée
+ * (« depuis Lyon en Corse »). Rien dans la phrase ne départage les deux : le nom long
+ * est proposé à côté du nom court, et la carte tranche (`settleLinkedOrigin`).
+ * Ni un moment, ni un transport, ni un nom commun (« en juin », « en train », « en famille »).
+ * `end` est la fin du nom court dans `src` ; `plain` est `src` normalisé, aux mêmes positions.
+ */
+function linkedName(src: string, plain: string, end: number, place: string, lower: boolean): string | undefined {
+  const link = /^\s+(en|sur)\s+/.exec(plain.slice(end, end + 12));
+  if (!link) return undefined;
+  const from = end + link[0].length;
+  let tail: string;
+  if (lower) {
+    const low = LOWER_ORIGIN.exec(plain.slice(from, from + 60));
+    const words = low ? low[1].trim() : '';
+    const first = words.split(/\s/)[0];
+    if (
+      !words ||
+      NOT_ORIGIN.test(first) ||
+      LOWER_STOP_FIRST.test(first) ||
+      WEEKDAYS.includes(first) ||
+      COMMON_PLACE_WORDS.test(first) ||
+      toNumber(first) != null ||
+      notAPlace(words)
+    )
+      return undefined;
+    tail = src.slice(from, from + words.length);
+  } else {
+    const named = /^\p{Lu}[\p{L}'’]*(?:[\s-]\p{Lu}[\p{L}'’]*)*/u.exec(src.slice(from, from + 60));
+    if (!named || notAPlace(named[0])) return undefined;
+    tail = named[0];
+  }
+  const longer = `${place} ${link[1]} ${tail}`;
+  return longer.length <= 80 ? longer : undefined;
+}
+
 /** « la gare de Briançon », « l'aéroport de Lyon » : le lieu de départ est ce qui suit « de ». */
 const FACILITY = /^(?:gare|aeroport|station)\s+(?:de la\s+|de l'\s*|du\s+|des\s+|de\s+|d'\s*)/;
 
@@ -442,7 +490,10 @@ const FACILITY = /^(?:gare|aeroport|station)\s+(?:de la\s+|de l'\s*|du\s+|des\s+
  * qui suit s'il n'est ni un moment ni un nom commun (`NOT_ORIGIN_WORDS`).
  * `plain` est `src` normalisé, aux mêmes positions.
  */
-function readOrigin(src: string, plain: string): { place: string; start: number; end: number } | null {
+function readOrigin(
+  src: string,
+  plain: string
+): { place: string; longer?: string; start: number; end: number } | null {
   const lower = !/\p{Lu}/u.test(src);
   for (const m of plain.matchAll(ORIGIN_LEAD)) {
     let at = (m.index ?? 0) + m[0].length;
@@ -457,7 +508,11 @@ function readOrigin(src: string, plain: string): { place: string; start: number;
         /\s+(?:dans|in|sur|vers|près|pres)$/i,
         ''
       );
-      if (place.length >= 2 && !notAPlace(place)) return { place, start: at, end: at + place.length };
+      if (place.length >= 2 && !notAPlace(place)) {
+        const end = at + place.length;
+        const longer = linkedName(src, plain, end, place, false);
+        return { place, ...(longer ? { longer } : {}), start: at, end };
+      }
       continue;
     }
     if (!lower) continue;
@@ -477,7 +532,9 @@ function readOrigin(src: string, plain: string): { place: string; start: number;
       notAPlace(words)
     )
       continue;
-    return { place: words.split(/\s/).map(capitalized).join(' '), start: from, end: from + words.length };
+    const place = words.split(/\s/).map(capitalized).join(' ');
+    const longer = linkedName(src, plain, from + words.length, place, true);
+    return { place, ...(longer ? { longer } : {}), start: from, end: from + words.length };
   }
   return null;
 }
@@ -826,7 +883,7 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
      destination, qui ne le reprend jamais (« rando dans le Vercors depuis Lyon »). */
   const origin = readOrigin(src, plain);
   const inOrigin = (i: number) => origin != null && i >= origin.start && i < origin.end;
-  if (origin) out.push({ type: 'set_origin', place: origin.place });
+  if (origin) out.push({ type: 'set_origin', place: origin.place, ...(origin.longer ? { longer: origin.longer } : {}) });
 
   /* Destination : « au Népal », « en Islande », « à Chamonix » (nom propre) */
   // « à la Réunion », « à l’Île de Ré », « dans l’Ain » ; « in Iceland » (anglais).
@@ -1194,6 +1251,39 @@ export function mergeActions(
   return out.slice(0, 10);
 }
 
+/** Le départ lu avec un nom long possible (« Bourg » / « Bourg en Bresse »), s'il y en a un. */
+export interface LinkedOrigin {
+  place: string;
+  longer: string;
+}
+
+export function linkedOriginOf(actions: readonly CompasIntentAction[]): LinkedOrigin | null {
+  for (const a of actions) if (a.type === 'set_origin' && a.longer) return { place: a.place, longer: a.longer };
+  return null;
+}
+
+/**
+ * Ce que la carte a tranché pour un départ à nom long possible. Nom long confirmé
+ * (`accepted`) : il devient le départ et son bout (« Bresse ») n'est plus une
+ * destination, qu'elle vienne des règles ou de l'IA. Sinon le départ est le nom court,
+ * la destination reste (« Lyon » puis « Corse »). Le nom long ne sort jamais d'ici.
+ */
+export function settleLinkedOrigin(
+  actions: readonly CompasIntentAction[],
+  link: LinkedOrigin | null,
+  accepted: boolean
+): CompasIntentAction[] {
+  const tail =
+    link && accepted
+      ? plainOf(link.longer.slice(link.place.length)).replace(/^\s*(?:en|sur)\s+/, '').trim()
+      : null;
+  return actions.flatMap((a): CompasIntentAction[] => {
+    if (a.type === 'set_origin') return [{ type: 'set_origin', place: accepted && a.longer ? a.longer : a.place }];
+    if (a.type === 'set_destination' && tail && plainOf(a.place) === tail) return [];
+    return [a];
+  });
+}
+
 export function validateActions(
   list: Array<{ action: CompasIntentAction; source: IntentSource; issue?: string | null }>,
   ctx: IntentContext
@@ -1436,7 +1526,7 @@ export function planApplication(actions: CompasIntentAction[], current: ApplyCur
   // rien ne dépend de lui, et s'il échoue (lieu inconnu) tout le reste est déjà appliqué.
   const origin = actions.find((a) => a.type === 'set_origin') as
     Extract<CompasIntentAction, { type: 'set_origin' }> | undefined;
-  if (origin && !(current.originName && plainOf(current.originName) === plainOf(origin.place)))
+  if (origin && !(current.originName && samePlaceName(current.originName, origin.place)))
     ops.push({ op: 'origin', place: origin.place });
   return ops;
 }
