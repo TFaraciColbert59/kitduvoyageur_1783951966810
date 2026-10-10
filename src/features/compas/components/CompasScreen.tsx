@@ -614,8 +614,12 @@ export function CompasScreen({
         const actions = res.proposals.filter((p) => p.ok && p.action.type !== 'search_route').map((p) => p.action);
         const planned = planApplication(actions, applyCurrent(ctl)).filter((o) => o.op !== 'route');
         const ops = planned.filter((o) => o.op !== 'origin');
+        // « Arrêter » peut être pressé pendant chaque écriture : l'arrêt est relu après chacune,
+        // sans quoi la suite le remplaçait par « itinéraire » et le panneau restait bloqué.
+        // La phrase reste alors sur le voyage : « Reprendre » (ou la prochaine visite) la rejoue.
         if (ops.length) {
           const done = await runOps(ctl, ops);
+          if (stopped.current) return;
           if (!done.success) return prepFail(done.error ?? 'Ta demande n’a pas pu être appliquée : réessaie.');
         }
         // Le lieu de départ n'arrête pas la préparation : introuvable ou refusé, elle continue
@@ -623,9 +627,11 @@ export function CompasScreen({
         const origin = planned.filter((o) => o.op === 'origin');
         if (origin.length) {
           const said = await runOps(ctl, origin);
+          if (stopped.current) return;
           if (!said.success) notify(`Départ non retenu · ${said.error ?? 'réessaie'}`);
         }
         await compasClearStartSayAction({ tripId: model.tripId }).catch(() => undefined);
+        if (stopped.current) return;
         setPrep({ stage: 'itinerary' });
         startTransition(() => router.refresh());
       } catch {
