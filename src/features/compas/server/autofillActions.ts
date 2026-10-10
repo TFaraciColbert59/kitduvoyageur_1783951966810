@@ -57,6 +57,7 @@ import {
 } from '../engine/autofill';
 import { anchorFromOrigin, originOf, shortHoursOf, tripLengthDays } from '../engine/tripContext';
 import { compasMeta, readProfile, requireEditor, resplitSteps, tripBasis, tripPartySize, updateTripMetadata, type Supa } from './compasServer';
+import { readTraveller } from './traveller';
 import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
 import { bestPeriod, monthName, needsDryNormals } from '../engine/period';
 import { partsText, retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
@@ -838,7 +839,6 @@ export async function compasAutofillAction(
       return { success: true, pending: true, stepsCreated: 0 };
     const notes: string[] = [...(resume?.notes ?? [])];
     const runId = resume?.runId ?? randomUUID();
-    const today = travellerToday(timeZone);
     const startedAt = Date.now();
     // « Arrêter » demandé après ce lancement : les écritures qui restent sont sautées.
     let halted = false;
@@ -860,10 +860,16 @@ export async function compasAutofillAction(
       lapAt = now;
     };
 
-    const [{ data: tripRow }, profile] = await Promise.all([
+    // Profil voyageur (PLAN-100 4.1) : la ligne de la personne qui lance, par la RLS ;
+    // un essai sans compte n'en a pas (tout inconnu, sans requête).
+    const [{ data: tripRow }, profile, traveller] = await Promise.all([
       supabase.from('trips').select('primary_activity, estimated_budget').eq('id', tripId).maybeSingle(),
       readProfile(supabase, userId),
+      readTraveller(supabase, auth.anonymous ? null : userId),
     ]);
+    // « Aujourd'hui » : le fuseau du navigateur (lot M) ; celui du profil seulement
+    // quand le navigateur n'en envoie aucun de valable ; Paris en dernier.
+    const today = travellerToday(timeZone, new Date(), traveller.timeZone);
     const activity = String((tripRow as { primary_activity?: string } | null)?.primary_activity ?? 'hiking');
     // Contexte projet : la phrase et les réglages du projet priment, le profil
     // n'est qu'un point de départ (adapté s'il ne tient pas pour CE projet).
@@ -1561,14 +1567,18 @@ export async function compasAutofillAction(
     }
 
     lap('5');
-    /* 5. Venir : d'où l'on part (« depuis X » dit, sinon la position, jamais la
-       France par défaut), puis la route mesurée, le train ou l'avion d'aéroport
-       à aéroport (`engine/travel.ts`). Sans point de départ, rien n'est chiffré. */
+    /* 5. Venir : d'où l'on part (« depuis X » dit, sinon le domicile du profil,
+       sinon la position, jamais la France par défaut), puis la route mesurée, le
+       train ou l'avion d'aéroport à aéroport (`engine/travel.ts`). Sans point de
+       départ, rien n'est chiffré. */
     const start = dayStep(1);
     const target = start?.latitude != null && start.longitude != null ? { lat: start.latitude, lon: start.longitude } : anchor;
+    // Domicile du profil (PLAN-100 4.3) : après le départ dit, avant la position ;
+    // rangé à 0,01° au profil, jamais recherché ici.
+    const home = saidOrigin ? null : traveller.home;
     // La commune, pas le lieu le plus proche du point (« depuis Chantier Hotel
-    // de Ville » au lieu d'Annecy, 8 oct.) ; inutile quand le départ est dit.
-    const near = !saidOrigin && from ? await lookupReverse(from.lat, from.lon) : null;
+    // de Ville » au lieu d'Annecy, 8 oct.) ; inutile quand le départ est dit ou le domicile connu.
+    const near = !saidOrigin && !home && from ? await lookupReverse(from.lat, from.lon) : null;
     const travelLeg = await planTravelLeg(
       {
         origin: travelOrigin(
@@ -1581,7 +1591,8 @@ export async function compasAutofillAction(
                 country: near?.country ?? null,
                 countryCode: near?.countryCode ?? null,
               }
-            : null
+            : null,
+          home
         ),
         target,
         destination: { name: anchor.name, countryCode: anchor.countryCode },
