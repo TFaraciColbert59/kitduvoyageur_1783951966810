@@ -162,13 +162,14 @@ p0*.mjs
 # scripts p0*.mjs : des outils qui pilotent un navigateur de dev.
 qa-local/
 
-# Sorties de captures et d'audits (régénérées par les scripts, jamais versionnées)
-/screenshots/
-/screenshots_mobile/
-/audit/
-/docs/audit-global/
-/docs/h-captures/
-/docs/u-captures/
-/docs/visual/
-/docs/qa/
-/docs/explorer-mobile/
+# Phase 1 — sauvegardes locales de production (jamais commitées)
+backups/
+
+
+# Phase 1 — sauvegardes locales de production (jamais commitées)
+backups/
+
+# Artefacts de diagnostic locaux
+hosted-schema.json
+scratch/
+
