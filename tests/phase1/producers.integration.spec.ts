@@ -25,18 +25,21 @@ import {
  */
 
 const E2E = process.env.PHASE1_PRODUCERS_E2E === '1';
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'http://127.0.0.1:54321';
 const LOCAL_HOSTS = new Set(['127.0.0.1', 'localhost']);
 
 function assertLocalEnv(): void {
+  const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!rawUrl) {
+    throw new Error('[phase1-producers] NEXT_PUBLIC_SUPABASE_URL requis (stack locale)');
+  }
   let hostname = '';
   try {
-    hostname = new URL(SUPABASE_URL).hostname;
+    hostname = new URL(rawUrl).hostname;
   } catch {
     hostname = '';
   }
   if (!LOCAL_HOSTS.has(hostname)) {
-    throw new Error(`[phase1-producers] URL Supabase non locale refusée : ${SUPABASE_URL}`);
+    throw new Error(`[phase1-producers] URL Supabase non locale refusée : ${rawUrl}`);
   }
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
     throw new Error('[phase1-producers] SUPABASE_SERVICE_ROLE_KEY requis (stack locale)');
@@ -81,8 +84,6 @@ interface TrackedFixtures {
   pois: string[];
   carnets: string[];
   moments: string[];
-  media: string[];
-  txIds: string[];
 }
 
 const F: TrackedFixtures = {
@@ -97,8 +98,6 @@ const F: TrackedFixtures = {
   pois: [],
   carnets: [],
   moments: [],
-  media: [],
-  txIds: [],
 };
 
 const RUN = `${Date.now()}`;
@@ -305,16 +304,6 @@ async function createMoment(carnetId: string): Promise<void> {
   F.moments.push(data.id);
 }
 
-async function createMedia(carnetId: string): Promise<void> {
-  const { data, error } = await svc
-    .from('carnet_media')
-    .insert({ carnet_id: carnetId, url: `https://example.com/e2e-${F.media.length}.jpg` })
-    .select('id')
-    .single();
-  if (error || !data) throw new Error(`carnet_media: ${error?.message}`);
-  F.media.push(data.id);
-}
-
 interface AwardResult {
   success: boolean;
   outcome: string;
@@ -404,7 +393,6 @@ async function expectAwarded(params: {
   const outbox = await fetchOutboxStatus(tx.id);
   expect(outbox).toBe('pending');
 
-  F.txIds.push(tx.id);
   return tx;
 }
 
@@ -473,6 +461,9 @@ describe.skipIf(!E2E)('phase1 — producteurs d’aventure (intégration locale 
     };
 
     for (const userId of F.users) {
+      await safe(`leaderboard(${userId})`, () =>
+        svc.from('leaderboard_refresh_queue').delete().eq('user_id', userId)
+      );
       await safe(`events(${userId})`, () =>
         svc.from('progression_events').delete().eq('user_id', userId)
       );
@@ -493,7 +484,6 @@ describe.skipIf(!E2E)('phase1 — producteurs d’aventure (intégration locale 
       );
     }
 
-    if (F.media.length) await safe('carnet_media', () => svc.from('carnet_media').delete().in('id', F.media));
     if (F.moments.length) await safe('carnet_moments', () => svc.from('carnet_moments').delete().in('id', F.moments));
     if (F.carnets.length) await safe('carnets', () => svc.from('carnets').delete().in('id', F.carnets));
     if (F.checklist.length) await safe('checklist', () => svc.from('trip_checklist_items').delete().in('id', F.checklist));
@@ -541,8 +531,11 @@ describe.skipIf(!E2E)('phase1 — producteurs d’aventure (intégration locale 
     const sessionId = await createSession(userA, 'pending');
     const result = (await awardHikeSessionProcessed(sessionId)) as AwardResult;
     await expectRefused(result, 'session_non_traitee', `hike_session:${sessionId}`);
-    // Refus au niveau du hook : le moteur n'est jamais atteint, aucune décision
-    // n'est journalisée (le refus « moteur » est couvert par les cas 5-7).
+    // Refus au niveau du hook : le moteur n'est jamais atteint → AUCUNE
+    // progression_decisions (borne documentée ; tous les refus métier de la
+    // suite — carnet privé, checklist, aucune_preuve — sont aussi des refus
+    // de hook).
+    expect(await fetchDecision(`hike_session:${sessionId}`)).toBeNull();
   });
 
   it('2. sentier préparé ⇒ awarded, rejeu idempotent', async () => {
@@ -693,11 +686,13 @@ describe.skipIf(!E2E)('phase1 — producteurs d’aventure (intégration locale 
     expect(rows.length).toBe(7);
     const totalA = rows.reduce((sum, row) => sum + row.points, 0);
 
-    const { data: processed, error: processError } = await svc.rpc('process_progression_outbox', {
+    const { data: outboxResult, error: processError } = await svc.rpc('process_progression_outbox', {
       p_limit: 50,
     });
     expect(processError).toBeNull();
-    expect(processed).toBeTruthy();
+    const stats = (outboxResult ?? {}) as { processed?: number; failed?: number };
+    expect(stats.failed).toBe(0);
+    expect(stats.processed ?? 0).toBeGreaterThanOrEqual(7);
 
     for (const row of rows) {
       const status = await fetchOutboxStatus(row.id);
