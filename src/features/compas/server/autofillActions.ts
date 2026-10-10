@@ -2153,7 +2153,9 @@ export async function compasUndoAutofillAction(
       (m) => {
         const next: Record<string, unknown> = {
           ...m,
-          compas: { ...withoutPending(compasMeta(m)), autofill: { undone: true } },
+          // Les prises de phase aussi : sans cela, une relance juste après « Annuler »
+          // attendait jusqu'à CLAIM_MS (290 s) une préparation qui n'existe plus.
+          compas: { ...withoutClaim(withoutPending(compasMeta(m))), autofill: { undone: true } },
         };
         if (run.routeSet) delete next.route_id;
         return next;

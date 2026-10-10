@@ -12,9 +12,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
  * - « Arrêter » : avant l'itinéraire, rien n'est écrit ; pendant le reste, plus
  *   aucune écriture (nuits, kit, budget) hormis la trace, et la relance demande
  *   d'abord « Annuler ».
- * - Sorties anticipées (pas de lieu, itinéraire refusé par la base, exception) :
- *   la prise de phase est rendue, une relance repart tout de suite au lieu
- *   d'attendre jusqu'à 290 s.
+ * - Sorties anticipées (pas de lieu, itinéraire refusé par la base, exception) et
+ *   « Annuler » : la prise de phase est rendue, une relance repart tout de suite
+ *   au lieu d'attendre jusqu'à 290 s.
  */
 const h = vi.hoisted(() => ({
   db: null as unknown as MemorySupabase,
@@ -201,8 +201,16 @@ describe('coupure par la limite de la fonction, juste après l’itinéraire', (
     expect(stepIds()).toEqual([]);
     expect(readPending(tripRow().metadata)).toBeNull();
 
-    // Saut au-delà de CLAIM_MS : contourne le défaut connu (« Annuler » garde la prise, PLAN-100 §2.6).
-    vi.setSystemTime(T0 + CLAIM_MS + 1_000);
+    // « Annuler » rend la prise : la relance repart tout de suite, sans attendre CLAIM_MS.
+    expect(compas().autofill_claim).toBeUndefined();
+    expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
+    expect(stepIds()).toHaveLength(3);
+  });
+
+  it('« Annuler » après une préparation finie : aucune prise ne reste, la relance repart tout de suite', async () => {
+    expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
+    expect(await compasUndoAutofillAction({ tripId: TRIP, tripSlug: 'lyon' })).toEqual({ success: true });
+    expect(compas().autofill_claim).toBeUndefined();
     expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
     expect(stepIds()).toHaveLength(3);
   });
