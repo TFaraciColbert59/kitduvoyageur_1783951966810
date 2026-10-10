@@ -113,7 +113,7 @@ test.describe('Redirections 307 des routes héritées (middleware)', { tag: '@lo
     ['/mes-aventures', /\/hub$/],
     ['/naviguer', /\/randonnee-active/],
     ['/boussole', /\/randonnee-active/],
-    ['/rapport-kit', /\/ai-configurator/],
+    ['/rapport-kit', /\/prepare\?tab=equipement/],
     ['/activite', /\/feed/],
     ['/gamification', /\/recompenses/],
     ['/encheres', /\/occasion/],

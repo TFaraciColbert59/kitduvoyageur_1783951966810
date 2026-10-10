@@ -34,6 +34,13 @@ test.describe('Back-office — matrice d’accès', () => {
     expect(res.headers()['location'] ?? '').toContain('/connexion');
   });
 
+  test('TEST-E2E-ADM-04: /connexion rend du contenu visible (garde anti écran noir)', { tag: '@local-web' }, async ({ page }) => {
+    // Régression : une CSP script-src sans unsafe-inline ni nonces bloque
+    // les scripts inline de Next (hydratation) → page noire malgré un HTML 200.
+    await page.goto('/connexion');
+    await expect(page.locator('h1').first()).toBeVisible();
+  });
+
   test('TEST-E2E-ADM-03: session admin → overview 200 + finances verrouillées sans AAL2', { tag: '@staging-auth' }, async () => {
     test.skip(
       !SUPABASE_URL || !SUPABASE_ANON_KEY || !ADMIN_EMAIL || !ADMIN_PASSWORD,

@@ -107,9 +107,19 @@ test.describe('ATLAS — explorateur unifié, palier local', { tag: '@local-web'
     await prepare.click();
 
     // Garde anti-régression « le bouton Préparer ne fait rien » : la navigation
-    // DOIT aboutir sur la route serveur ; visiteur anonyme → connexion avec
-    // reprise `?next=`, jamais une page morte.
-    await page.waitForURL(/\/connexion\?next=%2Fpreparer-sentier%2F/, { timeout: 20_000 });
-    expect(new URL(page.url()).searchParams.get('next')).toMatch(/^\/preparer-sentier\/\d+$/);
+    // DOIT aboutir sur la route serveur, jamais une page morte. Deux issues
+    // produit légitimes selon les données réelles du sentier :
+    // - sentier valide + visiteur anonyme → /connexion?next=/preparer-sentier/[id] ;
+    // - sentier sans données exploitables → page honnête /preparer-sentier/[id]
+    //   (« Données réelles indisponibles », aucune écriture).
+    await page.waitForURL(/\/(connexion\?next=%2Fpreparer-sentier%2F|preparer-sentier\/\d+)/, {
+      timeout: 20_000,
+    });
+    const finalUrl = new URL(page.url());
+    if (finalUrl.pathname === '/connexion') {
+      expect(finalUrl.searchParams.get('next')).toMatch(/^\/preparer-sentier\/\d+$/);
+    } else {
+      expect(finalUrl.pathname).toMatch(/^\/preparer-sentier\/\d+$/);
+    }
   });
 });
