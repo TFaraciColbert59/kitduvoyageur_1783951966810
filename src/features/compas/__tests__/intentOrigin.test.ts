@@ -480,6 +480,21 @@ describe('« depuis Bourg en Bresse » : « en » et « sur » peuvent faire par
     expect(origin('depuis aix en provence')).toMatchObject({ place: 'Aix', longer: 'Aix en provence' });
   });
 
+  it('l’article tombé devant le nom court revient dans le nom long (« la roche sur yon »)', () => {
+    expect(origin('rando depuis la roche sur yon')).toEqual({
+      type: 'set_origin',
+      place: 'Roche',
+      longer: 'La Roche sur yon',
+    });
+    expect(origin('rando depuis la Roche sur Yon')).toEqual({
+      type: 'set_origin',
+      place: 'Roche',
+      longer: 'La Roche sur Yon',
+    });
+    expect(origin('depuis le puy en velay')).toMatchObject({ longer: 'Le Puy en velay' });
+    expect(origin("depuis l'Isle sur la Sorgue")).toMatchObject({ longer: "L'Isle sur la Sorgue" });
+  });
+
   it.each([
     'rando depuis Lyon en voiture',
     'rando depuis Lyon en juin',
@@ -518,6 +533,23 @@ describe('départ à nom long : ce que la carte a tranché', () => {
     expect(settled).toContainEqual({ type: 'set_origin', place: 'Lyon' });
     expect(settled).toContainEqual({ type: 'set_destination', place: 'Corse' });
     expect(settled.some((a) => a.type === 'set_origin' && 'longer' in a)).toBe(false);
+  });
+
+  it('le bout du nom long tombe aussi quand l’article précède le nom court', () => {
+    const link = { place: 'Puy', longer: 'Le Puy en velay' };
+    expect(settleLinkedOrigin([{ type: 'set_destination', place: 'Velay' }], link, true)).toEqual([]);
+    expect(settleLinkedOrigin([{ type: 'set_origin', place: 'Puy', longer: link.longer }], link, true)).toEqual([
+      { type: 'set_origin', place: 'Le Puy en velay' },
+    ]);
+  });
+
+  it('« L’Isle sur la Sorgue » : l’article du bout ne garde pas « Sorgue » comme destination', () => {
+    const actions = rules('rando depuis L’Isle sur la Sorgue');
+    const link = linkedOriginOf(actions);
+    expect(link).toMatchObject({ longer: 'L’Isle sur la Sorgue' });
+    const settled = settleLinkedOrigin(actions, link, true);
+    expect(settled).toContainEqual({ type: 'set_origin', place: 'L’Isle sur la Sorgue' });
+    expect(settled.filter((a) => a.type === 'set_destination')).toEqual([]);
   });
 
   it('la destination que l’IA tire du même bout tombe aussi, et rien ne bouge sans nom long', () => {

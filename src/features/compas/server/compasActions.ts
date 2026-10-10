@@ -626,11 +626,12 @@ async function placeSearchLimitError(userId: string): Promise<string | null> {
  * « en … » fait partie du nom. Le nom long est retenu seulement si la carte le connaît
  * TEL QUEL — un lieu habité, une région ou un pays dont le nom est ce nom, à l'écriture
  * près (« Bourg-en-Bresse »). Un résultat approchant ne compte pas : « Lyon en Corse »
- * reste « Lyon » puis « Corse ». Compté comme toute recherche de lieu (plan 2.2) ; compteur
- * atteint ou carte muette : faux, et le nom court reste.
+ * reste « Lyon » puis « Corse ». Pas de compteur de recherche de lieu ici : au plus une
+ * recherche par compréhension, déjà bornée par `compas-interpret`, et l'application du
+ * départ compte la sienne (deux comptages feraient refuser un départ confirmé). Carte
+ * muette : faux, et le nom court reste.
  */
-async function longerOriginKnown(longer: string, userId: string): Promise<boolean> {
-  if (await placeSearchLimitError(userId)) return false;
+async function longerOriginKnown(longer: string): Promise<boolean> {
   try {
     const found = await lookupDestination(longer);
     return found != null && samePlaceName(found.name, longer) && isDeparturePlace(found);
@@ -1848,7 +1849,7 @@ export async function compasInterpretAction(
     const forcedTypes = new Set(forced.map((a) => a.type));
     const read = [...forced, ...parseIntentRules(text, today).filter((a) => !forcedTypes.has(a.type))];
     const link = linkedOriginOf(read);
-    const longerKnown = link ? await longerOriginKnown(link.longer, auth.userId) : false;
+    const longerKnown = link ? await longerOriginKnown(link.longer) : false;
     const rules = settleLinkedOrigin(read, link, longerKnown);
     let ai: CompasIntentAction[] = [];
     let usedAi = false;

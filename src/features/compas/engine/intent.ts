@@ -448,12 +448,22 @@ const LOWER_STOP_FIRST = new RegExp(`^(?:${LOWER_ORIGIN_STOP.join('|')})$`);
  * (« depuis Lyon en Corse »). Rien dans la phrase ne départage les deux : le nom long
  * est proposé à côté du nom court, et la carte tranche (`settleLinkedOrigin`).
  * Ni un moment, ni un transport, ni un nom commun (« en juin », « en train », « en famille »).
- * `end` est la fin du nom court dans `src` ; `plain` est `src` normalisé, aux mêmes positions.
+ * `end` est la fin du nom court dans `src` ; `plain` est `src` normalisé, aux mêmes positions ;
+ * `lead` est l'article tombé devant le nom court (« la », « l' »), s'il y en a un.
  */
-function linkedName(src: string, plain: string, end: number, place: string, lower: boolean): string | undefined {
+function linkedName(
+  src: string,
+  plain: string,
+  end: number,
+  place: string,
+  lower: boolean,
+  lead: string
+): string | undefined {
   const link = /^\s+(en|sur)\s+/.exec(plain.slice(end, end + 12));
   if (!link) return undefined;
-  const from = end + link[0].length;
+  // « sur la Sorgue », « sur l'Isère » : l'article fait partie du bout du nom.
+  const article = /^(?:(?:la|le|les)\s+|l['’])/.exec(plain.slice(end + link[0].length, end + link[0].length + 6))?.[0] ?? '';
+  const from = end + link[0].length + article.length;
   let tail: string;
   if (lower) {
     const low = LOWER_ORIGIN.exec(plain.slice(from, from + 60));
@@ -469,13 +479,14 @@ function linkedName(src: string, plain: string, end: number, place: string, lowe
       notAPlace(words)
     )
       return undefined;
-    tail = src.slice(from, from + words.length);
+    tail = src.slice(from - article.length, from + words.length);
   } else {
     const named = /^\p{Lu}[\p{L}'’]*(?:[\s-]\p{Lu}[\p{L}'’]*)*/u.exec(src.slice(from, from + 60));
     if (!named || notAPlace(named[0])) return undefined;
-    tail = named[0];
+    tail = src.slice(from - article.length, from) + named[0];
   }
-  const longer = `${place} ${link[1]} ${tail}`;
+  // L'article tombé devant le nom court en fait partie (« la roche sur yon » → « La Roche sur yon »).
+  const longer = capitalized(`${lead}${place} ${link[1]} ${tail}`);
   return longer.length <= 80 ? longer : undefined;
 }
 
@@ -499,7 +510,8 @@ function readOrigin(
     let at = (m.index ?? 0) + m[0].length;
     // « depuis la Suisse » : l'article en minuscule tombe ; « depuis Le Puy » le garde.
     const article = /^(?:(?:la|le|les)\s+|l['’]\s*)/.exec(src.slice(at));
-    if (article && !/^\p{Lu}/u.test(src.slice(at))) at += article[0].length;
+    const dropped = article && !/^\p{Lu}/u.test(src.slice(at)) ? article[0] : '';
+    at += dropped.length;
     const original = src.slice(at, at + 60);
     if (properLead(original)) {
       // « depuis GR20 » : un code de sentier, pas un lieu de départ.
@@ -510,7 +522,7 @@ function readOrigin(
       );
       if (place.length >= 2 && !notAPlace(place)) {
         const end = at + place.length;
-        const longer = linkedName(src, plain, end, place, false);
+        const longer = linkedName(src, plain, end, place, false, dropped);
         return { place, ...(longer ? { longer } : {}), start: at, end };
       }
       continue;
@@ -533,7 +545,7 @@ function readOrigin(
     )
       continue;
     const place = words.split(/\s/).map(capitalized).join(' ');
-    const longer = linkedName(src, plain, from + words.length, place, true);
+    const longer = linkedName(src, plain, from + words.length, place, true, dropped);
     return { place, ...(longer ? { longer } : {}), start: from, end: from + words.length };
   }
   return null;
@@ -1273,10 +1285,15 @@ export function settleLinkedOrigin(
   link: LinkedOrigin | null,
   accepted: boolean
 ): CompasIntentAction[] {
-  const tail =
-    link && accepted
-      ? plainOf(link.longer.slice(link.place.length)).replace(/^\s*(?:en|sur)\s+/, '').trim()
-      : null;
+  // Le bout du nom long : ce qui suit « en » / « sur » après le nom court (un article peut le précéder).
+  const tail = (() => {
+    if (!link || !accepted) return null;
+    const long = plainOf(link.longer);
+    const at = long.indexOf(plainOf(link.place));
+    if (at < 0) return null;
+    const rest = long.slice(at + plainOf(link.place).length).replace(/^\s*(?:en|sur)\s+/, '');
+    return rest.replace(/^(?:la|le|les)\s+|^l'/, '').trim() || null;
+  })();
   return actions.flatMap((a): CompasIntentAction[] => {
     if (a.type === 'set_origin') return [{ type: 'set_origin', place: accepted && a.longer ? a.longer : a.place }];
     if (a.type === 'set_destination' && tail && plainOf(a.place) === tail) return [];

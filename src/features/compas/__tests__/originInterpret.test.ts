@@ -13,6 +13,8 @@ const h = vi.hoisted(() => ({
   searched: [] as string[],
   /** Réponse du compteur de recherches de lieux (null : autorisé). */
   refuse: null as null | number,
+  /** Compteurs consultés, dans l'ordre. */
+  scopes: [] as string[],
 }));
 vi.mock('server-only', () => ({}));
 vi.mock('next/server', async (orig) => ({
@@ -20,9 +22,10 @@ vi.mock('next/server', async (orig) => ({
   after: () => undefined,
 }));
 vi.mock('@/lib/rate-limit/routes', () => ({
-  enforceRateLimit: vi.fn(async (_id: string, config: { scope: string }) =>
-    h.refuse && config.scope === 'compas-destination' ? new Response(null, { status: h.refuse }) : null
-  ),
+  enforceRateLimit: vi.fn(async (_id: string, config: { scope: string }) => {
+    h.scopes.push(config.scope);
+    return h.refuse && config.scope === 'compas-destination' ? new Response(null, { status: h.refuse }) : null;
+  }),
 }));
 vi.mock('../server/placeLookup', async (orig) => ({
   ...(await orig<typeof import('../server/placeLookup')>()),
@@ -67,6 +70,7 @@ describe('compréhension : « depuis X »', () => {
     h.found = {};
     h.searched = [];
     h.refuse = null;
+    h.scopes = [];
   });
 
   it('sans IA utile : départ Lyon et destination Vercors, proposés et valides', async () => {
@@ -115,6 +119,7 @@ describe('compréhension : un départ dont le nom contient « en » ou « sur »
     h.found = {};
     h.searched = [];
     h.refuse = null;
+    h.scopes = [];
   });
 
   const interpret = async (text: string) => {
@@ -150,11 +155,21 @@ describe('compréhension : un départ dont le nom contient « en » ou « sur »
     expect(actions.filter((a) => a.type === 'set_origin').every((a) => !('longer' in a))).toBe(true);
   });
 
-  it('compteur de recherches de lieux atteint : la carte n’est pas interrogée, le nom court reste', async () => {
+  it('la compréhension ne consomme pas le compteur de recherches de lieux : l’application le fait une fois', async () => {
+    h.found = { 'Bourg en Bresse': BOURG };
+    await interpret('rando 3 jours depuis Bourg en Bresse');
+    expect(h.scopes).toEqual(['compas-interpret']);
+  });
+
+  it('compteur de recherches de lieux déjà atteint : le nom long confirmé reste le départ proposé', async () => {
     h.refuse = 429;
     h.found = { 'Bourg en Bresse': BOURG };
     const actions = await interpret('rando 3 jours depuis Bourg en Bresse');
-    expect(h.searched).toEqual([]);
+    expect(actions.filter((a) => a.type === 'set_origin')).toEqual([{ type: 'set_origin', place: 'Bourg en Bresse' }]);
+  });
+
+  it('carte muette (aucun résultat ni erreur) : le nom court reste', async () => {
+    const actions = await interpret('rando 3 jours depuis Bourg en Bresse');
     expect(actions.filter((a) => a.type === 'set_origin')).toEqual([{ type: 'set_origin', place: 'Bourg' }]);
   });
 
