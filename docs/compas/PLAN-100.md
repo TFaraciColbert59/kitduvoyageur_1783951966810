@@ -776,7 +776,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       bouton d'étape dit la cause (« Kit, alerte : objet vital à trouver », « Où, alerte :
       dates à choisir »…), la pastille reste décorative et l'icône n'annonce plus le nom du
       glyphe.
-- [ ] Tailles de texte en `rem` ; lignes qui s'agrandissent au lieu de tronquer.
+- [x] Tailles de texte en `rem` ; lignes qui s'agrandissent au lieu de tronquer. Lot Q
+      (`compas.css`, `TripInvitations.tsx`, verrou `__tests__/textScale.test.ts`) : les 99
+      `font-size` et les `line-height` en px passent en rem ; `--cp-row-h` vaut 3 rem et les
+      lignes, pastilles, boutons de tiroir, champs et cases de calendrier ont une hauteur
+      MINIMALE (plus de hauteur fixe qui rogne) ; nom, détail, raison, titre de tiroir,
+      valeurs « Voici ce que j'ai compris » passent à la ligne au lieu d'être tronqués par
+      « … » (les nombres courts gardent une ligne) ; `PagedList` mesure déjà la ligne la plus
+      haute. Les px qui restent dimensionnent des icônes, vignettes et surfaces, pas du texte.
 - [x] « Annuler » : délai réglable ou plus long ; erreurs en `role="alert"`. Lot Q
       (`CompasScreen.tsx` `armToast`/`holdToast`, `CompasSheets.tsx`, `compasScreen.test.tsx`
       « Annuler : délai assez long et réglable ») : « Annuler », les erreurs et les détails
