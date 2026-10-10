@@ -1,0 +1,1178 @@
+﻿[
+    {
+        "Function":  "is_admin",
+        "Count":  3,
+        "LastFile":  "20260911551000_phase8_user_profile_privileged_columns.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  ""
+    },
+    {
+        "Function":  "is_moderateur",
+        "Count":  1,
+        "LastFile":  "20260710110000_admin_tables.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  ""
+    },
+    {
+        "Function":  "get_admin_role",
+        "Count":  1,
+        "LastFile":  "20260710110000_admin_tables.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  ""
+    },
+    {
+        "Function":  "handle_new_user",
+        "Count":  6,
+        "LastFile":  "20260713210000_auth_trigger_and_rls_cleanup.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  ""
+    },
+    {
+        "Function":  "update_loyalty_points",
+        "Count":  4,
+        "LastFile":  "20260712235900_fixes_and_enhancements.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  "p_user_id UUID, p_points INTEGER, p_action TEXT, p_type TEXT"
+    },
+    {
+        "Function":  "can_user_bid",
+        "Count":  1,
+        "LastFile":  "20260715090000_auction_bids.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  "user_uuid UUID"
+    },
+    {
+        "Function":  "can_user_sell_auction",
+        "Count":  1,
+        "LastFile":  "20260715090000_auction_bids.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  "user_uuid UUID"
+    },
+    {
+        "Function":  "place_bid",
+        "Count":  1,
+        "LastFile":  "20260715090000_auction_bids.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  "p_listing_id UUID, p_bidder_id UUID, p_montant_cents INTEGER, p_is_auto_bid BOOLEAN DEFAULT FALSE"
+    },
+    {
+        "Function":  "set_auto_bid",
+        "Count":  1,
+        "LastFile":  "20260715090000_auction_bids.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  "p_listing_id UUID, p_bidder_id UUID, p_plafond_cents INTEGER"
+    },
+    {
+        "Function":  "get_comparable_sales",
+        "Count":  1,
+        "LastFile":  "20260715090000_auction_bids.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  "p_produit_id UUID, p_limit INTEGER DEFAULT 5"
+    },
+    {
+        "Function":  "get_occasion_listing_for_product",
+        "Count":  1,
+        "LastFile":  "20260715110000_new_product_stock_fields.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  "p_produit_id UUID"
+    },
+    {
+        "Function":  "decrement_stock_on_order",
+        "Count":  1,
+        "LastFile":  "20260715240000_inventory_stock_orders.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  "p_product_id UUID, p_quantity INTEGER, p_order_id TEXT, p_user_id UUID"
+    },
+    {
+        "Function":  "increment_stock",
+        "Count":  1,
+        "LastFile":  "20260715240000_inventory_stock_orders.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  "p_product_id UUID, p_quantity INTEGER, p_reference_type TEXT, p_reference_id TEXT, p_user_id UUID, p_notes TEXT DEFAULT \u0027Réapprovisionnement\u0027"
+    },
+    {
+        "Function":  "is_group_member",
+        "Count":  2,
+        "LastFile":  "20260815000000_group_rls_and_replies.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_group_id uuid, p_user_id uuid"
+    },
+    {
+        "Function":  "is_group_organizer",
+        "Count":  2,
+        "LastFile":  "20260815000000_group_rls_and_replies.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_group_id uuid, p_user_id uuid"
+    },
+    {
+        "Function":  "calculate_kit_total_weight",
+        "Count":  1,
+        "LastFile":  "20260810212500_lot7_weight_calculations_and_optimizations.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  "kit_id_param uuid"
+    },
+    {
+        "Function":  "generate_weight_optimizations",
+        "Count":  1,
+        "LastFile":  "20260810212500_lot7_weight_calculations_and_optimizations.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  "calculation_id_param uuid, user_id_param uuid"
+    },
+    {
+        "Function":  "get_recommended_weight_profile",
+        "Count":  1,
+        "LastFile":  "20260810212500_lot7_weight_calculations_and_optimizations.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  "user_experience text, trip_type text, season text, temperature_min numeric, temperature_max numeric"
+    },
+    {
+        "Function":  "increment_unread_count",
+        "Count":  1,
+        "LastFile":  "20260810213000_lot8_messaging_and_notifications.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  ""
+    },
+    {
+        "Function":  "reset_unread_count",
+        "Count":  1,
+        "LastFile":  "20260810213000_lot8_messaging_and_notifications.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  "p_conversation_id uuid, p_user_id uuid"
+    },
+    {
+        "Function":  "create_mention_notification",
+        "Count":  1,
+        "LastFile":  "20260810213000_lot8_messaging_and_notifications.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  ""
+    },
+    {
+        "Function":  "check_quiet_hours",
+        "Count":  1,
+        "LastFile":  "20260810213000_lot8_messaging_and_notifications.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  "p_user_id uuid, p_category text"
+    },
+    {
+        "Function":  "update_daily_notification_count",
+        "Count":  1,
+        "LastFile":  "20260810213000_lot8_messaging_and_notifications.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  ""
+    },
+    {
+        "Function":  "send_notification",
+        "Count":  1,
+        "LastFile":  "20260810213000_lot8_messaging_and_notifications.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  "p_user_id uuid, p_type text, p_title text, p_message text DEFAULT NULL, p_category text DEFAULT \u0027system\u0027, p_priority text DEFAULT \u0027normal\u0027, p_action_url text DEFAULT NULL, p_action_label text DEFAULT NULL, p_source_id uuid DEFAULT NULL, p_source_type text DEFAULT NULL, p_metadata jsonb DEFAULT \u0027{}\u0027::jsonb"
+    },
+    {
+        "Function":  "log_security_definer_execution",
+        "Count":  1,
+        "LastFile":  "20260810213500_lot9_security_definer_functions.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  "p_function_name text, p_called_by_user uuid, p_parameters_hash text, p_parameters_count integer, p_execution_success boolean, p_error_message text DEFAULT NULL, p_execution_duration_ms integer DEFAULT NULL, p_client_ip inet DEFAULT NULL, p_user_agent text DEFAULT NULL"
+    },
+    {
+        "Function":  "validate_security_definer_functions",
+        "Count":  1,
+        "LastFile":  "20260810213500_lot9_security_definer_functions.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  ""
+    },
+    {
+        "Function":  "generate_security_definer_report",
+        "Count":  1,
+        "LastFile":  "20260810213500_lot9_security_definer_functions.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  ""
+    },
+    {
+        "Function":  "create_security_definer_function",
+        "Count":  1,
+        "LastFile":  "20260810213500_lot9_security_definer_functions.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  "p_function_name text, p_function_sql text, p_description text, p_category text, p_volatility text DEFAULT \u0027VOLATILE\u0027, p_dependencies text[] DEFAULT \u0027{}\u0027, p_test_coverage text DEFAULT \u0027none\u0027"
+    },
+    {
+        "Function":  "validate_critical_tables",
+        "Count":  1,
+        "LastFile":  "20260810214000_lot10_global_validations.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  ""
+    },
+    {
+        "Function":  "validate_referential_integrity",
+        "Count":  1,
+        "LastFile":  "20260810214000_lot10_global_validations.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  ""
+    },
+    {
+        "Function":  "validate_business_data_consistency",
+        "Count":  1,
+        "LastFile":  "20260810214000_lot10_global_validations.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  ""
+    },
+    {
+        "Function":  "validate_rls_policies",
+        "Count":  1,
+        "LastFile":  "20260810214000_lot10_global_validations.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  ""
+    },
+    {
+        "Function":  "validate_critical_indexes",
+        "Count":  1,
+        "LastFile":  "20260810214000_lot10_global_validations.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  ""
+    },
+    {
+        "Function":  "execute_global_validations",
+        "Count":  1,
+        "LastFile":  "20260810214000_lot10_global_validations.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  ""
+    },
+    {
+        "Function":  "generate_validation_summary",
+        "Count":  1,
+        "LastFile":  "20260810214000_lot10_global_validations.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  ""
+    },
+    {
+        "Function":  "generate_lkdv_final_report",
+        "Count":  1,
+        "LastFile":  "20260810214000_lot10_global_validations.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  ""
+    },
+    {
+        "Function":  "handle_new_user_reward_account",
+        "Count":  2,
+        "LastFile":  "20260920110000_hardening.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  ""
+    },
+    {
+        "Function":  "update_reward_account_on_transaction",
+        "Count":  2,
+        "LastFile":  "20260920101000_progression_outbox.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  ""
+    },
+    {
+        "Function":  "update_reward_account_on_contribution",
+        "Count":  2,
+        "LastFile":  "20260920110000_hardening.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  ""
+    },
+    {
+        "Function":  "claim_reward_points",
+        "Count":  1,
+        "LastFile":  "20260816001000_reward_functions.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  "p_user_id UUID, p_action_type TEXT, p_target_id UUID, p_target_type TEXT, p_metadata JSONB DEFAULT \u0027{}\u0027::jsonb"
+    },
+    {
+        "Function":  "process_pending_contribution",
+        "Count":  1,
+        "LastFile":  "20260816001000_reward_functions.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  "p_contribution_id UUID, p_approve BOOLEAN, p_reason TEXT DEFAULT NULL"
+    },
+    {
+        "Function":  "request_withdrawal",
+        "Count":  2,
+        "LastFile":  "20260921100000_legacy_hardening.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, extensions",
+        "Params":  "p_amount numeric, p_payment_provider text, p_idempotency_key text, p_metadata jsonb DEFAULT \u0027{}\u0027::jsonb"
+    },
+    {
+        "Function":  "finalize_reward_period",
+        "Count":  1,
+        "LastFile":  "20260816001000_reward_functions.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  "p_period_id TEXT, p_eligible_revenue NUMERIC(12,2)"
+    },
+    {
+        "Function":  "process_withdrawal",
+        "Count":  1,
+        "LastFile":  "20260816001000_reward_functions.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  "p_withdrawal_id UUID, p_approve BOOLEAN, p_reference TEXT DEFAULT NULL, p_reason TEXT DEFAULT NULL"
+    },
+    {
+        "Function":  "notify",
+        "Count":  2,
+        "LastFile":  "20260816005000_notification_digests.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  "p_user_id UUID, p_type TEXT, p_title TEXT, p_message TEXT, p_actor_id UUID DEFAULT NULL, p_related_type TEXT DEFAULT NULL, p_related_id UUID DEFAULT NULL, p_link TEXT DEFAULT NULL"
+    },
+    {
+        "Function":  "trg_on_community_post_like",
+        "Count":  1,
+        "LastFile":  "20260816002000_notification_system.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  ""
+    },
+    {
+        "Function":  "trg_on_community_post_comment",
+        "Count":  1,
+        "LastFile":  "20260816002000_notification_system.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  ""
+    },
+    {
+        "Function":  "trg_on_carnet_like",
+        "Count":  1,
+        "LastFile":  "20260816002000_notification_system.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  ""
+    },
+    {
+        "Function":  "trg_on_carnet_comment",
+        "Count":  1,
+        "LastFile":  "20260816002000_notification_system.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  ""
+    },
+    {
+        "Function":  "trg_on_group_message",
+        "Count":  1,
+        "LastFile":  "20260816002000_notification_system.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  ""
+    },
+    {
+        "Function":  "trg_on_group_member_join",
+        "Count":  1,
+        "LastFile":  "20260816003000_group_system_triggers.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  ""
+    },
+    {
+        "Function":  "trg_on_group_task_assigned",
+        "Count":  1,
+        "LastFile":  "20260816003000_group_system_triggers.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  ""
+    },
+    {
+        "Function":  "trg_on_group_expense_added",
+        "Count":  1,
+        "LastFile":  "20260816003000_group_system_triggers.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  ""
+    },
+    {
+        "Function":  "send_digests",
+        "Count":  1,
+        "LastFile":  "20260816005000_notification_digests.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  ""
+    },
+    {
+        "Function":  "cleanup_expired_trash_kits",
+        "Count":  2,
+        "LastFile":  "20260921100000_legacy_hardening.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, extensions",
+        "Params":  ""
+    },
+    {
+        "Function":  "record_hike_gear_usage",
+        "Count":  2,
+        "LastFile":  "20260921100000_legacy_hardening.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, extensions",
+        "Params":  "p_gear_ids uuid[]"
+    },
+    {
+        "Function":  "is_conversation_member",
+        "Count":  1,
+        "LastFile":  "20260830000000_messaging_security_helpers.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "target_conversation_id uuid, target_user_id uuid"
+    },
+    {
+        "Function":  "is_conv_owner",
+        "Count":  1,
+        "LastFile":  "20260830000000_messaging_security_helpers.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "target_conversation_id uuid, target_user_id uuid"
+    },
+    {
+        "Function":  "is_conv_admin",
+        "Count":  1,
+        "LastFile":  "20260830000000_messaging_security_helpers.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "target_conversation_id uuid, target_user_id uuid"
+    },
+    {
+        "Function":  "get_or_create_direct_conversation",
+        "Count":  1,
+        "LastFile":  "20260831000000_messaging_system_canonical.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_target_user_id UUID"
+    },
+    {
+        "Function":  "check_and_increment_ai_quota",
+        "Count":  1,
+        "LastFile":  "20260903000000_ai_foundations.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_user_id uuid, p_tier text, p_feature text DEFAULT NULL, p_feature_limit integer DEFAULT 0"
+    },
+    {
+        "Function":  "get_ai_cache",
+        "Count":  1,
+        "LastFile":  "20260903000000_ai_foundations.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_cache_key text"
+    },
+    {
+        "Function":  "set_ai_cache",
+        "Count":  1,
+        "LastFile":  "20260903000000_ai_foundations.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_cache_key text, p_feature text, p_response jsonb, p_model text, p_provider text, p_ttl_seconds integer"
+    },
+    {
+        "Function":  "claim_pending_ai_jobs",
+        "Count":  1,
+        "LastFile":  "20260903000000_ai_foundations.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_limit integer DEFAULT 10"
+    },
+    {
+        "Function":  "handle_kit_lineage",
+        "Count":  3,
+        "LastFile":  "20260911380000_a11_kit_lineage_immutability.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  ""
+    },
+    {
+        "Function":  "handle_field_proven_count",
+        "Count":  1,
+        "LastFile":  "20260903020000_kit_field_proof.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  ""
+    },
+    {
+        "Function":  "get_kit_journal",
+        "Count":  1,
+        "LastFile":  "20260903020000_kit_field_proof.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_kit_id uuid"
+    },
+    {
+        "Function":  "refresh_kit_conservation",
+        "Count":  3,
+        "LastFile":  "20260911390000_a11_kit_trust_index_resilience.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  ""
+    },
+    {
+        "Function":  "refresh_user_field_signature",
+        "Count":  2,
+        "LastFile":  "20260911360000_a11_refresh_signature_fallback.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  ""
+    },
+    {
+        "Function":  "get_user_signature",
+        "Count":  1,
+        "LastFile":  "20260904020000_user_field_signature.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp AS",
+        "Params":  "p_target uuid"
+    },
+    {
+        "Function":  "handle_trip_owner_collaborator",
+        "Count":  1,
+        "LastFile":  "20260904050000_trips_core.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  ""
+    },
+    {
+        "Function":  "can_read_trip",
+        "Count":  1,
+        "LastFile":  "20260904050000_trips_core.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  "p_trip_id UUID"
+    },
+    {
+        "Function":  "can_edit_trip",
+        "Count":  1,
+        "LastFile":  "20260904050000_trips_core.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  "p_trip_id UUID"
+    },
+    {
+        "Function":  "lkv_can",
+        "Count":  1,
+        "LastFile":  "20260907000000_unify_crews_trips_rls.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  "p_user_id UUID, p_resource TEXT, p_resource_id UUID, p_action TEXT"
+    },
+    {
+        "Function":  "purge_expired_lkv_events",
+        "Count":  1,
+        "LastFile":  "20260907010000_create_lkv_events_bus.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  ""
+    },
+    {
+        "Function":  "freeze_trip_owner",
+        "Count":  1,
+        "LastFile":  "20260907020000_trips_rls_hardening.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  ""
+    },
+    {
+        "Function":  "lkv_ensure_auto_crew",
+        "Count":  1,
+        "LastFile":  "20260909000000_activity_auto_crew.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  ""
+    },
+    {
+        "Function":  "lkv_seed_trip_checklist_template",
+        "Count":  1,
+        "LastFile":  "20260909110000_trip_checklist_seed_template.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  ""
+    },
+    {
+        "Function":  "current_feature_flags",
+        "Count":  1,
+        "LastFile":  "20260909140000_hub_feature_flags.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  ""
+    },
+    {
+        "Function":  "a1_sync_terrain_report_counts",
+        "Count":  1,
+        "LastFile":  "20260911134000_a1_terrain_live.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  ""
+    },
+    {
+        "Function":  "claim_pending_adventure_events",
+        "Count":  2,
+        "LastFile":  "20260911250000_a10_consent_enforcement.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_limit integer DEFAULT 10"
+    },
+    {
+        "Function":  "a2_claim_pending_sessions",
+        "Count":  2,
+        "LastFile":  "20260911230000_a10_session_lease.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_limit integer DEFAULT 5"
+    },
+    {
+        "Function":  "a4_recent_eligible_segments",
+        "Count":  2,
+        "LastFile":  "20260911320000_a11_aggregation_pagination.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_since interval DEFAULT \u002790 days\u0027, p_limit integer DEFAULT 500"
+    },
+    {
+        "Function":  "persist_processed_hike_session",
+        "Count":  1,
+        "LastFile":  "20260911220000_a10_transactional_rpcs.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_session_id uuid, p_passages jsonb, p_observations jsonb, p_processor_version text, p_track_quality jsonb DEFAULT NULL"
+    },
+    {
+        "Function":  "create_adventure_plan_bundle",
+        "Count":  2,
+        "LastFile":  "20260911340000_a11_engine_runs_observability.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_plan jsonb, p_version jsonb, p_runs jsonb DEFAULT \u0027[]\u0027::jsonb, p_decisions jsonb DEFAULT \u0027[]\u0027::jsonb"
+    },
+    {
+        "Function":  "has_active_consent",
+        "Count":  1,
+        "LastFile":  "20260911250000_a10_consent_enforcement.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_user_id uuid, p_purpose text"
+    },
+    {
+        "Function":  "persist_adventure_predictions",
+        "Count":  1,
+        "LastFile":  "20260911270000_a10_predictions_persist.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_plan_id uuid, p_user_id uuid, p_segments jsonb DEFAULT \u0027[]\u0027::jsonb, p_route jsonb DEFAULT \u0027[]\u0027::jsonb"
+    },
+    {
+        "Function":  "a11_merge_terrain_report",
+        "Count":  1,
+        "LastFile":  "20260911310000_a11_terrain_atomic.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_report_id uuid, p_contributor_id uuid, p_severity text DEFAULT NULL, p_passability text DEFAULT NULL, p_now timestamptz DEFAULT now()"
+    },
+    {
+        "Function":  "a11_cohort_bucket",
+        "Count":  1,
+        "LastFile":  "20260911330000_a11_flag_cohorts.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "\u0027\u0027",
+        "Params":  "p_user_id uuid"
+    },
+    {
+        "Function":  "current_feature_flags_for",
+        "Count":  1,
+        "LastFile":  "20260911330000_a11_flag_cohorts.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_user_id uuid"
+    },
+    {
+        "Function":  "insert_kit_attribution",
+        "Count":  1,
+        "LastFile":  "20260911400000_a11_kit_attributions.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_kit_id uuid, p_order_item_id uuid, p_product_id uuid, p_amount_cents integer, p_rate_bps integer, p_shares jsonb, -- [{beneficiary_id, generation_gap, share_cents}] p_buyer_user_id uuid"
+    },
+    {
+        "Function":  "finalize_kit_attributions",
+        "Count":  1,
+        "LastFile":  "20260911400000_a11_kit_attributions.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  ""
+    },
+    {
+        "Function":  "reverse_kit_attribution_by_session",
+        "Count":  1,
+        "LastFile":  "20260911400000_a11_kit_attributions.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_stripe_session_id text"
+    },
+    {
+        "Function":  "a13_materialize_candidate",
+        "Count":  1,
+        "LastFile":  "20260911430000_a13_materialize_candidate.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_user_id uuid, p_plan_id uuid, p_version jsonb, p_decision jsonb"
+    },
+    {
+        "Function":  "a13_append_plan_version",
+        "Count":  1,
+        "LastFile":  "20260911440000_a13_append_plan_version.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_user_id uuid, p_plan_id uuid, p_version jsonb"
+    },
+    {
+        "Function":  "select_adventure_plan_route",
+        "Count":  1,
+        "LastFile":  "20260911500000_phase2_chain_integrity.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_plan_id uuid, p_route_id bigint, p_correlation_id uuid DEFAULT NULL"
+    },
+    {
+        "Function":  "attach_adventure_plan_to_trip",
+        "Count":  1,
+        "LastFile":  "20260911510000_phase2_attach_plan_trip.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_plan_id uuid, p_trip_id uuid, p_correlation_id uuid DEFAULT NULL"
+    },
+    {
+        "Function":  "guard_user_profile_privileged_columns",
+        "Count":  1,
+        "LastFile":  "20260911551000_phase8_user_profile_privileged_columns.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  ""
+    },
+    {
+        "Function":  "coverage_log_dataset_event",
+        "Count":  1,
+        "LastFile":  "20260911560000_phase4_coverage.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  ""
+    },
+    {
+        "Function":  "join_event",
+        "Count":  1,
+        "LastFile":  "20260911570000_phase8b_permissive_policy_hardening.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_event_id uuid"
+    },
+    {
+        "Function":  "atlas_debug_explain",
+        "Count":  2,
+        "LastFile":  "20260912015000_atlas_fix_viewport_inline.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_query text, p_disable_seqscan boolean DEFAULT false"
+    },
+    {
+        "Function":  "atlas_debug_policies",
+        "Count":  1,
+        "LastFile":  "20260912000000_atlas_debug_observability.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  ""
+    },
+    {
+        "Function":  "atlas_debug_rls_status",
+        "Count":  1,
+        "LastFile":  "20260912000000_atlas_debug_observability.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  ""
+    },
+    {
+        "Function":  "atlas_set_country_geometry",
+        "Count":  1,
+        "LastFile":  "20260912000000_atlas_debug_observability.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_iso_a2 text, p_geojson jsonb"
+    },
+    {
+        "Function":  "refresh_atlas_density",
+        "Count":  2,
+        "LastFile":  "20260912030000_atlas_refresh_and_grants_hardening.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  ""
+    },
+    {
+        "Function":  "atlas_debug_function_privileges",
+        "Count":  1,
+        "LastFile":  "20260912030000_atlas_refresh_and_grants_hardening.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  ""
+    },
+    {
+        "Function":  "group_member_has_capability",
+        "Count":  2,
+        "LastFile":  "20260913080000_tribu_delegations.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_group_id UUID, p_user_id UUID, p_capability public.group_capability"
+    },
+    {
+        "Function":  "group_public_card_stats",
+        "Count":  1,
+        "LastFile":  "20260913020000_tribu_policies.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_group_ids UUID[]"
+    },
+    {
+        "Function":  "enforce_group_role_change",
+        "Count":  1,
+        "LastFile":  "20260913030000_tribu_role_integrity.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  ""
+    },
+    {
+        "Function":  "seed_group_owner_membership",
+        "Count":  1,
+        "LastFile":  "20260913030000_tribu_role_integrity.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  ""
+    },
+    {
+        "Function":  "enforce_reference_member_active",
+        "Count":  1,
+        "LastFile":  "20260913030000_tribu_role_integrity.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  ""
+    },
+    {
+        "Function":  "is_club_member",
+        "Count":  1,
+        "LastFile":  "20260913040000_tribu_club_bridge.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_club_id UUID, p_user_id UUID"
+    },
+    {
+        "Function":  "log_group_activity",
+        "Count":  1,
+        "LastFile":  "20260913100000_tribu_activity_log.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  ""
+    },
+    {
+        "Function":  "trg_compat_products_insert",
+        "Count":  1,
+        "LastFile":  "20260917020000_compatibility_adapters.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public AS",
+        "Params":  ""
+    },
+    {
+        "Function":  "trg_compat_products_update",
+        "Count":  1,
+        "LastFile":  "20260917020000_compatibility_adapters.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public AS",
+        "Params":  ""
+    },
+    {
+        "Function":  "trg_compat_products_delete",
+        "Count":  1,
+        "LastFile":  "20260917020000_compatibility_adapters.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public AS",
+        "Params":  ""
+    },
+    {
+        "Function":  "trg_compat_gear_items_insert",
+        "Count":  1,
+        "LastFile":  "20260917020000_compatibility_adapters.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public AS",
+        "Params":  ""
+    },
+    {
+        "Function":  "trg_compat_gear_items_update",
+        "Count":  1,
+        "LastFile":  "20260917020000_compatibility_adapters.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public AS",
+        "Params":  ""
+    },
+    {
+        "Function":  "trg_compat_gear_items_delete",
+        "Count":  1,
+        "LastFile":  "20260917020000_compatibility_adapters.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public AS",
+        "Params":  ""
+    },
+    {
+        "Function":  "trg_compat_loans_insert",
+        "Count":  1,
+        "LastFile":  "20260917020000_compatibility_adapters.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public AS",
+        "Params":  ""
+    },
+    {
+        "Function":  "trg_compat_loans_update",
+        "Count":  1,
+        "LastFile":  "20260917020000_compatibility_adapters.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public AS",
+        "Params":  ""
+    },
+    {
+        "Function":  "trg_compat_loans_delete",
+        "Count":  1,
+        "LastFile":  "20260917020000_compatibility_adapters.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public AS",
+        "Params":  ""
+    },
+    {
+        "Function":  "apply_progression_points",
+        "Count":  1,
+        "LastFile":  "20260919010000_unified_progression_rankings.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, auth",
+        "Params":  "p_user_id UUID, p_idempotency_key TEXT, p_action_type TEXT, p_points_total INTEGER, p_weight_explorer NUMERIC, p_weight_preparer NUMERIC, p_weight_partager NUMERIC, p_weight_entraider NUMERIC, p_explanation TEXT"
+    },
+    {
+        "Function":  "reverse_progression_fraud",
+        "Count":  1,
+        "LastFile":  "20260919010000_unified_progression_rankings.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, auth",
+        "Params":  "p_original_idempotency_key TEXT, p_reason TEXT"
+    },
+    {
+        "Function":  "enqueue_progression_outbox",
+        "Count":  1,
+        "LastFile":  "20260920101000_progression_outbox.sql",
+        "HasSearchPath":  false,
+        "SearchPath":  "",
+        "Params":  ""
+    },
+    {
+        "Function":  "award_progression_gain",
+        "Count":  2,
+        "LastFile":  "20260920110000_hardening.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public AS",
+        "Params":  "p_user_id UUID, p_action_type TEXT, p_source_type TEXT, p_source_id TEXT, p_effective_at TIMESTAMPTZ, p_points_total INTEGER, p_weights JSONB, p_explanation TEXT, p_metadata JSONB DEFAULT \u0027{}\u0027::jsonb"
+    },
+    {
+        "Function":  "process_progression_outbox",
+        "Count":  2,
+        "LastFile":  "20260921150000_season_challenge.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public AS",
+        "Params":  "p_limit INTEGER DEFAULT 50"
+    },
+    {
+        "Function":  "rebuild_progression_from_ledger",
+        "Count":  1,
+        "LastFile":  "20260920105000_rebuild_fraud.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public AS",
+        "Params":  "p_user_id UUID"
+    },
+    {
+        "Function":  "reverse_progression_fraud_canonical",
+        "Count":  1,
+        "LastFile":  "20260920105000_rebuild_fraud.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public AS",
+        "Params":  "p_original_transaction_id UUID, p_reason TEXT"
+    },
+    {
+        "Function":  "enqueue_leaderboard_refresh",
+        "Count":  1,
+        "LastFile":  "20260920109000_leaderboard.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  ""
+    },
+    {
+        "Function":  "refresh_leaderboard_for_user",
+        "Count":  2,
+        "LastFile":  "20260920110000_hardening.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  "p_user_id UUID, p_season_id TEXT"
+    },
+    {
+        "Function":  "refresh_leaderboard_batch",
+        "Count":  1,
+        "LastFile":  "20260920109000_leaderboard.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  "p_limit INTEGER DEFAULT 100"
+    },
+    {
+        "Function":  "get_leaderboard",
+        "Count":  2,
+        "LastFile":  "20260920110000_hardening.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  "p_user_id UUID, p_filter TEXT, p_limit INTEGER DEFAULT 50, p_cursor_points INTEGER DEFAULT NULL, p_cursor_user UUID DEFAULT NULL"
+    },
+    {
+        "Function":  "purge_progression_outbox",
+        "Count":  1,
+        "LastFile":  "20260920110000_hardening.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public AS",
+        "Params":  "p_keep_days INTEGER DEFAULT 90"
+    },
+    {
+        "Function":  "replay_dead_progression_outbox",
+        "Count":  1,
+        "LastFile":  "20260920110000_hardening.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public AS",
+        "Params":  "p_max INTEGER DEFAULT 100"
+    },
+    {
+        "Function":  "get_user_badges_progress",
+        "Count":  1,
+        "LastFile":  "20260921100000_legacy_hardening.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, extensions",
+        "Params":  "p_user_id uuid"
+    },
+    {
+        "Function":  "close_progression_season",
+        "Count":  1,
+        "LastFile":  "20260921120000_season_close.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public AS",
+        "Params":  "p_season_id TEXT"
+    },
+    {
+        "Function":  "apply_legacy_level_mapping",
+        "Count":  1,
+        "LastFile":  "20260921130000_legacy_level_mapping.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public AS",
+        "Params":  "p_user_id UUID, p_mapping_version TEXT DEFAULT \u0027legacy-xp-v1\u0027"
+    },
+    {
+        "Function":  "replace_progression_challenge",
+        "Count":  1,
+        "LastFile":  "20260921150000_season_challenge.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public AS",
+        "Params":  "p_user_id UUID"
+    },
+    {
+        "Function":  "purge_progression_logs",
+        "Count":  1,
+        "LastFile":  "20260921200000_perf_ops.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  "p_access_days INTEGER DEFAULT 30, p_territory_days INTEGER DEFAULT 180"
+    },
+    {
+        "Function":  "open_progression_season",
+        "Count":  1,
+        "LastFile":  "20260921210000_season_open.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  "p_season_id TEXT, p_season_number INTEGER, p_name TEXT, p_starts_at TIMESTAMPTZ, p_ends_at TIMESTAMPTZ"
+    },
+    {
+        "Function":  "get_route_cache",
+        "Count":  1,
+        "LastFile":  "20260929010000_route_persist.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_cache_key text, p_now timestamptz DEFAULT now()"
+    },
+    {
+        "Function":  "set_route_cache",
+        "Count":  1,
+        "LastFile":  "20260929010000_route_persist.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_cache_key text, p_route_mode text, p_payload jsonb, p_provider text, p_ttl_seconds integer"
+    },
+    {
+        "Function":  "purge_route_cache",
+        "Count":  1,
+        "LastFile":  "20260929010000_route_persist.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public, pg_temp",
+        "Params":  "p_limit integer DEFAULT 5000"
+    },
+    {
+        "Function":  "get_latest_trajectoire",
+        "Count":  1,
+        "LastFile":  "20260930080000_trajectoire_vivante.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  "p_trip_id uuid DEFAULT NULL"
+    },
+    {
+        "Function":  "get_latest_trajectory_plan",
+        "Count":  1,
+        "LastFile":  "20260930080001_trajectoire_plans_traces_veille.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  "p_trajectoire_id uuid"
+    },
+    {
+        "Function":  "count_trajectoire_at_scale",
+        "Count":  1,
+        "LastFile":  "20260930080001_trajectoire_plans_traces_veille.sql",
+        "HasSearchPath":  true,
+        "SearchPath":  "public",
+        "Params":  "p_trajectoire_id uuid"
+    }
+]

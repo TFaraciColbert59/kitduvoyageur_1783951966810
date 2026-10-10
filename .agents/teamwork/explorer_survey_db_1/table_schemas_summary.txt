@@ -1,0 +1,415 @@
+﻿==================================================
+TABLE: clubs
+==================================================
+  [CREATED in 20260712210000_app_tables.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    slug TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL DEFAULT 'activité',
+    emoji TEXT DEFAULT '🏕️',
+    description TEXT DEFAULT '',
+    cover_color TEXT DEFAULT 'from-emerald-600 to-teal-700',
+    members_count INTEGER DEFAULT 0,
+    active_this_month INTEGER DEFAULT 0,
+    min_trust_to_create INTEGER DEFAULT 60,
+    created_by UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [CREATED in 20260712220000_app_tables_v2.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    slug TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL DEFAULT 'activité',
+    emoji TEXT DEFAULT '🏕️',
+    description TEXT DEFAULT '',
+    cover_color TEXT DEFAULT 'from-emerald-600 to-teal-700',
+    members_count INTEGER DEFAULT 0,
+    active_this_month INTEGER DEFAULT 0,
+    min_trust_to_create INTEGER DEFAULT 60,
+    created_by UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [CREATED in 20260712230000_app_tables_v3.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    slug TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL DEFAULT 'activité',
+    emoji TEXT DEFAULT '🏕️',
+    description TEXT DEFAULT '',
+    cover_color TEXT DEFAULT 'from-emerald-600 to-teal-700',
+    members_count INTEGER DEFAULT 0,
+    active_this_month INTEGER DEFAULT 0,
+    min_trust_to_create INTEGER DEFAULT 60,
+    created_by UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [CREATED in 20260713120000_community_features.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    slug TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    type TEXT DEFAULT 'activité' CHECK (type IN ('activité','pays')),
+    emoji TEXT DEFAULT '🏕️',
+    description TEXT DEFAULT '',
+    cover_color TEXT DEFAULT 'from-emerald-600 to-teal-700',
+    cover_image TEXT DEFAULT '',
+    category TEXT DEFAULT '',
+    rules TEXT DEFAULT '',
+    privacy TEXT DEFAULT 'open' CHECK (privacy IN ('open','closed','secret')),
+    members_count INTEGER DEFAULT 0,
+    active_this_month INTEGER DEFAULT 0,
+    min_trust_to_create INTEGER DEFAULT 0,
+    is_verified BOOLEAN DEFAULT false,
+    created_by UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [ALTER in 20260713120000_community_features.sql]: cover_image TEXT DEFAULT ''
+  [CREATED in 20260713170000_full_schema_and_seed.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    slug TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    type TEXT DEFAULT 'activite',
+    emoji TEXT DEFAULT '🏕️',
+    description TEXT DEFAULT '',
+    cover_color TEXT DEFAULT 'from-emerald-600 to-teal-700',
+    cover_image TEXT DEFAULT '',
+    category TEXT DEFAULT '',
+    privacy TEXT DEFAULT 'open',
+    members_count INTEGER DEFAULT 0,
+    active_this_month INTEGER DEFAULT 0,
+    is_verified BOOLEAN DEFAULT false,
+    created_by UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+
+==================================================
+TABLE: community_posts
+==================================================
+  [CREATED in 20260713120000_community_features.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    author_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    image_url TEXT DEFAULT '',
+    image_alt TEXT DEFAULT '',
+    post_type TEXT DEFAULT 'post' CHECK (post_type IN ('post','tip','question','share')),
+    linked_carnet_id UUID REFERENCES public.carnets(id) ON DELETE SET NULL,
+    likes_count INTEGER DEFAULT 0,
+    comments_count INTEGER DEFAULT 0,
+    shares_count INTEGER DEFAULT 0,
+    is_trending BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [CREATED in 20260713170000_full_schema_and_seed.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    author_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    image_url TEXT DEFAULT '',
+    image_alt TEXT DEFAULT '',
+    post_type TEXT DEFAULT 'post' CHECK (post_type IN ('post','tip','question','share')),
+    likes_count INTEGER DEFAULT 0,
+    comments_count INTEGER DEFAULT 0,
+    shares_count INTEGER DEFAULT 0,
+    is_trending BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [ALTER in 20260713210000_auth_trigger_and_rls_cleanup.sql]: title TEXT DEFAULT ''
+  [ALTER in 20260911500000_phase2_chain_integrity.sql]: correlation_id uuid
+  [ALTER in 20260911530000_phase7_carnet_private_default.sql]: snapshot_payload jsonb,
+  ADD COLUMN IF NOT EXISTS snapshot_at timestamptz,
+  ADD COLUMN IF NOT EXISTS snapshot_exclude_location boolean NOT NULL DEFAULT false
+
+==================================================
+TABLE: post_comments
+==================================================
+  [CREATED in 20260713120000_community_features.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    post_id UUID REFERENCES public.community_posts(id) ON DELETE CASCADE,
+    author_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    likes_count INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [CREATED in 20260713170000_full_schema_and_seed.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    post_id UUID REFERENCES public.community_posts(id) ON DELETE CASCADE,
+    author_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [ALTER in 20260815000000_group_rls_and_replies.sql]: parent_id uuid REFERENCES public.post_comments(id) ON DELETE CASCADE
+
+==================================================
+TABLE: post_likes
+==================================================
+  [CREATED in 20260713120000_community_features.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    post_id UUID REFERENCES public.community_posts(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [CREATED in 20260713170000_full_schema_and_seed.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    post_id UUID REFERENCES public.community_posts(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+
+==================================================
+TABLE: carnet_likes
+==================================================
+  [CREATED in 20260713120000_community_features.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    carnet_id UUID REFERENCES public.carnets(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    reaction TEXT DEFAULT 'useful' CHECK (reaction IN ('useful','security','bag','fire','heart')),
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [CREATED in 20260713230000_carnets_seed_and_fixes.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    carnet_id UUID REFERENCES public.carnets(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    reaction TEXT DEFAULT 'useful',
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(carnet_id, user_id)
+
+==================================================
+TABLE: club_members
+==================================================
+  [CREATED in 20260712210000_app_tables.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    club_id UUID NOT NULL REFERENCES public.clubs(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    role TEXT DEFAULT 'member',
+    joined_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(club_id, user_id)
+  [CREATED in 20260712220000_app_tables_v2.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    club_id UUID NOT NULL REFERENCES public.clubs(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    role TEXT DEFAULT 'member',
+    joined_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(club_id, user_id)
+  [CREATED in 20260712230000_app_tables_v3.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    club_id UUID NOT NULL REFERENCES public.clubs(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    role TEXT DEFAULT 'member',
+    joined_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(club_id, user_id)
+  [CREATED in 20260713120000_community_features.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    club_id UUID REFERENCES public.clubs(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    role TEXT DEFAULT 'member' CHECK (role IN ('admin','moderator','member')),
+    status TEXT DEFAULT 'active' CHECK (status IN ('active','banned','pending')),
+    joined_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [ALTER in 20260713120000_community_features.sql]: status TEXT DEFAULT 'active'
+
+==================================================
+TABLE: carnet_comments
+==================================================
+  [CREATED in 20260713120000_community_features.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    carnet_id UUID REFERENCES public.carnets(id) ON DELETE CASCADE,
+    author_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    parent_id UUID REFERENCES public.carnet_comments(id) ON DELETE CASCADE,
+    likes_count INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [CREATED in 20260713230000_carnets_seed_and_fixes.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    carnet_id UUID REFERENCES public.carnets(id) ON DELETE CASCADE,
+    author_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+
+==================================================
+TABLE: user_profiles
+==================================================
+  [CREATED in 20260712210000_app_tables.sql]:
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    email TEXT NOT NULL UNIQUE,
+    full_name TEXT NOT NULL DEFAULT '',
+    avatar_url TEXT DEFAULT '',
+    trust_score INTEGER DEFAULT 50,
+    loyalty_points INTEGER DEFAULT 0,
+    loyalty_level TEXT DEFAULT 'Explorateur',
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [CREATED in 20260712220000_app_tables_v2.sql]:
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    email TEXT NOT NULL UNIQUE,
+    full_name TEXT NOT NULL DEFAULT '',
+    avatar_url TEXT DEFAULT '',
+    trust_score INTEGER DEFAULT 50,
+    loyalty_points INTEGER DEFAULT 100,
+    loyalty_level TEXT DEFAULT 'Explorateur',
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [CREATED in 20260712230000_app_tables_v3.sql]:
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    email TEXT NOT NULL UNIQUE,
+    full_name TEXT NOT NULL DEFAULT '',
+    avatar_url TEXT DEFAULT '',
+    trust_score INTEGER DEFAULT 50,
+    loyalty_points INTEGER DEFAULT 100,
+    loyalty_level TEXT DEFAULT 'Explorateur',
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [ALTER in 20260712235900_fixes_and_enhancements.sql]: avatar_url TEXT DEFAULT ''
+  [CREATED in 20260713000000_products_kits_experts_reviews.sql]:
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    email TEXT NOT NULL UNIQUE,
+    full_name TEXT NOT NULL DEFAULT '',
+    avatar_url TEXT DEFAULT '',
+    trust_score INTEGER DEFAULT 50,
+    loyalty_points INTEGER DEFAULT 0,
+    loyalty_level TEXT DEFAULT 'Explorateur',
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [CREATED in 20260713170000_full_schema_and_seed.sql]:
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    email TEXT NOT NULL UNIQUE,
+    full_name TEXT NOT NULL DEFAULT '',
+    avatar_url TEXT DEFAULT '',
+    trust_score INTEGER DEFAULT 50,
+    loyalty_points INTEGER DEFAULT 0,
+    loyalty_level TEXT DEFAULT 'Explorateur',
+    bio TEXT DEFAULT '',
+    location TEXT DEFAULT '',
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [ALTER in 20260713200000_gamification_loyalty_fix.sql]: xp INTEGER DEFAULT 0
+  [ALTER in 20260728100000_fix_admin_rls_shop_products.sql]: role text NOT NULL DEFAULT 'user'
+    CHECK (role IN ('user', 'admin', 'moderator'))
+  [ALTER in 20260904020000_user_field_signature.sql]: signature_visibility text NOT NULL DEFAULT 'private'
+  CHECK (signature_visibility IN ('private','communaute','public'))
+
+==================================================
+TABLE: carnets
+==================================================
+  [CREATED in 20260713120000_community_features.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    author_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    title TEXT NOT NULL DEFAULT '',
+    destination TEXT NOT NULL DEFAULT '',
+    description TEXT DEFAULT '',
+    cover_image TEXT DEFAULT '',
+    cover_image_alt TEXT DEFAULT '',
+    start_date DATE,
+    end_date DATE,
+    weather TEXT DEFAULT '',
+    route_rating NUMERIC(3,1) DEFAULT 0,
+    visibility TEXT DEFAULT 'public' CHECK (visibility IN ('public','private','friends')),
+    tags TEXT[] DEFAULT '{}',
+    map_points JSONB DEFAULT '[]',
+    is_collaborative BOOLEAN DEFAULT false,
+    likes_count INTEGER DEFAULT 0,
+    comments_count INTEGER DEFAULT 0,
+    favorites_count INTEGER DEFAULT 0,
+    views_count INTEGER DEFAULT 0,
+    verified BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [CREATED in 20260713170000_full_schema_and_seed.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    author_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    title TEXT NOT NULL DEFAULT '',
+    destination TEXT NOT NULL DEFAULT '',
+    description TEXT DEFAULT '',
+    cover_image TEXT DEFAULT '',
+    cover_image_alt TEXT DEFAULT '',
+    start_date DATE,
+    end_date DATE,
+    weather TEXT DEFAULT '',
+    route_rating NUMERIC(3,1) DEFAULT 0,
+    visibility TEXT DEFAULT 'public',
+    tags TEXT[] DEFAULT '{}',
+    likes_count INTEGER DEFAULT 0,
+    comments_count INTEGER DEFAULT 0,
+    views_count INTEGER DEFAULT 0,
+    verified BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [ALTER in 20260713230000_carnets_seed_and_fixes.sql]: map_points JSONB DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS is_collaborative BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS favorites_count INTEGER DEFAULT 0
+  [ALTER in 20260905160000_trip_completion_carnet.sql]: trip_id UUID REFERENCES public.trips(id) ON DELETE SET NULL
+  [ALTER in 20260911500000_phase2_chain_integrity.sql]: correlation_id uuid
+
+==================================================
+TABLE: user_follows
+==================================================
+  [CREATED in 20260713120000_community_features.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    follower_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    following_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [CREATED in 20260713170000_full_schema_and_seed.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    follower_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    following_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+
+==================================================
+TABLE: carnet_favorites
+==================================================
+  [CREATED in 20260713120000_community_features.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    carnet_id UUID REFERENCES public.carnets(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [CREATED in 20260713230000_carnets_seed_and_fixes.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    carnet_id UUID REFERENCES public.carnets(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(carnet_id, user_id)
+
+==================================================
+TABLE: comment_reports
+==================================================
+  [CREATED in 20260814000000_comment_reports_table.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    comment_id UUID NOT NULL,
+    reporter_id UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
+    reason TEXT DEFAULT 'Propos inappropriés',
+    table_name TEXT NOT NULL DEFAULT 'post_comments',
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending','reviewed','dismissed')),
+    created_at TIMESTAMPTZ DEFAULT now()
+
+==================================================
+TABLE: club_topics
+==================================================
+  [CREATED in 20260712210000_app_tables.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    club_id UUID NOT NULL REFERENCES public.clubs(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
+    author_id UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
+    title TEXT NOT NULL,
+    content TEXT DEFAULT '',
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [ALTER in 20260712210000_app_tables.sql]: author_id UUID REFERENCES public.user_profiles(id)
+  [CREATED in 20260712220000_app_tables_v2.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    club_id UUID NOT NULL REFERENCES public.clubs(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
+    title TEXT NOT NULL,
+    content TEXT DEFAULT '',
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [CREATED in 20260712230000_app_tables_v3.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    club_id UUID NOT NULL REFERENCES public.clubs(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
+    title TEXT NOT NULL,
+    content TEXT DEFAULT '',
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [CREATED in 20260713120000_community_features.sql]:
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    club_id UUID REFERENCES public.clubs(id) ON DELETE CASCADE,
+    author_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    content TEXT DEFAULT '',
+    is_pinned BOOLEAN DEFAULT false,
+    is_announcement BOOLEAN DEFAULT false,
+    is_approved BOOLEAN DEFAULT true,
+    likes_count INTEGER DEFAULT 0,
+    replies_count INTEGER DEFAULT 0,
+    reports_count INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  [ALTER in 20260713120000_community_features.sql]: is_approved BOOLEAN DEFAULT true
+
+

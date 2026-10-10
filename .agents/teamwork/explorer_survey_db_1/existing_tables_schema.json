@@ -1,0 +1,228 @@
+﻿{
+    "clubs":  [
+                  {
+                      "File":  "20260712210000_app_tables.sql",
+                      "Def":  "\r\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\r\n  slug TEXT NOT NULL UNIQUE,\r\n  name TEXT NOT NULL,\r\n  type TEXT NOT NULL DEFAULT \u0027activité\u0027,\r\n  emoji TEXT DEFAULT \u0027🏕️\u0027,\r\n  description TEXT DEFAULT \u0027\u0027,\r\n  cover_color TEXT DEFAULT \u0027from-emerald-600 to-teal-700\u0027,\r\n  members_count INTEGER DEFAULT 0,\r\n  active_this_month INTEGER DEFAULT 0,\r\n  min_trust_to_create INTEGER DEFAULT 60,\r\n  created_by UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,\r\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\r\n"
+                  },
+                  {
+                      "File":  "20260712220000_app_tables_v2.sql",
+                      "Def":  "\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  slug TEXT NOT NULL UNIQUE,\n  name TEXT NOT NULL,\n  type TEXT NOT NULL DEFAULT \u0027activité\u0027,\n  emoji TEXT DEFAULT \u0027🏕️\u0027,\n  description TEXT DEFAULT \u0027\u0027,\n  cover_color TEXT DEFAULT \u0027from-emerald-600 to-teal-700\u0027,\n  members_count INTEGER DEFAULT 0,\n  active_this_month INTEGER DEFAULT 0,\n  min_trust_to_create INTEGER DEFAULT 60,\n  created_by UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\n"
+                  },
+                  {
+                      "File":  "20260712230000_app_tables_v3.sql",
+                      "Def":  "\r\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\r\n  slug TEXT NOT NULL UNIQUE,\r\n  name TEXT NOT NULL,\r\n  type TEXT NOT NULL DEFAULT \u0027activité\u0027,\r\n  emoji TEXT DEFAULT \u0027🏕️\u0027,\r\n  description TEXT DEFAULT \u0027\u0027,\r\n  cover_color TEXT DEFAULT \u0027from-emerald-600 to-teal-700\u0027,\r\n  members_count INTEGER DEFAULT 0,\r\n  active_this_month INTEGER DEFAULT 0,\r\n  min_trust_to_create INTEGER DEFAULT 60,\r\n  created_by UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,\r\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\r\n"
+                  },
+                  {
+                      "File":  "20260713120000_community_features.sql",
+                      "Def":  "\r\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\r\n  slug TEXT UNIQUE NOT NULL,\r\n  name TEXT NOT NULL,\r\n  type TEXT DEFAULT \u0027activité\u0027 CHECK (type IN (\u0027activité\u0027,\u0027pays\u0027)),\r\n  emoji TEXT DEFAULT \u0027🏕️\u0027,\r\n  description TEXT DEFAULT \u0027\u0027,\r\n  cover_color TEXT DEFAULT \u0027from-emerald-600 to-teal-700\u0027,\r\n  cover_image TEXT DEFAULT \u0027\u0027,\r\n  category TEXT DEFAULT \u0027\u0027,\r\n  rules TEXT DEFAULT \u0027\u0027,\r\n  privacy TEXT DEFAULT \u0027open\u0027 CHECK (privacy IN (\u0027open\u0027,\u0027closed\u0027,\u0027secret\u0027)),\r\n  members_count INTEGER DEFAULT 0,\r\n  active_this_month INTEGER DEFAULT 0,\r\n  min_trust_to_create INTEGER DEFAULT 0,\r\n  is_verified BOOLEAN DEFAULT false,\r\n  created_by UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,\r\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,\r\n  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\r\n"
+                  },
+                  {
+                      "File":  "20260713120000_community_features.sql",
+                      "Alter":  "cover_image TEXT DEFAULT \u0027\u0027"
+                  },
+                  {
+                      "File":  "20260713170000_full_schema_and_seed.sql",
+                      "Def":  "\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  slug TEXT UNIQUE NOT NULL,\n  name TEXT NOT NULL,\n  type TEXT DEFAULT \u0027activite\u0027,\n  emoji TEXT DEFAULT \u0027🏕️\u0027,\n  description TEXT DEFAULT \u0027\u0027,\n  cover_color TEXT DEFAULT \u0027from-emerald-600 to-teal-700\u0027,\n  cover_image TEXT DEFAULT \u0027\u0027,\n  category TEXT DEFAULT \u0027\u0027,\n  privacy TEXT DEFAULT \u0027open\u0027,\n  members_count INTEGER DEFAULT 0,\n  active_this_month INTEGER DEFAULT 0,\n  is_verified BOOLEAN DEFAULT false,\n  created_by UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,\n  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\n"
+                  }
+              ],
+    "community_posts":  [
+                            {
+                                "File":  "20260713120000_community_features.sql",
+                                "Def":  "\r\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\r\n  author_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,\r\n  content TEXT NOT NULL,\r\n  image_url TEXT DEFAULT \u0027\u0027,\r\n  image_alt TEXT DEFAULT \u0027\u0027,\r\n  post_type TEXT DEFAULT \u0027post\u0027 CHECK (post_type IN (\u0027post\u0027,\u0027tip\u0027,\u0027question\u0027,\u0027share\u0027)),\r\n  linked_carnet_id UUID REFERENCES public.carnets(id) ON DELETE SET NULL,\r\n  likes_count INTEGER DEFAULT 0,\r\n  comments_count INTEGER DEFAULT 0,\r\n  shares_count INTEGER DEFAULT 0,\r\n  is_trending BOOLEAN DEFAULT false,\r\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,\r\n  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\r\n"
+                            },
+                            {
+                                "File":  "20260713170000_full_schema_and_seed.sql",
+                                "Def":  "\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  author_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,\n  content TEXT NOT NULL,\n  image_url TEXT DEFAULT \u0027\u0027,\n  image_alt TEXT DEFAULT \u0027\u0027,\n  post_type TEXT DEFAULT \u0027post\u0027 CHECK (post_type IN (\u0027post\u0027,\u0027tip\u0027,\u0027question\u0027,\u0027share\u0027)),\n  likes_count INTEGER DEFAULT 0,\n  comments_count INTEGER DEFAULT 0,\n  shares_count INTEGER DEFAULT 0,\n  is_trending BOOLEAN DEFAULT false,\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,\n  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\n"
+                            },
+                            {
+                                "File":  "20260713210000_auth_trigger_and_rls_cleanup.sql",
+                                "Alter":  "title TEXT DEFAULT \u0027\u0027"
+                            },
+                            {
+                                "File":  "20260911500000_phase2_chain_integrity.sql",
+                                "Alter":  "correlation_id uuid"
+                            },
+                            {
+                                "File":  "20260911530000_phase7_carnet_private_default.sql",
+                                "Alter":  "snapshot_payload jsonb,\r\n  ADD COLUMN IF NOT EXISTS snapshot_at timestamptz,\r\n  ADD COLUMN IF NOT EXISTS snapshot_exclude_location boolean NOT NULL DEFAULT false"
+                            }
+                        ],
+    "post_comments":  [
+                          {
+                              "File":  "20260713120000_community_features.sql",
+                              "Def":  "\r\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\r\n  post_id UUID REFERENCES public.community_posts(id) ON DELETE CASCADE,\r\n  author_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,\r\n  content TEXT NOT NULL,\r\n  likes_count INTEGER DEFAULT 0,\r\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\r\n"
+                          },
+                          {
+                              "File":  "20260713170000_full_schema_and_seed.sql",
+                              "Def":  "\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  post_id UUID REFERENCES public.community_posts(id) ON DELETE CASCADE,\n  author_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,\n  content TEXT NOT NULL,\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\n"
+                          },
+                          {
+                              "File":  "20260815000000_group_rls_and_replies.sql",
+                              "Alter":  "parent_id uuid REFERENCES public.post_comments(id) ON DELETE CASCADE"
+                          }
+                      ],
+    "post_likes":  [
+                       {
+                           "File":  "20260713120000_community_features.sql",
+                           "Def":  "\r\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\r\n  post_id UUID REFERENCES public.community_posts(id) ON DELETE CASCADE,\r\n  user_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,\r\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\r\n"
+                       },
+                       {
+                           "File":  "20260713170000_full_schema_and_seed.sql",
+                           "Def":  "\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  post_id UUID REFERENCES public.community_posts(id) ON DELETE CASCADE,\n  user_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\n"
+                       }
+                   ],
+    "carnet_likes":  [
+                         {
+                             "File":  "20260713120000_community_features.sql",
+                             "Def":  "\r\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\r\n  carnet_id UUID REFERENCES public.carnets(id) ON DELETE CASCADE,\r\n  user_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,\r\n  reaction TEXT DEFAULT \u0027useful\u0027 CHECK (reaction IN (\u0027useful\u0027,\u0027security\u0027,\u0027bag\u0027,\u0027fire\u0027,\u0027heart\u0027)),\r\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\r\n"
+                         },
+                         {
+                             "File":  "20260713230000_carnets_seed_and_fixes.sql",
+                             "Def":  "\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  carnet_id UUID REFERENCES public.carnets(id) ON DELETE CASCADE,\n  user_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,\n  reaction TEXT DEFAULT \u0027useful\u0027,\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,\n  UNIQUE(carnet_id, user_id)\n"
+                         }
+                     ],
+    "club_members":  [
+                         {
+                             "File":  "20260712210000_app_tables.sql",
+                             "Def":  "\r\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\r\n  club_id UUID NOT NULL REFERENCES public.clubs(id) ON DELETE CASCADE,\r\n  user_id UUID NOT NULL REFERENCES public.user_profiles(id) ON DELETE CASCADE,\r\n  role TEXT DEFAULT \u0027member\u0027,\r\n  joined_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,\r\n  UNIQUE(club_id, user_id)\r\n"
+                         },
+                         {
+                             "File":  "20260712220000_app_tables_v2.sql",
+                             "Def":  "\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  club_id UUID NOT NULL REFERENCES public.clubs(id) ON DELETE CASCADE,\n  user_id UUID NOT NULL REFERENCES public.user_profiles(id) ON DELETE CASCADE,\n  role TEXT DEFAULT \u0027member\u0027,\n  joined_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,\n  UNIQUE(club_id, user_id)\n"
+                         },
+                         {
+                             "File":  "20260712230000_app_tables_v3.sql",
+                             "Def":  "\r\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\r\n  club_id UUID NOT NULL REFERENCES public.clubs(id) ON DELETE CASCADE,\r\n  user_id UUID NOT NULL REFERENCES public.user_profiles(id) ON DELETE CASCADE,\r\n  role TEXT DEFAULT \u0027member\u0027,\r\n  joined_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,\r\n  UNIQUE(club_id, user_id)\r\n"
+                         },
+                         {
+                             "File":  "20260713120000_community_features.sql",
+                             "Def":  "\r\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\r\n  club_id UUID REFERENCES public.clubs(id) ON DELETE CASCADE,\r\n  user_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,\r\n  role TEXT DEFAULT \u0027member\u0027 CHECK (role IN (\u0027admin\u0027,\u0027moderator\u0027,\u0027member\u0027)),\r\n  status TEXT DEFAULT \u0027active\u0027 CHECK (status IN (\u0027active\u0027,\u0027banned\u0027,\u0027pending\u0027)),\r\n  joined_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\r\n"
+                         },
+                         {
+                             "File":  "20260713120000_community_features.sql",
+                             "Alter":  "status TEXT DEFAULT \u0027active\u0027"
+                         }
+                     ],
+    "carnet_comments":  [
+                            {
+                                "File":  "20260713120000_community_features.sql",
+                                "Def":  "\r\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\r\n  carnet_id UUID REFERENCES public.carnets(id) ON DELETE CASCADE,\r\n  author_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,\r\n  content TEXT NOT NULL,\r\n  parent_id UUID REFERENCES public.carnet_comments(id) ON DELETE CASCADE,\r\n  likes_count INTEGER DEFAULT 0,\r\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,\r\n  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\r\n"
+                            },
+                            {
+                                "File":  "20260713230000_carnets_seed_and_fixes.sql",
+                                "Def":  "\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  carnet_id UUID REFERENCES public.carnets(id) ON DELETE CASCADE,\n  author_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,\n  content TEXT NOT NULL,\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\n"
+                            }
+                        ],
+    "user_profiles":  [
+                          {
+                              "File":  "20260712210000_app_tables.sql",
+                              "Def":  "\r\n  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,\r\n  email TEXT NOT NULL UNIQUE,\r\n  full_name TEXT NOT NULL DEFAULT \u0027\u0027,\r\n  avatar_url TEXT DEFAULT \u0027\u0027,\r\n  trust_score INTEGER DEFAULT 50,\r\n  loyalty_points INTEGER DEFAULT 0,\r\n  loyalty_level TEXT DEFAULT \u0027Explorateur\u0027,\r\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,\r\n  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\r\n"
+                          },
+                          {
+                              "File":  "20260712220000_app_tables_v2.sql",
+                              "Def":  "\n  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,\n  email TEXT NOT NULL UNIQUE,\n  full_name TEXT NOT NULL DEFAULT \u0027\u0027,\n  avatar_url TEXT DEFAULT \u0027\u0027,\n  trust_score INTEGER DEFAULT 50,\n  loyalty_points INTEGER DEFAULT 100,\n  loyalty_level TEXT DEFAULT \u0027Explorateur\u0027,\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,\n  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\n"
+                          },
+                          {
+                              "File":  "20260712230000_app_tables_v3.sql",
+                              "Def":  "\r\n  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,\r\n  email TEXT NOT NULL UNIQUE,\r\n  full_name TEXT NOT NULL DEFAULT \u0027\u0027,\r\n  avatar_url TEXT DEFAULT \u0027\u0027,\r\n  trust_score INTEGER DEFAULT 50,\r\n  loyalty_points INTEGER DEFAULT 100,\r\n  loyalty_level TEXT DEFAULT \u0027Explorateur\u0027,\r\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,\r\n  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\r\n"
+                          },
+                          {
+                              "File":  "20260712235900_fixes_and_enhancements.sql",
+                              "Alter":  "avatar_url TEXT DEFAULT \u0027\u0027"
+                          },
+                          {
+                              "File":  "20260713000000_products_kits_experts_reviews.sql",
+                              "Def":  "\r\n  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,\r\n  email TEXT NOT NULL UNIQUE,\r\n  full_name TEXT NOT NULL DEFAULT \u0027\u0027,\r\n  avatar_url TEXT DEFAULT \u0027\u0027,\r\n  trust_score INTEGER DEFAULT 50,\r\n  loyalty_points INTEGER DEFAULT 0,\r\n  loyalty_level TEXT DEFAULT \u0027Explorateur\u0027,\r\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,\r\n  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\r\n"
+                          },
+                          {
+                              "File":  "20260713170000_full_schema_and_seed.sql",
+                              "Def":  "\n  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,\n  email TEXT NOT NULL UNIQUE,\n  full_name TEXT NOT NULL DEFAULT \u0027\u0027,\n  avatar_url TEXT DEFAULT \u0027\u0027,\n  trust_score INTEGER DEFAULT 50,\n  loyalty_points INTEGER DEFAULT 0,\n  loyalty_level TEXT DEFAULT \u0027Explorateur\u0027,\n  bio TEXT DEFAULT \u0027\u0027,\n  location TEXT DEFAULT \u0027\u0027,\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,\n  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\n"
+                          },
+                          {
+                              "File":  "20260713200000_gamification_loyalty_fix.sql",
+                              "Alter":  "xp INTEGER DEFAULT 0"
+                          },
+                          {
+                              "File":  "20260728100000_fix_admin_rls_shop_products.sql",
+                              "Alter":  "role text NOT NULL DEFAULT \u0027user\u0027\r\n    CHECK (role IN (\u0027user\u0027, \u0027admin\u0027, \u0027moderator\u0027))"
+                          },
+                          {
+                              "File":  "20260904020000_user_field_signature.sql",
+                              "Alter":  "signature_visibility text NOT NULL DEFAULT \u0027private\u0027\n  CHECK (signature_visibility IN (\u0027private\u0027,\u0027communaute\u0027,\u0027public\u0027))"
+                          }
+                      ],
+    "carnets":  [
+                    {
+                        "File":  "20260713120000_community_features.sql",
+                        "Def":  "\r\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\r\n  author_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,\r\n  title TEXT NOT NULL DEFAULT \u0027\u0027,\r\n  destination TEXT NOT NULL DEFAULT \u0027\u0027,\r\n  description TEXT DEFAULT \u0027\u0027,\r\n  cover_image TEXT DEFAULT \u0027\u0027,\r\n  cover_image_alt TEXT DEFAULT \u0027\u0027,\r\n  start_date DATE,\r\n  end_date DATE,\r\n  weather TEXT DEFAULT \u0027\u0027,\r\n  route_rating NUMERIC(3,1) DEFAULT 0,\r\n  visibility TEXT DEFAULT \u0027public\u0027 CHECK (visibility IN (\u0027public\u0027,\u0027private\u0027,\u0027friends\u0027)),\r\n  tags TEXT[] DEFAULT \u0027{}\u0027,\r\n  map_points JSONB DEFAULT \u0027[]\u0027,\r\n  is_collaborative BOOLEAN DEFAULT false,\r\n  likes_count INTEGER DEFAULT 0,\r\n  comments_count INTEGER DEFAULT 0,\r\n  favorites_count INTEGER DEFAULT 0,\r\n  views_count INTEGER DEFAULT 0,\r\n  verified BOOLEAN DEFAULT false,\r\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,\r\n  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\r\n"
+                    },
+                    {
+                        "File":  "20260713170000_full_schema_and_seed.sql",
+                        "Def":  "\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  author_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,\n  title TEXT NOT NULL DEFAULT \u0027\u0027,\n  destination TEXT NOT NULL DEFAULT \u0027\u0027,\n  description TEXT DEFAULT \u0027\u0027,\n  cover_image TEXT DEFAULT \u0027\u0027,\n  cover_image_alt TEXT DEFAULT \u0027\u0027,\n  start_date DATE,\n  end_date DATE,\n  weather TEXT DEFAULT \u0027\u0027,\n  route_rating NUMERIC(3,1) DEFAULT 0,\n  visibility TEXT DEFAULT \u0027public\u0027,\n  tags TEXT[] DEFAULT \u0027{}\u0027,\n  likes_count INTEGER DEFAULT 0,\n  comments_count INTEGER DEFAULT 0,\n  views_count INTEGER DEFAULT 0,\n  verified BOOLEAN DEFAULT false,\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,\n  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\n"
+                    },
+                    {
+                        "File":  "20260713230000_carnets_seed_and_fixes.sql",
+                        "Alter":  "map_points JSONB DEFAULT \u0027[]\u0027::jsonb,\n  ADD COLUMN IF NOT EXISTS is_collaborative BOOLEAN DEFAULT false,\n  ADD COLUMN IF NOT EXISTS favorites_count INTEGER DEFAULT 0"
+                    },
+                    {
+                        "File":  "20260905160000_trip_completion_carnet.sql",
+                        "Alter":  "trip_id UUID REFERENCES public.trips(id) ON DELETE SET NULL"
+                    },
+                    {
+                        "File":  "20260911500000_phase2_chain_integrity.sql",
+                        "Alter":  "correlation_id uuid"
+                    }
+                ],
+    "user_follows":  [
+                         {
+                             "File":  "20260713120000_community_features.sql",
+                             "Def":  "\r\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\r\n  follower_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,\r\n  following_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,\r\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\r\n"
+                         },
+                         {
+                             "File":  "20260713170000_full_schema_and_seed.sql",
+                             "Def":  "\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  follower_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,\n  following_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\n"
+                         }
+                     ],
+    "carnet_favorites":  [
+                             {
+                                 "File":  "20260713120000_community_features.sql",
+                                 "Def":  "\r\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\r\n  carnet_id UUID REFERENCES public.carnets(id) ON DELETE CASCADE,\r\n  user_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,\r\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\r\n"
+                             },
+                             {
+                                 "File":  "20260713230000_carnets_seed_and_fixes.sql",
+                                 "Def":  "\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  carnet_id UUID REFERENCES public.carnets(id) ON DELETE CASCADE,\n  user_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,\n  UNIQUE(carnet_id, user_id)\n"
+                             }
+                         ],
+    "comment_reports":  [
+                            {
+                                "File":  "20260814000000_comment_reports_table.sql",
+                                "Def":  "\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  comment_id UUID NOT NULL,\n  reporter_id UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,\n  reason TEXT DEFAULT \u0027Propos inappropriés\u0027,\n  table_name TEXT NOT NULL DEFAULT \u0027post_comments\u0027,\n  status TEXT DEFAULT \u0027pending\u0027 CHECK (status IN (\u0027pending\u0027,\u0027reviewed\u0027,\u0027dismissed\u0027)),\n  created_at TIMESTAMPTZ DEFAULT now()\n"
+                            }
+                        ],
+    "club_topics":  [
+                        {
+                            "File":  "20260712210000_app_tables.sql",
+                            "Def":  "\r\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\r\n  club_id UUID NOT NULL REFERENCES public.clubs(id) ON DELETE CASCADE,\r\n  user_id UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,\r\n  author_id UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,\r\n  title TEXT NOT NULL,\r\n  content TEXT DEFAULT \u0027\u0027,\r\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\r\n"
+                        },
+                        {
+                            "File":  "20260712210000_app_tables.sql",
+                            "Alter":  "author_id UUID REFERENCES public.user_profiles(id)"
+                        },
+                        {
+                            "File":  "20260712220000_app_tables_v2.sql",
+                            "Def":  "\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  club_id UUID NOT NULL REFERENCES public.clubs(id) ON DELETE CASCADE,\n  user_id UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,\n  title TEXT NOT NULL,\n  content TEXT DEFAULT \u0027\u0027,\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\n"
+                        },
+                        {
+                            "File":  "20260712230000_app_tables_v3.sql",
+                            "Def":  "\r\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\r\n  club_id UUID NOT NULL REFERENCES public.clubs(id) ON DELETE CASCADE,\r\n  user_id UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,\r\n  title TEXT NOT NULL,\r\n  content TEXT DEFAULT \u0027\u0027,\r\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\r\n"
+                        },
+                        {
+                            "File":  "20260713120000_community_features.sql",
+                            "Def":  "\r\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\r\n  club_id UUID REFERENCES public.clubs(id) ON DELETE CASCADE,\r\n  author_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,\r\n  title TEXT NOT NULL,\r\n  content TEXT DEFAULT \u0027\u0027,\r\n  is_pinned BOOLEAN DEFAULT false,\r\n  is_announcement BOOLEAN DEFAULT false,\r\n  is_approved BOOLEAN DEFAULT true,\r\n  likes_count INTEGER DEFAULT 0,\r\n  replies_count INTEGER DEFAULT 0,\r\n  reports_count INTEGER DEFAULT 0,\r\n  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,\r\n  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\r\n"
+                        },
+                        {
+                            "File":  "20260713120000_community_features.sql",
+                            "Alter":  "is_approved BOOLEAN DEFAULT true"
+                        }
+                    ]
+}
