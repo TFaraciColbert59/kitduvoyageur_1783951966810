@@ -73,9 +73,10 @@ vi.mock('@/lib/ai/askAI', () => ({
   ),
 }));
 
-import { compasSetOriginAction } from '../server/compasActions';
+import { askAI } from '@/lib/ai/askAI';
+import { compasSetDestinationAction, compasSetOriginAction } from '../server/compasActions';
 import { updateTripMetadata } from '../server/compasServer';
-import { lookupDestination } from '../server/placeLookup';
+import { lookupBase, lookupDestination } from '../server/placeLookup';
 
 const TRIP = '11111111-1111-4111-8111-111111111111';
 const LYON = {
@@ -287,11 +288,36 @@ describe('compasSetOriginAction', () => {
       expect(origin()).toEqual({ name: 'Ailleurs', lat: 46.1, lon: 6.2, countryCode: 'FR', source: 'dit' });
     });
 
-    it('accepté : la région que le spécialiste IA ramène à une ville de base', async () => {
+    it('un départ n’appelle jamais le spécialiste IA : ville trouvée sur la carte, ou inconnue', async () => {
       h.ai = JSON.stringify({ base: 'Grenoble', country_code: 'FR', label: 'Vercors' });
       h.base = { ...at, name: 'Grenoble', kind: 'city', settlement: true, lat: 45.19, lon: 5.72 };
-      expect(await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place: 'Vercors' })).toEqual({ success: true });
-      expect(origin()).toEqual({ name: 'Vercors', lat: 45.19, lon: 5.72, countryCode: 'FR', source: 'dit' });
+      // Trouvée du premier coup : aucun appel IA.
+      expect(await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place: 'Lyon' })).toEqual({ success: true });
+      // Inconnue de la carte : pas de ville de base inventée par l'IA, « introuvable ».
+      expect(await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place: 'Vercors' })).toEqual({
+        success: false,
+        error: '« Vercors » introuvable sur la carte.',
+      });
+      expect(askAI).not.toHaveBeenCalled();
+      expect(lookupBase).not.toHaveBeenCalled();
+      expect(origin()).toMatchObject({ name: 'Lyon' });
+    });
+
+    it('sans IA, le premier lieu habité du nom reste un départ valable (secours de la carte)', async () => {
+      h.loose = { ...at, name: 'Bourg-Saint-Maurice', kind: 'town', settlement: true, lat: 45.62, lon: 6.77 };
+      expect(await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place: 'bourg saint maurice' })).toEqual({
+        success: true,
+      });
+      expect(origin()).toEqual({ name: 'Bourg-Saint-Maurice', lat: 45.62, lon: 6.77, countryCode: 'FR', source: 'dit' });
+      expect(askAI).not.toHaveBeenCalled();
+    });
+
+    it('la destination, elle, passe toujours par le spécialiste IA quand la carte ne connaît pas le nom', async () => {
+      h.ai = JSON.stringify({ base: 'Grenoble', country_code: 'FR', label: 'Vercors' });
+      h.base = { ...at, name: 'Grenoble', kind: 'city', settlement: true, lat: 45.19, lon: 5.72 };
+      expect(await compasSetDestinationAction({ tripId: TRIP, tripSlug: 'x', place: 'Vercors' })).toEqual({ success: true });
+      expect(askAI).toHaveBeenCalledTimes(1);
+      expect((h.meta.compas as Record<string, unknown>).anchor).toMatchObject({ name: 'Vercors', lat: 45.19, lon: 5.72 });
     });
 
     it.each([

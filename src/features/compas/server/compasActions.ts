@@ -546,13 +546,11 @@ export async function compasSetPreferencesAction(
 }
 
 /**
- * Trois temps : le nom exact sur la carte ; sinon le spécialiste donne la
- * ville de base réelle (massif, parc, sentier : « Vercors » → Villard-de-Lans),
- * vérifiée sur la carte dans le bon pays ; sinon le premier lieu habité du nom.
+ * Le spécialiste donne la ville de base réelle d'un massif, d'un parc, d'un
+ * sentier (« Vercors » → Villard-de-Lans), vérifiée sur la carte dans le bon
+ * pays. Sans réponse fiable ou ville introuvable : null.
  */
-async function resolveDestination(query: string, userId: string): Promise<CompasPlace | null> {
-  const exact = await lookupDestination(query);
-  if (exact) return exact;
+async function baseFromSpecialist(query: string, userId: string): Promise<CompasPlace | null> {
   try {
     const res = await askAI({
       feature: 'compas-autofill',
@@ -577,6 +575,25 @@ async function resolveDestination(query: string, userId: string): Promise<Compas
   } catch {
     /* repli : lieu naturel, puis lieu habité du même nom */
   }
+  return null;
+}
+
+/**
+ * Trois temps : le nom exact sur la carte ; sinon le spécialiste donne la
+ * ville de base réelle (massif, parc, sentier : « Vercors » → Villard-de-Lans),
+ * vérifiée sur la carte dans le bon pays ; sinon le premier lieu habité du nom.
+ * `ai: false` (un lieu de DÉPART) saute le spécialiste : une ville de base
+ * inventée deviendrait un faux départ que personne ne verrait, pour un appel IA perdu.
+ */
+async function resolveDestination(
+  query: string,
+  userId: string,
+  opts: { ai?: boolean } = {}
+): Promise<CompasPlace | null> {
+  const exact = await lookupDestination(query);
+  if (exact) return exact;
+  const based = opts.ai === false ? null : await baseFromSpecialist(query, userId);
+  if (based) return based;
   // Sans réponse du spécialiste : le lieu naturel qui porte le nom (« Calanques » :
   // le parc national, pas le récif de Piana en Corse, premier venu de la carte).
   const natural = await lookupNatural(query, null).catch(() => null);
@@ -715,7 +732,7 @@ export async function compasSetOriginAction(
       const limitError = await placeSearchLimitError(auth.userId);
       if (limitError) return { success: false, error: limitError };
     }
-    const searched = wanted ? await resolveDestination(wanted, auth.userId) : null;
+    const searched = wanted ? await resolveDestination(wanted, auth.userId, { ai: false }) : null;
     if (wanted && !searched) return { success: false, error: `« ${wanted} » introuvable sur la carte.` };
     // Seul un lieu habité, une région ou un pays est un départ : « depuis le camping » (ou un
     // sommet, un lac, un hôtel) trouvé sur la carte est refusé, jamais écrit ni pris pour ancre.
