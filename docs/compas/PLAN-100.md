@@ -800,7 +800,18 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       `compas.css` : bloc `@media (forced-colors: active)` (verre plein et bordé, états
       choisis en Highlight, barres, lentille, interrupteurs, icônes en masque préservées,
       focus), couleurs système seulement.
-- [ ] Test réel VoiceOver et TalkBack ; CI axe étendue à tous les tiroirs.
+- [ ] Test réel VoiceOver et TalkBack. 🔒 Impossible en session : il faut un iPhone et un
+      Android réels, parcourus à la main par une personne (cinq étapes, un tiroir de
+      chaque, une annonce « Annuler » et une erreur).
+- [x] CI axe étendue à tous les tiroirs. Lot Q (`compasScreen.test.tsx` « axe-core :
+      l'écran et chacun des tiroirs ») : `axe-core` (déjà présent avec `@axe-core/playwright`)
+      balaie en jsdom, à chaque `npm test` de la CI, les cinq étapes de l'écran, les 26
+      parcours de tiroir (`STEP_FLOWS`), la fiche d'objet, Porteur, Emprunter / Louer /
+      Acheter, Ajouter au kit et le sac d'un membre, règles WCAG 2 A/AA et 2.1/2.2 :
+      zéro violation. Un témoin vérifie que le balayage détecte bien un défaut (l'ancien
+      `KitRow` fait échouer trois parcours). Reste : le contraste de couleur, que jsdom ne
+      mesure pas, et qui reste couvert dans le navigateur par `npm run test:a11y`
+      (Playwright, `tests/a11y/e2e`) sur l'aperçu.
 
 ### 5.3 Légal visible
 

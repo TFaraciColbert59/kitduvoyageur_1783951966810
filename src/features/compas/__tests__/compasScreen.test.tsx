@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import axe from 'axe-core';
+import { STEP_FLOWS } from '../components/compasTypes';
 import { buildCompasModel, type CompasInput, type CompasItemInput } from '../engine/compasModel';
 import { assessDanger } from '../engine/danger';
 import { daylightClock } from '../engine/sun';
@@ -2399,6 +2401,106 @@ describe('CompasScreen : accessibilité (lot Q, 5.2)', () => {
       const sheet = await openFlow(/Quand/);
       const prev = within(sheet).getByRole('button', { name: /Onglet précédent/ });
       expect(prev.getAttribute('aria-label')).toMatch(/^Onglet précédent : \S+/);
+    });
+  });
+
+  describe('axe-core : l’écran et chacun des tiroirs, zéro violation WCAG A/AA', () => {
+    /* jsdom n'a ni mise en page ni couleurs : le contraste reste mesuré dans le
+       navigateur (tests/a11y, Playwright). Tout le reste des règles A/AA tourne ici. */
+    const scan = async (root: Element): Promise<string[]> => {
+      const res = await axe.run(root as HTMLElement, {
+        runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] },
+        rules: {
+          'color-contrast': { enabled: false },
+          // Fragment de page : ni <main> ni repères de document ici.
+          region: { enabled: false },
+          'landmark-one-main': { enabled: false },
+          'page-has-heading-one': { enabled: false },
+        },
+      });
+      return res.violations.map(
+        (v) => `${v.id} (${v.impact}) : ${v.nodes.map((n) => n.target.join(' ')).slice(0, 3).join(' | ')}`
+      );
+    };
+
+    it('le balayage détecte bien un défaut (témoin : un bouton dans un role="button", l’ancien KitRow)', async () => {
+      const { container } = render(
+        <div role="button" tabIndex={0}>
+          <button type="button" aria-label="Emballer">
+            x
+          </button>
+        </div>
+      );
+      const found = await scan(container);
+      expect(found.some((f) => f.startsWith('nested-interactive'))).toBe(true);
+    });
+
+    it('l’écran du Compas, sur chacune des cinq étapes', async () => {
+      for (const step of ['ou', 'nous', 'resa', 'verdict', 'kit'] as const) {
+        render(<CompasScreen data={makeData()} initialStep={step} />);
+        expect(await scan(document.body), `étape ${step}`).toEqual([]);
+        cleanup();
+      }
+    });
+
+    it('fiche d’un objet, porteur, Emprunter / Louer / Acheter, Ajouter au kit, sac d’un membre', async () => {
+      render(<CompasScreen data={makeData()} initialStep="kit" />);
+      const settle = () => new Promise((r) => setTimeout(r, 50));
+      const current = async () => {
+        await settle();
+        return screen.getByRole('dialog');
+      };
+      const click = async (name: RegExp) => {
+        fireEvent.click(within(await current()).getByRole('button', { name }));
+        await settle();
+      };
+      fireEvent.click(screen.getByRole('button', { name: /^Détails : / }));
+      await click(/Tout/);
+      // fiche de l'objet à trouver (sac de couchage), puis ses quatre sorties
+      fireEvent.click(within(await current()).getByText('Sac de couchage'));
+      expect(await scan(await current()), 'fiche objet').toEqual([]);
+      await click(/Porteur/);
+      expect(await scan(await current()), 'porteur').toEqual([]);
+      await click(/^Retour$/);
+      await click(/Acheter/);
+      expect(await scan(await current()), 'acheter').toEqual([]);
+      await click(/^Retour$/);
+      await click(/Emprunter/);
+      expect(await scan(await current()), 'emprunter').toEqual([]);
+      await click(/^Retour$/);
+      await click(/Louer/);
+      expect(await scan(await current()), 'louer').toEqual([]);
+      // ajouter au kit, puis sac d'un membre (flux « Sacs »)
+      cleanup();
+      render(<CompasScreen data={makeData()} initialStep="kit" />);
+      fireEvent.click(screen.getByRole('button', { name: /^Détails : / }));
+      await click(/Tout/);
+      await click(/Ajouter au kit/);
+      expect(await scan(await current()), 'ajouter au kit').toEqual([]);
+      cleanup();
+      render(<CompasScreen data={makeData()} initialStep="kit" />);
+      fireEvent.click(screen.getByRole('button', { name: /^Détails : / }));
+      await click(/Sacs/);
+      fireEvent.click(within(await current()).getAllByRole('button', { name: /Tony/ })[0]);
+      expect(await scan(await current()), 'sac d’un membre').toEqual([]);
+    });
+
+    const CASES = (Object.keys(STEP_FLOWS) as Array<keyof typeof STEP_FLOWS>).flatMap((step) =>
+      STEP_FLOWS[step].map((f) => [step, f.id, f.label] as const)
+    );
+    it.each(CASES)('tiroir %s / %s (%s)', async (step, _flow, label) => {
+      render(<CompasScreen data={makeData()} initialStep={step} />);
+      fireEvent.click(screen.getByRole('button', { name: /^Détails : / }));
+      const sheet = await screen.findByRole('dialog');
+      const tabs = within(sheet).getByRole('group', { name: 'Parcours du tiroir' });
+      const tab = within(tabs)
+        .getAllByRole('button')
+        .find((b) => b.textContent?.trim() === label);
+      expect(tab, `onglet ${label}`).toBeTruthy();
+      fireEvent.click(tab as HTMLElement);
+      // Les parcours chargent parfois (Mes kits, bouteille…) : on laisse l'état se poser.
+      await new Promise((r) => setTimeout(r, 50));
+      expect(await scan(screen.getByRole('dialog')), `${step}/${label}`).toEqual([]);
     });
   });
 
