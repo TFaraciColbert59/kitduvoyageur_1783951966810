@@ -18,11 +18,12 @@
 --      20260911 et a10_replay_bootstrap — que le garde-fou v2 contrôle). Ajout
 --      transactionnel (rollbacké) pour que le garde-fou soit exerçable à
 --      l'identique de la prod ; la migration n'est pas modifiée.
---   4. couverture comportementale de `create_shop_order` (revue round 1) :
+--   4. couverture comportementale de `create_shop_order` (revues rounds 1-2) :
 --      produit fixture minimal (id, slug unique, name, price_eur, stock,
---      available) conforme au schéma réel ; l'assertion de points suppose le
---      trigger prod `process_order_points` (présent dans l'environnement
---      certifié baseline + migrations post-baseline).
+--      available) conforme au schéma réel ; virement créé 'pending' sans
+--      crédit, points crédités à la confirmation admin (triggers
+--      `process_order_points` + `process_pending_order_points` dans
+--      l'environnement certifié baseline + migrations post-baseline).
 BEGIN;
 SET LOCAL search_path = public;
 GRANT USAGE ON SCHEMA public TO authenticated, service_role;
@@ -35,7 +36,7 @@ TO service_role;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated, service_role;
 ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS is_suspended_groups boolean DEFAULT false;
 ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS suspended_from_groups_at timestamptz;
-SELECT plan(36);
+SELECT plan(39);
 
 -- Fixtures
 INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
@@ -103,6 +104,9 @@ SELECT is((public.legacy_loyalty_spend('aaaa0001-0000-4000-8000-000000000002', 1
   'true', '16. dépense nominale OK');
 SELECT is((public.legacy_loyalty_spend('aaaa0001-0000-4000-8000-000000000002', 1000, 'Achat test', 'test:spend:1'))->>'idempotent',
   'true', '17. rejeu idempotent (pas de double débit)');
+SELECT is((public.legacy_loyalty_spend('aaaa0001-0000-4000-8000-000000000002', 1000, 'Achat test', 'test:spend:1'))->>'level',
+  (SELECT loyalty_level FROM public.user_profiles WHERE id = 'aaaa0001-0000-4000-8000-000000000002'),
+  '17b. rejeu idempotent : level = loyalty_level courant (Explorateur à 234)');
 SELECT is((public.legacy_loyalty_earn('aaaa0001-0000-4000-8000-000000000002', 4000, 'Gain test', 'test:earn:1'))->>'balance',
   '4234', '18. crédit + solde exact');
 SELECT is((SELECT loyalty_level FROM public.user_profiles WHERE id = 'aaaa0001-0000-4000-8000-000000000002'),
@@ -137,41 +141,51 @@ SELECT ok(to_regprocedure('public.create_shop_order(uuid,text,jsonb,jsonb,text)'
 SELECT ok(NOT has_function_privilege('authenticated','public.create_shop_order(uuid,text,jsonb,jsonb,text)','EXECUTE'),
   '24b. create_shop_order non exécutable par authenticated');
 
--- 25-33. create_shop_order : couverture comportementale (spec §6.4-12).
+-- 25-35. create_shop_order : couverture comportementale (spec §6.4-12) + virement.
 INSERT INTO public.shop_products (id, slug, name, price_eur, available, stock)
 VALUES ('aaaa0003-0000-4000-8000-000000000001', 'phase1-smoke-produit', 'Produit Phase 1 Smoke', 25.00, true, 5)
 ON CONFLICT (id) DO NOTHING;
 
-SELECT is((public.create_shop_order('aaaa0001-0000-4000-8000-000000000002', 'bank_transfer', '{}'::jsonb,
+SELECT is((public.create_shop_order('aaaa0001-0000-4000-8000-000000000002', 'virement', '{}'::jsonb,
   '[{"slug":"phase1-slug-inexistant","quantity":1}]'::jsonb, 'standard'))->>'error',
   'unknown_product', '25. slug inconnu refusé');
 
-SELECT is((public.create_shop_order('aaaa0001-0000-4000-8000-000000000002', 'bank_transfer', '{}'::jsonb,
+SELECT is((public.create_shop_order('aaaa0001-0000-4000-8000-000000000002', 'virement', '{}'::jsonb,
   '[{"slug":"phase1-smoke-produit","quantity":1}]'::jsonb, 'pigeon'))->>'error',
   'invalid_shipping', '26. livraison inconnue refusée');
 
 CREATE TEMP TABLE p1_order_res AS
-SELECT public.create_shop_order('aaaa0001-0000-4000-8000-000000000002', 'bank_transfer',
+SELECT public.create_shop_order('aaaa0001-0000-4000-8000-000000000002', 'virement',
   '{"city":"Grenoble"}'::jsonb, '[{"slug":"phase1-smoke-produit","quantity":2}]'::jsonb, 'standard') AS res;
 
-SELECT is((SELECT (res->>'success')::boolean FROM p1_order_res), true, '27. commande nominale : success');
+SELECT is((SELECT (res->>'success')::boolean FROM p1_order_res), true, '27. commande virement : success');
 SELECT is((SELECT status FROM public.orders WHERE id = ((SELECT res->>'orderId' FROM p1_order_res))::uuid),
-  'confirmed', '28. commande nominale : statut confirmed');
+  'pending', '28. commande virement créée pending');
 SELECT is((SELECT count(*)::int FROM public.loyalty_history
-   WHERE source_id = 'order_' || (SELECT res->>'orderId' FROM p1_order_res)), 1,
-  '29. exactement une ligne purchase order_<id>');
+   WHERE source_id = 'order_' || (SELECT res->>'orderId' FROM p1_order_res)), 0,
+  '29. aucun point crédité à la création (virement)');
 SELECT is((SELECT count(*)::int FROM public.stock_movements
    WHERE reference_id = (SELECT res->>'orderId' FROM p1_order_res) AND reference_type = 'order'), 1,
   '30. un mouvement de stock tracé');
 SELECT is((SELECT stock FROM public.shop_products WHERE id = 'aaaa0003-0000-4000-8000-000000000001'), 3,
   '31. stock décrémenté de 2 (5 → 3)');
+
+UPDATE public.orders SET status = 'confirmed'
+WHERE id = ((SELECT res->>'orderId' FROM p1_order_res))::uuid;
+
+SELECT is((SELECT count(*)::int FROM public.loyalty_history
+   WHERE source_id = 'order_' || (SELECT res->>'orderId' FROM p1_order_res)), 1,
+  '32. confirmation admin : exactement une ligne purchase order_<id>');
 SELECT is((SELECT points FROM public.loyalty_history
    WHERE source_id = 'order_' || (SELECT res->>'orderId' FROM p1_order_res)), 559,
-  '32. points = floor(total × 10) = 559 (55,90 €)');
+  '33. points = floor(total × 10) = 559 (55,90 €)');
+SELECT is((SELECT loyalty_points FROM public.user_profiles WHERE id = 'aaaa0001-0000-4000-8000-000000000002'),
+  (SELECT COALESCE(SUM(points), 0)::int FROM public.loyalty_history WHERE user_id = 'aaaa0001-0000-4000-8000-000000000002'),
+  '34. loyalty_points synchronisé après confirmation');
 
-SELECT is((public.create_shop_order('aaaa0001-0000-4000-8000-000000000002', 'bank_transfer', '{}'::jsonb,
+SELECT is((public.create_shop_order('aaaa0001-0000-4000-8000-000000000002', 'virement', '{}'::jsonb,
   '[{"slug":"phase1-smoke-produit","quantity":0}]'::jsonb, 'standard'))->>'error',
-  'invalid_items', '33. quantité invalide refusée');
+  'invalid_items', '35. quantité invalide refusée');
 
 SELECT * FROM finish();
 ROLLBACK;
