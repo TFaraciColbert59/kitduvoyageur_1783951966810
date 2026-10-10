@@ -2144,4 +2144,41 @@ describe('CompasScreen : accessibilité (lot Q, 5.2)', () => {
     });
   });
 
+  describe('Pastilles d’alerte des étapes : annoncées au lecteur d’écran', () => {
+    // Le calcul du nom accessible de jsdom met une espace entre éléments frères.
+    const alertName = (step: string, cause: string) => new RegExp(`^${step} ?, alerte : ${cause}$`);
+
+    it('une étape en alerte dit pourquoi dans son nom accessible, la pastille reste décorative', () => {
+      render(<CompasScreen data={makeData()} />);
+      // Sac de couchage vital à trouver → alerte rouge sur le Kit.
+      const kitStep = within(stepsNav()).getByRole('button', {
+        name: alertName('Kit', 'objet vital à trouver'),
+      });
+      const dot = kitStep.querySelector('.cp-step__dot') as HTMLElement;
+      expect(dot.getAttribute('data-tone')).toBe('bad');
+      expect(dot.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('les icônes des étapes sont décoratives : le nom du glyphe n’est plus lu avant l’étape', () => {
+      render(<CompasScreen data={makeData()} />);
+      expect(within(stepsNav()).queryByRole('img')).toBeNull();
+    });
+
+    it('une étape sans alerte garde son nom simple', () => {
+      render(<CompasScreen data={makeData()} />);
+      const ou = within(stepsNav()).getByRole('button', { name: 'Où' });
+      expect(ou.querySelector('.cp-step__dot')).toBeNull();
+    });
+
+    it('chaque alerte se dit selon sa cause', () => {
+      const data = makeData({ trip: { ...baseTrip, startDate: null, endDate: null } });
+      render(<CompasScreen data={data} />);
+      const nav = stepsNav();
+      expect(within(nav).getByRole('button', { name: alertName('Où', 'dates à choisir') })).toBeTruthy();
+      expect(
+        within(nav).getByRole('button', { name: /^Verdict ?, alerte : (voyage bloqué|points à vérifier)$/ })
+      ).toBeTruthy();
+    });
+  });
+
 });

@@ -771,7 +771,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       pleine pour la prévision, ○ ◇ △ creuse pour la tendance) en plus de la couleur et du
       libellé complet ; la légende nomme les formes ; chaque heure de « Heure par heure »
       dit sa qualité et ses raisons en texte (lecteur d'écran) et porte la même forme.
-- [ ] Pastilles d'alerte des étapes annoncées au lecteur d'écran.
+- [x] Pastilles d'alerte des étapes annoncées au lecteur d'écran. Lot Q (`CompasScreen.tsx`
+      `alertText`, `compasScreen.test.tsx` « Pastilles d'alerte des étapes ») : le nom du
+      bouton d'étape dit la cause (« Kit, alerte : objet vital à trouver », « Où, alerte :
+      dates à choisir »…), la pastille reste décorative et l'icône n'annonce plus le nom du
+      glyphe.
 - [ ] Tailles de texte en `rem` ; lignes qui s'agrandissent au lieu de tronquer.
 - [ ] « Annuler » : délai réglable ou plus long ; erreurs en `role="alert"`.
 - [ ] Informations portées par `title` doublées en texte ; `forced-colors`.

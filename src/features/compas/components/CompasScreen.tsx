@@ -720,6 +720,22 @@ export function CompasScreen({
         ? 'warn'
         : undefined,
   };
+  /** Ce que dit la pastille, pour qui ne la voit pas (WCAG 1.1.1, 1.4.1) : sa cause en mots. */
+  const alertText: Partial<Record<CompasStepId, string>> = {
+    ou: alerts.ou ? 'dates à choisir' : undefined,
+    nous: alerts.nous ? 'budget au-dessus de l’objectif' : undefined,
+    resa: alerts.resa ? 'réservations en attente' : undefined,
+    verdict: alerts.verdict
+      ? alerts.verdict === 'bad'
+        ? 'voyage bloqué'
+        : 'points à vérifier'
+      : undefined,
+    kit: alerts.kit
+      ? alerts.kit === 'bad'
+        ? 'objet vital à trouver'
+        : 'objets à trouver ou à confier'
+      : undefined,
+  };
   const stepIndex = COMPAS_STEPS.findIndex((s) => s.id === step);
   const [lensX, setLensX] = useState<number | null>(null);
   const lensDrag = useRef<{ x: number; moved: boolean } | null>(null);
@@ -814,10 +830,14 @@ export function CompasScreen({
                 aria-current={step === s.id ? 'step' : undefined}
                 onClick={() => selectStep(s.id)}
               >
-                <Icon name={s.icon} size={20} />
+                <Icon name={s.icon} size={20} aria-hidden="true" />
                 <span className="cp-step__l">{s.label}</span>
                 {alerts[s.id] && (
-                  <i className="cp-step__dot" data-tone={alerts[s.id]} aria-hidden="true" />
+                  <>
+                    <i className="cp-step__dot" data-tone={alerts[s.id]} aria-hidden="true" />
+                    {/* La pastille est décorative ; sa cause est dans le nom du bouton. */}
+                    <span className="sr-only">, alerte : {alertText[s.id]}</span>
+                  </>
                 )}
               </button>
             ))}
