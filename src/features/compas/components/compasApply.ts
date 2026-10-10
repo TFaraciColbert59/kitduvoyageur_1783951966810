@@ -12,6 +12,7 @@ import {
   compasSetPartySizeAction,
   compasSetPreferencesAction,
   compasSetDestinationAction,
+  compasSetOriginAction,
   compasSetSpanAction,
 } from '../server/compasActions';
 import type { ActionResult, CompasCtl } from './compasTypes';
@@ -27,6 +28,7 @@ export function applyCurrent(ctl: CompasCtl): ApplyCurrent {
     plannedDays: ctl.data.plannedDays ?? null,
     preferences,
     hasRoute: ctl.data.route.id != null,
+    originName: ctl.data.originSaid?.name ?? null,
   };
 }
 
@@ -87,6 +89,14 @@ export async function runOps(
       case 'destination':
         res = await compasSetDestinationAction({ tripId, tripSlug: slug, place: op.place });
         break;
+      case 'origin':
+        res = await compasSetOriginAction({
+          tripId,
+          tripSlug: slug,
+          place: op.place,
+          ...(op.restore ? { restore: op.restore } : {}),
+        });
+        break;
       case 'span':
         res = await compasSetSpanAction({ tripId, tripSlug: slug, days: op.days });
         break;
@@ -142,6 +152,15 @@ export function inverseOps(ctl: CompasCtl, ops: readonly ApplyOp[]): ApplyOp[] |
         break;
       case 'destination':
         out.push({ op: 'destination', place: m.destination ?? null });
+        break;
+      case 'origin':
+        // Le départ dit d'avant, rétabli tel que rangé (même point, sans nouvelle recherche
+        // ni passage compté) ; sans départ avant, on l'efface.
+        out.push(
+          ctl.data.originSaid
+            ? { op: 'origin', place: ctl.data.originSaid.name, restore: ctl.data.originSaid }
+            : { op: 'origin', place: null }
+        );
         break;
       case 'span':
         out.push({ op: 'span', days: ctl.data.plannedDays ?? null });

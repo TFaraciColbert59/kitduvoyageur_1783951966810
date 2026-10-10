@@ -109,7 +109,8 @@ const CONTRACT = [
   '  {"type": "wish", "label": "une envie, 1 a 5 mots"},',
   '  {"type": "add_item", "name": "objet a ajouter au sac", "quantity": 1},',
   '  {"type": "search_route", "query": "nom de lieu ou de parcours"},',
-  '  {"type": "set_destination", "place": "pays, region, massif ou ville ou l on part, tel qu ecrit dans la phrase"}',
+  '  {"type": "set_destination", "place": "pays, region, massif ou ville ou l on va, tel qu ecrit dans la phrase"},',
+  '  {"type": "set_origin", "place": "ville ou lieu d ou la personne part, tel qu ecrit dans la phrase"}',
   ']}',
 ].join('\n');
 
@@ -125,7 +126,8 @@ export function buildCompasIntentSystem(): string {
     '4. « 2 nuits » = 3 jours. « une semaine » = 7 jours. « ce week-end » = samedi, 2 jours.',
     '5. Ne mets jamais de prix, de disponibilite ni de lieu que la phrase ne nomme pas.',
     '6. « dormir dehors 3 nuits » ou « 3 nuits en bivouac » = set_outdoor_nights (ce n est PAS une duree). « sous 12 kg » = set_max_pack. « surtout de la montagne » = set_terrain montagne. « je debute » = set_level debut. « courir », « footing » = running.',
-    '7. Phrase vide de demande : {"actions": []}.',
+    '7. « depuis Lyon », « au depart de Geneve », « en partant d Annecy » = set_origin (le lieu d ou l on part), jamais set_destination.',
+    '8. Phrase vide de demande : {"actions": []}.',
   ].join('\n');
 }
 

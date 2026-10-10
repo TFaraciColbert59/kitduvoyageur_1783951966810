@@ -29,7 +29,6 @@ import {
   longestStay,
   budgetLines,
   budgetTotal,
-  estimateCarTrip,
   gearForNights,
   gearForActivity,
   keepRuleForNights,
@@ -42,9 +41,6 @@ import {
   sanitizeAdvice,
   sanitizeStages,
   sourceGear,
-  approachMode,
-  maxDriveMinutes,
-  FLIGHT_THRESHOLD_KM,
   fuelForKm,
   CAR_ASSUMPTIONS,
   STEP_TRANSPORT,
@@ -59,7 +55,7 @@ import {
   type SourceShop,
   movesFromSteps,
 } from '../engine/autofill';
-import { shortHoursOf, tripLengthDays } from '../engine/tripContext';
+import { anchorFromOrigin, originOf, shortHoursOf, tripLengthDays } from '../engine/tripContext';
 import { compasMeta, readProfile, requireEditor, resplitSteps, tripBasis, tripPartySize, updateTripMetadata, type Supa } from './compasServer';
 import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
 import { bestPeriod, monthName, needsDryNormals } from '../engine/period';
@@ -70,7 +66,8 @@ import { buildTrack, simplifyLine, trackKey, type LngLat } from '../engine/track
 import { descentWindow, planRiverDescent } from '../engine/river';
 import { keepAiNote, travelPapers } from '../engine/papers';
 import { tutoyer } from '../engine/voice';
-import { trainTrip, type TrainTrip } from '../engine/rail';
+import { abroadCosts, originFact, planTravelLeg, travelOrigin, type TravelTransport } from '../engine/travel';
+import { nearestAirport } from './airports';
 import { trailRegion } from '../engine/intent';
 import {
   dayStartVillage,
@@ -135,14 +132,9 @@ const MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juill
 
 export interface CompasAutofillSummary {
   nights: Array<{ night: number; type: NightPlan['type']; place: string | null; reason: string }>;
-  transport: {
-    mode: 'voiture' | 'avion' | 'train';
-    km: number;
-    minutes: number;
-    walkKm: number;
-    fuelEur: number;
-    basis: string;
-  } | null;
+  transport: TravelTransport | null;
+  /** Aucun point de départ (ni « depuis X », ni position) : trajet non chiffré, dit à l'écran. */
+  originUnknown?: boolean;
   kit: Record<GearSource, number>;
   budget: BudgetLine[];
   total: number;
@@ -946,6 +938,14 @@ export async function compasAutofillAction(
           notes.push(`« ${nat.name} » retenu pour ${anchor.name} (lieu naturel, adapté à l’activité).`);
       }
     }
+    // Aucun lieu dit mais un départ dit (« rando 3 jours depuis Lyon ») : la personne a
+    // nommé un endroit, l'aventure est préparée autour de lui, avant toute position.
+    const saidOrigin = originOf(compasMeta(meta).origin);
+    if (!anchor && saidOrigin) {
+      const around = anchorFromOrigin(saidOrigin, ctx.scope);
+      anchor = around.anchor;
+      if (around.note) notes.push(around.note);
+    }
     // Aucun lieu dit : on part de la position partagée (une sortie autour de
     // soi, ou un voyage « près de chez toi »), et on le dit.
     if (!anchor && from) {
@@ -1561,118 +1561,61 @@ export async function compasAutofillAction(
     }
 
     lap('5');
-    /* 5. Venir : route mesurée si c'est raisonnable, sinon avion (chiffré par le spécialiste). */
-    let transport: CompasAutofillSummary['transport'] = null;
-    let carFuel: ReturnType<typeof estimateCarTrip> = null;
+    /* 5. Venir : d'où l'on part (« depuis X » dit, sinon la position, jamais la
+       France par défaut), puis la route mesurée, le train ou l'avion d'aéroport
+       à aéroport (`engine/travel.ts`). Sans point de départ, rien n'est chiffré. */
     const start = dayStep(1);
     const target = start?.latitude != null && start.longitude != null ? { lat: start.latitude, lon: start.longitude } : anchor;
-    const near = from ? await lookupReverse(from.lat, from.lon) : null;
     // La commune, pas le lieu le plus proche du point (« depuis Chantier Hotel
-    // de Ville » au lieu d'Annecy, 8 oct.).
-    const origin = near ? { ...near, name: near.locality ?? near.name } : null;
-    const abroad =
-      anchor.countryCode != null && (origin?.countryCode ?? 'FR') !== anchor.countryCode;
-    let flightNeeded = false;
-    // Train plutôt qu'avion quand la route est trop longue mais le rail à portée (Ardennes, Bruges).
-    let trainNeeded = null as TrainTrip | null;
-    const byTrain = (roadKm: number | null) =>
-      from ? trainTrip({ fromCountry: origin?.countryCode ?? 'FR', toCountry: anchor.countryCode, straightKm: distanceKm(from, target), roadKm, days, to: target }) : null;
-    const takeTrain = (rail: TrainTrip) => {
-      trainNeeded = rail;
-      transport = { mode: 'train', km: rail.railKm, minutes: rail.minutesOneWay, walkKm: 0, fuelEur: 0, basis: rail.basis };
-    };
-    // Sortie de quelques heures : pas de trajet à chiffrer (on part de chez soi).
-    if (!from && ctx.modules.transport)
-      notes.push('Position non partagée : le trajet jusqu’au départ est chiffré depuis la France, à ajuster.');
-    const mode = !ctx.modules.transport
-      ? 'aucun'
-      : from
-        ? approachMode({ straightKm: distanceKm(from, target), days })
-        : abroad
-          ? 'avion'
-          : 'route';
-    // Trop loin pour la route vu la durée : le train si le rail s'y prête (route
-    // mesurée pour écarter une île), sinon l'avion.
-    const railFirst =
-      mode === 'avion' && byTrain(from ? distanceKm(from, target) : null)
-        ? await routeAttempt([from!, target], 'voiture')
-            .then((car) => (car.legs?.length ? byTrain(car.legs.reduce((t, l) => t + l.distanceKm, 0)) : null))
-            .catch(() => null)
-        : null;
-    if (railFirst) takeTrain(railFirst);
-    else if (mode === 'avion') {
-      flightNeeded = true;
-      transport = {
-        mode: 'avion',
-        km: Math.round(from ? distanceKm(from, target) : 0),
-        minutes: 0,
-        walkKm: 0,
-        fuelEur: 0,
-        basis: `vol aller-retour ${origin?.name ? `depuis ${origin.name}` : 'depuis la France'} vers ${anchor.name}`,
-      };
-    } else if (mode === 'route' && from) {
-      const car = await routeAttempt([from, target], 'voiture');
-      if (car.legs?.length) {
-        const km = car.legs.reduce((t, l) => t + l.distanceKm, 0);
-        const min = car.legs.reduce((t, l) => t + l.durationMin, 0);
-        const last = car.legs[car.legs.length - 1].geometry.at(-1);
-        let walkKm = 0;
-        if (last) {
-          const end = { lat: last[1], lon: last[0] };
-          if (haversineKm(end, target) * 1000 > ARRIVAL_TOLERANCE_M) {
-            const walk = await routeAttempt([end, target], 'pieton');
-            walkKm = walk.legs?.reduce((t, l) => t + l.distanceKm, 0) ?? haversineKm(end, target);
+    // de Ville » au lieu d'Annecy, 8 oct.) ; inutile quand le départ est dit.
+    const near = !saidOrigin && from ? await lookupReverse(from.lat, from.lon) : null;
+    const travelLeg = await planTravelLeg(
+      {
+        origin: travelOrigin(
+          saidOrigin,
+          from
+            ? {
+                lat: from.lat,
+                lon: from.lon,
+                name: near ? (near.locality ?? near.name) : null,
+                country: near?.country ?? null,
+                countryCode: near?.countryCode ?? null,
+              }
+            : null
+        ),
+        target,
+        destination: { name: anchor.name, countryCode: anchor.countryCode },
+        days,
+        party,
+        transport: ctx.modules.transport,
+      },
+      {
+        carRoute: async (a, b) => {
+          const car = await routeAttempt([a, b], 'voiture');
+          if (!car.legs?.length) {
+            console.warn('[compas] trajet d’approche non calculé', car.reason ?? 'inconnu');
+            return { failure: car.reason ?? null };
           }
-        }
-        const rail = min > maxDriveMinutes(days) ? byTrain(km) : null;
-        if (rail) takeTrain(rail);
-        else if (min > maxDriveMinutes(days)) {
-          // Route trop longue pour la durée du voyage, rail hors de portée : l'avion.
-          flightNeeded = true;
-          transport = {
-            mode: 'avion',
-            km: Math.round(distanceKm(from, target)),
-            minutes: 0,
-            walkKm: 0,
-            fuelEur: 0,
-            basis: `${Math.round(min / 60)} h de route à l’aller pour ${days} jour${days > 1 ? 's' : ''} : vol vers ${anchor.name}`,
+          const last = car.legs[car.legs.length - 1].geometry.at(-1);
+          return {
+            km: car.legs.reduce((t, l) => t + l.distanceKm, 0),
+            minutes: car.legs.reduce((t, l) => t + l.durationMin, 0),
+            end: last ? { lat: last[1], lon: last[0] } : null,
           };
-        } else {
-          carFuel = estimateCarTrip({ oneWayKm: km, oneWayMin: min, partySize: party });
-          if (carFuel)
-            transport = {
-              mode: 'voiture',
-              km: carFuel.oneWayKm,
-              minutes: carFuel.oneWayMin,
-              walkKm: Math.round(walkKm * 10) / 10,
-              fuelEur: carFuel.fuelEur,
-              basis: carFuel.basis,
-            };
-        }
-      } else if (distanceKm(from, target) <= FLIGHT_THRESHOLD_KM) {
-        // Itinéraire non calculé (panne, débit, tracé qui n'arrive pas pile au
-        // lieu) mais destination à portée de route : trajet estimé (vol
-        // d'oiseau × 1,3 à 80 km/h), jamais un vol à 450 km.
-        const km = Math.round(distanceKm(from, target) * 1.3);
-        carFuel = estimateCarTrip({ oneWayKm: km, oneWayMin: Math.round((km / 80) * 60), partySize: party });
-        if (carFuel) {
-          transport = { mode: 'voiture', km: carFuel.oneWayKm, minutes: carFuel.oneWayMin, walkKm: 0, fuelEur: carFuel.fuelEur, basis: carFuel.basis };
-          const why: Record<string, string> = {
-            off_network: 'tracé qui n’arrive pas au lieu',
-            provider_unavailable: 'service de calcul injoignable',
-            rate_limited: 'trop de calculs d’affilée',
-          };
-          console.warn('[compas] trajet d’approche non calculé', car.reason ?? 'inconnu');
-          notes.push(
-            `Trajet en voiture estimé (itinéraire routier non calculé : ${why[car.reason ?? ''] ?? 'raison inconnue'}) : à vérifier, traversée en ferry éventuelle non comptée.`
-          );
-        }
-      } else {
-        // Pas de route (île, autre continent) : l'avion ou le bateau s'imposent.
-        flightNeeded = true;
-        transport = { mode: 'avion', km: Math.round(distanceKm(from, target)), minutes: 0, walkKm: 0, fuelEur: 0, basis: `aucune route praticable vers ${anchor.name}` };
+        },
+        walkKm: async (end, to) => {
+          if (haversineKm(end, to) * 1000 <= ARRIVAL_TOLERANCE_M) return 0;
+          const walk = await routeAttempt([end, to], 'pieton');
+          return walk.legs?.reduce((t, l) => t + l.distanceKm, 0) ?? haversineKm(end, to);
+        },
+        airport: (p, country) => nearestAirport(p.lat, p.lon, { country }),
       }
-    } else if (mode === 'sur_place') notes.push('Tu es déjà au départ : aucun trajet à prévoir.');
+    );
+    notes.push(...travelLeg.notes);
+    const { origin, abroad, transport, carFuel } = travelLeg;
+    const flightNeeded = travelLeg.flight != null;
+    // Train plutôt qu'avion quand la route est trop longue mais le rail à portée (Ardennes, Bruges).
+    const trainNeeded = travelLeg.train;
     const motorLegs = steps.filter((s, i) => i > 0 && s.distance_km != null && s.distance_km > 0).length;
     // Étapes proposées à l'instant, sinon celles déjà en place avec leur moyen de transport.
     const moves = stagePlaces.length ? stagePlaces : movesFromSteps(steps, activity);
@@ -1804,15 +1747,15 @@ export async function compasAutofillAction(
     const stageLine = steps
       .map((s) => {
         const by = s.transport_mode ? BY[s.transport_mode] : undefined;
-        const leg = s.distance_km ? ` (${s.distance_km} km${by ? ` ${by}` : ''})` : '';
-        return `J${s.day_number} ${s.title.split(' · ').slice(1).join(' · ')}${leg}`;
+        const legText = s.distance_km ? ` (${s.distance_km} km${by ? ` ${by}` : ''})` : '';
+        return `J${s.day_number} ${s.title.split(' · ').slice(1).join(' · ')}${legText}`;
       })
       .join(' ; ');
     const facts = [
       `Destination : ${anchor.name}${anchor.country ? `, ${anchor.country}` : ''} (code ${anchor.countryCode ?? 'inconnu'}).`,
-      `Départ de la personne : ${origin?.name ? `${origin.name}${origin.country ? `, ${origin.country}` : ''}` : 'France (position non partagée)'}.`,
+      `Départ de la personne : ${originFact(origin)}.`,
       `${trip.start_date ? `Dates : ${trip.start_date} au ${trip.end_date ?? trip.start_date}` : 'Dates non choisies'} (${days} jour(s)), groupe de ${party}, activité ${activity}.`,
-      abroad ? 'Voyage à l’étranger : oui.' : 'Voyage à l’étranger : non.',
+      abroad === true ? 'Voyage à l’étranger : oui.' : abroad === false ? 'Voyage à l’étranger : non.' : 'Voyage à l’étranger : inconnu.',
       flightNeeded
         ? 'Vol à prévoir : oui (aller-retour).'
         : trainNeeded
@@ -1888,12 +1831,14 @@ export async function compasAutofillAction(
     const unpricedRefuges = plan.filter(
       (n) => n.type === 'refuge' && refugesByNight[n.night - 1][0]?.pricePerNight == null
     ).length;
-    // Vol : distance à vol d'oiseau depuis la position partagée, sinon depuis Paris.
-    const flightKm = distanceKm(from ?? { lat: 48.8566, lon: 2.3522 }, target);
-    const flight = flightRoundTrip(flightKm);
+    // Vol : d'aéroport à aéroport (OurAirports), sinon du départ au lieu ; sans départ, aucun vol.
+    const flight = travelLeg.flight ? flightRoundTrip(travelLeg.flight.km) : null;
     const rentalCars = fuelForKm(carKmOnSite, party).cars;
     const localTrips = localMoves.reduce((t, m) => t + localTripPerLeg(m.move, lvl.level), 0);
-    const entry = abroad ? entryFees(anchor.countryCode) : null;
+    // Formalités (barème pour un voyageur français) : gardées tant qu'on ne sait pas
+    // que la personne est déjà dans le pays ; départ inconnu = pays de départ inconnu.
+    const abroadFor = abroadCosts(abroad);
+    const entry = abroadFor.formalities ? entryFees(anchor.countryCode) : null;
     const mealsAmount = mealsTotal({ days, party, nights: plan.map((n) => n.type), level: lvl.level });
     const rental = picks.filter((p) => p.source === 'location').reduce((t, p) => t + (p.costEur ?? 0), 0);
     // Le budget compte l'indispensable qui manque ; le conseillé (crème
@@ -1925,7 +1870,7 @@ export async function compasAutofillAction(
             basis: `${lvl.basis} · chambre partagée à deux · vrais prix dans Résa · Nuits`,
           }
         : null,
-      flightNeeded
+      flight
         ? {
             category: 'transport',
             title: `Vol aller-retour × ${party}`,
@@ -1994,11 +1939,11 @@ export async function compasAutofillAction(
             basis: `barème Compas ${COSTS_VERSION} · tarif officiel connu, à vérifier avant de partir`,
           }
         : null,
-      abroad || (maxAltitude ?? 0) >= 2500
+      abroadFor.insurance || (maxAltitude ?? 0) >= 2500
         ? {
             category: 'divers',
             title: 'Assurance voyage et rapatriement',
-            amount: insurance(days, { abroad, altitudeM: maxAltitude }) * party,
+            amount: insurance(days, { abroad: abroadFor.insurance, altitudeM: maxAltitude }) * party,
             source: 'estimation',
             basis: `barème Compas ${COSTS_VERSION} · forfait par jour${(maxAltitude ?? 0) >= 4000 ? ', haute altitude' : ''}`,
           }
@@ -2080,7 +2025,17 @@ export async function compasAutofillAction(
     console.info('[compas] préremplissage', { phase, ms: Date.now() - startedAt, laps });
     return {
       success: true,
-      summary: { nights: nightsOut, transport, kit: kitCount, budget: lines, total, notes: orderNotes(essential, notes, aiNotes), usedAi, stepsCreated },
+      summary: {
+        nights: nightsOut,
+        transport,
+        ...(travelLeg.originUnknown ? { originUnknown: true } : {}),
+        kit: kitCount,
+        budget: lines,
+        total,
+        notes: orderNotes(essential, notes, aiNotes),
+        usedAi,
+        stepsCreated,
+      },
     };
   } catch (err) {
     await reportServerError('compas.compasAutofillAction', err);

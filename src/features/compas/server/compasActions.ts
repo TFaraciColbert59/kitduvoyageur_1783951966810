@@ -12,7 +12,7 @@ import {
   type Supa,
 } from './compasServer';
 import { lookupBase, lookupDestination, lookupLoose, lookupNatural } from './placeLookup';
-import type { CompasPlace } from '../engine/places';
+import { isDeparturePlace, samePlaceName, type CompasPlace } from '../engine/places';
 import { getTripById } from '@/lib/queries-trips';
 import { addTripItem } from '@/lib/queries-trip-kit';
 import { askAI } from '@/lib/ai/askAI';
@@ -35,7 +35,9 @@ import {
   groundingIssue,
   mergeActions,
   trailRegion,
+  linkedOriginOf,
   parseIntentRules,
+  settleLinkedOrigin,
   validateActions,
   type CompasIntentAction,
   type CompasProposal,
@@ -44,6 +46,7 @@ import { planKitApply, type MyKit } from '../engine/kitApply';
 import { precisionActions } from '../engine/request';
 import { simplifyOffers, stayDates, type CompasStayOffer } from '../engine/stays';
 import { readCompasMeta } from '../engine/meta';
+import { coarsePosition } from '../engine/privacy';
 import { travellerToday } from '../engine/zone';
 import { getEurRate } from './rates';
 import { convertBetween } from '../engine/currency';
@@ -545,13 +548,11 @@ export async function compasSetPreferencesAction(
 }
 
 /**
- * Trois temps : le nom exact sur la carte ; sinon le spécialiste donne la
- * ville de base réelle (massif, parc, sentier : « Vercors » → Villard-de-Lans),
- * vérifiée sur la carte dans le bon pays ; sinon le premier lieu habité du nom.
+ * Le spécialiste donne la ville de base réelle d'un massif, d'un parc, d'un
+ * sentier (« Vercors » → Villard-de-Lans), vérifiée sur la carte dans le bon
+ * pays. Sans réponse fiable ou ville introuvable : null.
  */
-async function resolveDestination(query: string, userId: string): Promise<CompasPlace | null> {
-  const exact = await lookupDestination(query);
-  if (exact) return exact;
+async function baseFromSpecialist(query: string, userId: string): Promise<CompasPlace | null> {
   try {
     const res = await askAI({
       feature: 'compas-autofill',
@@ -576,11 +577,67 @@ async function resolveDestination(query: string, userId: string): Promise<Compas
   } catch {
     /* repli : lieu naturel, puis lieu habité du même nom */
   }
+  return null;
+}
+
+/**
+ * Trois temps : le nom exact sur la carte ; sinon le spécialiste donne la
+ * ville de base réelle (massif, parc, sentier : « Vercors » → Villard-de-Lans),
+ * vérifiée sur la carte dans le bon pays ; sinon le premier lieu habité du nom.
+ * `ai: false` (un lieu de DÉPART) saute le spécialiste : une ville de base
+ * inventée deviendrait un faux départ que personne ne verrait, pour un appel IA perdu.
+ */
+async function resolveDestination(
+  query: string,
+  userId: string,
+  opts: { ai?: boolean } = {}
+): Promise<CompasPlace | null> {
+  const exact = await lookupDestination(query);
+  if (exact) return exact;
+  const based = opts.ai === false ? null : await baseFromSpecialist(query, userId);
+  if (based) return based;
   // Sans réponse du spécialiste : le lieu naturel qui porte le nom (« Calanques » :
   // le parc national, pas le récif de Piana en Corse, premier venu de la carte).
   const natural = await lookupNatural(query, null).catch(() => null);
   if (natural) return { ...natural, name: query.trim().slice(0, 80) };
   return lookupLoose(query);
+}
+
+/**
+ * La carte (Photon, LocationIQ, Geoapify) et parfois l'IA : chaque recherche de
+ * lieu (destination, départ) est comptée par personne (plan 2.2). Le message à
+ * montrer si la limite est atteinte ou le compteur indisponible, sinon null.
+ */
+async function placeSearchLimitError(userId: string): Promise<string | null> {
+  const limited = await enforceRateLimit(userId, {
+    scope: 'compas-destination',
+    limit: 20,
+    windowMs: 600_000,
+    failMode: 'closed',
+  });
+  if (!limited) return null;
+  return limited.status === 429
+    ? 'Trop de lieux cherchés d’affilée : patiente quelques minutes.'
+    : 'Recherche de lieux indisponible pour le moment : réessaie dans un instant.';
+}
+
+/**
+ * « depuis Bourg en Bresse » ou « depuis Lyon en Corse » : rien dans la phrase ne dit si
+ * « en … » fait partie du nom. Le nom long est retenu seulement si la carte le connaît
+ * TEL QUEL — un lieu habité, une région ou un pays dont le nom est ce nom, à l'écriture
+ * près (« Bourg-en-Bresse »). Un résultat approchant ne compte pas : « Lyon en Corse »
+ * reste « Lyon » puis « Corse ». Pas de compteur de recherche de lieu ici : au plus une
+ * recherche par compréhension, déjà bornée par `compas-interpret`, et l'application du
+ * départ compte la sienne (deux comptages feraient refuser un départ confirmé). Carte
+ * muette : faux, et le nom court reste.
+ */
+async function longerOriginKnown(longer: string): Promise<boolean> {
+  try {
+    const found = await lookupDestination(longer);
+    return found != null && samePlaceName(found.name, longer) && isDeparturePlace(found);
+  } catch {
+    return false;
+  }
 }
 
 const destinationSchema = z.object({
@@ -603,23 +660,10 @@ export async function compasSetDestinationAction(
   try {
     const auth = await requireEditor(parsed.data.tripId);
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
-    // La carte (Photon, LocationIQ, Geoapify) et parfois l'IA : comptées par personne (plan 2.2).
     // Effacer la destination (aussi « Annuler ») ne cherche rien : ni compté, ni refusé.
     if (parsed.data.place) {
-      const limited = await enforceRateLimit(auth.userId, {
-        scope: 'compas-destination',
-        limit: 20,
-        windowMs: 600_000,
-        failMode: 'closed',
-      });
-      if (limited)
-        return {
-          success: false,
-          error:
-            limited.status === 429
-              ? 'Trop de lieux cherchés d’affilée : patiente quelques minutes.'
-              : 'Recherche de lieux indisponible pour le moment : réessaie dans un instant.',
-        };
+      const limitError = await placeSearchLimitError(auth.userId);
+      if (limitError) return { success: false, error: limitError };
     }
     // « GR34 » n'est pas un lieu : la région du sentier (sinon un point dans l'Indre).
     const wanted = parsed.data.place ? (trailRegion(parsed.data.place) ?? parsed.data.place) : null;
@@ -659,6 +703,81 @@ export async function compasSetDestinationAction(
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasSetDestinationAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+const originSchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  /** Lieu de départ tel que dit (« Lyon ») ; null ou vide efface le départ. */
+  place: z.string().trim().max(80).nullable(),
+  /**
+   * « Annuler » : le départ d'avant tel qu'il était rangé (déjà arrondi à ~1 km).
+   * Rien à chercher sur la carte ni à compter : il l'emporte sur `place`.
+   */
+  restore: z
+    .object({
+      name: z.string().trim().min(1).max(80),
+      lat: z.number().min(-90).max(90),
+      lon: z.number().min(-180).max(180),
+      countryCode: z
+        .string()
+        .regex(/^[A-Za-z]{2}$/)
+        .transform((code) => code.toUpperCase())
+        .nullable(),
+    })
+    .optional(),
+});
+
+/**
+ * Lieu de départ du voyage (« depuis Lyon »), retrouvé sur la carte comme la
+ * destination (même recherche, même limite par personne) et rangé arrondi à
+ * ~1 km dans `metadata.compas.origin` : le trajet d'approche se chiffre depuis
+ * là, avant la position de l'appareil. Effacer ne cherche rien, rétablir le
+ * départ d'avant (`restore`) non plus.
+ */
+export async function compasSetOriginAction(
+  input: z.input<typeof originSchema>
+): Promise<CompasActionResult> {
+  const parsed = originSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Lieu invalide' };
+  const { restore } = parsed.data;
+  const wanted = restore ? null : parsed.data.place || null;
+  if (wanted && wanted.length < 2) return { success: false, error: 'Lieu invalide' };
+  try {
+    // L'accès d'abord : un lecteur refusé ne consomme pas de recherche.
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    if (wanted) {
+      const limitError = await placeSearchLimitError(auth.userId);
+      if (limitError) return { success: false, error: limitError };
+    }
+    const searched = wanted ? await resolveDestination(wanted, auth.userId, { ai: false }) : null;
+    if (wanted && !searched) return { success: false, error: `« ${wanted} » introuvable sur la carte.` };
+    // Seul un lieu habité, une région ou un pays est un départ : « depuis le camping » (ou un
+    // sommet, un lac, un hôtel) trouvé sur la carte est refusé, jamais écrit ni pris pour ancre.
+    // Le départ d'avant rétabli (`restore`) n'est pas cherché : il n'est pas revérifié.
+    if (searched && !isDeparturePlace(searched))
+      return {
+        success: false,
+        error: `« ${wanted} » n’est pas un lieu habité, une région ou un pays : dis une ville (« depuis Lyon »).`,
+      };
+    const found = restore ?? searched;
+    const at = found ? coarsePosition({ lat: found.lat, lon: found.lon }) : null;
+    if (found && !at) return { success: false, error: 'Lieu invalide' };
+    const { error } = await updateTripMetadata(auth.supabase, parsed.data.tripId, (m) => {
+      const c = compasMeta(m);
+      if (found && at)
+        c.origin = { name: found.name, lat: at.lat, lon: at.lon, countryCode: found.countryCode, source: 'dit' };
+      else delete c.origin;
+      return { ...m, compas: c };
+    });
+    if (error) return { success: false, error: 'Impossible d’enregistrer le lieu de départ.' };
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasSetOriginAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -1728,7 +1847,10 @@ export async function compasInterpretAction(
     // Précisions choisies sous « Préciser » (fin de phrase) : avant la phrase et l'IA.
     const forced = precisionActions(text);
     const forcedTypes = new Set(forced.map((a) => a.type));
-    const rules = [...forced, ...parseIntentRules(text, today).filter((a) => !forcedTypes.has(a.type))];
+    const read = [...forced, ...parseIntentRules(text, today).filter((a) => !forcedTypes.has(a.type))];
+    const link = linkedOriginOf(read);
+    const longerKnown = link ? await longerOriginKnown(link.longer) : false;
+    const rules = settleLinkedOrigin(read, link, longerKnown);
     let ai: CompasIntentAction[] = [];
     let usedAi = false;
     let note: string | null = null;
@@ -1755,6 +1877,8 @@ export async function compasInterpretAction(
     } catch {
       note = AI_NOTES.provider_indisponible;
     }
+
+    ai = settleLinkedOrigin(ai, link, longerKnown);
 
     // L'IA ne propose que ce que la phrase dit ; ce qu'elle invente est montré refusé.
     const grounded = ai.filter((a) => groundingIssue(a, text) == null);
@@ -1806,9 +1930,10 @@ export async function compasInterpretAction(
  * aussi : « bivouac 2 nuits » fait 3 jours, le modèle lisait « 2 jours »
  * (essais aléatoires, 2026-10-06). Les dates enfin : le calcul des règles est
  * exact, celui du modèle non (« dans 3 semaines » posé au 23 octobre au lieu
- * du 30, aperçu du 9 oct.).
+ * du 30, aperçu du 9 oct.). Le lieu de départ : « depuis Lyon » lu par les
+ * règles n'est jamais remplacé par une ville que le modèle aurait choisie.
  */
-const RULES_FIRST = new Set<CompasIntentAction['type']>(['set_activity', 'set_duration', 'set_budget', 'set_dates']);
+const RULES_FIRST = new Set<CompasIntentAction['type']>(['set_activity', 'set_duration', 'set_budget', 'set_dates', 'set_origin']);
 
 /**
  * Budget dit dans une autre devise que celle du voyage (« 2000 $ ») : converti

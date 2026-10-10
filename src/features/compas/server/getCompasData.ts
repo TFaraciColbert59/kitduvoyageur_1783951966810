@@ -1,7 +1,7 @@
 import type { InventoryStatus } from '@/features/materiel/domain/inventory';
 import 'server-only';
 import { MAX_NOTES } from '../engine/advice';
-import { partySizeOf, shortHoursOf, tripLengthDays } from '../engine/tripContext';
+import { originOf, partySizeOf, shortHoursOf, tripLengthDays } from '../engine/tripContext';
 
 import type { FxRate } from '../engine/currency';
 import type { CompasPendingInvite } from '../engine/team';
@@ -123,7 +123,10 @@ export interface CompasData {
   weather: CompasWeather | null;
   /** Parcours du catalogue choisi pour le voyage. */
   route: { id: number | null; name: string | null };
-  /** Point de départ (première étape géolocalisée), pour chercher autour. */
+  /**
+   * Coordonnées de la première étape géolocalisée (météo, recherches autour), PAS le
+   * lieu de départ du voyageur : celui-ci est `originName` / `originSaid`.
+   */
   origin: { lat: number; lon: number } | null;
   /**
    * Fuseau IANA de la destination (première étape géolocalisée, sinon le lieu
@@ -145,6 +148,13 @@ export interface CompasData {
   startSay?: string | null;
   /** Destination retrouvée sur la carte (Dis-le). */
   anchorName?: string | null;
+  /** Nom du lieu de départ dit (« depuis Lyon »), retrouvé sur la carte ; null sans départ dit. */
+  originName?: string | null;
+  /**
+   * Le départ dit tel que rangé (point déjà arrondi à ~1 km, rien de plus fin ici) :
+   * « Annuler » le rétablit à l'identique sans le rechercher à nouveau.
+   */
+  originSaid?: { name: string; lat: number; lon: number; countryCode: string | null } | null;
   /** Contexte projet résolu (projet > sélection > profil > défaut), avec la source de chaque valeur. */
   context?: ProjectContext;
   /** Parties du préremplissage dépassées par un changement du projet (à réadapter). */
@@ -720,18 +730,26 @@ function autofillNotes(metadata: unknown): string[] {
     : [];
 }
 
-function compasPlan(metadata: unknown): {
+/** Exporté pour les tests : ce que le voyage a rangé et que l'écran relit (durée voulue, lieux, phrase). */
+export function compasPlan(metadata: unknown): {
   plannedDays: number | null;
   anchorName: string | null;
+  originName: string | null;
+  originSaid: NonNullable<CompasData['originSaid']> | null;
   startSay: string | null;
 } {
   const compas =
     metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).compas : null;
   const c = compas && typeof compas === 'object' ? (compas as Record<string, unknown>) : {};
   const anchor = c.anchor && typeof c.anchor === 'object' ? (c.anchor as Record<string, unknown>) : null;
+  const origin = originOf(c.origin);
   return {
     plannedDays: tripLengthDays(null, null, c.planned_days),
     anchorName: typeof anchor?.name === 'string' ? anchor.name : null,
+    originName: origin?.name ?? null,
+    originSaid: origin
+      ? { name: origin.name, lat: origin.lat, lon: origin.lon, countryCode: origin.countryCode }
+      : null,
     startSay: typeof c.start_say === 'string' && c.start_say.trim() ? c.start_say.trim().slice(0, 280) : null,
   };
 }

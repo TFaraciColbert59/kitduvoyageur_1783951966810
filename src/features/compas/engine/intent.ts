@@ -10,6 +10,7 @@ import {
 } from './format';
 import type { Pace } from './weather';
 import { HOLIDAY_RE, HOLIDAY_WORD, holidayDate, readMoney, spellNumbers } from './intentWords';
+import { samePlaceName } from './places';
 
 /**
  * Compas — « Dis-le » : une phrase devient des actions PROPOSÉES.
@@ -90,6 +91,16 @@ export const intentActionSchema = z.discriminatedUnion('type', [
   }),
   z.object({ type: z.literal('search_route'), query: label }),
   z.object({ type: z.literal('set_destination'), place: label }),
+  /** Lieu d'où l'on part (« depuis Lyon ») : le trajet d'approche se chiffre depuis là. */
+  z.object({
+    type: z.literal('set_origin'),
+    place: z.string().trim().min(1).max(80),
+    /**
+     * « Bourg en Bresse » quand le départ lu est « Bourg » : la carte dit si « en … » fait
+     * partie du nom (`settleLinkedOrigin`). Jamais montré ni appliqué tel quel.
+     */
+    longer: z.string().trim().min(1).max(80).optional(),
+  }),
   z.object({ type: z.literal('set_outdoor_nights'), nights: z.number().int().min(1).max(60) }),
   z.object({ type: z.literal('set_max_pack'), kg: z.number().min(1).max(40) }),
   z.object({ type: z.literal('set_distance'), km: z.number().min(1).max(300) }),
@@ -289,7 +300,7 @@ function clean(fragment: string, max = 40): string {
 /** Coupe un fragment au premier mot qui ouvre une autre idée. */
 function upToBreak(fragment: string): string {
   const cut = fragment.search(
-    /\s(?:et|puis|mais|pour|avec|sans|en|dans|du|le|la|a|au|à|on|depart|départ|des|dès)\s|\s(?:lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|demain|ce|cette|prochain|prochaine)(?=\s|$)|[,.;!?]|\d/i
+    /\s(?:et|puis|mais|pour|avec|sans|en|dans|du|le|la|a|au|à|on|depart|départ|des|dès|depuis)\s|\s(?:lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|demain|ce|cette|prochain|prochaine)(?=\s|$)|[,.;!?]|\d/i
   );
   return cut >= 0 ? fragment.slice(0, cut) : fragment;
 }
@@ -305,10 +316,16 @@ function properLead(fragment: string): boolean {
   return !!lead && /^\p{Lu}/u.test(fragment.slice(lead[0].length));
 }
 
-/** Un mois, un jour de la semaine ou une fête n'est jamais une destination (« à Noël »). */
+/**
+ * Un mois, un jour de la semaine ou une fête n'est jamais une destination
+ * (« à Noël »). Le premier mot du nom est un mois ENTIER : « juillet-aout »,
+ * « mai ou juin », « July and August » sont des mois ; « Marseille »,
+ * « Juillac » ou « Octon » commencent comme un mois et restent des lieux.
+ */
+const MONTH_LEAD = new RegExp(`^${MONTH_RE}(?![a-z])`);
 function notAPlace(name: string): boolean {
   const plain = plainOf(name);
-  return monthOf(plain) != null || WEEKDAYS.includes(plain) || HOLIDAY_WORD.test(plain);
+  return MONTH_LEAD.test(plain) || WEEKDAYS.includes(plain) || HOLIDAY_WORD.test(plain);
 }
 
 const capitalized = (s: string) => (s ? s[0].toLocaleUpperCase('fr') + s.slice(1) : s);
@@ -346,7 +363,214 @@ export function trailRegion(place: string): string | null {
 
 /** Noms communs de paysage ou de moment : jamais une destination à eux seuls. */
 const COMMON_PLACE_WORDS =
-  /^(?:bois|foret|forets|montagnes?|campagne|nature|mer|plage|plages|neige|environs|alentours|coin|region|parc|fjords?|calanques?|lacs?|riviere|vallee|ville|famille|couple|groupe|solo|van|velo|pied|cheval|ski|bord|mer|lac|journee|semaine|soiree|matinee|apres-?midi|hiver|ete|automne|printemps)$/;
+  /^(?:bois|foret|forets|montagnes?|campagne|nature|mer|plage|plages|neige|environs|alentours|coin|region|parc|fjords?|calanques?|lacs?|riviere|vallee|ville|famille|couple|groupe|solo|van|velo|pied|cheval|ski|bord|mer|lac|journee|semaine|soiree|matinee|apres-?midi|hiver|ete|automne|printemps|depart|partant)$/;
+
+/**
+ * Fin d'un nom de lieu : un mot qui ouvre une autre idée (durée, date,
+ * compagnie, lieu de départ). « du », « le », « la » ne coupent que devant un
+ * nombre (« Afrique du Sud », mais « Vercors du 3 au 10 juin »).
+ */
+const PLACE_END =
+  /\s(?:(?:du|le|la|les)(?=\s+(?:\d|mois\b|semaine\b|prochaine?\b))|pour|avec|en|a|à|à partir|pendant|durant|sur|et|sans|budget|plage|plages|temples?|musees?|fjords?|autour|via|pas|safari|un|une|deux|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|quinze|vingt|cette|ce|tout|toute|semaines?|jours?|nuits?|days?|weeks?|nights?|for|from|to|until|week[- ]?end|début|debut|mi|fin|noël|noel|pâques|paques|toussaint|demain|après-demain|apres-demain|aujourd['’]hui|prochain|prochaine|janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre|depuis|au départ|au depart|en partant|on part|je pars|nous partons)(?=[\s-]|$)/i;
+
+/**
+ * Fin d'un lieu de DÉPART, en plus de `PLACE_END` : ce qui continue la phrase
+ * après lui (« Lyon vers le Vercors », « Chamonix jusqu'à Zermatt », « Paris par
+ * le train », « Marseille puis retour », « Marseille ou Nice »).
+ */
+const ORIGIN_END = /\s(?:(?:vers|dans|par|puis|ou|ensuite|apres|après|direction)(?=[\s-]|$)|jusqu)/i;
+
+/** Ce qui annonce le lieu de départ : « depuis Lyon », « au départ de Genève », « en partant d'Annecy ». */
+const ORIGIN_LEAD =
+  /(?:^|[\s,(])(?:depuis|(?:au depart|en partant|on part|je pars|nous partons) (?:de|du|des|d'))(?:\s+|(?<='))/g;
+
+/**
+ * Premier mot, après « depuis » dans une phrase sans majuscule, qui n'est jamais
+ * un lieu de départ : un moment, un déterminant ou un nom commun de lieu. Écrits
+ * sans accent : le mot testé est déjà normalisé. Un départ faux est appliqué
+ * sans qu'on le voie : mieux vaut en manquer un que d'en inventer un.
+ */
+const NOT_ORIGIN_WORDS = [
+  // moments et durées
+  'longtemps', 'toujours', 'hier', 'demain', "aujourd'hui", 'lendemain', 'veille', 'matin', 'soir', 'nuit',
+  'midi', 'minuit', 'debut', 'semaines?', 'mois', 'ans?', 'jours?', 'heures?', 'week-?end', 'temps', 'zero',
+  // quantités, liaisons, déterminants
+  'peu', 'plus', 'moins', 'tout', 'toute', 'tous', 'plusieurs', 'quelques', 'chez', 'que', 'qu', 'quand', 'ici',
+  'des', 'ce', 'cet', 'cette', 'ces', 'les', 'bon', 'bonne', 'principe',
+  // possessifs : « depuis votre arrivée », « depuis ton départ » (jamais un nom de lieu)
+  'mon', 'ma', 'mes', 'ton', 'ta', 'tes', 'son', 'sa', 'ses', 'notre', 'nos', 'votre', 'vos', 'leur', 'leurs',
+  // adverbes et mots de liaison : « depuis tôt », « depuis environ un mois », « depuis cela »
+  'tot', 'tard', 'deja', 'maintenant', 'bientot', 'presque', 'environ', 'cela', 'ceci', 'combien', 'petit',
+  'petite', 'derniere', 'dernier', 'annee', 'autre', 'autres', 'meme', 'chaque', 'avant', 'lors', 'pres', 'loin',
+  // noms communs de lieu : sans « de X » derrière, pas un lieu (« gare de X » est lue à part)
+  'sommet', 'maison', 'boulot', 'travail', 'bureau', 'parking', 'refuge', 'village', 'col', 'gare', 'aeroport',
+  'station', 'nord', 'sud', 'est', 'ouest',
+  // hébergement et lieux de vie ou d'études
+  'camping', 'hotel', 'chalet', 'gite', 'cabane', 'hameau', 'centre', 'fac', 'lycee', 'ecole', 'ferme', 'abri',
+  'bivouac', 'camp', 'auberge', 'appartement', 'appart', 'studio', 'chambre', 'tente', 'domicile', 'hopital',
+  'universite', 'college', 'mairie', 'eglise', 'quartier', 'residence', 'restaurant',
+  // transport et chemins
+  'port', 'pont', 'sentier', 'chemin', 'piste', 'voiture', 'train', 'bus', 'route', 'bateau', 'avion', 'metro',
+  'tram', 'taxi',
+  // relief et eau
+  'pic', 'cime', 'crete', 'source', 'massif', 'ile', 'plage', 'colline', 'glacier', 'falaise', 'plateau',
+  'grotte', 'gorges', 'fleuve', 'chateau',
+];
+const NOT_ORIGIN = new RegExp(`^(?:${NOT_ORIGIN_WORDS.join('|')})$`);
+
+/**
+ * Mots qui ne prolongent jamais un nom de lieu de départ tapé sans majuscule : le
+ * lieu s'arrête avant (« depuis lyon vendredi », « depuis lyon svp », « depuis
+ * lyon fin juin », « depuis lyon pendant les vacances »). Sans accent.
+ */
+const LOWER_ORIGIN_STOP = [
+  // liaisons et compagnie
+  'pour', 'avec', 'en', 'a', 'et', 'du', 'de', 'des', 'le', 'la', 'les', 'sans', 'dans', 'sur', 'pendant', 'vers',
+  'depuis', 'par', 'puis', 'ou', 'ensuite', 'apres', 'direction', "jusqu[a-z']*", 'ce', 'cet', 'cette',
+  // moments
+  'demain', 'apres-demain', "aujourd'hui", 'prochain', 'prochaine', 'matin', 'soir', 'midi', 'fin', 'lundi',
+  'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche', 'hiver', 'ete', 'printemps', 'automne',
+  'janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'octobre', 'novembre',
+  'decembre', 'week-?end', 'jours?', 'semaines?', 'nuits?', 'une', 'deux', 'trois', 'quatre', 'cinq', 'six',
+  'sept', 'huit', 'neuf', 'dix', 'quinze', 'vingt',
+  // la suite de la demande ou de la phrase
+  'on', 'je', 'nous', 'tu', 'il', 'ils', 'elle', 'elles', 'vous', 'retour', 'rentre', 'rentrer', 'rentrons',
+  'svp', 'stp', 'merci', 'rando', 'randonnee', 'train', 'trek', 'trekking', 'velo', 'ski', 'sortie', 'voyage', 'bivouac',
+];
+const LOWER_ORIGIN = new RegExp(
+  `^([a-z][a-z'-]{2,}(?:\\s(?!(?:${LOWER_ORIGIN_STOP.join('|')})\\b)[a-z][a-z'-]{2,})?)`
+);
+
+const LOWER_STOP_FIRST = new RegExp(`^(?:${LOWER_ORIGIN_STOP.join('|')})$`);
+
+/** Un mot qui ne peut pas faire partie d'un nom de lieu de départ tapé en minuscules. */
+function notNameWord(word: string): boolean {
+  return (
+    NOT_ORIGIN.test(word) ||
+    LOWER_STOP_FIRST.test(word) ||
+    WEEKDAYS.includes(word) ||
+    COMMON_PLACE_WORDS.test(word) ||
+    toNumber(word) != null ||
+    notAPlace(word)
+  );
+}
+
+/** Mots qui relient les parties d'un nom propre (« Saint-Jean-de-Luz », « Aix-les-Bains », « Boulogne-sur-Mer »). */
+const NAME_LINKS = new Set(['de', 'du', 'des', 'le', 'la', 'les', 'sur', 'en', 'sous', 'lez', 'et', "d'", "l'"]);
+
+/**
+ * « Bourg en Bresse », « La Roche sur Yon », « Saint Pierre et Miquelon » : « en », « sur » ou « et »
+ * suivi d'un nom propre peut faire partie du nom du départ, ou ouvrir une autre idée
+ * (« depuis Lyon en Corse »). Rien dans la phrase ne départage les deux : le nom long
+ * est proposé à côté du nom court, et la carte tranche (`settleLinkedOrigin`).
+ * Ni un moment, ni un transport, ni un nom commun (« en juin », « en train », « en famille »).
+ * `end` est la fin du nom court dans `src` ; `plain` est `src` normalisé, aux mêmes positions ;
+ * `lead` est l'article tombé devant le nom court (« la », « l' »), s'il y en a un.
+ */
+function linkedName(src: string, plain: string, end: number, place: string, lead: string): string | undefined {
+  const link = /^\s+(en|sur|et)\s+/.exec(plain.slice(end, end + 12));
+  if (!link) return undefined;
+  // « sur la Sorgue », « sur l'Isère » : l'article fait partie du bout du nom.
+  const article = /^(?:(?:la|le|les)\s+|l['’])/.exec(plain.slice(end + link[0].length, end + link[0].length + 6))?.[0] ?? '';
+  const from = end + link[0].length + article.length;
+  const named = /^\p{Lu}[\p{L}'’]*(?:[\s-]\p{Lu}[\p{L}'’]*)*/u.exec(src.slice(from, from + 60));
+  if (!named || notAPlace(named[0])) return undefined;
+  const tail = src.slice(from - article.length, from) + named[0];
+  // L'article tombé devant le nom court en fait partie (« la roche sur yon » → « La Roche sur yon »).
+  const longer = capitalized(`${lead}${place} ${link[1]} ${tail}`);
+  return longer.length <= 80 ? longer : undefined;
+}
+
+/**
+ * Phrase sans majuscule : le lecteur s'arrête à deux mots et à tout connecteur, donc
+ * « saint jean de luz » se lit « Saint Jean », « aix les bains » « Aix ». Le nom prolongé
+ * par ses connecteurs (de, du, des, le, la, les, sur, en, sous, lez) et les mots qui les
+ * suivent est proposé comme nom long, jusqu'au premier mot qui n'est pas un bout de nom
+ * (un moment, un transport, un nom commun, un mot de la suite de la phrase). La carte tranche.
+ */
+function lowerLinkedName(src: string, plain: string, end: number, place: string, lead: string): string | undefined {
+  let pos = end;
+  let lastName = end;
+  for (let i = 0; i < 6; i += 1) {
+    const m = /^\s+([a-z][a-z'-]*)/.exec(plain.slice(pos, pos + 30));
+    if (!m) break;
+    const word = m[1];
+    const link = word.startsWith("d'") || word.startsWith("l'") ? word.slice(0, 2) : word;
+    if (NAME_LINKS.has(link) && link === word) {
+      pos += m[0].length;
+      continue;
+    }
+    // « d'olonne » : le bout du nom est ce qui suit l'apostrophe.
+    const core = word.includes("'") ? word.slice(word.lastIndexOf("'") + 1) : word;
+    if (core.length < 2 || notNameWord(core)) break;
+    pos += m[0].length;
+    lastName = pos;
+  }
+  if (lastName === end) return undefined;
+  const longer = capitalized(`${lead}${place}${src.slice(end, lastName)}`);
+  return longer.length <= 80 ? longer : undefined;
+}
+
+/** « la gare de Briançon », « l'aéroport de Lyon » : le lieu de départ est ce qui suit « de ». */
+const FACILITY = /^(?:gare|aeroport|station)\s+(?:de la\s+|de l'\s*|du\s+|des\s+|de\s+|d'\s*)/;
+
+/**
+ * Lieu de départ dit dans la phrase (« depuis Lyon », « depuis la Suisse »,
+ * « au départ du Grand-Bornand ») et sa place dans `src`, pour que la
+ * destination ne le reprenne jamais. Nom propre seulement ; dans une phrase
+ * tapée sans majuscule, après « depuis » ou « au départ de » seulement, le mot
+ * qui suit s'il n'est ni un moment ni un nom commun (`NOT_ORIGIN_WORDS`).
+ * `plain` est `src` normalisé, aux mêmes positions.
+ */
+function readOrigin(
+  src: string,
+  plain: string
+): { place: string; longer?: string; start: number; end: number } | null {
+  const lower = !/\p{Lu}/u.test(src);
+  for (const m of plain.matchAll(ORIGIN_LEAD)) {
+    let at = (m.index ?? 0) + m[0].length;
+    // « depuis la Suisse » : l'article en minuscule tombe ; « depuis Le Puy » le garde.
+    const article = /^(?:(?:la|le|les)\s+|l['’]\s*)/.exec(src.slice(at));
+    const dropped = article && !/^\p{Lu}/u.test(src.slice(at)) ? article[0] : '';
+    at += dropped.length;
+    const original = src.slice(at, at + 60);
+    if (properLead(original)) {
+      // « depuis GR20 » : un code de sentier, pas un lieu de départ.
+      if (/^\p{Lu}{1,4}\s?\d/u.test(original)) continue;
+      const place = clean(original.split(/[,.;!?\d]/)[0].split(PLACE_END)[0].split(ORIGIN_END)[0], 50).replace(
+        /\s+(?:dans|in|sur|vers|près|pres)$/i,
+        ''
+      );
+      if (place.length >= 2 && !notAPlace(place)) {
+        const end = at + place.length;
+        const longer = linkedName(src, plain, end, place, dropped);
+        return { place, ...(longer ? { longer } : {}), start: at, end };
+      }
+      continue;
+    }
+    if (!lower) continue;
+    // Phrase sans majuscule : « depuis » et « au départ de » seulement. « je pars de nuit »,
+    // « on part du principe que » ne disent pas d'où l'on part (la majuscule le montre).
+    if (!/\b(?:depuis|au depart)\b/.test(m[0])) continue;
+    const from = at + (FACILITY.exec(plain.slice(at, at + 60))?.[0].length ?? 0);
+    const low = LOWER_ORIGIN.exec(plain.slice(from, from + 60));
+    const words = low ? low[1].trim() : '';
+    const first = words.split(/\s/)[0];
+    if (
+      !words ||
+      NOT_ORIGIN.test(first) ||
+      WEEKDAYS.includes(first) ||
+      COMMON_PLACE_WORDS.test(first) ||
+      toNumber(first) != null ||
+      notAPlace(words)
+    )
+      continue;
+    const place = words.split(/\s/).map(capitalized).join(' ');
+    const longer = lowerLinkedName(src, plain, from + words.length, place, dropped);
+    return { place, ...(longer ? { longer } : {}), start: from, end: from + words.length };
+  }
+  return null;
+}
 
 export function parseIntentRules(text: string, today: string): CompasIntentAction[] {
   const src = text.normalize('NFC').slice(0, 400);
@@ -688,6 +912,12 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     });
   }
 
+  /* Lieu de départ : « depuis Lyon », « au départ de Genève ». Lu avant la
+     destination, qui ne le reprend jamais (« rando dans le Vercors depuis Lyon »). */
+  const origin = readOrigin(src, plain);
+  const inOrigin = (i: number) => origin != null && i >= origin.start && i < origin.end;
+  if (origin) out.push({ type: 'set_origin', place: origin.place, ...(origin.longer ? { longer: origin.longer } : {}) });
+
   /* Destination : « au Népal », « en Islande », « à Chamonix » (nom propre) */
   // « à la Réunion », « à l’Île de Ré », « dans l’Ain » ; « in Iceland » (anglais).
   // « sur la Dordogne », « autour du lac d'Annecy », « traversée des Pyrénées »,
@@ -698,19 +928,12 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
   )) {
     const at = (m.index ?? 0) + m[0].length;
     const original = src.slice(at, at + 60);
-    if (!properLead(original)) continue;
+    if (!properLead(original) || inOrigin(at)) continue;
     // « sur le GR20 » : un code de sentier, pas une destination.
     if (/^\p{Lu}{1,4}\s?\d/u.test(original)) continue;
-    // Coupe à la ponctuation ou au premier chiffre, puis au premier mot d'une autre idée.
-    const place = clean(
-      original.split(/[,.;!?\d]/)[0].split(
-        // Fin du nom : un mot qui ouvre une autre idée (durée, date, compagnie).
-        // « du », « le », « la » ne coupent que devant un nombre (« Afrique du Sud »,
-        // mais « Vercors du 3 au 10 juin »).
-        /\s(?:(?:du|le|la|les)(?=\s+(?:\d|mois\b|semaine\b|prochaine?\b))|pour|avec|en|a|à|à partir|pendant|durant|sur|et|sans|budget|plage|plages|temples?|musees?|fjords?|autour|via|pas|safari|un|une|deux|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|quinze|vingt|cette|ce|tout|toute|semaines?|jours?|nuits?|days?|weeks?|nights?|for|from|to|until|week[- ]?end|début|debut|mi|fin|noël|noel|pâques|paques|toussaint|demain|après-demain|apres-demain|aujourd['’]hui|prochain|prochaine|janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre)(?=[\s-]|$)/i
-      )[0],
-      50
-    )
+    // Coupe à la ponctuation ou au premier chiffre, puis au premier mot d'une
+    // autre idée (`PLACE_END`, « depuis Lyon » compris).
+    const place = clean(original.split(/[,.;!?\d]/)[0].split(PLACE_END)[0], 50)
       // « Norvège dans les fjords » : le nom s'arrête avant la préposition restée seule.
       .replace(/\s+(?:dans|in|sur|vers|près|pres)$/i, '');
     if (place.length >= 2 && !notAPlace(place)) {
@@ -769,6 +992,8 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
   if (!out.some((a) => a.type === 'set_destination')) {
     // Jamais une personne (« rando avec Paul ») : pas après « avec », « et », « chez »…
     for (const m of src.matchAll(/(?<!\b(?:avec|et|chez|pour|par|mon|ma|mes|ton|ta|copain|copine|ami|amie)\s)(?<=\s)(\p{Lu}[\p{L}'’-]+(?:[\s-]+\p{Lu}[\p{L}'’-]+)*)/gu)) {
+      // Le lieu de départ n'est jamais la destination (« rando 3 jours depuis Lyon »).
+      if (inOrigin(m.index ?? 0)) continue;
       const name = clean(m[1], 50);
       if (name.length >= 3 && !notAPlace(name) && !/^(?:je|j|on|nous|il|elle)$/i.test(name)) {
         out.push({ type: 'set_destination', place: name });
@@ -780,7 +1005,7 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
   /* Phrase tapée sans majuscule (« randoo 3 jour dans les vosges ») : le nom
      après une préposition de lieu, hors noms communs de paysage. */
   if (!out.some((a) => a.type === 'set_destination') && !/\p{Lu}/u.test(src)) {
-    const low = /\b(?:dans l'\s*|(?:dans les|dans le|dans la|en|au|aux|a|vers|pres de)\s+)([a-z][a-z'-]{2,}(?:\s(?!(?:pour|avec|en|a|et|du|de|des|le|la|les|sans|dans|ce|cet|cette|demain|apres-demain|aujourd'hui|prochain|prochaine|matin|soir)\b)[a-z][a-z'-]{2,})?)/.exec(plain);
+    const low = /\b(?:dans l'\s*|(?:dans les|dans le|dans la|en|au|aux|a|vers|pres de)\s+)([a-z][a-z'-]{2,}(?:\s(?!(?:pour|avec|en|a|et|du|de|des|le|la|les|sans|dans|ce|cet|cette|demain|apres-demain|aujourd'hui|prochain|prochaine|matin|soir|depuis)\b)[a-z][a-z'-]{2,})?)/.exec(plain);
     const word = low ? low[1].trim() : '';
     if (word && !COMMON_PLACE_WORDS.test(word.split(/\s/)[0]) && toNumber(word.split(/\s/)[0]) == null && !notAPlace(word))
       out.push({ type: 'set_destination', place: word.split(/\s/).map(capitalized).join(' ') });
@@ -819,7 +1044,7 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
   for (const m of plain.matchAll(place)) {
     const at = (m.index ?? 0) + m[0].length;
     const original = src.slice(at, at + 60);
-    if (!properLead(original)) continue;
+    if (!properLead(original) || inOrigin(at)) continue;
     const lead = /^\p{Lu}/u.test(original) ? '' : (PLACE_NOUN.exec(original)?.[0] ?? '');
     const query = capitalized(clean(lead + upToBreak(original.slice(lead.length)), 50));
     if (query.length >= 3 && !notAPlace(query)) {
@@ -916,6 +1141,7 @@ export function groundingIssue(action: CompasIntentAction, text: string): string
     case 'search_route':
       return tokensIn(text, action.query) ? null : 'Lieu absent de ta phrase';
     case 'set_destination':
+    case 'set_origin':
       return tokensIn(text, action.place) ? null : 'Lieu absent de ta phrase';
     // Rythme et nuits : seulement s'ils sont dits (l'IA posait « bivouac » et
     // « rythme normal » sur « Hiking in Iceland 5 days »).
@@ -993,6 +1219,8 @@ export function actionLabel(action: CompasIntentAction, currency = 'EUR'): strin
       return `Chercher un parcours : ${action.query}`;
     case 'set_destination':
       return `Destination : ${action.place}`;
+    case 'set_origin':
+      return `Départ : ${action.place}`;
     case 'set_outdoor_nights':
       return `${action.nights} nuit${action.nights > 1 ? 's' : ''} dehors`;
     case 'set_distance':
@@ -1034,9 +1262,14 @@ export function mergeActions(
 ): Array<{ action: CompasIntentAction; source: IntentSource }> {
   const seen = new Set<string>();
   const out: Array<{ action: CompasIntentAction; source: IntentSource }> = [];
+  // Le lieu de départ lu par les règles (« depuis Lyon ») n'est jamais la
+  // destination, même si l'IA le donne comme tel.
+  const origins = new Set(rules.flatMap((a) => (a.type === 'set_origin' ? [plainOf(a.place)] : [])));
   // « GR34 » n'est pas un lieu sur la carte (l'IA le donnait comme destination :
   // étapes dans l'Indre) : la région du sentier, comme pour les règles.
-  const placed = ai.map((a) => (a.type === 'set_destination' ? { ...a, place: trailRegion(a.place) ?? a.place } : a));
+  const placed = ai
+    .filter((a) => !(a.type === 'set_destination' && origins.has(plainOf(a.place))))
+    .map((a) => (a.type === 'set_destination' ? { ...a, place: trailRegion(a.place) ?? a.place } : a));
   for (const [list, source] of [
     [placed, 'ia'],
     [rules, 'regles'],
@@ -1049,6 +1282,56 @@ export function mergeActions(
     }
   }
   return out.slice(0, 10);
+}
+
+/** Le départ lu avec un nom long possible (« Bourg » / « Bourg en Bresse »), s'il y en a un. */
+export interface LinkedOrigin {
+  place: string;
+  longer: string;
+}
+
+export function linkedOriginOf(actions: readonly CompasIntentAction[]): LinkedOrigin | null {
+  for (const a of actions) if (a.type === 'set_origin' && a.longer) return { place: a.place, longer: a.longer };
+  return null;
+}
+
+/**
+ * Ce que la carte a tranché pour un départ à nom long possible. Nom long confirmé
+ * (`accepted`) : il devient le départ et son bout (« Bresse ») n'est plus une
+ * destination, qu'elle vienne des règles ou de l'IA. Sinon le départ est le nom court,
+ * la destination reste (« Lyon » puis « Corse »). Le nom long ne sort jamais d'ici.
+ */
+export function settleLinkedOrigin(
+  actions: readonly CompasIntentAction[],
+  link: LinkedOrigin | null,
+  accepted: boolean
+): CompasIntentAction[] {
+  // Les bouts du nom long : ce qui suit chaque connecteur après le nom court (un article peut le
+  // précéder) — « Luz » pour « Saint Jean de luz », « Bains » pour « Aix les bains », « Miquelon »,
+  // « Sorgue » pour « L'Isle sur la Sorgue ». Une destination qui est l'un d'eux n'en est plus une.
+  const tails = new Set<string>();
+  if (link && accepted) {
+    const long = plainOf(link.longer);
+    const at = long.indexOf(plainOf(link.place));
+    if (at >= 0) {
+      const words = long
+        .slice(at + plainOf(link.place).length)
+        .replace(/'/g, "' ")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+      for (let i = 0; i < words.length; i += 1) {
+        let j = i;
+        while (j < words.length && NAME_LINKS.has(words[j])) j += 1;
+        if (j < words.length) tails.add(words.slice(j).join(' '));
+      }
+    }
+  }
+  return actions.flatMap((a): CompasIntentAction[] => {
+    if (a.type === 'set_origin') return [{ type: 'set_origin', place: accepted && a.longer ? a.longer : a.place }];
+    if (a.type === 'set_destination' && tails.has(plainOf(a.place))) return [];
+    return [a];
+  });
 }
 
 export function validateActions(
@@ -1146,6 +1429,8 @@ export interface ApplyCurrent {
   plannedDays?: number | null;
   preferences: CompasPreferences;
   hasRoute: boolean;
+  /** Nom du lieu de départ déjà rangé sur le voyage : le redire ne le cherche pas à nouveau. */
+  originName?: string | null;
 }
 
 export type ApplyOp =
@@ -1163,6 +1448,15 @@ export type ApplyOp =
   | { op: 'item'; name: string; quantity: number }
   | { op: 'route'; query: string }
   | { op: 'destination'; place: string | null }
+  /**
+   * Lieu de départ dit (« depuis Lyon ») ; null l'efface. `restore` : le départ
+   * d'avant tel qu'il était rangé (« Annuler »), écrit sans le rechercher à nouveau.
+   */
+  | {
+      op: 'origin';
+      place: string | null;
+      restore?: { name: string; lat: number; lon: number; countryCode: string | null };
+    }
   /** Durée connue sans date de départ (« 20 jours ») ; null efface. */
   | { op: 'span'; days: number | null };
 
@@ -1278,5 +1572,11 @@ export function planApplication(actions: CompasIntentAction[], current: ApplyCur
     }
   }
   if (prefsChanged) ops.push({ op: 'prefs', preferences: prefs });
+  // Le lieu de départ (« depuis Lyon ») en dernier : le trajet d'approche se chiffre depuis là,
+  // rien ne dépend de lui, et s'il échoue (lieu inconnu) tout le reste est déjà appliqué.
+  const origin = actions.find((a) => a.type === 'set_origin') as
+    Extract<CompasIntentAction, { type: 'set_origin' }> | undefined;
+  if (origin && !(current.originName && samePlaceName(current.originName, origin.place)))
+    ops.push({ op: 'origin', place: origin.place });
   return ops;
 }

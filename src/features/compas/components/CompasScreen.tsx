@@ -15,6 +15,7 @@ import { togglePackedAction } from '@/app/voyages/kit-actions';
 import { COMPAS_STEPS, type CompasKitLine, type CompasStepId } from '../engine/compasModel';
 import { activityLabel, formatHours, formatMoney } from '../engine/format';
 import { NIGHT_LABEL } from '../engine/autofill';
+import { travelDigest } from '../engine/travel';
 import {
   compasAutofillOutcomeAction,
   compasAutofillStartAction,
@@ -484,6 +485,9 @@ export function CompasScreen({
   const refreshedFor = useRef<string | null>(null);
   useEffect(() => {
     const stale = data.autofillStale ?? [];
+    // Plus rien de caduc : le prochain changement (même liste de parties, ex. un autre
+    // départ) doit être réadapté à son tour.
+    if (data.autofill === 'done' && !stale.length) refreshedFor.current = null;
     if (data.autofill !== 'done' || !data.canEdit || !stale.length) return;
     const key = `${model.tripId}:${stale.join(',')}:${JSON.stringify(data.context?.scope)}:${model.dates.days}:${model.destination}`;
     if (refreshedFor.current === key || autofillRunning.current) return;
@@ -500,10 +504,11 @@ export function CompasScreen({
   useEffect(() => {
     if (data.autofill !== 'none' || !data.canEdit) return;
     if (!(model.dates.start || data.plannedDays)) return;
-    // Sans lieu dit, seule une demande en cours de préparation part quand même :
-    // le serveur prend alors la position partagée (« près de chez toi »).
+    // Sans lieu dit, seule une demande en cours de préparation ou un départ dit part quand
+    // même : le serveur prépare alors autour du départ dit, sinon de la position partagée
+    // (« près de chez toi »).
     if (
-      !(model.destination || data.anchorName || data.itinerary.length || data.origin) &&
+      !(model.destination || data.anchorName || data.itinerary.length || data.origin || data.originSaid) &&
       data.context?.scope !== 'sortie' &&
       !prepRef.current
     )
@@ -607,10 +612,18 @@ export function CompasScreen({
         // Tout ce qui est compris et valide est appliqué ; le parcours du
         // catalogue est choisi par la préparation (pas de tiroir à ouvrir).
         const actions = res.proposals.filter((p) => p.ok && p.action.type !== 'search_route').map((p) => p.action);
-        const ops = planApplication(actions, applyCurrent(ctl)).filter((o) => o.op !== 'route');
+        const planned = planApplication(actions, applyCurrent(ctl)).filter((o) => o.op !== 'route');
+        const ops = planned.filter((o) => o.op !== 'origin');
         if (ops.length) {
           const done = await runOps(ctl, ops);
           if (!done.success) return prepFail(done.error ?? 'Ta demande n’a pas pu être appliquée : réessaie.');
+        }
+        // Le lieu de départ n'arrête pas la préparation : introuvable ou refusé, elle continue
+        // sans lui (trajet à préciser), et l'échec est dit.
+        const origin = planned.filter((o) => o.op === 'origin');
+        if (origin.length) {
+          const said = await runOps(ctl, origin);
+          if (!said.success) notify(`Départ non retenu · ${said.error ?? 'réessaie'}`);
         }
         await compasClearStartSayAction({ tripId: model.tripId }).catch(() => undefined);
         setPrep({ stage: 'itinerary' });
@@ -619,7 +632,7 @@ export function CompasScreen({
         prepFail('Connexion perdue : ta demande est gardée, reprends quand tu veux.');
       }
     },
-    [model.tripId, router, setPrep, prepFail]
+    [model.tripId, router, setPrep, prepFail, notify]
   );
   useEffect(() => {
     if (!startSay || startSaid.current === model.tripId) return;
@@ -1040,14 +1053,9 @@ function autofillDigest(s: CompasAutofillSummary): string {
       [...count].map(([k, v]) => `${v} ${k.toLowerCase()}${v > 1 ? 's' : ''}`).join(', ')
     );
   }
-  if (s.transport)
-    parts.push(
-      s.transport.mode === 'avion'
-        ? 'vol à prévoir'
-        : s.transport.mode === 'train'
-          ? `train, environ ${String(Math.round(s.transport.minutes / 30) / 2).replace('.', ',')} h`
-          : `${Math.round(s.transport.km)} km de route`
-    );
+  // Le trajet (d'où, entre quels aéroports), ou « Trajet non chiffré : point de départ inconnu » (engine/travel.ts).
+  const travel = travelDigest(s.transport, s.originUnknown);
+  if (travel) parts.push(travel);
   const kit = s.kit.inventaire + s.kit.pret + s.kit.location + s.kit.achat + s.kit.a_trouver;
   if (kit) parts.push(`${kit} objet${kit > 1 ? 's' : ''} au kit`);
   return parts.join(' · ') || 'Budget posé';

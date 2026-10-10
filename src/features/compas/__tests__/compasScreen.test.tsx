@@ -140,6 +140,7 @@ const compas = vi.hoisted(() => ({
     note: null,
   })),
   compasClearStartSayAction: vi.fn(async () => ({ success: true })),
+  compasSetOriginAction: vi.fn(async () => ({ success: true }) as { success: boolean; error?: string }),
 }));
 vi.mock('../server/compasActions', () => compas);
 const poi = vi.hoisted(() => ({
@@ -241,6 +242,7 @@ const autofill = vi.hoisted(() => ({
   })),
   compasUndoAutofillAction: vi.fn(async () => ({ success: true })),
   compasAutofillStopAction: vi.fn(async () => ({ success: true })),
+  compasRefreshAutofillAction: vi.fn(async () => ({ success: true, parts: [] as string[], label: '', kept: 0 })),
   // Lancement immédiat, issue relue ensuite (comme en production, sans requête longue).
   compasAutofillStartAction: vi.fn(async (input: unknown) => {
     const token = `t${++outcomes.n}`;
@@ -784,6 +786,82 @@ describe('CompasScreen', () => {
       expect(autofill.compasUndoAutofillAction).toHaveBeenCalledWith({ tripId: TRIP, tripSlug: 'trek-3-vallees' })
     );
     expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1);
+  });
+
+  describe('Préremplissage d’une demande qui ne dit qu’un départ', () => {
+    /** « rando 3 jours depuis Lyon » appliquée depuis le tiroir : ni lieu, ni étape, ni dates, trois jours prévus. */
+    const onlyOrigin = (originSaid: CompasData['originSaid']): CompasData => ({
+      ...makeData({ trip: { ...baseTrip, destinationName: null, startDate: null, endDate: null }, steps: [] }),
+      autofill: 'none',
+      origin: null,
+      itinerary: [],
+      plannedDays: 3,
+      originSaid,
+    });
+
+    it('le départ dit suffit à lancer la préparation autour de lui', async () => {
+      render(<CompasScreen data={onlyOrigin({ name: 'Lyon', lat: 45.76, lon: 4.83, countryCode: 'FR' })} />);
+      await waitFor(() => expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1));
+    });
+
+    it('sans départ dit ni lieu ni préparation en cours, rien ne part tout seul', async () => {
+      render(<CompasScreen data={onlyOrigin(null)} />);
+      await new Promise((r) => setTimeout(r, 50));
+      expect(autofill.compasAutofillAction).not.toHaveBeenCalled();
+    });
+  });
+
+  it('Préremplissage sans point de départ : le trajet est dit non chiffré', async () => {
+    autofill.compasAutofillAction.mockImplementationOnce(async () => ({
+      success: true,
+      summary: {
+        nights: [
+          { night: 1, type: 'refuge', place: 'Refuge des Oulettes', reason: 'ton profil : confort' },
+          { night: 2, type: 'bivouac', place: null, reason: 'ta préférence' },
+        ],
+        transport: null,
+        originUnknown: true,
+        kit: { inventaire: 2, pret: 0, location: 0, achat: 1, a_trouver: 1 },
+        budget: [],
+        total: 486,
+        notes: [],
+        usedAi: true,
+        stepsCreated: 0,
+      },
+    }) as never);
+    render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+    expect(
+      await screen.findByText('1 refuge, 1 bivouac · Trajet non chiffré : point de départ inconnu · 4 objets au kit')
+    ).toBeTruthy();
+  });
+
+  it('Préremplissage : le vol dit d’où il part et entre quels aéroports', async () => {
+    autofill.compasAutofillAction.mockImplementationOnce(async () => ({
+      success: true,
+      summary: {
+        nights: [{ night: 1, type: 'bivouac', place: null, reason: 'ta préférence' }],
+        transport: {
+          mode: 'avion',
+          km: 790,
+          minutes: 0,
+          walkKm: 0,
+          fuelEur: 0,
+          basis: 'vol aller-retour depuis ta position, LYS → CAG',
+          route: 'LYS → CAG',
+          departure: 'ta position',
+        },
+        kit: { inventaire: 1, pret: 0, location: 0, achat: 0, a_trouver: 0 },
+        budget: [],
+        total: 486,
+        notes: [],
+        usedAi: true,
+        stepsCreated: 0,
+      },
+    }) as never);
+    render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+    expect(
+      await screen.findByText('1 bivouac · vol LYS → CAG à prévoir (depuis ta position) · 1 objet au kit')
+    ).toBeTruthy();
   });
 
   it('Préremplissage : limite de fréquence → annoncé, relancé seul à la fin de la fenêtre', async () => {
@@ -1622,6 +1700,75 @@ describe('CompasScreen', () => {
     expect(compas.compasClearStartSayAction).not.toHaveBeenCalled();
   });
 
+  it('Phrase de départ : un lieu de départ refusé n’arrête pas la préparation, l’échec est dit', async () => {
+    compas.compasInterpretAction.mockResolvedValueOnce({
+      success: true,
+      usedAi: false,
+      note: null,
+      proposals: [
+        {
+          id: '0-set_origin',
+          action: { type: 'set_origin', place: 'Lyon' },
+          label: 'Départ : Lyon',
+          ok: true,
+          reason: null,
+          source: 'regles',
+        },
+        {
+          id: '1-set_party_size',
+          action: { type: 'set_party_size', count: 4 },
+          label: '4 personnes',
+          ok: true,
+          reason: null,
+          source: 'regles',
+        },
+      ],
+    });
+    compas.compasSetOriginAction.mockResolvedValueOnce({ success: false, error: '« Lyon » introuvable sur la carte.' });
+    render(<CompasScreen data={{ ...makeData(), startSay: 'à 4 depuis Lyon' }} />);
+    await waitFor(() => expect(compas.compasSetOriginAction).toHaveBeenCalledTimes(1));
+    // Le reste est appliqué d'abord : le départ, dont rien ne dépend, passe en dernier.
+    expect(compas.compasSetPartySizeAction).toHaveBeenCalledWith({ tripId: TRIP, tripSlug: 'trek-3-vallees', partySize: 4 });
+    expect(compas.compasSetPartySizeAction.mock.invocationCallOrder[0]).toBeLessThan(
+      compas.compasSetOriginAction.mock.invocationCallOrder[0]
+    );
+    // L'échec est visible, sans arrêter la préparation : la phrase est consommée et la suite part.
+    expect(await screen.findByText('Départ non retenu · « Lyon » introuvable sur la carte.')).toBeTruthy();
+    await waitFor(() => expect(compas.compasClearStartSayAction).toHaveBeenCalledWith({ tripId: TRIP }));
+    expect(screen.queryByText('Préparation interrompue')).toBeNull();
+  });
+
+  it('Phrase de départ : un réglage refusé arrête toujours la préparation, sans tenter le départ', async () => {
+    compas.compasInterpretAction.mockResolvedValueOnce({
+      success: true,
+      usedAi: false,
+      note: null,
+      proposals: [
+        {
+          id: '0-set_origin',
+          action: { type: 'set_origin', place: 'Lyon' },
+          label: 'Départ : Lyon',
+          ok: true,
+          reason: null,
+          source: 'regles',
+        },
+        {
+          id: '1-set_party_size',
+          action: { type: 'set_party_size', count: 4 },
+          label: '4 personnes',
+          ok: true,
+          reason: null,
+          source: 'regles',
+        },
+      ],
+    });
+    compas.compasSetPartySizeAction.mockResolvedValueOnce({ success: false, error: 'Connexion perdue' } as never);
+    render(<CompasScreen data={{ ...makeData(), startSay: 'à 4 depuis Lyon' }} />);
+    expect(await screen.findByText('Préparation interrompue')).toBeTruthy();
+    expect(compas.compasSetOriginAction).not.toHaveBeenCalled();
+    expect(compas.compasClearStartSayAction).not.toHaveBeenCalled();
+  });
+
   it('Dis-le : les propositions refusées ne s’appliquent pas, les autres oui', async () => {
     compas.compasInterpretAction.mockResolvedValueOnce({
       success: true,
@@ -1682,5 +1829,119 @@ describe('CompasScreen', () => {
       preferences: { pace: 'tranquille', nights: null, avoid: [], wishes: [] },
     });
     expect(compas.compasSetBudgetAction).not.toHaveBeenCalled();
+  });
+
+  /* « N changements appliqués » compte les propositions cochées qui s'écrivent
+     (« Chercher un parcours » n'écrit rien). Un départ dit s'écrit : il compte
+     avec les autres, et seulement si son écriture a réussi. */
+  describe('Dis-le : « depuis Lyon »', () => {
+    const said = (id: string, action: object, label: string) => ({
+      id,
+      action,
+      label,
+      ok: true,
+      reason: null,
+      source: 'regles' as const,
+    });
+    const originProposal = said('0-set_origin', { type: 'set_origin', place: 'Lyon' }, 'Départ : Lyon');
+    const partyProposal = said('1-set_party_size', { type: 'set_party_size', count: 4 }, '4 personnes');
+
+    const understand = async (proposals: unknown[], text: string) => {
+      compas.compasInterpretAction.mockResolvedValueOnce({ success: true, usedAi: false, note: null, proposals });
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openOu(/Quand/);
+      fireEvent.change(within(sheet).getByLabelText('Dis-le'), { target: { value: text } });
+      fireEvent.click(within(sheet).getByRole('button', { name: 'Comprendre la phrase' }));
+      return sheet;
+    };
+
+    it('écrit le départ et le compte avec les autres changements', async () => {
+      const sheet = await understand([originProposal, partyProposal], 'à 4 depuis Lyon');
+      expect(await within(sheet).findByText('Départ : Lyon')).toBeTruthy();
+      fireEvent.click(within(sheet).getByRole('button', { name: /Appliquer \(2\)/ }));
+      await waitFor(() =>
+        expect(compas.compasSetOriginAction).toHaveBeenCalledWith({
+          tripId: TRIP,
+          tripSlug: 'trek-3-vallees',
+          place: 'Lyon',
+        })
+      );
+      expect(compas.compasSetPartySizeAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        partySize: 4,
+      });
+      expect(await screen.findByText('2 changements appliqués')).toBeTruthy();
+    });
+
+    it('seul, le départ est écrit, compté pour un, et « Annuler » l’efface (aucun départ avant)', async () => {
+      const sheet = await understand([originProposal], 'depuis Lyon');
+      fireEvent.click(await within(sheet).findByRole('button', { name: /Appliquer \(1\)/ }));
+      await waitFor(() => expect(compas.compasSetOriginAction).toHaveBeenCalledTimes(1));
+      expect(await screen.findByText('1 changement appliqué')).toBeTruthy();
+      fireEvent.click(await screen.findByRole('button', { name: 'Annuler' }));
+      await waitFor(() => expect(compas.compasSetOriginAction).toHaveBeenCalledTimes(2));
+      expect(compas.compasSetOriginAction).toHaveBeenLastCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        place: null,
+      });
+    });
+
+    it('départ changé : « Annuler » rétablit l’ancien tel que rangé, sans le rechercher à nouveau', async () => {
+      const grenoble = { name: 'Grenoble', lat: 45.19, lon: 5.72, countryCode: 'FR' };
+      compas.compasInterpretAction.mockResolvedValueOnce({
+        success: true,
+        usedAi: false,
+        note: null,
+        proposals: [originProposal],
+      });
+      render(<CompasScreen data={{ ...makeData(), originName: 'Grenoble', originSaid: grenoble }} />);
+      const sheet = await openOu(/Quand/);
+      fireEvent.change(within(sheet).getByLabelText('Dis-le'), { target: { value: 'depuis Lyon' } });
+      fireEvent.click(within(sheet).getByRole('button', { name: 'Comprendre la phrase' }));
+      fireEvent.click(await within(sheet).findByRole('button', { name: /Appliquer \(1\)/ }));
+      await waitFor(() => expect(compas.compasSetOriginAction).toHaveBeenCalledTimes(1));
+      fireEvent.click(await screen.findByRole('button', { name: 'Annuler' }));
+      await waitFor(() => expect(compas.compasSetOriginAction).toHaveBeenCalledTimes(2));
+      expect(compas.compasSetOriginAction).toHaveBeenLastCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        place: 'Grenoble',
+        restore: grenoble,
+      });
+    });
+
+    it('lieu de départ introuvable : l’erreur remplace l’annonce, rien n’est compté comme appliqué', async () => {
+      compas.compasSetOriginAction.mockResolvedValueOnce({
+        success: false,
+        error: '« Lyon » introuvable sur la carte.',
+      });
+      const sheet = await understand([originProposal], 'depuis Lyon');
+      fireEvent.click(await within(sheet).findByRole('button', { name: /Appliquer \(1\)/ }));
+      expect(await screen.findByText('« Lyon » introuvable sur la carte.')).toBeTruthy();
+      expect(screen.queryByText('1 changement appliqué')).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Annuler' })).toBeNull();
+    });
+  });
+});
+
+describe('CompasScreen : réadaptation après un réglage', () => {
+  beforeEach(() => {
+    autofill.compasRefreshAutofillAction.mockClear();
+  });
+  afterEach(() => cleanup());
+
+  it('deux changements de départ de suite (Lyon → Paris → Marseille) sont réadaptés tous les deux', async () => {
+    const stale = (autofillStale: Array<'transport' | 'budget'>) => ({ ...makeData(), autofill: 'done' as const, autofillStale });
+    const { rerender } = render(<CompasScreen data={stale(['transport', 'budget'])} />);
+    await waitFor(() => expect(autofill.compasRefreshAutofillAction).toHaveBeenCalledTimes(1));
+    // Même liste, même écran : pas de seconde réadaptation tant que rien n'a bougé.
+    rerender(<CompasScreen data={stale(['transport', 'budget'])} />);
+    expect(autofill.compasRefreshAutofillAction).toHaveBeenCalledTimes(1);
+    // La réadaptation a refait ce qui était caduc, puis un nouveau changement rend les mêmes parties caduques.
+    rerender(<CompasScreen data={stale([])} />);
+    rerender(<CompasScreen data={stale(['transport', 'budget'])} />);
+    await waitFor(() => expect(autofill.compasRefreshAutofillAction).toHaveBeenCalledTimes(2));
   });
 });

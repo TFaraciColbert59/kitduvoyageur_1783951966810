@@ -41,6 +41,13 @@ const DATA_SOURCES: Array<{ label: string; parts: Array<string | { text: string;
     ],
   },
   {
+    label: 'Aéroports',
+    parts: [
+      { text: 'OurAirports', href: 'https://ourairports.com/data/' },
+      ' (domaine public) : aéroports à vols réguliers, pour estimer un vol d’aéroport à aéroport.',
+    ],
+  },
+  {
     label: 'Calcul d’itinéraires',
     parts: [
       { text: 'Powered by Geoapify', href: 'https://www.geoapify.com/' },
