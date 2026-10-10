@@ -36,7 +36,8 @@ quotidien, cookies de session `Lax`. Migration appliquée ; le rapport du 8 oct.
 après « Essayer sans compte », `/compas` ouvert sans redirection, météo MET servie, aucune erreur
 serveur en base ; base à 429,4 Mio.
 
-Lot M (plan `docs/superpowers/plans/2026-10-09-compas-lot-m.md`, PLAN-100 4.7) : « aujourd'hui » au fuseau du navigateur, soleil et départ au fuseau de la destination, hiver selon l'hémisphère, saison sèche des tropiques hors table par les normales NASA POWER ; tests verts, à prouver sur l'aperçu.
+Lot M (plan `docs/superpowers/plans/2026-10-09-compas-lot-m.md`, PLAN-100 4.7) : « aujourd'hui » au fuseau du navigateur, soleil et départ au fuseau de la destination, hiver selon l'hémisphère, saison sèche des tropiques hors table par les normales NASA POWER. Prouvé sur l'aperçu les 9 et 10 oct. (relu en base) : « demain » dit à 23 h 44 UTC donne le 11 oct. pour un voyageur à Paris et le 10 oct. pour un voyageur à Los Angeles ; Chapada Diamantina (Brésil, absent de la table) → « août, mois le plus sec selon les normales 2001-2020 (NASA POWER) » ; Patagonie → « décembre » (été austral). Fusionné dans la PR #86 avec le lot O (garde réseau des tests unitaires ; contournement de limite corrigé : une préparation en phase `rest` sans itinéraire en attente comptait comme reprise).
+Lot N (plan `docs/superpowers/plans/2026-10-09-compas-lot-n.md`, PLAN-100 4.3 et 4.4) : « depuis Lyon » compris et rangé sur le voyage, trajet depuis le départ dit puis la position, jamais la France par défaut (sinon non chiffré, dit à l'écran), vol d'aéroport à aéroport (OurAirports, 3 244 aéroports), journée à plus de 3 h de trajet aller signalée ; tests verts, à prouver sur l'aperçu.
 
 **À faire par Tony** (rien d'autre ne bloque) :
 1. SQL Editor : `supabase/migrations/20261008190000_base_scheduled_purges.sql` (purges

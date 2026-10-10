@@ -418,6 +418,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       « Itinéraire non enregistré », `catch`) : une relance attend jusqu'à 290 s (lot O).
 - [ ] « Annuler » garde `autofill_claim` : juste après, une relance attend jusqu'à 290 s
       (lot O).
+- [ ] « Arrêter » pendant l'application des réglages : `stopped.current` n'est vérifié
+      qu'après la compréhension de la phrase ; un appui pendant `runOps` est écrasé par
+      `setPrep({stage:'itinerary'})` et le panneau reste bloqué (`CompasScreen`,
+      pré-existant, relevé au lot N).
 
 ### 2.7 Écritures concurrentes
 
@@ -597,20 +601,37 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [x] Note de papiers jamais perdue par la troncature : l'essentiel (papiers, sécurité)
       passe avant les notes de préparation et les suggestions de l'IA (`orderNotes`, 8
       notes), lot K.
+- [ ] Hypothèses « voyageur français » encore en place, jusqu'au profil (4.1), à ne pas
+      confondre avec le départ, qui ne vaut plus la France par défaut (4.3) : le prompt
+      système de l'IA (`src/lib/ai/features/compasAutofill.ts`, règles 8a et 8b ; la 8a
+      écrit « une personne qui part de France ») et le barème `entryFees` (« voyageur
+      français », `engine/costs.ts`).
 
 ### 4.3 Origine du voyage
 
-- [ ] Origine = ville dite (« depuis Lyon »), domicile du profil ou GPS ; **jamais la
+- [x] Origine = ville dite (« depuis Lyon »), domicile du profil ou GPS ; **jamais la
       France par défaut** ; sans origine, le trajet n'est pas chiffré (dit à l'écran).
-- [ ] Action « depuis X » dans la compréhension de la phrase.
-- [ ] Aéroport le plus proche de l'origine et de la destination (OurAirports, CC0).
+      Lot N : départ dit (`metadata.compas.origin`) > GPS > aucun ; plus de Paris ni de
+      « depuis la France » ; sans départ, rien de chiffré et « Trajet non chiffré : point de
+      départ inconnu » (`travel.test.ts`). **Pas fait : le domicile du profil**, il attend
+      le profil (4.1).
+- [x] Action « depuis X » dans la compréhension de la phrase. Lot N : `set_origin` lu par les
+      règles (« depuis », « au départ de », « en partant de », « on part de », « je pars
+      de », « nous partons de »), jamais pris pour la destination, appliqué par la même
+      recherche que la destination (`intentOrigin.test.ts`, `originInterpret.test.ts`,
+      `originAction.test.ts`).
+- [x] Aéroport le plus proche de l'origine et de la destination (OurAirports, CC0). Lot N :
+      3 244 aéroports desservis (domaine public), un aéroport moyen compte 1,6 fois sa
+      distance, vol d'aéroport à aéroport (« LYS → CAG », `airports.test.ts`, `travel.test.ts`).
 
 ### 4.4 Trajets
 
 - [ ] Train hors des 10 pays (Europe entière, Japon, Corée, Chine, Inde, Amérique du
       Nord) par règles de distance et de réseau ; barème par pays.
 - [ ] Préférence « sans voiture » ; transports en commun quand la zone en a.
-- [ ] Journée à plus de 3 h de trajet signalée (Mercantour depuis Annecy).
+- [x] Journée à plus de 3 h de trajet signalée (Mercantour depuis Annecy). Lot N : route
+      mesurée, train, ou temps estimé pour une sortie ; « 3 h 24 de trajet aller pour une
+      seule journée : prévois une nuit sur place ou choisis plus près. » (`dayTrip.test.ts`).
 
 ### 4.5 Itinéraire
 
