@@ -113,14 +113,14 @@ async function ensureUser(email) {
 }
 
 async function resetUserData(userId) {
-  const tables = ['user_roles', 'loyalty_history', 'loyalty_redemptions', 'kit_reports', 'orders', 'stock_movements'];
+  const tables = ['loyalty_history', 'loyalty_redemptions', 'kit_reports', 'orders', 'stock_movements'];
   for (const table of tables) {
     const { error } = await svc.from(table).delete().eq('user_id', userId);
     if (error) throw new Error(`reset ${table}: ${error.message}`);
   }
   const { error } = await svc
     .from('user_profiles')
-    .update({ loyalty_points: 0, loyalty_level: 'Explorateur' })
+    .update({ loyalty_points: 0, loyalty_level: 'Explorateur', role: 'user' })
     .eq('id', userId);
   if (error) throw new Error(`reset profil: ${error.message}`);
 }
@@ -158,12 +158,13 @@ async function ensureProduct() {
 }
 
 async function grantAdmin(userId) {
-  const { data: role, error } = await svc.from('roles').select('id').eq('name', 'admin').single();
-  if (error) throw new Error(`roles: ${error.message}`);
-  const { error: insErr } = await svc
-    .from('user_roles')
-    .upsert({ user_id: userId, role_id: role.id }, { onConflict: 'user_id,role_id' });
-  if (insErr) throw new Error(`user_roles: ${insErr.message}`);
+  const { error } = await svc.from('user_profiles').update({ role: 'admin' }).eq('id', userId);
+  if (error) throw new Error(`grantAdmin: ${error.message}`);
+}
+
+async function revokeAdmin(userId) {
+  const { error } = await svc.from('user_profiles').update({ role: 'user' }).eq('id', userId);
+  if (error) throw new Error(`revokeAdmin: ${error.message}`);
 }
 
 async function sumHistory(userId) {
@@ -429,15 +430,9 @@ try {
 
   await step('7. Confirmation admin ⇒ crédit unique (total×10), rejeu 409', async () => {
     await grantAdmin(userA.id);
-    const csrf = await pageA.evaluate(async () => {
-      const res = await fetch('/api/admin/csrf');
-      const json = await res.json().catch(() => null);
-      return { status: res.status, token: json?.data?.csrfToken ?? null };
-    });
-    check('jeton CSRF admin émis', csrf.status === 200 && Boolean(csrf.token), `status=${csrf.status}`);
 
-    const confirm = await api(pageA, '/api/admin/orders/confirm', { orderId: order1.id }, { 'x-admin-csrf': csrf.token });
-    check('confirm 200 success', confirm.status === 200 && confirm.json?.ok === true && confirm.json?.data?.success === true, JSON.stringify(confirm));
+    const confirm = await api(pageA, '/api/admin/orders/confirm', { orderId: order1.id });
+    check('confirm 200 success', confirm.status === 200 && confirm.json?.success === true, JSON.stringify(confirm));
 
     const { data: row } = await svc.from('orders').select('status').eq('id', order1.id).single();
     check('commande status=confirmed', row.status === 'confirmed', `status=${row.status}`);
@@ -450,8 +445,9 @@ try {
     const prof = await profileOf(userA.id);
     check(`profil synchronisé (${1075 + expectedPoints})`, prof.loyalty_points === 1075 + expectedPoints, `profil=${prof.loyalty_points} level=${prof.loyalty_level}`);
 
-    const replay = await api(pageA, '/api/admin/orders/confirm', { orderId: order1.id }, { 'x-admin-csrf': csrf.token });
-    check('rejeu confirm ⇒ 409 not_confirmable', replay.status === 409 && replay.json?.error?.code === 'not_confirmable', JSON.stringify(replay));
+    const replay = await api(pageA, '/api/admin/orders/confirm', { orderId: order1.id });
+    check('rejeu confirm ⇒ 409 not_confirmable', replay.status === 409 && replay.json?.error === 'not_confirmable', JSON.stringify(replay));
+    await revokeAdmin(userA.id);
     await assertInvariant(userA.id, 'A après confirmation');
   });
 

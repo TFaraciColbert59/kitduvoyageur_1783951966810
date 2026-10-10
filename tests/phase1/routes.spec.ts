@@ -12,13 +12,11 @@ const h = vi.hoisted(() => ({
   getServiceSupabase: vi.fn(),
   enforceRateLimit: vi.fn(),
   rpc: vi.fn(),
-  requireAdmin: vi.fn(),
-  checkCsrfToken: vi.fn(),
-  logAdminAction: vi.fn(),
+  isAdminRpc: vi.fn(),
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
-  createClient: async () => ({ auth: { getUser: h.getUser } }),
+  createClient: async () => ({ auth: { getUser: h.getUser }, rpc: (...args: unknown[]) => h.isAdminRpc(...args) }),
 }));
 
 vi.mock('@/lib/ai/serviceClient', () => ({
@@ -27,18 +25,6 @@ vi.mock('@/lib/ai/serviceClient', () => ({
 
 vi.mock('@/lib/rate-limit/routes', () => ({
   enforceRateLimit: (identifier: string, config: unknown) => h.enforceRateLimit(identifier, config),
-}));
-
-vi.mock('@/server/admin/requireAdmin', () => ({
-  requireAdmin: (code: string) => h.requireAdmin(code),
-}));
-
-vi.mock('@/server/admin/csrf', () => ({
-  checkCsrfToken: (req: unknown) => h.checkCsrfToken(req),
-}));
-
-vi.mock('@/server/admin/audit', () => ({
-  logAdminAction: (input: unknown) => h.logAdminAction(input),
 }));
 
 import { POST as spendPost } from '@/app/api/loyalty/spend/route';
@@ -100,7 +86,7 @@ function serviceFor(result: QueryResult = { data: [], error: null }, calls?: Que
 }
 
 function adminGateOk() {
-  h.requireAdmin.mockResolvedValue({ ok: true, ctx: { user: { id: USER_ID }, supabase: {} } });
+  h.isAdminRpc.mockResolvedValue({ data: true, error: null });
 }
 
 describe('Phase 1 — handlers des routes (mocks)', () => {
@@ -109,15 +95,12 @@ describe('Phase 1 — handlers des routes (mocks)', () => {
     h.getServiceSupabase.mockReset();
     h.enforceRateLimit.mockReset();
     h.rpc.mockReset();
-    h.requireAdmin.mockReset();
-    h.checkCsrfToken.mockReset();
-    h.logAdminAction.mockReset();
+    h.isAdminRpc.mockReset();
 
     h.getUser.mockResolvedValue({ data: { user: { id: USER_ID } } });
     h.getServiceSupabase.mockReturnValue(serviceFor());
     h.enforceRateLimit.mockResolvedValue(null);
-    h.checkCsrfToken.mockResolvedValue(true);
-    h.logAdminAction.mockResolvedValue(undefined);
+    h.isAdminRpc.mockResolvedValue({ data: true, error: null });
   });
 
   describe('POST /api/loyalty/spend', () => {
@@ -322,21 +305,18 @@ describe('Phase 1 — handlers des routes (mocks)', () => {
   describe('POST /api/admin/orders/confirm', () => {
     const validBody = { orderId: ORDER_ID };
 
-    it('403 non-admin (garde requireAdmin orders.write)', async () => {
-      h.requireAdmin.mockResolvedValue({
-        ok: false,
-        response: NextResponse.json({ error: 'Accès interdit' }, { status: 403 }),
-      });
+    it('403 non-admin (garde is_admin)', async () => {
+      h.isAdminRpc.mockResolvedValue({ data: false, error: null });
       const res = await adminConfirmPost(post('/api/admin/orders/confirm', validBody));
       expect(res.status).toBe(403);
-      expect(h.requireAdmin).toHaveBeenCalledWith('orders.write');
+      expect(h.isAdminRpc).toHaveBeenCalledWith('is_admin');
     });
 
     it('400 orderId invalide', async () => {
       adminGateOk();
       const res = await adminConfirmPost(post('/api/admin/orders/confirm', { orderId: 'nope' }));
       expect(res.status).toBe(400);
-      expect((await res.json()).error.code).toBe('invalid_body');
+      expect((await res.json()).error).toBe('Requête invalide');
     });
 
     it('409 not_confirmable quand la commande n’est pas pending', async () => {
@@ -344,20 +324,15 @@ describe('Phase 1 — handlers des routes (mocks)', () => {
       h.getServiceSupabase.mockReturnValue(serviceFor({ data: [], error: null }));
       const res = await adminConfirmPost(post('/api/admin/orders/confirm', validBody));
       expect(res.status).toBe(409);
-      expect((await res.json()).error.code).toBe('not_confirmable');
+      expect((await res.json()).error).toBe('not_confirmable');
     });
 
-    it('200 nominal : la confirmation est auditée', async () => {
+    it('200 nominal : confirmation plate success:true', async () => {
       adminGateOk();
       h.getServiceSupabase.mockReturnValue(serviceFor({ data: [{ id: ORDER_ID }], error: null }));
       const res = await adminConfirmPost(post('/api/admin/orders/confirm', validBody));
       expect(res.status).toBe(200);
-      const payload = await res.json();
-      expect(payload.ok).toBe(true);
-      expect(payload.data).toEqual({ success: true });
-      expect(h.logAdminAction).toHaveBeenCalledWith(
-        expect.objectContaining({ action: 'orders.confirm', target_id: ORDER_ID })
-      );
+      expect(await res.json()).toEqual({ success: true });
     });
   });
 });
