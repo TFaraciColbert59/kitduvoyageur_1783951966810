@@ -6,6 +6,7 @@ import { originOf, partySizeOf, shortHoursOf, tripLengthDays } from '../engine/t
 import type { FxRate } from '../engine/currency';
 import type { CompasPendingInvite } from '../engine/team';
 import { assessDanger, mergeDangerIntoVerdict, type DangerAssessment } from '../engine/danger';
+import type { AlertsStatus } from '../engine/officialAlerts';
 import { adviseKit, type KitAdvice } from '../engine/kitRules';
 import { parseRoutePois, poiLabel, type RoutePoi } from '../engine/routePois';
 import { getEurRate } from './rates';
@@ -115,6 +116,11 @@ export interface CompasData {
   fx: FxRate | null;
   /** Danger en trois axes, chaque signal sourcé et daté. */
   danger: DangerAssessment;
+  /**
+   * Ce que le Compas a pu lire des alertes officielles (Meteoalarm) pour ce voyage ;
+   * absent : écran plus ancien, non lues. Sert à citer la source (Sources).
+   */
+  alertsStatus?: AlertsStatus;
   /** Conseils de kit selon la météo et le parcours, chacun avec sa donnée source. */
   kitAdvice: KitAdvice[];
   /** Points OpenStreetMap à moins de 1 km du tracé choisi (vide sans parcours du catalogue). */
@@ -575,6 +581,7 @@ export async function getCompasData(): Promise<CompasData | null> {
   return {
     model: { ...baseModel, verdict: mergeDangerIntoVerdict(baseModel.verdict, danger) },
     danger,
+    alertsStatus: officialAlerts.status,
     kitAdvice: adviseKit({
       lines: baseModel.kit.lines,
       forecasts: (weather?.tripDays ?? []).map((d) => ({

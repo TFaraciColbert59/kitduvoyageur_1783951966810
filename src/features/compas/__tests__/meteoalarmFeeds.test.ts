@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  METEOALARM_DISCLAIMER,
+  METEOALARM_DISCLAIMER_FR,
   METEOALARM_FEEDS,
   METEOALARM_HOME,
   METEOALARM_TERMS,
   feedUrl,
+  formatIssuedUtc,
+  isMeteoalarmSource,
   providerLabel,
 } from '../engine/meteoalarmFeeds';
 
@@ -74,5 +78,35 @@ describe('providerLabel — le service national, jamais une personne', () => {
     expect(providerLabel(METEOALARM_FEEDS.no, ['Quelqu’un d’autre'])).toBe(
       'Meteorologisk Institutt (MET Norway) / Norges Vassdrags- og Energidirektorat (NVE)'
     );
+  });
+});
+
+describe('heure d’émission, toujours donnée avec l’alerte (conditions, § 5)', () => {
+  it('en UTC, sans dépendre du fuseau de la machine', () => {
+    expect(formatIssuedUtc('2026-10-10T16:00:00.000Z')).toBe('10 oct. 2026, 16 h 00 UTC');
+    expect(formatIssuedUtc('2026-10-10T18:05:08+02:00')).toBe('10 oct. 2026, 16 h 05 UTC');
+    expect(formatIssuedUtc('2026-01-02T00:09:00Z')).toBe('2 janv. 2026, 0 h 09 UTC');
+  });
+
+  it('une date sans heure, ou illisible : rien d’inventé', () => {
+    expect(formatIssuedUtc('2026-10-12')).toBeNull();
+    expect(formatIssuedUtc('hier')).toBeNull();
+    expect(formatIssuedUtc(null)).toBeNull();
+    expect(formatIssuedUtc(undefined)).toBeNull();
+  });
+});
+
+describe('avertissement du redistributeur', () => {
+  it('le texte officiel, mot pour mot (conditions, § 5, relues le 10 octobre 2026)', () => {
+    expect(METEOALARM_DISCLAIMER).toBe(
+      'Time delays between this website and the www.meteoalarm.org website are possible. For the most up-to-date awareness information as published by the participating National Meteorological and Hydrological Services, please refer to www.meteoalarm.org.'
+    );
+    expect(METEOALARM_DISCLAIMER_FR).toContain('meteoalarm.org');
+  });
+
+  it('une source « via Meteoalarm » se reconnaît', () => {
+    expect(isMeteoalarmSource('Météo-France via Meteoalarm')).toBe(true);
+    expect(isMeteoalarmSource('MET Norway')).toBe(false);
+    expect(isMeteoalarmSource('DIN 33466')).toBe(false);
   });
 });

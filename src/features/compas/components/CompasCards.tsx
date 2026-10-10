@@ -15,6 +15,8 @@ import {
   initials,
 } from '../engine/format';
 import { Thumb, useLongPress, type Tone } from './CompasPrimitives';
+import { isMeteoalarmSource } from '../engine/meteoalarmFeeds';
+import MeteoalarmNotice from './MeteoalarmNotice';
 import { DurationRuler, tripHours } from './CompasRuler';
 import type { CompasCtl } from './compasTypes';
 import { RESA_CATS, bookingCat, offerCat } from '../engine/resaCats';
@@ -715,6 +717,7 @@ export function VerdictCard({ ctl }: { ctl: CompasCtl }) {
           Aucun signal bloquant ni point de vigilance sur les données disponibles.
         </p>
       )}
+      {shown.some((r) => isMeteoalarmSource(r.source)) && <MeteoalarmNotice />}
       <button
         type="button"
         className="cp-btn cp-btn--soft"

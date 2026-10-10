@@ -269,6 +269,11 @@ describe('assessDanger — alerte officielle mise à jour depuis', () => {
     expect(labelOf(mise({ web: 'https://www.meteoam.it/it/avvisi' }))).toContain('à vérifier sur meteoam.it');
   });
 
+  it('l’heure d’émission accompagne toujours l’alerte, où qu’elle s’affiche (conditions Meteoalarm)', () => {
+    expect(labelOf(mise({ sent: '2026-10-10T16:00:00.000Z' }))).toContain('émise le 10 oct. 2026, 16 h 00 UTC');
+    expect(labelOf(mise({ sent: null }))).not.toContain('émise');
+  });
+
   it('le texte officiel du service accompagne la mise en forme, tel quel', () => {
     const label = labelOf(mise({ headline: 'Allerta Rossa Vento per Italia - Sardegna' }));
     expect(label).toContain('texte officiel : « Allerta Rossa Vento per Italia - Sardegna »');

@@ -48,7 +48,7 @@ const RULES: ReadonlyArray<{ id: string; axis: DangerAxis; label: string }> = [
     label: `Pente moyenne ≥ ${Math.round(T.steepAvgSlope * 100)} %`,
   },
   { id: 'loss', axis: 'technique', label: `Descente ≥ ${T.highLossM} m par jour` },
-  { id: 'alert', axis: 'conjoncturel', label: 'Vigilance officielle (Météo-France)' },
+  { id: 'alert', axis: 'conjoncturel', label: 'Vigilance officielle (services nationaux, via Meteoalarm)' },
 ];
 
 /** Le suffixe de règle porté par l'identifiant d'un signal du moteur. */

@@ -72,6 +72,8 @@ import {
 } from './CompasPrimitives';
 import { DisLe } from './CompasDisLe';
 import { proposeShift, watchRules } from '../engine/watch';
+import { isMeteoalarmSource } from '../engine/meteoalarmFeeds';
+import MeteoalarmNotice from './MeteoalarmNotice';
 import { planWater } from '../engine/water';
 import { addExpenseAction } from '@/app/voyages/budget-actions';
 import { RESA_CATS, bookingCat, offerCat, type ResaCat } from '../engine/resaCats';
@@ -2753,6 +2755,7 @@ function RaisonsFlow({ ctl }: { ctl: CompasCtl }) {
           </div>
         )}
       />
+      {ctl.data.model.verdict.reasons.some((r) => isMeteoalarmSource(r.source)) && <MeteoalarmNotice />}
       <VerdictExplain ctl={ctl} />
     </>
   );
@@ -2956,6 +2959,7 @@ function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
         Vérifiées à chaque ouverture du Compas sur la prévision MET Norway et les alertes
         officielles ; aucun seuil n’est une norme légale.
       </p>
+      {rules.some((r) => r.id === 'alert' && r.hits.length > 0) && <MeteoalarmNotice />}
     </>
   );
 }
@@ -2971,10 +2975,13 @@ function SourcesFlow({ ctl }: { ctl: CompasCtl }) {
     powerTrend ? 'tendance' : null,
     powerNormals ? 'normales 2001-2020' : null,
   ].filter(Boolean);
+  // Meteoalarm n'est cité que si ses flux ont été lus (même sans alerte à montrer).
+  const alertsRead = ctl.data.alertsStatus === 'lues' || ctl.data.alertsStatus === 'partielles';
   const sources = [
     'Étapes et dépenses du voyage',
     'Ton inventaire',
     m.weather.days.length ? 'MET Norway (météo, CC BY 4.0)' : null,
+    alertsRead ? 'Meteoalarm (alertes officielles des services nationaux)' : null,
     powerUses.length ? `NASA POWER (${powerUses.join(', ')})` : null,
     m.daylight ? 'Calcul astronomique (lumière)' : null,
     ctl.data.shop.length ? 'Boutique LKDV' : null,
@@ -3007,6 +3014,7 @@ function SourcesFlow({ ctl }: { ctl: CompasCtl }) {
       <p className="cp-note">
         Aucune donnée n’est inventée : ce qui manque est affiché comme manquant, sans score.
       </p>
+      {alertsRead && <MeteoalarmNotice />}
       <div className="cp-actions">
         <button
           type="button"

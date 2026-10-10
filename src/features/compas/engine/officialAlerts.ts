@@ -26,7 +26,7 @@
 
 import type { OfficialAlert } from './danger';
 import { covers, parseCircle, parsePolygon, type CapGeometry, type CapRing } from './capGeometry';
-import { METEOALARM_FEEDS, providerLabel, type MeteoalarmFeed } from './meteoalarmFeeds';
+import { METEOALARM_FEEDS, meteoalarmSource, providerLabel, type MeteoalarmFeed } from './meteoalarmFeeds';
 
 /** Ce que le Compas sait des alertes officielles pour ce voyage. */
 export type AlertsStatus =
@@ -45,8 +45,6 @@ export type AlertsStatus =
 
 /** Source des alertes françaises (service national + Meteoalarm), conservée pour l'affichage par défaut. */
 export const METEOALARM_SOURCE = 'Météo-France via Meteoalarm';
-
-export const meteoalarmSource = (provider: string) => `${provider} via Meteoalarm`;
 
 const LEVELS: Record<number, OfficialAlert['level']> = { 2: 'jaune', 3: 'orange', 4: 'rouge' };
 

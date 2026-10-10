@@ -47,6 +47,27 @@ export const METEOALARM_DISCLAIMER =
 export const METEOALARM_DISCLAIMER_FR =
   'Des décalages entre ce site et meteoalarm.org sont possibles. Pour l’information la plus à jour publiée par les services météorologiques et hydrologiques nationaux, rends-toi sur meteoalarm.org.';
 
+/** « <service national> via Meteoalarm » : la source affichée d'une alerte. */
+const VIA = ' via Meteoalarm';
+export const meteoalarmSource = (provider: string) => `${provider}${VIA}`;
+export const isMeteoalarmSource = (source: string) => source.endsWith(VIA);
+
+const MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+
+/**
+ * L'heure d'émission d'une alerte, en UTC et sans dépendre de la machine :
+ * « 10 oct. 2026, 16 h 00 UTC ». Une date sans heure ou illisible : null (rien
+ * d'inventé). Meteoalarm l'exige avec toute alerte redistribuée (conditions, § 5).
+ */
+export function formatIssuedUtc(iso: string | null | undefined): string | null {
+  if (typeof iso !== 'string' || !/T\d{2}:\d{2}/.test(iso)) return null;
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return null;
+  const d = new Date(t);
+  const mm = String(d.getUTCMinutes()).padStart(2, '0');
+  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}, ${d.getUTCHours()} h ${mm} UTC`;
+}
+
 export interface MeteoalarmProvider {
   /** Nom du service tel que Meteoalarm le publie. */
   name: string;

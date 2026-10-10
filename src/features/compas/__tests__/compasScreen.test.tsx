@@ -4,7 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { buildCompasModel, type CompasInput, type CompasItemInput } from '../engine/compasModel';
-import { assessDanger } from '../engine/danger';
+import { assessDanger, mergeDangerIntoVerdict, type OfficialAlert } from '../engine/danger';
+import { METEOALARM_DISCLAIMER, METEOALARM_HOME } from '../engine/meteoalarmFeeds';
 import { daylightClock } from '../engine/sun';
 import type { CompasData } from '../server/getCompasData';
 
@@ -1499,6 +1500,99 @@ describe('CompasScreen', () => {
     const sheet = await openSources();
     expect(await within(sheet).findByText('Étapes et dépenses du voyage')).toBeTruthy();
     expect(within(sheet).queryByText(/NASA POWER/)).toBeNull();
+  });
+
+  /* ---------- Alertes officielles : ce que Meteoalarm exige à l'affichage ---------- */
+
+  const mise = (over: Partial<OfficialAlert> = {}): OfficialAlert => ({
+    id: 'it-1',
+    source: 'Servizio Meteorologico dell’Aeronautica Militare (MeteoAM) via Meteoalarm',
+    hazard: 'vent violent',
+    level: 'orange',
+    area: 'Sardegna',
+    onset: '2026-10-12T06:00:00+02:00',
+    expires: '2026-10-12T21:00:00+02:00',
+    sent: '2026-10-10T16:00:00.000Z',
+    updatedSince: null,
+    fetchedAt: '2026-10-11T05:00:00.000Z',
+    headline: 'Allerta Arancione Vento per Italia - Sardegna',
+    web: 'https://www.meteoam.it/',
+    ...over,
+  });
+  const withAlert = (alert: OfficialAlert) => {
+    const data = makeData();
+    data.alertsStatus = 'partielles';
+    data.danger = assessDanger({ dayPlans: [], forecasts: [], alerts: [alert], alertsStatus: 'partielles' });
+    data.model = { ...data.model, verdict: mergeDangerIntoVerdict(data.model.verdict, data.danger) };
+    return data;
+  };
+
+  it('Sources : alertes officielles lues → Meteoalarm cité, avec son lien et l’avertissement mot pour mot', async () => {
+    const data = makeData();
+    data.alertsStatus = 'lues';
+    render(<CompasScreen data={data} />);
+    const sheet = await openSources();
+    expect(await within(sheet).findByText('Meteoalarm (alertes officielles des services nationaux)')).toBeTruthy();
+    const notice = within(sheet).getByTestId('meteoalarm-notice');
+    expect(notice.textContent).toContain(METEOALARM_DISCLAIMER);
+    const links = within(notice).getAllByRole('link');
+    expect(links.length).toBeGreaterThanOrEqual(2);
+    for (const a of links) expect(a.getAttribute('href')).toBe(METEOALARM_HOME);
+  });
+
+  it('Sources : pays non couvert ou alertes indisponibles → Meteoalarm n’est pas cité', async () => {
+    for (const status of ['non_couvert', 'indisponibles', 'zone_non_rapprochee'] as const) {
+      cleanup();
+      const data = makeData();
+      data.alertsStatus = status;
+      render(<CompasScreen data={data} />);
+      const sheet = await openSources();
+      expect(await within(sheet).findByText('Étapes et dépenses du voyage')).toBeTruthy();
+      expect(within(sheet).queryByText(/Meteoalarm/)).toBeNull();
+      expect(within(sheet).queryByTestId('meteoalarm-notice')).toBeNull();
+    }
+  });
+
+  it('Signaux du verdict : alerte orange → service national, heure d’émission, texte officiel, lien et avertissement', async () => {
+    render(<CompasScreen data={withAlert(mise())} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    const row = await within(sheet).findByText(/Vigilance orange · vent violent \(Sardegna\)/);
+    expect(row.textContent).toContain('émise le 10 oct. 2026, 16 h 00 UTC');
+    expect(row.textContent).toContain('texte officiel : « Allerta Arancione Vento per Italia - Sardegna »');
+    expect(
+      within(sheet).getByText(/Source : Servizio Meteorologico dell’Aeronautica Militare \(MeteoAM\) via Meteoalarm/)
+    ).toBeTruthy();
+    expect(within(sheet).getByTestId('meteoalarm-notice').textContent).toContain(METEOALARM_DISCLAIMER);
+  });
+
+  it('Verdict : la carte donne la même information, la même exigence', async () => {
+    render(<CompasScreen data={withAlert(mise())} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    const notice = await screen.findByTestId('meteoalarm-notice');
+    expect(notice.textContent).toContain(METEOALARM_DISCLAIMER);
+    expect(screen.getByText(/émise le 10 oct. 2026, 16 h 00 UTC/)).toBeTruthy();
+  });
+
+  it('CONTRE-EXEMPLE — sans alerte officielle affichée, ni lien ni avertissement Meteoalarm', async () => {
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    expect(within(sheet).queryByTestId('meteoalarm-notice')).toBeNull();
+    expect(screen.queryByTestId('meteoalarm-notice')).toBeNull();
+  });
+
+  it('Veille : une alerte jaune y figure avec son heure d’émission, et l’avertissement suit', async () => {
+    render(<CompasScreen data={withAlert(mise({ level: 'jaune' }))} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Veille/ }));
+    expect(await within(sheet).findByText('Vigilance officielle (services nationaux, via Meteoalarm)')).toBeTruthy();
+    expect(within(sheet).getByText(/Vigilance jaune · vent violent \(Sardegna\), émise le 10 oct. 2026, 16 h 00 UTC/)).toBeTruthy();
+    expect(within(sheet).getByTestId('meteoalarm-notice').textContent).toContain(METEOALARM_DISCLAIMER);
   });
 
   it('Parcours : chercher un lieu, voir la communauté, choisir découpé sur les dates', async () => {

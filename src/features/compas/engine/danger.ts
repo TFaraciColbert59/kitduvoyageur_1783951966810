@@ -11,6 +11,7 @@
  * - conjoncturel   : ce qui change avec le jour (vent, orage, pluie, alertes).
  */
 
+import { formatIssuedUtc } from './meteoalarmFeeds';
 import type { AlertsStatus } from './officialAlerts';
 
 import type { CompasDayPlan } from './compasModel';
@@ -108,6 +109,11 @@ const ALERT_SEVERITY: Record<OfficialAlert['level'], DangerSeverity> = {
   jaune: 'info',
   orange: 'warn',
   rouge: 'block',
+};
+
+const issued = (a: OfficialAlert): string => {
+  const when = formatIssuedUtc(a.sent);
+  return when ? `, émise le ${when}` : '';
 };
 
 /** Où vérifier une alerte : le site du service national si le flux le donne, sinon Meteoalarm. */
@@ -263,7 +269,9 @@ export function assessDanger(input: {
       id: `alert-${a.id}`,
       axis: 'conjoncturel',
       severity: a.updatedSince ? 'info' : ALERT_SEVERITY[a.level],
-      label: `Vigilance ${a.level} · ${a.hazard} (${a.area})${
+      // L'heure d'émission et le texte officiel voyagent avec l'alerte, où qu'elle
+      // s'affiche (conditions de Meteoalarm, § 5).
+      label: `Vigilance ${a.level} · ${a.hazard} (${a.area})${issued(a)}${
         a.updatedSince ? ` — mise à jour depuis, à vérifier sur ${checkHost(a)}` : ''
       }${a.headline ? ` — texte officiel : « ${a.headline} »` : ''}`,
       source: a.source,
