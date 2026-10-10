@@ -43,7 +43,9 @@ for (const version of remoteOnly) {
   fs.writeFileSync(path.join(MIG_DIR, `${version}_remote_placeholder.sql`), `-- placeholder (version enregistrée côté distant, absente du dépôt)\n`);
   placeholders++;
 }
-const OURS = '20261010140000_phase1_balance_lockdown.sql';
-fs.copyFileSync(path.join(ROOT, 'supabase', 'migrations', OURS), path.join(MIG_DIR, OURS));
+const OURS = ['20261010140000_phase1_balance_lockdown.sql', '20261010150000_loyalty_idempotence_user_scoped.sql'];
+for (const f of OURS) {
+  fs.copyFileSync(path.join(ROOT, 'supabase', 'migrations', f), path.join(MIG_DIR, f));
+}
 
 console.log(JSON.stringify({ copied, placeholders, missing, ours: OURS }, null, 2));
