@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }));
+vi.mock('@/lib/rate-limit/routes', () => ({ enforceRateLimit: vi.fn() }));
 vi.mock('@/features/progression/server/progressionService', () => ({
   getProgressionProfile: vi.fn(),
   getTerritorialLeaderboard: vi.fn(),
@@ -16,6 +17,7 @@ vi.mock('@/features/progression/server/challengeService', () => ({
 }));
 
 import { createClient } from '@/lib/supabase/server';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import {
   getProgressionProfile,
   getTerritorialLeaderboard,
@@ -35,6 +37,7 @@ import {
 const USER_ID = '22222222-2222-4222-8222-222222222222';
 
 const mockedCreateClient = vi.mocked(createClient);
+const mockedRateLimit = vi.mocked(enforceRateLimit);
 const mockedProfile = vi.mocked(getProgressionProfile);
 const mockedLeaderboard = vi.mocked(getTerritorialLeaderboard);
 const mockedDeclared = vi.mocked(updateDeclaredTerritory);
@@ -95,6 +98,38 @@ const LEADERBOARD: TerritorialLeaderboard = {
 describe('routes API progression — session et périmètre P1', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedRateLimit.mockReset();
+    mockedRateLimit.mockResolvedValue(null);
+  });
+
+  it.each([429, 503])('GET /api/progression propage le refus %i sans lire le profil', async (status) => {
+    mockedCreateClient.mockResolvedValue(sessionClient({ id: USER_ID }));
+    const denied = NextResponse.json({ error: 'rate_limit_denied' }, { status });
+    mockedRateLimit.mockResolvedValueOnce(denied);
+
+    const response = await progressionGET();
+
+    expect(response).toBe(denied);
+    expect(response.status).toBe(status);
+    expect(mockedProfile).not.toHaveBeenCalled();
+    expect(mockedRateLimit).toHaveBeenCalledWith(USER_ID, expect.objectContaining({
+      scope: 'progression-profile', failMode: 'closed',
+    }));
+  });
+
+  it.each([429, 503])('GET /api/progression/leaderboard propage le refus %i sans lire le classement', async (status) => {
+    mockedCreateClient.mockResolvedValue(sessionClient({ id: USER_ID }));
+    const denied = NextResponse.json({ error: 'rate_limit_denied' }, { status });
+    mockedRateLimit.mockResolvedValueOnce(denied);
+
+    const response = await leaderboardGET(new NextRequest('http://localhost/api/progression/leaderboard'));
+
+    expect(response).toBe(denied);
+    expect(response.status).toBe(status);
+    expect(mockedLeaderboard).not.toHaveBeenCalled();
+    expect(mockedRateLimit).toHaveBeenCalledWith(USER_ID, expect.objectContaining({
+      scope: 'progression-leaderboard', failMode: 'closed',
+    }));
   });
 
   it('GET /api/progression sans session → 401 unauthorized, service jamais appelé', async () => {

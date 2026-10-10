@@ -3,6 +3,8 @@ import React, { ReactNode, createContext, useContext, useEffect, useMemo, useRef
 import { hydrate, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { isNative } from '@/lib/native';
+import { listenForConfirmedProgressionAwards } from '@/lib/progression-award-requests';
+import { invalidateProgressionQueries } from '@/features/progression/client/progressionQuery';
 import {
   clearCriticalSnapshot,
   readCriticalSnapshot,
@@ -39,6 +41,18 @@ export default function ReactQueryProvider({ children }: { children: ReactNode }
     }),
     [identity],
   );
+
+  const activeIdentityRef = useRef({ userId, queryClient });
+  activeIdentityRef.current = { userId, queryClient };
+  useEffect(() => {
+    if (!userId) return;
+    return listenForConfirmedProgressionAwards(userId, () => {
+      // Ignore a previous request even during render -> effect cleanup transition.
+      const active = activeIdentityRef.current;
+      if (active.userId !== userId || active.queryClient !== queryClient) return;
+      void invalidateProgressionQueries(queryClient, userId);
+    });
+  }, [userId, queryClient]);
 
   useEffect(() => {
     const previous = previousRef.current;

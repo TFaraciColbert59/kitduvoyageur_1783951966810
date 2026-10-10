@@ -1,9 +1,19 @@
 # Reprise Progression 2.0
 
-Lire MANDAT.md, status.json, DECISIONS.md et les dernières preuves avant toute action.
+Lire MANDAT.md, status.json, DECISIONS.md et les dernières preuves. Ne pas recommencer l'audit.
 
-État initial : HEAD 373689c6a sur work, dépôt /workspace/kitduvoyageur_1783951966810. Stabilisation I1–I6 codée ; prod I1/I1bis documentée historiquement, I2/I4/I5 non confirmées distantes.
+Dépôt /workspace/kitduvoyageur_1783951966810, branche work, HEAD d8aeac7e0 (références 1ca05d0ae + intégration origin/main f4696770). Nombreux changements préparatoires non committés : consulter git status et agents avant toute édition.
 
-Action en cours : compléter T01/P0 avec inventaire outils, sauvegardes, restauration isolée et sondes en lecture seule. Rapport du sous-agent : evidence/p0-environment.md. Vérifier réellement les sept producteurs et les privilèges. Réussite : preuves SQL/locales datées, restauration comparée, migrations distantes et déploiement établis. Puis T02/T03/T04 ; si accès indisponible, poursuivre contrats et preview sans activation et enregistrer les blocages précis.
+P0 : SQL distant confirme I1/I1bis/I2/I4/I5 déjà appliquées ; ne pas les rejouer. Soldes/journaux réconciliés, démos exclues, outbox vide ; leaderboard neuf entrées anciennes pending. Deux crons existants hors progression. Snapshot privé de 18 tables dans backups/progression-v2-2026-10-10T16-48-07-956Z restauré exactement localement sur lkdv_restore (comparaison lignes typées). Auth/PostgREST non présents localement : aucune réussite E2E HTTP sept producteurs à prétendre. 142 assertions SQL ont passé sur chaîne complète locale avec stubs Auth/storage explicites.
 
-Aucun nouveau barème, cron, déploiement ni relance automatique confirmé. Ne pas confondre existence du code et déploiement.
+Action immédiate : tester/revoir migration additive 20261010165856_progression_ops_scheduled_consumers.sql + pgTAP ; le down désactive seulement les jobs, conserve tous droits/protections/logs. Agent stabilization_evidence possède scripts/ops/progression_v2_local_db*, evidence/p0-database.md et bases Docker locales. Aucune écriture SQL distante nouvelle faite. Avant application distante : preuve restauration, compatibilité, tests et revue indépendante. Observer consommateurs et compteurs, ne pas inférer panne à partir des 15 transactions démo historiques.
+
+Préparation T05 : registre 29 actions fermé, vérification documentaire et clés legacy ; agent registry_spec corrige type test puis construit validateur runtime v2 sans activation. T10 : agent compact_card possède carte/query/tests ; pas d'édition concurrente. Présentation niveaux neutre et seuils conservés. Agent review_preparation disponible pour revue indépendante. Root possède migrations/attribution partagées, suivi, tests types/build/intégration.
+
+Contrôles : invariants passés avant nouvelle migration ; suites ciblées progression 188 passées/9 skipped, carte 11, niveaux 37, registre 42, cron 9, sonde Node 5. npm ci a restauré dépendances lock inchangé. Typecheck avec NODE_OPTIONS=--max-old-space-size=6144 reste rouge sur it.each registre TS2345 (correction agent en cours), build non exécuté. Rien poussé/PR/déployé/activé pour cette tranche. Ne pas déclarer T01–T48 complètes.
+
+Sonde scripts/ops/progression_outbox_health.mjs compte HEAD exact + oldest limit1, détecte backlog sans plafond REST ; résultat prod dégradé leaderboard. GET cron outbox alias POST protégé. Correction historique route_persist ordre provider/payload correspond production actuelle, pas changement prod.
+
+Retour arrière : application saine + arrêt jobs ; downs I1/I2/I4 historiques dangereux en prod (retirent protections/provenance), exclus du mandat. Aucun mécanisme vérifié de relance agent automatique ; fichiers/scripts de tests ne sont pas une continuation.
+
+Reprise 20:52 UTC : types corrigés (testJSON utilise vraie Response), build et suiteglobale en cours /tmp/lkdv-build-current.log et /tmp/lkdv-tests-full-current.log ; navigateurs installés80tests PASS. Branch chantier/progression-v2-p0-contracts. Revue T05 (archives + formule/claims) et T10 élargi acceptées. T04local32PGtests + pannecron.libpqbgworkersoff réellementprouvée ; HTTP7hooks9/9sansskipGoTrue/PostgREST officiel. Les agentsde tests ont réparé51réseaux/8assertionsenv sansmasquerguard. T11 backend20tests existe NON inclus premièretranche ; agentcompactattend signalpostcommit pour UI. Prochaine action : commit/push/PR premièretranche, attendrechecksenforcés, migrationopsdistante seulementaprèsgates+observer et comparer0nouveaupoints. Continuer T03routesauthlocales/T06/T11 sansstop. Aucune relanceautomatiqueagent disponible dans ALL_TOOLS : interruptionlimiteusageprécédente n'a pas été contournée.

@@ -1,6 +1,6 @@
 # Exploitation du moteur de progression — runbook
 
-Mise à jour : 20 septembre 2026 · Branche `feat/mobile-direction-progression`.
+Mise à jour : 10 octobre 2026 · Chantier Progression 2.0.
 Périmètre : outbox P1, file de classement P3, rétention P4, crons.
 
 ## 1. Sonde de santé
@@ -19,7 +19,7 @@ Sortie JSON :
   "failed": 0,
   "dead": 0,
   "oldestPendingMinutes": 0,
-  "leaderboard": { "pending": 0, "failed": 0, "oldestPendingMinutes": 0 },
+  "leaderboard": { "pending": 0, "failed": 0, "dead": 0, "oldestPendingMinutes": 0 },
   "ok": true
 }
 ```
@@ -31,19 +31,72 @@ Codes de sortie : `0` = ok, `1` = dégradé ou lecture impossible, `2` = configu
 | Condition | Seuil | Action |
 |---|---|---|
 | lignes `dead` dans `progression_outbox` | > 0 | inspecter `progression_outbox.last_error`, rejouer via `replay_dead_progression_outbox(100)` (service_role), vérifier `reward_transactions` associé |
-| plus ancienne ligne outbox `pending`/`failed` | > 15 min | vérifier que le cron `/api/cron/progression-outbox` passe bien (`Authorization: Bearer $CRON_SECRET`) |
-| plus ancienne ligne `leaderboard_refresh_queue` `pending`/`failed` | > 30 min | vérifier le cron `/api/cron/leaderboard-refresh` (toutes les 15 min) ; la RPC `refresh_leaderboard_batch(100)` est concurrente (`SKIP LOCKED`) |
+| plus ancienne ligne outbox `pending`/`failed` | > 15 min | vérifier cron.job_run_details et le job SQL outbox ; le secours HTTP exige CRON_SECRET |
+| plus ancienne ligne `leaderboard_refresh_queue` `pending`/`failed` | > 30 min | vérifier le job SQL leaderboard (toutes les 15 min) ; la RPC `refresh_leaderboard_batch(100)` est concurrente (`SKIP LOCKED`) |
 
-## 2. Crons à planifier
+| lignes `dead` dans `leaderboard_refresh_queue` | > 0 | corriger last_error puis réenfiler explicitement la ligne ; aucune émission de points |
+
+Les compteurs utilisent HEAD count exact et seulement la première date ordonnée,
+pour éviter le plafond REST de 1 000 lignes. Aucun arrondi des seuils 15/30 minutes.
+Une lecture impossible est dégradée. Un JSON sain de file vide ne prouve pas
+l'exécution du scheduler : contrôler aussi les journaux ci-dessous.
+
+## 2. Jobs SQL v1 — migration additive du chantier
+
+État : migration testée et revue en environnement isolé ; application distante
+et observation renseignées dans docs/progression/2.0/status.json et evidence.
+Ne pas confondre ces résultats locaux avec une activation production.
+
+| Job pg_cron | Cadence UTC | Commande bornée |
+|---|---|---|
+| lkdv-progression-outbox-v1 | */5 * * * * | progression_ops.run_job('outbox'), batch 50 |
+| lkdv-progression-leaderboard-v1 | */15 * * * * | progression_ops.run_job('leaderboard'), batch 100 |
+
+pg_cron utilise sa connexion postgres existante ; le wrapper est possédé par
+lkdv_progression_job, NOLOGIN/NOINHERIT/NOBYPASSRLS. Ce rôle peut appeler
+uniquement les deux consumers canoniques et gérer ses logs privés ; ces
+consumers restent SECURITY DEFINER. Ce montage n'est pas une connexion
+cron sous le rôle NOLOGIN. Les clients anon/authenticated n'ont accès ni au
+wrapper ni au schéma progression_ops. Chaque commande a statement_timeout=50s.
+
+```sql
+SELECT jobname, schedule, active, database, username FROM cron.job
+WHERE jobname IN ('lkdv-progression-outbox-v1','lkdv-progression-leaderboard-v1');
+SELECT j.jobname, d.status, d.start_time, d.end_time, d.return_message
+FROM cron.job_run_details d JOIN cron.job j USING(jobid)
+WHERE j.jobname IN ('lkdv-progression-outbox-v1','lkdv-progression-leaderboard-v1')
+ORDER BY d.start_time DESC LIMIT 20;
+SELECT job, started_at, finished_at, status, result, error
+FROM progression_ops.job_runs ORDER BY id DESC LIMIT 20;
+```
+
+job_runs enregistre succeeded/degraded/failed pour les appels transactionnels.
+Un timeout/cancel annule aussi ce log : cron.job_run_details est la preuve de
+ces interruptions (cron.log_run doit rester on). Les lignes queue verrouillées
+retournent à leur état précédent après rollback et restent reprenables.
+Leaderboard : cinq erreurs, backoff exponentiel, puis dead ; une nouvelle
+projection source remet explicitement la ligne pending. Après réparation sans
+nouvelle réalisation, opérateur serveur peut remettre seulement les lignes
+identifiées à pending/attempts=0/available_at=now()/last_error=NULL. Vérifier
+ensuite batch, compteurs et absence de nouveaux reward_transactions/events.
+
+Retour arrière de cette tranche : down désactive seulement ces deux jobs.
+Il conserve journaux, retry corrigé, gains et protections. Pour reprendre,
+réappliquer les deux cron.schedule identiques ; vérifier cadence et journaux.
+Aucun down historique de soldes/démo/réconciliation n'est autorisé en production.
+
+## 2a. Secours HTTP et rétention historique
 
 | Route | Fréquence | Réponse |
 |---|---|---|
 | `POST /api/cron/progression-outbox` | 5 min | `{ processed, failed, purged }` — `purged` = lignes outbox `processed` > 90 j supprimées |
 | `POST /api/cron/leaderboard-refresh` | 15 min | `{ processed, failed }` |
 
-Les deux exigent `Authorization: Bearer ${CRON_SECRET}`. La planification
-plateforme n'est pas encore configurée dans le dépôt : voir
-`docs/progression/PERFORMANCE.md` §6.
+Le secours outbox accepte GET/POST avec Authorization Bearer CRON_SECRET.
+Le chemin HTTP leaderboard historique cité n'est pas une preuve de route ou
+de planification disponible : privilégier le job SQL vérifié. Ne pas planifier
+en double une nouvelle route HTTP. La purge processed >90j reste liée au
+secours HTTP existant ; le job SQL ne supprime aucun journal.
 
 ## 2bis. Cycle de vie des saisons (service_role uniquement)
 
@@ -92,7 +145,7 @@ WHERE status IN ('pending','failed','dead') GROUP BY status;
 
 -- Retard file classement
 SELECT status, count(*), min(created_at) FROM public.leaderboard_refresh_queue
-WHERE status IN ('pending','failed') GROUP BY status;
+WHERE status IN ('pending','failed','dead') GROUP BY status;
 
 -- Index attendus (P4)
 SELECT indexname FROM pg_indexes WHERE schemaname = 'public' AND indexname IN (

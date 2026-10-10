@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/AppIcon';
 import { Button, EmptyState, IconButton, Tabs } from '@/components/ui';
+import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { requestCarnetPublicationAward } from '@/lib/progression-award-requests';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
@@ -89,6 +90,7 @@ function fmtNum(n: number) {
 // ─────────────────────────────────────────────
 export default function CarnetsTab({ profile }: CarnetsTabProps) {
   const supabase = createClient();
+  const { user } = useAuth();
 
   // --- state ---
   const [published, setPublished] = useState<CarnetDB[]>([]);
@@ -224,13 +226,14 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
 
   // ─── publish draft ─────────────────────────
   async function handlePublish(id: string) {
+    const ownerId = user?.id;
     const { error } = await supabase.from('carnets').update({
       visibility: 'public'
     }).eq('id', id);
     if (!error) {
       // P2 — publication réelle : vérification serveur (lien + contenu) puis
       // attribution idempotente ; non bloquant pour l'interface.
-      requestCarnetPublicationAward(id);
+      if (ownerId) requestCarnetPublicationAward(id, ownerId);
       await fetchData();
     }
   }
