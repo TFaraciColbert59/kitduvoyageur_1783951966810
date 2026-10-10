@@ -27,6 +27,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ADDRESS_FIELDS = ['prenom', 'nom', 'email', 'adresse', 'codePostal', 'ville'] as const;
 const MAX_FIELD_LENGTH = 200;
 const MAX_QUANTITY = 999;
+const MAX_ORDER_ITEMS = 50;
 
 /** Barème livraison, miroir de `create_shop_order` : option inconnue → null. */
 export function computeShipping(option: string, subtotalEur: number): number | null {
@@ -94,6 +95,9 @@ export function parseOrderBody(input: unknown): ParseResult<OrderBody> {
   const items = body.items;
   if (!Array.isArray(items) || items.length === 0) {
     return { ok: false, error: 'invalid_items' };
+  }
+  if (items.length > MAX_ORDER_ITEMS) {
+    return { ok: false, error: 'invalid_order' };
   }
 
   const lines: OrderLine[] = [];

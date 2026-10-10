@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { parseEarnBody } from '@/features/loyalty/validation';
-import { rpcEarn } from '@/features/loyalty/server';
+import { rpcEarn, verifyEarnEligibility } from '@/features/loyalty/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,6 +30,13 @@ export async function POST(req: NextRequest) {
     const parsed = parseEarnBody(await req.json().catch(() => null));
     if (!parsed.ok) {
       return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+
+    // La source doit exister côté serveur et appartenir au membre : le client
+    // ne peut pas se créditer sur un identifiant inventé.
+    const verified = await verifyEarnEligibility(user.id, parsed.value);
+    if (!verified) {
+      return NextResponse.json({ error: 'action_not_verified' }, { status: 403 });
     }
 
     const outcome = await rpcEarn(user.id, parsed.value);
