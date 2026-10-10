@@ -5,6 +5,7 @@ import {
   buildStripeCheckoutMetadata,
   StripeCartItemRef,
 } from '@/features/checkout/stripeMetadata';
+import { clientIpFromHeaders } from '@/lib/rate-limit/clientIp';
 import { verifyKitRef, KIT_REF_COOKIE } from '@/features/kits/kitRef';
 
 // Rate limiting: simple in-memory store (use Redis in production)
@@ -135,7 +136,7 @@ async function validatePrices(items: CartItem[]): Promise<{ valid: boolean; erro
 }
 
 export async function POST(request: NextRequest) {
-  const ip = request.headers.get('x-forwarded-for') || 'unknown';
+  const ip = clientIpFromHeaders(request.headers);
 
   if (!checkRateLimit(ip, 5, 60_000)) {
     return NextResponse.json({ error: 'Trop de requêtes. Réessayez dans une minute.' }, { status: 429 });

@@ -8,6 +8,7 @@ import {
   discoveryItemsSchema,
   discoveryQuerySchema,
 } from '@/features/discovery/schemas/discovery.schema';
+import { clientIpFromHeaders } from '@/lib/rate-limit/clientIp';
 import { getDiscovery } from '@/features/discovery/services/discoveryService';
 
 export const dynamic = 'force-dynamic';
@@ -38,10 +39,7 @@ function httpStatusFor(result: Awaited<ReturnType<typeof getDiscovery>>): number
 }
 
 export async function GET(request: NextRequest) {
-  const ip =
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    request.headers.get('x-real-ip') ||
-    'unknown';
+  const ip = clientIpFromHeaders(request.headers);
 
   if (!checkRateLimit(ip)) {
     return NextResponse.json(
