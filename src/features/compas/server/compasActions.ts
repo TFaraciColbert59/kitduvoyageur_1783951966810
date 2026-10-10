@@ -12,7 +12,7 @@ import {
   type Supa,
 } from './compasServer';
 import { lookupBase, lookupDestination, lookupLoose, lookupNatural } from './placeLookup';
-import type { CompasPlace } from '../engine/places';
+import { isDeparturePlace, type CompasPlace } from '../engine/places';
 import { getTripById } from '@/lib/queries-trips';
 import { addTripItem } from '@/lib/queries-trip-kit';
 import { askAI } from '@/lib/ai/askAI';
@@ -715,8 +715,17 @@ export async function compasSetOriginAction(
       const limitError = await placeSearchLimitError(auth.userId);
       if (limitError) return { success: false, error: limitError };
     }
-    const found = restore ?? (wanted ? await resolveDestination(wanted, auth.userId) : null);
-    if (wanted && !found) return { success: false, error: `« ${wanted} » introuvable sur la carte.` };
+    const searched = wanted ? await resolveDestination(wanted, auth.userId) : null;
+    if (wanted && !searched) return { success: false, error: `« ${wanted} » introuvable sur la carte.` };
+    // Seul un lieu habité, une région ou un pays est un départ : « depuis le camping » (ou un
+    // sommet, un lac, un hôtel) trouvé sur la carte est refusé, jamais écrit ni pris pour ancre.
+    // Le départ d'avant rétabli (`restore`) n'est pas cherché : il n'est pas revérifié.
+    if (searched && !isDeparturePlace(searched))
+      return {
+        success: false,
+        error: `« ${wanted} » n’est pas un lieu habité, une région ou un pays : dis une ville (« depuis Lyon »).`,
+      };
+    const found = restore ?? searched;
     const at = found ? coarsePosition({ lat: found.lat, lon: found.lon }) : null;
     if (found && !at) return { success: false, error: 'Lieu invalide' };
     const { error } = await updateTripMetadata(auth.supabase, parsed.data.tripId, (m) => {

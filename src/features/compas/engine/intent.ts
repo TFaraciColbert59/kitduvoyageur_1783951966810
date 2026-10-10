@@ -387,12 +387,49 @@ const NOT_ORIGIN_WORDS = [
   'midi', 'minuit', 'debut', 'semaines?', 'mois', 'ans?', 'jours?', 'heures?', 'week-?end', 'temps', 'zero',
   // quantités, liaisons, déterminants
   'peu', 'plus', 'moins', 'tout', 'toute', 'tous', 'plusieurs', 'quelques', 'chez', 'que', 'qu', 'quand', 'ici',
-  'des', 'ce', 'cet', 'cette', 'ces', 'mon', 'ma', 'mes', 'notre', 'nos', 'les', 'bon', 'bonne', 'principe',
+  'des', 'ce', 'cet', 'cette', 'ces', 'les', 'bon', 'bonne', 'principe',
+  // possessifs : « depuis votre arrivée », « depuis ton départ » (jamais un nom de lieu)
+  'mon', 'ma', 'mes', 'ton', 'ta', 'tes', 'son', 'sa', 'ses', 'notre', 'nos', 'votre', 'vos', 'leur', 'leurs',
+  // adverbes et mots de liaison : « depuis tôt », « depuis environ un mois », « depuis cela »
+  'tot', 'tard', 'deja', 'maintenant', 'bientot', 'presque', 'environ', 'cela', 'ceci', 'combien', 'petit',
+  'petite', 'derniere', 'dernier', 'annee', 'autre', 'autres', 'meme', 'chaque', 'avant', 'lors', 'pres', 'loin',
   // noms communs de lieu : sans « de X » derrière, pas un lieu (« gare de X » est lue à part)
   'sommet', 'maison', 'boulot', 'travail', 'bureau', 'parking', 'refuge', 'village', 'col', 'gare', 'aeroport',
   'station', 'nord', 'sud', 'est', 'ouest',
+  // hébergement et lieux de vie ou d'études
+  'camping', 'hotel', 'chalet', 'gite', 'cabane', 'hameau', 'centre', 'fac', 'lycee', 'ecole', 'ferme', 'abri',
+  'bivouac', 'camp', 'auberge', 'appartement', 'appart', 'studio', 'chambre', 'tente', 'domicile', 'hopital',
+  'universite', 'college', 'mairie', 'eglise', 'quartier', 'residence', 'restaurant',
+  // transport et chemins
+  'port', 'pont', 'sentier', 'chemin', 'piste', 'voiture', 'train', 'bus', 'route', 'bateau', 'avion', 'metro',
+  'tram', 'taxi',
+  // relief et eau
+  'pic', 'cime', 'crete', 'source', 'massif', 'ile', 'plage', 'colline', 'glacier', 'falaise', 'plateau',
+  'grotte', 'gorges', 'fleuve', 'chateau',
 ];
 const NOT_ORIGIN = new RegExp(`^(?:${NOT_ORIGIN_WORDS.join('|')})$`);
+
+/**
+ * Mots qui ne prolongent jamais un nom de lieu de départ tapé sans majuscule : le
+ * lieu s'arrête avant (« depuis lyon vendredi », « depuis lyon svp », « depuis
+ * lyon fin juin », « depuis lyon pendant les vacances »). Sans accent.
+ */
+const LOWER_ORIGIN_STOP = [
+  // liaisons et compagnie
+  'pour', 'avec', 'en', 'a', 'et', 'du', 'de', 'des', 'le', 'la', 'les', 'sans', 'dans', 'sur', 'pendant', 'vers',
+  'depuis', 'par', 'puis', 'ou', 'ensuite', 'apres', 'direction', "jusqu[a-z']*", 'ce', 'cet', 'cette',
+  // moments
+  'demain', 'apres-demain', "aujourd'hui", 'prochain', 'prochaine', 'matin', 'soir', 'midi', 'fin', 'lundi',
+  'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche', 'hiver', 'ete', 'printemps', 'automne',
+  'janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'octobre', 'novembre',
+  'decembre', 'week-?end', 'jours?', 'semaines?', 'nuits?', 'une', 'deux', 'trois', 'quatre', 'cinq', 'six',
+  'sept', 'huit', 'neuf', 'dix', 'quinze', 'vingt',
+  // la suite de la demande ou de la phrase
+  'svp', 'stp', 'merci', 'rando', 'randonnee', 'train', 'trek', 'trekking', 'velo', 'ski', 'sortie', 'voyage', 'bivouac',
+];
+const LOWER_ORIGIN = new RegExp(
+  `^([a-z][a-z'-]{2,}(?:\\s(?!(?:${LOWER_ORIGIN_STOP.join('|')})\\b)[a-z][a-z'-]{2,})?)`
+);
 
 /** « la gare de Briançon », « l'aéroport de Lyon » : le lieu de départ est ce qui suit « de ». */
 const FACILITY = /^(?:gare|aeroport|station)\s+(?:de la\s+|de l'\s*|du\s+|des\s+|de\s+|d'\s*)/;
@@ -428,9 +465,7 @@ function readOrigin(src: string, plain: string): { place: string; start: number;
     // « on part du principe que » ne disent pas d'où l'on part (la majuscule le montre).
     if (!/\b(?:depuis|au depart)\b/.test(m[0])) continue;
     const from = at + (FACILITY.exec(plain.slice(at, at + 60))?.[0].length ?? 0);
-    const low = /^([a-z][a-z'-]{2,}(?:\s(?!(?:pour|avec|en|a|et|du|de|des|le|la|les|sans|dans|ce|cet|cette|demain|apres-demain|aujourd'hui|prochain|prochaine|matin|soir|vers|depuis|par|puis|ou|ensuite|apres|direction|jusqu[a-z']*)\b)[a-z][a-z'-]{2,})?)/.exec(
-      plain.slice(from, from + 60)
-    );
+    const low = LOWER_ORIGIN.exec(plain.slice(from, from + 60));
     const words = low ? low[1].trim() : '';
     const first = words.split(/\s/)[0];
     if (

@@ -288,6 +288,158 @@ describe('phrase tapée sans majuscule : seuls « depuis » et « au départ de 
   });
 });
 
+describe('phrase tapée sans majuscule : séjour, passage, relief, liaison et possessif ne sont jamais un départ', () => {
+  // Un départ faux est appliqué sans qu'on le voie (et devient l'ancre du voyage) : les familles de
+  // noms communs sont fermées ici, et le serveur refuse en plus tout lieu qui n'est pas habité.
+  const none = (texts: string[]) => {
+    for (const text of texts) expect(places(text), text).toEqual([]);
+  };
+
+  it('hébergement et lieux de vie : camping, hôtel, chalet, gîte, cabane…', () => {
+    none([
+      'depuis le camping',
+      "depuis l'hôtel",
+      "depuis l'hotel",
+      'depuis le chalet',
+      'depuis le gîte',
+      'depuis la cabane',
+      'depuis le hameau',
+      'depuis le centre',
+      'depuis la fac',
+      'depuis le lycée',
+      "depuis l'école",
+      'depuis la ferme',
+      "depuis l'abri",
+      'depuis le bivouac',
+      'depuis le camp de base',
+      "depuis l'auberge",
+      "depuis l'appartement",
+      'depuis la chambre',
+      'depuis la tente',
+      'depuis le domicile',
+      "depuis l'hôpital",
+      "depuis l'université",
+      'depuis le quartier',
+    ]);
+  });
+
+  it('transport et chemins : port, pont, sentier, piste, voiture, train, route…', () => {
+    none([
+      'depuis le port',
+      'depuis le pont',
+      'au départ du pont de normandie',
+      'au départ du sentier',
+      'depuis le chemin',
+      'depuis la piste',
+      'depuis la voiture',
+      'depuis le train',
+      'depuis le bus',
+      'depuis la route',
+      'depuis le bateau',
+      "depuis l'avion",
+      'depuis le métro',
+      'depuis le tram',
+    ]);
+  });
+
+  it('relief et eau : pic, cime, crête, source, massif, île, plage…', () => {
+    none([
+      'depuis le pic',
+      'depuis la cime',
+      'depuis la crête',
+      'depuis la source',
+      'depuis le massif',
+      "depuis l'île de ré",
+      "depuis l'ile",
+      'depuis la plage',
+      'depuis la colline',
+      'depuis le glacier',
+      'depuis la falaise',
+      'depuis le plateau',
+      'depuis la grotte',
+      'depuis le château',
+    ]);
+  });
+
+  it('adverbes et mots de liaison : tôt, déjà, environ, cela, dernier, année…', () => {
+    none([
+      'depuis tôt',
+      'depuis tard',
+      'depuis déjà trois ans',
+      'depuis maintenant un an',
+      'depuis bientôt un mois',
+      'depuis presque un an',
+      'depuis environ un mois',
+      'depuis cela fait longtemps',
+      'depuis combien de temps',
+      'depuis tout petit',
+      'depuis la dernière fois',
+      'depuis le dernier week-end',
+      "depuis l'année dernière",
+      'depuis une semaine',
+    ]);
+  });
+
+  it('possessifs : « depuis votre arrivée », « depuis ton départ »…', () => {
+    none([
+      'depuis votre arrivée',
+      'depuis vos conseils',
+      'depuis ton départ',
+      'depuis tes photos',
+      'depuis son arrivée',
+      'depuis ses vacances',
+      'depuis notre arrivée',
+      'depuis nos photos',
+      'depuis leur départ',
+      'depuis leurs conseils',
+      'depuis mon arrivée',
+      'depuis mes photos',
+    ]);
+  });
+
+  it('les mêmes mots précédés d’« au départ de » : jamais un départ non plus', () => {
+    none(['au départ du camping', "au départ de l'hôtel", 'au départ du chalet', 'au départ de votre arrivée']);
+  });
+
+  it.each([
+    'rando depuis lyon vendredi',
+    'rando depuis lyon samedi matin',
+    'rando depuis lyon lundi',
+    'rando depuis lyon dimanche soir',
+    'rando depuis lyon midi',
+    'rando depuis lyon fin juin',
+    'rando depuis lyon pendant les vacances',
+    'rando depuis lyon sur trois jours',
+    'depuis lyon svp',
+    'depuis lyon merci',
+    'depuis lyon rando de trois jours',
+    'depuis lyon randonnee',
+    'depuis lyon train',
+    'depuis lyon hiver',
+    'depuis lyon été',
+    'depuis lyon printemps',
+    'depuis lyon automne',
+    'depuis lyon octobre',
+    'depuis lyon weekend',
+    'depuis lyon deux jours',
+    'depuis lyon avec paul',
+    'depuis lyon pour une semaine',
+    'depuis lyon puis retour',
+  ])('« %s » : le départ s’arrête au lieu, « Lyon »', (text) => {
+    expect(places(text)).toEqual([{ type: 'set_origin', place: 'Lyon' }]);
+  });
+
+  it('les villes tapées en minuscules restent lues, composées ou non', () => {
+    const origins = (text: string) => places(text).filter((a) => a.type === 'set_origin');
+    expect(origins('rando depuis paris')).toEqual([{ type: 'set_origin', place: 'Paris' }]);
+    expect(origins('rando depuis saint etienne')).toEqual([{ type: 'set_origin', place: 'Saint Etienne' }]);
+    expect(origins('rando au départ de clermont-ferrand')).toEqual([{ type: 'set_origin', place: 'Clermont-ferrand' }]);
+    expect(origins('depuis port-vendres')).toEqual([{ type: 'set_origin', place: 'Port-vendres' }]);
+    expect(origins('depuis bordeaux vendredi')).toEqual([{ type: 'set_origin', place: 'Bordeaux' }]);
+    expect(origins('depuis neuilly sur seine')).toEqual([{ type: 'set_origin', place: 'Neuilly' }]);
+  });
+});
+
 describe('l’action set_origin', () => {
   it('schéma : un nom de 1 à 80 caractères', () => {
     expect(intentActionSchema.safeParse({ type: 'set_origin', place: 'Lyon' }).success).toBe(true);

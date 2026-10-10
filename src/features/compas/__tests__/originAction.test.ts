@@ -10,6 +10,14 @@ const h = vi.hoisted(() => ({
   calls: [] as Array<{ scope: string; limit: number; windowMs: number; failMode?: string }>,
   refuse: null as null | number,
   denied: false,
+  /** Ce que la carte répond, par requête exacte (`lookupDestination`). */
+  found: {} as Record<string, unknown>,
+  /** Réponses des secours : lieu naturel, ville de base de l'IA, premier lieu venu. */
+  natural: null as unknown,
+  base: null as unknown,
+  loose: null as unknown,
+  /** Réponse JSON du spécialiste IA (null : indisponible). */
+  ai: null as null | string,
 }));
 vi.mock('server-only', () => ({}));
 vi.mock('next/server', async (orig) => ({
@@ -52,17 +60,17 @@ vi.mock('../server/compasServer', async (orig) => {
 });
 vi.mock('../server/placeLookup', async (orig) => ({
   ...(await orig<typeof import('../server/placeLookup')>()),
-  lookupDestination: vi.fn(async (q: string) =>
-    q === 'Lyon'
-      ? { name: 'Lyon', lat: 45.757813, lon: 4.832011, countryCode: 'FR', country: 'France', kind: 'city', extent: null }
-      : null
-  ),
-  lookupBase: vi.fn(async () => null),
-  lookupLoose: vi.fn(async () => null),
-  lookupNatural: vi.fn(async () => null),
+  lookupDestination: vi.fn(async (q: string) => h.found[q] ?? null),
+  lookupBase: vi.fn(async () => h.base),
+  lookupLoose: vi.fn(async () => h.loose),
+  lookupNatural: vi.fn(async () => h.natural),
 }));
 vi.mock('@/lib/ai/askAI', () => ({
-  askAI: vi.fn(async () => ({ text: '{}', model: 'x', degraded: true, cached: false, provider: 'fallback' })),
+  askAI: vi.fn(async () =>
+    h.ai
+      ? { text: h.ai, model: 'x', degraded: false, cached: false, provider: 'nvidia' }
+      : { text: '{}', model: 'x', degraded: true, cached: false, provider: 'fallback' }
+  ),
 }));
 
 import { compasSetOriginAction } from '../server/compasActions';
@@ -70,6 +78,17 @@ import { updateTripMetadata } from '../server/compasServer';
 import { lookupDestination } from '../server/placeLookup';
 
 const TRIP = '11111111-1111-4111-8111-111111111111';
+const LYON = {
+  name: 'Lyon',
+  lat: 45.757813,
+  lon: 4.832011,
+  countryCode: 'FR',
+  country: 'France',
+  kind: 'city',
+  settlement: true,
+  settlementRank: 5,
+  extent: null,
+};
 
 describe('compasSetOriginAction', () => {
   beforeEach(() => {
@@ -77,6 +96,11 @@ describe('compasSetOriginAction', () => {
     h.calls = [];
     h.refuse = null;
     h.denied = false;
+    h.found = { Lyon: LYON };
+    h.natural = null;
+    h.base = null;
+    h.loose = null;
+    h.ai = null;
     vi.clearAllMocks();
   });
 
@@ -235,6 +259,97 @@ describe('compasSetOriginAction', () => {
       }
       expect(updateTripMetadata).not.toHaveBeenCalled();
       expect(h.meta).toEqual(before);
+    });
+  });
+
+  describe('seul un lieu habité, une région ou un pays peut être un départ', () => {
+    const at = { lat: 46.1, lon: 6.2, countryCode: 'FR', country: 'France', extent: null };
+    const refusal = (q: string) => `« ${q} » n’est pas un lieu habité, une région ou un pays : dis une ville (« depuis Lyon »).`;
+    const origin = () => (h.meta.compas as Record<string, unknown>).origin;
+
+    it.each([
+      ['ville', { kind: 'city', settlement: true, settlementRank: 5 }],
+      ['bourg', { kind: 'town', settlement: true, settlementRank: 4 }],
+      ['village', { kind: 'village', settlement: true, settlementRank: 3 }],
+      ['hameau', { kind: 'hamlet', settlement: true, settlementRank: 2 }],
+      ['quartier', { kind: 'suburb', settlement: true, settlementRank: 1 }],
+      ['lieu-dit habité', { kind: 'locality', settlement: true, settlementRank: 0 }],
+      ['pays', { kind: 'country', settlement: false }],
+      ['région', { kind: 'state', settlement: false }],
+      ['région (autre nature)', { kind: 'region', settlement: false }],
+      ['département', { kind: 'county', settlement: false }],
+      ['province', { kind: 'province', settlement: false }],
+      ['district', { kind: 'district', settlement: false }],
+      ['ville sans drapeau « habité »', { kind: 'city' }],
+    ])('accepté : %s', async (_label, kind) => {
+      h.found = { Ailleurs: { ...at, name: 'Ailleurs', ...kind } };
+      expect(await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place: 'Ailleurs' })).toEqual({ success: true });
+      expect(origin()).toEqual({ name: 'Ailleurs', lat: 46.1, lon: 6.2, countryCode: 'FR', source: 'dit' });
+    });
+
+    it('accepté : la région que le spécialiste IA ramène à une ville de base', async () => {
+      h.ai = JSON.stringify({ base: 'Grenoble', country_code: 'FR', label: 'Vercors' });
+      h.base = { ...at, name: 'Grenoble', kind: 'city', settlement: true, lat: 45.19, lon: 5.72 };
+      expect(await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place: 'Vercors' })).toEqual({ success: true });
+      expect(origin()).toEqual({ name: 'Vercors', lat: 45.19, lon: 5.72, countryCode: 'FR', source: 'dit' });
+    });
+
+    it.each([
+      ['sommet', { kind: 'other', landmark: true, osmTag: 'natural=peak' }],
+      ['lac', { kind: 'water', landmark: true, osmTag: 'natural=water' }],
+      ['parc national', { kind: 'other', landmark: true, osmTag: 'boundary=national_park', extent: [5, 46, 7, 45] }],
+      ['rivière', { kind: 'other', landmark: true, osmTag: 'waterway=river' }],
+      ['île', { kind: 'island', landmark: true, osmTag: 'place=island' }],
+      ['camping', { kind: 'camp_site', osmTag: 'tourism=camp_site' }],
+      ['hôtel', { kind: 'hotel', osmTag: 'tourism=hotel' }],
+      ['maison', { kind: 'house', osmTag: 'building=house' }],
+      ['parking', { kind: 'parking', osmTag: 'amenity=parking' }],
+      ['magasin', { kind: 'shop', osmTag: 'shop=supermarket' }],
+      ['rue', { kind: 'street' }],
+      ['pont', { kind: 'bridge', osmTag: 'man_made=bridge' }],
+    ])('refusé : %s (rien d’écrit, le départ d’avant reste)', async (_label, kind) => {
+      (h.meta.compas as Record<string, unknown>).origin = { name: 'Grenoble', lat: 45.19, lon: 5.72, countryCode: 'FR', source: 'dit' };
+      const before = structuredClone(h.meta);
+      h.found = { Camping: { ...at, name: 'Camping', settlement: false, ...kind } };
+      expect(await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place: 'Camping' })).toEqual({
+        success: false,
+        error: refusal('Camping'),
+      });
+      expect(updateTripMetadata).not.toHaveBeenCalled();
+      expect(h.meta).toEqual(before);
+      // La recherche a eu lieu : le passage est compté, comme pour une destination refusée.
+      expect(h.calls).toHaveLength(1);
+    });
+
+    it('refusé : le lieu naturel trouvé en secours (« Mont Blanc » n’est pas un départ)', async () => {
+      h.natural = { ...at, name: 'Mont Blanc', kind: 'other', landmark: true, osmTag: 'natural=peak', extent: [6, 46, 7, 45] };
+      expect(await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place: 'Mont Blanc' })).toEqual({
+        success: false,
+        error: refusal('Mont Blanc'),
+      });
+      expect(origin()).toBeUndefined();
+    });
+
+    it('refusé : le premier lieu venu de la carte quand rien d’habité ne porte ce nom', async () => {
+      h.loose = { ...at, name: 'Camping des Pins', kind: 'other', settlement: false, osmTag: 'tourism=camp_site' };
+      expect(await compasSetOriginAction({ tripId: TRIP, tripSlug: 'x', place: 'camping' })).toEqual({
+        success: false,
+        error: refusal('camping'),
+      });
+      expect(origin()).toBeUndefined();
+      expect(updateTripMetadata).not.toHaveBeenCalled();
+    });
+
+    it('« Annuler » n’est pas concerné : le départ d’avant est rétabli sans cette vérification', async () => {
+      expect(
+        await compasSetOriginAction({
+          tripId: TRIP,
+          tripSlug: 'x',
+          place: 'Grenoble',
+          restore: { name: 'Grenoble', lat: 45.19, lon: 5.72, countryCode: 'FR' },
+        })
+      ).toEqual({ success: true });
+      expect(origin()).toEqual({ name: 'Grenoble', lat: 45.19, lon: 5.72, countryCode: 'FR', source: 'dit' });
     });
   });
 });

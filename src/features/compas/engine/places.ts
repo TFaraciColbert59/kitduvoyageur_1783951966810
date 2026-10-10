@@ -333,6 +333,17 @@ export function nameCore(v: string): string {
 /** Ville, pays, région : un nom plus long que celui demandé reste ce lieu. */
 const ADMIN_KINDS = new Set(['city', 'town', 'village', 'country', 'state', 'county', 'region', 'province']);
 
+/**
+ * Un lieu d'où l'on PART : un lieu habité (ville, village, hameau, quartier) ou
+ * un découpage administratif (pays, région, département, province, district).
+ * Un sommet, un lac, un parc, un commerce, un hébergement ou un bâtiment n'en
+ * est pas un : « depuis le camping » ne devient jamais un départ (ni l'ancre du
+ * voyage), quoi que la carte trouve sous ce nom.
+ */
+export function isDeparturePlace(place: CompasPlace): boolean {
+  return Boolean(place.settlement) || ADMIN_KINDS.has(place.kind) || BROAD.has(place.kind);
+}
+
 /** Ferme, lieu-dit, bâtiment, quartier résidentiel : jamais une destination. */
 const WEAK_KINDS = new Set(['locality', 'house', 'other', 'street']);
 

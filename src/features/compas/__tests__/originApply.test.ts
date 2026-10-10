@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { originOf } from '../engine/tripContext';
+import { isDeparturePlace, type CompasPlace } from '../engine/places';
 import { projectBasis, staleParts } from '../engine/dependencies';
 import { parseIntentRules, planApplication, type ApplyCurrent } from '../engine/intent';
 import { inverseOps } from '../components/compasApply';
@@ -117,5 +118,31 @@ describe('changer de départ refait le trajet et le budget, rien d’autre', () 
     const old = { ...basis(null) } as Record<string, unknown>;
     delete old.origin;
     expect(staleParts(old, basis({ name: 'Lyon', lat: 45.76, lon: 4.83 }))).toEqual([]);
+  });
+});
+
+describe('un départ est un lieu habité, une région ou un pays', () => {
+  const place = (p: Partial<CompasPlace>): CompasPlace => ({
+    name: 'X',
+    lat: 45,
+    lon: 5,
+    countryCode: 'FR',
+    country: 'France',
+    kind: 'other',
+    extent: null,
+    ...p,
+  });
+
+  it('habité ou découpage administratif : oui', () => {
+    for (const kind of ['city', 'town', 'village', 'country', 'state', 'county', 'region', 'province', 'district'])
+      expect(isDeparturePlace(place({ kind })), kind).toBe(true);
+    for (const kind of ['hamlet', 'suburb', 'locality', 'isolated_dwelling'])
+      expect(isDeparturePlace(place({ kind, settlement: true })), kind).toBe(true);
+  });
+
+  it('relief, eau, parc, commerce, hébergement, bâtiment, voirie : non', () => {
+    for (const kind of ['other', 'peak', 'water', 'island', 'camp_site', 'hotel', 'house', 'parking', 'shop', 'street', 'bridge'])
+      expect(isDeparturePlace(place({ kind, settlement: false })), kind).toBe(false);
+    expect(isDeparturePlace(place({ kind: 'other', landmark: true, osmTag: 'boundary=national_park' }))).toBe(false);
   });
 });
