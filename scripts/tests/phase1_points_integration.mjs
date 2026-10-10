@@ -14,6 +14,13 @@
  * locale exportée (aucun secret en dur — garde-fou audit CI) :
  *   . scratch/start-dev-local.ps1   (pose NEXT_PUBLIC_SUPABASE_URL et
  *                                    SUPABASE_SERVICE_ROLE_KEY)
+ * NB : le limiteur distribué postgres exige la RPC locale `rate_limit_consume`
+ * (migration `20261008164423_rate_limit_windows.sql`). Sur une base locale
+ * partielle, l'appliquer puis `NOTIFY pgrst, 'reload schema';`. Sinon les
+ * routes sensibles répondent 503 (fail-closed) — comportement voulu.
+ *
+ * Garde de cible : le script REFUSE toute cible non locale (il crée des
+ * utilisateurs à mot de passe connu et promeut temporairement un admin).
  *
  * Sortie : log horodaté dans le dossier temp + exit 0 (PASS) / 1 (FAIL).
  */
@@ -32,6 +39,23 @@ const APP_URL = process.env.PHASE1_APP_URL ?? 'http://localhost:4000';
 if (!SERVICE_KEY) {
   console.error(
     'SUPABASE_SERVICE_ROLE_KEY absente — sourcez scratch/start-dev-local.ps1 ou exportez les clés locales avant de lancer ce script.'
+  );
+  process.exit(1);
+}
+
+// Garde de cible : ce script crée des utilisateurs (mot de passe connu) et
+// promeut temporairement un admin. Il refuse toute cible non locale.
+function isLocalHost(rawUrl, fallback) {
+  try {
+    const host = new URL(rawUrl).hostname;
+    return host === '127.0.0.1' || host === 'localhost';
+  } catch {
+    return fallback;
+  }
+}
+if (!isLocalHost(SUPABASE_URL, false) || !isLocalHost(APP_URL, false)) {
+  console.error(
+    `Refus : cible non locale (supabase=${SUPABASE_URL}, app=${APP_URL}). Ce script ne s'exécute que contre la stack locale.`
   );
   process.exit(1);
 }
@@ -207,11 +231,11 @@ async function assertInvariant(userId, label) {
 async function login(page, email) {
   await page.goto(`${APP_URL}/connexion`, { waitUntil: 'networkidle', timeout: 180000 });
   // La page expose des formulaires desktop ET mobile : ne cibler que le visible.
-  const emailInput = page.locator('#email:visible').first();
+  const emailInput = page.locator('input[type="email"]:visible').first();
   await emailInput.waitFor({ state: 'visible', timeout: 60000 });
   await emailInput.fill(email);
-  await page.locator('#password:visible').first().fill(PASSWORD);
-  await page.locator('button:visible', { hasText: /Se connecter/i }).first().click();
+  await page.locator('input[type="password"]:visible').first().fill(PASSWORD);
+  await page.getByRole('button', { name: /Se connecter/i }).first().click();
   await page.waitForURL((u) => !u.pathname.startsWith('/connexion'), { timeout: 90000 });
 }
 
@@ -430,24 +454,26 @@ try {
 
   await step('7. Confirmation admin ⇒ crédit unique (total×10), rejeu 409', async () => {
     await grantAdmin(userA.id);
+    try {
+      const confirm = await api(pageA, '/api/admin/orders/confirm', { orderId: order1.id });
+      check('confirm 200 success', confirm.status === 200 && confirm.json?.success === true, JSON.stringify(confirm));
 
-    const confirm = await api(pageA, '/api/admin/orders/confirm', { orderId: order1.id });
-    check('confirm 200 success', confirm.status === 200 && confirm.json?.success === true, JSON.stringify(confirm));
+      const { data: row } = await svc.from('orders').select('status').eq('id', order1.id).single();
+      check('commande status=confirmed', row.status === 'confirmed', `status=${row.status}`);
 
-    const { data: row } = await svc.from('orders').select('status').eq('id', order1.id).single();
-    check('commande status=confirmed', row.status === 'confirmed', `status=${row.status}`);
+      const expectedPoints = pointsForTotalEur(order1.total_eur);
+      const purchases = await historyRows(userA.id, `order_${order1.id}`);
+      check('EXACTEMENT 1 ligne purchase order_<id>', purchases.length === 1 && purchases[0].type === 'purchase', JSON.stringify(purchases));
+      check(`points achat = (total×10) = ${expectedPoints}`, purchases[0]?.points === expectedPoints, `points=${purchases[0]?.points}`);
 
-    const expectedPoints = pointsForTotalEur(order1.total_eur);
-    const purchases = await historyRows(userA.id, `order_${order1.id}`);
-    check('EXACTEMENT 1 ligne purchase order_<id>', purchases.length === 1 && purchases[0].type === 'purchase', JSON.stringify(purchases));
-    check(`points achat = (total×10) = ${expectedPoints}`, purchases[0]?.points === expectedPoints, `points=${purchases[0]?.points}`);
+      const prof = await profileOf(userA.id);
+      check(`profil synchronisé (${1075 + expectedPoints})`, prof.loyalty_points === 1075 + expectedPoints, `profil=${prof.loyalty_points} level=${prof.loyalty_level}`);
 
-    const prof = await profileOf(userA.id);
-    check(`profil synchronisé (${1075 + expectedPoints})`, prof.loyalty_points === 1075 + expectedPoints, `profil=${prof.loyalty_points} level=${prof.loyalty_level}`);
-
-    const replay = await api(pageA, '/api/admin/orders/confirm', { orderId: order1.id });
-    check('rejeu confirm ⇒ 409 not_confirmable', replay.status === 409 && replay.json?.error === 'not_confirmable', JSON.stringify(replay));
-    await revokeAdmin(userA.id);
+      const replay = await api(pageA, '/api/admin/orders/confirm', { orderId: order1.id });
+      check('rejeu confirm ⇒ 409 not_confirmable', replay.status === 409 && replay.json?.error === 'not_confirmable', JSON.stringify(replay));
+    } finally {
+      await revokeAdmin(userA.id);
+    }
     await assertInvariant(userA.id, 'A après confirmation');
   });
 
@@ -512,10 +538,10 @@ try {
     check('mobile /fidelite HTTP < 400', fid.status() < 400, `status=${fid.status()}`);
     const bodyText = (await pageM.textContent('body')) ?? '';
     const expectedBalance = (await profileOf(userA.id)).loyalty_points;
-    const formatted = expectedBalance.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f');
+    const normalizedText = bodyText.replace(/[\s\u00a0\u202f]/g, '');
     check(
-      `la page fidélité affiche le solde (${formatted})`,
-      bodyText.includes(formatted) || bodyText.includes(String(expectedBalance)),
+      `la page fidélité affiche le solde (${expectedBalance})`,
+      normalizedText.includes(String(expectedBalance)),
       `solde=${expectedBalance}`
     );
 
