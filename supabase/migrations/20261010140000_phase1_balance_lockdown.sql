@@ -134,7 +134,8 @@ BEGIN
   WHERE user_id = p_user_id;
 
   IF EXISTS (SELECT 1 FROM public.loyalty_history WHERE source_id = p_source_id) THEN
-    RETURN jsonb_build_object('success', true, 'idempotent', true, 'balance', v_balance);
+    SELECT loyalty_level INTO v_level FROM public.user_profiles WHERE id = p_user_id;
+    RETURN jsonb_build_object('success', true, 'idempotent', true, 'balance', v_balance, 'level', v_level);
   END IF;
 
   IF v_balance < p_points THEN
@@ -188,7 +189,8 @@ BEGIN
   WHERE user_id = p_user_id;
 
   IF EXISTS (SELECT 1 FROM public.loyalty_history WHERE source_id = p_source_id) THEN
-    RETURN jsonb_build_object('success', true, 'idempotent', true, 'balance', v_balance);
+    SELECT loyalty_level INTO v_level FROM public.user_profiles WHERE id = p_user_id;
+    RETURN jsonb_build_object('success', true, 'idempotent', true, 'balance', v_balance, 'level', v_level);
   END IF;
 
   INSERT INTO public.loyalty_history (user_id, action, points, type, source_id)
@@ -243,7 +245,8 @@ BEGIN
   WHERE user_id = p_user_id;
 
   IF EXISTS (SELECT 1 FROM public.loyalty_history WHERE source_id = 'cart_free_remove:' || p_cart_item_id) THEN
-    RETURN jsonb_build_object('success', true, 'idempotent', true, 'balance', v_balance);
+    SELECT loyalty_level INTO v_level FROM public.user_profiles WHERE id = p_user_id;
+    RETURN jsonb_build_object('success', true, 'idempotent', true, 'balance', v_balance, 'level', v_level);
   END IF;
 
   INSERT INTO public.loyalty_history (user_id, action, points, type, source_id)
@@ -321,8 +324,10 @@ END; $$;
 
 -- 10. RPC COMMANDES — création serveur ----------------------------------------
 -- Prix, livraison et total calculés serveur ; résolution produits par slug ;
--- stock décrémenté par article ; le trigger process_order_points reste
--- l'unique créditeur de points.
+-- stock décrémenté par article. Virement ⇒ commande 'pending' (aucun crédit de
+-- points à la création) ; le crédit intervient à la confirmation admin (voir
+-- process_pending_order_points ci-dessous), qui reste l'unique créditeur avec
+-- process_order_points.
 CREATE OR REPLACE FUNCTION public.create_shop_order(
   p_user_id uuid,
   p_payment_method text,
@@ -404,7 +409,9 @@ BEGIN
     user_id, order_number, status, payment_method, shipping_address,
     items, subtotal_eur, shipping_eur, total_eur
   ) VALUES (
-    p_user_id, v_order_number, 'confirmed', p_payment_method,
+    p_user_id, v_order_number,
+    CASE WHEN p_payment_method = 'virement' THEN 'pending' ELSE 'confirmed' END,
+    p_payment_method,
     COALESCE(p_shipping_address, '{}'::jsonb),
     v_lines, v_subtotal, v_shipping, v_total
   ) RETURNING id INTO v_order_id;
@@ -425,6 +432,39 @@ BEGIN
     'totalEur', v_total
   );
 END; $$;
+
+-- 10b. CRÉDIT À LA CONFIRMATION D'UNE COMMANDE 'pending' -----------------------
+-- Le trigger prod `process_order_points` ne couvre que cancelled/refunded →
+-- confirmed ; complément additif (la fonction existante n'est pas modifiée)
+-- pour que le virement, créé 'pending', crédite ses points à la confirmation
+-- admin — une seule fois par commande (garde sur `order_<id>`).
+CREATE OR REPLACE FUNCTION public.process_pending_order_points()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+BEGIN
+  IF OLD.status = 'pending'
+     AND NEW.status IN ('confirmed', 'preparing', 'shipped', 'delivered')
+     AND NOT EXISTS (
+       SELECT 1 FROM public.loyalty_history
+       WHERE source_id = 'order_' || NEW.id
+     )
+  THEN
+    INSERT INTO public.loyalty_history (user_id, action, points, type, source_id)
+    VALUES (
+      NEW.user_id,
+      'Achat boutique : Commande ' || NEW.order_number,
+      (NEW.total_eur * 10)::integer,
+      'purchase',
+      'order_' || NEW.id
+    );
+  END IF;
+  RETURN NEW;
+END; $$;
+
+DROP TRIGGER IF EXISTS trigger_process_pending_order_points ON public.orders;
+CREATE TRIGGER trigger_process_pending_order_points
+  BEFORE UPDATE OF status ON public.orders
+  FOR EACH ROW
+  EXECUTE FUNCTION public.process_pending_order_points();
 
 -- 11. PRIVILÈGES : service_role uniquement ------------------------------------
 REVOKE ALL ON FUNCTION public.legacy_loyalty_backfill_openings(text) FROM PUBLIC, anon, authenticated;
@@ -447,3 +487,6 @@ GRANT EXECUTE ON FUNCTION public.legacy_loyalty_redeem(uuid, uuid) TO service_ro
 
 REVOKE ALL ON FUNCTION public.create_shop_order(uuid, text, jsonb, jsonb, text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.create_shop_order(uuid, text, jsonb, jsonb, text) TO service_role;
+
+REVOKE ALL ON FUNCTION public.process_pending_order_points() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.process_pending_order_points() TO service_role;

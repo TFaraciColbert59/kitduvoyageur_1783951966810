@@ -6,7 +6,7 @@
 --     auth_insert_loyalty_redemptions, users_manage_own_orders) ;
 --   • policy orders_select_own supprimée ;
 --   • grants tables restaurés (INSERT/UPDATE/DELETE anon, authenticated) ;
---   • 7 fonctions Phase 1 supprimées ;
+--   • 8 fonctions Phase 1 supprimées + déclencheur de confirmation virement ;
 --   • lignes d'ouverture 'opening:%' supprimées.
 -- INTERDIT de toucher public.user_profiles (ni données ni structure).
 -- ============================================================================
@@ -92,6 +92,8 @@ GRANT INSERT, UPDATE, DELETE ON public.loyalty_redemptions TO anon, authenticate
 GRANT INSERT, UPDATE, DELETE ON public.orders TO anon, authenticated;
 
 -- 4. Fonctions Phase 1 supprimées
+DROP TRIGGER IF EXISTS trigger_process_pending_order_points ON public.orders;
+DROP FUNCTION IF EXISTS public.process_pending_order_points();
 DROP FUNCTION IF EXISTS public.create_shop_order(uuid, text, jsonb, jsonb, text);
 DROP FUNCTION IF EXISTS public.legacy_loyalty_redeem(uuid, uuid);
 DROP FUNCTION IF EXISTS public.legacy_loyalty_cart_refund(uuid, text);
