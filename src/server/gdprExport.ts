@@ -13,7 +13,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 /** Version du schéma d'export — incrémenter à toute évolution de forme. */
-export const GDPR_EXPORT_SCHEMA_VERSION = 'a14-v1';
+export const GDPR_EXPORT_SCHEMA_VERSION = 'a14-v2';
 
 /** Une table du domaine et la colonne qui identifie le sujet. */
 export interface GdprUserTable {
