@@ -1827,6 +1827,16 @@
   width: 100%;
   accent-color: var(--lkv-primary);
 }
+.cp-popv__sel {
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--cp-fill);
+  color: var(--cp-ink);
+  font: inherit;
+  font-size: 14px;
+}
 .cp-popv__lbl {
   display: flex;
   justify-content: space-between;

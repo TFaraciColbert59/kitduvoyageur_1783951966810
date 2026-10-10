@@ -96,6 +96,14 @@ const DECISION_FLOWS: Record<string, { step: CompasStepId; flow: StepFlow }> = {
 const DEFAULT_GLASS = 0.6;
 /** Version du réglage d'affichage : 2 = verre accessible (WCAG AA). */
 const DISPLAY_VERSION = 2;
+/**
+ * Durée (en secondes) des annonces qu'il faut avoir le temps de lire ou d'agir
+ * dessus : « Annuler », erreurs, détails (WCAG 2.2.1). Réglable dans « Affichage ».
+ */
+const UNDO_CHOICES = [8, 15, 30] as const;
+const DEFAULT_UNDO_S = 15;
+/** Une simple confirmation (« emballé ») disparaît vite : rien à lire ni à défaire. */
+const QUICK_TOAST_MS = 3800;
 
 /** Durée maximale d'une préparation côté serveur (300 s) et une marge. */
 const AUTOFILL_MAX_MS = 310_000;
@@ -161,9 +169,10 @@ export function CompasScreen({
     () => initialStep ?? data.model.nextDecision?.step ?? 'ou'
   );
   const [mapBig, setMapBig] = useState(false);
-  const [display, setDisplay] = useState<{ outdoor: boolean; glass: number }>({
+  const [display, setDisplay] = useState<{ outdoor: boolean; glass: number; undoS: number }>({
     outdoor: false,
     glass: DEFAULT_GLASS,
+    undoS: DEFAULT_UNDO_S,
   });
   const [popover, setPopover] = useState(false);
   const [stack, setStack] = useState<Array<{ sheet: SheetState; detent: Detent }>>([]);
@@ -233,20 +242,26 @@ export function CompasScreen({
     try {
       const raw = window.localStorage.getItem(DISPLAY_KEY);
       if (raw) {
-        const v = JSON.parse(raw) as { outdoor?: unknown; glass?: unknown; v?: unknown };
+        const v = JSON.parse(raw) as {
+          outdoor?: unknown;
+          glass?: unknown;
+          undoS?: unknown;
+          v?: unknown;
+        };
         // Un réglage d'avant DISPLAY_VERSION garde l'ancien verre peu lisible : on le remplace.
         const current = v.v === DISPLAY_VERSION;
         setDisplay({
           outdoor: v.outdoor === true,
           glass:
             current && typeof v.glass === 'number' && v.glass >= 0.05 && v.glass <= 0.7 ? v.glass : DEFAULT_GLASS,
+          undoS: UNDO_CHOICES.find((c) => c === v.undoS) ?? DEFAULT_UNDO_S,
         });
       }
     } catch {
       /* stockage indisponible : réglage par défaut */
     }
   }, []);
-  const updateDisplay = (next: { outdoor: boolean; glass: number }) => {
+  const updateDisplay = (next: { outdoor: boolean; glass: number; undoS: number }) => {
     setDisplay(next);
     try {
       window.localStorage.setItem(DISPLAY_KEY, JSON.stringify({ ...next, v: DISPLAY_VERSION }));
@@ -258,19 +273,37 @@ export function CompasScreen({
   // Les données fraîches du serveur remplacent l'état optimiste.
   useEffect(() => setPacked({}), [data]);
 
-  const notify = useCallback((message: string, tone?: 'bad', undo?: () => void, sub?: string) => {
+  // Durée choisie (« Affichage ») lue à l'armement : le minuteur ne se recrée pas à chaque rendu.
+  const toastMs = useRef(DEFAULT_UNDO_S * 1000);
+  toastMs.current = display.undoS * 1000;
+  /** Annonce à lire ou à défaire (« Annuler », erreur, détail) : durée réglable, suspendue au survol et au focus. */
+  const toastLong = useRef(false);
+  const armToast = useCallback((long: boolean) => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
-    undoRef.current = undo ?? null;
-    setToast({ message, tone, undo, sub });
-    // Une annonce annulable reste plus longtemps : le temps de se raviser.
+    toastLong.current = long;
     toastTimer.current = setTimeout(
       () => {
         undoRef.current = null;
         setToast(null);
       },
-      undo || sub ? 6000 : 3800
+      long ? toastMs.current : QUICK_TOAST_MS
     );
   }, []);
+  const holdToast = useCallback(() => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = null;
+  }, []);
+
+  const notify = useCallback(
+    (message: string, tone?: 'bad', undo?: () => void, sub?: string) => {
+      undoRef.current = undo ?? null;
+      setToast({ message, tone, undo, sub });
+      // Ce qu'on peut défaire, ou qu'il faut lire en entier (erreur, détail), reste
+      // assez longtemps pour se raviser (WCAG 2.2.1) ; une confirmation passe vite.
+      armToast(Boolean(undo || sub || tone === 'bad'));
+    },
+    [armToast]
+  );
 
   const run = useCallback(
     async (
@@ -294,12 +327,8 @@ export function CompasScreen({
           const doUndo = () => void runRef.current?.(`Annulé : ${success}`, undo);
           undoRef.current = doUndo;
           setToast((t) => (t && t.message === success ? { ...t, undo: doUndo } : t));
-          // Une annonce annulable reste le temps de se raviser.
-          if (toastTimer.current) clearTimeout(toastTimer.current);
-          toastTimer.current = setTimeout(() => {
-            undoRef.current = null;
-            setToast(null);
-          }, 6000);
+          // Une annonce annulable reste le temps de se raviser (durée réglable).
+          armToast(true);
         }
         startTransition(() => router.refresh());
         return true;
@@ -310,7 +339,7 @@ export function CompasScreen({
         setRunning(false);
       }
     },
-    [notify, router]
+    [armToast, notify, router]
   );
   const runRef = useRef(run);
   runRef.current = run;
@@ -951,6 +980,20 @@ export function CompasScreen({
               <span>Opaque</span>
             </span>
           </label>
+          <label className="cp-popv__col">
+            <span>Durée de « Annuler » et des erreurs</span>
+            <select
+              className="cp-popv__sel"
+              value={display.undoS}
+              onChange={(e) => updateDisplay({ ...display, undoS: Number(e.target.value) })}
+            >
+              {UNDO_CHOICES.map((c) => (
+                <option key={c} value={c}>
+                  {c} secondes{c === DEFAULT_UNDO_S ? ' (par défaut)' : ''}
+                </option>
+              ))}
+            </select>
+          </label>
           <p className="cp-popv__note">
             {offlineSavedAt ? (
               <>
@@ -1009,9 +1052,15 @@ export function CompasScreen({
       {toast && (
         <div
           className="cp-island"
-          role="status"
-          aria-live="polite"
+          // Une erreur interrompt (alert) ; le reste s'annonce poliment (status).
+          role={toast.tone === 'bad' ? 'alert' : 'status'}
+          aria-live={toast.tone === 'bad' ? undefined : 'polite'}
           data-tone={toast.tone}
+          // Le délai est suspendu tant qu'on lit, vise ou tabule dans l'annonce.
+          onPointerEnter={holdToast}
+          onPointerLeave={() => armToast(toastLong.current)}
+          onFocus={holdToast}
+          onBlur={() => armToast(toastLong.current)}
           onClick={(e) => {
             // Toucher l'îlot le referme (maquette) ; ses boutons gardent leur rôle.
             if ((e.target as Element).closest('button')) return;

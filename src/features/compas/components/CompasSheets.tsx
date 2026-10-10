@@ -1330,7 +1330,7 @@ function QuiFlow({ ctl }: { ctl: CompasCtl }) {
             ]}
           />
           {state.status === 'loading' && <p className="cp-note">Recherche…</p>}
-          {state.status === 'error' && <p className="cp-note">{state.error}</p>}
+          {state.status === 'error' && <p className="cp-note" role="alert">{state.error}</p>}
           {state.status === 'ok' && (
             <PagedList
               label={state.searched ? 'Résultats' : 'Personnes que tu suis'}
@@ -1859,7 +1859,7 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
       </div>
 
       {state.status === 'loading' && <p className="cp-note">Lecture de tes bouteilles…</p>}
-      {state.status === 'error' && <p className="cp-note">{state.error}</p>}
+      {state.status === 'error' && <p className="cp-note" role="alert">{state.error}</p>}
 
       {st?.bottles.map((b) => (
         <section key={b.id} className="cp-bottle cp-glass" aria-label={`Bouteille : ${b.name}`}>
@@ -2108,7 +2108,7 @@ function StaySearch({
         </button>
       </div>
       {state.status === 'loading' && <p className="cp-note">Recherche en cours…</p>}
-      {state.status === 'error' && <p className="cp-note">{state.error}</p>}
+      {state.status === 'error' && <p className="cp-note" role="alert">{state.error}</p>}
       {state.status === 'ok' && (
         <>
           {state.mode === 'sandbox' && (
@@ -2611,7 +2611,7 @@ function LiveSearch({ ctl, vertical }: { ctl: CompasCtl; vertical: CompasLiveVer
         </button>
       </form>
 
-      {state.status === 'error' && <p className="cp-note">{state.error}</p>}
+      {state.status === 'error' && <p className="cp-note" role="alert">{state.error}</p>}
       {state.status === 'error' && state.unavailable && (
         <PagedList
           label="Exemples"
@@ -2797,7 +2797,7 @@ function VerdictExplain({ ctl }: { ctl: CompasCtl }) {
       ) : state.status === 'done' && state.note ? (
         <p className="cp-note">{state.note}</p>
       ) : state.status === 'error' ? (
-        <p className="cp-note">{state.error}</p>
+        <p className="cp-note" role="alert">{state.error}</p>
       ) : null}
       {!(state.status === 'done' && state.text) && (
         <button
@@ -3281,7 +3281,7 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
   }, [reload]);
 
   if (state.status === 'loading') return <p className="cp-note">Lecture de tes kits…</p>;
-  if (state.status === 'error') return <p className="cp-note">{state.error}</p>;
+  if (state.status === 'error') return <p className="cp-note" role="alert">{state.error}</p>;
 
   const createKit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();

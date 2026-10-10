@@ -2181,4 +2181,140 @@ describe('CompasScreen : accessibilité (lot Q, 5.2)', () => {
     });
   });
 
+  describe('« Annuler » : délai assez long et réglable, erreurs annoncées', () => {
+    const openPrefs = async () => {
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
+      fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
+      const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
+      fireEvent.click(within(sheet).getByRole('button', { name: /Préférences/ }));
+      return sheet;
+    };
+    const undoButton = () => screen.queryByRole('button', { name: 'Annuler' });
+    const bivouac = (sheet: HTMLElement) =>
+      fireEvent.click(within(sheet).getByRole('button', { name: /Bivouac/ }));
+    const DISPLAY_KEY = 'lkdv.compas.affichage';
+
+    afterEach(() => {
+      vi.useRealTimers();
+      window.localStorage.removeItem(DISPLAY_KEY);
+    });
+
+    it('« Annuler » reste proposé bien plus que 6 s, puis disparaît', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openPrefs();
+      bivouac(sheet);
+      await screen.findByRole('button', { name: 'Annuler' });
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(undoButton()).not.toBeNull();
+      await vi.advanceTimersByTimeAsync(7_000);
+      await waitFor(() => expect(undoButton()).toBeNull());
+    });
+
+    it('le délai est suspendu tant que l’annonce a le focus ou le pointeur, et repart ensuite', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openPrefs();
+      bivouac(sheet);
+      const undo = await screen.findByRole('button', { name: 'Annuler' });
+      fireEvent.focus(undo);
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(undoButton()).not.toBeNull();
+      fireEvent.blur(undo);
+      await vi.advanceTimersByTimeAsync(5_000);
+      expect(undoButton()).not.toBeNull();
+      await vi.advanceTimersByTimeAsync(12_000);
+      await waitFor(() => expect(undoButton()).toBeNull());
+
+      // Même chose au pointeur.
+      bivouac(sheet);
+      const again = await screen.findByRole('button', { name: 'Annuler' });
+      const island = again.closest('.cp-island') as HTMLElement;
+      fireEvent.pointerEnter(island);
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(undoButton()).not.toBeNull();
+      fireEvent.pointerLeave(island);
+      await vi.advanceTimersByTimeAsync(17_000);
+      await waitFor(() => expect(undoButton()).toBeNull());
+    });
+
+    it('la durée est réglable dans « Affichage » et gardée sur l’appareil', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      render(<CompasScreen data={makeData()} />);
+      fireEvent.click(screen.getByRole('button', { name: /^Affichage/ }));
+      const popover = screen.getByRole('dialog', { name: 'Affichage' });
+      const choice = within(popover).getByRole('combobox', { name: /Durée de « Annuler »/ });
+      expect((choice as HTMLSelectElement).value).toBe('15');
+      fireEvent.change(choice, { target: { value: '30' } });
+      expect(JSON.parse(window.localStorage.getItem(DISPLAY_KEY) ?? '{}').undoS).toBe(30);
+
+      const sheet = await openPrefs();
+      bivouac(sheet);
+      await screen.findByRole('button', { name: 'Annuler' });
+      await vi.advanceTimersByTimeAsync(25_000);
+      expect(undoButton()).not.toBeNull();
+      await vi.advanceTimersByTimeAsync(7_000);
+      await waitFor(() => expect(undoButton()).toBeNull());
+    });
+
+    it('un réglage enregistré est relu au démarrage, une valeur inconnue est ignorée', async () => {
+      window.localStorage.setItem(DISPLAY_KEY, JSON.stringify({ outdoor: false, glass: 0.6, v: 2, undoS: 8 }));
+      render(<CompasScreen data={makeData()} />);
+      fireEvent.click(screen.getByRole('button', { name: /^Affichage/ }));
+      await waitFor(() =>
+        expect(
+          (within(screen.getByRole('dialog', { name: 'Affichage' })).getByRole('combobox', {
+            name: /Durée de « Annuler »/,
+          }) as HTMLSelectElement).value
+        ).toBe('8')
+      );
+      cleanup();
+      window.localStorage.setItem(DISPLAY_KEY, JSON.stringify({ outdoor: false, glass: 0.6, v: 2, undoS: 3 }));
+      render(<CompasScreen data={makeData()} />);
+      fireEvent.click(screen.getByRole('button', { name: /^Affichage/ }));
+      expect(
+        (within(screen.getByRole('dialog', { name: 'Affichage' })).getByRole('combobox', {
+          name: /Durée de « Annuler »/,
+        }) as HTMLSelectElement).value
+      ).toBe('15');
+    });
+
+    it('une erreur d’action est annoncée en role="alert" et reste lisible plus de 4 s', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      compas.compasSetPreferencesAction.mockResolvedValueOnce({
+        success: false,
+        error: 'Refusé par le serveur',
+      } as never);
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openPrefs();
+      bivouac(sheet);
+      const alert = await screen.findByRole('alert');
+      expect(alert.textContent).toContain('Refusé par le serveur');
+      await vi.advanceTimersByTimeAsync(8_000);
+      expect(screen.queryByRole('alert')).not.toBeNull();
+    });
+
+    it('une annonce de réussite reste un role="status", pas une alerte', async () => {
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openPrefs();
+      bivouac(sheet);
+      await screen.findByRole('button', { name: 'Annuler' });
+      expect(screen.queryByRole('alert')).toBeNull();
+      expect(screen.getByRole('status').textContent).toContain('Annuler');
+    });
+
+    it('une erreur de chargement dans un tiroir est annoncée en role="alert"', async () => {
+      compas.compasListMyKitsAction.mockResolvedValueOnce({
+        success: false,
+        error: 'Kits indisponibles',
+      } as never);
+      render(<CompasScreen data={makeData()} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Détails : Kit' }));
+      const sheet = await screen.findByRole('dialog', { name: 'Kit' });
+      fireEvent.click(within(sheet).getByRole('button', { name: /Mes kits/ }));
+      const alert = await within(sheet).findByRole('alert');
+      expect(alert.textContent).toBe('Kits indisponibles');
+    });
+  });
+
 });

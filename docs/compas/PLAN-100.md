@@ -777,7 +777,13 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       dates à choisir »…), la pastille reste décorative et l'icône n'annonce plus le nom du
       glyphe.
 - [ ] Tailles de texte en `rem` ; lignes qui s'agrandissent au lieu de tronquer.
-- [ ] « Annuler » : délai réglable ou plus long ; erreurs en `role="alert"`.
+- [x] « Annuler » : délai réglable ou plus long ; erreurs en `role="alert"`. Lot Q
+      (`CompasScreen.tsx` `armToast`/`holdToast`, `CompasSheets.tsx`, `compasScreen.test.tsx`
+      « Annuler : délai assez long et réglable ») : « Annuler », les erreurs et les détails
+      restent 15 s (6 s avant), réglables à 8 / 15 / 30 s dans « Affichage » et gardés sur
+      l'appareil ; le délai est suspendu tant que l'annonce a le pointeur ou le focus ; une
+      erreur d'action est un `role="alert"` (le reste un `status`), de même que les six
+      erreurs de chargement des tiroirs.
 - [ ] Informations portées par `title` doublées en texte ; `forced-colors`.
 - [ ] Test réel VoiceOver et TalkBack ; CI axe étendue à tous les tiroirs.
 
