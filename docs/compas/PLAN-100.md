@@ -620,6 +620,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       de », « nous partons de »), jamais pris pour la destination, appliqué par la même
       recherche que la destination (`intentOrigin.test.ts`, `originInterpret.test.ts`,
       `originAction.test.ts`).
+      Sans lieu dit, la préparation se fait autour du départ dit (avant la position), et la
+      lecture sans majuscule se limite à « depuis » et « au départ de » (un faux départ
+      serait appliqué sans validation au démarrage). **Pas fait : voir et effacer le départ
+      dit à l'écran** (seul « Annuler » juste après l'application le retire ;
+      `CompasData.originSaid` n'est pas encore affiché).
 - [x] Aéroport le plus proche de l'origine et de la destination (OurAirports, CC0). Lot N :
       3 244 aéroports desservis (domaine public), un aéroport moyen compte 1,6 fois sa
       distance, vol d'aéroport à aéroport (« LYS → CAG », `airports.test.ts`, `travel.test.ts`).
