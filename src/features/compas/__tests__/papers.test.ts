@@ -113,6 +113,16 @@ describe('travelPapers — autre nationalité connue : aucune règle « ressorti
     }
   });
 
+  it('Français résidant au Portugal pour un voyage au Portugal : aucune frontière, aucune ligne de papiers', () => {
+    const fr = who({ nationality: 'FR', residenceCountry: 'PT' });
+    const r = travelPapers('PT', 'Portugal', fr, false);
+    expect(r.papers).toBe('sur_place');
+    expect(r.notes.filter((n) => n.startsWith('Papiers'))).toEqual([]);
+    // Frontière franchie ou départ inconnu : les papiers français, comme avant.
+    expect(travelPapers('PT', 'Portugal', fr, true).notes[0]).toMatch(/^Papiers : carte d’identité/);
+    expect(travelPapers('PT', 'Portugal', fr, null).notes[0]).toMatch(/^Papiers : carte d’identité/);
+  });
+
   it('nationalité américaine, résidence en France : l’adaptateur vers le Royaume-Uni est dit', () => {
     expect(travelPapers('GB', 'Royaume-Uni', who({ nationality: 'US', residenceCountry: 'FR' })).notes).toEqual([
       GENERIC('Royaume-Uni'),

@@ -72,10 +72,15 @@ export const GDPR_USER_TABLES: readonly GdprUserTable[] = [
  */
 export const GDPR_OPTIONAL_TABLES: ReadonlySet<string> = new Set(['user_traveller']);
 
-/** Relation absente : Postgres 42P01, PostgREST PGRST205 (« schema cache »). */
+/**
+ * Relation absente : Postgres 42P01, PostgREST PGRST205. Le message ne sert que s'il
+ * nomme une table ou une relation absente : « schema cache » seul est aussi la panne de
+ * connexion PGRST002, qui doit rester une erreur.
+ */
 export function isMissingRelation(error: { code?: string | null; message?: string | null } | null): boolean {
   if (!error) return false;
-  return error.code === '42P01' || error.code === 'PGRST205' || /schema cache|does not exist/i.test(error.message ?? '');
+  if (error.code === '42P01' || error.code === 'PGRST205') return true;
+  return /could not find the table|relation "[^"]*" does not exist/i.test(error.message ?? '');
 }
 
 /** Tables enfants d'un AdventurePlan (liées par `plan_id`). */

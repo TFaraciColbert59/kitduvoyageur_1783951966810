@@ -34,6 +34,10 @@ describe('isMissingRelation', () => {
     expect(isMissingRelation(MISSING_REST)).toBe(true);
     expect(isMissingRelation({ message: 'relation "x" does not exist' })).toBe(true);
     expect(isMissingRelation({ code: '42501', message: 'permission denied for table user_traveller' })).toBe(false);
+    // PGRST002 : la panne de connexion qui construit le « schema cache » n'est pas une table absente.
+    expect(
+      isMissingRelation({ code: 'PGRST002', message: 'Could not query the database for the schema cache. Retrying.' })
+    ).toBe(false);
     expect(isMissingRelation(null)).toBe(false);
   });
 });

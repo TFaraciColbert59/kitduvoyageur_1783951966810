@@ -80,7 +80,7 @@ export function travelPapers(
   const notes: string[] = [];
   const papers =
     traveller.nationality === 'FR'
-      ? frenchPapers(cc, where, notes)
+      ? frenchPapers(cc, where, notes, abroad)
       : otherPapers(cc, where, traveller.nationality, abroad, notes);
   const plug = PLUGS[cc];
   let plugs: TravelPapers['plugs'];
@@ -101,9 +101,15 @@ export function travelPapers(
   };
 }
 
-/** Ressortissant français : listes sûres, formalités connues, France Diplomatie. */
-function frenchPapers(cc: string, where: string, notes: string[]): PapersKind {
+/**
+ * Ressortissant français : listes sûres, formalités connues, France Diplomatie. Son propre
+ * territoire : rien (un citoyen y entre de droit). Un départ déjà dans le pays visité
+ * (`abroad` faux, ex. résident au Portugal pour un voyage au Portugal) : aucune frontière,
+ * rien à dire.
+ */
+function frenchPapers(cc: string, where: string, notes: string[], abroad: boolean | null): PapersKind {
   if (DOMESTIC.has(cc)) return 'domestique';
+  if (abroad === false) return 'sur_place';
   if (ID_CARD.has(cc)) {
     notes.push(`Papiers : carte d’identité ou passeport en cours de validité, sans visa (${where}).`);
     return 'carte';
