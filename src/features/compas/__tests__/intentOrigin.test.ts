@@ -94,6 +94,126 @@ describe('« depuis X » : le lieu de départ, jamais la destination', () => {
   });
 });
 
+const MONTHS_FR = [
+  'janvier', 'février', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'aout',
+  'septembre', 'octobre', 'novembre', 'décembre', 'decembre',
+];
+const MONTHS_EN = [
+  'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december',
+];
+const cap = (w: string) => w[0].toLocaleUpperCase('fr') + w.slice(1);
+
+describe('un mois n’est jamais une destination, ni seul ni en série', () => {
+  it.each([
+    ...MONTHS_FR.flatMap((m) => [`rando en ${m}`, `rando en ${cap(m)}`, `trek à ${cap(m)}`]),
+    ...MONTHS_EN.flatMap((m) => [`hiking in ${m}`, `Hiking in ${cap(m)}`]),
+  ])('« %s » : aucune destination', (text) => {
+    expect(places(text)).toEqual([]);
+  });
+
+  it.each([
+    ['rando en juillet-aout', '2027-07-01'],
+    ['randonnee en septembre-octobre', '2027-09-01'],
+    ['trek en mai-juin', '2027-05-01'],
+    ['rando en juillet aout', '2027-07-01'],
+    ['trek 5 jours en juin puis juillet', '2027-06-01'],
+    ['Rando en Juillet-Août', '2027-07-01'],
+    ['trek en Mai ou Juin', '2027-05-01'],
+    ['Hiking in July and August', '2027-07-01'],
+  ])('« %s » : aucune destination, la date du premier mois reste lue', (text, start) => {
+    expect(places(text)).toEqual([]);
+    expect(parseIntentRules(text, TODAY)).toContainEqual(expect.objectContaining({ type: 'set_dates', start }));
+  });
+
+  it.each(['Marseille', 'Juillac', 'Octon', 'Novara', 'Maillane'])(
+    '« %s » commence comme un mois et reste une destination',
+    (name) => {
+      expect(places(`trek à ${name}`)).toEqual([{ type: 'set_destination', place: name }]);
+    }
+  );
+});
+
+describe('le départ s’arrête où finit le lieu', () => {
+  it('« depuis Lyon vers le Vercors » : départ Lyon, le Vercors reste lu', () => {
+    const a = parseIntentRules('Départ depuis Lyon vers le Vercors, 3 jours', TODAY);
+    expect(a).toContainEqual({ type: 'set_origin', place: 'Lyon' });
+    expect(a).toContainEqual({ type: 'set_destination', place: 'Vercors' });
+  });
+
+  it('« depuis Lyon vers Grenoble » : le parcours après « vers » est lu, pas avalé par le départ', () => {
+    const a = parseIntentRules('Rando depuis Lyon vers Grenoble', TODAY);
+    expect(a).toContainEqual({ type: 'set_origin', place: 'Lyon' });
+    expect(a).toContainEqual({ type: 'search_route', query: 'Grenoble' });
+  });
+
+  it('« depuis Lyon dans le Vercors » : départ Lyon, destination Vercors', () => {
+    expect(places('Rando depuis Lyon dans le Vercors')).toEqual([
+      { type: 'set_origin', place: 'Lyon' },
+      { type: 'set_destination', place: 'Vercors' },
+    ]);
+  });
+
+  it('« jusqu’à Zermatt » n’est pas dans le départ', () => {
+    expect(places('Trek depuis Chamonix jusqu’à Zermatt')).toEqual([
+      { type: 'set_origin', place: 'Chamonix' },
+      { type: 'set_destination', place: 'Zermatt' },
+    ]);
+  });
+
+  it.each([
+    ['Rando depuis Paris par le train', 'Paris'],
+    ['Rando depuis Marseille puis retour', 'Marseille'],
+    ['Rando depuis Marseille ou Nice', 'Marseille'],
+    ['Rando depuis Lyon après le boulot', 'Lyon'],
+    ['Rando depuis Lyon apres le boulot', 'Lyon'],
+    ['Rando depuis Lyon ensuite le Vercors', 'Lyon'],
+    ['Rando depuis Lyon direction Annecy', 'Lyon'],
+  ])('« %s » : le départ est seulement « %s »', (text, origin) => {
+    const origins = parseIntentRules(text, TODAY).filter((a) => a.type === 'set_origin');
+    expect(origins).toEqual([{ type: 'set_origin', place: origin }]);
+  });
+
+  it('apostrophe typographique : « au départ d’Annecy »', () => {
+    expect(places('Rando au départ d’Annecy')).toEqual([{ type: 'set_origin', place: 'Annecy' }]);
+  });
+});
+
+describe('phrase tapée sans majuscule : ni un moment, ni un nom commun, ni la suite de la phrase ne sont le départ', () => {
+  it.each([
+    'depuis le sommet',
+    'rando depuis la veille',
+    'on part de zero',
+    'rando depuis lundi dernier',
+    'rando depuis janvier dernier',
+    'rando depuis le lendemain',
+    'rando depuis demain',
+    'rando depuis hier',
+    'rando depuis les',
+  ])('« %s » : aucun départ', (text) => {
+    expect(places(text)).toEqual([]);
+  });
+
+  it.each([
+    'rando depuis lyon par le train',
+    'rando depuis lyon puis retour',
+    'rando depuis lyon ou nice',
+    "rando depuis lyon jusqu'a zermatt",
+    'rando depuis lyon jusqu’à zermatt',
+    'rando depuis lyon vers le vercors',
+    'rando depuis lyon ensuite le vercors',
+    'rando depuis lyon apres le boulot',
+    'rando depuis lyon direction annecy',
+  ])('« %s » : le départ s’arrête à « Lyon »', (text) => {
+    const origins = parseIntentRules(text, TODAY).filter((a) => a.type === 'set_origin');
+    expect(origins).toEqual([{ type: 'set_origin', place: 'Lyon' }]);
+  });
+
+  it('un vrai lieu tapé en minuscules reste un départ', () => {
+    expect(places('rando depuis lyon')).toEqual([{ type: 'set_origin', place: 'Lyon' }]);
+    expect(places('rando depuis la suisse')).toEqual([{ type: 'set_origin', place: 'Suisse' }]);
+  });
+});
+
 describe('l’action set_origin', () => {
   it('schéma : un nom de 1 à 80 caractères', () => {
     expect(intentActionSchema.safeParse({ type: 'set_origin', place: 'Lyon' }).success).toBe(true);

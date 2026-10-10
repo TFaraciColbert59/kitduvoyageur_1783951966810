@@ -309,13 +309,14 @@ function properLead(fragment: string): boolean {
 
 /**
  * Un mois, un jour de la semaine ou une fête n'est jamais une destination
- * (« à Noël »). Le mois entier seulement : « Marseille », « Juillac » ou
- * « Octon » commencent comme un mois et restent des lieux.
+ * (« à Noël »). Le premier mot du nom est un mois ENTIER : « juillet-aout »,
+ * « mai ou juin », « July and August » sont des mois ; « Marseille »,
+ * « Juillac » ou « Octon » commencent comme un mois et restent des lieux.
  */
-const MONTH_ONLY = new RegExp(`^${MONTH_RE}$`);
+const MONTH_LEAD = new RegExp(`^${MONTH_RE}(?![a-z])`);
 function notAPlace(name: string): boolean {
   const plain = plainOf(name);
-  return MONTH_ONLY.test(plain) || WEEKDAYS.includes(plain) || HOLIDAY_WORD.test(plain);
+  return MONTH_LEAD.test(plain) || WEEKDAYS.includes(plain) || HOLIDAY_WORD.test(plain);
 }
 
 const capitalized = (s: string) => (s ? s[0].toLocaleUpperCase('fr') + s.slice(1) : s);
@@ -363,13 +364,20 @@ const COMMON_PLACE_WORDS =
 const PLACE_END =
   /\s(?:(?:du|le|la|les)(?=\s+(?:\d|mois\b|semaine\b|prochaine?\b))|pour|avec|en|a|à|à partir|pendant|durant|sur|et|sans|budget|plage|plages|temples?|musees?|fjords?|autour|via|pas|safari|un|une|deux|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|quinze|vingt|cette|ce|tout|toute|semaines?|jours?|nuits?|days?|weeks?|nights?|for|from|to|until|week[- ]?end|début|debut|mi|fin|noël|noel|pâques|paques|toussaint|demain|après-demain|apres-demain|aujourd['’]hui|prochain|prochaine|janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre|depuis|au départ|au depart|en partant|on part|je pars|nous partons)(?=[\s-]|$)/i;
 
+/**
+ * Fin d'un lieu de DÉPART, en plus de `PLACE_END` : ce qui continue la phrase
+ * après lui (« Lyon vers le Vercors », « Chamonix jusqu'à Zermatt », « Paris par
+ * le train », « Marseille puis retour », « Marseille ou Nice »).
+ */
+const ORIGIN_END = /\s(?:(?:vers|dans|par|puis|ou|ensuite|apres|après|direction)(?=[\s-]|$)|jusqu)/i;
+
 /** Ce qui annonce le lieu de départ : « depuis Lyon », « au départ de Genève », « en partant d'Annecy ». */
 const ORIGIN_LEAD =
   /(?:^|[\s,(])(?:depuis|(?:au depart|en partant|on part|je pars|nous partons) (?:de|du|des|d'))(?:\s+|(?<='))/g;
 
 /** Après « depuis » dans une phrase sans majuscule : un moment ou un déterminant, pas un lieu. */
 const NOT_ORIGIN =
-  /^(?:longtemps|toujours|hier|chez|que|qu|quand|ici|maison|debut|peu|des|plusieurs|quelques|ce|cet|cette|ces|mon|ma|mes|notre|nos|la|le|les)$/;
+  /^(?:longtemps|toujours|hier|demain|aujourd'hui|lendemain|veille|matin|soir|minuit|sommet|zero|chez|que|qu|quand|ici|maison|debut|peu|des|plusieurs|quelques|ce|cet|cette|ces|mon|ma|mes|notre|nos|les)$/;
 
 /**
  * Lieu de départ dit dans la phrase (« depuis Lyon », « depuis la Suisse »,
@@ -389,7 +397,7 @@ function readOrigin(src: string, plain: string): { place: string; start: number;
     if (properLead(original)) {
       // « depuis GR20 » : un code de sentier, pas un lieu de départ.
       if (/^\p{Lu}{1,4}\s?\d/u.test(original)) continue;
-      const place = clean(original.split(/[,.;!?\d]/)[0].split(PLACE_END)[0], 50).replace(
+      const place = clean(original.split(/[,.;!?\d]/)[0].split(PLACE_END)[0].split(ORIGIN_END)[0], 50).replace(
         /\s+(?:dans|in|sur|vers|près|pres)$/i,
         ''
       );
@@ -397,12 +405,19 @@ function readOrigin(src: string, plain: string): { place: string; start: number;
       continue;
     }
     if (!lower) continue;
-    const low = /^([a-z][a-z'-]{2,}(?:\s(?!(?:pour|avec|en|a|et|du|de|des|le|la|les|sans|dans|ce|cet|cette|demain|apres-demain|aujourd'hui|prochain|prochaine|matin|soir|vers|depuis)\b)[a-z][a-z'-]{2,})?)/.exec(
+    const low = /^([a-z][a-z'-]{2,}(?:\s(?!(?:pour|avec|en|a|et|du|de|des|le|la|les|sans|dans|ce|cet|cette|demain|apres-demain|aujourd'hui|prochain|prochaine|matin|soir|vers|depuis|par|puis|ou|ensuite|apres|direction|jusqu[a-z']*)\b)[a-z][a-z'-]{2,})?)/.exec(
       plain.slice(at, at + 60)
     );
     const words = low ? low[1].trim() : '';
     const first = words.split(/\s/)[0];
-    if (!words || NOT_ORIGIN.test(first) || COMMON_PLACE_WORDS.test(first) || toNumber(first) != null || notAPlace(words))
+    if (
+      !words ||
+      NOT_ORIGIN.test(first) ||
+      WEEKDAYS.includes(first) ||
+      COMMON_PLACE_WORDS.test(first) ||
+      toNumber(first) != null ||
+      notAPlace(words)
+    )
       continue;
     return { place: words.split(/\s/).map(capitalized).join(' '), start: at, end: at + words.length };
   }
@@ -768,8 +783,8 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     if (!properLead(original) || inOrigin(at)) continue;
     // « sur le GR20 » : un code de sentier, pas une destination.
     if (/^\p{Lu}{1,4}\s?\d/u.test(original)) continue;
-    // Coupe à la ponctuation ou au premier chiffre, puis au premier mot d'une autre idée.
-    // Coupé au premier mot d'une autre idée (`PLACE_END`), « depuis Lyon » compris.
+    // Coupe à la ponctuation ou au premier chiffre, puis au premier mot d'une
+    // autre idée (`PLACE_END`, « depuis Lyon » compris).
     const place = clean(original.split(/[,.;!?\d]/)[0].split(PLACE_END)[0], 50)
       // « Norvège dans les fjords » : le nom s'arrête avant la préposition restée seule.
       .replace(/\s+(?:dans|in|sur|vers|près|pres)$/i, '');
@@ -1101,7 +1116,7 @@ export function mergeActions(
   const out: Array<{ action: CompasIntentAction; source: IntentSource }> = [];
   // Le lieu de départ lu par les règles (« depuis Lyon ») n'est jamais la
   // destination, même si l'IA le donne comme tel.
-  const origins = new Set(rules.filter((a) => a.type === 'set_origin').map((a) => plainOf((a as { place: string }).place)));
+  const origins = new Set(rules.flatMap((a) => (a.type === 'set_origin' ? [plainOf(a.place)] : [])));
   // « GR34 » n'est pas un lieu sur la carte (l'IA le donnait comme destination :
   // étapes dans l'Indre) : la région du sentier, comme pour les règles.
   const placed = ai
