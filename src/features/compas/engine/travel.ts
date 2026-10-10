@@ -179,12 +179,42 @@ const CAR_FAILURE: Record<string, string> = {
   rate_limited: 'trop de calculs d’affilée',
 };
 
+/** Au-delà de 3 h de trajet aller, une journée seule ne tient plus (PLAN-100 4.4). */
+export const DAY_TRIP_MAX_MINUTES = 180;
+
+/** Route estimée à l'aller : vol d'oiseau × 1,3 à 80 km/h (comme quand l'itinéraire n'est pas calculé). */
+export function estimatedDriveMinutes(straightKm: number): number {
+  return Math.round((Math.round(straightKm * 1.3) / 80) * 60);
+}
+
+/**
+ * Une journée (ou moins) à plus de 3 h de trajet aller : « 3 h 20 de trajet
+ * aller pour une seule journée : … ». null sinon, ou quand le temps n'est pas
+ * connu. Le temps se lit à la minute : 180,4 se lit 3 h 00, donc pas de note.
+ */
+export function dayTripNote(days: number, minutesOneWay: number | null): string | null {
+  if (days > 1 || minutesOneWay == null) return null;
+  const m = Math.round(minutesOneWay);
+  if (!(m > DAY_TRIP_MAX_MINUTES)) return null;
+  return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} de trajet aller pour une seule journée : prévois une nuit sur place ou choisis plus près.`;
+}
+
 /**
  * Le trajet d'approche, comme la préparation l'écrit : route mesurée si elle
  * est raisonnable pour la durée, sinon le train (pays reliés, pas d'île),
- * sinon l'avion d'aéroport à aéroport. Sans point de départ : rien.
+ * sinon l'avion d'aéroport à aéroport. Sans point de départ : rien. Une
+ * journée à plus de 3 h de trajet aller est signalée (Mercantour depuis Annecy).
  */
 export async function planTravelLeg(input: TravelLegInput, deps: TravelDeps): Promise<TravelLeg> {
+  const leg = await chooseLeg(input, deps);
+  // Temps connu : route mesurée ou estimée, train ; un vol n'a pas de durée connue.
+  const minutes = leg.transport && leg.transport.mode !== 'avion' ? leg.transport.minutes : null;
+  const note = dayTripNote(input.days, minutes);
+  if (note) leg.notes.push(note);
+  return leg;
+}
+
+async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<TravelLeg> {
   const { origin, target, destination, days, party } = input;
   const leg: TravelLeg = {
     origin,
@@ -196,8 +226,13 @@ export async function planTravelLeg(input: TravelLegInput, deps: TravelDeps): Pr
     originUnknown: false,
     notes: [],
   };
-  // Sortie de quelques heures : pas de trajet à chiffrer.
-  if (!input.transport) return leg;
+  // Sortie de quelques heures : rien à chiffrer. Partie de loin (départ connu),
+  // le temps de route estimé est dit quand la journée ne tient pas.
+  if (!input.transport) {
+    const note = origin ? dayTripNote(days, estimatedDriveMinutes(distanceKm(origin, target))) : null;
+    if (note) leg.notes.push(note);
+    return leg;
+  }
   if (!origin) {
     leg.originUnknown = true;
     leg.notes.push(UNKNOWN_ORIGIN_NOTE);
@@ -309,9 +344,8 @@ export async function planTravelLeg(input: TravelLegInput, deps: TravelDeps): Pr
     // Itinéraire non calculé (panne, débit, tracé qui n'arrive pas pile au
     // lieu) mais destination à portée de route : trajet estimé (vol
     // d'oiseau × 1,3 à 80 km/h), jamais un vol à 450 km.
-    const km = Math.round(straight * 1.3);
-    const minutes = Math.round((km / 80) * 60);
-    leg.carFuel = estimateCarTrip({ oneWayKm: km, oneWayMin: minutes, partySize: party });
+    const minutes = estimatedDriveMinutes(straight);
+    leg.carFuel = estimateCarTrip({ oneWayKm: Math.round(straight * 1.3), oneWayMin: minutes, partySize: party });
     if (leg.carFuel) {
       leg.transport = moveOf('voiture', {
         km: leg.carFuel.oneWayKm,

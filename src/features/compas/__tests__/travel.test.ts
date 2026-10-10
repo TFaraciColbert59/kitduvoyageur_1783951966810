@@ -271,8 +271,12 @@ describe('l’avion d’aéroport à aéroport (OurAirports)', () => {
     );
     expect(leg.flight).toBeNull();
     expect(leg.transport).toMatchObject({ mode: 'voiture', km: 600, minutes: 400 });
-    // 6 h 40 de route pour une journée (5 h au plus) et pas de vol possible : dit, pas caché.
-    expect(leg.notes).toEqual([SAME_AIRPORT_NOTE]);
+    // 6 h 40 de route pour une journée (5 h au plus) et pas de vol possible : dit, pas caché ;
+    // et c'est une journée à plus de 3 h de trajet aller : signalée aussi, en dernier.
+    expect(leg.notes).toEqual([
+      SAME_AIRPORT_NOTE,
+      '6 h 40 de trajet aller pour une seule journée : prévois une nuit sur place ou choisis plus près.',
+    ]);
   });
 
   describe('même aéroport aux deux bouts', () => {
@@ -286,12 +290,19 @@ describe('l’avion d’aéroport à aéroport (OurAirports)', () => {
       );
     });
 
-    it('route qui tient dans la durée du voyage : rien à signaler', async () => {
+    it('route qui tient dans la durée du voyage : pas de note d’aéroport (la journée longue est signalée à part)', async () => {
       const { d } = deps({ km: 560, minutes: 280, end: null }, () => same);
       const leg = await planTravelLeg(input({ origin: nord, ...to(40.5), days: 1 }), d);
       expect(leg.flight).toBeNull();
       expect(leg.transport).toMatchObject({ mode: 'voiture', km: 560, minutes: 280 });
-      expect(leg.notes).toEqual([]);
+      expect(leg.notes).not.toContain(SAME_AIRPORT_NOTE);
+      expect(leg.notes).toEqual([
+        '4 h 40 de trajet aller pour une seule journée : prévois une nuit sur place ou choisis plus près.',
+      ]);
+      // Deux jours : la même route ne dit plus rien du tout.
+      const two = await planTravelLeg(input({ origin: nord, ...to(40.5), days: 2 }), d);
+      expect(two.transport).toMatchObject({ mode: 'voiture', km: 560, minutes: 280 });
+      expect(two.notes).toEqual([]);
     });
 
     it('route non calculée, estimée plus longue que la durée du voyage : la route estimée, et la note', async () => {
@@ -301,6 +312,7 @@ describe('l’avion d’aéroport à aéroport (OurAirports)', () => {
       expect(leg.notes).toEqual([
         'Trajet en voiture estimé (itinéraire routier non calculé : service de calcul injoignable) : à vérifier, traversée en ferry éventuelle non comptée.',
         SAME_AIRPORT_NOTE,
+        '8 h 08 de trajet aller pour une seule journée : prévois une nuit sur place ou choisis plus près.',
       ]);
     });
 
