@@ -760,7 +760,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       Tab et Maj+Tab bouclent dans le tiroir (le « Annuler » de l'îlot reste atteignable),
       Échap ferme, le focus revient au déclencheur, y compris après deux tiroirs empilés,
       sans voler un focus que la page a posé ailleurs.
-- [ ] `KitRow` : plus de bouton dans un bouton ; Espace géré.
+- [x] `KitRow` : plus de bouton dans un bouton ; Espace géré. Lot Q (`CompasCards.tsx`,
+      `compas.css` `.cp-row__main`, `compasScreen.test.tsx` « KitRow : une ligne, un bouton ») :
+      la ligne n'est plus un `role="button"` qui contient des boutons ; sa commande
+      principale est un vrai `<button>` (Entrée et Espace natifs), voisine de « Emballer »
+      et « Retirer » ; toucher, appui long et glissement sont inchangés.
 - [ ] Calendrier des conditions : qualité dite en texte, pas seulement en couleur.
 - [ ] Pastilles d'alerte des étapes annoncées au lecteur d'écran.
 - [ ] Tailles de texte en `rem` ; lignes qui s'agrandissent au lieu de tronquer.

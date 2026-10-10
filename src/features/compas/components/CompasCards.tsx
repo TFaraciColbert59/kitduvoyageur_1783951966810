@@ -47,7 +47,9 @@ export function lineStatus(line: CompasKitLine): { label: string; tone: Tone } {
 /**
  * Ligne d'objet des tiroirs : toucher = fiche, appui long = fiche en grand,
  * glisser à gauche = « Retirer » apparaît (maquette finale) ; le retrait
- * demande ce second geste, jamais le seul glissement.
+ * demande ce second geste, jamais le seul glissement. Au clavier, la fiche
+ * s'ouvre par la commande de la ligne (Entrée ou Espace) ; aucune commande
+ * n'en contient une autre (WCAG 4.1.2).
  */
 export function KitRow({ line, ctl }: { line: CompasKitLine; ctl: CompasCtl }) {
   const [swiped, setSwiped] = useState(false);
@@ -86,8 +88,6 @@ export function KitRow({ line, ctl }: { line: CompasKitLine; ctl: CompasCtl }) {
   return (
     <div
       className="cp-row"
-      role="button"
-      tabIndex={0}
       data-swiped={swiped ? '' : undefined}
       {...press}
       onPointerDown={(e) => {
@@ -114,27 +114,32 @@ export function KitRow({ line, ctl }: { line: CompasKitLine; ctl: CompasCtl }) {
         swipe.current = null;
         press.onPointerUp();
       }}
-      onKeyDown={(e) => e.key === 'Enter' && press.onClick()}
     >
-      <Thumb
-        image={product?.image}
-        alt={product?.imageAlt}
-        category={line.category}
-        name={line.name}
-      />
-      <span className="cp-row__t">
-        <b>
-          {line.quantity > 1 ? `${line.quantity} × ` : ''}
-          {line.name}
-        </b>
-        <span>
-          {weight} · {carrier} · {status.label}
-          {line.vital ? ' · vital' : ''}
-          {suggested && suggested.priceEur != null
-            ? ` · boutique ${formatMoney(suggested.priceEur)}`
-            : ''}
+      {/* Les gestes (toucher, appui long, glissement) restent sur la ligne ; la
+          fiche s'ouvre au clavier par une vraie commande (Entrée et Espace
+          natifs, qui remontent en clic). « Retirer » et « Emballer » en sont
+          les voisines, jamais les enfants. */}
+      <button type="button" className="cp-row__main" aria-haspopup="dialog">
+        <Thumb
+          image={product?.image}
+          alt={product?.imageAlt}
+          category={line.category}
+          name={line.name}
+        />
+        <span className="cp-row__t">
+          <b>
+            {line.quantity > 1 ? `${line.quantity} × ` : ''}
+            {line.name}
+          </b>
+          <span>
+            {weight} · {carrier} · {status.label}
+            {line.vital ? ' · vital' : ''}
+            {suggested && suggested.priceEur != null
+              ? ` · boutique ${formatMoney(suggested.priceEur)}`
+              : ''}
+          </span>
         </span>
-      </span>
+      </button>
       <span className="cp-row__end">
         {swiped && (
           <button

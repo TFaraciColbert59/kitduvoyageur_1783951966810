@@ -3,6 +3,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { buildCompasModel, type CompasInput, type CompasItemInput } from '../engine/compasModel';
 import { assessDanger } from '../engine/danger';
 import { daylightClock } from '../engine/sun';
@@ -1943,5 +1944,77 @@ describe('CompasScreen : réadaptation après un réglage', () => {
     rerender(<CompasScreen data={stale([])} />);
     rerender(<CompasScreen data={stale(['transport', 'budget'])} />);
     await waitFor(() => expect(autofill.compasRefreshAutofillAction).toHaveBeenCalledTimes(2));
+  });
+});
+
+/* Lot Q, PLAN-100 5.2 — accessibilité (WCAG 2.2 AA) de l'écran et des tiroirs. */
+describe('CompasScreen : accessibilité (lot Q, 5.2)', () => {
+  afterEach(() => cleanup());
+
+  const openKitAll = async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Kit' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Kit' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Tout/ }));
+    return sheet;
+  };
+
+  describe('KitRow : une ligne, un bouton, aucune commande dans une commande', () => {
+    it('aucun bouton, lien ou role=button n’en contient un autre', async () => {
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openKitAll();
+      const rows = sheet.querySelectorAll('.cp-row');
+      expect(rows.length).toBe(2);
+      expect(
+        sheet.querySelectorAll(
+          '[role="button"] button, [role="button"] a, button button, button a, a button'
+        ).length
+      ).toBe(0);
+      for (const row of rows) {
+        // La ligne n’est plus elle-même un bouton ; sa commande principale en est un vrai.
+        expect(row.getAttribute('role')).toBeNull();
+        expect(row.getAttribute('tabindex')).toBeNull();
+        expect(row.querySelector('button.cp-row__main')).toBeTruthy();
+      }
+    });
+
+    it('Entrée ouvre la fiche de l’objet', async () => {
+      const user = userEvent.setup();
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openKitAll();
+      const main = within(sheet).getByText('Sac de couchage').closest('button') as HTMLButtonElement;
+      main.focus();
+      await user.keyboard('{Enter}');
+      expect(await screen.findByRole('dialog', { name: 'Sac de couchage' })).toBeTruthy();
+    });
+
+    it('Espace ouvre la fiche de l’objet', async () => {
+      const user = userEvent.setup();
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openKitAll();
+      const main = within(sheet).getByText('Sac de couchage').closest('button') as HTMLButtonElement;
+      main.focus();
+      await user.keyboard(' ');
+      expect(await screen.findByRole('dialog', { name: 'Sac de couchage' })).toBeTruthy();
+    });
+
+    it('Espace sur « Emballer » emballe sans ouvrir la fiche', async () => {
+      const user = userEvent.setup();
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openKitAll();
+      const pack = within(sheet).getByRole('button', { name: 'Emballer Sac de couchage' });
+      pack.focus();
+      await user.keyboard(' ');
+      await waitFor(() =>
+        expect(kit.togglePackedAction).toHaveBeenCalledWith(SLEEP, true, 'trek-3-vallees')
+      );
+      expect(screen.queryByRole('dialog', { name: 'Sac de couchage' })).toBeNull();
+    });
+
+    it('le clic sur la ligne ouvre toujours la fiche', async () => {
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openKitAll();
+      fireEvent.click(within(sheet).getByText('Sac de couchage'));
+      expect(await screen.findByRole('dialog', { name: 'Sac de couchage' })).toBeTruthy();
+    });
   });
 });
