@@ -12,6 +12,7 @@ import {
   compasSetPartySizeAction,
   compasSetPreferencesAction,
   compasSetDestinationAction,
+  compasSetOriginAction,
   compasSetSpanAction,
 } from '../server/compasActions';
 import type { ActionResult, CompasCtl } from './compasTypes';
@@ -87,6 +88,9 @@ export async function runOps(
       case 'destination':
         res = await compasSetDestinationAction({ tripId, tripSlug: slug, place: op.place });
         break;
+      case 'origin':
+        res = await compasSetOriginAction({ tripId, tripSlug: slug, place: op.place });
+        break;
       case 'span':
         res = await compasSetSpanAction({ tripId, tripSlug: slug, days: op.days });
         break;
@@ -142,6 +146,10 @@ export function inverseOps(ctl: CompasCtl, ops: readonly ApplyOp[]): ApplyOp[] |
         break;
       case 'destination':
         out.push({ op: 'destination', place: m.destination ?? null });
+        break;
+      case 'origin':
+        // Le départ dit d'avant (null : il n'y en avait pas, on l'efface).
+        out.push({ op: 'origin', place: ctl.data.originName ?? null });
         break;
       case 'span':
         out.push({ op: 'span', days: ctl.data.plannedDays ?? null });

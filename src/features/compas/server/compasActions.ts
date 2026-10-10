@@ -44,6 +44,7 @@ import { planKitApply, type MyKit } from '../engine/kitApply';
 import { precisionActions } from '../engine/request';
 import { simplifyOffers, stayDates, type CompasStayOffer } from '../engine/stays';
 import { readCompasMeta } from '../engine/meta';
+import { coarsePosition } from '../engine/privacy';
 import { travellerToday } from '../engine/zone';
 import { getEurRate } from './rates';
 import { convertBetween } from '../engine/currency';
@@ -659,6 +660,65 @@ export async function compasSetDestinationAction(
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasSetDestinationAction', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+const originSchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  /** Lieu de départ tel que dit (« Lyon ») ; null ou vide efface le départ. */
+  place: z.string().trim().max(80).nullable(),
+});
+
+/**
+ * Lieu de départ du voyage (« depuis Lyon »), retrouvé sur la carte comme la
+ * destination (même recherche, même limite par personne) et rangé arrondi à
+ * ~1 km dans `metadata.compas.origin` : le trajet d'approche se chiffre depuis
+ * là, avant la position de l'appareil. Effacer ne cherche rien.
+ */
+export async function compasSetOriginAction(
+  input: z.input<typeof originSchema>
+): Promise<CompasActionResult> {
+  const parsed = originSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Lieu invalide' };
+  const wanted = parsed.data.place || null;
+  if (wanted && wanted.length < 2) return { success: false, error: 'Lieu invalide' };
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    // Même compteur que la destination : la carte (et parfois l'IA) est la même.
+    if (wanted) {
+      const limited = await enforceRateLimit(auth.userId, {
+        scope: 'compas-destination',
+        limit: 20,
+        windowMs: 600_000,
+        failMode: 'closed',
+      });
+      if (limited)
+        return {
+          success: false,
+          error:
+            limited.status === 429
+              ? 'Trop de lieux cherchés d’affilée : patiente quelques minutes.'
+              : 'Recherche de lieux indisponible pour le moment : réessaie dans un instant.',
+        };
+    }
+    const place = wanted ? await resolveDestination(wanted, auth.userId) : null;
+    if (wanted && !place) return { success: false, error: `« ${wanted} » introuvable sur la carte.` };
+    const at = place ? coarsePosition({ lat: place.lat, lon: place.lon }) : null;
+    const { error } = await updateTripMetadata(auth.supabase, parsed.data.tripId, (m) => {
+      const c = compasMeta(m);
+      if (place && at)
+        c.origin = { name: place.name, lat: at.lat, lon: at.lon, countryCode: place.countryCode, source: 'dit' };
+      else delete c.origin;
+      return { ...m, compas: c };
+    });
+    if (error) return { success: false, error: 'Impossible d’enregistrer le lieu de départ.' };
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasSetOriginAction', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }

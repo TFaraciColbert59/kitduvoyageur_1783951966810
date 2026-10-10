@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import type { ProfileInput } from '../engine/projectContext';
 import { projectBasis, type ProjectBasis } from '../engine/dependencies';
 import { readCompasMeta } from '../engine/meta';
-import { partySizeOf, tripContextFromRow } from '../engine/tripContext';
+import { originOf, partySizeOf, tripContextFromRow } from '../engine/tripContext';
 
 /**
  * Briques serveur partagées par les actions du Compas (droits, métadonnées,
@@ -295,5 +295,6 @@ export function tripBasis(
     activity,
     partySize: trip.party_size,
     prefs: compas.preferences,
+    origin: originOf(compasMeta(meta).origin),
   });
 }

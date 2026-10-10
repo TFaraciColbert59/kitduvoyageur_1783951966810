@@ -1,7 +1,7 @@
 import type { InventoryStatus } from '@/features/materiel/domain/inventory';
 import 'server-only';
 import { MAX_NOTES } from '../engine/advice';
-import { partySizeOf, shortHoursOf, tripLengthDays } from '../engine/tripContext';
+import { originOf, partySizeOf, shortHoursOf, tripLengthDays } from '../engine/tripContext';
 
 import type { FxRate } from '../engine/currency';
 import type { CompasPendingInvite } from '../engine/team';
@@ -145,6 +145,8 @@ export interface CompasData {
   startSay?: string | null;
   /** Destination retrouvée sur la carte (Dis-le). */
   anchorName?: string | null;
+  /** Lieu de départ dit (« depuis Lyon »), retrouvé sur la carte ; null sans départ dit. */
+  originName?: string | null;
   /** Contexte projet résolu (projet > sélection > profil > défaut), avec la source de chaque valeur. */
   context?: ProjectContext;
   /** Parties du préremplissage dépassées par un changement du projet (à réadapter). */
@@ -723,6 +725,7 @@ function autofillNotes(metadata: unknown): string[] {
 function compasPlan(metadata: unknown): {
   plannedDays: number | null;
   anchorName: string | null;
+  originName: string | null;
   startSay: string | null;
 } {
   const compas =
@@ -732,6 +735,7 @@ function compasPlan(metadata: unknown): {
   return {
     plannedDays: tripLengthDays(null, null, c.planned_days),
     anchorName: typeof anchor?.name === 'string' ? anchor.name : null,
+    originName: originOf(c.origin)?.name ?? null,
     startSay: typeof c.start_say === 'string' && c.start_say.trim() ? c.start_say.trim().slice(0, 280) : null,
   };
 }

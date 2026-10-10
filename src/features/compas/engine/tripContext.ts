@@ -69,6 +69,29 @@ export function anchorOf(raw: unknown): TripAnchor | null {
   return { name: String(a.name ?? ''), lat, lon };
 }
 
+/** Lieu de départ dit (« depuis Lyon »), rangé dans `metadata.compas.origin`. */
+export interface TripOrigin {
+  name: string;
+  /** Arrondis à 0,01° (~1 km) à l'écriture : jamais un point plus fin. */
+  lat: number;
+  lon: number;
+  countryCode: string | null;
+  source: 'dit';
+}
+
+/** Départ dit lu depuis `metadata.compas.origin` (lecture défensive), sinon null. */
+export function originOf(raw: unknown): TripOrigin | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const o = raw as Record<string, unknown>;
+  const name = typeof o.name === 'string' ? o.name.trim() : '';
+  const lat = Number(o.lat);
+  const lon = Number(o.lon);
+  if (!name || o.lat == null || o.lon == null || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+  const cc = typeof o.countryCode === 'string' ? o.countryCode.trim().toUpperCase() : '';
+  return { name: name.slice(0, 80), lat, lon, countryCode: /^[A-Z]{2}$/.test(cc) ? cc : null, source: 'dit' };
+}
+
 export interface TripContextInput {
   startDate: string | null;
   endDate: string | null;

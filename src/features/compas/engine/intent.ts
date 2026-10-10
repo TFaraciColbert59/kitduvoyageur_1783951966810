@@ -1248,6 +1248,8 @@ export type ApplyOp =
   | { op: 'item'; name: string; quantity: number }
   | { op: 'route'; query: string }
   | { op: 'destination'; place: string | null }
+  /** Lieu de départ dit (« depuis Lyon ») ; null l'efface. */
+  | { op: 'origin'; place: string | null }
   /** Durée connue sans date de départ (« 20 jours ») ; null efface. */
   | { op: 'span'; days: number | null };
 
@@ -1298,6 +1300,10 @@ export function planApplication(actions: CompasIntentAction[], current: ApplyCur
   const destination = actions.find((a) => a.type === 'set_destination') as
     Extract<CompasIntentAction, { type: 'set_destination' }> | undefined;
   if (destination) ops.unshift({ op: 'destination', place: destination.place });
+  // Le lieu de départ (« depuis Lyon ») : le trajet d'approche se chiffre depuis là.
+  const origin = actions.find((a) => a.type === 'set_origin') as
+    Extract<CompasIntentAction, { type: 'set_origin' }> | undefined;
+  if (origin) ops.push({ op: 'origin', place: origin.place });
 
   const prefs: CompasPreferences = {
     ...current.preferences,

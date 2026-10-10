@@ -37,6 +37,8 @@ export interface ProjectBasis {
   level: string | null;
   terrain: string | null;
   targetKm: number | null;
+  /** Lieu de départ dit (« Lyon@45.76,4.84 »), null sans départ dit. */
+  origin: string | null;
 }
 
 /** Pour chaque réglage, les parties écrites qui en dépendent. */
@@ -55,6 +57,8 @@ const DEPENDS: Record<keyof ProjectBasis, AutofillPart[]> = {
   level: ['steps', 'budget'],
   terrain: ['steps', 'budget'],
   targetKm: ['steps', 'budget'],
+  // Partir d'ailleurs change le trajet d'approche, donc le budget ; rien d'autre.
+  origin: ['transport', 'budget'],
 };
 
 /** Refaire l'itinéraire refait aussi ce qui s'y accroche (nuits sur les étapes, départ). */
@@ -85,6 +89,8 @@ export function projectBasis(input: {
     terrain?: string | null;
     targetKm?: number | null;
   } | null;
+  /** Lieu de départ dit (`metadata.compas.origin`), s'il y en a un. */
+  origin?: { name: string; lat: number; lon: number } | null;
 }): ProjectBasis {
   const p = input.prefs ?? {};
   const destination = input.anchor
@@ -106,6 +112,9 @@ export function projectBasis(input: {
     level: p.level ?? null,
     terrain: p.terrain ?? null,
     targetKm: p.targetKm ?? null,
+    origin: input.origin
+      ? `${input.origin.name}@${input.origin.lat.toFixed(2)},${input.origin.lon.toFixed(2)}`
+      : null,
   };
 }
 

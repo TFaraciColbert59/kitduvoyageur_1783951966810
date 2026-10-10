@@ -140,6 +140,7 @@ const compas = vi.hoisted(() => ({
     note: null,
   })),
   compasClearStartSayAction: vi.fn(async () => ({ success: true })),
+  compasSetOriginAction: vi.fn(async () => ({ success: true }) as { success: boolean; error?: string }),
 }));
 vi.mock('../server/compasActions', () => compas);
 const poi = vi.hoisted(() => ({
@@ -1682,5 +1683,75 @@ describe('CompasScreen', () => {
       preferences: { pace: 'tranquille', nights: null, avoid: [], wishes: [] },
     });
     expect(compas.compasSetBudgetAction).not.toHaveBeenCalled();
+  });
+
+  /* « N changements appliqués » compte les propositions cochées qui s'écrivent
+     (« Chercher un parcours » n'écrit rien). Un départ dit s'écrit : il compte
+     avec les autres, et seulement si son écriture a réussi. */
+  describe('Dis-le : « depuis Lyon »', () => {
+    const said = (id: string, action: object, label: string) => ({
+      id,
+      action,
+      label,
+      ok: true,
+      reason: null,
+      source: 'regles' as const,
+    });
+    const originProposal = said('0-set_origin', { type: 'set_origin', place: 'Lyon' }, 'Départ : Lyon');
+    const partyProposal = said('1-set_party_size', { type: 'set_party_size', count: 4 }, '4 personnes');
+
+    const understand = async (proposals: unknown[], text: string) => {
+      compas.compasInterpretAction.mockResolvedValueOnce({ success: true, usedAi: false, note: null, proposals });
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openOu(/Quand/);
+      fireEvent.change(within(sheet).getByLabelText('Dis-le'), { target: { value: text } });
+      fireEvent.click(within(sheet).getByRole('button', { name: 'Comprendre la phrase' }));
+      return sheet;
+    };
+
+    it('écrit le départ et le compte avec les autres changements', async () => {
+      const sheet = await understand([originProposal, partyProposal], 'à 4 depuis Lyon');
+      expect(await within(sheet).findByText('Départ : Lyon')).toBeTruthy();
+      fireEvent.click(within(sheet).getByRole('button', { name: /Appliquer \(2\)/ }));
+      await waitFor(() =>
+        expect(compas.compasSetOriginAction).toHaveBeenCalledWith({
+          tripId: TRIP,
+          tripSlug: 'trek-3-vallees',
+          place: 'Lyon',
+        })
+      );
+      expect(compas.compasSetPartySizeAction).toHaveBeenCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        partySize: 4,
+      });
+      expect(await screen.findByText('2 changements appliqués')).toBeTruthy();
+    });
+
+    it('seul, le départ est écrit, compté pour un, et « Annuler » l’efface (aucun départ avant)', async () => {
+      const sheet = await understand([originProposal], 'depuis Lyon');
+      fireEvent.click(await within(sheet).findByRole('button', { name: /Appliquer \(1\)/ }));
+      await waitFor(() => expect(compas.compasSetOriginAction).toHaveBeenCalledTimes(1));
+      expect(await screen.findByText('1 changement appliqué')).toBeTruthy();
+      fireEvent.click(await screen.findByRole('button', { name: 'Annuler' }));
+      await waitFor(() => expect(compas.compasSetOriginAction).toHaveBeenCalledTimes(2));
+      expect(compas.compasSetOriginAction).toHaveBeenLastCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        place: null,
+      });
+    });
+
+    it('lieu de départ introuvable : l’erreur remplace l’annonce, rien n’est compté comme appliqué', async () => {
+      compas.compasSetOriginAction.mockResolvedValueOnce({
+        success: false,
+        error: '« Lyon » introuvable sur la carte.',
+      });
+      const sheet = await understand([originProposal], 'depuis Lyon');
+      fireEvent.click(await within(sheet).findByRole('button', { name: /Appliquer \(1\)/ }));
+      expect(await screen.findByText('« Lyon » introuvable sur la carte.')).toBeTruthy();
+      expect(screen.queryByText('1 changement appliqué')).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Annuler' })).toBeNull();
+    });
   });
 });
