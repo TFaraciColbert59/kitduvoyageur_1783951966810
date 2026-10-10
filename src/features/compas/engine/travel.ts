@@ -107,6 +107,9 @@ export const UNKNOWN_ORIGIN_NOTE =
   'Point de départ inconnu : écris « depuis Lyon » dans ta demande ou partage ta position pour chiffrer le trajet.';
 export const UNKNOWN_ORIGIN_LINE = 'Trajet non chiffré : point de départ inconnu';
 export const ON_SITE_NOTE = 'Tu es déjà au départ : aucun trajet à prévoir.';
+/** Aucun vol possible (même aéroport aux deux bouts) et la route est longue, ou introuvable. */
+export const SAME_AIRPORT_NOTE =
+  'Trajet d’approche à vérifier : aéroport identique au départ et à l’arrivée, route longue ou non calculée.';
 /** Le départ quand il vient de l'appareil. */
 const GPS_DEPARTURE = 'ta position';
 
@@ -127,6 +130,15 @@ export function abroadOf(origin: TravelOrigin | null, destinationCountry: string
   if (!destinationCountry) return false;
   if (!origin?.countryCode) return null;
   return origin.countryCode !== destinationCountry;
+}
+
+/**
+ * Ce que « à l'étranger » change au budget : les formalités d'entrée (barème pour
+ * un voyageur français) restent tant qu'on n'est pas SÛR d'être déjà dans le pays
+ * (départ inconnu compris) ; l'assurance voyage n'est ajoutée que si on sait.
+ */
+export function abroadCosts(abroad: boolean | null): { formalities: boolean; insurance: boolean } {
+  return { formalities: abroad !== false, insurance: abroad === true };
 }
 
 /** Le départ tel que dit au spécialiste (IA) : jamais un pays supposé. */
@@ -198,59 +210,80 @@ export async function planTravelLeg(input: TravelLegInput, deps: TravelDeps): Pr
     leg.notes.push(ON_SITE_NOTE);
     return leg;
   }
+  // Un trajet du résumé, toujours avec son départ (clés dans l'ordre du résumé stocké).
+  const moveOf = (
+    kind: TravelTransport['mode'],
+    m: { km: number; minutes: number; walkKm?: number; fuelEur?: number; basis: string; route?: string }
+  ): TravelTransport => ({
+    mode: kind,
+    km: m.km,
+    minutes: m.minutes,
+    walkKm: m.walkKm ?? 0,
+    fuelEur: m.fuelEur ?? 0,
+    basis: m.basis,
+    ...(m.route ? { route: m.route } : {}),
+    departure,
+  });
+  // La route mesurée : un routeur qui plante (promesse rejetée ou exception directe)
+  // vaut « non calculée », avec une trace sans coordonnées.
+  const road = async (): Promise<CarRouteResult> => {
+    try {
+      return await deps.carRoute(origin, target);
+    } catch (err) {
+      const why = (err instanceof Error ? err.message : String(err)).replace(/-?\d+[.,]\d+/g, '…').slice(0, 160);
+      console.warn('[compas] trajet d’approche : routage en erreur', why);
+      return { failure: null };
+    }
+  };
   const byTrain = (roadKm: number | null) =>
     trainTrip({ fromCountry: origin.countryCode, toCountry: destination.countryCode, straightKm: straight, roadKm, days, to: target });
   const takeTrain = (rail: TrainTrip): TravelLeg => {
     leg.train = rail;
-    leg.transport = {
-      mode: 'train',
-      km: rail.railKm,
-      minutes: rail.minutesOneWay,
-      walkKm: 0,
-      fuelEur: 0,
-      basis: rail.basis,
-      departure,
-    };
+    leg.transport = moveOf('train', { km: rail.railKm, minutes: rail.minutesOneWay, basis: rail.basis });
     return leg;
   };
   // L'avion d'aéroport à aéroport ; faux si les deux bouts ont le même aéroport.
   // Chaque aéroport est cherché avec le pays de son lieu (départ, arrivée), null si inconnu.
+  let sameAirport = false;
   const fly = (why: string | null): boolean => {
     const from = deps.airport(origin, origin.countryCode);
     const to = deps.airport(target, destination.countryCode);
-    if (from && to && from.iata === to.iata) return false;
+    if (from && to && from.iata === to.iata) {
+      sameAirport = true;
+      return false;
+    }
     const km = Math.round(from && to ? distanceKm(from, to) : straight);
     const text =
       from && to
         ? `vol aller-retour depuis ${departure}, ${from.iata} → ${to.iata} (${from.name} → ${to.name}), environ ${km} km`
         : `vol aller-retour depuis ${departure} vers ${destination.name}, environ ${km} km`;
     leg.flight = { from, to, km };
-    leg.transport = {
-      mode: 'avion',
+    leg.transport = moveOf('avion', {
       km,
       minutes: 0,
-      walkKm: 0,
-      fuelEur: 0,
       basis: why ? `${why} : ${text}` : text,
       ...(from && to ? { route: `${from.iata} → ${to.iata}` } : {}),
-      departure,
-    };
+    });
     return true;
+  };
+  // Pas de vol possible (même aéroport) et une route plus longue que le voyage ne le supporte : dit.
+  const noFlightLongRoad = (minutes: number) => {
+    if (sameAirport && minutes > maxDriveMinutes(days)) leg.notes.push(SAME_AIRPORT_NOTE);
   };
 
   if (mode === 'avion') {
     // Trop loin pour la route vu la durée : le train si le rail s'y prête (route
     // mesurée pour écarter une île), sinon l'avion.
     if (byTrain(straight)) {
-      const car = await deps.carRoute(origin, target).catch(() => null);
-      const rail = car && 'km' in car ? byTrain(car.km) : null;
+      const car = await road();
+      const rail = 'km' in car ? byTrain(car.km) : null;
       if (rail) return takeTrain(rail);
     }
     if (fly(null)) return leg;
     // Même aéroport aux deux bouts : la route, comme pour un trajet proche.
   }
 
-  const car = await deps.carRoute(origin, target).catch((): CarRouteResult => ({ failure: null }));
+  const car = await road();
   if ('km' in car) {
     const walkKm = car.end ? await deps.walkKm(car.end, target) : 0;
     const limit = maxDriveMinutes(days);
@@ -262,15 +295,14 @@ export async function planTravelLeg(input: TravelLegInput, deps: TravelDeps): Pr
     }
     leg.carFuel = estimateCarTrip({ oneWayKm: car.km, oneWayMin: car.minutes, partySize: party });
     if (leg.carFuel)
-      leg.transport = {
-        mode: 'voiture',
+      leg.transport = moveOf('voiture', {
         km: leg.carFuel.oneWayKm,
         minutes: leg.carFuel.oneWayMin,
         walkKm: Math.round(walkKm * 10) / 10,
         fuelEur: leg.carFuel.fuelEur,
         basis: leg.carFuel.basis,
-        departure,
-      };
+      });
+    noFlightLongRoad(car.minutes);
     return leg;
   }
   if (straight <= FLIGHT_THRESHOLD_KM) {
@@ -278,24 +310,24 @@ export async function planTravelLeg(input: TravelLegInput, deps: TravelDeps): Pr
     // lieu) mais destination à portée de route : trajet estimé (vol
     // d'oiseau × 1,3 à 80 km/h), jamais un vol à 450 km.
     const km = Math.round(straight * 1.3);
-    leg.carFuel = estimateCarTrip({ oneWayKm: km, oneWayMin: Math.round((km / 80) * 60), partySize: party });
+    const minutes = Math.round((km / 80) * 60);
+    leg.carFuel = estimateCarTrip({ oneWayKm: km, oneWayMin: minutes, partySize: party });
     if (leg.carFuel) {
-      leg.transport = {
-        mode: 'voiture',
+      leg.transport = moveOf('voiture', {
         km: leg.carFuel.oneWayKm,
         minutes: leg.carFuel.oneWayMin,
-        walkKm: 0,
         fuelEur: leg.carFuel.fuelEur,
         basis: leg.carFuel.basis,
-        departure,
-      };
+      });
       leg.notes.push(
         `Trajet en voiture estimé (itinéraire routier non calculé : ${CAR_FAILURE[car.failure ?? ''] ?? 'raison inconnue'}) : à vérifier, traversée en ferry éventuelle non comptée.`
       );
+      noFlightLongRoad(minutes);
     }
     return leg;
   }
-  // Pas de route (île, autre continent) : l'avion ou le bateau s'imposent.
-  fly('aucune route praticable');
+  // Pas de route (île, autre continent) : l'avion ou le bateau s'imposent. Le vol ne
+  // manque ici que si les deux bouts ont le même aéroport : rien n'est chiffré, on le dit.
+  if (!fly('aucune route praticable')) leg.notes.push(SAME_AIRPORT_NOTE);
   return leg;
 }

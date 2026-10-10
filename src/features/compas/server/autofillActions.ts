@@ -66,7 +66,7 @@ import { buildTrack, simplifyLine, trackKey, type LngLat } from '../engine/track
 import { descentWindow, planRiverDescent } from '../engine/river';
 import { keepAiNote, travelPapers } from '../engine/papers';
 import { tutoyer } from '../engine/voice';
-import { originFact, planTravelLeg, travelOrigin, type TravelTransport } from '../engine/travel';
+import { abroadCosts, originFact, planTravelLeg, travelOrigin, type TravelTransport } from '../engine/travel';
 import { nearestAirport } from './airports';
 import { trailRegion } from '../engine/intent';
 import {
@@ -1562,7 +1562,7 @@ export async function compasAutofillAction(
     // La commune, pas le lieu le plus proche du point (« depuis Chantier Hotel
     // de Ville » au lieu d'Annecy, 8 oct.) ; inutile quand le départ est dit.
     const near = !saidOrigin && from ? await lookupReverse(from.lat, from.lon) : null;
-    const leg = await planTravelLeg(
+    const travelLeg = await planTravelLeg(
       {
         origin: travelOrigin(
           saidOrigin,
@@ -1604,11 +1604,11 @@ export async function compasAutofillAction(
         airport: (p, country) => nearestAirport(p.lat, p.lon, { country }),
       }
     );
-    notes.push(...leg.notes);
-    const { origin, abroad, transport, carFuel } = leg;
-    const flightNeeded = leg.flight != null;
+    notes.push(...travelLeg.notes);
+    const { origin, abroad, transport, carFuel } = travelLeg;
+    const flightNeeded = travelLeg.flight != null;
     // Train plutôt qu'avion quand la route est trop longue mais le rail à portée (Ardennes, Bruges).
-    const trainNeeded = leg.train;
+    const trainNeeded = travelLeg.train;
     const motorLegs = steps.filter((s, i) => i > 0 && s.distance_km != null && s.distance_km > 0).length;
     // Étapes proposées à l'instant, sinon celles déjà en place avec leur moyen de transport.
     const moves = stagePlaces.length ? stagePlaces : movesFromSteps(steps, activity);
@@ -1740,8 +1740,8 @@ export async function compasAutofillAction(
     const stageLine = steps
       .map((s) => {
         const by = s.transport_mode ? BY[s.transport_mode] : undefined;
-        const leg = s.distance_km ? ` (${s.distance_km} km${by ? ` ${by}` : ''})` : '';
-        return `J${s.day_number} ${s.title.split(' · ').slice(1).join(' · ')}${leg}`;
+        const legText = s.distance_km ? ` (${s.distance_km} km${by ? ` ${by}` : ''})` : '';
+        return `J${s.day_number} ${s.title.split(' · ').slice(1).join(' · ')}${legText}`;
       })
       .join(' ; ');
     const facts = [
@@ -1825,12 +1825,13 @@ export async function compasAutofillAction(
       (n) => n.type === 'refuge' && refugesByNight[n.night - 1][0]?.pricePerNight == null
     ).length;
     // Vol : d'aéroport à aéroport (OurAirports), sinon du départ au lieu ; sans départ, aucun vol.
-    const flight = leg.flight ? flightRoundTrip(leg.flight.km) : null;
+    const flight = travelLeg.flight ? flightRoundTrip(travelLeg.flight.km) : null;
     const rentalCars = fuelForKm(carKmOnSite, party).cars;
     const localTrips = localMoves.reduce((t, m) => t + localTripPerLeg(m.move, lvl.level), 0);
     // Formalités (barème pour un voyageur français) : gardées tant qu'on ne sait pas
     // que la personne est déjà dans le pays ; départ inconnu = pays de départ inconnu.
-    const entry = abroad !== false ? entryFees(anchor.countryCode) : null;
+    const abroadFor = abroadCosts(abroad);
+    const entry = abroadFor.formalities ? entryFees(anchor.countryCode) : null;
     const mealsAmount = mealsTotal({ days, party, nights: plan.map((n) => n.type), level: lvl.level });
     const rental = picks.filter((p) => p.source === 'location').reduce((t, p) => t + (p.costEur ?? 0), 0);
     // Le budget compte l'indispensable qui manque ; le conseillé (crème
@@ -1931,11 +1932,11 @@ export async function compasAutofillAction(
             basis: `barème Compas ${COSTS_VERSION} · tarif officiel connu, à vérifier avant de partir`,
           }
         : null,
-      abroad === true || (maxAltitude ?? 0) >= 2500
+      abroadFor.insurance || (maxAltitude ?? 0) >= 2500
         ? {
             category: 'divers',
             title: 'Assurance voyage et rapatriement',
-            amount: insurance(days, { abroad: abroad === true, altitudeM: maxAltitude }) * party,
+            amount: insurance(days, { abroad: abroadFor.insurance, altitudeM: maxAltitude }) * party,
             source: 'estimation',
             basis: `barème Compas ${COSTS_VERSION} · forfait par jour${(maxAltitude ?? 0) >= 4000 ? ', haute altitude' : ''}`,
           }
@@ -2020,7 +2021,7 @@ export async function compasAutofillAction(
       summary: {
         nights: nightsOut,
         transport,
-        ...(leg.originUnknown ? { originUnknown: true } : {}),
+        ...(travelLeg.originUnknown ? { originUnknown: true } : {}),
         kit: kitCount,
         budget: lines,
         total,
