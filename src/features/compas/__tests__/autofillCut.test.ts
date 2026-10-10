@@ -12,6 +12,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
  * - « Arrêter » : avant l'itinéraire, rien n'est écrit ; pendant le reste, plus
  *   aucune écriture (nuits, kit, budget) hormis la trace, et la relance demande
  *   d'abord « Annuler ».
+ * - Sorties anticipées (pas de lieu, itinéraire refusé par la base, exception) :
+ *   la prise de phase est rendue, une relance repart tout de suite au lieu
+ *   d'attendre jusqu'à 290 s.
  */
 const h = vi.hoisted(() => ({
   db: null as unknown as MemorySupabase,
@@ -19,6 +22,7 @@ const h = vi.hoisted(() => ({
   cut: false,
   reachedCut: null as null | (() => void),
   onQuery: null as null | ((q: QueryInfo) => void | Promise<void>),
+  failQuery: null as null | ((q: QueryInfo) => { code: string; message: string } | undefined),
 }));
 
 vi.mock('server-only', () => ({}));
@@ -105,7 +109,12 @@ beforeEach(() => {
   h.cut = false;
   h.reachedCut = null;
   h.onQuery = null;
-  h.db = memorySupabase({ user: () => ({ id: 'u1' }), onQuery: (q) => h.onQuery?.(q) });
+  h.failQuery = null;
+  h.db = memorySupabase({
+    user: () => ({ id: 'u1' }),
+    onQuery: (q) => h.onQuery?.(q),
+    failQuery: (q) => h.failQuery?.(q),
+  });
   // Trois jours à Lyon : itinéraire depuis une base, sans carte ni IA.
   h.db.rows('trips').push({
     id: TRIP,
@@ -257,5 +266,87 @@ describe('« Arrêter » pendant la préparation', () => {
     vi.setSystemTime(T0 + 2_000);
     expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
     expect(stepIds()).toHaveLength(3);
+  });
+});
+
+describe('prise de phase rendue sur les sorties anticipées', () => {
+  /** Le voyage sans lieu : ni destination, ni étape, ni départ dit. */
+  const withoutPlace = () => {
+    tripRow().destination_name = null;
+    tripRow().destination_country_code = null;
+    tripRow().metadata = {};
+  };
+  const placeIsSaid = () => {
+    tripRow().destination_name = 'Lyon';
+    tripRow().destination_country_code = 'FR';
+    tripRow().metadata = {
+      compas: { anchor: { name: 'Lyon', lat: 45.764, lon: 4.8357, countryCode: 'FR', country: 'France', kind: 'city' } },
+    };
+  };
+
+  it('« Dis-moi où tu pars » : la prise est rendue, la relance avec un lieu repart tout de suite', async () => {
+    withoutPlace();
+    const res = await launch();
+    expect(res).toMatchObject({ success: false });
+    expect(res.success ? '' : res.error).toMatch(/Dis-moi où tu pars/);
+    expect(compas().autofill_claim).toBeUndefined();
+    expect(stepIds()).toEqual([]);
+
+    // Même instant : avant, la prise « steps » (290 s) faisait répondre « une autre préparation est en cours ».
+    placeIsSaid();
+    expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
+    expect(stepIds()).toHaveLength(3);
+  });
+
+  it('« Itinéraire non enregistré » : la prise est rendue, la relance repart tout de suite', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    h.failQuery = (q) => (q.table === 'trip_steps' && q.op === 'insert' ? { code: '53300', message: 'trop de connexions' } : undefined);
+    expect(await launch()).toEqual({ success: false, error: 'Itinéraire non enregistré : réessaie dans un instant.' });
+    expect(compas().autofill_claim).toBeUndefined();
+    expect(stepIds()).toEqual([]);
+
+    h.failQuery = null;
+    expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
+    expect(stepIds()).toHaveLength(3);
+  });
+
+  it('exception avant l’itinéraire (catch) : la prise est rendue, la relance repart tout de suite', async () => {
+    h.onQuery = (q) => {
+      if (q.table === 'trip_steps' && q.op === 'insert') throw new Error('réseau coupé');
+    };
+    expect(await launch()).toEqual({ success: false, error: 'Erreur serveur' });
+    expect(reportServerError).toHaveBeenCalledTimes(1);
+    expect(compas().autofill_claim).toBeUndefined();
+
+    h.onQuery = null;
+    expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
+    expect(stepIds()).toHaveLength(3);
+  });
+
+  it('exception pendant le reste (catch) : la prise du reste est rendue ; la relance reprend CET itinéraire tout de suite', async () => {
+    h.onQuery = (q) => {
+      if (q.table === 'trip_expenses' && q.op === 'insert') throw new Error('réseau coupé');
+    };
+    expect(await launch()).toEqual({ success: false, error: 'Erreur serveur' });
+    const pending = readPending(tripRow().metadata)!;
+    const ids = stepIds();
+    expect(ids).toHaveLength(3);
+    expect(pending.stepIds).toEqual(ids);
+    expect(compas().autofill_claim).toBeUndefined();
+
+    h.onQuery = null;
+    const before = h.db.writes.length;
+    expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
+    expect(stepIds()).toEqual(ids);
+    expect(writesTo('trip_steps', before).filter((w) => w.op !== 'update')).toEqual([]);
+    expect(compas().autofill).toMatchObject({ runId: pending.runId, stepIds: ids });
+  });
+
+  it('une préparation qui n’a pas la prise ne rend jamais celle d’une autre', async () => {
+    // Une autre préparation du même voyage tient la prise « steps » : la nôtre attend, sans rien rendre.
+    tripRow().metadata = { compas: { ...compas(), autofill_claim: { steps: T0 - 1_000 } } };
+    expect(await launch()).toEqual({ success: true, pending: true, stepsCreated: 0 });
+    expect(compas().autofill_claim).toEqual({ steps: T0 - 1_000 });
+    expect(stepIds()).toEqual([]);
   });
 });
