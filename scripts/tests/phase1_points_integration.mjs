@@ -10,7 +10,10 @@
  *   (isolation inter-utilisateurs), invariant solde = Σ journal, smoke mobile.
  *
  * Prérequis : Supabase local (127.0.0.1:54321, migration 20261010140000
- * appliquée) + `npm run dev` sur :4000 avec l'env local.
+ * appliquée) + `npm run dev` sur :4000 avec l'env local, et la clé service
+ * locale exportée (aucun secret en dur — garde-fou audit CI) :
+ *   . scratch/start-dev-local.ps1   (pose NEXT_PUBLIC_SUPABASE_URL et
+ *                                    SUPABASE_SERVICE_ROLE_KEY)
  *
  * Sortie : log horodaté dans le dossier temp + exit 0 (PASS) / 1 (FAIL).
  */
@@ -21,10 +24,17 @@ import { chromium } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'http://127.0.0.1:54321';
-const SERVICE_KEY =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ??
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const APP_URL = process.env.PHASE1_APP_URL ?? 'http://localhost:4000';
+
+// Aucun secret en dur (invariant audit CI) : la clé service locale doit être
+// exportée par l'appelant (cf. scratch/start-dev-local.ps1).
+if (!SERVICE_KEY) {
+  console.error(
+    'SUPABASE_SERVICE_ROLE_KEY absente — sourcez scratch/start-dev-local.ps1 ou exportez les clés locales avant de lancer ce script.'
+  );
+  process.exit(1);
+}
 
 const EMAIL_A = 'integ-a@lkdv.test';
 const EMAIL_B = 'integ-b@lkdv.test';
@@ -237,6 +247,15 @@ async function createOrder(page, quantity) {
   });
 }
 
+/**
+ * Miroir de `(total_eur*10)::integer` (Postgres arrondit au plus proche) :
+ * passage par les centimes pour éviter les artefacts flottants (ex. 3.05).
+ */
+function pointsForTotalEur(totalEur) {
+  const cents = Math.round(Number(totalEur) * 100);
+  return Math.round(cents / 10);
+}
+
 // ── Flux principal ───────────────────────────────────────────────────────────
 
 let browser;
@@ -423,7 +442,7 @@ try {
     const { data: row } = await svc.from('orders').select('status').eq('id', order1.id).single();
     check('commande status=confirmed', row.status === 'confirmed', `status=${row.status}`);
 
-    const expectedPoints = Math.trunc(Number(order1.total_eur) * 10);
+    const expectedPoints = pointsForTotalEur(order1.total_eur);
     const purchases = await historyRows(userA.id, `order_${order1.id}`);
     check('EXACTEMENT 1 ligne purchase order_<id>', purchases.length === 1 && purchases[0].type === 'purchase', JSON.stringify(purchases));
     check(`points achat = (total×10) = ${expectedPoints}`, purchases[0]?.points === expectedPoints, `points=${purchases[0]?.points}`);
@@ -441,6 +460,13 @@ try {
     check('2e commande virement créée (pending)', res.status === 200 && res.json?.success === true, JSON.stringify({ status: res.status, orderNumber: res.json?.orderNumber }));
     order2 = { id: res.json.orderId };
 
+    // B vise la commande PENDING de A tant qu'elle l'est : sans filtre user_id,
+    // B l'annulerait (elle est annulable) — c'est le vrai test d'isolation.
+    const cross = await api(pageB, '/api/orders/cancel', { orderId: order2.id });
+    check('B ne peut pas annuler la commande pending de A ⇒ 409 not_cancellable', cross.status === 409 && cross.json?.error === 'not_cancellable', JSON.stringify(cross));
+    const { data: stillPending } = await svc.from('orders').select('status').eq('id', order2.id).single();
+    check('commande 2 toujours pending après la tentative de B', stillPending.status === 'pending', `status=${stillPending.status}`);
+
     const before = await profileOf(userA.id);
 
     const cancel = await api(pageA, '/api/orders/cancel', { orderId: order2.id });
@@ -453,8 +479,6 @@ try {
     const after = await profileOf(userA.id);
     check('aucune écriture points fantôme (journal + solde inchangés)', ghost.length === 0 && after.loyalty_points === before.loyalty_points, `ghost=${ghost.length} profil=${after.loyalty_points}`);
 
-    const cross = await api(pageB, '/api/orders/cancel', { orderId: order1.id });
-    check('B ne peut pas annuler la commande confirmée de A ⇒ 409 not_cancellable', cross.status === 409 && cross.json?.error === 'not_cancellable', JSON.stringify(cross));
     await assertInvariant(userA.id, 'A après annulation');
   });
 
@@ -470,23 +494,22 @@ try {
       hasTouch: true,
     });
     const pageM = await ctxM.newPage();
+    await login(pageM, EMAIL_A);
+
+    // Écouteurs attachés APRÈS login et bornés aux documents/ressources des
+    // pages sous test : les rapports CSP navigateur postés sur
+    // /api/telemetry/hub (bruit local préexistant) ne polluent plus la mesure.
     const consoleErrors = [];
     const failedResponses = [];
     pageM.on('console', (msg) => {
       if (msg.type() === 'error') consoleErrors.push(msg.text());
     });
     pageM.on('response', (res) => {
-      if (res.status() >= 400) {
-        let requestBody = null;
-        try {
-          requestBody = res.request().postData()?.slice(0, 300) ?? null;
-        } catch {
-          /* corps indisponible */
-        }
-        failedResponses.push({ status: res.status(), url: res.url(), requestBody });
-      }
+      if (res.status() < 400) return;
+      const { pathname } = new URL(res.url());
+      if (!pathname.startsWith('/fidelite') && !pathname.startsWith('/panier')) return;
+      failedResponses.push({ status: res.status(), url: res.url() });
     });
-    await login(pageM, EMAIL_A);
 
     const fid = await pageM.goto(`${APP_URL}/fidelite`, { waitUntil: 'domcontentloaded', timeout: 180000 });
     await pageM.waitForTimeout(4000);
@@ -504,21 +527,14 @@ try {
     await pageM.waitForTimeout(3000);
     check('mobile /panier HTTP < 400', pan.status() < 400, `status=${pan.status()}`);
 
-    // Le navigateur poste ses rapports CSP (`{"csp-report":…}`) sur
-    // /api/telemetry/hub (endpoint qui attend `{events}`) : bruit local
-    // préexistant, sans rapport avec les flux points/commandes.
-    const cspReports = failedResponses.filter((r) => r.requestBody?.includes('"csp-report"'));
-    const blockingResponses = failedResponses.filter((r) => !r.requestBody?.includes('"csp-report"'));
-    log(`  rapports CSP navigateur (bruit local préexistant) : ${cspReports.length}`);
-
     const blocking = consoleErrors.filter(
       (msg) => !/favicon|net::ERR|Failed to load resource|websocket/i.test(msg)
     );
     check('aucun console.error bloquant mobile', blocking.length === 0, `errors=${JSON.stringify(consoleErrors)}`);
     check(
-      'aucune réponse ≥400 sur /fidelite et /panier (hors rapports CSP)',
-      blockingResponses.length === 0,
-      `count=${blockingResponses.length} ${JSON.stringify(blockingResponses)}`
+      'aucune réponse ≥400 sur /fidelite et /panier',
+      failedResponses.length === 0,
+      `count=${failedResponses.length} ${JSON.stringify(failedResponses)}`
     );
     await ctxM.close();
   });
