@@ -13,7 +13,8 @@ const ROWS = AIRPORTS as unknown as readonly AirportRow[];
 /**
  * Aéroport retenu pour un lieu, à moins de 300 km (ou `maxKm`), sinon null.
  * Un aéroport moyen compte 1,6 fois sa distance (un grand un peu plus loin peut
- * donc l'emporter). `country` (ISO alpha-2) : voir `NearestAirportOpts`.
+ * donc l'emporter). `country` (ISO alpha-2, facultatif) : un aéroport d'un autre
+ * pays compte 1,25 fois sa distance, voir `NearestAirportOpts`.
  */
 export function nearestAirport(lat: number, lon: number, opts?: NearestAirportOpts): AirportPick | null {
   return nearestAirportIn(ROWS, lat, lon, opts);

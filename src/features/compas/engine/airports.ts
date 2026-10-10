@@ -27,26 +27,35 @@ export interface AirportPick {
 export const AIRPORT_RADIUS_KM = 300;
 /** Un aéroport moyen (moins de vols) compte comme 1,6 fois plus loin qu'un grand. */
 export const MEDIUM_AIRPORT_FACTOR = 1.6;
+/**
+ * Avec un indice de pays, un aéroport d'un AUTRE pays compte comme 1,25 fois plus
+ * loin (en plus du facteur des aéroports moyens). Doux, pas une exclusion : Genève
+ * reste l'aéroport de Chamonix et de Morzine (il faudrait moins de 1,40 pour cela),
+ * alors qu'un aéroport du pays à peu près aussi près passe devant (Courmayeur → Turin).
+ */
+export const FOREIGN_AIRPORT_FACTOR = 1.25;
 
 export interface NearestAirportOpts {
   /** Rayon de recherche en km (défaut 300). */
   maxKm?: number;
   /**
-   * Indice de pays (ISO 3166 alpha-2, majuscules ou minuscules) : le vol
-   * d'oiseau traverse les frontières et les mers (Santa Teresa Gallura est
-   * plus près de Figari, en Corse, que d'Olbia ; Zermatt de Milan que de
-   * Genève). Si au moins un aéroport de ce pays est dans le rayon, seuls ceux
-   * de ce pays concourent ; sinon l'indice est ignoré. null, vide : pas d'indice.
+   * Indice de pays (ISO 3166 alpha-2, majuscules ou minuscules), par exemple celui
+   * du lieu géocodé. Le vol d'oiseau traverse frontières et mers : avec l'indice,
+   * un aéroport d'un autre pays voit son score multiplié par
+   * `FOREIGN_AIRPORT_FACTOR` (1,25), ceux du pays ne changent pas. Tous les
+   * aéroports du rayon restent candidats : l'indice ne retire personne, et sans
+   * aéroport du pays à portée il ne change rien. null, undefined, vide : pas d'indice.
+   * Limites connues : il ne voit ni les Alpes (Zermatt reste Milan) ni la mer
+   * (Santa Teresa Gallura reste Figari).
    */
   country?: string | null;
 }
 
 /**
  * Aéroport retenu pour un lieu : parmi ceux à moins de `maxKm` (300 km), le
- * plus petit score = distance × (grand ? 1 : 1,6) ; à égalité, le premier
- * (les lignes sont triées par code IATA). Avec un indice de pays (voir
- * `NearestAirportOpts`), les aéroports de ce pays passent d'abord s'il y en a
- * dans le rayon. null si aucun.
+ * plus petit score = distance × (grand ? 1 : 1,6) × (autre pays que l'indice ?
+ * 1,25 : 1) ; à égalité, le premier (les lignes sont triées par code IATA).
+ * null si aucun.
  */
 export function nearestAirportIn(
   rows: readonly AirportRow[],
@@ -62,21 +71,16 @@ export function nearestAirportIn(
   const country = typeof opts.country === 'string' ? opts.country.trim().toUpperCase() || null : null;
   // Un degré de latitude ≈ 111 km : ce qui en est plus loin ne peut pas être dans le rayon.
   const latSpan = maxKm / 111 + 0.1;
-  type Candidate = { row: AirportRow; km: number; score: number };
-  let best: Candidate | null = null;
-  let bestInCountry: Candidate | null = null;
+  let best: { row: AirportRow; km: number; score: number } | null = null;
   for (const row of rows) {
     if (Math.abs(row[2] - lat) > latSpan) continue;
     const km = distanceKm({ lat, lon }, { lat: row[2], lon: row[3] });
     if (km > maxKm) continue;
-    const candidate = { row, km, score: km * (row[5] === 'L' ? 1 : MEDIUM_AIRPORT_FACTOR) };
-    if (!best || candidate.score < best.score) best = candidate;
-    if (country && row[4].toUpperCase() === country && (!bestInCountry || candidate.score < bestInCountry.score)) {
-      bestInCountry = candidate;
-    }
+    const foreign = country !== null && row[4].toUpperCase() !== country;
+    const score = km * (row[5] === 'L' ? 1 : MEDIUM_AIRPORT_FACTOR) * (foreign ? FOREIGN_AIRPORT_FACTOR : 1);
+    if (!best || score < best.score) best = { row, km, score };
   }
-  const pick = bestInCountry ?? best;
-  if (!pick) return null;
-  const [iata, name, aLat, aLon, aCountry] = pick.row;
-  return { iata, name, km: Math.round(pick.km), country: aCountry, lat: aLat, lon: aLon };
+  if (!best) return null;
+  const [iata, name, aLat, aLon, aCountry] = best.row;
+  return { iata, name, km: Math.round(best.km), country: aCountry, lat: aLat, lon: aLon };
 }

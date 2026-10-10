@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
-import { nearestAirportIn, type AirportRow } from '../engine/airports';
+import { FOREIGN_AIRPORT_FACTOR, nearestAirportIn, type AirportRow } from '../engine/airports';
 import { nearestAirport } from '../server/airports';
 import AIRPORTS from '../data/airports.json';
 import META from '../data/airports.meta.json';
@@ -17,12 +17,13 @@ const ROWS: AirportRow[] = [
   ['OLB', 'Olbia Costa Smeralda Airport', 40.899, 9.518, 'IT', 'L'],
 ];
 
-/** Autres lignes réelles, pour les frontières : Corse, Suisse, Italie du nord. */
+/** Autres lignes réelles, pour les frontières : Corse, Suisse, Italie du nord, Annecy. */
 const BORDER_EXTRA: AirportRow[] = [
   ['BRN', 'Bern Airport', 46.913, 7.499, 'CH', 'M'],
   ['FSC', 'Figari Sud-Corse Airport', 41.502, 9.097, 'FR', 'L'],
   ['LUG', 'Lugano Airport', 46.004, 8.911, 'CH', 'M'],
   ['MXP', 'Milan Malpensa International Airport', 45.631, 8.728, 'IT', 'L'],
+  ['NCY', 'Annecy Meythet airport', 45.929, 6.099, 'FR', 'M'],
   ['TRN', 'Turin Airport', 45.201, 7.65, 'IT', 'L'],
   ['ZRH', 'Zürich Airport', 47.458, 8.548, 'CH', 'L'],
 ];
@@ -95,56 +96,91 @@ describe('aéroport d’un lieu (choix pur)', () => {
   });
 });
 
-describe('indice de pays (frontières, mers)', () => {
+describe('indice de pays (pénalité douce sur les aéroports d’un autre pays)', () => {
+  // Lieux réels (centres de commune). Chaque cas a été recalculé sur le fichier versionné.
+  const CHAMONIX = { lat: 45.9237, lon: 6.8694 };
+  const MORZINE = { lat: 46.1792, lon: 6.7087 };
+  const COURMAYEUR = { lat: 45.7967, lon: 6.9689 };
+  const ZERMATT = { lat: 46.0207, lon: 7.7491 };
   const SANTA_TERESA = { lat: 41.239, lon: 9.19 };
-  const ZERMATT = { lat: 46.02, lon: 7.749 };
+  const ANNECY = { lat: 45.9, lon: 6.13 };
   const GOLFE_DE_CAGLIARI = { lat: 38.7, lon: 9.2 };
+  const pick = (p: { lat: number; lon: number }, opts?: Parameters<typeof nearestAirportIn>[3]) =>
+    nearestAirportIn(BORDER_ROWS, p.lat, p.lon, opts);
 
-  it('Santa Teresa Gallura : sans indice Figari (Corse, 30 km), avec « IT » Olbia (47 km)', () => {
-    expect(nearestAirportIn(BORDER_ROWS, SANTA_TERESA.lat, SANTA_TERESA.lon)).toMatchObject({ iata: 'FSC', country: 'FR', km: 30 });
-    expect(nearestAirportIn(BORDER_ROWS, SANTA_TERESA.lat, SANTA_TERESA.lon, { country: 'IT' })).toMatchObject({
-      iata: 'OLB',
-      country: 'IT',
-      km: 47,
-    });
+  it('le facteur est de 1,25', () => {
+    expect(FOREIGN_AIRPORT_FACTOR).toBe(1.25);
   });
 
-  it('Zermatt : sans indice Malpensa (Italie, 87 km), avec « CH » Genève (grand) plutôt que Lugano (moyen, plus près)', () => {
-    expect(nearestAirportIn(BORDER_ROWS, ZERMATT.lat, ZERMATT.lon)).toMatchObject({ iata: 'MXP', country: 'IT', km: 87 });
-    // Lugano est à 90 km mais moyen (compte 144) ; Genève à 129 km, grand.
-    expect(nearestAirportIn(BORDER_ROWS, ZERMATT.lat, ZERMATT.lon, { country: 'CH' })).toMatchObject({
-      iata: 'GVA',
-      country: 'CH',
-      km: 129,
-    });
+  it('Chamonix et Morzine (France) gardent Genève : l’aéroport que tout le monde prend ne se perd pas', () => {
+    // Chamonix : Genève 68 km (grand, 68 × 1,25 = 85) devant Annecy 60 km (moyen français, 60 × 1,6 = 95).
+    expect(pick(CHAMONIX)).toMatchObject({ iata: 'GVA', km: 68 });
+    expect(pick(CHAMONIX, { country: 'FR' })).toMatchObject({ iata: 'GVA', country: 'CH', km: 68 });
+    // Morzine : Genève 47 km (47 × 1,25 = 58) devant Annecy 55 km (moyen, 87).
+    expect(pick(MORZINE, { country: 'FR' })).toMatchObject({ iata: 'GVA', country: 'CH', km: 47 });
   });
 
-  it('minuscules acceptées ; null, vide ou espaces : pas d’indice', () => {
-    expect(nearestAirportIn(BORDER_ROWS, SANTA_TERESA.lat, SANTA_TERESA.lon, { country: 'it' })?.iata).toBe('OLB');
-    expect(nearestAirportIn(BORDER_ROWS, SANTA_TERESA.lat, SANTA_TERESA.lon, { country: ' It ' })?.iata).toBe('OLB');
-    for (const country of [null, undefined, '', '  ']) {
-      expect(nearestAirportIn(BORDER_ROWS, SANTA_TERESA.lat, SANTA_TERESA.lon, { country })?.iata).toBe('FSC');
-    }
+  it('Courmayeur : sans indice Genève (83 km), avec « IT » Turin (85 km, le pays du lieu)', () => {
+    expect(pick(COURMAYEUR)).toMatchObject({ iata: 'GVA', km: 83 });
+    expect(pick(COURMAYEUR, { country: 'IT' })).toMatchObject({ iata: 'TRN', country: 'IT', km: 85 });
   });
 
-  it('aucun aéroport du pays dans le rayon : on revient au comportement sans indice', () => {
-    // Golfe de Cagliari : Figari est à 312 km, hors des 300 km → Cagliari malgré « FR ».
-    const sans = nearestAirportIn(BORDER_ROWS, GOLFE_DE_CAGLIARI.lat, GOLFE_DE_CAGLIARI.lon);
-    expect(sans).toMatchObject({ iata: 'CAG', km: 63 });
-    expect(nearestAirportIn(BORDER_ROWS, GOLFE_DE_CAGLIARI.lat, GOLFE_DE_CAGLIARI.lon, { country: 'FR' })).toEqual(sans);
-    // Un pays sans aucune ligne : pareil. Et rien du tout reste null.
-    expect(nearestAirportIn(BORDER_ROWS, SANTA_TERESA.lat, SANTA_TERESA.lon, { country: 'JP' })?.iata).toBe('FSC');
+  it('LIMITE CONNUE, Zermatt : même avec « CH », Milan (87 km) passe devant Genève (129 km)', () => {
+    // 87 × 1,25 = 109 < 129 : le vol d'oiseau ne connaît pas les Alpes (la vallée de Zermatt ne se
+    // rejoint pas depuis l'Italie). Le facteur n'y change rien sans casser Chamonix (il faut < 1,40 pour
+    // Chamonix, > 1,47 ici). À traiter autrement qu'avec le pays (route), hors de ce lot.
+    expect(pick(ZERMATT)).toMatchObject({ iata: 'MXP', km: 87 });
+    expect(pick(ZERMATT, { country: 'CH' })).toMatchObject({ iata: 'MXP', country: 'IT', km: 87 });
+  });
+
+  it('LIMITE CONNUE, Santa Teresa Gallura : Figari (Corse, grand, 30 km) reste devant Olbia (47 km) même avec « IT »', () => {
+    // 30 × 1,25 = 38 < 47. Il faudrait un facteur > 1,54 pour Olbia, ce qui ferait perdre Genève à Chamonix.
+    // La mer (le détroit de Bonifacio) n'est pas connue du vol d'oiseau : hors de ce lot.
+    expect(pick(SANTA_TERESA)).toMatchObject({ iata: 'FSC', country: 'FR', km: 30 });
+    expect(pick(SANTA_TERESA, { country: 'IT' })).toMatchObject({ iata: 'FSC', country: 'FR', km: 30 });
+  });
+
+  it('un aéroport du pays déjà le plus proche ne change rien (Annecy → NCY avec « FR »)', () => {
+    const sans = pick(ANNECY);
+    expect(sans).toMatchObject({ iata: 'NCY', country: 'FR', km: 4 });
+    expect(pick(ANNECY, { country: 'FR' })).toEqual(sans);
+  });
+
+  it('un indice qui ne correspond à rien d’aussi proche ne change rien : tous les aéroports sont pénalisés pareil', () => {
+    const sansGolfe = pick(GOLFE_DE_CAGLIARI);
+    expect(sansGolfe).toMatchObject({ iata: 'CAG', km: 63 });
+    // Aucun aéroport français à moins de 300 km du golfe (Figari est à 312 km) ; aucun japonais nulle part.
+    expect(pick(GOLFE_DE_CAGLIARI, { country: 'FR' })).toEqual(sansGolfe);
+    expect(pick(COURMAYEUR, { country: 'JP' })).toEqual(pick(COURMAYEUR));
+    expect(pick(SANTA_TERESA, { country: 'JP' })).toEqual(pick(SANTA_TERESA));
     expect(nearestAirportIn(BORDER_ROWS, 40, -40, { country: 'FR' })).toBeNull();
   });
 
-  it('l’indice suit le rayon demandé : à 350 km Figari redevient « du pays » ; à 40 km ou 60 km on retrouve le bon choix', () => {
-    expect(nearestAirportIn(BORDER_ROWS, GOLFE_DE_CAGLIARI.lat, GOLFE_DE_CAGLIARI.lon, { country: 'FR', maxKm: 350 })).toMatchObject({
-      iata: 'FSC',
-      km: 312,
-    });
-    // Rayon de 40 km : aucun aéroport italien à portée de Santa Teresa → l'indice est ignoré, Figari ; à 60 km Olbia est à portée.
-    expect(nearestAirportIn(BORDER_ROWS, SANTA_TERESA.lat, SANTA_TERESA.lon, { country: 'IT', maxKm: 40 })?.iata).toBe('FSC');
-    expect(nearestAirportIn(BORDER_ROWS, SANTA_TERESA.lat, SANTA_TERESA.lon, { country: 'IT', maxKm: 60 })?.iata).toBe('OLB');
+  it('minuscules et espaces acceptés ; null, undefined, vide ou espaces : pas d’indice', () => {
+    expect(pick(COURMAYEUR, { country: 'it' })?.iata).toBe('TRN');
+    expect(pick(COURMAYEUR, { country: ' It ' })?.iata).toBe('TRN');
+    for (const country of [null, undefined, '', '  ']) {
+      expect(pick(COURMAYEUR, { country })).toEqual(pick(COURMAYEUR));
+      expect(pick(COURMAYEUR, { country })?.iata).toBe('GVA');
+    }
+  });
+
+  it('la pénalité s’ajoute à celle des aéroports moyens (1,6 × 1,25 = 2)', () => {
+    // Lignes fictives : un moyen étranger à 44 km et un grand du pays à 88 km.
+    const etrangerMoyen: AirportRow = ['AAA', 'Étranger moyen', 0.4, 0, 'XX', 'M'];
+    const localGrand: AirportRow = ['BBB', 'Local grand', -0.79, 0, 'YY', 'L'];
+    // Sans indice : 44 × 1,6 = 71 contre 88 → le moyen. Avec « YY » : 44 × 1,6 × 1,25 = 89 contre 88 → le local.
+    expect(nearestAirportIn([etrangerMoyen, localGrand], 0, 0)?.iata).toBe('AAA');
+    expect(nearestAirportIn([etrangerMoyen, localGrand], 0, 0, { country: 'YY' })?.iata).toBe('BBB');
+    expect(nearestAirportIn([etrangerMoyen, localGrand], 0, 0, { country: 'XX' })?.iata).toBe('AAA');
+  });
+
+  it('l’indice ne retire personne et ne sort jamais du rayon : un seul aéroport étranger à portée reste choisi', () => {
+    // Rayon de 40 km autour de Santa Teresa : seul Figari (étranger pour « IT ») est à portée → lui, pas null.
+    expect(pick(SANTA_TERESA, { country: 'IT', maxKm: 40 })).toMatchObject({ iata: 'FSC', km: 30 });
+    // Le rayon reste le rayon : rien à 40 km du golfe de Cagliari, avec ou sans indice.
+    expect(pick(GOLFE_DE_CAGLIARI, { country: 'FR', maxKm: 40 })).toBeNull();
+    expect(pick(GOLFE_DE_CAGLIARI, { country: 'IT', maxKm: 40 })).toBeNull();
   });
 });
 
@@ -249,12 +285,27 @@ describe('recherche côté serveur', () => {
     expect(nearestAirport(40, -40)).toBeNull();
   });
 
-  it('indice de pays sur le vrai fichier : Santa Teresa Gallura → Olbia (et non Figari), Zermatt → un aéroport suisse', () => {
+  it('indice de pays sur le vrai fichier : les Alpes françaises gardent Genève, Courmayeur prend Turin', () => {
+    // Chamonix, Morzine : Genève avec ou sans « FR » (Annecy, saisonnier et moyen, ne la remplace pas).
+    expect(nearestAirport(45.9237, 6.8694)?.iata).toBe('GVA');
+    expect(nearestAirport(45.9237, 6.8694, { country: 'FR' })?.iata).toBe('GVA');
+    expect(nearestAirport(46.1792, 6.7087, { country: 'FR' })?.iata).toBe('GVA');
+    // Courmayeur : Genève sans indice, Turin (pays du lieu, 85 km) avec « IT ».
+    expect(nearestAirport(45.7967, 6.9689)?.iata).toBe('GVA');
+    expect(nearestAirport(45.7967, 6.9689, { country: 'IT' })?.iata).toBe('TRN');
+    // Briançon : l'indice ne l'envoie pas à Nice (146 km), il garde Turin (86 km) comme sans indice.
+    expect(nearestAirport(44.8987, 6.6433)?.iata).toBe('TRN');
+    expect(nearestAirport(44.8987, 6.6433, { country: 'FR' })?.iata).toBe('TRN');
+    // Annecy : l'aéroport du lieu, avec ou sans indice.
+    expect(nearestAirport(45.9, 6.13)?.iata).toBe('NCY');
+    expect(nearestAirport(45.9, 6.13, { country: 'FR' })?.iata).toBe('NCY');
+  });
+
+  it('limites connues sur le vrai fichier : Zermatt reste Milan avec « CH », Santa Teresa Gallura reste Figari avec « IT »', () => {
+    expect(nearestAirport(46.0207, 7.7491, { country: 'CH' })?.iata).toBe('MXP');
     expect(nearestAirport(41.239, 9.19)?.iata).toBe('FSC');
-    expect(nearestAirport(41.239, 9.19, { country: 'IT' })?.iata).toBe('OLB');
+    expect(nearestAirport(41.239, 9.19, { country: 'IT' })?.iata).toBe('FSC');
     expect(nearestAirport(41.239, 9.19, { country: null })?.iata).toBe('FSC');
-    expect(nearestAirport(46.02, 7.749)?.iata).toBe('MXP');
-    expect(nearestAirport(46.02, 7.749, { country: 'CH' })?.country).toBe('CH');
     // Le rayon par défaut vaut toujours : pas d'aéroport suisse à moins de 300 km de la Corse.
     expect(nearestAirport(41.239, 9.19, { country: 'CH' })?.iata).toBe('FSC');
   });
