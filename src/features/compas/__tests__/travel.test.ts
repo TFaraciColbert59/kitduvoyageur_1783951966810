@@ -538,15 +538,29 @@ describe('verrouillé par sonde (le tronc « 5. Venir » n’a pas de banc d’e
 
     it('le budget : formalités (ressortissant français) gardées tant qu’on ne sait pas, assurance voyage seulement si on le sait', () => {
       const fr = { nationality: 'FR' };
-      expect(abroadCosts(null, fr)).toEqual({ formalities: true, insurance: false });
-      expect(abroadCosts(true, fr)).toEqual({ formalities: true, insurance: true });
-      expect(abroadCosts(false, fr)).toEqual({ formalities: false, insurance: false });
+      const visa = { kind: 'e_visa' as const };
+      expect(abroadCosts(null, fr, visa)).toEqual({ formalities: true, insurance: false });
+      expect(abroadCosts(true, fr, visa)).toEqual({ formalities: true, insurance: true });
+      expect(abroadCosts(false, fr, visa)).toEqual({ formalities: false, insurance: false });
     });
 
     it('nationalité inconnue ou autre : aucune formalité chiffrée (rien d’affirmé), l’assurance ne change pas', () => {
-      expect(abroadCosts(true, { nationality: null })).toEqual({ formalities: false, insurance: true });
-      expect(abroadCosts(null, { nationality: null })).toEqual({ formalities: false, insurance: false });
-      expect(abroadCosts(true, { nationality: 'DE' })).toEqual({ formalities: false, insurance: true });
+      const visa = { kind: 'e_visa' as const };
+      expect(abroadCosts(true, { nationality: null }, visa)).toEqual({ formalities: false, insurance: true });
+      expect(abroadCosts(null, { nationality: null }, visa)).toEqual({ formalities: false, insurance: false });
+      expect(abroadCosts(true, { nationality: 'DE' }, visa)).toEqual({ formalities: false, insurance: true });
+    });
+
+    it('formalités chiffrées seulement quand la table dit qu’un visa ou une autorisation est requis', () => {
+      const fr = { nationality: 'FR' };
+      for (const kind of ['visa_arrivee', 'e_visa', 'autorisation', 'visa_a_demander'] as const)
+        expect(abroadCosts(true, fr, { kind }).formalities, kind).toBe(true);
+      // Sans visa (Vietnam pour un Français), libre circulation, entrée interdite, titre spécial : aucune ligne de frais.
+      for (const kind of ['sans_visa', 'libre_circulation', 'interdit', 'permis', 'non_confirme'] as const)
+        expect(abroadCosts(true, fr, { kind }).formalities, kind).toBe(false);
+      // La table muette (territoire, pays hors du jeu) : rien d'affirmé non plus.
+      expect(abroadCosts(true, fr, null)).toEqual({ formalities: false, insurance: true });
+      expect(abroadCosts(null, fr, null)).toEqual({ formalities: false, insurance: false });
     });
   });
 });

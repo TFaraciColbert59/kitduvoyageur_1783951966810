@@ -8,6 +8,7 @@ import {
 } from './autofill';
 import { distanceKm } from './places';
 import { trainTrip, type TrainTrip } from './rail';
+import { needsFormalities, type EntryRequirement } from './entry';
 import type { TravellerContext } from './traveller';
 
 /**
@@ -161,15 +162,22 @@ export function abroadOf(origin: TravelOrigin | null, destinationCountry: string
 /**
  * Ce que « à l'étranger » change au budget. Les formalités d'entrée sont un barème
  * pour un ressortissant français (`entryFees`) : chiffrées seulement pour une
- * nationalité française connue (sinon rien d'affirmé, PLAN-100 4.1), et tant qu'on
- * n'est pas SÛR d'être déjà dans le pays (départ inconnu compris). L'assurance
- * voyage n'est ajoutée que si on sait que le voyage passe une frontière.
+ * nationalité française connue (sinon rien d'affirmé, PLAN-100 4.1), tant qu'on
+ * n'est pas SÛR d'être déjà dans le pays (départ inconnu compris), et seulement si la
+ * table passeport × destination dit qu'un visa ou une autorisation est requis
+ * (`entry`, voir `entryFor` ; sans visa, libre circulation, « non confirmé » ou pas de
+ * ligne : aucune ligne de frais). L'assurance voyage n'est ajoutée que si on sait que le
+ * voyage passe une frontière.
  */
 export function abroadCosts(
   abroad: boolean | null,
-  traveller: Pick<TravellerContext, 'nationality'>
+  traveller: Pick<TravellerContext, 'nationality'>,
+  entry: Pick<EntryRequirement, 'kind'> | null
 ): { formalities: boolean; insurance: boolean } {
-  return { formalities: abroad !== false && traveller.nationality === 'FR', insurance: abroad === true };
+  return {
+    formalities: abroad !== false && traveller.nationality === 'FR' && entry != null && needsFormalities(entry.kind),
+    insurance: abroad === true,
+  };
 }
 
 /** Le départ tel que dit au spécialiste (IA) : jamais un pays supposé. */
