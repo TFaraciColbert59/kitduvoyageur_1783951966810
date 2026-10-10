@@ -1806,9 +1806,10 @@ export async function compasInterpretAction(
  * aussi : « bivouac 2 nuits » fait 3 jours, le modèle lisait « 2 jours »
  * (essais aléatoires, 2026-10-06). Les dates enfin : le calcul des règles est
  * exact, celui du modèle non (« dans 3 semaines » posé au 23 octobre au lieu
- * du 30, aperçu du 9 oct.).
+ * du 30, aperçu du 9 oct.). Le lieu de départ : « depuis Lyon » lu par les
+ * règles n'est jamais remplacé par une ville que le modèle aurait choisie.
  */
-const RULES_FIRST = new Set<CompasIntentAction['type']>(['set_activity', 'set_duration', 'set_budget', 'set_dates']);
+const RULES_FIRST = new Set<CompasIntentAction['type']>(['set_activity', 'set_duration', 'set_budget', 'set_dates', 'set_origin']);
 
 /**
  * Budget dit dans une autre devise que celle du voyage (« 2000 $ ») : converti
