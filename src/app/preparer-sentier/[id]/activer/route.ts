@@ -9,6 +9,7 @@ import {
   prepareActivityFromTrail,
   type PrepareTrailOutcome,
 } from '@/features/trips/server/prepareActivityFromTrail';
+import { allowedHostsFromSiteUrl, hasValidSameSiteSignal } from '@/lib/security/sameOrigin';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,11 +21,25 @@ export const dynamic = 'force-dynamic';
  * `prepareActivityFromTrail` (idempotent : `reused` si l'activité vient d'être
  * créée par la page), pose le cookie réel (id uuid + slug + titre), revalide le
  * hub puis redirige vers `/hub`.
+ *
+ * F-001 — GET MUTANT : exige un signal d'origine same-site (Referer de la page
+ * du parcours, sinon Origin) ; une image ou un lien cross-site est refusé 403.
  */
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (
+    !hasValidSameSiteSignal({
+      origin: request.headers.get('origin'),
+      referer: request.headers.get('referer'),
+      host: request.headers.get('host') ?? new URL(request.url).host,
+      allowedHosts: allowedHostsFromSiteUrl(),
+    })
+  ) {
+    return NextResponse.json({ error: 'Origine non autorisée' }, { status: 403 });
+  }
+
   const { id } = await params;
 
   let outcome: PrepareTrailOutcome;

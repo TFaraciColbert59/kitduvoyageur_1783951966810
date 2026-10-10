@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { isCronAuthorized } from '@/lib/security/cronAuth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -28,10 +29,16 @@ const supabaseAdmin = new Proxy({} as SupabaseClient<any>, {
  * Généralement appelé périodiquement (ex: toutes les 24 heures) par un service de cron.
  */
 export async function POST(req: NextRequest) {
+  if (!isCronAuthorized(req)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   return handleDigest();
 }
 
 export async function GET(req: NextRequest) {
+  if (!isCronAuthorized(req)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   return handleDigest();
 }
 
@@ -49,7 +56,10 @@ async function handleDigest() {
       // Execute non-blocking process request
       fetch(`${siteUrl}/api/notifications/process`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.CRON_SECRET ?? ''}`,
+        },
       }).catch(err => console.warn('[notifications/digest] Async process trigger warn:', err.message));
     } catch (triggerErr) {
       // Ignore background trigger errors

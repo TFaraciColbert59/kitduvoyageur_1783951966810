@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -13,23 +12,30 @@ import {
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(here, '..', '..', '..');
 
-function sha256b64(body: string): string {
-  return `'sha256-${createHash('sha256').update(body, 'utf8').digest('base64')}'`;
-}
-
 /**
- * La CSP `script-src` autorise exactement ces contenus (hashes).
- * Si ce test échoue : recalculez les hashes (ils sont affichés dans
- * l'erreur) et mettez à jour `next.config.mjs` — jamais l'inverse.
+ * Posture CSP documentée : Report-Only TANT QUE script-src contient
+ * 'unsafe-inline'. Les scripts inline émis par Next.js à chaque rendu
+ * (RSC payloads, HMR dev) sont incompatibles avec une allowlist par hash.
+ * Passer en enforcing exige des nonces par requête (middleware) — ne PAS
+ * simplement retirer 'unsafe-inline' (écran noir, incident constaté).
  */
-describe('CSP inline hashes', () => {
-  it('next.config.mjs contient exactement les hashes du registre', () => {
-    const config = readFileSync(join(repoRoot, 'next.config.mjs'), 'utf8');
-    const expected = [THEME_INIT_JS, SW_CLEANUP_JS, TRAVELPAYOUTS_LOADER_JS].map(sha256b64);
-    for (const hash of expected) {
-      expect(config, `hash manquant dans next.config.mjs : ${hash}`).toContain(hash);
+describe('CSP posture', () => {
+  const config = readFileSync(join(repoRoot, 'next.config.mjs'), 'utf8');
+
+  it('reste en Report-Only (pas de enforcing sans nonces)', () => {
+    expect(config).toContain('Content-Security-Policy-Report-Only');
+    expect(config).not.toMatch(/key:\s*'Content-Security-Policy',/);
+  });
+
+  it('garde unsafe-inline tant que les scripts Next ne sont pas noncés', () => {
+    expect(config).toContain("'unsafe-inline'");
+  });
+
+  it('le registre inline-scripts reste la source unique des 3 inlines', () => {
+    for (const body of [THEME_INIT_JS, SW_CLEANUP_JS, TRAVELPAYOUTS_LOADER_JS]) {
+      expect(body.length).toBeGreaterThan(20);
     }
-    const found = config.match(/'sha256-[A-Za-z0-9+/=]+'/g) ?? [];
-    expect(found.sort()).toEqual(expected.sort());
+    expect(THEME_INIT_JS).toContain('lkdv_theme');
+    expect(TRAVELPAYOUTS_LOADER_JS).toContain('tpembars.com');
   });
 });

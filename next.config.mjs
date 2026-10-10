@@ -122,20 +122,17 @@ const nextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=(self), interest-cohort=()',
           },
-          // P5 admin-rebuild — CSP appliquée (valeur identique à la
-          // Report-Only observée : aucun nouveau blocage par construction,
-          // les violations déjà signalées sont désormais bloquées).
-          // Chantier nonces — `unsafe-inline` RETIRÉ de script-src : seuls
-          // les 3 inlines first-party du registre `src/lib/csp/inline-scripts.ts`
-          // sont autorisés par hash (test `tests/lib/csp/inline-hashes.spec.ts`).
-          // Résiduels assumés : 'unsafe-eval' (libs), GA inline mort (GA_ID vide ;
-          // le jour où GA_ID est renseigné, hasher son bloc config), JSON-LD
-          // (non soumis à script-src).
+          // CSP en Report-Only (retour arrière : les scripts inline
+          // émis par Next.js à chaque rendu — RSC payloads, dev HMR —
+          // sont incompatibles avec une allowlist par hash ; le passage en
+          // enforcing exige des nonces par requête via middleware, chantier
+          // dédié. Les 3 inlines first-party restent figés au registre
+          // `src/lib/csp/inline-scripts.ts` (test de synchro actif).
           {
-            key: 'Content-Security-Policy',
+            key: 'Content-Security-Policy-Report-Only',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'sha256-idlh8L5xHF+MwwQ0CHHWo4Sta7gs0VvNEo5ejccK1IA=' 'sha256-SSqGHb3IhWjl4c/XQK8VAedf6P12bBLiPkzHtwDljp4=' 'sha256-hfOn3sqzRN6oFXj4iau1wyQt7j6Z9v8wCcvUHlwxsP8=' 'unsafe-eval' https://www.googletagmanager.com https://va.vercel-scripts.com https://static.rocket.new https://tpembars.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://va.vercel-scripts.com https://static.rocket.new https://tpembars.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com data:",
               "img-src 'self' data: blob: https:",

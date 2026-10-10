@@ -6,7 +6,19 @@
 -- ============================================================================
 
 -- 1. Nettoyage de la donnée aberrante et contrainte d'intégrité
-DELETE FROM public.trail_metadata WHERE id = 1322 AND trail_id = 140;
+--    (replay-safe : la colonne `id` n'existe que sur les bases historiques,
+--    la chaîne de migrations recrée `trail_metadata` sans cette colonne)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'trail_metadata'
+      AND column_name = 'id'
+  ) THEN
+    EXECUTE 'DELETE FROM public.trail_metadata WHERE id = 1322 AND trail_id = 140';
+  END IF;
+END $$;
 
 DO $$
 BEGIN

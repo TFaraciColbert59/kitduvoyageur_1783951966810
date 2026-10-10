@@ -1,0 +1,44 @@
+{
+  "program": "lkdv-security",
+  "version": "1.0-session1",
+  "started_at": "2026-10-09",
+  "source_ref": {
+    "repo": "TFaraciColbert59/kitduvoyageur_1783951966810",
+    "branch": "main",
+    "commit": "14d80de870930f454096390e1a7f6636fd105750",
+    "verified_equal_origin_main": true,
+    "dossier_reference_absent": "ba5166ee76891f391fead4a6276a4a1a2ce399db"
+  },
+  "working_tree": {
+    "contaminated": true,
+    "untracked_entries": 99,
+    "stash": "stash@{0}: On feat/explorer-mobile-osm: WIP avant passage sur main 2026-10-09 19:31",
+    "policy": "static analysis strictly from git HEAD; dynamic tests on clean worktree only"
+  },
+  "runtime": {
+    "model_id_observed": "opencode-go/deepseek-v4.1-flash",
+    "provider_route": "omniroute local proxy (http://localhost:20128) via @omniroute/opencode-plugin@0.2.1",
+    "provider_capabilities_verified": false,
+    "platform": "win32 / PowerShell 5.1 / opencode CLI",
+    "subagents": "native Task tool (fresh contexts), shared machine, no per-agent sandbox",
+    "node": "v24.18.0",
+    "npm": "12.0.2",
+    "docker": "29.7.2",
+    "supabase_cli": "global install present",
+    "playwright_browsers": true
+  },
+  "limits": {
+    "max_parallel_subagents": 4,
+    "heavy_builds_concurrent": 1,
+    "attempts_per_approach": 3
+  },
+  "authorizations": {
+    "local_read": true,
+    "local_isolated_tests": true,
+    "local_branch_edits": true,
+    "remote_tests": false,
+    "production_actions": false,
+    "payments": false,
+    "external_messages": false
+  }
+}

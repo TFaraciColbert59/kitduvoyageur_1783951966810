@@ -1,6 +1,26 @@
 -- Prompt #5 — Timeline interactive automatique
 -- Migration: hike_sessions + colonnes carnet_moments
 
+-- Rejouabilite : cette migration altere carnet_moments, dont la creation
+-- n'arrive qu'a la migration 20260815010000 (et absente du baseline prod en
+-- tant que CREATE). Creation identique a celle du seed si la table manque.
+DO $$
+BEGIN
+  IF to_regclass('public.carnet_moments') IS NULL THEN
+    EXECUTE $t$CREATE TABLE public.carnet_moments (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      carnet_id UUID REFERENCES public.carnets(id) ON DELETE CASCADE,
+      jour_numero INTEGER DEFAULT 1,
+      heure TEXT,
+      citation TEXT,
+      auteur_nom TEXT DEFAULT 'Randonneur',
+      lieu TEXT,
+      image_url TEXT,
+      created_at TIMESTAMPTZ DEFAULT now()
+    )$t$;
+  END IF;
+END $$;
+
 -- ── 1. Table hike_sessions ────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.hike_sessions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

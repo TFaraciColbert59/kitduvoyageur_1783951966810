@@ -1,0 +1,29 @@
+{
+  "notice": "Chaque source: id, type (law|standard|vendor_documentation|research|industrial_practice|experimental), titre, éditeur, url, version/date, consulté_le, affirmation soutenue, statut.",
+  "consulted_at": "2026-10-09",
+  "sources": [
+    {"id": "SRC-LOCAL-01", "type": "vendor_documentation", "title": "Observation runtime opencode (modèle, provider, outils)", "publisher": "runtime session", "url": "local", "version": "session 1", "controle": "CAPABILITIES.md", "statut": "verified_local"},
+    {"id": "SRC-ASVS", "type": "standard", "title": "OWASP ASVS", "publisher": "OWASP", "url": "https://asvs.dev/", "version": "5.0.0 (annoncée par le dossier — à revalider)", "statut": "dossier_provided_not_revalidated"},
+    {"id": "SRC-WSTG", "type": "standard", "title": "OWASP Web Security Testing Guide", "publisher": "OWASP", "url": "https://owasp.org/www-project-web-security-testing-guide/", "statut": "dossier_provided_not_revalidated"},
+    {"id": "SRC-GENAI", "type": "standard", "title": "OWASP GenAI / Agentic Applications 2026", "publisher": "OWASP", "url": "https://genai.owasp.org/", "statut": "dossier_provided_not_revalidated"},
+    {"id": "SRC-NEXT15", "type": "vendor_documentation", "title": "Next.js 15 Data Security guide", "publisher": "Vercel", "url": "https://nextjs.org/docs/15/app/guides/data-security", "statut": "dossier_provided_not_revalidated"},
+    {"id": "SRC-NEXT-MW-PM", "type": "industrial_practice", "title": "Postmortem middleware bypass", "publisher": "Vercel", "url": "https://vercel.com/blog/postmortem-on-next-js-middleware-bypass", "date": "2025-03-25", "statut": "dossier_provided_not_revalidated"},
+    {"id": "SRC-RSC-CVE", "type": "vendor_documentation", "title": "CVE-2025-66478 RSC (origine CVE-2025-55182)", "publisher": "Next.js", "url": "https://nextjs.org/blog/CVE-2025-66478", "statut": "dossier_provided_not_revalidated"},
+    {"id": "SRC-CF-2023", "type": "industrial_practice", "title": "Cloudflare Thanksgiving 2023 incident", "publisher": "Cloudflare", "url": "https://blog.cloudflare.com/thanksgiving-2023-security-incident/", "date": "2024-02-01", "statut": "dossier_provided_not_revalidated"},
+    {"id": "SRC-SUPABASE-SEC", "type": "vendor_documentation", "title": "Supabase security / RLS / SSR avancé / backups", "publisher": "Supabase", "url": "https://supabase.com/docs/guides/security/product-security", "statut": "dossier_provided_not_revalidated"},
+    {"id": "SRC-PG17-POLICY", "type": "vendor_documentation", "title": "PostgreSQL 17 CREATE POLICY", "publisher": "PostgreSQL", "url": "https://www.postgresql.org/docs/17/sql-createpolicy.html", "statut": "dossier_provided_not_revalidated"},
+    {"id": "SRC-STRIPE-WH", "type": "vendor_documentation", "title": "Stripe webhooks & security", "publisher": "Stripe", "url": "https://docs.stripe.com/webhooks", "statut": "dossier_provided_not_revalidated"},
+    {"id": "SRC-CNIL-RGPD", "type": "law", "title": "CNIL RGPD / chapitre IV / GPS / AIPD", "publisher": "CNIL", "url": "https://www.cnil.fr/fr/reglement-europeen-protection-donnees", "statut": "dossier_provided_not_revalidated"},
+    {"id": "SRC-EPDB-05-2020", "type": "law", "title": "Lignes directrices 05/2020 consentement", "publisher": "CEPD", "url": "https://www.edpb.europa.eu/documents/guideline/guidelines-052020-on-consent-under-regulation-2016679_en", "statut": "dossier_provided_not_revalidated"},
+    {"id": "SRC-EPDB-01-2020", "type": "law", "title": "Recommandations 01/2020 transferts (finales 18/06/2021)", "publisher": "CEPD", "url": "https://www.edpb.europa.eu/documents/recommendation/recommendations-012020-on-measures-that-supplement-transfer-tools-to_en", "statut": "dossier_provided_not_revalidated"},
+    {"id": "SRC-AIACT-2026-1744", "type": "law", "title": "Règlement (UE) 2026/1744 modifiant l'AI Act", "publisher": "EUR-Lex", "url": "https://eur-lex.europa.eu/legal-content/FR/ALL/?uri=CELEX%3A32026R1744", "statut": "dossier_provided_not_revalidated"},
+    {"id": "SRC-CRA", "type": "law", "title": "Cyber Resilience Act (UE) 2024/2847", "publisher": "EUR-Lex", "url": "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng", "statut": "dossier_provided_not_revalidated"},
+    {"id": "SRC-NIS2", "type": "law", "title": "Directive (UE) 2022/2555 NIS2 + transposition FR (en cours selon dossier)", "publisher": "EUR-Lex / ANSSI", "url": "https://eur-lex.europa.eu/eli/dir/2022/2555/oj/eng", "statut": "dossier_provided_not_revalidated"},
+    {"id": "SRC-DSA", "type": "law", "title": "DSA (UE) 2022/2065", "publisher": "EUR-Lex", "url": "https://eur-lex.europa.eu/eli/reg/2022/2065/oj/eng", "statut": "dossier_provided_not_revalidated"},
+    {"id": "SRC-CAPACITOR", "type": "vendor_documentation", "title": "Capacitor Preferences", "publisher": "Ionic", "url": "https://capacitorjs.com/docs/apis/preferences", "statut": "dossier_provided_not_revalidated"},
+    {"id": "SRC-AGENTDOJO", "type": "research", "title": "AgentDojo (NeurIPS 2024)", "publisher": "ETH Zurich / Invariant Labs", "url": "https://agentdojo.spylab.ai/", "statut": "dossier_provided_not_revalidated"},
+    {"id": "SRC-INJECAGENT", "type": "research", "title": "InjecAgent (ACL 2024 Findings)", "publisher": "Zhan et al.", "url": "https://aclanthology.org/2024.findings-acl.624/", "statut": "dossier_provided_not_revalidated"},
+    {"id": "SRC-POISONEDRAG", "type": "research", "title": "PoisonedRAG (USENIX Security 2025)", "publisher": "Zou et al.", "url": "https://www.usenix.org/conference/usenixsecurity25/presentation/zou-poisonedrag", "statut": "dossier_provided_not_revalidated"},
+    {"id": "SRC-CAMEL", "type": "research", "title": "CaMeL — Defeating Prompt Injections by Design", "publisher": "Google/DeepMind/ETH", "url": "https://arxiv.org/abs/2503.18813", "statut": "dossier_provided_not_revalidated"}
+  ]
+}

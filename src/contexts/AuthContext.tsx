@@ -1,7 +1,9 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState, ReactNode, useMemo, useCallback } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, Fragment, ReactNode, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { purgePrivateCaches } from '@/lib/pwa/purgePrivateData';
+import { purgeClientStateOnUserChange, decidePurgeOnAuth, LAST_AUTHED_USER_KEY } from '@/lib/security/purgeClientState';
 import type { User, Session } from '@supabase/supabase-js';
 
 interface UserProfile {
@@ -155,13 +157,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // (connexion d'un autre compte ou déconnexion) purge les caches privés du
   // service worker (HTML runtime + images) pour qu'aucun HTML authentifié
   // d'un compte ne soit resservi à un autre sur le même appareil.
-  const lastUserIdRef = useRef<string | null>(undefined as unknown as string | null);
+  const lastAuthedUserIdRef = useRef<string | null>(null);
   useEffect(() => {
     const currentId = user?.id ?? null;
-    const prevId = lastUserIdRef.current;
-    lastUserIdRef.current = currentId;
-    if (prevId === undefined || prevId === currentId) return;
-    navigator.serviceWorker?.controller?.postMessage({ type: 'LKDV_PURGE_PRIVATE' });
+    let persisted: string | null = null;
+    try {
+      persisted =
+        typeof localStorage !== 'undefined'
+          ? localStorage.getItem(LAST_AUTHED_USER_KEY)
+          : null;
+    } catch {
+      persisted = null;
+    }
+
+    const reference = lastAuthedUserIdRef.current ?? persisted;
+    if (decidePurgeOnAuth(reference, currentId) === 'purge' && reference && currentId) {
+      purgePrivateCaches(
+        typeof navigator !== 'undefined' ? navigator.serviceWorker : null
+      );
+      purgeClientStateOnUserChange(reference, currentId);
+    }
+
+    if (currentId) {
+      lastAuthedUserIdRef.current = currentId;
+      try {
+        localStorage.setItem(LAST_AUTHED_USER_KEY, currentId);
+      } catch {
+        /* stockage indisponible */
+      }
+    }
   }, [user?.id]);
 
   const signUp = useCallback(async (email: string, password: string, metadata: { fullName?: string; avatarUrl?: string } = {}) => {
@@ -242,5 +266,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     ]
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      <Fragment key={user?.id ?? 'guest'}>{children}</Fragment>
+    </AuthContext.Provider>
+  );
 };

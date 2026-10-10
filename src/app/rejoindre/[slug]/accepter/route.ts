@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { joinActivity } from '@/features/trips/server/joinActivity';
+import { allowedHostsFromSiteUrl, hasValidSameSiteSignal } from '@/lib/security/sameOrigin';
 
 /**
  * Task 17 — Acceptation d'une invitation « Rejoindre ».
@@ -9,11 +10,25 @@ import { joinActivity } from '@/features/trips/server/joinActivity';
  * Route Handler : session requise (sinon renvoi connexion avec retour), puis
  * `joinActivity` (membres + snapshot + recalcul). Le cache hub est revalidé au
  * niveau route — jamais dans le moteur, qui peut tourner dans un rendu.
+ *
+ * F-001 — CSRF : mutation à cookies (SameSite=None) hors /api ; exige un
+ * signal d'origine same-site (Origin du POST, sinon Referer) sinon 403.
  */
 export async function POST(
   request: Request,
   context: { params: Promise<{ slug: string }> }
 ): Promise<NextResponse> {
+  if (
+    !hasValidSameSiteSignal({
+      origin: request.headers.get('origin'),
+      referer: request.headers.get('referer'),
+      host: request.headers.get('host') ?? new URL(request.url).host,
+      allowedHosts: allowedHostsFromSiteUrl(),
+    })
+  ) {
+    return NextResponse.json({ error: 'Origine non autorisée' }, { status: 403 });
+  }
+
   const { slug } = await context.params;
   const formData = await request.formData();
   const consentValue = formData.get('consent');

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { LEGACY_REDIRECTS, resolveLegacyRedirect } from '@/lib/hub/hubRedirects';
+import { config as middlewareConfig } from '@/middleware';
 import { hubSectionRegistry } from '@/features/hub/registry/hubSectionRegistry';
 
 /**
@@ -146,12 +147,9 @@ describe('H-AUTO-42 — invariants de la matrice (chaînes, boucles, registre)',
   it('INV-5: le matcher middleware couvre toutes les sources statiques', () => {
     // Next refuse le spread dans config.matcher : la liste est littérale.
     // Ce test verrouille la synchro matcher ↔ matrice (un matcher incomplet
-    // = redirect qui ne tire jamais, cf. H5).
-    const middleware = fs.readFileSync(path.join(process.cwd(), 'src', 'middleware.ts'), 'utf8');
-    const matcherMatch = middleware.match(/matcher:\s*\[([\s\S]*?)\n\s*\]/);
-    expect(matcherMatch).not.toBeNull();
-    const matcherEntries = (matcherMatch![1].match(/'([^']+)'/g) ?? []).map((m) => m.slice(1, -1));
-    const matcherSet = new Set(matcherEntries);
+    // = redirect qui ne tire jamais, cf. H5). Lecture directe de la config
+    // exportée (plus de parsing par regex du source, fragile aux apostrophes).
+    const matcherSet = new Set(middlewareConfig.matcher);
     for (const source of Object.keys(LEGACY_REDIRECTS)) {
       expect(matcherSet.has(source), `matcher couvre ${source}`).toBe(true);
     }

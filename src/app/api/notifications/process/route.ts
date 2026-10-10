@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
+import { isCronAuthorized } from '@/lib/security/cronAuth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -42,6 +43,9 @@ if (vapidPublicKey && vapidPrivateKey) {
  * Peut être appelé par un webhook de base de données, un worker ou un cron job.
  */
 export async function POST(req: NextRequest) {
+  if (!isCronAuthorized(req)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     // 1. Fetch pending deliveries
     const { data: pending, error: fetchError } = (await supabaseAdmin

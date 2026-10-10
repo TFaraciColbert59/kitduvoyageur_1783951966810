@@ -42,6 +42,7 @@ DROP POLICY IF EXISTS "hike_sessions_update" ON public.hike_sessions;
 DROP POLICY IF EXISTS "hike_sessions_delete" ON public.hike_sessions;
 DROP POLICY IF EXISTS "own_sessions" ON public.hike_sessions;
 
+DROP POLICY IF EXISTS hike_sessions_select_owner_or_public_carnet ON public.hike_sessions;
 CREATE POLICY hike_sessions_select_owner_or_public_carnet ON public.hike_sessions
   FOR SELECT
   USING (
@@ -54,15 +55,18 @@ CREATE POLICY hike_sessions_select_owner_or_public_carnet ON public.hike_session
     )
   );
 
+DROP POLICY IF EXISTS hike_sessions_insert_owner ON public.hike_sessions;
 CREATE POLICY hike_sessions_insert_owner ON public.hike_sessions
   FOR INSERT TO authenticated
   WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS hike_sessions_update_owner ON public.hike_sessions;
 CREATE POLICY hike_sessions_update_owner ON public.hike_sessions
   FOR UPDATE TO authenticated
   USING (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS hike_sessions_delete_owner ON public.hike_sessions;
 CREATE POLICY hike_sessions_delete_owner ON public.hike_sessions
   FOR DELETE TO authenticated
   USING (user_id = auth.uid());
@@ -77,9 +81,11 @@ DROP POLICY IF EXISTS seed_public_read_carnet_kit_items ON public.carnet_kit_ite
 -- ----------------------------------------------------------------------------
 -- 3. groupe_messages — membres du groupe uniquement
 -- ----------------------------------------------------------------------------
-DROP POLICY IF EXISTS public_read_groupe_messages ON public.groupe_messages;
-
-CREATE POLICY groupe_messages_select_member ON public.groupe_messages
+DO $$ BEGIN
+  IF to_regclass('public.groupe_messages') IS NOT NULL THEN
+    EXECUTE $pol$DROP POLICY IF EXISTS public_read_groupe_messages ON public.groupe_messages$pol$;
+    EXECUTE $pol$DROP POLICY IF EXISTS groupe_messages_select_member ON public.groupe_messages$pol$;
+    EXECUTE $pol$CREATE POLICY groupe_messages_select_member ON public.groupe_messages
   FOR SELECT TO authenticated
   USING (
     EXISTS (
@@ -88,13 +94,16 @@ CREATE POLICY groupe_messages_select_member ON public.groupe_messages
       WHERE gm.groupe_id = groupe_messages.groupe_id
         AND gm.user_id = auth.uid()
     )
-  );
+  )$pol$;
+  END IF;
+END $$;
 
 -- ----------------------------------------------------------------------------
 -- 4. comment_reports — signalant, modérateurs et admins uniquement
 -- ----------------------------------------------------------------------------
 DROP POLICY IF EXISTS comment_reports_select ON public.comment_reports;
 
+DROP POLICY IF EXISTS comment_reports_select_own_or_moderator ON public.comment_reports;
 CREATE POLICY comment_reports_select_own_or_moderator ON public.comment_reports
   FOR SELECT TO authenticated
   USING (
@@ -118,13 +127,16 @@ DROP POLICY IF EXISTS affiliate_partners_public_read ON public.affiliate_partner
 DROP POLICY IF EXISTS affiliate_programs_public_read ON public.affiliate_programs;
 
 DROP POLICY IF EXISTS affiliate_offers_public_select ON public.affiliate_offers;
+DROP POLICY IF EXISTS affiliate_offers_public_select ON public.affiliate_offers;
 CREATE POLICY affiliate_offers_public_select ON public.affiliate_offers
   FOR SELECT TO anon, authenticated USING (true);
 
 DROP POLICY IF EXISTS affiliate_partners_public_select ON public.affiliate_partners;
+DROP POLICY IF EXISTS affiliate_partners_public_select ON public.affiliate_partners;
 CREATE POLICY affiliate_partners_public_select ON public.affiliate_partners
   FOR SELECT TO anon, authenticated USING (true);
 
+DROP POLICY IF EXISTS affiliate_programs_public_select ON public.affiliate_programs;
 DROP POLICY IF EXISTS affiliate_programs_public_select ON public.affiliate_programs;
 CREATE POLICY affiliate_programs_public_select ON public.affiliate_programs
   FOR SELECT TO anon, authenticated USING (true);
@@ -141,14 +153,24 @@ REVOKE ALL ON public.hub_dashboard_kpis FROM anon, authenticated;
 -- ----------------------------------------------------------------------------
 -- 8. Vues de projection publiques — lecture seule pour anon/authenticated
 -- ----------------------------------------------------------------------------
-REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER
-  ON public.terrain_reports_public,
-     public.public_profiles,
-     public.segment_collective_public,
-     public.explore_kits_public,
-     public.explore_trails,
-     public.countries_content_needs_review
-  FROM anon, authenticated;
+DO $$
+DECLARE
+  vue text;
+BEGIN
+  FOREACH vue IN ARRAY ARRAY[
+    'public.terrain_reports_public',
+    'public.public_profiles',
+    'public.segment_collective_public',
+    'public.explore_kits_public',
+    'public.explore_trails',
+    'public.countries_content_needs_review'
+  ]
+  LOOP
+    IF to_regclass(vue) IS NOT NULL THEN
+      EXECUTE format('REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON %s FROM anon, authenticated', vue);
+    END IF;
+  END LOOP;
+END $$;
 
 -- ----------------------------------------------------------------------------
 -- 9. spatial_ref_sys (PostGIS) — RLS SELECT-only si privilèges suffisants

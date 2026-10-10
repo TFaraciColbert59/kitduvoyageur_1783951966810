@@ -1,0 +1,178 @@
+{
+  "notice": "États: proposed | implemented_local | fix_verified | ready_for_review | deployed_verified. Branche locale `security/fixes-wave1` (worktree %TEMP%\\opencode\\lkdv-fixes), basée sur 14d80de8. Aucune promotion, aucun push, aucune application distante.",
+  "fixes": [
+    {
+      "id": "FIX-001",
+      "finding": "F-003",
+      "state": "implemented_local",
+      "commit": "fbc537b2",
+      "branch": "security/fixes-wave1",
+      "files": [
+        "src/lib/security/cronAuth.ts (nouveau)",
+        "src/app/api/notifications/process/route.ts",
+        "src/app/api/notifications/digest/route.ts",
+        "tests/security/notifications-auth.spec.ts (nouveau)"
+      ],
+      "change": "Bearer CRON_SECRET exigé (timingSafeEqual, rejet par défaut si secret ou en-tête absents) sur POST /api/notifications/process et GET+POST /api/notifications/digest ; digest transmet le Bearer au process interne.",
+      "tests": {
+        "before": "même spec exécutée sur 14d80de8 (worktree baseline) : 7/8 échecs — réponses 200/500 au lieu de 401 (red-tests.log)",
+        "after": "12/12 verts (8 notifications + 4 purge) ; suite complète : 727 fichiers passés / 6915 tests passés, mêmes 5 fichiers & 8 tests préexistants en échec → aucune régression",
+        "dynamic_server": "B2 (2026-10-10) — serveur Next réel (build local, port 4099, secret factice) : POST process sans en-tête = 401, secret erroné = 401, bon secret = passe la garde (500 config placeholder ensuite) ; GET digest sans en-tête = 401"
+      },
+      "limits": ["protections plateforme éventuelles non testables sans prod", "le déclencheur réel (cron externe) devra envoyer le Bearer"],
+      "review_needed": "revue indépendante du diff en contexte neuf (gate P5) avant toute promotion"
+    },
+    {
+      "id": "FIX-002",
+      "finding": "H-017 (lié F-002)",
+      "state": "implemented_local",
+      "commit": "7488210f",
+      "branch": "security/fixes-wave1",
+      "files": [
+        "src/lib/pwa/purgePrivateData.ts (nouveau)",
+        "src/contexts/AuthContext.tsx",
+        "tests/pwa/purge-private-data.spec.ts (nouveau)"
+      ],
+      "change": "La purge LKDV_PURGE_PRIVATE n'est plus perdue quand serviceWorker.controller est null : attente de navigator.serviceWorker.ready puis postMessage au worker activé ; no-op sûr sans SW.",
+      "tests": {
+        "before": "trou statique : message posté uniquement à controller (perdu sinon)",
+        "after": "4/4 verts ; tsc 0"
+      },
+      "review_needed": "revue indépendante du diff"
+    },
+    {
+      "id": "FIX-003",
+      "finding": "F-008",
+      "state": "deployed_verified (production 2026-10-09)",
+      "commit": "524d86ad + aca62384 (garde alignée prod)",
+      "branch": "security/fixes-wave1",
+      "files": ["supabase/migrations/20261009120000_invalidate_seed_credentials.sql (NON appliquée — action prod faite via API admin)"],
+      "change": "Vérification prod : 18/31 comptes existent (dont 8 créés le 25/08 — garde corrigée à < 2026-09-12 + exclusion admins). Remédiation production exécutée via API admin : mots de passe remplacés par des valeurs aléatoires non conservées (18/18) ; comptes bannis ban_duration 876000h et vérifiés (18/18) ; aucune donnée de démo supprimée. Preuves : evidence/f008-production.md + JSON temporaires.",
+      "tests": {
+        "before": "18 comptes connectables avec mots de passe publics du dépôt (last_sign_in_at null partout)",
+        "after": "mots de passe invalides + connexion/refresh refusés (ban vérifié par relecture admin) ; aucun rôle admin touché ; réversibilité documentée"
+      },
+      "review_needed": "revue humaine de la preuve prod (D3/PR #85) ; décision de conserver les bannissements"
+    },
+    {
+      "id": "FIX-004",
+      "finding": "F-010",
+      "state": "implemented_local (rev2 après revue)",
+      "commit": "7c28dffe + dab78700 (rev2)",
+      "branch": "security/fixes-wave1",
+      "files": [
+        "src/lib/security/urlSafety.ts (nouveau)",
+        "src/app/api/og-preview/route.ts",
+        "tests/security/og-preview-ssrf.spec.ts (nouveau)"
+      ],
+      "change": "Garde SSRF : IPv4 0/8,10/8,127/8,100.64/10,169.254/16,172.16/12,192.168/16,192.0/24,198.18/15,≥224/8 ; IPv6 ::,::1,fc00::/7,fe80::/10,64:ff9b::/96, IPv4-mappées pointées ET hex WHATWG, 6to4 2002::/16, Teredo 2001::/32 ; FQDN à point final normalisé (localhost.) ; fetch redirect:'manual' revalidé à chaque saut (cap 4) ; timeout 3 s étendu à la lecture du corps ; HTML borné 100 KB (y compris fallback). Limite résiduelle documentée : DNS→IP privée (nip.io etc.) non résolu.",
+      "tests": {
+        "before": "rev1 : 5 échecs sur baseline (127.0.0.2, [::1], [fc00::1], redirection non revalidée, redirection légitime non suivie)",
+        "after": "rev2 : 11/11 verts (incl. localhost., 6to4/Teredo, chaîne 3 redirections) ; suite complète 6939 tests sans nouvelle régression"
+      },
+      "review_needed": "re-revue du diff rev2 (contexte neuf) ; décision produit : allowlist de domaines vs DNS-resolution"
+    },
+    {
+      "id": "FIX-005",
+      "finding": "F-011",
+      "state": "implemented_local (rev2 après rejet de la revue v1, rev3 après réserves rev2)",
+      "commit": "8ae5d059 → rejetée en revue → 0939b2b6 (rev2) → 6eb6dd87 (rev3)",
+      "branch": "security/fixes-wave1",
+      "files": [
+        "src/lib/security/purgeClientState.ts (nouveau)",
+        "src/contexts/AuthContext.tsx",
+        "tests/security/client-state-purge.spec.ts (nouveau)"
+      ],
+      "change": "Purge déclenchée UNIQUEMENT sur changement de compte réel : `decidePurgeOnAuth` + mémoire persistée `lkdv_last_authed_user` (rechargement dur, déconnexion seule et reconnexion du même compte = no-op ; A→B et A→logout→B = purge). Clés complétées (manifest offline, queues legacy, variantes suffixées :userId, `lkdv:offline:` préfixe) ; sur-purge retirée (préférences d'appareil, ordres UI, namespace `lkdv_pref_*`) ; base adventure du compte précédent purgée via `purgeOfflineData` (ferme la connexion Dexie) en import dynamique ; `deleteDatabase` best-effort pour les autres bases (limite : connexions Dexie non fermées — H-031). Rev3 : arbre applicatif remonté (`Fragment key={user?.id}`) pour réinitialiser les stores Zustand en mémoire (réserve majeure de la revue rev2).",
+      "tests": {
+        "before": "v1 rejetée par la revue indépendante (purge à chaque rechargement, 5 clés manquantes, IDB bloquée, relogin purgé) ; rev2 non réfutée avec 4 réserves ; rev3 lève la réserve « état en mémoire »",
+        "after": "rev2 : 24/24 verts (12+12) ; rev3 : 37/37 verts sur les 5 specs sécurité + auth-fallback ; suite complète sans nouvelle régression"
+      },
+      "review_needed": "re-revue rev3 (remontage applicatif : vérifier l'absence d'effets de bord UX/perf) ; décision D4 (purge à la déconnexion seule)"
+    },
+    {
+      "id": "FIX-006",
+      "finding": "F-012",
+      "state": "implemented_local",
+      "commit": "d98e0136",
+      "branch": "security/fixes-wave1",
+      "files": [
+        "supabase/migrations/20260728160000 (guards to_regclass sur tables legacy + policy statements)",
+        "supabase/migrations/20260809200000 (création gardée carnet_moments)",
+        "supabase/migrations/20260911550000 (DROP avant CREATE POLICY + REVOKE vues gardé)",
+        "supabase/migrations/20260911570000 (DROP avant CREATE POLICY + drop résiduel event_expenses)",
+        "supabase/migrations/20260917010000 (REVOKE/ALTER gardés par to_regprocedure)",
+        "supabase/migrations/20260917020000 (colonne quantity ajoutée avant copie legacy)",
+        "supabase/migrations/20260921100000 (type badge_progress_result recréé si absent)",
+        "supabase/migrations/20260929010000 (ordre provider/payload corrigé)"
+      ],
+      "change": "Chaîne de migrations rendue rejouable de zéro : guards d'existence (tables/fonctions/types legacy absents du baseline), idempotence des policies (DROP avant CREATE), correction d'un bug réel d'ordre de colonnes, création gardée des tables dont l'ordre du dépôt était incohérent.",
+      "tests": {
+        "before": "replay complet sur base vierge : 239/252 puis 247/252 (échecs réels : user_payment_methods, groupes, storage functions, jsonb/text, policies existantes, type manquant)",
+        "after": "replay complet isolé (conteneur supabase/postgres, préparation storage, rôle supabase_admin) : **252/252, 0 échec**, 26-46 s"
+      },
+      "review_needed": "revue humaine : ces edits touchent des migrations historiques (no-op en prod quand les objets existent ; à vérifier sur le ledger prod avant application)"
+    },
+    {
+      "id": "FIX-007",
+      "finding": "H-003 (porte B8)",
+      "state": "implemented_local",
+      "commit": "9e4f1730",
+      "branch": "security/fixes-wave1",
+      "files": ["scripts/verify/rls-real-tests.mjs (nouveau)", ".github/workflows/ci.yml (Gate DB.3)"],
+      "change": "Runner RLS réel exécutable en CI : 14 scénarios avec rôles PostgreSQL réels (anon/authenticated), claims JWT, fixtures synthétiques idempotentes ; opt-in via LKDV_DB_TESTS_ENABLED + LKDV_TEST_DATABASE_URL (jamais de prod implicite, SKIP sans URL).",
+      "tests": {
+        "before": "aucune porte RLS réelle (miroirs TS seulement)",
+        "after": "14/14 PASS contre le clone isolé (post-replay 252/252) ; exit 0"
+      },
+      "review_needed": "activation des variables GitHub (action humaine) pour l'exécuter en CI"
+    },
+    {
+      "id": "FIX-008",
+      "finding": "F-001 (CSRF)",
+      "state": "implemented_local (réserves de revue levées)",
+      "commit": "7560a561 + 6aae1bc0 + 5bfe8bc5",
+      "branch": "security/fixes-wave1",
+      "files": [
+        "src/lib/security/sameOrigin.ts (nouveau)",
+        "src/middleware.ts (garde /api/:path* + matcher)",
+        "tests/security/same-origin.spec.ts (nouveau)",
+        "tests/security/middleware-csrf.spec.ts (nouveau)"
+      ],
+      "change": "Garde CSRF systémique : toute mutation /api avec Origin étranger → 403 ; méthodes sûres et appels sans Origin (webhooks signés, crons Bearer) intacts ; allowlist NEXT_PUBLIC_SITE_URL ; ports ignorés (sémantique same-site). Réserves de revue levées (5bfe8bc5) : `/api` exact couvert ; routes cookie-auth hors /api gardées (`rejoindre/[slug]/accepter` POST et `preparer-sentier/[id]/activer` GET mutant → 403 sans signal same-site Origin/Referer).",
+      "tests": {
+        "before": "80 routes mutantes, ~1 seule avec origin-check",
+        "after": "9 unités + 4 middleware + 5 routes hors /api verts ; suite complète verte ; auth-fallback exécuté vert"
+      },
+      "review_needed": "re-revue indépendante ; vérifier flux Capacitor en device"
+    },
+    {
+      "id": "FIX-009",
+      "finding": "F-006 phase 1 + D5 partiel",
+      "state": "implemented_local",
+      "commit": "7560a561",
+      "branch": "security/fixes-wave1",
+      "files": [
+        "supabase/migrations/20261010120000_group_media_membership_policies.sql (nouveau)",
+        "src/app/api/og-preview/route.ts (rate-limit 20/min)"
+      ],
+      "change": "group-media : politiques d'appartenance storage — phase 1 (7560a561), durcies phase 1bis (5bfe8bc5, migration 20261010130000) : segment 1 validé UUID (pas de 500 de cast), appartenance groupe OU club (`is_club_member`), DELETE propriétaire. Bucket toujours public (phase 2 = D7). og-preview : rate-limit 20/min fail-open.",
+      "tests": {
+        "before": "aucune policy group-media en migration ; og-preview sans limite",
+        "after": "policies vérifiées sur clone isolé (dont with_check contient is_club_member) ; set_route_cache corrigé testé (provider/payload corrects) ; test 429 après 20 requêtes vert"
+      },
+      "review_needed": "D7 pour la phase 2 (privé + URLs signées)"
+    }
+  ],
+  "review": {
+    "reviewer": "security-reviewer (contexte neuf, session 2 — tentative de réfutation documentée)",
+    "verdict": "lot promouvable en l'état (aucun cas d'acceptation à tort dans cronAuth, gardes avant effets, purge PWA robuste, migration 31/31 emails couverts et non appliquée, diff complet, 12/12 verts reproduits indépendamment)",
+    "reserves": [
+      "F-008 : dry-run SELECT sur la prod avant UPDATE ; la garde created_at < 2026-08-01 est un pari documenté ; invalider encrypted_password ne révoque pas les sessions existantes (refresh tokens à révoquer pour une fermeture complète)",
+      "F-003 : corriger docs/.../API.md:37 (Bearer CRON_SECRET) ; vérifier tout déclencheur externe configuré hors dépôt (aucun cron interne/externe versionné trouvé)",
+      "H-017 : documenter que sans SW jamais activé la purge est différée jusqu'à l'activation (ready pendant) — no-op sans conséquence",
+      "Qualité : test du chemin autorisé renforcé depuis (commit 7271fee7, 200 explicite)"
+    ],
+    "external_facts_verified": ["aucun appelant pg_net/pg_cron des routes notifications dans les migrations", "aucun workflow GitHub n'appelle ces routes", "planification cron externe non configurée selon docs/progression/STATE.md"]
+  }
+}

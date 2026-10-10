@@ -43,6 +43,7 @@ DROP POLICY IF EXISTS public_read_ambassadors ON public.ambassadors;
 DROP POLICY IF EXISTS auth_manage_ambassadors ON public.ambassadors;
 DROP POLICY IF EXISTS auth_insert_ambassadors ON public.ambassadors;
 
+DROP POLICY IF EXISTS ambassadors_select_own_or_admin ON public.ambassadors;
 CREATE POLICY ambassadors_select_own_or_admin ON public.ambassadors
   FOR SELECT TO authenticated
   USING (user_id = auth.uid() OR public.is_admin());
@@ -57,6 +58,7 @@ REVOKE SELECT ON public.ambassadors FROM anon;
 -- ----------------------------------------------------------------------------
 DROP POLICY IF EXISTS carnet_gear_manage ON public.carnet_gear_links;
 
+DROP POLICY IF EXISTS carnet_gear_links_insert_carnet_owner ON public.carnet_gear_links;
 CREATE POLICY carnet_gear_links_insert_carnet_owner ON public.carnet_gear_links
   FOR INSERT TO authenticated
   WITH CHECK (
@@ -66,6 +68,7 @@ CREATE POLICY carnet_gear_links_insert_carnet_owner ON public.carnet_gear_links
     )
   );
 
+DROP POLICY IF EXISTS carnet_gear_links_update_carnet_owner ON public.carnet_gear_links;
 CREATE POLICY carnet_gear_links_update_carnet_owner ON public.carnet_gear_links
   FOR UPDATE TO authenticated
   USING (
@@ -81,6 +84,7 @@ CREATE POLICY carnet_gear_links_update_carnet_owner ON public.carnet_gear_links
     )
   );
 
+DROP POLICY IF EXISTS carnet_gear_links_delete_carnet_owner ON public.carnet_gear_links;
 CREATE POLICY carnet_gear_links_delete_carnet_owner ON public.carnet_gear_links
   FOR DELETE TO authenticated
   USING (
@@ -103,6 +107,7 @@ DROP POLICY IF EXISTS public_read_club_challenges ON public.club_challenges;
 DROP POLICY IF EXISTS club_challenges_manage ON public.club_challenges;
 DROP POLICY IF EXISTS auth_insert_club_challenges ON public.club_challenges;
 
+DROP POLICY IF EXISTS club_challenges_select_public ON public.club_challenges;
 CREATE POLICY club_challenges_select_public ON public.club_challenges
   FOR SELECT TO anon, authenticated USING (true);
 
@@ -116,6 +121,7 @@ DROP POLICY IF EXISTS "Public read club_recommended_kits" ON public.club_recomme
 DROP POLICY IF EXISTS club_kits_read ON public.club_recommended_kits;
 DROP POLICY IF EXISTS club_kits_manage ON public.club_recommended_kits;
 
+DROP POLICY IF EXISTS club_recommended_kits_select_public ON public.club_recommended_kits;
 CREATE POLICY club_recommended_kits_select_public ON public.club_recommended_kits
   FOR SELECT TO anon, authenticated USING (true);
 
@@ -138,11 +144,13 @@ REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER
 DROP POLICY IF EXISTS auth_manage_events ON public.events;
 
 DROP POLICY IF EXISTS auth_update_events ON public.events;
+DROP POLICY IF EXISTS auth_update_events ON public.events;
 CREATE POLICY auth_update_events ON public.events
   FOR UPDATE TO authenticated
   USING (auth.uid() = organizer_id OR public.is_admin())
   WITH CHECK (auth.uid() = organizer_id OR public.is_admin());
 
+DROP POLICY IF EXISTS auth_delete_events ON public.events;
 DROP POLICY IF EXISTS auth_delete_events ON public.events;
 CREATE POLICY auth_delete_events ON public.events
   FOR DELETE TO authenticated
@@ -174,6 +182,7 @@ REVOKE SELECT ON public.feature_flags FROM anon;
 DROP POLICY IF EXISTS auth_read_gear_history ON public.gear_history;
 DROP POLICY IF EXISTS auth_insert_own_gear_history ON public.gear_history;
 
+DROP POLICY IF EXISTS gear_history_select_owner ON public.gear_history;
 CREATE POLICY gear_history_select_owner ON public.gear_history
   FOR SELECT TO authenticated
   USING (
@@ -183,6 +192,7 @@ CREATE POLICY gear_history_select_owner ON public.gear_history
     )
   );
 
+DROP POLICY IF EXISTS gear_history_insert_owner ON public.gear_history;
 CREATE POLICY gear_history_insert_owner ON public.gear_history
   FOR INSERT TO authenticated
   WITH CHECK (
@@ -192,6 +202,7 @@ CREATE POLICY gear_history_insert_owner ON public.gear_history
     )
   );
 
+DROP POLICY IF EXISTS gear_history_update_owner ON public.gear_history;
 CREATE POLICY gear_history_update_owner ON public.gear_history
   FOR UPDATE TO authenticated
   USING (
@@ -207,6 +218,7 @@ CREATE POLICY gear_history_update_owner ON public.gear_history
     )
   );
 
+DROP POLICY IF EXISTS gear_history_delete_owner ON public.gear_history;
 CREATE POLICY gear_history_delete_owner ON public.gear_history
   FOR DELETE TO authenticated
   USING (
@@ -218,6 +230,7 @@ CREATE POLICY gear_history_delete_owner ON public.gear_history
 
 DROP POLICY IF EXISTS auth_read_gear_images ON public.gear_images;
 
+DROP POLICY IF EXISTS gear_images_select_owner ON public.gear_images;
 CREATE POLICY gear_images_select_owner ON public.gear_images
   FOR SELECT TO authenticated
   USING (
@@ -227,6 +240,7 @@ CREATE POLICY gear_images_select_owner ON public.gear_images
     )
   );
 
+DROP POLICY IF EXISTS gear_images_insert_owner ON public.gear_images;
 CREATE POLICY gear_images_insert_owner ON public.gear_images
   FOR INSERT TO authenticated
   WITH CHECK (
@@ -236,6 +250,7 @@ CREATE POLICY gear_images_insert_owner ON public.gear_images
     )
   );
 
+DROP POLICY IF EXISTS gear_images_update_owner ON public.gear_images;
 CREATE POLICY gear_images_update_owner ON public.gear_images
   FOR UPDATE TO authenticated
   USING (
@@ -251,6 +266,7 @@ CREATE POLICY gear_images_update_owner ON public.gear_images
     )
   );
 
+DROP POLICY IF EXISTS gear_images_delete_owner ON public.gear_images;
 CREATE POLICY gear_images_delete_owner ON public.gear_images
   FOR DELETE TO authenticated
   USING (
@@ -262,6 +278,7 @@ CREATE POLICY gear_images_delete_owner ON public.gear_images
 
 DROP POLICY IF EXISTS auth_read_loans ON public.loans;
 
+DROP POLICY IF EXISTS loans_select_owner ON public.loans;
 CREATE POLICY loans_select_owner ON public.loans
   FOR SELECT TO authenticated
   USING (
@@ -271,6 +288,7 @@ CREATE POLICY loans_select_owner ON public.loans
     )
   );
 
+DROP POLICY IF EXISTS loans_insert_owner ON public.loans;
 CREATE POLICY loans_insert_owner ON public.loans
   FOR INSERT TO authenticated
   WITH CHECK (
@@ -280,6 +298,7 @@ CREATE POLICY loans_insert_owner ON public.loans
     )
   );
 
+DROP POLICY IF EXISTS loans_update_owner ON public.loans;
 CREATE POLICY loans_update_owner ON public.loans
   FOR UPDATE TO authenticated
   USING (
@@ -295,6 +314,7 @@ CREATE POLICY loans_update_owner ON public.loans
     )
   );
 
+DROP POLICY IF EXISTS loans_delete_owner ON public.loans;
 CREATE POLICY loans_delete_owner ON public.loans
   FOR DELETE TO authenticated
   USING (
@@ -316,6 +336,7 @@ DROP POLICY IF EXISTS public_read_guides ON public.guides;
 DROP POLICY IF EXISTS auth_manage_guides ON public.guides;
 DROP POLICY IF EXISTS users_manage_own_guides ON public.guides;
 
+DROP POLICY IF EXISTS guides_select_public ON public.guides;
 CREATE POLICY guides_select_public ON public.guides
   FOR SELECT TO anon, authenticated USING (true);
 
@@ -330,6 +351,7 @@ DROP POLICY IF EXISTS auth_manage_kit_items ON public.kit_items;
 DROP POLICY IF EXISTS auth_manage_promo_codes ON public.promo_codes;
 DROP POLICY IF EXISTS public_read_promo_codes ON public.promo_codes;
 
+DROP POLICY IF EXISTS promo_codes_select_ambassador_or_admin ON public.promo_codes;
 CREATE POLICY promo_codes_select_ambassador_or_admin ON public.promo_codes
   FOR SELECT TO authenticated
   USING (
@@ -350,6 +372,7 @@ REVOKE SELECT ON public.promo_codes FROM anon;
 -- ----------------------------------------------------------------------------
 DROP POLICY IF EXISTS public_read_stock_movements ON public.stock_movements;
 
+DROP POLICY IF EXISTS stock_movements_select_admin ON public.stock_movements;
 CREATE POLICY stock_movements_select_admin ON public.stock_movements
   FOR SELECT TO authenticated
   USING (public.is_admin());
@@ -466,6 +489,11 @@ REVOKE ALL ON FUNCTION public.join_event(uuid) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.leave_event(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.join_event(uuid) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.leave_event(uuid) TO authenticated, service_role;
+
+-- Rejouabilite : policy ALL permissive historique sur event_expenses, jamais
+-- retiree par une autre migration du depot ; le controle final ci-dessous la
+-- detecte. On la retire ici, comme l'exige l'intention de la section 11.
+DROP POLICY IF EXISTS auth_manage_expenses ON public.event_expenses;
 
 -- ----------------------------------------------------------------------------
 -- 15. Contrôle final — aucune policy permissive d'ÉCRITURE ne doit subsister

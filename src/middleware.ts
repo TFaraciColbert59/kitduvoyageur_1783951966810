@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { getCountryCodeByName, getCountryByCode } from '@/lib/countries';
 import { resolveLegacyRedirect } from '@/lib/hub/hubRedirects';
+import { isCrossSiteMutation, allowedHostsFromSiteUrl } from '@/lib/security/sameOrigin';
 
 const PROTECTED_ROUTES = ['/admin', '/checkout'];
 const ADMIN_ROUTES = ['/admin'];
@@ -20,6 +21,23 @@ function isAdmin(pathname: string) {
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+
+  // ─── CSRF — mutations API cross-site refusées ─────────────────────────────
+  // Les cookies de session sont SameSite=None (compatibilité Capacitor) : un
+  // POST cross-site les enverrait. Les appels machine (webhooks signés, crons
+  // Bearer) n'ont pas d'Origin et conservent leur propre authentification.
+  if (pathname === '/api' || pathname.startsWith('/api/')) {
+    if (
+      isCrossSiteMutation({
+        method: request.method,
+        origin: request.headers.get('origin'),
+        host: request.headers.get('host'),
+        allowedHosts: allowedHostsFromSiteUrl(),
+      })
+    ) {
+      return NextResponse.json({ error: 'Origine non autorisée' }, { status: 403 });
+    }
+  }
 
   // ─── Mobile landing redirect to the hub ────────────────────────────────────
   if (pathname === '/') {
@@ -68,11 +86,13 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-        // Admin routes: verify role
+        // Admin routes: autorité canonique has_permission('admin.access').
     if (isAdmin(pathname)) {
-      const { data: isAdminRole } = await supabase.rpc('is_admin');
+      const { data: canAccess } = await supabase.rpc('has_permission', {
+        p_code: 'admin.access',
+      });
 
-      if (!isAdminRole) {
+      if (canAccess !== true) {
         const homeUrl = request.nextUrl.clone();
         homeUrl.pathname = '/';
         return NextResponse.redirect(homeUrl);
@@ -133,6 +153,8 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/',
+    // CSRF : mutations API refusees hors origine connue.
+    '/api/:path*',
     '/admin',
     '/admin/:path*',
     '/checkout/:path*',
