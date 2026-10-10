@@ -356,3 +356,44 @@ describe('travelPapers — la table passeport × destination (4.2)', () => {
     });
   });
 });
+
+/**
+ * PLAN-100 4.2 « keepAiNote ne retire plus les conseils justes pour un non-Français » :
+ * les papiers sont décidés par la règle (la table pour une nationalité connue), donc le
+ * conseil de l'IA sur les papiers est toujours écarté ; le change et les prises, eux,
+ * ne sont écartés que si la règle les dit déjà vrais pour CETTE personne.
+ */
+describe('keepAiNote — un non-Français garde ses conseils justes', () => {
+  const MONEY = 'Retire de la monnaie locale avant de quitter l’aéroport, les distributeurs sont rares.';
+  const MONEY_EUR = 'Passe au bureau de change avant le départ : tes dollars n’ont pas cours au Portugal.';
+  const PLUG = 'Prévois un adaptateur de prise pour tes chargeurs.';
+  const TIP = 'Vérifie les vaccins recommandés pour cette région.';
+
+  it('Allemand (euro) : le change reste un conseil possible hors zone euro, et les conseils de saison sont gardés', () => {
+    const ma = travelPapers('MA', 'Maroc', DE, true, entryRequirement('DE', 'MA'));
+    expect(keepAiNote(MONEY, ma)).toBe(true);
+    expect(keepAiNote(TIP, ma)).toBe(true);
+    // Zone euro et même monnaie : la règle le sait, le conseil double.
+    expect(keepAiNote(MONEY_EUR, travelPapers('PT', 'Portugal', DE, true, entryRequirement('DE', 'PT')))).toBe(false);
+  });
+
+  it('Américain (dollar) au Portugal : le change est gardé, l’adaptateur aussi (la règle ne sait pas)', () => {
+    const pt = travelPapers('PT', 'Portugal', US, true, entryRequirement('US', 'PT'));
+    expect(keepAiNote(MONEY_EUR, pt)).toBe(true);
+    expect(keepAiNote(PLUG, pt)).toBe(true);
+  });
+
+  it('Américain au Royaume-Uni : la règle dit déjà le type de prise, l’adaptateur de l’IA est écarté', () => {
+    const gb = travelPapers('GB', 'Royaume-Uni', US, true, entryRequirement('US', 'GB'));
+    expect(gb.notes).toContain('Prises de type G (Royaume-Uni) : vérifie que tes chargeurs s’y branchent.');
+    expect(keepAiNote(PLUG, gb)).toBe(false);
+  });
+
+  it('les papiers restent à la règle pour toute nationalité, avec ou sans ligne de table', () => {
+    for (const entry of [entryRequirement('DE', 'NP'), null]) {
+      const np = travelPapers('NP', 'Népal', DE, true, entry);
+      expect(keepAiNote('Il te faut un visa à l’arrivée, prévois 50 dollars en liquide.', np)).toBe(false);
+      expect(keepAiNote('Vérifie la validité de ton passeport.', np)).toBe(false);
+    }
+  });
+});
