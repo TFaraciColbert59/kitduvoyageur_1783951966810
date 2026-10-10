@@ -242,6 +242,7 @@ const autofill = vi.hoisted(() => ({
   })),
   compasUndoAutofillAction: vi.fn(async () => ({ success: true })),
   compasAutofillStopAction: vi.fn(async () => ({ success: true })),
+  compasRefreshAutofillAction: vi.fn(async () => ({ success: true, parts: [] as string[], label: '', kept: 0 })),
   // Lancement immédiat, issue relue ensuite (comme en production, sans requête longue).
   compasAutofillStartAction: vi.fn(async (input: unknown) => {
     const token = `t${++outcomes.n}`;
@@ -1899,5 +1900,25 @@ describe('CompasScreen', () => {
       expect(screen.queryByText('1 changement appliqué')).toBeNull();
       expect(screen.queryByRole('button', { name: 'Annuler' })).toBeNull();
     });
+  });
+});
+
+describe('CompasScreen : réadaptation après un réglage', () => {
+  beforeEach(() => {
+    autofill.compasRefreshAutofillAction.mockClear();
+  });
+  afterEach(() => cleanup());
+
+  it('deux changements de départ de suite (Lyon → Paris → Marseille) sont réadaptés tous les deux', async () => {
+    const stale = (autofillStale: Array<'transport' | 'budget'>) => ({ ...makeData(), autofill: 'done' as const, autofillStale });
+    const { rerender } = render(<CompasScreen data={stale(['transport', 'budget'])} />);
+    await waitFor(() => expect(autofill.compasRefreshAutofillAction).toHaveBeenCalledTimes(1));
+    // Même liste, même écran : pas de seconde réadaptation tant que rien n'a bougé.
+    rerender(<CompasScreen data={stale(['transport', 'budget'])} />);
+    expect(autofill.compasRefreshAutofillAction).toHaveBeenCalledTimes(1);
+    // La réadaptation a refait ce qui était caduc, puis un nouveau changement rend les mêmes parties caduques.
+    rerender(<CompasScreen data={stale([])} />);
+    rerender(<CompasScreen data={stale(['transport', 'budget'])} />);
+    await waitFor(() => expect(autofill.compasRefreshAutofillAction).toHaveBeenCalledTimes(2));
   });
 });

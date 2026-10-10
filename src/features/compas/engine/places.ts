@@ -332,11 +332,12 @@ export function nameCore(v: string): string {
 
 /**
  * Le même nom de lieu écrit autrement : sans accent, sans casse, trait d'union et
- * apostrophe comptés comme des espaces (« Bourg en Bresse » = « Bourg-en-Bresse »).
+ * apostrophe comptés comme des espaces (« Bourg en Bresse » = « Bourg-en-Bresse »),
+ * article du début ignoré (« depuis le havre » retrouve « Le Havre »).
  */
 export function samePlaceName(a: string, b: string): boolean {
-  const key = plainName(a);
-  return key !== '' && key === plainName(b);
+  const key = (v: string) => plainName(v).replace(/^(?:le|la|les|l) (?=\S)/, '');
+  return key(a) !== '' && key(a) === key(b);
 }
 
 /** Ville, pays, région : un nom plus long que celui demandé reste ce lieu. */

@@ -485,6 +485,9 @@ export function CompasScreen({
   const refreshedFor = useRef<string | null>(null);
   useEffect(() => {
     const stale = data.autofillStale ?? [];
+    // Plus rien de caduc : le prochain changement (même liste de parties, ex. un autre
+    // départ) doit être réadapté à son tour.
+    if (data.autofill === 'done' && !stale.length) refreshedFor.current = null;
     if (data.autofill !== 'done' || !data.canEdit || !stale.length) return;
     const key = `${model.tripId}:${stale.join(',')}:${JSON.stringify(data.context?.scope)}:${model.dates.days}:${model.destination}`;
     if (refreshedFor.current === key || autofillRunning.current) return;

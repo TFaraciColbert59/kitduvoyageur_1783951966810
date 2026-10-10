@@ -68,10 +68,19 @@ describe('samePlaceName', () => {
     expect(samePlaceName("L'Isle-sur-la-Sorgue", 'L’Isle sur la Sorgue')).toBe(true);
   });
 
+  it('l’article du début ne compte pas : « depuis le havre » retrouve « Le Havre »', () => {
+    expect(samePlaceName('Le Havre', 'Havre')).toBe(true);
+    expect(samePlaceName('La Roche-sur-Yon', 'Roche sur Yon')).toBe(true);
+    expect(samePlaceName("L'Isle-sur-la-Sorgue", 'Isle sur la Sorgue')).toBe(true);
+    const havre = [{ type: 'set_origin' as const, place: 'Havre' }];
+    expect(planApplication(havre, { ...current, originName: 'Le Havre' })).toEqual([]);
+  });
+
   it('un nom plus long ou différent n’est pas le même, ni le vide', () => {
     expect(samePlaceName('Lyon', 'Lyon en Corse')).toBe(false);
     expect(samePlaceName('Bourg', 'Bourg-en-Bresse')).toBe(false);
     expect(samePlaceName('', '')).toBe(false);
     expect(samePlaceName('--', '  ')).toBe(false);
+    expect(samePlaceName('Le', 'La')).toBe(false);
   });
 });
