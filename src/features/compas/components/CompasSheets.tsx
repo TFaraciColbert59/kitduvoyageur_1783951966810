@@ -3088,6 +3088,8 @@ const ADVICE_ICON: Record<string, string> = {
   chaud: 'thermometer',
   extremites: 'cloud-snow',
   soleil: 'sun',
+  moustiques: 'shield',
+  filtre: 'filter',
   frontale: 'sunset',
   eau: 'droplet',
 };
@@ -3100,6 +3102,8 @@ const ADVICE_QUERY: Record<string, string> = {
   chaud: 'polaire',
   extremites: 'gant',
   soleil: 'solaire',
+  moustiques: 'repulsif',
+  filtre: 'filtre',
   frontale: 'frontale',
   eau: 'gourde',
 };

@@ -68,15 +68,15 @@ import { getCompasData } from '../server/getCompasData';
 
 const REYKJAVIK = { lat: fixtures.reykjavik.lat, lon: fixtures.reykjavik.lon };
 
-const step = (day: number) => ({
+const step = (day: number, at: { lat: number; lon: number } = REYKJAVIK) => ({
   id: `step-${day}`,
   trip_id: 'trip-1',
   day_number: day,
   order_index: 0,
   title: `Jour ${day}`,
-  location_name: 'Reykjavik',
-  latitude: REYKJAVIK.lat,
-  longitude: REYKJAVIK.lon,
+  location_name: 'Lieu',
+  latitude: at.lat,
+  longitude: at.lon,
   distance_km: 12,
   elevation_gain_m: 300,
   elevation_loss_m: 300,
@@ -148,6 +148,22 @@ describe('getCompasData donne les normales du lieu aux conseils de kit', () => {
     const data = await getCompasData();
     expect(data?.kitContext?.climate).toBeNull();
     expect(data?.kitAdvice.map((a) => a.need)).not.toContain('froid');
+  });
+
+  it('sous les tropiques : moustiques, soleil, filtre ou pastilles, d’après la seule latitude de l’étape (normales muettes)', async () => {
+    h.normals = null;
+    const ubud = { lat: fixtures.ubud.lat, lon: fixtures.ubud.lon };
+    h.trip = tripOf({ steps: [step(1, ubud), step(2, ubud), step(3, ubud)], start_date: '2027-08-10', end_date: '2027-08-12' });
+    const data = await getCompasData();
+    expect(data?.kitContext).toMatchObject({ lat: ubud.lat, activity: 'hiking', climate: null });
+    expect(data?.kitAdvice.map((a) => a.need)).toEqual(expect.arrayContaining(['moustiques', 'soleil', 'filtre']));
+    expect(data?.kitAdvice.find((a) => a.need === 'moustiques')?.source).toBe('latitude du lieu');
+  });
+
+  it('activité qui vit des ruisseaux : le filtre suit l’activité du voyage', async () => {
+    h.trip = tripOf({ primary_activity: 'trekking' });
+    const data = await getCompasData();
+    expect(data?.kitAdvice.find((a) => a.need === 'filtre')?.source).toBe('activité du voyage');
   });
 
   it('sans date : les normales ne sont pas demandées', async () => {

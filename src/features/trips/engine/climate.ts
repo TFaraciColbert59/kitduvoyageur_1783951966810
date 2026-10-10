@@ -68,6 +68,12 @@ export const CLIMATE_THRESHOLDS = {
   hotMeanC: 24,
   /** Climat aride : moins de 0,5 mm par jour (même seuil que la période). */
   aridMmDay: 0.5,
+  /** Moustiques porteurs de maladies : plus au-dessus de 2 500 m (repère courant)… */
+  mosquitoMaxAltitudeM: 2500,
+  /** …ni dans un mois dont la moyenne est sous 15 °C. */
+  mosquitoMinMeanC: 15,
+  /** Eau des névés, torrents et sources non contrôlée au-dessus de 2 400 m. */
+  filterAltitudeM: 2400,
 } as const;
 
 const T = CLIMATE_THRESHOLDS;
@@ -86,6 +92,17 @@ const MONTHS_FR = [
   'novembre',
   'décembre',
 ];
+
+/**
+ * Activités qui vivent de l'eau des ruisseaux et des sources : un filtre se
+ * justifie là même sans altitude ni tropiques (plan 4.8, ressource en eau).
+ */
+export const NATURAL_WATER_ACTIVITIES: ReadonlySet<string> = new Set([
+  'trekking',
+  'bivouac',
+  'bushcraft',
+  'mountaineering',
+]);
 
 /** Entre les tropiques (|latitude| < 23,5°) : soleil haut, pas d'hiver, saisons sèche et humide. */
 export const isTropicalLatitude = (lat: number | null | undefined): boolean =>

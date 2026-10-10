@@ -1,11 +1,12 @@
 import type { CompasActivity } from './intent';
 import type { NightType } from './autofill';
+import { isTropicalLatitude } from '@/features/trips/engine/climate';
 
 /**
  * Compas — conseils essentiels par règles (plan 4.11, fonction pure).
  *
  * Ce qui touche à la sécurité ne dépend pas de l'IA : altitude, avalanches,
- * orages, sortie en solitaire, refuges, bivouac, rivière. Chaque conseil est
+ * orages, sortie en solitaire, refuges, bivouac, rivière, eau à traiter. Chaque conseil est
  * vrai partout où il s'applique et n'invente aucune obligation (pas de permis,
  * pas d'horaire précis) : le détail local reste à vérifier sur place, et le
  * conseil le dit. L'IA n'ajoute ensuite que des suggestions facultatives,
@@ -72,6 +73,15 @@ export function essentialAdvice(input: AdviceInput, max = 3): string[] {
         ? 'Seul·e : laisse ton itinéraire et ton heure de retour à un proche. Urgence : 112.'
         : 'Seul·e : laisse ton itinéraire et ton heure de retour à un proche, et note le numéro d’urgence du pays avant de partir.'
     );
+  // Eau : selon la ressource, pas seulement l'altitude (plan 4.8). Sous les
+  // tropiques (latitude), ni le robinet ni les ruisseaux ne sont garantis ;
+  // en altitude, les névés, torrents et sources ne sont pas contrôlés.
+  if (isTropicalLatitude(input.lat))
+    out.push(
+      'Sous les tropiques, l’eau du robinet et celle des ruisseaux n’est pas toujours potable : traite-la (filtre, pastilles ou ébullition) ou prends de l’eau en bouteille scellée.'
+    );
+  else if (alt > 2400)
+    out.push('Au-dessus de 2 400 m, l’eau des névés, des torrents et des sources n’est pas contrôlée : traite-la (filtre ou pastilles).');
   if (mountain && season === 'ete' && MOUNTAIN_SPORT.has(input.activity))
     out.push('En montagne l’été, les orages éclatent souvent l’après-midi : pars tôt et sois redescendu·e des crêtes avant.');
   if (input.nights.includes('refuge'))
@@ -92,6 +102,7 @@ const TOPICS: Array<[RegExp, RegExp]> = [
   [/Bivouac/, /\bbivouac/i],
   [/Rivière/, /\b(gilet|l[âa]chers?|niveau de l.eau)\b/i],
   [/Seul·e/, /\b(seul|solo|proche|112)\b/i],
+  [/traite-la/, /\b(filtre|filtrer|pastilles?|potable|purifi\w*|[ée]bullition)/i],
 ];
 
 /** Un conseil de l'IA qui redit un conseil des règles est écarté. */

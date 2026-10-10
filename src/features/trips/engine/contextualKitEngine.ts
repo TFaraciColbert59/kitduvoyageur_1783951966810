@@ -8,6 +8,8 @@ import type { ElevationProfile } from '../lib/elevation';
 import { getCivilDurationDays } from '@/lib/dates/tripDates';
 import { kitProductBaseSlug } from '../domain/kitCatalogImport';
 import {
+  CLIMATE_THRESHOLDS,
+  NATURAL_WATER_ACTIVITIES,
   celsius,
   mmPerDay,
   monthNameFr,
@@ -15,6 +17,7 @@ import {
   isTropicalLatitude,
   type ClimateWindow,
 } from './climate';
+
 
 export interface ContextualKitInput {
   /**
@@ -112,7 +115,8 @@ interface KitRuleTemplate {
   defaultPriority: 'vital' | 'recommended' | 'optional';
   baseWeightGrams: number;
   condition: (input: ContextualKitInput, maxAlt: number) => { match: boolean; reason: string; priority?: 'vital' | 'recommended' };
-  preferredProductSlug: string;
+  /** Slug boutique réel ; null : aucun produit du catalogue pour cet objet (jamais un produit inventé). */
+  preferredProductSlug: string | null;
 }
 
 export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
@@ -176,17 +180,70 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     category: 'water',
     defaultPriority: 'vital',
     baseWeightGrams: 140,
-    condition: (_input, maxAlt) => {
-      const needFilter = maxAlt > 2400;
+    condition: (input, maxAlt) => {
+      // Selon la ressource, pas seulement l'altitude : tropiques (eau pas toujours
+      // potable), altitude (névés, torrents), activité qui vit des ruisseaux et des sources.
+      const high = maxAlt > CLIMATE_THRESHOLDS.filterAltitudeM;
+      const why: string[] = [];
+      if (isTropicalLatitude(input.latitude))
+        why.push(
+          'Zone tropicale : l’eau du robinet et celle des ruisseaux n’est pas toujours potable ; un filtre retient bactéries et parasites.'
+        );
+      if (high)
+        why.push(
+          `Altitude supérieure à 2400m (${maxAlt}m) : filtration indispensable des névés, torrents et sources naturelles non contrôlées.`
+        );
+      if (NATURAL_WATER_ACTIVITIES.has(input.activity ?? ''))
+        why.push('Activité qui vit de l’eau des ruisseaux et des sources : filtre ou paille filtrante.');
       return {
-        match: needFilter,
-        reason: needFilter
-          ? `Altitude supérieure à 2400m (${maxAlt}m) : filtration indispensable des névés, torrents et sources naturelles non contrôlées.`
-          : '',
-        priority: 'vital',
+        match: why.length > 0,
+        reason: why.join(' '),
+        // Vital en altitude (règle d'origine) ; ailleurs, recommandé.
+        priority: high ? 'vital' : 'recommended',
       };
     },
     preferredProductSlug: 'filtre-a-eau-randonnee-categorie-bigbuy',
+  },
+  {
+    key: 'water-purification',
+    name: 'Pastilles de purification d’eau',
+    category: 'water',
+    defaultPriority: 'recommended',
+    baseWeightGrams: 20,
+    condition: (input) => {
+      const tropical = isTropicalLatitude(input.latitude);
+      return {
+        match: tropical,
+        reason: tropical
+          ? 'Zone tropicale : un filtre seul ne retient pas la plupart des virus ; des pastilles (ou l’ébullition) complètent le traitement de l’eau.'
+          : '',
+        priority: 'recommended',
+      };
+    },
+    preferredProductSlug: null,
+  },
+  {
+    key: 'mosquito-repellent',
+    name: 'Répulsif anti-moustiques',
+    category: 'safety',
+    defaultPriority: 'recommended',
+    baseWeightGrams: 100,
+    condition: (input, maxAlt) => {
+      // Latitude tropicale, sous 2 500 m, hors mois frais (altitude ou climat inconnus : dit par précaution).
+      const read = readClimate(input.climate);
+      const match =
+        isTropicalLatitude(input.latitude) &&
+        maxAlt < CLIMATE_THRESHOLDS.mosquitoMaxAltitudeM &&
+        !(read != null && read.hottest.tMeanC < CLIMATE_THRESHOLDS.mosquitoMinMeanC);
+      return {
+        match,
+        reason: match
+          ? 'Zone tropicale : moustiques actifs toute l’année, porteurs de dengue ou de paludisme selon la zone. Répulsif, vêtements couvrants au crépuscule ; avant de partir, demande conseil à un médecin.'
+          : '',
+        priority: 'recommended',
+      };
+    },
+    preferredProductSlug: null,
   },
   {
     key: 'cold-down-jacket',
@@ -654,10 +711,9 @@ export function generateTripContextualKit(input: ContextualKitInput): TripKitAna
     });
 
     if (!hasItem) {
-      const matchedProduct = resolvePreferredProduct(
-        availableProducts,
-        rule.preferredProductSlug
-      );
+      const matchedProduct = rule.preferredProductSlug
+        ? resolvePreferredProduct(availableProducts, rule.preferredProductSlug)
+        : null;
 
       // Anti-D3 : si le produit boutique a un poids de 0g, repli sur le poids de base calibré
       const weightGrams =

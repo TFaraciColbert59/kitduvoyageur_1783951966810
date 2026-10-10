@@ -11,7 +11,10 @@ import type { CompasDayPlan, CompasKitLine } from './compasModel';
 import { tripDayLight } from './sun';
 import type { DayForecast } from './weather';
 import {
+  CLIMATE_THRESHOLDS as C,
+  NATURAL_WATER_ACTIVITIES,
   celsius,
+  isTropicalLatitude,
   mmPerDay,
   monthNameFr,
   readClimate,
@@ -25,6 +28,8 @@ export type KitNeed =
   | 'froid'
   | 'extremites'
   | 'soleil'
+  | 'moustiques'
+  | 'filtre'
   | 'frontale'
   | 'eau';
 
@@ -72,6 +77,7 @@ export const KIT_THRESHOLDS = {
   waterLPerHourHot: 0.75,
 } as const;
 
+
 const MATCH: Record<KitNeed, RegExp> = {
   pluie: /veste|imperm|gore|poncho|coupe-?pluie|k-?way|shell|cape/i,
   etanche: /[ée]tanche|dry ?-?bag|housse|pack ?liner|rain ?cover|sursac/i,
@@ -79,9 +85,18 @@ const MATCH: Record<KitNeed, RegExp> = {
   froid: /polaire|doudoune|isolant|fleece|down|primaloft|puffy|pull|laine|m[ée]rinos/i,
   extremites: /gant|bonnet|mitaine|tour de cou|buff/i,
   soleil: /casquette|chapeau|cr[èe]me|solaire|lunette|spf/i,
+  moustiques: /r[ée]pulsif|moustiqu|insect|icaridine|\bdeet\b|perm[ée]thrine/i,
+  filtre: /filtre|paille filtrante|pastille|purifi|katadyn|sawyer|micropur|steripen/i,
   frontale: /frontale|lampe|headlamp|lanterne/i,
   eau: /gourde|bouteille|poche [àa] eau|hydrat|camelbak|flask|bidon/i,
 };
+
+/** « 8,5° S » : latitude lisible, une décimale au plus. */
+const latLabel = (lat: number) =>
+  `${(Math.round(Math.abs(lat) * 10) / 10).toString().replace('.', ',')}° ${lat < 0 ? 'S' : 'N'}`;
+
+/** « 2 600 » : milliers séparés par une espace simple, comme le reste du Compas. */
+const thousands = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
 const dateFr = (iso: string) => {
   const [y, m, d] = iso.split('-');
@@ -98,6 +113,8 @@ export function adviseKit(input: {
   const T = KIT_THRESHOLDS;
   const ctx = input.context;
   const climate = readClimate(ctx?.climate);
+  const tropical = isTropicalLatitude(ctx?.lat);
+  const altitude = ctx?.maxAltitudeM ?? null;
   const has = (need: KitNeed) => out.some((a) => a.need === need);
   const out: KitAdvice[] = [];
   const find = (need: KitNeed) => input.lines.find((l) => MATCH[need].test(l.name)) ?? null;
@@ -201,6 +218,13 @@ export function adviseKit(input: {
       `Jour ${hot.day} (${dateFr(hot.date)}) : jusqu'à ${Math.round(hot.forecast.tMax as number)} °C.`,
       'MET Norway'
     );
+  else if (tropical)
+    add(
+      'soleil',
+      'Protection solaire (chapeau, crème, lunettes)',
+      `Zone tropicale (latitude ${latLabel(ctx?.lat as number)}) : le soleil est fort toute l’année.`,
+      'latitude du lieu'
+    );
   else if (climate?.warm)
     add(
       'soleil',
@@ -208,6 +232,47 @@ export function adviseKit(input: {
       `En ${monthNameFr(climate.hottest.month)} : température moyenne de ${celsius(climate.hottest.tMeanC)}${climate.hot ? ', mois chaud' : ''}.`,
       CLIMATE_SOURCE
     );
+
+  /* Moustiques : sous les tropiques, en dessous de 2 500 m et pas dans un mois frais (altitude ou climat inconnus : dit par précaution) */
+  if (
+    tropical &&
+    (altitude == null || altitude < C.mosquitoMaxAltitudeM) &&
+    !(climate && climate.hottest.tMeanC < C.mosquitoMinMeanC)
+  )
+    add(
+      'moustiques',
+      'Répulsif et protection contre les moustiques',
+      `Zone tropicale (latitude ${latLabel(ctx?.lat as number)}) : moustiques actifs toute l’année, porteurs de dengue ou de paludisme selon la zone. Répulsif, vêtements couvrants au crépuscule, moustiquaire si tu dors dehors ; avant de partir, demande conseil à un médecin.`,
+      'latitude du lieu'
+    );
+
+  /* Filtre à eau : selon la ressource (tropiques, altitude, activité qui vit des sources), pas seulement l'altitude */
+  const waterWhy: string[] = [];
+  const waterSources: string[] = [];
+  if (tropical) {
+    waterWhy.push(
+      'Zone tropicale : l’eau du robinet et celle des ruisseaux n’est pas toujours potable. Un filtre retient bactéries et parasites, pas la plupart des virus : ajoute des pastilles (ou fais bouillir).'
+    );
+    waterSources.push('latitude du lieu');
+  }
+  if (altitude != null && altitude > C.filterAltitudeM) {
+    waterWhy.push(`Parcours jusqu’à ${thousands(altitude)} m : l’eau des névés, des torrents et des sources n’est pas contrôlée.`);
+    waterSources.push('altitude mesurée');
+  }
+  if (NATURAL_WATER_ACTIVITIES.has(ctx?.activity ?? '')) {
+    waterWhy.push('Cette activité vit de l’eau des ruisseaux et des sources : filtre ou pastilles.');
+    waterSources.push('activité du voyage');
+  }
+  if (waterWhy.length) {
+    const n = input.waterPointsCount;
+    if (n != null && n > 0)
+      waterWhy.push(
+        n === 1
+          ? '1 point d’eau connu du tracé (fontaine ou source) : son contrôle n’est pas garanti.'
+          : `${n} points d’eau connus du tracé (fontaines, sources) ne sont pas tous contrôlés.`
+      );
+    add('filtre', 'Filtre à eau ou pastilles de purification', waterWhy.join(' '), waterSources.join(' · '));
+  }
 
   /* Lumière : marche plus longue que le jour (prévision, sinon calcul astronomique) */
   for (const p of input.dayPlans) {
