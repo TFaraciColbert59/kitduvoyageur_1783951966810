@@ -1,7 +1,23 @@
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { resolveGearImage } from '@/features/materiel/services/gearImageResolver';
-import type { Conversation, Message, UserProfileSummary, MessageReaction, MessageType, ConversationMember } from '../types/messaging.types';
+import type {
+  Conversation,
+  Message,
+  UserProfileSummary,
+  MessageReaction,
+  MessageType,
+  ConversationMember,
+  MemberRole,
+  CursorPaginationOptions,
+  PaginatedMessagesResult,
+  PendingMessage,
+  SyncReconciliationResult,
+} from '../types/messaging.types';
+import { sequenceService } from './domain/sequenceService';
+import { idempotencyService } from './domain/idempotencyService';
+import { cursorPaginationService } from './domain/cursorPaginationService';
+import { offlineSyncQueue } from './domain/offlineSyncQueue';
 
 // Mémoire locale pour les conversations démo interactives
 const localDemoMessages = new Map<string, Message[]>();
@@ -507,10 +523,12 @@ export const messagingService = {
       return {
         id: conv.id,
         type: conv.type || 'direct',
+        context_type: (conv as any).context_type || (conv.type === 'group' ? 'group' : 'direct'),
         title: conv.title || (conv.type === 'direct' ? otherMember?.full_name : 'Groupe de Voyage'),
         avatar_url: conv.avatar_url || (conv.type === 'direct' ? otherMember?.avatar_url : undefined),
         created_by: conv.created_by,
         last_message_at: conv.last_message_at || conv.created_at,
+        last_sequence_number: (conv as any).last_sequence_number != null ? Number((conv as any).last_sequence_number) : undefined,
         created_at: conv.created_at,
         updated_at: conv.updated_at || conv.created_at,
         other_member: otherMember,
@@ -523,6 +541,7 @@ export const messagingService = {
   },
 
   async getOrCreateDirectConversation(targetUserId: string, currentUserId: string): Promise<string | null> {
+    void currentUserId;
     const supabase = createClient();
 
     const { data: rpcData, error: rpcError } = await supabase.rpc('get_or_create_direct_conversation', {
@@ -530,12 +549,20 @@ export const messagingService = {
     });
 
     if (!rpcError && rpcData) {
-      return rpcData;
+      return rpcData as unknown as string;
     }
 
     if (rpcError) {
-      console.error('Erreur get_or_create_direct_conversation:', rpcError);
-      throw new Error(rpcError.message || 'Impossible de créer la discussion');
+      // Supabase renvoie parfois un objet vide {} (PostgREST) : logger le JSON complet
+      // pour garder code/details/hint quand ils existent.
+      console.error('Erreur get_or_create_direct_conversation:', JSON.stringify(rpcError));
+      const message =
+        (rpcError as { message?: string }).message ||
+        (rpcError as { details?: string }).details ||
+        (rpcError as { hint?: string }).hint ||
+        (rpcError as { code?: string }).code ||
+        'Impossible de créer la discussion';
+      throw new Error(message);
     }
 
     throw new Error('Impossible de créer la discussion');
@@ -571,6 +598,8 @@ export const messagingService = {
         id,
         conversation_id,
         sender_id,
+        sequence_number,
+        client_nonce,
         content,
         message_type,
         metadata,
@@ -593,7 +622,8 @@ export const messagingService = {
 
     if (error || !data || data.length === 0) {
       const demoMap = initDemoMessages('current-user-id');
-      return demoMap.get(conversationId) || [];
+      const fallbackMsgs = demoMap.get(conversationId) || [];
+      return sequenceService.sortMessages(fallbackMsgs);
     }
 
     const rawMessages = data as any[];
@@ -613,7 +643,7 @@ export const messagingService = {
       });
     });
 
-    return rawMessages.map((msg) => {
+    const parsedMessages: Message[] = rawMessages.map((msg) => {
       const profile = profileById[msg.sender_id];
       const reactions = Array.isArray(msg.message_reactions) ? msg.message_reactions : [];
       const replyToMsg = msg.reply_to_id ? messageMap.get(msg.reply_to_id) || null : null;
@@ -622,6 +652,8 @@ export const messagingService = {
         id: msg.id,
         conversation_id: msg.conversation_id,
         sender_id: msg.sender_id,
+        sequence_number: msg.sequence_number != null ? Number(msg.sequence_number) : undefined,
+        client_nonce: msg.client_nonce,
         content: msg.content,
         message_type: msg.message_type || 'text',
         metadata: msg.metadata ?? null,
@@ -646,9 +678,11 @@ export const messagingService = {
           reaction_value: r.reaction_value,
           created_at: r.created_at,
         })),
-        status: 'sent',
+        status: 'sent' as const,
       };
     });
+
+    return sequenceService.sortMessages(parsedMessages);
   },
 
   async toggleReaction(
@@ -735,27 +769,34 @@ export const messagingService = {
     content: string,
     messageType: MessageType = 'text',
     replyToId?: string,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
+    clientNonce?: string
   ): Promise<Message | null> {
-    const newMsg: Message = {
-      id: `msg-${Date.now()}`,
-      conversation_id: conversationId,
-      sender_id: senderId,
-      content,
-      message_type: messageType,
-      reply_to_id: replyToId || null,
-      metadata: metadata ?? null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      status: 'sent',
-    };
+    const nonce = clientNonce || idempotencyService.generateNonce();
 
     if (conversationId.startsWith('demo-conv-')) {
       const list = localDemoMessages.get(conversationId) || [];
+      const nextSeq = list.length > 0 ? (list[list.length - 1].sequence_number || list.length) + 1 : 1;
+      const newMsg: Message = {
+        id: `msg-${Date.now()}`,
+        conversation_id: conversationId,
+        sender_id: senderId,
+        content,
+        message_type: messageType,
+        sequence_number: nextSeq,
+        client_nonce: nonce,
+        reply_to_id: replyToId || null,
+        metadata: metadata ?? null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        status: 'sent',
+      };
       list.push(newMsg);
       localDemoMessages.set(conversationId, list);
       return newMsg;
     }
+
+    idempotencyService.trackInFlight(nonce, conversationId);
 
     const supabase = createClient();
 
@@ -766,16 +807,46 @@ export const messagingService = {
         sender_id: senderId,
         content,
         message_type: messageType,
+        client_nonce: nonce,
         reply_to_id: replyToId || null,
         metadata: metadata ?? null,
       })
       .select('*')
       .single();
 
-    if (error || !data) {
+    if (error) {
+      if (idempotencyService.isDuplicateKeyError(error)) {
+        const existing = await idempotencyService.handleDuplicateSend(conversationId, nonce);
+        if (existing) {
+          return existing;
+        }
+      }
+
+      idempotencyService.markFailed(nonce);
+
       // Si la base distante échoue, préserver la réactivité démo localement
-      return newMsg;
+      const fallbackMsg: Message = {
+        id: `msg-${Date.now()}`,
+        conversation_id: conversationId,
+        sender_id: senderId,
+        content,
+        message_type: messageType,
+        client_nonce: nonce,
+        reply_to_id: replyToId || null,
+        metadata: metadata ?? null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        status: 'sent',
+      };
+      return fallbackMsg;
     }
+
+    if (!data) {
+      idempotencyService.markFailed(nonce);
+      return null;
+    }
+
+    idempotencyService.markConfirmed(nonce);
 
     await supabase
       .from('conversations')
@@ -808,6 +879,8 @@ export const messagingService = {
 
     return {
       ...data,
+      sequence_number: data.sequence_number != null ? Number(data.sequence_number) : undefined,
+      client_nonce: data.client_nonce ?? nonce,
       status: 'sent',
     };
   },
@@ -839,7 +912,14 @@ export const messagingService = {
     return URL.createObjectURL(file);
   },
 
-  async markAsRead(conversationId: string, userId: string): Promise<void> {
+  async markAsRead(
+    conversationId: string,
+    userId: string,
+    sequenceNumber?: number
+  ): Promise<void> {
+    if (sequenceNumber != null) {
+      await sequenceService.markSequenceAsRead(conversationId, userId, sequenceNumber);
+    }
     const supabase = createClient();
     await supabase
       .from('conversation_members')
@@ -1248,7 +1328,7 @@ export const messagingService = {
   async updateMemberRole(
     conversationId: string,
     targetUserId: string,
-    newRole: 'member' | 'admin' | 'owner'
+    newRole: MemberRole
   ): Promise<{ success: boolean; error?: string }> {
     if (conversationId.startsWith('demo-conv-')) {
       return { success: true };
@@ -1307,5 +1387,47 @@ export const messagingService = {
     }
 
     return this.removeGroupMember(conversationId, userId);
+  },
+
+  // ── Facade Domain Sub-services & Extended Operations (Milestone 1) ──────────
+
+  sequence: sequenceService,
+  idempotency: idempotencyService,
+  cursor: cursorPaginationService,
+  offlineQueue: offlineSyncQueue,
+
+  async getMessagesCursor(
+    conversationId: string,
+    options: CursorPaginationOptions = {}
+  ): Promise<PaginatedMessagesResult> {
+    return cursorPaginationService.getMessagesCursor(conversationId, options);
+  },
+
+  async markSequenceAsRead(
+    conversationId: string,
+    userId: string,
+    sequenceNumber: number
+  ): Promise<void> {
+    await sequenceService.markSequenceAsRead(conversationId, userId, sequenceNumber);
+  },
+
+  async reconcileOfflineMessages(
+    conversationId?: string
+  ): Promise<SyncReconciliationResult> {
+    return offlineSyncQueue.reconcile(conversationId, async (pending) => {
+      return this.sendMessage(
+        pending.conversationId,
+        pending.senderId,
+        pending.content,
+        pending.messageType,
+        pending.replyToId,
+        pending.metadata,
+        pending.clientNonce
+      );
+    });
+  },
+
+  getPendingMessages(conversationId?: string): PendingMessage[] {
+    return offlineSyncQueue.getPending(conversationId);
   },
 };

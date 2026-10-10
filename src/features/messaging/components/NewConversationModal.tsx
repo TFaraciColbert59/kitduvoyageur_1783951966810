@@ -32,6 +32,7 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
   const [travelers, setTravelers] = useState<Traveler[]>([]);
   const [loading, setLoading] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -73,15 +74,27 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
 
   const handleStartConversation = async (targetUserId: string) => {
     setStarting(true);
-    const convId = await messagingService.getOrCreateDirectConversation(
-      targetUserId,
-      currentUserId
-    );
-    setStarting(false);
-
-    if (convId) {
-      onConversationCreated(convId);
-      onClose();
+    setStartError(null);
+    try {
+      const convId = await messagingService.getOrCreateDirectConversation(
+        targetUserId,
+        currentUserId
+      );
+      if (convId) {
+        onConversationCreated(convId);
+        onClose();
+      } else {
+        setStartError('Impossible de créer la discussion. Réessayez.');
+      }
+    } catch (err) {
+      console.error('handleStartConversation:', err);
+      setStartError(
+        err instanceof Error && err.message
+          ? err.message
+          : 'Impossible de créer la discussion. Réessayez.'
+      );
+    } finally {
+      setStarting(false);
     }
   };
 
@@ -98,6 +111,11 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
       />
 
       <div className="mt-[var(--space-4)] space-y-[var(--space-2)]">
+        {startError ? (
+          <p role="alert" className="rounded-[var(--lkv-radius-md)] bg-red-500/10 px-3 py-2 text-sm text-red-600">
+            {startError}
+          </p>
+        ) : null}
         {loading ? (
           <div className="space-y-[var(--space-2)]">
             {[1, 2, 3].map((i) => (

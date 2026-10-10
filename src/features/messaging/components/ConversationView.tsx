@@ -19,6 +19,7 @@ import { useRealtimeMessaging } from '../hooks/useRealtimeMessaging';
 import { messagingService } from '../services/messagingService';
 import { MessageList } from './MessageList';
 import { MessageComposer } from './MessageComposer';
+import { ExpeditionRoomCockpit } from './expedition/ExpeditionRoomCockpit';
 import { ForwardMessageSheet } from './ForwardMessageSheet';
 import { ConversationOptionsMenuModal } from './ConversationOptionsMenuModal';
 import { GroupSettingsModal } from './GroupSettingsModal';
@@ -43,6 +44,9 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
   const { haptic } = useHapticFeedback();
   const router = useRouter();
   const isGroup = conversation.type === 'group';
+  // R3 — Expedition Room : la conversation est réunie dans le cockpit unifié
+  // (discussion + météo + tracé GPX + checklist partagée + points de situation).
+  const isExpeditionRoom = conversation.context_type === 'expedition_room';
   const title = conversation.title || (isGroup ? "Groupe d'expédition" : 'Voyageur LKDV');
   const avatarUrl = conversation.avatar_url || '/assets/images/no_image.png';
   // Convention app : photo de profil / nom -> fiche profil (/profil/<id>).
@@ -217,6 +221,90 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
 
   const headerTargetLabel = isGroup ? 'Gérer le groupe' : `Voir le profil de ${title}`;
 
+  // Flux de conversation + composer, mutualisés entre la vue simple et le
+  // cockpit Expedition Room (colonne « Discussion »).
+  const chatStream = (
+    <>
+      <MessageList
+        key={conversation.id}
+        messages={messages}
+        currentUserId={currentUserId}
+        isGroup={isGroup}
+        typingUserNames={typingUserNames}
+        loading={loading}
+        members={members}
+        onReply={(msg) => setReplyToMessage(msg)}
+        onToggleReaction={toggleReaction}
+        onForward={setForwardMessage}
+      />
+
+      {/* Message Request Action Bar (Pending status) */}
+      {convStatus === 'pending' ? (
+        <div className="animate-slide-up flex shrink-0 flex-col gap-[var(--space-3)] border-t border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-4)] pb-[calc(var(--safe-bottom)+var(--space-3))] pt-[var(--space-4)] backdrop-blur-[var(--glass-blur-sm)]">
+          <div className="flex items-center gap-[var(--space-2)]">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-warning)]/15 text-[color:var(--lkv-warning)]">
+              <Icon name="shield-alert" className="size-5" aria-hidden="true" />
+            </div>
+            <div>
+              <p className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
+                Demande de message
+              </p>
+              <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                Souhaitez-vous autoriser {conversation.other_member?.full_name || 'ce voyageur'} à
+                échanger avec vous ?
+              </p>
+            </div>
+          </div>
+
+          {/* Sous 360px les trois actions ne tiennent pas sur une ligne :
+              flex-wrap laisse « Bloquer » passer à la ligne suivante. */}
+          <div className="flex flex-wrap items-center gap-[var(--space-2)] pt-[var(--space-1)]">
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleAcceptRequest}
+              className="flex-1"
+              icon={<Icon name="check" className="size-4" aria-hidden="true" />}
+            >
+              Accepter
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleDeclineRequest}
+              className="flex-1"
+              icon={<Icon name="x" className="size-4" aria-hidden="true" />}
+            >
+              Refuser
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleOpenReportBlock}
+              className="border border-[color:var(--lkv-danger)]/35 text-[color:var(--lkv-danger)] hover:bg-[color:var(--lkv-danger-bg)]"
+            >
+              Bloquer
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <MessageComposer
+          currentUserId={currentUserId}
+          onSendMessage={handleSendMessage}
+          onSendAttachment={handleSendAttachment}
+          onSendVoiceNote={handleSendVoiceNote}
+          onSendGpx={handleSendGpx}
+          onSendProduct={handleSendProduct}
+          onSendTrail={handleSendTrail}
+          onSendKit={handleSendKit}
+          onTyping={sendTypingSignal}
+          replyToMessage={replyToMessage}
+          onCancelReply={() => setReplyToMessage(null)}
+        />
+      )}
+    </>
+  );
+
   return (
     <div className="relative flex h-full w-full flex-col overflow-hidden rounded-none bg-[color:var(--glass-bg-medium)] md:rounded-[var(--lkv-radius-lg)]">
       {/* Top Header avec safe-area iOS */}
@@ -307,82 +395,21 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
         }
       />
 
-      <MessageList
-        key={conversation.id}
-        messages={messages}
-        currentUserId={currentUserId}
-        isGroup={isGroup}
-        typingUserNames={typingUserNames}
-        loading={loading}
-        members={members}
-        onReply={(msg) => setReplyToMessage(msg)}
-        onToggleReaction={toggleReaction}
-        onForward={setForwardMessage}
-      />
-
-      {/* Message Request Action Bar (Pending status) */}
-      {convStatus === 'pending' ? (
-        <div className="animate-slide-up flex shrink-0 flex-col gap-[var(--space-3)] border-t border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-4)] pb-[calc(var(--safe-bottom)+var(--space-3))] pt-[var(--space-4)] backdrop-blur-[var(--glass-blur-sm)]">
-          <div className="flex items-center gap-[var(--space-2)]">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-warning)]/15 text-[color:var(--lkv-warning)]">
-              <Icon name="shield-alert" className="size-5" aria-hidden="true" />
-            </div>
-            <div>
-              <p className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
-                Demande de message
-              </p>
-              <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
-                Souhaitez-vous autoriser {conversation.other_member?.full_name || 'ce voyageur'} à
-                échanger avec vous ?
-              </p>
-            </div>
-          </div>
-
-          {/* Sous 360px les trois actions ne tiennent pas sur une ligne :
-              flex-wrap laisse « Bloquer » passer à la ligne suivante. */}
-          <div className="flex flex-wrap items-center gap-[var(--space-2)] pt-[var(--space-1)]">
-            <Button
-              type="button"
-              variant="primary"
-              onClick={handleAcceptRequest}
-              className="flex-1"
-              icon={<Icon name="check" className="size-4" aria-hidden="true" />}
-            >
-              Accepter
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleDeclineRequest}
-              className="flex-1"
-              icon={<Icon name="x" className="size-4" aria-hidden="true" />}
-            >
-              Refuser
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={handleOpenReportBlock}
-              className="border border-[color:var(--lkv-danger)]/35 text-[color:var(--lkv-danger)] hover:bg-[color:var(--lkv-danger-bg)]"
-            >
-              Bloquer
-            </Button>
-          </div>
+      {isExpeditionRoom ? (
+        <div className="min-h-0 flex-1 overflow-y-auto p-[var(--space-3)]">
+          <ExpeditionRoomCockpit
+            room={{
+              id: conversation.id,
+              title,
+              status: 'active',
+              conversationId: conversation.id,
+            }}
+          >
+            <div className="flex h-[60vh] min-h-0 flex-col md:h-[520px]">{chatStream}</div>
+          </ExpeditionRoomCockpit>
         </div>
       ) : (
-        <MessageComposer
-          currentUserId={currentUserId}
-          onSendMessage={handleSendMessage}
-          onSendAttachment={handleSendAttachment}
-          onSendVoiceNote={handleSendVoiceNote}
-          onSendGpx={handleSendGpx}
-          onSendProduct={handleSendProduct}
-          onSendTrail={handleSendTrail}
-          onSendKit={handleSendKit}
-          onTyping={sendTypingSignal}
-          replyToMessage={replyToMessage}
-          onCancelReply={() => setReplyToMessage(null)}
-        />
+        chatStream
       )}
 
       {/* Group Settings Modal */}

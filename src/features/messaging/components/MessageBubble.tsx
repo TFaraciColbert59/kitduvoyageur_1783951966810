@@ -16,6 +16,22 @@ import { GPXPreviewCard } from './GPXPreviewCard';
 import { ProductCard } from './ProductCard';
 import { TrailCard } from './TrailCard';
 import { KitCard } from './KitCard';
+import { GPXLiveCard } from './GPXLiveCard';
+import { KitLiveCard } from './KitLiveCard';
+import { EquipmentLiveCard } from './EquipmentLiveCard';
+import { ExpeditionLiveCard } from './ExpeditionLiveCard';
+import { PackMergeSheet } from './PackMergeSheet';
+import { computeKitPreviewMergeResult } from '../domain/packMerge';
+import {
+  isGPXSnapshot,
+  isKitSnapshot,
+  isEquipmentSnapshot,
+  isExpeditionSnapshot,
+  type GPXSnapshot,
+  type KitSnapshot,
+  type EquipmentSnapshot,
+  type ExpeditionSnapshot,
+} from '../types/outdoorObjects.types';
 import type {
   ProductMessageMeta,
   TrailMessageMeta,
@@ -59,6 +75,18 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 }) => {
   const { haptic } = useHapticFeedback();
   const [showActionMenu, setShowActionMenu] = useState(false);
+  const [showPackMergeSheet, setShowPackMergeSheet] = useState(false);
+
+  const senderName = message.sender_profile?.full_name || 'Voyageur';
+  const avatarUrl = message.sender_profile?.avatar_url || '/assets/images/no_image.png';
+
+  const kitSnapshot = isKitSnapshot(message.metadata) ? (message.metadata as KitSnapshot) : null;
+  const previewMergeResult = React.useMemo(() => {
+    if (!kitSnapshot) return undefined;
+    return computeKitPreviewMergeResult(kitSnapshot, {
+      currentUserName: !isMine ? senderName : 'Équipier',
+    });
+  }, [kitSnapshot, isMine, senderName]);
 
   // Swipe à droite sur un message reçu → répondre (comme Instagram DM)
   const swipeHandlers = useSwipe(
@@ -72,9 +100,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     },
     { threshold: 60 }
   );
-
-  const senderName = message.sender_profile?.full_name || 'Voyageur';
-  const avatarUrl = message.sender_profile?.avatar_url || '/assets/images/no_image.png';
 
   // Double-tap for ❤️ — hook partagé (mission gestes, Phase 3) ;
   // comportement identique à l'ancien inline (fenêtre 300ms).
@@ -396,10 +421,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               <AudioPlayerBubble audioUrl={message.content} isMine={isMine} />
             )}
 
-            {/* GPX Message Type */}
-            {message.message_type === 'gpx' && (
+            {/* GPX Message Type — Instant SVG Live Card or fallback */}
+            {isGPXSnapshot(message.metadata) ? (
+              <GPXLiveCard snapshot={message.metadata as GPXSnapshot} isMine={isMine} />
+            ) : message.message_type === 'gpx' ? (
               <GPXPreviewCard gpxUrl={message.content} isMine={isMine} />
-            )}
+            ) : null}
 
             {/* Image Message Type — envoi Photo : l'URL (signee ou blob) est
                 portee par content. <img> natif : compatible blob: et hotlinks,
@@ -427,6 +454,34 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               </a>
             )}
 
+            {/* Kit Message Type — Live Card with Pack Merge or legacy */}
+            {isKitSnapshot(message.metadata) ? (
+              <KitLiveCard
+                snapshot={message.metadata as KitSnapshot}
+                isMine={isMine}
+                onPackMerge={() => setShowPackMergeSheet(true)}
+                onOpenPackMerge={() => setShowPackMergeSheet(true)}
+              />
+            ) : message.message_type === 'kit' && message.metadata ? (
+              <KitCard meta={message.metadata as unknown as KitMessageMeta} isMine={isMine} />
+            ) : null}
+
+            {/* Equipment Live Card */}
+            {isEquipmentSnapshot(message.metadata) && (
+              <EquipmentLiveCard
+                snapshot={message.metadata as EquipmentSnapshot}
+                isMine={isMine}
+              />
+            )}
+
+            {/* Expedition Live Card */}
+            {isExpeditionSnapshot(message.metadata) && (
+              <ExpeditionLiveCard
+                snapshot={message.metadata as ExpeditionSnapshot}
+                isMine={isMine}
+              />
+            )}
+
             {/* Product / Trail — cartes cliquables portées par metadata */}
             {message.message_type === 'product' && message.metadata && (
               <ProductCard
@@ -437,9 +492,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             {message.message_type === 'trail' && message.metadata && (
               <TrailCard meta={message.metadata as unknown as TrailMessageMeta} isMine={isMine} />
             )}
-            {message.message_type === 'kit' && message.metadata && (
-              <KitCard meta={message.metadata as unknown as KitMessageMeta} isMine={isMine} />
-            )}
 
             {/* Message Content */}
             {message.message_type !== 'audio' &&
@@ -447,7 +499,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               message.message_type !== 'image' &&
               message.message_type !== 'product' &&
               message.message_type !== 'trail' &&
-              message.message_type !== 'kit' && (
+              message.message_type !== 'kit' &&
+              !isGPXSnapshot(message.metadata) &&
+              !isKitSnapshot(message.metadata) &&
+              !isEquipmentSnapshot(message.metadata) &&
+              !isExpeditionSnapshot(message.metadata) &&
+              Boolean(message.content) && (
                 <p className="whitespace-pre-wrap break-words text-[length:var(--lkv-text-subheadline)] font-normal leading-[1.45]">
                   {message.content}
                 </p>
@@ -457,7 +514,27 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             {firstUrl &&
               message.message_type !== 'audio' &&
               message.message_type !== 'gpx' &&
-              message.message_type !== 'image' && <OpenGraphCard url={firstUrl} isMine={isMine} />}
+              message.message_type !== 'image' &&
+              !isGPXSnapshot(message.metadata) &&
+              !isKitSnapshot(message.metadata) &&
+              !isEquipmentSnapshot(message.metadata) &&
+              !isExpeditionSnapshot(message.metadata) && (
+                <OpenGraphCard url={firstUrl} isMine={isMine} />
+              )}
+
+            {/* Pack Merge Sheet modal for KitLiveCard */}
+            {showPackMergeSheet && kitSnapshot && (
+              <PackMergeSheet
+                isOpen={true}
+                onClose={() => setShowPackMergeSheet(false)}
+                tripTitle={kitSnapshot.title}
+                result={previewMergeResult}
+                kitSnapshot={kitSnapshot}
+                onApplyMerge={() => {
+                  haptic('success');
+                }}
+              />
+            )}
 
             {/* Footer timestamp & status / read receipts */}
             <div className="mt-1.5 flex items-center justify-end gap-[var(--space-1)]">

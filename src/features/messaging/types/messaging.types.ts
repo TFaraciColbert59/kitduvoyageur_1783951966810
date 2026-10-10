@@ -1,4 +1,13 @@
+import type { MessageMetadata } from './outdoorObjects.types';
+
 export type ConversationType = 'direct' | 'group';
+
+export type ConversationContextType =
+  | 'direct'
+  | 'group'
+  | 'club_channel'
+  | 'expedition_room';
+
 export type MessageType =
   | 'text'
   | 'image'
@@ -38,7 +47,8 @@ export interface KitMessageMeta {
   kit_id: string;
   kit_name: string;
 }
-export type MemberRole = 'member' | 'admin' | 'owner';
+
+export type MemberRole = 'member' | 'safety' | 'guide' | 'admin' | 'owner';
 
 export interface UserProfileSummary {
   id: string;
@@ -51,10 +61,12 @@ export interface UserProfileSummary {
 export interface Conversation {
   id: string;
   type: ConversationType;
+  context_type?: ConversationContextType;
   title?: string | null;
   avatar_url?: string | null;
   created_by?: string | null;
   last_message_at: string;
+  last_sequence_number?: number;
   created_at: string;
   updated_at: string;
 
@@ -76,8 +88,10 @@ export interface ConversationMember {
   is_muted: boolean;
   is_archived: boolean;
   last_read_at: string;
+  last_read_sequence?: number;
   unread_count: number;
   joined_at: string;
+  left_at?: string | null;
   profile?: UserProfileSummary;
 }
 
@@ -116,6 +130,8 @@ export interface Message {
   sender_id: string;
   content: string;
   message_type: MessageType;
+  sequence_number?: number;
+  client_nonce?: string | null;
   reply_to_id?: string | null;
   reply_to_message?: {
     id: string;
@@ -130,9 +146,9 @@ export interface Message {
   sender_profile?: UserProfileSummary;
   reactions?: MessageReaction[];
   attachments?: MessageAttachment[];
-  status?: 'sending' | 'sent' | 'error';
-  /** Payload structuré pour les types enrichis ('product', 'trail', transferts…). */
-  metadata?: Record<string, unknown> | null;
+  status?: 'sending' | 'sent' | 'error' | 'pending';
+  /** Payload structuré pour les types enrichis ('product', 'trail', outdoor snapshots…). */
+  metadata?: MessageMetadata | Record<string, unknown> | null;
 }
 
 export interface MessageSummary {
@@ -141,4 +157,69 @@ export interface MessageSummary {
   sender_name: string;
   created_at: string;
   message_type: MessageType;
+  sequence_number?: number;
 }
+
+// ── Domain Foundation Interfaces (Milestone 1) ────────────────────────────────
+
+export interface CursorPaginationOptions {
+  limit?: number; // Par défaut: 50
+  beforeSequence?: number; // Messages plus anciens (scrolling vers le haut)
+  afterSequence?: number; // Messages plus récents (scrolling vers le bas / rattrapage)
+}
+
+export interface PaginatedMessagesResult {
+  messages: Message[];
+  hasMoreBefore: boolean;
+  hasMoreAfter: boolean;
+  earliestSequence: number | null;
+  latestSequence: number | null;
+}
+
+export interface PendingMessage {
+  tempId: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  messageType: MessageType;
+  replyToId?: string;
+  metadata?: Record<string, unknown>;
+  clientNonce: string;
+  createdAt: string;
+  retryCount: number;
+  status: 'pending' | 'syncing' | 'failed';
+  lastError?: string;
+}
+
+export type SyncReconciliationPhase = 'flush_pending' | 'pull_delta' | 'resolve_conflicts';
+
+export interface SyncReconciliationResult {
+  flushedCount: number;
+  failedCount: number;
+  syncedMessages: Message[];
+  newDeltaMessages: Message[];
+}
+
+export interface SequenceUnreadResult {
+  conversationId: string;
+  lastReadSequence: number;
+  lastConversationSequence: number;
+  unreadCount: number;
+}
+
+export interface NonceRecord {
+  clientNonce: string;
+  conversationId: string;
+  createdAt: number;
+  status: 'pending' | 'confirmed' | 'failed';
+}
+
+export type {
+  MessageMetadata,
+  OutdoorObjectSnapshot,
+  GPXSnapshot,
+  KitSnapshot,
+  EquipmentSnapshot,
+  ExpeditionSnapshot,
+} from './outdoorObjects.types';
+
