@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui';
 import { useAdminFetch } from './useCsrfToken';
+import { errorMessage, unwrapData } from './adminResponse';
 import { AdminField, AdminInput, AdminSelect, AdminTextarea } from './AdminField';
 import { slugify } from '@/features/admin/productUtils';
 
@@ -180,8 +181,9 @@ export function ProductEditor({
         body: JSON.stringify(payload),
       });
       const j = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(j?.error ?? `Échec (${res.status})`);
-      const id = (j?.data as { id?: string } | undefined)?.id ?? productId;
+      if (!res.ok) throw new Error(errorMessage(j, `Échec (${res.status})`));
+      const saved = unwrapData<{ success?: boolean; data?: { id?: string } }>(j);
+      const id = saved?.data?.id ?? productId;
       router.push(`/admin/produits/${id}`);
       router.refresh();
     } catch (e) {

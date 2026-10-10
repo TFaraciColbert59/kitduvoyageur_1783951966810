@@ -1,10 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 
 import { logAdminAction } from '@/server/admin/audit';
 import { checkCsrfToken } from '@/server/admin/csrf';
 import { requireAdmin } from '@/server/admin/requireAdmin';
+import { fail, ok } from '@/server/admin/respond';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import { readCorrelationId } from '@/lib/observability/correlation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,12 +24,13 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const correlationId = readCorrelationId(req);
   const gate = await requireAdmin('moderation.write');
   if (!gate.ok) return gate.response;
   const { supabase, user } = gate.ctx;
 
   if (!(await checkCsrfToken(req))) {
-    return NextResponse.json({ error: 'Jeton CSRF invalide' }, { status: 403 });
+    return fail('csrf_invalid', 'Jeton CSRF invalide', 403, correlationId ?? undefined);
   }
   const limited = await enforceRateLimit(user.id, {
     scope: 'admin-moderation',
@@ -39,11 +42,11 @@ export async function PATCH(
 
   const { id } = await params;
   if (!idParam.safeParse(id).success) {
-    return NextResponse.json({ error: 'Identifiant invalide' }, { status: 400 });
+    return fail('invalid_id', 'Identifiant invalide', 400, correlationId ?? undefined);
   }
   const body = decisionSchema.safeParse(await req.json().catch(() => null));
   if (!body.success) {
-    return NextResponse.json({ error: 'Décision invalide' }, { status: 400 });
+    return fail('invalid_decision', 'Décision invalide', 400, correlationId ?? undefined);
   }
 
   const { data, error } = await supabase
@@ -58,7 +61,7 @@ export async function PATCH(
     .single();
   if (error) {
     console.error('[admin/moderation] traitement impossible', { code: error.code });
-    return NextResponse.json({ error: 'Traitement impossible' }, { status: 500 });
+    return fail('process_failed', 'Traitement impossible', 500, correlationId ?? undefined);
   }
 
   await logAdminAction({
@@ -70,5 +73,5 @@ export async function PATCH(
     ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined,
     user_agent: req.headers.get('user-agent') ?? undefined,
   });
-  return NextResponse.json({ success: true, data });
+  return ok({ success: true, data }, { correlationId: correlationId ?? undefined });
 }

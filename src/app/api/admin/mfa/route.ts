@@ -1,9 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 
 import { logAdminAction } from '@/server/admin/audit';
 import { checkCsrfToken } from '@/server/admin/csrf';
 import { requireAdmin } from '@/server/admin/requireAdmin';
+import { fail, ok } from '@/server/admin/respond';
+import { readCorrelationId } from '@/lib/observability/correlation';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 
 export const runtime = 'nodejs';
@@ -20,12 +22,13 @@ const mfaActionSchema = z.discriminatedUnion('action', [
  * précède l'élévation) ; chaque écriture est journalisée.
  */
 export async function POST(req: NextRequest) {
+  const correlationId = readCorrelationId(req);
   const gate = await requireAdmin();
   if (!gate.ok) return gate.response;
   const { supabase, user } = gate.ctx;
 
   if (!(await checkCsrfToken(req))) {
-    return NextResponse.json({ error: 'Jeton CSRF invalide' }, { status: 403 });
+    return fail('invalid_csrf_token', 'Jeton CSRF invalide', 403, correlationId ?? undefined);
   }
   const limited = await enforceRateLimit(user.id, {
     scope: 'admin-mfa',
@@ -37,26 +40,26 @@ export async function POST(req: NextRequest) {
 
   const body = mfaActionSchema.safeParse(await req.json().catch(() => null));
   if (!body.success) {
-    return NextResponse.json({ error: 'Requête invalide' }, { status: 400 });
+    return fail('invalid_request', 'Requête invalide', 400, correlationId ?? undefined);
   }
 
   // Le facteur doit appartenir à l'appelant (jamais de factor_id d'autrui).
   const { data: factors, error: listError } = await supabase.auth.mfa.listFactors();
   if (listError || !factors) {
-    return NextResponse.json({ error: 'Facteurs illisibles' }, { status: 500 });
+    return fail('factors_unreadable', 'Facteurs illisibles', 500, correlationId ?? undefined);
   }
   const owned = [...(factors.totp ?? []), ...(factors.phone ?? [])].some(
     (f) => f.id === body.data.factor_id
   );
   if (!owned) {
-    return NextResponse.json({ error: 'Facteur inconnu' }, { status: 404 });
+    return fail('unknown_factor', 'Facteur inconnu', 404, correlationId ?? undefined);
   }
 
   if (body.data.action === 'unenroll') {
     const { error } = await supabase.auth.mfa.unenroll({ factorId: body.data.factor_id });
     if (error) {
       console.error('[admin/mfa] révocation impossible', { code: error.code });
-      return NextResponse.json({ error: 'Révocation impossible' }, { status: 500 });
+      return fail('revocation_failed', 'Révocation impossible', 500, correlationId ?? undefined);
     }
   }
 
@@ -68,5 +71,5 @@ export async function POST(req: NextRequest) {
     ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined,
     user_agent: req.headers.get('user-agent') ?? undefined,
   });
-  return NextResponse.json({ success: true });
+  return ok({ success: true }, { correlationId: correlationId ?? undefined });
 }

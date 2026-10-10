@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 import { Button } from '@/components/ui';
+import { unwrapData } from '../_components/adminResponse';
 
 function csvCell(value: string | number): string {
   const s = String(value ?? '');
@@ -22,10 +23,15 @@ export function ReportButton({ section, label }: { section: string; label: strin
         cache: 'no-store',
       });
       if (!res.ok) throw new Error(`Échec (${res.status})`);
-      const j = (await res.json()) as { columns: string[]; rows: (string | number)[][] };
+      const out = unwrapData<{ columns: string[]; rows: (string | number)[][] }>(
+        await res.json()
+      );
+      if (!out || !Array.isArray(out.columns) || !Array.isArray(out.rows)) {
+        throw new Error('Réponse illisible');
+      }
       const lines = [
-        j.columns.join(';'),
-        ...j.rows.map((r) => r.map(csvCell).join(';')),
+        out.columns.join(';'),
+        ...out.rows.map((r) => r.map(csvCell).join(';')),
       ];
       const blob = new Blob([`﻿${lines.join('\n')}`], { type: 'text/csv;charset=utf-8' });
       const url = URL.createObjectURL(blob);

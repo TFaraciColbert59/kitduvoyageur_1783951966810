@@ -1,13 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
 import { logAdminAction } from '@/server/admin/audit';
 import { checkCsrfToken } from '@/server/admin/csrf';
 import { requireAdmin } from '@/server/admin/requireAdmin';
+import { fail, ok } from '@/server/admin/respond';
 import { sanitizeIlike } from '@/server/admin/sanitize';
 import { productCreateSchema } from '@/server/admin/productSchemas';
 import { paginationSchema } from '@/server/admin/schemas';
 import { slugify } from '@/features/admin/productUtils';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import { readCorrelationId } from '@/lib/observability/correlation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,6 +19,7 @@ export const dynamic = 'force-dynamic';
  * (inclut les archivés `deleted_at`, avec fanion).
  */
 export async function GET(req: NextRequest) {
+  const correlationId = readCorrelationId(req);
   const gate = await requireAdmin('products.read');
   if (!gate.ok) return gate.response;
   const { supabase } = gate.ctx;
@@ -25,7 +28,7 @@ export async function GET(req: NextRequest) {
     Object.fromEntries(req.nextUrl.searchParams.entries())
   );
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Requête invalide' }, { status: 400 });
+    return fail('invalid_query', 'Requête invalide', 400, correlationId ?? undefined);
   }
   const { page, pageSize } = parsed.data;
   const q = sanitizeIlike(parsed.data.q);
@@ -41,9 +44,12 @@ export async function GET(req: NextRequest) {
   const { data, count, error } = await query;
   if (error) {
     console.error('[admin/products] lecture impossible', { code: error.code });
-    return NextResponse.json({ error: 'Lecture impossible' }, { status: 500 });
+    return fail('read_failed', 'Lecture impossible', 500, correlationId ?? undefined);
   }
-  const res = NextResponse.json({ data: data ?? [], page, pageSize, total: count ?? 0 });
+  const res = ok(
+    { data: data ?? [], page, pageSize, total: count ?? 0 },
+    { correlationId: correlationId ?? undefined }
+  );
   res.headers.set('Cache-Control', 'no-store');
   return res;
 }
@@ -52,12 +58,13 @@ export async function GET(req: NextRequest) {
  * POST /api/admin/products — création (slug auto si absent).
  */
 export async function POST(req: NextRequest) {
+  const correlationId = readCorrelationId(req);
   const gate = await requireAdmin('products.write');
   if (!gate.ok) return gate.response;
   const { supabase, user } = gate.ctx;
 
   if (!(await checkCsrfToken(req))) {
-    return NextResponse.json({ error: 'Jeton CSRF invalide' }, { status: 403 });
+    return fail('csrf_invalid', 'Jeton CSRF invalide', 403, correlationId ?? undefined);
   }
   const limited = await enforceRateLimit(user.id, {
     scope: 'admin-products',
@@ -69,18 +76,12 @@ export async function POST(req: NextRequest) {
 
   const body = productCreateSchema.safeParse(await req.json().catch(() => null));
   if (!body.success) {
-    return NextResponse.json(
-      {
-        error: 'Requête invalide',
-        fields: body.error.issues.map((i) => i.path.join('.')),
-      },
-      { status: 400 }
-    );
+    return fail('invalid_body', 'Requête invalide', 400, correlationId ?? undefined);
   }
 
   const slug = body.data.slug || slugify(body.data.name);
   if (!slug) {
-    return NextResponse.json({ error: 'Slug impossible à générer' }, { status: 400 });
+    return fail('invalid_slug', 'Slug impossible à générer', 400, correlationId ?? undefined);
   }
 
   const { data, error } = await supabase
@@ -90,10 +91,10 @@ export async function POST(req: NextRequest) {
     .single();
   if (error) {
     if (error.code === '23505') {
-      return NextResponse.json({ error: 'Doublon (slug ou référence)' }, { status: 409 });
+      return fail('duplicate', 'Doublon (slug ou référence)', 409, correlationId ?? undefined);
     }
     console.error('[admin/products] création impossible', { code: error.code });
-    return NextResponse.json({ error: 'Création impossible' }, { status: 500 });
+    return fail('create_failed', 'Création impossible', 500, correlationId ?? undefined);
   }
 
   await logAdminAction({
@@ -105,5 +106,5 @@ export async function POST(req: NextRequest) {
     ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined,
     user_agent: req.headers.get('user-agent') ?? undefined,
   });
-  return NextResponse.json({ success: true, data }, { status: 201 });
+  return ok({ success: true, data }, { correlationId: correlationId ?? undefined, status: 201 });
 }

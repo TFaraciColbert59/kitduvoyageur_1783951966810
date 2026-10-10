@@ -1,11 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 
 import { logAdminAction } from '@/server/admin/audit';
 import { checkCsrfToken } from '@/server/admin/csrf';
 import { requireAdmin } from '@/server/admin/requireAdmin';
+import { fail, ok } from '@/server/admin/respond';
 import { stockMoveSchema } from '@/server/admin/productSchemas';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import { readCorrelationId } from '@/lib/observability/correlation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,12 +22,13 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const correlationId = readCorrelationId(req);
   const gate = await requireAdmin('products.write');
   if (!gate.ok) return gate.response;
   const { supabase, user } = gate.ctx;
 
   if (!(await checkCsrfToken(req))) {
-    return NextResponse.json({ error: 'Jeton CSRF invalide' }, { status: 403 });
+    return fail('csrf_invalid', 'Jeton CSRF invalide', 403, correlationId ?? undefined);
   }
   const limited = await enforceRateLimit(user.id, {
     scope: 'admin-products',
@@ -37,17 +40,11 @@ export async function POST(
 
   const { id } = await params;
   if (!idParam.safeParse(id).success) {
-    return NextResponse.json({ error: 'Identifiant invalide' }, { status: 400 });
+    return fail('invalid_id', 'Identifiant invalide', 400, correlationId ?? undefined);
   }
   const body = stockMoveSchema.safeParse(await req.json().catch(() => null));
   if (!body.success) {
-    return NextResponse.json(
-      {
-        error: 'Requête invalide',
-        fields: body.error.issues.map((i) => i.path.join('.')),
-      },
-      { status: 400 }
-    );
+    return fail('invalid_body', 'Requête invalide', 400, correlationId ?? undefined);
   }
 
   const { data: product, error: readError } = await supabase
@@ -56,12 +53,12 @@ export async function POST(
     .eq('id', id)
     .single();
   if (readError || !product) {
-    return NextResponse.json({ error: 'Produit introuvable' }, { status: 404 });
+    return fail('not_found', 'Produit introuvable', 404, correlationId ?? undefined);
   }
   const before = (product as { stock: number }).stock ?? 0;
   const after = before + body.data.quantity_change;
   if (after < 0) {
-    return NextResponse.json({ error: 'Stock résultant négatif' }, { status: 400 });
+    return fail('negative_stock', 'Stock résultant négatif', 400, correlationId ?? undefined);
   }
 
   // Écriture atomique via RPC (pas de lost-update concurrent) ; la trace
@@ -76,7 +73,7 @@ export async function POST(
   });
   if (rpcError) {
     console.error('[admin/stock] mouvement impossible', { code: rpcError.code });
-    return NextResponse.json({ error: 'Mouvement impossible' }, { status: 500 });
+    return fail('stock_move_failed', 'Mouvement impossible', 500, correlationId ?? undefined);
   }
 
   await logAdminAction({
@@ -93,5 +90,5 @@ export async function POST(
     ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined,
     user_agent: req.headers.get('user-agent') ?? undefined,
   });
-  return NextResponse.json({ success: true, data: { before, after } });
+  return ok({ success: true, data: { before, after } }, { correlationId: correlationId ?? undefined });
 }

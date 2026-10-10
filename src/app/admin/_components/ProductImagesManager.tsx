@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui';
 import { useAdminFetch } from './useCsrfToken';
+import { errorMessage } from './adminResponse';
 import { AdminField, AdminInput } from './AdminField';
 import type { ProductImage } from '@/features/admin/productUtils';
 
@@ -27,7 +28,8 @@ export function ProductImagesManager({
     setError(null);
     try {
       const tokenRes = await fetch('/api/admin/csrf', { cache: 'no-store' });
-      const { csrfToken } = (await tokenRes.json()) as { csrfToken: string };
+      const tokenJson = (await tokenRes.json()) as { csrfToken?: string; data?: { csrfToken?: string } };
+      const csrfToken = tokenJson.csrfToken ?? tokenJson.data?.csrfToken ?? '';
       const form = new FormData();
       form.append('product_id', productId);
       form.append('alt', alt);
@@ -39,7 +41,7 @@ export function ProductImagesManager({
       });
       if (!res.ok) {
         const j = await res.json().catch(() => null);
-        throw new Error(j?.error ?? `Échec (${res.status})`);
+        throw new Error(errorMessage(j, `Échec (${res.status})`));
       }
       setAlt('');
       router.refresh();

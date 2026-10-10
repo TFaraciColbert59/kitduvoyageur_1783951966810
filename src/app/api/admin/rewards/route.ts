@@ -1,10 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
 import { logAdminAction } from '@/server/admin/audit';
 import { checkCsrfToken } from '@/server/admin/csrf';
 import { requireAdmin } from '@/server/admin/requireAdmin';
+import { fail, ok } from '@/server/admin/respond';
 import { rewardsActionSchema } from '@/server/admin/schemas';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import { readCorrelationId } from '@/lib/observability/correlation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,12 +19,13 @@ const MAX_BODY_BYTES = 64 * 1024;
  * erreurs génériques (jamais de `error.message` brut).
  */
 export async function POST(req: NextRequest) {
+  const correlationId = readCorrelationId(req);
   const gate = await requireAdmin('rewards.write');
   if (!gate.ok) return gate.response;
   const { supabase, user } = gate.ctx;
 
   if (!(await checkCsrfToken(req))) {
-    return NextResponse.json({ error: 'Jeton CSRF invalide' }, { status: 403 });
+    return fail('csrf_invalid', 'Jeton CSRF invalide', 403, correlationId ?? undefined);
   }
 
   const limited = await enforceRateLimit(user.id, {
@@ -35,25 +38,19 @@ export async function POST(req: NextRequest) {
 
   const contentLength = Number(req.headers.get('content-length') ?? '0');
   if (contentLength > MAX_BODY_BYTES) {
-    return NextResponse.json({ error: 'Corps trop volumineux' }, { status: 413 });
+    return fail('payload_too_large', 'Corps trop volumineux', 413, correlationId ?? undefined);
   }
 
   let raw: unknown;
   try {
     raw = await req.json();
   } catch {
-    return NextResponse.json({ error: 'JSON invalide' }, { status: 400 });
+    return fail('invalid_json', 'JSON invalide', 400, correlationId ?? undefined);
   }
 
   const parsed = rewardsActionSchema.safeParse(raw);
   if (!parsed.success) {
-    return NextResponse.json(
-      {
-        error: 'Requête invalide',
-        fields: parsed.error.issues.map((i) => i.path.join('.')),
-      },
-      { status: 400 }
-    );
+    return fail('invalid_body', 'Requête invalide', 400, correlationId ?? undefined);
   }
 
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined;
@@ -69,7 +66,7 @@ export async function POST(req: NextRequest) {
         });
         if (error) {
           console.error('[admin/rewards] finalize_period refusé', { code: error.code });
-          return NextResponse.json({ error: 'Opération refusée' }, { status: 400 });
+          return fail('operation_rejected', 'Opération refusée', 400, correlationId ?? undefined);
         }
         await logAdminAction({
           action: 'rewards.finalize_period',
@@ -80,7 +77,7 @@ export async function POST(req: NextRequest) {
           ip,
           user_agent: userAgent,
         });
-        return NextResponse.json({ success: true, data });
+        return ok({ success: true, data }, { correlationId: correlationId ?? undefined });
       }
 
       case 'process_withdrawal': {
@@ -93,7 +90,7 @@ export async function POST(req: NextRequest) {
         });
         if (error) {
           console.error('[admin/rewards] process_withdrawal refusé', { code: error.code });
-          return NextResponse.json({ error: 'Opération refusée' }, { status: 400 });
+          return fail('operation_rejected', 'Opération refusée', 400, correlationId ?? undefined);
         }
         await logAdminAction({
           action: approve ? 'rewards.withdrawal.approve' : 'rewards.withdrawal.reject',
@@ -104,7 +101,7 @@ export async function POST(req: NextRequest) {
           ip,
           user_agent: userAgent,
         });
-        return NextResponse.json({ success: true, data });
+        return ok({ success: true, data }, { correlationId: correlationId ?? undefined });
       }
 
       case 'process_contribution': {
@@ -116,7 +113,7 @@ export async function POST(req: NextRequest) {
         });
         if (error) {
           console.error('[admin/rewards] process_contribution refusé', { code: error.code });
-          return NextResponse.json({ error: 'Opération refusée' }, { status: 400 });
+          return fail('operation_rejected', 'Opération refusée', 400, correlationId ?? undefined);
         }
         await logAdminAction({
           action: 'rewards.contribution.process',
@@ -127,7 +124,7 @@ export async function POST(req: NextRequest) {
           ip,
           user_agent: userAgent,
         });
-        return NextResponse.json({ success: true, data });
+        return ok({ success: true, data }, { correlationId: correlationId ?? undefined });
       }
 
       case 'update_config': {
@@ -143,7 +140,7 @@ export async function POST(req: NextRequest) {
           .select();
         if (error) {
           console.error('[admin/rewards] update_config refusé', { code: error.code });
-          return NextResponse.json({ error: 'Opération refusée' }, { status: 400 });
+          return fail('operation_rejected', 'Opération refusée', 400, correlationId ?? undefined);
         }
         await logAdminAction({
           action: 'rewards.config.update',
@@ -154,13 +151,13 @@ export async function POST(req: NextRequest) {
           ip,
           user_agent: userAgent,
         });
-        return NextResponse.json({ success: true, data });
+        return ok({ success: true, data }, { correlationId: correlationId ?? undefined });
       }
     }
   } catch (err) {
     console.error('[admin/rewards] erreur inattendue', {
       message: err instanceof Error ? err.message : 'unknown',
     });
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+    return fail('internal_error', 'Erreur serveur', 500, correlationId ?? undefined);
   }
 }

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui';
 import { useAdminFetch } from './useCsrfToken';
+import { errorMessage } from './adminResponse';
 import { AdminField, AdminInput } from './AdminField';
 
 /** Îlot client : approuver / rejeter un retrait via la route durcie. */
@@ -32,7 +33,7 @@ export function WithdrawalActions({ withdrawalId }: { withdrawalId: string }) {
       });
       if (!res.ok) {
         const j = await res.json().catch(() => null);
-        throw new Error(j?.error ?? `Échec (${res.status})`);
+        throw new Error(errorMessage(j, `Échec (${res.status})`));
       }
       router.refresh();
     } catch (e) {
@@ -104,7 +105,7 @@ export function FinalizePeriodForm() {
       });
       if (!res.ok) {
         const j = await res.json().catch(() => null);
-        throw new Error(j?.error ?? `Échec (${res.status})`);
+        throw new Error(errorMessage(j, `Échec (${res.status})`));
       }
       setDone(true);
       router.refresh();

@@ -55,34 +55,32 @@ describe('requireAdmin', () => {
     if (res.ok) expect(res.ctx.user).toEqual(USER);
   });
 
-  it('repli is_admin quand has_permission échoue (migration non déployée)', async () => {
+  it('503 fail-closed quand has_permission échoue (aucun repli is_admin)', async () => {
     const client = clientWith(USER, (name) => {
       if (name === 'has_permission') return { data: null, error: { code: '42883' } };
-      if (name === 'is_admin') return { data: true, error: null };
       return { data: null, error: null };
     });
     mocks.createClient.mockResolvedValue(client);
     const res = await requireAdmin('users.read');
-    expect(res.ok).toBe(true);
-    expect(client.rpc).toHaveBeenCalledWith('is_admin');
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.response.status).toBe(503);
+    expect(client.rpc).not.toHaveBeenCalledWith('is_admin');
   });
 
-  it('403 quand has_permission est faux et is_admin est faux', async () => {
-    mocks.createClient.mockResolvedValue(
-      clientWith(USER, () => ({ data: false, error: null }))
-    );
+  it('403 quand has_permission est faux, sans appeler is_admin', async () => {
+    const client = clientWith(USER, () => ({ data: false, error: null }));
+    mocks.createClient.mockResolvedValue(client);
     const res = await requireAdmin('rewards.write');
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.response.status).toBe(403);
+    expect(client.rpc).not.toHaveBeenCalledWith('is_admin');
   });
 
-  it('403 quand les deux RPC échouent', async () => {
-    mocks.createClient.mockResolvedValue(
-      clientWith(USER, () => ({ data: null, error: { code: 'XX000' } }))
-    );
+  it("n'appelle jamais is_admin (autorité canonique unique)", async () => {    const client = clientWith(USER, () => ({ data: true, error: null }));
+    mocks.createClient.mockResolvedValue(client);
     const res = await requireAdmin('audit.read');
-    expect(res.ok).toBe(false);
-    if (!res.ok) expect(res.response.status).toBe(403);
+    expect(res.ok).toBe(true);
+    expect(client.rpc).not.toHaveBeenCalledWith('is_admin');
   });
 
   it('ok sur permission critique avec session AAL2', async () => {
@@ -113,6 +111,30 @@ describe('requireAdmin', () => {
       clientWith(USER, () => ({ data: true, error: null }), 'error')
     );
     const res = await requireAdmin('rewards.write');
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.response.status).toBe(403);
+  });
+
+  it('élévation JIT active habilite sans rôle (sans is_admin)', async () => {
+    const client = clientWith(USER, (name) => {
+      if (name === 'has_permission') return { data: false, error: null };
+      if (name === 'has_active_elevation') return { data: true, error: null };
+      return { data: false, error: null };
+    }, 'aal2');
+    mocks.createClient.mockResolvedValue(client);
+    const res = await requireAdmin('commerce.refund.approve');
+    expect(res.ok).toBe(true);
+    expect(client.rpc).toHaveBeenCalledWith('has_active_elevation', {
+      p_code: 'commerce.refund.approve',
+    });
+    expect(client.rpc).not.toHaveBeenCalledWith('is_admin');
+  });
+
+  it('403 quand ni permission ni élévation', async () => {
+    mocks.createClient.mockResolvedValue(
+      clientWith(USER, () => ({ data: false, error: null }))
+    );
+    const res = await requireAdmin('commerce.refund.approve');
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.response.status).toBe(403);
   });

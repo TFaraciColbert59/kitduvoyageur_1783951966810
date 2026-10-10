@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { Button, ErrorState, Spinner } from '@/components/ui';
 import { useAdminFetch } from './useCsrfToken';
+import { errorMessage, unwrapData } from './adminResponse';
 import { ProductEditor, type ProductFormState } from './ProductEditor';
 import { ProductImagesManager } from './ProductImagesManager';
 import { StockAdjust } from './StockAdjust';
@@ -73,7 +74,8 @@ export function ProductDetailLoader({ id }: { id: string }) {
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
         if (!cancelled) {
-          if (j?.data) setDetail(j.data as Detail);
+          const payload = unwrapData<{ data: Detail }>(j);
+          if (payload?.data) setDetail(payload.data);
           else setFailed(true);
         }
       })
@@ -99,7 +101,7 @@ export function ProductDetailLoader({ id }: { id: string }) {
       router.push('/admin/produits');
     } else {
       const j = await res.json().catch(() => null);
-      setArchiveError(j?.error ?? `Échec (${res.status})`);
+      setArchiveError(errorMessage(j, `Échec (${res.status})`));
     }
   }
 

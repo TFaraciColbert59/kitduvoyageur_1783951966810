@@ -1,0 +1,38 @@
+/**
+ * Pont de tokens Admin OS → design system canonique.
+ * AUCUNE valeur inventée : `--os-*` mappés vers les tokens existants
+ * (`src/design/tokens.ts`, `src/styles/tokens.css`, `liquid-glass.css`).
+ * Importé par `src/app/admin/_os/admin-os.css` (bridge, pas fork).
+ */
+
+:root {
+  --os-ink: var(--ink, #17251b);
+  --os-green: var(--forest, #1e5c38);
+  --os-paper: var(--paper, #fbfaf6);
+  --os-warning: var(--warning, #b45309);
+  --os-danger: var(--danger, #b91c1c);
+  --os-info: var(--info, #1d4ed8);
+}
+
+.os-risk {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.os-risk-0 { background: rgba(30, 92, 56, 0.12); }
+.os-risk-1 { background: rgba(29, 78, 216, 0.12); }
+.os-risk-2 { background: rgba(180, 83, 9, 0.16); }
+.os-risk-3 { background: rgba(180, 83, 9, 0.28); }
+.os-risk-4 { background: rgba(185, 28, 28, 0.16); }
+
+@supports (background: color-mix(in srgb, red 50%, transparent)) {
+  .os-risk-0 { background: color-mix(in srgb, var(--os-green) 12%, transparent); }
+  .os-risk-1 { background: color-mix(in srgb, var(--os-info) 12%, transparent); }
+  .os-risk-2 { background: color-mix(in srgb, var(--os-warning) 16%, transparent); }
+  .os-risk-3 { background: color-mix(in srgb, var(--os-warning) 28%, transparent); }
+  .os-risk-4 { background: color-mix(in srgb, var(--os-danger) 16%, transparent); }
+}

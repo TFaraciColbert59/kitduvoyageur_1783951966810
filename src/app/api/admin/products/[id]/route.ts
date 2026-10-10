@@ -1,11 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 
 import { logAdminAction } from '@/server/admin/audit';
 import { checkCsrfToken } from '@/server/admin/csrf';
 import { requireAdmin } from '@/server/admin/requireAdmin';
+import { fail, ok } from '@/server/admin/respond';
 import { productUpdateSchema } from '@/server/admin/productSchemas';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import { readCorrelationId } from '@/lib/observability/correlation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -14,16 +16,17 @@ const idParam = z.string().uuid();
 
 /** GET /api/admin/products/[id] — fiche + images + mouvements. */
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const correlationId = readCorrelationId(req);
   const gate = await requireAdmin('products.read');
   if (!gate.ok) return gate.response;
   const { supabase } = gate.ctx;
 
   const { id } = await params;
   if (!idParam.safeParse(id).success) {
-    return NextResponse.json({ error: 'Identifiant invalide' }, { status: 400 });
+    return fail('invalid_id', 'Identifiant invalide', 400, correlationId ?? undefined);
   }
 
   const [product, images, movements] = await Promise.all([
@@ -41,15 +44,18 @@ export async function GET(
       .limit(50),
   ]);
   if (product.error) {
-    return NextResponse.json({ error: 'Produit introuvable' }, { status: 404 });
+    return fail('not_found', 'Produit introuvable', 404, correlationId ?? undefined);
   }
-  const res = NextResponse.json({
-    data: {
-      product: product.data,
-      images: images.data ?? [],
-      movements: movements.data ?? [],
+  const res = ok(
+    {
+      data: {
+        product: product.data,
+        images: images.data ?? [],
+        movements: movements.data ?? [],
+      },
     },
-  });
+    { correlationId: correlationId ?? undefined }
+  );
   res.headers.set('Cache-Control', 'no-store');
   return res;
 }
@@ -59,12 +65,13 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const correlationId = readCorrelationId(req);
   const gate = await requireAdmin('products.write');
   if (!gate.ok) return gate.response;
   const { supabase, user } = gate.ctx;
 
   if (!(await checkCsrfToken(req))) {
-    return NextResponse.json({ error: 'Jeton CSRF invalide' }, { status: 403 });
+    return fail('csrf_invalid', 'Jeton CSRF invalide', 403, correlationId ?? undefined);
   }
   const limited = await enforceRateLimit(user.id, {
     scope: 'admin-products',
@@ -76,17 +83,11 @@ export async function PATCH(
 
   const { id } = await params;
   if (!idParam.safeParse(id).success) {
-    return NextResponse.json({ error: 'Identifiant invalide' }, { status: 400 });
+    return fail('invalid_id', 'Identifiant invalide', 400, correlationId ?? undefined);
   }
   const body = productUpdateSchema.safeParse(await req.json().catch(() => null));
   if (!body.success) {
-    return NextResponse.json(
-      {
-        error: 'Requête invalide',
-        fields: body.error.issues.map((i) => i.path.join('.')),
-      },
-      { status: 400 }
-    );
+    return fail('invalid_body', 'Requête invalide', 400, correlationId ?? undefined);
   }
 
   const { data, error } = await supabase
@@ -97,10 +98,10 @@ export async function PATCH(
     .single();
   if (error) {
     if (error.code === '23505') {
-      return NextResponse.json({ error: 'Doublon (slug ou référence)' }, { status: 409 });
+      return fail('duplicate', 'Doublon (slug ou référence)', 409, correlationId ?? undefined);
     }
     console.error('[admin/products] mise à jour impossible', { code: error.code });
-    return NextResponse.json({ error: 'Mise à jour impossible' }, { status: 500 });
+    return fail('update_failed', 'Mise à jour impossible', 500, correlationId ?? undefined);
   }
 
   await logAdminAction({
@@ -112,7 +113,7 @@ export async function PATCH(
     ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined,
     user_agent: req.headers.get('user-agent') ?? undefined,
   });
-  return NextResponse.json({ success: true, data });
+  return ok({ success: true, data }, { correlationId: correlationId ?? undefined });
 }
 
 /** DELETE /api/admin/products/[id] — archivage (soft-delete, jamais de suppression dure). */
@@ -120,12 +121,13 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const correlationId = readCorrelationId(req);
   const gate = await requireAdmin('products.write');
   if (!gate.ok) return gate.response;
   const { supabase, user } = gate.ctx;
 
   if (!(await checkCsrfToken(req))) {
-    return NextResponse.json({ error: 'Jeton CSRF invalide' }, { status: 403 });
+    return fail('csrf_invalid', 'Jeton CSRF invalide', 403, correlationId ?? undefined);
   }
   const limited = await enforceRateLimit(user.id, {
     scope: 'admin-products',
@@ -137,7 +139,7 @@ export async function DELETE(
 
   const { id } = await params;
   if (!idParam.safeParse(id).success) {
-    return NextResponse.json({ error: 'Identifiant invalide' }, { status: 400 });
+    return fail('invalid_id', 'Identifiant invalide', 400, correlationId ?? undefined);
   }
 
   const now = new Date().toISOString();
@@ -147,7 +149,7 @@ export async function DELETE(
     .eq('id', id);
   if (error) {
     console.error('[admin/products] archivage impossible', { code: error.code });
-    return NextResponse.json({ error: 'Archivage impossible' }, { status: 500 });
+    return fail('archive_failed', 'Archivage impossible', 500, correlationId ?? undefined);
   }
 
   await logAdminAction({
@@ -158,5 +160,5 @@ export async function DELETE(
     ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined,
     user_agent: req.headers.get('user-agent') ?? undefined,
   });
-  return NextResponse.json({ success: true });
+  return ok({ success: true }, { correlationId: correlationId ?? undefined });
 }

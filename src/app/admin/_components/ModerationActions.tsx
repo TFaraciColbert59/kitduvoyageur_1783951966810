@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui';
 import { useAdminFetch } from './useCsrfToken';
+import { errorMessage } from './adminResponse';
 
 type Decision = 'approuve' | 'rejete' | 'signale';
 
@@ -25,7 +26,7 @@ export function ModerationActions({ id }: { id: string }) {
       });
       if (!res.ok) {
         const j = await res.json().catch(() => null);
-        throw new Error(j?.error ?? `Échec (${res.status})`);
+        throw new Error(errorMessage(j, `Échec (${res.status})`));
       }
       router.refresh();
     } catch (e) {

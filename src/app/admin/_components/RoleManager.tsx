@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui';
 import { useAdminFetch } from './useCsrfToken';
+import { errorMessage } from './adminResponse';
 import { AdminInput, AdminSelect, AdminField } from './AdminField';
 
 const GRANTABLE_ROLES = ['super_admin', 'admin', 'moderateur'] as const;
@@ -31,7 +32,7 @@ export function RoleManager({ userId, roles }: { userId: string; roles: string[]
       });
       if (!res.ok) {
         const j = await res.json().catch(() => null);
-        throw new Error(j?.error ?? `Échec (${res.status})`);
+        throw new Error(errorMessage(j, `Échec (${res.status})`));
       }
       router.refresh();
     } catch (e) {
@@ -51,7 +52,7 @@ export function RoleManager({ userId, roles }: { userId: string; roles: string[]
       });
       if (!res.ok) {
         const j = await res.json().catch(() => null);
-        throw new Error(j?.error ?? `Échec (${res.status})`);
+        throw new Error(errorMessage(j, `Échec (${res.status})`));
       }
       router.refresh();
     } catch (e) {

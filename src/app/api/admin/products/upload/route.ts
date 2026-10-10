@@ -1,10 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 
 import { logAdminAction } from '@/server/admin/audit';
 import { checkCsrfToken } from '@/server/admin/csrf';
 import { requireAdmin } from '@/server/admin/requireAdmin';
+import { fail, ok } from '@/server/admin/respond';
+import { readCorrelationId } from '@/lib/observability/correlation';
 import { getServiceSupabase } from '@/lib/ai/serviceClient';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 
@@ -21,12 +23,13 @@ const BUCKET = 'product-images';
  * Écriture Storage via service_role (jamais depuis le navigateur).
  */
 export async function POST(req: NextRequest) {
+  const correlationId = readCorrelationId(req);
   const gate = await requireAdmin('products.write');
   if (!gate.ok) return gate.response;
   const { supabase, user } = gate.ctx;
 
   if (!(await checkCsrfToken(req))) {
-    return NextResponse.json({ error: 'Jeton CSRF invalide' }, { status: 403 });
+    return fail('invalid_csrf_token', 'Jeton CSRF invalide', 403, correlationId ?? undefined);
   }
   const limited = await enforceRateLimit(user.id, {
     scope: 'admin-products-upload',
@@ -40,7 +43,7 @@ export async function POST(req: NextRequest) {
   try {
     form = await req.formData();
   } catch {
-    return NextResponse.json({ error: 'Formulaire illisible' }, { status: 400 });
+    return fail('unreadable_form', 'Formulaire illisible', 400, correlationId ?? undefined);
   }
 
   const productId = form.get('product_id');
@@ -51,13 +54,13 @@ export async function POST(req: NextRequest) {
     !z.string().uuid().safeParse(productId).success ||
     !(file instanceof File)
   ) {
-    return NextResponse.json({ error: 'Paramètres invalides' }, { status: 400 });
+    return fail('invalid_params', 'Paramètres invalides', 400, correlationId ?? undefined);
   }
   if (!ALLOWED_TYPES.includes(file.type as (typeof ALLOWED_TYPES)[number])) {
-    return NextResponse.json({ error: 'Type de fichier refusé' }, { status: 400 });
+    return fail('file_type_rejected', 'Type de fichier refusé', 400, correlationId ?? undefined);
   }
   if (file.size === 0 || file.size > MAX_BYTES) {
-    return NextResponse.json({ error: 'Fichier trop volumineux (5 Mo max)' }, { status: 400 });
+    return fail('file_too_large', 'Fichier trop volumineux (5 Mo max)', 400, correlationId ?? undefined);
   }
   const altText = typeof alt === 'string' ? alt.slice(0, 255) : '';
 
@@ -67,12 +70,12 @@ export async function POST(req: NextRequest) {
     .eq('id', productId)
     .single();
   if (!product) {
-    return NextResponse.json({ error: 'Produit introuvable' }, { status: 404 });
+    return fail('product_not_found', 'Produit introuvable', 404, correlationId ?? undefined);
   }
 
   const service = getServiceSupabase();
   if (!service) {
-    return NextResponse.json({ error: 'Stockage indisponible' }, { status: 503 });
+    return fail('storage_unavailable', 'Stockage indisponible', 503, correlationId ?? undefined);
   }
 
   const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
@@ -83,7 +86,7 @@ export async function POST(req: NextRequest) {
     .upload(storagePath, bytes, { contentType: file.type, upsert: false });
   if (uploadError) {
     console.error('[admin/upload] téléversement impossible', { code: uploadError });
-    return NextResponse.json({ error: 'Téléversement impossible' }, { status: 500 });
+    return fail('upload_failed', 'Téléversement impossible', 500, correlationId ?? undefined);
   }
 
   const { data: urlData } = service.storage.from(BUCKET).getPublicUrl(storagePath);
@@ -107,7 +110,7 @@ export async function POST(req: NextRequest) {
   if (rowError) {
     await service.storage.from(BUCKET).remove([storagePath]);
     console.error('[admin/upload] fiche impossible', { code: rowError.code });
-    return NextResponse.json({ error: 'Fiche image impossible' }, { status: 500 });
+    return fail('image_record_failed', 'Fiche image impossible', 500, correlationId ?? undefined);
   }
 
   await logAdminAction({
@@ -119,5 +122,8 @@ export async function POST(req: NextRequest) {
     ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined,
     user_agent: req.headers.get('user-agent') ?? undefined,
   });
-  return NextResponse.json({ success: true, data: row }, { status: 201 });
+  return ok(
+    { success: true, data: row },
+    { correlationId: correlationId ?? undefined, status: 201 }
+  );
 }

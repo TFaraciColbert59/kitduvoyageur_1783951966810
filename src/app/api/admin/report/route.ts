@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
 import { requireAdmin } from '@/server/admin/requireAdmin';
+import { fail, ok } from '@/server/admin/respond';
+import { readCorrelationId } from '@/lib/observability/correlation';
 import { logAdminAction } from '@/server/admin/audit';
 import {
   listAuditPage,
@@ -41,9 +43,10 @@ const PERMISSION: Record<Section, string> = {
  * Données réelles uniquement, journalisé (export = action sensible).
  */
 export async function GET(req: NextRequest) {
+  const correlationId = readCorrelationId(req);
   const section = req.nextUrl.searchParams.get('section') as Section | null;
   if (!section || !SECTIONS.includes(section)) {
-    return NextResponse.json({ error: 'Section inconnue' }, { status: 400 });
+    return fail('unknown_section', 'Section inconnue', 400, correlationId ?? undefined);
   }
   const gate = await requireAdmin(PERMISSION[section]);
   if (!gate.ok) return gate.response;
@@ -104,7 +107,7 @@ export async function GET(req: NextRequest) {
       }
     }
   } catch {
-    return NextResponse.json({ error: 'Export impossible' }, { status: 500 });
+    return fail('export_failed', 'Export impossible', 500, correlationId ?? undefined);
   }
 
   await logAdminAction({
@@ -115,7 +118,10 @@ export async function GET(req: NextRequest) {
     ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined,
     user_agent: req.headers.get('user-agent') ?? undefined,
   });
-  const res = NextResponse.json({ ...out, total: out.rows.length });
+  const res = ok(
+    { ...out, total: out.rows.length },
+    { correlationId: correlationId ?? undefined }
+  );
   res.headers.set('Cache-Control', 'no-store');
   return res;
 }

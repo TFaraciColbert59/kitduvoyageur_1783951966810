@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui';
 import { useAdminFetch } from './useCsrfToken';
+import { errorMessage } from './adminResponse';
 import { AdminField, AdminInput, AdminSelect } from './AdminField';
 import type { StockMovement } from '@/features/admin/productUtils';
 
@@ -39,7 +40,7 @@ export function StockAdjust({
         }),
       });
       const j = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(j?.error ?? `Échec (${res.status})`);
+      if (!res.ok) throw new Error(errorMessage(j, `Échec (${res.status})`));
       setNotes('');
       router.refresh();
     } catch (e) {

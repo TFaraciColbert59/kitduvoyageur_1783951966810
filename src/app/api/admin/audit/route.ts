@@ -1,7 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
 import { requireAdmin } from '@/server/admin/requireAdmin';
+import { fail, ok } from '@/server/admin/respond';
 import { auditQuerySchema } from '@/server/admin/schemas';
+import { readCorrelationId } from '@/lib/observability/correlation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,6 +13,7 @@ export const dynamic = 'force-dynamic';
  * Lecture du journal append-only (permission `audit.read`).
  */
 export async function GET(req: NextRequest) {
+  const correlationId = readCorrelationId(req);
   const gate = await requireAdmin('audit.read');
   if (!gate.ok) return gate.response;
   const { supabase } = gate.ctx;
@@ -19,12 +22,11 @@ export async function GET(req: NextRequest) {
     Object.fromEntries(req.nextUrl.searchParams.entries())
   );
   if (!parsed.success) {
-    return NextResponse.json(
-      {
-        error: 'Requête invalide',
-        fields: parsed.error.issues.map((i) => i.path.join('.')),
-      },
-      { status: 400 }
+    return fail(
+      'invalid_query',
+      'Requête invalide',
+      400,
+      correlationId ?? undefined
     );
   }
   const { page, pageSize, action, target_table, actor_id } = parsed.data;
@@ -46,10 +48,13 @@ export async function GET(req: NextRequest) {
   const { data, count, error } = await query;
   if (error) {
     console.error('[admin/audit] lecture impossible', { code: error.code });
-    return NextResponse.json({ error: 'Lecture impossible' }, { status: 500 });
+    return fail('read_failed', 'Lecture impossible', 500, correlationId ?? undefined);
   }
 
-  const res = NextResponse.json({ data: data ?? [], page, pageSize, total: count ?? 0 });
+  const res = ok(
+    { data: data ?? [], page, pageSize, total: count ?? 0 },
+    { correlationId: correlationId ?? undefined }
+  );
   res.headers.set('Cache-Control', 'no-store');
   return res;
 }

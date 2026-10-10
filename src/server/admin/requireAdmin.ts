@@ -10,8 +10,10 @@ import { getAssuranceLevel, requiresAal2 } from '@/server/admin/mfa';
  * Garde admin serveur — À appeler en tête de chaque API `/api/admin/*`
  * et Server Action d'administration.
  *
- * 401 si non authentifié, 403 si `has_permission(code)` est faux
- * (avec repli `is_admin()` si la migration RBAC n'est pas encore appliquée),
+ * Autorité canonique unique : `has_permission(code)` sur `user_roles`
+ * (migration P0-02, sans repli `is_admin()`).
+ * 401 si non authentifié, 503 si le contrôle de permission est
+ * injoignable (fail-closed, jamais de bypass), 403 si refusé,
  * 403 si la permission exige AAL2 (MFA) et que la session est AAL1.
  * Retourne le client RLS de l'appelant : les lectures/écritures restent
  * soumises aux policies (défense en profondeur, jamais de service_role ici).
@@ -45,12 +47,25 @@ export async function requireAdmin(
   const { data: perm, error: permError } = await supabase.rpc('has_permission', {
     p_code: code,
   });
-  if (!permError && perm === true) {
+  if (permError) {
+    // Fail-closed : contrôle injoignable → 503, jamais de repli is_admin().
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { error: 'Contrôle des permissions indisponible' },
+        { status: 503 }
+      ),
+    };
+  }
+  if (perm === true) {
     allowed = true;
   } else {
-    // Filet : migration RBAC pas encore déployée → ancien prédicat.
-    const { data: legacy } = await supabase.rpc('is_admin');
-    allowed = legacy === true;
+    // Élévation JIT active (≤ 8 h, auditée à l'octroi) : habilitation
+    // temporaire explicite. Usage tracé par les audits de commandes.
+    const { data: elevated } = await supabase.rpc('has_active_elevation', {
+      p_code: code,
+    });
+    allowed = elevated === true;
   }
 
   if (!allowed) {

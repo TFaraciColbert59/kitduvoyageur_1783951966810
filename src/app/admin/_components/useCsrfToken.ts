@@ -10,7 +10,9 @@ export function useCsrfToken(): string | null {
     fetch('/api/admin/csrf', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
-        if (!cancelled && j?.csrfToken) setToken(j.csrfToken as string);
+        const t = (j as { csrfToken?: string; data?: { csrfToken?: string } } | null)?.csrfToken
+          ?? (j as { data?: { csrfToken?: string } } | null)?.data?.csrfToken;
+        if (!cancelled && t) setToken(t as string);
       })
       .catch(() => {});
     return () => {

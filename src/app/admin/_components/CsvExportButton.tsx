@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui';
 import { buildProductsCsv, type ShopProduct } from '@/features/admin/productUtils';
+import { unwrapData } from './adminResponse';
 
 /** Îlot client : export CSV du catalogue (recherche courante, toutes pages). */
 export function CsvExportButton({ q }: { q: string }) {
@@ -23,9 +24,10 @@ export function CsvExportButton({ q }: { q: string }) {
           { cache: 'no-store' }
         );
         if (!res.ok) throw new Error(`Échec (${res.status})`);
-        const j = (await res.json()) as { data: ShopProduct[]; total: number };
-        all.push(...j.data);
-        total = j.total;
+        const paging = unwrapData<{ data: ShopProduct[]; total: number }>(await res.json());
+        if (!paging || !Array.isArray(paging.data)) throw new Error('Réponse illisible');
+        all.push(...paging.data);
+        total = paging.total;
         page += 1;
         if (page > 100) break;
       }
