@@ -59,6 +59,9 @@ export const GDPR_USER_TABLES: readonly GdprUserTable[] = [
   { table: 'territory_change_log', userColumn: 'user_id' },
   { table: 'user_territory', userColumn: 'user_id' },
   { table: 'user_territory_private', userColumn: 'user_id' },
+  // Profil voyageur du Compas (migration 20261010100000, PLAN-100 4.1) : nationalité,
+  // résidence, domicile arrondi — données de la personne, rendues à elle seule.
+  { table: 'user_traveller', userColumn: 'user_id' },
 ] as const;
 
 /** Tables enfants d'un AdventurePlan (liées par `plan_id`). */

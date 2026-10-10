@@ -97,6 +97,7 @@ describe('A14 — RGPD export/suppression (TEST-A14-GDPR)', () => {
       'territory_change_log',
       'user_territory',
       'user_territory_private',
+      'user_traveller',
     ]);
     expect(names.some((name) => /sant|health|medical/.test(name))).toBe(false);
   });
