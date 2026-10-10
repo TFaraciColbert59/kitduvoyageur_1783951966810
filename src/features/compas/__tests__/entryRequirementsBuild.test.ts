@@ -54,7 +54,9 @@ const csv = (...rows: string[]) => [HEADER, ...rows].join('\n');
 const BASIC = csv(LINES.FR_US, LINES.FR_VN, LINES.FR_PT, LINES.DE_PT, LINES.US_TR, LINES.FR_NP, LINES.DE_NP);
 const BASIC_INDEX = { ...INDEX, coverage: { destinations: 5, passports: 3, matrixRows: 7 } };
 const OPTS = { fetched: '2026-10-10' };
-const build = (text: string, index: unknown = BASIC_INDEX) => buildEntryRequirements(text, index, OPTS);
+type Built = { table: Record<string, Array<Array<string | number | null>>>; meta: Record<string, unknown> };
+const build = (text: string, index: unknown = BASIC_INDEX) =>
+  buildEntryRequirements(text, index, OPTS) as unknown as Built;
 
 describe('script de génération : la table compacte', () => {
   it('groupe, par destination, les passeports qui ont la même exigence, séjour, fenêtre et date', () => {
