@@ -53,6 +53,11 @@
       ],
       "enabled": true,
       "timeout": 120000
+    },
+    "magicpath": {
+      "type": "remote",
+      "url": "https://api.magicpath.ai/mcp",
+      "enabled": true
     }
   },
   "tools": {
