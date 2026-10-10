@@ -512,6 +512,21 @@ describe('« depuis Bourg en Bresse » : « en » et « sur » peuvent faire par
     expect(origin(text)).not.toHaveProperty('longer');
   });
 
+  it('« et » relie aussi des noms (« Saint-Pierre-et-Miquelon », « Trinité et Tobago »)', () => {
+    expect(origin('rando depuis Saint Pierre et Miquelon')).toEqual({
+      type: 'set_origin',
+      place: 'Saint Pierre',
+      longer: 'Saint Pierre et Miquelon',
+    });
+    expect(origin('depuis saint pierre et miquelon')).toEqual({
+      type: 'set_origin',
+      place: 'Saint Pierre',
+      longer: 'Saint Pierre et miquelon',
+    });
+    expect(origin('depuis lyon et on rentre dimanche')).not.toHaveProperty('longer');
+    expect(origin('depuis Lyon et retour dimanche')).not.toHaveProperty('longer');
+  });
+
   it('l’article tombé devant le nom court revient dans le nom long (« la roche sur yon »)', () => {
     expect(origin('rando depuis la roche sur yon')).toEqual({
       type: 'set_origin',
@@ -582,6 +597,23 @@ describe('départ à nom long : ce que la carte a tranché', () => {
     const settled = settleLinkedOrigin(actions, link, true);
     expect(settled).toContainEqual({ type: 'set_origin', place: 'L’Isle sur la Sorgue' });
     expect(settled.filter((a) => a.type === 'set_destination')).toEqual([]);
+  });
+
+  it.each([
+    ['Saint Jean', 'Saint Jean de luz', 'Luz'],
+    ['Aix', 'Aix les bains', 'Bains'],
+    ['Saint Pierre', 'Saint Pierre et Miquelon', 'Miquelon'],
+    ['Mont', 'Mont de marsan', 'Marsan'],
+    ['Villefranche', 'Villefranche sur Saône', 'Saône'],
+  ])('« %s » → « %s » confirmé : « %s » n’est plus une destination, une autre reste', (place, longer, tail) => {
+    const link = { place, longer };
+    expect(settleLinkedOrigin([{ type: 'set_destination', place: tail }], link, true)).toEqual([]);
+    expect(settleLinkedOrigin([{ type: 'set_destination', place: 'Corse' }], link, true)).toEqual([
+      { type: 'set_destination', place: 'Corse' },
+    ]);
+    expect(settleLinkedOrigin([{ type: 'set_destination', place: tail }], link, false)).toEqual([
+      { type: 'set_destination', place: tail },
+    ]);
   });
 
   it('la destination que l’IA tire du même bout tombe aussi, et rien ne bouge sans nom long', () => {

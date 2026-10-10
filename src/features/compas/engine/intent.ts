@@ -434,6 +434,7 @@ const LOWER_ORIGIN_STOP = [
   'decembre', 'week-?end', 'jours?', 'semaines?', 'nuits?', 'une', 'deux', 'trois', 'quatre', 'cinq', 'six',
   'sept', 'huit', 'neuf', 'dix', 'quinze', 'vingt',
   // la suite de la demande ou de la phrase
+  'on', 'je', 'nous', 'tu', 'il', 'ils', 'elle', 'elles', 'vous', 'retour', 'rentre', 'rentrer', 'rentrons',
   'svp', 'stp', 'merci', 'rando', 'randonnee', 'train', 'trek', 'trekking', 'velo', 'ski', 'sortie', 'voyage', 'bivouac',
 ];
 const LOWER_ORIGIN = new RegExp(
@@ -455,10 +456,10 @@ function notNameWord(word: string): boolean {
 }
 
 /** Mots qui relient les parties d'un nom propre (« Saint-Jean-de-Luz », « Aix-les-Bains », « Boulogne-sur-Mer »). */
-const NAME_LINKS = new Set(['de', 'du', 'des', 'le', 'la', 'les', 'sur', 'en', 'sous', 'lez', "d'", "l'"]);
+const NAME_LINKS = new Set(['de', 'du', 'des', 'le', 'la', 'les', 'sur', 'en', 'sous', 'lez', 'et', "d'", "l'"]);
 
 /**
- * « Bourg en Bresse », « La Roche sur Yon », « Neuilly sur Seine » : « en » ou « sur »
+ * « Bourg en Bresse », « La Roche sur Yon », « Saint Pierre et Miquelon » : « en », « sur » ou « et »
  * suivi d'un nom propre peut faire partie du nom du départ, ou ouvrir une autre idée
  * (« depuis Lyon en Corse »). Rien dans la phrase ne départage les deux : le nom long
  * est proposé à côté du nom court, et la carte tranche (`settleLinkedOrigin`).
@@ -467,7 +468,7 @@ const NAME_LINKS = new Set(['de', 'du', 'des', 'le', 'la', 'les', 'sur', 'en', '
  * `lead` est l'article tombé devant le nom court (« la », « l' »), s'il y en a un.
  */
 function linkedName(src: string, plain: string, end: number, place: string, lead: string): string | undefined {
-  const link = /^\s+(en|sur)\s+/.exec(plain.slice(end, end + 12));
+  const link = /^\s+(en|sur|et)\s+/.exec(plain.slice(end, end + 12));
   if (!link) return undefined;
   // « sur la Sorgue », « sur l'Isère » : l'article fait partie du bout du nom.
   const article = /^(?:(?:la|le|les)\s+|l['’])/.exec(plain.slice(end + link[0].length, end + link[0].length + 6))?.[0] ?? '';
@@ -1305,18 +1306,30 @@ export function settleLinkedOrigin(
   link: LinkedOrigin | null,
   accepted: boolean
 ): CompasIntentAction[] {
-  // Le bout du nom long : ce qui suit « en » / « sur » après le nom court (un article peut le précéder).
-  const tail = (() => {
-    if (!link || !accepted) return null;
+  // Les bouts du nom long : ce qui suit chaque connecteur après le nom court (un article peut le
+  // précéder) — « Luz » pour « Saint Jean de luz », « Bains » pour « Aix les bains », « Miquelon »,
+  // « Sorgue » pour « L'Isle sur la Sorgue ». Une destination qui est l'un d'eux n'en est plus une.
+  const tails = new Set<string>();
+  if (link && accepted) {
     const long = plainOf(link.longer);
     const at = long.indexOf(plainOf(link.place));
-    if (at < 0) return null;
-    const rest = long.slice(at + plainOf(link.place).length).replace(/^\s*(?:en|sur)\s+/, '');
-    return rest.replace(/^(?:la|le|les)\s+|^l'/, '').trim() || null;
-  })();
+    if (at >= 0) {
+      const words = long
+        .slice(at + plainOf(link.place).length)
+        .replace(/'/g, "' ")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+      for (let i = 0; i < words.length; i += 1) {
+        let j = i;
+        while (j < words.length && NAME_LINKS.has(words[j])) j += 1;
+        if (j < words.length) tails.add(words.slice(j).join(' '));
+      }
+    }
+  }
   return actions.flatMap((a): CompasIntentAction[] => {
     if (a.type === 'set_origin') return [{ type: 'set_origin', place: accepted && a.longer ? a.longer : a.place }];
-    if (a.type === 'set_destination' && tail && plainOf(a.place) === tail) return [];
+    if (a.type === 'set_destination' && tails.has(plainOf(a.place))) return [];
     return [a];
   });
 }
