@@ -251,6 +251,18 @@ function lineOf(content, index) {
   return content.slice(0, index).split(/\r?\n/).length;
 }
 
+/**
+ * Fenêtre de recherche bornée à la fin de l'instruction : tronque au premier
+ * `;` suivant le point de départ. Évite les faux positifs inter-instructions
+ * (un `.update()` d'une AUTRE requête située plus loin dans le fichier) sans
+ * casser les chaînages PostgREST, qui ne contiennent jamais de `;`.
+ */
+function statementWindow(content, start, maxLen) {
+  const slice = content.slice(start, start + maxLen);
+  const end = slice.indexOf(';');
+  return end === -1 ? slice : slice.slice(0, end);
+}
+
 const BALANCE_EXCLUDES = [
   /^src\/app\/api\//,
   /^src\/features\/[^/]+\/server/,
@@ -267,14 +279,11 @@ for (const file of grep('user_profiles', src)) {
   let fromMatch;
   BALANCE_FROM.lastIndex = 0;
   while ((fromMatch = BALANCE_FROM.exec(content)) !== null) {
-    const window = content.slice(fromMatch.index, fromMatch.index + 300);
+    const window = statementWindow(content, fromMatch.index, 300);
     const writeMatch = CLIENT_WRITE.exec(window);
     if (!writeMatch) continue;
     // Colonnes interdites cherchées dans les arguments de l'écriture elle-même.
-    const args = content.slice(
-      fromMatch.index + writeMatch.index,
-      fromMatch.index + writeMatch.index + 300,
-    );
+    const args = statementWindow(content, fromMatch.index + writeMatch.index, 300);
     if (!BALANCE_FIELDS.test(args)) continue;
     balanceHits.push(`${rel}:${lineOf(content, fromMatch.index)}`);
   }
@@ -302,7 +311,7 @@ for (const file of grep('loyalty_history|loyalty_redemptions|orders', src)) {
   let fromMatch;
   JOURNAL_FROM.lastIndex = 0;
   while ((fromMatch = JOURNAL_FROM.exec(content)) !== null) {
-    const window = content.slice(fromMatch.index, fromMatch.index + 200);
+    const window = statementWindow(content, fromMatch.index, 200);
     if (!CLIENT_WRITE.test(window)) continue;
     journalHits.push(`${rel}:${lineOf(content, fromMatch.index)}`);
   }
