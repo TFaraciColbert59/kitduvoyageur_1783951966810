@@ -62,6 +62,43 @@ describe('assessDanger', () => {
     expect(s?.label).toContain('11 h 40');
   });
 
+  it('lever et coucher en « HH:MM » (format réel) : « X de marche pour Y de jour »', () => {
+    const d = run(plan({ walkMin: 700 }), forecast({ sunrise: '07:40', sunset: '19:00' }));
+    expect(d.signals.find((x) => x.id === 'physique-light-1')?.label).toBe(
+      'Jour 1 : 11 h 40 de marche pour 11 h 20 de jour'
+    );
+  });
+
+  it('au-delà de la prévision (J+30) : « X de marche pour Y de jour » par le calcul astronomique', () => {
+    const later = (walkMin: number) =>
+      assessDanger({
+        dayPlans: [plan({ date: '2026-11-08', walkMin })],
+        forecasts: [{ day: 1, date: '2026-11-08', forecast: null }],
+        alerts: [],
+      });
+    const s = later(700).signals.find((x) => x.id === 'physique-light-1');
+    // 8 novembre à 45° N : un peu moins de 10 h de jour.
+    expect(s?.label).toMatch(/^Jour 1 : 11 h 40 de marche pour 9 h \d{2} de jour$/);
+    expect(s?.source).toBe('DIN 33466 · calcul astronomique');
+    expect(s?.asOf).toBe('2026-11-08');
+    expect(later(300).signals.some((x) => x.id === 'physique-light-1')).toBe(false);
+  });
+
+  it('au-delà de la prévision : nuit polaire ou étape sans coordonnées, aucun signal de lumière', () => {
+    const polar = assessDanger({
+      dayPlans: [plan({ date: '2026-12-15', lat: 78.2, lon: 15.6, walkMin: 700 })],
+      forecasts: [{ day: 1, date: '2026-12-15', forecast: null }],
+      alerts: [],
+    });
+    expect(polar.signals.some((x) => x.id === 'physique-light-1')).toBe(false);
+    const nowhere = assessDanger({
+      dayPlans: [plan({ date: '2026-11-08', lat: null, lon: null, walkMin: 700 })],
+      forecasts: [{ day: 1, date: '2026-11-08', forecast: null }],
+      alerts: [],
+    });
+    expect(nowhere.signals.some((x) => x.id === 'physique-light-1')).toBe(false);
+  });
+
   it('rafales : warn puis block selon le seuil', () => {
     expect(run(plan(), forecast({ gustMax: 70 })).axes.conjoncturel.level).toBe('vigilance');
     expect(run(plan(), forecast({ gustMax: 95 })).axes.conjoncturel.level).toBe('bloque');

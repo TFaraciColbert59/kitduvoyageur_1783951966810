@@ -267,3 +267,29 @@ export function powerToDaily(payload: unknown): { daily: Record<string, unknown[
     },
   };
 }
+
+const MONTH_KEYS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'] as const;
+
+/**
+ * NASA POWER, climatologie (normales mensuelles 2001-2020) : précipitations
+ * moyennes de janvier à décembre, en mm/jour. Un mois absent, illisible ou
+ * égal à la valeur de remplissage (-999) : null, rien n'est comblé.
+ */
+export function powerClimatology(payload: unknown): number[] | null {
+  if (!payload || typeof payload !== 'object') return null;
+  const p = payload as {
+    properties?: { parameter?: { PRECTOTCORR?: Record<string, unknown> } };
+    header?: { fill_value?: unknown };
+  };
+  const series = p.properties?.parameter?.PRECTOTCORR;
+  if (!series || typeof series !== 'object') return null;
+  const fillRaw = p.header?.fill_value;
+  const fill = typeof fillRaw === 'number' ? fillRaw : -999;
+  const out: number[] = [];
+  for (const k of MONTH_KEYS) {
+    const v = num(series[k]);
+    if (v == null || v === fill || v < 0) return null;
+    out.push(v);
+  }
+  return out;
+}

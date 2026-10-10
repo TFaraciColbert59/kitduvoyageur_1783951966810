@@ -110,4 +110,23 @@ describe('préparation en arrière-plan', () => {
       error: expect.stringMatching(/arrêtée en cours de route/),
     });
   });
+
+  it('le fuseau du navigateur est accepté ; un fuseau démesuré est refusé (lot M)', async () => {
+    const ok = await compasAutofillStartAction({
+      tripId: TRIP,
+      tripSlug: 'x',
+      from: null,
+      phase: 'all',
+      timeZone: 'Pacific/Auckland',
+    });
+    expect(ok.success).toBe(true);
+    const bad = await compasAutofillStartAction({
+      tripId: TRIP,
+      tripSlug: 'x',
+      from: null,
+      phase: 'all',
+      timeZone: 'x'.repeat(65),
+    });
+    expect(bad).toEqual({ success: false, error: 'Requête invalide' });
+  });
 });

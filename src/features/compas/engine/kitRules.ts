@@ -8,6 +8,7 @@
  */
 
 import type { CompasDayPlan, CompasKitLine } from './compasModel';
+import { tripDayLight } from './sun';
 import type { DayForecast } from './weather';
 
 export type KitNeed = 'pluie' | 'chaud' | 'froid' | 'extremites' | 'soleil' | 'frontale' | 'eau';
@@ -129,20 +130,22 @@ export function adviseKit(input: {
       'MET Norway'
     );
 
-  /* Lumière : marche plus longue que le jour */
-  const dark = input.dayPlans.find((p) => {
+  /* Lumière : marche plus longue que le jour (prévision, sinon calcul astronomique) */
+  for (const p of input.dayPlans) {
+    if (p.walkMin == null) continue;
     const f = days.find((d) => d.day === p.day)?.forecast;
-    if (!f?.sunrise || !f.sunset || p.walkMin == null) return false;
-    const light = Math.round((Date.parse(f.sunset) - Date.parse(f.sunrise)) / 60000);
-    return Number.isFinite(light) && p.walkMin > light;
-  });
-  if (dark)
+    const date = p.date ?? input.forecasts.find((d) => d.day === p.day)?.date ?? null;
+    // Lever et coucher arrivent en « HH:MM » (heure locale du lieu).
+    const light = tripDayLight(f, { lat: p.lat, lon: p.lon, date });
+    if (light == null || p.walkMin <= light.minutes) continue;
     add(
       'frontale',
       'Lampe frontale',
-      `Jour ${dark.day} : la marche prévue dépasse la durée du jour.`,
-      'DIN 33466 · MET Norway'
+      `Jour ${p.day} : la marche prévue dépasse la durée du jour.`,
+      light.from === 'prevision' ? 'DIN 33466 · MET Norway' : 'DIN 33466 · calcul astronomique'
     );
+    break;
+  }
 
   /* Eau : repère par heure de marche, jamais une quantité « exacte » */
   const longest = input.dayPlans

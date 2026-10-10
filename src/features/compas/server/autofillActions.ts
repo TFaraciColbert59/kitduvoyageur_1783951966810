@@ -62,7 +62,7 @@ import {
 import { shortHoursOf, tripLengthDays } from '../engine/tripContext';
 import { compasMeta, readProfile, requireEditor, resplitSteps, tripBasis, tripPartySize, updateTripMetadata, type Supa } from './compasServer';
 import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
-import { bestPeriod, monthName } from '../engine/period';
+import { bestPeriod, monthName, needsDryNormals } from '../engine/period';
 import { partsText, retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { lookupDestination, lookupMassif, lookupNatural, lookupReverse, lookupRiver, stageAliasCandidates, stageCandidates } from './placeLookup';
 import { lookupAreaPlaces, lookupRiverLine, lookupStagePois } from './stagePoiLookup';
@@ -102,7 +102,8 @@ import {
 import { after } from 'next/server';
 import { bareAdminName, destinationRadiusKm, distanceKm, isAdminName, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, type CompasPlace } from '../engine/places';
 import { unifyStageNames, untangleStages } from '../engine/stageOrder';
-import { localToday } from './weather';
+import { travellerToday } from '../engine/zone';
+import { getPrecipNormals } from './weather';
 import { aiSuggestion, essentialAdvice, orderNotes, repeatsRule } from '../engine/advice';
 import { preparationEventKind, recordPreparationEvent } from './opsEvents';
 import { coarsePosition } from '../engine/privacy';
@@ -179,6 +180,12 @@ const schema = z.object({
    * Compas va aujourd'hui jusqu'à 300 s), même quand l'IA est lente.
    */
   phase: z.enum(['steps', 'rest', 'all']).default('all'),
+  /**
+   * Fuseau du navigateur (IANA) : « aujourd'hui » du voyageur (meilleure
+   * période, date des dépenses prévues). Rien n'est gardé pour une reprise :
+   * chaque relance vient de l'écran, avec son fuseau.
+   */
+  timeZone: z.string().max(64).optional(),
 });
 
 interface StepRow {
@@ -790,7 +797,7 @@ export async function compasAutofillAction(
 ): Promise<CompasAutofillResult> {
   const parsed = schema.safeParse(input);
   if (!parsed.success) return { success: false, error: 'Requête invalide' };
-  const { tripId, from, phase } = parsed.data;
+  const { tripId, from, phase, timeZone } = parsed.data;
   try {
     const auth = await requireEditor(tripId);
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
@@ -818,16 +825,20 @@ export async function compasAutofillAction(
     const resume = resumableRun(phase, pending);
     // La limite de fréquence ne compte qu'une préparation réellement lancée :
     // après les refus et retours ci-dessus (déjà prérempli, déjà en attente…).
-    // Une reprise (phase « rest », itinéraire déjà écrit) a sa propre limite :
+    // Une reprise (un itinéraire déjà écrit attend le reste) a sa propre limite :
     // l'état de reprise vit dans `trips.metadata`, que l'éditeur peut écrire ;
     // sans limite, réécrire cet état relançait la préparation sans compter.
-    const resuming = phase === 'rest' || Boolean(pending);
+    // C'est l'itinéraire en attente qui fait la reprise, jamais la phase envoyée
+    // par le navigateur : sans attente, une phase « rest » écrit tout un
+    // itinéraire et compte comme un lancement (6 par 10 min, 120 par heure).
+    const resuming = Boolean(pending);
     const limited = await enforceCompasAutofillLimits(userId, resuming);
     if (limited) return limited;
 
     // Un seul « steps » à la fois (deux onglets, F5) : prise atomique, sinon
-    // deux itinéraires complets seraient écrits.
-    if (phase !== 'rest' && !pending && !(await claimPhase(supabase, tripId, 'steps')))
+    // deux itinéraires complets seraient écrits. Toute préparation sans
+    // itinéraire en attente en écrit un, quelle que soit la phase demandée.
+    if (!pending && !(await claimPhase(supabase, tripId, 'steps')))
       return { success: true, pending: true, stepsCreated: 0 };
     // Un seul « rest » à la fois : deux onglets, ou l'écran remonté pendant la
     // préparation, n'écrivent jamais deux fois les objets et les dépenses.
@@ -835,7 +846,7 @@ export async function compasAutofillAction(
       return { success: true, pending: true, stepsCreated: 0 };
     const notes: string[] = [...(resume?.notes ?? [])];
     const runId = resume?.runId ?? randomUUID();
-    const today = localToday('Europe/Paris');
+    const today = travellerToday(timeZone);
     const startedAt = Date.now();
     // « Arrêter » demandé après ce lancement : les écritures qui restent sont sautées.
     let halted = false;
@@ -870,6 +881,8 @@ export async function compasAutofillAction(
       hours: shortHoursOf(days, compas.durationHours),
       partySize: party,
       month: trip.start_date ? Number(trip.start_date.slice(5, 7)) : null,
+      // Le lieu n'est retrouvé qu'ensuite : la destination déjà gardée sur le voyage, si elle existe.
+      lat: readAnchor(meta)?.lat ?? null,
       project: compas.preferences,
       profile,
     });
@@ -961,7 +974,20 @@ export async function compasAutofillAction(
     /* 1 bis. Quand : sans date, la meilleure période pour CE projet (annoncée, modifiable). */
     let datesSet = resume?.datesSet ?? false;
     if (!trip.start_date && !resume && ctx.scope === 'sejour') {
-      const period = bestPeriod({ activity, lat: anchor.lat, countryCode: anchor.countryCode, today, days });
+      // Tropiques hors de la table des saisons sèches : le mois le plus sec des
+      // normales NASA POWER (une demande par préparation, gardée 30 jours).
+      // Service injoignable : aucune période, comme avant.
+      const normals = needsDryNormals({ activity, lat: anchor.lat, countryCode: anchor.countryCode })
+        ? await getPrecipNormals(anchor.lat, anchor.lon)
+        : null;
+      const period = bestPeriod({
+        activity,
+        lat: anchor.lat,
+        countryCode: anchor.countryCode,
+        today,
+        days,
+        normals,
+      });
       if (period) {
         const { error } = await supabase
           .from('trips')
@@ -1487,6 +1513,7 @@ export async function compasAutofillAction(
       hours: shortHoursOf(days, compas.durationHours),
       partySize: party,
       month: trip.start_date ? Number(trip.start_date.slice(5, 7)) : null,
+      lat: anchor.lat,
       maxAltitudeM: maxAltitude,
       project: compas.preferences,
       profile,

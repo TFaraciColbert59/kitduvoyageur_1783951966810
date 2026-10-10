@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * Limites par personne sur la destination (carte : Photon, LocationIQ, Geoapify,
@@ -196,6 +196,46 @@ describe('limites de la destination et de la phrase', () => {
     const res = await compasInterpretAction({ tripId: TRIP, text: 'rando 3 jours dans le Vercors' });
     expect(res).toEqual({ success: false, error: 'Accès refusé' });
     expect(h.calls).toEqual([]);
+    expect(askAI).not.toHaveBeenCalled();
+  });
+});
+
+describe('phrase : « aujourd’hui » au fuseau du voyageur (lot M)', () => {
+  beforeEach(() => {
+    h.calls = [];
+    h.refuse = null;
+    h.denied = false;
+    vi.clearAllMocks();
+    // 10 oct. 3 h UTC : déjà le 10 à Paris et à Auckland, encore le 9 (20 h) à Los Angeles.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-10T03:00:00Z'));
+  });
+  afterEach(() => vi.useRealTimers());
+
+  /** Première ligne de la consigne envoyée à l'IA : « Date du jour : … ». */
+  const dayLine = async (timeZone?: string) => {
+    const res = await compasInterpretAction({ tripId: TRIP, text: 'rando 3 jours dans le Vercors', timeZone });
+    expect(res.success).toBe(true);
+    return vi.mocked(askAI).mock.calls[0][0].prompt.split('\n')[0];
+  };
+
+  it('le fuseau du navigateur fait la date du jour', async () => {
+    expect(await dayLine('America/Los_Angeles')).toBe('Date du jour : 2026-10-09 (vendredi).');
+  });
+
+  it('même instant, autre fuseau : autre date', async () => {
+    expect(await dayLine('Pacific/Auckland')).toBe('Date du jour : 2026-10-10 (samedi).');
+  });
+
+  it('sans fuseau ou fuseau inconnu : Paris (repli des anciens écrans)', async () => {
+    expect(await dayLine()).toBe('Date du jour : 2026-10-10 (samedi).');
+    vi.mocked(askAI).mockClear();
+    expect(await dayLine('Mars/Olympus')).toBe('Date du jour : 2026-10-10 (samedi).');
+  });
+
+  it('un fuseau démesuré est refusé par la validation', async () => {
+    const res = await compasInterpretAction({ tripId: TRIP, text: 'rando 3 jours', timeZone: 'x'.repeat(65) });
+    expect(res).toEqual({ success: false, error: 'Phrase trop courte ou trop longue' });
     expect(askAI).not.toHaveBeenCalled();
   });
 });

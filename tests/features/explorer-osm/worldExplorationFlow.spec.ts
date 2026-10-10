@@ -12,6 +12,13 @@ vi.mock('@/lib/rate-limit/routes', () => ({
   enforceRateLimit: vi.fn().mockResolvedValue(null),
 }));
 
+// Plan 100, 2.12 : le relief (Terrain Tiles sur s3.amazonaws.com) n'est jamais
+// demandé par un test ; sans altitude lue, le détail reste sans profil, comme
+// quand la source ne répond pas.
+vi.mock('@/lib/geo/terrainElevation', async (orig) => ({
+  ...(await orig<typeof import('@/lib/geo/terrainElevation')>()),
+  terrainElevations: vi.fn(async () => null),
+}));
 vi.mock('@/features/explorer-osm/adapters/overpassAdapter', () => ({
   queryRoutesInBbox: vi.fn(),
   queryRouteDetail: vi.fn(),

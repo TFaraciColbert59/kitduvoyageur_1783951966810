@@ -14,6 +14,7 @@
 import type { AlertsStatus } from './officialAlerts';
 
 import type { CompasDayPlan } from './compasModel';
+import { tripDayLight } from './sun';
 import type { DayForecast } from './weather';
 
 export type DangerAxis = 'physique' | 'technique' | 'conjoncturel';
@@ -101,15 +102,6 @@ const ALERT_SEVERITY: Record<OfficialAlert['level'], DangerSeverity> = {
 
 const hhmm = (min: number) => `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')}`;
 
-function minutesBetween(a: string | null, b: string | null): number | null {
-  if (!a || !b) return null;
-  const ta = Date.parse(a);
-  const tb = Date.parse(b);
-  return Number.isFinite(ta) && Number.isFinite(tb) && tb > ta
-    ? Math.round((tb - ta) / 60000)
-    : null;
-}
-
 export function assessDanger(input: {
   dayPlans: CompasDayPlan[];
   forecasts: Array<{ day: number; date: string; forecast: DayForecast | null }>;
@@ -173,13 +165,18 @@ export function assessDanger(input: {
     /* Physique : durée, dénivelé */
     if (plan.walkMin != null) {
       evaluated.physique = true;
-      const light = minutesBetween(f?.forecast?.sunrise ?? null, f?.forecast?.sunset ?? null);
-      if (light != null && plan.walkMin > light) {
+      // Lever et coucher de la prévision ; au-delà, calcul astronomique à l'étape.
+      const light = tripDayLight(f?.forecast, {
+        lat: plan.lat,
+        lon: plan.lon,
+        date: date || null,
+      });
+      if (light != null && plan.walkMin > light.minutes) {
         push(
           'physique',
           'warn',
-          `${hhmm(plan.walkMin)} de marche pour ${hhmm(light)} de jour`,
-          'DIN 33466 · MET Norway',
+          `${hhmm(plan.walkMin)} de marche pour ${hhmm(light.minutes)} de jour`,
+          light.from === 'prevision' ? 'DIN 33466 · MET Norway' : 'DIN 33466 · calcul astronomique',
           'light'
         );
       } else if (plan.walkMin > T.longDayMin) {

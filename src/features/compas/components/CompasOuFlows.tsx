@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
 import Icon from '@/components/ui/Icon';
 import type { CompasLevel, CompasNights, CompasTerrain } from '../engine/compasModel';
 import { SOURCE_LABEL, adaptationText, type CtxField } from '../engine/projectContext';
@@ -22,6 +22,7 @@ import {
   type CompasActivity,
 } from '../engine/intent';
 import { daylightClock } from '../engine/sun';
+import { DEFAULT_TRAVELLER_ZONE, browserTimeZone, browserToday, differentClock } from '../engine/zone';
 import {
   dayQuality,
   departureAdvice,
@@ -46,8 +47,13 @@ import { mixParcours } from '../engine/parcoursMix';
 import { AffiliateDisclosure } from '@/features/affiliation/components/AffiliateDisclosure';
 import type { CompasCtl, FlowHint } from './compasTypes';
 
-const TIME_ZONE = 'Europe/Paris';
 const staticRow = { cursor: 'default' } as const;
+
+const noSubscribe = () => () => {};
+/** Fuseau du navigateur, lu côté navigateur seulement (null au rendu serveur : aucun écart d'hydratation). */
+function useBrowserZone(): string | null {
+  return useSyncExternalStore(noSubscribe, browserTimeZone, () => null);
+}
 
 /* =============================================================================
    Où et quand — les quatre parcours du tiroir, dans l'ordre de la maquette :
@@ -576,24 +582,16 @@ const QUALITY_LABEL = {
   mauvais: 'mauvaises conditions',
 } as const;
 
-function todayParis(): string {
-  try {
-    return new Intl.DateTimeFormat('en-CA', {
-      timeZone: TIME_ZONE,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(new Date());
-  } catch {
-    return new Date().toISOString().slice(0, 10);
-  }
-}
-
 export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
   const { data } = ctl;
   const m = data.model;
   const weather = data.weather;
-  const today = weather?.calendar[0]?.date ?? todayParis();
+  // Le plus tôt des deux « aujourd'hui » : celui du voyageur (navigateur, le
+  // même que le serveur pour « Date passée ») et celui de la destination
+  // (premier jour du calendrier). Aucun des deux n'est refusé ici.
+  const own = browserToday();
+  const destinationDay = weather?.calendar[0]?.date;
+  const today = destinationDay && destinationDay < own ? destinationDay : own;
   const initialHours =
     hint?.hours ?? (m.dates.hours != null && m.dates.hours < 24 ? m.dates.hours : null);
   const [start, setStart] = useState(m.dates.start ?? '');
@@ -865,20 +863,27 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
   const trend = plan?.date
     ? ctl.data.weather?.calendar.find((c) => c.date === plan.date)
     : undefined;
+  // Heure de la destination (fuseau retrouvé par le serveur), au-delà de la prévision aussi.
+  const zone = ctl.data.zone ?? DEFAULT_TRAVELLER_ZONE;
+  const here = useBrowserZone();
 
   const light = useMemo(() => {
     if (forecast?.sunrise && forecast.sunset)
       return { sunrise: forecast.sunrise, sunset: forecast.sunset, source: 'calcul astronomique (SunCalc)' };
     if (plan?.date && plan.lat != null && plan.lon != null) {
       return {
-        ...daylightClock(plan.lat, plan.lon, plan.date, TIME_ZONE),
+        ...daylightClock(plan.lat, plan.lon, plan.date, zone),
         source: 'calcul astronomique',
       };
     }
     return null;
-  }, [forecast, plan]);
+  }, [forecast, plan, zone]);
 
   if (!plan) return null;
+  // Destination à une autre heure que le navigateur : on le dit (« heure locale »).
+  const away = plan.date
+    ? differentClock(ctl.data.zone, here, new Date(`${plan.date}T12:00:00Z`))
+    : false;
   const advice = departureAdvice({
     walkMin: plan.walkMin,
     sunrise: light?.sunrise ?? null,
@@ -959,6 +964,7 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
             <dt>Lumière</dt>
             <dd>
               {light.sunrise ?? '—'} – {light.sunset ?? '—'}
+              {away ? ' · heure locale' : ''}
             </dd>
           </>
         )}

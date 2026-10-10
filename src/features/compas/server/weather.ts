@@ -6,10 +6,11 @@ import {
   type CalendarDay,
   type DayForecast,
 } from '../engine/weather';
-import { METNO_SOURCE, POWER_SOURCE, parseMetNo, powerToDaily } from '../engine/metno';
+import { METNO_SOURCE, POWER_SOURCE, parseMetNo, powerClimatology, powerToDaily } from '../engine/metno';
 import tzLookup from '@photostructure/tz-lookup';
 import { appUserAgent } from '@/lib/userAgent';
 import { metnoForecastUrl, metnoGet } from '@/lib/weather/metnoRequest';
+import { localToday } from '../engine/zone';
 
 /**
  * Compas — météo gratuite, usage commercial permis :
@@ -19,6 +20,9 @@ import { metnoForecastUrl, metnoGet } from '@/lib/weather/metnoRequest';
  * - Calendrier des conditions sur 6 semaines au point de départ : prévision
  *   tant qu'elle couvre (~9 jours), puis TENDANCE (moyenne des 5 dernières
  *   années aux mêmes dates, NASA POWER). La tendance est toujours étiquetée.
+ * - Normales mensuelles (NASA POWER, climatologie 2001-2020, gardées 30 jours) :
+ *   le mois le plus sec d'une destination tropicale absente de la table des
+ *   saisons sèches (`getPrecipNormals`, une demande par préparation).
  *
  * MET Norway passe par un seul point d'accès (`metnoGet`, `metnoForecastUrl`) :
  * User-Agent unique du site, 20 requêtes par seconde au plus, cache au-delà
@@ -31,6 +35,9 @@ import { metnoForecastUrl, metnoGet } from '@/lib/weather/metnoRequest';
  */
 
 const POWER = 'https://power.larc.nasa.gov/api/temporal/daily/point';
+const POWER_CLIMATOLOGY = 'https://power.larc.nasa.gov/api/temporal/climatology/point';
+/** Les normales 2001-2020 ne bougent pas : une réponse sert 30 jours. */
+const NORMALS_REVALIDATE_S = 30 * 86_400;
 const USER_AGENT = appUserAgent('Compas, meteo');
 /** Horizon annoncé : MET Norway couvre ~9 jours pleins après aujourd'hui. */
 export const FORECAST_HORIZON_DAYS = 10;
@@ -63,18 +70,8 @@ export function addDays(iso: string, n: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-export function localToday(timeZone: string, now = new Date()): string {
-  try {
-    return new Intl.DateTimeFormat('en-CA', {
-      timeZone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(now);
-  } catch {
-    return now.toISOString().slice(0, 10);
-  }
-}
+/** « Aujourd'hui » dans un fuseau : vit dans `engine/zone.ts` (module pur), réexporté ici. */
+export { localToday };
 
 /* ---------- URLs (exportées pour les tests) ---------- */
 
@@ -98,6 +95,18 @@ export function trendUrl(lat: number, lon: number, start: string, end: string): 
   return `${POWER}?${q.toString()}`;
 }
 
+/** Normales mensuelles de précipitations (climatologie 2001-2020) au point arrondi à 0,01°. */
+export function climatologyUrl(lat: number, lon: number): string {
+  const q = new URLSearchParams({
+    parameters: 'PRECTOTCORR',
+    community: 'RE',
+    longitude: at2(lon),
+    latitude: at2(lat),
+    format: 'JSON',
+  });
+  return `${POWER_CLIMATOLOGY}?${q.toString()}`;
+}
+
 /** Fuseau horaire du lieu (hors ligne) ; celui de l'app si la mer ou l'erreur l'empêche. */
 export function zoneAt(lat: number, lon: number, fallback: string): string {
   try {
@@ -105,6 +114,14 @@ export function zoneAt(lat: number, lon: number, fallback: string): string {
   } catch {
     return fallback;
   }
+}
+
+/**
+ * Fuseau de la destination : celui du point donné (premier jour du voyage,
+ * sinon le départ), le repli sans point. Côté serveur seulement (tz-lookup).
+ */
+export function destinationZone(point: { lat: number; lon: number } | null, fallback: string): string {
+  return point ? zoneAt(point.lat, point.lon, fallback) : fallback;
 }
 
 async function getJson(url: string, revalidate: number, timeoutMs = 6000): Promise<unknown | null> {
@@ -122,6 +139,16 @@ async function getJson(url: string, revalidate: number, timeoutMs = 6000): Promi
   } catch {
     return null;
   }
+}
+
+/**
+ * Normales mensuelles de précipitations au point (mm/jour, janvier → décembre),
+ * ou null (service injoignable, mois manquant) : la période reste alors non
+ * proposée, comme avant.
+ */
+export async function getPrecipNormals(lat: number, lon: number): Promise<{ precip: number[] } | null> {
+  const precip = powerClimatology(await getJson(climatologyUrl(lat, lon), NORMALS_REVALIDATE_S, 8000));
+  return precip ? { precip } : null;
 }
 
 function shiftYear(iso: string, years: number): string {
@@ -150,11 +177,15 @@ export function trendWindow(first: string, last: string): { start: string; end: 
 export async function getCompasWeather(input: {
   origin: { lat: number; lon: number } | null;
   tripDays: Array<{ day: number; date: string; lat: number; lon: number }>;
+  /** Repli quand le lieu ne donne aucun fuseau. */
   timeZone: string;
   now?: Date;
 }): Promise<CompasWeather | null> {
   if (!input.origin && input.tripDays.length === 0) return null;
-  const today = localToday(input.timeZone, input.now);
+  // Les dates du calendrier et des jours du voyage sont celles de la
+  // DESTINATION : « aujourd'hui » s'y lit aussi (premier jour, sinon départ).
+  const zone = destinationZone(input.tripDays[0] ?? input.origin, input.timeZone);
+  const today = localToday(zone, input.now);
   const horizon = addDays(today, FORECAST_HORIZON_DAYS - 1);
 
   // 1. Jours du voyage dans l'horizon : une prévision par point (cache partagé).

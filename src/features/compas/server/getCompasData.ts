@@ -37,7 +37,7 @@ import { relevantAffiliateLinks } from '../engine/affiliates';
 import { getOfficialAlerts } from './officialAlerts';
 import { getRouteElevation } from './elevation';
 import type { ElevationProfile } from '../engine/elevation';
-import { getCompasWeather, type CompasWeather } from './weather';
+import { destinationZone, getCompasWeather, type CompasWeather } from './weather';
 
 /**
  * Compas — chargeur serveur unique.
@@ -125,6 +125,12 @@ export interface CompasData {
   route: { id: number | null; name: string | null };
   /** Point de départ (première étape géolocalisée), pour chercher autour. */
   origin: { lat: number; lon: number } | null;
+  /**
+   * Fuseau IANA de la destination (première étape géolocalisée, sinon le lieu
+   * retrouvé sur la carte), calculé ici : tz-lookup n'entre jamais dans le
+   * navigateur. Absent (écran plus ancien, tests) : Paris, sans mention.
+   */
+  zone?: string;
   /** Invitations envoyées, en attente de réponse (accès au voyage après acceptation). */
   pendingInvites: CompasPendingInvite[];
   /** Préremplissage : jamais lancé, déjà écrit, ou annulé (ne se relance pas seul). */
@@ -145,6 +151,7 @@ export interface CompasData {
   autofillStale?: AutofillPart[];
 }
 
+/** Repli tant que la destination n'est pas placée sur la carte. */
 const TIME_ZONE = 'Europe/Paris';
 const SHOP_MODES = new Set(['achat', 'location', 'occasion', 'enchere']);
 
@@ -456,6 +463,10 @@ export async function getCompasData(): Promise<CompasData | null> {
     now: new Date(),
     timeZone: TIME_ZONE,
   };
+  // Lever et coucher du soleil, et « aujourd'hui » de la météo : à l'heure de la
+  // destination (tz-lookup, côté serveur seulement), plus à celle de Paris.
+  const zone = destinationZone(firstGeoPoint(input.steps) ?? anchorPoint(trip.metadata), TIME_ZONE);
+  input.timeZone = zone;
 
   const points: CompasPoint[] = [
     ...(trip.steps ?? [])
@@ -504,7 +515,7 @@ export async function getCompasData(): Promise<CompasData | null> {
           lat: d.lat as number,
           lon: d.lon as number,
         })),
-      timeZone: TIME_ZONE,
+      timeZone: zone,
     }),
     routeId != null ? loadRoutePois(client, routeId) : Promise.resolve([]),
     getOfficialAlerts({
@@ -601,6 +612,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     weather,
     route: { id: routeId, name: hub.hiking?.routeName ?? null },
     origin,
+    zone,
     pendingInvites,
     autofill: autofillState(trip.metadata),
     autofillNotes: autofillNotes(trip.metadata),
@@ -616,11 +628,32 @@ export async function getCompasData(): Promise<CompasData | null> {
       // Même groupe que l'écran et la préparation : party_size, sinon les membres.
       partySize: partySizeOf(num(trip.party_size), members.length),
       month: trip.start_date ? Number(String(trip.start_date).slice(5, 7)) : null,
+      // Hiver selon l'hémisphère : latitude du départ, sinon du lieu retrouvé sur la carte.
+      lat: origin?.lat ?? anchorPoint(trip.metadata)?.lat ?? null,
       maxAltitudeM: elevation?.maxM ?? null,
       project: compasMeta.preferences,
       profile,
     }),
   };
+}
+
+/** Première étape géolocalisée, dans l'ordre du voyage. */
+function firstGeoPoint(steps: CompasInput['steps']): { lat: number; lon: number } | null {
+  const s = [...steps]
+    .sort((a, b) => a.dayNumber - b.dayNumber || a.orderIndex - b.orderIndex)
+    .find((x) => x.lat != null && x.lon != null);
+  return s ? { lat: s.lat as number, lon: s.lon as number } : null;
+}
+
+/** Destination retrouvée sur la carte (Dis-le), quand aucune étape n'est placée. */
+function anchorPoint(metadata: unknown): { lat: number; lon: number } | null {
+  const compas =
+    metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).compas : null;
+  const a = compas && typeof compas === 'object' ? (compas as Record<string, unknown>).anchor : null;
+  if (!a || typeof a !== 'object') return null;
+  const lat = num((a as Record<string, unknown>).lat);
+  const lon = num((a as Record<string, unknown>).lon);
+  return lat != null && lon != null ? { lat, lon } : null;
 }
 
 function autofillStale(trip: TripFull): AutofillPart[] {
