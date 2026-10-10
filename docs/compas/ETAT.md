@@ -4,7 +4,7 @@
 > kit / budget / conseils → résultat final. Rien de P3 tant que P0/P1 ne passent pas P2.
 > « Fait » = prouvé de bout en bout sur la preview et contrôlé en base, pas « le code compile ».
 
-Mis à jour : 9 octobre 2026. **En production** (koosmoweb.fr) : lot A (PR #76,
+Mis à jour : 10 octobre 2026. **En production** (koosmoweb.fr) : lot A (PR #76,
 sécurité), lot B (PR #77, clés gratuites), lot C (PR #78, `195a47f` : rapport quotidien,
 sauvegarde, purges), lot D (PR #79, `153ddfc` : routage Geoapify puis Valhalla, estimation
 annoncée, OSRM démo et BRouter retirés), lots E et F (PR #80, `f5b5ac9` : référentiel des

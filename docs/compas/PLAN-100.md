@@ -609,7 +609,7 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 4.3 Origine du voyage
 
-- [x] Origine = ville dite (« depuis Lyon »), domicile du profil ou GPS ; **jamais la
+- [~] Origine = ville dite (« depuis Lyon »), domicile du profil ou GPS ; **jamais la
       France par défaut** ; sans origine, le trajet n'est pas chiffré (dit à l'écran).
       Lot N : départ dit (`metadata.compas.origin`) > GPS > aucun ; plus de Paris ni de
       « depuis la France » ; sans départ, rien de chiffré et « Trajet non chiffré : point de
