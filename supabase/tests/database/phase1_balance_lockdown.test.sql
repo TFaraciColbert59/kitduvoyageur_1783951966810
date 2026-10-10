@@ -18,6 +18,11 @@
 --      20260911 et a10_replay_bootstrap — que le garde-fou v2 contrôle). Ajout
 --      transactionnel (rollbacké) pour que le garde-fou soit exerçable à
 --      l'identique de la prod ; la migration n'est pas modifiée.
+--   4. couverture comportementale de `create_shop_order` (revue round 1) :
+--      produit fixture minimal (id, slug unique, name, price_eur, stock,
+--      available) conforme au schéma réel ; l'assertion de points suppose le
+--      trigger prod `process_order_points` (présent dans l'environnement
+--      certifié baseline + migrations post-baseline).
 BEGIN;
 SET LOCAL search_path = public;
 GRANT USAGE ON SCHEMA public TO authenticated, service_role;
@@ -30,7 +35,7 @@ TO service_role;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated, service_role;
 ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS is_suspended_groups boolean DEFAULT false;
 ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS suspended_from_groups_at timestamptz;
-SELECT plan(24);
+SELECT plan(36);
 
 -- Fixtures
 INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
@@ -100,6 +105,8 @@ SELECT is((public.legacy_loyalty_spend('aaaa0001-0000-4000-8000-000000000002', 1
   'true', '17. rejeu idempotent (pas de double débit)');
 SELECT is((public.legacy_loyalty_earn('aaaa0001-0000-4000-8000-000000000002', 4000, 'Gain test', 'test:earn:1'))->>'balance',
   '4234', '18. crédit + solde exact');
+SELECT is((SELECT loyalty_level FROM public.user_profiles WHERE id = 'aaaa0001-0000-4000-8000-000000000002'),
+  'Guide de Montagne', '18b. niveau recalculé par earn (4234 ⇒ Guide de Montagne)');
 
 -- 19-21. Panier : remboursement adossé au journal uniquement.
 SELECT is((public.legacy_loyalty_cart_refund('aaaa0001-0000-4000-8000-000000000002','item-x'))->>'error',
@@ -123,8 +130,48 @@ SELECT ok(
   (SELECT bool_and(NOT has_function_privilege('authenticated', p.oid, 'EXECUTE'))
    FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
    WHERE n.nspname='public' AND p.proname IN
-     ('legacy_loyalty_spend','legacy_loyalty_earn','legacy_loyalty_cart_refund','legacy_loyalty_redeem','create_shop_order','legacy_loyalty_backfill_openings')),
+     ('legacy_loyalty_spend','legacy_loyalty_earn','legacy_loyalty_cart_refund','legacy_loyalty_redeem','create_shop_order','legacy_loyalty_backfill_openings','legacy_loyalty_level_for')),
   '24. RPC serveur non exécutables par authenticated');
+SELECT ok(to_regprocedure('public.create_shop_order(uuid,text,jsonb,jsonb,text)') IS NOT NULL,
+  '24a. create_shop_order existe (signature exacte)');
+SELECT ok(NOT has_function_privilege('authenticated','public.create_shop_order(uuid,text,jsonb,jsonb,text)','EXECUTE'),
+  '24b. create_shop_order non exécutable par authenticated');
+
+-- 25-33. create_shop_order : couverture comportementale (spec §6.4-12).
+INSERT INTO public.shop_products (id, slug, name, price_eur, available, stock)
+VALUES ('aaaa0003-0000-4000-8000-000000000001', 'phase1-smoke-produit', 'Produit Phase 1 Smoke', 25.00, true, 5)
+ON CONFLICT (id) DO NOTHING;
+
+SELECT is((public.create_shop_order('aaaa0001-0000-4000-8000-000000000002', 'bank_transfer', '{}'::jsonb,
+  '[{"slug":"phase1-slug-inexistant","quantity":1}]'::jsonb, 'standard'))->>'error',
+  'unknown_product', '25. slug inconnu refusé');
+
+SELECT is((public.create_shop_order('aaaa0001-0000-4000-8000-000000000002', 'bank_transfer', '{}'::jsonb,
+  '[{"slug":"phase1-smoke-produit","quantity":1}]'::jsonb, 'pigeon'))->>'error',
+  'invalid_shipping', '26. livraison inconnue refusée');
+
+CREATE TEMP TABLE p1_order_res AS
+SELECT public.create_shop_order('aaaa0001-0000-4000-8000-000000000002', 'bank_transfer',
+  '{"city":"Grenoble"}'::jsonb, '[{"slug":"phase1-smoke-produit","quantity":2}]'::jsonb, 'standard') AS res;
+
+SELECT is((SELECT (res->>'success')::boolean FROM p1_order_res), true, '27. commande nominale : success');
+SELECT is((SELECT status FROM public.orders WHERE id = ((SELECT res->>'orderId' FROM p1_order_res))::uuid),
+  'confirmed', '28. commande nominale : statut confirmed');
+SELECT is((SELECT count(*)::int FROM public.loyalty_history
+   WHERE source_id = 'order_' || (SELECT res->>'orderId' FROM p1_order_res)), 1,
+  '29. exactement une ligne purchase order_<id>');
+SELECT is((SELECT count(*)::int FROM public.stock_movements
+   WHERE reference_id = (SELECT res->>'orderId' FROM p1_order_res) AND reference_type = 'order'), 1,
+  '30. un mouvement de stock tracé');
+SELECT is((SELECT stock FROM public.shop_products WHERE id = 'aaaa0003-0000-4000-8000-000000000001'), 3,
+  '31. stock décrémenté de 2 (5 → 3)');
+SELECT is((SELECT points FROM public.loyalty_history
+   WHERE source_id = 'order_' || (SELECT res->>'orderId' FROM p1_order_res)), 559,
+  '32. points = floor(total × 10) = 559 (55,90 €)');
+
+SELECT is((public.create_shop_order('aaaa0001-0000-4000-8000-000000000002', 'bank_transfer', '{}'::jsonb,
+  '[{"slug":"phase1-smoke-produit","quantity":0}]'::jsonb, 'standard'))->>'error',
+  'invalid_items', '33. quantité invalide refusée');
 
 SELECT * FROM finish();
 ROLLBACK;
