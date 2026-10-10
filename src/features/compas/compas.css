@@ -3110,3 +3110,88 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
     animation-duration: 3s;
   }
 }
+
+/* ---------- Squelette de chargement (plan 5.1) ----------
+   Même grille que le Compas réel (.compas > .cp-top + .cp-map) et mêmes
+   mesures (capsule d'étapes, rangées de --cp-row-h) : à l'arrivée de l'écran,
+   rien ne se déplace. Teinte : le jeton --lkv-ink-900 en voile (--cp-fill en
+   repli). Seule l'opacité s'anime ; avec prefers-reduced-motion, plus rien. */
+.cp-skel {
+  display: block;
+  border-radius: 999px;
+  background: var(--cp-fill);
+  background: color-mix(in srgb, var(--lkv-ink-900) 9%, transparent);
+  animation: cp-skel-pulse 1.5s ease-in-out infinite;
+}
+@keyframes cp-skel-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cp-skel {
+    animation: none;
+  }
+}
+.cp-skel-step {
+  gap: 5px;
+  cursor: default;
+}
+.cp-skel--icon {
+  width: 20px;
+  height: 20px;
+}
+.cp-skel--label {
+  width: 30px;
+  height: 8px;
+}
+.cp-skel--title {
+  flex: none;
+  width: 58%;
+  height: 20px;
+  border-radius: 10px;
+}
+.cp-skel--sub {
+  flex: none;
+  width: 86%;
+  height: 12px;
+}
+.cp-skel-rows {
+  display: flex;
+  flex-direction: column;
+  margin-top: 6px;
+}
+.cp-skel-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--cp-row-h);
+  padding: 0 4px;
+  border-bottom: 0.5px solid var(--cp-sep);
+}
+.cp-skel-row:last-child {
+  border-bottom: 0;
+}
+.cp-skel--thumb {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+}
+.cp-skel-row__t {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.cp-skel--line {
+  width: 72%;
+  height: 11px;
+}
+.cp-skel--short {
+  width: 42%;
+}
+.cp-skel--map {
+  border-radius: 32px 32px 0 0;
+}
