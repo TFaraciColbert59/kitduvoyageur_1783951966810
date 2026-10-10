@@ -581,6 +581,11 @@ const QUALITY_LABEL = {
   moyen: 'conditions moyennes',
   mauvais: 'mauvaises conditions',
 } as const;
+/** Une forme par qualité, pleine pour une prévision et creuse pour une tendance : la couleur ne porte jamais seule l'information (WCAG 1.4.1). */
+const QUALITY_SHAPE = {
+  prevision: { bon: '●', moyen: '◆', mauvais: '▲' },
+  tendance: { bon: '○', moyen: '◇', mauvais: '△' },
+} as const;
 
 export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
   const { data } = ctl;
@@ -783,8 +788,19 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
             </p>
           )}
           <p className="cp-cal__legend">
-            <i data-q="bon" /> bon <i data-q="moyen" /> moyen <i data-q="mauvais" /> mauvais · plein
-            : prévision ~9 j (MET Norway) · cerclé : tendance des 5 dernières années (NASA POWER)
+            <i data-q="bon" aria-hidden="true">
+              {QUALITY_SHAPE.prevision.bon}
+            </i>{' '}
+            bon{' '}
+            <i data-q="moyen" aria-hidden="true">
+              {QUALITY_SHAPE.prevision.moyen}
+            </i>{' '}
+            moyen{' '}
+            <i data-q="mauvais" aria-hidden="true">
+              {QUALITY_SHAPE.prevision.mauvais}
+            </i>{' '}
+            mauvais · forme pleine : prévision ~9 j (MET Norway) · forme creuse : tendance des 5
+            dernières années (NASA POWER)
           </p>
         </div>
       ) : (
@@ -850,7 +866,9 @@ function CalendarCell({
       onClick={onPick}
     >
       <span>{n === 1 ? `1 ${formatDayMonth(day.date).split(' ')[2]}` : n}</span>
-      <i aria-hidden="true" />
+      <i aria-hidden="true">
+        {day.quality && day.kind !== 'inconnu' ? QUALITY_SHAPE[day.kind][day.quality] : ''}
+      </i>
     </button>
   );
 }
@@ -1005,6 +1023,14 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
                 {hw && <Icon name={hw.icon} size={16} />}
                 <b>{h.tempC != null ? `${Math.round(h.tempC)}°` : '—'}</b>
                 <small>{h.precipPct != null ? `${h.precipPct} %` : '—'}</small>
+                {/* La qualité de l'heure en texte (et une forme), pas seulement en teinte. */}
+                <i className="cp-hour__q" aria-hidden="true">
+                  {QUALITY_SHAPE.prevision[hq.quality]}
+                </i>
+                <span className="sr-only">
+                  {QUALITY_LABEL[hq.quality]}
+                  {hq.reasons.length ? ` : ${hq.reasons.join(', ')}` : ''}
+                </span>
               </span>
             );
           })}

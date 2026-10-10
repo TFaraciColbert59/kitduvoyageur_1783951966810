@@ -2017,4 +2017,131 @@ describe('CompasScreen : accessibilité (lot Q, 5.2)', () => {
       expect(await screen.findByRole('dialog', { name: 'Sac de couchage' })).toBeTruthy();
     });
   });
+  describe('Calendrier des conditions : la qualité est dite, pas seulement colorée', () => {
+    const openQuand = async (weather: CompasData['weather']) => {
+      const data = makeData();
+      data.weather = weather;
+      render(<CompasScreen data={data} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
+      fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
+      const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
+      fireEvent.click(within(sheet).getByRole('button', { name: /Quand/ }));
+      return sheet;
+    };
+    const day = (n: number) => `2026-10-${String(n).padStart(2, '0')}`;
+
+    it('chaque jour porte une forme propre à sa qualité et à sa nature, en plus de la couleur et du libellé', async () => {
+      const kinds = [
+        ['prevision', 'bon'],
+        ['prevision', 'moyen'],
+        ['prevision', 'mauvais'],
+        ['tendance', 'bon'],
+        ['tendance', 'moyen'],
+        ['tendance', 'mauvais'],
+      ] as const;
+      const calendar = [
+        ...kinds.map(([kind, quality], i) => ({
+          date: day(10 + i),
+          kind: kind as 'prevision' | 'tendance',
+          quality: quality as 'bon' | 'moyen' | 'mauvais',
+          reasons: [] as string[],
+          tMin: 4,
+          tMax: 14,
+        })),
+        { date: day(16), kind: 'inconnu' as const, quality: null, reasons: [] as string[], tMin: null, tMax: null },
+      ];
+      const sheet = await openQuand({
+        source: 'MET Norway',
+        trendSource: 'NASA POWER',
+        horizon: day(12),
+        tripDays: [],
+        calendar,
+      });
+      const cell = (d: number) =>
+        within(sheet).getByRole('button', { name: new RegExp(`\\b${d} oct\\.? :`) });
+      const shape = (d: number) => cell(d).querySelector('i')?.textContent ?? '';
+      // prévision : forme pleine ; tendance : même forme, creuse
+      expect(shape(10)).toBe('●');
+      expect(shape(11)).toBe('◆');
+      expect(shape(12)).toBe('▲');
+      expect(shape(13)).toBe('○');
+      expect(shape(14)).toBe('◇');
+      expect(shape(15)).toBe('△');
+      // pas de donnée : aucune forme de qualité
+      expect(shape(16)).toBe('');
+      // le libellé dit la qualité en toutes lettres
+      expect(cell(11).getAttribute('aria-label')).toMatch(/conditions moyennes \(prévision\)/);
+      expect(cell(15).getAttribute('aria-label')).toMatch(/mauvaises conditions \(tendance\)/);
+      expect(cell(16).getAttribute('aria-label')).toMatch(/pas de donnée/);
+      // les formes sont décoratives : le libellé suffit aux lecteurs d’écran
+      expect(cell(10).querySelector('i')?.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('la légende nomme chaque forme, sans passer par la couleur', async () => {
+      const sheet = await openQuand({
+        source: 'MET Norway',
+        trendSource: 'NASA POWER',
+        horizon: day(12),
+        tripDays: [],
+        calendar: [{ date: day(12), kind: 'prevision', quality: 'bon', reasons: [], tMin: 4, tMax: 14 }],
+      });
+      const legend = sheet.querySelector('.cp-cal__legend') as HTMLElement;
+      expect(legend.textContent).toMatch(/●\s*bon/);
+      expect(legend.textContent).toMatch(/◆\s*moyen/);
+      expect(legend.textContent).toMatch(/▲\s*mauvais/);
+      expect(legend.textContent).toMatch(/forme pleine\s*:\s*prévision/);
+      expect(legend.textContent).toMatch(/forme creuse\s*:\s*tendance/);
+    });
+
+    it('heure par heure : la qualité de chaque heure est dite en texte, avec ses raisons', async () => {
+      const hour = (hh: string, o: Partial<{ code: number; precipPct: number; gustKmh: number }>) => ({
+        time: `2026-10-12T${hh}:00`,
+        tempC: 9,
+        precipPct: o.precipPct ?? 10,
+        precipMm: 0,
+        windKmh: 10,
+        gustKmh: o.gustKmh ?? 15,
+        code: o.code ?? 1,
+        freezingM: null,
+        isDay: true,
+      });
+      const sheet = await openQuand({
+        source: 'MET Norway',
+        trendSource: 'NASA POWER',
+        horizon: day(20),
+        calendar: [{ date: day(12), kind: 'prevision', quality: 'bon', reasons: [], tMin: 4, tMax: 14 }],
+        tripDays: [
+          {
+            day: 1,
+            date: day(12),
+            lat: 42.73,
+            lon: -0.01,
+            forecast: {
+              date: day(12),
+              tMin: 4,
+              tMax: 14,
+              precipPct: 20,
+              precipMm: 1,
+              gustMax: 30,
+              code: 2,
+              sunrise: '07:40',
+              sunset: '19:10',
+              hours: [hour('09', {}), hour('11', { precipPct: 50 }), hour('14', { precipPct: 85, gustKmh: 65 })],
+            },
+          },
+        ],
+      });
+      const strip = within(sheet).getByLabelText('Heure par heure');
+      const chips = Array.from(strip.querySelectorAll<HTMLElement>('.cp-hour'));
+      expect(chips).toHaveLength(3);
+      expect(chips[0].textContent).toMatch(/bonnes conditions/);
+      expect(chips[1].textContent).toMatch(/conditions moyennes/);
+      expect(chips[1].textContent).toMatch(/pluie 50 %/);
+      expect(chips[2].textContent).toMatch(/mauvaises conditions/);
+      expect(chips[2].textContent).toMatch(/rafales 65 km\/h/);
+      // forme de qualité visible, décorative
+      expect(chips[2].querySelector('i[aria-hidden="true"]')?.textContent).toBe('▲');
+    });
+  });
+
 });

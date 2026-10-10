@@ -765,7 +765,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       la ligne n'est plus un `role="button"` qui contient des boutons ; sa commande
       principale est un vrai `<button>` (Entrée et Espace natifs), voisine de « Emballer »
       et « Retirer » ; toucher, appui long et glissement sont inchangés.
-- [ ] Calendrier des conditions : qualité dite en texte, pas seulement en couleur.
+- [x] Calendrier des conditions : qualité dite en texte, pas seulement en couleur. Lot Q
+      (`CompasOuFlows.tsx` `QUALITY_SHAPE`, `compas.css`, `compasScreen.test.tsx`
+      « Calendrier des conditions ») : chaque jour porte une forme propre à sa qualité (● ◆ ▲
+      pleine pour la prévision, ○ ◇ △ creuse pour la tendance) en plus de la couleur et du
+      libellé complet ; la légende nomme les formes ; chaque heure de « Heure par heure »
+      dit sa qualité et ses raisons en texte (lecteur d'écran) et porte la même forme.
 - [ ] Pastilles d'alerte des étapes annoncées au lecteur d'écran.
 - [ ] Tailles de texte en `rem` ; lignes qui s'agrandissent au lieu de tronquer.
 - [ ] « Annuler » : délai réglable ou plus long ; erreurs en `role="alert"`.

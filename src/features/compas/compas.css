@@ -2064,13 +2064,15 @@
   white-space: nowrap;
   font-size: 11.5px;
 }
+/* Forme (●◆▲ pleine, ○◇△ creuse) : la qualité ne tient jamais à la couleur seule. */
 .cp-cal__d i,
 .cp-cal__legend i {
   display: inline-block;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--q);
+  min-width: 0.5rem;
+  font-style: normal;
+  font-size: 0.625rem;
+  line-height: 1;
+  color: var(--q);
 }
 .cp-cal__d[data-q='bon'],
 .cp-cal__legend i[data-q='bon'] {
@@ -2083,11 +2085,6 @@
 .cp-cal__d[data-q='mauvais'],
 .cp-cal__legend i[data-q='mauvais'] {
   --q: var(--cp-bad);
-}
-/* Tendance : cerclée, jamais confondue avec une prévision */
-.cp-cal__d[data-kind='tendance'] i {
-  background: transparent;
-  box-shadow: inset 0 0 0 1.5px var(--q);
 }
 .cp-cal__d[data-kind='inconnu'] {
   color: var(--cp-ink3);
@@ -2205,6 +2202,12 @@
 }
 .cp-hour[data-q='mauvais'] {
   background: var(--cp-bad-bg);
+}
+.cp-hour__q {
+  font-style: normal;
+  font-size: 0.625rem;
+  line-height: 1;
+  color: var(--cp-ink2);
 }
 
 /* Envies */
