@@ -607,10 +607,18 @@ export function CompasScreen({
         // Tout ce qui est compris et valide est appliqué ; le parcours du
         // catalogue est choisi par la préparation (pas de tiroir à ouvrir).
         const actions = res.proposals.filter((p) => p.ok && p.action.type !== 'search_route').map((p) => p.action);
-        const ops = planApplication(actions, applyCurrent(ctl)).filter((o) => o.op !== 'route');
+        const planned = planApplication(actions, applyCurrent(ctl)).filter((o) => o.op !== 'route');
+        const ops = planned.filter((o) => o.op !== 'origin');
         if (ops.length) {
           const done = await runOps(ctl, ops);
           if (!done.success) return prepFail(done.error ?? 'Ta demande n’a pas pu être appliquée : réessaie.');
+        }
+        // Le lieu de départ n'arrête pas la préparation : introuvable ou refusé, elle continue
+        // sans lui (trajet à préciser), et l'échec est dit.
+        const origin = planned.filter((o) => o.op === 'origin');
+        if (origin.length) {
+          const said = await runOps(ctl, origin);
+          if (!said.success) notify(`Départ non retenu · ${said.error ?? 'réessaie'}`);
         }
         await compasClearStartSayAction({ tripId: model.tripId }).catch(() => undefined);
         setPrep({ stage: 'itinerary' });
@@ -619,7 +627,7 @@ export function CompasScreen({
         prepFail('Connexion perdue : ta demande est gardée, reprends quand tu veux.');
       }
     },
-    [model.tripId, router, setPrep, prepFail]
+    [model.tripId, router, setPrep, prepFail, notify]
   );
   useEffect(() => {
     if (!startSay || startSaid.current === model.tripId) return;

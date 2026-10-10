@@ -84,9 +84,11 @@ export function originOf(raw: unknown): TripOrigin | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const o = raw as Record<string, unknown>;
   const name = typeof o.name === 'string' ? o.name.trim() : '';
-  const lat = Number(o.lat);
-  const lon = Number(o.lon);
-  if (!name || o.lat == null || o.lon == null || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  // Des nombres, rien d'autre : `Number('')` ou `Number(false)` feraient un faux point (0, 0)
+  // (les éditeurs d'un voyage peuvent écrire `metadata`).
+  const { lat, lon } = o;
+  if (!name || typeof lat !== 'number' || typeof lon !== 'number' || !Number.isFinite(lat) || !Number.isFinite(lon))
+    return null;
   if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
   const cc = typeof o.countryCode === 'string' ? o.countryCode.trim().toUpperCase() : '';
   return { name: name.slice(0, 80), lat, lon, countryCode: /^[A-Z]{2}$/.test(cc) ? cc : null, source: 'dit' };

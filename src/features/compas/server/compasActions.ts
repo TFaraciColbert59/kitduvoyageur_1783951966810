@@ -584,6 +584,24 @@ async function resolveDestination(query: string, userId: string): Promise<Compas
   return lookupLoose(query);
 }
 
+/**
+ * La carte (Photon, LocationIQ, Geoapify) et parfois l'IA : chaque recherche de
+ * lieu (destination, départ) est comptée par personne (plan 2.2). Le message à
+ * montrer si la limite est atteinte ou le compteur indisponible, sinon null.
+ */
+async function placeSearchLimitError(userId: string): Promise<string | null> {
+  const limited = await enforceRateLimit(userId, {
+    scope: 'compas-destination',
+    limit: 20,
+    windowMs: 600_000,
+    failMode: 'closed',
+  });
+  if (!limited) return null;
+  return limited.status === 429
+    ? 'Trop de lieux cherchés d’affilée : patiente quelques minutes.'
+    : 'Recherche de lieux indisponible pour le moment : réessaie dans un instant.';
+}
+
 const destinationSchema = z.object({
   tripId: uuid,
   tripSlug: slug,
@@ -604,23 +622,10 @@ export async function compasSetDestinationAction(
   try {
     const auth = await requireEditor(parsed.data.tripId);
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
-    // La carte (Photon, LocationIQ, Geoapify) et parfois l'IA : comptées par personne (plan 2.2).
     // Effacer la destination (aussi « Annuler ») ne cherche rien : ni compté, ni refusé.
     if (parsed.data.place) {
-      const limited = await enforceRateLimit(auth.userId, {
-        scope: 'compas-destination',
-        limit: 20,
-        windowMs: 600_000,
-        failMode: 'closed',
-      });
-      if (limited)
-        return {
-          success: false,
-          error:
-            limited.status === 429
-              ? 'Trop de lieux cherchés d’affilée : patiente quelques minutes.'
-              : 'Recherche de lieux indisponible pour le moment : réessaie dans un instant.',
-        };
+      const limitError = await placeSearchLimitError(auth.userId);
+      if (limitError) return { success: false, error: limitError };
     }
     // « GR34 » n'est pas un lieu : la région du sentier (sinon un point dans l'Indre).
     const wanted = parsed.data.place ? (trailRegion(parsed.data.place) ?? parsed.data.place) : null;
@@ -669,48 +674,55 @@ const originSchema = z.object({
   tripSlug: slug,
   /** Lieu de départ tel que dit (« Lyon ») ; null ou vide efface le départ. */
   place: z.string().trim().max(80).nullable(),
+  /**
+   * « Annuler » : le départ d'avant tel qu'il était rangé (déjà arrondi à ~1 km).
+   * Rien à chercher sur la carte ni à compter : il l'emporte sur `place`.
+   */
+  restore: z
+    .object({
+      name: z.string().trim().min(1).max(80),
+      lat: z.number().min(-90).max(90),
+      lon: z.number().min(-180).max(180),
+      countryCode: z
+        .string()
+        .regex(/^[A-Za-z]{2}$/)
+        .transform((code) => code.toUpperCase())
+        .nullable(),
+    })
+    .optional(),
 });
 
 /**
  * Lieu de départ du voyage (« depuis Lyon »), retrouvé sur la carte comme la
  * destination (même recherche, même limite par personne) et rangé arrondi à
  * ~1 km dans `metadata.compas.origin` : le trajet d'approche se chiffre depuis
- * là, avant la position de l'appareil. Effacer ne cherche rien.
+ * là, avant la position de l'appareil. Effacer ne cherche rien, rétablir le
+ * départ d'avant (`restore`) non plus.
  */
 export async function compasSetOriginAction(
   input: z.input<typeof originSchema>
 ): Promise<CompasActionResult> {
   const parsed = originSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: 'Lieu invalide' };
-  const wanted = parsed.data.place || null;
+  const { restore } = parsed.data;
+  const wanted = restore ? null : parsed.data.place || null;
   if (wanted && wanted.length < 2) return { success: false, error: 'Lieu invalide' };
   try {
+    // L'accès d'abord : un lecteur refusé ne consomme pas de recherche.
     const auth = await requireEditor(parsed.data.tripId);
     if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
-    // Même compteur que la destination : la carte (et parfois l'IA) est la même.
     if (wanted) {
-      const limited = await enforceRateLimit(auth.userId, {
-        scope: 'compas-destination',
-        limit: 20,
-        windowMs: 600_000,
-        failMode: 'closed',
-      });
-      if (limited)
-        return {
-          success: false,
-          error:
-            limited.status === 429
-              ? 'Trop de lieux cherchés d’affilée : patiente quelques minutes.'
-              : 'Recherche de lieux indisponible pour le moment : réessaie dans un instant.',
-        };
+      const limitError = await placeSearchLimitError(auth.userId);
+      if (limitError) return { success: false, error: limitError };
     }
-    const place = wanted ? await resolveDestination(wanted, auth.userId) : null;
-    if (wanted && !place) return { success: false, error: `« ${wanted} » introuvable sur la carte.` };
-    const at = place ? coarsePosition({ lat: place.lat, lon: place.lon }) : null;
+    const found = restore ?? (wanted ? await resolveDestination(wanted, auth.userId) : null);
+    if (wanted && !found) return { success: false, error: `« ${wanted} » introuvable sur la carte.` };
+    const at = found ? coarsePosition({ lat: found.lat, lon: found.lon }) : null;
+    if (found && !at) return { success: false, error: 'Lieu invalide' };
     const { error } = await updateTripMetadata(auth.supabase, parsed.data.tripId, (m) => {
       const c = compasMeta(m);
-      if (place && at)
-        c.origin = { name: place.name, lat: at.lat, lon: at.lon, countryCode: place.countryCode, source: 'dit' };
+      if (found && at)
+        c.origin = { name: found.name, lat: at.lat, lon: at.lon, countryCode: found.countryCode, source: 'dit' };
       else delete c.origin;
       return { ...m, compas: c };
     });

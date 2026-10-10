@@ -89,7 +89,12 @@ export async function runOps(
         res = await compasSetDestinationAction({ tripId, tripSlug: slug, place: op.place });
         break;
       case 'origin':
-        res = await compasSetOriginAction({ tripId, tripSlug: slug, place: op.place });
+        res = await compasSetOriginAction({
+          tripId,
+          tripSlug: slug,
+          place: op.place,
+          ...(op.restore ? { restore: op.restore } : {}),
+        });
         break;
       case 'span':
         res = await compasSetSpanAction({ tripId, tripSlug: slug, days: op.days });
@@ -148,8 +153,13 @@ export function inverseOps(ctl: CompasCtl, ops: readonly ApplyOp[]): ApplyOp[] |
         out.push({ op: 'destination', place: m.destination ?? null });
         break;
       case 'origin':
-        // Le départ dit d'avant (null : il n'y en avait pas, on l'efface).
-        out.push({ op: 'origin', place: ctl.data.originName ?? null });
+        // Le départ dit d'avant, rétabli tel que rangé (même point, sans nouvelle recherche
+        // ni passage compté) ; sans départ avant, on l'efface.
+        out.push(
+          ctl.data.originSaid
+            ? { op: 'origin', place: ctl.data.originSaid.name, restore: ctl.data.originSaid }
+            : { op: 'origin', place: null }
+        );
         break;
       case 'span':
         out.push({ op: 'span', days: ctl.data.plannedDays ?? null });

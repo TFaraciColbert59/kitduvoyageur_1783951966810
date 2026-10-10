@@ -1623,6 +1623,75 @@ describe('CompasScreen', () => {
     expect(compas.compasClearStartSayAction).not.toHaveBeenCalled();
   });
 
+  it('Phrase de départ : un lieu de départ refusé n’arrête pas la préparation, l’échec est dit', async () => {
+    compas.compasInterpretAction.mockResolvedValueOnce({
+      success: true,
+      usedAi: false,
+      note: null,
+      proposals: [
+        {
+          id: '0-set_origin',
+          action: { type: 'set_origin', place: 'Lyon' },
+          label: 'Départ : Lyon',
+          ok: true,
+          reason: null,
+          source: 'regles',
+        },
+        {
+          id: '1-set_party_size',
+          action: { type: 'set_party_size', count: 4 },
+          label: '4 personnes',
+          ok: true,
+          reason: null,
+          source: 'regles',
+        },
+      ],
+    });
+    compas.compasSetOriginAction.mockResolvedValueOnce({ success: false, error: '« Lyon » introuvable sur la carte.' });
+    render(<CompasScreen data={{ ...makeData(), startSay: 'à 4 depuis Lyon' }} />);
+    await waitFor(() => expect(compas.compasSetOriginAction).toHaveBeenCalledTimes(1));
+    // Le reste est appliqué d'abord : le départ, dont rien ne dépend, passe en dernier.
+    expect(compas.compasSetPartySizeAction).toHaveBeenCalledWith({ tripId: TRIP, tripSlug: 'trek-3-vallees', partySize: 4 });
+    expect(compas.compasSetPartySizeAction.mock.invocationCallOrder[0]).toBeLessThan(
+      compas.compasSetOriginAction.mock.invocationCallOrder[0]
+    );
+    // L'échec est visible, sans arrêter la préparation : la phrase est consommée et la suite part.
+    expect(await screen.findByText('Départ non retenu · « Lyon » introuvable sur la carte.')).toBeTruthy();
+    await waitFor(() => expect(compas.compasClearStartSayAction).toHaveBeenCalledWith({ tripId: TRIP }));
+    expect(screen.queryByText('Préparation interrompue')).toBeNull();
+  });
+
+  it('Phrase de départ : un réglage refusé arrête toujours la préparation, sans tenter le départ', async () => {
+    compas.compasInterpretAction.mockResolvedValueOnce({
+      success: true,
+      usedAi: false,
+      note: null,
+      proposals: [
+        {
+          id: '0-set_origin',
+          action: { type: 'set_origin', place: 'Lyon' },
+          label: 'Départ : Lyon',
+          ok: true,
+          reason: null,
+          source: 'regles',
+        },
+        {
+          id: '1-set_party_size',
+          action: { type: 'set_party_size', count: 4 },
+          label: '4 personnes',
+          ok: true,
+          reason: null,
+          source: 'regles',
+        },
+      ],
+    });
+    compas.compasSetPartySizeAction.mockResolvedValueOnce({ success: false, error: 'Connexion perdue' } as never);
+    render(<CompasScreen data={{ ...makeData(), startSay: 'à 4 depuis Lyon' }} />);
+    expect(await screen.findByText('Préparation interrompue')).toBeTruthy();
+    expect(compas.compasSetOriginAction).not.toHaveBeenCalled();
+    expect(compas.compasClearStartSayAction).not.toHaveBeenCalled();
+  });
+
   it('Dis-le : les propositions refusées ne s’appliquent pas, les autres oui', async () => {
     compas.compasInterpretAction.mockResolvedValueOnce({
       success: true,
@@ -1739,6 +1808,30 @@ describe('CompasScreen', () => {
         tripId: TRIP,
         tripSlug: 'trek-3-vallees',
         place: null,
+      });
+    });
+
+    it('départ changé : « Annuler » rétablit l’ancien tel que rangé, sans le rechercher à nouveau', async () => {
+      const grenoble = { name: 'Grenoble', lat: 45.19, lon: 5.72, countryCode: 'FR' };
+      compas.compasInterpretAction.mockResolvedValueOnce({
+        success: true,
+        usedAi: false,
+        note: null,
+        proposals: [originProposal],
+      });
+      render(<CompasScreen data={{ ...makeData(), originName: 'Grenoble', originSaid: grenoble }} />);
+      const sheet = await openOu(/Quand/);
+      fireEvent.change(within(sheet).getByLabelText('Dis-le'), { target: { value: 'depuis Lyon' } });
+      fireEvent.click(within(sheet).getByRole('button', { name: 'Comprendre la phrase' }));
+      fireEvent.click(await within(sheet).findByRole('button', { name: /Appliquer \(1\)/ }));
+      await waitFor(() => expect(compas.compasSetOriginAction).toHaveBeenCalledTimes(1));
+      fireEvent.click(await screen.findByRole('button', { name: 'Annuler' }));
+      await waitFor(() => expect(compas.compasSetOriginAction).toHaveBeenCalledTimes(2));
+      expect(compas.compasSetOriginAction).toHaveBeenLastCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        place: 'Grenoble',
+        restore: grenoble,
       });
     });
 

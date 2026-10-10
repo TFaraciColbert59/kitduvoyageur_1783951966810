@@ -30,6 +30,23 @@ describe('lieu de départ rangé sur le voyage', () => {
     expect(originOf({ name: 'Lyon', lat: 145, lon: 4.83 })).toBeNull();
     expect(originOf('Lyon')).toBeNull();
   });
+
+  it('lecture stricte : aucune coordonnée n’est devinée par coercition (jamais (0, 0))', () => {
+    const at = (lat: unknown, lon: unknown) => originOf({ name: 'Lyon', lat, lon });
+    expect(at('', '')).toBeNull();
+    expect(at(false, false)).toBeNull();
+    expect(at([], [])).toBeNull();
+    expect(at(true, true)).toBeNull();
+    expect(at('abc', 'abc')).toBeNull();
+    expect(at(Number.NaN, 4.83)).toBeNull();
+    expect(at(45.76, Number.NaN)).toBeNull();
+    expect(at(Number.POSITIVE_INFINITY, 4.83)).toBeNull();
+    expect(at(45.76, Number.NEGATIVE_INFINITY)).toBeNull();
+    expect(at('45.7', '4.8')).toBeNull();
+    expect(at(45.76, '4.83')).toBeNull();
+    expect(at(0, 0)).toMatchObject({ lat: 0, lon: 0 });
+    expect(at(45.76, 4.83)).toEqual({ name: 'Lyon', lat: 45.76, lon: 4.83, countryCode: null, source: 'dit' });
+  });
 });
 
 describe('appliquer « depuis Lyon »', () => {
@@ -40,15 +57,32 @@ describe('appliquer « depuis Lyon »', () => {
     expect(ops.filter((o) => o.op === 'destination')).toHaveLength(1);
   });
 
-  it('« Annuler » rétablit le départ d’avant, ou l’efface s’il n’y en avait pas', () => {
-    const ctl = (originName: string | null) =>
+  it('le départ vient en dernier (rien n’en dépend), la destination reste la première', () => {
+    const ops = planApplication(
+      parseIntentRules('rando 3 jours dans le Vercors, rythme tranquille depuis Lyon', '2026-10-09'),
+      current
+    );
+    expect(ops[0]).toEqual({ op: 'destination', place: 'Vercors' });
+    expect(ops.some((o) => o.op === 'prefs')).toBe(true);
+    expect(ops.at(-1)).toEqual({ op: 'origin', place: 'Lyon' });
+  });
+
+  it('« Annuler » rétablit le départ d’avant tel quel (même point), ou l’efface s’il n’y en avait pas', () => {
+    const ctl = (originSaid: { name: string; lat: number; lon: number; countryCode: string | null } | null) =>
       ({
         data: {
-          originName,
+          originName: originSaid?.name ?? null,
+          originSaid,
           model: { dates: { start: null, end: null, hours: null, days: null }, preferences: current.preferences },
         },
       }) as unknown as CompasCtl;
-    expect(inverseOps(ctl('Grenoble'), [{ op: 'origin', place: 'Lyon' }])).toEqual([{ op: 'origin', place: 'Grenoble' }]);
+    const grenoble = { name: 'Grenoble', lat: 45.19, lon: 5.72, countryCode: 'FR' };
+    expect(inverseOps(ctl(grenoble), [{ op: 'origin', place: 'Lyon' }])).toEqual([
+      { op: 'origin', place: 'Grenoble', restore: grenoble },
+    ]);
+    expect(inverseOps(ctl({ ...grenoble, countryCode: null }), [{ op: 'origin', place: 'Lyon' }])).toEqual([
+      { op: 'origin', place: 'Grenoble', restore: { ...grenoble, countryCode: null } },
+    ]);
     expect(inverseOps(ctl(null), [{ op: 'origin', place: 'Lyon' }])).toEqual([{ op: 'origin', place: null }]);
   });
 });
