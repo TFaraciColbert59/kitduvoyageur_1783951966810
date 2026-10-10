@@ -580,10 +580,21 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 4.1 Contexte voyageur
 
-- [ ] Profil : nationalité, pays de résidence, devise, langue, fuseau, domicile (ville) ;
+- [x] Profil : nationalité, pays de résidence, devise, langue, fuseau, domicile (ville) ;
       demandé une fois, modifiable dans `/compte` ; les réglages du compte (unités,
-      devise, fuseau) enfin lus.
-- [ ] Sans profil : rien d'affirmé qui dépende de la nationalité.
+      devise, fuseau) enfin lus. Lot P : table privée `user_traveller` (RLS de la personne
+      seule, aucun droit pour anon, essai sans compte refusé, domicile à 0,01° par la base),
+      question posée une fois dans le Compas vide (« Passer » range une ligne vide) et page
+      `/compte/voyageur` (bureau et téléphone). Aucun réglage du compte n'existait côté
+      serveur (devise et fuseau de `/compte` restaient dans le navigateur, jamais relus) :
+      ils passent au profil, le fuseau sert de repli à « aujourd'hui » ; unités : 6.3
+      (`traveller.test.ts`, `travellerActions.test.ts`, `travellerCard.test.tsx`, sonde
+      `scripts/verify/user_traveller_rls_probe.sql`).
+- [x] Sans profil : rien d'affirmé qui dépende de la nationalité. Lot P : papiers,
+      formalités, prises, change et consignes de l'IA lisent le profil ; sans nationalité
+      connue, une ligne « à vérifier auprès du service officiel de ton pays », ni France
+      Diplomatie, ni formalités chiffrées, ni « adaptateur à prévoir » (`papers.test.ts`,
+      `nationalityPrompt.test.ts`, `travel.test.ts`).
 
 ### 4.2 Papiers, prises, change
 
@@ -594,27 +605,37 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [ ] Budget aussi dans la devise du pays de destination (taux Frankfurter v2, 223
       devises, déjà branché) : aujourd'hui seulement si la devise du voyage est l'une des
       six de l'enum `trip_budget_currency`, et le Compas ne la change jamais.
-- [ ] Prises et change selon le pays de résidence ; « France Diplomatie » pour les
-      Français seulement, le service officiel du pays sinon.
-- [ ] `keepAiNote` ne retire plus les conseils justes pour un non-Français.
+- [~] Prises et change selon le pays de résidence ; « France Diplomatie » pour les
+      Français seulement, le service officiel du pays sinon. Lot P : France Diplomatie et
+      « adaptateur à prévoir » seulement pour une nationalité ou une résidence françaises
+      connues ; ailleurs le type de prise du pays, un fait. **Pas fait** : prises et change
+      d'une résidence hors de France (table des prises par pays, lot Q).
+- [~] `keepAiNote` ne retire plus les conseils justes pour un non-Français. Lot P : le change
+      est gardé pour une devise connue autre que l'euro, les prises quand la règle ne sait
+      pas ; les papiers restent à la règle (`papers.test.ts`).
 - [ ] Mise à jour des barèmes périmés (ESTA, exemption Vietnam) avec date de vérification.
 - [x] Note de papiers jamais perdue par la troncature : l'essentiel (papiers, sécurité)
       passe avant les notes de préparation et les suggestions de l'IA (`orderNotes`, 8
       notes), lot K.
-- [ ] Hypothèses « voyageur français » encore en place, jusqu'au profil (4.1), à ne pas
+- [x] Hypothèses « voyageur français » encore en place, jusqu'au profil (4.1), à ne pas
       confondre avec le départ, qui ne vaut plus la France par défaut (4.3) : le prompt
       système de l'IA (`src/lib/ai/features/compasAutofill.ts`, règles 8a et 8b ; la 8a
       écrit « une personne qui part de France ») et le barème `entryFees` (« voyageur
-      français », `engine/costs.ts`).
+      français », `engine/costs.ts`). Lot P : 8a neutre sans nationalité française connue,
+      plus jamais « part de France » ; règle 11 de l'itinéraire sans « voyageur français » ;
+      `entryFees` réservé aux ressortissants français (`nationalityPrompt.test.ts`,
+      `travel.test.ts`).
 
 ### 4.3 Origine du voyage
 
-- [~] Origine = ville dite (« depuis Lyon »), domicile du profil ou GPS ; **jamais la
+- [x] Origine = ville dite (« depuis Lyon »), domicile du profil ou GPS ; **jamais la
       France par défaut** ; sans origine, le trajet n'est pas chiffré (dit à l'écran).
       Lot N : départ dit (`metadata.compas.origin`) > GPS > aucun ; plus de Paris ni de
       « depuis la France » ; sans départ, rien de chiffré et « Trajet non chiffré : point de
-      départ inconnu » (`travel.test.ts`). **Pas fait : le domicile du profil**, il attend
-      le profil (4.1).
+      départ inconnu » (`travel.test.ts`). Lot P : domicile du profil après le départ dit et
+      avant la position, rangé à 0,01° et cherché une seule fois, à l'enregistrement ;
+      « (depuis ton domicile) » et une note, jamais le nom du domicile sur le voyage ni pour
+      l'IA (`travelHome.test.ts`).
 - [x] Action « depuis X » dans la compréhension de la phrase. Lot N : `set_origin` lu par les
       règles (« depuis », « au départ de », « en partant de », « on part de », « je pars
       de », « nous partons de »), jamais pris pour la destination, appliqué par la même
