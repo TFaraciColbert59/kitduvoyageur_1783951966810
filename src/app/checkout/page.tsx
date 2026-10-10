@@ -547,7 +547,9 @@ export default function CheckoutPage() {
                     <div className="mb-[var(--space-6)] flex h-20 w-20 items-center justify-center rounded-full bg-[color:var(--lkv-success-bg)]">
                       <Icon name="CheckIcon" size={32} className="text-[color:var(--lkv-text-primary)]" />
                     </div>
-                    <h2 className="mb-[var(--space-4)] font-display text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">Commande confirmée.</h2>
+                    <h2 className="mb-[var(--space-4)] font-display text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">
+                      {orderNumber ? 'Commande enregistrée — en attente de paiement.' : 'Commande confirmée.'}
+                    </h2>
                     <p className="mb-[var(--space-2)] text-[color:var(--lkv-text-muted)]">
                       {orderNumber ? (
                         <>Numéro de commande : <span className="font-mono font-semibold text-[color:var(--lkv-text-primary)]">{orderNumber}</span></>
@@ -556,7 +558,9 @@ export default function CheckoutPage() {
                       )}
                     </p>
                     <p className="mx-auto mb-[var(--space-8)] max-w-sm text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-muted)]">
-                      Merci ! Un email de confirmation vous a été envoyé. Préparez-vous pour l'aventure.
+                      {orderNumber
+                        ? 'Votre commande sera confirmée dès réception de votre virement. Préparez-vous pour l’aventure.'
+                        : 'Merci ! Un email de confirmation vous a été envoyé. Préparez-vous pour l\'aventure.'}
                     </p>
                     <Link
                       href="/explorer"
