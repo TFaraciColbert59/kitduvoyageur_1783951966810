@@ -26,7 +26,7 @@
 
 | Service | Limite gratuite | Commercial | Obligations | Source |
 |---|---|---|---|---|
-| **Geoapify** (géocodage, lieux, routage) | 3 000 crédits/jour, 5 req/s ; au-delà, pas de facture | Oui *(extrait : « we do not restrict that » ; le tableau dit « Limited Commercial Use »)* | « Powered by Geoapify » avec lien ; clé gratuite | [pricing](https://www.geoapify.com/pricing) |
+| **Geoapify** (géocodage, lieux, routage) | 3 000 crédits/jour, 5 req/s ; au-delà, pas de facture | Oui (page [pricing](https://www.geoapify.com/pricing) lue le 10 oct. 2026 : « You can use the Free plan for commercial websites, apps, and business projects, including in production » dans les limites du plan ; les conditions générales, elles, disent « The commercial use of the Free-package is allowed in the development and, with some limitations, in the production phase. Please contact us for details » : deux textes qui ne disent pas tout à fait la même chose, à confirmer par écrit avant le lancement) | « Powered by Geoapify » en **lien suivi** « near the map or information provided by the service » ; attribution OpenStreetMap toujours ([conditions](https://www.geoapify.com/terms-and-conditions) : « Geoapify attribution is mandatory when using Free subscription plan ») ; clé gratuite | [pricing](https://www.geoapify.com/pricing), [conditions](https://www.geoapify.com/terms-and-conditions) |
 | **LocationIQ** (géocodage, secours) | 5 000 req/jour, 2 req/s | Oui, avec lien visible vers locationiq.com *(extrait)* | « Search by LocationIQ.com » ; clé gratuite | [pricing](https://locationiq.com/pricing) |
 | **Photon** public | « raisonnable », sinon bridé ou banni | ? (aucune clause commerciale) | User-Agent identifiant ; faible volume | [README](https://github.com/komoot/photon) |
 | **Overpass private.coffee** | pas de limite, éviter les requêtes simultanées | Oui *(extrait : « including commercial use »)* | Prévenir l'opérateur avant un usage important | [overpass.private.coffee](https://overpass.private.coffee/) |
@@ -79,7 +79,8 @@
 - **Prix du carburant hors UE** : aucune source gratuite, à jour et sous licence claire ;
   le budget l'annonce comme « estimation » (barème versionné, daté).
 - **À relire sur les pages officielles** (proxy bloqué pendant la recherche) : conditions
-  Geoapify, LocationIQ, private.coffee, Valhalla FOSSGIS, hCaptcha gratuit.
+  LocationIQ, private.coffee, Valhalla FOSSGIS, hCaptcha gratuit. (Geoapify relu le 10 oct.
+  2026 ; Meteoalarm, GeoNames, BCE et Terrain Tiles aussi, voir `DataSources.tsx`.)
 
 ## Meteoalarm (relu le 10 octobre 2026, plan 1.8 et 4.9)
 

@@ -83,6 +83,11 @@ export interface CompasItineraryStep {
   distanceKm: number | null;
   /** Distance estimée (aucun routeur n'a pu la mesurer, plan 1.5) : l'écran le dit. */
   distanceEstimated?: boolean;
+  /**
+   * Qui a mesuré la distance (`geoapify`, `valhalla`, `estimation`…), quand le voyage
+   * le dit : « Powered by Geoapify » ne s'affiche que près de ce qu'il a mesuré.
+   */
+  distanceSource?: string | null;
   elevationGainM: number | null;
   accommodation: string | null;
 }
@@ -549,6 +554,7 @@ export async function getCompasData(): Promise<CompasData | null> {
   const estimatedIds = new Set(
     (trip.steps ?? []).filter((s) => distanceSource(s.metadata) === 'estimation').map((s) => s.id)
   );
+  const sourceOfStep = new Map((trip.steps ?? []).map((s) => [s.id, distanceSource(s.metadata)]));
   const itinerary: CompasItineraryStep[] = [...input.steps]
     .sort((a, b) => a.dayNumber - b.dayNumber || a.orderIndex - b.orderIndex)
     .map((s) => ({
@@ -557,6 +563,7 @@ export async function getCompasData(): Promise<CompasData | null> {
       title: s.title,
       distanceKm: s.distanceKm,
       distanceEstimated: estimatedIds.has(s.id),
+      distanceSource: sourceOfStep.get(s.id) ?? null,
       elevationGainM: s.elevationGainM,
       accommodation: s.accommodationName,
     }));

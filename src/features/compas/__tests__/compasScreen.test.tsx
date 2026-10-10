@@ -1238,6 +1238,31 @@ describe('CompasScreen', () => {
     fireEvent.click(within(sheet).getByRole('button', { name: /Refuge ou abri \(1\)/ }));
     expect(within(sheet).queryByText('Point d’eau')).toBeNull();
     expect(within(sheet).getByText(/contributeurs OpenStreetMap/)).toBeTruthy();
+    // Geoapify complète cette liste (Places) : son crédit, lien suivi, est à côté des résultats.
+    const credit = within(sheet).getByRole('link', { name: 'Powered by Geoapify' });
+    expect(credit.getAttribute('href')).toBe('https://www.geoapify.com/');
+    expect(credit.getAttribute('rel') ?? '').not.toContain('nofollow');
+  });
+
+  /* ---------- « Powered by Geoapify » à côté des distances qu'il mesure (plan 5.3) ---------- */
+
+  it('Parcours · étapes : une distance mesurée par Geoapify → son crédit, lien suivi', async () => {
+    const data = makeData();
+    data.itinerary = data.itinerary.map((st, i) => ({ ...st, distanceSource: i === 0 ? 'geoapify' : 'valhalla' }));
+    render(<CompasScreen data={data} />);
+    const sheet = await openOu(/Parcours/);
+    const credit = await within(sheet).findByRole('link', { name: 'Powered by Geoapify' });
+    expect(credit.getAttribute('href')).toBe('https://www.geoapify.com/');
+    expect(credit.getAttribute('rel') ?? '').not.toContain('nofollow');
+  });
+
+  it('Parcours · étapes : distances de Valhalla ou estimées → pas de crédit Geoapify', async () => {
+    const data = makeData();
+    data.itinerary = data.itinerary.map((st, i) => ({ ...st, distanceSource: i === 0 ? 'valhalla' : 'estimation' }));
+    render(<CompasScreen data={data} />);
+    const sheet = await openOu(/Parcours/);
+    expect(await within(sheet).findByText('Gavarnie')).toBeTruthy();
+    expect(within(sheet).queryByRole('link', { name: 'Powered by Geoapify' })).toBeNull();
   });
 
   it('tiroir : trois hauteurs (petit, moyen, grand) et fermeture en tirant la poignée', async () => {
