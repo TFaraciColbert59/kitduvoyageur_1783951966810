@@ -536,10 +536,17 @@ describe('verrouillé par sonde (le tronc « 5. Venir » n’a pas de banc d’e
       expect(leg.transport?.basis).toMatch(/^7 h de route à l’aller pour 3 jours : vol aller-retour depuis Lyon, LYS → BRU/);
     });
 
-    it('le budget : formalités gardées tant qu’on ne sait pas, assurance voyage seulement si on le sait', () => {
-      expect(abroadCosts(null)).toEqual({ formalities: true, insurance: false });
-      expect(abroadCosts(true)).toEqual({ formalities: true, insurance: true });
-      expect(abroadCosts(false)).toEqual({ formalities: false, insurance: false });
+    it('le budget : formalités (ressortissant français) gardées tant qu’on ne sait pas, assurance voyage seulement si on le sait', () => {
+      const fr = { nationality: 'FR' };
+      expect(abroadCosts(null, fr)).toEqual({ formalities: true, insurance: false });
+      expect(abroadCosts(true, fr)).toEqual({ formalities: true, insurance: true });
+      expect(abroadCosts(false, fr)).toEqual({ formalities: false, insurance: false });
+    });
+
+    it('nationalité inconnue ou autre : aucune formalité chiffrée (rien d’affirmé), l’assurance ne change pas', () => {
+      expect(abroadCosts(true, { nationality: null })).toEqual({ formalities: false, insurance: true });
+      expect(abroadCosts(null, { nationality: null })).toEqual({ formalities: false, insurance: false });
+      expect(abroadCosts(true, { nationality: 'DE' })).toEqual({ formalities: false, insurance: true });
     });
   });
 });

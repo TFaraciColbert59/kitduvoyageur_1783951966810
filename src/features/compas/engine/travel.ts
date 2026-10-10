@@ -8,6 +8,7 @@ import {
 } from './autofill';
 import { distanceKm } from './places';
 import { trainTrip, type TrainTrip } from './rail';
+import type { TravellerContext } from './traveller';
 
 /**
  * Compas — venir jusqu'au départ (« 5. Venir », PLAN-100 4.3 et 4.4).
@@ -149,12 +150,17 @@ export function abroadOf(origin: TravelOrigin | null, destinationCountry: string
 }
 
 /**
- * Ce que « à l'étranger » change au budget : les formalités d'entrée (barème pour
- * un voyageur français) restent tant qu'on n'est pas SÛR d'être déjà dans le pays
- * (départ inconnu compris) ; l'assurance voyage n'est ajoutée que si on sait.
+ * Ce que « à l'étranger » change au budget. Les formalités d'entrée sont un barème
+ * pour un ressortissant français (`entryFees`) : chiffrées seulement pour une
+ * nationalité française connue (sinon rien d'affirmé, PLAN-100 4.1), et tant qu'on
+ * n'est pas SÛR d'être déjà dans le pays (départ inconnu compris). L'assurance
+ * voyage n'est ajoutée que si on sait que le voyage passe une frontière.
  */
-export function abroadCosts(abroad: boolean | null): { formalities: boolean; insurance: boolean } {
-  return { formalities: abroad !== false, insurance: abroad === true };
+export function abroadCosts(
+  abroad: boolean | null,
+  traveller: Pick<TravellerContext, 'nationality'>
+): { formalities: boolean; insurance: boolean } {
+  return { formalities: abroad !== false && traveller.nationality === 'FR', insurance: abroad === true };
 }
 
 /** Le départ tel que dit au spécialiste (IA) : jamais un pays supposé. */

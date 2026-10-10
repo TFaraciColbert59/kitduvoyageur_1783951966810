@@ -66,6 +66,7 @@ import { lookupAreaPlaces, lookupRiverLine, lookupStagePois } from './stagePoiLo
 import { buildTrack, simplifyLine, trackKey, type LngLat } from '../engine/track';
 import { descentWindow, planRiverDescent } from '../engine/river';
 import { keepAiNote, travelPapers } from '../engine/papers';
+import { isFrenchNational } from '../engine/traveller';
 import { tutoyer } from '../engine/voice';
 import { abroadCosts, originFact, planTravelLeg, travelOrigin, type TravelTransport } from '../engine/travel';
 import { nearestAirport } from './airports';
@@ -1800,7 +1801,7 @@ export async function compasAutofillAction(
       ? null
       : await askJson(
           userId,
-          buildCompasAutofillSystem(),
+          buildCompasAutofillSystem(isFrenchNational(traveller)),
           buildCompasAutofillPrompt(facts),
           500,
           false,
@@ -1809,9 +1810,10 @@ export async function compasAutofillAction(
         );
     const advice: AutofillAiAdvice = sanitizeAdvice(rawAdvice);
     const usedAi = rawAdvice != null;
-    // Papiers, change et prises : la règle parle, l'IA se tait sur ces sujets.
+    // Papiers, change et prises : la règle parle, l'IA se tait sur ces sujets ; ce que
+    // la règle affirme dépend du voyageur (nationalité, résidence, devise : PLAN-100 4.1).
     // Le tutoiement aussi est une règle : un conseil qui vouvoie encore est écarté.
-    const papers = travelPapers(anchor.countryCode, anchor.country);
+    const papers = travelPapers(anchor.countryCode, anchor.country, traveller, abroad);
     // L'essentiel (papiers, sécurité) vient des règles, avec ou sans IA (plan 4.11).
     const safety = essentialAdvice({
       activity,
@@ -1846,9 +1848,9 @@ export async function compasAutofillAction(
     const flight = travelLeg.flight ? flightRoundTrip(travelLeg.flight.km) : null;
     const rentalCars = fuelForKm(carKmOnSite, party).cars;
     const localTrips = localMoves.reduce((t, m) => t + localTripPerLeg(m.move, lvl.level), 0);
-    // Formalités (barème pour un voyageur français) : gardées tant qu'on ne sait pas
-    // que la personne est déjà dans le pays ; départ inconnu = pays de départ inconnu.
-    const abroadFor = abroadCosts(abroad);
+    // Formalités (barème pour un ressortissant français) : seulement pour une nationalité
+    // française connue, et tant qu'on ne sait pas que la personne est déjà dans le pays.
+    const abroadFor = abroadCosts(abroad, traveller);
     const entry = abroadFor.formalities ? entryFees(anchor.countryCode) : null;
     const mealsAmount = mealsTotal({ days, party, nights: plan.map((n) => n.type), level: lvl.level });
     const rental = picks.filter((p) => p.source === 'location').reduce((t, p) => t + (p.costEur ?? 0), 0);
@@ -1947,7 +1949,7 @@ export async function compasAutofillAction(
             title: `Formalités : ${entry.detail}`,
             amount: entry.eur * party,
             source: 'estimation',
-            basis: `barème Compas ${COSTS_VERSION} · tarif officiel connu, à vérifier avant de partir`,
+            basis: `barème Compas ${COSTS_VERSION} · ressortissant français, tarif officiel connu, à vérifier avant de partir`,
           }
         : null,
       abroadFor.insurance || (maxAltitude ?? 0) >= 2500
