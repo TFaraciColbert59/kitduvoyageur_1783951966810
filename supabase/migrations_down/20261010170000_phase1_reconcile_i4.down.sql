@@ -1,8 +1,9 @@
 -- ============================================================================
 -- DOWN — 20261010170000_phase1_reconcile_i4
 --   • DROP des 2 fonctions de réconciliation I4 ;
---   • suppression des transactions de provenance
---     (idempotency_key LIKE 'opening:reward_account:%:incr4').
+--   • suppression des transactions de provenance — écriture A (incr4) ET
+--     écriture B d'ajustement (incr4:adjust), soit
+--     idempotency_key LIKE 'opening:reward_account:%:incr4%'.
 --
 -- NOTA — le down NE re-crée PAS les 8 projections démo purgées : les snapshots
 -- (`progression_legacy_snapshot`, reasons `demo_projection_sans_provenance_incr4`
@@ -17,4 +18,4 @@ DROP FUNCTION IF EXISTS public.phase1_reconcile_demo_economics();
 DROP FUNCTION IF EXISTS public.phase1_purge_orphan_demo_projections();
 
 DELETE FROM public.reward_transactions
-WHERE idempotency_key LIKE 'opening:reward_account:%:incr4';
+WHERE idempotency_key LIKE 'opening:reward_account:%:incr4%';
