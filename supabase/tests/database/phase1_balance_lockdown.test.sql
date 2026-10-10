@@ -36,7 +36,7 @@ TO service_role;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated, service_role;
 ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS is_suspended_groups boolean DEFAULT false;
 ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS suspended_from_groups_at timestamptz;
-SELECT plan(39);
+SELECT plan(49);
 
 -- Fixtures
 INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
@@ -186,6 +186,41 @@ SELECT is((SELECT loyalty_points FROM public.user_profiles WHERE id = 'aaaa0001-
 SELECT is((public.create_shop_order('aaaa0001-0000-4000-8000-000000000002', 'virement', '{}'::jsonb,
   '[{"slug":"phase1-smoke-produit","quantity":0}]'::jsonb, 'standard'))->>'error',
   'invalid_items', '35. quantité invalide refusée');
+
+-- 36-45. Idempotence source_id scopée par utilisateur (revue finale).
+-- A et B utilisent la MÊME source 'cart_free_apply:shared-x' (id produit
+-- catalogue partagé) : sans scoping user_id, le 2e utilisateur était sauté.
+SELECT is((public.legacy_loyalty_earn('aaaa0001-0000-4000-8000-000000000001', 300, 'Seed A', 'seed:A:cross'))->>'success',
+  'true', '36. A crédité (seed 300)');
+SELECT is((public.legacy_loyalty_spend('aaaa0001-0000-4000-8000-000000000001', 100, 'Panier A', 'cart_free_apply:shared-x'))->>'success',
+  'true', '37. A applique shared-x (100)');
+SELECT is((public.legacy_loyalty_cart_refund('aaaa0001-0000-4000-8000-000000000001', 'shared-x'))->>'success',
+  'true', '38. A rembourse shared-x (ligne remove A)');
+
+CREATE TEMP TABLE p1_x AS
+  SELECT (SELECT loyalty_points FROM public.user_profiles WHERE id = 'aaaa0001-0000-4000-8000-000000000002') AS b_before;
+CREATE TEMP TABLE p1_xspend AS
+  SELECT public.legacy_loyalty_spend('aaaa0001-0000-4000-8000-000000000002', 100, 'Panier B', 'cart_free_apply:shared-x') AS res;
+
+SELECT is((SELECT res->>'success' FROM p1_xspend), 'true',
+  '39. B débité sur la même source que A (pas de saut inter-utilisateur)');
+SELECT ok((SELECT res->>'idempotent' FROM p1_xspend) IS NULL,
+  '40. B : pas de court-circuit idempotent (débit réel)');
+SELECT is((SELECT loyalty_points FROM public.user_profiles WHERE id = 'aaaa0001-0000-4000-8000-000000000002'),
+  (SELECT b_before - 100 FROM p1_x), '41. solde de B réellement débité (-100)');
+
+CREATE TEMP TABLE p1_xrefund AS
+  SELECT public.legacy_loyalty_cart_refund('aaaa0001-0000-4000-8000-000000000002', 'shared-x') AS res;
+
+SELECT is((SELECT res->>'success' FROM p1_xrefund), 'true',
+  '42. B remboursé indépendamment (pas de saut via la ligne remove de A)');
+SELECT is((SELECT loyalty_points FROM public.user_profiles WHERE id = 'aaaa0001-0000-4000-8000-000000000002'),
+  (SELECT b_before FROM p1_x), '43. solde de B restauré après remboursement');
+
+SELECT is((public.legacy_loyalty_cart_refund('aaaa0001-0000-4000-8000-000000000001', 'shared-x'))->>'idempotent',
+  'true', '44. rejeu A : idempotent pour A uniquement');
+SELECT is((SELECT loyalty_points FROM public.user_profiles WHERE id = 'aaaa0001-0000-4000-8000-000000000001'),
+  300, '45. rejeu A : aucun débit supplémentaire (solde 300)');
 
 SELECT * FROM finish();
 ROLLBACK;
