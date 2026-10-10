@@ -623,7 +623,7 @@ export default function CommunityPostCard({
               fullWidth
               className="justify-start"
               onClick={handleLessLikeThis}
-              icon={<Icon name="minus-circle" size={14} className={isLessLiked ? 'text-[color:var(--lkv-action)]' : 'text-[color:var(--lkv-text-secondary)]'} aria-hidden="true" />}
+              icon={<Icon name="MinusCircleIcon" size={14} className={isLessLiked ? 'text-[color:var(--lkv-action)]' : 'text-[color:var(--lkv-text-secondary)]'} aria-hidden="true" />}
             >
               {isLessLiked ? 'Moins de contenus (enregistré)' : 'Moins comme ceci'}
             </Button>

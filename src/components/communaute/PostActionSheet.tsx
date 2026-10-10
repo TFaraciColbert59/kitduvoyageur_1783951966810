@@ -131,7 +131,7 @@ export default function PostActionSheet({
         >
           <div className="flex items-center gap-[var(--space-3)]">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--glass-bg-subtle)] text-[color:var(--lkv-text-secondary)]">
-              <Icon name="minus-circle" size={18} aria-hidden="true" />
+              <Icon name="MinusCircleIcon" size={18} aria-hidden="true" />
             </div>
             <div>
               <p className="text-[length:var(--lkv-text-subheadline)] font-semibold text-[color:var(--lkv-text-primary)]">
