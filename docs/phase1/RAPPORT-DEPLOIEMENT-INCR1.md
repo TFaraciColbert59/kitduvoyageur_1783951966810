@@ -36,7 +36,18 @@ Sondes REST :
 2. Base : exécuter `supabase/migrations_down/20261010140000_phase1_balance_lockdown.down.sql` (restaure garde v1, policies d'origine, supprime les 6 fonctions, supprime les lignes `opening_balance`, ne touche pas aux profils).
 3. Restauration de données complète si nécessaire : `backups/phase1-2026-10-10T13-29-31-910Z/` (JSON + SQL).
 
-## 5. Reste à faire (dans l'ordre)
+## 5. Déploiement application (fait)
 
-- Déploiement app (merge `main` → Vercel) : les routes `/api/loyalty/*` et `/api/orders*` doivent être en ligne pour que les parcours fidélité/panier/commande fonctionnent (avant cela, les anciens clients échouent proprement : 4xx, aucune forge possible).
-- Incrément 2 : isolation des données de démonstration (`is_demo`, classements) + rejeu canonique des 15 transactions.
+- Intégration : la ligne locale était en retard de 69 commits sur `origin/main` (chantier Compas). Livraison via une branche linéaire `phase1-live` construite **sur** `origin/main` (17 commits phase1 appliqués, adaptations aux modules live : garde admin `is_admin`, sélecteurs de connexion, infra rate-limit postgres). La ligne locale d'origine est préservée (`chantier/phase1-points`).
+- Gates branche finale : `tsc`, `vitest` (7872), invariants anti-dérive (1-9), `build`, intégration locale **56/56** (concurrence, idempotence, earn vérifié, commande pending→confirm, annulation, invariants Σ journal).
+- Push `main` : `3b96d58b..08498ef5` (fast-forward) → déploiement Vercel automatique.
+- **Smoke production** : `https://kitduvoyageur-1783951966810-ruddy.vercel.app` → home 200 ; `POST /api/loyalty/spend` sans session → **401 `Authentification requise`** (routes phase1 actives) ; DB : `20261010140000` + `20261010150000` appliquées, 10 lignes d'ouverture, **0 écart** de solde, RPC anon refusées (401), RPC service opérationnelles.
+- NB : le domaine custom `lekitduvoyageur.com` ne résout pas publiquement (DNS) — vérifications faites sur l'URL Vercel de référence.
+
+## 6. Reste à faire (incréments suivants de la Phase 1)
+
+- Incrément 2 : isolation des données de démonstration (`is_demo`, exclusion classements/agrégats) + rejeu canonique des 15 transactions seed (outbox → `progression_events`).
+- Incrément 3 : audit producteurs + tests des 7 producteurs d'aventure.
+- Incrément 4 : réconciliation soldes historiques.
+- Incrément 5 : uniformisation niveaux/barèmes + badges/saisons/classements + états vides.
+- Incrément 6 : supervision, E2E mobile, déploiement progressif/rollback.
