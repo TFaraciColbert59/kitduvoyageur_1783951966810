@@ -28,7 +28,9 @@ export default async function TravellerProfilePage() {
   } = await supabase.auth.getUser();
   if (!user) redirect(`/connexion?next=${encodeURIComponent('/compte/voyageur')}`);
   const trial = user.is_anonymous === true;
-  const view = trial ? null : travellerView((await readTravellerState(supabase, user.id)).traveller);
+  const state = trial ? null : await readTravellerState(supabase, user.id);
+  // Lecture en échec : jamais un formulaire vide (« Enregistrer » écraserait le profil rangé).
+  const view = state && !state.failed ? travellerView(state.traveller) : null;
 
   return (
     <AppShell hasBottomNav videoBackground={false}>
@@ -63,7 +65,9 @@ export default async function TravellerProfilePage() {
             <TravellerCard mode="edit" initial={view} />
           ) : (
             <p style={{ margin: 0, fontSize: 'var(--lkv-text-body-sm)', color: 'var(--lkv-text-primary)' }}>
-              Crée ton compte pour garder un profil voyageur : un essai sans compte ne garde rien.
+              {state?.failed
+                ? 'Ton profil voyageur ne peut pas être lu pour le moment : réessaie dans un instant.'
+                : 'Crée ton compte pour garder un profil voyageur : un essai sans compte ne garde rien.'}
             </p>
           )}
         </Card>

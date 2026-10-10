@@ -68,7 +68,7 @@ import { descentWindow, planRiverDescent } from '../engine/river';
 import { keepAiNote, travelPapers } from '../engine/papers';
 import { isFrenchNational } from '../engine/traveller';
 import { tutoyer } from '../engine/voice';
-import { abroadCosts, originFact, planTravelLeg, travelOrigin, type TravelTransport } from '../engine/travel';
+import { abroadCosts, homeForLeg, originFact, planTravelLeg, travelOrigin, type TravelTransport } from '../engine/travel';
 import { nearestAirport } from './airports';
 import { trailRegion } from '../engine/intent';
 import {
@@ -948,6 +948,8 @@ export async function compasAutofillAction(
     // Aucun lieu dit mais un départ dit (« rando 3 jours depuis Lyon ») : la personne a
     // nommé un endroit, l'aventure est préparée autour de lui, avant toute position.
     const saidOrigin = originOf(compasMeta(meta).origin);
+    // L'aventure est préparée autour de la position partagée (aucun lieu ni départ dit).
+    let anchoredOnPosition = false;
     if (!anchor && saidOrigin) {
       const around = anchorFromOrigin(saidOrigin, ctx.scope);
       anchor = around.anchor;
@@ -956,6 +958,7 @@ export async function compasAutofillAction(
     // Aucun lieu dit : on part de la position partagée (une sortie autour de
     // soi, ou un voyage « près de chez toi »), et on le dit.
     if (!anchor && from) {
+      anchoredOnPosition = true;
       const here = await lookupReverse(from.lat, from.lon);
       anchor = {
         name: here?.locality ?? here?.name ?? 'Autour de toi',
@@ -1576,7 +1579,7 @@ export async function compasAutofillAction(
     const target = start?.latitude != null && start.longitude != null ? { lat: start.latitude, lon: start.longitude } : anchor;
     // Domicile du profil (PLAN-100 4.3) : après le départ dit, avant la position ;
     // rangé à 0,01° au profil, jamais recherché ici.
-    const home = saidOrigin ? null : traveller.home;
+    const home = homeForLeg(saidOrigin, anchoredOnPosition, traveller.home);
     // La commune, pas le lieu le plus proche du point (« depuis Chantier Hotel
     // de Ville » au lieu d'Annecy, 8 oct.) ; inutile quand le départ est dit ou le domicile connu.
     const near = !saidOrigin && !home && from ? await lookupReverse(from.lat, from.lon) : null;

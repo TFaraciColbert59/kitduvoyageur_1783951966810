@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { nearestAirportIn, type AirportRow } from '../engine/airports';
 import {
   HOME_ORIGIN_NOTE,
+  homeForLeg,
   originFact,
   planTravelLeg,
   travelDigest,
@@ -64,6 +65,18 @@ describe('d’où l’on part : dit, puis domicile, puis position', () => {
     const fact = originFact(travelOrigin(null, null, HOME));
     expect(fact).toBe('domicile de la personne (ville non transmise)');
     expect(fact).not.toContain('Villeurbanne');
+  });
+});
+
+describe('le domicile et la position partagée', () => {
+  const HOME = { name: 'Lyon', lat: 45.76, lon: 4.83, countryCode: 'FR' };
+
+  it('le domicile ne sert que sans départ dit et sans ancre sur la position', () => {
+    expect(homeForLeg(null, false, HOME)).toBe(HOME);
+    expect(homeForLeg({ name: 'Genève' }, false, HOME)).toBeNull();
+    // « Préparé près de chez toi » : la personne y est déjà, le trajet ne part pas de Lyon.
+    expect(homeForLeg(null, true, HOME)).toBeNull();
+    expect(homeForLeg(null, false, null)).toBeNull();
   });
 });
 

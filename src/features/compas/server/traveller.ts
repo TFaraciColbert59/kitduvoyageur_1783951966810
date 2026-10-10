@@ -26,6 +26,8 @@ export interface TravellerState {
   /** Une ligne existe (remplie, ou « Passer ») : la question n'est plus posée. */
   asked: boolean;
   traveller: TravellerContext;
+  /** La lecture a échoué : tout est inconnu, mais rien ne prouve que la ligne soit vide. */
+  failed?: boolean;
 }
 
 /**
@@ -37,10 +39,10 @@ export async function readTravellerState(supabase: Reader, userId: string | null
   if (!userId) return { asked: false, traveller: { ...UNKNOWN_TRAVELLER } };
   try {
     const { data, error } = await (supabase as Supa).from('user_traveller').select(COLUMNS).eq('user_id', userId).maybeSingle();
-    if (error) return { asked: true, traveller: { ...UNKNOWN_TRAVELLER } };
+    if (error) return { asked: true, traveller: { ...UNKNOWN_TRAVELLER }, failed: true };
     return { asked: data != null, traveller: travellerFromRow(data) };
   } catch {
-    return { asked: true, traveller: { ...UNKNOWN_TRAVELLER } };
+    return { asked: true, traveller: { ...UNKNOWN_TRAVELLER }, failed: true };
   }
 }
 

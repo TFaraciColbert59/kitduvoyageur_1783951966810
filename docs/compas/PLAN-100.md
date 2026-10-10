@@ -595,6 +595,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       connue, une ligne « à vérifier auprès du service officiel de ton pays », ni France
       Diplomatie, ni formalités chiffrées, ni « adaptateur à prévoir » (`papers.test.ts`,
       `nationalityPrompt.test.ts`, `travel.test.ts`).
+- [ ] Nationalité française lisible dans les papiers d'un voyage partagé : la base de la dépense
+      « Formalités » (« ressortissant français ») et les notes de papiers rangées sur le voyage
+      laissent deviner la nationalité aux collaborateurs (et à tous pour un voyage public) ;
+      les rendre à l'affichage pour la seule personne concernée (lot Q, avec la table
+      passeport × destination).
 
 ### 4.2 Papiers, prises, change
 

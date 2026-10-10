@@ -122,6 +122,15 @@ export const HOME_ORIGIN_NOTE =
   'Trajet chiffré depuis ton domicile (ton profil voyageur) : écris « depuis Lyon » dans ta demande pour partir d’ailleurs.';
 
 /**
+ * Le domicile du profil ne sert au trajet que si le départ n'est pas dit et que
+ * l'aventure n'est pas préparée « près de chez toi » (ancre = position partagée) :
+ * sinon le trajet irait du domicile à l'endroit où la personne se trouve déjà.
+ */
+export function homeForLeg<T>(said: unknown, anchoredOnPosition: boolean, home: T | null): T | null {
+  return said || anchoredOnPosition ? null : home;
+}
+
+/**
  * D'où l'on part : le départ dit (`metadata.compas.origin`), puis le domicile du
  * profil voyageur (déjà arrondi à 0,01°), puis la position de l'appareil ; sinon aucun.
  */

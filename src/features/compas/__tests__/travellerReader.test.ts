@@ -75,10 +75,10 @@ describe('lecteur du profil voyageur (sa ligne, par la RLS)', () => {
     expect(await readTravellerState(supabase as never, 'u1')).toEqual({ asked: true, traveller: UNKNOWN_TRAVELLER });
   });
 
-  it('lecture en échec ou en panne : on ne redemande pas, tout reste inconnu', async () => {
+  it('lecture en échec ou en panne : on ne redemande pas, tout reste inconnu, et c\'est dit (jamais un formulaire vide)', async () => {
     const failed = fake({ data: null, error: { message: 'refusé' } });
-    expect(await readTravellerState(failed.supabase as never, 'u1')).toEqual({ asked: true, traveller: UNKNOWN_TRAVELLER });
+    expect(await readTravellerState(failed.supabase as never, 'u1')).toEqual({ asked: true, traveller: UNKNOWN_TRAVELLER, failed: true });
     const broken = fake(new Error('réseau'));
-    expect(await readTravellerState(broken.supabase as never, 'u1')).toEqual({ asked: true, traveller: UNKNOWN_TRAVELLER });
+    expect(await readTravellerState(broken.supabase as never, 'u1')).toEqual({ asked: true, traveller: UNKNOWN_TRAVELLER, failed: true });
   });
 });
