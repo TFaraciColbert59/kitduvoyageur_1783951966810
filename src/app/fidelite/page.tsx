@@ -112,22 +112,31 @@ export default function FidelitePage() {
   const handleRedeem = async (reward: Reward) => {
     if (!user || userPoints < reward.points_cost || redeemedIds.includes(reward.id)) return;
     setRedeemingId(reward.id);
+    setError(null);
     try {
-      const newPoints = userPoints - reward.points_cost;
-      await supabase.from('user_profiles').update({
-        loyalty_points: newPoints,
-        loyalty_level: LEVELS.reduce((acc, l) => newPoints >= l.minPoints ? l : acc, LEVELS[0]).name,
-      }).eq('id', user.id);
-
-      await supabase.from('loyalty_redemptions').insert({ user_id: user.id, reward_id: reward.id, points_spent: reward.points_cost });
-
-      await supabase.from('loyalty_history').insert({ user_id: user.id, action: `Récompense échangée: ${reward.title}`, points: -reward.points_cost, type: 'spent' });
-
-      setUserPoints(newPoints);
+      const res = await fetch('/api/loyalty/redeem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rewardId: reward.id }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || typeof data?.balance !== 'number') {
+        const code = data?.error;
+        setError(
+          code === 'insufficient_balance'
+            ? 'Solde insuffisant'
+            : code === 'already_redeemed'
+              ? 'Récompense déjà échangée'
+              : 'Impossible d’échanger cette récompense pour le moment.'
+        );
+        return;
+      }
+      setUserPoints(data.balance);
       setRedeemedIds((prev) => [...prev, reward.id]);
       await loadData();
     } catch (err) {
       console.error(err);
+      setError('Impossible d’échanger cette récompense pour le moment.');
     } finally {
       setRedeemingId(null);
     }

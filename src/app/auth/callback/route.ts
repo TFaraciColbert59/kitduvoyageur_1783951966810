@@ -43,11 +43,6 @@ export async function GET(req: NextRequest) {
           id: user.id,
           email: user.email ?? '',
           full_name: fullName,
-          trust_score: 50,
-          loyalty_points: 0,
-          loyalty_level: 'Explorateur',
-          xp: 0,
-          level: 1,
         },
         { onConflict: 'id', ignoreDuplicates: false }
       );

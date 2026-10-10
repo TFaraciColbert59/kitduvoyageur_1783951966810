@@ -64,7 +64,7 @@ function AuthForm() {
       const supabase = createClient();
       const { data: existing } = await supabase.from('user_profiles').select('id').eq('id', userId).maybeSingle();
       if (!existing) {
-        await supabase.from('user_profiles').upsert({ id: userId, email: userEmail, full_name: fullName || userEmail.split('@')[0], trust_score: 50, loyalty_points: 0, loyalty_level: 'Explorateur', xp: 0, level: 1 }, { onConflict: 'id' });
+        await supabase.from('user_profiles').upsert({ id: userId, email: userEmail, full_name: fullName || userEmail.split('@')[0] }, { onConflict: 'id' });
       }
     } catch { /* ignore */ }
   };

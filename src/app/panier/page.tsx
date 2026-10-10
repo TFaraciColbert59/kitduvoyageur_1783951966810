@@ -6,7 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card, Divider, EmptyState, IconButton, LoadingState } from '@/components/ui';
-import { lkvConfirm } from '@/components/ui/dialogs';
+import { lkvAlert, lkvConfirm } from '@/components/ui/dialogs';
 import { getCart, updateQuantity, removeFromCart, getCartTotals, applyLoyaltyFree, removeLoyaltyFree, CartItem } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -81,16 +81,26 @@ export default function PanierPage() {
     if (loyaltyPoints < needed) return;
     setApplyingLoyalty(itemId);
     try {
-      // Deduct points from DB
-      const newPoints = loyaltyPoints - needed;
-      await supabase.from('user_profiles').update({ loyalty_points: newPoints }).eq('id', user.id);
-      await supabase.from('loyalty_history').insert({
-        user_id: user.id,
-        action: `Article offert via fidélité (panier)`,
-        points: -needed,
-        type: 'spent',
+      const res = await fetch('/api/loyalty/spend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          points: needed,
+          reason: 'Article offert (panier)',
+          sourceId: `cart_free_apply:${itemId}`,
+        }),
       });
-      setLoyaltyPoints(newPoints);
+      const data = await res.json().catch(() => null);
+      if (!res.ok || typeof data?.balance !== 'number') {
+        console.error('Loyalty spend error:', data?.error ?? res.status);
+        lkvAlert(
+          data?.error === 'insufficient_balance'
+            ? 'Solde de points insuffisant.'
+            : 'Impossible d’utiliser vos points pour le moment.'
+        );
+        return;
+      }
+      setLoyaltyPoints(data.balance);
       const updated = applyLoyaltyFree(itemId);
       setItems(updated);
     } catch (err) {
@@ -100,21 +110,25 @@ export default function PanierPage() {
     }
   };
 
-  const handleRemoveLoyaltyFree = async (itemId: string, originalPrice: number) => {
+  const handleRemoveLoyaltyFree = async (itemId: string) => {
     if (!user) return;
-    const needed = pointsNeededForFree(originalPrice);
-    // Refund points
-    const newPoints = loyaltyPoints + needed;
-    await supabase.from('user_profiles').update({ loyalty_points: newPoints }).eq('id', user.id);
-    await supabase.from('loyalty_history').insert({
-      user_id: user.id,
-      action: `Remboursement points — article retiré du panier`,
-      points: needed,
-      type: 'earned',
-    });
-    setLoyaltyPoints(newPoints);
-    const updated = removeLoyaltyFree(itemId);
-    setItems(updated);
+    try {
+      const res = await fetch('/api/loyalty/refund', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cartItemId: itemId }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || typeof data?.balance !== 'number') {
+        console.error('Loyalty refund error:', data?.error ?? res.status);
+        return;
+      }
+      setLoyaltyPoints(data.balance);
+      const updated = removeLoyaltyFree(itemId);
+      setItems(updated);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const { totalItems, totalPriceEur, totalWeightG, savedEur } = getCartTotals(items);

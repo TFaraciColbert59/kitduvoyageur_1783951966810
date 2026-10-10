@@ -125,157 +125,69 @@ export default function CheckoutPage() {
     e.preventDefault();
     setProcessing(true);
     try {
-      const realNumber = await saveOrderToSupabase('virement');
+      const realNumber = await saveOrderToSupabase();
       setOrderNumber(realNumber);
       setStep('confirmation');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch {
-      setError("L'enregistrement de votre commande a échoué. Veuillez réessayer.");
+    } catch (err) {
+      setError(
+        err instanceof Error && err.message
+          ? err.message
+          : "L'enregistrement de votre commande a échoué. Veuillez réessayer."
+      );
     } finally {
       setProcessing(false);
     }
   };
 
-  const saveOrderToSupabase = async (method: string): Promise<string> => {
-    try {
-      // Prix serveur uniquement (products) — jamais les prix du panier client.
-      const slugs = items.map((i) => i.slug).filter(Boolean);
-      const { data: serverProducts } = slugs.length > 0
-        ? await supabase.from('products').select('id, slug, name, price_eur').in('slug', slugs)
-        : { data: [] };
-      const priceBySlug = new Map<string, { id: string; slug: string; name: string; price_eur: number }>(
-        (serverProducts || []).map((p: any) => [p.slug, p])
-      );
-
-      const orderItems = items.map((i) => {
-        const server = i.slug ? priceBySlug.get(i.slug) : null;
-        return {
-          name: server?.name || i.name,
-          quantity: i.quantity,
-          unit_price_eur: Number(server?.price_eur ?? 0),
-          slug: i.slug,
-        };
-      });
-
-      const serverSubtotal = orderItems.reduce((s, it) => s + it.unit_price_eur * it.quantity, 0);
-      const serverShipping = shippingCosts[shippingOption] ?? 5.9;
-      const serverDiscountEligible = serverSubtotal >= 99;
-      const finalShippingEur = shippingOption === 'standard' && serverDiscountEligible ? 0 : serverShipping;
-      const finalTotal = serverSubtotal + finalShippingEur;
-
-      // order_number : généré par la base (défaut `KDV-…`), jamais par le client.
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user?.id ?? null,
-          status: 'confirmed',
-          payment_method: method,
-          shipping_address: shipping,
-          items: orderItems,
-          subtotal_eur: serverSubtotal,
-          shipping_eur: finalShippingEur,
-          total_eur: finalTotal,
-          loyalty_points_earned: Math.floor(finalTotal * 10),
-        })
-        .select('id, order_number')
-        .single();
-
-      if (orderError) throw orderError;
-
-      const realNumber = orderData?.order_number || '';
-
-      // Decrement stock
-      for (const item of items) {
-        if (!item.slug) continue;
-        const productData = priceBySlug.get(item.slug);
-        if (!productData) continue;
-
-        const { data: currentRow } = await supabase
-          .from('products')
-          .select('stock')
-          .eq('id', productData.id)
-          .single();
-        const currentStock = Number(currentRow?.stock ?? 0);
-        const newStock = Math.max(0, currentStock - item.quantity);
-        await supabase.from('products').update({
-          stock: newStock,
-          updated_at: new Date().toISOString(),
-        }).eq('id', productData.id);
-
-        await supabase.from('stock_movements').insert({
-          product_id: productData.id,
-          product_slug: productData.slug,
-          product_name: productData.name,
-          movement_type: 'sale',
-          quantity_change: -item.quantity,
-          quantity_before: currentStock,
-          quantity_after: newStock,
-          reference_type: 'order',
-          reference_id: orderData?.id ?? null,
-          user_id: user?.id ?? null,
-          notes: realNumber ? `Vente via commande ${realNumber}` : 'Vente via commande',
-        });
-      }
-
-      // Award loyalty points
-      if (user) {
-        const pointsEarned = Math.floor(finalTotal * 10);
-        try {
-          await supabase.rpc('increment_loyalty_points' as never, {
-            p_user_id: user.id,
-            p_points: pointsEarned,
-          });
-        } catch {
-          const { data } = await supabase.from('user_profiles')
-            .select('loyalty_points')
-            .eq('id', user.id)
-            .single();
-          if (data) {
-            await supabase.from('user_profiles').update({
-              loyalty_points: ((data as { loyalty_points?: number }).loyalty_points ?? 0) + pointsEarned,
-            }).eq('id', user.id);
-          }
-        }
-
-        await supabase.from('loyalty_history').insert({
-          user_id: user.id,
-          action: realNumber ? `Commande ${realNumber}` : 'Commande virement',
-          points: Math.floor(finalTotal * 10),
-          type: 'earned',
-        });
-      }
-
-      clearCart();
-
-      // B1: Auto-populate gear_items
-      if (user && orderData?.id) {
-        try {
-          for (const item of orderItems) {
-            if (!item.name) continue;
-            await supabase.from('gear_items').insert({
-              user_id: user.id,
-              name: item.name,
-              category: 'autre',
-              condition: 'neuf',
-              source: 'achat',
-              origin_order_id: orderData.id,
-              weight_g: 0,
-              brand: '',
-              model: '',
-              notes: realNumber ? `Importé automatiquement depuis la commande ${realNumber}` : 'Importé automatiquement depuis une commande',
-              acquired_at: new Date().toISOString().split('T')[0],
-            });
-          }
-        } catch {
-          // Best-effort
-        }
-      }
-
-      return realNumber;
-    } catch (err) {
-      console.error('Order save error:', err);
+  const saveOrderToSupabase = async (): Promise<string> => {
+    const missingItem = items.find((i) => !i.slug);
+    if (missingItem) {
+      throw new Error(`Article indisponible : ${missingItem.name}`);
     }
-    return '';
+
+    const res = await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: items.map((i) => ({ slug: i.slug, quantity: i.quantity })),
+        shipping,
+        shippingOption,
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.orderNumber) {
+      console.error('Order create error:', data?.error ?? res.status);
+      throw new Error("L'enregistrement de votre commande a échoué. Veuillez réessayer.");
+    }
+
+    clearCart();
+
+    // B1: Auto-populate gear_items
+    if (user && data.orderId) {
+      try {
+        for (const item of items) {
+          if (!item.name) continue;
+          await supabase.from('gear_items').insert({
+            user_id: user.id,
+            name: item.name,
+            category: 'autre',
+            condition: 'neuf',
+            source: 'achat',
+            origin_order_id: data.orderId,
+            weight_g: 0,
+            brand: '',
+            model: '',
+            notes: data.orderNumber ? `Importé automatiquement depuis la commande ${data.orderNumber}` : 'Importé automatiquement depuis une commande',
+            acquired_at: new Date().toISOString().split('T')[0],
+          });
+        }
+      } catch {
+        // Best-effort
+      }
+    }
+
+    return data.orderNumber;
   };
 
   const formatPriceEur = (val: number): string => {

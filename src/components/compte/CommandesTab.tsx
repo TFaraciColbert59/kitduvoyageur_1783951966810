@@ -246,11 +246,26 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
   // ─── actions ──────────────────────────────
   const handleCancelOrder = async (orderId: string) => {
     if (!(await lkvConfirm('Êtes-vous sûr de vouloir annuler cette commande ?'))) return;
-    const { error } = await supabase.from('orders').update({ status: 'cancelled' }).eq('id', orderId);
-    if (!error) {
+    try {
+      const res = await fetch('/api/orders/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        console.error('Order cancel error:', data?.error ?? res.status);
+        showToast(
+          data?.error === 'not_cancellable'
+            ? 'Cette commande n’est plus annulable'
+            : 'Erreur lors de l\'annulation'
+        );
+        return;
+      }
       showToast('Commande annulée');
       fetchOrders();
-    } else {
+    } catch (err) {
+      console.error(err);
       showToast('Erreur lors de l\'annulation');
     }
   };
