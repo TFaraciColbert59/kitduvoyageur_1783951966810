@@ -952,7 +952,7 @@ function StepSheet({
       type="button"
       className="cp-ibtn cp-glass cp-sheet__prev"
       disabled={!before}
-      aria-label="Onglet précédent"
+      aria-label={before ? `Onglet précédent : ${before.label}` : 'Onglet précédent'}
       title={before?.label}
       onClick={() => before && ctl.replace({ kind: 'step', step, flow: before.id as StepFlow })}
     >

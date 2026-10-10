@@ -2317,4 +2317,89 @@ describe('CompasScreen : accessibilité (lot Q, 5.2)', () => {
     });
   });
 
+  describe('Ce que porte un `title` est aussi dit au clavier et au lecteur d’écran', () => {
+    const describedBy = (el: HTMLElement) =>
+      (el.getAttribute('aria-describedby') ?? '')
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((id) => document.getElementById(id)?.textContent ?? '')
+        .join(' ')
+        .trim();
+    const openFlow = async (flow: RegExp) => {
+      render(<CompasScreen data={makeData()} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
+      fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
+      const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
+      fireEvent.click(
+        within(within(sheet).getByRole('group', { name: 'Parcours du tiroir' })).getByRole('button', {
+          name: flow,
+        })
+      );
+      return sheet;
+    };
+
+    it('les activités : la description de chacune est lue avec elle, pas seulement au survol', async () => {
+      const sheet = await openFlow(/Activité/);
+      const tiles = within(within(sheet).getByRole('group', { name: 'Activités' })).getAllByRole('button');
+      expect(tiles.length).toBeGreaterThan(3);
+      for (const t of tiles) {
+        expect(t.getAttribute('title')).toBeTruthy();
+        expect(describedBy(t)).toBe(t.getAttribute('title'));
+      }
+    });
+
+    it('« Dis-le » : l’exemple est une description du champ, pas une info-bulle seule', async () => {
+      const sheet = await openFlow(/Quand/);
+      const field = within(sheet).getByLabelText('Dis-le');
+      expect(describedBy(field)).toMatch(/3 jours à 4, départ samedi/);
+    });
+
+    it('carte, calques sans point : « aucun » est écrit, pas seulement dans une info-bulle', async () => {
+      render(<CompasScreen data={makeData()} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Personnaliser la carte' }));
+      const panel = screen.getByRole('dialog', { name: 'Personnaliser la carte' });
+      const empty = within(panel)
+        .getAllByRole('switch')
+        .filter((b) => (b as HTMLButtonElement).disabled);
+      expect(empty.length).toBeGreaterThan(0);
+      for (const b of empty) expect(b.textContent).toMatch(/aucun/);
+    });
+
+    it('Résa : une nuit sans hébergement est une image nommée, pas une lettre « H » sous info-bulle', () => {
+      render(<CompasScreen data={makeData()} initialStep="resa" />);
+      const slots = document.querySelectorAll<HTMLElement>('.cp-slot');
+      expect(slots.length).toBeGreaterThan(0);
+      for (const slot of slots) {
+        expect(slot.getAttribute('role')).toBe('img');
+        expect(slot.getAttribute('aria-label')).toBe(slot.getAttribute('title'));
+      }
+      expect(within(document.body).getByRole('img', { name: 'Nuit sans hébergement' })).toBeTruthy();
+    });
+
+    it('Nous : les avatars (décoratifs) sont doublés par la liste des noms', () => {
+      render(<CompasScreen data={makeData()} initialStep="nous" />);
+      expect(screen.getByText('Équipe : Tony, Léa')).toBeTruthy();
+    });
+
+    it('Verdict : la note d’un axe de danger est dans le texte de la pastille, pas seulement en info-bulle', () => {
+      render(<CompasScreen data={makeData()} initialStep="verdict" />);
+      const chips = document.querySelectorAll<HTMLElement>('.cp-tchip--axis[title]');
+      expect(chips.length).toBeGreaterThan(0);
+      for (const chip of chips) expect(chip.textContent).toContain(chip.getAttribute('title') as string);
+    });
+
+    it('« Annuler » annonce son raccourci clavier', async () => {
+      const sheet = await openFlow(/Préférences/);
+      fireEvent.click(within(sheet).getByRole('button', { name: /Bivouac/ }));
+      const undo = await screen.findByRole('button', { name: 'Annuler' });
+      expect(undo.getAttribute('aria-keyshortcuts')).toBe('Control+Z Meta+Z');
+    });
+
+    it('l’onglet précédent nomme sa destination dans son nom accessible', async () => {
+      const sheet = await openFlow(/Quand/);
+      const prev = within(sheet).getByRole('button', { name: /Onglet précédent/ });
+      expect(prev.getAttribute('aria-label')).toMatch(/^Onglet précédent : \S+/);
+    });
+  });
+
 });

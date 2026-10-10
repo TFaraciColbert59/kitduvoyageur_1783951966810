@@ -3144,3 +3144,124 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
     animation-duration: 3s;
   }
 }
+
+/* =============================================================================
+   Contraste forcé (Windows « thèmes à contraste élevé », forced-colors: active).
+   Le navigateur remplace couleurs et bordures par celles du système et ôte
+   ombres et dégradés : le verre, les états « choisi », les barres et les icônes
+   en masque y disparaîtraient. On les redessine avec des couleurs système
+   uniquement (verrou : forcedColors.test.ts). WCAG 1.4.11, 1.4.1.
+   ============================================================================= */
+@media (forced-colors: active) {
+  /* Surfaces : un fond plein et un trait, plus de verre. */
+  .cp-glass,
+  .cp-sheet-glass,
+  .cp-island,
+  .cp-popv,
+  .cp-mopts,
+  .cp-prep,
+  .cp-card {
+    background: Canvas;
+    color: CanvasText;
+    border: 1px solid CanvasText;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .cp-glass::before {
+    display: none;
+  }
+  .cp-island[data-tone='bad'] {
+    border-width: 3px;
+  }
+
+  /* Commandes : toujours cernées. */
+  .cp-btn,
+  .cp-ibtn,
+  .cp-gbtn,
+  .cp-pill,
+  .cp-seg button,
+  .cp-tile,
+  .cp-chip,
+  .cp-tchip,
+  .cp-cal__d,
+  .cp-day,
+  .cp-switch,
+  .cp-pager button,
+  .cp-island__btn,
+  .cp-sheet__grab,
+  .cp-decision,
+  .cp-mini,
+  .cp-hour {
+    border: 1px solid ButtonText;
+  }
+  .cp-btn:disabled,
+  .cp-ibtn:disabled,
+  .cp-pill:disabled,
+  .cp-tile:disabled,
+  .cp-cal__d:disabled,
+  .cp-island__btn:disabled,
+  .cp-mopts button:disabled {
+    color: GrayText;
+    border-color: GrayText;
+  }
+
+  /* États « choisi » : plus de teinte de fond, le système les signale. */
+  .compas [aria-pressed='true'],
+  .compas [aria-current='step'],
+  .compas [aria-checked='true'],
+  .cp-cal__d[data-start='1'],
+  .cp-tchip[data-on='1'] {
+    background: Highlight;
+    color: HighlightText;
+    border-color: Highlight;
+  }
+  .cp-cal__d[data-sel='1'] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+  .cp-hour[data-q='mauvais'] {
+    border-width: 3px;
+  }
+  .cp-hour[data-q='moyen'] {
+    border-style: dashed;
+    border-width: 2px;
+  }
+
+  /* Lentille, barres, pastilles, interrupteurs : formes système. */
+  .cp-steps__lens {
+    background: transparent;
+    border: 2px solid Highlight;
+    box-shadow: none;
+  }
+  .cp-bar {
+    background: Canvas;
+    border: 1px solid CanvasText;
+  }
+  .cp-bar i {
+    background: Highlight;
+  }
+  .cp-step__dot {
+    background: Highlight;
+    box-shadow: none;
+    forced-color-adjust: none;
+  }
+  .cp-switch::after {
+    background: ButtonText;
+    box-shadow: none;
+  }
+  .cp-ruler__thumb {
+    background: ButtonText;
+    forced-color-adjust: none;
+  }
+
+  /* Icônes en masque : leur fond (currentColor) EST le dessin ; sans cela il devient Canvas. */
+  .compas [style*='mask-image'] {
+    forced-color-adjust: none;
+  }
+
+  .compas :focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+}

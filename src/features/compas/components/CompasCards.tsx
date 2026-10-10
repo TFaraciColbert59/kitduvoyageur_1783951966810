@@ -445,6 +445,10 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
           {crew.loads.slice(0, 6).map((m) => (
             <MemberAvatar key={m.userId} name={m.name} url={m.avatarUrl} />
           ))}
+          {/* Les avatars sont décoratifs (nom en info-bulle) : les noms sont dits ici. */}
+          <span className="sr-only">
+            Équipe : {crew.loads.slice(0, 6).map((m) => m.name).join(', ')}
+          </span>
           <button
             type="button"
             className="cp-avadd"
@@ -600,12 +604,24 @@ export function ResaCard({ ctl }: { ctl: CompasCtl }) {
                   {stay && (
                     // Noté n'est pas réservé : pastille neutre, jamais la
                     // teinte « confirmée » d'une réservation réelle.
-                    <span className="cp-slot" data-s="noted" title={`Noté : ${stay} (non réservé)`}>
+                    <span
+                      className="cp-slot"
+                      data-s="noted"
+                      role="img"
+                      aria-label={`Noté : ${stay} (non réservé)`}
+                      title={`Noté : ${stay} (non réservé)`}
+                    >
                       H
                     </span>
                   )}
                   {needNight && (
-                    <span className="cp-slot" data-s="need" title="Nuit sans hébergement">
+                    <span
+                      className="cp-slot"
+                      data-s="need"
+                      role="img"
+                      aria-label="Nuit sans hébergement"
+                      title="Nuit sans hébergement"
+                    >
                       H
                     </span>
                   )}
@@ -699,6 +715,8 @@ export function VerdictCard({ ctl }: { ctl: CompasCtl }) {
               <span className="cp-tchip__bd">
                 {a.level === 'ok' && a.partial ? 'RAS partiel' : AXIS_LEVEL[a.level]}
               </span>
+              {/* L'explication n'est pas qu'une info-bulle : elle est lue avec la pastille. */}
+              {(a.note || a.partial) && <span className="sr-only">. {a.note || a.partial}</span>}
             </span>
           );
         })}

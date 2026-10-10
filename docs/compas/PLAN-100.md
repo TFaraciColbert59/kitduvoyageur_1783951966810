@@ -784,7 +784,15 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       l'appareil ; le délai est suspendu tant que l'annonce a le pointeur ou le focus ; une
       erreur d'action est un `role="alert"` (le reste un `status`), de même que les six
       erreurs de chargement des tiroirs.
-- [ ] Informations portées par `title` doublées en texte ; `forced-colors`.
+- [x] Informations portées par `title` doublées en texte ; `forced-colors`. Lot Q
+      (`compasScreen.test.tsx` « Ce que porte un `title` est aussi dit », `a11yStart.test.tsx`,
+      `forcedColors.test.ts`) : description des activités, exemple de « Dis-le », raison des
+      étapes grisées, note des axes de danger, nuits sans hébergement, équipe, calques
+      « aucun » et raccourci de « Annuler » sont lus (aria-describedby, aria-label, texte
+      masqué) et non plus seulement au survol ; l'onglet précédent nomme sa destination.
+      `compas.css` : bloc `@media (forced-colors: active)` (verre plein et bordé, états
+      choisis en Highlight, barres, lentille, interrupteurs, icônes en masque préservées,
+      focus), couleurs système seulement.
 - [ ] Test réel VoiceOver et TalkBack ; CI axe étendue à tous les tiroirs.
 
 ### 5.3 Légal visible

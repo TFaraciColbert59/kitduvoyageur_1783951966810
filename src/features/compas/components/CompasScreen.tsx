@@ -1078,6 +1078,7 @@ export function CompasScreen({
               className="cp-island__btn"
               disabled={running}
               title="Ctrl/⌘ + Z"
+              aria-keyshortcuts="Control+Z Meta+Z"
               onClick={() => {
                 const undo = toast.undo;
                 undoRef.current = null;

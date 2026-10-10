@@ -131,6 +131,7 @@ export function ActiviteFlow({ ctl }: { ctl: CompasCtl }) {
               type="button"
               className="cp-tile"
               aria-pressed={on}
+              aria-describedby={`cp-act-${a}`}
               title={ACTIVITY_META[a].hint}
               disabled={!ctl.data.canEdit || ctl.busy}
               onClick={() => pick(a)}
@@ -140,6 +141,12 @@ export function ActiviteFlow({ ctl }: { ctl: CompasCtl }) {
             </button>
           );
         })}
+        {/* La description n'est pas qu'une info-bulle : elle est lue avec l'activité. */}
+        {ACTIVITY_ORDER.map((a) => (
+          <span key={a} id={`cp-act-${a}`} hidden>
+            {ACTIVITY_META[a].hint}
+          </span>
+        ))}
       </div>
       <p className="cp-note">
         {current
