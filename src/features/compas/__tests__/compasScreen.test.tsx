@@ -787,6 +787,59 @@ describe('CompasScreen', () => {
     expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1);
   });
 
+  it('Préremplissage sans point de départ : le trajet est dit non chiffré', async () => {
+    autofill.compasAutofillAction.mockImplementationOnce(async () => ({
+      success: true,
+      summary: {
+        nights: [
+          { night: 1, type: 'refuge', place: 'Refuge des Oulettes', reason: 'ton profil : confort' },
+          { night: 2, type: 'bivouac', place: null, reason: 'ta préférence' },
+        ],
+        transport: null,
+        originUnknown: true,
+        kit: { inventaire: 2, pret: 0, location: 0, achat: 1, a_trouver: 1 },
+        budget: [],
+        total: 486,
+        notes: [],
+        usedAi: true,
+        stepsCreated: 0,
+      },
+    }) as never);
+    render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+    expect(
+      await screen.findByText('1 refuge, 1 bivouac · Trajet non chiffré : point de départ inconnu · 4 objets au kit')
+    ).toBeTruthy();
+  });
+
+  it('Préremplissage : le vol dit d’où il part et entre quels aéroports', async () => {
+    autofill.compasAutofillAction.mockImplementationOnce(async () => ({
+      success: true,
+      summary: {
+        nights: [{ night: 1, type: 'bivouac', place: null, reason: 'ta préférence' }],
+        transport: {
+          mode: 'avion',
+          km: 790,
+          minutes: 0,
+          walkKm: 0,
+          fuelEur: 0,
+          basis: 'vol aller-retour depuis ta position, LYS → CAG',
+          route: 'LYS → CAG',
+          departure: 'ta position',
+        },
+        kit: { inventaire: 1, pret: 0, location: 0, achat: 0, a_trouver: 0 },
+        budget: [],
+        total: 486,
+        notes: [],
+        usedAi: true,
+        stepsCreated: 0,
+      },
+    }) as never);
+    render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+    expect(
+      await screen.findByText('1 bivouac · vol LYS → CAG à prévoir (depuis ta position) · 1 objet au kit')
+    ).toBeTruthy();
+  });
+
   it('Préremplissage : limite de fréquence → annoncé, relancé seul à la fin de la fenêtre', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {

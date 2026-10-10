@@ -15,6 +15,7 @@ import { togglePackedAction } from '@/app/voyages/kit-actions';
 import { COMPAS_STEPS, type CompasKitLine, type CompasStepId } from '../engine/compasModel';
 import { activityLabel, formatHours, formatMoney } from '../engine/format';
 import { NIGHT_LABEL } from '../engine/autofill';
+import { travelDigest } from '../engine/travel';
 import {
   compasAutofillOutcomeAction,
   compasAutofillStartAction,
@@ -1048,14 +1049,9 @@ function autofillDigest(s: CompasAutofillSummary): string {
       [...count].map(([k, v]) => `${v} ${k.toLowerCase()}${v > 1 ? 's' : ''}`).join(', ')
     );
   }
-  if (s.transport)
-    parts.push(
-      s.transport.mode === 'avion'
-        ? 'vol à prévoir'
-        : s.transport.mode === 'train'
-          ? `train, environ ${String(Math.round(s.transport.minutes / 30) / 2).replace('.', ',')} h`
-          : `${Math.round(s.transport.km)} km de route`
-    );
+  // Le trajet (d'où, entre quels aéroports), ou « Trajet non chiffré : point de départ inconnu » (engine/travel.ts).
+  const travel = travelDigest(s.transport, s.originUnknown);
+  if (travel) parts.push(travel);
   const kit = s.kit.inventaire + s.kit.pret + s.kit.location + s.kit.achat + s.kit.a_trouver;
   if (kit) parts.push(`${kit} objet${kit > 1 ? 's' : ''} au kit`);
   return parts.join(' · ') || 'Budget posé';
