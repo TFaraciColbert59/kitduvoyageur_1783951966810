@@ -406,22 +406,16 @@ export default function RapportExpeditionPage() {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ reportId })
             });
-          }
 
-        // Award loyalty points for creating a report
-        await supabase.from('loyalty_history').insert({
-          user_id: user.id,
-          action: `Rapport d'expédition créé : ${form.destination}`,
-          points: 75,
-          type: 'earned',
-        });
-        // Update loyalty points using raw SQL increment
-        const { data: currentProfile } = await supabase.from('user_profiles').select('loyalty_points').eq('id', user.id).single();
-        if (currentProfile) {
-          await supabase.from('user_profiles').update({
-            loyalty_points: (currentProfile.loyalty_points || 0) + 75,
-          }).eq('id', user.id);
-        }
+            const earnRes = await fetch('/api/loyalty/earn', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'rapport_expedition', sourceId: reportId })
+            });
+            if (!earnRes.ok) {
+              console.error('Loyalty earn error:', await earnRes.json().catch(() => null));
+            }
+          }
 
         await loadReports();
       } catch (err) {
