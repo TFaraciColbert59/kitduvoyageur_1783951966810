@@ -28,6 +28,7 @@ export function applyCurrent(ctl: CompasCtl): ApplyCurrent {
     plannedDays: ctl.data.plannedDays ?? null,
     preferences,
     hasRoute: ctl.data.route.id != null,
+    originName: ctl.data.originSaid?.name ?? null,
   };
 }
 

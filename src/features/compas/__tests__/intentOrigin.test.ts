@@ -214,6 +214,80 @@ describe('phrase tapée sans majuscule : ni un moment, ni un nom commun, ni la s
   });
 });
 
+describe('phrase tapée sans majuscule : seuls « depuis » et « au départ de » lisent un départ', () => {
+  // Ces phrases partaient au géocodeur comme lieu de départ, sans qu'on le voie.
+  it.each([
+    'on part de bonne heure',
+    'on part du principe que',
+    'je pars de nuit',
+    'on part de bon matin',
+    'je pars du boulot vendredi',
+    'depuis le parking du col',
+    'depuis le col de rousset',
+    'au départ du refuge de la pra',
+    'depuis le village',
+    'depuis le temps que',
+    'depuis midi',
+  ])('« %s » : ni départ ni destination', (text) => {
+    expect(places(text)).toEqual([]);
+  });
+
+  it.each([
+    'depuis la gare',
+    "depuis l'aeroport",
+    'depuis la station',
+    'depuis la gare du nord',
+    'depuis le nord',
+    'depuis le week-end',
+    'depuis des semaines',
+    'depuis ce matin',
+    'depuis une heure',
+    'depuis le bureau',
+    'depuis la maison',
+    'depuis le travail',
+    'depuis quelques jours',
+    'depuis tout ce temps',
+    'depuis plus de deux ans',
+    'depuis moins de deux ans',
+  ])('« %s » : aucun départ', (text) => {
+    expect(places(text)).toEqual([]);
+  });
+
+  it.each([
+    'je pars de lyon',
+    'on part de grenoble',
+    'nous partons de lyon',
+    'en partant de lyon',
+  ])('« %s » : ces tournures ne lisent un départ qu’avec une majuscule', (text) => {
+    expect(places(text)).toEqual([]);
+  });
+
+  it('les mêmes tournures avec une majuscule restent lues', () => {
+    expect(places('Je pars de Lyon')).toEqual([{ type: 'set_origin', place: 'Lyon' }]);
+    expect(places('On part de Chamonix')).toEqual([{ type: 'set_origin', place: 'Chamonix' }]);
+    expect(places('je pars de Lyon')).toEqual([{ type: 'set_origin', place: 'Lyon' }]);
+  });
+
+  it('« depuis lyon », « au départ de grenoble », « au départ d’annecy » restent lus', () => {
+    expect(places('depuis lyon')).toEqual([{ type: 'set_origin', place: 'Lyon' }]);
+    expect(places('au départ de grenoble')).toEqual([{ type: 'set_origin', place: 'Grenoble' }]);
+    expect(places('au départ d’annecy')).toEqual([{ type: 'set_origin', place: 'Annecy' }]);
+    expect(places("au depart d'annecy")).toEqual([{ type: 'set_origin', place: 'Annecy' }]);
+    expect(places('rando 3 jours dans le vercors depuis lyon')).toEqual([
+      { type: 'set_origin', place: 'Lyon' },
+      { type: 'set_destination', place: 'Vercors' },
+    ]);
+  });
+
+  it('gare, aéroport, station : le lieu qui suit « de », pas le mot « gare »', () => {
+    expect(places('depuis la gare de briancon')).toEqual([{ type: 'set_origin', place: 'Briancon' }]);
+    expect(places('au départ de la gare de grenoble')).toEqual([{ type: 'set_origin', place: 'Grenoble' }]);
+    expect(places('depuis l’aéroport de geneve')).toEqual([{ type: 'set_origin', place: 'Geneve' }]);
+    expect(places("depuis l'aeroport de lyon")).toEqual([{ type: 'set_origin', place: 'Lyon' }]);
+    expect(places('depuis la station de la plagne')).toEqual([{ type: 'set_origin', place: 'Plagne' }]);
+  });
+});
+
 describe('l’action set_origin', () => {
   it('schéma : un nom de 1 à 80 caractères', () => {
     expect(intentActionSchema.safeParse({ type: 'set_origin', place: 'Lyon' }).success).toBe(true);

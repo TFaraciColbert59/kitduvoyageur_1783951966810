@@ -375,15 +375,34 @@ const ORIGIN_END = /\s(?:(?:vers|dans|par|puis|ou|ensuite|apres|après|direction
 const ORIGIN_LEAD =
   /(?:^|[\s,(])(?:depuis|(?:au depart|en partant|on part|je pars|nous partons) (?:de|du|des|d'))(?:\s+|(?<='))/g;
 
-/** Après « depuis » dans une phrase sans majuscule : un moment ou un déterminant, pas un lieu. */
-const NOT_ORIGIN =
-  /^(?:longtemps|toujours|hier|demain|aujourd'hui|lendemain|veille|matin|soir|minuit|sommet|zero|chez|que|qu|quand|ici|maison|debut|peu|des|plusieurs|quelques|ce|cet|cette|ces|mon|ma|mes|notre|nos|les)$/;
+/**
+ * Premier mot, après « depuis » dans une phrase sans majuscule, qui n'est jamais
+ * un lieu de départ : un moment, un déterminant ou un nom commun de lieu. Écrits
+ * sans accent : le mot testé est déjà normalisé. Un départ faux est appliqué
+ * sans qu'on le voie : mieux vaut en manquer un que d'en inventer un.
+ */
+const NOT_ORIGIN_WORDS = [
+  // moments et durées
+  'longtemps', 'toujours', 'hier', 'demain', "aujourd'hui", 'lendemain', 'veille', 'matin', 'soir', 'nuit',
+  'midi', 'minuit', 'debut', 'semaines?', 'mois', 'ans?', 'jours?', 'heures?', 'week-?end', 'temps', 'zero',
+  // quantités, liaisons, déterminants
+  'peu', 'plus', 'moins', 'tout', 'toute', 'tous', 'plusieurs', 'quelques', 'chez', 'que', 'qu', 'quand', 'ici',
+  'des', 'ce', 'cet', 'cette', 'ces', 'mon', 'ma', 'mes', 'notre', 'nos', 'les', 'bon', 'bonne', 'principe',
+  // noms communs de lieu : sans « de X » derrière, pas un lieu (« gare de X » est lue à part)
+  'sommet', 'maison', 'boulot', 'travail', 'bureau', 'parking', 'refuge', 'village', 'col', 'gare', 'aeroport',
+  'station', 'nord', 'sud', 'est', 'ouest',
+];
+const NOT_ORIGIN = new RegExp(`^(?:${NOT_ORIGIN_WORDS.join('|')})$`);
+
+/** « la gare de Briançon », « l'aéroport de Lyon » : le lieu de départ est ce qui suit « de ». */
+const FACILITY = /^(?:gare|aeroport|station)\s+(?:de la\s+|de l'\s*|du\s+|des\s+|de\s+|d'\s*)/;
 
 /**
  * Lieu de départ dit dans la phrase (« depuis Lyon », « depuis la Suisse »,
  * « au départ du Grand-Bornand ») et sa place dans `src`, pour que la
  * destination ne le reprenne jamais. Nom propre seulement ; dans une phrase
- * tapée sans majuscule, le mot qui suit s'il n'est ni un moment ni un nom commun.
+ * tapée sans majuscule, après « depuis » ou « au départ de » seulement, le mot
+ * qui suit s'il n'est ni un moment ni un nom commun (`NOT_ORIGIN_WORDS`).
  * `plain` est `src` normalisé, aux mêmes positions.
  */
 function readOrigin(src: string, plain: string): { place: string; start: number; end: number } | null {
@@ -405,8 +424,12 @@ function readOrigin(src: string, plain: string): { place: string; start: number;
       continue;
     }
     if (!lower) continue;
+    // Phrase sans majuscule : « depuis » et « au départ de » seulement. « je pars de nuit »,
+    // « on part du principe que » ne disent pas d'où l'on part (la majuscule le montre).
+    if (!/\b(?:depuis|au depart)\b/.test(m[0])) continue;
+    const from = at + (FACILITY.exec(plain.slice(at, at + 60))?.[0].length ?? 0);
     const low = /^([a-z][a-z'-]{2,}(?:\s(?!(?:pour|avec|en|a|et|du|de|des|le|la|les|sans|dans|ce|cet|cette|demain|apres-demain|aujourd'hui|prochain|prochaine|matin|soir|vers|depuis|par|puis|ou|ensuite|apres|direction|jusqu[a-z']*)\b)[a-z][a-z'-]{2,})?)/.exec(
-      plain.slice(at, at + 60)
+      plain.slice(from, from + 60)
     );
     const words = low ? low[1].trim() : '';
     const first = words.split(/\s/)[0];
@@ -419,7 +442,7 @@ function readOrigin(src: string, plain: string): { place: string; start: number;
       notAPlace(words)
     )
       continue;
-    return { place: words.split(/\s/).map(capitalized).join(' '), start: at, end: at + words.length };
+    return { place: words.split(/\s/).map(capitalized).join(' '), start: from, end: from + words.length };
   }
   return null;
 }
@@ -1231,6 +1254,8 @@ export interface ApplyCurrent {
   plannedDays?: number | null;
   preferences: CompasPreferences;
   hasRoute: boolean;
+  /** Nom du lieu de départ déjà rangé sur le voyage : le redire ne le cherche pas à nouveau. */
+  originName?: string | null;
 }
 
 export type ApplyOp =
@@ -1376,6 +1401,7 @@ export function planApplication(actions: CompasIntentAction[], current: ApplyCur
   // rien ne dépend de lui, et s'il échoue (lieu inconnu) tout le reste est déjà appliqué.
   const origin = actions.find((a) => a.type === 'set_origin') as
     Extract<CompasIntentAction, { type: 'set_origin' }> | undefined;
-  if (origin) ops.push({ op: 'origin', place: origin.place });
+  if (origin && !(current.originName && plainOf(current.originName) === plainOf(origin.place)))
+    ops.push({ op: 'origin', place: origin.place });
   return ops;
 }
