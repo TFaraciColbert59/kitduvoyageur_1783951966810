@@ -70,13 +70,20 @@ function post(url: string, body?: unknown): NextRequest {
 }
 
 type QueryResult = { data: unknown; error: { message: string } | null };
+type QueryCall = { method: 'eq' | 'in'; args: unknown[] };
 
 /** Chaîne PostgREST factice : chaque méthode retourne la chaîne (thenable). */
-function ledger(result: QueryResult = { data: [], error: null }) {
+function ledger(result: QueryResult = { data: [], error: null }, calls?: QueryCall[]) {
   const chain: Record<string, unknown> = {};
   chain.select = () => chain;
-  chain.eq = () => chain;
-  chain.in = () => chain;
+  chain.eq = (...args: unknown[]) => {
+    calls?.push({ method: 'eq', args });
+    return chain;
+  };
+  chain.in = (...args: unknown[]) => {
+    calls?.push({ method: 'in', args });
+    return chain;
+  };
   chain.update = () => chain;
   chain.insert = () => chain;
   chain.maybeSingle = async () => result;
@@ -85,9 +92,9 @@ function ledger(result: QueryResult = { data: [], error: null }) {
   return chain;
 }
 
-function serviceFor(result: QueryResult = { data: [], error: null }) {
+function serviceFor(result: QueryResult = { data: [], error: null }, calls?: QueryCall[]) {
   return {
-    from: () => ledger(result),
+    from: () => ledger(result, calls),
     rpc: (...args: unknown[]) => h.rpc(...args),
   };
 }
@@ -300,11 +307,15 @@ describe('Phase 1 — handlers des routes (mocks)', () => {
       expect(await res.json()).toEqual({ error: 'not_cancellable' });
     });
 
-    it('200 quand une ligne est annulée', async () => {
-      h.getServiceSupabase.mockReturnValue(serviceFor({ data: [{ id: ORDER_ID }], error: null }));
+    it('200 quand une ligne pending ou confirmée est annulée (filtre in)', async () => {
+      const calls: QueryCall[] = [];
+      h.getServiceSupabase.mockReturnValue(
+        serviceFor({ data: [{ id: ORDER_ID }], error: null }, calls)
+      );
       const res = await cancelPost(post('/api/orders/cancel', { orderId: ORDER_ID }));
       expect(res.status).toBe(200);
       expect(await res.json()).toEqual({ success: true });
+      expect(calls).toContainEqual({ method: 'in', args: ['status', ['pending', 'confirmed']] });
     });
   });
 

@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       .update({ status: 'cancelled' })
       .eq('id', orderId)
       .eq('user_id', user.id)
-      .eq('status', 'confirmed')
+      .in('status', ['pending', 'confirmed'])
       .select('id');
 
     if (error) {

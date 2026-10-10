@@ -101,6 +101,7 @@ export default function PanierPage() {
         return;
       }
       setLoyaltyPoints(data.balance);
+      setLoyaltyLevel(data.level);
       const updated = applyLoyaltyFree(itemId);
       setItems(updated);
     } catch (err) {
@@ -124,6 +125,7 @@ export default function PanierPage() {
         return;
       }
       setLoyaltyPoints(data.balance);
+      setLoyaltyLevel(data.level);
       const updated = removeLoyaltyFree(itemId);
       setItems(updated);
     } catch (err) {

@@ -107,11 +107,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             id: authUser.id,
             email: authUser.email ?? '',
             full_name: fullName,
-            trust_score: 50,
-            loyalty_points: 0,
-            loyalty_level: 'Explorateur',
-            xp: 0,
-            level: 1,
           },
           { onConflict: 'id' }
         )

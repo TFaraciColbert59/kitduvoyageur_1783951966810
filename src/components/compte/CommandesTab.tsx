@@ -37,7 +37,7 @@ interface OrderDB {
   updated_at: string | null;
 }
 
-type OrderStatus = 'confirmed' | 'preparing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
+type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
 
 interface DeliveryAddress {
   id: string;
@@ -79,6 +79,7 @@ function fmtPrice(n: number) {
 
 function getStatusLabel(status: string): { label: string; tone: BadgeTone } {
   switch (status) {
+    case 'pending': return { label: 'En attente de paiement', tone: 'warn' };
     case 'confirmed': return { label: 'Confirmée', tone: 'info' };
     case 'preparing': return { label: 'En préparation', tone: 'warn' };
     case 'shipped': return { label: 'Expédiée', tone: 'stone' };
@@ -91,6 +92,7 @@ function getStatusLabel(status: string): { label: string; tone: BadgeTone } {
 
 function getStatusIndex(status: string): number {
   switch (status) {
+    case 'pending':
     case 'confirmed': return 0;
     case 'preparing': return 1;
     case 'shipped': return 2;
@@ -212,6 +214,7 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
       const daysSinceOrder = Math.floor((Date.now() - new Date(o.created_at).getTime()) / (1000 * 60 * 60 * 24));
       let derivedStatus: OrderStatus;
       if (o.status === 'cancelled') derivedStatus = 'cancelled';
+      else if (o.status === 'pending') derivedStatus = 'pending';
       else if (daysSinceOrder > 14) derivedStatus = 'delivered';
       else if (daysSinceOrder > 7) derivedStatus = 'shipped';
       else if (daysSinceOrder > 3) derivedStatus = 'preparing';
@@ -913,7 +916,7 @@ function ActiveOrderCard({
         <Button variant="secondary" size="sm" onClick={onInvoice} className="font-bold">
           Facture PDF
         </Button>
-        {(order.derivedStatus === 'confirmed' || order.derivedStatus === 'preparing') && (
+        {(order.derivedStatus === 'pending' || order.derivedStatus === 'confirmed' || order.derivedStatus === 'preparing') && (
           <Button variant="destructive" size="sm" onClick={onCancel} className="font-bold">
             Annuler
           </Button>

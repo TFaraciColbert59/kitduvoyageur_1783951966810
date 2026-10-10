@@ -7,6 +7,7 @@ import AppShell from '@/components/shell/AppShell';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import { Badge, Button, Card, Chip, EmptyState, ErrorState, ListItem, LoadingState, Skeleton, Tabs, type BadgeTone } from '@/components/ui';
 
 interface LoyaltyLevel {
@@ -67,6 +68,7 @@ export default function FidelitePage() {
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
   const [redeemedIds, setRedeemedIds] = useState<string[]>([]);
   const { user } = useAuth();
+  const { toast } = useToast();
   const supabase = useMemo(() => createClient(), []);
 
   const loadData = useCallback(async () => {
@@ -85,6 +87,7 @@ export default function FidelitePage() {
         const { data: redemptions } = await supabase.from('loyalty_redemptions').select('reward_id').eq('user_id', user.id);
         setRedeemedIds(redemptions?.map((r) => r.reward_id) ?? []);
       }
+      setError(null);
     } catch (err) {
       console.error('Error loading loyalty data:', err);
       setError('Impossible de charger les données de fidélité.');
@@ -112,7 +115,6 @@ export default function FidelitePage() {
   const handleRedeem = async (reward: Reward) => {
     if (!user || userPoints < reward.points_cost || redeemedIds.includes(reward.id)) return;
     setRedeemingId(reward.id);
-    setError(null);
     try {
       const res = await fetch('/api/loyalty/redeem', {
         method: 'POST',
@@ -122,12 +124,13 @@ export default function FidelitePage() {
       const data = await res.json().catch(() => null);
       if (!res.ok || typeof data?.balance !== 'number') {
         const code = data?.error;
-        setError(
+        toast(
           code === 'insufficient_balance'
             ? 'Solde insuffisant'
             : code === 'already_redeemed'
               ? 'Récompense déjà échangée'
-              : 'Impossible d’échanger cette récompense pour le moment.'
+              : 'Échange impossible pour le moment',
+          'error'
         );
         return;
       }
@@ -136,7 +139,7 @@ export default function FidelitePage() {
       await loadData();
     } catch (err) {
       console.error(err);
-      setError('Impossible d’échanger cette récompense pour le moment.');
+      toast('Échange impossible pour le moment', 'error');
     } finally {
       setRedeemingId(null);
     }
