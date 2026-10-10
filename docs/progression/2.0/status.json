@@ -1,0 +1,767 @@
+{
+  "updated_at": "2026-10-10T16:46:36.428170+00:00",
+  "initial_commit": "373689c6a552d5a8e98fb54920c01467761f9916",
+  "tasks": [
+    {
+      "id": "T01",
+      "title": "Figer l’état et vérifier la restauration",
+      "dependencies": [],
+      "status": "in_progress",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T02",
+      "title": "Isoler les données de démonstration",
+      "dependencies": [
+        "T01"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T03",
+      "title": "Vérifier les parcours de fidélité protégés",
+      "dependencies": [
+        "T01"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T04",
+      "title": "Observer les traitements de progression",
+      "dependencies": [
+        "T01",
+        "T02",
+        "T03"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T05",
+      "title": "Geler le contrat économique v2",
+      "dependencies": [
+        "T04"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T06",
+      "title": "Écrire une intention durable avec la source",
+      "dependencies": [
+        "T05"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T07",
+      "title": "Consommer et reprendre les intentions",
+      "dependencies": [
+        "T06"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T08",
+      "title": "Appliquer les plafonds sous concurrence",
+      "dependencies": [
+        "T05",
+        "T07"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T09",
+      "title": "Renforcer les sept preuves existantes",
+      "dependencies": [
+        "T08"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T10",
+      "title": "Afficher une progression compacte fiable",
+      "dependencies": [
+        "T05",
+        "T09"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T11",
+      "title": "Ouvrir le bilan et l’historique dans la sheet",
+      "dependencies": [
+        "T10"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T12",
+      "title": "Versionner le catalogue de missions",
+      "dependencies": [
+        "T11"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T13",
+      "title": "Permettre trois missions choisies",
+      "dependencies": [
+        "T12"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T14",
+      "title": "Dériver l’avancement depuis les événements",
+      "dependencies": [
+        "T13"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T15",
+      "title": "Unifier les distinctions",
+      "dependencies": [
+        "T14"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T16",
+      "title": "Proposer un rythme choisi",
+      "dependencies": [
+        "T14"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T17",
+      "title": "Suggérer des missions dans un catalogue fermé",
+      "dependencies": [
+        "T12",
+        "T13",
+        "T16"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T18",
+      "title": "Enregistrer les découvertes géographiques",
+      "dependencies": [
+        "T09",
+        "T14"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T19",
+      "title": "Afficher le passeport privé",
+      "dependencies": [
+        "T18"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T20",
+      "title": "Superposer les découvertes à la carte actuelle",
+      "dependencies": [
+        "T18",
+        "T19"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T21",
+      "title": "Adapter les activités hors randonnée",
+      "dependencies": [
+        "T09",
+        "T18"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T22",
+      "title": "Reconnaître une préparation Compas pertinente",
+      "dependencies": [
+        "T09",
+        "T17",
+        "T21"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T23",
+      "title": "Reconnaître une amélioration de kit éprouvée",
+      "dependencies": [
+        "T09",
+        "T22"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T24",
+      "title": "Valider les corrections utiles",
+      "dependencies": [
+        "T08",
+        "T18"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T25",
+      "title": "Activer les réponses acceptées",
+      "dependencies": [
+        "T24"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T26",
+      "title": "Dédupliquer les médias récompensés",
+      "dependencies": [
+        "T24"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T27",
+      "title": "Valider les contributions éditoriales",
+      "dependencies": [
+        "T24",
+        "T26"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T28",
+      "title": "Valider les traces contributives",
+      "dependencies": [
+        "T21",
+        "T24",
+        "T27"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T29",
+      "title": "Reconnaître l’usage matériel et la contribution locale",
+      "dependencies": [
+        "T23",
+        "T25",
+        "T28"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T30",
+      "title": "Confirmer la tenue d’une sortie collective",
+      "dependencies": [
+        "T21",
+        "T24"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T31",
+      "title": "Confirmer les tâches collectives",
+      "dependencies": [
+        "T30"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T32",
+      "title": "Confirmer le cycle d’un prêt réel",
+      "dependencies": [
+        "T31"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T33",
+      "title": "Valider une intervention sur le matériel",
+      "dependencies": [
+        "T23",
+        "T32"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T34",
+      "title": "Valider les actions collectives encadrées",
+      "dependencies": [
+        "T24",
+        "T30",
+        "T33"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T35",
+      "title": "Publier des classements volontaires",
+      "dependencies": [
+        "T02",
+        "T30",
+        "T34"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T36",
+      "title": "Créer des ligues sur population suffisante",
+      "dependencies": [
+        "T35"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T37",
+      "title": "Inventorier les droits commerciaux",
+      "dependencies": [
+        "T03",
+        "T29"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T38",
+      "title": "Émettre la fidélité sur encaissement réel",
+      "dependencies": [
+        "T37"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T39",
+      "title": "Valoriser les bons côté serveur",
+      "dependencies": [
+        "T38"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T40",
+      "title": "Distribuer des parts sur un pool financé",
+      "dependencies": [
+        "T25",
+        "T27",
+        "T28",
+        "T37"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T41",
+      "title": "Présenter les crédits de lignée existants",
+      "dependencies": [
+        "T37",
+        "T38"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T42",
+      "title": "Administrer les règles avec prévisualisation",
+      "dependencies": [
+        "T39",
+        "T40",
+        "T41"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T43",
+      "title": "Vérifier les parcours mobiles réels",
+      "dependencies": [
+        "T11",
+        "T19",
+        "T36",
+        "T42"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T44",
+      "title": "Couvrir confidentialité et vie du compte",
+      "dependencies": [
+        "T18",
+        "T35",
+        "T42"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T45",
+      "title": "Mesurer charge et coûts du pipeline",
+      "dependencies": [
+        "T07",
+        "T35",
+        "T40"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T46",
+      "title": "Mesurer compréhension et qualité",
+      "dependencies": [
+        "T14",
+        "T42",
+        "T43"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T47",
+      "title": "Déployer par cohortes avec retour arrière",
+      "dependencies": [
+        "T43",
+        "T44",
+        "T45",
+        "T46"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": "T48",
+      "title": "Clore le programme avec preuves",
+      "dependencies": [
+        "T47"
+      ],
+      "status": "pending",
+      "implemented": false,
+      "tested": false,
+      "integrated": false,
+      "deployed": false,
+      "activated": false,
+      "evidence": [],
+      "blockers": []
+    }
+  ]
+}
