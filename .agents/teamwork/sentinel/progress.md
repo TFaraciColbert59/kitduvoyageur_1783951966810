@@ -13,3 +13,4 @@ Supervise end-to-end implementation and industrialization of LKDV Social archite
 - [x] Final Completion Delivery
 - [x] Assembly (2026-10-10): FF merge `feat/explorer-mobile-osm` (30 commits) + stash WIP appliqué + 597 fichiers non suivis ; desktop Feed V1 comblé ; Expedition Room montée dans ConversationView ; tsc 0 / lint 0 / build 0 / suite complète 7693 verts — `docs/reports/CHANTIER_COMMUNAUTE_FINAL.md`
 - [x] Phase 2 (2026-10-10): intégration sécurité (F-001/F-003/F-008/F-010 rev2/F-011 rev2-3/F-012/H-017/B8, deps CVE Capacitor) ; replay intégral **272/272 migrations** sur conteneur vierge + F-012 matérialisation idempotente (273/273) ; porte RLS réelle **14/14** ; E2E locales **46/46** ; suite complète **7744 verts / 0 échec** — même rapport §3–§5
+- [x] Phase 3 (2026-10-10): livraison git — 11 commits par phase sur `main` local (`686aad1a` → `6b8018da`), arbre committé revérifié (tsc 0 / vitest 7744 verts) — rapport §8

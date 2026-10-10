@@ -100,3 +100,25 @@ npm run test:e2e:local              # 46 verts / 0 échec
 #   $env:LKDV_TEST_DATABASE_URL='postgresql://supabase_admin:postgres@localhost:55433/postgres'
 #   node scripts/verify/rls-real-tests.mjs  → 14/14
 ```
+## 8. Livraison git (clôture finale)
+
+Le chantier est committé sur `main` local (11 commits au-dessus de la fusion FF, non poussés) :
+
+| Commit | Contenu |
+|---|---|
+| `686aad1a` | feat(community) : Feed V1 déterministe + interactions persistantes (R1–R4) |
+| `b3469458` | feat(social) : messagerie canonique M1–M4 + Expedition Room montée |
+| `e7964acb` | feat(social) : socle M1–M4 complémentaire (domaines, cartes live, types, suites) |
+| `62799746` | feat(admin-os) : back-office P0–P5 (shell, primitives, socle serveur, suites) |
+| `e8af3927` | feat(admin-os) : migrations P0–P5 |
+| `db61f760` | feat(admin-os) : routes P2–P5 et files de travail |
+| `7a4ea3ae` | feat(admin-os) : socle serveur complémentaire + 13 suites |
+| `571710ad` | fix(security) : F-001/F-003/F-008/F-010/F-011/F-012, H-017, porte RLS B8 |
+| `4eaf0753` | test(ci) : suites réparées + E2E alignées produit + baselines visuelles |
+| `1589ccc1` | chore(deps) : Capacitor 8.5.3 (CVE), next 15.5.27 pinné, sharp 0.35.5 |
+| `6b8018da` | docs(chantier) : rapport de clôture + artefacts de session + skill Stripe |
+
+État final vérifié **sur l'arbre committé** : `tsc` 0 erreur, `vitest` 7744 verts / 0 échec.
+Reste non suivi (volontaire) : `hosted-schema.json` (dump de travail non référencé).
+Stash `stash@{0}` conservé (filet de sécurité, contenu désormais dans l'historique).
+Aucun push : `main` local est à +41 commits d'`origin/main` (30 FF + 11 phases).
