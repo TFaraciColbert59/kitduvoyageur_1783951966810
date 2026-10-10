@@ -182,9 +182,12 @@ const CAR_FAILURE: Record<string, string> = {
 /** Au-delà de 3 h de trajet aller, une journée seule ne tient plus (PLAN-100 4.4). */
 export const DAY_TRIP_MAX_MINUTES = 180;
 
+/** Une route fait en moyenne 1,3 fois le vol d'oiseau. */
+export const ROAD_DETOUR_FACTOR = 1.3;
+
 /** Route estimée à l'aller : vol d'oiseau × 1,3 à 80 km/h (comme quand l'itinéraire n'est pas calculé). */
 export function estimatedDriveMinutes(straightKm: number): number {
-  return Math.round((Math.round(straightKm * 1.3) / 80) * 60);
+  return Math.round((Math.round(straightKm * ROAD_DETOUR_FACTOR) / 80) * 60);
 }
 
 /**
@@ -227,9 +230,12 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
     notes: [],
   };
   // Sortie de quelques heures : rien à chiffrer. Partie de loin (départ connu),
-  // le temps de route estimé est dit quand la journée ne tient pas.
+  // le temps de route estimé est dit quand la journée ne tient pas. Au-delà de la
+  // portée d'une route (même seuil que l'avion, `approachMode` : > 900 km à vol
+  // d'oiseau), ce n'est pas un trajet en voiture : ni temps estimé ni note.
   if (!input.transport) {
-    const note = origin ? dayTripNote(days, estimatedDriveMinutes(distanceKm(origin, target))) : null;
+    const straightKm = origin ? distanceKm(origin, target) : null;
+    const note = straightKm != null && straightKm <= FLIGHT_THRESHOLD_KM ? dayTripNote(days, estimatedDriveMinutes(straightKm)) : null;
     if (note) leg.notes.push(note);
     return leg;
   }
@@ -345,7 +351,7 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
     // lieu) mais destination à portée de route : trajet estimé (vol
     // d'oiseau × 1,3 à 80 km/h), jamais un vol à 450 km.
     const minutes = estimatedDriveMinutes(straight);
-    leg.carFuel = estimateCarTrip({ oneWayKm: Math.round(straight * 1.3), oneWayMin: minutes, partySize: party });
+    leg.carFuel = estimateCarTrip({ oneWayKm: Math.round(straight * ROAD_DETOUR_FACTOR), oneWayMin: minutes, partySize: party });
     if (leg.carFuel) {
       leg.transport = moveOf('voiture', {
         km: leg.carFuel.oneWayKm,

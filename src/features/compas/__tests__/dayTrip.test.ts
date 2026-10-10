@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { FLIGHT_THRESHOLD_KM } from '../engine/autofill';
+import { distanceKm } from '../engine/places';
 import {
   DAY_TRIP_MAX_MINUTES,
   dayTripNote,
@@ -142,6 +144,62 @@ describe('une journée à plus de 3 h de trajet aller est signalée', () => {
       deps({ failure: null })
     );
     expect(onSite.notes).toEqual([]);
+  });
+
+  describe('sortie au-delà de la portée d’une route : ni note ni chiffre', () => {
+    const PARIS = { name: 'Paris', lat: 48.86, lon: 2.35, countryCode: 'FR' };
+    const NEW_YORK = { lat: 40.71, lon: -74.0 };
+    // Un point plein sud d'Annecy, à `km` kilomètres à vol d'oiseau.
+    const southOfAnnecy = (km: number) => ({ lat: ANNECY.lat - (km / 6371) * (180 / Math.PI), lon: ANNECY.lon });
+    const nothingPriced = { transport: null, carFuel: null, train: null, flight: null, originUnknown: false };
+
+    it('Paris → New York, sortie : aucune note (jamais « 94 h … »), rien de chiffré, aucun calcul', async () => {
+      const calls: string[] = [];
+      const spy: TravelDeps = {
+        carRoute: async () => {
+          calls.push('route');
+          return { failure: null };
+        },
+        walkKm: async () => {
+          calls.push('marche');
+          return 0;
+        },
+        airport: () => {
+          calls.push('aéroport');
+          return null;
+        },
+      };
+      const leg = await planTravelLeg(
+        input({
+          transport: false,
+          origin: travelOrigin(PARIS, null),
+          target: NEW_YORK,
+          destination: { name: 'New York', countryCode: 'US' },
+        }),
+        spy
+      );
+      expect(leg).toMatchObject(nothingPriced);
+      expect(leg.notes).toEqual([]);
+      expect(calls).toEqual([]);
+    });
+
+    it('la limite est celle de la route estimée : 900 km à vol d’oiseau et pas un de plus', async () => {
+      const under = southOfAnnecy(FLIGHT_THRESHOLD_KM - 0.01);
+      const over = southOfAnnecy(FLIGHT_THRESHOLD_KM + 0.01);
+      // Les deux points tombent bien de part et d'autre du seuil de `approachMode` (> 900 = avion).
+      expect(distanceKm(ANNECY, under)).toBeLessThanOrEqual(FLIGHT_THRESHOLD_KM);
+      expect(distanceKm(ANNECY, over)).toBeGreaterThan(FLIGHT_THRESHOLD_KM);
+      const near = await planTravelLeg(input({ transport: false, target: under }), deps({ failure: null }));
+      expect(near).toMatchObject(nothingPriced);
+      // 900 km × 1,3 à 80 km/h : 14 h 38.
+      expect(near.notes).toEqual([
+        '14 h 38 de trajet aller pour une seule journée : prévois une nuit sur place ou choisis plus près.',
+      ]);
+      const far = await planTravelLeg(input({ transport: false, target: over }), deps({ failure: null }));
+      expect(far).toMatchObject(nothingPriced);
+      expect(far.notes).toEqual([]);
+    });
+
   });
 
   it('un vol n’a pas de durée connue : pas de note', async () => {
