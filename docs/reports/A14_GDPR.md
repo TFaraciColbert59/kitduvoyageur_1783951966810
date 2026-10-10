@@ -5,7 +5,7 @@ test) — aucun PII réel, aucun export commité, aucune donnée envoyée à un 
 
 ## 1. Export (portabilité, art. 20) — livré et exécuté
 
-- Module : `src/server/gdprExport.ts` (`buildGdprExport`, version de schéma `a14-v1`).
+- Module : `src/server/gdprExport.ts` (`buildGdprExport`, version de schéma `a14-v2` (v2 : table user_traveller, profil voyageur)).
 - Route : `GET /api/account/export` — **auth requise** (401), service requis (503),
   identité issue **exclusivement de la session**, réponse `application/json`
   téléchargeable (`Content-Disposition: attachment`), `Cache-Control: no-store`.
@@ -21,7 +21,7 @@ test) — aucun PII réel, aucun export commité, aucune donnée envoyée à un 
 Export réel (extrait anonyme, aucune valeur personnelle) :
 
 ```text
-GET /api/account/export → 200, schemaVersion=a14-v1
+GET /api/account/export → 200, schemaVersion=a14-v2
 profile.id=<uuid jetable>, consents=1, counts={terrain_reports:1, hike_sessions:1,
 performance_observations:1, adventure_plans:1, ...}, plans[0].versions=1, decisions=1, engineRuns=1
 ```

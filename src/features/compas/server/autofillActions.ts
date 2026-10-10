@@ -57,6 +57,7 @@ import {
 } from '../engine/autofill';
 import { anchorFromOrigin, originOf, shortHoursOf, tripLengthDays } from '../engine/tripContext';
 import { compasMeta, readProfile, requireEditor, resplitSteps, tripBasis, tripPartySize, updateTripMetadata, type Supa } from './compasServer';
+import { readTraveller } from './traveller';
 import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
 import { bestPeriod, monthName, needsDryNormals } from '../engine/period';
 import { partsText, retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
@@ -65,8 +66,9 @@ import { lookupAreaPlaces, lookupRiverLine, lookupStagePois } from './stagePoiLo
 import { buildTrack, simplifyLine, trackKey, type LngLat } from '../engine/track';
 import { descentWindow, planRiverDescent } from '../engine/river';
 import { keepAiNote, travelPapers } from '../engine/papers';
+import { isFrenchNational } from '../engine/traveller';
 import { tutoyer } from '../engine/voice';
-import { abroadCosts, originFact, planTravelLeg, travelOrigin, type TravelTransport } from '../engine/travel';
+import { abroadCosts, homeForLeg, originFact, planTravelLeg, travelOrigin, type TravelTransport } from '../engine/travel';
 import { nearestAirport } from './airports';
 import { trailRegion } from '../engine/intent';
 import {
@@ -838,7 +840,6 @@ export async function compasAutofillAction(
       return { success: true, pending: true, stepsCreated: 0 };
     const notes: string[] = [...(resume?.notes ?? [])];
     const runId = resume?.runId ?? randomUUID();
-    const today = travellerToday(timeZone);
     const startedAt = Date.now();
     // « Arrêter » demandé après ce lancement : les écritures qui restent sont sautées.
     let halted = false;
@@ -860,10 +861,16 @@ export async function compasAutofillAction(
       lapAt = now;
     };
 
-    const [{ data: tripRow }, profile] = await Promise.all([
+    // Profil voyageur (PLAN-100 4.1) : la ligne de la personne qui lance, par la RLS ;
+    // un essai sans compte n'en a pas (tout inconnu, sans requête).
+    const [{ data: tripRow }, profile, traveller] = await Promise.all([
       supabase.from('trips').select('primary_activity, estimated_budget').eq('id', tripId).maybeSingle(),
       readProfile(supabase, userId),
+      readTraveller(supabase, auth.anonymous ? null : userId),
     ]);
+    // « Aujourd'hui » : le fuseau du navigateur (lot M) ; celui du profil seulement
+    // quand le navigateur n'en envoie aucun de valable ; Paris en dernier.
+    const today = travellerToday(timeZone, new Date(), traveller.timeZone);
     const activity = String((tripRow as { primary_activity?: string } | null)?.primary_activity ?? 'hiking');
     // Contexte projet : la phrase et les réglages du projet priment, le profil
     // n'est qu'un point de départ (adapté s'il ne tient pas pour CE projet).
@@ -941,6 +948,8 @@ export async function compasAutofillAction(
     // Aucun lieu dit mais un départ dit (« rando 3 jours depuis Lyon ») : la personne a
     // nommé un endroit, l'aventure est préparée autour de lui, avant toute position.
     const saidOrigin = originOf(compasMeta(meta).origin);
+    // L'aventure est préparée autour de la position partagée (aucun lieu ni départ dit).
+    let anchoredOnPosition = false;
     if (!anchor && saidOrigin) {
       const around = anchorFromOrigin(saidOrigin, ctx.scope);
       anchor = around.anchor;
@@ -949,6 +958,7 @@ export async function compasAutofillAction(
     // Aucun lieu dit : on part de la position partagée (une sortie autour de
     // soi, ou un voyage « près de chez toi »), et on le dit.
     if (!anchor && from) {
+      anchoredOnPosition = true;
       const here = await lookupReverse(from.lat, from.lon);
       anchor = {
         name: here?.locality ?? here?.name ?? 'Autour de toi',
@@ -1561,14 +1571,18 @@ export async function compasAutofillAction(
     }
 
     lap('5');
-    /* 5. Venir : d'où l'on part (« depuis X » dit, sinon la position, jamais la
-       France par défaut), puis la route mesurée, le train ou l'avion d'aéroport
-       à aéroport (`engine/travel.ts`). Sans point de départ, rien n'est chiffré. */
+    /* 5. Venir : d'où l'on part (« depuis X » dit, sinon le domicile du profil,
+       sinon la position, jamais la France par défaut), puis la route mesurée, le
+       train ou l'avion d'aéroport à aéroport (`engine/travel.ts`). Sans point de
+       départ, rien n'est chiffré. */
     const start = dayStep(1);
     const target = start?.latitude != null && start.longitude != null ? { lat: start.latitude, lon: start.longitude } : anchor;
+    // Domicile du profil (PLAN-100 4.3) : après le départ dit, avant la position ;
+    // rangé à 0,01° au profil, jamais recherché ici.
+    const home = homeForLeg(saidOrigin, anchoredOnPosition, traveller.home);
     // La commune, pas le lieu le plus proche du point (« depuis Chantier Hotel
-    // de Ville » au lieu d'Annecy, 8 oct.) ; inutile quand le départ est dit.
-    const near = !saidOrigin && from ? await lookupReverse(from.lat, from.lon) : null;
+    // de Ville » au lieu d'Annecy, 8 oct.) ; inutile quand le départ est dit ou le domicile connu.
+    const near = !saidOrigin && !home && from ? await lookupReverse(from.lat, from.lon) : null;
     const travelLeg = await planTravelLeg(
       {
         origin: travelOrigin(
@@ -1581,7 +1595,8 @@ export async function compasAutofillAction(
                 country: near?.country ?? null,
                 countryCode: near?.countryCode ?? null,
               }
-            : null
+            : null,
+          home
         ),
         target,
         destination: { name: anchor.name, countryCode: anchor.countryCode },
@@ -1789,7 +1804,7 @@ export async function compasAutofillAction(
       ? null
       : await askJson(
           userId,
-          buildCompasAutofillSystem(),
+          buildCompasAutofillSystem(isFrenchNational(traveller)),
           buildCompasAutofillPrompt(facts),
           500,
           false,
@@ -1798,9 +1813,10 @@ export async function compasAutofillAction(
         );
     const advice: AutofillAiAdvice = sanitizeAdvice(rawAdvice);
     const usedAi = rawAdvice != null;
-    // Papiers, change et prises : la règle parle, l'IA se tait sur ces sujets.
+    // Papiers, change et prises : la règle parle, l'IA se tait sur ces sujets ; ce que
+    // la règle affirme dépend du voyageur (nationalité, résidence, devise : PLAN-100 4.1).
     // Le tutoiement aussi est une règle : un conseil qui vouvoie encore est écarté.
-    const papers = travelPapers(anchor.countryCode, anchor.country);
+    const papers = travelPapers(anchor.countryCode, anchor.country, traveller, abroad);
     // L'essentiel (papiers, sécurité) vient des règles, avec ou sans IA (plan 4.11).
     const safety = essentialAdvice({
       activity,
@@ -1835,9 +1851,9 @@ export async function compasAutofillAction(
     const flight = travelLeg.flight ? flightRoundTrip(travelLeg.flight.km) : null;
     const rentalCars = fuelForKm(carKmOnSite, party).cars;
     const localTrips = localMoves.reduce((t, m) => t + localTripPerLeg(m.move, lvl.level), 0);
-    // Formalités (barème pour un voyageur français) : gardées tant qu'on ne sait pas
-    // que la personne est déjà dans le pays ; départ inconnu = pays de départ inconnu.
-    const abroadFor = abroadCosts(abroad);
+    // Formalités (barème pour un ressortissant français) : seulement pour une nationalité
+    // française connue, et tant qu'on ne sait pas que la personne est déjà dans le pays.
+    const abroadFor = abroadCosts(abroad, traveller);
     const entry = abroadFor.formalities ? entryFees(anchor.countryCode) : null;
     const mealsAmount = mealsTotal({ days, party, nights: plan.map((n) => n.type), level: lvl.level });
     const rental = picks.filter((p) => p.source === 'location').reduce((t, p) => t + (p.costEur ?? 0), 0);
@@ -1936,7 +1952,7 @@ export async function compasAutofillAction(
             title: `Formalités : ${entry.detail}`,
             amount: entry.eur * party,
             source: 'estimation',
-            basis: `barème Compas ${COSTS_VERSION} · tarif officiel connu, à vérifier avant de partir`,
+            basis: `barème Compas ${COSTS_VERSION} · ressortissant français, tarif officiel connu, à vérifier avant de partir`,
           }
         : null,
       abroadFor.insurance || (maxAltitude ?? 0) >= 2500

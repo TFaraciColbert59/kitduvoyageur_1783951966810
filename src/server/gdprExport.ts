@@ -13,7 +13,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 /** Version du schéma d'export — incrémenter à toute évolution de forme. */
-export const GDPR_EXPORT_SCHEMA_VERSION = 'a14-v1';
+export const GDPR_EXPORT_SCHEMA_VERSION = 'a14-v2';
 
 /** Une table du domaine et la colonne qui identifie le sujet. */
 export interface GdprUserTable {
@@ -59,7 +59,29 @@ export const GDPR_USER_TABLES: readonly GdprUserTable[] = [
   { table: 'territory_change_log', userColumn: 'user_id' },
   { table: 'user_territory', userColumn: 'user_id' },
   { table: 'user_territory_private', userColumn: 'user_id' },
+  // Profil voyageur du Compas (migration 20261010100000, PLAN-100 4.1) : nationalité,
+  // résidence, domicile arrondi — données de la personne, rendues à elle seule.
+  { table: 'user_traveller', userColumn: 'user_id' },
 ] as const;
+
+/**
+ * Tables dont la migration peut ne pas être encore appliquée quand le code est
+ * déployé (la base se migre à la main) : absentes, elles sont vides. Sans cela,
+ * l'export plante et, pire, la suppression de compte échoue au recomptage APRÈS
+ * avoir supprimé l'utilisateur.
+ */
+export const GDPR_OPTIONAL_TABLES: ReadonlySet<string> = new Set(['user_traveller']);
+
+/**
+ * Relation absente : Postgres 42P01, PostgREST PGRST205. Le message ne sert que s'il
+ * nomme une table ou une relation absente : « schema cache » seul est aussi la panne de
+ * connexion PGRST002, qui doit rester une erreur.
+ */
+export function isMissingRelation(error: { code?: string | null; message?: string | null } | null): boolean {
+  if (!error) return false;
+  if (error.code === '42P01' || error.code === 'PGRST205') return true;
+  return /could not find the table|relation "[^"]*" does not exist/i.test(error.message ?? '');
+}
 
 /** Tables enfants d'un AdventurePlan (liées par `plan_id`). */
 export const GDPR_PLAN_CHILD_TABLES = [
@@ -191,6 +213,7 @@ export function createSupabaseGdprExportClient(
 
     async selectByUser(table, userColumn, userId) {
       const { data, error } = await supabase.from(table).select('*').eq(userColumn, userId);
+      if (error && GDPR_OPTIONAL_TABLES.has(table) && isMissingRelation(error)) return [];
       assertNoError(error, table);
       return (data ?? []) as Record<string, unknown>[];
     },

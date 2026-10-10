@@ -354,6 +354,15 @@ export function isDeparturePlace(place: CompasPlace): boolean {
   return Boolean(place.settlement) || ADMIN_KINDS.has(place.kind) || BROAD.has(place.kind);
 }
 
+/**
+ * Un domicile (profil voyageur, PLAN-100 4.1) : un lieu d'où l'on part
+ * (`isDeparturePlace`) qui soit une ville ou un village, jamais une région, une
+ * province ni un pays (le trajet serait chiffré depuis leur centre).
+ */
+export function isHomePlace(place: CompasPlace): boolean {
+  return isDeparturePlace(place) && !BROAD.has(place.kind) && place.kind !== 'province';
+}
+
 /** Ferme, lieu-dit, bâtiment, quartier résidentiel : jamais une destination. */
 const WEAK_KINDS = new Set(['locality', 'house', 'other', 'street']);
 
