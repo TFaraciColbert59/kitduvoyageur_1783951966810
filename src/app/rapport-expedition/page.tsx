@@ -265,6 +265,7 @@ export default function RapportExpeditionPage() {
   const [selectedReport, setSelectedReport] = useState<PastReport | null>(null);
   const [reports, setReports] = useState<PastReport[]>([]);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [earnAwarded, setEarnAwarded] = useState<boolean | null>(null);
   const [loadingReports, setLoadingReports] = useState(false);
   const [userGear, setUserGear] = useState<GearItem[]>([]);
   const { response, isLoading, sendMessage } = useChat('gemini', 'gemini/gemini-2.5-flash');
@@ -366,6 +367,8 @@ export default function RapportExpeditionPage() {
       ? `${Math.ceil((new Date(form.endDate).getTime() - new Date(form.startDate).getTime()) / (1000 * 60 * 60 * 24))}j`
       : '?j';
 
+    setEarnAwarded(null);
+
     if (user) {
       try {
         // Ensure profile exists
@@ -405,13 +408,19 @@ export default function RapportExpeditionPage() {
               body: JSON.stringify({ reportId })
             });
 
-            const earnRes = await fetch('/api/loyalty/earn', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action: 'rapport_expedition', sourceId: reportId })
-            });
-            if (!earnRes.ok) {
-              console.error('Loyalty earn error:', await earnRes.json().catch(() => null));
+            try {
+              const earnRes = await fetch('/api/loyalty/earn', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'rapport_expedition', sourceId: reportId })
+              });
+              setEarnAwarded(earnRes.ok);
+              if (!earnRes.ok) {
+                console.error('Loyalty earn error:', await earnRes.json().catch(() => null));
+              }
+            } catch (err) {
+              console.error('Loyalty earn error:', err);
+              setEarnAwarded(false);
             }
           }
 
@@ -507,7 +516,9 @@ export default function RapportExpeditionPage() {
               {savedSuccess && (
                 <div className="mb-4 flex items-center gap-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-success)]/30 bg-[color:var(--lkv-success-bg)] px-4 py-3 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)]">
                   <Icon name="CheckCircleIcon" size={16} variant="outline" />
-                  Rapport créé avec succès ! +75 points fidélité gagnés.
+                  {earnAwarded === true
+                    ? 'Rapport créé avec succès ! +75 points fidélité gagnés.'
+                    : 'Rapport créé avec succès.'}
                 </div>
               )}
               <div className="flex items-center justify-between mb-5">
@@ -774,7 +785,9 @@ export default function RapportExpeditionPage() {
                 <Card variant="compact" role="status" aria-live="polite" className="mb-[var(--space-3)] flex items-center gap-[var(--space-2)] border-[color:var(--lkv-success)]/40 bg-[color:var(--lkv-success-bg)]">
                   <span className="text-[14px] text-[color:var(--lkv-success)]" aria-hidden="true">✓</span>
                   <p className="m-0 text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]">
-                    Rapport créé avec succès ! +75 points fidélité.
+                    {earnAwarded === true
+                      ? 'Rapport créé avec succès ! +75 points fidélité.'
+                      : 'Rapport créé avec succès.'}
                   </p>
                 </Card>
               )}
