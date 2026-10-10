@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { nearestAirportIn, type AirportPick, type AirportRow } from '../engine/airports';
 import { approachMode } from '../engine/autofill';
 import { trainTrip } from '../engine/rail';
+import { anchorFromOrigin } from '../engine/tripContext';
 import {
   ON_SITE_NOTE,
   SAME_AIRPORT_NOTE,
@@ -90,6 +91,16 @@ describe('d’où l’on part', () => {
     expect(abroadOf(null, null)).toBe(false);
   });
 
+  it('les codes pays se comparent sans tenir compte de la casse', () => {
+    const it = (countryCode: string | null) => travelOrigin({ name: 'Turin', lat: 45.07, lon: 7.69, countryCode }, null);
+    expect(abroadOf(it('it'), 'IT')).toBe(false);
+    expect(abroadOf(it('IT'), 'it')).toBe(false);
+    expect(abroadOf(it(' fr'), 'FR')).toBe(false);
+    expect(abroadOf(it('it'), 'FR')).toBe(true);
+    expect(abroadOf(it(null), 'IT')).toBeNull();
+    expect(abroadOf(it('it'), null)).toBe(false);
+  });
+
   it('dit au spécialiste : jamais un pays supposé', () => {
     expect(`Départ de la personne : ${originFact(null)}.`).toBe('Départ de la personne : inconnu.');
     expect(originFact(travelOrigin(null, PARIS_GPS))).toBe('Paris, France');
@@ -148,6 +159,19 @@ describe('le départ dit passe avant la position', () => {
     expect(leg.origin?.source).toBe('gps');
     expect(leg.transport).toMatchObject({ mode: 'voiture', departure: 'ta position' });
     expect(travelDigest(leg.transport)).toBe('120 km de route (depuis ta position)');
+  });
+
+  it('aventure préparée autour du départ dit (aucun lieu dit) : sur place, rien d’absurde n’est chiffré', async () => {
+    const said = { ...LYON, source: 'dit' as const };
+    const { anchor } = anchorFromOrigin(said, 'sejour');
+    const { d, calls, airportCalls } = deps({ km: 1, minutes: 1, end: null });
+    const leg = await planTravelLeg(
+      input({ origin: travelOrigin(said, null), target: anchor, destination: { name: anchor.name, countryCode: anchor.countryCode } }),
+      d
+    );
+    expect(leg).toMatchObject({ transport: null, carFuel: null, train: null, flight: null, abroad: false, originUnknown: false });
+    expect(leg.notes).toEqual([ON_SITE_NOTE]);
+    expect([calls, airportCalls]).toEqual([[], []]);
   });
 
   it('déjà sur place : rien à prévoir', async () => {

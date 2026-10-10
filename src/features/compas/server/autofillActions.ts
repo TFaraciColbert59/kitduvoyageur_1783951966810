@@ -55,7 +55,7 @@ import {
   type SourceShop,
   movesFromSteps,
 } from '../engine/autofill';
-import { originOf, shortHoursOf, tripLengthDays } from '../engine/tripContext';
+import { anchorFromOrigin, originOf, shortHoursOf, tripLengthDays } from '../engine/tripContext';
 import { compasMeta, readProfile, requireEditor, resplitSteps, tripBasis, tripPartySize, updateTripMetadata, type Supa } from './compasServer';
 import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
 import { bestPeriod, monthName, needsDryNormals } from '../engine/period';
@@ -938,6 +938,14 @@ export async function compasAutofillAction(
           notes.push(`« ${nat.name} » retenu pour ${anchor.name} (lieu naturel, adapté à l’activité).`);
       }
     }
+    // Aucun lieu dit mais un départ dit (« rando 3 jours depuis Lyon ») : la personne a
+    // nommé un endroit, l'aventure est préparée autour de lui, avant toute position.
+    const saidOrigin = originOf(compasMeta(meta).origin);
+    if (!anchor && saidOrigin) {
+      const around = anchorFromOrigin(saidOrigin, ctx.scope);
+      anchor = around.anchor;
+      if (around.note) notes.push(around.note);
+    }
     // Aucun lieu dit : on part de la position partagée (une sortie autour de
     // soi, ou un voyage « près de chez toi »), et on le dit.
     if (!anchor && from) {
@@ -1558,7 +1566,6 @@ export async function compasAutofillAction(
        à aéroport (`engine/travel.ts`). Sans point de départ, rien n'est chiffré. */
     const start = dayStep(1);
     const target = start?.latitude != null && start.longitude != null ? { lat: start.latitude, lon: start.longitude } : anchor;
-    const saidOrigin = originOf(compasMeta(meta).origin);
     // La commune, pas le lieu le plus proche du point (« depuis Chantier Hotel
     // de Ville » au lieu d'Annecy, 8 oct.) ; inutile quand le départ est dit.
     const near = !saidOrigin && from ? await lookupReverse(from.lat, from.lon) : null;

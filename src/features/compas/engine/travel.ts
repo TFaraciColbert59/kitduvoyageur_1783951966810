@@ -127,9 +127,12 @@ export function travelOrigin(
 
 /** À l'étranger ? Faux sans pays de destination ; inconnu sans pays de départ. */
 export function abroadOf(origin: TravelOrigin | null, destinationCountry: string | null): boolean | null {
-  if (!destinationCountry) return false;
-  if (!origin?.countryCode) return null;
-  return origin.countryCode !== destinationCountry;
+  // Codes pays comparés sans la casse ni les espaces (« it » et « IT » : le même pays).
+  const to = destinationCountry?.trim().toUpperCase();
+  if (!to) return false;
+  const from = origin?.countryCode?.trim().toUpperCase();
+  if (!from) return null;
+  return from !== to;
 }
 
 /**
