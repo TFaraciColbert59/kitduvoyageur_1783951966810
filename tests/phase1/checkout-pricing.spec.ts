@@ -223,6 +223,21 @@ describe('Phase 1 — tarification commandes côté serveur', () => {
       });
     });
 
+    it('refuse plus de 50 articles', () => {
+      const items = Array.from({ length: 51 }, (_, i) => ({ slug: `p-${i}`, quantity: 1 }));
+      expect(parseOrderBody({ ...validBody, items })).toEqual({
+        ok: false,
+        error: 'invalid_order',
+      });
+    });
+
+    it('accepte 50 articles (borne haute)', () => {
+      const items = Array.from({ length: 50 }, (_, i) => ({ slug: `p-${i}`, quantity: 1 }));
+      const result = parseOrderBody({ ...validBody, items });
+      expect(result.ok).toBe(true);
+      if (result.ok) expect(result.value.lines).toHaveLength(50);
+    });
+
     it('refuse un corps non objet', () => {
       expect(parseOrderBody(null)).toEqual({ ok: false, error: 'invalid_body' });
     });

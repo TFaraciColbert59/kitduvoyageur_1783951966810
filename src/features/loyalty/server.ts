@@ -1,7 +1,7 @@
 import 'server-only';
 import { getServiceSupabase } from '@/lib/ai/serviceClient';
 import type { OrderBody } from '@/features/checkout/serverPricing';
-import type { EarnInput, RedeemInput, RefundInput, SpendInput } from './validation';
+import { EARN_ACTIONS, type EarnInput, type RedeemInput, type RefundInput, type SpendInput } from './validation';
 
 /**
  * Phase 1 — écritures loyalty via RPC service_role uniquement.
@@ -36,22 +36,6 @@ const RPC_ERROR_STATUS: Record<string, number> = {
   service_indisponible: 503,
 };
 
-/** Échelle niveau legacy — miroir de `legacy_loyalty_level_for`. */
-const LEVEL_SCALE: Array<{ min: number; label: string }> = [
-  { min: 7500, label: 'Légende du Voyage' },
-  { min: 3500, label: 'Guide de Montagne' },
-  { min: 1500, label: 'Randonneur Expert' },
-  { min: 500, label: 'Aventurier' },
-  { min: 0, label: 'Explorateur' },
-];
-
-function levelForBalance(balance: number): string {
-  for (const step of LEVEL_SCALE) {
-    if (balance >= step.min) return step.label;
-  }
-  return 'Explorateur';
-}
-
 function errorStatus(code: string): number {
   if (code.startsWith('invalid_') || code === 'unknown_product') return 400;
   return RPC_ERROR_STATUS[code] ?? 500;
@@ -79,11 +63,45 @@ async function callLoyaltyRpc(
   const balance = typeof payload.balance === 'number' ? payload.balance : 0;
   const result: LoyaltyData = {
     balance,
-    // Le chemin idempotent de la RPC ne renvoie pas de niveau : dérivé du solde.
-    level: typeof payload.level === 'string' ? payload.level : levelForBalance(balance),
+    // Niveau DB autoritaire (y compris en rejeu idempotent) — jamais recalculé TS.
+    level: typeof payload.level === 'string' ? payload.level : '',
   };
   if (payload.idempotent === true) result.idempotent = true;
   return { ok: true, data: result };
+}
+
+/**
+ * Éligibilité d'un gain : la source doit exister côté serveur et appartenir à
+ * l'utilisateur. Fail-closed (service indisponible ou source introuvable).
+ * `input.sourceId` porte déjà le préfixe producteur ; l'id BRUT est vérifié.
+ */
+export async function verifyEarnEligibility(
+  userId: string,
+  input: Pick<EarnInput, 'action' | 'sourceId'>
+): Promise<boolean> {
+  if (input.action !== 'rapport_expedition') return false;
+
+  const { sourcePrefix } = EARN_ACTIONS.rapport_expedition;
+  const prefix = `${sourcePrefix}:`;
+  const rawId = input.sourceId.startsWith(prefix)
+    ? input.sourceId.slice(prefix.length)
+    : input.sourceId;
+
+  const service = getServiceSupabase();
+  if (!service) return false;
+
+  const { data, error } = await service
+    .from('kit_reports')
+    .select('id')
+    .eq('id', rawId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    console.warn('[loyalty/server] RPC verifyEarnEligibility en échec:', error.message);
+    return false;
+  }
+  return data !== null;
 }
 
 export function rpcSpend(

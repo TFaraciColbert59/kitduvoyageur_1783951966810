@@ -57,6 +57,25 @@ describe('Phase 1 — validation des corps loyalty (jamais de points client)', (
       });
     });
 
+    it('refuse points au-delà du plafond 1 000 000', () => {
+      expect(parseSpendBody({ points: 1_000_001, sourceId: 'cart_free_apply:x' })).toEqual({
+        ok: false,
+        error: 'invalid_points',
+      });
+    });
+
+    it('accepte la borne haute 1 000 000', () => {
+      expect(parseSpendBody({ points: 1_000_000, sourceId: 'cart_free_apply:x' })).toMatchObject({
+        ok: true,
+      });
+    });
+
+    it('refuse un entier non sûr', () => {
+      expect(
+        parseSpendBody({ points: Number.MAX_SAFE_INTEGER + 2, sourceId: 'cart_free_apply:x' })
+      ).toEqual({ ok: false, error: 'invalid_points' });
+    });
+
     it('refuse un sourceId sans le préfixe cart_free_apply:', () => {
       expect(parseSpendBody({ points: 10, sourceId: 'item-1' })).toEqual({
         ok: false,

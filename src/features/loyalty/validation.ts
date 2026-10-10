@@ -35,7 +35,12 @@ export function parseSpendBody(input: unknown): ParseResult<SpendInput> {
   const { points, sourceId } = input;
   const rawReason = input.reason;
 
-  if (typeof points !== 'number' || !Number.isInteger(points) || points <= 0) {
+  if (
+    typeof points !== 'number' ||
+    !Number.isSafeInteger(points) ||
+    points <= 0 ||
+    points > 1_000_000
+  ) {
     return { ok: false, error: 'invalid_points' };
   }
 
