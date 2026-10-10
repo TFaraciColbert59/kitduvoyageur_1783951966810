@@ -442,6 +442,21 @@ const LOWER_ORIGIN = new RegExp(
 
 const LOWER_STOP_FIRST = new RegExp(`^(?:${LOWER_ORIGIN_STOP.join('|')})$`);
 
+/** Un mot qui ne peut pas faire partie d'un nom de lieu de départ tapé en minuscules. */
+function notNameWord(word: string): boolean {
+  return (
+    NOT_ORIGIN.test(word) ||
+    LOWER_STOP_FIRST.test(word) ||
+    WEEKDAYS.includes(word) ||
+    COMMON_PLACE_WORDS.test(word) ||
+    toNumber(word) != null ||
+    notAPlace(word)
+  );
+}
+
+/** Mots qui relient les parties d'un nom propre (« Saint-Jean-de-Luz », « Aix-les-Bains », « Boulogne-sur-Mer »). */
+const NAME_LINKS = new Set(['de', 'du', 'des', 'le', 'la', 'les', 'sur', 'en', 'sous', 'lez', "d'", "l'"]);
+
 /**
  * « Bourg en Bresse », « La Roche sur Yon », « Neuilly sur Seine » : « en » ou « sur »
  * suivi d'un nom propre peut faire partie du nom du départ, ou ouvrir une autre idée
@@ -451,42 +466,47 @@ const LOWER_STOP_FIRST = new RegExp(`^(?:${LOWER_ORIGIN_STOP.join('|')})$`);
  * `end` est la fin du nom court dans `src` ; `plain` est `src` normalisé, aux mêmes positions ;
  * `lead` est l'article tombé devant le nom court (« la », « l' »), s'il y en a un.
  */
-function linkedName(
-  src: string,
-  plain: string,
-  end: number,
-  place: string,
-  lower: boolean,
-  lead: string
-): string | undefined {
+function linkedName(src: string, plain: string, end: number, place: string, lead: string): string | undefined {
   const link = /^\s+(en|sur)\s+/.exec(plain.slice(end, end + 12));
   if (!link) return undefined;
   // « sur la Sorgue », « sur l'Isère » : l'article fait partie du bout du nom.
   const article = /^(?:(?:la|le|les)\s+|l['’])/.exec(plain.slice(end + link[0].length, end + link[0].length + 6))?.[0] ?? '';
   const from = end + link[0].length + article.length;
-  let tail: string;
-  if (lower) {
-    const low = LOWER_ORIGIN.exec(plain.slice(from, from + 60));
-    const words = low ? low[1].trim() : '';
-    const first = words.split(/\s/)[0];
-    if (
-      !words ||
-      NOT_ORIGIN.test(first) ||
-      LOWER_STOP_FIRST.test(first) ||
-      WEEKDAYS.includes(first) ||
-      COMMON_PLACE_WORDS.test(first) ||
-      toNumber(first) != null ||
-      notAPlace(words)
-    )
-      return undefined;
-    tail = src.slice(from - article.length, from + words.length);
-  } else {
-    const named = /^\p{Lu}[\p{L}'’]*(?:[\s-]\p{Lu}[\p{L}'’]*)*/u.exec(src.slice(from, from + 60));
-    if (!named || notAPlace(named[0])) return undefined;
-    tail = src.slice(from - article.length, from) + named[0];
-  }
+  const named = /^\p{Lu}[\p{L}'’]*(?:[\s-]\p{Lu}[\p{L}'’]*)*/u.exec(src.slice(from, from + 60));
+  if (!named || notAPlace(named[0])) return undefined;
+  const tail = src.slice(from - article.length, from) + named[0];
   // L'article tombé devant le nom court en fait partie (« la roche sur yon » → « La Roche sur yon »).
   const longer = capitalized(`${lead}${place} ${link[1]} ${tail}`);
+  return longer.length <= 80 ? longer : undefined;
+}
+
+/**
+ * Phrase sans majuscule : le lecteur s'arrête à deux mots et à tout connecteur, donc
+ * « saint jean de luz » se lit « Saint Jean », « aix les bains » « Aix ». Le nom prolongé
+ * par ses connecteurs (de, du, des, le, la, les, sur, en, sous, lez) et les mots qui les
+ * suivent est proposé comme nom long, jusqu'au premier mot qui n'est pas un bout de nom
+ * (un moment, un transport, un nom commun, un mot de la suite de la phrase). La carte tranche.
+ */
+function lowerLinkedName(src: string, plain: string, end: number, place: string, lead: string): string | undefined {
+  let pos = end;
+  let lastName = end;
+  for (let i = 0; i < 6; i += 1) {
+    const m = /^\s+([a-z][a-z'-]*)/.exec(plain.slice(pos, pos + 30));
+    if (!m) break;
+    const word = m[1];
+    const link = word.startsWith("d'") || word.startsWith("l'") ? word.slice(0, 2) : word;
+    if (NAME_LINKS.has(link) && link === word) {
+      pos += m[0].length;
+      continue;
+    }
+    // « d'olonne » : le bout du nom est ce qui suit l'apostrophe.
+    const core = word.includes("'") ? word.slice(word.lastIndexOf("'") + 1) : word;
+    if (core.length < 2 || notNameWord(core)) break;
+    pos += m[0].length;
+    lastName = pos;
+  }
+  if (lastName === end) return undefined;
+  const longer = capitalized(`${lead}${place}${src.slice(end, lastName)}`);
   return longer.length <= 80 ? longer : undefined;
 }
 
@@ -522,7 +542,7 @@ function readOrigin(
       );
       if (place.length >= 2 && !notAPlace(place)) {
         const end = at + place.length;
-        const longer = linkedName(src, plain, end, place, false, dropped);
+        const longer = linkedName(src, plain, end, place, dropped);
         return { place, ...(longer ? { longer } : {}), start: at, end };
       }
       continue;
@@ -545,7 +565,7 @@ function readOrigin(
     )
       continue;
     const place = words.split(/\s/).map(capitalized).join(' ');
-    const longer = linkedName(src, plain, from + words.length, place, true, dropped);
+    const longer = lowerLinkedName(src, plain, from + words.length, place, dropped);
     return { place, ...(longer ? { longer } : {}), start: from, end: from + words.length };
   }
   return null;

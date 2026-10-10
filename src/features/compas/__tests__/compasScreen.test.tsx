@@ -788,6 +788,29 @@ describe('CompasScreen', () => {
     expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1);
   });
 
+  describe('Préremplissage d’une demande qui ne dit qu’un départ', () => {
+    /** « rando 3 jours depuis Lyon » appliquée depuis le tiroir : ni lieu, ni étape, ni dates, trois jours prévus. */
+    const onlyOrigin = (originSaid: CompasData['originSaid']): CompasData => ({
+      ...makeData({ trip: { ...baseTrip, destinationName: null, startDate: null, endDate: null }, steps: [] }),
+      autofill: 'none',
+      origin: null,
+      itinerary: [],
+      plannedDays: 3,
+      originSaid,
+    });
+
+    it('le départ dit suffit à lancer la préparation autour de lui', async () => {
+      render(<CompasScreen data={onlyOrigin({ name: 'Lyon', lat: 45.76, lon: 4.83, countryCode: 'FR' })} />);
+      await waitFor(() => expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1));
+    });
+
+    it('sans départ dit ni lieu ni préparation en cours, rien ne part tout seul', async () => {
+      render(<CompasScreen data={onlyOrigin(null)} />);
+      await new Promise((r) => setTimeout(r, 50));
+      expect(autofill.compasAutofillAction).not.toHaveBeenCalled();
+    });
+  });
+
   it('Préremplissage sans point de départ : le trajet est dit non chiffré', async () => {
     autofill.compasAutofillAction.mockImplementationOnce(async () => ({
       success: true,

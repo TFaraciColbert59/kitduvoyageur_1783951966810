@@ -504,10 +504,11 @@ export function CompasScreen({
   useEffect(() => {
     if (data.autofill !== 'none' || !data.canEdit) return;
     if (!(model.dates.start || data.plannedDays)) return;
-    // Sans lieu dit, seule une demande en cours de préparation part quand même :
-    // le serveur prend alors la position partagée (« près de chez toi »).
+    // Sans lieu dit, seule une demande en cours de préparation ou un départ dit part quand
+    // même : le serveur prépare alors autour du départ dit, sinon de la position partagée
+    // (« près de chez toi »).
     if (
-      !(model.destination || data.anchorName || data.itinerary.length || data.origin) &&
+      !(model.destination || data.anchorName || data.itinerary.length || data.origin || data.originSaid) &&
       data.context?.scope !== 'sortie' &&
       !prepRef.current
     )

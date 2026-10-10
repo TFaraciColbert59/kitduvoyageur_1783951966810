@@ -480,6 +480,38 @@ describe('« depuis Bourg en Bresse » : « en » et « sur » peuvent faire par
     expect(origin('depuis aix en provence')).toMatchObject({ place: 'Aix', longer: 'Aix en provence' });
   });
 
+  it('minuscules : un nom à connecteur est proposé en entier (« saint jean de luz », « aix les bains »)', () => {
+    expect(origin('depuis saint jean de luz')).toEqual({
+      type: 'set_origin',
+      place: 'Saint Jean',
+      longer: 'Saint Jean de luz',
+    });
+    expect(origin('rando depuis aix les bains pour 3 jours')).toEqual({
+      type: 'set_origin',
+      place: 'Aix',
+      longer: 'Aix les bains',
+    });
+    expect(origin('depuis mont de marsan vendredi')).toEqual({
+      type: 'set_origin',
+      place: 'Mont',
+      longer: 'Mont de marsan',
+    });
+    expect(origin("depuis l'isle sur la sorgue")).toMatchObject({ place: 'Isle', longer: "L'Isle sur la sorgue" });
+  });
+
+  it.each([
+    'depuis lyon le matin',
+    'depuis paris le weekend',
+    'depuis grenoble de nuit',
+    'depuis lyon la semaine prochaine',
+    'depuis lyon de bon matin',
+    'depuis lyon le vendredi',
+    'depuis lyon de temps en temps',
+    'depuis lyon pour 3 jours',
+  ])('minuscules : « %s » n’étend pas le nom (un moment n’est pas un bout de nom)', (text) => {
+    expect(origin(text)).not.toHaveProperty('longer');
+  });
+
   it('l’article tombé devant le nom court revient dans le nom long (« la roche sur yon »)', () => {
     expect(origin('rando depuis la roche sur yon')).toEqual({
       type: 'set_origin',
