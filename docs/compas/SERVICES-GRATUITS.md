@@ -20,7 +20,7 @@
 | Routage | ~~OSRM démo, FOSSGIS OSRM, BRouter~~ (retirés le 8 oct.) ; Geoapify, Valhalla | OSRM démo **Non** (vérifié) ; BRouter **?** | **Fait (lot D)** : cache → Geoapify Routing → Valhalla FOSSGIS (identifié) → estimation annoncée |
 | Overpass | 5 serveurs en course | overpass-api.de **Non** pour une application ; private.coffee **Oui** *(extrait)* | private.coffee seul, en série |
 | Géocodage | Photon, Nominatim, Geoapify | Nominatim **Non** pour le trafic d'une application ; Photon **?** | Référentiel local → Geoapify → LocationIQ → Photon (faible volume) |
-| Papiers par passeport | Règles internes | Jeux « Passport Index » **Non** (recherche académique seulement, même republiés sous MIT) | travelrequirements.info (CC BY 4.0) |
+| Papiers par passeport | travelrequirements.info v1.3.0 (table versionnée, côté serveur) ; règles internes en repli | Jeux « Passport Index » **Non** (recherche académique seulement, même republiés sous MIT) | **Fait (lot T)** : travelrequirements.info (CC BY 4.0), `scripts/compas/build-entry-requirements.mjs` ; crédit dans les mentions légales |
 
 ## Services retenus
 
@@ -37,7 +37,7 @@
 | **NASA POWER** (tendance) | aucune | Oui (« no restrictions ») | Citation demandée | [referencing](https://power.larc.nasa.gov/docs/referencing/) |
 | **Frankfurter** (change) | sans clé ni quota ; 223 devises | Oui (code MIT ; conditions de chaque banque centrale) | BCE : « Source: ECB statistics. » | [frankfurter.dev](https://frankfurter.dev/), [BCE](https://www.ecb.europa.eu/stats/ecb_statistics/governance_and_quality_framework/html/usage_policy.en.html) |
 | fawazahmed0 currency-api (secours) | sans limite ; 200+ devises | Oui (CC0) | Aucune ; prévoir l'URL de secours | [dépôt](https://github.com/fawazahmed0/exchange-api) |
-| **travelrequirements.info** (papiers) | jeu v1.3.0, 199 destinations | Oui (CC BY 4.0) | Crédit exact donné par l'éditeur | [data](https://travelrequirements.info/en/data/) |
+| **travelrequirements.info** (papiers) | jeu v1.3.0, 199 destinations × 199 passeports (39 601 lignes, versionnées dans `src/features/compas/data/entryRequirements.json`) | Oui (CC BY 4.0) | Crédit exact donné par l'éditeur, affiché dans les mentions légales : « TravelRequirements.info — Entry Requirements Dataset v1.3.0, AXG Sp. z o.o., https://travelrequirements.info/data/ (CC BY 4.0) » | [data](https://travelrequirements.info/en/data/) |
 | **OurAirports** (aéroports) | 86 216 aéroports | Oui (domaine public) | Aucune | [data](https://ourairports.com/data/) |
 | **GeoNames** (lieux habités) | cities500 : ≈ 185 000 lieux | Oui (CC BY 4.0) | Lien vers GeoNames | [export](https://www.geonames.org/export/) |
 | **OpenStreetMap** (données) | — | Oui (ODbL) | « © OpenStreetMap contributors » + lien ; **une base dérivée servie au public doit rester sous ODbL** | [copyright](https://www.openstreetmap.org/copyright) |
