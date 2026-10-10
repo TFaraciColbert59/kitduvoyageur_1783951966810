@@ -8,13 +8,16 @@ import {
 } from './autofill';
 import { distanceKm } from './places';
 import { trainTrip, type TrainTrip } from './rail';
+import type { TravellerContext } from './traveller';
 
 /**
  * Compas — venir jusqu'au départ (« 5. Venir », PLAN-100 4.3 et 4.4).
  *
- * D'où l'on part : le lieu dit (« depuis Lyon »), sinon la position de
- * l'appareil ; sinon personne ne le sait et rien n'est chiffré, l'écran le
- * dit. Jamais la France ni Paris par défaut. Puis la route mesurée si elle
+ * D'où l'on part : le lieu dit (« depuis Lyon »), sinon le domicile du profil
+ * voyageur, sinon la position de l'appareil ; sinon personne ne le sait et rien
+ * n'est chiffré, l'écran le dit. Jamais la France ni Paris par défaut. Le nom du
+ * domicile ne quitte jamais ce module : « ton domicile » dans ce qui est rangé
+ * sur le voyage (partagé), rien pour l'IA. Puis la route mesurée si elle
  * tient dans la durée du voyage, le train si le rail s'y prête, sinon l'avion
  * d'aéroport à aéroport (OurAirports).
  *
@@ -32,8 +35,8 @@ export interface TravelOrigin extends TravelPoint {
   name: string | null;
   country: string | null;
   countryCode: string | null;
-  /** « dit » (« depuis Lyon ») ou position de l'appareil. */
-  source: 'dit' | 'gps';
+  /** « dit » (« depuis Lyon »), domicile du profil voyageur, ou position de l'appareil. */
+  source: 'dit' | 'domicile' | 'gps';
 }
 
 /** Le trajet tel que le résumé de la préparation le montre. */
@@ -112,14 +115,34 @@ export const SAME_AIRPORT_NOTE =
   'Trajet d’approche à vérifier : aéroport identique au départ et à l’arrivée, route longue ou non calculée.';
 /** Le départ quand il vient de l'appareil. */
 const GPS_DEPARTURE = 'ta position';
+/** Le départ quand il vient du profil : jamais le nom du domicile sur le voyage, qui se partage. */
+const HOME_DEPARTURE = 'ton domicile';
+/** Dit une fois quand le trajet part du domicile du profil. */
+export const HOME_ORIGIN_NOTE =
+  'Trajet chiffré depuis ton domicile (ton profil voyageur) : écris « depuis Lyon » dans ta demande pour partir d’ailleurs.';
 
-/** Départ dit (`metadata.compas.origin`) d'abord, puis la position de l'appareil, sinon aucun. */
+/**
+ * Le domicile du profil ne sert au trajet que si le départ n'est pas dit et que
+ * l'aventure n'est pas préparée « près de chez toi » (ancre = position partagée) :
+ * sinon le trajet irait du domicile à l'endroit où la personne se trouve déjà.
+ */
+export function homeForLeg<T>(said: unknown, anchoredOnPosition: boolean, home: T | null): T | null {
+  return said || anchoredOnPosition ? null : home;
+}
+
+/**
+ * D'où l'on part : le départ dit (`metadata.compas.origin`), puis le domicile du
+ * profil voyageur (déjà arrondi à 0,01°), puis la position de l'appareil ; sinon aucun.
+ */
 export function travelOrigin(
   said: { name: string; lat: number; lon: number; countryCode: string | null } | null,
-  gps: (TravelPoint & { name: string | null; country: string | null; countryCode: string | null }) | null
+  gps: (TravelPoint & { name: string | null; country: string | null; countryCode: string | null }) | null,
+  home: { name: string; lat: number; lon: number; countryCode: string | null } | null = null
 ): TravelOrigin | null {
   if (said)
     return { name: said.name, country: null, countryCode: said.countryCode, lat: said.lat, lon: said.lon, source: 'dit' };
+  if (home)
+    return { name: home.name, country: null, countryCode: home.countryCode, lat: home.lat, lon: home.lon, source: 'domicile' };
   if (gps)
     return { name: gps.name, country: gps.country, countryCode: gps.countryCode, lat: gps.lat, lon: gps.lon, source: 'gps' };
   return null;
@@ -136,23 +159,31 @@ export function abroadOf(origin: TravelOrigin | null, destinationCountry: string
 }
 
 /**
- * Ce que « à l'étranger » change au budget : les formalités d'entrée (barème pour
- * un voyageur français) restent tant qu'on n'est pas SÛR d'être déjà dans le pays
- * (départ inconnu compris) ; l'assurance voyage n'est ajoutée que si on sait.
+ * Ce que « à l'étranger » change au budget. Les formalités d'entrée sont un barème
+ * pour un ressortissant français (`entryFees`) : chiffrées seulement pour une
+ * nationalité française connue (sinon rien d'affirmé, PLAN-100 4.1), et tant qu'on
+ * n'est pas SÛR d'être déjà dans le pays (départ inconnu compris). L'assurance
+ * voyage n'est ajoutée que si on sait que le voyage passe une frontière.
  */
-export function abroadCosts(abroad: boolean | null): { formalities: boolean; insurance: boolean } {
-  return { formalities: abroad !== false, insurance: abroad === true };
+export function abroadCosts(
+  abroad: boolean | null,
+  traveller: Pick<TravellerContext, 'nationality'>
+): { formalities: boolean; insurance: boolean } {
+  return { formalities: abroad !== false && traveller.nationality === 'FR', insurance: abroad === true };
 }
 
 /** Le départ tel que dit au spécialiste (IA) : jamais un pays supposé. */
 export function originFact(origin: TravelOrigin | null): string {
   if (!origin) return 'inconnu';
+  // Le domicile ne part jamais en clair vers l'IA (PLAN-100 4.1) : seul « à l'étranger » est dit à côté.
+  if (origin.source === 'domicile') return 'domicile de la personne (ville non transmise)';
   if (!origin.name) return 'position partagée, commune inconnue';
   return `${origin.name}${origin.country ? `, ${origin.country}` : ''}`;
 }
 
-/** D'où le trajet est chiffré, pour l'écran : le lieu dit, sinon « ta position ». */
+/** D'où le trajet est chiffré, pour l'écran : le lieu dit, « ton domicile », sinon « ta position ». */
 function departureOf(origin: TravelOrigin): string {
+  if (origin.source === 'domicile') return HOME_DEPARTURE;
   return origin.source === 'dit' && origin.name ? origin.name : GPS_DEPARTURE;
 }
 
@@ -213,6 +244,8 @@ export function dayTripNote(days: number, minutesOneWay: number | null): string 
  */
 export async function planTravelLeg(input: TravelLegInput, deps: TravelDeps): Promise<TravelLeg> {
   const leg = await chooseLeg(input, deps);
+  // Départ pris au profil : dit une fois, sans le nom du domicile.
+  if (input.origin?.source === 'domicile' && leg.transport) leg.notes.push(HOME_ORIGIN_NOTE);
   // Temps connu : route mesurée ou estimée, train ; un vol n'a pas de durée connue.
   const minutes = leg.transport && leg.transport.mode !== 'avion' ? leg.transport.minutes : null;
   const note = dayTripNote(input.days, minutes);

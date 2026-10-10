@@ -80,7 +80,7 @@ résiduel (supprimé, cascades vérifiées).
 | Sauvegarde + restauration + rollback (local) | `npm run ops:backup-restore` | `A14_BACKUP_RESULT ... "ok": true`, base `a14_restore_test` supprimée |
 | Coupure d'une fonctionnalité | `UPDATE feature_flags SET enabled=false WHERE id=...` | route 503 (A12_RUNBOOKS §1-2) |
 | Rollback flags vérifié sur base réelle | `A14_LOCAL_INTEGRATION=1 npx vitest run tests/ops/a14-flag-rollback.integration.spec.ts` | 6 tests verts, flags OFF |
-| Export RGPD | `GET /api/account/export` (session requise) | JSON `a14-v1` téléchargeable |
+| Export RGPD | `GET /api/account/export` (session requise) | JSON `a14-v2` téléchargeable |
 | Suppression RGPD | `DELETE /api/account/delete` + confirmation exacte | 200 + résidus 0 ; 400/500 sinon |
 | Incident RGPD | A12_RUNBOOKS §7 | gel flags, évaluation, CNIL < 72 h si fuite |
 

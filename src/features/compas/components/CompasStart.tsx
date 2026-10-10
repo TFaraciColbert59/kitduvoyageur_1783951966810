@@ -13,6 +13,7 @@ import { activityLabel } from '../engine/format';
 import { browserToday } from '../engine/zone';
 import { compasCreateTripAction } from '../server/compasActions';
 import { ACTIVITY_FIRST, ACTIVITY_META, ACTIVITY_ORDER } from './CompasOuFlows';
+import TravellerCard from '@/components/identity/TravellerCard';
 
 const LINE_ICON: Record<RequestLine['key'], string> = {
   activite: 'compass',
@@ -34,10 +35,13 @@ const LINE_ICON: Record<RequestLine['key'], string> = {
 export function CompasStart({
   signedIn,
   invitations = [],
+  askTraveller = false,
 }: {
   signedIn: boolean;
   /** Invitations reçues : on peut rejoindre un voyage au lieu d'en créer un. */
   invitations?: TripInvitationView[];
+  /** Profil voyageur jamais demandé (compte réel) : la question est posée une fois, « Passer » visible. */
+  askTraveller?: boolean;
 }) {
   const router = useRouter();
   const [text, setText] = useState('');
@@ -254,6 +258,8 @@ export function CompasStart({
             </p>
           )}
         </section>
+
+        {askTraveller && <TravellerCard mode="collect" className="cp-card cp-sheet-glass" />}
       </div>
 
       <section className="cp-map" aria-label="Carte du parcours">

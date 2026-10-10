@@ -57,7 +57,11 @@ const FR = {
   carRentalPerDay: 45,
 } as const;
 
-/** Formalités d'entrée connues pour un voyageur français (€ par personne, hors permis locaux). */
+/**
+ * Formalités d'entrée connues pour un ressortissant français (€ par personne, hors
+ * permis locaux). Jamais appliquées à une autre nationalité ni sans nationalité
+ * connue (`abroadCosts`, `travelPapers`) : la table passeport × destination est le lot Q.
+ */
 const ENTRY_FEES: Record<string, { eur: number; detail: string }> = {
   NP: { eur: 45, detail: 'visa népalais (30 jours) + permis de trek TIMS' },
   VN: { eur: 25, detail: 'e-visa vietnamien' },
@@ -163,7 +167,7 @@ export function flightRoundTrip(km: number): { eur: number; basis: string } {
   return { eur: band[1], basis: `barème Compas ${COSTS_VERSION} · vol aller-retour, ${band[2]}` };
 }
 
-/** Formalités d'entrée connues (visa, autorisation, permis principal), sinon null. */
+/** Formalités d'entrée connues d'un ressortissant français (visa, autorisation, permis principal), sinon null. */
 export function entryFees(countryCode: string | null | undefined): { eur: number; detail: string } | null {
   const hit = ENTRY_FEES[(countryCode ?? '').toUpperCase()];
   return hit && hit.eur > 0 ? hit : null;
