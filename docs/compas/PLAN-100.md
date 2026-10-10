@@ -755,7 +755,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 5.2 Accessibilité (WCAG 2.2 AA)
 
-- [ ] Focus piégé dans les tiroirs et rendu à l'élément d'origine.
+- [x] Focus piégé dans les tiroirs et rendu à l'élément d'origine. Lot Q
+      (`components/focusTrap.ts`, `CompasSheet.tsx`, `__tests__/a11yFocus.test.tsx`) :
+      Tab et Maj+Tab bouclent dans le tiroir (le « Annuler » de l'îlot reste atteignable),
+      Échap ferme, le focus revient au déclencheur, y compris après deux tiroirs empilés,
+      sans voler un focus que la page a posé ailleurs.
 - [ ] `KitRow` : plus de bouton dans un bouton ; Espace géré.
 - [ ] Calendrier des conditions : qualité dite en texte, pas seulement en couleur.
 - [ ] Pastilles d'alerte des étapes annoncées au lecteur d'écran.
