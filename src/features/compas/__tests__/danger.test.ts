@@ -200,7 +200,13 @@ describe('assessDanger — état des alertes officielles', () => {
     expect(avec('pas_encore_publiees')).toBe(
       'Non vérifié : alertes officielles (publiées la veille du départ).'
     );
-    expect(avec('hors_france')).toBe('Non vérifié : alertes officielles (hors France, non couvertes).');
+    expect(avec('non_couvert')).toBe('Non vérifié : alertes officielles (pays non couvert par Meteoalarm).');
+    expect(avec('zone_non_rapprochee')).toBe(
+      'Non vérifié : alertes officielles (zone de l’étape non reconnue dans le flux Meteoalarm).'
+    );
+    expect(avec('partielles')).toBe(
+      'Non vérifié : alertes officielles (zone reconnue en partie : d’autres alertes peuvent exister).'
+    );
     expect(avec('indisponibles')).toBe('Non vérifié : alertes officielles.');
     expect(avec(undefined)).toBe('Non vérifié : alertes officielles.');
   });
@@ -224,6 +230,8 @@ describe('assessDanger — alerte officielle mise à jour depuis', () => {
           sent: '2026-09-30T14:04:23.000Z',
           updatedSince: '2026-09-30T20:05:48.000Z',
           fetchedAt: '2026-10-01T18:00:00.000Z',
+          // Le flux de Météo-France donne sa propre page (`web`) : c'est là qu'on renvoie.
+          web: 'https://vigilance.meteofrance.fr/',
         },
       ],
     });
@@ -231,6 +239,40 @@ describe('assessDanger — alerte officielle mise à jour depuis', () => {
     expect(s?.severity).toBe('info');
     expect(s?.label).toContain('à vérifier sur vigilance.meteofrance.fr');
     expect(s?.asOf).toBe('2026-09-30T14:04:23.000Z');
+  });
+
+  const mise = (extra: Partial<OfficialAlert>): OfficialAlert => ({
+    id: 'm',
+    source: 'Servizio Meteorologico dell’Aeronautica Militare (MeteoAM) via Meteoalarm',
+    hazard: 'vent violent',
+    level: 'rouge',
+    area: 'Sardegna',
+    onset: null,
+    expires: null,
+    sent: '2026-10-10T16:00:00.000Z',
+    updatedSince: '2026-10-10T18:00:00.000Z',
+    fetchedAt: '2026-10-11T05:00:00.000Z',
+    ...extra,
+  });
+  const labelOf = (a: OfficialAlert) =>
+    assessDanger({
+      dayPlans: [plan()],
+      forecasts: [{ day: 1, date: '2026-10-12', forecast: forecast() }],
+      alertsStatus: 'partielles',
+      alerts: [a],
+    }).signals.find((x) => x.id === 'alert-m')?.label;
+
+  it('hors France : on renvoie à Meteoalarm sans page du service, jamais vers un site de Météo-France', () => {
+    expect(labelOf(mise({}))).toContain('à vérifier sur meteoalarm.org');
+    expect(labelOf(mise({}))).not.toContain('meteofrance');
+    expect(labelOf(mise({ web: 'javascript:alert(1)' }))).toContain('à vérifier sur meteoalarm.org');
+    expect(labelOf(mise({ web: 'https://www.meteoam.it/it/avvisi' }))).toContain('à vérifier sur meteoam.it');
+  });
+
+  it('le texte officiel du service accompagne la mise en forme, tel quel', () => {
+    const label = labelOf(mise({ headline: 'Allerta Rossa Vento per Italia - Sardegna' }));
+    expect(label).toContain('texte officiel : « Allerta Rossa Vento per Italia - Sardegna »');
+    expect(labelOf(mise({}))).not.toContain('texte officiel');
   });
 });
 

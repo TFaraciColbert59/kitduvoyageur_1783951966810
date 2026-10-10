@@ -532,6 +532,7 @@ export async function getCompasData(): Promise<CompasData | null> {
       point: origin,
       from: trip.start_date ?? null,
       to: trip.end_date ?? trip.start_date ?? null,
+      timeZone: zone,
     }),
     // Le tracé ne dépend pas de la météo : le brouillon suffit.
     getRouteElevation(draft.route.coords),
@@ -566,7 +567,7 @@ export async function getCompasData(): Promise<CompasData | null> {
       date: d.date,
       forecast: d.forecast,
     })),
-    // France : Météo-France via Meteoalarm ; ailleurs, l'axe le dit.
+    // Europe : services nationaux via Meteoalarm ; ailleurs ou zone non reconnue, l'axe le dit.
     alerts: officialAlerts.alerts,
     alertsStatus: officialAlerts.status,
   });

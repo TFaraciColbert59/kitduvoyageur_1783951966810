@@ -39,6 +39,14 @@ export interface OfficialAlert {
   updatedSince?: string | null;
   /** Instant de lecture du flux (ISO). */
   fetchedAt: string;
+  /**
+   * Texte officiel de l'alerte, tel que le service national l'a publié (langue
+   * du flux, jamais reformulé). Meteoalarm exige qu'une alerte mise en forme
+   * soit redonnée avec l'information officielle (conditions d'usage, § 5).
+   */
+  headline?: string | null;
+  /** Page du service national pour cette alerte (`web` du flux). */
+  web?: string | null;
 }
 
 export interface DangerSignal {
@@ -89,8 +97,10 @@ const THUNDER_CODES = new Set([95, 96, 99]);
 /** Ce qu'un « RAS » conjoncturel ne couvre pas, selon l'état des alertes officielles. */
 const ALERTS_GAP: Record<AlertsStatus, string | null> = {
   lues: null,
+  partielles: 'alertes officielles (zone reconnue en partie : d’autres alertes peuvent exister)',
   pas_encore_publiees: 'alertes officielles (publiées la veille du départ)',
-  hors_france: 'alertes officielles (hors France, non couvertes)',
+  non_couvert: 'alertes officielles (pays non couvert par Meteoalarm)',
+  zone_non_rapprochee: 'alertes officielles (zone de l’étape non reconnue dans le flux Meteoalarm)',
   indisponibles: 'alertes officielles',
 };
 
@@ -99,6 +109,17 @@ const ALERT_SEVERITY: Record<OfficialAlert['level'], DangerSeverity> = {
   orange: 'warn',
   rouge: 'block',
 };
+
+/** Où vérifier une alerte : le site du service national si le flux le donne, sinon Meteoalarm. */
+function checkHost(a: OfficialAlert): string {
+  try {
+    const url = new URL(a.web ?? '');
+    if (url.protocol === 'https:' || url.protocol === 'http:') return url.hostname.replace(/^www\./, '');
+  } catch {
+    /* adresse absente ou illisible */
+  }
+  return 'meteoalarm.org';
+}
 
 const hhmm = (min: number) => `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')}`;
 
@@ -243,8 +264,8 @@ export function assessDanger(input: {
       axis: 'conjoncturel',
       severity: a.updatedSince ? 'info' : ALERT_SEVERITY[a.level],
       label: `Vigilance ${a.level} · ${a.hazard} (${a.area})${
-        a.updatedSince ? ' — mise à jour depuis, à vérifier sur vigilance.meteofrance.fr' : ''
-      }`,
+        a.updatedSince ? ` — mise à jour depuis, à vérifier sur ${checkHost(a)}` : ''
+      }${a.headline ? ` — texte officiel : « ${a.headline} »` : ''}`,
       source: a.source,
       asOf: a.sent ?? a.fetchedAt,
     });
