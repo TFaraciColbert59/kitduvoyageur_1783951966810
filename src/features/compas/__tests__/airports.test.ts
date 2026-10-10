@@ -5,9 +5,9 @@ import { nearestAirportIn, type AirportRow } from '../engine/airports';
 import { nearestAirport } from '../server/airports';
 import AIRPORTS from '../data/airports.json';
 import META from '../data/airports.meta.json';
-import { buildAirports } from '../../../../scripts/compas/build-airports.mjs';
+import { buildAirports, parseCsvLine } from '../../../../scripts/compas/build-airports.mjs';
 
-/** Lignes réelles d'OurAirports (coordonnées et catégories du fichier du 9 oct. 2026). */
+/** Lignes réelles d'OurAirports, telles que dans le fichier versionné (un test le vérifie). */
 const ROWS: AirportRow[] = [
   ['AHO', 'Alghero-Fertilia Airport', 40.632, 8.291, 'IT', 'M'],
   ['CAG', 'Cagliari Elmas Airport', 39.251, 9.054, 'IT', 'L'],
@@ -15,6 +15,25 @@ const ROWS: AirportRow[] = [
   ['GVA', 'Geneva International Airport', 46.238, 6.109, 'CH', 'L'],
   ['LYS', 'Lyon Saint-Exupéry Airport', 45.726, 5.09, 'FR', 'L'],
   ['OLB', 'Olbia Costa Smeralda Airport', 40.899, 9.518, 'IT', 'L'],
+];
+
+/** Autres lignes réelles, pour les frontières : Corse, Suisse, Italie du nord. */
+const BORDER_EXTRA: AirportRow[] = [
+  ['BRN', 'Bern Airport', 46.913, 7.499, 'CH', 'M'],
+  ['FSC', 'Figari Sud-Corse Airport', 41.502, 9.097, 'FR', 'L'],
+  ['LUG', 'Lugano Airport', 46.004, 8.911, 'CH', 'M'],
+  ['MXP', 'Milan Malpensa International Airport', 45.631, 8.728, 'IT', 'L'],
+  ['TRN', 'Turin Airport', 45.201, 7.65, 'IT', 'L'],
+  ['ZRH', 'Zürich Airport', 47.458, 8.548, 'CH', 'L'],
+];
+/** Les six lignes plus celles-ci, triées par code comme le fichier. */
+const BORDER_ROWS: AirportRow[] = [...ROWS, ...BORDER_EXTRA].sort((a, b) => (a[0] < b[0] ? -1 : 1));
+
+/** Fidji, de part et d'autre de l'antiméridien (180°). */
+const FIJI: AirportRow[] = [
+  ['LBS', 'Labasa Airport', -16.467, 179.34, 'FJ', 'M'],
+  ['NAN', 'Nadi International Airport', -17.762, 177.438, 'FJ', 'L'],
+  ['SUV', 'Nausori International Airport', -18.044, 178.561, 'FJ', 'L'],
 ];
 
 describe('aéroport d’un lieu (choix pur)', () => {
@@ -29,9 +48,10 @@ describe('aéroport d’un lieu (choix pur)', () => {
     });
   });
 
-  it('un aéroport moyen tout près gagne (Chambéry), un grand un peu plus loin aussi (Annecy → Genève)', () => {
+  it('un aéroport moyen tout près gagne (Chambéry), un grand un peu plus loin aussi (Annecy → Genève, avec ces six lignes)', () => {
     expect(nearestAirportIn(ROWS, 45.57, 5.92)?.iata).toBe('CMF');
-    // Annecy : Chambéry à 35 km (moyen, compte 56), Genève à 38 km (grand) → Genève.
+    // Annecy, avec ces seules lignes (le fichier complet y a son propre aéroport, NCY) :
+    // Chambéry à 35 km (moyen, compte 56), Genève à 38 km (grand) → Genève.
     expect(nearestAirportIn(ROWS, 45.9, 6.13)).toMatchObject({ iata: 'GVA', km: 38 });
   });
 
@@ -47,10 +67,101 @@ describe('aéroport d’un lieu (choix pur)', () => {
     expect(nearestAirportIn(ROWS, Number.NaN, 4.84)).toBeNull();
     expect(nearestAirportIn([], 45.76, 4.84)).toBeNull();
   });
+
+  it('rayon : un maxKm qui n’est pas un nombre fini vaut le rayon par défaut, zéro ou négatif ne trouve rien', () => {
+    for (const maxKm of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+      // Le rayon ne saute pas en silence : plein Atlantique, toujours rien.
+      expect(nearestAirportIn(ROWS, 40, -40, { maxKm })).toBeNull();
+      expect(nearestAirportIn(ROWS, 45.76, 4.84, { maxKm })?.iata).toBe('LYS');
+    }
+    expect(nearestAirportIn(ROWS, 45.76, 4.84, { maxKm: 0 })).toBeNull();
+    // Même posé exactement sur l'aéroport (0 km), un rayon nul ne trouve rien.
+    expect(nearestAirportIn(ROWS, 45.726, 5.09, { maxKm: 0 })).toBeNull();
+    expect(nearestAirportIn(ROWS, 45.76, 4.84, { maxKm: -5 })).toBeNull();
+  });
+
+  it('égalité de score : la première ligne gagne (le fichier est trié par code)', () => {
+    // Lignes fictives, seulement pour fabriquer l'égalité exacte.
+    const a: AirportRow = ['AAA', 'Premier', 10, 10, 'XX', 'L'];
+    const b: AirportRow = ['BBB', 'Second', 10, 10, 'XX', 'L'];
+    expect(nearestAirportIn([a, b], 10.2, 10.1)?.iata).toBe('AAA');
+    expect(nearestAirportIn([b, a], 10.2, 10.1)?.iata).toBe('BBB');
+    expect(nearestAirportIn([a, b], 10.2, 10.1, { country: 'XX' })?.iata).toBe('AAA');
+  });
+
+  it('de part et d’autre de l’antiméridien (Taveuni, Fidji) : Labasa, la distance passe par 180°', () => {
+    expect(nearestAirportIn(FIJI, -16.85, 179.95)).toMatchObject({ iata: 'LBS', km: 78 });
+    expect(nearestAirportIn(FIJI, -16.85, -179.95)).toMatchObject({ iata: 'LBS', km: 87 });
+  });
+});
+
+describe('indice de pays (frontières, mers)', () => {
+  const SANTA_TERESA = { lat: 41.239, lon: 9.19 };
+  const ZERMATT = { lat: 46.02, lon: 7.749 };
+  const GOLFE_DE_CAGLIARI = { lat: 38.7, lon: 9.2 };
+
+  it('Santa Teresa Gallura : sans indice Figari (Corse, 30 km), avec « IT » Olbia (47 km)', () => {
+    expect(nearestAirportIn(BORDER_ROWS, SANTA_TERESA.lat, SANTA_TERESA.lon)).toMatchObject({ iata: 'FSC', country: 'FR', km: 30 });
+    expect(nearestAirportIn(BORDER_ROWS, SANTA_TERESA.lat, SANTA_TERESA.lon, { country: 'IT' })).toMatchObject({
+      iata: 'OLB',
+      country: 'IT',
+      km: 47,
+    });
+  });
+
+  it('Zermatt : sans indice Malpensa (Italie, 87 km), avec « CH » Genève (grand) plutôt que Lugano (moyen, plus près)', () => {
+    expect(nearestAirportIn(BORDER_ROWS, ZERMATT.lat, ZERMATT.lon)).toMatchObject({ iata: 'MXP', country: 'IT', km: 87 });
+    // Lugano est à 90 km mais moyen (compte 144) ; Genève à 129 km, grand.
+    expect(nearestAirportIn(BORDER_ROWS, ZERMATT.lat, ZERMATT.lon, { country: 'CH' })).toMatchObject({
+      iata: 'GVA',
+      country: 'CH',
+      km: 129,
+    });
+  });
+
+  it('minuscules acceptées ; null, vide ou espaces : pas d’indice', () => {
+    expect(nearestAirportIn(BORDER_ROWS, SANTA_TERESA.lat, SANTA_TERESA.lon, { country: 'it' })?.iata).toBe('OLB');
+    expect(nearestAirportIn(BORDER_ROWS, SANTA_TERESA.lat, SANTA_TERESA.lon, { country: ' It ' })?.iata).toBe('OLB');
+    for (const country of [null, undefined, '', '  ']) {
+      expect(nearestAirportIn(BORDER_ROWS, SANTA_TERESA.lat, SANTA_TERESA.lon, { country })?.iata).toBe('FSC');
+    }
+  });
+
+  it('aucun aéroport du pays dans le rayon : on revient au comportement sans indice', () => {
+    // Golfe de Cagliari : Figari est à 312 km, hors des 300 km → Cagliari malgré « FR ».
+    const sans = nearestAirportIn(BORDER_ROWS, GOLFE_DE_CAGLIARI.lat, GOLFE_DE_CAGLIARI.lon);
+    expect(sans).toMatchObject({ iata: 'CAG', km: 63 });
+    expect(nearestAirportIn(BORDER_ROWS, GOLFE_DE_CAGLIARI.lat, GOLFE_DE_CAGLIARI.lon, { country: 'FR' })).toEqual(sans);
+    // Un pays sans aucune ligne : pareil. Et rien du tout reste null.
+    expect(nearestAirportIn(BORDER_ROWS, SANTA_TERESA.lat, SANTA_TERESA.lon, { country: 'JP' })?.iata).toBe('FSC');
+    expect(nearestAirportIn(BORDER_ROWS, 40, -40, { country: 'FR' })).toBeNull();
+  });
+
+  it('l’indice suit le rayon demandé : à 350 km Figari redevient « du pays » ; à 40 km ou 60 km on retrouve le bon choix', () => {
+    expect(nearestAirportIn(BORDER_ROWS, GOLFE_DE_CAGLIARI.lat, GOLFE_DE_CAGLIARI.lon, { country: 'FR', maxKm: 350 })).toMatchObject({
+      iata: 'FSC',
+      km: 312,
+    });
+    // Rayon de 40 km : aucun aéroport italien à portée de Santa Teresa → l'indice est ignoré, Figari ; à 60 km Olbia est à portée.
+    expect(nearestAirportIn(BORDER_ROWS, SANTA_TERESA.lat, SANTA_TERESA.lon, { country: 'IT', maxKm: 40 })?.iata).toBe('FSC');
+    expect(nearestAirportIn(BORDER_ROWS, SANTA_TERESA.lat, SANTA_TERESA.lon, { country: 'IT', maxKm: 60 })?.iata).toBe('OLB');
+  });
 });
 
 describe('fichier généré (OurAirports)', () => {
   const rows = AIRPORTS as unknown as unknown[];
+
+  it('les lignes de test sont celles du fichier, au chiffre près', () => {
+    const byCode = new Map(rows.map((r) => [(r as AirportRow)[0], r]));
+    for (const fixture of [...ROWS, ...BORDER_EXTRA, ...FIJI]) expect(byCode.get(fixture[0])).toEqual(fixture);
+  });
+
+  it('un code IATA ne revient jamais', () => {
+    const codes = rows.map((r) => (r as AirportRow)[0]);
+    const doubles = codes.filter((c, i) => codes.indexOf(c) !== i);
+    expect(doubles).toEqual([]);
+    expect(new Set(codes).size).toBe(codes.length);
+  });
 
   it('une ligne [iata, nom, lat, lon, pays, L|M] par aéroport, triée par code', () => {
     expect(rows.length).toBe(META.count);
@@ -102,6 +213,33 @@ describe('script de génération', () => {
       ['LYS', 'Lyon Saint-Exupéry Airport', 45.726, 5.09, 'FR', 'L'],
     ]);
   });
+
+  it('lit un fichier Windows : BOM UTF-8, fins de ligne CRLF, saut de ligne dans un champ entre guillemets', () => {
+    const header =
+      '﻿"id","ident","type","name","latitude_deg","longitude_deg","elevation_ft","continent","iso_country","iso_region","municipality","scheduled_service","icao_code","iata_code","gps_code","local_code","home_link","wikipedia_link","keywords"';
+    const csv = [
+      header,
+      // Le champ « municipality » (avant « scheduled_service » et « iata_code ») contient un saut de ligne.
+      '4137,"LFLL","large_airport","Lyon Saint-Exupéry Airport",45.725996,5.090139,821,"EU","FR","FR-ARA","Colombier-Saugnieu,\nRhône","yes","LFLL","LYS","LFLL",,,,',
+      '4131,"LFLB","medium_airport","Chambéry Aix les Bains airport",45.6381,5.88023,779,"EU","FR","FR-ARA","Voglans,\r\nSavoie","yes","LFLB","CMF","LFLB",,,"un mot,\ndeux mots"',
+      '',
+    ].join('\r\n');
+    expect(buildAirports(csv)).toEqual([
+      ['CMF', 'Chambéry Aix les Bains airport', 45.638, 5.88, 'FR', 'M'],
+      ['LYS', 'Lyon Saint-Exupéry Airport', 45.726, 5.09, 'FR', 'L'],
+    ]);
+  });
+
+  it('un fichier vide ou sans en-tête dit clairement ce qui ne va pas', () => {
+    for (const csv of ['', '\n\r\n', '﻿']) {
+      expect(() => buildAirports(csv)).toThrow('CSV OurAirports vide ou sans en-tête');
+    }
+    expect(() => buildAirports('"id","name"\n1,"x"')).toThrow('Colonne absente du CSV : type');
+  });
+
+  it('parseCsvLine : guillemets doublés, virgule dans un champ, champs vides', () => {
+    expect(parseCsvLine('1,"a, ""b""",,"c"')).toEqual(['1', 'a, "b"', '', 'c']);
+  });
 });
 
 describe('recherche côté serveur', () => {
@@ -109,6 +247,21 @@ describe('recherche côté serveur', () => {
     expect(nearestAirport(45.76, 4.84)?.iata).toBe('LYS');
     expect(['CAG', 'OLB']).toContain(nearestAirport(40.08, 9.03)?.iata);
     expect(nearestAirport(40, -40)).toBeNull();
+  });
+
+  it('indice de pays sur le vrai fichier : Santa Teresa Gallura → Olbia (et non Figari), Zermatt → un aéroport suisse', () => {
+    expect(nearestAirport(41.239, 9.19)?.iata).toBe('FSC');
+    expect(nearestAirport(41.239, 9.19, { country: 'IT' })?.iata).toBe('OLB');
+    expect(nearestAirport(41.239, 9.19, { country: null })?.iata).toBe('FSC');
+    expect(nearestAirport(46.02, 7.749)?.iata).toBe('MXP');
+    expect(nearestAirport(46.02, 7.749, { country: 'CH' })?.country).toBe('CH');
+    // Le rayon par défaut vaut toujours : pas d'aéroport suisse à moins de 300 km de la Corse.
+    expect(nearestAirport(41.239, 9.19, { country: 'CH' })?.iata).toBe('FSC');
+  });
+
+  it('Taveuni (Fidji, sur l’antiméridien) : un aéroport fidjien des deux côtés de 180°', () => {
+    expect(nearestAirport(-16.85, 179.95)?.country).toBe('FJ');
+    expect(nearestAirport(-16.85, -179.95)?.country).toBe('FJ');
   });
 });
 

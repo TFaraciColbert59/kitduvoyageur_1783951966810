@@ -5,14 +5,16 @@
 // code IATA, grands ou moyens, et écrit dans `src/features/compas/data/` :
 //   - `airports.json` : [iata, nom, lat (3 décimales), lon (3 décimales), pays ISO, 'L' | 'M']
 //     trié par code IATA, une ligne par aéroport (diff lisible) ;
-//   - `airports.meta.json` : source, adresse, licence, date, nombre.
+//   - `airports.meta.json` : source, adresse, licence, date, nombre. `fetched` est le
+//     jour du téléchargement ; avec un fichier donné en argument, le jour de sa
+//     dernière modification (pour un fichier téléchargé, le jour où il l'a été).
 //
 // Usage :
 //   NODE_USE_ENV_PROXY=1 node scripts/compas/build-airports.mjs
 //   node scripts/compas/build-airports.mjs /chemin/vers/airports.csv
 // (Node 22 : `fetch` ne passe par HTTPS_PROXY qu'avec NODE_USE_ENV_PROXY=1.)
 // Aucune dépendance.
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -20,7 +22,7 @@ export const AIRPORTS_URL = 'https://davidmegginson.github.io/ourairports-data/a
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const OUT_DIR = path.join(ROOT, 'src', 'features', 'compas', 'data');
 /** En dessous, le fichier lu est tronqué ou n'est pas celui d'OurAirports. */
-const MIN_AIRPORTS = 2500;
+const MIN_AIRPORTS = 3000;
 
 /** Une ligne CSV (RFC 4180) : champs entre guillemets, guillemets doublés. */
 export function parseCsvLine(line) {
@@ -66,7 +68,9 @@ const round3 = (n) => Math.round(n * 1000) / 1000;
 
 /** Aéroports desservis du CSV, triés par code IATA. */
 export function buildAirports(text) {
-  const [header, ...rows] = csvRecords(text);
+  // Un fichier enregistré par Excel ou Notepad peut commencer par un BOM UTF-8.
+  const [header, ...rows] = csvRecords(text.replace(/^\uFEFF/, ''));
+  if (!header) throw new Error('CSV OurAirports vide ou sans en-tête');
   const col = (name) => {
     const i = header.indexOf(name);
     if (i < 0) throw new Error(`Colonne absente du CSV : ${name}`);
@@ -103,12 +107,19 @@ export function buildAirports(text) {
 
 async function main() {
   const file = process.argv[2];
-  const text = file
-    ? await readFile(file, 'utf8')
-    : await fetch(AIRPORTS_URL).then((res) => {
-        if (!res.ok) throw new Error(`OurAirports : HTTP ${res.status}`);
-        return res.text();
-      });
+  const day = (date) => date.toISOString().slice(0, 10);
+  let text;
+  let fetched;
+  if (file) {
+    text = await readFile(file, 'utf8');
+    fetched = day((await stat(file)).mtime);
+  } else {
+    text = await fetch(AIRPORTS_URL).then((res) => {
+      if (!res.ok) throw new Error(`OurAirports : HTTP ${res.status}`);
+      return res.text();
+    });
+    fetched = day(new Date());
+  }
   const airports = buildAirports(text);
   if (airports.length < MIN_AIRPORTS)
     throw new Error(`Seulement ${airports.length} aéroports : fichier tronqué ou inattendu, rien n'est écrit.`);
@@ -121,11 +132,11 @@ async function main() {
     source: 'OurAirports',
     url: AIRPORTS_URL,
     licence: 'Public Domain',
-    fetched: new Date().toISOString().slice(0, 10),
+    fetched,
     count: airports.length,
   };
   await writeFile(path.join(OUT_DIR, 'airports.meta.json'), `${JSON.stringify(meta, null, 2)}\n`);
-  console.log(`${airports.length} aéroports écrits dans ${path.relative(ROOT, OUT_DIR)}`);
+  console.info(`${airports.length} aéroports écrits dans ${path.relative(ROOT, OUT_DIR)}`);
 }
 
 // Lancé en ligne de commande (pas importé par un test).
