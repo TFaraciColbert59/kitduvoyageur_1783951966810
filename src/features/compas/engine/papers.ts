@@ -122,8 +122,10 @@ function frenchPapers(cc: string, where: string, notes: string[]): PapersKind {
 }
 
 /**
- * Nationalité inconnue ou autre : rien d'affirmé. Son propre pays, ou un départ déjà
- * dans le pays : aucune frontière, rien à dire. Sinon une seule ligne, la même pour
+ * Nationalité inconnue ou autre : rien d'affirmé. Un départ déjà dans le pays : aucune
+ * frontière, rien à dire. Son propre pays sans départ connu : pas de frontière connue,
+ * rien à dire non plus ; mais revenir dans son pays depuis l'étranger franchit une
+ * frontière (`abroad` vrai) : la ligne ci-dessous. Sinon une seule ligne, la même pour
  * tous (dédoublonnée par `orderNotes`), qui renvoie au service officiel de son pays.
  */
 function otherPapers(
@@ -133,8 +135,8 @@ function otherPapers(
   abroad: boolean | null,
   notes: string[]
 ): PapersKind {
-  if (nationality === cc) return 'domestique';
-  if (abroad === false) return 'sur_place';
+  if (abroad === false) return nationality === cc ? 'domestique' : 'sur_place';
+  if (nationality === cc && abroad == null) return 'domestique';
   notes.push(`Papiers : conditions d’entrée (${where}) à vérifier auprès du service officiel de ton pays avant de partir.`);
   return 'a_verifier';
 }

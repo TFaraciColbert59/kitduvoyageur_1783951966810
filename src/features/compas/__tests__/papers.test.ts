@@ -101,6 +101,18 @@ describe('travelPapers — autre nationalité connue : aucune règle « ressorti
     expect(travelPapers('DE', 'Allemagne', DE)).toMatchObject({ papers: 'domestique', notes: [], sameMoney: true });
   });
 
+  it('revenir dans son pays depuis l’étranger franchit une frontière : la ligne générique (US, domicile en France)', () => {
+    const us = who({ nationality: 'US', residenceCountry: 'FR' });
+    expect(travelPapers('US', 'États-Unis', us, true).notes).toContain(GENERIC('États-Unis'));
+    expect(travelPapers('US', 'États-Unis', us, true).papers).toBe('a_verifier');
+    // Départ déjà dans le pays, ou départ inconnu : rien à dire.
+    for (const abroad of [false, null]) {
+      const r = travelPapers('US', 'États-Unis', us, abroad);
+      expect(r.papers).toBe('domestique');
+      expect(r.notes.filter((n) => n.startsWith('Papiers'))).toEqual([]);
+    }
+  });
+
   it('nationalité américaine, résidence en France : l’adaptateur vers le Royaume-Uni est dit', () => {
     expect(travelPapers('GB', 'Royaume-Uni', who({ nationality: 'US', residenceCountry: 'FR' })).notes).toEqual([
       GENERIC('Royaume-Uni'),

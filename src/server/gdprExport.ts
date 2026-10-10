@@ -64,6 +64,20 @@ export const GDPR_USER_TABLES: readonly GdprUserTable[] = [
   { table: 'user_traveller', userColumn: 'user_id' },
 ] as const;
 
+/**
+ * Tables dont la migration peut ne pas être encore appliquée quand le code est
+ * déployé (la base se migre à la main) : absentes, elles sont vides. Sans cela,
+ * l'export plante et, pire, la suppression de compte échoue au recomptage APRÈS
+ * avoir supprimé l'utilisateur.
+ */
+export const GDPR_OPTIONAL_TABLES: ReadonlySet<string> = new Set(['user_traveller']);
+
+/** Relation absente : Postgres 42P01, PostgREST PGRST205 (« schema cache »). */
+export function isMissingRelation(error: { code?: string | null; message?: string | null } | null): boolean {
+  if (!error) return false;
+  return error.code === '42P01' || error.code === 'PGRST205' || /schema cache|does not exist/i.test(error.message ?? '');
+}
+
 /** Tables enfants d'un AdventurePlan (liées par `plan_id`). */
 export const GDPR_PLAN_CHILD_TABLES = [
   'adventure_plan_versions',
@@ -194,6 +208,7 @@ export function createSupabaseGdprExportClient(
 
     async selectByUser(table, userColumn, userId) {
       const { data, error } = await supabase.from(table).select('*').eq(userColumn, userId);
+      if (error && GDPR_OPTIONAL_TABLES.has(table) && isMissingRelation(error)) return [];
       assertNoError(error, table);
       return (data ?? []) as Record<string, unknown>[];
     },
