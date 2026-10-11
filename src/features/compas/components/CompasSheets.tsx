@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { shopRelevance } from '../engine/shopMatch';
 import {
   compasAnswerApplicantAction,
@@ -50,7 +50,7 @@ import {
   compasSetStayAction,
   compasExplainVerdictAction,
 } from '../server/compasActions';
-import { KitRow, LIVE_BOOKING, MemberAvatar, lineStatus, verticalOf } from './CompasCards';
+import { BudgetAlso, KitRow, LIVE_BOOKING, MemberAvatar, lineStatus, verticalOf } from './CompasCards';
 import { AffiliateDisclosure } from '@/features/affiliation/components/AffiliateDisclosure';
 import {
   ROUTE_POI_LABEL,
@@ -71,7 +71,11 @@ import {
   useTextFilter,
 } from './CompasPrimitives';
 import { DisLe } from './CompasDisLe';
+import { alertsGapOf } from '../engine/danger';
 import { proposeShift, watchRules } from '../engine/watch';
+import { isMeteoalarmSource } from '../engine/meteoalarmFeeds';
+import MeteoalarmNotice from './MeteoalarmNotice';
+import OfficialAlertTexts from './OfficialAlertTexts';
 import { planWater } from '../engine/water';
 import { addExpenseAction } from '@/app/voyages/budget-actions';
 import { RESA_CATS, bookingCat, offerCat, type ResaCat } from '../engine/resaCats';
@@ -952,7 +956,7 @@ function StepSheet({
       type="button"
       className="cp-ibtn cp-glass cp-sheet__prev"
       disabled={!before}
-      aria-label="Onglet précédent"
+      aria-label={before ? `Onglet précédent : ${before.label}` : 'Onglet précédent'}
       title={before?.label}
       onClick={() => before && ctl.replace({ kind: 'step', step, flow: before.id as StepFlow })}
     >
@@ -1330,7 +1334,7 @@ function QuiFlow({ ctl }: { ctl: CompasCtl }) {
             ]}
           />
           {state.status === 'loading' && <p className="cp-note">Recherche…</p>}
-          {state.status === 'error' && <p className="cp-note">{state.error}</p>}
+          {state.status === 'error' && <p className="cp-note" role="alert">{state.error}</p>}
           {state.status === 'ok' && (
             <PagedList
               label={state.searched ? 'Résultats' : 'Personnes que tu suis'}
@@ -1583,6 +1587,16 @@ function BudgetFlow({ ctl }: { ctl: CompasCtl }) {
         <dt>Par personne</dt>
         <dd>{formatMoney(b.perPerson, b.currency)}</dd>
       </dl>
+      <BudgetAlso
+        fx={ctl.data.budgetFx}
+        currency={b.currency}
+        items={[
+          { label: 'enveloppe', amount: b.target },
+          { label: 'prévu', amount: b.planned },
+          { label: 'dépensé', amount: b.spent },
+          { label: 'par personne', amount: b.perPerson },
+        ]}
+      />
       {ctl.data.canEdit && <ExpenseForm ctl={ctl} />}
       <SettlementBlock ctl={ctl} />
       <PagedList
@@ -1859,7 +1873,7 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
       </div>
 
       {state.status === 'loading' && <p className="cp-note">Lecture de tes bouteilles…</p>}
-      {state.status === 'error' && <p className="cp-note">{state.error}</p>}
+      {state.status === 'error' && <p className="cp-note" role="alert">{state.error}</p>}
 
       {st?.bottles.map((b) => (
         <section key={b.id} className="cp-bottle cp-glass" aria-label={`Bouteille : ${b.name}`}>
@@ -2108,7 +2122,7 @@ function StaySearch({
         </button>
       </div>
       {state.status === 'loading' && <p className="cp-note">Recherche en cours…</p>}
-      {state.status === 'error' && <p className="cp-note">{state.error}</p>}
+      {state.status === 'error' && <p className="cp-note" role="alert">{state.error}</p>}
       {state.status === 'ok' && (
         <>
           {state.mode === 'sandbox' && (
@@ -2611,7 +2625,7 @@ function LiveSearch({ ctl, vertical }: { ctl: CompasCtl; vertical: CompasLiveVer
         </button>
       </form>
 
-      {state.status === 'error' && <p className="cp-note">{state.error}</p>}
+      {state.status === 'error' && <p className="cp-note" role="alert">{state.error}</p>}
       {state.status === 'error' && state.unavailable && (
         <PagedList
           label="Exemples"
@@ -2699,6 +2713,9 @@ function LiveSearch({ ctl, vertical }: { ctl: CompasCtl; vertical: CompasLiveVer
 function RaisonsFlow({ ctl }: { ctl: CompasCtl }) {
   const { danger } = ctl.data;
   const dated = new Map(danger.signals.map((x) => [`${x.source}|${x.label}`, x.asOf]));
+  // Alertes officielles affichées dans les signaux, avec le texte du service national.
+  const shownKeys = new Set(ctl.data.model.verdict.reasons.map((r) => `${r.source}|${r.label}`));
+  const officials = danger.signals.filter((x) => x.official && shownKeys.has(`${x.source}|${x.label}`));
   const axes = ['physique', 'technique', 'conjoncturel'] as const;
   const unknown = axes.filter((a) => danger.axes[a].level === 'non_evalue');
   const partial = axes.filter(
@@ -2721,7 +2738,9 @@ function RaisonsFlow({ ctl }: { ctl: CompasCtl }) {
         items={ctl.data.model.verdict.reasons}
         empty={<p className="cp-note">Aucun signal bloquant ni point de vigilance.</p>}
         render={(r) => (
-          <div key={`${r.source}-${r.label}`} className="cp-row" style={staticRow}>
+          // Ligne qui s'agrandit : le service national et l'heure d'émission d'une alerte
+          // doivent se lire en entier (Meteoalarm), pas finir en points de suspension.
+          <div key={`${r.source}-${r.label}`} className="cp-row cp-row--tall cp-row--wrap" style={staticRow}>
             <span className="cp-thumb">
               <Icon
                 name={
@@ -2753,6 +2772,12 @@ function RaisonsFlow({ ctl }: { ctl: CompasCtl }) {
           </div>
         )}
       />
+      {officials.map((x) => (
+        <OfficialAlertTexts key={x.id} title={x.official?.title} texts={x.official?.texts ?? []} />
+      ))}
+      {ctl.data.model.verdict.reasons.some((r) => isMeteoalarmSource(r.source)) && (
+        <MeteoalarmNotice readAt={ctl.data.alertsReadAt} />
+      )}
       <VerdictExplain ctl={ctl} />
     </>
   );
@@ -2797,7 +2822,7 @@ function VerdictExplain({ ctl }: { ctl: CompasCtl }) {
       ) : state.status === 'done' && state.note ? (
         <p className="cp-note">{state.note}</p>
       ) : state.status === 'error' ? (
-        <p className="cp-note">{state.error}</p>
+        <p className="cp-note" role="alert">{state.error}</p>
       ) : null}
       {!(state.status === 'done' && state.text) && (
         <button
@@ -2890,6 +2915,8 @@ function MeteoFlow({ ctl }: { ctl: CompasCtl }) {
 function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
   const m = ctl.data.model;
   const rules = watchRules(ctl.data.danger.signals);
+  // « Rien à signaler » sur la vigilance officielle n'a de sens que si les alertes ont été lues.
+  const alertsGap = alertsGapOf(ctl.data.alertsStatus);
   const active = rules.filter((r) => r.hits.length > 0).length;
   const shift = proposeShift({
     start: m.dates.start,
@@ -2943,11 +2970,26 @@ function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
         {rules.map((r) => (
           <li key={r.id} data-hit={r.hits.length ? '1' : undefined}>
             <b>{r.label}</b>
-            <span>
-              {r.hits.length
-                ? r.hits.map((h) => h.label).join(' · ')
-                : 'Rien à signaler sur ce voyage.'}
-            </span>
+            {r.hits.length ? (
+              // Chaque alerte nomme son service national (conditions de Meteoalarm, § 5), comme
+              // dans les signaux du verdict.
+              r.hits.map((h, i) => (
+                <Fragment key={i}>
+                  <span>{h.label}</span>
+                  <span>Source : {h.source}</span>
+                </Fragment>
+              ))
+            ) : (
+              <span>
+                {r.id === 'alert' && alertsGap ? `Non vérifié : ${alertsGap}.` : 'Rien à signaler sur ce voyage.'}
+              </span>
+            )}
+            {r.hits.map(
+              (h, i) =>
+                h.official && (
+                  <OfficialAlertTexts key={i} title={h.official.title} texts={h.official.texts} />
+                )
+            )}
           </li>
         ))}
       </ul>
@@ -2956,6 +2998,9 @@ function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
         Vérifiées à chaque ouverture du Compas sur la prévision MET Norway et les alertes
         officielles ; aucun seuil n’est une norme légale.
       </p>
+      {rules.some((r) => r.id === 'alert' && r.hits.length > 0) && (
+        <MeteoalarmNotice readAt={ctl.data.alertsReadAt} />
+      )}
     </>
   );
 }
@@ -2971,10 +3016,13 @@ function SourcesFlow({ ctl }: { ctl: CompasCtl }) {
     powerTrend ? 'tendance' : null,
     powerNormals ? 'normales 2001-2020' : null,
   ].filter(Boolean);
+  // Meteoalarm n'est cité que si ses flux ont été lus (même sans alerte à montrer).
+  const alertsRead = ctl.data.alertsStatus === 'lues' || ctl.data.alertsStatus === 'partielles';
   const sources = [
     'Étapes et dépenses du voyage',
     'Ton inventaire',
     m.weather.days.length ? 'MET Norway (météo, CC BY 4.0)' : null,
+    alertsRead ? 'Meteoalarm (alertes officielles des services nationaux)' : null,
     powerUses.length ? `NASA POWER (${powerUses.join(', ')})` : null,
     m.daylight ? 'Calcul astronomique (lumière)' : null,
     ctl.data.shop.length ? 'Boutique LKDV' : null,
@@ -3007,6 +3055,7 @@ function SourcesFlow({ ctl }: { ctl: CompasCtl }) {
       <p className="cp-note">
         Aucune donnée n’est inventée : ce qui manque est affiché comme manquant, sans score.
       </p>
+      {alertsRead && <MeteoalarmNotice readAt={ctl.data.alertsReadAt} />}
       <div className="cp-actions">
         <button
           type="button"
@@ -3083,10 +3132,13 @@ function TallList<T>({
 
 const ADVICE_ICON: Record<string, string> = {
   pluie: 'cloud-rain',
+  etanche: 'package',
   froid: 'thermometer',
   chaud: 'thermometer',
   extremites: 'cloud-snow',
   soleil: 'sun',
+  moustiques: 'shield',
+  filtre: 'filter',
   frontale: 'sunset',
   eau: 'droplet',
 };
@@ -3094,10 +3146,13 @@ const ADVICE_ICON: Record<string, string> = {
 /** Mot cherché dans la boutique quand on ajoute depuis un conseil (sous-chaîne, sans accent). */
 const ADVICE_QUERY: Record<string, string> = {
   pluie: 'imperm',
+  etanche: 'etanche',
   froid: 'polaire',
   chaud: 'polaire',
   extremites: 'gant',
   soleil: 'solaire',
+  moustiques: 'repulsif',
+  filtre: 'filtre',
   frontale: 'frontale',
   eau: 'gourde',
 };
@@ -3107,8 +3162,9 @@ function ConseilsFlow({ ctl }: { ctl: CompasCtl }) {
   return (
     <>
       <p className="cp-note">
-        Des repères tirés de la météo et du parcours, pas des ordres : chacun cite la donnée qui le
-        déclenche. « Couvert » veut dire qu’un objet de ton kit porte un nom qui correspond.
+        Des repères tirés de la météo, des normales du mois (quand la prévision ne couvre pas tes
+        dates) et du parcours, pas des ordres : chacun cite la donnée qui le déclenche. « Couvert »
+        veut dire qu’un objet de ton kit porte un nom qui correspond.
       </p>
       <TallList
         label="Conseils de kit"
@@ -3281,7 +3337,7 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
   }, [reload]);
 
   if (state.status === 'loading') return <p className="cp-note">Lecture de tes kits…</p>;
-  if (state.status === 'error') return <p className="cp-note">{state.error}</p>;
+  if (state.status === 'error') return <p className="cp-note" role="alert">{state.error}</p>;
 
   const createKit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -3382,6 +3438,7 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
             forecasts,
             dayPlans: model.route.dayPlans,
             waterPointsCount: null,
+            context: ctl.data.kitContext,
           });
           return (
             <div key={kit.id} className="cp-row cp-row--tall" style={staticRow}>
@@ -3399,8 +3456,8 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
                 </span>
                 <span>
                   {compat.total > 0
-                    ? `Couvre ${compat.covered} conseil${compat.covered > 1 ? 's' : ''} météo sur ${compat.total}${compat.bringsNew ? ` (dont ${compat.bringsNew} de plus qu’aujourd’hui)` : ''}`
-                    : 'Aucun conseil météo à comparer'}
+                    ? `Couvre ${compat.covered} conseil${compat.covered > 1 ? 's' : ''} de kit sur ${compat.total}${compat.bringsNew ? ` (dont ${compat.bringsNew} de plus qu’aujourd’hui)` : ''}`
+                    : 'Aucun conseil de kit à comparer'}
                 </span>
               </span>
               <span className="cp-row__end">

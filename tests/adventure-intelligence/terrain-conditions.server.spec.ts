@@ -27,6 +27,8 @@ const ALL_FLAGS = {
   terrain_live: true,
 };
 
+// Adresses de documentation (RFC 5737) : la clé par adresse ne lit que de vraies
+// adresses (un texte libre n'est pas celle d'un proxy), sinon tous partageraient « inconnue ».
 function conditionsRequest(ip: string, query = '?lat=45.1&lng=2.8'): NextRequest {
   return new NextRequest(`http://localhost/api/terrain/conditions${query}`, {
     method: 'GET',
@@ -42,7 +44,7 @@ describe('A11 — lecture conditions protégée (TEST-A11-TL)', () => {
   });
 
   it('TEST-A11-TL-06: cache court et rayon par défaut 5 km, forme de réponse inchangée', async () => {
-    const response = await conditionsGET(conditionsRequest('a11-ip-cache'));
+    const response = await conditionsGET(conditionsRequest('203.0.113.10'));
 
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe(
@@ -57,11 +59,11 @@ describe('A11 — lecture conditions protégée (TEST-A11-TL)', () => {
 
   it('TEST-A11-TL-07: rafale par IP limitée à 429 + Retry-After, les autres IP restent servies', async () => {
     for (let index = 0; index < PUBLIC_READ_BUCKET_CAPACITY; index += 1) {
-      const response = await conditionsGET(conditionsRequest('a11-ip-rafale'));
+      const response = await conditionsGET(conditionsRequest('203.0.113.11'));
       expect(response.status).toBe(200);
     }
 
-    const limited = await conditionsGET(conditionsRequest('a11-ip-rafale'));
+    const limited = await conditionsGET(conditionsRequest('203.0.113.11'));
     expect(limited.status).toBe(429);
     expect(Number(limited.headers.get('retry-after'))).toBeGreaterThanOrEqual(1);
     expect(await limited.json()).toEqual({
@@ -69,7 +71,7 @@ describe('A11 — lecture conditions protégée (TEST-A11-TL)', () => {
       details: 'conditions_rate_limited',
     });
 
-    const other = await conditionsGET(conditionsRequest('a11-ip-autre'));
+    const other = await conditionsGET(conditionsRequest('203.0.113.12'));
     expect(other.status).toBe(200);
   });
 });

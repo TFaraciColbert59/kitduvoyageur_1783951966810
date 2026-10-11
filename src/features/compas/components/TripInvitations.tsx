@@ -26,14 +26,14 @@ const row: CSSProperties = {
   border: '1px solid var(--lkv-border)',
 };
 const btn: CSSProperties = {
-  minHeight: 44,
+  minHeight: '2.75rem',
   padding: '0 14px',
   borderRadius: 999,
   border: '1px solid var(--lkv-border)',
   background: 'transparent',
   color: 'var(--lkv-text-primary)',
   fontWeight: 600,
-  fontSize: 14,
+  fontSize: '0.875rem',
   cursor: 'pointer',
 };
 const btnMain: CSSProperties = {
@@ -115,11 +115,11 @@ export function InvitationResponse({
           </button>
         )}
         {state === 'declined' && (
-          <span style={{ fontSize: 14, color: 'var(--lkv-text-secondary)' }}>Refusée</span>
+          <span style={{ fontSize: '0.875rem', color: 'var(--lkv-text-secondary)' }}>Refusée</span>
         )}
       </span>
       {error && (
-        <span role="alert" style={{ fontSize: 13, color: 'var(--lkv-danger)' }}>
+        <span role="alert" style={{ fontSize: '0.8125rem', color: 'var(--lkv-danger)' }}>
           {error}
         </span>
       )}
@@ -140,7 +140,7 @@ export function TripInvitationsInbox({
       <h2
         style={{
           margin: 0,
-          fontSize: 12,
+          fontSize: '0.75rem',
           letterSpacing: '0.1em',
           textTransform: 'uppercase',
           color: 'var(--lkv-text-secondary)',
@@ -153,8 +153,8 @@ export function TripInvitationsInbox({
         return (
           <div key={inv.invitationId} style={row}>
             <span style={{ flex: 1, minWidth: 0, display: 'grid', gap: 2 }}>
-              <b style={{ fontSize: 15, color: 'var(--lkv-text-primary)' }}>{inv.tripTitle}</b>
-              <span style={{ fontSize: 13, color: 'var(--lkv-text-secondary)' }}>
+              <b style={{ fontSize: '0.9375rem', color: 'var(--lkv-text-primary)' }}>{inv.tripTitle}</b>
+              <span style={{ fontSize: '0.8125rem', color: 'var(--lkv-text-secondary)' }}>
                 {[`${inv.inviterName} t’invite`, inv.destination, when].filter(Boolean).join(' · ')}
               </span>
             </span>

@@ -278,7 +278,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       calée sur des mois entiers (`trendWindow`), la même URL sert tout le mois au lieu
       d'une de plus chaque jour ; citation du projet POWER dans les mentions. Test
       `trendWindow.test.ts`.
-- [ ] Meteoalarm : conditions à vérifier ; attribution.
+- [x] Meteoalarm : conditions à vérifier ; attribution. **Lot U** : conditions (§ 5, Style
+      Guide v1.0, profil CAP v2.0) relues mot pour mot le 11 oct. 2026 et citées avec lien et
+      date ; attribution affichée avec chaque alerte et dans les mentions légales
+      (`meteoalarmFeeds.test.ts`). ⚠️ À faire par Tony : s'enregistrer comme redistributeur
+      Meteoalarm et demander si le trafic pose problème (aucune fréquence d'appel chiffrée ;
+      cache de 5 min par instance).
 - [x] Taux de change : **Frankfurter v2** (`/v2/rates`, 104 banques centrales, 223
       devises ; vérifié le 8 oct. : VND, ARS, KES, XPF servis), secours **currency-api**
       (CC0) ; cache 12 h ; la source est dite à côté du montant ; mentions : « Source:
@@ -286,8 +291,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       n'enregistre encore que six devises (enum `trip_budget_currency`) et le Compas le
       crée en euros (retour Codex sur #82) : la conversion dans la devise du pays de
       destination est à faire en 4.2.
-- [ ] Carburant : bulletin pétrolier de l'UE (CC BY 4.0) pour l'UE-27 ; ailleurs barème
+- [x] Carburant : bulletin pétrolier de l'UE (CC BY 4.0) pour l'UE-27 ; ailleurs barème
       versionné et daté, affiché comme « estimation » (aucune source mondiale gratuite).
+      **Lot W** : Euro-super 95 TTC des 27 pays (prix du 5 oct. 2026, lu par
+      `scripts/compas/build-fuel-prices.mjs`) ; hors UE, estimation à fourchette (moyenne
+      pondérée UE-27 2,01 €/L, de 1,34 à 2,61 €/L), jamais un prix pays inventé
+      (`fuel.test.ts`, `autofill.test.ts`, `dataCredits.test.tsx`). Les lignes déjà écrites
+      gardent l'ancien 1,80 €/L jusqu'à un nouveau « Tout préparer ». Le nom du classeur du
+      bulletin porte 2026-09-21, sa cellule A2 le 5 oct. : la date lue est retenue.
 
 ---
 
@@ -335,10 +346,19 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       limite d'IP de Supabase Auth (30 sessions anonymes/heure), nos limites (5 essais
       par heure et par adresse, 300 par jour pour le site) et la purge à 7 jours.
       BotID de Vercel sur les actions coûteuses : à faire.
-- [ ] `compasExplainVerdictAction` appelle l'IA sans `enforceRateLimit` : bornée par le
-      seul quota IA par personne (lot O).
-- [ ] Clés par adresse (essai sans compte, routes `/api` publiques) lues sur le premier
-      `x-forwarded-for` : sûres sur Vercel (en-tête réécrit) seulement (lot O).
+- [x] `compasExplainVerdictAction` appelle l'IA sans `enforceRateLimit` : bornée par le
+      seul quota IA par personne (lot O). **Lot R** : comptée par personne (`compas-verdict`,
+      10 par 10 min, fermée) avant la lecture du voyage et l'appel IA ; refus dit
+      (`verdictLimit.test.ts`).
+- [x] Clés par adresse (essai sans compte, routes `/api` publiques) lues sur le premier
+      `x-forwarded-for` : sûres sur Vercel (en-tête réécrit) seulement (lot O). **Lot R** :
+      une seule lecture (`src/lib/rate-limit/clientIp.ts`) : `x-vercel-forwarded-for` sur
+      Vercel, sinon la première adresse publique de `x-forwarded-for` en partant de la
+      droite (relais privés sautés, ports retirés), sinon `x-real-ip`, sinon `inconnue` ;
+      reprise sur l'essai, la connexion démo, `/api/discovery/search`, `/api/pays/[code]`,
+      `/api/checkout`, `/go/[slug]` ; un test de garde casse si une route relit ces en-têtes
+      (`clientIp.test.ts`, `clientIpUsage.test.ts`). Limite : sur Vercel, ne se vérifie
+      qu'en production ; les IPv6 ne sont pas regroupées par /64.
 
 ### 2.3 Connexion démo
 
@@ -414,14 +434,22 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       coupée est dite « coupée », plus « en cours ». Tests `autofillState.test.ts`
       (coupure simulée après l'itinéraire : annulation, reprise, prise, expiration).
 - [x] Commentaires « 60 s » mis à jour (300 s ; 48 s par phase gardés et expliqués).
-- [ ] Prise `steps` jamais rendue sur les sorties anticipées (« Dis-moi où tu pars »,
+- [x] Prise `steps` jamais rendue sur les sorties anticipées (« Dis-moi où tu pars »,
       « Itinéraire non enregistré », `catch`) : une relance attend jusqu'à 290 s (lot O).
-- [ ] « Annuler » garde `autofill_claim` : juste après, une relance attend jusqu'à 290 s
-      (lot O).
-- [ ] « Arrêter » pendant l'application des réglages : `stopped.current` n'est vérifié
+      **Lot R** : `compasAutofillAction` suit la prise prise par CETTE exécution et la
+      rend sur toute sortie qui ne l'a pas rendue par son écriture de fin, jamais celle
+      d'une autre préparation (`autofillCut.test.ts`).
+- [x] « Annuler » garde `autofill_claim` : juste après, une relance attend jusqu'à 290 s
+      (lot O). **Lot R** : `compasUndoAutofillAction` retire aussi les prises
+      (`autofillCut.test.ts`). Limite : « Annuler » ne distingue pas une préparation
+      vivante d'une préparation coupée depuis moins de 290 s ; l'interface ne le propose
+      qu'après une préparation finie.
+- [x] « Arrêter » pendant l'application des réglages : `stopped.current` n'est vérifié
       qu'après la compréhension de la phrase ; un appui pendant `runOps` est écrasé par
       `setPrep({stage:'itinerary'})` et le panneau reste bloqué (`CompasScreen`,
-      pré-existant, relevé au lot N).
+      pré-existant, relevé au lot N). **Lot R** : relu après chaque `runOps` et la
+      suppression de la phrase, avant `setPrep` ; la phrase reste sur le voyage,
+      « Reprendre » la rejoue (`compasScreen.test.tsx`).
 
 ### 2.7 Écritures concurrentes
 
@@ -595,30 +623,62 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       connue, une ligne « à vérifier auprès du service officiel de ton pays », ni France
       Diplomatie, ni formalités chiffrées, ni « adaptateur à prévoir » (`papers.test.ts`,
       `nationalityPrompt.test.ts`, `travel.test.ts`).
-- [ ] Nationalité française lisible dans les papiers d'un voyage partagé : la base de la dépense
+- [~] Nationalité française lisible dans les papiers d'un voyage partagé : la base de la dépense
       « Formalités » (« ressortissant français ») et les notes de papiers rangées sur le voyage
       laissent deviner la nationalité aux collaborateurs (et à tous pour un voyage public) ;
       les rendre à l'affichage pour la seule personne concernée (lot Q, avec la table
-      passeport × destination).
+      passeport × destination). **Relecture de la PR #90** : la ligne « Papiers » tirée de la table
+      (qui identifiait un passeport rare, 506 des 1 271 groupes n'en contiennent qu'un) n'est plus
+      JAMAIS rangée sur le voyage : seule la ligne neutre l'est, plus le pays et le départ ; la
+      ligne du passeport du LECTEUR est rendue à la lecture par `getCompasData` (profil du lecteur
+      authentifié, jamais celui du propriétaire) ; verrou testé par mutation
+      (`papersPrivacy.test.ts`, `traveller_privacy.mjs`). **Reste** : (a) la dépense « Formalités »
+      (existence = nationalité française ; demande de la rendre à la lecture, dépense virtuelle par
+      lecteur) ; (b) fuites voisines : ligne « Prises » (selon `frenchDevices`) et conseils de change
+      gardés par l'IA (selon la devise du lanceur) rangés sur le voyage, même remède (ligne neutre
+      rangée, rendue à la lecture) ; (c) voyages DÉJÀ préparés : leur ancienne ligne reste dans
+      `trips.metadata` jusqu'à une relance (l'écran ne la montre plus) ; rattrapage = SQL de données,
+      non écrit.
 
 ### 4.2 Papiers, prises, change
 
-- [ ] Table passeport × destination tirée de **travelrequirements.info v1.3.0**
+- [x] Table passeport × destination tirée de **travelrequirements.info v1.3.0**
       (CC BY 4.0, commercial autorisé, crédit exact de l'éditeur), versionnée dans le
       code. Les jeux dérivés de Passport Index sont exclus (recherche académique
-      seulement).
-- [ ] Budget aussi dans la devise du pays de destination (taux Frankfurter v2, 223
+      seulement). **Lot T** : `scripts/compas/build-entry-requirements.mjs` (liste fermée
+      des exigences, toute valeur inconnue fait échouer) → `data/entryRequirements.json`
+      (174 Ko, 39 601 lignes) + `.meta.json` (version, licence, dates de vérification,
+      sha256) ; `engine/entry.ts` + module serveur seul ; la ligne « Papiers » vient de la
+      table quand une ligne existe (datée), sinon les règles d'avant ; « Formalités »
+      chiffrée seulement si la table dit qu'un visa ou une autorisation est requis(e) ;
+      crédit exact dans les mentions légales (`entryRequirementsBuild.test.ts`,
+      `entry.test.ts`, `papers.test.ts`, `autofillPapers.test.ts`, `dataCredits.test.tsx`).
+      Pas de barème de frais par nationalité (la table ne porte aucun montant).
+- [x] Budget aussi dans la devise du pays de destination (taux Frankfurter v2, 223
       devises, déjà branché) : aujourd'hui seulement si la devise du voyage est l'une des
-      six de l'enum `trip_budget_currency`, et le Compas ne la change jamais.
+      six de l'enum `trip_budget_currency`, et le Compas ne la change jamais. **Lot W** :
+      devise du pays d'après la liste ISO 4217 n° 1 de SIX (246 pays, publiée le 17 sept.
+      2026, `scripts/compas/build-country-currencies.mjs`), conversion AFFICHÉE avec taux,
+      date et source, rien de stocké (enum non touché, aucune migration) (`countryCurrencies.test.ts`,
+      `budgetFx.test.ts`, `compasScreen.test.tsx`). ⚠️ Le fichier SIX ne porte aucun texte de
+      licence : crédité dans les mentions légales, licence à confirmer par Tony.
 - [~] Prises et change selon le pays de résidence ; « France Diplomatie » pour les
       Français seulement, le service officiel du pays sinon. Lot P : France Diplomatie et
       « adaptateur à prévoir » seulement pour une nationalité ou une résidence françaises
       connues ; ailleurs le type de prise du pays, un fait. **Pas fait** : prises et change
       d'une résidence hors de France (table des prises par pays, lot Q).
-- [~] `keepAiNote` ne retire plus les conseils justes pour un non-Français. Lot P : le change
+- [x] `keepAiNote` ne retire plus les conseils justes pour un non-Français. Lot P : le change
       est gardé pour une devise connue autre que l'euro, les prises quand la règle ne sait
-      pas ; les papiers restent à la règle (`papers.test.ts`).
-- [ ] Mise à jour des barèmes périmés (ESTA, exemption Vietnam) avec date de vérification.
+      pas ; les papiers restent à la règle (`papers.test.ts`). **Lot T** : les papiers sont
+      décidés par la règle pour toute nationalité connue, via la table (Allemand, Américain :
+      `papers.test.ts`, « keepAiNote — un non-Français garde ses conseils justes »).
+- [x] Mise à jour des barèmes périmés (ESTA, exemption Vietnam) avec date de vérification.
+      **Lot T** : Vietnam (sans visa 45 jours pour un Français, e-visa retiré), Rwanda (visa
+      à l'arrivée gratuit 30 jours, 50 € retiré), Laos (détail neutre), ESTA (40 $ depuis le
+      30 septembre 2025, soit ~35 €) ; la ligne « Papiers » et la base de « Formalités »
+      portent la date de vérification de la table (`costs.test.ts`, `autofillPapers.test.ts`).
+      ⚠️ Montant ESTA lu sur des sites citant CBP : cbp.gov n'était pas joignable depuis le
+      bac à sable ; à reconfirmer, conversion ~1,15 $/€.
 - [x] Note de papiers jamais perdue par la troncature : l'essentiel (papiers, sécurité)
       passe avant les notes de préparation et les suggestions de l'IA (`orderNotes`, 8
       notes), lot K.
@@ -663,9 +723,19 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 4.4 Trajets
 
-- [ ] Train hors des 10 pays (Europe entière, Japon, Corée, Chine, Inde, Amérique du
-      Nord) par règles de distance et de réseau ; barème par pays.
-- [ ] Préférence « sans voiture » ; transports en commun quand la zone en a.
+- [~] Train hors des 10 pays (Europe entière, Japon, Corée, Chine, Inde, Amérique du
+      Nord) par règles de distance et de réseau ; barème par pays. **Lot X** : Europe 32 pays
+      (10 d'origine, PT DK SE NO PL CZ SK HU SI HR RO BG RS GR ME MK BA ; IE FI EE LV LT en train
+      intérieur seulement), JP, KR, CN, IN, 12 corridors Amtrak/VIA ; tout est « estimation »
+      datée 2026-10 (aucune source gratuite) (`railWorld.test.ts`). **Reste** : TR, UA, MD, BY,
+      RU, AL, XK, CY, MT, IS, Caucase ; trains longue distance d'Amérique du Nord non comptés
+      (et dit) ; ordres de grandeur des prix non vérifiés contre une source libre.
+- [x] Préférence « sans voiture » ; transports en commun quand la zone en a. **Lot X** : phrase
+      comprise (`set_car_free`), réglage à l'écran, trajet par train/bus, aucun carburant ni
+      location, « transports en commun » dit seulement quand une gare est lue autour des étapes,
+      sinon « non évalué » (`carFree.test.ts`, `carFreeTransit.test.ts`, `carFreeAutofill.test.ts`,
+      `compasScreen.test.tsx`). Le test d'`intent.test.ts` qui prenait « sans voiture » pour un
+      « avoid » utilise maintenant « sans foule ».
 - [x] Journée à plus de 3 h de trajet signalée (Mercantour depuis Annecy). Lot N : route
       mesurée, train, ou temps estimé pour une sortie ; « 3 h 24 de trajet aller pour une
       seule journée : prévois une nuit sur place ou choisis plus près. » (`dayTrip.test.ts`).
@@ -674,19 +744,51 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 - [ ] Échelle d'un pays **sans noms de l'IA** : bases multiples choisies dans le
       référentiel (rang, notoriété) ; chemin `planBase` multi-bases réellement atteint.
-- [ ] Espaces sauvages : densité de lieux adaptée (refuges, campings, bivouac annoncé).
-- [ ] Acclimatation en alpinisme (paliers d'altitude).
+- [x] Espaces sauvages : densité de lieux adaptée (refuges, campings, bivouac annoncé).
+      **Lot Y** : `isWildZone` ; la recherche descend aux hameaux et campings (seconde demande
+      seulement dans ce cas) ; campings permis sauf toit ou refuge voulu ; bivouacs CALCULÉS entre
+      deux lieux réels (jusqu'à 3 journées, « Bivouac entre A et B (2/3) », sans `placeId`, note qui
+      annonce emplacement à choisir et règles à vérifier), jamais au-delà ni avec « hébergement »
+      (`wildAreas.test.ts`).
+- [~] Acclimatation en alpinisme (paliers d'altitude). **Lot Y** : `engine/acclimatisation.ts`
+      (au-dessus de 2 500 m, pas plus de 500 m de dénivelé de COUCHAGE par jour, une nuit de repos
+      après 3 nuits ; source citée, formulation prudente, jamais un diagnostic) ; le planificateur à
+      pied exclut le saut > 500 m tant qu'un lieu plus doux existe, la note de l'écran contrôle les
+      nuits posées (`acclimatisation.test.ts`). **Reste** : alpinisme sur base (sommets non
+      étapes), altitude des étapes = plancher et non mesure.
 - [ ] Grands itinéraires suivis sur leur tracé (3.7).
-- [ ] Grandes îles (Sardaigne) : randonnée à pied, pas en voiture d'étape en étape.
-- [ ] Défauts ouverts : Kalymnos, Patagonie (nuits sur un lac), « Mòguru/Mogoro », TMB.
-- [ ] Emprises qui traversent l'antiméridien (Fidji).
+- [ ] Grandes îles (Sardaigne) : randonnée à pied, pas en voiture d'étape en étape. Lot Y :
+      constat seulement : le planificateur à pied marche déjà (zone de 48 km au plus) ; c'est la porte
+      `scaleKm > PLANNED_MAX_KM` (150 ; Sardaigne ≈ 183 km de rayon) qui renvoie à l'IA, dont les étapes
+      sont acceptées en « voiture » sans limite. Le corriger demande de savoir que l'ancre est une île
+      et de choisir le massif de l'île : aucun test pur ne le prouve.
+- [~] Défauts ouverts : Kalymnos, Patagonie (nuits sur un lac), « Mòguru/Mogoro », TMB.
+      **Lot Y** : « Mòguru/Mogoro » (une étape garde le nom proposé quand la carte l'écrit en deux
+      langues, `bilingualNames.test.ts`) et « Canal de Beagle » (un détroit, une baie, un canal ou la
+      mer ne sont jamais le lieu d'une nuit, `sleepPlaces.test.ts`) corrigés. **Reste** : Kalymnos
+      (données OSM d'escalade non importées, 3.x), Patagonie « Lago de los Tres » (échelle pays confiée
+      à l'IA), TMB (tracé des grands itinéraires, 3.7).
+- [x] Emprises qui traversent l'antiméridien (Fidji). **Lot Y** : tout calcul de longitude de
+      l'emprise gère la coupure à ±180° (`engine/longitude.ts`) ; le serveur du référentiel lit deux
+      boîtes valides et les fusionne au lieu de passer ouest > est au `box` de Postgres ; profil
+      d'altitude, part de recul, tracé de rivière, refuges à 3 km et étendue d'une emprise coupée
+      (`antimeridian.test.ts`, `antimeridianServer.test.ts`).
 
 ### 4.6 Budget
 
-- [ ] Calcul en euros, **affichage dans la devise du voyageur** (taux gratuit, 1.8).
-- [ ] Carburant par pays (table versionnée, date) ; péages là où ils comptent.
-- [ ] Assurance et repas par région ; libellés « indice de prix du pays » (plus
-      « prix français »).
+- [x] Calcul en euros, **affichage dans la devise du voyageur** (taux gratuit, 1.8).
+      **Lot W** : « ≈ 930 CHF · 1 € = 0,93 CHF · taux du 9 octobre 2026 · Frankfurter » dans la
+      carte Nous et le tiroir Budget ; taux introuvable = « indisponible » (`budgetFx.test.ts`,
+      `budgetFxServer.test.ts`, `compasScreen.test.tsx`).
+- [~] Carburant par pays (table versionnée, date) ; péages là où ils comptent. **Lot W** :
+      carburant par pays de l'UE-27 daté (voir 1.8). **Reste** : péages (aucune source officielle
+      lue : barèmes par km FR/IT/ES/PT/HR/GR, vignettes CH/AT/CZ/SK/SI/HU) ; la base des lignes
+      dit « péages non comptés ». Gazole dans la table, non chiffré ; 6,5 L/100 km non sourcé.
+- [~] Assurance et repas par région ; libellés « indice de prix du pays » (plus
+      « prix français »). **Lot W** : libellés faits (« indice de prix du pays : Pérou 45
+      (France = 100) », `costs.test.ts`). **Reste** : assurance (forfait 2 / 3 / 4,5 € par jour) et
+      repas (barème France × indice) sans découpage par région sourcé ; piste : indices de niveau
+      de prix de l'ICP 2021 de la Banque mondiale (CC BY 4.0).
 
 ### 4.7 Temps
 
@@ -711,16 +813,30 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 4.8 Kit
 
-- [ ] Règles fondées sur les normales climatiques (NASA POWER) : froid sans altitude,
-      pluie, mousson, chaleur.
-- [ ] Tropiques : moustiques, eau (filtre/pastilles), soleil ; filtre à eau selon la
-      source, pas seulement l'altitude.
-- [ ] Altitudes de secours sans liste de pays en dur.
+- [x] Règles fondées sur les normales climatiques (NASA POWER) : froid sans altitude,
+      pluie, mousson, chaleur. **Lot S** : `kitClimateRules.test.ts`, `kitClimate.test.ts`,
+      `climateNormals.test.ts`, `kitContext.test.ts`, `kitWiring.test.ts`.
+- [x] Tropiques : moustiques, eau (filtre/pastilles), soleil ; filtre à eau selon la
+      source, pas seulement l'altitude. **Lot S** : `kitTropics.test.ts`. Le conseil
+      moustiques est décidé par le point le plus bas du tracé, pas par des lieux hauts seuls.
+- [x] Altitudes de secours sans liste de pays en dur. **Lot S** : lues sur le relief
+      (Terrain Tiles) sous les lieux du voyage, comme un plancher (`altitudeFrom: 'lieux'`) :
+      haut, il déclenche les règles fermes (« jusqu'à X m, le parcours peut monter plus
+      haut »), bas, il ne lève pas la formulation prudente (`kitAltitude.test.ts`,
+      `kitWiring.test.ts`). Limite : le module Voyages historique (`src/features/trips`) ne
+      pose pas ce plancher ; `PILOT_ELEVATIONS` (tracés nommés, pas des pays) reste en place.
 
 ### 4.9 Alertes officielles
 
-- [ ] Meteoalarm pour toute l'Europe ; ailleurs, « non couvert » dit clairement (déjà) ;
-      sources gratuites hors Europe recherchées.
+- [~] Meteoalarm pour toute l'Europe ; ailleurs, « non couvert » dit clairement (déjà) ;
+      sources gratuites hors Europe recherchées. **Lot U** : 33 services nationaux lus
+      (flux JSON par pays), chaque alerte nomme son service, son heure d'émission, sa période
+      et reprend son texte officiel avec lien et avertissement (`meteoalarmFeeds.test.ts`,
+      `danger.test.ts`, `compasScreen.test.tsx`). **Reste** : Royaume-Uni, Luxembourg, Malte,
+      Moldavie, Macédoine du Nord et Slovaquie ont un flux vide (dits « non couverts », jamais un
+      faux « aucune alerte ») ; hors contours (9 pays) et France, la zone n'est reconnue que par
+      le nom exact d'une unité administrative, sinon « zone non rapprochée » ; sources hors
+      Europe (NWS, ECCC, JMA) recherchées, non branchées.
 
 ### 4.10 Compréhension de la demande
 
@@ -743,7 +859,7 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       sortie seul·e (112 seulement là où il répond), refuges à réserver, règles du bivouac
       à vérifier (sans horaire inventé), rivière ; trois au plus, le plus grave d'abord.
       L'IA ne donne plus que des « Suggestion de l'IA (facultatif) », jamais une redite
-      d'une règle. Reste : eau (filtre selon la source, tropiques), avec 4.8.
+      d'une règle. Eau (filtre selon la source, tropiques) : lot S, `kitTropics.test.ts`.
 
 ---
 
@@ -751,25 +867,81 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 5.1 États
 
-- [ ] Squelette de chargement et page d'erreur propres au Compas (2.9).
+- [x] Squelette de chargement et page d'erreur propres au Compas (2.9). **Lot V** :
+      `CompasSkeleton` (même grille que l'écran vide réel, mesuré à l'identique à 393 × 852,
+      `role="status"`, opacité seule, immobile avec `prefers-reduced-motion`) ; `error.tsx`
+      dans la langue du Compas, tutoyé, `role="alert"`, focus sur le titre, « Réessayer »,
+      référence `digest` sans message interne (`compasStates.test.tsx`).
 
 ### 5.2 Accessibilité (WCAG 2.2 AA)
 
-- [ ] Focus piégé dans les tiroirs et rendu à l'élément d'origine.
-- [ ] `KitRow` : plus de bouton dans un bouton ; Espace géré.
-- [ ] Calendrier des conditions : qualité dite en texte, pas seulement en couleur.
-- [ ] Pastilles d'alerte des étapes annoncées au lecteur d'écran.
-- [ ] Tailles de texte en `rem` ; lignes qui s'agrandissent au lieu de tronquer.
-- [ ] « Annuler » : délai réglable ou plus long ; erreurs en `role="alert"`.
-- [ ] Informations portées par `title` doublées en texte ; `forced-colors`.
-- [ ] Test réel VoiceOver et TalkBack ; CI axe étendue à tous les tiroirs.
+- [x] Focus piégé dans les tiroirs et rendu à l'élément d'origine. Lot Q
+      (`components/focusTrap.ts`, `CompasSheet.tsx`, `__tests__/a11yFocus.test.tsx`) :
+      Tab et Maj+Tab bouclent dans le tiroir (le « Annuler » de l'îlot reste atteignable),
+      Échap ferme, le focus revient au déclencheur, y compris après deux tiroirs empilés,
+      sans voler un focus que la page a posé ailleurs.
+- [x] `KitRow` : plus de bouton dans un bouton ; Espace géré. Lot Q (`CompasCards.tsx`,
+      `compas.css` `.cp-row__main`, `compasScreen.test.tsx` « KitRow : une ligne, un bouton ») :
+      la ligne n'est plus un `role="button"` qui contient des boutons ; sa commande
+      principale est un vrai `<button>` (Entrée et Espace natifs), voisine de « Emballer »
+      et « Retirer » ; toucher, appui long et glissement sont inchangés.
+- [x] Calendrier des conditions : qualité dite en texte, pas seulement en couleur. Lot Q
+      (`CompasOuFlows.tsx` `QUALITY_SHAPE`, `compas.css`, `compasScreen.test.tsx`
+      « Calendrier des conditions ») : chaque jour porte une forme propre à sa qualité (● ◆ ▲
+      pleine pour la prévision, ○ ◇ △ creuse pour la tendance) en plus de la couleur et du
+      libellé complet ; la légende nomme les formes ; chaque heure de « Heure par heure »
+      dit sa qualité et ses raisons en texte (lecteur d'écran) et porte la même forme.
+- [x] Pastilles d'alerte des étapes annoncées au lecteur d'écran. Lot Q (`CompasScreen.tsx`
+      `alertText`, `compasScreen.test.tsx` « Pastilles d'alerte des étapes ») : le nom du
+      bouton d'étape dit la cause (« Kit, alerte : objet vital à trouver », « Où, alerte :
+      dates à choisir »…), la pastille reste décorative et l'icône n'annonce plus le nom du
+      glyphe.
+- [x] Tailles de texte en `rem` ; lignes qui s'agrandissent au lieu de tronquer. Lot Q
+      (`compas.css`, `TripInvitations.tsx`, verrou `__tests__/textScale.test.ts`) : les 99
+      `font-size` et les `line-height` en px passent en rem ; `--cp-row-h` vaut 3 rem et les
+      lignes, pastilles, boutons de tiroir, champs et cases de calendrier ont une hauteur
+      MINIMALE (plus de hauteur fixe qui rogne) ; nom, détail, raison, titre de tiroir,
+      valeurs « Voici ce que j'ai compris » passent à la ligne au lieu d'être tronqués par
+      « … » (les nombres courts gardent une ligne) ; `PagedList` mesure déjà la ligne la plus
+      haute. Les px qui restent dimensionnent des icônes, vignettes et surfaces, pas du texte.
+- [x] « Annuler » : délai réglable ou plus long ; erreurs en `role="alert"`. Lot Q
+      (`CompasScreen.tsx` `armToast`/`holdToast`, `CompasSheets.tsx`, `compasScreen.test.tsx`
+      « Annuler : délai assez long et réglable ») : « Annuler », les erreurs et les détails
+      restent 15 s (6 s avant), réglables à 8 / 15 / 30 s dans « Affichage » et gardés sur
+      l'appareil ; le délai est suspendu tant que l'annonce a le pointeur ou le focus ; une
+      erreur d'action est un `role="alert"` (le reste un `status`), de même que les six
+      erreurs de chargement des tiroirs.
+- [x] Informations portées par `title` doublées en texte ; `forced-colors`. Lot Q
+      (`compasScreen.test.tsx` « Ce que porte un `title` est aussi dit », `a11yStart.test.tsx`,
+      `forcedColors.test.ts`) : description des activités, exemple de « Dis-le », raison des
+      étapes grisées, note des axes de danger, nuits sans hébergement, équipe, calques
+      « aucun » et raccourci de « Annuler » sont lus (aria-describedby, aria-label, texte
+      masqué) et non plus seulement au survol ; l'onglet précédent nomme sa destination.
+      `compas.css` : bloc `@media (forced-colors: active)` (verre plein et bordé, états
+      choisis en Highlight, barres, lentille, interrupteurs, icônes en masque préservées,
+      focus), couleurs système seulement.
+- [ ] Test réel VoiceOver et TalkBack. 🔒 Impossible en session : il faut un iPhone et un
+      Android réels, parcourus à la main par une personne (cinq étapes, un tiroir de
+      chaque, une annonce « Annuler » et une erreur).
+- [x] CI axe étendue à tous les tiroirs. Lot Q (`compasScreen.test.tsx` « axe-core :
+      l'écran et chacun des tiroirs ») : `axe-core` (déjà présent avec `@axe-core/playwright`)
+      balaie en jsdom, à chaque `npm test` de la CI, les cinq étapes de l'écran, les 26
+      parcours de tiroir (`STEP_FLOWS`), la fiche d'objet, Porteur, Emprunter / Louer /
+      Acheter, Ajouter au kit et le sac d'un membre, règles WCAG 2 A/AA et 2.1/2.2 :
+      zéro violation. Un témoin vérifie que le balayage détecte bien un défaut (l'ancien
+      `KitRow` fait échouer trois parcours). Reste : le contraste de couleur, que jsdom ne
+      mesure pas, et qui reste couvert dans le navigateur par `npm run test:a11y`
+      (Playwright, `tests/a11y/e2e`) sur l'aperçu.
 
 ### 5.3 Légal visible
 
-- [~] Attributions complètes et cliquables : section « Sources des données et
+- [x] Attributions complètes et cliquables : section « Sources des données et
       licences » des mentions légales (OpenStreetMap, Esri, Photon, LocationIQ, Geoapify,
-      Overpass, MET Norway, NASA POWER), lot B. Reste : Terrain Tiles, GeoNames,
-      Meteoalarm, BCE ; « Powered by Geoapify » là où ses résultats s'affichent.
+      Overpass, MET Norway, NASA POWER), lot B. **Lot U** : Terrain Tiles, GeoNames,
+      Meteoalarm, BCE ajoutés avec la licence relue à la source (11 oct.) et un lien
+      cliquable ; « Powered by Geoapify » seulement là où ses résultats s'affichent
+      (retiré des points « Sur place », gardé près des distances) ; chaque service crédité
+      est réellement employé (`dataSources.test.tsx`, `compasScreen.test.tsx`).
 - [~] Mention IA au démarrage, sur les conseils et sur toute étape proposée par l'IA
       (AI Act art. 50).
 - [ ] Mention d'affiliation dans la recherche d'hébergement en direct ; placée avant la
@@ -783,9 +955,22 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 5.4 Mobile (Capacitor)
 
-- [ ] Barre d'état lisible sur le paysage clair du Compas.
-- [ ] Texte de la demande de position juste (Info.plist, Android).
-- [ ] Zones sûres vérifiées sur iPhone à encoche (capture 393 × 852).
+- [x] Barre d'état lisible sur le paysage clair du Compas. **Lot V** : thème de la barre
+      selon la route (`statusBarThemeForPath`) : texte sombre sur fond crème sur `/compas`,
+      thème d'avant ailleurs, à l'arrivée, à l'entrée et à la sortie (`statusBar.test.ts`,
+      `statusBarBootstrap.test.tsx`). Prouve les appels au plugin, pas le rendu natif.
+- [x] Texte de la demande de position juste (Info.plist, Android). **Lot V** :
+      `NSLocationWhenInUseUsageDescription` en français, avec le pourquoi et les limites
+      réelles (app ouverte seulement, jamais en arrière-plan, arrondie à ~1 km dans le
+      Compas) ; Android : `ACCESS_FINE_LOCATION` et `ACCESS_COARSE_LOCATION` seulement,
+      aucune position en arrière-plan (`nativePermissions.test.ts`).
+- [x] Zones sûres vérifiées sur iPhone à encoche (capture 393 × 852). **Lot V** : le Compas
+      utilisait déjà `viewport-fit=cover` et `env(safe-area-inset-*)` ; Playwright chromium
+      393 × 852 × 3 avec encoche imposée (haut 59, bas 34 ; paysage côtés 59), capture
+      `docs/compas/preuves/compas-393x852-zones-sures.jpg`
+      (`scripts/e2e/compas-safe-area.spec.ts`, `safeArea.test.ts`). Chromium, pas un iPhone
+      réel : rendu natif, dialogue de permission, VoiceOver et TalkBack restent à faire sur
+      appareil.
 
 ### 5.5 Écarts avec la maquette (`ECARTS_MAQUETTE.md`)
 

@@ -11,6 +11,7 @@
  * - conjoncturel   : ce qui change avec le jour (vent, orage, pluie, alertes).
  */
 
+import { formatIssuedUtc, formatPeriodUtc } from './meteoalarmFeeds';
 import type { AlertsStatus } from './officialAlerts';
 
 import type { CompasDayPlan } from './compasModel';
@@ -39,6 +40,30 @@ export interface OfficialAlert {
   updatedSince?: string | null;
   /** Instant de lecture du flux (ISO). */
   fetchedAt: string;
+  /**
+   * Texte officiel de l'alerte, tel que le service national l'a publié (langue
+   * du flux, jamais reformulé). Meteoalarm exige qu'une alerte mise en forme
+   * soit redonnée avec l'information officielle (conditions d'usage, § 5).
+   */
+  headline?: string | null;
+  /** Page du service national pour cette alerte (`web` du flux), seulement si c'est une adresse https. */
+  web?: string | null;
+  /**
+   * Textes officiels par langue du message (titre, description, consignes), tels
+   * que le service les a publiés, nettoyés des caractères de contrôle et bornés
+   * en longueur. Le Style Guide de Meteoalarm demande de les afficher dans
+   * toutes les langues du message, sans les modifier.
+   */
+  texts?: OfficialAlertText[];
+}
+
+/** Le texte officiel d'une alerte dans UNE langue du message. */
+export interface OfficialAlertText {
+  /** Langue déclarée par le flux (BCP 47, ex. « de-DE »), vide si absente. */
+  lang: string;
+  headline: string | null;
+  description: string | null;
+  instruction: string | null;
 }
 
 export interface DangerSignal {
@@ -49,6 +74,8 @@ export interface DangerSignal {
   source: string;
   /** Date de la donnée (jour du voyage AAAA-MM-JJ, ou instant de lecture pour une alerte). */
   asOf: string;
+  /** Alerte officielle : le texte du service national, par langue, à montrer avec le signal. */
+  official?: { title: string; texts: OfficialAlertText[] };
   day?: number;
 }
 
@@ -89,15 +116,47 @@ const THUNDER_CODES = new Set([95, 96, 99]);
 /** Ce qu'un « RAS » conjoncturel ne couvre pas, selon l'état des alertes officielles. */
 const ALERTS_GAP: Record<AlertsStatus, string | null> = {
   lues: null,
+  partielles: 'alertes officielles (zone reconnue en partie : d’autres alertes peuvent exister)',
   pas_encore_publiees: 'alertes officielles (publiées la veille du départ)',
-  hors_france: 'alertes officielles (hors France, non couvertes)',
+  non_couvert: 'alertes officielles (pays non couvert par Meteoalarm)',
+  zone_non_rapprochee: 'alertes officielles (zone de l’étape non reconnue dans le flux Meteoalarm)',
   indisponibles: 'alertes officielles',
 };
+
+/**
+ * Ce qu'un « rien à signaler » sur les alertes officielles ne couvre pas, ou null
+ * si elles ont été lues. Statut absent : non lues, comme `assessDanger`.
+ */
+export const alertsGapOf = (status: AlertsStatus | undefined): string | null => ALERTS_GAP[status ?? 'indisponibles'];
 
 const ALERT_SEVERITY: Record<OfficialAlert['level'], DangerSeverity> = {
   jaune: 'info',
   orange: 'warn',
   rouge: 'block',
+};
+
+const issued = (a: OfficialAlert): string => {
+  const when = formatIssuedUtc(a.sent);
+  return when ? `, émise le ${when}` : '';
+};
+
+/** Où vérifier une alerte : le site du service national si le flux le donne en https, sinon Meteoalarm. */
+function checkHost(a: OfficialAlert): string {
+  try {
+    const url = new URL(a.web ?? '');
+    const host = url.hostname.replace(/^www\./, '');
+    // Une adresse venue d'un tiers n'est citée que si c'est un nom de domaine simple en https.
+    if (url.protocol === 'https:' && !url.username && !url.password && /^[a-z0-9.-]{3,100}$/.test(host)) return host;
+  } catch {
+    /* adresse absente ou illisible */
+  }
+  return 'meteoalarm.org';
+}
+
+/** « , valable du … au … » (UTC), ou rien si le flux ne donne pas les deux heures. */
+const validity = (a: OfficialAlert): string => {
+  const period = formatPeriodUtc(a.onset, a.expires);
+  return period ? `, valable ${period}` : '';
 };
 
 const hhmm = (min: number) => `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')}`;
@@ -127,7 +186,7 @@ export function assessDanger(input: {
   };
   // Aucune cotation du terrain n'existe dans les données du voyage.
   gap('technique', 'cotation du terrain');
-  const alertsGap = ALERTS_GAP[input.alertsStatus ?? 'indisponibles'];
+  const alertsGap = alertsGapOf(input.alertsStatus);
   if (alertsGap) gap('conjoncturel', alertsGap);
 
   for (const plan of input.dayPlans) {
@@ -238,15 +297,19 @@ export function assessDanger(input: {
   /* Alertes officielles : lues telles quelles, datées, jamais reformulées en score */
   for (const a of input.alerts) {
     evaluated.conjoncturel = true;
+    const title = `Vigilance ${a.level} · ${a.hazard} (${a.area})`;
     signals.push({
       id: `alert-${a.id}`,
       axis: 'conjoncturel',
       severity: a.updatedSince ? 'info' : ALERT_SEVERITY[a.level],
-      label: `Vigilance ${a.level} · ${a.hazard} (${a.area})${
-        a.updatedSince ? ' — mise à jour depuis, à vérifier sur vigilance.meteofrance.fr' : ''
-      }`,
+      // L'heure d'émission et le texte officiel voyagent avec l'alerte, où qu'elle
+      // s'affiche (conditions de Meteoalarm, § 5).
+      label: `${title}${issued(a)}${validity(a)}${
+        a.updatedSince ? ` — mise à jour depuis, à vérifier sur ${checkHost(a)}` : ''
+      }${a.headline ? ` — texte officiel : « ${a.headline} »` : ''}`,
       source: a.source,
       asOf: a.sent ?? a.fetchedAt,
+      ...(a.texts?.length ? { official: { title, texts: a.texts } } : {}),
     });
   }
 

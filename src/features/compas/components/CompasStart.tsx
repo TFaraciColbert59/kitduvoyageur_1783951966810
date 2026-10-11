@@ -15,6 +15,8 @@ import { compasCreateTripAction } from '../server/compasActions';
 import { ACTIVITY_FIRST, ACTIVITY_META, ACTIVITY_ORDER } from './CompasOuFlows';
 import TravellerCard from '@/components/identity/TravellerCard';
 
+const LOCKED_STEP = 'Disponible dès le premier choix';
+
 const LINE_ICON: Record<RequestLine['key'], string> = {
   activite: 'compass',
   lieu: 'map-pin',
@@ -23,6 +25,7 @@ const LINE_ICON: Record<RequestLine['key'], string> = {
   nuits: 'moon',
   envies: 'heart',
   budget: 'euro',
+  deplacements: 'train',
 };
 
 /**
@@ -93,12 +96,17 @@ export function CompasStart({
                 className="cp-step"
                 aria-current={i === 0 ? 'step' : undefined}
                 disabled={i > 0}
-                title={i > 0 ? 'Disponible dès le premier choix' : undefined}
+                aria-describedby={i > 0 ? 'cp-start-locked' : undefined}
+                title={i > 0 ? LOCKED_STEP : undefined}
               >
-                <Icon name={s.icon} size={20} />
+                <Icon name={s.icon} size={20} aria-hidden="true" />
                 <span className="cp-step__l">{s.label}</span>
               </button>
             ))}
+            {/* L'info-bulle ne suffit pas (clavier, toucher, lecteur d'écran) : la raison est dite aussi. */}
+            <span id="cp-start-locked" hidden>
+              {LOCKED_STEP}
+            </span>
           </nav>
         </div>
 
@@ -178,12 +186,18 @@ export function CompasStart({
                     className="cp-tile"
                     disabled={pending}
                     aria-pressed={precise.activity === a}
+                    aria-describedby={`cp-start-act-${a}`}
                     title={ACTIVITY_META[a].hint}
                     onClick={() => setPrecise((p) => ({ ...p, activity: p.activity === a ? null : a }))}
                   >
                     <Icon name={ACTIVITY_META[a].icon} size={22} />
                     <span>{activityLabel(a)}</span>
                   </button>
+                ))}
+                {(allActivities ? ACTIVITY_ORDER : ACTIVITY_FIRST).map((a) => (
+                  <span key={a} id={`cp-start-act-${a}`} hidden>
+                    {ACTIVITY_META[a].hint}
+                  </span>
                 ))}
                 {!allActivities && (
                   <button

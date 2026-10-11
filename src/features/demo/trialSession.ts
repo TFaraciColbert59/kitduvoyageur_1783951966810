@@ -2,6 +2,7 @@
 
 import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
+import { clientIpFromHeaders } from '@/lib/rate-limit/clientIp';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { anonymousSignInsEnabled } from './anonymousSettings';
 
@@ -27,7 +28,7 @@ export async function trialLoginAction(captchaToken?: string): Promise<
     return { success: false, error: 'Essai sans compte indisponible pour le moment.' };
   try {
     const h = await headers();
-    const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() || h.get('x-real-ip') || 'inconnu';
+    const ip = clientIpFromHeaders(h);
     // Chaque essai est un compte en base : peu par adresse, plafond pour le site.
     const mine = await enforceRateLimit(ip, {
       scope: 'trial-login',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildTrack, MAX_TRACK_POINTS, simplifyLine, trackKey } from '../engine/track';
+import { buildTrack, geojsonLatLon, MAX_TRACK_POINTS, simplifyLine, trackKey } from '../engine/track';
 
 describe('tracé réel de l’itinéraire', () => {
   it('garde la géométrie routée de chaque tronçon, segment droit seulement sans elle', () => {
@@ -67,5 +67,42 @@ describe('tracé réel de l’itinéraire', () => {
       a.forEach((v, k) => expect(v).toBeCloseTo(b[k], 5));
     near(track.coordinates[3][0], legs[4]![0]);
     near(track.coordinates[3].at(-1)!, legs[4]!.at(-1)!);
+  });
+});
+
+describe('geojsonLatLon : les points [lat, lon] d’un tracé GeoJSON', () => {
+  const line = [
+    [6.1, 45.9],
+    [6.2, 45.95, 1450],
+  ];
+
+  it('LineString, MultiLineString, Feature et FeatureCollection : lat et lon dans l’ordre, altitude du GeoJSON ignorée', () => {
+    const expected = [
+      [45.9, 6.1],
+      [45.95, 6.2],
+    ];
+    expect(geojsonLatLon({ type: 'LineString', coordinates: line })).toEqual(expected);
+    expect(geojsonLatLon({ type: 'Feature', geometry: { type: 'LineString', coordinates: line } })).toEqual(expected);
+    expect(
+      geojsonLatLon({
+        type: 'FeatureCollection',
+        features: [{ type: 'Feature', geometry: { type: 'LineString', coordinates: line } }],
+      })
+    ).toEqual(expected);
+    expect(geojsonLatLon({ type: 'MultiLineString', coordinates: [line, [[7, 46]]] })).toEqual([...expected, [46, 7]]);
+  });
+
+  it('points illisibles écartés, jamais complétés ; ni ligne ni objet : rien', () => {
+    expect(
+      geojsonLatLon({
+        type: 'LineString',
+        coordinates: [[6.1, 45.9], [null, 46], ['7', '46'], [200, 10], [6.3, 95], [6.4], 'x', [6.5, 46.1]],
+      })
+    ).toEqual([
+      [45.9, 6.1],
+      [46.1, 6.5],
+    ]);
+    for (const g of [null, undefined, 'x', 3, {}, { type: 'Point', coordinates: [6, 45] }, { type: 'Polygon', coordinates: [] }])
+      expect(geojsonLatLon(g)).toEqual([]);
   });
 });

@@ -232,18 +232,10 @@ export function rateLimitKey(scope: string, identifier: string): string {
 }
 
 /**
- * IP cliente à partir des en-têtes de proxy, jamais devinée : premier
- * `x-forwarded-for`, puis `x-real-ip`, sinon `inconnue`.
+ * Adresse du client à partir des en-têtes de proxy : le saut ajouté par NOTRE
+ * proxy, jamais le premier (écrit par le navigateur). Détail dans `./clientIp`.
  */
-export function clientIpFromHeaders(headers: Headers): string {
-  const forwarded = headers.get('x-forwarded-for');
-  if (forwarded) {
-    const first = forwarded.split(',')[0]?.trim();
-    if (first) return first;
-  }
-  const realIp = headers.get('x-real-ip')?.trim();
-  return realIp && realIp.length > 0 ? realIp : 'inconnue';
-}
+export { clientIpFromHeaders } from './clientIp';
 
 /** En-têtes standards à poser sur une réponse limitée. */
 export function rateLimitHeaders(result: RateLimitResult): Record<string, string> {

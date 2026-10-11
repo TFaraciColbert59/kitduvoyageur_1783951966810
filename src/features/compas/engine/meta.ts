@@ -75,6 +75,7 @@ export function readCompasMeta(metadata: unknown): {
           maxPackKg: bounded(p.maxPackKg, 1, 40),
           outdoorNights: bounded(p.outdoorNights, 0, 60),
           targetKm: bounded(p.targetKm, 1, 300),
+          carFree: p.carFree === true ? true : null,
         }
       : null,
   };

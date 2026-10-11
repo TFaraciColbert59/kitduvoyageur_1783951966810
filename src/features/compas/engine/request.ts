@@ -18,7 +18,7 @@ export interface RequestPrecisions {
 export type RequestLineState = 'compris' | 'precise' | 'defaut' | 'a_trouver';
 
 export interface RequestLine {
-  key: 'activite' | 'lieu' | 'quand' | 'groupe' | 'nuits' | 'envies' | 'budget';
+  key: 'activite' | 'lieu' | 'quand' | 'groupe' | 'nuits' | 'envies' | 'budget' | 'deplacements';
   label: string;
   value: string;
   state: RequestLineState;
@@ -144,6 +144,9 @@ export function understandRequest(text: string, today: string, p: RequestPrecisi
 
   const wishes = actions.filter((a): a is Extract<CompasIntentAction, { type: 'wish' }> => a.type === 'wish').map((a) => a.label);
   if (wishes.length) lines.push({ key: 'envies', label: 'Envies', value: wishes.join(' · '), state: 'compris' });
+
+  if (first(actions, 'set_car_free'))
+    lines.push({ key: 'deplacements', label: 'Déplacements', value: 'Sans voiture : train, bus, vélo ou à pied', state: 'compris' });
 
   const budget = first(actions, 'set_budget');
   if (budget)

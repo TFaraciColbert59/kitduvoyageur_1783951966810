@@ -2,6 +2,7 @@
 
 import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
+import { clientIpFromHeaders } from '@/lib/rate-limit/clientIp';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { anonymousSignInsEnabled } from './anonymousSettings';
 
@@ -34,7 +35,7 @@ export async function demoLoginAction(): Promise<
     return { success: false, error: 'Compte de démonstration indisponible.' };
   try {
     const h = await headers();
-    const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() || h.get('x-real-ip') || 'inconnu';
+    const ip = clientIpFromHeaders(h);
     const limited = await enforceRateLimit(ip, {
       scope: 'demo-login',
       limit: 10,

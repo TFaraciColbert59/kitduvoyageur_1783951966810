@@ -41,6 +41,7 @@ import {
 } from '../server/compasActions';
 import { applyCurrent, inverseOps, runOps } from './compasApply';
 import { Chip, PagedList, Segments } from './CompasPrimitives';
+import GeoapifyCredit from './GeoapifyCredit';
 import { compasNearbyActivitiesAction } from '../server/resaActions';
 import type { CompasStayOffer } from '../engine/stays';
 import { mixParcours } from '../engine/parcoursMix';
@@ -131,6 +132,7 @@ export function ActiviteFlow({ ctl }: { ctl: CompasCtl }) {
               type="button"
               className="cp-tile"
               aria-pressed={on}
+              aria-describedby={`cp-act-${a}`}
               title={ACTIVITY_META[a].hint}
               disabled={!ctl.data.canEdit || ctl.busy}
               onClick={() => pick(a)}
@@ -140,6 +142,12 @@ export function ActiviteFlow({ ctl }: { ctl: CompasCtl }) {
             </button>
           );
         })}
+        {/* La description n'est pas qu'une info-bulle : elle est lue avec l'activité. */}
+        {ACTIVITY_ORDER.map((a) => (
+          <span key={a} id={`cp-act-${a}`} hidden>
+            {ACTIVITY_META[a].hint}
+          </span>
+        ))}
       </div>
       <p className="cp-note">
         {current
@@ -329,33 +337,40 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
       </div>
 
       {mode === 'etapes' ? (
-        <PagedList
-          label="Étapes du parcours"
-          resetKey="etapes"
-          items={data.itinerary}
-          empty={
-            <p className="cp-note">
-              Aucune étape : choisis un parcours autour de toi, dans tes randos, ou cherche un lieu.
-            </p>
-          }
-          render={(s) => (
-            <div key={s.id} className="cp-row" style={staticRow}>
-              <span className="cp-thumb" aria-hidden="true">
-                <b>{s.day}</b>
-              </span>
-              <span className="cp-row__t">
-                <b>{s.title}</b>
-                <span>
-                  Jour {s.day} · {s.distanceEstimated && s.distanceKm != null ? `≈ ${formatKm(s.distanceKm)} (estimée)` : formatKm(s.distanceKm)} · D+{' '}
-                  {formatMeters(s.elevationGainM)}
+        <>
+          <PagedList
+            label="Étapes du parcours"
+            resetKey="etapes"
+            items={data.itinerary}
+            empty={
+              <p className="cp-note">
+                Aucune étape : choisis un parcours autour de toi, dans tes randos, ou cherche un lieu.
+              </p>
+            }
+            render={(s) => (
+              <div key={s.id} className="cp-row" style={staticRow}>
+                <span className="cp-thumb" aria-hidden="true">
+                  <b>{s.day}</b>
                 </span>
-              </span>
-              <span className="cp-row__end">
-                {s.accommodation && <Chip icon="bed-double">{s.accommodation}</Chip>}
-              </span>
-            </div>
+                <span className="cp-row__t">
+                  <b>{s.title}</b>
+                  <span>
+                    Jour {s.day} · {s.distanceEstimated && s.distanceKm != null ? `≈ ${formatKm(s.distanceKm)} (estimée)` : formatKm(s.distanceKm)} · D+{' '}
+                    {formatMeters(s.elevationGainM)}
+                  </span>
+                </span>
+                <span className="cp-row__end">
+                  {s.accommodation && <Chip icon="bed-double">{s.accommodation}</Chip>}
+                </span>
+              </div>
+            )}
+          />
+          {data.itinerary.some((s) => s.distanceSource === 'geoapify') && (
+            <p className="cp-disc">
+              Distances par la route : <GeoapifyCredit /> · © contributeurs OpenStreetMap (licence ODbL)
+            </p>
           )}
-        />
+        </>
       ) : results.status === 'loading' ? (
         <p className="cp-note" aria-live="polite">
           Recherche dans le catalogue LKDV…
@@ -581,6 +596,11 @@ const QUALITY_LABEL = {
   moyen: 'conditions moyennes',
   mauvais: 'mauvaises conditions',
 } as const;
+/** Une forme par qualité, pleine pour une prévision et creuse pour une tendance : la couleur ne porte jamais seule l'information (WCAG 1.4.1). */
+const QUALITY_SHAPE = {
+  prevision: { bon: '●', moyen: '◆', mauvais: '▲' },
+  tendance: { bon: '○', moyen: '◇', mauvais: '△' },
+} as const;
 
 export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
   const { data } = ctl;
@@ -783,8 +803,19 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
             </p>
           )}
           <p className="cp-cal__legend">
-            <i data-q="bon" /> bon <i data-q="moyen" /> moyen <i data-q="mauvais" /> mauvais · plein
-            : prévision ~9 j (MET Norway) · cerclé : tendance des 5 dernières années (NASA POWER)
+            <i data-q="bon" aria-hidden="true">
+              {QUALITY_SHAPE.prevision.bon}
+            </i>{' '}
+            bon{' '}
+            <i data-q="moyen" aria-hidden="true">
+              {QUALITY_SHAPE.prevision.moyen}
+            </i>{' '}
+            moyen{' '}
+            <i data-q="mauvais" aria-hidden="true">
+              {QUALITY_SHAPE.prevision.mauvais}
+            </i>{' '}
+            mauvais · forme pleine : prévision ~9 j (MET Norway) · forme creuse : tendance des 5
+            dernières années (NASA POWER)
           </p>
         </div>
       ) : (
@@ -850,7 +881,9 @@ function CalendarCell({
       onClick={onPick}
     >
       <span>{n === 1 ? `1 ${formatDayMonth(day.date).split(' ')[2]}` : n}</span>
-      <i aria-hidden="true" />
+      <i aria-hidden="true">
+        {day.quality && day.kind !== 'inconnu' ? QUALITY_SHAPE[day.kind][day.quality] : ''}
+      </i>
     </button>
   );
 }
@@ -1005,6 +1038,14 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
                 {hw && <Icon name={hw.icon} size={16} />}
                 <b>{h.tempC != null ? `${Math.round(h.tempC)}°` : '—'}</b>
                 <small>{h.precipPct != null ? `${h.precipPct} %` : '—'}</small>
+                {/* La qualité de l'heure en texte (et une forme), pas seulement en teinte. */}
+                <i className="cp-hour__q" aria-hidden="true">
+                  {QUALITY_SHAPE.prevision[hq.quality]}
+                </i>
+                <span className="sr-only">
+                  {QUALITY_LABEL[hq.quality]}
+                  {hq.reasons.length ? ` : ${hq.reasons.join(', ')}` : ''}
+                </span>
               </span>
             );
           })}
@@ -1233,6 +1274,29 @@ function ProjectBlock({
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {ctx.modules.transport && (
+        <div className="cp-prefs__block">
+          <span className="cp-prefs__l">Déplacements</span>
+          <div className="cp-chiprow" role="group" aria-label="Déplacements">
+            <button
+              type="button"
+              className="cp-pill"
+              aria-pressed={prefs.carFree === true}
+              disabled={!edit}
+              onClick={() =>
+                save(
+                  { ...prefs, carFree: prefs.carFree === true ? null : true },
+                  prefs.carFree === true ? 'Voiture de nouveau possible' : 'Sans voiture : train, bus, vélo ou à pied'
+                )
+              }
+            >
+              Sans voiture
+            </button>
+          </div>
+          <p className="cp-sub">Ni voiture personnelle ni de location : train, bus, vélo ou à pied.</p>
         </div>
       )}
 

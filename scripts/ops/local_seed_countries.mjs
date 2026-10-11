@@ -9,14 +9,22 @@ import { createClient } from '@supabase/supabase-js';
  */
 
 const LOCAL_URL = 'http://127.0.0.1:54321';
-const LOCAL_SERVICE_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
 
 const env = {};
 for (const line of fs.readFileSync('.env.local', 'utf8').split(/\r?\n/)) {
   const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
   if (m) env[m[1]] = m[2];
 }
+// Clé du stack LOCAL (`npx supabase status -o env`, variable SERVICE_ROLE_KEY) : jamais écrite dans le dépôt,
+// le contrôle `tests/audit` refuse tout jeton dans le code suivi, même la clé de démonstration publique.
+const LOCAL_SERVICE_KEY = process.env.SUPABASE_LOCAL_SERVICE_ROLE_KEY || env.SUPABASE_LOCAL_SERVICE_ROLE_KEY;
+if (!LOCAL_SERVICE_KEY) {
+  console.error(
+    'SUPABASE_LOCAL_SERVICE_ROLE_KEY manquante : copie SERVICE_ROLE_KEY de `npx supabase status -o env` dans .env.local ou l’environnement.'
+  );
+  process.exit(1);
+}
+
 const prod = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });

@@ -3,6 +3,7 @@ import {
   carRentalPerDay,
   entryFees,
   flightRoundTrip,
+  formalitiesBasis,
   insurance,
   localTripPerLeg,
   lodgingPerNight,
@@ -11,12 +12,20 @@ import {
   priceLevel,
   refugePerNight,
 } from '../engine/costs';
+import { needsFormalities } from '../engine/entry';
+import { entryRequirement } from '../server/entryRequirements';
 
 describe('barèmes du Compas', () => {
   it('niveau de prix par pays, annoncé ; pays inconnu = moyenne annoncée', () => {
     expect(priceLevel('FR').level).toBe(1);
     expect(priceLevel('pe', 'Pérou')).toMatchObject({ level: 0.45, known: true });
-    expect(priceLevel('PE', 'Pérou').basis).toContain('Pérou ≈ 45 % des prix français');
+    expect(priceLevel('PE', 'Pérou').basis).toBe('barème Compas 2026-10 · indice de prix du pays : Pérou 45 (France = 100)');
+    expect(priceLevel('FR').basis).toBe('barème Compas 2026-10 · indice de prix du pays : France 100 (référence)');
+    expect(priceLevel('XX', 'Atlantide').basis).toBe(
+      'barème Compas 2026-10 · indice de prix du pays : Atlantide absent du barème, niveau moyen 70 (France = 100)'
+    );
+    // Plus aucun libellé « prix français » : l'indice du pays se dit par rapport à une base, pas comme les prix d'un pays.
+    for (const cc of ['PE', 'FR', 'XX', 'CH']) expect(priceLevel(cc).basis).not.toMatch(/prix français/);
     expect(priceLevel('XX')).toMatchObject({ level: 0.7, known: false });
     expect(priceLevel(null).basis).toContain('absent du barème');
   });
@@ -64,5 +73,56 @@ describe('barèmes du Compas', () => {
     const a = mealsTotal({ days: 12, party: 3, nights: Array(11).fill('refuge'), level: priceLevel('NP').level });
     const b = mealsTotal({ days: 12, party: 3, nights: Array(11).fill('refuge'), level: priceLevel('NP').level });
     expect(a).toBe(b);
+  });
+});
+
+/**
+ * PLAN-100 4.2 « mise à jour des barèmes périmés » : le barème des formalités (en euros,
+ * pour un ressortissant français) ne dit rien que la table passeport × destination
+ * (travelrequirements.info v1.3.0) contredise, et porte sa date de vérification.
+ */
+describe('barème des formalités et table passeport × destination', () => {
+  const codes = (): string[] => {
+    const out: string[] = [];
+    for (let a = 65; a <= 90; a += 1) for (let b = 65; b <= 90; b += 1) out.push(String.fromCharCode(a, b));
+    return out;
+  };
+
+  it('chaque pays chiffré est un pays où la table dit à un Français « visa ou autorisation requis »', () => {
+    const priced = codes().filter((cc) => entryFees(cc));
+    expect(priced.length).toBeGreaterThanOrEqual(20);
+    for (const cc of priced) {
+      const req = entryRequirement('FR', cc);
+      expect(req && needsFormalities(req.kind), `${cc} : ${req?.kind ?? 'aucune ligne'}`).toBe(true);
+    }
+  });
+
+  it('Vietnam : exemption de 45 jours pour un Français, plus de e-visa chiffré', () => {
+    expect(entryRequirement('FR', 'VN')).toMatchObject({ kind: 'sans_visa', maxStayDays: 45 });
+    expect(entryFees('VN')).toBeNull();
+  });
+
+  it('ESTA : 40 $ depuis le 30 septembre 2025, soit environ 35 €', () => {
+    expect(entryFees('US')).toEqual({ eur: 35, detail: 'ESTA (40 $)' });
+  });
+
+  it('Rwanda : visa à l’arrivée sans frais pour 30 jours (membres de la Francophonie), plus de 50 € chiffrés', () => {
+    expect(entryRequirement('FR', 'RW')).toMatchObject({ kind: 'visa_arrivee', maxStayDays: 30 });
+    expect(entryFees('RW')).toBeNull();
+  });
+
+  it('Laos : l’e-visa et le visa à l’arrivée existent, le barème ne choisit pas', () => {
+    expect(entryRequirement('FR', 'LA')?.kind).toBe('e_visa');
+    expect(entryFees('LA')?.detail).toBe('visa laotien (e-visa ou à l’arrivée)');
+  });
+
+  it('la base du poste dit la date de vérification de la table, ou rien de plus', () => {
+    expect(formalitiesBasis('2026-10-03')).toBe(
+      'barème Compas 2026-10 · ressortissant français, tarif officiel connu, exigence vérifiée le 3 octobre 2026 (TravelRequirements.info), à vérifier avant de partir'
+    );
+    expect(formalitiesBasis(null)).toBe(
+      'barème Compas 2026-10 · ressortissant français, tarif officiel connu, à vérifier avant de partir'
+    );
+    expect(formalitiesBasis('pas une date')).toBe(formalitiesBasis(null));
   });
 });

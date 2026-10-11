@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   isNative,
   hideNativeSplashScreen,
-  setStatusBarStyle,
-  setStatusBarColor,
+  applyStatusBarTheme,
+  statusBarThemeForPath,
   setupNativeAppListeners,
 } from "@/lib/native";
 import { purgeExpiredCache } from "@/lib/storage/cacheDB";
@@ -19,6 +19,7 @@ const SPLASH_MAX_WAIT_MS = 4_000;
 
 export default function NativeAppBootstrap() {
   const router = useRouter();
+  const pathname = usePathname();
   const queryClient = useQueryClient();
   const { user, loading, refreshProfile } = useAuth();
   const cacheReady = useCriticalCacheReady();
@@ -49,11 +50,16 @@ export default function NativeAppBootstrap() {
     if (isNative()) revealAfterPaint();
   }, [cacheReady, loading, revealAfterPaint]);
 
+  // Barre d'état (plan 5.4) : le Compas force le thème clair, son texte doit donc
+  // être sombre ; partout ailleurs, le thème de l'app (vert forêt, texte clair).
+  // Suivre la route couvre l'arrivée directe sur /compas, l'entrée et la sortie.
   useEffect(() => {
     if (!isNative()) return;
+    applyStatusBarTheme(statusBarThemeForPath(pathname)).catch(() => {});
+  }, [pathname]);
 
-    setStatusBarStyle("dark").catch(() => {});
-    setStatusBarColor("#17402C").catch(() => {});
+  useEffect(() => {
+    if (!isNative()) return;
 
     const unsubPromise = setupNativeAppListeners({
       onBackButton: () => {

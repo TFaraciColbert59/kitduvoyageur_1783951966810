@@ -3,8 +3,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import axe from 'axe-core';
+import { STEP_FLOWS } from '../components/compasTypes';
 import { buildCompasModel, type CompasInput, type CompasItemInput } from '../engine/compasModel';
-import { assessDanger } from '../engine/danger';
+import { assessDanger, mergeDangerIntoVerdict, type OfficialAlert } from '../engine/danger';
+import { METEOALARM_DISCLAIMER, METEOALARM_HOME } from '../engine/meteoalarmFeeds';
+import { resolveProjectContext } from '../engine/projectContext';
 import { daylightClock } from '../engine/sun';
 import type { CompasData } from '../server/getCompasData';
 
@@ -1027,6 +1032,79 @@ describe('CompasScreen', () => {
     );
   });
 
+  describe('Nous : le budget aussi dans la devise de la personne (PLAN-100 4.6)', () => {
+    const chf = {
+      targets: [{ currency: 'CHF', kinds: ['voyageur' as const] }],
+      rates: {
+        CHF: { base: 'EUR' as const, currency: 'CHF', rate: 0.93, date: '2026-10-09', source: 'Frankfurter (banques centrales)' },
+      },
+    };
+
+    const spent = {
+      id: 'e1',
+      title: 'Refuge',
+      amount: 400,
+      category: 'hébergement',
+      isPlanned: true,
+      payerId: U1,
+      splitType: 'equal',
+    };
+    const withBudget = (budgetFx: CompasData['budgetFx']) => ({ ...makeData({ expenses: [spent] }), budgetFx });
+
+    it('la carte et le tiroir disent le montant converti avec son taux, sa date et sa source', async () => {
+      render(<CompasScreen data={withBudget(chf)} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+      const card = screen.getByTestId('budget-also');
+      expect(within(card).getByText(/Dans ta devise \(CHF\)/)).toBeTruthy();
+      expect(card.textContent).toMatch(/prévus et dépensés ≈ 372\s(CHF|Fr\.?)/);
+      expect(card.textContent).toContain('1 € = 0,93 CHF · taux du 9 octobre 2026 · Frankfurter (banques centrales)');
+      expect(card.textContent).toContain('le calcul reste en euros');
+      fireEvent.click(screen.getByRole('button', { name: 'Détails : Nous' }));
+      const sheet = await screen.findByRole('dialog', { name: 'Nous' });
+      fireEvent.click(within(sheet).getByRole('button', { name: /Budget/ }));
+      const block = within(sheet).getByTestId('budget-also');
+      expect(block.textContent).toMatch(/enveloppe ≈ 837/);
+      expect(block.textContent).toContain('1 € = 0,93 CHF');
+    });
+
+    it('la devise du pays de destination est dite comme telle, à côté de celle du voyageur', () => {
+      const jpy = {
+        base: 'EUR' as const,
+        currency: 'JPY',
+        rate: 176.2,
+        date: '2026-10-08',
+        source: 'currency-api',
+      };
+      render(
+        <CompasScreen
+          data={withBudget({
+            targets: [...chf.targets, { currency: 'JPY', kinds: ['destination' as const] }],
+            rates: { ...chf.rates, JPY: jpy },
+          })}
+        />
+      );
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+      const card = screen.getByTestId('budget-also');
+      expect(card.textContent).toContain('Dans ta devise (CHF)');
+      expect(card.textContent).toContain('Dans la devise du pays (JPY)');
+      expect(card.textContent).toContain('1 € = 176,2 JPY · taux du 8 octobre 2026 · currency-api');
+    });
+
+    it('sans devise à montrer en plus, rien n’est ajouté', () => {
+      render(<CompasScreen data={withBudget(null)} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+      expect(screen.queryByTestId('budget-also')).toBeNull();
+    });
+
+    it('taux introuvable : la ligne le dit, aucun montant', () => {
+      render(<CompasScreen data={withBudget({ targets: chf.targets, rates: {} })} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+      const card = screen.getByTestId('budget-also');
+      expect(card.textContent).toContain('Conversion en CHF indisponible');
+      expect(card.textContent).not.toContain('≈');
+    });
+  });
+
   it('objet prêté : « Je l’ai récupéré » remet l’objet de l’inventaire en service', async () => {
     const INV = '77777777-7777-4777-8777-777777777777';
     const inventory = [
@@ -1237,6 +1315,31 @@ describe('CompasScreen', () => {
     fireEvent.click(within(sheet).getByRole('button', { name: /Refuge ou abri \(1\)/ }));
     expect(within(sheet).queryByText('Point d’eau')).toBeNull();
     expect(within(sheet).getByText(/contributeurs OpenStreetMap/)).toBeTruthy();
+    // Ces points viennent d'Overpass (et du catalogue, OpenStreetMap), jamais de Geoapify :
+    // « Powered by Geoapify » n'a rien à faire à côté (plan 5.3 : seulement là où ses résultats s'affichent).
+    expect(within(sheet).queryByRole('link', { name: 'Powered by Geoapify' })).toBeNull();
+    expect(within(sheet).queryByText(/Photon/)).toBeNull();
+  });
+
+  /* ---------- « Powered by Geoapify » à côté des distances qu'il mesure (plan 5.3) ---------- */
+
+  it('Parcours · étapes : une distance mesurée par Geoapify → son crédit, lien suivi', async () => {
+    const data = makeData();
+    data.itinerary = data.itinerary.map((st, i) => ({ ...st, distanceSource: i === 0 ? 'geoapify' : 'valhalla' }));
+    render(<CompasScreen data={data} />);
+    const sheet = await openOu(/Parcours/);
+    const credit = await within(sheet).findByRole('link', { name: 'Powered by Geoapify' });
+    expect(credit.getAttribute('href')).toBe('https://www.geoapify.com/');
+    expect(credit.getAttribute('rel') ?? '').not.toContain('nofollow');
+  });
+
+  it('Parcours · étapes : distances de Valhalla ou estimées → pas de crédit Geoapify', async () => {
+    const data = makeData();
+    data.itinerary = data.itinerary.map((st, i) => ({ ...st, distanceSource: i === 0 ? 'valhalla' : 'estimation' }));
+    render(<CompasScreen data={data} />);
+    const sheet = await openOu(/Parcours/);
+    expect(await within(sheet).findByText('Gavarnie')).toBeTruthy();
+    expect(within(sheet).queryByRole('link', { name: 'Powered by Geoapify' })).toBeNull();
   });
 
   it('tiroir : trois hauteurs (petit, moyen, grand) et fermeture en tirant la poignée', async () => {
@@ -1501,6 +1604,241 @@ describe('CompasScreen', () => {
     expect(within(sheet).queryByText(/NASA POWER/)).toBeNull();
   });
 
+  /* ---------- Alertes officielles : ce que Meteoalarm exige à l'affichage ---------- */
+
+  const mise = (over: Partial<OfficialAlert> = {}): OfficialAlert => ({
+    id: 'it-1',
+    source: 'Servizio Meteorologico dell’Aeronautica Militare (MeteoAM) via Meteoalarm',
+    hazard: 'vent violent',
+    level: 'orange',
+    area: 'Sardegna',
+    onset: '2026-10-12T06:00:00+02:00',
+    expires: '2026-10-12T21:00:00+02:00',
+    sent: '2026-10-10T16:00:00.000Z',
+    updatedSince: null,
+    fetchedAt: '2026-10-11T05:00:00.000Z',
+    headline: 'Allerta Arancione Vento per Italia - Sardegna',
+    web: 'https://www.meteoam.it/',
+    ...over,
+  });
+  const withAlert = (alert: OfficialAlert) => {
+    const data = makeData();
+    data.alertsStatus = 'partielles';
+    data.danger = assessDanger({ dayPlans: [], forecasts: [], alerts: [alert], alertsStatus: 'partielles' });
+    data.model = { ...data.model, verdict: mergeDangerIntoVerdict(data.model.verdict, data.danger) };
+    return data;
+  };
+
+  it('Sources : alertes officielles lues → Meteoalarm cité, avec son lien et l’avertissement mot pour mot', async () => {
+    const data = makeData();
+    data.alertsStatus = 'lues';
+    render(<CompasScreen data={data} />);
+    const sheet = await openSources();
+    expect(await within(sheet).findByText('Meteoalarm (alertes officielles des services nationaux)')).toBeTruthy();
+    const notice = within(sheet).getByTestId('meteoalarm-notice');
+    expect(notice.textContent).toContain(METEOALARM_DISCLAIMER);
+    const links = within(notice).getAllByRole('link');
+    expect(links.length).toBeGreaterThanOrEqual(2);
+    for (const a of links) expect(a.getAttribute('href')).toBe(METEOALARM_HOME);
+  });
+
+  it('Sources : pays non couvert ou alertes indisponibles → Meteoalarm n’est pas cité', async () => {
+    for (const status of ['non_couvert', 'indisponibles', 'zone_non_rapprochee'] as const) {
+      cleanup();
+      const data = makeData();
+      data.alertsStatus = status;
+      render(<CompasScreen data={data} />);
+      const sheet = await openSources();
+      expect(await within(sheet).findByText('Étapes et dépenses du voyage')).toBeTruthy();
+      expect(within(sheet).queryByText(/Meteoalarm/)).toBeNull();
+      expect(within(sheet).queryByTestId('meteoalarm-notice')).toBeNull();
+    }
+  });
+
+  it('Signaux du verdict : alerte orange → service national, heure d’émission, texte officiel, lien et avertissement', async () => {
+    render(<CompasScreen data={withAlert(mise())} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    const row = await within(sheet).findByText(/Vigilance orange · vent violent \(Sardegna\)/);
+    expect(row.textContent).toContain('émise le 10 oct. 2026, 16 h 00 UTC');
+    expect(row.textContent).toContain('texte officiel : « Allerta Arancione Vento per Italia - Sardegna »');
+    expect(
+      within(sheet).getByText(/Source : Servizio Meteorologico dell’Aeronautica Militare \(MeteoAM\) via Meteoalarm/)
+    ).toBeTruthy();
+    expect(within(sheet).getByTestId('meteoalarm-notice').textContent).toContain(METEOALARM_DISCLAIMER);
+  });
+
+  it('Verdict : la carte donne la même information, la même exigence', async () => {
+    render(<CompasScreen data={withAlert(mise())} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    const notice = await screen.findByTestId('meteoalarm-notice');
+    expect(notice.textContent).toContain(METEOALARM_DISCLAIMER);
+    expect(screen.getByText(/émise le 10 oct. 2026, 16 h 00 UTC/)).toBeTruthy();
+  });
+
+  it('CONTRE-EXEMPLE — sans alerte officielle affichée, ni lien ni avertissement Meteoalarm', async () => {
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    expect(within(sheet).queryByTestId('meteoalarm-notice')).toBeNull();
+    expect(screen.queryByTestId('meteoalarm-notice')).toBeNull();
+  });
+
+  it('Veille : une alerte jaune y figure avec son heure d’émission, et l’avertissement suit', async () => {
+    render(<CompasScreen data={withAlert(mise({ level: 'jaune' }))} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Veille/ }));
+    expect(await within(sheet).findByText('Vigilance officielle (services nationaux, via Meteoalarm)')).toBeTruthy();
+    expect(within(sheet).getByText(/Vigilance jaune · vent violent \(Sardegna\), émise le 10 oct. 2026, 16 h 00 UTC/)).toBeTruthy();
+    expect(within(sheet).getByTestId('meteoalarm-notice').textContent).toContain(METEOALARM_DISCLAIMER);
+  });
+
+  /** Ouvre la Veille du verdict et rend la ligne de la règle « Vigilance officielle ». */
+  const openVeilleAlertRule = async (data: CompasData) => {
+    render(<CompasScreen data={data} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Veille/ }));
+    const label = await within(sheet).findByText('Vigilance officielle (services nationaux, via Meteoalarm)');
+    return label.closest('li') as HTMLElement;
+  };
+
+  it('Veille : « Rien à signaler » seulement si les alertes ont été lues, sinon ce qui n’a pas été vérifié', async () => {
+    const cases = [
+      ['lues', 'Rien à signaler sur ce voyage.'],
+      ['partielles', 'Non vérifié : alertes officielles (zone reconnue en partie : d’autres alertes peuvent exister).'],
+      ['pas_encore_publiees', 'Non vérifié : alertes officielles (publiées la veille du départ).'],
+      ['non_couvert', 'Non vérifié : alertes officielles (pays non couvert par Meteoalarm).'],
+      ['zone_non_rapprochee', 'Non vérifié : alertes officielles (zone de l’étape non reconnue dans le flux Meteoalarm).'],
+      ['indisponibles', 'Non vérifié : alertes officielles.'],
+      [undefined, 'Non vérifié : alertes officielles.'],
+    ] as const;
+    for (const [status, expected] of cases) {
+      cleanup();
+      const data = makeData();
+      data.alertsStatus = status;
+      data.danger = assessDanger({ dayPlans: [], forecasts: [], alerts: [], alertsStatus: status });
+      const rule = await openVeilleAlertRule(data);
+      expect(rule.textContent, String(status)).toContain(expected);
+      if (status !== 'lues') expect(rule.textContent, String(status)).not.toContain('Rien à signaler');
+    }
+  });
+
+  it('Veille : le service national qui a émis l’alerte est nommé sur sa ligne (conditions de Meteoalarm, § 5)', async () => {
+    const rule = await openVeilleAlertRule(withAlert(mise({ level: 'jaune' })));
+    expect(rule.textContent).toContain('Vigilance jaune · vent violent (Sardegna), émise le 10 oct. 2026, 16 h 00 UTC');
+    expect(
+      within(rule).getByText('Source : Servizio Meteorologico dell’Aeronautica Militare (MeteoAM) via Meteoalarm')
+    ).toBeTruthy();
+  });
+
+  it('Veille : deux alertes, chacune avec son service', async () => {
+    const data = withAlert(mise({ level: 'jaune' }));
+    const autre = mise({
+      id: 'de-1',
+      level: 'orange',
+      hazard: 'orages',
+      area: 'Bayern',
+      source: 'Deutscher Wetterdienst (DWD) via Meteoalarm',
+      texts: undefined,
+    });
+    data.danger = assessDanger({ dayPlans: [], forecasts: [], alerts: [mise({ level: 'jaune' }), autre], alertsStatus: 'partielles' });
+    const rule = await openVeilleAlertRule(data);
+    expect(within(rule).getByText(/Source : Servizio Meteorologico/)).toBeTruthy();
+    expect(within(rule).getByText('Source : Deutscher Wetterdienst (DWD) via Meteoalarm')).toBeTruthy();
+  });
+
+  const TEXTES = [
+    {
+      lang: 'en-GB',
+      headline: 'Orange Wind Warning for Italy - Sardegna',
+      description: 'Strong winds|Gusts up to 90 km/h',
+      instruction: 'Avoid exposed ridges <script>alert(1)</script>',
+    },
+    { lang: 'it-IT', headline: 'Allerta Arancione Vento', description: 'Venti forti', instruction: 'Evitare le creste' },
+  ];
+
+  it('Signaux du verdict : la période de validité (UTC) est donnée en entier, la ligne ne se tronque pas', async () => {
+    render(<CompasScreen data={withAlert(mise())} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    const row = await within(sheet).findByText(/Vigilance orange · vent violent \(Sardegna\)/);
+    expect(row.textContent).toContain('valable du 12 oct. 2026, 4 h 00 UTC au 12 oct. 2026, 19 h 00 UTC');
+    // Meteoalarm veut le service et l'heure d'émission toujours visibles : pas de « … » sur une ligne fixe.
+    const line = row.closest('.cp-row');
+    expect(line?.className).toContain('cp-row--wrap');
+    expect(line?.className).toContain('cp-row--tall');
+  });
+
+  it('Signaux du verdict : le texte officiel (titre, description, consignes) de chaque langue, en texte, sans HTML interprété', async () => {
+    const data = withAlert(mise({ texts: TEXTES }));
+    render(<CompasScreen data={data} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    const official = await within(sheet).findByTestId('official-alert-texts');
+    expect(official.textContent).toContain('Texte officiel : Vigilance orange · vent violent (Sardegna)');
+    for (const phrase of ['Strong winds', 'Gusts up to 90 km/h', 'Avoid exposed ridges', 'Venti forti', 'Evitare le creste'])
+      expect(official.textContent).toContain(phrase);
+    // Le texte d'un tiers reste du texte.
+    expect(official.textContent).toContain('<script>alert(1)</script>');
+    expect(sheet.querySelector('script')).toBeNull();
+    expect(official.querySelectorAll('li')).toHaveLength(2);
+    expect(Array.from(official.querySelectorAll('[lang]')).map((n) => n.getAttribute('lang'))).toEqual(['en-GB', 'it-IT']);
+  });
+
+  it('Verdict : le texte officiel est à un geste de la carte (le bouton y mène, même sans autre signal)', async () => {
+    render(<CompasScreen data={withAlert(mise({ texts: TEXTES }))} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Texte officiel et détails/ }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    expect(await within(sheet).findByTestId('official-alert-texts')).toBeTruthy();
+  });
+
+  it('CONTRE-EXEMPLE — alerte sans texte détaillé : pas de rubrique « Texte officiel », le bouton garde son libellé', async () => {
+    render(<CompasScreen data={withAlert(mise())} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    expect(await screen.findByRole('button', { name: /Sources et détails/ })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Texte officiel et détails/ })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    expect(within(sheet).queryByTestId('official-alert-texts')).toBeNull();
+  });
+
+  it('l’heure de lecture du flux est donnée avec l’avertissement (une page restée ouverte ne se rafraîchit pas)', async () => {
+    const data = withAlert(mise());
+    data.alertsReadAt = '2026-10-11T05:03:00.000Z';
+    render(<CompasScreen data={data} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    const notice = await screen.findByTestId('meteoalarm-notice');
+    expect(notice.textContent).toContain('Flux lu le 11 oct. 2026, 5 h 03 UTC.');
+    expect(notice.textContent).toContain(METEOALARM_DISCLAIMER);
+  });
+
+  it('sans heure de lecture connue, l’avertissement reste complet et rien n’est inventé', async () => {
+    render(<CompasScreen data={withAlert(mise())} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    const notice = await screen.findByTestId('meteoalarm-notice');
+    expect(notice.textContent).not.toContain('Flux lu');
+    expect(notice.textContent).toContain(METEOALARM_DISCLAIMER);
+  });
+
+  it('Veille : le texte officiel d’une alerte jaune suit sa ligne', async () => {
+    render(<CompasScreen data={withAlert(mise({ level: 'jaune', texts: TEXTES }))} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Veille/ }));
+    const official = await within(sheet).findByTestId('official-alert-texts');
+    expect(official.textContent).toContain('Venti forti');
+  });
+
   it('Parcours : chercher un lieu, voir la communauté, choisir découpé sur les dates', async () => {
     compas.compasSearchRoutesAction.mockResolvedValueOnce({
       success: true,
@@ -1557,6 +1895,22 @@ describe('CompasScreen', () => {
         tripId: TRIP,
         tripSlug: 'trek-3-vallees',
         preferences: { pace: 'normal', nights: 'bivouac', avoid: [], wishes: [] },
+      })
+    );
+  });
+
+  it('Préférences : « Sans voiture » s’enregistre avec les autres réglages', async () => {
+    const context = resolveProjectContext({ activity: 'hiking', days: 4, hours: null, partySize: 2, month: 10, project: null, profile: null });
+    render(<CompasScreen data={{ ...makeData(), context }} />);
+    const sheet = await openOu(/Préférences/);
+    const pill = () => within(sheet).getByRole('button', { name: 'Sans voiture' }) as HTMLButtonElement;
+    expect(pill().getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(pill());
+    await waitFor(() =>
+      expect(compas.compasSetPreferencesAction).toHaveBeenLastCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        preferences: { pace: 'normal', nights: null, avoid: [], wishes: [], carFree: true },
       })
     );
   });
@@ -1769,6 +2123,90 @@ describe('CompasScreen', () => {
     expect(compas.compasClearStartSayAction).not.toHaveBeenCalled();
   });
 
+  describe('Phrase de départ : « Arrêter » pendant l’application des réglages', () => {
+    /** « rando à 4 » comprise, puis appliquée réglage par réglage (une écriture tenue en l’air). */
+    const sayFour = () => ({
+      success: true as const,
+      usedAi: false,
+      note: null,
+      proposals: [
+        {
+          id: '0-set_party_size',
+          action: { type: 'set_party_size', count: 4 },
+          label: '4 personnes',
+          ok: true,
+          reason: null,
+          source: 'regles',
+        },
+      ],
+    });
+    const noPlace = (): CompasData => ({
+      ...makeData({ trip: { ...baseTrip, destinationName: null, startDate: null, endDate: null }, steps: [] }),
+      autofill: 'none',
+      origin: null,
+      itinerary: [],
+      // Ni dates ni durée : la préparation ne part pas d'elle-même (le routeur simulé change
+      // à chaque rendu et relancerait sinon l'effet de départ pendant la compréhension).
+      plannedDays: null,
+      startSay: 'rando à 4',
+    });
+    /** Écriture du réglage tenue en l'air : la personne appuie sur « Arrêter » avant qu'elle réponde. */
+    const holdPartySize = (answer: { success: boolean; error?: string }) => {
+      let release: () => void = () => undefined;
+      compas.compasSetPartySizeAction.mockImplementationOnce(
+        () => new Promise((resolve) => (release = () => resolve(answer))) as never
+      );
+      return () => release();
+    };
+    const stopWhileApplying = async () => {
+      const panel = await screen.findByRole('status', { name: 'Préparation de l’aventure' });
+      await waitFor(() => expect(compas.compasSetPartySizeAction).toHaveBeenCalledTimes(1));
+      fireEvent.click(within(panel).getByRole('button', { name: 'Arrêter' }));
+      await waitFor(() => expect(autofill.compasAutofillStopAction).toHaveBeenCalledWith({ tripId: TRIP }));
+      expect(screen.getByText('Préparation arrêtée')).toBeTruthy();
+    };
+
+    it('les réglages se terminent : le panneau reste « arrêté », rien ne repart', async () => {
+      compas.compasInterpretAction.mockResolvedValueOnce(sayFour());
+      const release = holdPartySize({ success: true });
+      render(<CompasScreen data={noPlace()} />);
+      await stopWhileApplying();
+      release();
+      await new Promise((r) => setTimeout(r, 60));
+      // Avant : setPrep({ stage: 'itinerary' }) écrasait l'arrêt, le panneau restait bloqué.
+      expect(screen.getByText('Préparation arrêtée')).toBeTruthy();
+      expect(screen.queryByText('Je prépare ton aventure…')).toBeNull();
+      expect(autofill.compasAutofillStartAction).not.toHaveBeenCalled();
+      // La phrase reste sur le voyage : « Reprendre » (ou la prochaine visite) la rejoue.
+      expect(compas.compasClearStartSayAction).not.toHaveBeenCalled();
+    });
+
+    it('un réglage refusé pendant ce temps ne remplace pas l’arrêt par une erreur', async () => {
+      compas.compasInterpretAction.mockResolvedValueOnce(sayFour());
+      const release = holdPartySize({ success: false, error: 'Connexion perdue' });
+      render(<CompasScreen data={noPlace()} />);
+      await stopWhileApplying();
+      release();
+      await new Promise((r) => setTimeout(r, 60));
+      expect(screen.getByText('Préparation arrêtée')).toBeTruthy();
+      expect(screen.queryByText('Préparation interrompue')).toBeNull();
+      expect(autofill.compasAutofillStartAction).not.toHaveBeenCalled();
+    });
+
+    it('« Reprendre » après cet arrêt rejoue la phrase puis lance la préparation', async () => {
+      compas.compasInterpretAction.mockResolvedValueOnce(sayFour()).mockResolvedValueOnce(sayFour());
+      const release = holdPartySize({ success: true });
+      render(<CompasScreen data={noPlace()} />);
+      await stopWhileApplying();
+      release();
+      await new Promise((r) => setTimeout(r, 60));
+      fireEvent.click(screen.getByRole('button', { name: /Reprendre|Réessayer/ }));
+      await waitFor(() => expect(compas.compasInterpretAction).toHaveBeenCalledTimes(2));
+      await waitFor(() => expect(compas.compasClearStartSayAction).toHaveBeenCalledWith({ tripId: TRIP }));
+      expect(screen.queryByText('Préparation arrêtée')).toBeNull();
+    });
+  });
+
   it('Dis-le : les propositions refusées ne s’appliquent pas, les autres oui', async () => {
     compas.compasInterpretAction.mockResolvedValueOnce({
       success: true,
@@ -1944,4 +2382,561 @@ describe('CompasScreen : réadaptation après un réglage', () => {
     rerender(<CompasScreen data={stale(['transport', 'budget'])} />);
     await waitFor(() => expect(autofill.compasRefreshAutofillAction).toHaveBeenCalledTimes(2));
   });
+});
+
+/* Lot Q, PLAN-100 5.2 — accessibilité (WCAG 2.2 AA) de l'écran et des tiroirs. */
+describe('CompasScreen : accessibilité (lot Q, 5.2)', () => {
+  afterEach(() => cleanup());
+
+  const openKitAll = async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Kit' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Kit' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Tout/ }));
+    return sheet;
+  };
+
+  describe('KitRow : une ligne, un bouton, aucune commande dans une commande', () => {
+    it('aucun bouton, lien ou role=button n’en contient un autre', async () => {
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openKitAll();
+      const rows = sheet.querySelectorAll('.cp-row');
+      expect(rows.length).toBe(2);
+      expect(
+        sheet.querySelectorAll(
+          '[role="button"] button, [role="button"] a, button button, button a, a button'
+        ).length
+      ).toBe(0);
+      for (const row of rows) {
+        // La ligne n’est plus elle-même un bouton ; sa commande principale en est un vrai.
+        expect(row.getAttribute('role')).toBeNull();
+        expect(row.getAttribute('tabindex')).toBeNull();
+        expect(row.querySelector('button.cp-row__main')).toBeTruthy();
+      }
+    });
+
+    it('Entrée ouvre la fiche de l’objet', async () => {
+      const user = userEvent.setup();
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openKitAll();
+      const main = within(sheet).getByText('Sac de couchage').closest('button') as HTMLButtonElement;
+      main.focus();
+      await user.keyboard('{Enter}');
+      expect(await screen.findByRole('dialog', { name: 'Sac de couchage' })).toBeTruthy();
+    });
+
+    it('Espace ouvre la fiche de l’objet', async () => {
+      const user = userEvent.setup();
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openKitAll();
+      const main = within(sheet).getByText('Sac de couchage').closest('button') as HTMLButtonElement;
+      main.focus();
+      await user.keyboard(' ');
+      expect(await screen.findByRole('dialog', { name: 'Sac de couchage' })).toBeTruthy();
+    });
+
+    it('Espace sur « Emballer » emballe sans ouvrir la fiche', async () => {
+      const user = userEvent.setup();
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openKitAll();
+      const pack = within(sheet).getByRole('button', { name: 'Emballer Sac de couchage' });
+      pack.focus();
+      await user.keyboard(' ');
+      await waitFor(() =>
+        expect(kit.togglePackedAction).toHaveBeenCalledWith(SLEEP, true, 'trek-3-vallees')
+      );
+      expect(screen.queryByRole('dialog', { name: 'Sac de couchage' })).toBeNull();
+    });
+
+    it('le clic sur la ligne ouvre toujours la fiche', async () => {
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openKitAll();
+      fireEvent.click(within(sheet).getByText('Sac de couchage'));
+      expect(await screen.findByRole('dialog', { name: 'Sac de couchage' })).toBeTruthy();
+    });
+  });
+  describe('Calendrier des conditions : la qualité est dite, pas seulement colorée', () => {
+    const openQuand = async (weather: CompasData['weather']) => {
+      const data = makeData();
+      data.weather = weather;
+      render(<CompasScreen data={data} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
+      fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
+      const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
+      fireEvent.click(within(sheet).getByRole('button', { name: /Quand/ }));
+      return sheet;
+    };
+    const day = (n: number) => `2026-10-${String(n).padStart(2, '0')}`;
+
+    it('chaque jour porte une forme propre à sa qualité et à sa nature, en plus de la couleur et du libellé', async () => {
+      const kinds = [
+        ['prevision', 'bon'],
+        ['prevision', 'moyen'],
+        ['prevision', 'mauvais'],
+        ['tendance', 'bon'],
+        ['tendance', 'moyen'],
+        ['tendance', 'mauvais'],
+      ] as const;
+      const calendar = [
+        ...kinds.map(([kind, quality], i) => ({
+          date: day(10 + i),
+          kind: kind as 'prevision' | 'tendance',
+          quality: quality as 'bon' | 'moyen' | 'mauvais',
+          reasons: [] as string[],
+          tMin: 4,
+          tMax: 14,
+        })),
+        { date: day(16), kind: 'inconnu' as const, quality: null, reasons: [] as string[], tMin: null, tMax: null },
+      ];
+      const sheet = await openQuand({
+        source: 'MET Norway',
+        trendSource: 'NASA POWER',
+        horizon: day(12),
+        tripDays: [],
+        calendar,
+      });
+      const cell = (d: number) =>
+        within(sheet).getByRole('button', { name: new RegExp(`\\b${d} oct\\.? :`) });
+      const shape = (d: number) => cell(d).querySelector('i')?.textContent ?? '';
+      // prévision : forme pleine ; tendance : même forme, creuse
+      expect(shape(10)).toBe('●');
+      expect(shape(11)).toBe('◆');
+      expect(shape(12)).toBe('▲');
+      expect(shape(13)).toBe('○');
+      expect(shape(14)).toBe('◇');
+      expect(shape(15)).toBe('△');
+      // pas de donnée : aucune forme de qualité
+      expect(shape(16)).toBe('');
+      // le libellé dit la qualité en toutes lettres
+      expect(cell(11).getAttribute('aria-label')).toMatch(/conditions moyennes \(prévision\)/);
+      expect(cell(15).getAttribute('aria-label')).toMatch(/mauvaises conditions \(tendance\)/);
+      expect(cell(16).getAttribute('aria-label')).toMatch(/pas de donnée/);
+      // les formes sont décoratives : le libellé suffit aux lecteurs d’écran
+      expect(cell(10).querySelector('i')?.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('la légende nomme chaque forme, sans passer par la couleur', async () => {
+      const sheet = await openQuand({
+        source: 'MET Norway',
+        trendSource: 'NASA POWER',
+        horizon: day(12),
+        tripDays: [],
+        calendar: [{ date: day(12), kind: 'prevision', quality: 'bon', reasons: [], tMin: 4, tMax: 14 }],
+      });
+      const legend = sheet.querySelector('.cp-cal__legend') as HTMLElement;
+      expect(legend.textContent).toMatch(/●\s*bon/);
+      expect(legend.textContent).toMatch(/◆\s*moyen/);
+      expect(legend.textContent).toMatch(/▲\s*mauvais/);
+      expect(legend.textContent).toMatch(/forme pleine\s*:\s*prévision/);
+      expect(legend.textContent).toMatch(/forme creuse\s*:\s*tendance/);
+    });
+
+    it('heure par heure : la qualité de chaque heure est dite en texte, avec ses raisons', async () => {
+      const hour = (hh: string, o: Partial<{ code: number; precipPct: number; gustKmh: number }>) => ({
+        time: `2026-10-12T${hh}:00`,
+        tempC: 9,
+        precipPct: o.precipPct ?? 10,
+        precipMm: 0,
+        windKmh: 10,
+        gustKmh: o.gustKmh ?? 15,
+        code: o.code ?? 1,
+        freezingM: null,
+        isDay: true,
+      });
+      const sheet = await openQuand({
+        source: 'MET Norway',
+        trendSource: 'NASA POWER',
+        horizon: day(20),
+        calendar: [{ date: day(12), kind: 'prevision', quality: 'bon', reasons: [], tMin: 4, tMax: 14 }],
+        tripDays: [
+          {
+            day: 1,
+            date: day(12),
+            lat: 42.73,
+            lon: -0.01,
+            forecast: {
+              date: day(12),
+              tMin: 4,
+              tMax: 14,
+              precipPct: 20,
+              precipMm: 1,
+              gustMax: 30,
+              code: 2,
+              sunrise: '07:40',
+              sunset: '19:10',
+              hours: [hour('09', {}), hour('11', { precipPct: 50 }), hour('14', { precipPct: 85, gustKmh: 65 })],
+            },
+          },
+        ],
+      });
+      const strip = within(sheet).getByLabelText('Heure par heure');
+      const chips = Array.from(strip.querySelectorAll<HTMLElement>('.cp-hour'));
+      expect(chips).toHaveLength(3);
+      expect(chips[0].textContent).toMatch(/bonnes conditions/);
+      expect(chips[1].textContent).toMatch(/conditions moyennes/);
+      expect(chips[1].textContent).toMatch(/pluie 50 %/);
+      expect(chips[2].textContent).toMatch(/mauvaises conditions/);
+      expect(chips[2].textContent).toMatch(/rafales 65 km\/h/);
+      // forme de qualité visible, décorative
+      expect(chips[2].querySelector('i[aria-hidden="true"]')?.textContent).toBe('▲');
+    });
+  });
+
+  describe('Pastilles d’alerte des étapes : annoncées au lecteur d’écran', () => {
+    // Le calcul du nom accessible de jsdom met une espace entre éléments frères.
+    const alertName = (step: string, cause: string) => new RegExp(`^${step} ?, alerte : ${cause}$`);
+
+    it('une étape en alerte dit pourquoi dans son nom accessible, la pastille reste décorative', () => {
+      render(<CompasScreen data={makeData()} />);
+      // Sac de couchage vital à trouver → alerte rouge sur le Kit.
+      const kitStep = within(stepsNav()).getByRole('button', {
+        name: alertName('Kit', 'objet vital à trouver'),
+      });
+      const dot = kitStep.querySelector('.cp-step__dot') as HTMLElement;
+      expect(dot.getAttribute('data-tone')).toBe('bad');
+      expect(dot.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('les icônes des étapes sont décoratives : le nom du glyphe n’est plus lu avant l’étape', () => {
+      render(<CompasScreen data={makeData()} />);
+      expect(within(stepsNav()).queryByRole('img')).toBeNull();
+    });
+
+    it('une étape sans alerte garde son nom simple', () => {
+      render(<CompasScreen data={makeData()} />);
+      const ou = within(stepsNav()).getByRole('button', { name: 'Où' });
+      expect(ou.querySelector('.cp-step__dot')).toBeNull();
+    });
+
+    it('chaque alerte se dit selon sa cause', () => {
+      const data = makeData({ trip: { ...baseTrip, startDate: null, endDate: null } });
+      render(<CompasScreen data={data} />);
+      const nav = stepsNav();
+      expect(within(nav).getByRole('button', { name: alertName('Où', 'dates à choisir') })).toBeTruthy();
+      expect(
+        within(nav).getByRole('button', { name: /^Verdict ?, alerte : (voyage bloqué|points à vérifier)$/ })
+      ).toBeTruthy();
+    });
+  });
+
+  describe('« Annuler » : délai assez long et réglable, erreurs annoncées', () => {
+    const openPrefs = async () => {
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
+      fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
+      const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
+      fireEvent.click(within(sheet).getByRole('button', { name: /Préférences/ }));
+      return sheet;
+    };
+    const undoButton = () => screen.queryByRole('button', { name: 'Annuler' });
+    const bivouac = (sheet: HTMLElement) =>
+      fireEvent.click(within(sheet).getByRole('button', { name: /Bivouac/ }));
+    const DISPLAY_KEY = 'lkdv.compas.affichage';
+
+    afterEach(() => {
+      vi.useRealTimers();
+      window.localStorage.removeItem(DISPLAY_KEY);
+    });
+
+    it('« Annuler » reste proposé bien plus que 6 s, puis disparaît', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openPrefs();
+      bivouac(sheet);
+      await screen.findByRole('button', { name: 'Annuler' });
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(undoButton()).not.toBeNull();
+      await vi.advanceTimersByTimeAsync(7_000);
+      await waitFor(() => expect(undoButton()).toBeNull());
+    });
+
+    it('le délai est suspendu tant que l’annonce a le focus ou le pointeur, et repart ensuite', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openPrefs();
+      bivouac(sheet);
+      const undo = await screen.findByRole('button', { name: 'Annuler' });
+      fireEvent.focus(undo);
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(undoButton()).not.toBeNull();
+      fireEvent.blur(undo);
+      await vi.advanceTimersByTimeAsync(5_000);
+      expect(undoButton()).not.toBeNull();
+      await vi.advanceTimersByTimeAsync(12_000);
+      await waitFor(() => expect(undoButton()).toBeNull());
+
+      // Même chose au pointeur.
+      bivouac(sheet);
+      const again = await screen.findByRole('button', { name: 'Annuler' });
+      const island = again.closest('.cp-island') as HTMLElement;
+      fireEvent.pointerEnter(island);
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(undoButton()).not.toBeNull();
+      fireEvent.pointerLeave(island);
+      await vi.advanceTimersByTimeAsync(17_000);
+      await waitFor(() => expect(undoButton()).toBeNull());
+    });
+
+    it('la durée est réglable dans « Affichage » et gardée sur l’appareil', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      render(<CompasScreen data={makeData()} />);
+      fireEvent.click(screen.getByRole('button', { name: /^Affichage/ }));
+      const popover = screen.getByRole('dialog', { name: 'Affichage' });
+      const choice = within(popover).getByRole('combobox', { name: /Durée de « Annuler »/ });
+      expect((choice as HTMLSelectElement).value).toBe('15');
+      fireEvent.change(choice, { target: { value: '30' } });
+      expect(JSON.parse(window.localStorage.getItem(DISPLAY_KEY) ?? '{}').undoS).toBe(30);
+
+      const sheet = await openPrefs();
+      bivouac(sheet);
+      await screen.findByRole('button', { name: 'Annuler' });
+      await vi.advanceTimersByTimeAsync(25_000);
+      expect(undoButton()).not.toBeNull();
+      await vi.advanceTimersByTimeAsync(7_000);
+      await waitFor(() => expect(undoButton()).toBeNull());
+    });
+
+    it('un réglage enregistré est relu au démarrage, une valeur inconnue est ignorée', async () => {
+      window.localStorage.setItem(DISPLAY_KEY, JSON.stringify({ outdoor: false, glass: 0.6, v: 2, undoS: 8 }));
+      render(<CompasScreen data={makeData()} />);
+      fireEvent.click(screen.getByRole('button', { name: /^Affichage/ }));
+      await waitFor(() =>
+        expect(
+          (within(screen.getByRole('dialog', { name: 'Affichage' })).getByRole('combobox', {
+            name: /Durée de « Annuler »/,
+          }) as HTMLSelectElement).value
+        ).toBe('8')
+      );
+      cleanup();
+      window.localStorage.setItem(DISPLAY_KEY, JSON.stringify({ outdoor: false, glass: 0.6, v: 2, undoS: 3 }));
+      render(<CompasScreen data={makeData()} />);
+      fireEvent.click(screen.getByRole('button', { name: /^Affichage/ }));
+      expect(
+        (within(screen.getByRole('dialog', { name: 'Affichage' })).getByRole('combobox', {
+          name: /Durée de « Annuler »/,
+        }) as HTMLSelectElement).value
+      ).toBe('15');
+    });
+
+    it('une erreur d’action est annoncée en role="alert" et reste lisible plus de 4 s', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      compas.compasSetPreferencesAction.mockResolvedValueOnce({
+        success: false,
+        error: 'Refusé par le serveur',
+      } as never);
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openPrefs();
+      bivouac(sheet);
+      const alert = await screen.findByRole('alert');
+      expect(alert.textContent).toContain('Refusé par le serveur');
+      await vi.advanceTimersByTimeAsync(8_000);
+      expect(screen.queryByRole('alert')).not.toBeNull();
+    });
+
+    it('une annonce de réussite reste un role="status", pas une alerte', async () => {
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openPrefs();
+      bivouac(sheet);
+      await screen.findByRole('button', { name: 'Annuler' });
+      expect(screen.queryByRole('alert')).toBeNull();
+      expect(screen.getByRole('status').textContent).toContain('Annuler');
+    });
+
+    it('une erreur de chargement dans un tiroir est annoncée en role="alert"', async () => {
+      compas.compasListMyKitsAction.mockResolvedValueOnce({
+        success: false,
+        error: 'Kits indisponibles',
+      } as never);
+      render(<CompasScreen data={makeData()} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Détails : Kit' }));
+      const sheet = await screen.findByRole('dialog', { name: 'Kit' });
+      fireEvent.click(within(sheet).getByRole('button', { name: /Mes kits/ }));
+      const alert = await within(sheet).findByRole('alert');
+      expect(alert.textContent).toBe('Kits indisponibles');
+    });
+  });
+
+  describe('Ce que porte un `title` est aussi dit au clavier et au lecteur d’écran', () => {
+    const describedBy = (el: HTMLElement) =>
+      (el.getAttribute('aria-describedby') ?? '')
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((id) => document.getElementById(id)?.textContent ?? '')
+        .join(' ')
+        .trim();
+    const openFlow = async (flow: RegExp) => {
+      render(<CompasScreen data={makeData()} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
+      fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
+      const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
+      fireEvent.click(
+        within(within(sheet).getByRole('group', { name: 'Parcours du tiroir' })).getByRole('button', {
+          name: flow,
+        })
+      );
+      return sheet;
+    };
+
+    it('les activités : la description de chacune est lue avec elle, pas seulement au survol', async () => {
+      const sheet = await openFlow(/Activité/);
+      const tiles = within(within(sheet).getByRole('group', { name: 'Activités' })).getAllByRole('button');
+      expect(tiles.length).toBeGreaterThan(3);
+      for (const t of tiles) {
+        expect(t.getAttribute('title')).toBeTruthy();
+        expect(describedBy(t)).toBe(t.getAttribute('title'));
+      }
+    });
+
+    it('« Dis-le » : l’exemple est une description du champ, pas une info-bulle seule', async () => {
+      const sheet = await openFlow(/Quand/);
+      const field = within(sheet).getByLabelText('Dis-le');
+      expect(describedBy(field)).toMatch(/3 jours à 4, départ samedi/);
+    });
+
+    it('carte, calques sans point : « aucun » est écrit, pas seulement dans une info-bulle', async () => {
+      render(<CompasScreen data={makeData()} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Personnaliser la carte' }));
+      const panel = screen.getByRole('dialog', { name: 'Personnaliser la carte' });
+      const empty = within(panel)
+        .getAllByRole('switch')
+        .filter((b) => (b as HTMLButtonElement).disabled);
+      expect(empty.length).toBeGreaterThan(0);
+      for (const b of empty) expect(b.textContent).toMatch(/aucun/);
+    });
+
+    it('Résa : une nuit sans hébergement est une image nommée, pas une lettre « H » sous info-bulle', () => {
+      render(<CompasScreen data={makeData()} initialStep="resa" />);
+      const slots = document.querySelectorAll<HTMLElement>('.cp-slot');
+      expect(slots.length).toBeGreaterThan(0);
+      for (const slot of slots) {
+        expect(slot.getAttribute('role')).toBe('img');
+        expect(slot.getAttribute('aria-label')).toBe(slot.getAttribute('title'));
+      }
+      expect(within(document.body).getByRole('img', { name: 'Nuit sans hébergement' })).toBeTruthy();
+    });
+
+    it('Nous : les avatars (décoratifs) sont doublés par la liste des noms', () => {
+      render(<CompasScreen data={makeData()} initialStep="nous" />);
+      expect(screen.getByText('Équipe : Tony, Léa')).toBeTruthy();
+    });
+
+    it('Verdict : la note d’un axe de danger est dans le texte de la pastille, pas seulement en info-bulle', () => {
+      render(<CompasScreen data={makeData()} initialStep="verdict" />);
+      const chips = document.querySelectorAll<HTMLElement>('.cp-tchip--axis[title]');
+      expect(chips.length).toBeGreaterThan(0);
+      for (const chip of chips) expect(chip.textContent).toContain(chip.getAttribute('title') as string);
+    });
+
+    it('« Annuler » annonce son raccourci clavier', async () => {
+      const sheet = await openFlow(/Préférences/);
+      fireEvent.click(within(sheet).getByRole('button', { name: /Bivouac/ }));
+      const undo = await screen.findByRole('button', { name: 'Annuler' });
+      expect(undo.getAttribute('aria-keyshortcuts')).toBe('Control+Z Meta+Z');
+    });
+
+    it('l’onglet précédent nomme sa destination dans son nom accessible', async () => {
+      const sheet = await openFlow(/Quand/);
+      const prev = within(sheet).getByRole('button', { name: /Onglet précédent/ });
+      expect(prev.getAttribute('aria-label')).toMatch(/^Onglet précédent : \S+/);
+    });
+  });
+
+  describe('axe-core : l’écran et chacun des tiroirs, zéro violation WCAG A/AA', () => {
+    /* jsdom n'a ni mise en page ni couleurs : le contraste reste mesuré dans le
+       navigateur (tests/a11y, Playwright). Tout le reste des règles A/AA tourne ici. */
+    const scan = async (root: Element): Promise<string[]> => {
+      const res = await axe.run(root as HTMLElement, {
+        runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] },
+        rules: {
+          'color-contrast': { enabled: false },
+          // Fragment de page : ni <main> ni repères de document ici.
+          region: { enabled: false },
+          'landmark-one-main': { enabled: false },
+          'page-has-heading-one': { enabled: false },
+        },
+      });
+      return res.violations.map(
+        (v) => `${v.id} (${v.impact}) : ${v.nodes.map((n) => n.target.join(' ')).slice(0, 3).join(' | ')}`
+      );
+    };
+
+    it('le balayage détecte bien un défaut (témoin : un bouton dans un role="button", l’ancien KitRow)', async () => {
+      const { container } = render(
+        <div role="button" tabIndex={0}>
+          <button type="button" aria-label="Emballer">
+            x
+          </button>
+        </div>
+      );
+      const found = await scan(container);
+      expect(found.some((f) => f.startsWith('nested-interactive'))).toBe(true);
+    });
+
+    it('l’écran du Compas, sur chacune des cinq étapes', async () => {
+      for (const step of ['ou', 'nous', 'resa', 'verdict', 'kit'] as const) {
+        render(<CompasScreen data={makeData()} initialStep={step} />);
+        expect(await scan(document.body), `étape ${step}`).toEqual([]);
+        cleanup();
+      }
+    });
+
+    it('fiche d’un objet, porteur, Emprunter / Louer / Acheter, Ajouter au kit, sac d’un membre', async () => {
+      render(<CompasScreen data={makeData()} initialStep="kit" />);
+      const settle = () => new Promise((r) => setTimeout(r, 50));
+      const current = async () => {
+        await settle();
+        return screen.getByRole('dialog');
+      };
+      const click = async (name: RegExp) => {
+        fireEvent.click(within(await current()).getByRole('button', { name }));
+        await settle();
+      };
+      fireEvent.click(screen.getByRole('button', { name: /^Détails : / }));
+      await click(/Tout/);
+      // fiche de l'objet à trouver (sac de couchage), puis ses quatre sorties
+      fireEvent.click(within(await current()).getByText('Sac de couchage'));
+      expect(await scan(await current()), 'fiche objet').toEqual([]);
+      await click(/Porteur/);
+      expect(await scan(await current()), 'porteur').toEqual([]);
+      await click(/^Retour$/);
+      await click(/Acheter/);
+      expect(await scan(await current()), 'acheter').toEqual([]);
+      await click(/^Retour$/);
+      await click(/Emprunter/);
+      expect(await scan(await current()), 'emprunter').toEqual([]);
+      await click(/^Retour$/);
+      await click(/Louer/);
+      expect(await scan(await current()), 'louer').toEqual([]);
+      // ajouter au kit, puis sac d'un membre (flux « Sacs »)
+      cleanup();
+      render(<CompasScreen data={makeData()} initialStep="kit" />);
+      fireEvent.click(screen.getByRole('button', { name: /^Détails : / }));
+      await click(/Tout/);
+      await click(/Ajouter au kit/);
+      expect(await scan(await current()), 'ajouter au kit').toEqual([]);
+      cleanup();
+      render(<CompasScreen data={makeData()} initialStep="kit" />);
+      fireEvent.click(screen.getByRole('button', { name: /^Détails : / }));
+      await click(/Sacs/);
+      fireEvent.click(within(await current()).getAllByRole('button', { name: /Tony/ })[0]);
+      expect(await scan(await current()), 'sac d’un membre').toEqual([]);
+    });
+
+    const CASES = (Object.keys(STEP_FLOWS) as Array<keyof typeof STEP_FLOWS>).flatMap((step) =>
+      STEP_FLOWS[step].map((f) => [step, f.id, f.label] as const)
+    );
+    it.each(CASES)('tiroir %s / %s (%s)', async (step, _flow, label) => {
+      render(<CompasScreen data={makeData()} initialStep={step} />);
+      fireEvent.click(screen.getByRole('button', { name: /^Détails : / }));
+      const sheet = await screen.findByRole('dialog');
+      const tabs = within(sheet).getByRole('group', { name: 'Parcours du tiroir' });
+      const tab = within(tabs)
+        .getAllByRole('button')
+        .find((b) => b.textContent?.trim() === label);
+      expect(tab, `onglet ${label}`).toBeTruthy();
+      fireEvent.click(tab as HTMLElement);
+      // Les parcours chargent parfois (Mes kits, bouteille…) : on laisse l'état se poser.
+      await new Promise((r) => setTimeout(r, 50));
+      expect(await scan(screen.getByRole('dialog')), `${step}/${label}`).toEqual([]);
+    });
+  });
+
 });

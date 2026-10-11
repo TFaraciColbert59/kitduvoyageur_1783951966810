@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, type ReactNode, type UIEvent } from 'react';
 import Icon from '@/components/ui/Icon';
+import { trapTab, useFocusReturn } from './focusTrap';
 
 export type Detent = 'small' | 'medium' | 'large';
 
@@ -12,7 +13,8 @@ export type Detent = 'small' | 'medium' | 'large';
  * - `large`  : recouvre l'écran du Compas.
  * La poignée se tire (haut = agrandir, bas = réduire puis fermer) ou se touche
  * (petit → moyen → grand, puis retour au moyen). Échap ferme. Le focus entre
- * dans le tiroir à l'ouverture.
+ * dans le tiroir à l'ouverture, y reste piégé (Tab et Maj+Tab bouclent) et
+ * revient à l'élément qui l'avait ouvert à la fermeture (`focusTrap.ts`).
  */
 export function CompasSheet({
   title,
@@ -64,10 +66,18 @@ export function CompasSheet({
     lastTop.current = top;
   };
 
+  // Le focus entre dans le tiroir à l'ouverture et revient à l'élément qui
+  // l'avait ouvert à la fermeture (WCAG 2.4.3).
+  useFocusReturn();
   useEffect(() => {
     ref.current?.focus({ preventScroll: true });
+  }, []);
+
+  // Échap ferme ; Tab et Maj+Tab bouclent dans le tiroir (WCAG 2.1.2 / 2.4.3).
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
+      else if (e.key === 'Tab') trapTab(e, ref.current);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);

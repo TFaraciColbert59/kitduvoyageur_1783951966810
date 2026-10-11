@@ -105,6 +105,7 @@ const CONTRACT = [
   '  {"type": "set_distance", "km": 20},',
   '  {"type": "set_level", "level": "debut | regulier | aguerri"},',
   '  {"type": "set_terrain", "terrain": "sentier | montagne | hors_sentier | itinerance | urbain_transit"},',
+  '  {"type": "set_car_free"},',
   '  {"type": "avoid", "label": "ce qu il faut eviter, 1 a 5 mots"},',
   '  {"type": "wish", "label": "une envie, 1 a 5 mots"},',
   '  {"type": "add_item", "name": "objet a ajouter au sac", "quantity": 1},',
@@ -126,6 +127,7 @@ export function buildCompasIntentSystem(): string {
     '4. « 2 nuits » = 3 jours. « une semaine » = 7 jours. « ce week-end » = samedi, 2 jours.',
     '5. Ne mets jamais de prix, de disponibilite ni de lieu que la phrase ne nomme pas.',
     '6. « dormir dehors 3 nuits » ou « 3 nuits en bivouac » = set_outdoor_nights (ce n est PAS une duree). « sous 12 kg » = set_max_pack. « surtout de la montagne » = set_terrain montagne. « je debute » = set_level debut. « courir », « footing » = running.',
+    '6b. « sans voiture », « sans louer de voiture », « en transports en commun » = set_car_free (jamais avoid). « village sans voiture » decrit un lieu : rien.',
     '7. « depuis Lyon », « au depart de Geneve », « en partant d Annecy » = set_origin (le lieu d ou l on part), jamais set_destination.',
     '8. Phrase vide de demande : {"actions": []}.',
   ].join('\n');

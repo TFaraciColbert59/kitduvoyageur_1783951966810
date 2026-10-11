@@ -4,24 +4,45 @@
  * L'IA écrivait « pense à ton passeport » pour le Portugal : les papiers sont
  * décidés ici, sur des listes sûres, et chaque affirmation dépend de ce qu'on SAIT
  * de la personne (profil voyageur) :
- *  - papiers et formalités : sa NATIONALITÉ. Française : les listes ci-dessous et
- *    France Diplomatie (règles d'avant le profil, inchangées). Inconnue ou autre :
- *    rien d'affirmé, une seule ligne qui renvoie au service officiel de son pays
- *    (la vraie table passeport × destination est le lot Q) ; rien quand aucune
- *    frontière n'est passée (son propre pays, ou départ déjà dans le pays) ;
+ *  - papiers et formalités : sa NATIONALITÉ. Quand la table passeport × destination
+ *    (travelrequirements.info, `engine/entry.ts`) a une ligne confirmée pour elle,
+ *    la ligne « Papiers » vient de la table, avec sa date de vérification. Sinon :
+ *    française, les listes ci-dessous et France Diplomatie (règles d'avant le
+ *    profil, inchangées ; la carte d'identité en Europe, que la table ne dit pas,
+ *    garde la liste interne) ; inconnue ou autre, rien d'affirmé, une seule ligne
+ *    qui renvoie au service officiel de son pays. Rien quand aucune frontière
+ *    n'est passée (son propre pays, ou départ déjà dans le pays) ;
  *  - prises : son PAYS DE RÉSIDENCE (ses appareils). En France (ou nationalité
  *    française sans résidence dite) : l'adaptateur est dit ; sinon seulement le
  *    type de prise du pays, un fait ;
  *  - change : sa DEVISE. En zone euro, les conseils de change de l'IA ne sont
  *    gardés que pour une personne dont la devise connue n'est pas l'euro.
  * Les conseils de l'IA qui doublent une règle sont écartés (`keepAiNote`).
+ *
+ * VIE PRIVÉE : la ligne « Papiers » dépend de la nationalité, donc ne se range JAMAIS sur le
+ * voyage (`trips.metadata` est lisible par les collaborateurs et, pour un voyage public, par
+ * tous : le groupe de passeports de la table ne contient parfois qu'une nationalité). Le
+ * voyage garde la ligne SANS nationalité (`sharedPapersNotes`) ; la ligne de la personne qui
+ * regarde se calcule à la lecture, avec SON profil (`notesForReader`).
  */
 
 import { entryFees } from './costs';
+import { describeEntry, entryFor, frenchDay, type EntryKind, type EntryRequirement } from './entry';
 import { UNKNOWN_TRAVELLER, type TravellerContext } from './traveller';
 
-/** `sur_place` : aucune frontière à passer (départ déjà dans le pays), rien à dire. */
-export type PapersKind = 'domestique' | 'carte' | 'passeport' | 'a_verifier' | 'sur_place';
+/**
+ * `sur_place` : aucune frontière à passer (départ déjà dans le pays), rien à dire.
+ * `visa` : visa, autorisation ou permis à obtenir (d'après la table) ; `libre_circulation` :
+ * pas de formalité de frontière (d'après la table).
+ */
+export type PapersKind =
+  | 'domestique'
+  | 'carte'
+  | 'passeport'
+  | 'visa'
+  | 'libre_circulation'
+  | 'a_verifier'
+  | 'sur_place';
 
 export interface TravelPapers {
   papers: PapersKind | null;
@@ -66,13 +87,17 @@ const FRENCH_PLUGS = set(
 
 /**
  * Papiers, monnaie et prises pour CE voyageur. `abroad` : faux quand le départ est
- * déjà dans le pays de destination (`abroadOf`), null quand on ne sait pas.
+ * déjà dans le pays de destination (`abroadOf`), null quand on ne sait pas. `entry` :
+ * ce que la table passeport × destination dit pour sa nationalité et ce pays
+ * (`server/entryRequirements.ts`, via `entryFor`) ; null ou « non confirmé » : les règles
+ * d'avant. Ignorée sans nationalité connue.
  */
 export function travelPapers(
   countryCode: string | null | undefined,
   countryName?: string | null,
   traveller: TravellerContext = UNKNOWN_TRAVELLER,
-  abroad: boolean | null = null
+  abroad: boolean | null = null,
+  entry: EntryRequirement | null = null
 ): TravelPapers {
   const cc = (countryCode ?? '').toUpperCase();
   if (!/^[A-Z]{2}$/.test(cc)) return { papers: null, euro: null, sameMoney: null, plugs: null, notes: [] };
@@ -80,8 +105,8 @@ export function travelPapers(
   const notes: string[] = [];
   const papers =
     traveller.nationality === 'FR'
-      ? frenchPapers(cc, where, notes, abroad)
-      : otherPapers(cc, where, traveller.nationality, abroad, notes);
+      ? frenchPapers(cc, where, notes, abroad, entry)
+      : otherPapers(cc, where, traveller.nationality, abroad, notes, entry);
   const plug = PLUGS[cc];
   let plugs: TravelPapers['plugs'];
   if (frenchDevices(traveller)) {
@@ -101,19 +126,56 @@ export function travelPapers(
   };
 }
 
+const FRANCE_DIPLOMATIE = 'sur France Diplomatie';
+const OFFICIAL_SERVICE = 'auprès du service officiel de ton pays';
+
+/** Mot de la table → nature des papiers, pour `TravelPapers.papers`. */
+const PAPERS_OF: Record<EntryKind, PapersKind> = {
+  libre_circulation: 'libre_circulation',
+  sans_visa: 'passeport',
+  visa_arrivee: 'visa',
+  e_visa: 'visa',
+  autorisation: 'visa',
+  visa_a_demander: 'visa',
+  permis: 'visa',
+  interdit: 'a_verifier',
+  non_confirme: 'a_verifier',
+};
+
 /**
- * Ressortissant français : listes sûres, formalités connues, France Diplomatie. Son propre
- * territoire : rien (un citoyen y entre de droit). Un départ déjà dans le pays visité
- * (`abroad` faux, ex. résident au Portugal pour un voyage au Portugal) : aucune frontière,
- * rien à dire.
+ * La ligne « Papiers » d'après la table, avec sa date de vérification et où la confirmer ;
+ * null quand la table ne dit rien de sûr (« non confirmé », pas de ligne).
  */
-function frenchPapers(cc: string, where: string, notes: string[], abroad: boolean | null): PapersKind {
+function tableLine(entry: EntryRequirement | null, where: string, confirm: string, notes: string[]): PapersKind | null {
+  const body = entry ? describeEntry(entry) : null;
+  if (!entry || !body) return null;
+  const day = frenchDay(entry.verified);
+  notes.push(`Papiers : ${body} (${where})${day ? ` ; vérifié le ${day}` : ''}, à confirmer ${confirm} avant de partir.`);
+  return PAPERS_OF[entry.kind];
+}
+
+/**
+ * Ressortissant français : DOMESTIC, la carte d'identité en Europe (liste interne : la
+ * table ne la dit pas), puis la table ; sans ligne confirmée, les formalités connues et
+ * France Diplomatie (règles d'avant). Son propre territoire : rien (un citoyen y entre de
+ * droit). Un départ déjà dans le pays visité (`abroad` faux, ex. résident au Portugal pour
+ * un voyage au Portugal) : aucune frontière, rien à dire.
+ */
+function frenchPapers(
+  cc: string,
+  where: string,
+  notes: string[],
+  abroad: boolean | null,
+  entry: EntryRequirement | null
+): PapersKind {
   if (DOMESTIC.has(cc)) return 'domestique';
   if (abroad === false) return 'sur_place';
   if (ID_CARD.has(cc)) {
     notes.push(`Papiers : carte d’identité ou passeport en cours de validité, sans visa (${where}).`);
     return 'carte';
   }
+  const fromTable = tableLine(entry, where, FRANCE_DIPLOMATIE, notes);
+  if (fromTable) return fromTable;
   const fee = entryFees(cc);
   if (fee) {
     notes.push(`Papiers : passeport + ${fee.detail}, conditions à vérifier sur France Diplomatie avant de partir.`);
@@ -131,18 +193,24 @@ function frenchPapers(cc: string, where: string, notes: string[], abroad: boolea
  * Nationalité inconnue ou autre : rien d'affirmé. Un départ déjà dans le pays : aucune
  * frontière, rien à dire. Son propre pays sans départ connu : pas de frontière connue,
  * rien à dire non plus ; mais revenir dans son pays depuis l'étranger franchit une
- * frontière (`abroad` vrai) : la ligne ci-dessous. Sinon une seule ligne, la même pour
- * tous (dédoublonnée par `orderNotes`), qui renvoie au service officiel de son pays.
+ * frontière (`abroad` vrai) : la ligne ci-dessous. Une nationalité connue qui passe une
+ * frontière reçoit la ligne de la table quand elle est confirmée ; sinon une seule
+ * ligne, la même pour tous (dédoublonnée par `orderNotes`), qui renvoie au service
+ * officiel de son pays. Sans nationalité connue, la table n'est jamais lue.
  */
 function otherPapers(
   cc: string,
   where: string,
   nationality: string | null,
   abroad: boolean | null,
-  notes: string[]
+  notes: string[],
+  entry: EntryRequirement | null
 ): PapersKind {
   if (abroad === false) return nationality === cc ? 'domestique' : 'sur_place';
   if (nationality === cc && abroad == null) return 'domestique';
+  // La table ne parle qu'à une nationalité connue, hors de son propre pays (un citoyen y revient de droit).
+  const fromTable = nationality && nationality !== cc ? tableLine(entry, where, OFFICIAL_SERVICE, notes) : null;
+  if (fromTable) return fromTable;
   notes.push(`Papiers : conditions d’entrée (${where}) à vérifier auprès du service officiel de ton pays avant de partir.`);
   return 'a_verifier';
 }
@@ -150,6 +218,70 @@ function otherPapers(
 /** Appareils de France : résidence en France (outre-mer compris), ou nationalité française sans résidence dite. */
 function frenchDevices(t: TravellerContext): boolean {
   return t.residenceCountry ? DOMESTIC.has(t.residenceCountry) : t.nationality === 'FR';
+}
+
+/** Toute ligne « Papiers » des règles ci-dessus commence ainsi (la seule note qui dépend de la nationalité). */
+export const PAPERS_NOTE_PREFIX = 'Papiers :';
+
+export function isPapersNote(note: string): boolean {
+  return note.startsWith(PAPERS_NOTE_PREFIX);
+}
+
+/**
+ * La ligne « Papiers » SANS nationalité : la seule qui se range sur le voyage. Mêmes règles que
+ * pour une nationalité inconnue (aucune frontière : rien ; sinon une ligne qui renvoie au service
+ * officiel du pays de la personne), la table n'est jamais lue.
+ */
+export function sharedPapersNotes(
+  countryCode: string | null | undefined,
+  countryName: string | null | undefined,
+  abroad: boolean | null
+): string[] {
+  return travelPapers(countryCode, countryName, UNKNOWN_TRAVELLER, abroad, null).notes.filter(isPapersNote);
+}
+
+/**
+ * La ligne « Papiers » de CETTE personne, d'après son profil et la table (`find`). Rendue à la
+ * lecture seulement (`notesForReader`), jamais rangée : voir l'en-tête du module.
+ */
+export function readerPapersNotes(
+  countryCode: string | null | undefined,
+  countryName: string | null | undefined,
+  reader: TravellerContext,
+  abroad: boolean | null,
+  find: (passport: string, destination: string) => EntryRequirement | null
+): string[] {
+  const entry = entryFor(find, reader.nationality, countryCode, abroad);
+  return travelPapers(countryCode, countryName, reader, abroad, entry).notes.filter(isPapersNote);
+}
+
+/** Ce que le voyage garde pour rendre la ligne de chaque lecteur : le pays visité et le départ, jamais une nationalité. */
+export interface PapersFacts {
+  countryCode: string;
+  /** Nom du pays tel que la ligne le dit ; null : le code. */
+  country: string | null;
+  /** Faux : départ déjà dans le pays ; null : on ne sait pas. */
+  abroad: boolean | null;
+}
+
+/**
+ * Les notes rangées sur le voyage, avec la ligne « Papiers » de CE lecteur à la place de celle
+ * du voyage. Toute ligne « Papiers » rangée est remplacée (jamais rendue telle quelle : un
+ * voyage préparé avant ce verrou peut encore porter la ligne d'une nationalité) ; sans ligne
+ * rangée, rien n'est ajouté (aucune frontière, ou rien à dire) ; sans les faits du pays, la
+ * ligne est retirée plutôt que devinée.
+ */
+export function notesForReader(
+  stored: string[],
+  facts: PapersFacts | null,
+  reader: TravellerContext,
+  find: (passport: string, destination: string) => EntryRequirement | null
+): string[] {
+  const at = stored.findIndex(isPapersNote);
+  if (at < 0) return stored;
+  const rest = stored.filter((n) => !isPapersNote(n));
+  const own = facts ? readerPapersNotes(facts.countryCode, facts.country, reader, facts.abroad, find) : [];
+  return [...rest.slice(0, at), ...own, ...rest.slice(at)];
 }
 
 const PAPERS_RE = /passeport|carte d[’']identit|\bvisas?\b|e-visa|formalit|autorisation (de voyage|électronique)/i;

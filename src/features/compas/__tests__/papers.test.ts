@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { keepAiNote, travelPapers } from '../engine/papers';
+import { entryRequirementIn, type EntryRequirement, type EntryTable } from '../engine/entry';
+import { isPapersNote, keepAiNote, notesForReader, readerPapersNotes, sharedPapersNotes, travelPapers, type PapersFacts } from '../engine/papers';
 import { UNKNOWN_TRAVELLER, type TravellerContext } from '../engine/traveller';
+import { entryRequirement } from '../server/entryRequirements';
 
 const who = (over: Partial<TravellerContext>): TravellerContext => ({ ...UNKNOWN_TRAVELLER, ...over });
 const FR = who({ nationality: 'FR' });
@@ -180,5 +182,277 @@ describe('keepAiNote — l’IA ne double ni ne contredit une règle', () => {
     expect(keepAiNote('Prévois un adaptateur de prise.', travelPapers('GB', 'Royaume-Uni', NONE))).toBe(false);
     expect(keepAiNote('Prévois un adaptateur de prise.', travelPapers('PT', 'Portugal', FR))).toBe(false);
     expect(keepAiNote('Prévois un adaptateur de prise.', travelPapers('PT', 'Portugal', US))).toBe(true);
+  });
+});
+
+/**
+ * PLAN-100 4.2 : la ligne « Papiers » d'une nationalité connue vient de la table
+ * passeport × destination (travelrequirements.info v1.3.0) quand elle a une ligne
+ * confirmée ; sinon la ligne des règles d'avant (carte d'identité, France Diplomatie,
+ * service officiel du pays).
+ */
+describe('travelPapers — la table passeport × destination (4.2)', () => {
+  const FR_DIPLO = 'à confirmer sur France Diplomatie avant de partir.';
+  const OFFICIAL = 'à confirmer auprès du service officiel de ton pays avant de partir.';
+  const papersLine = (r: ReturnType<typeof travelPapers>) => r.notes.find((n) => n.startsWith('Papiers')) ?? '';
+  const real = (p: string, d: string) => entryRequirement(p, d);
+
+  describe('ressortissant français', () => {
+    it('Vietnam : l’exemption de 45 jours remplace l’ancien e-visa, avec la date de vérification', () => {
+      const r = travelPapers('VN', 'Vietnam', FR, true, real('FR', 'VN'));
+      expect(r.papers).toBe('passeport');
+      expect(papersLine(r)).toBe(
+        `Papiers : passeport valide, sans visa jusqu’à 45 jours (Vietnam) ; vérifié le 7 octobre 2026, ${FR_DIPLO}`
+      );
+      expect(r.notes.join(' ')).not.toMatch(/e-visa/);
+    });
+
+    it('États-Unis : l’autorisation électronique avant le départ (ESTA), séjour et date de la table', () => {
+      const r = travelPapers('US', 'États-Unis', FR, true, real('FR', 'US'));
+      expect(r.papers).toBe('visa');
+      expect(papersLine(r)).toBe(
+        `Papiers : passeport valide, autorisation électronique (ETA/ESTA) à obtenir avant le départ, séjour jusqu’à 90 jours (États-Unis) ; vérifié le 3 octobre 2026, ${FR_DIPLO}`
+      );
+      expect(r.notes).toContain('Prises de type A/B : adaptateur à prévoir.');
+    });
+
+    it('Népal : visa à l’arrivée ; Inde : e-visa ; Iran : visa à demander', () => {
+      expect(papersLine(travelPapers('NP', 'Népal', FR, true, real('FR', 'NP')))).toBe(
+        `Papiers : passeport valide, visa à l’arrivée (Népal) ; vérifié le 3 octobre 2026, ${FR_DIPLO}`
+      );
+      expect(papersLine(travelPapers('IN', 'Inde', FR, true, real('FR', 'IN')))).toMatch(
+        /^Papiers : passeport valide, e-visa à demander en ligne avant le départ \(Inde\) ; vérifié le \d+(er)? \w+ 2026, à confirmer sur France Diplomatie/
+      );
+      const ir = travelPapers('IR', 'Iran', FR, true, real('FR', 'IR'));
+      expect(ir.papers).toBe('visa');
+      expect(papersLine(ir)).toBe(
+        `Papiers : passeport valide, visa à demander avant le départ (ambassade ou consulat) (Iran) ; vérifié le 9 octobre 2026, ${FR_DIPLO}`
+      );
+    });
+
+    it('Turquie (liste « à vérifier » d’avant) : la table la remplace, 90 jours par période de 180', () => {
+      const r = travelPapers('TR', 'Turquie', FR, true, real('FR', 'TR'));
+      expect(r.papers).toBe('passeport');
+      expect(papersLine(r)).toBe(
+        `Papiers : passeport valide, sans visa jusqu’à 90 jours par période de 180 jours (Turquie) ; vérifié le 3 octobre 2026, ${FR_DIPLO}`
+      );
+    });
+
+    it('la carte d’identité en Europe : la table ne la dit pas, la liste interne garde la main', () => {
+      for (const cc of ['PT', 'ES', 'CH', 'AL', 'RS', 'MC'])
+        expect(papersLine(travelPapers(cc, cc, FR, true, real('FR', cc))), cc).toBe(
+          `Papiers : carte d’identité ou passeport en cours de validité, sans visa (${cc}).`
+        );
+      expect(travelPapers('PT', 'Portugal', FR, true, real('FR', 'PT')).papers).toBe('carte');
+    });
+
+    it('France et outre-mer, ou départ déjà dans le pays : rien, même avec une ligne de table', () => {
+      expect(travelPapers('FR', 'France', FR, true, real('FR', 'FR'))).toMatchObject({ papers: 'domestique', notes: [] });
+      expect(travelPapers('VN', 'Vietnam', FR, false, real('FR', 'VN'))).toMatchObject({ papers: 'sur_place', notes: [] });
+    });
+
+    it('« non confirmé » ou pas de ligne : les règles d’avant, texte pour texte', () => {
+      const afghanistan = real('FR', 'AF');
+      expect(afghanistan?.kind).toBe('non_confirme');
+      expect(papersLine(travelPapers('AF', 'Afghanistan', FR, true, afghanistan))).toBe(
+        'Papiers : passeport (Afghanistan), conditions d’entrée à vérifier sur France Diplomatie avant de partir.'
+      );
+      // Népal sans ligne de table : le visa et le permis TIMS du barème, comme avant.
+      expect(papersLine(travelPapers('NP', 'Népal', FR, true, null))).toBe(
+        'Papiers : passeport + visa népalais (30 jours) + permis de trek TIMS, conditions à vérifier sur France Diplomatie avant de partir.'
+      );
+      // Gibraltar n'est pas dans le jeu : la liste « Europe à vérifier » reste.
+      expect(real('FR', 'GI')).toBeNull();
+      const gi = travelPapers('GI', 'Gibraltar', FR, true, real('FR', 'GI'));
+      expect(gi.papers).toBe('a_verifier');
+      expect(papersLine(gi)).toBe('Papiers : conditions d’entrée (Gibraltar) à vérifier sur France Diplomatie avant de partir.');
+    });
+  });
+
+  describe('autre nationalité connue', () => {
+    it('Allemand au Népal : la ligne de la table, jamais France Diplomatie', () => {
+      const r = travelPapers('NP', 'Népal', DE, true, real('DE', 'NP'));
+      expect(papersLine(r)).toBe(`Papiers : passeport valide, visa à l’arrivée (Népal) ; vérifié le 3 octobre 2026, ${OFFICIAL}`);
+      expect(r.notes.join(' ')).not.toContain('France Diplomatie');
+      expect(r.papers).toBe('visa');
+    });
+
+    it('Allemand au Portugal : libre circulation, sans carte d’identité affirmée', () => {
+      const r = travelPapers('PT', 'Portugal', DE, true, real('DE', 'PT'));
+      expect(r.papers).toBe('libre_circulation');
+      expect(papersLine(r)).toBe(
+        `Papiers : libre circulation, sans visa (Portugal) ; vérifié le 8 octobre 2026, ${OFFICIAL}`
+      );
+    });
+
+    it('Américain en Turquie, au Royaume-Uni : sans visa 90 jours ; autorisation 180 jours par entrée', () => {
+      expect(papersLine(travelPapers('TR', 'Turquie', US, true, real('US', 'TR')))).toBe(
+        `Papiers : passeport valide, sans visa jusqu’à 90 jours par période de 180 jours (Turquie) ; vérifié le 3 octobre 2026, ${OFFICIAL}`
+      );
+      expect(papersLine(travelPapers('GB', 'Royaume-Uni', US, true, real('US', 'GB')))).toMatch(
+        /^Papiers : passeport valide, autorisation électronique \(ETA\/ESTA\) à obtenir avant le départ, séjour jusqu’à 180 jours par entrée \(Royaume-Uni\)/
+      );
+    });
+
+    it('titre spécial et entrée interdite sont dits, et laissent « à vérifier »', () => {
+      const cn = travelPapers('CN', 'Chine', who({ nationality: 'HK' }), true, real('HK', 'CN'));
+      expect(cn.papers).toBe('visa');
+      expect(papersLine(cn)).toMatch(/^Papiers : passeport valide, permis d’entrée spécifique à obtenir avant le départ \(Chine\)/);
+      const us = travelPapers('US', 'États-Unis', who({ nationality: 'IR' }), true, real('IR', 'US'));
+      expect(us.papers).toBe('a_verifier');
+      expect(papersLine(us)).toBe(
+        `Papiers : entrée interdite aux détenteurs de ton passeport (États-Unis) ; vérifié le 3 octobre 2026, ${OFFICIAL}`
+      );
+    });
+
+    it('« non confirmé » ou pas de ligne : la ligne générique d’avant', () => {
+      expect(real('DE', 'DJ')?.kind).toBe('non_confirme');
+      expect(travelPapers('DJ', 'Djibouti', DE, true, real('DE', 'DJ')).notes).toEqual([GENERIC('Djibouti')]);
+      expect(travelPapers('RE', 'La Réunion', DE, true, real('DE', 'RE')).notes).toEqual([GENERIC('La Réunion')]);
+      expect(travelPapers('NP', 'Népal', DE, true, null).notes).toEqual([GENERIC('Népal')]);
+      expect(travelPapers('NP', 'Népal', DE).notes).toEqual([GENERIC('Népal')]);
+    });
+
+    it('une ligne qui date d’un jour inconnu ne casse pas la phrase', () => {
+      const odd = { kind: 'sans_visa', maxStayDays: 30, stayWindow: null, verified: 'plus tard' } as EntryRequirement;
+      expect(papersLine(travelPapers('MA', 'Maroc', DE, true, odd))).toBe(
+        `Papiers : passeport valide, sans visa jusqu’à 30 jours (Maroc), ${OFFICIAL}`
+      );
+    });
+  });
+
+  describe('la table ne dit rien sans nationalité ni frontière', () => {
+    it('nationalité inconnue : la ligne honnête, même si on lui passe une ligne', () => {
+      expect(travelPapers('VN', 'Vietnam', NONE, true, real('FR', 'VN')).notes).toEqual([GENERIC('Vietnam')]);
+    });
+
+    it('dans son propre pays, ou déjà sur place : rien de la table', () => {
+      const own = real('US', 'US');
+      expect(own?.kind).toBe('libre_circulation');
+      const home = travelPapers('US', 'États-Unis', US, null, own);
+      expect(home.papers).toBe('domestique');
+      expect(home.notes.filter((n) => n.startsWith('Papiers'))).toEqual([]);
+      const back = who({ nationality: 'US', residenceCountry: 'FR' });
+      expect(travelPapers('US', 'États-Unis', back, true, own).notes).toContain(GENERIC('États-Unis'));
+      expect(travelPapers('VN', 'Vietnam', DE, false, real('DE', 'VN'))).toMatchObject({ papers: 'sur_place', notes: [] });
+    });
+
+    it('les conseils de l’IA sur les papiers restent écartés, table ou non', () => {
+      const r = travelPapers('VN', 'Vietnam', FR, true, real('FR', 'VN'));
+      expect(keepAiNote('Un e-visa est nécessaire pour le Vietnam.', r)).toBe(false);
+      expect(keepAiNote('Prévois de la monnaie en liquide pour les marchés.', r)).toBe(true);
+    });
+  });
+
+  describe('sur une table de test', () => {
+    const table: EntryTable = { ZZ: [['evisa', 30, null, '2026-10-01', 'FR DE']] };
+    it('la même ligne pour deux nationalités, seul le service officiel change', () => {
+      const fr = travelPapers('ZZ', 'Zedland', FR, true, entryRequirementIn(table, 'FR', 'ZZ'));
+      const de = travelPapers('ZZ', 'Zedland', DE, true, entryRequirementIn(table, 'DE', 'ZZ'));
+      expect(papersLine(fr)).toBe(
+        'Papiers : passeport valide, e-visa à demander en ligne avant le départ, séjour jusqu’à 30 jours (Zedland) ; vérifié le 1er octobre 2026, à confirmer sur France Diplomatie avant de partir.'
+      );
+      expect(papersLine(de)).toBe(papersLine(fr).replace('sur France Diplomatie', 'auprès du service officiel de ton pays'));
+    });
+  });
+});
+
+/**
+ * PLAN-100 4.2 « keepAiNote ne retire plus les conseils justes pour un non-Français » :
+ * les papiers sont décidés par la règle (la table pour une nationalité connue), donc le
+ * conseil de l'IA sur les papiers est toujours écarté ; le change et les prises, eux,
+ * ne sont écartés que si la règle les dit déjà vrais pour CETTE personne.
+ */
+describe('keepAiNote — un non-Français garde ses conseils justes', () => {
+  const MONEY = 'Retire de la monnaie locale avant de quitter l’aéroport, les distributeurs sont rares.';
+  const MONEY_EUR = 'Passe au bureau de change avant le départ : tes dollars n’ont pas cours au Portugal.';
+  const PLUG = 'Prévois un adaptateur de prise pour tes chargeurs.';
+  const TIP = 'Vérifie les vaccins recommandés pour cette région.';
+
+  it('Allemand (euro) : le change reste un conseil possible hors zone euro, et les conseils de saison sont gardés', () => {
+    const ma = travelPapers('MA', 'Maroc', DE, true, entryRequirement('DE', 'MA'));
+    expect(keepAiNote(MONEY, ma)).toBe(true);
+    expect(keepAiNote(TIP, ma)).toBe(true);
+    // Zone euro et même monnaie : la règle le sait, le conseil double.
+    expect(keepAiNote(MONEY_EUR, travelPapers('PT', 'Portugal', DE, true, entryRequirement('DE', 'PT')))).toBe(false);
+  });
+
+  it('Américain (dollar) au Portugal : le change est gardé, l’adaptateur aussi (la règle ne sait pas)', () => {
+    const pt = travelPapers('PT', 'Portugal', US, true, entryRequirement('US', 'PT'));
+    expect(keepAiNote(MONEY_EUR, pt)).toBe(true);
+    expect(keepAiNote(PLUG, pt)).toBe(true);
+  });
+
+  it('Américain au Royaume-Uni : la règle dit déjà le type de prise, l’adaptateur de l’IA est écarté', () => {
+    const gb = travelPapers('GB', 'Royaume-Uni', US, true, entryRequirement('US', 'GB'));
+    expect(gb.notes).toContain('Prises de type G (Royaume-Uni) : vérifie que tes chargeurs s’y branchent.');
+    expect(keepAiNote(PLUG, gb)).toBe(false);
+  });
+
+  it('les papiers restent à la règle pour toute nationalité, avec ou sans ligne de table', () => {
+    for (const entry of [entryRequirement('DE', 'NP'), null]) {
+      const np = travelPapers('NP', 'Népal', DE, true, entry);
+      expect(keepAiNote('Il te faut un visa à l’arrivée, prévois 50 dollars en liquide.', np)).toBe(false);
+      expect(keepAiNote('Vérifie la validité de ton passeport.', np)).toBe(false);
+    }
+  });
+});
+
+/**
+ * VIE PRIVÉE : la ligne « Papiers » dépend de la nationalité, donc le voyage ne garde que la
+ * ligne sans nationalité ; celle de la personne qui regarde se rend à la lecture
+ * (`papersPrivacy.test.ts` éprouve le chemin entier, ici les règles).
+ */
+describe('la ligne « Papiers » sur le voyage et pour chaque lecteur', () => {
+  const find = (p: string, d: string) => entryRequirement(p, d);
+  const MA: PapersFacts = { countryCode: 'MA', country: 'Maroc', abroad: true };
+  const GB_LINE =
+    'Papiers : passeport valide, sans visa jusqu’à 90 jours (Maroc) ; vérifié le 3 octobre 2026, à confirmer auprès du service officiel de ton pays avant de partir.';
+  const DE_LINE =
+    'Papiers : passeport valide, sans visa (Maroc) ; vérifié le 3 octobre 2026, à confirmer auprès du service officiel de ton pays avant de partir.';
+  const PLUGS = 'Prises de type G (Royaume-Uni) : vérifie que tes chargeurs s’y branchent.';
+
+  it('sharedPapersNotes : la ligne d’une nationalité inconnue, jamais la table ni France Diplomatie', () => {
+    expect(sharedPapersNotes('MA', 'Maroc', true)).toEqual([GENERIC('Maroc')]);
+    expect(sharedPapersNotes('PT', 'Portugal', null)).toEqual([GENERIC('Portugal')]);
+    expect(sharedPapersNotes('PT', null, true)).toEqual([GENERIC('PT')]);
+    // Aucune frontière, ou pas de pays : rien à ranger. Les prises n'en font pas partie.
+    expect(sharedPapersNotes('MA', 'Maroc', false)).toEqual([]);
+    expect(sharedPapersNotes(null, null, true)).toEqual([]);
+    expect(sharedPapersNotes('GB', 'Royaume-Uni', false)).toEqual([]);
+    expect(sharedPapersNotes('GB', 'Royaume-Uni', true).every(isPapersNote)).toBe(true);
+  });
+
+  it('readerPapersNotes : la ligne du passeport du lecteur, la table lue pour lui seul', () => {
+    expect(readerPapersNotes('MA', 'Maroc', who({ nationality: 'GB' }), true, find)).toEqual([GB_LINE]);
+    expect(readerPapersNotes('MA', 'Maroc', who({ nationality: 'DE' }), true, find)).toEqual([DE_LINE]);
+    expect(readerPapersNotes('MA', 'Maroc', FR, true, find)[0]).toMatch(/France Diplomatie avant de partir\.$/);
+    expect(readerPapersNotes('MA', 'Maroc', NONE, true, find)).toEqual([GENERIC('Maroc')]);
+    // Son propre pays : un citoyen y entre de droit.
+    expect(readerPapersNotes('MA', 'Maroc', who({ nationality: 'MA' }), null, find)).toEqual([]);
+    expect(readerPapersNotes('MA', 'Maroc', who({ nationality: 'GB' }), false, find)).toEqual([]);
+  });
+
+  it('notesForReader : seule la ligne « Papiers » change, à sa place', () => {
+    const stored = ['Itinéraire gardé.', GENERIC('Maroc'), PLUGS, 'Emporte de l’eau.'];
+    expect(notesForReader(stored, MA, who({ nationality: 'GB' }), find)).toEqual(['Itinéraire gardé.', GB_LINE, PLUGS, 'Emporte de l’eau.']);
+    expect(notesForReader(stored, MA, who({ nationality: 'DE' }), find)).toEqual(['Itinéraire gardé.', DE_LINE, PLUGS, 'Emporte de l’eau.']);
+    expect(notesForReader(stored, MA, NONE, find)).toEqual(stored);
+  });
+
+  it('notesForReader : un lecteur qui n’a aucune formalité (son pays) ne voit plus la ligne ; sans ligne rangée, rien n’est ajouté', () => {
+    const stored = ['Itinéraire gardé.', GENERIC('Maroc')];
+    expect(notesForReader(stored, { ...MA, abroad: null }, who({ nationality: 'MA' }), find)).toEqual(['Itinéraire gardé.']);
+    const noLine = ['Itinéraire gardé.', PLUGS];
+    expect(notesForReader(noLine, MA, who({ nationality: 'GB' }), find)).toBe(noLine);
+    expect(notesForReader([], MA, who({ nationality: 'GB' }), find)).toEqual([]);
+  });
+
+  it('notesForReader : une ligne rangée par l’ancienne version (celle d’un autre passeport) n’est jamais rendue telle quelle', () => {
+    const legacy = ['Itinéraire gardé.', GB_LINE, PLUGS];
+    expect(notesForReader(legacy, MA, who({ nationality: 'DE' }), find)).toEqual(['Itinéraire gardé.', DE_LINE, PLUGS]);
+    expect(notesForReader(legacy, MA, NONE, find)).toEqual(['Itinéraire gardé.', GENERIC('Maroc'), PLUGS]);
+    // Sans le pays, la ligne est retirée plutôt que devinée.
+    expect(notesForReader(legacy, null, who({ nationality: 'DE' }), find)).toEqual(['Itinéraire gardé.', PLUGS]);
   });
 });

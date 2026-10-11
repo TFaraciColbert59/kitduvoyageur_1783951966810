@@ -13,7 +13,14 @@
  *   4. la carte `TravellerCard` est montée ailleurs que /compte/voyageur et le Compas vide ;
  *   5. l'IA, les kits, les voyages partagés, les profils publics ou les routes API
  *      importent le contexte voyageur (`engine/traveller`) ;
- *   6. le lecteur ou les actions écrivent dans la console (aucun journal).
+ *   6. le lecteur ou les actions écrivent dans la console (aucun journal) ;
+ *   7. la ligne « Papiers » d'une nationalité (`readerPapersNotes`, `notesForReader`) est
+ *      nommée ailleurs que dans le moteur des papiers et la lecture du Compas
+ *      (`getCompasData`) : le voyage (`trips.metadata`, lisible par les collaborateurs et,
+ *      public, par tous) ne garde que la ligne SANS nationalité (`sharedPapersNotes`) ;
+ *   8. une note de papiers brute de `travelPapers(...)` (`papers.notes`, qui porte la ligne de
+ *      la nationalité) est reprise telle quelle dans le serveur du Compas : seulement
+ *      filtrée de sa ligne « Papiers » (`papers.notes.filter(`).
  * Marche de fichiers en Node, sans `rg` : un outil absent ne fait jamais passer à vide.
  *
  * Usage : node scripts/verify/traveller_privacy.mjs
@@ -33,6 +40,9 @@ const READER_PAGES = new Set(['src/app/compas/page.tsx', 'src/app/compte/voyageu
 const CARD_ALLOWED = new Set(['src/app/compte/voyageur/page.tsx', 'src/features/compas/components/CompasStart.tsx']);
 const ENGINE_FORBIDDEN = ['src/lib/ai/', 'src/features/kits/', 'src/features/trips/', 'src/app/k/', 'src/app/profil/', 'src/app/api/'];
 const SILENT = new Set(['src/features/compas/server/traveller.ts', 'src/features/compas/server/travellerActions.ts']);
+const PAPERS_READ_ALLOWED = new Set(['src/features/compas/engine/papers.ts', 'src/features/compas/server/getCompasData.ts']);
+const PAPERS_READ_NAMES = /\b(?:readerPapersNotes|notesForReader)\b/;
+const RAW_PAPERS_NOTES = /\bpapers\.notes\b(?!\s*\.filter\()/;
 
 const IMPORT_RE = /(?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s+|\brequire\s*\(\s*)['"]([^'"]+)['"]/g;
 const CODE_FILE = /\.(?:ts|tsx|js|jsx|mjs)$/;
@@ -69,6 +79,9 @@ export function travellerPrivacyViolations(root = process.cwd()) {
     const client = /^\s*['"]use client['"]/.test(text);
     if (text.includes(TABLE) && !TABLE_ALLOWED.has(file)) out.push(`table ${TABLE} nommée hors du lecteur : ${file}`);
     if (SILENT.has(file) && /\bconsole\./.test(text)) out.push(`journal interdit dans ${file}`);
+    if (PAPERS_READ_NAMES.test(text) && !PAPERS_READ_ALLOWED.has(file)) out.push(`ligne « Papiers » d'une nationalité nommée hors de la lecture : ${file}`);
+    if (file.startsWith('src/features/compas/server/') && RAW_PAPERS_NOTES.test(text))
+      out.push(`notes de papiers brutes (nationalité) reprises dans ${file}`);
     for (const m of text.matchAll(IMPORT_RE)) {
       const t = target(file, m[1]);
       if (!t) continue;

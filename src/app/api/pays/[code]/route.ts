@@ -3,6 +3,7 @@ import { completion } from '@rocketnew/llm-sdk';
 import fs from 'fs';
 import path from 'path';
 import type { CountryDataV2 } from '@/types/country';
+import { clientIpFromHeaders } from '@/lib/rate-limit/clientIp';
 
 const CACHE_DIR = path.join(process.cwd(), '.country-cache');
 const CACHE_TTL_MS = 48 * 60 * 60 * 1000; // 48 hours
@@ -300,7 +301,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ code: string }> }
 ) {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const ip = clientIpFromHeaders(request.headers);
 
   if (!checkRateLimit(ip, 30, 60_000)) {
     return NextResponse.json({ error: 'Trop de requêtes. Réessayez dans une minute.' }, { status: 429 });

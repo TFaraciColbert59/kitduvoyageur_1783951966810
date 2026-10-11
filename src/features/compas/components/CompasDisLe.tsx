@@ -8,6 +8,9 @@ import { browserTimeZone } from '../engine/zone';
 import { applyCurrent, inverseOps, runOps } from './compasApply';
 import type { CompasCtl } from './compasTypes';
 
+/** Exemple de phrase, dit par l'info-bulle ET par la description du champ. */
+const DISLE_EXAMPLE = 'Par exemple : « 3 jours à 4, départ samedi »';
+
 type State =
   | { status: 'idle' }
   | { status: 'loading' }
@@ -193,9 +196,14 @@ export function DisLe({
             maxLength={280}
             autoComplete="off"
             placeholder="Dis-le…"
-            title="Par exemple : « 3 jours à 4, départ samedi »"
+            aria-describedby="cp-disle-example"
+            title={DISLE_EXAMPLE}
             onChange={(e) => setText(e.target.value)}
           />
+          {/* L'exemple n'est pas qu'une info-bulle : il est lu avec le champ. */}
+          <span id="cp-disle-example" hidden>
+            {DISLE_EXAMPLE}
+          </span>
           <button
             type="submit"
             className="cp-ibtn cp-ibtn--sm cp-ibtn--pg"

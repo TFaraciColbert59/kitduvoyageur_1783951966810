@@ -6,6 +6,8 @@
  * `convertAmount` rend `null` et l'écran garde le montant en euros.
  */
 
+import COUNTRY_CURRENCIES from '../data/countryCurrencies.json';
+
 export interface FxRate {
   base: 'EUR';
   currency: string;
@@ -96,4 +98,17 @@ export function parseCurrencyApi(json: unknown, currency: string): FxRate | null
   if (!usable(rate)) return null;
   if (typeof date !== 'string' || !ISO_DATE.test(date)) return null;
   return { base: 'EUR', currency, rate, date, source: CURRENCY_API_SOURCE };
+}
+
+/**
+ * Devise d'un pays (ISO 3166-1 alpha-2 → ISO 4217) d'après la liste n° 1 de la norme, publiée
+ * par SIX (`data/countryCurrencies.json`, généré par `scripts/compas/build-country-currencies.mjs`).
+ * Null quand la liste n'en donne pas (Antarctique, Palestine, Kosovo…) ou que le code est faux :
+ * jamais une devise devinée.
+ */
+export function currencyOfCountry(countryCode: string | null | undefined): string | null {
+  const code = (countryCode ?? '').trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(code)) return null;
+  const hit = (COUNTRY_CURRENCIES as Record<string, string>)[code];
+  return typeof hit === 'string' ? hit : null;
 }

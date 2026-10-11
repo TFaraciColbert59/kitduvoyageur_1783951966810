@@ -1,6 +1,7 @@
 'use client';
 
 import { classifyScale, scaleHours } from '../engine/scale';
+import { budgetInOtherCurrencies, type BudgetFxData } from '../engine/budgetFx';
 import Link from 'next/link';
 import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { deleteTripItemAction } from '@/app/voyages/kit-actions';
@@ -15,6 +16,8 @@ import {
   initials,
 } from '../engine/format';
 import { Thumb, useLongPress, type Tone } from './CompasPrimitives';
+import { isMeteoalarmSource } from '../engine/meteoalarmFeeds';
+import MeteoalarmNotice from './MeteoalarmNotice';
 import { DurationRuler, tripHours } from './CompasRuler';
 import type { CompasCtl } from './compasTypes';
 import { RESA_CATS, bookingCat, offerCat } from '../engine/resaCats';
@@ -47,7 +50,9 @@ export function lineStatus(line: CompasKitLine): { label: string; tone: Tone } {
 /**
  * Ligne d'objet des tiroirs : toucher = fiche, appui long = fiche en grand,
  * glisser à gauche = « Retirer » apparaît (maquette finale) ; le retrait
- * demande ce second geste, jamais le seul glissement.
+ * demande ce second geste, jamais le seul glissement. Au clavier, la fiche
+ * s'ouvre par la commande de la ligne (Entrée ou Espace) ; aucune commande
+ * n'en contient une autre (WCAG 4.1.2).
  */
 export function KitRow({ line, ctl }: { line: CompasKitLine; ctl: CompasCtl }) {
   const [swiped, setSwiped] = useState(false);
@@ -86,8 +91,6 @@ export function KitRow({ line, ctl }: { line: CompasKitLine; ctl: CompasCtl }) {
   return (
     <div
       className="cp-row"
-      role="button"
-      tabIndex={0}
       data-swiped={swiped ? '' : undefined}
       {...press}
       onPointerDown={(e) => {
@@ -114,27 +117,32 @@ export function KitRow({ line, ctl }: { line: CompasKitLine; ctl: CompasCtl }) {
         swipe.current = null;
         press.onPointerUp();
       }}
-      onKeyDown={(e) => e.key === 'Enter' && press.onClick()}
     >
-      <Thumb
-        image={product?.image}
-        alt={product?.imageAlt}
-        category={line.category}
-        name={line.name}
-      />
-      <span className="cp-row__t">
-        <b>
-          {line.quantity > 1 ? `${line.quantity} × ` : ''}
-          {line.name}
-        </b>
-        <span>
-          {weight} · {carrier} · {status.label}
-          {line.vital ? ' · vital' : ''}
-          {suggested && suggested.priceEur != null
-            ? ` · boutique ${formatMoney(suggested.priceEur)}`
-            : ''}
+      {/* Les gestes (toucher, appui long, glissement) restent sur la ligne ; la
+          fiche s'ouvre au clavier par une vraie commande (Entrée et Espace
+          natifs, qui remontent en clic). « Retirer » et « Emballer » en sont
+          les voisines, jamais les enfants. */}
+      <button type="button" className="cp-row__main" aria-haspopup="dialog">
+        <Thumb
+          image={product?.image}
+          alt={product?.imageAlt}
+          category={line.category}
+          name={line.name}
+        />
+        <span className="cp-row__t">
+          <b>
+            {line.quantity > 1 ? `${line.quantity} × ` : ''}
+            {line.name}
+          </b>
+          <span>
+            {weight} · {carrier} · {status.label}
+            {line.vital ? ' · vital' : ''}
+            {suggested && suggested.priceEur != null
+              ? ` · boutique ${formatMoney(suggested.priceEur)}`
+              : ''}
+          </span>
         </span>
-      </span>
+      </button>
       <span className="cp-row__end">
         {swiped && (
           <button
@@ -419,6 +427,39 @@ function AutofillLine({ ctl }: { ctl: CompasCtl }) {
   return null;
 }
 
+/* ---------- Le budget dans d'autres devises ---------- */
+
+/**
+ * Le même budget dans la devise du voyageur (profil) et celle du pays (PLAN-100 4.2, 4.6) :
+ * le calcul reste dans la devise du voyage, chaque montant converti dit son taux, sa date
+ * et sa source juste dessous. Rien n'est stocké ; sans taux, la ligne dit « indisponible ».
+ */
+export function BudgetAlso({
+  fx,
+  currency,
+  items,
+}: {
+  fx: BudgetFxData | null | undefined;
+  currency: string;
+  items: Array<{ label: string; amount: number | null | undefined }>;
+}) {
+  const lines = budgetInOtherCurrencies(items, currency, fx);
+  if (!lines.length) return null;
+  return (
+    <div data-testid="budget-also">
+      {lines.map((l) => (
+        <div key={l.currency}>
+          <p className="cp-sub">
+            <b>{l.title}</b>
+            {l.parts.map((p) => ` · ${p.label} ${p.text}`).join('')}
+          </p>
+          <p className="cp-disc">{l.unavailable ? l.note : `${l.note} · indicatif : le calcul reste en ${currency === 'EUR' ? 'euros' : currency}`}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ---------- Nous : équipe et budget ---------- */
 
 export function NousCard({ ctl }: { ctl: CompasCtl }) {
@@ -440,6 +481,10 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
           {crew.loads.slice(0, 6).map((m) => (
             <MemberAvatar key={m.userId} name={m.name} url={m.avatarUrl} />
           ))}
+          {/* Les avatars sont décoratifs (nom en info-bulle) : les noms sont dits ici. */}
+          <span className="sr-only">
+            Équipe : {crew.loads.slice(0, 6).map((m) => m.name).join(', ')}
+          </span>
           <button
             type="button"
             className="cp-avadd"
@@ -476,6 +521,11 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
             : ''}
         </span>
       </button>
+      <BudgetAlso
+        fx={ctl.data.budgetFx}
+        currency={budget.currency}
+        items={[{ label: 'prévus et dépensés', amount: engaged }]}
+      />
       {share != null && (
         <div
           className="cp-bar"
@@ -595,12 +645,24 @@ export function ResaCard({ ctl }: { ctl: CompasCtl }) {
                   {stay && (
                     // Noté n'est pas réservé : pastille neutre, jamais la
                     // teinte « confirmée » d'une réservation réelle.
-                    <span className="cp-slot" data-s="noted" title={`Noté : ${stay} (non réservé)`}>
+                    <span
+                      className="cp-slot"
+                      data-s="noted"
+                      role="img"
+                      aria-label={`Noté : ${stay} (non réservé)`}
+                      title={`Noté : ${stay} (non réservé)`}
+                    >
                       H
                     </span>
                   )}
                   {needNight && (
-                    <span className="cp-slot" data-s="need" title="Nuit sans hébergement">
+                    <span
+                      className="cp-slot"
+                      data-s="need"
+                      role="img"
+                      aria-label="Nuit sans hébergement"
+                      title="Nuit sans hébergement"
+                    >
                       H
                     </span>
                   )}
@@ -671,6 +733,11 @@ export function VerdictCard({ ctl }: { ctl: CompasCtl }) {
   const v = VERDICT[verdict.level];
   const shown = verdict.reasons.slice(0, 4);
   const more = verdict.reasons.length - shown.length;
+  // Le texte officiel d'une alerte (description, consignes) s'ouvre dans « Signaux du verdict ».
+  const withOfficial = new Set(
+    ctl.data.danger.signals.filter((x) => x.official).map((x) => `${x.source}|${x.label}`)
+  );
+  const hasOfficial = shown.some((r) => withOfficial.has(`${r.source}|${r.label}`));
   return (
     <>
       <div className="cp-between">
@@ -694,6 +761,8 @@ export function VerdictCard({ ctl }: { ctl: CompasCtl }) {
               <span className="cp-tchip__bd">
                 {a.level === 'ok' && a.partial ? 'RAS partiel' : AXIS_LEVEL[a.level]}
               </span>
+              {/* L'explication n'est pas qu'une info-bulle : elle est lue avec la pastille. */}
+              {(a.note || a.partial) && <span className="sr-only">. {a.note || a.partial}</span>}
             </span>
           );
         })}
@@ -715,17 +784,26 @@ export function VerdictCard({ ctl }: { ctl: CompasCtl }) {
           Aucun signal bloquant ni point de vigilance sur les données disponibles.
         </p>
       )}
+      {shown.some((r) => isMeteoalarmSource(r.source)) && (
+        <MeteoalarmNotice readAt={ctl.data.alertsReadAt} />
+      )}
       <button
         type="button"
         className="cp-btn cp-btn--soft"
         onClick={() =>
-          ctl.open({ kind: 'step', step: 'verdict', flow: more > 0 ? 'raisons' : 'sources' })
+          ctl.open({
+            kind: 'step',
+            step: 'verdict',
+            flow: more > 0 || hasOfficial ? 'raisons' : 'sources',
+          })
         }
       >
         <Icon name="info" size={16} />
         {more > 0
           ? `${more} autre${more > 1 ? 's' : ''} signal${more > 1 ? 'aux' : ''}`
-          : 'Sources et détails'}
+          : hasOfficial
+            ? 'Texte officiel et détails'
+            : 'Sources et détails'}
       </button>
     </>
   );
@@ -817,8 +895,8 @@ export function KitCard({ ctl }: { ctl: CompasCtl }) {
           {(() => {
             const open = ctl.data.kitAdvice.filter((a) => !a.covered).length;
             return open
-              ? `${open} conseil${open > 1 ? 's' : ''} météo à regarder`
-              : 'Conseils météo : tout est couvert';
+              ? `${open} conseil${open > 1 ? 's' : ''} de kit à regarder`
+              : 'Conseils de kit : tout est couvert';
           })()}
         </button>
       )}

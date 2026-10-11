@@ -24,7 +24,7 @@ import {
   type AreaQuery,
 } from '../engine/itinerary';
 import { cached, coordKey, readShared } from './sharedCache';
-import { chainRiver, parseRiverWays, riverNamePattern } from '../engine/river';
+import { chainRiver, parseRiverWays, riverNamePattern, riverQuery } from '../engine/river';
 import { simplifyLine, type LngLat } from '../engine/track';
 import { appUserAgent } from '@/lib/userAgent';
 
@@ -138,6 +138,18 @@ export async function lookupStagePois(
   return { pois: out, partial: fresh.length > now.length || found.some((l) => l == null) };
 }
 
+/**
+ * Points autour des étapes DÉJÀ connus (cache partagé), sans aucune requête au service
+ * public : pour dire ce que la zone montre (gare, gare routière…) sans rien attendre.
+ * `complete` : tous les lieux d'étape (huit au plus) ont été lus.
+ */
+export async function readCachedStagePois(points: readonly StagePoint[]): Promise<{ pois: RoutePoi[]; complete: boolean }> {
+  const places = distinctPlaces(points);
+  if (!places.length) return { pois: [], complete: false };
+  const known = await Promise.all(places.map((p) => readShared<RoutePoi[] | null>('place', keyOf(p))));
+  return { pois: known.flatMap((l) => l ?? []), complete: known.every((l) => l != null) };
+}
+
 /** Photon : lieux d'une emprise par catégorie, sans quota strict (OpenStreetMap). */
 async function photonArea(bbox: [number, number, number, number], include: string, signal: AbortSignal): Promise<AreaPlace[]> {
   // Créneau du site (plan 1.3) : les tuiles d'une zone partent en parallèle,
@@ -186,9 +198,8 @@ export async function lookupRiverLine(
   // (le nom exact ne trouvait rien : Périgueux et Sarlat, loin de l'eau, 8 oct.).
   const pattern = riverNamePattern(name);
   if (!pattern) return null;
-  const [w, north, e, south] = extent;
-  const bbox = `${Math.min(south, north).toFixed(3)},${Math.min(w, e).toFixed(3)},${Math.max(south, north).toFixed(3)},${Math.max(w, e).toFixed(3)}`;
-  const query = `[out:json][timeout:25];(way["waterway"="river"]["name"~"${pattern}",i](${bbox});way["waterway"="river"]["name:fr"~"${pattern}",i](${bbox}););out geom;`;
+  const query = riverQuery(pattern, extent);
+  if (!query) return null;
   const key = `river:v1:${createHash('sha256').update(query).digest('hex').slice(0, 32)}`;
   return cached<LngLat[] | null>(
     'place',

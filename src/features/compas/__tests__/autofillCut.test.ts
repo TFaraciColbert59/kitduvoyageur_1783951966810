@@ -12,6 +12,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
  * - « Arrêter » : avant l'itinéraire, rien n'est écrit ; pendant le reste, plus
  *   aucune écriture (nuits, kit, budget) hormis la trace, et la relance demande
  *   d'abord « Annuler ».
+ * - Sorties anticipées (pas de lieu, itinéraire refusé par la base, exception) et
+ *   « Annuler » : la prise de phase est rendue, une relance repart tout de suite
+ *   au lieu d'attendre jusqu'à 290 s.
+ * - « Annuler » (second onglet) ne touche jamais une préparation encore vivante : comme
+ *   la réadaptation, il refuse tant que son itinéraire attend un reste que quelqu'un prépare ;
+ *   sans cela, une relance immédiate lançait une 2e préparation en parallèle de la première
+ *   (doubles écritures du kit et du budget). Une préparation morte (prise expirée) s'annule.
  */
 const h = vi.hoisted(() => ({
   db: null as unknown as MemorySupabase,
@@ -19,6 +26,7 @@ const h = vi.hoisted(() => ({
   cut: false,
   reachedCut: null as null | (() => void),
   onQuery: null as null | ((q: QueryInfo) => void | Promise<void>),
+  failQuery: null as null | ((q: QueryInfo) => { code: string; message: string } | undefined),
 }));
 
 vi.mock('server-only', () => ({}));
@@ -64,7 +72,15 @@ vi.mock('../server/sharedCache', async (orig) => ({
   readShared: vi.fn(async () => undefined),
   writeShared: vi.fn(async () => undefined),
 }));
-vi.mock('../server/elevation', () => ({ routeAscentM: vi.fn(async () => null) }));
+vi.mock('../server/elevation', () => ({
+  routeAscentM: vi.fn(async () => null),
+  pointsMaxAltitudeM: vi.fn(async () => null),
+}));
+// Normales NASA POWER du kit (plan 4.8) : simulées à la frontière, aucun appel réseau.
+vi.mock('../server/weather', async (orig) => ({
+  ...(await orig<typeof import('../server/weather')>()),
+  getClimateNormals: vi.fn(async () => null),
+}));
 vi.mock('@/lib/ai/askAI', () => ({
   aiEnabled: () => false,
   askAI: vi.fn(async () => ({ text: '{}', model: 'x', degraded: true, cached: false, provider: 'fallback' })),
@@ -105,7 +121,12 @@ beforeEach(() => {
   h.cut = false;
   h.reachedCut = null;
   h.onQuery = null;
-  h.db = memorySupabase({ user: () => ({ id: 'u1' }), onQuery: (q) => h.onQuery?.(q) });
+  h.failQuery = null;
+  h.db = memorySupabase({
+    user: () => ({ id: 'u1' }),
+    onQuery: (q) => h.onQuery?.(q),
+    failQuery: (q) => h.failQuery?.(q),
+  });
   // Trois jours à Lyon : itinéraire depuis une base, sans carte ni IA.
   h.db.rows('trips').push({
     id: TRIP,
@@ -186,16 +207,92 @@ describe('coupure par la limite de la fonction, juste après l’itinéraire', (
     expect(reportServerError).not.toHaveBeenCalled();
   });
 
-  it('« Annuler » après la coupure retire toutes les étapes écrites ; la relance repart d’un voyage vide', async () => {
+  it('« Annuler » après la coupure (prise expirée) retire toutes les étapes écrites ; la relance repart d’un voyage vide', async () => {
     await launchAndCut();
+    // Une exécution coupée ne se distingue d'une exécution vivante qu'à l'expiration de sa prise.
+    vi.setSystemTime(T0 + CLAIM_MS + 1_000);
     expect(await compasUndoAutofillAction({ tripId: TRIP, tripSlug: 'lyon' })).toEqual({ success: true });
     expect(stepIds()).toEqual([]);
     expect(readPending(tripRow().metadata)).toBeNull();
 
-    // Saut au-delà de CLAIM_MS : contourne le défaut connu (« Annuler » garde la prise, PLAN-100 §2.6).
-    vi.setSystemTime(T0 + CLAIM_MS + 1_000);
+    // « Annuler » rend la prise : la relance repart tout de suite, sans attendre CLAIM_MS.
+    expect(compas().autofill_claim).toBeUndefined();
     expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
     expect(stepIds()).toHaveLength(3);
+  });
+
+  it('« Annuler » après une préparation finie : aucune prise ne reste, la relance repart tout de suite', async () => {
+    expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
+    expect(await compasUndoAutofillAction({ tripId: TRIP, tripSlug: 'lyon' })).toEqual({ success: true });
+    expect(compas().autofill_claim).toBeUndefined();
+    expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
+    expect(stepIds()).toHaveLength(3);
+  });
+});
+
+describe('« Annuler » depuis un second onglet, pendant qu’une préparation vit encore', () => {
+  const undo = () => compasUndoAutofillAction({ tripId: TRIP, tripSlug: 'lyon' });
+  const BUSY = 'Une préparation est en cours : attends sa fin ou arrête-la, puis annule.';
+
+  it('refuse, ne retire rien, et la relance immédiate n’ouvre pas une 2e préparation en parallèle', async () => {
+    await launchAndCut();
+    const ids = stepIds();
+    const pending = readPending(tripRow().metadata)!;
+    vi.setSystemTime(T0 + 60_000);
+    const before = h.db.writes.length;
+
+    // Le second onglet croit encore « prérempli » et clique « Annuler ».
+    expect(await undo()).toEqual({ success: false, error: BUSY });
+    expect(h.db.writes.length).toBe(before);
+    expect(stepIds()).toEqual(ids);
+    expect(readPending(tripRow().metadata)).toEqual(pending);
+    expect(compas().autofill_claim).toMatchObject({ rest: T0 });
+
+    // La relance attend la préparation vivante : aucune écriture, aucune 2e préparation.
+    expect(await launch()).toEqual({ success: true, pending: true, stepsCreated: 0 });
+    expect(h.db.writes.length).toBe(before);
+    expect(stepIds()).toEqual(ids);
+  });
+
+  it('une préparation qui a fini entre-temps (trace écrite) s’annule, relance immédiate', async () => {
+    expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
+    expect(await undo()).toEqual({ success: true });
+    expect(compas().autofill_claim).toBeUndefined();
+    expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
+  });
+
+  it('prise expirée : la préparation est morte, « Annuler » retire tout et rend la place', async () => {
+    await launchAndCut();
+    vi.setSystemTime(T0 + CLAIM_MS - 1);
+    expect(await undo()).toEqual({ success: false, error: BUSY });
+    vi.setSystemTime(T0 + CLAIM_MS);
+    expect(await undo()).toEqual({ success: true });
+    expect(stepIds()).toEqual([]);
+    expect(readPending(tripRow().metadata)).toBeNull();
+    expect(compas().autofill_claim).toBeUndefined();
+  });
+
+  it('itinéraire en attente que personne ne prépare (ni prise fraîche, ni reprise en main) : « Annuler » le retire', async () => {
+    for (const id of ['orphan-1', 'orphan-2']) h.db.rows('trip_steps').push({ id, trip_id: TRIP, day_number: 1, order_index: 0, title: id });
+    tripRow().metadata = {
+      compas: { ...compas(), autofill_pending: { runId: 'run-orphan', stepIds: ['orphan-1', 'orphan-2'], routeSet: false, notes: [] } },
+    };
+    expect(await undo()).toEqual({ success: true });
+    expect(stepIds()).toEqual([]);
+    expect(readPending(tripRow().metadata)).toBeNull();
+  });
+
+  it('même sans reprise en main, une prise fraîche suffit : la préparation vit', async () => {
+    h.db.rows('trip_steps').push({ id: 'live-1', trip_id: TRIP, day_number: 1, order_index: 0, title: 'live' });
+    tripRow().metadata = {
+      compas: {
+        ...compas(),
+        autofill_pending: { runId: 'run-live', stepIds: ['live-1'], routeSet: false, notes: [] },
+        autofill_claim: { rest: T0 - 1_000 },
+      },
+    };
+    expect(await undo()).toEqual({ success: false, error: BUSY });
+    expect(stepIds()).toEqual(['live-1']);
   });
 });
 
@@ -257,5 +354,139 @@ describe('« Arrêter » pendant la préparation', () => {
     vi.setSystemTime(T0 + 2_000);
     expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
     expect(stepIds()).toHaveLength(3);
+  });
+});
+
+describe('prise de phase rendue sur les sorties anticipées', () => {
+  /** Le voyage sans lieu : ni destination, ni étape, ni départ dit. */
+  const withoutPlace = () => {
+    tripRow().destination_name = null;
+    tripRow().destination_country_code = null;
+    tripRow().metadata = {};
+  };
+  const placeIsSaid = () => {
+    tripRow().destination_name = 'Lyon';
+    tripRow().destination_country_code = 'FR';
+    tripRow().metadata = {
+      compas: { anchor: { name: 'Lyon', lat: 45.764, lon: 4.8357, countryCode: 'FR', country: 'France', kind: 'city' } },
+    };
+  };
+
+  it('« Dis-moi où tu pars » : la prise est rendue, la relance avec un lieu repart tout de suite', async () => {
+    withoutPlace();
+    const res = await launch();
+    expect(res).toMatchObject({ success: false });
+    expect(res.success ? '' : res.error).toMatch(/Dis-moi où tu pars/);
+    expect(compas().autofill_claim).toBeUndefined();
+    expect(stepIds()).toEqual([]);
+
+    // Même instant : avant, la prise « steps » (290 s) faisait répondre « une autre préparation est en cours ».
+    placeIsSaid();
+    expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
+    expect(stepIds()).toHaveLength(3);
+  });
+
+  it('« Itinéraire non enregistré » : la prise est rendue, la relance repart tout de suite', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    h.failQuery = (q) => (q.table === 'trip_steps' && q.op === 'insert' ? { code: '53300', message: 'trop de connexions' } : undefined);
+    expect(await launch()).toEqual({ success: false, error: 'Itinéraire non enregistré : réessaie dans un instant.' });
+    expect(compas().autofill_claim).toBeUndefined();
+    expect(stepIds()).toEqual([]);
+
+    h.failQuery = null;
+    expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
+    expect(stepIds()).toHaveLength(3);
+  });
+
+  it('exception avant l’itinéraire (catch) : la prise est rendue, la relance repart tout de suite', async () => {
+    h.onQuery = (q) => {
+      if (q.table === 'trip_steps' && q.op === 'insert') throw new Error('réseau coupé');
+    };
+    expect(await launch()).toEqual({ success: false, error: 'Erreur serveur' });
+    expect(reportServerError).toHaveBeenCalledTimes(1);
+    expect(compas().autofill_claim).toBeUndefined();
+
+    h.onQuery = null;
+    expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
+    expect(stepIds()).toHaveLength(3);
+  });
+
+  it('exception pendant le reste (catch) : la prise du reste est rendue ; la relance reprend CET itinéraire tout de suite', async () => {
+    h.onQuery = (q) => {
+      if (q.table === 'trip_expenses' && q.op === 'insert') throw new Error('réseau coupé');
+    };
+    expect(await launch()).toEqual({ success: false, error: 'Erreur serveur' });
+    const pending = readPending(tripRow().metadata)!;
+    const ids = stepIds();
+    expect(ids).toHaveLength(3);
+    expect(pending.stepIds).toEqual(ids);
+    expect(compas().autofill_claim).toBeUndefined();
+
+    h.onQuery = null;
+    const before = h.db.writes.length;
+    expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
+    expect(stepIds()).toEqual(ids);
+    expect(writesTo('trip_steps', before).filter((w) => w.op !== 'update')).toEqual([]);
+    expect(compas().autofill).toMatchObject({ runId: pending.runId, stepIds: ids });
+  });
+
+  it('une préparation qui n’a pas la prise ne rend jamais celle d’une autre', async () => {
+    // Une autre préparation du même voyage tient la prise « steps » : la nôtre attend, sans rien rendre.
+    tripRow().metadata = { compas: { ...compas(), autofill_claim: { steps: T0 - 1_000 } } };
+    expect(await launch()).toEqual({ success: true, pending: true, stepsCreated: 0 });
+    expect(compas().autofill_claim).toEqual({ steps: T0 - 1_000 });
+    expect(stepIds()).toEqual([]);
+  });
+});
+
+describe('une date dans le futur ne tient pas une préparation (éditeur qui écrit trips.metadata)', () => {
+  /** Une heure que l'horloge n'atteindra jamais : Date.now() - 9e15 reste négatif. */
+  const FAR = 9e15;
+  const attack = () => {
+    for (const id of ['orphan-1', 'orphan-2']) h.db.rows('trip_steps').push({ id, trip_id: TRIP, day_number: 1, order_index: 0, title: id });
+    tripRow().metadata = {
+      compas: {
+        ...compas(),
+        autofill_pending: { runId: 'run-forged', stepIds: ['orphan-1', 'orphan-2'], routeSet: false, notes: [], restAt: FAR },
+        autofill_claim: { steps: FAR, rest: FAR },
+      },
+    };
+  };
+
+  it('prises « steps » et « rest » datées du futur : la préparation du propriétaire part quand même', async () => {
+    tripRow().metadata = { compas: { ...compas(), autofill_claim: { steps: FAR, rest: FAR } } };
+    expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
+    expect(stepIds()).toHaveLength(3);
+    expect(compas().autofill_claim).toBeUndefined();
+  });
+
+  it('itinéraire en attente à restAt lointain : dit coupé, « Annuler » le retire et rend la place', async () => {
+    attack();
+    // La réadaptation ne répond plus « déjà en cours » à une attente qui ne finira jamais.
+    expect(await compasRefreshAutofillAction({ tripId: TRIP, tripSlug: 'lyon' })).toEqual({
+      success: false,
+      error: 'Préparation coupée en cours de route : relance « Tout préparer » pour la finir, ou annule-la.',
+    });
+    expect(await compasUndoAutofillAction({ tripId: TRIP, tripSlug: 'lyon' })).toEqual({ success: true });
+    expect(stepIds()).toEqual([]);
+    expect(readPending(tripRow().metadata)).toBeNull();
+    expect(compas().autofill_claim).toBeUndefined();
+    expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
+  });
+
+  it('la même attente est reprise par une relance (prise du reste datée du futur = morte)', async () => {
+    attack();
+    const res = await launch();
+    expect(res).toMatchObject({ success: true });
+    expect(res).not.toMatchObject({ pending: true });
+  });
+
+  it('une prise datée de quelques secondes dans le futur (horloges décalées) reste valable', async () => {
+    tripRow().metadata = { compas: { ...compas(), autofill_claim: { steps: T0 + 30_000 } } };
+    expect(await launch()).toEqual({ success: true, pending: true, stepsCreated: 0 });
+    expect(stepIds()).toEqual([]);
+    // Au-delà d'une minute d'avance, ce n'est plus un décalage d'horloge : la prise est morte.
+    tripRow().metadata = { compas: { ...compas(), autofill_claim: { steps: T0 + 61_000 } } };
+    expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
   });
 });

@@ -1,0 +1,14 @@
+{
+  "source": "TravelRequirements.info — Entry Requirements Dataset",
+  "version": "1.3.0",
+  "url": "https://travelrequirements.info/data/",
+  "licence": "CC BY 4.0",
+  "credit": "TravelRequirements.info — Entry Requirements Dataset v1.3.0, AXG Sp. z o.o., https://travelrequirements.info/data/ (CC BY 4.0)",
+  "fetched": "2026-10-10",
+  "verifiedMin": "2026-08-26",
+  "verifiedMax": "2026-10-10",
+  "rows": 39601,
+  "destinations": 199,
+  "passports": 199,
+  "sha256": "b53db18ef434d01a74941b5ddc2d3ff11b9bbcd6e106ffef3069992520385d1a"
+}

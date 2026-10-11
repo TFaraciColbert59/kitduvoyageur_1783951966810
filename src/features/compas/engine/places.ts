@@ -5,6 +5,8 @@
  * près de la destination est écarté, jamais deviné.
  */
 
+import { extentIsWorldwide, extentWidthDeg } from './longitude';
+
 export interface CompasPlace {
   name: string;
   lat: number;
@@ -420,7 +422,25 @@ export function stageTitleFor(proposed: string, mapName: string | null | undefin
   // Nom proposé plus long que celui de la carte : un commentaire collé
   // (« Springdale repos », « Retour Salt Lake City ») : le nom de la carte.
   if (!a || !b || a === b || b.startsWith(`${a} `)) return proposed;
+  // Nom à deux langues de la carte (« Mòguru/Mogoro », « Bolzano - Bozen ») :
+  // si le nom proposé est l'une des deux, c'est lui, pas les deux collés
+  // (Sardaigne, plan 4.5).
+  if (bilingualParts(mapName).some((part) => plainName(part) === a)) return proposed;
   return mapName;
+}
+
+/**
+ * Les deux noms d'un lieu nommé dans deux langues par la carte : « Mòguru/Mogoro »
+ * (barre oblique) ou « Bolzano - Bozen » (tiret entouré d'espaces). Un trait
+ * d'union collé (« Saint-Étienne-de-Tinée ») n'en sépare jamais deux. Vide si le
+ * nom n'est pas à deux langues.
+ */
+export function bilingualParts(name: string): string[] {
+  const parts = name
+    .split(/\s*\/\s*|\s+[-–—]\s+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  return parts.length > 1 && parts.length <= 3 && parts.every((p) => /\p{L}{2}/u.test(p)) ? parts : [];
 }
 
 
@@ -438,6 +458,8 @@ export function aliasMatches(place: CompasPlace, query: string): boolean {
 const SLEEP_TAGS = /^(tourism=(hotel|hostel|guest_house|alpine_hut|wilderness_hut|camp_site|caravan_site|chalet|motel|apartment)|amenity=shelter)$/;
 /** Nature : sommet, lac, col, vallée… restent l'étape d'un trek (bivouac, refuge voisin). */
 const NATURE_TAG = /^(natural|waterway|mountain_pass)=|^place=(island|islet)$|^leisure=nature_reserve$/;
+/** Eau libre : un détroit, une baie, la mer ne sont pas un lieu où dormir (un lac, lui, reste une étape possible). */
+const OPEN_WATER_TAG = /^natural=(strait|bay|channel)$|^place=(sea|ocean)$/;
 /** « Province de Ninh Bình », « Distrito de Cusco » : le nom sans son préfixe administratif. */
 const ADMIN_PREFIX = /^(province|region|région|departement|département|district|distrito|provincia|regione|comté|county|prefecture|préfecture|municipalité|municipality|commune)\s+(de\s+la\s+|de\s+l['’]|du\s+|des\s+|de\s+|d['’]|of\s+)?/i;
 /** « West Clare Municipal District », « Kerry County » : le nom sans son suffixe administratif. */
@@ -470,7 +492,10 @@ export function sleepPlaceFix(place: CompasPlace): { locality: string } | { sear
     return bare ? { search: bare } : null;
   }
   if (place.settlement && (place.settlementRank ?? 2) >= 1) return null;
-  if (SLEEP_TAGS.test(tag) || NATURE_TAG.test(tag)) return null;
+  if (SLEEP_TAGS.test(tag)) return null;
+  // « Canal de Beagle » (Patagonie) gardé comme étape : le village le plus proche est cherché (plan 4.5).
+  if (OPEN_WATER_TAG.test(tag)) return { search: place.name };
+  if (NATURE_TAG.test(tag)) return null;
   if (BROAD.has(place.kind) || /^boundary=administrative$/.test(tag)) {
     const bare = place.name.replace(ADMIN_PREFIX, '').replace(ADMIN_SUFFIX, '').trim();
     if (bare && bare !== place.name) return { search: bare };
@@ -549,8 +574,18 @@ const NATURAL_TAG_RANK: Array<[RegExp, number]> = [
   [/^waterway=river$/, 3],
   [/^natural=/, 4],
 ];
-const extentArea = (p: CompasPlace) =>
-  p.extent ? Math.abs((p.extent[2] - p.extent[0]) * (p.extent[1] - p.extent[3])) : 0;
+/**
+ * Étendue d'une emprise (degrés carrés), pour départager. Une emprise coupée par
+ * l'antiméridien se mesure par-dessus la coupure ; la boîte d'un globe entier
+ * (Photon la rend pour une forme coupée) ne dit rien de la largeur : seule la
+ * hauteur est connue, on ne la compte pas plus large que haute.
+ */
+const extentArea = (p: CompasPlace) => {
+  if (!p.extent) return 0;
+  const height = Math.abs(p.extent[1] - p.extent[3]);
+  const width = extentIsWorldwide(p.extent) ? height : extentWidthDeg(p.extent);
+  return width * height;
+};
 
 /**
  * Le lieu naturel qu'une activité de plein air vise sous ce nom (« Chartreuse »

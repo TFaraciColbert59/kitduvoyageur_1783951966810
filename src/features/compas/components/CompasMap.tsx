@@ -177,6 +177,7 @@ export function CompasMap({
                   <Icon name={l.icon} size={16} />
                   <span>{l.label}</span>
                   {n != null && n > 0 && <small>{n}</small>}
+                  {n === 0 && <small>aucun</small>}
                 </button>
               );
             })}

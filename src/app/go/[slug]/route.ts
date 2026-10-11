@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAffiliateLinkBySlug, logAffiliateClick } from '@/lib/queries-affiliation';
+import { clientIpFromHeaders } from '@/lib/rate-limit/clientIp';
 import { buildAffiliateUrl, isValidAffiliateTargetUrl } from '@/features/affiliation/engine/affiliateEngine';
 
 export const dynamic = 'force-dynamic';
@@ -20,10 +21,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
   // 2. Extraire les métadonnées de requête pour la traçabilité éthique RGPD
   const tripId = request.nextUrl.searchParams.get('trip_id') || undefined;
-  const ip =
-    request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
-    request.headers.get('x-real-ip') ||
-    '127.0.0.1';
+  const ip = clientIpFromHeaders(request.headers);
   const userAgent = request.headers.get('user-agent') || 'unknown';
   const referrer = request.headers.get('referer') || undefined;
 
