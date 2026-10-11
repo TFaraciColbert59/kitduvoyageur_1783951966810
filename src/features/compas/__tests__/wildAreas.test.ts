@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { NightPlan } from '../engine/autofill';
+import { gearForNights, type NightPlan } from '../engine/autofill';
 import {
   BIVOUAC_PREFIX,
   areaKinds,
@@ -88,10 +88,27 @@ describe('bivouac annoncé entre deux lieux trop éloignés', () => {
     expect(s.note).toMatch(/règles/);
   });
 
-  it('une personne qui veut un hébergement n’a pas de bivouac : le plan reste sur place, dit comme avant', () => {
-    const plan = planItinerary({ ...base, days: 5, places, nights: 'hebergement' })!;
+  it.each(['hebergement', 'refuge'])('une personne qui veut %s n’a pas de bivouac : le plan reste sur place, dit comme avant', (nights) => {
+    const plan = planItinerary({ ...base, days: 5, places, nights })!;
     expect(plan.stages.some((s) => isBivouacStage(s.name))).toBe(false);
     expect(plan.stages.some((s) => /aucun lieu où dormir/.test(s.note ?? ''))).toBe(true);
+  });
+
+  it('CONTRE-EXEMPLE — qui accepte le bivouac (« bivouac », « mixte », rien de dit) en a, comme avant', () => {
+    for (const nights of ['bivouac', 'mixte', null, undefined]) {
+      const plan = planItinerary({ ...base, days: 5, places, nights })!;
+      expect(plan.stages.filter((s) => isBivouacStage(s.name)).length, String(nights)).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('refuges à 38 et 76 km avec « refuge » : aucun bivouac calculé, donc ni nuit forcée en bivouac ni tente au kit', () => {
+    const huts = [at('r0', 'Village Départ', 0), at('r1', 'Rifugio Uno', 38, 'hut', null), at('r2', 'Rifugio Due', 76, 'hut', null)];
+    const plan = planItinerary({ ...base, days: 5, places: huts, nights: 'refuge' })!;
+    expect(plan.stages.some((s) => isBivouacStage(s.name))).toBe(false);
+    const nightPlan: NightPlan[] = [1, 2, 3, 4].map((night) => ({ night, type: 'refuge' as const, reason: 'ta préférence' }));
+    const marked = markComputedBivouacs(nightPlan, (n) => plan.stages[n - 1]?.name);
+    expect(marked.every((n) => n.type === 'refuge')).toBe(true);
+    expect(gearForNights(marked.map((n) => n.type)).some((g) => g.key === 'tent' || g.key === 'sleeping-bag' || g.key === 'mattress')).toBe(false);
   });
 
   it('trop loin (plus de quatre journées de marche sans lieu) : pas de bivouac inventé', () => {

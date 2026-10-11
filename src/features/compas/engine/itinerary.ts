@@ -564,10 +564,12 @@ function planMoving(
     }
     // Aucun lieu à une journée de marche, mais un lieu réel plus loin vers l'avant
     // (jusqu'à quatre journées) : un bivouac calculé sur la ligne, annoncé comme tel.
-    // Jamais si le lieu réel n'est pas atteint avant la fin du voyage (le décompte « (k/total) » promettrait des nuits
-    // que le voyage n'a pas) : sans lieu atteignable, on reste sur place, et on le dit.
+    // Jamais pour qui veut un toit ou un refuge (comme pour les campings, `sleepOk`) :
+    // faute de lieu, on reste sur place et on le dit. Jamais non plus si le lieu réel
+    // n'est pas atteint avant la fin du voyage (le décompte « (k/total) » promettrait
+    // des nuits que le voyage n'a pas).
     let bivouacNote: string | null = null;
-    if (!next && !returning && shape === 'traverse' && !goal && prof.move === 'marche' && input.nights !== 'hebergement') {
+    if (!next && !returning && shape === 'traverse' && !goal && prof.move === 'marche' && input.nights !== 'hebergement' && input.nights !== 'refuge') {
       // Journées de marche jusqu'à `p`. Le lieu est atteignable si les nuits de bivouac tiennent dans la borne et dans les jours qui restent.
       const walkDaysTo = (p: AreaPlace) => Math.max(2, Math.ceil(distanceKm(cur, p) / crowTarget));
       const fits = (walkDays: number) => walkDays - 1 <= MAX_BIVOUAC_GAP_NIGHTS && walkDays - 1 <= left;
