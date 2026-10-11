@@ -1,0 +1,13 @@
+{
+  "source": "Weekly Oil Bulletin — prix hebdomadaires avec taxes, Commission européenne (DG Énergie)",
+  "page": "https://energy.ec.europa.eu/data-and-analysis/weekly-oil-bulletin_en",
+  "licence": "CC BY 4.0",
+  "licenceUrl": "https://commission.europa.eu/legal-notice_en",
+  "credit": "Weekly Oil Bulletin, Commission européenne (DG Énergie), https://energy.ec.europa.eu/data-and-analysis/weekly-oil-bulletin_en (CC BY 4.0) ; prix convertis en euros par litre, arrondis au millième",
+  "pricesDate": "2026-10-05",
+  "pagePublished": "2026-10-08",
+  "file": "Weekly Oil Bulletin Weekly prices with Taxes - 2026-09-21.xlsx",
+  "note": "Le nom du fichier publié porte une date plus ancienne que le contenu : la date des prix est celle lue dans la cellule A2 du classeur.",
+  "sha256": "caf597685a68ea265e7e671715622b71b7402de069d21477331ea196f8f6a3c0",
+  "countries": 27
+}
