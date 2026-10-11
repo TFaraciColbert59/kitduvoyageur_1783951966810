@@ -80,6 +80,35 @@ function utcDayKey(value: string | null | undefined): string | null {
 }
 
 /**
+ * T23 — Amélioration de kit éprouvée → Se préparer (émission fermée en v1 :
+ * `kit_improved` n'existe qu'au registre v2). La preuve est chargée par
+ * `loadKitImprovementProof` (diff de versions persistées, problème terrain
+ * résolu, éléments vitaux conservés, auto-fork exclu) ; le claim par version
+ * empêche de recréditer le même correctif.
+ */
+export async function awardKitImproved(kitId: string): Promise<AwardProducerResult> {
+  try {
+    const { loadKitImprovementProof } = await import('./kitImprovementProof');
+    const proof = await loadKitImprovementProof(kitId);
+    if (!proof.ok) {
+      return { success: false, outcome: 'refused', reason: proof.reason };
+    }
+    return award({
+      userId: proof.userId,
+      action: 'kit_improved',
+      sourceType: 'kit_improvement',
+      sourceId: `${kitId}:${proof.newVersionId}`,
+      effectiveAt: new Date().toISOString(),
+      claims: [{ group: 'kit_improvement', key: `kit_version:${proof.newVersionId}` }],
+      metadata: { kitId, resolvedKeys: proof.resolvedKeys },
+    });
+  } catch (error) {
+    console.error('[progression/producerHooks] amélioration kit (non bloquant):', error);
+    return { success: false, outcome: 'refused', reason: 'hook_error' };
+  }
+}
+
+/**
  * Session de randonnée traitée → Explorer.
  *
  * Le gain suit les paliers de durée active ; le bonus de nouveauté est réservé
