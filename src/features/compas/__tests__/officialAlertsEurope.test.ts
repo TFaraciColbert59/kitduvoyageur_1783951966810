@@ -314,7 +314,8 @@ describe('contour illisible dans une zone : la zone n’est plus « entièrement
         warning('ch-cercle', '2026-10-10T20:00:00+02:00', [
           {
             ...info({ language: 'fr', areas: [{ name: 'Zone d’essai', polygon: [AILLEURS] }], level: '4; red; Extreme', type: null }),
-            area: [{ areaDesc: 'Zone d’essai', polygon: [AILLEURS], circle: ['46.0,7.0 rayon-inconnu'] }],
+            // Le flux réel porte aussi `circle` ; le type du lecteur de test n'en liste que deux formes.
+            area: [{ areaDesc: 'Zone d’essai', polygon: [AILLEURS], circle: ['46.0,7.0 rayon-inconnu'] }] as never,
           },
         ]),
       ],

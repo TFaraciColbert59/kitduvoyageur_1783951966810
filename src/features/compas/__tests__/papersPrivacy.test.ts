@@ -63,6 +63,7 @@ vi.mock('../server/sharedCache', async (orig) => ({
 vi.mock('../server/elevation', () => ({
   routeAscentM: vi.fn(async () => null),
   pointsMaxAltitudeM: vi.fn(async () => null),
+  pointsAltitudeRange: vi.fn(async () => null),
   getRouteElevation: vi.fn(async () => null),
 }));
 vi.mock('../server/weather', async (orig) => ({
