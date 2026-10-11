@@ -34,16 +34,41 @@ Codes de sortie : `0` = ok, `1` = dégradé ou lecture impossible, `2` = configu
 | plus ancienne ligne outbox `pending`/`failed` | > 15 min | vérifier que le cron `/api/cron/progression-outbox` passe bien (`Authorization: Bearer $CRON_SECRET`) |
 | plus ancienne ligne `leaderboard_refresh_queue` `pending`/`failed` | > 30 min | vérifier le cron `/api/cron/leaderboard-refresh` (toutes les 15 min) ; la RPC `refresh_leaderboard_batch(100)` est concurrente (`SKIP LOCKED`) |
 
-## 2. Crons à planifier
+## 2. Planification (T04 — observée en prod)
 
-| Route | Fréquence | Réponse |
+Canal nominal : **jobs pg_cron** créés par la migration `20261011121250_progression_cron_jobs`.
+
+| Job pg_cron | Fréquence | Commande | RPC |
+|---|---|---|---|
+| `progression-outbox-consume` | `*/5 * * * *` | `SELECT public.process_progression_outbox(50)` | lot borné 50, `SKIP LOCKED` |
+| `progression-leaderboard-refresh` | `*/15 * * * *` | `SELECT public.refresh_leaderboard_batch(100)` | lot borné 100 |
+| `progression-outbox-purge` | `13 4 * * *` | `SELECT public.purge_progression_outbox(90)` | rétention 90 j |
+
+Contrainte plateforme documentée : `cron.schedule_in_database` refuse un
+`username` différent sans superuser ; les migrations distantes tournent sous
+`postgres`. Les jobs s'exécutent donc sous ce rôle et le confinement passe par
+les fonctions `SECURITY DEFINER` (révoquées pour `PUBLIC`/`anon`/`authenticated`).
+`pg_net` n'étant pas installé, pg_cron exécute le SQL directement (pas d'appel HTTP).
+
+Observation (lecture seule) :
+
+```sql
+SELECT j.jobname, j.schedule, j.active FROM cron.job j WHERE j.jobname LIKE 'progression-%';
+SELECT j.jobname, d.status, d.start_time, d.return_message
+FROM cron.job_run_details d JOIN cron.job j ON j.jobid = d.jobid
+WHERE j.jobname LIKE 'progression-%' ORDER BY d.start_time DESC LIMIT 10;
+```
+
+Canal alternatif : routes Next sécurisées (même contrôle `Authorization: Bearer ${CRON_SECRET}`),
+`POST` **et** adaptateur `GET` (Vercel Cron, cron-job.org, etc.) :
+
+| Route | Fréquence cible | Réponse |
 |---|---|---|
-| `POST /api/cron/progression-outbox` | 5 min | `{ processed, failed, purged }` — `purged` = lignes outbox `processed` > 90 j supprimées |
-| `POST /api/cron/leaderboard-refresh` | 15 min | `{ processed, failed }` |
+| `GET|POST /api/cron/progression-outbox` | 5 min | `{ processed, failed, purged }` — `purged` = lignes outbox `processed` > 90 j supprimées |
+| `GET|POST /api/cron/leaderboard-refresh` | 15 min | `{ processed, failed }` |
 
-Les deux exigent `Authorization: Bearer ${CRON_SECRET}`. La planification
-plateforme n'est pas encore configurée dans le dépôt : voir
-`docs/progression/PERFORMANCE.md` §6.
+Vérification locale de reprise (panne simulée, escalade `dead`, requeue sans
+double) : `scripts/ops/t04_outbox_recovery_sim.sql` (LOCAL uniquement).
 
 ## 2bis. Cycle de vie des saisons (service_role uniquement)
 

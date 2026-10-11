@@ -12,7 +12,7 @@ vi.mock('@supabase/supabase-js', () => ({ createClient: vi.fn() }));
 
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest } from 'next/server';
-import { POST } from '@/app/api/cron/progression-outbox/route';
+import { GET, POST } from '@/app/api/cron/progression-outbox/route';
 
 interface MockOptions {
   rpcResult?: { processed: number; failed: number } | null;
@@ -118,5 +118,19 @@ describe('cron progression-outbox', () => {
 
     expect(response.status).toBe(200);
     expect(body).toEqual({ processed: 2, failed: 0, purged: 0 });
+  });
+
+  it('(f) adaptateur GET : même contrôle de secret et même lot', async () => {
+    const denied = await GET(makeRequest());
+    expect(denied.status).toBe(401);
+
+    mockedCreateClient.mockReturnValue(
+      createSupabaseMock({ rpcResult: { processed: 1, failed: 0 }, purgeResult: 0 }) as never
+    );
+    const response = await GET(makeRequest('test-secret'));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({ processed: 1, failed: 0, purged: 0 });
   });
 });

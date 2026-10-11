@@ -14,8 +14,13 @@ const OUTBOX_KEEP_DAYS = 90;
  * Une fois par exécution, purge aussi l'outbox traité au-delà de 90 jours.
  * Déclencheur externe avec `Authorization: Bearer ${CRON_SECRET}`. La RPC
  * `process_progression_outbox` est atomique et concurrente (`SKIP LOCKED`).
+ *
+ * POST et GET partagent le même contrôle (adaptateur GET pour les
+ * planificateurs qui n'invoquent qu'en GET ou pour Vercel Cron). Le canal
+ * nominal de production reste les jobs pg_cron (voir migration
+ * `20261011121250_progression_cron_jobs`).
  */
-export async function POST(request: NextRequest) {
+async function handle(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
   const authHeader = request.headers.get('authorization');
   if (!secret || authHeader !== `Bearer ${secret}`) {
@@ -58,3 +63,6 @@ export async function POST(request: NextRequest) {
     purged,
   });
 }
+
+export const POST = handle;
+export const GET = handle;
