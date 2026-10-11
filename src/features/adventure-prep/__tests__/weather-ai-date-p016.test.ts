@@ -23,7 +23,18 @@ import { fullDraft } from './fixtures';
  * Un double qui remplacerait toute la phase ne prouverait rien.
  */
 
-const DATE_IA = '2026-10-10';
+/**
+ * Une date proposee par l'IA est toujours dans le futur : on la calcule depuis
+ * l'horloge (UTC) au lieu de la figer. Figee au 2026-10-10, elle est devenue
+ * passee le 2026-10-11 et la phase meteo n'interrogeait plus rien.
+ */
+function isoDansLesJours(jours: number): string {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() + jours);
+  return d.toISOString().slice(0, 10);
+}
+const DATE_IA = isoDansLesJours(30);
+const LENDEMAIN_IA = isoDansLesJours(31);
 
 function step(overrides: Partial<DraftedStep> = {}): DraftedStep {
   return {
@@ -137,10 +148,10 @@ describe('P0.16 — la meteo se mesure sur la date proposee par l IA', () => {
     expect(outcome.suggestedStartDate).toBe(DATE_IA);
     // Avant le correctif, `demandees` etait VIDE : aucune prevision n'etait
     // demandee, faute de date.
-    expect(demandees.flat()).toEqual([DATE_IA, '2026-10-11']);
+    expect(demandees.flat()).toEqual([DATE_IA, LENDEMAIN_IA]);
     expect(outcome.model?.weather.map((day) => day?.date ?? null)).toEqual([
       DATE_IA,
-      '2026-10-11',
+      LENDEMAIN_IA,
     ]);
   });
 
