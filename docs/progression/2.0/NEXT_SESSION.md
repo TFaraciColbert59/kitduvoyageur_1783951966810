@@ -44,7 +44,32 @@ remplace les jobs simples déjà en prod.
   utilise des fixtures `session_segment_passages` — réaligner lors de la
   prochaine exécution locale complète.
 
-## Prochaine action concrète — T13 (trois missions choisies)
+## État au point de reprise (après T12 + T13 backend)
+
+- T12 **TESTÉ+DÉPLOYÉ** (catalogue + liaison `progression_challenge_models`,
+  5 publiés / 3 conservés, pgTAP 15/15, prod vérifiée).
+- T13 backend **TESTÉ+DÉPLOYÉ** (migration `20261011160430`, route
+  `/api/progression/missions`, pgTAP 17/17, spec 9/9, prod vérifiée).
+- Batterie du jalon : vitest **395 passés / 9 skipped**, pgTAP **112/112**
+  (5 suites), invariants 9/9, `tsc` 0.
+
+## Prochaine action concrète — T14 (avancement dérivé des événements)
+
+1. `missionProjection.ts` : compter les **réalisations sources distinctes**
+   par assignation active (événements `progression_events.action_type` ;
+   cible multi-activités = IDs métier distincts ; un événement avance plusieurs
+   vues mais ne crée qu'un gain). Mettre à jour `progress` des assignations
+   (SQL ou service — pas de PROGRESSION_AWARD à la fin de mission).
+2. UI ≤ 3 missions : la carte de `MaProgressionView` lit
+   `GET /api/progression/missions` (3 actives max), affiche titre/avancement/
+   unité + **gain restant estimé** (jamais de points promis), actions
+   choisir/remplacer/abandonner branchées sur le POST T13.
+3. Tests : `mission_projection.test.sql` (rejeu d'événements, correction d'un
+   fait) + extension des specs UI ; clôture de mission = distinction, 0 XP.
+
+## Reprise historique (T13, fait)
+
+## Ancienne action — T13 (trois missions choisies)
 
 1. Migration additive via CLI : `progression_mission_assignments`
    (user_id, model_id text du catalogue, state `active|replaced|abandoned`,
