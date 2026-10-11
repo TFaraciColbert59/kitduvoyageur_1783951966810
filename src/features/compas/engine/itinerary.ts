@@ -328,8 +328,12 @@ export function markComputedBivouacs(plan: NightPlan[], stageNameOfNight: (night
   });
 }
 
-/** Journées de marche, au plus, qu'un bivouac calculé peut combler entre deux lieux réels. */
-const MAX_BIVOUAC_GAP_DAYS = 3;
+/**
+ * Nuits de bivouac calculées, au plus, d'affilée entre deux lieux réels : trois
+ * nuits, donc quatre journées de marche d'un lieu à l'autre. Le décompte
+ * « (k/3) » affiché ne dépasse jamais cette borne.
+ */
+const MAX_BIVOUAC_GAP_NIGHTS = 3;
 
 function kindScore(p: AreaPlace, prof: Profile, nights: string | null | undefined): number {
   let s = prof.prefer[p.kind] ?? 0;
@@ -482,6 +486,8 @@ function planMoving(
   let bivouacNights = 0;
   let gapFrom = start.name;
   let gapTo: AreaPlace | null = null;
+  // Journées de marche qui restent jusqu'à `gapTo`, celle du jour comprise (comptées à l'ouverture du trou, jamais ré-estimées).
+  let gapDays = 0;
   // Traversée qui a fait demi-tour (bout de la zone) : la note n'est dite qu'une fois.
   let returning = false;
   for (let day = 1; day <= input.days; day += 1) {
@@ -536,7 +542,7 @@ function planMoving(
         : returning
           ? null
           : midGap
-            ? distanceKm(cur, midGap) <= crowMax
+            ? gapDays <= 1
               ? midGap
               : null
             : choose(true);
@@ -557,22 +563,31 @@ function planMoving(
       }
     }
     // Aucun lieu à une journée de marche, mais un lieu réel plus loin vers l'avant
-    // (deux ou trois journées) : un bivouac calculé sur la ligne, annoncé comme tel.
+    // (jusqu'à quatre journées) : un bivouac calculé sur la ligne, annoncé comme tel.
+    // Jamais pour qui veut un toit ou un refuge (comme pour les campings, `sleepOk`) :
+    // faute de lieu, on reste sur place et on le dit. Jamais non plus si le lieu réel
+    // n'est pas atteint avant la fin du voyage (le décompte « (k/total) » promettrait
+    // des nuits que le voyage n'a pas).
     let bivouacNote: string | null = null;
-    if (!next && !returning && shape === 'traverse' && !goal && prof.move === 'marche' && input.nights !== 'hebergement') {
+    if (!next && !returning && shape === 'traverse' && !goal && prof.move === 'marche' && input.nights !== 'hebergement' && input.nights !== 'refuge') {
+      // Journées de marche jusqu'à `p`. Le lieu est atteignable si les nuits de bivouac tiennent dans la borne et dans les jours qui restent.
+      const walkDaysTo = (p: AreaPlace) => Math.max(2, Math.ceil(distanceKm(cur, p) / crowTarget));
+      const fits = (walkDays: number) => walkDays - 1 <= MAX_BIVOUAC_GAP_NIGHTS && walkDays - 1 <= left;
       const ahead: AreaPlace | null =
         midGap ??
         best(inZone, (p) => {
           if (used.has(p.id)) return -Infinity;
           const d = distanceKm(cur, p);
-          if (d <= crowMax * 1.4 || d > crowMax * MAX_BIVOUAC_GAP_DAYS) return -Infinity;
+          if (d <= crowMax * 1.4 || !fits(walkDaysTo(p))) return -Infinity;
           if (along(axis, p) - along(axis, cur) <= 0) return -Infinity;
           return -d;
         });
-      if (ahead) {
+      // En plein trou, les journées qui restent ont été comptées à l'ouverture : le décompte « (k/total) » ne bouge plus.
+      const walkDays = ahead ? (midGap ? gapDays : walkDaysTo(ahead)) : 0;
+      if (ahead && fits(walkDays)) {
         gapTo = ahead;
+        gapDays = walkDays - 1;
         const d = distanceKm(cur, ahead);
-        const walkDays = Math.max(2, Math.ceil(d / crowTarget));
         const f = 1 / walkDays;
         const total = bivouacNights + walkDays - 1;
         next = {
@@ -634,6 +649,7 @@ function planMoving(
       bivouacNights = 0;
       gapFrom = next.name;
       gapTo = null;
+      gapDays = 0;
     }
     highStreak = (next.eleM ?? 0) >= ACCLIMATISATION_FROM_M ? highStreak + 1 : 0;
     returning = returning || back;

@@ -6,6 +6,7 @@ import {
   REST_AFTER_NIGHTS,
   acclimatisationNote,
   checkSleepingProfile,
+  sleepNightsOf,
   sleepOvershootM,
 } from '../engine/acclimatisation';
 import { planItinerary, type AreaPlace } from '../engine/itinerary';
@@ -101,6 +102,63 @@ describe('checkSleepingProfile — contrôle d’un itinéraire posé', () => {
     // Une nuit au même niveau remet le compte à zéro.
     nights[2] = { day: 3, eleM: 3200, stay: true } as (typeof nights)[number];
     expect(checkSleepingProfile(nights)).toEqual([]);
+  });
+});
+
+describe('checkSleepingProfile — seules les nuits de MONTÉE font la série', () => {
+  const nightsAt = (elevations: number[]) => elevations.map((eleM, i) => ({ day: i + 1, eleM }));
+
+  it('des nuits qui redescendent ne sont pas des jours de montée : 2700, 2600, 2800, 2650, 2900 ne signale rien', () => {
+    // Avant : « Pas de nuit au même niveau depuis 5 jours de montée (jour 5) » alors que deux nuits sont plus basses que la veille.
+    expect(checkSleepingProfile(nightsAt([2700, 2600, 2800, 2650, 2900]))).toEqual([]);
+  });
+
+  it('une nuit plus basse remet la série à zéro, comme une nuit au même niveau', () => {
+    // 5 nuits de montée d'affilée, la 3e plus basse que la 2e : la série repart de 1 (3 nuits en tout après), rien à dire.
+    expect(checkSleepingProfile(nightsAt([2600, 2900, 2800, 3000, 3300, 3600]))).toEqual([]);
+    // Même niveau sans le drapeau « stay » (deux lieux à la même altitude) : palier.
+    expect(checkSleepingProfile(nightsAt([2600, 2900, 2900, 3200, 3500, 3800]))).toEqual([]);
+  });
+
+  it('CONTRE-EXEMPLE — cinq nuits qui montent d’affilée restent signalées, une fois, après une descente plus ancienne', () => {
+    expect(checkSleepingProfile(nightsAt([2600, 2900, 3200, 3500, 3800]))).toEqual([{ kind: 'rest', day: 5, nights: 5 }]);
+    // Une descente au début (la nuit à 2 600 m), puis cinq nuits de montée : la série compte depuis la descente, signalée au jour 7.
+    expect(checkSleepingProfile(nightsAt([3000, 2600, 2900, 3200, 3500, 3800, 4100]))).toEqual([{ kind: 'rest', day: 7, nights: 5 }]);
+  });
+
+  it('la première nuit compte quand la nuit d’avant est inconnue (on ne déduit pas qu’elle redescend), pas quand on la sait plus haute', () => {
+    expect(checkSleepingProfile(nightsAt([2600, 2900, 3200, 3500, 3800]))).toHaveLength(1);
+    expect(checkSleepingProfile(nightsAt([2600, 2900, 3200, 3500, 3800]), 3000)).toEqual([]);
+  });
+});
+
+describe('sleepNightsOf — les nuits d’un itinéraire (le dernier jour est l’arrivée, on n’y dort pas)', () => {
+  // Un trek de 6 jours : 5 nuits (jours 1 à 5), le jour 6 est l'arrivée.
+  const steps = [1, 2, 3, 4, 5, 6].map((day) => ({ day, lat: 45.9, lon: 7 + day * 0.1 }));
+
+  it('ne garde que les jours 1 à nightsCount', () => {
+    const nights = sleepNightsOf(steps, [2600, 2800, 3000, 3200, 3400, 3600], 5);
+    expect(nights.map((n) => n.day)).toEqual([1, 2, 3, 4, 5]);
+    expect(nights.map((n) => n.eleM)).toEqual([2600, 2800, 3000, 3200, 3400]);
+  });
+
+  it('l’arrivée au sommet le dernier jour ne fait pas une 6e nuit de montée', () => {
+    // 5 nuits qui montent puis l'arrivée plus haut : signalé à la 5e nuit seulement (jour 5), jamais au jour 6.
+    const f = checkSleepingProfile(sleepNightsOf(steps, [2600, 2900, 3200, 3500, 3800, 4100], 5));
+    expect(f).toEqual([{ kind: 'rest', day: 5, nights: 5 }]);
+    // Quatre nuits de montée + l'arrivée : rien (l'arrivée n'est pas une nuit).
+    expect(checkSleepingProfile(sleepNightsOf(steps.slice(0, 5), [2600, 2900, 3200, 3500, 3800], 4))).toEqual([]);
+  });
+
+  it('même lieu que l’étape d’avant : une nuit au même niveau', () => {
+    const same = [1, 2, 3, 4, 5].map((day) => ({ day, lat: 45.9, lon: day === 3 ? 7.2 : 7 + day * 0.1 }));
+    const nights = sleepNightsOf(same, [2600, 2900, 2900, 3200, 3500], 5);
+    expect(nights.map((n) => n.stay)).toEqual([false, false, true, false, false]);
+  });
+
+  it('les altitudes inconnues restent inconnues', () => {
+    expect(sleepNightsOf(steps, null, 5).map((n) => n.eleM)).toEqual([null, null, null, null, null]);
+    expect(sleepNightsOf(steps, [2600, null, 3000, 3200, 3400, 3600], 5)[1].eleM).toBeNull();
   });
 });
 

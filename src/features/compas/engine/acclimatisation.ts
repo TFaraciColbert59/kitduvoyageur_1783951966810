@@ -12,6 +12,8 @@
  * - ce module ne pose aucun diagnostic et ne remplace pas un médecin.
  */
 
+import { distanceKm } from './places';
+
 /** La source LUE (pas citée de mémoire) : texte lu le 11 octobre 2026. */
 export const ACCLIMATISATION_SOURCE = {
   organisation: 'UIAA (Union internationale des associations d’alpinisme), commission médicale',
@@ -65,9 +67,14 @@ export type AcclimFinding =
 
 /**
  * Contrôle d'un itinéraire : les nuits qui montent de plus de 500 m (arrivée
- * à 2 500 m ou plus) et les séries de plus de 4 nuits de montée au-dessus de
- * 2 500 m sans nuit au même niveau. `startM` : altitude de la nuit d'avant la
- * première, si on la connaît (sinon la première nuit n'est pas jugée).
+ * à 2 500 m ou plus) et les séries de plus de 4 nuits de MONTÉE au-dessus de
+ * 2 500 m sans nuit au même niveau. Seule une nuit plus haute que la précédente
+ * prolonge la série ; une nuit au même niveau ou plus basse (palier) la remet à
+ * zéro, comme la règle de l'UIAA, qui parle de jours de montée. `startM` :
+ * altitude de la nuit d'avant la première, si on la connaît (sinon la première
+ * nuit n'est pas jugée, et compte dans la série : on ne déduit pas qu'elle
+ * redescend). `nights` : les nuits seulement, pas l'étape d'arrivée du dernier
+ * jour (voir `sleepNightsOf`).
  */
 export function checkSleepingProfile(nights: ReadonlyArray<SleepNight>, startM: number | null = null): AcclimFinding[] {
   const out: AcclimFinding[] = [];
@@ -77,7 +84,8 @@ export function checkSleepingProfile(nights: ReadonlyArray<SleepNight>, startM: 
     const over = sleepOvershootM(prev, n.eleM);
     if (over > 0 && prev != null && n.eleM != null)
       out.push({ kind: 'gain', day: n.day, fromM: Math.round(prev), toM: Math.round(n.eleM), gainM: Math.round(n.eleM - prev) });
-    if (n.stay || n.eleM == null || n.eleM < ACCLIMATISATION_FROM_M) streak = 0;
+    const climbs = n.eleM != null && (prev == null || n.eleM > prev);
+    if (n.stay || !climbs || n.eleM == null || n.eleM < ACCLIMATISATION_FROM_M) streak = 0;
     else {
       streak += 1;
       if (streak === REST_MAX_NIGHTS + 1) out.push({ kind: 'rest', day: n.day, nights: streak });
@@ -85,6 +93,28 @@ export function checkSleepingProfile(nights: ReadonlyArray<SleepNight>, startM: 
     if (n.eleM != null) prev = n.eleM;
   }
   return out;
+}
+
+/**
+ * Les nuits d'un itinéraire, à passer à `checkSleepingProfile` : les étapes des
+ * jours 1 à `nightsCount` seulement (le dernier jour est l'arrivée, on n'y dort
+ * pas : `nightsCount` = jours - 1). `steps` : les étapes localisées, dans
+ * l'ordre ; `altitudes` : leur altitude repère, dans le même ordre (null :
+ * inconnue). Une étape à moins de 300 m de la précédente est la même nuit au
+ * même niveau.
+ */
+export function sleepNightsOf(
+  steps: ReadonlyArray<{ day: number; lat: number; lon: number }>,
+  altitudes: ReadonlyArray<number | null> | null,
+  nightsCount: number
+): SleepNight[] {
+  return steps
+    .map((st, i) => ({
+      day: st.day,
+      eleM: altitudes?.[i] ?? null,
+      stay: i > 0 && distanceKm(st, steps[i - 1]) < 0.3,
+    }))
+    .filter((n) => n.day >= 1 && n.day <= nightsCount);
 }
 
 const rounded = (m: number) => `${Math.round(m / 10) * 10}`.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
