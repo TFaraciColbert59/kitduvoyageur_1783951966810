@@ -3,7 +3,7 @@ import 'server-only';
 import { MAX_NOTES } from '../engine/advice';
 import { originOf, partySizeOf, shortHoursOf, tripLengthDays } from '../engine/tripContext';
 
-import type { FxRate } from '../engine/currency';
+import { currencyOfCountry, type FxRate } from '../engine/currency';
 import type { BudgetFxData } from '../engine/budgetFx';
 import type { CompasPendingInvite } from '../engine/team';
 import { assessDanger, mergeDangerIntoVerdict, type DangerAssessment } from '../engine/danger';
@@ -550,7 +550,8 @@ export async function getCompasData(): Promise<CompasData | null> {
     getBudgetFx({
       tripCurrency: input.trip.budgetCurrency ?? 'EUR',
       traveller: traveller.currency,
-      destination: null,
+      // La devise du pays de destination (ISO 4217) : null quand la liste n'en donne pas.
+      destination: currencyOfCountry(trip.destination_country_code),
     }),
   ]);
   input.weather = toWeatherInput(weather);

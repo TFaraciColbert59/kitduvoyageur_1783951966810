@@ -1065,6 +1065,29 @@ describe('CompasScreen', () => {
       expect(block.textContent).toContain('1 € = 0,93 CHF');
     });
 
+    it('la devise du pays de destination est dite comme telle, à côté de celle du voyageur', () => {
+      const jpy = {
+        base: 'EUR' as const,
+        currency: 'JPY',
+        rate: 176.2,
+        date: '2026-10-08',
+        source: 'currency-api',
+      };
+      render(
+        <CompasScreen
+          data={withBudget({
+            targets: [...chf.targets, { currency: 'JPY', kinds: ['destination' as const] }],
+            rates: { ...chf.rates, JPY: jpy },
+          })}
+        />
+      );
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+      const card = screen.getByTestId('budget-also');
+      expect(card.textContent).toContain('Dans ta devise (CHF)');
+      expect(card.textContent).toContain('Dans la devise du pays (JPY)');
+      expect(card.textContent).toContain('1 € = 176,2 JPY · taux du 8 octobre 2026 · currency-api');
+    });
+
     it('sans devise à montrer en plus, rien n’est ajouté', () => {
       render(<CompasScreen data={withBudget(null)} />);
       fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));

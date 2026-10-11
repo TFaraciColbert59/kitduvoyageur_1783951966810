@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import META from '../data/entryRequirements.meta.json';
+import CURRENCIES_META from '../data/countryCurrencies.meta.json';
 import { DATA_SOURCES, DataSources } from '@/app/mentions-legales/dataSources';
 
 /**
@@ -45,6 +46,12 @@ describe('mentions légales — sources des données', () => {
 
   it('aucun jeu dérivé de Passport Index n’est crédité ni cité', () => {
     expect(text).not.toMatch(/passport ?index/i);
+  });
+
+  it('les devises des pays citent la liste ISO 4217 de SIX, avec sa date de publication', () => {
+    expect(text).toContain('Devises des pays :');
+    expect(text).toMatch(/liste n° 1 de la norme ISO 4217, publiée par SIX/);
+    expect(text).toContain(`liste du ${CURRENCIES_META.published}`);
   });
 
   it('la page des mentions légales affiche ces sources (mobile et bureau)', () => {

@@ -1,5 +1,6 @@
 import React from 'react';
 import ENTRY_DATA from '@/features/compas/data/entryRequirements.meta.json';
+import CURRENCIES_META from '@/features/compas/data/countryCurrencies.meta.json';
 
 /** Le crédit de l'éditeur de la table des papiers, coupé autour de l'adresse du jeu (qui devient un lien). */
 const [CREDIT_BEFORE_URL, CREDIT_AFTER_URL] = ENTRY_DATA.credit.split(ENTRY_DATA.url) as [string, string];
@@ -85,6 +86,16 @@ export const DATA_SOURCES: Array<{ label: string; parts: Array<string | { text: 
       ' : « Source: ECB statistics. ») ; en secours, ',
       { text: 'currency-api', href: 'https://github.com/fawazahmed0/exchange-api' },
       ' (CC0). Taux donnés à titre indicatif.',
+    ],
+  },
+  {
+    label: 'Devises des pays',
+    parts: [
+      'Devise de chaque pays d’après la liste n° 1 de la norme ISO 4217, publiée par ',
+      { text: 'SIX', href: 'https://www.six-group.com/en/products-services/financial-information/data-standards.html' },
+      ', agence de maintenance de la norme (liste du ',
+      CURRENCIES_META.published,
+      ').',
     ],
   },
 ];
