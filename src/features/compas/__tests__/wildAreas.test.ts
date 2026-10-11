@@ -41,19 +41,20 @@ describe('bivouac annoncé entre deux lieux trop éloignés', () => {
   // Trois villages à 38 km l'un de l'autre : aucun lieu où dormir à une journée de marche.
   const places = [at('n1', 'Västra', 0), at('n2', 'Mitten', 38), at('n3', 'Östra', 76)];
 
-  it('cinq jours : des bivouacs calculés entre les villages, au lieu de cinq journées au même endroit', () => {
+  it('cinq jours : des bivouacs calculés jusqu’à Mitten, au lieu de cinq journées au même endroit', () => {
     const plan = planItinerary({ ...base, days: 5, places })!;
     expect(plan).not.toBeNull();
     expect(plan.stages).toHaveLength(5);
-    // Avant : « Journée sur place » cinq fois, sans avancer.
-    expect(plan.distinct).toBe(5);
+    // Avant : « Journée sur place » cinq fois, sans avancer. Quatre lieux distincts : trois bivouacs et Mitten.
+    // (La 5e étape n’est plus un point calculé « 1/3 » vers Östra, que le voyage n’atteint pas : voir plus bas.)
+    expect(plan.distinct).toBe(4);
     const bivouacs = plan.stages.filter((s) => isBivouacStage(s.name));
     expect(bivouacs.length).toBeGreaterThanOrEqual(3);
-    for (const s of plan.stages) expect(s.move).toBe('marche');
-    // Chaque étape avance vers l'est.
-    for (let i = 1; i < plan.stages.length; i += 1) expect(plan.stages[i].lon).toBeGreaterThan(plan.stages[i - 1].lon);
-    // Une journée de marche entre deux soirs.
-    for (const km of legs(plan.stages)) {
+    // Les quatre premiers soirs avancent vers l'est, d'une journée de marche chacun.
+    const walked = plan.stages.slice(0, 4);
+    for (const s of walked) expect(s.move).toBe('marche');
+    for (let i = 1; i < walked.length; i += 1) expect(walked[i].lon).toBeGreaterThan(walked[i - 1].lon);
+    for (const km of legs(walked)) {
       expect(km).toBeGreaterThanOrEqual(6);
       expect(km).toBeLessThanOrEqual(16);
     }
@@ -93,16 +94,109 @@ describe('bivouac annoncé entre deux lieux trop éloignés', () => {
     expect(plan.stages.some((s) => /aucun lieu où dormir/.test(s.note ?? ''))).toBe(true);
   });
 
-  it('trop loin (plus de trois journées de marche sans lieu) : pas de bivouac inventé', () => {
+  it('trop loin (plus de quatre journées de marche sans lieu) : pas de bivouac inventé', () => {
     const far = [at('n1', 'Västra', 0), at('n2', 'Östra', 120)];
     const plan = planItinerary({ ...base, center: { lat: LAT, lon: 17 + 60 / (111 * K) }, radiusKm: 70, days: 4, places: far });
     if (plan) expect(plan.stages.some((s) => isBivouacStage(s.name))).toBe(false);
+  });
+
+  it('à la limite : quatre journées de marche (trois bivouacs) oui, cinq (quatre bivouacs) non', () => {
+    // Trois villages espacés de `km` : 38 km = 3,65 journées (quatre, soit trois bivouacs), 50 km = 4,8 journées (cinq, soit quatre bivouacs).
+    const gap = (km: number) => {
+      const trio = [at('a', 'Västra', 0), at('b', 'Mitten', km), at('c', 'Östra', 2 * km)];
+      return planItinerary({ ...base, center: { lat: LAT, lon: 17 + km / (111 * K) }, radiusKm: km + 8, days: 5, places: trio })!;
+    };
+    expect(gap(38).stages.filter((s) => isBivouacStage(s.name))).toHaveLength(3);
+    expect(gap(50).stages.some((s) => isBivouacStage(s.name))).toBe(false);
   });
 
   it('même entrée → même itinéraire', () => {
     const a = planItinerary({ ...base, days: 5, places })!;
     const b = planItinerary({ ...base, days: 5, places: [...places].reverse() })!;
     expect(b.stages).toEqual(a.stages);
+  });
+});
+
+/**
+ * Les bivouacs calculés d'un même trou, dans l'ordre : chaque groupe doit être tenu,
+ * c'est-à-dire que « (k/total) » dit vrai (k-ième nuit d'un trou de `total` nuits) et
+ * que le lieu réel annoncé est atteint juste après (jamais une dernière étape calculée).
+ */
+function holdsBivouacPromises(stages: Array<{ name: string }>): string[] {
+  const problems: string[] = [];
+  let i = 0;
+  while (i < stages.length) {
+    const m = /^Bivouac entre (.+?) et (.+?)(?: \((\d)\/(\d)\))?$/.exec(stages[i].name);
+    if (!m) {
+      i += 1;
+      continue;
+    }
+    let j = i;
+    while (j < stages.length && isBivouacStage(stages[j].name) && new RegExp(`^Bivouac entre ${m[1]} et ${m[2]}(?: |$)`).test(stages[j].name)) j += 1;
+    const size = j - i;
+    for (let k = 0; k < size; k += 1) {
+      const lab = /\((\d)\/(\d)\)$/.exec(stages[i + k].name);
+      if (size === 1 ? lab != null : !lab || Number(lab[1]) !== k + 1 || Number(lab[2]) !== size)
+        problems.push(`« ${stages[i + k].name} » : ${size} nuit(s) dans ce trou`);
+    }
+    if (stages[j]?.name !== m[2]) problems.push(`après « ${stages[j - 1].name} » : ${stages[j]?.name ?? 'rien (fin du voyage)'} au lieu de ${m[2]}`);
+    i = j;
+  }
+  return problems;
+}
+
+describe('un bivouac calculé tient sa promesse : le lieu réel est atteint avant la fin du voyage', () => {
+  const places = [at('n1', 'Västra', 0), at('n2', 'Mitten', 38), at('n3', 'Östra', 76)];
+
+  it.each([2, 3, 4, 5, 6, 7, 8])('%i jours : la dernière étape n’est jamais un bivouac calculé, et chaque « (k/total) » est tenue', (days) => {
+    const plan = planItinerary({ ...base, days, places })!;
+    expect(plan.stages).toHaveLength(days);
+    expect(isBivouacStage(plan.stages[days - 1].name)).toBe(false);
+    expect(holdsBivouacPromises(plan.stages)).toEqual([]);
+  });
+
+  it('deux et trois jours : Mitten est à quatre journées, aucun bivouac n’est posé, on reste sur place et on le dit', () => {
+    for (const days of [2, 3]) {
+      const plan = planItinerary({ ...base, days, places })!;
+      expect(plan.stages.some((s) => isBivouacStage(s.name))).toBe(false);
+      expect(plan.stages.every((s) => s.name === 'Västra' && /aucun lieu où dormir/.test(s.note ?? ''))).toBe(true);
+    }
+  });
+
+  it('cinq jours : trois bivouacs, Mitten au quatrième soir, puis une journée sur place (le trou suivant ne tient plus dans le voyage)', () => {
+    const plan = planItinerary({ ...base, days: 5, places })!;
+    expect(plan.stages.map((s) => s.name)).toEqual([
+      'Bivouac entre Västra et Mitten (1/3)',
+      'Bivouac entre Västra et Mitten (2/3)',
+      'Bivouac entre Västra et Mitten (3/3)',
+      'Mitten',
+      'Mitten',
+    ]);
+    expect(plan.stages[4].move).toBe('aucun');
+    expect(plan.stages[4].note).toMatch(/aucun lieu où dormir/);
+  });
+
+  it('quatre jours : Mitten est atteint le dernier soir, c’est la dernière étape', () => {
+    const plan = planItinerary({ ...base, days: 4, places })!;
+    expect(plan.stages[3].name).toBe('Mitten');
+  });
+
+  it('la constante dit vrai : jamais plus de trois nuits de bivouac calculées d’affilée, quelle que soit la distance entre les lieux', () => {
+    for (let km = 20; km <= 70; km += 1) {
+      const trio = [at('a', 'Västra', 0), at('b', 'Mitten', km), at('c', 'Östra', 2 * km)];
+      for (const days of [3, 5, 6, 8, 10]) {
+        const plan = planItinerary({ ...base, center: { lat: LAT, lon: 17 + km / (111 * K) }, radiusKm: km + 8, days, places: trio });
+        if (!plan) continue;
+        const where = `${km} km, ${days} jours`;
+        expect(holdsBivouacPromises(plan.stages), where).toEqual([]);
+        expect(isBivouacStage(plan.stages[days - 1].name), where).toBe(false);
+        let run = 0;
+        for (const s of plan.stages) {
+          run = isBivouacStage(s.name) ? run + 1 : 0;
+          expect(run, where).toBeLessThanOrEqual(3);
+        }
+      }
+    }
   });
 });
 
