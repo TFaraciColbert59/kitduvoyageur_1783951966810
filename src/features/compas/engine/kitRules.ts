@@ -45,7 +45,8 @@ export interface KitContext {
   /** Altitude maximale du parcours (m), si connue (voir `altitudeFrom`). */
   maxAltitudeM: number | null;
   /**
-   * D'où vient l'altitude. `trace` (défaut) : profil du tracé, c'est le point le plus haut mesuré.
+   * D'où vient l'altitude. `trace` (défaut) : profil d'un tracé RÉEL (route du catalogue, tracé préparé), c'est
+   * le point le plus haut mesuré ; jamais le profil de lignes droites entre les étapes.
    * `lieux` : relief sous les lieux du voyage seulement, un PLANCHER : un trek qui part d'un village
    * à 800 m peut passer un col à 5 400 m. Haute, elle prouve que le parcours monte ; basse, elle ne
    * prouve rien et les activités qui montent gardent leur formulation prudente.
@@ -53,6 +54,12 @@ export interface KitContext {
   altitudeFrom?: 'trace' | 'lieux';
   /** Point le plus bas du tracé (m), si le profil du tracé est lu : sert aux moustiques. */
   minAltitudeM?: number | null;
+  /**
+   * Étape la plus basse des lieux du voyage (m), lue sur le relief : le parcours y passe, donc il descend au
+   * moins jusque-là. Ce n'est PAS le point bas du tracé (il peut descendre plus bas) et, haute, elle ne prouve
+   * pas que le parcours reste haut : elle ne sert qu'à dire qu'il atteint des basses terres (moustiques).
+   */
+  lowestPlaceM?: number | null;
   /** Normales des mois du voyage non couverts par la prévision ; null : aucune lisible. */
   climate: ClimateWindow | null;
   /** Activité du voyage. */
@@ -282,13 +289,17 @@ export function adviseKit(input: {
      (altitude ou climat inconnus : dit par précaution). Le point le plus bas du tracé décide quand il est lu ;
      sinon le point le plus haut mesuré. Des lieux hauts seuls ne prouvent pas que le parcours n'en descend pas.
      Les normales ne sont lues qu'en UN point (la première étape) : un mois frais n'y parle que pour ce point.
-     Si le tracé mesuré descend sous 2 500 m, il traverse des basses terres que ce point ne dit pas (Cusco, 9 °C
-     en novembre, puis la forêt de Puerto Maldonado) : le contrôle du mois frais est alors ignoré. */
-  const reachesLowland = ctx?.minAltitudeM != null && ctx.minAltitudeM < C.mosquitoMaxAltitudeM;
+     Si le tracé mesuré, ou une étape, descend sous 2 500 m, le parcours traverse des basses terres que ce point
+     ne dit pas (Cusco, 9 °C en novembre, puis la forêt de Puerto Maldonado) : le contrôle du mois frais est alors
+     ignoré. */
+  const reachesLowland = [ctx?.minAltitudeM, ctx?.lowestPlaceM].some(
+    (m) => m != null && m < C.mosquitoMaxAltitudeM
+  );
   const allAbove =
-    ctx?.minAltitudeM != null
+    !reachesLowland &&
+    (ctx?.minAltitudeM != null
       ? ctx.minAltitudeM >= C.mosquitoMaxAltitudeM
-      : altitude != null && !floorOnly && altitude >= C.mosquitoMaxAltitudeM;
+      : altitude != null && !floorOnly && altitude >= C.mosquitoMaxAltitudeM);
   const coolMonth = climate != null && climate.hottest.tMeanC < C.mosquitoMinMeanC;
   if (tropical && !allAbove && !(coolMonth && !reachesLowland))
     add(

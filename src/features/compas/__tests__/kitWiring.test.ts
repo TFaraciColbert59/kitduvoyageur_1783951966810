@@ -9,6 +9,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import fixtures from './fixtures/power-climatology.json';
 import { powerClimateNormals } from '../engine/metno';
+import { trackKey } from '../engine/track';
 import { memorySupabase } from './helpers/memorySupabase';
 
 const h = vi.hoisted(() => ({
@@ -17,13 +18,19 @@ const h = vi.hoisted(() => ({
   normalsCalls: [] as Array<[number, number]>,
   normals: null as unknown,
   profile: null as { maxM: number; minM: number } | null,
+  /** Tracé réel du hub (route du catalogue) ; null : aucun. */
+  hiking: null as { routeGeojson: Record<string, unknown> } | null,
+  /** Les coordonnées [lat, lon] dont le relief est lu pour le profil du tracé. */
+  elevationCalls: [] as Array<Array<[number, number]>>,
   placesAltitude: null as number | null,
+  /** Étape la plus basse lue sur le relief ; null : la même que la plus haute (lieux à la même altitude). */
+  placesMin: null as number | null,
   placesCalls: [] as Array<Array<{ lat: number; lon: number }>>,
 }));
 
 vi.mock('server-only', () => ({}));
 vi.mock('@/features/hub/server/getHubAdventureData', () => ({
-  getHubAdventureData: vi.fn(async () => ({ trip: h.trip, group: null, hiking: null, affiliateLinks: [] })),
+  getHubAdventureData: vi.fn(async () => ({ trip: h.trip, group: null, hiking: h.hiking, affiliateLinks: [] })),
 }));
 vi.mock('@/lib/supabase/server', () => ({
   createClient: async () => memorySupabase({ user: () => ({ id: 'user-1' }) }).client,
@@ -35,10 +42,16 @@ vi.mock('../server/officialAlerts', () => ({
   getOfficialAlerts: vi.fn(async () => ({ status: 'hors_france', alerts: [], area: null })),
 }));
 vi.mock('../server/elevation', () => ({
-  getRouteElevation: vi.fn(async () => h.profile),
-  pointsMaxAltitudeM: vi.fn(async (points: Array<{ lat: number; lon: number }>) => {
+  getRouteElevation: vi.fn(async (coords: Array<[number, number]>) => {
+    h.elevationCalls.push(coords.map(([lat, lon]) => [lat, lon]));
+    return h.profile;
+  }),
+  pointsMaxAltitudeM: vi.fn(async () => h.placesAltitude),
+  pointsAltitudeRange: vi.fn(async (points: Array<{ lat: number; lon: number }>) => {
     h.placesCalls.push(points);
-    return h.placesAltitude;
+    return h.placesAltitude == null
+      ? null
+      : { maxM: h.placesAltitude, minM: h.placesMin ?? h.placesAltitude };
   }),
 }));
 vi.mock('../server/rates', () => ({
@@ -121,13 +134,26 @@ const tripOf = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
+/** Un tracé du catalogue (GeoJSON, [lon, lat]) : la seule géométrie dont le profil est une altitude MESURÉE du parcours. */
+const ROUTE_GEOJSON = {
+  type: 'LineString',
+  coordinates: [
+    [-71.97, -13.52],
+    [-72.3, -13.4],
+    [-72.55, -13.16],
+  ],
+};
+
 describe('getCompasData donne les normales du lieu aux conseils de kit', () => {
   beforeEach(() => {
     h.trip = tripOf();
     h.forecastDays = [];
     h.normalsCalls = [];
     h.profile = null;
+    h.hiking = null;
+    h.elevationCalls = [];
     h.placesAltitude = null;
+    h.placesMin = null;
     h.placesCalls = [];
     h.normals = powerClimateNormals(fixtures.reykjavik.payload);
   });
@@ -192,6 +218,7 @@ describe('getCompasData donne les normales du lieu aux conseils de kit', () => {
   });
 
   it('altitude du tracé mesurée : elle passe avant l’altitude de secours', async () => {
+    h.hiking = { routeGeojson: ROUTE_GEOJSON };
     h.profile = { maxM: 3100, minM: 120 };
     h.placesAltitude = 400;
     const data = await getCompasData();
@@ -220,11 +247,144 @@ describe('getCompasData donne les normales du lieu aux conseils de kit', () => {
     h.placesAltitude = 3400;
     expect((await getCompasData())?.kitAdvice.map((a) => a.need)).toContain('moustiques');
     h.placesAltitude = null;
-    // Le tracé descend dans la forêt (2 040 m) : le point le plus haut ne décide pas.
+    // Le tracé du catalogue descend dans la forêt (2 040 m) : le point le plus haut ne décide pas.
+    h.hiking = { routeGeojson: ROUTE_GEOJSON };
     h.profile = { maxM: 3400, minM: 2040 };
     expect((await getCompasData())?.kitAdvice.map((a) => a.need)).toContain('moustiques');
     h.profile = { maxM: 3400, minM: 2900 };
     expect((await getCompasData())?.kitAdvice.map((a) => a.need)).not.toContain('moustiques');
+  });
+
+  describe('seule une vraie géométrie donne un profil « trace » : jamais des lignes droites entre les étapes', () => {
+    const chamonix = { lat: 45.924, lon: 6.869 };
+    const courmayeur = { lat: 45.797, lon: 6.969 };
+
+    it('Chamonix → Courmayeur par le tunnel : le massif traversé en ligne droite n’est pas le parcours', async () => {
+      h.normals = null;
+      h.trip = tripOf({
+        steps: [step(1, chamonix), step(2, courmayeur)],
+        start_date: '2027-08-10',
+        end_date: '2027-08-11',
+      });
+      // Les lignes droites entre les deux étapes survolent le Mont-Blanc ; les étapes sont à 1 035 m et 1 224 m.
+      h.profile = { maxM: 3457, minM: 1030 };
+      h.placesAltitude = 1224;
+      h.placesMin = 1035;
+      const data = await getCompasData();
+      expect(data?.kitContext).toMatchObject({ maxAltitudeM: 1224, altitudeFrom: 'lieux' });
+      expect(data?.kitContext?.minAltitudeM ?? null).toBeNull();
+      expect(JSON.stringify(data?.kitAdvice)).not.toMatch(/3 457/);
+      expect(data?.kitAdvice.map((a) => a.need)).not.toContain('extremites');
+      expect(data?.kitAdvice.some((a) => /altitude mesurée/.test(a.source))).toBe(false);
+    });
+
+    it('une ascension dont le sommet n’est pas une étape : deux étapes à 1 000 m ne prouvent pas que le parcours reste bas', async () => {
+      h.trip = tripOf({ primary_activity: 'trekking' });
+      h.normals = null;
+      h.profile = { maxM: 1000, minM: 1000 };
+      h.placesAltitude = 1000;
+      const data = await getCompasData();
+      expect(data?.kitContext).toMatchObject({ maxAltitudeM: 1000, altitudeFrom: 'lieux' });
+      const froid = data?.kitAdvice.find((a) => a.need === 'froid');
+      expect(froid?.reason).toMatch(/non mesurée/);
+      expect(froid?.source).toMatch(/non mesurée/);
+    });
+
+    it('sans géométrie, le relief est tout de même lu sur les étapes pour l’affichage du profil', async () => {
+      h.trip = tripOf({ steps: [step(1, chamonix), step(2, courmayeur)] });
+      h.profile = { maxM: 3457, minM: 1030 };
+      const data = await getCompasData();
+      expect(h.elevationCalls[0]).toEqual([
+        [chamonix.lat, chamonix.lon],
+        [courmayeur.lat, courmayeur.lon],
+      ]);
+      expect(data?.elevation).toEqual(h.profile);
+    });
+
+    it('route du catalogue : le relief est lu sur sa géométrie, et le profil compte comme tracé mesuré', async () => {
+      h.hiking = { routeGeojson: ROUTE_GEOJSON };
+      h.profile = { maxM: 2537, minM: 990 };
+      h.placesAltitude = 400;
+      const data = await getCompasData();
+      expect(h.elevationCalls[0]).toEqual([
+        [-13.52, -71.97],
+        [-13.4, -72.3],
+        [-13.16, -72.55],
+      ]);
+      expect(data?.kitContext).toMatchObject({ maxAltitudeM: 2537, minAltitudeM: 990, altitudeFrom: 'trace' });
+    });
+
+    it('tracé préparé (routé entre les étapes) : lu comme une géométrie ; périmé, il ne compte plus', async () => {
+      const a = chamonix;
+      const b = courmayeur;
+      const geojson = {
+        type: 'MultiLineString',
+        coordinates: [
+          [
+            [a.lon, a.lat],
+            [6.9, 45.88],
+            [b.lon, b.lat],
+          ],
+        ],
+      };
+      const preparedFor = (points: Array<{ lat: number; lon: number }>) => ({
+        compas: { track: { key: trackKey(points), geojson } },
+      });
+      h.profile = { maxM: 1800, minM: 1030 };
+      h.trip = tripOf({ steps: [step(1, a), step(2, b)], metadata: preparedFor([a, b]) });
+      const fresh = await getCompasData();
+      expect(h.elevationCalls[0]).toEqual([
+        [a.lat, a.lon],
+        [45.88, 6.9],
+        [b.lat, b.lon],
+      ]);
+      expect(fresh?.kitContext).toMatchObject({ maxAltitudeM: 1800, minAltitudeM: 1030, altitudeFrom: 'trace' });
+
+      // Une étape a bougé : la clé du tracé ne correspond plus, il redevient des lignes droites.
+      h.elevationCalls = [];
+      h.placesAltitude = 1224;
+      h.trip = tripOf({
+        steps: [step(1, a), step(2, { lat: 45.7, lon: 7.1 })],
+        metadata: preparedFor([a, b]),
+      });
+      const stale = await getCompasData();
+      expect(h.elevationCalls[0]).toEqual([
+        [a.lat, a.lon],
+        [45.7, 7.1],
+      ]);
+      expect(stale?.kitContext).toMatchObject({ maxAltitudeM: 1224, altitudeFrom: 'lieux' });
+    });
+  });
+
+  describe('trek qui part des hautes terres et descend vers la forêt, sans géométrie', () => {
+    const cusco = { lat: -13.53, lon: -71.97 };
+    const maldonado = { lat: -12.6, lon: -69.18 };
+    const trek = () => {
+      h.normals = powerClimateNormals(fixtures.cusco.payload);
+      h.trip = tripOf({
+        primary_activity: 'trekking',
+        steps: [step(1, cusco), step(2, maldonado)],
+        // Plus de dix jours : plus de prévision, les normales du premier lieu (9 °C en novembre) parlent seules.
+        start_date: '2027-11-10',
+        end_date: '2027-11-11',
+      });
+    };
+
+    it('l’étape la plus basse lue sur le relief (190 m) garde le conseil moustiques malgré le mois frais de Cusco', async () => {
+      trek();
+      h.placesAltitude = 3400;
+      h.placesMin = 190;
+      const data = await getCompasData();
+      expect(data?.kitContext).toMatchObject({ maxAltitudeM: 3400, altitudeFrom: 'lieux', lowestPlaceM: 190 });
+      expect(data?.kitAdvice.map((a) => a.need)).toContain('moustiques');
+    });
+
+    it('toutes les étapes en altitude : le mois frais du lieu décide, comme avant', async () => {
+      trek();
+      h.placesAltitude = 3400;
+      h.placesMin = 3300;
+      expect((await getCompasData())?.kitAdvice.map((a) => a.need)).not.toContain('moustiques');
+    });
   });
 
   it('relief injoignable : altitude inconnue, la trek reste prudent (jamais d’altitude devinée)', async () => {
