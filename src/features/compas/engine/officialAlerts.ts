@@ -198,7 +198,7 @@ export interface FeedDigest {
   rawCount: number;
   /** Le flux n'est pas vide mais rien n'y a été lu : format inattendu. */
   unreadable: boolean;
-  /** Toutes les zones du flux ont un contour ou un cercle (au moins une zone). */
+  /** Toutes les zones du flux ont au moins un contour ou cercle, et tous se lisent (au moins une zone). */
   geometryComplete: boolean;
   /**
    * Au moins un message n'a pas pu être lu (pas de fin, pas de niveau, borne
@@ -273,17 +273,18 @@ export function digestMeteoalarm(json: unknown, now: Date = new Date()): FeedDig
         const rawPolygons = Array.isArray(a.polygon) ? a.polygon : [];
         const rawCircles = Array.isArray(a.circle) ? a.circle : [];
         if (rawPolygons.length > LIMITS.polygonsPerArea || rawCircles.length > LIMITS.polygonsPerArea) dropped = true;
-        const polygons = rawPolygons
-          .slice(0, LIMITS.polygonsPerArea)
-          .map(ringOf)
-          .filter((r): r is CapRing => r != null);
-        const circles = rawCircles
-          .slice(0, LIMITS.polygonsPerArea)
+        const polygonTexts = rawPolygons.slice(0, LIMITS.polygonsPerArea);
+        const circleTexts = rawCircles.slice(0, LIMITS.polygonsPerArea);
+        const polygons = polygonTexts.map(ringOf).filter((r): r is CapRing => r != null);
+        const circles = circleTexts
           .map(parseCircle)
           .filter((c): c is NonNullable<ReturnType<typeof parseCircle>> => c != null);
         areaCount += 1;
         const geo = polygons.length || circles.length ? { rings: polygons, circles } : null;
-        if (geo) geoCount += 1;
+        // Un contour ou un cercle illisible (mal formé, trop long) n'a pas été testé : ceux qui se
+        // lisent restent utilisés, mais la zone n'est plus « entièrement testée » (sinon une zone
+        // dont un contour manque passerait pour calme sous une vigilance rouge).
+        if (geo && polygons.length === polygonTexts.length && circles.length === circleTexts.length) geoCount += 1;
         areas.push({ name, key: normalizeArea(name), geo });
       }
 

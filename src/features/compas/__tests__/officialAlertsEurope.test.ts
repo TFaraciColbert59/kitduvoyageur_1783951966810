@@ -281,6 +281,61 @@ describe('zone reconnue par son contour (flux dont toutes les zones ont un conto
   });
 });
 
+describe('contour illisible dans une zone : la zone n’est plus « entièrement testée »', () => {
+  // Deux contours pour la même zone : un carré lisible loin du lieu, et un second qui ne se lit pas
+  // (trop long, ou mal formé). Le second a pu couvrir le lieu : « aucune alerte » n'est pas prouvé.
+  const AILLEURS = '10.0,20.0 10.0,20.1 10.1,20.1 10.1,20.0 10.0,20.0';
+  const opts = { ...BASE, names: [], feed: METEOALARM_FEEDS.ch };
+  const flux = (polygon: string[]) => ({
+    warnings: [
+      warning('ch-rouge', '2026-10-10T20:00:00+02:00', [
+        info({ language: 'fr', areas: [{ name: 'Zone d’essai', polygon }], level: '4; red; Extreme', type: null }),
+      ]),
+    ],
+  });
+
+  it('CONTRE-EXEMPLE — un contour mal formé : le flux ne prouve pas le calme, rien n’est affirmé', () => {
+    const r = readMeteoalarm(flux([AILLEURS, 'pas un contour']), { ...opts, point: DEHORS });
+    expect(r).toMatchObject({ alerts: [], knowledge: 'aucune' });
+  });
+
+  it('CONTRE-EXEMPLE — un contour de plus de 200 000 caractères est ignoré, et le dit', () => {
+    const enorme = `${'46.0,7.0 '.repeat(25_000)}46.0,7.0`;
+    expect(enorme.length).toBeGreaterThan(200_000);
+    expect(readMeteoalarm(flux([AILLEURS, enorme]), { ...opts, point: DEHORS })).toMatchObject({
+      alerts: [],
+      knowledge: 'aucune',
+    });
+  });
+
+  it('un cercle illisible compte comme un contour illisible', () => {
+    const avecCercle = {
+      warnings: [
+        warning('ch-cercle', '2026-10-10T20:00:00+02:00', [
+          {
+            ...info({ language: 'fr', areas: [{ name: 'Zone d’essai', polygon: [AILLEURS] }], level: '4; red; Extreme', type: null }),
+            area: [{ areaDesc: 'Zone d’essai', polygon: [AILLEURS], circle: ['46.0,7.0 rayon-inconnu'] }],
+          },
+        ]),
+      ],
+    };
+    expect(readMeteoalarm(avecCercle, { ...opts, point: DEHORS })).toMatchObject({ alerts: [], knowledge: 'aucune' });
+  });
+
+  it('le contour lisible qui couvre le lieu est quand même montré, la liste est dite partielle', () => {
+    const r = readMeteoalarm(flux([CARRE[0], 'pas un contour']), { ...opts, point: DEDANS });
+    expect(r.alerts).toMatchObject([{ id: 'ch-rouge', level: 'rouge' }]);
+    expect(r.knowledge).toBe('partielle');
+  });
+
+  it('tous les contours lisibles : le flux prouve toujours le calme hors des zones', () => {
+    expect(readMeteoalarm(flux([AILLEURS, CARRE[0]]), { ...opts, point: DEHORS })).toMatchObject({
+      alerts: [],
+      knowledge: 'complete',
+    });
+  });
+});
+
 describe('services, langues et fenêtres', () => {
   it('Norvège, deux services : le nom suit l’expéditeur de l’alerte', () => {
     const feed = {
