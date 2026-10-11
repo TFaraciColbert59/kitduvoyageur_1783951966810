@@ -24,7 +24,7 @@
  * (`trips.metadata` est lisible par les collaborateurs et, pour un voyage public, par tous : le
  * groupe de passeports de la table ne contient parfois qu'une nationalité, et « adaptateur à
  * prévoir » dit des appareils de France). Le voyage ne garde que les lignes SANS profil
- * (`sharedNotes`) ; les lignes de la personne qui regarde se
+ * (`sharedNotes`, `sharedRules` pour filtrer l'IA) ; les lignes de la personne qui regarde se
  * calculent à la lecture, avec SON profil (`notesForReader`).
  */
 
@@ -257,6 +257,21 @@ export function sharedPapersNotes(
   abroad: boolean | null
 ): string[] {
   return sharedNotes(countryCode, countryName, abroad).filter(isPapersNote);
+}
+
+/**
+ * Les règles SANS profil, pour filtrer les conseils de l'IA avant de les ranger (`keepAiNote`) :
+ * filtrer avec celles du lanceur ferait dépendre la présence d'un conseil de sa devise (change) ou
+ * de ses appareils (prises), donc la trahirait. Le change est donc écarté en zone euro pour tous,
+ * et un conseil sur les prises toujours (la règle les dit, pour chaque lecteur, à la lecture).
+ */
+export function sharedRules(
+  countryCode: string | null | undefined,
+  countryName: string | null | undefined,
+  abroad: boolean | null
+): TravelPapers {
+  const rules = travelPapers(countryCode, countryName, UNKNOWN_TRAVELLER, abroad, null);
+  return rules.papers == null ? rules : { ...rules, plugs: 'dit' };
 }
 
 /**

@@ -70,8 +70,7 @@ import { carFreeOf, carFreeStages, carFreeStagesNote, transitSignal } from '../e
 import { buildTrack, simplifyLine, trackKey, type LngLat } from '../engine/track';
 import { descentWindow, planRiverDescent } from '../engine/river';
 import { entryFor } from '../engine/entry';
-import { keepAiNote, papersFactsFor, sharedNotes, travelPapers, type PapersFacts } from '../engine/papers';
-import { isFrenchNational } from '../engine/traveller';
+import { keepAiNote, papersFactsFor, sharedNotes, sharedRules, type PapersFacts } from '../engine/papers';
 import { tutoyer } from '../engine/voice';
 import { addDaysIso } from '../engine/format';
 import { climateWindow } from '@/features/trips/engine/climate';
@@ -1943,7 +1942,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       ? null
       : await askJson(
           userId,
-          buildCompasAutofillSystem(isFrenchNational(traveller)),
+          buildCompasAutofillSystem(),
           buildCompasAutofillPrompt(facts),
           500,
           false,
@@ -1952,12 +1951,12 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         );
     const advice: AutofillAiAdvice = sanitizeAdvice(rawAdvice);
     const usedAi = rawAdvice != null;
-    // Papiers, change et prises : la règle parle, l'IA se tait sur ces sujets ; ce que
-    // la règle affirme dépend du voyageur (nationalité, résidence, devise : PLAN-100 4.1).
-    // Le tutoiement aussi est une règle : un conseil qui vouvoie encore est écarté.
-    // La nationalité ne sert qu'à lire la table (jamais écrite dans un journal ni envoyée à l'IA).
+    // Papiers, change et prises : la règle parle, l'IA se tait sur ces sujets ; ce que la règle
+    // affirme dépend du voyageur (nationalité, résidence, devise : PLAN-100 4.1), donc ne se range
+    // pas sur le voyage mais se rend à la lecture. Le tutoiement aussi est une règle : un conseil
+    // qui vouvoie encore est écarté. La nationalité ne sert ici qu'à lire la table pour la ligne
+    // « Formalités » (jamais écrite dans un journal ni envoyée à l'IA).
     const entryRule = entryFor(entryRequirement, traveller.nationality, anchor.countryCode, abroad);
-    const papers = travelPapers(anchor.countryCode, anchor.country, traveller, abroad, entryRule);
     // L'essentiel (papiers, sécurité) vient des règles, avec ou sans IA (plan 4.11).
     const safety = essentialAdvice({
       activity,
@@ -1978,9 +1977,12 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     // n'apprennent rien sur la personne ; ils se rangent dès que le code pays est valide.
     const essential = [...sharedNotes(anchor.countryCode, anchor.country, abroad), ...safety];
     const papersFacts: PapersFacts | null = papersFactsFor(anchor.countryCode, anchor.country, abroad);
-    // L'IA n'ajoute que des suggestions facultatives, dites comme telles.
+    // L'IA n'ajoute que des suggestions facultatives, dites comme telles. Filtrées avec les règles SANS
+    // profil : filtrer avec celles du lanceur ferait dépendre la présence d'un conseil de sa devise
+    // (change) ou de sa résidence (prises), donc la trahirait sur le voyage.
+    const aiRules = sharedRules(anchor.countryCode, anchor.country, abroad);
     const aiNotes = advice.notes
-      .filter((n) => keepAiNote(n, papers))
+      .filter((n) => keepAiNote(n, aiRules))
       .map(tutoyer)
       .filter((n): n is string => n != null)
       .filter((n) => !repeatsRule(n, safety))

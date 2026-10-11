@@ -10,6 +10,7 @@ import {
   readerPlugsNotes,
   sharedNotes,
   sharedPapersNotes,
+  sharedRules,
   travelPapers,
   type PapersFacts,
 } from '../engine/papers';
@@ -553,5 +554,51 @@ describe('la ligne « Prises » sur le voyage et pour chaque lecteur', () => {
     expect(papersFactsFor(null, 'Rien', true)).toBeNull();
     expect(papersFactsFor('Portugal', 'Portugal', true)).toBeNull();
     expect(papersFactsFor('', null, true)).toBeNull();
+  });
+});
+
+/**
+ * VIE PRIVÉE (lot Z1) : un conseil de l'IA rangé sur le voyage est filtré avec les règles du
+ * lanceur dans `keepAiNote` (change selon sa devise, prises selon sa résidence) : sa PRÉSENCE
+ * trahirait ces champs. Le filtre qui précède le rangement n'a donc aucun profil.
+ */
+describe('sharedRules — le filtre des conseils de l’IA rangés, sans profil', () => {
+  const MONEY_EUR = 'Passe au bureau de change avant le départ : tes francs suisses n’ont pas cours au Portugal.';
+  const MONEY_LOCAL = 'Retire de la monnaie locale avant de quitter l’aéroport, les distributeurs sont rares.';
+  const PLUG = 'Prévois un adaptateur de prise pour tes chargeurs.';
+  const TIP = 'Réserve tes nuits de juillet à l’avance : la côte est très fréquentée.';
+
+  it('zone euro : le change est écarté pour tous (la devise du lanceur ne décide plus), les conseils justes sont gardés', () => {
+    const pt = sharedRules('PT', 'Portugal', true);
+    expect(pt).toMatchObject({ papers: 'a_verifier', euro: true, sameMoney: null });
+    expect(keepAiNote(MONEY_EUR, pt)).toBe(false);
+    expect(keepAiNote(TIP, pt)).toBe(true);
+    // Un lanceur à la devise connue autre que l'euro garderait ce conseil avec SES règles : c'est la fuite.
+    expect(keepAiNote(MONEY_EUR, travelPapers('PT', 'Portugal', who({ currency: 'CHF' })))).toBe(true);
+  });
+
+  it('hors zone euro : le change reste un conseil possible, pour tous', () => {
+    expect(keepAiNote(MONEY_LOCAL, sharedRules('MA', 'Maroc', true))).toBe(true);
+  });
+
+  it('prises : un conseil d’adaptateur n’est jamais rangé (chaque lecteur lit sa ligne), même là où la règle se tait', () => {
+    for (const cc of ['GB', 'US', 'PT', 'MA', 'JP'])
+      expect(keepAiNote(PLUG, sharedRules(cc, cc, true)), cc).toBe(false);
+    // Avec les règles d'une personne aux appareils inconnus, le Portugal laisserait passer ce conseil.
+    expect(keepAiNote(PLUG, travelPapers('PT', 'Portugal', NONE))).toBe(true);
+  });
+
+  it('les papiers restent à la règle, quel que soit le départ', () => {
+    for (const abroad of [true, false, null])
+      expect(keepAiNote('Pense à ton passeport valide.', sharedRules('NP', 'Népal', abroad)), String(abroad)).toBe(false);
+  });
+
+  it('pays inconnu : l’IA n’est pas filtrée, comme avant', () => {
+    expect(keepAiNote(PLUG, sharedRules(null, null, true))).toBe(true);
+    expect(keepAiNote('Pense à ton passeport.', sharedRules('Portugal', null, true))).toBe(true);
+  });
+
+  it('les mêmes lignes que celles qui se rangent : les règles du voyage, pas celles d’une personne', () => {
+    expect(sharedRules('GB', 'Royaume-Uni', null).notes).toEqual(sharedNotes('GB', 'Royaume-Uni', null));
   });
 });

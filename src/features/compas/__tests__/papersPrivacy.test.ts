@@ -20,6 +20,9 @@ const h = vi.hoisted(() => ({
   db: null as unknown as MemorySupabase,
   viewer: null as { id: string; is_anonymous?: boolean } | null,
   canEdit: true,
+  /** Ce que répond l'IA simulée, et ce qu'on lui a demandé. */
+  aiText: '{}',
+  asked: [] as string[],
 }));
 
 vi.mock('server-only', () => ({}));
@@ -73,7 +76,10 @@ vi.mock('../server/weather', async (orig) => ({
 }));
 vi.mock('@/lib/ai/askAI', () => ({
   aiEnabled: () => true,
-  askAI: vi.fn(async () => ({ text: '{}', model: 'x', degraded: false, cached: false, provider: 'fallback' })),
+  askAI: vi.fn(async (req: unknown) => {
+    h.asked.push(JSON.stringify(req));
+    return { text: h.aiText, model: 'x', degraded: false, cached: false, provider: 'nvidia' };
+  }),
 }));
 // Lecture : le hub rend le voyage tel que la base l'a rangé, avec le droit du lecteur.
 vi.mock('@/features/hub/server/getHubAdventureData', () => ({
@@ -107,6 +113,7 @@ vi.mock('../server/rates', () => ({
   getBudgetFx: vi.fn(async () => null),
 }));
 
+import { buildCompasAutofillSystem } from '@/lib/ai/features/compasAutofill';
 import type { PapersFacts } from '../engine/papers';
 import { compasAutofillAction } from '../server/autofillActions';
 import { getCompasData } from '../server/getCompasData';
@@ -161,6 +168,8 @@ const TABLE_TRACES = /vérifié le|sans visa|visa à l’arrivée|ETA\/ESTA|e-vi
 
 beforeEach(() => {
   vi.clearAllMocks();
+  h.aiText = '{}';
+  h.asked = [];
   h.viewer = { id: 'u1' };
   h.canEdit = true;
   h.db = memorySupabase({ user: () => h.viewer });
@@ -321,5 +330,78 @@ describe('lecture : chaque lecteur voit la ligne de SON passeport, un anonyme la
     h.db.rows('trips')[0].metadata = { compas: { ...meta.compas, autofill: { ...autofill, notes: legacy } } };
     expect(papersOf(await readAs({ id: 'u2' }))).toEqual([FR_LINE]);
     expect(papersOf(await readAs(null))).toEqual([NEUTRAL('Maroc')]);
+  });
+});
+
+/**
+ * Conseils de l'IA (lot Z1) : filtrés avec les règles SANS profil, donc leur présence ne dit rien de la
+ * devise (change) ni de la résidence (prises) du lanceur ; et la demande à l'IA est la même pour tous,
+ * sans nationalité (un tiers).
+ */
+describe('écriture : les conseils de l’IA rangés et la demande à l’IA ne dépendent pas du profil', () => {
+  const MONEY = 'Passe au bureau de change avant le départ : tes francs suisses n’ont pas cours au Portugal.';
+  const MONEY_LOCAL = 'Retire de la monnaie locale avant de quitter l’aéroport, les distributeurs sont rares.';
+  const PLUG = 'Prévois un adaptateur de prise pour tes chargeurs.';
+  const TIP = 'Réserve tes nuits de juillet à l’avance : la côte est très fréquentée.';
+  const PROFILES: Array<[string, Partial<Row>]> = [
+    ['sans profil', {}],
+    ['résident suisse, francs', { nationality: 'CH', residence_country: 'CH', currency: 'CHF' }],
+    ['résident allemand, euro', { nationality: 'DE', residence_country: 'DE', currency: 'EUR' }],
+    ['Français, appareils de France', { nationality: 'FR', residence_country: 'FR', currency: 'EUR' }],
+    ['Américaine, dollars', { nationality: 'US', residence_country: 'US', currency: 'USD' }],
+  ];
+
+  // L'IA ne rend que trois conseils (`sanitizeAdvice`) : l'ordre garde ici le conseil juste en dernier.
+  const prepare = async (over: Partial<Row>, advice: string[], where: [string, string, string] = ['PT', 'Portugal', 'Lisbonne']) => {
+    h.db = memorySupabase({ user: () => h.viewer });
+    h.asked = [];
+    h.aiText = JSON.stringify({ notes: advice });
+    publicTrip(...where);
+    h.db.rows('user_traveller').push(profileOf('u1', over));
+    const res = await launch();
+    expect(res.success).toBe(true);
+    return {
+      notes: storedMeta().compas.autofill.notes,
+      issue: res.success && 'summary' in res ? res.summary.notes : [],
+      request: h.asked.map((raw) => JSON.parse(raw) as { system: string; prompt: string }),
+    };
+  };
+  const aiOf = (notes: string[]) => notes.filter((n) => n.startsWith('Suggestion de l’IA'));
+
+  it('zone euro : le même ensemble de conseils pour cinq profils, ni change ni prises, seulement le conseil juste', async () => {
+    const runs = [];
+    for (const [, over] of PROFILES) runs.push(await prepare(over, [MONEY, PLUG, TIP]));
+    for (const run of runs) {
+      expect(run.notes).toEqual(runs[0].notes);
+      expect(run.issue).toEqual(runs[0].issue);
+    }
+    expect(aiOf(runs[0].notes)).toHaveLength(1);
+    expect(aiOf(runs[0].notes)[0]).toContain('réserve tes nuits de juillet');
+    expect(JSON.stringify(runs[0].notes)).not.toMatch(/bureau de change|adaptateur/);
+  });
+
+  it('hors zone euro : le conseil de change est gardé, le même pour tous', async () => {
+    const runs = [];
+    for (const [, over] of PROFILES) runs.push(await prepare(over, [MONEY_LOCAL, PLUG, TIP], ['MA', 'Maroc', 'Rabat']));
+    for (const run of runs) expect(run.notes).toEqual(runs[0].notes);
+    expect(aiOf(runs[0].notes).map((n) => n.replace(/^Suggestion de l’IA \(facultatif\) : /, ''))).toEqual([
+      'retire de la monnaie locale avant de quitter l’aéroport, les distributeurs sont rares.',
+      'réserve tes nuits de juillet à l’avance : la côte est très fréquentée.',
+    ]);
+  });
+
+  it('la demande à l’IA est la même pour tous, et ne contient ni nationalité, ni résidence, ni devise', async () => {
+    const requests = [];
+    for (const [, over] of PROFILES) requests.push((await prepare(over, [TIP])).request);
+    for (const request of requests) {
+      expect(request.length).toBeGreaterThan(0);
+      expect(request.map((r) => r.system)).toEqual(requests[0].map((r) => r.system));
+      expect(request.map((r) => r.prompt)).toEqual(requests[0].map((r) => r.prompt));
+      for (const r of request) {
+        expect(r.system).toBe(buildCompasAutofillSystem());
+        expect(r.system).not.toMatch(/nationalite francaise|part de France/);
+        expect(r.prompt).not.toMatch(/nationalit|francs suisses|\bCHF\b|\bUSD\b|suisse|allemand|americain/i);
+      }
+    }
   });
 });
