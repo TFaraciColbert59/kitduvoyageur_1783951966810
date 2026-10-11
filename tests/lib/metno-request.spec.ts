@@ -3,6 +3,18 @@
  * `Expires` (cache de 45 min, Expires mesuré à ~32 min), User-Agent du site.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+// Isolate backend configuration at its reader boundary. The real memory
+// counter and rate-limit policy still run; developer credentials never select
+// a remote PostgREST/Redis backend in these unit scenarios.
+vi.mock('@/lib/rate-limit/postgresStore', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/rate-limit/postgresStore')>()),
+  readPostgresEnv: () => ({}),
+}));
+vi.mock('@/lib/rate-limit/upstashStore', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/rate-limit/upstashStore')>()),
+  readUpstashEnv: () => ({}),
+}));
 import { memoryRateLimitSize, resetMemoryRateLimits } from '@/lib/rate-limit';
 import {
   METNO_MAX_PER_SECOND,

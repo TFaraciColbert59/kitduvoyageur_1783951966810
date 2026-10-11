@@ -3,12 +3,14 @@
  * Domain Types & Interfaces
  *
  * Invariants:
- * 1. Single visible currency: "Points LKDV" (no separate XP currency visible to users).
+ * 1. XP measures progression only, with no conversion to money. Loyalty credits,
+ *    economic contribution shares and store credit keep separate units and ledgers.
  * 2. Permanent level (1-10) calculated exclusively on cumulative lifetime validated points.
  * 3. Season points determine territorial leaderboard ranks (8-week cycles).
  * 4. 4 transversal skills: Explorer, Se préparer, Partager, S'entraider.
  *    Single global points grant, broken down with sum of weights = 1.0.
- * 5. Territorial rankings: 5 filters (1 km / confidentiel, ville, région, pays, monde).
+ * 5. Territorial rankings: city, region, country and world; the 1 km filter remains closed.
+ *    Its legacy key is retained for compatibility, never a promise of availability.
  *    Strict privacy: GPS coordinates and exact addresses are NEVER exposed in leaderboards.
  *    Critical mass threshold: < 5 active participants -> "Communauté en formation" state.
  * 6. L'inconnu est distinct de zéro : aucune valeur de progression, de rang ou de solde

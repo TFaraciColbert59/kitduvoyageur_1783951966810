@@ -123,6 +123,44 @@ describe('awardProducerGain', () => {
     expect((rpcCall?.[2] as { p_source_id: string }).p_source_id).toBe('session-1');
   });
 
+  it('(d2) transmet les claims T08 (réservations de faits) au moteur', async () => {
+    const calls: Array<[string, ...unknown[]]> = [];
+    mockedGetService.mockReturnValue(
+      createSupabaseMock({
+        rules: RULES,
+        rpcResult: { success: true, outcome: 'awarded', points: 40 },
+        calls,
+      }) as never
+    );
+
+    await awardProducerGain({
+      ...BASE_INPUT,
+      action: 'hike_session_processed',
+      claims: [{ group: 'route_novelty', key: 'trail:42' }],
+    });
+
+    const rpcCall = calls.find(([op]) => op === 'rpc');
+    expect((rpcCall?.[2] as { p_claims: unknown }).p_claims).toEqual([
+      { group: 'route_novelty', key: 'trail:42' },
+    ]);
+  });
+
+  it('(d3) sans claims, transmet un tableau vide (compatibilité moteur)', async () => {
+    const calls: Array<[string, ...unknown[]]> = [];
+    mockedGetService.mockReturnValue(
+      createSupabaseMock({
+        rules: RULES,
+        rpcResult: { success: true, outcome: 'awarded', points: 40 },
+        calls,
+      }) as never
+    );
+
+    await awardProducerGain({ ...BASE_INPUT, action: 'hike_session_processed' });
+
+    const rpcCall = calls.find(([op]) => op === 'rpc');
+    expect((rpcCall?.[2] as { p_claims: unknown }).p_claims).toEqual([]);
+  });
+
   it('(e) bonus au-delà du plafond → gain plafonné', async () => {
     const calls: Array<[string, ...unknown[]]> = [];
     mockedGetService.mockReturnValue(

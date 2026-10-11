@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { getProgressionProfile } from '@/features/progression/server/progressionService';
+import { consumeProgressionAwardIntents } from '@/features/progression/server/intentConsumer';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,6 +36,16 @@ export async function GET() {
     if (limited) return limited;
 
     const profile = await getProgressionProfile(user.id);
+
+    // T07 — drain opportuniste borné des intentions du compte : le trafic réel
+    // rattrape le backlog même sans planificateur HTTP configuré. Best-effort
+    // strict : jamais bloquant, jamais d'échec remonté au parcours.
+    try {
+      await consumeProgressionAwardIntents({ limit: 2, userId: user.id });
+    } catch {
+      /* silencieux : la progression ne bloque jamais la lecture du profil */
+    }
+
     return NextResponse.json({ success: true, profile }, { headers: PROFILE_CACHE_HEADERS });
   } catch (err) {
     const message = 'Erreur interne de progression'; console.error('[API /api/progression]', err);

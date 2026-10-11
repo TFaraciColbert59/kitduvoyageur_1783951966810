@@ -724,6 +724,7 @@ export default function CarnetsPage() {
 
   const handleSave = async (form: CarnetForm) => {
     if (!user) return;
+    const ownerId = user.id;
     setSaving(true);
     try {
       const payload = {
@@ -747,7 +748,7 @@ export default function CarnetsPage() {
         if (uErr) throw uErr;
         showToast('Carnet mis à jour !');
         if (form.visibility !== 'private') {
-          requestCarnetPublicationAward(editCarnet.id);
+          requestCarnetPublicationAward(editCarnet.id, ownerId);
         }
       } else {
         const { data: newC, error: iErr } = await supabase.from('carnets').insert(payload).select('id').single();
@@ -755,7 +756,7 @@ export default function CarnetsPage() {
         showToast('Carnet publié !');
 
         if (form.visibility !== 'private' && newC?.id) {
-          requestCarnetPublicationAward(newC.id);
+          requestCarnetPublicationAward(newC.id, ownerId);
         }
 
         try {

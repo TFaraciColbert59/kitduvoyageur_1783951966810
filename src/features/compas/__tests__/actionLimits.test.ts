@@ -48,6 +48,9 @@ vi.mock('../server/compasServer', async (orig) => {
   };
   return {
     ...real,
+    updateTripMetadata: vi.fn(async (_client: unknown, _tripId: string, patch: (meta: Record<string, unknown>) => Record<string, unknown>) => ({
+      metadata: patch({}), error: null,
+    })),
     requireEditor: vi.fn(async () =>
       h.denied
         ? { error: 'Accès refusé' }
@@ -143,6 +146,7 @@ describe('limites de la destination et de la phrase', () => {
   it('destination : effacer (place: null) ne compte pas et n’est jamais refusé', async () => {
     h.refuse = { scope: 'compas-destination', status: 429 };
     const res = await compasSetDestinationAction({ tripId: TRIP, tripSlug: 'x', place: null });
+    expect(res.success).toBe(true);
     expect(h.calls.some((c) => c.scope === 'compas-destination')).toBe(false);
     expect(res.success === false ? res.error : '').not.toBe(
       'Trop de lieux cherchés d’affilée : patiente quelques minutes.'
@@ -239,3 +243,6 @@ describe('phrase : « aujourd’hui » au fuseau du voyageur (lot M)', () => {
     expect(askAI).not.toHaveBeenCalled();
   });
 });
+
+// Les journaux opérationnels n'utilisent jamais le client de production dans ces tests d'action.
+vi.mock('@/lib/ai/serviceClient', () => ({ getServiceSupabase: vi.fn(() => null) }));

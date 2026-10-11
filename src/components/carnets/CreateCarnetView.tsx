@@ -180,6 +180,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
       setSaveError('Connectez-vous pour créer un carnet.');
       return;
     }
+    const ownerId: string = user.id;
     setSaving(true);
     setSaveError(null);
     try {
@@ -262,7 +263,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
       // P2 — publication explicite (visibilité ≠ privée) : le serveur revérifie
       // la visibilité réelle, le rattachement et le contenu avant d'attribuer.
       if (form.visibility !== 'private') {
-        requestCarnetPublicationAward(carnetId);
+        requestCarnetPublicationAward(carnetId, ownerId);
       }
 
       setSaveSuccess(true);

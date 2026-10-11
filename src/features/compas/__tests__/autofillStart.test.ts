@@ -130,3 +130,6 @@ describe('préparation en arrière-plan', () => {
     expect(bad).toEqual({ success: false, error: 'Requête invalide' });
   });
 });
+
+// Les journaux opérationnels n'utilisent jamais le client de production dans ces tests d'action.
+vi.mock('@/lib/ai/serviceClient', () => ({ getServiceSupabase: vi.fn(() => null) }));
