@@ -20,7 +20,7 @@ import { cached, coordKey, readShared, writeShared } from './sharedCache';
 import { haversineKm } from '@/features/adventure-prep/engine/routing';
 import { generateTripContextualKit } from '@/features/trips/engine/contextualKitEngine';
 import type { TripItem } from '@/features/trips/types/trip.types';
-import { acclimatisationNote, checkSleepingProfile } from '../engine/acclimatisation';
+import { acclimatisationNote, checkSleepingProfile, sleepNightsOf } from '../engine/acclimatisation';
 import { lonOrFilter, splitLonRange } from '../engine/longitude';
 import { readCompasMeta } from '../engine/meta';
 import {
@@ -1639,20 +1639,16 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           (night) => dayStep(night)?.title?.split(' · ').slice(1).join(' · ')
         )
       : [];
-    // Paliers d'altitude (règle UIAA, plan 4.5) : les nuits de l'itinéraire, contrôlées sur les altitudes repères.
+    // Paliers d'altitude (règle UIAA, plan 4.5) : les nuits de l'itinéraire (jours 1 à nightsCount, le dernier
+    // jour est l'arrivée, on n'y dort pas), contrôlées sur les altitudes repères.
     const acclim = acclimatisationNote({
       maxAltitudeM: maxAltitude,
       findings: checkSleepingProfile(
-        geoSteps.map((st, i) => ({
-          day: st.day_number,
-          eleM: altitudes?.[i] ?? null,
-          stay:
-            i > 0 &&
-            distanceKm(
-              { lat: st.latitude as number, lon: st.longitude as number },
-              { lat: geoSteps[i - 1].latitude as number, lon: geoSteps[i - 1].longitude as number }
-            ) < 0.3,
-        }))
+        sleepNightsOf(
+          geoSteps.map((st) => ({ day: st.day_number, lat: st.latitude as number, lon: st.longitude as number })),
+          altitudes,
+          nightsCount
+        )
       ),
     });
     if (acclim) notes.push(acclim);
