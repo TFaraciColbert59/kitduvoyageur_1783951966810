@@ -1,4 +1,4 @@
-# Progression 2.0 — État d'exécution durable
+﻿# Progression 2.0 — État d'exécution durable
 
 > Dernière mise à jour : 2026-10-11 (session d'exécution autonome)
 > Référence documents : `docs/progression/2.0/economie.md` (montants/règles font autorité),
@@ -54,17 +54,17 @@ Le chantier de stabilisation phase1 (I1–I6) est vérifié au 2026-10-11 :
 | T12 — Versionner le catalogue de missions | **TESTÉ + DÉPLOYÉ** — domaine : `missionCatalog.ts` (12 modèles versionnés, 8 catégories couvertes ; 4 fermées avec dépendance exacte : T30/T18/T22/T16 ; **aucune promesse de points**), spec 5/5. Données : migration `20261011160108` — table `progression_challenge_models` ; **constat d'application** : la base contient exactement 8 défis (les « 26 anciens » du dossier n'existent plus dans la table — aucune suppression effectuée) ; **5 publiés** (exp_01, prep_01, prep_02, part_01, part_02) vers les modèles du catalogue, **3 conservés non publiés avec raison** (entr_01 T25, entr_02 T32, exp_02 produit ambigu) ; associations historiques intactes. pgTAP `challenge_models_link.test.sql` **15/15** ; prod vérifiée après push (5+3). L'UI n'affichait déjà plus aucun montant de défi (title/progress/unit seulement) — l'écart points_reward reste dans le DTO legacy, à repurger en T14. |
 | T13 — Trois missions choisies | **TESTÉ + DÉPLOYÉ (backend)** — migration `20261011160430` : `progression_mission_assignments` + 4 fonctions SECURITY DEFINER (`choose/replace/abandon`, `is_published_mission_model`) ; **limite 3 atomique sous verrou par utilisateur**, seuls les modèles **publiés** (producteurs disponibles) sont choisissables, remplacement/abandon **sans écriture XP ni dette**, opérations scopées `user_id` (inter-comptes refusé). Route `GET|POST /api/progression/missions` (session, rate-limit, zod, identité serveur — un userId du corps est ignoré). pgTAP `mission_assignments.test.sql` **17/17** ; `missionAssignments.spec` **9/9** ; prod vérifiée (table + 4 fonctions). **UI ≤ 3 missions affichées = sous-étape T14** (la carte actuelle montre encore un seul défi — aucun régression). |
 | T14 — Avancement depuis les événements | **TESTÉ + DÉPLOYÉ** — migration `20261011163920` : `progression_mission_model_actions` (miroir SQL des modèles publiés) + `refresh_progression_mission_progress(user)` idempotent — **réalisations sources distinctes** (événements), fenêtres ever/semaine ISO/saison, **borne à la cible**, `completed_at` = **distinction sans aucun PROGRESSION_AWARD** ; recalcul à la lecture de `GET /api/progression/missions` (échec de recalcul ne bloque jamais la liste). pgTAP `mission_projection.test.sql` **15/15** (un événement → plusieurs vues, aucun doublon d'événement, aucune transaction créée, rejeu stable, fenêtre hebdo, privilèges). UI : section « Missions choisies » dans `MaProgressionView` (≤ 3 actives, avancement n/target, distinction, abandon, ajout depuis les modèles publiés — **aucun montant affiché**). Batterie : vitest **395**, pgTAP **127/127** (6 suites), invariants 9/9 ; prod vérifiée (colonne + fonction + 5 correspondances). |
-| T15 — Unifier les distinctions | À FAIRE |
-| T16 — Rythme choisi | À FAIRE |
-| T17 — Suggestions en catalogue fermé | À FAIRE |
+| T15 — Unifier les distinctions | **TESTÉ + DÉPLOYÉ** — migration `20261011173333` : `progression_badge_links` (clé canonique = nom normalisé, `condition_version`, provenance) ; prod vérifiée : **32 liaisons → 19 clés** (doublons regroupés sans suppression), **10 possessions intactes**, **0 promesse de points restante** (12 `points_reward` remis à zéro — promesses, pas des droits). Service `distinctions.ts` (dédup à l'affichage, possession historique préférée, **aucune écriture**), UI sans montant (`FideliteTab` : rareté au lieu de « +X pts »). pgTAP 10/10 ; spec 5/5 |
+| T16 — Rythme choisi | **TESTÉ + DÉPLOYÉ** — migration `20261011173630` : `progression_user_preferences` + `update_progression_preferences` (scopée utilisateur) ; domaine `rhythm.ts` (3 rythmes, semaine ISO UTC, pause = masquage sans perte, aucune pénalité) ; route `GET|POST /api/progression/preferences` ; UI bloc « Rythme (facultatif) » (chips + pause/reprendre). Specs 8/8 ; prod vérifiée (table + fonction) |
+| T17 — Suggestions en catalogue fermé | **TESTÉ** — `missionSuggestions.ts` (déterministe d'abord : priorité de catégorie + départage hash stable, exclusions actives/distinctions) + IA **facultative** qui ne peut que réordonner des IDs serveur (hors catalogue/malformé/panne → repli) ; route `GET /api/progression/suggestions` (aucun montant). Spec 7/7 |
 
 ## P3 — Passeport, carte et matériel
 
 | Tâche | Statut |
 |---|---|
-| T18 — Découvertes géographiques | À FAIRE |
-| T19 — Passeport privé | À FAIRE |
-| T20 — Couche carte | À FAIRE |
+| T18 — Découvertes géographiques | **TESTÉ + DÉPLOYÉ** — migration `20261011174153` : `progression_discoveries` (provenance stricte verified/declared/virtual, unique par entité) + `record_verified_discovery` (seule une réalisation contrôlée pose/remonte 'verified' ; déclaration/virtuel jamais interchangeables) ; dérivation région+pays depuis session traitée via le consommateur, best-effort sans XP. Spec 6/6 ; prod vérifiée |
+| T19 — Passeport privé | **TESTÉ** — route `GET /api/progression/passport` (privé, no-store) + `PassportSection` (comptes pays/régions/massifs, provenance lisible, dates, **aucune trace/identité/coordonnée** — payload hostile testé, 20 vignettes max) intégrée à la sheet. Spec 4/4 |
+| T20 — Couche carte | **TESTÉ** — route `GET /api/progression/discoveries` (identifiants seulement, 100 bornés) + `DiscoveryMapLayer` (auto-chargée, null à vide/panne, jamais les extras) **montée dans `ExplorerMap`** en dynamic import ssr:false. Spec 4/4 (`discoveryMap.spec.tsx` — extension .tsx au lieu de .ts pour le JSX) |
 | T21 — Activités hors randonnée | À FAIRE |
 | T22 — Préparation Compas pertinente | À FAIRE |
 | T23 — Kit éprouvé | À FAIRE |

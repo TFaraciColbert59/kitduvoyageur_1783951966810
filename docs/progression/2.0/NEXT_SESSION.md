@@ -1,4 +1,4 @@
-# NEXT_SESSION — reprise de l'exécution Progression 2.0
+﻿# NEXT_SESSION — reprise de l'exécution Progression 2.0
 
 > Mis à jour : 2026-10-11 (fusion des deux sessions d'exécution). Lire d'abord
 > `docs/progression/2.0/ETAT.md` (état consolidé + écarts), `DECISIONS.md`
@@ -59,25 +59,15 @@ remplace les jobs simples déjà en prod.
   avancement, distinction sans XP ; UI ≤ 3 missions sans montant). Batterie du
   jalon : vitest **395 / 9 skipped**, pgTAP **127/127** (6 suites), invariants 9/9.
 
-## Prochaine action concrète — T15 (unifier les distinctions)
+## Prochaine action concrète — T21 (adaptateurs d'activité) puis T22–T36
 
-1. Lecture : `badges` + `user_badges` en prod (32 badges au dossier ; mesurer
-   l'état réel), détecter les définitions **doublonnées** sans retirer les
-   propriétaires (`user_badges` conservés).
-2. Migration additive via CLI : table de liaison/dédup des définitions
-   (provenance + version, conditions par jalons de compétences 100/300/700/
-   1500/3000 — présentation seule, **0 crédit automatique**), aucune
-   suppression d'association historique.
-3. `distinctions.ts` (service) + `BadgesCard.tsx` : affichage dérivé du
-   catalogue unifié ; conditions versionnées et déblocage idempotent ;
-   vérifier qu'un badge/niveau ne donne **ni points ni permission admin**.
-4. Tests : `distinctions.spec.ts` (fixtures doublonnées, replay de conditions,
-   autorisations) ; pgTAP de liaison si table.
+1. T21 : `activityAdapters.ts` — registre d'adaptateurs (randonnée déjà active ; vélo/urbain/accessible fermés avec critères publiés), clé d'activité commune (multitag = un seul gain via claim), durée/objectif contrôlés serveur.
+2. T22–T36 : suivre `tasks/todo.md` ; les producteurs restent FERMÉS tant que leur preuve n'est pas construite (colonnes/tables dédiées), chaque fermeture documentée dans ETAT.md.
 
-## Contrôle de réussite T15
+## Contrôle de réussite T21
 
-- Badge acquis conservé malgré la fusion de définitions (fixtures).
-- Déblocage idempotent (rejeu = même état) ; aucun XP émis.
+- Une activité multitag ne produit qu'un gain (clé commune testée).
+- Aucun adaptateur fermé ne promet de gain ; durée/objectif validés serveur.
 - `npx vitest run tests/features/progression` vert ; `npx tsc --noEmit`.
 
 ## Ancienne action — T13/T14 (faites)

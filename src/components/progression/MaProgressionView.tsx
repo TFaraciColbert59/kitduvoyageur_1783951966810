@@ -8,6 +8,8 @@ import { Badge, Button, Card, LoadingState, Tabs } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { createClient } from '@/lib/supabase/client';
 import { useTranslation, type LocaleContextValue } from '@/lib/i18n/context';
+import PassportSection from './PassportSection';
+import type { UserDiscovery } from '@/features/progression/server/discoveries';
 import { plural, type TranslationKey } from '@/lib/i18n/translate';
 import { formatDate, formatNumber } from '@/lib/i18n/format';
 import {
@@ -293,6 +295,10 @@ export default function MaProgressionView({
     models: [],
     mutating: false,
   });
+  const [passport, setPassport] = useState<{
+    status: ClientDataStatus;
+    discoveries: UserDiscovery[];
+  }>({ status: 'loading', discoveries: [] });
   const [rhythm, setRhythm] = useState<{
     status: ClientDataStatus;
     rhythmId: 'leger' | 'regulier' | 'intense' | null;
@@ -604,6 +610,32 @@ export default function MaProgressionView({
     },
     [refreshRhythm]
   );
+
+  /** T19 — passeport privé (chargement différé, aucune coordonnée exposée). */
+  const refreshPassport = useCallback(async () => {
+    try {
+      const response = await fetch('/api/progression/passport', { cache: 'no-store' });
+      if (!response.ok) {
+        setPassport((prev) => ({ ...prev, status: 'unavailable' }));
+        return;
+      }
+      const payload = (await response.json()) as {
+        success?: boolean;
+        discoveries?: UserDiscovery[];
+      };
+      if (payload?.success !== true || !Array.isArray(payload.discoveries)) {
+        setPassport((prev) => ({ ...prev, status: 'unavailable' }));
+        return;
+      }
+      setPassport({ status: 'ready', discoveries: payload.discoveries });
+    } catch {
+      setPassport((prev) => ({ ...prev, status: 'unavailable' }));
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshPassport();
+  }, [refreshPassport]);
 
   const handleFilterChange = (filter: TerritoryFilter) => {
     triggerHaptic('selection');
@@ -1418,6 +1450,20 @@ export default function MaProgressionView({
         >
           {t('progression.seeAllRewards')}
         </Link>
+      </ProgressionSection>
+
+      <ProgressionSection
+        forceOpen={isDrawer}
+        title={t('progression.passportTitle')}
+        summary={
+          passport.status === 'ready'
+            ? passport.discoveries.length > 0
+              ? t('progression.passportTitle')
+              : t('progression.passportEmpty')
+            : t('progression.passportTitle')
+        }
+      >
+        <PassportSection status={passport.status} discoveries={passport.discoveries} />
       </ProgressionSection>
 
       {/* Liens économiques distincts : récompenses utilisables et fidélité historique. */}
