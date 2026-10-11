@@ -117,6 +117,7 @@ import { pointsMaxAltitudeM, routeAscentM } from './elevation';
 import { estimatedLegKm, estimationNote, stepDistanceMetadata, type LegDistanceSource, type LegMove } from '../engine/legDistance';
 import {
   CLAIM_MS,
+  pendingIsLive,
   pendingIsStale,
   readPending,
   resumableRun,
@@ -2194,6 +2195,12 @@ export async function compasUndoAutofillAction(
     const { supabase } = auth;
     const tripMeta = (auth.trip.metadata ?? {}) as Record<string, unknown>;
     const done = compasMeta(tripMeta).autofill as { runId?: string } | undefined;
+    // Une préparation encore vivante (lancée d'un autre onglet) ne s'annule pas : « Annuler »
+    // rendait ses prises, une relance immédiate en ouvrait une 2e en parallèle de la première
+    // et chacune écrivait kit et budget. Comme la réadaptation, il attend sa fin ou son arrêt ;
+    // une préparation coupée (prise expirée) s'annule.
+    if (!done?.runId && pendingIsLive(tripMeta, Date.now()))
+      return { success: false, error: 'Une préparation est en cours : attends sa fin ou arrête-la, puis annule.' };
     // Une préparation interrompue après l'itinéraire s'annule aussi.
     const run = (done?.runId ? done : readPending(tripMeta)) as
       | {

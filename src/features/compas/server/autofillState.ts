@@ -92,3 +92,24 @@ export function withStepsWritten(
 export function pendingIsStale(pending: PendingRun, now: number): boolean {
   return pending.restAt != null && now - pending.restAt >= CLAIM_MS;
 }
+
+/** Une prise de phase encore valable : une exécution de la préparation tient ce voyage. */
+function hasFreshClaim(meta: Record<string, unknown>, now: number): boolean {
+  const claims = compasPart(meta).autofill_claim;
+  if (!claims || typeof claims !== 'object') return false;
+  return Object.values(claims).some((at) => typeof at === 'number' && now - at < CLAIM_MS);
+}
+
+/**
+ * Une préparation dont l'itinéraire attend le reste ET que quelqu'un prépare encore : reprise
+ * en main depuis moins de `CLAIM_MS`, ou prise de phase fraîche. Passé ce délai l'exécution est
+ * morte (la fonction s'arrête à 300 s) : l'attente est « coupée », et s'annule. Un itinéraire en
+ * attente sans reprise en main ni prise fraîche (orphelin d'une phase « steps » seule) n'est pas
+ * vivant non plus.
+ */
+export function pendingIsLive(meta: Record<string, unknown>, now: number): boolean {
+  const pending = readPending(meta);
+  if (!pending) return false;
+  const takenOver = pending.restAt != null && !pendingIsStale(pending, now);
+  return takenOver || hasFreshClaim(meta, now);
+}
