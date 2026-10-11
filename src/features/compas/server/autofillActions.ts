@@ -80,14 +80,18 @@ import {
   fromPlace,
   isGenericName,
   isMountainActivity,
+  isWildZone,
   keepAdminArea,
   keepHighlands,
   keepHomeCountry,
+  markComputedBivouacs,
+  mergeAreaPlaces,
   planItinerary,
   toPlace,
   planningZoneKm,
   profileFor,
   shapeFor,
+  type AreaPlace,
   type ItineraryShape,
 } from '../engine/itinerary';
 import {
@@ -494,9 +498,22 @@ async function plannedStages(opts: {
     return {
       fallback: `lieux de la zone indisponibles (service de carte injoignable${diag.length ? ` : ${diag.join(', ')}` : ''})`,
     };
-  let places = keepHomeCountry(found, anchor.countryCode);
-  if (anchor.kind === 'state' || anchor.kind === 'region') places = keepAdminArea(places, anchor.name, 'region');
-  else if (anchor.kind === 'county') places = keepAdminArea(places, anchor.name, 'county');
+  const inCountry = (list: AreaPlace[]) => {
+    const home = keepHomeCountry(list, anchor.countryCode);
+    if (anchor.kind === 'state' || anchor.kind === 'region') return keepAdminArea(home, anchor.name, 'region');
+    if (anchor.kind === 'county') return keepAdminArea(home, anchor.name, 'county');
+    return home;
+  };
+  let places = inCountry(found);
+  // Espace sauvage à pied (peu de lieux habités) : la recherche descend aux hameaux et aux
+  // campings, qu'une zone de cette taille ne demande pas d'ordinaire (plan 4.5).
+  if (
+    profileFor(activity).move === 'marche' &&
+    isWildZone({ places, center: anchor, radiusKm: zoneKm, days, extent: anchor.extent && (halfExtentKm ?? 0) >= 15 ? anchor.extent : null })
+  ) {
+    const more = await lookupAreaPlaces({ center: anchor, radiusKm: zoneKm, activity, wild: true }, opts.deadline).catch(() => null);
+    if (more) places = mergeAreaPlaces([places, inCountry(more)]);
+  }
   // Altitudes réelles (tuiles de relief, quelques tuiles pour toute la zone) :
   // acclimatation au-dessus de 3 000 m, et à pied, le massif plutôt que la plaine.
   // Le ski aussi : une station, pas le village de la vallée (Jura : Crotenay, 600 m) ;
@@ -1586,16 +1603,20 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     });
     for (const a of nightCtx.adaptations) notes.push(adaptationText(a));
     const plan = ctx.modules.nights
-      ? planNights({
-          nights: nightsCount,
-          pref: nightsPrefFor(activity, nightCtx.nights.value),
-          autonomy: nightCtx.autonomy.value as Autonomy,
-          // Le profil a déjà parlé dans `nights` : la priorité ne rejoue que si rien n'est décidé.
-          priority: nightCtx.nights.value ? null : (nightCtx.priority.value as Priority),
-          maxAltitudeM: maxAltitude,
-          refugeNear: refugesByNight.map((r) => r.length > 0),
-          outdoorNights: nightCtx.outdoorNights.value,
-        })
+      ? markComputedBivouacs(
+          planNights({
+            nights: nightsCount,
+            pref: nightsPrefFor(activity, nightCtx.nights.value),
+            autonomy: nightCtx.autonomy.value as Autonomy,
+            // Le profil a déjà parlé dans `nights` : la priorité ne rejoue que si rien n'est décidé.
+            priority: nightCtx.nights.value ? null : (nightCtx.priority.value as Priority),
+            maxAltitudeM: maxAltitude,
+            refugeNear: refugesByNight.map((r) => r.length > 0),
+            outdoorNights: nightCtx.outdoorNights.value,
+          }),
+          // Le soir d'un bivouac calculé (aucun lieu réel où dormir) : bivouac, jamais « à réserver ».
+          (night) => dayStep(night)?.title?.split(' · ').slice(1).join(' · ')
+        )
       : [];
     // Paliers d'altitude (règle UIAA, plan 4.5) : les nuits de l'itinéraire, contrôlées sur les altitudes repères.
     const acclim = acclimatisationNote({

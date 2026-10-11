@@ -15,7 +15,7 @@
  */
 
 import { distanceKm } from './places';
-import type { StageMove } from './autofill';
+import type { NightPlan, StageMove } from './autofill';
 import { ACCLIMATISATION_FROM_M, MAX_SLEEP_GAIN_M, REST_AFTER_NIGHTS, sleepOvershootM } from './acclimatisation';
 import { extentIsWorldwide, extentWidthDeg, lonDelta, lonInExtent, meanLon, splitLonRange, wrapLon } from './longitude';
 
@@ -298,11 +298,38 @@ export function shapeFor(
   return input.radiusKm * 2 >= crowDay * Math.max(1, input.days - 1) * 0.6 ? 'traverse' : 'loop';
 }
 
-function sleepOk(p: AreaPlace, nights: string | null | undefined): boolean {
+function sleepOk(p: AreaPlace, nights: string | null | undefined, wild = false): boolean {
   // Hors bivouac, un camping ne fait pas une étape ; un refuge oui si la personne en veut.
-  if (p.kind === 'camp') return nights === 'bivouac' || nights === 'mixte';
+  // Sauf dans un espace sauvage (peu de lieux habités) : le camping y est l'un des
+  // rares endroits où dormir, tant que la personne ne demande ni toit ni refuge.
+  if (p.kind === 'camp') return nights === 'bivouac' || nights === 'mixte' || (wild && nights !== 'hebergement' && nights !== 'refuge');
   return true;
 }
+
+/** Nom d'un bivouac calculé entre deux lieux réels (voir `planMoving`) : sert aussi à le reconnaître. */
+export const BIVOUAC_PREFIX = 'Bivouac entre ';
+
+/** Cette étape est-elle un bivouac calculé (aucun lieu réel où dormir) ? */
+export function isBivouacStage(name: string): boolean {
+  return name.startsWith(BIVOUAC_PREFIX);
+}
+
+/**
+ * La nuit d'un bivouac calculé est un bivouac : un « hébergement à réserver » à
+ * un point qui n'est aucun lieu serait faux, quel que soit le profil qui a posé
+ * le type des nuits. `stageNameOfNight` : le nom de l'étape de ce soir-là.
+ */
+export function markComputedBivouacs(plan: NightPlan[], stageNameOfNight: (night: number) => string | null | undefined): NightPlan[] {
+  return plan.map((n) => {
+    const name = stageNameOfNight(n.night);
+    return name && isBivouacStage(name)
+      ? { night: n.night, type: 'bivouac' as const, reason: 'aucun lieu où dormir à une journée de marche : bivouac annoncé' }
+      : n;
+  });
+}
+
+/** Journées de marche, au plus, qu'un bivouac calculé peut combler entre deux lieux réels. */
+const MAX_BIVOUAC_GAP_DAYS = 3;
 
 function kindScore(p: AreaPlace, prof: Profile, nights: string | null | undefined): number {
   let s = prof.prefer[p.kind] ?? 0;
@@ -377,7 +404,11 @@ function planMoving(
   const [minKm, targetKm, maxKm] = input.targetKmPerDay
     ? [input.targetKmPerDay * 0.6, input.targetKmPerDay, input.targetKmPerDay * 1.4]
     : prof.dayKm;
-  const reachable = input.places.filter((p) => sleepOk(p, input.nights) && distanceKm(input.center, p) <= input.radiusKm * 1.15);
+  // Espace sauvage : moins de lieux habités (ou refuges) dans la zone que de jours à dormir.
+  const wild =
+    prof.move === 'marche' &&
+    isWildZone({ places: input.places, center: input.center, radiusKm: input.radiusKm, days: input.days, extent: input.extent });
+  const reachable = input.places.filter((p) => sleepOk(p, input.nights, wild) && distanceKm(input.center, p) <= input.radiusKm * 1.15);
   let inZone = reachable.filter((p) => withinExtent(p, input.extent));
   // Traversée plus longue que l'emprise (« traversée du Jura » à vélo en
   // 5 jours dans le seul Parc du Haut-Jura, 80 km : bloquée au 3e soir) : on
@@ -447,6 +478,10 @@ function planMoving(
   let highStreak = (start.eleM ?? 0) >= ACCLIMATISATION_FROM_M ? 1 : 0;
   // Lieu où une nuit de plus vient d'être posée : on n'y reste pas deux fois pour la même raison.
   let restedAt: string | null = null;
+  // Bivouacs calculés d'affilée (même trou entre deux lieux réels) et dernier lieu réel quitté.
+  let bivouacNights = 0;
+  let gapFrom = start.name;
+  let gapTo: AreaPlace | null = null;
   // Traversée qui a fait demi-tour (bout de la zone) : la note n'est dite qu'une fois.
   let returning = false;
   for (let day = 1; day <= input.days; day += 1) {
@@ -493,16 +528,22 @@ function planMoving(
     const choose = (strict: boolean) => pickWith(crowMin, crowMax, strict) ?? pickWith(crowMin * 0.5, crowMax * 1.4, strict);
     // Dernier soir d'une boucle : retour au départ.
     // Une fois le demi-tour fait, on continue de revenir (pas de zigzag).
+    // En plein trou entre deux lieux réels (bivouacs calculés) : on y va droit, journées égales.
+    const midGap: AreaPlace | null = gapTo && !used.has(gapTo.id) && shape === 'traverse' && !goal && !returning ? gapTo : null;
     let next: AreaPlace | null =
       shape === 'loop' && left === 0 && !goal
         ? start
         : returning
           ? null
-          : choose(true);
+          : midGap
+            ? distanceKm(cur, midGap) <= crowMax
+              ? midGap
+              : null
+            : choose(true);
     // Aucun lieu sans saut de couchage trop grand, mais il y en a avec : une nuit
     // de plus ici d'abord (acclimatation), puis l'étape, dite, si rien d'autre n'existe.
     let climbM = 0;
-    if (!next && !returning && prof.move === 'marche' && !(goal && distanceKm(cur, goal) <= crowMax)) {
+    if (!next && !returning && !midGap && prof.move === 'marche' && !(goal && distanceKm(cur, goal) <= crowMax)) {
       const risky = choose(false);
       if (risky) {
         if (restedAt !== cur.id) {
@@ -513,6 +554,37 @@ function planMoving(
         }
         next = risky;
         climbM = sleepOvershootM(cur.eleM, risky.eleM) + MAX_SLEEP_GAIN_M;
+      }
+    }
+    // Aucun lieu à une journée de marche, mais un lieu réel plus loin vers l'avant
+    // (deux ou trois journées) : un bivouac calculé sur la ligne, annoncé comme tel.
+    let bivouacNote: string | null = null;
+    if (!next && !returning && shape === 'traverse' && !goal && prof.move === 'marche' && input.nights !== 'hebergement') {
+      const ahead: AreaPlace | null =
+        midGap ??
+        best(inZone, (p) => {
+          if (used.has(p.id)) return -Infinity;
+          const d = distanceKm(cur, p);
+          if (d <= crowMax * 1.4 || d > crowMax * MAX_BIVOUAC_GAP_DAYS) return -Infinity;
+          if (along(axis, p) - along(axis, cur) <= 0) return -Infinity;
+          return -d;
+        });
+      if (ahead) {
+        gapTo = ahead;
+        const d = distanceKm(cur, ahead);
+        const walkDays = Math.max(2, Math.ceil(d / crowTarget));
+        const f = 1 / walkDays;
+        const total = bivouacNights + walkDays - 1;
+        next = {
+          id: `b:${day}`,
+          name: `${BIVOUAC_PREFIX}${gapFrom} et ${ahead.name}${total > 1 ? ` (${bivouacNights + 1}/${total})` : ''}`,
+          lat: cur.lat + (ahead.lat - cur.lat) * f,
+          lon: wrapLon(cur.lon + lonDelta(cur.lon, ahead.lon) * f),
+          kind: 'camp',
+          population: null,
+          eleM: null,
+        };
+        bivouacNote = `Bivouac : aucun lieu où dormir à une journée de marche (${ahead.name} est à ${Math.round(d)} km à vol d’oiseau) ; emplacement à choisir sur place, après avoir vérifié les règles du lieu (bivouac souvent limité ou interdit dans les parcs et les réserves).`;
       }
     }
     let back = false;
@@ -548,14 +620,21 @@ function planMoving(
       move: prof.move,
       note: [
         day === 1 ? `Départ ${fromPlace(start.name)}.` : back && !returning ? 'Retour par un autre chemin : la zone s’arrête ici.' : null,
+        bivouacNote,
         climbM > 0
           ? `Nuit environ ${Math.round(climbM / 10) * 10} m plus haut que la veille, plus que les 300 à 500 m conseillés au-dessus de 2 500 m (altitudes repères) : aucun lieu intermédiaire dans la zone.`
           : null,
       ]
         .filter(Boolean)
         .join(' ') || null,
-      placeId: next.id.startsWith('w:') ? null : next.id,
+      placeId: next.id.startsWith('w:') || next.id.startsWith('b:') ? null : next.id,
     });
+    if (bivouacNote) bivouacNights += 1;
+    else {
+      bivouacNights = 0;
+      gapFrom = next.name;
+      gapTo = null;
+    }
     highStreak = (next.eleM ?? 0) >= ACCLIMATISATION_FROM_M ? highStreak + 1 : 0;
     returning = returning || back;
     cur = next;
@@ -627,11 +706,34 @@ export interface AreaQuery {
   /** Emprise [ouest, nord, est, sud] quand la carte la donne (pays, régions). */
   extent?: [number, number, number, number] | null;
   activity: string;
+  /** Espace sauvage (`isWildZone`) : peu de lieux habités, on descend aux hameaux et aux campings. */
+  wild?: boolean;
+}
+
+/**
+ * Espace sauvage : moins de lieux habités (ou refuges) dans la zone que de jours
+ * à dormir (quatre au moins). Les campings ne comptent pas : ils ne remplacent
+ * pas un lieu où ravitailler. Sert au planificateur (campings permis, bivouac
+ * annoncé) et à la recherche (hameaux et campings demandés).
+ */
+export function isWildZone(input: {
+  places: ReadonlyArray<AreaPlace>;
+  center: { lat: number; lon: number };
+  radiusKm: number;
+  days: number;
+  extent?: ItineraryInput['extent'];
+}): boolean {
+  const habitable = input.places.filter(
+    (p) => p.kind !== 'camp' && distanceKm(input.center, p) <= input.radiusKm * 1.15 && withinExtent(p, input.extent)
+  );
+  return habitable.length < Math.max(4, input.days);
 }
 
 /** Natures cherchées : plus la zone est grande, moins on descend dans les petits lieux. */
 export function areaKinds(q: AreaQuery): AreaPlaceKind[] {
   const foot = profileFor(q.activity).move === 'marche';
+  // Espace sauvage à pied : les hameaux et les campings sont parmi les seuls endroits où dormir.
+  if (q.wild && foot && q.radiusKm <= 90) return ['town', 'village', 'hamlet', 'hut', 'camp'];
   if (q.radiusKm > 250) return ['city', 'town'];
   if (q.radiusKm > 90) return foot ? ['town', 'village', 'hut'] : ['city', 'town', 'village'];
   // Hameaux et campings : seulement sur une petite zone (sinon la requête est trop lourde).
