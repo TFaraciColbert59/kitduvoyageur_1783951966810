@@ -7,6 +7,154 @@ export type ChallengeReplaceFailureReason =
   | 'no_alternative'
   | 'unavailable';
 
+/* ============================================================================
+ * T13 — Assignations de missions (≤ 3 actives), compatibles avec l'ancien
+ * `current_challenge_id` (lecture legacy conservée ; aucun suppression).
+ * Le client ne choisit qu'un model_id du catalogue publié ; l'identité vient
+ * toujours de la session serveur, jamais du corps de requête.
+ * ========================================================================== */
+
+export type MissionFailureReason =
+  | 'limite_atteinte'
+  | 'modele_non_publie'
+  | 'assignation_introuvable'
+  | 'invalid_input'
+  | 'unavailable';
+
+export interface UserMissionAssignment {
+  id: string;
+  modelId: string;
+  state: 'active' | 'replaced' | 'abandoned';
+  targetCount: number;
+  period: 'ever' | 'week' | 'season';
+  progress: number;
+  createdAt: string;
+}
+
+export type MissionMutationResult =
+  | { ok: true; assignmentId?: string }
+  | { ok: false; reason: MissionFailureReason };
+
+const MISSION_MODEL_ID_PATTERN = /^mission_[a-z0-9_]{3,64}$/;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function createMissionServiceClient(): SupabaseClient {
+  return createChallengeServiceClient();
+}
+
+/** Missions du compte (l'utilisateur vient de la session serveur). */
+export async function getUserMissions(userId: string): Promise<UserMissionAssignment[]> {
+  const supabase = createMissionServiceClient();
+  const { data, error } = await supabase
+    .from('progression_mission_assignments')
+    .select('id, model_id, state, target_count, period, progress, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true });
+  if (error) throw new Error(error.message);
+
+  const rows = (data ?? []) as Array<{
+    id: string;
+    model_id: string;
+    state: string;
+    target_count: number | null;
+    period: string | null;
+    progress: number | null;
+    created_at: string | null;
+  }>;
+
+  return rows.map((row) => ({
+    id: row.id,
+    modelId: row.model_id,
+    state: (row.state === 'replaced' || row.state === 'abandoned' ? row.state : 'active') as
+      UserMissionAssignment['state'],
+    targetCount: Math.max(1, Math.floor(Number(row.target_count) || 1)),
+    period: (row.period === 'week' || row.period === 'season' ? row.period : 'ever') as
+      UserMissionAssignment['period'],
+    progress: Math.max(0, Math.floor(Number(row.progress) || 0)),
+    createdAt: row.created_at ?? '',
+  }));
+}
+
+async function callMissionRpc(
+  name: string,
+  params: Record<string, unknown>
+): Promise<MissionMutationResult> {
+  const supabase = createMissionServiceClient();
+  const rpc = (supabase as unknown as {
+    rpc?: (
+      fn: string,
+      args: Record<string, unknown>
+    ) => Promise<{ data: unknown; error: { message: string } | null }>;
+  }).rpc;
+  if (typeof rpc !== 'function') return { ok: false, reason: 'unavailable' };
+
+  const { data, error } = await rpc(name, params);
+  if (error) throw new Error(error.message);
+
+  const payload =
+    data !== null && typeof data === 'object'
+      ? (data as { ok?: unknown; reason?: unknown; assignmentId?: unknown })
+      : null;
+  if (payload?.ok === true) {
+    return {
+      ok: true,
+      assignmentId:
+        typeof payload.assignmentId === 'string' && UUID_PATTERN.test(payload.assignmentId)
+          ? payload.assignmentId
+          : undefined,
+    };
+  }
+  const known: readonly MissionFailureReason[] = [
+    'limite_atteinte',
+    'modele_non_publie',
+    'assignation_introuvable',
+    'invalid_input',
+    'unavailable',
+  ];
+  const reason =
+    typeof payload?.reason === 'string' && (known as readonly string[]).includes(payload.reason)
+      ? (payload.reason as MissionFailureReason)
+      : 'unavailable';
+  return { ok: false, reason };
+}
+
+export async function chooseProgressionMission(
+  userId: string,
+  modelId: string
+): Promise<MissionMutationResult> {
+  if (!MISSION_MODEL_ID_PATTERN.test(modelId)) return { ok: false, reason: 'invalid_input' };
+  return callMissionRpc('choose_progression_mission', {
+    p_user_id: userId,
+    p_model_id: modelId,
+  });
+}
+
+export async function replaceProgressionMission(
+  userId: string,
+  assignmentId: string,
+  modelId: string
+): Promise<MissionMutationResult> {
+  if (!UUID_PATTERN.test(assignmentId) || !MISSION_MODEL_ID_PATTERN.test(modelId)) {
+    return { ok: false, reason: 'invalid_input' };
+  }
+  return callMissionRpc('replace_progression_mission', {
+    p_user_id: userId,
+    p_assignment_id: assignmentId,
+    p_model_id: modelId,
+  });
+}
+
+export async function abandonProgressionMission(
+  userId: string,
+  assignmentId: string
+): Promise<MissionMutationResult> {
+  if (!UUID_PATTERN.test(assignmentId)) return { ok: false, reason: 'invalid_input' };
+  return callMissionRpc('abandon_progression_mission', {
+    p_user_id: userId,
+    p_assignment_id: assignmentId,
+  });
+}
+
 export type ChallengeReplaceResult =
   | { ok: true; challengeId: string }
   | { ok: false; reason: ChallengeReplaceFailureReason };
