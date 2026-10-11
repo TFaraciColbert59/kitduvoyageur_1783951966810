@@ -51,7 +51,7 @@ Le chantier de stabilisation phase1 (I1–I6) est vérifié au 2026-10-11 :
 
 | Tâche | Statut |
 |---|---|
-| T12 — Versionner le catalogue de missions | À FAIRE |
+| T12 — Versionner le catalogue de missions | EN COURS — domaine FAIT/TESTÉ : `missionCatalog.ts` (12 modèles versionnés, 8 catégories couvertes ; 4 fermées avec dépendance exacte : T30/T18/T22/T16 ; **aucune promesse de points** — fin de mission = distinction), `missionCatalog.spec` 5/5, `docs/progression/2.0/missions.md`. **Étape suivante** : résorption des données historiques (8 défis canoniques avec `points_reward` 40–120 contraires à la doctrine + 26 défis anciens) — table de liaison défi→modèle, dédup sans suppression, arrêt de l'affichage des promesses (séquencé avec T14/T13). |
 | T13 — Trois missions choisies | À FAIRE |
 | T14 — Avancement depuis les événements | À FAIRE |
 | T15 — Unifier les distinctions | À FAIRE |
