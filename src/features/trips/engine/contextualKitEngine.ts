@@ -232,13 +232,21 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     category: 'safety',
     defaultPriority: 'recommended',
     baseWeightGrams: 100,
-    condition: (input, maxAlt) => {
-      // Latitude tropicale, sous 2 500 m, hors mois frais (altitude ou climat inconnus : dit par précaution).
+    condition: (input) => {
+      // Latitude tropicale, hors mois frais, et pas si TOUT le parcours est au-dessus de 2 500 m (altitude ou
+      // climat inconnus : dit par précaution). Le point le plus BAS décide, pas le plus haut : un seul col à
+      // 2 500 m sur un trek qui part de 850 m (Kilimandjaro, Moshi) ne retire pas les moustiques du départ.
+      // Avec le seul maximum connu (minimum absent ou 0 = inconnu), l'altitude ne retire jamais le conseil.
+      // Les normales sont lues en UN point (le premier lieu) : un parcours dont le point bas est connu sous
+      // 2 500 m traverse des basses terres que leur mois frais ne dit pas, le contrôle est alors ignoré.
+      const { mosquitoMaxAltitudeM, mosquitoMinMeanC } = CLIMATE_THRESHOLDS;
+      const minM = input.elevationProfile?.minM;
+      const lowestM = typeof minM === 'number' && Number.isFinite(minM) && minM > 0 ? minM : null;
+      const allAbove = lowestM != null && lowestM >= mosquitoMaxAltitudeM;
+      const reachesLowland = lowestM != null && lowestM < mosquitoMaxAltitudeM;
       const read = readClimate(input.climate);
-      const match =
-        isTropicalLatitude(input.latitude) &&
-        maxAlt < CLIMATE_THRESHOLDS.mosquitoMaxAltitudeM &&
-        !(read != null && read.hottest.tMeanC < CLIMATE_THRESHOLDS.mosquitoMinMeanC);
+      const coolMonth = read != null && read.hottest.tMeanC < mosquitoMinMeanC;
+      const match = isTropicalLatitude(input.latitude) && !allAbove && !(coolMonth && !reachesLowland);
       return {
         match,
         reason: match

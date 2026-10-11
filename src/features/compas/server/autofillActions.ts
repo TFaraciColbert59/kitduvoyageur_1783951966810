@@ -1565,9 +1565,13 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         ? await terrainElevations(geoSteps.map((s) => [s.longitude as number, s.latitude as number] as const))
         : null;
     // Altitude de secours : sans étape mesurée, le relief du lieu retrouvé (jamais une valeur par pays).
+    const stepAltitudes = altitudes ? altitudes.filter((a): a is number => a != null) : [];
     const maxStepAltitude =
-      (altitudes ? Math.max(0, ...altitudes.filter((a): a is number => a != null)) || null : null) ??
+      (stepAltitudes.length ? Math.max(0, ...stepAltitudes) || null : null) ??
       (await pointsMaxAltitudeM([anchor]));
+    // L'étape la plus basse : le parcours y passe, il descend au moins jusque-là (moustiques d'un trek
+    // qui part de la plaine). Sans étape mesurée, le seul lieu retrouvé ; sinon inconnue.
+    const minStepAltitude = stepAltitudes.length ? Math.min(...stepAltitudes) : maxStepAltitude;
 
     lap('4');
     /* 4. Nuits : profil + terrain + refuges connus (en parallèle). */
@@ -1767,7 +1771,11 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       latitude: anchor.lat,
       climate: climateWindow(kitNormals, kitDates),
       currentItems: tripItemNames.map((item_name) => ({ item_name }) as unknown as TripItem),
-      ...(maxAltitude ? { elevationProfile: { maxM: maxAltitude } as never } : {}),
+      // Maximum des étapes et des refuges, minimum des seules étapes. Pour les règles du kit, 0 veut dire
+      // « minimum inconnu » : une étape lue au niveau de la mer (0 m) est un minimum connu, d'où le 1 m.
+      ...(maxAltitude
+        ? { elevationProfile: { maxM: maxAltitude, minM: minStepAltitude != null ? Math.max(1, minStepAltitude) : 0 } as never }
+        : {}),
     });
     const needs: GearNeed[] = [];
     const nightTypes = plan.map((n) => n.type);

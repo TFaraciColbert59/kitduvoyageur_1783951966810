@@ -227,6 +227,47 @@ describe('règles d’équipement : répulsif, pastilles, filtre', () => {
     expect(keys(kit('paris', 8))).not.toContain('mosquito-repellent');
   });
 
+  describe('répulsif : le point le plus bas du parcours décide, pas le plus haut', () => {
+    // Kilimandjaro + Moshi (3,3° S) : le sommet à 4 700 m, la ville de départ à 850 m.
+    const moshi = (profile: { maxM: number; minM?: number }, over: Partial<ContextualKitInput> = {}) =>
+      generateTripContextualKit({
+        activity: 'trekking',
+        durationDays: 8,
+        seasonMonth: 1,
+        latitude: -3.3,
+        elevationProfile: profile as never,
+        ...over,
+      });
+    const repellent = (a: ReturnType<typeof moshi>) =>
+      [...a.vitalGaps, ...a.recommendedGaps].some((g) => g.key === 'mosquito-repellent');
+
+    it('un seul point à 2 500 m ou plus ne retire pas le répulsif : le départ est à 850 m', () => {
+      expect(repellent(moshi({ maxM: 4700, minM: 850 }))).toBe(true);
+    });
+
+    it('avec seulement un maximum connu, le répulsif n’est jamais retiré', () => {
+      expect(repellent(moshi({ maxM: 4700 }))).toBe(true);
+      expect(repellent(moshi({ maxM: 4700, minM: 0 }))).toBe(true);
+    });
+
+    it('tout le parcours au-dessus de 2 500 m : pas de répulsif', () => {
+      expect(repellent(moshi({ maxM: 4200, minM: 2900 }))).toBe(false);
+      expect(repellent(moshi({ maxM: 2500, minM: 2500 }))).toBe(false);
+    });
+
+    it('un parcours bas garde son répulsif', () => {
+      expect(repellent(moshi({ maxM: 900, minM: 120 }))).toBe(true);
+    });
+
+    it('le mois frais du premier lieu ne retire pas le répulsif d’un parcours qui descend (Cusco, puis la forêt)', () => {
+      const cool = climateAt('cusco', 11);
+      expect(cool?.months[0].tMeanC).toBeLessThan(15);
+      expect(repellent(moshi({ maxM: 3750, minM: 190 }, { latitude: -13.53, climate: cool }))).toBe(true);
+      // Sans point bas connu, le mois frais du lieu décide, faute de mieux (comportement d'origine).
+      expect(repellent(moshi({ maxM: 3750 }, { latitude: -13.53, climate: cool }))).toBe(false);
+    });
+  });
+
   it('villes et plages des tropiques : répulsif gardé ; sortie de quelques heures : ni pastilles ni filtre', () => {
     expect(keepRuleForActivity('mosquito-repellent', 'citytrip')).toBe(true);
     expect(keepRuleForActivity('mosquito-repellent', 'beach')).toBe(true);
