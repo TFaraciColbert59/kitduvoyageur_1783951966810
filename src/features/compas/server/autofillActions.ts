@@ -65,11 +65,13 @@ import { lookupDestination, lookupMassif, lookupNatural, lookupReverse, lookupRi
 import { lookupAreaPlaces, lookupRiverLine, lookupStagePois } from './stagePoiLookup';
 import { buildTrack, simplifyLine, trackKey, type LngLat } from '../engine/track';
 import { descentWindow, planRiverDescent } from '../engine/river';
+import { entryFor } from '../engine/entry';
 import { keepAiNote, travelPapers } from '../engine/papers';
 import { isFrenchNational } from '../engine/traveller';
 import { tutoyer } from '../engine/voice';
 import { abroadCosts, homeForLeg, originFact, planTravelLeg, travelOrigin, type TravelTransport } from '../engine/travel';
 import { nearestAirport } from './airports';
+import { entryRequirement } from './entryRequirements';
 import { trailRegion } from '../engine/intent';
 import {
   dayStartVillage,
@@ -91,6 +93,7 @@ import {
   carRentalPerDay,
   entryFees,
   flightRoundTrip,
+  formalitiesBasis,
   insurance,
   localTripPerLeg,
   lodgingPerNight,
@@ -1864,7 +1867,9 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     // Papiers, change et prises : la règle parle, l'IA se tait sur ces sujets ; ce que
     // la règle affirme dépend du voyageur (nationalité, résidence, devise : PLAN-100 4.1).
     // Le tutoiement aussi est une règle : un conseil qui vouvoie encore est écarté.
-    const papers = travelPapers(anchor.countryCode, anchor.country, traveller, abroad);
+    // La nationalité ne sert qu'à lire la table (jamais écrite dans un journal ni envoyée à l'IA).
+    const entryRule = entryFor(entryRequirement, traveller.nationality, anchor.countryCode, abroad);
+    const papers = travelPapers(anchor.countryCode, anchor.country, traveller, abroad, entryRule);
     // L'essentiel (papiers, sécurité) vient des règles, avec ou sans IA (plan 4.11).
     const safety = essentialAdvice({
       activity,
@@ -1900,8 +1905,9 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     const rentalCars = fuelForKm(carKmOnSite, party).cars;
     const localTrips = localMoves.reduce((t, m) => t + localTripPerLeg(m.move, lvl.level), 0);
     // Formalités (barème pour un ressortissant français) : seulement pour une nationalité
-    // française connue, et tant qu'on ne sait pas que la personne est déjà dans le pays.
-    const abroadFor = abroadCosts(abroad, traveller);
+    // française connue, tant qu'on ne sait pas que la personne est déjà dans le pays, et
+    // si la table passeport × destination dit qu'un visa ou une autorisation est requis.
+    const abroadFor = abroadCosts(abroad, traveller, entryRule);
     const entry = abroadFor.formalities ? entryFees(anchor.countryCode) : null;
     const mealsAmount = mealsTotal({ days, party, nights: plan.map((n) => n.type), level: lvl.level });
     const rental = picks.filter((p) => p.source === 'location').reduce((t, p) => t + (p.costEur ?? 0), 0);
@@ -2000,7 +2006,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             title: `Formalités : ${entry.detail}`,
             amount: entry.eur * party,
             source: 'estimation',
-            basis: `barème Compas ${COSTS_VERSION} · ressortissant français, tarif officiel connu, à vérifier avant de partir`,
+            basis: formalitiesBasis(entryRule?.verified),
           }
         : null,
       abroadFor.insurance || (maxAltitude ?? 0) >= 2500
