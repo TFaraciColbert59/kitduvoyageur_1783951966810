@@ -17,14 +17,14 @@ test.describe('Bottom bar mobile — 5 entrées + bouton Hub central', { tag: '@
     await page.goto('/explorer');
     const nav = page.locator('nav[aria-label="Navigation principale"]');
     await expect(nav).toBeVisible();
-    // UI actuelle (Phase 2, registre DESTINATIONS) : Aventures, Explorer,
-    // Matériel, Communauté, Moi.
+    // Registre canonique actuel (`destinationRegistry.ts`) :
+    // HUB · COMMUNAUTÉ · EXPLORER · MESSAGES · COMPTE.
     const links = nav.locator('a');
     await expect(links).toHaveCount(5);
     const hubTab = nav.locator('a[href="/hub"]');
     await expect(hubTab).toHaveAttribute(
       'aria-label',
-      'Aventures : aventure active, préparation et voyages',
+      'Hub : aventure active, préparation et voyages',
     );
     await expect(hubTab).toHaveAttribute('aria-haspopup', 'dialog');
   });
@@ -59,7 +59,7 @@ test.describe('Bottom bar mobile — 5 entrées + bouton Hub central', { tag: '@
       .toBe('1');
     // Hors surface hub : navigation vers /hub + ouverture one-shot du sélecteur.
     await expect(page).toHaveURL(/\/hub$/);
-    const dialog = page.getByRole('dialog', { name: "Changer d'aventure" });
+    const dialog = page.getByRole('dialog', { name: "Tes aventures" });
     await expect(dialog).toBeVisible({ timeout: 15_000 });
     // Les 3 natures sont listées (icône + nom, premier niveau).
     await expect(dialog.getByText('Mon matériel').first()).toBeVisible();
@@ -80,7 +80,7 @@ test.describe('Bottom bar mobile — 5 entrées + bouton Hub central', { tag: '@
     await page.waitForTimeout(750);
     await hubTab.dispatchEvent('pointerup', { ...pointerInit, bubbles: true });
     await expect(page).toHaveURL(/\/hub$/);
-    await expect(page.getByRole('dialog', { name: "Changer d'aventure" }).first()).toBeVisible();
+    await expect(page.getByRole('dialog', { name: "Tes aventures" }).first()).toBeVisible();
   });
 
   // FIXME (pré-existant, timing hydratation/one-shot) : gelé pour fiabiliser la CI.
@@ -90,7 +90,7 @@ test.describe('Bottom bar mobile — 5 entrées + bouton Hub central', { tag: '@
     await page.waitForLoadState('domcontentloaded');
     // Alternative clavier : Ctrl/Cmd+K ouvre le sélecteur (hub monté).
     await page.keyboard.press('Control+k');
-    const dialog = page.getByRole('dialog', { name: "Changer d'aventure" });
+    const dialog = page.getByRole('dialog', { name: "Tes aventures" });
     await expect(dialog).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(dialog).not.toBeVisible();
