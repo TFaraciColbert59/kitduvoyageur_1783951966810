@@ -22,34 +22,43 @@ session 2 sont conservées ; une migration additive unique réconcilie les jobs
 (`lkdv-progression-*` via `progression_ops.run_job` + journal + retry réparé) et
 remplace les jobs simples déjà en prod.
 
-## État au point de reprise (après T06+T07)
+## État au point de reprise (après T06+T07+T08)
 
-- T06 TESTÉ : intentions durables (`progression_award_intents`, 6 capteurs SQL +
-  préparation sentier), pgTAP 24/24.
-- T07 TESTÉ : consommateur borné (réservation atomique, refus/backoff/dead),
-  route `/api/cron/progression-awards`, drain opportuniste borné. 12 tests unitaires.
-- Restent pour P1 : **T08 (plafonds sous concurrence + claims)** puis T09 (les
-  sept preuves renforcées), T10 (carte compacte — déjà livrée session 1,
-  à réconcilier au statut machine), T11 (historique sheet).
+- T06 TESTÉ : intentions durables (pgTAP 24/24). T07 TESTÉ : consommateur borné
+  (12 tests unitaires ; route 401 prouvée en prod ; drain opportuniste actif).
+- T08 TESTÉ + DÉPLOYÉ EN PROD (migration `20261011125038`) : verrou consultatif,
+  plafonds par date métier, cap_group, claims atomiques, fallback sans cap_groups.
+  pgTAP 23/23 + preuve de concurrence réelle 1 gagnant/1 refus/1 transaction
+  (`scripts/ops/t08_concurrency/run.ps1`). Scan prod 0 anomalie après déploiement.
+- Utilisation active des claims par les producteurs : à faire en T09 (le moteur
+  et le passthrough `awardProducer.p_claims` existent déjà).
 
-## Prochaine action concrète — T08 (plafonds sous concurrence)
+## Prochaine action concrète — T09 (renforcer les sept preuves existantes)
 
-1. Étendre l'attribution (`award_progression_gain` v2) : claims unitaires
-   (`progression_claims`), caps par date métier (jour UTC, semaine ISO UTC,
-   saison bornes [début, fin)), cap_group partagés, verrou par utilisateur,
-   décision idempotente retrouvée avant les plafonds.
-2. Le registre v2 (`rules-registry.json`) porte déjà cap_group et les plafonds ;
-   ne pas activer (status draft_closed) — l'implémentation doit être testée
-   avec des versions de test, pas en publiant le barème.
-3. Tests : deux transactions concurrentes à la dernière place du quota ;
-   replay après plafond ; frontières jour/semaine/saison ; TS/SQL identiques.
+1. ProducerHooks : durée active réelle (paliers 20/60/120/240) au lieu du bonus
+   par segments OSM ; nouveauté de parcours via claim `route_novelty` (même
+   gain, +20, max 150) ; `adaptedObjectiveFloor` si objectif adapté vérifié.
+2. Checklist : exiger ≥ 3 contrôles dus pertinents (documenter la colonne qui
+   distingue « dû » d'« ajout libre » — sinon le dire et fermer la variante).
+3. Itinérance (`trip_completed`) : ≥ 2 journées distinctes + 2 réalisations
+   liées ; une checklist seule ne prouve plus le voyage.
+4. Débrief : attribution à la finalisation (20 + 2×items, cap 40) ; avis de
+   lieu : 15 ou 40 si visite contrôlée ; carnet : inchangé (60) + claim média
+   pour préparer T26.
+5. Tests : `producerHooks.spec.ts` et `producerHooksCompletion.spec.ts` étendus
+   (gain nominal, rejeu, refus) + intégration source→intention→décision→outbox.
 
-## Contrôle de réussite T08
+## Contrôle de réussite T09
 
-- `supabase/tests/database/progression_concurrence_plafonds.test.sql` vert sur
-  base locale (deux sessions réellement concurrentes).
-- `npx vitest run tests/features/progression/` vert ; type-check vert.
-- Aucune activation de barème : `progression_rules` reste `v1` actif en prod.
+- Les sept producteurs ont gain nominal + rejeu + refus testés (vitest vert).
+- Aucun changement de montant pour les gains historiques (déjà en décisions).
+- `npx tsc --noEmit` ; `npx vitest run tests/features/progression tests/phase1`.
+
+## Rappels de continuation
+
+- Ne pas publier le barème v2 (`rules-registry.json` reste `draft_closed`).
+- T10 (carte compacte) est déjà livré session 1 — vérifier avant de refaire.
+- T11 backend 20 tests existe session 1 — intégrer plutôt que réécrire.
 
 ## Règles de continuation
 

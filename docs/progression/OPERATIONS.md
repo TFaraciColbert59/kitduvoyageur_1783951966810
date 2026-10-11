@@ -99,6 +99,13 @@ Option zero-coût disponible : l'extension `pg_net` (0.20.3) est disponible mais
 non installée. L'activer exige un secret Vault + l'URL de l'app, et un test
 d'observation avant usage — non activé par défaut.
 
+**Frontière d'activation datée (2026-10-11)** : `CRON_SECRET` est vide dans
+`.env` et `.env.local` du dépôt ; la route déployée refuse donc 401 (prouvé en
+production). Le chemin planifié HTTP ne fonctionne qu'une fois le secret défini
+côté hébergement et un planificateur configuré — condition ops externe. Sans
+lui, le rattrapage passe par le **drain opportuniste** (trafic réel) et les
+jobs SQL, qui ne dépendent d'aucun secret.
+
 Sonde du backlog :
 
 ```sql
