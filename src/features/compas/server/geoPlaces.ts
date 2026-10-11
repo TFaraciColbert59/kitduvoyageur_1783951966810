@@ -1,7 +1,7 @@
 import 'server-only';
 import { getServiceSupabase } from '@/lib/ai/serviceClient';
 import { areaKinds, type AreaPlace, type AreaQuery } from '../engine/itinerary';
-import { areaBox, geoPlaceToArea, SETTLEMENT_KINDS, type GeoPlaceRow } from '../engine/geoPlaces';
+import { areaBoxes, geoPlaceToArea, mergeBoxRows, SETTLEMENT_KINDS, type GeoPlaceRow } from '../engine/geoPlaces';
 
 /**
  * Les lieux habités d'une zone, lus dans le référentiel (`geo_places_in_box`,
@@ -13,21 +13,26 @@ export async function referentialAreaPlaces(q: AreaQuery, limit = 800): Promise<
   if (kinds.length === 0) return null;
   const client = getServiceSupabase();
   if (!client) return null;
-  const [w, s, e, n] = areaBox(q);
   try {
-    const { data, error } = await client.rpc('geo_places_in_box', {
-      p_west: w,
-      p_south: s,
-      p_east: e,
-      p_north: n,
-      p_kinds: kinds,
-      p_limit: limit,
-    });
-    if (error) {
-      console.warn('[compas] référentiel des lieux', error.code);
-      return null;
+    // Une zone qui franchit l'antiméridien se lit en deux boîtes : le `box` de
+    // Postgres range ses coins et lirait sinon tout ce qui est ENTRE les deux.
+    const lists: GeoPlaceRow[][] = [];
+    for (const [w, s, e, n] of areaBoxes(q)) {
+      const { data, error } = await client.rpc('geo_places_in_box', {
+        p_west: w,
+        p_south: s,
+        p_east: e,
+        p_north: n,
+        p_kinds: kinds,
+        p_limit: limit,
+      });
+      if (error) {
+        console.warn('[compas] référentiel des lieux', error.code);
+        return null;
+      }
+      lists.push((data ?? []) as GeoPlaceRow[]);
     }
-    const places = ((data ?? []) as GeoPlaceRow[]).map(geoPlaceToArea).filter((p): p is AreaPlace => p != null);
+    const places = mergeBoxRows(lists, limit).map(geoPlaceToArea).filter((p): p is AreaPlace => p != null);
     return places.length ? places : null;
   } catch (err) {
     console.warn('[compas] référentiel des lieux', err instanceof Error ? err.message : 'erreur');

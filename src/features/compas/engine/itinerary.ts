@@ -16,6 +16,7 @@
 
 import { distanceKm } from './places';
 import type { StageMove } from './autofill';
+import { extentIsWorldwide, extentWidthDeg, lonDelta, lonInExtent, meanLon, splitLonRange, wrapLon } from './longitude';
 
 export type AreaPlaceKind = 'city' | 'town' | 'village' | 'hamlet' | 'hut' | 'camp';
 
@@ -180,7 +181,7 @@ function offset(p: { lat: number; lon: number }, deg: number, km: number): { lat
   const rad = (deg * Math.PI) / 180;
   const dLat = (km * Math.cos(rad)) / 111;
   const dLon = (km * Math.sin(rad)) / (111 * Math.max(0.1, Math.cos((p.lat * Math.PI) / 180)));
-  return { lat: p.lat + dLat, lon: p.lon + dLon };
+  return { lat: p.lat + dLat, lon: wrapLon(p.lon + dLon) };
 }
 
 /** Rayon réel d'une zone : 90 % de ses lieux sont à moins de ce rayon de leur centre. */
@@ -188,7 +189,7 @@ export function zoneSpreadKm(places: ReadonlyArray<{ lat: number; lon: number }>
   if (!places.length) return 0;
   const c = {
     lat: places.reduce((t, p) => t + p.lat, 0) / places.length,
-    lon: places.reduce((t, p) => t + p.lon, 0) / places.length,
+    lon: meanLon(places.map((p) => p.lon)),
   };
   const d = places.map((p) => distanceKm(c, p)).sort((a, b) => a - b);
   return d[Math.min(d.length - 1, Math.floor(d.length * 0.9))];
@@ -205,13 +206,19 @@ function fitScale(places: AreaPlace[], shape: 'traverse' | 'loop', crowTarget: n
   return need > room ? Math.max(0.4, room / need) : 1;
 }
 
-/** Dans l'emprise de la destination (marge de 10 %), quand on la connaît. */
+/**
+ * Dans l'emprise de la destination (marge de 10 %), quand on la connaît. Une
+ * emprise qui franchit l'antiméridien (ouest > est) se lit de part et d'autre
+ * de la coupure ; la boîte d'un globe entier (Fidji, Taveuni : [-180, 180]) ne
+ * dit rien de la largeur, seule la latitude filtre.
+ */
 function withinExtent(p: { lat: number; lon: number }, extent: ItineraryInput['extent']): boolean {
   if (!extent) return true;
-  const [w, n, e, s] = extent;
-  const mx = Math.abs(e - w) * 0.1;
+  const [, n, , s] = extent;
   const my = Math.abs(n - s) * 0.1;
-  return p.lon >= Math.min(w, e) - mx && p.lon <= Math.max(w, e) + mx && p.lat >= Math.min(s, n) - my && p.lat <= Math.max(s, n) + my;
+  if (!(p.lat >= Math.min(s, n) - my && p.lat <= Math.max(s, n) + my)) return false;
+  if (extentIsWorldwide(extent)) return true;
+  return lonInExtent(p.lon, extent, extentWidthDeg(extent) * 0.1);
 }
 
 /** Ordre stable : score décroissant, puis identifiant (jamais de hasard). */
@@ -233,13 +240,13 @@ function best<T extends { id: string }>(list: T[], score: (t: T) => number): T |
 export function mainAxis(points: ReadonlyArray<{ lat: number; lon: number }>): { lat: number; lon: number; dx: number; dy: number } {
   const n = points.length || 1;
   const lat0 = points.reduce((t, p) => t + p.lat, 0) / n;
-  const lon0 = points.reduce((t, p) => t + p.lon, 0) / n;
+  const lon0 = meanLon(points.map((p) => p.lon));
   const k = Math.cos((lat0 * Math.PI) / 180);
   let sxx = 0;
   let syy = 0;
   let sxy = 0;
   for (const p of points) {
-    const x = (p.lon - lon0) * k;
+    const x = lonDelta(lon0, p.lon) * k;
     const y = p.lat - lat0;
     sxx += x * x;
     syy += y * y;
@@ -259,7 +266,7 @@ export function mainAxis(points: ReadonlyArray<{ lat: number; lon: number }>): {
 function along(axis: ReturnType<typeof mainAxis>, p: { lat: number; lon: number }): number {
   const k = Math.cos((axis.lat * Math.PI) / 180);
   // En km (1° de latitude ≈ 111 km).
-  return ((p.lon - axis.lon) * k * axis.dx + (p.lat - axis.lat) * axis.dy) * 111;
+  return (lonDelta(axis.lon, p.lon) * k * axis.dx + (p.lat - axis.lat) * axis.dy) * 111;
 }
 
 /** Longueur d'un ensemble de lieux le long de son axe principal (km). */
@@ -629,16 +636,32 @@ export function planningZoneKm(input: {
   return Math.round(Math.min(cap, Math.max(8, own, span * 0.5) + crowDay * 0.25));
 }
 
+/**
+ * Les boîtes [ouest, sud, est, nord] à interroger pour une emprise : une seule
+ * en général, deux quand elle franchit l'antiméridien (ouest > est). La boîte
+ * d'un globe entier ([-180, 180], Fidji) n'en est pas une : la zone est alors
+ * le rayon autour du centre (null ici).
+ */
+export function extentBoxes(extent: Readonly<NonNullable<AreaQuery['extent']>>): Array<[number, number, number, number]> | null {
+  if (extentIsWorldwide(extent)) return null;
+  const [w, n, e, s] = extent;
+  return splitLonRange(w, e).map(([a, b]) => [a, Math.min(s, n), b, Math.max(s, n)]);
+}
+
 export function buildAreaQuery(q: AreaQuery): string {
   const kinds = areaKinds(q);
   const places = kinds.filter((k) => k !== 'hut' && k !== 'camp');
   const r = Math.round(Math.min(q.radiusKm, 400) * 1000);
-  const where = q.extent
-    ? `(${q.extent[3].toFixed(3)},${q.extent[0].toFixed(3)},${q.extent[1].toFixed(3)},${q.extent[2].toFixed(3)})`
-    : `(around:${r},${q.center.lat.toFixed(4)},${q.center.lon.toFixed(4)})`;
-  const parts = [`node[place~"^(${places.join('|')})$"][name]${where};`];
-  if (kinds.includes('hut')) parts.push(`nwr[tourism~"^(alpine_hut|wilderness_hut)$"][name]${where};`);
-  if (kinds.includes('camp')) parts.push(`nwr[tourism=camp_site][name]${where};`);
+  const boxes = q.extent ? extentBoxes(q.extent) : null;
+  const wheres = boxes
+    ? boxes.map(([w, s, e, n]) => `(${s.toFixed(3)},${w.toFixed(3)},${n.toFixed(3)},${e.toFixed(3)})`)
+    : [`(around:${r},${q.center.lat.toFixed(4)},${q.center.lon.toFixed(4)})`];
+  const parts: string[] = [];
+  for (const where of wheres) {
+    parts.push(`node[place~"^(${places.join('|')})$"][name]${where};`);
+    if (kinds.includes('hut')) parts.push(`nwr[tourism~"^(alpine_hut|wilderness_hut)$"][name]${where};`);
+    if (kinds.includes('camp')) parts.push(`nwr[tourism=camp_site][name]${where};`);
+  }
   return `[out:json][timeout:25];(${parts.join('')});out center tags 4000;`;
 }
 
@@ -698,20 +721,29 @@ export function parseAreaPlaces(payload: unknown): AreaPlace[] {
 
 /* ---------- Lecture de Photon (lieux d'une emprise par catégorie), pure ---------- */
 
-/** Emprises à interroger : une seule pour une petite zone, quatre tuiles au-delà de 25 km (50 lieux par tuile). */
+/**
+ * Emprises à interroger : une seule pour une petite zone, quatre tuiles au-delà
+ * de 25 km (50 lieux par tuile). Les tuiles restent dans [-180, 180] et [-90, 90] :
+ * une tuile qui franchit l'antiméridien (Fidji, 179,9° E) est scindée en deux.
+ */
 export function areaTiles(center: { lat: number; lon: number }, radiusKm: number): Array<[number, number, number, number]> {
   const dLat = radiusKm / 111;
   const dLon = radiusKm / (111 * Math.max(0.1, Math.cos((center.lat * Math.PI) / 180)));
-  const [w, s, e, n] = [center.lon - dLon, center.lat - dLat, center.lon + dLon, center.lat + dLat];
-  if (radiusKm <= 25) return [[w, s, e, n]];
-  const mx = center.lon;
-  const my = center.lat;
-  return [
-    [w, s, mx, my],
-    [mx, s, e, my],
-    [w, my, mx, n],
-    [mx, my, e, n],
-  ];
+  const [w, e] = [center.lon - dLon, center.lon + dLon];
+  const s = Math.max(-90, center.lat - dLat);
+  const n = Math.min(90, center.lat + dLat);
+  const tiles: Array<[number, number, number, number]> =
+    radiusKm <= 25
+      ? [[w, s, e, n]]
+      : [
+          [w, s, center.lon, center.lat],
+          [center.lon, s, e, center.lat],
+          [w, center.lat, center.lon, n],
+          [center.lon, center.lat, e, n],
+        ];
+  return tiles.flatMap(([a, south, b, north]) =>
+    splitLonRange(a, b).map(([x, y]) => [x, south, y, north] as [number, number, number, number])
+  );
 }
 
 const PHOTON_KIND: Record<string, AreaPlaceKind> = {

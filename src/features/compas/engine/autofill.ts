@@ -8,6 +8,7 @@ import { isInventoryAvailable, type InventoryStatus } from '@/features/materiel/
  * toujours affichée comme telle). Aucun produit, prix ou lieu n'est inventé.
  */
 
+import { lonDelta } from './longitude';
 import { shopTokens } from './shopMatch';
 
 /* ---------- Nuits ---------- */
@@ -841,11 +842,11 @@ export function backtrackShare(points: ReadonlyArray<{ lat: number; lon: number 
   const a = points[0];
   const b = points[points.length - 1];
   const kx = Math.cos(((a.lat + b.lat) / 2) * (Math.PI / 180));
-  const ax = (b.lon - a.lon) * kx;
+  const ax = lonDelta(a.lon, b.lon) * kx;
   const ay = b.lat - a.lat;
   const len = Math.hypot(ax, ay);
   if (len < 1e-6) return 1; // départ = arrivée : une boucle, pas une traversée
-  const proj = points.map((p) => ((p.lon - a.lon) * kx * ax + (p.lat - a.lat) * ay) / len);
+  const proj = points.map((p) => (lonDelta(a.lon, p.lon) * kx * ax + (p.lat - a.lat) * ay) / len);
   let forward = 0;
   let backward = 0;
   for (let i = 1; i < proj.length; i += 1) {

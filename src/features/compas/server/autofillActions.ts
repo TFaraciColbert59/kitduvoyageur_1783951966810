@@ -20,6 +20,7 @@ import { cached, coordKey, readShared, writeShared } from './sharedCache';
 import { haversineKm } from '@/features/adventure-prep/engine/routing';
 import { generateTripContextualKit } from '@/features/trips/engine/contextualKitEngine';
 import type { TripItem } from '@/features/trips/types/trip.types';
+import { lonOrFilter, splitLonRange } from '../engine/longitude';
 import { readCompasMeta } from '../engine/meta';
 import {
   NIGHT_LABEL,
@@ -235,24 +236,27 @@ async function loadSteps(supabase: Supa, tripId: string): Promise<StepRow[]> {
 async function refugesNear(supabase: Supa, p: { lat: number; lon: number }): Promise<Refuge[]> {
   const dLat = 0.11;
   const dLon = 0.11 / Math.max(0.2, Math.cos((p.lat * Math.PI) / 180));
+  // À moins de 3 km de la coupure à ±180°, la fenêtre déborde : deux plages de longitudes.
+  const lons = splitLonRange(p.lon - dLon, p.lon + dLon);
+  const cut = lons.length > 1;
   const [{ data: priced }, { data: listed }] = await Promise.all([
-    supabase
-      .from('map_refuges')
-      .select('name, lat, lng, altitude_m, price_per_night')
-      .gte('lat', p.lat - dLat)
-      .lte('lat', p.lat + dLat)
-      .gte('lng', p.lon - dLon)
-      .lte('lng', p.lon + dLon)
-      .limit(20),
-    supabase
-      .from('places')
-      .select('name, latitude, longitude, altitude_m')
-      .eq('category', 'refuge')
-      .gte('latitude', p.lat - dLat)
-      .lte('latitude', p.lat + dLat)
-      .gte('longitude', p.lon - dLon)
-      .lte('longitude', p.lon + dLon)
-      .limit(20),
+    (() => {
+      const q = supabase
+        .from('map_refuges')
+        .select('name, lat, lng, altitude_m, price_per_night')
+        .gte('lat', p.lat - dLat)
+        .lte('lat', p.lat + dLat);
+      return (cut ? q.or(lonOrFilter('lng', lons)) : q.gte('lng', lons[0][0]).lte('lng', lons[0][1])).limit(20);
+    })(),
+    (() => {
+      const q = supabase
+        .from('places')
+        .select('name, latitude, longitude, altitude_m')
+        .eq('category', 'refuge')
+        .gte('latitude', p.lat - dLat)
+        .lte('latitude', p.lat + dLat);
+      return (cut ? q.or(lonOrFilter('longitude', lons)) : q.gte('longitude', lons[0][0]).lte('longitude', lons[0][1])).limit(20);
+    })(),
   ]);
   const out: Refuge[] = [
     ...((priced ?? []) as Array<Record<string, unknown>>).map((r) => ({

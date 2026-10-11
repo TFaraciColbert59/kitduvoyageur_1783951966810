@@ -5,6 +5,8 @@
  * près de la destination est écarté, jamais deviné.
  */
 
+import { extentIsWorldwide, extentWidthDeg } from './longitude';
+
 export interface CompasPlace {
   name: string;
   lat: number;
@@ -549,8 +551,18 @@ const NATURAL_TAG_RANK: Array<[RegExp, number]> = [
   [/^waterway=river$/, 3],
   [/^natural=/, 4],
 ];
-const extentArea = (p: CompasPlace) =>
-  p.extent ? Math.abs((p.extent[2] - p.extent[0]) * (p.extent[1] - p.extent[3])) : 0;
+/**
+ * Étendue d'une emprise (degrés carrés), pour départager. Une emprise coupée par
+ * l'antiméridien se mesure par-dessus la coupure ; la boîte d'un globe entier
+ * (Photon la rend pour une forme coupée) ne dit rien de la largeur : seule la
+ * hauteur est connue, on ne la compte pas plus large que haute.
+ */
+const extentArea = (p: CompasPlace) => {
+  if (!p.extent) return 0;
+  const height = Math.abs(p.extent[1] - p.extent[3]);
+  const width = extentIsWorldwide(p.extent) ? height : extentWidthDeg(p.extent);
+  return width * height;
+};
 
 /**
  * Le lieu naturel qu'une activité de plein air vise sous ce nom (« Chartreuse »
