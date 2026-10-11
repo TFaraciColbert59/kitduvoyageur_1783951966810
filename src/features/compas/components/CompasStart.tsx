@@ -14,6 +14,7 @@ import { browserToday } from '../engine/zone';
 import { compasCreateTripAction } from '../server/compasActions';
 import { ACTIVITY_FIRST, ACTIVITY_META, ACTIVITY_ORDER } from './CompasOuFlows';
 import TravellerCard from '@/components/identity/TravellerCard';
+import { AiNotice } from './AiNotice';
 
 const LOCKED_STEP = 'Disponible dès le premier choix';
 
@@ -39,12 +40,15 @@ export function CompasStart({
   signedIn,
   invitations = [],
   askTraveller = false,
+  aiOn = false,
 }: {
   signedIn: boolean;
   /** Invitations reçues : on peut rejoindre un voyage au lieu d'en créer un. */
   invitations?: TripInvitationView[];
   /** Profil voyageur jamais demandé (compte réel) : la question est posée une fois, « Passer » visible. */
   askTraveller?: boolean;
+  /** Interrupteur de l'IA du site : allumé, la mention est dite avant le premier envoi (PLAN-100 5.3). */
+  aiOn?: boolean;
 }) {
   const router = useRouter();
   const [text, setText] = useState('');
@@ -259,6 +263,8 @@ export function CompasStart({
               {pending ? 'Création de l’aventure…' : 'Préparer mon aventure'}
             </button>
           </form>
+
+          {aiOn && <AiNotice variant="run" withPrivacyLink />}
 
           {error && (
             <p className="cp-note" role="alert">

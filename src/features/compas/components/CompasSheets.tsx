@@ -2778,7 +2778,8 @@ function RaisonsFlow({ ctl }: { ctl: CompasCtl }) {
       {ctl.data.model.verdict.reasons.some((r) => isMeteoalarmSource(r.source)) && (
         <MeteoalarmNotice readAt={ctl.data.alertsReadAt} />
       )}
-      <VerdictExplain ctl={ctl} />
+      {/* IA éteinte (`AI_MODE=off`) : le bouton n'est pas proposé, rien ne parle d'IA (PLAN-100 5.3). */}
+      {ctl.data.aiOn && <VerdictExplain ctl={ctl} />}
     </>
   );
 }
@@ -2831,7 +2832,7 @@ function VerdictExplain({ ctl }: { ctl: CompasCtl }) {
           disabled={state.status === 'loading'}
           onClick={() => void explain()}
         >
-          <Icon name="sparkles" size={16} />
+          <Icon name="sparkles" size={16} aria-hidden="true" />
           {state.status === 'loading' ? 'L’IA lit les signaux…' : 'Expliquer avec l’IA'}
         </button>
       )}

@@ -477,6 +477,8 @@ export function CompasScreen({
             stage: 'done',
             total: res.summary.total > 0 ? `Budget ${formatMoney(res.summary.total, 'EUR')}` : null,
             digest: autofillDigest(res.summary),
+            // L'IA a produit quelque chose (conseils, étapes) : la mention reste à la fin (PLAN-100 5.3).
+            usedAi: res.summary.usedAi,
           });
         notify(
           res.summary.total > 0 ? `${done} · ${formatMoney(res.summary.total, 'EUR')}` : done,
@@ -1031,6 +1033,7 @@ export function CompasScreen({
       {prep && (
         <CompasPrep
           prep={prep}
+          aiOn={data.aiOn === true}
           onStop={() => {
             stopped.current = true;
             // Le serveur aussi : la préparation en arrière-plan saute ce qui reste à écrire.

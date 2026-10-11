@@ -6,6 +6,8 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import userEvent from '@testing-library/user-event';
 import axe from 'axe-core';
 import { STEP_FLOWS } from '../components/compasTypes';
+import { aiSuggestion } from '../engine/advice';
+import { AI_NOTICE_DONE, AI_NOTICE_RUN, AI_STEP_LABEL } from '../engine/aiNotice';
 import { buildCompasModel, type CompasInput, type CompasItemInput } from '../engine/compasModel';
 import { assessDanger, mergeDangerIntoVerdict, type OfficialAlert } from '../engine/danger';
 import { METEOALARM_DISCLAIMER, METEOALARM_HOME } from '../engine/meteoalarmFeeds';
@@ -450,6 +452,7 @@ function makeData(overrides: Partial<CompasInput> = {}): CompasData {
     weather: null,
     route: { id: 374, name: 'Tour des Vallées' },
     origin: { lat: 42.73, lon: -0.01 },
+    aiOn: true,
   };
 }
 
@@ -2939,4 +2942,188 @@ describe('CompasScreen : accessibilité (lot Q, 5.2)', () => {
     });
   });
 
+});
+
+describe('CompasScreen : la mention « IA » (lot Z2, PLAN-100 5.3)', () => {
+  const openParcours = async () => {
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Parcours/ }));
+    return sheet;
+  };
+  const withAiStep = (aiOn = true): CompasData => {
+    const data = makeData();
+    data.aiOn = aiOn;
+    data.itinerary = data.itinerary.map((st, i) => ({ ...st, aiProposed: i === 0 }));
+    return data;
+  };
+
+  it('Parcours · étapes : seule l’étape proposée par l’IA le dit, en texte, sur sa ligne', async () => {
+    render(<CompasScreen data={withAiStep()} />);
+    const sheet = await openParcours();
+    const labels = await within(sheet).findAllByText(AI_STEP_LABEL);
+    expect(labels).toHaveLength(1);
+    expect(labels[0].closest('.cp-row')?.textContent).toContain('Gavarnie');
+    // La seconde étape n'est pas de l'IA : sa ligne ne le dit pas.
+    const second = within(sheet).getByText(/^Jour 2 ·/).closest('.cp-row');
+    expect(second?.textContent).toContain('Refuge');
+    expect(second?.textContent).not.toContain(AI_STEP_LABEL);
+  });
+
+  it('Parcours · étapes calculées par le Compas : aucune mention', async () => {
+    render(<CompasScreen data={makeData()} />);
+    const sheet = await openParcours();
+    expect(await within(sheet).findByText('Gavarnie')).toBeTruthy();
+    expect(within(sheet).queryByText(AI_STEP_LABEL)).toBeNull();
+  });
+
+  it('étape déjà proposée par l’IA, puis IA éteinte : la mention reste (le contenu, lui, existe)', async () => {
+    render(<CompasScreen data={withAiStep(false)} />);
+    const sheet = await openParcours();
+    expect(await within(sheet).findAllByText(AI_STEP_LABEL)).toHaveLength(1);
+  });
+
+  it('conseil de l’IA dans les notes de la préparation : « Suggestion de l’IA (facultatif) » est lu avec lui', () => {
+    const data = { ...makeData(), autofill: 'done' as const, autofillNotes: [aiSuggestion('Prévois une frontale de secours.')] };
+    render(<CompasScreen data={data} initialStep="ou" />);
+    expect(screen.getByText('Suggestion de l’IA (facultatif) : prévois une frontale de secours.')).toBeTruthy();
+  });
+
+  describe('Verdict · Risques : « Expliquer avec l’IA »', () => {
+    const openRisks = async () => {
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+      fireEvent.click(screen.getByRole('button', { name: /^Détails : / }));
+      return screen.findByRole('dialog');
+    };
+
+    it('IA allumée : le bouton est là, son libellé dit que c’est l’IA', async () => {
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openRisks();
+      expect(within(sheet).getByRole('button', { name: 'Expliquer avec l’IA' })).toBeTruthy();
+    });
+
+    it('IA éteinte (AI_MODE=off) : ni bouton ni mot sur l’IA dans le tiroir', async () => {
+      render(<CompasScreen data={{ ...makeData(), aiOn: false }} />);
+      const sheet = await openRisks();
+      expect(within(sheet).queryByRole('button', { name: /IA/ })).toBeNull();
+      expect(sheet.textContent ?? '').not.toMatch(/\bIA\b/);
+    });
+  });
+
+  describe('préparation lancée depuis la demande (panneau visible)', () => {
+    const say = () => ({ ...makeData(), startSay: 'rando à 4' }) as CompasData;
+    const panel = () => screen.findByRole('status', { name: 'Préparation de l’aventure' });
+
+    it('IA allumée : la mention est dite dès le démarrage, dans le panneau', async () => {
+      render(<CompasScreen data={say()} />);
+      const p = await panel();
+      expect(within(p).getByRole('note').textContent).toContain(AI_NOTICE_RUN);
+    });
+
+    it('IA éteinte : le panneau ne parle pas d’IA', async () => {
+      render(<CompasScreen data={{ ...say(), aiOn: false }} />);
+      const p = await panel();
+      expect(within(p).queryByRole('note')).toBeNull();
+      expect(p.textContent ?? '').not.toMatch(/\bIA\b/);
+    });
+
+    it('terminée : la mention « l’IA a contribué » suit ce que le serveur dit avoir produit', async () => {
+      render(<CompasScreen data={{ ...say(), autofill: 'none' }} />);
+      expect(await screen.findByText('Ton aventure est prête')).toBeTruthy();
+      expect(within(await panel()).getByRole('note').textContent).toContain(AI_NOTICE_DONE);
+    });
+
+    it('terminée sans que l’IA ait rien produit : plus aucune mention', async () => {
+      autofill.compasAutofillAction.mockResolvedValueOnce({
+        success: true,
+        summary: {
+          nights: [],
+          transport: null,
+          kit: { inventaire: 0, pret: 0, location: 0, achat: 0, a_trouver: 0 },
+          budget: [],
+          total: 0,
+          notes: [],
+          usedAi: false,
+          stepsCreated: 0,
+        },
+      } as never);
+      render(<CompasScreen data={{ ...say(), autofill: 'none' }} />);
+      expect(await screen.findByText('Ton aventure est prête')).toBeTruthy();
+      expect(within(await panel()).queryByRole('note')).toBeNull();
+    });
+  });
+
+  it('Dis-le : l’IA qui a compris est dite en texte (pas seulement l’icône) ; les règles seules ne le disent pas', async () => {
+    compas.compasInterpretAction.mockResolvedValueOnce({
+      success: true,
+      usedAi: true,
+      note: null,
+      proposals: [
+        { id: '0-set_party_size', action: { type: 'set_party_size', count: 4 }, label: '4 personnes', ok: true, reason: null, source: 'ia' },
+        { id: '1-set_pace', action: { type: 'set_pace', pace: 'tranquille' }, label: 'Rythme tranquille', ok: true, reason: null, source: 'regles' },
+      ],
+    });
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Quand/ }));
+    fireEvent.change(within(sheet).getByLabelText('Dis-le'), { target: { value: 'à 4, tranquille' } });
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Comprendre la phrase' }));
+    expect(await within(sheet).findByText('Compris par l’IA, vérifié par le Compas.')).toBeTruthy();
+    // La pastille de la proposition de l'IA a un nom en texte ; celle des règles n'en a pas.
+    const ai = within(sheet).getByText('4 personnes').closest('label');
+    const rules = within(sheet).getByText('Rythme tranquille').closest('label');
+    expect(ai?.textContent).toContain('Compris par l’IA');
+    expect(rules?.textContent).not.toContain('Compris par l’IA');
+    expect(ai?.querySelector('[aria-label="Compris par l’IA"]')).toBeNull();
+  });
+
+  describe('axe-core : les écrans touchés, avec la mention', () => {
+    const scan = async (root: Element): Promise<string[]> => {
+      const res = await axe.run(root as HTMLElement, {
+        runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] },
+        rules: {
+          'color-contrast': { enabled: false },
+          region: { enabled: false },
+          'landmark-one-main': { enabled: false },
+          'page-has-heading-one': { enabled: false },
+        },
+      });
+      return res.violations.map(
+        (v) => `${v.id} (${v.impact}) : ${v.nodes.map((n) => n.target.join(' ')).slice(0, 3).join(' | ')}`
+      );
+    };
+
+    it('Parcours · étapes avec une étape de l’IA', async () => {
+      render(<CompasScreen data={withAiStep()} />);
+      const sheet = await openParcours();
+      await within(sheet).findAllByText(AI_STEP_LABEL);
+      expect(await scan(sheet)).toEqual([]);
+    });
+
+    it('Verdict · Risques avec « Expliquer avec l’IA »', async () => {
+      render(<CompasScreen data={makeData()} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+      fireEvent.click(screen.getByRole('button', { name: /^Détails : / }));
+      const sheet = await screen.findByRole('dialog');
+      expect(within(sheet).getByRole('button', { name: 'Expliquer avec l’IA' })).toBeTruthy();
+      expect(await scan(sheet)).toEqual([]);
+    });
+
+    it('le panneau de préparation, mention comprise', async () => {
+      render(<CompasScreen data={{ ...makeData(), startSay: 'rando à 4' }} />);
+      const p = await screen.findByRole('status', { name: 'Préparation de l’aventure' });
+      expect(within(p).getByRole('note')).toBeTruthy();
+      expect(await scan(p)).toEqual([]);
+    });
+
+    it('les notes d’une préparation qui contient un conseil de l’IA', async () => {
+      const data = { ...makeData(), autofill: 'done' as const, autofillNotes: [aiSuggestion('Prévois une frontale de secours.')] };
+      const { container } = render(<CompasScreen data={data} initialStep="ou" />);
+      expect(screen.getByText(/^Suggestion de l’IA \(facultatif\) : /)).toBeTruthy();
+      expect(await scan(container)).toEqual([]);
+    });
+  });
 });

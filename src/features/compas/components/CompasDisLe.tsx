@@ -145,8 +145,10 @@ export function DisLe({
                     />
                     <span className="cp-prop__t">{p.label}</span>
                     {p.source === 'ia' && (
-                      <span className="cp-prop__ai" aria-label="Compris par l’IA">
-                        <Icon name="sparkles" size={12} />
+                      // Du texte pour les lecteurs d'écran : une icône seule ne dit pas « IA » (PLAN-100 5.3).
+                      <span className="cp-prop__ai">
+                        <Icon name="sparkles" size={12} aria-hidden="true" />
+                        <span className="sr-only">Compris par l’IA</span>
                       </span>
                     )}
                     {p.reason && <span className="cp-prop__why">{p.reason}</span>}
