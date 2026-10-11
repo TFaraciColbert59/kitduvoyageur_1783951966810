@@ -41,7 +41,10 @@ vi.mock('../server/elevation', () => ({
     return h.placesAltitude;
   }),
 }));
-vi.mock('../server/rates', () => ({ getEurRate: vi.fn(async () => null) }));
+vi.mock('../server/rates', () => ({
+  getEurRate: vi.fn(async () => null),
+  getBudgetFx: vi.fn(async () => null),
+}));
 vi.mock('../server/weather', async (orig) => ({
   ...(await orig<typeof import('../server/weather')>()),
   getClimateNormals: vi.fn(async (lat: number, lon: number) => {
