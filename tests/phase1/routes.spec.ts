@@ -334,5 +334,73 @@ describe('Phase 1 — handlers des routes (mocks)', () => {
       expect(res.status).toBe(200);
       expect(await res.json()).toEqual({ success: true });
     });
+
+    it('200 virement : encaissement idempotent émis avant confirmation (T38)', async () => {
+      adminGateOk();
+      const rpcs: { fn: string; args: Record<string, unknown> }[] = [];
+      const orderRow = {
+        id: ORDER_ID,
+        user_id: USER_ID,
+        payment_method: 'virement',
+        subtotal_eur: 55.9,
+      };
+      const chain: Record<string, unknown> = {};
+      chain.select = () => chain;
+      chain.eq = () => chain;
+      chain.update = () => chain;
+      chain.maybeSingle = async () => ({ data: orderRow, error: null });
+      chain.then = (resolve: (value: { data: unknown; error: unknown }) => unknown) =>
+        resolve({ data: [orderRow], error: null });
+      h.getServiceSupabase.mockReturnValue({
+        from: () => chain,
+        rpc: async (fn: string, args: Record<string, unknown>) => {
+          rpcs.push({ fn, args });
+          return { data: { ok: true }, error: null };
+        },
+      });
+
+      const res = await adminConfirmPost(post('/api/admin/orders/confirm', validBody));
+
+      expect(res.status).toBe(200);
+      expect(rpcs).toContainEqual({
+        fn: 'record_order_encashment_event',
+        args: {
+          p_event_id: `admin-transfer:${ORDER_ID}`,
+          p_order_id: ORDER_ID,
+          p_kind: 'payment',
+          p_merchandise_cents: 5590,
+        },
+      });
+    });
+
+    it('500 encaissement refusé : aucun changement de statut (réessayable, T38)', async () => {
+      adminGateOk();
+      const updates: unknown[] = [];
+      const orderRow = {
+        id: ORDER_ID,
+        user_id: USER_ID,
+        payment_method: 'virement',
+        subtotal_eur: 20,
+      };
+      const chain: Record<string, unknown> = {};
+      chain.select = () => chain;
+      chain.eq = () => chain;
+      chain.update = (row: unknown) => {
+        updates.push(row);
+        return chain;
+      };
+      chain.maybeSingle = async () => ({ data: orderRow, error: null });
+      chain.then = (resolve: (value: { data: unknown; error: unknown }) => unknown) =>
+        resolve({ data: [{ id: ORDER_ID }], error: null });
+      h.getServiceSupabase.mockReturnValue({
+        from: () => chain,
+        rpc: async () => ({ data: null, error: { code: 'P0001' } }),
+      });
+
+      const res = await adminConfirmPost(post('/api/admin/orders/confirm', validBody));
+
+      expect(res.status).toBe(500);
+      expect(updates).toHaveLength(0);
+    });
   });
 });

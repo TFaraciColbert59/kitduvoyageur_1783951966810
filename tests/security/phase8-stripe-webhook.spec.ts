@@ -185,6 +185,15 @@ describe('Phase 8 — webhook Stripe (mocks, zéro réseau)', () => {
       user_id: CHECKOUT_SESSION.metadata.user_id,
     });
     expect(fake.calls.rpcs.map((r) => r.fn)).toContain('decrement_stock_on_order');
+    expect(fake.calls.rpcs).toContainEqual({
+      fn: 'record_order_encashment_event',
+      args: {
+        p_event_id: 'stripe:cs_test_phase8',
+        p_order_id: 'order-1',
+        p_kind: 'payment',
+        p_merchandise_cents: 5000,
+      },
+    });
     expect(grantMock).toHaveBeenCalledWith(expect.anything(), CHECKOUT_SESSION.metadata.user_id, CHECKOUT_SESSION.metadata);
     expect(
       fake.calls.updates.find((u) => u.table === 'stripe_events')?.row
@@ -244,6 +253,63 @@ describe('Phase 8 — webhook Stripe (mocks, zéro réseau)', () => {
       limit: 1,
     });
     expect(fake.calls.rpcs.map((r) => r.fn)).toContain('reverse_kit_attribution_by_session');
+  });
+
+  it('TEST-PHASE8-STRIPE-05b (T38): rejeu de session ⇒ encaissement re-tenté (idempotent), aucune commande dupliquée', async () => {
+    const fake = installFake({ existingOrder: true });
+    stripeMock.constructEvent.mockReturnValue(event('checkout.session.completed', CHECKOUT_SESSION));
+
+    const response = await POST(request('{"id":"evt_phase8_replay"}'));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ received: true, duplicate: true });
+    expect(fake.calls.inserts.filter((i) => i.table === 'orders')).toHaveLength(0);
+    expect(fake.calls.rpcs).toContainEqual({
+      fn: 'record_order_encashment_event',
+      args: {
+        p_event_id: 'stripe:cs_test_phase8',
+        p_order_id: 'order-existing',
+        p_kind: 'payment',
+        p_merchandise_cents: 5000,
+      },
+    });
+  });
+
+  it('TEST-PHASE8-STRIPE-08b (T38): remboursement partiel ⇒ encaissement inverse borné par le débit réel', async () => {
+    const fake = installFake({
+      order: {
+        id: 'order-1',
+        user_id: 'a1330000-0000-4000-8000-0000000000a1',
+        payment_state: 'paid',
+        paid_merchandise_cents: 5000,
+        refunded_merchandise_cents: 0,
+      },
+    });
+    stripeMock.constructEvent.mockReturnValue(
+      event(
+        'charge.refunded',
+        {
+          id: 'ch_1',
+          payment_intent: 'pi_phase8',
+          amount_refunded: 2500,
+        },
+        'evt_phase8_refund_b'
+      )
+    );
+
+    const response = await POST(request('{"id":"evt_phase8_refund_b"}'));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ received: true, kind: 'refund' });
+    expect(fake.calls.rpcs).toContainEqual({
+      fn: 'record_order_encashment_event',
+      args: {
+        p_event_id: 'stripe-refund:evt_phase8_refund_b',
+        p_order_id: 'order-1',
+        p_kind: 'refund',
+        p_merchandise_cents: 2500,
+      },
+    });
   });
 
   it('TEST-PHASE8-STRIPE-09: annulation d’abonnement ⇒ acquittée sans écriture d’entitlement', async () => {

@@ -21,6 +21,16 @@ export interface FakeSupabaseConfig {
   royalty?: { value: { global_bps: number } } | null;
   /** Intent renvoyé par `checkout_intents`. */
   intent?: { payload: unknown[] } | null;
+  /** Ligne commande renvoyée par `orders.select(...).eq(...).maybeSingle()`. */
+  order?: {
+    id: string;
+    user_id?: string | null;
+    payment_method?: string;
+    subtotal_eur?: number;
+    payment_state?: string;
+    paid_merchandise_cents?: number;
+    refunded_merchandise_cents?: number;
+  } | null;
 }
 
 export interface FakeSupabaseCalls {
@@ -61,6 +71,7 @@ export function createFakeSupabase(config: FakeSupabaseConfig = {}): {
       return { data: null, error: null };
     }
     if (table === 'orders') {
+      if (config.order !== undefined) return { data: config.order, error: null };
       return { data: config.existingOrder ? { id: 'order-existing' } : null, error: null };
     }
     if (table === 'products') return { data: config.product ?? null, error: null };

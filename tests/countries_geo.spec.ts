@@ -60,9 +60,10 @@ describe.skipIf(!hasSupabaseEnv)('countries_geo & countries_content Supabase Int
     expect(afghanistan.languages).toContain('Dari');
     expect(afghanistan.languages).toContain('Pachto');
 
-    // Voluntarily emptied fields should be null/empty
+    // Le dataset actuel : population d'AF encore vide (jamais une estimation
+    // inventée), géométrie désormais fournie (frontières enrichies).
     expect(afghanistan.population).toBeNull();
-    expect(afghanistan.geometry).toBeNull();
+    expect(afghanistan.geometry).not.toBeNull();
   });
 
   it('should fetch country_content for DE and AF with all 7 sheets fields populated', async () => {

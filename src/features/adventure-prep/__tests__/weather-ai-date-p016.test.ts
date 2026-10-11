@@ -23,7 +23,17 @@ import { fullDraft } from './fixtures';
  * Un double qui remplacerait toute la phase ne prouverait rien.
  */
 
-const DATE_IA = '2026-10-10';
+// Dates FUTURES calculées à l'exécution : une proposition de date passée est
+// — à raison — refusée par le moteur (jamais de départ dans le passé), donc
+// une valeur figée rendrait ce test rouge dès le lendemain.
+function localIso(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+const DATE_IA = localIso(new Date(Date.now() + 86_400_000));
+const NEXT_DAY = localIso(new Date(Date.now() + 2 * 86_400_000));
 
 function step(overrides: Partial<DraftedStep> = {}): DraftedStep {
   return {
@@ -137,10 +147,10 @@ describe('P0.16 — la meteo se mesure sur la date proposee par l IA', () => {
     expect(outcome.suggestedStartDate).toBe(DATE_IA);
     // Avant le correctif, `demandees` etait VIDE : aucune prevision n'etait
     // demandee, faute de date.
-    expect(demandees.flat()).toEqual([DATE_IA, '2026-10-11']);
+    expect(demandees.flat()).toEqual([DATE_IA, NEXT_DAY]);
     expect(outcome.model?.weather.map((day) => day?.date ?? null)).toEqual([
       DATE_IA,
-      '2026-10-11',
+      NEXT_DAY,
     ]);
   });
 

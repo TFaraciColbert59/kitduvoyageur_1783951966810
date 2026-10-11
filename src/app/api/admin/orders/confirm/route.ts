@@ -11,8 +11,11 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 /**
  * POST /api/admin/orders/confirm — confirmation d'une commande `pending`
- * (virement). Les points sont crédités par le trigger
- * `process_pending_order_points` : jamais touchés ici.
+ * (virement). Depuis T38, AUCUN trigger ne crédite : la confirmation admin
+ * est la preuve que le virement a été réellement reçu, elle émet donc
+ * l'événement d'encaissement `record_order_encashment_event` (idempotent par
+ * commande, 10 crédits/€ de marchandises) AVANT la transition de statut —
+ * un échec laisse la commande `pending` (réessayable) et n'émet rien.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -47,6 +50,37 @@ export async function POST(req: NextRequest) {
     const service = getServiceSupabase();
     if (!service) {
       return NextResponse.json({ error: 'Service indisponible' }, { status: 503 });
+    }
+
+    // T38 — Encaissement autoritaire : preuve d'encaissement émise en premier
+    // (idempotente par commande). Un échec ⇒ rien n'a changé, réessayable.
+    const { data: orderRow } = await service
+      .from('orders')
+      .select('id, user_id, payment_method, subtotal_eur')
+      .eq('id', orderId)
+      .maybeSingle();
+
+    if (
+      orderRow &&
+      orderRow.payment_method === 'virement' &&
+      orderRow.user_id &&
+      Number(orderRow.subtotal_eur) > 0
+    ) {
+      const { error: encashError } = await service.rpc('record_order_encashment_event', {
+        p_event_id: `admin-transfer:${orderId}`,
+        p_order_id: orderId,
+        p_kind: 'payment',
+        p_merchandise_cents: Math.round(Number(orderRow.subtotal_eur) * 100),
+      });
+      if (encashError) {
+        console.error('[admin/orders/confirm] encaissement impossible', {
+          code: encashError.code,
+        });
+        return NextResponse.json(
+          { error: 'Encaissement non enregistré — réessayez' },
+          { status: 500 }
+        );
+      }
     }
 
     const { data, error } = await service

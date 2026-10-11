@@ -26,8 +26,8 @@ Toutes additives, testées localement puis appliquées en prod par workdir isol�
 
 ## Limites déclarées (non maquillées)
 
-- Webhook Stripe de l'encaissement : moteur livré et testé ; branchement = étape nommée (clé webhook + rejeu réel) — l'émission commerciale reste fermée.
+- Webhook Stripe : **branchement code terminé et testé** (encaissement carte/remboursements/confirmation virement ; 35/35) — reste la clé webhook + un rejeu réel en environnement (l'émission commerciale s'ouvre ensuite, DEPLOYMENT.md §9).
 - Financement du pool et budget des bons : inconnus → distribution fermée.
-- Téléphone réel (VoiceOver/TalkBack, Capacité) : non exécuté (aucun appareil) — specs web mobile écrites.
+- Téléphone réel (VoiceOver/TalkBack, Capacitor) : non exécuté (aucun appareil) — specs web mobile vertes (3/3 Playwright local).
 - Pilote de compréhension (≥ 8/10) : non exécuté (population réelle requise).
-- Deux specs d'intégration env-gated historiques restent à réaligner sur les fixtures T09 lors de la prochaine exécution locale complète.
+- Les suites d'intégration locales (producers, countries, phase2, a14, a15) sont réconciliées et vertes **séquentiellement** (43/43) — instructions dans NEXT_SESSION.md.
