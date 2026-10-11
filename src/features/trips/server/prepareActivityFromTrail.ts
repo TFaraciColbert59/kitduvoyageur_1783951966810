@@ -27,6 +27,7 @@ import { generateTripDocuments } from './generateTripDocuments';
 import { generateJournalNotes } from './generateJournalNotes';
 import { createKitForTrip } from './createKitForTrip';
 import { awardTrailPrepared } from '@/features/progression/server/producerHooks';
+import { enqueueProgressionAwardIntent } from '@/features/progression/server/intents';
 import {
   claimTripLaunch,
   completeTripLaunch,
@@ -1008,7 +1009,16 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
 
   // P2 — producteur « activité préparée depuis un sentier réel » : uniquement
   // une création réelle (pas une réutilisation), idempotent par (user, route).
+  // T06 — l'intention durable est écrite avant l'attribution : une panne entre
+  // la création et l'appel accélérateur conserve la reprise par le worker.
   if (status === 'created') {
+    await enqueueProgressionAwardIntent({
+      userId: user.id,
+      action: 'trail_prepared',
+      sourceType: 'trail_prep',
+      sourceId: `${user.id}:${routeId}`,
+      metadata: { routeId: String(routeId), tripId },
+    });
     await awardTrailPrepared(user.id, routeId, tripId);
   }
 

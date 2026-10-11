@@ -85,6 +85,31 @@ restaure les jobs simples antérieurs ; il conserve journaux, retry corrigé, ga
 et protections. Aucun down historique de soldes/démo/réconciliation n'est autorisé
 en production.
 
+## 2b. Worker des intentions durables (T07)
+
+Le consommateur d'intentions relit des preuves applicatives : il tourne dans
+Next, jamais en SQL pur.
+
+| Canal | Déclencheur | Effet |
+|---|---|---|
+| `GET|POST /api/cron/progression-awards` | planificateur HTTP, `Authorization: Bearer ${CRON_SECRET}` | lot global borné 50 |
+| drain opportuniste | `GET /api/progression` (compte connecté) | lot du compte, borné 2 |
+
+Option zero-coût disponible : l'extension `pg_net` (0.20.3) est disponible mais
+non installée. L'activer exige un secret Vault + l'URL de l'app, et un test
+d'observation avant usage — non activé par défaut.
+
+Sonde du backlog :
+
+```sql
+SELECT state, count(*), min(created_at) FROM public.progression_award_intents
+WHERE state IN ('pending','failed','dead') GROUP BY state;
+```
+
+`dead` (5 échecs d'infrastructure) ou un backlog `pending` ancien = état
+dégradé ; corriger la cause puis rejouer la ligne
+(`state='pending', attempts=0, available_at=now()`).
+
 ## 2a. Secours HTTP et rétention
 
 Le secours outbox accepte GET/POST avec `Authorization: Bearer ${CRON_SECRET}`

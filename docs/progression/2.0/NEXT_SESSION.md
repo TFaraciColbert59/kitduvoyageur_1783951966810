@@ -22,26 +22,34 @@ session 2 sont conservées ; une migration additive unique réconcilie les jobs
 (`lkdv-progression-*` via `progression_ops.run_job` + journal + retry réparé) et
 remplace les jobs simples déjà en prod.
 
-## Prochaine action concrète — T06 (intention durable avec la source)
+## État au point de reprise (après T06+T07)
 
-1. Migration additive via CLI : table interne `progression_award_intents`
-   (user_id, action_type, source_type, source_id, business_effective_at, state,
-   attempts, next_attempt_at, derniers faits) — unique par réalisation ;
-   référence les preuves existantes sans copier GPS/documents ; accès
-   service_role seulement.
-2. Brancher les transitions finales des 7 producteurs (`producerHooks.ts`) :
-   écriture de l'intention atomique avec la source ; `award-requests` reste un
-   déclencheur accélérateur (déjà réparé en session 1).
-3. Consommateur borné (T07) : `progression_ops` réutilisé ; décision →
-   `award_production_gain` existant ; état pending/dead + reprise.
-4. pgTAP : unicité, atomicité/rollback, panne entre source et appel.
+- T06 TESTÉ : intentions durables (`progression_award_intents`, 6 capteurs SQL +
+  préparation sentier), pgTAP 24/24.
+- T07 TESTÉ : consommateur borné (réservation atomique, refus/backoff/dead),
+  route `/api/cron/progression-awards`, drain opportuniste borné. 12 tests unitaires.
+- Restent pour P1 : **T08 (plafonds sous concurrence + claims)** puis T09 (les
+  sept preuves renforcées), T10 (carte compacte — déjà livrée session 1,
+  à réconcilier au statut machine), T11 (historique sheet).
 
-## Contrôle de réussite T06
+## Prochaine action concrète — T08 (plafonds sous concurrence)
 
-- Source finalisée puis panne avant consommation → intention `pending` unique ;
-  consommation ultérieure = une décision, une transaction, un événement.
-- `supabase/tests/database/intent_source_atomicity.test.sql` vert (base locale).
+1. Étendre l'attribution (`award_progression_gain` v2) : claims unitaires
+   (`progression_claims`), caps par date métier (jour UTC, semaine ISO UTC,
+   saison bornes [début, fin)), cap_group partagés, verrou par utilisateur,
+   décision idempotente retrouvée avant les plafonds.
+2. Le registre v2 (`rules-registry.json`) porte déjà cap_group et les plafonds ;
+   ne pas activer (status draft_closed) — l'implémentation doit être testée
+   avec des versions de test, pas en publiant le barème.
+3. Tests : deux transactions concurrentes à la dernière place du quota ;
+   replay après plafond ; frontières jour/semaine/saison ; TS/SQL identiques.
+
+## Contrôle de réussite T08
+
+- `supabase/tests/database/progression_concurrence_plafonds.test.sql` vert sur
+  base locale (deux sessions réellement concurrentes).
 - `npx vitest run tests/features/progression/` vert ; type-check vert.
+- Aucune activation de barème : `progression_rules` reste `v1` actif en prod.
 
 ## Règles de continuation
 
