@@ -9,22 +9,21 @@ for (const vp of MOBILE_VIEWPORTS) {
   test.describe(`Mobile Layout Verification — ${vp.name}`, { tag: '@mobile' }, () => {
     test.use({ viewport: { width: vp.width, height: vp.height } });
 
-    test('Communauté — Header rendered, no white gap, bottom nav visible', async ({ page }) => {
+    test('Communauté — titre mobile rendu, no white gap, bottom nav visible', async ({ page }) => {
       await page.goto('/communaute?tab=fil');
       await page.waitForLoadState('domcontentloaded');
 
-      // TopBar header is visible
-      const header = page.locator('header').first();
-      await expect(header).toBeVisible();
-      await expect(header).toContainText('Communauté');
+      // Design actuel : le header flottant est DESKTOP uniquement
+      // (`hidden md:block`, Header.tsx) ; en mobile la page rend son propre
+      // en-tête. On vérifie donc le shell, le titre H1 et la nav basse.
+      const shell = page.locator('.mobile-page-shell').first();
+      await expect(shell).toBeVisible();
+
+      await expect(page.locator('h1', { hasText: 'Communauté' }).first()).toBeVisible();
 
       // Bottom nav is fixed at bottom
       const bottomNav = page.locator('nav[aria-label="Navigation principale"]');
       await expect(bottomNav).toBeVisible();
-
-      // MobilePageShell has proper paddingBottom set
-      const shell = page.locator('.mobile-page-shell').first();
-      await expect(shell).toBeVisible();
     });
 
     test('Compte — Header, Identity, Tabs, and SmartImage fallbacks', async ({ page }) => {

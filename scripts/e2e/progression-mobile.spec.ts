@@ -17,26 +17,28 @@ test.describe('@mobile progression — deep-links et état', () => {
     await expect(page).toHaveURL(/\/hub\?panel=points/);
   });
 
-  test('@mobile le Hub reste navigable (destinations bornées, aucun overlay bloquant)', async ({ page }) => {
+  test('@mobile le Hub reste navigable (destinations canoniques, aucun overlay bloquant)', async ({ page }) => {
     await page.goto('/hub?panel=points', { waitUntil: 'domcontentloaded' });
-    // La barre de navigation se charge en différé (« Chargement de la
-    // navigation ») : on attend de VRAIS liens, jamais le placeholder.
-    const links = page.locator('nav a[href], header a[href]');
-    await expect(links.first()).toBeVisible({ timeout: 15_000 });
 
-    const count = await links.count();
-    expect(count).toBeGreaterThanOrEqual(1);
-    expect(count).toBeLessThanOrEqual(8);
+    // La nav basse est chargée en différé : on attend de VRAIS liens.
+    const nav = page.getByRole('navigation', { name: 'Navigation principale' });
+    await expect(nav.locator('a[href]').first()).toBeVisible({ timeout: 15_000 });
 
-    // Les destinations canoniques existent : jamais un sixième onglet produit.
-    const hrefs = await links.evaluateAll((nodes) =>
-      nodes.map((node) => (node as HTMLAnchorElement).getAttribute('href') ?? '')
-    );
+    // Destinations canoniques du registre (HUB · COMMUNAUTÉ · EXPLORER ·
+    // MESSAGES · COMPTE) : jamais un sixième onglet produit.
+    const hrefs = await nav
+      .locator('a[href]')
+      .evaluateAll((nodes) => nodes.map((node) => (node as HTMLAnchorElement).getAttribute('href') ?? ''));
     expect(hrefs.join(' ')).toContain('/explorer');
     expect(hrefs.some((href) => href.startsWith('/hub'))).toBe(true);
+    expect(hrefs.length).toBeLessThanOrEqual(6);
 
-    // Aucun overlay plein écran ne bloque la navigation.
-    const blocking = page.locator('[aria-modal="true"]:visible, [role="dialog"]:visible');
-    expect(await blocking.count()).toBe(0);
+    // La sheet « Ma progression » ouverte par le deep-link est DISMISSIBLE ;
+    // une fois fermée, plus aucun overlay modal ne bloque la navigation.
+    const sheet = page.getByRole('dialog');
+    if ((await sheet.count()) > 0) {
+      await page.getByRole('button', { name: /fermer/i }).first().click();
+    }
+    await expect(page.locator('[aria-modal="true"]:visible')).toHaveCount(0);
   });
 });
