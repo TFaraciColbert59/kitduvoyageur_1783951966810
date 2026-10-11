@@ -96,11 +96,14 @@ describe('le trajet depuis le domicile', () => {
       deps({ km: 1100, minutes: 840, end: null })
     );
     expect(leg.abroad).toBe(true);
-    expect(leg.transport).toMatchObject({ mode: 'avion', route: 'LYS → CAG', departure: 'ton domicile' });
+    // L'aéroport le plus proche du domicile le désigne autant que son nom : il n'est pas rangé,
+    // seul l'aéroport d'arrivée (la destination du voyage) l'est.
+    expect(leg.transport).toMatchObject({ mode: 'avion', departure: 'ton domicile' });
+    expect(leg.transport).not.toHaveProperty('route');
     expect(leg.transport?.basis).toBe(
-      'vol aller-retour depuis ton domicile, LYS → CAG (Lyon Saint-Exupéry Airport → Cagliari Elmas Airport), environ 790 km'
+      'vol aller-retour depuis ton domicile vers CAG (Cagliari Elmas Airport), environ 790 km'
     );
-    expect(travelDigest(leg.transport)).toBe('vol LYS → CAG à prévoir (depuis ton domicile)');
+    expect(travelDigest(leg.transport)).toBe('vol à prévoir (depuis ton domicile)');
     expect(leaks([leg.transport, leg.notes, leg.flight])).toBe(false);
   });
 
@@ -117,5 +120,81 @@ describe('le trajet depuis le domicile', () => {
     const leg = await planTravelLeg(input({ transport: false, days: 1 }), deps({ km: 110, minutes: 95, end: VERCORS }));
     expect(leg.transport).toBeNull();
     expect(leg.notes).not.toContain(HOME_ORIGIN_NOTE);
+  });
+});
+
+/**
+ * Rien de ce qui est rangé sur le voyage (trip_expenses.metadata.basis, autofill_result.summary,
+ * lisibles par les collaborateurs et, pour un voyage public, par tous) ne désigne le domicile :
+ * ni son nom, ni son pays, ni l'aéroport ou le corridor de rail qui le dessert.
+ */
+describe('rien de rangé ne désigne le domicile', () => {
+  const LIEGE = { name: 'Liège', lat: 50.63, lon: 5.57, countryCode: 'BE' };
+  const ANNECY = { lat: 45.9, lon: 6.13 };
+  const TORONTO = { name: 'Toronto', lat: 43.65, lon: -79.38, countryCode: 'CA' };
+  const NEW_YORK = { lat: 40.71, lon: -74.0 };
+  const stored = (leg: Awaited<ReturnType<typeof planTravelLeg>>) =>
+    JSON.stringify([leg.transport, leg.notes, leg.carFuel?.basis, leg.train]);
+
+  it('carburant : le prix moyen des pays du trajet, sans nommer le pays du domicile', async () => {
+    const from = (origin: TravelLegInput['origin']) =>
+      planTravelLeg(
+        input({ origin, target: ANNECY, destination: { name: 'Annecy', countryCode: 'FR' }, days: 5 }),
+        deps({ km: 700, minutes: 420, end: ANNECY })
+      );
+    const home = await from(travelOrigin(null, null, LIEGE));
+    expect(home.transport?.mode).toBe('voiture');
+    expect(home.carFuel?.fuelSource).toBe('bulletin');
+    expect(home.carFuel?.basis).toContain('moyenne des pays du trajet');
+    expect(stored(home)).not.toMatch(/\bBE\b/);
+    // Le prix reste celui des deux pays : seule la mention du pays de départ disparaît.
+    const said = await from(travelOrigin({ name: 'Liège', lat: 50.63, lon: 5.57, countryCode: 'BE' }, null));
+    expect(said.carFuel?.basis).toMatch(/BE 1,96 €\/L, FR 2,21 €\/L/);
+    expect(home.carFuel?.fuelEur).toBe(said.carFuel?.fuelEur);
+  });
+
+  it('vol : ni l’IATA ni le nom de l’aéroport du domicile, mais celui de la destination', async () => {
+    const leg = await planTravelLeg(
+      input({ target: SARDAIGNE, destination: { name: 'Sardaigne', countryCode: 'IT' } }),
+      deps({ km: 1100, minutes: 840, end: null })
+    );
+    expect(leg.transport?.mode).toBe('avion');
+    // (La note de domicile cite « depuis Lyon » en exemple de demande : ce n'est pas le domicile.)
+    expect(stored(leg)).not.toMatch(/LYS|Saint-Exup|Villeurbanne/);
+    expect(stored(leg)).toContain('CAG');
+    // Un départ dit reste nommé : c'est la personne qui l'a écrit dans sa demande.
+    const said = await planTravelLeg(
+      input({ origin: travelOrigin(HOME, null), target: SARDAIGNE, destination: { name: 'Sardaigne', countryCode: 'IT' } }),
+      deps({ km: 1100, minutes: 840, end: null })
+    );
+    expect(said.transport).toMatchObject({ route: 'LYS → CAG' });
+  });
+
+  it('rail d’Amérique du Nord : le corridor qui dessert le domicile n’est pas nommé', async () => {
+    const leg = await planTravelLeg(
+      input({
+        origin: travelOrigin(null, null, TORONTO),
+        target: NEW_YORK,
+        destination: { name: 'New York', countryCode: 'US' },
+        days: 4,
+        carFree: true,
+      }),
+      deps({ km: 800, minutes: 540, end: NEW_YORK })
+    );
+    expect(leg.train).not.toBeNull();
+    expect(leg.train?.notice).toContain('corridors');
+    expect(stored(leg)).not.toMatch(/Empire|Maple|Amtrak|VIA|Toronto|\bCA\b/);
+    // Départ dit : le corridor est dit comme avant.
+    const said = await planTravelLeg(
+      input({
+        origin: travelOrigin(TORONTO, null),
+        target: NEW_YORK,
+        destination: { name: 'New York', countryCode: 'US' },
+        days: 4,
+        carFree: true,
+      }),
+      deps({ km: 800, minutes: 540, end: NEW_YORK })
+    );
+    expect(said.train?.notice).toContain('corridor Empire et Maple Leaf, Amtrak');
   });
 });

@@ -68,6 +68,18 @@ describe('fuelPriceFor — plusieurs pays traversés', () => {
     expect(p.basis).toBe('Euro-super 95, moyenne des pays du trajet : FR 2,21 €/L, IT 2,07 €/L (bulletin pétrolier de l’UE du 5 octobre 2026)');
   });
 
+  it('sans nommer les pays (départ du domicile) : le même prix, aucun code dans la base', () => {
+    const named = fuelPriceFor(['BE', 'FR']);
+    const anonymous = fuelPriceFor(['BE', 'FR'], { nameCountries: false });
+    expect(anonymous.eurPerL).toBe(named.eurPerL);
+    expect(anonymous.kind).toBe('bulletin');
+    expect(anonymous.basis).toBe('Euro-super 95, moyenne des pays du trajet : 2,09 €/L (bulletin pétrolier de l’UE du 5 octobre 2026)');
+    expect(anonymous.basis).not.toMatch(/\b(?:BE|FR)\b/);
+    // Un seul pays, ou une estimation : la base ne nommait déjà aucun pays.
+    expect(fuelPriceFor(['BE', 'BE'], { nameCountries: false })).toEqual(fuelPrice('BE'));
+    expect(fuelPriceFor(['BE', 'CH'], { nameCountries: false })).toEqual(fuelPrice(null));
+  });
+
   it('un pays hors UE parmi eux : le tout reste une estimation', () => {
     const p = fuelPriceFor(['FR', 'CH']);
     expect(p.kind).toBe('estimation');

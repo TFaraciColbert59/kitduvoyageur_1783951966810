@@ -427,6 +427,11 @@ export interface TrainInput {
   to?: { lat: number; lon: number } | null;
   /** Lieu de départ : une île au départ, et les corridors d'Amérique du Nord. */
   from?: { lat: number; lon: number } | null;
+  /**
+   * Le départ est le domicile du profil : l'annonce rangée sur le voyage ne nomme pas le corridor
+   * ni l'exploitant, qui désigneraient la ville du domicile.
+   */
+  homeDeparture?: boolean;
 }
 
 export interface TrainOutlook {
@@ -484,7 +489,9 @@ export function trainOutlook(input: TrainInput): TrainOutlook {
   const eurRoundTrip = 2 * Math.max(minOneWayEur, Math.round(railKm * eurPerKm));
   const h = Math.round(minutesOneWay / 30) / 2;
   const notice = corridor
-    ? `Amérique du Nord : les trains de voyageurs ne roulent que sur quelques corridors. Celui-ci (corridor ${corridor.name}, ${corridor.operator}) dessert les deux villes à moins de ${CORRIDOR_RADIUS_KM} km d’une gare ; fréquences et prix dans Résa · Trajets.`
+    ? `Amérique du Nord : les trains de voyageurs ne roulent que sur quelques corridors. ${
+        input.homeDeparture ? 'Un corridor' : `Celui-ci (corridor ${corridor.name}, ${corridor.operator})`
+      } dessert les deux villes à moins de ${CORRIDOR_RADIUS_KM} km d’une gare ; fréquences et prix dans Résa · Trajets.`
     : null;
   return {
     trip: {

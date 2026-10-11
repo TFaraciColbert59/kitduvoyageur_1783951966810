@@ -265,6 +265,19 @@ describe('Amérique du Nord : des corridors seulement, annoncés', () => {
     expect(t.priceSource).toBe('estimation');
   });
 
+  it('départ du domicile : le corridor et l’exploitant ne sont pas nommés (ils désigneraient la ville)', () => {
+    const from = P.boston;
+    const to = P.washington;
+    const straightKm = distanceKm(from, to);
+    const base = { fromCountry: 'US', toCountry: 'US', straightKm, roadKm: straightKm * 1.25, days: 5, from, to };
+    const home = trainOutlook({ ...base, homeDeparture: true }).trip!;
+    expect(home.notice).toMatch(/quelques corridors/);
+    expect(home.notice).toMatch(/dessert les deux villes/);
+    expect(home.notice).not.toMatch(/Nord-Est|Amtrak/);
+    // Le reste du trajet est le même.
+    expect(home).toEqual({ ...trainOutlook(base).trip!, notice: home.notice });
+  });
+
   it('un corridor traverse la frontière : Seattle → Vancouver', () => {
     expect(trip('seattle', 'vancouver', 'US', 'CA', 5)?.notice).toMatch(/corridor Cascades/);
   });
