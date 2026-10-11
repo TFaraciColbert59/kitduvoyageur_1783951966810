@@ -28,6 +28,11 @@ export interface AwardProducerInput {
   /** Bonus additif calculé depuis des faits serveur (segments, items…). */
   bonus?: number;
   metadata?: Record<string, unknown>;
+  /**
+   * T08 — réservations de faits (claim_group + evidence_key) écrites avec le
+   * gain ; toute réservation existante refuse « fait_déjà_réclamé ».
+   */
+  claims?: Array<{ group: string; key: string }>;
 }
 
 export interface AwardProducerResult {
@@ -108,6 +113,7 @@ export async function awardProducerGain(input: AwardProducerInput): Promise<Awar
     p_weights: weights,
     p_explanation: `Gain validé · ${input.action}`,
     p_metadata: input.metadata ?? {},
+    p_claims: input.claims ?? [],
   });
 
   if (error) {
