@@ -19,6 +19,10 @@ export function parseLegacyProducerKeys(hooksSource) {
   const variables = { sessionId: '<session_id>', userId: '<user_id>', routeId: '<route_id>', placeId: '<place_id>', carnetId: '<carnet_id>', tripId: '<trip_id>' };
   const keys = {};
   for (const [, action, sourceType, sourceId] of hooksSource.matchAll(/action:\s*'([^']+)',\s*sourceType:\s*'([^']+)',\s*(?:\/\/[^\n]*\n\s*)*sourceId:\s*(`[^`]+`|\w+)/g)) {
+    // Le contrat historique porte sur les SEPT producteurs v1 ; les
+    // producteurs v2 (claims dédiés, émission fermée) ne doivent pas
+    // contaminer la table des clés legacy.
+    if (!(action in legacyProducerKeys)) continue;
     const id = sourceId.startsWith('`') ? sourceId.slice(1, -1).replace(/\$\{(\w+)\}/g, (_, name) => variables[name] ?? `<unknown:${name}>`) : variables[sourceId] ?? `<unknown:${sourceId}>`;
     keys[action] = `${sourceType}:${id}`;
   }
@@ -86,8 +90,16 @@ export function verifyRegistry(registry, markdown, producerSource = '', hooksSou
   if (producerSource) {
     const union = producerSource.match(/export type ProducerAction =([\s\S]*?);/)?.[1] ?? '';
     const producers = [...union.matchAll(/'([^']+)'/g)].map(match => match[1]);
-    check(producers.length === 7, 'Expected seven existing producer IDs; review contract drift');
-    for (const id of producers) check(byId[id]?.producer_status === 'existing_requires_upgrade', `Existing producer ID missing: ${id}`);
+    // Contrat étendu (T22–T26) : les SEPT producteurs v1 restent exigés et
+    // inchangés ; les producteurs v2 supplémentaires doivent exister dans le
+    // registre (aucune action hors catalogue).
+    const LEGACY_SEVEN = Object.keys(legacyProducerKeys);
+    check(producers.length >= 7, 'Expected at least the seven existing producer IDs; review contract drift');
+    for (const id of LEGACY_SEVEN) check(producers.includes(id), `Existing producer ID missing: ${id}`);
+    for (const id of LEGACY_SEVEN) check(byId[id]?.producer_status === 'existing_requires_upgrade', `Existing producer ID missing: ${id}`);
+    // Alias internes du contrat producteur → identifiants canoniques du registre.
+    const producerAliases = { compas_prepared: 'compass_prepared', place_photo: 'place_photo_accepted' };
+    for (const id of producers) check(Boolean(byId[producerAliases[id] ?? id]), `Producer action absent from registry: ${id}`);
   }
   for (const [id, key] of Object.entries(legacyProducerKeys)) check(byId[id]?.idempotency?.legacy_key === key, `Legacy key mismatch: ${id}; expected ${key}`);
   if (hooksSource) {
