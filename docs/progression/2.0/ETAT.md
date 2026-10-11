@@ -51,7 +51,7 @@ Le chantier de stabilisation phase1 (I1–I6) est vérifié au 2026-10-11 :
 
 | Tâche | Statut |
 |---|---|
-| T12 — Versionner le catalogue de missions | EN COURS — domaine FAIT/TESTÉ : `missionCatalog.ts` (12 modèles versionnés, 8 catégories couvertes ; 4 fermées avec dépendance exacte : T30/T18/T22/T16 ; **aucune promesse de points** — fin de mission = distinction), `missionCatalog.spec` 5/5, `docs/progression/2.0/missions.md`. **Étape suivante** : résorption des données historiques (8 défis canoniques avec `points_reward` 40–120 contraires à la doctrine + 26 défis anciens) — table de liaison défi→modèle, dédup sans suppression, arrêt de l'affichage des promesses (séquencé avec T14/T13). |
+| T12 — Versionner le catalogue de missions | **TESTÉ + DÉPLOYÉ** — domaine : `missionCatalog.ts` (12 modèles versionnés, 8 catégories couvertes ; 4 fermées avec dépendance exacte : T30/T18/T22/T16 ; **aucune promesse de points**), spec 5/5. Données : migration `20261011160108` — table `progression_challenge_models` ; **constat d'application** : la base contient exactement 8 défis (les « 26 anciens » du dossier n'existent plus dans la table — aucune suppression effectuée) ; **5 publiés** (exp_01, prep_01, prep_02, part_01, part_02) vers les modèles du catalogue, **3 conservés non publiés avec raison** (entr_01 T25, entr_02 T32, exp_02 produit ambigu) ; associations historiques intactes. pgTAP `challenge_models_link.test.sql` **15/15** ; prod vérifiée après push (5+3). L'UI n'affichait déjà plus aucun montant de défi (title/progress/unit seulement) — l'écart points_reward reste dans le DTO legacy, à repurger en T14. |
 | T13 — Trois missions choisies | À FAIRE |
 | T14 — Avancement depuis les événements | À FAIRE |
 | T15 — Unifier les distinctions | À FAIRE |

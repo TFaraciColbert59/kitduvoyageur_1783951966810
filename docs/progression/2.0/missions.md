@@ -25,9 +25,24 @@ Mise à jour : 11 octobre 2026. Source : `src/features/progression/domain/missio
 | `mission_formation_module` | formation | — | — | **fermé** (T22) |
 | `mission_personal_rhythm` | personnelle | — | — | **fermé** (T16) |
 
-## Écart historique à résorber (étape suivante de T12)
+## Constat d'application (2026-10-11) et liaison défi → modèle
 
-La base de production contient 8 défis « canoniques » (`chal_exp_01`…`chal_entr_02`) portant des `points_reward` de 40 à 120, et 26 défis historiques. Ces montants **contredisent la doctrine 2.0** (« fin de mission = 0 XP supplémentaire ») et l'interface actuelle les affiche via `challengeService`/DTO.
+La base contient **exactement 8 défis** (`chal_exp_01`…`chal_entr_02`) : les « 26 anciens défis » du dossier de conception n'existent plus dans `progression_challenges` — aucune suppression n'a été faite par ce chantier. La migration `20261011160108` crée `progression_challenge_models` :
+
+| Défi | Modèle publié | État |
+|---|---|---|
+| `chal_exp_01` Arpenteur local | `mission_discovery_first_activity` | publié |
+| `chal_prep_02` Vérification météo & sécurité | `mission_prep_departure_checks` | publié |
+| `chal_prep_01` Pacte du sac léger | `mission_prep_kit_debrief` | publié |
+| `chal_part_01` Plume des sentiers | `mission_community_carnet` | publié |
+| `chal_part_02` Conseil de cordée | `mission_community_review` | publié |
+| `chal_exp_02` Sommets secrets | — | conservé non publié (produit ambigu) |
+| `chal_entr_01` Main tendue | — | conservé non publié (T25) |
+| `chal_entr_02` Partage d'équipement | — | conservé non publié (T32) |
+
+Les `points_reward` historiques (40–120) **ne sont plus affichés** par l'interface (la carte de défi montre titre/avancement/unité seulement) ; le champ reste dans le DTO legacy et sera repurgé quand T14 affichera le gain restant estimé. Les associations `user_progression.current_challenge_id` sont intactes (pgTAP 15/15).
+
+## Écart historique à résorber (rappel)
 
 Plan de résorption (données, prochaine tranche) :
 1. Conserver les lignes et toutes les associations (`user_progression.current_challenge_id`) — aucune suppression.

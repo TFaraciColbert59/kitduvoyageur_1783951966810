@@ -44,18 +44,32 @@ remplace les jobs simples déjà en prod.
   utilise des fixtures `session_segment_passages` — réaligner lors de la
   prochaine exécution locale complète.
 
-## Prochaine action concrète — finir T12 (données) puis T13
+## Prochaine action concrète — T13 (trois missions choisies)
 
-1. Migration additive via CLI : table de liaison `progression_challenge_models`
-   (challenge_id → model_id de `missionCatalog.ts`, provenance `canonical_v2`,
-   version) ; liaison des 8 défis canoniques (`chal_exp_01`…`chal_entr_02`) et
-   marquage des 26 historiques (dédupliqués, conservés, jamais supprimés).
-2. Interface : retirer l'affichage des `points_reward` de la carte de défi
-   (remplacé par l'avancement en réalisations distinctes + gain restant estimé,
-   T14) ; le DTO de défi ne promet plus aucun montant.
-3. Tests : pgTAP de liaison (aucune ligne supprimée, associations préservées) ;
-   spec DTO (aucun montant de fin de mission affiché).
-4. Enchaîner T13 (assignations ≤ 3 missions) selon `tasks/todo.md`.
+1. Migration additive via CLI : `progression_mission_assignments`
+   (user_id, model_id text du catalogue, state `active|replaced|abandoned`,
+   period, target_count, created_at, replaced_at…) — **compatibilité** avec
+   `user_progression.current_challenge_id` (l'ancien défi reste lisible ;
+   migration douce : l'assignation legacy est dérivée à la lecture, rien
+   n'est supprimé). Le client ne choisit jamais un model_id hors catalogue.
+2. Serveur : étendre `challengeService.ts` — `getUserMissions(userId)`
+   (≤ 3 actives, modèles publiés uniquement via `progression_challenge_models`
+   où model_id non nul), `chooseMission/replaceMission/abandonMission`
+   (remplacement/abandon SANS perte d'XP ni dette ; limites atomiques).
+3. Route `GET|POST /api/progression/missions` (session, rate-limit, zod) —
+   aucune lecture/affectation d'un autre compte (filtre user_id serveur).
+4. Tests : `missionAssignments.spec.ts` (limite 3, remplacement legacy,
+   permission inter-comptes) + pgTAP si la contrainte 3 est portée en SQL.
+5. UI (après backend vert) : carte de mission de `MaProgressionView` affiche
+   jusqu'à 3 missions (titre/avancement/unité uniquement, jamais de points)
+   avec actions choisir/remplacer/abandonner.
+
+## Contrôle de réussite T13
+
+- Maximum 3 missions actives ; abandon/remplacement sans dette (aucun
+  PROGRESSION_AWARD créé, aucun XP négatif).
+- Un compte B ne peut ni lire ni affecter les missions du compte A (tests).
+- `npx vitest run tests/features/progression` vert ; `npx tsc --noEmit`.
 
 ## État au point de reprise (après T10 + T11)
 
