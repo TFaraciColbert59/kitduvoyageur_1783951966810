@@ -153,6 +153,33 @@ async function createSession(userId: string, status: 'processed' | 'pending'): P
   return data.id;
 }
 
+/**
+ * T09 — Session TRAITÉE rattachée à un voyage (preuve d'itinérance : ≥ 2
+ * sessions traitées sur ≥ 2 jours UTC distincts pour créditer le voyage).
+ */
+async function createProvenSession(
+  userId: string,
+  tripId: string,
+  endedAt: string
+): Promise<string> {
+  const { data, error } = await svc
+    .from('hike_sessions')
+    .insert({
+      user_id: userId,
+      trip_id: tripId,
+      started_at: new Date(new Date(endedAt).getTime() - 3_600_000).toISOString(),
+      ended_at: endedAt,
+      distance_km: 8,
+      duration_seconds: 3600,
+      processing_status: 'processed',
+    })
+    .select('id')
+    .single();
+  if (error || !data) throw new Error(`hike_sessions(trip): ${error?.message}`);
+  F.sessions.push(data.id);
+  return data.id;
+}
+
 async function createPassage(
   sessionId: string,
   userId: string,
@@ -518,7 +545,9 @@ describe.skipIf(!E2E)('phase1 — producteurs d’aventure (intégration locale 
       action: 'hike_session_processed',
       sourceType: 'hike_session',
       sourceId: sessionId,
-      points: expectedPoints('hike_session_processed', 15),
+      // T09 : le gain suit les PALIERS DE DURÉE ACTIVE (session 60 min ⇒ 70),
+      // et non plus « base 40 + bonus segments » (ancien modèle).
+      points: 70,
     });
 
     const replay = (await awardHikeSessionProcessed(sessionId)) as AwardResult;
@@ -656,9 +685,13 @@ describe.skipIf(!E2E)('phase1 — producteurs d’aventure (intégration locale 
     await expectRefused(refusedEmpty, 'checklist_vide', `checklist:${tripEmpty}`);
   });
 
-  it('7. voyage terminé avec preuve ⇒ awarded ; sans preuve ⇒ refused aucune_preuve', async () => {
+  it('7. voyage terminé avec itinérance prouvée (2 jours UTC) ⇒ awarded ; sinon itinerance_non_prouvee', async () => {
     const tripVisited = await createTrip(userA, 'completed');
+    // Un POI déclaré seul ne prouve plus le voyage (T09) — il reste tracé ici
+    // pour documenter la règle, la preuve réelle étant les sessions traitées.
     await createPoi(tripVisited, true);
+    await createProvenSession(userA, tripVisited, new Date(Date.now() - 30 * 3_600_000).toISOString());
+    await createProvenSession(userA, tripVisited, new Date().toISOString());
     const awarded = (await awardTripCompleted(tripVisited)) as AwardResult;
     await expectAwarded({
       result: awarded,
@@ -669,9 +702,16 @@ describe.skipIf(!E2E)('phase1 — producteurs d’aventure (intégration locale 
       points: expectedPoints('trip_completed'),
     });
 
+    // Aucune session prouvée ⇒ refus de hook (aucune décision gravée).
     const tripBare = await createTrip(userA, 'completed');
     const refused = (await awardTripCompleted(tripBare)) as AwardResult;
-    await expectRefused(refused, 'aucune_preuve', `trip:${tripBare}`);
+    await expectRefused(refused, 'itinerance_non_prouvee', `trip:${tripBare}`);
+
+    // Une seule journée prouvée ne suffit pas (règle des 2 jours UTC distincts).
+    const tripSingleDay = await createTrip(userA, 'completed');
+    await createProvenSession(userA, tripSingleDay, new Date().toISOString());
+    const refusedSingle = (await awardTripCompleted(tripSingleDay)) as AwardResult;
+    await expectRefused(refusedSingle, 'itinerance_non_prouvee', `trip:${tripSingleDay}`);
   });
 
   it('8. chaîne complète : outbox → progression_events + user_progression (total exact)', async () => {

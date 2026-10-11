@@ -103,3 +103,48 @@ Puis : `has_function_privilege('authenticated', …claim_reward_points…)` doit
 - Aucune CLI d'hébergement (`vercel`, `netlify`, `gh`) n'est installée : la PR et le canari se font depuis la console GitHub/plateforme.
 - Aucun build iOS/Android possible (pas de macOS, pas de comptes stores) : la validation appareils et les soumissions restent côté porteur.
 - La sauvegarde/restauration de production exige l'accès au Dashboard (ou le mot de passe DB, absent de l'environnement local).
+
+---
+
+## 9. Complément P2.0 — flags, cohortes et réévaluation (T47, 2026-10-11)
+
+### Flags séparés (familles indépendantes)
+
+| Flag | Portée | Défaut | Activation |
+|---|---|---|---|
+| `progression.ui.card` | carte compacte + sheet | déjà livrée (lecture) | pas de flag requis (lecture seule, cache privé) |
+| barème v2 | moteur d'attribution | **fermé** (`draft_closed`) | publication journalisée (T42) + date d'effet, jamais de recrédit |
+| `adaptateurs` | activités hors randonnée | **fermé** (registre P3) | critères publiés + source de données vérifiée |
+| `passeport` | découvertes privées | livré privé par défaut | aucune exposition publique |
+| `coopération` | sorties/tâches/prêts | **fermé** (producteurs prouvés, émission v2 close) | preuve + population |
+| `ligues` | cohortes | **fermé** (`population_insuffisante` tant que < 20 réels) | opt-in + population réelle |
+| émission commerciale | fidélité/parts | **fermée** : encaissement autoritaire en place, webhook à brancher (T38) | financement + réconciliation vérifiés |
+
+Ces familles sont indépendantes : couper l'une n'affecte jamais les autres ni
+les journaux déjà écrits.
+
+## Marche de déploiement (canari par conditions, pas par minuterie)
+
+1 → 5 → 25 → 100 % **seulement si**, à chaque palier :
+
+- scan d'anomalies 0 écart non-démo (`phase1_points_anomaly_scan.mjs`) ;
+- outbox sans `dead`, retard ≤ 15 min (`progression_outbox_health.mjs`) ;
+- parcours source→intention→décision→outbox→projection observé sur les
+  compteurs (décisions = transactions = événements après rattrapage) ;
+- coûts/refus dans les budgets mesurés (T45).
+
+L'outillage : `node scripts/ops/progression_rollout_check.mjs` (lecture seule).
+
+## Retour arrière
+
+- **Applicatif** : redéployer le déploiement Vercel précédent — les journaux
+  (décisions, transactions, événements, claims, intentions) et les nouveaux
+  droits restent intacts ; la reprise les lit tels quels.
+- **Migrations** : chaque migration du chantier a une descente
+  (`supabase/migrations_down/`) qui **ne supprime aucun journal ni droit** ;
+  retirer les triggers legacy de T38 est le seul changement de comportement
+  majeur, sa descente les restaure.
+- **Émission** : couper un producteur = le retirer du barème publié
+  (journalisé T42) ; jamais de suppression de droits acquis.
+- **Compensation** : toute correction future passe par un mouvement lié et
+  motivé (journal), avec recours — jamais d'édition opaque de solde.

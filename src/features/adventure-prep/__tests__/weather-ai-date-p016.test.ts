@@ -23,18 +23,17 @@ import { fullDraft } from './fixtures';
  * Un double qui remplacerait toute la phase ne prouverait rien.
  */
 
-/**
- * Une date proposee par l'IA est toujours dans le futur : on la calcule depuis
- * l'horloge (UTC) au lieu de la figer. Figee au 2026-10-10, elle est devenue
- * passee le 2026-10-11 et la phase meteo n'interrogeait plus rien.
- */
-function isoDansLesJours(jours: number): string {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() + jours);
-  return d.toISOString().slice(0, 10);
+// Dates FUTURES calculées à l'exécution : une proposition de date passée est
+// — à raison — refusée par le moteur (jamais de départ dans le passé), donc
+// une valeur figée rendrait ce test rouge dès le lendemain.
+function localIso(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
-const DATE_IA = isoDansLesJours(30);
-const LENDEMAIN_IA = isoDansLesJours(31);
+const DATE_IA = localIso(new Date(Date.now() + 86_400_000));
+const NEXT_DAY = localIso(new Date(Date.now() + 2 * 86_400_000));
 
 function step(overrides: Partial<DraftedStep> = {}): DraftedStep {
   return {
@@ -148,10 +147,10 @@ describe('P0.16 — la meteo se mesure sur la date proposee par l IA', () => {
     expect(outcome.suggestedStartDate).toBe(DATE_IA);
     // Avant le correctif, `demandees` etait VIDE : aucune prevision n'etait
     // demandee, faute de date.
-    expect(demandees.flat()).toEqual([DATE_IA, LENDEMAIN_IA]);
+    expect(demandees.flat()).toEqual([DATE_IA, NEXT_DAY]);
     expect(outcome.model?.weather.map((day) => day?.date ?? null)).toEqual([
       DATE_IA,
-      LENDEMAIN_IA,
+      NEXT_DAY,
     ]);
   });
 

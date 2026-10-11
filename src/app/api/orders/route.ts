@@ -16,7 +16,9 @@ type ShopProductRow = { id: string; slug: string; name: string; price_eur: numbe
 
 /**
  * POST /api/orders — création de commande virement (prix et livraison
- * recalculés serveur depuis `shop_products` ; le trigger reste seul créditeur).
+ * recalculés serveur depuis `shop_products`). Aucun crédit à la création :
+ * depuis T38, seule la preuve d'encaissement émet (la confirmation admin du
+ * virement reçu émet l'événement `record_order_encashment_event`).
  */
 export async function POST(req: NextRequest) {
   try {

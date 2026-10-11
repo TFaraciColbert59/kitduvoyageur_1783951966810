@@ -11,6 +11,14 @@ import type { UnifiedPOI } from '@/lib/queries/pois';
 import TerrainLiveLayer from '@/features/terrain-live/components/TerrainLiveLayer';
 import type { TerrainLiveReport } from '@/features/terrain-live/lib/terrainDisplay';
 import { leafletTiles } from '@/components/map/engine/leafletTiles';
+import dynamicImport from 'next/dynamic';
+
+// T20 — couche personnelle des découvertes : chargée à la demande (client),
+// jamais bloquante, limitée à des identifiants territoriaux (aucune coordonnée).
+const DiscoveryMapLayer = dynamicImport(
+  () => import('@/features/progression/components/DiscoveryMapLayer'),
+  { ssr: false }
+);
 
 interface ExplorerMapProps {
   trails: MapTrail[];
@@ -519,6 +527,8 @@ export default function ExplorerMap({
       {mapReady && mapInstance && (trails.length > 0 || (pois && pois.length > 0)) && (
         <TrailLayer map={mapInstance} trails={trails} pois={pois} selectedTrailId={selectedTrailId} onTrailClick={onTrailClick} onPoiClick={onPoiClick} />
       )}
+
+      {mapReady && <DiscoveryMapLayer />}
 
       {/* A13 (S7) — Terrain Live monté sur la carte existante (vanilla Leaflet). */}
       {mapReady && mapInstance && terrainReports && terrainReports.length > 0 && (

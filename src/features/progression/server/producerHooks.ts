@@ -1,19 +1,48 @@
 import 'server-only';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { getServiceSupabase } from '@/lib/ai/serviceClient';
 import { awardProducerGain, type AwardProducerResult } from './awardProducer';
 
 /**
- * P2 — Accroches des producteurs vérifiés.
+ * P2/T09 — Accroches des producteurs vérifiés.
  *
- * Chaque accroche lit les faits côté serveur (propriété, état final, comptages)
- * puis délègue au moteur canonique. Toute erreur est avalée : la progression ne
- * doit jamais casser le parcours métier, et l'idempotence empêche tout doublon.
+ * Chaque accroche lit les faits côté serveur (propriété, état final, comptages,
+ * durée active, mouvement plausible, contrôles dus) puis délègue au moteur
+ * canonique. Toute erreur est avalée : la progression ne doit jamais casser le
+ * parcours métier, et l'idempotence empêche tout doublon.
+ *
+ * T09 — Preuves renforcées (économie 2.0, P1) :
+ *   • activité : paliers de DURÉE ACTIVE recalculée (20/60/120/240 min) ; le
+ *     bonus par segments OSM est supprimé ; un tracé non plausible (téléphone
+ *     immobile) ne produit aucun gain ; nouveauté de parcours canonique
+ *     réservée par claim `route_novelty` (+20, une fois par saison, max 150) ;
+ *   • checklist : au moins 3 contrôles DUS (`due_offset_days` non nul) tous
+ *     terminés — un item libre coché ne suffit pas ;
+ *   • itinérance : au moins 2 sessions traitées sur 2 JOURS UTC distincts ; une
+ *     checklist ou un POI déclaré seuls ne prouvent plus le voyage ;
+ *   • débrief kit : équipements DISTINCTS réellement évalués (20 + 2×n, borné) ;
+ *     l'attribution attend la stabilisation de finalisation (capsule SQL) ;
+ *   • avis de lieu : 15 XP ; le palier 40 (visite contrôlée) reste FERMÉ faute
+ *     de preuve serveur de visite — aucun crédit inventé.
  */
 
-const SEGMENT_BONUS = 5;
-const SEGMENT_BONUS_CAP = 110;
+/** Paliers de durée active (minutes) → points du gain d'activité. */
+const DURATION_TIERS: ReadonlyArray<{ minActiveMinutes: number; points: number }> = [
+  { minActiveMinutes: 240, points: 130 },
+  { minActiveMinutes: 120, points: 100 },
+  { minActiveMinutes: 60, points: 70 },
+  { minActiveMinutes: 20, points: 40 },
+];
+/** Base du barème v1 (le bonus transmis est relatif à cette base). */
+const ACTIVITY_BASE_POINTS = 40;
+const NOVELTY_POINTS = 20;
+const NOVELTY_CLAIM_GROUP = 'route_novelty';
+/** Mouvement plausible minimal du traitement serveur (téléphone immobile exclu). */
+const PLAUSIBLE_MOVEMENT_MIN = 0.5;
 const KIT_ITEM_BONUS = 2;
-const KIT_ITEM_BONUS_CAP = 20;
+const KIT_ITEM_MAX = 10;
+const CHECKLIST_MIN_DUE_CONTROLS = 3;
+const CHECKLIST_PREPARATION_STATUSES = new Set(['planned', 'active']);
 
 async function award(input: Parameters<typeof awardProducerGain>[0]): Promise<AwardProducerResult> {
   try {
@@ -24,25 +53,258 @@ async function award(input: Parameters<typeof awardProducerGain>[0]): Promise<Aw
   }
 }
 
-/** Session de randonnée traitée par le processeur → Explorer. */
+/**
+ * Lecture fail-closed d'un claim : en cas d'erreur, on considère le fait déjà
+ * réservé (le bonus conditionnel n'est jamais accordé deux fois par accident).
+ */
+async function claimExists(
+  supabase: SupabaseClient,
+  userId: string,
+  group: string,
+  key: string
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('progression_claims')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('claim_group', group)
+    .eq('evidence_key', key)
+    .maybeSingle();
+  if (error) return true;
+  return Boolean(data);
+}
+
+function utcDayKey(value: string | null | undefined): string | null {
+  if (typeof value !== 'string' || value.length < 10) return null;
+  return value.slice(0, 10);
+}
+
+/**
+ * T26 — Photo de terrain utile à un lieu → Partager (émission fermée en v1 :
+ * `place_photo` n'existe qu'au registre v2).
+ *
+ * Preuves livrées : photo publiée avec EXIF retiré (consentement de
+ * publication), auteur possédant un avis qualifié sur le même lieu (preuve de
+ * visite par proxy documentée — la validation par modérateur et le plafond
+ * 3/activité restent à construire, critères publiés au registre). Claim média
+ * partagé : la même photo dans un carnet ne peut pas être recréditée ici.
+ */
+export async function awardPlacePhoto(photoId: string): Promise<AwardProducerResult> {
+  try {
+    const supabase = getServiceSupabase();
+    if (!supabase) return { success: false, outcome: 'refused', reason: 'service_indisponible' };
+
+    const { data: photo, error } = await supabase
+      .from('place_photos')
+      .select('id, place_id, author_id, url, has_exif_stripped')
+      .eq('id', photoId)
+      .maybeSingle();
+    if (error || !photo) {
+      return { success: false, outcome: 'refused', reason: 'photo_introuvable' };
+    }
+    if (photo.has_exif_stripped !== true) {
+      return { success: false, outcome: 'refused', reason: 'consentement_requis' };
+    }
+
+    const { count, error: reviewError } = await supabase
+      .from('place_reviews')
+      .select('id', { count: 'exact', head: true })
+      .eq('place_id', photo.place_id)
+      .eq('author_id', photo.author_id);
+    if (reviewError) {
+      return { success: false, outcome: 'refused', reason: 'preuves_indisponibles' };
+    }
+    if ((count ?? 0) === 0) {
+      return { success: false, outcome: 'refused', reason: 'visite_non_prouvee' };
+    }
+
+    const { mediaClaimFor } = await import('./mediaClaim');
+    const claim = mediaClaimFor(photo.url ?? '');
+    if (!claim) {
+      return { success: false, outcome: 'refused', reason: 'media_invalide' };
+    }
+
+    return award({
+      userId: photo.author_id,
+      action: 'place_photo',
+      sourceType: 'place_photo',
+      sourceId: photoId,
+      effectiveAt: new Date().toISOString(),
+      claims: [claim],
+      metadata: { placeId: photo.place_id },
+    });
+  } catch (error) {
+    console.error('[progression/producerHooks] photo de lieu (non bloquant):', error);
+    return { success: false, outcome: 'refused', reason: 'hook_error' };
+  }
+}
+
+/**
+ * T25 — Réponse acceptée et utile → Entraider (émission fermée en v1 :
+ * `answer_accepted` n'existe qu'au registre v2).
+ * Preuve : réponse `is_accepted` (décision du demandeur, vérifiée par la
+ * fonction SQL). Claim par QUESTION : un seul gain par question, même si la
+ * réponse acceptée est remplacée après un désaccord.
+ */
+export async function awardAnswerAccepted(answerId: string): Promise<AwardProducerResult> {
+  try {
+    const supabase = getServiceSupabase();
+    if (!supabase) return { success: false, outcome: 'refused', reason: 'service_indisponible' };
+
+    const { data: answer, error } = await supabase
+      .from('qa_answers')
+      .select('id, question_id, author_id, is_accepted')
+      .eq('id', answerId)
+      .maybeSingle();
+    if (error || !answer) {
+      return { success: false, outcome: 'refused', reason: 'reponse_introuvable' };
+    }
+    if (answer.is_accepted !== true) {
+      return { success: false, outcome: 'refused', reason: 'reponse_non_acceptee' };
+    }
+
+    return award({
+      userId: answer.author_id,
+      action: 'answer_accepted',
+      sourceType: 'qa_answer',
+      sourceId: answerId,
+      effectiveAt: new Date().toISOString(),
+      claims: [{ group: 'qa_answer', key: `question:${answer.question_id}` }],
+      metadata: { answerId, questionId: answer.question_id },
+    });
+  } catch (error) {
+    console.error('[progression/producerHooks] réponse acceptée (non bloquant):', error);
+    return { success: false, outcome: 'refused', reason: 'hook_error' };
+  }
+}
+
+/**
+ * T24 — Correction de lieu/sentier ACCEPTÉE → Partager + Entraider (émission
+ * fermée en v1 : `place_report_accepted` n'existe qu'au registre v2).
+ * Preuve : rapport `accepted` par un validateur indépendant (la fonction SQL
+ * l'a déjà garanti). Claim UNIQUE `place_report:report:<id>` : la variante
+ * accessibilité du même rapport ne peut jamais produire un second gain.
+ */
+export async function awardPlaceReportAccepted(reportId: string): Promise<AwardProducerResult> {
+  try {
+    const supabase = getServiceSupabase();
+    if (!supabase) return { success: false, outcome: 'refused', reason: 'service_indisponible' };
+
+    const { data: report, error } = await supabase
+      .from('place_reports')
+      .select('reporter_id, status, resolution')
+      .eq('id', reportId)
+      .maybeSingle();
+    if (error || !report) {
+      return { success: false, outcome: 'refused', reason: 'rapport_introuvable' };
+    }
+    if (report.resolution !== 'accepted' || report.status !== 'accepted') {
+      return { success: false, outcome: 'refused', reason: 'rapport_non_accepte' };
+    }
+
+    return award({
+      userId: report.reporter_id,
+      action: 'place_report_accepted',
+      sourceType: 'place_report',
+      sourceId: reportId,
+      effectiveAt: new Date().toISOString(),
+      claims: [{ group: 'place_report', key: `report:${reportId}` }],
+      metadata: { reportId },
+    });
+  } catch (error) {
+    console.error('[progression/producerHooks] rapport de lieu (non bloquant):', error);
+    return { success: false, outcome: 'refused', reason: 'hook_error' };
+  }
+}
+
+/**
+ * T23 — Amélioration de kit éprouvée → Se préparer (émission fermée en v1 :
+ * `kit_improved` n'existe qu'au registre v2). La preuve est chargée par
+ * `loadKitImprovementProof` (diff de versions persistées, problème terrain
+ * résolu, éléments vitaux conservés, auto-fork exclu) ; le claim par version
+ * empêche de recréditer le même correctif.
+ */
+export async function awardKitImproved(kitId: string): Promise<AwardProducerResult> {
+  try {
+    const { loadKitImprovementProof } = await import('./kitImprovementProof');
+    const proof = await loadKitImprovementProof(kitId);
+    if (!proof.ok) {
+      return { success: false, outcome: 'refused', reason: proof.reason };
+    }
+    return award({
+      userId: proof.userId,
+      action: 'kit_improved',
+      sourceType: 'kit_improvement',
+      sourceId: `${kitId}:${proof.newVersionId}`,
+      effectiveAt: new Date().toISOString(),
+      claims: [{ group: 'kit_improvement', key: `kit_version:${proof.newVersionId}` }],
+      metadata: { kitId, resolvedKeys: proof.resolvedKeys },
+    });
+  } catch (error) {
+    console.error('[progression/producerHooks] amélioration kit (non bloquant):', error);
+    return { success: false, outcome: 'refused', reason: 'hook_error' };
+  }
+}
+
+/**
+ * Session de randonnée traitée → Explorer.
+ *
+ * Le gain suit les paliers de durée active ; le bonus de nouveauté est réservé
+ * une fois par parcours canonique et par saison (claim atomique côté moteur).
+ */
 export async function awardHikeSessionProcessed(sessionId: string): Promise<AwardProducerResult> {
   const supabase = getServiceSupabase();
   if (!supabase) return { success: false, outcome: 'refused', reason: 'service_indisponible' };
 
   const { data: session, error } = await supabase
     .from('hike_sessions')
-    .select('user_id, ended_at, processing_status')
+    .select('user_id, ended_at, processing_status, duration_seconds, track_quality, route_id')
     .eq('id', sessionId)
     .maybeSingle();
   if (error || !session || session.processing_status !== 'processed') {
     return { success: false, outcome: 'refused', reason: 'session_non_traitee' };
   }
 
-  const { count } = await supabase
-    .from('session_segment_passages')
-    .select('id', { count: 'exact', head: true })
-    .eq('session_id', sessionId);
-  const segments = Math.max(0, count ?? 0);
+  const quality = (session.track_quality ?? {}) as { plausibleMovement?: unknown };
+  const plausibleMovement =
+    typeof quality.plausibleMovement === 'number' ? quality.plausibleMovement : null;
+  if (plausibleMovement !== null && plausibleMovement < PLAUSIBLE_MOVEMENT_MIN) {
+    return { success: false, outcome: 'refused', reason: 'mouvement_non_plausible' };
+  }
+
+  const activeMinutes = Math.floor(Math.max(0, Number(session.duration_seconds ?? 0)) / 60);
+  const tier = DURATION_TIERS.find((candidate) => activeMinutes >= candidate.minActiveMinutes);
+  if (!tier) {
+    return { success: false, outcome: 'refused', reason: 'duree_insuffisante' };
+  }
+
+  // Nouveauté : une fois par parcours canonique et par saison. La clé porte la
+  // saison ; le moteur réserve le claim atomiquement dans la même transaction.
+  let noveltyGranted = false;
+  let noveltyClaim: { group: string; key: string } | undefined;
+  if (session.route_id !== null && session.route_id !== undefined) {
+    const { data: season } = await supabase
+      .from('progression_seasons')
+      .select('id')
+      .eq('status', 'active')
+      .maybeSingle();
+    const endedAt = session.ended_at ?? new Date().toISOString();
+    const seasonKey = season?.id ?? `y${endedAt.slice(0, 4)}`;
+    const evidenceKey = `${seasonKey}:route:${session.route_id}`;
+    const alreadyClaimed = await claimExists(
+      supabase,
+      session.user_id,
+      NOVELTY_CLAIM_GROUP,
+      evidenceKey
+    );
+    if (!alreadyClaimed) {
+      noveltyGranted = true;
+      noveltyClaim = { group: NOVELTY_CLAIM_GROUP, key: evidenceKey };
+    }
+  }
+
+  const bonus =
+    tier.points - ACTIVITY_BASE_POINTS + (noveltyGranted ? NOVELTY_POINTS : 0);
 
   return award({
     userId: session.user_id,
@@ -50,9 +312,26 @@ export async function awardHikeSessionProcessed(sessionId: string): Promise<Awar
     sourceType: 'hike_session',
     sourceId: sessionId,
     effectiveAt: session.ended_at ?? new Date().toISOString(),
-    bonus: Math.min(segments * SEGMENT_BONUS, SEGMENT_BONUS_CAP),
-    metadata: { segments },
+    bonus,
+    claims: noveltyClaim ? [noveltyClaim] : [],
+    metadata: {
+      activeMinutes,
+      tierPoints: tier.points,
+      novelty: noveltyGranted,
+      plausibleMovement,
+      routeId: session.route_id ?? null,
+    },
   });
+}
+
+/**
+ * T22 — Claim d'exclusivité de préparation : sentier et Compas partagent la
+ * même clé d'aventure — la deuxième variante pour la même aventure est
+ * refusée « fait_déjà_réclamé », dans les deux sens.
+ */
+const PREPARATION_CLAIM_GROUP = 'preparation_exclusive';
+export function preparationAventureClaimKey(tripId: string): string {
+  return `aventure:${tripId}`;
 }
 
 /** Activité réellement créée depuis un sentier → Se préparer. */
@@ -67,11 +346,79 @@ export async function awardTrailPrepared(
     sourceType: 'trail_prep',
     sourceId: `${userId}:${routeId}`,
     effectiveAt: new Date().toISOString(),
+    claims: [{ group: PREPARATION_CLAIM_GROUP, key: preparationAventureClaimKey(tripId) }],
     metadata: { routeId: String(routeId), tripId },
   });
 }
 
-/** Débrief terrain du kit (session traitée portant le kit) → Se préparer + Partager. */
+/**
+ * T22 — Préparation Compas PERTINENTE → Se préparer (émission fermée en v1 :
+ * `compas_prepared` n'existe qu'au registre v2, le moteur refuse
+ * `action_non_autorisee` jusqu'à l'activation — le producteur et sa preuve
+ * sont néanmoins livrés ici).
+ *
+ * Preuves : voyage réellement sorti du brouillon (préparation engagée), flux
+ * Compas d'origine (`metadata.compas`), JAMAIS un voyage lié à un sentier
+ * (claim d'aventure partagé + refus direct), jamais une création vide.
+ */
+export async function awardCompasPrepared(tripId: string): Promise<AwardProducerResult> {
+  try {
+    const supabase = getServiceSupabase();
+    if (!supabase) return { success: false, outcome: 'refused', reason: 'service_indisponible' };
+
+    const { data: trip, error } = await supabase
+      .from('trips')
+      .select('user_id, status, metadata')
+      .eq('id', tripId)
+      .maybeSingle();
+    if (error || !trip) {
+      return { success: false, outcome: 'refused', reason: 'voyage_introuvable' };
+    }
+    if (trip.status === 'draft') {
+      return { success: false, outcome: 'refused', reason: 'preparation_vide' };
+    }
+
+    const metadata = (trip.metadata ?? {}) as Record<string, unknown>;
+    const compas = (metadata.compas ?? null) as Record<string, unknown> | null;
+    if (!compas || typeof compas !== 'object') {
+      return { success: false, outcome: 'refused', reason: 'hors_compas' };
+    }
+
+    // Exclut la préparation de sentier déjà payée pour la même aventure.
+    const origin = compas.origin;
+    const originText = typeof origin === 'string' ? origin.toLowerCase() : '';
+    const originRecord = origin !== null && typeof origin === 'object' ? (origin as Record<string, unknown>) : null;
+    const linkedToTrail =
+      originText.includes('sentier') ||
+      originText.includes('trail') ||
+      (originRecord !== null && (originRecord.routeId !== undefined || originRecord.route_id !== undefined));
+    if (linkedToTrail) {
+      return { success: false, outcome: 'refused', reason: 'aventure_liee_sentier' };
+    }
+
+    return award({
+      userId: trip.user_id,
+      action: 'compas_prepared',
+      sourceType: 'compas_prep',
+      sourceId: tripId,
+      effectiveAt: new Date().toISOString(),
+      claims: [{ group: PREPARATION_CLAIM_GROUP, key: preparationAventureClaimKey(tripId) }],
+      metadata: { tripId, origin: originText || null },
+    });
+  } catch (error) {
+    console.error('[progression/producerHooks] préparation Compas (non bloquant):', error);
+    return { success: false, outcome: 'refused', reason: 'hook_error' };
+  }
+}
+
+/**
+ * Débrief terrain du kit → Se préparer + Partager.
+ *
+ * Le gain est calculé sur les équipements DISTINCTS réellement évalués
+ * (20 + 2×n, plafond 10 équipements = 40 XP) ; la date métier est celle du
+ * dernier enregistrement. L'attribution n'est déclenchée qu'après la capsule
+ * de stabilisation de finalisation (réservation d'intention différée).
+ */
 export async function awardKitFieldReport(sessionId: string): Promise<AwardProducerResult> {
   const supabase = getServiceSupabase();
   if (!supabase) return { success: false, outcome: 'refused', reason: 'service_indisponible' };
@@ -85,34 +432,47 @@ export async function awardKitFieldReport(sessionId: string): Promise<AwardProdu
     return { success: false, outcome: 'refused', reason: 'session_non_traitee' };
   }
 
-  const { data: report, error: reportError } = await supabase
+  const { data: reports, error: reportsError } = await supabase
     .from('kit_field_reports')
-    .select('kit_id')
-    .eq('hike_session_id', sessionId)
-    .limit(1)
-    .maybeSingle();
-  if (reportError || !report) {
+    .select('item_key, created_at')
+    .eq('hike_session_id', sessionId);
+  if (reportsError || !reports || reports.length === 0) {
     return { success: false, outcome: 'refused', reason: 'aucun_debrief' };
   }
 
-  const { count } = await supabase
-    .from('kit_field_reports')
-    .select('id', { count: 'exact', head: true })
-    .eq('hike_session_id', sessionId);
-  const items = Math.max(1, count ?? 1);
+  const rows = reports as Array<{ item_key?: string | null; created_at?: string | null }>;
+  const distinctItems = new Set(
+    rows.map((row) => (typeof row.item_key === 'string' ? row.item_key : '')).filter(Boolean)
+  ).size;
+  if (distinctItems === 0) {
+    return { success: false, outcome: 'refused', reason: 'aucun_debrief' };
+  }
+
+  const lastSavedAt = rows
+    .map((row) => row.created_at)
+    .filter((value): value is string => typeof value === 'string' && value.length > 0)
+    .sort()
+    .at(-1);
 
   return award({
     userId: session.user_id,
     action: 'kit_field_report',
     sourceType: 'kit_report',
     sourceId: sessionId,
-    effectiveAt: new Date().toISOString(),
-    bonus: Math.min(items * KIT_ITEM_BONUS, KIT_ITEM_BONUS_CAP),
-    metadata: { kitId: report.kit_id ?? session.kit_id, items },
+    effectiveAt: lastSavedAt ?? new Date().toISOString(),
+    bonus: Math.min(distinctItems * KIT_ITEM_BONUS, KIT_ITEM_MAX),
+    metadata: { kitId: session.kit_id ?? null, items: distinctItems },
   });
 }
 
-/** Avis de lieu publié (première publication uniquement) → Partager. */
+/**
+ * Avis de lieu publié (première publication uniquement) → Partager.
+ *
+ * Économie : 15 XP pour un avis qualifié, 40 si la preuve de visite est
+ * validée dès l'attribution. Le palier 40 reste FERMÉ : aucune preuve serveur
+ * de visite (lien lieu ↔ réalisation GPS) n'existe dans le schéma actuel ;
+ * aucun crédit n'est inventé tant que cette preuve n'est pas construite.
+ */
 export async function awardPlaceReview(
   userId: string,
   placeId: string
@@ -216,12 +576,11 @@ export async function awardCarnetPublished(carnetId: string): Promise<AwardProdu
 }
 
 /**
- * Checklist de préparation complétée à 100 % → Se préparer.
+ * Checklist de préparation complétée → Se préparer.
  *
- * Preuves : voyage `planned`/`active`, checklist non vide, tous les items
- * cochés (aucune colonne ne distingue un item dû d'un ajout manuel dans
- * `trip_checklist_items` : la règle exige donc 100 % des items existants).
- * Une seule attribution par voyage : `checklist:<trip_id>`.
+ * Preuves : voyage `planned`/`active`, au moins 3 contrôles DUS pertinents
+ * (`due_offset_days` non nul), tous terminés. Les items libres ne comptent pas
+ * et ne bloquent pas. Une seule attribution par voyage : `checklist:<trip_id>`.
  */
 export async function awardChecklistCompleted(tripId: string): Promise<AwardProducerResult> {
   try {
@@ -236,27 +595,39 @@ export async function awardChecklistCompleted(tripId: string): Promise<AwardProd
     if (tripError || !trip) {
       return { success: false, outcome: 'refused', reason: 'voyage_introuvable' };
     }
-    if (trip.status !== 'planned' && trip.status !== 'active') {
+    if (!CHECKLIST_PREPARATION_STATUSES.has(trip.status)) {
       return { success: false, outcome: 'refused', reason: 'voyage_hors_preparation' };
     }
 
     const { data: items, error: itemsError } = await supabase
       .from('trip_checklist_items')
-      .select('id, done, done_at')
+      .select('id, done, done_at, due_offset_days')
       .eq('trip_id', tripId);
     if (itemsError) {
       return { success: false, outcome: 'refused', reason: 'checklist_indisponible' };
     }
 
-    const rows = (items ?? []) as Array<{ id: string; done: boolean; done_at?: string | null }>;
+    const rows = (items ?? []) as Array<{
+      id: string;
+      done: boolean;
+      done_at?: string | null;
+      due_offset_days?: number | null;
+    }>;
     if (rows.length === 0) {
       return { success: false, outcome: 'refused', reason: 'checklist_vide' };
     }
-    if (rows.some((item) => item.done !== true)) {
+
+    const dueRows = rows.filter(
+      (item) => item.due_offset_days !== null && item.due_offset_days !== undefined
+    );
+    if (dueRows.length < CHECKLIST_MIN_DUE_CONTROLS) {
+      return { success: false, outcome: 'refused', reason: 'controles_insuffisants' };
+    }
+    if (dueRows.some((item) => item.done !== true)) {
       return { success: false, outcome: 'refused', reason: 'checklist_incomplete' };
     }
 
-    const lastDoneAt = rows
+    const lastDoneAt = dueRows
       .map((item) => item.done_at)
       .filter((value): value is string => typeof value === 'string' && value.length > 0)
       .sort()
@@ -268,7 +639,7 @@ export async function awardChecklistCompleted(tripId: string): Promise<AwardProd
       sourceType: 'checklist',
       sourceId: tripId,
       effectiveAt: lastDoneAt ?? new Date().toISOString(),
-      metadata: { items: rows.length },
+      metadata: { dueControls: dueRows.length, total: rows.length },
     });
   } catch (error) {
     console.error('[progression/producerHooks] checklist complétée (non bloquant):', error);
@@ -277,12 +648,12 @@ export async function awardChecklistCompleted(tripId: string): Promise<AwardProd
 }
 
 /**
- * Voyage réellement terminé → Explorer + Se préparer.
+ * Itinérance réellement accomplie → Explorer + Se préparer.
  *
- * Preuves recalculées en service role : statut `completed` ET au moins une
- * preuve de terrain parmi — session de randonnée `processed` liée au voyage,
- * checklist 100 % complétée, POI du voyage marqué `visited`. Une seule
- * attribution par voyage : `trip:<trip_id>`.
+ * Preuves T09 : statut `completed` ET au moins 2 sessions de randonnée
+ * `processed` liées au voyage, réparties sur au moins 2 JOURS UTC distincts.
+ * Une checklist ou un POI déclaré seuls ne prouvent plus le voyage ; une
+ * simple sortie journalière non plus. Idempotent par voyage : `trip:<trip_id>`.
  */
 export async function awardTripCompleted(tripId: string): Promise<AwardProducerResult> {
   try {
@@ -301,31 +672,22 @@ export async function awardTripCompleted(tripId: string): Promise<AwardProducerR
       return { success: false, outcome: 'refused', reason: 'voyage_non_termine' };
     }
 
-    const [sessionsResult, itemsResult, poisResult] = await Promise.all([
-      supabase
-        .from('hike_sessions')
-        .select('id', { count: 'exact', head: true })
-        .eq('trip_id', tripId)
-        .eq('processing_status', 'processed'),
-      supabase.from('trip_checklist_items').select('id, done').eq('trip_id', tripId),
-      supabase
-        .from('trip_pois')
-        .select('id', { count: 'exact', head: true })
-        .eq('trip_id', tripId)
-        .eq('visited', true),
-    ]);
-    if (sessionsResult.error || itemsResult.error || poisResult.error) {
+    const { data: sessions, error: sessionsError } = await supabase
+      .from('hike_sessions')
+      .select('id, ended_at')
+      .eq('trip_id', tripId)
+      .eq('processing_status', 'processed');
+    if (sessionsError) {
       return { success: false, outcome: 'refused', reason: 'preuves_indisponibles' };
     }
 
-    const processedSessions = sessionsResult.count ?? 0;
-    const checklistRows = (itemsResult.data ?? []) as Array<{ id: string; done: boolean }>;
-    const checklistCompleted =
-      checklistRows.length > 0 && checklistRows.every((item) => item.done === true);
-    const visitedPois = poisResult.count ?? 0;
+    const rows = (sessions ?? []) as Array<{ id: string; ended_at?: string | null }>;
+    const days = new Set(
+      rows.map((row) => utcDayKey(row.ended_at)).filter((day): day is string => day !== null)
+    );
 
-    if (processedSessions === 0 && !checklistCompleted && visitedPois === 0) {
-      return { success: false, outcome: 'refused', reason: 'aucune_preuve' };
+    if (rows.length < 2 || days.size < 2) {
+      return { success: false, outcome: 'refused', reason: 'itinerance_non_prouvee' };
     }
 
     return award({
@@ -334,7 +696,7 @@ export async function awardTripCompleted(tripId: string): Promise<AwardProducerR
       sourceType: 'trip',
       sourceId: tripId,
       effectiveAt: trip.updated_at ?? new Date().toISOString(),
-      metadata: { processedSessions, checklistCompleted, visitedPois },
+      metadata: { sessions: rows.length, days: days.size },
     });
   } catch (error) {
     console.error('[progression/producerHooks] voyage terminé (non bloquant):', error);

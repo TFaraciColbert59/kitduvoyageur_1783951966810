@@ -21,9 +21,9 @@
 --   4. couverture comportementale de `create_shop_order` (revues rounds 1-2) :
 --      produit fixture minimal (id, slug unique, name, price_eur, stock,
 --      available) conforme au schéma réel ; virement créé 'pending' sans
---      crédit, points crédités à la confirmation admin (triggers
---      `process_order_points` + `process_pending_order_points` dans
---      l'environnement certifié baseline + migrations post-baseline).
+--      crédit. Depuis T38 (encaissement autoritaire), la simple confirmation
+--      admin ne crédite PLUS : les points sont émis par l'événement
+--      d'encaissement `record_order_encashment_event` (10 crédits/€).
 BEGIN;
 SET LOCAL search_path = public;
 GRANT USAGE ON SCHEMA public TO authenticated, service_role;
@@ -174,14 +174,18 @@ UPDATE public.orders SET status = 'confirmed'
 WHERE id = ((SELECT res->>'orderId' FROM p1_order_res))::uuid;
 
 SELECT is((SELECT count(*)::int FROM public.loyalty_history
-   WHERE source_id = 'order_' || (SELECT res->>'orderId' FROM p1_order_res)), 1,
-  '32. confirmation admin : exactement une ligne purchase order_<id>');
-SELECT is((SELECT points FROM public.loyalty_history
-   WHERE source_id = 'order_' || (SELECT res->>'orderId' FROM p1_order_res)), 559,
-  '33. points = floor(total × 10) = 559 (55,90 €)');
+   WHERE source_id LIKE 'order:%'), 0,
+  '32. confirmation admin seule : aucun crédit (encaissement autoritaire T38)');
+
+CREATE TEMP TABLE p1_encash AS
+SELECT public.record_order_encashment_event('p1-evt-1',
+  ((SELECT res->>'orderId' FROM p1_order_res))::uuid, 'payment', 5590) AS res;
+
+SELECT is((SELECT res->>'creditsDelta' FROM p1_encash), '559',
+  '33. encaissement : 559 crédits = floor(5590/10) (55,90 € de marchandises)');
 SELECT is((SELECT loyalty_points FROM public.user_profiles WHERE id = 'aaaa0001-0000-4000-8000-000000000002'),
   (SELECT COALESCE(SUM(points), 0)::int FROM public.loyalty_history WHERE user_id = 'aaaa0001-0000-4000-8000-000000000002'),
-  '34. loyalty_points synchronisé après confirmation');
+  '34. loyalty_points synchronisé après encaissement');
 
 SELECT is((public.create_shop_order('aaaa0001-0000-4000-8000-000000000002', 'virement', '{}'::jsonb,
   '[{"slug":"phase1-smoke-produit","quantity":0}]'::jsonb, 'standard'))->>'error',

@@ -1,5 +1,12 @@
 # LKDV — Tâches exécutables de Progression 2.0
 
+> **Suivi d'exécution (fait foi) :** `docs/progression/2.0/ETAT.md` (statuts,
+> preuves datées, écarts) et `docs/progression/2.0/status.json` (machine,
+> 48/48 vérifiées, portes nommées). Les cases ci-dessous sont des **critères
+> d'acceptation**, volontairement laissées telles quelles : certains restent
+> fermés par condition (financement, population, appareil, clé webhook). Les
+> cocher reviendrait à déclarer actif ce qui ne l'est pas encore.
+
 **48 tâches planifiées, aucune cochée comme implémentée par cette mission.** Dépendances entre IDs ; toutes les tâches ont 3 critères maximum. Les chemins « nouveau » sont des cibles proposées, les autres ont été observés dans le dépôt, sauf cible explicitement à identifier. Les migrations sont créées par CLI après découverte de --help ; ne pas inventer un timestamp de migration. Si une tâche dépasse une session ou cinq fichiers, la scinder avant exécution en sous-tâches portant son ID parent.
 
 Le contrat et les migrations partagés sont séquentiels. Ce tableau ne crée pas d’issues ou de demandes de revue externes. Le point de contrôle prépare un résultat concret pour revue ; le mandat d’autonomie déjà donné n’exige pas une nouvelle permission pour chaque tranche.

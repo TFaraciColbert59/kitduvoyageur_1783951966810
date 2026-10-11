@@ -30,12 +30,15 @@ SELECT is((public.award_progression_gain('bbbbbbbb-0000-4000-8000-000000000002',
 SELECT is((SELECT count(*)::int FROM public.reward_transactions WHERE transaction_type = 'PROGRESSION_AWARD'
    AND idempotency_key IN ('place_review:bbbbbbbb-0000-4000-8000-000000000001:place-1','place_review:bbbbbbbb-0000-4000-8000-000000000002:place-1')), 2, '3. deux gains distincts');
 
--- 4-6. Refus temporaire (plafond) : jamais persisté, réévalué après relèvement.
+-- 4-6. Refus temporaire (plafond) : gravé avec motif (explicabilité, T08),
+-- puis PROMU vers un gain si le fait est représenté après relèvement
+-- (réévaluation doctrinale, migration 20261011183000).
 SELECT is((public.award_progression_gain('bbbbbbbb-0000-4000-8000-000000000001','test_hike','hike_session','h-1', now(), 40,
   '{"explorer":1,"preparer":0,"partager":0,"entraider":0}','R1'))->>'outcome', 'awarded', '4. premier gain dans le plafond');
 SELECT is((public.award_progression_gain('bbbbbbbb-0000-4000-8000-000000000001','test_hike','hike_session','h-2', now(), 40,
   '{"explorer":1,"preparer":0,"partager":0,"entraider":0}','R2'))->>'reason', 'plafond_quotidien', '5. second refusé par plafond');
-SELECT is((SELECT count(*)::int FROM public.progression_decisions WHERE idempotency_key = 'hike_session:h-2'), 0, '6. refus temporaire NON gravé');
+SELECT is((SELECT outcome || '/' || reason FROM public.progression_decisions WHERE idempotency_key = 'hike_session:h-2'),
+  'refused/plafond_quotidien', '6. refus temporaire gravé avec motif (explicable, non compté au plafond)');
 UPDATE public.progression_rules SET payload = jsonb_set(payload, '{actions,test_hike,caps,daily}', '5'::jsonb) WHERE active;
 SELECT is((public.award_progression_gain('bbbbbbbb-0000-4000-8000-000000000001','test_hike','hike_session','h-2', now(), 40,
   '{"explorer":1,"preparer":0,"partager":0,"entraider":0}','R2'))->>'outcome', 'awarded', '7. réévaluation possible après le plafond');

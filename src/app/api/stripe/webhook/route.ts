@@ -39,10 +39,44 @@ export const dynamic = 'force-dynamic';
  *   (`ignored`) sans écriture métier.
  *
  * Idempotence métier conservée : `orders.stripe_session_id` (index UNIQUE).
+ *
+ * T38 — ENCAISSEMENT AUTORITAIRE : la carte est encaissée au checkout ;
+ * `record_order_encashment_event` (service_role, idempotent par event_id) est
+ * la SEULE source d'émission fidélité (10 crédits/€ marchandises) — les
+ * triggers legacy d'émission-par-statut ont été retirés. Un échec de cet
+ * encaissement fait échouer l'événement (réservation libérée, Stripe rejoue) :
+ * jamais de perte silencieuse. Les remboursements émettent l'événement inverse
+ * borné par ce qui a été réellement encaissé.
  */
 
 interface CheckoutProcessingResult {
   duplicate: boolean;
+}
+
+/**
+ * Encaissement fidélité (T38) — la preuve d'encaissement est la seule source
+ * d'émission de crédits (10 crédits/€ de marchandises). Idempotent par
+ * `stripe:<sessionId>` : un rejeu (retry Stripe ou chemin `duplicate`) ne
+ * double jamais. Un échec PROPAGE : l'événement reste non traité (réservation
+ * libérée) et Stripe rejouera — jamais de perte silencieuse.
+ */
+async function encashCardOrder(
+  supabase: SupabaseClient,
+  orderId: string,
+  sessionId: string,
+  merchandiseCents: number,
+  buyerId: string | null
+): Promise<void> {
+  if (!buyerId || merchandiseCents <= 0) return;
+  const { error } = await supabase.rpc('record_order_encashment_event', {
+    p_event_id: `stripe:${sessionId}`,
+    p_order_id: orderId,
+    p_kind: 'payment',
+    p_merchandise_cents: merchandiseCents,
+  });
+  if (error) {
+    throw new Error(`encaissement fidélité refusé (${error.code ?? 'erreur'})`);
+  }
 }
 
 /**
@@ -66,6 +100,11 @@ async function processCheckoutSessionCompleted(
     expand: ['line_items'],
   });
 
+  const userId = (expandedSession.metadata?.user_id as string) || null;
+  const buyerId = userId && userId !== 'anonymous' ? userId : null;
+  // Montant marchandises en centimes (hors livraison) — base d'émission.
+  const merchandiseCents = Math.max(0, Math.round(Number(expandedSession.amount_subtotal || 0)));
+
   // Idempotence métier : un index UNIQUE stripe_session_id (les NULL restent permis)
   const { data: existingOrder } = await supabase
     .from('orders')
@@ -74,10 +113,12 @@ async function processCheckoutSessionCompleted(
     .maybeSingle();
 
   if (existingOrder) {
+    // Rejeu de session après incident : la commande existe déjà mais
+    // l'encaissement a pu échouer — on le re-tente (idempotent), jamais les
+    // autres effets (commande, stock, grants créés une seule fois).
+    await encashCardOrder(supabase, existingOrder.id, sessionId, merchandiseCents, buyerId);
     return { duplicate: true };
   }
-
-  const userId = (expandedSession.metadata?.user_id as string) || null;
 
   // A13 (S3) — plan/pass éventuels portés par les métadonnées Stripe
   // existantes : grant d'entitlements best-effort, jamais bloquant (sans
@@ -151,6 +192,11 @@ async function processCheckoutSessionCompleted(
     );
   }
 
+  // Encaissement fidélité (T38) : preuve serveur du paiement carte — émet les
+  // crédits (10 crédits/€ marchandises). Échec ⇒ événement non traité, Stripe
+  // rejouera (chemin `duplicate` ci-dessus).
+  await encashCardOrder(supabase, order.id, sessionId, merchandiseCents, buyerId);
+
   // ── order_items + déstockage (product_id depuis les items validés) ──
   const createdOrderItemIds: { productId: string; orderItemId: string; totalCents: number }[] = [];
   for (const item of items) {
@@ -214,7 +260,6 @@ async function processCheckoutSessionCompleted(
 
   // ── Part créateur (Lot 6) : attribution depuis metadata.kit_ref validé ──
   const kitRef = expandedSession.metadata?.kit_ref as string | undefined;
-  const buyerId = userId && userId !== 'anonymous' ? userId : null;
   if (kitRef && createdOrderItemIds.length > 0 && buyerId) {
     try {
       const { data: kitRow } = await supabase
@@ -300,7 +345,10 @@ async function processSubscriptionRenewal(
 
 /**
  * Remboursement (`charge.refunded`) : annule la commission créateur liée à la
- * session. Best-effort — l'acquittement Stripe ne dépend pas du reverse.
+ * session (best-effort) PUIS émet l'événement d'encaissement inverse (T38) —
+ * borné par ce qui a été réellement encaissé et idempotent par événement.
+ * L'échec de l'encaissement inverse propage (Stripe rejouera), jamais une
+ * perte silencieuse de crédits déjà émis.
  */
 async function processRefund(
   stripe: Stripe,
@@ -308,23 +356,53 @@ async function processRefund(
   event: StripeEventLike
 ): Promise<void> {
   const charge = event.data?.object as
-    | { payment_intent?: string | null }
+    | { payment_intent?: string | null; amount_refunded?: number | null }
     | undefined;
   if (!charge?.payment_intent) return;
 
+  let sessionId: string | undefined;
   try {
     const listed = await stripe.checkout.sessions.list({
       payment_intent: charge.payment_intent,
       limit: 1,
     });
-    const sessionId = listed.data[0]?.id;
-    if (sessionId) {
-      await supabase.rpc('reverse_kit_attribution_by_session', {
-        p_stripe_session_id: sessionId,
-      });
-    }
+    sessionId = listed.data[0]?.id;
+  } catch (refundErr) {
+    console.error('⚠️ Webhook: recherche session remboursement échouée', refundErr);
+    return;
+  }
+  if (!sessionId) return;
+
+  try {
+    await supabase.rpc('reverse_kit_attribution_by_session', {
+      p_stripe_session_id: sessionId,
+    });
   } catch (refundErr) {
     console.error('⚠️ Webhook: reversement attribution échoué', refundErr);
+  }
+
+  // ── Encaissement inverse (T38) ──
+  const { data: orderRow } = await supabase
+    .from('orders')
+    .select('id, user_id, payment_state, paid_merchandise_cents, refunded_merchandise_cents')
+    .eq('stripe_session_id', sessionId)
+    .maybeSingle();
+  if (!orderRow || !orderRow.user_id) return;
+
+  const amountRefunded = typeof charge.amount_refunded === 'number' ? charge.amount_refunded : 0;
+  const alreadyRefunded = Number(orderRow.refunded_merchandise_cents ?? 0);
+  const paidCents = Number(orderRow.paid_merchandise_cents ?? 0);
+  const refundDeltaCents = Math.min(Math.max(0, amountRefunded - alreadyRefunded), paidCents);
+  if (refundDeltaCents <= 0) return;
+
+  const { error: encashError } = await supabase.rpc('record_order_encashment_event', {
+    p_event_id: `stripe-refund:${event.id}`,
+    p_order_id: orderRow.id,
+    p_kind: 'refund',
+    p_merchandise_cents: refundDeltaCents,
+  });
+  if (encashError) {
+    throw new Error(`remboursement fidélité refusé (${encashError.code ?? 'erreur'})`);
   }
 }
 

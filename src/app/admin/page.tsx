@@ -11,7 +11,7 @@ import AppShell from '@/components/shell/AppShell';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 type AdminSection =
-  | 'overview' | 'products' | 'kits' | 'categories' |'orders'| 'configurator' | 'countries' | 'toolbox' |'users' | 'moderation' | 'content' | 'audit' | 'rewards';
+  | 'overview' | 'products' | 'kits' | 'categories' |'orders'| 'configurator' | 'countries' | 'toolbox' |'users' | 'moderation' | 'content' | 'audit' | 'rewards' | 'progression';
 
 // ─── Sidebar config ────────────────────────────────────────────────────────────
 const SIDEBAR_ITEMS: { id: AdminSection; label: string; icon: string; badge?: string; group?: string }[] = [
@@ -27,6 +27,7 @@ const SIDEBAR_ITEMS: { id: AdminSection; label: string; icon: string; badge?: st
   { id: 'users', label: 'Utilisateurs', icon: 'UsersIcon', group: 'Gestion' },
   { id: 'moderation', label: 'Modération', icon: 'ShieldCheckIcon', badge: '7', group: 'Gestion' },
   { id: 'rewards', label: 'Récompenses & Sim', icon: 'GiftIcon', group: 'Gestion' },
+  { id: 'progression', label: 'Barème & Simulation', icon: 'AdjustmentsHorizontalIcon', group: 'Gestion' },
   { id: 'audit', label: 'Audit & Paramètres', icon: 'Cog6ToothIcon', group: 'Gestion' },
 ];
 
@@ -319,6 +320,29 @@ function ProductsSection() {
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[color:var(--lkv-primary)] text-white text-sm font-medium hover:bg-[color:var(--lkv-danger)] transition-all">
           <Icon name="ArrowTopRightOnSquareIcon" size={14} variant="outline" />
           Ouvrir la gestion produits
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// ─── Section: Progression rules ────────────────────────────────────────────────
+function ProgressionRulesSection() {
+  return (
+    <div className="space-y-4">
+      <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-6 text-center">
+        <div className="w-12 h-12 rounded-2xl bg-[color:var(--lkv-primary)]/15 flex items-center justify-center mx-auto mb-4">
+          <Icon name="AdjustmentsHorizontalIcon" size={22} variant="outline" className="text-[color:var(--lkv-text-primary)]" />
+        </div>
+        <h3 className="font-semibold text-white mb-2">Barème de progression — prévisualisation</h3>
+        <p className="text-sm text-white/40 mb-5 max-w-sm mx-auto">
+          Simulez l&apos;effet d&apos;un échantillon de faits sur le registre fermé (29 actions) :
+          XP projetés et refus expliqués, sans aucune écriture de solde.
+        </p>
+        <Link href="/admin/progression"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[color:var(--lkv-primary)] text-white text-sm font-medium hover:bg-[color:var(--lkv-danger)] transition-all">
+          <Icon name="ArrowTopRightOnSquareIcon" size={14} variant="outline" />
+          Ouvrir le simulateur de barème
         </Link>
       </div>
     </div>
@@ -1452,6 +1476,7 @@ export default function AdminPage() {
     content: 'Guides & Contenu',
     audit: 'Audit & Paramètres',
     rewards: 'Gestion des Récompenses & Simulateur Économique',
+    progression: 'Barème & Simulation (prévisualisation sans écriture)',
   };
 
   return (
@@ -1588,6 +1613,7 @@ export default function AdminPage() {
               {activeSection === 'content' && <ContentSection />}
               {activeSection === 'audit' && <AuditSection />}
               {activeSection === 'rewards' && <RewardsSection />}
+              {activeSection === 'progression' && <ProgressionRulesSection />}
             </div>
           </main>
         </div>
@@ -1667,6 +1693,7 @@ export default function AdminPage() {
             {activeSection === 'content' && <ContentSection />}
             {activeSection === 'audit' && <AuditSection />}
             {activeSection === 'rewards' && <RewardsSection />}
+            {activeSection === 'progression' && <ProgressionRulesSection />}
           </div>
 
           {/* Footer spacer */}

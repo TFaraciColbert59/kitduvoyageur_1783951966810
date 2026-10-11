@@ -13,10 +13,15 @@ import { getServiceSupabase } from '@/lib/ai/serviceClient';
 export type ProducerAction =
   | 'hike_session_processed'
   | 'trail_prepared'
+  | 'compas_prepared'
   | 'kit_field_report'
   | 'place_review'
   | 'carnet_published'
   | 'checklist_completed'
+  | 'kit_improved'
+  | 'place_report_accepted'
+  | 'answer_accepted'
+  | 'place_photo'
   | 'trip_completed';
 
 export interface AwardProducerInput {
