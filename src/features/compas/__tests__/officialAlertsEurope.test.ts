@@ -311,10 +311,11 @@ describe('contour réel de MétéoSuisse (zone « Lausanne - Lavaux », message 
         level: 'orange',
         area: 'Lausanne - Lavaux',
         headline: 'Fortes pluies',
-        web: 'http://www.meteoswiss.admin.ch',
         source: 'Federal Office of Meteorology and Climatology MeteoSwiss via Meteoalarm',
       },
     ]);
     expect(readMeteoalarm(orange, { ...opts, point: ZERMATT })).toMatchObject({ alerts: [], knowledge: 'complete' });
+    // Le flux réel donne `http://www.meteoswiss.admin.ch` : une adresse http d'un tiers n'est jamais reprise.
+    expect(dedans.alerts[0]).not.toHaveProperty('web');
   });
 });

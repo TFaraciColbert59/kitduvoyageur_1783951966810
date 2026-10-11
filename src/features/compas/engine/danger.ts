@@ -11,7 +11,7 @@
  * - conjoncturel   : ce qui change avec le jour (vent, orage, pluie, alertes).
  */
 
-import { formatIssuedUtc } from './meteoalarmFeeds';
+import { formatIssuedUtc, formatPeriodUtc } from './meteoalarmFeeds';
 import type { AlertsStatus } from './officialAlerts';
 
 import type { CompasDayPlan } from './compasModel';
@@ -46,8 +46,24 @@ export interface OfficialAlert {
    * soit redonnée avec l'information officielle (conditions d'usage, § 5).
    */
   headline?: string | null;
-  /** Page du service national pour cette alerte (`web` du flux). */
+  /** Page du service national pour cette alerte (`web` du flux), seulement si c'est une adresse https. */
   web?: string | null;
+  /**
+   * Textes officiels par langue du message (titre, description, consignes), tels
+   * que le service les a publiés, nettoyés des caractères de contrôle et bornés
+   * en longueur. Le Style Guide de Meteoalarm demande de les afficher dans
+   * toutes les langues du message, sans les modifier.
+   */
+  texts?: OfficialAlertText[];
+}
+
+/** Le texte officiel d'une alerte dans UNE langue du message. */
+export interface OfficialAlertText {
+  /** Langue déclarée par le flux (BCP 47, ex. « de-DE »), vide si absente. */
+  lang: string;
+  headline: string | null;
+  description: string | null;
+  instruction: string | null;
 }
 
 export interface DangerSignal {
@@ -58,6 +74,8 @@ export interface DangerSignal {
   source: string;
   /** Date de la donnée (jour du voyage AAAA-MM-JJ, ou instant de lecture pour une alerte). */
   asOf: string;
+  /** Alerte officielle : le texte du service national, par langue, à montrer avec le signal. */
+  official?: { title: string; texts: OfficialAlertText[] };
   day?: number;
 }
 
@@ -116,16 +134,24 @@ const issued = (a: OfficialAlert): string => {
   return when ? `, émise le ${when}` : '';
 };
 
-/** Où vérifier une alerte : le site du service national si le flux le donne, sinon Meteoalarm. */
+/** Où vérifier une alerte : le site du service national si le flux le donne en https, sinon Meteoalarm. */
 function checkHost(a: OfficialAlert): string {
   try {
     const url = new URL(a.web ?? '');
-    if (url.protocol === 'https:' || url.protocol === 'http:') return url.hostname.replace(/^www\./, '');
+    const host = url.hostname.replace(/^www\./, '');
+    // Une adresse venue d'un tiers n'est citée que si c'est un nom de domaine simple en https.
+    if (url.protocol === 'https:' && !url.username && !url.password && /^[a-z0-9.-]{3,100}$/.test(host)) return host;
   } catch {
     /* adresse absente ou illisible */
   }
   return 'meteoalarm.org';
 }
+
+/** « , valable du … au … » (UTC), ou rien si le flux ne donne pas les deux heures. */
+const validity = (a: OfficialAlert): string => {
+  const period = formatPeriodUtc(a.onset, a.expires);
+  return period ? `, valable ${period}` : '';
+};
 
 const hhmm = (min: number) => `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')}`;
 
@@ -265,17 +291,19 @@ export function assessDanger(input: {
   /* Alertes officielles : lues telles quelles, datées, jamais reformulées en score */
   for (const a of input.alerts) {
     evaluated.conjoncturel = true;
+    const title = `Vigilance ${a.level} · ${a.hazard} (${a.area})`;
     signals.push({
       id: `alert-${a.id}`,
       axis: 'conjoncturel',
       severity: a.updatedSince ? 'info' : ALERT_SEVERITY[a.level],
       // L'heure d'émission et le texte officiel voyagent avec l'alerte, où qu'elle
       // s'affiche (conditions de Meteoalarm, § 5).
-      label: `Vigilance ${a.level} · ${a.hazard} (${a.area})${issued(a)}${
+      label: `${title}${issued(a)}${validity(a)}${
         a.updatedSince ? ` — mise à jour depuis, à vérifier sur ${checkHost(a)}` : ''
       }${a.headline ? ` — texte officiel : « ${a.headline} »` : ''}`,
       source: a.source,
       asOf: a.sent ?? a.fetchedAt,
+      ...(a.texts?.length ? { official: { title, texts: a.texts } } : {}),
     });
   }
 

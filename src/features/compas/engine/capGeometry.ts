@@ -30,9 +30,16 @@ export interface CapGeometry {
 const validLat = (v: number) => Number.isFinite(v) && Math.abs(v) <= 90;
 const validLon = (v: number) => Number.isFinite(v) && Math.abs(v) <= 180;
 
-/** Un contour CAP, ou null s'il est illisible (moins de 3 points, coordonnée hors du globe). */
+/**
+ * Bornes d'un contour reçu d'un tiers : le plus gros relevé le 11 oct. 2026 sur
+ * les 33 flux fait 11 478 caractères et 643 points. Au-delà de ces bornes, le
+ * contour est ignoré (jamais lu à moitié).
+ */
+export const MAX_POLYGON_CHARS = 200_000;
+
+/** Un contour CAP, ou null s'il est illisible (moins de 3 points, coordonnée hors du globe, trop long). */
 export function parsePolygon(text: unknown): CapRing | null {
-  if (typeof text !== 'string') return null;
+  if (typeof text !== 'string' || text.length > MAX_POLYGON_CHARS) return null;
   const pts: number[] = [];
   let minLat = Infinity;
   let minLon = Infinity;

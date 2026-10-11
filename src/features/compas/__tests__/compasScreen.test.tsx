@@ -1620,6 +1620,92 @@ describe('CompasScreen', () => {
     expect(within(sheet).getByTestId('meteoalarm-notice').textContent).toContain(METEOALARM_DISCLAIMER);
   });
 
+  const TEXTES = [
+    {
+      lang: 'en-GB',
+      headline: 'Orange Wind Warning for Italy - Sardegna',
+      description: 'Strong winds|Gusts up to 90 km/h',
+      instruction: 'Avoid exposed ridges <script>alert(1)</script>',
+    },
+    { lang: 'it-IT', headline: 'Allerta Arancione Vento', description: 'Venti forti', instruction: 'Evitare le creste' },
+  ];
+
+  it('Signaux du verdict : la période de validité (UTC) est donnée en entier, la ligne ne se tronque pas', async () => {
+    render(<CompasScreen data={withAlert(mise())} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    const row = await within(sheet).findByText(/Vigilance orange · vent violent \(Sardegna\)/);
+    expect(row.textContent).toContain('valable du 12 oct. 2026, 4 h 00 UTC au 12 oct. 2026, 19 h 00 UTC');
+    // Meteoalarm veut le service et l'heure d'émission toujours visibles : pas de « … » sur une ligne fixe.
+    const line = row.closest('.cp-row');
+    expect(line?.className).toContain('cp-row--wrap');
+    expect(line?.className).toContain('cp-row--tall');
+  });
+
+  it('Signaux du verdict : le texte officiel (titre, description, consignes) de chaque langue, en texte, sans HTML interprété', async () => {
+    const data = withAlert(mise({ texts: TEXTES }));
+    render(<CompasScreen data={data} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    const official = await within(sheet).findByTestId('official-alert-texts');
+    expect(official.textContent).toContain('Texte officiel : Vigilance orange · vent violent (Sardegna)');
+    for (const phrase of ['Strong winds', 'Gusts up to 90 km/h', 'Avoid exposed ridges', 'Venti forti', 'Evitare le creste'])
+      expect(official.textContent).toContain(phrase);
+    // Le texte d'un tiers reste du texte.
+    expect(official.textContent).toContain('<script>alert(1)</script>');
+    expect(sheet.querySelector('script')).toBeNull();
+    expect(official.querySelectorAll('li')).toHaveLength(2);
+    expect(Array.from(official.querySelectorAll('[lang]')).map((n) => n.getAttribute('lang'))).toEqual(['en-GB', 'it-IT']);
+  });
+
+  it('Verdict : le texte officiel est à un geste de la carte (le bouton y mène, même sans autre signal)', async () => {
+    render(<CompasScreen data={withAlert(mise({ texts: TEXTES }))} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Texte officiel et détails/ }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    expect(await within(sheet).findByTestId('official-alert-texts')).toBeTruthy();
+  });
+
+  it('CONTRE-EXEMPLE — alerte sans texte détaillé : pas de rubrique « Texte officiel », le bouton garde son libellé', async () => {
+    render(<CompasScreen data={withAlert(mise())} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    expect(await screen.findByRole('button', { name: /Sources et détails/ })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Texte officiel et détails/ })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    expect(within(sheet).queryByTestId('official-alert-texts')).toBeNull();
+  });
+
+  it('l’heure de lecture du flux est donnée avec l’avertissement (une page restée ouverte ne se rafraîchit pas)', async () => {
+    const data = withAlert(mise());
+    data.alertsReadAt = '2026-10-11T05:03:00.000Z';
+    render(<CompasScreen data={data} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    const notice = await screen.findByTestId('meteoalarm-notice');
+    expect(notice.textContent).toContain('Flux lu le 11 oct. 2026, 5 h 03 UTC.');
+    expect(notice.textContent).toContain(METEOALARM_DISCLAIMER);
+  });
+
+  it('sans heure de lecture connue, l’avertissement reste complet et rien n’est inventé', async () => {
+    render(<CompasScreen data={withAlert(mise())} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    const notice = await screen.findByTestId('meteoalarm-notice');
+    expect(notice.textContent).not.toContain('Flux lu');
+    expect(notice.textContent).toContain(METEOALARM_DISCLAIMER);
+  });
+
+  it('Veille : le texte officiel d’une alerte jaune suit sa ligne', async () => {
+    render(<CompasScreen data={withAlert(mise({ level: 'jaune', texts: TEXTES }))} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Veille/ }));
+    const official = await within(sheet).findByTestId('official-alert-texts');
+    expect(official.textContent).toContain('Venti forti');
+  });
+
   it('Parcours : chercher un lieu, voir la communauté, choisir découpé sur les dates', async () => {
     compas.compasSearchRoutesAction.mockResolvedValueOnce({
       success: true,

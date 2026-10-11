@@ -2,38 +2,56 @@
  * Compas — la table des flux Meteoalarm (plan 4.9). C'est la SEULE liste de pays
  * des alertes officielles : un pays qui n'y figure pas est « non couvert ».
  *
- * CONDITIONS D'USAGE, lues le 2026-10-10 sur la page officielle
- * https://meteoalarm.org/en/live/page/terms-and-conditions (mise à jour du
- * 15/03/2024), § 5 « Use and Redistribution of Information » :
+ * CONDITIONS D'USAGE, lues le 2026-10-10 et relues mot pour mot le 2026-10-11 sur
+ * la page officielle https://meteoalarm.org/en/live/page/terms-and-conditions
+ * (« Last Updated: 15/03/2024 »), § 5 « Use and Redistribution of Information » :
  *   « All Information on the MeteoAlarm Website may be used and redistributed
  *   under terms equivalent to the Creative Commons Attribution 4.0
  *   International License (CC BY 4.0), along with the following additional
  *   requirements »
- * donc l'usage commercial est permis, à ces conditions :
- * - une alerte modifiée est redonnée AVEC l'information officielle sans
- *   changement : le texte officiel (`headline`) et le lien vers la page du
- *   service accompagnent la mise en forme du Compas ;
- * - pour un seul pays, le NOM DU SERVICE NATIONAL (`providers`) est toujours
- *   affiché ;
- * - l'heure d'émission (`sent`) est toujours affichée ;
+ * La page ne prononce pas le mot « commercial » : l'usage commercial est
+ * permis parce que la CC BY 4.0 le permet, ce que la page ne dit pas elle-même.
+ * Exigences supplémentaires du § 5, et où le code les applique :
+ * - « If the Information being redistributed is modified in any way, it must be
+ *   redistributed along with the same Information without any material change
+ *   or modification » : le texte officiel (`headline`, `description`,
+ *   `instruction`, dans la langue du flux) accompagne la mise en forme du
+ *   Compas ;
+ * - pour un seul pays, « the name of the relevant MeteoAlarm Participant »
+ *   (`providers`) est toujours affiché (plusieurs pays : « EUMETNET –
+ *   MeteoAlarm » ; le Compas ne lit qu'un pays par voyage) ;
+ * - « the time of issue » (`sent`, que le profil CAP v2.0 définit comme
+ *   l'heure d'émission) est toujours affichée ;
  * - un lien vers meteoalarm.org (`METEOALARM_HOME`) accompagne l'information ;
- * - l'information est rendue en temps réel : en moyenne moins de 5 minutes de
- *   retard, jamais plus de 10 (cache du serveur : 5 minutes au plus) ;
+ * - « in real-time, with the delay [...] on average less than five minutes and
+ *   never longer than ten minutes » : cache du serveur de 5 minutes au plus, et
+ *   l'heure de lecture du flux est affichée ;
  * - l'avertissement `METEOALARM_DISCLAIMER` est publié mot pour mot.
- * Aucune fréquence d'appel n'est chiffrée par Meteoalarm (« Redistribution
- * Hub », page lue le même jour) ; le cache de 5 minutes par instance est donc
- * aussi la limite de nos appels.
+ * Le Style Guide v1.0 (février 2026), publié dans le Redistribution Hub, marque
+ * en plus « MANDATORY » : le nom du service (`senderName`), le début et la fin
+ * (`onset`, `expires`) avec leur fuseau, la zone (`areaDesc`), le niveau et le
+ * phénomène dans le titre, `description` et `instruction` dans toutes les langues
+ * du message, « exactly as provided ». Ce guide présente ses règles comme des
+ * « guidelines and good practices » et précise (§ 1.3) que la redistribution doit,
+ * en plus, respecter les conditions ci-dessus : le Compas applique ces points par
+ * prudence (voir `danger.ts` et `OfficialAlertTexts.tsx`).
+ * Aucune fréquence d'appel n'est chiffrée par Meteoalarm (page « Redistribution
+ * Hub », relue le même jour) ; le cache de 5 minutes par instance est donc aussi
+ * la limite de nos appels.
  *
  * Noms des services : page « Our Warning Providers »
- * https://meteoalarm.org/en/live/page/warning-providers (lue le 2026-10-10).
+ * https://meteoalarm.org/en/live/page/warning-providers (relue le 2026-10-11).
  *
- * Flux : `https://feeds.meteoalarm.org/api/v1/warnings/feeds-<slug>`, l'adresse
- * que les flux Atom officiels (https://feeds.meteoalarm.org) donnent en lien
- * `application/cap+xml` pour chaque alerte. Ne figurent ici que les pays dont
- * le flux portait des alertes à la lecture du 10 octobre 2026. Royaume-Uni,
- * Luxembourg, Malte, Moldavie, Macédoine du Nord et Slovaquie rendaient un flux
- * vide : on ne sait pas s'il est calme ou à l'arrêt, donc « non couvert » plutôt
- * qu'un faux « aucune alerte ».
+ * Flux : `https://feeds.meteoalarm.org/api/v1/warnings/feeds-<slug>`, la liste
+ * JSON d'un pays. Les pages lues ne décrivent pas cette adresse : c'est le
+ * préfixe que les flux Atom officiels (https://feeds.meteoalarm.org, « maintained
+ * for backward compatibility », portail https://api.meteoalarm.org) donnent en
+ * lien `application/cap+xml` pour chaque alerte (`…/feeds-<slug>/<uuid>`). Elle
+ * répond sans jeton ; si elle change ou ferme, le Compas dit « indisponibles ».
+ * Ne figurent ici que les pays dont le flux portait des alertes à la lecture du
+ * 10 octobre 2026. Royaume-Uni, Luxembourg, Malte, Moldavie, Macédoine du Nord et
+ * Slovaquie rendaient un flux vide : on ne sait pas s'il est calme ou à l'arrêt,
+ * donc « non couvert » plutôt qu'un faux « aucune alerte ».
  */
 
 export const METEOALARM_HOME = 'https://meteoalarm.org/en/live/';
@@ -66,6 +84,18 @@ export function formatIssuedUtc(iso: string | null | undefined): string | null {
   const d = new Date(t);
   const mm = String(d.getUTCMinutes()).padStart(2, '0');
   return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}, ${d.getUTCHours()} h ${mm} UTC`;
+}
+
+/**
+ * La période de validité d'une alerte (début et fin, en UTC), « du 11 oct. 2026,
+ * 4 h 00 UTC au 11 oct. 2026, 19 h 00 UTC ». Le Style Guide de Meteoalarm exige
+ * le début et la fin avec leur fuseau. Un début ou une fin sans heure ou
+ * illisible : null (rien d'inventé).
+ */
+export function formatPeriodUtc(onset: string | null | undefined, expires: string | null | undefined): string | null {
+  const from = formatIssuedUtc(onset);
+  const to = formatIssuedUtc(expires);
+  return from && to ? `du ${from} au ${to}` : null;
 }
 
 export interface MeteoalarmProvider {

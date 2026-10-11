@@ -126,6 +126,8 @@ export interface CompasData {
    * absent : écran plus ancien, non lues. Sert à citer la source (Sources).
    */
   alertsStatus?: AlertsStatus;
+  /** Instant où le flux d'alertes a été lu (ISO), affiché avec l'avertissement de Meteoalarm ; null sans lecture. */
+  alertsReadAt?: string | null;
   /** Conseils de kit selon la météo et le parcours, chacun avec sa donnée source. */
   kitAdvice: KitAdvice[];
   /** Points OpenStreetMap à moins de 1 km du tracé choisi (vide sans parcours du catalogue). */
@@ -589,6 +591,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     model: { ...baseModel, verdict: mergeDangerIntoVerdict(baseModel.verdict, danger) },
     danger,
     alertsStatus: officialAlerts.status,
+    alertsReadAt: officialAlerts.readAt ?? null,
     kitAdvice: adviseKit({
       lines: baseModel.kit.lines,
       forecasts: (weather?.tripDays ?? []).map((d) => ({

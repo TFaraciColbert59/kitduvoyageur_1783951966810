@@ -19,7 +19,7 @@ export interface WatchRule {
   axis: DangerAxis;
   label: string;
   /** Ce que la règle a déclenché sur ce voyage (vide : rien à signaler). */
-  hits: Array<{ day: number | null; label: string; source: string }>;
+  hits: Array<{ day: number | null; label: string; source: string; official?: DangerSignal['official'] }>;
 }
 
 const T = DANGER_THRESHOLDS;
@@ -65,7 +65,7 @@ export function watchRules(signals: readonly DangerSignal[]): WatchRule[] {
     const r = ruleOf(s);
     if (!r) continue;
     const list = byRule.get(r) ?? [];
-    list.push({ day: s.day ?? null, label: s.label, source: s.source });
+    list.push({ day: s.day ?? null, label: s.label, source: s.source, ...(s.official ? { official: s.official } : {}) });
     byRule.set(r, list);
   }
   return RULES.map((r) => ({ ...r, hits: byRule.get(r.id) ?? [] }));

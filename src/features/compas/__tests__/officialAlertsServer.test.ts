@@ -4,10 +4,13 @@ vi.mock('server-only', () => ({}));
 
 import lausanne from './fixtures/meteoalarm-ch-lausanne.json';
 import {
+  FEED_MAX_BYTES,
   FEED_MAX_STALE_MS,
+  FEED_RETRY_AFTER_FAILURE_MS,
   FEED_TTL_MS,
   getOfficialAlerts,
   placeAreasOf,
+  readBodyBounded,
   resetOfficialAlertsCache,
 } from '../server/officialAlerts';
 
@@ -81,6 +84,8 @@ function mockNetwork(opts: {
     if (opts.delayMs) await new Promise((r) => setTimeout(r, opts.delayMs));
     const body = opts.feeds[slug];
     if (typeof body === 'number') return new Response('boom', { status: body });
+    // Une réponse toute faite (corps trop gros, mal formé…) ou une panne réseau.
+    if (typeof body === 'function') return (body as () => Response)();
     return new Response(JSON.stringify(body), { status: 200 });
   });
   return { calls, feedCalls: () => calls.filter((c) => c.url.includes('feeds.meteoalarm.org')).length };
@@ -119,7 +124,7 @@ describe('getOfficialAlerts', () => {
   it('pays absent de la table : « non couvert », et aucun appel au flux', async () => {
     const net = mockNetwork({ place: 'yosemite' });
     const r = await getOfficialAlerts({ point: POINTS.yosemite, ...TRIP });
-    expect(r).toEqual({ status: 'non_couvert', alerts: [], area: null });
+    expect(r).toEqual({ status: 'non_couvert', alerts: [], area: null, readAt: null });
     expect(net.feedCalls()).toBe(0);
   });
 
@@ -179,7 +184,7 @@ describe('getOfficialAlerts', () => {
   });
 
   it('« aujourd’hui » est celui de la destination, pas celui de Paris', async () => {
-    mockNetwork({ place: 'lyon', feeds: { france: { warnings: [] } } });
+    mockNetwork({ place: 'lyon', feeds: { france: { warnings: [cap('fr-13', 'Bouches-du-Rhône', '3; orange; Severe', '3; Thunderstorm')] } } });
     // 11 oct. 0 h 30 à Paris = 10 oct. 15 h 30 à Los Angeles : un voyage du 12 oct. n'est pas encore publié là-bas.
     vi.setSystemTime(new Date('2026-10-10T22:30:00Z'));
     expect(await getOfficialAlerts({ point: POINTS.lyon, from: '2026-10-12', to: '2026-10-12', timeZone: 'America/Los_Angeles' })).toMatchObject({
@@ -260,5 +265,146 @@ describe('fraîcheur : retard moyen < 5 min, jamais > 10 min (conditions Meteoal
     expect(stale.alerts).toHaveLength(1);
     vi.setSystemTime(new Date(NOW.getTime() + 10 * 60_000 + 1_000));
     expect(await getOfficialAlerts({ point: POINTS.lyon, ...TRIP })).toMatchObject({ status: 'indisponibles', alerts: [] });
+  });
+});
+
+describe('entrée non fiable : taille, forme, panne (aucune exception, jamais « aucune alerte »)', () => {
+  const MIB = 1024 * 1024;
+  const calme = { warnings: [cap('fr-13', 'Bouches-du-Rhône', '3; orange; Severe', '3; Thunderstorm')] };
+
+  it('readBodyBounded : un corps dans la borne est lu en entier, BOM retiré', async () => {
+    const text = await readBodyBounded(new Response('\uFEFF{"warnings":[]}'), 1000);
+    expect(JSON.parse(text as string)).toEqual({ warnings: [] });
+  });
+
+  it('readBodyBounded : un Content-Length au-dessus de la borne refuse avant toute lecture', async () => {
+    let pulled = 0;
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulled += 1;
+        controller.enqueue(new Uint8Array(10));
+      },
+    });
+    const res = new Response(body, { headers: { 'content-length': '5000' } });
+    expect(await readBodyBounded(res, 1000)).toBeNull();
+    expect(pulled).toBeLessThanOrEqual(1);
+  });
+
+  it('readBodyBounded : sans Content-Length, la lecture s’arrête dès que la borne est dépassée', async () => {
+    let pulled = 0;
+    const chunk = new Uint8Array(MIB);
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulled += 1;
+        if (pulled > 200) controller.close();
+        else controller.enqueue(chunk);
+      },
+    });
+    expect(await readBodyBounded(new Response(body), 4 * MIB)).toBeNull();
+    // Arrêté vers le 5e Mio, pas lu jusqu'au bout (200 Mio).
+    expect(pulled).toBeLessThan(10);
+  });
+
+  it('flux de plus de 12 Mo (annoncé ou non) : indisponible, sans exception', async () => {
+    expect(FEED_MAX_BYTES).toBe(12 * MIB);
+    mockNetwork({
+      place: 'lyon',
+      feeds: { france: () => new Response('{"warnings":[]}', { headers: { 'content-length': String(FEED_MAX_BYTES + 1) } }) },
+    });
+    expect(await getOfficialAlerts({ point: POINTS.lyon, ...TRIP })).toMatchObject({ status: 'indisponibles', alerts: [], readAt: null });
+    resetOfficialAlertsCache();
+    vi.restoreAllMocks();
+    const chunk = new Uint8Array(MIB);
+    mockNetwork({
+      place: 'lyon',
+      feeds: {
+        france: () => {
+          let n = 0;
+          return new Response(
+            new ReadableStream<Uint8Array>({
+              pull(controller) {
+                n += 1;
+                if (n > 40) controller.close();
+                else controller.enqueue(chunk);
+              },
+            })
+          );
+        },
+      },
+    });
+    expect(await getOfficialAlerts({ point: POINTS.lyon, ...TRIP })).toMatchObject({ status: 'indisponibles', alerts: [] });
+  });
+
+  it('corps qui n’est pas du JSON (page d’erreur HTML), réseau coupé : indisponible', async () => {
+    mockNetwork({ place: 'lyon', feeds: { france: () => new Response('<html><body>Bad gateway</body></html>', { status: 200 }) } });
+    expect(await getOfficialAlerts({ point: POINTS.lyon, ...TRIP })).toMatchObject({ status: 'indisponibles', alerts: [] });
+    resetOfficialAlertsCache();
+    vi.restoreAllMocks();
+    mockNetwork({
+      place: 'lyon',
+      feeds: {
+        france: () => {
+          throw new TypeError('fetch failed');
+        },
+      },
+    });
+    expect(await getOfficialAlerts({ point: POINTS.lyon, ...TRIP })).toMatchObject({ status: 'indisponibles', alerts: [] });
+  });
+
+  it('flux sans aucun message : pas pris pour un pays calme (le flux garde l’historique, un flux vide ressemble à une panne)', async () => {
+    mockNetwork({ place: 'lyon', feeds: { france: { warnings: [] } } });
+    expect(await getOfficialAlerts({ point: POINTS.lyon, ...TRIP })).toMatchObject({ status: 'indisponibles', alerts: [] });
+  });
+
+  it('flux lu avec un BOM : lu normalement', async () => {
+    mockNetwork({ place: 'lyon', feeds: { france: () => new Response(`\uFEFF${JSON.stringify(calme)}`) } });
+    expect(await getOfficialAlerts({ point: POINTS.lyon, ...TRIP })).toMatchObject({ status: 'lues', alerts: [] });
+  });
+
+  it('l’instant de lecture du flux est rendu, et reste celui de la lecture tant que le cache sert', async () => {
+    mockNetwork({ place: 'lyon', feeds: { france: calme } });
+    const first = await getOfficialAlerts({ point: POINTS.lyon, ...TRIP });
+    expect(first.readAt).toBe(NOW.toISOString());
+    vi.setSystemTime(new Date(NOW.getTime() + 3 * 60_000));
+    const second = await getOfficialAlerts({ point: POINTS.lyon, ...TRIP });
+    expect(second.readAt).toBe(NOW.toISOString());
+    vi.setSystemTime(new Date(NOW.getTime() + 6 * 60_000));
+    const third = await getOfficialAlerts({ point: POINTS.lyon, ...TRIP });
+    expect(third.readAt).toBe(new Date(NOW.getTime() + 6 * 60_000).toISOString());
+  });
+
+  it('un flux qui échoue n’est pas rappelé à chaque ouverture : une minute de répit, puis un nouvel essai', async () => {
+    expect(FEED_RETRY_AFTER_FAILURE_MS).toBe(60_000);
+    const net = mockNetwork({ place: 'lyon', feeds: { france: 503 } });
+    for (let i = 0; i < 3; i += 1)
+      expect(await getOfficialAlerts({ point: POINTS.lyon, ...TRIP })).toMatchObject({ status: 'indisponibles' });
+    expect(net.feedCalls()).toBe(1);
+    vi.setSystemTime(new Date(NOW.getTime() + 61_000));
+    await getOfficialAlerts({ point: POINTS.lyon, ...TRIP });
+    expect(net.feedCalls()).toBe(2);
+  });
+
+  it('le flux revient une fois le répit passé : il est lu normalement', async () => {
+    mockNetwork({ place: 'lyon', feeds: { france: 503 } });
+    await getOfficialAlerts({ point: POINTS.lyon, ...TRIP });
+    vi.restoreAllMocks();
+    mockNetwork({ place: 'lyon', feeds: { france: calme } });
+    vi.setSystemTime(new Date(NOW.getTime() + 61_000));
+    expect(await getOfficialAlerts({ point: POINTS.lyon, ...TRIP })).toMatchObject({ status: 'lues' });
+  });
+
+  it('pas de lecture, pas d’heure de lecture', async () => {
+    mockNetwork({ place: 'lyon', feeds: { france: 503 } });
+    expect(await getOfficialAlerts({ point: POINTS.lyon, ...TRIP })).toMatchObject({ status: 'indisponibles', readAt: null });
+  });
+
+  it('la carte qui ne répond pas ou répond n’importe quoi : indisponible, sans exception', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response('<html>', { status: 200 }));
+    expect(await getOfficialAlerts({ point: POINTS.lyon, ...TRIP })).toMatchObject({ status: 'indisponibles' });
+    vi.restoreAllMocks();
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      throw new TypeError('fetch failed');
+    });
+    expect(await getOfficialAlerts({ point: POINTS.lyon, ...TRIP })).toMatchObject({ status: 'indisponibles' });
   });
 });
