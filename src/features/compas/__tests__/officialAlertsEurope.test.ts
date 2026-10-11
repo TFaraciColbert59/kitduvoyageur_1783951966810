@@ -152,6 +152,78 @@ describe('connaissance de la zone : jamais « aucune alerte » sans preuve', () 
   });
 });
 
+/* ---------- Italie : plusieurs messages émis à la même seconde ---------- */
+describe('émissions à la même seconde pour un même phénomène et un même jour', () => {
+  // Jeu de test (forme du flux, valeurs inventées pour le test) : un service publie
+  // à la même seconde trois mises à jour « vertes » puis une alerte orange de vent
+  // sur la même zone, même fenêtre. Le niveau retenu ne doit pas dépendre de
+  // l'ordre dans lequel le flux liste les messages.
+  const SENT = '2026-10-10T18:00:00+02:00';
+  const vert = (id: string) =>
+    warning(id, SENT, [info({ language: 'en-GB', areas: [{ name: 'Sardegna' }], level: '1; green; Minor' })], 'Update');
+  const orange = warning('it-orange', SENT, [
+    info({ language: 'en-GB', areas: [{ name: 'Sardegna' }], level: '3; orange; Severe' }),
+  ]);
+  const opts = { ...BASE, names: ['Sardegna'], feed: METEOALARM_FEEDS.it };
+
+  it('l’orange reste affiché, que le flux le liste avant ou après les messages verts', () => {
+    const verts = [vert('it-v1'), vert('it-v2'), vert('it-v3')];
+    for (const warnings of [[...verts, orange], [orange, ...verts], [verts[0], orange, verts[1], verts[2]]]) {
+      const r = readMeteoalarm({ warnings }, opts);
+      expect(r.alerts.map((a) => [a.id, a.level, a.hazard])).toEqual([['it-orange', 'orange', 'vent violent']]);
+    }
+  });
+
+  it('à la même seconde, le niveau le plus sévère l’emporte sur une fenêtre identique (jaune puis rouge, et l’inverse)', () => {
+    const jaune = warning('it-jaune', SENT, [
+      info({ language: 'en-GB', areas: [{ name: 'Sardegna' }], level: '2; yellow; Moderate' }),
+    ]);
+    const rouge = warning('it-rouge', SENT, [
+      info({ language: 'en-GB', areas: [{ name: 'Sardegna' }], level: '4; red; Extreme' }),
+    ]);
+    for (const warnings of [[jaune, rouge], [rouge, jaune]]) {
+      expect(readMeteoalarm({ warnings }, opts).alerts.map((a) => a.id)).toEqual(['it-rouge']);
+    }
+  });
+
+  it('une émission plus récente reste prioritaire : l’orange plus ancien est clos par le vert plus récent', () => {
+    const plusTard = warning('it-v-tard', '2026-10-10T19:00:00+02:00', [
+      info({ language: 'en-GB', areas: [{ name: 'Sardegna' }], level: '1; green; Minor' }),
+    ], 'Update');
+    for (const warnings of [[orange, plusTard], [plusTard, orange]]) {
+      expect(readMeteoalarm({ warnings }, opts).alerts).toEqual([]);
+    }
+  });
+
+  it('deux fenêtres distinctes d’une même émission restent deux alertes (matin jaune, après-midi orange)', () => {
+    const feed = {
+      warnings: [
+        warning('it-2f', SENT, [
+          info({
+            language: 'en-GB',
+            areas: [{ name: 'Sardegna' }],
+            level: '2; yellow; Moderate',
+            onset: '2026-10-11T06:00:00+02:00',
+            expires: '2026-10-11T12:00:00+02:00',
+          }),
+          info({
+            language: 'en-GB',
+            areas: [{ name: 'Sardegna' }],
+            level: '3; orange; Severe',
+            onset: '2026-10-11T12:00:00+02:00',
+            expires: '2026-10-11T21:00:00+02:00',
+          }),
+        ]),
+      ],
+    };
+    const r = readMeteoalarm(feed, opts);
+    expect(r.alerts.map((a) => [a.level, a.onset])).toEqual([
+      ['orange', '2026-10-11T12:00:00+02:00'],
+      ['jaune', '2026-10-11T06:00:00+02:00'],
+    ]);
+  });
+});
+
 /* ---------- Suisse : contours, trois langues ---------- */
 // Un carré de ~11 km autour de (46,7) ; le lieu « dedans » est au milieu.
 const CARRE = ['45.95,6.95 45.95,7.05 46.05,7.05 46.05,6.95 45.95,6.95'];
