@@ -1,4 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * VERROU DE VIE PRIVÉE (relecture du 11 octobre, lot P) : la ligne « Papiers » tirée de la
@@ -113,6 +116,7 @@ vi.mock('../server/rates', () => ({
   getBudgetFx: vi.fn(async () => null),
 }));
 
+import { travellerPrivacyViolations } from '../../../../scripts/verify/traveller_privacy.mjs';
 import { buildCompasAutofillSystem } from '@/lib/ai/features/compasAutofill';
 import type { PapersFacts } from '../engine/papers';
 import { compasAutofillAction } from '../server/autofillActions';
@@ -524,5 +528,105 @@ describe('lecture : chaque lecteur calcule SA ligne « Formalités », à part d
     expect(await planned('u2')).toBe(before + 12);
     expect((await dataAs({ id: 'u3' })).formalities ?? null).toBeNull();
     expect((await dataAs({ id: 'u2' })).formalities).toMatchObject({ title: 'Formalités : ESTA (40 $)', amount: 70 });
+  });
+});
+
+/**
+ * CONTRÔLE PAR MUTATION (lot Z1) : le verrou `scripts/verify/traveller_privacy.mjs` lit le VRAI code
+ * de la préparation et de la lecture (copié dans un dossier temporaire) ; réintroduire une fuite
+ * (formalités chiffrées par le profil, filtre de l'IA avec les règles du lanceur, nationalité dans
+ * la consigne, lecture de la nationalité à l'écriture) le fait casser. Le code intact, lui, passe.
+ */
+describe('verrou : chaque fuite réintroduite dans le vrai code est refusée', () => {
+  const FILES = [
+    'src/features/compas/engine/papers.ts',
+    'src/features/compas/engine/formalities.ts',
+    'src/features/compas/engine/travel.ts',
+    'src/features/compas/engine/costs.ts',
+    'src/features/compas/engine/traveller.ts',
+    'src/features/compas/server/autofillActions.ts',
+    'src/features/compas/server/getCompasData.ts',
+    'src/lib/ai/features/compasAutofill.ts',
+  ];
+  const WRITE = 'src/features/compas/server/autofillActions.ts';
+  const READ = 'src/features/compas/server/getCompasData.ts';
+  const AI = 'src/lib/ai/features/compasAutofill.ts';
+  const roots: string[] = [];
+  afterEach(() => {
+    for (const root of roots.splice(0)) fs.rmSync(root, { recursive: true, force: true });
+  });
+
+  /** Le vrai code dans un dossier temporaire, avec les remplacements demandés (chacun doit exister). */
+  function mutated(changes: Record<string, Array<[string, string]>> = {}): string[] {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'lkdv-mutation-'));
+    roots.push(root);
+    for (const rel of FILES) {
+      let text = fs.readFileSync(path.join(process.cwd(), rel), 'utf8');
+      for (const [from, to] of changes[rel] ?? []) {
+        expect(text, `${rel} ne contient plus « ${from} » : mettre le test à jour`).toContain(from);
+        text = text.replace(from, to);
+      }
+      fs.mkdirSync(path.dirname(path.join(root, rel)), { recursive: true });
+      fs.writeFileSync(path.join(root, rel), text);
+    }
+    return travellerPrivacyViolations(root);
+  }
+  const named = (name: string, file: string) => `calcul dépendant du profil (${name}) nommé hors de son moteur et de la lecture : ${file}`;
+
+  it('le code intact passe', () => {
+    expect(mutated()).toEqual([]);
+  });
+
+  it('formalités chiffrées par le profil du lanceur (abroadCosts) : refusé', () => {
+    const v = mutated({ [WRITE]: [['const insured = abroad === true;', 'const insured = abroadCosts(abroad, traveller, null).insurance;']] });
+    expect(v).toContain(named('abroadCosts', WRITE));
+    expect(v).toContain(`profil voyageur passé tel quel dans l'écriture du voyage : ${WRITE}`);
+  });
+
+  it('la ligne « Formalités » et sa base « ressortissant français » rangées de nouveau (entryFees, formalitiesBasis) : refusé', () => {
+    const v = mutated({
+      [WRITE]: [['const insured = abroad === true;', "const insured = abroad === true; const fee = entryFees(anchor.countryCode); const basis = formalitiesBasis(null);"]],
+    });
+    expect(v).toContain(named('entryFees', WRITE));
+    expect(v).toContain(named('formalitiesBasis', WRITE));
+  });
+
+  it('les appareils du lanceur (frenchDevices) ou ses règles complètes (travelPapers) à l’écriture : refusé', () => {
+    const v = mutated({
+      [WRITE]: [['const insured = abroad === true;', "const insured = frenchDevices(x) || travelPapers('PT', 'Portugal', x).euro;"]],
+    });
+    expect(v).toContain(named('frenchDevices', WRITE));
+    expect(v).toContain(named('travelPapers', WRITE));
+  });
+
+  it('conseils de l’IA filtrés avec les règles du lanceur (keepAiNote) : refusé', () => {
+    const v = mutated({
+      [WRITE]: [['const aiRules = sharedRules(anchor.countryCode, anchor.country, abroad);', "const aiRules = rulesOf(anchor);"]],
+    });
+    expect(v).toEqual([`aiRules ne vient pas de sharedRules dans ${WRITE}`]);
+    const w = mutated({ [WRITE]: [['keepAiNote(n, aiRules)', 'keepAiNote(n, rules)']] });
+    expect(w).toEqual([`conseil de l'IA filtré avec d'autres règles que celles sans profil (sharedRules) dans ${WRITE}`]);
+  });
+
+  it('la nationalité dans la consigne de l’IA : refusé, côté appelant comme côté consigne', () => {
+    const v = mutated({
+      [WRITE]: [['buildCompasAutofillSystem()', "buildCompasAutofillSystem(traveller.nationality === 'FR')"]],
+      [AI]: [['export function buildCompasAutofillSystem()', 'export function buildCompasAutofillSystem(frenchNational = false)']],
+    });
+    expect(v).toContain(`consigne de l'IA réglée par un argument (la nationalité ne part pas à un tiers) : ${WRITE}`);
+    expect(v).toContain(`consigne de l'IA réglée par un argument (la nationalité ne part pas à un tiers) : ${AI}`);
+    expect(v).toContain(`valeur du profil (traveller.nationality) lue dans l'écriture du voyage : ${WRITE}`);
+  });
+
+  it('une valeur du profil (nationalité, résidence, devise) lue pour ce qui se range : refusé', () => {
+    for (const field of ['nationality', 'residenceCountry', 'currency']) {
+      const v = mutated({ [WRITE]: [['const insured = abroad === true;', `const insured = abroad === true && traveller.${field} != null;`]] });
+      expect(v, field).toEqual([`valeur du profil (traveller.${field}) lue dans l'écriture du voyage : ${WRITE}`]);
+    }
+  });
+
+  it('la lecture ne contourne pas le moteur : abroadCosts nommé directement dans getCompasData est refusé', () => {
+    const v = mutated({ [READ]: [['readerFormalities({', 'abroadCosts(null, reader, null); readerFormalities({']] });
+    expect(v).toEqual([named('abroadCosts', READ)]);
   });
 });
