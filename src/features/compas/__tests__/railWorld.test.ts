@@ -111,6 +111,100 @@ describe('l’Europe entière, par règles de réseau et de distance', () => {
   });
 });
 
+describe('îles sans train depuis le continent, route mesurée comprise (1,2 à 1,4 fois le vol d’oiseau)', () => {
+  type Pt = { lat: number; lon: number };
+  const ATHENES = P.athenes;
+  const THESSALONIQUE = P.thessalonique;
+  const ZAGREB: Pt = { lat: 45.81, lon: 15.98 };
+  const TARTU: Pt = { lat: 58.38, lon: 26.72 };
+  const TALLINN: Pt = { lat: 59.44, lon: 24.75 };
+  const GLASGOW: Pt = { lat: 55.86, lon: -4.25 };
+  const MADRID: Pt = { lat: 40.42, lon: -3.7 };
+
+  /** Un trajet du continent à une île, route mesurée à `factor` fois le vol d’oiseau, 4 jours. */
+  function reach(from: Pt, to: Pt, cc: string, factor: number) {
+    const straightKm = distanceKm(from, to);
+    const base = { fromCountry: cc, toCountry: cc, straightKm, roadKm: straightKm * factor, days: 4 };
+    // Sans coordonnées d’arrivée aucune île n’est connue : le train serait compté. C’est la règle
+    // « île » seule qui l’écarte, pas la distance ni la durée.
+    expect(trainTrip(base), `contrôle de ${JSON.stringify(to)}`).not.toBeNull();
+    return trainTrip({ ...base, from, to });
+  }
+
+  const islands: Array<[string, Pt, Pt, string]> = [
+    // Îles Ioniennes
+    ['Céphalonie (Argostoli)', ATHENES, { lat: 38.18, lon: 20.49 }, 'GR'],
+    ['Ithaque (Vathy)', ATHENES, { lat: 38.37, lon: 20.72 }, 'GR'],
+    ['Zante', ATHENES, { lat: 37.78, lon: 20.9 }, 'GR'],
+    ['Leucade', ATHENES, { lat: 38.83, lon: 20.71 }, 'GR'],
+    ['Paxos', ATHENES, { lat: 39.2, lon: 20.18 }, 'GR'],
+    ['Cythère', THESSALONIQUE, { lat: 36.26, lon: 22.99 }, 'GR'],
+    // Égée du Nord et de l’Est
+    ['Lesbos (Mytilène)', ATHENES, { lat: 39.11, lon: 26.55 }, 'GR'],
+    ['Lemnos', ATHENES, { lat: 39.87, lon: 25.07 }, 'GR'],
+    ['Chios', ATHENES, { lat: 38.37, lon: 26.14 }, 'GR'],
+    ['Samos', ATHENES, { lat: 37.75, lon: 26.98 }, 'GR'],
+    ['Ikaria', ATHENES, { lat: 37.62, lon: 26.17 }, 'GR'],
+    ['Thasos', ATHENES, { lat: 40.78, lon: 24.71 }, 'GR'],
+    ['Samothrace', ATHENES, { lat: 40.48, lon: 25.52 }, 'GR'],
+    ['Skiathos', THESSALONIQUE, { lat: 39.16, lon: 23.49 }, 'GR'],
+    ['Skopelos', THESSALONIQUE, { lat: 39.12, lon: 23.73 }, 'GR'],
+    ['Skyros', THESSALONIQUE, { lat: 38.9, lon: 24.57 }, 'GR'],
+    // Dodécanèse
+    ['Kos', ATHENES, { lat: 36.89, lon: 27.29 }, 'GR'],
+    ['Patmos', ATHENES, { lat: 37.31, lon: 26.55 }, 'GR'],
+    ['Léros', ATHENES, { lat: 37.15, lon: 26.85 }, 'GR'],
+    ['Karpathos', ATHENES, { lat: 35.51, lon: 27.21 }, 'GR'],
+    ['Symi', ATHENES, { lat: 36.61, lon: 27.84 }, 'GR'],
+    // Îles dalmates
+    ['Hvar', ZAGREB, { lat: 43.17, lon: 16.44 }, 'HR'],
+    ['Brač (Supetar)', ZAGREB, { lat: 43.38, lon: 16.56 }, 'HR'],
+    ['Brač (Bol)', ZAGREB, { lat: 43.26, lon: 16.65 }, 'HR'],
+    ['Šolta', ZAGREB, { lat: 43.39, lon: 16.3 }, 'HR'],
+    ['Vis', ZAGREB, { lat: 43.06, lon: 16.18 }, 'HR'],
+    ['Korčula', ZAGREB, { lat: 42.96, lon: 17.13 }, 'HR'],
+    ['Lastovo', ZAGREB, { lat: 42.75, lon: 16.89 }, 'HR'],
+    ['Mljet', ZAGREB, { lat: 42.75, lon: 17.5 }, 'HR'],
+    // Estonie
+    ['Saaremaa (Kuressaare)', TARTU, { lat: 58.25, lon: 22.49 }, 'EE'],
+    ['Muhu', TARTU, { lat: 58.58, lon: 23.2 }, 'EE'],
+    ['Hiiumaa (Kärdla)', TARTU, { lat: 59.0, lon: 22.75 }, 'EE'],
+    // Irlande du Nord, Ceuta, Melilla
+    ['Belfast', GLASGOW, { lat: 54.6, lon: -5.93 }, 'GB'],
+    ['Derry', GLASGOW, { lat: 54.99, lon: -7.32 }, 'GB'],
+    ['Londres → Belfast', P.londres, { lat: 54.6, lon: -5.93 }, 'GB'],
+    ['Ceuta', MADRID, { lat: 35.89, lon: -5.31 }, 'ES'],
+    ['Melilla', MADRID, { lat: 35.29, lon: -2.94 }, 'ES'],
+  ];
+
+  it.each(islands)('%s : pas de train', (_name, from, to, cc) => {
+    for (const factor of [1.2, 1.3, 1.4]) expect(reach(from, to, cc, factor)).toBeNull();
+  });
+
+  it('le continent voisin, lui, se rejoint toujours en train', () => {
+    const mainland: Array<[string, Pt, Pt, string]> = [
+      ['Athènes → Patras', ATHENES, { lat: 38.25, lon: 21.73 }, 'GR'],
+      ['Athènes → Volos', ATHENES, { lat: 39.36, lon: 22.94 }, 'GR'],
+      ['Athènes → Préveza', ATHENES, { lat: 38.96, lon: 20.75 }, 'GR'],
+      ['Athènes → Igoumenitsa', ATHENES, { lat: 39.5, lon: 20.27 }, 'GR'],
+      ['Athènes → Alexandroupoli', ATHENES, { lat: 40.85, lon: 25.87 }, 'GR'],
+      ['Zagreb → Split', ZAGREB, { lat: 43.51, lon: 16.44 }, 'HR'],
+      ['Zagreb → Šibenik', ZAGREB, { lat: 43.73, lon: 15.89 }, 'HR'],
+      ['Zagreb → Zadar', ZAGREB, { lat: 44.12, lon: 15.23 }, 'HR'],
+      ['Tallinn → Tartu', TALLINN, TARTU, 'EE'],
+      ['Londres → Glasgow', P.londres, GLASGOW, 'GB'],
+      ['Madrid → Algésiras', MADRID, { lat: 36.13, lon: -5.45 }, 'ES'],
+    ];
+    for (const [name, from, to, cc] of mainland) {
+      const straightKm = distanceKm(from, to);
+      expect(
+        trainTrip({ fromCountry: cc, toCountry: cc, straightKm, roadKm: straightKm * 1.3, days: 5, from, to }),
+        name
+      ).not.toBeNull();
+    }
+  });
+});
+
 describe('Japon, Corée, Chine, Inde : un réseau par pays, jamais d’un pays à l’autre', () => {
   it('Tokyo → Osaka : Shinkansen, 170 km/h en moyenne, le train passe avant la voiture', () => {
     const t = trip('tokyo', 'osaka', 'JP', 'JP', 3)!;
