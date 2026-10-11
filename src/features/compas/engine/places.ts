@@ -422,7 +422,25 @@ export function stageTitleFor(proposed: string, mapName: string | null | undefin
   // Nom proposé plus long que celui de la carte : un commentaire collé
   // (« Springdale repos », « Retour Salt Lake City ») : le nom de la carte.
   if (!a || !b || a === b || b.startsWith(`${a} `)) return proposed;
+  // Nom à deux langues de la carte (« Mòguru/Mogoro », « Bolzano - Bozen ») :
+  // si le nom proposé est l'une des deux, c'est lui, pas les deux collés
+  // (Sardaigne, plan 4.5).
+  if (bilingualParts(mapName).some((part) => plainName(part) === a)) return proposed;
   return mapName;
+}
+
+/**
+ * Les deux noms d'un lieu nommé dans deux langues par la carte : « Mòguru/Mogoro »
+ * (barre oblique) ou « Bolzano - Bozen » (tiret entouré d'espaces). Un trait
+ * d'union collé (« Saint-Étienne-de-Tinée ») n'en sépare jamais deux. Vide si le
+ * nom n'est pas à deux langues.
+ */
+export function bilingualParts(name: string): string[] {
+  const parts = name
+    .split(/\s*\/\s*|\s+[-–—]\s+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  return parts.length > 1 && parts.length <= 3 && parts.every((p) => /\p{L}{2}/u.test(p)) ? parts : [];
 }
 
 
