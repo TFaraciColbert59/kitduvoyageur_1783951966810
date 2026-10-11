@@ -33,32 +33,35 @@ remplace les jobs simples déjà en prod.
 - Utilisation active des claims par les producteurs : à faire en T09 (le moteur
   et le passthrough `awardProducer.p_claims` existent déjà).
 
-## Prochaine action concrète — T09 (renforcer les sept preuves existantes)
+## État au point de reprise (après T09)
 
-1. ProducerHooks : durée active réelle (paliers 20/60/120/240) au lieu du bonus
-   par segments OSM ; nouveauté de parcours via claim `route_novelty` (même
-   gain, +20, max 150) ; `adaptedObjectiveFloor` si objectif adapté vérifié.
-2. Checklist : exiger ≥ 3 contrôles dus pertinents (documenter la colonne qui
-   distingue « dû » d'« ajout libre » — sinon le dire et fermer la variante).
-3. Itinérance (`trip_completed`) : ≥ 2 journées distinctes + 2 réalisations
-   liées ; une checklist seule ne prouve plus le voyage.
-4. Débrief : attribution à la finalisation (20 + 2×items, cap 40) ; avis de
-   lieu : 15 ou 40 si visite contrôlée ; carnet : inchangé (60) + claim média
-   pour préparer T26.
-5. Tests : `producerHooks.spec.ts` et `producerHooksCompletion.spec.ts` étendus
-   (gain nominal, rejeu, refus) + intégration source→intention→décision→outbox.
+- T09 TESTÉ : preuves renforcées (durée active par paliers + nouveauté claim,
+  checklist 3 contrôles dus, itinérance 2 jours, débrief différé 20 min,
+  avis lieu 15 seul — palier 40 fermé). Suites : producerHooks 9/9,
+  completion 16/16, pgTAP intention 25/25. Migration `20261011142641` à pousser
+  en prod (workdir OURS à compléter).
+- Dette consignée : `tests/phase1/producers.integration.spec.ts` (env-gated)
+  utilise des fixtures `session_segment_passages` — réaligner lors de la
+  prochaine exécution locale complète.
 
-## Contrôle de réussite T09
+## Prochaine action concrète — T10 puis T11 (vérifier l'existant session 1, ne pas refaire)
 
-- Les sept producteurs ont gain nominal + rejeu + refus testés (vitest vert).
-- Aucun changement de montant pour les gains historiques (déjà en décisions).
-- `npx tsc --noEmit` ; `npx vitest run tests/features/progression tests/phase1`.
+1. T10 : la carte compacte a été livrée par la session 1 (`ProgressionCompactCard`,
+   `client/progressionQuery.ts`, `compactCard.spec` 12 tests, preuve
+   `docs/progression/2.0/evidence/compact-card.md`). Vérifier les 3 critères sur
+   l'état fusionné : carte visible à 0 XP, erreur ≠ zéro (action réessayer),
+   cache isolé par compte + invalidation après gain/déconnexion. Corriger tout
+   écart constaté, puis statuer T10 = TESTÉ/DÉPLOYÉ.
+2. T11 : intégrer le backend historique (20 tests session 1) plutôt que le
+   réécrire : historique paginé (`/api/progression/history`), sheet Ma
+   progression avec résolveur d'ouverture (Hub/Compte, anciens deep-links),
+   bilan gain confirmé ≠ pending. Contrôles : `sheetFlow.spec` + focus clavier.
 
 ## Rappels de continuation
 
 - Ne pas publier le barème v2 (`rules-registry.json` reste `draft_closed`).
-- T10 (carte compacte) est déjà livré session 1 — vérifier avant de refaire.
-- T11 backend 20 tests existe session 1 — intégrer plutôt que réécrire.
+- Rappels T09 : avis de lieu 40 = fermé (pas de preuve visite) ; débrief = jamais
+  d'appel direct d'attribution (capsule de stabilisation uniquement).
 
 ## Règles de continuation
 

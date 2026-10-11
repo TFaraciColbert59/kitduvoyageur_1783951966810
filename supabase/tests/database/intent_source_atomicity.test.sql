@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(24);
+SELECT plan(25);
 
 -- Fixtures : deux comptes synthétiques + les prérequis minimaux.
 INSERT INTO auth.users(id,email,aud,role,raw_user_meta_data) VALUES
@@ -68,6 +68,8 @@ SELECT is((SELECT count(*)::int FROM public.progression_award_intents WHERE acti
 INSERT INTO public.kit_field_reports(id,user_id,kit_id,hike_session_id,item_key,verdict) VALUES
   ('88888888-0000-4000-8000-000000000002','dddddddd-0000-4000-8000-000000000001','55555555-0000-4000-8000-000000000001','ffffffff-0000-4000-8000-000000000001','item-2','utile');
 SELECT is((SELECT count(*)::int FROM public.progression_award_intents WHERE action_type='kit_field_report'), 1, 'débrief du propriétaire sur session traitée → une intention');
+SELECT ok((SELECT available_at >= created_at + interval '19 minutes' FROM public.progression_award_intents WHERE action_type='kit_field_report'),
+  'débrief : réservation différée (finalisation, pas premier item)');
 
 -- 9. Avis de lieu → clé auteur:lieu exactement comme l'attribution.
 INSERT INTO public.countries_geo(iso_a2,name) VALUES ('FR','France') ON CONFLICT (iso_a2) DO NOTHING;
@@ -84,8 +86,8 @@ SELECT throws_ok($$INSERT INTO public.progression_award_intents(user_id,action_t
 -- 11. Grants : les clients n'accèdent jamais aux intentions.
 SELECT ok(NOT has_table_privilege('anon','public.progression_award_intents','SELECT'), 'anon sans lecture');
 SELECT ok(NOT has_table_privilege('authenticated','public.progression_award_intents','SELECT'), 'authenticated sans lecture');
-SELECT ok(NOT has_function_privilege('authenticated','public.enqueue_progression_award_intent(uuid,text,text,text,timestamptz,jsonb)','EXECUTE'), 'client sans écriture d''intention');
-SELECT ok(has_function_privilege('service_role','public.enqueue_progression_award_intent(uuid,text,text,text,timestamptz,jsonb)','EXECUTE'), 'service_role peut écrire une intention');
+SELECT ok(NOT has_function_privilege('authenticated','public.enqueue_progression_award_intent(uuid,text,text,text,timestamptz,jsonb,integer)','EXECUTE'), 'client sans écriture d''intention');
+SELECT ok(has_function_privilege('service_role','public.enqueue_progression_award_intent(uuid,text,text,text,timestamptz,jsonb,integer)','EXECUTE'), 'service_role peut écrire une intention');
 
 -- 12. La fonction d'enqueue est idempotente par réalisation.
 SELECT is(public.enqueue_progression_award_intent('dddddddd-0000-4000-8000-000000000001','trail_prepared','trail_prep','dddddddd-0000-4000-8000-000000000001:route-42',now()), true, 'première intention acceptée');

@@ -1,11 +1,15 @@
 /**
- * P2 — Accroches producteurs : faits serveur exigés avant toute attribution.
+ * P2/T09 — Accroches producteurs : faits serveur exigés avant toute attribution.
  *   (a) session non traitée → aucun crédit, aucune décision ;
- *   (b) session traitée → gain Explorer avec bonus segments plafonné ;
+ *   (b) session traitée 90 min → palier 70 + nouveauté +20, claim route_novelty ;
+ *   (b2) parcours déjà parcouru cette saison → palier seul, aucun claim ;
+ *   (b3) tracé non plausible (téléphone immobile) → refus ;
+ *   (b4) durée < 20 min → refus ;
  *   (c) débrief kit sans session traitée → refus ;
- *   (d) débrief kit sur session traitée → gain Se préparer/Partager ;
+ *   (d) débrief kit sur session traitée → équipements DISTINCTS (et non le
+ *       nombre de lignes) et date du dernier enregistrement ;
  *   (e) activité préparée → clé (user, route) ;
- *   (f) avis de lieu → clé (place).
+ *   (f) avis de lieu → clé (place), sans collision inter-utilisateurs.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -26,40 +30,41 @@ const mockedAward = vi.mocked(awardProducerGain);
 
 interface TableData {
   session?: unknown;
-  report?: unknown;
-  count?: number;
+  reports?: Array<Record<string, unknown>>;
+  claim?: unknown;
+  season?: unknown;
+}
+
+function builder() {
+  const b: Record<string, unknown> = {};
+  b.select = () => b;
+  b.eq = () => b;
+  b.maybeSingle = (value: unknown) => Promise.resolve({ data: value ?? null, error: null });
+  return b;
 }
 
 function createSupabaseMock(data: TableData) {
   return {
     from: (table: string) => {
       if (table === 'hike_sessions') {
-        const builder: Record<string, unknown> = {};
-        builder.select = () => builder;
-        builder.eq = () => builder;
-        builder.maybeSingle = () => Promise.resolve({ data: data.session ?? null, error: null });
-        return builder;
+        const b = builder();
+        b.maybeSingle = () => Promise.resolve({ data: data.session ?? null, error: null });
+        return b;
       }
-      if (table === 'session_segment_passages') {
-        const builder: Record<string, unknown> = {};
-        builder.select = () => builder;
-        builder.eq = () => Promise.resolve({ count: data.count ?? 0, error: null });
-        return builder;
+      if (table === 'progression_claims') {
+        const b = builder();
+        b.maybeSingle = () => Promise.resolve({ data: data.claim ?? null, error: null });
+        return b;
+      }
+      if (table === 'progression_seasons') {
+        const b = builder();
+        b.maybeSingle = () => Promise.resolve({ data: data.season ?? null, error: null });
+        return b;
       }
       if (table === 'kit_field_reports') {
-        const builder: Record<string, unknown> = {};
-        builder.select = (_cols: string, opts?: { count?: string; head?: boolean }) => {
-          if (opts?.head) {
-            return {
-              eq: () => Promise.resolve({ count: data.count ?? 0, error: null }),
-            };
-          }
-          return builder;
-        };
-        builder.eq = () => builder;
-        builder.limit = () => builder;
-        builder.maybeSingle = () => Promise.resolve({ data: data.report ?? null, error: null });
-        return builder;
+        const b = builder();
+        b.eq = () => Promise.resolve({ data: data.reports ?? [], error: null });
+        return b;
       }
       throw new Error(`table inattendue: ${table}`);
     },
@@ -84,11 +89,19 @@ describe('producerHooks', () => {
     expect(mockedAward).not.toHaveBeenCalled();
   });
 
-  it('(b) session traitée → gain Explorer avec bonus segments plafonné', async () => {
+  it('(b) session 90 min plausible, nouveau parcours → palier 70 + nouveauté 20', async () => {
     mockedGetService.mockReturnValue(
       createSupabaseMock({
-        session: { user_id: 'u1', ended_at: '2026-09-19T08:00:00.000Z', processing_status: 'processed' },
-        count: 100,
+        session: {
+          user_id: 'u1',
+          ended_at: '2026-09-19T08:00:00.000Z',
+          processing_status: 'processed',
+          duration_seconds: 5400,
+          track_quality: { plausibleMovement: 0.9 },
+          route_id: 42,
+        },
+        season: null,
+        claim: null,
       }) as never
     );
 
@@ -99,15 +112,88 @@ describe('producerHooks', () => {
     expect(input.action).toBe('hike_session_processed');
     expect(input.sourceType).toBe('hike_session');
     expect(input.sourceId).toBe('s1');
-    expect(input.bonus).toBe(110);
+    expect(input.bonus).toBe(50); // (70 − 40) + 20
+    expect(input.claims).toEqual([{ group: 'route_novelty', key: 'y2026:route:42' }]);
     expect(input.effectiveAt).toBe('2026-09-19T08:00:00.000Z');
+    expect(input.metadata).toMatchObject({
+      activeMinutes: 90,
+      tierPoints: 70,
+      novelty: true,
+      plausibleMovement: 0.9,
+      routeId: 42,
+    });
+  });
+
+  it('(b2) parcours déjà parcouru dans la saison → palier seul, aucun claim', async () => {
+    mockedGetService.mockReturnValue(
+      createSupabaseMock({
+        session: {
+          user_id: 'u1',
+          ended_at: '2026-10-02T08:00:00.000Z',
+          processing_status: 'processed',
+          duration_seconds: 7200,
+          track_quality: { plausibleMovement: 0.8 },
+          route_id: 42,
+        },
+        season: { id: 'season_2026_s1' },
+        claim: { id: 'claim-1' },
+      }) as never
+    );
+
+    await awardHikeSessionProcessed('s1');
+
+    const input = mockedAward.mock.calls[0][0];
+    expect(input.bonus).toBe(60); // (100 − 40) + 0
+    expect(input.claims).toEqual([]);
+    expect(input.metadata).toMatchObject({ tierPoints: 100, novelty: false });
+  });
+
+  it('(b3) tracé non plausible → refus sans attribution', async () => {
+    mockedGetService.mockReturnValue(
+      createSupabaseMock({
+        session: {
+          user_id: 'u1',
+          ended_at: '2026-09-19T08:00:00.000Z',
+          processing_status: 'processed',
+          duration_seconds: 5400,
+          track_quality: { plausibleMovement: 0.2 },
+          route_id: 42,
+        },
+      }) as never
+    );
+
+    const result = await awardHikeSessionProcessed('s1');
+
+    expect(result.success).toBe(false);
+    expect(result.reason).toBe('mouvement_non_plausible');
+    expect(mockedAward).not.toHaveBeenCalled();
+  });
+
+  it('(b4) durée active < 20 min → refus', async () => {
+    mockedGetService.mockReturnValue(
+      createSupabaseMock({
+        session: {
+          user_id: 'u1',
+          ended_at: '2026-09-19T08:00:00.000Z',
+          processing_status: 'processed',
+          duration_seconds: 600,
+          track_quality: { plausibleMovement: 0.9 },
+          route_id: null,
+        },
+      }) as never
+    );
+
+    const result = await awardHikeSessionProcessed('s1');
+
+    expect(result.success).toBe(false);
+    expect(result.reason).toBe('duree_insuffisante');
+    expect(mockedAward).not.toHaveBeenCalled();
   });
 
   it('(c) débrief kit sans session traitée → refus sans crédit', async () => {
     mockedGetService.mockReturnValue(
       createSupabaseMock({
         session: { user_id: 'u1', kit_id: 'k1', processing_status: 'processing' },
-        report: { kit_id: 'k1' },
       }) as never
     );
 
@@ -118,12 +204,15 @@ describe('producerHooks', () => {
     expect(mockedAward).not.toHaveBeenCalled();
   });
 
-  it('(d) débrief kit sur session traitée → gain kit', async () => {
+  it('(d) débrief sur session traitée → équipements distincts et date du dernier item', async () => {
     mockedGetService.mockReturnValue(
       createSupabaseMock({
         session: { user_id: 'u1', kit_id: 'k1', processing_status: 'processed' },
-        report: { kit_id: 'k1' },
-        count: 3,
+        reports: [
+          { item_key: 'tente', created_at: '2026-09-19T18:00:00.000Z' },
+          { item_key: 'tente', created_at: '2026-09-19T18:05:00.000Z' },
+          { item_key: 'rechaud', created_at: '2026-09-19T18:20:00.000Z' },
+        ],
       }) as never
     );
 
@@ -133,7 +222,9 @@ describe('producerHooks', () => {
     expect(input.action).toBe('kit_field_report');
     expect(input.sourceType).toBe('kit_report');
     expect(input.sourceId).toBe('s1');
-    expect(input.bonus).toBe(6);
+    expect(input.bonus).toBe(4); // 2 équipements distincts
+    expect(input.effectiveAt).toBe('2026-09-19T18:20:00.000Z');
+    expect(input.metadata).toMatchObject({ kitId: 'k1', items: 2 });
   });
 
   it('(e) activité préparée → clé stable (user, route)', async () => {

@@ -7,10 +7,7 @@ import {
   type HikeSessionRow,
 } from '@/features/adventure-intelligence/server/processHikeSession';
 import type { SegmentCandidate } from '@/features/adventure-intelligence/domain/mapMatching';
-import {
-  awardHikeSessionProcessed,
-  awardKitFieldReport,
-} from '@/features/progression/server/producerHooks';
+import { awardHikeSessionProcessed } from '@/features/progression/server/producerHooks';
 
 export const dynamic = 'force-dynamic';
 
@@ -135,10 +132,10 @@ export async function POST(request: NextRequest) {
       const result = await processHikeSession(session.id, client);
       if (result.status === 'processed') {
         processed += 1;
-        // P2 — producteurs vérifiés : session traitée puis débrief kit éventuel.
-        // Idempotent et non bloquant (les erreurs n'interrompent pas le lot).
+        // P2 — producteur « session traitée » : idempotent et non bloquant.
+        // T09 — le débrief kit n'est plus attribué ici : son intention est
+        // différée (finalisation) et consommée par le worker des intentions.
         await awardHikeSessionProcessed(session.id);
-        await awardKitFieldReport(session.id);
       } else if (result.status === 'skipped') skipped += 1;
       else failed += 1;
     } catch (err) {
