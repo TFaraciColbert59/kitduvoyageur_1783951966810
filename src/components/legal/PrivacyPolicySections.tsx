@@ -46,7 +46,7 @@ const PROCESSORS: Processor[] = [
   },
   {
     name: 'Overpass (overpass-api.de et ses miroirs)',
-    role: 'points d’intérêt et tracés OpenStreetMap de l’Explorer et des services à proximité : la zone de carte ou les coordonnées demandées',
+    role: 'points d’intérêt et tracés OpenStreetMap de l’Explorer, et recherches de services à proximité (repas, hébergements, commerces) : la zone de carte demandée',
     where: 'selon le miroir (non précisé par l’exploitant)',
   },
   { name: 'Esri (ArcGIS)', role: 'fonds de carte : la zone affichée et votre adresse IP', where: 'États-Unis' },
