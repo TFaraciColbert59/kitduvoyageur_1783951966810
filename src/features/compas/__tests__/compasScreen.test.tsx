@@ -3127,3 +3127,126 @@ describe('CompasScreen : la mention « IA » (lot Z2, PLAN-100 5.3)', () => {
     });
   });
 });
+
+describe('CompasScreen : divulgation d’affiliation avant les offres (lot Z2, PLAN-100 5.3)', () => {
+  /** La divulgation (Art. L121-2 et L121-3 du Code de la consommation) : la note « Transparence publicitaire ». */
+  const disclosure = (root: HTMLElement) => within(root).getByRole('note', { name: /Transparence publicitaire et affiliation/ });
+  const precedes = (a: Element, b: Element) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+  /** Tout lien sortant d'une offre est balisé « sponsored nofollow » (DGCCRF, balisage rel). */
+  const expectSponsored = (root: HTMLElement) => {
+    const links = Array.from(root.querySelectorAll<HTMLAnchorElement>('a[target="_blank"]'));
+    expect(links.length).toBeGreaterThan(0);
+    for (const a of links) {
+      const rel = (a.getAttribute('rel') ?? '').split(/\s+/);
+      expect(rel, a.outerHTML).toContain('sponsored');
+      expect(rel, a.outerHTML).toContain('nofollow');
+    }
+  };
+  const openNights = async () => {
+    const data = makeData();
+    data.providers = { routestack: 'sandbox', viator: 'disabled' };
+    render(<CompasScreen data={data} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Mes réservations' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Mes réservations' });
+    fireEvent.click(
+      within(within(sheet).getByRole('group', { name: 'Parcours du tiroir' })).getByRole('button', { name: /Nuits/ })
+    );
+    return sheet;
+  };
+
+  it('Nuits · recherche en direct : la divulgation est dite AVANT la liste des offres, qui sont balisées', async () => {
+    const sheet = await openNights();
+    // Avant la recherche : aucune offre, donc aucune divulgation.
+    expect(within(sheet).queryByRole('note', { name: /Transparence publicitaire/ })).toBeNull();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
+    expect(await within(sheet).findByText('Gîte des Cimes')).toBeTruthy();
+    const list = within(sheet).getByRole('group', { name: 'Offres d’hébergement' });
+    expect(precedes(disclosure(sheet), list)).toBe(true);
+    expectSponsored(sheet);
+  });
+
+  it('Nuits · recherche en direct sans offre : pas de divulgation (rien n’est vendu)', async () => {
+    compas.compasSearchStaysAction.mockResolvedValueOnce({
+      success: true,
+      mode: 'live',
+      fetchedAt: '2026-10-01T10:00:00Z',
+      offers: [],
+    } as never);
+    const sheet = await openNights();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
+    expect(await within(sheet).findByText('Aucune offre trouvée pour cette nuit.')).toBeTruthy();
+    expect(within(sheet).queryByRole('note', { name: /Transparence publicitaire/ })).toBeNull();
+  });
+
+  it('Parcours · activités partenaires : la divulgation précède la liste (et non plus la suit)', async () => {
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Parcours/ }));
+    fireEvent.change(within(sheet).getByRole('searchbox'), { target: { value: 'Gavarnie' } });
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
+    const partner = await within(sheet).findByRole('link', { name: /Cirque de Gavarnie avec un guide/ });
+    const list = sheet.querySelector('[aria-label="Parcours trouvés"]') as HTMLElement;
+    expect(list).toBeTruthy();
+    expect(list.contains(partner)).toBe(true);
+    expect(precedes(disclosure(sheet), list)).toBe(true);
+    expectSponsored(sheet);
+  });
+
+  it('Parcours sans activité partenaire : pas de divulgation', async () => {
+    resa.compasNearbyActivitiesAction.mockResolvedValueOnce({ success: true, unavailable: false, offers: [] } as never);
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Parcours/ }));
+    fireEvent.change(within(sheet).getByRole('searchbox'), { target: { value: 'Gavarnie' } });
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
+    await waitFor(() => expect(resa.compasNearbyActivitiesAction).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 30));
+    expect(within(sheet).queryByRole('note', { name: /Transparence publicitaire/ })).toBeNull();
+  });
+
+  it('Résa · recherche en direct (vols) et offres Extras : divulgation avant la liste, liens balisés', async () => {
+    const data = makeData();
+    data.affiliateLinks = [{ id: 'a2', label: 'Assurance', category: 'insurance', partner: 'Heymondo', url: '/go/ass' }];
+    render(<CompasScreen data={data} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Vols' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Mes réservations' });
+    const form = within(sheet).getByRole('form', { name: 'Chercher : vols' });
+    fireEvent.change(within(form).getByLabelText('Départ de'), { target: { value: 'Lyon' } });
+    fireEvent.click(within(form).getByRole('button', { name: /Chercher en direct/ }));
+    expect(await within(sheet).findByText('Lyon → Pau')).toBeTruthy();
+    const live = sheet.querySelector('[aria-label="Offres en direct"]') as HTMLElement;
+    const notes = within(sheet).getAllByRole('note', { name: /Transparence publicitaire/ });
+    // Une divulgation avant « Offres en direct ».
+    expect(notes.some((n) => precedes(n, live))).toBe(true);
+    expectSponsored(sheet);
+    fireEvent.click(within(within(sheet).getByRole('group', { name: 'Catégorie' })).getByText('Extras'));
+    const extras = sheet.querySelector('[aria-label="Offres partenaires"]') as HTMLElement;
+    expect(extras).toBeTruthy();
+    const noteBeforeExtras = within(sheet).getAllByRole('note', { name: /Transparence publicitaire/ }).filter((n) => precedes(n, extras));
+    expect(noteBeforeExtras.length).toBeGreaterThan(0);
+    expectSponsored(sheet);
+  });
+
+  it('axe-core : la recherche d’hébergement avec sa divulgation', async () => {
+    const sheet = await openNights();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
+    expect(await within(sheet).findByText('Gîte des Cimes')).toBeTruthy();
+    expect(disclosure(sheet)).toBeTruthy();
+    const res = await axe.run(sheet, {
+      runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] },
+      rules: {
+        'color-contrast': { enabled: false },
+        region: { enabled: false },
+        'landmark-one-main': { enabled: false },
+        'page-has-heading-one': { enabled: false },
+      },
+    });
+    expect(res.violations.map((v) => `${v.id} : ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([]);
+  });
+});

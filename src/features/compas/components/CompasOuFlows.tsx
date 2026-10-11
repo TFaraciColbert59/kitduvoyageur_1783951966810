@@ -390,6 +390,8 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
               {here?.gps ? 'de toi' : 'du départ du voyage'}, du plus proche au plus loin
             </p>
           )}
+          {/* Activités partenaires mêlées à la liste : la divulgation AVANT elle, pas après (PLAN-100 5.3). */}
+          {partners.length > 0 && mode !== 'mes' && <AffiliateDisclosure compact />}
           <PagedList
             label="Parcours trouvés"
             resetKey={`${mode}-${query}`}
@@ -470,7 +472,6 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
               </button>);
             }}
           />
-          {partners.length > 0 && mode !== 'mes' && <AffiliateDisclosure compact />}
         </>
       )}
     </>

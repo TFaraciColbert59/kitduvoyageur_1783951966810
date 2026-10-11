@@ -2131,6 +2131,9 @@ function StaySearch({
               pas de vraies offres.
             </p>
           )}
+          {/* Les offres s'ouvrent chez un partenaire rémunéré : la divulgation vient AVANT la liste
+              (Art. L121-2 et L121-3 du Code de la consommation), jamais pour une liste vide. */}
+          {state.offers.length > 0 && <AffiliateDisclosure compact />}
           <TallList
             label="Offres d’hébergement"
             items={state.offers}
