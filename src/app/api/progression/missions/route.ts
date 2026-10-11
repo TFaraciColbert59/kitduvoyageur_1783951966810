@@ -5,6 +5,7 @@ import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import {
   abandonProgressionMission,
   chooseProgressionMission,
+  getAvailableMissionModels,
   getUserMissions,
   replaceProgressionMission,
   type MissionMutationResult,
@@ -62,8 +63,14 @@ export async function GET() {
     });
     if (limited) return limited;
 
-    const missions = await getUserMissions(user.id);
-    return NextResponse.json({ success: true, missions }, { headers: NO_STORE_HEADERS });
+    const [missions, availableModels] = await Promise.all([
+      getUserMissions(user.id),
+      getAvailableMissionModels(),
+    ]);
+    return NextResponse.json(
+      { success: true, missions, availableModels },
+      { headers: NO_STORE_HEADERS }
+    );
   } catch (err) {
     console.error('[API /api/progression/missions] GET', err);
     return NextResponse.json({ success: false, error: 'Erreur interne' }, { status: 500 });

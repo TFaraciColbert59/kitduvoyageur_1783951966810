@@ -115,10 +115,12 @@ describe('T13 — route missions', () => {
         targetCount: 1,
         period: 'ever',
         progress: 2,
+        completedAt: null,
         createdAt: '2026-10-11T10:00:00.000Z',
       },
     ]);
-    expect(eqFilters).toEqual([['user_id', SESSION_USER]]);
+    expect(Array.isArray(body.availableModels)).toBe(true);
+    expect(eqFilters).toContainEqual(['user_id', SESSION_USER]);
   });
 
   it('(c1) choose → 200 avec assignmentId', async () => {

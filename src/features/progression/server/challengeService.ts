@@ -28,7 +28,16 @@ export interface UserMissionAssignment {
   targetCount: number;
   period: 'ever' | 'week' | 'season';
   progress: number;
+  completedAt: string | null;
   createdAt: string;
+}
+
+export interface AvailableMissionModel {
+  id: string;
+  title: string;
+  description: string;
+  targetCount: number;
+  period: 'ever' | 'week' | 'season';
 }
 
 export type MissionMutationResult =
@@ -45,9 +54,20 @@ function createMissionServiceClient(): SupabaseClient {
 /** Missions du compte (l'utilisateur vient de la session serveur). */
 export async function getUserMissions(userId: string): Promise<UserMissionAssignment[]> {
   const supabase = createMissionServiceClient();
+
+  // T14 — l'avancement est recalculé depuis les événements avant lecture.
+  // Un échec de recalcul ne bloque jamais la liste (simple fraîcheur).
+  try {
+    await (supabase as unknown as {
+      rpc: (fn: string, args: Record<string, unknown>) => Promise<{ error: unknown }>;
+    }).rpc('refresh_progression_mission_progress', { p_user_id: userId });
+  } catch {
+    /* silencieux : lecture servie sur le dernier état connu */
+  }
+
   const { data, error } = await supabase
     .from('progression_mission_assignments')
-    .select('id, model_id, state, target_count, period, progress, created_at')
+    .select('id, model_id, state, target_count, period, progress, completed_at, created_at')
     .eq('user_id', userId)
     .order('created_at', { ascending: true });
   if (error) throw new Error(error.message);
@@ -59,6 +79,7 @@ export async function getUserMissions(userId: string): Promise<UserMissionAssign
     target_count: number | null;
     period: string | null;
     progress: number | null;
+    completed_at: string | null;
     created_at: string | null;
   }>;
 
@@ -71,8 +92,46 @@ export async function getUserMissions(userId: string): Promise<UserMissionAssign
     period: (row.period === 'week' || row.period === 'season' ? row.period : 'ever') as
       UserMissionAssignment['period'],
     progress: Math.max(0, Math.floor(Number(row.progress) || 0)),
+    completedAt: row.completed_at ?? null,
     createdAt: row.created_at ?? '',
   }));
+}
+
+/**
+ * T14 — Modèles publiés (producteurs disponibles) proposables au choix.
+ * Les libellés viennent du catalogue versionné ; la publication vient de la
+ * base (aucun modèle fermé n'est proposé).
+ */
+export async function getAvailableMissionModels(): Promise<AvailableMissionModel[]> {
+  const { findMissionModel } = await import('../domain/missionCatalog');
+  const supabase = createMissionServiceClient();
+  const { data, error } = await supabase
+    .from('progression_challenge_models')
+    .select('model_id')
+    .eq('provenance', 'canonical_v2');
+  if (error) throw new Error(error.message);
+
+  const ids = [
+    ...new Set(
+      ((data ?? []) as Array<{ model_id: string | null }>)
+        .map((row) => row.model_id)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0)
+    ),
+  ];
+
+  const models: AvailableMissionModel[] = [];
+  for (const id of ids) {
+    const model = findMissionModel(id);
+    if (!model || model.status !== 'available') continue;
+    models.push({
+      id: model.id,
+      title: model.title,
+      description: model.description,
+      targetCount: model.targetCount,
+      period: model.period,
+    });
+  }
+  return models;
 }
 
 async function callMissionRpc(

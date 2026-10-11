@@ -109,6 +109,29 @@ const EMPTY_GAINS: GainsState = {
   loadingMore: false,
 };
 
+/** T14 — l'affichage ne présente jamais de montant : avancement + distinction. */
+interface MissionRow {
+  id: string;
+  modelId: string;
+  title: string;
+  progress: number;
+  targetCount: number;
+  completedAt: string | null;
+}
+
+interface MissionModelOption {
+  id: string;
+  title: string;
+  targetCount: number;
+}
+
+interface MissionsState {
+  status: ClientDataStatus;
+  active: MissionRow[];
+  models: MissionModelOption[];
+  mutating: boolean;
+}
+
 interface HistoryApiItem {
   id: string;
   action: string;
@@ -263,6 +286,12 @@ export default function MaProgressionView({
     pending: [],
     nextCursor: null,
     loadingMore: false,
+  });
+  const [missions, setMissions] = useState<MissionsState>({
+    status: 'loading',
+    active: [],
+    models: [],
+    mutating: false,
   });
   const [replacingChallenge, setReplacingChallenge] = useState(false);
   const [replaceChallengeError, setReplaceChallengeError] = useState(false);
@@ -442,6 +471,72 @@ export default function MaProgressionView({
       setGains((prev) => ({ ...prev, loadingMore: false }));
     }
   }, [gains.nextCursor, gains.loadingMore]);
+
+  /** T14 — missions : lecture serveur (avancement recalculé), actions sans XP. */
+  const refreshMissions = useCallback(async () => {
+    try {
+      const response = await fetch('/api/progression/missions', { cache: 'no-store' });
+      if (!response.ok) {
+        setMissions((prev) => ({ ...prev, status: 'unavailable' }));
+        return;
+      }
+      const payload = (await response.json()) as {
+        success?: boolean;
+        missions?: Array<{
+          id: string;
+          modelId: string;
+          state: string;
+          targetCount: number;
+          progress: number;
+          completedAt: string | null;
+        }>;
+        availableModels?: Array<{ id: string; title: string; targetCount: number }>;
+      };
+      if (payload?.success !== true || !Array.isArray(payload.missions)) {
+        setMissions((prev) => ({ ...prev, status: 'unavailable' }));
+        return;
+      }
+      const models = Array.isArray(payload.availableModels) ? payload.availableModels : [];
+      const titles = new Map(models.map((model) => [model.id, model.title]));
+      const active = payload.missions
+        .filter((mission) => mission.state === 'active')
+        .map((mission) => ({
+          id: mission.id,
+          modelId: mission.modelId,
+          title: titles.get(mission.modelId) ?? mission.modelId,
+          progress: Math.max(0, Math.floor(Number(mission.progress) || 0)),
+          targetCount: Math.max(1, Math.floor(Number(mission.targetCount) || 1)),
+          completedAt: mission.completedAt ?? null,
+        }));
+      setMissions({ status: 'ready', active, models, mutating: false });
+    } catch {
+      setMissions((prev) => ({ ...prev, status: 'unavailable' }));
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshMissions();
+  }, [refreshMissions]);
+
+  const mutateMission = useCallback(
+    async (body: Record<string, unknown>) => {
+      setMissions((prev) => ({ ...prev, mutating: true }));
+      try {
+        await fetch('/api/progression/missions', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          cache: 'no-store',
+          body: JSON.stringify(body),
+        });
+      } catch {
+        /* silencieux : la relecture ci-dessous rétablit l'état réel */
+      } finally {
+        await refreshMissions();
+        setMissions((prev) => ({ ...prev, mutating: false }));
+      }
+    },
+    [refreshMissions]
+  );
 
   const handleFilterChange = (filter: TerritoryFilter) => {
     triggerHaptic('selection');
@@ -1014,6 +1109,86 @@ export default function MaProgressionView({
               );
             })}
           </ul>
+        )}
+      </ProgressionSection>
+
+      <ProgressionSection
+        forceOpen={isDrawer}
+        title={t('progression.missionsTitle')}
+        summary={
+          missions.status === 'ready'
+            ? missions.active.length > 0
+              ? t('progression.missionsCount', { count: missions.active.length })
+              : t('progression.missionsEmpty')
+            : t('progression.missionsTitle')
+        }
+      >
+        {missions.status === 'loading' && (
+          <p className="text-xs text-[var(--lkv-text-muted)]">{t('progression.missionsLoading')}</p>
+        )}
+        {missions.status === 'unavailable' && (
+          <p className="text-xs text-[var(--lkv-text-secondary)]">
+            {t('progression.missionsUnavailable')}
+          </p>
+        )}
+        {missions.status === 'ready' && (
+          <>
+            {missions.active.length === 0 && (
+              <p className="text-xs leading-relaxed text-[var(--lkv-text-secondary)]">
+                {t('progression.missionsEmptyBody')}
+              </p>
+            )}
+            {missions.active.length > 0 && (
+              <ul className="divide-y divide-black/5">
+                {missions.active.map((mission) => (
+                  <li key={mission.id} className="flex items-center justify-between gap-3 py-2.5">
+                    <span className="min-w-0">
+                      <span className="block truncate text-xs font-bold text-[var(--lkv-text-primary)]">
+                        {mission.title}
+                      </span>
+                      <span className="block text-[10.5px] text-[var(--lkv-text-muted)]">
+                        {mission.progress}/{mission.targetCount}
+                        {mission.completedAt
+                          ? ` · ${t('progression.missionsCompleted')}`
+                          : ''}
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      disabled={missions.mutating}
+                      onClick={() => void mutateMission({ action: 'abandon', assignmentId: mission.id })}
+                      className="shrink-0 min-h-[44px] rounded-full px-3 text-[11px] font-semibold text-[var(--lkv-text-secondary)] disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+                    >
+                      {t('progression.missionsAbandon')}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {missions.active.length < 3 && missions.models.length > 0 && (
+              <div className="mt-3 border-t border-black/5 pt-3">
+                <p className="text-[11px] font-bold text-[var(--lkv-text-secondary)]">
+                  {t('progression.missionsChoose')}
+                </p>
+                <ul className="mt-1 flex flex-wrap gap-2">
+                  {missions.models
+                    .filter((model) => !missions.active.some((mission) => mission.modelId === model.id))
+                    .map((model) => (
+                      <li key={model.id}>
+                        <button
+                          type="button"
+                          disabled={missions.mutating}
+                          onClick={() => void mutateMission({ action: 'choose', modelId: model.id })}
+                          className="min-h-[44px] rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-3 text-[11px] font-semibold text-[color:var(--card-content)] disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+                        >
+                          {model.title}
+                        </button>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            )}
+          </>
         )}
       </ProgressionSection>
 
