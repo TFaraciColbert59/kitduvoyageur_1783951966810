@@ -13,12 +13,15 @@
  *   2. Aucun token de couleur parallèle `--role-*` nulle part dans src.
  *   3. Les fichiers du chantier (features/identity, components/identity) n'utilisent
  *      QUE la palette autorisée (ink/sage) — pas d'hex hors norme, pas d'emerald/red.
+ *   4. Le profil voyageur du Compas reste confiné (lecteur, actions, carte) :
+ *      scripts/verify/traveller_privacy.mjs, marche de fichiers sans rg.
  *
  * Usage : node scripts/verify/identity_compliance.mjs
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
+import { travellerPrivacyViolations } from './traveller_privacy.mjs';
 
 const root = process.cwd();
 const src = path.join(root, 'src');
@@ -89,6 +92,14 @@ const scan = (dir) => {
 scan(path.join(src, 'features', 'identity'));
 scan(path.join(src, 'components', 'identity'));
 ok('palette du chantier vérifiée (identity)');
+
+// --- 4. profil voyageur confiné (PLAN-100 4.1, lot P) — marche de fichiers, sans rg
+const travellerLeaks = travellerPrivacyViolations(root);
+if (travellerLeaks.length) {
+  travellerLeaks.forEach((v) => fail(v));
+} else {
+  ok('profil voyageur confiné : lecteur, actions et carte à leur seule place');
+}
 
 // --- Résultat ----------------------------------------------------------------
 if (failures) {

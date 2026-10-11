@@ -39,7 +39,7 @@ export function buildCompasStagesSystem(): string {
     '10. Une « traversee » (ou un GR, une haute route) va d un bout a l autre du massif ou du trace, d ouest en est ou dans le sens classique, sur des etapes consecutives.',
     '10b. « autour de » (un lac, un massif) sur plusieurs jours : une boucle de village en village autour, retour au depart le dernier jour, jamais deux jours au meme lieu.',
     '10c. Une semaine ou plus dans tout un pays (sejour, decouverte, culturel, sans activite unique) : un circuit de 2 a 4 bases dans des regions differentes, 2 a 4 nuits chacune, jamais plus de 4 nuits au meme lieu.',
-    '11. Un massif ou une chaine a cheval sur une frontiere (Pyrenees, Alpes, Andes, Himalaya) : le pays donne n est qu un indice ; prends le versant le plus pertinent pour l activite (pour un voyageur francais, souvent le versant francais) ou passe d un versant a l autre.',
+    '11. Un massif ou une chaine a cheval sur une frontiere (Pyrenees, Alpes, Andes, Himalaya) : le pays donne n est qu un indice ; prends le versant le plus pertinent pour l activite ou passe d un versant a l autre.',
   ].join('\n');
 }
 
@@ -99,7 +99,13 @@ export function buildCompasDestinationSystem(): string {
   ].join('\n');
 }
 
-export function buildCompasAutofillSystem(): string {
+/**
+ * `frenchNational` : nationalité française CONNUE (profil voyageur). C'est le seul
+ * fait sur la personne que l'IA reçoit, sous la forme d'une règle (8a), jamais un
+ * code ni un lieu : sans profil, ou pour une autre nationalité, la règle est neutre.
+ * Appel sans cache partagé (`cacheTtlSeconds: 0`) : rien ne passe d'un compte à l'autre.
+ */
+export function buildCompasAutofillSystem(frenchNational = false): string {
   return [
     'Tu es le specialiste senior de la preparation de voyages et d activites outdoor d une application francaise.',
     'Une application t envoie les faits deja calcules (lieu, dates, groupe, itineraire, nuits, trajet, materiel, budget).',
@@ -108,7 +114,9 @@ export function buildCompasAutofillSystem(): string {
     '1. Reponds UNIQUEMENT par un objet JSON : {"notes": string[]}',
     '8. notes : 0 a 3 conseils d action courts, en francais correct AVEC les accents (é, è, à, ç), fondes sur les faits (objet a se procurer, reservation, vaccin, saison, altitude). Ne repete pas les faits, ne contredis jamais les listes de materiel, pas de reassurance, pas de score. N ecris jamais « introuvable en boutique » : dis « a se procurer ».',
     '7. Tutoie la personne (« prévois », « pense à »), jamais de vouvoiement, toujours avec les accents.',
-    '8a. Chaque conseil doit etre VRAI pour une personne qui part de France. Papiers (passeport, carte d identite, visa, autorisation), change et prises electriques sont deja traites par l application : n en parle JAMAIS.',
+    frenchNational
+      ? '8a. Chaque conseil doit etre VRAI pour une personne de nationalite francaise. Papiers (passeport, carte d identite, visa, autorisation), change et prises electriques sont deja traites par l application : n en parle JAMAIS.'
+      : '8a. Chaque conseil doit etre VRAI quelle que soit la nationalite de la personne : n ecris aucun conseil qui depende de sa nationalite, de son pays de residence ou de sa monnaie. Papiers (passeport, carte d identite, visa, autorisation), change et prises electriques sont deja traites par l application : n en parle JAMAIS.',
     '8b. N invente aucune obligation (permis, licence, visa, certificat) qui n est pas reellement exigee pour CE pays et CETTE activite : par exemple aucun permis pour le canoe, le kayak, la randonnee ou le velo en France.',
     '9. N invente aucun nom de prestataire, aucun horaire. Si tu ne sais pas, mets null.',
   ].join('\n');

@@ -11,7 +11,8 @@ import {
   updateTripMetadata,
   type Supa,
 } from './compasServer';
-import { lookupBase, lookupDestination, lookupLoose, lookupNatural } from './placeLookup';
+import { lookupBase, lookupDestination } from './placeLookup';
+import { placeSearchLimitError, resolvePlaceByName } from './placeSearch';
 import { isDeparturePlace, samePlaceName, type CompasPlace } from '../engine/places';
 import { getTripById } from '@/lib/queries-trips';
 import { addTripItem } from '@/lib/queries-trip-kit';
@@ -592,33 +593,7 @@ async function resolveDestination(
   userId: string,
   opts: { ai?: boolean } = {}
 ): Promise<CompasPlace | null> {
-  const exact = await lookupDestination(query);
-  if (exact) return exact;
-  const based = opts.ai === false ? null : await baseFromSpecialist(query, userId);
-  if (based) return based;
-  // Sans réponse du spécialiste : le lieu naturel qui porte le nom (« Calanques » :
-  // le parc national, pas le récif de Piana en Corse, premier venu de la carte).
-  const natural = await lookupNatural(query, null).catch(() => null);
-  if (natural) return { ...natural, name: query.trim().slice(0, 80) };
-  return lookupLoose(query);
-}
-
-/**
- * La carte (Photon, LocationIQ, Geoapify) et parfois l'IA : chaque recherche de
- * lieu (destination, départ) est comptée par personne (plan 2.2). Le message à
- * montrer si la limite est atteinte ou le compteur indisponible, sinon null.
- */
-async function placeSearchLimitError(userId: string): Promise<string | null> {
-  const limited = await enforceRateLimit(userId, {
-    scope: 'compas-destination',
-    limit: 20,
-    windowMs: 600_000,
-    failMode: 'closed',
-  });
-  if (!limited) return null;
-  return limited.status === 429
-    ? 'Trop de lieux cherchés d’affilée : patiente quelques minutes.'
-    : 'Recherche de lieux indisponible pour le moment : réessaie dans un instant.';
+  return resolvePlaceByName(query, opts.ai === false ? undefined : (q) => baseFromSpecialist(q, userId));
 }
 
 /**
