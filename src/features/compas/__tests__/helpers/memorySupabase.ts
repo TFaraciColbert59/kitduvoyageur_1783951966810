@@ -10,7 +10,9 @@
  * comportent comme en base. Chaque écriture est notée dans `writes`.
  *
  * `onQuery` est appelé avant chaque requête : un test y simule un geste
- * concurrent (« Arrêter » pendant la préparation).
+ * concurrent (« Arrêter » pendant la préparation), ou une coupure (il lève).
+ * `failQuery` fait refuser une requête par la base (erreur rendue, rien d'écrit),
+ * comme une contrainte ou une panne : le code appelant lit `error`.
  *
  * Limites de fidélité (à garder en tête avant d'en tirer une conclusion) :
  * - `maybeSingle` sur plusieurs lignes rend la première, là où PostgREST
@@ -43,6 +45,7 @@ export interface MemorySupabaseOptions {
   user: () => { id: string; is_anonymous?: boolean } | null;
   rpc?: (fn: string, args: Record<string, unknown>) => { data: unknown; error: unknown } | undefined;
   onQuery?: (q: QueryInfo) => void | Promise<void>;
+  failQuery?: (q: QueryInfo) => { code: string; message: string } | undefined;
 }
 
 export interface MemorySupabase {
@@ -158,6 +161,8 @@ export function memorySupabase(options: MemorySupabaseOptions): MemorySupabase {
 
     private async run(): Promise<{ data: unknown; error: unknown; count?: number | null }> {
       await options.onQuery?.({ table: this.table, op: this.op });
+      const refused = options.failQuery?.({ table: this.table, op: this.op });
+      if (refused) return { data: null, error: refused };
       if (this.op === 'insert') {
         const inserted: Row[] = (this.payload as Row[]).map((r) => ({ id: randomUUID(), ...clone(r) }));
         if (this.table === 'trips') for (const r of inserted) r.updated_at = freshStamp();

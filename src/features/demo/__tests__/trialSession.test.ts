@@ -13,7 +13,7 @@ const h = vi.hoisted(() => ({
 }));
 vi.mock('server-only', () => ({}));
 vi.mock('next/headers', () => ({
-  headers: async () => new Headers({ 'x-forwarded-for': '203.0.113.9, 10.0.0.1' }),
+  headers: async () => new Headers({ 'x-forwarded-for': '1.2.3.4, 203.0.113.9, 10.0.0.1' }),
 }));
 vi.mock('@/lib/supabase/server', () => ({
   createClient: async () => ({ auth: { signInAnonymously: h.signIn, signInWithPassword: h.password } }),
@@ -59,7 +59,7 @@ describe('essai sans compte', () => {
 
     expect(await trialLoginAction()).toEqual({ success: true });
     expect(h.signIn).toHaveBeenCalledTimes(1);
-    // Compté par adresse (première IP de x-forwarded-for) et pour tout le site.
+    // Compté par adresse (celle qu'ajoute notre proxy, pas le préfixe écrit par le navigateur) et pour tout le site.
     expect(h.calls).toEqual([
       { identifier: '203.0.113.9', scope: 'trial-login' },
       { identifier: 'site', scope: 'trial-login-global' },

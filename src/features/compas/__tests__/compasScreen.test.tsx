@@ -1772,6 +1772,90 @@ describe('CompasScreen', () => {
     expect(compas.compasClearStartSayAction).not.toHaveBeenCalled();
   });
 
+  describe('Phrase de départ : « Arrêter » pendant l’application des réglages', () => {
+    /** « rando à 4 » comprise, puis appliquée réglage par réglage (une écriture tenue en l’air). */
+    const sayFour = () => ({
+      success: true as const,
+      usedAi: false,
+      note: null,
+      proposals: [
+        {
+          id: '0-set_party_size',
+          action: { type: 'set_party_size', count: 4 },
+          label: '4 personnes',
+          ok: true,
+          reason: null,
+          source: 'regles',
+        },
+      ],
+    });
+    const noPlace = (): CompasData => ({
+      ...makeData({ trip: { ...baseTrip, destinationName: null, startDate: null, endDate: null }, steps: [] }),
+      autofill: 'none',
+      origin: null,
+      itinerary: [],
+      // Ni dates ni durée : la préparation ne part pas d'elle-même (le routeur simulé change
+      // à chaque rendu et relancerait sinon l'effet de départ pendant la compréhension).
+      plannedDays: null,
+      startSay: 'rando à 4',
+    });
+    /** Écriture du réglage tenue en l'air : la personne appuie sur « Arrêter » avant qu'elle réponde. */
+    const holdPartySize = (answer: { success: boolean; error?: string }) => {
+      let release: () => void = () => undefined;
+      compas.compasSetPartySizeAction.mockImplementationOnce(
+        () => new Promise((resolve) => (release = () => resolve(answer))) as never
+      );
+      return () => release();
+    };
+    const stopWhileApplying = async () => {
+      const panel = await screen.findByRole('status', { name: 'Préparation de l’aventure' });
+      await waitFor(() => expect(compas.compasSetPartySizeAction).toHaveBeenCalledTimes(1));
+      fireEvent.click(within(panel).getByRole('button', { name: 'Arrêter' }));
+      await waitFor(() => expect(autofill.compasAutofillStopAction).toHaveBeenCalledWith({ tripId: TRIP }));
+      expect(screen.getByText('Préparation arrêtée')).toBeTruthy();
+    };
+
+    it('les réglages se terminent : le panneau reste « arrêté », rien ne repart', async () => {
+      compas.compasInterpretAction.mockResolvedValueOnce(sayFour());
+      const release = holdPartySize({ success: true });
+      render(<CompasScreen data={noPlace()} />);
+      await stopWhileApplying();
+      release();
+      await new Promise((r) => setTimeout(r, 60));
+      // Avant : setPrep({ stage: 'itinerary' }) écrasait l'arrêt, le panneau restait bloqué.
+      expect(screen.getByText('Préparation arrêtée')).toBeTruthy();
+      expect(screen.queryByText('Je prépare ton aventure…')).toBeNull();
+      expect(autofill.compasAutofillStartAction).not.toHaveBeenCalled();
+      // La phrase reste sur le voyage : « Reprendre » (ou la prochaine visite) la rejoue.
+      expect(compas.compasClearStartSayAction).not.toHaveBeenCalled();
+    });
+
+    it('un réglage refusé pendant ce temps ne remplace pas l’arrêt par une erreur', async () => {
+      compas.compasInterpretAction.mockResolvedValueOnce(sayFour());
+      const release = holdPartySize({ success: false, error: 'Connexion perdue' });
+      render(<CompasScreen data={noPlace()} />);
+      await stopWhileApplying();
+      release();
+      await new Promise((r) => setTimeout(r, 60));
+      expect(screen.getByText('Préparation arrêtée')).toBeTruthy();
+      expect(screen.queryByText('Préparation interrompue')).toBeNull();
+      expect(autofill.compasAutofillStartAction).not.toHaveBeenCalled();
+    });
+
+    it('« Reprendre » après cet arrêt rejoue la phrase puis lance la préparation', async () => {
+      compas.compasInterpretAction.mockResolvedValueOnce(sayFour()).mockResolvedValueOnce(sayFour());
+      const release = holdPartySize({ success: true });
+      render(<CompasScreen data={noPlace()} />);
+      await stopWhileApplying();
+      release();
+      await new Promise((r) => setTimeout(r, 60));
+      fireEvent.click(screen.getByRole('button', { name: /Reprendre|Réessayer/ }));
+      await waitFor(() => expect(compas.compasInterpretAction).toHaveBeenCalledTimes(2));
+      await waitFor(() => expect(compas.compasClearStartSayAction).toHaveBeenCalledWith({ tripId: TRIP }));
+      expect(screen.queryByText('Préparation arrêtée')).toBeNull();
+    });
+  });
+
   it('Dis-le : les propositions refusées ne s’appliquent pas, les autres oui', async () => {
     compas.compasInterpretAction.mockResolvedValueOnce({
       success: true,

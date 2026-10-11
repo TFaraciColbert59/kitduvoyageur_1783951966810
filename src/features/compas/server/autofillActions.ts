@@ -786,9 +786,46 @@ export async function compasAutofillStopAction(input: z.input<typeof stopSchema>
   return { success: !error };
 }
 
+/**
+ * Prise de phase tenue par UNE exécution de la préparation : de la prise à son
+ * écriture de fin (qui la rend avec l'itinéraire ou la trace). Une sortie qui
+ * n'écrit pas cette fin (« Dis-moi où tu pars », itinéraire refusé par la base,
+ * exception) la laissait vivre 290 s : une relance, même après correction,
+ * répondait « une autre préparation est en cours » (plan 2.6).
+ */
+interface ClaimHold {
+  supabase: Supa | null;
+  tripId: string;
+  /** Cette exécution a pris une phase (jamais celle d'une autre préparation). */
+  claimed: boolean;
+  /** Une écriture de fin a rendu la prise. */
+  released: boolean;
+}
+
+/** Rend les prises du voyage : l'exécution qui les tenait est finie. */
+async function giveBackClaim(hold: ClaimHold): Promise<void> {
+  if (!hold.supabase || !hold.claimed || hold.released) return;
+  try {
+    const { error } = await updateTripMetadata(hold.supabase, hold.tripId, (m) =>
+      compasMeta(m).autofill_claim === undefined ? m : { ...m, compas: withoutClaim(compasMeta(m)) }
+    );
+    if (error) console.error('[compas] prise de phase non rendue', error.code, error.message);
+    else hold.released = true;
+  } catch (err) {
+    console.error('[compas] prise de phase non rendue', err instanceof Error ? err.message : err);
+  }
+}
+
 export async function compasAutofillAction(
   input: z.input<typeof schema>
 ): Promise<CompasAutofillResult> {
+  const hold: ClaimHold = { supabase: null, tripId: '', claimed: false, released: false };
+  const result = await runAutofill(input, hold);
+  await giveBackClaim(hold);
+  return result;
+}
+
+async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Promise<CompasAutofillResult> {
   const parsed = schema.safeParse(input);
   if (!parsed.success) return { success: false, error: 'Requête invalide' };
   const { tripId, from, phase, timeZone } = parsed.data;
@@ -832,12 +869,18 @@ export async function compasAutofillAction(
     // Un seul « steps » à la fois (deux onglets, F5) : prise atomique, sinon
     // deux itinéraires complets seraient écrits. Toute préparation sans
     // itinéraire en attente en écrit un, quelle que soit la phase demandée.
-    if (!pending && !(await claimPhase(supabase, tripId, 'steps')))
-      return { success: true, pending: true, stepsCreated: 0 };
+    hold.supabase = supabase;
+    hold.tripId = tripId;
+    if (!pending) {
+      if (!(await claimPhase(supabase, tripId, 'steps'))) return { success: true, pending: true, stepsCreated: 0 };
+      hold.claimed = true;
+    }
     // Un seul « rest » à la fois : deux onglets, ou l'écran remonté pendant la
     // préparation, n'écrivent jamais deux fois les objets et les dépenses.
-    if (resume && !(await claimPhase(supabase, tripId, 'rest')))
-      return { success: true, pending: true, stepsCreated: 0 };
+    if (resume) {
+      if (!(await claimPhase(supabase, tripId, 'rest'))) return { success: true, pending: true, stepsCreated: 0 };
+      hold.claimed = true;
+    }
     const notes: string[] = [...(resume?.notes ?? [])];
     const runId = resume?.runId ?? randomUUID();
     const startedAt = Date.now();
@@ -1410,7 +1453,11 @@ export async function compasAutofillAction(
           );
         // Arrêtée avant d'écrire l'itinéraire : rien n'est écrit, la place est rendue.
         if (stagePlaces.length && (await stopAsked())) {
-          await updateTripMetadata(supabase, tripId, (m) => ({ ...m, compas: withoutClaim(compasMeta(m)) }));
+          const { error: giveBackError } = await updateTripMetadata(supabase, tripId, (m) => ({
+            ...m,
+            compas: withoutClaim(compasMeta(m)),
+          }));
+          hold.released = !giveBackError;
           return { success: false, error: 'Préparation arrêtée : rien n’a été écrit.' };
         }
         if (stagePlaces.length) await dropReplaced();
@@ -1472,11 +1519,12 @@ export async function compasAutofillAction(
 
     if (phase === 'steps') {
       const run: PendingRun = { runId, stepIds: createdStepIds, routeSet, notes: notes.slice(0, 6), datesSet, stagesFallback };
-      await updateTripMetadata(supabase, tripId, (m) => ({
+      const { error: pendingError } = await updateTripMetadata(supabase, tripId, (m) => ({
         ...m,
         // Itinéraire écrit : la prise « steps » est rendue.
         compas: { ...withoutClaim(compasMeta(m)), autofill_pending: run },
       }));
+      hold.released = !pendingError;
       // Points sur place (restos, commerces, eau…) cherchés dès maintenant, après
       // la réponse : ils sont en cache quand l'écran s'ouvre. Trois appels au plus
       // (deux lieux chacun), arrêtés par la limite de la fonction sans rien casser.
@@ -2036,6 +2084,7 @@ export async function compasAutofillAction(
       { columns: setBudget ? { estimated_budget: total } : {} }
     );
     if (traceError) console.error('[compas] autofill trace', traceError.code, traceError.message);
+    hold.released = !traceError;
 
     lap('fin');
     console.info('[compas] préremplissage', { phase, ms: Date.now() - startedAt, laps });
@@ -2104,7 +2153,9 @@ export async function compasUndoAutofillAction(
       (m) => {
         const next: Record<string, unknown> = {
           ...m,
-          compas: { ...withoutPending(compasMeta(m)), autofill: { undone: true } },
+          // Les prises de phase aussi : sans cela, une relance juste après « Annuler »
+          // attendait jusqu'à CLAIM_MS (290 s) une préparation qui n'existe plus.
+          compas: { ...withoutClaim(withoutPending(compasMeta(m))), autofill: { undone: true } },
         };
         if (run.routeSet) delete next.route_id;
         return next;

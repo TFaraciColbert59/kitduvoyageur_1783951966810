@@ -1953,6 +1953,23 @@ export async function compasExplainVerdictAction(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Connecte-toi pour obtenir une explication.' };
+    // L'IA (et la lecture complète du voyage qui la précède) : comptée par
+    // personne comme la compréhension d'une phrase (plan 2.2), en plus du quota
+    // IA du jour. Refus dit, ni lecture ni appel.
+    const limited = await enforceRateLimit(user.id, {
+      scope: 'compas-verdict',
+      limit: 10,
+      windowMs: 600_000,
+      failMode: 'closed',
+    });
+    if (limited)
+      return {
+        success: false,
+        error:
+          limited.status === 429
+            ? 'Trop d’explications d’affilée : patiente quelques minutes.'
+            : 'Explication indisponible pour le moment : réessaie dans un instant.',
+      };
     // Les mêmes données que l'écran, lues pour cette personne (RLS) : l'IA ne
     // voit que ce que le Compas affiche déjà.
     const data = await getCompasData();
