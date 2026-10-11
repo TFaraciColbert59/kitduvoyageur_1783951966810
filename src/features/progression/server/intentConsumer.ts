@@ -1,6 +1,7 @@
 import 'server-only';
 import { getServiceSupabase } from '@/lib/ai/serviceClient';
 import type { AwardProducerResult } from './awardProducer';
+import { deriveVerifiedDiscoveriesFromSession } from './discoveries';
 import {
   awardCarnetPublished,
   awardChecklistCompleted,
@@ -151,6 +152,17 @@ export async function consumeProgressionAwardIntents(options?: {
             reward_transaction_id: result.rewardTransactionId ?? null,
           })
           .eq('id', intent.id);
+
+        // T18 — découvertes géographiques dérivées de la réalisation vérifiée.
+        // Best-effort : l'échec n'affecte jamais l'attribution déjà écrite.
+        if (intent.action_type === 'hike_session_processed') {
+          try {
+            await deriveVerifiedDiscoveriesFromSession(intent.source_id);
+          } catch (error) {
+            console.warn('[progression/intentConsumer] découvertes (non bloquant):', error);
+          }
+        }
+
         summary.processed += 1;
         continue;
       }
