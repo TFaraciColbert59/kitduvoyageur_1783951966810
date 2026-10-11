@@ -24,9 +24,51 @@ const TRIP = { from: '2026-10-11', to: '2026-10-12', timeZone: 'Europe/Paris' };
 
 type Address = Record<string, string>;
 const ADDRESSES: Record<string, Address> = {
-  // Valeurs relevées sur Nominatim le 2026-10-10 (zoom 8, sans langue demandée).
-  lyon: { county: 'Métropole de Lyon', state_district: 'Rhône', state: 'Auvergne-Rhône-Alpes', country_code: 'fr' },
-  chamonix: { county: 'Haute-Savoie', state: 'Auvergne-Rhône-Alpes', country_code: 'fr' },
+  // Valeurs relevées sur Nominatim le 2026-10-11 (zoom 8, sans langue demandée).
+  lyon: {
+    county: 'Métropole de Lyon',
+    'ISO3166-2-lvl6': 'FR-69M',
+    state_district: 'Rhône',
+    state: 'Auvergne-Rhône-Alpes',
+    'ISO3166-2-lvl4': 'FR-ARA',
+    region: 'France métropolitaine',
+    country_code: 'fr',
+  },
+  chamonix: {
+    county: 'Haute-Savoie',
+    'ISO3166-2-lvl6': 'FR-74',
+    state: 'Auvergne-Rhône-Alpes',
+    'ISO3166-2-lvl4': 'FR-ARA',
+    region: 'France métropolitaine',
+    country_code: 'fr',
+  },
+  paris: {
+    city: 'Paris',
+    'ISO3166-2-lvl6': 'FR-75C',
+    state: 'Île-de-France',
+    'ISO3166-2-lvl4': 'FR-IDF',
+    region: 'France métropolitaine',
+    country_code: 'fr',
+  },
+  corse: {
+    county: 'Haute-Corse',
+    'ISO3166-2-lvl6': 'FR-2B',
+    state: 'Corse',
+    'ISO3166-2-lvl4': 'FR-20R',
+    region: 'France métropolitaine',
+    country_code: 'fr',
+  },
+  // Départements d'outre-mer : Nominatim leur donne aussi « fr », sans `county` ni `region`.
+  reunion: { state: 'La Réunion', 'ISO3166-2-lvl4': 'FR-RE', 'ISO3166-2-lvl3': 'FR-974', country_code: 'fr' },
+  guadeloupe: { state: 'Guadeloupe', 'ISO3166-2-lvl4': 'FR-971', 'ISO3166-2-lvl3': 'FR-971', country_code: 'fr' },
+  guyane: {
+    county: 'Arrondissement de Cayenne',
+    state: 'Guyane',
+    'ISO3166-2-lvl4': 'FR-GF',
+    'ISO3166-2-lvl3': 'FR-973',
+    country_code: 'fr',
+  },
+  mayotte: { state: 'Mayotte', 'ISO3166-2-lvl4': 'FR-976', 'ISO3166-2-lvl3': 'FR-976', country_code: 'fr' },
   lausanne: { county: 'District de Lausanne', state: 'Vaud', country_code: 'ch' },
   garmisch: { county: 'Landkreis Garmisch-Partenkirchen', state: 'Bayern', country_code: 'de' },
   yosemite: { county: 'Mariposa County', state: 'California', country_code: 'us' },
@@ -34,6 +76,12 @@ const ADDRESSES: Record<string, Address> = {
 const POINTS = {
   lyon: { lat: 45.76, lon: 4.83 },
   chamonix: { lat: 45.92, lon: 6.87 },
+  paris: { lat: 48.86, lon: 2.35 },
+  corse: { lat: 42.15, lon: 9.1 },
+  reunion: { lat: -21.11, lon: 55.53 },
+  guadeloupe: { lat: 16.24, lon: -61.53 },
+  guyane: { lat: 4.0, lon: -53.0 },
+  mayotte: { lat: -12.8, lon: 45.2 },
   lausanne: { lat: 46.5197, lon: 6.6323 },
   garmisch: { lat: 47.49, lon: 11.1 },
   yosemite: { lat: 37.75, lon: -119.59 },
@@ -114,6 +162,27 @@ describe('carte : pays et unités administratives', () => {
     expect((net.calls[0].init?.headers as Record<string, string>)['User-Agent']).toMatch(/^kitduvoyageur\/1\.0 \(/);
   });
 
+  it('La Réunion et la Guadeloupe sont « fr » pour la carte, mais marquées outre-mer ; la métropole, Paris et la Corse ne le sont pas', async () => {
+    for (const place of ['reunion', 'guadeloupe', 'guyane', 'mayotte'] as const) {
+      vi.restoreAllMocks();
+      mockNetwork({ place });
+      const r = await placeAreasOf(POINTS[place].lat, POINTS[place].lon);
+      expect(r, place).toMatchObject({ country: 'fr', overseas: true });
+    }
+    for (const place of ['lyon', 'chamonix', 'paris', 'corse'] as const) {
+      vi.restoreAllMocks();
+      mockNetwork({ place });
+      const r = await placeAreasOf(POINTS[place].lat, POINTS[place].lon);
+      expect(r, place).not.toHaveProperty('overseas');
+    }
+    // Ni région « France métropolitaine » ni code de département : rien ne prouve la métropole.
+    vi.restoreAllMocks();
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
+      async () => new Response(JSON.stringify({ address: { state: 'Bretagne', country_code: 'fr' } }), { status: 200 })
+    );
+    await expect(placeAreasOf(48.1, -2.9)).resolves.toMatchObject({ country: 'fr', overseas: true });
+  });
+
   it('carte muette : null', async () => {
     mockNetwork({ place: null });
     await expect(placeAreasOf(45.76, 4.83)).resolves.toBeNull();
@@ -148,6 +217,37 @@ describe('getOfficialAlerts', () => {
   it('France, département calme : « lues », liste vide', async () => {
     mockNetwork({ place: 'chamonix', feeds: { france: { warnings: [cap('fr-69', 'Rhône', '3; orange; Severe', '3; Thunderstorm')] } } });
     expect(await getOfficialAlerts({ point: POINTS.chamonix, ...TRIP })).toMatchObject({ status: 'lues', alerts: [] });
+  });
+
+  it('Paris, Lyon, Corse (France métropolitaine) : le flux France est lu, un département calme est « lues »', async () => {
+    const feeds = { france: { warnings: [cap('fr-13', 'Bouches-du-Rhône', '3; orange; Severe', '3; Thunderstorm')] } };
+    for (const place of ['paris', 'lyon', 'corse'] as const) {
+      resetOfficialAlertsCache();
+      vi.restoreAllMocks();
+      mockNetwork({ place, feeds });
+      expect(await getOfficialAlerts({ point: POINTS[place], ...TRIP })).toMatchObject({ status: 'lues', alerts: [] });
+    }
+  });
+
+  it('Corse : l’alerte du département Haute-Corse est montrée', async () => {
+    mockNetwork({ place: 'corse', feeds: { france: { warnings: [cap('fr-2b', 'Haute-Corse', '3; orange; Severe', '1; Wind')] } } });
+    const r = await getOfficialAlerts({ point: POINTS.corse, ...TRIP });
+    expect(r.status).toBe('lues');
+    expect(r.alerts).toMatchObject([{ id: 'fr-2b', level: 'orange', area: 'Haute-Corse' }]);
+  });
+
+  it('CONTRE-EXEMPLE — outre-mer (La Réunion, Guadeloupe, Guyane, Mayotte) : « fr » pour la carte, mais Meteoalarm ne les couvre pas', async () => {
+    // Le flux France ne nomme que les départements métropolitains : un territoire absent du
+    // flux n'est pas un territoire calme. « Alertes lues, aucune » serait faux.
+    const feeds = { france: { warnings: [cap('fr-69', 'Rhône', '3; orange; Severe', '3; Thunderstorm')] } };
+    for (const place of ['reunion', 'guadeloupe', 'guyane', 'mayotte'] as const) {
+      resetOfficialAlertsCache();
+      vi.restoreAllMocks();
+      const net = mockNetwork({ place, feeds });
+      const r = await getOfficialAlerts({ point: POINTS[place], ...TRIP });
+      expect(r, place).toEqual({ status: 'non_couvert', alerts: [], area: null, readAt: null });
+      expect(net.feedCalls(), place).toBe(0);
+    }
   });
 
   it('Suisse : le contour du flux couvre Lausanne, la zone est reconnue', async () => {

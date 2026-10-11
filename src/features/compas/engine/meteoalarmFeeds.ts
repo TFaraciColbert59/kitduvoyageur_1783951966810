@@ -110,10 +110,12 @@ export interface MeteoalarmFeed {
   slug: string;
   providers: MeteoalarmProvider[];
   /**
-   * Les zones du flux sont les départements, nommés comme la carte : un
-   * département absent du flux n'a pas d'alerte (vérifié le 2026-10-01, flux de
-   * Météo-France). Faux ailleurs : un nom absent peut être un nom que la carte
-   * ne donne pas pareil, jamais la preuve d'une zone calme.
+   * Les zones du flux sont les départements métropolitains, nommés comme la
+   * carte : un département absent du flux n'a pas d'alerte (vérifié le
+   * 2026-10-01, flux de Météo-France). Les départements d'outre-mer n'y figurent
+   * pas : un lieu d'outre-mer n'en reçoit jamais cette garantie. Faux ailleurs :
+   * un nom absent peut être un nom que la carte ne donne pas pareil, jamais la
+   * preuve d'une zone calme.
    */
   namesAreComplete?: boolean;
 }
