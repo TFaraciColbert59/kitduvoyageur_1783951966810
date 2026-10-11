@@ -1,5 +1,7 @@
 import React from 'react';
 import ENTRY_DATA from '@/features/compas/data/entryRequirements.meta.json';
+import CURRENCIES_META from '@/features/compas/data/countryCurrencies.meta.json';
+import FUEL_META from '@/features/compas/data/fuelPrices.meta.json';
 
 /**
  * Sources des données et licences (plan 5.3) : chaque service gratuit est
@@ -133,6 +135,26 @@ export const DATA_SOURCES: DataSource[] = [
       ' : « Source: ECB statistics. », statistiques reprises sans les modifier) ; en secours, ',
       { text: 'currency-api', href: 'https://github.com/fawazahmed0/exchange-api' },
       ' (CC0). Taux donnés à titre indicatif.',
+    ],
+  },
+  {
+    label: 'Carburant',
+    parts: [
+      'Prix à la pompe de l’UE-27 : ',
+      { text: 'Weekly Oil Bulletin', href: FUEL_META.page },
+      ', Commission européenne (DG Énergie), licence ',
+      { text: 'CC BY 4.0', href: CC_BY },
+      ` ; prix du ${FUEL_META.pricesDate}, convertis en euros par litre et arrondis au millième. Hors de l’UE, aucune source gratuite : le prix est une estimation, dite comme telle.`,
+    ],
+  },
+  {
+    label: 'Devises des pays',
+    parts: [
+      'Devise de chaque pays d’après la liste n° 1 de la norme ISO 4217, publiée par ',
+      { text: 'SIX', href: 'https://www.six-group.com/en/products-services/financial-information/data-standards.html' },
+      ', agence de maintenance de la norme (liste du ',
+      CURRENCIES_META.published,
+      ').',
     ],
   },
 ];

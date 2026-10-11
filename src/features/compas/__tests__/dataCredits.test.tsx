@@ -3,6 +3,8 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import META from '../data/entryRequirements.meta.json';
+import CURRENCIES_META from '../data/countryCurrencies.meta.json';
+import FUEL_META from '../data/fuelPrices.meta.json';
 import { DATA_SOURCES, DataSources } from '@/app/mentions-legales/DataSources';
 
 /**
@@ -45,6 +47,20 @@ describe('mentions légales — sources des données', () => {
 
   it('aucun jeu dérivé de Passport Index n’est crédité ni cité', () => {
     expect(text).not.toMatch(/passport ?index/i);
+  });
+
+  it('le carburant cite le bulletin pétrolier de la Commission (CC BY 4.0), sa date, la conversion, et l’estimation hors UE', () => {
+    expect(text).toContain('Carburant :');
+    expect(text).toMatch(/Weekly Oil Bulletin, Commission européenne \(DG Énergie\), licence CC BY 4\.0/);
+    expect(text).toContain(`prix du ${FUEL_META.pricesDate}, convertis en euros par litre et arrondis au millième`);
+    expect(text).toMatch(/Hors de l’UE, aucune source gratuite : le prix est une estimation/);
+    expect(markup).toContain(`href="${FUEL_META.page}"`);
+  });
+
+  it('les devises des pays citent la liste ISO 4217 de SIX, avec sa date de publication', () => {
+    expect(text).toContain('Devises des pays :');
+    expect(text).toMatch(/liste n° 1 de la norme ISO 4217, publiée par SIX/);
+    expect(text).toContain(`liste du ${CURRENCIES_META.published}`);
   });
 
   it('la page des mentions légales affiche ces sources (mobile et bureau)', () => {

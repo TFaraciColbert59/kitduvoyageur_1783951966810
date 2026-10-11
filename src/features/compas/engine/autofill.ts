@@ -8,6 +8,7 @@ import { isInventoryAvailable, type InventoryStatus } from '@/features/materiel/
  * toujours affichée comme telle). Aucun produit, prix ou lieu n'est inventé.
  */
 
+import { fuelPrice, type FuelKind, type FuelPrice } from './fuel';
 import { shopTokens } from './shopMatch';
 
 /* ---------- Nuits ---------- */
@@ -100,7 +101,7 @@ export function planNights(input: NightsInput): NightPlan[] {
 /* ---------- Trajet ---------- */
 
 /** Voiture : consommation et carburant moyens, affichés comme hypothèses. */
-export const CAR_ASSUMPTIONS = { litersPer100Km: 6.5, fuelEurPerLiter: 1.8, seats: 4 } as const;
+export const CAR_ASSUMPTIONS = { litersPer100Km: 6.5, seats: 4 } as const;
 
 export interface TransportEstimate {
   mode: 'voiture';
@@ -110,6 +111,10 @@ export interface TransportEstimate {
   roundTripKm: number;
   /** Carburant aller-retour pour toutes les voitures, péages non comptés. */
   fuelEur: number;
+  /** D'où vient le prix du litre : le bulletin pétrolier de l'UE (UE-27) ou une estimation (PLAN-100 4.6). */
+  fuelSource: FuelKind;
+  /** Estimation seulement : le carburant du trajet au moins cher et au plus cher des pays de l'UE (€). */
+  fuelRangeEur: { low: number; high: number } | null;
   basis: string;
 }
 
@@ -117,14 +122,18 @@ export function estimateCarTrip(input: {
   oneWayKm: number;
   oneWayMin: number;
   partySize: number;
+  /** Prix du litre du ou des pays du trajet (`fuelPriceFor`) ; sans lui, l'estimation de l'UE-27. */
+  fuel?: FuelPrice;
 }): TransportEstimate | null {
   if (!(input.oneWayKm > 0) || !Number.isFinite(input.oneWayKm)) return null;
   const cars = Math.max(1, Math.ceil(Math.max(1, input.partySize) / CAR_ASSUMPTIONS.seats));
   const roundTripKm = Math.round(input.oneWayKm * 2 * 10) / 10;
-  const fuelEur =
-    Math.round(
-      ((roundTripKm * CAR_ASSUMPTIONS.litersPer100Km) / 100) * CAR_ASSUMPTIONS.fuelEurPerLiter * cars
-    );
+  const fuel = input.fuel ?? fuelPrice(null);
+  const litres = (roundTripKm * CAR_ASSUMPTIONS.litersPer100Km) / 100;
+  const fuelEur = Math.round(litres * fuel.eurPerL * cars);
+  const fuelRangeEur = fuel.range
+    ? { low: Math.round(litres * fuel.range.low * cars), high: Math.round(litres * fuel.range.high * cars) }
+    : null;
   return {
     mode: 'voiture',
     oneWayKm: Math.round(input.oneWayKm * 10) / 10,
@@ -132,7 +141,9 @@ export function estimateCarTrip(input: {
     cars,
     roundTripKm,
     fuelEur,
-    basis: `itinéraire routier mesuré · ${CAR_ASSUMPTIONS.litersPer100Km} L/100 km à ${CAR_ASSUMPTIONS.fuelEurPerLiter.toFixed(2).replace('.', ',')} €/L · ${cars} voiture${cars > 1 ? 's' : ''} · péages non comptés`,
+    fuelSource: fuel.kind,
+    fuelRangeEur,
+    basis: `itinéraire routier mesuré · ${String(CAR_ASSUMPTIONS.litersPer100Km).replace('.', ',')} L/100 km · ${fuel.basis}${fuelRangeEur ? ` · entre ${fuelRangeEur.low} € et ${fuelRangeEur.high} € pour ce trajet` : ''} · ${cars} voiture${cars > 1 ? 's' : ''} · péages non comptés`,
   };
 }
 
@@ -681,11 +692,11 @@ export function sameNeed(a: GearNeed, b: GearNeed): boolean {
 }
 
 /** Carburant pour des kilomètres mesurés sur place (mêmes hypothèses que le trajet). */
-export function fuelForKm(km: number, partySize: number): { fuelEur: number; cars: number } {
+export function fuelForKm(km: number, partySize: number, fuel: FuelPrice = fuelPrice(null)): { fuelEur: number; cars: number } {
   const cars = Math.max(1, Math.ceil(Math.max(1, partySize) / CAR_ASSUMPTIONS.seats));
   return {
     cars,
-    fuelEur: Math.round(((km * CAR_ASSUMPTIONS.litersPer100Km) / 100) * CAR_ASSUMPTIONS.fuelEurPerLiter * cars),
+    fuelEur: Math.round(((km * CAR_ASSUMPTIONS.litersPer100Km) / 100) * fuel.eurPerL * cars),
   };
 }
 

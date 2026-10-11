@@ -1,6 +1,7 @@
 'use client';
 
 import { classifyScale, scaleHours } from '../engine/scale';
+import { budgetInOtherCurrencies, type BudgetFxData } from '../engine/budgetFx';
 import Link from 'next/link';
 import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { deleteTripItemAction } from '@/app/voyages/kit-actions';
@@ -426,6 +427,39 @@ function AutofillLine({ ctl }: { ctl: CompasCtl }) {
   return null;
 }
 
+/* ---------- Le budget dans d'autres devises ---------- */
+
+/**
+ * Le même budget dans la devise du voyageur (profil) et celle du pays (PLAN-100 4.2, 4.6) :
+ * le calcul reste dans la devise du voyage, chaque montant converti dit son taux, sa date
+ * et sa source juste dessous. Rien n'est stocké ; sans taux, la ligne dit « indisponible ».
+ */
+export function BudgetAlso({
+  fx,
+  currency,
+  items,
+}: {
+  fx: BudgetFxData | null | undefined;
+  currency: string;
+  items: Array<{ label: string; amount: number | null | undefined }>;
+}) {
+  const lines = budgetInOtherCurrencies(items, currency, fx);
+  if (!lines.length) return null;
+  return (
+    <div data-testid="budget-also">
+      {lines.map((l) => (
+        <div key={l.currency}>
+          <p className="cp-sub">
+            <b>{l.title}</b>
+            {l.parts.map((p) => ` · ${p.label} ${p.text}`).join('')}
+          </p>
+          <p className="cp-disc">{l.unavailable ? l.note : `${l.note} · indicatif : le calcul reste en ${currency === 'EUR' ? 'euros' : currency}`}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ---------- Nous : équipe et budget ---------- */
 
 export function NousCard({ ctl }: { ctl: CompasCtl }) {
@@ -487,6 +521,11 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
             : ''}
         </span>
       </button>
+      <BudgetAlso
+        fx={ctl.data.budgetFx}
+        currency={budget.currency}
+        items={[{ label: 'prévus et dépensés', amount: engaged }]}
+      />
       {share != null && (
         <div
           className="cp-bar"

@@ -1032,6 +1032,79 @@ describe('CompasScreen', () => {
     );
   });
 
+  describe('Nous : le budget aussi dans la devise de la personne (PLAN-100 4.6)', () => {
+    const chf = {
+      targets: [{ currency: 'CHF', kinds: ['voyageur' as const] }],
+      rates: {
+        CHF: { base: 'EUR' as const, currency: 'CHF', rate: 0.93, date: '2026-10-09', source: 'Frankfurter (banques centrales)' },
+      },
+    };
+
+    const spent = {
+      id: 'e1',
+      title: 'Refuge',
+      amount: 400,
+      category: 'hébergement',
+      isPlanned: true,
+      payerId: U1,
+      splitType: 'equal',
+    };
+    const withBudget = (budgetFx: CompasData['budgetFx']) => ({ ...makeData({ expenses: [spent] }), budgetFx });
+
+    it('la carte et le tiroir disent le montant converti avec son taux, sa date et sa source', async () => {
+      render(<CompasScreen data={withBudget(chf)} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+      const card = screen.getByTestId('budget-also');
+      expect(within(card).getByText(/Dans ta devise \(CHF\)/)).toBeTruthy();
+      expect(card.textContent).toMatch(/prévus et dépensés ≈ 372\s(CHF|Fr\.?)/);
+      expect(card.textContent).toContain('1 € = 0,93 CHF · taux du 9 octobre 2026 · Frankfurter (banques centrales)');
+      expect(card.textContent).toContain('le calcul reste en euros');
+      fireEvent.click(screen.getByRole('button', { name: 'Détails : Nous' }));
+      const sheet = await screen.findByRole('dialog', { name: 'Nous' });
+      fireEvent.click(within(sheet).getByRole('button', { name: /Budget/ }));
+      const block = within(sheet).getByTestId('budget-also');
+      expect(block.textContent).toMatch(/enveloppe ≈ 837/);
+      expect(block.textContent).toContain('1 € = 0,93 CHF');
+    });
+
+    it('la devise du pays de destination est dite comme telle, à côté de celle du voyageur', () => {
+      const jpy = {
+        base: 'EUR' as const,
+        currency: 'JPY',
+        rate: 176.2,
+        date: '2026-10-08',
+        source: 'currency-api',
+      };
+      render(
+        <CompasScreen
+          data={withBudget({
+            targets: [...chf.targets, { currency: 'JPY', kinds: ['destination' as const] }],
+            rates: { ...chf.rates, JPY: jpy },
+          })}
+        />
+      );
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+      const card = screen.getByTestId('budget-also');
+      expect(card.textContent).toContain('Dans ta devise (CHF)');
+      expect(card.textContent).toContain('Dans la devise du pays (JPY)');
+      expect(card.textContent).toContain('1 € = 176,2 JPY · taux du 8 octobre 2026 · currency-api');
+    });
+
+    it('sans devise à montrer en plus, rien n’est ajouté', () => {
+      render(<CompasScreen data={withBudget(null)} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+      expect(screen.queryByTestId('budget-also')).toBeNull();
+    });
+
+    it('taux introuvable : la ligne le dit, aucun montant', () => {
+      render(<CompasScreen data={withBudget({ targets: chf.targets, rates: {} })} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+      const card = screen.getByTestId('budget-also');
+      expect(card.textContent).toContain('Conversion en CHF indisponible');
+      expect(card.textContent).not.toContain('≈');
+    });
+  });
+
   it('objet prêté : « Je l’ai récupéré » remet l’objet de l’inventaire en service', async () => {
     const INV = '77777777-7777-4777-8777-777777777777';
     const inventory = [

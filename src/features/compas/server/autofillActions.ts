@@ -55,6 +55,7 @@ import {
   type SourceShop,
   movesFromSteps,
 } from '../engine/autofill';
+import { fuelPrice } from '../engine/fuel';
 import { anchorFromOrigin, originOf, shortHoursOf, tripLengthDays } from '../engine/tripContext';
 import { compasMeta, readProfile, requireEditor, resplitSteps, tripBasis, tripPartySize, updateTripMetadata, type Supa } from './compasServer';
 import { readTraveller } from './traveller';
@@ -1946,7 +1947,9 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     ).length;
     // Vol : d'aéroport à aéroport (OurAirports), sinon du départ au lieu ; sans départ, aucun vol.
     const flight = travelLeg.flight ? flightRoundTrip(travelLeg.flight.km) : null;
-    const rentalCars = fuelForKm(carKmOnSite, party).cars;
+    // Carburant sur place au prix du pays de destination : publié (UE-27) ou estimation (PLAN-100 4.6).
+    const siteFuel = fuelPrice(anchor.countryCode);
+    const rentalCars = fuelForKm(carKmOnSite, party, siteFuel).cars;
     const localTrips = localMoves.reduce((t, m) => t + localTripPerLeg(m.move, lvl.level), 0);
     // Formalités (barème pour un ressortissant français) : seulement pour une nationalité
     // française connue, tant qu'on ne sait pas que la personne est déjà dans le pays, et
@@ -2003,15 +2006,21 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           }
         : null,
       carFuel
-        ? { category: 'transport', title: `Carburant aller-retour (${carFuel.roundTripKm} km)`, amount: carFuel.fuelEur, source: 'mesure', basis: carFuel.basis }
+        ? {
+            category: 'transport',
+            title: `Carburant aller-retour (${carFuel.roundTripKm} km)`,
+            amount: carFuel.fuelEur,
+            source: carFuel.fuelSource === 'bulletin' ? 'mesure' : 'estimation',
+            basis: carFuel.basis,
+          }
         : null,
       carKmOnSite > 0
         ? {
             category: 'transport',
             title: `Carburant sur place (${Math.round(carKmOnSite)} km)`,
-            amount: fuelForKm(carKmOnSite, party).fuelEur,
-            source: 'mesure',
-            basis: `kilomètres mesurés entre les étapes · ${CAR_ASSUMPTIONS.litersPer100Km} L/100 km à ${CAR_ASSUMPTIONS.fuelEurPerLiter.toFixed(2).replace('.', ',')} €/L`,
+            amount: fuelForKm(carKmOnSite, party, siteFuel).fuelEur,
+            source: siteFuel.kind === 'bulletin' ? 'mesure' : 'estimation',
+            basis: `kilomètres mesurés entre les étapes · ${String(CAR_ASSUMPTIONS.litersPer100Km).replace('.', ',')} L/100 km · ${siteFuel.basis} · péages non comptés`,
           }
         : null,
       rentalNeeded

@@ -3,14 +3,16 @@ import 'server-only';
 import { MAX_NOTES } from '../engine/advice';
 import { originOf, partySizeOf, shortHoursOf, tripLengthDays } from '../engine/tripContext';
 
-import type { FxRate } from '../engine/currency';
+import { currencyOfCountry, type FxRate } from '../engine/currency';
+import type { BudgetFxData } from '../engine/budgetFx';
 import type { CompasPendingInvite } from '../engine/team';
 import { assessDanger, mergeDangerIntoVerdict, type DangerAssessment } from '../engine/danger';
 import type { AlertsStatus } from '../engine/officialAlerts';
 import { adviseKit, type KitAdvice, type KitContext } from '../engine/kitRules';
 import { buildKitContext, datesWithoutForecast, kitAltitude } from '../engine/kitContext';
 import { parseRoutePois, poiLabel, type RoutePoi } from '../engine/routePois';
-import { getEurRate } from './rates';
+import { getBudgetFx, getEurRate } from './rates';
+import { readTraveller } from './traveller';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
@@ -120,6 +122,13 @@ export interface CompasData {
   providers: { routestack: ProviderCredentialMode; viator: ProviderCredentialMode };
   /** Taux EUR → devise du voyage (null si le voyage est en euros ou taux indisponible). */
   fx: FxRate | null;
+  /**
+   * Le budget aussi dans la devise de la personne qui regarde (son profil voyageur, jamais
+   * celle d'un autre membre du voyage) et dans celle du pays de destination, avec taux, date
+   * et source (PLAN-100 4.2, 4.6). Calculé à chaque affichage, jamais stocké ; absent (écran
+   * plus ancien, tests) ou null : le budget reste dans la devise du voyage.
+   */
+  budgetFx?: BudgetFxData | null;
   /** Danger en trois axes, chaque signal sourcé et daté. */
   danger: DangerAssessment;
   /**
@@ -428,12 +437,14 @@ export async function getCompasData(): Promise<CompasData | null> {
   } = await client.auth.getUser();
   const viewerId = user?.id ?? null;
 
-  const [inventory, bookings, shop, pendingInvites, profile] = await Promise.all([
+  const [inventory, bookings, shop, pendingInvites, profile, traveller] = await Promise.all([
     loadInventory(client, viewerId),
     loadBookings(client, trip.id),
     loadShop(client),
     loadPendingInvites(client, trip.id),
     readProfile(client as never, viewerId),
+    // Sa propre devise, par la RLS de la personne ; jamais pour un essai sans compte.
+    readTraveller(client, user?.is_anonymous === true ? null : viewerId),
   ]);
 
   const members = toMembers(trip, hub.group?.members ?? []);
@@ -536,7 +547,7 @@ export async function getCompasData(): Promise<CompasData | null> {
   // Normales NASA POWER du lieu (gardées 30 jours) : froid, pluie, chaleur au-delà de la prévision.
   const kitPoint = origin ?? anchorPoint(trip.metadata);
   const hasDates = plans.some((d) => d.date != null) || Boolean(trip.start_date);
-  const [weather, routePois, officialAlerts, elevation, fx, climateNormals, placesAltitudeM] = await Promise.all([
+  const [weather, routePois, officialAlerts, elevation, fx, climateNormals, placesAltitudeM, budgetFx] = await Promise.all([
     getCompasWeather({
       origin,
       tripDays: plans
@@ -562,6 +573,12 @@ export async function getCompasData(): Promise<CompasData | null> {
     kitPoint && hasDates ? getClimateNormals(kitPoint.lat, kitPoint.lon) : Promise.resolve(null),
     // Altitude de secours du kit : sans tracé, le relief des lieux du voyage (jamais une valeur par pays).
     pointsMaxAltitudeM(points.filter((p) => p.kind === 'step')),
+    getBudgetFx({
+      tripCurrency: input.trip.budgetCurrency ?? 'EUR',
+      traveller: traveller.currency,
+      // La devise du pays de destination (ISO 4217) : null quand la liste n'en donne pas.
+      destination: currencyOfCountry(trip.destination_country_code),
+    }),
   ]);
   input.weather = toWeatherInput(weather);
 
@@ -665,6 +682,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     viewerId,
     providers: getActiveProviderMode(),
     fx,
+    budgetFx,
     weather,
     route: { id: routeId, name: hub.hiking?.routeName ?? null },
     origin,
