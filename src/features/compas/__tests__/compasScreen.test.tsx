@@ -931,6 +931,105 @@ describe('CompasScreen', () => {
     }
   });
 
+  // Plan 1.2 « Coût de calcul » : le suivi ralentit, se tait onglet caché ou hors ligne,
+  // reprend à la reprise et s'arrête avec « Arrêter ».
+  describe('Préremplissage : suivi économe', () => {
+    const setTabVisible = (visible: boolean) => {
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => (visible ? 'visible' : 'hidden') });
+      document.dispatchEvent(new Event('visibilitychange'));
+    };
+    const setOnline = (online: boolean) => {
+      Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => online });
+      window.dispatchEvent(new Event(online ? 'online' : 'offline'));
+    };
+    const pending = { outcome: null, stamp: 'v1' };
+    let original: ((...args: never[]) => unknown) | undefined;
+    beforeEach(() => {
+      original = autofill.compasAutofillOutcomeAction.getMockImplementation() as typeof original;
+    });
+    afterEach(() => {
+      delete (document as unknown as Record<string, unknown>).visibilityState;
+      delete (navigator as unknown as Record<string, unknown>).onLine;
+      if (original) autofill.compasAutofillOutcomeAction.mockImplementation(original as never);
+    });
+
+    it('onglet caché : aucune relecture ; au retour, une relecture tout de suite et l’issue s’affiche', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        let answer: unknown = pending;
+        autofill.compasAutofillOutcomeAction.mockImplementation((async () => answer) as never);
+        render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        await waitFor(() => expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(1));
+        setTabVisible(false);
+        await vi.advanceTimersByTimeAsync(120_000);
+        expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(1);
+        expect(screen.queryByText(/Aventure préparée/)).toBeNull();
+        // Le serveur a fini pendant l'absence : la reprise le montre sans attendre le prochain rythme.
+        const done = (await outcomes.byToken.get('t' + outcomes.n)) as Record<string, unknown>;
+        answer = { outcome: { ...done, token: 't' + outcomes.n, at: Date.now() }, stamp: 'fin' };
+        setTabVisible(true);
+        expect(await screen.findByText(/Aventure préparée · 486/)).toBeTruthy();
+        expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(2);
+        // Fini : plus aucune relecture.
+        await vi.advanceTimersByTimeAsync(120_000);
+        expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(2);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('hors ligne : aucune relecture ; le réseau revient, la relecture reprend', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        autofill.compasAutofillOutcomeAction.mockImplementation((async () => pending) as never);
+        render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        await waitFor(() => expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(1));
+        setOnline(false);
+        await vi.advanceTimersByTimeAsync(90_000);
+        expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(1);
+        setOnline(true);
+        await vi.advanceTimersByTimeAsync(50);
+        expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(2);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('« Arrêter » hors ligne met fin au suivi : le retour du réseau ne relit plus rien', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        autofill.compasAutofillOutcomeAction.mockImplementation((async () => pending) as never);
+        render(<CompasScreen data={{ ...makeData(), autofill: 'none', startSay: 'rando à 4' }} />);
+        const panel = await screen.findByRole('status', { name: 'Préparation de l’aventure' });
+        await waitFor(() => expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(1));
+        setOnline(false);
+        await vi.advanceTimersByTimeAsync(10_000);
+        fireEvent.click(within(panel).getByRole('button', { name: 'Arrêter' }));
+        await waitFor(() => expect(autofill.compasAutofillStopAction).toHaveBeenCalledWith({ tripId: TRIP }));
+        setOnline(true);
+        await vi.advanceTimersByTimeAsync(120_000);
+        expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('une préparation de 100 s coûte au plus 14 relectures (4 s fixes : 25)', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        autofill.compasAutofillOutcomeAction.mockImplementation((async () => pending) as never);
+        render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        await waitFor(() => expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(1));
+        await vi.advanceTimersByTimeAsync(100_000);
+        const calls = autofill.compasAutofillOutcomeAction.mock.calls.length;
+        expect(calls).toBeGreaterThanOrEqual(8);
+        expect(calls).toBeLessThanOrEqual(14);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
   it('Préremplissage : déjà fait ou annulé → ne se relance pas', () => {
     render(<CompasScreen data={{ ...makeData(), autofill: 'undone' }} />);
     expect(autofill.compasAutofillAction).not.toHaveBeenCalled();
