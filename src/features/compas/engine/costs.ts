@@ -2,7 +2,7 @@
  * Barèmes de coûts du Compas — tenus dans le code, versionnés, sans IA.
  *
  * Même voyage → même budget, au centime près. Chaque montant porte sa base
- * (« barème Compas 2026 · Pérou ≈ 45 % des prix français »). Ce sont des
+ * (« barème Compas 2026-10 · indice de prix du pays : Pérou 45 (France = 100) »). Ce sont des
  * ordres de grandeur pour préparer, jamais un devis : Résa donne les vrais prix.
  *
  * Référence : prix moyens d'un voyageur en France en 2026 (repas mi-marché
@@ -98,7 +98,7 @@ const ENTRY_FEES: Record<string, { eur: number; detail: string }> = {
 export interface PriceLevel {
   level: number;
   known: boolean;
-  /** « Pérou ≈ 45 % des prix français ». */
+  /** « indice de prix du pays : Pérou 45 (France = 100) ». */
   basis: string;
 }
 
@@ -107,15 +107,15 @@ export function priceLevel(countryCode: string | null | undefined, countryName?:
   const known = cc in PRICE_LEVEL;
   const level = known ? PRICE_LEVEL[cc] : DEFAULT_LEVEL;
   const where = countryName || cc || 'pays inconnu';
-  const pct = Math.round(level * 100);
+  const index = Math.round(level * 100);
   return {
     level,
     known,
     basis: known
       ? cc === 'FR'
-        ? `barème Compas ${COSTS_VERSION} · prix français`
-        : `barème Compas ${COSTS_VERSION} · ${where} ≈ ${pct} % des prix français`
-      : `barème Compas ${COSTS_VERSION} · niveau de prix moyen (${where} absent du barème)`,
+        ? `barème Compas ${COSTS_VERSION} · indice de prix du pays : France ${index} (référence)`
+        : `barème Compas ${COSTS_VERSION} · indice de prix du pays : ${where} ${index} (France = 100)`
+      : `barème Compas ${COSTS_VERSION} · indice de prix du pays : ${where} absent du barème, niveau moyen ${index} (France = 100)`,
   };
 }
 

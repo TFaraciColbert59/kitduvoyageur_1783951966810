@@ -19,7 +19,13 @@ describe('barèmes du Compas', () => {
   it('niveau de prix par pays, annoncé ; pays inconnu = moyenne annoncée', () => {
     expect(priceLevel('FR').level).toBe(1);
     expect(priceLevel('pe', 'Pérou')).toMatchObject({ level: 0.45, known: true });
-    expect(priceLevel('PE', 'Pérou').basis).toContain('Pérou ≈ 45 % des prix français');
+    expect(priceLevel('PE', 'Pérou').basis).toBe('barème Compas 2026-10 · indice de prix du pays : Pérou 45 (France = 100)');
+    expect(priceLevel('FR').basis).toBe('barème Compas 2026-10 · indice de prix du pays : France 100 (référence)');
+    expect(priceLevel('XX', 'Atlantide').basis).toBe(
+      'barème Compas 2026-10 · indice de prix du pays : Atlantide absent du barème, niveau moyen 70 (France = 100)'
+    );
+    // Plus aucun libellé « prix français » : l'indice du pays se dit par rapport à une base, pas comme les prix d'un pays.
+    for (const cc of ['PE', 'FR', 'XX', 'CH']) expect(priceLevel(cc).basis).not.toMatch(/prix français/);
     expect(priceLevel('XX')).toMatchObject({ level: 0.7, known: false });
     expect(priceLevel(null).basis).toContain('absent du barème');
   });
