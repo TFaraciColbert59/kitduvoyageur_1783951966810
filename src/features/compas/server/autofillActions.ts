@@ -70,7 +70,7 @@ import { carFreeOf, carFreeStages, carFreeStagesNote, transitSignal } from '../e
 import { buildTrack, simplifyLine, trackKey, type LngLat } from '../engine/track';
 import { descentWindow, planRiverDescent } from '../engine/river';
 import { entryFor } from '../engine/entry';
-import { isPapersNote, keepAiNote, sharedPapersNotes, travelPapers, type PapersFacts } from '../engine/papers';
+import { keepAiNote, papersFactsFor, sharedNotes, travelPapers, type PapersFacts } from '../engine/papers';
 import { isFrenchNational } from '../engine/traveller';
 import { tutoyer } from '../engine/voice';
 import { addDaysIso } from '../engine/format';
@@ -1970,17 +1970,14 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       lat: anchor.lat ?? null,
       countryCode: anchor.countryCode ?? null,
     });
-    // VIE PRIVÉE : la ligne « Papiers » de la table dépend de la nationalité ; rangée sur le
-    // voyage (notes, issue), tout collaborateur la lirait (et tout le monde pour un voyage
-    // public : un groupe de la table peut n'avoir qu'un passeport). Le voyage ne garde que la
-    // ligne sans nationalité, plus de quoi rendre celle de chaque lecteur à la lecture
-    // (`getCompasData`, avec SON profil). Le pays et le départ n'apprennent rien sur la personne.
-    const sharedPapers = sharedPapersNotes(anchor.countryCode, anchor.country, abroad);
-    const papersFacts: PapersFacts | null =
-      sharedPapers.length && anchor.countryCode
-        ? { countryCode: anchor.countryCode.toUpperCase(), country: anchor.country ?? null, abroad }
-        : null;
-    const essential = [...sharedPapers, ...papers.notes.filter((n) => !isPapersNote(n)), ...safety];
+    // VIE PRIVÉE : les lignes « Papiers » (nationalité) et « Prises » (appareils : résidence) dépendent
+    // du profil ; rangées sur le voyage (notes, issue), tout collaborateur les lirait (et tout le monde
+    // pour un voyage public : un groupe de la table peut n'avoir qu'un passeport, « adaptateur à prévoir »
+    // dit des appareils de France). Le voyage ne garde que les lignes SANS profil, plus de quoi rendre
+    // celles de chaque lecteur à la lecture (`getCompasData`, avec SON profil). Le pays et le départ
+    // n'apprennent rien sur la personne ; ils se rangent dès que le code pays est valide.
+    const essential = [...sharedNotes(anchor.countryCode, anchor.country, abroad), ...safety];
+    const papersFacts: PapersFacts | null = papersFactsFor(anchor.countryCode, anchor.country, abroad);
     // L'IA n'ajoute que des suggestions facultatives, dites comme telles.
     const aiNotes = advice.notes
       .filter((n) => keepAiNote(n, papers))

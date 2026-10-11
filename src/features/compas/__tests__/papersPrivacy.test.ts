@@ -107,6 +107,7 @@ vi.mock('../server/rates', () => ({
   getBudgetFx: vi.fn(async () => null),
 }));
 
+import type { PapersFacts } from '../engine/papers';
 import { compasAutofillAction } from '../server/autofillActions';
 import { getCompasData } from '../server/getCompasData';
 import { memorySupabase, type MemorySupabase, type Row } from './helpers/memorySupabase';
@@ -147,10 +148,14 @@ const profile = (userId: string, nationality: string | null): Row => ({
   home_country: null,
 });
 
+/** Un profil complet : tout inconnu sauf ce qu'on dit. */
+const profileOf = (userId: string, over: Partial<Row>): Row => ({ ...profile(userId, null), ...over });
+
 const NEUTRAL = (where: string) =>
   `Papiers : conditions d’entrée (${where}) à vérifier auprès du service officiel de ton pays avant de partir.`;
 const papersOf = (notes: string[]) => notes.filter((n) => n.startsWith('Papiers'));
-const storedMeta = () => h.db.rows('trips')[0].metadata as { compas: { autofill: { notes: string[] } } };
+const storedMeta = () =>
+  h.db.rows('trips')[0].metadata as { compas: { autofill: { notes: string[]; papers?: PapersFacts } } };
 /** Tout ce que la table dit d'un passeport : une de ces marques sur le voyage trahit la nationalité. */
 const TABLE_TRACES = /vérifié le|sans visa|visa à l’arrivée|ETA\/ESTA|e-visa|libre circulation|carte d’identité|France Diplomatie/;
 
@@ -189,6 +194,71 @@ describe('écriture : la nationalité du lanceur ne va jamais sur le voyage', ()
     expect(res.success).toBe(true);
     expect(papersOf(res.success && 'summary' in res ? res.summary.notes : [])).toEqual([]);
     expect(papersOf(storedMeta().compas.autofill.notes)).toEqual([]);
+    // Les faits du pays se rangent tout de même : la ligne « Prises » de chaque lecteur s'en rend.
+    expect(storedMeta().compas.autofill.papers).toEqual({ countryCode: 'MA', country: 'Maroc', abroad: false });
+  });
+});
+
+const NEUTRAL_G = 'Prises de type G (Royaume-Uni) : vérifie que tes chargeurs s’y branchent.';
+const ADAPTER_G = 'Prises de type G : adaptateur à prévoir.';
+const pluggedOf = (notes: string[]) => notes.filter((n) => n.startsWith('Prises'));
+
+describe('écriture : les appareils du lanceur ne vont jamais sur le voyage (ligne « Prises »)', () => {
+  it.each([
+    ['sans profil', {}],
+    ['appareils de France (résidence FR)', { residence_country: 'FR' }],
+    ['passeport français sans résidence dite', { nationality: 'FR' }],
+    ['résidente aux États-Unis', { nationality: 'US', residence_country: 'US' }],
+    ['Française résidant au Royaume-Uni', { nationality: 'FR', residence_country: 'GB' }],
+  ])('%s : la même ligne neutre, notes du voyage et issue, jamais « adaptateur »', async (_who, over) => {
+    publicTrip('GB', 'Royaume-Uni', 'Londres');
+    h.db.rows('user_traveller').push(profileOf('u1', over));
+    const res = await launch();
+    expect(res.success).toBe(true);
+    const issue = res.success && 'summary' in res ? res.summary.notes : [];
+    expect(pluggedOf(issue)).toEqual([NEUTRAL_G]);
+    expect(pluggedOf(storedMeta().compas.autofill.notes)).toEqual([NEUTRAL_G]);
+    expect(JSON.stringify(h.db.rows('trips')[0].metadata)).not.toMatch(/adaptateur/);
+    expect(JSON.stringify(issue)).not.toMatch(/adaptateur/);
+  });
+});
+
+describe('lecture : chaque lecteur voit la ligne « Prises » de SES appareils', () => {
+  const readAs = async (viewer: { id: string; is_anonymous?: boolean } | null) => {
+    h.viewer = viewer;
+    h.canEdit = false;
+    return pluggedOf((await getCompasData())?.autofillNotes ?? []);
+  };
+
+  beforeEach(async () => {
+    // Un résident des États-Unis prépare un voyage public à Londres.
+    publicTrip('GB', 'Royaume-Uni', 'Londres');
+    h.db.rows('user_traveller').push(
+      profileOf('u1', { nationality: 'US', residence_country: 'US' }),
+      profileOf('u2', { residence_country: 'FR' }),
+      profileOf('u3', { nationality: 'FR' }),
+      profileOf('u4', { nationality: 'DE', residence_country: 'DE' })
+    );
+    expect((await launch()).success).toBe(true);
+  });
+
+  it('appareils de France (résidence, ou passeport français sans résidence) : l’adaptateur', async () => {
+    expect(await readAs({ id: 'u2' })).toEqual([ADAPTER_G]);
+    expect(await readAs({ id: 'u3' })).toEqual([ADAPTER_G]);
+  });
+
+  it('les autres, un anonyme, un compte sans profil : le fait du pays, jamais l’adaptateur', async () => {
+    for (const viewer of [{ id: 'u1' }, { id: 'u4' }, { id: 'u9' }, { id: 'anon-1', is_anonymous: true }, null])
+      expect(await readAs(viewer), JSON.stringify(viewer)).toEqual([NEUTRAL_G]);
+  });
+
+  it('un voyage rangé avant ce correctif (adaptateur dans les notes) : jamais rendu tel quel à un autre lecteur', async () => {
+    const meta = storedMeta();
+    const legacy = meta.compas.autofill.notes.map((n) => (n.startsWith('Prises') ? ADAPTER_G : n));
+    h.db.rows('trips')[0].metadata = { compas: { ...meta.compas, autofill: { ...meta.compas.autofill, notes: legacy } } };
+    expect(await readAs({ id: 'u4' })).toEqual([NEUTRAL_G]);
+    expect(await readAs(null)).toEqual([NEUTRAL_G]);
+    expect(await readAs({ id: 'u2' })).toEqual([ADAPTER_G]);
   });
 });
 
