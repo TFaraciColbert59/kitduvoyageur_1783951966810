@@ -10,7 +10,7 @@
  */
 
 import { distanceKm } from './places';
-import { isGenericName, type AreaPlace } from './itinerary';
+import { extentBoxes, isGenericName, type AreaPlace } from './itinerary';
 import type { LngLat } from './track';
 
 /** Distance de pagaie d'une journée (km), randonnée nautique en eau calme à vive. */
@@ -36,6 +36,22 @@ export function riverNamePattern(name: string): string | null {
   const escaped = bare.replace(/[.^$*+?()[\]{}|]/g, (c) => `\\\\${c}`);
   // Alternative plutôt que classe de caractères : « ’ » tient sur plusieurs octets.
   return `^((la|le|les) |l'|l’)?${escaped}$`;
+}
+
+/**
+ * La requête Overpass du tracé d'une rivière dans son emprise [ouest, nord, est, sud].
+ * Une emprise qui franchit l'antiméridien se lit en deux boîtes ; la boîte d'un
+ * globe entier (Photon la rend pour une forme coupée par la coupure) ne dit rien
+ * de la rivière : null, plutôt qu'une bande de latitude du monde entier.
+ */
+export function riverQuery(pattern: string, extent: readonly [number, number, number, number]): string | null {
+  const boxes = extentBoxes(extent);
+  if (!boxes) return null;
+  const ways = boxes.flatMap(([w, s, e, n]) => {
+    const bbox = `(${s.toFixed(3)},${w.toFixed(3)},${n.toFixed(3)},${e.toFixed(3)})`;
+    return [`way["waterway"="river"]["name"~"${pattern}",i]${bbox};`, `way["waterway"="river"]["name:fr"~"${pattern}",i]${bbox};`];
+  });
+  return `[out:json][timeout:25];(${ways.join('')});out geom;`;
 }
 
 /** Tronçons d'une réponse Overpass (`out geom`) : [lon, lat] dans le sens du tracé OSM (le courant). */

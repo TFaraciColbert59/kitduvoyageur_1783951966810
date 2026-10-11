@@ -20,6 +20,8 @@ import { cached, coordKey, readShared, writeShared } from './sharedCache';
 import { haversineKm } from '@/features/adventure-prep/engine/routing';
 import { generateTripContextualKit } from '@/features/trips/engine/contextualKitEngine';
 import type { TripItem } from '@/features/trips/types/trip.types';
+import { acclimatisationNote, checkSleepingProfile } from '../engine/acclimatisation';
+import { lonOrFilter, splitLonRange } from '../engine/longitude';
 import { readCompasMeta } from '../engine/meta';
 import {
   NIGHT_LABEL,
@@ -82,14 +84,18 @@ import {
   fromPlace,
   isGenericName,
   isMountainActivity,
+  isWildZone,
   keepAdminArea,
   keepHighlands,
   keepHomeCountry,
+  markComputedBivouacs,
+  mergeAreaPlaces,
   planItinerary,
   toPlace,
   planningZoneKm,
   profileFor,
   shapeFor,
+  type AreaPlace,
   type ItineraryShape,
 } from '../engine/itinerary';
 import {
@@ -240,24 +246,27 @@ async function loadSteps(supabase: Supa, tripId: string): Promise<StepRow[]> {
 async function refugesNear(supabase: Supa, p: { lat: number; lon: number }): Promise<Refuge[]> {
   const dLat = 0.11;
   const dLon = 0.11 / Math.max(0.2, Math.cos((p.lat * Math.PI) / 180));
+  // À moins de 3 km de la coupure à ±180°, la fenêtre déborde : deux plages de longitudes.
+  const lons = splitLonRange(p.lon - dLon, p.lon + dLon);
+  const cut = lons.length > 1;
   const [{ data: priced }, { data: listed }] = await Promise.all([
-    supabase
-      .from('map_refuges')
-      .select('name, lat, lng, altitude_m, price_per_night')
-      .gte('lat', p.lat - dLat)
-      .lte('lat', p.lat + dLat)
-      .gte('lng', p.lon - dLon)
-      .lte('lng', p.lon + dLon)
-      .limit(20),
-    supabase
-      .from('places')
-      .select('name, latitude, longitude, altitude_m')
-      .eq('category', 'refuge')
-      .gte('latitude', p.lat - dLat)
-      .lte('latitude', p.lat + dLat)
-      .gte('longitude', p.lon - dLon)
-      .lte('longitude', p.lon + dLon)
-      .limit(20),
+    (() => {
+      const q = supabase
+        .from('map_refuges')
+        .select('name, lat, lng, altitude_m, price_per_night')
+        .gte('lat', p.lat - dLat)
+        .lte('lat', p.lat + dLat);
+      return (cut ? q.or(lonOrFilter('lng', lons)) : q.gte('lng', lons[0][0]).lte('lng', lons[0][1])).limit(20);
+    })(),
+    (() => {
+      const q = supabase
+        .from('places')
+        .select('name, latitude, longitude, altitude_m')
+        .eq('category', 'refuge')
+        .gte('latitude', p.lat - dLat)
+        .lte('latitude', p.lat + dLat);
+      return (cut ? q.or(lonOrFilter('longitude', lons)) : q.gte('longitude', lons[0][0]).lte('longitude', lons[0][1])).limit(20);
+    })(),
   ]);
   const out: Refuge[] = [
     ...((priced ?? []) as Array<Record<string, unknown>>).map((r) => ({
@@ -494,9 +503,22 @@ async function plannedStages(opts: {
     return {
       fallback: `lieux de la zone indisponibles (service de carte injoignable${diag.length ? ` : ${diag.join(', ')}` : ''})`,
     };
-  let places = keepHomeCountry(found, anchor.countryCode);
-  if (anchor.kind === 'state' || anchor.kind === 'region') places = keepAdminArea(places, anchor.name, 'region');
-  else if (anchor.kind === 'county') places = keepAdminArea(places, anchor.name, 'county');
+  const inCountry = (list: AreaPlace[]) => {
+    const home = keepHomeCountry(list, anchor.countryCode);
+    if (anchor.kind === 'state' || anchor.kind === 'region') return keepAdminArea(home, anchor.name, 'region');
+    if (anchor.kind === 'county') return keepAdminArea(home, anchor.name, 'county');
+    return home;
+  };
+  let places = inCountry(found);
+  // Espace sauvage à pied (peu de lieux habités) : la recherche descend aux hameaux et aux
+  // campings, qu'une zone de cette taille ne demande pas d'ordinaire (plan 4.5).
+  if (
+    profileFor(activity).move === 'marche' &&
+    isWildZone({ places, center: anchor, radiusKm: zoneKm, days, extent: anchor.extent && (halfExtentKm ?? 0) >= 15 ? anchor.extent : null })
+  ) {
+    const more = await lookupAreaPlaces({ center: anchor, radiusKm: zoneKm, activity, wild: true }, opts.deadline).catch(() => null);
+    if (more) places = mergeAreaPlaces([places, inCountry(more)]);
+  }
   // Altitudes réelles (tuiles de relief, quelques tuiles pour toute la zone) :
   // acclimatation au-dessus de 3 000 m, et à pied, le massif plutôt que la plaine.
   // Le ski aussi : une station, pas le village de la vallée (Jura : Crotenay, 600 m) ;
@@ -1602,21 +1624,38 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     });
     for (const a of nightCtx.adaptations) notes.push(adaptationText(a));
     const plan = ctx.modules.nights
-      ? planNights({
-          nights: nightsCount,
-          pref: nightsPrefFor(activity, nightCtx.nights.value),
-          autonomy: nightCtx.autonomy.value as Autonomy,
-          // Le profil a déjà parlé dans `nights` : la priorité ne rejoue que si rien n'est décidé.
-          priority: nightCtx.nights.value ? null : (nightCtx.priority.value as Priority),
-          maxAltitudeM: maxAltitude,
-          refugeNear: refugesByNight.map((r) => r.length > 0),
-          outdoorNights: nightCtx.outdoorNights.value,
-        })
+      ? markComputedBivouacs(
+          planNights({
+            nights: nightsCount,
+            pref: nightsPrefFor(activity, nightCtx.nights.value),
+            autonomy: nightCtx.autonomy.value as Autonomy,
+            // Le profil a déjà parlé dans `nights` : la priorité ne rejoue que si rien n'est décidé.
+            priority: nightCtx.nights.value ? null : (nightCtx.priority.value as Priority),
+            maxAltitudeM: maxAltitude,
+            refugeNear: refugesByNight.map((r) => r.length > 0),
+            outdoorNights: nightCtx.outdoorNights.value,
+          }),
+          // Le soir d'un bivouac calculé (aucun lieu réel où dormir) : bivouac, jamais « à réserver ».
+          (night) => dayStep(night)?.title?.split(' · ').slice(1).join(' · ')
+        )
       : [];
-    if (maxAltitude != null && maxAltitude >= 2500)
-      notes.push(
-        `Altitude jusqu’à ${Math.round(maxAltitude)} m : monte progressivement (300 à 500 m de couchage par jour au-dessus de 3 000 m) et garde un jour de repos tous les 3 à 4 jours.`
-      );
+    // Paliers d'altitude (règle UIAA, plan 4.5) : les nuits de l'itinéraire, contrôlées sur les altitudes repères.
+    const acclim = acclimatisationNote({
+      maxAltitudeM: maxAltitude,
+      findings: checkSleepingProfile(
+        geoSteps.map((st, i) => ({
+          day: st.day_number,
+          eleM: altitudes?.[i] ?? null,
+          stay:
+            i > 0 &&
+            distanceKm(
+              { lat: st.latitude as number, lon: st.longitude as number },
+              { lat: geoSteps[i - 1].latitude as number, lon: geoSteps[i - 1].longitude as number }
+            ) < 0.3,
+        }))
+      ),
+    });
+    if (acclim) notes.push(acclim);
 
     const stays: Array<{ stepId: string; name: string }> = [];
     const nightsOut: CompasAutofillSummary['nights'] = [];
