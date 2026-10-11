@@ -623,11 +623,22 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       connue, une ligne « à vérifier auprès du service officiel de ton pays », ni France
       Diplomatie, ni formalités chiffrées, ni « adaptateur à prévoir » (`papers.test.ts`,
       `nationalityPrompt.test.ts`, `travel.test.ts`).
-- [ ] Nationalité française lisible dans les papiers d'un voyage partagé : la base de la dépense
+- [~] Nationalité française lisible dans les papiers d'un voyage partagé : la base de la dépense
       « Formalités » (« ressortissant français ») et les notes de papiers rangées sur le voyage
       laissent deviner la nationalité aux collaborateurs (et à tous pour un voyage public) ;
       les rendre à l'affichage pour la seule personne concernée (lot Q, avec la table
-      passeport × destination).
+      passeport × destination). **Relecture de la PR #90** : la ligne « Papiers » tirée de la table
+      (qui identifiait un passeport rare, 506 des 1 271 groupes n'en contiennent qu'un) n'est plus
+      JAMAIS rangée sur le voyage : seule la ligne neutre l'est, plus le pays et le départ ; la
+      ligne du passeport du LECTEUR est rendue à la lecture par `getCompasData` (profil du lecteur
+      authentifié, jamais celui du propriétaire) ; verrou testé par mutation
+      (`papersPrivacy.test.ts`, `traveller_privacy.mjs`). **Reste** : (a) la dépense « Formalités »
+      (existence = nationalité française ; demande de la rendre à la lecture, dépense virtuelle par
+      lecteur) ; (b) fuites voisines : ligne « Prises » (selon `frenchDevices`) et conseils de change
+      gardés par l'IA (selon la devise du lanceur) rangés sur le voyage, même remède (ligne neutre
+      rangée, rendue à la lecture) ; (c) voyages DÉJÀ préparés : leur ancienne ligne reste dans
+      `trips.metadata` jusqu'à une relance (l'écran ne la montre plus) ; rattrapage = SQL de données,
+      non écrit.
 
 ### 4.2 Papiers, prises, change
 
@@ -733,12 +744,35 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 - [ ] Échelle d'un pays **sans noms de l'IA** : bases multiples choisies dans le
       référentiel (rang, notoriété) ; chemin `planBase` multi-bases réellement atteint.
-- [ ] Espaces sauvages : densité de lieux adaptée (refuges, campings, bivouac annoncé).
-- [ ] Acclimatation en alpinisme (paliers d'altitude).
+- [x] Espaces sauvages : densité de lieux adaptée (refuges, campings, bivouac annoncé).
+      **Lot Y** : `isWildZone` ; la recherche descend aux hameaux et campings (seconde demande
+      seulement dans ce cas) ; campings permis sauf toit ou refuge voulu ; bivouacs CALCULÉS entre
+      deux lieux réels (jusqu'à 3 journées, « Bivouac entre A et B (2/3) », sans `placeId`, note qui
+      annonce emplacement à choisir et règles à vérifier), jamais au-delà ni avec « hébergement »
+      (`wildAreas.test.ts`).
+- [~] Acclimatation en alpinisme (paliers d'altitude). **Lot Y** : `engine/acclimatisation.ts`
+      (au-dessus de 2 500 m, pas plus de 500 m de dénivelé de COUCHAGE par jour, une nuit de repos
+      après 3 nuits ; source citée, formulation prudente, jamais un diagnostic) ; le planificateur à
+      pied exclut le saut > 500 m tant qu'un lieu plus doux existe, la note de l'écran contrôle les
+      nuits posées (`acclimatisation.test.ts`). **Reste** : alpinisme sur base (sommets non
+      étapes), altitude des étapes = plancher et non mesure.
 - [ ] Grands itinéraires suivis sur leur tracé (3.7).
-- [ ] Grandes îles (Sardaigne) : randonnée à pied, pas en voiture d'étape en étape.
-- [ ] Défauts ouverts : Kalymnos, Patagonie (nuits sur un lac), « Mòguru/Mogoro », TMB.
-- [ ] Emprises qui traversent l'antiméridien (Fidji).
+- [ ] Grandes îles (Sardaigne) : randonnée à pied, pas en voiture d'étape en étape. Lot Y :
+      constat seulement : le planificateur à pied marche déjà (zone de 48 km au plus) ; c'est la porte
+      `scaleKm > PLANNED_MAX_KM` (150 ; Sardaigne ≈ 183 km de rayon) qui renvoie à l'IA, dont les étapes
+      sont acceptées en « voiture » sans limite. Le corriger demande de savoir que l'ancre est une île
+      et de choisir le massif de l'île : aucun test pur ne le prouve.
+- [~] Défauts ouverts : Kalymnos, Patagonie (nuits sur un lac), « Mòguru/Mogoro », TMB.
+      **Lot Y** : « Mòguru/Mogoro » (une étape garde le nom proposé quand la carte l'écrit en deux
+      langues, `bilingualNames.test.ts`) et « Canal de Beagle » (un détroit, une baie, un canal ou la
+      mer ne sont jamais le lieu d'une nuit, `sleepPlaces.test.ts`) corrigés. **Reste** : Kalymnos
+      (données OSM d'escalade non importées, 3.x), Patagonie « Lago de los Tres » (échelle pays confiée
+      à l'IA), TMB (tracé des grands itinéraires, 3.7).
+- [x] Emprises qui traversent l'antiméridien (Fidji). **Lot Y** : tout calcul de longitude de
+      l'emprise gère la coupure à ±180° (`engine/longitude.ts`) ; le serveur du référentiel lit deux
+      boîtes valides et les fusionne au lieu de passer ouest > est au `box` de Postgres ; profil
+      d'altitude, part de recul, tracé de rivière, refuges à 3 km et étendue d'une emprise coupée
+      (`antimeridian.test.ts`, `antimeridianServer.test.ts`).
 
 ### 4.6 Budget
 

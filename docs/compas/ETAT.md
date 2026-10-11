@@ -56,6 +56,10 @@ Lot W : budget 4.6 : budget affiché aussi dans la devise du voyageur et du pays
 
 Lot X : trajets 4.4 : train par règles (Europe 32 pays, JP, KR, CN, IN, corridors Amtrak/VIA, barème par pays daté 2026-10, tout « estimation ») ; « sans voiture » (phrase, réglage, trajet, bus entre étapes, budget, « transports en commun » seulement si gare lue sinon « non évalué »). Non prouvé en préview/prod.
 
+Lot Y : itinéraire 4.5 : antiméridien (Fidji), espaces sauvages (campings, bivouac calculé entre deux lieux réels, annoncé), paliers d'altitude de couchage à pied (UIAA, prudents), « Mòguru/Mogoro » et « Canal de Beagle » corrigés. Restent ouverts (données ou réseau) : Sardaigne, Kalymnos, lac, TMB, alpinisme sur base, échelle d'un pays sans l'IA.
+
+Relecture indépendante de la PR #90 (Opus, Codex hors quota) : corrigés avant fusion : alertes émises à la même seconde (niveau le plus sévère), outre-mer lu dans le flux France (faux « aucune alerte »), Veille honnête sur le statut et nommant le service, contour illisible = zone non testée ; kit : moustiques d'un tracé qui descend, plafond de conseils de sécurité, altitude « trace » réservée aux vrais tracés ; « Annuler » refuse une préparation vivante ; clé IPv6 = /64 ; **la ligne « Papiers » par nationalité n'est plus rangée sur le voyage** (vie privée). Limites connues : plafond global de l'essai décompté avant le captcha ; dépense « Formalités », ligne « Prises » et conseils de change laissent encore deviner résidence ou nationalité aux collaborateurs ; voyages déjà préparés gardent l'ancienne ligne en base jusqu'à une relance.
+
 **À faire par Tony** (rien d'autre ne bloque) :
 1. SQL Editor : `supabase/migrations/20261008190000_base_scheduled_purges.sql` (purges
    planifiées), puis `20261009100000_app_errors_purge.sql`, puis
