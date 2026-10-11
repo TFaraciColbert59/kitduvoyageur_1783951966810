@@ -19,6 +19,8 @@ export type ProducerAction =
   | 'carnet_published'
   | 'checklist_completed'
   | 'kit_improved'
+  | 'place_report_accepted'
+  | 'answer_accepted'
   | 'trip_completed';
 
 export interface AwardProducerInput {

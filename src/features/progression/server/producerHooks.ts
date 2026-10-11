@@ -80,6 +80,84 @@ function utcDayKey(value: string | null | undefined): string | null {
 }
 
 /**
+ * T25 — Réponse acceptée et utile → Entraider (émission fermée en v1 :
+ * `answer_accepted` n'existe qu'au registre v2).
+ * Preuve : réponse `is_accepted` (décision du demandeur, vérifiée par la
+ * fonction SQL). Claim par QUESTION : un seul gain par question, même si la
+ * réponse acceptée est remplacée après un désaccord.
+ */
+export async function awardAnswerAccepted(answerId: string): Promise<AwardProducerResult> {
+  try {
+    const supabase = getServiceSupabase();
+    if (!supabase) return { success: false, outcome: 'refused', reason: 'service_indisponible' };
+
+    const { data: answer, error } = await supabase
+      .from('qa_answers')
+      .select('id, question_id, author_id, is_accepted')
+      .eq('id', answerId)
+      .maybeSingle();
+    if (error || !answer) {
+      return { success: false, outcome: 'refused', reason: 'reponse_introuvable' };
+    }
+    if (answer.is_accepted !== true) {
+      return { success: false, outcome: 'refused', reason: 'reponse_non_acceptee' };
+    }
+
+    return award({
+      userId: answer.author_id,
+      action: 'answer_accepted',
+      sourceType: 'qa_answer',
+      sourceId: answerId,
+      effectiveAt: new Date().toISOString(),
+      claims: [{ group: 'qa_answer', key: `question:${answer.question_id}` }],
+      metadata: { answerId, questionId: answer.question_id },
+    });
+  } catch (error) {
+    console.error('[progression/producerHooks] réponse acceptée (non bloquant):', error);
+    return { success: false, outcome: 'refused', reason: 'hook_error' };
+  }
+}
+
+/**
+ * T24 — Correction de lieu/sentier ACCEPTÉE → Partager + Entraider (émission
+ * fermée en v1 : `place_report_accepted` n'existe qu'au registre v2).
+ * Preuve : rapport `accepted` par un validateur indépendant (la fonction SQL
+ * l'a déjà garanti). Claim UNIQUE `place_report:report:<id>` : la variante
+ * accessibilité du même rapport ne peut jamais produire un second gain.
+ */
+export async function awardPlaceReportAccepted(reportId: string): Promise<AwardProducerResult> {
+  try {
+    const supabase = getServiceSupabase();
+    if (!supabase) return { success: false, outcome: 'refused', reason: 'service_indisponible' };
+
+    const { data: report, error } = await supabase
+      .from('place_reports')
+      .select('reporter_id, status, resolution')
+      .eq('id', reportId)
+      .maybeSingle();
+    if (error || !report) {
+      return { success: false, outcome: 'refused', reason: 'rapport_introuvable' };
+    }
+    if (report.resolution !== 'accepted' || report.status !== 'accepted') {
+      return { success: false, outcome: 'refused', reason: 'rapport_non_accepte' };
+    }
+
+    return award({
+      userId: report.reporter_id,
+      action: 'place_report_accepted',
+      sourceType: 'place_report',
+      sourceId: reportId,
+      effectiveAt: new Date().toISOString(),
+      claims: [{ group: 'place_report', key: `report:${reportId}` }],
+      metadata: { reportId },
+    });
+  } catch (error) {
+    console.error('[progression/producerHooks] rapport de lieu (non bloquant):', error);
+    return { success: false, outcome: 'refused', reason: 'hook_error' };
+  }
+}
+
+/**
  * T23 — Amélioration de kit éprouvée → Se préparer (émission fermée en v1 :
  * `kit_improved` n'existe qu'au registre v2). La preuve est chargée par
  * `loadKitImprovementProof` (diff de versions persistées, problème terrain
