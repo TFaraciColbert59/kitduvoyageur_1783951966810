@@ -438,3 +438,55 @@ describe('prise de phase rendue sur les sorties anticipées', () => {
     expect(stepIds()).toEqual([]);
   });
 });
+
+describe('une date dans le futur ne tient pas une préparation (éditeur qui écrit trips.metadata)', () => {
+  /** Une heure que l'horloge n'atteindra jamais : Date.now() - 9e15 reste négatif. */
+  const FAR = 9e15;
+  const attack = () => {
+    for (const id of ['orphan-1', 'orphan-2']) h.db.rows('trip_steps').push({ id, trip_id: TRIP, day_number: 1, order_index: 0, title: id });
+    tripRow().metadata = {
+      compas: {
+        ...compas(),
+        autofill_pending: { runId: 'run-forged', stepIds: ['orphan-1', 'orphan-2'], routeSet: false, notes: [], restAt: FAR },
+        autofill_claim: { steps: FAR, rest: FAR },
+      },
+    };
+  };
+
+  it('prises « steps » et « rest » datées du futur : la préparation du propriétaire part quand même', async () => {
+    tripRow().metadata = { compas: { ...compas(), autofill_claim: { steps: FAR, rest: FAR } } };
+    expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
+    expect(stepIds()).toHaveLength(3);
+    expect(compas().autofill_claim).toBeUndefined();
+  });
+
+  it('itinéraire en attente à restAt lointain : dit coupé, « Annuler » le retire et rend la place', async () => {
+    attack();
+    // La réadaptation ne répond plus « déjà en cours » à une attente qui ne finira jamais.
+    expect(await compasRefreshAutofillAction({ tripId: TRIP, tripSlug: 'lyon' })).toEqual({
+      success: false,
+      error: 'Préparation coupée en cours de route : relance « Tout préparer » pour la finir, ou annule-la.',
+    });
+    expect(await compasUndoAutofillAction({ tripId: TRIP, tripSlug: 'lyon' })).toEqual({ success: true });
+    expect(stepIds()).toEqual([]);
+    expect(readPending(tripRow().metadata)).toBeNull();
+    expect(compas().autofill_claim).toBeUndefined();
+    expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
+  });
+
+  it('la même attente est reprise par une relance (prise du reste datée du futur = morte)', async () => {
+    attack();
+    const res = await launch();
+    expect(res).toMatchObject({ success: true });
+    expect(res).not.toMatchObject({ pending: true });
+  });
+
+  it('une prise datée de quelques secondes dans le futur (horloges décalées) reste valable', async () => {
+    tripRow().metadata = { compas: { ...compas(), autofill_claim: { steps: T0 + 30_000 } } };
+    expect(await launch()).toEqual({ success: true, pending: true, stepsCreated: 0 });
+    expect(stepIds()).toEqual([]);
+    // Au-delà d'une minute d'avance, ce n'est plus un décalage d'horloge : la prise est morte.
+    tripRow().metadata = { compas: { ...compas(), autofill_claim: { steps: T0 + 61_000 } } };
+    expect(await launch()).toMatchObject({ success: true, summary: { stepsCreated: 3 } });
+  });
+});

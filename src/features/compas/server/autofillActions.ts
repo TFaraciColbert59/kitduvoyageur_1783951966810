@@ -122,7 +122,7 @@ import { coarsePosition } from '../engine/privacy';
 import { pointsMaxAltitudeM, routeAscentM } from './elevation';
 import { estimatedLegKm, estimationNote, stepDistanceMetadata, type LegDistanceSource, type LegMove } from '../engine/legDistance';
 import {
-  CLAIM_MS,
+  claimIsLive,
   pendingIsLive,
   pendingIsStale,
   readPending,
@@ -638,7 +638,7 @@ function readCarry(meta: Record<string, unknown>): Carry | null {
  * Prise d'une phase (« steps » ou « rest ») de façon atomique : l'écriture ne
  * passe que si le voyage n'a pas changé depuis la lecture (`updated_at`).
  * Deux onglets ou un F5 : un seul gagne, l'autre attend le résultat. Une prise
- * plus vieille que `CLAIM_MS` est morte (la fonction s'arrête à 300 s).
+ * plus vieille que `CLAIM_MS`, ou datée du futur, est morte (la fonction s'arrête à 300 s).
  */
 async function claimPhase(supabase: Supa, tripId: string, phase: 'steps' | 'rest'): Promise<boolean> {
   const { data: row } = await supabase.from('trips').select('metadata, updated_at').eq('id', tripId).maybeSingle();
@@ -646,8 +646,9 @@ async function claimPhase(supabase: Supa, tripId: string, phase: 'steps' | 'rest
   const meta = ((row as { metadata: unknown }).metadata ?? {}) as Record<string, unknown>;
   const c = compasMeta(meta);
   const claims = (c.autofill_claim ?? {}) as Record<string, number>;
-  // Une préparation dure au plus ~280 s : la prise reste valable ce temps-là.
-  if (Date.now() - Number(claims[phase] ?? 0) < CLAIM_MS) return false;
+  // Une préparation dure au plus ~280 s : la prise reste valable ce temps-là. Une prise datée du
+  // futur n'a pas pu être écrite par une préparation (l'éditeur écrit `trips.metadata`) : morte.
+  if (claimIsLive(claims[phase], Date.now())) return false;
   const metadata = { ...meta, compas: { ...c, autofill_claim: { ...claims, [phase]: Date.now() } } };
   const { data: won } = await supabase
     .from('trips')

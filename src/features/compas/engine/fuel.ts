@@ -60,7 +60,15 @@ export function fuelPrice(countryCode: string | null | undefined): FuelPrice {
  * quand il n'y en a qu'un, la moyenne des prix publiés quand tous le sont, sinon l'estimation
  * (un pays hors de l'UE parmi eux). Aucun pays connu : l'estimation.
  */
-export function fuelPriceFor(countryCodes: Array<string | null | undefined>): FuelPrice {
+export function fuelPriceFor(
+  countryCodes: Array<string | null | undefined>,
+  /**
+   * `nameCountries: false` : la base ne nomme aucun pays du trajet (le prix est le même). Pour un
+   * trajet qui part du domicile du profil : la base est rangée sur le voyage, lisible par les
+   * collaborateurs, et le pays du domicile n'y a pas sa place.
+   */
+  options: { nameCountries?: boolean } = {}
+): FuelPrice {
   const codes = [...new Set(countryCodes.map(normal).filter((c) => /^[A-Z]{2}$/.test(c)))];
   if (codes.length === 0) return fuelPrice(null);
   if (codes.length === 1) return fuelPrice(codes[0]);
@@ -70,7 +78,10 @@ export function fuelPriceFor(countryCodes: Array<string | null | undefined>): Fu
   return {
     eurPerL: Math.round(mean * 1000) / 1000,
     kind: 'bulletin',
-    basis: `Euro-super 95, moyenne des pays du trajet : ${prices.map((p) => `${p.code} ${perLitre(p.price.eurPerL)} €/L`).join(', ')} (${SOURCE})`,
+    basis:
+      options.nameCountries === false
+        ? `Euro-super 95, moyenne des pays du trajet : ${perLitre(mean)} €/L (${SOURCE})`
+        : `Euro-super 95, moyenne des pays du trajet : ${prices.map((p) => `${p.code} ${perLitre(p.price.eurPerL)} €/L`).join(', ')} (${SOURCE})`,
     range: null,
   };
 }

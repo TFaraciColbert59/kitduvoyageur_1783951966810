@@ -5,6 +5,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   CLAIM_MS,
+  CLOCK_SKEW_MS,
+  claimIsLive,
+  pendingIsLive,
   pendingIsStale,
   readPending,
   resumableRun,
@@ -74,5 +77,40 @@ describe('lecture de l’attente', () => {
 
   it('ne garde que des identifiants de texte', () => {
     expect(readPending({ compas: { autofill_pending: { runId: 'r', stepIds: ['s1', 2, null] } } })?.stepIds).toEqual(['s1']);
+  });
+});
+
+describe('une heure dans le futur ne tient pas une préparation', () => {
+  const pending = { runId: 'r', stepIds: ['s1'], routeSet: false, notes: [] };
+
+  it('une prise : vivante de maintenant à CLAIM_MS, morte avant 60 s d’avance, au-delà, ou sans heure', () => {
+    expect(claimIsLive(T0, T0)).toBe(true);
+    expect(claimIsLive(T0 - CLAIM_MS + 1, T0)).toBe(true);
+    expect(claimIsLive(T0 - CLAIM_MS, T0)).toBe(false);
+    // Horloges de deux fonctions qui divergent de quelques secondes : encore une prise.
+    expect(claimIsLive(T0 + CLOCK_SKEW_MS, T0)).toBe(true);
+    expect(claimIsLive(T0 + CLOCK_SKEW_MS + 1, T0)).toBe(false);
+    expect(claimIsLive(9e15, T0)).toBe(false);
+    expect(claimIsLive('9e15', T0)).toBe(false);
+    expect(claimIsLive(undefined, T0)).toBe(false);
+    expect(claimIsLive(Number.NaN, T0)).toBe(false);
+  });
+
+  it('un restAt daté du futur est une attente coupée, jamais « en cours »', () => {
+    expect(pendingIsStale({ ...pending, restAt: T0 + CLOCK_SKEW_MS }, T0)).toBe(false);
+    expect(pendingIsStale({ ...pending, restAt: T0 + CLOCK_SKEW_MS + 1 }, T0)).toBe(true);
+    expect(pendingIsStale({ ...pending, restAt: 9e15 }, T0)).toBe(true);
+  });
+
+  it('l’attaque : restAt et prises à 9e15 ne rendent pas la préparation vivante', () => {
+    const forged = {
+      compas: { autofill_pending: { ...pending, restAt: 9e15 }, autofill_claim: { steps: 9e15, rest: 9e15 } },
+    };
+    expect(pendingIsLive(forged, T0)).toBe(false);
+    // Une vraie prise fraîche, elle, tient toujours l'attente.
+    const real = { compas: { autofill_pending: { ...pending, restAt: 9e15 }, autofill_claim: { rest: T0 - 1_000 } } };
+    expect(pendingIsLive(real, T0)).toBe(true);
+    // Et une vraie reprise en main aussi.
+    expect(pendingIsLive({ compas: { autofill_pending: { ...pending, restAt: T0 - 1_000 } } }, T0)).toBe(true);
   });
 });

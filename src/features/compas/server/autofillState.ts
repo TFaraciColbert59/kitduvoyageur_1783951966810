@@ -28,6 +28,21 @@ export type AutofillPhase = 'steps' | 'rest' | 'all';
 /** Durée d'une prise : la durée maximale d'une préparation en une passe. */
 export const CLAIM_MS = 290_000;
 
+/**
+ * Avance tolérée d'une heure de prise sur l'horloge d'une autre exécution (deux fonctions serveur
+ * ne sont pas au même instant à la seconde près). Une heure plus avancée que cela n'a pas pu être
+ * écrite par une préparation : `trips.metadata` est écrit par tout éditeur du voyage, et une
+ * prise datée du futur tenait sinon la préparation, « Annuler » et la réadaptation à jamais.
+ */
+export const CLOCK_SKEW_MS = 60_000;
+
+/** Une prise de phase vivante : écrite il y a moins de `CLAIM_MS`, et pas datée du futur. */
+export function claimIsLive(at: unknown, now: number): boolean {
+  if (typeof at !== 'number' || !Number.isFinite(at)) return false;
+  const age = now - at;
+  return age >= -CLOCK_SKEW_MS && age < CLAIM_MS;
+}
+
 function compasPart(meta: Record<string, unknown>): Record<string, unknown> {
   const c = meta.compas;
   return c && typeof c === 'object' && !Array.isArray(c) ? { ...(c as Record<string, unknown>) } : {};
@@ -90,14 +105,14 @@ export function withStepsWritten(
 
 /** Une préparation en attente que plus rien ne fait avancer (coupée en route). */
 export function pendingIsStale(pending: PendingRun, now: number): boolean {
-  return pending.restAt != null && now - pending.restAt >= CLAIM_MS;
+  return pending.restAt != null && (now - pending.restAt >= CLAIM_MS || pending.restAt - now > CLOCK_SKEW_MS);
 }
 
 /** Une prise de phase encore valable : une exécution de la préparation tient ce voyage. */
 function hasFreshClaim(meta: Record<string, unknown>, now: number): boolean {
   const claims = compasPart(meta).autofill_claim;
   if (!claims || typeof claims !== 'object') return false;
-  return Object.values(claims).some((at) => typeof at === 'number' && now - at < CLAIM_MS);
+  return Object.values(claims).some((at) => claimIsLive(at, now));
 }
 
 /**

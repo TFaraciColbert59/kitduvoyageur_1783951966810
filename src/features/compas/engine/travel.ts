@@ -305,8 +305,10 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
   }
   const departure = departureOf(origin);
   const straight = distanceKm(origin, target);
-  // Carburant au prix du ou des pays du trajet (départ et destination), PLAN-100 4.6.
-  const fuel = fuelPriceFor([origin.countryCode, destination.countryCode]);
+  // Carburant au prix du ou des pays du trajet (départ et destination), PLAN-100 4.6. Départ pris au
+  // domicile : la base, rangée sur le voyage, ne nomme pas le pays du domicile.
+  const fromHome = origin.source === 'domicile';
+  const fuel = fuelPriceFor([origin.countryCode, destination.countryCode], { nameCountries: !fromHome });
   const mode = approachMode({ straightKm: straight, days });
   if (mode === 'sur_place') {
     leg.notes.push(ON_SITE_NOTE);
@@ -350,6 +352,7 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
       days,
       from: origin,
       to: target,
+      homeDeparture: fromHome,
     });
     if (announce && !out.trip && out.notice && !railAnnounced) {
       railAnnounced = true;
@@ -374,16 +377,20 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
       return false;
     }
     const km = Math.round(from && to ? distanceKm(from, to) : straight);
+    // Départ pris au domicile : l'aéroport le plus proche du domicile le désigne autant que son
+    // nom, il n'est ni dans la base ni dans le trajet (« vol à prévoir (depuis ton domicile) »).
     const text =
       from && to
-        ? `vol aller-retour depuis ${departure}, ${from.iata} → ${to.iata} (${from.name} → ${to.name}), environ ${km} km`
+        ? fromHome
+          ? `vol aller-retour depuis ${departure} vers ${to.iata} (${to.name}), environ ${km} km`
+          : `vol aller-retour depuis ${departure}, ${from.iata} → ${to.iata} (${from.name} → ${to.name}), environ ${km} km`
         : `vol aller-retour depuis ${departure} vers ${destination.name}, environ ${km} km`;
     leg.flight = { from, to, km };
     leg.transport = moveOf('avion', {
       km,
       minutes: 0,
       basis: why ? `${why} : ${text}` : text,
-      ...(from && to ? { route: `${from.iata} → ${to.iata}` } : {}),
+      ...(from && to && !fromHome ? { route: `${from.iata} → ${to.iata}` } : {}),
     });
     return true;
   };

@@ -154,7 +154,11 @@ export function railScaleFor(countryCode: string | null | undefined): RailScale 
  * Îles sans train depuis le continent, ou dont le rail n'est pas relié au reste du
  * pays : la route mesurée y passe par un ferry sans toujours paraître plus longue
  * (Annecy → Cagliari : 1,6 fois le vol d'oiseau), d'où ces emprises [sud, ouest, nord, est].
- * Les plus visitées seulement : l'écart de route mesurée (plus de 1,8 fois) couvre le reste.
+ * Les plus visitées seulement : l'écart de route mesurée (plus de 1,8 fois) couvre le reste quand
+ * le ferry est long. Le routeur ne dit pas s'il prend un ferry : une île absente d'ici (golfe
+ * Saronique, Eubée, Quarnero, archipel de Zadar, Hébrides...) reste comptée comme joignable en train
+ * si la route mesurée ne la trahit pas. Ajouter l'emprise d'une île à mesure que le réseau d'un pays
+ * entre dans la table.
  */
 const ISLANDS: Array<[number, number, number, number]> = [
   [41.3, 8.5, 43.1, 9.6], // Corse
@@ -176,6 +180,38 @@ const ISLANDS: Array<[number, number, number, number]> = [
   [18.1, 108.5, 20.2, 111.2], // Hainan (le train y passe par un ferry)
   [6.5, 92.1, 13.8, 94.0], // Andaman et Nicobar
   [8.0, 71.5, 12.5, 74.0], // Laquedives
+  // Grèce : le réseau grec compte depuis que la Grèce est dans la table, et le routeur ne dit pas s'il
+  // prend un ferry (Athènes → Lesbos : 358 km « de train » avec une route mesurée à 1,3 fois le vol d'oiseau).
+  [37.6, 20.6, 37.95, 21.05], // Zante
+  [38.0, 20.25, 38.55, 20.85], // Céphalonie et Ithaque
+  [38.55, 20.5, 38.92, 20.76], // Leucade (pont routier, pas de rail)
+  [39.1, 20.1, 39.3, 20.25], // Paxos
+  [36.1, 22.9, 36.4, 23.15], // Cythère
+  [38.95, 25.8, 39.4, 26.65], // Lesbos
+  [39.7, 25.0, 40.0, 25.5], // Lemnos
+  [38.1, 25.85, 38.7, 26.2], // Chios
+  [37.5, 25.9, 37.85, 27.1], // Ikaria, Fournoi et Samos
+  [40.5, 24.5, 40.8, 24.85], // Thasos
+  [40.4, 25.4, 40.55, 25.7], // Samothrace
+  [39.0, 23.38, 39.45, 24.2], // Sporades du Nord : Skiathos, Skopelos, Alonissos
+  [38.75, 24.4, 38.98, 24.7], // Skyros
+  [35.3, 26.2, 37.5, 29.7], // Dodécanèse : de Patmos et Kos à Rhodes voisine, Karpathos, Symi, Kastellorizo
+  // Croatie : îles dalmates (le rail s'arrête à Split, Šibenik, Zadar).
+  [43.33, 16.17, 43.43, 16.4], // Šolta
+  [43.2, 16.3, 43.42, 17.0], // Brač
+  [43.03, 16.37, 43.21, 17.2], // Hvar
+  [42.9, 15.7, 43.1, 16.3], // Vis et Biševo
+  [42.88, 16.6, 43.0, 17.2], // Korčula
+  [42.7, 16.75, 42.8, 17.05], // Lastovo
+  [42.69, 17.28, 42.81, 17.72], // Mljet
+  // Estonie : le pont-digue relie Muhu à Saaremaa, rien ne relie les deux au continent par le rail.
+  [57.9, 21.7, 58.7, 23.45], // Saaremaa et Muhu
+  [58.5, 22.0, 59.15, 23.1], // Hiiumaa
+  // Royaume-Uni et Espagne : la mer sépare l'Irlande du Nord de la Grande-Bretagne ; Ceuta et
+  // Melilla n'ont aucune voie ferrée reliée au réseau espagnol.
+  [54.05, -8.2, 55.35, -5.4], // Irlande du Nord
+  [35.85, -5.4, 35.93, -5.28], // Ceuta
+  [35.26, -3.0, 35.34, -2.91], // Melilla
 ];
 
 function onIsland(p: { lat: number; lon: number }): boolean {
@@ -391,6 +427,11 @@ export interface TrainInput {
   to?: { lat: number; lon: number } | null;
   /** Lieu de départ : une île au départ, et les corridors d'Amérique du Nord. */
   from?: { lat: number; lon: number } | null;
+  /**
+   * Le départ est le domicile du profil : l'annonce rangée sur le voyage ne nomme pas le corridor
+   * ni l'exploitant, qui désigneraient la ville du domicile.
+   */
+  homeDeparture?: boolean;
 }
 
 export interface TrainOutlook {
@@ -448,7 +489,9 @@ export function trainOutlook(input: TrainInput): TrainOutlook {
   const eurRoundTrip = 2 * Math.max(minOneWayEur, Math.round(railKm * eurPerKm));
   const h = Math.round(minutesOneWay / 30) / 2;
   const notice = corridor
-    ? `Amérique du Nord : les trains de voyageurs ne roulent que sur quelques corridors. Celui-ci (corridor ${corridor.name}, ${corridor.operator}) dessert les deux villes à moins de ${CORRIDOR_RADIUS_KM} km d’une gare ; fréquences et prix dans Résa · Trajets.`
+    ? `Amérique du Nord : les trains de voyageurs ne roulent que sur quelques corridors. ${
+        input.homeDeparture ? 'Un corridor' : `Celui-ci (corridor ${corridor.name}, ${corridor.operator})`
+      } dessert les deux villes à moins de ${CORRIDOR_RADIUS_KM} km d’une gare ; fréquences et prix dans Résa · Trajets.`
     : null;
   return {
     trip: {
