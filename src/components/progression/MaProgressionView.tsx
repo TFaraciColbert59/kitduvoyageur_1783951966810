@@ -293,6 +293,17 @@ export default function MaProgressionView({
     models: [],
     mutating: false,
   });
+  const [rhythm, setRhythm] = useState<{
+    status: ClientDataStatus;
+    rhythmId: 'leger' | 'regulier' | 'intense' | null;
+    paused: boolean;
+    weekly: { target: number | null; done: number; atGoal: boolean };
+  }>({
+    status: 'loading',
+    rhythmId: null,
+    paused: false,
+    weekly: { target: null, done: 0, atGoal: false },
+  });
   const [replacingChallenge, setReplacingChallenge] = useState(false);
   const [replaceChallengeError, setReplaceChallengeError] = useState(false);
   const [profileUnavailable, setProfileUnavailable] = useState(false);
@@ -536,6 +547,62 @@ export default function MaProgressionView({
       }
     },
     [refreshMissions]
+  );
+
+  /** T16 — rythme choisi (facultatif) : objectif hebdo + pause, sans dette. */
+  const refreshRhythm = useCallback(async () => {
+    try {
+      const response = await fetch('/api/progression/preferences', { cache: 'no-store' });
+      if (!response.ok) {
+        setRhythm((prev) => ({ ...prev, status: 'unavailable' }));
+        return;
+      }
+      const payload = (await response.json()) as {
+        success?: boolean;
+        preference?: { rhythmId?: 'leger' | 'regulier' | 'intense' | null; paused?: boolean };
+        weekly?: { target?: number | null; done?: number; atGoal?: boolean };
+      };
+      if (payload?.success !== true) {
+        setRhythm((prev) => ({ ...prev, status: 'unavailable' }));
+        return;
+      }
+      const rhythmId = payload.preference?.rhythmId ?? null;
+      setRhythm({
+        status: 'ready',
+        rhythmId:
+          rhythmId === 'leger' || rhythmId === 'regulier' || rhythmId === 'intense' ? rhythmId : null,
+        paused: payload.preference?.paused === true,
+        weekly: {
+          target: typeof payload.weekly?.target === 'number' ? payload.weekly.target : null,
+          done: Math.max(0, Math.floor(Number(payload.weekly?.done) || 0)),
+          atGoal: payload.weekly?.atGoal === true,
+        },
+      });
+    } catch {
+      setRhythm((prev) => ({ ...prev, status: 'unavailable' }));
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshRhythm();
+  }, [refreshRhythm]);
+
+  const postRhythm = useCallback(
+    async (body: { rhythmId?: 'leger' | 'regulier' | 'intense' | null; paused?: boolean }) => {
+      try {
+        await fetch('/api/progression/preferences', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          cache: 'no-store',
+          body: JSON.stringify(body),
+        });
+      } catch {
+        /* silencieux : la relecture rétablit l'état réel */
+      } finally {
+        await refreshRhythm();
+      }
+    },
+    [refreshRhythm]
   );
 
   const handleFilterChange = (filter: TerritoryFilter) => {
@@ -1165,6 +1232,64 @@ export default function MaProgressionView({
                 ))}
               </ul>
             )}
+            {/* T16 — rythme choisi : facultatif, sans obligation ni pénalité. */}
+            <div className="mt-3 border-t border-black/5 pt-3">
+              <p className="text-[11px] font-bold text-[var(--lkv-text-secondary)]">
+                {t('progression.rhythmTitle')}
+              </p>
+              {rhythm.status === 'unavailable' && (
+                <p className="mt-1 text-[10.5px] text-[var(--lkv-text-muted)]">
+                  {t('progression.rhythmUnavailable')}
+                </p>
+              )}
+              {rhythm.status === 'ready' && (
+                <>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {(
+                      [
+                        ['leger', t('progression.rhythmLeger')],
+                        ['regulier', t('progression.rhythmRegulier')],
+                        ['intense', t('progression.rhythmIntense')],
+                      ] as Array<['leger' | 'regulier' | 'intense', string]>
+                    ).map(([id, label]) => (
+                      <button
+                        key={id}
+                        type="button"
+                        aria-pressed={rhythm.rhythmId === id}
+                        onClick={() =>
+                          void postRhythm({ rhythmId: rhythm.rhythmId === id ? null : id })
+                        }
+                        className={`min-h-[44px] rounded-full border px-3 text-[11px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] ${
+                          rhythm.rhythmId === id
+                            ? 'border-[color:var(--lkv-primary)] text-[color:var(--lkv-primary)]'
+                            : 'border-[color:var(--glass-border)] text-[color:var(--card-content)]'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-1 text-[10.5px] text-[var(--lkv-text-muted)]">
+                    {rhythm.paused
+                      ? t('progression.rhythmPaused')
+                      : rhythm.weekly.target !== null
+                        ? t('progression.rhythmWeek', {
+                            done: rhythm.weekly.done,
+                            target: rhythm.weekly.target,
+                          })
+                        : t('progression.rhythmNone')}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void postRhythm({ paused: !rhythm.paused })}
+                    className="mt-1 min-h-[44px] text-[11px] font-semibold text-[color:var(--lkv-text-primary)] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+                  >
+                    {rhythm.paused ? t('progression.rhythmResume') : t('progression.rhythmPause')}
+                  </button>
+                </>
+              )}
+            </div>
+
             {missions.active.length < 3 && missions.models.length > 0 && (
               <div className="mt-3 border-t border-black/5 pt-3">
                 <p className="text-[11px] font-bold text-[var(--lkv-text-secondary)]">

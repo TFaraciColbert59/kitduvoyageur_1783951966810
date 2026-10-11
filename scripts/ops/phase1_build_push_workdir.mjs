@@ -43,7 +43,7 @@ for (const version of remoteOnly) {
   fs.writeFileSync(path.join(MIG_DIR, `${version}_remote_placeholder.sql`), `-- placeholder (version enregistrée côté distant, absente du dépôt)\n`);
   placeholders++;
 }
-const OURS = ['20261010140000_phase1_balance_lockdown.sql', '20261010150000_loyalty_idempotence_user_scoped.sql', '20261010160000_phase1_demo_isolation.sql', '20261010170000_phase1_reconcile_i4.sql', '20261010180000_phase1_normalize_loyalty_levels.sql', '20261011121250_progression_cron_jobs.sql', '20261011123612_progression_ops_scheduled_consumers.sql', '20261011123955_progression_award_intents.sql', '20261011125038_progression_award_claims_v2.sql', '20261011142641_progression_intent_settle.sql', '20261011160108_progression_challenge_models.sql', '20261011160430_progression_mission_assignments.sql', '20261011163920_progression_mission_progress.sql'];
+const OURS = ['20261010140000_phase1_balance_lockdown.sql', '20261010150000_loyalty_idempotence_user_scoped.sql', '20261010160000_phase1_demo_isolation.sql', '20261010170000_phase1_reconcile_i4.sql', '20261010180000_phase1_normalize_loyalty_levels.sql', '20261011121250_progression_cron_jobs.sql', '20261011123612_progression_ops_scheduled_consumers.sql', '20261011123955_progression_award_intents.sql', '20261011125038_progression_award_claims_v2.sql', '20261011142641_progression_intent_settle.sql', '20261011160108_progression_challenge_models.sql', '20261011160430_progression_mission_assignments.sql', '20261011163920_progression_mission_progress.sql', '20261011173333_progression_badge_unification.sql', '20261011173630_progression_user_preferences.sql'];
 for (const f of OURS) {
   fs.copyFileSync(path.join(ROOT, 'supabase', 'migrations', f), path.join(MIG_DIR, f));
 }
