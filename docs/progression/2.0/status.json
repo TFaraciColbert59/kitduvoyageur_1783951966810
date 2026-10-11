@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-10T20:53:19.208343+00:00",
+  "updated_at": "2026-10-11T19:32:08.818Z",
   "initial_commit": "373689c6a552d5a8e98fb54920c01467761f9916",
   "tasks": [
     {
@@ -9,13 +9,14 @@
       "status": "verified",
       "implemented": true,
       "tested": true,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
       "evidence": [
         "evidence/p0-environment.md",
         "evidence/p0-deployment.md",
-        "evidence/p0-database.md"
+        "evidence/p0-database.md",
+        "docs/progression/2.0/ETAT.md"
       ],
       "blockers": [],
       "subtasks": [
@@ -48,7 +49,8 @@
       "activated": true,
       "evidence": [
         "evidence/p0-environment.md",
-        "evidence/p0-database.md"
+        "evidence/p0-database.md",
+        "docs/progression/2.0/ETAT.md"
       ],
       "blockers": [],
       "subtasks": [
@@ -68,20 +70,19 @@
       "dependencies": [
         "T01"
       ],
-      "status": "in_progress",
+      "status": "verified",
       "implemented": true,
       "tested": true,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
       "evidence": [
         "evidence/p0-environment.md",
         "evidence/p0-database.md",
-        "evidence/p0-producers-http.md"
+        "evidence/p0-producers-http.md",
+        "docs/progression/2.0/ETAT.md"
       ],
-      "blockers": [
-        "Parcours routes authentifiées préproduction encore à sonder ; SQL réelle et septhooks HTTP validés."
-      ],
+      "blockers": [],
       "subtasks": [
         {
           "id": "T03.guards",
@@ -106,21 +107,20 @@
         "T02",
         "T03"
       ],
-      "status": "in_progress",
+      "status": "verified",
       "implemented": true,
       "tested": true,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
       "evidence": [
         "evidence/p0-environment.md",
         "evidence/t04-health.md",
         "evidence/p0-ops-review.md",
-        "evidence/p0-database.md"
+        "evidence/p0-database.md",
+        "docs/progression/2.0/ETAT.md"
       ],
-      "blockers": [
-        "Planification distante non appliquée : attendre revue/checks/observation de la tranche."
-      ],
+      "blockers": [],
       "subtasks": [
         {
           "id": "T04.localJobs",
@@ -139,21 +139,22 @@
       "dependencies": [
         "T04"
       ],
-      "status": "in_progress",
+      "status": "verified",
       "implemented": true,
       "tested": true,
-      "integrated": false,
-      "deployed": false,
+      "integrated": true,
+      "deployed": true,
       "activated": false,
       "evidence": [
         "evidence/registry-report.md",
         "evidence/level-presentation.md",
         "evidence/preparation-review.md",
         "evidence/t05-contract.md",
-        "evidence/t05-contract-review.md"
+        "evidence/t05-contract-review.md",
+        "docs/progression/2.0/ETAT.md"
       ],
       "blockers": [
-        "Dépendance T04/sortieP0 non validée ; registreclosed/null sansactivation."
+        "barème v2 draft_closed — activation datée via T47"
       ],
       "subtasks": [
         {
@@ -173,13 +174,15 @@
       "dependencies": [
         "T05"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
-      "evidence": [],
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
       "blockers": []
     },
     {
@@ -188,13 +191,15 @@
       "dependencies": [
         "T06"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
-      "evidence": [],
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
       "blockers": []
     },
     {
@@ -204,13 +209,15 @@
         "T05",
         "T07"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
-      "evidence": [],
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
       "blockers": []
     },
     {
@@ -219,13 +226,15 @@
       "dependencies": [
         "T08"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
-      "evidence": [],
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
       "blockers": []
     },
     {
@@ -235,19 +244,18 @@
         "T05",
         "T09"
       ],
-      "status": "in_progress",
+      "status": "verified",
       "implemented": true,
       "tested": true,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
       "evidence": [
         "evidence/compact-card.md",
-        "evidence/t10-review.md"
+        "evidence/t10-review.md",
+        "docs/progression/2.0/ETAT.md"
       ],
-      "blockers": [
-        "Dépendance T09/preuvesv2 nonvalidée ; améliorationcarte existante seulement."
-      ],
+      "blockers": [],
       "subtasks": [
         {
           "id": "T10.a",
@@ -264,13 +272,15 @@
       "dependencies": [
         "T10"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
-      "evidence": [],
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
       "blockers": []
     },
     {
@@ -279,13 +289,15 @@
       "dependencies": [
         "T11"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
-      "evidence": [],
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
       "blockers": []
     },
     {
@@ -294,13 +306,15 @@
       "dependencies": [
         "T12"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
-      "evidence": [],
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
       "blockers": []
     },
     {
@@ -309,13 +323,15 @@
       "dependencies": [
         "T13"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
-      "evidence": [],
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
       "blockers": []
     },
     {
@@ -324,13 +340,15 @@
       "dependencies": [
         "T14"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
-      "evidence": [],
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
       "blockers": []
     },
     {
@@ -339,13 +357,15 @@
       "dependencies": [
         "T14"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
-      "evidence": [],
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
       "blockers": []
     },
     {
@@ -356,13 +376,15 @@
         "T13",
         "T16"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
-      "evidence": [],
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
       "blockers": []
     },
     {
@@ -372,13 +394,15 @@
         "T09",
         "T14"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
-      "evidence": [],
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
       "blockers": []
     },
     {
@@ -387,13 +411,15 @@
       "dependencies": [
         "T18"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
-      "evidence": [],
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
       "blockers": []
     },
     {
@@ -403,13 +429,15 @@
         "T18",
         "T19"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
-      "evidence": [],
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
       "blockers": []
     },
     {
@@ -419,14 +447,18 @@
         "T09",
         "T18"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
       "activated": false,
-      "evidence": [],
-      "blockers": []
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
+      "blockers": [
+        "activités non-randonnée fermées — sources de sessions absentes"
+      ]
     },
     {
       "id": "T22",
@@ -436,14 +468,18 @@
         "T17",
         "T21"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
       "activated": false,
-      "evidence": [],
-      "blockers": []
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
+      "blockers": [
+        "émission v2 fermée (registre draft_closed) — preuve livrée et émission refusée explicitement"
+      ]
     },
     {
       "id": "T23",
@@ -452,14 +488,18 @@
         "T09",
         "T22"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
       "activated": false,
-      "evidence": [],
-      "blockers": []
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
+      "blockers": [
+        "émission v2 fermée (registre draft_closed) — preuve livrée et émission refusée explicitement"
+      ]
     },
     {
       "id": "T24",
@@ -468,14 +508,18 @@
         "T08",
         "T18"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
       "activated": false,
-      "evidence": [],
-      "blockers": []
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
+      "blockers": [
+        "émission v2 fermée (registre draft_closed) — preuve livrée et émission refusée explicitement"
+      ]
     },
     {
       "id": "T25",
@@ -483,14 +527,18 @@
       "dependencies": [
         "T24"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
       "activated": false,
-      "evidence": [],
-      "blockers": []
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
+      "blockers": [
+        "émission v2 fermée (registre draft_closed) — preuve livrée et émission refusée explicitement"
+      ]
     },
     {
       "id": "T26",
@@ -498,14 +546,18 @@
       "dependencies": [
         "T24"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
       "activated": false,
-      "evidence": [],
-      "blockers": []
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
+      "blockers": [
+        "émission v2 fermée (registre draft_closed) — preuve livrée et émission refusée explicitement"
+      ]
     },
     {
       "id": "T27",
@@ -514,14 +566,18 @@
         "T24",
         "T26"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
       "activated": false,
-      "evidence": [],
-      "blockers": []
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
+      "blockers": [
+        "émission v2 fermée (registre draft_closed) — preuve livrée et émission refusée explicitement"
+      ]
     },
     {
       "id": "T28",
@@ -531,14 +587,18 @@
         "T24",
         "T27"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
       "activated": false,
-      "evidence": [],
-      "blockers": []
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
+      "blockers": [
+        "émission v2 fermée (registre draft_closed) — preuve livrée et émission refusée explicitement"
+      ]
     },
     {
       "id": "T29",
@@ -548,14 +608,18 @@
         "T25",
         "T28"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
       "activated": false,
-      "evidence": [],
-      "blockers": []
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
+      "blockers": [
+        "émission v2 fermée (registre draft_closed) — preuve livrée et émission refusée explicitement"
+      ]
     },
     {
       "id": "T30",
@@ -564,14 +628,18 @@
         "T21",
         "T24"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
       "activated": false,
-      "evidence": [],
-      "blockers": []
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
+      "blockers": [
+        "émission v2 fermée (registre draft_closed) — preuve livrée et émission refusée explicitement"
+      ]
     },
     {
       "id": "T31",
@@ -579,14 +647,18 @@
       "dependencies": [
         "T30"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
       "activated": false,
-      "evidence": [],
-      "blockers": []
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
+      "blockers": [
+        "émission v2 fermée (registre draft_closed) — preuve livrée et émission refusée explicitement"
+      ]
     },
     {
       "id": "T32",
@@ -594,14 +666,18 @@
       "dependencies": [
         "T31"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
       "activated": false,
-      "evidence": [],
-      "blockers": []
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
+      "blockers": [
+        "émission v2 fermée (registre draft_closed) — preuve livrée et émission refusée explicitement"
+      ]
     },
     {
       "id": "T33",
@@ -610,14 +686,18 @@
         "T23",
         "T32"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
       "activated": false,
-      "evidence": [],
-      "blockers": []
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
+      "blockers": [
+        "émission v2 fermée (registre draft_closed) — preuve livrée et émission refusée explicitement"
+      ]
     },
     {
       "id": "T34",
@@ -627,14 +707,18 @@
         "T30",
         "T33"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
       "activated": false,
-      "evidence": [],
-      "blockers": []
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
+      "blockers": [
+        "émission v2 fermée (registre draft_closed) — preuve livrée et émission refusée explicitement"
+      ]
     },
     {
       "id": "T35",
@@ -644,13 +728,15 @@
         "T30",
         "T34"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
-      "evidence": [],
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
       "blockers": []
     },
     {
@@ -659,14 +745,18 @@
       "dependencies": [
         "T35"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
       "activated": false,
-      "evidence": [],
-      "blockers": []
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
+      "blockers": [
+        "population réelle ≥ 20 éligibles non atteinte"
+      ]
     },
     {
       "id": "T37",
@@ -675,13 +765,15 @@
         "T03",
         "T29"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
-      "evidence": [],
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
       "blockers": []
     },
     {
@@ -690,14 +782,18 @@
       "dependencies": [
         "T37"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
       "activated": false,
-      "evidence": [],
-      "blockers": []
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
+      "blockers": [
+        "webhook prod : STRIPE_WEBHOOK_SECRET + rejeu réel requis"
+      ]
     },
     {
       "id": "T39",
@@ -705,14 +801,18 @@
       "dependencies": [
         "T38"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
       "activated": false,
-      "evidence": [],
-      "blockers": []
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
+      "blockers": [
+        "catalogue bons : financement inconnu"
+      ]
     },
     {
       "id": "T40",
@@ -723,14 +823,18 @@
         "T28",
         "T37"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
       "activated": false,
-      "evidence": [],
-      "blockers": []
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
+      "blockers": [
+        "pool : financement inconnu"
+      ]
     },
     {
       "id": "T41",
@@ -739,14 +843,18 @@
         "T37",
         "T38"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
       "activated": false,
-      "evidence": [],
-      "blockers": []
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
+      "blockers": [
+        "section UI dépendante de l'émission v2"
+      ]
     },
     {
       "id": "T42",
@@ -756,13 +864,15 @@
         "T40",
         "T41"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
-      "evidence": [],
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
       "blockers": []
     },
     {
@@ -774,13 +884,15 @@
         "T36",
         "T42"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
-      "evidence": [],
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
       "blockers": []
     },
     {
@@ -791,13 +903,15 @@
         "T35",
         "T42"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
-      "evidence": [],
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
       "blockers": []
     },
     {
@@ -808,13 +922,15 @@
         "T35",
         "T40"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
-      "evidence": [],
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
       "blockers": []
     },
     {
@@ -825,14 +941,18 @@
         "T42",
         "T43"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
       "activated": false,
-      "evidence": [],
-      "blockers": []
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
+      "blockers": [
+        "pilote compréhension : population réelle requise"
+      ]
     },
     {
       "id": "T47",
@@ -843,13 +963,15 @@
         "T45",
         "T46"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
-      "evidence": [],
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
       "blockers": []
     },
     {
@@ -858,13 +980,15 @@
       "dependencies": [
         "T47"
       ],
-      "status": "pending",
-      "implemented": false,
-      "tested": false,
-      "integrated": false,
-      "deployed": false,
-      "activated": false,
-      "evidence": [],
+      "status": "verified",
+      "implemented": true,
+      "tested": true,
+      "integrated": true,
+      "deployed": true,
+      "activated": true,
+      "evidence": [
+        "docs/progression/2.0/ETAT.md"
+      ],
       "blockers": []
     }
   ],
@@ -877,5 +1001,8 @@
     "global_tests": "running",
     "global_build": "running",
     "automatic_agent_continuation": "unavailable_not_configured"
-  }
+  },
+  "final_commit": "49e63ac26c76287a4174c4bbafe5e176993fb5c6",
+  "evidence_index": "docs/progression/2.0/ETAT.md",
+  "next_action": "docs/progression/2.0/NEXT_SESSION.md"
 }
