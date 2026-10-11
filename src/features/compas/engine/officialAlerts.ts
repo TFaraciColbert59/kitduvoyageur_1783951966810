@@ -12,7 +12,9 @@
  * - seuls les champs STRUCTURÉS font foi (`awareness_level`, `awareness_type`) :
  *   le libellé libre (« Vigilance jaune orages ») peut contredire le niveau ;
  * - le flux garde un historique : pour une zone, un phénomène et un jour, seule
- *   la dernière émission à fenêtre valide compte ;
+ *   la dernière émission à fenêtre valide compte ; des messages émis à la même
+ *   seconde comptent ensemble (niveau le plus sévère par fenêtre), l'ordre du
+ *   flux ne décide jamais du niveau ;
  * - une mise à jour à fenêtre nulle (début ≥ fin, « verte », avec `references`)
  *   clôt le message précédent, souvent suivie d'une nouvelle alerte quelques
  *   secondes après ; sans cette nouvelle alerte, l'état actuel n'est pas connu :
@@ -196,7 +198,7 @@ export interface FeedDigest {
   rawCount: number;
   /** Le flux n'est pas vide mais rien n'y a été lu : format inattendu. */
   unreadable: boolean;
-  /** Toutes les zones du flux ont un contour ou un cercle (au moins une zone). */
+  /** Toutes les zones du flux ont au moins un contour ou cercle, et tous se lisent (au moins une zone). */
   geometryComplete: boolean;
   /**
    * Au moins un message n'a pas pu être lu (pas de fin, pas de niveau, borne
@@ -271,17 +273,18 @@ export function digestMeteoalarm(json: unknown, now: Date = new Date()): FeedDig
         const rawPolygons = Array.isArray(a.polygon) ? a.polygon : [];
         const rawCircles = Array.isArray(a.circle) ? a.circle : [];
         if (rawPolygons.length > LIMITS.polygonsPerArea || rawCircles.length > LIMITS.polygonsPerArea) dropped = true;
-        const polygons = rawPolygons
-          .slice(0, LIMITS.polygonsPerArea)
-          .map(ringOf)
-          .filter((r): r is CapRing => r != null);
-        const circles = rawCircles
-          .slice(0, LIMITS.polygonsPerArea)
+        const polygonTexts = rawPolygons.slice(0, LIMITS.polygonsPerArea);
+        const circleTexts = rawCircles.slice(0, LIMITS.polygonsPerArea);
+        const polygons = polygonTexts.map(ringOf).filter((r): r is CapRing => r != null);
+        const circles = circleTexts
           .map(parseCircle)
           .filter((c): c is NonNullable<ReturnType<typeof parseCircle>> => c != null);
         areaCount += 1;
         const geo = polygons.length || circles.length ? { rings: polygons, circles } : null;
-        if (geo) geoCount += 1;
+        // Un contour ou un cercle illisible (mal formé, trop long) n'a pas été testé : ceux qui se
+        // lisent restent utilisés, mais la zone n'est plus « entièrement testée » (sinon une zone
+        // dont un contour manque passerait pour calme sous une vigilance rouge).
+        if (geo && polygons.length === polygonTexts.length && circles.length === circleTexts.length) geoCount += 1;
         areas.push({ name, key: normalizeArea(name), geo });
       }
 
@@ -394,8 +397,11 @@ export function readDigest(digest: FeedDigest, opts: ReadOptions): MeteoalarmRea
   const point = opts.point && Number.isFinite(opts.point.lat) && Number.isFinite(opts.point.lon) ? opts.point : null;
 
   // Dernière émission par (phénomène, jour de début) pour ce lieu, et dernière
-  // mise à jour à fenêtre nulle par phénomène.
-  const latest = new Map<string, Hit>();
+  // mise à jour à fenêtre nulle par phénomène. Les messages d'une même seconde
+  // comptent ensemble (un service publie souvent plusieurs mises à jour d'un seul
+  // coup) : l'ordre du flux n'y décide de rien. Sur une même fenêtre, le niveau
+  // le plus sévère est gardé ; deux fenêtres distinctes restent deux alertes.
+  const latest = new Map<string, { sent: number; byWindow: Map<string, Hit> }>();
   const closedAt = new Map<string, number>();
   for (const c of digest.candidates) {
     const hit = hitOf(c, rank, point);
@@ -408,14 +414,20 @@ export function readDigest(digest: FeedDigest, opts: ReadOptions): MeteoalarmRea
       continue;
     }
     const key = `${c.type ?? '?'}|${c.onset.slice(0, 10)}`;
+    const period = `${c.onset}|${c.expires}`;
     const prev = latest.get(key);
-    if (prev && prev.candidate.sent >= c.sent) continue;
-    latest.set(key, hit);
+    if (prev && prev.sent > c.sent) continue;
+    if (!prev || prev.sent < c.sent) {
+      latest.set(key, { sent: c.sent, byWindow: new Map([[period, hit]]) });
+      continue;
+    }
+    const same = prev.byWindow.get(period);
+    if (!same || c.level > same.candidate.level) prev.byWindow.set(period, hit);
   }
 
   const now = opts.now.getTime();
   const out: OfficialAlert[] = [];
-  for (const { candidate: c, blocks } of latest.values()) {
+  for (const { candidate: c, blocks } of [...latest.values()].flatMap((l) => [...l.byWindow.values()])) {
     const level = LEVELS[c.level];
     if (!level) continue; // 1 = vert : pas de vigilance
     const end = Date.parse(c.expires);

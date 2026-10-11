@@ -4,6 +4,7 @@ import type { OfficialAlert } from '../engine/danger';
 import {
   cleanText,
   digestMeteoalarm,
+  normalizeArea,
   readDigest,
   withinPublishedHorizon,
   type AlertsStatus,
@@ -22,7 +23,9 @@ import { appUserAgent } from '@/lib/userAgent';
  *    arrondies (~1 km), User-Agent de l'application (jamais une donnée
  *    personnelle), cache 30 j. Les noms sont ceux du pays (pas traduits) : ce
  *    sont ceux que les services nationaux emploient pour leurs zones.
- * 2. Pays absent de la table des flux : « non_couvert », rien n'est affirmé.
+ * 2. Pays absent de la table des flux : « non_couvert », rien n'est affirmé. Les
+ *    départements d'outre-mer, que la carte nomme aussi « fr », sont dans ce cas :
+ *    seul le flux France MÉTROPOLITAINE existe.
  * 3. Départ au-delà du lendemain : « pas_encore_publiees », sans appel réseau.
  * 4. Sinon le flux du pays est lu (cache de 5 minutes) et la zone du lieu y est
  *    cherchée : contour qui couvre le lieu, ou nom exact d'une unité
@@ -140,6 +143,23 @@ export interface PlaceAreas {
   country: string;
   /** Noms des unités administratives du lieu, du plus fin au plus large. */
   names: string[];
+  /**
+   * Lieu « fr » pour la carte mais pas établi comme métropolitain (La Réunion,
+   * Guadeloupe, Martinique, Guyane, Mayotte… : la carte leur donne aussi « fr »).
+   * Le flux France ne nomme que les départements métropolitains.
+   */
+  overseas?: true;
+}
+
+/** Code ISO 3166-2 d'un département métropolitain (niveau 6) : « FR-74 », « FR-2B », « FR-69M ». Les outre-mer ont trois chiffres. */
+const METROPOLITAN_DEPARTMENT = /^FR-(?:\d{2}|2[AB])[A-Z]?$/;
+
+/** La carte place un lieu en France métropolitaine : `region` « France métropolitaine » ou code de département. */
+function isMetropolitanFrance(address: Record<string, unknown>): boolean {
+  const region = typeof address.region === 'string' ? normalizeArea(address.region) : '';
+  if (region === 'france metropolitaine' || region === 'metropolitan france') return true;
+  const department = address['ISO3166-2-lvl6'];
+  return typeof department === 'string' && METROPOLITAN_DEPARTMENT.test(department);
 }
 
 /** Pays et unités administratives d'un point, ou null. */
@@ -160,7 +180,7 @@ export async function placeAreasOf(lat: number, lon: number): Promise<PlaceAreas
     const v = cleanText(address[level], 200);
     if (v && !names.includes(v)) names.push(v);
   }
-  return { country, names };
+  return country === 'fr' && !isMetropolitanFrance(address) ? { country, names, overseas: true } : { country, names };
 }
 
 /* ------------------------------------------------------------------ */
@@ -259,7 +279,8 @@ export async function getOfficialAlerts(input: {
   if (!point || !from || !to) return unavailable();
   const place = await placeAreasOf(point.lat, point.lon);
   if (!place) return unavailable();
-  const feed = METEOALARM_FEEDS[place.country];
+  // Outre-mer : « fr » pour la carte, mais absent du flux France, donc jamais « aucune alerte ».
+  const feed = place.overseas ? undefined : METEOALARM_FEEDS[place.country];
   if (!feed) return { status: 'non_couvert', alerts: [], area: null, readAt: null };
   const today = localToday(safeTimeZone(input.timeZone) ?? TIME_ZONE);
   const area = place.names[0] ?? null;

@@ -1697,6 +1697,62 @@ describe('CompasScreen', () => {
     expect(within(sheet).getByTestId('meteoalarm-notice').textContent).toContain(METEOALARM_DISCLAIMER);
   });
 
+  /** Ouvre la Veille du verdict et rend la ligne de la règle « Vigilance officielle ». */
+  const openVeilleAlertRule = async (data: CompasData) => {
+    render(<CompasScreen data={data} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Veille/ }));
+    const label = await within(sheet).findByText('Vigilance officielle (services nationaux, via Meteoalarm)');
+    return label.closest('li') as HTMLElement;
+  };
+
+  it('Veille : « Rien à signaler » seulement si les alertes ont été lues, sinon ce qui n’a pas été vérifié', async () => {
+    const cases = [
+      ['lues', 'Rien à signaler sur ce voyage.'],
+      ['partielles', 'Non vérifié : alertes officielles (zone reconnue en partie : d’autres alertes peuvent exister).'],
+      ['pas_encore_publiees', 'Non vérifié : alertes officielles (publiées la veille du départ).'],
+      ['non_couvert', 'Non vérifié : alertes officielles (pays non couvert par Meteoalarm).'],
+      ['zone_non_rapprochee', 'Non vérifié : alertes officielles (zone de l’étape non reconnue dans le flux Meteoalarm).'],
+      ['indisponibles', 'Non vérifié : alertes officielles.'],
+      [undefined, 'Non vérifié : alertes officielles.'],
+    ] as const;
+    for (const [status, expected] of cases) {
+      cleanup();
+      const data = makeData();
+      data.alertsStatus = status;
+      data.danger = assessDanger({ dayPlans: [], forecasts: [], alerts: [], alertsStatus: status });
+      const rule = await openVeilleAlertRule(data);
+      expect(rule.textContent, String(status)).toContain(expected);
+      if (status !== 'lues') expect(rule.textContent, String(status)).not.toContain('Rien à signaler');
+    }
+  });
+
+  it('Veille : le service national qui a émis l’alerte est nommé sur sa ligne (conditions de Meteoalarm, § 5)', async () => {
+    const rule = await openVeilleAlertRule(withAlert(mise({ level: 'jaune' })));
+    expect(rule.textContent).toContain('Vigilance jaune · vent violent (Sardegna), émise le 10 oct. 2026, 16 h 00 UTC');
+    expect(
+      within(rule).getByText('Source : Servizio Meteorologico dell’Aeronautica Militare (MeteoAM) via Meteoalarm')
+    ).toBeTruthy();
+  });
+
+  it('Veille : deux alertes, chacune avec son service', async () => {
+    const data = withAlert(mise({ level: 'jaune' }));
+    const autre = mise({
+      id: 'de-1',
+      level: 'orange',
+      hazard: 'orages',
+      area: 'Bayern',
+      source: 'Deutscher Wetterdienst (DWD) via Meteoalarm',
+      texts: undefined,
+    });
+    data.danger = assessDanger({ dayPlans: [], forecasts: [], alerts: [mise({ level: 'jaune' }), autre], alertsStatus: 'partielles' });
+    const rule = await openVeilleAlertRule(data);
+    expect(within(rule).getByText(/Source : Servizio Meteorologico/)).toBeTruthy();
+    expect(within(rule).getByText('Source : Deutscher Wetterdienst (DWD) via Meteoalarm')).toBeTruthy();
+  });
+
   const TEXTES = [
     {
       lang: 'en-GB',
