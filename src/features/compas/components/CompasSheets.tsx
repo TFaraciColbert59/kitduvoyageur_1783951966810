@@ -3083,10 +3083,13 @@ function TallList<T>({
 
 const ADVICE_ICON: Record<string, string> = {
   pluie: 'cloud-rain',
+  etanche: 'package',
   froid: 'thermometer',
   chaud: 'thermometer',
   extremites: 'cloud-snow',
   soleil: 'sun',
+  moustiques: 'shield',
+  filtre: 'filter',
   frontale: 'sunset',
   eau: 'droplet',
 };
@@ -3094,10 +3097,13 @@ const ADVICE_ICON: Record<string, string> = {
 /** Mot cherché dans la boutique quand on ajoute depuis un conseil (sous-chaîne, sans accent). */
 const ADVICE_QUERY: Record<string, string> = {
   pluie: 'imperm',
+  etanche: 'etanche',
   froid: 'polaire',
   chaud: 'polaire',
   extremites: 'gant',
   soleil: 'solaire',
+  moustiques: 'repulsif',
+  filtre: 'filtre',
   frontale: 'frontale',
   eau: 'gourde',
 };
@@ -3107,8 +3113,9 @@ function ConseilsFlow({ ctl }: { ctl: CompasCtl }) {
   return (
     <>
       <p className="cp-note">
-        Des repères tirés de la météo et du parcours, pas des ordres : chacun cite la donnée qui le
-        déclenche. « Couvert » veut dire qu’un objet de ton kit porte un nom qui correspond.
+        Des repères tirés de la météo, des normales du mois (quand la prévision ne couvre pas tes
+        dates) et du parcours, pas des ordres : chacun cite la donnée qui le déclenche. « Couvert »
+        veut dire qu’un objet de ton kit porte un nom qui correspond.
       </p>
       <TallList
         label="Conseils de kit"
@@ -3382,6 +3389,7 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
             forecasts,
             dayPlans: model.route.dayPlans,
             waterPointsCount: null,
+            context: ctl.data.kitContext,
           });
           return (
             <div key={kit.id} className="cp-row cp-row--tall" style={staticRow}>
@@ -3399,8 +3407,8 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
                 </span>
                 <span>
                   {compat.total > 0
-                    ? `Couvre ${compat.covered} conseil${compat.covered > 1 ? 's' : ''} météo sur ${compat.total}${compat.bringsNew ? ` (dont ${compat.bringsNew} de plus qu’aujourd’hui)` : ''}`
-                    : 'Aucun conseil météo à comparer'}
+                    ? `Couvre ${compat.covered} conseil${compat.covered > 1 ? 's' : ''} de kit sur ${compat.total}${compat.bringsNew ? ` (dont ${compat.bringsNew} de plus qu’aujourd’hui)` : ''}`
+                    : 'Aucun conseil de kit à comparer'}
                 </span>
               </span>
               <span className="cp-row__end">

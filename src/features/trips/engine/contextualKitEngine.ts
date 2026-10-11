@@ -7,9 +7,28 @@ import type {
 import type { ElevationProfile } from '../lib/elevation';
 import { getCivilDurationDays } from '@/lib/dates/tripDates';
 import { kitProductBaseSlug } from '../domain/kitCatalogImport';
+import {
+  ALTITUDE_PRONE_ACTIVITIES,
+  CLIMATE_THRESHOLDS,
+  NATURAL_WATER_ACTIVITIES,
+  celsius,
+  mmPerDay,
+  monthNameFr,
+  readClimate,
+  isTropicalLatitude,
+  type ClimateWindow,
+} from './climate';
+
 
 export interface ContextualKitInput {
+  /**
+   * Gardé pour les appelants, plus lu par les règles : aucune règle du kit ne
+   * dépend d'un pays (plan 4.8). Le climat vient de `climate`, le relief de
+   * l'altitude mesurée, la latitude de `latitude`.
+   */
   countryCode?: string | null;
+  /** Normales NASA POWER des mois du voyage (froid, pluie, chaleur) ; absentes : formulation prudente. */
+  climate?: ClimateWindow | null;
   activity?: string | null;
   durationDays: number;
   seasonMonth?: number; // 1 to 12
@@ -97,7 +116,8 @@ interface KitRuleTemplate {
   defaultPriority: 'vital' | 'recommended' | 'optional';
   baseWeightGrams: number;
   condition: (input: ContextualKitInput, maxAlt: number) => { match: boolean; reason: string; priority?: 'vital' | 'recommended' };
-  preferredProductSlug: string;
+  /** Slug boutique réel ; null : aucun produit du catalogue pour cet objet (jamais un produit inventé). */
+  preferredProductSlug: string | null;
 }
 
 export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
@@ -161,17 +181,73 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     category: 'water',
     defaultPriority: 'vital',
     baseWeightGrams: 140,
-    condition: (_input, maxAlt) => {
-      const needFilter = maxAlt > 2400;
+    condition: (input, maxAlt) => {
+      // Selon la ressource, pas seulement l'altitude : tropiques (eau pas toujours
+      // potable), altitude (névés, torrents), activité qui vit des ruisseaux et des sources.
+      const high = maxAlt > CLIMATE_THRESHOLDS.filterAltitudeM;
+      const why: string[] = [];
+      if (isTropicalLatitude(input.latitude))
+        why.push(
+          'Zone tropicale : l’eau du robinet et celle des ruisseaux n’est pas toujours potable ; un filtre retient bactéries et parasites.'
+        );
+      if (high)
+        why.push(
+          `Altitude supérieure à 2400m (${maxAlt}m) : filtration indispensable des névés, torrents et sources naturelles non contrôlées.`
+        );
+      if (NATURAL_WATER_ACTIVITIES.has(input.activity ?? ''))
+        why.push('Activité qui vit de l’eau des ruisseaux et des sources : filtre ou paille filtrante.');
+      // Altitude non mesurée en montagne : par précaution (jamais le silence).
+      if (maxAlt === 0 && ALTITUDE_PRONE_ACTIVITIES.has(input.activity ?? ''))
+        why.push('Altitude du parcours non mesurée : par précaution, de quoi traiter l’eau des sources et des névés.');
       return {
-        match: needFilter,
-        reason: needFilter
-          ? `Altitude supérieure à 2400m (${maxAlt}m) : filtration indispensable des névés, torrents et sources naturelles non contrôlées.`
-          : '',
-        priority: 'vital',
+        match: why.length > 0,
+        reason: why.join(' '),
+        // Vital en altitude (règle d'origine) ; ailleurs, recommandé.
+        priority: high ? 'vital' : 'recommended',
       };
     },
     preferredProductSlug: 'filtre-a-eau-randonnee-categorie-bigbuy',
+  },
+  {
+    key: 'water-purification',
+    name: 'Pastilles de purification d’eau',
+    category: 'water',
+    defaultPriority: 'recommended',
+    baseWeightGrams: 20,
+    condition: (input) => {
+      const tropical = isTropicalLatitude(input.latitude);
+      return {
+        match: tropical,
+        reason: tropical
+          ? 'Zone tropicale : un filtre seul ne retient pas la plupart des virus ; des pastilles (ou l’ébullition) complètent le traitement de l’eau.'
+          : '',
+        priority: 'recommended',
+      };
+    },
+    preferredProductSlug: null,
+  },
+  {
+    key: 'mosquito-repellent',
+    name: 'Répulsif anti-moustiques',
+    category: 'safety',
+    defaultPriority: 'recommended',
+    baseWeightGrams: 100,
+    condition: (input, maxAlt) => {
+      // Latitude tropicale, sous 2 500 m, hors mois frais (altitude ou climat inconnus : dit par précaution).
+      const read = readClimate(input.climate);
+      const match =
+        isTropicalLatitude(input.latitude) &&
+        maxAlt < CLIMATE_THRESHOLDS.mosquitoMaxAltitudeM &&
+        !(read != null && read.hottest.tMeanC < CLIMATE_THRESHOLDS.mosquitoMinMeanC);
+      return {
+        match,
+        reason: match
+          ? 'Zone tropicale : moustiques actifs toute l’année, porteurs de dengue ou de paludisme selon la zone. Répulsif, vêtements couvrants au crépuscule ; avant de partir, demande conseil à un médecin.'
+          : '',
+        priority: 'recommended',
+      };
+    },
+    preferredProductSlug: null,
   },
   {
     key: 'cold-down-jacket',
@@ -185,15 +261,20 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
       const lat = input.latitude ?? null;
       const month = input.seasonMonth && lat != null && lat < 0 ? ((input.seasonMonth + 5) % 12) + 1 : input.seasonMonth;
       const summer = Boolean(month && month >= 6 && month <= 9);
-      const tropical = lat != null && Math.abs(lat) < 23.5;
-      const extremeCold = tropical
+      const tropical = isTropicalLatitude(lat);
+      const highCold = tropical
         ? maxAlt >= 3500
         : maxAlt >= 3000 || (maxAlt > 2400 && (!summer || input.activity === 'mountaineering'));
+      // Grand froid sans altitude (moyenne du mois à 2 °C ou moins, -10 °C déjà relevé).
+      const deep = readClimate(input.climate);
+      const deepCold = !highCold && deep?.deepCold === true;
       return {
-        match: extremeCold,
-        reason: extremeCold
-          ? `Haute altitude (${maxAlt}m > 2400m) : isolation thermique grand froid indispensable face aux températures nocturnes négatives.`
-          : '',
+        match: highCold || deepCold,
+        reason: deepCold
+          ? `En ${monthNameFr(deep!.coldest.month)} : température moyenne de ${celsius(deep!.coldest.tMeanC)}, jusqu’à ${celsius(deep!.coldest.tMinC)} déjà relevés : isolation thermique grand froid indispensable.`
+          : highCold
+            ? `Haute altitude (${maxAlt}m > 2400m) : isolation thermique grand froid indispensable face aux températures nocturnes négatives.`
+            : '',
         priority: 'vital',
       };
     },
@@ -205,14 +286,18 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     category: 'safety',
     defaultPriority: 'vital',
     baseWeightGrams: 60,
-    condition: (_input, maxAlt) => {
+    condition: (input, maxAlt) => {
       const isHigh = maxAlt > 2400;
+      // Altitude non mesurée en montagne : par précaution, jamais le silence.
+      const unknown = maxAlt === 0 && ALTITUDE_PRONE_ACTIVITIES.has(input.activity ?? '');
       return {
-        match: isHigh,
+        match: isHigh || unknown,
         reason: isHigh
           ? `Haute altitude (${maxAlt}m > 2400m) : isolation thermique vitale d’urgence en cas d’aléa météo ou blessure immobilisante.`
-          : '',
-        priority: 'vital',
+          : unknown
+            ? 'Altitude du parcours non mesurée : par précaution, une couverture de survie en cas d’aléa météo ou de blessure immobilisante.'
+            : '',
+        priority: isHigh ? 'vital' : 'recommended',
       };
     },
     preferredProductSlug: 'couverture-de-survie-categorie-bigbuy',
@@ -232,17 +317,21 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
       const summer = Boolean(month && month >= 6 && month <= 9);
       const snowSport = input.activity === 'mountaineering' || input.activity === 'ski';
       // Sous les tropiques, la neige commence vers 5 000 m (Andes, Kilimandjaro).
-      const tropical = lat != null && Math.abs(lat) < 23.5;
+      const tropical = isTropicalLatitude(lat);
       const isHighAltitude =
         maxAlt >= (tropical ? 5000 : 3000) ||
-        input.countryCode === 'IS' ||
-        input.countryCode === 'NP' ||
         (maxAlt >= 2400 && (snowSport || (!tropical && !summer)));
+      // Froid sans altitude : un mois à 2 °C de moyenne ou moins gèle les sentiers
+      // (Islande, Scandinavie, Patagonie l'hiver), d'après les normales du lieu.
+      const frozen = readClimate(input.climate);
+      const icy = !isHighAltitude && frozen?.icy === true;
       return {
-        match: isHighAltitude,
-        reason: isHighAltitude
-          ? `Itinéraire avec altitude max de ${maxAlt}m ou terrain glaciaire : indispensable pour traverser les névés et passages verglacés en toute sécurité.`
-          : '',
+        match: isHighAltitude || icy,
+        reason: icy
+          ? `En ${monthNameFr(frozen!.coldest.month)} : température moyenne de ${celsius(frozen!.coldest.tMeanC)} autour du lieu : sentiers verglacés ou enneigés possibles, crampons légers indispensables.`
+          : isHighAltitude
+            ? `Itinéraire avec altitude max de ${maxAlt}m ou terrain glaciaire : indispensable pour traverser les névés et passages verglacés en toute sécurité.`
+            : '',
         priority: 'vital',
       };
     },
@@ -260,12 +349,12 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
       // seulement au-dessus de 44° ou en altitude (pas une balade aux Calanques).
       const lat = input.latitude ?? null;
       const month = input.seasonMonth && lat != null && lat < 0 ? ((input.seasonMonth + 5) % 12) + 1 : input.seasonMonth;
-      const tropical = lat != null && Math.abs(lat) < 23.5;
+      const tropical = isTropicalLatitude(lat);
       const winter = Boolean(month && (month === 12 || month <= 2));
       const shoulder = Boolean(month && (month === 3 || month === 4 || month === 10 || month === 11));
       const coldExpected = Boolean(
         (maxAlt >= 2000 && (!tropical || maxAlt >= 3500) && (maxAlt >= 3000 || !(month && month >= 6 && month <= 9))) ||
-        input.countryCode === 'IS' ||
+        readClimate(input.climate)?.frost === true ||
         (!tropical && winter) ||
         (shoulder && (lat == null || Math.abs(lat) >= 44 || maxAlt >= 1000))
       );
@@ -286,7 +375,7 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     defaultPriority: 'optional',
     baseWeightGrams: 30,
     condition: (input, maxAlt) => {
-      const extremeCold = maxAlt >= 3000 || input.countryCode === 'IS';
+      const extremeCold = maxAlt >= 3000 || readClimate(input.climate)?.deepCold === true;
       return {
         match: extremeCold,
         reason: extremeCold ? 'Réconfort thermique immédiat lors des bivouacs glaciaux ou passages de cols ventés.' : '',
@@ -303,12 +392,19 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     defaultPriority: 'recommended',
     baseWeightGrams: 120,
     condition: (input, maxAlt) => {
-      const intenseUv = maxAlt >= 1800 || input.countryCode === 'MA' || input.countryCode === 'PE';
+      // UV forts : l'altitude, le soleil haut des tropiques (latitude), un mois sec et chaud (désert).
+      const tropical = isTropicalLatitude(input.latitude);
+      const desert = readClimate(input.climate)?.desertHot ?? null;
+      const intenseUv = maxAlt >= 1800 || tropical || desert != null;
       return {
         match: true,
-        reason: intenseUv
-          ? `Rayonnement UV démultiplié par l’altitude (${maxAlt}m) ou l'exposition désertique : protection cutanée indispensable.`
-          : 'Protection cutanée contre le soleil.',
+        reason: desert
+          ? `En ${monthNameFr(desert.month)} : mois sec et chaud (${celsius(desert.tMeanC)} de moyenne, ${mmPerDay(desert.precipMmDay)}), exposition désertique : protection cutanée indispensable.`
+          : tropical
+            ? 'Zone tropicale : le soleil est haut et le rayonnement UV fort toute l’année, protection cutanée indispensable.'
+            : maxAlt >= 1800
+              ? `Rayonnement UV démultiplié par l’altitude (${maxAlt}m) : protection cutanée indispensable.`
+              : 'Protection cutanée contre le soleil.',
         priority: intenseUv ? 'vital' : 'recommended',
       };
     },
@@ -321,7 +417,13 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     defaultPriority: 'recommended',
     baseWeightGrams: 30,
     condition: (input, maxAlt) => {
-      const needGlasses = maxAlt >= 1500 || input.countryCode === 'MA' || input.countryCode === 'IS';
+      const read = readClimate(input.climate);
+      const needGlasses =
+        maxAlt >= 1500 ||
+        isTropicalLatitude(input.latitude) ||
+        read?.desertHot != null ||
+        // Réverbération de la neige : un mois à 2 °C de moyenne ou moins.
+        read?.icy === true;
       return {
         match: needGlasses,
         reason: 'Protection rétinienne indispensable contre la réverbération de la neige, roche claire ou soleil direct.',
@@ -338,7 +440,7 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     baseWeightGrams: 280,
     condition: (input, maxAlt) => ({
       match: true,
-      reason: maxAlt >= 2500 || input.countryCode === 'IS'
+      reason: maxAlt >= 2500 || readClimate(input.climate)?.icy === true
         ? 'Maintient l’eau chaude par températures négatives ou l’eau fraîche par forte chaleur.'
         : 'Conservation optimale de votre réserve hydrique quotidienne.',
     }),
@@ -366,13 +468,19 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     defaultPriority: 'recommended',
     baseWeightGrams: 150,
     condition: (input) => {
-      const wetClimate = input.countryCode === 'IS' || input.countryCode === 'NP' || input.countryCode === 'FR';
+      const read = readClimate(input.climate);
+      // Climat connu : la pluie du mois. Climat illisible : par précaution, dès deux jours dehors.
+      const wetClimate = read ? read.rainy : input.durationDays >= 2;
+      // Pluie ET froid : le risque est l'hypothermie, pas l'inconfort.
+      const coldRain = read?.rainy === true && read.cool;
       return {
         match: wetClimate,
-        reason: wetClimate
-          ? 'Protection immédiate contre les averses torrentielles et le vent froid protégeant le marcheur et son sac.'
-          : 'Couverture d’intempéries d’appoint.',
-        priority: input.countryCode === 'IS' ? 'vital' : 'recommended',
+        reason: !wetClimate
+          ? ''
+          : read
+            ? `En ${monthNameFr(read.wettest.month)} : ${mmPerDay(read.wettest.precipMmDay)} en moyenne${coldRain ? ` et ${celsius(read.coldest.tMeanC)} de moyenne` : ''} : protection immédiate contre les averses et le vent, pour le marcheur et son sac.`
+            : 'Météo du mois non lue : un coupe-pluie par précaution pour plusieurs jours dehors.',
+        priority: coldRain ? 'vital' : 'recommended',
       };
     },
     preferredProductSlug: 'poncho-impermeable-pluie-categorie-bigbuy',
@@ -384,10 +492,13 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     defaultPriority: 'recommended',
     baseWeightGrams: 100,
     condition: (input) => {
-      const wet = input.countryCode === 'IS' || input.countryCode === 'NP';
+      const read = readClimate(input.climate);
+      const wet = read?.rainy === true;
       return {
         match: wet,
-        reason: 'Garantit l’étanchéité absolue de vos vêtements de rechange et équipements électroniques sensibles.',
+        reason: wet
+          ? `En ${monthNameFr(read!.wettest.month)} : ${mmPerDay(read!.wettest.precipMmDay)} en moyenne${read!.heavyRain ? ' (mousson ou saison des pluies)' : ''}. Garantit l’étanchéité de tes vêtements de rechange et de ton matériel électronique.`
+          : '',
       };
     },
     preferredProductSlug: 'sac-etanche-dry-bag-bouteille-filtrante-brita-1052250-bleu-600-ml',
@@ -557,27 +668,41 @@ export function generateTripContextualKit(input: ContextualKitInput): TripKitAna
         }
       }
     }
-    if (maxAltitudeM === 0 && input.countryCode) {
-      const countryCode = input.countryCode.toUpperCase();
-      const fallbacks: Record<string, number> = { NP: 3500, PE: 3400, MA: 1200, IS: 500, FR: 480 };
-      maxAltitudeM = fallbacks[countryCode] || 0;
-    }
+    // Aucune altitude donnée : jamais une valeur devinée d'après le pays (plan 4.8).
+    // L'appelant lit le relief au lieu du voyage ; à défaut, 0 = inconnue et les
+    // règles d'altitude passent en formulation prudente (`altitudeUnknown`).
   }
+  const altitudeKnown = maxAltitudeM > 0;
 
-  // 2. Alertes contextuelles et climatiques
+  // 2. Alertes contextuelles et climatiques, d'après les normales du lieu et l'altitude mesurée
   const climateWarnings: string[] = [];
-  if (input.countryCode === 'IS') {
-    climateWarnings.push('Islande : Météo hautement imprévisible, vents violents et passages gués froids. Imperméabilité critique.');
-  }
-  if (input.countryCode === 'NP') {
-    climateWarnings.push('Népal : Écarts thermiques extrêmes entre le jour et la nuit en altitude. Protection thermique prioritaire.');
-  }
-  if (input.countryCode === 'MA' && input.seasonMonth && input.seasonMonth >= 6 && input.seasonMonth <= 8) {
-    climateWarnings.push('Maroc (été) : Risque de canicule sévère. Augmentez la capacité d’emport hydrique.');
+  const climate = readClimate(input.climate);
+  if (climate) {
+    const c = climate.coldest;
+    if (climate.icy || climate.frost)
+      climateWarnings.push(
+        `Mois froid (${monthNameFr(c.month)} : ${celsius(c.tMeanC)} de moyenne, jusqu’à ${celsius(c.tMinC)} déjà relevés) : protection thermique prioritaire.`
+      );
+    if (climate.rainy && climate.cool)
+      climateWarnings.push(
+        `Pluie froide en ${monthNameFr(climate.wettest.month)} (${mmPerDay(climate.wettest.precipMmDay)}, ${celsius(c.tMeanC)} de moyenne) : l’imperméabilité est critique.`
+      );
+    if (climate.heavyRain)
+      climateWarnings.push(
+        `Pluies abondantes en ${monthNameFr(climate.wettest.month)} (${mmPerDay(climate.wettest.precipMmDay)}, mousson ou saison des pluies) : protège le matériel et prévois des sentiers détrempés.`
+      );
+    if (climate.hot)
+      climateWarnings.push(
+        `Chaleur en ${monthNameFr(climate.hottest.month)} (${celsius(climate.hottest.tMeanC)} de moyenne, jusqu’à ${celsius(climate.hottest.tMaxC)} déjà relevés) : augmente ta capacité d’emport hydrique.`
+      );
   }
   if (maxAltitudeM >= 2500) {
     climateWarnings.push(`Altitude maximale élevée (${maxAltitudeM}m) : risque de mal aigu des montagnes, gel et UV intenses.`);
   }
+  if (!altitudeKnown && ALTITUDE_PRONE_ACTIVITIES.has(input.activity ?? ''))
+    climateWarnings.push(
+      'Altitude du parcours non mesurée : au-delà de 2 500 m, froid, UV, mal des montagnes et eau à traiter comptent ; ajoute les étapes pour une règle plus juste.'
+    );
 
   // 3. Évaluation des règles contextuelles
   const requiredGaps: ContextualGearRecommendation[] = [];
@@ -597,10 +722,9 @@ export function generateTripContextualKit(input: ContextualKitInput): TripKitAna
     });
 
     if (!hasItem) {
-      const matchedProduct = resolvePreferredProduct(
-        availableProducts,
-        rule.preferredProductSlug
-      );
+      const matchedProduct = rule.preferredProductSlug
+        ? resolvePreferredProduct(availableProducts, rule.preferredProductSlug)
+        : null;
 
       // Anti-D3 : si le produit boutique a un poids de 0g, repli sur le poids de base calibré
       const weightGrams =
@@ -629,10 +753,10 @@ export function generateTripContextualKit(input: ContextualKitInput): TripKitAna
   const scoreRisk = (gap: ContextualGearRecommendation) => {
     let score = 0;
     if (gap.key === 'first-aid') score += 10;
-    if (gap.key === 'rain-poncho' && input.countryCode === 'IS') score += 9.8;
-    if (gap.key === 'crampons' && (maxAltitudeM >= 2400 || input.countryCode === 'IS' || input.countryCode === 'NP')) score += 9.5;
+    if (gap.key === 'rain-poncho' && climate?.rainy && climate.cool) score += 9.8;
+    if (gap.key === 'crampons' && (maxAltitudeM >= 2400 || climate?.icy)) score += 9.5;
     if (gap.key === 'water-filter' && maxAltitudeM > 2400) score += 8.8;
-    if (gap.key === 'cold-down-jacket' && maxAltitudeM > 2400) score += 8.5;
+    if (gap.key === 'cold-down-jacket' && (maxAltitudeM > 2400 || climate?.deepCold)) score += 8.5;
     if (gap.key === 'survival-blanket' && maxAltitudeM > 2400) score += 8.2;
     if (gap.key === 'headlamp') score += 5;
     if (gap.key === 'whistle') score += 4.5;
@@ -695,6 +819,7 @@ export function generateTripContextualKit(input: ContextualKitInput): TripKitAna
     weightCategory: weightResult.weightCategory,
     unweighedItemsCount: weightResult.unweighedItemsCount,
     maxAltitudeM,
+    altitudeKnown,
     seasonContext: input.seasonMonth ? `Mois ${input.seasonMonth}` : 'Dates flexibles',
     climateWarnings,
     vitalGaps,

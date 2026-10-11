@@ -101,8 +101,10 @@ describe('Phase 11.1 — Matrice de Tests Unitaires : Cas Dégradés et Limites'
       });
       const profile = getTripElevationProfile(trip);
       expect(profile.minM).toBeDefined();
-      expect(profile.maxM).toBeGreaterThanOrEqual(100);
-      expect(profile.confidence).toBeDefined();
+      // Plan 4.8 : aucune altitude n'est plus devinée d'après le pays (la France valait 480 m) :
+      // sans donnée, 0 = inconnue, jamais NaN ni négatif.
+      expect(profile.maxM).toBe(0);
+      expect(profile.confidence).toBe('low');
     });
   });
 

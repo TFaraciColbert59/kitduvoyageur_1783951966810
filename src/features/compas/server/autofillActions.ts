@@ -69,6 +69,8 @@ import { entryFor } from '../engine/entry';
 import { keepAiNote, travelPapers } from '../engine/papers';
 import { isFrenchNational } from '../engine/traveller';
 import { tutoyer } from '../engine/voice';
+import { addDaysIso } from '../engine/format';
+import { climateWindow } from '@/features/trips/engine/climate';
 import { abroadCosts, homeForLeg, originFact, planTravelLeg, travelOrigin, type TravelTransport } from '../engine/travel';
 import { nearestAirport } from './airports';
 import { entryRequirement } from './entryRequirements';
@@ -105,11 +107,11 @@ import { after } from 'next/server';
 import { bareAdminName, destinationRadiusKm, distanceKm, isAdminName, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, type CompasPlace } from '../engine/places';
 import { unifyStageNames, untangleStages } from '../engine/stageOrder';
 import { travellerToday } from '../engine/zone';
-import { getPrecipNormals } from './weather';
+import { getClimateNormals, getPrecipNormals } from './weather';
 import { aiSuggestion, essentialAdvice, orderNotes, repeatsRule } from '../engine/advice';
 import { preparationEventKind, recordPreparationEvent } from './opsEvents';
 import { coarsePosition } from '../engine/privacy';
-import { routeAscentM } from './elevation';
+import { pointsMaxAltitudeM, routeAscentM } from './elevation';
 import { estimatedLegKm, estimationNote, stepDistanceMetadata, type LegDistanceSource, type LegMove } from '../engine/legDistance';
 import {
   CLAIM_MS,
@@ -1551,7 +1553,10 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       geoSteps.length > 0
         ? await terrainElevations(geoSteps.map((s) => [s.longitude as number, s.latitude as number] as const))
         : null;
-    const maxStepAltitude = altitudes ? Math.max(0, ...altitudes.filter((a): a is number => a != null)) || null : null;
+    // Altitude de secours : sans étape mesurée, le relief du lieu retrouvé (jamais une valeur par pays).
+    const maxStepAltitude =
+      (altitudes ? Math.max(0, ...altitudes.filter((a): a is number => a != null)) || null : null) ??
+      (await pointsMaxAltitudeM([anchor]));
 
     lap('4');
     /* 4. Nuits : profil + terrain + refuges connus (en parallèle). */
@@ -1695,7 +1700,12 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
 
     lap('6');
     /* 6. Kit : règles contextuelles (pays, altitude réelle) + couchage selon les nuits. */
-    const [{ data: itemRows }, { data: inv }, { data: loans }, { data: shopRows }] = await Promise.all([
+    // Normales du lieu pour les mois du voyage (NASA POWER, gardées 30 jours) : le froid, la
+    // pluie et la chaleur des règles viennent d'elles, plus d'une liste de pays (plan 4.8).
+    const kitDates = trip.start_date
+      ? Array.from({ length: Math.min(62, Math.max(1, days)) }, (_, i) => addDaysIso(trip.start_date as string, i))
+      : [];
+    const [{ data: itemRows }, { data: inv }, { data: loans }, { data: shopRows }, kitNormals] = await Promise.all([
       supabase.from('trip_items').select('item_name').eq('trip_id', tripId),
       supabase.from('product_ownership').select('id, name, is_lent, status').eq('user_id', userId).limit(500),
       supabase.from('materiel_loans').select('product_ownership_id, status').eq('borrower_id', userId).eq('status', 'en_cours').limit(50),
@@ -1705,6 +1715,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         .eq('is_active', true)
         .is('deleted_at', null)
         .limit(400),
+      kitDates.length ? getClimateNormals(anchor.lat, anchor.lon) : Promise.resolve(null),
     ]);
     const tripItemNames = ((itemRows ?? []) as Array<{ item_name: string }>).map((r) => r.item_name);
     const loanIds = ((loans ?? []) as Array<{ product_ownership_id: string }>).map((l) => l.product_ownership_id);
@@ -1724,6 +1735,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       durationDays: days,
       seasonMonth: month,
       latitude: anchor.lat,
+      climate: climateWindow(kitNormals, kitDates),
       currentItems: tripItemNames.map((item_name) => ({ item_name }) as unknown as TripItem),
       ...(maxAltitude ? { elevationProfile: { maxM: maxAltitude } as never } : {}),
     });
@@ -1875,6 +1887,8 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       activity,
       nights: plan.map((n) => n.type),
       maxAltitudeM: maxAltitude,
+      // Étapes et refuges seulement : un plancher, pas le point le plus haut du parcours.
+      altitudeFrom: 'lieux',
       party,
       startDate: trip.start_date ?? null,
       lat: anchor.lat ?? null,

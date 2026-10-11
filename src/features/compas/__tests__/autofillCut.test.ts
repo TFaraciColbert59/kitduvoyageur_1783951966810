@@ -68,7 +68,15 @@ vi.mock('../server/sharedCache', async (orig) => ({
   readShared: vi.fn(async () => undefined),
   writeShared: vi.fn(async () => undefined),
 }));
-vi.mock('../server/elevation', () => ({ routeAscentM: vi.fn(async () => null) }));
+vi.mock('../server/elevation', () => ({
+  routeAscentM: vi.fn(async () => null),
+  pointsMaxAltitudeM: vi.fn(async () => null),
+}));
+// Normales NASA POWER du kit (plan 4.8) : simulées à la frontière, aucun appel réseau.
+vi.mock('../server/weather', async (orig) => ({
+  ...(await orig<typeof import('../server/weather')>()),
+  getClimateNormals: vi.fn(async () => null),
+}));
 vi.mock('@/lib/ai/askAI', () => ({
   aiEnabled: () => false,
   askAI: vi.fn(async () => ({ text: '{}', model: 'x', degraded: true, cached: false, provider: 'fallback' })),

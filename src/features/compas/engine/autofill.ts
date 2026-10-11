@@ -693,7 +693,15 @@ export function fuelForKm(km: number, partySize: number): { fuelEur: number; car
  * Les règles de matériel sont pensées pour la montagne : pour un séjour
  * culturel ou un road trip, seules celles qui servent vraiment restent.
  */
-const CITY_KEYS = new Set(['first-aid', 'powerbank', 'sunscreen', 'sunglasses', 'rain-poncho', 'water-bottle']);
+const CITY_KEYS = new Set([
+  'first-aid',
+  'powerbank',
+  'sunscreen',
+  'sunglasses',
+  'rain-poncho',
+  'water-bottle',
+  'mosquito-repellent',
+]);
 const ROAD_EXCLUDED = new Set([
   'tent-2p',
   'sleeping-mat',
@@ -711,7 +719,15 @@ const WATER_EXCLUDED = new Set(['trekking-poles', 'crampons']);
 const RUN_KEYS = new Set(['first-aid', 'sunscreen', 'sunglasses', 'water-bottle', 'whistle', 'rain-poncho']);
 
 /** Sortie de quelques heures, sans nuit : pas de quoi réparer ni de thermos. */
-const SHORT_EXCLUDED = new Set(['repair-kit', 'thermos', 'water-filter', 'stove', 'tent-2p', 'sleeping-mat']);
+const SHORT_EXCLUDED = new Set([
+  'repair-kit',
+  'thermos',
+  'water-filter',
+  'water-purification',
+  'stove',
+  'tent-2p',
+  'sleeping-mat',
+]);
 
 /**
  * Sortie de quelques heures (6 h au plus) près de chez soi : ni lampe, ni

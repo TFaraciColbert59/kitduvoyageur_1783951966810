@@ -1,5 +1,6 @@
 import SunCalc from 'suncalc';
 import type { DayForecast, HourCondition } from './weather';
+import type { ClimateNormals } from '@/features/trips/engine/climate';
 
 /**
  * Compas — lecture PURE de deux sources météo gratuites, usage commercial
@@ -270,26 +271,50 @@ export function powerToDaily(payload: unknown): { daily: Record<string, unknown[
 
 const MONTH_KEYS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'] as const;
 
-/**
- * NASA POWER, climatologie (normales mensuelles 2001-2020) : précipitations
- * moyennes de janvier à décembre, en mm/jour. Un mois absent, illisible ou
- * égal à la valeur de remplissage (-999) : null, rien n'est comblé.
- */
-export function powerClimatology(payload: unknown): number[] | null {
+/** Une mesure mensuelle de la climatologie : douze valeurs lisibles, sinon null (rien n'est comblé). */
+function monthlySeries(
+  payload: unknown,
+  name: string,
+  valid: (v: number) => boolean = () => true
+): number[] | null {
   if (!payload || typeof payload !== 'object') return null;
   const p = payload as {
-    properties?: { parameter?: { PRECTOTCORR?: Record<string, unknown> } };
+    properties?: { parameter?: Record<string, Record<string, unknown> | undefined> };
     header?: { fill_value?: unknown };
   };
-  const series = p.properties?.parameter?.PRECTOTCORR;
+  const series = p.properties?.parameter?.[name];
   if (!series || typeof series !== 'object') return null;
   const fillRaw = p.header?.fill_value;
   const fill = typeof fillRaw === 'number' ? fillRaw : -999;
   const out: number[] = [];
   for (const k of MONTH_KEYS) {
     const v = num(series[k]);
-    if (v == null || v === fill || v < 0) return null;
+    if (v == null || v === fill || !valid(v)) return null;
     out.push(v);
   }
   return out;
+}
+
+/**
+ * NASA POWER, climatologie (normales mensuelles) : précipitations moyennes de
+ * janvier à décembre, en mm/jour. Un mois absent, illisible ou égal à la
+ * valeur de remplissage (-999) : null, rien n'est comblé.
+ */
+export function powerClimatology(payload: unknown): number[] | null {
+  return monthlySeries(payload, 'PRECTOTCORR', (v) => v >= 0);
+}
+
+/**
+ * NASA POWER, climatologie : température moyenne (`T2M`), plus basse et plus
+ * haute relevées dans le mois (`T2M_MIN`, `T2M_MAX`, des extrêmes sur la
+ * période, pas des moyennes) et précipitations (`PRECTOTCORR`). Les quatre
+ * mesures doivent être entières : une seule manquante et rien n'est rendu.
+ */
+export function powerClimateNormals(payload: unknown): ClimateNormals | null {
+  const temp = (v: number) => v > -90 && v < 60;
+  const tMean = monthlySeries(payload, 'T2M', temp);
+  const tMin = monthlySeries(payload, 'T2M_MIN', temp);
+  const tMax = monthlySeries(payload, 'T2M_MAX', temp);
+  const precip = powerClimatology(payload);
+  return tMean && tMin && tMax && precip ? { tMean, tMin, tMax, precip } : null;
 }

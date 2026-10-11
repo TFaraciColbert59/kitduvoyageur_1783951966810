@@ -6,7 +6,8 @@ import { originOf, partySizeOf, shortHoursOf, tripLengthDays } from '../engine/t
 import type { FxRate } from '../engine/currency';
 import type { CompasPendingInvite } from '../engine/team';
 import { assessDanger, mergeDangerIntoVerdict, type DangerAssessment } from '../engine/danger';
-import { adviseKit, type KitAdvice } from '../engine/kitRules';
+import { adviseKit, type KitAdvice, type KitContext } from '../engine/kitRules';
+import { buildKitContext, datesWithoutForecast, kitAltitude } from '../engine/kitContext';
 import { parseRoutePois, poiLabel, type RoutePoi } from '../engine/routePois';
 import { getEurRate } from './rates';
 
@@ -35,9 +36,9 @@ import { readProfile, tripBasis } from './compasServer';
 import { retryParts, staleParts, unionParts, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { relevantAffiliateLinks } from '../engine/affiliates';
 import { getOfficialAlerts } from './officialAlerts';
-import { getRouteElevation } from './elevation';
+import { getRouteElevation, pointsMaxAltitudeM } from './elevation';
 import type { ElevationProfile } from '../engine/elevation';
-import { destinationZone, getCompasWeather, type CompasWeather } from './weather';
+import { destinationZone, getClimateNormals, getCompasWeather, type CompasWeather } from './weather';
 
 /**
  * Compas — chargeur serveur unique.
@@ -117,6 +118,11 @@ export interface CompasData {
   danger: DangerAssessment;
   /** Conseils de kit selon la météo et le parcours, chacun avec sa donnée source. */
   kitAdvice: KitAdvice[];
+  /**
+   * Ce que les conseils de kit savent du lieu en plus de la prévision (normales
+   * climatiques des jours sans prévision, latitude, altitude). Absent : écran plus ancien.
+   */
+  kitContext?: KitContext;
   /** Points OpenStreetMap à moins de 1 km du tracé choisi (vide sans parcours du catalogue). */
   routePois: RoutePoi[];
   /** Météo MET Norway des jours du voyage et calendrier 6 semaines (null si indisponible). */
@@ -514,7 +520,10 @@ export async function getCompasData(): Promise<CompasData | null> {
   const routeId = compasMeta.routeId ?? num(hub.hiking?.routeId);
   // Tout ce qui ne dépend que du brouillon part en même temps : chaque action
   // du Compas recharge cette page, une chaîne d'attentes la rendait lente.
-  const [weather, routePois, officialAlerts, elevation, fx] = await Promise.all([
+  // Normales NASA POWER du lieu (gardées 30 jours) : froid, pluie, chaleur au-delà de la prévision.
+  const kitPoint = origin ?? anchorPoint(trip.metadata);
+  const hasDates = plans.some((d) => d.date != null) || Boolean(trip.start_date);
+  const [weather, routePois, officialAlerts, elevation, fx, climateNormals, placesAltitudeM] = await Promise.all([
     getCompasWeather({
       origin,
       tripDays: plans
@@ -536,6 +545,9 @@ export async function getCompasData(): Promise<CompasData | null> {
     // Le tracé ne dépend pas de la météo : le brouillon suffit.
     getRouteElevation(draft.route.coords),
     getEurRate(input.trip.budgetCurrency ?? 'EUR'),
+    kitPoint && hasDates ? getClimateNormals(kitPoint.lat, kitPoint.lon) : Promise.resolve(null),
+    // Altitude de secours du kit : sans tracé, le relief des lieux du voyage (jamais une valeur par pays).
+    pointsMaxAltitudeM(points.filter((p) => p.kind === 'step')),
   ]);
   input.weather = toWeatherInput(weather);
 
@@ -559,6 +571,24 @@ export async function getCompasData(): Promise<CompasData | null> {
     routeId != null && routePois.length ? waterOnRoute : input.waterPointsCount;
 
   const baseModel = input.weather.length ? buildCompasModel(input) : draft;
+  const tripForecasts = (weather?.tripDays ?? []).map((d) => ({
+    day: d.day,
+    date: d.date,
+    forecast: d.forecast,
+  }));
+  const kitContext = buildKitContext({
+    lat: kitPoint?.lat ?? null,
+    // Profil du tracé d'abord ; sans tracé, le relief des lieux, retenu comme un plancher.
+    ...kitAltitude({ route: elevation, placesMaxM: placesAltitudeM }),
+    activity: trip.primary_activity ?? null,
+    normals: climateNormals,
+    dates: datesWithoutForecast({
+      dayPlans: baseModel.route.dayPlans,
+      forecasts: tripForecasts,
+      startDate: trip.start_date ?? null,
+      endDate: trip.end_date ?? null,
+    }),
+  });
   const danger = assessDanger({
     dayPlans: baseModel.route.dayPlans,
     forecasts: (weather?.tripDays ?? []).map((d) => ({
@@ -576,14 +606,12 @@ export async function getCompasData(): Promise<CompasData | null> {
     danger,
     kitAdvice: adviseKit({
       lines: baseModel.kit.lines,
-      forecasts: (weather?.tripDays ?? []).map((d) => ({
-        day: d.day,
-        date: d.date,
-        forecast: d.forecast,
-      })),
+      forecasts: tripForecasts,
       dayPlans: baseModel.route.dayPlans,
       waterPointsCount,
+      context: kitContext,
     }),
+    kitContext,
     routePois,
     itinerary,
     bookings,

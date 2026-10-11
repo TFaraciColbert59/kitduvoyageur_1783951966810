@@ -840,8 +840,8 @@ export function KitCard({ ctl }: { ctl: CompasCtl }) {
           {(() => {
             const open = ctl.data.kitAdvice.filter((a) => !a.covered).length;
             return open
-              ? `${open} conseil${open > 1 ? 's' : ''} météo à regarder`
-              : 'Conseils météo : tout est couvert';
+              ? `${open} conseil${open > 1 ? 's' : ''} de kit à regarder`
+              : 'Conseils de kit : tout est couvert';
           })()}
         </button>
       )}
