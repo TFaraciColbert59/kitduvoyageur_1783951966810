@@ -48,6 +48,10 @@ Lot T : table passeport × destination (travelrequirements.info v1.3.0, CC BY 4.
 
 Lot V : mobile 5.4 / états 5.1 : barre d'état du Compas lisible (thème par route, texte sombre), texte de position iOS honnête et permissions Android minimales verrouillées par test, zones sûres prouvées (chromium 393 × 852 + capture, pas d'iPhone réel), squelette et erreur propres au Compas. Reste : appareil réel (barre, dialogue de permission, VoiceOver, TalkBack) ; `Info.plist` sans `NSCameraUsageDescription` ni `NSPhotoLibraryUsageDescription` : latent (`src/lib/native/camera.ts` n'a aucun appelant aujourd'hui), mais iOS plantera à la première ouverture de la caméra le jour où un écran l'utilise ; à ajouter avec ce premier appelant.
 
+Lot S : kit 4.8 terminé : règles sur les normales NASA POWER (froid, pluie, mousson, chaleur), tropiques (moustiques, eau filtre/pastilles, soleil), altitudes de secours lues sur le relief comme un plancher, sans table de pays ; un conseil de sécurité n'est jamais muet, formulation prudente si l'altitude n'est pas établie.
+
+Lot U : alertes officielles Meteoalarm pour 33 pays d'Europe (service national, heure d'émission, période, texte officiel, lien et avertissement avec chaque alerte), conditions relues le 11 oct. ; attributions Terrain Tiles, GeoNames, Meteoalarm, BCE et « Powered by Geoapify » à l'écran. 4.9 reste partielle : 6 pays à flux vide, zones reconnues par le nom exact, hors Europe non branché. **À faire par Tony** : s'enregistrer comme redistributeur Meteoalarm (meteoalarm@geosphere.at) et demander si le trafic pose problème.
+
 **À faire par Tony** (rien d'autre ne bloque) :
 1. SQL Editor : `supabase/migrations/20261008190000_base_scheduled_purges.sql` (purges
    planifiées), puis `20261009100000_app_errors_purge.sql`, puis

@@ -15,6 +15,8 @@ import {
   initials,
 } from '../engine/format';
 import { Thumb, useLongPress, type Tone } from './CompasPrimitives';
+import { isMeteoalarmSource } from '../engine/meteoalarmFeeds';
+import MeteoalarmNotice from './MeteoalarmNotice';
 import { DurationRuler, tripHours } from './CompasRuler';
 import type { CompasCtl } from './compasTypes';
 import { RESA_CATS, bookingCat, offerCat } from '../engine/resaCats';
@@ -692,6 +694,11 @@ export function VerdictCard({ ctl }: { ctl: CompasCtl }) {
   const v = VERDICT[verdict.level];
   const shown = verdict.reasons.slice(0, 4);
   const more = verdict.reasons.length - shown.length;
+  // Le texte officiel d'une alerte (description, consignes) s'ouvre dans « Signaux du verdict ».
+  const withOfficial = new Set(
+    ctl.data.danger.signals.filter((x) => x.official).map((x) => `${x.source}|${x.label}`)
+  );
+  const hasOfficial = shown.some((r) => withOfficial.has(`${r.source}|${r.label}`));
   return (
     <>
       <div className="cp-between">
@@ -738,17 +745,26 @@ export function VerdictCard({ ctl }: { ctl: CompasCtl }) {
           Aucun signal bloquant ni point de vigilance sur les données disponibles.
         </p>
       )}
+      {shown.some((r) => isMeteoalarmSource(r.source)) && (
+        <MeteoalarmNotice readAt={ctl.data.alertsReadAt} />
+      )}
       <button
         type="button"
         className="cp-btn cp-btn--soft"
         onClick={() =>
-          ctl.open({ kind: 'step', step: 'verdict', flow: more > 0 ? 'raisons' : 'sources' })
+          ctl.open({
+            kind: 'step',
+            step: 'verdict',
+            flow: more > 0 || hasOfficial ? 'raisons' : 'sources',
+          })
         }
       >
         <Icon name="info" size={16} />
         {more > 0
           ? `${more} autre${more > 1 ? 's' : ''} signal${more > 1 ? 'aux' : ''}`
-          : 'Sources et détails'}
+          : hasOfficial
+            ? 'Texte officiel et détails'
+            : 'Sources et détails'}
       </button>
     </>
   );

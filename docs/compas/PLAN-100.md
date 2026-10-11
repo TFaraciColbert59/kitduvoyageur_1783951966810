@@ -278,7 +278,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       calée sur des mois entiers (`trendWindow`), la même URL sert tout le mois au lieu
       d'une de plus chaque jour ; citation du projet POWER dans les mentions. Test
       `trendWindow.test.ts`.
-- [ ] Meteoalarm : conditions à vérifier ; attribution.
+- [x] Meteoalarm : conditions à vérifier ; attribution. **Lot U** : conditions (§ 5, Style
+      Guide v1.0, profil CAP v2.0) relues mot pour mot le 11 oct. 2026 et citées avec lien et
+      date ; attribution affichée avec chaque alerte et dans les mentions légales
+      (`meteoalarmFeeds.test.ts`). ⚠️ À faire par Tony : s'enregistrer comme redistributeur
+      Meteoalarm et demander si le trafic pose problème (aucune fréquence d'appel chiffrée ;
+      cache de 5 min par instance).
 - [x] Taux de change : **Frankfurter v2** (`/v2/rates`, 104 banques centrales, 223
       devises ; vérifié le 8 oct. : VND, ARS, KES, XPF servis), secours **currency-api**
       (CC0) ; cache 12 h ; la source est dite à côté du montant ; mentions : « Source:
@@ -744,16 +749,30 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 4.8 Kit
 
-- [ ] Règles fondées sur les normales climatiques (NASA POWER) : froid sans altitude,
-      pluie, mousson, chaleur.
-- [ ] Tropiques : moustiques, eau (filtre/pastilles), soleil ; filtre à eau selon la
-      source, pas seulement l'altitude.
-- [ ] Altitudes de secours sans liste de pays en dur.
+- [x] Règles fondées sur les normales climatiques (NASA POWER) : froid sans altitude,
+      pluie, mousson, chaleur. **Lot S** : `kitClimateRules.test.ts`, `kitClimate.test.ts`,
+      `climateNormals.test.ts`, `kitContext.test.ts`, `kitWiring.test.ts`.
+- [x] Tropiques : moustiques, eau (filtre/pastilles), soleil ; filtre à eau selon la
+      source, pas seulement l'altitude. **Lot S** : `kitTropics.test.ts`. Le conseil
+      moustiques est décidé par le point le plus bas du tracé, pas par des lieux hauts seuls.
+- [x] Altitudes de secours sans liste de pays en dur. **Lot S** : lues sur le relief
+      (Terrain Tiles) sous les lieux du voyage, comme un plancher (`altitudeFrom: 'lieux'`) :
+      haut, il déclenche les règles fermes (« jusqu'à X m, le parcours peut monter plus
+      haut »), bas, il ne lève pas la formulation prudente (`kitAltitude.test.ts`,
+      `kitWiring.test.ts`). Limite : le module Voyages historique (`src/features/trips`) ne
+      pose pas ce plancher ; `PILOT_ELEVATIONS` (tracés nommés, pas des pays) reste en place.
 
 ### 4.9 Alertes officielles
 
-- [ ] Meteoalarm pour toute l'Europe ; ailleurs, « non couvert » dit clairement (déjà) ;
-      sources gratuites hors Europe recherchées.
+- [~] Meteoalarm pour toute l'Europe ; ailleurs, « non couvert » dit clairement (déjà) ;
+      sources gratuites hors Europe recherchées. **Lot U** : 33 services nationaux lus
+      (flux JSON par pays), chaque alerte nomme son service, son heure d'émission, sa période
+      et reprend son texte officiel avec lien et avertissement (`meteoalarmFeeds.test.ts`,
+      `danger.test.ts`, `compasScreen.test.tsx`). **Reste** : Royaume-Uni, Luxembourg, Malte,
+      Moldavie, Macédoine du Nord et Slovaquie ont un flux vide (dits « non couverts », jamais un
+      faux « aucune alerte ») ; hors contours (9 pays) et France, la zone n'est reconnue que par
+      le nom exact d'une unité administrative, sinon « zone non rapprochée » ; sources hors
+      Europe (NWS, ECCC, JMA) recherchées, non branchées.
 
 ### 4.10 Compréhension de la demande
 
@@ -776,7 +795,7 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       sortie seul·e (112 seulement là où il répond), refuges à réserver, règles du bivouac
       à vérifier (sans horaire inventé), rivière ; trois au plus, le plus grave d'abord.
       L'IA ne donne plus que des « Suggestion de l'IA (facultatif) », jamais une redite
-      d'une règle. Reste : eau (filtre selon la source, tropiques), avec 4.8.
+      d'une règle. Eau (filtre selon la source, tropiques) : lot S, `kitTropics.test.ts`.
 
 ---
 
@@ -852,10 +871,13 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 5.3 Légal visible
 
-- [~] Attributions complètes et cliquables : section « Sources des données et
+- [x] Attributions complètes et cliquables : section « Sources des données et
       licences » des mentions légales (OpenStreetMap, Esri, Photon, LocationIQ, Geoapify,
-      Overpass, MET Norway, NASA POWER), lot B. Reste : Terrain Tiles, GeoNames,
-      Meteoalarm, BCE ; « Powered by Geoapify » là où ses résultats s'affichent.
+      Overpass, MET Norway, NASA POWER), lot B. **Lot U** : Terrain Tiles, GeoNames,
+      Meteoalarm, BCE ajoutés avec la licence relue à la source (11 oct.) et un lien
+      cliquable ; « Powered by Geoapify » seulement là où ses résultats s'affichent
+      (retiré des points « Sur place », gardé près des distances) ; chaque service crédité
+      est réellement employé (`dataSources.test.tsx`, `compasScreen.test.tsx`).
 - [~] Mention IA au démarrage, sur les conseils et sur toute étape proposée par l'IA
       (AI Act art. 50).
 - [ ] Mention d'affiliation dans la recherche d'hébergement en direct ; placée avant la

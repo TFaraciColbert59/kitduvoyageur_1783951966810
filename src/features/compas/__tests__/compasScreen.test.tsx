@@ -7,7 +7,8 @@ import userEvent from '@testing-library/user-event';
 import axe from 'axe-core';
 import { STEP_FLOWS } from '../components/compasTypes';
 import { buildCompasModel, type CompasInput, type CompasItemInput } from '../engine/compasModel';
-import { assessDanger } from '../engine/danger';
+import { assessDanger, mergeDangerIntoVerdict, type OfficialAlert } from '../engine/danger';
+import { METEOALARM_DISCLAIMER, METEOALARM_HOME } from '../engine/meteoalarmFeeds';
 import { daylightClock } from '../engine/sun';
 import type { CompasData } from '../server/getCompasData';
 
@@ -1240,6 +1241,31 @@ describe('CompasScreen', () => {
     fireEvent.click(within(sheet).getByRole('button', { name: /Refuge ou abri \(1\)/ }));
     expect(within(sheet).queryByText('Point d’eau')).toBeNull();
     expect(within(sheet).getByText(/contributeurs OpenStreetMap/)).toBeTruthy();
+    // Ces points viennent d'Overpass (et du catalogue, OpenStreetMap), jamais de Geoapify :
+    // « Powered by Geoapify » n'a rien à faire à côté (plan 5.3 : seulement là où ses résultats s'affichent).
+    expect(within(sheet).queryByRole('link', { name: 'Powered by Geoapify' })).toBeNull();
+    expect(within(sheet).queryByText(/Photon/)).toBeNull();
+  });
+
+  /* ---------- « Powered by Geoapify » à côté des distances qu'il mesure (plan 5.3) ---------- */
+
+  it('Parcours · étapes : une distance mesurée par Geoapify → son crédit, lien suivi', async () => {
+    const data = makeData();
+    data.itinerary = data.itinerary.map((st, i) => ({ ...st, distanceSource: i === 0 ? 'geoapify' : 'valhalla' }));
+    render(<CompasScreen data={data} />);
+    const sheet = await openOu(/Parcours/);
+    const credit = await within(sheet).findByRole('link', { name: 'Powered by Geoapify' });
+    expect(credit.getAttribute('href')).toBe('https://www.geoapify.com/');
+    expect(credit.getAttribute('rel') ?? '').not.toContain('nofollow');
+  });
+
+  it('Parcours · étapes : distances de Valhalla ou estimées → pas de crédit Geoapify', async () => {
+    const data = makeData();
+    data.itinerary = data.itinerary.map((st, i) => ({ ...st, distanceSource: i === 0 ? 'valhalla' : 'estimation' }));
+    render(<CompasScreen data={data} />);
+    const sheet = await openOu(/Parcours/);
+    expect(await within(sheet).findByText('Gavarnie')).toBeTruthy();
+    expect(within(sheet).queryByRole('link', { name: 'Powered by Geoapify' })).toBeNull();
   });
 
   it('tiroir : trois hauteurs (petit, moyen, grand) et fermeture en tirant la poignée', async () => {
@@ -1502,6 +1528,185 @@ describe('CompasScreen', () => {
     const sheet = await openSources();
     expect(await within(sheet).findByText('Étapes et dépenses du voyage')).toBeTruthy();
     expect(within(sheet).queryByText(/NASA POWER/)).toBeNull();
+  });
+
+  /* ---------- Alertes officielles : ce que Meteoalarm exige à l'affichage ---------- */
+
+  const mise = (over: Partial<OfficialAlert> = {}): OfficialAlert => ({
+    id: 'it-1',
+    source: 'Servizio Meteorologico dell’Aeronautica Militare (MeteoAM) via Meteoalarm',
+    hazard: 'vent violent',
+    level: 'orange',
+    area: 'Sardegna',
+    onset: '2026-10-12T06:00:00+02:00',
+    expires: '2026-10-12T21:00:00+02:00',
+    sent: '2026-10-10T16:00:00.000Z',
+    updatedSince: null,
+    fetchedAt: '2026-10-11T05:00:00.000Z',
+    headline: 'Allerta Arancione Vento per Italia - Sardegna',
+    web: 'https://www.meteoam.it/',
+    ...over,
+  });
+  const withAlert = (alert: OfficialAlert) => {
+    const data = makeData();
+    data.alertsStatus = 'partielles';
+    data.danger = assessDanger({ dayPlans: [], forecasts: [], alerts: [alert], alertsStatus: 'partielles' });
+    data.model = { ...data.model, verdict: mergeDangerIntoVerdict(data.model.verdict, data.danger) };
+    return data;
+  };
+
+  it('Sources : alertes officielles lues → Meteoalarm cité, avec son lien et l’avertissement mot pour mot', async () => {
+    const data = makeData();
+    data.alertsStatus = 'lues';
+    render(<CompasScreen data={data} />);
+    const sheet = await openSources();
+    expect(await within(sheet).findByText('Meteoalarm (alertes officielles des services nationaux)')).toBeTruthy();
+    const notice = within(sheet).getByTestId('meteoalarm-notice');
+    expect(notice.textContent).toContain(METEOALARM_DISCLAIMER);
+    const links = within(notice).getAllByRole('link');
+    expect(links.length).toBeGreaterThanOrEqual(2);
+    for (const a of links) expect(a.getAttribute('href')).toBe(METEOALARM_HOME);
+  });
+
+  it('Sources : pays non couvert ou alertes indisponibles → Meteoalarm n’est pas cité', async () => {
+    for (const status of ['non_couvert', 'indisponibles', 'zone_non_rapprochee'] as const) {
+      cleanup();
+      const data = makeData();
+      data.alertsStatus = status;
+      render(<CompasScreen data={data} />);
+      const sheet = await openSources();
+      expect(await within(sheet).findByText('Étapes et dépenses du voyage')).toBeTruthy();
+      expect(within(sheet).queryByText(/Meteoalarm/)).toBeNull();
+      expect(within(sheet).queryByTestId('meteoalarm-notice')).toBeNull();
+    }
+  });
+
+  it('Signaux du verdict : alerte orange → service national, heure d’émission, texte officiel, lien et avertissement', async () => {
+    render(<CompasScreen data={withAlert(mise())} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    const row = await within(sheet).findByText(/Vigilance orange · vent violent \(Sardegna\)/);
+    expect(row.textContent).toContain('émise le 10 oct. 2026, 16 h 00 UTC');
+    expect(row.textContent).toContain('texte officiel : « Allerta Arancione Vento per Italia - Sardegna »');
+    expect(
+      within(sheet).getByText(/Source : Servizio Meteorologico dell’Aeronautica Militare \(MeteoAM\) via Meteoalarm/)
+    ).toBeTruthy();
+    expect(within(sheet).getByTestId('meteoalarm-notice').textContent).toContain(METEOALARM_DISCLAIMER);
+  });
+
+  it('Verdict : la carte donne la même information, la même exigence', async () => {
+    render(<CompasScreen data={withAlert(mise())} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    const notice = await screen.findByTestId('meteoalarm-notice');
+    expect(notice.textContent).toContain(METEOALARM_DISCLAIMER);
+    expect(screen.getByText(/émise le 10 oct. 2026, 16 h 00 UTC/)).toBeTruthy();
+  });
+
+  it('CONTRE-EXEMPLE — sans alerte officielle affichée, ni lien ni avertissement Meteoalarm', async () => {
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    expect(within(sheet).queryByTestId('meteoalarm-notice')).toBeNull();
+    expect(screen.queryByTestId('meteoalarm-notice')).toBeNull();
+  });
+
+  it('Veille : une alerte jaune y figure avec son heure d’émission, et l’avertissement suit', async () => {
+    render(<CompasScreen data={withAlert(mise({ level: 'jaune' }))} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Veille/ }));
+    expect(await within(sheet).findByText('Vigilance officielle (services nationaux, via Meteoalarm)')).toBeTruthy();
+    expect(within(sheet).getByText(/Vigilance jaune · vent violent \(Sardegna\), émise le 10 oct. 2026, 16 h 00 UTC/)).toBeTruthy();
+    expect(within(sheet).getByTestId('meteoalarm-notice').textContent).toContain(METEOALARM_DISCLAIMER);
+  });
+
+  const TEXTES = [
+    {
+      lang: 'en-GB',
+      headline: 'Orange Wind Warning for Italy - Sardegna',
+      description: 'Strong winds|Gusts up to 90 km/h',
+      instruction: 'Avoid exposed ridges <script>alert(1)</script>',
+    },
+    { lang: 'it-IT', headline: 'Allerta Arancione Vento', description: 'Venti forti', instruction: 'Evitare le creste' },
+  ];
+
+  it('Signaux du verdict : la période de validité (UTC) est donnée en entier, la ligne ne se tronque pas', async () => {
+    render(<CompasScreen data={withAlert(mise())} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    const row = await within(sheet).findByText(/Vigilance orange · vent violent \(Sardegna\)/);
+    expect(row.textContent).toContain('valable du 12 oct. 2026, 4 h 00 UTC au 12 oct. 2026, 19 h 00 UTC');
+    // Meteoalarm veut le service et l'heure d'émission toujours visibles : pas de « … » sur une ligne fixe.
+    const line = row.closest('.cp-row');
+    expect(line?.className).toContain('cp-row--wrap');
+    expect(line?.className).toContain('cp-row--tall');
+  });
+
+  it('Signaux du verdict : le texte officiel (titre, description, consignes) de chaque langue, en texte, sans HTML interprété', async () => {
+    const data = withAlert(mise({ texts: TEXTES }));
+    render(<CompasScreen data={data} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    const official = await within(sheet).findByTestId('official-alert-texts');
+    expect(official.textContent).toContain('Texte officiel : Vigilance orange · vent violent (Sardegna)');
+    for (const phrase of ['Strong winds', 'Gusts up to 90 km/h', 'Avoid exposed ridges', 'Venti forti', 'Evitare le creste'])
+      expect(official.textContent).toContain(phrase);
+    // Le texte d'un tiers reste du texte.
+    expect(official.textContent).toContain('<script>alert(1)</script>');
+    expect(sheet.querySelector('script')).toBeNull();
+    expect(official.querySelectorAll('li')).toHaveLength(2);
+    expect(Array.from(official.querySelectorAll('[lang]')).map((n) => n.getAttribute('lang'))).toEqual(['en-GB', 'it-IT']);
+  });
+
+  it('Verdict : le texte officiel est à un geste de la carte (le bouton y mène, même sans autre signal)', async () => {
+    render(<CompasScreen data={withAlert(mise({ texts: TEXTES }))} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Texte officiel et détails/ }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    expect(await within(sheet).findByTestId('official-alert-texts')).toBeTruthy();
+  });
+
+  it('CONTRE-EXEMPLE — alerte sans texte détaillé : pas de rubrique « Texte officiel », le bouton garde son libellé', async () => {
+    render(<CompasScreen data={withAlert(mise())} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    expect(await screen.findByRole('button', { name: /Sources et détails/ })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Texte officiel et détails/ })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    expect(within(sheet).queryByTestId('official-alert-texts')).toBeNull();
+  });
+
+  it('l’heure de lecture du flux est donnée avec l’avertissement (une page restée ouverte ne se rafraîchit pas)', async () => {
+    const data = withAlert(mise());
+    data.alertsReadAt = '2026-10-11T05:03:00.000Z';
+    render(<CompasScreen data={data} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    const notice = await screen.findByTestId('meteoalarm-notice');
+    expect(notice.textContent).toContain('Flux lu le 11 oct. 2026, 5 h 03 UTC.');
+    expect(notice.textContent).toContain(METEOALARM_DISCLAIMER);
+  });
+
+  it('sans heure de lecture connue, l’avertissement reste complet et rien n’est inventé', async () => {
+    render(<CompasScreen data={withAlert(mise())} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    const notice = await screen.findByTestId('meteoalarm-notice');
+    expect(notice.textContent).not.toContain('Flux lu');
+    expect(notice.textContent).toContain(METEOALARM_DISCLAIMER);
+  });
+
+  it('Veille : le texte officiel d’une alerte jaune suit sa ligne', async () => {
+    render(<CompasScreen data={withAlert(mise({ level: 'jaune', texts: TEXTES }))} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Veille/ }));
+    const official = await within(sheet).findByTestId('official-alert-texts');
+    expect(official.textContent).toContain('Venti forti');
   });
 
   it('Parcours : chercher un lieu, voir la communauté, choisir découpé sur les dates', async () => {

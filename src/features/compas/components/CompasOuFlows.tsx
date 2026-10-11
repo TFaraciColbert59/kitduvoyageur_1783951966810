@@ -41,6 +41,7 @@ import {
 } from '../server/compasActions';
 import { applyCurrent, inverseOps, runOps } from './compasApply';
 import { Chip, PagedList, Segments } from './CompasPrimitives';
+import GeoapifyCredit from './GeoapifyCredit';
 import { compasNearbyActivitiesAction } from '../server/resaActions';
 import type { CompasStayOffer } from '../engine/stays';
 import { mixParcours } from '../engine/parcoursMix';
@@ -336,33 +337,40 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
       </div>
 
       {mode === 'etapes' ? (
-        <PagedList
-          label="Étapes du parcours"
-          resetKey="etapes"
-          items={data.itinerary}
-          empty={
-            <p className="cp-note">
-              Aucune étape : choisis un parcours autour de toi, dans tes randos, ou cherche un lieu.
-            </p>
-          }
-          render={(s) => (
-            <div key={s.id} className="cp-row" style={staticRow}>
-              <span className="cp-thumb" aria-hidden="true">
-                <b>{s.day}</b>
-              </span>
-              <span className="cp-row__t">
-                <b>{s.title}</b>
-                <span>
-                  Jour {s.day} · {s.distanceEstimated && s.distanceKm != null ? `≈ ${formatKm(s.distanceKm)} (estimée)` : formatKm(s.distanceKm)} · D+{' '}
-                  {formatMeters(s.elevationGainM)}
+        <>
+          <PagedList
+            label="Étapes du parcours"
+            resetKey="etapes"
+            items={data.itinerary}
+            empty={
+              <p className="cp-note">
+                Aucune étape : choisis un parcours autour de toi, dans tes randos, ou cherche un lieu.
+              </p>
+            }
+            render={(s) => (
+              <div key={s.id} className="cp-row" style={staticRow}>
+                <span className="cp-thumb" aria-hidden="true">
+                  <b>{s.day}</b>
                 </span>
-              </span>
-              <span className="cp-row__end">
-                {s.accommodation && <Chip icon="bed-double">{s.accommodation}</Chip>}
-              </span>
-            </div>
+                <span className="cp-row__t">
+                  <b>{s.title}</b>
+                  <span>
+                    Jour {s.day} · {s.distanceEstimated && s.distanceKm != null ? `≈ ${formatKm(s.distanceKm)} (estimée)` : formatKm(s.distanceKm)} · D+{' '}
+                    {formatMeters(s.elevationGainM)}
+                  </span>
+                </span>
+                <span className="cp-row__end">
+                  {s.accommodation && <Chip icon="bed-double">{s.accommodation}</Chip>}
+                </span>
+              </div>
+            )}
+          />
+          {data.itinerary.some((s) => s.distanceSource === 'geoapify') && (
+            <p className="cp-disc">
+              Distances par la route : <GeoapifyCredit /> · © contributeurs OpenStreetMap (licence ODbL)
+            </p>
           )}
-        />
+        </>
       ) : results.status === 'loading' ? (
         <p className="cp-note" aria-live="polite">
           Recherche dans le catalogue LKDV…

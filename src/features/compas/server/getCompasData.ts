@@ -6,6 +6,7 @@ import { originOf, partySizeOf, shortHoursOf, tripLengthDays } from '../engine/t
 import type { FxRate } from '../engine/currency';
 import type { CompasPendingInvite } from '../engine/team';
 import { assessDanger, mergeDangerIntoVerdict, type DangerAssessment } from '../engine/danger';
+import type { AlertsStatus } from '../engine/officialAlerts';
 import { adviseKit, type KitAdvice, type KitContext } from '../engine/kitRules';
 import { buildKitContext, datesWithoutForecast, kitAltitude } from '../engine/kitContext';
 import { parseRoutePois, poiLabel, type RoutePoi } from '../engine/routePois';
@@ -83,6 +84,11 @@ export interface CompasItineraryStep {
   distanceKm: number | null;
   /** Distance estimée (aucun routeur n'a pu la mesurer, plan 1.5) : l'écran le dit. */
   distanceEstimated?: boolean;
+  /**
+   * Qui a mesuré la distance (`geoapify`, `valhalla`, `estimation`…), quand le voyage
+   * le dit : « Powered by Geoapify » ne s'affiche que près de ce qu'il a mesuré.
+   */
+  distanceSource?: string | null;
   elevationGainM: number | null;
   accommodation: string | null;
 }
@@ -116,6 +122,13 @@ export interface CompasData {
   fx: FxRate | null;
   /** Danger en trois axes, chaque signal sourcé et daté. */
   danger: DangerAssessment;
+  /**
+   * Ce que le Compas a pu lire des alertes officielles (Meteoalarm) pour ce voyage ;
+   * absent : écran plus ancien, non lues. Sert à citer la source (Sources).
+   */
+  alertsStatus?: AlertsStatus;
+  /** Instant où le flux d'alertes a été lu (ISO), affiché avec l'avertissement de Meteoalarm ; null sans lecture. */
+  alertsReadAt?: string | null;
   /** Conseils de kit selon la météo et le parcours, chacun avec sa donnée source. */
   kitAdvice: KitAdvice[];
   /**
@@ -541,6 +554,7 @@ export async function getCompasData(): Promise<CompasData | null> {
       point: origin,
       from: trip.start_date ?? null,
       to: trip.end_date ?? trip.start_date ?? null,
+      timeZone: zone,
     }),
     // Le tracé ne dépend pas de la météo : le brouillon suffit.
     getRouteElevation(draft.route.coords),
@@ -554,6 +568,7 @@ export async function getCompasData(): Promise<CompasData | null> {
   const estimatedIds = new Set(
     (trip.steps ?? []).filter((s) => distanceSource(s.metadata) === 'estimation').map((s) => s.id)
   );
+  const sourceOfStep = new Map((trip.steps ?? []).map((s) => [s.id, distanceSource(s.metadata)]));
   const itinerary: CompasItineraryStep[] = [...input.steps]
     .sort((a, b) => a.dayNumber - b.dayNumber || a.orderIndex - b.orderIndex)
     .map((s) => ({
@@ -562,6 +577,7 @@ export async function getCompasData(): Promise<CompasData | null> {
       title: s.title,
       distanceKm: s.distanceKm,
       distanceEstimated: estimatedIds.has(s.id),
+      distanceSource: sourceOfStep.get(s.id) ?? null,
       elevationGainM: s.elevationGainM,
       accommodation: s.accommodationName,
     }));
@@ -596,7 +612,7 @@ export async function getCompasData(): Promise<CompasData | null> {
       date: d.date,
       forecast: d.forecast,
     })),
-    // France : Météo-France via Meteoalarm ; ailleurs, l'axe le dit.
+    // Europe : services nationaux via Meteoalarm ; ailleurs ou zone non reconnue, l'axe le dit.
     alerts: officialAlerts.alerts,
     alertsStatus: officialAlerts.status,
   });
@@ -604,6 +620,8 @@ export async function getCompasData(): Promise<CompasData | null> {
   return {
     model: { ...baseModel, verdict: mergeDangerIntoVerdict(baseModel.verdict, danger) },
     danger,
+    alertsStatus: officialAlerts.status,
+    alertsReadAt: officialAlerts.readAt ?? null,
     kitAdvice: adviseKit({
       lines: baseModel.kit.lines,
       forecasts: tripForecasts,

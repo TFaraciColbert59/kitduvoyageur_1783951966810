@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import META from '../data/entryRequirements.meta.json';
-import { DATA_SOURCES, DataSources } from '@/app/mentions-legales/dataSources';
+import { DATA_SOURCES, DataSources } from '@/app/mentions-legales/DataSources';
 
 /**
  * Sources des données et licences (mentions légales, PLAN-100 5.3) : le crédit exact de

@@ -2364,6 +2364,50 @@
   padding-block: 8px;
   align-items: flex-start;
 }
+/* Ligne dont le texte passe à la ligne au lieu de finir en « … » (signaux du verdict) */
+.cp-row--wrap .cp-row__t > b,
+.cp-row--wrap .cp-row__t > span {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+}
+
+/* Texte officiel d'une alerte (Meteoalarm) : description et consignes du service national, telles que publiées */
+.cp-official {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--cp-ink2);
+  user-select: text;
+  -webkit-user-select: text;
+}
+.cp-official > summary {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--cp-ink3);
+}
+.cp-official__lang {
+  margin-top: 6px;
+  padding-left: 10px;
+  border-left: 2px solid var(--cp-sep);
+}
+.cp-official p,
+.cp-official ul {
+  margin: 2px 0 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.cp-official ul {
+  padding-left: 18px;
+}
+.cp-official__title {
+  font-weight: 600;
+  color: var(--cp-ink);
+}
 
 /* =============================================================================
    Maquette finale (LKDV_Compas.html, 2026-10-01) — écarts relevés écran par

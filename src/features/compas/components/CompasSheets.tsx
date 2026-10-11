@@ -72,6 +72,9 @@ import {
 } from './CompasPrimitives';
 import { DisLe } from './CompasDisLe';
 import { proposeShift, watchRules } from '../engine/watch';
+import { isMeteoalarmSource } from '../engine/meteoalarmFeeds';
+import MeteoalarmNotice from './MeteoalarmNotice';
+import OfficialAlertTexts from './OfficialAlertTexts';
 import { planWater } from '../engine/water';
 import { addExpenseAction } from '@/app/voyages/budget-actions';
 import { RESA_CATS, bookingCat, offerCat, type ResaCat } from '../engine/resaCats';
@@ -2699,6 +2702,9 @@ function LiveSearch({ ctl, vertical }: { ctl: CompasCtl; vertical: CompasLiveVer
 function RaisonsFlow({ ctl }: { ctl: CompasCtl }) {
   const { danger } = ctl.data;
   const dated = new Map(danger.signals.map((x) => [`${x.source}|${x.label}`, x.asOf]));
+  // Alertes officielles affichées dans les signaux, avec le texte du service national.
+  const shownKeys = new Set(ctl.data.model.verdict.reasons.map((r) => `${r.source}|${r.label}`));
+  const officials = danger.signals.filter((x) => x.official && shownKeys.has(`${x.source}|${x.label}`));
   const axes = ['physique', 'technique', 'conjoncturel'] as const;
   const unknown = axes.filter((a) => danger.axes[a].level === 'non_evalue');
   const partial = axes.filter(
@@ -2721,7 +2727,9 @@ function RaisonsFlow({ ctl }: { ctl: CompasCtl }) {
         items={ctl.data.model.verdict.reasons}
         empty={<p className="cp-note">Aucun signal bloquant ni point de vigilance.</p>}
         render={(r) => (
-          <div key={`${r.source}-${r.label}`} className="cp-row" style={staticRow}>
+          // Ligne qui s'agrandit : le service national et l'heure d'émission d'une alerte
+          // doivent se lire en entier (Meteoalarm), pas finir en points de suspension.
+          <div key={`${r.source}-${r.label}`} className="cp-row cp-row--tall cp-row--wrap" style={staticRow}>
             <span className="cp-thumb">
               <Icon
                 name={
@@ -2753,6 +2761,12 @@ function RaisonsFlow({ ctl }: { ctl: CompasCtl }) {
           </div>
         )}
       />
+      {officials.map((x) => (
+        <OfficialAlertTexts key={x.id} title={x.official?.title} texts={x.official?.texts ?? []} />
+      ))}
+      {ctl.data.model.verdict.reasons.some((r) => isMeteoalarmSource(r.source)) && (
+        <MeteoalarmNotice readAt={ctl.data.alertsReadAt} />
+      )}
       <VerdictExplain ctl={ctl} />
     </>
   );
@@ -2948,6 +2962,12 @@ function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
                 ? r.hits.map((h) => h.label).join(' · ')
                 : 'Rien à signaler sur ce voyage.'}
             </span>
+            {r.hits.map(
+              (h, i) =>
+                h.official && (
+                  <OfficialAlertTexts key={i} title={h.official.title} texts={h.official.texts} />
+                )
+            )}
           </li>
         ))}
       </ul>
@@ -2956,6 +2976,9 @@ function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
         Vérifiées à chaque ouverture du Compas sur la prévision MET Norway et les alertes
         officielles ; aucun seuil n’est une norme légale.
       </p>
+      {rules.some((r) => r.id === 'alert' && r.hits.length > 0) && (
+        <MeteoalarmNotice readAt={ctl.data.alertsReadAt} />
+      )}
     </>
   );
 }
@@ -2971,10 +2994,13 @@ function SourcesFlow({ ctl }: { ctl: CompasCtl }) {
     powerTrend ? 'tendance' : null,
     powerNormals ? 'normales 2001-2020' : null,
   ].filter(Boolean);
+  // Meteoalarm n'est cité que si ses flux ont été lus (même sans alerte à montrer).
+  const alertsRead = ctl.data.alertsStatus === 'lues' || ctl.data.alertsStatus === 'partielles';
   const sources = [
     'Étapes et dépenses du voyage',
     'Ton inventaire',
     m.weather.days.length ? 'MET Norway (météo, CC BY 4.0)' : null,
+    alertsRead ? 'Meteoalarm (alertes officielles des services nationaux)' : null,
     powerUses.length ? `NASA POWER (${powerUses.join(', ')})` : null,
     m.daylight ? 'Calcul astronomique (lumière)' : null,
     ctl.data.shop.length ? 'Boutique LKDV' : null,
@@ -3007,6 +3033,7 @@ function SourcesFlow({ ctl }: { ctl: CompasCtl }) {
       <p className="cp-note">
         Aucune donnée n’est inventée : ce qui manque est affiché comme manquant, sans score.
       </p>
+      {alertsRead && <MeteoalarmNotice readAt={ctl.data.alertsReadAt} />}
       <div className="cp-actions">
         <button
           type="button"
