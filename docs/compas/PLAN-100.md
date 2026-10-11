@@ -335,10 +335,19 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       limite d'IP de Supabase Auth (30 sessions anonymes/heure), nos limites (5 essais
       par heure et par adresse, 300 par jour pour le site) et la purge à 7 jours.
       BotID de Vercel sur les actions coûteuses : à faire.
-- [ ] `compasExplainVerdictAction` appelle l'IA sans `enforceRateLimit` : bornée par le
-      seul quota IA par personne (lot O).
-- [ ] Clés par adresse (essai sans compte, routes `/api` publiques) lues sur le premier
-      `x-forwarded-for` : sûres sur Vercel (en-tête réécrit) seulement (lot O).
+- [x] `compasExplainVerdictAction` appelle l'IA sans `enforceRateLimit` : bornée par le
+      seul quota IA par personne (lot O). **Lot R** : comptée par personne (`compas-verdict`,
+      10 par 10 min, fermée) avant la lecture du voyage et l'appel IA ; refus dit
+      (`verdictLimit.test.ts`).
+- [x] Clés par adresse (essai sans compte, routes `/api` publiques) lues sur le premier
+      `x-forwarded-for` : sûres sur Vercel (en-tête réécrit) seulement (lot O). **Lot R** :
+      une seule lecture (`src/lib/rate-limit/clientIp.ts`) : `x-vercel-forwarded-for` sur
+      Vercel, sinon la première adresse publique de `x-forwarded-for` en partant de la
+      droite (relais privés sautés, ports retirés), sinon `x-real-ip`, sinon `inconnue` ;
+      reprise sur l'essai, la connexion démo, `/api/discovery/search`, `/api/pays/[code]`,
+      `/api/checkout`, `/go/[slug]` ; un test de garde casse si une route relit ces en-têtes
+      (`clientIp.test.ts`, `clientIpUsage.test.ts`). Limite : sur Vercel, ne se vérifie
+      qu'en production ; les IPv6 ne sont pas regroupées par /64.
 
 ### 2.3 Connexion démo
 
@@ -414,14 +423,22 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       coupée est dite « coupée », plus « en cours ». Tests `autofillState.test.ts`
       (coupure simulée après l'itinéraire : annulation, reprise, prise, expiration).
 - [x] Commentaires « 60 s » mis à jour (300 s ; 48 s par phase gardés et expliqués).
-- [ ] Prise `steps` jamais rendue sur les sorties anticipées (« Dis-moi où tu pars »,
+- [x] Prise `steps` jamais rendue sur les sorties anticipées (« Dis-moi où tu pars »,
       « Itinéraire non enregistré », `catch`) : une relance attend jusqu'à 290 s (lot O).
-- [ ] « Annuler » garde `autofill_claim` : juste après, une relance attend jusqu'à 290 s
-      (lot O).
-- [ ] « Arrêter » pendant l'application des réglages : `stopped.current` n'est vérifié
+      **Lot R** : `compasAutofillAction` suit la prise prise par CETTE exécution et la
+      rend sur toute sortie qui ne l'a pas rendue par son écriture de fin, jamais celle
+      d'une autre préparation (`autofillCut.test.ts`).
+- [x] « Annuler » garde `autofill_claim` : juste après, une relance attend jusqu'à 290 s
+      (lot O). **Lot R** : `compasUndoAutofillAction` retire aussi les prises
+      (`autofillCut.test.ts`). Limite : « Annuler » ne distingue pas une préparation
+      vivante d'une préparation coupée depuis moins de 290 s ; l'interface ne le propose
+      qu'après une préparation finie.
+- [x] « Arrêter » pendant l'application des réglages : `stopped.current` n'est vérifié
       qu'après la compréhension de la phrase ; un appui pendant `runOps` est écrasé par
       `setPrep({stage:'itinerary'})` et le panneau reste bloqué (`CompasScreen`,
-      pré-existant, relevé au lot N).
+      pré-existant, relevé au lot N). **Lot R** : relu après chaque `runOps` et la
+      suppression de la phrase, avant `setPrep` ; la phrase reste sur le voyage,
+      « Reprendre » la rejoue (`compasScreen.test.tsx`).
 
 ### 2.7 Écritures concurrentes
 
@@ -603,10 +620,18 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 4.2 Papiers, prises, change
 
-- [ ] Table passeport × destination tirée de **travelrequirements.info v1.3.0**
+- [x] Table passeport × destination tirée de **travelrequirements.info v1.3.0**
       (CC BY 4.0, commercial autorisé, crédit exact de l'éditeur), versionnée dans le
       code. Les jeux dérivés de Passport Index sont exclus (recherche académique
-      seulement).
+      seulement). **Lot T** : `scripts/compas/build-entry-requirements.mjs` (liste fermée
+      des exigences, toute valeur inconnue fait échouer) → `data/entryRequirements.json`
+      (174 Ko, 39 601 lignes) + `.meta.json` (version, licence, dates de vérification,
+      sha256) ; `engine/entry.ts` + module serveur seul ; la ligne « Papiers » vient de la
+      table quand une ligne existe (datée), sinon les règles d'avant ; « Formalités »
+      chiffrée seulement si la table dit qu'un visa ou une autorisation est requis(e) ;
+      crédit exact dans les mentions légales (`entryRequirementsBuild.test.ts`,
+      `entry.test.ts`, `papers.test.ts`, `autofillPapers.test.ts`, `dataCredits.test.tsx`).
+      Pas de barème de frais par nationalité (la table ne porte aucun montant).
 - [ ] Budget aussi dans la devise du pays de destination (taux Frankfurter v2, 223
       devises, déjà branché) : aujourd'hui seulement si la devise du voyage est l'une des
       six de l'enum `trip_budget_currency`, et le Compas ne la change jamais.
@@ -615,10 +640,18 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       « adaptateur à prévoir » seulement pour une nationalité ou une résidence françaises
       connues ; ailleurs le type de prise du pays, un fait. **Pas fait** : prises et change
       d'une résidence hors de France (table des prises par pays, lot Q).
-- [~] `keepAiNote` ne retire plus les conseils justes pour un non-Français. Lot P : le change
+- [x] `keepAiNote` ne retire plus les conseils justes pour un non-Français. Lot P : le change
       est gardé pour une devise connue autre que l'euro, les prises quand la règle ne sait
-      pas ; les papiers restent à la règle (`papers.test.ts`).
-- [ ] Mise à jour des barèmes périmés (ESTA, exemption Vietnam) avec date de vérification.
+      pas ; les papiers restent à la règle (`papers.test.ts`). **Lot T** : les papiers sont
+      décidés par la règle pour toute nationalité connue, via la table (Allemand, Américain :
+      `papers.test.ts`, « keepAiNote — un non-Français garde ses conseils justes »).
+- [x] Mise à jour des barèmes périmés (ESTA, exemption Vietnam) avec date de vérification.
+      **Lot T** : Vietnam (sans visa 45 jours pour un Français, e-visa retiré), Rwanda (visa
+      à l'arrivée gratuit 30 jours, 50 € retiré), Laos (détail neutre), ESTA (40 $ depuis le
+      30 septembre 2025, soit ~35 €) ; la ligne « Papiers » et la base de « Formalités »
+      portent la date de vérification de la table (`costs.test.ts`, `autofillPapers.test.ts`).
+      ⚠️ Montant ESTA lu sur des sites citant CBP : cbp.gov n'était pas joignable depuis le
+      bac à sable ; à reconfirmer, conversion ~1,15 $/€.
 - [x] Note de papiers jamais perdue par la troncature : l'essentiel (papiers, sécurité)
       passe avant les notes de préparation et les suggestions de l'IA (`orderNotes`, 8
       notes), lot K.
@@ -751,7 +784,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 5.1 États
 
-- [ ] Squelette de chargement et page d'erreur propres au Compas (2.9).
+- [x] Squelette de chargement et page d'erreur propres au Compas (2.9). **Lot V** :
+      `CompasSkeleton` (même grille que l'écran vide réel, mesuré à l'identique à 393 × 852,
+      `role="status"`, opacité seule, immobile avec `prefers-reduced-motion`) ; `error.tsx`
+      dans la langue du Compas, tutoyé, `role="alert"`, focus sur le titre, « Réessayer »,
+      référence `digest` sans message interne (`compasStates.test.tsx`).
 
 ### 5.2 Accessibilité (WCAG 2.2 AA)
 
@@ -832,9 +869,22 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 5.4 Mobile (Capacitor)
 
-- [ ] Barre d'état lisible sur le paysage clair du Compas.
-- [ ] Texte de la demande de position juste (Info.plist, Android).
-- [ ] Zones sûres vérifiées sur iPhone à encoche (capture 393 × 852).
+- [x] Barre d'état lisible sur le paysage clair du Compas. **Lot V** : thème de la barre
+      selon la route (`statusBarThemeForPath`) : texte sombre sur fond crème sur `/compas`,
+      thème d'avant ailleurs, à l'arrivée, à l'entrée et à la sortie (`statusBar.test.ts`,
+      `statusBarBootstrap.test.tsx`). Prouve les appels au plugin, pas le rendu natif.
+- [x] Texte de la demande de position juste (Info.plist, Android). **Lot V** :
+      `NSLocationWhenInUseUsageDescription` en français, avec le pourquoi et les limites
+      réelles (app ouverte seulement, jamais en arrière-plan, arrondie à ~1 km dans le
+      Compas) ; Android : `ACCESS_FINE_LOCATION` et `ACCESS_COARSE_LOCATION` seulement,
+      aucune position en arrière-plan (`nativePermissions.test.ts`).
+- [x] Zones sûres vérifiées sur iPhone à encoche (capture 393 × 852). **Lot V** : le Compas
+      utilisait déjà `viewport-fit=cover` et `env(safe-area-inset-*)` ; Playwright chromium
+      393 × 852 × 3 avec encoche imposée (haut 59, bas 34 ; paysage côtés 59), capture
+      `docs/compas/preuves/compas-393x852-zones-sures.jpg`
+      (`scripts/e2e/compas-safe-area.spec.ts`, `safeArea.test.ts`). Chromium, pas un iPhone
+      réel : rendu natif, dialogue de permission, VoiceOver et TalkBack restent à faire sur
+      appareil.
 
 ### 5.5 Écarts avec la maquette (`ECARTS_MAQUETTE.md`)
 
