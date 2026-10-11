@@ -69,14 +69,12 @@ import { lookupAreaPlaces, lookupRiverLine, lookupStagePois, readCachedStagePois
 import { carFreeOf, carFreeStages, carFreeStagesNote, transitSignal } from '../engine/carFree';
 import { buildTrack, simplifyLine, trackKey, type LngLat } from '../engine/track';
 import { descentWindow, planRiverDescent } from '../engine/river';
-import { entryFor } from '../engine/entry';
 import { keepAiNote, papersFactsFor, sharedNotes, sharedRules, type PapersFacts } from '../engine/papers';
 import { tutoyer } from '../engine/voice';
 import { addDaysIso } from '../engine/format';
 import { climateWindow } from '@/features/trips/engine/climate';
-import { abroadCosts, homeForLeg, originFact, planTravelLeg, travelOrigin, type TravelTransport } from '../engine/travel';
+import { homeForLeg, originFact, planTravelLeg, travelOrigin, type TravelTransport } from '../engine/travel';
 import { nearestAirport } from './airports';
-import { entryRequirement } from './entryRequirements';
 import { trailRegion } from '../engine/intent';
 import {
   dayStartVillage,
@@ -100,9 +98,7 @@ import {
 import {
   COSTS_VERSION,
   carRentalPerDay,
-  entryFees,
   flightRoundTrip,
-  formalitiesBasis,
   insurance,
   localTripPerLeg,
   lodgingPerNight,
@@ -1951,12 +1947,11 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         );
     const advice: AutofillAiAdvice = sanitizeAdvice(rawAdvice);
     const usedAi = rawAdvice != null;
-    // Papiers, change et prises : la règle parle, l'IA se tait sur ces sujets ; ce que la règle
-    // affirme dépend du voyageur (nationalité, résidence, devise : PLAN-100 4.1), donc ne se range
-    // pas sur le voyage mais se rend à la lecture. Le tutoiement aussi est une règle : un conseil
-    // qui vouvoie encore est écarté. La nationalité ne sert ici qu'à lire la table pour la ligne
-    // « Formalités » (jamais écrite dans un journal ni envoyée à l'IA).
-    const entryRule = entryFor(entryRequirement, traveller.nationality, anchor.countryCode, abroad);
+    // Papiers, change, prises et formalités : la règle parle, l'IA se tait sur ces sujets ; ce que la
+    // règle affirme dépend du voyageur (nationalité, résidence, devise : PLAN-100 4.1), donc ne se range
+    // pas sur le voyage mais se rend à la lecture (`getCompasData`, avec le profil du LECTEUR). Le
+    // tutoiement aussi est une règle : un conseil qui vouvoie encore est écarté. Aucune valeur du
+    // profil ne sert plus à ce qui s'écrit ici (verrou `scripts/verify/traveller_privacy.mjs`).
     // L'essentiel (papiers, sécurité) vient des règles, avec ou sans IA (plan 4.11).
     const safety = essentialAdvice({
       activity,
@@ -2005,11 +2000,11 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     const siteFuel = fuelPrice(anchor.countryCode);
     const rentalCars = fuelForKm(carKmOnSite, party, siteFuel).cars;
     const localTrips = localMoves.reduce((t, m) => t + localTripPerLeg(m.move, lvl.level), 0);
-    // Formalités (barème pour un ressortissant français) : seulement pour une nationalité
-    // française connue, tant qu'on ne sait pas que la personne est déjà dans le pays, et
-    // si la table passeport × destination dit qu'un visa ou une autorisation est requis.
-    const abroadFor = abroadCosts(abroad, traveller, entryRule);
-    const entry = abroadFor.formalities ? entryFees(anchor.countryCode) : null;
+    // Formalités d'entrée (visa, ESTA) : un barème pour un ressortissant français, donc un fait sur la
+    // NATIONALITÉ ; ni dépense du voyage (lisible par les collaborateurs, et par tous si le voyage est
+    // public), ni total rangé. Chaque lecteur calcule la sienne à la lecture (`readerFormalities`).
+    // L'assurance, elle, ne dépend que du voyage : savoir qu'on passe une frontière.
+    const insured = abroad === true;
     const mealsAmount = mealsTotal({ days, party, nights: plan.map((n) => n.type), level: lvl.level });
     const rental = picks.filter((p) => p.source === 'location').reduce((t, p) => t + (p.costEur ?? 0), 0);
     // Le budget compte l'indispensable qui manque ; le conseillé (crème
@@ -2107,20 +2102,11 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           },
       rental ? { category: 'matériel', title: 'Location de matériel', amount: rental, source: 'base', basis: 'prix par jour de la boutique × jours' } : null,
       purchase ? { category: 'matériel', title: 'Matériel à acheter', amount: purchase, source: 'base', basis: 'prix de la boutique' } : null,
-      entry
-        ? {
-            category: 'divers',
-            title: `Formalités : ${entry.detail}`,
-            amount: entry.eur * party,
-            source: 'estimation',
-            basis: formalitiesBasis(entryRule?.verified),
-          }
-        : null,
-      abroadFor.insurance || (maxAltitude ?? 0) >= 2500
+      insured || (maxAltitude ?? 0) >= 2500
         ? {
             category: 'divers',
             title: 'Assurance voyage et rapatriement',
-            amount: insurance(days, { abroad: abroadFor.insurance, altitudeM: maxAltitude }) * party,
+            amount: insurance(days, { abroad: insured, altitudeM: maxAltitude }) * party,
             source: 'estimation',
             basis: `barème Compas ${COSTS_VERSION} · forfait par jour${(maxAltitude ?? 0) >= 4000 ? ', haute altitude' : ''}`,
           }

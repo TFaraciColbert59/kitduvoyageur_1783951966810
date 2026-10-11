@@ -179,6 +179,9 @@ export function abroadOf(origin: TravelOrigin | null, destinationCountry: string
  * (`entry`, voir `entryFor` ; sans visa, libre circulation, « non confirmé » ou pas de
  * ligne : aucune ligne de frais). L'assurance voyage n'est ajoutée que si on sait que le
  * voyage passe une frontière.
+ *
+ * VIE PRIVÉE : `formalities` dépend de la NATIONALITÉ ; il ne s'utilise qu'à la lecture, pour le
+ * profil du lecteur (`engine/formalities.ts`), jamais pour ce que la préparation range sur le voyage.
  */
 export function abroadCosts(
   abroad: boolean | null,

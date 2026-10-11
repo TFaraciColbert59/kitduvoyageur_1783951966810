@@ -26,7 +26,7 @@ import {
   formatMoney,
   weatherLabel,
 } from '../engine/format';
-import type { CompasShopProduct } from '../server/getCompasData';
+import type { CompasData, CompasShopProduct } from '../server/getCompasData';
 import {
   compasAddInventoryItemAction,
   compasAddShopProductToTripAction,
@@ -1597,6 +1597,7 @@ function BudgetFlow({ ctl }: { ctl: CompasCtl }) {
           { label: 'par personne', amount: b.perPerson },
         ]}
       />
+      <FormalitiesLine formalities={ctl.data.formalities} />
       {ctl.data.canEdit && <ExpenseForm ctl={ctl} />}
       <SettlementBlock ctl={ctl} />
       <PagedList
@@ -1619,6 +1620,32 @@ function BudgetFlow({ ctl }: { ctl: CompasCtl }) {
         )}
       />
     </>
+  );
+}
+
+/**
+ * Les formalités d'entrée (visa, ESTA) de la personne qui regarde : calculées à la lecture avec SON
+ * profil, jamais rangées sur le voyage (elles diraient sa nationalité), donc à part des catégories et
+ * hors du total. La base dit d'où vient le chiffre.
+ */
+function FormalitiesLine({ formalities: f }: { formalities: CompasData['formalities'] }) {
+  if (!f) return null;
+  return (
+    <div data-testid="formalities-line">
+      <div className="cp-row" style={staticRow}>
+        <span className="cp-thumb">
+          <Icon name="coins" size={18} />
+        </span>
+        <span className="cp-row__t">
+          <b>{f.title}</b>
+          <span className="cp-sub">
+            {f.party} personne{f.party > 1 ? 's' : ''} × {formatMoney(f.perPerson, f.currency)}
+          </span>
+        </span>
+        <span className="cp-row__end">{formatMoney(f.amount, f.currency)}</span>
+      </div>
+      <p className="cp-disc">{f.basis}</p>
+    </div>
   );
 }
 

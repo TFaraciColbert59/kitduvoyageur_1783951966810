@@ -4,7 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  * PLAN-100 4.2, de bout en bout sur `compasAutofillAction` (client Supabase en mémoire,
  * services tiers simulés) : la ligne « Papiers » et le poste « Formalités » suivent la
  * table passeport × destination pour la nationalité du profil voyageur, et la
- * nationalité ne sort ni dans un journal ni dans la demande à l'IA.
+ * nationalité ne sort ni dans un journal ni dans la demande à l'IA. Le poste « Formalités »
+ * ne se range pas sur le voyage (lot Z1) : il se calcule à la lecture, pour le lecteur.
  *
  * Vie privée (relecture du 11 octobre) : le voyage ne range que la ligne « Papiers » sans
  * nationalité (`papersPrivacy.test.ts`) ; la ligne de la table pour le passeport de la
@@ -68,6 +69,7 @@ vi.mock('@/lib/ai/askAI', () => ({
 }));
 
 import { reportServerError } from '@/lib/observability/appErrors';
+import { readerFormalities } from '../engine/formalities';
 import { notesForReader, type PapersFacts } from '../engine/papers';
 import { UNKNOWN_TRAVELLER } from '../engine/traveller';
 import { compasAutofillAction } from '../server/autofillActions';
@@ -140,7 +142,7 @@ describe('Vietnam, Français : l’exemption de 45 jours remplace l’ancien e-v
 });
 
 describe('États-Unis, Français : l’ESTA à son tarif de 2026, avec la date de la table', () => {
-  it('la ligne « Papiers » (autorisation électronique) et la ligne « Formalités » × 2 personnes', async () => {
+  it('la ligne « Papiers » (autorisation électronique) à la lecture ; la ligne « Formalités » × 2 personnes se calcule à la lecture, elle ne se range plus', async () => {
     trip('US', 'États-Unis', 'New York');
     h.db.rows('user_traveller').push(profile('FR'));
     const res = await launch();
@@ -148,11 +150,20 @@ describe('États-Unis, Français : l’ESTA à son tarif de 2026, avec la date d
     expect(seenBy('FR')).toEqual([
       'Papiers : passeport valide, autorisation électronique (ETA/ESTA) à obtenir avant le départ, séjour jusqu’à 90 jours (États-Unis) ; vérifié le 3 octobre 2026, à confirmer sur France Diplomatie avant de partir.',
     ]);
-    expect(expenses().find((e) => e.title.startsWith('Formalités'))).toEqual({
+    // Vie privée (lot Z1) : ni dépense, ni ligne de l'issue ne portent la nationalité du lanceur.
+    expect(expenses().some((e) => /Formalités|visa|ESTA/i.test(e.title))).toBe(false);
+    expect(expenses().some((e) => /ressortissant français/.test(e.basis))).toBe(false);
+    // À la lecture, un Français la calcule pour lui (le détail de la lecture : papersPrivacy.test.ts).
+    expect(
+      readerFormalities({ countryCode: 'US', abroad: null, party: 2, reader: { nationality: 'FR' }, find: entryRequirement })
+    ).toEqual({
       title: 'Formalités : ESTA (40 $)',
+      perPerson: 35,
+      party: 2,
       amount: 70,
+      currency: 'EUR',
       basis:
-        'barème Compas 2026-10 · ressortissant français, tarif officiel connu, exigence vérifiée le 3 octobre 2026 (TravelRequirements.info), à vérifier avant de partir',
+        'barème Compas 2026-10 · ressortissant français, tarif officiel connu, exigence vérifiée le 3 octobre 2026 (TravelRequirements.info), à vérifier avant de partir · calculé pour toi à l’ouverture, non compté dans le total du voyage',
     });
   });
 });

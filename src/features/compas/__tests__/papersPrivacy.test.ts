@@ -90,7 +90,7 @@ vi.mock('@/features/hub/server/getHubAdventureData', () => ({
         ...row,
         steps: h.db.rows('trip_steps'),
         items: [],
-        expenses: [],
+        expenses: h.db.rows('trip_expenses'),
         pois: [],
         collaborators: [],
         member_profiles: [],
@@ -403,5 +403,126 @@ describe('écriture : les conseils de l’IA rangés et la demande à l’IA ne 
         expect(r.prompt).not.toMatch(/nationalit|francs suisses|\bCHF\b|\bUSD\b|suisse|allemand|americain/i);
       }
     }
+  });
+});
+
+/**
+ * « Formalités » (lot Z1) : la dépense (visa, ESTA) dépend de la nationalité ; rangée dans
+ * `trip_expenses` et recopiée dans `autofill_result.summary.budget`, sa présence et sa base
+ * « ressortissant français » la diraient à tout lecteur du voyage. Elle ne se range plus : chaque
+ * lecteur calcule la sienne à la lecture, à part du budget.
+ */
+const DESTINATIONS: Array<[string, string, string]> = [
+  ['US', 'États-Unis', 'New York'], // ESTA : autorisation électronique
+  ['NP', 'Népal', 'Katmandou'], // visa à l'arrivée
+  ['VN', 'Viêt Nam', 'Hanoï'], // exemption pour un Français
+];
+
+describe('écriture : la nationalité du lanceur ne va jamais dans le budget rangé', () => {
+  const snapshot = async (where: [string, string, string], over: Partial<Row>) => {
+    h.db = memorySupabase({ user: () => h.viewer });
+    publicTrip(...where);
+    h.db.rows('user_traveller').push(profileOf('u1', over));
+    const res = await launch();
+    expect(res.success).toBe(true);
+    const summary = res.success && 'summary' in res ? res.summary : null;
+    return {
+      expenses: h.db.rows('trip_expenses').map((e) => ({ title: e.title, amount: e.amount, basis: (e.metadata as { basis?: string }).basis })),
+      budget: summary?.budget,
+      total: summary?.total,
+      estimated: h.db.rows('trips')[0].estimated_budget,
+      raw: JSON.stringify({ trips: h.db.rows('trips'), expenses: h.db.rows('trip_expenses'), summary }),
+    };
+  };
+
+  it.each(DESTINATIONS)('%s : les mêmes dépenses, le même total, la même enveloppe pour un Français, un Allemand et personne', async (...where) => {
+    const runs = [];
+    for (const over of [{ nationality: 'FR' }, { nationality: 'DE', residence_country: 'DE' }, {}]) runs.push(await snapshot(where, over));
+    for (const run of runs) {
+      expect(run.expenses).toEqual(runs[0].expenses);
+      expect(run.budget).toEqual(runs[0].budget);
+      expect(run.total).toBe(runs[0].total);
+      expect(run.estimated).toBe(runs[0].estimated);
+      expect(/Formalités|ressortissant français/.test(run.raw)).toBe(false);
+    }
+    expect(runs[0].expenses.length).toBeGreaterThan(0);
+  });
+});
+
+describe('lecture : chaque lecteur calcule SA ligne « Formalités », à part du budget', () => {
+  const U = (id: string, over: Partial<Row>) => profileOf(id, over);
+  const dataAs = async (viewer: { id: string; is_anonymous?: boolean } | null) => {
+    h.viewer = viewer;
+    h.canEdit = false;
+    const data = await getCompasData();
+    expect(data).not.toBeNull();
+    return data!;
+  };
+
+  beforeEach(async () => {
+    // Un Français prépare un voyage public aux États-Unis, à deux (ESTA).
+    publicTrip('US', 'États-Unis', 'New York');
+    h.db.rows('user_traveller').push(
+      U('u1', { nationality: 'FR' }),
+      U('u2', { nationality: 'FR' }),
+      U('u3', { nationality: 'DE', residence_country: 'DE' }),
+      U('u4', {})
+    );
+    expect((await launch()).success).toBe(true);
+  });
+
+  it('un Français (le lanceur ou un collaborateur) lit l’ESTA × 2 personnes, avec sa base', async () => {
+    for (const id of ['u1', 'u2']) {
+      const f = (await dataAs({ id })).formalities;
+      expect(f, id).toMatchObject({ title: 'Formalités : ESTA (40 $)', perPerson: 35, party: 2, amount: 70, currency: 'EUR' });
+      expect(f?.basis).toContain('ressortissant français');
+      expect(f?.basis).toContain('non compté dans le total du voyage');
+    }
+  });
+
+  it('un Allemand, un compte sans nationalité, un compte inconnu, un anonyme : aucune ligne, et nulle trace de la ligne du lanceur', async () => {
+    for (const viewer of [{ id: 'u3' }, { id: 'u4' }, { id: 'u9' }, { id: 'anon-1', is_anonymous: true }, null]) {
+      const data = await dataAs(viewer);
+      expect(data.formalities ?? null, JSON.stringify(viewer)).toBeNull();
+      expect(JSON.stringify(data)).not.toMatch(/Formalités|ressortissant français/);
+    }
+  });
+
+  it('le budget affiché est le même pour tous : la ligne n’entre ni dans le prévu, ni dans l’enveloppe, ni dans les catégories', async () => {
+    const fr = await dataAs({ id: 'u2' });
+    const de = await dataAs({ id: 'u3' });
+    expect(fr.model.budget).toEqual(de.model.budget);
+    expect(fr.model.budget.planned).toBeGreaterThan(0);
+  });
+
+  it('une préparation annulée ne laisse aucune ligne « Formalités »', async () => {
+    const meta = storedMeta();
+    h.db.rows('trips')[0].metadata = { compas: { ...meta.compas, autofill: { undone: true } } };
+    expect((await dataAs({ id: 'u2' })).formalities ?? null).toBeNull();
+  });
+
+  it('un voyage préparé avant ce correctif : la dépense rangée est retirée de l’affichage, la ligne du lecteur la remplace', async () => {
+    const planned = async (id: string) => (await dataAs({ id })).model.budget.planned;
+    const before = await planned('u3');
+    h.db.rows('trip_expenses').push(
+      {
+        id: 'legacy-1',
+        trip_id: TRIP,
+        payer_id: 'u1',
+        title: 'Formalités : ESTA (40 $)',
+        amount: 70,
+        category: 'divers',
+        is_planned: true,
+        split_type: 'equal',
+        metadata: { autofill: 'run-0', source: 'estimation', basis: 'barème Compas 2026-10 · ressortissant français, tarif officiel connu' },
+      },
+      // Une dépense saisie à la main reste, même nommée ainsi.
+      { id: 'manual-1', trip_id: TRIP, payer_id: 'u1', title: 'Formalités : visa étudiant', amount: 12, category: 'divers', is_planned: true, split_type: 'equal', metadata: null }
+    );
+    // Pour un Allemand comme pour un Français : les 70 € de la préparation d'avant ne comptent plus, les 12 € saisis oui.
+    expect(await planned('u3')).toBe(before + 12);
+    expect(await planned('u2')).toBe(before + 12);
+    expect((await dataAs({ id: 'u3' })).formalities ?? null).toBeNull();
+    expect((await dataAs({ id: 'u2' })).formalities).toMatchObject({ title: 'Formalités : ESTA (40 $)', amount: 70 });
   });
 });
