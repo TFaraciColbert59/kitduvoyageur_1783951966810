@@ -123,6 +123,12 @@ const ALERTS_GAP: Record<AlertsStatus, string | null> = {
   indisponibles: 'alertes officielles',
 };
 
+/**
+ * Ce qu'un « rien à signaler » sur les alertes officielles ne couvre pas, ou null
+ * si elles ont été lues. Statut absent : non lues, comme `assessDanger`.
+ */
+export const alertsGapOf = (status: AlertsStatus | undefined): string | null => ALERTS_GAP[status ?? 'indisponibles'];
+
 const ALERT_SEVERITY: Record<OfficialAlert['level'], DangerSeverity> = {
   jaune: 'info',
   orange: 'warn',
@@ -180,7 +186,7 @@ export function assessDanger(input: {
   };
   // Aucune cotation du terrain n'existe dans les données du voyage.
   gap('technique', 'cotation du terrain');
-  const alertsGap = ALERTS_GAP[input.alertsStatus ?? 'indisponibles'];
+  const alertsGap = alertsGapOf(input.alertsStatus);
   if (alertsGap) gap('conjoncturel', alertsGap);
 
   for (const plan of input.dayPlans) {

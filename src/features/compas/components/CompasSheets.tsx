@@ -71,6 +71,7 @@ import {
   useTextFilter,
 } from './CompasPrimitives';
 import { DisLe } from './CompasDisLe';
+import { alertsGapOf } from '../engine/danger';
 import { proposeShift, watchRules } from '../engine/watch';
 import { isMeteoalarmSource } from '../engine/meteoalarmFeeds';
 import MeteoalarmNotice from './MeteoalarmNotice';
@@ -2914,6 +2915,8 @@ function MeteoFlow({ ctl }: { ctl: CompasCtl }) {
 function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
   const m = ctl.data.model;
   const rules = watchRules(ctl.data.danger.signals);
+  // « Rien à signaler » sur la vigilance officielle n'a de sens que si les alertes ont été lues.
+  const alertsGap = alertsGapOf(ctl.data.alertsStatus);
   const active = rules.filter((r) => r.hits.length > 0).length;
   const shift = proposeShift({
     start: m.dates.start,
@@ -2970,7 +2973,9 @@ function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
             <span>
               {r.hits.length
                 ? r.hits.map((h) => h.label).join(' · ')
-                : 'Rien à signaler sur ce voyage.'}
+                : r.id === 'alert' && alertsGap
+                  ? `Non vérifié : ${alertsGap}.`
+                  : 'Rien à signaler sur ce voyage.'}
             </span>
             {r.hits.map(
               (h, i) =>

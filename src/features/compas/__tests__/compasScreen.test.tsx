@@ -1697,6 +1697,38 @@ describe('CompasScreen', () => {
     expect(within(sheet).getByTestId('meteoalarm-notice').textContent).toContain(METEOALARM_DISCLAIMER);
   });
 
+  /** Ouvre la Veille du verdict et rend la ligne de la règle « Vigilance officielle ». */
+  const openVeilleAlertRule = async (data: CompasData) => {
+    render(<CompasScreen data={data} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Verdict' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Verdict' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Veille/ }));
+    const label = await within(sheet).findByText('Vigilance officielle (services nationaux, via Meteoalarm)');
+    return label.closest('li') as HTMLElement;
+  };
+
+  it('Veille : « Rien à signaler » seulement si les alertes ont été lues, sinon ce qui n’a pas été vérifié', async () => {
+    const cases = [
+      ['lues', 'Rien à signaler sur ce voyage.'],
+      ['partielles', 'Non vérifié : alertes officielles (zone reconnue en partie : d’autres alertes peuvent exister).'],
+      ['pas_encore_publiees', 'Non vérifié : alertes officielles (publiées la veille du départ).'],
+      ['non_couvert', 'Non vérifié : alertes officielles (pays non couvert par Meteoalarm).'],
+      ['zone_non_rapprochee', 'Non vérifié : alertes officielles (zone de l’étape non reconnue dans le flux Meteoalarm).'],
+      ['indisponibles', 'Non vérifié : alertes officielles.'],
+      [undefined, 'Non vérifié : alertes officielles.'],
+    ] as const;
+    for (const [status, expected] of cases) {
+      cleanup();
+      const data = makeData();
+      data.alertsStatus = status;
+      data.danger = assessDanger({ dayPlans: [], forecasts: [], alerts: [], alertsStatus: status });
+      const rule = await openVeilleAlertRule(data);
+      expect(rule.textContent, String(status)).toContain(expected);
+      if (status !== 'lues') expect(rule.textContent, String(status)).not.toContain('Rien à signaler');
+    }
+  });
+
   const TEXTES = [
     {
       lang: 'en-GB',
