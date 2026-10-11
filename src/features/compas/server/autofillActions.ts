@@ -68,7 +68,7 @@ import { carFreeOf, carFreeStages, carFreeStagesNote, transitSignal } from '../e
 import { buildTrack, simplifyLine, trackKey, type LngLat } from '../engine/track';
 import { descentWindow, planRiverDescent } from '../engine/river';
 import { entryFor } from '../engine/entry';
-import { keepAiNote, travelPapers } from '../engine/papers';
+import { isPapersNote, keepAiNote, sharedPapersNotes, travelPapers, type PapersFacts } from '../engine/papers';
 import { isFrenchNational } from '../engine/traveller';
 import { tutoyer } from '../engine/voice';
 import { addDaysIso } from '../engine/format';
@@ -117,6 +117,7 @@ import { pointsMaxAltitudeM, routeAscentM } from './elevation';
 import { estimatedLegKm, estimationNote, stepDistanceMetadata, type LegDistanceSource, type LegMove } from '../engine/legDistance';
 import {
   CLAIM_MS,
+  pendingIsLive,
   pendingIsStale,
   readPending,
   resumableRun,
@@ -1933,7 +1934,17 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       lat: anchor.lat ?? null,
       countryCode: anchor.countryCode ?? null,
     });
-    const essential = [...papers.notes, ...safety];
+    // VIE PRIVÉE : la ligne « Papiers » de la table dépend de la nationalité ; rangée sur le
+    // voyage (notes, issue), tout collaborateur la lirait (et tout le monde pour un voyage
+    // public : un groupe de la table peut n'avoir qu'un passeport). Le voyage ne garde que la
+    // ligne sans nationalité, plus de quoi rendre celle de chaque lecteur à la lecture
+    // (`getCompasData`, avec SON profil). Le pays et le départ n'apprennent rien sur la personne.
+    const sharedPapers = sharedPapersNotes(anchor.countryCode, anchor.country, abroad);
+    const papersFacts: PapersFacts | null =
+      sharedPapers.length && anchor.countryCode
+        ? { countryCode: anchor.countryCode.toUpperCase(), country: anchor.country ?? null, abroad }
+        : null;
+    const essential = [...sharedPapers, ...papers.notes.filter((n) => !isPapersNote(n)), ...safety];
     // L'IA n'ajoute que des suggestions facultatives, dites comme telles.
     const aiNotes = advice.notes
       .filter((n) => keepAiNote(n, papers))
@@ -2139,6 +2150,8 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             ...(halted ? { stopped: true } : {}),
             datesSet,
             notes: orderNotes(essential, notes, aiNotes),
+            // De quoi rendre la ligne « Papiers » de chaque lecteur (pays et départ, jamais une nationalité).
+            ...(papersFacts ? { papers: papersFacts } : {}),
             // Réglages qui ont produit ce préremplissage : un changement dit quoi refaire.
             // Lus sur les métadonnées à jour : le lieu naturel retenu en cours de route
             // (Ardennes, département → massif) ne passe pas pour un changement de lieu,
@@ -2190,6 +2203,12 @@ export async function compasUndoAutofillAction(
     const { supabase } = auth;
     const tripMeta = (auth.trip.metadata ?? {}) as Record<string, unknown>;
     const done = compasMeta(tripMeta).autofill as { runId?: string } | undefined;
+    // Une préparation encore vivante (lancée d'un autre onglet) ne s'annule pas : « Annuler »
+    // rendait ses prises, une relance immédiate en ouvrait une 2e en parallèle de la première
+    // et chacune écrivait kit et budget. Comme la réadaptation, il attend sa fin ou son arrêt ;
+    // une préparation coupée (prise expirée) s'annule.
+    if (!done?.runId && pendingIsLive(tripMeta, Date.now()))
+      return { success: false, error: 'Une préparation est en cours : attends sa fin ou arrête-la, puis annule.' };
     // Une préparation interrompue après l'itinéraire s'annule aussi.
     const run = (done?.runId ? done : readPending(tripMeta)) as
       | {

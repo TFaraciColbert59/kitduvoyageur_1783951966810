@@ -5,6 +5,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  * services tiers simulés) : la ligne « Papiers » et le poste « Formalités » suivent la
  * table passeport × destination pour la nationalité du profil voyageur, et la
  * nationalité ne sort ni dans un journal ni dans la demande à l'IA.
+ *
+ * Vie privée (relecture du 11 octobre) : le voyage ne range que la ligne « Papiers » sans
+ * nationalité (`papersPrivacy.test.ts`) ; la ligne de la table pour le passeport de la
+ * personne se lit à l'écran avec son profil (`seenBy`, comme `getCompasData`).
  */
 const h = vi.hoisted(() => ({ db: null as unknown as MemorySupabase, asked: [] as string[] }));
 
@@ -64,7 +68,10 @@ vi.mock('@/lib/ai/askAI', () => ({
 }));
 
 import { reportServerError } from '@/lib/observability/appErrors';
+import { notesForReader, type PapersFacts } from '../engine/papers';
+import { UNKNOWN_TRAVELLER } from '../engine/traveller';
 import { compasAutofillAction } from '../server/autofillActions';
+import { entryRequirement } from '../server/entryRequirements';
 import { memorySupabase, type MemorySupabase, type Row } from './helpers/memorySupabase';
 
 const TRIP = '44444444-4444-4444-8444-444444444444';
@@ -104,6 +111,15 @@ const expenses = () => h.db.rows('trip_expenses').map((e) => ({ title: String(e.
 const papersNotes = (res: Awaited<ReturnType<typeof launch>>) =>
   (res.success && 'summary' in res ? res.summary.notes : []).filter((n: string) => n.startsWith('Papiers'));
 
+/** La ligne « Papiers » qu'une personne de cette nationalité lit à l'écran : notes rangées + son profil. */
+const seenBy = (nationality: string | null) => {
+  const run = (h.db.rows('trips')[0].metadata as { compas: { autofill: { notes: string[]; papers?: PapersFacts } } }).compas
+    .autofill;
+  return notesForReader(run.notes, run.papers ?? null, { ...UNKNOWN_TRAVELLER, nationality }, entryRequirement).filter((n) =>
+    n.startsWith('Papiers')
+  );
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
   h.asked = [];
@@ -116,7 +132,7 @@ describe('Vietnam, Français : l’exemption de 45 jours remplace l’ancien e-v
     h.db.rows('user_traveller').push(profile('FR'));
     const res = await launch();
     expect(res.success).toBe(true);
-    expect(papersNotes(res)).toEqual([
+    expect(seenBy('FR')).toEqual([
       'Papiers : passeport valide, sans visa jusqu’à 45 jours (Viêt Nam) ; vérifié le 7 octobre 2026, à confirmer sur France Diplomatie avant de partir.',
     ]);
     expect(expenses().some((e) => /Formalités|visa/i.test(e.title))).toBe(false);
@@ -128,7 +144,8 @@ describe('États-Unis, Français : l’ESTA à son tarif de 2026, avec la date d
     trip('US', 'États-Unis', 'New York');
     h.db.rows('user_traveller').push(profile('FR'));
     const res = await launch();
-    expect(papersNotes(res)).toEqual([
+    expect(res.success).toBe(true);
+    expect(seenBy('FR')).toEqual([
       'Papiers : passeport valide, autorisation électronique (ETA/ESTA) à obtenir avant le départ, séjour jusqu’à 90 jours (États-Unis) ; vérifié le 3 octobre 2026, à confirmer sur France Diplomatie avant de partir.',
     ]);
     expect(expenses().find((e) => e.title.startsWith('Formalités'))).toEqual({
@@ -145,7 +162,8 @@ describe('une autre nationalité connue : la table, jamais le barème français'
     trip('NP', 'Népal', 'Katmandou');
     h.db.rows('user_traveller').push(profile('DE'));
     const res = await launch();
-    expect(papersNotes(res)).toEqual([
+    expect(res.success).toBe(true);
+    expect(seenBy('DE')).toEqual([
       'Papiers : passeport valide, visa à l’arrivée (Népal) ; vérifié le 3 octobre 2026, à confirmer auprès du service officiel de ton pays avant de partir.',
     ]);
     expect(expenses().some((e) => /Formalités/.test(e.title))).toBe(false);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { entryRequirementIn, type EntryRequirement, type EntryTable } from '../engine/entry';
-import { keepAiNote, travelPapers } from '../engine/papers';
+import { isPapersNote, keepAiNote, notesForReader, readerPapersNotes, sharedPapersNotes, travelPapers, type PapersFacts } from '../engine/papers';
 import { UNKNOWN_TRAVELLER, type TravellerContext } from '../engine/traveller';
 import { entryRequirement } from '../server/entryRequirements';
 
@@ -395,5 +395,64 @@ describe('keepAiNote — un non-Français garde ses conseils justes', () => {
       expect(keepAiNote('Il te faut un visa à l’arrivée, prévois 50 dollars en liquide.', np)).toBe(false);
       expect(keepAiNote('Vérifie la validité de ton passeport.', np)).toBe(false);
     }
+  });
+});
+
+/**
+ * VIE PRIVÉE : la ligne « Papiers » dépend de la nationalité, donc le voyage ne garde que la
+ * ligne sans nationalité ; celle de la personne qui regarde se rend à la lecture
+ * (`papersPrivacy.test.ts` éprouve le chemin entier, ici les règles).
+ */
+describe('la ligne « Papiers » sur le voyage et pour chaque lecteur', () => {
+  const find = (p: string, d: string) => entryRequirement(p, d);
+  const MA: PapersFacts = { countryCode: 'MA', country: 'Maroc', abroad: true };
+  const GB_LINE =
+    'Papiers : passeport valide, sans visa jusqu’à 90 jours (Maroc) ; vérifié le 3 octobre 2026, à confirmer auprès du service officiel de ton pays avant de partir.';
+  const DE_LINE =
+    'Papiers : passeport valide, sans visa (Maroc) ; vérifié le 3 octobre 2026, à confirmer auprès du service officiel de ton pays avant de partir.';
+  const PLUGS = 'Prises de type G (Royaume-Uni) : vérifie que tes chargeurs s’y branchent.';
+
+  it('sharedPapersNotes : la ligne d’une nationalité inconnue, jamais la table ni France Diplomatie', () => {
+    expect(sharedPapersNotes('MA', 'Maroc', true)).toEqual([GENERIC('Maroc')]);
+    expect(sharedPapersNotes('PT', 'Portugal', null)).toEqual([GENERIC('Portugal')]);
+    expect(sharedPapersNotes('PT', null, true)).toEqual([GENERIC('PT')]);
+    // Aucune frontière, ou pas de pays : rien à ranger. Les prises n'en font pas partie.
+    expect(sharedPapersNotes('MA', 'Maroc', false)).toEqual([]);
+    expect(sharedPapersNotes(null, null, true)).toEqual([]);
+    expect(sharedPapersNotes('GB', 'Royaume-Uni', false)).toEqual([]);
+    expect(sharedPapersNotes('GB', 'Royaume-Uni', true).every(isPapersNote)).toBe(true);
+  });
+
+  it('readerPapersNotes : la ligne du passeport du lecteur, la table lue pour lui seul', () => {
+    expect(readerPapersNotes('MA', 'Maroc', who({ nationality: 'GB' }), true, find)).toEqual([GB_LINE]);
+    expect(readerPapersNotes('MA', 'Maroc', who({ nationality: 'DE' }), true, find)).toEqual([DE_LINE]);
+    expect(readerPapersNotes('MA', 'Maroc', FR, true, find)[0]).toMatch(/France Diplomatie avant de partir\.$/);
+    expect(readerPapersNotes('MA', 'Maroc', NONE, true, find)).toEqual([GENERIC('Maroc')]);
+    // Son propre pays : un citoyen y entre de droit.
+    expect(readerPapersNotes('MA', 'Maroc', who({ nationality: 'MA' }), null, find)).toEqual([]);
+    expect(readerPapersNotes('MA', 'Maroc', who({ nationality: 'GB' }), false, find)).toEqual([]);
+  });
+
+  it('notesForReader : seule la ligne « Papiers » change, à sa place', () => {
+    const stored = ['Itinéraire gardé.', GENERIC('Maroc'), PLUGS, 'Emporte de l’eau.'];
+    expect(notesForReader(stored, MA, who({ nationality: 'GB' }), find)).toEqual(['Itinéraire gardé.', GB_LINE, PLUGS, 'Emporte de l’eau.']);
+    expect(notesForReader(stored, MA, who({ nationality: 'DE' }), find)).toEqual(['Itinéraire gardé.', DE_LINE, PLUGS, 'Emporte de l’eau.']);
+    expect(notesForReader(stored, MA, NONE, find)).toEqual(stored);
+  });
+
+  it('notesForReader : un lecteur qui n’a aucune formalité (son pays) ne voit plus la ligne ; sans ligne rangée, rien n’est ajouté', () => {
+    const stored = ['Itinéraire gardé.', GENERIC('Maroc')];
+    expect(notesForReader(stored, { ...MA, abroad: null }, who({ nationality: 'MA' }), find)).toEqual(['Itinéraire gardé.']);
+    const noLine = ['Itinéraire gardé.', PLUGS];
+    expect(notesForReader(noLine, MA, who({ nationality: 'GB' }), find)).toBe(noLine);
+    expect(notesForReader([], MA, who({ nationality: 'GB' }), find)).toEqual([]);
+  });
+
+  it('notesForReader : une ligne rangée par l’ancienne version (celle d’un autre passeport) n’est jamais rendue telle quelle', () => {
+    const legacy = ['Itinéraire gardé.', GB_LINE, PLUGS];
+    expect(notesForReader(legacy, MA, who({ nationality: 'DE' }), find)).toEqual(['Itinéraire gardé.', DE_LINE, PLUGS]);
+    expect(notesForReader(legacy, MA, NONE, find)).toEqual(['Itinéraire gardé.', GENERIC('Maroc'), PLUGS]);
+    // Sans le pays, la ligne est retirée plutôt que devinée.
+    expect(notesForReader(legacy, null, who({ nationality: 'DE' }), find)).toEqual(['Itinéraire gardé.', PLUGS]);
   });
 });

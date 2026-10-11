@@ -13,6 +13,9 @@ import { buildKitContext, datesWithoutForecast, kitAltitude } from '../engine/ki
 import { parseRoutePois, poiLabel, type RoutePoi } from '../engine/routePois';
 import { getBudgetFx, getEurRate } from './rates';
 import { readTraveller } from './traveller';
+import { entryRequirement } from './entryRequirements';
+import { notesForReader, type PapersFacts } from '../engine/papers';
+import type { TravellerContext } from '../engine/traveller';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
@@ -700,7 +703,8 @@ export async function getCompasData(): Promise<CompasData | null> {
     zone,
     pendingInvites,
     autofill: autofillState(trip.metadata),
-    autofillNotes: autofillNotes(trip.metadata),
+    // La ligne « Papiers » est celle de CE lecteur (son profil), jamais celle du propriétaire.
+    autofillNotes: autofillNotes(trip.metadata, traveller, trip.destination_country_code),
     ...compasPlan(trip.metadata),
     autofillStale: autofillStale(trip),
     context: resolveProjectContext({
@@ -794,15 +798,41 @@ function autofillState(metadata: unknown): CompasData['autofill'] {
   return (run as Record<string, unknown>).runId ? 'done' : 'undone';
 }
 
-function autofillNotes(metadata: unknown): string[] {
+function autofillNotes(metadata: unknown, reader: TravellerContext, destinationCode?: string | null): string[] {
   const compas =
     metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).compas : null;
   const run =
     compas && typeof compas === 'object' ? (compas as Record<string, unknown>).autofill : null;
   const notes = run && typeof run === 'object' ? (run as Record<string, unknown>).notes : null;
-  return Array.isArray(notes)
-    ? notes.filter((n): n is string => typeof n === 'string').slice(0, MAX_NOTES)
-    : [];
+  if (!Array.isArray(notes)) return [];
+  const stored = notes.filter((n): n is string => typeof n === 'string');
+  // VIE PRIVÉE : le voyage ne garde pas la ligne « Papiers » d'une nationalité (lisible par les
+  // collaborateurs, et par tous pour un voyage public) ; elle se calcule ici, avec le profil de la
+  // personne qui regarde (sans profil : la ligne neutre).
+  const facts = papersFacts(compas as Record<string, unknown> | null, destinationCode);
+  return notesForReader(stored, facts, reader, entryRequirement).slice(0, MAX_NOTES);
+}
+
+/**
+ * Le pays et le départ de la ligne « Papiers » rangés avec le préremplissage ; pour un voyage
+ * préparé avant, le pays du lieu retrouvé sur la carte, sinon celui de la destination du voyage.
+ */
+function papersFacts(compas: Record<string, unknown> | null, destinationCode?: string | null): PapersFacts | null {
+  const obj = (v: unknown) => (v && typeof v === 'object' ? (v as Record<string, unknown>) : null);
+  const code = (v: unknown) => (typeof v === 'string' && /^[A-Za-z]{2}$/.test(v) ? v.toUpperCase() : null);
+  const name = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, 80) : null);
+  const saved = obj(obj(compas?.autofill)?.papers);
+  if (saved) {
+    const countryCode = code(saved.countryCode);
+    if (countryCode) {
+      return { countryCode, country: name(saved.country), abroad: typeof saved.abroad === 'boolean' ? saved.abroad : null };
+    }
+  }
+  const anchor = obj(compas?.anchor);
+  const fromAnchor = code(anchor?.countryCode);
+  if (fromAnchor) return { countryCode: fromAnchor, country: name(anchor?.country), abroad: null };
+  const fromTrip = code(destinationCode);
+  return fromTrip ? { countryCode: fromTrip, country: null, abroad: null } : null;
 }
 
 /** Exporté pour les tests : ce que le voyage a rangé et que l'écran relit (durée voulue, lieux, phrase). */
