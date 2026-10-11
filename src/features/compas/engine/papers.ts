@@ -356,8 +356,9 @@ export function notesForReader(
 
 const PAPERS_RE = /passeport|carte d[’']identit|\bvisas?\b|e-visa|formalit|autorisation (de voyage|électronique)/i;
 const PAPERS_ACRONYM_RE = /\b(ESTA|ETA|eTA|NZeTA|AVE)\b/;
-const MONEY_RE = /bureau de change|taux de change|devises?\b|monnaie locale|changer (de l[’'])?argent|changer (tes |vos |des )?euros|change tes euros|change vos euros/i;
-const PLUG_RE = /adaptateur|prises? (électriques?|de type)/i;
+/** Les conseils de change et de prises de l'IA (aussi lus par le script de rattrapage SQL du lot Z1). */
+export const MONEY_RE = /bureau de change|taux de change|devises?\b|monnaie locale|changer (de l[’'])?argent|changer (tes |vos |des )?euros|change tes euros|change vos euros/i;
+export const PLUG_RE = /adaptateur|prises? (électriques?|de type)/i;
 
 /** Un conseil de l'IA est gardé s'il ne contredit pas, ou ne double pas, une règle connue. */
 export function keepAiNote(note: string, rules: TravelPapers): boolean {
