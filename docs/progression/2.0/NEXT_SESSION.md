@@ -44,18 +44,37 @@ remplace les jobs simples déjà en prod.
   utilise des fixtures `session_segment_passages` — réaligner lors de la
   prochaine exécution locale complète.
 
-## Prochaine action concrète — T10 puis T11 (vérifier l'existant session 1, ne pas refaire)
+## État au point de reprise (après T10 + T11)
 
-1. T10 : la carte compacte a été livrée par la session 1 (`ProgressionCompactCard`,
-   `client/progressionQuery.ts`, `compactCard.spec` 12 tests, preuve
-   `docs/progression/2.0/evidence/compact-card.md`). Vérifier les 3 critères sur
-   l'état fusionné : carte visible à 0 XP, erreur ≠ zéro (action réessayer),
-   cache isolé par compte + invalidation après gain/déconnexion. Corriger tout
-   écart constaté, puis statuer T10 = TESTÉ/DÉPLOYÉ.
-2. T11 : intégrer le backend historique (20 tests session 1) plutôt que le
-   réécrire : historique paginé (`/api/progression/history`), sheet Ma
-   progression avec résolveur d'ouverture (Hub/Compte, anciens deep-links),
-   bilan gain confirmé ≠ pending. Contrôles : `sheetFlow.spec` + focus clavier.
+- T10 TESTÉ : carte compacte vérifiée sur l'état fusionné (38/38, dépendance
+  T09 satisfaite). T11 : historique paginé livré (`/api/progression/history`,
+  service + route 12 tests ; section gains remplacée dans MaProgressionView
+  avec pending séparé et « Voir plus »). E2E appareil (focus, deep-links
+  mobiles) → T43. `npm run verify:invariants` vert ; vitest progression+phase1
+  **381 passés / 9 skipped**.
+
+## Prochaine action concrète — T12 (catalogue de missions versionné)
+
+1. Créer `src/features/progression/domain/missionCatalog.ts` : modèles
+   versionnés (8 catégories du brief : découverte, préparation, progression,
+   communauté, coopération, collection, formation, personnelle), chaque modèle
+   exposant : critères (action source + seuil), période, provenance, version,
+   producteurs réellement disponibles (aujourd'hui les 7 T09 — ne jamais
+   promettre un producteur fermé, cf. PRODUCER_MATRIX.md).
+2. Migration additive via CLI : réutiliser `progression_challenges`
+   (dédupliquer les 26 défis historiques ; marquer provenance/version) —
+   aucune nouvelle table si possible ; sinon `progression_mission_templates`.
+3. Tests : `missionCatalog.spec.ts` (critères complets, aucune promesse sur
+   producteur non disponible, 8 catégories couvertes ou dépendance fermée
+   explicite) ; validation JSON cohérente avec `rules-registry.json`.
+4. Livrable doc : `docs/progression/2.0/missions.md`.
+
+## Contrôle de réussite T12
+
+- Chaque mission expose critères, période, provenance et version.
+- Aucun modèle ne référence un producteur désactivé (comparaison
+  PRODUCER_MATRIX « Actifs »).
+- `npx vitest run tests/features/progression` vert ; `npx tsc --noEmit`.
 
 ## Rappels de continuation
 

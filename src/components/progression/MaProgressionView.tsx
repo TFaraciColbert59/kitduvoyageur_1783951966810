@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Award, ChevronDown, Gift, RefreshCw, Target, Trophy } from 'lucide-react';
 import Icon from '@/components/ui/AppIcon';
@@ -74,6 +74,16 @@ interface GainRow {
   points: number;
   type: string;
   createdAt: string;
+  skills: Array<{ skill: string; points: number; weight: number }>;
+  rulesVersion: string | null;
+}
+
+/** T11 — intention non résolue : affichée « en analyse », jamais célébrée. */
+interface PendingGainRow {
+  id: string;
+  label: string;
+  effectiveAt: string;
+  state: 'pending' | 'processing' | 'failed';
 }
 
 type ClientDataStatus = 'loading' | 'ready' | 'unavailable';
@@ -86,6 +96,45 @@ interface DistinctionsState {
 interface GainsState {
   status: ClientDataStatus;
   items: GainRow[];
+  pending: PendingGainRow[];
+  nextCursor: { before: string; beforeId: string } | null;
+  loadingMore: boolean;
+}
+
+const EMPTY_GAINS: GainsState = {
+  status: 'unavailable',
+  items: [],
+  pending: [],
+  nextCursor: null,
+  loadingMore: false,
+};
+
+interface HistoryApiItem {
+  id: string;
+  action: string;
+  label: string;
+  points: number;
+  effectiveAt: string;
+  rulesVersion: string | null;
+  skills?: Array<{ skill: string; points: number; weight: number }>;
+}
+
+interface HistoryApiPayload {
+  success?: boolean;
+  items?: HistoryApiItem[];
+  pending?: PendingGainRow[];
+  nextCursor?: { before: string; beforeId: string } | null;
+}
+
+function mapHistoryItems(items: HistoryApiItem[] | undefined): GainRow[] {
+  return (items ?? []).map((item) => ({
+    id: item.id,
+    points: Math.max(0, Math.floor(Number(item.points) || 0)),
+    type: item.action,
+    createdAt: item.effectiveAt,
+    skills: Array.isArray(item.skills) ? item.skills : [],
+    rulesVersion: item.rulesVersion ?? null,
+  }));
 }
 
 function reasonLabel(reason: string | null | undefined, t: TFn): string {
@@ -208,7 +257,13 @@ export default function MaProgressionView({
     status: 'loading',
     items: [],
   });
-  const [gains, setGains] = useState<GainsState>({ status: 'loading', items: [] });
+  const [gains, setGains] = useState<GainsState>({
+    status: 'loading',
+    items: [],
+    pending: [],
+    nextCursor: null,
+    loadingMore: false,
+  });
   const [replacingChallenge, setReplacingChallenge] = useState(false);
   const [replaceChallengeError, setReplaceChallengeError] = useState(false);
   const [profileUnavailable, setProfileUnavailable] = useState(false);
@@ -280,7 +335,7 @@ export default function MaProgressionView({
         if (!user) {
           if (alive) {
             setDistinctions({ status: 'unavailable', items: [] });
-            setGains({ status: 'unavailable', items: [] });
+            setGains({ ...EMPTY_GAINS });
           }
           return;
         }
@@ -292,13 +347,9 @@ export default function MaProgressionView({
             .eq('user_id', user.id)
             .order('earned_at', { ascending: false })
             .limit(12),
-          supabase
-            .from('reward_transactions')
-            .select('id, points, transaction_type, created_at')
-            .eq('user_id', user.id)
-            .gt('points', 0)
-            .order('created_at', { ascending: false })
-            .limit(8),
+          // T11 — historique paginé par route serveur privée (gains confirmés
+          // + intentions en attente strictement séparés).
+          fetch('/api/progression/history?limit=8', { cache: 'no-store' }),
         ]);
         if (!alive) return;
 
@@ -329,30 +380,27 @@ export default function MaProgressionView({
           });
         }
 
-        if (gainsRes.error) {
-          setGains({ status: 'unavailable', items: [] });
+        if (!gainsRes.ok) {
+          setGains({ ...EMPTY_GAINS });
         } else {
-          const rows = (gainsRes.data ?? []) as Array<{
-            id: string;
-            points: number;
-            transaction_type: string;
-            created_at: string;
-          }>;
-          setGains({
-            status: 'ready',
-            items: rows.map((row) => ({
-              id: row.id,
-              points: Math.max(0, Math.floor(Number(row.points) || 0)),
-              type: row.transaction_type,
-              createdAt: row.created_at,
-            })),
-          });
+          const payload = (await gainsRes.json()) as HistoryApiPayload;
+          if (payload?.success !== true) {
+            setGains({ ...EMPTY_GAINS });
+          } else {
+            setGains({
+              status: 'ready',
+              items: mapHistoryItems(payload.items),
+              pending: Array.isArray(payload.pending) ? payload.pending : [],
+              nextCursor: payload.nextCursor ?? null,
+              loadingMore: false,
+            });
+          }
         }
       } catch (err) {
         console.error('Erreur chargement distinctions/gains:', err);
         if (alive) {
           setDistinctions({ status: 'unavailable', items: [] });
-          setGains({ status: 'unavailable', items: [] });
+          setGains({ ...EMPTY_GAINS });
         }
       }
     }
@@ -362,6 +410,38 @@ export default function MaProgressionView({
       alive = false;
     };
   }, []);
+
+  /** T11 — page suivante d'historique (curseur serveur), strictement additive. */
+  const loadMoreGains = useCallback(async () => {
+    const cursor = gains.nextCursor;
+    if (!cursor || gains.loadingMore) return;
+    setGains((prev) => ({ ...prev, loadingMore: true }));
+    try {
+      const response = await fetch(
+        `/api/progression/history?limit=8&before=${encodeURIComponent(cursor.before)}&beforeId=${encodeURIComponent(cursor.beforeId)}`,
+        { cache: 'no-store' }
+      );
+      if (!response.ok) {
+        setGains((prev) => ({ ...prev, loadingMore: false }));
+        return;
+      }
+      const payload = (await response.json()) as HistoryApiPayload;
+      if (payload?.success !== true) {
+        setGains((prev) => ({ ...prev, loadingMore: false }));
+        return;
+      }
+      setGains((prev) => ({
+        ...prev,
+        status: 'ready',
+        items: [...prev.items, ...mapHistoryItems(payload.items)],
+        pending: Array.isArray(payload.pending) ? payload.pending : prev.pending,
+        nextCursor: payload.nextCursor ?? null,
+        loadingMore: false,
+      }));
+    } catch {
+      setGains((prev) => ({ ...prev, loadingMore: false }));
+    }
+  }, [gains.nextCursor, gains.loadingMore]);
 
   const handleFilterChange = (filter: TerritoryFilter) => {
     triggerHaptic('selection');
@@ -959,7 +1039,26 @@ export default function MaProgressionView({
             {t('progression.gainsUnavailable')}
           </p>
         )}
-        {gains.status === 'ready' && gains.items.length === 0 && (
+        {gains.status === 'ready' && gains.pending.length > 0 && (
+          <div className="mb-3 rounded-2xl border border-dashed border-black/10 p-3">
+            <p className="text-[11px] font-bold text-[var(--lkv-text-secondary)]">
+              {t('progression.historyPendingTitle')}
+            </p>
+            <ul className="mt-1 space-y-1">
+              {gains.pending.map((item) => (
+                <li key={item.id} className="flex items-center justify-between gap-3">
+                  <span className="min-w-0 truncate text-xs text-[var(--lkv-text-secondary)]">
+                    {item.label}
+                  </span>
+                  <span className="shrink-0 text-[10.5px] font-semibold text-[var(--lkv-text-muted)]">
+                    {t('progression.historyPendingState')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {gains.status === 'ready' && gains.items.length === 0 && gains.pending.length === 0 && (
           <p className="text-xs leading-relaxed text-[var(--lkv-text-secondary)]">
             {t('progression.gainsNoneBody')}
           </p>
@@ -968,12 +1067,25 @@ export default function MaProgressionView({
           <ul className="divide-y divide-black/5">
             {gains.items.map((gain) => {
               const dateLabel = formatDate(gain.createdAt, undefined, locale);
+              const breakdown = gain.skills
+                .filter((skill) => skill.points > 0)
+                .map((skill) => {
+                  const entry =
+                    profile?.skills?.[skill.skill as keyof UserProgressionProfile['skills']];
+                  return `${entry?.label ?? skill.skill} ${skill.points}`;
+                })
+                .join(' · ');
               return (
                 <li key={gain.id} className="flex items-center justify-between gap-3 py-2.5">
                   <span className="min-w-0">
                     <span className="block truncate text-xs font-bold text-[var(--lkv-text-primary)]">
                       {gainLabel(gain.type, t)}
                     </span>
+                    {breakdown && (
+                      <span className="block truncate text-[10.5px] text-[var(--lkv-text-secondary)]">
+                        {breakdown}
+                      </span>
+                    )}
                     {dateLabel && (
                       <span className="block text-[10.5px] text-[var(--lkv-text-muted)]">
                         {dateLabel}
@@ -987,6 +1099,18 @@ export default function MaProgressionView({
               );
             })}
           </ul>
+        )}
+        {gains.status === 'ready' && gains.nextCursor && (
+          <button
+            type="button"
+            onClick={loadMoreGains}
+            disabled={gains.loadingMore}
+            className="mt-3 inline-flex min-h-[44px] items-center text-xs font-bold text-[color:var(--lkv-text-primary)] underline-offset-2 hover:underline disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+          >
+            {gains.loadingMore
+              ? t('progression.historyLoadingMore')
+              : t('progression.historyLoadMore')}
+          </button>
         )}
         <Link
           href="/recompenses"

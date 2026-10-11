@@ -120,6 +120,172 @@ export async function getProgressionProfile(userId: string): Promise<UserProgres
   });
 }
 
+/* ============================================================================
+ * T11 — Historique paginé et état d'attente (jamais confondus).
+ * Les gains confirmés viennent des événements canoniques (post-commit de la
+ * transaction). Les intentions non résolues sont listées à part : elles ne
+ * célèbrent rien et n'affichent aucun montant.
+ * ========================================================================== */
+
+export interface ProgressionHistoryItem {
+  id: string;
+  action: string;
+  label: string;
+  points: number;
+  effectiveAt: string;
+  rulesVersion: string | null;
+  seasonId: string | null;
+  skills: Array<{ skill: string; points: number; weight: number }>;
+}
+
+export interface ProgressionHistoryPending {
+  id: string;
+  action: string;
+  label: string;
+  effectiveAt: string;
+  state: 'pending' | 'processing' | 'failed';
+}
+
+export interface ProgressionHistory {
+  items: ProgressionHistoryItem[];
+  pending: ProgressionHistoryPending[];
+  nextCursor: { before: string; beforeId: string } | null;
+}
+
+export interface ProgressionHistoryOptions {
+  limit?: number;
+  before?: string | null;
+  beforeId?: string | null;
+}
+
+/** Libellés humains des actions connues ; repli neutre sinon. */
+const PROGRESSION_ACTION_LABELS: Record<string, string> = {
+  hike_session_processed: 'Randonnée accomplie',
+  trail_prepared: 'Préparation depuis un sentier',
+  compas_prepared: 'Préparation dans le Compas',
+  checklist_completed: 'Contrôles de départ terminés',
+  kit_field_report: 'Débrief terrain du kit',
+  place_review: 'Avis sur un lieu',
+  carnet_published: 'Carnet publié',
+  trip_completed: 'Itinérance accomplie',
+  correction: 'Correction motivée',
+  ajustement: 'Ajustement administratif',
+};
+
+function historyLabel(action: string): string {
+  const known = PROGRESSION_ACTION_LABELS[action];
+  if (known) return known;
+  return action
+    .split('_')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function parseSkillAllocations(value: unknown): ProgressionHistoryItem['skills'] {
+  if (!Array.isArray(value)) return [];
+  const skills: ProgressionHistoryItem['skills'] = [];
+  for (const entry of value) {
+    if (entry === null || typeof entry !== 'object') continue;
+    const row = entry as { skill?: unknown; points?: unknown; weight?: unknown };
+    if (typeof row.skill !== 'string') continue;
+    const points = Number(row.points);
+    const weight = Number(row.weight);
+    if (!Number.isFinite(points)) continue;
+    skills.push({
+      skill: row.skill,
+      points: Math.floor(points),
+      weight: Number.isFinite(weight) ? weight : 0,
+    });
+  }
+  return skills;
+}
+
+export async function getProgressionHistory(
+  userId: string,
+  options: ProgressionHistoryOptions = {}
+): Promise<ProgressionHistory> {
+  const supabase = createProgressionServiceClient();
+  const limit = Math.max(1, Math.min(options.limit ?? 20, 50));
+
+  let eventsQuery = supabase
+    .from('progression_events')
+    .select('id, action_type, points_total, effective_at, rules_version, season_id, skill_allocations')
+    .eq('user_id', userId)
+    .order('effective_at', { ascending: false })
+    .order('id', { ascending: false })
+    .limit(limit + 1);
+  if (options.before && options.beforeId) {
+    // Pagination par curseur (effective_at, id) — jamais d'offset instable.
+    eventsQuery = eventsQuery.or(
+      `effective_at.lt.${options.before},and(effective_at.eq.${options.before},id.lt.${options.beforeId})`
+    );
+  }
+
+  const [eventsRes, pendingRes] = await Promise.all([
+    eventsQuery,
+    supabase
+      .from('progression_award_intents')
+      .select('id, action_type, business_effective_at, state')
+      .eq('user_id', userId)
+      .in('state', ['pending', 'processing', 'failed'])
+      .order('created_at', { ascending: false })
+      .limit(5),
+  ]);
+
+  if (eventsRes.error) throw eventsRes.error;
+  if (pendingRes.error) throw pendingRes.error;
+
+  const rows = (eventsRes.data ?? []) as Array<{
+    id: string;
+    action_type: string | null;
+    points_total: number | null;
+    effective_at: string | null;
+    rules_version: string | null;
+    season_id: string | null;
+    skill_allocations: unknown;
+  }>;
+
+  const hasMore = rows.length > limit;
+  const page = hasMore ? rows.slice(0, limit) : rows;
+  const last = page.at(-1);
+  const nextCursor =
+    hasMore && last?.effective_at
+      ? { before: last.effective_at, beforeId: last.id }
+      : null;
+
+  const pendingRows = (pendingRes.data ?? []) as Array<{
+    id: string;
+    action_type: string;
+    business_effective_at: string | null;
+    state: string;
+  }>;
+
+  return {
+    items: page.map((row) => ({
+      id: row.id,
+      action: row.action_type ?? 'gain',
+      label: historyLabel(row.action_type ?? 'gain'),
+      points: clampPoints(row.points_total),
+      effectiveAt: row.effective_at ?? '',
+      rulesVersion: row.rules_version ?? null,
+      seasonId: row.season_id ?? null,
+      skills: parseSkillAllocations(row.skill_allocations),
+    })),
+    pending: pendingRows.map((row) => ({
+      id: row.id,
+      action: row.action_type,
+      label: historyLabel(row.action_type),
+      effectiveAt: row.business_effective_at ?? '',
+      state: (row.state === 'processing' || row.state === 'failed' ? row.state : 'pending') as
+        | 'pending'
+        | 'processing'
+        | 'failed',
+    })),
+    nextCursor,
+  };
+}
+
 export interface LeaderboardOptions {
   limit?: number;
   cursor?: { points: number; userId: string } | null;
