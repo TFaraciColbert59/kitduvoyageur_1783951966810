@@ -478,7 +478,8 @@ export function readDigest(digest: FeedDigest, opts: ReadOptions): MeteoalarmRea
 
 /** Comme `readDigest`, depuis le JSON brut d'un flux. Corps illisible : rien d'affirmé. */
 export function readMeteoalarm(json: unknown, opts: ReadOptions): MeteoalarmReading {
-  const digest = digestMeteoalarm(json);
+  // `opts.now` aussi pour le tri des textes encore en vigueur : l'horloge réelle ferait dépendre le résultat de l'heure de l'appel.
+  const digest = digestMeteoalarm(json, opts.now);
   return digest ? readDigest(digest, opts) : { alerts: [], knowledge: 'aucune' };
 }
 
