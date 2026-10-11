@@ -65,9 +65,9 @@ Le chantier de stabilisation phase1 (I1–I6) est vérifié au 2026-10-11 :
 | T18 — Découvertes géographiques | **TESTÉ + DÉPLOYÉ** — migration `20261011174153` : `progression_discoveries` (provenance stricte verified/declared/virtual, unique par entité) + `record_verified_discovery` (seule une réalisation contrôlée pose/remonte 'verified' ; déclaration/virtuel jamais interchangeables) ; dérivation région+pays depuis session traitée via le consommateur, best-effort sans XP. Spec 6/6 ; prod vérifiée |
 | T19 — Passeport privé | **TESTÉ** — route `GET /api/progression/passport` (privé, no-store) + `PassportSection` (comptes pays/régions/massifs, provenance lisible, dates, **aucune trace/identité/coordonnée** — payload hostile testé, 20 vignettes max) intégrée à la sheet. Spec 4/4 |
 | T20 — Couche carte | **TESTÉ** — route `GET /api/progression/discoveries` (identifiants seulement, 100 bornés) + `DiscoveryMapLayer` (auto-chargée, null à vide/panne, jamais les extras) **montée dans `ExplorerMap`** en dynamic import ssr:false. Spec 4/4 (`discoveryMap.spec.tsx` — extension .tsx au lieu de .ts pour le JSX) |
-| T21 — Activités hors randonnée | À FAIRE |
-| T22 — Préparation Compas pertinente | À FAIRE |
-| T23 — Kit éprouvé | À FAIRE |
+| T21 — Activités hors randonnée | **TESTÉ** — `activityAdapters.ts` : registre (randonnée seule active ; vélo/urbain/accessible FERMÉS avec critères publiés), résolution multitag → UN adaptateur, clé d'évidence commune `activity:<session>` + claim `activity_completed`, gardes serveur (durée/mouvement/objectif adapté). Spec 6/6. Sources de données des modes fermés = dépendance P3 nommée |
+| T22 — Préparation Compas pertinente | **TESTÉ (émission fermée v1)** — `awardCompasPrepared` : voyage hors brouillon + métadonnées `compas` exigées, création vide → refus, aventure liée à un sentier → refus ; **claim d'aventure partagé** `preparation_exclusive:aventure:<tripId>` porté aussi par `trail_prepared` (exclusivité symétrique) ; `compas_prepared` absent du barème v1 → refus `action_non_autorisee` attendu. Specs producerHooks 12/12. Module d'apprentissage éditorial : fermé (registre) |
+| T23 — Kit éprouvé | **TESTÉ (émission fermée v1)** — `kitImprovementProof.ts` : diff entre versions persistées (historique), problème terrain (`defaillant`/`manquait`) RÉSOLU dans la version postérieure, **éléments vitaux conservés** (retrait → refus), version inverse/insuffisante → refus, auto-fork exclu, payloads illisibles → fail-closed ; hook `awardKitImproved` avec claim par version. Spec 6/6 |
 
 ## P4 — Contributions utiles
 

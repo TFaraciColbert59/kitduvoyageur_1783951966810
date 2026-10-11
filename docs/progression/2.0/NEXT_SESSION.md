@@ -59,16 +59,15 @@ remplace les jobs simples déjà en prod.
   avancement, distinction sans XP ; UI ≤ 3 missions sans montant). Batterie du
   jalon : vitest **395 / 9 skipped**, pgTAP **127/127** (6 suites), invariants 9/9.
 
-## Prochaine action concrète — T21 (adaptateurs d'activité) puis T22–T36
+## Prochaine action concrète — T24 (corrections utiles) puis T25–T36
 
-1. T21 : `activityAdapters.ts` — registre d'adaptateurs (randonnée déjà active ; vélo/urbain/accessible fermés avec critères publiés), clé d'activité commune (multitag = un seul gain via claim), durée/objectif contrôlés serveur.
-2. T22–T36 : suivre `tasks/todo.md` ; les producteurs restent FERMÉS tant que leur preuve n'est pas construite (colonnes/tables dédiées), chaque fermeture documentée dans ETAT.md.
+1. T24 : brancher place_reports (modération) sur une acceptation indépendante (validateur distinct de l'auteur) et un delta précis ; rapport en attente = 0 gain ; correction et accessibilité du même rapport = claim unique (`place_report`), refus/raison tracés. Migration additive si colonnes manquantes (validateur, raison). Emission `place_report_accepted` fermée v1 (registre).
+2. T25–T36 : suivre tasks/todo.md ; chaque producteur fermé tant que sa preuve n'est pas construite ; documenter dans ETAT.md.
 
-## Contrôle de réussite T21
+## Contrôle de réussite T24
 
-- Une activité multitag ne produit qu'un gain (clé commune testée).
-- Aucun adaptateur fermé ne promet de gain ; durée/objectif validés serveur.
-- `npx vitest run tests/features/progression` vert ; `npx tsc --noEmit`.
+- Rapport pending sans gain ; auto-validation refusée ; même rapport (correction ↔ accessibilité) ne double jamais (claim unique).
+- `npx vitest run tests/features/progression` vert ; tsc 0.
 
 ## Ancienne action — T13/T14 (faites)
 
