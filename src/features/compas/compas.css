@@ -2376,14 +2376,14 @@
 /* Texte officiel d'une alerte (Meteoalarm) : description et consignes du service national, telles que publiées */
 .cp-official {
   margin: 4px 0 0;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   line-height: 1.4;
   color: var(--cp-ink2);
   user-select: text;
   -webkit-user-select: text;
 }
 .cp-official > summary {
-  min-height: 32px;
+  min-height: 2rem;
   display: flex;
   align-items: center;
   cursor: pointer;

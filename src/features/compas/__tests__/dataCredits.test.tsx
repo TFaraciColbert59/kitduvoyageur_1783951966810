@@ -49,7 +49,7 @@ describe('mentions légales — sources des données', () => {
 
   it('la page des mentions légales affiche ces sources (mobile et bureau)', () => {
     const page = readFileSync(path.resolve(__dirname, '..', '..', '..', 'app', 'mentions-legales', 'page.tsx'), 'utf8');
-    expect(page).toMatch(/import \{ DataSources \} from '\.\/dataSources'/);
+    expect(page).toMatch(/import \{ DataSources \} from '\.\/DataSources'/);
     expect(page.match(/<DataSources /g)).toHaveLength(2);
   });
 });
