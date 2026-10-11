@@ -20,6 +20,7 @@ import { cached, coordKey, readShared, writeShared } from './sharedCache';
 import { haversineKm } from '@/features/adventure-prep/engine/routing';
 import { generateTripContextualKit } from '@/features/trips/engine/contextualKitEngine';
 import type { TripItem } from '@/features/trips/types/trip.types';
+import { acclimatisationNote, checkSleepingProfile } from '../engine/acclimatisation';
 import { lonOrFilter, splitLonRange } from '../engine/longitude';
 import { readCompasMeta } from '../engine/meta';
 import {
@@ -1596,10 +1597,23 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           outdoorNights: nightCtx.outdoorNights.value,
         })
       : [];
-    if (maxAltitude != null && maxAltitude >= 2500)
-      notes.push(
-        `Altitude jusqu’à ${Math.round(maxAltitude)} m : monte progressivement (300 à 500 m de couchage par jour au-dessus de 3 000 m) et garde un jour de repos tous les 3 à 4 jours.`
-      );
+    // Paliers d'altitude (règle UIAA, plan 4.5) : les nuits de l'itinéraire, contrôlées sur les altitudes repères.
+    const acclim = acclimatisationNote({
+      maxAltitudeM: maxAltitude,
+      findings: checkSleepingProfile(
+        geoSteps.map((st, i) => ({
+          day: st.day_number,
+          eleM: altitudes?.[i] ?? null,
+          stay:
+            i > 0 &&
+            distanceKm(
+              { lat: st.latitude as number, lon: st.longitude as number },
+              { lat: geoSteps[i - 1].latitude as number, lon: geoSteps[i - 1].longitude as number }
+            ) < 0.3,
+        }))
+      ),
+    });
+    if (acclim) notes.push(acclim);
 
     const stays: Array<{ stepId: string; name: string }> = [];
     const nightsOut: CompasAutofillSummary['nights'] = [];

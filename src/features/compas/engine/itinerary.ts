@@ -16,6 +16,7 @@
 
 import { distanceKm } from './places';
 import type { StageMove } from './autofill';
+import { ACCLIMATISATION_FROM_M, MAX_SLEEP_GAIN_M, REST_AFTER_NIGHTS, sleepOvershootM } from './acclimatisation';
 import { extentIsWorldwide, extentWidthDeg, lonDelta, lonInExtent, meanLon, splitLonRange, wrapLon } from './longitude';
 
 export type AreaPlaceKind = 'city' | 'town' | 'village' | 'hamlet' | 'hut' | 'camp';
@@ -367,9 +368,6 @@ function planBase(input: ItineraryInput, prof: Profile): PlannedStage[] {
   });
 }
 
-const HIGH_M = 3000;
-const MAX_NIGHT_GAIN_M = 500;
-
 /** Itinéraire itinérant (trek, vélo, road trip) : un lieu réel par soir, choisi par calcul. */
 function planMoving(
   input: ItineraryInput,
@@ -445,20 +443,25 @@ function planMoving(
         })()
       : null;
   let cur: AreaPlace = start;
-  let highStreak = (start.eleM ?? 0) >= HIGH_M ? 1 : 0;
+  // Nuits d'affilée au-dessus de 2 500 m (règle UIAA, `acclimatisation.ts`).
+  let highStreak = (start.eleM ?? 0) >= ACCLIMATISATION_FROM_M ? 1 : 0;
+  // Lieu où une nuit de plus vient d'être posée : on n'y reste pas deux fois pour la même raison.
+  let restedAt: string | null = null;
   // Traversée qui a fait demi-tour (bout de la zone) : la note n'est dite qu'une fois.
   let returning = false;
   for (let day = 1; day <= input.days; day += 1) {
     const left = input.days - day; // déplacements restants après celui-ci
-    // Acclimatation : au-dessus de 3 000 m, un jour sur place tous les trois.
-    if (prof.move === 'marche' && (cur.eleM ?? 0) >= HIGH_M && highStreak >= 3) {
-      stages.push({ day, name: cur.name, lat: cur.lat, lon: cur.lon, move: 'aucun', note: 'Journée d’acclimatation (au-dessus de 3 000 m).', placeId: cur.id });
+    // Acclimatation : au-dessus de 2 500 m, une nuit de plus au même lieu après trois nuits de montée.
+    if (prof.move === 'marche' && (cur.eleM ?? 0) >= ACCLIMATISATION_FROM_M && highStreak >= REST_AFTER_NIGHTS) {
+      stages.push({ day, name: cur.name, lat: cur.lat, lon: cur.lon, move: 'aucun', note: 'Journée d’acclimatation (au-dessus de 2 500 m) : une nuit de plus à la même altitude, comme le conseille la commission médicale de l’UIAA.', placeId: cur.id });
       highStreak = 0;
+      restedAt = cur.id;
       continue;
     }
     const goal = orderedWays[0] ?? null;
     const ideal = loopCircle ? loopCircle(day) : null;
-    const pickWith = (lo: number, hi: number) =>
+    // `strict` : la nuit ne monte jamais de plus de 500 m au-dessus de 2 500 m (UIAA) ; sinon l'excès coûte cher mais reste possible.
+    const pickWith = (lo: number, hi: number, strict: boolean) =>
       best(inZone, (p) => {
         if (used.has(p.id)) return -Infinity;
         const d = distanceKm(cur, p);
@@ -477,11 +480,17 @@ function planMoving(
           if (ideal) s -= 2 * (distanceKm(p, ideal) / crowTarget);
           if (distanceKm(p, start) > crowMax * Math.max(1, left)) return -Infinity;
         }
-        // Montée de nuit limitée en altitude.
-        if (prof.move === 'marche' && (cur.eleM ?? 0) >= 2500 && p.eleM != null && cur.eleM != null && p.eleM - cur.eleM > MAX_NIGHT_GAIN_M)
-          s -= 3;
+        // Montée de couchage limitée en altitude (altitudes inconnues : rien n'est déduit).
+        if (prof.move === 'marche') {
+          const over = sleepOvershootM(cur.eleM, p.eleM);
+          if (over > 0) {
+            if (strict) return -Infinity;
+            s -= 3 + 2 * (over / MAX_SLEEP_GAIN_M);
+          }
+        }
         return s;
       });
+    const choose = (strict: boolean) => pickWith(crowMin, crowMax, strict) ?? pickWith(crowMin * 0.5, crowMax * 1.4, strict);
     // Dernier soir d'une boucle : retour au départ.
     // Une fois le demi-tour fait, on continue de revenir (pas de zigzag).
     let next: AreaPlace | null =
@@ -489,7 +498,23 @@ function planMoving(
         ? start
         : returning
           ? null
-          : (pickWith(crowMin, crowMax) ?? pickWith(crowMin * 0.5, crowMax * 1.4));
+          : choose(true);
+    // Aucun lieu sans saut de couchage trop grand, mais il y en a avec : une nuit
+    // de plus ici d'abord (acclimatation), puis l'étape, dite, si rien d'autre n'existe.
+    let climbM = 0;
+    if (!next && !returning && prof.move === 'marche' && !(goal && distanceKm(cur, goal) <= crowMax)) {
+      const risky = choose(false);
+      if (risky) {
+        if (restedAt !== cur.id) {
+          stages.push({ day, name: cur.name, lat: cur.lat, lon: cur.lon, move: 'aucun', note: 'Journée d’acclimatation : le prochain lieu est à plus de 500 m plus haut que cette nuit (altitudes repères). Une nuit de plus ici avant de monter.', placeId: cur.id });
+          restedAt = cur.id;
+          highStreak = 0;
+          continue;
+        }
+        next = risky;
+        climbM = sleepOvershootM(cur.eleM, risky.eleM) + MAX_SLEEP_GAIN_M;
+      }
+    }
     let back = false;
     if (!next && shape === 'traverse' && !goal) {
       // Bout de la zone atteint : on revient vers le départ par d'autres lieux,
@@ -521,10 +546,17 @@ function planMoving(
       lat: next.lat,
       lon: next.lon,
       move: prof.move,
-      note: day === 1 ? `Départ ${fromPlace(start.name)}.` : back && !returning ? 'Retour par un autre chemin : la zone s’arrête ici.' : null,
+      note: [
+        day === 1 ? `Départ ${fromPlace(start.name)}.` : back && !returning ? 'Retour par un autre chemin : la zone s’arrête ici.' : null,
+        climbM > 0
+          ? `Nuit environ ${Math.round(climbM / 10) * 10} m plus haut que la veille, plus que les 300 à 500 m conseillés au-dessus de 2 500 m (altitudes repères) : aucun lieu intermédiaire dans la zone.`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(' ') || null,
       placeId: next.id.startsWith('w:') ? null : next.id,
     });
-    highStreak = (next.eleM ?? 0) >= HIGH_M ? highStreak + 1 : 0;
+    highStreak = (next.eleM ?? 0) >= ACCLIMATISATION_FROM_M ? highStreak + 1 : 0;
     returning = returning || back;
     cur = next;
   }
