@@ -13,6 +13,8 @@
  * https://artificialintelligenceact.eu/article/50/
  */
 
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
@@ -173,5 +175,14 @@ describe('Compas vide : la mention avant le premier envoi', () => {
   it('axe-core : zéro violation avec la mention', async () => {
     const { container } = render(<CompasStart signedIn aiOn />);
     expect(await scan(container)).toEqual([]);
+  });
+});
+
+describe('panneau de préparation : la mention ne le fait pas sortir de l’écran', () => {
+  it('il défile au lieu de déborder (paysage, écran court) : « Arrêter » reste atteignable', () => {
+    const css = readFileSync(path.resolve(__dirname, '../compas.css'), 'utf8');
+    const block = /\n\.cp-prep \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(block).toMatch(/max-height:\s*calc\(100dvh/);
+    expect(block).toMatch(/overflow-y:\s*auto/);
   });
 });
