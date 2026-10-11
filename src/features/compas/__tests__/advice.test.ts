@@ -78,6 +78,74 @@ describe('conseils essentiels par règles', () => {
   });
 });
 
+describe('conseils essentiels : la précaution d’altitude et l’eau tropicale ne prennent pas la place d’un conseil de sécurité', () => {
+  // Alpinisme en solo au Pérou en janvier (l'été austral) : l'autofill donne l'altitude des seuls lieux.
+  const peru: AdviceInput = {
+    activity: 'mountaineering',
+    nights: [],
+    maxAltitudeM: 3050,
+    altitudeFrom: 'lieux',
+    party: 1,
+    startDate: '2027-01-15',
+    lat: -9.5,
+    countryCode: 'PE',
+  };
+  const mentions = (notes: string[]) => ({
+    altitude: notes.some((n) => /2 500 m/.test(n)),
+    solo: notes.some((n) => /^Seul·e/.test(n)),
+    eau: notes.some((n) => /tropiques/.test(n)),
+    orages: notes.some((n) => /orages/.test(n)),
+    refuge: notes.some((n) => /refuge/.test(n)),
+    bivouac: notes.some((n) => /^Bivouac/.test(n)),
+  });
+
+  it('altitude, solo, orages : l’eau tropicale s’ajoute, elle ne chasse pas les orages', () => {
+    expect(mentions(essentialAdvice(peru))).toEqual({
+      altitude: true,
+      solo: true,
+      eau: true,
+      orages: true,
+      refuge: false,
+      bivouac: false,
+    });
+  });
+
+  it('altitude des lieux basse (précaution non mesurée) : la précaution s’ajoute aussi, les orages restent', () => {
+    for (const maxAltitudeM of [800, null]) {
+      const notes = essentialAdvice({ ...peru, maxAltitudeM });
+      expect(notes[0], String(maxAltitudeM)).toMatch(/^Altitude du parcours non mesurée/);
+      expect(mentions(notes), String(maxAltitudeM)).toMatchObject({ solo: true, eau: true, orages: true });
+    }
+  });
+
+  it('trek dans les Alpes en été avec refuge et bivouac : la précaution ne fait tomber ni orages, ni refuge, ni bivouac', () => {
+    const notes = essentialAdvice({
+      activity: 'trekking',
+      nights: ['refuge', 'bivouac'],
+      maxAltitudeM: 1800,
+      altitudeFrom: 'lieux',
+      party: 3,
+      startDate: '2027-07-14',
+      lat: 45.9,
+      countryCode: 'FR',
+    });
+    expect(notes[0]).toMatch(/^Altitude du parcours non mesurée/);
+    expect(mentions(notes)).toMatchObject({ orages: true, refuge: true, bivouac: true });
+  });
+
+  it('le plafond de trois conseils de sécurité tient toujours : seules la précaution et l’eau tropicale s’y ajoutent', () => {
+    const notes = essentialAdvice({
+      ...peru,
+      maxAltitudeM: 800,
+      nights: ['refuge', 'bivouac'],
+      startDate: '2027-07-10',
+    });
+    // Juillet au Pérou : l'hiver austral (avalanche), pas d'orages. Précaution et eau en plus de trois conseils comptés.
+    expect(notes).toHaveLength(5);
+    expect(notes.filter((n) => !/^Altitude du parcours non mesurée|tropiques/.test(n))).toHaveLength(3);
+  });
+});
+
 describe('suggestions de l’IA', () => {
   it('dites facultatives et venant de l’IA', () => {
     expect(aiSuggestion('Prévois une frontale de secours.')).toBe(`${AI_SUGGESTION_PREFIX}prévois une frontale de secours.`);

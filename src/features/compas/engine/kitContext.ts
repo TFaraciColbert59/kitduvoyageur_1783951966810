@@ -41,15 +41,22 @@ export function datesWithoutForecast(input: {
  * Altitude des règles du kit (plan 4.8) : le profil du tracé s'il est lu (point
  * le plus haut ET le plus bas mesurés) ; sinon le relief sous les lieux du
  * voyage, retenu comme un plancher (`altitudeFrom: 'lieux'`) ; sinon inconnue.
- * Jamais une altitude devinée d'après un pays.
+ * `route` n'est donné que pour une VRAIE géométrie (route du catalogue, tracé
+ * préparé) : le profil de lignes droites entre les étapes n'est pas le parcours
+ * (un tunnel sous le Mont-Blanc, une ascension dont le sommet n'est pas une étape).
+ * `placesMinM` : l'étape la plus basse, le parcours y passe ; elle s'ajoute sans
+ * jamais remplacer le point bas du tracé. Jamais une altitude devinée d'après un pays.
  */
 export function kitAltitude(input: {
   route: { maxM: number; minM: number } | null;
   placesMaxM: number | null;
-}): Pick<KitContext, 'maxAltitudeM' | 'minAltitudeM' | 'altitudeFrom'> {
-  if (input.route) return { maxAltitudeM: input.route.maxM, minAltitudeM: input.route.minM, altitudeFrom: 'trace' };
+  placesMinM?: number | null;
+}): Pick<KitContext, 'maxAltitudeM' | 'minAltitudeM' | 'altitudeFrom' | 'lowestPlaceM'> {
+  const lowest = input.placesMinM != null ? { lowestPlaceM: input.placesMinM } : {};
+  if (input.route)
+    return { maxAltitudeM: input.route.maxM, minAltitudeM: input.route.minM, altitudeFrom: 'trace', ...lowest };
   if (input.placesMaxM != null && input.placesMaxM > 0)
-    return { maxAltitudeM: input.placesMaxM, minAltitudeM: null, altitudeFrom: 'lieux' };
+    return { maxAltitudeM: input.placesMaxM, minAltitudeM: null, altitudeFrom: 'lieux', ...lowest };
   return { maxAltitudeM: null, minAltitudeM: null, altitudeFrom: 'trace' };
 }
 
@@ -59,6 +66,8 @@ export function buildKitContext(input: {
   /** Voir `KitContext.altitudeFrom` : `trace` par défaut. */
   altitudeFrom?: KitContext['altitudeFrom'];
   minAltitudeM?: number | null;
+  /** Voir `KitContext.lowestPlaceM`. */
+  lowestPlaceM?: number | null;
   activity: string | null;
   normals: ClimateNormals | null;
   dates: readonly string[];
@@ -68,6 +77,7 @@ export function buildKitContext(input: {
     maxAltitudeM: input.maxAltitudeM,
     ...(input.altitudeFrom ? { altitudeFrom: input.altitudeFrom } : {}),
     ...(input.minAltitudeM !== undefined ? { minAltitudeM: input.minAltitudeM } : {}),
+    ...(input.lowestPlaceM != null ? { lowestPlaceM: input.lowestPlaceM } : {}),
     activity: input.activity,
     climate: climateWindow(input.normals, input.dates),
   };

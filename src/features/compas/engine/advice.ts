@@ -54,9 +54,19 @@ function seasonAt(startDate: string | null, lat: number | null): Season {
   return winter ? 'hiver' : summer ? 'ete' : 'autre';
 }
 
-/** Au plus `max` conseils, du plus grave au plus courant. */
+/**
+ * Au plus `max` conseils de sécurité, du plus grave au plus courant. Deux lignes s'y ajoutent sans compter :
+ * la précaution d'altitude non mesurée (l'autofill la déclenche toujours en trek, alpinisme, ski et escalade)
+ * et l'eau à traiter sous les tropiques. Elles viennent d'une donnée absente ou d'une latitude, pas d'un
+ * danger de plus à classer : comptées, elles chassaient les orages, le refuge ou le bivouac.
+ */
 export function essentialAdvice(input: AdviceInput, max = 3): string[] {
   const out: string[] = [];
+  const extras = new Set<string>();
+  const addExtra = (note: string) => {
+    out.push(note);
+    extras.add(note);
+  };
   const alt = input.maxAltitudeM ?? 0;
   const season = seasonAt(input.startDate, input.lat);
   const mountain = alt >= 1500 || input.activity === 'mountaineering' || input.activity === 'ski';
@@ -71,7 +81,7 @@ export function essentialAdvice(input: AdviceInput, max = 3): string[] {
     (input.maxAltitudeM == null || input.altitudeFrom === 'lieux') &&
     ALTITUDE_PRONE_ACTIVITIES.has(input.activity)
   )
-    out.push(
+    addExtra(
       'Altitude du parcours non mesurée : au-delà de 2 500 m, monte progressivement et bois souvent ; mal de tête, nausée ou essoufflement au repos : redescends.'
     );
   if (mountain && season === 'hiver')
@@ -92,7 +102,7 @@ export function essentialAdvice(input: AdviceInput, max = 3): string[] {
   // tropiques (latitude), ni le robinet ni les ruisseaux ne sont garantis ;
   // en altitude, les névés, torrents et sources ne sont pas contrôlés.
   if (isTropicalLatitude(input.lat))
-    out.push(
+    addExtra(
       'Sous les tropiques, l’eau du robinet et celle des ruisseaux n’est pas toujours potable : traite-la (filtre, pastilles ou ébullition) ou prends de l’eau en bouteille scellée.'
     );
   else if (alt > 2400)
@@ -105,7 +115,8 @@ export function essentialAdvice(input: AdviceInput, max = 3): string[] {
     out.push(
       'Bivouac : vérifie les règles du lieu ; dans les parcs nationaux et les réserves, il est souvent limité (horaires, distance à la route) ou interdit.'
     );
-  return out.slice(0, max);
+  let counted = 0;
+  return out.filter((note) => extras.has(note) || counted++ < max);
 }
 
 /** Thèmes déjà couverts par un conseil des règles : l'IA ne les redit pas. */

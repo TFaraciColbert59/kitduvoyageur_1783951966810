@@ -9,7 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import fixtures from './fixtures/power-climatology.json';
 import { adviseKit, type KitContext } from '../engine/kitRules';
 import { essentialAdvice, type AdviceInput } from '../engine/advice';
-import { kitAltitude } from '../engine/kitContext';
+import { buildKitContext, kitAltitude } from '../engine/kitContext';
 import { powerClimateNormals } from '../engine/metno';
 import type { CompasDayPlan } from '../engine/compasModel';
 import { climateWindow } from '@/features/trips/engine/climate';
@@ -24,7 +24,7 @@ vi.mock('@/lib/geo/terrainElevation', () => ({
   TERRAIN_SOURCE: 'Terrain Tiles (test)',
 }));
 
-import { pointsMaxAltitudeM } from '../server/elevation';
+import { pointsAltitudeRange, pointsMaxAltitudeM } from '../server/elevation';
 
 const COUNTRIES = ['NP', 'PE', 'MA', 'IS', 'FR'] as const;
 
@@ -218,6 +218,70 @@ describe('moustiques : le point le plus bas du tracé décide, pas le plus haut'
   });
 });
 
+describe('moustiques : un mois frais lu en un seul point ne parle pas pour un tracé qui descend', () => {
+  // Trek Cusco → Machu Picchu → Puerto Maldonado, départ à plus de dix jours : plus de prévision, les
+  // normales NASA POWER ne sont lues qu'à la première étape (cellule de 3 740 m, 9,1 °C en novembre).
+  const cuscoTrek = (route: { maxM: number; minM: number }) =>
+    buildKitContext({
+      lat: -13.53,
+      ...kitAltitude({ route, placesMaxM: null }),
+      activity: 'trekking',
+      normals: powerClimateNormals(fixtures.cusco.payload),
+      dates: ['2027-11-10'],
+    });
+  const advise = (context: KitContext) =>
+    adviseKit({ lines: [], forecasts: [], dayPlans: [], waterPointsCount: null, context });
+  const has = (context: KitContext) => advise(context).some((x) => x.need === 'moustiques');
+
+  it('le tracé mesuré descend à 190 m dans les basses terres : le conseil reste malgré le mois frais de Cusco', () => {
+    const context = cuscoTrek({ maxM: 3750, minM: 190 });
+    // Le mois frais est bien lu (9,1 °C en novembre) : sans cela le test ne prouverait rien.
+    expect(context.climate?.months[0]).toMatchObject({ month: 11 });
+    expect(context.climate?.months[0].tMeanC).toBeLessThan(15);
+    expect(has(context)).toBe(true);
+  });
+
+  it('un tracé qui reste au-dessus de 2 500 m : toujours pas de moustiques', () => {
+    expect(has(cuscoTrek({ maxM: 3750, minM: 2900 }))).toBe(false);
+  });
+
+  it('sans tracé mesuré, l’étape la plus basse (190 m) suffit à garder le conseil ; toutes les étapes en altitude, non', () => {
+    const lieux = (placesMinM: number) =>
+      buildKitContext({
+        lat: -13.53,
+        ...kitAltitude({ route: null, placesMaxM: 3400, placesMinM }),
+        activity: 'trekking',
+        normals: powerClimateNormals(fixtures.cusco.payload),
+        dates: ['2027-11-10'],
+      });
+    expect(lieux(190)).toMatchObject({ altitudeFrom: 'lieux', lowestPlaceM: 190 });
+    expect(has(lieux(190))).toBe(true);
+    expect(has(lieux(3300))).toBe(false);
+  });
+
+  it('une étape basse l’emporte aussi sur un point bas de tracé lu trop haut (le parcours passe par l’étape)', () => {
+    const context = buildKitContext({
+      lat: -13.53,
+      ...kitAltitude({ route: { maxM: 3750, minM: 2900 }, placesMaxM: 3400, placesMinM: 190 }),
+      activity: 'trekking',
+      normals: null,
+      dates: [],
+    });
+    expect(has(context)).toBe(true);
+  });
+
+  it('aucun point bas connu : le mois frais du lieu décide, faute de mieux', () => {
+    const context = buildKitContext({
+      lat: -13.53,
+      ...kitAltitude({ route: null, placesMaxM: null }),
+      activity: 'hiking',
+      normals: powerClimateNormals(fixtures.cusco.payload),
+      dates: ['2027-11-10'],
+    });
+    expect(has(context)).toBe(false);
+  });
+});
+
 describe('kitAltitude : le tracé d’abord, puis le relief des lieux, sinon inconnue', () => {
   it('profil du tracé lu : point le plus haut et le plus bas, source « trace »', () => {
     expect(kitAltitude({ route: { maxM: 3100, minM: 120 }, placesMaxM: 400 })).toEqual({
@@ -232,6 +296,22 @@ describe('kitAltitude : le tracé d’abord, puis le relief des lieux, sinon inc
       minAltitudeM: null,
       altitudeFrom: 'lieux',
     });
+  });
+  it('l’étape la plus basse s’ajoute, sans remplacer le point bas du tracé ni changer la source', () => {
+    expect(kitAltitude({ route: null, placesMaxM: 3400, placesMinM: 190 })).toEqual({
+      maxAltitudeM: 3400,
+      minAltitudeM: null,
+      altitudeFrom: 'lieux',
+      lowestPlaceM: 190,
+    });
+    expect(kitAltitude({ route: { maxM: 3100, minM: 1200 }, placesMaxM: 400, placesMinM: 190 })).toEqual({
+      maxAltitudeM: 3100,
+      minAltitudeM: 1200,
+      altitudeFrom: 'trace',
+      lowestPlaceM: 190,
+    });
+    // Aucun relief lu : rien n'est inventé.
+    expect(kitAltitude({ route: null, placesMaxM: null, placesMinM: null })).not.toHaveProperty('lowestPlaceM');
   });
   it('ni tracé ni relief : inconnue, jamais devinée', () => {
     for (const placesMaxM of [null, 0])
@@ -325,5 +405,53 @@ describe('pointsMaxAltitudeM : altitude de secours lue sur le relief', () => {
     expect(await pointsMaxAltitudeM([{ lat: 1, lon: 1 }])).toBeNull();
     expect(await pointsMaxAltitudeM([])).toBeNull();
     expect(await pointsMaxAltitudeM([{ lat: Number.NaN, lon: 1 }])).toBeNull();
+  });
+});
+
+describe('pointsAltitudeRange : le plus haut et le plus bas des lieux, lus sur le relief', () => {
+  beforeEach(() => h.elevations.mockReset());
+
+  it('les deux extrêmes des lieux, [lon, lat] dans l’ordre ; le maximum est celui de pointsMaxAltitudeM', async () => {
+    h.elevations.mockResolvedValue([3400, 2040, null, 190]);
+    const points = [
+      { lat: -13.5, lon: -72 },
+      { lat: -13.1, lon: -72.5 },
+      { lat: -12.9, lon: -71.4 },
+      { lat: -12.6, lon: -69.2 },
+    ];
+    expect(await pointsAltitudeRange(points)).toEqual({ maxM: 3400, minM: 190 });
+    expect(h.elevations).toHaveBeenCalledWith([
+      [-72, -13.5],
+      [-72.5, -13.1],
+      [-71.4, -12.9],
+      [-69.2, -12.6],
+    ]);
+    expect(await pointsMaxAltitudeM(points)).toBe(3400);
+  });
+
+  it('un seul lieu : le même point haut et bas', async () => {
+    h.elevations.mockResolvedValue([2310]);
+    expect(await pointsAltitudeRange([{ lat: 28.2, lon: 83.9 }])).toEqual({ maxM: 2310, minM: 2310 });
+  });
+
+  it('une étape au niveau de la mer est un point bas connu, tant qu’une autre est plus haute', async () => {
+    h.elevations.mockResolvedValue([0, 3050]);
+    expect(
+      await pointsAltitudeRange([
+        { lat: -12, lon: -77 },
+        { lat: -9.5, lon: -77.5 },
+      ])
+    ).toEqual({ maxM: 3050, minM: 0 });
+  });
+
+  it('relief injoignable, mer partout (0 m) ou aucun lieu : null, rien n’est supposé', async () => {
+    h.elevations.mockResolvedValue(null);
+    expect(await pointsAltitudeRange([{ lat: 1, lon: 1 }])).toBeNull();
+    h.elevations.mockRejectedValue(new Error('réseau coupé'));
+    expect(await pointsAltitudeRange([{ lat: 1, lon: 1 }])).toBeNull();
+    h.elevations.mockResolvedValue([0]);
+    expect(await pointsAltitudeRange([{ lat: 1, lon: 1 }])).toBeNull();
+    expect(await pointsAltitudeRange([])).toBeNull();
+    expect(await pointsAltitudeRange([{ lat: Number.NaN, lon: 1 }])).toBeNull();
   });
 });

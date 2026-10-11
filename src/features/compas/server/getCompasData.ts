@@ -33,13 +33,13 @@ import {
   type CompasWeatherDayInput,
 } from '../engine/compasModel';
 import { readCompasMeta } from '../engine/meta';
-import { trackKey } from '../engine/track';
+import { geojsonLatLon, trackKey } from '../engine/track';
 import { resolveProjectContext, type ProjectContext } from '../engine/projectContext';
 import { readProfile, tripBasis } from './compasServer';
 import { retryParts, staleParts, unionParts, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { relevantAffiliateLinks } from '../engine/affiliates';
 import { getOfficialAlerts } from './officialAlerts';
-import { getRouteElevation, pointsMaxAltitudeM } from './elevation';
+import { getRouteElevation, pointsAltitudeRange } from './elevation';
 import type { ElevationProfile } from '../engine/elevation';
 import { destinationZone, getClimateNormals, getCompasWeather, type CompasWeather } from './weather';
 
@@ -542,12 +542,18 @@ export async function getCompasData(): Promise<CompasData | null> {
       ? { lat: firstPoint.lat, lon: firstPoint.lon }
       : null;
   const routeId = compasMeta.routeId ?? num(hub.hiking?.routeId);
+  // Tracé réel : la route du catalogue ou le tracé préparé (routé entre les étapes), tant que les étapes n'ont
+  // pas bougé. Seul son profil est une altitude MESURÉE du parcours : des lignes droites entre les étapes
+  // survolent un massif (tunnel de Chamonix à Courmayeur) ou manquent un sommet qui n'est pas une étape.
+  const realTrack = hub.hiking?.routeGeojson ?? preparedTrack(trip.metadata, draft.route.coords);
+  const trackCoords = geojsonLatLon(realTrack);
+  const hasRealTrack = trackCoords.length >= 2;
   // Tout ce qui ne dépend que du brouillon part en même temps : chaque action
   // du Compas recharge cette page, une chaîne d'attentes la rendait lente.
   // Normales NASA POWER du lieu (gardées 30 jours) : froid, pluie, chaleur au-delà de la prévision.
   const kitPoint = origin ?? anchorPoint(trip.metadata);
   const hasDates = plans.some((d) => d.date != null) || Boolean(trip.start_date);
-  const [weather, routePois, officialAlerts, elevation, fx, climateNormals, placesAltitudeM, budgetFx] = await Promise.all([
+  const [weather, routePois, officialAlerts, elevation, fx, climateNormals, placesAltitude, budgetFx] = await Promise.all([
     getCompasWeather({
       origin,
       tripDays: plans
@@ -567,12 +573,13 @@ export async function getCompasData(): Promise<CompasData | null> {
       to: trip.end_date ?? trip.start_date ?? null,
       timeZone: zone,
     }),
-    // Le tracé ne dépend pas de la météo : le brouillon suffit.
-    getRouteElevation(draft.route.coords),
+    // Le tracé ne dépend pas de la météo : le brouillon suffit. Sans tracé réel, le profil des lignes droites
+    // entre les étapes ne sert qu'à l'affichage (jamais au kit).
+    getRouteElevation(hasRealTrack ? trackCoords : draft.route.coords),
     getEurRate(input.trip.budgetCurrency ?? 'EUR'),
     kitPoint && hasDates ? getClimateNormals(kitPoint.lat, kitPoint.lon) : Promise.resolve(null),
-    // Altitude de secours du kit : sans tracé, le relief des lieux du voyage (jamais une valeur par pays).
-    pointsMaxAltitudeM(points.filter((p) => p.kind === 'step')),
+    // Altitude de secours du kit : sans tracé réel, le relief des lieux du voyage (jamais une valeur par pays).
+    pointsAltitudeRange(points.filter((p) => p.kind === 'step')),
     getBudgetFx({
       tripCurrency: input.trip.budgetCurrency ?? 'EUR',
       traveller: traveller.currency,
@@ -611,8 +618,12 @@ export async function getCompasData(): Promise<CompasData | null> {
   }));
   const kitContext = buildKitContext({
     lat: kitPoint?.lat ?? null,
-    // Profil du tracé d'abord ; sans tracé, le relief des lieux, retenu comme un plancher.
-    ...kitAltitude({ route: elevation, placesMaxM: placesAltitudeM }),
+    // Profil d'un tracé réel d'abord ; sans lui, le relief des lieux, retenu comme un plancher.
+    ...kitAltitude({
+      route: hasRealTrack ? elevation : null,
+      placesMaxM: placesAltitude?.maxM ?? null,
+      placesMinM: placesAltitude?.minM ?? null,
+    }),
     activity: trip.primary_activity ?? null,
     normals: climateNormals,
     dates: datesWithoutForecast({
@@ -650,7 +661,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     routePois,
     itinerary,
     bookings,
-    routeGeojson: hub.hiking?.routeGeojson ?? preparedTrack(trip.metadata, baseModel.route.coords),
+    routeGeojson: realTrack,
     elevation,
     countryCode: trip.destination_country_code
       ? String(trip.destination_country_code).toLowerCase()

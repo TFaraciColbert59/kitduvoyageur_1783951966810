@@ -70,3 +70,30 @@ export function buildTrack(
 
 /** Points au plus dans le tracé d'un voyage (plan 1.1). */
 export const MAX_TRACK_POINTS = 600;
+
+/**
+ * Points `[lat, lon]`, dans l'ordre, d'un GeoJSON de tracé (LineString, MultiLineString, Feature ou
+ * FeatureCollection de lignes) : la forme que lit le relief. Tout le reste (point, polygone, valeur
+ * illisible) est ignoré, jamais complété : sans ligne lisible, rien.
+ */
+export function geojsonLatLon(geojson: unknown): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  const line = (coords: unknown) => {
+    if (!Array.isArray(coords)) return;
+    for (const pt of coords) {
+      if (!Array.isArray(pt) || typeof pt[0] !== 'number' || typeof pt[1] !== 'number') continue;
+      const [lon, lat] = pt as [number, number];
+      if (Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180) out.push([lat, lon]);
+    }
+  };
+  const walk = (g: unknown, depth: number) => {
+    if (!g || typeof g !== 'object' || depth > 3) return;
+    const o = g as { type?: unknown; coordinates?: unknown; geometry?: unknown; features?: unknown };
+    if (o.type === 'LineString') line(o.coordinates);
+    else if (o.type === 'MultiLineString' && Array.isArray(o.coordinates)) o.coordinates.forEach(line);
+    else if (o.type === 'Feature') walk(o.geometry, depth + 1);
+    else if (o.type === 'FeatureCollection' && Array.isArray(o.features)) o.features.forEach((f) => walk(f, depth + 1));
+  };
+  walk(geojson, 0);
+  return out;
+}
