@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import {
   getProgressionRhythm,
+  setCompetitionOptIn,
   updateProgressionRhythm,
 } from '@/features/progression/server/rhythmService';
 
@@ -19,10 +20,16 @@ const updateSchema = z
   .object({
     rhythmId: z.union([z.literal('leger'), z.literal('regulier'), z.literal('intense'), z.null()]).optional(),
     paused: z.boolean().optional(),
+    // T35 — opt-in de compétition, DISTINCT de la confidentialité générale.
+    competitionOptIn: z.boolean().optional(),
   })
-  .refine((value) => value.rhythmId !== undefined || value.paused !== undefined, {
-    message: 'aucune préférence fournie',
-  });
+  .refine(
+    (value) =>
+      value.rhythmId !== undefined ||
+      value.paused !== undefined ||
+      value.competitionOptIn !== undefined,
+    { message: 'aucune préférence fournie' }
+  );
 
 export async function GET() {
   try {
@@ -89,6 +96,14 @@ export async function POST(request: NextRequest) {
         { status: result.reason === 'rythme_invalide' ? 400 : 503 }
       );
     }
+
+    if (parsed.data.competitionOptIn !== undefined) {
+      const optIn = await setCompetitionOptIn(user.id, parsed.data.competitionOptIn);
+      if (!optIn.ok) {
+        return NextResponse.json({ success: false, error: 'unavailable' }, { status: 503 });
+      }
+    }
+
     return NextResponse.json({ success: true }, { headers: NO_STORE_HEADERS });
   } catch (err) {
     console.error('[API /api/progression/preferences] POST', err);

@@ -77,6 +77,29 @@ export type RhythmUpdateResult =
   | { ok: true }
   | { ok: false; reason: 'rythme_invalide' | 'unavailable' };
 
+/**
+ * T35 — Opt-in de compétition (distinct de la confidentialité) : le retrait
+ * supprime effectivement les agrégats du compte (fonction SQL verrouillée).
+ */
+export async function setCompetitionOptIn(
+  userId: string,
+  optIn: boolean
+): Promise<{ ok: boolean; reason?: string }> {
+  try {
+    const supabase = createRhythmClient();
+    const { data, error } = await supabase.rpc('set_competition_optin', {
+      p_user_id: userId,
+      p_opt_in: optIn,
+    });
+    if (error) throw new Error(error.message);
+    const payload = data !== null && typeof data === 'object' ? (data as { ok?: unknown }) : null;
+    return { ok: payload?.ok === true };
+  } catch (error) {
+    console.error('[progression/rhythm] opt-in compétition:', error);
+    return { ok: false, reason: 'unavailable' };
+  }
+}
+
 export async function updateProgressionRhythm(
   userId: string,
   update: { rhythmId?: WeeklyRhythmId | null; paused?: boolean }
