@@ -80,6 +80,66 @@ function utcDayKey(value: string | null | undefined): string | null {
 }
 
 /**
+ * T26 — Photo de terrain utile à un lieu → Partager (émission fermée en v1 :
+ * `place_photo` n'existe qu'au registre v2).
+ *
+ * Preuves livrées : photo publiée avec EXIF retiré (consentement de
+ * publication), auteur possédant un avis qualifié sur le même lieu (preuve de
+ * visite par proxy documentée — la validation par modérateur et le plafond
+ * 3/activité restent à construire, critères publiés au registre). Claim média
+ * partagé : la même photo dans un carnet ne peut pas être recréditée ici.
+ */
+export async function awardPlacePhoto(photoId: string): Promise<AwardProducerResult> {
+  try {
+    const supabase = getServiceSupabase();
+    if (!supabase) return { success: false, outcome: 'refused', reason: 'service_indisponible' };
+
+    const { data: photo, error } = await supabase
+      .from('place_photos')
+      .select('id, place_id, author_id, url, has_exif_stripped')
+      .eq('id', photoId)
+      .maybeSingle();
+    if (error || !photo) {
+      return { success: false, outcome: 'refused', reason: 'photo_introuvable' };
+    }
+    if (photo.has_exif_stripped !== true) {
+      return { success: false, outcome: 'refused', reason: 'consentement_requis' };
+    }
+
+    const { count, error: reviewError } = await supabase
+      .from('place_reviews')
+      .select('id', { count: 'exact', head: true })
+      .eq('place_id', photo.place_id)
+      .eq('author_id', photo.author_id);
+    if (reviewError) {
+      return { success: false, outcome: 'refused', reason: 'preuves_indisponibles' };
+    }
+    if ((count ?? 0) === 0) {
+      return { success: false, outcome: 'refused', reason: 'visite_non_prouvee' };
+    }
+
+    const { mediaClaimFor } = await import('./mediaClaim');
+    const claim = mediaClaimFor(photo.url ?? '');
+    if (!claim) {
+      return { success: false, outcome: 'refused', reason: 'media_invalide' };
+    }
+
+    return award({
+      userId: photo.author_id,
+      action: 'place_photo',
+      sourceType: 'place_photo',
+      sourceId: photoId,
+      effectiveAt: new Date().toISOString(),
+      claims: [claim],
+      metadata: { placeId: photo.place_id },
+    });
+  } catch (error) {
+    console.error('[progression/producerHooks] photo de lieu (non bloquant):', error);
+    return { success: false, outcome: 'refused', reason: 'hook_error' };
+  }
+}
+
+/**
  * T25 — Réponse acceptée et utile → Entraider (émission fermée en v1 :
  * `answer_accepted` n'existe qu'au registre v2).
  * Preuve : réponse `is_accepted` (décision du demandeur, vérifiée par la

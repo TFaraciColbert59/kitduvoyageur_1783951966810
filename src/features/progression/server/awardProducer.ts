@@ -21,6 +21,7 @@ export type ProducerAction =
   | 'kit_improved'
   | 'place_report_accepted'
   | 'answer_accepted'
+  | 'place_photo'
   | 'trip_completed';
 
 export interface AwardProducerInput {
