@@ -9,6 +9,13 @@ import {
 export const dynamic = 'force-dynamic';
 
 /**
+ * Traitement par lots, parfois long : on déclare le maximum d'une fonction
+ * Vercel Hobby (300 s, https://vercel.com/docs/functions/limitations#max-duration)
+ * au lieu de dépendre du défaut de la plateforme.
+ */
+export const maxDuration = 300;
+
+/**
  * Cron de rafraîchissement des guides pays — hors trafic.
  * Déclencheur EXTERNE : `Authorization: Bearer ${CRON_SECRET}`.
  *
