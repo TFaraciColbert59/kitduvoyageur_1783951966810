@@ -9,7 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import fixtures from './fixtures/power-climatology.json';
 import { adviseKit, type KitContext } from '../engine/kitRules';
 import { essentialAdvice, type AdviceInput } from '../engine/advice';
-import { kitAltitude } from '../engine/kitContext';
+import { buildKitContext, kitAltitude } from '../engine/kitContext';
 import { powerClimateNormals } from '../engine/metno';
 import type { CompasDayPlan } from '../engine/compasModel';
 import { climateWindow } from '@/features/trips/engine/climate';
@@ -215,6 +215,45 @@ describe('moustiques : le point le plus bas du tracé décide, pas le plus haut'
   });
   it('des lieux hauts seuls (plancher) ne retirent pas le conseil', () => {
     expect(has(tropic({ maxAltitudeM: 3400, altitudeFrom: 'lieux' }))).toBe(true);
+  });
+});
+
+describe('moustiques : un mois frais lu en un seul point ne parle pas pour un tracé qui descend', () => {
+  // Trek Cusco → Machu Picchu → Puerto Maldonado, départ à plus de dix jours : plus de prévision, les
+  // normales NASA POWER ne sont lues qu'à la première étape (cellule de 3 740 m, 9,1 °C en novembre).
+  const cuscoTrek = (route: { maxM: number; minM: number }) =>
+    buildKitContext({
+      lat: -13.53,
+      ...kitAltitude({ route, placesMaxM: null }),
+      activity: 'trekking',
+      normals: powerClimateNormals(fixtures.cusco.payload),
+      dates: ['2027-11-10'],
+    });
+  const advise = (context: KitContext) =>
+    adviseKit({ lines: [], forecasts: [], dayPlans: [], waterPointsCount: null, context });
+  const has = (context: KitContext) => advise(context).some((x) => x.need === 'moustiques');
+
+  it('le tracé mesuré descend à 190 m dans les basses terres : le conseil reste malgré le mois frais de Cusco', () => {
+    const context = cuscoTrek({ maxM: 3750, minM: 190 });
+    // Le mois frais est bien lu (9,1 °C en novembre) : sans cela le test ne prouverait rien.
+    expect(context.climate?.months[0]).toMatchObject({ month: 11 });
+    expect(context.climate?.months[0].tMeanC).toBeLessThan(15);
+    expect(has(context)).toBe(true);
+  });
+
+  it('un tracé qui reste au-dessus de 2 500 m : toujours pas de moustiques', () => {
+    expect(has(cuscoTrek({ maxM: 3750, minM: 2900 }))).toBe(false);
+  });
+
+  it('aucun point bas connu : le mois frais du lieu décide, faute de mieux', () => {
+    const context = buildKitContext({
+      lat: -13.53,
+      ...kitAltitude({ route: null, placesMaxM: null }),
+      activity: 'hiking',
+      normals: powerClimateNormals(fixtures.cusco.payload),
+      dates: ['2027-11-10'],
+    });
+    expect(has(context)).toBe(false);
   });
 });
 

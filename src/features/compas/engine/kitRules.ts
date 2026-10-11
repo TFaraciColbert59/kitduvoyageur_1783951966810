@@ -280,12 +280,17 @@ export function adviseKit(input: {
 
   /* Moustiques : sous les tropiques, pas dans un mois frais, et pas si TOUT le parcours est au-dessus de 2 500 m
      (altitude ou climat inconnus : dit par précaution). Le point le plus bas du tracé décide quand il est lu ;
-     sinon le point le plus haut mesuré. Des lieux hauts seuls ne prouvent pas que le parcours n'en descend pas. */
+     sinon le point le plus haut mesuré. Des lieux hauts seuls ne prouvent pas que le parcours n'en descend pas.
+     Les normales ne sont lues qu'en UN point (la première étape) : un mois frais n'y parle que pour ce point.
+     Si le tracé mesuré descend sous 2 500 m, il traverse des basses terres que ce point ne dit pas (Cusco, 9 °C
+     en novembre, puis la forêt de Puerto Maldonado) : le contrôle du mois frais est alors ignoré. */
+  const reachesLowland = ctx?.minAltitudeM != null && ctx.minAltitudeM < C.mosquitoMaxAltitudeM;
   const allAbove =
     ctx?.minAltitudeM != null
       ? ctx.minAltitudeM >= C.mosquitoMaxAltitudeM
       : altitude != null && !floorOnly && altitude >= C.mosquitoMaxAltitudeM;
-  if (tropical && !allAbove && !(climate && climate.hottest.tMeanC < C.mosquitoMinMeanC))
+  const coolMonth = climate != null && climate.hottest.tMeanC < C.mosquitoMinMeanC;
+  if (tropical && !allAbove && !(coolMonth && !reachesLowland))
     add(
       'moustiques',
       'Répulsif et protection contre les moustiques',
