@@ -35,7 +35,14 @@
         </provider>
     </application>
 
-    <!-- Permissions -->
+    <!-- Permissions (plan 5.4) : seulement ce que le code utilise.
+         Position : le Compas ne demande que l'approximative (enableHighAccuracy
+         false) ; le suivi de randonnée, la carte Explorer et le partage de
+         position demandent la précise. Android exige de déclarer l'approximative
+         avec la précise, et Capacitor (BridgeWebChromeClient) demande les deux
+         ensemble. AUCUNE position en arrière-plan : n'ajouter ni
+         ACCESS_BACKGROUND_LOCATION ni service de premier plan sans un usage réel
+         et une mise à jour du texte iOS (NSLocationWhenInUseUsageDescription). -->
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
