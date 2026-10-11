@@ -53,23 +53,34 @@ remplace les jobs simples déjà en prod.
 - Batterie du jalon : vitest **395 passés / 9 skipped**, pgTAP **112/112**
   (5 suites), invariants 9/9, `tsc` 0.
 
-## Prochaine action concrète — T14 (avancement dérivé des événements)
+## État au point de reprise (après T14)
 
-1. `missionProjection.ts` : compter les **réalisations sources distinctes**
-   par assignation active (événements `progression_events.action_type` ;
-   cible multi-activités = IDs métier distincts ; un événement avance plusieurs
-   vues mais ne crée qu'un gain). Mettre à jour `progress` des assignations
-   (SQL ou service — pas de PROGRESSION_AWARD à la fin de mission).
-2. UI ≤ 3 missions : la carte de `MaProgressionView` lit
-   `GET /api/progression/missions` (3 actives max), affiche titre/avancement/
-   unité + **gain restant estimé** (jamais de points promis), actions
-   choisir/remplacer/abandonner branchées sur le POST T13.
-3. Tests : `mission_projection.test.sql` (rejeu d'événements, correction d'un
-   fait) + extension des specs UI ; clôture de mission = distinction, 0 XP.
+- T14 **TESTÉ+DÉPLOYÉ** (migration `20261011163920` : projection événements →
+  avancement, distinction sans XP ; UI ≤ 3 missions sans montant). Batterie du
+  jalon : vitest **395 / 9 skipped**, pgTAP **127/127** (6 suites), invariants 9/9.
 
-## Reprise historique (T13, fait)
+## Prochaine action concrète — T15 (unifier les distinctions)
 
-## Ancienne action — T13 (trois missions choisies)
+1. Lecture : `badges` + `user_badges` en prod (32 badges au dossier ; mesurer
+   l'état réel), détecter les définitions **doublonnées** sans retirer les
+   propriétaires (`user_badges` conservés).
+2. Migration additive via CLI : table de liaison/dédup des définitions
+   (provenance + version, conditions par jalons de compétences 100/300/700/
+   1500/3000 — présentation seule, **0 crédit automatique**), aucune
+   suppression d'association historique.
+3. `distinctions.ts` (service) + `BadgesCard.tsx` : affichage dérivé du
+   catalogue unifié ; conditions versionnées et déblocage idempotent ;
+   vérifier qu'un badge/niveau ne donne **ni points ni permission admin**.
+4. Tests : `distinctions.spec.ts` (fixtures doublonnées, replay de conditions,
+   autorisations) ; pgTAP de liaison si table.
+
+## Contrôle de réussite T15
+
+- Badge acquis conservé malgré la fusion de définitions (fixtures).
+- Déblocage idempotent (rejeu = même état) ; aucun XP émis.
+- `npx vitest run tests/features/progression` vert ; `npx tsc --noEmit`.
+
+## Ancienne action — T13/T14 (faites)
 
 1. Migration additive via CLI : `progression_mission_assignments`
    (user_id, model_id text du catalogue, state `active|replaced|abandoned`,
