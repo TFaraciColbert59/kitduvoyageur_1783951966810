@@ -103,6 +103,8 @@ export const intentActionSchema = z.discriminatedUnion('type', [
   }),
   z.object({ type: z.literal('set_outdoor_nights'), nights: z.number().int().min(1).max(60) }),
   z.object({ type: z.literal('set_max_pack'), kg: z.number().min(1).max(40) }),
+  /** « sans voiture » : ni voiture personnelle ni de location, train, bus, vélo ou à pied. */
+  z.object({ type: z.literal('set_car_free') }),
   z.object({ type: z.literal('set_distance'), km: z.number().min(1).max(300) }),
   z.object({ type: z.literal('set_level'), level: z.enum(['debut', 'regulier', 'aguerri']) }),
   z.object({
@@ -572,6 +574,22 @@ function readOrigin(
   return null;
 }
 
+/**
+ * « sans voiture », « sans louer de voiture », « pas de voiture », « en transports en commun »,
+ * « without a car », « car-free » (texte « plain »). Pas « village sans voiture » : c'est un lieu
+ * qui est décrit, pas une préférence.
+ */
+const CAR_FREE_SOURCE = [
+  `(?<!\\b(?:village|station|ville|zone|ile|centre|quartier|rue|route|vallee|hameau|domaine|plage|parc|site)s?\\s)\\b(?:sans|pas)\\s+(?:(?:louer|location|prendre|conduire|utiliser)\\s+)?(?:(?:la|une|ma|notre|des|de)\\s+|d')?(?:voiture|vehicule|auto|bagnole)s?\\b`,
+  `\\bwithout\\s+(?:a\\s+|any\\s+|the\\s+)?(?:car|vehicle)s?\\b|\\bcar[- ]?free\\b|\\bno car\\b`,
+  `\\b(?:en|par les|via les|avec les|uniquement en)\\s+transports?\\s+en\\s+commun\\b`,
+].join('|');
+
+/** Où la phrase dit « sans voiture » (début, fin dans le texte « plain »). */
+function carFreeSpans(plain: string): Array<[number, number]> {
+  return [...plain.matchAll(new RegExp(CAR_FREE_SOURCE, 'g'))].map((m) => [m.index ?? 0, (m.index ?? 0) + m[0].length]);
+}
+
 export function parseIntentRules(text: string, today: string): CompasIntentAction[] {
   const src = text.normalize('NFC').slice(0, 400);
   // Nombres en lettres écrits en chiffres, aux mêmes positions que dans `src`.
@@ -872,10 +890,15 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
   // « 5 jours dans les Dolomites en refuge » : dormir en refuge, c'est marcher.
   else if (nights.has('refuge')) out.push({ type: 'set_activity', activity: 'hiking' });
 
+  /* Sans voiture : un réglage à part, pas une chose « à éviter » */
+  const noCar = carFreeSpans(plain);
+  if (noCar.length) out.push({ type: 'set_car_free' });
+
   /* Éviter, envies */
   for (const m of plain.matchAll(
     /\b(?:sans|eviter|evite|pas de|pas d'|aucun|aucune)\s+([^,.;!?]+)/g
   )) {
+    if (noCar.some(([from, to]) => (m.index ?? 0) >= from && (m.index ?? 0) < to)) continue;
     const at = (m.index ?? 0) + m[0].length - m[1].length;
     const value = clean(upToBreak(src.slice(at, at + m[1].length)));
     if (value.length >= 3 && !/^(souci|probleme|problème|soucis)$/i.test(value))
@@ -1165,6 +1188,8 @@ export function groundingIssue(action: CompasIntentAction, text: string): string
         : 'Niveau absent de ta phrase';
     case 'set_terrain':
       return /\b(montagne|altitude|sommet|hors[- ]sentier|sentier|mountain)/.test(plain) ? null : 'Terrain absent de ta phrase';
+    case 'set_car_free':
+      return carFreeSpans(plain).length ? null : 'Sans voiture absent de ta phrase';
     case 'set_nights':
       return /\b(dehors|belle etoile|bivouac|bivouaquer|tente|camping|camper|refuges?|hotels?|gites?|chambres?|auberges?|hebergements?|airbnb|tent|hut|hostel)/.test(plain)
         ? null
@@ -1231,6 +1256,8 @@ export function actionLabel(action: CompasIntentAction, currency = 'EUR'): strin
       return `Niveau : ${LEVEL_LABEL[action.level]}`;
     case 'set_terrain':
       return `Terrain : ${TERRAIN_LABEL[action.terrain]}`;
+    case 'set_car_free':
+      return 'Sans voiture : train, bus, vélo ou à pied';
   }
 }
 
@@ -1565,6 +1592,10 @@ export function planApplication(actions: CompasIntentAction[], current: ApplyCur
         break;
       case 'set_terrain':
         prefs.terrain = a.terrain;
+        prefsChanged = true;
+        break;
+      case 'set_car_free':
+        prefs.carFree = true;
         prefsChanged = true;
         break;
       default:

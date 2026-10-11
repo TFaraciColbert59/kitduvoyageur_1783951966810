@@ -7,7 +7,7 @@ import {
   type TransportEstimate,
 } from './autofill';
 import { distanceKm } from './places';
-import { trainTrip, type TrainTrip } from './rail';
+import { trainOutlook, type TrainTrip } from './rail';
 import { needsFormalities, type EntryRequirement } from './entry';
 import type { TravellerContext } from './traveller';
 
@@ -105,12 +105,22 @@ export interface TravelLegInput {
   party: number;
   /** Module « trajet » du projet : faux pour une sortie de quelques heures. */
   transport: boolean;
+  /**
+   * Sans voiture (personnelle ou de location) : jamais de trajet en voiture ni de temps de route
+   * estimé ; le train par règle de réseau, l'avion si le séjour est trop court pour la route,
+   * sinon rien n'est chiffré et la note le dit.
+   */
+  carFree?: boolean;
 }
 
 export const UNKNOWN_ORIGIN_NOTE =
   'Point de départ inconnu : écris « depuis Lyon » dans ta demande ou partage ta position pour chiffrer le trajet.';
 export const UNKNOWN_ORIGIN_LINE = 'Trajet non chiffré : point de départ inconnu';
 export const ON_SITE_NOTE = 'Tu es déjà au départ : aucun trajet à prévoir.';
+/** Début de la note « sans voiture » quand aucun moyen de venir n'est chiffré. */
+export const CAR_FREE_NO_LEG_PREFIX = 'Sans voiture :';
+const carFreeNoLegNote = (straightKm: number) =>
+  `${CAR_FREE_NO_LEG_PREFIX} le trajet d’approche (environ ${Math.round(straightKm)} km à vol d’oiseau) n’est pas chiffré, aucune ligne de train ou de bus n’est évaluée sur ce trajet ; cherche-la dans Résa · Trajets.`;
 /** Aucun vol possible (même aéroport aux deux bouts) et la route est longue, ou introuvable. */
 export const SAME_AIRPORT_NOTE =
   'Trajet d’approche à vérifier : aéroport identique au départ et à l’arrivée, route longue ou non calculée.';
@@ -279,7 +289,11 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
   // d'oiseau), ce n'est pas un trajet en voiture : ni temps estimé ni note.
   if (!input.transport) {
     const straightKm = origin ? distanceKm(origin, target) : null;
-    const note = straightKm != null && straightKm <= FLIGHT_THRESHOLD_KM ? dayTripNote(days, estimatedDriveMinutes(straightKm)) : null;
+    // Sans voiture, un temps de route estimé en voiture ne dit rien de la journée.
+    const note =
+      straightKm != null && straightKm <= FLIGHT_THRESHOLD_KM && !input.carFree
+        ? dayTripNote(days, estimatedDriveMinutes(straightKm))
+        : null;
     if (note) leg.notes.push(note);
     return leg;
   }
@@ -320,11 +334,30 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
       return { failure: null };
     }
   };
-  const byTrain = (roadKm: number | null) =>
-    trainTrip({ fromCountry: origin.countryCode, toCountry: destination.countryCode, straightKm: straight, roadKm, days, to: target });
+  // Le train, par règle de réseau (`rail.ts`). `announce` : le train était l'autre moyen
+  // possible (route trop longue, avion) ; si le réseau n'a aucune ligne pour ce trajet et
+  // que le dire est honnête (Amérique du Nord, hors corridor), la note l'annonce, une fois.
+  let railAnnounced = false;
+  const byTrain = (roadKm: number | null, announce = false): TrainTrip | null => {
+    const out = trainOutlook({
+      fromCountry: origin.countryCode,
+      toCountry: destination.countryCode,
+      straightKm: straight,
+      roadKm,
+      days,
+      from: origin,
+      to: target,
+    });
+    if (announce && !out.trip && out.notice && !railAnnounced) {
+      railAnnounced = true;
+      leg.notes.push(out.notice);
+    }
+    return out.trip;
+  };
   const takeTrain = (rail: TrainTrip): TravelLeg => {
     leg.train = rail;
     leg.transport = moveOf('train', { km: rail.railKm, minutes: rail.minutesOneWay, basis: rail.basis });
+    if (rail.notice) leg.notes.push(rail.notice);
     return leg;
   };
   // L'avion d'aéroport à aéroport ; faux si les deux bouts ont le même aéroport.
@@ -359,7 +392,7 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
   if (mode === 'avion') {
     // Trop loin pour la route vu la durée : le train si le rail s'y prête (route
     // mesurée pour écarter une île), sinon l'avion.
-    if (byTrain(straight)) {
+    if (byTrain(straight, true)) {
       const car = await road();
       const rail = 'km' in car ? byTrain(car.km) : null;
       if (rail) return takeTrain(rail);
@@ -368,13 +401,32 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
     // Même aéroport aux deux bouts : la route, comme pour un trajet proche.
   }
 
+  // Sans voiture : le train si le rail s'y prête (la route mesurée écarte une île), l'avion si le
+  // séjour est trop court pour la même route faite en car, sinon rien n'est chiffré et la note le dit.
+  if (input.carFree) {
+    const probe = byTrain(straight, true);
+    const ride = straight >= 150 ? await road() : null;
+    if (probe && ride && 'km' in ride) {
+      const rail = byTrain(ride.km);
+      if (rail) return takeTrain(rail);
+    }
+    if (ride && 'km' in ride && ride.minutes > maxDriveMinutes(days)) {
+      if (fly(`${Math.round(ride.minutes / 60)} h de route à l’aller pour ${days} jour${days > 1 ? 's' : ''}`)) return leg;
+      noFlightLongRoad(ride.minutes);
+    }
+    leg.notes.push(carFreeNoLegNote(straight));
+    return leg;
+  }
+
   const car = await road();
   if ('km' in car) {
     const walkKm = car.end ? await deps.walkKm(car.end, target) : 0;
     const limit = maxDriveMinutes(days);
-    if (car.minutes > limit) {
-      const rail = byTrain(car.km);
-      if (rail) return takeTrain(rail);
+    const tooLong = car.minutes > limit;
+    // Japon, Corée, Chine, Inde : le train passe avant la voiture dès qu'il est aussi rapide.
+    const rail = byTrain(car.km, tooLong);
+    if (rail && (tooLong || (rail.preferred && rail.minutesOneWay <= car.minutes))) return takeTrain(rail);
+    if (tooLong) {
       // Route trop longue pour la durée du voyage, rail hors de portée : l'avion.
       if (fly(`${Math.round(car.minutes / 60)} h de route à l’aller pour ${days} jour${days > 1 ? 's' : ''}`)) return leg;
     }

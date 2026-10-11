@@ -138,6 +138,18 @@ export async function lookupStagePois(
   return { pois: out, partial: fresh.length > now.length || found.some((l) => l == null) };
 }
 
+/**
+ * Points autour des étapes DÉJÀ connus (cache partagé), sans aucune requête au service
+ * public : pour dire ce que la zone montre (gare, gare routière…) sans rien attendre.
+ * `complete` : tous les lieux d'étape (huit au plus) ont été lus.
+ */
+export async function readCachedStagePois(points: readonly StagePoint[]): Promise<{ pois: RoutePoi[]; complete: boolean }> {
+  const places = distinctPlaces(points);
+  if (!places.length) return { pois: [], complete: false };
+  const known = await Promise.all(places.map((p) => readShared<RoutePoi[] | null>('place', keyOf(p))));
+  return { pois: known.flatMap((l) => l ?? []), complete: known.every((l) => l != null) };
+}
+
 /** Photon : lieux d'une emprise par catégorie, sans quota strict (OpenStreetMap). */
 async function photonArea(bbox: [number, number, number, number], include: string, signal: AbortSignal): Promise<AreaPlace[]> {
   // Créneau du site (plan 1.3) : les tuiles d'une zone partent en parallèle,
