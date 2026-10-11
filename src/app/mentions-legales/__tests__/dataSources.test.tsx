@@ -7,7 +7,7 @@ import { DATA_SOURCES, DataSources } from '../DataSources';
 /**
  * Sources des données et licences (plan 5.3), dans le style du contrôle
  * d'OurAirports : pour chaque crédit, la source, la licence LUE sur la page
- * officielle (le 10 octobre 2026) et son lien sont vérifiés mot pour mot, et le
+ * officielle (le 10 octobre 2026, relue le 11) et son lien sont vérifiés mot pour mot, et le
  * code est relu pour prouver que le service est réellement utilisé — on ne
  * crédite pas ce qu'on n'emploie pas.
  */
@@ -37,13 +37,14 @@ interface Expected {
 
 const EXPECTED: Expected[] = [
   {
-    // https://meteoalarm.org/en/live/page/terms-and-conditions, § 5 (relu le 2026-10-10)
+    // https://meteoalarm.org/en/live/page/terms-and-conditions, § 5 (relu le 2026-10-11)
     label: 'Alertes météo officielles',
     says: [
       'EUMETNET – MeteoAlarm',
       'termes équivalents',
       'Creative Commons Attribution 4.0 (CC BY 4.0)',
-      'chaque alerte nomme son service national, son heure d’émission',
+      'chaque alerte nomme son service national, son heure d’émission, sa période de validité et reprend son texte officiel',
+      '(version du 15/03/2024)',
     ],
     links: {
       'EUMETNET – MeteoAlarm': 'https://meteoalarm.org/en/live/',
@@ -56,7 +57,7 @@ const EXPECTED: Expected[] = [
     ],
   },
   {
-    // https://github.com/tilezen/joerd/blob/master/docs/attribution.md, « Required attribution » (relu le 2026-10-10)
+    // https://github.com/tilezen/joerd/blob/master/docs/attribution.md, « Required attribution » (relu le 2026-10-11)
     label: 'Altitudes',
     says: [
       'Terrain Tiles',
@@ -80,7 +81,7 @@ const EXPECTED: Expected[] = [
     uses: [{ file: 'src/lib/geo/terrainElevation.ts', pattern: /elevation-tiles-prod\/terrarium/ }],
   },
   {
-    // https://www.geonames.org/export/ et https://download.geonames.org/export/dump/readme.txt (relus le 2026-10-10)
+    // https://www.geonames.org/export/ et https://download.geonames.org/export/dump/readme.txt (relus le 2026-10-11)
     label: 'Lieux habités, régions et pays',
     says: [
       'GeoNames',
@@ -99,7 +100,7 @@ const EXPECTED: Expected[] = [
     ],
   },
   {
-    // https://www.ecb.europa.eu/stats/ecb_statistics/governance_and_quality_framework/html/usage_policy.en.html (relu le 2026-10-10)
+    // https://www.ecb.europa.eu/stats/ecb_statistics/governance_and_quality_framework/html/usage_policy.en.html (relu le 2026-10-11)
     label: 'Taux de change',
     says: [
       'Frankfurter',
@@ -160,6 +161,17 @@ describe('« Powered by Geoapify »', () => {
     expect(read('src/features/compas/server/geoapify.ts')).toMatch(/\/v1\/geocode\/search/);
     expect(read('src/features/compas/server/geoapify.ts')).toMatch(/\/v2\/places/);
     expect(read('src/features/adventure-prep/routingService.ts')).toMatch(/api\.geoapify\.com\/v1\/routing/);
+  });
+});
+
+describe('« Powered by Geoapify » à l’écran (plan 5.3 : seulement là où ses résultats s’affichent)', () => {
+  // https://www.geoapify.com/pricing, relu le 2026-10-11 : un lien suivi « near the map or information provided by the service ».
+  it('le crédit est lié aux distances mesurées par Geoapify, pas aux points d’Overpass', () => {
+    const flows = read('src/features/compas/components/CompasOuFlows.tsx');
+    expect(flows).toMatch(/distanceSource === 'geoapify'[\s\S]{0,300}<GeoapifyCredit \/>/);
+    // « Sur place » (restos, commerces, eau…) vient d'Overpass et du catalogue OpenStreetMap.
+    expect(read('src/features/compas/components/CompasSheets.tsx')).not.toContain('GeoapifyCredit');
+    expect(read('src/features/compas/server/stagePoiLookup.ts')).toMatch(/poisAround[\s\S]{0,400}overpass\(buildOverpassQuery/);
   });
 });
 

@@ -75,7 +75,6 @@ import { proposeShift, watchRules } from '../engine/watch';
 import { isMeteoalarmSource } from '../engine/meteoalarmFeeds';
 import MeteoalarmNotice from './MeteoalarmNotice';
 import OfficialAlertTexts from './OfficialAlertTexts';
-import GeoapifyCredit from './GeoapifyCredit';
 import { planWater } from '../engine/water';
 import { addExpenseAction } from '@/app/voyages/budget-actions';
 import { RESA_CATS, bookingCat, offerCat, type ResaCat } from '../engine/resaCats';
@@ -3260,10 +3259,7 @@ function TraceFlow({ ctl }: { ctl: CompasCtl }) {
           </div>
         )}
       />
-      <p className="cp-disc">
-        © contributeurs OpenStreetMap (licence ODbL) · Lieux cherchés avec Photon, Overpass et{' '}
-        <GeoapifyCredit />
-      </p>
+      <p className="cp-disc">© contributeurs OpenStreetMap (licence ODbL)</p>
     </>
   );
 }

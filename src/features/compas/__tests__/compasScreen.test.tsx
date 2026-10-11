@@ -1238,10 +1238,10 @@ describe('CompasScreen', () => {
     fireEvent.click(within(sheet).getByRole('button', { name: /Refuge ou abri \(1\)/ }));
     expect(within(sheet).queryByText('Point d’eau')).toBeNull();
     expect(within(sheet).getByText(/contributeurs OpenStreetMap/)).toBeTruthy();
-    // Geoapify complète cette liste (Places) : son crédit, lien suivi, est à côté des résultats.
-    const credit = within(sheet).getByRole('link', { name: 'Powered by Geoapify' });
-    expect(credit.getAttribute('href')).toBe('https://www.geoapify.com/');
-    expect(credit.getAttribute('rel') ?? '').not.toContain('nofollow');
+    // Ces points viennent d'Overpass (et du catalogue, OpenStreetMap), jamais de Geoapify :
+    // « Powered by Geoapify » n'a rien à faire à côté (plan 5.3 : seulement là où ses résultats s'affichent).
+    expect(within(sheet).queryByRole('link', { name: 'Powered by Geoapify' })).toBeNull();
+    expect(within(sheet).queryByText(/Photon/)).toBeNull();
   });
 
   /* ---------- « Powered by Geoapify » à côté des distances qu'il mesure (plan 5.3) ---------- */

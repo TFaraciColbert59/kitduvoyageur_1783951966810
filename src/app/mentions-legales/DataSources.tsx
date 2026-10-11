@@ -5,7 +5,7 @@ import React from 'react';
  * crédité comme ses conditions l'exigent (`docs/compas/SERVICES-GRATUITS.md`).
  *
  * Les textes de licence sont ceux lus sur la page officielle du service le
- * 2026-10-10 ; `__tests__/dataSources.test.tsx` les vérifie mot pour mot et
+ * 2026-10-10 et relus le 2026-10-11 ; `__tests__/dataSources.test.tsx` les vérifie mot pour mot et
  * relit le code pour prouver que chaque service crédité est réellement employé
  * (on ne crédite pas ce qu'on n'emploie pas). Ce module n'est pas la page :
  * une page Next n'exporte pas d'autre nom que `default` et `metadata`.
@@ -97,7 +97,7 @@ export const DATA_SOURCES: DataSource[] = [
     label: 'Alertes météo officielles',
     parts: [
       { text: 'EUMETNET – MeteoAlarm', href: 'https://meteoalarm.org/en/live/' },
-      ' : alertes des services météorologiques et hydrologiques nationaux d’Europe ; chaque alerte nomme son service national, son heure d’émission et reprend son texte officiel. Information redistribuée selon des termes équivalents à la licence ',
+      ' : alertes des services météorologiques et hydrologiques nationaux d’Europe ; chaque alerte nomme son service national, son heure d’émission, sa période de validité et reprend son texte officiel. Information redistribuée selon des termes équivalents à la licence ',
       { text: 'Creative Commons Attribution 4.0 (CC BY 4.0)', href: CC_BY },
       ', avec les exigences des ',
       {

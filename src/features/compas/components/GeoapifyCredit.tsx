@@ -1,6 +1,8 @@
 /**
- * « Powered by Geoapify », à côté des résultats que le service fournit (lieux,
- * distances). Condition lue le 2026-10-10 sur https://www.geoapify.com/pricing
+ * « Powered by Geoapify », à côté des résultats que le service fournit : les
+ * distances par la route qu'il a mesurées (Parcours). Jamais près des points
+ * « Sur place », qui viennent d'Overpass et d'OpenStreetMap. Condition lue le
+ * 2026-10-10 et relue le 2026-10-11 sur https://www.geoapify.com/pricing
  * (FAQ « Can I use the Free plan in commercial projects? ») : « include a
  * follow-link such as Powered by Geoapify near the map or information provided
  * by the service » ; et sur https://www.geoapify.com/terms-and-conditions :
