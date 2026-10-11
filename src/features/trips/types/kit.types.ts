@@ -39,6 +39,11 @@ export interface TripKitAnalysis {
   weightCategory: 'none' | 'incomplet' | 'ultralight' | 'light' | 'standard' | 'heavy';
   unweighedItemsCount: number;
   maxAltitudeM: number;
+  /**
+   * Une altitude a été mesurée ou donnée (profil, étapes). Faux : `maxAltitudeM` vaut 0 et
+   * les règles d'altitude passent en formulation prudente (plan 4.8).
+   */
+  altitudeKnown?: boolean;
   seasonContext: string;
   climateWarnings: string[];
   vitalGaps: ContextualGearRecommendation[];

@@ -11,6 +11,7 @@ import type { CompasDayPlan, CompasKitLine } from './compasModel';
 import { tripDayLight } from './sun';
 import type { DayForecast } from './weather';
 import {
+  ALTITUDE_PRONE_ACTIVITIES,
   CLIMATE_THRESHOLDS as C,
   NATURAL_WATER_ACTIVITIES,
   celsius,
@@ -41,8 +42,17 @@ export type KitNeed =
 export interface KitContext {
   /** Latitude du lieu, si connue. */
   lat: number | null;
-  /** Altitude maximale mesurée du parcours (m), si connue. */
+  /** Altitude maximale du parcours (m), si connue (voir `altitudeFrom`). */
   maxAltitudeM: number | null;
+  /**
+   * D'où vient l'altitude. `trace` (défaut) : profil du tracé, c'est le point le plus haut mesuré.
+   * `lieux` : relief sous les lieux du voyage seulement, un PLANCHER : un trek qui part d'un village
+   * à 800 m peut passer un col à 5 400 m. Haute, elle prouve que le parcours monte ; basse, elle ne
+   * prouve rien et les activités qui montent gardent leur formulation prudente.
+   */
+  altitudeFrom?: 'trace' | 'lieux';
+  /** Point le plus bas du tracé (m), si le profil du tracé est lu : sert aux moustiques. */
+  minAltitudeM?: number | null;
   /** Normales des mois du voyage non couverts par la prévision ; null : aucune lisible. */
   climate: ClimateWindow | null;
   /** Activité du voyage. */
@@ -115,6 +125,15 @@ export function adviseKit(input: {
   const climate = readClimate(ctx?.climate);
   const tropical = isTropicalLatitude(ctx?.lat);
   const altitude = ctx?.maxAltitudeM ?? null;
+  // Altitude des seuls lieux : un plancher, jamais la preuve que le parcours reste bas.
+  const floorOnly = ctx?.altitudeFrom === 'lieux';
+  const altitudeUnproven =
+    (altitude == null || floorOnly) && ALTITUDE_PRONE_ACTIVITIES.has(ctx?.activity ?? '');
+  const altitudeLabel = (m: number) =>
+    floorOnly
+      ? `Lieux du voyage jusqu’à ${thousands(m)} m (le parcours peut monter plus haut)`
+      : `Parcours jusqu’à ${thousands(m)} m`;
+  const altitudeSource = floorOnly ? 'altitude des lieux · relief' : 'altitude mesurée';
   const has = (need: KitNeed) => out.some((a) => a.need === need);
   const out: KitAdvice[] = [];
   const find = (need: KitNeed) => input.lines.find((l) => MATCH[need].test(l.name)) ?? null;
@@ -207,6 +226,32 @@ export function adviseKit(input: {
     );
   }
 
+  // Froid d'altitude : la moyenne du mois est celle d'une maille de ~50 km, la montagne y est plus froide.
+  // Altitude mesurée, sinon formulation prudente pour les activités qui montent (jamais le silence).
+  if (!has('froid')) {
+    if (altitude != null && altitude >= C.altitudeColdM)
+      add(
+        'froid',
+        'Couche chaude (polaire, doudoune)',
+        `${altitudeLabel(altitude)} : environ 6,5 °C de moins que dans la vallée par 1 000 m d’altitude.`,
+        `${altitudeSource} · gradient standard`
+      );
+    else if (altitudeUnproven)
+      add(
+        'froid',
+        'Couche chaude (polaire, doudoune)',
+        'Altitude du parcours non mesurée : en montagne, environ 6,5 °C de moins par 1 000 m d’altitude ; prévois une couche chaude par précaution.',
+        'altitude non mesurée · gradient standard'
+      );
+  }
+  if (!has('extremites') && altitude != null && altitude >= C.altitudeGlovesM)
+    add(
+      'extremites',
+      'Gants et bonnet',
+      `${altitudeLabel(altitude)} : gel possible même en été.`,
+      altitudeSource
+    );
+
   /* Chaleur et soleil : le jour le plus chaud */
   const hot = days
     .filter((d) => d.forecast.tMax != null && d.forecast.tMax >= T.sunC)
@@ -233,12 +278,14 @@ export function adviseKit(input: {
       CLIMATE_SOURCE
     );
 
-  /* Moustiques : sous les tropiques, en dessous de 2 500 m et pas dans un mois frais (altitude ou climat inconnus : dit par précaution) */
-  if (
-    tropical &&
-    (altitude == null || altitude < C.mosquitoMaxAltitudeM) &&
-    !(climate && climate.hottest.tMeanC < C.mosquitoMinMeanC)
-  )
+  /* Moustiques : sous les tropiques, pas dans un mois frais, et pas si TOUT le parcours est au-dessus de 2 500 m
+     (altitude ou climat inconnus : dit par précaution). Le point le plus bas du tracé décide quand il est lu ;
+     sinon le point le plus haut mesuré. Des lieux hauts seuls ne prouvent pas que le parcours n'en descend pas. */
+  const allAbove =
+    ctx?.minAltitudeM != null
+      ? ctx.minAltitudeM >= C.mosquitoMaxAltitudeM
+      : altitude != null && !floorOnly && altitude >= C.mosquitoMaxAltitudeM;
+  if (tropical && !allAbove && !(climate && climate.hottest.tMeanC < C.mosquitoMinMeanC))
     add(
       'moustiques',
       'Répulsif et protection contre les moustiques',
@@ -256,8 +303,8 @@ export function adviseKit(input: {
     waterSources.push('latitude du lieu');
   }
   if (altitude != null && altitude > C.filterAltitudeM) {
-    waterWhy.push(`Parcours jusqu’à ${thousands(altitude)} m : l’eau des névés, des torrents et des sources n’est pas contrôlée.`);
-    waterSources.push('altitude mesurée');
+    waterWhy.push(`${altitudeLabel(altitude)} : l’eau des névés, des torrents et des sources n’est pas contrôlée.`);
+    waterSources.push(altitudeSource);
   }
   if (NATURAL_WATER_ACTIVITIES.has(ctx?.activity ?? '')) {
     waterWhy.push('Cette activité vit de l’eau des ruisseaux et des sources : filtre ou pastilles.');

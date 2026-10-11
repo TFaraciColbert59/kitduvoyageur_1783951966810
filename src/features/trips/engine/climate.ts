@@ -74,6 +74,9 @@ export const CLIMATE_THRESHOLDS = {
   mosquitoMinMeanC: 15,
   /** Eau des névés, torrents et sources non contrôlée au-dessus de 2 400 m. */
   filterAltitudeM: 2400,
+  /** Couche chaude à partir de 2 000 m (6,5 °C de moins par 1 000 m), gants et bonnet à partir de 3 000 m. */
+  altitudeColdM: 2000,
+  altitudeGlovesM: 3000,
 } as const;
 
 const T = CLIMATE_THRESHOLDS;
@@ -102,6 +105,18 @@ export const NATURAL_WATER_ACTIVITIES: ReadonlySet<string> = new Set([
   'bivouac',
   'bushcraft',
   'mountaineering',
+]);
+
+/**
+ * Activités où l'altitude du parcours change le matériel et les conseils : sans
+ * altitude mesurée, les règles passent en formulation prudente pour elles
+ * (une randonnée ou une ville peuvent être n'importe où).
+ */
+export const ALTITUDE_PRONE_ACTIVITIES: ReadonlySet<string> = new Set([
+  'mountaineering',
+  'ski',
+  'trekking',
+  'climbing',
 ]);
 
 /** Entre les tropiques (|latitude| < 23,5°) : soleil haut, pas d'hiver, saisons sèche et humide. */

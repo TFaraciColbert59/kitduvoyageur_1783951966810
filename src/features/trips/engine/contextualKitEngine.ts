@@ -8,6 +8,7 @@ import type { ElevationProfile } from '../lib/elevation';
 import { getCivilDurationDays } from '@/lib/dates/tripDates';
 import { kitProductBaseSlug } from '../domain/kitCatalogImport';
 import {
+  ALTITUDE_PRONE_ACTIVITIES,
   CLIMATE_THRESHOLDS,
   NATURAL_WATER_ACTIVITIES,
   celsius,
@@ -195,6 +196,9 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
         );
       if (NATURAL_WATER_ACTIVITIES.has(input.activity ?? ''))
         why.push('Activité qui vit de l’eau des ruisseaux et des sources : filtre ou paille filtrante.');
+      // Altitude non mesurée en montagne : par précaution (jamais le silence).
+      if (maxAlt === 0 && ALTITUDE_PRONE_ACTIVITIES.has(input.activity ?? ''))
+        why.push('Altitude du parcours non mesurée : par précaution, de quoi traiter l’eau des sources et des névés.');
       return {
         match: why.length > 0,
         reason: why.join(' '),
@@ -282,14 +286,18 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     category: 'safety',
     defaultPriority: 'vital',
     baseWeightGrams: 60,
-    condition: (_input, maxAlt) => {
+    condition: (input, maxAlt) => {
       const isHigh = maxAlt > 2400;
+      // Altitude non mesurée en montagne : par précaution, jamais le silence.
+      const unknown = maxAlt === 0 && ALTITUDE_PRONE_ACTIVITIES.has(input.activity ?? '');
       return {
-        match: isHigh,
+        match: isHigh || unknown,
         reason: isHigh
           ? `Haute altitude (${maxAlt}m > 2400m) : isolation thermique vitale d’urgence en cas d’aléa météo ou blessure immobilisante.`
-          : '',
-        priority: 'vital',
+          : unknown
+            ? 'Altitude du parcours non mesurée : par précaution, une couverture de survie en cas d’aléa météo ou de blessure immobilisante.'
+            : '',
+        priority: isHigh ? 'vital' : 'recommended',
       };
     },
     preferredProductSlug: 'couverture-de-survie-categorie-bigbuy',
@@ -489,7 +497,7 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
       return {
         match: wet,
         reason: wet
-          ? `En ${monthNameFr(read!.wettest.month)} : ${mmPerDay(read!.wettest.precipMmDay)} en moyenne${read!.heavyRain ? ' (mousson ou saison des pluies)' : ''}. Garantit l’étanchéité de vos vêtements de rechange et équipements électroniques sensibles.`
+          ? `En ${monthNameFr(read!.wettest.month)} : ${mmPerDay(read!.wettest.precipMmDay)} en moyenne${read!.heavyRain ? ' (mousson ou saison des pluies)' : ''}. Garantit l’étanchéité de tes vêtements de rechange et de ton matériel électronique.`
           : '',
       };
     },
@@ -660,12 +668,11 @@ export function generateTripContextualKit(input: ContextualKitInput): TripKitAna
         }
       }
     }
-    if (maxAltitudeM === 0 && input.countryCode) {
-      const countryCode = input.countryCode.toUpperCase();
-      const fallbacks: Record<string, number> = { NP: 3500, PE: 3400, MA: 1200, IS: 500, FR: 480 };
-      maxAltitudeM = fallbacks[countryCode] || 0;
-    }
+    // Aucune altitude donnée : jamais une valeur devinée d'après le pays (plan 4.8).
+    // L'appelant lit le relief au lieu du voyage ; à défaut, 0 = inconnue et les
+    // règles d'altitude passent en formulation prudente (`altitudeUnknown`).
   }
+  const altitudeKnown = maxAltitudeM > 0;
 
   // 2. Alertes contextuelles et climatiques, d'après les normales du lieu et l'altitude mesurée
   const climateWarnings: string[] = [];
@@ -692,6 +699,10 @@ export function generateTripContextualKit(input: ContextualKitInput): TripKitAna
   if (maxAltitudeM >= 2500) {
     climateWarnings.push(`Altitude maximale élevée (${maxAltitudeM}m) : risque de mal aigu des montagnes, gel et UV intenses.`);
   }
+  if (!altitudeKnown && ALTITUDE_PRONE_ACTIVITIES.has(input.activity ?? ''))
+    climateWarnings.push(
+      'Altitude du parcours non mesurée : au-delà de 2 500 m, froid, UV, mal des montagnes et eau à traiter comptent ; ajoute les étapes pour une règle plus juste.'
+    );
 
   // 3. Évaluation des règles contextuelles
   const requiredGaps: ContextualGearRecommendation[] = [];
@@ -808,6 +819,7 @@ export function generateTripContextualKit(input: ContextualKitInput): TripKitAna
     weightCategory: weightResult.weightCategory,
     unweighedItemsCount: weightResult.unweighedItemsCount,
     maxAltitudeM,
+    altitudeKnown,
     seasonContext: input.seasonMonth ? `Mois ${input.seasonMonth}` : 'Dates flexibles',
     climateWarnings,
     vitalGaps,

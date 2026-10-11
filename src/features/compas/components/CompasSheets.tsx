@@ -3407,8 +3407,8 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
                 </span>
                 <span>
                   {compat.total > 0
-                    ? `Couvre ${compat.covered} conseil${compat.covered > 1 ? 's' : ''} météo sur ${compat.total}${compat.bringsNew ? ` (dont ${compat.bringsNew} de plus qu’aujourd’hui)` : ''}`
-                    : 'Aucun conseil météo à comparer'}
+                    ? `Couvre ${compat.covered} conseil${compat.covered > 1 ? 's' : ''} de kit sur ${compat.total}${compat.bringsNew ? ` (dont ${compat.bringsNew} de plus qu’aujourd’hui)` : ''}`
+                    : 'Aucun conseil de kit à comparer'}
                 </span>
               </span>
               <span className="cp-row__end">

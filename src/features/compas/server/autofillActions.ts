@@ -108,7 +108,7 @@ import { getClimateNormals, getPrecipNormals } from './weather';
 import { aiSuggestion, essentialAdvice, orderNotes, repeatsRule } from '../engine/advice';
 import { preparationEventKind, recordPreparationEvent } from './opsEvents';
 import { coarsePosition } from '../engine/privacy';
-import { routeAscentM } from './elevation';
+import { pointsMaxAltitudeM, routeAscentM } from './elevation';
 import { estimatedLegKm, estimationNote, stepDistanceMetadata, type LegDistanceSource, type LegMove } from '../engine/legDistance';
 import {
   CLAIM_MS,
@@ -1502,7 +1502,10 @@ export async function compasAutofillAction(
       geoSteps.length > 0
         ? await terrainElevations(geoSteps.map((s) => [s.longitude as number, s.latitude as number] as const))
         : null;
-    const maxStepAltitude = altitudes ? Math.max(0, ...altitudes.filter((a): a is number => a != null)) || null : null;
+    // Altitude de secours : sans étape mesurée, le relief du lieu retrouvé (jamais une valeur par pays).
+    const maxStepAltitude =
+      (altitudes ? Math.max(0, ...altitudes.filter((a): a is number => a != null)) || null : null) ??
+      (await pointsMaxAltitudeM([anchor]));
 
     lap('4');
     /* 4. Nuits : profil + terrain + refuges connus (en parallèle). */
@@ -1831,6 +1834,8 @@ export async function compasAutofillAction(
       activity,
       nights: plan.map((n) => n.type),
       maxAltitudeM: maxAltitude,
+      // Étapes et refuges seulement : un plancher, pas le point le plus haut du parcours.
+      altitudeFrom: 'lieux',
       party,
       startDate: trip.start_date ?? null,
       lat: anchor.lat ?? null,

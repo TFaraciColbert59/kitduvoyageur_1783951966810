@@ -37,9 +37,28 @@ export function datesWithoutForecast(input: {
   return Array.from({ length }, (_, i) => addDaysIso(start, i));
 }
 
+/**
+ * Altitude des règles du kit (plan 4.8) : le profil du tracé s'il est lu (point
+ * le plus haut ET le plus bas mesurés) ; sinon le relief sous les lieux du
+ * voyage, retenu comme un plancher (`altitudeFrom: 'lieux'`) ; sinon inconnue.
+ * Jamais une altitude devinée d'après un pays.
+ */
+export function kitAltitude(input: {
+  route: { maxM: number; minM: number } | null;
+  placesMaxM: number | null;
+}): Pick<KitContext, 'maxAltitudeM' | 'minAltitudeM' | 'altitudeFrom'> {
+  if (input.route) return { maxAltitudeM: input.route.maxM, minAltitudeM: input.route.minM, altitudeFrom: 'trace' };
+  if (input.placesMaxM != null && input.placesMaxM > 0)
+    return { maxAltitudeM: input.placesMaxM, minAltitudeM: null, altitudeFrom: 'lieux' };
+  return { maxAltitudeM: null, minAltitudeM: null, altitudeFrom: 'trace' };
+}
+
 export function buildKitContext(input: {
   lat: number | null;
   maxAltitudeM: number | null;
+  /** Voir `KitContext.altitudeFrom` : `trace` par défaut. */
+  altitudeFrom?: KitContext['altitudeFrom'];
+  minAltitudeM?: number | null;
   activity: string | null;
   normals: ClimateNormals | null;
   dates: readonly string[];
@@ -47,6 +66,8 @@ export function buildKitContext(input: {
   return {
     lat: input.lat,
     maxAltitudeM: input.maxAltitudeM,
+    ...(input.altitudeFrom ? { altitudeFrom: input.altitudeFrom } : {}),
+    ...(input.minAltitudeM !== undefined ? { minAltitudeM: input.minAltitudeM } : {}),
     activity: input.activity,
     climate: climateWindow(input.normals, input.dates),
   };

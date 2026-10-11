@@ -1,7 +1,7 @@
 /**
  * Compas — appliquer un de ses kits à un voyage (fonctions pures).
  *
- * « Compatibilité » = ce que le kit couvre parmi les conseils météo du voyage
+ * « Compatibilité » = ce que le kit couvre parmi les conseils de kit du voyage
  * et ce qui est déjà dans le voyage. Ce n'est pas un score : ce sont deux
  * décomptes que l'utilisateur peut recompter.
  */
@@ -52,7 +52,7 @@ export function planKitApply(kit: MyKit, tripNames: string[]): KitApplyPlan {
 }
 
 export interface KitCompatibility {
-  /** Conseils météo du voyage couverts par ce kit / total de conseils. */
+  /** Conseils de kit du voyage (météo, climat, latitude, altitude) couverts par ce kit / total. */
   covered: number;
   total: number;
   /** Conseils couverts uniquement grâce à ce kit (absents du voyage actuel). */

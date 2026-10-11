@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getTripElevationProfile, type ElevationProfile } from '@/features/trips/lib/elevation';
+import { getTripElevationProfile } from '@/features/trips/lib/elevation';
 import type { TripFull } from '@/features/trips/types/trip.types';
 
 function createMockTrip(overrides: Partial<TripFull> = {}): TripFull {
@@ -136,7 +136,7 @@ describe('Sous-phase 1.2 (D2) — Source unique du profil d’altitude (TDD)', (
     expect(profile.maxM).toBe(1890);
   });
 
-  it('TEST-ELEVATION-04: Priorité 4 — Valeur pays (country_fallback) marquée low', () => {
+  it('TEST-ELEVATION-04: Priorité 4 — Aucune donnée : plus de valeur par pays, 0 inconnue et marquée low (plan 4.8)', () => {
     const trip = createMockTrip({
       slug: 'escapade-plaine',
       title: 'Escapade Plaine',
@@ -149,7 +149,7 @@ describe('Sous-phase 1.2 (D2) — Source unique du profil d’altitude (TDD)', (
 
     expect(profile.source).toBe('country_fallback');
     expect(profile.confidence).toBe('low');
-    expect(profile.maxM).toBeLessThanOrEqual(500);
+    expect(profile.maxM).toBe(0);
   });
 
   it('TEST-ELEVATION-05: Absence totale de données -> fallback gracieux à 0 low', () => {

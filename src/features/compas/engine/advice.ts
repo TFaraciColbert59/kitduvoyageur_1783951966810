@@ -1,6 +1,6 @@
 import type { CompasActivity } from './intent';
 import type { NightType } from './autofill';
-import { isTropicalLatitude } from '@/features/trips/engine/climate';
+import { ALTITUDE_PRONE_ACTIVITIES, isTropicalLatitude } from '@/features/trips/engine/climate';
 
 /**
  * Compas — conseils essentiels par règles (plan 4.11, fonction pure).
@@ -17,8 +17,14 @@ export interface AdviceInput {
   activity: CompasActivity | string;
   /** Type de chaque nuit du voyage. */
   nights: NightType[];
-  /** Altitude maximale mesurée sur l'itinéraire (m), si connue. */
+  /** Altitude maximale sur l'itinéraire (m), si connue. */
   maxAltitudeM: number | null;
+  /**
+   * `lieux` : l'altitude ne vient que du relief sous les étapes et les refuges, un plancher (un trek qui
+   * part d'un village à 800 m peut passer un col à 5 400 m). Basse, elle ne lève pas la prudence.
+   * Défaut `trace` : point le plus haut mesuré du parcours.
+   */
+  altitudeFrom?: 'trace' | 'lieux';
   party: number;
   /** Date de départ (AAAA-MM-JJ), si choisie. */
   startDate: string | null;
@@ -58,6 +64,15 @@ export function essentialAdvice(input: AdviceInput, max = 3): string[] {
   if (alt >= 2500)
     out.push(
       'Au-dessus de 2 500 m, monte progressivement et bois souvent ; mal de tête, nausée ou essoufflement au repos : redescends.'
+    );
+  // Altitude non mesurée (ou seulement celle des lieux, trop basse pour trancher) : la règle des 2 500 m
+  // est dite par précaution pour les sorties qui montent.
+  else if (
+    (input.maxAltitudeM == null || input.altitudeFrom === 'lieux') &&
+    ALTITUDE_PRONE_ACTIVITIES.has(input.activity)
+  )
+    out.push(
+      'Altitude du parcours non mesurée : au-delà de 2 500 m, monte progressivement et bois souvent ; mal de tête, nausée ou essoufflement au repos : redescends.'
     );
   if (mountain && season === 'hiver')
     out.push(

@@ -5,6 +5,8 @@
 import { describe, expect, it } from 'vitest';
 import fixtures from './fixtures/power-climatology.json';
 import { buildKitContext, datesWithoutForecast } from '../engine/kitContext';
+import { kitCompatibility, type MyKit } from '../engine/kitApply';
+import { adviseKit } from '../engine/kitRules';
 import { powerClimateNormals } from '../engine/metno';
 
 const plan = (day: number, date: string | null) => ({ day, date });
@@ -79,5 +81,53 @@ describe('buildKitContext', () => {
       lat: 1,
       climate: null,
     });
+  });
+});
+
+describe('compatibilité d’un kit : la même liste de conseils que le voyage', () => {
+  const normals = powerClimateNormals(fixtures.reykjavik.payload);
+  const context = buildKitContext({
+    lat: fixtures.reykjavik.lat,
+    maxAltitudeM: null,
+    activity: 'hiking',
+    normals,
+    dates: ['2027-02-10'],
+  });
+  const dayPlans = [
+    {
+      day: 1,
+      date: '2027-02-10',
+      title: 'J1',
+      distanceKm: 10,
+      gainM: 200,
+      lossM: 200,
+      lat: fixtures.reykjavik.lat,
+      lon: fixtures.reykjavik.lon,
+      stay: null,
+      walkMin: null,
+    },
+  ];
+  const kit: MyKit = {
+    id: 'k1',
+    name: 'Hiver',
+    season: null,
+    items: [
+      { id: 'i1', name: 'Polaire 200', category: null, weightG: null, quantity: 1, isVital: false, productOwnershipId: null },
+      { id: 'i2', name: 'Gants et bonnet', category: null, weightG: null, quantity: 1, isVital: false, productOwnershipId: null },
+    ],
+  };
+  const base = { kit, tripNames: [], forecasts: [{ day: 1, date: '2027-02-10', forecast: null }], dayPlans, waterPointsCount: null };
+
+  it('avec le contexte du voyage, les conseils tirés des normales comptent', () => {
+    const total = adviseKit({ lines: [], forecasts: base.forecasts, dayPlans, waterPointsCount: null, context }).length;
+    const compat = kitCompatibility({ ...base, context });
+    expect(compat.total).toBe(total);
+    expect(compat.total).toBeGreaterThanOrEqual(3);
+    expect(compat.covered).toBe(2);
+    expect(compat.bringsNew).toBe(2);
+  });
+
+  it('sans contexte : seule la prévision compte (comportement d’avant)', () => {
+    expect(kitCompatibility(base)).toEqual({ covered: 0, total: 0, bringsNew: 0 });
   });
 });

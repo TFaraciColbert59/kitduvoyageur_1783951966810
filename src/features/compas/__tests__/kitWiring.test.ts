@@ -16,6 +16,9 @@ const h = vi.hoisted(() => ({
   forecastDays: [] as number[],
   normalsCalls: [] as Array<[number, number]>,
   normals: null as unknown,
+  profile: null as { maxM: number; minM: number } | null,
+  placesAltitude: null as number | null,
+  placesCalls: [] as Array<Array<{ lat: number; lon: number }>>,
 }));
 
 vi.mock('server-only', () => ({}));
@@ -31,7 +34,13 @@ vi.mock('@/features/booking/server/providerCredentials', () => ({
 vi.mock('../server/officialAlerts', () => ({
   getOfficialAlerts: vi.fn(async () => ({ status: 'hors_france', alerts: [], area: null })),
 }));
-vi.mock('../server/elevation', () => ({ getRouteElevation: vi.fn(async () => null) }));
+vi.mock('../server/elevation', () => ({
+  getRouteElevation: vi.fn(async () => h.profile),
+  pointsMaxAltitudeM: vi.fn(async (points: Array<{ lat: number; lon: number }>) => {
+    h.placesCalls.push(points);
+    return h.placesAltitude;
+  }),
+}));
 vi.mock('../server/rates', () => ({ getEurRate: vi.fn(async () => null) }));
 vi.mock('../server/weather', async (orig) => ({
   ...(await orig<typeof import('../server/weather')>()),
@@ -114,6 +123,9 @@ describe('getCompasData donne les normales du lieu aux conseils de kit', () => {
     h.trip = tripOf();
     h.forecastDays = [];
     h.normalsCalls = [];
+    h.profile = null;
+    h.placesAltitude = null;
+    h.placesCalls = [];
     h.normals = powerClimateNormals(fixtures.reykjavik.payload);
   });
 
@@ -164,6 +176,61 @@ describe('getCompasData donne les normales du lieu aux conseils de kit', () => {
     h.trip = tripOf({ primary_activity: 'trekking' });
     const data = await getCompasData();
     expect(data?.kitAdvice.find((a) => a.need === 'filtre')?.source).toBe('activité du voyage');
+  });
+
+  it('altitude de secours : sans tracé, le relief des étapes (jamais une valeur par pays)', async () => {
+    h.placesAltitude = 2310;
+    const data = await getCompasData();
+    // Relief sous les lieux = un plancher, dit comme tel dans le contexte et dans le conseil.
+    expect(data?.kitContext).toMatchObject({ maxAltitudeM: 2310, altitudeFrom: 'lieux' });
+    expect(h.placesCalls[0]).toHaveLength(3);
+    expect(h.placesCalls[0][0]).toMatchObject({ lat: REYKJAVIK.lat, lon: REYKJAVIK.lon });
+    expect(data?.kitAdvice.find((a) => a.need === 'froid')?.source).toMatch(/NASA POWER/);
+  });
+
+  it('altitude du tracé mesurée : elle passe avant l’altitude de secours', async () => {
+    h.profile = { maxM: 3100, minM: 120 };
+    h.placesAltitude = 400;
+    const data = await getCompasData();
+    expect(data?.kitContext).toMatchObject({ maxAltitudeM: 3100, minAltitudeM: 120, altitudeFrom: 'trace' });
+  });
+
+  it('lieux bas en trek : ce plancher ne lève pas la prudence (le col peut être bien plus haut)', async () => {
+    h.trip = tripOf({ primary_activity: 'trekking' });
+    h.normals = null;
+    h.placesAltitude = 800;
+    const data = await getCompasData();
+    expect(data?.kitContext).toMatchObject({ maxAltitudeM: 800, altitudeFrom: 'lieux' });
+    const froid = data?.kitAdvice.find((a) => a.need === 'froid');
+    expect(froid?.reason).toMatch(/non mesurée/);
+    expect(froid?.source).toMatch(/non mesurée/);
+  });
+
+  it('sous les tropiques, des lieux hauts ne retirent pas les moustiques ; un tracé tout entier au-dessus de 2 500 m, si', async () => {
+    const cusco = { lat: fixtures.cusco.lat, lon: fixtures.cusco.lon };
+    h.normals = null;
+    h.trip = tripOf({
+      steps: [step(1, cusco), step(2, cusco), step(3, cusco)],
+      start_date: '2027-08-10',
+      end_date: '2027-08-12',
+    });
+    h.placesAltitude = 3400;
+    expect((await getCompasData())?.kitAdvice.map((a) => a.need)).toContain('moustiques');
+    h.placesAltitude = null;
+    // Le tracé descend dans la forêt (2 040 m) : le point le plus haut ne décide pas.
+    h.profile = { maxM: 3400, minM: 2040 };
+    expect((await getCompasData())?.kitAdvice.map((a) => a.need)).toContain('moustiques');
+    h.profile = { maxM: 3400, minM: 2900 };
+    expect((await getCompasData())?.kitAdvice.map((a) => a.need)).not.toContain('moustiques');
+  });
+
+  it('relief injoignable : altitude inconnue, la trek reste prudent (jamais d’altitude devinée)', async () => {
+    h.trip = tripOf({ primary_activity: 'trekking' });
+    h.normals = null;
+    const data = await getCompasData();
+    expect(data?.kitContext?.maxAltitudeM).toBeNull();
+    const froid = data?.kitAdvice.find((a) => a.need === 'froid');
+    expect(froid?.reason).toMatch(/non mesurée/);
   });
 
   it('sans date : les normales ne sont pas demandées', async () => {

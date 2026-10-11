@@ -7,7 +7,7 @@ import type { FxRate } from '../engine/currency';
 import type { CompasPendingInvite } from '../engine/team';
 import { assessDanger, mergeDangerIntoVerdict, type DangerAssessment } from '../engine/danger';
 import { adviseKit, type KitAdvice, type KitContext } from '../engine/kitRules';
-import { buildKitContext, datesWithoutForecast } from '../engine/kitContext';
+import { buildKitContext, datesWithoutForecast, kitAltitude } from '../engine/kitContext';
 import { parseRoutePois, poiLabel, type RoutePoi } from '../engine/routePois';
 import { getEurRate } from './rates';
 
@@ -36,7 +36,7 @@ import { readProfile, tripBasis } from './compasServer';
 import { retryParts, staleParts, unionParts, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { relevantAffiliateLinks } from '../engine/affiliates';
 import { getOfficialAlerts } from './officialAlerts';
-import { getRouteElevation } from './elevation';
+import { getRouteElevation, pointsMaxAltitudeM } from './elevation';
 import type { ElevationProfile } from '../engine/elevation';
 import { destinationZone, getClimateNormals, getCompasWeather, type CompasWeather } from './weather';
 
@@ -523,7 +523,7 @@ export async function getCompasData(): Promise<CompasData | null> {
   // Normales NASA POWER du lieu (gardées 30 jours) : froid, pluie, chaleur au-delà de la prévision.
   const kitPoint = origin ?? anchorPoint(trip.metadata);
   const hasDates = plans.some((d) => d.date != null) || Boolean(trip.start_date);
-  const [weather, routePois, officialAlerts, elevation, fx, climateNormals] = await Promise.all([
+  const [weather, routePois, officialAlerts, elevation, fx, climateNormals, placesAltitudeM] = await Promise.all([
     getCompasWeather({
       origin,
       tripDays: plans
@@ -546,6 +546,8 @@ export async function getCompasData(): Promise<CompasData | null> {
     getRouteElevation(draft.route.coords),
     getEurRate(input.trip.budgetCurrency ?? 'EUR'),
     kitPoint && hasDates ? getClimateNormals(kitPoint.lat, kitPoint.lon) : Promise.resolve(null),
+    // Altitude de secours du kit : sans tracé, le relief des lieux du voyage (jamais une valeur par pays).
+    pointsMaxAltitudeM(points.filter((p) => p.kind === 'step')),
   ]);
   input.weather = toWeatherInput(weather);
 
@@ -576,7 +578,8 @@ export async function getCompasData(): Promise<CompasData | null> {
   }));
   const kitContext = buildKitContext({
     lat: kitPoint?.lat ?? null,
-    maxAltitudeM: elevation?.maxM ?? null,
+    // Profil du tracé d'abord ; sans tracé, le relief des lieux, retenu comme un plancher.
+    ...kitAltitude({ route: elevation, placesMaxM: placesAltitudeM }),
     activity: trip.primary_activity ?? null,
     normals: climateNormals,
     dates: datesWithoutForecast({
