@@ -99,7 +99,55 @@ describe('comprise dans la phrase', () => {
     expect(actions).toContainEqual({ type: 'avoid', label: 'foule' });
   });
 
+  it('« sans auto-stop » ou « car free » avec espace ne sont pas « sans voiture » ; l’auto-stop reste à éviter', () => {
+    const stop = parseIntentRules('4 jours en Écosse, sans auto-stop', TODAY);
+    expect(stop).not.toContainEqual(CAR_FREE);
+    expect(stop).toContainEqual({ type: 'avoid', label: 'auto-stop' });
+    expect(parseIntentRules('4 jours à Lisbonne, sans voiture-balai', TODAY)).not.toContainEqual(CAR_FREE);
+    // « car free » avec un espace ne dit rien (« rental car free of charge »).
+    expect(parseIntentRules('a week in Wales, rental car free of charge', TODAY)).not.toContainEqual(CAR_FREE);
+    expect(parseIntentRules('une semaine au pays de Galles, carfree', TODAY)).toContainEqual(CAR_FREE);
+  });
+
+  it('quand la phrase dit venir avec sa voiture, ce n’est pas « sans voiture »', () => {
+    expect(
+      parseIntentRules(
+        'Je viens en voiture depuis Lyon, puis 4 jours dans le Vercors en transports en commun',
+        TODAY
+      )
+    ).not.toContainEqual(CAR_FREE);
+    expect(
+      parseIntentRules('Road trip en Islande avec ma voiture, pas de voiture de location', TODAY)
+    ).not.toContainEqual(CAR_FREE);
+    expect(parseIntentRules('On part avec notre voiture, 3 jours sans voiture sur place', TODAY)).not.toContainEqual(CAR_FREE);
+    expect(parseIntentRules('We drive there by car, then 4 days in Wales without a car', TODAY)).not.toContainEqual(CAR_FREE);
+    // Non-régression : la voiture niée n’est pas la voiture prise.
+    expect(parseIntentRules('3 jours dans le Vercors, sans la voiture', TODAY)).toContainEqual(CAR_FREE);
+    expect(parseIntentRules('Je ne viens pas en voiture : 3 jours dans le Vercors en transports en commun', TODAY)).toContainEqual(
+      CAR_FREE
+    );
+    expect(parseIntentRules('Lyon puis le Vercors en transports en commun, pas en voiture', TODAY)).toContainEqual(CAR_FREE);
+  });
+
+  it('« sans voiture ni foule » : seule la voiture sort des choses à éviter', () => {
+    const actions = parseIntentRules('Vercors sans voiture ni foule', TODAY);
+    expect(actions).toContainEqual(CAR_FREE);
+    expect(actions).toContainEqual({ type: 'avoid', label: 'foule' });
+    expect(actions.filter((a) => a.type === 'avoid')).toHaveLength(1);
+    const et = parseIntentRules('Vercors sans voiture et sans foule', TODAY);
+    expect(et).toContainEqual(CAR_FREE);
+    expect(et).toContainEqual({ type: 'avoid', label: 'foule' });
+    expect(et.filter((a) => a.type === 'avoid')).toHaveLength(1);
+    // Rien après la voiture : rien à éviter.
+    expect(parseIntentRules('Vercors sans la voiture', TODAY).filter((a) => a.type === 'avoid')).toEqual([]);
+  });
+
   it('l’IA ne pose « sans voiture » que si la phrase le dit', () => {
+    // Même règle que la lecture directe : venir en voiture contredit « sans voiture ».
+    expect(groundingIssue(CAR_FREE, 'Je viens en voiture, puis 4 jours en transports en commun')).toBe(
+      'Sans voiture absent de ta phrase'
+    );
+    expect(groundingIssue(CAR_FREE, '4 jours en Écosse, sans auto-stop')).toBe('Sans voiture absent de ta phrase');
     expect(groundingIssue(CAR_FREE, '3 jours en Ardèche')).toBe('Sans voiture absent de ta phrase');
     expect(groundingIssue(CAR_FREE, '3 jours en Ardèche sans voiture')).toBeNull();
     expect(groundingIssue(CAR_FREE, 'Lisbonne en transports en commun')).toBeNull();

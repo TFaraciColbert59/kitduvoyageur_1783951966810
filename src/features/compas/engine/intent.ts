@@ -577,17 +577,50 @@ function readOrigin(
 /**
  * « sans voiture », « sans louer de voiture », « pas de voiture », « en transports en commun »,
  * « without a car », « car-free » (texte « plain »). Pas « village sans voiture » : c'est un lieu
- * qui est décrit, pas une préférence.
+ * qui est décrit, pas une préférence. Le nom du véhicule n'est pas suivi d'un trait d'union ni
+ * d'une lettre : « sans auto-stop » (l'auto-stop est à éviter, la voiture non), « sans voiture-balai ».
  */
 const CAR_FREE_SOURCE = [
-  `(?<!\\b(?:village|station|ville|zone|ile|centre|quartier|rue|route|vallee|hameau|domaine|plage|parc|site)s?\\s)\\b(?:sans|pas)\\s+(?:(?:louer|location|prendre|conduire|utiliser)\\s+)?(?:(?:la|une|ma|notre|des|de)\\s+|d')?(?:voiture|vehicule|auto|bagnole)s?\\b`,
-  `\\bwithout\\s+(?:a\\s+|any\\s+|the\\s+)?(?:car|vehicle)s?\\b|\\bcar[- ]?free\\b|\\bno car\\b`,
+  `(?<!\\b(?:village|station|ville|zone|ile|centre|quartier|rue|route|vallee|hameau|domaine|plage|parc|site)s?\\s)\\b(?:sans|pas)\\s+(?:(?:louer|location|prendre|conduire|utiliser)\\s+)?(?:(?:la|une|ma|notre|des|de)\\s+|d')?(?:voiture|vehicule|auto|bagnole)s?(?![-\\w])`,
+  // Pas « car free » avec une espace : « rental car free of charge » ne dit rien du voyage.
+  `\\bwithout\\s+(?:a\\s+|any\\s+|the\\s+)?(?:car|vehicle)s?(?![-\\w])|\\bcar-?free\\b|\\bno car(?![-\\w])`,
   `\\b(?:en|par les|via les|avec les|uniquement en)\\s+transports?\\s+en\\s+commun\\b`,
 ].join('|');
 
 /** Où la phrase dit « sans voiture » (début, fin dans le texte « plain »). */
 function carFreeSpans(plain: string): Array<[number, number]> {
   return [...plain.matchAll(new RegExp(CAR_FREE_SOURCE, 'g'))].map((m) => [m.index ?? 0, (m.index ?? 0) + m[0].length]);
+}
+
+/** « en voiture », « avec ma/notre/la voiture », « by car » : la personne vient avec sa voiture. */
+const OWN_CAR_SOURCE = [
+  `\\ben\\s+(?:voiture|vehicule|auto|bagnole)s?(?![-\\w])`,
+  `\\bavec\\s+(?:ma|mon|notre|nos|la|sa|leur)\\s+(?:voiture|vehicule|auto|bagnole)(?![-\\w])`,
+  `\\bby\\s+car(?![-\\w])|\\b(?:with|in)\\s+(?:my|our|the)\\s+car(?![-\\w])`,
+].join('|');
+
+/**
+ * La phrase dit-elle aussi qu'on vient avec sa voiture (hors d'une plage « sans voiture » et hors
+ * d'une négation : « je ne viens pas en voiture ») ? Alors ce n'est pas « sans voiture » : le trajet
+ * d'approche se fait en voiture, il ne doit pas être traité comme absent.
+ */
+function drivesOwnCar(plain: string, spans: Array<[number, number]>): boolean {
+  for (const m of plain.matchAll(new RegExp(OWN_CAR_SOURCE, 'g'))) {
+    const at = m.index ?? 0;
+    if (spans.some(([from, to]) => at >= from && at < to)) continue;
+    const clauseStart =
+      Math.max(plain.lastIndexOf(',', at), plain.lastIndexOf(';', at), plain.lastIndexOf(':', at), plain.lastIndexOf('.', at)) + 1;
+    const before = plain.slice(Math.max(clauseStart, at - 40), at);
+    if (/\b(?:pas|sans|jamais|ni|aucun|aucune|not|never|no|without)\b/.test(before)) continue;
+    return true;
+  }
+  return false;
+}
+
+/** « Sans voiture » est dit, et la phrase ne dit pas le contraire. */
+function saysCarFree(plain: string): boolean {
+  const spans = carFreeSpans(plain);
+  return spans.length > 0 && !drivesOwnCar(plain, spans);
 }
 
 export function parseIntentRules(text: string, today: string): CompasIntentAction[] {
@@ -892,15 +925,28 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
 
   /* Sans voiture : un réglage à part, pas une chose « à éviter » */
   const noCar = carFreeSpans(plain);
-  if (noCar.length) out.push({ type: 'set_car_free' });
+  if (noCar.length && !drivesOwnCar(plain, noCar)) out.push({ type: 'set_car_free' });
 
   /* Éviter, envies */
   for (const m of plain.matchAll(
     /\b(?:sans|eviter|evite|pas de|pas d'|aucun|aucune)\s+([^,.;!?]+)/g
   )) {
-    if (noCar.some(([from, to]) => (m.index ?? 0) >= from && (m.index ?? 0) < to)) continue;
-    const at = (m.index ?? 0) + m[0].length - m[1].length;
-    const value = clean(upToBreak(src.slice(at, at + m[1].length)));
+    const matchEnd = (m.index ?? 0) + m[0].length;
+    let at = matchEnd - m[1].length;
+    let length = m[1].length;
+    const inCarFree = noCar.find(([from, to]) => (m.index ?? 0) >= from && (m.index ?? 0) < to);
+    if (inCarFree) {
+      // « sans voiture ni foule » : seul le nom du véhicule est un réglage ; ce qui suit, après
+      // « ni », « et » ou « ou » (et un éventuel « sans »), reste à éviter.
+      const rest = /^\s*(?:ni|et|ou)\s+(?:(?:sans|eviter|evite|pas de|pas d'|aucun|aucune)\s+)?/.exec(
+        plain.slice(inCarFree[1], matchEnd)
+      );
+      if (!rest) continue;
+      at = inCarFree[1] + rest[0].length;
+      length = matchEnd - at;
+      if (length <= 0) continue;
+    }
+    const value = clean(upToBreak(src.slice(at, at + length)));
     if (value.length >= 3 && !/^(souci|probleme|problème|soucis)$/i.test(value))
       out.push({ type: 'avoid', label: value });
   }
@@ -1189,7 +1235,7 @@ export function groundingIssue(action: CompasIntentAction, text: string): string
     case 'set_terrain':
       return /\b(montagne|altitude|sommet|hors[- ]sentier|sentier|mountain)/.test(plain) ? null : 'Terrain absent de ta phrase';
     case 'set_car_free':
-      return carFreeSpans(plain).length ? null : 'Sans voiture absent de ta phrase';
+      return saysCarFree(plain) ? null : 'Sans voiture absent de ta phrase';
     case 'set_nights':
       return /\b(dehors|belle etoile|bivouac|bivouaquer|tente|camping|camper|refuges?|hotels?|gites?|chambres?|auberges?|hebergements?|airbnb|tent|hut|hostel)/.test(plain)
         ? null
