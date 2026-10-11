@@ -52,6 +52,10 @@ Lot S : kit 4.8 terminé : règles sur les normales NASA POWER (froid, pluie, mo
 
 Lot U : alertes officielles Meteoalarm pour 33 pays d'Europe (service national, heure d'émission, période, texte officiel, lien et avertissement avec chaque alerte), conditions relues le 11 oct. ; attributions Terrain Tiles, GeoNames, Meteoalarm, BCE et « Powered by Geoapify » à l'écran. 4.9 reste partielle : 6 pays à flux vide, zones reconnues par le nom exact, hors Europe non branché. **À faire par Tony** : s'enregistrer comme redistributeur Meteoalarm (meteoalarm@geosphere.at) et demander si le trafic pose problème.
 
+Lot W : budget 4.6 : budget affiché aussi dans la devise du voyageur et du pays (taux, date, source dits ; rien stocké ; ISO 4217 SIX, licence à confirmer) ; carburant UE-27 daté (bulletin UE CC BY 4.0) + estimation à fourchette hors UE ; libellé « indice de prix du pays ». Reste : péages, assurance et repas par région.
+
+Lot X : trajets 4.4 : train par règles (Europe 32 pays, JP, KR, CN, IN, corridors Amtrak/VIA, barème par pays daté 2026-10, tout « estimation ») ; « sans voiture » (phrase, réglage, trajet, bus entre étapes, budget, « transports en commun » seulement si gare lue sinon « non évalué »). Non prouvé en préview/prod.
+
 **À faire par Tony** (rien d'autre ne bloque) :
 1. SQL Editor : `supabase/migrations/20261008190000_base_scheduled_purges.sql` (purges
    planifiées), puis `20261009100000_app_errors_purge.sql`, puis

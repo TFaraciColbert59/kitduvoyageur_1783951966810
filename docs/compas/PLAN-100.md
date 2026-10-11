@@ -291,8 +291,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       n'enregistre encore que six devises (enum `trip_budget_currency`) et le Compas le
       crée en euros (retour Codex sur #82) : la conversion dans la devise du pays de
       destination est à faire en 4.2.
-- [ ] Carburant : bulletin pétrolier de l'UE (CC BY 4.0) pour l'UE-27 ; ailleurs barème
+- [x] Carburant : bulletin pétrolier de l'UE (CC BY 4.0) pour l'UE-27 ; ailleurs barème
       versionné et daté, affiché comme « estimation » (aucune source mondiale gratuite).
+      **Lot W** : Euro-super 95 TTC des 27 pays (prix du 5 oct. 2026, lu par
+      `scripts/compas/build-fuel-prices.mjs`) ; hors UE, estimation à fourchette (moyenne
+      pondérée UE-27 2,01 €/L, de 1,34 à 2,61 €/L), jamais un prix pays inventé
+      (`fuel.test.ts`, `autofill.test.ts`, `dataCredits.test.tsx`). Les lignes déjà écrites
+      gardent l'ancien 1,80 €/L jusqu'à un nouveau « Tout préparer ». Le nom du classeur du
+      bulletin porte 2026-09-21, sa cellule A2 le 5 oct. : la date lue est retenue.
 
 ---
 
@@ -637,9 +643,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       crédit exact dans les mentions légales (`entryRequirementsBuild.test.ts`,
       `entry.test.ts`, `papers.test.ts`, `autofillPapers.test.ts`, `dataCredits.test.tsx`).
       Pas de barème de frais par nationalité (la table ne porte aucun montant).
-- [ ] Budget aussi dans la devise du pays de destination (taux Frankfurter v2, 223
+- [x] Budget aussi dans la devise du pays de destination (taux Frankfurter v2, 223
       devises, déjà branché) : aujourd'hui seulement si la devise du voyage est l'une des
-      six de l'enum `trip_budget_currency`, et le Compas ne la change jamais.
+      six de l'enum `trip_budget_currency`, et le Compas ne la change jamais. **Lot W** :
+      devise du pays d'après la liste ISO 4217 n° 1 de SIX (246 pays, publiée le 17 sept.
+      2026, `scripts/compas/build-country-currencies.mjs`), conversion AFFICHÉE avec taux,
+      date et source, rien de stocké (enum non touché, aucune migration) (`countryCurrencies.test.ts`,
+      `budgetFx.test.ts`, `compasScreen.test.tsx`). ⚠️ Le fichier SIX ne porte aucun texte de
+      licence : crédité dans les mentions légales, licence à confirmer par Tony.
 - [~] Prises et change selon le pays de résidence ; « France Diplomatie » pour les
       Français seulement, le service officiel du pays sinon. Lot P : France Diplomatie et
       « adaptateur à prévoir » seulement pour une nationalité ou une résidence françaises
@@ -701,9 +712,19 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 4.4 Trajets
 
-- [ ] Train hors des 10 pays (Europe entière, Japon, Corée, Chine, Inde, Amérique du
-      Nord) par règles de distance et de réseau ; barème par pays.
-- [ ] Préférence « sans voiture » ; transports en commun quand la zone en a.
+- [~] Train hors des 10 pays (Europe entière, Japon, Corée, Chine, Inde, Amérique du
+      Nord) par règles de distance et de réseau ; barème par pays. **Lot X** : Europe 32 pays
+      (10 d'origine, PT DK SE NO PL CZ SK HU SI HR RO BG RS GR ME MK BA ; IE FI EE LV LT en train
+      intérieur seulement), JP, KR, CN, IN, 12 corridors Amtrak/VIA ; tout est « estimation »
+      datée 2026-10 (aucune source gratuite) (`railWorld.test.ts`). **Reste** : TR, UA, MD, BY,
+      RU, AL, XK, CY, MT, IS, Caucase ; trains longue distance d'Amérique du Nord non comptés
+      (et dit) ; ordres de grandeur des prix non vérifiés contre une source libre.
+- [x] Préférence « sans voiture » ; transports en commun quand la zone en a. **Lot X** : phrase
+      comprise (`set_car_free`), réglage à l'écran, trajet par train/bus, aucun carburant ni
+      location, « transports en commun » dit seulement quand une gare est lue autour des étapes,
+      sinon « non évalué » (`carFree.test.ts`, `carFreeTransit.test.ts`, `carFreeAutofill.test.ts`,
+      `compasScreen.test.tsx`). Le test d'`intent.test.ts` qui prenait « sans voiture » pour un
+      « avoid » utilise maintenant « sans foule ».
 - [x] Journée à plus de 3 h de trajet signalée (Mercantour depuis Annecy). Lot N : route
       mesurée, train, ou temps estimé pour une sortie ; « 3 h 24 de trajet aller pour une
       seule journée : prévois une nuit sur place ou choisis plus près. » (`dayTrip.test.ts`).
@@ -721,10 +742,19 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 4.6 Budget
 
-- [ ] Calcul en euros, **affichage dans la devise du voyageur** (taux gratuit, 1.8).
-- [ ] Carburant par pays (table versionnée, date) ; péages là où ils comptent.
-- [ ] Assurance et repas par région ; libellés « indice de prix du pays » (plus
-      « prix français »).
+- [x] Calcul en euros, **affichage dans la devise du voyageur** (taux gratuit, 1.8).
+      **Lot W** : « ≈ 930 CHF · 1 € = 0,93 CHF · taux du 9 octobre 2026 · Frankfurter » dans la
+      carte Nous et le tiroir Budget ; taux introuvable = « indisponible » (`budgetFx.test.ts`,
+      `budgetFxServer.test.ts`, `compasScreen.test.tsx`).
+- [~] Carburant par pays (table versionnée, date) ; péages là où ils comptent. **Lot W** :
+      carburant par pays de l'UE-27 daté (voir 1.8). **Reste** : péages (aucune source officielle
+      lue : barèmes par km FR/IT/ES/PT/HR/GR, vignettes CH/AT/CZ/SK/SI/HU) ; la base des lignes
+      dit « péages non comptés ». Gazole dans la table, non chiffré ; 6,5 L/100 km non sourcé.
+- [~] Assurance et repas par région ; libellés « indice de prix du pays » (plus
+      « prix français »). **Lot W** : libellés faits (« indice de prix du pays : Pérou 45
+      (France = 100) », `costs.test.ts`). **Reste** : assurance (forfait 2 / 3 / 4,5 € par jour) et
+      repas (barème France × indice) sans découpage par région sourcé ; piste : indices de niveau
+      de prix de l'ICP 2021 de la Banque mondiale (CC BY 4.0).
 
 ### 4.7 Temps
 
