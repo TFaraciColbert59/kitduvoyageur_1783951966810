@@ -82,6 +82,33 @@ describe('verrou de vie privée du profil voyageur', () => {
     expect(travellerPrivacyViolations(root)).toEqual(['journal interdit dans src/features/compas/server/travellerActions.ts']);
   });
 
+  it('la ligne « Papiers » d’une nationalité ne se lit que dans le moteur des papiers et la lecture du Compas', () => {
+    const root = repo({
+      'src/features/compas/engine/papers.ts': 'export function readerPapersNotes() {}\nexport function notesForReader() {}\n',
+      'src/features/compas/server/getCompasData.ts': "import { notesForReader } from '../engine/papers';\n",
+      'src/features/compas/server/autofillActions.ts': "import { readerPapersNotes } from '../engine/papers';\n",
+      'src/features/trips/server/shareTrip.ts': "import { notesForReader } from '@/features/compas/engine/papers';\n",
+    });
+    expect(travellerPrivacyViolations(root)).toEqual([
+      "ligne « Papiers » d'une nationalité nommée hors de la lecture : src/features/compas/server/autofillActions.ts",
+      "ligne « Papiers » d'une nationalité nommée hors de la lecture : src/features/trips/server/shareTrip.ts",
+    ]);
+  });
+
+  it('les notes de papiers brutes (celles d’une nationalité) ne se rangent pas sur le voyage ; filtrées de leur ligne « Papiers », oui', () => {
+    const leak = repo({
+      'src/features/compas/server/autofillActions.ts': 'const essential = [...papers.notes, ...safety];\n',
+    });
+    expect(travellerPrivacyViolations(leak)).toEqual([
+      'notes de papiers brutes (nationalité) reprises dans src/features/compas/server/autofillActions.ts',
+    ]);
+    const kept = repo({
+      'src/features/compas/server/autofillActions.ts':
+        'const essential = [...shared, ...papers.notes.filter((n) => !isPapersNote(n)), ...safety];\n',
+    });
+    expect(travellerPrivacyViolations(kept)).toEqual([]);
+  });
+
   it('les tests ne comptent pas', () => {
     const root = repo({ 'src/features/compas/__tests__/x.test.ts': READ, 'src/components/x.spec.tsx': READ });
     expect(travellerPrivacyViolations(root)).toEqual([]);

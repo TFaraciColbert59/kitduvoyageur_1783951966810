@@ -18,10 +18,16 @@
  *  - change : sa DEVISE. En zone euro, les conseils de change de l'IA ne sont
  *    gardés que pour une personne dont la devise connue n'est pas l'euro.
  * Les conseils de l'IA qui doublent une règle sont écartés (`keepAiNote`).
+ *
+ * VIE PRIVÉE : la ligne « Papiers » dépend de la nationalité, donc ne se range JAMAIS sur le
+ * voyage (`trips.metadata` est lisible par les collaborateurs et, pour un voyage public, par
+ * tous : le groupe de passeports de la table ne contient parfois qu'une nationalité). Le
+ * voyage garde la ligne SANS nationalité (`sharedPapersNotes`) ; la ligne de la personne qui
+ * regarde se calcule à la lecture, avec SON profil (`notesForReader`).
  */
 
 import { entryFees } from './costs';
-import { describeEntry, frenchDay, type EntryKind, type EntryRequirement } from './entry';
+import { describeEntry, entryFor, frenchDay, type EntryKind, type EntryRequirement } from './entry';
 import { UNKNOWN_TRAVELLER, type TravellerContext } from './traveller';
 
 /**
@@ -212,6 +218,70 @@ function otherPapers(
 /** Appareils de France : résidence en France (outre-mer compris), ou nationalité française sans résidence dite. */
 function frenchDevices(t: TravellerContext): boolean {
   return t.residenceCountry ? DOMESTIC.has(t.residenceCountry) : t.nationality === 'FR';
+}
+
+/** Toute ligne « Papiers » des règles ci-dessus commence ainsi (la seule note qui dépend de la nationalité). */
+export const PAPERS_NOTE_PREFIX = 'Papiers :';
+
+export function isPapersNote(note: string): boolean {
+  return note.startsWith(PAPERS_NOTE_PREFIX);
+}
+
+/**
+ * La ligne « Papiers » SANS nationalité : la seule qui se range sur le voyage. Mêmes règles que
+ * pour une nationalité inconnue (aucune frontière : rien ; sinon une ligne qui renvoie au service
+ * officiel du pays de la personne), la table n'est jamais lue.
+ */
+export function sharedPapersNotes(
+  countryCode: string | null | undefined,
+  countryName: string | null | undefined,
+  abroad: boolean | null
+): string[] {
+  return travelPapers(countryCode, countryName, UNKNOWN_TRAVELLER, abroad, null).notes.filter(isPapersNote);
+}
+
+/**
+ * La ligne « Papiers » de CETTE personne, d'après son profil et la table (`find`). Rendue à la
+ * lecture seulement (`notesForReader`), jamais rangée : voir l'en-tête du module.
+ */
+export function readerPapersNotes(
+  countryCode: string | null | undefined,
+  countryName: string | null | undefined,
+  reader: TravellerContext,
+  abroad: boolean | null,
+  find: (passport: string, destination: string) => EntryRequirement | null
+): string[] {
+  const entry = entryFor(find, reader.nationality, countryCode, abroad);
+  return travelPapers(countryCode, countryName, reader, abroad, entry).notes.filter(isPapersNote);
+}
+
+/** Ce que le voyage garde pour rendre la ligne de chaque lecteur : le pays visité et le départ, jamais une nationalité. */
+export interface PapersFacts {
+  countryCode: string;
+  /** Nom du pays tel que la ligne le dit ; null : le code. */
+  country: string | null;
+  /** Faux : départ déjà dans le pays ; null : on ne sait pas. */
+  abroad: boolean | null;
+}
+
+/**
+ * Les notes rangées sur le voyage, avec la ligne « Papiers » de CE lecteur à la place de celle
+ * du voyage. Toute ligne « Papiers » rangée est remplacée (jamais rendue telle quelle : un
+ * voyage préparé avant ce verrou peut encore porter la ligne d'une nationalité) ; sans ligne
+ * rangée, rien n'est ajouté (aucune frontière, ou rien à dire) ; sans les faits du pays, la
+ * ligne est retirée plutôt que devinée.
+ */
+export function notesForReader(
+  stored: string[],
+  facts: PapersFacts | null,
+  reader: TravellerContext,
+  find: (passport: string, destination: string) => EntryRequirement | null
+): string[] {
+  const at = stored.findIndex(isPapersNote);
+  if (at < 0) return stored;
+  const rest = stored.filter((n) => !isPapersNote(n));
+  const own = facts ? readerPapersNotes(facts.countryCode, facts.country, reader, facts.abroad, find) : [];
+  return [...rest.slice(0, at), ...own, ...rest.slice(at)];
 }
 
 const PAPERS_RE = /passeport|carte d[’']identit|\bvisas?\b|e-visa|formalit|autorisation (de voyage|électronique)/i;
