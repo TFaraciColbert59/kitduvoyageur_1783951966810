@@ -157,6 +157,16 @@ export async function awardHikeSessionProcessed(sessionId: string): Promise<Awar
   });
 }
 
+/**
+ * T22 — Claim d'exclusivité de préparation : sentier et Compas partagent la
+ * même clé d'aventure — la deuxième variante pour la même aventure est
+ * refusée « fait_déjà_réclamé », dans les deux sens.
+ */
+const PREPARATION_CLAIM_GROUP = 'preparation_exclusive';
+export function preparationAventureClaimKey(tripId: string): string {
+  return `aventure:${tripId}`;
+}
+
 /** Activité réellement créée depuis un sentier → Se préparer. */
 export async function awardTrailPrepared(
   userId: string,
@@ -169,8 +179,69 @@ export async function awardTrailPrepared(
     sourceType: 'trail_prep',
     sourceId: `${userId}:${routeId}`,
     effectiveAt: new Date().toISOString(),
+    claims: [{ group: PREPARATION_CLAIM_GROUP, key: preparationAventureClaimKey(tripId) }],
     metadata: { routeId: String(routeId), tripId },
   });
+}
+
+/**
+ * T22 — Préparation Compas PERTINENTE → Se préparer (émission fermée en v1 :
+ * `compas_prepared` n'existe qu'au registre v2, le moteur refuse
+ * `action_non_autorisee` jusqu'à l'activation — le producteur et sa preuve
+ * sont néanmoins livrés ici).
+ *
+ * Preuves : voyage réellement sorti du brouillon (préparation engagée), flux
+ * Compas d'origine (`metadata.compas`), JAMAIS un voyage lié à un sentier
+ * (claim d'aventure partagé + refus direct), jamais une création vide.
+ */
+export async function awardCompasPrepared(tripId: string): Promise<AwardProducerResult> {
+  try {
+    const supabase = getServiceSupabase();
+    if (!supabase) return { success: false, outcome: 'refused', reason: 'service_indisponible' };
+
+    const { data: trip, error } = await supabase
+      .from('trips')
+      .select('user_id, status, metadata')
+      .eq('id', tripId)
+      .maybeSingle();
+    if (error || !trip) {
+      return { success: false, outcome: 'refused', reason: 'voyage_introuvable' };
+    }
+    if (trip.status === 'draft') {
+      return { success: false, outcome: 'refused', reason: 'preparation_vide' };
+    }
+
+    const metadata = (trip.metadata ?? {}) as Record<string, unknown>;
+    const compas = (metadata.compas ?? null) as Record<string, unknown> | null;
+    if (!compas || typeof compas !== 'object') {
+      return { success: false, outcome: 'refused', reason: 'hors_compas' };
+    }
+
+    // Exclut la préparation de sentier déjà payée pour la même aventure.
+    const origin = compas.origin;
+    const originText = typeof origin === 'string' ? origin.toLowerCase() : '';
+    const originRecord = origin !== null && typeof origin === 'object' ? (origin as Record<string, unknown>) : null;
+    const linkedToTrail =
+      originText.includes('sentier') ||
+      originText.includes('trail') ||
+      (originRecord !== null && (originRecord.routeId !== undefined || originRecord.route_id !== undefined));
+    if (linkedToTrail) {
+      return { success: false, outcome: 'refused', reason: 'aventure_liee_sentier' };
+    }
+
+    return award({
+      userId: trip.user_id,
+      action: 'compas_prepared',
+      sourceType: 'compas_prep',
+      sourceId: tripId,
+      effectiveAt: new Date().toISOString(),
+      claims: [{ group: PREPARATION_CLAIM_GROUP, key: preparationAventureClaimKey(tripId) }],
+      metadata: { tripId, origin: originText || null },
+    });
+  } catch (error) {
+    console.error('[progression/producerHooks] préparation Compas (non bloquant):', error);
+    return { success: false, outcome: 'refused', reason: 'hook_error' };
+  }
 }
 
 /**

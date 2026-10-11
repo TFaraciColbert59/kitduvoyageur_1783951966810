@@ -19,6 +19,7 @@ vi.mock('@/features/progression/server/awardProducer', () => ({ awardProducerGai
 import { getServiceSupabase } from '@/lib/ai/serviceClient';
 import { awardProducerGain } from '@/features/progression/server/awardProducer';
 import {
+  awardCompasPrepared,
   awardHikeSessionProcessed,
   awardKitFieldReport,
   awardTrailPrepared,
@@ -33,6 +34,7 @@ interface TableData {
   reports?: Array<Record<string, unknown>>;
   claim?: unknown;
   season?: unknown;
+  trip?: unknown;
 }
 
 function builder() {
@@ -64,6 +66,11 @@ function createSupabaseMock(data: TableData) {
       if (table === 'kit_field_reports') {
         const b = builder();
         b.eq = () => Promise.resolve({ data: data.reports ?? [], error: null });
+        return b;
+      }
+      if (table === 'trips') {
+        const b = builder();
+        b.maybeSingle = () => Promise.resolve({ data: data.trip ?? null, error: null });
         return b;
       }
       throw new Error(`table inattendue: ${table}`);
@@ -227,13 +234,66 @@ describe('producerHooks', () => {
     expect(input.metadata).toMatchObject({ kitId: 'k1', items: 2 });
   });
 
-  it('(e) activité préparée → clé stable (user, route)', async () => {
+  it('(e) activité préparée → clé stable (user, route) + claim d’aventure partagé', async () => {
     await awardTrailPrepared('u1', 42, 'trip-1');
 
     const input = mockedAward.mock.calls[0][0];
     expect(input.action).toBe('trail_prepared');
     expect(input.sourceId).toBe('u1:42');
     expect(input.metadata).toEqual({ routeId: '42', tripId: 'trip-1' });
+    expect(input.claims).toEqual([
+      { group: 'preparation_exclusive', key: 'aventure:trip-1' },
+    ]);
+  });
+
+  it('(g) Compas : création vide (draft) → refus sans crédit', async () => {
+    mockedGetService.mockReturnValue(
+      createSupabaseMock({
+        trip: { user_id: 'u1', status: 'draft', metadata: { compas: {} } },
+      }) as never
+    );
+
+    const result = await awardCompasPrepared('trip-1');
+
+    expect(result.success).toBe(false);
+    expect(result.reason).toBe('preparation_vide');
+    expect(mockedAward).not.toHaveBeenCalled();
+  });
+
+  it('(h) Compas : préparation engagée hors sentier → gain avec claim partagé', async () => {
+    mockedGetService.mockReturnValue(
+      createSupabaseMock({
+        trip: { user_id: 'u1', status: 'planned', metadata: { compas: { origin: 'compas' } } },
+      }) as never
+    );
+
+    await awardCompasPrepared('trip-1');
+
+    const input = mockedAward.mock.calls[0][0];
+    expect(input.action).toBe('compas_prepared');
+    expect(input.sourceType).toBe('compas_prep');
+    expect(input.sourceId).toBe('trip-1');
+    expect(input.claims).toEqual([
+      { group: 'preparation_exclusive', key: 'aventure:trip-1' },
+    ]);
+  });
+
+  it('(i) Compas : aventure liée à un sentier → refus d’exclusivité', async () => {
+    mockedGetService.mockReturnValue(
+      createSupabaseMock({
+        trip: {
+          user_id: 'u1',
+          status: 'planned',
+          metadata: { compas: { origin: { routeId: 42 } } },
+        },
+      }) as never
+    );
+
+    const result = await awardCompasPrepared('trip-1');
+
+    expect(result.success).toBe(false);
+    expect(result.reason).toBe('aventure_liee_sentier');
+    expect(mockedAward).not.toHaveBeenCalled();
   });
 
   it('(f) avis de lieu → clé stable (auteur, place), sans collision inter-utilisateurs', async () => {

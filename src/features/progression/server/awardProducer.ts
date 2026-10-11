@@ -13,6 +13,7 @@ import { getServiceSupabase } from '@/lib/ai/serviceClient';
 export type ProducerAction =
   | 'hike_session_processed'
   | 'trail_prepared'
+  | 'compas_prepared'
   | 'kit_field_report'
   | 'place_review'
   | 'carnet_published'
