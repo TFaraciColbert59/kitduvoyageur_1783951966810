@@ -458,6 +458,8 @@ export function aliasMatches(place: CompasPlace, query: string): boolean {
 const SLEEP_TAGS = /^(tourism=(hotel|hostel|guest_house|alpine_hut|wilderness_hut|camp_site|caravan_site|chalet|motel|apartment)|amenity=shelter)$/;
 /** Nature : sommet, lac, col, vallée… restent l'étape d'un trek (bivouac, refuge voisin). */
 const NATURE_TAG = /^(natural|waterway|mountain_pass)=|^place=(island|islet)$|^leisure=nature_reserve$/;
+/** Eau libre : un détroit, une baie, la mer ne sont pas un lieu où dormir (un lac, lui, reste une étape possible). */
+const OPEN_WATER_TAG = /^natural=(strait|bay|channel)$|^place=(sea|ocean)$/;
 /** « Province de Ninh Bình », « Distrito de Cusco » : le nom sans son préfixe administratif. */
 const ADMIN_PREFIX = /^(province|region|région|departement|département|district|distrito|provincia|regione|comté|county|prefecture|préfecture|municipalité|municipality|commune)\s+(de\s+la\s+|de\s+l['’]|du\s+|des\s+|de\s+|d['’]|of\s+)?/i;
 /** « West Clare Municipal District », « Kerry County » : le nom sans son suffixe administratif. */
@@ -490,7 +492,10 @@ export function sleepPlaceFix(place: CompasPlace): { locality: string } | { sear
     return bare ? { search: bare } : null;
   }
   if (place.settlement && (place.settlementRank ?? 2) >= 1) return null;
-  if (SLEEP_TAGS.test(tag) || NATURE_TAG.test(tag)) return null;
+  if (SLEEP_TAGS.test(tag)) return null;
+  // « Canal de Beagle » (Patagonie) gardé comme étape : le village le plus proche est cherché (plan 4.5).
+  if (OPEN_WATER_TAG.test(tag)) return { search: place.name };
+  if (NATURE_TAG.test(tag)) return null;
   if (BROAD.has(place.kind) || /^boundary=administrative$/.test(tag)) {
     const bare = place.name.replace(ADMIN_PREFIX, '').replace(ADMIN_SUFFIX, '').trim();
     if (bare && bare !== place.name) return { search: bare };
