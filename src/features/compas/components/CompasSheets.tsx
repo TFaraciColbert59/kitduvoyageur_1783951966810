@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { shopRelevance } from '../engine/shopMatch';
 import {
   compasAnswerApplicantAction,
@@ -2970,13 +2970,20 @@ function VeilleFlow({ ctl }: { ctl: CompasCtl }) {
         {rules.map((r) => (
           <li key={r.id} data-hit={r.hits.length ? '1' : undefined}>
             <b>{r.label}</b>
-            <span>
-              {r.hits.length
-                ? r.hits.map((h) => h.label).join(' · ')
-                : r.id === 'alert' && alertsGap
-                  ? `Non vérifié : ${alertsGap}.`
-                  : 'Rien à signaler sur ce voyage.'}
-            </span>
+            {r.hits.length ? (
+              // Chaque alerte nomme son service national (conditions de Meteoalarm, § 5), comme
+              // dans les signaux du verdict.
+              r.hits.map((h, i) => (
+                <Fragment key={i}>
+                  <span>{h.label}</span>
+                  <span>Source : {h.source}</span>
+                </Fragment>
+              ))
+            ) : (
+              <span>
+                {r.id === 'alert' && alertsGap ? `Non vérifié : ${alertsGap}.` : 'Rien à signaler sur ce voyage.'}
+              </span>
+            )}
             {r.hits.map(
               (h, i) =>
                 h.official && (

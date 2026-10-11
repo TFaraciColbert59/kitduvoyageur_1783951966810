@@ -1729,6 +1729,30 @@ describe('CompasScreen', () => {
     }
   });
 
+  it('Veille : le service national qui a émis l’alerte est nommé sur sa ligne (conditions de Meteoalarm, § 5)', async () => {
+    const rule = await openVeilleAlertRule(withAlert(mise({ level: 'jaune' })));
+    expect(rule.textContent).toContain('Vigilance jaune · vent violent (Sardegna), émise le 10 oct. 2026, 16 h 00 UTC');
+    expect(
+      within(rule).getByText('Source : Servizio Meteorologico dell’Aeronautica Militare (MeteoAM) via Meteoalarm')
+    ).toBeTruthy();
+  });
+
+  it('Veille : deux alertes, chacune avec son service', async () => {
+    const data = withAlert(mise({ level: 'jaune' }));
+    const autre = mise({
+      id: 'de-1',
+      level: 'orange',
+      hazard: 'orages',
+      area: 'Bayern',
+      source: 'Deutscher Wetterdienst (DWD) via Meteoalarm',
+      texts: undefined,
+    });
+    data.danger = assessDanger({ dayPlans: [], forecasts: [], alerts: [mise({ level: 'jaune' }), autre], alertsStatus: 'partielles' });
+    const rule = await openVeilleAlertRule(data);
+    expect(within(rule).getByText(/Source : Servizio Meteorologico/)).toBeTruthy();
+    expect(within(rule).getByText('Source : Deutscher Wetterdienst (DWD) via Meteoalarm')).toBeTruthy();
+  });
+
   const TEXTES = [
     {
       lang: 'en-GB',
