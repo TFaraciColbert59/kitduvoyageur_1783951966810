@@ -92,8 +92,9 @@ describe('lecteur de règles (sans IA)', () => {
   });
 
   it('éviter, envies et objets', () => {
-    const a = parseIntentRules('sans voiture, envie de voir un lac, ajoute 2 frontales', TODAY);
-    expect(a).toContainEqual({ type: 'avoid', label: 'voiture' });
+    // « sans voiture » n'est plus une chose à éviter : c'est le réglage « sans voiture » (carFree.test.ts).
+    const a = parseIntentRules('sans foule, envie de voir un lac, ajoute 2 frontales', TODAY);
+    expect(a).toContainEqual({ type: 'avoid', label: 'foule' });
     expect(a).toContainEqual({ type: 'wish', label: 'voir un lac' });
     expect(a).toContainEqual({ type: 'add_item', name: 'frontales', quantity: 2 });
   });

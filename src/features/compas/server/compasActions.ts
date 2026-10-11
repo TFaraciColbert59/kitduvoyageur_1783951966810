@@ -524,6 +524,7 @@ const prefsSchema = z.object({
     maxPackKg: z.number().min(1).max(40).nullable().optional(),
     outdoorNights: z.number().int().min(0).max(60).nullable().optional(),
     targetKm: z.number().min(1).max(300).nullable().optional(),
+    carFree: z.boolean().nullable().optional(),
   }),
 });
 

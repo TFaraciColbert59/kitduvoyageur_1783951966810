@@ -62,7 +62,8 @@ import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } f
 import { bestPeriod, monthName, needsDryNormals } from '../engine/period';
 import { partsText, retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
 import { lookupDestination, lookupMassif, lookupNatural, lookupReverse, lookupRiver, stageAliasCandidates, stageCandidates } from './placeLookup';
-import { lookupAreaPlaces, lookupRiverLine, lookupStagePois } from './stagePoiLookup';
+import { lookupAreaPlaces, lookupRiverLine, lookupStagePois, readCachedStagePois } from './stagePoiLookup';
+import { carFreeOf, carFreeStages, carFreeStagesNote, transitSignal } from '../engine/carFree';
 import { buildTrack, simplifyLine, trackKey, type LngLat } from '../engine/track';
 import { descentWindow, planRiverDescent } from '../engine/river';
 import { entryFor } from '../engine/entry';
@@ -931,6 +932,8 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       project: compas.preferences,
       profile,
     });
+    // « Sans voiture » (PLAN-100 4.4) : posée au projet ; écartée, et dit, pour un road trip ou un van.
+    const carFree = carFreeOf(compas.preferences, activity);
     const prevBudget = (tripRow as { estimated_budget?: number | null } | null)?.estimated_budget ?? null;
 
     /* 1. Où : la destination retrouvée sur la carte (Dis-le), sinon les étapes, sinon son nom. */
@@ -1398,6 +1401,13 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         }
       }
       if (!routeSet) {
+        // Sans voiture : les déplacements d'une étape à l'autre en voiture passent en bus (barème, dit).
+        if (carFree.on && stagePlaces.length) {
+          const swapped = carFreeStages(stagePlaces);
+          stagePlaces = swapped.stages;
+          const swapNote = carFreeStagesNote(swapped.converted);
+          if (swapNote) notes.push(swapNote);
+        }
         // Distances réelles entre deux soirs (à pied, à vélo ou sur la route), en parallèle.
         const legGeometry: Array<Array<[number, number]> | null> = stagePlaces.map(() => null);
         const legs = await mapLimit(stagePlaces, 4, async (st, i): Promise<StageLeg | null> => {
@@ -1654,6 +1664,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         days,
         party,
         transport: ctx.modules.transport,
+        carFree: carFree.on,
       },
       {
         carRoute: async (a, b) => {
@@ -1678,19 +1689,37 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       }
     );
     notes.push(...travelLeg.notes);
+    if (carFree.note) notes.push(carFree.note);
+    if (carFree.on) {
+      // « Transports en commun » seulement si la zone en montre : gares, gares routières, embarcadères
+      // lus sur la carte autour des étapes (cache partagé ; une lecture réseau si la passe a le temps).
+      const stagePoints = steps
+        .filter((s) => s.latitude != null && s.longitude != null)
+        .map((s) => ({ lat: Number(s.latitude), lon: Number(s.longitude) }));
+      let read = await readCachedStagePois(stagePoints).catch(() => null);
+      if (read && !read.complete && !read.pois.some((p) => p.category === 'transport') && remaining() > 90_000) {
+        const fresh = await lookupStagePois(stagePoints).catch(() => null);
+        if (fresh) read = { pois: fresh.pois, complete: !fresh.partial };
+      }
+      notes.push(transitSignal({ pois: read?.pois ?? null, complete: read?.complete ?? false }).text);
+    }
     const { origin, abroad, transport, carFuel } = travelLeg;
     const flightNeeded = travelLeg.flight != null;
     // Train plutôt qu'avion quand la route est trop longue mais le rail à portée (Ardennes, Bruges).
     const trainNeeded = travelLeg.train;
     const motorLegs = steps.filter((s, i) => i > 0 && s.distance_km != null && s.distance_km > 0).length;
     // Étapes proposées à l'instant, sinon celles déjà en place avec leur moyen de transport.
-    const moves = stagePlaces.length ? stagePlaces : movesFromSteps(steps, activity);
+    const moves0 = stagePlaces.length ? stagePlaces : movesFromSteps(steps, activity);
+    // Sans voiture, les étapes déjà en place en voiture se comptent en bus, comme les nouvelles.
+    const moves = carFree.on ? carFreeStages(moves0).stages : moves0;
     const localMoves = moves.filter((s, i) => i > 0 && ['bus', 'train', 'bateau', 'vol'].includes(s.move));
     // Road trip : kilomètres mesurés en voiture entre les étapes ; arrivé en avion, il faut louer.
     const carDays = moves.filter((s, i) => i > 0 && s.move === 'voiture');
-    const carKmOnSite = steps
-      .filter((st) => st.transport_mode === 'car' && st.distance_km != null)
-      .reduce((t, st) => t + (st.distance_km ?? 0), 0);
+    const carKmOnSite = carFree.on
+      ? 0
+      : steps
+          .filter((st) => st.transport_mode === 'car' && st.distance_km != null)
+          .reduce((t, st) => t + (st.distance_km ?? 0), 0);
     const rentalNeeded = carDays.length > 0 && (flightNeeded || trainNeeded != null);
 
     lap('6');
@@ -1822,6 +1851,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       `Départ de la personne : ${originFact(origin)}.`,
       `${trip.start_date ? `Dates : ${trip.start_date} au ${trip.end_date ?? trip.start_date}` : 'Dates non choisies'} (${days} jour(s)), groupe de ${party}, activité ${activity}.`,
       abroad === true ? 'Voyage à l’étranger : oui.' : abroad === false ? 'Voyage à l’étranger : non.' : 'Voyage à l’étranger : inconnu.',
+      carFree.on ? 'Préférence : sans voiture (ni voiture personnelle ni de location) : ne conseille jamais d’en prendre ou d’en louer une.' : '',
       flightNeeded
         ? 'Vol à prévoir : oui (aller-retour).'
         : trainNeeded

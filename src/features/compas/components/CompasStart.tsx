@@ -25,6 +25,7 @@ const LINE_ICON: Record<RequestLine['key'], string> = {
   nuits: 'moon',
   envies: 'heart',
   budget: 'euro',
+  deplacements: 'train',
 };
 
 /**

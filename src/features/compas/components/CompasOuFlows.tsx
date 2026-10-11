@@ -1269,6 +1269,29 @@ function ProjectBlock({
         </div>
       )}
 
+      {ctx.modules.transport && (
+        <div className="cp-prefs__block">
+          <span className="cp-prefs__l">Déplacements</span>
+          <div className="cp-chiprow" role="group" aria-label="Déplacements">
+            <button
+              type="button"
+              className="cp-pill"
+              aria-pressed={prefs.carFree === true}
+              disabled={!edit}
+              onClick={() =>
+                save(
+                  { ...prefs, carFree: prefs.carFree === true ? null : true },
+                  prefs.carFree === true ? 'Voiture de nouveau possible' : 'Sans voiture : train, bus, vélo ou à pied'
+                )
+              }
+            >
+              Sans voiture
+            </button>
+          </div>
+          <p className="cp-sub">Ni voiture personnelle ni de location : train, bus, vélo ou à pied.</p>
+        </div>
+      )}
+
       {nightsCount > 0 && (
         <div className="cp-prefs__block">
           <span className="cp-prefs__l">Nuits dehors</span>

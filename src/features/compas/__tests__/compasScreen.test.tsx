@@ -8,6 +8,7 @@ import axe from 'axe-core';
 import { STEP_FLOWS } from '../components/compasTypes';
 import { buildCompasModel, type CompasInput, type CompasItemInput } from '../engine/compasModel';
 import { assessDanger } from '../engine/danger';
+import { resolveProjectContext } from '../engine/projectContext';
 import { daylightClock } from '../engine/sun';
 import type { CompasData } from '../server/getCompasData';
 
@@ -1560,6 +1561,22 @@ describe('CompasScreen', () => {
         tripId: TRIP,
         tripSlug: 'trek-3-vallees',
         preferences: { pace: 'normal', nights: 'bivouac', avoid: [], wishes: [] },
+      })
+    );
+  });
+
+  it('Préférences : « Sans voiture » s’enregistre avec les autres réglages', async () => {
+    const context = resolveProjectContext({ activity: 'hiking', days: 4, hours: null, partySize: 2, month: 10, project: null, profile: null });
+    render(<CompasScreen data={{ ...makeData(), context }} />);
+    const sheet = await openOu(/Préférences/);
+    const pill = () => within(sheet).getByRole('button', { name: 'Sans voiture' }) as HTMLButtonElement;
+    expect(pill().getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(pill());
+    await waitFor(() =>
+      expect(compas.compasSetPreferencesAction).toHaveBeenLastCalledWith({
+        tripId: TRIP,
+        tripSlug: 'trek-3-vallees',
+        preferences: { pace: 'normal', nights: null, avoid: [], wishes: [], carFree: true },
       })
     );
   });

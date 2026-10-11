@@ -69,6 +69,8 @@ export interface CompasPreferences {
   outdoorNights?: number | null;
   /** Distance visée (km) : la sortie entière, ou par jour pour un séjour. */
   targetKm?: number | null;
+  /** Sans voiture (personnelle ou de location) : train, bus, vélo ou à pied ; `true` ou absent. */
+  carFree?: boolean | null;
 }
 
 export interface CompasStepInput {
@@ -414,7 +416,7 @@ export function buildCompasModel(input: CompasInput): CompasModel {
     // Personnalisations du projet : présentes seulement si elles sont choisies
     // (un champ absent laisse le profil, puis un défaut, décider).
     ...Object.fromEntries(
-      (['level', 'autonomy', 'priority', 'terrain', 'maxPackKg', 'outdoorNights', 'targetKm'] as const)
+      (['level', 'autonomy', 'priority', 'terrain', 'maxPackKg', 'outdoorNights', 'targetKm', 'carFree'] as const)
         .filter((k) => trip.preferences?.[k] != null)
         .map((k) => [k, trip.preferences?.[k]])
     ),
