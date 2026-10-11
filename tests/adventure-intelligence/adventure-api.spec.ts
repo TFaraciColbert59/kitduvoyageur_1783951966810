@@ -170,3 +170,14 @@ describe('A6 — API génération et lecture (TEST-A6-API)', () => {
     expect(body.decisions).toHaveLength(1);
   });
 });
+
+// Garder le limiteur réel en mémoire ; les backends distribués sont une frontière externe.
+vi.mock('@/lib/rate-limit', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/rate-limit')>();
+  return {
+    ...actual,
+    rateLimit: vi.fn((options: import('@/lib/rate-limit').RateLimitOptions) =>
+      actual.rateLimit({ ...options, env: {} })
+    ),
+  };
+});

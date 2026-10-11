@@ -164,3 +164,7 @@ describe('queries-affiliation (Service Layer)', () => {
     expect(conversion?.amount_cents).toBe(1250);
   });
 });
+
+vi.mock('@/lib/ai/serviceClient', () => ({
+  getServiceSupabase: vi.fn(() => ({ from: mockFrom })),
+}));

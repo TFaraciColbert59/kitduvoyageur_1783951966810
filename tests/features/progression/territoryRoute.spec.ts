@@ -3,9 +3,10 @@
  * verrou court, corrections plafonnées, état sans coordonnées.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }));
+vi.mock('@/lib/rate-limit/routes', () => ({ enforceRateLimit: vi.fn() }));
 vi.mock('@/features/progression/server/territoryService', () => ({
   getTerritoryState: vi.fn(),
   updateDeclaredTerritory: vi.fn(),
@@ -13,6 +14,7 @@ vi.mock('@/features/progression/server/territoryService', () => ({
 }));
 
 import { createClient } from '@/lib/supabase/server';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import {
   getTerritoryState,
   updateDeclaredTerritory,
@@ -23,6 +25,7 @@ import { GET, POST } from '@/app/api/progression/territory/route';
 const USER_ID = '22222222-2222-4222-8222-222222222222';
 
 const mockedCreateClient = vi.mocked(createClient);
+const mockedRateLimit = vi.mocked(enforceRateLimit);
 const mockedGetState = vi.mocked(getTerritoryState);
 const mockedDeclared = vi.mocked(updateDeclaredTerritory);
 const mockedPrivate = vi.mocked(updatePrivateAttachment);
@@ -58,6 +61,23 @@ const ATTACHMENT = {
 describe('GET /api/progression/territory', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedRateLimit.mockReset();
+    mockedRateLimit.mockResolvedValue(null);
+  });
+
+  it.each([429, 503])('propage le refus %i sans lire le territoire', async (status) => {
+    mockedCreateClient.mockResolvedValue(sessionClient({ id: USER_ID }));
+    const denied = NextResponse.json({ error: 'rate_limit_denied' }, { status });
+    mockedRateLimit.mockResolvedValueOnce(denied);
+
+    const response = await GET();
+
+    expect(response).toBe(denied);
+    expect(response.status).toBe(status);
+    expect(mockedRateLimit).toHaveBeenCalledWith(USER_ID, expect.objectContaining({
+      scope: 'progression-territory', failMode: 'closed',
+    }));
+    expect(mockedGetState).not.toHaveBeenCalled();
   });
 
   it('sans session → 401, service jamais appelé', async () => {
@@ -102,6 +122,8 @@ describe('GET /api/progression/territory', () => {
 describe('POST /api/progression/territory — choix manuel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedRateLimit.mockReset();
+    mockedRateLimit.mockResolvedValue(null);
   });
 
   it('sans session → 401', async () => {
@@ -111,6 +133,22 @@ describe('POST /api/progression/territory — choix manuel', () => {
 
     expect(response.status).toBe(401);
     expect(mockedDeclared).not.toHaveBeenCalled();
+  });
+
+  it.each([429, 503])('propage le refus %i sans écrire le territoire', async (status) => {
+    mockedCreateClient.mockResolvedValue(sessionClient({ id: USER_ID }));
+    const denied = NextResponse.json({ error: 'rate_limit_denied' }, { status });
+    mockedRateLimit.mockResolvedValueOnce(denied);
+
+    const response = await POST(post({ city_code: '38185' }));
+
+    expect(response).toBe(denied);
+    expect(response.status).toBe(status);
+    expect(mockedRateLimit).toHaveBeenCalledWith(USER_ID, expect.objectContaining({
+      scope: 'progression-territory', failMode: 'closed',
+    }));
+    expect(mockedDeclared).not.toHaveBeenCalled();
+    expect(mockedPrivate).not.toHaveBeenCalled();
   });
 
   it('corps illisible → 400 invalid_body', async () => {
@@ -157,6 +195,8 @@ describe('POST /api/progression/territory — choix manuel', () => {
 describe('POST /api/progression/territory — rattachement privé 1 km', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedRateLimit.mockReset();
+    mockedRateLimit.mockResolvedValue(null);
     mockedCreateClient.mockResolvedValue(sessionClient({ id: USER_ID }));
   });
 

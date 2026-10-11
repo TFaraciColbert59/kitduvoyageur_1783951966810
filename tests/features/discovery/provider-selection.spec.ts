@@ -23,6 +23,8 @@ describe('Sélection du fournisseur de découverte (kill-switch)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllEnvs();
+    vi.stubEnv('DISCOVERY_PROVIDER', '');
+    vi.stubEnv('DISCOVERY_TERRA_ENABLED', '');
     configuredMock.mockReturnValue(true);
     geoMock.mockResolvedValue({ name: 'Islande', name_en: 'Iceland', capital: 'Reykjavik' } as never);
   });

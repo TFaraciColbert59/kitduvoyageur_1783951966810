@@ -4,6 +4,7 @@ import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { Badge, Card, EmptyState, ListItem } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { requestChecklistCompletionAward } from '@/lib/progression-award-requests';
 import type { DatabaseTripChecklistItem } from '@/lib/supabase/types';
@@ -284,6 +285,7 @@ interface TripChecklistViewProps {
 export function TripChecklistView({ tripId, daysUntilStart, items }: TripChecklistViewProps) {
   const [rows, setRows] = useState<DatabaseTripChecklistItem[]>(items);
   const { triggerHaptic } = useHapticFeedback();
+  const { user } = useAuth();
   // T10 — reveal des tâches ajoutées en réel (bus live), section visible seulement.
   const { liveIds, containerRef } = useLiveArrivalReveal<HTMLDivElement>('trip_checklist_items');
 
@@ -291,6 +293,7 @@ export function TripChecklistView({ tripId, daysUntilStart, items }: TripCheckli
   const doneCount = rows.filter((i) => i.done).length;
 
   const toggleItem = (item: DatabaseTripChecklistItem) => {
+    const ownerId = user?.id;
     triggerHaptic('selection');
     const nextDone = !item.done;
     const previous = rows;
@@ -307,7 +310,7 @@ export function TripChecklistView({ tripId, daysUntilStart, items }: TripCheckli
       } else {
         // P2 — le serveur revérifie l'état réel (100 % des items) et attribue
         // une seule fois par voyage ; ne bloque jamais le toggle.
-        requestChecklistCompletionAward(tripId);
+        if (ownerId) requestChecklistCompletionAward(tripId, ownerId);
       }
     })();
   };

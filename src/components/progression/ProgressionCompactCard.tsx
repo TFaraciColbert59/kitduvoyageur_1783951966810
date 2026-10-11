@@ -1,77 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { ChevronRight, Flame, Target, Trophy } from 'lucide-react';
 import { Badge } from '@/components/ui';
+import { useAuth } from '@/contexts/AuthContext';
 import MaProgressionView from './MaProgressionView';
-import type {
-  TerritorialLeaderboard,
-  UserProgressionProfile,
-} from '@/features/progression/domain/types';
-
-interface ProgressionCompactState {
-  /** `hidden` tant que la donnée n'est pas chargée (ou si l'API est indisponible). */
-  status: 'hidden' | 'ready';
-  profile: UserProgressionProfile | null;
-  /** Rang réel : `leaderboardRank` du profil, sinon rang RPC du classement ville. */
-  rank: number | null;
-}
+import { progressionProfileQuery, progressionCityRankQuery } from '@/features/progression/client/progressionQuery';
 
 interface ProgressionCompactCardProps {
   className?: string;
   variant?: 'card' | 'drawer';
-}
-
-/**
- * Cache mémoire court, module-level : évite le double appel systématique
- * profil + classement quand la carte est montée deux fois sur le même écran
- * (CollectifMenu, PossessionMenu, SortieMenu) et absorbe les remontages
- * rapprochés. Limites assumées : par instance JS (onglet), non partagé entre
- * onglets/worktrees, perdu au rechargement ; aucune lib partagée n'est ajoutée
- * pour ce besoin (TTL 60 s aligné sur le `Cache-Control` des routes).
- */
-const RESPONSE_CACHE_TTL_MS = 60_000;
-interface MemoryCacheEntry {
-  expiresAt: number;
-  payload: unknown;
-}
-const memoryResponseCache = new Map<string, MemoryCacheEntry>();
-const inflightRequests = new Map<string, Promise<unknown>>();
-
-async function fetchJsonCached(url: string): Promise<unknown> {
-  const cached = memoryResponseCache.get(url);
-  if (cached && cached.expiresAt > Date.now()) return cached.payload;
-
-  const inflight = inflightRequests.get(url);
-  if (inflight) return inflight;
-
-  const request = fetch(url, { cache: 'no-store' })
-    .then(async (response) => {
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const payload = await response.json();
-      memoryResponseCache.set(url, {
-        expiresAt: Date.now() + RESPONSE_CACHE_TTL_MS,
-        payload,
-      });
-      return payload;
-    })
-    .finally(() => {
-      inflightRequests.delete(url);
-    });
-
-  inflightRequests.set(url, request);
-  return request;
-}
-
-interface ProfilePayload {
-  success?: boolean;
-  profile?: UserProgressionProfile;
-}
-
-interface LeaderboardPayload {
-  success?: boolean;
-  leaderboard?: TerritorialLeaderboard;
 }
 
 /**
@@ -80,67 +19,22 @@ interface LeaderboardPayload {
  * Honnêteté : lit uniquement `/api/progression` (profil canonique) et, pour le
  * rang, `/api/progression/leaderboard` (RPC réelle). Aucun chiffre n'est
  * inventé : `hasData=false` → état vide explicite, rang/défi absents → masqués.
- * La carte reste silencieuse (non montée) si l'API ne répond pas.
+ * Chargement et erreur restent visibles, sans les confondre avec un solde nul.
  */
 export function ProgressionCompactCard({
   className = '',
   variant = 'card',
 }: ProgressionCompactCardProps) {
-  const [state, setState] = useState<ProgressionCompactState>({
-    status: 'hidden',
-    profile: null,
-    rank: null,
+  const { user, loading: authLoading } = useAuth();
+  const userId = user?.id ?? null;
+  const enabled = variant !== 'drawer' && !authLoading && userId !== null;
+  const profileQuery = useQuery({ ...progressionProfileQuery(userId ?? ''), enabled });
+  const ownedProfile = enabled && profileQuery.data?.userId === userId ? profileQuery.data : null;
+  const canonicalRank = ownedProfile?.leaderboardRank;
+  const rankQuery = useQuery({
+    ...progressionCityRankQuery(userId ?? ''),
+    enabled: enabled && !!ownedProfile?.hasData && !(typeof canonicalRank === 'number' && canonicalRank > 0),
   });
-
-  useEffect(() => {
-    let alive = true;
-
-    async function load() {
-      try {
-        const payload = (await fetchJsonCached('/api/progression')) as ProfilePayload | null;
-        const profile = payload?.success ? (payload.profile ?? null) : null;
-        if (!profile || !alive) return;
-
-        let rank =
-          typeof profile.leaderboardRank === 'number' && profile.leaderboardRank > 0
-            ? profile.leaderboardRank
-            : null;
-
-        // `leaderboardRank` n'est pas encore projeté par le profil : le rang
-        // réel vient de la même RPC que Ma progression (filtre ville). On ne
-        // sollicite le classement que si un profil avec données existe : un
-        // compte sans progression n'a rien à classer.
-        if (rank === null && profile.hasData) {
-          try {
-            const leaderboardPayload = (await fetchJsonCached(
-              '/api/progression/leaderboard?filter=city&limit=1'
-            )) as LeaderboardPayload | null;
-            const leaderboard = leaderboardPayload?.success
-              ? (leaderboardPayload.leaderboard ?? null)
-              : null;
-            if (
-              leaderboard &&
-              typeof leaderboard.rank === 'number' &&
-              leaderboard.rank > 0
-            ) {
-              rank = leaderboard.rank;
-            }
-          } catch {
-            // Rang indisponible : aucun rang affiché, jamais inventé.
-          }
-        }
-
-        if (alive) setState({ status: 'ready', profile, rank });
-      } catch {
-        // API indisponible : la carte reste démontée.
-      }
-    }
-
-    load();
-    return () => {
-      alive = false;
-    };
-  }, []);
 
   if (variant === 'drawer') {
     return (
@@ -150,9 +44,38 @@ export function ProgressionCompactCard({
     );
   }
 
-  if (state.status !== 'ready' || !state.profile) return null;
+  // The query key and payload both identify the owner; no previous-account data.
+  if (!ownedProfile || profileQuery.isError) {
+    const isError = enabled && profileQuery.isError;
+    const isGuest = !authLoading && !userId;
+    return (
+      <section
+        aria-label="Progression"
+        aria-busy={!isError && !isGuest}
+        className={className}
+        style={{ borderRadius: 16, padding: 14, border: '1px solid var(--lkv-border-subtle)', background: 'var(--lkv-surface-card)', color: 'var(--lkv-text-primary)' }}
+      >
+        <span style={{ display: 'block', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--lkv-text-muted)' }}>Ma progression</span>
+        <p role={isError ? 'alert' : 'status'} style={{ margin: '6px 0', fontSize: 14 }}>
+          {isError ? 'Progression indisponible. Vos points ne peuvent pas être chargés.' : isGuest ? 'Connectez-vous pour retrouver votre progression.' : 'Chargement de votre progression…'}
+        </p>
+        {isError && (
+          <button
+            type="button"
+            onClick={() => void profileQuery.refetch()}
+            className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--lkv-focus-ring)]"
+            style={{ minWidth: 44, minHeight: 44, padding: '8px 12px', borderRadius: 12, border: '1px solid var(--lkv-border)', background: 'var(--lkv-surface-muted)', color: 'var(--lkv-text-primary)', fontWeight: 600 }}
+          >Réessayer</button>
+        )}
+        {isGuest && <Link href="/compte" style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, color: 'var(--lkv-text-primary)' }}>Mon compte</Link>}
+      </section>
+    );
+  }
 
-  const { profile, rank } = state;
+  const profile = ownedProfile;
+  const rank = typeof canonicalRank === 'number' && canonicalRank > 0
+    ? canonicalRank
+    : rankQuery.isError ? null : (rankQuery.data ?? null);
   const hasData = profile.hasData;
   const seasonPoints = profile.points.seasonId !== null ? profile.points.season : null;
   const challenge = profile.challenge;
@@ -164,12 +87,12 @@ export function ProgressionCompactCard({
     <section aria-label="Progression" className={className}>
       <Link
         href="/compte#progression"
-        className="block min-h-[44px] rounded-2xl border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] px-3.5 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-focus-ring)]"
+        className="block min-h-[44px] rounded-2xl border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-card)] px-3.5 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-focus-ring)]"
       >
         <span className="flex items-center gap-3">
           <span
             aria-hidden="true"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[color:var(--lkv-text-primary)]"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-text-primary)]"
           >
             <Trophy size={16} />
           </span>

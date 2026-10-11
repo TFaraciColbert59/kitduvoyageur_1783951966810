@@ -31,6 +31,7 @@ function createChainedMock(result: any = { error: null }) {
     eq: vi.fn(() => chain),
     select: vi.fn(() => chain),
     single: vi.fn().mockResolvedValue(result),
+    maybeSingle: vi.fn().mockResolvedValue(result),
     then: (resolve: any, reject?: any) => Promise.resolve(result).then(resolve, reject),
   };
   return chain;
@@ -262,3 +263,9 @@ describe('queries-trip-notes & queries-trip-completion — Chantier 8', () => {
     });
   });
 });
+
+// Les producteurs ont leurs tests d'intégration propres ; ce test porte les requêtes métier.
+vi.mock('@/features/progression/server/producerHooks', () => ({
+  awardCarnetPublished: vi.fn(async () => undefined),
+  awardTripCompleted: vi.fn(async () => undefined),
+}));

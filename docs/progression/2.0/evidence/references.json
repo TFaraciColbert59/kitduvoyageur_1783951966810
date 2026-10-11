@@ -1,0 +1,17 @@
+[
+  {
+    "path": "tasks/todo.md",
+    "bytes": 49516,
+    "sha256": "c9f37658ae4eb84d455c0f73e3b8f7e04b7061508d6b1d429f23862f631745c8"
+  },
+  {
+    "path": "tasks/plan.md",
+    "bytes": 47477,
+    "sha256": "5e8198513e2eb9a7e8ce348daa3ca9f48958764ef30d729d0996de98be6579d8"
+  },
+  {
+    "path": "docs/progression/2.0/economie.md",
+    "bytes": 22141,
+    "sha256": "b706e3bbe40a33351c34d453e70ab35806c35697dd29ca6180522a56b5343d38"
+  }
+]

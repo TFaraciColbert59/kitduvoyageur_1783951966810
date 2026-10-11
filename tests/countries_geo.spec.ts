@@ -4,8 +4,10 @@ import { countryGeoToCountry } from '@/lib/countries';
 
 // A11 #36 — ce test d'intégration nécessitait le fallback de clé en dur.
 // Il ne s'exécute désormais que si l'environnement Supabase est explicitement
-// fourni ; sinon la suite est ignorée (jamais de cible de production implicite).
-const hasSupabaseEnv = Boolean(
+// fourni avec COUNTRIES_GEO_E2E=1 et une cible locale ; sinon la suite est
+// ignorée. Des secrets injectés par l’environnement ne sont pas un opt-in.
+const hasSupabaseEnv = process.env.COUNTRIES_GEO_E2E === '1' &&
+  /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(?:\/|$)/.test(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '') && Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 

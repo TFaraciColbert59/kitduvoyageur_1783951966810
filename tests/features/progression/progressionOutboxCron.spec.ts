@@ -75,6 +75,26 @@ describe('cron progression-outbox', () => {
     expect(response.status).toBe(503);
   });
 
+  it('protège aussi le déclencheur GET et consomme le même lot borné', async () => {
+    const denied = await GET(new NextRequest('http://localhost/api/cron/progression-outbox'));
+    expect(denied.status).toBe(401);
+    expect(mockedCreateClient).not.toHaveBeenCalled();
+
+    const calls: Array<[string, ...unknown[]]> = [];
+    mockedCreateClient.mockReturnValue(createSupabaseMock({
+      rpcResult: { processed: 1, failed: 0 }, purgeResult: 0, calls,
+    }) as never);
+    const response = await GET(new NextRequest('http://localhost/api/cron/progression-outbox', {
+      headers: { authorization: 'Bearer test-secret' },
+    }));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ processed: 1, failed: 0, purged: 0 });
+    expect(calls).toEqual([
+      ['rpc', 'process_progression_outbox', { p_limit: 50 }],
+      ['rpc', 'purge_progression_outbox', { p_keep_days: 90 }],
+    ]);
+  });
+
   it('(c) appelle les RPC de consommation et de purge puis renvoie les compteurs', async () => {
     const calls: Array<[string, ...unknown[]]> = [];
     mockedCreateClient.mockReturnValue(

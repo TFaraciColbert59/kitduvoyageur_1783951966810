@@ -3,12 +3,14 @@
  * Domain Types & Interfaces
  *
  * Invariants:
- * 1. Single visible currency: "Points LKDV" (no separate XP currency visible to users).
+ * 1. XP measures progression only, with no conversion to money. Loyalty credits,
+ *    economic contribution shares and store credit keep separate units and ledgers.
  * 2. Permanent level (1-10) calculated exclusively on cumulative lifetime validated points.
  * 3. Season points determine territorial leaderboard ranks (8-week cycles).
  * 4. 4 transversal skills: Explorer, Se préparer, Partager, S'entraider.
  *    Single global points grant, broken down with sum of weights = 1.0.
- * 5. Territorial rankings: 5 filters (1 km / confidentiel, ville, région, pays, monde).
+ * 5. Territorial rankings: city, region, country and world; the 1 km filter remains closed.
+ *    Its legacy key is retained for compatibility, never a promise of availability.
  *    Strict privacy: GPS coordinates and exact addresses are NEVER exposed in leaderboards.
  *    Critical mass threshold: < 5 active participants -> "Communauté en formation" state.
  * 6. L'inconnu est distinct de zéro : aucune valeur de progression, de rang ou de solde
@@ -159,147 +161,4 @@ export interface TerritorialLeaderboard {
   reason?: string | null;
   /** Erreur serveur explicite (`rate_limited`). */
   error?: string | null;
-}
-
-/* ==========================================================================
- * Contrat économique v2 (T05) — registre versionné, montants et règles.
- * Source d'exécution : `registryV2.ts`. Aucun montant de ce contrat n'est
- * activé tant que la porte de phase correspondante n'est pas ouverte.
- * Aucune conversion XP → valeur commerciale n'existe ni ne doit exister.
- * ========================================================================== */
-
-export type ProgressionFamily = 'terrain' | 'preparation' | 'partage' | 'entraide';
-
-export const PROGRESSION_FAMILIES: readonly ProgressionFamily[] = [
-  'terrain',
-  'preparation',
-  'partage',
-  'entraide',
-] as const;
-
-export type ProgressionFirstPhase = 'P1' | 'P2' | 'P3' | 'P4' | 'P5' | 'P6' | 'P7';
-
-export type ProgressionAwardKind = 'fixed' | 'duration_tiers' | 'tiered_by_proof' | 'items_bonus';
-
-export interface ProgressionDurationTier {
-  /** Minutes actives minimales pour ce palier. */
-  minActiveMinutes: number;
-  points: number;
-}
-
-export interface ProgressionActionPoints {
-  kind: ProgressionAwardKind;
-  /** Montant nominal (ou plancher des formules variables). */
-  base: number;
-  /** Borne basse explicite (tiered_by_proof) quand différente du plancher. */
-  min?: number;
-  /** Borne haute absolue du gain de l'action, bonus compris. */
-  max?: number;
-  /** Paliers de durée active (`duration_tiers`). */
-  tiers?: ProgressionDurationTier[];
-  /** Bonus par item distinct (débrief kit). */
-  itemsBonus?: { perItem: number; maxItems: number };
-  /** Deux paliers selon la preuve (avis de lieu : visite contrôlée). */
-  proofTiers?: { withoutProof: number; withProof: number };
-  /** Objectif adapté vérifié : le plancher sans condition de durée. */
-  adaptedObjectiveFloor?: number;
-}
-
-/** Plafonds en NOMBRE D'ACTIONS (jamais des plafonds d'XP), par date métier. */
-export interface ProgressionCaps {
-  day: number;
-  week: number;
-  season: number;
-}
-
-export type ProgressionClaimKind =
-  | 'source' // unicité de la réalisation source (clé d'idempotence)
-  | 'activity' // même activité entre adaptateurs (multitag = 1 gain)
-  | 'novelty' // nouveauté de parcours canonique par saison
-  | 'media' // empreinte d'un média original (pas de recrédit carnet ↔ lieu)
-  | 'object' // même objet (entretien, réparation)
-  | 'pair' // même paire de personnes (accompagnement, prêts)
-  | 'aventure' // même aventure préparée (sentier ↔ Compas exclusifs)
-  | 'report'; // même rapport (correction ↔ accessibilité exclusives)
-
-export interface ProgressionClaimRules {
-  kinds: ProgressionClaimKind[];
-  /** Actions mutuellement exclusives sur le même fait. */
-  exclusiveWith?: string[];
-  /** Délai minimum entre deux gains sur le même objet. */
-  perObjectCooldownDays?: number;
-  /** Délai minimum entre deux gains sur la même paire. */
-  perPairCooldownDays?: number;
-  /** Nombre maximal de récompenses par activité (photos). */
-  maxPerActivity?: number;
-  note?: string;
-}
-
-export interface ProgressionNoveltyRule {
-  points: number;
-  perSeason: true;
-  /** Plafond du gain total (base + nouveauté) de l'action. */
-  maxTotal: number;
-  scope: 'canonical_trail';
-}
-
-export interface ProgressionRegistryAction {
-  id: string;
-  label: string;
-  family: ProgressionFamily;
-  firstPhase: ProgressionFirstPhase;
-  weights: Record<SkillType, number>;
-  points: ProgressionActionPoints;
-  novelty?: ProgressionNoveltyRule;
-  caps: ProgressionCaps;
-  /** Variantes partageant un compteur commun (quotas mutualisés). */
-  capGroup?: string;
-  claims: ProgressionClaimRules;
-  /** Preuve exigée — reprise du document d'économie. */
-  proof: string;
-  /** Émission économique associée (P6, fermée jusqu'au financement vérifié). */
-  partsOnAward?: number;
-}
-
-export interface ProgressionCapGroup {
-  id: string;
-  label: string;
-  caps: ProgressionCaps;
-  members: readonly string[];
-}
-
-export interface ProgressionFamilyCap {
-  family: ProgressionFamily;
-  weekPoints: number;
-  seasonPoints: number;
-}
-
-export interface ProgressionCommercialContract {
-  /** Fidélité : crédits par euro de marchandises effectivement payé. */
-  loyaltyCreditsPerEuro: number;
-  /** Bons futurs : 1 000 crédits → 2 € (barème fermé P6). */
-  loyaltyBons: { credits: number; euros: number }[];
-  /** Parts : plafonds proposés, émission fermée jusqu'au pool financé. */
-  partsWeeklyCap: number;
-  partsPeriodCap: number;
-  /** Garde-fou doctrinal : aucune conversion XP/argent. */
-  conversionXpToMoney: false;
-  activationGate: string;
-}
-
-export interface ProgressionRegistryV2 {
-  version: string;
-  /** Date métier d'application : les gains antérieurs gardent leur version. */
-  effectiveFrom: string;
-  latePolicy: 'refuse' | 'lifetime_only';
-  graceDays: number;
-  seasonDurationWeeks: number;
-  familyCaps: ProgressionFamilyCap[];
-  capGroups: ProgressionCapGroup[];
-  /** Jalons de présentation des compétences — aucun crédit supplémentaire. */
-  skillMilestones: number[];
-  actions: ProgressionRegistryAction[];
-  /** Comportements explicitement sans XP (gouvernance). */
-  nonAwarded: string[];
-  commercial: ProgressionCommercialContract;
 }

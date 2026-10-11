@@ -56,7 +56,11 @@ describe('Validation des liens Klook (allowlist stricte)', () => {
 });
 
 describe('getKlookBlock (mode sans product feed)', () => {
-  beforeEach(() => vi.unstubAllEnvs());
+  beforeEach(() => {
+    vi.unstubAllEnvs();
+    vi.stubEnv('DISCOVERY_PROVIDER', 'klook');
+    vi.stubEnv('KLOOK_AFFILIATE_URL', '');
+  });
   afterEach(() => vi.unstubAllEnvs());
 
   it('utilise le lien par pays quand configuré (affilié)', () => {

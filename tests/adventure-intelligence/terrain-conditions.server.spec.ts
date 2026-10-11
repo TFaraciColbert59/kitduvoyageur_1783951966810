@@ -73,3 +73,14 @@ describe('A11 — lecture conditions protégée (TEST-A11-TL)', () => {
     expect(other.status).toBe(200);
   });
 });
+
+// Garder le limiteur réel en mémoire ; les backends distribués sont une frontière externe.
+vi.mock('@/lib/rate-limit', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/rate-limit')>();
+  return {
+    ...actual,
+    rateLimit: vi.fn((options: import('@/lib/rate-limit').RateLimitOptions) =>
+      actual.rateLimit({ ...options, env: {} })
+    ),
+  };
+});

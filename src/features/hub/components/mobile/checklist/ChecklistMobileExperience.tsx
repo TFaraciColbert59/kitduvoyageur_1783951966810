@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, CheckCircle2, Circle, ListTodo } from 'lucide-react';
 import { Badge, Button, Card, EmptyState, IconButton, ListItem, Tabs } from '@/components/ui';
+import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { requestChecklistCompletionAward } from '@/lib/progression-award-requests';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -42,6 +43,7 @@ type ChecklistFilter = 'all' | 'todo' | 'done';
 
 export function ChecklistMobileExperience({ tripId, daysUntilStart, items }: ChecklistMobileExperienceProps) {
   const { triggerHaptic } = useHapticFeedback();
+  const { user } = useAuth();
   // T10 — reveal des tâches ajoutées en réel (bus T9), section visible seulement.
   const { liveIds, containerRef } = useLiveArrivalReveal<HTMLDivElement>('trip_checklist_items');
   const [rows, setRows] = useState<DatabaseTripChecklistItem[]>(items);
@@ -56,6 +58,7 @@ export function ChecklistMobileExperience({ tripId, daysUntilStart, items }: Che
   const next = useMemo(() => nextChecklistItem(rows), [rows]);
 
   const toggleItem = (item: DatabaseTripChecklistItem) => {
+    const ownerId = user?.id;
     triggerHaptic('selection');
     const nextDone = !item.done;
     const previous = rows;
@@ -70,7 +73,7 @@ export function ChecklistMobileExperience({ tripId, daysUntilStart, items }: Che
         setRows(previous);
       } else {
         // P2 — vérification serveur de la complétion (idempotente, non bloquante).
-        requestChecklistCompletionAward(tripId);
+        if (ownerId) requestChecklistCompletionAward(tripId, ownerId);
       }
     })();
   };
