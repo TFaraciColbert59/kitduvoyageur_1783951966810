@@ -4,11 +4,13 @@ import { MAX_NOTES } from '../engine/advice';
 import { originOf, partySizeOf, shortHoursOf, tripLengthDays } from '../engine/tripContext';
 
 import type { FxRate } from '../engine/currency';
+import type { BudgetFxData } from '../engine/budgetFx';
 import type { CompasPendingInvite } from '../engine/team';
 import { assessDanger, mergeDangerIntoVerdict, type DangerAssessment } from '../engine/danger';
 import { adviseKit, type KitAdvice } from '../engine/kitRules';
 import { parseRoutePois, poiLabel, type RoutePoi } from '../engine/routePois';
-import { getEurRate } from './rates';
+import { getBudgetFx, getEurRate } from './rates';
+import { readTraveller } from './traveller';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
@@ -113,6 +115,13 @@ export interface CompasData {
   providers: { routestack: ProviderCredentialMode; viator: ProviderCredentialMode };
   /** Taux EUR → devise du voyage (null si le voyage est en euros ou taux indisponible). */
   fx: FxRate | null;
+  /**
+   * Le budget aussi dans la devise de la personne qui regarde (son profil voyageur, jamais
+   * celle d'un autre membre du voyage) et dans celle du pays de destination, avec taux, date
+   * et source (PLAN-100 4.2, 4.6). Calculé à chaque affichage, jamais stocké ; absent (écran
+   * plus ancien, tests) ou null : le budget reste dans la devise du voyage.
+   */
+  budgetFx?: BudgetFxData | null;
   /** Danger en trois axes, chaque signal sourcé et daté. */
   danger: DangerAssessment;
   /** Conseils de kit selon la météo et le parcours, chacun avec sa donnée source. */
@@ -409,12 +418,14 @@ export async function getCompasData(): Promise<CompasData | null> {
   } = await client.auth.getUser();
   const viewerId = user?.id ?? null;
 
-  const [inventory, bookings, shop, pendingInvites, profile] = await Promise.all([
+  const [inventory, bookings, shop, pendingInvites, profile, traveller] = await Promise.all([
     loadInventory(client, viewerId),
     loadBookings(client, trip.id),
     loadShop(client),
     loadPendingInvites(client, trip.id),
     readProfile(client as never, viewerId),
+    // Sa propre devise, par la RLS de la personne ; jamais pour un essai sans compte.
+    readTraveller(client, user?.is_anonymous === true ? null : viewerId),
   ]);
 
   const members = toMembers(trip, hub.group?.members ?? []);
@@ -514,7 +525,7 @@ export async function getCompasData(): Promise<CompasData | null> {
   const routeId = compasMeta.routeId ?? num(hub.hiking?.routeId);
   // Tout ce qui ne dépend que du brouillon part en même temps : chaque action
   // du Compas recharge cette page, une chaîne d'attentes la rendait lente.
-  const [weather, routePois, officialAlerts, elevation, fx] = await Promise.all([
+  const [weather, routePois, officialAlerts, elevation, fx, budgetFx] = await Promise.all([
     getCompasWeather({
       origin,
       tripDays: plans
@@ -536,6 +547,11 @@ export async function getCompasData(): Promise<CompasData | null> {
     // Le tracé ne dépend pas de la météo : le brouillon suffit.
     getRouteElevation(draft.route.coords),
     getEurRate(input.trip.budgetCurrency ?? 'EUR'),
+    getBudgetFx({
+      tripCurrency: input.trip.budgetCurrency ?? 'EUR',
+      traveller: traveller.currency,
+      destination: null,
+    }),
   ]);
   input.weather = toWeatherInput(weather);
 
@@ -619,6 +635,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     viewerId,
     providers: getActiveProviderMode(),
     fx,
+    budgetFx,
     weather,
     route: { id: routeId, name: hub.hiking?.routeName ?? null },
     origin,

@@ -50,7 +50,7 @@ import {
   compasSetStayAction,
   compasExplainVerdictAction,
 } from '../server/compasActions';
-import { KitRow, LIVE_BOOKING, MemberAvatar, lineStatus, verticalOf } from './CompasCards';
+import { BudgetAlso, KitRow, LIVE_BOOKING, MemberAvatar, lineStatus, verticalOf } from './CompasCards';
 import { AffiliateDisclosure } from '@/features/affiliation/components/AffiliateDisclosure';
 import {
   ROUTE_POI_LABEL,
@@ -1583,6 +1583,16 @@ function BudgetFlow({ ctl }: { ctl: CompasCtl }) {
         <dt>Par personne</dt>
         <dd>{formatMoney(b.perPerson, b.currency)}</dd>
       </dl>
+      <BudgetAlso
+        fx={ctl.data.budgetFx}
+        currency={b.currency}
+        items={[
+          { label: 'enveloppe', amount: b.target },
+          { label: 'prévu', amount: b.planned },
+          { label: 'dépensé', amount: b.spent },
+          { label: 'par personne', amount: b.perPerson },
+        ]}
+      />
       {ctl.data.canEdit && <ExpenseForm ctl={ctl} />}
       <SettlementBlock ctl={ctl} />
       <PagedList
