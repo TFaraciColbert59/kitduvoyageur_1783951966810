@@ -59,15 +59,18 @@ remplace les jobs simples déjà en prod.
   avancement, distinction sans XP ; UI ≤ 3 missions sans montant). Batterie du
   jalon : vitest **395 / 9 skipped**, pgTAP **127/127** (6 suites), invariants 9/9.
 
-## Prochaine action concrète — T24 (corrections utiles) puis T25–T36
+## Prochaine action concrète — T37 (inventaire des droits commerciaux), T38–T42 en suite
 
-1. T24 : brancher place_reports (modération) sur une acceptation indépendante (validateur distinct de l'auteur) et un delta précis ; rapport en attente = 0 gain ; correction et accessibilité du même rapport = claim unique (`place_report`), refus/raison tracés. Migration additive si colonnes manquantes (validateur, raison). Emission `place_report_accepted` fermée v1 (registre).
-2. T25–T36 : suivre tasks/todo.md ; chaque producteur fermé tant que sa preuve n'est pas construite ; documenter dans ETAT.md.
+1. T37 : script `scripts/audit/economic_entitlements_scan.mjs` (agrégats fidélité/parts/crédit boutique, sources, doublons) + doc `docs/progression/2.0/droits-et-couts.md` ; aucune conversion, mapping de continuité.
+2. T38 : fidélité sur encaissement réel (état d'encaissement explicite, webhooks dupliqués/désordonnés, remboursements partiels) — gates si le cycle de paiement ne peut être vérifié.
+3. T39–T42 : bons valorisés serveur, pool financé (fermé sans financement), crédits de lignée, administration des règles (simulation sans mutation).
+4. P7 : T43–T48 (mobile/E2E réel = limite appareil documentée, charge, mesure, cohortes, clôture).
 
-## Contrôle de réussite T24
+## Contrôle de réussite T37
 
-- Rapport pending sans gain ; auto-validation refusée ; même rapport (correction ↔ accessibilité) ne double jamais (claim unique).
-- `npx vitest run tests/features/progression` vert ; tsc 0.
+- Trois familles économiques distinguées, aucune conversion automatique.
+- Droits anciens avec mapping/continuité ; budget/pool connus OU activation fermée motivée.
+- Rapport daté + revue de cohérence.
 
 ## Ancienne action — T13/T14 (faites)
 

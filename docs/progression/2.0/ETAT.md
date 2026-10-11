@@ -73,24 +73,24 @@ Le chantier de stabilisation phase1 (I1–I6) est vérifié au 2026-10-11 :
 
 | Tâche | Statut |
 |---|---|
-| T24 — Corrections utiles | À FAIRE |
-| T25 — Réponses acceptées | À FAIRE |
-| T26 — Médias dédupliqués | À FAIRE |
-| T27 — Contributions éditoriales | À FAIRE |
-| T28 — Traces contributives | À FAIRE |
-| T29 — Usage matériel / contribution locale | À FAIRE |
+| T24 — Corrections utiles | **TESTÉ+DÉPLOYÉ** — migration `20261011175418` : résolution SQL (validateur indépendant ≠ auteur, raison de refus obligatoire, une résolution) + `contributionValidation.ts` + hook claim unique `place_report:report:<id>` (correction↔accessibilité). Specs 6/6 ; prod vérifiée |
+| T25 — Réponses acceptées | **TESTÉ+DÉPLOYÉ** — migration `20261011175540` : seul le demandeur accepte (auto-réponse et vote seul refusés), 1 réponse acceptée/question, **anti-collusion paire** (≤2/30 j), trace accepted_by/at (recours) ; `answerProof.ts` + route `/api/progression/answers/accept` (identité session) + hook claim par QUESTION. Specs 7/7 ; prod vérifiée |
+| T26 — Médias dédupliqués | **TESTÉ (émission fermée v1)** — `mediaClaim.ts` : empreinte SHA-256 normalisée (domaine, query, dérivés évidents) partagée carnet↔lieu ; hook photo (EXIF retiré + visite prouvée par avis, modération/plafond 3-activité = fermeture nommée). Spec 4/4 |
+| T27 — Contributions éditoriales | **TESTÉ (fermé v1)** — `editorialProof.ts` : licence permise, langue cible, IA brute refusée, copie non inédite, claim par empreinte (traduction répétée exclue). Spec 8/8 (3 fichiers) |
+| T28 — Traces contributives | **TESTÉ (fermé v1)** — `traceProof.ts` : import seul refusé, réalisation contrôlée exigée, clone/déjà inclus exclu, zone sensible expurgée, licence. Spec inclus (8/8 groupés T27-T29) |
+| T29 — Usage matériel / contribution locale | **TESTÉ (fermé v1)** — `gearReviewProof.ts` : possédé=emprunté, usage terrain exigé, recopie du débrief exclue, contenu minimal. Spec inclus |
 
 ## P5 — Coopération et ligues
 
 | Tâche | Statut |
 |---|---|
-| T30 — Sortie collective | À FAIRE |
-| T31 — Tâches collectives | À FAIRE |
-| T32 — Cycle d'un prêt | À FAIRE |
-| T33 — Intervention matériel | À FAIRE |
-| T34 — Actions collectives encadrées | À FAIRE |
-| T35 — Classements volontaires | À FAIRE |
-| T36 — Ligues sur population suffisante | À FAIRE |
+| T30 — Sortie collective | **TESTÉ (fermé v1)** — `groupPresenceProof.ts` : inscription/auto-check-in refusés, ≥3 participants vérifiés distincts, double activité exclue. Spec 3/3 |
+| T31 — Tâches collectives | **TESTÉ (fermé v1)** — `groupTaskProof.ts` : confirmateur distinct, anti-micro-partition, pas de double organisation, claim empreinte. Spec 2/2 |
+| T32 — Cycle d'un prêt | **TESTÉ (fermé v1)** — `loanProof.ts` : prêt à soi refusé, ≥24 h, DEUX confirmations, 1 gain/rôle, objet/paire 90 j. Spec 3/3 |
+| T33 — Intervention matériel | **TESTÉ (fermé v1)** — `interventionProof.ts` : alerte seule refusée, acte unique entretien/réparation, objet 90 j. Spec 3/3 |
+| T34 — Actions collectives encadrées | **TESTÉ (fermé v1)** — `collectiveProof.ts` : accompagnement consenti double-confirmé (paire 1/mois), environnement encadré sans lieu fragile, observation IA seule refusée. Spec 4/4 |
+| T35 — Classements volontaires | **TESTÉ+DÉPLOYÉ** — migration `20261011180234` : `competition_opt_in` (défaut faux) + `set_competition_optin` : **retrait EFFECTIF** (suppression immédiate des agrégats), distinct de la confidentialité ; exposé via `/api/progression/preferences` ; 1 km toujours fermé ; démos déjà exclues. pgTAP 8/8 (avec T36) ; prod vérifiée |
+| T36 — Ligues sur population suffisante | **TESTÉ+DÉPLOYÉ** — migration `20261011180236` : `progression_league_cohorts` gelées + `create_league_cohorts` (≥20 éligibles RÉELS : non-démo + opt-in ; refus `population_insuffisante` ; re-gel refusé) + domaine `leagues.ts` (ordre déterministe points desc/user asc). pgTAP 8/8 ; prod vérifiée |
 
 ## P6 — Avantages financés
 
