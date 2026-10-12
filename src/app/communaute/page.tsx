@@ -177,6 +177,26 @@ function CommunautePageContent() {
         return true;
       });
 
+      // F-024/F-012 : états personnels (like/favori) chargés en une passe pour
+      // toute la page — jamais une requête par carte, jamais un état fictif.
+      let postsWithPersonalState = postsData;
+      if (user?.id && postsData.length > 0) {
+        const postIds = postsData.map((p: any) => p.id).filter(Boolean);
+        if (postIds.length > 0) {
+          const [likesRes, savesRes] = await Promise.all([
+            supabase.from('post_likes').select('post_id').eq('user_id', user.id).in('post_id', postIds),
+            supabase.from('post_saves').select('post_id').eq('user_id', user.id).in('post_id', postIds),
+          ]);
+          const likedIds = new Set((likesRes.data ?? []).map((r: any) => r.post_id));
+          const savedIds = new Set((savesRes.data ?? []).map((r: any) => r.post_id));
+          postsWithPersonalState = postsData.map((p: any) => ({
+            ...p,
+            user_liked: likedIds.has(p.id),
+            user_saved: savedIds.has(p.id),
+          }));
+        }
+      }
+
       // F1 — auteurs via la vue `public_profiles` (deux étapes, jamais d'embed).
       const authorProfiles = await fetchPublicProfilesWith(supabase, [
         ...postsData.map((p: any) => p.author_id as string),
@@ -198,7 +218,7 @@ function CommunautePageContent() {
         };
       };
 
-      setPosts(postsData.map(withAuthor));
+      setPosts(postsWithPersonalState.map(withAuthor));
       setCarnets(carnetsData.map(withAuthor));
       setClubs(clubsData);
       setGroups(groupsData);
@@ -219,7 +239,7 @@ function CommunautePageContent() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     fetchData();
