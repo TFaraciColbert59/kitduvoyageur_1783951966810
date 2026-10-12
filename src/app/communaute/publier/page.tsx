@@ -390,6 +390,29 @@ function PublierPostContent() {
 
       if (!user) throw new Error('Authentification requise');
 
+      // F-022 : le format « événement » crée une VRAIE sortie (table events,
+      // fiche + inscription join_event), pas seulement une ligne de texte.
+      if (postType === 'evenement') {
+        if (!eventDate) {
+          lkvAlert('Choisissez une date pour publier une sortie.');
+          setIsSubmitting(false);
+          return;
+        }
+        const { error: eventError } = await supabase.from('events').insert({
+          title: title.trim() || 'Sortie communauté',
+          description: content.trim() || null,
+          event_date: eventDate,
+          max_participants: eventMaxParticipants > 0 ? eventMaxParticipants : 10,
+          organizer_id: user.id,
+          type: 'rando',
+        });
+        if (eventError) {
+          lkvAlert(`La sortie n’a pas pu être créée : ${eventError.message}`);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       // Valid columns matching PostgreSQL community_posts table
       const linkedCarnetId = UUID_PATTERN.test(linkedCarnet) ? linkedCarnet : null;
       const selectedCarnetRow = linkedCarnetId
