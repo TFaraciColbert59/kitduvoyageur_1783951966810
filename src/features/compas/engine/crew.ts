@@ -86,6 +86,39 @@ export function settleExpenses(expenses: CrewExpense[], members: CrewPerson[]): 
   };
 }
 
+/**
+ * Une valeur de profil posée faute de donnée (`sources.<champ> === 'average'` : moyenne de population,
+ * profil sans consentement) n'est pas une donnée de la personne. Provenance absente : valeur gardée.
+ */
+export function isPopulationDefault(
+  sources: Record<string, string> | null | undefined,
+  field: string
+): boolean {
+  return sources?.[field] === 'average';
+}
+
+/**
+ * Le membre tel que le Compas peut le dire : allure et niveau « moyenne de population » deviennent
+ * « non renseignés » (null) au lieu de passer pour les siens. Les marches gardent leurs 4 km/h par
+ * défaut ailleurs (`walkingMinutes`) : aucun calcul ne change, seul l'affichage cesse de mentir.
+ * La capacité de portage reste (c'est un repère de population dans tous les cas : l'écran le dit).
+ */
+export function withKnownProfile<
+  M extends {
+    flatSpeedKmh: number | null;
+    experienceLevel: string | null;
+    profileSources?: Record<string, string> | null;
+  },
+>(m: M): M {
+  return {
+    ...m,
+    flatSpeedKmh: isPopulationDefault(m.profileSources, 'flatSpeedKmH') ? null : m.flatSpeedKmh,
+    experienceLevel: isPopulationDefault(m.profileSources, 'experienceLevel')
+      ? null
+      : m.experienceLevel,
+  };
+}
+
 export interface CompasPace {
   /** Membre le plus lent parmi ceux dont l'allure est connue. */
   slowest: { userId: string; name: string; speedKmh: number } | null;

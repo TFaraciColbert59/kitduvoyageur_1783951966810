@@ -3527,3 +3527,37 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
 .cp-skel--map {
   border-radius: 32px 32px 0 0;
 }
+
+/* =============================================================================
+   Nous · Équipe en lecture (lot AD 5.5) : rôle et niveau en pastilles, charge portée
+   avec sa barre, invitations en attente. La gestion du groupe reste au Hub.
+   ============================================================================= */
+.cp-btn--tap {
+  min-height: 2.75rem;
+}
+.cp-row__t .cp-mem__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 3px 0 2px;
+}
+.cp-row__t .cp-mem__tags .cp-chip {
+  display: inline-flex;
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--cp-ink);
+}
+.cp-row__t .cp-mem__bar {
+  display: block;
+  height: 6px;
+  margin: 4px 0 3px;
+}
+.cp-mem__hub {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.cp-mem__facts {
+  margin: 0;
+}

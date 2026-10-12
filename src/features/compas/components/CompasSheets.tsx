@@ -82,6 +82,15 @@ import { addExpenseAction } from '@/app/voyages/budget-actions';
 import { RESA_CATS, bookingCat, offerCat, type ResaCat } from '../engine/resaCats';
 import { RESA_EXAMPLES, type CompasLiveVertical } from '../engine/resaExamples';
 import { teamCount, teamCountLabel } from '../engine/team';
+import { ROLE_LABEL, memberView, memberViews } from '../engine/crewView';
+import {
+  HubGroupLink,
+  LoadBar,
+  MemberRow,
+  MemberTags,
+  PendingRow,
+  memberFacts,
+} from './CompasMembers';
 import { compasSearchOffersAction } from '../server/resaActions';
 import { KIT_THRESHOLDS } from '../engine/kitRules';
 import { browserToday } from '../engine/zone';
@@ -833,7 +842,7 @@ function BagSheet({ ctl, userId }: { ctl: CompasCtl; userId: string }) {
     );
   }, [ctl.lines, load, userId]);
   if (!load) return <p className="cp-note">Cette personne ne fait plus partie de l’équipe.</p>;
-  const pct = load.ratio == null ? null : Math.round(load.ratio * 100);
+  const view = memberView(load, ctl.data.model.ownerId);
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -842,21 +851,17 @@ function BagSheet({ ctl, userId }: { ctl: CompasCtl; userId: string }) {
           <b>{formatKg(load.carriedGrams)}</b>
           <span className="cp-note">
             {' '}
-            {load.capacityKg != null
-              ? `sur ${load.capacityKg} kg de capacité`
+            {view.load.limit
+              ? `sur ${view.load.limit}${view.load.limitNote ? ` (${view.load.limitNote})` : ''}`
               : '· capacité non renseignée'}
           </span>
-          {pct != null && (
-            <div
-              className="cp-meter"
-              data-tone={pct > 100 ? 'bad' : pct > 85 ? 'warn' : undefined}
-              style={{ marginTop: 6 }}
-            >
-              <i style={{ width: `${Math.min(100, pct)}%` }} />
-            </div>
-          )}
+          <LoadBar load={view.load} />
         </div>
       </div>
+      <p className="cp-row__t cp-mem__facts">
+        <MemberTags view={view} />
+        <span>{memberFacts(view)}</span>
+      </p>
       <PagedList
         label="Contenu du sac"
         items={lines}
@@ -1040,13 +1045,6 @@ function StepSheet({
 
 const staticRow = { cursor: 'default' } as const;
 
-const LEVELS: Record<string, string> = {
-  beginner: 'débutant',
-  intermediate: 'intermédiaire',
-  advanced: 'confirmé',
-  expert: 'expert',
-};
-
 function PartySize({ ctl }: { ctl: CompasCtl }) {
   const { crew, tripId, slug } = ctl.data.model;
   const set = (n: number) =>
@@ -1086,8 +1084,11 @@ function PartySize({ ctl }: { ctl: CompasCtl }) {
 }
 
 function EquipeFlow({ ctl }: { ctl: CompasCtl }) {
-  const { crew } = ctl.data.model;
+  const { crew, ownerId } = ctl.data.model;
+  const pending = ctl.data.pendingInvites ?? [];
   const slowest = crew.pace.slowest;
+  const views = useMemo(() => memberViews(crew.loads, ownerId), [crew.loads, ownerId]);
+  const count = teamCountLabel(teamCount(crew.size, crew.loads.length, pending.length));
   return (
     <>
       <PartySize ctl={ctl} />
@@ -1096,46 +1097,48 @@ function EquipeFlow({ ctl }: { ctl: CompasCtl }) {
           ? `Le groupe marche au rythme de ${slowest.name} (${String(slowest.speedKmh).replace('.', ',')} km/h à plat). Allure connue pour ${crew.pace.known} sur ${crew.pace.total}.`
           : 'Aucune allure connue : les temps de marche utilisent 4 km/h par défaut. Chaque membre peut la renseigner dans son profil terrain.'}
       </p>
+      <p className="cp-sub">
+        <b>Dans le voyage</b> · {count}
+      </p>
       <PagedList
         label="Équipe"
-        items={crew.loads}
-        render={(m) => {
-          const pct = m.ratio == null ? null : Math.round(m.ratio * 100);
-          const level = m.experienceLevel ? (LEVELS[m.experienceLevel] ?? m.experienceLevel) : null;
-          return (
-            <button
-              key={m.userId}
-              type="button"
-              className="cp-row"
-              onClick={() => ctl.open({ kind: 'bag', userId: m.userId })}
-            >
-              <MemberAvatar name={m.name} url={m.avatarUrl} />
-              <span className="cp-row__t">
-                <b>
-                  {m.name}
-                  {m.userId === ctl.data.viewerId ? ' (moi)' : ''}
-                </b>
-                <span>
-                  porte {formatKg(m.carriedGrams)}
-                  {m.capacityKg != null ? ` sur ${m.capacityKg} kg` : ' · capacité non renseignée'}
-                </span>
-                <span>
-                  {m.flatSpeedKmh != null
-                    ? `${String(m.flatSpeedKmh).replace('.', ',')} km/h`
-                    : 'allure non renseignée'}
-                  {` · niveau ${level ?? 'non renseigné'}`}
-                </span>
-              </span>
-              <span className="cp-row__end">
-                {pct != null && (
-                  <Chip tone={pct > 100 ? 'bad' : pct > 90 ? 'warn' : 'good'}>{pct} %</Chip>
-                )}
-                <Icon name="chevron-right" size={16} />
-              </span>
-            </button>
-          );
-        }}
+        items={views}
+        render={(v) => (
+          <MemberRow
+            key={v.userId}
+            view={v}
+            isViewer={v.userId === ctl.data.viewerId}
+            onOpenBag={() => ctl.open({ kind: 'bag', userId: v.userId })}
+          />
+        )}
       />
+      {pending.length > 0 && (
+        <>
+          <p className="cp-sub">
+            <b>En attente de réponse</b> · pas encore dans le voyage
+          </p>
+          <TallList
+            label="Invitations en attente"
+            items={pending}
+            empty={null}
+            render={(inv) => <PendingRow key={inv.id} invite={inv} />}
+          />
+        </>
+      )}
+      {crew.unassignedShared.length > 0 && (
+        <button
+          type="button"
+          className="cp-alertline"
+          onClick={() => ctl.open({ kind: 'step', step: 'kit', flow: 'sacs' })}
+        >
+          <Icon name="users" size={16} />
+          <span className="cp-alertline__t">
+            {crew.unassignedShared.length} objet{crew.unassignedShared.length > 1 ? 's' : ''} commun
+            {crew.unassignedShared.length > 1 ? 's' : ''} sans porteur
+          </span>
+          <Icon name="chevron-right" size={14} />
+        </button>
+      )}
       <div className="cp-actions">
         <button
           type="button"
@@ -1146,16 +1149,11 @@ function EquipeFlow({ ctl }: { ctl: CompasCtl }) {
           Ajouter quelqu’un ou gérer les rôles
         </button>
       </div>
+      <HubGroupLink />
     </>
   );
 }
 
-const ROLE_LABEL: Record<string, string> = {
-  owner: 'Organisateur',
-  editor: 'Peut modifier',
-  viewer: 'Lecture seule',
-  member: 'Membre du groupe',
-};
 
 /**
  * Lien d'invitation pour l'extérieur : à coller dans un message, un club, un
