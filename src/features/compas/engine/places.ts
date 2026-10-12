@@ -333,6 +333,30 @@ export function nameCore(v: string): string {
 }
 
 /**
+ * La commune d'un point, parmi les lieux que la carte donne à son nom (la commune
+ * lue à l'adresse du point arrondi, plan 2.10) : un lieu HABITÉ du même nom (`samePlaceName`),
+ * du pays du point quand il est connu, le plus proche du point, à 25 km au plus. C'est le
+ * centre que la carte donne à la commune, jamais un point de la personne. Aucun : null.
+ */
+export function pickCommune(
+  candidates: readonly CompasPlace[],
+  name: string,
+  countryCode: string | null,
+  near: { lat: number; lon: number },
+  maxKm = 25
+): CompasPlace | null {
+  let best: { place: CompasPlace; km: number } | null = null;
+  for (const c of candidates) {
+    if (!c.settlement || !samePlaceName(c.name, name)) continue;
+    if (countryCode && c.countryCode && c.countryCode !== countryCode) continue;
+    const km = distanceKm(c, near);
+    if (km > maxKm) continue;
+    if (!best || km < best.km) best = { place: c, km };
+  }
+  return best?.place ?? null;
+}
+
+/**
  * Le même nom de lieu écrit autrement : sans accent, sans casse, trait d'union et
  * apostrophe comptés comme des espaces (« Bourg en Bresse » = « Bourg-en-Bresse »),
  * article du début ignoré (« depuis le havre » retrouve « Le Havre »).

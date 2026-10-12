@@ -45,6 +45,7 @@ import { planApplication } from '../engine/intent';
 import { applyCurrent, runOps } from './compasApply';
 import { compasClearStartSayAction, compasInterpretAction } from '../server/compasActions';
 import { browserTimeZone } from '../engine/zone';
+import { coarsePosition } from '../engine/privacy';
 
 const DISPLAY_KEY = 'lkdv.compas.affichage';
 const LAYERS_KEY = 'lkdv.compas.calques';
@@ -412,7 +413,8 @@ export function CompasScreen({
       navigator.geolocation.getCurrentPosition(
         (p) => {
           clearTimeout(guard);
-          resolve({ lat: p.coords.latitude, lon: p.coords.longitude });
+          // Plan 2.10 : la position exacte ne quitte pas l'appareil, 0,01° (~1 km) dès la lecture.
+          resolve(coarsePosition({ lat: p.coords.latitude, lon: p.coords.longitude }));
         },
         () => {
           clearTimeout(guard);

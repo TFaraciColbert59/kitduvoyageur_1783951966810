@@ -16,6 +16,8 @@
  */
 
 import { appUserAgent } from '@/lib/userAgent';
+import { nominatimJson, resetNominatimClock } from '@/features/compas/server/locationIq';
+import { coarsePosition } from '@/features/compas/engine/privacy';
 
 export type GeocodeProvider = 'open-meteo' | 'photon' | 'nominatim';
 
@@ -78,46 +80,19 @@ const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const CACHE_MAX = 100;
 
 /**
- * Cadence OSM pour Nominatim.
+ * Nominatim (et LocationIQ a sa place) : un seul client pour tout le site,
+ * `nominatimJson` (`features/compas/server/locationIq.ts`, plan 1.3).
  *
- * La politique d usage impose UN appel par seconde au maximum et un User-Agent
- * identifiant l application. Sans cela le service rend 429 puis bloque l IP : on
- * perdrait le fournisseur de repli precisement quand Photon tombe. Un seul
- * appel a la fois, espace d au moins MIN_GAP_MS, le deficit de credit se
- * constitue ici — jamais chez l appelant, qui ne doit pas attendre un
- * fournisseur tiers pour savoir qu il est rate-limite.
+ * Le Nominatim public interdit le trafic regulier d une application
+ * (« periodic requests from apps are considered bulk geocoding ») : avec la
+ * cle `LOCATIONIQ_API_KEY` tout part chez LocationIQ (2 requetes par seconde
+ * pour tout le site). SANS cle (developpement, tests), le comportement d avant
+ * est garde : Nominatim public, UN appel a la fois, espace d au moins une
+ * seconde, User-Agent identifiant l application ; ce n est pas un regime de
+ * production. La chaine de promesses et l horloge de cadence vivent dans ce
+ * client, partages par tous les appelants.
  */
-const NOMINATIM_MIN_GAP_MS = 1100;
 const NOMINATIM_UA = appUserAgent('preparation de voyage');
-
-let nominatimChain: Promise<unknown> = Promise.resolve();
-let nominatimLastAt = 0;
-
-/** Un appel Nominatim a la fois, espace d au moins une seconde. */
-async function nominatimFetch(url: string, signal: AbortSignal): Promise<Response | null> {
-  const run = async (): Promise<Response | null> => {
-    const wait = nominatimLastAt + NOMINATIM_MIN_GAP_MS - Date.now();
-    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-    if (signal.aborted) return null;
-    nominatimLastAt = Date.now();
-    try {
-      return await fetch(url, {
-        signal,
-        headers: { Accept: 'application/json', 'User-Agent': NOMINATIM_UA },
-      });
-    } catch {
-      return null;
-    }
-  };
-  const next = nominatimChain.then(run, run);
-  // La chaine ne doit jamais rester rejetee : elle ferait echouer tous les
-  // appels suivants sans aucune tentative.
-  nominatimChain = next.then(
-    () => undefined,
-    () => undefined,
-  );
-  return next;
-}
 
 const cache = new Map<string, { at: number; result: GeocodeResult }>();
 
@@ -137,7 +112,7 @@ export function __resetGeoCache(): void {
  * et l independance des tests.
  */
 export function __resetNominatimCadence(): void {
-  nominatimLastAt = 0;
+  resetNominatimClock();
 }
 
 /** Renvoie des coordonnees valides, ou `null`. Ne complete jamais une valeur. */
@@ -353,9 +328,17 @@ export function normalizePhoton(payload: RawPhoton): GeocodeMatch[] {
 /* ------------------------------------------------------------------ */
 
 async function fetchJson(url: string, signal: AbortSignal): Promise<unknown | null> {
+  // Le fournisseur EST decide par l URL, et lui seul : Nominatim n est pas un
+  // fetch comme les autres (trafic d application interdit sur le serveur
+  // public, une requete a la fois, User-Agent). Il passe donc par le client
+  // commun du site, qui envoie chez LocationIQ quand la cle est lue. Le routeur
+  // est ici, plutot qu au caller, pour qu aucune voie d appel ne puisse le contourner.
+  if (url.startsWith('https://nominatim.openstreetmap.org/')) {
+    return nominatimJson(url, { userAgent: NOMINATIM_UA, signal });
+  }
   try {
-    const response = await fetchUrl(url, signal);
-    if (response === null || !response.ok) return null;
+    const response = await fetch(url, { signal, headers: { Accept: 'application/json' } });
+    if (!response.ok) return null;
     // Photon limite le debit et repond alors par une PAGE HTML. Laisser passer
     // ce corps a `response.json()` leve un SyntaxError que le `catch` traite
     // comme une panne reseau — les deux disent pourtant des choses
@@ -377,19 +360,6 @@ async function fetchJson(url: string, signal: AbortSignal): Promise<unknown | nu
     // sans consequence car on tente le fournisseur suivant.
     return null;
   }
-}
-
-/**
- * Le fournisseur EST decide par l URL, et lui seul.
- *
- * Nominatim n est pas un fetch comme les autres : sa politique d usage
- * interdit de l appeler en rafale et exige un User-Agent. Le routeur est donc
- * ici, plutot qu au caller, pour qu aucune voie d appel ne puisse l contourner.
- */
-function fetchUrl(url: string, signal: AbortSignal): Promise<Response | null> {
-  return url.includes('nominatim.openstreetmap.org')
-    ? nominatimFetch(url, signal)
-    : fetch(url, { signal, headers: { Accept: 'application/json' } });
 }
 
 type Normalizer = (payload: unknown) => GeocodeMatch[];
@@ -488,17 +458,20 @@ export async function geocodePlace(rawQuery: string): Promise<GeocodeResult> {
  * Resout le nom de la commune qui contient un point GPS. Sert a nommer la
  * position reelle de la personne au lieu d ecrire « Ma position » partout.
  *
- * Regle de precision : seul Photon sait resoudre en inverse, et il repond
- * TOUJOURS avec le centre de la commune trouvee, jamais le point demande. On
- * garde donc le nom du fournisseur et les coordonnees mesurees : la position
- * affichee reste la vraie, le nom est la commune la plus proche connue de
- * l OSM.
+ * Vie privee (plan 2.10) : la position de la personne n est JAMAIS envoyee
+ * exacte a un tiers (Photon, Nominatim, LocationIQ). Elle est arrondie a 0,01°
+ * (~1 km, `coarsePosition`) des l entree : c est ce point arrondi qui part chez
+ * le fournisseur, qui sert de cle de cache et qui est rendu dans la reponse.
+ * Un kilometre suffit a nommer une commune ; le nom est la commune la plus
+ * proche connue de l OSM, jamais le batiment ni l adresse.
  */
 export async function reverseGeocodePlace(lat: unknown, lon: unknown): Promise<GeocodeResult> {
-  const point = readLatLon(lat, lon);
+  const exact = readLatLon(lat, lon);
+  if (exact === null) return { status: 'invalid', matches: [], provider: null };
+  const point = coarsePosition(exact);
   if (point === null) return { status: 'invalid', matches: [], provider: null };
 
-  const key = `rev:${point.lat.toFixed(4)}:${point.lon.toFixed(4)}`;
+  const key = `rev:${point.lat.toFixed(2)}:${point.lon.toFixed(2)}`;
   const cached = readCache(key);
   if (cached) return cached;
 

@@ -1,9 +1,9 @@
 import 'server-only';
 import { createHash } from 'node:crypto';
-import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, isNotablePlace, pickDestination, pickNatural, type CompasPlace } from '../engine/places';
+import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, isNotablePlace, pickCommune, pickDestination, pickNatural, type CompasPlace } from '../engine/places';
 import { cached, coordKey } from './sharedCache';
 import { geoapifyReverse, geoapifySearch } from './geoapify';
-import { locationIqKey, locationIqSlot, locationIqUrl, normalizeLocationIq } from './locationIq';
+import { nominatimJson } from './locationIq';
 import { photonSlot } from '@/lib/siteSlot';
 import { appUserAgent } from '@/lib/userAgent';
 
@@ -67,33 +67,18 @@ async function fetchJson(url: string, headers: Record<string, string>): Promise<
   }
 }
 
-/** Nominatim exige au plus une requête par seconde et un User-Agent identifiant l'application. */
+/** L'application nommée auprès des cartes ouvertes (Photon, Nominatim ou LocationIQ). */
 const NOMINATIM_UA = appUserAgent('Compas, preparation de voyage');
-let nominatimChain: Promise<unknown> = Promise.resolve();
 /**
- * Une requête Nominatim, une à la fois. Avec la clé LocationIQ (même moteur,
- * usage commercial autorisé), elle part chez LocationIQ (2 requêtes/s) ; sans,
- * chez Nominatim (1 requête/s, trafic d'application déconseillé).
+ * Une requête Nominatim, une à la fois, par le client commun du site
+ * (`locationIq.ts` : LocationIQ avec la clé, 2 requêtes/s pour tout le site ;
+ * sans clé, Nominatim public à 1 requête/s, repli de développement).
  */
-function nominatimQueued(url: string): Promise<CompasPlace[] | null> {
-  const key = locationIqKey();
-  const viaLocationIq = key ? locationIqUrl(url, key) : null;
-  const run = nominatimChain.then(async () => {
-    // LocationIQ : 2 requêtes/s pour tout le site (créneau partagé en base).
-    if (viaLocationIq && !(await locationIqSlot())) {
-      console.warn('[compas] LocationIQ : pas de créneau libre, service suivant');
-      return null;
-    }
-    const payload = viaLocationIq
-      ? await fetchJson(viaLocationIq, { Accept: 'application/json' })
-      : await fetchJson(url, { Accept: 'application/json', 'User-Agent': NOMINATIM_UA });
-    await new Promise((r) => setTimeout(r, viaLocationIq ? 550 : 1100));
-    if (payload == null) return null;
-    // La recherche renvoie une liste, le géocodage inverse un seul lieu.
-    return parseNominatim(viaLocationIq ? normalizeLocationIq(payload) : Array.isArray(payload) ? payload : [payload]);
-  });
-  nominatimChain = run.catch(() => null);
-  return run;
+async function nominatimQueued(url: string): Promise<CompasPlace[] | null> {
+  const payload = await nominatimJson(url, { userAgent: NOMINATIM_UA, timeoutMs: TIMEOUT_MS });
+  if (payload == null) return null;
+  // La recherche renvoie une liste, le géocodage inverse un seul lieu.
+  return parseNominatim(Array.isArray(payload) ? payload : [payload]);
 }
 function nominatim(query: string, limit: number): Promise<CompasPlace[] | null> {
   return nominatimQueued(
@@ -246,6 +231,18 @@ export async function lookupReverse(lat: number, lon: number): Promise<CompasPla
     return geoapifyReverse(lat, lon);
   });
   return places?.[0] ?? null;
+}
+
+/**
+ * Le centre de la COMMUNE où se trouve la personne (plan 2.10) : la commune lue à l'adresse
+ * de son point arrondi (`here`, `lookupReverse`), retrouvée par son nom près de ce point.
+ * Ce qui s'écrit sur le voyage est ce centre, jamais le point lui-même. Rien de sûr : null.
+ */
+export async function lookupCommune(here: CompasPlace | null, near: { lat: number; lon: number }): Promise<CompasPlace | null> {
+  const name = here?.locality ?? (here?.settlement ? here.name : null);
+  if (!name || name.trim().length < 2) return null;
+  const found = (await search(name.trim().slice(0, 80), 8, near)) ?? [];
+  return pickCommune(found, name, here?.countryCode ?? null, near);
 }
 
 /**

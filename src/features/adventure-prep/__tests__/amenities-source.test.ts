@@ -180,35 +180,39 @@ describe('fetchAmenitiesNear — contrat reseau', () => {
 
     await fetchAmenitiesNear(box, fake);
     await fetchAmenitiesNear(box, fake);
-    // Les deux sources courent EN PARALLELE : le premier appel sollicite les
-    // trois miroirs ET les trois familles du repli, soit 6 requetes ; le
-    // second ZERO. Ce qui compte est que rien ne repart au fournisseur, pas
-    // le nombre d appels du premier.
-    expect(appels).toBe(6);
+    // Les deux sources courent EN PARALLELE : le premier appel sollicite UN
+    // serveur Overpass (plan 1.4) ET les trois familles du repli, soit 4
+    // requetes ; le second ZERO. Ce qui compte est que rien ne repart au
+    // fournisseur, pas le nombre d appels du premier.
+    expect(appels).toBe(4);
   });
 
   // AM-16 : mesure live du 2026-09-28. Le miroir principal a repondu 504
-  // pendant que deux miroirs secondaires repondaient 200 en 23 et 32 s.
-  // Un seul point d entree transforme cette surcharge momentanie en liste
-  // VIDE, donc en Jour 3 vide, sans jamais lever la moindre erreur.
-  it('AM-16 : un miroir en 504 bascule sur un autre miroir', async () => {
+  // pendant que deux miroirs secondaires repondaient 200 en 23 et 32 s : la
+  // surcharge d un seul point d entree se traduisait par un Jour 3 vide. Plan
+  // 1.4 : il n y a plus qu UN serveur (le seul autorise en commercial), qui
+  // n est jamais double d un miroir ; c est le repli Photon qui sauve alors le
+  // Jour 3. Les deux faits sont verrouilles ici.
+  it('AM-16 : Overpass en 504 -> un seul serveur interroge (private.coffee), le repli Photon rend les lieux', async () => {
     __resetAmenityCache();
     const vues: string[] = [];
     const fake = (async (url: string) => {
       vues.push(url);
-      if (url.includes('private.coffee')) {
+      if (url.includes('overpass')) {
         return new Response('<html>gateway timeout</html>', { status: 504 });
       }
-      return new Response(
-        JSON.stringify({ elements: [{ lat: 45.9, lon: 6.87, tags: { name: 'Miroir', amenity: 'bar' } }] }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
-      );
+      return new Response(JSON.stringify({ features: [featureHotel()] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }) as unknown as typeof fetch;
 
     const rows = await fetchAmenitiesNear(box, fake);
-    expect(rows.map((r) => r.name)).toEqual(['Miroir']);
-    // Trois miroirs + les trois requetes du repli concurrent.
-    expect(vues.length).toBe(6);
+    expect(rows.map((r) => r.name)).toEqual(['Hotel Mont-Blanc']);
+    const overpassUrls = vues.filter((u) => u.includes('overpass'));
+    expect(overpassUrls).toEqual(['https://overpass.private.coffee/api/interpreter']);
+    // Un serveur Overpass + les trois requetes du repli concurrent.
+    expect(vues.length).toBe(4);
   });
 
   it('AM-17 : si tous les miroirs tombent, la liste reste vide sans lever', async () => {
@@ -233,20 +237,22 @@ describe('fetchAmenitiesNear — contrat reseau', () => {
     const vues: string[] = [];
     const fake = (async (url: string) => {
       vues.push(url);
-      if (url.includes('lz4')) {
+      if (url.includes('overpass')) {
         return new Response(
           JSON.stringify({ remark: 'runtime error: Query timed out' }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         );
       }
-      return new Response(
-        JSON.stringify({ elements: [{ lat: 45.9, lon: 6.87, tags: { name: 'Vrai', amenity: 'bar' } }] }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
-      );
+      return new Response(JSON.stringify({ features: [featureHotel()] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }) as unknown as typeof fetch;
 
     const rows = await fetchAmenitiesNear(box, fake);
-    expect(rows.map((r) => r.name)).toEqual(['Vrai']);
+    // Ni zone vide ni lieu d Overpass : le corps d erreur est un echec, le repli parle.
+    expect(rows.map((r) => r.name)).toEqual(['Hotel Mont-Blanc']);
+    expect(vues.some((u) => u.includes('overpass'))).toBe(true);
   });
 
   it('AM-19 : une zone reellement vide reste une reponse valide', async () => {

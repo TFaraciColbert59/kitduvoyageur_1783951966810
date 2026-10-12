@@ -13,16 +13,20 @@ import {
 import { METEOALARM_FEEDS, feedUrl, type MeteoalarmFeed } from '../engine/meteoalarmFeeds';
 import { localToday, safeTimeZone } from '../engine/zone';
 import { appUserAgent } from '@/lib/userAgent';
+import { nominatimJson } from './locationIq';
+import { cached } from './sharedCache';
 
 /**
  * Compas — alertes officielles du voyage (Meteoalarm : services nationaux
  * d'Europe, conditions d'usage lues le 2026-10-10 et relues le 2026-10-11, voir
  * `meteoalarmFeeds.ts`).
  *
- * 1. Pays et unités administratives du premier point : Nominatim, coordonnées
- *    arrondies (~1 km), User-Agent de l'application (jamais une donnée
- *    personnelle), cache 30 j. Les noms sont ceux du pays (pas traduits) : ce
- *    sont ceux que les services nationaux emploient pour leurs zones.
+ * 1. Pays et unités administratives du premier point : la carte Nominatim, par le
+ *    client commun du site (`locationIq.ts` : LocationIQ avec la clé, jamais le
+ *    serveur public en trafic courant ; plan 1.3), coordonnées arrondies (~1 km),
+ *    User-Agent de l'application (jamais une donnée personnelle), cache 30 j
+ *    partagé. Les noms sont ceux du pays (pas traduits) : ce sont ceux que les
+ *    services nationaux emploient pour leurs zones.
  * 2. Pays absent de la table des flux : « non_couvert », rien n'est affirmé. Les
  *    départements d'outre-mer, que la carte nomme aussi « fr », sont dans ce cas :
  *    seul le flux France MÉTROPOLITAINE existe.
@@ -122,19 +126,6 @@ export async function readBodyBounded(res: Response, max: number): Promise<strin
   return new TextDecoder().decode(Buffer.concat(chunks));
 }
 
-async function fetchJson(url: string, revalidate: number, headers?: Record<string, string>) {
-  try {
-    const res = await fetch(url, {
-      headers: { Accept: 'application/json', ...headers },
-      next: { revalidate },
-      signal: AbortSignal.timeout(6000),
-    });
-    return res.ok ? ((await res.json()) as unknown) : null;
-  } catch {
-    return null;
-  }
-}
-
 /** Unités administratives que la carte donne, de la plus fine à la plus large. */
 const ADDRESS_LEVELS = ['county', 'state_district', 'municipality', 'city', 'state'] as const;
 
@@ -154,20 +145,39 @@ export interface PlaceAreas {
 /** Code ISO 3166-2 d'un département métropolitain (niveau 6) : « FR-74 », « FR-2B », « FR-69M ». Les outre-mer ont trois chiffres. */
 const METROPOLITAN_DEPARTMENT = /^FR-(?:\d{2}|2[AB])[A-Z]?$/;
 
-/** La carte place un lieu en France métropolitaine : `region` « France métropolitaine » ou code de département. */
-function isMetropolitanFrance(address: Record<string, unknown>): boolean {
-  const region = typeof address.region === 'string' ? normalizeArea(address.region) : '';
-  if (region === 'france metropolitaine' || region === 'metropolitan france') return true;
+/**
+ * France métropolitaine, Corse comprise : aucune terre d'outre-mer n'est dans ce
+ * cadre (la plus proche, Saint-Pierre-et-Miquelon, est à 56° ouest). Ne sert qu'avec
+ * un lieu déjà donné « fr » par la carte, quand son adresse ne dit pas autrement.
+ */
+export function inMetropolitanFrance(lat: number, lon: number): boolean {
+  return lat >= 41.2 && lat <= 51.3 && lon >= -5.5 && lon <= 9.8;
+}
+
+/**
+ * La carte place un lieu en France métropolitaine : `region` « France métropolitaine »
+ * ou code de département. Une adresse qui ne porte NI l'un NI l'autre (LocationIQ ne
+ * donne pas forcément ces clés de Nominatim) ne prouve rien : le point décide, par le
+ * cadre de la métropole. Une adresse qui dit autre chose (« La Réunion ») reste outre-mer.
+ */
+function isMetropolitanFrance(address: Record<string, unknown>, at: { lat: number; lon: number }): boolean {
+  const regionRaw = address.region;
   const department = address['ISO3166-2-lvl6'];
+  if (typeof regionRaw !== 'string' && typeof department !== 'string') return inMetropolitanFrance(at.lat, at.lon);
+  const region = typeof regionRaw === 'string' ? normalizeArea(regionRaw) : '';
+  if (region === 'france metropolitaine' || region === 'metropolitan france') return true;
   return typeof department === 'string' && METROPOLITAN_DEPARTMENT.test(department);
 }
 
 /** Pays et unités administratives d'un point, ou null. */
 export async function placeAreasOf(lat: number, lon: number): Promise<PlaceAreas | null> {
-  const url =
-    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=8&addressdetails=1` +
-    `&lat=${lat.toFixed(2)}&lon=${lon.toFixed(2)}`;
-  const json = (await fetchJson(url, 30 * 86_400, { 'User-Agent': USER_AGENT })) as {
+  const la = lat.toFixed(2);
+  const lo = lon.toFixed(2);
+  const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=8&addressdetails=1&lat=${la}&lon=${lo}`;
+  // Gardé 30 jours pour tout le site (une zone ne change pas) ; une panne n'est jamais gardée.
+  const json = (await cached('reverse', `areas:v1:${la},${lo}`, 30 * 86_400, () =>
+    nominatimJson(url, { userAgent: USER_AGENT, timeoutMs: 6000 })
+  )) as {
     address?: Record<string, unknown>;
   } | null;
   const address = json?.address;
@@ -180,7 +190,9 @@ export async function placeAreasOf(lat: number, lon: number): Promise<PlaceAreas
     const v = cleanText(address[level], 200);
     if (v && !names.includes(v)) names.push(v);
   }
-  return country === 'fr' && !isMetropolitanFrance(address) ? { country, names, overseas: true } : { country, names };
+  return country === 'fr' && !isMetropolitanFrance(address, { lat: Number(la), lon: Number(lo) })
+    ? { country, names, overseas: true }
+    : { country, names };
 }
 
 /* ------------------------------------------------------------------ */

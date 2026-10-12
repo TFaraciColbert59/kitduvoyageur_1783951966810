@@ -1,6 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('server-only', () => ({}));
+// Cache partagé neutre : chaque test relit la carte (la mémoire du module survivrait entre deux tests).
+vi.mock('../server/sharedCache', () => ({
+  cached: async (_kind: string, _key: string, _ttl: number, fn: () => Promise<unknown>) => fn(),
+}));
+// Le vrai client de carte (LocationIQ ou Nominatim), sans l'attente réelle entre deux requêtes.
+vi.mock('../server/locationIq', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../server/locationIq')>();
+  return {
+    ...actual,
+    nominatimJson: (url: string, o: Parameters<typeof actual.nominatimJson>[1]) =>
+      actual.nominatimJson(url, { ...o, sleep: async () => undefined }),
+  };
+});
 
 import lausanne from './fixtures/meteoalarm-ch-lausanne.json';
 import {
@@ -9,14 +22,16 @@ import {
   FEED_RETRY_AFTER_FAILURE_MS,
   FEED_TTL_MS,
   getOfficialAlerts,
+  inMetropolitanFrance,
   placeAreasOf,
   readBodyBounded,
   resetOfficialAlertsCache,
 } from '../server/officialAlerts';
 
 /**
- * Alertes officielles côté serveur : la carte (Nominatim) et les flux Meteoalarm
- * sont simulés à la frontière `fetch` ; aucun réseau réel.
+ * Alertes officielles côté serveur : la carte (Nominatim, ou LocationIQ avec la
+ * clé : jamais le serveur public en trafic courant, plan 1.3) et les flux
+ * Meteoalarm sont simulés à la frontière `fetch` ; aucun réseau réel.
  */
 
 const NOW = new Date('2026-10-11T07:00:00+02:00');
@@ -175,12 +190,55 @@ describe('carte : pays et unités administratives', () => {
       const r = await placeAreasOf(POINTS[place].lat, POINTS[place].lon);
       expect(r, place).not.toHaveProperty('overseas');
     }
-    // Ni région « France métropolitaine » ni code de département : rien ne prouve la métropole.
+    // Une adresse qui dit autre chose que la métropole (région, code non métropolitain) reste outre-mer,
+    // même si le point tombait dans le cadre de la métropole.
     vi.restoreAllMocks();
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
+      async () =>
+        new Response(JSON.stringify({ address: { region: 'La Réunion', 'ISO3166-2-lvl6': 'FR-974', country_code: 'fr' } }), {
+          status: 200,
+        })
+    );
+    await expect(placeAreasOf(48.1, -2.9)).resolves.toMatchObject({ country: 'fr', overseas: true });
+  });
+
+  it('adresse sans région ni code de département (LocationIQ) : le cadre de la métropole décide, comme un calcul dit', async () => {
+    // Bretagne : ni `region` ni `ISO3166-2-lvl6` dans l'adresse ; le point est en métropole.
     vi.spyOn(globalThis, 'fetch').mockImplementation(
       async () => new Response(JSON.stringify({ address: { state: 'Bretagne', country_code: 'fr' } }), { status: 200 })
     );
-    await expect(placeAreasOf(48.1, -2.9)).resolves.toMatchObject({ country: 'fr', overseas: true });
+    const metro = await placeAreasOf(48.1, -2.9);
+    expect(metro).toEqual({ country: 'fr', names: ['Bretagne'] });
+    // Même adresse muette, point en Guyane : outre-mer, aucune alerte affirmée pour la métropole.
+    await expect(placeAreasOf(4.0, -53.0)).resolves.toMatchObject({ country: 'fr', overseas: true });
+    // Le cadre : Corse et Dunkerque dedans, la Réunion, la Guadeloupe, Mayotte et Saint-Pierre-et-Miquelon dehors.
+    expect(inMetropolitanFrance(42.15, 9.1)).toBe(true);
+    expect(inMetropolitanFrance(51.03, 2.37)).toBe(true);
+    for (const p of [POINTS.reunion, POINTS.guadeloupe, POINTS.mayotte, POINTS.guyane, { lat: 46.78, lon: -56.18 }])
+      expect(inMetropolitanFrance(p.lat, p.lon), JSON.stringify(p)).toBe(false);
+  });
+
+  it('avec LOCATIONIQ_API_KEY : LocationIQ à la place du serveur public, point arrondi, adresse lue pareil (plan 1.3)', async () => {
+    vi.stubEnv('LOCATIONIQ_API_KEY', 'cle-test');
+    try {
+      const calls: string[] = [];
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+        calls.push(String(input));
+        // LocationIQ rend un seul objet (format json) pour un géocodage inverse.
+        return new Response(JSON.stringify({ display_name: 'Lyon, France', address: ADDRESSES.lyon }), { status: 200 });
+      });
+      const r = await placeAreasOf(45.7612, 4.8349);
+      expect(r).toEqual({ country: 'fr', names: ['Métropole de Lyon', 'Rhône', 'Auvergne-Rhône-Alpes'] });
+      expect(calls).toHaveLength(1);
+      const u = new URL(calls[0]);
+      expect(`${u.origin}${u.pathname}`).toBe('https://eu1.locationiq.com/v1/reverse');
+      expect(u.searchParams.get('key')).toBe('cle-test');
+      expect(u.searchParams.get('lat')).toBe('45.76');
+      expect(u.searchParams.get('lon')).toBe('4.83');
+      expect(calls.some((c) => c.includes('nominatim.openstreetmap.org'))).toBe(false);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it('carte muette : null', async () => {

@@ -36,18 +36,13 @@ const PROCESSORS: Processor[] = [
   { name: 'Google (Gemini)', role: 'IA : la photo de matériel que vous envoyez à l’analyse, si vous utilisez cette fonction', where: 'États-Unis' },
   {
     name: 'Photon (komoot), LocationIQ, Geoapify, Valhalla (FOSSGIS), Overpass (private.coffee)',
-    role: 'recherche de lieux, itinéraires et points d’intérêt : les noms de lieux cherchés et des coordonnées (votre position, arrondie à environ 1 km)',
+    role: 'recherche de lieux, itinéraires et points d’intérêt (dont ceux de l’Explorer et les services à proximité : repas, hébergements, commerces) : les noms de lieux cherchés, la zone de carte demandée et des coordonnées (votre position, arrondie à environ 1 km)',
     where: 'Allemagne, Autriche, États-Unis selon le service',
   },
   {
     name: 'Nominatim (fondation OpenStreetMap)',
-    role: 'recherche de lieux : les noms de lieux cherchés et, pour retrouver une commune, des coordonnées',
+    role: 'recherche de lieux, seulement quand le site n’a pas de clé LocationIQ (LocationIQ est alors utilisé à sa place) : les noms de lieux cherchés et, pour retrouver une commune, des coordonnées arrondies à environ 1 km',
     where: 'Royaume-Uni, Pays-Bas',
-  },
-  {
-    name: 'Overpass (overpass-api.de et ses miroirs)',
-    role: 'points d’intérêt et tracés OpenStreetMap de l’Explorer, et recherches de services à proximité (repas, hébergements, commerces) : la zone de carte demandée',
-    where: 'selon le miroir (non précisé par l’exploitant)',
   },
   { name: 'Esri (ArcGIS)', role: 'fonds de carte : la zone affichée et votre adresse IP', where: 'États-Unis' },
   {
