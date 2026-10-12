@@ -23,6 +23,7 @@
 import { activitySpeedKmh } from './projectContext';
 import { clockMinutes, daylightClock, formatClock } from './sun';
 import { walkingMinutes, type Pace } from './weather';
+import { safeTimeZone } from './zone';
 
 /** Pauses comptées en plus du temps de marche (comme « Départ conseillé »). */
 export const PAUSE_FACTOR = 1.15;
@@ -168,13 +169,16 @@ export const MISSING_TEXT: Record<PassageMissing, string> = {
 
 /**
  * Lever et coucher locaux du jour : la prévision (« HH:MM » ou ISO) si elle les
- * donne, sinon le calcul astronomique au point et à la date de l'étape. null quand
- * rien ne permet de les dire (étape sans point ni date, jour ou nuit polaire).
+ * donne, sinon le calcul astronomique au point et à la date de l'étape, à l'heure du
+ * fuseau DE CE JOUR (`timeZone`, retrouvé par le serveur depuis le point du jour : un
+ * itinéraire peut traverser des fuseaux). null quand rien ne permet de les dire (étape
+ * sans point ni date, jour ou nuit polaire, fuseau du jour inconnu ou illisible : on ne
+ * devine pas avec le fuseau d'une autre étape).
  */
 export function dayLightClock(
   forecast: { sunrise?: string | null; sunset?: string | null } | null | undefined,
   at: { lat: number | null; lon: number | null; date: string | null },
-  timeZone: string
+  timeZone: string | null
 ): { sunrise: string; sunset: string } | null {
   const rise = clockMinutes(forecast?.sunrise);
   const set = clockMinutes(forecast?.sunset);
@@ -183,7 +187,9 @@ export function dayLightClock(
   if (at.lat == null || at.lon == null || !Number.isFinite(at.lat) || !Number.isFinite(at.lon))
     return null;
   if (!at.date || !/^\d{4}-\d{2}-\d{2}/.test(at.date)) return null;
-  const sun = daylightClock(at.lat, at.lon, at.date, timeZone);
+  const zone = safeTimeZone(timeZone);
+  if (!zone) return null;
+  const sun = daylightClock(at.lat, at.lon, at.date, zone);
   // Jour ou nuit polaire, date impossible : pas de lever ni de coucher, donc pas de « de nuit ».
   return clockMinutes(sun.sunrise) != null && clockMinutes(sun.sunset) != null
     ? { sunrise: sun.sunrise as string, sunset: sun.sunset as string }

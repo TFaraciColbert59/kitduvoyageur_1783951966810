@@ -9,6 +9,7 @@ import { STOVE, TENT, TRIP, U1, U2, baseTrip, compasData, compasInput, item } fr
 import { compas, refresh, resetScreenMocks } from './helpers/screenMocks';
 import { assessDanger, type OfficialAlert } from '../engine/danger';
 import type { DayForecast } from '../engine/weather';
+import { clockMinutes, daylightClock } from '../engine/sun';
 import type { CompasData } from '../server/getCompasData';
 import type { CompasInput } from '../engine/compasModel';
 
@@ -122,9 +123,85 @@ describe('Quand : heure de passage à chaque étape', () => {
   });
 
   it('un passage après le coucher du soleil est dit en texte', async () => {
-    render(<CompasScreen data={compasData(withStart('14:00'))} />);
+    render(<CompasScreen data={compasData(withStart('14:00'), { dayZones: { 1: 'Europe/Paris', 2: 'Europe/Paris' } })} />);
     const sheet = await openOu(/Quand/);
     expect(row(sheet, 'Gavarnie').textContent).toMatch(/après le coucher du soleil \(\d{2}:\d{2}\)/);
+  });
+
+  describe('un itinéraire qui change de fuseau : la lumière de chaque jour suit le fuseau de CE jour', () => {
+    /** Jour 1 aux Pyrénées (Paris, UTC+2), jour 2 à Lisbonne (UTC+1 : une heure plus tôt) ; départ noté du jour 2 à 13:35, arrivée vers 19:20. */
+    const LISBON = { lat: 38.72, lon: -9.14 };
+    const crossing = (dayZones: CompasData['dayZones']) => {
+      const base = compasInput();
+      return compasData(
+        {
+          steps: base.steps.map((st) =>
+            st.dayNumber === 2 ? { ...st, lat: LISBON.lat, lon: LISBON.lon, startTime: '13:35' } : st
+          ),
+        },
+        // `zone` reste celui de la première étape : c'est ce qui trompait le jour 2.
+        { zone: 'Europe/Paris', dayZones }
+      );
+    };
+
+    it('fuseau de chaque jour connu : lever et coucher du jour 2 sont ceux de Lisbonne, le passage de 19:20 est dit de nuit', async () => {
+      render(<CompasScreen data={crossing({ 1: 'Europe/Paris', 2: 'Europe/Lisbon' })} />);
+      const sheet = await openOu(/Quand/);
+      const day2 = row(sheet, 'Refuge');
+      expect(within(day2).getByText('19:20')).toBeTruthy();
+      const lisbonSunset = daylightClock(LISBON.lat, LISBON.lon, '2026-10-13', 'Europe/Lisbon').sunset as string;
+      const parisSunset = daylightClock(LISBON.lat, LISBON.lon, '2026-10-13', 'Europe/Paris').sunset as string;
+      expect(lisbonSunset).not.toBe(parisSunset);
+      expect(day2.textContent).toContain(`après le coucher du soleil (${lisbonSunset})`);
+      expect(day2.textContent).not.toContain(parisSunset);
+    });
+
+    // Sens inverse : le jour 1 est à Lisbonne (le `zone` de l'écran), le jour 2 aux Pyrénées (UTC+2). Arrivée à 18:50 :
+    // de jour à l'heure des Pyrénées (coucher vers 19:20), mais « de nuit » si on y plaquait l'heure de Lisbonne (18:20).
+    const eastward = (dayZones: CompasData['dayZones']) => {
+      const base = compasInput();
+      return compasData(
+        {
+          steps: base.steps.map((st) =>
+            st.dayNumber === 1 ? { ...st, lat: LISBON.lat, lon: LISBON.lon } : { ...st, startTime: '13:05' }
+          ),
+        },
+        { zone: 'Europe/Lisbon', dayZones }
+      );
+    };
+    const day2At = { lat: 42.7, lon: 0.02 };
+    const pyreneesSunset = daylightClock(day2At.lat, day2At.lon, '2026-10-13', 'Europe/Paris').sunset as string;
+    const lisbonClockSunset = daylightClock(day2At.lat, day2At.lon, '2026-10-13', 'Europe/Lisbon').sunset as string;
+
+    it('le jeu d’essai discrimine : à 18:50, de jour à l’heure du lieu, de nuit à l’heure d’un autre fuseau', () => {
+      const arrival = 18 * 60 + 50;
+      expect(clockMinutes(pyreneesSunset) as number).toBeGreaterThan(arrival);
+      expect(clockMinutes(lisbonClockSunset) as number).toBeLessThan(arrival);
+    });
+
+    it('fuseau du jour 2 connu : de jour (coucher à l’heure du lieu), aucune mention de nuit', async () => {
+      render(<CompasScreen data={eastward({ 1: 'Europe/Lisbon', 2: 'Europe/Paris' })} />);
+      const sheet = await openOu(/Quand/);
+      const day2 = row(sheet, 'Refuge');
+      expect(within(day2).getByText('18:50')).toBeTruthy();
+      expect(day2.textContent).not.toMatch(/coucher|lever/);
+    });
+
+    it('fuseau du jour 2 inconnu : la lumière reste non classée (pas l’heure du fuseau de la première étape), l’heure de passage reste dite', async () => {
+      render(<CompasScreen data={eastward({ 1: 'Europe/Lisbon', 2: null })} />);
+      const sheet = await openOu(/Quand/);
+      const day2 = row(sheet, 'Refuge');
+      expect(within(day2).getByText('18:50')).toBeTruthy();
+      expect(day2.textContent).not.toMatch(/coucher|lever/);
+      // Garde-fou du test : si le fuseau de Lisbonne était plaqué, la ligne dirait « de nuit ».
+      expect(day2.textContent).not.toContain(lisbonClockSunset);
+    });
+
+    it('aucun fuseau par jour (écran plus ancien) : jamais de lumière devinée avec le fuseau de la première étape', async () => {
+      render(<CompasScreen data={eastward(undefined)} />);
+      const sheet = await openOu(/Quand/);
+      expect(row(sheet, 'Refuge').textContent).not.toMatch(/coucher|lever/);
+    });
   });
 
   it('activité sans allure connue : pas d’heure, pas de champ de simulation, la raison est écrite', async () => {

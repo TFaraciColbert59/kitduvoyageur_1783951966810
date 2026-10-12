@@ -276,6 +276,24 @@ describe('dayLightClock : lever et coucher du jour', () => {
   it('nuit polaire : null', () => {
     expect(dayLightClock(null, { lat: 78.2, lon: 15.6, date: '2026-12-15' }, 'Arctic/Longyearbyen')).toBeNull();
   });
+
+  it('fuseau du jour inconnu : le calcul astronomique n’est pas tenté (jamais l’heure d’un autre fuseau)', () => {
+    expect(dayLightClock(null, at, null)).toBeNull();
+    expect(dayLightClock(null, at, '')).toBeNull();
+    expect(dayLightClock(null, at, 'Nulle/Part')).toBeNull();
+  });
+
+  it('fuseau inconnu mais prévision lisible : la prévision est dite telle qu’elle est publiée', () => {
+    expect(dayLightClock({ sunrise: '07:41', sunset: '18:55' }, at, null)).toEqual({ sunrise: '07:41', sunset: '18:55' });
+  });
+
+  it('le calcul suit le fuseau DU JOUR : même point et même date, une heure locale de plus pour Paris que pour Lisbonne', () => {
+    const lisbon = { lat: 38.72, lon: -9.14, date: '2026-10-13' };
+    const local = dayLightClock(null, lisbon, 'Europe/Lisbon');
+    const paris = dayLightClock(null, lisbon, 'Europe/Paris');
+    expect(minutes(paris!.sunset) - minutes(local!.sunset)).toBe(60);
+    expect(minutes(paris!.sunrise) - minutes(local!.sunrise)).toBe(60);
+  });
 });
 
 describe('modèle : ce que les jours de marche portent pour le passage', () => {
