@@ -910,6 +910,109 @@ describe('CompasScreen', () => {
     }
   });
 
+  // Quitter l'écran annule aussi les relances programmées (reprise après coupure, limite de fréquence,
+  // relectures différées) : une relance armée relançait la préparation, ou relisait la page, pour un
+  // écran qui n'existe plus (relecture de la PR #91).
+  describe('Préremplissage : quitter l’écran annule les relances programmées', () => {
+    it('limite de fréquence : la relance prévue ne part pas après le démontage (et part si l’écran reste)', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        const limited = async () =>
+          ({ success: false, error: 'Beaucoup de préparations d’affilée : je reprends seul dans 2 min.', retryInS: 90 }) as never;
+        // Témoin : l'écran reste, la relance part.
+        autofill.compasAutofillAction.mockImplementationOnce(limited);
+        const stays = render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        expect(await screen.findByText(/je reprends seul dans 2 min/)).toBeTruthy();
+        await vi.advanceTimersByTimeAsync(93_000);
+        await waitFor(() => expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(2));
+        stays.unmount();
+        // Même cas, mais l'écran est quitté avant la fin de l'attente.
+        autofill.compasAutofillAction.mockClear();
+        autofill.compasAutofillAction.mockImplementationOnce(limited);
+        const leaves = render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        expect(await screen.findByText(/je reprends seul dans 2 min/)).toBeTruthy();
+        expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1);
+        await vi.advanceTimersByTimeAsync(10_000);
+        leaves.unmount();
+        await vi.advanceTimersByTimeAsync(120_000);
+        expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('coupure du réseau : la reprise à 66 s ne part pas après le démontage (et part si l’écran reste)', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        // Témoin : l'écran reste, la préparation reprend une fois.
+        autofill.compasAutofillStartAction.mockRejectedValueOnce(new Error('réseau coupé'));
+        const stays = render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        expect(await screen.findByText(/je reprends dans une minute/)).toBeTruthy();
+        expect(autofill.compasAutofillStartAction).toHaveBeenCalledTimes(1);
+        await vi.advanceTimersByTimeAsync(67_000);
+        await waitFor(() => expect(autofill.compasAutofillStartAction).toHaveBeenCalledTimes(2));
+        stays.unmount();
+        // Même coupure, mais l'écran est quitté pendant l'attente.
+        autofill.compasAutofillStartAction.mockClear();
+        autofill.compasAutofillStartAction.mockRejectedValueOnce(new Error('réseau coupé'));
+        const leaves = render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        expect(await screen.findByText(/je reprends dans une minute/)).toBeTruthy();
+        await vi.advanceTimersByTimeAsync(20_000);
+        leaves.unmount();
+        await vi.advanceTimersByTimeAsync(120_000);
+        expect(autofill.compasAutofillStartAction).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('une réponse qui arrive après le démontage n’arme plus de relance', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        let fail: (e: Error) => void = () => undefined;
+        autofill.compasAutofillStartAction.mockImplementationOnce(
+          () => new Promise((_resolve, reject) => (fail = reject)) as never
+        );
+        const view = render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        await waitFor(() => expect(autofill.compasAutofillStartAction).toHaveBeenCalledTimes(1));
+        view.unmount();
+        fail(new Error('réseau coupé'));
+        await vi.advanceTimersByTimeAsync(120_000);
+        expect(autofill.compasAutofillStartAction).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('autre préparation en cours : les relectures à 20, 45 et 90 s s’arrêtent avec l’écran (et ont lieu s’il reste)', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        const elsewhere = async () => ({ success: true }) as never;
+        // Témoin : l'écran reste, la page est relue aux trois échéances.
+        autofill.compasAutofillAction.mockImplementationOnce(elsewhere);
+        const stays = render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        await waitFor(() => expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1));
+        await vi.advanceTimersByTimeAsync(5_000);
+        const armed = refresh.mock.calls.length;
+        await vi.advanceTimersByTimeAsync(100_000);
+        expect(refresh.mock.calls.length - armed).toBeGreaterThanOrEqual(3);
+        stays.unmount();
+        // Même cas, mais l'écran est quitté après 5 s : aucune relecture ensuite.
+        autofill.compasAutofillAction.mockClear();
+        autofill.compasAutofillAction.mockImplementationOnce(elsewhere);
+        const leaves = render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        await waitFor(() => expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1));
+        await vi.advanceTimersByTimeAsync(5_000);
+        leaves.unmount();
+        const left = refresh.mock.calls.length;
+        await vi.advanceTimersByTimeAsync(120_000);
+        expect(refresh.mock.calls.length).toBe(left);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
   it('Préremplissage : lancé puis issue relue, sans tenir de requête ouverte', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
@@ -1266,7 +1369,10 @@ describe('CompasScreen', () => {
       fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
       const line = screen.getByTestId('formalities-card');
       expect(line.textContent).toContain('Formalités d’entrée pour toi');
-      expect(line.textContent).toMatch(/70\s€/);
+      // « Pour toi » : le montant PAR PERSONNE (barème de sa nationalité), jamais celui du groupe (70 €),
+      // qui supposerait le même passeport pour tous alors que le profil des autres est privé.
+      expect(line.textContent).toMatch(/35\s€ par personne/);
+      expect(line.textContent).not.toMatch(/70/);
       expect(line.textContent).toContain('hors du total');
       // Le total engagé est celui du budget rangé, ni plus ni moins.
       expect(bigsum()).toBe(total);
@@ -1284,6 +1390,34 @@ describe('CompasScreen', () => {
       expect(row.textContent).toMatch(/70\s€/);
       expect(row.textContent).toContain('non compté dans le total du voyage');
       expect(within(sheet).queryByText('divers')).toBeNull();
+    });
+
+    it('la carte ne multiplie jamais par la taille du groupe : 5 personnes, toujours le montant par personne', () => {
+      render(<CompasScreen data={withFormalities({ ...formalities, party: 5, amount: 175 })} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+      const line = screen.getByTestId('formalities-card');
+      expect(line.textContent).toMatch(/35\s€ par personne/);
+      expect(line.textContent).not.toMatch(/175/);
+    });
+
+    it('le tiroir ne suppose pas le même passeport pour tout le groupe sans le dire', async () => {
+      render(<CompasScreen data={withFormalities(formalities)} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+      fireEvent.click(screen.getByRole('button', { name: 'Détails : Nous' }));
+      const sheet = await screen.findByRole('dialog', { name: 'Nous' });
+      fireEvent.click(within(sheet).getByRole('button', { name: /Budget/ }));
+      expect(within(sheet).getByTestId('formalities-line').textContent).toContain('si tout le groupe a ta nationalité');
+    });
+
+    it('seul : aucune réserve sur le groupe', async () => {
+      render(<CompasScreen data={withFormalities({ ...formalities, party: 1, amount: 35 })} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+      fireEvent.click(screen.getByRole('button', { name: 'Détails : Nous' }));
+      const sheet = await screen.findByRole('dialog', { name: 'Nous' });
+      fireEvent.click(within(sheet).getByRole('button', { name: /Budget/ }));
+      const row = within(sheet).getByTestId('formalities-line');
+      expect(row.textContent).toMatch(/1 personne × 35\s€/);
+      expect(row.textContent).not.toContain('tout le groupe');
     });
 
     it('sans ligne pour cette personne, rien n’est affiché', async () => {

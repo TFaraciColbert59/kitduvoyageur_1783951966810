@@ -208,7 +208,14 @@ describe('écriture : la nationalité du lanceur ne va jamais sur le voyage', ()
     expect(papersOf(res.success && 'summary' in res ? res.summary.notes : [])).toEqual([]);
     expect(papersOf(storedMeta().compas.autofill.notes)).toEqual([]);
     // Les faits du pays se rangent tout de même : la ligne « Prises » de chaque lecteur s'en rend.
-    expect(storedMeta().compas.autofill.papers).toEqual({ countryCode: 'MA', country: 'Maroc', abroad: false });
+    // …avec d'où vient « à l'étranger » (ici le domicile du lanceur) et qui a lancé : seul lui le connaît.
+    expect(storedMeta().compas.autofill.papers).toEqual({
+      countryCode: 'MA',
+      country: 'Maroc',
+      abroad: false,
+      abroadFrom: 'domicile',
+      launchedBy: 'u1',
+    });
   });
 });
 
@@ -528,6 +535,229 @@ describe('lecture : chaque lecteur calcule SA ligne « Formalités », à part d
     expect(await planned('u2')).toBe(before + 12);
     expect((await dataAs({ id: 'u3' })).formalities ?? null).toBeNull();
     expect((await dataAs({ id: 'u2' })).formalities).toMatchObject({ title: 'Formalités : ESTA (40 $)', amount: 70 });
+  });
+
+  it('quelle que soit la base de la dépense rangée : la préparation en a écrit plusieurs, aucune ne reste', async () => {
+    const planned = async (id: string) => (await dataAs({ id })).model.budget.planned;
+    const before = await planned('u3');
+    const legacy = (id: string, metadata: Row) => ({
+      id,
+      trip_id: TRIP,
+      payer_id: 'u1',
+      title: 'Formalités : ESTA (40 $)',
+      amount: 70,
+      category: 'divers',
+      is_planned: true,
+      split_type: 'equal',
+      metadata,
+    });
+    h.db.rows('trip_expenses').push(
+      legacy('legacy-a', { autofill: 'run-0', source: 'estimation', basis: 'barème Compas 2026-09 · tarif officiel connu · à vérifier' }),
+      legacy('legacy-b', { autofill: 'run-0', source: 'estimation' })
+    );
+    for (const id of ['u2', 'u3']) expect(await planned(id), id).toBe(before);
+    expect(JSON.stringify(await dataAs({ id: 'u3' }))).not.toMatch(/Formalités/);
+  });
+
+  it('réglée ou retouchée par la personne, la dépense reste comptée normalement (Compas comme /voyages)', async () => {
+    const budget = async () => (await dataAs({ id: 'u3' })).model.budget;
+    const before = await budget();
+    const legacy = (id: string, over: Row) => ({
+      id,
+      trip_id: TRIP,
+      payer_id: 'u1',
+      title: 'Formalités : ESTA (40 $)',
+      amount: 70,
+      category: 'divers',
+      is_planned: true,
+      split_type: 'equal',
+      metadata: { autofill: 'run-0', source: 'estimation', basis: 'barème Compas 2026-10 · ressortissant français, tarif officiel connu' },
+      created_at: '2026-10-09T09:00:00.000Z',
+      updated_at: '2026-10-09T09:00:00.000Z',
+      ...over,
+    });
+    h.db.rows('trip_expenses').push(
+      legacy('intacte', {}), // retirée
+      legacy('reglee', { is_planned: false }), // payée : une dépense réelle de la personne
+      legacy('retouchee', { amount: 33, updated_at: '2026-10-10T18:30:00.000Z' }) // montant corrigé à la main
+    );
+    const after = await budget();
+    expect(after.spent).toBe(before.spent + 70);
+    expect(after.planned).toBe(before.planned + 33);
+    // Le Compas compte exactement ce que le voyage rend à `/voyages` (même filtre à la lecture).
+    const { withoutStoredFormalities } = await import('../engine/storedFormalities');
+    const kept = withoutStoredFormalities(h.db.rows('trip_expenses') as never[]) as Array<{ id: string }>;
+    expect(kept.map((e) => e.id).sort()).toEqual(
+      h.db.rows('trip_expenses').map((e) => String(e.id)).filter((id) => id !== 'intacte').sort()
+    );
+  });
+});
+
+/**
+ * Relecture de la PR #91 : « à l'étranger » (le pays du départ comparé à la destination) n'est le fait du
+ * VOYAGE que si le départ est dit dans la demande. Pris au domicile ou à la position du lanceur, il ne vaut
+ * que pour lui : pour un collaborateur, un anonyme ou le public, il est inconnu. Sinon la présence ou
+ * l'absence de leur ligne « Papiers » ou « Formalités » dirait si le lanceur habite le pays visité.
+ */
+describe('départ du lanceur : « à l’étranger » ne vaut que pour lui quand il vient de son domicile', () => {
+  const HOME_RABAT = { home_name: 'Rabat', home_lat: 34.02, home_lon: -6.83, home_country: 'MA' };
+  const HOME_PARIS = { home_name: 'Paris', home_lat: 48.86, home_lon: 2.35, home_country: 'FR' };
+  const HOME_NEW_YORK = { home_name: 'New York', home_lat: 40.71, home_lon: -74.0, home_country: 'US' };
+  const FR_LINE_MA =
+    'Papiers : passeport valide, sans visa (Maroc) ; vérifié le 3 octobre 2026, à confirmer sur France Diplomatie avant de partir.';
+
+  type Viewer = { id: string; is_anonymous?: boolean } | null;
+  const seenBy = async (viewer: Viewer) => {
+    h.viewer = viewer;
+    h.canEdit = false;
+    const data = await getCompasData();
+    expect(data).not.toBeNull();
+    return { papers: papersOf(data!.autofillNotes ?? []), formalities: data!.formalities ?? null };
+  };
+  /** Le lanceur u1 (profil `over`) prépare le voyage `where` ; u2 est un Français, u3 sans profil. */
+  const prepare = async (where: [string, string, string], over: Partial<Row>) => {
+    h.db = memorySupabase({ user: () => h.viewer });
+    h.viewer = { id: 'u1' };
+    publicTrip(...where);
+    h.db.rows('user_traveller').push(profileOf('u1', over), profileOf('u2', { nationality: 'FR' }), profileOf('u3', {}));
+    expect((await launch()).success).toBe(true);
+  };
+
+  it('le lanceur qui habite le pays visité n’a aucune frontière ; le collaborateur français, lui, a sa ligne', async () => {
+    await prepare(['MA', 'Maroc', 'Rabat'], { nationality: 'GB', ...HOME_RABAT });
+    expect(storedMeta().compas.autofill.papers).toMatchObject({ abroad: false, abroadFrom: 'domicile', launchedBy: 'u1' });
+    expect((await seenBy({ id: 'u1' })).papers).toEqual([]);
+    expect((await seenBy({ id: 'u2' })).papers).toEqual([FR_LINE_MA]);
+    for (const viewer of [{ id: 'u3' }, { id: 'anon-1', is_anonymous: true }, null])
+      expect((await seenBy(viewer)).papers, JSON.stringify(viewer)).toEqual([NEUTRAL('Maroc')]);
+  });
+
+  it('un collaborateur ne peut pas deviner où habite le lanceur : mêmes lignes, que le lanceur habite le pays visité ou non', async () => {
+    const outcomes = [];
+    for (const home of [HOME_RABAT, HOME_PARIS]) {
+      await prepare(['MA', 'Maroc', 'Rabat'], { nationality: 'GB', ...home });
+      const out: Record<string, unknown> = {};
+      for (const viewer of [{ id: 'u2' }, { id: 'u3' }, { id: 'anon-1', is_anonymous: true }, null])
+        out[JSON.stringify(viewer)] = await seenBy(viewer);
+      outcomes.push(out);
+    }
+    expect(outcomes[1]).toEqual(outcomes[0]);
+  });
+
+  it('« Formalités » : une Française qui habite les États-Unis n’en a pas pour les États-Unis ; son collaborateur français, si', async () => {
+    await prepare(['US', 'États-Unis', 'New York'], { nationality: 'FR', ...HOME_NEW_YORK });
+    expect(storedMeta().compas.autofill.papers).toMatchObject({ abroad: false, abroadFrom: 'domicile', launchedBy: 'u1' });
+    expect((await seenBy({ id: 'u1' })).formalities).toBeNull();
+    expect((await seenBy({ id: 'u2' })).formalities).toMatchObject({ title: 'Formalités : ESTA (40 $)', perPerson: 35 });
+    for (const viewer of [{ id: 'u3' }, null]) expect((await seenBy(viewer)).formalities, JSON.stringify(viewer)).toBeNull();
+  });
+
+  it('le lanceur qui part de l’étranger garde sa ligne, un collaborateur la sienne, et rien ne dit d’où il part', async () => {
+    await prepare(['MA', 'Maroc', 'Rabat'], { nationality: 'GB', ...HOME_PARIS });
+    expect(storedMeta().compas.autofill.papers).toMatchObject({ abroad: true, abroadFrom: 'domicile', launchedBy: 'u1' });
+    expect((await seenBy({ id: 'u1' })).papers).toHaveLength(1);
+    expect((await seenBy({ id: 'u2' })).papers).toEqual([FR_LINE_MA]);
+  });
+
+  it('un départ DIT dans la demande est un fait du voyage : le même pour tous, aucun lanceur rangé', async () => {
+    h.db = memorySupabase({ user: () => h.viewer });
+    h.viewer = { id: 'u1' };
+    publicTrip('MA', 'Maroc', 'Rabat');
+    const meta = h.db.rows('trips')[0].metadata as { compas: Record<string, unknown> };
+    meta.compas.origin = { name: 'Rabat', lat: 34.02, lon: -6.83, countryCode: 'MA' };
+    h.db.rows('user_traveller').push(profileOf('u1', { nationality: 'GB' }), profileOf('u2', { nationality: 'FR' }));
+    expect((await launch()).success).toBe(true);
+    const stored = storedMeta().compas.autofill.papers;
+    expect(stored).toMatchObject({ abroad: false, abroadFrom: 'dit' });
+    expect(stored).not.toHaveProperty('launchedBy');
+    for (const viewer of [{ id: 'u1' }, { id: 'u2' }, null]) expect((await seenBy(viewer)).papers, JSON.stringify(viewer)).toEqual([]);
+  });
+
+  it('un voyage rangé avant que la source le soit (ni `abroadFrom` ni lanceur) garde son comportement d’avant', async () => {
+    await prepare(['MA', 'Maroc', 'Rabat'], { nationality: 'GB', ...HOME_RABAT });
+    const meta = storedMeta();
+    const { abroadFrom: _from, launchedBy: _by, ...old } = meta.compas.autofill.papers as unknown as Record<string, unknown>;
+    void _from;
+    void _by;
+    h.db.rows('trips')[0].metadata = { compas: { ...meta.compas, autofill: { ...meta.compas.autofill, papers: old } } };
+    expect(old).toMatchObject({ abroad: false });
+    for (const viewer of [{ id: 'u1' }, { id: 'u2' }, null]) expect((await seenBy(viewer)).papers, JSON.stringify(viewer)).toEqual([]);
+  });
+});
+
+/**
+ * Relecture de la PR #91 : la politique de confidentialité dit que rien du profil n'est envoyé à l'IA.
+ * Un départ du DOMICILE n'envoie donc ni km, ni minutes, ni km de voie, ni « voyage à l'étranger » (le pays
+ * du domicile par rapport à la destination), ni vol/train/location qui s'en déduisent ; et ne range aucune
+ * distance dans un titre ou une base du voyage.
+ */
+describe('départ du domicile : rien de déduit n’est envoyé à l’IA ni rangé en kilomètres', () => {
+  const HOME_LYON = { home_name: 'Villeurbanne', home_lat: 45.76, home_lon: 4.84, home_country: 'FR' };
+  const HOME_CASA = { home_name: 'Casablanca', home_lat: 33.57, home_lon: -7.59, home_country: 'MA' };
+  const SAID = { name: 'Lyon', lat: 45.76, lon: 4.83, countryCode: 'FR' };
+  const SAID_CASA = { name: 'Casablanca', lat: 33.57, lon: -7.59, countryCode: 'MA' };
+
+  /** Prépare un séjour à Rabat pour u1 (profil `over`, départ dit `said`) et rend les faits envoyés à l'IA. */
+  const run = async (over: Partial<Row>, said?: typeof SAID) => {
+    h.db = memorySupabase({ user: () => h.viewer });
+    h.viewer = { id: 'u1' };
+    h.asked = [];
+    publicTrip('MA', 'Maroc', 'Rabat');
+    if (said) (h.db.rows('trips')[0].metadata as { compas: Record<string, unknown> }).compas.origin = said;
+    h.db.rows('user_traveller').push(profileOf('u1', over));
+    const res = await launch();
+    expect(res.success).toBe(true);
+    const asked = h.asked.map((raw) => JSON.parse(raw) as { system: string; prompt: string });
+    const facts = asked.find((r) => r.system === buildCompasAutofillSystem())?.prompt ?? '';
+    expect(facts).not.toBe('');
+    const line = (start: string) => facts.split('\n').filter((l) => l.startsWith(start));
+    return { facts, line, asked, summary: res.success && 'summary' in res ? res.summary : null };
+  };
+  const DERIVED = /Vol à prévoir|Train à prévoir|Trajet d’approche mesuré|Voiture de location|km de voie/;
+
+  it('vol depuis le domicile : « inconnu », « non communiqué », ni vol, ni train, ni location, ni nom de commune', async () => {
+    const { facts, line } = await run({ nationality: 'FR', ...HOME_LYON });
+    expect(line('Départ de la personne')).toEqual(['Départ de la personne : domicile de la personne (ville non transmise).']);
+    expect(line('Voyage à l’étranger')).toEqual(['Voyage à l’étranger : inconnu.']);
+    expect(line('Trajet d’approche')).toEqual(['Trajet d’approche : non communiqué.']);
+    expect(facts).not.toMatch(DERIVED);
+    expect(facts).not.toMatch(/Villeurbanne|FR\b/);
+  });
+
+  it('route depuis le domicile : ni kilomètres ni minutes de trajet', async () => {
+    const { facts, line } = await run({ nationality: 'FR', ...HOME_CASA });
+    expect(line('Trajet d’approche')).toEqual(['Trajet d’approche : non communiqué.']);
+    expect(line('Voyage à l’étranger')).toEqual(['Voyage à l’étranger : inconnu.']);
+    expect(facts).not.toMatch(DERIVED);
+    expect(facts).not.toMatch(/en voiture \(\d+ min\)/);
+  });
+
+  it('un départ DIT dans la demande garde ses faits chiffrés (il ne vient pas du profil)', async () => {
+    const lyon = await run({}, SAID);
+    expect(lyon.line('Départ de la personne')).toEqual(['Départ de la personne : Lyon.']);
+    expect(lyon.line('Voyage à l’étranger')).toEqual(['Voyage à l’étranger : oui.']);
+    expect(lyon.line('Vol à prévoir')).toEqual(['Vol à prévoir : oui (aller-retour).']);
+    const casa = await run({}, SAID_CASA);
+    expect(casa.line('Voyage à l’étranger')).toEqual(['Voyage à l’étranger : non.']);
+    expect(casa.line('Trajet d’approche mesuré')[0]).toMatch(/^Trajet d’approche mesuré : [\d.]+ km en voiture \(\d+ min\)/);
+  });
+
+  it('rien de rangé sur le voyage ne dit une distance depuis le domicile (titres, bases, notes, issue)', async () => {
+    const home = await run({ nationality: 'FR', ...HOME_CASA });
+    const stored = () => ({
+      titles: h.db.rows('trip_expenses').map((e) => e.title),
+      bases: h.db.rows('trip_expenses').map((e) => (e.metadata as { basis?: string }).basis ?? ''),
+      notes: storedMeta().compas.autofill.notes,
+      issue: home.summary?.notes ?? [],
+    });
+    const out = stored();
+    expect(out.titles).toContain('Carburant aller-retour');
+    for (const text of [...out.titles, ...out.bases, ...out.notes, ...out.issue] as string[])
+      // (« 6,5 L/100 km » est une consommation, pas une distance.)
+      expect(text, text).not.toMatch(/(?<![\/\d.,])\d+(?:[.,]\d+)?\s*km\b/);
+    // Départ dit depuis le même endroit : la distance reste dans le titre, la personne l'a écrite.
+    await run({}, SAID_CASA);
+    expect(h.db.rows('trip_expenses').map((e) => String(e.title)).some((t) => /^Carburant aller-retour \(\d+(\.\d+)? km\)$/.test(t))).toBe(true);
   });
 });
 

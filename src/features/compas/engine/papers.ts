@@ -303,13 +303,44 @@ export function readerPlugsNotes(
   return travelPapers(countryCode, countryName, reader).notes.filter(isPlugsNote);
 }
 
+/** D'où vient le départ d'une préparation : lieu dit dans la demande, domicile du profil, position de l'appareil. */
+export type AbroadFrom = 'dit' | 'domicile' | 'gps';
+
 /** Ce que le voyage garde pour rendre la ligne de chaque lecteur : le pays visité et le départ, jamais un profil. */
 export interface PapersFacts {
   countryCode: string;
   /** Nom du pays tel que la ligne le dit ; null : le code. */
   country: string | null;
-  /** Faux : départ déjà dans le pays ; null : on ne sait pas. */
+  /**
+   * Faux : départ déjà dans le pays ; null : on ne sait pas. C'est le départ DE LA PRÉPARATION : s'il vient
+   * du domicile ou de la position du lanceur (`abroadFrom`), il ne vaut que pour lui (`abroadForReader`).
+   */
   abroad: boolean | null;
+  /**
+   * D'où vient `abroad`. Absent : voyage préparé avant ce champ, `abroad` s'applique à tous comme avant
+   * (limite connue, voir `abroadForReader`).
+   */
+  abroadFrom?: AbroadFrom;
+  /**
+   * Le lanceur de la préparation, rangé seulement quand `abroad` vient de son domicile ou de sa position :
+   * c'est lui seul qui peut le lire (un collaborateur ne doit pas apprendre où habite le lanceur).
+   */
+  launchedBy?: string;
+}
+
+/**
+ * `abroad` tel que CE lecteur peut le connaître. Un départ DIT dans la demande (« depuis Lyon ») est un
+ * fait du voyage, le même pour tous. Un départ pris au DOMICILE ou à la POSITION du lanceur n'est le
+ * départ que du lanceur : un collaborateur, un lecteur anonyme ou public ne sait pas s'il part du pays
+ * visité, et le lui dire (par la présence ou l'absence de sa ligne « Papiers » ou « Formalités ») lui
+ * apprendrait si le lanceur y habite : inconnu (null) pour tout autre que lui. Un voyage préparé avant
+ * que la source soit rangée (`abroadFrom` absent) garde l'ancien comportement : sa source est inconnue,
+ * le rattrapage des données le traite à part.
+ */
+export function abroadForReader(facts: PapersFacts, viewerId: string | null | undefined): boolean | null {
+  if (facts.abroad == null) return null;
+  if (facts.abroadFrom !== 'domicile' && facts.abroadFrom !== 'gps') return facts.abroad;
+  return viewerId != null && facts.launchedBy != null && viewerId === facts.launchedBy ? facts.abroad : null;
 }
 
 /**
@@ -320,11 +351,19 @@ export interface PapersFacts {
 export function papersFactsFor(
   countryCode: string | null | undefined,
   countryName: string | null | undefined,
-  abroad: boolean | null
+  abroad: boolean | null,
+  /** D'où vient le départ et qui a lancé la préparation ; sans départ connu (`from` nul), rien de plus n'est rangé. */
+  launch?: { from: AbroadFrom | null; by: string }
 ): PapersFacts | null {
   const cc = (countryCode ?? '').toUpperCase();
   if (!/^[A-Z]{2}$/.test(cc)) return null;
-  return { countryCode: cc, country: countryName || null, abroad };
+  const facts: PapersFacts = { countryCode: cc, country: countryName || null, abroad };
+  if (launch?.from) {
+    facts.abroadFrom = launch.from;
+    // Le lanceur n'est rangé que pour un départ qui est le sien (domicile, position) : un départ dit est un fait du voyage.
+    if (launch.from !== 'dit') facts.launchedBy = launch.by;
+  }
+  return facts;
 }
 
 /** Remplace les lignes `is` de `notes` par `own`, à la place de la première ; rien à remplacer : `notes` tel quel. */
@@ -346,12 +385,20 @@ export function notesForReader(
   stored: string[],
   facts: PapersFacts | null,
   reader: TravellerContext,
-  find: (passport: string, destination: string) => EntryRequirement | null
+  find: (passport: string, destination: string) => EntryRequirement | null,
+  /** Qui lit : le lanceur est le seul à connaître le départ de sa préparation (`abroadForReader`). */
+  viewerId: string | null = null
 ): string[] {
-  if (!stored.some(isPapersNote) && !stored.some(isPlugsNote)) return stored;
-  const papers = facts ? readerPapersNotes(facts.countryCode, facts.country, reader, facts.abroad, find) : [];
+  const abroad = facts ? abroadForReader(facts, viewerId) : null;
+  // Le départ du lanceur était dans le pays visité (son domicile, sa position) : le voyage n'a rangé aucune
+  // ligne « Papiers » (aucune frontière POUR LUI). Un autre lecteur ne sait pas d'où il part : sa ligne lui
+  // est rendue, en tête, là où la ligne rangée aurait été. Sinon l'absence de ligne dirait où habite le lanceur.
+  const unseen = facts != null && facts.abroad === false && abroad !== false && !stored.some(isPapersNote);
+  if (!unseen && !stored.some(isPapersNote) && !stored.some(isPlugsNote)) return stored;
+  const papers = facts ? readerPapersNotes(facts.countryCode, facts.country, reader, abroad, find) : [];
   const plugs = facts ? readerPlugsNotes(facts.countryCode, facts.country, reader) : [];
-  return swapLines(swapLines(stored, isPapersNote, papers), isPlugsNote, plugs);
+  const swapped = swapLines(swapLines(stored, isPapersNote, papers), isPlugsNote, plugs);
+  return unseen ? [...papers, ...swapped] : swapped;
 }
 
 const PAPERS_RE = /passeport|carte d[’']identit|\bvisas?\b|e-visa|formalit|autorisation (de voyage|électronique)/i;

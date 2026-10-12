@@ -374,6 +374,20 @@ export function CompasScreen({
   const stopped = useRef(false);
   /** Réveille le suivi de la préparation quand « Arrêter » est pressé (onglet caché ou hors ligne compris). */
   const pollAbort = useRef<AbortController | null>(null);
+  // Minuteurs de relance (reprise après une coupure, limite de fréquence, relectures différées) :
+  // tous retenus ici pour être annulés quand l'écran est quitté. Sans cela, une relance programmée
+  // relançait la préparation (ou relisait la page) pour un écran qui n'existe plus. `unmounted` couvre
+  // aussi une réponse qui arrive APRÈS le démontage et voudrait en armer un nouveau.
+  const retryTimers = useRef(new Set<ReturnType<typeof setTimeout>>());
+  const unmounted = useRef(false);
+  const later = useCallback((fn: () => void, ms: number) => {
+    if (unmounted.current) return;
+    const id = setTimeout(() => {
+      retryTimers.current.delete(id);
+      if (!unmounted.current) fn();
+    }, ms);
+    retryTimers.current.add(id);
+  }, []);
   const autofill = useCallback((redo?: { label: string; kept: string[] }) => {
     if (autofillRunning.current) return;
     autofillRunning.current = true;
@@ -450,7 +464,7 @@ export function CompasScreen({
             autofillDeferred.current = true;
             if (prepRef.current && prepRef.current.stage !== 'stopped')
               setPrep({ stage: prepAt() ?? 'itinerary', message: res.error });
-            setTimeout(() => !stopped.current && autofillRef.current?.(redo), res.retryInS * 1000 + 2000);
+            later(() => !stopped.current && autofillRef.current?.(redo), res.retryInS * 1000 + 2000);
             return notify(res.error);
           }
           prepFail(res.error);
@@ -465,7 +479,7 @@ export function CompasScreen({
             });
           // Une autre préparation du même voyage est en cours (autre onglet,
           // écran remonté) : on relit le voyage quand elle aura écrit.
-          for (const wait of [20_000, 45_000, 90_000]) setTimeout(() => startTransition(() => router.refresh()), wait);
+          for (const wait of [20_000, 45_000, 90_000]) later(() => startTransition(() => router.refresh()), wait);
           return;
         }
         const undo = () =>
@@ -500,13 +514,13 @@ export function CompasScreen({
         // écrit reste, on reprend une fois là où ça s'est arrêté.
         autofillRetried.current = true;
         notify('Préparation interrompue · je reprends dans une minute…');
-        setTimeout(() => !stopped.current && autofillRef.current?.(redo), 66_000);
+        later(() => !stopped.current && autofillRef.current?.(redo), 66_000);
       })
       .finally(() => {
         autofillRunning.current = false;
         setRunning(false);
       });
-  }, [model.tripId, model.slug, notify, router, setPrep, prepFail]);
+  }, [model.tripId, model.slug, notify, router, setPrep, prepFail, later]);
   const autofillRef = useRef(autofill);
   autofillRef.current = autofill;
 
@@ -515,12 +529,18 @@ export function CompasScreen({
   // Sans cela, la relecture tournerait encore jusqu'à 5 minutes pour un écran
   // qui n'existe plus (plan 1.2, coût de calcul). Seul le contrôleur du suivi est
   // réveillé, pas `stopped` : un remontage (mode strict) ne bloquerait pas « Reprendre ».
-  useEffect(
-    () => () => {
+  // Les minuteurs de relance sont annulés avec lui. `unmounted` repasse à faux à chaque
+  // montage : le mode strict (montage, nettoyage, remontage) ne bloque pas les relances de l'écran vivant.
+  useEffect(() => {
+    unmounted.current = false;
+    const timers = retryTimers.current;
+    return () => {
+      unmounted.current = true;
       pollAbort.current?.abort();
-    },
-    []
-  );
+      for (const id of timers) clearTimeout(id);
+      timers.clear();
+    };
+  }, []);
 
 
   // Réadaptation : un changement (durée, lieu, activité, nuits, personnes…)

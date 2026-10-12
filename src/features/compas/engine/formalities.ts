@@ -19,10 +19,14 @@ import type { TravellerContext } from './traveller';
 export interface ReaderFormalities {
   /** « Formalités : ESTA (40 $) ». */
   title: string;
-  /** € par personne (barème). */
+  /** € par personne (barème) : ce que coûte la formalité à CE lecteur, la seule chose qu'on sache de lui. */
   perPerson: number;
   party: number;
-  /** € pour le groupe. */
+  /**
+   * € pour le groupe SI toutes les personnes ont la nationalité du lecteur : le profil des autres membres
+   * est privé, on ne peut pas dire combien d'entre elles sont concernées. À ne jamais présenter comme
+   * « le montant pour toi » (c'est `perPerson`).
+   */
   amount: number;
   currency: 'EUR';
   /** Le barème, pour qui, la date de la table, et le fait que la ligne n'est pas dans le total rangé. */
@@ -57,17 +61,6 @@ export function readerFormalities(input: {
   };
 }
 
-/**
- * La dépense « Formalités » qu'une préparation d'AVANT ce correctif a rangée sur le voyage (chiffrée
- * pour un ressortissant français, par la préparation seulement : une dépense saisie à la main, même
- * nommée ainsi, n'est pas reconnue). L'affichage la retire : la ligne du lecteur la remplace.
- */
-export function isStoredFormalities(expense: { title: string; metadata?: Record<string, unknown> | null }): boolean {
-  const m = expense.metadata;
-  return (
-    expense.title.startsWith('Formalités : ') &&
-    typeof m?.autofill === 'string' &&
-    typeof m.basis === 'string' &&
-    m.basis.includes('ressortissant français')
-  );
-}
+// La dépense « Formalités » d'une préparation d'avant ce verrou (reconnue, retirée de l'affichage) :
+// module à part, sans dépendance, que la lecture des voyages de `lib/` importe aussi.
+export { isStoredFormalities, withoutStoredFormalities } from './storedFormalities';

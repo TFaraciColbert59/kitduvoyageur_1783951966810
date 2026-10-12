@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { entryRequirementIn, type EntryRequirement, type EntryTable } from '../engine/entry';
 import {
+  abroadForReader,
   isPapersNote,
   isPlugsNote,
   keepAiNote,
@@ -600,5 +601,73 @@ describe('sharedRules — le filtre des conseils de l’IA rangés, sans profil'
 
   it('les mêmes lignes que celles qui se rangent : les règles du voyage, pas celles d’une personne', () => {
     expect(sharedRules('GB', 'Royaume-Uni', null).notes).toEqual(sharedNotes('GB', 'Royaume-Uni', null));
+  });
+});
+
+/**
+ * « À l'étranger » (le pays du départ comparé à la destination) : un fait du voyage seulement si le départ
+ * est DIT dans la demande. Pris au domicile ou à la position du lanceur, il ne vaut que pour lui (PR #91).
+ */
+describe('« à l’étranger » : le départ du lanceur n’est connu que de lui', () => {
+  const find = (p: string, d: string) => entryRequirement(p, d);
+  const base: PapersFacts = { countryCode: 'MA', country: 'Maroc', abroad: false };
+  const fromHome: PapersFacts = { ...base, abroadFrom: 'domicile', launchedBy: 'u1' };
+  const fromGps: PapersFacts = { ...base, abroadFrom: 'gps', launchedBy: 'u1' };
+  const said: PapersFacts = { ...base, abroadFrom: 'dit' };
+  const FR_LINE =
+    'Papiers : passeport valide, sans visa (Maroc) ; vérifié le 3 octobre 2026, à confirmer sur France Diplomatie avant de partir.';
+  const PLUGS = 'Matériel conseillé non compté au budget : 12 € à la boutique si tu ne l’as pas (facultatif).';
+
+  it('papersFactsFor : la source et le lanceur se rangent pour un départ à soi, pas pour un départ dit ni sans départ', () => {
+    expect(papersFactsFor('ma', 'Maroc', false, { from: 'domicile', by: 'u1' })).toEqual(fromHome);
+    expect(papersFactsFor('ma', 'Maroc', false, { from: 'gps', by: 'u1' })).toEqual(fromGps);
+    expect(papersFactsFor('ma', 'Maroc', false, { from: 'dit', by: 'u1' })).toEqual(said);
+    expect(papersFactsFor('ma', 'Maroc', null, { from: null, by: 'u1' })).toEqual({ countryCode: 'MA', country: 'Maroc', abroad: null });
+    expect(papersFactsFor('Portugal', 'Portugal', true, { from: 'domicile', by: 'u1' })).toBeNull();
+  });
+
+  it('abroadForReader : le lanceur le sait, tout autre lecteur l’ignore, un départ dit vaut pour tous', () => {
+    for (const facts of [fromHome, fromGps]) {
+      expect(abroadForReader(facts, 'u1')).toBe(false);
+      expect(abroadForReader({ ...facts, abroad: true }, 'u1')).toBe(true);
+      for (const viewer of ['u2', null, undefined, ''])
+        expect(abroadForReader({ ...facts, abroad: true }, viewer), String(viewer)).toBeNull();
+      expect(abroadForReader({ ...facts, abroad: false }, 'u2')).toBeNull();
+    }
+    for (const viewer of ['u1', 'u2', null]) expect(abroadForReader(said, viewer)).toBe(false);
+    expect(abroadForReader({ ...fromHome, abroad: null }, 'u1')).toBeNull();
+  });
+
+  it('abroadForReader : sans lanceur rangé, personne ne le sait (un domicile sans lanceur n’est à personne)', () => {
+    expect(abroadForReader({ ...base, abroadFrom: 'domicile' }, 'u1')).toBeNull();
+  });
+
+  it('abroadForReader : un voyage rangé avant la source garde son comportement d’avant (valeur pour tous)', () => {
+    expect(abroadForReader(base, 'u2')).toBe(false);
+    expect(abroadForReader({ ...base, abroad: true }, null)).toBe(true);
+  });
+
+  it('notesForReader : le lanceur vivait dans le pays visité (aucune ligne rangée) ; un autre lecteur reçoit SA ligne, en tête', () => {
+    const stored = ['Itinéraire gardé.', PLUGS];
+    // Le lanceur : aucune frontière, rien n'est ajouté.
+    expect(notesForReader(stored, fromHome, who({ nationality: 'GB' }), find, 'u1')).toBe(stored);
+    // Un collaborateur français, un anonyme, quelqu'un sans profil : la frontière est possible pour eux.
+    expect(notesForReader(stored, fromHome, FR, find, 'u2')).toEqual([FR_LINE, ...stored]);
+    expect(notesForReader(stored, fromHome, NONE, find, null)).toEqual([GENERIC('Maroc'), ...stored]);
+    // Même ligne que si le lanceur avait habité à l'étranger (rien ne dit où il habite) : rangée en tête par
+    // la préparation (`essential` commence par les lignes « Papiers »), elle est remplacée à sa place.
+    const away = [GENERIC('Maroc'), 'Itinéraire gardé.', PLUGS];
+    expect(notesForReader(away, { ...fromHome, abroad: true }, FR, find, 'u2')).toEqual([FR_LINE, 'Itinéraire gardé.', PLUGS]);
+  });
+
+  it('notesForReader : un départ dit ou un voyage d’avant (ni source ni lanceur) : aucune ligne ajoutée', () => {
+    const stored = ['Itinéraire gardé.', PLUGS];
+    expect(notesForReader(stored, said, FR, find, 'u2')).toBe(stored);
+    expect(notesForReader(stored, base, FR, find, 'u2')).toBe(stored);
+  });
+
+  it('notesForReader : sans pays rangé (facts nul), rien n’est inventé', () => {
+    const stored = ['Itinéraire gardé.'];
+    expect(notesForReader(stored, null, FR, find, 'u2')).toBe(stored);
   });
 });
