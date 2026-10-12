@@ -17,15 +17,22 @@ import { NextRequest } from 'next/server';
 const SECRET = 'secret-de-test-0123456789abcdef';
 
 const calls: Array<{ name: string; authorization: string | null; method: string }> = [];
+const registries = vi.hoisted(() => ({
+  active: 'default' as 'default' | 'rotating',
+  default: [] as unknown[],
+  rotating: [] as unknown[],
+}));
 const behaviours = vi.hoisted(
   () => new Map<string, (request: Request) => Promise<Response> | Response>()
 );
 
 vi.mock('@/lib/cron/dailyTasks', async () => {
   const actual = await vi.importActual<typeof import('@/lib/cron/dailyTasks')>('@/lib/cron/dailyTasks');
-  const make = (name: string, method: 'GET' | 'POST') => ({
+  // Épinglées : l'ordre ne dépend pas du jour (la rotation quotidienne est testée à part).
+  const make = (name: string, method: 'GET' | 'POST', pinned = true) => ({
     name,
     method,
+    pinned,
     load: async () => ({
       [method]: async (request: Request) => {
         calls.push({ name, authorization: request.headers.get('authorization'), method: request.method });
@@ -35,10 +42,13 @@ vi.mock('@/lib/cron/dailyTasks', async () => {
     }),
   });
   const registry = [make('purge', 'GET'), make('file', 'POST'), make('vues', 'GET')];
+  registries.default = registry;
+  registries.rotating = [make('p', 'GET'), make('a', 'GET', false), make('b', 'GET', false), make('c', 'GET', false)];
   return {
     ...actual,
     DAILY_CRON_TASKS: registry,
-    buildDailyTasks: (request: NextRequest, secret: string) => actual.buildDailyTasks(request, secret, registry),
+    buildDailyTasks: (request: NextRequest, secret: string) =>
+      actual.buildDailyTasks(request, secret, registries.active === 'rotating' ? registries.rotating : registries.default),
   };
 });
 
@@ -54,6 +64,7 @@ describe('GET /api/cron/daily', () => {
   beforeEach(() => {
     calls.length = 0;
     behaviours.clear();
+    registries.active = 'default';
     vi.stubEnv('CRON_SECRET', SECRET);
     vi.spyOn(console, 'error').mockImplementation(() => {});
   });
@@ -109,6 +120,28 @@ describe('GET /api/cron/daily', () => {
       ['file', 'ok'],
       ['vues', 'ok'],
     ]);
+  });
+
+  it('décale chaque jour les tâches non épinglées ; l’épinglée reste en tête', async () => {
+    registries.active = 'rotating';
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      const order: string[][] = [];
+      for (const day of [20_000, 20_001, 20_002]) {
+        vi.setSystemTime(new Date(day * 86_400_000 + 3 * 3_600_000));
+        calls.length = 0;
+        expect((await GET(request(`Bearer ${SECRET}`))).status).toBe(200);
+        order.push(calls.map((c) => c.name));
+      }
+      // 20 000 mod 3 = 2 ; chaque jour la tête du reste avance d'un rang.
+      expect(order).toEqual([
+        ['p', 'c', 'a', 'b'],
+        ['p', 'a', 'b', 'c'],
+        ['p', 'b', 'c', 'a'],
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('une tâche qui échoue (500, puis exception) n’arrête pas les suivantes ; la réponse passe en 500', async () => {
