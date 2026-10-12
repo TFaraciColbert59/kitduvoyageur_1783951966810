@@ -1989,8 +1989,11 @@ describe('CompasScreen', () => {
     const row = await within(sheet).findByText(/Vigilance orange · vent violent \(Sardegna\)/);
     expect(row.textContent).toContain('émise le 10 oct. 2026, 16 h 00 UTC');
     expect(row.textContent).toContain('texte officiel : « Allerta Arancione Vento per Italia - Sardegna »');
+    // Le service national est nommé sur la ligne même du signal (la barre du niveau le cite aussi, plus haut).
     expect(
-      within(sheet).getByText(/Source : Servizio Meteorologico dell’Aeronautica Militare \(MeteoAM\) via Meteoalarm/)
+      within(row.closest('.cp-row') as HTMLElement).getByText(
+        /Source : Servizio Meteorologico dell’Aeronautica Militare \(MeteoAM\) via Meteoalarm/
+      )
     ).toBeTruthy();
     expect(within(sheet).getByTestId('meteoalarm-notice').textContent).toContain(METEOALARM_DISCLAIMER);
   });

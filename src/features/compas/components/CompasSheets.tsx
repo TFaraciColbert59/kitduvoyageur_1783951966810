@@ -76,6 +76,7 @@ import { proposeShift, watchRules } from '../engine/watch';
 import { isMeteoalarmSource } from '../engine/meteoalarmFeeds';
 import MeteoalarmNotice from './MeteoalarmNotice';
 import OfficialAlertTexts from './OfficialAlertTexts';
+import { RiskBars } from './CompasRisks';
 import { planWater } from '../engine/water';
 import { addExpenseAction } from '@/app/voyages/budget-actions';
 import { RESA_CATS, bookingCat, offerCat, type ResaCat } from '../engine/resaCats';
@@ -2748,23 +2749,10 @@ function RaisonsFlow({ ctl }: { ctl: CompasCtl }) {
   // Alertes officielles affichées dans les signaux, avec le texte du service national.
   const shownKeys = new Set(ctl.data.model.verdict.reasons.map((r) => `${r.source}|${r.label}`));
   const officials = danger.signals.filter((x) => x.official && shownKeys.has(`${x.source}|${x.label}`));
-  const axes = ['physique', 'technique', 'conjoncturel'] as const;
-  const unknown = axes.filter((a) => danger.axes[a].level === 'non_evalue');
-  const partial = axes.filter(
-    (a) => danger.axes[a].level !== 'non_evalue' && danger.axes[a].partial
-  );
   return (
     <>
-      {unknown.map((a) => (
-        <p key={a} className="cp-note">
-          <b>{a[0].toUpperCase() + a.slice(1)} non évalué.</b> {danger.axes[a].note}
-        </p>
-      ))}
-      {partial.map((a) => (
-        <p key={a} className="cp-note">
-          <b>{a[0].toUpperCase() + a.slice(1)} évalué en partie.</b> {danger.axes[a].partial}
-        </p>
-      ))}
+      {/* Un axe non évalué ou évalué en partie le dit ici, sous sa barre (jamais un « RAS » muet). */}
+      <RiskBars danger={danger} />
       <PagedList
         label="Signaux du verdict"
         items={ctl.data.model.verdict.reasons}

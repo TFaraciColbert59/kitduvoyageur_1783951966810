@@ -1515,6 +1515,112 @@
   background: var(--lkv-warning);
 }
 
+/* Barres de risque par axe (onglet « Risques ») : jamais une note. Le niveau est écrit, le nombre de
+   segments pleins le redit, un axe non évalué est vide et hachuré ; la teinte ne porte jamais seule. */
+.cp-risks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.cp-risks__h {
+  margin: 0;
+  font-size: 0.84375rem;
+  font-weight: 600;
+}
+.cp-risks__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+.cp-risk {
+  --risk-c: var(--cp-ink3);
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.5rem 0.6875rem;
+  border-radius: 1rem;
+  background: var(--cp-fill);
+}
+.cp-risk[data-level='faible'] {
+  --risk-c: var(--cp-good);
+}
+.cp-risk[data-level='modere'] {
+  --risk-c: var(--cp-warn);
+}
+.cp-risk[data-level='eleve'] {
+  --risk-c: var(--cp-bad);
+}
+.cp-risk__top {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 2rem;
+}
+.cp-risk__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.cp-risk__lvl {
+  flex: none;
+  min-width: 4.5rem;
+  text-align: right;
+  font-size: 0.78125rem;
+  font-weight: 700;
+  color: var(--cp-ink);
+}
+.cp-gauge {
+  flex: none;
+  display: inline-flex;
+  gap: 0.1875rem;
+}
+.cp-gauge i {
+  display: block;
+  width: 1.5rem;
+  height: 0.625rem;
+  border: 1px solid var(--cp-ink3);
+  border-radius: 0.1875rem;
+  background: transparent;
+}
+.cp-gauge i[data-on='1'] {
+  border-color: var(--risk-c);
+  background: var(--risk-c);
+}
+/* Non évalué : trois segments vides, hachurés et pointillés, jamais une barre « à zéro ». */
+.cp-gauge[data-level='non_evalue'] i {
+  border-style: dashed;
+  background: repeating-linear-gradient(135deg, var(--cp-ink3) 0 0.0625rem, transparent 0.0625rem 0.25rem);
+}
+.cp-risk__src,
+.cp-risk__note {
+  margin: 0;
+  font-size: 0.71875rem;
+  line-height: 1.35;
+  color: var(--cp-ink2);
+  overflow-wrap: anywhere;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cp-gauge i[data-on='1'] {
+    transform-origin: left center;
+    animation: cp-gauge-in 0.45s ease both;
+  }
+  @keyframes cp-gauge-in {
+    from {
+      transform: scaleX(0.35);
+      opacity: 0.4;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+}
+
 /* Kit */
 .cp-weights {
   display: flex;
@@ -2101,7 +2207,7 @@
   gap: 0.5rem;
   padding: 0.625rem 0.6875rem;
   border-radius: 1rem;
-  background: rgb(255 255 255 / 0.3);
+  background: var(--cp-fill);
 }
 .cp-pass__h {
   margin: 0;
@@ -3265,6 +3371,18 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
   }
   .cp-bar i {
     background: Highlight;
+  }
+  .cp-gauge i {
+    background: Canvas;
+    border: 1px solid CanvasText;
+  }
+  .cp-gauge i[data-on='1'] {
+    background: Highlight;
+    border-color: Highlight;
+    forced-color-adjust: none;
+  }
+  .cp-gauge[data-level='non_evalue'] i {
+    border-style: dashed;
   }
   .cp-step__dot {
     background: Highlight;
