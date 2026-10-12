@@ -123,23 +123,33 @@ jobs:
           path: playwright-report/
           retention-days: 14
 
-  # Audit #39 — suites pgTAP + migrations sur une base de test dédiée.
-  # Opt-in : variable de dépôt LKDV_DB_TESTS_ENABLED=true + secret LKDV_TEST_DATABASE_URL.
+  # Audit #39 / PLAN-100 2.4 — suites pgTAP sur une base ÉPHÉMÈRE du job.
+  #
+  # Pourquoi ce job restait « skipped » : il exigeait la variable de dépôt
+  # LKDV_DB_TESTS_ENABLED=true ET le secret LKDV_TEST_DATABASE_URL (une base
+  # distante dédiée, jamais créée) ; sans eux, GitHub ignore le job. Il ne dépend
+  # plus d'aucun des deux : PostgreSQL 17 + PostGIS + pgTAP + pg_cron sont
+  # installés sur le runner, le schéma est celui du dépôt (baseline de production
+  # + migrations post-baseline, strictes), les tests tournent dans des
+  # transactions annulées. Aucun secret, aucune base distante, rien n'est appliqué
+  # hors du runner. `supabase db push` / `supabase test db` (Docker, base
+  # distante) ne sont plus utilisés.
+  #
+  # Bloquant pour une fusion seulement une fois ajouté aux contrôles requis de
+  # la branche `main` (réglage GitHub) : à faire après un premier passage vert
+  # sur un runner.
   database-gates:
-    if: ${{ vars.LKDV_DB_TESTS_ENABLED == 'true' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: 22
-          cache: 'npm'
+      - name: Base PostgreSQL éphémère + schéma du dépôt (Gate DB.1)
+        id: db
+        uses: ./.github/actions/ephemeral-postgres
 
-      - name: Gate DB.1 — Migrations additives sur base de test
-        run: npx --yes supabase@2 db push --db-url "${{ secrets.LKDV_TEST_DATABASE_URL }}"
-
-      - name: Gate DB.2 — Suites pgTAP
-        run: npx --yes supabase@2 test db --db-url "${{ secrets.LKDV_TEST_DATABASE_URL }}"
+      - name: Gate DB.2 — Suites pgTAP (pg_prove)
+        run: bash scripts/db/ci/run_pgtap.sh
+        env:
+          DATABASE_URL: ${{ steps.db.outputs.database-url }}
