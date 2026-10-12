@@ -9,7 +9,7 @@ import { partySizeOf, shortHoursOf, tripLengthDays } from './tripContext';
  * inventée. Une donnée absente reste absente (`null`) et l'écran le dit.
  */
 
-import { formatClock, sunTimes, tzOffsetMinutes } from './sun';
+import { clockMinutes, formatClock, sunTimes, tzOffsetMinutes } from './sun';
 import { crewPace, settleExpenses, type CompasPace, type CompasSettlement } from './crew';
 import { walkingMinutes, type Pace } from './weather';
 
@@ -226,6 +226,15 @@ export interface CompasMemberLoad {
   sharedItemIds: string[];
 }
 
+/** Une étape d'un jour de marche : de quoi estimer à quelle heure on y passe (`engine/passage.ts`). */
+export interface CompasDayStep {
+  id: string;
+  title: string;
+  distanceKm: number | null;
+  gainM: number | null;
+  lossM: number | null;
+}
+
 export interface CompasDayPlan {
   day: number;
   date: string | null;
@@ -237,6 +246,13 @@ export interface CompasDayPlan {
   lon: number | null;
   stay: string | null;
   walkMin: number | null;
+  /**
+   * Heure de départ du jour (« HH:MM », heure locale) NOTÉE sur la première étape du jour
+   * (`trip_steps.start_time`) ; null quand personne ne l'a renseignée. Jamais une heure par défaut.
+   */
+  startTime?: string | null;
+  /** Étapes du jour, dans l'ordre. */
+  steps?: CompasDayStep[];
 }
 
 export interface CompasDecision {
@@ -386,6 +402,12 @@ function kitKind(item: CompasItemInput): CompasKitLine['kind'] {
   if (item.isWorn) return 'worn';
   if (item.isConsumable) return 'consumable';
   return 'base';
+}
+
+/** « 08:30:00 » ou « 08:30 » (colonne `time`) → « 08:30 » ; illisible ou absente : null. */
+function startTimeOf(value: string | null | undefined): string | null {
+  const minutes = clockMinutes(value);
+  return minutes == null ? null : formatClock(minutes);
 }
 
 /* ---------- Modèle ---------- */
@@ -577,6 +599,14 @@ export function buildCompasModel(input: CompasInput): CompasModel {
       lat: first?.lat ?? null,
       lon: first?.lon ?? null,
       stay: ofDay.map((s) => s.accommodationName).find(Boolean) ?? null,
+      startTime: startTimeOf(ofDay[0]?.startTime),
+      steps: ofDay.map((s) => ({
+        id: s.id,
+        title: s.title,
+        distanceKm: s.distanceKm,
+        gainM: s.elevationGainM,
+        lossM: s.elevationLossM,
+      })),
       walkMin: walkingMinutes({
         distanceKm,
         gainM,

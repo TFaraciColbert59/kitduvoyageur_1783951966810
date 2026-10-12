@@ -40,6 +40,7 @@ import {
   type CompasRouteOption,
 } from '../server/compasActions';
 import { applyCurrent, inverseOps, runOps } from './compasApply';
+import { PassageSection } from './CompasPassage';
 import { Chip, PagedList, Segments } from './CompasPrimitives';
 import GeoapifyCredit from './GeoapifyCredit';
 import { compasNearbyActivitiesAction } from '../server/resaActions';
@@ -829,6 +830,8 @@ export function QuandFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
             : 'Ajoute un point de départ au parcours pour voir les conditions jour par jour.'}
         </p>
       )}
+
+      <PassageSection ctl={ctl} />
 
       {m.route.dayPlans.length > 0 && m.dates.start && (
         <>

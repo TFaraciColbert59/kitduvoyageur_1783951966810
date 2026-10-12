@@ -79,6 +79,14 @@ export interface DangerSignal {
   day?: number;
 }
 
+/** Ce que l'évaluation d'un axe a lu : une source et les jours (AAAA-MM-JJ) qu'elle couvre. */
+export interface DangerEvidence {
+  source: string;
+  /** Premier et dernier jour lus ; null quand la source ne donne aucune date. */
+  from: string | null;
+  to: string | null;
+}
+
 export interface DangerAxisResult {
   level: AxisLevel;
   note: string;
@@ -87,6 +95,12 @@ export interface DangerAxisResult {
    * Un « RAS » ne vaut que pour ce qui a été mesuré ; null quand tout l'a été.
    */
   partial: string | null;
+  /**
+   * Les sources lues pour évaluer l'axe, chacune avec ses dates : de quoi dire d'où vient un
+   * niveau « faible » (rien à signaler) aussi bien qu'un signal. Vide pour un axe non évalué ;
+   * absent d'une évaluation faite avant ce champ.
+   */
+  evidence?: DangerEvidence[];
 }
 
 export interface DangerAssessment {
@@ -184,6 +198,19 @@ export function assessDanger(input: {
     if (day != null) days.push(day);
     gaps[axis].set(what, days);
   };
+  // Ce qui a été lu, par axe et par source (jours couverts) : un niveau se cite avec sa source.
+  const reads: Record<DangerAxis, Map<string, DangerEvidence>> = {
+    physique: new Map(),
+    technique: new Map(),
+    conjoncturel: new Map(),
+  };
+  const read = (axis: DangerAxis, source: string, asOf: string | null | undefined) => {
+    const day = asOf && /^\d{4}-\d{2}-\d{2}/.test(asOf) ? asOf.slice(0, 10) : null;
+    const seen = reads[axis].get(source);
+    if (!seen) return void reads[axis].set(source, { source, from: day, to: day });
+    if (day && (!seen.from || day < seen.from)) seen.from = day;
+    if (day && (!seen.to || day > seen.to)) seen.to = day;
+  };
   // Aucune cotation du terrain n'existe dans les données du voyage.
   gap('technique', 'cotation du terrain');
   const alertsGap = alertsGapOf(input.alertsStatus);
@@ -224,6 +251,7 @@ export function assessDanger(input: {
     /* Physique : durée, dénivelé */
     if (plan.walkMin != null) {
       evaluated.physique = true;
+      read('physique', 'DIN 33466', date);
       // Lever et coucher de la prévision ; au-delà, calcul astronomique à l'étape.
       const light = tripDayLight(f?.forecast, {
         lat: plan.lat,
@@ -244,6 +272,7 @@ export function assessDanger(input: {
     }
     if (plan.gainM != null) {
       evaluated.physique = true;
+      read('physique', 'étapes du voyage', date);
       if (plan.gainM >= T.highGainM)
         push('physique', 'warn', `${plan.gainM} m de montée`, 'étapes du voyage', 'gain');
     }
@@ -251,6 +280,7 @@ export function assessDanger(input: {
     /* Technique : pente moyenne, descente */
     if (plan.gainM != null && plan.distanceKm != null && plan.distanceKm > 0) {
       evaluated.technique = true;
+      read('technique', 'étapes du voyage', date);
       const slope = plan.gainM / (plan.distanceKm * 1000);
       if (slope >= T.steepAvgSlope)
         push(
@@ -263,6 +293,7 @@ export function assessDanger(input: {
     }
     if (plan.lossM != null) {
       evaluated.technique = true;
+      read('technique', 'étapes du voyage', date);
       if (plan.lossM >= T.highLossM)
         push('technique', 'warn', `${plan.lossM} m de descente`, 'étapes du voyage', 'loss');
     }
@@ -272,6 +303,8 @@ export function assessDanger(input: {
     if (!fc) continue;
     evaluated.conjoncturel = true;
     const src = 'MET Norway';
+    read('conjoncturel', src, date);
+    if (fc.tMax != null || fc.tMin != null) read('physique', src, date);
     if (fc.tMax != null && fc.tMax >= T.heatC) {
       evaluated.physique = true;
       push('physique', 'warn', `chaleur (${Math.round(fc.tMax)} °C)`, src, 'heat');
@@ -297,6 +330,7 @@ export function assessDanger(input: {
   /* Alertes officielles : lues telles quelles, datées, jamais reformulées en score */
   for (const a of input.alerts) {
     evaluated.conjoncturel = true;
+    read('conjoncturel', a.source, a.sent ?? a.fetchedAt);
     const title = `Vigilance ${a.level} · ${a.hazard} (${a.area})`;
     signals.push({
       id: `alert-${a.id}`,
@@ -321,7 +355,7 @@ export function assessDanger(input: {
     return parts.length ? `Non vérifié : ${parts.join(', ')}.` : null;
   };
   const axisOf = (axis: DangerAxis, missing: string): DangerAxisResult => {
-    if (!evaluated[axis]) return { level: 'non_evalue', note: missing, partial: null };
+    if (!evaluated[axis]) return { level: 'non_evalue', note: missing, partial: null, evidence: [] };
     const worst = signals
       .filter((s) => s.axis === axis)
       .reduce<DangerSeverity | null>(
@@ -329,7 +363,7 @@ export function assessDanger(input: {
         null
       );
     const level: AxisLevel = worst === 'block' ? 'bloque' : worst === 'warn' ? 'vigilance' : 'ok';
-    return { level, note: '', partial: partialOf(axis) };
+    return { level, note: '', partial: partialOf(axis), evidence: [...reads[axis].values()] };
   };
 
   return {
