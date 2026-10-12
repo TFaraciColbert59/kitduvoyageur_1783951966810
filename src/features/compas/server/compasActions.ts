@@ -1871,6 +1871,8 @@ export async function compasInterpretAction(
       currency: trip.budget_currency ?? 'EUR',
       avoid: prefs?.avoid ?? [],
       wishes: prefs?.wishes ?? [],
+      // Le groupe rangé sur le voyage : un montant « par personne » se multiplie par lui (ou par celui de la phrase).
+      partySize: trip.party_size ?? null,
     };
     // Une proposition de l'IA que le Compas refuse (date passée, mauvaise année…)
     // ne masque pas la lecture correcte des règles pour le même réglage.
