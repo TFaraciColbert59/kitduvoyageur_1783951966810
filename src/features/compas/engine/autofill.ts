@@ -11,6 +11,7 @@ import { isInventoryAvailable, type InventoryStatus } from '@/features/materiel/
 import { fuelPrice, type FuelKind, type FuelPrice } from './fuel';
 import { lonDelta } from './longitude';
 import { shopTokens } from './shopMatch';
+import { tollsBasis } from './tolls';
 
 /* ---------- Nuits ---------- */
 
@@ -110,7 +111,7 @@ export interface TransportEstimate {
   oneWayMin: number;
   cars: number;
   roundTripKm: number;
-  /** Carburant aller-retour pour toutes les voitures, péages non comptés. */
+  /** Carburant aller-retour pour toutes les voitures, péages non comptés (la base dit pourquoi). */
   fuelEur: number;
   /** D'où vient le prix du litre : le bulletin pétrolier de l'UE (UE-27) ou une estimation (PLAN-100 4.6). */
   fuelSource: FuelKind;
@@ -125,6 +126,11 @@ export function estimateCarTrip(input: {
   partySize: number;
   /** Prix du litre du ou des pays du trajet (`fuelPriceFor`) ; sans lui, l'estimation de l'UE-27. */
   fuel?: FuelPrice;
+  /**
+   * La fin de la base : « péages non comptés (pourquoi, barème du pays s'il existe) » (`tollsBasis`).
+   * Le pays de DESTINATION seulement : le domicile du profil ne se nomme jamais sur le voyage.
+   */
+  tollsBasis?: string;
 }): TransportEstimate | null {
   if (!(input.oneWayKm > 0) || !Number.isFinite(input.oneWayKm)) return null;
   const cars = Math.max(1, Math.ceil(Math.max(1, input.partySize) / CAR_ASSUMPTIONS.seats));
@@ -144,7 +150,7 @@ export function estimateCarTrip(input: {
     fuelEur,
     fuelSource: fuel.kind,
     fuelRangeEur,
-    basis: `itinéraire routier mesuré · ${String(CAR_ASSUMPTIONS.litersPer100Km).replace('.', ',')} L/100 km · ${fuel.basis}${fuelRangeEur ? ` · entre ${fuelRangeEur.low} € et ${fuelRangeEur.high} € pour ce trajet` : ''} · ${cars} voiture${cars > 1 ? 's' : ''} · péages non comptés`,
+    basis: `itinéraire routier mesuré · ${String(CAR_ASSUMPTIONS.litersPer100Km).replace('.', ',')} L/100 km · ${fuel.basis}${fuelRangeEur ? ` · entre ${fuelRangeEur.low} € et ${fuelRangeEur.high} € pour ce trajet` : ''} · ${cars} voiture${cars > 1 ? 's' : ''} · ${input.tollsBasis ?? tollsBasis(null)}`,
   };
 }
 

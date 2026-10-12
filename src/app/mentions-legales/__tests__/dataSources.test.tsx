@@ -119,6 +119,66 @@ const EXPECTED: Expected[] = [
       { file: 'src/features/compas/server/rates.ts', pattern: /fawazahmed0\/currency-api/ },
     ],
   },
+  {
+    // Pages officielles lues le 2026-10-12 : chaque tarif de `engine/tolls.ts` porte la sienne.
+    label: 'Péages et vignettes',
+    says: [
+      'Tarifs officiels des vignettes (voiture) et des péages au kilomètre (barème moyen)',
+      'à vérifier avant de partir',
+      'Suisse : ',
+      'Autriche : ',
+      'Tchéquie : ',
+      'Slovaquie : ',
+      'Slovénie : ',
+      'Hongrie : ',
+      'France : ',
+      'Italie : ',
+      '(lu le 12 octobre 2026)',
+      'Un pays dont aucune source officielle n’a pu être lue reste « non chiffré », dit comme tel.',
+    ],
+    links: {
+      'ch.ch, portail des autorités suisses': 'https://www.ch.ch/en/vehicles-and-traffic/how-to-behave-in-road-traffic/motorway-vignette/',
+      'Office fédéral de la douane et de la sécurité des frontières (OFDF), portail Via':
+        'https://www.bazg.admin.ch/fr/vignette-electronique-achat-portal-via',
+      'oesterreich.gv.at, portail officiel de l’Autriche (ASFINAG), page mise à jour le 1er janvier 2026':
+        'https://www.oesterreich.gv.at/en/themen/mobilitaet/kfz/10/Vignette-und-Maut/Vignette-fuer-Fahrzeuge-bis-3,5-t',
+      'eDalnice, e-shop officiel de l’État tchèque': 'https://edalnice.gov.cz/en/price-list',
+      'Národná diaľničná spoločnosť, eznamka.sk (vignette électronique slovaque)': 'https://eznamka.sk/sk/dialnicne-znamky/typy-a-ceny',
+      'Uradni list RS n° 46/2025 (décret sur les routes à péage et le péage), Journal officiel de la Slovénie':
+        'https://www.uradni-list.si/glasilo-uradni-list-rs/vsebina/2025-01-1893',
+      'Nemzeti Útdíjfizetési Szolgáltató Zrt. (opérateur public), « E-matrica rendszerben alkalmazott díjak »':
+        'https://nemzetiutdij.hu/api/uploads/e_matrica_arak_2026_pdf_611db0ecc1.pdf',
+      'Autorité de régulation des transports, synthèse des comptes des sociétés concessionnaires d’autoroutes, exercice 2024':
+        'https://www.autorite-transports.fr/wp-content/uploads/2025/12/synthese_des_comptes_sca_2024.pdf',
+      'Autostrade per l’Italia, « Come si calcola il pedaggio »':
+        'https://www.autostrade.it/en/servizi-al-cliente/pedaggio/come-si-calcola-il-pedaggio',
+    },
+    uses: [
+      { file: 'src/features/compas/server/autofillActions.ts', pattern: /tripTolls\(\{/ },
+      { file: 'src/features/compas/engine/travel.ts', pattern: /tollsBasis\(destination\.countryCode\)/ },
+    ],
+  },
+  {
+    // https://datacatalog.worldbank.org/public-licenses (CC BY 4.0 par défaut) et https://data.worldbank.org/summary-terms-of-use
+    // (attribution « The World Bank: Nom du jeu : Source »), lus le 2026-10-12.
+    label: 'Niveaux de prix des repas',
+    says: [
+      'The World Bank: ICP 2021',
+      '(International Comparison Program)',
+      'indice de niveau de prix (Monde = 100)',
+      'série « Produits alimentaires et boissons non alcoolisées »',
+      'année 2021',
+      'mis à jour le 4 août 2024',
+      'lu le 12 octobre 2026',
+      'CC BY 4.0',
+      'Ramené à la France = 100 et arrondi par le Compas',
+    ],
+    links: {
+      'The World Bank: ICP 2021': 'https://api.worldbank.org/v2/sources/90',
+      'CC BY 4.0': 'https://datacatalog.worldbank.org/public-licenses',
+    },
+    uses: [{ file: 'src/features/compas/server/autofillActions.ts', pattern: /icpFoodLevel\(anchor\.countryCode/ }],
+  },
 ];
 
 describe('sources des données : chaque crédit dit ce que la source exige', () => {
