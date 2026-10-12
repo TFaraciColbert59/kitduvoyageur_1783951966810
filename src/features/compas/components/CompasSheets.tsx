@@ -60,6 +60,7 @@ import {
 } from '../engine/routePois';
 import type { CompasStayOffer } from '../engine/stays';
 import { kitCompatibility, planKitApply, type MyKit } from '../engine/kitApply';
+import { acquireOverview, priceText, productsFor, weightDelta } from '../engine/acquire';
 import { convertFromEur } from '../engine/currency';
 import {
   Chip,
@@ -77,6 +78,7 @@ import { isMeteoalarmSource } from '../engine/meteoalarmFeeds';
 import MeteoalarmNotice from './MeteoalarmNotice';
 import OfficialAlertTexts from './OfficialAlertTexts';
 import { RiskBars } from './CompasRisks';
+import { ItemHistory } from './CompasItemHistory';
 import { planWater } from '../engine/water';
 import { addExpenseAction } from '@/app/voyages/budget-actions';
 import { RESA_CATS, bookingCat, offerCat, type ResaCat } from '../engine/resaCats';
@@ -162,6 +164,7 @@ function Missing() {
 function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
   const line = ctl.lines.find((l) => l.id === lineId);
   const [confirm, setConfirm] = useState(false);
+  const [tab, setTab] = useState<'fiche' | 'historique'>('fiche');
   if (!line) return <Missing />;
   const product = ctl.product(line.shopProductId);
   const inv = line.inventoryItemId
@@ -172,6 +175,19 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
   const edit = ctl.data.canEdit;
 
   return (
+    <>
+      <Segments
+        label="Fiche de l’objet"
+        value={tab}
+        onChange={setTab}
+        options={[
+          { id: 'fiche', label: 'Fiche', icon: 'package' },
+          { id: 'historique', label: 'Historique', icon: 'clock' },
+        ]}
+      />
+      {tab === 'historique' ? (
+        <ItemHistory tripId={ctl.data.model.tripId} line={line} data={ctl.data} />
+      ) : (
     <>
       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
         <Thumb
@@ -292,7 +308,7 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
               aria-pressed={false}
               onClick={() => ctl.open({ kind: 'acquire', lineId: line.id, mode: m.id })}
             >
-              <Icon name={m.icon} size={15} />
+              <Icon name={m.icon} size={15} aria-hidden="true" />
               {m.label}
             </button>
           ))}
@@ -334,6 +350,8 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
           ))}
       </div>
     </>
+      )}
+    </>
   );
 }
 
@@ -347,19 +365,28 @@ function ProductRow({
   action,
   onAction,
   disabled,
+  days,
+  plannedG,
 }: {
   product: CompasShopProduct;
   action: string;
   onAction: () => void;
   disabled?: boolean;
+  /** Jours datés du voyage (null : non datés) ; absent : prix tel quel (ajout depuis la boutique). */
+  days?: number | null;
+  /** Poids de l'objet prévu, pour dire l'écart ; absent ou null : pas d'écart. */
+  plannedG?: number | null;
 }) {
   const tap = useDoubleTap(() => {
     if (!disabled) onAction();
   });
   const price =
-    product.mode === 'location' && product.pricePerDay != null
-      ? `${formatMoney(product.pricePerDay)} / jour`
-      : formatMoney(product.priceEur);
+    days !== undefined
+      ? priceText(product, days)
+      : product.mode === 'location' && product.pricePerDay != null
+        ? `${formatMoney(product.pricePerDay)} / jour`
+        : formatMoney(product.priceEur);
+  const delta = plannedG === undefined ? null : weightDelta(plannedG, product.weightG);
   return (
     <div
       className="cp-row"
@@ -373,8 +400,11 @@ function ProductRow({
         category={product.category}
         name={product.name}
       />
-      <span className="cp-row__t">
-        <b>{product.name}</b>
+      <span className="cp-row__t cp-row__t--wrap">
+        <b>
+          {product.name}
+          {product.mode === 'occasion' ? ' · occasion' : ''}
+        </b>
         <span>
           {[product.brand, product.weightG != null ? formatKg(product.weightG) : null, price]
             .filter(Boolean)
@@ -384,8 +414,18 @@ function ProductRow({
             ? ` · ★ ${product.rating.toLocaleString('fr-FR')} (${product.reviewCount} avis)`
             : ''}
         </span>
+        {delta && <span>{delta.text}</span>}
       </span>
       <span className="cp-row__end">
+        {product.slug && (
+          <Link
+            className="cp-ibtn cp-ibtn--tap"
+            href={`/produit/${product.slug}`}
+            aria-label={`Fiche produit : ${product.name}`}
+          >
+            <Icon name="external-link" size={16} aria-hidden="true" />
+          </Link>
+        )}
         <button
           type="button"
           className="cp-btn cp-btn--soft"
@@ -433,20 +473,29 @@ function AcquireSheet({
   const line = ctl.lines.find((l) => l.id === lineId);
   const [mode, setMode] = useState<AcquireMode>(initialMode);
   const { query, setQuery, matches } = useTextFilter();
-  const { tripId, slug } = ctl.data.model;
+  const { tripId, slug, dates } = ctl.data.model;
+  const days = dates.days;
+  const teammates = ctl.data.model.crew.loads.filter((m) => m.userId !== ctl.data.viewerId);
 
   const products = useMemo(() => {
-    if (!line) return [];
-    const wanted = mode === 'louer' ? 'location' : 'achat';
-    return ctl.data.shop
-      .filter(
-        (p) => (p.mode ?? 'achat') === wanted || (mode === 'acheter' && p.mode === 'occasion')
-      )
+    if (!line || mode === 'emprunter') return [];
+    return productsFor(ctl.data.shop, mode)
       .map((p) => ({ p, score: relevance(line, p) }))
       .sort((a, b) => b.score - a.score)
       .map((x) => x.p);
   }, [ctl.data.shop, line, mode]);
   const shown = products.filter((p) => matches(p.name, p.brand, p.category));
+  const overview = useMemo(
+    () => acquireOverview({ shop: ctl.data.shop, teammates: teammates.length, days }),
+    [ctl.data.shop, teammates.length, days]
+  );
+  const counts = useMemo(
+    () => ({
+      louer: productsFor(ctl.data.shop, 'louer').length,
+      acheter: productsFor(ctl.data.shop, 'acheter').length,
+    }),
+    [ctl.data.shop]
+  );
 
   if (!line) return <Missing />;
 
@@ -457,11 +506,14 @@ function AcquireSheet({
         value={mode}
         onChange={setMode}
         options={[
-          { id: 'emprunter', label: 'Emprunter', icon: 'handshake' },
-          { id: 'louer', label: 'Louer', icon: 'calendar-days' },
-          { id: 'acheter', label: 'Acheter', icon: 'shopping-bag' },
+          { id: 'emprunter', label: `Emprunter · ${teammates.length}`, icon: 'handshake' },
+          { id: 'louer', label: `Louer · ${counts.louer}`, icon: 'calendar-days' },
+          { id: 'acheter', label: `Acheter · ${counts.acheter}`, icon: 'shopping-bag' },
         ]}
       />
+      <p className="cp-note" data-testid="acquire-overview">
+        {overview[mode]}
+      </p>
       {mode === 'emprunter' ? (
         <>
           <p className="cp-note">
@@ -469,7 +521,7 @@ function AcquireSheet({
           </p>
           <PagedList
             label="Équipe"
-            items={ctl.data.model.crew.loads.filter((m) => m.userId !== ctl.data.viewerId)}
+            items={teammates}
             empty={
               <p className="cp-note">
                 Personne d’autre dans l’équipe pour l’instant.{' '}
@@ -541,6 +593,8 @@ function AcquireSheet({
               <ProductRow
                 key={p.id}
                 product={p}
+                days={days}
+                plannedG={line.weightGrams}
                 action={line.shopProductId === p.id ? 'Choisi' : 'Choisir'}
                 disabled={ctl.busy || line.shopProductId === p.id}
                 onAction={async () => {
@@ -569,6 +623,10 @@ function AcquireSheet({
               />
             )}
           />
+          <p className="cp-note">
+            Rien n’est payé ici : « Choisir » relie le produit à l’objet et le met au panier. Tu
+            commandes depuis le panier, quand tu veux.
+          </p>
           <div className="cp-actions">
             <Link className="cp-btn cp-btn--soft" href="/panier">
               <Icon name="shopping-cart" size={16} />

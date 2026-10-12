@@ -3561,3 +3561,33 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
 .cp-mem__facts {
   margin: 0;
 }
+
+/* Fiche d'un objet · Historique, et « Emprunter · Louer · Acheter » complet (lot AD 5.5). */
+.cp-ibtn--tap {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+.cp-hist {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cp-hist__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cp-hist__list > .cp-row {
+  align-items: flex-start;
+  gap: 10px;
+}
+.cp-hist__ic {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 10px;
+  background: var(--cp-soft);
+  color: var(--cp-ink);
+}
