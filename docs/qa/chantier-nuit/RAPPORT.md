@@ -93,6 +93,7 @@ Elles restent **pending** dans le dossier ; commande proposée quand tu veux les
 | `npm run build` | ✅ build production OK |
 | Realtime 2 clients (WebSocket réel) | ✅ B reçoit sans rechargement |
 | Smoke Playwright (WebKit mobile, `localhost:4000`) | ✅ fil, stories « Exemples », bannière cookies ; 1 erreur console pré-existante (`/api/telemetry/hub` → 401 visiteur) |
+| `npm run test:e2e:local` (@local-web) | ◐ 31 passés / 12 échoués / 10 skip — échecs **hors périmètre** sur `/hub`, `/explorer` (atlas), redirections middleware et snapshots voyage : pages bloquées en chargement sur base locale **non seedée**, aucune spec en échec ne référence la communauté. À valider sur la base de test CI (gate E2E). |
 
 ## 5. Points ouverts / limites
 
@@ -102,7 +103,7 @@ Elles restent **pending** dans le dossier ; commande proposée quand tu veux les
 4. **F-027 (stories)** : la publication de stories n'existe toujours pas ; la barre est honnêtement étiquetée « Exemples » en attendant le contrat complet (audience, expiration, modération).
 5. **F-028 (présence)** : plus de faux « En ligne », mais pas encore de vraie présence temps réel.
 6. **F-030 (tests e2e réels)** : tests pgTAP de la RPC DM et upload ajoutés ; un scénario e2e navigateur à deux identités (upload réel, deux appareils) reste à brancher sur la base de test CI.
-7. **F-034 (pagination clubs/événements)** et **F-036 (annulation de réponses obsolètes)** : non traités cette nuit (P1) — la fondation (états par section, dépendance d'identité sur le fil) est posée.
+7. **F-034 (pagination clubs/événements)** : non traitée cette nuit (P1) — la fondation (états par section, pagination du fil) est posée. **F-036** traité (garde d'annulation profil + recharge du fil selon l'identité).
 8. **16 hotfix remote-only sans fichier local** : historiquement appliqués au cloud ; seuls `legacy_loyalty` a été repris dans le dépôt. Recommandation : les extraire en fichiers de migration pour une rejouabilité complète (les statements sont conservés dans `supabase_migrations.schema_migrations`).
 9. **Catalogue A-001→A-240** : hors périmètre de cette nuit (c'est un catalogue d'améliorations produit) ; les composants de base qui le conditionnent (persistance, invariants, vérité des états) sont désormais en place.
 
@@ -124,5 +125,7 @@ c2e8776f  F-015/F-016/F-017/F-018/F-021 messagerie
 089a0312  F-023 fil paginé + erreurs par section
 9d7f6656  F-019/F-020 boîte bornée + mute temporaire
 df1d9c51  F-022 événement = vraie sortie
-(+ c2701681 = outillage .gitignore ; 8 commits DB déployés dans 20261013*)
+ef00ea49  docs : rapport final
+a5f126f5  F-036 réponses obsolètes profil
+(+ c2701681 = outillage .gitignore ; 10 migrations DB déployées dans 20261013*)
 ```
