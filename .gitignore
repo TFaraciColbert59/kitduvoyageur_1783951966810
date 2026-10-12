@@ -173,3 +173,6 @@ backups/
 hosted-schema.json
 scratch/
 
+
+# Copies de travail des sous-agents (git worktree)
+.claude/worktrees/
