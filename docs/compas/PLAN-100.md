@@ -67,7 +67,8 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       des journaux et des kits à la corbeille (`purge_expired_trash_kits`, sans session,
       car `cleanup_expired_trash_kits` en exige une), planifiées en base (`pg_cron`,
       `docs/compas/SAUVEGARDES.md`).
-      🔒 Suppressions : `20261008190000_base_scheduled_purges.sql` à lancer par Tony dans
+      🔒 Suppressions : `20261008190000_base_scheduled_purges.sql` (corrigée le 12 oct. : la purge de
+      la file `progression` y était planifiée deux fois) à lancer par Tony dans
       le SQL Editor. Preuve : taille stable sur 7 jours.
 - [x] **Tracé dans `trips.metadata`** : 600 points au plus pour tout le voyage
       (`MAX_TRACK_POINTS`, ~12 Ko ; 150 par tronçon avant), réécrit à chaque
@@ -116,8 +117,8 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       20 lots tant qu'ils sont pleins (sans rejouer un échec transitoire dans le même tir), les refus
       forgés (`actor_mismatch`, `missing_actor_id`) sont terminaux d'emblée, et la migration
       `20261012100000_adventure_events_claim_lease.sql` donne un bail de 15 min aux lignes
-      `processing` (une purge RGPD coupée est reprise) et sert `consent.revoked` d'abord (**à appliquer
-      par Tony**). Limites : l'expiration des positions live (TTL 15 min) n'est purgée qu'une fois par
+      `processing` (une purge RGPD coupée est reprise) et sert `consent.revoked` d'abord (**appliquée en
+      production le 12 oct.**, version `20261012142746`). Limites : l'expiration des positions live (TTL 15 min) n'est purgée qu'une fois par
       jour (vérifier que chaque lecteur filtre sur `expires_at`) ; les 13 routes enchaînées gardent
       leur comparaison de Bearer.
 
@@ -438,7 +439,13 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       résultats). Ouvertes à `anon` : 29 → 14 (droits de voyage et de groupe utilisés
       par les policies, drapeaux, données publiques, 3 PostGIS). ⚖️ Reste : vue `public_profiles` (nom, ville, bio et
       points de chaque compte lisibles sans connexion), décision de Tony.
-- [ ] Revue des policies « public » restantes (conseiller Supabase `get_advisors`).
+- [x] Revue des policies « public » restantes (conseiller Supabase `get_advisors`, relu le 12 oct.) :
+      aucune table exposée sans RLS hors `spatial_ref_sys` (table système de PostGIS, non modifiable) ;
+      30 tables sous RLS sans policy = lisibles par le serveur seul (voulu) ; 6 vues matérialisées
+      lisibles par session (`kit_trust_scores`, `kit_item_survival*`, densités de l'atlas) = agrégats
+      publics voulus, lus par `/api/kits/*` et l'atlas ; `legacy_loyalty_level_for` : `search_path`
+      verrouillé (`20261012143322`). Restent : vue `public_profiles` (⚖️ Tony, 2.4 ci-dessus) ;
+      protection des mots de passe divulgués (HaveIBeenPwned) réservée aux offres payantes de Supabase.
 
 ### 2.5 Quota IA
 
@@ -1128,7 +1135,8 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 5.7 Documentation
 
-- [ ] `DESIGN_REFERENCE.md` : thème sombre (contradiction) corrigé.
+- [x] `DESIGN_REFERENCE.md` : thème sombre (contradiction) corrigé : thème clair seul sur `/compas`
+      (`CompasLightTheme`), le verre sombre ne reste qu'à `/partir-librement` (vérifié le 12 oct.).
 - [ ] `ETAT.md`, `REFERENTIEL-GEO.md`, ce plan : à jour à chaque PR.
 
 ---
