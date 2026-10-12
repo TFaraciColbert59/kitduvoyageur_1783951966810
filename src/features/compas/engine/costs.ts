@@ -181,7 +181,8 @@ export function entryFees(countryCode: string | null | undefined): { eur: number
 /**
  * La base du poste « Formalités » : le barème, pour qui, et la date à laquelle la table
  * passeport × destination a vérifié que cette formalité est requise (aucune date si elle
- * n'est pas lisible).
+ * n'est pas lisible). Elle dit « ressortissant français » : à n'afficher qu'à la personne
+ * concernée, à la lecture (`engine/formalities.ts`), jamais rangée sur le voyage.
  */
 export function formalitiesBasis(verified: string | null | undefined): string {
   const day = verified ? frenchDay(verified) : null;

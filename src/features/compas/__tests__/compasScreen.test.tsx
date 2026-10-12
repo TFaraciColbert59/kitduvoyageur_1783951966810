@@ -1105,6 +1105,61 @@ describe('CompasScreen', () => {
     });
   });
 
+  describe('Nous : les formalités d’entrée de la personne, à part du budget (vie privée, lot Z1)', () => {
+    const formalities = {
+      title: 'Formalités : ESTA (40 $)',
+      perPerson: 35,
+      party: 2,
+      amount: 70,
+      currency: 'EUR' as const,
+      basis:
+        'barème Compas 2026-10 · ressortissant français, tarif officiel connu · calculé pour toi à l’ouverture, non compté dans le total du voyage',
+    };
+    const withFormalities = (f: CompasData['formalities']) => ({ ...makeData(), formalities: f });
+
+    it('la carte la dit à côté du total, sans l’y ajouter', () => {
+      const bigsum = () => document.querySelector('.cp-bigsum')?.textContent ?? '';
+      const without = render(<CompasScreen data={withFormalities(null)} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+      const total = bigsum();
+      expect(total).not.toBe('');
+      expect(screen.queryByTestId('formalities-card')).toBeNull();
+      without.unmount();
+      render(<CompasScreen data={withFormalities(formalities)} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+      const line = screen.getByTestId('formalities-card');
+      expect(line.textContent).toContain('Formalités d’entrée pour toi');
+      expect(line.textContent).toMatch(/70\s€/);
+      expect(line.textContent).toContain('hors du total');
+      // Le total engagé est celui du budget rangé, ni plus ni moins.
+      expect(bigsum()).toBe(total);
+    });
+
+    it('le tiroir budget détaille la ligne : titre, groupe, montant et base, à part des catégories', async () => {
+      render(<CompasScreen data={withFormalities(formalities)} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+      fireEvent.click(screen.getByRole('button', { name: 'Détails : Nous' }));
+      const sheet = await screen.findByRole('dialog', { name: 'Nous' });
+      fireEvent.click(within(sheet).getByRole('button', { name: /Budget/ }));
+      const row = within(sheet).getByTestId('formalities-line');
+      expect(row.textContent).toContain('Formalités : ESTA (40 $)');
+      expect(row.textContent).toMatch(/2 personnes × 35\s€/);
+      expect(row.textContent).toMatch(/70\s€/);
+      expect(row.textContent).toContain('non compté dans le total du voyage');
+      expect(within(sheet).queryByText('divers')).toBeNull();
+    });
+
+    it('sans ligne pour cette personne, rien n’est affiché', async () => {
+      for (const f of [null, undefined]) {
+        const { unmount } = render(<CompasScreen data={withFormalities(f)} />);
+        fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+        expect(screen.queryByTestId('formalities-card')).toBeNull();
+        expect(screen.queryByTestId('formalities-line')).toBeNull();
+        unmount();
+      }
+    });
+  });
+
   it('objet prêté : « Je l’ai récupéré » remet l’objet de l’inventaire en service', async () => {
     const INV = '77777777-7777-4777-8777-777777777777';
     const inventory = [

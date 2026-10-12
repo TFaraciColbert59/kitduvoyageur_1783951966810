@@ -19,11 +19,13 @@
  *    gardés que pour une personne dont la devise connue n'est pas l'euro.
  * Les conseils de l'IA qui doublent une règle sont écartés (`keepAiNote`).
  *
- * VIE PRIVÉE : la ligne « Papiers » dépend de la nationalité, donc ne se range JAMAIS sur le
- * voyage (`trips.metadata` est lisible par les collaborateurs et, pour un voyage public, par
- * tous : le groupe de passeports de la table ne contient parfois qu'une nationalité). Le
- * voyage garde la ligne SANS nationalité (`sharedPapersNotes`) ; la ligne de la personne qui
- * regarde se calcule à la lecture, avec SON profil (`notesForReader`).
+ * VIE PRIVÉE : la ligne « Papiers » dépend de la nationalité, la ligne « Prises » des appareils
+ * (résidence), le conseil de change de la devise : rien de tout cela ne se range sur le voyage
+ * (`trips.metadata` est lisible par les collaborateurs et, pour un voyage public, par tous : le
+ * groupe de passeports de la table ne contient parfois qu'une nationalité, et « adaptateur à
+ * prévoir » dit des appareils de France). Le voyage ne garde que les lignes SANS profil
+ * (`sharedNotes`, `sharedRules` pour filtrer l'IA) ; les lignes de la personne qui regarde se
+ * calculent à la lecture, avec SON profil (`notesForReader`).
  */
 
 import { entryFees } from './costs';
@@ -220,24 +222,56 @@ function frenchDevices(t: TravellerContext): boolean {
   return t.residenceCountry ? DOMESTIC.has(t.residenceCountry) : t.nationality === 'FR';
 }
 
-/** Toute ligne « Papiers » des règles ci-dessus commence ainsi (la seule note qui dépend de la nationalité). */
+/** Toute ligne « Papiers » des règles ci-dessus commence ainsi (la note qui dépend de la nationalité). */
 export const PAPERS_NOTE_PREFIX = 'Papiers :';
 
 export function isPapersNote(note: string): boolean {
   return note.startsWith(PAPERS_NOTE_PREFIX);
 }
 
+/** Toute ligne « Prises » des règles ci-dessus commence ainsi (la note qui dépend des appareils de la personne). */
+export const PLUGS_NOTE_PREFIX = 'Prises de type';
+
+export function isPlugsNote(note: string): boolean {
+  return note.startsWith(PLUGS_NOTE_PREFIX);
+}
+
 /**
- * La ligne « Papiers » SANS nationalité : la seule qui se range sur le voyage. Mêmes règles que
- * pour une nationalité inconnue (aucune frontière : rien ; sinon une ligne qui renvoie au service
- * officiel du pays de la personne), la table n'est jamais lue.
+ * Les lignes « Papiers » et « Prises » SANS profil : les seules qui se rangent sur le voyage.
+ * Mêmes règles que pour une personne inconnue (aucune frontière : pas de « Papiers » ; sinon une
+ * ligne qui renvoie au service officiel du pays de la personne ; pour les prises, le type du
+ * pays, un fait). La table n'est jamais lue. Le lecteur recevra SA ligne (`notesForReader`).
  */
+export function sharedNotes(
+  countryCode: string | null | undefined,
+  countryName: string | null | undefined,
+  abroad: boolean | null
+): string[] {
+  return travelPapers(countryCode, countryName, UNKNOWN_TRAVELLER, abroad, null).notes;
+}
+
+/** La seule ligne « Papiers » de `sharedNotes`. */
 export function sharedPapersNotes(
   countryCode: string | null | undefined,
   countryName: string | null | undefined,
   abroad: boolean | null
 ): string[] {
-  return travelPapers(countryCode, countryName, UNKNOWN_TRAVELLER, abroad, null).notes.filter(isPapersNote);
+  return sharedNotes(countryCode, countryName, abroad).filter(isPapersNote);
+}
+
+/**
+ * Les règles SANS profil, pour filtrer les conseils de l'IA avant de les ranger (`keepAiNote`) :
+ * filtrer avec celles du lanceur ferait dépendre la présence d'un conseil de sa devise (change) ou
+ * de ses appareils (prises), donc la trahirait. Le change est donc écarté en zone euro pour tous,
+ * et un conseil sur les prises toujours (la règle les dit, pour chaque lecteur, à la lecture).
+ */
+export function sharedRules(
+  countryCode: string | null | undefined,
+  countryName: string | null | undefined,
+  abroad: boolean | null
+): TravelPapers {
+  const rules = travelPapers(countryCode, countryName, UNKNOWN_TRAVELLER, abroad, null);
+  return rules.papers == null ? rules : { ...rules, plugs: 'dit' };
 }
 
 /**
@@ -255,7 +289,21 @@ export function readerPapersNotes(
   return travelPapers(countryCode, countryName, reader, abroad, entry).notes.filter(isPapersNote);
 }
 
-/** Ce que le voyage garde pour rendre la ligne de chaque lecteur : le pays visité et le départ, jamais une nationalité. */
+/**
+ * La ligne « Prises » de CETTE personne, d'après ses appareils (résidence, sinon nationalité
+ * française) : l'adaptateur à prévoir pour des appareils de France, sinon le type de prise du pays.
+ * Rendue à la lecture seulement, comme `readerPapersNotes`. Rien quand le pays n'a pas de prise
+ * différente (la même chose pour tous).
+ */
+export function readerPlugsNotes(
+  countryCode: string | null | undefined,
+  countryName: string | null | undefined,
+  reader: TravellerContext
+): string[] {
+  return travelPapers(countryCode, countryName, reader).notes.filter(isPlugsNote);
+}
+
+/** Ce que le voyage garde pour rendre la ligne de chaque lecteur : le pays visité et le départ, jamais un profil. */
 export interface PapersFacts {
   countryCode: string;
   /** Nom du pays tel que la ligne le dit ; null : le code. */
@@ -265,11 +313,34 @@ export interface PapersFacts {
 }
 
 /**
- * Les notes rangées sur le voyage, avec la ligne « Papiers » de CE lecteur à la place de celle
- * du voyage. Toute ligne « Papiers » rangée est remplacée (jamais rendue telle quelle : un
- * voyage préparé avant ce verrou peut encore porter la ligne d'une nationalité) ; sans ligne
- * rangée, rien n'est ajouté (aucune frontière, ou rien à dire) ; sans les faits du pays, la
- * ligne est retirée plutôt que devinée.
+ * Les faits à ranger dès que le code pays est valide (les lignes « Papiers » comme « Prises » se
+ * rendent à partir d'eux, même quand le voyage n'a gardé aucune ligne « Papiers » : départ déjà
+ * dans le pays), sinon null.
+ */
+export function papersFactsFor(
+  countryCode: string | null | undefined,
+  countryName: string | null | undefined,
+  abroad: boolean | null
+): PapersFacts | null {
+  const cc = (countryCode ?? '').toUpperCase();
+  if (!/^[A-Z]{2}$/.test(cc)) return null;
+  return { countryCode: cc, country: countryName || null, abroad };
+}
+
+/** Remplace les lignes `is` de `notes` par `own`, à la place de la première ; rien à remplacer : `notes` tel quel. */
+function swapLines(notes: string[], is: (note: string) => boolean, own: string[]): string[] {
+  const at = notes.findIndex(is);
+  if (at < 0) return notes;
+  const rest = notes.filter((n) => !is(n));
+  return [...rest.slice(0, at), ...own, ...rest.slice(at)];
+}
+
+/**
+ * Les notes rangées sur le voyage, avec les lignes « Papiers » et « Prises » de CE lecteur à la
+ * place de celles du voyage. Toute ligne « Papiers » ou « Prises » rangée est remplacée (jamais
+ * rendue telle quelle : un voyage préparé avant ce verrou peut encore porter la ligne d'une
+ * nationalité ou d'appareils de France) ; sans ligne rangée, rien n'est ajouté (aucune frontière,
+ * ou rien à dire) ; sans les faits du pays, la ligne est retirée plutôt que devinée.
  */
 export function notesForReader(
   stored: string[],
@@ -277,17 +348,17 @@ export function notesForReader(
   reader: TravellerContext,
   find: (passport: string, destination: string) => EntryRequirement | null
 ): string[] {
-  const at = stored.findIndex(isPapersNote);
-  if (at < 0) return stored;
-  const rest = stored.filter((n) => !isPapersNote(n));
-  const own = facts ? readerPapersNotes(facts.countryCode, facts.country, reader, facts.abroad, find) : [];
-  return [...rest.slice(0, at), ...own, ...rest.slice(at)];
+  if (!stored.some(isPapersNote) && !stored.some(isPlugsNote)) return stored;
+  const papers = facts ? readerPapersNotes(facts.countryCode, facts.country, reader, facts.abroad, find) : [];
+  const plugs = facts ? readerPlugsNotes(facts.countryCode, facts.country, reader) : [];
+  return swapLines(swapLines(stored, isPapersNote, papers), isPlugsNote, plugs);
 }
 
 const PAPERS_RE = /passeport|carte d[’']identit|\bvisas?\b|e-visa|formalit|autorisation (de voyage|électronique)/i;
 const PAPERS_ACRONYM_RE = /\b(ESTA|ETA|eTA|NZeTA|AVE)\b/;
-const MONEY_RE = /bureau de change|taux de change|devises?\b|monnaie locale|changer (de l[’'])?argent|changer (tes |vos |des )?euros|change tes euros|change vos euros/i;
-const PLUG_RE = /adaptateur|prises? (électriques?|de type)/i;
+/** Les conseils de change et de prises de l'IA (aussi lus par le script de rattrapage SQL du lot Z1). */
+export const MONEY_RE = /bureau de change|taux de change|devises?\b|monnaie locale|changer (de l[’'])?argent|changer (tes |vos |des )?euros|change tes euros|change vos euros/i;
+export const PLUG_RE = /adaptateur|prises? (électriques?|de type)/i;
 
 /** Un conseil de l'IA est gardé s'il ne contredit pas, ou ne double pas, une règle connue. */
 export function keepAiNote(note: string, rules: TravelPapers): boolean {

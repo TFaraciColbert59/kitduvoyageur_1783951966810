@@ -15,6 +15,7 @@ import { getBudgetFx, getEurRate } from './rates';
 import { readTraveller } from './traveller';
 import { entryRequirement } from './entryRequirements';
 import { notesForReader, type PapersFacts } from '../engine/papers';
+import { isStoredFormalities, readerFormalities, type ReaderFormalities } from '../engine/formalities';
 import type { TravellerContext } from '../engine/traveller';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -171,6 +172,12 @@ export interface CompasData {
   autofill: 'none' | 'done' | 'undone';
   /** Conseils du spécialiste (IA) laissés par le préremplissage. */
   autofillNotes?: string[];
+  /**
+   * Les formalités d'entrée (visa, ESTA) de la personne qui regarde, calculées ici avec SON profil
+   * et affichées à part du budget : jamais rangées sur le voyage (elles diraient sa nationalité).
+   * Null ou absent : rien à chiffrer pour elle.
+   */
+  formalities?: ReaderFormalities | null;
   /** Durée voulue quand la date de départ n'est pas choisie (« 20 jours »). */
   plannedDays?: number | null;
   /** Points autour des étapes : recherche en cours ou faite (rempli côté écran). */
@@ -485,15 +492,19 @@ export async function getCompasData(): Promise<CompasData | null> {
     })),
     items: toItems(trip),
     members,
-    expenses: (trip.expenses ?? []).map((e) => ({
-      id: e.id,
-      title: e.title,
-      amount: num(e.amount) ?? 0,
-      category: e.category,
-      isPlanned: Boolean(e.is_planned),
-      payerId: e.payer_id,
-      splitType: e.split_type,
-    })),
+    // Une dépense « Formalités » rangée par une préparation d'avant ce verrou dit la nationalité du
+    // lanceur : retirée de l'affichage, la ligne du lecteur (`formalities`) la remplace.
+    expenses: (trip.expenses ?? [])
+      .filter((e) => !isStoredFormalities(e))
+      .map((e) => ({
+        id: e.id,
+        title: e.title,
+        amount: num(e.amount) ?? 0,
+        category: e.category,
+        isPlanned: Boolean(e.is_planned),
+        payerId: e.payer_id,
+        splitType: e.split_type,
+      })),
     inventory,
     bookings,
     // Rempli plus bas avec la prévision des VRAIS jours du voyage : la météo du
@@ -705,6 +716,13 @@ export async function getCompasData(): Promise<CompasData | null> {
     autofill: autofillState(trip.metadata),
     // La ligne « Papiers » est celle de CE lecteur (son profil), jamais celle du propriétaire.
     autofillNotes: autofillNotes(trip.metadata, traveller, trip.destination_country_code),
+    // Ses formalités d'entrée, calculées avec SON profil, à part du budget (jamais rangées).
+    formalities: readerFormalitiesOf(
+      trip.metadata,
+      traveller,
+      trip.destination_country_code,
+      partySizeOf(num(trip.party_size), members.length)
+    ),
     ...compasPlan(trip.metadata),
     autofillStale: autofillStale(trip),
     context: resolveProjectContext({
@@ -811,6 +829,25 @@ function autofillNotes(metadata: unknown, reader: TravellerContext, destinationC
   // personne qui regarde (sans profil : la ligne neutre).
   const facts = papersFacts(compas as Record<string, unknown> | null, destinationCode);
   return notesForReader(stored, facts, reader, entryRequirement).slice(0, MAX_NOTES);
+}
+
+/**
+ * Les formalités d'entrée du lecteur (visa, ESTA), pour un voyage préparé seulement : la préparation
+ * annulée ou jamais lancée n'a écrit aucun budget. Pays et départ : ceux que le voyage a rangés
+ * (`papersFacts`) ; le profil est celui du lecteur.
+ */
+function readerFormalitiesOf(
+  metadata: unknown,
+  reader: TravellerContext,
+  destinationCode: string | null | undefined,
+  party: number
+): ReaderFormalities | null {
+  if (autofillState(metadata) !== 'done') return null;
+  const compas =
+    metadata && typeof metadata === 'object' ? ((metadata as Record<string, unknown>).compas as Record<string, unknown> | null) : null;
+  const facts = papersFacts(compas && typeof compas === 'object' ? compas : null, destinationCode);
+  if (!facts) return null;
+  return readerFormalities({ countryCode: facts.countryCode, abroad: facts.abroad, party, reader, find: entryRequirement });
 }
 
 /**
