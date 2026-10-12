@@ -292,42 +292,69 @@ describe('Îlot de la prochaine décision', () => {
     expect(capsule().textContent).toContain('Proposé : Tony : 1 objet, 1,7 kg · Léa : 1 objet, 400 g');
   });
 
-  it('« Appliquer » confie chaque objet par l’action existante, annonce, et « Annuler » les remet sans porteur', async () => {
+  it('« Appliquer » envoie la répartition entière en UNE demande, annonce, et « Annuler » remet tout sans porteur en une demande', async () => {
     render(<CompasScreen data={sacs()} />);
     fireEvent.click(within(capsule()).getByRole('button', { name: /^Appliquer/ }));
-    await waitFor(() => expect(compas.compasSetCarrierAction).toHaveBeenCalledTimes(2));
-    expect(compas.compasSetCarrierAction).toHaveBeenNthCalledWith(1, {
-      tripId: TRIP, tripSlug: 'trek-3-vallees', itemId: TENT, carrierId: U1, shared: true,
+    await waitFor(() => expect(compas.compasSetCarriersAction).toHaveBeenCalledTimes(1));
+    // Tony (14 kg max) prend la tente ; Léa (12 kg max) le réchaud : un seul appel pour les deux objets.
+    expect(compas.compasSetCarriersAction).toHaveBeenCalledWith({
+      tripId: TRIP,
+      tripSlug: 'trek-3-vallees',
+      assignments: [
+        { itemId: TENT, carrierId: U1 },
+        { itemId: STOVE, carrierId: U2 },
+      ],
+      shared: true,
     });
-    expect(compas.compasSetCarrierAction).toHaveBeenNthCalledWith(2, {
-      tripId: TRIP, tripSlug: 'trek-3-vallees', itemId: STOVE, carrierId: U2, shared: true,
-    });
+    // Jamais d'écritures en série objet par objet.
+    expect(compas.compasSetCarrierAction).not.toHaveBeenCalled();
     expect(await screen.findByText('Matériel commun réparti · 2 objets')).toBeTruthy();
     expect(refresh).toHaveBeenCalled();
 
-    compas.compasSetCarrierAction.mockClear();
+    compas.compasSetCarriersAction.mockClear();
     fireEvent.click(await screen.findByRole('button', { name: 'Annuler' }));
-    await waitFor(() => expect(compas.compasSetCarrierAction).toHaveBeenCalledTimes(2));
-    expect(compas.compasSetCarrierAction).toHaveBeenNthCalledWith(1, {
-      tripId: TRIP, tripSlug: 'trek-3-vallees', itemId: TENT, carrierId: null, shared: true,
+    await waitFor(() => expect(compas.compasSetCarriersAction).toHaveBeenCalledTimes(1));
+    expect(compas.compasSetCarriersAction).toHaveBeenCalledWith({
+      tripId: TRIP,
+      tripSlug: 'trek-3-vallees',
+      assignments: [
+        { itemId: TENT, carrierId: null },
+        { itemId: STOVE, carrierId: null },
+      ],
+      shared: true,
     });
-    expect(compas.compasSetCarrierAction).toHaveBeenNthCalledWith(2, {
-      tripId: TRIP, tripSlug: 'trek-3-vallees', itemId: STOVE, carrierId: null, shared: true,
-    });
+    expect(compas.compasSetCarrierAction).not.toHaveBeenCalled();
   });
 
-  it('un échec au milieu ne laisse rien à moitié : ce qui était confié est remis, l’erreur est dite, pas d’« Annuler »', async () => {
-    compas.compasSetCarrierAction
-      .mockResolvedValueOnce({ success: true })
-      .mockResolvedValueOnce({ success: false, error: 'Cette personne ne fait pas partie du voyage.' });
+  it('refus du serveur : l’erreur est dite, pas d’« Annuler », et rien n’est tenté objet par objet côté écran (la remise est celle du serveur)', async () => {
+    compas.compasSetCarriersAction.mockResolvedValueOnce({ success: false, error: 'Cette personne ne fait pas partie du voyage.' });
     render(<CompasScreen data={sacs()} />);
     fireEvent.click(within(capsule()).getByRole('button', { name: /^Appliquer/ }));
     expect(await screen.findByText('Cette personne ne fait pas partie du voyage.')).toBeTruthy();
-    // 2 appels d'écriture, puis la remise du premier objet sans porteur.
-    expect(compas.compasSetCarrierAction).toHaveBeenCalledTimes(3);
-    expect(compas.compasSetCarrierAction).toHaveBeenLastCalledWith({
-      tripId: TRIP, tripSlug: 'trek-3-vallees', itemId: TENT, carrierId: null, shared: true,
-    });
+    expect(compas.compasSetCarriersAction).toHaveBeenCalledTimes(1);
+    expect(compas.compasSetCarrierAction).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Annuler' })).toBeNull();
+  });
+
+  it('connexion perdue : une seule demande était partie (rien à moitié), le message le dit, pas d’« Annuler »', async () => {
+    compas.compasSetCarriersAction.mockRejectedValueOnce(new Error('Failed to fetch'));
+    render(<CompasScreen data={sacs()} />);
+    fireEvent.click(within(capsule()).getByRole('button', { name: /^Appliquer/ }));
+    expect(await screen.findByText('Connexion perdue : réessaie.')).toBeTruthy();
+    expect(compas.compasSetCarriersAction).toHaveBeenCalledTimes(1);
+    // Aucune remise « à la main » depuis l'écran : il n'y a pas eu d'écritures en série à rattraper.
+    expect(compas.compasSetCarrierAction).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Annuler' })).toBeNull();
+    // Le bouton redevient actif : la personne peut réessayer.
+    await waitFor(() => expect((within(capsule()).getByRole('button', { name: /^Appliquer/ }) as HTMLButtonElement).disabled).toBe(false));
+  });
+
+  it('remise impossible côté serveur : l’écran affiche tel quel le message honnête (combien d’objets ont gardé leur porteur)', async () => {
+    const honest = 'La répartition a échoué et n’a pas pu être entièrement annulée : 1 objet a gardé son nouveau porteur. Vérifie le kit.';
+    compas.compasSetCarriersAction.mockResolvedValueOnce({ success: false, error: honest });
+    render(<CompasScreen data={sacs()} />);
+    fireEvent.click(within(capsule()).getByRole('button', { name: /^Appliquer/ }));
+    expect(await screen.findByText(honest)).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Annuler' })).toBeNull();
   });
 
