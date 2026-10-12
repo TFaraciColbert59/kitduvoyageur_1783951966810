@@ -8,7 +8,10 @@
 export type LngLat = [number, number];
 
 /** Au plus `max` points, extrémités gardées (décimation régulière). */
-export function simplifyLine(coords: ReadonlyArray<readonly [number, number]>, max = 150): LngLat[] {
+export function simplifyLine(
+  coords: ReadonlyArray<readonly [number, number]>,
+  max = 150
+): LngLat[] {
   const pts = coords
     .filter((c) => Number.isFinite(c[0]) && Number.isFinite(c[1]))
     .map((c) => [Math.round(c[0] * 1e5) / 1e5, Math.round(c[1] * 1e5) / 1e5] as LngLat);
@@ -83,16 +86,29 @@ export function geojsonLatLon(geojson: unknown): Array<[number, number]> {
     for (const pt of coords) {
       if (!Array.isArray(pt) || typeof pt[0] !== 'number' || typeof pt[1] !== 'number') continue;
       const [lon, lat] = pt as [number, number];
-      if (Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180) out.push([lat, lon]);
+      if (
+        Number.isFinite(lat) &&
+        Number.isFinite(lon) &&
+        Math.abs(lat) <= 90 &&
+        Math.abs(lon) <= 180
+      )
+        out.push([lat, lon]);
     }
   };
   const walk = (g: unknown, depth: number) => {
     if (!g || typeof g !== 'object' || depth > 3) return;
-    const o = g as { type?: unknown; coordinates?: unknown; geometry?: unknown; features?: unknown };
+    const o = g as {
+      type?: unknown;
+      coordinates?: unknown;
+      geometry?: unknown;
+      features?: unknown;
+    };
     if (o.type === 'LineString') line(o.coordinates);
-    else if (o.type === 'MultiLineString' && Array.isArray(o.coordinates)) o.coordinates.forEach(line);
+    else if (o.type === 'MultiLineString' && Array.isArray(o.coordinates))
+      o.coordinates.forEach(line);
     else if (o.type === 'Feature') walk(o.geometry, depth + 1);
-    else if (o.type === 'FeatureCollection' && Array.isArray(o.features)) o.features.forEach((f) => walk(f, depth + 1));
+    else if (o.type === 'FeatureCollection' && Array.isArray(o.features))
+      o.features.forEach((f) => walk(f, depth + 1));
   };
   walk(geojson, 0);
   return out;
