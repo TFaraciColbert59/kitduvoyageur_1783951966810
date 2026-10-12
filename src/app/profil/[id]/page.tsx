@@ -53,6 +53,10 @@ export default function PublicProfilePage() {
       return;
     }
 
+    // F-036 : ignorer une réponse obsolète si l'identifiant de profil change
+    // pendant le chargement (navigation rapide entre profils).
+    let cancelled = false;
+
     async function loadProfile() {
       setLoading(true);
       try {
@@ -63,6 +67,8 @@ export default function PublicProfilePage() {
           fetchUserBadges(profileId),
           fetchUserActivities(profileId),
         ]);
+
+        if (cancelled) return;
 
         if (!profileData) {
           setNotFound(true);
@@ -75,14 +81,18 @@ export default function PublicProfilePage() {
         setBadges(badgesData);
         setActivite(activiteData);
       } catch (err) {
+        if (cancelled) return;
         console.error('Error loading public profile:', err);
         setNotFound(true);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
     loadProfile();
+    return () => {
+      cancelled = true;
+    };
   }, [profileId]);
 
   if (loading) {
