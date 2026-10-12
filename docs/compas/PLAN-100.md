@@ -1094,12 +1094,32 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 5.5 Écarts avec la maquette (`ECARTS_MAQUETTE.md`)
 
-- [ ] Îlot « prochaine décision, appliquer ».
-- [ ] Heure de passage à chaque étape (Quand).
+- [x] Îlot « prochaine décision, appliquer ». **Lot R2** : capsule en verre au-dessus de la barre
+      d'onglets (`CompasDecision.tsx`). « Voir » ouvre l'étape ; « Appliquer » seulement quand le moteur dit
+      que la décision est un calcul sûr et défaisable (`engine/decisionApply.ts`) : « Répartir le matériel
+      commun » (charge rapportée à la capacité, plus lourds d'abord), via `compasSetCarrierAction`,
+      « Annuler » / Ctrl+Z, retour arrière si un appel échoue. Dates, parcours, produit, réservations,
+      budget : « Voir » seulement. Cibles ≥ 2,75 rem, `aria-live="polite"`, hors de l'ordre de tabulation
+      quand un tiroir est ouvert, mouvement réduit respecté (`ecartsMaquetteUi.test.tsx`, axe-core, 17
+      mutations tuées). Rendu réel et contrastes non mesurés (pas de navigateur) : à contrôler sur appareil.
+- [x] Heure de passage à chaque étape (Quand). **Lot R2** : `engine/passage.ts` (pur) : départ du jour +
+      temps pour atteindre l'étape (DIN 33466 +15 % à pied ; vitesse type vélo / course / trail / eau ;
+      sinon aucune), arrondi à 5 min, passage de nuit dit en texte (lever et coucher de la prévision, sinon
+      calcul astronomique). Sans départ, distance ou allure : « non renseigné » et la raison, jamais
+      d'heure par défaut (18 mutations tuées). **Reste** : enregistrer l'heure de départ (une action dans
+      `compasActions.ts` ; aujourd'hui seule une étape portant déjà `start_time`, ou la simulation locale
+      « Si tu pars à », donne des heures) ; road trip, ski, escalade, alpinisme, ville, plage, van n'ont
+      aucune allure, donc aucune heure.
 - [ ] Niveau et présence des membres ; rôles (dans la règle `/hub`) ; charge par membre.
 - [ ] Manques : Emprunter · Louer · Acheter complet ; appui long : fiche, historique.
 - [ ] Carte : style des pastilles et de l'encart ; fonds Relief et Satellite gratuits.
-- [ ] Risques : barres par risque, sources datées.
+- [x] Risques : barres par risque, sources datées. **Lot R2** : `engine/riskBars.ts`, trois barres
+      (physique, technique, conjoncturel) à quatre niveaux écrits (faible · modéré · élevé · non évalué),
+      sans score ; « non évalué » = barre vide hachurée, jamais « faible » ; source et date par barre
+      (« Source : MET Norway · 12 oct. 2026 ») ; `assessDanger` renvoie `evidence` (sources lues)
+      (20 + 9 mutations tuées). **Reste** : avalanche et altitude (le moteur n'en tire aucun signal de
+      danger, seulement des conseils), cotation du terrain (l'axe Technique reste « en partie »), une barre
+      par signal (le détail reste dans « Signaux du verdict »).
 
 ### 5.6 Bureau et tablette
 
