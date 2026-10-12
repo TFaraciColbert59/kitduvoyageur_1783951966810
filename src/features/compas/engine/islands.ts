@@ -37,8 +37,21 @@ export const ISLAND_MIN_RELIEF_PLACES = 10;
 /** Natures de lieux habités qui disent où est le massif (ni refuge, ni camping). */
 const SETTLEMENT = new Set<AreaPlace['kind']>(['city', 'town', 'village', 'hamlet']);
 
+/** Marge sur le demi-diamètre de l'île : la côte de la carte n'est pas un cercle (même marge de 10 % que le reste du planificateur). */
+const ISLAND_MARGIN = 1.1;
+
 /** Un lieu dont l'altitude est connue. */
 type Known = AreaPlace & { eleM: number };
+
+/** Rayon (km) de la zone où l'on randonne sur une île : celui d'un lieu naturel sans emprise pour l'activité et la durée. */
+export function islandZoneKm(activity: string, days: number): number {
+  return planningZoneKm({ activity, days, halfExtentKm: null, settlement: false });
+}
+
+/** Une île qui ne tient pas dans sa zone de randonnée : son centre ne dit plus où aller, il faut choisir le massif. */
+export function isLargeIsland(halfExtentKm: number | null | undefined, activity: string, days: number): boolean {
+  return halfExtentKm != null && Number.isFinite(halfExtentKm) && halfExtentKm > islandZoneKm(activity, days);
+}
 
 export interface IslandZoneInput {
   /** Lieux réels de l'île, avec l'altitude quand elle est lue. */
@@ -77,11 +90,11 @@ function medianEle(eles: readonly number[]): number {
  * lieu naturel sans emprise (`planningZoneKm`) : le reste du calcul ne change pas.
  */
 export function pickIslandZone(input: IslandZoneInput): IslandZone | null {
-  const radiusKm = planningZoneKm({ activity: input.activity, days: input.days, halfExtentKm: null, settlement: false });
+  const radiusKm = islandZoneKm(input.activity, input.days);
   // Une île qui tient dans une zone n'a pas de massif à choisir : le centre convient.
-  if (!(input.island.halfExtentKm > radiusKm)) return null;
+  if (!isLargeIsland(input.island.halfExtentKm, input.activity, input.days)) return null;
 
-  const onIsland = input.places.filter((p) => SETTLEMENT.has(p.kind) && distanceKm(input.island, p) <= input.island.halfExtentKm * 1.1);
+  const onIsland = input.places.filter((p) => SETTLEMENT.has(p.kind) && distanceKm(input.island, p) <= input.island.halfExtentKm * ISLAND_MARGIN);
   const nearest = (c: { lat: number; lon: number }) => {
     let top: AreaPlace | null = null;
     let topKm = Infinity;
@@ -99,7 +112,7 @@ export function pickIslandZone(input: IslandZoneInput): IslandZone | null {
   const highest = (c: { lat: number; lon: number }) => inZone(c).reduce<number | null>((m, p) => (m == null || p.eleM > m ? p.eleM : m), null);
 
   // La personne a dit un lieu de l'île : c'est lui, le reste de l'île n'est pas son voyage.
-  if (input.near && distanceKm(input.island, input.near) <= input.island.halfExtentKm * 1.1) {
+  if (input.near && distanceKm(input.island, input.near) <= input.island.halfExtentKm * ISLAND_MARGIN) {
     const center = { lat: input.near.lat, lon: input.near.lon };
     return {
       center,

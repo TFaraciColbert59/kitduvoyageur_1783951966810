@@ -10,6 +10,7 @@
  *
  * - classées par notoriété : la nature de lieu que l'activité préfère
  *   (`profileFor(activity).prefer`) et la population (échelle logarithmique) ;
+ *   la régularité des pas ne fait que départager des chaînes voisines ;
  * - deux bases consécutives sont à une distance de TRAJET raisonnable pour le
  *   moyen qui les relie : celui de l'activité si c'est un véhicule (road trip,
  *   van), sinon la voiture d'un séjour sur base (à pied et à vélo, le
@@ -43,10 +44,23 @@ export const COUNTRY_SCALE_KM = 150;
 export const WIDE_STAY_FROM_DAYS = 5;
 
 /**
- * Bases au plus : au-delà, le voyage se lirait comme une suite de séjours d'une
- * nuit sur l'écran. Plafond historique du planificateur (`planBase`).
+ * Bases au plus. Plafond historique du planificateur (`planBase`), repris tel quel et
+ * NON SOURCÉ : il garde un voyage lisible à l'écran, mais six bases pour soixante jours
+ * font dix jours par base (le séjour par base n'est plus alors celui de l'activité).
  */
 export const MAX_COUNTRY_BASES = 6;
+
+/**
+ * Marge sur le rayon de la zone : un lieu un peu au-delà du cercle compte encore (le cercle d'un
+ * pays est un rayon de carte, pas une frontière). Même marge de 10 % que le reste du planificateur.
+ */
+const ZONE_MARGIN = 1.1;
+
+/**
+ * Part de `minKm` dont une base avance au moins sur l'axe du pays par rapport à la précédente :
+ * la moitié, pour que deux bases non consécutives (deux pas) soient à `minKm` au moins l'une de l'autre.
+ */
+const MIN_PROGRESS_RATIO = 0.5;
 
 /**
  * Lieux étudiés au plus (les mieux classés) : borne le calcul. La chaîne
@@ -55,8 +69,8 @@ export const MAX_COUNTRY_BASES = 6;
 export const COUNTRY_POOL_MAX = 300;
 
 /**
- * Poids d'un lieu dit par la personne : plus qu'aucun rang (la notoriété d'un
- * lieu vaut au plus 5 points), donc une envie réalisable est toujours retenue.
+ * Poids d'un lieu dit par la personne : plus qu'aucun écart de notoriété (une capitale
+ * vaut 3 + 7 points au plus, un bourg inconnu 0 à 3), donc une envie réalisable est retenue.
  */
 export const WAYPOINT_BONUS = 10;
 
@@ -68,7 +82,7 @@ export interface CountryBasesInput {
   places: readonly AreaPlace[];
   days: number;
   activity: string;
-  /** Centre et rayon de la zone : seuls les lieux à moins de 110 % du rayon comptent. */
+  /** Centre et rayon de la zone : seuls les lieux à moins de 110 % du rayon comptent (`ZONE_MARGIN`). */
   anchor: { lat: number; lon: number; radiusKm: number };
   /** Lieux dits par la personne, déjà retrouvés sur la carte. */
   waypoints?: ReadonlyArray<{ name: string; lat: number; lon: number }>;
@@ -137,9 +151,9 @@ export function countryBaseCount(activity: string, days: number): number {
 
 /** `days` jours répartis sur `count` bases, le plus également possible (les premières bases d'abord). */
 export function spreadDays(days: number, count: number): number[] {
-  const per = days / count;
   const out = new Array<number>(count).fill(0);
-  for (let i = 0; i < days; i += 1) out[Math.min(count - 1, Math.floor(i / per))] += 1;
+  // Le jour i (de 0) est à la base ⌊i × count ÷ days⌋ : division d'entiers, exacte aux bornes (14 jours sur 6 bases : le 8e jour ouvre la 4e).
+  for (let i = 0; i < days; i += 1) out[Math.min(count - 1, Math.floor((i * count) / days))] += 1;
   return out;
 }
 
@@ -154,10 +168,22 @@ export function keepCountry<T extends { countryCode?: string | null }>(places: r
   return places.filter((p) => !p.countryCode || p.countryCode === countryCode);
 }
 
-/** Notoriété d'un lieu pour une activité : la nature que l'activité préfère + la population (log, au plus 2). */
+/**
+ * Notoriété d'un lieu pour une activité : la nature que l'activité préfère (0 à 3, le barème de
+ * `profileFor`) + le logarithme décimal de la population (3 pour mille habitants, 6 pour un million).
+ * Échelle logarithmique : une capitale passe devant une préfecture, deux villes voisines en taille
+ * restent proches.
+ */
 function notoriety(p: AreaPlace, prof: Profile): number {
-  return (prof.prefer[p.kind] ?? 0) + Math.min(2, Math.log10(Math.max(1, p.population ?? 1)) / 3);
+  return (prof.prefer[p.kind] ?? 0) + Math.log10(Math.max(1, p.population ?? 1));
 }
+
+/**
+ * Poids de la régularité du pas (par changement de base) face à la notoriété : faible, pour qu'elle
+ * ne départage que des chaînes de notoriété voisine. Un facteur 2,5 de population (0,4 point) pèse
+ * plus que la meilleure régularité sur quatre changements de base (4 × 0,1).
+ */
+const STEP_WEIGHT = 0.1;
 
 interface Candidate {
   place: AreaPlace;
@@ -166,9 +192,9 @@ interface Candidate {
   t: number;
 }
 
-/** Régularité du pas : 2 points à la distance cible, 0 à un écart d'une cible entière (comme `planMoving`). */
+/** Régularité du pas : `STEP_WEIGHT` à la distance cible, 0 à un écart d'une cible entière. */
 function stepFit(km: number, targetKm: number): number {
-  return 2 * (1 - Math.min(1, Math.abs(km - targetKm) / targetKm));
+  return STEP_WEIGHT * (1 - Math.min(1, Math.abs(km - targetKm) / targetKm));
 }
 
 /** Écart sous lequel deux totaux sont égaux : le premier trouvé reste (ordre fixe, jamais de hasard). */
@@ -190,7 +216,7 @@ export function pickCountryBases(input: CountryBasesInput): CountryBasesPlan | n
 
   // Lieux où l'on peut loger, dans la zone, du mieux classé au moins bien (identifiant en dernier recours).
   const inZone = input.places.filter(
-    (p) => p.kind !== 'camp' && p.kind !== 'hut' && distanceKm(input.anchor, p) <= input.anchor.radiusKm * 1.1
+    (p) => p.kind !== 'camp' && p.kind !== 'hut' && distanceKm(input.anchor, p) <= input.anchor.radiusKm * ZONE_MARGIN
   );
   const ranked = inZone
     .map((place) => ({ place, score: notoriety(place, prof) }))
@@ -199,7 +225,7 @@ export function pickCountryBases(input: CountryBasesInput): CountryBasesPlan | n
   // Une envie dite compte plus que tout rang : sur le lieu de la carte tout proche, sinon sur son propre point.
   const pool: Array<{ place: AreaPlace; score: number }> = ranked.slice(0, COUNTRY_POOL_MAX).map((r) => ({ ...r }));
   for (const w of input.waypoints ?? []) {
-    if (distanceKm(input.anchor, w) > input.anchor.radiusKm * 1.1) continue;
+    if (distanceKm(input.anchor, w) > input.anchor.radiusKm * ZONE_MARGIN) continue;
     let near: { place: AreaPlace; score: number } | null = null;
     let nearKm = Infinity;
     for (const c of pool) {
@@ -224,19 +250,18 @@ export function pickCountryBases(input: CountryBasesInput): CountryBasesPlan | n
     .map((c) => ({ place: c.place, score: c.score, t: along(axis, c.place) }))
     .sort((a, b) => a.t - b.t || (a.place.id < b.place.id ? -1 : a.place.id > b.place.id ? 1 : 0));
   const P = cands.length;
-  const minStep = legs.minKm / 2;
+  const minStep = legs.minKm * MIN_PROGRESS_RATIO;
 
   // best[c][j] : meilleur total d'une chaîne de c bases qui finit en j ; from[c][j] : la base d'avant.
   const best: number[][] = Array.from({ length: wanted + 1 }, () => new Array<number>(P).fill(-Infinity));
   const from: number[][] = Array.from({ length: wanted + 1 }, () => new Array<number>(P).fill(-1));
   for (let j = 0; j < P; j += 1) best[1][j] = cands[j].score;
+  // Toutes les paires : 300 lieux × 6 bases font ~225 000 distances, quelques dizaines de millisecondes.
   for (let c = 2; c <= wanted; c += 1) {
     for (let j = 0; j < P; j += 1) {
       for (let i = j - 1; i >= 0; i -= 1) {
-        const dt = cands[j].t - cands[i].t;
-        // Trié par position : plus loin dans la liste, plus loin sur l'axe, donc plus loin à vol d'oiseau.
-        if (dt > legs.maxKm) break;
-        if (dt < minStep || best[c - 1][i] === -Infinity) continue;
+        // Avancer d'au moins `minStep` sur l'axe (jamais de retour en arrière) depuis une chaîne déjà possible.
+        if (cands[j].t - cands[i].t < minStep || best[c - 1][i] === -Infinity) continue;
         const km = distanceKm(cands[i].place, cands[j].place);
         if (km < legs.minKm || km > legs.maxKm) continue;
         const total = best[c - 1][i] + cands[j].score + stepFit(km, legs.targetKm);

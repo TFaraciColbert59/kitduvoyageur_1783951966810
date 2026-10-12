@@ -67,6 +67,10 @@ describe('countryBaseCount — combien de bases', () => {
     expect(countryBaseCount('roadtrip', 3)).toBe(1);
     expect(countryBaseCount('roadtrip', 14)).toBe(MAX_COUNTRY_BASES);
     expect(countryBaseCount('hiking', 40)).toBe(MAX_COUNTRY_BASES);
+    // Une base de plus dès que les jours dépassent un séjour entier (arrondi par le haut).
+    expect(countryBaseCount('cultural', 7)).toBe(3);
+    expect(countryBaseCount('hiking', 9)).toBe(3);
+    expect(countryBaseCount('roadtrip', 9)).toBe(5);
     // Un jour, ou une durée absurde : une seule base.
     expect(countryBaseCount('hiking', 1)).toBe(1);
     expect(countryBaseCount('hiking', 0)).toBe(1);
@@ -96,6 +100,16 @@ describe('spreadDays', () => {
       expect(out.reduce((t, v) => t + v, 0)).toBe(d);
       expect(Math.max(...out) - Math.min(...out)).toBeLessThanOrEqual(1);
     }
+  });
+
+  it('toutes les durées de 1 à 60 jours sur 1 à 6 bases : aucun jour perdu, aucune base vide, au plus un jour d’écart', () => {
+    for (let days = 1; days <= 60; days += 1)
+      for (let count = 1; count <= Math.min(6, days); count += 1) {
+        const out = spreadDays(days, count);
+        expect(out.reduce((t, v) => t + v, 0), `${days} j / ${count}`).toBe(days);
+        expect(Math.min(...out), `${days} j / ${count}`).toBeGreaterThanOrEqual(1);
+        expect(Math.max(...out) - Math.min(...out), `${days} j / ${count}`).toBeLessThanOrEqual(1);
+      }
   });
 });
 
@@ -175,10 +189,10 @@ describe('pickCountryBases — des bases réelles, classées, espacées, sans re
   });
 
   it('trop près pour changer de base : une grande ville à 50 km n’est pas une seconde base', () => {
-    const places = [spot('a', 0, 0, 'town', 50_000), spot('proche', 50, 0, 'city', 5_000_000), spot('b', 150, 0, 'town', 40_000)];
-    const plan = pickCountryBases({ places, days: 4, activity: 'roadtrip', anchor: { lat: LAT0 + 0.45, lon: LON0, radiusKm: 330 } })!;
-    expect(plan.bases.map((b) => b.placeId)).not.toContain('proche');
-    expect(plan.bases).toHaveLength(2);
+    // Ni de « a » (50 km) ni de « b » (80 km) la grande ville n'est à une journée de route minimale (90 km) : seuls a et b se suivent.
+    const places = [spot('a', 0, 0, 'town', 50_000), spot('proche', 50, 0, 'city', 5_000_000), spot('b', 130, 0, 'town', 40_000)];
+    const plan = pickCountryBases({ places, days: 4, activity: 'roadtrip', anchor: { lat: LAT0 + 0.6, lon: LON0, radiusKm: 330 } })!;
+    expect(plan.bases.map((b) => b.placeId)).toEqual(['a', 'b']);
   });
 
   it('trop loin pour une journée : deux bases à 300 km ne se suivent pas, une seule base est posée', () => {
@@ -238,6 +252,15 @@ describe('pickCountryBases — des bases réelles, classées, espacées, sans re
     expect(dit.placeId).toBeNull();
   });
 
+  it('un lieu dit hors de la zone du pays (plus de 110 % du rayon) est ignoré, même s’il se chaînerait', () => {
+    const places = [spot('p0', -100, 0, 'town', 20_000), spot('p1', 0, 0, 'town', 20_000)];
+    const horsZone = { name: 'Hors zone', lat: LAT0 + 150 / 111, lon: LON0 };
+    const plan = pickCountryBases({ places, days: 6, activity: 'roadtrip', anchor: { lat: LAT0, lon: LON0, radiusKm: 100 }, waypoints: [horsZone] })!;
+    // Trois bases voulues (6 jours, 2 par base) : sans lui, la carte n'en offre que deux.
+    expect(plan.wanted).toBe(3);
+    expect(plan.bases.map((b) => b.name)).toEqual(['Lieu p0', 'Lieu p1']);
+  });
+
   it('rien d’exploitable : null, jamais une base inventée', () => {
     expect(pickCountryBases(roadtrip({ places: [] }))).toBeNull();
     expect(pickCountryBases(roadtrip({ days: 0 }))).toBeNull();
@@ -248,10 +271,13 @@ describe('pickCountryBases — des bases réelles, classées, espacées, sans re
     const many: AreaPlace[] = [];
     for (let i = 0; i < 2000; i += 1) many.push(spot(`m${String(i).padStart(4, '0')}`, ((i * 37) % 560) - 280, ((i * 91) % 160) - 80, 'town', 1_000 + (i % 50)));
     expect(many.length).toBeGreaterThan(COUNTRY_POOL_MAX);
+    // Trois capitales le long du pays, noyées dans 2000 bourgs : les mieux classées sont étudiées, donc retenues.
+    many.push(spot('capitale-sud', -280, 0, 'city', 5_000_000), spot('capitale-centre', 0, 0, 'city', 6_000_000), spot('capitale-nord', 280, 0, 'city', 4_000_000));
     const t0 = Date.now();
     const plan = pickCountryBases(roadtrip({ places: many }))!;
     expect(Date.now() - t0).toBeLessThan(2000);
     expect(plan.bases).toHaveLength(5);
+    for (const capitale of ['capitale-sud', 'capitale-centre', 'capitale-nord']) expect(plan.bases.map((b) => b.placeId)).toContain(capitale);
     for (const km of legsOf(plan.bases)) {
       expect(km).toBeGreaterThanOrEqual(90);
       expect(km).toBeLessThanOrEqual(210);
