@@ -465,17 +465,31 @@ export const messagingService = {
       allMembers = memRes as any;
     }
 
-    // 4. Obtenir le dernier message pour chaque conversation
-    const { data: lastMessages } = await supabase
-      .from('messages')
-      .select('conversation_id, id, content, message_type, created_at, sender_id')
-      .in('conversation_id', conversationIds)
-      .order('created_at', { ascending: false });
+    // 4. Dernier message par conversation — F-019 : projection bornée côté
+    // base (plus de lecture de TOUS les messages pour choisir le dernier).
+    let lastMessages: Array<{
+      conversation_id: string;
+      id: string;
+      content: string;
+      message_type: string;
+      created_at: string;
+      sender_id: string;
+    }> = [];
+    if (conversationIds.length > 0) {
+      const { data: lastRows, error: lastError } = await supabase.rpc('get_last_messages', {
+        p_conversation_ids: conversationIds,
+      });
+      if (lastError) {
+        console.error('Erreur getLastMessages:', lastError.message);
+      } else if (lastRows) {
+        lastMessages = lastRows as typeof lastMessages;
+      }
+    }
 
     // F1 — profils publics via la vue `public_profiles` (username absent → undefined).
     const profileById = await fetchPublicProfilesWith(supabase, [
       ...allMembers.map((m) => m.user_id),
-      ...((lastMessages ?? []) as any[]).map((msg) => msg.sender_id as string),
+      ...lastMessages.map((msg) => msg.sender_id),
     ]);
 
     const membersByConv = new Map<string, UserProfileSummary>();
@@ -492,18 +506,16 @@ export const messagingService = {
     }
 
     const lastMsgByConv = new Map();
-    if (lastMessages) {
-      lastMessages.forEach((msg) => {
-        if (!lastMsgByConv.has(msg.conversation_id)) {
-          lastMsgByConv.set(msg.conversation_id, {
-            id: msg.id,
-            content: msg.content,
-            message_type: msg.message_type,
-            created_at: msg.created_at,
-            sender_name: profileById[(msg as any).sender_id]?.full_name || 'Voyageur',
-          });
-        }
-      });
+    for (const msg of lastMessages) {
+      if (!lastMsgByConv.has(msg.conversation_id)) {
+        lastMsgByConv.set(msg.conversation_id, {
+          id: msg.id,
+          content: msg.content,
+          message_type: msg.message_type,
+          created_at: msg.created_at,
+          sender_name: profileById[msg.sender_id]?.full_name || 'Voyageur',
+        });
+      }
     }
 
     const memberMetaMap = new Map(memberData.map((m) => [m.conversation_id, m]));
@@ -897,6 +909,8 @@ export const messagingService = {
       .update({
         is_muted: prefs.is_muted,
         is_archived: prefs.is_archived,
+        // F-020 : le mute temporaire est réellement persisté.
+        ...(prefs.mute_until !== undefined ? { mute_until: prefs.mute_until } : {}),
       })
       .eq('conversation_id', conversationId)
       .eq('user_id', userId);
