@@ -43,45 +43,88 @@
 --      ligne dont la base dit « ressortissant français ») sont retirées, `summary.total`
 --      est recalculé. Si la préparation avait fixé l’enveloppe (`autofill.budgetSet`) et
 --      que `trips.estimated_budget` vaut encore exactement l’ancien total, elle est
---      abaissée du montant des formalités (une enveloppe modifiée depuis n’est jamais
---      touchée).
+--      abaissée du montant des seules formalités SUPPRIMÉES (étape c) ; si elles en étaient
+--      tout le montant, elle est remise à vide (NULL, comme l’annulation du préremplissage :
+--      « pas de budget »), jamais à 0 ni en négatif. Une enveloppe modifiée depuis n’est
+--      jamais touchée.
 --   c. `trip_expenses` : les dépenses « Formalités : … » ÉCRITES PAR UNE PRÉPARATION
---      (`metadata.autofill` présent ET base « ressortissant français ») sont supprimées ;
---      leurs identifiants sont retirés de `compas.autofill.expenseIds`. Une dépense
---      saisie à la main, même nommée « Formalités : … », n’est jamais touchée.
+--      (`metadata.autofill` présent ET base « ressortissant français ») sont classées :
+--        - SUPPRIMÉES si elles sont restées intactes : `is_planned` vrai, jamais retouchées
+--          (`updated_at` au plus 5 s après `trips.metadata.compas.autofill.at`, la marge de
+--          `untouchedSince` dans engine/dependencies.ts, ET au plus 5 s après `created_at`,
+--          ce qui écarte une ligne modifiée avant une relance qui a reporté `autofill.at`) ;
+--          leurs identifiants sont retirés de `compas.autofill.expenseIds` ;
+--        - NEUTRALISÉES sinon (réglée = `is_planned` faux, modifiée, réécrite par un
+--          recalcul d’équipe, ou voyage sans `autofill.at` lisible) : la ligne reste, avec
+--          son montant, son statut et son titre ; seule la base (`metadata.basis`, qui
+--          nomme « ressortissant français ») est remplacée par un texte sans profil. Dans le
+--          doute, on neutralise : une dépense n’est supprimée que si elle est prouvée intacte.
+--      Une dépense saisie à la main, même nommée « Formalités : … », n’est jamais touchée.
 --   d. Le déclencheur `trg_trips_updated_at` remet `updated_at` à jour sur les voyages
 --      corrigés : les écrans rechargent.
 --   La ligne « Formalités » de chaque lecteur est calculée par le code à la lecture ; ce
 --   script n’a rien à y recréer.
 --
+-- ⚠️ À L’ÉCRAN : `getCompasData` masque les dépenses dont la base dit « ressortissant français »
+--    (`isStoredFormalities`). Une ligne NEUTRALISÉE n’est plus masquée : elle s’affiche comme
+--    une ligne ordinaire du budget (même titre, même montant, même statut), parce qu’elle a été
+--    réglée ou retouchée, donc qu’elle est devenue un choix de la personne. Son TITRE
+--    (« Formalités : ESTA (40 $) ») reste lisible : c’est le seul reste, et il ne se retire
+--    qu’en supprimant la ligne à la main.
+--
 -- IDEMPOTENT : un second passage ne trouve plus rien (les fonctions sont les mêmes ; les
--- UPDATE ne touchent que les lignes dont la valeur change ; le DELETE ne trouve plus de
--- dépense). Les compteurs de l’étape A tombent à 0 et y restent.
+-- UPDATE ne touchent que les lignes dont la valeur change ; la base neutralisée ne dit plus
+-- « ressortissant français », donc plus aucune dépense n’est reconnue ; le DELETE ne trouve
+-- plus de dépense). Les compteurs de l’étape A tombent à 0 et y restent (hors
+-- `depenses_formalites_a_verifier`, qui reste constant entre deux passages).
 --
 -- MODE D’EMPLOI (l’éditeur n’affiche que le résultat de la DERNIÈRE requête : lance chaque
 -- étape séparément, en sélectionnant son bloc puis « Run »)
 --   1. Étape A : le SELECT de contrôle, AVANT. Note les compteurs.
 --   2. Étape B : la transaction (de BEGIN à COMMIT). Pour une répétition à blanc,
 --      remplace la dernière ligne `commit;` par `rollback;` : rien n’est gardé.
---   3. Étape A de nouveau : TOUS les compteurs doivent valoir 0.
+--   3. Étape A de nouveau : TOUS les compteurs doivent valoir 0, sauf
+--      `depenses_formalites_a_verifier`, qui n’est pas à remettre à 0 : ce sont les dépenses
+--      « Formalités : … » que le script ne supprime pas (saisies à la main, ou déjà
+--      neutralisées). Avant B : celles que B ne touche pas ; après B : celles-ci PLUS les
+--      lignes neutralisées. Regarde-les une fois à la main (titre et montant seulement : la
+--      base n’y dit plus rien du profil).
 --
 -- ⚠️ Aucun secret, aucune donnée personnelle dans ce fichier. Il ne lit ni n’écrit
 --    `user_traveller` : le profil de personne n’est jamais touché, seuls les voyages le sont.
 --
--- VALIDATION FAITE : exécuté (étapes A, B, A, puis B encore, et une répétition à blanc en
--- `rollback`) sur un PostgreSQL 16 jetable avec dix voyages factices (avant/après le
--- correctif, enveloppe modifiée à la main, dépense « Formalités » saisie à la main, métadonnées
--- vides ou nulles) : seules les lignes attendues changent, un second passage ne change rien.
--- Les textes neutres et les listes (zone euro, expressions de change et de prises) sont
--- vérifiés contre le code par src/features/compas/__tests__/rattrapageSql.test.ts. Cela ne
--- remplace pas la validation sur une branche ou une copie de la base réelle.
+-- VALIDATION FAITE : exécuté (étape A, B en `rollback` puis B pour de vrai, A, puis B encore)
+-- sur un PostgreSQL 16 jetable avec dix-sept voyages factices : formalités intacte, intacte
+-- avec d’autres lignes, intacte et seule dans le budget (enveloppe remise à NULL), intacte avec
+-- une enveloppe modifiée à la main ou non fixée par la préparation, réglée, modifiée, modifiée
+-- avant une relance, réécrite par un recalcul d’équipe, sans `autofill.at` ou avec un `at`
+-- illisible, marge de 5 s (3 s gardée comme intacte, 6 s neutralisée), dépense saisie à la main,
+-- notes « Papiers » / « Prises » d’avant le correctif, métadonnées vides, nulles ou non objet.
+-- Résultat : seules les lignes attendues changent, la répétition à blanc ne laisse aucune
+-- trace, un second passage ne change rien. Les textes neutres et les listes (zone euro,
+-- expressions de change et de prises) sont vérifiés contre le code par
+-- src/features/compas/__tests__/rattrapageSql.test.ts. Cela ne remplace pas la validation sur
+-- une branche ou une copie de la base réelle (colonnes, types et déclencheurs réels).
 -- ============================================================================
 
 
 -- ============================================================================
 -- ÉTAPE A — CONTRÔLE (lecture seule). À lancer AVANT, puis APRÈS l’étape B.
 -- Chaque colonne compte des VOYAGES (ou des lignes) à corriger ; toutes doivent valoir 0
--- une fois l’étape B passée.
+-- une fois l’étape B passée, sauf `depenses_formalites_a_verifier` (voir le mode d’emploi).
+--
+-- Ce que l’étape B fera des dépenses « Formalités : … » (compteurs de la fin) :
+--   depenses_formalites_supprimables   écrites par une préparation et restées intactes : SUPPRIMÉES ;
+--   depenses_formalites_a_neutraliser  écrites par une préparation mais réglées, modifiées ou
+--                                      réécrites : GARDÉES, seule leur base est remplacée ;
+--     dont_reglees                     (parmi elles) celles dont `is_planned` est faux ;
+--   depenses_formalites_a_verifier     autres lignes « Formalités : … » (saisies à la main…) :
+--                                      JAMAIS touchées, à regarder à la main ;
+--   enveloppes_a_abaisser              voyages dont `estimated_budget` (fixé par la préparation,
+--                                      encore égal à son total) sera abaissé du montant supprimé ;
+--     dont_remises_a_vide              (parmi eux) ceux où les formalités étaient tout le budget :
+--                                      l’enveloppe repasse à NULL.
+-- Le classement (supprimable ou non) est le MÊME texte qu’en B.2.
 -- ============================================================================
 with t0 as (
   select t.id,
@@ -140,12 +183,44 @@ bad_lines as (
   select * from budget_lines
   where (line ->> 'title') like 'Formalités : %' or (line ->> 'basis') like '%ressortissant français%'
 ),
-bad_expenses as (
-  select e.id, e.trip_id
+formalities as (
+  select e.id,
+         e.trip_id,
+         e.amount,
+         e.is_planned,
+         e.metadata ->> 'autofill' as run,
+         case when (t.metadata #>> '{compas,autofill,at}') ~ '^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?(Z|[+-]\d{2}:\d{2})$'
+              then e.is_planned
+               and e.updated_at <= (t.metadata #>> '{compas,autofill,at}')::timestamptz + interval '5 seconds'
+               and e.updated_at <= e.created_at + interval '5 seconds'
+              else false end as supprimable
   from public.trip_expenses e
+  join public.trips t on t.id = e.trip_id
   where e.title like 'Formalités : %'
     and e.metadata ->> 'autofill' is not null
     and e.metadata ->> 'basis' like '%ressortissant français%'
+),
+formalities_autres as (
+  select e.id
+  from public.trip_expenses e
+  where e.title like 'Formalités : %'
+    and not exists (select 1 from formalities f where f.id = e.id)
+),
+envelopes as (
+  select t.id as trip_id,
+         (select coalesce(sum(x.amount), 0)
+            from public.trip_expenses x
+           where x.trip_id = t.id
+             and x.metadata ->> 'autofill' = t.metadata #>> '{compas,autofill,runId}') as old_total,
+         (select coalesce(sum(f.amount), 0)
+            from formalities f
+           where f.trip_id = t.id
+             and f.supprimable
+             and f.run = t.metadata #>> '{compas,autofill,runId}') as removed,
+         t.estimated_budget
+  from public.trips t
+  where t.metadata #>> '{compas,autofill,budgetSet}' = 'true'
+    and exists (select 1 from formalities f where f.trip_id = t.id and f.supprimable)
 )
 select
   (select count(distinct id) from bad_notes)                                          as voyages_notes_a_neutraliser,
@@ -154,7 +229,14 @@ select
   (select count(distinct id) from bad_notes where note like 'Prises de type %')       as voyages_prises_non_neutres,
   (select count(distinct id) from bad_notes where note like 'Suggestion de l’IA%')    as voyages_conseils_ia_change_ou_prises,
   (select count(distinct id) from bad_lines)                                          as voyages_lignes_budget_formalites,
-  (select count(*) from bad_expenses)                                                 as depenses_formalites_a_supprimer;
+  (select count(*) from formalities where supprimable)                                as depenses_formalites_supprimables,
+  (select count(*) from formalities where not supprimable)                            as depenses_formalites_a_neutraliser,
+  (select count(*) from formalities where not supprimable and not is_planned)         as dont_reglees,
+  (select count(*) from formalities_autres)                                           as depenses_formalites_a_verifier,
+  (select count(*) from envelopes
+    where estimated_budget = old_total and removed > 0 and removed <= old_total)      as enveloppes_a_abaisser,
+  (select count(*) from envelopes
+    where estimated_budget = old_total and removed > 0 and removed = old_total)       as dont_remises_a_vide;
 
 
 -- ============================================================================
@@ -321,19 +403,29 @@ begin
 end
 $fn$;
 
--- B.2 — Les dépenses « Formalités » écrites par une préparation (avant toute suppression) ---
+-- B.2 — Les dépenses « Formalités » écrites par une préparation, classées (avant toute suppression)
+-- `supprimable` : prévue (`is_planned`), jamais retouchée depuis son écriture (voir l’en-tête, c).
+-- Faux = on la GARDE et on neutralise sa base (B.7). Même classement que l’étape A.
 create temp table z1_formalities on commit drop as
 select e.id,
        e.trip_id,
        e.amount,
-       e.metadata ->> 'autofill' as run
+       e.is_planned,
+       e.metadata ->> 'autofill' as run,
+       case when (t.metadata #>> '{compas,autofill,at}') ~ '^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?(Z|[+-]\d{2}:\d{2})$'
+            then e.is_planned
+             and e.updated_at <= (t.metadata #>> '{compas,autofill,at}')::timestamptz + interval '5 seconds'
+             and e.updated_at <= e.created_at + interval '5 seconds'
+            else false end as supprimable
 from public.trip_expenses e
+join public.trips t on t.id = e.trip_id
 where e.title like 'Formalités : %'
   and e.metadata ->> 'autofill' is not null
   and e.metadata ->> 'basis' like '%ressortissant français%';
 
 -- B.3 — Ce que valait le total rangé par la préparation en cours de chaque voyage concerné ---
--- (somme des dépenses de sa dernière exécution, formalités comprises) et ce qui en sort.
+-- (somme des dépenses de sa dernière exécution, formalités comprises) et ce qui en sort : les
+-- seules formalités SUPPRIMÉES (une ligne neutralisée reste dans le budget, donc dans le total).
 create temp table z1_budget on commit drop as
 select t.id as trip_id,
        (select coalesce(sum(x.amount), 0)
@@ -343,9 +435,10 @@ select t.id as trip_id,
        (select coalesce(sum(f.amount), 0)
           from z1_formalities f
          where f.trip_id = t.id
+           and f.supprimable
            and f.run = t.metadata #>> '{compas,autofill,runId}') as removed
 from public.trips t
-where exists (select 1 from z1_formalities f where f.trip_id = t.id);
+where exists (select 1 from z1_formalities f where f.trip_id = t.id and f.supprimable);
 
 -- B.4 — Les métadonnées des voyages (seuls ceux dont la valeur change sont réécrits) --------
 with fixed as (
@@ -353,7 +446,7 @@ with fixed as (
          pg_temp.z1_fix_metadata(
            t.metadata,
            t.destination_country_code,
-           coalesce((select jsonb_agg(to_jsonb(f.id::text)) from z1_formalities f where f.trip_id = t.id), '[]'::jsonb)
+           coalesce((select jsonb_agg(to_jsonb(f.id::text)) from z1_formalities f where f.trip_id = t.id and f.supprimable), '[]'::jsonb)
          ) as metadata
   from public.trips t
   where jsonb_typeof(t.metadata) = 'object'
@@ -366,21 +459,37 @@ update public.trips t
    and f.metadata is distinct from t.metadata;
 
 -- B.5 — L’enveloppe fixée par la préparation, si elle n’a pas bougé depuis --------------------
+-- Abaissée du montant des formalités supprimées ; remise à NULL (« pas de budget », comme
+-- l’annulation du préremplissage et comme avant la préparation) quand elles en étaient tout le
+-- montant. Jamais négative : `removed <= old_total`.
 update public.trips t
-   set estimated_budget = b.old_total - b.removed
+   set estimated_budget = nullif(b.old_total - b.removed, 0)
   from z1_budget b
  where b.trip_id = t.id
    and t.metadata #>> '{compas,autofill,budgetSet}' = 'true'
    and t.estimated_budget = b.old_total
    and b.removed > 0
-   and b.old_total - b.removed > 0;
+   and b.removed <= b.old_total;
 
--- B.6 — Les dépenses « Formalités » de la préparation --------------------------------------
+-- B.6 — Les dépenses « Formalités » de la préparation restées intactes ------------------------
 delete from public.trip_expenses e
  using z1_formalities f
- where f.id = e.id;
+ where f.id = e.id
+   and f.supprimable;
+
+-- B.7 — Les autres (réglées, modifiées, réécrites) restent : seule leur base est neutralisée ---
+-- Titre, montant, statut, catégorie, date : inchangés. Plus de « ressortissant français » : la
+-- ligne suivante du même état ne les reconnaît plus (idempotent).
+update public.trip_expenses e
+   set metadata = jsonb_set(e.metadata, '{basis}',
+         to_jsonb('barème Compas · montant indicatif, à vérifier auprès du service officiel avant de partir'::text))
+  from z1_formalities f
+ where f.id = e.id
+   and not f.supprimable
+   and e.metadata ->> 'basis' like '%ressortissant français%';
 
 commit;  -- répétition à blanc : remplacer par `rollback;`
 
 -- ÉTAPE A (bis) : relance maintenant le SELECT de contrôle de l’étape A tel quel. Tous les
--- compteurs doivent valoir 0, et ils y restent si tu relances l’étape B.
+-- compteurs doivent valoir 0 (sauf `depenses_formalites_a_verifier` : les lignes à regarder à la
+-- main), et ils y restent si tu relances l’étape B.
