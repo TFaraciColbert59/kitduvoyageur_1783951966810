@@ -107,7 +107,7 @@ import {
   refugePerNight,
 } from '../engine/costs';
 import { icpFoodLevel } from '../engine/icp';
-import { needsVignette, tollCurrency, tollsBasis, tripTolls } from '../engine/tolls';
+import { abroadForVignette, needsVignette, tollCurrency, tollsBasis, tripTolls } from '../engine/tolls';
 import { getEurRate } from './rates';
 import { after } from 'next/server';
 import { bareAdminName, destinationRadiusKm, distanceKm, isAdminName, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, type CompasPlace } from '../engine/places';
@@ -2226,7 +2226,10 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     // et que le voyage passe une frontière (dans son pays, la vignette du résident n'est pas une dépense du
     // voyage), pour le pays de DESTINATION, une vignette par voiture. Les péages au kilomètre restent « non
     // comptés », dit (`tollsBasis`).
-    const driving = needsVignette({ drives: carFuel != null || carKmOnSite > 0, abroad });
+    const driving = needsVignette({
+      drives: carFuel != null || carKmOnSite > 0,
+      abroad: abroadForVignette(abroad, travelLeg.origin?.source),
+    });
     const vignetteCurrency = driving ? tollCurrency(anchor.countryCode) : null;
     const tolls =
       driving && vignetteCurrency

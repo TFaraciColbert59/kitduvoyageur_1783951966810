@@ -11,6 +11,7 @@ import {
   VIGNETTES,
   chooseVignette,
   needsVignette,
+  abroadForVignette,
   perKmHint,
   perKmProblems,
   tollCurrency,
@@ -243,6 +244,29 @@ describe('tripTolls — la ligne de budget en euros, avec sa base', () => {
   });
 });
 
+describe('abroadForVignette — la présence de la ligne ne dit pas où habite le lanceur', () => {
+  it('domicile et position : « à l’étranger » est traité comme inconnu, donc la vignette est chiffrée', () => {
+    for (const source of ['domicile', 'gps'] as const) {
+      expect(abroadForVignette(false, source)).toBeNull();
+      expect(abroadForVignette(true, source)).toBeNull();
+      expect(needsVignette({ drives: true, abroad: abroadForVignette(false, source) })).toBe(true);
+    }
+  });
+
+  it('un départ dit dans la demande est un fait du voyage : il compte', () => {
+    expect(abroadForVignette(false, 'dit')).toBe(false);
+    expect(abroadForVignette(true, 'dit')).toBe(true);
+    expect(abroadForVignette(false, null)).toBe(false);
+    expect(abroadForVignette(null, undefined)).toBeNull();
+  });
+
+  it('le serveur passe par cette garde (aucun `abroad` brut vers la vignette)', () => {
+    const src = readFileSync(path.resolve(__dirname, '../server/autofillActions.ts'), 'utf8');
+    expect(src).toMatch(/abroad: abroadForVignette\(abroad, travelLeg\.origin\?\.source\)/);
+    expect(src).not.toMatch(/needsVignette\(\{[^}]*\babroad\s*\}\)/);
+  });
+});
+
 describe('needsVignette — une dépense du voyage seulement si une voiture roule et qu’une frontière est passée', () => {
   it('voiture + frontière, ou départ inconnu : oui ; dans son pays ou sans voiture : non', () => {
     expect(needsVignette({ drives: true, abroad: true })).toBe(true);
@@ -254,7 +278,7 @@ describe('needsVignette — une dépense du voyage seulement si une voiture roul
 
   it('la préparation s’en sert, ajoute la ligne et les notes, et dit « péages non comptés » sur ses lignes de carburant', () => {
     const code = readFileSync(path.resolve(__dirname, '..', 'server', 'autofillActions.ts'), 'utf8');
-    expect(code).toMatch(/needsVignette\(\{ drives: carFuel != null \|\| carKmOnSite > 0, abroad \}\)/);
+    expect(code).toMatch(/needsVignette\(\{\s*drives: carFuel != null \|\| carKmOnSite > 0,\s*abroad: abroadForVignette\(abroad, travelLeg\.origin\?\.source\),?\s*\}\)/);
     expect(code).toMatch(/tolls\?\.line[\s\S]{0,160}source: 'mesure'/);
     expect(code).toMatch(/notes\.push\(\.\.\.tolls\.notes\)/);
     expect(code).toMatch(/\$\{tollsBasis\(anchor\.countryCode\)\}/);

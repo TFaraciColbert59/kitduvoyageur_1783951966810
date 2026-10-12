@@ -486,6 +486,17 @@ export function needsVignette(input: { drives: boolean; abroad: boolean | null }
   return input.drives && input.abroad !== false;
 }
 
+/**
+ * VIE PRIVÉE : la ligne « Vignette » est rangée sur le voyage (lisible par les collaborateurs). Si elle
+ * n'existait que pour un voyage « à l'étranger » tiré du domicile du profil ou de la position de l'appareil,
+ * son absence dirait où habite le lanceur. Pour ces deux départs, `abroad` est donc traité comme inconnu :
+ * la vignette est chiffrée, la base dit que le résident en a peut-être déjà une. Un départ DIT dans la
+ * demande (« depuis Lyon ») est un fait du voyage : il compte.
+ */
+export function abroadForVignette(abroad: boolean | null, originSource: 'dit' | 'domicile' | 'gps' | null | undefined): boolean | null {
+  return originSource === 'domicile' || originSource === 'gps' ? null : abroad;
+}
+
 export interface TripTollsInput {
   /** Pays de destination (ISO alpha-2). */
   country: string | null | undefined;
