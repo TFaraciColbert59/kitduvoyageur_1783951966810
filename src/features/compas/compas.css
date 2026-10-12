@@ -2094,6 +2094,87 @@
   margin-top: 1px;
 }
 
+/* Heure de passage à chaque étape (onglet « Quand ») : du texte à chaque ligne, jamais une teinte seule. */
+.cp-pass {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.625rem 0.6875rem;
+  border-radius: 1rem;
+  background: rgb(255 255 255 / 0.3);
+}
+.cp-pass__h {
+  margin: 0;
+  font-size: 0.84375rem;
+  font-weight: 600;
+}
+.cp-pass__sim input {
+  min-height: 2.75rem;
+}
+.cp-pass__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+.cp-pass__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  min-height: 2.75rem;
+  padding: 0.375rem 0;
+  border-bottom: 0.5px solid var(--cp-sep);
+}
+.cp-pass__row:last-child {
+  border-bottom: 0;
+}
+.cp-pass__day {
+  flex: none;
+  min-width: 1.75rem;
+  font-size: 0.78125rem;
+  font-weight: 700;
+  color: var(--cp-ink2);
+  font-variant-numeric: tabular-nums;
+}
+.cp-pass__t {
+  flex: 1;
+  min-width: 0;
+}
+.cp-pass__t b,
+.cp-pass__t small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.cp-pass__t b {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.cp-pass__t small {
+  font-size: 0.71875rem;
+  color: var(--cp-ink2);
+}
+.cp-pass__dark {
+  color: var(--cp-warn);
+  font-weight: 600;
+}
+.cp-pass__v {
+  flex: none;
+  max-width: 45%;
+  text-align: right;
+  font-size: 0.78125rem;
+  color: var(--cp-ink2);
+  font-variant-numeric: tabular-nums;
+}
+.cp-pass__v b {
+  font-size: 0.9375rem;
+  color: var(--cp-ink);
+  white-space: nowrap;
+}
+.cp-pass__row[data-missing] .cp-pass__v {
+  font-style: italic;
+}
+
 /* Heure par heure : défile dans sa propre bande, jamais la page */
 .cp-hours {
   display: flex;
