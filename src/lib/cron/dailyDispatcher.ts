@@ -11,10 +11,19 @@
  *
  * Contrat :
  * - les tâches tournent l'une après l'autre, dans l'ordre donné ;
- * - une tâche qui échoue (réponse non 2xx, exception, dépassement de son délai)
- *   est journalisée et n'arrête pas les suivantes ;
+ * - une tâche qui échoue (réponse non 2xx, exception) est journalisée et
+ *   n'arrête pas les suivantes ;
+ * - une tâche qui dépasse son délai ne peut pas être interrompue (un gestionnaire
+ *   ne reçoit aucun signal d'arrêt) : elle continue en arrière-plan. Pour que deux
+ *   tâches ne tournent jamais en même temps, on N'EN LANCE AUCUNE autre ensuite ;
+ *   les suivantes sont sautées (`after_timeout`) et repartent au prochain tir ;
  * - le budget total est borné : une tâche qui ne peut plus tenir est sautée
  *   (elle repart au prochain tir, les tâches sont idempotentes) ;
+ * - pour qu'une queue de liste ne soit pas sautée tous les jours quand le budget
+ *   s'épuise, les tâches non épinglées partent d'un rang différent chaque jour
+ *   (`rotation`). Les tâches épinglées (vie privée) restent toujours en tête et
+ *   dans l'ordre ; le reste est idempotent, un enchaînement pris dans un autre
+ *   ordre se rattrape au tir suivant ;
  * - le résumé ne porte que des noms de tâches, des codes et des compteurs :
  *   jamais un message d'erreur, un identifiant ni une donnée personnelle.
  */
@@ -33,6 +42,8 @@ export interface DailyTask {
   name: string;
   /** Exécute la tâche et rend la réponse HTTP de sa route. */
   run: () => Promise<Response>;
+  /** Tâche toujours lancée en tête, dans l'ordre donné (vie privée) : jamais décalée par la rotation. */
+  pinned?: boolean;
 }
 
 export interface DailyTaskReport {
@@ -40,7 +51,7 @@ export interface DailyTaskReport {
   status: DailyTaskStatus;
   durationMs: number;
   httpStatus?: number;
-  /** Code court : `http_503`, `exception`, `timeout`, `budget`. */
+  /** Code court : `http_503`, `exception`, `timeout`, `budget`, `after_timeout`. */
   reason?: string;
   /** Compteurs numériques ou booléens du premier niveau de la réponse. */
   counters?: Record<string, number | boolean>;
@@ -68,6 +79,11 @@ export interface DailyOptions {
   budgetMs?: number;
   taskTimeoutMs?: number;
   minStartMs?: number;
+  /**
+   * Décalage de départ des tâches non épinglées (par exemple le numéro du jour).
+   * Entier ; 0 = ordre donné.
+   */
+  rotation?: number;
   /** Journal d'un échec (par défaut `console.error`). */
   log?: (event: DailyLogEvent) => void;
 }
@@ -104,6 +120,15 @@ async function execute(task: DailyTask): Promise<{ httpStatus: number; counters?
   return { httpStatus: response.status, counters: summarizeBody(body) };
 }
 
+/** Épinglées d'abord (ordre donné), puis les autres décalées de `rotation` rangs. */
+export function orderTasks(tasks: readonly DailyTask[], rotation = 0): DailyTask[] {
+  const pinned = tasks.filter((t) => t.pinned);
+  const rest = tasks.filter((t) => !t.pinned);
+  if (rest.length === 0) return pinned;
+  const offset = ((Math.trunc(rotation) % rest.length) + rest.length) % rest.length;
+  return [...pinned, ...rest.slice(offset), ...rest.slice(0, offset)];
+}
+
 export async function runDailyTasks(tasks: readonly DailyTask[], options: DailyOptions = {}): Promise<DailySummary> {
   const budgetMs = options.budgetMs ?? DAILY_BUDGET_MS;
   const taskTimeoutMs = options.taskTimeoutMs ?? DAILY_TASK_TIMEOUT_MS;
@@ -113,7 +138,14 @@ export async function runDailyTasks(tasks: readonly DailyTask[], options: DailyO
   const startedAt = Date.now();
   const reports: DailyTaskReport[] = [];
 
-  for (const task of tasks) {
+  /** Une tâche a dépassé son délai et tourne peut-être encore : on n'en lance plus. */
+  let abandoned = false;
+
+  for (const task of orderTasks(tasks, options.rotation ?? 0)) {
+    if (abandoned) {
+      reports.push({ name: task.name, status: 'skipped', durationMs: 0, reason: 'after_timeout' });
+      continue;
+    }
     const remaining = budgetMs - (Date.now() - startedAt);
     if (remaining < minStartMs) {
       reports.push({ name: task.name, status: 'skipped', durationMs: 0, reason: 'budget' });
@@ -133,6 +165,7 @@ export async function runDailyTasks(tasks: readonly DailyTask[], options: DailyO
       const durationMs = Date.now() - taskStartedAt;
       if (outcome === TIMED_OUT) {
         report = { name: task.name, status: 'timeout', durationMs, reason: 'timeout' };
+        abandoned = true;
       } else if (outcome.httpStatus >= 200 && outcome.httpStatus < 300) {
         report = { name: task.name, status: 'ok', durationMs, httpStatus: outcome.httpStatus };
       } else {

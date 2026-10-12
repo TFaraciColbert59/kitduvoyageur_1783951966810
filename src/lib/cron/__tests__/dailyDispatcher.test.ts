@@ -6,7 +6,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { runDailyTasks, summarizeBody, type DailyTask } from '../dailyDispatcher';
+import { orderTasks, runDailyTasks, summarizeBody, type DailyTask } from '../dailyDispatcher';
 
 function ok(body: unknown = { ok: true }): Response {
   return Response.json(body, { status: 200 });
@@ -105,7 +105,7 @@ describe('runDailyTasks', () => {
     expect(summary.tasks.map((t) => t.status)).toEqual(['failed', 'ok']);
   });
 
-  it('une tâche trop lente est coupée à son délai et la suivante démarre', async () => {
+  it('une tâche trop lente est coupée à son délai ; on ne lance rien d’autre tant qu’elle peut tourner', async () => {
     const log = vi.fn();
     const next = vi.fn(async () => ok());
     const promise = runDailyTasks(
@@ -116,9 +116,24 @@ describe('runDailyTasks', () => {
     const summary = await promise;
     expect(summary.tasks[0]).toMatchObject({ name: 'lente', status: 'timeout' });
     expect(summary.tasks[0].durationMs).toBeGreaterThanOrEqual(1_000);
-    expect(next).toHaveBeenCalledTimes(1);
+    // Le gestionnaire coupé continue en arrière-plan : pas de deuxième tâche en même temps.
+    expect(next).not.toHaveBeenCalled();
+    expect(summary.tasks[1]).toMatchObject({ name: 'suite', status: 'skipped', reason: 'after_timeout' });
     expect(summary.failed).toBe(1);
+    expect(summary.skipped).toBe(1);
+    expect(summary.ok).toBe(false);
     expect(log).toHaveBeenCalledWith({ task: 'lente', status: 'timeout', reason: 'timeout' });
+  });
+
+  it('une tâche qui échoue vite (sans dépassement) ne bloque pas les suivantes', async () => {
+    const next = vi.fn(async () => ok());
+    const promise = runDailyTasks([task('casse', async () => Response.json({}, { status: 503 })), task('suite', next)], {
+      log: () => {},
+    });
+    await vi.runAllTimersAsync();
+    const summary = await promise;
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(summary.tasks.map((t) => t.status)).toEqual(['failed', 'ok']);
   });
 
   it('le budget total est borné : une tâche qui ne peut plus tenir est sautée, pas lancée', async () => {
@@ -164,6 +179,49 @@ describe('runDailyTasks', () => {
   it('aucune tâche : résumé vide et ok', async () => {
     const summary = await runDailyTasks([], { log: () => {} });
     expect(summary).toMatchObject({ ok: true, total: 0, succeeded: 0, failed: 0, skipped: 0, tasks: [] });
+  });
+});
+
+describe('orderTasks — la queue de liste ne reste pas sautée tous les jours', () => {
+  const t = (name: string, pinned = false): DailyTask => ({ name, pinned, run: async () => ok() });
+  const names = (list: DailyTask[]) => list.map((x) => x.name);
+
+  it('rotation 0 : ordre donné', () => {
+    expect(names(orderTasks([t('p', true), t('a'), t('b'), t('c')]))).toEqual(['p', 'a', 'b', 'c']);
+  });
+
+  it('les tâches épinglées restent en tête et dans l’ordre, le reste est décalé', () => {
+    const list = [t('p1', true), t('p2', true), t('a'), t('b'), t('c')];
+    expect(names(orderTasks(list, 1))).toEqual(['p1', 'p2', 'b', 'c', 'a']);
+    expect(names(orderTasks(list, 2))).toEqual(['p1', 'p2', 'c', 'a', 'b']);
+    expect(names(orderTasks(list, 3))).toEqual(['p1', 'p2', 'a', 'b', 'c']);
+  });
+
+  it('chaque tâche non épinglée est la première une fois sur N jours', () => {
+    const list = [t('p', true), t('a'), t('b'), t('c'), t('d')];
+    const firsts = new Set([0, 1, 2, 3].map((day) => names(orderTasks(list, day))[1]));
+    expect(firsts).toEqual(new Set(['a', 'b', 'c', 'd']));
+  });
+
+  it('une rotation négative ou énorme reste valide et ne perd aucune tâche', () => {
+    const list = [t('p', true), t('a'), t('b')];
+    for (const r of [-5, 20_000, 1.9]) {
+      expect(names(orderTasks(list, r)).sort()).toEqual(['a', 'b', 'p']);
+    }
+  });
+
+  it('runDailyTasks suit cet ordre', async () => {
+    const order: string[] = [];
+    const make = (name: string, pinned = false): DailyTask => ({
+      name,
+      pinned,
+      run: async () => {
+        order.push(name);
+        return ok();
+      },
+    });
+    await runDailyTasks([make('p', true), make('a'), make('b')], { rotation: 1, log: () => {} });
+    expect(order).toEqual(['p', 'b', 'a']);
   });
 });
 

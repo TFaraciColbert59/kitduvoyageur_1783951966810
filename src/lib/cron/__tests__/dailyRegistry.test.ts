@@ -107,6 +107,52 @@ describe('routes /api/cron/* — aucune route oubliée', () => {
   });
 });
 
+describe('vie privée d’abord, kit à la main', () => {
+  it('les tâches de vie privée sont épinglées et en tête', () => {
+    const names = DAILY_CRON_TASKS.map((t) => t.name);
+    const pinned = DAILY_CRON_TASKS.filter((t) => t.pinned).map((t) => t.name);
+    expect(pinned).toEqual([
+      'expire-live-positions',
+      'process-adventure-events',
+      'expire-terrain-reports',
+      'cleanup-ephemeral-groups',
+      'cleanup-solo-crews',
+    ]);
+    expect(names.slice(0, pinned.length)).toEqual(pinned);
+  });
+
+  it('finalize-kit-attributions n’est pas automatique tant que la reprise de crédit n’est pas sûre', () => {
+    expect(DAILY_CRON_TASKS.map((t) => t.name)).not.toContain('finalize-kit-attributions');
+    expect(MANUAL_ONLY_CRON_ROUTES['finalize-kit-attributions']).toMatch(/reverse_kit_attribution_by_session/);
+  });
+});
+
+describe('file d’événements — bail et priorité de la purge RGPD', () => {
+  const sql = readFileSync(path.join(ROOT, 'supabase/migrations/20261012100000_adventure_events_claim_lease.sql'), 'utf8');
+  const route = routeSource('process-adventure-events');
+
+  it('la migration reprend une ligne « processing » dont le bail a expiré, dans la limite des 5 tentatives', () => {
+    expect(sql).toMatch(/ADD COLUMN IF NOT EXISTS claimed_at timestamptz/);
+    expect(sql).toMatch(/claimed_at = now\(\)/);
+    expect(sql).toMatch(/status = 'processing'\s+AND \(claimed_at IS NULL OR claimed_at < now\(\) - interval '15 minutes'\)/);
+    expect(sql).toMatch(/attempts < 5/);
+    expect(sql).toMatch(/ORDER BY \(event_type = 'consent\.revoked'\) DESC, created_at/);
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.claim_pending_adventure_events\(integer\) TO service_role/);
+    expect(sql).not.toMatch(/TO (anon|authenticated|public)\b/);
+  });
+
+  it('la route enchaîne les lots tant que le lot est plein, sans rejouer un échec transitoire', () => {
+    expect(route).toMatch(/MAX_BATCHES/);
+    expect(route).toMatch(/BATCH_DEADLINE_MS/);
+    expect(route).toMatch(/transientFailures > failuresBefore/);
+  });
+
+  it('un événement forgé ou sans acteur devient terminal tout de suite', () => {
+    expect(route).toMatch(/TERMINAL_REFUSALS = new Set\(\['missing_actor_id', 'actor_mismatch'\]\)/);
+    expect(route).toMatch(/attempts: MAX_ATTEMPTS/);
+  });
+});
+
 describe('durée — le budget tient sous la limite Hobby', () => {
   const daily = routeSource(DAILY_CRON_ROUTE);
   const declared = Number(/export const maxDuration = (\d+)/.exec(daily)?.[1]);

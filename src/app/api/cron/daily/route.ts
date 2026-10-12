@@ -35,7 +35,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const summary = await runDailyTasks(buildDailyTasks(request, secret));
+  // Rotation : le numéro du jour décale le départ des tâches non épinglées.
+  const rotation = Math.floor(Date.now() / 86_400_000);
+  const summary = await runDailyTasks(buildDailyTasks(request, secret), { rotation });
   // 500 si une tâche a échoué : le journal des crons de Vercel le montre en rouge.
   return NextResponse.json(summary, { status: summary.ok ? 200 : 500 });
 }
