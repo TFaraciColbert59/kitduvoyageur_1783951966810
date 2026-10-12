@@ -183,19 +183,26 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [x] **Photon public** (pas de clause commerciale, « usage raisonnable ») : après le
       référentiel (lot E) ; User-Agent `koosmoweb.fr` ; **trois requêtes par seconde pour
       tout le site** (`siteSlot`, compteur en base, lot F) ; cache 30 j.
-- [~] **Nominatim public retiré du trafic courant** (« periodic requests from apps are
+- [x] **Nominatim public retiré du trafic courant** (« periodic requests from apps are
       considered bulk geocoding ») : remplacé par LocationIQ dans le Compas dès que la
-      clé est lue (lot B). Reste : `officialAlerts` et les modules hors Compas.
+      clé est lue (lot B). **Lot AA** : `nominatimJson` (`compas/server/locationIq.ts`) est le
+      seul client (Compas, `officialAlerts`, `adventure-prep/geocodeService.ts`) : LocationIQ avec
+      clé, une requête à la fois ; sans clé, Nominatim public en repli de développement, dit dans
+      le code (`locationIq.test.ts`). Limite : les champs `region` et `ISO3166-2-lvl6` de LocationIQ
+      ne sont pas vérifiés hors ligne (repli : le cadre de la métropole décide), à contrôler avec la
+      vraie clé ; Photon reste sans créneau du site (`amenities`, `geocodeService`).
 - [x] Positions envoyées arrondies à 0,01° (RGPD, 2.10) : `coarsePosition` dès l'entrée
       de la préparation (lot F).
 
 ### 1.4 Points autour des étapes (Overpass)
 
-- [~] **Fin de la course à 5 instances** dans le Compas (`stagePoiLookup.ts`, lot B) :
+- [x] **Fin de la course à 5 instances** dans le Compas (`stagePoiLookup.ts`, lot B) :
       private.coffee seul, une requête à la fois, test de garde
-      (`overpassEndpoints.test.ts`). Reste hors Compas : `lib/queries/amenities.ts`
-      (Partir librement), `explorer-osm/adapters/overpassAdapter.ts`,
-      `trips/connectors/realDataConnectors.ts`.
+      (`overpassEndpoints.test.ts`). **Lot AA** : même règle dans tout le site par une file
+      commune (`src/lib/overpass.ts`, `serializeOverpass`) : `amenities.ts` (Partir librement),
+      l'adaptateur de l'explorateur OSM, `realDataConnectors.ts` ; le garde couvre tout `src/`
+      (`overpass.test.ts`, `overpassAdapter.test.ts`, `overpassWaterSerial.spec.ts`). Limite dite :
+      la file est par instance Vercel.
 - [ ] Un seul fournisseur autorisé en commercial : **private.coffee** (« including
       commercial use », pas de limite, éviter les requêtes simultanées), après les avoir
       prévenus (support@private.coffee) ; requêtes en série, jamais en parallèle.
@@ -523,9 +530,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 2.10 RGPD
 
-- [~] Position GPS arrondie (≈ 1 km) avant tout envoi à un tiers : fait pour la
-      préparation du Compas (lot F). Reste : jamais enregistrée au mètre ailleurs ; base
-      d'un séjour sans lieu dit = commune, pas le point GPS.
+- [x] Position GPS arrondie (≈ 1 km) avant tout envoi à un tiers : fait pour la
+      préparation du Compas (lot F). **Lot AA** : arrondie dès l'appareil ; la base d'un séjour
+      sans lieu dit est la commune (`engine/privacy.ts` `positionBase`, `placeLookup.ts`
+      `lookupCommune`), le point arrondi n'est gardé que si la carte ne nomme aucune commune
+      (`positionBase.test.ts`) ; politique de confidentialité mise à jour. Hors périmètre, à
+      revoir : les publications de la communauté gardent une position à 4 décimales (≈ 11 m,
+      publiée) ; messages de clubs et de groupes, tribu, hub, Explorer, Partir librement et
+      cockpit (partage voulu ou traces de randonnée).
 - [~] Explication de la demande de position : pendant la préparation (le navigateur
       la demande au lancement), « sert au trajet d'approche, arrondie à environ 1 km,
       sans elle le trajet reste à préciser » ; refuser ne bloque rien (déjà le cas).
