@@ -6,6 +6,7 @@
  */
 
 import { COMPAS_ACTIVITIES, parseIntentRules, type CompasActivity, type CompasIntentAction } from './intent';
+import { vagueSpan } from './intentWords';
 import { activityLabel, daysBetweenIso, formatMoney } from './format';
 import { formatDateRange } from './compasModel';
 
@@ -109,8 +110,17 @@ export function understandRequest(text: string, today: string, p: RequestPrecisi
       key: 'quand',
       label: 'Quand',
       // Départ seul et durée dite (« 10 jours en avril », « un week-end ») : les deux.
-      value: `${formatDateRange(dates.start, dates.end)}${days ? ` · ${plural(days, 'jour', 'jours')}` : duration?.days ? ` · ${plural(duration.days, 'jour', 'jours')}` : ''}${duration?.hours ? ` · ${String(duration.hours).replace('.', ',')} h` : ''}`,
-      state: 'compris',
+      value: `${formatDateRange(dates.start, dates.end)}${days ? ` · ${plural(days, 'jour', 'jours')}` : duration?.days ? ` · ${duration.atLeast ? 'au moins ' : ''}${plural(duration.days, 'jour', 'jours')}${duration.atLeast ? ' (durée vague : précise-la)' : ''}` : ''}${duration?.hours ? ` · ${String(duration.hours).replace('.', ',')} h` : ''}`,
+      state: duration?.atLeast && !days ? 'defaut' : 'compris',
+    };
+  } else if (duration?.atLeast && duration.days) {
+    // « quelques jours » : aucun nombre n'est dit. Le Compas annonce la borne sûre du pluriel, « au moins », et demande
+    // de préciser (la durée réellement voulue se choisit sous « Préciser »).
+    quand = {
+      key: 'quand',
+      label: 'Durée',
+      value: `au moins ${plural(duration.days, 'jour', 'jours')} (« ${vagueSpan(phrase.toLowerCase())?.said ?? 'quelques jours'} » ne dit pas combien) · précise-le`,
+      state: 'defaut',
     };
   } else if (duration?.days || duration?.hours) {
     quand = {
@@ -149,14 +159,22 @@ export function understandRequest(text: string, today: string, p: RequestPrecisi
     lines.push({ key: 'deplacements', label: 'Déplacements', value: 'Sans voiture : train, bus, vélo ou à pied', state: 'compris' });
 
   const budget = first(actions, 'set_budget');
-  if (budget)
+  if (budget) {
+    // Tel que dit (« 2 000 $ ») : la conversion se fait à l'application, au taux du jour.
+    const each = formatMoney(Math.round(budget.amount), budget.currency ?? 'EUR');
+    // « 50 € par personne » : multiplié par le groupe (précisé, sinon dit dans la phrase), calcul montré.
+    const people = p.party ?? party ?? null;
     lines.push({
       key: 'budget',
       label: 'Budget',
-      // Tel que dit (« 2 000 $ ») : la conversion se fait à l'application, au taux du jour.
-      value: formatMoney(Math.round(budget.amount), budget.currency ?? 'EUR'),
+      value: !budget.perPerson
+        ? each
+        : people
+          ? `${formatMoney(Math.round(budget.amount * people), budget.currency ?? 'EUR')} (${each} par personne × ${plural(people, 'personne', 'personnes')})`
+          : `${each} par personne · dis combien vous êtes`,
       state: 'compris',
     });
+  }
 
   // Précisions ajoutées en fin de phrase, sous une forme fixe que la lecture
   // fait passer avant la phrase (`precisionActions`).

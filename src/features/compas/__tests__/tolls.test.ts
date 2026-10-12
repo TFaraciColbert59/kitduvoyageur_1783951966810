@@ -61,10 +61,10 @@ describe('tables : chaque ligne porte sa source, sa date de lecture et ce qu’e
     }
   });
 
-  it('les six pays à vignette, les deux pays au kilomètre chiffrés et les quatre non chiffrés sont là, sans recouvrement', () => {
+  it('les six pays à vignette, les trois pays au kilomètre chiffrés et les trois non chiffrés sont là, sans recouvrement', () => {
     expect(VIGNETTES.map((r) => r.country).sort()).toEqual(['AT', 'CH', 'CZ', 'HU', 'SI', 'SK']);
-    expect(PER_KM_TOLLS.map((r) => r.country).sort()).toEqual(['FR', 'IT']);
-    expect(PER_KM_UNQUANTIFIED.map((r) => r.country).sort()).toEqual(['ES', 'GR', 'HR', 'PT']);
+    expect(PER_KM_TOLLS.map((r) => r.country).sort()).toEqual(['ES', 'FR', 'IT']);
+    expect(PER_KM_UNQUANTIFIED.map((r) => r.country).sort()).toEqual(['GR', 'HR', 'PT']);
     const all = [...VIGNETTES, ...PER_KM_TOLLS, ...PER_KM_UNQUANTIFIED].map((r) => r.country);
     // Un pays à vignette ne figure pas en doublon dans les péages au kilomètre, ni l’inverse.
     expect(new Set(all).size).toBe(all.length);
@@ -243,7 +243,7 @@ describe('tripTolls — la ligne de budget en euros, avec sa base', () => {
   });
 
   it('un pays sans vignette lue : ni ligne ni note', () => {
-    for (const country of ['FR', 'IT', 'PE', null, undefined, '']) expect(tripTolls({ ...base, country })).toEqual({ line: null, notes: [] });
+    for (const country of ['FR', 'IT', 'ES', 'PT', 'HR', 'GR', 'PE', null, undefined, '']) expect(tripTolls({ ...base, country })).toEqual({ line: null, notes: [] });
   });
 });
 
@@ -305,11 +305,36 @@ describe('péages au kilomètre — non comptés, avec la raison et le barème d
     expect(basis).toContain('chaque autre concessionnaire a son propre tarif au km, non lu');
   });
 
-  it('Espagne, Portugal, Croatie, Grèce : aucun barème lu à une source officielle, dit', () => {
-    for (const [cc, name] of [['ES', 'Espagne'], ['PT', 'Portugal'], ['HR', 'Croatie'], ['GR', 'Grèce']]) {
+  it('Espagne (lot AC) : le barème au km des autoroutes de la SEITT, hors taxes + 21 %, sa portée dite, jamais ajouté au budget', () => {
+    const es = PER_KM_TOLLS.find((r) => r.country === 'ES')!;
+    expect(es.rates.map((r) => r.eurPerKm)).toEqual([0.0827, 0.0927]);
+    expect(es).toMatchObject({ vatRate: 0.21, asOf: '2025-01-01', readOn: '2026-10-12' });
+    expect(es.source).toBe('https://www.boe.es/buscar/doc.php?id=BOE-A-2025-25961');
+    expect(es.vatSources[0].url).toBe('https://www.boe.es/buscar/act.php?id=BOE-A-1992-28740');
+    const basis = flat(tollsBasis('es'));
+    expect(basis).toContain('péages non comptés (le trajet mesuré ne donne pas ses km d’autoroute à péage ; Espagne :');
+    expect(basis).toContain('10,0 c€/km TTC en tarif avec badge (TAG) et 11,2 c€/km TTC en tarif sans badge');
+    expect(basis).toContain('les autoroutes d’État gérées par la SEITT');
+    expect(basis).toContain('tarifs du 1er janvier 2025, TVA de 21 % ajoutée au prix hors taxes, source : BOE');
+    // La portée est dite : le reste de l'Espagne n'est pas chiffré.
+    expect(basis).toContain('les autoroutes concédées (AP-7 Méditerranée, AP-6, AP-9, AP-68…) ont chacune leur tarif, non lu');
+    // Jamais une ligne de budget : un péage au km n'est que dit, et un pays sans vignette ne donne ni ligne ni note.
+    expect(tripTolls({ country: 'ES', days: 5, cars: 1, start: '2026-11-01', today: '2026-10-12', rates: {} })).toEqual({ line: null, notes: [] });
+  });
+
+  it('Portugal, Croatie, Grèce : aucun barème moyen lu à une source officielle, dit, avec la raison dans la table', () => {
+    for (const [cc, name] of [['PT', 'Portugal'], ['HR', 'Croatie'], ['GR', 'Grèce']]) {
       expect(perKmHint(cc)).toBe(`${name} : aucun barème moyen au km lu à une source officielle`);
       expect(tollsBasis(cc)).toContain('aucun barème moyen au km lu à une source officielle');
+      const row = PER_KM_UNQUANTIFIED.find((r) => r.country === cc)!;
+      expect(row.reason.length, cc).toBeGreaterThan(40);
+      expect(row.checkedOn, cc).toBe('2026-10-12');
     }
+    // Les raisons disent ce qui a été lu : matrice ou sous-lanços, pas de moyenne au km.
+    const reason = (cc: string) => PER_KM_UNQUANTIFIED.find((r) => r.country === cc)!.reason;
+    expect(reason('PT')).toMatch(/IMT.*sous-lanço.*longueur.*Brisa.*matrice.*aucune moyenne au kilomètre/);
+    expect(reason('HR')).toMatch(/matrice.*1er janvier 2023.*kunas/);
+    expect(reason('GR')).toMatch(/Egnatia/);
   });
 
   it('ailleurs : « péages non comptés » et pourquoi, rien d’autre', () => {
