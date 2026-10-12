@@ -65,8 +65,18 @@ function PublierPostContent() {
   const [eventDate, setEventDate] = useState('');
   const [eventMaxParticipants, setEventMaxParticipants] = useState(10);
 
-  // Media Files
-  const [photos, setPhotos] = useState<string[]>([]);
+  // Media Files — F-014 : chaque photo garde son File et son état d'upload ;
+  // la publication n'embarque QUE des URLs publiques durables.
+  type PublicationPhoto = {
+    id: string;
+    fileName: string;
+    previewUrl: string;
+    file: File;
+    uploadedUrl: string | null;
+    uploading: boolean;
+    failed: boolean;
+  };
+  const [photos, setPhotos] = useState<PublicationPhoto[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Context & Links
@@ -224,16 +234,83 @@ function PublierPostContent() {
     setMentions(mentions.filter((m) => m !== mentionToRemove));
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const url = URL.createObjectURL(file);
-      setPhotos([...photos, url]);
+  const uploadPublicationPhoto = async (photo: PublicationPhoto) => {
+    const failPhoto = (reason: string) => {
+      console.error('Upload photo de publication refusé —', reason, photo.fileName);
+      setPhotos((prev) =>
+        prev.map((p) => (p.id === photo.id ? { ...p, uploading: false, failed: true } : p))
+      );
+    };
+
+    try {
+      const supabase = createClient();
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
+        failPhoto('session absente');
+        return;
+      }
+      if (!photo.file.type.startsWith('image/') && !photo.file.type.startsWith('video/')) {
+        failPhoto('format non supporté');
+        return;
+      }
+      if (photo.file.size > 26214400) {
+        failPhoto('fichier au-delà de 25 Mio');
+        return;
+      }
+
+      const ext = (photo.file.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = `community-posts/${currentUser.id}/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.${ext}`;
+
+      // Bucket public carnet-media : l'URL stockée dans image_url est durable
+      // (contrairement à une URL signée qui expirerait).
+      const { error } = await supabase.storage
+        .from('carnet-media')
+        .upload(path, photo.file, { cacheControl: '3600', upsert: false });
+      if (error) {
+        failPhoto(error.message);
+        return;
+      }
+
+      const { data: publicUrlData } = supabase.storage.from('carnet-media').getPublicUrl(path);
+      const publicUrl = publicUrlData?.publicUrl || null;
+      if (!publicUrl) {
+        failPhoto('URL publique introuvable');
+        return;
+      }
+
+      setPhotos((prev) =>
+        prev.map((p) =>
+          p.id === photo.id ? { ...p, uploading: false, failed: false, uploadedUrl: publicUrl } : p
+        )
+      );
+    } catch (err) {
+      failPhoto(err instanceof Error ? err.message : 'erreur inattendue');
     }
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const photo: PublicationPhoto = {
+      id: `photo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      fileName: file.name,
+      previewUrl: URL.createObjectURL(file),
+      file,
+      uploadedUrl: null,
+      uploading: true,
+      failed: false,
+    };
+    setPhotos((prev) => [...prev, photo]);
+    void uploadPublicationPhoto(photo);
+    e.target.value = '';
+  };
+
   const handleRemovePhoto = (index: number) => {
-    setPhotos(photos.filter((_, i) => i !== index));
+    setPhotos((prev) => {
+      const target = prev[index];
+      if (target) URL.revokeObjectURL(target.previewUrl);
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
   // Submit Handler — publie uniquement des données réelles ; un échec est
@@ -251,6 +328,18 @@ function PublierPostContent() {
     setIsSubmitting(true);
     try {
       const supabase = createClient();
+
+      // F-014 : on n'envoie que des photos réellement téléversées.
+      if (photos.some((photo) => photo.uploading)) {
+        lkvAlert('Des photos sont encore en cours d’envoi. Réessayez dans un instant.');
+        setIsSubmitting(false);
+        return;
+      }
+      if (photos.length > 0 && photos.every((photo) => !photo.uploadedUrl)) {
+        lkvAlert('Aucune photo n’a pu être envoyée. Retirez-les ou réessayez.');
+        setIsSubmitting(false);
+        return;
+      }
 
       // Format full content string cleanly
       let fullContent = content.trim();
@@ -270,8 +359,9 @@ function PublierPostContent() {
         fullContent += `\n\n` + tags.map((t) => `#${t}`).join(' ');
       }
 
-      // Seules les URLs réellement persistables sont envoyées.
-      const firstPersistableImage = photos.find((photo) => /^https?:\/\//i.test(photo)) || null;
+      // F-014 : URL publique durable de la première photo réellement téléversée.
+      const firstPersistableImage =
+        photos.find((photo) => photo.uploadedUrl)?.uploadedUrl || null;
 
       // Target club topic if audience is club
       if (audience === 'club' && selectedClub) {
@@ -609,9 +699,28 @@ function PublierPostContent() {
               </Card>
 
               <div className="grid grid-cols-4 gap-[var(--space-3)]">
-                {photos.map((src, index) => (
-                  <div key={index} className="group relative aspect-[4/3] overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-black/10">
-                    <img src={src} alt="Preview" className="size-full object-cover" />
+                {photos.map((photo, index) => (
+                  <div key={photo.id} className="group relative aspect-[4/3] overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-black/10">
+                    <img src={photo.previewUrl} alt="Preview" className="size-full object-cover" />
+                    {photo.uploading && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-[length:var(--lkv-text-caption-2)] font-bold text-white">
+                        Envoi…
+                      </div>
+                    )}
+                    {photo.failed && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPhotos((prev) =>
+                            prev.map((p) => (p.id === photo.id ? { ...p, uploading: true, failed: false } : p))
+                          );
+                          void uploadPublicationPhoto({ ...photo, uploading: true, failed: false });
+                        }}
+                        className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/60 text-[length:var(--lkv-text-caption-2)] font-bold text-white"
+                      >
+                        <span>Échec — réessayer</span>
+                      </button>
+                    )}
                     <IconButton
                       type="button"
                       variant="glass"
@@ -873,7 +982,7 @@ function PublierPostContent() {
 
                 {photos.length > 0 && (
                   <div className="relative aspect-[16/9] overflow-hidden rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)]">
-                    <img src={photos[0]} alt="Preview" className="size-full object-cover" />
+                    <img src={photos[0].previewUrl} alt="Preview" className="size-full object-cover" />
                   </div>
                 )}
 
