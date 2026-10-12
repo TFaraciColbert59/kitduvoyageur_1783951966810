@@ -12,20 +12,29 @@ export function useMessages(
 ) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchMessages = useCallback(async () => {
     if (!conversationId) {
       setMessages([]);
+      setError(null);
       return;
     }
 
     setLoading(true);
-    const data = await messagingService.getMessages(conversationId);
-    setMessages(data);
-    setLoading(false);
+    try {
+      const data = await messagingService.getMessages(conversationId);
+      setMessages(data);
 
-    if (currentUserId) {
-      await messagingService.markAsRead(conversationId, currentUserId);
+      if (currentUserId) {
+        await messagingService.markAsRead(conversationId, currentUserId);
+      }
+      setError(null);
+    } catch (err: unknown) {
+      console.error('Failed to fetch messages:', err);
+      setError('Impossible de charger les messages.');
+    } finally {
+      setLoading(false);
     }
   }, [conversationId, currentUserId]);
 
@@ -222,6 +231,7 @@ export function useMessages(
   return {
     messages,
     loading,
+    error,
     sendMessage,
     retryMessage,
     toggleReaction,
