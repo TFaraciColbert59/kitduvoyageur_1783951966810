@@ -5,6 +5,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import META from '../data/entryRequirements.meta.json';
 import CURRENCIES_META from '../data/countryCurrencies.meta.json';
 import FUEL_META from '../data/fuelPrices.meta.json';
+import ICP_META from '../data/icpPriceLevels.meta.json';
+import { tollSources } from '../engine/tolls';
 import { DATA_SOURCES, DataSources } from '@/app/mentions-legales/DataSources';
 
 /**
@@ -55,6 +57,33 @@ describe('mentions légales — sources des données', () => {
     expect(text).toContain(`prix du ${FUEL_META.pricesDate}, convertis en euros par litre et arrondis au millième`);
     expect(text).toMatch(/Hors de l’UE, aucune source gratuite : le prix est une estimation/);
     expect(markup).toContain(`href="${FUEL_META.page}"`);
+  });
+
+  it('les péages et vignettes créditent chaque page officielle lue : nom, adresse cliquable, jour de lecture', () => {
+    expect(text).toContain('Péages et vignettes :');
+    expect(text).toMatch(/Péages et vignettes :.*à vérifier avant de partir/);
+    expect(text).toMatch(/reste « non chiffré », dit comme tel/);
+    const sources = tollSources();
+    expect(sources.length).toBe(8);
+    for (const src of sources) {
+      for (const ref of src.refs) {
+        expect(text, ref.name).toContain(ref.name);
+        expect(markup, ref.url).toContain(`href="${ref.url.replace(/&/g, '&amp;')}"`);
+      }
+      expect(text).toContain(`${src.name} : `);
+    }
+    // Le jour de lecture est dit pour chacune des huit entrées.
+    expect(text.match(/\(lu le 12 octobre 2026\)/g)?.length).toBeGreaterThanOrEqual(8);
+  });
+
+  it('les niveaux de prix des repas citent la Banque mondiale (ICP 2021, CC BY 4.0), la série, les dates et le changement', () => {
+    expect(text).toContain('Niveaux de prix des repas :');
+    expect(text).toContain('The World Bank: ICP 2021 (International Comparison Program)');
+    expect(text).toContain(`année ${ICP_META.year}, mis à jour le 4 août 2024, lu le 12 octobre 2026 (licence CC BY 4.0)`);
+    expect(text).toContain('Ramené à la France = 100 et arrondi par le Compas');
+    expect(markup).toContain(`href="${ICP_META.page}"`);
+    expect(markup).toContain(`href="${ICP_META.licenceUrl}"`);
+    expect(ICP_META.lastUpdated).toBe('2024-08-04');
   });
 
   it('les devises des pays citent la liste ISO 4217 de SIX, avec sa date de publication', () => {

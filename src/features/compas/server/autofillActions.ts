@@ -106,6 +106,9 @@ import {
   priceLevel,
   refugePerNight,
 } from '../engine/costs';
+import { icpFoodLevel } from '../engine/icp';
+import { needsVignette, tollCurrency, tollsBasis, tripTolls } from '../engine/tolls';
+import { getEurRate } from './rates';
 import { after } from 'next/server';
 import { bareAdminName, destinationRadiusKm, distanceKm, isAdminName, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, type CompasPlace } from '../engine/places';
 import { unifyStageNames, untangleStages } from '../engine/stageOrder';
@@ -2215,7 +2218,28 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     // public), ni total rangé. Chaque lecteur calcule la sienne à la lecture (`readerFormalities`).
     // L'assurance, elle, ne dépend que du voyage : savoir qu'on passe une frontière.
     const insured = abroad === true;
-    const mealsAmount = mealsTotal({ days, party, nights: plan.map((n) => n.type), level: lvl.level });
+    // Repas en autonomie (bivouac, journée) : des courses, au niveau de prix de l'alimentation de l'ICP 2021
+    // (Banque mondiale) quand il existe ; restaurants et refuges restent au barème (PLAN-100 4.6).
+    const food = icpFoodLevel(anchor.countryCode, anchor.country);
+    const mealsAmount = mealsTotal({ days, party, nights: plan.map((n) => n.type), level: lvl.level, foodLevel: food?.level });
+    // Péages forfaitaires (vignette) : seulement si une voiture roule (trajet d'approche ou kilomètres sur place)
+    // et que le voyage passe une frontière (dans son pays, la vignette du résident n'est pas une dépense du
+    // voyage), pour le pays de DESTINATION, une vignette par voiture. Les péages au kilomètre restent « non
+    // comptés », dit (`tollsBasis`).
+    const driving = needsVignette({ drives: carFuel != null || carKmOnSite > 0, abroad });
+    const vignetteCurrency = driving ? tollCurrency(anchor.countryCode) : null;
+    const tolls =
+      driving && vignetteCurrency
+        ? tripTolls({
+            country: anchor.countryCode,
+            days,
+            cars: carFuel?.cars ?? rentalCars,
+            start: trip.start_date,
+            today,
+            rates: vignetteCurrency === 'EUR' ? {} : { [vignetteCurrency]: await getEurRate(vignetteCurrency) },
+          })
+        : null;
+    if (tolls) notes.push(...tolls.notes);
     const rental = picks.filter((p) => p.source === 'location').reduce((t, p) => t + (p.costEur ?? 0), 0);
     // Le budget compte l'indispensable qui manque ; le conseillé (crème
     // solaire, poncho pour une course du soir : 103 €) reste au kit, facultatif.
@@ -2280,8 +2304,11 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             title: `Carburant sur place (${Math.round(carKmOnSite)} km)`,
             amount: fuelForKm(carKmOnSite, party, siteFuel).fuelEur,
             source: siteFuel.kind === 'bulletin' ? 'mesure' : 'estimation',
-            basis: `kilomètres mesurés entre les étapes · ${String(CAR_ASSUMPTIONS.litersPer100Km).replace('.', ',')} L/100 km · ${siteFuel.basis} · péages non comptés`,
+            basis: `kilomètres mesurés entre les étapes · ${String(CAR_ASSUMPTIONS.litersPer100Km).replace('.', ',')} L/100 km · ${siteFuel.basis} · ${tollsBasis(anchor.countryCode)}`,
           }
+        : null,
+      tolls?.line
+        ? { category: 'transport', title: tolls.line.title, amount: tolls.line.amount, source: 'mesure', basis: tolls.line.basis }
         : null,
       rentalNeeded
         ? {
@@ -2309,7 +2336,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             title: `Repas · ${days} jour(s) × ${party}`,
             amount: mealsAmount,
             source: 'estimation',
-            basis: `${lvl.basis} · selon la nuit (bivouac, refuge, hébergement)`,
+            basis: `${lvl.basis} · selon la nuit (bivouac, refuge, hébergement)${food ? ` · repas en autonomie (bivouac, journée) : ${food.basis}` : ''}`,
           },
       rental ? { category: 'matériel', title: 'Location de matériel', amount: rental, source: 'base', basis: 'prix par jour de la boutique × jours' } : null,
       purchase ? { category: 'matériel', title: 'Matériel à acheter', amount: purchase, source: 'base', basis: 'prix de la boutique' } : null,
