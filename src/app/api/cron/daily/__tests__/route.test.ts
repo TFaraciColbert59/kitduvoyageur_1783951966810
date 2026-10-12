@@ -9,6 +9,8 @@
  * Les routes réelles sont moquées à la frontière (`dailyTasks`) : aucune base,
  * aucun réseau.
  */
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
@@ -40,7 +42,7 @@ vi.mock('@/lib/cron/dailyTasks', async () => {
   };
 });
 
-import { GET, maxDuration } from '../route';
+import { GET, dynamic, maxDuration } from '../route';
 
 function request(authorization?: string): NextRequest {
   return new NextRequest('http://localhost/api/cron/daily', {
@@ -60,8 +62,18 @@ describe('GET /api/cron/daily', () => {
     vi.restoreAllMocks();
   });
 
-  it('est dynamique et déclare une durée dans la limite Hobby (300 s)', () => {
+  it('est dynamique (jamais mise en cache) et déclare une durée dans la limite Hobby (300 s)', () => {
+    expect(dynamic).toBe('force-dynamic');
     expect(maxDuration).toBeLessThanOrEqual(300);
+  });
+
+  it('contrôle le Bearer par isCronAuthorized (empreintes + timingSafeEqual), jamais par une comparaison de chaînes', () => {
+    const source = readFileSync(path.resolve(__dirname, '../route.ts'), 'utf8');
+    expect(source).toContain('isCronAuthorized(');
+    expect(source).not.toMatch(/authorization[^\n]*(===|!==)/i);
+    expect(source).not.toMatch(/(===|!==)[^\n]*Bearer/);
+    const auth = readFileSync(path.resolve(__dirname, '../../../../../lib/cron/auth.ts'), 'utf8');
+    expect(auth).toContain('timingSafeEqual');
   });
 
   it('refuse (401) sans en-tête, sans lancer aucune tâche', async () => {
