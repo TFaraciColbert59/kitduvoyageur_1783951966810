@@ -123,14 +123,27 @@ const round = (n: number) => Math.round(n);
 
 export type MealNight = 'bivouac' | 'refuge' | 'hebergement';
 
-/** Repas par personne et par jour, selon la nuit qui suit (bivouac = lyophilisés, hébergement = restaurant). */
-export function mealsPerDay(night: MealNight | null, level: number): number {
-  return round(FR.mealsPerDay[night ?? 'jour'] * level);
+/**
+ * Repas par personne et par jour, selon la nuit qui suit (bivouac = lyophilisés, hébergement = restaurant).
+ * `foodLevel` : le niveau de prix de l'alimentation (ICP 2021, `icp.ts`), pour les repas en autonomie
+ * (bivouac, journée sans nuit) qui sont des courses ; sans lui, le niveau du pays comme avant.
+ */
+export function mealsPerDay(night: MealNight | null, level: number, foodLevel: number = level): number {
+  const selfCatered = night == null || night === 'bivouac';
+  return round(FR.mealsPerDay[night ?? 'jour'] * (selfCatered ? foodLevel : level));
 }
 
-export function mealsTotal(input: { days: number; party: number; nights: Array<MealNight | null>; level: number }): number {
+export function mealsTotal(input: {
+  days: number;
+  party: number;
+  nights: Array<MealNight | null>;
+  level: number;
+  /** Niveau de prix de l'alimentation (courses) quand l'ICP le donne ; sinon `level`. */
+  foodLevel?: number | null;
+}): number {
   let perPerson = 0;
-  for (let d = 1; d <= Math.max(1, input.days); d += 1) perPerson += mealsPerDay(input.nights[d - 1] ?? null, input.level);
+  for (let d = 1; d <= Math.max(1, input.days); d += 1)
+    perPerson += mealsPerDay(input.nights[d - 1] ?? null, input.level, input.foodLevel ?? input.level);
   return perPerson * Math.max(1, input.party);
 }
 
