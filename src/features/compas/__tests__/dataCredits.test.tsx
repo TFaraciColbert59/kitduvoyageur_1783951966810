@@ -65,7 +65,7 @@ describe('mentions légales — sources des données', () => {
     expect(text).toMatch(/Péages et vignettes :.*à vérifier avant de partir/);
     expect(text).toMatch(/reste « non chiffré », dit comme tel/);
     const sources = tollSources();
-    expect(sources.length).toBe(8);
+    expect(sources.length).toBe(9);
     for (const src of sources) {
       for (const ref of src.refs) {
         expect(text, ref.name).toContain(ref.name);
@@ -73,8 +73,8 @@ describe('mentions légales — sources des données', () => {
       }
       expect(text).toContain(`${src.name} : `);
     }
-    // Le jour de lecture est dit pour chacune des huit entrées.
-    expect(text.match(/\(lu le 12 octobre 2026\)/g)?.length).toBeGreaterThanOrEqual(8);
+    // Le jour de lecture est dit pour chacune des neuf entrées.
+    expect(text.match(/\(lu le 12 octobre 2026\)/g)?.length).toBeGreaterThanOrEqual(9);
   });
 
   it('les niveaux de prix des repas citent la Banque mondiale (ICP 2021, CC BY 4.0), la série, les dates et le changement', () => {
