@@ -207,7 +207,14 @@ describe('stepPassages : de nuit', () => {
     const [p] = run({ ...sun, departure: '20:00', activity: 'cycling', steps: [step('a', 90)] });
     expect(p.nextDay).toBe(true);
     expect(p.time).toBe('01:00');
-    expect(p.light).toBe('apres-coucher');
+    // Lever et coucher sont ceux du jour de départ : la lumière du lendemain n'est pas dite.
+    expect(p.light).toBeNull();
+  });
+
+  it('une arrivée le lendemain matin n\u2019est jamais « après le coucher »', () => {
+    const [p] = run({ ...sun, departure: '23:00', activity: 'cycling', steps: [step('a', 120)] });
+    expect(p.nextDay).toBe(true);
+    expect(p.light).toBeNull();
   });
 
   it('pile à minuit : c’est déjà le lendemain', () => {

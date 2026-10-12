@@ -104,7 +104,8 @@ export function stepPassages(input: PassageInput): StepPassage[] {
   let broken = false;
 
   return input.steps.map((step): StepPassage => {
-    const known = step.distanceKm != null && Number.isFinite(step.distanceKm) && step.distanceKm > 0;
+    const known =
+      step.distanceKm != null && Number.isFinite(step.distanceKm) && step.distanceKm > 0;
     if (!known) broken = true;
     const none = (missing: PassageMissing): StepPassage => ({
       id: step.id,
@@ -136,10 +137,12 @@ export function stepPassages(input: PassageInput): StepPassage[] {
         : (km / model.kmh) * 60;
     const at = round(departure + moving);
     const nextDay = at >= 1440;
+    // Le lendemain : lever et coucher sont ceux du jour de départ, donc rien n'est comparable. On ne dit
+    // rien de la lumière plutôt que d'annoncer « après le coucher » pour une arrivée à 7 h du matin.
     const light: PassageLight | null =
-      rise == null || set == null
+      rise == null || set == null || nextDay
         ? null
-        : nextDay || at > set
+        : at > set
           ? 'apres-coucher'
           : at < rise
             ? 'avant-lever'
@@ -175,8 +178,10 @@ export function dayLightClock(
 ): { sunrise: string; sunset: string } | null {
   const rise = clockMinutes(forecast?.sunrise);
   const set = clockMinutes(forecast?.sunset);
-  if (rise != null && set != null && set > rise) return { sunrise: formatClock(rise), sunset: formatClock(set) };
-  if (at.lat == null || at.lon == null || !Number.isFinite(at.lat) || !Number.isFinite(at.lon)) return null;
+  if (rise != null && set != null && set > rise)
+    return { sunrise: formatClock(rise), sunset: formatClock(set) };
+  if (at.lat == null || at.lon == null || !Number.isFinite(at.lat) || !Number.isFinite(at.lon))
+    return null;
   if (!at.date || !/^\d{4}-\d{2}-\d{2}/.test(at.date)) return null;
   const sun = daylightClock(at.lat, at.lon, at.date, timeZone);
   // Jour ou nuit polaire, date impossible : pas de lever ni de coucher, donc pas de « de nuit ».

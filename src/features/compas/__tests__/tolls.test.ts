@@ -151,6 +151,9 @@ describe('chooseVignette — la moins chère qui couvre le voyage, jamais extrap
   it('un tarif qui ne vaut plus à la date du voyage ne chiffre rien (Autriche : nouveaux prix au 1er décembre)', () => {
     expect(pick('AT', 5, '2026-11-30')).toMatchObject({ ok: true });
     expect(pick('AT', 5, '2026-12-05')).toMatchObject({ ok: false, reason: 'after-tariff' });
+    // Avant l'entrée en vigueur du tarif lu, on n'applique pas le tarif plus récent.
+    expect(pick('AT', 5, '2025-11-20')).toMatchObject({ ok: false, reason: 'before-tariff' });
+    expect(pick('AT', 5, '2025-12-01')).toMatchObject({ ok: true });
   });
 
   it('Suisse : une seule vignette, qui doit couvrir tout le voyage', () => {
