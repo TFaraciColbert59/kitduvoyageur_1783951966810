@@ -1014,6 +1014,41 @@ describe('CompasScreen', () => {
       }
     });
 
+    it('quitter l’écran met fin au suivi : plus aucune relecture entre deux rythmes', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        autofill.compasAutofillOutcomeAction.mockImplementation((async () => pending) as never);
+        const view = render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        await waitFor(() => expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(1));
+        await vi.advanceTimersByTimeAsync(3_500);
+        expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(2);
+        view.unmount();
+        await vi.advanceTimersByTimeAsync(120_000);
+        expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(2);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('quitter l’écran onglet caché ou hors ligne : le retour de l’onglet ou du réseau ne relit rien', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        autofill.compasAutofillOutcomeAction.mockImplementation((async () => pending) as never);
+        const view = render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        await waitFor(() => expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(1));
+        setTabVisible(false);
+        setOnline(false);
+        await vi.advanceTimersByTimeAsync(10_000);
+        view.unmount();
+        setOnline(true);
+        setTabVisible(true);
+        await vi.advanceTimersByTimeAsync(120_000);
+        expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
     it('une préparation de 100 s coûte au plus 14 relectures (4 s fixes : 25)', async () => {
       vi.useFakeTimers({ shouldAdvanceTime: true });
       try {

@@ -508,6 +508,18 @@ export function CompasScreen({
   const autofillRef = useRef(autofill);
   autofillRef.current = autofill;
 
+  // Quitter l'écran (navigation, fermeture de l'onglet) met fin au suivi de la
+  // préparation : elle continue côté serveur et sera relue à la prochaine visite.
+  // Sans cela, la relecture tournerait encore jusqu'à 5 minutes pour un écran
+  // qui n'existe plus (plan 1.2, coût de calcul). Seul le contrôleur du suivi est
+  // réveillé, pas `stopped` : un remontage (mode strict) ne bloquerait pas « Reprendre ».
+  useEffect(
+    () => () => {
+      pollAbort.current?.abort();
+    },
+    []
+  );
+
 
   // Réadaptation : un changement (durée, lieu, activité, nuits, personnes…)
   // rend une partie du préremplissage caduque. Seules ces parties sont
