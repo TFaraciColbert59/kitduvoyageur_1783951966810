@@ -44,9 +44,9 @@ function blocks(header: RegExp): string[] {
 /** Les déclarations d'un corps, sans les filets (`border`, `outline`) qui restent en px. */
 const withoutHairlines = (body: string) => body.replace(/(?:^|;)\s*(?:border|outline)[a-z-]*:[^;]*/g, ';');
 
-const NEW_PREFIXES = ['.cp-pass', '.cp-risk', '.cp-gauge'];
+const NEW_PREFIXES = ['.cp-pass', '.cp-risk', '.cp-gauge', '.cp-decision'];
 
-describe('CSS neuf : heure de passage, barres de risque', () => {
+describe('CSS neuf : heure de passage, barres de risque, îlot de décision', () => {
   const rules = rulesOf(NEW_PREFIXES);
 
   it('les règles existent', () => {
@@ -111,5 +111,46 @@ describe('barres de risque : mouvement et contraste forcé', () => {
     expect(forced).toMatch(/\.cp-gauge i\s*\{[^}]*border:\s*1px solid CanvasText/);
     expect(forced).toMatch(/\.cp-gauge i\[data-on='1'\]\s*\{[^}]*background:\s*Highlight/);
     expect(forced).toMatch(/\.cp-gauge\[data-level='non_evalue'\] i\s*\{[^}]*border-style:\s*dashed/);
+  });
+});
+
+describe('îlot de la prochaine décision', () => {
+  const bodyOf = (selector: string) =>
+    RULES.filter((r) => r.selectors.includes(selector))
+      .map((r) => r.body)
+      .join('\n');
+  const rem = (body: string, prop: string) => Number(new RegExp(`(?:^|[;\\s])${prop}:\\s*([\\d.]+)rem`).exec(body)?.[1] ?? Number.NaN);
+
+  it('les boutons ont une cible d’au moins 2,75 rem (44 px) en hauteur et en largeur, qui s’agrandit avec le texte', () => {
+    const btn = bodyOf('.cp-decision__btn');
+    expect(rem(btn, 'min-height')).toBeGreaterThanOrEqual(2.75);
+    expect(rem(btn, 'min-width')).toBeGreaterThanOrEqual(2.75);
+    expect(btn).not.toMatch(/(?:^|[;\s])height:/);
+    expect(rem(bodyOf('.cp-decision'), 'min-height')).toBeGreaterThanOrEqual(3);
+  });
+
+  it('posé au-dessus de la barre d’onglets, et au-dessus de l’accessoire quand il est là', () => {
+    expect(bodyOf('.cp-decision')).toMatch(/bottom:\s*calc\(var\(--cp-nav-clear\)/);
+    expect(bodyOf(".cp-decision[data-acc='1']")).toMatch(/bottom:\s*calc\(var\(--cp-nav-clear\)[^;]*\+\s*2\.75rem\)/);
+  });
+
+  it('seule l’opacité se transitionne, et plus rien quand on demande de réduire les animations', () => {
+    // Aucune animation (« animation: none » du bloc de réduction mis à part) ; la seule transition est celle de l'opacité.
+    expect(bodyOf('.cp-decision').replace(/animation:\s*none/g, '')).not.toMatch(/animation/);
+    expect(bodyOf('.cp-decision').replace(/transition:\s*(?:opacity[^;]*|none)/g, '')).not.toMatch(/transition/);
+    const reduce = blocks(/@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{/).join('\n');
+    expect(reduce).toMatch(/\.cp-decision,[\s\S]*?transition:\s*none/);
+  });
+
+  it('le texte de la capsule passe à la ligne, il n’est jamais tronqué', () => {
+    for (const sel of ['.cp-decision__t b', '.cp-decision__t span']) {
+      expect(bodyOf(sel), sel).not.toMatch(/text-overflow:\s*ellipsis|white-space:\s*nowrap/);
+    }
+  });
+
+  it('contraste forcé : la capsule et ses boutons sont cernés, les boutons désactivés grisés', () => {
+    const forced = blocks(/@media\s*\(forced-colors:\s*active\)\s*\{/).join('\n');
+    expect(forced).toMatch(/\.cp-decision,\s*\.cp-decision__btn,[\s\S]*?border:\s*1px solid ButtonText/);
+    expect(forced).toMatch(/\.cp-decision__btn:disabled/);
   });
 });

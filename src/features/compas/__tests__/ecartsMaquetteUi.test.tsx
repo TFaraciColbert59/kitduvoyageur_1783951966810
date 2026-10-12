@@ -2,11 +2,11 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import axe from 'axe-core';
 import { CompasScreen } from '../components/CompasScreen';
-import { compasData, compasInput } from './helpers/compasData';
-import { compas, resetScreenMocks } from './helpers/screenMocks';
+import { STOVE, TENT, TRIP, U1, U2, baseTrip, compasData, compasInput, item } from './helpers/compasData';
+import { compas, refresh, resetScreenMocks } from './helpers/screenMocks';
 import { assessDanger, type OfficialAlert } from '../engine/danger';
 import type { DayForecast } from '../engine/weather';
 import type { CompasData } from '../server/getCompasData';
@@ -262,5 +262,145 @@ describe('Verdict · Risques : barres par axe', () => {
     cleanup();
     const empty = await openRisques(compasData());
     expect(await scan(empty)).toEqual([]);
+  });
+});
+
+/* =============================================================================
+   3. Îlot de la prochaine décision : « Voir » et, quand c'est sûr, « Appliquer »
+   ============================================================================= */
+
+describe('Îlot de la prochaine décision', () => {
+  /** Deux objets communs sans porteur, rien de vital : la prochaine décision est « Répartir le matériel commun ». */
+  const sacs = (patch: Partial<CompasData> = {}): CompasData =>
+    compasData(
+      {
+        items: [
+          item({ id: TENT, name: 'Tente 2P', ownership: 'shared', weightGrams: 1720, isPacked: true }),
+          item({ id: STOVE, name: 'Réchaud', ownership: 'shared', weightGrams: 400, isPacked: true }),
+        ],
+      },
+      patch
+    );
+  const capsule = () => screen.getByRole('group', { name: 'Prochaine décision' });
+  const buttons = () => within(capsule()).getAllByRole('button').map((b) => b.textContent);
+
+  it('décision calculable : « Voir » et « Appliquer », avec ce qui sera fait écrit dans la capsule', () => {
+    render(<CompasScreen data={sacs()} />);
+    expect(within(capsule()).getByText('Répartir le matériel commun')).toBeTruthy();
+    expect(buttons()).toEqual(['Voir', 'Appliquer']);
+    // Tony (14 kg max) prend la tente ; Léa (12 kg max) le réchaud : charge rapportée à la capacité.
+    expect(capsule().textContent).toContain('Proposé : Tony : 1 objet, 1,7 kg · Léa : 1 objet, 400 g');
+  });
+
+  it('« Appliquer » confie chaque objet par l’action existante, annonce, et « Annuler » les remet sans porteur', async () => {
+    render(<CompasScreen data={sacs()} />);
+    fireEvent.click(within(capsule()).getByRole('button', { name: /^Appliquer/ }));
+    await waitFor(() => expect(compas.compasSetCarrierAction).toHaveBeenCalledTimes(2));
+    expect(compas.compasSetCarrierAction).toHaveBeenNthCalledWith(1, {
+      tripId: TRIP, tripSlug: 'trek-3-vallees', itemId: TENT, carrierId: U1, shared: true,
+    });
+    expect(compas.compasSetCarrierAction).toHaveBeenNthCalledWith(2, {
+      tripId: TRIP, tripSlug: 'trek-3-vallees', itemId: STOVE, carrierId: U2, shared: true,
+    });
+    expect(await screen.findByText('Matériel commun réparti · 2 objets')).toBeTruthy();
+    expect(refresh).toHaveBeenCalled();
+
+    compas.compasSetCarrierAction.mockClear();
+    fireEvent.click(await screen.findByRole('button', { name: 'Annuler' }));
+    await waitFor(() => expect(compas.compasSetCarrierAction).toHaveBeenCalledTimes(2));
+    expect(compas.compasSetCarrierAction).toHaveBeenNthCalledWith(1, {
+      tripId: TRIP, tripSlug: 'trek-3-vallees', itemId: TENT, carrierId: null, shared: true,
+    });
+    expect(compas.compasSetCarrierAction).toHaveBeenNthCalledWith(2, {
+      tripId: TRIP, tripSlug: 'trek-3-vallees', itemId: STOVE, carrierId: null, shared: true,
+    });
+  });
+
+  it('un échec au milieu ne laisse rien à moitié : ce qui était confié est remis, l’erreur est dite, pas d’« Annuler »', async () => {
+    compas.compasSetCarrierAction
+      .mockResolvedValueOnce({ success: true })
+      .mockResolvedValueOnce({ success: false, error: 'Cette personne ne fait pas partie du voyage.' });
+    render(<CompasScreen data={sacs()} />);
+    fireEvent.click(within(capsule()).getByRole('button', { name: /^Appliquer/ }));
+    expect(await screen.findByText('Cette personne ne fait pas partie du voyage.')).toBeTruthy();
+    // 2 appels d'écriture, puis la remise du premier objet sans porteur.
+    expect(compas.compasSetCarrierAction).toHaveBeenCalledTimes(3);
+    expect(compas.compasSetCarrierAction).toHaveBeenLastCalledWith({
+      tripId: TRIP, tripSlug: 'trek-3-vallees', itemId: TENT, carrierId: null, shared: true,
+    });
+    expect(screen.queryByRole('button', { name: 'Annuler' })).toBeNull();
+  });
+
+  it('décision qui demande un choix (dates) : « Voir » seulement, qui ouvre l’étape', async () => {
+    render(<CompasScreen data={compasData({ trip: { ...baseTrip, startDate: null, endDate: null } })} />);
+    expect(within(capsule()).getByText('Choisir les dates')).toBeTruthy();
+    expect(buttons()).toEqual(['Voir']);
+    fireEvent.click(within(capsule()).getByRole('button', { name: 'Voir : Choisir les dates' }));
+    expect(await screen.findByRole('dialog', { name: 'Préparer' })).toBeTruthy();
+  });
+
+  it('décision qui engage de l’argent (réservations en attente) : « Voir » seulement', () => {
+    const data = compasData();
+    data.model = {
+      ...data.model,
+      nextDecision: { step: 'resa', flow: 'choix', label: 'Confirmer les réservations', detail: '1 en attente' },
+    };
+    render(<CompasScreen data={data} />);
+    expect(buttons()).toEqual(['Voir']);
+  });
+
+  it('objet vital à trouver (choix de produit) : « Voir » seulement', () => {
+    render(
+      <CompasScreen
+        data={compasData({ items: [item({ id: TENT, name: 'Sac de couchage', isVital: true })] })}
+      />
+    );
+    expect(within(capsule()).getByText('Trouver : sac de couchage')).toBeTruthy();
+    expect(buttons()).toEqual(['Voir']);
+  });
+
+  it('lecture seule : même décision calculable, pas d’« Appliquer »', () => {
+    render(<CompasScreen data={sacs({ canEdit: false })} />);
+    expect(buttons()).toEqual(['Voir']);
+  });
+
+  it('aucune décision : pas de capsule', () => {
+    render(<CompasScreen data={compasData()} />);
+    expect(screen.queryByRole('group', { name: 'Prochaine décision' })).toBeNull();
+  });
+
+  it('toucher le texte vaut « Voir » ; le bouton « Voir » est au clavier', async () => {
+    render(<CompasScreen data={sacs()} />);
+    fireEvent.click(within(capsule()).getByText('Répartir le matériel commun'));
+    expect(await screen.findByRole('dialog', { name: 'Kit' })).toBeTruthy();
+    expect(compas.compasSetCarrierAction).not.toHaveBeenCalled();
+  });
+
+  it('annonce polie, sans piège au clavier : tabulable, retirée de l’ordre quand un tiroir s’ouvre', async () => {
+    render(<CompasScreen data={sacs()} />);
+    expect(capsule().getAttribute('aria-live')).toBe('polite');
+    expect(capsule().hasAttribute('inert')).toBe(false);
+    for (const b of within(capsule()).getAllByRole('button')) expect(b.getAttribute('tabindex')).toBeNull();
+    fireEvent.click(within(capsule()).getByRole('button', { name: /^Voir/ }));
+    await screen.findByRole('dialog', { name: 'Kit' });
+    expect(capsule().hasAttribute('inert')).toBe(true);
+    // Le tiroir se ferme (Échap) : l'îlot revient dans l'ordre de tabulation.
+    fireEvent.keyDown(screen.getByRole('dialog', { name: 'Kit' }), { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Kit' })).toBeNull());
+    expect(capsule().hasAttribute('inert')).toBe(false);
+  });
+
+  it('au-dessus de l’accessoire quand le profil d’altitude est affiché', () => {
+    render(<CompasScreen data={sacs()} />);
+    expect(capsule().getAttribute('data-acc')).toBe('1');
+  });
+
+  it('axe-core : zéro violation WCAG A/AA sur la capsule, avec et sans « Appliquer »', async () => {
+    const { container } = render(<CompasScreen data={sacs()} />);
+    expect(await scan(capsule())).toEqual([]);
+    expect(await scan(container)).toEqual([]);
+    cleanup();
+    const view = render(<CompasScreen data={sacs({ canEdit: false })} />);
+    expect(await scan(view.container)).toEqual([]);
   });
 });
