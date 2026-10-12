@@ -79,6 +79,12 @@ function CommunautePageContent() {
   const [groups, setGroups] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  // F-023 : pagination du fil (fenêtre croissante — pas de doublon possible,
+  // états personnels et auteurs rechargés par le même chemin).
+  const POSTS_PAGE_SIZE = 20;
+  const [postsLimit, setPostsLimit] = useState(POSTS_PAGE_SIZE);
+  const [hasMorePosts, setHasMorePosts] = useState(false);
+  const [sectionErrors, setSectionErrors] = useState<Record<string, string>>({});
   const [joinedEventIds, setJoinedEventIds] = useState<Record<string, boolean>>({});
 
   const handleJoinEvent = useCallback(
@@ -134,7 +140,7 @@ function CommunautePageContent() {
           .from('community_posts')
           .select('*')
           .order('created_at', { ascending: false })
-          .limit(20),
+          .limit(postsLimit),
         supabase
           .from('carnets')
           .select('*')
@@ -157,9 +163,32 @@ function CommunautePageContent() {
           .limit(20),
       ]);
 
-      const postsData = postsRes.status === 'fulfilled' ? (postsRes.value.data ?? []) : [];
-      const carnetsData = carnetsRes.status === 'fulfilled' ? (carnetsRes.value.data ?? []) : [];
-      const clubsData = clubsRes.status === 'fulfilled' ? (clubsRes.value.data ?? []) : [];
+      // F-023 : chaque section porte son propre état d'erreur — une panne de
+      // clubs n'efface pas le fil, et l'UI propose une nouvelle tentative.
+      const sec = (
+        res: PromiseSettledResult<{ data: unknown; error: { message: string } | null }>
+      ): { data: unknown[]; error: string | null } => {
+        if (res.status !== 'fulfilled') return { data: [], error: 'réseau indisponible' };
+        if (res.value.error) return { data: [], error: res.value.error.message };
+        return { data: (res.value.data ?? []) as unknown[], error: null };
+      };
+      const postsSection = sec(postsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
+      const carnetsSection = sec(carnetsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
+      const clubsSection = sec(clubsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
+      const groupsSection = sec(groupsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
+      const eventsSection = sec(eventsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
+      const nextSectionErrors: Record<string, string> = {};
+      if (postsSection.error) nextSectionErrors.posts = postsSection.error;
+      if (carnetsSection.error) nextSectionErrors.carnets = carnetsSection.error;
+      if (clubsSection.error) nextSectionErrors.clubs = clubsSection.error;
+      if (groupsSection.error) nextSectionErrors.groups = groupsSection.error;
+      if (eventsSection.error) nextSectionErrors.events = eventsSection.error;
+      setSectionErrors(nextSectionErrors);
+
+      const postsData = postsSection.data as any[];
+      setHasMorePosts(postsData.length >= postsLimit);
+      const carnetsData = carnetsSection.data as any[];
+      const clubsData = clubsSection.data as any[];
       // F-026 : « mes clubs » doit s'appuyer sur les adhésions réelles.
       const myClubIds = new Set<string>();
       if (user?.id) {
@@ -176,15 +205,13 @@ function CommunautePageContent() {
         ...c,
         is_member: myClubIds.has(c.id),
       }));
-      const groupsData = (groupsRes.status === 'fulfilled' ? (groupsRes.value.data ?? []) : []).map(
-        (g: any) => ({
-          ...g,
-          // Affichage honnête : `massif` n'existe pas sur travel_groups, on
-          // retombe sur la destination réelle (ou rien).
-          massif: g.destination || null,
-        })
-      );
-      const rawEvents = eventsRes.status === 'fulfilled' ? (eventsRes.value.data ?? []) : [];
+      const groupsData = (groupsSection.data as any[]).map((g: any) => ({
+        ...g,
+        // Affichage honnête : `massif` n'existe pas sur travel_groups, on
+        // retombe sur la destination réelle (ou rien).
+        massif: g.destination || null,
+      }));
+      const rawEvents = eventsSection.data as any[];
       const seenEventIds = new Set<string>();
       const eventsData = rawEvents.filter((ev: any) => {
         const key = String(ev.id || `${ev.title}_${ev.event_date}`);
@@ -255,7 +282,7 @@ function CommunautePageContent() {
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, postsLimit]);
 
   useEffect(() => {
     fetchData();
@@ -334,6 +361,13 @@ function CommunautePageContent() {
             joinedEventIds={joinedEventIds}
             onJoinEvent={handleJoinEvent}
             highlightPostId={highlightPostId}
+            hasMorePosts={hasMorePosts}
+            onLoadMorePosts={() => setPostsLimit((limit) => limit + POSTS_PAGE_SIZE)}
+            sectionError={
+              Object.keys(sectionErrors).length > 0
+                ? `Sections indisponibles : ${Object.keys(sectionErrors).join(', ')}`
+                : null
+            }
           />
         </AppShell>
       </div>
@@ -380,6 +414,23 @@ function CommunautePageContent() {
                 <CommunityStoriesBar currentUser={user} />
               </Card>
 
+              {/* F-023 : panne d'une section — les autres restent utilisables. */}
+              {Object.keys(sectionErrors).length > 0 && (
+                <div
+                  role="alert"
+                  className="flex items-center justify-between gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-danger)]/30 bg-[color:var(--lkv-danger)]/10 px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-danger)]"
+                >
+                  <span>
+                    Certaines sections n’ont pas pu se charger (
+                    {Object.keys(sectionErrors).join(', ')}
+                    ).
+                  </span>
+                  <Button type="button" variant="secondary" size="sm" onClick={fetchData}>
+                    Réessayer
+                  </Button>
+                </div>
+              )}
+
               {/* DÉCOUVERTE LIGNÉES (Lot 7) — ce qui revient du terrain + lignées endurantes */}
               {activeTab === 'fil' && (
                 <Card variant="featured" className="p-[var(--space-4)]">
@@ -403,6 +454,19 @@ function CommunautePageContent() {
                     {posts.map((post, i) => (
                       <CommunityPostCard key={post.id || i} post={post} user={user} highlight={highlightPostId === post.id} />
                     ))}
+                    {hasMorePosts && (
+                      <div className="flex justify-center">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => setPostsLimit((limit) => limit + POSTS_PAGE_SIZE)}
+                          disabled={loading}
+                        >
+                          {loading ? 'Chargement…' : 'Charger plus de publications'}
+                        </Button>
+                      </div>
+                    )}
                     {!loading && posts.length === 0 && (
                       <Card className="text-center">
                         <EmptyState
