@@ -815,8 +815,21 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 4.5 Itinéraire
 
-- [ ] Échelle d'un pays **sans noms de l'IA** : bases multiples choisies dans le
+- [~] Échelle d'un pays **sans noms de l'IA** : bases multiples choisies dans le
       référentiel (rang, notoriété) ; chemin `planBase` multi-bases réellement atteint.
+      **Lot R2** : `engine/countryBases.ts` (`pickCountryBases` : chaîne de bases par programmation
+      dynamique, optimum exact et déterministe ; chaque lieu noté par la nature que l'activité préfère
+      et le log de la population ; pas entre un minimum et un maximum tirés du barème de l'activité ;
+      toujours le long de l'axe du pays, jamais de retour en arrière ; 2 à 6 bases ; changement de base
+      « en véhicule », converti en bus pour « sans voiture »). L'IA passe d'abord comme avant et garde
+      son chemin quand ses étapes sont retrouvées sur la carte (le test prouve que la carte du pays
+      n'est alors pas lue) ; IA éteinte, muette ou sans lieu retrouvé : `countryStages` lit la carte du
+      pays (`lookupAreaPlaces`, 800 lieux les plus peuplés) et planifie en bases multiples
+      (`countryBases.test.ts`, `countryBasesAutofill.test.ts` via `compasAutofillAction`, une
+      soixantaine de mutations tuées). **Reste** : routage entre bases testé avec un routeur simulé
+      (pas contre Geoapify ou Valhalla) ; plafond de 6 bases, poids de régularité 0,1 et pool de 300
+      lieux = constantes documentées non sourcées ; `CLAUDE.md` dit « exception IA » : vrai seulement
+      quand l'IA répond.
 - [x] Espaces sauvages : densité de lieux adaptée (refuges, campings, bivouac annoncé).
       **Lot Y** : `isWildZone` ; la recherche descend aux hameaux et campings (seconde demande
       seulement dans ce cas) ; campings permis sauf toit ou refuge voulu ; bivouacs CALCULÉS entre
@@ -830,11 +843,17 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       nuits posées (`acclimatisation.test.ts`). **Reste** : alpinisme sur base (sommets non
       étapes), altitude des étapes = plancher et non mesure.
 - [ ] Grands itinéraires suivis sur leur tracé (3.7).
-- [ ] Grandes îles (Sardaigne) : randonnée à pied, pas en voiture d'étape en étape. Lot Y :
-      constat seulement : le planificateur à pied marche déjà (zone de 48 km au plus) ; c'est la porte
-      `scaleKm > PLANNED_MAX_KM` (150 ; Sardaigne ≈ 183 km de rayon) qui renvoie à l'IA, dont les étapes
-      sont acceptées en « voiture » sans limite. Le corriger demande de savoir que l'ancre est une île
-      et de choisir le massif de l'île : aucun test pur ne le prouve.
+- [x] Grandes îles (Sardaigne) : randonnée à pied, pas en voiture d'étape en étape. **Lot R2** :
+      `engine/islands.ts` (`isIslandAnchor`, `isLargeIsland`, `pickIslandZone`) : une île est reconnue par
+      sa nature ou par l'étiquette OSM `place=island` rangée avec l'ancre (Photon range une île sous
+      « other ») ; à pied ou à vélo, la zone est celle où les lieux habités à altitude dépassent le
+      plus la médiane de l'île, rayon ≤ 48 km, centrée sur eux (relief inconnu : centre de l'île, dit) ;
+      un lieu dit sur l'île prime ; la porte `scaleKm > PLANNED_MAX_KM` n'envoie plus l'île à l'IA
+      (`islands.test.ts`, Sardaigne simulée à pied : toutes les étapes à moins de 48 km, à pied,
+      sans appel IA pour l'itinéraire). **Limites** : une île enregistrée avant ce changement n'a pas
+      l'étiquette (ancien chemin) ; GR20 / traversées sur île = traversée courte dans la zone (grands
+      itinéraires 3.7 non suivis) ; activités ni à pied ni à vélo : chemin d'un pays ; aucun nom de
+      massif écrit sans donnée.
 - [~] Défauts ouverts : Kalymnos, Patagonie (nuits sur un lac), « Mòguru/Mogoro », TMB.
       **Lot Y** : « Mòguru/Mogoro » (une étape garde le nom proposé quand la carte l'écrit en deux
       langues, `bilingualNames.test.ts`) et « Canal de Beagle » (un détroit, une baie, un canal ou la
@@ -854,14 +873,36 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       carte Nous et le tiroir Budget ; taux introuvable = « indisponible » (`budgetFx.test.ts`,
       `budgetFxServer.test.ts`, `compasScreen.test.tsx`).
 - [~] Carburant par pays (table versionnée, date) ; péages là où ils comptent. **Lot W** :
-      carburant par pays de l'UE-27 daté (voir 1.8). **Reste** : péages (aucune source officielle
-      lue : barèmes par km FR/IT/ES/PT/HR/GR, vignettes CH/AT/CZ/SK/SI/HU) ; la base des lignes
-      dit « péages non comptés ». Gazole dans la table, non chiffré ; 6,5 L/100 km non sourcé.
+      carburant par pays de l'UE-27 daté (voir 1.8). **Lot R2** : vignettes chiffrées
+      (`engine/tolls.ts`, table datée où chaque ligne porte source https, jour de lecture et période) :
+      CH 40 CHF annuelle (ch.ch, OFDF) ; AT 9,60 / 12,80 / 32 / 106,80 € (oesterreich.gv.at ; ASFINAG
+      illisible depuis le poste) ; CZ 230 / 300 / 480 / 2 570 CZK (edalnice.gov.cz, depuis le 1er janv.
+      2026) ; SK 8,10 / 10,80 / 17,10 / 90 € (eznamka.sk) ; SI 16 € hebdomadaire, 32 € mensuelle (Uradni
+      list RS 46/2025 ; DARS illisible) ; HU D1 5 550 / 6 900 / 11 170 Ft (PDF NÚSZ, 1er janv. 2026) ;
+      toutes lues le 12 oct. 2026. Ligne « Vignette … » pour le pays de DESTINATION seulement, une par
+      voiture, la moins chère qui couvre les jours, taux de change dit, sinon note « conversion
+      indisponible » ; table non appliquée quand le voyage commence après le dernier jour couvert ;
+      **vie privée** : pour un départ tiré du domicile ou de la position, « à l'étranger » est traité
+      comme inconnu (la présence de la ligne ne dit pas où habite le lanceur, `abroadForVignette`)
+      (`tolls.test.ts`). **Péages au km** : jamais ajoutés au budget (le routage ne donne pas les km
+      d'autoroute), dits dans la base « péages non comptés (pourquoi ; barème du pays) » : FR 11,1 c€/km
+      TTC (ART : 9,27 c€ HT/km au 1er févr. 2024 + TVA 20 %), IT 7,9 / 9,3 c€/km TTC plaine / montagne
+      (Autostrade per l'Italia, classe A, 1er janv. 2026). **Reste** : ES, PT, HR, GR non chiffrés (aucun
+      barème moyen au km lu à une source officielle) ; chiffrer les péages au km exige les km d'autoroute à
+      péage du routeur (piste : détail du trajet chez Geoapify / Valhalla) ; pays de départ et pays
+      traversés non comptés ; barème FR de février 2024 (hausses 2025 et 2026 non lues) ; SI à revérifier
+      sur dars.si ; SI annuelle et HU annuelle écartées (période non confirmée) ; gazole et 6,5 L/100 km
+      inchangés.
 - [~] Assurance et repas par région ; libellés « indice de prix du pays » (plus
       « prix français »). **Lot W** : libellés faits (« indice de prix du pays : Pérou 45
-      (France = 100) », `costs.test.ts`). **Reste** : assurance (forfait 2 / 3 / 4,5 € par jour) et
-      repas (barème France × indice) sans découpage par région sourcé ; piste : indices de niveau
-      de prix de l'ICP 2021 de la Banque mondiale (CC BY 4.0).
+      (France = 100) », `costs.test.ts`). **Lot R2** : repas en autonomie (bivouac, journée sans nuit) au
+      niveau de prix de l'ALIMENTATION de l'ICP 2021 de la Banque mondiale (170 pays, CC BY 4.0,
+      « The World Bank: ICP 2021 », lu le 12 oct. 2026 ; `engine/icp.ts`, `icpPriceLevels.json`,
+      `scripts/compas/build-icp-price-levels.mjs`), repli sur le barème pour un pays absent
+      (`icpFood.test.ts`) ; la série « Restaurants et hôtels » est écartée (prix des résidents, plus de
+      20 % sous le barème dans 87 pays sur 170). **À valider en P2** : le budget « Repas » change pour
+      bivouac et journées sans nuit. **Reste** : assurance (forfait 2 / 3 / 4,5 € par jour) sans découpage
+      régional sourcé ; repas au restaurant et au refuge au barème France × indice du pays.
 
 ### 4.7 Temps
 
