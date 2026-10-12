@@ -10,7 +10,6 @@ import {
   stepPassages,
   type StepPassage,
 } from '../engine/passage';
-import { DEFAULT_TRAVELLER_ZONE } from '../engine/zone';
 import type { CompasCtl } from './compasTypes';
 
 /**
@@ -23,7 +22,9 @@ import type { CompasCtl } from './compasTypes';
  */
 export function PassageSection({ ctl }: { ctl: CompasCtl }) {
   const m = ctl.data.model;
-  const zone = ctl.data.zone ?? DEFAULT_TRAVELLER_ZONE;
+  // Le fuseau de CHAQUE jour (son point), jamais celui de la première étape : un itinéraire peut traverser
+  // des fuseaux. Inconnu : la lumière du jour reste non classée.
+  const dayZones = ctl.data.dayZones;
   const forecasts = ctl.data.weather?.tripDays;
   const inputId = useId();
   const [simulated, setSimulated] = useState('');
@@ -36,7 +37,7 @@ export function PassageSection({ ctl }: { ctl: CompasCtl }) {
         const light = dayLightClock(
           forecasts?.find((d) => d.day === plan.day)?.forecast,
           { lat: plan.lat, lon: plan.lon, date: plan.date },
-          zone
+          dayZones?.[plan.day] ?? null
         );
         const rows = stepPassages({
           activity: m.activity,
@@ -55,7 +56,7 @@ export function PassageSection({ ctl }: { ctl: CompasCtl }) {
           rows,
         };
       }),
-    [m.route.dayPlans, m.activity, m.crew.pace.slowest?.speedKmh, m.preferences.pace, forecasts, zone, simulated]
+    [m.route.dayPlans, m.activity, m.crew.pace.slowest?.speedKmh, m.preferences.pace, forecasts, dayZones, simulated]
   );
 
   const all = days.flatMap((d) => d.rows);

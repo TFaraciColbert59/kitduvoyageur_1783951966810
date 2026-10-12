@@ -46,7 +46,7 @@ import { relevantAffiliateLinks } from '../engine/affiliates';
 import { getOfficialAlerts } from './officialAlerts';
 import { getRouteElevation, pointsAltitudeRange } from './elevation';
 import type { ElevationProfile } from '../engine/elevation';
-import { destinationZone, getClimateNormals, getCompasWeather, type CompasWeather } from './weather';
+import { destinationZone, getClimateNormals, getCompasWeather, knownZoneAt, type CompasWeather } from './weather';
 import { readAiProposed } from '../engine/aiNotice';
 import { aiEnabled } from '@/lib/ai/aiMode';
 
@@ -174,6 +174,13 @@ export interface CompasData {
    * navigateur. Absent (écran plus ancien, tests) : Paris, sans mention.
    */
   zone?: string;
+  /**
+   * Fuseau IANA du point de départ de CHAQUE jour (clé : numéro du jour), null quand il ne se retrouve
+   * pas ou que le jour n'a pas de point. Un itinéraire peut traverser des fuseaux : `zone` (première
+   * étape) ne vaut que pour elle. Absent (écran plus ancien, tests) : aucun fuseau de jour connu, donc la
+   * lumière du jour n'est pas calculée plutôt que devinée avec `zone`.
+   */
+  dayZones?: Record<number, string | null>;
   /** Invitations envoyées, en attente de réponse (accès au voyage après acceptation). */
   pendingInvites: CompasPendingInvite[];
   /** Préremplissage : jamais lancé, déjà écrit, ou annulé (ne se relance pas seul). */
@@ -730,6 +737,9 @@ export async function getCompasData(): Promise<CompasData | null> {
     route: { id: routeId, name: hub.hiking?.routeName ?? null },
     origin,
     zone,
+    dayZones: Object.fromEntries(
+      plans.map((d) => [d.day, d.lat != null && d.lon != null ? knownZoneAt(d.lat, d.lon) : null])
+    ),
     pendingInvites,
     autofill: autofillState(trip.metadata),
     aiOn: aiEnabled(),

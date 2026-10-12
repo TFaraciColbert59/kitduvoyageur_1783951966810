@@ -96,6 +96,10 @@ vi.mock('../server/weather', async (orig) => ({
   ...(await orig<typeof import('../server/weather')>()),
   getClimateNormals: vi.fn(async () => null),
 }));
+vi.mock('@/features/trips/engine/contextualKitEngine', async (orig) => {
+  const real = await orig<typeof import('@/features/trips/engine/contextualKitEngine')>();
+  return { ...real, generateTripContextualKit: vi.fn(real.generateTripContextualKit) };
+});
 vi.mock('@/lib/ai/askAI', () => ({
   aiEnabled: () => h.ai,
   askAI: vi.fn(async (req: { system?: string }) => {
@@ -114,6 +118,8 @@ import { backtrackShare } from '../engine/autofill';
 import { transferLegs } from '../engine/countryBases';
 import { distanceKm } from '../engine/places';
 import { lookupAreaPlaces } from '../server/stagePoiLookup';
+import { getClimateNormals } from '../server/weather';
+import { generateTripContextualKit } from '@/features/trips/engine/contextualKitEngine';
 import { memorySupabase, type MemorySupabase } from './helpers/memorySupabase';
 
 const TRIP = '88888888-8888-4888-8888-888888888888';
@@ -450,6 +456,19 @@ function sardinia() {
   return out;
 }
 const MASSIF = { lat: 40.05, lon: 9.3 };
+/** Le centre géométrique de l'île (l'ancre du voyage). */
+const ISLAND_CENTER = { lat: SARDAIGNE.lat, lon: SARDAIGNE.lon };
+/** Un massif tout au nord de l'île, à ~120 km de son centre : l'ancre et le massif ne sont pas dans le même climat. */
+const FAR_MASSIF = { lat: 41.1, lon: 9.2 };
+function sardiniaFarMassif() {
+  const out = sardinia().filter((p) => !/^Haut-village/.test(p.name));
+  for (let i = 0; i < 14; i += 1) {
+    const a = (2 * Math.PI * i) / 14;
+    const r = 6 + (i % 3) * 6;
+    out.push(sd(`n${i}`, `Haut-village ${i + 1}`, FAR_MASSIF.lat + (r * Math.cos(a)) / 111, FAR_MASSIF.lon + (r * Math.sin(a)) / 85, 'village', 600 + i * 30, 900));
+  }
+  return out;
+}
 
 describe('une grande île à pied : le massif de l’île, jamais la voiture d’étape en étape', () => {
   it('Sardaigne à pied, IA allumée : la zone est le massif (48 km au plus), les étapes y sont, à pied, sans appeler l’IA', async () => {
@@ -540,6 +559,39 @@ describe('une grande île à pied : le massif de l’île, jamais la voiture d�
     expect(titleOf(steps()[0])).toMatch(/^Haut-village/);
     expect(distanceKm(point(steps()[0]), MASSIF)).toBeLessThanOrEqual(35);
     expect(notesOf(res).some((n) => /^Grande île : zone de \d+ km autour de Haut-village/.test(n))).toBe(true);
+  });
+
+  it('le kit lit le climat et la latitude du massif où les étapes sont écrites, pas le centre de l’île', async () => {
+    h.places = sardiniaFarMassif();
+    trip(SARDAIGNE, { activity: 'hiking', end: '2026-11-14' });
+    const res = await launch();
+    expect(res.success).toBe(true);
+    // Les étapes sont dans le massif du nord, loin du centre de l'île (l'ancre du voyage).
+    expect(steps()).toHaveLength(5);
+    for (const s of steps()) expect(distanceKm(point(s), FAR_MASSIF), titleOf(s)).toBeLessThanOrEqual(48);
+    expect(distanceKm(FAR_MASSIF, ISLAND_CENTER)).toBeGreaterThan(100);
+    // Normales NASA POWER lues au point des étapes, une seule fois.
+    expect(vi.mocked(getClimateNormals)).toHaveBeenCalledTimes(1);
+    const [lat, lon] = vi.mocked(getClimateNormals).mock.calls[0];
+    expect(distanceKm({ lat, lon }, FAR_MASSIF)).toBeLessThanOrEqual(48);
+    expect(distanceKm({ lat, lon }, ISLAND_CENTER)).toBeGreaterThan(100);
+    // Même point pour les règles du kit (latitude), qui lisent ce climat.
+    const kit = vi.mocked(generateTripContextualKit).mock.calls[0][0];
+    expect(kit.latitude).toBeCloseTo(lat, 5);
+    expect(kit.latitude).toBeGreaterThan(40.5);
+  });
+
+  it('des étapes sans coordonnées : le kit garde le centre de l’île (l’ancre), sans inventer de point', async () => {
+    h.places = sardiniaFarMassif();
+    trip(SARDAIGNE, { activity: 'hiking', end: '2026-11-14' });
+    // L'itinéraire est celui de la personne, sans lieu localisé : rien n'est recalculé ni deviné.
+    for (let day = 1; day <= 5; day += 1)
+      h.db.rows('trip_steps').push({ id: `p${day}`, trip_id: TRIP, day_number: day, order_index: 0, title: `Jour ${day}`, latitude: null, longitude: null, source: 'user', metadata: {} });
+    const res = await launch();
+    expect(res.success).toBe(true);
+    expect(steps()).toHaveLength(5);
+    expect(vi.mocked(getClimateNormals)).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(getClimateNormals).mock.calls[0]).toEqual([ISLAND_CENTER.lat, ISLAND_CENTER.lon]);
   });
 
   it('séjour sans activité de marche sur la même île (culturel) : le chemin d’un pays, pas le massif', async () => {

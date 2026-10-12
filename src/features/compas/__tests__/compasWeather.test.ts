@@ -7,7 +7,7 @@ vi.mock('@/lib/weather/metnoRequest', () => ({
   metnoGet: vi.fn(async () => null),
 }));
 
-import { destinationZone, getCompasWeather, localToday } from '../server/weather';
+import { destinationZone, getCompasWeather, knownZoneAt, localToday, zoneAt } from '../server/weather';
 
 /** 9 oct. 13 h UTC : déjà le 10 à Auckland, encore le 9 à Paris et à Los Angeles. */
 const NOW = new Date('2026-10-09T13:00:00Z');
@@ -21,6 +21,17 @@ describe('météo du Compas : « aujourd’hui » de la destination', () => {
     expect(destinationZone(TONGARIRO, 'Europe/Paris')).toBe('Pacific/Auckland');
     expect(destinationZone(YOSEMITE, 'Europe/Paris')).toBe('America/Los_Angeles');
     expect(destinationZone(null, 'Europe/Paris')).toBe('Europe/Paris');
+  });
+
+  it('knownZoneAt : le fuseau de CHAQUE point (un itinéraire peut en traverser), null quand il ne se retrouve pas, jamais un repli', () => {
+    expect(knownZoneAt(TONGARIRO.lat, TONGARIRO.lon)).toBe('Pacific/Auckland');
+    expect(knownZoneAt(YOSEMITE.lat, YOSEMITE.lon)).toBe('America/Los_Angeles');
+    expect(knownZoneAt(38.72, -9.14)).toBe('Europe/Lisbon');
+    expect(knownZoneAt(42.7, 0.02)).toBe('Europe/Paris');
+    expect(knownZoneAt(Number.NaN, 0)).toBeNull();
+    expect(knownZoneAt(123, 0)).toBeNull();
+    // `zoneAt` garde son repli pour les appelants qui en veulent un.
+    expect(zoneAt(Number.NaN, 0, 'Europe/Paris')).toBe('Europe/Paris');
   });
 
   it('localToday reste importable depuis le serveur météo', () => {

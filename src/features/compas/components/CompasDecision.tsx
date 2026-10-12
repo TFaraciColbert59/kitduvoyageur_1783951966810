@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import Icon from '@/components/ui/Icon';
 import type { CompasDecision } from '../engine/compasModel';
 import type { DecisionApply } from '../engine/decisionApply';
-import { compasSetCarrierAction } from '../server/compasActions';
+import { compasSetCarriersAction } from '../server/compasActions';
 import type { CompasCtl } from './compasTypes';
 
 /**
@@ -12,8 +12,9 @@ import type { CompasCtl } from './compasTypes';
  *
  * - « Voir » ouvre l'étape de la décision, toujours ;
  * - « Appliquer » n'est là que si le moteur dit que la décision est un calcul sûr
- *   (`planDecisionApply`) : il exécute les actions EXISTANTES (ici `compasSetCarrierAction`), puis
- *   l'annonce propose « Annuler » (aussi Ctrl/⌘+Z) qui remet les objets sans porteur ;
+ *   (`planDecisionApply`) : la répartition entière part en UNE demande (`compasSetCarriersAction`, tout ou
+ *   rien côté serveur : zod, session, droit d'édition, RLS, remise vérifiée si une écriture échoue), puis
+ *   l'annonce propose « Annuler » (aussi Ctrl/⌘+Z) qui remet les objets sans porteur, aussi en une demande ;
  * - rien à décider : le composant n'est pas rendu.
  * L'annonce est polie (`aria-live`) ; toucher le texte vaut « Voir » ; aucun piège au clavier.
  */
@@ -48,34 +49,24 @@ export function DecisionCapsule({
   );
 
   const { tripId, slug } = ctl.data.model;
-  const setCarrier = (itemId: string, carrierId: string | null) =>
-    compasSetCarrierAction({ tripId, tripSlug: slug, itemId, carrierId, shared: true });
+  /** Une seule demande pour tout le lot : jamais d'écritures en série dont une moitié pourrait rester. */
+  const setCarriers = (assignments: ReadonlyArray<{ itemId: string; carrierId: string | null }>) =>
+    compasSetCarriersAction({
+      tripId,
+      tripSlug: slug,
+      assignments: assignments.map(({ itemId, carrierId }) => ({ itemId, carrierId })),
+      shared: true,
+    });
 
   const applyNow = async () => {
     if (!apply) return;
     const count = apply.assignments.length;
-    const done: string[] = [];
+    // Réseau perdu : `ctl.run` le dit (« Connexion perdue »). Le lot étant tout ou rien côté serveur, il
+    // n'y a rien à moitié à rattraper ici ; une relance rejoue le même lot et donne le même état.
     await ctl.run(
       `Matériel commun réparti · ${count} objet${count > 1 ? 's' : ''}`,
-      async () => {
-        for (const a of apply.assignments) {
-          const res = await setCarrier(a.itemId, a.carrierId);
-          if (!res.success) {
-            // Rien à moitié : ce qui vient d'être confié est remis sans porteur.
-            for (const id of done) await setCarrier(id, null).catch(() => undefined);
-            return res;
-          }
-          done.push(a.itemId);
-        }
-        return { success: true };
-      },
-      async () => {
-        for (const a of apply.assignments) {
-          const res = await setCarrier(a.itemId, null);
-          if (!res.success) return res;
-        }
-        return { success: true };
-      }
+      () => setCarriers(apply.assignments),
+      () => setCarriers(apply.assignments.map((a) => ({ itemId: a.itemId, carrierId: null })))
     );
   };
 

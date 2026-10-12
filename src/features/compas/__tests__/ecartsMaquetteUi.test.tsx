@@ -9,6 +9,7 @@ import { STOVE, TENT, TRIP, U1, U2, baseTrip, compasData, compasInput, item } fr
 import { compas, refresh, resetScreenMocks } from './helpers/screenMocks';
 import { assessDanger, type OfficialAlert } from '../engine/danger';
 import type { DayForecast } from '../engine/weather';
+import { clockMinutes, daylightClock } from '../engine/sun';
 import type { CompasData } from '../server/getCompasData';
 import type { CompasInput } from '../engine/compasModel';
 
@@ -122,9 +123,85 @@ describe('Quand : heure de passage à chaque étape', () => {
   });
 
   it('un passage après le coucher du soleil est dit en texte', async () => {
-    render(<CompasScreen data={compasData(withStart('14:00'))} />);
+    render(<CompasScreen data={compasData(withStart('14:00'), { dayZones: { 1: 'Europe/Paris', 2: 'Europe/Paris' } })} />);
     const sheet = await openOu(/Quand/);
     expect(row(sheet, 'Gavarnie').textContent).toMatch(/après le coucher du soleil \(\d{2}:\d{2}\)/);
+  });
+
+  describe('un itinéraire qui change de fuseau : la lumière de chaque jour suit le fuseau de CE jour', () => {
+    /** Jour 1 aux Pyrénées (Paris, UTC+2), jour 2 à Lisbonne (UTC+1 : une heure plus tôt) ; départ noté du jour 2 à 13:35, arrivée vers 19:20. */
+    const LISBON = { lat: 38.72, lon: -9.14 };
+    const crossing = (dayZones: CompasData['dayZones']) => {
+      const base = compasInput();
+      return compasData(
+        {
+          steps: base.steps.map((st) =>
+            st.dayNumber === 2 ? { ...st, lat: LISBON.lat, lon: LISBON.lon, startTime: '13:35' } : st
+          ),
+        },
+        // `zone` reste celui de la première étape : c'est ce qui trompait le jour 2.
+        { zone: 'Europe/Paris', dayZones }
+      );
+    };
+
+    it('fuseau de chaque jour connu : lever et coucher du jour 2 sont ceux de Lisbonne, le passage de 19:20 est dit de nuit', async () => {
+      render(<CompasScreen data={crossing({ 1: 'Europe/Paris', 2: 'Europe/Lisbon' })} />);
+      const sheet = await openOu(/Quand/);
+      const day2 = row(sheet, 'Refuge');
+      expect(within(day2).getByText('19:20')).toBeTruthy();
+      const lisbonSunset = daylightClock(LISBON.lat, LISBON.lon, '2026-10-13', 'Europe/Lisbon').sunset as string;
+      const parisSunset = daylightClock(LISBON.lat, LISBON.lon, '2026-10-13', 'Europe/Paris').sunset as string;
+      expect(lisbonSunset).not.toBe(parisSunset);
+      expect(day2.textContent).toContain(`après le coucher du soleil (${lisbonSunset})`);
+      expect(day2.textContent).not.toContain(parisSunset);
+    });
+
+    // Sens inverse : le jour 1 est à Lisbonne (le `zone` de l'écran), le jour 2 aux Pyrénées (UTC+2). Arrivée à 18:50 :
+    // de jour à l'heure des Pyrénées (coucher vers 19:20), mais « de nuit » si on y plaquait l'heure de Lisbonne (18:20).
+    const eastward = (dayZones: CompasData['dayZones']) => {
+      const base = compasInput();
+      return compasData(
+        {
+          steps: base.steps.map((st) =>
+            st.dayNumber === 1 ? { ...st, lat: LISBON.lat, lon: LISBON.lon } : { ...st, startTime: '13:05' }
+          ),
+        },
+        { zone: 'Europe/Lisbon', dayZones }
+      );
+    };
+    const day2At = { lat: 42.7, lon: 0.02 };
+    const pyreneesSunset = daylightClock(day2At.lat, day2At.lon, '2026-10-13', 'Europe/Paris').sunset as string;
+    const lisbonClockSunset = daylightClock(day2At.lat, day2At.lon, '2026-10-13', 'Europe/Lisbon').sunset as string;
+
+    it('le jeu d’essai discrimine : à 18:50, de jour à l’heure du lieu, de nuit à l’heure d’un autre fuseau', () => {
+      const arrival = 18 * 60 + 50;
+      expect(clockMinutes(pyreneesSunset) as number).toBeGreaterThan(arrival);
+      expect(clockMinutes(lisbonClockSunset) as number).toBeLessThan(arrival);
+    });
+
+    it('fuseau du jour 2 connu : de jour (coucher à l’heure du lieu), aucune mention de nuit', async () => {
+      render(<CompasScreen data={eastward({ 1: 'Europe/Lisbon', 2: 'Europe/Paris' })} />);
+      const sheet = await openOu(/Quand/);
+      const day2 = row(sheet, 'Refuge');
+      expect(within(day2).getByText('18:50')).toBeTruthy();
+      expect(day2.textContent).not.toMatch(/coucher|lever/);
+    });
+
+    it('fuseau du jour 2 inconnu : la lumière reste non classée (pas l’heure du fuseau de la première étape), l’heure de passage reste dite', async () => {
+      render(<CompasScreen data={eastward({ 1: 'Europe/Lisbon', 2: null })} />);
+      const sheet = await openOu(/Quand/);
+      const day2 = row(sheet, 'Refuge');
+      expect(within(day2).getByText('18:50')).toBeTruthy();
+      expect(day2.textContent).not.toMatch(/coucher|lever/);
+      // Garde-fou du test : si le fuseau de Lisbonne était plaqué, la ligne dirait « de nuit ».
+      expect(day2.textContent).not.toContain(lisbonClockSunset);
+    });
+
+    it('aucun fuseau par jour (écran plus ancien) : jamais de lumière devinée avec le fuseau de la première étape', async () => {
+      render(<CompasScreen data={eastward(undefined)} />);
+      const sheet = await openOu(/Quand/);
+      expect(row(sheet, 'Refuge').textContent).not.toMatch(/coucher|lever/);
+    });
   });
 
   it('activité sans allure connue : pas d’heure, pas de champ de simulation, la raison est écrite', async () => {
@@ -292,42 +369,69 @@ describe('Îlot de la prochaine décision', () => {
     expect(capsule().textContent).toContain('Proposé : Tony : 1 objet, 1,7 kg · Léa : 1 objet, 400 g');
   });
 
-  it('« Appliquer » confie chaque objet par l’action existante, annonce, et « Annuler » les remet sans porteur', async () => {
+  it('« Appliquer » envoie la répartition entière en UNE demande, annonce, et « Annuler » remet tout sans porteur en une demande', async () => {
     render(<CompasScreen data={sacs()} />);
     fireEvent.click(within(capsule()).getByRole('button', { name: /^Appliquer/ }));
-    await waitFor(() => expect(compas.compasSetCarrierAction).toHaveBeenCalledTimes(2));
-    expect(compas.compasSetCarrierAction).toHaveBeenNthCalledWith(1, {
-      tripId: TRIP, tripSlug: 'trek-3-vallees', itemId: TENT, carrierId: U1, shared: true,
+    await waitFor(() => expect(compas.compasSetCarriersAction).toHaveBeenCalledTimes(1));
+    // Tony (14 kg max) prend la tente ; Léa (12 kg max) le réchaud : un seul appel pour les deux objets.
+    expect(compas.compasSetCarriersAction).toHaveBeenCalledWith({
+      tripId: TRIP,
+      tripSlug: 'trek-3-vallees',
+      assignments: [
+        { itemId: TENT, carrierId: U1 },
+        { itemId: STOVE, carrierId: U2 },
+      ],
+      shared: true,
     });
-    expect(compas.compasSetCarrierAction).toHaveBeenNthCalledWith(2, {
-      tripId: TRIP, tripSlug: 'trek-3-vallees', itemId: STOVE, carrierId: U2, shared: true,
-    });
+    // Jamais d'écritures en série objet par objet.
+    expect(compas.compasSetCarrierAction).not.toHaveBeenCalled();
     expect(await screen.findByText('Matériel commun réparti · 2 objets')).toBeTruthy();
     expect(refresh).toHaveBeenCalled();
 
-    compas.compasSetCarrierAction.mockClear();
+    compas.compasSetCarriersAction.mockClear();
     fireEvent.click(await screen.findByRole('button', { name: 'Annuler' }));
-    await waitFor(() => expect(compas.compasSetCarrierAction).toHaveBeenCalledTimes(2));
-    expect(compas.compasSetCarrierAction).toHaveBeenNthCalledWith(1, {
-      tripId: TRIP, tripSlug: 'trek-3-vallees', itemId: TENT, carrierId: null, shared: true,
+    await waitFor(() => expect(compas.compasSetCarriersAction).toHaveBeenCalledTimes(1));
+    expect(compas.compasSetCarriersAction).toHaveBeenCalledWith({
+      tripId: TRIP,
+      tripSlug: 'trek-3-vallees',
+      assignments: [
+        { itemId: TENT, carrierId: null },
+        { itemId: STOVE, carrierId: null },
+      ],
+      shared: true,
     });
-    expect(compas.compasSetCarrierAction).toHaveBeenNthCalledWith(2, {
-      tripId: TRIP, tripSlug: 'trek-3-vallees', itemId: STOVE, carrierId: null, shared: true,
-    });
+    expect(compas.compasSetCarrierAction).not.toHaveBeenCalled();
   });
 
-  it('un échec au milieu ne laisse rien à moitié : ce qui était confié est remis, l’erreur est dite, pas d’« Annuler »', async () => {
-    compas.compasSetCarrierAction
-      .mockResolvedValueOnce({ success: true })
-      .mockResolvedValueOnce({ success: false, error: 'Cette personne ne fait pas partie du voyage.' });
+  it('refus du serveur : l’erreur est dite, pas d’« Annuler », et rien n’est tenté objet par objet côté écran (la remise est celle du serveur)', async () => {
+    compas.compasSetCarriersAction.mockResolvedValueOnce({ success: false, error: 'Cette personne ne fait pas partie du voyage.' });
     render(<CompasScreen data={sacs()} />);
     fireEvent.click(within(capsule()).getByRole('button', { name: /^Appliquer/ }));
     expect(await screen.findByText('Cette personne ne fait pas partie du voyage.')).toBeTruthy();
-    // 2 appels d'écriture, puis la remise du premier objet sans porteur.
-    expect(compas.compasSetCarrierAction).toHaveBeenCalledTimes(3);
-    expect(compas.compasSetCarrierAction).toHaveBeenLastCalledWith({
-      tripId: TRIP, tripSlug: 'trek-3-vallees', itemId: TENT, carrierId: null, shared: true,
-    });
+    expect(compas.compasSetCarriersAction).toHaveBeenCalledTimes(1);
+    expect(compas.compasSetCarrierAction).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Annuler' })).toBeNull();
+  });
+
+  it('connexion perdue : une seule demande était partie (rien à moitié), le message le dit, pas d’« Annuler »', async () => {
+    compas.compasSetCarriersAction.mockRejectedValueOnce(new Error('Failed to fetch'));
+    render(<CompasScreen data={sacs()} />);
+    fireEvent.click(within(capsule()).getByRole('button', { name: /^Appliquer/ }));
+    expect(await screen.findByText('Connexion perdue : réessaie.')).toBeTruthy();
+    expect(compas.compasSetCarriersAction).toHaveBeenCalledTimes(1);
+    // Aucune remise « à la main » depuis l'écran : il n'y a pas eu d'écritures en série à rattraper.
+    expect(compas.compasSetCarrierAction).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Annuler' })).toBeNull();
+    // Le bouton redevient actif : la personne peut réessayer.
+    await waitFor(() => expect((within(capsule()).getByRole('button', { name: /^Appliquer/ }) as HTMLButtonElement).disabled).toBe(false));
+  });
+
+  it('remise impossible côté serveur : l’écran affiche tel quel le message honnête (combien d’objets ont gardé leur porteur)', async () => {
+    const honest = 'La répartition a échoué et n’a pas pu être entièrement annulée : 1 objet a gardé son nouveau porteur. Vérifie le kit.';
+    compas.compasSetCarriersAction.mockResolvedValueOnce({ success: false, error: honest });
+    render(<CompasScreen data={sacs()} />);
+    fireEvent.click(within(capsule()).getByRole('button', { name: /^Appliquer/ }));
+    expect(await screen.findByText(honest)).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Annuler' })).toBeNull();
   });
 
