@@ -19,8 +19,8 @@ const SECRET = 'secret-de-test-0123456789abcdef';
 const calls: Array<{ name: string; authorization: string | null; method: string }> = [];
 const registries = vi.hoisted(() => ({
   active: 'default' as 'default' | 'rotating',
-  default: [] as unknown[],
-  rotating: [] as unknown[],
+  default: [] as import('@/lib/cron/dailyTasks').DailyCronTask[],
+  rotating: [] as import('@/lib/cron/dailyTasks').DailyCronTask[],
 }));
 const behaviours = vi.hoisted(
   () => new Map<string, (request: Request) => Promise<Response> | Response>()
