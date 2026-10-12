@@ -87,15 +87,32 @@ function CommunautePageContent() {
         router.push('/connexion');
         return;
       }
+      // F-008 : chemin atomique unique (verrou + capacité + compteur côté base).
       const supabase = createClient();
-      const { error } = await supabase
-        .from('event_participants')
-        .upsert(
-          { event_id: eventId, user_id: user.id },
-          { onConflict: 'event_id,user_id', ignoreDuplicates: true }
+      const { data, error } = await supabase.rpc('join_event', { p_event_id: eventId });
+      if (error) {
+        console.error('join_event refusé:', error.message);
+        return;
+      }
+      const result = data as {
+        registered?: boolean;
+        current_participants?: number;
+        status?: string;
+      } | null;
+      setJoinedEventIds((prev) => ({ ...prev, [String(eventId)]: true }));
+      if (result && typeof result.current_participants === 'number') {
+        setEvents((prev) =>
+          prev.map((ev) =>
+            String(ev.id) === String(eventId)
+              ? {
+                  ...ev,
+                  current_participants: result.current_participants,
+                  participants: result.current_participants,
+                  status: result.status ?? ev.status,
+                }
+              : ev
+          )
         );
-      if (!error) {
-        setJoinedEventIds((prev) => ({ ...prev, [String(eventId)]: true }));
       }
     },
     [user, router]
