@@ -1,7 +1,7 @@
 /**
  * Plan 100, 1.2 « Durée des fonctions » — rester ≤ 300 s, le maximum d'une
  * fonction Vercel Hobby (https://vercel.com/docs/functions/limitations#max-duration,
- * page lue le 11 oct. 2026 : « Hobby 300s default and maximum »).
+ * page lue le 12 oct. 2026 : « Hobby 300s default and maximum »).
  *
  * Garde statique :
  *   - aucun `export const maxDuration` du dépôt ne dépasse 300, et chacun est un

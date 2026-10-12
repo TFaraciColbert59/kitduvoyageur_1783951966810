@@ -55,9 +55,9 @@ export const DAILY_CRON_TASKS: readonly DailyCronTask[] = [
  */
 export const MANUAL_ONLY_CRON_ROUTES: Readonly<Record<string, string>> = {
   'process-ai-jobs':
-    'appelle un fournisseur d’IA et peut dépasser la durée de la fonction ; l’IA est éteinte en production (SERVICES-GRATUITS.md) : à lancer à la main quand elle sera allumée',
+    'appelle un fournisseur d’IA (l’essai NVIDIA n’est pas autorisé en production tant qu’aucune offre conforme n’existe à 0 €, docs/compas/SERVICES-GRATUITS.md) et traite jusqu’à 10 jobs à la suite, ce qui peut dépasser le budget d’un tir : à lancer à la main, sur décision de Tony',
   'refresh-country-guides':
-    'génère des guides pays par IA (longs, payants hors offre gratuite), paramétrés par l’URL (scope, limit, countries) : à lancer à la main',
+    'génère des guides pays par IA (même réserve sur l’essai NVIDIA), en lots longs paramétrés par l’URL (scope, limit, countries) : à lancer à la main, sur décision de Tony',
 };
 
 /** Route du répartiteur lui-même (ne s'enchaîne pas elle-même). */

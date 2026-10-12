@@ -2,7 +2,7 @@
  * Répartiteur du cron quotidien (plan 100, 1.1).
  *
  * Offre Hobby de Vercel (page « Usage & Pricing for Cron Jobs », lue le
- * 11 oct. 2026, https://vercel.com/docs/cron-jobs/usage-and-pricing) : 100 crons
+ * 12 oct. 2026, https://vercel.com/docs/cron-jobs/usage-and-pricing) : 100 crons
  * par projet, MAIS « Hobby accounts are limited to cron jobs that run once per
  * day » (une expression plus fréquente fait échouer le déploiement) et une
  * précision « Per-hour (±59 min) ». Un tir par jour, donc UN seul cron qui

@@ -4,7 +4,7 @@ import { createHash, timingSafeEqual } from 'node:crypto';
  * Autorise un appel planifié : `Authorization: Bearer ${CRON_SECRET}`.
  *
  * Vercel envoie cet en-tête tout seul quand la variable `CRON_SECRET` existe
- * dans le projet (page lue le 11 oct. 2026 :
+ * dans le projet (page lue le 12 oct. 2026 :
  * https://vercel.com/docs/cron-jobs/manage-cron-jobs, « The value of the
  * variable will be automatically sent as an `Authorization` header »).
  *

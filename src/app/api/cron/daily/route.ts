@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * 300 s : le maximum d'une fonction Vercel Hobby
- * (https://vercel.com/docs/functions/limitations#max-duration, lue le 11 oct. 2026).
+ * (https://vercel.com/docs/functions/limitations#max-duration, lue le 12 oct. 2026).
  * Le répartiteur borne son propre budget à 270 s (`DAILY_BUDGET_MS`).
  */
 export const maxDuration = 300;
@@ -18,7 +18,7 @@ export const maxDuration = 300;
  *
  * Offre Hobby : « Hobby accounts are limited to cron jobs that run once per day »
  * et précision de ±59 min (https://vercel.com/docs/cron-jobs/usage-and-pricing,
- * lue le 11 oct. 2026). Cette route enchaîne donc, dans la limite de durée, les
+ * lue le 12 oct. 2026). Cette route enchaîne donc, dans la limite de durée, les
  * tâches utiles et idempotentes des routes `/api/cron/*` (liste et ordre dans
  * `src/lib/cron/dailyTasks.ts`). Les autres routes restent appelables à la main.
  *
