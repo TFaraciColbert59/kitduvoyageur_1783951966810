@@ -1526,11 +1526,17 @@ export interface CompasRouteOption {
   mine: { count: number; last: string | null } | null;
 }
 
-const searchSchema = z.object({
-  lat: z.number().min(-90).max(90).nullable(),
-  lon: z.number().min(-180).max(180).nullable(),
-  query: z.string().trim().max(80).nullable(),
-});
+const searchSchema = z
+  .object({
+    /** Position de l'appareil pour « autour de moi » : arrondie à 0,01° (~1 km) dès l'entrée (plan 2.10), jamais plus fine ici. */
+    lat: z.number().min(-90).max(90).nullable(),
+    lon: z.number().min(-180).max(180).nullable(),
+    query: z.string().trim().max(80).nullable(),
+  })
+  .transform((v) => {
+    const at = v.lat != null && v.lon != null ? coarsePosition({ lat: v.lat, lon: v.lon }) : null;
+    return { ...v, lat: at?.lat ?? null, lon: at?.lon ?? null };
+  });
 
 /** « Autour » : tous les parcours du catalogue à moins de 50 km, du plus proche au plus loin. */
 const AROUND_RADIUS_KM = 50;

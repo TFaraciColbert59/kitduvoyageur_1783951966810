@@ -22,6 +22,7 @@ import {
   type CompasActivity,
 } from '../engine/intent';
 import { daylightClock } from '../engine/sun';
+import { coarsePosition } from '../engine/privacy';
 import { DEFAULT_TRAVELLER_ZONE, browserTimeZone, browserToday, differentClock } from '../engine/zone';
 import {
   dayQuality,
@@ -204,7 +205,11 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
       if (typeof navigator === 'undefined' || !navigator.geolocation) return resolve(here);
       navigator.geolocation.getCurrentPosition(
         (p) => {
-          const pos = { lat: p.coords.latitude, lon: p.coords.longitude, gps: true };
+          // Plan 2.10 : la position exacte ne quitte pas l'appareil, 0,01° (~1 km) dès la lecture
+          // (une recherche « autour de moi » à 50 km n'a pas besoin de mieux).
+          const coarse = coarsePosition({ lat: p.coords.latitude, lon: p.coords.longitude });
+          if (!coarse) return resolve(here);
+          const pos = { ...coarse, gps: true };
           setHere(pos);
           resolve(pos);
         },

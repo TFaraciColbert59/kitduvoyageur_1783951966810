@@ -64,7 +64,7 @@ import { readTraveller } from './traveller';
 import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
 import { bestPeriod, monthName, needsDryNormals } from '../engine/period';
 import { partsText, retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
-import { lookupDestination, lookupMassif, lookupNatural, lookupReverse, lookupRiver, stageAliasCandidates, stageCandidates } from './placeLookup';
+import { lookupCommune, lookupDestination, lookupMassif, lookupNatural, lookupReverse, lookupRiver, stageAliasCandidates, stageCandidates } from './placeLookup';
 import { lookupAreaPlaces, lookupRiverLine, lookupStagePois, readCachedStagePois } from './stagePoiLookup';
 import { carFreeOf, carFreeStages, carFreeStagesNote, transitSignal } from '../engine/carFree';
 import { buildTrack, simplifyLine, trackKey, type LngLat } from '../engine/track';
@@ -113,7 +113,7 @@ import { travellerToday } from '../engine/zone';
 import { getClimateNormals, getPrecipNormals } from './weather';
 import { aiSuggestion, essentialAdvice, orderNotes, repeatsRule } from '../engine/advice';
 import { preparationEventKind, recordPreparationEvent } from './opsEvents';
-import { coarsePosition } from '../engine/privacy';
+import { coarsePosition, positionBase } from '../engine/privacy';
 import { pointsMaxAltitudeM, routeAscentM } from './elevation';
 import { estimatedLegKm, estimationNote, stepDistanceMetadata, type LegDistanceSource, type LegMove } from '../engine/legDistance';
 import { aiContributed, readAiProposed, withAiProposed } from '../engine/aiNotice';
@@ -1034,15 +1034,13 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     if (!anchor && from) {
       anchoredOnPosition = true;
       const here = await lookupReverse(from.lat, from.lon);
-      anchor = {
-        name: here?.locality ?? here?.name ?? 'Autour de toi',
-        lat: from.lat,
-        lon: from.lon,
-        countryCode: here?.countryCode ?? null,
-        country: here?.country ?? null,
-        radiusKm: ctx.scope === 'sortie' ? 15 : 60,
-        kind: 'town',
-      };
+      // PLAN 2.10 : la base d'un séjour sans lieu dit est la COMMUNE (son nom et son centre sur la
+      // carte), pas le point GPS : c'est ce qui s'écrit dans les étapes et l'ancre du voyage. Le
+      // point, déjà arrondi à ~1 km, n'est gardé que si la carte ne nomme aucune commune.
+      const commune = await lookupCommune(here, from).catch(() => null);
+      const base = positionBase(from, here, commune);
+      if (!base) return { success: false, error: 'Position illisible : dis où tu pars (« à Annecy », « dans le Vercors »…).' };
+      anchor = { ...base, radiusKm: ctx.scope === 'sortie' ? 15 : 60 };
       if (ctx.scope !== 'sortie')
         notes.push(`Lieu non précisé : préparé près de chez toi (${anchor.name}). Change-le dans « Où » si tu pensais à un autre endroit.`);
     }
