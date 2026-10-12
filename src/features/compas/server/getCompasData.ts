@@ -14,7 +14,9 @@ import { parseRoutePois, poiLabel, type RoutePoi } from '../engine/routePois';
 import { getBudgetFx, getEurRate } from './rates';
 import { readTraveller } from './traveller';
 import { entryRequirement } from './entryRequirements';
-import { notesForReader, type PapersFacts } from '../engine/papers';
+import { abroadForReader, notesForReader, type AbroadFrom, type PapersFacts } from '../engine/papers';
+import { readerFormalities, type ReaderFormalities } from '../engine/formalities';
+import { withoutStoredFormalities } from '../engine/storedFormalities';
 import type { TravellerContext } from '../engine/traveller';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -45,6 +47,8 @@ import { getOfficialAlerts } from './officialAlerts';
 import { getRouteElevation, pointsAltitudeRange } from './elevation';
 import type { ElevationProfile } from '../engine/elevation';
 import { destinationZone, getClimateNormals, getCompasWeather, type CompasWeather } from './weather';
+import { readAiProposed } from '../engine/aiNotice';
+import { aiEnabled } from '@/lib/ai/aiMode';
 
 /**
  * Compas — chargeur serveur unique.
@@ -96,6 +100,11 @@ export interface CompasItineraryStep {
   distanceSource?: string | null;
   elevationGainM: number | null;
   accommodation: string | null;
+  /**
+   * Étape proposée par l'IA (sa position est ensuite vérifiée sur la carte), pas calculée par
+   * le Compas : l'écran le dit en texte (PLAN-100 5.3). Absent : non.
+   */
+  aiProposed?: boolean;
 }
 
 export interface CompasData {
@@ -171,6 +180,18 @@ export interface CompasData {
   autofill: 'none' | 'done' | 'undone';
   /** Conseils du spécialiste (IA) laissés par le préremplissage. */
   autofillNotes?: string[];
+  /**
+  /**
+   * Les formalités d'entrée (visa, ESTA) de la personne qui regarde, calculées ici avec SON profil
+   * et affichées à part du budget : jamais rangées sur le voyage (elles diraient sa nationalité).
+   * Null ou absent : rien à chiffrer pour elle.
+   */
+  formalities?: ReaderFormalities | null;
+  /**
+   * Interrupteur de l'IA du site (`AI_MODE`, plan 1.7) à l'affichage : faux ou absent, l'écran ne
+   * parle pas d'IA (ni mention, ni bouton « Expliquer avec l'IA »). PLAN-100 5.3.
+   */
+  aiOn?: boolean;
   /** Durée voulue quand la date de départ n'est pas choisie (« 20 jours »). */
   plannedDays?: number | null;
   /** Points autour des étapes : recherche en cours ou faite (rempli côté écran). */
@@ -485,15 +506,20 @@ export async function getCompasData(): Promise<CompasData | null> {
     })),
     items: toItems(trip),
     members,
-    expenses: (trip.expenses ?? []).map((e) => ({
-      id: e.id,
-      title: e.title,
-      amount: num(e.amount) ?? 0,
-      category: e.category,
-      isPlanned: Boolean(e.is_planned),
-      payerId: e.payer_id,
-      splitType: e.split_type,
-    })),
+    // Une dépense « Formalités » rangée par une préparation d'avant ce verrou dit la nationalité du
+    // lanceur : retirée de l'affichage tant qu'elle est planifiée et intacte (la ligne du lecteur,
+    // `formalities`, la remplace) ; réglée ou retouchée, elle compte comme les autres, ici comme dans
+    // `/voyages` (même filtre à la lecture du voyage, `lib/queries-trips.ts`).
+    expenses: withoutStoredFormalities(trip.expenses ?? [])
+      .map((e) => ({
+        id: e.id,
+        title: e.title,
+        amount: num(e.amount) ?? 0,
+        category: e.category,
+        isPlanned: Boolean(e.is_planned),
+        payerId: e.payer_id,
+        splitType: e.split_type,
+      })),
     inventory,
     bookings,
     // Rempli plus bas avec la prévision des VRAIS jours du voyage : la météo du
@@ -596,6 +622,8 @@ export async function getCompasData(): Promise<CompasData | null> {
     (trip.steps ?? []).filter((s) => distanceSource(s.metadata) === 'estimation').map((s) => s.id)
   );
   const sourceOfStep = new Map((trip.steps ?? []).map((s) => [s.id, distanceSource(s.metadata)]));
+  // Étapes que l'IA a proposées (marque posée à l'écriture par la préparation, PLAN-100 5.3).
+  const aiProposedIds = new Set((trip.steps ?? []).filter((s) => readAiProposed(s.metadata)).map((s) => s.id));
   const itinerary: CompasItineraryStep[] = [...input.steps]
     .sort((a, b) => a.dayNumber - b.dayNumber || a.orderIndex - b.orderIndex)
     .map((s) => ({
@@ -607,6 +635,7 @@ export async function getCompasData(): Promise<CompasData | null> {
       distanceSource: sourceOfStep.get(s.id) ?? null,
       elevationGainM: s.elevationGainM,
       accommodation: s.accommodationName,
+      ...(aiProposedIds.has(s.id) ? { aiProposed: true } : {}),
     }));
 
   const waterOnRoute = routePois.filter((p) => p.category === 'water').length;
@@ -703,8 +732,17 @@ export async function getCompasData(): Promise<CompasData | null> {
     zone,
     pendingInvites,
     autofill: autofillState(trip.metadata),
+    aiOn: aiEnabled(),
     // La ligne « Papiers » est celle de CE lecteur (son profil), jamais celle du propriétaire.
-    autofillNotes: autofillNotes(trip.metadata, traveller, trip.destination_country_code),
+    autofillNotes: autofillNotes(trip.metadata, traveller, trip.destination_country_code, viewerId),
+    // Ses formalités d'entrée, calculées avec SON profil, à part du budget (jamais rangées).
+    formalities: readerFormalitiesOf(
+      trip.metadata,
+      traveller,
+      trip.destination_country_code,
+      partySizeOf(num(trip.party_size), members.length),
+      viewerId
+    ),
     ...compasPlan(trip.metadata),
     autofillStale: autofillStale(trip),
     context: resolveProjectContext({
@@ -798,7 +836,12 @@ function autofillState(metadata: unknown): CompasData['autofill'] {
   return (run as Record<string, unknown>).runId ? 'done' : 'undone';
 }
 
-function autofillNotes(metadata: unknown, reader: TravellerContext, destinationCode?: string | null): string[] {
+function autofillNotes(
+  metadata: unknown,
+  reader: TravellerContext,
+  destinationCode: string | null | undefined,
+  viewerId: string | null
+): string[] {
   const compas =
     metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).compas : null;
   const run =
@@ -810,7 +853,35 @@ function autofillNotes(metadata: unknown, reader: TravellerContext, destinationC
   // collaborateurs, et par tous pour un voyage public) ; elle se calcule ici, avec le profil de la
   // personne qui regarde (sans profil : la ligne neutre).
   const facts = papersFacts(compas as Record<string, unknown> | null, destinationCode);
-  return notesForReader(stored, facts, reader, entryRequirement).slice(0, MAX_NOTES);
+  // « À l'étranger » ne vaut que pour le lanceur quand le départ est son domicile ou sa position.
+  return notesForReader(stored, facts, reader, entryRequirement, viewerId).slice(0, MAX_NOTES);
+}
+
+/**
+ * Les formalités d'entrée du lecteur (visa, ESTA), pour un voyage préparé seulement : la préparation
+ * annulée ou jamais lancée n'a écrit aucun budget. Pays et départ : ceux que le voyage a rangés
+ * (`papersFacts`) ; le profil est celui du lecteur.
+ */
+function readerFormalitiesOf(
+  metadata: unknown,
+  reader: TravellerContext,
+  destinationCode: string | null | undefined,
+  party: number,
+  viewerId: string | null
+): ReaderFormalities | null {
+  if (autofillState(metadata) !== 'done') return null;
+  const compas =
+    metadata && typeof metadata === 'object' ? ((metadata as Record<string, unknown>).compas as Record<string, unknown> | null) : null;
+  const facts = papersFacts(compas && typeof compas === 'object' ? compas : null, destinationCode);
+  if (!facts) return null;
+  // Le départ du lanceur (domicile, position) n'est connu que de lui : pour un collaborateur, « on ne sait pas ».
+  return readerFormalities({
+    countryCode: facts.countryCode,
+    abroad: abroadForReader(facts, viewerId),
+    party,
+    reader,
+    find: entryRequirement,
+  });
 }
 
 /**
@@ -825,7 +896,16 @@ function papersFacts(compas: Record<string, unknown> | null, destinationCode?: s
   if (saved) {
     const countryCode = code(saved.countryCode);
     if (countryCode) {
-      return { countryCode, country: name(saved.country), abroad: typeof saved.abroad === 'boolean' ? saved.abroad : null };
+      const from: AbroadFrom | undefined =
+        saved.abroadFrom === 'dit' || saved.abroadFrom === 'domicile' || saved.abroadFrom === 'gps' ? saved.abroadFrom : undefined;
+      const by = typeof saved.launchedBy === 'string' && saved.launchedBy ? saved.launchedBy : undefined;
+      return {
+        countryCode,
+        country: name(saved.country),
+        abroad: typeof saved.abroad === 'boolean' ? saved.abroad : null,
+        ...(from ? { abroadFrom: from } : {}),
+        ...(from && from !== 'dit' && by ? { launchedBy: by } : {}),
+      };
     }
   }
   const anchor = obj(compas?.anchor);

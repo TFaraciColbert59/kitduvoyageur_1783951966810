@@ -69,15 +69,12 @@ import { lookupAreaPlaces, lookupRiverLine, lookupStagePois, readCachedStagePois
 import { carFreeOf, carFreeStages, carFreeStagesNote, transitSignal } from '../engine/carFree';
 import { buildTrack, simplifyLine, trackKey, type LngLat } from '../engine/track';
 import { descentWindow, planRiverDescent } from '../engine/river';
-import { entryFor } from '../engine/entry';
-import { isPapersNote, keepAiNote, sharedPapersNotes, travelPapers, type PapersFacts } from '../engine/papers';
-import { isFrenchNational } from '../engine/traveller';
+import { keepAiNote, papersFactsFor, sharedNotes, sharedRules, type PapersFacts } from '../engine/papers';
 import { tutoyer } from '../engine/voice';
 import { addDaysIso } from '../engine/format';
 import { climateWindow } from '@/features/trips/engine/climate';
-import { abroadCosts, homeForLeg, originFact, planTravelLeg, travelOrigin, type TravelTransport } from '../engine/travel';
+import { homeForLeg, isHomeOrigin, originFact, planTravelLeg, travelFactsForAi, travelOrigin, type TravelTransport } from '../engine/travel';
 import { nearestAirport } from './airports';
-import { entryRequirement } from './entryRequirements';
 import { trailRegion } from '../engine/intent';
 import {
   dayStartVillage,
@@ -101,9 +98,7 @@ import {
 import {
   COSTS_VERSION,
   carRentalPerDay,
-  entryFees,
   flightRoundTrip,
-  formalitiesBasis,
   insurance,
   localTripPerLeg,
   lodgingPerNight,
@@ -121,6 +116,7 @@ import { preparationEventKind, recordPreparationEvent } from './opsEvents';
 import { coarsePosition } from '../engine/privacy';
 import { pointsMaxAltitudeM, routeAscentM } from './elevation';
 import { estimatedLegKm, estimationNote, stepDistanceMetadata, type LegDistanceSource, type LegMove } from '../engine/legDistance';
+import { aiContributed, readAiProposed, withAiProposed } from '../engine/aiNotice';
 import {
   claimIsLive,
   pendingIsLive,
@@ -386,6 +382,8 @@ interface StagePlace {
   lon: number;
   move: StageMove;
   note: string | null;
+  /** Proposée par l'IA (puis retrouvée sur la carte), pas calculée par le Compas : rangée avec l'étape (PLAN-100 5.3). */
+  aiProposed?: boolean;
   /** Descente de rivière : km d'eau du jour et tracé de la rivière (pas de calcul de route). */
   riverKm?: number | null;
   geometry?: LngLat[] | null;
@@ -1361,7 +1359,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           }
           const at = last ?? { name: anchor.name, lat: anchor.lat, lon: anchor.lon };
           located.push(last != null);
-          stagePlaces.push({ day: p.day, name: at.name, lat: at.lat, lon: at.lon, move: hit ? move : 'aucun', note: p.note });
+          stagePlaces.push({ day: p.day, name: at.name, lat: at.lat, lon: at.lon, move: hit ? move : 'aucun', note: p.note, aiProposed: true });
         }
         // Premières étapes introuvables : elles partent de la première étape
         // trouvée, jamais du centre de la destination (« États-Unis », au Kansas).
@@ -1521,7 +1519,11 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           distance_km: legs[i]?.km ?? (loopKm && i === 0 ? loopKm : null),
           elevation_gain_m: legs[i]?.ascent ?? null,
           // D'où vient la distance (plan 1.5) : le routeur qui l'a mesurée, ou « estimation ».
-          metadata: stepDistanceMetadata(legs[i]?.source ?? (loopKm && i === 0 ? 'estimation' : null)),
+          // Et si l'IA a proposé l'étape : l'écran le dit en texte (PLAN-100 5.3).
+          metadata: withAiProposed(
+            stepDistanceMetadata(legs[i]?.source ?? (loopKm && i === 0 ? 'estimation' : null)),
+            st.aiProposed === true
+          ),
         }));
         if (rows.length) {
           const { data: insertedSteps, error: stepsError } = await supabase.from('trip_steps').insert(rows).select('id');
@@ -1904,19 +1906,19 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         return `J${s.day_number} ${s.title.split(' · ').slice(1).join(' · ')}${legText}`;
       })
       .join(' ; ');
+    // VIE PRIVÉE : un départ du DOMICILE du profil n'envoie à l'IA ni km, ni minutes, ni km de voie, ni
+    // « voyage à l'étranger », ni vol/train/location qui s'en déduisent (`travelFactsForAi`) : la politique
+    // de confidentialité dit que rien de ce profil ne lui est envoyé.
+    const aiTravel = travelFactsForAi(travelLeg);
     const facts = [
       `Destination : ${anchor.name}${anchor.country ? `, ${anchor.country}` : ''} (code ${anchor.countryCode ?? 'inconnu'}).`,
       `Départ de la personne : ${originFact(origin)}.`,
       `${trip.start_date ? `Dates : ${trip.start_date} au ${trip.end_date ?? trip.start_date}` : 'Dates non choisies'} (${days} jour(s)), groupe de ${party}, activité ${activity}.`,
-      abroad === true ? 'Voyage à l’étranger : oui.' : abroad === false ? 'Voyage à l’étranger : non.' : 'Voyage à l’étranger : inconnu.',
+      aiTravel.abroad,
       carFree.on ? 'Préférence : sans voiture (ni voiture personnelle ni de location) : ne conseille jamais d’en prendre ou d’en louer une.' : '',
-      flightNeeded
-        ? 'Vol à prévoir : oui (aller-retour).'
-        : trainNeeded
-          ? `Train à prévoir : oui (aller-retour, environ ${trainNeeded.railKm} km de voie).`
-          : transport?.mode === 'voiture' ? `Trajet d’approche mesuré : ${transport.km} km en voiture (${transport.minutes} min) puis ${transport.walkKm} km à pied.` : 'Trajet d’approche : non mesuré.',
+      aiTravel.approach,
       `Itinéraire : ${stageLine || 'non détaillé'}.`,
-      rentalNeeded
+      rentalNeeded && aiTravel.rental
         ? `Voiture de location à prévoir : ${days} jour(s), ${fuelForKm(carKmOnSite, party).cars} voiture(s), ${Math.round(carKmOnSite)} km mesurés sur place.`
         : '',
       localMoves.length
@@ -1943,7 +1945,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       ? null
       : await askJson(
           userId,
-          buildCompasAutofillSystem(isFrenchNational(traveller)),
+          buildCompasAutofillSystem(),
           buildCompasAutofillPrompt(facts),
           500,
           false,
@@ -1951,13 +1953,22 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           Math.min(phase === 'all' ? 30_000 : 15_000, remaining() - 6_000)
         );
     const advice: AutofillAiAdvice = sanitizeAdvice(rawAdvice);
-    const usedAi = rawAdvice != null;
-    // Papiers, change et prises : la règle parle, l'IA se tait sur ces sujets ; ce que
-    // la règle affirme dépend du voyageur (nationalité, résidence, devise : PLAN-100 4.1).
-    // Le tutoiement aussi est une règle : un conseil qui vouvoie encore est écarté.
-    // La nationalité ne sert qu'à lire la table (jamais écrite dans un journal ni envoyée à l'IA).
-    const entryRule = entryFor(entryRequirement, traveller.nationality, anchor.countryCode, abroad);
-    const papers = travelPapers(anchor.countryCode, anchor.country, traveller, abroad, entryRule);
+    // « L'IA a produit quelque chose » : un conseil, ou l'itinéraire (même si les conseils n'ont rien
+    // donné). Une préparation reprise après une coupure relit les étapes déjà écrites (PLAN-100 5.3).
+    let aiStages = stagePlaces.some((st) => st.aiProposed === true);
+    if (!aiStages && resume && createdStepIds.length) {
+      try {
+        const { data: written } = await supabase.from('trip_steps').select('metadata').in('id', createdStepIds);
+        aiStages = ((written ?? []) as Array<{ metadata: unknown }>).some((r) => readAiProposed(r.metadata));
+      } catch {
+        // Lecture impossible : on ne prétend rien (la marque de chaque étape, elle, est déjà écrite).
+      }
+    }
+    // Papiers, change, prises et formalités : la règle parle, l'IA se tait sur ces sujets ; ce que la
+    // règle affirme dépend du voyageur (nationalité, résidence, devise : PLAN-100 4.1), donc ne se range
+    // pas sur le voyage mais se rend à la lecture (`getCompasData`, avec le profil du LECTEUR). Le
+    // tutoiement aussi est une règle : un conseil qui vouvoie encore est écarté. Aucune valeur du
+    // profil ne sert plus à ce qui s'écrit ici (verrou `scripts/verify/traveller_privacy.mjs`).
     // L'essentiel (papiers, sécurité) vient des règles, avec ou sans IA (plan 4.11).
     const safety = essentialAdvice({
       activity,
@@ -1970,24 +1981,32 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       lat: anchor.lat ?? null,
       countryCode: anchor.countryCode ?? null,
     });
-    // VIE PRIVÉE : la ligne « Papiers » de la table dépend de la nationalité ; rangée sur le
-    // voyage (notes, issue), tout collaborateur la lirait (et tout le monde pour un voyage
-    // public : un groupe de la table peut n'avoir qu'un passeport). Le voyage ne garde que la
-    // ligne sans nationalité, plus de quoi rendre celle de chaque lecteur à la lecture
-    // (`getCompasData`, avec SON profil). Le pays et le départ n'apprennent rien sur la personne.
-    const sharedPapers = sharedPapersNotes(anchor.countryCode, anchor.country, abroad);
-    const papersFacts: PapersFacts | null =
-      sharedPapers.length && anchor.countryCode
-        ? { countryCode: anchor.countryCode.toUpperCase(), country: anchor.country ?? null, abroad }
-        : null;
-    const essential = [...sharedPapers, ...papers.notes.filter((n) => !isPapersNote(n)), ...safety];
-    // L'IA n'ajoute que des suggestions facultatives, dites comme telles.
+    // VIE PRIVÉE : les lignes « Papiers » (nationalité) et « Prises » (appareils : résidence) dépendent
+    // du profil ; rangées sur le voyage (notes, issue), tout collaborateur les lirait (et tout le monde
+    // pour un voyage public : un groupe de la table peut n'avoir qu'un passeport, « adaptateur à prévoir »
+    // dit des appareils de France). Le voyage ne garde que les lignes SANS profil, plus de quoi rendre
+    // celles de chaque lecteur à la lecture (`getCompasData`, avec SON profil). Le pays et le départ
+    // n'apprennent rien sur la personne ; ils se rangent dès que le code pays est valide.
+    const essential = [...sharedNotes(anchor.countryCode, anchor.country, abroad), ...safety];
+    // D'où vient « à l'étranger » et qui a lancé : sans cela, un collaborateur lirait comme un fait du voyage
+    // ce qui n'est que le départ du lanceur (son domicile, sa position), donc où il habite.
+    const papersFacts: PapersFacts | null = papersFactsFor(anchor.countryCode, anchor.country, abroad, {
+      from: origin?.source ?? null,
+      by: userId,
+    });
+    // L'IA n'ajoute que des suggestions facultatives, dites comme telles. Filtrées avec les règles SANS
+    // profil : filtrer avec celles du lanceur ferait dépendre la présence d'un conseil de sa devise
+    // (change) ou de sa résidence (prises), donc la trahirait sur le voyage.
+    const aiRules = sharedRules(anchor.countryCode, anchor.country, abroad);
     const aiNotes = advice.notes
-      .filter((n) => keepAiNote(n, papers))
+      .filter((n) => keepAiNote(n, aiRules))
       .map(tutoyer)
       .filter((n): n is string => n != null)
       .filter((n) => !repeatsRule(n, safety))
       .map(aiSuggestion);
+    // Seulement ce que l'IA a réellement donné et qui reste affiché : une réponse reçue mais vide ou
+    // entièrement écartée par les règles n'est pas « rédigée par l'IA » (PLAN-100 5.3).
+    const usedAi = aiContributed({ aiNotes, aiStages });
 
     lap('8');
     /* 8. Budget complet, chaque ligne avec sa source. */
@@ -2006,11 +2025,11 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     const siteFuel = fuelPrice(anchor.countryCode);
     const rentalCars = fuelForKm(carKmOnSite, party, siteFuel).cars;
     const localTrips = localMoves.reduce((t, m) => t + localTripPerLeg(m.move, lvl.level), 0);
-    // Formalités (barème pour un ressortissant français) : seulement pour une nationalité
-    // française connue, tant qu'on ne sait pas que la personne est déjà dans le pays, et
-    // si la table passeport × destination dit qu'un visa ou une autorisation est requis.
-    const abroadFor = abroadCosts(abroad, traveller, entryRule);
-    const entry = abroadFor.formalities ? entryFees(anchor.countryCode) : null;
+    // Formalités d'entrée (visa, ESTA) : un barème pour un ressortissant français, donc un fait sur la
+    // NATIONALITÉ ; ni dépense du voyage (lisible par les collaborateurs, et par tous si le voyage est
+    // public), ni total rangé. Chaque lecteur calcule la sienne à la lecture (`readerFormalities`).
+    // L'assurance, elle, ne dépend que du voyage : savoir qu'on passe une frontière.
+    const insured = abroad === true;
     const mealsAmount = mealsTotal({ days, party, nights: plan.map((n) => n.type), level: lvl.level });
     const rental = picks.filter((p) => p.source === 'location').reduce((t, p) => t + (p.costEur ?? 0), 0);
     // Le budget compte l'indispensable qui manque ; le conseillé (crème
@@ -2063,7 +2082,8 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       carFuel
         ? {
             category: 'transport',
-            title: `Carburant aller-retour (${carFuel.roundTripKm} km)`,
+            // Départ du domicile : la distance ne se range pas sur le voyage (elle en déduirait la commune).
+            title: isHomeOrigin(origin) ? 'Carburant aller-retour' : `Carburant aller-retour (${carFuel.roundTripKm} km)`,
             amount: carFuel.fuelEur,
             source: carFuel.fuelSource === 'bulletin' ? 'mesure' : 'estimation',
             basis: carFuel.basis,
@@ -2108,20 +2128,11 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           },
       rental ? { category: 'matériel', title: 'Location de matériel', amount: rental, source: 'base', basis: 'prix par jour de la boutique × jours' } : null,
       purchase ? { category: 'matériel', title: 'Matériel à acheter', amount: purchase, source: 'base', basis: 'prix de la boutique' } : null,
-      entry
-        ? {
-            category: 'divers',
-            title: `Formalités : ${entry.detail}`,
-            amount: entry.eur * party,
-            source: 'estimation',
-            basis: formalitiesBasis(entryRule?.verified),
-          }
-        : null,
-      abroadFor.insurance || (maxAltitude ?? 0) >= 2500
+      insured || (maxAltitude ?? 0) >= 2500
         ? {
             category: 'divers',
             title: 'Assurance voyage et rapatriement',
-            amount: insurance(days, { abroad: abroadFor.insurance, altitudeM: maxAltitude }) * party,
+            amount: insurance(days, { abroad: insured, altitudeM: maxAltitude }) * party,
             source: 'estimation',
             basis: `barème Compas ${COSTS_VERSION} · forfait par jour${(maxAltitude ?? 0) >= 4000 ? ', haute altitude' : ''}`,
           }

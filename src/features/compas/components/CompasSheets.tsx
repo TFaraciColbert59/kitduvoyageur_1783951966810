@@ -26,7 +26,7 @@ import {
   formatMoney,
   weatherLabel,
 } from '../engine/format';
-import type { CompasShopProduct } from '../server/getCompasData';
+import type { CompasData, CompasShopProduct } from '../server/getCompasData';
 import {
   compasAddInventoryItemAction,
   compasAddShopProductToTripAction,
@@ -1597,6 +1597,7 @@ function BudgetFlow({ ctl }: { ctl: CompasCtl }) {
           { label: 'par personne', amount: b.perPerson },
         ]}
       />
+      <FormalitiesLine formalities={ctl.data.formalities} />
       {ctl.data.canEdit && <ExpenseForm ctl={ctl} />}
       <SettlementBlock ctl={ctl} />
       <PagedList
@@ -1619,6 +1620,34 @@ function BudgetFlow({ ctl }: { ctl: CompasCtl }) {
         )}
       />
     </>
+  );
+}
+
+/**
+ * Les formalités d'entrée (visa, ESTA) de la personne qui regarde : calculées à la lecture avec SON
+ * profil, jamais rangées sur le voyage (elles diraient sa nationalité), donc à part des catégories et
+ * hors du total. La base dit d'où vient le chiffre.
+ */
+function FormalitiesLine({ formalities: f }: { formalities: CompasData['formalities'] }) {
+  if (!f) return null;
+  return (
+    <div data-testid="formalities-line">
+      <div className="cp-row" style={staticRow}>
+        <span className="cp-thumb">
+          <Icon name="coins" size={18} />
+        </span>
+        <span className="cp-row__t">
+          <b>{f.title}</b>
+          <span className="cp-sub">
+            {f.party} personne{f.party > 1 ? 's' : ''} × {formatMoney(f.perPerson, f.currency)}
+            {/* Le profil des autres membres est privé : le calcul suppose le même passeport pour tous. */}
+            {f.party > 1 ? ' · si tout le groupe a ta nationalité' : ''}
+          </span>
+        </span>
+        <span className="cp-row__end">{formatMoney(f.amount, f.currency)}</span>
+      </div>
+      <p className="cp-disc">{f.basis}</p>
+    </div>
   );
 }
 
@@ -2131,6 +2160,9 @@ function StaySearch({
               pas de vraies offres.
             </p>
           )}
+          {/* Les offres s'ouvrent chez un partenaire rémunéré : la divulgation vient AVANT la liste
+              (Art. L121-2 et L121-3 du Code de la consommation), jamais pour une liste vide. */}
+          {state.offers.length > 0 && <AffiliateDisclosure compact />}
           <TallList
             label="Offres d’hébergement"
             items={state.offers}
@@ -2778,7 +2810,8 @@ function RaisonsFlow({ ctl }: { ctl: CompasCtl }) {
       {ctl.data.model.verdict.reasons.some((r) => isMeteoalarmSource(r.source)) && (
         <MeteoalarmNotice readAt={ctl.data.alertsReadAt} />
       )}
-      <VerdictExplain ctl={ctl} />
+      {/* IA éteinte (`AI_MODE=off`) : le bouton n'est pas proposé, rien ne parle d'IA (PLAN-100 5.3). */}
+      {ctl.data.aiOn && <VerdictExplain ctl={ctl} />}
     </>
   );
 }
@@ -2831,7 +2864,7 @@ function VerdictExplain({ ctl }: { ctl: CompasCtl }) {
           disabled={state.status === 'loading'}
           onClick={() => void explain()}
         >
-          <Icon name="sparkles" size={16} />
+          <Icon name="sparkles" size={16} aria-hidden="true" />
           {state.status === 'loading' ? 'L’IA lit les signaux…' : 'Expliquer avec l’IA'}
         </button>
       )}

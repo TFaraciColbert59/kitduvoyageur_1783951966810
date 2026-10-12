@@ -46,6 +46,7 @@ import { compasNearbyActivitiesAction } from '../server/resaActions';
 import type { CompasStayOffer } from '../engine/stays';
 import { mixParcours } from '../engine/parcoursMix';
 import { AffiliateDisclosure } from '@/features/affiliation/components/AffiliateDisclosure';
+import { AI_STEP_LABEL } from '../engine/aiNotice';
 import type { CompasCtl, FlowHint } from './compasTypes';
 
 const staticRow = { cursor: 'default' } as const;
@@ -358,6 +359,8 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
                     Jour {s.day} · {s.distanceEstimated && s.distanceKm != null ? `≈ ${formatKm(s.distanceKm)} (estimée)` : formatKm(s.distanceKm)} · D+{' '}
                     {formatMeters(s.elevationGainM)}
                   </span>
+                  {/* Étape proposée par l'IA : dit en texte (PLAN-100 5.3), même si l'IA est éteinte depuis. */}
+                  {s.aiProposed && <span>{AI_STEP_LABEL}</span>}
                 </span>
                 <span className="cp-row__end">
                   {s.accommodation && <Chip icon="bed-double">{s.accommodation}</Chip>}
@@ -387,6 +390,8 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
               {here?.gps ? 'de toi' : 'du départ du voyage'}, du plus proche au plus loin
             </p>
           )}
+          {/* Activités partenaires mêlées à la liste : la divulgation AVANT elle, pas après (PLAN-100 5.3). */}
+          {partners.length > 0 && mode !== 'mes' && <AffiliateDisclosure compact />}
           <PagedList
             label="Parcours trouvés"
             resetKey={`${mode}-${query}`}
@@ -467,7 +472,6 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
               </button>);
             }}
           />
-          {partners.length > 0 && mode !== 'mes' && <AffiliateDisclosure compact />}
         </>
       )}
     </>

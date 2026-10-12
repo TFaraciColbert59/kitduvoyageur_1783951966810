@@ -11,6 +11,13 @@ import { awardHikeSessionProcessed } from '@/features/progression/server/produce
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * Traitement par lots, parfois long : on déclare le maximum d'une fonction
+ * Vercel Hobby (300 s, https://vercel.com/docs/functions/limitations#max-duration)
+ * au lieu de dépendre du défaut de la plateforme.
+ */
+export const maxDuration = 300;
+
 /** Taille du lot réclamé par exécution de cron. */
 const CLAIM_LIMIT = 5;
 

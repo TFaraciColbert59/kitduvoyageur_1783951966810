@@ -26,6 +26,7 @@ import {
   computeTripPermissions,
 } from '@/features/trips/schemas/trip.schema';
 import { fetchPublicProfiles } from '@/lib/queries/publicProfiles';
+import { withoutStoredFormalities } from '@/features/compas/engine/storedFormalities';
 
 /**
  * 1.3.1 Récupérer les voyages publics avec filtres et pagination
@@ -322,7 +323,11 @@ async function loadFullTripDetails(
   // d'embed FK direct : *_user_id/payer_id → auth.users). Source unique menu +
   // widgets : le moteur budget lit exp.payer.full_name pour nommer les balances.
   const collabRows = (collabsRes.data as TripCollaborator[]) || [];
-  const expenseRows = (expensesRes.data as TripExpense[]) || [];
+  // Vie privée (PLAN-100 4.1) : la dépense « Formalités » qu'une ancienne préparation a rangée dit la
+  // nationalité du lanceur à tous les lecteurs ; retirée ici tant qu'elle est planifiée et intacte, comme
+  // dans le Compas (qui la remplace par la ligne du lecteur) : les deux comptent la même chose. Réglée
+  // ou retouchée, c'est une dépense de la personne et elle reste.
+  const expenseRows = withoutStoredFormalities((expensesRes.data as TripExpense[]) || []);
   const collaboratorUserIds = [
     ...new Set([
       ...collabRows.map((c) => c.user_id),

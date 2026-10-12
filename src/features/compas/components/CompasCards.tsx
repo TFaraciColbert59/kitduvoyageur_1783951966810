@@ -526,6 +526,12 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
         currency={budget.currency}
         items={[{ label: 'prévus et dépensés', amount: engaged }]}
       />
+      {ctl.data.formalities && (
+        <p className="cp-sub" data-testid="formalities-card">
+          Formalités d’entrée pour toi : <b>{formatMoney(ctl.data.formalities.perPerson, ctl.data.formalities.currency)}</b> par
+          personne, à part, hors du total ci-dessus
+        </p>
+      )}
       {share != null && (
         <div
           className="cp-bar"

@@ -12,6 +12,25 @@ export const dynamic = 'force-dynamic';
 /** Plafond de segments dont les agrégats sont invalidés par événement. */
 const CONTRIBUTED_SEGMENT_LIMIT = 5000;
 
+/**
+ * Le cron quotidien (Hobby) ne tire qu'une fois par jour : un seul lot de 10
+ * laisserait la file grossir. On enchaîne les lots tant que le précédent est
+ * plein, dans une limite de lots et de temps (la tâche vit sous un délai de
+ * 90 s dans le répartiteur ; un événement coupé en route est repris par le bail
+ * de `claim_pending_adventure_events`, migration 20261012100000).
+ */
+const MAX_BATCHES = 20;
+const BATCH_DEADLINE_MS = 60_000;
+
+/**
+ * Refus déterministes (événement forgé ou sans acteur) : les rejouer ne change
+ * rien. Ils passent tout de suite à l'état terminal (attempts = 5) pour qu'une
+ * rafale d'événements forgés, insérables par n'importe quelle session, ne
+ * retarde pas la purge d'une vraie révocation.
+ */
+const TERMINAL_REFUSALS = new Set(['missing_actor_id', 'actor_mismatch']);
+const MAX_ATTEMPTS = 5;
+
 function message(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
@@ -40,6 +59,8 @@ export async function POST(request: NextRequest) {
   }
 
   const service = supabase;
+  /** Échecs non déterministes du lot en cours : on ne les rejoue pas dans la même exécution. */
+  let transientFailures = 0;
 
   async function deleteByUser(table: string, userId: string): Promise<void> {
     const { error } = await service.from(table).delete().eq('user_id', userId);
@@ -99,17 +120,38 @@ export async function POST(request: NextRequest) {
      */
     async markEventFailed(eventId: string, failure: string) {
       console.warn('[adventure-intelligence/cron/events] événement en échec:', eventId, failure);
+      const terminal = TERMINAL_REFUSALS.has(failure);
+      if (!terminal) transientFailures += 1;
       const { error } = await supabase
         .from('adventure_domain_events')
-        .update({ status: 'failed', error: failure, processed_at: new Date().toISOString() })
+        .update({
+          status: 'failed',
+          error: failure,
+          processed_at: new Date().toISOString(),
+          ...(terminal ? { attempts: MAX_ATTEMPTS } : {}),
+        })
         .eq('id', eventId);
       if (error) console.error('[adventure-intelligence/cron/events] mark failed:', message(error));
     },
   };
 
   try {
-    const result = await processAdventureEvents(client, { limit: ADVENTURE_EVENT_CLAIM_LIMIT });
-    return NextResponse.json(result);
+    const startedAt = Date.now();
+    const total = { processed: 0, failed: 0, skipped: 0 };
+    let batches = 0;
+    for (;;) {
+      const failuresBefore = transientFailures;
+      const result = await processAdventureEvents(client, { limit: ADVENTURE_EVENT_CLAIM_LIMIT });
+      batches += 1;
+      total.processed += result.processed;
+      total.failed += result.failed;
+      total.skipped += result.skipped;
+      const handled = result.processed + result.failed + result.skipped;
+      // Lot incomplet : la file est vide. Échec transitoire : on laisse au prochain tir.
+      if (handled < ADVENTURE_EVENT_CLAIM_LIMIT || transientFailures > failuresBefore) break;
+      if (batches >= MAX_BATCHES || Date.now() - startedAt >= BATCH_DEADLINE_MS) break;
+    }
+    return NextResponse.json({ ...total, batches });
   } catch (error) {
     console.error('[adventure-intelligence/cron/events] exécution en échec:', message(error));
     return NextResponse.json({ error: 'Traitement indisponible' }, { status: 502 });

@@ -243,7 +243,7 @@ function decodeStoredRoute(stored: unknown): RouteAttempt | undefined {
 async function readRouteCacheRemote(
   endpoint: string,
   key: string,
-  signature?: string,
+  signature?: string
 ): Promise<RouteAttempt | undefined> {
   try {
     // Signée par le serveur : la route ne la compte pas sur l'adresse de sortie
@@ -263,7 +263,7 @@ async function readRouteCacheRemote(
   } catch (err) {
     console.warn(
       '[routing] lecture du cache base impossible (repli memoire) :',
-      err instanceof Error ? err.message : err,
+      err instanceof Error ? err.message : err
     );
     return undefined;
   }
@@ -285,7 +285,7 @@ async function writeRouteCacheRemote(
   key: string,
   mode: TravelMode,
   value: RouteAttempt,
-  signature: string,
+  signature: string
 ): Promise<void> {
   try {
     await fetch(endpoint, {
@@ -301,7 +301,7 @@ async function writeRouteCacheRemote(
   } catch (err) {
     console.warn(
       '[routing] ecriture du cache base impossible (repli memoire) :',
-      err instanceof Error ? err.message : err,
+      err instanceof Error ? err.message : err
     );
   }
 }
@@ -326,7 +326,7 @@ async function writeRouteCacheRemote(
 async function readRouteCache(
   endpoint: string | null,
   key: string,
-  sign?: (key: string) => string,
+  sign?: (key: string) => string
 ): Promise<RouteAttempt | undefined> {
   const memoire = readCache(key) as RouteAttempt | undefined;
   if (memoire !== undefined) return memoire;
@@ -366,7 +366,7 @@ async function writeRouteCache(
   key: string,
   mode: TravelMode,
   value: RouteAttempt,
-  sign?: (key: string) => string,
+  sign?: (key: string) => string
 ): Promise<void> {
   writeCache(key, value);
   // Seul le serveur, qui vient de mesurer, écrit en base : la route refuse une
@@ -479,7 +479,7 @@ function finite(value: unknown): number | null {
 async function fetchJson(
   url: string,
   signal: AbortSignal,
-  headers: Record<string, string> = {},
+  headers: Record<string, string> = {}
 ): Promise<unknown | null> {
   try {
     const response = await fetch(url, {
@@ -576,7 +576,7 @@ export function decodeValhallaShape(shape: unknown): Pair[] {
 /** L extremite du trace est-elle bien le lieu demande ? */
 function reaches(
   point: readonly [number, number],
-  target: { readonly lat: number; readonly lon: number },
+  target: { readonly lat: number; readonly lon: number }
 ): boolean {
   const gapKm = haversineKm({ lat: point[1], lon: point[0] }, target);
   return gapKm * 1000 <= ARRIVAL_TOLERANCE_M;
@@ -606,11 +606,7 @@ function reaches(
  * une fois, plutot que dans chaque appelant.
  */
 export type RouteFailure =
-  | 'off_network'
-  | 'provider_unavailable'
-  | 'points_expected'
-  | 'mode_expected'
-  | 'rate_limited';
+  'off_network' | 'provider_unavailable' | 'points_expected' | 'mode_expected' | 'rate_limited';
 
 export interface RouteAttempt {
   readonly legs: RouteLeg[] | null;
@@ -636,7 +632,7 @@ export interface RouteAttempt {
  */
 export function normalizeValhallaRouteDetailed(
   payload: unknown,
-  points: readonly RoutePoint[],
+  points: readonly RoutePoint[]
 ): RouteAttempt {
   const trip = (payload as { trip?: { status?: unknown; legs?: unknown } } | null)?.trip;
   if (!trip || trip.status !== 0 || !Array.isArray(trip.legs)) {
@@ -668,7 +664,7 @@ export function normalizeValhallaRouteDetailed(
 /** Forme historique : la trace, ou `null`. La raison reste dans `routeAttempt`. */
 export function normalizeValhallaRoute(
   payload: unknown,
-  points: readonly RoutePoint[],
+  points: readonly RoutePoint[]
 ): RouteLeg[] | null {
   return normalizeValhallaRouteDetailed(payload, points).legs;
 }
@@ -711,7 +707,7 @@ function readLines(value: unknown): Pair[][] | null {
  */
 export function normalizeGeoapifyRouteDetailed(
   payload: unknown,
-  points: readonly RoutePoint[],
+  points: readonly RoutePoint[]
 ): RouteAttempt {
   const unavailable: RouteAttempt = { legs: null, reason: 'provider_unavailable' };
   const features = (payload as { features?: unknown } | null)?.features;
@@ -772,10 +768,13 @@ function withTimeout(signal?: AbortSignal): { signal: AbortSignal; done: () => v
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   const onAbort = () => controller.abort();
   signal?.addEventListener('abort', onAbort, { once: true });
-  return { signal: controller.signal, done: () => {
-    clearTimeout(timer);
-    signal?.removeEventListener('abort', onAbort);
-  } };
+  return {
+    signal: controller.signal,
+    done: () => {
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', onAbort);
+    },
+  };
 }
 
 function geoapifyKey(env: Record<string, string | undefined> = process.env): string | null {
@@ -788,7 +787,11 @@ function geoapifyKey(env: Record<string, string | undefined> = process.env): str
  * par `|` ; le mode est nomme (jamais un defaut) et les unites explicites.
  * Elle porte la cle : jamais journalisee.
  */
-export function geoapifyRouteUrl(points: readonly RoutePoint[], mode: TravelMode, key: string): string {
+export function geoapifyRouteUrl(
+  points: readonly RoutePoint[],
+  mode: TravelMode,
+  key: string
+): string {
   const params = new URLSearchParams({
     waypoints: points.map((p) => `${round6(p.lat)},${round6(p.lon)}`).join('|'),
     mode: GEOAPIFY_MODE[mode],
@@ -828,7 +831,7 @@ async function geoapifyAllowed(credits: number): Promise<boolean> {
 async function callProvider(
   url: string,
   signal: AbortSignal | undefined,
-  headers: Record<string, string>,
+  headers: Record<string, string>
 ): Promise<unknown | null> {
   const { signal: local, done } = withTimeout(signal);
   try {
@@ -879,7 +882,7 @@ export async function routeAttempt(
   signal?: AbortSignal,
   cacheBaseUrl?: string,
   /** Signature serveur d'une clé de cache (`signRouteCacheKey`) : sans elle, rien n'est écrit en base. */
-  signCacheKey?: (key: string) => string,
+  signCacheKey?: (key: string) => string
 ): Promise<RouteAttempt> {
   // Un mode inconnu et une liste de points inexploitable sont des REFUS de
   // l appelant, pas une panne du fournisseur : ils se distinguent, parce
@@ -903,8 +906,10 @@ export async function routeAttempt(
   const fromGeoapify =
     apiKey && (await geoapifyAllowed(geoapifyRouteCredits(points)))
       ? normalizeGeoapifyRouteDetailed(
-          await callProvider(geoapifyRouteUrl(points, mode, apiKey), signal, { 'User-Agent': USER_AGENT }),
-          points,
+          await callProvider(geoapifyRouteUrl(points, mode, apiKey), signal, {
+            'User-Agent': USER_AGENT,
+          }),
+          points
         )
       : null;
   const attempt =
@@ -915,7 +920,7 @@ export async function routeAttempt(
             'User-Agent': USER_AGENT,
             'X-Client-Id': CLIENT_ID,
           }),
-          points,
+          points
         );
   // Seule une trace REUSSIE est memorisee — cote memoire ET cote base. Un
   // echec ne doit pas etre fige : une panne de cinq minutes finirait par etre
@@ -933,7 +938,7 @@ export async function routeAttempt(
 export async function routeThrough(
   points: readonly RoutePoint[],
   mode: TravelMode,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<RouteLeg[] | null> {
   return (await routeAttempt(points, mode, signal)).legs;
 }

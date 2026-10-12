@@ -16,8 +16,9 @@
 /* Encre du thème clair prise sur les primitives (--lkv-ink-*, --lkv-sage-*) :
    la couche globale html[data-liquid-ios27] force --lkv-text-* et
    --lkv-secondary en BLANC pour le hub sombre, ce qui rendait le Compas
-   (verre clair) illisible sur un vrai paysage. Le thème sombre, plus bas,
-   reprend les jetons de texte. */
+   (verre clair) illisible sur un vrai paysage. Le Compas est clair
+   uniquement (CompasLightTheme force le thème clair sur /compas) : il n'a
+   aucune variante sombre. */
 .compas {
   --cp-ink: var(--lkv-ink-900);
   /* Contraste WCAG AA (4,5:1) mesuré au pixel sur la carte réelle (audit du
@@ -98,34 +99,6 @@
   --cp-ink3: rgb(23 43 36 / 0.85);
   font-size: 0.9375rem;
 }
-.dark .compas,
-[data-theme='dark'] .compas {
-  --cp-ink: var(--lkv-text-primary);
-  --cp-ink2: var(--lkv-text-secondary);
-  --cp-accent: var(--lkv-secondary);
-  --cp-good: var(--lkv-success);
-  --cp-warn: var(--lkv-warning-dark);
-  --cp-bad: var(--lkv-danger);
-  --cp-info: var(--lkv-info);
-  --cp-water: var(--lkv-info);
-  --cp-ink3: rgb(236 237 232 / 0.55);
-  --cp-sep: rgb(236 237 232 / 0.12);
-  --cp-fill: rgb(236 237 232 / 0.08);
-  --cp-hi: rgb(255 255 255 / 0.35);
-  --cp-soft: rgb(166 193 160 / 0.2);
-  --cp-soft-line: rgb(166 193 160 / 0.4);
-  --cp-pg:
-    linear-gradient(
-      180deg,
-      rgb(255 255 255 / 0.2),
-      rgb(255 255 255 / 0.04) 52%,
-      rgb(255 255 255 / 0.1)
-    ),
-    rgb(91 127 85 / 0.36);
-  --cp-pg-ink: var(--lkv-text-primary);
-  --cp-shadow: 0 8px 22px rgb(0 0 0 / 0.3);
-  --cp-island-bg: rgb(0 0 0 / 0.86);
-}
 .compas b,
 .compas strong {
   color: inherit;
@@ -168,10 +141,6 @@
       var(--lkv-app-bg-image-landscape) center / cover no-repeat,
       var(--lkv-app-bg-fallback);
   }
-}
-.dark .cp-bg,
-[data-theme='dark'] .cp-bg {
-  filter: brightness(0.62) saturate(1.05);
 }
 .compas button,
 .compas input,
@@ -248,16 +217,6 @@
     inset 0 0 16px rgb(255 255 255 / 0.12),
     0 0 0 0.5px rgb(23 43 36 / 0.12),
     0 10px 30px rgb(23 43 36 / 0.14);
-}
-.dark .cp-glass,
-[data-theme='dark'] .cp-glass,
-.dark .cp-sheet-glass,
-[data-theme='dark'] .cp-sheet-glass {
-  background: linear-gradient(
-    180deg,
-    rgb(24 30 27 / calc(var(--cp-ga) + 0.38)),
-    rgb(24 30 27 / calc(var(--cp-ga) + 0.3))
-  );
 }
 @media (prefers-reduced-transparency: reduce) {
   .cp-glass,
@@ -340,20 +299,12 @@
     0 3px 10px rgb(23 43 36 / 0.1);
   transition: transform 0.55s cubic-bezier(0.3, 1.35, 0.4, 1);
 }
-.dark .cp-ruler__thumb,
-[data-theme='dark'] .cp-ruler__thumb {
-  background: rgb(236 237 232);
-}
 .cp-steps {
   touch-action: pan-y;
 }
 /* Pendant le glissement, la lentille colle au doigt (pas de transition). */
 .cp-steps[data-drag] .cp-steps__lens {
   transition: none;
-}
-.dark .cp-steps__lens,
-[data-theme='dark'] .cp-steps__lens {
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.22), rgb(255 255 255 / 0.08));
 }
 .cp-step {
   position: relative;
@@ -385,10 +336,6 @@
 }
 .cp-step[aria-current='step'] {
   color: var(--lkv-primary);
-}
-.dark .cp-step[aria-current='step'],
-[data-theme='dark'] .cp-step[aria-current='step'] {
-  color: var(--cp-ink);
 }
 .cp-step__dot {
   position: absolute;
@@ -903,12 +850,6 @@
   background: rgb(255 255 255 / 0.55);
   color: var(--cp-ink);
   font-size: 0.9375rem;
-}
-.dark .cp-field input,
-.dark .cp-field select,
-[data-theme='dark'] .cp-field input,
-[data-theme='dark'] .cp-field select {
-  background: rgb(0 0 0 / 0.25);
 }
 .cp-grid2 {
   display: grid;
@@ -2111,10 +2052,6 @@
   border-radius: 16px;
   background: rgb(255 255 255 / 0.3);
 }
-.dark .cp-dayd,
-[data-theme='dark'] .cp-dayd {
-  background: rgb(0 0 0 / 0.2);
-}
 .cp-dayd__h {
   display: flex;
   align-items: baseline;
@@ -2271,10 +2208,6 @@
   padding: 10px 11px;
   border-radius: 16px;
   background: rgb(255 255 255 / 0.3);
-}
-.dark .cp-disle__out,
-[data-theme='dark'] .cp-disle__out {
-  background: rgb(0 0 0 / 0.2);
 }
 .cp-props {
   margin: 0;
@@ -2442,10 +2375,6 @@
 }
 .cp-intent:focus-within {
   box-shadow: 0 0 0 2px var(--cp-accent);
-}
-.dark .cp-intent,
-[data-theme='dark'] .cp-intent {
-  background: var(--cp-fill);
 }
 
 /* Barres posées sur le paysage : couche lumineuse (maquette : « .head .steps.lg,
@@ -2661,10 +2590,6 @@ html[data-liquid-ios27]:not([data-theme='dark'])
 .cp-tile:disabled {
   cursor: default;
 }
-.dark .cp-tile,
-[data-theme='dark'] .cp-tile {
-  background: var(--cp-fill);
-}
 
 /* Météo du verdict (maquette : « .wx ») : une case par jour, deux colonnes. */
 .cp-wx {
@@ -2688,10 +2613,6 @@ html[data-liquid-ios27]:not([data-theme='dark'])
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--cp-ink);
-}
-.dark .cp-wx > div,
-[data-theme='dark'] .cp-wx > div {
-  background: var(--cp-fill);
 }
 
 /* Veille du verdict (maquette : « .vb » et lignes à interrupteur). */
@@ -2761,10 +2682,6 @@ html[data-liquid-ios27]:not([data-theme='dark'])
 }
 .cp-rules li[data-hit='1'] span {
   color: var(--cp-warn);
-}
-.dark .cp-vb,
-[data-theme='dark'] .cp-vb {
-  background: var(--cp-fill);
 }
 
 /* Barre d'onglets réduite (maquette finale, .tabmin) : en défilant un tiroir
@@ -3093,6 +3010,10 @@ body:has(.compas[data-tabmin]) .lkv-nav-surface .lkv-nav-tab:not([aria-current='
   border-radius: 24px;
   box-shadow: var(--cp-shadow);
   animation: cp-prep-in 0.35s ease-out both;
+  /* Avec la mention « IA » et la note de position, le panneau peut dépasser un écran court
+     (paysage) : il défile au lieu de sortir de l'écran, « Arrêter » reste atteignable. */
+  max-height: calc(100dvh - var(--cp-nav-clear, 96px) - 24px);
+  overflow-y: auto;
 }
 @keyframes cp-prep-in {
   from {

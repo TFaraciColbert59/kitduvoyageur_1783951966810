@@ -94,9 +94,32 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       lire la table (notification gratuite).
 - [ ] **Pause pour inactivité** (7 jours sans requête) : le trafic et les tâches de nuit
       gardent le projet actif. Preuve : aucune pause en 14 jours.
-- [ ] Aucune des 15 routes `/api/cron/*` du site n'est planifiée (ni `vercel.json`, ni
+- [~] Aucune des 15 routes `/api/cron/*` du site n'est planifiée (ni `vercel.json`, ni
       tâche GitHub ; 8 oct.) : les brancher sur `pg_cron` + `pg_net` ou les retirer
-      (hors Compas, phase 9).
+      (hors Compas, phase 9). **Lot Z3** : code et tests faits : un seul cron Vercel quotidien
+      (`/api/cron/daily`, 03:00 UTC ; Hobby : un tir par jour, ±59 min, page des limites relue le
+      12 oct.) enchaîne 13 des 16 routes réelles (Bearer `CRON_SECRET` en temps constant, une tâche
+      qui échoue n'arrête pas les autres, budget 270 s) ; `process-ai-jobs` et
+      `refresh-country-guides` restent à la main (IA : décision de Tony), de même que
+      `finalize-kit-attributions` (retirée après revue : la reprise d'un crédit déjà versé est bornée
+      au solde restant alors que le registre débite le tout, et le webhook Stripe avale l'erreur de
+      `reverse_kit_attribution_by_session` ; à corriger avant de verser automatiquement)
+      (`dailyRegistry.test.ts`,
+      `dailyRealRoutes.test.ts`, `dailyDispatcher.test.ts`, `auth.test.ts`, `route.test.ts`).
+      ⚠️ **ACTIF SEULEMENT quand Tony crée `CRON_SECRET`** dans les variables Vercel (absent le
+      12 oct. : la route répond 401, rien ne tourne). Preuve attendue : un tir dans Réglages › Cron
+      Jobs, réponse 200 avec le résumé. **Après revue (PR #91)** : une tâche qui dépasse son délai
+      (90 s) ne peut pas être interrompue : le répartiteur n'en lance plus d'autre (suite sautée
+      `after_timeout`, jamais deux tâches en même temps) ; les tâches non épinglées partent d'un rang
+      décalé chaque jour (`rotation` = numéro du jour) pour qu'une queue de liste ne soit pas sautée à
+      vie, la vie privée (5 tâches) reste épinglée en tête ; `process-adventure-events` enchaîne jusqu'à
+      20 lots tant qu'ils sont pleins (sans rejouer un échec transitoire dans le même tir), les refus
+      forgés (`actor_mismatch`, `missing_actor_id`) sont terminaux d'emblée, et la migration
+      `20261012100000_adventure_events_claim_lease.sql` donne un bail de 15 min aux lignes
+      `processing` (une purge RGPD coupée est reprise) et sert `consent.revoked` d'abord (**à appliquer
+      par Tony**). Limites : l'expiration des positions live (TTL 15 min) n'est purgée qu'une fois par
+      jour (vérifier que chaque lecteur filtre sur `expires_at`) ; les 13 routes enchaînées gardent
+      leur comparaison de Bearer.
 
 ### 1.2 Hébergement Vercel
 
@@ -116,10 +139,16 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [x] **Aucune clé Stripe en production** (variables Vercel lues sans leurs valeurs,
       8 oct.) : aucun paiement n'est traité aujourd'hui. Tant que l'offre est Hobby,
       Stripe reste éteint ; l'allumer impose l'offre Pro (20 $/mois).
-- [ ] **Durée des fonctions** : rester ≤ 300 s (maximum Hobby) ; préparation découpée en
-      étapes reprenables (2.6) pour ne jamais dépendre d'une seule fonction longue.
-- [ ] **Coût de calcul** : supprimer le rafraîchissement complet de page toutes les 4 s
-      (2.8) ; mettre en cache les données de page (météo 30 min, altitudes 30 j).
+- [x] **Durée des fonctions** : rester ≤ 300 s (maximum Hobby) ; préparation découpée en
+      étapes reprenables (2.6) pour ne jamais dépendre d'une seule fonction longue. **Lot Z3** :
+      `maxDuration` ≤ 300 gardé par un test statique, cohérent avec `CLAIM_MS` (290 s)
+      (`functionDuration.test.ts`).
+- [~] **Coût de calcul** : supprimer le rafraîchissement complet de page toutes les 4 s
+      (2.8) ; mettre en cache les données de page (météo 30 min, altitudes 30 j). **Lot Z3** :
+      suivi de préparation à intervalle croissant, arrêté quand l'onglet est caché, hors ligne, la
+      préparation finie ou l'écran quitté, une seule requête en vol (`outcomePoll.test.ts`,
+      `compasScreen.test.tsx`). Le cache des données de page (météo 30 min, altitudes 30 j) était
+      déjà là (lots H et L).
 - [x] **Région des fonctions** : `vercel.json` → `cdg1` (Paris). Les fonctions
       tournaient à `iad1` (Washington) alors que la base est à Paris (`eu-west-3`), comme
       Geoapify, Photon, Valhalla et MET Norway : chaque requête traversait l'Atlantique.
@@ -519,7 +548,14 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 2.12 Tests
 
-- [ ] Tests d'autorisation réels de `requireEditor` (sans simulation).
+- [x] Tests d'autorisation réels de `requireEditor` (sans simulation). **Lot Z4** :
+      `requireEditorAuthorization.test.ts` (34 tests, helper `tripRls.ts`) : `requireEditor` et
+      `compasSetBudgetAction` s'exécutent pour de vrai ; propriétaire, co-propriétaire, éditeur et
+      propriétaire en essai passent ; lecteur, étranger (voyage privé, public, non répertorié), essai
+      étranger, voyage inexistant et sans session sont refusés sans écriture ; quatre mutations de
+      `requireEditor` font échouer les tests. ⚠️ Le client en mémoire ne rejoue pas la RLS : elle est
+      portée à la main depuis `20260904050000_trips_core.sql` (un bloc de tests garde ce portage
+      fidèle) ; les rôles et politiques PostgreSQL restent à éprouver par pgTAP (2.4).
 - [x] Test du contournement de la limite (2.2) et de la coupure (2.6) (lot O) :
       `limitBypass.test.ts` (14 tests, session et compteur en base réels : clé HMAC de la
       session, voyage, lieu, texte ou slug sans effet, compteur en panne ou muet → refus)
@@ -623,7 +659,7 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       connue, une ligne « à vérifier auprès du service officiel de ton pays », ni France
       Diplomatie, ni formalités chiffrées, ni « adaptateur à prévoir » (`papers.test.ts`,
       `nationalityPrompt.test.ts`, `travel.test.ts`).
-- [~] Nationalité française lisible dans les papiers d'un voyage partagé : la base de la dépense
+- [x] Nationalité française lisible dans les papiers d'un voyage partagé : la base de la dépense
       « Formalités » (« ressortissant français ») et les notes de papiers rangées sur le voyage
       laissent deviner la nationalité aux collaborateurs (et à tous pour un voyage public) ;
       les rendre à l'affichage pour la seule personne concernée (lot Q, avec la table
@@ -642,6 +678,39 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 4.2 Papiers, prises, change
 
+      **Lot Z1** : reste (a) à (c) traité : la dépense « Formalités » n'est plus rangée (ni dans
+      `trip_expenses`, ni dans `autofill_result`, ni dans le total) ; elle est calculée à la lecture pour
+      le LECTEUR (`readerFormalities` : `entryFor`, `entryFees`, seulement si la table dit visa ou
+      autorisation et lecteur de nationalité française) et affichée à part du budget (« non compté dans
+      le total du voyage ») ; la ligne « Prises » et les conseils de l'IA ne se rangent plus que neutres ;
+      la consigne envoyée à l'IA est unique et sans nationalité ; verrou étendu (`abroadCosts`,
+      `formalitiesBasis`, `frenchDevices`, `keepAiNote`…) avec contrôle par mutation sur les vrais
+      fichiers (`formalities.test.ts`, `papersPrivacy.test.ts`, `travellerPrivacy.test.ts`).
+      **Rattrapage des voyages déjà préparés** : `supabase/maintenance/lot_z1_vie_privee_rattrapage.sql`
+      (ÉCRIT et rejoué sur un PostgreSQL 16 jetable, NON APPLIQUÉ : à passer par Tony dans le SQL Editor,
+      sur une copie d'abord, étapes A puis B puis A). Limite : le domicile du profil reste un fait du
+      voyage choisi par le lanceur ; un voyage d'avant sans faits rangés dont le départ était dans le pays
+      peut montrer « Formalités » à tort à un lecteur français (cas rare).
+      **Après relecture (PR #91)** : (1) `isStoredFormalities` (`engine/storedFormalities.ts`) reconnaît
+      toute dépense « Formalités : » signée par une préparation, PRÉVUE et jamais retouchée, quelle que
+      soit sa base ; une ligne réglée ou retouchée reste comptée, dans le Compas comme dans `/voyages`
+      (même filtre dans `loadFullTripDetails`) ; (2) le SQL de rattrapage ne SUPPRIME que ces lignes
+      (prévues, `updated_at` au plus 5 s après `autofill.at` et après `created_at`), NEUTRALISE la base des
+      autres, vide l'enveloppe (`estimated_budget` NULL) quand les formalités en étaient tout le montant,
+      et sa reconnaissance suit celle du code (plus de filtre sur le texte de la base : seulement « pas
+      déjà neutre », pour rester rejouable) ; rejoué sur un PostgreSQL 16 jetable avec la reconnaissance
+      d'avant (base « ressortissant français ») : le prédicat élargi à toute base n'a pas été rejoué sur
+      une base ; (3) quand le départ vient du domicile, l'IA ne reçoit plus ni km, ni minutes, ni vol, ni
+      train, ni voiture de location (« Voyage à l'étranger : inconnu », `travelFactsForAi`) et les textes
+      rangés n'en portent plus ; (4) `abroad` est inconnu pour tout lecteur autre que le lanceur quand il
+      découle du domicile ou de la position (`abroadFrom`, `launchedBy`, `abroadForReader`) ; (5) la carte
+      « Formalités d'entrée pour toi » montre le montant PAR PERSONNE ; (6) `usedAi` ne vaut vrai que si
+      une note ou une étape vient de l'IA ; (7) les minuteurs de relance de `CompasScreen` sont annulés
+      au démontage. **Limites** : un voyage préparé avant ce correctif n'a pas `abroadFrom` (il garde
+      l'ancien comportement : `abroad` appliqué à tous) ; `summary.transport` (km, minutes) reste dans
+      `autofill_result` pour le résumé du lanceur ; les montants du budget (carburant, vol, train) restent
+      proportionnels à la distance, et la présence de « Assurance » ou « Location de voiture » découle
+      encore de `abroad`.
 - [x] Table passeport × destination tirée de **travelrequirements.info v1.3.0**
       (CC BY 4.0, commercial autorisé, crédit exact de l'éditeur), versionnée dans le
       code. Les jeux dérivés de Passport Index sont exclus (recherche académique
@@ -665,8 +734,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [~] Prises et change selon le pays de résidence ; « France Diplomatie » pour les
       Français seulement, le service officiel du pays sinon. Lot P : France Diplomatie et
       « adaptateur à prévoir » seulement pour une nationalité ou une résidence françaises
-      connues ; ailleurs le type de prise du pays, un fait. **Pas fait** : prises et change
-      d'une résidence hors de France (table des prises par pays, lot Q).
+      connues ; ailleurs le type de prise du pays, un fait. **Lot Z1** : la ligne « Prises »
+      ne range plus que le fait du pays ; celle du lecteur (`frenchDevices(lecteur)`) est rendue
+      à la lecture (`papers.test.ts`, `papersPrivacy.test.ts`). **Pas fait** : prises d'une
+      résidence hors de France pour d'autres pays que les 10 de `PLUGS` (table des prises par
+      pays) et ligne de change calculée à la lecture avec la devise du lecteur : le conseil de
+      change de l'IA est maintenant écarté en zone euro pour tous (régression assumée du choix neutre).
 - [x] `keepAiNote` ne retire plus les conseils justes pour un non-Français. Lot P : le change
       est gardé pour une devise connue autre que l'euro, les prises quand la règle ne sait
       pas ; les papiers restent à la règle (`papers.test.ts`). **Lot T** : les papiers sont
@@ -942,13 +1015,19 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       cliquable ; « Powered by Geoapify » seulement là où ses résultats s'affichent
       (retiré des points « Sur place », gardé près des distances) ; chaque service crédité
       est réellement employé (`dataSources.test.tsx`, `compasScreen.test.tsx`).
-- [~] Mention IA au démarrage, sur les conseils et sur toute étape proposée par l'IA
-      (AI Act art. 50).
-- [ ] Mention d'affiliation dans la recherche d'hébergement en direct ; placée avant la
-      liste dans Parcours.
+- [x] Mention IA au démarrage, sur les conseils et sur toute étape proposée par l'IA
+      (AI Act art. 50). **Lot Z2** : démarrage de la préparation, étapes `aiProposed`, conseils,
+      « Dis-le », explication du verdict ; muette si `AI_MODE=off` (`aiNotice.test.tsx`,
+      `autofillAiMark.test.ts`, `compasScreen.test.tsx`, axe-core).
+- [x] Mention d'affiliation dans la recherche d'hébergement en direct ; placée avant la
+      liste dans Parcours. **Lot Z2** : divulgation avant les offres (ordre du DOM), `rel="sponsored
+      nofollow"` sur chaque lien sortant d'offre (`compasScreen.test.tsx`).
 - [~] Politique de confidentialité et mentions légales (2.10) : hébergeur corrigé
       (Vercel et non Netlify ; base à Paris et non Francfort), NVIDIA, services de carte et
-      hCaptcha ajoutés aux destinataires (lot B).
+      hCaptcha ajoutés aux destinataires (lot B). **Lot Z2** : destinataires relus dans le code
+      (OpenRouter retiré, Nominatim, Overpass, unpkg ajoutés), profil voyageur privé, section IA,
+      essai de 7 jours, et « rien du profil n'est envoyé à l'IA » (`privacyPolicy.test.tsx`). Reste :
+      l'identité de l'éditeur (Tony).
 - [ ] ⚖️ **Identité de l'éditeur à fournir par Tony** : les mentions légales affichent
       une société d'exemple (« 1 Rue de la Paix », SIRET 123 456 789). Obligatoire (LCEN)
       avant toute ouverture au public ; Claude n'invente rien ici.
@@ -1059,14 +1138,21 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ## Phase 9 — Dette et hygiène
 
-- [ ] `eslint.ignoreDuringBuilds` remis à `false` (CLAUDE.md) après nettoyage du lint.
-- [ ] Fichiers non formatés par Prettier (`track.ts`, `routeStackBookingProvider.ts`,
-      `routingService.ts`…) reformatés dans une PR dédiée.
+- [ ] `eslint.ignoreDuringBuilds` remis à `false` (CLAUDE.md) après nettoyage du lint. **Lot Z4** :
+      mesure du 12 oct. (`npx eslint .`, 2 967 fichiers) : 45 erreurs (no-this-alias 17, display-name 9,
+      no-children-prop 9…) et 8 699 avertissements (no-unused-expressions 6 172, no-unused-vars 1 211,
+      no-console 925…) : réglage inchangé tant qu'il reste des erreurs.
+- [~] Fichiers non formatés par Prettier (`track.ts`, `routeStackBookingProvider.ts`,
+      `routingService.ts`…) reformatés dans une PR dédiée. **Lot Z4** : les trois fichiers cités
+      sont formatés (commit dédié, `prettier --check` vert) ; le « … » reste à lister.
 - [ ] Actions GitHub sur Node 20 (déprécié) mises à jour.
 - [ ] Historique des migrations aligné dépôt ↔ base (versions divergentes du 4 octobre).
 - [ ] `visual-tests` : finir sous 25 min (aujourd'hui annulé à chaque fois) ou le
       découper.
-- [ ] Code mort et fichiers d'exemple retirés (DemoLoginButton, CSS sombre du Compas).
+- [x] Code mort et fichiers d'exemple retirés (DemoLoginButton, CSS sombre du Compas).
+      **Lot Z4** : `DemoLoginButton` était déjà supprimé (verrou `audit-scripts-static`) ; les 13
+      règles `.dark` du CSS du Compas sont retirées (thème clair intact, `lightOnly.test.ts`) ;
+      `demoLogin.ts` n'est PAS mort (la page de connexion l'appelle) : gardé.
 
 ---
 

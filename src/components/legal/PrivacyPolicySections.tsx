@@ -11,7 +11,7 @@ import Link from 'next/link';
  * c'est changer ce fichier.
  */
 
-export const PRIVACY_UPDATED_AT = '9 octobre 2026';
+export const PRIVACY_UPDATED_AT = '11 octobre 2026';
 
 export interface PrivacySection {
   title: string;
@@ -29,8 +29,8 @@ const PROCESSORS: Processor[] = [
   { name: 'Supabase', role: 'base de données et comptes', where: 'Union européenne (Paris)' },
   { name: 'Vercel', role: 'hébergement du site (fonctions à Paris)', where: 'États-Unis (société)' },
   {
-    name: 'NVIDIA, et OpenRouter en secours',
-    role: 'IA : le texte de votre demande et les faits du voyage (lieux, dates, groupe), jamais votre nom ni votre e-mail',
+    name: 'NVIDIA',
+    role: 'IA : le texte de votre demande et les faits du voyage (lieux, dates, groupe), jamais votre nom, votre e-mail ni le domicile de votre profil',
     where: 'États-Unis',
   },
   { name: 'Google (Gemini)', role: 'IA : la photo de matériel que vous envoyez à l’analyse, si vous utilisez cette fonction', where: 'États-Unis' },
@@ -39,7 +39,22 @@ const PROCESSORS: Processor[] = [
     role: 'recherche de lieux, itinéraires et points d’intérêt : les noms de lieux cherchés et des coordonnées (votre position, arrondie à environ 1 km)',
     where: 'Allemagne, Autriche, États-Unis selon le service',
   },
+  {
+    name: 'Nominatim (fondation OpenStreetMap)',
+    role: 'recherche de lieux : les noms de lieux cherchés et, pour retrouver une commune, des coordonnées',
+    where: 'Royaume-Uni, Pays-Bas',
+  },
+  {
+    name: 'Overpass (overpass-api.de et ses miroirs)',
+    role: 'points d’intérêt et tracés OpenStreetMap de l’Explorer, et recherches de services à proximité (repas, hébergements, commerces) : la zone de carte demandée',
+    where: 'selon le miroir (non précisé par l’exploitant)',
+  },
   { name: 'Esri (ArcGIS)', role: 'fonds de carte : la zone affichée et votre adresse IP', where: 'États-Unis' },
+  {
+    name: 'unpkg',
+    role: 'icônes de marqueurs des cartes de l’Explorer et des carnets : votre adresse IP, quand une de ces cartes s’affiche',
+    where: 'selon le réseau de diffusion (non précisé par l’exploitant)',
+  },
   {
     name: 'MET Norway, NASA POWER, Terrain Tiles (Amazon Web Services)',
     role: 'météo, tendances et relief : les coordonnées des lieux du voyage',
@@ -88,6 +103,15 @@ export function privacySections(linkClass: string): PrivacySection[] {
             Données techniques : adresse IP et journaux de l’hébergeur. Les compteurs qui limitent les abus ne gardent
             qu’une empreinte (HMAC), jamais l’adresse ni l’identifiant en clair.
           </li>
+          <li>
+            Profil voyageur (facultatif) : nationalité, pays de résidence, devise, langue, fuseau horaire et commune de
+            domicile, rangée à environ 1 km près. Il est privé : seul le compte concerné le lit et le modifie, il
+            n’apparaît ni dans un voyage partagé ni dans un profil public, et il fait partie de l’export de vos données.
+            La nationalité sert, sur le serveur, à lire les formalités d’entrée ; la commune de domicile sert de départ
+            du trajet quand aucun autre départ n’est dit. Rien de ce profil n’est envoyé à l’IA : les consignes qu’elle
+            reçoit sont les mêmes pour tout le monde. Le profil sert à chaque lecteur, au moment d’afficher le voyage,
+            pour ses propres papiers et formalités d’entrée ; il n’est jamais rangé sur le voyage.
+          </li>
           <li>Aucune donnée bancaire (aucun paiement n’est activé) ; aucune donnée sensible au sens de l’article 9 du RGPD.</li>
         </ul>
       ),
@@ -104,7 +128,35 @@ export function privacySections(linkClass: string): PrivacySection[] {
       ),
     },
     {
-      title: '4. Destinataires',
+      title: '4. Intelligence artificielle',
+      body: (
+        <>
+          <p>
+            Une IA (un modèle de langage appelé chez NVIDIA) peut lire une demande de voyage, proposer des étapes,
+            rédiger des conseils et expliquer le verdict du Compas. Ces contenus sont signalés à l’écran : « Compris par
+            l’IA », « Proposée par l’IA », « Suggestion de l’IA », « Rédigé par l’IA ».
+          </p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            <li>
+              Les lieux proposés sont retrouvés sur la carte ; le niveau du verdict est calculé par le Compas, jamais par
+              l’IA.
+            </li>
+            <li>
+              Le site peut éteindre l’IA : le Compas prépare alors avec ses seules règles et l’écran ne mentionne plus
+              d’IA. Une étape proposée par l’IA avant l’arrêt garde sa mention.
+            </li>
+            <li>Une préparation se retire d’un geste (« Annuler la préparation »).</li>
+            <li>Ce qui est envoyé à l’IA, et ce qui ne l’est jamais, figure dans la liste des destinataires ci-dessous.</li>
+          </ul>
+          <p className="mt-2">
+            Ces mentions s’inspirent des obligations d’information de l’article 50 du règlement (UE) 2024/1689 sur
+            l’intelligence artificielle : savoir qu’un contenu vient d’une IA.
+          </p>
+        </>
+      ),
+    },
+    {
+      title: '5. Destinataires',
       body: (
         <>
           <ul className="list-disc space-y-1 pl-5">
@@ -119,7 +171,7 @@ export function privacySections(linkClass: string): PrivacySection[] {
       ),
     },
     {
-      title: '5. Transferts hors de l’Union européenne',
+      title: '6. Transferts hors de l’Union européenne',
       body: (
         <p>
           Les prestataires établis aux États-Unis reçoivent des données dans les limites décrites ci-dessus. Ces
@@ -129,7 +181,7 @@ export function privacySections(linkClass: string): PrivacySection[] {
       ),
     },
     {
-      title: '6. Durées de conservation',
+      title: '7. Durées de conservation',
       body: (
         <ul className="list-disc space-y-1 pl-5">
           <li>Compte et ses voyages : tant que le compte existe, puis 3 ans après sa dernière utilisation.</li>
@@ -145,7 +197,7 @@ export function privacySections(linkClass: string): PrivacySection[] {
       ),
     },
     {
-      title: '7. Vos droits',
+      title: '8. Vos droits',
       body: (
         <p>
           Accès, rectification, effacement, portabilité, opposition, limitation, retrait du consentement. Contact :{' '}
@@ -161,7 +213,7 @@ export function privacySections(linkClass: string): PrivacySection[] {
       ),
     },
     {
-      title: '8. Sécurité',
+      title: '9. Sécurité',
       body: (
         <p>
           Les données privées ne sont lisibles qu’après authentification, et chaque table est protégée par des règles
@@ -170,7 +222,7 @@ export function privacySections(linkClass: string): PrivacySection[] {
       ),
     },
     {
-      title: '9. Cookies',
+      title: '10. Cookies',
       body: (
         <p>
           Voir la{' '}

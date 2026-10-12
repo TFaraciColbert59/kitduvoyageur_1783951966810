@@ -6,6 +6,8 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import userEvent from '@testing-library/user-event';
 import axe from 'axe-core';
 import { STEP_FLOWS } from '../components/compasTypes';
+import { aiSuggestion } from '../engine/advice';
+import { AI_NOTICE_DONE, AI_NOTICE_RUN, AI_STEP_LABEL } from '../engine/aiNotice';
 import { buildCompasModel, type CompasInput, type CompasItemInput } from '../engine/compasModel';
 import { assessDanger, mergeDangerIntoVerdict, type OfficialAlert } from '../engine/danger';
 import { METEOALARM_DISCLAIMER, METEOALARM_HOME } from '../engine/meteoalarmFeeds';
@@ -450,6 +452,7 @@ function makeData(overrides: Partial<CompasInput> = {}): CompasData {
     weather: null,
     route: { id: 374, name: 'Tour des Vallées' },
     origin: { lat: 42.73, lon: -0.01 },
+    aiOn: true,
   };
 }
 
@@ -907,6 +910,109 @@ describe('CompasScreen', () => {
     }
   });
 
+  // Quitter l'écran annule aussi les relances programmées (reprise après coupure, limite de fréquence,
+  // relectures différées) : une relance armée relançait la préparation, ou relisait la page, pour un
+  // écran qui n'existe plus (relecture de la PR #91).
+  describe('Préremplissage : quitter l’écran annule les relances programmées', () => {
+    it('limite de fréquence : la relance prévue ne part pas après le démontage (et part si l’écran reste)', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        const limited = async () =>
+          ({ success: false, error: 'Beaucoup de préparations d’affilée : je reprends seul dans 2 min.', retryInS: 90 }) as never;
+        // Témoin : l'écran reste, la relance part.
+        autofill.compasAutofillAction.mockImplementationOnce(limited);
+        const stays = render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        expect(await screen.findByText(/je reprends seul dans 2 min/)).toBeTruthy();
+        await vi.advanceTimersByTimeAsync(93_000);
+        await waitFor(() => expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(2));
+        stays.unmount();
+        // Même cas, mais l'écran est quitté avant la fin de l'attente.
+        autofill.compasAutofillAction.mockClear();
+        autofill.compasAutofillAction.mockImplementationOnce(limited);
+        const leaves = render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        expect(await screen.findByText(/je reprends seul dans 2 min/)).toBeTruthy();
+        expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1);
+        await vi.advanceTimersByTimeAsync(10_000);
+        leaves.unmount();
+        await vi.advanceTimersByTimeAsync(120_000);
+        expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('coupure du réseau : la reprise à 66 s ne part pas après le démontage (et part si l’écran reste)', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        // Témoin : l'écran reste, la préparation reprend une fois.
+        autofill.compasAutofillStartAction.mockRejectedValueOnce(new Error('réseau coupé'));
+        const stays = render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        expect(await screen.findByText(/je reprends dans une minute/)).toBeTruthy();
+        expect(autofill.compasAutofillStartAction).toHaveBeenCalledTimes(1);
+        await vi.advanceTimersByTimeAsync(67_000);
+        await waitFor(() => expect(autofill.compasAutofillStartAction).toHaveBeenCalledTimes(2));
+        stays.unmount();
+        // Même coupure, mais l'écran est quitté pendant l'attente.
+        autofill.compasAutofillStartAction.mockClear();
+        autofill.compasAutofillStartAction.mockRejectedValueOnce(new Error('réseau coupé'));
+        const leaves = render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        expect(await screen.findByText(/je reprends dans une minute/)).toBeTruthy();
+        await vi.advanceTimersByTimeAsync(20_000);
+        leaves.unmount();
+        await vi.advanceTimersByTimeAsync(120_000);
+        expect(autofill.compasAutofillStartAction).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('une réponse qui arrive après le démontage n’arme plus de relance', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        let fail: (e: Error) => void = () => undefined;
+        autofill.compasAutofillStartAction.mockImplementationOnce(
+          () => new Promise((_resolve, reject) => (fail = reject)) as never
+        );
+        const view = render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        await waitFor(() => expect(autofill.compasAutofillStartAction).toHaveBeenCalledTimes(1));
+        view.unmount();
+        fail(new Error('réseau coupé'));
+        await vi.advanceTimersByTimeAsync(120_000);
+        expect(autofill.compasAutofillStartAction).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('autre préparation en cours : les relectures à 20, 45 et 90 s s’arrêtent avec l’écran (et ont lieu s’il reste)', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        const elsewhere = async () => ({ success: true }) as never;
+        // Témoin : l'écran reste, la page est relue aux trois échéances.
+        autofill.compasAutofillAction.mockImplementationOnce(elsewhere);
+        const stays = render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        await waitFor(() => expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1));
+        await vi.advanceTimersByTimeAsync(5_000);
+        const armed = refresh.mock.calls.length;
+        await vi.advanceTimersByTimeAsync(100_000);
+        expect(refresh.mock.calls.length - armed).toBeGreaterThanOrEqual(3);
+        stays.unmount();
+        // Même cas, mais l'écran est quitté après 5 s : aucune relecture ensuite.
+        autofill.compasAutofillAction.mockClear();
+        autofill.compasAutofillAction.mockImplementationOnce(elsewhere);
+        const leaves = render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        await waitFor(() => expect(autofill.compasAutofillAction).toHaveBeenCalledTimes(1));
+        await vi.advanceTimersByTimeAsync(5_000);
+        leaves.unmount();
+        const left = refresh.mock.calls.length;
+        await vi.advanceTimersByTimeAsync(120_000);
+        expect(refresh.mock.calls.length).toBe(left);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
   it('Préremplissage : lancé puis issue relue, sans tenir de requête ouverte', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
@@ -929,6 +1035,140 @@ describe('CompasScreen', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  // Plan 1.2 « Coût de calcul » : le suivi ralentit, se tait onglet caché ou hors ligne,
+  // reprend à la reprise et s'arrête avec « Arrêter ».
+  describe('Préremplissage : suivi économe', () => {
+    const setTabVisible = (visible: boolean) => {
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => (visible ? 'visible' : 'hidden') });
+      document.dispatchEvent(new Event('visibilitychange'));
+    };
+    const setOnline = (online: boolean) => {
+      Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => online });
+      window.dispatchEvent(new Event(online ? 'online' : 'offline'));
+    };
+    const pending = { outcome: null, stamp: 'v1' };
+    let original: ((...args: never[]) => unknown) | undefined;
+    beforeEach(() => {
+      original = autofill.compasAutofillOutcomeAction.getMockImplementation() as typeof original;
+    });
+    afterEach(() => {
+      delete (document as unknown as Record<string, unknown>).visibilityState;
+      delete (navigator as unknown as Record<string, unknown>).onLine;
+      if (original) autofill.compasAutofillOutcomeAction.mockImplementation(original as never);
+    });
+
+    it('onglet caché : aucune relecture ; au retour, une relecture tout de suite et l’issue s’affiche', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        let answer: unknown = pending;
+        autofill.compasAutofillOutcomeAction.mockImplementation((async () => answer) as never);
+        render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        await waitFor(() => expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(1));
+        setTabVisible(false);
+        await vi.advanceTimersByTimeAsync(120_000);
+        expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(1);
+        expect(screen.queryByText(/Aventure préparée/)).toBeNull();
+        // Le serveur a fini pendant l'absence : la reprise le montre sans attendre le prochain rythme.
+        const done = (await outcomes.byToken.get('t' + outcomes.n)) as Record<string, unknown>;
+        answer = { outcome: { ...done, token: 't' + outcomes.n, at: Date.now() }, stamp: 'fin' };
+        setTabVisible(true);
+        expect(await screen.findByText(/Aventure préparée · 486/)).toBeTruthy();
+        expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(2);
+        // Fini : plus aucune relecture.
+        await vi.advanceTimersByTimeAsync(120_000);
+        expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(2);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('hors ligne : aucune relecture ; le réseau revient, la relecture reprend', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        autofill.compasAutofillOutcomeAction.mockImplementation((async () => pending) as never);
+        render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        await waitFor(() => expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(1));
+        setOnline(false);
+        await vi.advanceTimersByTimeAsync(90_000);
+        expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(1);
+        setOnline(true);
+        await vi.advanceTimersByTimeAsync(50);
+        expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(2);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('« Arrêter » hors ligne met fin au suivi : le retour du réseau ne relit plus rien', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        autofill.compasAutofillOutcomeAction.mockImplementation((async () => pending) as never);
+        render(<CompasScreen data={{ ...makeData(), autofill: 'none', startSay: 'rando à 4' }} />);
+        const panel = await screen.findByRole('status', { name: 'Préparation de l’aventure' });
+        await waitFor(() => expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(1));
+        setOnline(false);
+        await vi.advanceTimersByTimeAsync(10_000);
+        fireEvent.click(within(panel).getByRole('button', { name: 'Arrêter' }));
+        await waitFor(() => expect(autofill.compasAutofillStopAction).toHaveBeenCalledWith({ tripId: TRIP }));
+        setOnline(true);
+        await vi.advanceTimersByTimeAsync(120_000);
+        expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('quitter l’écran met fin au suivi : plus aucune relecture entre deux rythmes', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        autofill.compasAutofillOutcomeAction.mockImplementation((async () => pending) as never);
+        const view = render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        await waitFor(() => expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(1));
+        await vi.advanceTimersByTimeAsync(3_500);
+        expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(2);
+        view.unmount();
+        await vi.advanceTimersByTimeAsync(120_000);
+        expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(2);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('quitter l’écran onglet caché ou hors ligne : le retour de l’onglet ou du réseau ne relit rien', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        autofill.compasAutofillOutcomeAction.mockImplementation((async () => pending) as never);
+        const view = render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        await waitFor(() => expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(1));
+        setTabVisible(false);
+        setOnline(false);
+        await vi.advanceTimersByTimeAsync(10_000);
+        view.unmount();
+        setOnline(true);
+        setTabVisible(true);
+        await vi.advanceTimersByTimeAsync(120_000);
+        expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('une préparation de 100 s coûte au plus 14 relectures (4 s fixes : 25)', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        autofill.compasAutofillOutcomeAction.mockImplementation((async () => pending) as never);
+        render(<CompasScreen data={{ ...makeData(), autofill: 'none' }} />);
+        await waitFor(() => expect(autofill.compasAutofillOutcomeAction).toHaveBeenCalledTimes(1));
+        await vi.advanceTimersByTimeAsync(100_000);
+        const calls = autofill.compasAutofillOutcomeAction.mock.calls.length;
+        expect(calls).toBeGreaterThanOrEqual(8);
+        expect(calls).toBeLessThanOrEqual(14);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 
   it('Préremplissage : déjà fait ou annulé → ne se relance pas', () => {
@@ -1102,6 +1342,92 @@ describe('CompasScreen', () => {
       const card = screen.getByTestId('budget-also');
       expect(card.textContent).toContain('Conversion en CHF indisponible');
       expect(card.textContent).not.toContain('≈');
+    });
+  });
+
+  describe('Nous : les formalités d’entrée de la personne, à part du budget (vie privée, lot Z1)', () => {
+    const formalities = {
+      title: 'Formalités : ESTA (40 $)',
+      perPerson: 35,
+      party: 2,
+      amount: 70,
+      currency: 'EUR' as const,
+      basis:
+        'barème Compas 2026-10 · ressortissant français, tarif officiel connu · calculé pour toi à l’ouverture, non compté dans le total du voyage',
+    };
+    const withFormalities = (f: CompasData['formalities']) => ({ ...makeData(), formalities: f });
+
+    it('la carte la dit à côté du total, sans l’y ajouter', () => {
+      const bigsum = () => document.querySelector('.cp-bigsum')?.textContent ?? '';
+      const without = render(<CompasScreen data={withFormalities(null)} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+      const total = bigsum();
+      expect(total).not.toBe('');
+      expect(screen.queryByTestId('formalities-card')).toBeNull();
+      without.unmount();
+      render(<CompasScreen data={withFormalities(formalities)} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+      const line = screen.getByTestId('formalities-card');
+      expect(line.textContent).toContain('Formalités d’entrée pour toi');
+      // « Pour toi » : le montant PAR PERSONNE (barème de sa nationalité), jamais celui du groupe (70 €),
+      // qui supposerait le même passeport pour tous alors que le profil des autres est privé.
+      expect(line.textContent).toMatch(/35\s€ par personne/);
+      expect(line.textContent).not.toMatch(/70/);
+      expect(line.textContent).toContain('hors du total');
+      // Le total engagé est celui du budget rangé, ni plus ni moins.
+      expect(bigsum()).toBe(total);
+    });
+
+    it('le tiroir budget détaille la ligne : titre, groupe, montant et base, à part des catégories', async () => {
+      render(<CompasScreen data={withFormalities(formalities)} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+      fireEvent.click(screen.getByRole('button', { name: 'Détails : Nous' }));
+      const sheet = await screen.findByRole('dialog', { name: 'Nous' });
+      fireEvent.click(within(sheet).getByRole('button', { name: /Budget/ }));
+      const row = within(sheet).getByTestId('formalities-line');
+      expect(row.textContent).toContain('Formalités : ESTA (40 $)');
+      expect(row.textContent).toMatch(/2 personnes × 35\s€/);
+      expect(row.textContent).toMatch(/70\s€/);
+      expect(row.textContent).toContain('non compté dans le total du voyage');
+      expect(within(sheet).queryByText('divers')).toBeNull();
+    });
+
+    it('la carte ne multiplie jamais par la taille du groupe : 5 personnes, toujours le montant par personne', () => {
+      render(<CompasScreen data={withFormalities({ ...formalities, party: 5, amount: 175 })} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+      const line = screen.getByTestId('formalities-card');
+      expect(line.textContent).toMatch(/35\s€ par personne/);
+      expect(line.textContent).not.toMatch(/175/);
+    });
+
+    it('le tiroir ne suppose pas le même passeport pour tout le groupe sans le dire', async () => {
+      render(<CompasScreen data={withFormalities(formalities)} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+      fireEvent.click(screen.getByRole('button', { name: 'Détails : Nous' }));
+      const sheet = await screen.findByRole('dialog', { name: 'Nous' });
+      fireEvent.click(within(sheet).getByRole('button', { name: /Budget/ }));
+      expect(within(sheet).getByTestId('formalities-line').textContent).toContain('si tout le groupe a ta nationalité');
+    });
+
+    it('seul : aucune réserve sur le groupe', async () => {
+      render(<CompasScreen data={withFormalities({ ...formalities, party: 1, amount: 35 })} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+      fireEvent.click(screen.getByRole('button', { name: 'Détails : Nous' }));
+      const sheet = await screen.findByRole('dialog', { name: 'Nous' });
+      fireEvent.click(within(sheet).getByRole('button', { name: /Budget/ }));
+      const row = within(sheet).getByTestId('formalities-line');
+      expect(row.textContent).toMatch(/1 personne × 35\s€/);
+      expect(row.textContent).not.toContain('tout le groupe');
+    });
+
+    it('sans ligne pour cette personne, rien n’est affiché', async () => {
+      for (const f of [null, undefined]) {
+        const { unmount } = render(<CompasScreen data={withFormalities(f)} />);
+        fireEvent.click(within(stepsNav()).getByRole('button', { name: /Nous/ }));
+        expect(screen.queryByTestId('formalities-card')).toBeNull();
+        expect(screen.queryByTestId('formalities-line')).toBeNull();
+        unmount();
+      }
     });
   });
 
@@ -2939,4 +3265,311 @@ describe('CompasScreen : accessibilité (lot Q, 5.2)', () => {
     });
   });
 
+});
+
+describe('CompasScreen : la mention « IA » (lot Z2, PLAN-100 5.3)', () => {
+  const openParcours = async () => {
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Parcours/ }));
+    return sheet;
+  };
+  const withAiStep = (aiOn = true): CompasData => {
+    const data = makeData();
+    data.aiOn = aiOn;
+    data.itinerary = data.itinerary.map((st, i) => ({ ...st, aiProposed: i === 0 }));
+    return data;
+  };
+
+  it('Parcours · étapes : seule l’étape proposée par l’IA le dit, en texte, sur sa ligne', async () => {
+    render(<CompasScreen data={withAiStep()} />);
+    const sheet = await openParcours();
+    const labels = await within(sheet).findAllByText(AI_STEP_LABEL);
+    expect(labels).toHaveLength(1);
+    expect(labels[0].closest('.cp-row')?.textContent).toContain('Gavarnie');
+    // La seconde étape n'est pas de l'IA : sa ligne ne le dit pas.
+    const second = within(sheet).getByText(/^Jour 2 ·/).closest('.cp-row');
+    expect(second?.textContent).toContain('Refuge');
+    expect(second?.textContent).not.toContain(AI_STEP_LABEL);
+  });
+
+  it('Parcours · étapes calculées par le Compas : aucune mention', async () => {
+    render(<CompasScreen data={makeData()} />);
+    const sheet = await openParcours();
+    expect(await within(sheet).findByText('Gavarnie')).toBeTruthy();
+    expect(within(sheet).queryByText(AI_STEP_LABEL)).toBeNull();
+  });
+
+  it('étape déjà proposée par l’IA, puis IA éteinte : la mention reste (le contenu, lui, existe)', async () => {
+    render(<CompasScreen data={withAiStep(false)} />);
+    const sheet = await openParcours();
+    expect(await within(sheet).findAllByText(AI_STEP_LABEL)).toHaveLength(1);
+  });
+
+  it('conseil de l’IA dans les notes de la préparation : « Suggestion de l’IA (facultatif) » est lu avec lui', () => {
+    const data = { ...makeData(), autofill: 'done' as const, autofillNotes: [aiSuggestion('Prévois une frontale de secours.')] };
+    render(<CompasScreen data={data} initialStep="ou" />);
+    expect(screen.getByText('Suggestion de l’IA (facultatif) : prévois une frontale de secours.')).toBeTruthy();
+  });
+
+  describe('Verdict · Risques : « Expliquer avec l’IA »', () => {
+    const openRisks = async () => {
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+      fireEvent.click(screen.getByRole('button', { name: /^Détails : / }));
+      return screen.findByRole('dialog');
+    };
+
+    it('IA allumée : le bouton est là, son libellé dit que c’est l’IA', async () => {
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openRisks();
+      expect(within(sheet).getByRole('button', { name: 'Expliquer avec l’IA' })).toBeTruthy();
+    });
+
+    it('IA éteinte (AI_MODE=off) : ni bouton ni mot sur l’IA dans le tiroir', async () => {
+      render(<CompasScreen data={{ ...makeData(), aiOn: false }} />);
+      const sheet = await openRisks();
+      expect(within(sheet).queryByRole('button', { name: /IA/ })).toBeNull();
+      expect(sheet.textContent ?? '').not.toMatch(/\bIA\b/);
+    });
+  });
+
+  describe('préparation lancée depuis la demande (panneau visible)', () => {
+    const say = () => ({ ...makeData(), startSay: 'rando à 4' }) as CompasData;
+    const panel = () => screen.findByRole('status', { name: 'Préparation de l’aventure' });
+
+    it('IA allumée : la mention est dite dès le démarrage, dans le panneau', async () => {
+      render(<CompasScreen data={say()} />);
+      const p = await panel();
+      expect(within(p).getByRole('note').textContent).toContain(AI_NOTICE_RUN);
+    });
+
+    it('IA éteinte : le panneau ne parle pas d’IA', async () => {
+      render(<CompasScreen data={{ ...say(), aiOn: false }} />);
+      const p = await panel();
+      expect(within(p).queryByRole('note')).toBeNull();
+      expect(p.textContent ?? '').not.toMatch(/\bIA\b/);
+    });
+
+    it('terminée : la mention « l’IA a contribué » suit ce que le serveur dit avoir produit', async () => {
+      render(<CompasScreen data={{ ...say(), autofill: 'none' }} />);
+      expect(await screen.findByText('Ton aventure est prête')).toBeTruthy();
+      expect(within(await panel()).getByRole('note').textContent).toContain(AI_NOTICE_DONE);
+    });
+
+    it('terminée sans que l’IA ait rien produit : plus aucune mention', async () => {
+      autofill.compasAutofillAction.mockResolvedValueOnce({
+        success: true,
+        summary: {
+          nights: [],
+          transport: null,
+          kit: { inventaire: 0, pret: 0, location: 0, achat: 0, a_trouver: 0 },
+          budget: [],
+          total: 0,
+          notes: [],
+          usedAi: false,
+          stepsCreated: 0,
+        },
+      } as never);
+      render(<CompasScreen data={{ ...say(), autofill: 'none' }} />);
+      expect(await screen.findByText('Ton aventure est prête')).toBeTruthy();
+      expect(within(await panel()).queryByRole('note')).toBeNull();
+    });
+  });
+
+  it('Dis-le : l’IA qui a compris est dite en texte (pas seulement l’icône) ; les règles seules ne le disent pas', async () => {
+    compas.compasInterpretAction.mockResolvedValueOnce({
+      success: true,
+      usedAi: true,
+      note: null,
+      proposals: [
+        { id: '0-set_party_size', action: { type: 'set_party_size', count: 4 }, label: '4 personnes', ok: true, reason: null, source: 'ia' },
+        { id: '1-set_pace', action: { type: 'set_pace', pace: 'tranquille' }, label: 'Rythme tranquille', ok: true, reason: null, source: 'regles' },
+      ],
+    });
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Quand/ }));
+    fireEvent.change(within(sheet).getByLabelText('Dis-le'), { target: { value: 'à 4, tranquille' } });
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Comprendre la phrase' }));
+    expect(await within(sheet).findByText('Compris par l’IA, vérifié par le Compas.')).toBeTruthy();
+    // La pastille de la proposition de l'IA a un nom en texte ; celle des règles n'en a pas.
+    const ai = within(sheet).getByText('4 personnes').closest('label');
+    const rules = within(sheet).getByText('Rythme tranquille').closest('label');
+    expect(ai?.textContent).toContain('Compris par l’IA');
+    expect(rules?.textContent).not.toContain('Compris par l’IA');
+    expect(ai?.querySelector('[aria-label="Compris par l’IA"]')).toBeNull();
+  });
+
+  describe('axe-core : les écrans touchés, avec la mention', () => {
+    const scan = async (root: Element): Promise<string[]> => {
+      const res = await axe.run(root as HTMLElement, {
+        runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] },
+        rules: {
+          'color-contrast': { enabled: false },
+          region: { enabled: false },
+          'landmark-one-main': { enabled: false },
+          'page-has-heading-one': { enabled: false },
+        },
+      });
+      return res.violations.map(
+        (v) => `${v.id} (${v.impact}) : ${v.nodes.map((n) => n.target.join(' ')).slice(0, 3).join(' | ')}`
+      );
+    };
+
+    it('Parcours · étapes avec une étape de l’IA', async () => {
+      render(<CompasScreen data={withAiStep()} />);
+      const sheet = await openParcours();
+      await within(sheet).findAllByText(AI_STEP_LABEL);
+      expect(await scan(sheet)).toEqual([]);
+    });
+
+    it('Verdict · Risques avec « Expliquer avec l’IA »', async () => {
+      render(<CompasScreen data={makeData()} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+      fireEvent.click(screen.getByRole('button', { name: /^Détails : / }));
+      const sheet = await screen.findByRole('dialog');
+      expect(within(sheet).getByRole('button', { name: 'Expliquer avec l’IA' })).toBeTruthy();
+      expect(await scan(sheet)).toEqual([]);
+    });
+
+    it('le panneau de préparation, mention comprise', async () => {
+      render(<CompasScreen data={{ ...makeData(), startSay: 'rando à 4' }} />);
+      const p = await screen.findByRole('status', { name: 'Préparation de l’aventure' });
+      expect(within(p).getByRole('note')).toBeTruthy();
+      expect(await scan(p)).toEqual([]);
+    });
+
+    it('les notes d’une préparation qui contient un conseil de l’IA', async () => {
+      const data = { ...makeData(), autofill: 'done' as const, autofillNotes: [aiSuggestion('Prévois une frontale de secours.')] };
+      const { container } = render(<CompasScreen data={data} initialStep="ou" />);
+      expect(screen.getByText(/^Suggestion de l’IA \(facultatif\) : /)).toBeTruthy();
+      expect(await scan(container)).toEqual([]);
+    });
+  });
+});
+
+describe('CompasScreen : divulgation d’affiliation avant les offres (lot Z2, PLAN-100 5.3)', () => {
+  /** La divulgation (Art. L121-2 et L121-3 du Code de la consommation) : la note « Transparence publicitaire ». */
+  const disclosure = (root: HTMLElement) => within(root).getByRole('note', { name: /Transparence publicitaire et affiliation/ });
+  const precedes = (a: Element, b: Element) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+  /** Tout lien sortant d'une offre est balisé « sponsored nofollow » (DGCCRF, balisage rel). */
+  const expectSponsored = (root: HTMLElement) => {
+    const links = Array.from(root.querySelectorAll<HTMLAnchorElement>('a[target="_blank"]'));
+    expect(links.length).toBeGreaterThan(0);
+    for (const a of links) {
+      const rel = (a.getAttribute('rel') ?? '').split(/\s+/);
+      expect(rel, a.outerHTML).toContain('sponsored');
+      expect(rel, a.outerHTML).toContain('nofollow');
+    }
+  };
+  const openNights = async () => {
+    const data = makeData();
+    data.providers = { routestack: 'sandbox', viator: 'disabled' };
+    render(<CompasScreen data={data} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Mes réservations' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Mes réservations' });
+    fireEvent.click(
+      within(within(sheet).getByRole('group', { name: 'Parcours du tiroir' })).getByRole('button', { name: /Nuits/ })
+    );
+    return sheet;
+  };
+
+  it('Nuits · recherche en direct : la divulgation est dite AVANT la liste des offres, qui sont balisées', async () => {
+    const sheet = await openNights();
+    // Avant la recherche : aucune offre, donc aucune divulgation.
+    expect(within(sheet).queryByRole('note', { name: /Transparence publicitaire/ })).toBeNull();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
+    expect(await within(sheet).findByText('Gîte des Cimes')).toBeTruthy();
+    const list = within(sheet).getByRole('group', { name: 'Offres d’hébergement' });
+    expect(precedes(disclosure(sheet), list)).toBe(true);
+    expectSponsored(sheet);
+  });
+
+  it('Nuits · recherche en direct sans offre : pas de divulgation (rien n’est vendu)', async () => {
+    compas.compasSearchStaysAction.mockResolvedValueOnce({
+      success: true,
+      mode: 'live',
+      fetchedAt: '2026-10-01T10:00:00Z',
+      offers: [],
+    } as never);
+    const sheet = await openNights();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
+    expect(await within(sheet).findByText('Aucune offre trouvée pour cette nuit.')).toBeTruthy();
+    expect(within(sheet).queryByRole('note', { name: /Transparence publicitaire/ })).toBeNull();
+  });
+
+  it('Parcours · activités partenaires : la divulgation précède la liste (et non plus la suit)', async () => {
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Parcours/ }));
+    fireEvent.change(within(sheet).getByRole('searchbox'), { target: { value: 'Gavarnie' } });
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
+    const partner = await within(sheet).findByRole('link', { name: /Cirque de Gavarnie avec un guide/ });
+    const list = sheet.querySelector('[aria-label="Parcours trouvés"]') as HTMLElement;
+    expect(list).toBeTruthy();
+    expect(list.contains(partner)).toBe(true);
+    expect(precedes(disclosure(sheet), list)).toBe(true);
+    expectSponsored(sheet);
+  });
+
+  it('Parcours sans activité partenaire : pas de divulgation', async () => {
+    resa.compasNearbyActivitiesAction.mockResolvedValueOnce({ success: true, unavailable: false, offers: [] } as never);
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Parcours/ }));
+    fireEvent.change(within(sheet).getByRole('searchbox'), { target: { value: 'Gavarnie' } });
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
+    await waitFor(() => expect(resa.compasNearbyActivitiesAction).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 30));
+    expect(within(sheet).queryByRole('note', { name: /Transparence publicitaire/ })).toBeNull();
+  });
+
+  it('Résa · recherche en direct (vols) et offres Extras : divulgation avant la liste, liens balisés', async () => {
+    const data = makeData();
+    data.affiliateLinks = [{ id: 'a2', label: 'Assurance', category: 'insurance', partner: 'Heymondo', url: '/go/ass' }];
+    render(<CompasScreen data={data} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Vols' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Mes réservations' });
+    const form = within(sheet).getByRole('form', { name: 'Chercher : vols' });
+    fireEvent.change(within(form).getByLabelText('Départ de'), { target: { value: 'Lyon' } });
+    fireEvent.click(within(form).getByRole('button', { name: /Chercher en direct/ }));
+    expect(await within(sheet).findByText('Lyon → Pau')).toBeTruthy();
+    const live = sheet.querySelector('[aria-label="Offres en direct"]') as HTMLElement;
+    const notes = within(sheet).getAllByRole('note', { name: /Transparence publicitaire/ });
+    // Une divulgation avant « Offres en direct ».
+    expect(notes.some((n) => precedes(n, live))).toBe(true);
+    expectSponsored(sheet);
+    fireEvent.click(within(within(sheet).getByRole('group', { name: 'Catégorie' })).getByText('Extras'));
+    const extras = sheet.querySelector('[aria-label="Offres partenaires"]') as HTMLElement;
+    expect(extras).toBeTruthy();
+    const noteBeforeExtras = within(sheet).getAllByRole('note', { name: /Transparence publicitaire/ }).filter((n) => precedes(n, extras));
+    expect(noteBeforeExtras.length).toBeGreaterThan(0);
+    expectSponsored(sheet);
+  });
+
+  it('axe-core : la recherche d’hébergement avec sa divulgation', async () => {
+    const sheet = await openNights();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
+    expect(await within(sheet).findByText('Gîte des Cimes')).toBeTruthy();
+    expect(disclosure(sheet)).toBeTruthy();
+    const res = await axe.run(sheet, {
+      runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] },
+      rules: {
+        'color-contrast': { enabled: false },
+        region: { enabled: false },
+        'landmark-one-main': { enabled: false },
+        'page-has-heading-one': { enabled: false },
+      },
+    });
+    expect(res.violations.map((v) => `${v.id} : ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([]);
+  });
 });

@@ -10,6 +10,7 @@ import { CompasStart } from '@/features/compas/components/CompasStart';
 import { createClient } from '@/lib/supabase/server';
 import { listMyTripInvitations } from '@/features/compas/server/invitationActions';
 import { readTravellerState } from '@/features/compas/server/traveller';
+import { aiEnabled } from '@/lib/ai/aiMode';
 import '@/features/compas/compas.css';
 
 /**
@@ -66,6 +67,8 @@ export default async function CompasPage({
           signedIn={Boolean(user)}
           invitations={invitations}
           askTraveller={traveller != null && !traveller.asked}
+          // Interrupteur de l'IA : éteint, le Compas vide ne parle pas d'IA (PLAN-100 5.3).
+          aiOn={aiEnabled()}
         />
       </AppShell>
     );
