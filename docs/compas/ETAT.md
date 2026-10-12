@@ -66,7 +66,7 @@ Lot Z1 : vie privée restante du profil voyageur : « Prises », conseils de l'I
 
 Lot Z2 : légal 5.3 : mention IA (démarrage, étapes `aiProposed`, conseils, verdict ; muette si `AI_MODE=off`), divulgation d'affiliation avant les offres d'hébergement, politique de confidentialité relue au code (rien du profil n'est envoyé à l'IA). Identité de l'éditeur : à Tony.
 
-Lot Z3 : infra à 0 € : 1 cron Vercel quotidien (`/api/cron/daily`, 03:00 UTC) enchaîne 14 des 16 routes cron ; suivi de préparation à intervalle croissant (plus de rafraîchissement fixe toutes les 4 s) ; `maxDuration` ≤ 300 gardé par test. **ACTIF seulement quand Tony crée `CRON_SECRET` dans Vercel (absent le 12 oct. : la route répond 401).**
+Lot Z3 : infra à 0 € : 1 cron Vercel quotidien (`/api/cron/daily`, 03:00 UTC) enchaîne 13 des 16 routes cron (rotation quotidienne hors vie privée, rien de concurrent après un délai dépassé ; `finalize-kit-attributions` à la main) ; suivi de préparation à intervalle croissant (plus de rafraîchissement fixe toutes les 4 s) ; `maxDuration` ≤ 300 gardé par test. **ACTIF seulement quand Tony crée `CRON_SECRET` dans Vercel (absent le 12 oct. : la route répond 401).** Migration `20261012100000_adventure_events_claim_lease.sql` (bail de 15 min sur la file d'événements RGPD, `consent.revoked` d'abord) à passer par Tony dans l'éditeur SQL.
 
 Lot Z4 : hygiène : CSS sombre du Compas retiré, 3 fichiers formatés, tests d'autorisation réels de `requireEditor` (34 tests ; la RLS est portée à la main, pgTAP reste à faire). Mesure eslint : 45 erreurs, 8 699 avertissements : `ignoreDuringBuilds` inchangé.
 

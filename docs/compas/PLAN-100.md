@@ -98,15 +98,28 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       tâche GitHub ; 8 oct.) : les brancher sur `pg_cron` + `pg_net` ou les retirer
       (hors Compas, phase 9). **Lot Z3** : code et tests faits : un seul cron Vercel quotidien
       (`/api/cron/daily`, 03:00 UTC ; Hobby : un tir par jour, ±59 min, page des limites relue le
-      12 oct.) enchaîne 14 des 16 routes réelles (Bearer `CRON_SECRET` en temps constant, une tâche
+      12 oct.) enchaîne 13 des 16 routes réelles (Bearer `CRON_SECRET` en temps constant, une tâche
       qui échoue n'arrête pas les autres, budget 270 s) ; `process-ai-jobs` et
-      `refresh-country-guides` restent à la main (IA : décision de Tony) (`dailyRegistry.test.ts`,
+      `refresh-country-guides` restent à la main (IA : décision de Tony), de même que
+      `finalize-kit-attributions` (retirée après revue : la reprise d'un crédit déjà versé est bornée
+      au solde restant alors que le registre débite le tout, et le webhook Stripe avale l'erreur de
+      `reverse_kit_attribution_by_session` ; à corriger avant de verser automatiquement)
+      (`dailyRegistry.test.ts`,
       `dailyRealRoutes.test.ts`, `dailyDispatcher.test.ts`, `auth.test.ts`, `route.test.ts`).
       ⚠️ **ACTIF SEULEMENT quand Tony crée `CRON_SECRET`** dans les variables Vercel (absent le
       12 oct. : la route répond 401, rien ne tourne). Preuve attendue : un tir dans Réglages › Cron
-      Jobs, réponse 200 avec le résumé. Limites : un lot par route et par jour ; l'expiration des
-      positions live (TTL 15 min) n'est purgée qu'une fois par jour (vérifier que chaque lecteur
-      filtre sur `expires_at`) ; les 14 routes enchaînées gardent leur comparaison de Bearer.
+      Jobs, réponse 200 avec le résumé. **Après revue (PR #91)** : une tâche qui dépasse son délai
+      (90 s) ne peut pas être interrompue : le répartiteur n'en lance plus d'autre (suite sautée
+      `after_timeout`, jamais deux tâches en même temps) ; les tâches non épinglées partent d'un rang
+      décalé chaque jour (`rotation` = numéro du jour) pour qu'une queue de liste ne soit pas sautée à
+      vie, la vie privée (5 tâches) reste épinglée en tête ; `process-adventure-events` enchaîne jusqu'à
+      20 lots tant qu'ils sont pleins (sans rejouer un échec transitoire dans le même tir), les refus
+      forgés (`actor_mismatch`, `missing_actor_id`) sont terminaux d'emblée, et la migration
+      `20261012100000_adventure_events_claim_lease.sql` donne un bail de 15 min aux lignes
+      `processing` (une purge RGPD coupée est reprise) et sert `consent.revoked` d'abord (**à appliquer
+      par Tony**). Limites : l'expiration des positions live (TTL 15 min) n'est purgée qu'une fois par
+      jour (vérifier que chaque lecteur filtre sur `expires_at`) ; les 13 routes enchaînées gardent
+      leur comparaison de Bearer.
 
 ### 1.2 Hébergement Vercel
 
