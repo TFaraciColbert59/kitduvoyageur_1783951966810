@@ -41,6 +41,7 @@ interface MessageBubbleProps {
   onToggleReaction?: (messageId: string, reactionValue: string) => void;
   onScrollToMessage?: (messageId: string) => void;
   onForward?: (message: Message) => void;
+  onRetry?: (message: Message) => void;
 }
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({
@@ -56,6 +57,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   onToggleReaction,
   onScrollToMessage,
   onForward,
+  onRetry,
 }) => {
   const { haptic } = useHapticFeedback();
   const [showActionMenu, setShowActionMenu] = useState(false);
@@ -474,7 +476,20 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   {message.status === 'sending' ? (
                     <Spinner size="sm" tone="current" label="Envoi en cours" />
                   ) : message.status === 'error' ? (
-                    <Badge tone="danger">! Échec</Badge>
+                    onRetry ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          haptic('light');
+                          onRetry(message);
+                        }}
+                        aria-label="Échec de l'envoi — réessayer"
+                      >
+                        <Badge tone="danger">! Échec — Réessayer</Badge>
+                      </button>
+                    ) : (
+                      <Badge tone="danger">! Échec</Badge>
+                    )
                   ) : isReadByRecipient || (readByCount && readByCount > 0) ? (
                     <span
                       className="flex items-center gap-0.5 text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-forest-100)]"

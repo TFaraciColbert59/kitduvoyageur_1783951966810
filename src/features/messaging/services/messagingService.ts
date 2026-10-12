@@ -737,24 +737,23 @@ export const messagingService = {
     replyToId?: string,
     metadata?: Record<string, unknown>
   ): Promise<Message | null> {
-    const newMsg: Message = {
-      id: `msg-${Date.now()}`,
-      conversation_id: conversationId,
-      sender_id: senderId,
-      content,
-      message_type: messageType,
-      reply_to_id: replyToId || null,
-      metadata: metadata ?? null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      status: 'sent',
-    };
-
     if (conversationId.startsWith('demo-conv-')) {
+      const demoMsg: Message = {
+        id: `msg-${Date.now()}`,
+        conversation_id: conversationId,
+        sender_id: senderId,
+        content,
+        message_type: messageType,
+        reply_to_id: replyToId || null,
+        metadata: metadata ?? null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        status: 'sent',
+      };
       const list = localDemoMessages.get(conversationId) || [];
-      list.push(newMsg);
+      list.push(demoMsg);
       localDemoMessages.set(conversationId, list);
-      return newMsg;
+      return demoMsg;
     }
 
     const supabase = createClient();
@@ -773,8 +772,13 @@ export const messagingService = {
       .single();
 
     if (error || !data) {
-      // Si la base distante échoue, préserver la réactivité démo localement
-      return newMsg;
+      // F-004 : un échec SQL n'est jamais présenté comme « envoyé ».
+      // L'appelant conserve le texte et propose une nouvelle tentative.
+      console.error(
+        'Erreur envoi message:',
+        error?.message ?? 'aucune ligne retournée par l’insertion'
+      );
+      return null;
     }
 
     await supabase

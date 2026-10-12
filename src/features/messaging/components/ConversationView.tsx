@@ -78,7 +78,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
     };
   }, [conversation.id]);
 
-  const { messages, loading, sendMessage, toggleReaction, refreshMessages } = useMessages(
+  const { messages, loading, sendMessage, retryMessage, toggleReaction, refreshMessages } = useMessages(
     conversation.id,
     currentUserId,
     currentUserProfile
@@ -318,6 +318,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
         onReply={(msg) => setReplyToMessage(msg)}
         onToggleReaction={toggleReaction}
         onForward={setForwardMessage}
+        onRetry={(msg) => retryMessage(msg.id)}
       />
 
       {/* Message Request Action Bar (Pending status) */}

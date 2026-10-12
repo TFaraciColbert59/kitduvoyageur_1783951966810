@@ -18,6 +18,7 @@ interface MessageListProps {
   onReply?: (message: Message) => void;
   onToggleReaction?: (messageId: string, reactionValue: string) => void;
   onForward?: (message: Message) => void;
+  onRetry?: (message: Message) => void;
 }
 
 export const MessageListSkeleton = () => (
@@ -75,6 +76,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   onReply,
   onToggleReaction,
   onForward,
+  onRetry,
 }) => {
   const { haptic } = useHapticFeedback();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -242,6 +244,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                 onToggleReaction={onToggleReaction}
                 onScrollToMessage={handleScrollToMessage}
                 onForward={onForward}
+                onRetry={onRetry}
               />
             </React.Fragment>
           );

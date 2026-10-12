@@ -146,6 +146,40 @@ export function useMessages(
     }
   };
 
+  const retryMessage = async (localMessageId: string) => {
+    if (!conversationId || !currentUserId) return;
+
+    const target = messages.find((m) => m.id === localMessageId && m.status === 'error');
+    if (!target) return;
+
+    setMessages((prev) =>
+      prev.map((m) => (m.id === localMessageId ? { ...m, status: 'sending' } : m))
+    );
+
+    const sent = await messagingService.sendMessage(
+      conversationId,
+      currentUserId,
+      target.content,
+      target.message_type,
+      target.reply_to_id ?? undefined,
+      (target.metadata as Record<string, unknown> | null) ?? undefined
+    );
+
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== localMessageId) return m;
+        if (sent) {
+          return {
+            ...sent,
+            reply_to_message: target.reply_to_message,
+            sender_profile: target.sender_profile,
+          };
+        }
+        return { ...m, status: 'error' };
+      })
+    );
+  };
+
   const toggleReaction = async (messageId: string, reactionValue: string) => {
     if (!currentUserId || !conversationId) return;
 
@@ -189,6 +223,7 @@ export function useMessages(
     messages,
     loading,
     sendMessage,
+    retryMessage,
     toggleReaction,
     refreshMessages: fetchMessages,
   };
