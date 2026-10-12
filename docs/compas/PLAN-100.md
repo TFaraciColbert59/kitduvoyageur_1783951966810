@@ -691,6 +691,26 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       sur une copie d'abord, étapes A puis B puis A). Limite : le domicile du profil reste un fait du
       voyage choisi par le lanceur ; un voyage d'avant sans faits rangés dont le départ était dans le pays
       peut montrer « Formalités » à tort à un lecteur français (cas rare).
+      **Après relecture (PR #91)** : (1) `isStoredFormalities` (`engine/storedFormalities.ts`) reconnaît
+      toute dépense « Formalités : » signée par une préparation, PRÉVUE et jamais retouchée, quelle que
+      soit sa base ; une ligne réglée ou retouchée reste comptée, dans le Compas comme dans `/voyages`
+      (même filtre dans `loadFullTripDetails`) ; (2) le SQL de rattrapage ne SUPPRIME que ces lignes
+      (prévues, `updated_at` au plus 5 s après `autofill.at` et après `created_at`), NEUTRALISE la base des
+      autres, vide l'enveloppe (`estimated_budget` NULL) quand les formalités en étaient tout le montant,
+      et sa reconnaissance suit celle du code (plus de filtre sur le texte de la base : seulement « pas
+      déjà neutre », pour rester rejouable) ; rejoué sur un PostgreSQL 16 jetable avec la reconnaissance
+      d'avant (base « ressortissant français ») : le prédicat élargi à toute base n'a pas été rejoué sur
+      une base ; (3) quand le départ vient du domicile, l'IA ne reçoit plus ni km, ni minutes, ni vol, ni
+      train, ni voiture de location (« Voyage à l'étranger : inconnu », `travelFactsForAi`) et les textes
+      rangés n'en portent plus ; (4) `abroad` est inconnu pour tout lecteur autre que le lanceur quand il
+      découle du domicile ou de la position (`abroadFrom`, `launchedBy`, `abroadForReader`) ; (5) la carte
+      « Formalités d'entrée pour toi » montre le montant PAR PERSONNE ; (6) `usedAi` ne vaut vrai que si
+      une note ou une étape vient de l'IA ; (7) les minuteurs de relance de `CompasScreen` sont annulés
+      au démontage. **Limites** : un voyage préparé avant ce correctif n'a pas `abroadFrom` (il garde
+      l'ancien comportement : `abroad` appliqué à tous) ; `summary.transport` (km, minutes) reste dans
+      `autofill_result` pour le résumé du lanceur ; les montants du budget (carburant, vol, train) restent
+      proportionnels à la distance, et la présence de « Assurance » ou « Location de voiture » découle
+      encore de `abroad`.
 - [x] Table passeport × destination tirée de **travelrequirements.info v1.3.0**
       (CC BY 4.0, commercial autorisé, crédit exact de l'éditeur), versionnée dans le
       code. Les jeux dérivés de Passport Index sont exclus (recherche académique

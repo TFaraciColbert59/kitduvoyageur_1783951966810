@@ -48,7 +48,8 @@
 --      « pas de budget »), jamais à 0 ni en négatif. Une enveloppe modifiée depuis n’est
 --      jamais touchée.
 --   c. `trip_expenses` : les dépenses « Formalités : … » ÉCRITES PAR UNE PRÉPARATION
---      (`metadata.autofill` présent ET base « ressortissant français ») sont classées :
+--      (`metadata.autofill` présent, QUELLE QUE SOIT leur base : les préparations successives en ont
+--      écrit plusieurs, comme `isStoredFormalities`) sont classées :
 --        - SUPPRIMÉES si elles sont restées intactes : `is_planned` vrai, jamais retouchées
 --          (`updated_at` au plus 5 s après `trips.metadata.compas.autofill.at`, la marge de
 --          `untouchedSince` dans engine/dependencies.ts, ET au plus 5 s après `created_at`,
@@ -65,17 +66,17 @@
 --   La ligne « Formalités » de chaque lecteur est calculée par le code à la lecture ; ce
 --   script n’a rien à y recréer.
 --
--- ⚠️ À L’ÉCRAN : `getCompasData` masque les dépenses dont la base dit « ressortissant français »
---    (`isStoredFormalities`). Une ligne NEUTRALISÉE n’est plus masquée : elle s’affiche comme
---    une ligne ordinaire du budget (même titre, même montant, même statut), parce qu’elle a été
---    réglée ou retouchée, donc qu’elle est devenue un choix de la personne. Son TITRE
---    (« Formalités : ESTA (40 $) ») reste lisible : c’est le seul reste, et il ne se retire
---    qu’en supprimant la ligne à la main.
+-- ⚠️ À L’ÉCRAN : `getCompasData` et `/voyages` masquent les dépenses « Formalités : » signées par
+--    une préparation, PRÉVUES et jamais retouchées (`isStoredFormalities`, quelle que soit leur
+--    base). Une ligne NEUTRALISÉE parce qu’elle a été réglée ou retouchée n’est plus masquée :
+--    elle s’affiche comme une ligne ordinaire du budget (même titre, même montant, même statut),
+--    parce qu’elle est devenue un choix de la personne. Son TITRE (« Formalités : ESTA (40 $) »)
+--    reste lisible : c’est le seul reste, et il ne se retire qu’en supprimant la ligne à la main.
 --
 -- IDEMPOTENT : un second passage ne trouve plus rien (les fonctions sont les mêmes ; les
 -- UPDATE ne touchent que les lignes dont la valeur change ; la base neutralisée ne dit plus
--- « ressortissant français », donc plus aucune dépense n’est reconnue ; le DELETE ne trouve
--- plus de dépense). Les compteurs de l’étape A tombent à 0 et y restent (hors
+-- « ressortissant français » et la reconnaissance écarte une base déjà neutre, donc plus aucune
+-- dépense n’est reconnue ; le DELETE ne trouve plus de dépense). Les compteurs de l’étape A tombent à 0 et y restent (hors
 -- `depenses_formalites_a_verifier`, qui reste constant entre deux passages).
 --
 -- MODE D’EMPLOI (l’éditeur n’affiche que le résultat de la DERNIÈRE requête : lance chaque
@@ -198,7 +199,7 @@ formalities as (
   join public.trips t on t.id = e.trip_id
   where e.title like 'Formalités : %'
     and e.metadata ->> 'autofill' is not null
-    and e.metadata ->> 'basis' like '%ressortissant français%'
+    and e.metadata ->> 'basis' is distinct from 'barème Compas · montant indicatif, à vérifier auprès du service officiel avant de partir'
 ),
 formalities_autres as (
   select e.id
@@ -421,7 +422,7 @@ from public.trip_expenses e
 join public.trips t on t.id = e.trip_id
 where e.title like 'Formalités : %'
   and e.metadata ->> 'autofill' is not null
-  and e.metadata ->> 'basis' like '%ressortissant français%';
+  and e.metadata ->> 'basis' is distinct from 'barème Compas · montant indicatif, à vérifier auprès du service officiel avant de partir';
 
 -- B.3 — Ce que valait le total rangé par la préparation en cours de chaque voyage concerné ---
 -- (somme des dépenses de sa dernière exécution, formalités comprises) et ce qui en sort : les
@@ -486,7 +487,7 @@ update public.trip_expenses e
   from z1_formalities f
  where f.id = e.id
    and not f.supprimable
-   and e.metadata ->> 'basis' like '%ressortissant français%';
+   and e.metadata ->> 'basis' is distinct from 'barème Compas · montant indicatif, à vérifier auprès du service officiel avant de partir';
 
 commit;  -- répétition à blanc : remplacer par `rollback;`
 

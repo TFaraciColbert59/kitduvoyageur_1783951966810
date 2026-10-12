@@ -53,8 +53,8 @@ describe('script de rattrapage de vie privée (écrit, non appliqué)', () => {
     expect(updates[0]).toMatch(/is distinct from/);
     // Enveloppe : seulement si elle vaut encore l'ancien total et qu'il y a des formalités à retirer.
     expect(updates[1]).toMatch(/b\.removed > 0/);
-    // Base des dépenses gardées : seulement tant qu'elle nomme encore la nationalité.
-    expect(updates[2]).toMatch(/like '%ressortissant français%'/);
+    // Base des dépenses gardées : seulement tant qu'elle n'est pas déjà la base neutre (rejouable).
+    expect(updates[2]).toMatch(/is distinct from 'barème Compas/);
     expect(updates[2]).toMatch(/not f\.supprimable/);
   });
 
@@ -69,8 +69,8 @@ describe('script de rattrapage de vie privée (écrit, non appliqué)', () => {
       expect(cases).toHaveLength(2);
       expect(cases[0]).toBe(cases[1]);
       expect(codeFlat).toContain(CLASSIFY);
-      // Les mêmes filtres de reconnaissance (écrite par une préparation, base « ressortissant français »).
-      const wheres = [...codeFlat.matchAll(/where e\.title like 'Formalités : %' and e\.metadata ->> 'autofill' is not null and e\.metadata ->> 'basis' like '%ressortissant français%'/g)];
+      // Les mêmes filtres de reconnaissance (écrite par une préparation, quelle que soit sa base, pas déjà neutre).
+      const wheres = [...codeFlat.matchAll(/where e\.title like 'Formalités : %' and e\.metadata ->> 'autofill' is not null and e\.metadata ->> 'basis' is distinct from 'barème Compas/g)];
       expect(wheres).toHaveLength(2);
     });
 
@@ -103,11 +103,17 @@ describe('script de rattrapage de vie privée (écrit, non appliqué)', () => {
     it('colle à ce que la préparation écrit : dépense prévue, `autofill` = runId, base, et `at` sur la trace', () => {
       expect(autofillSrc).toMatch(/is_planned: true,\s*metadata: \{ autofill: runId, source: l\.source, basis: l\.basis \}/);
       expect(autofillSrc).toMatch(/autofill: \{\s*runId,\s*at: new Date\(\)\.toISOString\(\),/);
-      // La reconnaissance est celle du code (isStoredFormalities) : titre, `autofill`, base « ressortissant français ».
+      // La reconnaissance est celle du code (isStoredFormalities) : titre, `autofill`, prévue, intacte,
+      // QUELLE QUE SOIT la base (les préparations successives en ont écrit plusieurs).
       const basis = formalitiesBasis('2026-09-03');
-      expect(isStoredFormalities({ title: 'Formalités : ESTA (40 $)', metadata: { autofill: 'run-1', basis } })).toBe(true);
       expect(basis).toContain('ressortissant français');
+      for (const b of [basis, 'autre base écrite par une ancienne préparation']) {
+        expect(isStoredFormalities({ title: 'Formalités : ESTA (40 $)', is_planned: true, metadata: { autofill: 'run-1', basis: b } })).toBe(true);
+      }
       expect(sql).toContain("e.title like 'Formalités : %'");
+      // Le SQL ne filtre plus sur le texte de la base : seulement sur la base déjà neutralisée (idempotence).
+      expect(sql).not.toMatch(/e\.metadata ->> 'basis' like '%ressortissant français%'/);
+      expect((sql.match(/e\.metadata ->> 'basis' is distinct from 'barème Compas/g) ?? []).length).toBe(3);
     });
 
     it('seules les supprimables sont supprimées et retirées des identifiants ; les autres gardent leur ligne', () => {
@@ -117,12 +123,22 @@ describe('script de rattrapage de vie privée (écrit, non appliqué)', () => {
       expect(fix).toMatch(/where f\.trip_id = t\.id and f\.supprimable/);
     });
 
-    it('la base neutralisée ne dit rien du profil, et le code ne la reconnaît plus comme « Formalités » rangée', () => {
+    it('la base neutralisée ne dit rien du profil ; une ligne réglée ou retouchée n\u2019est plus masquée par le code', () => {
       const m = /to_jsonb\('([^']+)'::text\)/.exec(code);
       expect(m).not.toBeNull();
       const neutral = (m as RegExpExecArray)[1];
       expect(neutral).not.toMatch(/français|francais|ressortissant|nationalit|passeport|résident|domicile/i);
-      expect(isStoredFormalities({ title: 'Formalités : ESTA (40 $)', metadata: { autofill: 'run-1', basis: neutral } })).toBe(false);
+      // Réglée (is_planned faux) ou retouchée : c'est devenu la dépense de la personne, elle reste comptée.
+      expect(isStoredFormalities({ title: 'Formalités : ESTA (40 $)', is_planned: false, metadata: { autofill: 'run-1', basis: neutral } })).toBe(false);
+      expect(
+        isStoredFormalities({
+          title: 'Formalités : ESTA (40 $)',
+          is_planned: true,
+          created_at: '2026-10-01T10:00:00Z',
+          updated_at: '2026-10-02T10:00:00Z',
+          metadata: { autofill: 'run-1', basis: neutral },
+        })
+      ).toBe(false);
       // Seule la base change : ni le montant, ni is_planned, ni le titre ne sont réécrits.
       const upd = /update public\.trip_expenses e[\s\S]*?;/i.exec(code)?.[0] ?? '';
       expect(upd).toMatch(/set metadata = jsonb_set\(e\.metadata, '\{basis\}'/);
