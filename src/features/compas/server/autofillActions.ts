@@ -73,7 +73,7 @@ import { keepAiNote, papersFactsFor, sharedNotes, sharedRules, type PapersFacts 
 import { tutoyer } from '../engine/voice';
 import { addDaysIso } from '../engine/format';
 import { climateWindow } from '@/features/trips/engine/climate';
-import { homeForLeg, originFact, planTravelLeg, travelOrigin, type TravelTransport } from '../engine/travel';
+import { homeForLeg, isHomeOrigin, originFact, planTravelLeg, travelFactsForAi, travelOrigin, type TravelTransport } from '../engine/travel';
 import { nearestAirport } from './airports';
 import { trailRegion } from '../engine/intent';
 import {
@@ -116,7 +116,7 @@ import { preparationEventKind, recordPreparationEvent } from './opsEvents';
 import { coarsePosition } from '../engine/privacy';
 import { pointsMaxAltitudeM, routeAscentM } from './elevation';
 import { estimatedLegKm, estimationNote, stepDistanceMetadata, type LegDistanceSource, type LegMove } from '../engine/legDistance';
-import { readAiProposed, withAiProposed } from '../engine/aiNotice';
+import { aiContributed, readAiProposed, withAiProposed } from '../engine/aiNotice';
 import {
   claimIsLive,
   pendingIsLive,
@@ -1906,19 +1906,19 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         return `J${s.day_number} ${s.title.split(' · ').slice(1).join(' · ')}${legText}`;
       })
       .join(' ; ');
+    // VIE PRIVÉE : un départ du DOMICILE du profil n'envoie à l'IA ni km, ni minutes, ni km de voie, ni
+    // « voyage à l'étranger », ni vol/train/location qui s'en déduisent (`travelFactsForAi`) : la politique
+    // de confidentialité dit que rien de ce profil ne lui est envoyé.
+    const aiTravel = travelFactsForAi(travelLeg);
     const facts = [
       `Destination : ${anchor.name}${anchor.country ? `, ${anchor.country}` : ''} (code ${anchor.countryCode ?? 'inconnu'}).`,
       `Départ de la personne : ${originFact(origin)}.`,
       `${trip.start_date ? `Dates : ${trip.start_date} au ${trip.end_date ?? trip.start_date}` : 'Dates non choisies'} (${days} jour(s)), groupe de ${party}, activité ${activity}.`,
-      abroad === true ? 'Voyage à l’étranger : oui.' : abroad === false ? 'Voyage à l’étranger : non.' : 'Voyage à l’étranger : inconnu.',
+      aiTravel.abroad,
       carFree.on ? 'Préférence : sans voiture (ni voiture personnelle ni de location) : ne conseille jamais d’en prendre ou d’en louer une.' : '',
-      flightNeeded
-        ? 'Vol à prévoir : oui (aller-retour).'
-        : trainNeeded
-          ? `Train à prévoir : oui (aller-retour, environ ${trainNeeded.railKm} km de voie).`
-          : transport?.mode === 'voiture' ? `Trajet d’approche mesuré : ${transport.km} km en voiture (${transport.minutes} min) puis ${transport.walkKm} km à pied.` : 'Trajet d’approche : non mesuré.',
+      aiTravel.approach,
       `Itinéraire : ${stageLine || 'non détaillé'}.`,
-      rentalNeeded
+      rentalNeeded && aiTravel.rental
         ? `Voiture de location à prévoir : ${days} jour(s), ${fuelForKm(carKmOnSite, party).cars} voiture(s), ${Math.round(carKmOnSite)} km mesurés sur place.`
         : '',
       localMoves.length
@@ -1964,7 +1964,6 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         // Lecture impossible : on ne prétend rien (la marque de chaque étape, elle, est déjà écrite).
       }
     }
-    const usedAi = rawAdvice != null || aiStages;
     // Papiers, change, prises et formalités : la règle parle, l'IA se tait sur ces sujets ; ce que la
     // règle affirme dépend du voyageur (nationalité, résidence, devise : PLAN-100 4.1), donc ne se range
     // pas sur le voyage mais se rend à la lecture (`getCompasData`, avec le profil du LECTEUR). Le
@@ -1989,7 +1988,12 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     // celles de chaque lecteur à la lecture (`getCompasData`, avec SON profil). Le pays et le départ
     // n'apprennent rien sur la personne ; ils se rangent dès que le code pays est valide.
     const essential = [...sharedNotes(anchor.countryCode, anchor.country, abroad), ...safety];
-    const papersFacts: PapersFacts | null = papersFactsFor(anchor.countryCode, anchor.country, abroad);
+    // D'où vient « à l'étranger » et qui a lancé : sans cela, un collaborateur lirait comme un fait du voyage
+    // ce qui n'est que le départ du lanceur (son domicile, sa position), donc où il habite.
+    const papersFacts: PapersFacts | null = papersFactsFor(anchor.countryCode, anchor.country, abroad, {
+      from: origin?.source ?? null,
+      by: userId,
+    });
     // L'IA n'ajoute que des suggestions facultatives, dites comme telles. Filtrées avec les règles SANS
     // profil : filtrer avec celles du lanceur ferait dépendre la présence d'un conseil de sa devise
     // (change) ou de sa résidence (prises), donc la trahirait sur le voyage.
@@ -2000,6 +2004,9 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       .filter((n): n is string => n != null)
       .filter((n) => !repeatsRule(n, safety))
       .map(aiSuggestion);
+    // Seulement ce que l'IA a réellement donné et qui reste affiché : une réponse reçue mais vide ou
+    // entièrement écartée par les règles n'est pas « rédigée par l'IA » (PLAN-100 5.3).
+    const usedAi = aiContributed({ aiNotes, aiStages });
 
     lap('8');
     /* 8. Budget complet, chaque ligne avec sa source. */
@@ -2075,7 +2082,8 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       carFuel
         ? {
             category: 'transport',
-            title: `Carburant aller-retour (${carFuel.roundTripKm} km)`,
+            // Départ du domicile : la distance ne se range pas sur le voyage (elle en déduirait la commune).
+            title: isHomeOrigin(origin) ? 'Carburant aller-retour' : `Carburant aller-retour (${carFuel.roundTripKm} km)`,
             amount: carFuel.fuelEur,
             source: carFuel.fuelSource === 'bulletin' ? 'mesure' : 'estimation',
             basis: carFuel.basis,

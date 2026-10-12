@@ -9,7 +9,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
  *    carte) → chaque étape écrite porte la marque, et `usedAi` le dit même si les conseils
  *    n'ont rien donné ;
  *  - une ville : séjour calculé par le Compas → aucune marque ;
- *  - IA éteinte : une étape par jour sur le lieu, aucune marque.
+ *  - IA éteinte : une étape par jour sur le lieu, aucune marque ;
+ *  - conseils : `usedAi` ne dit « rédigé par l'IA » que si un conseil est RÉELLEMENT gardé (une réponse
+ *    reçue mais vide ou entièrement écartée par les règles ne compte pas).
  */
 const h = vi.hoisted(() => ({
   db: null as unknown as MemorySupabase,
@@ -17,6 +19,8 @@ const h = vi.hoisted(() => ({
   ai: true,
   /** Réponse de l'IA à l'itinéraire (le reste de ses appels est « dégradé »). */
   stages: null as unknown,
+  /** Réponse de l'IA aux conseils (`{"notes": [...]}`) ; absente : appel « dégradé ». */
+  advice: null as unknown,
   /** La fonction est coupée à l'altitude des étapes (première chose après l'itinéraire). */
   cut: false,
   reachedCut: null as null | (() => void),
@@ -96,6 +100,9 @@ vi.mock('@/lib/ai/askAI', () => ({
     const { buildCompasStagesSystem } = await import('@/lib/ai/features/compasAutofill');
     if (h.ai && h.stages && req.system === buildCompasStagesSystem())
       return { text: JSON.stringify(h.stages), model: 'x', degraded: false, cached: false, provider: 'nvidia' };
+    const { buildCompasAutofillSystem } = await import('@/lib/ai/features/compasAutofill');
+    if (h.ai && h.advice && req.system === buildCompasAutofillSystem())
+      return { text: JSON.stringify(h.advice), model: 'x', degraded: false, cached: false, provider: 'nvidia' };
     // Conseils, budget : l'IA ne donne rien (repli par règles).
     return { text: '{}', model: 'x', degraded: true, cached: false, provider: 'fallback' };
   }),
@@ -136,6 +143,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   h.ai = true;
   h.stages = null;
+  h.advice = null;
   h.cut = false;
   h.reachedCut = null;
   h.db = memorySupabase({ user: () => ({ id: 'u1' }) });
@@ -209,6 +217,44 @@ describe('étapes proposées par l’IA : la marque suit l’étape', () => {
     vi.setSystemTime(T0 + CLAIM_MS + 1_000);
     const res = await launch();
     expect(res).toMatchObject({ success: true, summary: { stepsCreated: 4 } });
+    expect(usedAi(res)).toBe(true);
+  });
+});
+
+/**
+ * `usedAi` (PLAN-100 5.3) : « Rédigé par l'IA » ne s'affiche que si l'IA a réellement produit un
+ * contenu gardé. Une ville : aucune étape de l'IA, donc seuls les conseils comptent.
+ */
+describe('conseils de l’IA : `usedAi` suit ce qui est réellement gardé', () => {
+  const PASSEPORT = 'Pense à ton passeport et à ton visa avant de partir.';
+  const CONSEIL = 'Réserve ton hébergement à l’avance : la ville est très fréquentée ce week-end.';
+  const adviceOf = (res: Awaited<ReturnType<typeof launch>>) =>
+    (res.success && 'summary' in res ? res.summary.notes : []).filter((n) => n.startsWith('Suggestion de l’IA'));
+
+  it('réponse reçue mais vide (aucun conseil) : pas de mention', async () => {
+    h.advice = { notes: [] };
+    trip(GRENOBLE, '2026-11-12');
+    const res = await launch();
+    expect(res.success).toBe(true);
+    expect(adviceOf(res)).toEqual([]);
+    expect(usedAi(res)).toBe(false);
+  });
+
+  it('réponse reçue dont tous les conseils sont écartés (papiers : la règle parle, pas l’IA) : pas de mention', async () => {
+    h.advice = { notes: [PASSEPORT] };
+    trip(GRENOBLE, '2026-11-12');
+    const res = await launch();
+    expect(res.success).toBe(true);
+    expect(adviceOf(res)).toEqual([]);
+    expect(usedAi(res)).toBe(false);
+  });
+
+  it('un conseil gardé : la mention est dite', async () => {
+    h.advice = { notes: [PASSEPORT, CONSEIL] };
+    trip(GRENOBLE, '2026-11-12');
+    const res = await launch();
+    expect(res.success).toBe(true);
+    expect(adviceOf(res)).toHaveLength(1);
     expect(usedAi(res)).toBe(true);
   });
 });

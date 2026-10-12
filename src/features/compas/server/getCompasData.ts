@@ -14,8 +14,9 @@ import { parseRoutePois, poiLabel, type RoutePoi } from '../engine/routePois';
 import { getBudgetFx, getEurRate } from './rates';
 import { readTraveller } from './traveller';
 import { entryRequirement } from './entryRequirements';
-import { notesForReader, type PapersFacts } from '../engine/papers';
-import { isStoredFormalities, readerFormalities, type ReaderFormalities } from '../engine/formalities';
+import { abroadForReader, notesForReader, type AbroadFrom, type PapersFacts } from '../engine/papers';
+import { readerFormalities, type ReaderFormalities } from '../engine/formalities';
+import { withoutStoredFormalities } from '../engine/storedFormalities';
 import type { TravellerContext } from '../engine/traveller';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -506,9 +507,10 @@ export async function getCompasData(): Promise<CompasData | null> {
     items: toItems(trip),
     members,
     // Une dépense « Formalités » rangée par une préparation d'avant ce verrou dit la nationalité du
-    // lanceur : retirée de l'affichage, la ligne du lecteur (`formalities`) la remplace.
-    expenses: (trip.expenses ?? [])
-      .filter((e) => !isStoredFormalities(e))
+    // lanceur : retirée de l'affichage tant qu'elle est planifiée et intacte (la ligne du lecteur,
+    // `formalities`, la remplace) ; réglée ou retouchée, elle compte comme les autres, ici comme dans
+    // `/voyages` (même filtre à la lecture du voyage, `lib/queries-trips.ts`).
+    expenses: withoutStoredFormalities(trip.expenses ?? [])
       .map((e) => ({
         id: e.id,
         title: e.title,
@@ -732,13 +734,14 @@ export async function getCompasData(): Promise<CompasData | null> {
     autofill: autofillState(trip.metadata),
     aiOn: aiEnabled(),
     // La ligne « Papiers » est celle de CE lecteur (son profil), jamais celle du propriétaire.
-    autofillNotes: autofillNotes(trip.metadata, traveller, trip.destination_country_code),
+    autofillNotes: autofillNotes(trip.metadata, traveller, trip.destination_country_code, viewerId),
     // Ses formalités d'entrée, calculées avec SON profil, à part du budget (jamais rangées).
     formalities: readerFormalitiesOf(
       trip.metadata,
       traveller,
       trip.destination_country_code,
-      partySizeOf(num(trip.party_size), members.length)
+      partySizeOf(num(trip.party_size), members.length),
+      viewerId
     ),
     ...compasPlan(trip.metadata),
     autofillStale: autofillStale(trip),
@@ -833,7 +836,12 @@ function autofillState(metadata: unknown): CompasData['autofill'] {
   return (run as Record<string, unknown>).runId ? 'done' : 'undone';
 }
 
-function autofillNotes(metadata: unknown, reader: TravellerContext, destinationCode?: string | null): string[] {
+function autofillNotes(
+  metadata: unknown,
+  reader: TravellerContext,
+  destinationCode: string | null | undefined,
+  viewerId: string | null
+): string[] {
   const compas =
     metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).compas : null;
   const run =
@@ -845,7 +853,8 @@ function autofillNotes(metadata: unknown, reader: TravellerContext, destinationC
   // collaborateurs, et par tous pour un voyage public) ; elle se calcule ici, avec le profil de la
   // personne qui regarde (sans profil : la ligne neutre).
   const facts = papersFacts(compas as Record<string, unknown> | null, destinationCode);
-  return notesForReader(stored, facts, reader, entryRequirement).slice(0, MAX_NOTES);
+  // « À l'étranger » ne vaut que pour le lanceur quand le départ est son domicile ou sa position.
+  return notesForReader(stored, facts, reader, entryRequirement, viewerId).slice(0, MAX_NOTES);
 }
 
 /**
@@ -857,14 +866,22 @@ function readerFormalitiesOf(
   metadata: unknown,
   reader: TravellerContext,
   destinationCode: string | null | undefined,
-  party: number
+  party: number,
+  viewerId: string | null
 ): ReaderFormalities | null {
   if (autofillState(metadata) !== 'done') return null;
   const compas =
     metadata && typeof metadata === 'object' ? ((metadata as Record<string, unknown>).compas as Record<string, unknown> | null) : null;
   const facts = papersFacts(compas && typeof compas === 'object' ? compas : null, destinationCode);
   if (!facts) return null;
-  return readerFormalities({ countryCode: facts.countryCode, abroad: facts.abroad, party, reader, find: entryRequirement });
+  // Le départ du lanceur (domicile, position) n'est connu que de lui : pour un collaborateur, « on ne sait pas ».
+  return readerFormalities({
+    countryCode: facts.countryCode,
+    abroad: abroadForReader(facts, viewerId),
+    party,
+    reader,
+    find: entryRequirement,
+  });
 }
 
 /**
@@ -879,7 +896,16 @@ function papersFacts(compas: Record<string, unknown> | null, destinationCode?: s
   if (saved) {
     const countryCode = code(saved.countryCode);
     if (countryCode) {
-      return { countryCode, country: name(saved.country), abroad: typeof saved.abroad === 'boolean' ? saved.abroad : null };
+      const from: AbroadFrom | undefined =
+        saved.abroadFrom === 'dit' || saved.abroadFrom === 'domicile' || saved.abroadFrom === 'gps' ? saved.abroadFrom : undefined;
+      const by = typeof saved.launchedBy === 'string' && saved.launchedBy ? saved.launchedBy : undefined;
+      return {
+        countryCode,
+        country: name(saved.country),
+        abroad: typeof saved.abroad === 'boolean' ? saved.abroad : null,
+        ...(from ? { abroadFrom: from } : {}),
+        ...(from && from !== 'dit' && by ? { launchedBy: by } : {}),
+      };
     }
   }
   const anchor = obj(compas?.anchor);

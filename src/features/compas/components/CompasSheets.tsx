@@ -1640,6 +1640,8 @@ function FormalitiesLine({ formalities: f }: { formalities: CompasData['formalit
           <b>{f.title}</b>
           <span className="cp-sub">
             {f.party} personne{f.party > 1 ? 's' : ''} × {formatMoney(f.perPerson, f.currency)}
+            {/* Le profil des autres membres est privé : le calcul suppose le même passeport pour tous. */}
+            {f.party > 1 ? ' · si tout le groupe a ta nationalité' : ''}
           </span>
         </span>
         <span className="cp-row__end">{formatMoney(f.amount, f.currency)}</span>

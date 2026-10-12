@@ -405,6 +405,11 @@ export interface TrainTrip {
   /** Aller-retour, par personne. */
   eurRoundTrip: number;
   basis: string;
+  /**
+   * La même base sans les mesures du trajet (« environ N km de voie et X h ») : c'est celle qui se range
+   * sur le voyage quand le départ est le domicile du profil, dont une distance déduirait la commune.
+   */
+  basisWithoutMeasures: string;
   /** Réseau retenu : le moins rapide des deux pays. */
   network: RailNetworkId;
   /** Le prix est toujours une estimation du barème Compas, jamais un tarif relevé. */
@@ -499,6 +504,7 @@ export function trainOutlook(input: TrainInput): TrainOutlook {
       minutesOneWay,
       eurRoundTrip,
       basis: `barème Compas ${RAIL_SCALE_DATE} · train aller-retour, environ ${railKm} km de voie et ${String(h).replace('.', ',')} h · ${net.label} · ${RAIL_SCALE_NOTE} · vrais horaires et prix dans Résa · Trajets`,
+      basisWithoutMeasures: `barème Compas ${RAIL_SCALE_DATE} · train aller-retour · ${net.label} · ${RAIL_SCALE_NOTE} · vrais horaires et prix dans Résa · Trajets`,
       network: net.id,
       priceSource: 'estimation',
       preferred: net.preferred,

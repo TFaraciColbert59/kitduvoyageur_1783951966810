@@ -46,3 +46,13 @@ export function readAiProposed(metadata: unknown): boolean {
     (metadata as Record<string, unknown>)[AI_PROPOSED_KEY] === true
   );
 }
+
+/**
+ * « L'IA a produit quelque chose » : au moins un conseil GARDÉ (après les filtres de règles, de
+ * tutoiement et de doublon), ou des étapes qu'elle a proposées. Une réponse reçue mais vide, illisible
+ * ou entièrement écartée ne compte pas : la mention « Rédigé par l'IA » ne se montre que sur ce qui
+ * est réellement venu d'elle (PLAN-100 5.3).
+ */
+export function aiContributed(input: { aiNotes: readonly string[]; aiStages: boolean }): boolean {
+  return input.aiStages || input.aiNotes.length > 0;
+}

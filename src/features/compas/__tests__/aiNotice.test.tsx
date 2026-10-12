@@ -33,6 +33,7 @@ import {
   AI_NOTICE_DONE,
   AI_NOTICE_RUN,
   AI_STEP_LABEL,
+  aiContributed,
   readAiProposed,
   withAiProposed,
 } from '../engine/aiNotice';
@@ -184,5 +185,16 @@ describe('panneau de préparation : la mention ne le fait pas sortir de l’écr
     const block = /\n\.cp-prep \{([^}]*)\}/.exec(css)?.[1] ?? '';
     expect(block).toMatch(/max-height:\s*calc\(100dvh/);
     expect(block).toMatch(/overflow-y:\s*auto/);
+  });
+});
+
+describe('`aiContributed` : la mention « Rédigé par l’IA » suit ce que l’IA a réellement donné', () => {
+  it('ni conseil gardé ni étape proposée : l’IA n’a rien produit', () => {
+    expect(aiContributed({ aiNotes: [], aiStages: false })).toBe(false);
+  });
+
+  it('un conseil gardé suffit, une étape proposée aussi', () => {
+    expect(aiContributed({ aiNotes: ['Suggestion de l’IA (facultatif) : réserve tôt.'], aiStages: false })).toBe(true);
+    expect(aiContributed({ aiNotes: [], aiStages: true })).toBe(true);
   });
 });

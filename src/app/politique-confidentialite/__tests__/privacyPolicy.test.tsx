@@ -10,7 +10,8 @@ import { aiEnabled } from '@/lib/ai/aiMode';
 import { buildCompasAutofillSystem } from '@/lib/ai/features/compasAutofill';
 import { AI_STEP_LABEL } from '@/features/compas/engine/aiNotice';
 import { AI_SUGGESTION_PREFIX } from '@/features/compas/engine/advice';
-import { originFact } from '@/features/compas/engine/travel';
+import { nearestAirportIn, type AirportRow } from '@/features/compas/engine/airports';
+import { originFact, planTravelLeg, travelFactsForAi, travelOrigin, type TravelDeps } from '@/features/compas/engine/travel';
 
 /**
  * Politique de confidentialité (plan 2.10, 5.3) : dans le style du contrôle des sources de
@@ -131,6 +132,71 @@ describe('profil voyageur : privé, et ce qui en sort est dit', () => {
     expect(
       originFact({ name: 'Lyon', country: 'France', countryCode: 'FR', lat: 45.76, lon: 4.83, source: 'domicile' })
     ).toBe('domicile de la personne (ville non transmise)');
+  });
+});
+
+/**
+ * Relecture de la PR #91 : « Rien de ce profil n'est envoyé à l'IA » doit rester vrai pour ce qui s'en
+ * DÉDUIT. Un départ du domicile fait un trajet (route, vol, train) et un « voyage à l'étranger » : leurs
+ * kilomètres, minutes, kilomètres de voie et le pays du domicile par rapport à la destination diraient
+ * d'où la personne part. Le code n'envoie alors que « inconnu » et « non communiqué ».
+ */
+describe('profil voyageur : la phrase « rien n’est envoyé à l’IA » vaut aussi pour ce qui s’en déduit', () => {
+  const AIRPORTS: AirportRow[] = [
+    ['CAG', 'Cagliari Elmas Airport', 39.251, 9.054, 'IT', 'L'],
+    ['LYS', 'Lyon Saint-Exupéry Airport', 45.726, 5.09, 'FR', 'L'],
+  ];
+  const HOME = { name: 'Villeurbanne', lat: 45.76, lon: 4.84, countryCode: 'FR' };
+  const TORONTO = { name: 'Toronto', lat: 43.65, lon: -79.38, countryCode: 'CA' };
+  const deps = (car: { km: number; minutes: number } | { failure: null }): TravelDeps => ({
+    carRoute: async (_a, b) => ('km' in car ? { ...car, end: b } : car),
+    walkKm: async () => 0,
+    airport: (p, country) => nearestAirportIn(AIRPORTS, p.lat, p.lon, { country }),
+  });
+  /** Tout ce qu'une mesure ou un moyen de transport déduit du domicile dirait. */
+  const DERIVED = /\d|\bkm\b|\bmin\b|voie|Vol à prévoir|Train à prévoir|mesuré|louer|location|étranger : (oui|non)/;
+
+  it('la politique le dit, et le code n’envoie du trajet que « inconnu » et « non communiqué »', async () => {
+    expect(policy().section('Données traitées')).toMatch(/Rien de ce profil n’est envoyé à l’IA/);
+    const scenarios = [
+      // route mesurée, dans le pays
+      { target: { lat: 45.07, lon: 5.55 }, to: { name: 'Vercors', countryCode: 'FR' }, days: 3, car: { km: 110, minutes: 95 }, origin: HOME },
+      // vol, à l'étranger
+      { target: { lat: 40.08, lon: 9.03 }, to: { name: 'Sardaigne', countryCode: 'IT' }, days: 3, car: { km: 1100, minutes: 840 }, origin: HOME },
+      // train, à l'étranger (sans voiture)
+      { target: { lat: 40.71, lon: -74.0 }, to: { name: 'New York', countryCode: 'US' }, days: 4, car: { km: 800, minutes: 540 }, origin: TORONTO, carFree: true },
+    ];
+    for (const sc of scenarios) {
+      const leg = await planTravelLeg(
+        { origin: travelOrigin(null, null, sc.origin), target: sc.target, destination: sc.to, days: sc.days, party: 2, transport: true, carFree: sc.carFree },
+        deps(sc.car)
+      );
+      expect(leg.transport, sc.to.name).not.toBeNull();
+      const facts = travelFactsForAi(leg);
+      expect(facts, sc.to.name).toEqual({
+        abroad: 'Voyage à l’étranger : inconnu.',
+        approach: 'Trajet d’approche : non communiqué.',
+        rental: false,
+      });
+      expect(`${facts.abroad} ${facts.approach}`).not.toMatch(DERIVED);
+    }
+    // Le départ lui-même : le domicile, sans ville.
+    expect(originFact(travelOrigin(null, null, HOME))).toBe('domicile de la personne (ville non transmise)');
+  });
+
+  it('le code de la préparation ne compose plus ces faits à la main (un seul passage, `travelFactsForAi`)', () => {
+    const code = read('src/features/compas/server/autofillActions.ts');
+    expect(code).toContain('travelFactsForAi(travelLeg)');
+    expect(code).toContain('rentalNeeded && aiTravel.rental');
+    expect(code).not.toMatch(/railKm|Trajet d’approche mesuré|Vol à prévoir|Voyage à l’étranger : oui/);
+  });
+
+  it('un départ dit dans la demande garde ses faits : il vient de la personne, pas de son profil', async () => {
+    const leg = await planTravelLeg(
+      { origin: travelOrigin({ ...HOME, name: 'Lyon' }, null), target: { lat: 40.08, lon: 9.03 }, destination: { name: 'Sardaigne', countryCode: 'IT' }, days: 3, party: 2, transport: true },
+      deps({ km: 1100, minutes: 840 })
+    );
+    expect(travelFactsForAi(leg)).toMatchObject({ abroad: 'Voyage à l’étranger : oui.', approach: 'Vol à prévoir : oui (aller-retour).' });
   });
 });
 

@@ -120,8 +120,9 @@ export const UNKNOWN_ORIGIN_LINE = 'Trajet non chiffré : point de départ incon
 export const ON_SITE_NOTE = 'Tu es déjà au départ : aucun trajet à prévoir.';
 /** Début de la note « sans voiture » quand aucun moyen de venir n'est chiffré. */
 export const CAR_FREE_NO_LEG_PREFIX = 'Sans voiture :';
-const carFreeNoLegNote = (straightKm: number) =>
-  `${CAR_FREE_NO_LEG_PREFIX} le trajet d’approche (environ ${Math.round(straightKm)} km à vol d’oiseau) n’est pas chiffré, aucune ligne de train ou de bus n’est évaluée sur ce trajet ; cherche-la dans Résa · Trajets.`;
+/** `fromHome` : la distance depuis le domicile ne se range pas sur le voyage (elle en déduirait la commune). */
+const carFreeNoLegNote = (straightKm: number, fromHome = false) =>
+  `${CAR_FREE_NO_LEG_PREFIX} le trajet d’approche${fromHome ? '' : ` (environ ${Math.round(straightKm)} km à vol d’oiseau)`} n’est pas chiffré, aucune ligne de train ou de bus n’est évaluée sur ce trajet ; cherche-la dans Résa · Trajets.`;
 /** Aucun vol possible (même aéroport aux deux bouts) et la route est longue, ou introuvable. */
 export const SAME_AIRPORT_NOTE =
   'Trajet d’approche à vérifier : aéroport identique au départ et à l’arrivée, route longue ou non calculée.';
@@ -194,6 +195,46 @@ export function abroadCosts(
   };
 }
 
+/** Le départ est le domicile du profil voyageur (et non un lieu dit ou la position de l'appareil). */
+export function isHomeOrigin(origin: Pick<TravelOrigin, 'source'> | null | undefined): boolean {
+  return origin?.source === 'domicile';
+}
+
+/**
+ * Les faits du trajet d'approche que le spécialiste (IA, un tiers) peut lire.
+ *
+ * VIE PRIVÉE : quand le départ est le DOMICILE du profil, tout ce qui s'en déduit reste ici : les km, les
+ * minutes, les km de voie, le moyen retenu (vol, train) et « voyage à l'étranger » (le pays du domicile
+ * par rapport à la destination) diraient d'où la personne part, ce que la politique de confidentialité
+ * promet de ne pas envoyer (« rien de ce profil n'est envoyé à l'IA »). L'IA reçoit alors « inconnu » et
+ * « non communiqué », et la ligne « voiture de location » (déduite du vol ou du train) s'en va aussi.
+ * Un départ dit (« depuis Lyon », écrit dans la demande) ou la position de l'appareil (arrondie à environ
+ * 1 km, dite dans la politique) gardent leurs faits chiffrés.
+ */
+export function travelFactsForAi(leg: Pick<TravelLeg, 'origin' | 'abroad' | 'transport' | 'train' | 'flight'>): {
+  /** « Voyage à l'étranger : oui / non / inconnu. » */
+  abroad: string;
+  /** Vol, train, route mesurée ou rien de mesuré. */
+  approach: string;
+  /** La ligne « voiture de location à prévoir » peut être envoyée (elle se déduit du vol ou du train). */
+  rental: boolean;
+} {
+  if (isHomeOrigin(leg.origin))
+    return { abroad: 'Voyage à l’étranger : inconnu.', approach: 'Trajet d’approche : non communiqué.', rental: false };
+  const { abroad, transport, train, flight } = leg;
+  return {
+    abroad: abroad === true ? 'Voyage à l’étranger : oui.' : abroad === false ? 'Voyage à l’étranger : non.' : 'Voyage à l’étranger : inconnu.',
+    approach: flight
+      ? 'Vol à prévoir : oui (aller-retour).'
+      : train
+        ? `Train à prévoir : oui (aller-retour, environ ${train.railKm} km de voie).`
+        : transport?.mode === 'voiture'
+          ? `Trajet d’approche mesuré : ${transport.km} km en voiture (${transport.minutes} min) puis ${transport.walkKm} km à pied.`
+          : 'Trajet d’approche : non mesuré.',
+    rental: true,
+  };
+}
+
 /** Le départ tel que dit au spécialiste (IA) : jamais un pays supposé. */
 export function originFact(origin: TravelOrigin | null): string {
   if (!origin) return 'inconnu';
@@ -251,10 +292,12 @@ export function estimatedDriveMinutes(straightKm: number): number {
  * aller pour une seule journée : … ». null sinon, ou quand le temps n'est pas
  * connu. Le temps se lit à la minute : 180,4 se lit 3 h 00, donc pas de note.
  */
-export function dayTripNote(days: number, minutesOneWay: number | null): string | null {
+export function dayTripNote(days: number, minutesOneWay: number | null, exact = true): string | null {
   if (days > 1 || minutesOneWay == null) return null;
   const m = Math.round(minutesOneWay);
   if (!(m > DAY_TRIP_MAX_MINUTES)) return null;
+  // `exact` faux (départ du domicile) : la durée exacte se rangerait sur le voyage et en déduirait la commune.
+  if (!exact) return `Plus de ${DAY_TRIP_MAX_MINUTES / 60} h de trajet aller pour une seule journée : prévois une nuit sur place ou choisis plus près.`;
   return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} de trajet aller pour une seule journée : prévois une nuit sur place ou choisis plus près.`;
 }
 
@@ -270,7 +313,7 @@ export async function planTravelLeg(input: TravelLegInput, deps: TravelDeps): Pr
   if (input.origin?.source === 'domicile' && leg.transport) leg.notes.push(HOME_ORIGIN_NOTE);
   // Temps connu : route mesurée ou estimée, train ; un vol n'a pas de durée connue.
   const minutes = leg.transport && leg.transport.mode !== 'avion' ? leg.transport.minutes : null;
-  const note = dayTripNote(input.days, minutes);
+  const note = dayTripNote(input.days, minutes, !isHomeOrigin(input.origin));
   if (note) leg.notes.push(note);
   return leg;
 }
@@ -296,7 +339,7 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
     // Sans voiture, un temps de route estimé en voiture ne dit rien de la journée.
     const note =
       straightKm != null && straightKm <= FLIGHT_THRESHOLD_KM && !input.carFree
-        ? dayTripNote(days, estimatedDriveMinutes(straightKm))
+        ? dayTripNote(days, estimatedDriveMinutes(straightKm), !isHomeOrigin(origin))
         : null;
     if (note) leg.notes.push(note);
     return leg;
@@ -364,8 +407,10 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
     return out.trip;
   };
   const takeTrain = (rail: TrainTrip): TravelLeg => {
-    leg.train = rail;
-    leg.transport = moveOf('train', { km: rail.railKm, minutes: rail.minutesOneWay, basis: rail.basis });
+    // Départ du domicile : la base rangée ne dit pas les km de voie ni la durée (ils déduiraient la commune).
+    const stored = fromHome ? { ...rail, basis: rail.basisWithoutMeasures } : rail;
+    leg.train = stored;
+    leg.transport = moveOf('train', { km: rail.railKm, minutes: rail.minutesOneWay, basis: stored.basis });
     if (rail.notice) leg.notes.push(rail.notice);
     return leg;
   };
@@ -382,12 +427,14 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
     const km = Math.round(from && to ? distanceKm(from, to) : straight);
     // Départ pris au domicile : l'aéroport le plus proche du domicile le désigne autant que son
     // nom, il n'est ni dans la base ni dans le trajet (« vol à prévoir (depuis ton domicile) »).
+    // La distance non plus : depuis le domicile, « environ N km » en déduirait la commune.
+    const measure = fromHome ? '' : `, environ ${km} km`;
     const text =
       from && to
         ? fromHome
-          ? `vol aller-retour depuis ${departure} vers ${to.iata} (${to.name}), environ ${km} km`
-          : `vol aller-retour depuis ${departure}, ${from.iata} → ${to.iata} (${from.name} → ${to.name}), environ ${km} km`
-        : `vol aller-retour depuis ${departure} vers ${destination.name}, environ ${km} km`;
+          ? `vol aller-retour depuis ${departure} vers ${to.iata} (${to.name})`
+          : `vol aller-retour depuis ${departure}, ${from.iata} → ${to.iata} (${from.name} → ${to.name})${measure}`
+        : `vol aller-retour depuis ${departure} vers ${destination.name}${measure}`;
     leg.flight = { from, to, km };
     leg.transport = moveOf('avion', {
       km,
@@ -427,7 +474,7 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
       if (fly(`${Math.round(ride.minutes / 60)} h de route à l’aller pour ${days} jour${days > 1 ? 's' : ''}`)) return leg;
       noFlightLongRoad(ride.minutes);
     }
-    leg.notes.push(carFreeNoLegNote(straight));
+    leg.notes.push(carFreeNoLegNote(straight, fromHome));
     return leg;
   }
 

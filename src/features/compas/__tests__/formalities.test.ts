@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isStoredFormalities, readerFormalities } from '../engine/formalities';
+import { isStoredFormalities, readerFormalities, withoutStoredFormalities } from '../engine/formalities';
 import { entryFees } from '../engine/costs';
 import { entryRequirement } from '../server/entryRequirements';
 
@@ -73,16 +73,61 @@ describe('readerFormalities — la ligne chiffrée du lecteur, jamais rangée', 
 describe('isStoredFormalities — la dépense « Formalités » rangée par une préparation d’avant ce correctif', () => {
   const legacy = {
     title: 'Formalités : ESTA (40 $)',
+    is_planned: true,
     metadata: { autofill: 'run-1', source: 'estimation', basis: 'barème Compas 2026-10 · ressortissant français, tarif officiel connu' },
   };
 
-  it('la ligne chiffrée par la préparation, pour un ressortissant français, est reconnue', () => {
+  it('la ligne chiffrée par la préparation, planifiée et intacte, est reconnue', () => {
     expect(isStoredFormalities(legacy)).toBe(true);
   });
 
+  it('quelle que soit sa base : la préparation en a écrit plusieurs, aucune ne doit passer', () => {
+    for (const basis of [
+      undefined,
+      '',
+      'barème Compas 2026-10 · ressortissant français, tarif officiel connu',
+      'barème Compas 2026-09 · tarif officiel connu · à vérifier avant de partir',
+      'estimation du spécialiste',
+    ])
+      expect(isStoredFormalities({ ...legacy, metadata: { autofill: 'run-1', source: 'estimation', ...(basis === undefined ? {} : { basis }) } }), String(basis)).toBe(true);
+  });
+
   it('une dépense saisie à la main, même nommée « Formalités », ne l’est pas', () => {
-    expect(isStoredFormalities({ title: 'Formalités : visa', metadata: null })).toBe(false);
-    expect(isStoredFormalities({ title: 'Formalités : visa', metadata: { note: 'payé en ligne' } })).toBe(false);
-    expect(isStoredFormalities({ title: 'Parking', metadata: legacy.metadata })).toBe(false);
+    expect(isStoredFormalities({ title: 'Formalités : visa', is_planned: true, metadata: null })).toBe(false);
+    expect(isStoredFormalities({ title: 'Formalités : visa', is_planned: true, metadata: { note: 'payé en ligne' } })).toBe(false);
+    expect(isStoredFormalities({ title: 'Parking', is_planned: true, metadata: legacy.metadata })).toBe(false);
+  });
+
+  it('réglée (plus planifiée) : c’est devenu une dépense de la personne, elle compte', () => {
+    expect(isStoredFormalities({ ...legacy, is_planned: false })).toBe(false);
+    expect(isStoredFormalities({ ...legacy, is_planned: null })).toBe(false);
+    const { is_planned: _planned, ...undecided } = legacy;
+    void _planned;
+    expect(isStoredFormalities(undecided)).toBe(false);
+  });
+
+  it('retouchée depuis sa création (montant, titre…) : elle compte, au-delà de la marge de la passe', () => {
+    const at = '2026-10-09T09:00:00.000Z';
+    expect(isStoredFormalities({ ...legacy, created_at: at, updated_at: '2026-10-09T09:00:03.000Z' })).toBe(true);
+    expect(isStoredFormalities({ ...legacy, created_at: at, updated_at: '2026-10-09T09:00:05.000Z' })).toBe(true);
+    expect(isStoredFormalities({ ...legacy, created_at: at, updated_at: '2026-10-09T09:00:06.000Z' })).toBe(false);
+    expect(isStoredFormalities({ ...legacy, created_at: at, updated_at: '2026-10-10T18:30:00.000Z' })).toBe(false);
+  });
+
+  it('des dates absentes ou illisibles ne prouvent aucune retouche : la ligne reste retirée', () => {
+    expect(isStoredFormalities({ ...legacy, created_at: null, updated_at: '2026-10-10T18:30:00.000Z' })).toBe(true);
+    expect(isStoredFormalities({ ...legacy, created_at: '2026-10-09T09:00:00.000Z', updated_at: undefined })).toBe(true);
+    expect(isStoredFormalities({ ...legacy, created_at: 'hier', updated_at: 'ce matin' })).toBe(true);
+  });
+
+  it('`withoutStoredFormalities` ne retire que les lignes reconnues, dans l’ordre', () => {
+    const rows = [
+      { id: 'a', ...legacy },
+      { id: 'b', ...legacy, is_planned: false },
+      { id: 'c', title: 'Parking', is_planned: true, metadata: null },
+      { id: 'd', ...legacy, created_at: '2026-10-09T09:00:00.000Z', updated_at: '2026-10-09T10:00:00.000Z' },
+      { id: 'e', ...legacy },
+    ];
+    expect(withoutStoredFormalities(rows).map((r) => r.id)).toEqual(['b', 'c', 'd']);
   });
 });
