@@ -183,17 +183,36 @@ describe('NOM-03 : l inverse rend la commune, pas le batiment', () => {
     expect(res.matches[0].precision).toBe('commune');
   });
 
-  it('NOM-03b: la position rendue est celle demandee, pas celle du batiment', async () => {
+  it('NOM-03b: la position rendue est celle demandee (arrondie), pas celle du batiment', async () => {
     fetchMock.mockImplementation((url: string) =>
       isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve(json(NOMINATIM_REVERSE)),
     );
 
     const res = await reverseGeocodePlace(45.9301, 6.8802);
 
-    // C est la position de la personne qui fait foi : le fournisseur donne un
-    // nom, pas une position.
-    expect(res.matches[0].lat).toBe(45.9301);
-    expect(res.matches[0].lon).toBe(6.8802);
+    // C est la position de la personne qui fait foi, a ~1 km (plan 2.10) : le
+    // fournisseur donne un nom, pas une position.
+    expect(res.matches[0].lat).toBe(45.93);
+    expect(res.matches[0].lon).toBe(6.88);
+  });
+
+  it('NOM-03d: aucun fournisseur ne recoit la position exacte (plan 2.10)', async () => {
+    fetchMock.mockImplementation((url: string) =>
+      isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve(json(NOMINATIM_REVERSE)),
+    );
+
+    await reverseGeocodePlace(45.923712, 6.869349);
+
+    const urls = fetchMock.mock.calls.map((c) => String(c[0]));
+    expect(urls.some(isPhoton)).toBe(true);
+    expect(urls.some(isNominatim)).toBe(true);
+    for (const url of urls) {
+      const u = new URL(url);
+      expect(u.searchParams.get('lat'), url).toBe('45.92');
+      expect(u.searchParams.get('lon'), url).toBe('6.87');
+      expect(url).not.toContain('45.9237');
+      expect(url).not.toContain('6.8693');
+    }
   });
 
   it('NOM-03c: sans commune dans l adresse, on ne renvoie rien plutot qu un batiment', async () => {
@@ -332,6 +351,82 @@ describe('NOM-05 : un appel a la fois, espace d au moins 1,1 s', () => {
     const second = await geocodePlace('Argentiere');
     expect(second.status).toBe('ok');
     expect(second.provider).toBe('nominatim');
+  });
+});
+
+describe('NOM-07 : avec la cle LocationIQ, le Nominatim public n est plus appele (plan 1.3)', () => {
+  const isLocationIq = (url: string) => url.startsWith('https://eu1.locationiq.com/v1/');
+
+  /** Ce que LocationIQ rend en `format=json` : pas de `name`, mais `class`, `type`, `display_name`. */
+  const LOCATIONIQ_SEARCH = [
+    {
+      lat: '45.9237',
+      lon: '6.8694',
+      display_name: 'Chamonix-Mont-Blanc, Haute-Savoie, France',
+      class: 'boundary',
+      type: 'city',
+      address: { city: 'Chamonix-Mont-Blanc', county: 'Haute-Savoie', state: 'Auvergne-Rhone-Alpes', country: 'France' },
+    },
+  ];
+  const LOCATIONIQ_REVERSE = {
+    lat: '45.92',
+    lon: '6.87',
+    display_name: 'Archives municipales, Chamonix-Mont-Blanc, France',
+    address: { city: 'Chamonix-Mont-Blanc', county: 'Haute-Savoie', state: 'Auvergne-Rhone-Alpes', country: 'France' },
+  };
+
+  beforeEach(() => {
+    vi.stubEnv('LOCATIONIQ_API_KEY', 'cle-test');
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('NOM-07: l aller part chez LocationIQ (format json, cle), et la ligne se lit comme celle de Nominatim', async () => {
+    fetchMock.mockImplementation((url: string) =>
+      isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve(json(LOCATIONIQ_SEARCH)),
+    );
+
+    const res = await geocodePlace('Chamonix');
+
+    const urls = fetchMock.mock.calls.map((c) => String(c[0]));
+    expect(urls.some(isNominatim)).toBe(false);
+    const li = urls.find(isLocationIq);
+    expect(li).toBeDefined();
+    expect(new URL(li as string).searchParams.get('format')).toBe('json');
+    expect(new URL(li as string).searchParams.get('key')).toBe('cle-test');
+    expect(res.status).toBe('ok');
+    expect(res.matches[0]).toMatchObject({ name: 'Chamonix-Mont-Blanc', country: 'France', precision: 'commune' });
+  });
+
+  it('NOM-07b: l inverse aussi, avec le point arrondi, et la commune sort de l adresse', async () => {
+    fetchMock.mockImplementation((url: string) =>
+      isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve(json(LOCATIONIQ_REVERSE)),
+    );
+
+    const res = await reverseGeocodePlace(45.923712, 6.869349);
+
+    const urls = fetchMock.mock.calls.map((c) => String(c[0]));
+    expect(urls.some(isNominatim)).toBe(false);
+    const li = new URL(urls.find(isLocationIq) as string);
+    expect(li.pathname).toBe('/v1/reverse');
+    expect(li.searchParams.get('lat')).toBe('45.92');
+    expect(li.searchParams.get('lon')).toBe('6.87');
+    expect(res.matches[0].name).toBe('Chamonix-Mont-Blanc');
+  });
+
+  it('NOM-07c: la cle ne sort jamais dans les journaux', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      fetchMock.mockImplementation((url: string) =>
+        isPhoton(url) ? Promise.reject(new Error('503')) : Promise.resolve({ ok: false, status: 429 } as Response),
+      );
+      await geocodePlace('Chamonix');
+      expect(warn).toHaveBeenCalled();
+      expect(warn.mock.calls.flat().join(' ')).not.toContain('cle-test');
+    } finally {
+      warn.mockRestore();
+    }
   });
 });
 

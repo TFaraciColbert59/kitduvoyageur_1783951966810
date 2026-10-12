@@ -170,7 +170,7 @@ describe('geocodage inverse', () => {
     expect(res.matches[0]).toMatchObject({ name: 'Chamonix-Mont-Blanc', country: 'France', precision: 'commune' });
   });
 
-  it('R2: garde la position exacte, pas le centroid du fournisseur', async () => {
+  it('R2: garde la position demandee (arrondie a ~1 km, plan 2.10), pas le centroid du fournisseur', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       json: () =>
@@ -185,9 +185,13 @@ describe('geocodage inverse', () => {
     } as Response);
     const res = await reverseGeocodePlace(45.9237, 6.8694);
     // Le fournisseur rend le centre de la commune, pas le point demande : on
-    // rend le nom mais on conserve la position reellement mesuree.
-    expect(res.matches[0].lat).toBe(45.9237);
-    expect(res.matches[0].lon).toBe(6.8694);
+    // rend le nom mais on conserve la position demandee. Elle est arrondie a
+    // 0,01° des l entree : la position exacte ne part jamais chez un tiers.
+    expect(res.matches[0].lat).toBe(45.92);
+    expect(res.matches[0].lon).toBe(6.87);
+    const demande = new URL(String(fetchMock.mock.calls[0][0]));
+    expect(demande.searchParams.get('lat')).toBe('45.92');
+    expect(demande.searchParams.get('lon')).toBe('6.87');
   });
 
   it('R3: ne prend que la ligne de type commune', async () => {
