@@ -15,6 +15,12 @@
  * comme une contrainte ou une panne : le code appelant lit `error`.
  *
  * Limites de fidélité (à garder en tête avant d'en tirer une conclusion) :
+ * - la RLS n'est PAS rejouée : sans `canSelect`, toute ligne est lisible par
+ *   n'importe quelle session, et `rpc` rend `true` pour `can_edit_trip` (sauf
+ *   si le test fournit sa propre fonction). Un test d'autorisation fournit les
+ *   deux, portés à la main depuis la migration (voir `helpers/tripRls.ts`) ;
+ *   `canSelect` ne filtre que les lectures : `insert`, `update` et `delete` ne
+ *   sont soumis à aucune politique ;
  * - `maybeSingle` sur plusieurs lignes rend la première, là où PostgREST
  *   renvoie l'erreur PGRST116 ;
  * - `order` ne trie que des valeurs numériques ;
@@ -46,6 +52,11 @@ export interface MemorySupabaseOptions {
   rpc?: (fn: string, args: Record<string, unknown>) => { data: unknown; error: unknown } | undefined;
   onQuery?: (q: QueryInfo) => void | Promise<void>;
   failQuery?: (q: QueryInfo) => { code: string; message: string } | undefined;
+  /**
+   * Politique de lecture (RLS `FOR SELECT`) portée à la main : la ligne est-elle
+   * visible pour la session courante ? Absente, tout est visible (cas historique).
+   */
+  canSelect?: (table: string, row: Row) => boolean;
 }
 
 export interface MemorySupabase {
@@ -185,7 +196,7 @@ export function memorySupabase(options: MemorySupabaseOptions): MemorySupabase {
         writes.push({ table: this.table, op: 'delete', ids: hit.map((r) => String(r.id)) });
         return this.shape(hit);
       }
-      let found = this.matching();
+      let found = this.matching().filter((r) => options.canSelect?.(this.table, r) ?? true);
       for (const [col, asc] of [...this.orders].reverse())
         found = [...found].sort((a, b) => (Number(a[col]) - Number(b[col])) * (asc ? 1 : -1));
       if (this.max != null) found = found.slice(0, this.max);
