@@ -6,6 +6,7 @@ import META from '../data/entryRequirements.meta.json';
 import CURRENCIES_META from '../data/countryCurrencies.meta.json';
 import FUEL_META from '../data/fuelPrices.meta.json';
 import ICP_META from '../data/icpPriceLevels.meta.json';
+import MAINS_META from '../data/mainsElectricity.meta.json';
 import { tollSources } from '../engine/tolls';
 import { DATA_SOURCES, DataSources } from '@/app/mentions-legales/DataSources';
 
@@ -96,5 +97,15 @@ describe('mentions légales — sources des données', () => {
     const page = readFileSync(path.resolve(__dirname, '..', '..', '..', 'app', 'mentions-legales', 'page.tsx'), 'utf8');
     expect(page).toMatch(/import \{ DataSources \} from '\.\/DataSources'/);
     expect(page.match(/<DataSources /g)).toHaveLength(2);
+  });
+  it('les prises et le courant citent la révision de Wikipédia lue (CC BY-SA 4.0), ses auteurs, les changements, et la source première retirée', () => {
+    expect(text).toContain('Prises et courant :');
+    expect(text).toContain(`révision ${MAINS_META.revision} du 11 octobre 2026, lue le 12 octobre 2026`);
+    expect(text).toContain('licence CC BY-SA 4.0');
+    expect(text).toMatch(/Prises et courant :.*Ce jeu dérivé reste sous la même licence/);
+    expect(text).toMatch(/Prises et courant :.*retiré en septembre 2026/);
+    expect(text).toMatch(/Prises et courant :.*Changements : lettres, tensions du foyer et fréquences extraites/);
+    for (const href of [MAINS_META.page, MAINS_META.revisionUrl, MAINS_META.historyUrl, MAINS_META.licenceUrl, MAINS_META.primarySourceUrl])
+      expect(markup, href).toContain(`href="${href.replace(/&/g, '&amp;')}"`);
   });
 });
