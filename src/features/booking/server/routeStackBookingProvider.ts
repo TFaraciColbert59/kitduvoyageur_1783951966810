@@ -79,7 +79,10 @@ interface RouteStackProviderOptions {
 
 interface RouteStackSession {
   client: {
-    connect(transport: unknown, options?: { signal?: AbortSignal; timeout?: number }): Promise<void>;
+    connect(
+      transport: unknown,
+      options?: { signal?: AbortSignal; timeout?: number }
+    ): Promise<void>;
     callTool(
       input: { name: string; arguments?: Record<string, unknown> },
       resultSchema?: unknown,
@@ -118,7 +121,8 @@ function requireRouteStackCredentials(env: BookingProviderEnv): ResolvedProvider
 
 function isPrivateHost(hostname: string): boolean {
   const host = hostname.toLowerCase();
-  if (host === 'localhost' || host === 'ip6-localhost' || host === '0.0.0.0' || host === '::1') return true;
+  if (host === 'localhost' || host === 'ip6-localhost' || host === '0.0.0.0' || host === '::1')
+    return true;
   if (host.startsWith('127.') || host.startsWith('10.') || host.startsWith('192.168.')) return true;
   const rfc1918 = host.match(/^172\.(\d{1,3})\./);
   return Boolean(rfc1918 && Number(rfc1918[1]) >= 16 && Number(rfc1918[1]) <= 31);
@@ -235,7 +239,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function readString(record: Record<string, unknown>, keys: string[]): string | null {
   for (const key of keys) {
     const value = record[key];
-    if (typeof value === 'string' && value.trim()) return value.trim().slice(0, MAX_TITLE_LENGTH * 4);
+    if (typeof value === 'string' && value.trim())
+      return value.trim().slice(0, MAX_TITLE_LENGTH * 4);
   }
   return null;
 }
@@ -340,17 +345,25 @@ function flightTitle(
   const first = segments[0];
   const last = segments[segments.length - 1];
   const origin = readString(first ?? {}, ['from', 'origin', 'departure']) ?? requestOrigin;
-  const destination = readString(last ?? {}, ['to', 'destination', 'arrival']) ?? requestDestination;
+  const destination =
+    readString(last ?? {}, ['to', 'destination', 'arrival']) ?? requestDestination;
   return `${origin} → ${destination}`;
 }
 
-function fallbackTitle(record: Record<string, unknown>, request: BookingSearchRequest): string | null {
-  if (request.vertical === 'flight') return flightTitle(record, request.origin, request.destination);
+function fallbackTitle(
+  record: Record<string, unknown>,
+  request: BookingSearchRequest
+): string | null {
+  if (request.vertical === 'flight')
+    return flightTitle(record, request.origin, request.destination);
   if (request.vertical === 'hotel') {
     return readString(record, ['city', 'destination', 'name']) ?? `Hôtel · ${request.destination}`;
   }
   if (request.vertical === 'car') {
-    return readString(record, ['vehicleName', 'carType', 'model']) ?? `Location de voiture · ${request.destination}`;
+    return (
+      readString(record, ['vehicleName', 'carType', 'model']) ??
+      `Location de voiture · ${request.destination}`
+    );
   }
   return null;
 }
@@ -416,7 +429,9 @@ function normalizeOffers(
       'publishedRate',
       'rate',
     ]);
-    const currency = normalizeCurrency(readString(record, ['currency', 'currencyCode']) ?? payloadCurrency);
+    const currency = normalizeCurrency(
+      readString(record, ['currency', 'currencyCode']) ?? payloadCurrency
+    );
     // Ni identifiant, ni nom, ni prix : l'enveloppe d'une réponse vide, pas une
     // offre (« Hôtel · Annecy » sans prix ni lien, 7 octobre).
     if (!rawId && !providerTitle && amount == null) continue;
@@ -517,7 +532,9 @@ async function readJsonLimited(response: Response): Promise<unknown> {
 
 function parseToolPayload(result: RouteStackToolResult): unknown {
   if (result.isError) {
-    const said = (result.content ?? []).find((item) => item.type === 'text' && typeof item.text === 'string')?.text;
+    const said = (result.content ?? []).find(
+      (item) => item.type === 'text' && typeof item.text === 'string'
+    )?.text;
     throw new BookingProviderError({
       code: BOOKING_PROVIDER_ERROR_CODES.upstream,
       provider: 'routestack',
@@ -649,10 +666,12 @@ async function connectWithDeadline(
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     await Promise.race([
-      Promise.resolve(client.connect(transport, {
-        signal: controller.signal,
-        timeout: MCP_CONNECT_TIMEOUT_MS,
-      })),
+      Promise.resolve(
+        client.connect(transport, {
+          signal: controller.signal,
+          timeout: MCP_CONNECT_TIMEOUT_MS,
+        })
+      ),
       new Promise<never>((_, reject) => {
         timer = setTimeout(() => {
           controller.abort();
@@ -679,26 +698,36 @@ async function connectWithDeadline(
 async function createConnectedSession(env: BookingProviderEnv): Promise<RouteStackSession> {
   const token = await getPartnerToken(env);
   const url = resolveMcpUrl(env);
-  const [{ Client }, { StreamableHTTPClientTransport }, { SSEClientTransport }] = await Promise.all([
-    import('@modelcontextprotocol/sdk/client/index.js'),
-    import('@modelcontextprotocol/sdk/client/streamableHttp.js'),
-    import('@modelcontextprotocol/sdk/client/sse.js'),
-  ]);
+  const [{ Client }, { StreamableHTTPClientTransport }, { SSEClientTransport }] = await Promise.all(
+    [
+      import('@modelcontextprotocol/sdk/client/index.js'),
+      import('@modelcontextprotocol/sdk/client/streamableHttp.js'),
+      import('@modelcontextprotocol/sdk/client/sse.js'),
+    ]
+  );
   const headers = { Authorization: `Bearer ${token}` };
   const client = new Client({ name: 'lkdv-booking', version: '1.0.0' });
 
   try {
-    await connectWithDeadline(client as unknown as RouteStackSession['client'], new StreamableHTTPClientTransport(url, { requestInit: { headers } }));
+    await connectWithDeadline(
+      client as unknown as RouteStackSession['client'],
+      new StreamableHTTPClientTransport(url, { requestInit: { headers } })
+    );
     return { client: client as unknown as RouteStackSession['client'] };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    const transportMismatch = /404|405|not found|method not allowed|timed out|timeout/i.test(message);
+    const transportMismatch = /404|405|not found|method not allowed|timed out|timeout/i.test(
+      message
+    );
     await closeWithDeadline({ client: client as unknown as RouteStackSession['client'] });
     if (!transportMismatch) throw normalizeBookingProviderError(error, 'routestack');
 
     const fallbackClient = new Client({ name: 'lkdv-booking', version: '1.0.0' });
     try {
-      await connectWithDeadline(fallbackClient as unknown as RouteStackSession['client'], new SSEClientTransport(url, { requestInit: { headers } }));
+      await connectWithDeadline(
+        fallbackClient as unknown as RouteStackSession['client'],
+        new SSEClientTransport(url, { requestInit: { headers } })
+      );
       return { client: fallbackClient as unknown as RouteStackSession['client'] };
     } catch (fallbackError) {
       await closeWithDeadline({ client: fallbackClient as unknown as RouteStackSession['client'] });
@@ -729,7 +758,10 @@ async function connectRouteStackSession(env: BookingProviderEnv): Promise<RouteS
   return connecting;
 }
 
-async function invalidateRouteStackSession(env: BookingProviderEnv, session: RouteStackSession): Promise<void> {
+async function invalidateRouteStackSession(
+  env: BookingProviderEnv,
+  session: RouteStackSession
+): Promise<void> {
   const key = createRouteStackSessionKey(env);
   const current = routeStackSessions.get(key);
   if (current?.session === session) routeStackSessions.delete(key);
@@ -745,11 +777,10 @@ function createDefaultToolCaller(env: BookingProviderEnv): RouteStackToolCaller 
     const forwardAbort = () => controller.abort();
     options?.signal?.addEventListener('abort', forwardAbort, { once: true });
     try {
-      const result = await session.client.callTool(
-        { name, arguments: args },
-        undefined,
-        { signal: controller.signal, timeout: options?.timeout ?? timeoutMs }
-      );
+      const result = await session.client.callTool({ name, arguments: args }, undefined, {
+        signal: controller.signal,
+        timeout: options?.timeout ?? timeoutMs,
+      });
       return result as RouteStackToolResult;
     } catch (error) {
       await invalidateRouteStackSession(env, session);
@@ -780,9 +811,14 @@ interface ResolvedLocation {
 
 const IATA_CODE = /^[A-Z]{3}$/;
 const foldName = (value: string) =>
-  value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
 
-const flightCode = (r: Record<string, unknown>) => readString(r, ['code', 'iata', 'iataCode']) ?? '';
+const flightCode = (r: Record<string, unknown>) =>
+  readString(r, ['code', 'iata', 'iataCode']) ?? '';
 /** Une gare ou un port dans la liste des lieux de vol (« [ZYD] Lisbon TP » avant l'aéroport « Portela »). */
 const NOT_AIRPORT = /\b(tp|rail|railway|station|bus|gare|hbf|bahnhof|ferry|heliport)\b/i;
 
@@ -798,7 +834,9 @@ function pickFlightLocation(
 ): Record<string, unknown> | undefined {
   const wanted = new Set(cityNames.map(foldName));
   const inCity = records.filter(
-    (r) => IATA_CODE.test(flightCode(r)) && wanted.has(foldName(readString(r, ['city', 'cityName']) ?? ''))
+    (r) =>
+      IATA_CODE.test(flightCode(r)) &&
+      wanted.has(foldName(readString(r, ['city', 'cityName']) ?? ''))
   );
   const name = (r: Record<string, unknown>) => readString(r, ['name']) ?? '';
   return (
@@ -824,15 +862,31 @@ async function resolveLocation(
   if (vertical !== 'flight' && /^\d+$/.test(trimmed)) {
     return { id: trimmed, code: trimmed };
   }
-  const tool = vertical === 'flight' ? 'flight_locations' : vertical === 'hotel' ? 'hotel_search_destinations' : 'car_locations';
+  const tool =
+    vertical === 'flight'
+      ? 'flight_locations'
+      : vertical === 'hotel'
+        ? 'hotel_search_destinations'
+        : 'car_locations';
   // OpenAPI RouteStack : `term` pour les lieux de vol et de voiture, `query` pour les destinations d'hôtel.
   const lookup = async (term: string) => {
-    const payload = parseToolPayload(await callTool(tool, vertical === 'hotel' ? { query: term } : { term }));
+    const payload = parseToolPayload(
+      await callTool(tool, vertical === 'hotel' ? { query: term } : { term })
+    );
     return findRecords(payload, ['result', 'results', 'locations', 'destinations', 'data']);
   };
   // Données publiques (codes et noms de lieux) : de quoi voir pourquoi un lieu est mal choisi.
-  const note = (term: string, records: Record<string, unknown>[], picked: Record<string, unknown> | undefined) =>
-    trail?.push(JSON.stringify({ tool, term, picked: picked ?? null, candidates: records.slice(0, 6) }).slice(0, 1500));
+  const note = (
+    term: string,
+    records: Record<string, unknown>[],
+    picked: Record<string, unknown> | undefined
+  ) =>
+    trail?.push(
+      JSON.stringify({ tool, term, picked: picked ?? null, candidates: records.slice(0, 6) }).slice(
+        0,
+        1500
+      )
+    );
 
   let records = await lookup(trimmed);
   let record: Record<string, unknown> | undefined;
@@ -872,7 +926,14 @@ async function resolveLocation(
       message: `Destination RouteStack non résolue : ${trimmed}.`,
     });
   }
-  const id = readString(record, ['id', 'destinationId', 'destination_id', 'code', 'iata', 'locationId']);
+  const id = readString(record, [
+    'id',
+    'destinationId',
+    'destination_id',
+    'code',
+    'iata',
+    'locationId',
+  ]);
   if (!id) {
     throw new BookingProviderError({
       code: BOOKING_PROVIDER_ERROR_CODES.validation,
@@ -901,7 +962,13 @@ async function argumentsForRequest(
   const limit = request.limit ?? DEFAULT_LIMIT;
   if (request.vertical === 'flight') {
     const origin = await resolveLocation(callTool, 'flight', request.origin, localize, trail);
-    const destination = await resolveLocation(callTool, 'flight', request.destination, localize, trail);
+    const destination = await resolveLocation(
+      callTool,
+      'flight',
+      request.destination,
+      localize,
+      trail
+    );
     // Corps de POST /mcp/flight/search (collection Postman RouteStack), que
     // l'outil MCP `flight_search` attend sous `filter`.
     return {
@@ -1032,7 +1099,14 @@ function searchRequestFromCandidate(candidate: BookingCandidate): BookingSearchR
     const departure = text('departure');
     const ret = text('return');
     if (!origin || !destination || !departure) return null;
-    return { vertical: 'flight', origin, destination, departure, ...(ret ? { return: ret } : {}), ...shared };
+    return {
+      vertical: 'flight',
+      origin,
+      destination,
+      departure,
+      ...(ret ? { return: ret } : {}),
+      ...shared,
+    };
   }
   if (candidate.vertical === 'hotel') {
     const destination = text('destination');
@@ -1105,7 +1179,8 @@ export function createRouteStackBookingProvider(
               ? `${validated.destination} = ${String((filter.pickup as Record<string, unknown> | undefined)?.name)}`
               : null;
         if (used && normalized.code === BOOKING_PROVIDER_ERROR_CODES.upstream) {
-          if (trail.length) console.warn('[routestack] recherche refusée, lieux', trail.join(' | '));
+          if (trail.length)
+            console.warn('[routestack] recherche refusée, lieux', trail.join(' | '));
           throw new BookingProviderError({
             code: normalized.code,
             provider: 'routestack',
@@ -1142,9 +1217,12 @@ export function createRouteStackBookingProvider(
         const payload = parseToolPayload(await callTool(name, args));
         const offers = normalizeOffers(payload, request, env);
         const fresh = offers.find(
-          (offer) => offer.id === candidate.id || offer.providerReference === candidate.providerReference
+          (offer) =>
+            offer.id === candidate.id || offer.providerReference === candidate.providerReference
         );
-        return fresh ? { ...fresh, requiresRevalidation: false } : { ...candidate, requiresRevalidation: true };
+        return fresh
+          ? { ...fresh, requiresRevalidation: false }
+          : { ...candidate, requiresRevalidation: true };
       } catch {
         // Echec de revalidation != prix change : on le signale, on invente rien.
         return { ...candidate, requiresRevalidation: true };
