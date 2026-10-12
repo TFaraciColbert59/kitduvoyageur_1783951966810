@@ -166,20 +166,19 @@ export default function NouveauGroupePage() {
     setSaving(true);
     try {
       const supabase = createClient();
+      // F-009 : le modèle canonique est `travel_groups` (le trigger
+      // seed_group_owner_membership_trg inscrit automatiquement le créateur).
       const payload = {
         name,
         description,
-        massif: selectedTrail.region,
-        distance_km: selectedTrail.distance_km,
-        elevation_gain: selectedTrail.elevation_gain,
-        start_date: startDate,
-        end_date: endDate,
+        destination: selectedTrail?.region || null,
         max_members: maxMembers,
-        creator_id: user?.id,
-        created_at: new Date().toISOString()
+        owner_id: user?.id,
+        departure_date: startDate || null,
+        return_date: endDate || null,
       };
 
-      const { data, error } = await supabase.from('groupes').insert([payload]).select('id').single();
+      const { data, error } = await supabase.from('travel_groups').insert([payload]).select('id').single();
 
       if (error || !data) {
         toast(error?.message || 'Impossible de créer le groupe pour le moment.', 'error');

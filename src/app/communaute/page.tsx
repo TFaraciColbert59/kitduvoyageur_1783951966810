@@ -141,7 +141,13 @@ function CommunautePageContent() {
           .order('created_at', { ascending: false })
           .limit(20),
         supabase.from('clubs').select('*').order('members_count', { ascending: false }),
-        supabase.from('groupes').select('*').limit(20),
+        // F-009 : modèle canonique des groupes d'expédition (travel_groups),
+        // jamais la vue legacy remplie de constantes.
+        supabase
+          .from('travel_groups')
+          .select('id, name, description, destination, theme, visibility, max_members, cover_url, created_at')
+          .order('created_at', { ascending: false })
+          .limit(20),
         supabase
           .from('events')
           .select('*')
@@ -154,7 +160,14 @@ function CommunautePageContent() {
       const postsData = postsRes.status === 'fulfilled' ? (postsRes.value.data ?? []) : [];
       const carnetsData = carnetsRes.status === 'fulfilled' ? (carnetsRes.value.data ?? []) : [];
       const clubsData = clubsRes.status === 'fulfilled' ? (clubsRes.value.data ?? []) : [];
-      const groupsData = groupsRes.status === 'fulfilled' ? (groupsRes.value.data ?? []) : [];
+      const groupsData = (groupsRes.status === 'fulfilled' ? (groupsRes.value.data ?? []) : []).map(
+        (g: any) => ({
+          ...g,
+          // Affichage honnête : `massif` n'existe pas sur travel_groups, on
+          // retombe sur la destination réelle (ou rien).
+          massif: g.destination || null,
+        })
+      );
       const rawEvents = eventsRes.status === 'fulfilled' ? (eventsRes.value.data ?? []) : [];
       const seenEventIds = new Set<string>();
       const eventsData = rawEvents.filter((ev: any) => {

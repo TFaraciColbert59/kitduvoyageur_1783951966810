@@ -66,7 +66,7 @@ export async function getGroupeComplet(groupeId: string) {
         return_date: legacyGroupe.date_fin,
         budget_target: legacyGroupe.budget_prevu_cents ? legacyGroupe.budget_prevu_cents / 100 : null,
         group_level: 3,
-        optimization_score: legacyGroupe.progression_pct || 80,
+        optimization_score: legacyGroupe.progression_pct ?? 0,
         visibility: legacyGroupe.confidentialite === 'prive' ? 'private' : 'public',
       };
     }
@@ -331,8 +331,9 @@ export async function getGroupeComplet(groupeId: string) {
       participantsCount: String(nbMembers),
       season: seasonLabel(groupe.departure_date),
       durationDays: durationDays ?? (trailData?.duration_hours ? Math.ceil(trailData.duration_hours / 7) : 3),
-      distanceKm: trailData?.distance_km ? Number(trailData.distance_km) : 27.4,
-      elevationGain: trailData?.elevation_gain ? Number(trailData.elevation_gain) : 1620,
+      // F-009 : aucune métrique inventée — null quand la donnée n'existe pas.
+      distanceKm: trailData?.distance_km ? Number(trailData.distance_km) : null,
+      elevationGain: trailData?.elevation_gain ? Number(trailData.elevation_gain) : null,
       daysLeft: daysLeft ?? 0,
       startDate: formatDateShort(groupe.departure_date),
       endDate: formatDateShort(groupe.return_date),
