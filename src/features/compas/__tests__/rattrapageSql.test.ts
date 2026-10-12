@@ -3,6 +3,9 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { MONEY_RE, PLUG_RE, sharedNotes, sharedRules } from '../engine/papers';
 import { AI_SUGGESTION_PREFIX } from '../engine/advice';
+import { untouchedSince } from '../engine/dependencies';
+import { isStoredFormalities } from '../engine/formalities';
+import { formalitiesBasis } from '../engine/costs';
 
 /**
  * Le script de rattrapage des voyages déjà préparés (lot Z1, `supabase/maintenance/`) est écrit,
@@ -12,6 +15,8 @@ import { AI_SUGGESTION_PREFIX } from '../engine/advice';
  */
 const FILE = path.join(process.cwd(), 'supabase/maintenance/lot_z1_vie_privee_rattrapage.sql');
 const sql = fs.readFileSync(FILE, 'utf8');
+/** Ce que la préparation écrit (dépenses, horodatage de l'exécution) : le script en dépend. */
+const autofillSrc = fs.readFileSync(path.join(process.cwd(), 'src/features/compas/server/autofillActions.ts'), 'utf8');
 /** Le SQL sans ses lignes de commentaire. */
 const code = sql
   .split('\n')
@@ -43,9 +48,118 @@ describe('script de rattrapage de vie privée (écrit, non appliqué)', () => {
 
   it('est idempotent par construction : tout UPDATE est gardé par « is distinct from » ou une valeur qui change', () => {
     const updates = [...code.matchAll(/update\s+public\.\w+[\s\S]*?;/gi)].map((m) => m[0]);
-    expect(updates).toHaveLength(2);
+    expect(updates).toHaveLength(3);
+    // Métadonnées des voyages : seulement si la valeur change.
     expect(updates[0]).toMatch(/is distinct from/);
+    // Enveloppe : seulement si elle vaut encore l'ancien total et qu'il y a des formalités à retirer.
     expect(updates[1]).toMatch(/b\.removed > 0/);
+    // Base des dépenses gardées : seulement tant qu'elle nomme encore la nationalité.
+    expect(updates[2]).toMatch(/like '%ressortissant français%'/);
+    expect(updates[2]).toMatch(/not f\.supprimable/);
+  });
+
+  describe('dépenses « Formalités » : supprimer seulement l’intact, neutraliser le reste', () => {
+    /** Texte sans retours à la ligne ni espaces multiples, pour comparer des blocs de l'étape A et de B.2. */
+    const flat = (t: string) => t.replace(/\s+/g, ' ');
+    const codeFlat = flat(code);
+    const CLASSIFY = flat(`case when (t.metadata #>> '{compas,autofill,at}') ~ '`);
+
+    it('le classement « supprimable » est le même texte à l’étape A et en B.2', () => {
+      const cases = [...codeFlat.matchAll(/case when \(t\.metadata #>> '\{compas,autofill,at\}'\) ~ '[^']+' then .*? else false end as supprimable/g)].map((m) => m[0]);
+      expect(cases).toHaveLength(2);
+      expect(cases[0]).toBe(cases[1]);
+      expect(codeFlat).toContain(CLASSIFY);
+      // Les mêmes filtres de reconnaissance (écrite par une préparation, base « ressortissant français »).
+      const wheres = [...codeFlat.matchAll(/where e\.title like 'Formalités : %' and e\.metadata ->> 'autofill' is not null and e\.metadata ->> 'basis' like '%ressortissant français%'/g)];
+      expect(wheres).toHaveLength(2);
+    });
+
+    it('supprimable = prévue (is_planned) ET jamais retouchée (updated_at borné par autofill.at et par created_at)', () => {
+      const [block] = [...codeFlat.matchAll(/case when \(t\.metadata[^;]*? as supprimable/g)].map((m) => m[0]);
+      expect(block).toContain('then e.is_planned');
+      expect(block).toContain("and e.updated_at <= (t.metadata #>> '{compas,autofill,at}')::timestamptz + interval '5 seconds'");
+      expect(block).toContain("and e.updated_at <= e.created_at + interval '5 seconds'");
+      // Sans horodatage lisible : jamais supprimable (on neutralise), et le cast n'est atteint que si le texte est valide.
+      expect(block).toMatch(/else false end as supprimable/);
+    });
+
+    it('la marge de 5 s est celle d’untouchedSince, et le motif de date accepte l’horodatage que la préparation écrit', () => {
+      const margin = /interval '(\d+) seconds'/.exec(sql);
+      expect(margin).not.toBeNull();
+      const ms = Number((margin as RegExpExecArray)[1]) * 1000;
+      const at = '2026-10-01T10:00:00.000Z';
+      const base = Date.parse(at);
+      expect(untouchedSince(new Date(base + ms).toISOString(), at)).toBe(true);
+      expect(untouchedSince(new Date(base + ms + 1).toISOString(), at)).toBe(false);
+      const pattern = /\{compas,autofill,at\}'\) ~ '([^']+)'/.exec(sql);
+      expect(pattern).not.toBeNull();
+      const re = new RegExp((pattern as RegExpExecArray)[1]);
+      expect(re.test(new Date().toISOString())).toBe(true);
+      expect(re.test(at)).toBe(true);
+      expect(re.test('pas une date')).toBe(false);
+      expect(re.test('2026-13-45T25:00:00.000Z')).toBe(false);
+    });
+
+    it('colle à ce que la préparation écrit : dépense prévue, `autofill` = runId, base, et `at` sur la trace', () => {
+      expect(autofillSrc).toMatch(/is_planned: true,\s*metadata: \{ autofill: runId, source: l\.source, basis: l\.basis \}/);
+      expect(autofillSrc).toMatch(/autofill: \{\s*runId,\s*at: new Date\(\)\.toISOString\(\),/);
+      // La reconnaissance est celle du code (isStoredFormalities) : titre, `autofill`, base « ressortissant français ».
+      const basis = formalitiesBasis('2026-09-03');
+      expect(isStoredFormalities({ title: 'Formalités : ESTA (40 $)', metadata: { autofill: 'run-1', basis } })).toBe(true);
+      expect(basis).toContain('ressortissant français');
+      expect(sql).toContain("e.title like 'Formalités : %'");
+    });
+
+    it('seules les supprimables sont supprimées et retirées des identifiants ; les autres gardent leur ligne', () => {
+      const del = /delete from public\.trip_expenses e[\s\S]*?;/i.exec(code)?.[0] ?? '';
+      expect(del).toMatch(/and f\.supprimable/);
+      const fix = /pg_temp\.z1_fix_metadata\([\s\S]*?\) as metadata/.exec(code)?.[0] ?? '';
+      expect(fix).toMatch(/where f\.trip_id = t\.id and f\.supprimable/);
+    });
+
+    it('la base neutralisée ne dit rien du profil, et le code ne la reconnaît plus comme « Formalités » rangée', () => {
+      const m = /to_jsonb\('([^']+)'::text\)/.exec(code);
+      expect(m).not.toBeNull();
+      const neutral = (m as RegExpExecArray)[1];
+      expect(neutral).not.toMatch(/français|francais|ressortissant|nationalit|passeport|résident|domicile/i);
+      expect(isStoredFormalities({ title: 'Formalités : ESTA (40 $)', metadata: { autofill: 'run-1', basis: neutral } })).toBe(false);
+      // Seule la base change : ni le montant, ni is_planned, ni le titre ne sont réécrits.
+      const upd = /update public\.trip_expenses e[\s\S]*?;/i.exec(code)?.[0] ?? '';
+      expect(upd).toMatch(/set metadata = jsonb_set\(e\.metadata, '\{basis\}'/);
+      expect(upd).not.toMatch(/\bamount\b|is_planned\s*=|\btitle\s*=/);
+    });
+
+    it('l’enveloppe : abaissée du seul montant supprimé, remise à NULL si c’était tout, jamais négative', () => {
+      const budget = /create temp table z1_budget[\s\S]*?;/i.exec(code)?.[0] ?? '';
+      expect(flat(budget)).toMatch(/from z1_formalities f where f\.trip_id = t\.id and f\.supprimable and f\.run = /);
+      const upd = flat(/update public\.trips t\s+set estimated_budget[\s\S]*?;/i.exec(code)?.[0] ?? '');
+      expect(upd).toContain('set estimated_budget = nullif(b.old_total - b.removed, 0)');
+      expect(upd).toContain('t.estimated_budget = b.old_total');
+      expect(upd).toContain('b.removed > 0');
+      expect(upd).toContain('b.removed <= b.old_total');
+      expect(upd).toContain("t.metadata #>> '{compas,autofill,budgetSet}' = 'true'");
+      // NULL = « pas de budget » (chk_trips_budget l'admet) : l'annulation du préremplissage fait de même.
+      expect(autofillSrc).toMatch(/run\.budgetSet \? \{ estimated_budget: null \}/);
+      // Jamais 0 : le script ne pose ni `= 0` ni `greatest` sur l'enveloppe.
+      expect(upd).not.toMatch(/estimated_budget = 0\b/);
+    });
+
+    it('le contrôle de l’étape A compte séparément supprimables, neutralisables, à vérifier et enveloppes', () => {
+      for (const col of [
+        'depenses_formalites_supprimables',
+        'depenses_formalites_a_neutraliser',
+        'dont_reglees',
+        'depenses_formalites_a_verifier',
+        'enveloppes_a_abaisser',
+        'dont_remises_a_vide',
+      ])
+        expect(code).toContain(`as ${col}`);
+      expect(code).not.toContain('depenses_formalites_a_supprimer');
+      // « À vérifier » = « Formalités : … » que le script ne reconnaît pas (rien à supprimer ni à neutraliser).
+      expect(flat(code)).toContain("not exists (select 1 from formalities f where f.id = e.id)");
+      // Les enveloppes comptées sont celles que B.5 touchera (mêmes conditions).
+      expect(flat(code)).toContain('where estimated_budget = old_total and removed > 0 and removed <= old_total');
+    });
   });
 
   it('les lignes neutres sont exactement celles que la préparation range', () => {
