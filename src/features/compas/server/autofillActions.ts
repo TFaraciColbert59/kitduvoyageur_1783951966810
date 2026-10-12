@@ -1966,6 +1966,12 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     const kitDates = trip.start_date
       ? Array.from({ length: Math.min(62, Math.max(1, days)) }, (_, i) => addDaysIso(trip.start_date as string, i))
       : [];
+    // Où se lisent ce climat et ces règles : la première étape écrite, comme à la lecture (`getCompasData`,
+    // `kitPoint`). L'ancre du voyage n'est que le centre du lieu dit : celui d'une grande île n'est pas son
+    // massif (Sardaigne : l'itinéraire est dans les hauteurs, l'ancre à 100 km de là). L'ancre ne sert que
+    // sans étape localisée.
+    const firstStep = steps.find((s) => s.latitude != null && s.longitude != null);
+    const kitPoint = firstStep ? { lat: firstStep.latitude as number, lon: firstStep.longitude as number } : { lat: anchor.lat, lon: anchor.lon };
     const [{ data: itemRows }, { data: inv }, { data: loans }, { data: shopRows }, kitNormals] = await Promise.all([
       supabase.from('trip_items').select('item_name').eq('trip_id', tripId),
       supabase.from('product_ownership').select('id, name, is_lent, status').eq('user_id', userId).limit(500),
@@ -1976,7 +1982,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         .eq('is_active', true)
         .is('deleted_at', null)
         .limit(400),
-      kitDates.length ? getClimateNormals(anchor.lat, anchor.lon) : Promise.resolve(null),
+      kitDates.length ? getClimateNormals(kitPoint.lat, kitPoint.lon) : Promise.resolve(null),
     ]);
     const tripItemNames = ((itemRows ?? []) as Array<{ item_name: string }>).map((r) => r.item_name);
     const loanIds = ((loans ?? []) as Array<{ product_ownership_id: string }>).map((l) => l.product_ownership_id);
@@ -1995,7 +2001,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       activity,
       durationDays: days,
       seasonMonth: month,
-      latitude: anchor.lat,
+      latitude: kitPoint.lat,
       climate: climateWindow(kitNormals, kitDates),
       currentItems: tripItemNames.map((item_name) => ({ item_name }) as unknown as TripItem),
       // Maximum des étapes et des refuges, minimum des seules étapes. Pour les règles du kit, 0 veut dire
