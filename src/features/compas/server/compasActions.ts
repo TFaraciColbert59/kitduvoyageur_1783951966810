@@ -663,6 +663,8 @@ export async function compasSetDestinationAction(
             country: place.country,
             kind: place.kind,
             extent: place.extent,
+            // L'étiquette OSM (« place=island ») : Photon range une île sous « other », elle seule dit que c'en est une.
+            ...(place.osmTag ? { osmTag: place.osmTag.slice(0, 80) } : {}),
           };
         else delete c.anchor;
         return { ...m, compas: c };

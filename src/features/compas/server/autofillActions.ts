@@ -109,6 +109,8 @@ import {
 import { after } from 'next/server';
 import { bareAdminName, destinationRadiusKm, distanceKm, isAdminName, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, type CompasPlace } from '../engine/places';
 import { unifyStageNames, untangleStages } from '../engine/stageOrder';
+import { COUNTRY_SCALE_KM, WIDE_STAY_FROM_DAYS, keepCountry } from '../engine/countryBases';
+import { isIslandAnchor, isLargeIsland, pickIslandZone } from '../engine/islands';
 import { travellerToday } from '../engine/zone';
 import { getClimateNormals, getPrecipNormals } from './weather';
 import { aiSuggestion, essentialAdvice, orderNotes, repeatsRule } from '../engine/advice';
@@ -349,12 +351,23 @@ interface Anchor {
   radiusKm: number;
   /** Nature OSM (« other » : massif, lac, vallée…), absente des anciennes ancres. */
   kind?: string;
+  /** Étiquette OSM du lieu (« place=island ») : la seule trace d'une île que Photon range sous « other ». Absente des anciennes ancres. */
+  osmTag?: string;
   /** Emprise [ouest, nord, est, sud] quand la carte la donne. */
   extent?: [number, number, number, number] | null;
 }
 
-/** Au-delà de ce rayon (un pays), l'itinéraire déterministe ne sait pas encore choisir les lieux marquants. */
-const PLANNED_MAX_KM = 150;
+/**
+ * Au-delà de ce rayon (un pays), l'itinéraire d'étapes ne sait pas choisir les lieux marquants :
+ * l'IA propose (lieux vérifiés sur la carte), et sans elle les bases multiples du pays (`countryStages`).
+ */
+const PLANNED_MAX_KM = COUNTRY_SCALE_KM;
+/**
+ * Les bases d'un pays et le massif d'une île sont des lieux habités : on lit la carte comme pour un
+ * séjour en ville (villes, bourgs, villages ; ni refuge ni camping, que cette lecture irait chercher
+ * en ligne pour rien), quelle que soit l'activité.
+ */
+const SETTLEMENTS_LOOKUP_ACTIVITY = 'cultural';
 /** Natures de lieux habités : une ancre de ce type est déjà une base où dormir. */
 const SETTLEMENT_KINDS = new Set(['city', 'town', 'village', 'hamlet', 'suburb', 'municipality', 'borough', 'quarter', 'neighbourhood']);
 /** Entités administratives qui peuvent porter le nom d'un massif. */
@@ -390,9 +403,75 @@ interface StagePlace {
 }
 
 /**
+ * Altitudes réelles (tuiles de relief, quelques tuiles pour toute la zone) pour les lieux
+ * qui n'en ont pas : le massif d'une île, l'acclimatation, la montagne plutôt que la plaine.
+ * Beaucoup de lieux (les Alpes suisses entières) : relief lu plus large (moins de tuiles).
+ * Relief injoignable ou trop de lieux : liste inchangée.
+ */
+async function withReliefElevations(places: AreaPlace[]): Promise<AreaPlace[]> {
+  if (places.length > 3000) return places;
+  const zoom = places.length <= 400 ? 12 : 10;
+  const eles = await terrainElevations(places.map((p) => [p.lon, p.lat] as const), zoom).catch(() => null);
+  return eles ? places.map((p, i) => (p.eleM == null && eles[i] != null ? { ...p, eleM: eles[i] } : p)) : places;
+}
+
+/** Demi-diagonale (km) de l'emprise d'un lieu, si la carte la donne. */
+function halfExtentOf(extent: Anchor['extent']): number | null {
+  return extent ? distanceKm({ lat: extent[1], lon: extent[0] }, { lat: extent[3], lon: extent[2] }) / 2 : null;
+}
+
+/**
+ * Grande île à pied (PLAN-100 4.5) : le massif de l'île, pas l'île entière ni son centre. Les lieux habités
+ * de l'île (carte ou référentiel) reçoivent leur altitude et `pickIslandZone` choisit la zone où ils sont
+ * le plus haut ; un lieu de l'île dit par la personne (« Supramonte ») prime. `reason` quand rien n'est
+ * choisi (la zone reste alors celle du centre de l'île, dite).
+ */
+async function islandMassif(opts: {
+  anchor: Anchor;
+  activity: string;
+  days: number;
+  wishes: string[];
+  deadline: number;
+}): Promise<{ anchor: Anchor; note: string } | { reason: string }> {
+  const { anchor, activity, days } = opts;
+  const halfExtentKm = halfExtentOf(anchor.extent) ?? 0;
+  const found = await lookupAreaPlaces(
+    { center: anchor, radiusKm: Math.min(halfExtentKm, 400), extent: anchor.extent ?? null, activity: SETTLEMENTS_LOOKUP_ACTIVITY },
+    opts.deadline
+  ).catch(() => null);
+  if (!found) return { reason: 'lieux de l’île indisponibles (service de carte injoignable)' };
+  const places = await withReliefElevations(keepHomeCountry(found, anchor.countryCode));
+  // Lieux dits : le premier qui est sur l'île centre la zone (le même lieu sera retrouvé comme étape voulue ensuite).
+  let near: { name: string; lat: number; lon: number } | null = null;
+  for (const w of opts.wishes.slice(0, 4)) {
+    if (near || Date.now() > opts.deadline - 5_000) break;
+    if (LOOP_WISH.test(w) || wantsTraverse([w])) continue;
+    const candidates = await stageCandidates(w, { countryCode: anchor.countryCode, country: anchor.country }, anchor).catch(() => []);
+    const hit = pickPlace(
+      candidates.filter((c) => c.settlement || c.landmark),
+      { near: anchor, maxKm: halfExtentKm * 1.1 + 5, query: w, strict: true }
+    );
+    if (hit) near = { name: stageTitleFor(w, hit.name), lat: hit.lat, lon: hit.lon };
+  }
+  const zone = pickIslandZone({ places, island: { lat: anchor.lat, lon: anchor.lon, halfExtentKm }, activity, days, near });
+  if (!zone) return { reason: 'altitudes des lieux de l’île introuvables' };
+  const km = Math.round(zone.radiusKm);
+  const note =
+    zone.why === 'lieu dit'
+      ? `Grande île : zone de ${km} km autour de « ${zone.around} », le lieu que tu as dit.`
+      : `Grande île : zone de ${km} km autour de ${zone.around ?? 'son massif'}, là où les lieux habités sont les plus hauts de l’île${zone.highestM != null ? ` (jusqu’à ${Math.round(zone.highestM)} m)` : ''}. Altitudes des lieux, pas des sommets.`;
+  return {
+    anchor: { ...anchor, lat: zone.center.lat, lon: zone.center.lon, kind: 'other', osmTag: undefined, extent: null, radiusKm: zone.radiusKm },
+    note,
+  };
+}
+
+/**
  * Itinéraire déterministe : lieux RÉELS de la zone (OpenStreetMap) choisis par
- * calcul (distance du jour selon l'activité, forme, altitude). null quand la
- * zone est un pays entier ou que la carte ne répond pas : l'appelant se replie.
+ * calcul (distance du jour selon l'activité, forme, altitude). `wide` quand la
+ * zone est un pays entier (l'appelant confie alors le voyage à l'IA, puis aux
+ * bases multiples du pays si elle ne propose rien de vérifiable) ; `fallback` quand
+ * la carte ne répond pas : l'appelant se replie.
  */
 async function plannedStages(opts: {
   anchor: Anchor;
@@ -404,7 +483,7 @@ async function plannedStages(opts: {
   deadline: number;
   /** Notes du préremplissage : un repli y est dit (descente de rivière impossible). */
   notes?: string[];
-}): Promise<{ stages: StagePlace[]; note: string } | { fallback: string } | null> {
+}): Promise<{ stages: StagePlace[]; note: string } | { fallback: string } | { wide: true }> {
   const { activity, days } = opts;
   let anchor = opts.anchor;
   // Descente de rivière (canoë, kayak) : le tracé de l'eau fixe les soirs, vers
@@ -430,6 +509,21 @@ async function plannedStages(opts: {
       }) : séjour sur l’eau depuis une base.`
     );
   }
+  // Grande île (Sardaigne, Corse, Crète, Sicile…) à pied ou à vélo : l'île n'est pas « un pays » (la porte
+  // de taille plus bas l'enverrait à l'IA, dont les étapes sont acceptées en voiture sans limite) ;
+  // elle se parcourt par une zone. À pied, c'est le massif de l'île ; à vélo, la zone autour de l'île
+  // (le planificateur à vélo borne déjà la sienne). Avant le plafond de taille.
+  const move = profileFor(activity).move;
+  const onFoot = move === 'marche' || isMountainActivity(activity);
+  const onIsland = isIslandAnchor(anchor) && (onFoot || move === 'velo');
+  let islandNote = '';
+  if (onIsland && onFoot && isLargeIsland(halfExtentOf(anchor.extent), activity, days)) {
+    const massif = await islandMassif({ anchor, activity, days, wishes: opts.wishes, deadline: opts.deadline });
+    if ('anchor' in massif) {
+      anchor = massif.anchor;
+      islandNote = massif.note;
+    } else opts.notes?.push(`Massif de l’île non trouvé (${massif.reason}) : zone prise au centre de l’île.`);
+  }
   // Road trip et van : une région entière se parcourt en voiture ; à pied ou à
   // vélo, au-delà d'un massif, il faut savoir où sont les grands itinéraires.
   const roadScale = activity === 'roadtrip' || activity === 'vanlife';
@@ -440,7 +534,7 @@ async function plannedStages(opts: {
     : anchor.kind === 'country'
       ? 1000
       : Math.min(anchor.radiusKm, 60);
-  if (scaleKm > (roadScale ? 260 : PLANNED_MAX_KM)) return null;
+  if (scaleKm > (roadScale ? 260 : PLANNED_MAX_KM) && !onIsland) return { wide: true };
   const base: StagePlace[] = Array.from({ length: days }, (_, i) => ({
     day: i + 1,
     name: anchor.name,
@@ -524,12 +618,7 @@ async function plannedStages(opts: {
   const foot = profileFor(activity).move === 'marche' || isMountainActivity(activity);
   // Beaucoup de lieux (les Alpes suisses entières) : relief lu plus large
   // (moins de tuiles) plutôt que pas de filtre (Genève, Lausanne, Montreux).
-  if (foot && places.length <= 3000) {
-    const zoom = places.length <= 400 ? 12 : 10;
-    const eles = await terrainElevations(places.map((p) => [p.lon, p.lat] as const), zoom).catch(() => null);
-    if (eles) places = places.map((p, i) => (p.eleM == null && eles[i] != null ? { ...p, eleM: eles[i] } : p));
-    places = keepHighlands(places);
-  }
+  if (foot && places.length <= 3000) places = keepHighlands(await withReliefElevations(places));
   // Lieux dits par la personne, cherchés sur la carte dans la zone (quatre au plus).
   const waypoints: Array<{ name: string; lat: number; lon: number }> = [];
   for (const w of opts.wishes.slice(0, 4)) {
@@ -568,7 +657,72 @@ async function plannedStages(opts: {
   const shapeText = plan.shape === 'traverse' ? 'en traversée' : plan.shape === 'loop' ? 'en boucle' : 'depuis une base';
   return {
     stages: plan.stages.map((st) => ({ day: st.day, name: st.name, lat: st.lat, lon: st.lon, move: st.move, note: st.note })),
-    note: `Itinéraire ${shapeText} construit sur des lieux réels de la carte (${plan.distinct} lieu${plan.distinct > 1 ? 'x' : ''} où dormir)${waypoints.length ? `, en passant par ${waypoints.map((w) => w.name).join(', ')}` : ''}.`,
+    note: `${islandNote ? `${islandNote} ` : ''}Itinéraire ${shapeText} construit sur des lieux réels de la carte (${plan.distinct} lieu${plan.distinct > 1 ? 'x' : ''} où dormir)${waypoints.length ? `, en passant par ${waypoints.map((w) => w.name).join(', ')}` : ''}.`,
+  };
+}
+
+/**
+ * Échelle d'un pays SANS les noms de l'IA (PLAN-100 4.5) : plusieurs bases, une par groupe de jours,
+ * choisies parmi les lieux RÉELS du référentiel ou de la carte (`planBase` → `pickCountryBases` :
+ * notoriété, trajet raisonnable pour l'activité, sans retour en arrière). Appelé quand l'IA est
+ * éteinte ou ne propose rien de vérifiable sur la carte, jamais à sa place quand elle répond.
+ */
+async function countryStages(opts: {
+  anchor: Anchor;
+  activity: string;
+  days: number;
+  wishes: string[];
+  nights: string | null;
+  deadline: number;
+}): Promise<{ stages: StagePlace[]; note: string } | { fallback: string }> {
+  const { anchor, activity, days } = opts;
+  const diag: string[] = [];
+  // La zone entière du pays (emprise de la carte), les villes et bourgs les plus peuplés d'abord.
+  const found = await lookupAreaPlaces(
+    { center: anchor, radiusKm: Math.min(anchor.radiusKm, 400), extent: anchor.extent ?? null, activity: SETTLEMENTS_LOOKUP_ACTIVITY },
+    opts.deadline,
+    diag
+  );
+  if (!found) return { fallback: `lieux du pays indisponibles (service de carte injoignable${diag.length ? ` : ${diag.join(', ')}` : ''})` };
+  // Un pays : ses lieux seulement. Une grande région : les deux versants d'une frontière restent, les autres régions non.
+  let places = anchor.kind === 'country' ? keepCountry(found, anchor.countryCode) : keepHomeCountry(found, anchor.countryCode);
+  if (anchor.kind === 'state' || anchor.kind === 'region') places = keepAdminArea(places, anchor.name, 'region');
+  else if (anchor.kind === 'county') places = keepAdminArea(places, anchor.name, 'county');
+  // Lieux dits par la personne, cherchés sur la carte dans le pays (quatre au plus). Sans biais vers le
+  // centre du pays : il ferait préférer un hameau homonyme (« Cusco » au nord du Pérou).
+  const waypoints: Array<{ name: string; lat: number; lon: number }> = [];
+  for (const w of opts.wishes.slice(0, 4)) {
+    if (Date.now() > opts.deadline - 5_000) break;
+    if (LOOP_WISH.test(w) || wantsTraverse([w])) continue;
+    const candidates = await stageCandidates(w, { countryCode: anchor.countryCode, country: anchor.country }, null).catch(() => []);
+    const hit = pickPlace(
+      candidates.filter((c) => c.settlement || c.landmark),
+      { countryCode: anchor.kind === 'country' ? anchor.countryCode : null, near: anchor, maxKm: anchor.radiusKm * 1.1 + 5, query: w, strict: true }
+    );
+    if (hit) waypoints.push({ name: stageTitleFor(w, hit.name), lat: hit.lat, lon: hit.lon });
+  }
+  const plan = planItinerary({
+    days,
+    activity,
+    center: anchor,
+    radiusKm: anchor.radiusKm,
+    places,
+    waypoints,
+    shape: 'base',
+    nights: opts.nights,
+  });
+  if (!plan) return { fallback: `trop peu de lieux où poser des bases dans le pays (${places.length} trouvés)` };
+  // Les bases dans l'ordre, chacune avec ses jours (une base = des jours consécutifs au même lieu).
+  const bases: Array<{ name: string; days: number }> = [];
+  for (const st of plan.stages) {
+    const last = bases[bases.length - 1];
+    if (last && last.name === st.name) last.days += 1;
+    else bases.push({ name: st.name, days: 1 });
+  }
+  const vehicle = plan.stages.some((st) => st.move === 'voiture') ? ' Les changements de base se font en véhicule (distances à vol d’oiseau).' : '';
+  return {
+    stages: plan.stages.map((st) => ({ day: st.day, name: st.name, lat: st.lat, lon: st.lon, move: st.move, note: st.note })),
+    note: `Itinéraire en ${bases.length} base${bases.length > 1 ? 's' : ''} calculé sans l’IA sur des lieux réels de la carte : ${bases.map((b) => `${b.name} (${b.days} j)`).join(', ')}.${vehicle}`,
   };
 }
 
@@ -586,6 +740,7 @@ function readAnchor(meta: Record<string, unknown>): Anchor | null {
     country: typeof a.country === 'string' ? a.country : null,
     kind: String(a.kind ?? 'place'),
     extent: Array.isArray(a.extent) && a.extent.length === 4 ? (a.extent.map(Number) as CompasPlace['extent']) : null,
+    ...(typeof a.osmTag === 'string' && a.osmTag ? { osmTag: a.osmTag.slice(0, 80) } : {}),
   };
   return { ...place, radiusKm: destinationRadiusKm(place) };
 }
@@ -1153,6 +1308,8 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             return { fallback: 'erreur de calcul' };
           });
       const plannedOk = planned && 'stages' in planned ? planned : null;
+      // Un pays entier (porte de taille) : l'IA d'abord, les bases multiples calculées si elle ne donne rien de vérifiable.
+      const wide = planned != null && 'wide' in planned;
       if (plannedOk) {
         stagePlaces = plannedOk.stages;
         if (plannedOk.note) notes.push(plannedOk.note);
@@ -1187,7 +1344,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         const minPlaces = ITINERANT_ACTIVITIES.has(activity) ? (days >= 4 ? 3 : days >= 2 ? 2 : 1) : 1;
         // Une semaine dans tout un pays (Costa Rica : San José puis six jours
         // à Arenal) : deux bases au moins, quatre jours au plus au même endroit.
-        const wideStay = (anchor.kind === 'country' || anchor.radiusKm >= 300) && days >= 5;
+        const wideStay = (anchor.kind === 'country' || anchor.radiusKm >= 300) && days >= WIDE_STAY_FROM_DAYS;
         const usable = (st: ReturnType<typeof sanitizeStages>) =>
           st.length > 0 &&
           new Set(st.map((x) => x.place)).size >= Math.max(minPlaces, wideStay ? 2 : 1) &&
@@ -1375,7 +1532,35 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
         // et on dit quoi faire, au lieu de promettre un nouvel essai.
         const aiOff = !aiEnabled();
         const aiOffNote = `Sans IA, pas d’étapes détaillées pour « ${anchor.name} » : une étape par jour sur le lieu. Précise une région ou une ville dans « Où » pour des étapes sur des lieux réels.`;
-        if (!proposed.length && replacing.length) {
+        // Échelle d'un pays et rien de vérifiable de l'IA (éteinte, muette, ou aucun de ses lieux retrouvé
+        // sur la carte) : des bases multiples calculées sur des lieux réels, à la place d'« une étape par
+        // jour sur le lieu » (PLAN-100 4.5). Quand l'IA répond avec des étapes retrouvées, son chemin reste.
+        // Réadaptation avec une IA allumée mais en retard : l'ancien itinéraire reste (la prochaine visite
+        // redemande), il n'est pas remplacé par un calcul moins riche.
+        const keepOldForRetry = replacing.length > 0 && !proposed.length && !aiOff;
+        let country: Awaited<ReturnType<typeof countryStages>> | null = null;
+        if (wide && !keepOldForRetry && (!proposed.length || !located.some(Boolean))) {
+          country = await countryStages({
+            anchor,
+            activity,
+            days,
+            wishes: compas.preferences?.wishes ?? [],
+            nights: ctx.nights.value ?? null,
+            // Au moins 6 s : le référentiel répond en quelques dizaines de ms, mais `lookupAreaPlaces` refuse un délai court.
+            deadline: Date.now() + Math.max(6_000, Math.min(25_000, remaining() - 20_000)),
+          }).catch((err) => {
+            console.error('[compas] bases multiples du pays', err instanceof Error ? err.message : err);
+            return { fallback: 'erreur de calcul' };
+          });
+          if ('fallback' in country) {
+            console.warn('[compas] bases multiples du pays : repli', country.fallback);
+            notes.push(`Bases multiples du pays impossibles : ${country.fallback}.`);
+          }
+        }
+        if (country && 'stages' in country) {
+          stagePlaces = country.stages;
+          notes.push(country.note);
+        } else if (!proposed.length && replacing.length) {
           // L'IA n'a pas répondu : on garde l'itinéraire d'avant plutôt qu'un moins bon.
           notes.push(aiOff ? aiOffNote : 'Itinéraire gardé tel quel : la nouvelle proposition n’est pas arrivée à temps. Je réessaie à ta prochaine visite.');
           stagePlaces = [];
