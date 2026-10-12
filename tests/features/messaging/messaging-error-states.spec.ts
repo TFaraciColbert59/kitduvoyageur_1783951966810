@@ -68,4 +68,40 @@ describe('F-005 — une panne n’est pas une liste vide', () => {
 
     await expect(messagingService.getConversations('u1')).resolves.toEqual([]);
   });
+
+  it('F-015 : les derniers messages reviennent dans l’ordre chronologique', async () => {
+    const rows = [
+      {
+        id: 'm2',
+        conversation_id: 'c1',
+        sender_id: 'u1',
+        content: 'récent',
+        message_type: 'text',
+        metadata: null,
+        reply_to_id: null,
+        deleted_at: null,
+        created_at: '2026-10-13T10:00:00.000Z',
+        updated_at: '2026-10-13T10:00:00.000Z',
+      },
+      {
+        id: 'm1',
+        conversation_id: 'c1',
+        sender_id: 'u1',
+        content: 'ancien',
+        message_type: 'text',
+        metadata: null,
+        reply_to_id: null,
+        deleted_at: null,
+        created_at: '2026-10-13T09:00:00.000Z',
+        updated_at: '2026-10-13T09:00:00.000Z',
+      },
+    ];
+
+    mockCreateClient.mockReturnValue({
+      from: vi.fn(() => makeChain({ data: rows, error: null })),
+    } as unknown as ReturnType<typeof createClient>);
+
+    const result = await messagingService.getMessages('c1');
+    expect(result.map((m) => m.id)).toEqual(['m1', 'm2']);
+  });
 });

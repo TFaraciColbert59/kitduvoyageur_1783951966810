@@ -10,8 +10,11 @@ export function useMessages(
   currentUserId: string | undefined,
   currentUserProfile?: UserProfileSummary | null
 ) {
+  const MESSAGES_PAGE_SIZE = 50;
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingEarlier, setLoadingEarlier] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchMessages = useCallback(async () => {
@@ -23,8 +26,9 @@ export function useMessages(
 
     setLoading(true);
     try {
-      const data = await messagingService.getMessages(conversationId);
+      const data = await messagingService.getMessages(conversationId, MESSAGES_PAGE_SIZE);
       setMessages(data);
+      setHasMore(data.length >= MESSAGES_PAGE_SIZE);
 
       if (currentUserId) {
         await messagingService.markAsRead(conversationId, currentUserId);
@@ -63,6 +67,32 @@ export function useMessages(
 
           setMessages((prev) => {
             if (prev.some((m) => m.id === newMsg.id)) return prev;
+
+            // F-017 : si Realtime arrive avant la réponse HTTP, remplacer le
+            // message optimiste (même expéditeur, même contenu) au lieu de
+            // créer un doublon temp + serveur.
+            const optimisticIndex = prev.findIndex(
+              (m) =>
+                m.id.startsWith('temp-') &&
+                m.status === 'sending' &&
+                m.sender_id === newMsg.sender_id &&
+                m.content === newMsg.content &&
+                (m.reply_to_id ?? null) === (newMsg.reply_to_id ?? null)
+            );
+            if (optimisticIndex >= 0) {
+              const next = [...prev];
+              next[optimisticIndex] = {
+                ...newMsg,
+                status: 'sent',
+                reply_to_message: prev[optimisticIndex].reply_to_message,
+                sender_profile:
+                  newMsg.sender_id === currentUserId
+                    ? currentUserProfile || prev[optimisticIndex].sender_profile
+                    : undefined,
+              };
+              return next;
+            }
+
             return [
               ...prev,
               {
@@ -79,6 +109,48 @@ export function useMessages(
           if (currentUserId && newMsg.sender_id !== currentUserId) {
             await messagingService.markAsRead(conversationId, currentUserId);
           }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          // F-018 : éditions et suppressions (tombstone deleted_at) suivies
+          // sur les autres appareils, sans rechargement.
+          const updated = payload.new as Message;
+          setMessages((prev) => {
+            if (updated.deleted_at) {
+              return prev.map((m) =>
+                m.id === updated.id
+                  ? { ...m, deleted_at: updated.deleted_at, content: '', reactions: [] }
+                  : m
+              );
+            }
+            return prev.map((m) =>
+              m.id === updated.id
+                ? { ...m, content: updated.content, updated_at: updated.updated_at, metadata: updated.metadata ?? m.metadata }
+                : m
+            );
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          const removedId = (payload.old as { id?: string }).id;
+          if (!removedId) return;
+          setMessages((prev) => prev.filter((m) => m.id !== removedId));
         }
       )
       .on(
@@ -102,6 +174,27 @@ export function useMessages(
       supabase.removeChannel(channel);
     };
   }, [conversationId, currentUserId, currentUserProfile]);
+
+  const loadEarlier = useCallback(async () => {
+    if (!conversationId || loadingEarlier) return;
+    const oldest = messages[0]?.created_at;
+    if (!oldest) return;
+
+    setLoadingEarlier(true);
+    try {
+      const older = await messagingService.getMessages(conversationId, MESSAGES_PAGE_SIZE, oldest);
+      setMessages((prev) => {
+        const seen = new Set(prev.map((m) => m.id));
+        return [...older.filter((m) => !seen.has(m.id)), ...prev];
+      });
+      setHasMore(older.length >= MESSAGES_PAGE_SIZE);
+    } catch (err) {
+      console.error('Failed to load earlier messages:', err);
+      setError('Impossible de charger l’historique.');
+    } finally {
+      setLoadingEarlier(false);
+    }
+  }, [conversationId, messages, loadingEarlier]);
 
   const sendMessage = async (content: string, replyToId?: string) => {
     if (!conversationId || !currentUserId || !content.trim()) return;
@@ -141,13 +234,23 @@ export function useMessages(
     );
 
     if (sent) {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === tempId
-            ? { ...sent, reply_to_message: replyToMessage, sender_profile: currentUserProfile || undefined }
+      setMessages((prev) => {
+        const hasTemp = prev.some((m) => m.id === tempId);
+        if (hasTemp) {
+          return prev.map((m) =>
+            m.id === tempId
+              ? { ...sent, reply_to_message: replyToMessage, sender_profile: currentUserProfile || undefined }
+              : m
+          );
+        }
+        // F-017 : Realtime a déjà remplacé le message optimiste — fusionner les
+        // métadonnées d'affichage sans dupliquer la bulle.
+        return prev.map((m) =>
+          m.id === sent.id
+            ? { ...m, reply_to_message: m.reply_to_message ?? replyToMessage, sender_profile: m.sender_profile ?? currentUserProfile ?? undefined }
             : m
-        )
-      );
+        );
+      });
     } else {
       setMessages((prev) =>
         prev.map((m) => (m.id === tempId ? { ...m, status: 'error' } : m))
@@ -232,6 +335,9 @@ export function useMessages(
     messages,
     loading,
     error,
+    hasMore,
+    loadingEarlier,
+    loadEarlier,
     sendMessage,
     retryMessage,
     toggleReaction,

@@ -446,16 +446,22 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               <KitCard meta={message.metadata as unknown as KitMessageMeta} isMine={isMine} />
             )}
 
-            {/* Message Content */}
+            {/* Message Content — F-018 : tombstone visible pour un message retiré. */}
             {message.message_type !== 'audio' &&
               message.message_type !== 'gpx' &&
               message.message_type !== 'image' &&
               message.message_type !== 'product' &&
               message.message_type !== 'trail' &&
               message.message_type !== 'kit' && (
-                <p className="whitespace-pre-wrap break-words text-[length:var(--lkv-text-subheadline)] font-normal leading-[1.45]">
-                  {message.content}
-                </p>
+                message.deleted_at ? (
+                  <p className="text-[length:var(--lkv-text-subheadline)] font-normal italic leading-[1.45] opacity-70">
+                    Message supprimé
+                  </p>
+                ) : (
+                  <p className="whitespace-pre-wrap break-words text-[length:var(--lkv-text-subheadline)] font-normal leading-[1.45]">
+                    {message.content}
+                  </p>
+                )
               )}
 
             {/* OpenGraph Card Preview */}

@@ -550,7 +550,7 @@ export const messagingService = {
     throw new Error('Impossible de créer la discussion');
   },
 
-  async getMessages(conversationId: string, limit = 50): Promise<Message[]> {
+  async getMessages(conversationId: string, limit = 50, beforeIso?: string): Promise<Message[]> {
     if (conversationId.startsWith('demo-conv-')) {
       const demoMap = initDemoMessages('current-user-id');
       const messages = demoMap.get(conversationId) || [];
@@ -574,7 +574,10 @@ export const messagingService = {
 
     const supabase = createClient();
 
-    const { data, error } = await supabase
+    // F-015 : ouvrir sur les DERNIERS messages (ordre descendant côté requête,
+    // remis chronologiquement ensuite) ; `beforeIso` charge l'historique plus
+    // ancien sans trou.
+    let messagesQuery = supabase
       .from('messages')
       .select(`
         id,
@@ -597,8 +600,14 @@ export const messagingService = {
         )
       `)
       .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
       .limit(limit);
+
+    if (beforeIso) {
+      messagesQuery = messagesQuery.lt('created_at', beforeIso);
+    }
+
+    const { data, error } = await messagesQuery;
 
     if (error) {
       // F-005 : distinguer « panne » de « discussion vide ».
@@ -627,7 +636,11 @@ export const messagingService = {
       });
     });
 
-    return rawMessages.map((msg) => {
+    // F-015 : remise en ordre chronologique pour l'affichage.
+    return rawMessages
+      .slice()
+      .reverse()
+      .map((msg) => {
       const profile = profileById[msg.sender_id];
       const reactions = Array.isArray(msg.message_reactions) ? msg.message_reactions : [];
       const replyToMsg = msg.reply_to_id ? messageMap.get(msg.reply_to_id) || null : null;
@@ -795,34 +808,9 @@ export const messagingService = {
       return null;
     }
 
-    await supabase
-      .from('conversations')
-      .update({ last_message_at: new Date().toISOString() })
-      .eq('id', conversationId);
-
-    // Declencher les notifications in-app pour les autres membres du chat (si non mute)
-    try {
-      const { data: membersToNotify } = await supabase
-        .from('conversation_members')
-        .select('user_id, is_muted')
-        .eq('conversation_id', conversationId)
-        .neq('user_id', senderId)
-        .eq('is_muted', false);
-
-      if (membersToNotify && membersToNotify.length > 0) {
-        const notifInserts = membersToNotify.map((m) => ({
-          user_id: m.user_id,
-          type: 'new_message',
-          title: 'Nouveau message LKDV',
-          message: content.length > 80 ? `${content.substring(0, 80)}...` : content,
-          link: '/messagerie',
-        }));
-
-        await supabase.from('notifications').insert(notifInserts);
-      }
-    } catch {
-      // Ignorer silencieusement si la table notifications subit une restriction
-    }
+    // F-021 : last_message_at, unread_count et notifications in-app sont
+    // maintenus par le trigger serveur `sync_conversation_on_message_insert`.
+    // Le client n'écrit plus au nom des autres comptes.
 
     return {
       ...data,

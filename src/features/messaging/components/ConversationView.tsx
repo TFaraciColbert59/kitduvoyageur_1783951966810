@@ -78,7 +78,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
     };
   }, [conversation.id]);
 
-  const { messages, loading, error, sendMessage, retryMessage, toggleReaction, refreshMessages } = useMessages(
+  const { messages, loading, error, hasMore, loadingEarlier, loadEarlier, sendMessage, retryMessage, toggleReaction, refreshMessages } = useMessages(
     conversation.id,
     currentUserId,
     currentUserProfile
@@ -337,6 +337,9 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
         onToggleReaction={toggleReaction}
         onForward={setForwardMessage}
         onRetry={(msg) => retryMessage(msg.id)}
+        hasMore={hasMore}
+        loadingEarlier={loadingEarlier}
+        onLoadEarlier={loadEarlier}
       />
 
       {error && (
