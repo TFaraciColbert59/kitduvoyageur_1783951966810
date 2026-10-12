@@ -1,5 +1,6 @@
 import 'server-only';
 import { z } from 'zod';
+import { aiEnabled } from './aiMode';
 import { providerChain, modelNameFor } from './providers';
 import { raceProviders, HEDGE_MS } from './providers/providerRace';
 import { getCached, setCached } from './responseStore';
@@ -26,10 +27,8 @@ import type { AIRequest, AIResponse, AIFailureReason } from './providers/types';
  * La clé API n'est JAMAIS loggée ni incluse dans un résultat.
  */
 
-/** IA allumée ? `AI_MODE=off` l'éteint pour tout le site (repli par règles partout). */
-export function aiEnabled(env: Record<string, string | undefined> = process.env): boolean {
-  return env.AI_MODE?.trim().toLowerCase() !== 'off';
-}
+// L'interrupteur vit dans `aiMode` (sans `server-only`) ; réexporté ici pour les appelants et tests existants.
+export { aiEnabled };
 
 /** Appels IA par jour pour tout le site (en plus du quota de chaque personne). */
 export function aiDailyCap(env: Record<string, string | undefined> = process.env): number {

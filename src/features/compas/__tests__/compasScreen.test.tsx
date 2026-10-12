@@ -6,6 +6,8 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import userEvent from '@testing-library/user-event';
 import axe from 'axe-core';
 import { STEP_FLOWS } from '../components/compasTypes';
+import { aiSuggestion } from '../engine/advice';
+import { AI_NOTICE_DONE, AI_NOTICE_RUN, AI_STEP_LABEL } from '../engine/aiNotice';
 import { buildCompasModel, type CompasInput, type CompasItemInput } from '../engine/compasModel';
 import { assessDanger, mergeDangerIntoVerdict, type OfficialAlert } from '../engine/danger';
 import { METEOALARM_DISCLAIMER, METEOALARM_HOME } from '../engine/meteoalarmFeeds';
@@ -450,6 +452,7 @@ function makeData(overrides: Partial<CompasInput> = {}): CompasData {
     weather: null,
     route: { id: 374, name: 'Tour des Vallées' },
     origin: { lat: 42.73, lon: -0.01 },
+    aiOn: true,
   };
 }
 
@@ -2994,4 +2997,311 @@ describe('CompasScreen : accessibilité (lot Q, 5.2)', () => {
     });
   });
 
+});
+
+describe('CompasScreen : la mention « IA » (lot Z2, PLAN-100 5.3)', () => {
+  const openParcours = async () => {
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Parcours/ }));
+    return sheet;
+  };
+  const withAiStep = (aiOn = true): CompasData => {
+    const data = makeData();
+    data.aiOn = aiOn;
+    data.itinerary = data.itinerary.map((st, i) => ({ ...st, aiProposed: i === 0 }));
+    return data;
+  };
+
+  it('Parcours · étapes : seule l’étape proposée par l’IA le dit, en texte, sur sa ligne', async () => {
+    render(<CompasScreen data={withAiStep()} />);
+    const sheet = await openParcours();
+    const labels = await within(sheet).findAllByText(AI_STEP_LABEL);
+    expect(labels).toHaveLength(1);
+    expect(labels[0].closest('.cp-row')?.textContent).toContain('Gavarnie');
+    // La seconde étape n'est pas de l'IA : sa ligne ne le dit pas.
+    const second = within(sheet).getByText(/^Jour 2 ·/).closest('.cp-row');
+    expect(second?.textContent).toContain('Refuge');
+    expect(second?.textContent).not.toContain(AI_STEP_LABEL);
+  });
+
+  it('Parcours · étapes calculées par le Compas : aucune mention', async () => {
+    render(<CompasScreen data={makeData()} />);
+    const sheet = await openParcours();
+    expect(await within(sheet).findByText('Gavarnie')).toBeTruthy();
+    expect(within(sheet).queryByText(AI_STEP_LABEL)).toBeNull();
+  });
+
+  it('étape déjà proposée par l’IA, puis IA éteinte : la mention reste (le contenu, lui, existe)', async () => {
+    render(<CompasScreen data={withAiStep(false)} />);
+    const sheet = await openParcours();
+    expect(await within(sheet).findAllByText(AI_STEP_LABEL)).toHaveLength(1);
+  });
+
+  it('conseil de l’IA dans les notes de la préparation : « Suggestion de l’IA (facultatif) » est lu avec lui', () => {
+    const data = { ...makeData(), autofill: 'done' as const, autofillNotes: [aiSuggestion('Prévois une frontale de secours.')] };
+    render(<CompasScreen data={data} initialStep="ou" />);
+    expect(screen.getByText('Suggestion de l’IA (facultatif) : prévois une frontale de secours.')).toBeTruthy();
+  });
+
+  describe('Verdict · Risques : « Expliquer avec l’IA »', () => {
+    const openRisks = async () => {
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+      fireEvent.click(screen.getByRole('button', { name: /^Détails : / }));
+      return screen.findByRole('dialog');
+    };
+
+    it('IA allumée : le bouton est là, son libellé dit que c’est l’IA', async () => {
+      render(<CompasScreen data={makeData()} />);
+      const sheet = await openRisks();
+      expect(within(sheet).getByRole('button', { name: 'Expliquer avec l’IA' })).toBeTruthy();
+    });
+
+    it('IA éteinte (AI_MODE=off) : ni bouton ni mot sur l’IA dans le tiroir', async () => {
+      render(<CompasScreen data={{ ...makeData(), aiOn: false }} />);
+      const sheet = await openRisks();
+      expect(within(sheet).queryByRole('button', { name: /IA/ })).toBeNull();
+      expect(sheet.textContent ?? '').not.toMatch(/\bIA\b/);
+    });
+  });
+
+  describe('préparation lancée depuis la demande (panneau visible)', () => {
+    const say = () => ({ ...makeData(), startSay: 'rando à 4' }) as CompasData;
+    const panel = () => screen.findByRole('status', { name: 'Préparation de l’aventure' });
+
+    it('IA allumée : la mention est dite dès le démarrage, dans le panneau', async () => {
+      render(<CompasScreen data={say()} />);
+      const p = await panel();
+      expect(within(p).getByRole('note').textContent).toContain(AI_NOTICE_RUN);
+    });
+
+    it('IA éteinte : le panneau ne parle pas d’IA', async () => {
+      render(<CompasScreen data={{ ...say(), aiOn: false }} />);
+      const p = await panel();
+      expect(within(p).queryByRole('note')).toBeNull();
+      expect(p.textContent ?? '').not.toMatch(/\bIA\b/);
+    });
+
+    it('terminée : la mention « l’IA a contribué » suit ce que le serveur dit avoir produit', async () => {
+      render(<CompasScreen data={{ ...say(), autofill: 'none' }} />);
+      expect(await screen.findByText('Ton aventure est prête')).toBeTruthy();
+      expect(within(await panel()).getByRole('note').textContent).toContain(AI_NOTICE_DONE);
+    });
+
+    it('terminée sans que l’IA ait rien produit : plus aucune mention', async () => {
+      autofill.compasAutofillAction.mockResolvedValueOnce({
+        success: true,
+        summary: {
+          nights: [],
+          transport: null,
+          kit: { inventaire: 0, pret: 0, location: 0, achat: 0, a_trouver: 0 },
+          budget: [],
+          total: 0,
+          notes: [],
+          usedAi: false,
+          stepsCreated: 0,
+        },
+      } as never);
+      render(<CompasScreen data={{ ...say(), autofill: 'none' }} />);
+      expect(await screen.findByText('Ton aventure est prête')).toBeTruthy();
+      expect(within(await panel()).queryByRole('note')).toBeNull();
+    });
+  });
+
+  it('Dis-le : l’IA qui a compris est dite en texte (pas seulement l’icône) ; les règles seules ne le disent pas', async () => {
+    compas.compasInterpretAction.mockResolvedValueOnce({
+      success: true,
+      usedAi: true,
+      note: null,
+      proposals: [
+        { id: '0-set_party_size', action: { type: 'set_party_size', count: 4 }, label: '4 personnes', ok: true, reason: null, source: 'ia' },
+        { id: '1-set_pace', action: { type: 'set_pace', pace: 'tranquille' }, label: 'Rythme tranquille', ok: true, reason: null, source: 'regles' },
+      ],
+    });
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Quand/ }));
+    fireEvent.change(within(sheet).getByLabelText('Dis-le'), { target: { value: 'à 4, tranquille' } });
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Comprendre la phrase' }));
+    expect(await within(sheet).findByText('Compris par l’IA, vérifié par le Compas.')).toBeTruthy();
+    // La pastille de la proposition de l'IA a un nom en texte ; celle des règles n'en a pas.
+    const ai = within(sheet).getByText('4 personnes').closest('label');
+    const rules = within(sheet).getByText('Rythme tranquille').closest('label');
+    expect(ai?.textContent).toContain('Compris par l’IA');
+    expect(rules?.textContent).not.toContain('Compris par l’IA');
+    expect(ai?.querySelector('[aria-label="Compris par l’IA"]')).toBeNull();
+  });
+
+  describe('axe-core : les écrans touchés, avec la mention', () => {
+    const scan = async (root: Element): Promise<string[]> => {
+      const res = await axe.run(root as HTMLElement, {
+        runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] },
+        rules: {
+          'color-contrast': { enabled: false },
+          region: { enabled: false },
+          'landmark-one-main': { enabled: false },
+          'page-has-heading-one': { enabled: false },
+        },
+      });
+      return res.violations.map(
+        (v) => `${v.id} (${v.impact}) : ${v.nodes.map((n) => n.target.join(' ')).slice(0, 3).join(' | ')}`
+      );
+    };
+
+    it('Parcours · étapes avec une étape de l’IA', async () => {
+      render(<CompasScreen data={withAiStep()} />);
+      const sheet = await openParcours();
+      await within(sheet).findAllByText(AI_STEP_LABEL);
+      expect(await scan(sheet)).toEqual([]);
+    });
+
+    it('Verdict · Risques avec « Expliquer avec l’IA »', async () => {
+      render(<CompasScreen data={makeData()} />);
+      fireEvent.click(within(stepsNav()).getByRole('button', { name: /Verdict/ }));
+      fireEvent.click(screen.getByRole('button', { name: /^Détails : / }));
+      const sheet = await screen.findByRole('dialog');
+      expect(within(sheet).getByRole('button', { name: 'Expliquer avec l’IA' })).toBeTruthy();
+      expect(await scan(sheet)).toEqual([]);
+    });
+
+    it('le panneau de préparation, mention comprise', async () => {
+      render(<CompasScreen data={{ ...makeData(), startSay: 'rando à 4' }} />);
+      const p = await screen.findByRole('status', { name: 'Préparation de l’aventure' });
+      expect(within(p).getByRole('note')).toBeTruthy();
+      expect(await scan(p)).toEqual([]);
+    });
+
+    it('les notes d’une préparation qui contient un conseil de l’IA', async () => {
+      const data = { ...makeData(), autofill: 'done' as const, autofillNotes: [aiSuggestion('Prévois une frontale de secours.')] };
+      const { container } = render(<CompasScreen data={data} initialStep="ou" />);
+      expect(screen.getByText(/^Suggestion de l’IA \(facultatif\) : /)).toBeTruthy();
+      expect(await scan(container)).toEqual([]);
+    });
+  });
+});
+
+describe('CompasScreen : divulgation d’affiliation avant les offres (lot Z2, PLAN-100 5.3)', () => {
+  /** La divulgation (Art. L121-2 et L121-3 du Code de la consommation) : la note « Transparence publicitaire ». */
+  const disclosure = (root: HTMLElement) => within(root).getByRole('note', { name: /Transparence publicitaire et affiliation/ });
+  const precedes = (a: Element, b: Element) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+  /** Tout lien sortant d'une offre est balisé « sponsored nofollow » (DGCCRF, balisage rel). */
+  const expectSponsored = (root: HTMLElement) => {
+    const links = Array.from(root.querySelectorAll<HTMLAnchorElement>('a[target="_blank"]'));
+    expect(links.length).toBeGreaterThan(0);
+    for (const a of links) {
+      const rel = (a.getAttribute('rel') ?? '').split(/\s+/);
+      expect(rel, a.outerHTML).toContain('sponsored');
+      expect(rel, a.outerHTML).toContain('nofollow');
+    }
+  };
+  const openNights = async () => {
+    const data = makeData();
+    data.providers = { routestack: 'sandbox', viator: 'disabled' };
+    render(<CompasScreen data={data} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Mes réservations' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Mes réservations' });
+    fireEvent.click(
+      within(within(sheet).getByRole('group', { name: 'Parcours du tiroir' })).getByRole('button', { name: /Nuits/ })
+    );
+    return sheet;
+  };
+
+  it('Nuits · recherche en direct : la divulgation est dite AVANT la liste des offres, qui sont balisées', async () => {
+    const sheet = await openNights();
+    // Avant la recherche : aucune offre, donc aucune divulgation.
+    expect(within(sheet).queryByRole('note', { name: /Transparence publicitaire/ })).toBeNull();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
+    expect(await within(sheet).findByText('Gîte des Cimes')).toBeTruthy();
+    const list = within(sheet).getByRole('group', { name: 'Offres d’hébergement' });
+    expect(precedes(disclosure(sheet), list)).toBe(true);
+    expectSponsored(sheet);
+  });
+
+  it('Nuits · recherche en direct sans offre : pas de divulgation (rien n’est vendu)', async () => {
+    compas.compasSearchStaysAction.mockResolvedValueOnce({
+      success: true,
+      mode: 'live',
+      fetchedAt: '2026-10-01T10:00:00Z',
+      offers: [],
+    } as never);
+    const sheet = await openNights();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
+    expect(await within(sheet).findByText('Aucune offre trouvée pour cette nuit.')).toBeTruthy();
+    expect(within(sheet).queryByRole('note', { name: /Transparence publicitaire/ })).toBeNull();
+  });
+
+  it('Parcours · activités partenaires : la divulgation précède la liste (et non plus la suit)', async () => {
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Parcours/ }));
+    fireEvent.change(within(sheet).getByRole('searchbox'), { target: { value: 'Gavarnie' } });
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
+    const partner = await within(sheet).findByRole('link', { name: /Cirque de Gavarnie avec un guide/ });
+    const list = sheet.querySelector('[aria-label="Parcours trouvés"]') as HTMLElement;
+    expect(list).toBeTruthy();
+    expect(list.contains(partner)).toBe(true);
+    expect(precedes(disclosure(sheet), list)).toBe(true);
+    expectSponsored(sheet);
+  });
+
+  it('Parcours sans activité partenaire : pas de divulgation', async () => {
+    resa.compasNearbyActivitiesAction.mockResolvedValueOnce({ success: true, unavailable: false, offers: [] } as never);
+    render(<CompasScreen data={makeData()} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Où/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Détails : Préparer' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Préparer' });
+    fireEvent.click(within(sheet).getByRole('button', { name: /Parcours/ }));
+    fireEvent.change(within(sheet).getByRole('searchbox'), { target: { value: 'Gavarnie' } });
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
+    await waitFor(() => expect(resa.compasNearbyActivitiesAction).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 30));
+    expect(within(sheet).queryByRole('note', { name: /Transparence publicitaire/ })).toBeNull();
+  });
+
+  it('Résa · recherche en direct (vols) et offres Extras : divulgation avant la liste, liens balisés', async () => {
+    const data = makeData();
+    data.affiliateLinks = [{ id: 'a2', label: 'Assurance', category: 'insurance', partner: 'Heymondo', url: '/go/ass' }];
+    render(<CompasScreen data={data} />);
+    fireEvent.click(within(stepsNav()).getByRole('button', { name: /Résa/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Vols' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Mes réservations' });
+    const form = within(sheet).getByRole('form', { name: 'Chercher : vols' });
+    fireEvent.change(within(form).getByLabelText('Départ de'), { target: { value: 'Lyon' } });
+    fireEvent.click(within(form).getByRole('button', { name: /Chercher en direct/ }));
+    expect(await within(sheet).findByText('Lyon → Pau')).toBeTruthy();
+    const live = sheet.querySelector('[aria-label="Offres en direct"]') as HTMLElement;
+    const notes = within(sheet).getAllByRole('note', { name: /Transparence publicitaire/ });
+    // Une divulgation avant « Offres en direct ».
+    expect(notes.some((n) => precedes(n, live))).toBe(true);
+    expectSponsored(sheet);
+    fireEvent.click(within(within(sheet).getByRole('group', { name: 'Catégorie' })).getByText('Extras'));
+    const extras = sheet.querySelector('[aria-label="Offres partenaires"]') as HTMLElement;
+    expect(extras).toBeTruthy();
+    const noteBeforeExtras = within(sheet).getAllByRole('note', { name: /Transparence publicitaire/ }).filter((n) => precedes(n, extras));
+    expect(noteBeforeExtras.length).toBeGreaterThan(0);
+    expectSponsored(sheet);
+  });
+
+  it('axe-core : la recherche d’hébergement avec sa divulgation', async () => {
+    const sheet = await openNights();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Chercher' }));
+    expect(await within(sheet).findByText('Gîte des Cimes')).toBeTruthy();
+    expect(disclosure(sheet)).toBeTruthy();
+    const res = await axe.run(sheet, {
+      runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] },
+      rules: {
+        'color-contrast': { enabled: false },
+        region: { enabled: false },
+        'landmark-one-main': { enabled: false },
+        'page-has-heading-one': { enabled: false },
+      },
+    });
+    expect(res.violations.map((v) => `${v.id} : ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([]);
+  });
 });

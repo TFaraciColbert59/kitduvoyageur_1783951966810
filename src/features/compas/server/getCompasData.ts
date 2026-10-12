@@ -46,6 +46,8 @@ import { getOfficialAlerts } from './officialAlerts';
 import { getRouteElevation, pointsAltitudeRange } from './elevation';
 import type { ElevationProfile } from '../engine/elevation';
 import { destinationZone, getClimateNormals, getCompasWeather, type CompasWeather } from './weather';
+import { readAiProposed } from '../engine/aiNotice';
+import { aiEnabled } from '@/lib/ai/aiMode';
 
 /**
  * Compas — chargeur serveur unique.
@@ -97,6 +99,11 @@ export interface CompasItineraryStep {
   distanceSource?: string | null;
   elevationGainM: number | null;
   accommodation: string | null;
+  /**
+   * Étape proposée par l'IA (sa position est ensuite vérifiée sur la carte), pas calculée par
+   * le Compas : l'écran le dit en texte (PLAN-100 5.3). Absent : non.
+   */
+  aiProposed?: boolean;
 }
 
 export interface CompasData {
@@ -173,11 +180,17 @@ export interface CompasData {
   /** Conseils du spécialiste (IA) laissés par le préremplissage. */
   autofillNotes?: string[];
   /**
+  /**
    * Les formalités d'entrée (visa, ESTA) de la personne qui regarde, calculées ici avec SON profil
    * et affichées à part du budget : jamais rangées sur le voyage (elles diraient sa nationalité).
    * Null ou absent : rien à chiffrer pour elle.
    */
   formalities?: ReaderFormalities | null;
+  /**
+   * Interrupteur de l'IA du site (`AI_MODE`, plan 1.7) à l'affichage : faux ou absent, l'écran ne
+   * parle pas d'IA (ni mention, ni bouton « Expliquer avec l'IA »). PLAN-100 5.3.
+   */
+  aiOn?: boolean;
   /** Durée voulue quand la date de départ n'est pas choisie (« 20 jours »). */
   plannedDays?: number | null;
   /** Points autour des étapes : recherche en cours ou faite (rempli côté écran). */
@@ -607,6 +620,8 @@ export async function getCompasData(): Promise<CompasData | null> {
     (trip.steps ?? []).filter((s) => distanceSource(s.metadata) === 'estimation').map((s) => s.id)
   );
   const sourceOfStep = new Map((trip.steps ?? []).map((s) => [s.id, distanceSource(s.metadata)]));
+  // Étapes que l'IA a proposées (marque posée à l'écriture par la préparation, PLAN-100 5.3).
+  const aiProposedIds = new Set((trip.steps ?? []).filter((s) => readAiProposed(s.metadata)).map((s) => s.id));
   const itinerary: CompasItineraryStep[] = [...input.steps]
     .sort((a, b) => a.dayNumber - b.dayNumber || a.orderIndex - b.orderIndex)
     .map((s) => ({
@@ -618,6 +633,7 @@ export async function getCompasData(): Promise<CompasData | null> {
       distanceSource: sourceOfStep.get(s.id) ?? null,
       elevationGainM: s.elevationGainM,
       accommodation: s.accommodationName,
+      ...(aiProposedIds.has(s.id) ? { aiProposed: true } : {}),
     }));
 
   const waterOnRoute = routePois.filter((p) => p.category === 'water').length;
@@ -714,6 +730,7 @@ export async function getCompasData(): Promise<CompasData | null> {
     zone,
     pendingInvites,
     autofill: autofillState(trip.metadata),
+    aiOn: aiEnabled(),
     // La ligne « Papiers » est celle de CE lecteur (son profil), jamais celle du propriétaire.
     autofillNotes: autofillNotes(trip.metadata, traveller, trip.destination_country_code),
     // Ses formalités d'entrée, calculées avec SON profil, à part du budget (jamais rangées).

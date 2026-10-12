@@ -116,6 +116,7 @@ import { preparationEventKind, recordPreparationEvent } from './opsEvents';
 import { coarsePosition } from '../engine/privacy';
 import { pointsMaxAltitudeM, routeAscentM } from './elevation';
 import { estimatedLegKm, estimationNote, stepDistanceMetadata, type LegDistanceSource, type LegMove } from '../engine/legDistance';
+import { readAiProposed, withAiProposed } from '../engine/aiNotice';
 import {
   claimIsLive,
   pendingIsLive,
@@ -381,6 +382,8 @@ interface StagePlace {
   lon: number;
   move: StageMove;
   note: string | null;
+  /** Proposée par l'IA (puis retrouvée sur la carte), pas calculée par le Compas : rangée avec l'étape (PLAN-100 5.3). */
+  aiProposed?: boolean;
   /** Descente de rivière : km d'eau du jour et tracé de la rivière (pas de calcul de route). */
   riverKm?: number | null;
   geometry?: LngLat[] | null;
@@ -1356,7 +1359,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           }
           const at = last ?? { name: anchor.name, lat: anchor.lat, lon: anchor.lon };
           located.push(last != null);
-          stagePlaces.push({ day: p.day, name: at.name, lat: at.lat, lon: at.lon, move: hit ? move : 'aucun', note: p.note });
+          stagePlaces.push({ day: p.day, name: at.name, lat: at.lat, lon: at.lon, move: hit ? move : 'aucun', note: p.note, aiProposed: true });
         }
         // Premières étapes introuvables : elles partent de la première étape
         // trouvée, jamais du centre de la destination (« États-Unis », au Kansas).
@@ -1516,7 +1519,11 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           distance_km: legs[i]?.km ?? (loopKm && i === 0 ? loopKm : null),
           elevation_gain_m: legs[i]?.ascent ?? null,
           // D'où vient la distance (plan 1.5) : le routeur qui l'a mesurée, ou « estimation ».
-          metadata: stepDistanceMetadata(legs[i]?.source ?? (loopKm && i === 0 ? 'estimation' : null)),
+          // Et si l'IA a proposé l'étape : l'écran le dit en texte (PLAN-100 5.3).
+          metadata: withAiProposed(
+            stepDistanceMetadata(legs[i]?.source ?? (loopKm && i === 0 ? 'estimation' : null)),
+            st.aiProposed === true
+          ),
         }));
         if (rows.length) {
           const { data: insertedSteps, error: stepsError } = await supabase.from('trip_steps').insert(rows).select('id');
@@ -1946,7 +1953,18 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
           Math.min(phase === 'all' ? 30_000 : 15_000, remaining() - 6_000)
         );
     const advice: AutofillAiAdvice = sanitizeAdvice(rawAdvice);
-    const usedAi = rawAdvice != null;
+    // « L'IA a produit quelque chose » : un conseil, ou l'itinéraire (même si les conseils n'ont rien
+    // donné). Une préparation reprise après une coupure relit les étapes déjà écrites (PLAN-100 5.3).
+    let aiStages = stagePlaces.some((st) => st.aiProposed === true);
+    if (!aiStages && resume && createdStepIds.length) {
+      try {
+        const { data: written } = await supabase.from('trip_steps').select('metadata').in('id', createdStepIds);
+        aiStages = ((written ?? []) as Array<{ metadata: unknown }>).some((r) => readAiProposed(r.metadata));
+      } catch {
+        // Lecture impossible : on ne prétend rien (la marque de chaque étape, elle, est déjà écrite).
+      }
+    }
+    const usedAi = rawAdvice != null || aiStages;
     // Papiers, change, prises et formalités : la règle parle, l'IA se tait sur ces sujets ; ce que la
     // règle affirme dépend du voyageur (nationalité, résidence, devise : PLAN-100 4.1), donc ne se range
     // pas sur le voyage mais se rend à la lecture (`getCompasData`, avec le profil du LECTEUR). Le

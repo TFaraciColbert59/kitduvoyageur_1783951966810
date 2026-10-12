@@ -1,6 +1,7 @@
 'use client';
 
 import Icon from '@/components/ui/Icon';
+import { AiNotice } from './AiNotice';
 
 export type PrepStage = 'understand' | 'itinerary' | 'rest' | 'done' | 'error' | 'stopped';
 
@@ -11,6 +12,8 @@ export interface PrepState {
   message?: string;
   total?: string | null;
   digest?: string | null;
+  /** L'IA a produit quelque chose dans cette préparation (conseils, étapes) : la mention reste. */
+  usedAi?: boolean;
 }
 
 const STEPS: Array<{ id: 'understand' | 'itinerary' | 'rest' | 'done'; label: string; sub: string }> = [
@@ -25,15 +28,22 @@ const ORDER = ['understand', 'itinerary', 'rest', 'done'] as const;
  * Chargement visible de la préparation : chaque étape se coche avec son
  * résultat. La carte se dessine derrière dès que l'itinéraire est écrit.
  * « Arrêter » garde ce qui est déjà fait ; la reprise est automatique.
+ *
+ * Mention « IA » (PLAN-100 5.3) : dite dès le démarrage quand l'interrupteur est allumé (`aiOn`),
+ * gardée à la fin seulement si l'IA a produit quelque chose (`prep.usedAi`) ; jamais quand elle
+ * est éteinte, ni après une erreur ou un arrêt.
  */
 export function CompasPrep({
   prep,
+  aiOn = false,
   onStop,
   onClose,
   onRetry,
   onEditRequest,
 }: {
   prep: PrepState;
+  /** Interrupteur de l'IA du site (`AI_MODE`) : faux, rien ne parle d'IA. */
+  aiOn?: boolean;
   onStop: () => void;
   onClose: () => void;
   onRetry: () => void;
@@ -82,6 +92,8 @@ export function CompasPrep({
           Sans elle, le trajet reste à préciser.
         </p>
       )}
+      {aiOn && !failed && !stopped && !finished && <AiNotice variant="run" />}
+      {aiOn && finished && prep.usedAi && <AiNotice variant="done" />}
       {(failed || stopped) && prep.message && (
         <p className="cp-note" role={failed ? 'alert' : undefined}>
           {prep.message}
