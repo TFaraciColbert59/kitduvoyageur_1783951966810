@@ -26,6 +26,7 @@ interface MobileCommunityHubProps {
   onRefresh?: () => Promise<void> | void;
   joinedEventIds?: Record<string, boolean>;
   onJoinEvent?: (eventId: string | number) => Promise<void> | void;
+  highlightPostId?: string | null;
 }
 
 const TABS: Array<{ id: CommunityMobileTab; label: string; icon: React.ReactNode }> = [
@@ -52,6 +53,7 @@ export default function MobileCommunityHub({
   onRefresh,
   joinedEventIds = {},
   onJoinEvent,
+  highlightPostId = null,
 }: MobileCommunityHubProps) {
   const { triggerHaptic } = useHapticFeedback();
   const [carnetFilter, setCarnetFilter] = useState('all');
@@ -151,7 +153,12 @@ export default function MobileCommunityHub({
                 </Card>
               ) : (
                 posts.map((post) => (
-                  <CommunityPostCard key={post.id} post={post} user={user} />
+                  <CommunityPostCard
+                    key={post.id}
+                    post={post}
+                    user={user}
+                    highlight={highlightPostId === post.id}
+                  />
                 ))
               )}
             </div>

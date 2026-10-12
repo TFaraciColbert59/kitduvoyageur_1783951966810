@@ -131,9 +131,8 @@ export default function PublicProfilePage() {
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <span className="px-3 py-1 bg-[color:var(--lkv-success-bg)] text-[color:var(--lkv-text-primary)] rounded-full text-xs font-bold border border-[color:var(--lkv-secondary)]/40 flex items-center gap-1.5">
-                    <span>✓</span> Profil vérifié
-                  </span>
+                  {/* F-028 : aucun badge « vérifié » sans source de vérification
+                      réelle — le libellé inconditionnel a été retiré. */}
                 </div>
               </div>
 

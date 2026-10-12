@@ -45,20 +45,15 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
       {/* P2 — fade iOS en fin de rail : la dernière story (« M ») s'estompe
           au lieu d'être tronquée nette ; `pr` de fin de course. */}
       <div className="flex w-full items-center gap-[var(--space-2)] overflow-x-auto pb-[var(--space-1)] pr-[28px] [scrollbar-width:none] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [&::-webkit-scrollbar]:hidden">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="shrink-0"
-          aria-label="Ajouter une story"
-          icon={
-            <span className="flex size-7 items-center justify-center rounded-full border border-dashed border-[color:var(--lkv-border-strong)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
-              +
-            </span>
-          }
+        {/* F-027 : la barre ne montre que des exemples de démonstration tant
+            que la publication de stories n'existe pas — c'est dit clairement,
+            et aucun bouton de création sans handler ne subsiste. */}
+        <span
+          className="shrink-0 rounded-full border border-[color:var(--glass-border)] px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)]"
+          title="Aperçu de démonstration — la publication de stories arrive avec son contrat complet (audience, expiration, modération)."
         >
-          Votre story
-        </Button>
+          Exemples
+        </span>
 
         {DEMO_STORIES.map((user, i) => (
           <Button

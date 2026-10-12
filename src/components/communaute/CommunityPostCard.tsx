@@ -94,9 +94,11 @@ export function HeartSvg({ filled = false, className = '' }: { filled?: boolean;
 export default function CommunityPostCard({
   post,
   user,
+  highlight = false,
 }: {
   post: CommunityPostItem;
   user?: any;
+  highlight?: boolean;
 }) {
   const [isLiked, setIsLiked] = useState(Boolean(post.user_liked));
   const [likesCount, setLikesCount] = useState<number>(post.likes_count ?? 0);
@@ -247,15 +249,24 @@ export default function CommunityPostCard({
   };
 
   const handleLike = async () => {
-    const newLiked = !isLiked;
+    if (!user) {
+      showToast('Connectez-vous pour aimer une publication.');
+      return;
+    }
+    const previousLiked = isLiked;
+    const previousCount = likesCount;
+    const newLiked = !previousLiked;
     setIsLiked(newLiked);
-    setLikesCount((prev: number) => (newLiked ? prev + 1 : Math.max(0, prev - 1)));
+    setLikesCount(newLiked ? previousCount + 1 : Math.max(0, previousCount - 1));
 
+    // F-024 : le résultat de la RPC fait autorité — rollback si refus.
     const supabase = createClient();
-    try {
-      await supabase.rpc('toggle_community_post_like', { p_post_id: post.id });
-    } catch (err) {
-      console.error(err);
+    const { error } = await supabase.rpc('toggle_community_post_like', { p_post_id: post.id });
+    if (error) {
+      console.error('toggle_community_post_like refusé:', error.message);
+      setIsLiked(previousLiked);
+      setLikesCount(previousCount);
+      showToast('Like non enregistré. Réessayez.');
     }
   };
 
@@ -433,10 +444,18 @@ export default function CommunityPostCard({
     setTimeout(() => commentInputRef.current?.focus(), 150);
   };
 
-  const handleShare = () => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(window.location.href);
+  const handleShare = async () => {
+    // F-025 : permalien réel de la publication (pas l'URL du hub).
+    const permalink =
+      typeof window !== 'undefined'
+        ? `${window.location.origin}/communaute?post=${post.id}`
+        : `/communaute?post=${post.id}`;
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('presse-papier indisponible');
+      await navigator.clipboard.writeText(permalink);
       showToast('Lien copié dans le presse-papier !');
+    } catch {
+      showToast(`Lien : ${permalink}`);
     }
   };
 
@@ -718,7 +737,12 @@ export default function CommunityPostCard({
   );
 
   return (
-    <Card className="community-post relative space-y-[var(--space-4)] overflow-hidden p-[var(--space-4)] sm:p-[var(--space-5)]">
+    <Card
+      id={`post-${post.id}`}
+      className={`community-post relative space-y-[var(--space-4)] overflow-hidden p-[var(--space-4)] transition-shadow sm:p-[var(--space-5)] ${
+        highlight ? 'ring-2 ring-[color:var(--lkv-primary)] ring-offset-2 ring-offset-[color:var(--glass-bg-base)]' : ''
+      }`}
+    >
       {/* Toast notification */}
       {toastMessage && (
         <div className="animate-fade-in absolute left-1/2 top-3 z-[var(--z-toast)] -translate-x-1/2 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-3 py-1 font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-primary)] shadow-elevation-2">

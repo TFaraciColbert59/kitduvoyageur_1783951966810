@@ -57,7 +57,9 @@ function PublierPostContent() {
   const { user } = useAuth();
 
   // Form State — vide par défaut : rien de fictif n'est pré-rempli.
-  const [postType, setPostType] = useState<PostType>('photo');
+  const [postType, setPostType] = useState<PostType>(
+    searchParams?.get('type') === 'question' ? 'question' : 'photo'
+  );
   const [title, setTitle] = useState(initialClubName ? `Récit dans ${initialClubName}` : '');
   const [content, setContent] = useState('');
 
@@ -170,16 +172,16 @@ function PublierPostContent() {
     return content.trim() ? content.trim().split(/\s+/).length : 0;
   }, [content]);
 
-  // Quality score computation
+  // Quality score computation — F-035 : la géolocalisation exacte n'est plus
+  // récompensée ; un récit utile sans GPS n'est pas « incomplet ».
   const qualityScore = useMemo(() => {
     let score = 20;
     if (title.trim()) score += 20;
     if (photos.length > 0) score += 25;
     if (linkedCarnet) score += 15;
     if (tags.length >= 2) score += 12;
-    if (location.trim()) score += 8;
     return Math.min(100, score);
-  }, [title, photos, linkedCarnet, tags, location]);
+  }, [title, photos, linkedCarnet, tags]);
 
   // Functional Geolocation Detection
   const handleDetectLocation = () => {
@@ -1030,8 +1032,12 @@ function PublierPostContent() {
                   <span className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{tags.length > 0 ? 'FAIT' : 'OPTIONNEL'}</span>
                 </div>
                 <div className="flex items-center justify-between text-[color:var(--lkv-text-muted)]">
-                  <span className="flex items-center gap-[var(--space-1)]">{location ? '✓' : '○'} Ajouter la géolocalisation exacte</span>
-                  <span className="text-[length:var(--lkv-text-caption-2)]">{location ? 'FAIT' : 'OPTIONNEL'}</span>
+                  <span className="flex items-center gap-[var(--space-1)]">
+                    {photos.length > 0
+                      ? '✓ Vérifiez qu’une photo ne révèle pas un lieu privé'
+                      : '○ Des photos aident les voyageurs (optionnel)'}
+                  </span>
+                  <span className="text-[length:var(--lkv-text-caption-2)]">{photos.length > 0 ? 'VÉRIFIÉ' : 'OPTIONNEL'}</span>
                 </div>
               </div>
 

@@ -160,6 +160,22 @@ function CommunautePageContent() {
       const postsData = postsRes.status === 'fulfilled' ? (postsRes.value.data ?? []) : [];
       const carnetsData = carnetsRes.status === 'fulfilled' ? (carnetsRes.value.data ?? []) : [];
       const clubsData = clubsRes.status === 'fulfilled' ? (clubsRes.value.data ?? []) : [];
+      // F-026 : « mes clubs » doit s'appuyer sur les adhésions réelles.
+      const myClubIds = new Set<string>();
+      if (user?.id) {
+        const { data: membershipRows } = await supabase
+          .from('club_members')
+          .select('club_id')
+          .eq('user_id', user.id)
+          .eq('status', 'active');
+        for (const row of membershipRows ?? []) {
+          if ((row as { club_id?: string }).club_id) myClubIds.add((row as { club_id: string }).club_id);
+        }
+      }
+      const clubsWithMembership = clubsData.map((c: any) => ({
+        ...c,
+        is_member: myClubIds.has(c.id),
+      }));
       const groupsData = (groupsRes.status === 'fulfilled' ? (groupsRes.value.data ?? []) : []).map(
         (g: any) => ({
           ...g,
@@ -220,7 +236,7 @@ function CommunautePageContent() {
 
       setPosts(postsWithPersonalState.map(withAuthor));
       setCarnets(carnetsData.map(withAuthor));
-      setClubs(clubsData);
+      setClubs(clubsWithMembership);
       setGroups(groupsData);
       setEvents(
         eventsData.map((ev: any) => {
@@ -245,6 +261,19 @@ function CommunautePageContent() {
     fetchData();
   }, [fetchData]);
 
+  // F-025 : permalien `?post=<id>` — amène au contenu exact et le met en
+  // évidence une fois le fil chargé.
+  const [highlightPostId, setHighlightPostId] = useState<string | null>(null);
+  useEffect(() => {
+    const target = searchParams?.get('post');
+    if (!target || loading) return;
+    setHighlightPostId(target);
+    const timer = window.setTimeout(() => {
+      document.querySelector(`#post-${target}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 200);
+    return () => window.clearTimeout(timer);
+  }, [searchParams, loading]);
+
   const filteredCarnets = useMemo(() => {
     return carnets.filter((c) => {
       if (carnetFilterCategory !== 'all') {
@@ -268,7 +297,7 @@ function CommunautePageContent() {
     return clubs.filter((c) => {
       const name = (c.name || c.title || '').toLowerCase();
       const desc = (c.description || '').toLowerCase();
-      if (clubFilterTab === 'activite' && (c.type || '').toLowerCase() !== 'activité') return false;
+      if (clubFilterTab === 'activite' && (c.type || '').toLowerCase() !== 'activite') return false;
       if (clubFilterTab === 'pays' && (c.type || '').toLowerCase() !== 'pays') return false;
       if (clubFilterTab === 'my_clubs' && !c.is_member) return false;
       if (clubSearchQuery.trim()) {
@@ -304,6 +333,7 @@ function CommunautePageContent() {
             onRefresh={fetchData}
             joinedEventIds={joinedEventIds}
             onJoinEvent={handleJoinEvent}
+            highlightPostId={highlightPostId}
           />
         </AppShell>
       </div>
@@ -371,7 +401,7 @@ function CommunautePageContent() {
 
                   <div className="space-y-[var(--space-4)]">
                     {posts.map((post, i) => (
-                      <CommunityPostCard key={post.id || i} post={post} user={user} />
+                      <CommunityPostCard key={post.id || i} post={post} user={user} highlight={highlightPostId === post.id} />
                     ))}
                     {!loading && posts.length === 0 && (
                       <Card className="text-center">
