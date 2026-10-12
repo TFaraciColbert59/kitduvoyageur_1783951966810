@@ -62,6 +62,14 @@ Relecture indépendante de la PR #90 (Opus, Codex hors quota) : corrigés avant 
 
 Relecture finale (Opus) de la PR #90, corrigée avant fusion : bivouac calculé jamais en dernière étape ni sans pouvoir atteindre le lieu réel, jamais pour une préférence « refuge » (3 nuits de bivouac d'affilée au plus : écart assumé avec la borne « 3 journées de marche »), règle d'acclimatation qui ne compte que les nuits de montée, « sans voiture » qui ne déborde plus sur « auto-stop » ni sur une voiture prise, pas de train vers les îles grecques, dalmates, estoniennes, l'Irlande du Nord, Ceuta et Melilla, le pays du domicile n'est plus nommé dans les bases rangées, une prise ou un `restAt` daté du futur ne bloque plus « Annuler », `readMeteoalarm` transmet son horloge (les tests dépendaient de l'heure). Limites restantes : la planification d'acclimatation compte encore toute nuit > 2 500 m comme montée (une nuit de repos de trop, jamais un faux avertissement) ; conseils IA et ligne « Prises » rangés selon le profil du lanceur ; le prompt de l'IA reçoit « nationalité française » (lot P) ; voyages déjà préparés : rattrapage SQL de données à écrire.
 
+Lot Z1 : vie privée restante du profil voyageur : « Prises », conseils de l'IA (règles et consigne sans profil, nationalité jamais envoyée) et dépense « Formalités » ne dépendent plus du lanceur : seules des lignes neutres sont rangées, chaque lecteur reçoit la sienne à la lecture ; verrou étendu (mutation) ; **SQL de rattrapage des voyages déjà préparés écrit (`supabase/maintenance/lot_z1_vie_privee_rattrapage.sql`), non appliqué : à passer par Tony.**
+
+Lot Z2 : légal 5.3 : mention IA (démarrage, étapes `aiProposed`, conseils, verdict ; muette si `AI_MODE=off`), divulgation d'affiliation avant les offres d'hébergement, politique de confidentialité relue au code (rien du profil n'est envoyé à l'IA). Identité de l'éditeur : à Tony.
+
+Lot Z3 : infra à 0 € : 1 cron Vercel quotidien (`/api/cron/daily`, 03:00 UTC) enchaîne 14 des 16 routes cron ; suivi de préparation à intervalle croissant (plus de rafraîchissement fixe toutes les 4 s) ; `maxDuration` ≤ 300 gardé par test. **ACTIF seulement quand Tony crée `CRON_SECRET` dans Vercel (absent le 12 oct. : la route répond 401).**
+
+Lot Z4 : hygiène : CSS sombre du Compas retiré, 3 fichiers formatés, tests d'autorisation réels de `requireEditor` (34 tests ; la RLS est portée à la main, pgTAP reste à faire). Mesure eslint : 45 erreurs, 8 699 avertissements : `ignoreDuringBuilds` inchangé.
+
 **À faire par Tony** (rien d'autre ne bloque) :
 1. SQL Editor : `supabase/migrations/20261008190000_base_scheduled_purges.sql` (purges
    planifiées), puis `20261009100000_app_errors_purge.sql`, puis
