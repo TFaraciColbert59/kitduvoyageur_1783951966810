@@ -15,6 +15,7 @@ import { togglePackedAction } from '@/app/voyages/kit-actions';
 import { COMPAS_STEPS, type CompasKitLine, type CompasStepId } from '../engine/compasModel';
 import { activityLabel, formatHours, formatMoney } from '../engine/format';
 import { NIGHT_LABEL } from '../engine/autofill';
+import { waitForOutcome } from '../engine/outcomePoll';
 import { travelDigest } from '../engine/travel';
 import {
   compasAutofillOutcomeAction,
@@ -107,8 +108,6 @@ const QUICK_TOAST_MS = 3800;
 
 /** Durée maximale d'une préparation côté serveur (300 s) et une marge. */
 const AUTOFILL_MAX_MS = 310_000;
-/** Cadence à laquelle l'écran demande l'issue de la préparation. */
-const AUTOFILL_POLL_MS = 4000;
 
 export function CompasScreen({
   data: rawData,
@@ -373,6 +372,8 @@ export function CompasScreen({
     [setPrep]
   );
   const stopped = useRef(false);
+  /** Réveille le suivi de la préparation quand « Arrêter » est pressé (onglet caché ou hors ligne compris). */
+  const pollAbort = useRef<AbortController | null>(null);
   const autofill = useCallback((redo?: { label: string; kept: string[] }) => {
     if (autofillRunning.current) return;
     autofillRunning.current = true;
@@ -407,14 +408,15 @@ export function CompasScreen({
     void Promise.resolve()
       .then(async () => {
         // Une seule passe côté serveur (jusqu'à 300 s) : itinéraire, nuits, trajet,
-        // kit et budget. Pendant ce temps, l'écran se relit toutes les 6 s :
+        // kit et budget. Pendant ce temps, l'écran se relit quand le voyage change :
         // la carte se dessine dès que l'itinéraire est écrit.
         // La position sert au trajet d'approche et au départ d'une sortie sans lieu.
         const from = await position;
         // Lancée, la préparation tourne côté serveur sans tenir de requête
         // ouverte (un réseau mobile coupe une longue requête muette) : l'écran
-        // demande son issue toutes les 4 s, et ne se relit (carte, étapes) que
-        // si le voyage a changé depuis la dernière fois (plan 2.8).
+        // demande son issue à un rythme qui ralentit (3 s, puis jusqu'à 10 s),
+        // s'arrête onglet caché ou hors ligne et reprend à la reprise, et ne
+        // se relit (carte, étapes) que si le voyage a changé (plan 1.2 et 2.8).
         // Fuseau du navigateur : « aujourd'hui » du voyageur côté serveur.
         const started = await compasAutofillStartAction({
           tripId: model.tripId,
@@ -424,20 +426,19 @@ export function CompasScreen({
           timeZone: browserTimeZone() ?? undefined,
         });
         if (!started.success) return started;
-        let seen: string | null = null;
-        while (Date.now() - startedAt < AUTOFILL_MAX_MS) {
-          if (stopped.current) return null;
-          const poll = await compasAutofillOutcomeAction({ tripId: model.tripId, token: started.token, since: started.at }).catch(
-            () => null
-          );
-          if (poll?.outcome) return poll.outcome;
-          if (poll?.stamp && poll.stamp !== seen) {
-            seen = poll.stamp;
-            startTransition(() => router.refresh());
-          }
-          await new Promise((r) => setTimeout(r, AUTOFILL_POLL_MS));
-        }
-        throw new Error('préparation sans réponse');
+        const watch = new AbortController();
+        pollAbort.current = watch;
+        const followed = await waitForOutcome({
+          poll: () => compasAutofillOutcomeAction({ tripId: model.tripId, token: started.token, since: started.at }),
+          onStamp: () => startTransition(() => router.refresh()),
+          maxMs: AUTOFILL_MAX_MS - (Date.now() - startedAt),
+          signal: watch.signal,
+          isStopped: () => stopped.current,
+        });
+        if (pollAbort.current === watch) pollAbort.current = null;
+        if (followed.kind === 'stopped') return null;
+        if (followed.kind === 'timeout') throw new Error('préparation sans réponse');
+        return followed.outcome;
       })
       .then((res) => {
         if (!res) return;
@@ -508,6 +509,18 @@ export function CompasScreen({
   }, [model.tripId, model.slug, notify, router, setPrep, prepFail]);
   const autofillRef = useRef(autofill);
   autofillRef.current = autofill;
+
+  // Quitter l'écran (navigation, fermeture de l'onglet) met fin au suivi de la
+  // préparation : elle continue côté serveur et sera relue à la prochaine visite.
+  // Sans cela, la relecture tournerait encore jusqu'à 5 minutes pour un écran
+  // qui n'existe plus (plan 1.2, coût de calcul). Seul le contrôleur du suivi est
+  // réveillé, pas `stopped` : un remontage (mode strict) ne bloquerait pas « Reprendre ».
+  useEffect(
+    () => () => {
+      pollAbort.current?.abort();
+    },
+    []
+  );
 
 
   // Réadaptation : un changement (durée, lieu, activité, nuits, personnes…)
@@ -1036,6 +1049,7 @@ export function CompasScreen({
           aiOn={data.aiOn === true}
           onStop={() => {
             stopped.current = true;
+            pollAbort.current?.abort();
             // Le serveur aussi : la préparation en arrière-plan saute ce qui reste à écrire.
             void compasAutofillStopAction({ tripId: model.tripId }).catch(() => undefined);
             setPrep({ stage: 'stopped', at: prepAt(), message: 'Ce qui est fait est gardé. Reprends quand tu veux.' });
