@@ -750,7 +750,7 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       date et source, rien de stocké (enum non touché, aucune migration) (`countryCurrencies.test.ts`,
       `budgetFx.test.ts`, `compasScreen.test.tsx`). ⚠️ Le fichier SIX ne porte aucun texte de
       licence : crédité dans les mentions légales, licence à confirmer par Tony.
-- [~] Prises et change selon le pays de résidence ; « France Diplomatie » pour les
+- [x] Prises et change selon le pays de résidence ; « France Diplomatie » pour les
       Français seulement, le service officiel du pays sinon. Lot P : France Diplomatie et
       « adaptateur à prévoir » seulement pour une nationalité ou une résidence françaises
       connues ; ailleurs le type de prise du pays, un fait. **Lot Z1** : la ligne « Prises »
@@ -759,6 +759,15 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       résidence hors de France pour d'autres pays que les 10 de `PLUGS` (table des prises par
       pays) et ligne de change calculée à la lecture avec la devise du lecteur : le conseil de
       change de l'IA est maintenant écarté en zone euro pour tous (régression assumée du choix neutre).
+      **Lot AC** : prises, tension et fréquence de 228 pays (`data/mainsElectricity.json`, script
+      `scripts/compas/build-mains-electricity.mjs`) tirées de Wikipédia « Mains electricity by country »
+      (révision 1379647853 du 11 oct. 2026, CC BY-SA 4.0, crédit dans les mentions ; le site « World
+      Plugs » de la CEI, illisible le 12 oct., a été retiré en septembre 2026) ; « adaptateur à prévoir »
+      calculé à la lecture selon la résidence de n'importe quel lecteur ; lignes « Courant » et
+      « Change » (devise dite, sinon celle de la résidence) rendues à la lecture seulement, verrou de
+      vie privée étendu (`scripts/verify/traveller_privacy.mjs`). Reste : 20 territoires non renseignés ;
+      la table ne dit pas qu'un type est rare (C à Singapour, en Malaisie) ; ⚖️ licence CC BY-SA du
+      fichier dérivé (partage à l'identique) à valider par Tony.
 - [x] `keepAiNote` ne retire plus les conseils justes pour un non-Français. Lot P : le change
       est gardé pour une devise connue autre que l'euro, les prises quand la règle ne sait
       pas ; les papiers restent à la règle (`papers.test.ts`). **Lot T** : les papiers sont
@@ -912,6 +921,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       traversés non comptés ; barème FR de février 2024 (hausses 2025 et 2026 non lues) ; SI à revérifier
       sur dars.si ; SI annuelle et HU annuelle écartées (période non confirmée) ; gazole et 6,5 L/100 km
       inchangés.
+      **Lot AC** : ES chiffré pour les seules autoroutes de la SEITT (8,3 / 9,3 c€/km HT + TVA 21 %,
+      BOE-A-2025-25961, tarifs 2025 ; TVA BOE-A-1992-28740 art. 90), dit dans la base, jamais ajouté au
+      budget ; PT (IMT, Brisa), HR (HAC) et GR lus le 12 oct. : aucun barème moyen au km, non chiffrés
+      avec la raison datée.
 - [~] Assurance et repas par région ; libellés « indice de prix du pays » (plus
       « prix français »). **Lot W** : libellés faits (« indice de prix du pays : Pérou 45
       (France = 100) », `costs.test.ts`). **Lot R2** : repas en autonomie (bivouac, journée sans nuit) au
@@ -987,6 +1000,11 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 4.11 Notes et conseils
 
+      **Lot AC** : « 50 € par personne » multiplié par le groupe (taille de la phrase, sinon du voyage,
+      sinon précision demandée) ; « quelques jours » lu « au moins 2 jours » (3 pour des nuits, 14 pour
+      des semaines), dit « à préciser », jamais un chiffre de l'IA (`intent.ts`, `intentWords.ts`,
+      `request.ts`). Reste : dates numériques selon la langue (phase 6) ; montants par jour, nuit ou
+      semaine lus comme avant.
 - [x] Lot K (`engine/advice.ts`, `advice.test.ts`) : altitude (au-dessus de 2 500 m),
       avalanches en hiver selon l'hémisphère (BERA en France), orages d'été en montagne,
       sortie seul·e (112 seulement là où il répond), refuges à réserver, règles du bivouac
