@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useReportWebVitals } from "next/web-vitals";
 import { createNavigationTracker } from "@/lib/perf/experienceMetrics";
+import { createClient } from "@/lib/supabase/client";
 
 interface VitalEvent {
   event: string;
@@ -13,15 +14,36 @@ interface VitalEvent {
 /**
  * Reports Web Vitals and LKDV experience timings through the existing
  * authenticated telemetry endpoint. Reporting never blocks rendering.
+ *
+ * La télémétrie est RÉSERVÉE aux sessions authentifiées : un visiteur anonyme
+ * ne déclenche aucune requête (plus de 401 en console, audit Lighthouse).
  */
 export default function WebVitalsReporter() {
   const buffer = useRef<VitalEvent[]>([]);
   const tracker = useRef(createNavigationTracker());
   const bootRecorded = useRef(false);
   const pathname = usePathname();
+  const hasSession = useRef<boolean | null>(null);
 
-  const flush = useCallback(() => {
+  const flush = useCallback(async () => {
     if (buffer.current.length === 0) return;
+
+    if (hasSession.current === null) {
+      try {
+        const supabase = createClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        hasSession.current = Boolean(session);
+      } catch {
+        hasSession.current = false;
+      }
+    }
+    if (!hasSession.current) {
+      buffer.current = [];
+      return;
+    }
+
     const batch = buffer.current.slice(0, 20);
     buffer.current = buffer.current.slice(20);
     fetch("/api/telemetry/hub", {
