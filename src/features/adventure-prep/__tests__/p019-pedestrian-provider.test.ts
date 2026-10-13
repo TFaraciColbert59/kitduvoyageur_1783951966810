@@ -263,8 +263,8 @@ describe('P1.9 - le fournisseur pieton repond', () => {
     expect(repli).toBeDefined();
     // FOSSGIS demande que l'application s'identifie.
     const entetes = new Headers(repli?.[1]?.headers);
-    expect(entetes.get('x-client-id')).toBe('koosmoweb.fr');
-    expect(entetes.get('user-agent')).toContain('koosmoweb.fr');
+    expect(entetes.get('x-client-id')).toBe('kitduvoyageur-1783951966810-ruddy.vercel.app');
+    expect(entetes.get('user-agent')).toContain('kitduvoyageur-1783951966810-ruddy.vercel.app');
     // La cle Geoapify ne part jamais chez un autre fournisseur.
     expect(String(repli?.[0])).not.toContain('cle-de-test');
   });

@@ -105,7 +105,7 @@ describe('LocationIQ à la place du Nominatim public', () => {
 describe('nominatimJson — le client commun', () => {
   const SEARCH = 'https://nominatim.openstreetmap.org/search?q=Annecy&format=jsonv2&addressdetails=1&limit=5';
   const REVERSE = 'https://nominatim.openstreetmap.org/reverse?lat=45.9&lon=6.87&format=jsonv2&zoom=14';
-  const UA = 'kitduvoyageur/1.0 (test; +https://koosmoweb.fr)';
+  const UA = 'kitduvoyageur/1.0 (test; +https://kitduvoyageur-1783951966810-ruddy.vercel.app)';
   const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
   const noSleep = async () => undefined;
   const asFetch = (f: unknown) => f as typeof fetch;
