@@ -1,0 +1,1547 @@
+{
+  "source": "https://photon.komoot.io/api/?limit=50&lang=fr&include=osm.tourism.alpine_hut,osm.tourism.wilderness_hut&bbox=5.4294,44.5844,6.0026,44.9898",
+  "capturedAt": "2026-10-13T00:40:50.003Z",
+  "host": "photon.komoot.io",
+  "path": "/api/",
+  "query": {
+    "bbox": "5.4294,44.5844,6.0026,44.9898",
+    "include": "osm.tourism.alpine_hut,osm.tourism.wilderness_hut",
+    "limit": "50"
+  },
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 181542553,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane libre de Boustigue",
+          "street": "Chemin de l'Alpage",
+          "district": "La Boustigue",
+          "city": "Corps",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38970",
+          "countrycode": "FR",
+          "extent": [
+            5.9593929,
+            44.8153295,
+            5.9595075,
+            44.8152501
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.9594502,
+            44.8152898
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 567855035,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Abri de la Jasse du Play",
+          "street": "Montée du Pas de Berrieves",
+          "city": "Gresse-en-Vercors",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38650",
+          "countrycode": "FR",
+          "extent": [
+            5.5020401,
+            44.9107,
+            5.5021552,
+            44.9106251
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.5020976,
+            44.9106626
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 255826762,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane des Aiguillettes",
+          "street": "Sentier des Rochers du Parquet",
+          "city": "Chichilianne",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38930",
+          "countrycode": "FR",
+          "extent": [
+            5.520207,
+            44.8537136,
+            5.5202824,
+            44.8536563
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.5202447,
+            44.853685
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 217511710,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane de Pré-Peyret",
+          "street": "Grande Traversée du Vercors",
+          "city": "Gresse-en-Vercors",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38650",
+          "countrycode": "FR",
+          "extent": [
+            5.4827577,
+            44.8270167,
+            5.482869,
+            44.8269484
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.4828108,
+            44.8269762
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 1001439346,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane du Grand Pôt",
+          "street": "Pas Ernadant",
+          "city": "Château-Bernard",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38650",
+          "countrycode": "FR",
+          "extent": [
+            5.5197797,
+            44.9790173,
+            5.5199182,
+            44.9789362
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.5198452,
+            44.9789767
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 218727866,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane de Carrette",
+          "street": "Piste bleue du Purgatoire",
+          "city": "Saint-Andéol",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38650",
+          "countrycode": "FR",
+          "extent": [
+            5.5066169,
+            44.9844992,
+            5.5067257,
+            44.9844501
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.5066713,
+            44.9844747
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 224455508,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Refuge d'Esparron",
+          "street": "Chemin d'Esparron à Praleron",
+          "city": "Le Percy",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38930",
+          "countrycode": "FR",
+          "extent": [
+            5.6059128,
+            44.7734101,
+            5.6060786,
+            44.7732076
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.6059957,
+            44.7733089
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "N",
+          "osm_id": 5420534346,
+          "osm_key": "tourism",
+          "osm_value": "alpine_hut",
+          "type": "house",
+          "name": "Gite - Refuge",
+          "district": "Sanctuaire de La Salette",
+          "city": "La Salette-Fallavaux",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38970",
+          "countrycode": "FR"
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.9778151,
+            44.8582921
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 1215846254,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane de Côte-Belle",
+          "street": "Chemin des Carcaris ou de l'Échaillon",
+          "district": "Péchal",
+          "city": "Valbonnais",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38740",
+          "countrycode": "FR",
+          "extent": [
+            5.9041574,
+            44.9136335,
+            5.9042363,
+            44.9135762
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.9041968,
+            44.9136049
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 231579248,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane ONF du Rif Bruyant",
+          "street": "Chemin de la Cabane des Italiens",
+          "city": "Lavaldens",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38350",
+          "countrycode": "FR",
+          "extent": [
+            5.9067994,
+            44.9479481,
+            5.9068559,
+            44.9479002
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.9068277,
+            44.9479242
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 1055154705,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane du Clot de la Ligne",
+          "street": "Chemin de la Cabane des Italiens",
+          "city": "Lavaldens",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38350",
+          "countrycode": "FR",
+          "extent": [
+            5.9147113,
+            44.9590605,
+            5.9147793,
+            44.9590113
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.9147453,
+            44.9590359
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "R",
+          "osm_id": 16085715,
+          "osm_key": "tourism",
+          "osm_value": "alpine_hut",
+          "type": "house",
+          "name": "Refuge le Rivobruenti",
+          "street": "Chemin de Rif Bruyant",
+          "district": "Le Mollard",
+          "city": "Lavaldens",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38350",
+          "countrycode": "FR",
+          "extent": [
+            5.8861323,
+            44.9581848,
+            5.8864863,
+            44.9578264
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.8862239,
+            44.9579363
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 372454369,
+          "osm_key": "tourism",
+          "osm_value": "alpine_hut",
+          "type": "house",
+          "name": "La Pouya",
+          "street": "Chemin du Pré Darve à Tracoulay",
+          "city": "Mayres-Savel",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38350",
+          "countrycode": "FR",
+          "extent": [
+            5.7204798,
+            44.922326,
+            5.7205776,
+            44.9222522
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.7205287,
+            44.9222892
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 438320329,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Refuge Louis Debastiani",
+          "street": "Montée au N de La Posterle",
+          "district": "Les Chaneaux",
+          "city": "Pellafol",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38970",
+          "countrycode": "FR",
+          "extent": [
+            5.8778501,
+            44.7764286,
+            5.8779245,
+            44.7764002
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.8778873,
+            44.7764145
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "N",
+          "osm_id": 13989245118,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane de Peisseiriou",
+          "city": "Pellafol",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38970",
+          "countrycode": "FR"
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.8691605,
+            44.7663055
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 181685565,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane du Bois du Serre",
+          "street": "Chemin de l'Oche",
+          "district": "Hameau des Achards",
+          "city": "Les Côtes-de-Corps",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38970",
+          "countrycode": "FR",
+          "extent": [
+            5.9313666,
+            44.8534812,
+            5.9314362,
+            44.8534305
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.9314014,
+            44.8534559
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 637455279,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Refuge de Chaumailloux",
+          "street": "Sentier des Rochers du Parquet",
+          "city": "Chichilianne",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38930",
+          "countrycode": "FR",
+          "extent": [
+            5.511911,
+            44.805471,
+            5.5119866,
+            44.8054108
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.5119488,
+            44.8054409
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 61294930,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Bergerie des Chaumailloux (cabane de la SMA)",
+          "street": "Sentier des Rochers du Parquet",
+          "city": "Chichilianne",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38930",
+          "countrycode": "FR",
+          "extent": [
+            5.5117892,
+            44.8071873,
+            5.5119715,
+            44.8070723
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.5118804,
+            44.8071186
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 713673710,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Baraque du Pison",
+          "street": "Liaison du Col di Pison à la fontaine des Bachassons",
+          "city": "Chichilianne",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38930",
+          "countrycode": "FR",
+          "extent": [
+            5.4726145,
+            44.8095378,
+            5.4727122,
+            44.8094699
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.4726634,
+            44.8095039
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 422101694,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Bergerie des Ayes",
+          "city": "Chichilianne",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38930",
+          "countrycode": "FR",
+          "extent": [
+            5.5992004,
+            44.7963716,
+            5.5993042,
+            44.7962713
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.5992523,
+            44.7963215
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 137892747,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane de la Peyrouse",
+          "street": "Balcon Est",
+          "city": "Saint-Andéol",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38650",
+          "countrycode": "FR",
+          "extent": [
+            5.5269277,
+            44.9461965,
+            5.5270064,
+            44.94613
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.5269671,
+            44.9461633
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 538286777,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Bergerie de Paille",
+          "street": "Route du Pied de la Vallée",
+          "city": "Tréminis",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38710",
+          "countrycode": "FR",
+          "extent": [
+            5.7521483,
+            44.7115114,
+            5.7522262,
+            44.7113668
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.7521873,
+            44.7114391
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 538595626,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Baraque forestière de sous Courtet",
+          "street": "Chemin de Sous-Courtet",
+          "city": "Tréminis",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38710",
+          "countrycode": "FR",
+          "extent": [
+            5.8072532,
+            44.762588,
+            5.8073048,
+            44.7625517
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.807279,
+            44.7625699
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 1291259291,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane de Lou Pi",
+          "district": "Les Bourlens",
+          "city": "La Salle-en-Beaumont",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38350",
+          "countrycode": "FR",
+          "extent": [
+            5.8801074,
+            44.8710889,
+            5.8801787,
+            44.8710336
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.8801426,
+            44.8710624
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 791666729,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane du Curé",
+          "street": "Des Treize Bises à Peychagnard en VTT",
+          "district": "La Sausie",
+          "city": "Susville",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38350",
+          "countrycode": "FR",
+          "extent": [
+            5.7495903,
+            44.9309986,
+            5.7497133,
+            44.930908
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.7496518,
+            44.9309533
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 761980841,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane de Cumina",
+          "city": "Saint-Michel-en-Beaumont",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38350",
+          "countrycode": "FR",
+          "extent": [
+            5.9269248,
+            44.8732948,
+            5.9269647,
+            44.8732561
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.9269448,
+            44.8732755
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 289781149,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Refuge de Rochassac",
+          "street": "Sentier du Col de l'Aiguille",
+          "district": "Longueville",
+          "city": "Saint-Baudille-et-Pipet",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38710",
+          "countrycode": "FR",
+          "extent": [
+            5.815155,
+            44.7849831,
+            5.8152386,
+            44.7849318
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.8151968,
+            44.7849574
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 977808858,
+          "osm_key": "tourism",
+          "osm_value": "alpine_hut",
+          "type": "house",
+          "name": "Au dessus de Gaudissard",
+          "street": "Chemin du Roi",
+          "locality": "Les Bouleaux",
+          "district": "Bourcheny Le Bas",
+          "city": "Chantepérier",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38740",
+          "countrycode": "FR",
+          "extent": [
+            5.9537691,
+            44.9395633,
+            5.9538452,
+            44.9395154
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.9538071,
+            44.9395393
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "N",
+          "osm_id": 13266440925,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane de Rif-Meyol",
+          "street": "Route de Confolens",
+          "locality": "Les Bouleaux",
+          "district": "Confolens le Bas",
+          "city": "Chantepérier",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38740",
+          "countrycode": "FR"
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            6.0021469,
+            44.923936
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 233715099,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane des Drayes",
+          "street": "Chemin de Clapier Noir",
+          "locality": "Le Périer",
+          "district": "Bourcheny Le Bas",
+          "city": "Chantepérier",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38740",
+          "countrycode": "FR",
+          "extent": [
+            5.9878903,
+            44.9153601,
+            5.9879642,
+            44.9152986
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.9879273,
+            44.9153294
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 288770020,
+          "osm_key": "tourism",
+          "osm_value": "alpine_hut",
+          "type": "house",
+          "name": "Cabane ONF de l'Infernet",
+          "street": "Chemin de la Cabane des Italiens",
+          "city": "Lavaldens",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38350",
+          "countrycode": "FR",
+          "extent": [
+            5.935897,
+            44.9328185,
+            5.9359905,
+            44.9327694
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.9359438,
+            44.932794
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "N",
+          "osm_id": 11116059992,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Abri de la Drayre (Le chatel)",
+          "street": "Sentier de la Source des Pavés",
+          "district": "Cordéac",
+          "city": "Châtel-en-Trièves",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38710",
+          "countrycode": "FR"
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.8197566,
+            44.8150433
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 121698702,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "L'estive",
+          "street": "Route forestière des Dus",
+          "district": "Puy Trangouilla",
+          "city": "Château-Bernard",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38650",
+          "countrycode": "FR",
+          "extent": [
+            5.5499046,
+            44.9793886,
+            5.5499886,
+            44.9793206
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.5499466,
+            44.9793546
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 293789322,
+          "osm_key": "tourism",
+          "osm_value": "alpine_hut",
+          "type": "house",
+          "name": "Refuge du col de la Croix",
+          "street": "Piste du Col de la Croix",
+          "city": "Tréminis",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38710",
+          "countrycode": "FR",
+          "extent": [
+            5.7803128,
+            44.7030183,
+            5.7804516,
+            44.7029124
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.7803824,
+            44.7029652
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 62041109,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Chalet des ours",
+          "street": "Traversée du Vercors",
+          "city": "Saint-Agnan-en-Vercors",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26420",
+          "countrycode": "FR",
+          "extent": [
+            5.4313419,
+            44.8375452,
+            5.4314966,
+            44.8374171
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.4314193,
+            44.8374812
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 438498076,
+          "osm_key": "tourism",
+          "osm_value": "alpine_hut",
+          "type": "house",
+          "name": "Cabane de Combe Male",
+          "street": "Grande Traversée du Vercors",
+          "city": "Saint-Agnan-en-Vercors",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26420",
+          "countrycode": "FR",
+          "extent": [
+            5.4536174,
+            44.8344152,
+            5.4537366,
+            44.8343555
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.453677,
+            44.8343854
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 61318469,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane forestière de Pré Grandu",
+          "street": "Route forestière de Brutinel",
+          "city": "Saint-Agnan-en-Vercors",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26420",
+          "countrycode": "FR",
+          "extent": [
+            5.4440334,
+            44.881745,
+            5.4441317,
+            44.8816453
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.4440826,
+            44.8816952
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 267933880,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Baraque des Bachassons",
+          "street": "Route forestière de Pré Rateau",
+          "district": "Les Brunets",
+          "city": "Saint-Agnan-en-Vercors",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26420",
+          "countrycode": "FR",
+          "extent": [
+            5.4518524,
+            44.9221958,
+            5.4519466,
+            44.9221422
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.4518997,
+            44.9221683
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 713786721,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Refuge de Tiolache du milieu",
+          "street": "Sentier Central",
+          "city": "Gresse-en-Vercors",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38650",
+          "countrycode": "FR",
+          "extent": [
+            5.4902311,
+            44.925813,
+            5.4903068,
+            44.9257511
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.490269,
+            44.9257821
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 186601946,
+          "osm_key": "tourism",
+          "osm_value": "alpine_hut",
+          "type": "house",
+          "name": "Gite d'alpage de la Tour de Borne",
+          "street": "Col de Jiboui Versant Sud",
+          "city": "Glandage",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26410",
+          "countrycode": "FR",
+          "extent": [
+            5.6181654,
+            44.7297873,
+            5.6183437,
+            44.7295971
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.618253,
+            44.7296889
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 1274509880,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane de bois noir ou du col de Boulc",
+          "street": "GR95",
+          "city": "Boulc",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26410",
+          "countrycode": "FR",
+          "extent": [
+            5.6254897,
+            44.6596072,
+            5.625545,
+            44.6595664
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.6255173,
+            44.6595868
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 510860057,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Refuge du Château",
+          "street": "Route de Chabrinel",
+          "city": "Romeyer",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26150",
+          "countrycode": "FR",
+          "extent": [
+            5.4553826,
+            44.809488,
+            5.4555005,
+            44.8094044
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.4554416,
+            44.8094462
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 61424042,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Pré Valet",
+          "street": "Route des Mondains",
+          "district": "Les Mondains",
+          "city": "La Chapelle-en-Vercors",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26420",
+          "countrycode": "FR",
+          "extent": [
+            5.4595847,
+            44.9688993,
+            5.4596918,
+            44.9688367
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.4596383,
+            44.9688676
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "N",
+          "osm_id": 6767063263,
+          "osm_key": "tourism",
+          "osm_value": "alpine_hut",
+          "type": "house",
+          "name": "Auberge de Combeau",
+          "street": "Route de Combeau",
+          "district": "Treschenu-Creyers",
+          "city": "Châtillon-en-Diois",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26410",
+          "countrycode": "FR"
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.5665312,
+            44.765568
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "N",
+          "osm_id": 6725018742,
+          "osm_key": "tourism",
+          "osm_value": "alpine_hut",
+          "type": "house",
+          "name": "Gîte de Bénevise",
+          "street": "Rue du Glandasse",
+          "district": "Bénevise",
+          "city": "Châtillon-en-Diois",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26410",
+          "countrycode": "FR"
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.539856,
+            44.7310942
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "N",
+          "osm_id": 6412734285,
+          "osm_key": "tourism",
+          "osm_value": "alpine_hut",
+          "type": "house",
+          "name": "Refuge d’Archiane",
+          "street": "Chemin des Prayols",
+          "district": "Archiane",
+          "city": "Châtillon-en-Diois",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26410",
+          "countrycode": "FR"
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.5042657,
+            44.7459559
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 474237626,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane de l'Essaure",
+          "street": "Route de Combeau",
+          "district": "Treschenu-Creyers",
+          "city": "Châtillon-en-Diois",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26410",
+          "countrycode": "FR",
+          "extent": [
+            5.5578525,
+            44.787129,
+            5.5579767,
+            44.7870615
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.5579146,
+            44.7870953
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 113088958,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Maison Forestière Gîte de Matacharre",
+          "street": "Vers le Col de Garcinel",
+          "district": "Le Temple",
+          "city": "La Roche-des-Arnauds",
+          "county": "Hautes-Alpes",
+          "state": "Provence-Alpes-Côte d'Azur",
+          "country": "France",
+          "postcode": "05400",
+          "countrycode": "FR",
+          "extent": [
+            5.934625,
+            44.5857374,
+            5.9348368,
+            44.5856125
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.9347309,
+            44.585675
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 176297001,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane de Châtillon",
+          "street": "Chemin des Grands Espaces",
+          "district": "Archiane",
+          "city": "Châtillon-en-Diois",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26410",
+          "countrycode": "FR",
+          "extent": [
+            5.4901356,
+            44.7276723,
+            5.4902286,
+            44.7276074
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.4901821,
+            44.7276398
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 1200385033,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane Pastorale du Chourum Clot",
+          "street": "Chemin de la Clapérie",
+          "district": "Lachaup",
+          "city": "Le Dévoluy",
+          "county": "Hautes-Alpes",
+          "state": "Provence-Alpes-Côte d'Azur",
+          "country": "France",
+          "postcode": "05250",
+          "countrycode": "FR",
+          "extent": [
+            5.8501502,
+            44.7025627,
+            5.8502638,
+            44.702488
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.850207,
+            44.7025254
+          ]
+        }
+      }
+    ]
+  }
+}
