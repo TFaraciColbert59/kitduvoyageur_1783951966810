@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { messagingService } from '../services/messagingService';
 import type { Message, UserProfileSummary, MessageReaction } from '../types/messaging.types';
 import { createClient } from '@/lib/supabase/client';
@@ -30,7 +30,10 @@ export function useMessages(
       setMessages(data);
       setHasMore(data.length >= MESSAGES_PAGE_SIZE);
 
-      if (currentUserId) {
+      // A-086 : on ne marque lu que si la discussion est réellement visible.
+      const isVisible =
+        typeof document === 'undefined' || document.visibilityState !== 'hidden';
+      if (currentUserId && isVisible) {
         await messagingService.markAsRead(conversationId, currentUserId);
       }
       setError(null);
@@ -42,6 +45,11 @@ export function useMessages(
     }
   }, [conversationId, currentUserId]);
 
+  // A-077 : après une coupure de socket, la resynchronisation repart de la base.
+  const fetchMessagesRef = useRef(fetchMessages);
+  fetchMessagesRef.current = fetchMessages;
+  const hasSubscribedOnceRef = useRef(false);
+
   useEffect(() => {
     fetchMessages();
   }, [fetchMessages]);
@@ -50,6 +58,7 @@ export function useMessages(
   useEffect(() => {
     if (!conversationId) return;
 
+    hasSubscribedOnceRef.current = false;
     const supabase = createClient();
     const channelName = `chat-messages-${conversationId}-${Math.random().toString(36).substring(2, 7)}`;
     const channel = supabase
@@ -106,7 +115,10 @@ export function useMessages(
             ];
           });
 
-          if (currentUserId && newMsg.sender_id !== currentUserId) {
+          // A-086 : un message reçu en arrière-plan ne devient pas « lu ».
+          const documentVisible =
+            typeof document === 'undefined' || document.visibilityState !== 'hidden';
+          if (currentUserId && newMsg.sender_id !== currentUserId && documentVisible) {
             await messagingService.markAsRead(conversationId, currentUserId);
           }
         }
@@ -168,7 +180,17 @@ export function useMessages(
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        // A-077 : à la (re)connexion, on resynchronise depuis la base — le
+        // socket ne rejoue jamais les événements manqués.
+        if (status === 'SUBSCRIBED') {
+          if (hasSubscribedOnceRef.current) {
+            void fetchMessagesRef.current();
+          } else {
+            hasSubscribedOnceRef.current = true;
+          }
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);

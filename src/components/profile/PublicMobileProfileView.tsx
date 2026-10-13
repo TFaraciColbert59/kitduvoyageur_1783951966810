@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useUserPresence } from '@/hooks/useUserPresence';
 import Icon from '@/components/ui/AppIcon';
 import {
   Badge,
@@ -32,6 +33,7 @@ interface PublicMobileProfileViewProps {
   badges: CompteBadgeItem[];
   activite: CompteActiviteItem[];
   onShare: () => void;
+  onReport?: () => void;
 }
 
 type TabKey = 'tout' | 'carnets' | 'clubs' | 'badges';
@@ -52,8 +54,10 @@ export default function PublicMobileProfileView({
   badges,
   activite,
   onShare,
+  onReport,
 }: PublicMobileProfileViewProps) {
   const { triggerHaptic } = useHapticFeedback();
+  const isOnline = useUserPresence(profile.id);
   const [tab, setTab] = useState<TabKey>('tout');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [following, setFollowing] = useState(false);
@@ -87,20 +91,39 @@ export default function PublicMobileProfileView({
         backHref="/communaute"
         backLabel="Communauté"
         title={handleName}
-        subtitle={`Niv.${levelNum} · ${levelTitle}`}
+        subtitle={
+          isOnline
+            ? `Niv.${levelNum} · ${levelTitle} · En ligne`
+            : `Niv.${levelNum} · ${levelTitle}`
+        }
         className="px-4 pt-[var(--safe-top)] pb-2.5"
         actions={
-          <IconButton
-            variant="glass"
-            size="sm"
-            aria-label="Partager ce profil"
-            onClick={() => {
-              triggerHaptic('light');
-              onShare();
-            }}
-          >
-            <Icon name="share2" size={15} />
-          </IconButton>
+          <span className="flex items-center gap-1">
+            {onReport && (
+              <IconButton
+                variant="glass"
+                size="sm"
+                aria-label="Signaler ou bloquer ce profil"
+                onClick={() => {
+                  triggerHaptic('light');
+                  onReport();
+                }}
+              >
+                <Icon name="flag" size={15} />
+              </IconButton>
+            )}
+            <IconButton
+              variant="glass"
+              size="sm"
+              aria-label="Partager ce profil"
+              onClick={() => {
+                triggerHaptic('light');
+                onShare();
+              }}
+            >
+              <Icon name="share2" size={15} />
+            </IconButton>
+          </span>
         }
       />
 

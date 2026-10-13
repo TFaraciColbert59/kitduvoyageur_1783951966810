@@ -190,7 +190,7 @@ describe('la politique vise bien cette route', () => {
   });
 
   it('la migration garde les violations CSP hors du seuil « erreurs serveur » et expose le résumé', () => {
-    const sql = readFileSync(resolve(__dirname, '../../supabase/migrations/20261012170000_csp_reports.sql'), 'utf8');
+    const sql = readFileSync(resolve(__dirname, '../../supabase/migrations/20261013004818_hotfix.sql'), 'utf8');
     expect(sql).toContain("count(*) filter (where a.scope <> 'csp')");
     expect(sql).toContain('csp_report_summary');
     expect(sql).toMatch(/grant execute on function public\.csp_report_summary\(integer\) to service_role/);

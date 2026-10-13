@@ -5,6 +5,8 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button, HeaderBackButton, IconButton, PageHeader } from '@/components/ui';
+import { lkvAlert } from '@/components/ui/dialogs';
+import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
 import type {
   Conversation,
   UserProfileSummary,
@@ -99,9 +101,13 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
     const isGpx = file.name.toLowerCase().endsWith('.gpx') || file.type.includes('gpx');
     // F-007 : les navigateurs ne typent pas toujours le GPX — on impose un
     // type déterministe accepté par la liste blanche du bucket.
-    const uploadFile = isGpx && !file.type
+    const typedFile = isGpx && !file.type
       ? new File([file], file.name, { type: 'application/gpx+xml' })
       : file;
+    // A-096 : une photo envoyée en message ne conserve pas ses métadonnées.
+    const uploadFile = typedFile.type.startsWith('image/')
+      ? await stripImageMetadata(typedFile)
+      : typedFile;
     const fileUrl = await messagingService.uploadAttachment(conversation.id, uploadFile);
     if (!fileUrl) {
       console.error('Pièce jointe non envoyée : upload refusé (voir console service).');
@@ -143,6 +149,32 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
   };
 
   const handleSendGpx = async (file: File) => {
+    // A-097 : valider la trace avant tout coût d'upload (taille, structure,
+    // nombre de points borné) — un fichier corrompu ou énorme est refusé net.
+    if (file.size > 5 * 1024 * 1024) {
+      lkvAlert('Trace GPX limitée à 5 Mo.');
+      return;
+    }
+    try {
+      const text = await file.text();
+      if (!/<gpx[\s>]/i.test(text)) {
+        lkvAlert('Ce fichier n’est pas une trace GPX valide.');
+        return;
+      }
+      const trackPoints = text.match(/<trkpt[\s>]/gi)?.length ?? 0;
+      if (trackPoints === 0) {
+        lkvAlert('Cette trace GPX ne contient aucun point de passage.');
+        return;
+      }
+      if (trackPoints > 50000) {
+        lkvAlert('Trace trop volumineuse : plus de 50 000 points.');
+        return;
+      }
+    } catch {
+      lkvAlert('Impossible de lire cette trace GPX.');
+      return;
+    }
+
     // F-007 : type déterministe si le navigateur n'en fournit aucun.
     const uploadFile = file.type
       ? file
@@ -416,6 +448,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
           onTyping={sendTypingSignal}
           replyToMessage={replyToMessage}
           onCancelReply={() => setReplyToMessage(null)}
+          conversationId={conversation.id}
         />
       )}
 

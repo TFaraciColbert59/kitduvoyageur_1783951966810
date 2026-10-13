@@ -8,6 +8,7 @@ import { IconButton } from '@/components/ui';
 export interface StorySlide {
   image: string;
   caption?: string;
+  storyId?: string;
 }
 
 export interface StoryUser {
@@ -34,10 +35,18 @@ export default function StoriesViewer({
   users,
   startUser,
   onClose,
+  onReport,
+  onBlock,
+  onDelete,
+  myUserId,
 }: {
   users: StoryUser[];
   startUser: number;
   onClose: () => void;
+  onReport?: (user: StoryUser, slide: StorySlide) => void;
+  onBlock?: (user: StoryUser) => void;
+  onDelete?: (slide: StorySlide) => void;
+  myUserId?: string;
 }) {
   const [userIndex, setUserIndex] = useState(startUser);
   const [slideIndex, setSlideIndex] = useState(0);
@@ -243,19 +252,67 @@ export default function StoriesViewer({
               </span>
             )}
           </span>
-          <IconButton
-            type="button"
-            variant="glass"
-            className="bg-black/40 text-white active:scale-[var(--motion-press-scale)]"
-            aria-label="Fermer les stories"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-          >
-            <Icon name="x" size={18} color="var(--lkv-text-inverted)" />
-          </IconButton>
+          <span className="flex items-center gap-[var(--space-1)]">
+            {/* A-144 : signaler et bloquer sans quitter le visionneur. */}
+            {onDelete && myUserId && user.id === myUserId && slide.storyId && (
+              <IconButton
+                type="button"
+                variant="glass"
+                className="bg-black/40 text-white active:scale-[var(--motion-press-scale)]"
+                aria-label="Retirer ma story"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(slide);
+                }}
+              >
+                <Icon name="trash2" size={16} color="var(--lkv-text-inverted)" />
+              </IconButton>
+            )}
+            {onReport && user.id !== myUserId && (
+              <IconButton
+                type="button"
+                variant="glass"
+                className="bg-black/40 text-white active:scale-[var(--motion-press-scale)]"
+                aria-label={`Signaler la story de ${user.name}`}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReport(user, slide);
+                }}
+              >
+                <Icon name="flag" size={16} color="var(--lkv-text-inverted)" />
+              </IconButton>
+            )}
+            {onBlock && user.id !== myUserId && (
+              <IconButton
+                type="button"
+                variant="glass"
+                className="bg-black/40 text-white active:scale-[var(--motion-press-scale)]"
+                aria-label={`Bloquer ${user.name}`}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onBlock(user);
+                }}
+              >
+                <Icon name="user-minus" size={16} color="var(--lkv-text-inverted)" />
+              </IconButton>
+            )}
+            <IconButton
+              type="button"
+              variant="glass"
+              className="bg-black/40 text-white active:scale-[var(--motion-press-scale)]"
+              aria-label="Fermer les stories"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }}
+            >
+              <Icon name="x" size={18} color="var(--lkv-text-inverted)" />
+            </IconButton>
+          </span>
         </div>
 
         {/* Légende */}

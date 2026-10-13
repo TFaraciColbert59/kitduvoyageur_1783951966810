@@ -419,7 +419,7 @@ export const messagingService = {
 
     const { data: cmData, error: cmError } = await supabase
       .from('conversation_members')
-      .select('conversation_id, unread_count, is_muted, is_archived')
+      .select('conversation_id, unread_count, is_muted, is_archived, status')
       .eq('user_id', userId);
 
     if (cmError) {
@@ -539,6 +539,9 @@ export const messagingService = {
         unread_count: meta?.unread_count || 0,
         is_muted: meta?.is_muted || false,
         is_archived: meta?.is_archived || false,
+        // F-020 : l'onglet « Demandes » et la barre pending de la conversation
+        // s'appuient sur l'état serveur réel.
+        status: (meta as { status?: string } | undefined)?.status === 'pending' ? 'pending' : 'active',
       };
     });
   },
@@ -928,10 +931,12 @@ export const messagingService = {
       return true;
     }
 
+    // F-020 : l'acceptation est un état serveur ('active'), pas un simple
+    // désarchivage.
     const supabase = createClient();
     const { error } = await supabase
       .from('conversation_members')
-      .update({ is_archived: false })
+      .update({ is_archived: false, status: 'active' })
       .eq('conversation_id', conversationId)
       .eq('user_id', userId);
 

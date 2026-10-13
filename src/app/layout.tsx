@@ -27,6 +27,7 @@ import PageTransition from '@/components/ui/PageTransition';
 import { ConditionalCursor } from '@/components/ui/CustomCursor';
 import PrefetchRoutes from '@/components/PrefetchRoutes';
 import NativeAppBootstrap from '@/components/NativeAppBootstrap';
+import PresenceTracker from '@/components/system/PresenceTracker';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 import WebVitalsReporter from '@/components/WebVitalsReporter';
 import { ActiveTripProvider } from '@/features/trips/context/ActiveTripContext';
@@ -290,6 +291,8 @@ export default async function RootLayout({
                   <ErrorBoundaryWrapper>
                     <ReactQueryProvider>
                       <NativeAppBootstrap />
+                      {/* F-028 — présence réelle (canal privé lkdv-online) */}
+                      <PresenceTracker />
                       {/* Service worker web (production) — jamais enregistré dans
                           l'app Capacitor (garde `isNative()` côté client). */}
                       <ServiceWorkerRegistration />

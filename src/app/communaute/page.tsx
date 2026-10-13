@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense } from 'react';
 import Header from '@/components/Header';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
@@ -130,37 +130,54 @@ function CommunautePageContent() {
   const [clubFilterTab, setClubFilterTab] = useState<'all' | 'activite' | 'pays' | 'my_clubs'>('all');
   const [clubSearchQuery, setClubSearchQuery] = useState('');
 
-  const fetchData = useCallback(async () => {
+  // A-205 : chaque section n'est chargée qu'au premier accès à son onglet
+  // (le fil reste le socle initial) ; `fetchData()` sans argument recharge tout
+  // (bouton Réessayer).
+  const loadedSectionsRef = useRef<Record<string, boolean>>({});
+
+  const fetchData = useCallback(async (requested?: string[]) => {
     const supabase = createClient();
+    const want = (name: string) => !requested || requested.includes(name);
+    const idle = Promise.resolve({ data: null, error: null });
 
     try {
       // Parallel fetch — la page n'affiche QUE des données serveur.
       const [postsRes, carnetsRes, clubsRes, groupsRes, eventsRes] = await Promise.allSettled([
-        supabase
-          .from('community_posts')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(postsLimit),
-        supabase
-          .from('carnets')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(20),
-        supabase.from('clubs').select('*').order('members_count', { ascending: false }),
+        want('posts')
+          ? supabase
+              .from('community_posts')
+              .select('*')
+              .order('created_at', { ascending: false })
+              .limit(postsLimit)
+          : idle,
+        want('carnets')
+          ? supabase
+              .from('carnets')
+              .select('*')
+              .order('created_at', { ascending: false })
+              .limit(20)
+          : idle,
+        want('clubs')
+          ? supabase.from('clubs').select('*').order('members_count', { ascending: false }).limit(50)
+          : idle,
         // F-009 : modèle canonique des groupes d'expédition (travel_groups),
         // jamais la vue legacy remplie de constantes.
-        supabase
-          .from('travel_groups')
-          .select('id, name, description, destination, theme, visibility, max_members, cover_url, created_at')
-          .order('created_at', { ascending: false })
-          .limit(20),
-        supabase
-          .from('events')
-          .select('*')
-          .neq('status', 'past')
-          .gte('event_date', new Date().toISOString().split('T')[0])
-          .order('event_date', { ascending: true })
-          .limit(20),
+        want('groups')
+          ? supabase
+              .from('travel_groups')
+              .select('id, name, description, destination, theme, visibility, max_members, cover_url, created_at')
+              .order('created_at', { ascending: false })
+              .limit(20)
+          : idle,
+        want('events')
+          ? supabase
+              .from('events')
+              .select('*')
+              .neq('status', 'past')
+              .gte('event_date', new Date().toISOString().split('T')[0])
+              .order('event_date', { ascending: true })
+              .limit(20)
+          : idle,
       ]);
 
       // F-023 : chaque section porte son propre état d'erreur — une panne de
@@ -177,53 +194,76 @@ function CommunautePageContent() {
       const clubsSection = sec(clubsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
       const groupsSection = sec(groupsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
       const eventsSection = sec(eventsRes as PromiseSettledResult<{ data: unknown; error: { message: string } | null }>);
-      const nextSectionErrors: Record<string, string> = {};
-      if (postsSection.error) nextSectionErrors.posts = postsSection.error;
-      if (carnetsSection.error) nextSectionErrors.carnets = carnetsSection.error;
-      if (clubsSection.error) nextSectionErrors.clubs = clubsSection.error;
-      if (groupsSection.error) nextSectionErrors.groups = groupsSection.error;
-      if (eventsSection.error) nextSectionErrors.events = eventsSection.error;
-      setSectionErrors(nextSectionErrors);
 
-      const postsData = postsSection.data as any[];
-      setHasMorePosts(postsData.length >= postsLimit);
-      const carnetsData = carnetsSection.data as any[];
-      const clubsData = clubsSection.data as any[];
-      // F-026 : « mes clubs » doit s'appuyer sur les adhésions réelles.
-      const myClubIds = new Set<string>();
-      if (user?.id) {
-        const { data: membershipRows } = await supabase
-          .from('club_members')
-          .select('club_id')
-          .eq('user_id', user.id)
-          .eq('status', 'active');
-        for (const row of membershipRows ?? []) {
-          if ((row as { club_id?: string }).club_id) myClubIds.add((row as { club_id: string }).club_id);
-        }
-      }
-      const clubsWithMembership = clubsData.map((c: any) => ({
-        ...c,
-        is_member: myClubIds.has(c.id),
-      }));
-      const groupsData = (groupsSection.data as any[]).map((g: any) => ({
-        ...g,
-        // Affichage honnête : `massif` n'existe pas sur travel_groups, on
-        // retombe sur la destination réelle (ou rien).
-        massif: g.destination || null,
-      }));
-      const rawEvents = eventsSection.data as any[];
-      const seenEventIds = new Set<string>();
-      const eventsData = rawEvents.filter((ev: any) => {
-        const key = String(ev.id || `${ev.title}_${ev.event_date}`);
-        if (seenEventIds.has(key)) return false;
-        seenEventIds.add(key);
-        return true;
+      setSectionErrors((prev) => {
+        const next = { ...prev };
+        const apply = (key: string, err: string | null) => {
+          if (!want(key)) return;
+          if (err) next[key] = err;
+          else delete next[key];
+        };
+        apply('posts', postsSection.error);
+        apply('carnets', carnetsSection.error);
+        apply('clubs', clubsSection.error);
+        apply('groups', groupsSection.error);
+        apply('events', eventsSection.error);
+        return next;
       });
+
+      const postsData = want('posts') ? (postsSection.data as any[]) : [];
+      const carnetsData = want('carnets') ? (carnetsSection.data as any[]) : [];
+      const clubsData = want('clubs') ? (clubsSection.data as any[]) : [];
+      const groupsData = want('groups')
+        ? (groupsSection.data as any[]).map((g: any) => ({
+            ...g,
+            // Affichage honnête : `massif` n'existe pas sur travel_groups, on
+            // retombe sur la destination réelle (ou rien).
+            massif: g.destination || null,
+          }))
+        : [];
+      const seenEventIds = new Set<string>();
+      const eventsData = want('events')
+        ? (eventsSection.data as any[]).filter((ev: any) => {
+            const key = String(ev.id || `${ev.title}_${ev.event_date}`);
+            if (seenEventIds.has(key)) return false;
+            seenEventIds.add(key);
+            return true;
+          })
+        : [];
+
+      if (want('posts')) {
+        setHasMorePosts(postsData.length >= postsLimit);
+        loadedSectionsRef.current.posts = true;
+      }
+      if (want('carnets')) loadedSectionsRef.current.carnets = true;
+      if (want('groups')) loadedSectionsRef.current.groups = true;
+      if (want('events')) loadedSectionsRef.current.events = true;
+
+      // F-026 : « mes clubs » doit s'appuyer sur les adhésions réelles.
+      let clubsWithMembership: any[] = [];
+      if (want('clubs')) {
+        const myClubIds = new Set<string>();
+        if (user?.id) {
+          const { data: membershipRows } = await supabase
+            .from('club_members')
+            .select('club_id')
+            .eq('user_id', user.id)
+            .eq('status', 'active');
+          for (const row of membershipRows ?? []) {
+            if ((row as { club_id?: string }).club_id) myClubIds.add((row as { club_id: string }).club_id);
+          }
+        }
+        clubsWithMembership = clubsData.map((c: any) => ({
+          ...c,
+          is_member: myClubIds.has(c.id),
+        }));
+        loadedSectionsRef.current.clubs = true;
+      }
 
       // F-024/F-012 : états personnels (like/favori) chargés en une passe pour
       // toute la page — jamais une requête par carte, jamais un état fictif.
       let postsWithPersonalState = postsData;
-      if (user?.id && postsData.length > 0) {
+      if (want('posts') && user?.id && postsData.length > 0) {
         const postIds = postsData.map((p: any) => p.id).filter(Boolean);
         if (postIds.length > 0) {
           const [likesRes, savesRes] = await Promise.all([
@@ -261,22 +301,24 @@ function CommunautePageContent() {
         };
       };
 
-      setPosts(postsWithPersonalState.map(withAuthor));
-      setCarnets(carnetsData.map(withAuthor));
-      setClubs(clubsWithMembership);
-      setGroups(groupsData);
-      setEvents(
-        eventsData.map((ev: any) => {
-          const organizer = ev.organizer_id ? authorProfiles[ev.organizer_id] : undefined;
-          return {
-            ...ev,
-            date: formatEventDate(ev.event_date),
-            participants: ev.current_participants ?? 0,
-            maxParticipants: ev.max_participants ?? 0,
-            guide: organizer?.full_name || null,
-          };
-        })
-      );
+      if (want('posts')) setPosts(postsWithPersonalState.map(withAuthor));
+      if (want('carnets')) setCarnets(carnetsData.map(withAuthor));
+      if (want('clubs')) setClubs(clubsWithMembership);
+      if (want('groups')) setGroups(groupsData);
+      if (want('events')) {
+        setEvents(
+          eventsData.map((ev: any) => {
+            const organizer = ev.organizer_id ? authorProfiles[ev.organizer_id] : undefined;
+            return {
+              ...ev,
+              date: formatEventDate(ev.event_date),
+              participants: ev.current_participants ?? 0,
+              maxParticipants: ev.max_participants ?? 0,
+              guide: organizer?.full_name || null,
+            };
+          })
+        );
+      }
     } catch (err) {
       console.error('[CommunautePage] Error loading data:', err);
     } finally {
@@ -284,9 +326,37 @@ function CommunautePageContent() {
     }
   }, [user?.id, postsLimit]);
 
+  // A-205 : associe chaque onglet à ses sections ; recharge la section à
+  // l'ouverture de l'onglet, une seule fois par session et par identité.
+  const sectionsForTab = (tab: string): string[] => {
+    switch (tab) {
+      case 'carnets':
+        return ['carnets'];
+      case 'clubs':
+        return ['clubs'];
+      case 'groupes':
+        return ['groups'];
+      case 'evenements':
+        return ['events'];
+      case 'entraide':
+        return ['posts'];
+      default:
+        return ['posts'];
+    }
+  };
+
+  const lastLoadUserRef = useRef<string | undefined>(undefined);
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    // Changement d'identité : tout est rechargé pour le compte courant.
+    if (lastLoadUserRef.current !== user?.id) {
+      lastLoadUserRef.current = user?.id;
+      loadedSectionsRef.current = {};
+    }
+    const needed = sectionsForTab(activeTab).filter((s) => !loadedSectionsRef.current[s]);
+    if (needed.length === 0) return;
+    void fetchData(needed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchData, activeTab]);
 
   // F-025 : permalien `?post=<id>` — amène au contenu exact et le met en
   // évidence une fois le fil chargé.
@@ -425,7 +495,7 @@ function CommunautePageContent() {
                     {Object.keys(sectionErrors).join(', ')}
                     ).
                   </span>
-                  <Button type="button" variant="secondary" size="sm" onClick={fetchData}>
+                  <Button type="button" variant="secondary" size="sm" onClick={() => { void fetchData(); }}>
                     Réessayer
                   </Button>
                 </div>

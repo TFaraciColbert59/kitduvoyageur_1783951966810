@@ -80,6 +80,24 @@ for file in supabase/migrations/*.sql; do
   name="$(basename "$file")"
   version="${name%%_*}"
   if grep -qx "$version" supabase/baseline/applied_migrations.txt; then continue; fi
+  # `*_hotfix.sql` : copies, reconstruites le 13 oct., de correctifs passés en direct
+  # sur la production. Plusieurs refont un objet que la migration nommée voisine crée
+  # déjà : chacune passe en une transaction, et si son effet est déjà là elle est
+  # annulée entière, dite, puis inscrite au ledger (comme en production). Les tests
+  # pgTAP vérifient ensuite le schéma obtenu.
+  if [[ "$name" == *_hotfix.sql ]]; then
+    if ! sql --single-transaction -f "$file" >/dev/null 2>"$errfile"; then
+      # Seul « existe déjà » est toléré ; toute autre erreur arrête l'installation.
+      if ! grep -q 'ERROR: .* already exists' "$errfile"; then
+        echo "ECHEC migration ${name}" >&2
+        cat "$errfile" >&2
+        exit 1
+      fi
+      echo "[ci-db] ${name} : déjà en place, annulé ($(grep -m1 -o 'ERROR: .*' "$errfile"))"
+    fi
+    sql -c "insert into supabase_migrations.schema_migrations(version, name) values ('${version}', '${name//\'/\'\'}') on conflict do nothing;"
+    continue
+  fi
   if ! sql -f "$file" >/dev/null 2>"$errfile"; then
     echo "ECHEC migration ${name}" >&2
     cat "$errfile" >&2

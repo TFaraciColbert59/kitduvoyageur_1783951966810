@@ -1,5 +1,52 @@
 # Chantier de nuit — Communauté LKDV — Rapport final
 
+## Session 2 (24 h supplémentaires) — clôture des F restants + balayage A
+
+Tous les constats F de l'audit sont désormais **clos** et une première vague du catalogue A est livrée, testée et déployée :
+
+- **F-027 stories réelles** : table `post_stories` (24 h, audience publique/club, retrait auteur, expiration filtrée), publication depuis la barre (feuille de composition interne, aucun dialogue natif), signalement (`story_reports`, conservé après expiration) et blocage depuis le viewer — pgtap 9/9 + garde-fou U-D63 vert. **PROD**
+- **F-022 mentions structurées** : colonne `mentions uuid[]` (posts + discussions de club), résolution des noms côté composeur, notifications serveur hors auteur/blocages/ids sans profil — pgtap 6/6. **PROD**
+- **F-028 présence réelle** : table `user_presence` + battement de cœur (horodatage imposé par trigger, RLS stricte), badges « En ligne » desktop/mobile — pgtap 6/6. **PROD**
+- **F-030 portes CI** : Gate 5.1 pièces jointes durables (A/B/C) et Gate 5.2 temps réel 2 clients — scripts validés PASS en local, opt-in `LKDV_E2E_ENABLED`.
+- **17 hotfix historiques réintégrés** en fichiers de migration (reconstruits depuis `supabase_migrations`), historique distant réaligné — **0 remote-only**, replayabilité complète.
+
+### Balayage catalogue A (livré)
+
+| Réf | Livré | Preuve |
+|---|---|---|
+| A-032 | Brouillons de publication **serveur** privés (restauration, autosave débouncé, purge post-publication) | pgtap 7/7 · PROD |
+| A-033 | Bornes serveur du contenu (non vide, ≤ 20 000) sans toucher l'historique (NOT VALID) | idem |
+| A-036 | Audience explicite sous le score avant publication | client |
+| A-039 | Idempotence de publication (clé client + unicité auteur, retry sans doublon, récompense unique) | idem |
+| A-058 | Signaler / bloquer depuis le profil public (desktop + mobile, jamais sur soi) | client |
+| A-067/A-216 | Quotas quotidiens par identité en base (posts 30, topics 20, commentaires 200, stories 20, likes 500, signalements 50, invitations 50) | pgtap 5/5 · PROD |
+| A-077 | Reprise après coupure socket (resynchronisation base à la reconnexion) | useMessages |
+| A-085 | Brouillon de message par conversation (local appareil, restauré, jamais croisé) | MessageComposer |
+| A-086 | Marquer « lu » uniquement si la discussion est visible | useMessages |
+| A-096 | EXIF/GPS retirés à l'upload (canvas) sur publications, stories et photos de messages | helper + 3 points d'appel |
+| A-097 | Validation GPX avant upload (taille, `<gpx>`, 1–50 000 points) | ConversationView |
+| A-104 | Le dernier admin actif ne peut ni être rétrogradé/banni ni quitter un club vivant (cascade club neutralisée) | pgtap 7/7 · PROD |
+| A-183 | Lien profond des notifications de message (`/messagerie?conversation=…`) | pgtap 1/1 · PROD |
+| A-211 | Invariants de références : parent de commentaire dans le même post, réponse dans la même conversation | pgtap 8/8 · PROD |
+| A-212 | Recount du compteur de likes du fil (toute voie) | idem |
+| A-213 | Matrice de sécurité consolidée inter-domaines | pgtap 11/11 |
+| A-214 | Hygiène des grants : fonctions de trigger et prédicats internes hors anon, trajectoire en INVOKER, **moindre privilège par défaut** du schéma public | pgtap 6/6 · PROD |
+| A-215 | Garde SSRF durcie de `/api/og-preview` : résolution DNS vérifiée, redirections revalidées saut par saut, IPv6/mappées | vitest 10/10 |
+
+### Vérifications de session 2 (toutes locales, prod vérifiée par dump/migration list)
+
+- pgtap : **84 suites — 83 vertes + 1 anomalie locale pré-existante** (`intent_source_atomicity`, hors périmètre)
+- vitest : **9 811 passés / 0 échec** (41 skip)
+- a11y : **57/57** (zéro critical/serious) · verre : **36/36**
+- lint : 0 erreur · `npm run build` : OK
+- Perf à chaud (dev, WebKit mobile, `/communaute`) : **TTFB 397 ms · LCP 820 ms · CLS 0** (budget audit ≤ 2,5 s)
+
+### Restant (documenté, non bloquant)
+
+- 2 migrations à gate humain (purges) — inchangées.
+- A-110 pagination profonde des listes de club (bornes posées), A-084 recherche messagerie, A-205 chargement par onglet actif, A-186→A-190 confort notifications, A-217→A-240 (privacité légale, modération unifiée, i18n, économie) — roadmap.
+
+
 - **Date** : nuit du 12 au 13 octobre 2026 (session autonome)
 - **Source** : `LKDV_Audit_Communaute_Complet_2026-10-12.md` (F-001 → F-036, priorités section 1.2, lots 8.1)
 - **Branche** : `main` — commits `a06e8bcb` → `df1d9c51` (tous poussés sur `origin`)
@@ -51,6 +98,9 @@ Les 10 priorités de la section 1.2 de l'audit ont été **traitées et vérifi�
 | **F-031** | Entraide : plus de CTA sans effet ni filtres inertes ; question réelle pré-réglée (`publier?type=question`) + rappel explicite « pas un service de secours » | entraide/page.tsx |
 | **F-032** | Compteurs clubs (likes, réponses, participants) : **recount serveur** par triggers + réconciliation des valeurs existantes ; client en optimiste avec rollback | Migration `20261013100000` · pgTAP 6/6 |
 | **F-033** | Visibilité des sujets : gouvernement côté serveur documenté et unique (RLS `is_approved = true` + auteur via policy manage) — aligné entre `/clubs` et `/clubs/[id]` | clubs/[id] |
+| **F-029** | Policies SELECT/INSERT dupliquées et indexes strictement identiques consolidés (périmètre communauté) — permissions effectives inchangées | Migration `20261013120000` · pgTAP 8/8 · **PROD** |
+| **F-020 complet** | Demandes de message : colonne `conversation_members.status` (active/pending), la RPC de DM crée la cible en `pending`, écriture réservée aux adhésions actives, acceptation = passage `active` (le client onglet « Demandes »/barre pending devient réel) | Migration `20261013130000` · pgTAP 7/7 · **PROD** |
+| **F-034** | Bornes de chargement : clubs du hub (50), sujets (100) et membres (200) d'une fiche club — plus de téléchargement intégral | hub + clubs/[id] |
 | **F-035** | Score qualité : le bonus « géolocalisation exacte » est retiré ; l'aide devient « vérifiez qu'une photo ne révèle pas un lieu privé » | publier/page.tsx |
 
 ### Findings découverts en exécutant (hors audit initial)
@@ -98,12 +148,18 @@ Elles restent **pending** dans le dossier ; commande proposée quand tu veux les
 ## 5. Points ouverts / limites
 
 1. **`intent_source_atomicity.test.sql`** échoue sur la base locale (« more than one row returned by a subquery ») — **sans lien** avec ce chantier (aucune table club/msg) ; à vérifier sur la base de test CI (gate DB.2).
-2. **Parcours « demandes de message » (F-020 partiel)** : accept/refus utilisent `is_archived`/suppression d'adhésion ; un vrai état `pending/refused` serveur reste à modéliser (le modèle démo porte ces états, pas la base). Documenté, non bloquant.
+2. **Parcours « demandes de message »** : ✅ **finalisé en fin de nuit** — état serveur `pending/active` (`20261013130000`), écriture refusée tant que la demande n'est pas acceptée ; le refus reste le retrait de l'adhésion (documenté).
 3. **Tags/mentions du composeur (F-022 partiel)** : restent textuels (comportement existant) — un vrai système de mentions (ID + blocages) est un chantier dédié.
 4. **F-027 (stories)** : la publication de stories n'existe toujours pas ; la barre est honnêtement étiquetée « Exemples » en attendant le contrat complet (audience, expiration, modération).
 5. **F-028 (présence)** : plus de faux « En ligne », mais pas encore de vraie présence temps réel.
 6. **F-030 (tests e2e réels)** : tests pgTAP de la RPC DM et upload ajoutés ; un scénario e2e navigateur à deux identités (upload réel, deux appareils) reste à brancher sur la base de test CI.
-7. **F-034 (pagination clubs/événements)** : non traitée cette nuit (P1) — la fondation (états par section, pagination du fil) est posée. **F-036** traité (garde d'annulation profil + recharge du fil selon l'identité).
+7. **F-034** ✅ bornes posées (pagination profonde des grosses listes = A-110, follow-up produit). **F-036** ✅ traité (garde d'annulation profil + recharge du fil selon l'identité).
+10. **Hotfix ops externe `20261013004818`** (CSP/ops reports, appliqué en direct à 00:48 par l'outillage de veille) : effets conservés en prod, entrée d'historique fantôme réconciliée (`reverted`). Rien à voir avec la communauté.
+
+## 7. État final migrations (après reprise « Compas lot R2 » #92)
+
+- **LOCAL-ONLY : `20261008190000`, `20261009100000`** — les 2 gates humains (purges), inchangés.
+- **REMOTE-ONLY : aucun.**
 8. **16 hotfix remote-only sans fichier local** : historiquement appliqués au cloud ; seuls `legacy_loyalty` a été repris dans le dépôt. Recommandation : les extraire en fichiers de migration pour une rejouabilité complète (les statements sont conservés dans `supabase_migrations.schema_migrations`).
 9. **Catalogue A-001→A-240** : hors périmètre de cette nuit (c'est un catalogue d'améliorations produit) ; les composants de base qui le conditionnent (persistance, invariants, vérité des états) sont désormais en place.
 

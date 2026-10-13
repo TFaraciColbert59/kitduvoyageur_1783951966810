@@ -1,11 +1,6 @@
--- Plan 2.11 : lecture des rapports de la CSP (Content-Security-Policy-Report-Only).
--- Les rapports arrivent par /api/csp-report, une ligne par violation dans `app_errors`
--- (scope 'csp', code = directive, message '<report|enforce> <hôte bloqué> <page>').
--- Aucune donnée personnelle : voir src/lib/security/cspReport.ts.
--- À appliquer par Tony ; rien n'est supprimé ici (la purge à 30 jours d'app_errors existe).
-
--- 1. Résumé lisible : une ligne par jour, directive, hôte bloqué et page.
---    Dans le SQL Editor : select * from public.csp_report_summary(7);
+-- Hotfix appliqué historiquement en direct sur le projet (supabase_migrations).
+-- Reconstruit depuis l'historique distant le 13/10/2026 — version 20261013004818.
+-- Conservé tel quel : source de vérité pour la rejouabilité.
 create or replace function public.csp_report_summary(p_days integer default 7)
 returns table (day date, directive text, disposition text, blocked text, page text, hits bigint)
 language sql
@@ -24,14 +19,9 @@ as $$
    group by 1, 2, 3, 4, 5
    order by 1 desc, 6 desc;
 $$;
-
 revoke all on function public.csp_report_summary(integer) from public, anon, authenticated;
 grant execute on function public.csp_report_summary(integer) to service_role;
 
--- 2. Rapport quotidien : les violations CSP ont leur propre colonne et ne comptent plus
---    dans « au moins 50 erreurs serveur » (une page qui viole la règle à chaque
---    chargement ferait sonner l'alerte sans qu'aucune erreur serveur n'ait eu lieu).
---    Sans valeur par défaut : les jours d'avant restent « non renseignés ».
 alter table public.ops_daily_reports
   add column if not exists csp_reports integer;
 
@@ -60,7 +50,6 @@ begin
     into v_errors, v_csp
     from public.app_errors a
    where a.at >= v_since and a.at < v_until;
-  -- array_append : « tableau || 'texte' » lirait le texte comme un tableau.
   if v_bytes > 430::bigint * 1024 * 1024 then
     v_alerts := array_append(v_alerts, 'base au-dessus de 430 Mo');
   end if;

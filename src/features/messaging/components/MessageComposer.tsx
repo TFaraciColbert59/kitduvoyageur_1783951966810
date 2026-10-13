@@ -26,6 +26,7 @@ interface MessageComposerProps {
   replyToMessage?: Message | null;
   onCancelReply?: () => void;
   disabled?: boolean;
+  conversationId?: string;
 }
 
 export const MessageComposer: React.FC<MessageComposerProps> = ({
@@ -41,6 +42,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
   replyToMessage,
   onCancelReply,
   disabled,
+  conversationId,
 }) => {
   const { haptic } = useHapticFeedback();
   const [content, setContent] = useState('');
@@ -48,6 +50,37 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const draftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // A-085 — un brouillon PAR conversation, restauré au retour sur la discussion
+  // et jamais envoyé à une autre : le stockage est local à l'appareil.
+  useEffect(() => {
+    if (!conversationId || typeof window === 'undefined') return;
+    try {
+      setContent(window.localStorage.getItem(`lkdv:draft:${conversationId}`) || '');
+    } catch {
+      setContent('');
+    }
+  }, [conversationId]);
+
+  useEffect(() => {
+    if (!conversationId || typeof window === 'undefined') return;
+    if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
+    draftTimerRef.current = setTimeout(() => {
+      try {
+        if (content.trim()) {
+          window.localStorage.setItem(`lkdv:draft:${conversationId}`, content);
+        } else {
+          window.localStorage.removeItem(`lkdv:draft:${conversationId}`);
+        }
+      } catch {
+        /* stockage local indisponible : sans gravité */
+      }
+    }, 400);
+    return () => {
+      if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
+    };
+  }, [content, conversationId]);
 
   // Auto-resize — aligné sur le min-height 44px du champ, max 132px.
   useEffect(() => {
@@ -63,6 +96,11 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
     haptic('light');
     onSendMessage(content.trim());
     setContent('');
+    try {
+      if (conversationId) window.localStorage.removeItem(`lkdv:draft:${conversationId}`);
+    } catch {
+      /* ignore */
+    }
     if (textareaRef.current) {
       textareaRef.current.style.height = '44px';
     }

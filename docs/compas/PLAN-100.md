@@ -587,7 +587,7 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       les rapports partaient vers `/api/telemetry/hub`, qui les refusait (400/401) : aucune semaine
       n'existait. `/api/csp-report` les range dans `app_errors` (portée `csp`, directive, hôte bloqué, début
       du chemin ; 60 par 10 min et par adresse, 2 000 par jour) ; `csp_report_summary(7)` et colonne
-      `csp_reports` du rapport quotidien (migration `20261012170000_csp_reports.sql`, appliquée en production le 13 oct.).
+      `csp_reports` du rapport quotidien (appliquée en production le 13 oct. ; dans le dépôt : `20261013004818_hotfix.sql`, la version du registre de production).
       Reste : une semaine lue, puis le mode appliqué.
 - [x] Cookies `SameSite` revus (lot L) : session Supabase en `Lax` côté navigateur et
       côté serveur (essai sans compte, retour OAuth, rafraîchissements) — elle était en
@@ -665,7 +665,7 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 - [~] OSM `tourism=alpine_hut/wilderness_hut/camp_site`, `amenity=drinking_water`,
       import par pays (Overpass hors Vercel, en série, une fois par mois). **Lot AG (prêt, rien en base)** :
-      table `geo_pois` (migration `20261013190000_geo_pois.sql`, lecture serveur seule), script
+      table `geo_pois` (migration `20261014090000_geo_pois.sql`, lecture serveur seule), script
       `scripts/geo/import_geo_pois.ts` (Overpass private.coffee par tuiles, en série, upsert idempotent,
       `--dry-run`) : refuges, cabanes, campings, abris de montagne, eau potable, sources (OSM, ODbL). Mesuré
       sur un quart du Vercors : 1 250 lignes, 0,25 Mo (210 octets par ligne) ; Alpes ≤ 72 000 lignes
