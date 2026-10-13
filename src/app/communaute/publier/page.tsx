@@ -36,7 +36,7 @@ interface UserCarnetOption {
 }
 
 const POST_TYPES: Array<{ id: PostType; icon: string; title: string; hint: string }> = [
-  { id: 'photo', icon: 'camera', title: 'Photo / vidéo', hint: 'Instantané ou galerie' },
+  { id: 'photo', icon: 'image-plus', title: 'Photo / vidéo', hint: 'Instantané ou galerie' },
   { id: 'billet', icon: 'file-text', title: 'Billet', hint: 'Texte long, mise en page' },
   { id: 'question', icon: 'help-circle', title: 'Question', hint: 'Demandez aux membres' },
   { id: 'evenement', icon: 'calendar', title: 'Événement', hint: 'Sortie à venir' },
