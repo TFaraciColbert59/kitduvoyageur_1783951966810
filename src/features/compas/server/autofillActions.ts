@@ -1170,6 +1170,23 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       const place = await lookupDestination(trailRegion(trip.destination_name) ?? trip.destination_name);
       if (place) anchor = { ...place, radiusKm: destinationRadiusKm(place) };
     }
+    // Ancre enregistrée avant l'étiquette OSM (lot R2) : Photon range une île sous « other » et seule l'étiquette
+    // (`place=island`) dit que c'en est une ; sans elle, ni contour ni massif ne seraient jamais cherchés. Une
+    // requête (même géocodage que celui de l'ancre), l'ancre n'est acceptée que si elle est au même endroit, et le
+    // voyage n'est réécrit que si l'étiquette est nouvelle (la suivante ne redemande rien).
+    if (anchor && anchor.kind === 'other' && !anchor.osmTag) {
+      const fresh = await lookupDestination(anchor.name).catch(() => null);
+      const tag = fresh?.osmTag?.slice(0, 80);
+      if (fresh && tag && distanceKm(anchor, fresh) <= Math.max(anchor.radiusKm, 25)) {
+        anchor = { ...anchor, osmTag: tag };
+        await updateTripMetadata(supabase, tripId, (m) => {
+          const c = compasMeta(m);
+          const a = c.anchor;
+          if (!a || typeof a !== 'object' || (a as Record<string, unknown>).osmTag) return m;
+          return { ...m, compas: { ...c, anchor: { ...(a as Record<string, unknown>), osmTag: tag } } };
+        });
+      }
+    }
     // Plein air, destination lue comme un quartier ou un département
     // (« Chartreuse » : un quartier de Toulouse ; « Loire » : le département de
     // Saint-Étienne pour un voyage à vélo le long du fleuve) : le lieu naturel

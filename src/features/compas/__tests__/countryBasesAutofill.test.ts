@@ -134,6 +134,7 @@ import { lookupAreaPlaces } from '../server/stagePoiLookup';
 import { getClimateNormals } from '../server/weather';
 import { planItinerary } from '../engine/itinerary';
 import { onIslandContour, parseIslandContour } from '../engine/islands';
+import { lookupDestination } from '../server/placeLookup';
 import { generateTripContextualKit } from '@/features/trips/engine/contextualKitEngine';
 import { memorySupabase, type MemorySupabase } from './helpers/memorySupabase';
 
@@ -890,6 +891,74 @@ describe('une grande île à pied : le massif de l’île, jamais la voiture d�
       expect(notesOf(res).some((n) => /Itinéraire calculé impossible : contour de l’île introuvable/.test(n))).toBe(true);
       expect(vi.mocked(lookupAreaPlaces)).not.toHaveBeenCalled();
       expect(steps().some(isMainland)).toBe(false);
+    });
+  });
+
+  describe('ancre enregistrée avant l’étiquette OSM (Photon : une île sous « other »)', () => {
+    const OLD = { ...SARDAIGNE, kind: 'other' };
+    const found = (over: Record<string, unknown> = {}) => ({
+      name: 'Sardaigne',
+      lat: 40.05,
+      lon: 9.0,
+      countryCode: 'IT',
+      country: 'Italie',
+      kind: 'other',
+      osmTag: 'place=island',
+      settlement: false,
+      extent: SARDAIGNE.extent,
+      ...over,
+    });
+    const storedAnchor = () => ((h.db.rows('trips')[0].metadata as { compas: { anchor: Record<string, unknown> } }).compas.anchor);
+    beforeEach(() => {
+      vi.mocked(lookupDestination).mockReset();
+      vi.mocked(lookupDestination).mockImplementation(async () => null);
+    });
+
+    it('l’ancre est ré-résolue une fois : l’île est reconnue (contour, massif) et l’étiquette est gardée sur le voyage', async () => {
+      vi.mocked(lookupDestination).mockImplementation(async () => found() as never);
+      h.places = sardinia();
+      trip(OLD, { activity: 'hiking', end: '2026-11-14' });
+      const res = await launch();
+      expect(res.success).toBe(true);
+      expect(vi.mocked(lookupDestination)).toHaveBeenCalledTimes(1);
+      expect(h.contourAsks).toBe(1);
+      expect(notesOf(res).find((n) => /^Grande île/.test(n))).toMatch(/autour de Haut-village/);
+      for (const s of steps()) expect(distanceKm(point(s), MASSIF), titleOf(s)).toBeLessThanOrEqual(48);
+      expect(storedAnchor().osmTag).toBe('place=island');
+      // Le reste de l'ancre n'a pas bougé.
+      expect(storedAnchor()).toMatchObject({ name: 'Sardaigne', kind: 'other', countryCode: 'IT' });
+    });
+
+    it('déjà étiquetée : aucune requête de plus', async () => {
+      h.places = sardinia();
+      trip({ ...OLD, osmTag: 'place=island' }, { activity: 'hiking', end: '2026-11-14' });
+      const res = await launch();
+      expect(res.success).toBe(true);
+      expect(vi.mocked(lookupDestination)).not.toHaveBeenCalled();
+      expect(notesOf(res).some((n) => /^Grande île/.test(n))).toBe(true);
+      expect(storedAnchor().osmTag).toBe('place=island');
+    });
+
+    it('la carte ne rend rien (ou un autre lieu, ou un lieu sans étiquette) : l’ancre reste telle quelle, le voyage n’est pas réécrit', async () => {
+      for (const answer of [null, found({ lat: 12, lon: 100 }), found({ osmTag: undefined })]) {
+        h.db = memorySupabase({ user: () => ({ id: 'u1' }) });
+        vi.mocked(lookupDestination).mockImplementation(async () => answer as never);
+        h.places = sardinia();
+        trip(OLD, { activity: 'hiking', end: '2026-11-14' });
+        const res = await launch();
+        expect(res.success).toBe(true);
+        expect(notesOf(res).some((n) => /^Grande île/.test(n))).toBe(false);
+        expect(h.contourAsks).toBe(0);
+        expect(storedAnchor().osmTag).toBeUndefined();
+        h.contourAsks = 0;
+      }
+    });
+
+    it('une ancre qui n’est pas « other » (ville, pays, île déjà typée) ne coûte aucune requête', async () => {
+      h.places = sardinia();
+      trip(SARDAIGNE, { activity: 'hiking', end: '2026-11-14' });
+      await launch();
+      expect(vi.mocked(lookupDestination)).not.toHaveBeenCalled();
     });
   });
 
