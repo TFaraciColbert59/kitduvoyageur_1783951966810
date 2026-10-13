@@ -1493,6 +1493,17 @@ export function mergeActions(
       out.push({ action, source });
     }
   }
+  // Deux lieux différents (« Jordanie » pour l'IA, « Désert du Wadi Rum » pour les règles, 13 oct.) :
+  // la destination de l'IA reste, celui des règles devient une envie au lieu de disparaître.
+  const aiDest = out.find((x) => x.action.type === 'set_destination')?.action;
+  if (
+    ruleDest?.type === 'set_destination' &&
+    aiDest?.type === 'set_destination' &&
+    plainOf(aiDest.place) !== ruleKey &&
+    !origins.has(ruleKey) &&
+    !out.some((x) => x.action.type === 'wish' && plainOf(x.action.label) === ruleKey)
+  )
+    out.push({ action: { type: 'wish', label: ruleDest.place }, source: 'regles' });
   return out.slice(0, 10);
 }
 

@@ -188,6 +188,11 @@ describe('limites réelles', () => {
       type: 'set_destination',
       place: 'Lac d’Annecy',
     });
+    // Deux lieux différents : celui des règles n'est pas perdu, il devient une envie (Wadi Rum).
+    expect(mergeActions([{ type: 'set_destination', place: 'Jordanie' }], [{ type: 'set_destination', place: 'Désert du Wadi Rum' }])).toEqual([
+      { action: { type: 'set_destination', place: 'Jordanie' }, source: 'ia' },
+      { action: { type: 'wish', label: 'Désert du Wadi Rum' }, source: 'regles' },
+    ]);
   });
 
   it('un sentier célèbre donné comme destination par l’IA devient sa région (GR34 → Bretagne)', () => {
