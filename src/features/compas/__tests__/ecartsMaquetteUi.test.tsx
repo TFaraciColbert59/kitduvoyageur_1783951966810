@@ -76,67 +76,119 @@ async function openOu(flow: RegExp): Promise<HTMLElement> {
    ============================================================================= */
 
 describe('Quand : heure de passage à chaque étape', () => {
-  /** Les deux jours du jeu d'essai, avec ou sans heure de départ notée sur la première étape de chaque jour. */
-  const withStart = (day1: string | null, day2: string | null = null): Partial<CompasInput> => ({
+  /**
+   * Les deux jours du jeu d'essai, avec ou sans heure de PASSAGE notée sur leur étape (`trip_steps.start_time` :
+   * l'heure de cette étape, pas un départ de jour).
+   */
+  const withNotes = (day1: string | null, day2: string | null = null): Partial<CompasInput> => ({
     steps: compasInput().steps.map((st) => ({ ...st, startTime: st.dayNumber === 1 ? day1 : day2 })),
   });
   const region = (sheet: HTMLElement) =>
     within(sheet).getByRole('region', { name: 'Heure de passage à chaque étape' });
   const row = (sheet: HTMLElement, title: string) =>
     within(region(sheet)).getByText(title, { selector: 'b' }).closest('li') as HTMLElement;
+  /** Tape un départ dans le champ de simulation (jamais enregistré). */
+  const simulate = (sheet: HTMLElement, hhmm: string) =>
+    fireEvent.change(within(sheet).getByLabelText(/Si tu pars à/), { target: { value: hhmm } });
 
-  it('un départ noté donne une heure estimée ; sans départ : « non renseigné » et ce qui manque', async () => {
-    render(<CompasScreen data={compasData(withStart('07:30:00'))} />);
+  it('une heure notée sur l’étape est gardée telle quelle ; sans heure : « non renseigné » et ce qui manque', async () => {
+    render(<CompasScreen data={compasData(withNotes('07:30:00'))} />);
     const sheet = await openOu(/Quand/);
     const day1 = row(sheet, 'Gavarnie');
-    expect(within(day1).getByText('13:10')).toBeTruthy();
-    expect(day1.textContent).toContain('Départ 07:30 (noté)');
-    expect(day1.textContent).toContain('5 h 42 depuis le départ');
+    // 07:30 est l'heure de passage à Gavarnie (12,4 km du départ), pas un départ auquel on ajouterait 5 h 42.
+    expect(within(day1).getByText('07:30')).toBeTruthy();
+    expect(day1.textContent).toContain('Heure notée dans l’itinéraire');
+    expect(day1.textContent).not.toContain('vers');
+    expect(day1.textContent).not.toContain('13:10');
     const day2 = row(sheet, 'Refuge');
     expect(day2.textContent).toContain('non renseigné');
     expect(day2.textContent).toContain('Manque : heure de départ');
     expect(day2.textContent).not.toContain('vers');
   });
 
-  it('aucune heure par défaut : sans départ noté, aucune étape n’affiche d’heure', async () => {
-    render(<CompasScreen data={compasData(withStart(null))} />);
+  it('une heure notée n’est ni décalée par la distance ni remplacée par la simulation', async () => {
+    render(<CompasScreen data={compasData(withNotes('09:00'))} />);
+    const sheet = await openOu(/Quand/);
+    expect(within(row(sheet, 'Gavarnie')).getByText('09:00')).toBeTruthy();
+    simulate(sheet, '06:00');
+    expect(within(row(sheet, 'Gavarnie')).getByText('09:00')).toBeTruthy();
+    expect(row(sheet, 'Gavarnie').textContent).not.toContain('06:00');
+  });
+
+  it('aucune heure par défaut : sans heure notée ni départ, aucune étape n’affiche d’heure', async () => {
+    render(<CompasScreen data={compasData(withNotes(null))} />);
     const sheet = await openOu(/Quand/);
     expect(within(region(sheet)).getAllByText('non renseigné')).toHaveLength(2);
     expect(region(sheet).textContent).not.toMatch(/vers \d/);
     expect(region(sheet).querySelectorAll('.cp-pass__v b')).toHaveLength(0);
   });
 
-  it('la simulation (« Si tu pars à ») calcule les jours sans départ noté, sans rien enregistrer', async () => {
-    render(<CompasScreen data={compasData(withStart('07:30'))} />);
+  it('la simulation (« Si tu pars à ») estime les étapes sans heure notée, sans rien enregistrer', async () => {
+    render(<CompasScreen data={compasData(withNotes('07:30'))} />);
     const sheet = await openOu(/Quand/);
     const input = within(sheet).getByLabelText(/Si tu pars à/) as HTMLInputElement;
     expect(input.value).toBe('');
-    fireEvent.change(input, { target: { value: '06:00' } });
+    simulate(sheet, '06:00');
     const day2 = row(sheet, 'Refuge');
     expect(within(day2).getByText('11:45')).toBeTruthy();
     expect(day2.textContent).toContain('Départ 06:00 (simulation)');
-    // Le jour qui a un départ noté garde le sien.
-    expect(row(sheet, 'Gavarnie').textContent).toContain('Départ 07:30 (noté)');
+    // L'étape qui a une heure notée garde la sienne.
+    expect(within(row(sheet, 'Gavarnie')).getByText('07:30')).toBeTruthy();
+    expect(row(sheet, 'Gavarnie').textContent).toContain('Heure notée dans l’itinéraire');
     // Rien n'est écrit : la simulation reste sur l'écran.
     expect(compas.compasSetDatesAction).not.toHaveBeenCalled();
     expect(compas.compasSetPreferencesAction).not.toHaveBeenCalled();
   });
 
+  it('toutes les étapes ont leur heure : aucun départ à simuler', async () => {
+    render(<CompasScreen data={compasData(withNotes('07:30', '09:15'))} />);
+    const sheet = await openOu(/Quand/);
+    expect(within(sheet).queryByLabelText(/Si tu pars à/)).toBeNull();
+    expect(within(row(sheet, 'Refuge')).getByText('09:15')).toBeTruthy();
+  });
+
   it('un passage après le coucher du soleil est dit en texte', async () => {
-    render(<CompasScreen data={compasData(withStart('14:00'), { dayZones: { 1: 'Europe/Paris', 2: 'Europe/Paris' } })} />);
+    render(<CompasScreen data={compasData(withNotes(null), { dayZones: { 1: 'Europe/Paris', 2: 'Europe/Paris' } })} />);
+    const sheet = await openOu(/Quand/);
+    simulate(sheet, '14:00');
+    expect(row(sheet, 'Gavarnie').textContent).toMatch(/après le coucher du soleil \(\d{2}:\d{2}\)/);
+  });
+
+  it('une heure notée tard le soir est dite de nuit aussi (la lumière ne dépend pas du calcul)', async () => {
+    render(<CompasScreen data={compasData(withNotes('23:00'), { dayZones: { 1: 'Europe/Paris', 2: 'Europe/Paris' } })} />);
     const sheet = await openOu(/Quand/);
     expect(row(sheet, 'Gavarnie').textContent).toMatch(/après le coucher du soleil \(\d{2}:\d{2}\)/);
   });
 
+  it('activité sans allure connue : pas d’heure estimée, pas de champ de simulation, la raison est écrite', async () => {
+    const data = compasData(withNotes(null));
+    data.model = { ...data.model, activity: 'roadtrip' };
+    render(<CompasScreen data={data} />);
+    const sheet = await openOu(/Quand/);
+    expect(within(sheet).queryByLabelText(/Si tu pars à/)).toBeNull();
+    const day1 = row(sheet, 'Gavarnie');
+    expect(day1.textContent).toContain('non renseigné');
+    expect(day1.textContent).toContain('pas d’allure connue pour cette activité');
+  });
+
+  it('axe-core : zéro violation WCAG A/AA sur le tiroir Quand avec les heures de passage', async () => {
+    render(<CompasScreen data={compasData(withNotes('07:30'))} />);
+    const sheet = await openOu(/Quand/);
+    expect(region(sheet)).toBeTruthy();
+    expect(await scan(sheet)).toEqual([]);
+    simulate(sheet, '06:00');
+    expect(await scan(sheet)).toEqual([]);
+  });
+
   describe('un itinéraire qui change de fuseau : la lumière de chaque jour suit le fuseau de CE jour', () => {
-    /** Jour 1 aux Pyrénées (Paris, UTC+2), jour 2 à Lisbonne (UTC+1 : une heure plus tôt) ; départ noté du jour 2 à 13:35, arrivée vers 19:20. */
+    /** Jour 1 aux Pyrénées (Paris, UTC+2), jour 2 à Lisbonne (UTC+1 : une heure plus tôt) ; passage noté à Lisbonne à 19:20. */
     const LISBON = { lat: 38.72, lon: -9.14 };
     const crossing = (dayZones: CompasData['dayZones']) => {
       const base = compasInput();
       return compasData(
         {
           steps: base.steps.map((st) =>
-            st.dayNumber === 2 ? { ...st, lat: LISBON.lat, lon: LISBON.lon, startTime: '13:35' } : st
+            st.dayNumber === 2 ? { ...st, lat: LISBON.lat, lon: LISBON.lon, startTime: '19:20' } : st
           ),
         },
         // `zone` reste celui de la première étape : c'est ce qui trompait le jour 2.
@@ -156,14 +208,14 @@ describe('Quand : heure de passage à chaque étape', () => {
       expect(day2.textContent).not.toContain(parisSunset);
     });
 
-    // Sens inverse : le jour 1 est à Lisbonne (le `zone` de l'écran), le jour 2 aux Pyrénées (UTC+2). Arrivée à 18:50 :
+    // Sens inverse : le jour 1 est à Lisbonne (le `zone` de l'écran), le jour 2 aux Pyrénées (UTC+2). Passage noté à 18:50 :
     // de jour à l'heure des Pyrénées (coucher vers 19:20), mais « de nuit » si on y plaquait l'heure de Lisbonne (18:20).
     const eastward = (dayZones: CompasData['dayZones']) => {
       const base = compasInput();
       return compasData(
         {
           steps: base.steps.map((st) =>
-            st.dayNumber === 1 ? { ...st, lat: LISBON.lat, lon: LISBON.lon } : { ...st, startTime: '13:05' }
+            st.dayNumber === 1 ? { ...st, lat: LISBON.lat, lon: LISBON.lon } : { ...st, startTime: '18:50' }
           ),
         },
         { zone: 'Europe/Lisbon', dayZones }
@@ -202,24 +254,6 @@ describe('Quand : heure de passage à chaque étape', () => {
       const sheet = await openOu(/Quand/);
       expect(row(sheet, 'Refuge').textContent).not.toMatch(/coucher|lever/);
     });
-  });
-
-  it('activité sans allure connue : pas d’heure, pas de champ de simulation, la raison est écrite', async () => {
-    const data = compasData(withStart('07:30'));
-    data.model = { ...data.model, activity: 'roadtrip' };
-    render(<CompasScreen data={data} />);
-    const sheet = await openOu(/Quand/);
-    expect(within(sheet).queryByLabelText(/Si tu pars à/)).toBeNull();
-    const day1 = row(sheet, 'Gavarnie');
-    expect(day1.textContent).toContain('non renseigné');
-    expect(day1.textContent).toContain('pas d’allure connue pour cette activité');
-  });
-
-  it('axe-core : zéro violation WCAG A/AA sur le tiroir Quand avec les heures de passage', async () => {
-    render(<CompasScreen data={compasData(withStart('07:30'))} />);
-    const sheet = await openOu(/Quand/);
-    expect(region(sheet)).toBeTruthy();
-    expect(await scan(sheet)).toEqual([]);
   });
 });
 

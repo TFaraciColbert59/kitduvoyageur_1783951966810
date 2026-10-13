@@ -20,12 +20,19 @@ import { compasInput } from './helpers/compasData';
  * allure connue, la ligne reste « non renseignée ».
  */
 
-const step = (id: string, distanceKm: number | null, gainM: number | null = 0, lossM: number | null = 0): PassageStepInput => ({
+const step = (
+  id: string,
+  distanceKm: number | null,
+  gainM: number | null = 0,
+  lossM: number | null = 0,
+  startTime: string | null = null
+): PassageStepInput => ({
   id,
   title: `Étape ${id}`,
   distanceKm,
   gainM,
   lossM,
+  startTime,
 });
 
 const base: PassageInput = {
@@ -92,6 +99,97 @@ describe('stepPassages : à pied (DIN 33466, pauses +15 %)', () => {
 
   it('un départ lu depuis une colonne « time » (HH:MM:SS) est compris', () => {
     expect(run({ departure: '07:30:00' })[0].time).toBe('13:10');
+  });
+});
+
+describe('stepPassages : une heure notée sur l’étape est un fait, pas un départ', () => {
+  it('09:00 notée sur une étape à 5 km : 09:00 telle quelle (jamais 09:00 + le temps pour 5 km), départ saisi ou non', () => {
+    for (const departure of [null, '07:30']) {
+      const [p] = run({ departure, steps: [step('a', 5, 300, 0, '09:00')] });
+      expect(p.time).toBe('09:00');
+      expect(p.source).toBe('note');
+      expect(p.missing).toBeNull();
+      expect(p.from).toBeNull();
+      expect(p.sinceStartMin).toBeNull();
+      expect(p.nextDay).toBe(false);
+    }
+  });
+
+  it('une heure notée est gardée à la minute (jamais arrondie à 5 min), « HH:MM:SS » comprise', () => {
+    expect(run({ steps: [step('a', 5, 0, 0, '09:07')] })[0].time).toBe('09:07');
+    expect(run({ steps: [step('a', 5, 0, 0, '09:07:00')] })[0].time).toBe('09:07');
+  });
+
+  it('une heure notée est dite même sans allure connue, sans distance, sans départ', () => {
+    const out = run({ activity: 'roadtrip', departure: null, steps: [step('a', null, null, null, '08:15'), step('b', null)] });
+    expect(out[0].time).toBe('08:15');
+    expect(out[0].source).toBe('note');
+    // L'étape sans heure, elle, dit ce qui manque (l'allure d'abord).
+    expect(out[1].time).toBeNull();
+    expect(out[1].missing).toBe('allure');
+  });
+
+  it('les étapes sans heure sont estimées À PARTIR de la dernière heure notée avant elles, pas du départ du jour', () => {
+    const out = run({
+      departure: '06:00',
+      steps: [step('a', 6, 300, 0), step('b', 4, 0, 0, '12:00'), step('c', 8, 200, 100)],
+    });
+    expect(out[1].time).toBe('12:00');
+    // c = 12:00 + le temps pour SES 8 km (et non la cumulée depuis 06:00) : identique à un départ de 12:00 sur 8 km.
+    const fromNoon = run({ departure: '12:00', steps: [step('c', 8, 200, 100)] })[0];
+    expect(out[2].time).toBe(fromNoon.time);
+    expect(out[2].source).toBe('estime');
+    expect(out[2].from).toEqual({ kind: 'etape', time: '12:00', title: 'Étape b' });
+    expect(out[2].sinceStartMin).toBe(fromNoon.sinceStartMin);
+    // a, avant toute heure notée, part du départ du jour.
+    expect(out[0].from).toEqual({ kind: 'depart', time: '06:00' });
+  });
+
+  it('une heure notée sur la première étape sert de point de départ aux suivantes, sans départ saisi', () => {
+    const out = run({ departure: null, steps: [step('a', 5, 300, 0, '09:00'), step('b', 8, 0, 0)] });
+    expect(out[0].time).toBe('09:00');
+    expect(out[1].time).toBe(run({ departure: '09:00', steps: [step('b', 8, 0, 0)] })[0].time);
+    expect(out[1].from?.kind).toBe('etape');
+  });
+
+  it('avant toute heure notée et sans départ : « non renseigné », la raison est le départ', () => {
+    const out = run({ departure: null, steps: [step('a', 5), step('b', 4, 0, 0, '12:00'), step('c', 3)] });
+    expect(out[0].missing).toBe('depart');
+    expect(out[1].time).toBe('12:00');
+    expect(out[2].time).not.toBeNull();
+  });
+
+  it('une heure illisible n’est pas une heure notée : l’étape est estimée', () => {
+    for (const bad of ['tôt', '25:00', '', '9h']) {
+      const [p] = run({ steps: [step('a', 12.4, 900, 300, bad)] });
+      expect(p.source, bad).toBe('estime');
+      expect(p.time, bad).toBe('13:10');
+    }
+  });
+
+  it('une distance inconnue coupe l’estimation jusqu’à la prochaine heure notée, qui la rétablit', () => {
+    const out = run({
+      steps: [step('a', 6, 0, 0, '08:00'), step('b', null), step('c', 5), step('d', 4, 0, 0, '14:00'), step('e', 5)],
+    });
+    expect(out[1].missing).toBe('distance');
+    expect(out[2].missing).toBe('distance');
+    expect(out[3].time).toBe('14:00');
+    expect(out[4].time).toBe(run({ departure: '14:00', steps: [step('e', 5)] })[0].time);
+  });
+
+  it('la lumière d’une heure notée est dite aussi (après le coucher, avant le lever), jamais « le lendemain »', () => {
+    const sun = { sunrise: '07:40', sunset: '18:30' };
+    expect(run({ ...sun, steps: [step('a', 5, 0, 0, '19:10')] })[0].light).toBe('apres-coucher');
+    expect(run({ ...sun, steps: [step('a', 5, 0, 0, '06:10')] })[0].light).toBe('avant-lever');
+    expect(run({ ...sun, steps: [step('a', 5, 0, 0, '12:00')] })[0].light).toBe('jour');
+    expect(run({ ...sun, steps: [step('a', 5, 0, 0, '19:10')] })[0].nextDay).toBe(false);
+  });
+
+  it('sans heure notée, rien ne change : départ + temps pour atteindre l’étape, source « estime »', () => {
+    const [p] = run();
+    expect(p.time).toBe('13:10');
+    expect(p.source).toBe('estime');
+    expect(p.from).toEqual({ kind: 'depart', time: '07:30' });
   });
 });
 
@@ -304,31 +402,56 @@ describe('modèle : ce que les jours de marche portent pour le passage', () => {
       })
     ).route.dayPlans;
 
-  it('l’heure de départ du jour est celle notée sur sa première étape, lue en « HH:MM »', () => {
-    const [d1, d2] = plans(['07:30:00', null]);
-    expect(d1.startTime).toBe('07:30');
-    expect(d2.startTime).toBeNull();
+  it('l’heure notée est celle de CHAQUE étape (« HH:MM »), jamais un départ de jour', () => {
+    const [d1, d2] = plans(['07:30:00', '16:45']);
+    expect(d1.steps?.[0].startTime).toBe('07:30');
+    expect(d2.steps?.[0].startTime).toBe('16:45');
+    // Le jour n'a pas de « départ » dérivé de sa première étape.
+    expect(d1).not.toHaveProperty('startTime');
   });
 
-  it('une heure illisible n’est pas un départ', () => {
-    expect(plans(['tôt', '25:00'])[0].startTime).toBeNull();
-    expect(plans(['tôt', '25:00'])[1].startTime).toBeNull();
+  it('plusieurs étapes dans un jour : chacune garde sa propre heure', () => {
+    const base = compasInput();
+    const model = buildCompasModel(
+      compasInput({
+        steps: [
+          { ...base.steps[0], id: 'x1', orderIndex: 0, startTime: '09:00' },
+          { ...base.steps[0], id: 'x2', orderIndex: 1, title: 'Col', startTime: null },
+          { ...base.steps[0], id: 'x3', orderIndex: 2, title: 'Lac', startTime: '15:30:00' },
+        ],
+      })
+    );
+    expect(model.route.dayPlans[0].steps?.map((st) => st.startTime)).toEqual(['09:00', null, '15:30']);
+  });
+
+  it('une heure illisible n’est pas une heure notée', () => {
+    expect(plans(['tôt', '25:00'])[0].steps?.[0].startTime).toBeNull();
+    expect(plans(['tôt', '25:00'])[1].steps?.[0].startTime).toBeNull();
   });
 
   it('les étapes du jour gardent distance et dénivelés, dans l’ordre', () => {
     const [d1] = plans([null, null]);
-    expect(d1.steps).toEqual([{ id: 's1', title: 'Gavarnie', distanceKm: 12.4, gainM: 900, lossM: 300 }]);
+    expect(d1.steps).toEqual([{ id: 's1', title: 'Gavarnie', distanceKm: 12.4, gainM: 900, lossM: 300, startTime: null }]);
   });
 
-  it('de bout en bout : le modèle donne la même heure que le calcul direct', () => {
-    const [d1] = plans(['07:30', null]);
+  it('de bout en bout : une heure notée à Gavarnie reste 07:30 ; sans note, le départ saisi donne 13:10', () => {
+    const [noted] = plans(['07:30', null]);
     const [p] = stepPassages({
       activity: 'hiking',
-      departure: d1.startTime ?? null,
-      steps: d1.steps ?? [],
+      departure: null,
+      steps: noted.steps ?? [],
       flatSpeedKmh: 4.6,
       pace: 'normal',
     });
-    expect(p.time).toBe('13:10');
+    expect(p.time).toBe('07:30');
+    const [free] = plans([null, null]);
+    const [q] = stepPassages({
+      activity: 'hiking',
+      departure: '07:30',
+      steps: free.steps ?? [],
+      flatSpeedKmh: 4.6,
+      pace: 'normal',
+    });
+    expect(q.time).toBe('13:10');
   });
 });

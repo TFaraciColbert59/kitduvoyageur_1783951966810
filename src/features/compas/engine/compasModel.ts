@@ -233,6 +233,12 @@ export interface CompasDayStep {
   distanceKm: number | null;
   gainM: number | null;
   lossM: number | null;
+  /**
+   * Heure de passage NOTÉE sur cette étape (« HH:MM », `trip_steps.start_time` : « heure locale de
+   * passage/arrivée de l'étape »), null quand personne ne l'a renseignée. Jamais une heure par défaut,
+   * et jamais le départ du jour.
+   */
+  startTime: string | null;
 }
 
 export interface CompasDayPlan {
@@ -246,11 +252,6 @@ export interface CompasDayPlan {
   lon: number | null;
   stay: string | null;
   walkMin: number | null;
-  /**
-   * Heure de départ du jour (« HH:MM », heure locale) NOTÉE sur la première étape du jour
-   * (`trip_steps.start_time`) ; null quand personne ne l'a renseignée. Jamais une heure par défaut.
-   */
-  startTime?: string | null;
   /** Étapes du jour, dans l'ordre. */
   steps?: CompasDayStep[];
 }
@@ -599,13 +600,13 @@ export function buildCompasModel(input: CompasInput): CompasModel {
       lat: first?.lat ?? null,
       lon: first?.lon ?? null,
       stay: ofDay.map((s) => s.accommodationName).find(Boolean) ?? null,
-      startTime: startTimeOf(ofDay[0]?.startTime),
       steps: ofDay.map((s) => ({
         id: s.id,
         title: s.title,
         distanceKm: s.distanceKm,
         gainM: s.elevationGainM,
         lossM: s.elevationLossM,
+        startTime: startTimeOf(s.startTime),
       })),
       walkMin: walkingMinutes({
         distanceKm,
