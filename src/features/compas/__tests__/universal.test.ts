@@ -440,6 +440,34 @@ describe('Phrases tirées au hasard (20 parcours) : lecture sans IA', () => {
     // Un nom commun seul n'est pas un lieu.
     expect(read('rando dans les bois demain').dest).toBeUndefined();
   });
+  it('passage du 13 octobre : le lieu s’arrête au bon mot, les lieux en plus deviennent des envies', () => {
+    // « Vietnam du nord au sud » : un mémorial en Australie (étapes à Kempsey, Taree…).
+    expect(read('voyage 10 jours au Vietnam du nord au sud').dest).toBe('Vietnam');
+    // « Midi » seul : une ville du Yémen.
+    expect(read('vélo électrique 3 jours le long du canal du Midi')).toMatchObject({ dest: 'Canal du Midi', act: 'cycling' });
+    // « Swiss Alps near Zermatt » : introuvable sur la carte.
+    expect(read('hiking 5 days in the Swiss Alps near Zermatt')).toMatchObject({ dest: 'Zermatt', wishes: ['Swiss Alps'] });
+    expect(read('rando 4 jours dans les Alpes près de Chamonix')).toMatchObject({ dest: 'Chamonix', wishes: ['Alpes'] });
+    // Lieux nommés en plus du pays ou de l'île : envies (Venise, l'Etna, Samaria, la mer Rouge étaient perdus).
+    expect(read('voyage en train 1 semaine en Italie, Florence et Venise')).toMatchObject({ dest: 'Italie', wishes: ['Florence', 'Venise'] });
+    expect(read('7 jours en Sicile avec l’Etna')).toMatchObject({ dest: 'Sicile', wishes: ['Etna'] });
+    expect(read('5 jours en Crète à pied avec les gorges de Samaria')).toMatchObject({ dest: 'Crète', wishes: ['Gorges de Samaria'] });
+    expect(read('plongée 6 jours en Égypte en mer Rouge')).toMatchObject({ dest: 'Égypte', act: 'water', wishes: ['Mer Rouge'] });
+    // « avec » suivi d'un prénom reste une personne.
+    expect(read('rando avec Paul dans le Vercors').wishes).toEqual([]);
+    // Une marche au bord de la mer est une marche, dans la journée (elle a pris 7 jours de plage).
+    expect(read('marche 10 km en bord de mer en Normandie')).toMatchObject({ dest: 'Normandie', act: 'hiking' });
+    expect(parseIntentRules('marche 10 km en bord de mer en Normandie', TODAY)).toContainEqual({ type: 'set_duration', days: 1, hours: null });
+    expect(read('séjour en bord de mer en Vendée').act).toBe('beach');
+  });
+  it('à deux sans le dire en nombre ; des enfants : rythme tranquille', () => {
+    const rules = (t: string) => parseIntentRules(t, TODAY);
+    expect(rules('3 jours à Lisbonne en amoureux')).toContainEqual({ type: 'set_party_size', count: 2 });
+    expect(rules('escapade 2 jours à Annecy avec ma copine')).toContainEqual({ type: 'set_party_size', count: 2 });
+    expect(rules('rando en famille 3 jours dans le Jura avec 2 enfants de 6 et 9 ans')).toContainEqual({ type: 'set_pace', pace: 'tranquille' });
+    // Un rythme dit l'emporte.
+    expect(rules('rando sportive avec les enfants')).toContainEqual({ type: 'set_pace', pace: 'soutenu' });
+  });
   it('« mont Ventoux », « puy de Dôme », « lac Blanc » : le nom commun reste dans le lieu', () => {
     // Avant : « Ventoux » seul, résolu en intercommunalité (étape à Avignon, 433 m au plus haut).
     expect(read('week-end vélo de route autour du mont Ventoux').dest).toBe('Mont Ventoux');

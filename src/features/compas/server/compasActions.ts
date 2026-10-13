@@ -846,7 +846,12 @@ export async function compasSetDestinationAction(
         },
       }
     );
-    if (error) return { success: false, error: 'Impossible d’enregistrer la destination.' };
+    if (error) {
+      // Seule trace de la cause (conflit d'écritures, droits) : « 4 jours à Prague en hiver »
+      // a échoué ainsi le 13 oct. sans rien laisser dans les journaux.
+      await reportServerError('compas.compasSetDestinationAction.write', error);
+      return { success: false, error: 'Impossible d’enregistrer la destination.' };
+    }
     return { success: true };
   } catch (err) {
     await reportServerError('compas.compasSetDestinationAction', err);

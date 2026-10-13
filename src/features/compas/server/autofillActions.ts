@@ -494,6 +494,8 @@ async function plannedStages(opts: {
   scope: string;
   wishes: string[];
   nights: string | null;
+  /** Rythme du voyage : « tranquille » (des enfants, 13 oct.) raccourcit les journées à pied. */
+  pace?: string | null;
   deadline: number;
   /** Notes du préremplissage : un repli y est dit (descente de rivière impossible). */
   notes?: string[];
@@ -667,7 +669,10 @@ async function plannedStages(opts: {
       found.filter((f) => (f.settlement || f.landmark) && onLand(f)),
       { near: anchor, maxKm: zoneKm * 1.1 + 5, query: w, strict: true }
     );
-    if (hit) waypoints.push({ name: stageTitleFor(w, hit.name), lat: hit.lat, lon: hit.lon });
+    if (hit) {
+      const at = sleepNear(hit, places);
+      waypoints.push({ name: stageTitleFor(w, at.name), lat: at.lat, lon: at.lon });
+    }
   }
   const plan = planItinerary({
     days,
@@ -680,6 +685,9 @@ async function plannedStages(opts: {
     // forme demandée la boucle y revient.
     shape: shape ?? (settlement ? 'loop' : null),
     startAt: settlement ? { name: anchor.name, lat: anchor.lat, lon: anchor.lon } : null,
+    // Rythme tranquille à pied : la journée la plus courte du barème (22 km par jour avec
+    // des enfants de 6 et 9 ans, 13 oct.).
+    targetKmPerDay: opts.pace === 'tranquille' && profileFor(activity).move === 'marche' ? profileFor(activity).dayKm[0] : null,
     natural,
     // Une région (Bretagne, Jura) : les étapes restent dans son emprise ; un
     // lac ou un sommet n'en a pas d'utile (on dort autour).
@@ -696,6 +704,29 @@ async function plannedStages(opts: {
     stages: plan.stages.map((st) => ({ day: st.day, name: st.name, lat: st.lat, lon: st.lon, move: st.move, note: st.note })),
     note: `${islandNote ? `${islandNote} ` : ''}Itinéraire ${shapeText} construit sur des lieux réels de la carte (${plan.distinct} lieu${plan.distinct > 1 ? 'x' : ''} où dormir)${waypoints.length ? `, en passant par ${waypoints.map((w) => w.name).join(', ')}` : ''}.`,
   };
+}
+
+/** Distance (km) jusqu'où un lieu habité sert de nuit à un lieu dit qui n'en est pas un. */
+const SLEEP_NEAR_KM = 25;
+
+/**
+ * Un lieu dit qui n'est pas habité (un volcan, des gorges, un parc : « 7 jours en Sicile avec
+ * l'Etna », 13 oct.) : on y va, mais la nuit se passe au lieu habité le plus proche de la zone
+ * (refuges et campings mis à part), à 25 km au plus ; sinon le point dit, comme avant.
+ */
+function sleepNear(hit: CompasPlace, places: readonly AreaPlace[]): { name: string; lat: number; lon: number } {
+  if (hit.settlement) return hit;
+  let best: AreaPlace | null = null;
+  let bestKm = SLEEP_NEAR_KM;
+  for (const p of places) {
+    if (p.kind === 'camp' || p.kind === 'hut') continue;
+    const km = distanceKm(p, hit);
+    if (km < bestKm) {
+      best = p;
+      bestKm = km;
+    }
+  }
+  return best ?? hit;
 }
 
 /**
@@ -736,7 +767,10 @@ async function countryStages(opts: {
       candidates.filter((c) => c.settlement || c.landmark),
       { countryCode: anchor.kind === 'country' ? anchor.countryCode : null, near: anchor, maxKm: anchor.radiusKm * 1.1 + 5, query: w, strict: true }
     );
-    if (hit) waypoints.push({ name: stageTitleFor(w, hit.name), lat: hit.lat, lon: hit.lon });
+    if (hit) {
+      const at = sleepNear(hit, places);
+      waypoints.push({ name: stageTitleFor(w, at.name), lat: at.lat, lon: at.lon });
+    }
   }
   const plan = planItinerary({
     days,
@@ -1352,6 +1386,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             scope: ctx.scope,
             wishes: compas.preferences?.wishes ?? [],
             nights: ctx.nights.value ?? null,
+            pace: ctx.pace.value,
             // Passe unique (270 s) : l'itinéraire a le temps d'essayer toutes les
             // cartes (Photon, Overpass, Geoapify) même après une compréhension lente.
             deadline: startedAt + (phase === 'all' ? 120_000 : 30_000),

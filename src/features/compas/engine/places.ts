@@ -421,6 +421,29 @@ export function pickDestination(candidates: CompasPlace[], query: string): Compa
   return named.find((c) => !WEAK_KINDS.has(c.kind) || c.landmark) ?? null;
 }
 
+/** Étiquettes OSM qui ne sont jamais une destination : bâtiment, rue, commerce, maison isolée… */
+const NOT_A_DESTINATION_TAG =
+  /^(?:building|highway|amenity|shop|office|craft|railway|man_made|historic|landuse|club|healthcare|emergency|public_transport|aeroway)=|^leisure=(?!nature_reserve)|^waterway=(?!river|canal|stream)|^place=(?:isolated_dwelling|farm|house|plot|allotments)$/;
+
+/**
+ * Dernier recours, quand aucun lieu ne porte exactement ce nom : un lieu habité,
+ * naturel ou administratif dont le nom est contenu dans la demande ou la contient
+ * (mot entier). Jamais un bâtiment, une rue, une maison isolée, ni un nom seulement
+ * voisin. Passage du 13 octobre : « Semnoz » donnait Semond (Côte-d'Or), « Lofoten »
+ * une maison isolée de Suède, « Vietnam du nord au sud » un mémorial en Australie.
+ */
+export function pickLoose(candidates: readonly CompasPlace[], query: string): CompasPlace | null {
+  const want = nameCore(query);
+  if (!want) return null;
+  const ok = candidates.filter((c) => {
+    if (c.kind === 'house' || c.kind === 'street' || NOT_A_DESTINATION_TAG.test(c.osmTag ?? '')) return false;
+    const n = nameCore(c.name);
+    if (!n) return false;
+    return n === want || ` ${n} `.includes(` ${want} `) || (n.length >= 4 && ` ${want} `.includes(` ${n} `));
+  });
+  return ok.find((c) => c.settlement) ?? ok[0] ?? null;
+}
+
 /**
  * Plusieurs lieux portent ce nom, loin les uns des autres (« Mont Rose » : la
  * colline de Marseille et le massif des Alpes) : le premier venu n'est pas
@@ -628,15 +651,18 @@ export function pickNatural(
   const core = nameCore(query);
   if (core.length < 3) return null;
   const rank = (p: CompasPlace) => NATURAL_TAG_RANK.find(([re]) => re.test(p.osmTag ?? ''))?.[1] ?? 9;
+  // Un sommet ou un volcan n'a qu'un point, pas d'emprise : il compte sous son nom exact
+  // seulement (« Puy de Dôme » le volcan, pas le département ; 13 oct.).
+  const summit = (p: CompasPlace) => !p.extent && /^natural=(?:peak|volcano|glacier|ridge)$/.test(p.osmTag ?? '');
   const usable = candidates.filter(
     (p) =>
-      p.extent &&
+      (p.extent || summit(p)) &&
       (!countryCode || p.countryCode === countryCode) &&
       rank(p) < 9 &&
       (rivers || !/^waterway=/.test(p.osmTag ?? ''))
   );
   const exact = usable.filter((p) => nameCore(p.name) === core);
-  const containing = usable.filter((p) => ` ${nameCore(p.name)} `.includes(` ${core} `));
+  const containing = usable.filter((p) => !summit(p) && ` ${nameCore(p.name)} `.includes(` ${core} `));
   const order = (list: CompasPlace[]) => [...list].sort((a, b) => rank(a) - rank(b) || extentArea(b) - extentArea(a));
   return order(exact)[0] ?? order(containing)[0] ?? null;
 }

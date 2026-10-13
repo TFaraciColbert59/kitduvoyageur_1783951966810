@@ -342,7 +342,7 @@ function upToBreak(fragment: string): string {
 /** Nom commun de lieu qui peut ouvrir un nom propre (« lac d'Annecy »). */
 // La préposition est facultative : « mont Ventoux », « lac Blanc », « pic Saint-Loup ».
 const PLACE_NOUN =
-  /^(?:lacs?|calanques?|massifs?|parc(?: national| naturel(?: régional)?)?|gorges|vallée|vallee|îles?|iles?|côte|cote|monts?|puys?|pics?|piton|pointe|glaciers?|étangs?|etangs?|col|forêt|foret|plateau|baie|golfe|cirque|presqu['’]île|presqu['’]ile|canyon|désert|desert|volcans?|aiguilles?|dents?)\s+(?:de la |de l['’]|du |des |de |d['’])?/iu;
+  /^(?:lacs?|calanques?|massifs?|parc(?: national| naturel(?: régional)?)?|gorges|vallée|vallee|îles?|iles?|côte|cote|canal|canaux|mer|monts?|puys?|pics?|piton|pointe|glaciers?|étangs?|etangs?|col|forêt|foret|plateau|baie|golfe|cirque|presqu['’]île|presqu['’]ile|canyon|désert|desert|volcans?|aiguilles?|dents?)\s+(?:de la |de l['’]|du |des |de |d['’])?/iu;
 
 /** Le fragment commence-t-il par un nom de lieu (nom propre, ou « lac de X ») ? */
 function properLead(fragment: string): boolean {
@@ -406,7 +406,7 @@ const COMMON_PLACE_WORDS =
  * nombre (« Afrique du Sud », mais « Vercors du 3 au 10 juin »).
  */
 const PLACE_END =
-  /\s(?:(?:du|le|la|les)(?=\s+(?:\d|mois\b|semaine\b|prochaine?\b))|pour|avec|en|a|à|à partir|pendant|durant|sur|et|sans|budget|plage|plages|temples?|musees?|fjords?|autour|via|pas|safari|un|une|deux|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|quinze|vingt|cette|ce|tout|toute|semaines?|jours?|nuits?|days?|weeks?|nights?|for|from|to|until|week[- ]?end|début|debut|mi|fin|noël|noel|pâques|paques|toussaint|demain|après-demain|apres-demain|aujourd['’]hui|prochain|prochaine|janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre|depuis|au départ|au depart|en partant|on part|je pars|nous partons)(?=[\s-]|$)/i;
+  /\s(?:(?:du|le|la|les)(?=\s+(?:\d|mois\b|semaine\b|prochaine?\b))|du (?:nord|sud|centre) (?:au|jusqu['’]au) (?:nord|sud|centre)|d['’](?:est|ouest) en (?:est|ouest)|de l['’](?:est|ouest) (?:a|à) l['’](?:est|ouest)|near|around|close to|pr[eè]s de|à côté de|a cote de|pour|avec|en|a|à|à partir|pendant|durant|sur|et|sans|budget|plage|plages|temples?|musees?|fjords?|autour|via|pas|safari|un|une|deux|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|quinze|vingt|cette|ce|tout|toute|semaines?|jours?|nuits?|days?|weeks?|nights?|for|from|to|until|week[- ]?end|début|debut|mi|fin|noël|noel|pâques|paques|toussaint|demain|après-demain|apres-demain|aujourd['’]hui|prochain|prochaine|janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre|depuis|au départ|au depart|en partant|on part|je pars|nous partons)(?=[\s-]|$)/i;
 
 /**
  * Fin d'un lieu de DÉPART, en plus de `PLACE_END` : ce qui continue la phrase
@@ -882,6 +882,11 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
   if (km) {
     const n = Number(km[1].replace(',', '.'));
     if (n >= 1 && n <= 300) out.push({ type: 'set_distance', km: n });
+    // « marche 10 km en bord de mer » sans durée dite : une sortie qui tient dans la
+    // journée, pas un séjour d'une semaine (elle a pris 7 jours, 13 oct.).
+    const dayReach = /\b(?:velo|vtt|gravel|cyclo|bike|cycling|biking)\b/.test(plain) ? 200 : 60;
+    if (n >= 1 && n <= dayReach && !out.some((a) => a.type === 'set_duration'))
+      out.push({ type: 'set_duration', days: 1, hours: null });
   }
 
   /* Personnes */
@@ -903,7 +908,9 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     if (n != null && Number.isInteger(n) && n >= 1) out.push({ type: 'set_party_size', count: n });
   } else if (/\b(en solo|seul|seule)\b/.test(plain)) {
     out.push({ type: 'set_party_size', count: 1 });
-  } else if (/\b(en couple|en duo)\b/.test(plain)) {
+  } else if (
+    /\b(en couple|en duo|en amoureux|a deux|avec (?:ma|mon) (?:copine|copain|femme|mari|compagne|compagnon|cherie|cheri|amoureuse|amoureux|partenaire|moitie|epouse|epoux)|with my (?:girlfriend|boyfriend|wife|husband|partner))\b/.test(plain)
+  ) {
     out.push({ type: 'set_party_size', count: 2 });
   }
 
@@ -927,6 +934,9 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     out.push({ type: 'set_pace', pace: 'soutenu' });
   } else if (/\brythme normal\b/.test(plain)) {
     out.push({ type: 'set_pace', pace: 'normal' });
+  } else if (/\b(?:enfants?|gamins?|petits?|bebes?|kids?|children)\b/.test(plain) && /\b(?:avec|en famille|nos|mes|les|des|\d+|deux|trois|quatre)\b/.test(plain)) {
+    // Des enfants dans le groupe : des journées courtes (22 km par jour avec un enfant de 6 ans, 13 oct.).
+    out.push({ type: 'set_pace', pace: 'tranquille' });
   }
 
   /* Nuits */
@@ -960,7 +970,11 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     // En dernier : « rando avec bivouac » reste une rando, « bivouac 1 nuit » est un bivouac.
     [/\b(bivouac|bivouacs|bivouaquer)\b/, 'bivouac'],
   ];
-  const act = activity.find(([re]) => re.test(plain));
+  // « marche 10 km en bord de mer » : le bord de mer est le lieu, la marche l'activité.
+  const walkByTheSea =
+    /\b(?:marche|marcher|balades?|promenades?|rando+s?|randon+ee?s?)\b/.test(plain) &&
+    !/\b(?:plages?|farniente|baignade|beach)\b/.test(plain);
+  const act = activity.find(([re, kind]) => re.test(plain) && !(kind === 'beach' && walkByTheSea));
   if (act) out.push({ type: 'set_activity', activity: act[1] });
   // « 5 jours dans les Dolomites en refuge » : dormir en refuge, c'est marcher.
   else if (nights.has('refuge')) out.push({ type: 'set_activity', activity: 'hiking' });
@@ -1059,6 +1073,16 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
           break;
         }
       }
+      // « in the Swiss Alps near Zermatt », « dans les Alpes près de Chamonix » : le lieu
+      // dit ensuite est le plus précis ; la région reste une envie.
+      const nearBy = /^\s*,?\s*(?:near|around|close to|pr[eè]s de|à côté de|a cote de)\s+(\p{Lu}[\p{L}'’-]+(?:[\s-]\p{Lu}[\p{L}'’-]+)*)/u.exec(
+        src.slice(at + place.length, at + place.length + 60)
+      );
+      if (nearBy && !notAPlace(nearBy[1])) {
+        out.push({ type: 'set_destination', place: clean(nearBy[1], 50) });
+        out.push({ type: 'wish', label: capitalized(place) });
+        break;
+      }
       // « au Maroc à Marrakech » : la ville dite ensuite précise le pays.
       const city = /^(?:en|au|aux)\s/.test(m[0].trimStart())
         ? /^\s*,?\s*(?:à|a)\s+(\p{Lu}[\p{L}'’-]+(?:[\s-]\p{Lu}[\p{L}'’-]+)*)/u.exec(src.slice(at + place.length, at + place.length + 60))
@@ -1074,10 +1098,16 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
       // « en Patagonie, Torres del Paine » : le lieu précis qui suit devient une
       // envie, transmise au spécialiste de l'itinéraire (sans resserrer la
       // destination : « Japon, Tokyo et Kyoto » reste un voyage au Japon).
-      const after = /^\s*,\s*(\p{Lu}[^,.;!?\d]*)/u.exec(original.slice(original.indexOf(place) + place.length));
-      const precise = after ? clean(after[1].split(/\s(?:et|pour|avec|en|du|pendant|durant|à|a)\s/i)[0], 40) : '';
-      if (precise.length >= 3 && !notAPlace(precise))
-        out.push({ type: 'wish', label: precise });
+      // « en Italie, Florence et Venise » : chaque lieu nommé (trois au plus).
+      const after = /^\s*,\s*(\p{Lu}[^.;!?\d]*)/u.exec(src.slice(at + place.length, at + place.length + 80));
+      const precise = after
+        ? after[1]
+            .split(/\s*,\s*|\s+(?:et|and)\s+/i)
+            .map((part) => clean(part.split(/\s(?:pour|avec|en|du|pendant|durant|à|a)\s/i)[0], 40))
+            .filter((label) => label.length >= 3 && /^\p{Lu}/u.test(label) && !notAPlace(label))
+            .slice(0, 3)
+        : [];
+      for (const label of precise) out.push({ type: 'wish', label });
       break;
     }
   }
@@ -1123,6 +1153,26 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     const word = low ? low[1].trim() : '';
     if (word && !COMMON_PLACE_WORDS.test(word.split(/\s/)[0]) && toNumber(word.split(/\s/)[0]) == null && !notAPlace(word))
       out.push({ type: 'set_destination', place: word.split(/\s/).map(capitalized).join(' ') });
+  }
+
+  /* Lieu nommé en plus de la destination : « 7 jours en Sicile avec l'Etna », « en Crète
+     avec les gorges de Samaria », « en Égypte en mer Rouge ». Après « avec », un article
+     est exigé (« avec Paul » est une personne) ; après « en », « dans », « sur », un nom
+     commun de lieu (« en Norvège » ne double pas la destination). */
+  const destination = out.find((a): a is Extract<CompasIntentAction, { type: 'set_destination' }> => a.type === 'set_destination');
+  for (const m of src.matchAll(/(?:^|\s)(avec|en|dans|sur|et)\s+(l['’]\s*|le\s+|la\s+|les\s+)?/giu)) {
+    const at = (m.index ?? 0) + m[0].length;
+    const fragment = src.slice(at, at + 60);
+    const lead = PLACE_NOUN.exec(fragment)?.[0] ?? '';
+    const word = m[1].toLowerCase();
+    if (word === 'avec' ? !m[2] || !properLead(fragment) : !lead || !properLead(fragment)) continue;
+    if (inOrigin(at)) continue;
+    const label = capitalized(clean(lead + upToBreak(fragment.slice(lead.length)), 40));
+    const same = (other: string) => plainOf(other) === plainOf(label);
+    if (label.length < 3 || notAPlace(label) || (destination && same(destination.place))) continue;
+    if (out.some((a) => a.type === 'wish' && same(a.label))) continue;
+    out.push({ type: 'wish', label });
+    if (out.filter((a) => a.type === 'wish').length >= 4) break;
   }
 
   /* Sentier nommé : « sur le GR20 », « sur le chemin de l'Inca », « le Tour du

@@ -1,7 +1,7 @@
 import 'server-only';
 import { createHash } from 'node:crypto';
 import { parseIslandContour, type IslandContour } from '../engine/islands';
-import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, isNotablePlace, pickCommune, pickDestination, pickNatural, type CompasPlace } from '../engine/places';
+import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, isNotablePlace, pickCommune, pickDestination, pickLoose, pickNatural, type CompasPlace } from '../engine/places';
 import { cached, coordKey } from './sharedCache';
 import { geoapifyReverse, geoapifySearch } from './geoapify';
 import { nominatimJson } from './locationIq';
@@ -154,10 +154,10 @@ export async function lookupBase(name: string, countryCode: string | null): Prom
   return inCountry.find((p) => p.settlement) ?? inCountry[0] ?? null;
 }
 
-/** Dernier recours : le premier lieu habité ou naturel qui porte ce nom. */
+/** Dernier recours : un lieu habité, naturel ou administratif qui porte ce nom (`pickLoose`). */
 export async function lookupLoose(query: string): Promise<CompasPlace | null> {
   const found = (await search(query.trim().slice(0, 80), 8)) ?? [];
-  return found.find((p) => p.settlement) ?? found[0] ?? null;
+  return pickLoose(found, query);
 }
 
 /**

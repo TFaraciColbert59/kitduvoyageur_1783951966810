@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { homonymsFarApart, isNotablePlace, parsePhoton, pickDestination, pickNatural } from '../engine/places';
+import { homonymsFarApart, isNotablePlace, parsePhoton, pickDestination, pickLoose, pickNatural } from '../engine/places';
+import looseSemnoz from './fixtures/photon-loose-semnoz.json';
+import looseLofoten from './fixtures/photon-loose-lofoten.json';
+import looseVietnam from './fixtures/photon-loose-vietnam-nord-sud.json';
+import puyDeDome from './fixtures/photon-natural-puy-de-dome.json';
 import alsace from './fixtures/photon-alsace.json';
 import chartreuse from './fixtures/photon-natural-chartreuse.json';
 import loire from './fixtures/photon-natural-loire.json';
@@ -51,5 +55,28 @@ describe('lieu naturel pour une activité de plein air', () => {
     const pick = pickDestination(found, 'Alsace');
     expect(homonymsFarApart(found, 'Alsace')).toBe(true);
     expect(pick && isNotablePlace(pick)).toBe(false);
+  });
+});
+
+// Réponses Photon réelles (13 octobre 2026) : le dernier recours ne prend plus n'importe quoi.
+describe('dernier recours : jamais un nom voisin, un bâtiment ni une maison isolée', () => {
+  it('« Semnoz » n’est pas Semond (Côte-d’Or), « Lofoten » pas une maison de Suède', () => {
+    expect(pickLoose(parsePhoton(looseSemnoz), 'Semnoz')).toBeNull();
+    expect(pickLoose(parsePhoton(looseLofoten), 'Lofoten')).toBeNull();
+  });
+  it('« Vietnam du nord au sud » : aucun mémorial (étapes en Australie le 13 oct.)', () => {
+    expect(pickLoose(parsePhoton(looseVietnam), 'Vietnam du nord au sud')).toBeNull();
+  });
+  it('un lieu habité dont le nom contient la demande reste accepté (« Hossegor » → Soorts-Hossegor)', () => {
+    const town = { name: 'Soorts-Hossegor', kind: 'city', lat: 43.66, lon: -1.43, countryCode: 'FR', country: 'France', settlement: true, osmTag: 'place=village', extent: null };
+    expect(pickLoose([town as never], 'Hossegor')?.name).toBe('Soorts-Hossegor');
+  });
+});
+
+describe('un sommet sans emprise compte sous son nom exact', () => {
+  it('« Puy-de-Dôme » en randonnée : le volcan, pas le département ni le Petit Puy de Dôme', () => {
+    const p = pickNatural(parsePhoton(puyDeDome), 'Puy-de-Dôme', 'FR');
+    expect(p?.name).toBe('Puy de Dôme');
+    expect(p?.osmTag).toBe('natural=volcano');
   });
 });
