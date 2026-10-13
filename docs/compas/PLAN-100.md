@@ -1301,14 +1301,40 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ## Phase 9 — Dette et hygiène
 
-- [ ] `eslint.ignoreDuringBuilds` remis à `false` (CLAUDE.md) après nettoyage du lint. **Lot Z4** :
+- [x] `eslint.ignoreDuringBuilds` remis à `false` (CLAUDE.md) après nettoyage du lint. **Lot Z4** :
       mesure du 12 oct. (`npx eslint .`, 2 967 fichiers) : 45 erreurs (no-this-alias 17, display-name 9,
       no-children-prop 9…) et 8 699 avertissements (no-unused-expressions 6 172, no-unused-vars 1 211,
-      no-console 925…) : réglage inchangé tant qu'il reste des erreurs.
+      no-console 925…) : réglage inchangé tant qu'il reste des erreurs. **Lot AI** (13 oct.) : le réglage
+      est déjà à `false` dans `next.config.mjs` depuis e0c8cfeb, et le périmètre que le build lint
+      (`npx next lint --quiet`) donnait déjà 0 erreur. Les 45 erreurs de `npx eslint .` étaient hors de ce
+      périmètre : 26 dans le bundle minifié du plugin Obsidian tiers Claudian
+      (`docs/.obsidian/.obsidian/plugins/realclaudian/main.js`, 3 Mo) et 1 dans `next-env.d.ts` (généré par
+      Next.js), tous deux désormais en ignores globaux commentés de `eslint.config.mjs` ; 18 dans du code
+      écrit à la main, corrigées pour de vrai : `tests/` (9 no-children-prop passés en JSX, d'où quatre
+      specs renommées en `.tsx` ; 1 variable `module` ; 2 `<a>` → `<Link>`) et `scripts/verify/` (6
+      `@ts-ignore` sur du code mort, retiré). Preuve locale : `npx eslint . --quiet` et
+      `npx next lint --quiet` à 0 erreur, `npx tsc --noEmit -p .` à 0. Restent 2 724 avertissements sur
+      3 082 fichiers (no-unused-expressions 1 062, no-console 921, no-unused-vars 484), tolérés, sans effet
+      sur le build.
 - [~] Fichiers non formatés par Prettier (`track.ts`, `routeStackBookingProvider.ts`,
       `routingService.ts`…) reformatés dans une PR dédiée. **Lot Z4** : les trois fichiers cités
-      sont formatés (commit dédié, `prettier --check` vert) ; le « … » reste à lister.
-- [ ] Actions GitHub sur Node 20 (déprécié) mises à jour.
+      sont formatés (commit dédié, `prettier --check` vert) ; le « … » reste à lister. **Lot AI**
+      (13 oct.) : `npx prettier --check "src/**/*.{ts,tsx,css}"` comptait 1 651 fichiers non formatés sur
+      2 259. Commit dédié `style: prettier sur …` : 335 fichiers reformatés (65 dans
+      `src/features/compas/engine/`, 137 dans `src/lib/`, 133 dans `src/features/adventure-prep/`), ces
+      trois dossiers sont à 0 ; restent 1 316 fichiers, dont 37 dans `src/features/compas/components/` et
+      `server/` (autre lot, volontairement laissés) ; pas de reformatage de tout le dépôt. `tsc` à 0 erreur ;
+      `vitest` : seuls les 7 fichiers Playwright échouent (Chromium absent en local).
+- [ ] Actions GitHub sur Node 20 (déprécié) mises à jour. **Lot AI** (13 oct.) : opt-in documenté par
+      GitHub posé sans toucher aux SHA épinglés : `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` dans un `env:`
+      de premier niveau des six workflows (`ci`, `db-backup`, `geo-pois-monthly`, `ios`, `lighthouse-ci`,
+      `visual-regression`) ; `node-version` de build de l'application inchangé (22) ; l'action composite
+      `ephemeral-postgres` n'a que des étapes shell ; `.github/ci.yml` (cité dans CLAUDE.md) n'existe pas,
+      seul `.github/workflows/ci.yml` est un workflow. Garde `tests/ops/workflowsNode24.spec.ts` (échoue si un
+      workflow n'a pas la clé, contrôle négatif prouvé). Case non cochée : la preuve est une exécution CI
+      verte sans l'avertissement de dépréciation Node 20, encore à observer ; les actions restent en
+      `@v4` ou épinglées sur un SHA v4 (checkout, setup-node, upload/download-artifact) : les passer à une
+      version native Node 24 demande des SHA à relever sur GitHub, ce qui n'a pas été fait hors ligne.
 - [ ] Historique des migrations aligné dépôt ↔ base (versions divergentes du 4 octobre).
 - [ ] `visual-tests` : finir sous 25 min (aujourd'hui annulé à chaque fois) ou le
       découper.
