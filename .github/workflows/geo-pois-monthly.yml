@@ -11,7 +11,7 @@ name: Refuges et points d'eau (mise à jour mensuelle)
 # DÉSACTIVÉE tant que Tony n'a pas posé, dans Settings → Secrets and variables → Actions :
 #   secret   SUPABASE_DB_URL     chaîne « Session pooler » de Supabase (la même que db-backup.yml)
 #   variable GEO_POIS_IMPORT=on  seulement APRÈS : suppression de places_geo (base <= 250 Mo),
-#                                application de supabase/migrations/20261013090000_geo_pois.sql
+#                                application de supabase/migrations/20261013190000_geo_pois.sql
 #                                et premier import lancé à la main (workflow_dispatch, zone vercors puis alpes)
 # Sans eux, la tâche s'arrête proprement en le disant (pas d'échec rouge).
 # Variables facultatives : GEO_POIS_ZONE (alpes par défaut), GEO_POIS_MAX_DB_MB (430 par défaut :

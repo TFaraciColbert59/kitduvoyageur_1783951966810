@@ -171,7 +171,7 @@ async function connect(): Promise<PgClient> {
   const { rows } = await client.query("select to_regclass('public.geo_pois') as t");
   if (!rows[0]?.t) {
     await client.end();
-    throw new Error('public.geo_pois n’existe pas : la migration 20261013090000_geo_pois.sql n’est pas appliquée.');
+    throw new Error('public.geo_pois n’existe pas : la migration 20261013190000_geo_pois.sql n’est pas appliquée.');
   }
   return client as unknown as PgClient;
 }
