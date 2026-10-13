@@ -26,7 +26,7 @@ Légende : `[x]` fait (preuve) · `[ ]` à faire · `[~]` en cours · `🔒` blo
 | Volet | Aujourd'hui | Cible | Phases |
 |---|---|---|---|
 | Socle (services, hébergement, base) | 60 % (26/43) | 100 % | 1 |
-| Fiabilité et sécurité | 83 % (40/48) | 100 % | 2 |
+| Fiabilité et sécurité | 85 % (41/48) | 100 % | 2 |
 | Données (référentiel géographique) | 46 % (6/13) | 100 % | 3 |
 | Moteur (itinéraire, budget, papiers, kit, temps) | 75 % (27/36) | 100 % | 4 |
 | Interface, accessibilité, légal (français) | 86 % (24/28) | 100 % | 5 |
@@ -36,7 +36,7 @@ Légende : `[x]` fait (preuve) · `[ ]` à faire · `[~]` en cours · `🔒` blo
 | Dette et hygiène | 33 % (2/6) | 100 % | 9 |
 
 Mesuré le 13 octobre : cases cochées avec preuve sur cases du volet (une grande case compte comme une
-petite). **Global : 69 %** (125/182, hors phase 0 faite et phases 6 et 8 gelées) ; 77 % en comptant
+petite). **Global : 69 %** (126/182, hors phase 0 faite et phases 6 et 8 gelées) ; 77 % en comptant
 pour moitié les cases en cours. Avant le gel de la phase 6 (autres langues, décision de Tony du 13 oct.) :
 64 % (125/194). Le 8 octobre, ce tableau donnait des estimations, pas des comptes.
 
@@ -473,7 +473,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       côté serveur avec limite de débit) ; lien expiré → `?lien=echec`. 🔒 Tony : autoriser
       `<domaine de production>/auth/callback**` dans Supabase (Authentication → URL Configuration → Redirect
       URLs), puis un essai réel.
-- [~] Garder son essai : lier un e-mail à la session anonyme (« manual linking » à
+- [x] ⚖️ **Sans objet (décision de Tony, 13 oct.)** : à terme, un compte sera obligatoire pour
+      accéder à l'application ; pour l'instant l'essai reste tel quel et l'interrupteur
+      `NEXT_PUBLIC_KEEP_TRIAL` reste éteint (rien à allumer dans Supabase). Le code ci-dessous est
+      gardé, inerte. Garder son essai : lier un e-mail à la session anonyme (« manual linking » à
       allumer dans Supabase) au lieu de créer un nouveau compte qui perd le voyage. **Lot AE** :
       e-mail lié à la session (`updateUser({ email })`), mot de passe après confirmation (exigé par
       Supabase), page `/compte/garder-mon-essai`, ligne dans le Compas, lien depuis `/compte/voyageur` ;
@@ -862,8 +865,8 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       calculé à la lecture selon la résidence de n'importe quel lecteur ; lignes « Courant » et
       « Change » (devise dite, sinon celle de la résidence) rendues à la lecture seulement, verrou de
       vie privée étendu (`scripts/verify/traveller_privacy.mjs`). Reste : 20 territoires non renseignés ;
-      la table ne dit pas qu'un type est rare (C à Singapour, en Malaisie) ; ⚖️ licence CC BY-SA du
-      fichier dérivé (partage à l'identique) à valider par Tony.
+      la table ne dit pas qu'un type est rare (C à Singapour, en Malaisie). ⚖️ Licence CC BY-SA du
+      fichier dérivé (partage à l'identique) **acceptée par Tony le 13 oct.**
 - [x] `keepAiNote` ne retire plus les conseils justes pour un non-Français. Lot P : le change
       est gardé pour une devise connue autre que l'euro, les prises quand la règle ne sait
       pas ; les papiers restent à la règle (`papers.test.ts`). **Lot T** : les papiers sont

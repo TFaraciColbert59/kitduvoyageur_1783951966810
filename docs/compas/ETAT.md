@@ -163,6 +163,13 @@ budget, offre Vercel, IA, démo.
 
 ## Décisions en vigueur
 
+- **Pas de domaine pour l'instant (Tony, 13 octobre)** : `koosmoweb.fr` a disparu ; l'application
+  vit à `kitduvoyageur-1783951966810-ruddy.vercel.app` jusqu'à nouvel ordre (contact des services
+  ouverts sur cette adresse, `APP_CONTACT_URL` le jour où un domaine est choisi).
+- **Compte obligatoire à terme (Tony, 13 octobre)** : il faudra se connecter avec un compte pour
+  accéder à l'application ; pour l'instant l'essai sans compte reste tel quel. « Garder son essai »
+  (lier un e-mail à la session anonyme) est sans objet et reste éteint.
+- **Licence CC BY-SA de la table des prises acceptée (Tony, 13 octobre).**
 - **Autres langues gelées (Tony, 13 octobre)** : la phase 6 de `PLAN-100.md` (langues, formats,
   voyageur non français) attend ; le français d'abord. Le tableau de bord ne la compte plus.
 - **Budget 0 € (Tony, 8 octobre, après-midi)** : carte blanche complète, Claude est le
