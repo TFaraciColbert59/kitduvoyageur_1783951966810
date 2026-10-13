@@ -340,8 +340,9 @@ function upToBreak(fragment: string): string {
 }
 
 /** Nom commun de lieu qui peut ouvrir un nom propre (« lac d'Annecy »). */
+// La préposition est facultative : « mont Ventoux », « lac Blanc », « pic Saint-Loup ».
 const PLACE_NOUN =
-  /^(?:lacs?|calanques?|massifs?|parc(?: national| naturel(?: régional)?)?|gorges|vallée|vallee|îles?|iles?|côte|cote|monts?|col|forêt|foret|plateau|baie|golfe|cirque|presqu['’]île|presqu['’]ile|canyon|désert|desert|volcans?|aiguilles?|dents?)\s+(?:de la |de l['’]|du |des |de |d['’])/iu;
+  /^(?:lacs?|calanques?|massifs?|parc(?: national| naturel(?: régional)?)?|gorges|vallée|vallee|îles?|iles?|côte|cote|monts?|puys?|pics?|piton|pointe|glaciers?|étangs?|etangs?|col|forêt|foret|plateau|baie|golfe|cirque|presqu['’]île|presqu['’]ile|canyon|désert|desert|volcans?|aiguilles?|dents?)\s+(?:de la |de l['’]|du |des |de |d['’])?/iu;
 
 /** Le fragment commence-t-il par un nom de lieu (nom propre, ou « lac de X ») ? */
 function properLead(fragment: string): boolean {
@@ -1064,6 +1065,9 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
         : null;
       if (city && !notAPlace(city[1])) {
         out.push({ type: 'set_destination', place: clean(city[1], 50) });
+        // « au lac Blanc à Chamonix » : la ville départage les homonymes, le lieu
+        // naturel reste un passage voulu.
+        if (PLACE_NOUN.test(place)) out.push({ type: 'wish', label: capitalized(place) });
         break;
       }
       out.push({ type: 'set_destination', place: capitalized(place) });

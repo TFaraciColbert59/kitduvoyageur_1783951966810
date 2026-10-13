@@ -440,6 +440,13 @@ describe('Phrases tirées au hasard (20 parcours) : lecture sans IA', () => {
     // Un nom commun seul n'est pas un lieu.
     expect(read('rando dans les bois demain').dest).toBeUndefined();
   });
+  it('« mont Ventoux », « puy de Dôme », « lac Blanc » : le nom commun reste dans le lieu', () => {
+    // Avant : « Ventoux » seul, résolu en intercommunalité (étape à Avignon, 433 m au plus haut).
+    expect(read('week-end vélo de route autour du mont Ventoux').dest).toBe('Mont Ventoux');
+    expect(read('rando à la journée au puy de Dôme dimanche').dest).toBe('Puy de Dôme');
+    // La ville dite ensuite départage les « lac Blanc » ; le lac reste un passage voulu.
+    expect(read('rando 2 jours au lac Blanc à Chamonix avec nuit en refuge')).toMatchObject({ dest: 'Chamonix', wishes: ['Lac Blanc'] });
+  });
   it('« pays dans l’endroit » : le pays est la destination, l’endroit une envie et une recherche', () => {
     expect(read('7 jours de rando au Maroc dans l’Atlas')).toMatchObject({ dest: 'Maroc', route: 'Atlas', wishes: ['Atlas'] });
     expect(read('road trip 10 jours aux États-Unis dans l’Utah')).toMatchObject({ dest: 'États-Unis', act: 'roadtrip' });
