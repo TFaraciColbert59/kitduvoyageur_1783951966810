@@ -365,9 +365,39 @@ function PublierPostContent() {
       const firstPersistableImage =
         photos.find((photo) => photo.uploadedUrl)?.uploadedUrl || null;
 
+      if (!user) throw new Error('Authentification requise');
+
+      // F-022 : résoudre les mentions saisies vers des identifiants réels.
+      // Une mention non résolue reste du texte (aucune fausse promesse).
+      let mentionIds: string[] = [];
+      if (mentions.length > 0) {
+        const resolved: Array<string | null> = [];
+        for (const handle of mentions) {
+          const trimmed = handle.trim();
+          if (!trimmed) continue;
+          const exact = await supabase
+            .from('public_profiles')
+            .select('id')
+            .ilike('full_name', trimmed)
+            .limit(1)
+            .maybeSingle();
+          let id = exact.data?.id ?? null;
+          if (!id) {
+            const prefix = await supabase
+              .from('public_profiles')
+              .select('id')
+              .ilike('full_name', `${trimmed}%`)
+              .limit(1)
+              .maybeSingle();
+            id = prefix.data?.id ?? null;
+          }
+          resolved.push(id);
+        }
+        mentionIds = [...new Set(resolved.filter((value): value is string => Boolean(value)))];
+      }
+
       // Target club topic if audience is club
       if (audience === 'club' && selectedClub) {
-        if (!user) throw new Error('Authentification requise');
         const clubPayload = {
           club_id: selectedClub,
           author_id: user.id,
@@ -376,6 +406,7 @@ function PublierPostContent() {
           image_url: firstPersistableImage,
           likes_count: 0,
           replies_count: 0,
+          mentions: mentionIds,
         };
 
         const { error: clubError } = await supabase.from('club_topics').insert(clubPayload);
@@ -387,8 +418,6 @@ function PublierPostContent() {
         }, 1200);
         return;
       }
-
-      if (!user) throw new Error('Authentification requise');
 
       // F-022 : le format « événement » crée une VRAIE sortie (table events,
       // fiche + inscription join_event), pas seulement une ligne de texte.
@@ -431,6 +460,7 @@ function PublierPostContent() {
         likes_count: 0,
         comments_count: 0,
         image_url: firstPersistableImage,
+        mentions: mentionIds,
         ...(linkedCarnetId ? { linked_carnet_id: linkedCarnetId, snapshot_exclude_location: stripCoordinates } : {}),
         ...(correlationId ? { correlation_id: correlationId } : {}),
       };
@@ -918,6 +948,9 @@ function PublierPostContent() {
                       className="min-w-[140px] flex-1 bg-transparent px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none"
                     />
                   </div>
+                  <p className="mt-1 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                    Les mentions reconnues reçoivent une notification — saisissez le nom du profil (ex. « Marie Dupont »).
+                  </p>
                 </div>
               </div>
             </Card>
