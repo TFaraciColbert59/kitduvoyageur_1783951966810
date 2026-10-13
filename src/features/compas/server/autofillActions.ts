@@ -659,7 +659,10 @@ async function plannedStages(opts: {
   // l'escalade et l'alpinisme : une base d'altitude (Dolomites : Canazei, pas Brugnàch).
   // VTT (vélo en montagne) : les hauteurs aussi, pas la plaine (Vosges : Sarrebourg, Obernai).
   const mtb = profileFor(activity).move === 'velo' && opts.terrain === 'montagne';
-  const foot = profileFor(activity).move === 'marche' || isMountainActivity(activity) || mtb;
+  // Road trip ou moto dans une chaîne de montagnes : ses routes, pas la plaine que son emprise
+  // englobe (« trip moto 6 jours dans les Pyrénées » passait par Calahorra, vallée de l'Èbre, 13 oct.).
+  const mountainRoad = roadScale && /^natural=mountain_range$/.test(anchor.osmTag ?? '');
+  const foot = profileFor(activity).move === 'marche' || isMountainActivity(activity) || mtb || mountainRoad;
   // Beaucoup de lieux (les Alpes suisses entières) : relief lu plus large
   // (moins de tuiles) plutôt que pas de filtre (Genève, Lausanne, Montreux).
   if (foot && places.length <= 3000) places = keepHighlands(await withReliefElevations(places));
