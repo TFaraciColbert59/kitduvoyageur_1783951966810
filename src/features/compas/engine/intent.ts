@@ -1487,6 +1487,17 @@ function key(a: CompasIntentAction): string {
 }
 
 /** Les actions de l'IA d'abord ; les règles complètent ce qu'elle a oublié. */
+/**
+ * Le lieu de l'IA est-il celui des règles avec la suite de la phrase collée ? Il commence par
+ * lui (« vietnam du nord au sud »), ou le contient après un mot de liaison (« swiss alps near
+ * zermatt », « nepal jusqu'au camp de base »). « lac d'annecy » pour « annecy » n'en est pas un.
+ */
+function gluedPlace(ai: string, rule: string): boolean {
+  if (ai.startsWith(`${rule} `)) return true;
+  if (!` ${ai} `.includes(` ${rule} `) && !ai.endsWith(` ${rule}`)) return false;
+  return /\b(?:near|around|close to|pres de|a cote de|jusqu|du nord|du sud|de l'est|de l'ouest|avec|with)\b/.test(ai);
+}
+
 export function mergeActions(
   ai: CompasIntentAction[],
   rules: CompasIntentAction[]
@@ -1506,7 +1517,7 @@ export function mergeActions(
   const placed = ai
     .filter((a) => !(a.type === 'set_destination' && origins.has(plainOf(a.place))))
     .map((a) =>
-      a.type === 'set_destination' && ruleDest?.type === 'set_destination' && ruleKey && plainOf(a.place).startsWith(`${ruleKey} `)
+      a.type === 'set_destination' && ruleDest?.type === 'set_destination' && ruleKey && gluedPlace(plainOf(a.place), ruleKey)
         ? ruleDest
         : a
     )

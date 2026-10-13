@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { homonymsFarApart, isNotablePlace, leadingProperName, parsePhoton, pickDestination, pickLoose, pickNatural } from '../engine/places';
+import { homonymsFarApart, isNotablePlace, leadingProperName, parsePhoton, pickDestination, pickLoose, pickNatural, withinPlaceExtent } from '../engine/places';
 import looseSemnoz from './fixtures/photon-loose-semnoz.json';
 import looseLofoten from './fixtures/photon-loose-lofoten.json';
 import looseVietnam from './fixtures/photon-loose-vietnam-nord-sud.json';
@@ -87,5 +87,20 @@ describe('nom long inconnu de la carte : son début en noms propres', () => {
     expect(leadingProperName('Swiss Alps near Zermatt')).toBe('Swiss Alps');
     expect(leadingProperName('Chamonix')).toBeNull();
     expect(leadingProperName('la Chartreuse')).toBeNull();
+  });
+});
+
+describe('une grande entité n’est remplacée que par un lieu naturel qui s’y trouve', () => {
+  // Emprise de la Normandie (région) et du Puy-de-Dôme (département), [ouest, nord, est, sud].
+  const normandie: [number, number, number, number] = [-1.95, 50.07, 1.8, 48.18];
+  const puyDeDome: [number, number, number, number] = [2.39, 46.26, 3.98, 45.29];
+  it('un sommet « Normandie » près du Mont-Dore n’est pas en Normandie (13 oct.)', () => {
+    expect(withinPlaceExtent({ lat: 45.57, lon: 2.81 }, normandie)).toBe(false);
+  });
+  it('le volcan du Puy de Dôme est dans son département', () => {
+    expect(withinPlaceExtent({ lat: 45.7726, lon: 2.9644 }, puyDeDome)).toBe(true);
+  });
+  it('emprise à cheval sur l’antiméridien (Fidji)', () => {
+    expect(withinPlaceExtent({ lat: -17.8, lon: -179.9 }, [176.8, -12.4, -178.2, -21.1])).toBe(true);
   });
 });

@@ -183,6 +183,10 @@ describe('limites réelles', () => {
   it('l’IA colle la suite de la phrase au lieu : le nom des règles qui le commence est gardé (13 oct.)', () => {
     const merged = mergeActions([{ type: 'set_destination', place: 'Vietnam du nord au sud' }], [{ type: 'set_destination', place: 'Vietnam' }]);
     expect(merged).toEqual([{ action: { type: 'set_destination', place: 'Vietnam' }, source: 'ia' }]);
+    expect(mergeActions([{ type: 'set_destination', place: 'Swiss Alps near Zermatt' }], [{ type: 'set_destination', place: 'Zermatt' }])[0].action).toEqual({
+      type: 'set_destination',
+      place: 'Zermatt',
+    });
     // Un lieu de l'IA plus précis qui ne commence pas par celui des règles reste celui de l'IA.
     expect(mergeActions([{ type: 'set_destination', place: 'Lac d’Annecy' }], [{ type: 'set_destination', place: 'Annecy' }])[0].action).toEqual({
       type: 'set_destination',

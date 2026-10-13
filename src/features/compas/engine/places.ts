@@ -421,6 +421,18 @@ export function pickDestination(candidates: CompasPlace[], query: string): Compa
   return named.find((c) => !WEAK_KINDS.has(c.kind) || c.landmark) ?? null;
 }
 
+/**
+ * Le point est-il dans l'emprise [ouest, nord, est, sud] (marge de 0,05°, antiméridien compris) ?
+ * Une grande entité (« Normandie ») n'est remplacée que par un lieu naturel qui s'y trouve.
+ */
+export function withinPlaceExtent(p: { lat: number; lon: number }, extent: readonly [number, number, number, number]): boolean {
+  const [w, n, e, so] = extent;
+  const m = 0.05;
+  const inLat = p.lat <= n + m && p.lat >= so - m;
+  const inLon = w <= e ? p.lon >= w - m && p.lon <= e + m : p.lon >= w - m || p.lon <= e + m;
+  return inLat && inLon;
+}
+
 /** Le début d'un nom en mots à majuscule (« Népal camp de base… » → « Népal »), s'il est plus court. */
 export function leadingProperName(query: string): string | null {
   const lead = /^\p{Lu}[\p{L}'’-]*(?:[\s-]+\p{Lu}[\p{L}'’-]*)*/u.exec(query.trim())?.[0]?.trim() ?? '';

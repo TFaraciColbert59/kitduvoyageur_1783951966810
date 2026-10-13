@@ -111,7 +111,7 @@ import { icpFoodLevel } from '../engine/icp';
 import { abroadForVignette, carDrives, needsVignette, tollCurrency, tollsBasis, tripTolls } from '../engine/tolls';
 import { getEurRate } from './rates';
 import { after } from 'next/server';
-import { bareAdminName, destinationRadiusKm, distanceKm, isAdminName, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, type CompasPlace } from '../engine/places';
+import { bareAdminName, destinationRadiusKm, distanceKm, isAdminName, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, withinPlaceExtent, type CompasPlace } from '../engine/places';
 import { unifyStageNames, untangleStages } from '../engine/stageOrder';
 import { COUNTRY_SCALE_KM, WIDE_STAY_FROM_DAYS, keepCountry } from '../engine/countryBases';
 import { isIslandAnchor, isLargeIsland, onIslandContour, pickIslandZone, type IslandContour } from '../engine/islands';
@@ -385,6 +385,9 @@ const ADMIN_ANCHOR_KINDS = new Set(['county', 'state', 'region', 'province', 'di
 /** Activités de plein air : une destination y est un massif, un parc, un fleuve plutôt qu'un quartier. */
 const OUTDOOR_ACTIVITIES = new Set(['hiking', 'trekking', 'trail', 'running', 'climbing', 'mountaineering', 'ski', 'bivouac', 'bushcraft', 'cycling', 'water']);
 /** Lieux lus « administratifs » ou « urbains » qu'un lieu naturel du même nom remplace. */
+/** Grandes entités administratives : remplacées seulement par un lieu naturel qui s'y trouve. */
+const BIG_ADMIN_KINDS = new Set(['county', 'state', 'region', 'province']);
+
 const REPLACEABLE_ANCHOR_KINDS = new Set(['county', 'state', 'region', 'province', 'district', 'suburb', 'quarter', 'neighbourhood', 'city_district', 'borough']);
 /** Natures OSM d'un lieu naturel : on en fait le tour plutôt que le traverser. */
 const NATURAL_KINDS = new Set(['water', 'lake', 'peak', 'island', 'islet', 'bay', 'mountain_range', 'volcano', 'glacier', 'river']);
@@ -1321,7 +1324,13 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
     if (anchor && OUTDOOR_ACTIVITIES.has(activity) && (replaceable || seekRiver)) {
       const isRiver = (p: CompasPlace | null) => /^waterway=/.test(p?.osmTag ?? '');
       const found = await lookupNatural(anchor.name, anchor.countryCode, activity === 'cycling' || activity === 'water').catch(() => null);
-      let nat = found && (replaceable || isRiver(found)) ? found : null;
+      // Une grande entité (région, département) n'est remplacée que par un lieu naturel qui s'y trouve :
+      // « Normandie » devenait un sommet homonyme près du Mont-Dore (13 oct.) ; le volcan du
+      // Puy de Dôme, lui, est dans son département. Un quartier homonyme (Chartreuse à Toulouse)
+      // n'a pas cette exigence : ce n'est pas le lieu voulu.
+      const insideBig = (p: CompasPlace) =>
+        !BIG_ADMIN_KINDS.has(anchor?.kind ?? '') || !anchor?.extent || withinPlaceExtent(p, anchor.extent);
+      let nat = found && (replaceable || isRiver(found)) && insideBig(found) ? found : null;
       // Sur l'eau, la rivière cherchée aussi sous son article (« Le Tarn »).
       if (activity === 'water' && !isRiver(nat)) nat = (await lookupRiver(anchor.name, anchor.countryCode)) ?? nat;
       if (nat) {
