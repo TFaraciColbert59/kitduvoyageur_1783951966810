@@ -7,7 +7,11 @@
 
 import {
   COMPAS_ACTIVITIES,
+  linkedDestinationOf,
+  linkedOriginOf,
   parseIntentRules,
+  settleLinkedDestination,
+  settleLinkedOrigin,
   type CompasActivity,
   type CompasIntentAction,
 } from './intent';
@@ -81,6 +85,48 @@ function first<T extends CompasIntentAction['type']>(
 
 const plural = (n: number, one: string, many: string) => `${n} ${n > 1 ? many : one}`;
 
+/**
+ * La ligne « Lieu » de l'aperçu. Même lecture que l'envoi (`settleLinkedOrigin`,
+ * `settleLinkedDestination`), mais sans la carte, qui ne répond qu'à l'envoi : quand « en » ou
+ * « sur » peut faire partie d'un nom (« Bourg en Bresse », « depuis Lyon en Corse »), les deux
+ * lectures sont dites, jamais un bout de nom seul (« Bresse ») donné pour la destination.
+ */
+function placeLine(actions: CompasIntentAction[], phrase: string): RequestLine {
+  const originLink = linkedOriginOf(actions);
+  const destLink = linkedDestinationOf(actions);
+  const read = (accepted: boolean) =>
+    settleLinkedDestination(settleLinkedOrigin(actions, originLink, accepted), destLink, accepted);
+  const placeOf = (list: CompasIntentAction[]) =>
+    first(list, 'set_destination')?.place ?? first(list, 'search_route')?.query ?? null;
+  const ifLong = placeOf(read(true));
+  const ifShort = placeOf(read(false));
+  if (ifLong !== ifShort && (originLink || destLink)) {
+    // La destination elle-même peut porter un nom long (« à Bourg en Bresse »).
+    if (ifLong && ifShort)
+      return {
+        key: 'lieu',
+        label: 'Lieu',
+        value: `${ifLong} si la carte le connaît ; sinon ${ifShort}`,
+        state: 'defaut',
+      };
+    // Le bout d'un nom de départ (« Bresse » pour « Bourg en Bresse ») : destination seulement si la carte ne connaît pas le nom long.
+    if (ifShort && originLink)
+      return {
+        key: 'lieu',
+        label: 'Lieu',
+        value: `« ${originLink.longer} » est le départ si la carte le connaît ; sinon ${ifShort}`,
+        state: 'defaut',
+      };
+  }
+  const dest = ifShort;
+  return {
+    key: 'lieu',
+    label: 'Lieu',
+    value: dest ?? (phrase ? 'Je le cherche dans ta phrase' : 'Dis où tu pars'),
+    state: dest ? 'compris' : 'a_trouver',
+  };
+}
+
 export function understandRequest(
   text: string,
   today: string,
@@ -99,14 +145,7 @@ export function understandRequest(
     state: p.activity ? 'precise' : parsedActivity ? 'compris' : 'defaut',
   });
 
-  const dest =
-    first(actions, 'set_destination')?.place ?? first(actions, 'search_route')?.query ?? null;
-  lines.push({
-    key: 'lieu',
-    label: 'Lieu',
-    value: dest ?? (phrase ? 'Je le cherche dans ta phrase' : 'Dis où tu pars'),
-    state: dest ? 'compris' : 'a_trouver',
-  });
+  lines.push(placeLine(actions, phrase));
 
   const dates = first(actions, 'set_dates');
   const duration = first(actions, 'set_duration');
