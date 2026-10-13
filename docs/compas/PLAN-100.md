@@ -418,8 +418,15 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       est refusé (8 oct.). Reste : retirer `DEMO_LOGIN_*` de Vercel (Tony, sans
       urgence : le bouton démo ne s'affiche plus).
 - [ ] Captcha hCaptcha sur l'essai et l'inscription (compte gratuit à créer par Tony).
-- [ ] Garder son essai : lier un e-mail à la session anonyme (« manual linking » à
-      allumer dans Supabase) au lieu de créer un nouveau compte qui perd le voyage.
+- [~] Garder son essai : lier un e-mail à la session anonyme (« manual linking » à
+      allumer dans Supabase) au lieu de créer un nouveau compte qui perd le voyage. **Lot AE** :
+      e-mail lié à la session (`updateUser({ email })`), mot de passe après confirmation (exigé par
+      Supabase), page `/compte/garder-mon-essai`, ligne dans le Compas, lien depuis `/compte/voyageur` ;
+      derrière `NEXT_PUBLIC_KEEP_TRIAL=on` (éteint par défaut), refus dits sans détail technique ; aucune
+      migration (le trigger `on_auth_user_email_set` et la purge des seuls comptes anonymes existaient).
+      Faille corrigée au passage : `/auth/callback?next=//autre.site` sortait du site. 🔒 Tony : Supabase
+      « Allow manual linking », SMTP personnalisé (celui par défaut n'écrit qu'aux membres de
+      l'organisation), `/auth/callback` autorisé, puis l'interrupteur ; preuve en production.
 - [x] `DemoLoginButton.tsx` retiré (mot de passe du compte démo en clair, **encore
       valable** le 8 oct.) ; plus aucune exclusion du scan de secrets.
 - [x] `scripts/compas/validate-online.mjs` : « Essayer sans compte » dès qu'il existe,
@@ -460,8 +467,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [x] Palier : la préparation est comptée en `heavy` comme le prévoit sa fiche
       (`quotaTier`), tout en gardant le modèle rapide (réponse longue, temps compté).
       Test TEST-ASK-04b.
-- [ ] Plafond global et fail-closed (1.7).
-
+- [x] Plafond global et fail-closed (1.7). **Lot AE** : plafond du site (`AI_DAILY_CAP`, 2 000 par
+      jour) compté par jour UTC ; en production, compteur illisible ou seulement en mémoire = IA coupée,
+      quota par personne fermé sur erreur (il s'ouvrait) ; cause `compteur_illisible` dite à la place de
+      « quota épuisé » ; le Compas continue par règles (`siteCap.spec.ts`).
 ### 2.6 Préparation durable
 
 - [x] Étapes écrites et **tracées au fil de l'eau** (aussi en passe unique) : dès
@@ -558,7 +567,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 ### 2.11 En-têtes et cookies
 
-- [ ] CSP appliquée (plus seulement `Report-Only`) après une semaine de rapports propres.
+- [~] CSP appliquée (plus seulement `Report-Only`) après une semaine de rapports propres. **Lot AE** :
+      les rapports partaient vers `/api/telemetry/hub`, qui les refusait (400/401) : aucune semaine
+      n'existait. `/api/csp-report` les range dans `app_errors` (portée `csp`, directive, hôte bloqué, début
+      du chemin ; 60 par 10 min et par adresse, 2 000 par jour) ; `csp_report_summary(7)` et colonne
+      `csp_reports` du rapport quotidien (migration `20261012170000_csp_reports.sql`, appliquée en production le 13 oct.).
+      Reste : une semaine lue, puis le mode appliqué.
 - [x] Cookies `SameSite` revus (lot L) : session Supabase en `Lax` côté navigateur et
       côté serveur (essai sans compte, retour OAuth, rafraîchissements) — elle était en
       `None` partout ; le site envoie `X-Frame-Options: DENY`, `None` ne servait à
