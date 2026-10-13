@@ -8,7 +8,7 @@ import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
 import { storyMediaUrl } from '@/lib/stories/media';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
-import StoriesViewer, { type StoryUser } from './StoriesViewer';
+import StoriesViewer, { type StorySlide, type StoryUser } from './StoriesViewer';
 
 type StoryRow = {
   id: string;
@@ -17,7 +17,17 @@ type StoryRow = {
   storage_path: string | null;
   caption: string | null;
   created_at: string;
+  media_type: 'image' | 'video' | 'text';
+  duration_ms: number | null;
 };
+
+const AUDIENCES = [
+  { value: 'public', label: 'Public' },
+  { value: 'followers', label: 'Abonnés' },
+  { value: 'close_friends', label: 'Amis proches' },
+  { value: 'only_me', label: 'Moi uniquement' },
+] as const;
+type StoryAudience = (typeof AUDIENCES)[number]['value'];
 
 function storyTimeLabel(iso: string): string {
   const minutes = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
@@ -28,25 +38,29 @@ function storyTimeLabel(iso: string): string {
 }
 
 /**
- * F-027 + Stories V2 (phase 01) — stories RÉELLES : publication privée
- * (bucket `stories-private`, 24 h), lecture des stories autorisées, signalement
- * et blocage depuis le visionneur. Plus aucun exemple local : ce qui s'affiche
- * a été publié par un membre. Les anciennes stories (URL publique) restent
- * affichées telles quelles.
+ * F-027 + Stories V2 (phases 01/04/05) — stories RÉELLES : publication privée
+ * (bucket `stories-private`, 24 h) avec choix d'audience, lecture des stories
+ * autorisées, anneaux vu/non-vu, vues enregistrées après 1 s d'affichage réel,
+ * likes idempotents, signalement et blocage depuis le visionneur. Les anciennes
+ * stories (URL publique) restent affichées telles quelles.
  */
 export default function CommunityStoriesBar({ currentUser }: { currentUser?: any }) {
   const [stories, setStories] = useState<StoryRow[]>([]);
   const [authors, setAuthors] = useState<Record<string, { name: string; avatar_url?: string }>>({});
   const [viewerStart, setViewerStart] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
-  // Choix du fichier → feuille de composition (légende) : jamais de dialogue
-  // natif (garde-fou U-D63 du dépôt).
+  // Choix du fichier → feuille de composition (légende, audience) : jamais de
+  // dialogue natif (garde-fou U-D63 du dépôt).
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingPreview, setPendingPreview] = useState<string | null>(null);
   const [captionDraft, setCaptionDraft] = useState('');
+  const [audience, setAudience] = useState<StoryAudience>('public');
   // Idempotence de publication : stable pour une même sélection de fichier,
   // réutilisé si l'utilisateur relance après un échec réseau.
   const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
+  // États « vu / aimé » (batchés au chargement, mis à jour localement).
+  const [viewedIds, setViewedIds] = useState<Set<string>>(new Set());
+  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadStories = useCallback(async () => {
@@ -104,7 +118,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
 
     const { data, error } = await supabase
       .from('post_stories')
-      .select('id, author_id, image_url, storage_path, caption, created_at')
+      .select('id, author_id, image_url, storage_path, caption, created_at, media_type, duration_ms')
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: true })
       .limit(200);
@@ -119,6 +133,28 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
     setStories(rows);
 
     if (rows.length > 0) {
+      const ids = rows.map((row) => row.id);
+      // États « vu / aimé » batchés (jamais une requête par story) ; filtrés
+      // sur ma propre personne (l'auteur voit aussi les lignes d'autrui).
+      const [viewsRes, likesRes] = await Promise.all([
+        supabase.from('story_views').select('story_id, viewer_id').in('story_id', ids),
+        supabase.from('story_likes').select('story_id, user_id').in('story_id', ids),
+      ]);
+      setViewedIds(
+        new Set(
+          (viewsRes.data ?? [])
+            .filter((r) => (r as { viewer_id: string }).viewer_id === session.user.id)
+            .map((r) => (r as { story_id: string }).story_id)
+        )
+      );
+      setLikedIds(
+        new Set(
+          (likesRes.data ?? [])
+            .filter((r) => (r as { user_id: string }).user_id === session.user.id)
+            .map((r) => (r as { story_id: string }).story_id)
+        )
+      );
+
       const profiles = await fetchPublicProfilesWith(
         supabase,
         rows.map((row) => row.author_id)
@@ -152,15 +188,18 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
       // legacy → URL publique conservée. Une ligne sans média lisible est
       // ignorée plutôt que d'afficher un slide vide.
       const slides = rows
-        .map((row) => {
+        .map((row): StorySlide | null => {
           const image = storyMediaUrl(row);
-          return image
-            ? { image, caption: row.caption ?? undefined, storyId: row.id }
-            : null;
+          if (!image) return null;
+          return {
+            image,
+            caption: row.caption ?? undefined,
+            storyId: row.id,
+            mediaType: row.media_type === 'video' ? 'video' : 'image',
+            durationMs: row.duration_ms ?? undefined,
+          };
         })
-        .filter(
-          (slide): slide is { image: string; caption?: string; storyId: string } => slide !== null
-        );
+        .filter((slide): slide is StorySlide => slide !== null);
       if (slides.length === 0) continue;
       users.push({
         id: authorId,
@@ -203,6 +242,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
     setPendingFile(file);
     setPendingPreview(URL.createObjectURL(file));
     setCaptionDraft('');
+    setAudience('public');
     setPendingRequestId(crypto.randomUUID());
   };
 
@@ -247,7 +287,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
         status: 'ready',
         client_request_id: requestId,
         caption: captionDraft.trim() ? captionDraft.trim().slice(0, 280) : null,
-        visibility: 'public',
+        visibility: audience,
       });
       if (insertError) {
         // La ligne n'existe pas : retirer l'objet orphelin avant de rendre la main.
@@ -268,6 +308,55 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
       setUploading(false);
     }
   };
+
+  // Vue enregistrée après 1 s d'affichage réel (le visionneur déclenche).
+  const handleView = useCallback(
+    async (slide: StorySlide) => {
+      if (!slide.storyId || !currentUser?.id) return;
+      const storyId = slide.storyId;
+      const supabase = createClient();
+      const { error } = await supabase.from('story_views').upsert(
+        { story_id: storyId, viewer_id: currentUser.id, last_viewed_at: new Date().toISOString() },
+        { onConflict: 'story_id,viewer_id' }
+      );
+      if (!error) {
+        setViewedIds((prev) => new Set(prev).add(storyId));
+      }
+    },
+    [currentUser?.id]
+  );
+
+  // Like idempotent (double clic : la clé primaire absorbe).
+  const handleToggleLike = useCallback(
+    async (slide: StorySlide, liked: boolean) => {
+      if (!slide.storyId || !currentUser?.id) return;
+      const storyId = slide.storyId;
+      const supabase = createClient();
+      if (liked) {
+        const { error } = await supabase
+          .from('story_likes')
+          .delete()
+          .eq('story_id', storyId)
+          .eq('user_id', currentUser.id);
+        if (!error) {
+          setLikedIds((prev) => {
+            const next = new Set(prev);
+            next.delete(storyId);
+            return next;
+          });
+        }
+      } else {
+        const { error } = await supabase
+          .from('story_likes')
+          .insert({ story_id: storyId, user_id: currentUser.id });
+        // 23505 = déjà aimé (double clic) : état final identique.
+        if (!error || error.code === '23505') {
+          setLikedIds((prev) => new Set(prev).add(storyId));
+        }
+      }
+    },
+    [currentUser?.id]
+  );
 
   const handleReport = async (user: StoryUser, slide: { storyId?: string }) => {
     if (!currentUser?.id) {
@@ -364,55 +453,69 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
       {/* Rail de stories — colonnes 70 px : anneau + avatar 58 px + nom dessous
           (le langage iOS/Instagram attendu ; l'ancienne rangée de pilules ne se
           lisait pas comme des stories). Ma story d'abord, puis « + » (« Votre
-          story » si vide, « Ajouter » sinon). Fade iOS en fin de course. */}
+          story » si vide, « Ajouter » sinon). Anneau sobre quand tout a été
+          vu. Fade iOS en fin de course. */}
       <div className="flex w-full items-start gap-[var(--space-3)] overflow-x-auto pb-[var(--space-2)] pr-[28px] [scrollbar-width:none] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [&::-webkit-scrollbar]:hidden">
-        {storyUsers.map((user, index) => (
-          <React.Fragment key={user.id}>
-            <button
-              type="button"
-              aria-label={`Voir la story de ${user.name}`}
-              onClick={() => setViewerStart(index)}
-              className="flex w-[70px] shrink-0 flex-col items-center gap-[6px] outline-none transition-transform active:scale-[0.96]"
-            >
-              <span className="rounded-full bg-[conic-gradient(from_210deg,#f9ce34,#ee2a7b,#6228d7,#f9ce34)] p-[2.5px]">
-                <span className="block rounded-full bg-[color:var(--glass-bg-medium)] p-[2px]">
-                  {user.avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- avatars distants (mêmes URLs que le reste de l'app)
-                    <img
-                      src={user.avatarUrl}
-                      alt=""
-                      loading="lazy"
-                      className="size-[55px] rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="flex size-[55px] items-center justify-center rounded-full bg-[color:var(--btn-tint)] text-[length:var(--lkv-text-subheadline)] font-semibold uppercase text-[color:var(--lkv-text-primary)]">
-                      {user.name.charAt(0)}
-                    </span>
-                  )}
-                </span>
-              </span>
-              <span className="w-full truncate text-center text-[11px] font-medium leading-tight text-[color:var(--lkv-text-primary)]">
-                {user.id === currentUser?.id ? 'Votre story' : user.name}
-              </span>
-            </button>
-            {index === myStoryIndex && currentUser?.id && (
+        {storyUsers.map((user, index) => {
+          // Anneau vu/non-vu : sobre quand toutes les slides actives ont été vues.
+          const seen =
+            user.id !== currentUser?.id &&
+            user.slides.length > 0 &&
+            user.slides.every((s) => Boolean(s.storyId && viewedIds.has(s.storyId)));
+          return (
+            <React.Fragment key={user.id}>
               <button
                 type="button"
-                disabled={uploading}
-                aria-label="Publier une story (photo, 24 h)"
-                onClick={() => fileInputRef.current?.click()}
+                aria-label={`Voir la story de ${user.name}`}
+                onClick={() => setViewerStart(index)}
                 className="flex w-[70px] shrink-0 flex-col items-center gap-[6px] outline-none transition-transform active:scale-[0.96]"
               >
-                <span className="flex size-[64px] items-center justify-center rounded-full border-2 border-dashed border-[color:var(--lkv-border-strong)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--blur-md)]">
-                  <Icon name="plus" size={20} aria-hidden="true" />
+                <span
+                  className={
+                    seen
+                      ? 'rounded-full bg-white/25 p-[2.5px]'
+                      : 'rounded-full bg-[conic-gradient(from_210deg,#f9ce34,#ee2a7b,#6228d7,#f9ce34)] p-[2.5px]'
+                  }
+                >
+                  <span className="block rounded-full bg-[color:var(--glass-bg-medium)] p-[2px]">
+                    {user.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- avatars distants (mêmes URLs que le reste de l'app)
+                      <img
+                        src={user.avatarUrl}
+                        alt=""
+                        loading="lazy"
+                        className="size-[55px] rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="flex size-[55px] items-center justify-center rounded-full bg-[color:var(--btn-tint)] text-[length:var(--lkv-text-subheadline)] font-semibold uppercase text-[color:var(--lkv-text-primary)]">
+                        {user.name.charAt(0)}
+                      </span>
+                    )}
+                  </span>
                 </span>
                 <span className="w-full truncate text-center text-[11px] font-medium leading-tight text-[color:var(--lkv-text-primary)]">
-                  {uploading ? 'Envoi…' : 'Ajouter'}
+                  {user.id === currentUser?.id ? 'Votre story' : user.name}
                 </span>
               </button>
-            )}
-          </React.Fragment>
-        ))}
+              {index === myStoryIndex && currentUser?.id && (
+                <button
+                  type="button"
+                  disabled={uploading}
+                  aria-label="Publier une story (photo, 24 h)"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex w-[70px] shrink-0 flex-col items-center gap-[6px] outline-none transition-transform active:scale-[0.96]"
+                >
+                  <span className="flex size-[64px] items-center justify-center rounded-full border-2 border-dashed border-[color:var(--lkv-border-strong)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--blur-md)]">
+                    <Icon name="plus" size={20} aria-hidden="true" />
+                  </span>
+                  <span className="w-full truncate text-center text-[11px] font-medium leading-tight text-[color:var(--lkv-text-primary)]">
+                    {uploading ? 'Envoi…' : 'Ajouter'}
+                  </span>
+                </button>
+              )}
+            </React.Fragment>
+          );
+        })}
 
         {myStoryIndex < 0 && currentUser?.id && (
           <button
@@ -443,7 +546,14 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
           users={storyUsers}
           startUser={Math.min(viewerStart, storyUsers.length - 1)}
           myUserId={currentUser?.id}
+          likedStoryIds={likedIds}
           onClose={() => setViewerStart(null)}
+          onView={(slide) => {
+            void handleView(slide);
+          }}
+          onToggleLike={(slide, liked) => {
+            void handleToggleLike(slide, liked);
+          }}
           onReport={(user, slide) => {
             void handleReport(user, slide);
           }}
@@ -456,7 +566,8 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
         />
       )}
 
-      {/* Feuille de composition : légende + publication (aucun dialogue natif). */}
+      {/* Feuille de composition : légende + audience + publication (aucun
+          dialogue natif). */}
       {pendingFile && (
         <div
           className="fixed inset-0 z-[var(--z-modal)] flex items-end justify-center bg-black/60 p-[var(--space-4)] backdrop-blur-[var(--glass-blur-sm)] sm:items-center"
@@ -480,6 +591,28 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
                 className="max-h-56 w-full rounded-[var(--lkv-radius-md)] object-cover"
               />
             )}
+            <fieldset className="space-y-[var(--space-1)]">
+              <legend className="text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">
+                Audience
+              </legend>
+              <div className="flex flex-wrap gap-[var(--space-1)]">
+                {AUDIENCES.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-pressed={audience === option.value}
+                    onClick={() => setAudience(option.value)}
+                    className={
+                      audience === option.value
+                        ? 'rounded-full bg-white/15 px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-primary)] ring-1 ring-[color:var(--lkv-border-strong)]'
+                        : 'rounded-full bg-[color:var(--glass-bg-medium)] px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-muted)]'
+                    }
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
             <label className="block text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">
               Légende (optionnel)
               <input
@@ -492,7 +625,9 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
               />
             </label>
             <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
-              Visible par la communauté — 24 h. Média privé, servi uniquement aux personnes autorisées.
+              {audience === 'only_me'
+                ? 'Vous seul·e verrez cette story. Média privé, servi uniquement à vous.'
+                : 'Média privé, servi uniquement aux personnes autorisées — 24 h.'}
             </p>
             <div className="flex justify-end gap-[var(--space-2)]">
               <Button type="button" variant="ghost" size="sm" onClick={cancelPending} disabled={uploading}>
