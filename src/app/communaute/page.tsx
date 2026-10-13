@@ -146,7 +146,7 @@ function CommunautePageContent() {
           .select('*')
           .order('created_at', { ascending: false })
           .limit(20),
-        supabase.from('clubs').select('*').order('members_count', { ascending: false }),
+        supabase.from('clubs').select('*').order('members_count', { ascending: false }).limit(50),
         // F-009 : modèle canonique des groupes d'expédition (travel_groups),
         // jamais la vue legacy remplie de constantes.
         supabase

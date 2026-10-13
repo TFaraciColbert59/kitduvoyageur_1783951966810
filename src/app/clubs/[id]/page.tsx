@@ -175,8 +175,8 @@ export default function ClubDetailPage() {
           // F-033 : la visibilité des sujets est gouvernée côté serveur
           // (policy club_topics_read: is_approved = true, OR auteur via
           // club_topics_manage) — un seul contrat, identique à /clubs.
-          supabase.from('club_topics').select('*').eq('club_id', clubData.id).order('is_pinned', { ascending: false }).order('created_at', { ascending: false }),
-          supabase.from('club_members').select('*').eq('club_id', clubData.id).eq('status', 'active'),
+          supabase.from('club_topics').select('*').eq('club_id', clubData.id).order('is_pinned', { ascending: false }).order('created_at', { ascending: false }).limit(100),
+          supabase.from('club_members').select('*').eq('club_id', clubData.id).eq('status', 'active').limit(200),
           supabase.from('club_events').select('*').eq('club_id', clubData.id).order('event_date', { ascending: true }),
           supabase
             .from('travel_groups')
