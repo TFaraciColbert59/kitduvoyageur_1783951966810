@@ -88,10 +88,6 @@ export default function ClubDetailPage() {
   const clubId = params?.id as string;
   const [club, setClub] = useState<Club | null>(null);
   const [topics, setTopics] = useState<ClubTopic[]>([]);
-  // A-110 : pagination des sujets (charger plus) — jamais 100 % de la table.
-  const [topicsLimit, setTopicsLimit] = useState(30);
-  const [hasMoreTopics, setHasMoreTopics] = useState(false);
-  const [loadingMoreTopics, setLoadingMoreTopics] = useState(false);
   const [members, setMembers] = useState<ClubMember[]>([]);
   const [events, setEvents] = useState<ClubEvent[]>([]);
   const [clubGroups, setClubGroups] = useState<any[]>([]);
@@ -144,45 +140,6 @@ export default function ClubDetailPage() {
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
 
-  // A-110 : projection commune des sujets (chargement initial et « charger plus »).
-  const mapTopicRows = (rows: any[], profiles: Record<string, any>): ClubTopic[] =>
-    rows.map((t) => ({
-      ...t,
-      author: profiles[t.author_id]
-        ? {
-            full_name: profiles[t.author_id].full_name ?? '',
-            avatar_url: profiles[t.author_id].avatar_url ?? undefined,
-          }
-        : undefined,
-    })) as ClubTopic[];
-
-  const loadMoreTopics = async () => {
-    if (!club || loadingMoreTopics || !hasMoreTopics) return;
-    setLoadingMoreTopics(true);
-    try {
-      const nextLimit = topicsLimit + 30;
-      const { data } = await supabase
-        .from('club_topics')
-        .select('*')
-        .eq('club_id', club.id)
-        .order('is_pinned', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(nextLimit);
-      const rows = (data as any[]) ?? [];
-      const profiles = await fetchPublicProfilesWith(
-        supabase,
-        rows.map((t) => t.author_id as string)
-      );
-      setTopics(mapTopicRows(rows, profiles));
-      setTopicsLimit(nextLimit);
-      setHasMoreTopics(rows.length >= nextLimit);
-    } catch (err) {
-      console.warn('Chargement de sujets supplémentaires impossible:', err);
-    } finally {
-      setLoadingMoreTopics(false);
-    }
-  };
-
   const handleOpenClubGroup = async (group: any) => {
     const res = await setActiveAdventureAction({ nature: 'collectif', id: group.id, title: group.name });
     if (!res.success) {
@@ -218,9 +175,10 @@ export default function ClubDetailPage() {
           // F-033 : la visibilité des sujets est gouvernée côté serveur
           // (policy club_topics_read: is_approved = true, OR auteur via
           // club_topics_manage) — un seul contrat, identique à /clubs.
-          supabase.from('club_topics').select('*').eq('club_id', clubData.id).order('is_pinned', { ascending: false }).order('created_at', { ascending: false }).limit(topicsLimit),
+          // A-110 : bornes de chargement (fiche ouverte sans tout télécharger).
+          supabase.from('club_topics').select('*').eq('club_id', clubData.id).order('is_pinned', { ascending: false }).order('created_at', { ascending: false }).limit(30),
           supabase.from('club_members').select('*').eq('club_id', clubData.id).eq('status', 'active').limit(200),
-          supabase.from('club_events').select('*').eq('club_id', clubData.id).order('event_date', { ascending: true }),
+          supabase.from('club_events').select('*').eq('club_id', clubData.id).order('event_date', { ascending: true }).limit(200),
           supabase
             .from('travel_groups')
             .select('id, name, destination, theme, cover_url, departure_date, return_date, visibility, owner_id, parent_club_id')
@@ -235,8 +193,17 @@ export default function ClubDetailPage() {
           ...topicRows.map((t) => t.author_id as string),
           ...memberRows.map((m) => m.user_id as string),
         ]);
-        setTopics(mapTopicRows(topicRows, profiles));
-        setHasMoreTopics(topicRows.length >= topicsLimit);
+        setTopics(
+          topicRows.map((t) => ({
+            ...t,
+            author: profiles[t.author_id]
+              ? {
+                  full_name: profiles[t.author_id].full_name ?? '',
+                  avatar_url: profiles[t.author_id].avatar_url ?? undefined,
+                }
+              : undefined,
+          })) as ClubTopic[]
+        );
         setMembers(
           memberRows.map((m) => ({
             ...m,
@@ -522,7 +489,7 @@ export default function ClubDetailPage() {
     setSelectedEventId(eventId);
     setParticipantsModalOpen(true);
     setEventParticipants([]);
-    const { data } = await supabase.from('club_event_participants').select('*').eq('event_id', eventId).limit(200);
+    const { data } = await supabase.from('club_event_participants').select('*').eq('event_id', eventId);
     if (data) {
       // F1 — profils des participants via la vue `public_profiles`.
       const profiles = await fetchPublicProfilesWith(
@@ -813,19 +780,6 @@ export default function ClubDetailPage() {
             user={user}
             filterType="all"
           />
-          {hasMoreTopics && (
-            <div className="flex justify-center">
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={() => void loadMoreTopics()}
-                disabled={loadingMoreTopics}
-              >
-                {loadingMoreTopics ? 'Chargement…' : 'Charger plus de sujets'}
-              </Button>
-            </div>
-          )}
         </section>
       </>
     );
@@ -907,9 +861,6 @@ export default function ClubDetailPage() {
             onOpenGroup={handleOpenClubGroup}
             onCreateGroup={handleCreateClubGroup}
             onRefresh={loadData}
-            hasMoreTopics={hasMoreTopics}
-            loadingMoreTopics={loadingMoreTopics}
-            onLoadMoreTopics={() => void loadMoreTopics()}
           />
         </AppShell>
       </div>
