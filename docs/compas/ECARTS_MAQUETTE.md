@@ -19,7 +19,7 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 | Accessoire au-dessus de la barre (altitude max + profil) | ✅ | profil réel (Open-Meteo, Copernicus GLO-90, 80 points), glisser ou flèches pour lire ; sans profil : D+ et km |
 | Barre d'onglets qui se réduit au défilement | ✅ | défiler un tiroir vers le bas : seul l'onglet actif reste (portée Compas, navigation de l'app intacte) |
 | Lentille qui suit le doigt (maintenir et glisser) | ✅ | glisser sur la capsule : la lentille suit, l'étape sous elle est choisie au relâchement |
-| Îlot dynamique : prochaine décision, appliquer | ⬜ | |
+| Îlot dynamique : prochaine décision, appliquer | 🟡 | capsule au-dessus de la barre d'onglets : « Voir » toujours, « Appliquer » seulement pour « Répartir le matériel commun » (calcul sûr, annulable) ; les autres décisions demandent un choix ou engagent de l'argent : « Voir » seulement. Rendu à vérifier sur appareil. |
 | Annuler (îlot, Ctrl/⌘+Z, deux doigts vers la gauche) | ✅ | « Annuler » dans l'annonce, Ctrl/⌘+Z, deux doigts vers la gauche : activité, préférences, enveloppe, décalage de dates, « Dis-le » quand l'inverse est sûr |
 | Mode extérieur + intensité du verre (☀) | ✅ | |
 
@@ -31,7 +31,7 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 | Lignes Activité · Parcours · Quand · Préférences · Sac | ✅ | |
 | Tiroir « Préparer » : Activité · Parcours · Quand · Préférences · Sac | ✅ | onglet « Sur le tracé » conservé en dernier (données réelles) |
 | Activités en tuiles (grille 4 colonnes) | ✅ | description de l'activité choisie en note |
-| Quand : calendrier des conditions, heure par heure, passage à chaque étape | 🟡 | calendrier et heure par heure faits ; heure de passage par étape à vérifier |
+| Quand : calendrier des conditions, heure par heure, passage à chaque étape | ✅ | calendrier et heure par heure faits ; heure de passage estimée par étape (DIN 33466 / vitesse type), « non renseigné » sans départ, distance ou allure. Reste : enregistrer l'heure de départ (aujourd'hui `start_time` d'une étape, ou simulation locale). |
 
 ## Nous
 | Élément | État | Note |
@@ -56,7 +56,7 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire · ⛔ écart volontaire (r�
 | Élément | État | Note |
 |---|---|---|
 | Jauge « sur 100 » | ⛔ | pas de score unique |
-| Risques (barres par risque, source datée) | 🟡 | onglet « Risques » : axes physique / technique / conjoncturel, signaux sourcés |
+| Risques (barres par risque, source datée) | ✅ | trois barres (physique / technique / conjoncturel), niveaux faible / modéré / élevé / non évalué, sans score, source et date par barre. Pas d'avalanche ni d'altitude : le moteur n'en tire aucun signal. |
 | Météo (jours, vent) | ✅ | par jour du voyage : ciel, min/max, pluie, rafales, isotherme 0 °C ; source et horizon affichés |
 | Veille (règles, alertes proposées) | ✅ | seuils réels du moteur (`engine/watch.ts`) ; décalage proposé seulement sur prévision, appliqué au geste « Décaler » |
 | Sources + fraîcheur | ✅ | alertes officielles Meteoalarm branchées |

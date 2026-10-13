@@ -133,13 +133,18 @@ export function climateNormalsUrl(lat: number, lon: number): string {
   return `${POWER_CLIMATOLOGY}?${q.toString()}`;
 }
 
+/** Fuseau horaire du lieu (hors ligne), ou null quand il ne se retrouve pas (point invalide) : aucun repli. */
+export function knownZoneAt(lat: number, lon: number): string | null {
+  try {
+    return tzLookup(lat, lon) || null;
+  } catch {
+    return null;
+  }
+}
+
 /** Fuseau horaire du lieu (hors ligne) ; celui de l'app si la mer ou l'erreur l'empêche. */
 export function zoneAt(lat: number, lon: number, fallback: string): string {
-  try {
-    return tzLookup(lat, lon) || fallback;
-  } catch {
-    return fallback;
-  }
+  return knownZoneAt(lat, lon) ?? fallback;
 }
 
 /**

@@ -43,6 +43,8 @@
 | **GeoNames** (lieux habités) | cities500 : ≈ 185 000 lieux | Oui (CC BY 4.0) | Lien vers GeoNames | [export](https://www.geonames.org/export/) |
 | **OpenStreetMap** (données) | — | Oui (ODbL) | « © OpenStreetMap contributors » + lien ; **une base dérivée servie au public doit rester sous ODbL** | [copyright](https://www.openstreetmap.org/copyright) |
 | **Bulletin pétrolier de l'UE** (carburant, UE-27) | hebdomadaire | Oui (CC BY 4.0) | Crédit Commission européenne | [bulletin](https://energy.ec.europa.eu/data-and-analysis/weekly-oil-bulletin_en) |
+| **Tarifs officiels des vignettes** (CH, AT, CZ, SK, SI, HU) et **péages au kilomètre** (FR, IT) | pages publiques lues le 12 oct. 2026, versionnées dans `src/features/compas/engine/tolls.ts` (aucune requête en ligne) | ? (prix publics d'organismes de l'État ; aucune licence de réutilisation lue, source citée) | Source, adresse et jour de lecture dans les mentions légales ; ES, PT, HR, GR non chiffrés (aucun barème moyen lu) | [ch.ch](https://www.ch.ch/en/vehicles-and-traffic/how-to-behave-in-road-traffic/motorway-vignette/), [oesterreich.gv.at](https://www.oesterreich.gv.at/en/themen/mobilitaet/kfz/10/Vignette-und-Maut/Vignette-fuer-Fahrzeuge-bis-3,5-t), [eDalnice](https://edalnice.gov.cz/en/price-list), [eznamka.sk](https://eznamka.sk/sk/dialnicne-znamky/typy-a-ceny), [Uradni list RS](https://www.uradni-list.si/glasilo-uradni-list-rs/vsebina/2025-01-1893), [NÚSZ](https://nemzetiutdij.hu/api/uploads/e_matrica_arak_2026_pdf_611db0ecc1.pdf), [ART](https://www.autorite-transports.fr/wp-content/uploads/2025/12/synthese_des_comptes_sca_2024.pdf), [ASPI](https://www.autostrade.it/en/servizi-al-cliente/pedaggio/come-si-calcola-il-pedaggio) |
+| **Banque mondiale, ICP 2021** (niveau de prix de l'alimentation, repas en autonomie) | 170 pays, versionnés dans `src/features/compas/data/icpPriceLevels.json` (réponse de l'API lue le 12 oct. 2026, mise à jour du 4 août 2024) | Oui (CC BY 4.0) | « The World Bank: ICP 2021 », changements indiqués (France = 100, arrondi) | [licences](https://datacatalog.worldbank.org/public-licenses), [source](https://api.worldbank.org/v2/sources/90) |
 | **Supabase** gratuit | 500 Mo (lecture seule au-delà), 5 Go de sortie, 50 000 MAU, pause après 7 jours sans activité, aucune sauvegarde | ? (aucune interdiction trouvée) | Sessions anonymes : **captcha obligatoire** (sinon base remplie) | [pricing](https://supabase.com/pricing), [anonyme](https://supabase.com/docs/guides/auth/auth-anonymous) |
 | **hCaptcha** gratuit | plafond non confirmé | ? (aucune interdiction trouvée) | Sous-traitant RGPD (DPA intégré) ; à citer dans la politique de confidentialité. Turnstile exclu (Cloudflare, règle du dépôt) | [pricing](https://www.hcaptcha.com/pricing), [RGPD](https://www.hcaptcha.com/gdpr) |
 | **Vercel BotID** basique, pare-feu | BotID basique gratuit ; 1 règle de limite de débit par projet (Hobby) | — (fonctions ; la restriction Hobby reste) | — | [BotID](https://vercel.com/docs/botid), [WAF](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting) |
@@ -78,6 +80,14 @@
   **jamais collées dans la conversation**.
 - **Prix du carburant hors UE** : aucune source gratuite, à jour et sous licence claire ;
   le budget l'annonce comme « estimation » (barème versionné, daté).
+- **Péages** : une vignette est chiffrée (pays de destination, une par voiture) quand sa source officielle a
+  été lue ; un péage au kilomètre n'est jamais ajouté au budget (la route mesurée ne détaille pas les
+  km d'autoroute à péage), seulement dit avec son barème moyen (FR : ART, IT : ASPI). Rien n'est écrit
+  sans source lue : ES, PT, HR et GR restent « non chiffrés ». Hôtes refusés depuis le poste de
+  recherche (12 oct. 2026) : asfinag.at (403), dars.si et evinjeta.dars.si (connexion refusée),
+  transportes.gob.es (403) ; leurs prix viennent de pages officielles de l'État qui les reprennent.
+- **ICP 2021 (Banque mondiale)** : la série « Restaurants et hôtels » ne sert pas (prix des résidents,
+  plus de 20 % sous le barème dans 87 des 170 pays) ; la série alimentaire sert aux repas en autonomie.
 - **À relire sur les pages officielles** (proxy bloqué pendant la recherche) : conditions
   LocationIQ, private.coffee, Valhalla FOSSGIS, hCaptcha gratuit. (Geoapify, GeoNames, BCE
   et Terrain Tiles relus le 10 puis le 11 oct. 2026 sur les pages officielles ; Meteoalarm

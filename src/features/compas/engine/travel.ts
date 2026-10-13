@@ -7,6 +7,7 @@ import {
   type TransportEstimate,
 } from './autofill';
 import { fuelPriceFor } from './fuel';
+import { tollsBasis } from './tolls';
 import { distanceKm } from './places';
 import { trainOutlook, type TrainTrip } from './rail';
 import { needsFormalities, type EntryRequirement } from './entry';
@@ -355,6 +356,9 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
   // domicile : la base, rangée sur le voyage, ne nomme pas le pays du domicile.
   const fromHome = origin.source === 'domicile';
   const fuel = fuelPriceFor([origin.countryCode, destination.countryCode], { nameCountries: !fromHome });
+  // Péages : « non comptés » avec la raison, et le barème du pays de DESTINATION s'il en existe un (PLAN-100 4.6).
+  // Jamais le pays de départ : la base est rangée sur le voyage, le domicile du profil ne s'y nomme pas.
+  const tolls = tollsBasis(destination.countryCode);
   const mode = approachMode({ straightKm: straight, days });
   if (mode === 'sur_place') {
     leg.notes.push(ON_SITE_NOTE);
@@ -490,7 +494,7 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
       // Route trop longue pour la durée du voyage, rail hors de portée : l'avion.
       if (fly(`${Math.round(car.minutes / 60)} h de route à l’aller pour ${days} jour${days > 1 ? 's' : ''}`)) return leg;
     }
-    leg.carFuel = estimateCarTrip({ oneWayKm: car.km, oneWayMin: car.minutes, partySize: party, fuel });
+    leg.carFuel = estimateCarTrip({ oneWayKm: car.km, oneWayMin: car.minutes, partySize: party, fuel, tollsBasis: tolls });
     if (leg.carFuel)
       leg.transport = moveOf('voiture', {
         km: leg.carFuel.oneWayKm,
@@ -507,7 +511,13 @@ async function chooseLeg(input: TravelLegInput, deps: TravelDeps): Promise<Trave
     // lieu) mais destination à portée de route : trajet estimé (vol
     // d'oiseau × 1,3 à 80 km/h), jamais un vol à 450 km.
     const minutes = estimatedDriveMinutes(straight);
-    leg.carFuel = estimateCarTrip({ oneWayKm: Math.round(straight * ROAD_DETOUR_FACTOR), oneWayMin: minutes, partySize: party, fuel });
+    leg.carFuel = estimateCarTrip({
+      oneWayKm: Math.round(straight * ROAD_DETOUR_FACTOR),
+      oneWayMin: minutes,
+      partySize: party,
+      fuel,
+      tollsBasis: tolls,
+    });
     if (leg.carFuel) {
       leg.transport = moveOf('voiture', {
         km: leg.carFuel.oneWayKm,

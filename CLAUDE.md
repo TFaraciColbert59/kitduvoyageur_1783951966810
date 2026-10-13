@@ -296,7 +296,7 @@ redirects() {
 ### Compas : des calculs et des choix dans un contexte (audit du 2026-10-07)
 - « Où » est LA demande (phrase libre + précisions facultatives) ; « Préparer mon aventure » crée le voyage et lance une préparation visible (`CompasPrep`). Tout le reste est la réponse.
 - Une seule lecture des réglages : `engine/tripContext.ts` (jours, nuits, heures, groupe, ancre). Ne jamais recalculer les jours ou le groupe ailleurs.
-- Itinéraire : `engine/itinerary.ts` (pur) sur les lieux RÉELS de la zone (Overpass via `lookupAreaPlaces`). Budget : `engine/costs.ts` (barèmes versionnés). L'IA ne donne jamais un lieu, un prix ou une date : elle relit et conseille. Seule exception restante : itinéraire à l'échelle d'un pays (noms de l'IA vérifiés sur la carte).
+- Itinéraire : `engine/itinerary.ts` (pur) sur les lieux RÉELS de la zone (Overpass via `lookupAreaPlaces`). Budget : `engine/costs.ts` (barèmes versionnés). L'IA ne donne jamais un lieu, un prix ou une date : elle relit et conseille. Seule exception restante : itinéraire à l'échelle d'un pays, où l'IA propose d'abord les bases (noms vérifiés sur la carte) ; IA éteinte, muette ou sans lieu retrouvé, `engine/countryBases.ts` choisit des bases multiples dans le référentiel.
 - **Source de vérité unique de l'avancement : `docs/compas/ETAT.md`** (P0 moteur → P1 données → P2 validation → P3 gelé). Ne rien commencer en P3 tant que P0/P1 ne passent pas P2.
 
 ### Le Compas est le SEUL préparateur (décision de Tony, 2026-10-02)

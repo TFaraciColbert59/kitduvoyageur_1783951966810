@@ -18,6 +18,14 @@ import { distanceKm } from './places';
 import type { NightPlan, StageMove } from './autofill';
 import { ACCLIMATISATION_FROM_M, MAX_SLEEP_GAIN_M, REST_AFTER_NIGHTS, sleepOvershootM } from './acclimatisation';
 import { extentIsWorldwide, extentWidthDeg, lonDelta, lonInExtent, meanLon, splitLonRange, wrapLon } from './longitude';
+import { along, mainAxis } from './axis';
+import { MOUNTAIN_BASE, RANK, altitudeBonus, profileFor, type Profile } from './activityProfile';
+import { COUNTRY_SCALE_KM, pickCountryBases, type CountryBasesPlan } from './countryBases';
+
+// Le barème des activités et l'axe d'une zone vivent à part (`activityProfile.ts`, `axis.ts`) ;
+// ils restent lisibles d'ici, comme avant.
+export { isMountainActivity, profileFor } from './activityProfile';
+export { mainAxis } from './axis';
 
 export type AreaPlaceKind = 'city' | 'town' | 'village' | 'hamlet' | 'hut' | 'camp';
 
@@ -85,88 +93,6 @@ export interface ItineraryPlan {
   distinct: number;
 }
 
-interface Profile {
-  move: StageMove;
-  /** Distance du jour sur le terrain (km) : min, cible, max. */
-  dayKm: [number, number, number];
-  /** Vol d'oiseau ≈ terrain × ce coefficient (sentiers et routes serpentent). */
-  crow: number;
-  /** Préférence de nature de lieu (plus haut = mieux). */
-  prefer: Partial<Record<AreaPlaceKind, number>>;
-  itinerant: boolean;
-}
-
-const FOOT: Profile = {
-  move: 'marche',
-  dayKm: [10, 16, 22],
-  crow: 0.65,
-  prefer: { village: 3, hamlet: 2.5, hut: 2.5, town: 2, camp: 1.5, city: 0.5 },
-  itinerant: true,
-};
-// « mixed » (aucune activité dite) n'est pas ici : un séjour sans activité se
-// fait depuis une base (une ville, une région), jamais en randonnée d'étape en étape.
-const PROFILES: Record<string, Profile> = {
-  trekking: FOOT,
-  hiking: FOOT,
-  bivouac: { ...FOOT, prefer: { ...FOOT.prefer, camp: 3, hut: 3 } },
-  bushcraft: { ...FOOT, dayKm: [6, 10, 15] },
-  cycling: {
-    move: 'velo',
-    dayKm: [45, 70, 95],
-    crow: 0.75,
-    prefer: { town: 3, village: 2.5, city: 2, hamlet: 1 },
-    itinerant: true,
-  },
-  roadtrip: {
-    move: 'voiture',
-    dayKm: [120, 200, 280],
-    crow: 0.75,
-    prefer: { town: 3, city: 3, village: 1.5 },
-    itinerant: true,
-  },
-  vanlife: {
-    move: 'voiture',
-    dayKm: [80, 150, 230],
-    crow: 0.75,
-    prefer: { town: 2.5, village: 2.5, city: 1.5, camp: 3 },
-    itinerant: true,
-  },
-};
-const BASE: Profile = {
-  move: 'voiture',
-  dayKm: [100, 200, 300],
-  crow: 0.75,
-  prefer: { town: 3, city: 3, village: 2 },
-  itinerant: false,
-};
-/** Base dans un village (ski, escalade, alpinisme) plutôt qu'en ville. */
-const MOUNTAIN_BASE = new Set(['ski', 'climbing', 'mountaineering', 'trail', 'running']);
-
-/** Activité de montagne : l'altitude des lieux compte (base, hauteurs). */
-export function isMountainActivity(activity: string): boolean {
-  return MOUNTAIN_BASE.has(activity);
-}
-
-/** Bonus d'altitude d'une base de montagne : 0 sous 400 m, plafonné à 1 400 m. */
-function altitudeBonus(eleM: number | null): number {
-  return eleM == null ? 0 : Math.min(2, Math.max(0, (eleM - 400) / 500));
-}
-
-export function profileFor(activity: string): Profile {
-  const p = PROFILES[activity];
-  if (p) return p;
-  if (MOUNTAIN_BASE.has(activity)) return { ...BASE, prefer: { village: 3, town: 2.5, hamlet: 1.5, city: 1, hut: 1 } };
-  return BASE;
-}
-
-/** Jours passés au même endroit avant de changer de base (séjour sur place). */
-function baseStay(activity: string): number {
-  if (activity === 'citytrip' || activity === 'cultural') return 3;
-  if (activity === 'roadtrip' || activity === 'vanlife') return 2;
-  return 4;
-}
-
-const RANK: Record<AreaPlaceKind, number> = { city: 5, town: 4, village: 3, hamlet: 2, hut: 1, camp: 1 };
 
 function bearing(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
   const toRad = (d: number) => (d * Math.PI) / 180;
@@ -235,39 +161,6 @@ function best<T extends { id: string }>(list: T[], score: (t: T) => number): T |
     }
   }
   return top;
-}
-
-/** Axe principal de la zone (vers l'est par défaut) : direction d'une traversée. */
-export function mainAxis(points: ReadonlyArray<{ lat: number; lon: number }>): { lat: number; lon: number; dx: number; dy: number } {
-  const n = points.length || 1;
-  const lat0 = points.reduce((t, p) => t + p.lat, 0) / n;
-  const lon0 = meanLon(points.map((p) => p.lon));
-  const k = Math.cos((lat0 * Math.PI) / 180);
-  let sxx = 0;
-  let syy = 0;
-  let sxy = 0;
-  for (const p of points) {
-    const x = lonDelta(lon0, p.lon) * k;
-    const y = p.lat - lat0;
-    sxx += x * x;
-    syy += y * y;
-    sxy += x * y;
-  }
-  const theta = 0.5 * Math.atan2(2 * sxy, sxx - syy);
-  let dx = Math.cos(theta);
-  let dy = Math.sin(theta);
-  // Sens fixé (ouest → est, sinon sud → nord) : déterministe.
-  if (dx < -1e-9 || (Math.abs(dx) <= 1e-9 && dy < 0)) {
-    dx = -dx;
-    dy = -dy;
-  }
-  return { lat: lat0, lon: lon0, dx, dy };
-}
-
-function along(axis: ReturnType<typeof mainAxis>, p: { lat: number; lon: number }): number {
-  const k = Math.cos((axis.lat * Math.PI) / 180);
-  // En km (1° de latitude ≈ 111 km).
-  return (lonDelta(axis.lon, p.lon) * k * axis.dx + (p.lat - axis.lat) * axis.dy) * 111;
 }
 
 /** Longueur d'un ensemble de lieux le long de son axe principal (km). */
@@ -344,59 +237,76 @@ function kindScore(p: AreaPlace, prof: Profile, nights: string | null | undefine
   return s;
 }
 
-/** Base(s) d'un séjour : le meilleur lieu près du centre, ou plusieurs bases espacées sur un grand pays. */
+/**
+ * Séjour sur base(s). Un pays entier (rayon au-delà de `COUNTRY_SCALE_KM`) : plusieurs
+ * bases, une par groupe de jours, choisies parmi les lieux réels par `pickCountryBases`
+ * (notoriété, trajet raisonnable pour l'activité, sans retour en arrière). Sinon une
+ * seule base : le lieu dit par la personne, ou le meilleur lieu près du centre.
+ */
 function planBase(input: ItineraryInput, prof: Profile): PlannedStage[] {
-  const pool = input.places.filter((p) => p.kind !== 'camp' && p.kind !== 'hut');
-  const stay = baseStay(input.activity);
-  const count =
-    input.radiusKm > 150 && input.days >= stay * 2 ? Math.min(6, Math.ceil(input.days / stay)) : 1;
-  const bases: Array<{ name: string; lat: number; lon: number; id: string | null }> = [];
-  for (const w of input.waypoints ?? []) {
-    if (bases.length >= count) break;
-    bases.push({ name: w.name, lat: w.lat, lon: w.lon, id: null });
-  }
-  const spacing = Math.max(60, input.radiusKm / 3);
-  while (bases.length < count) {
-    const pick = best(pool, (p) => {
-      if (bases.some((b) => distanceKm(b, p) < spacing)) return -Infinity;
-      const fromCenter = distanceKm(input.center, p) / Math.max(1, input.radiusKm);
-      if (fromCenter > 1.1) return -Infinity;
-      // Une seule base : la plus proche du centre. Dans un grand lieu naturel, le
-      // centre de l'emprise ne dit rien (Dolomites : près de Belluno, en plaine) :
-      // il pèse moins, et en montagne l'altitude compte (Canazei, pas Brugnàch).
-      // Plusieurs bases : les lieux les plus importants.
-      if (count > 1) return RANK[p.kind] + Math.min(2, Math.log10(p.population ?? 1) / 3);
-      const mountain = MOUNTAIN_BASE.has(input.activity) ? altitudeBonus(p.eleM) : 0;
-      return kindScore(p, prof, input.nights) + mountain - (input.natural ? 1 : 3) * fromCenter;
+  if (input.radiusKm > COUNTRY_SCALE_KM) {
+    const multi = pickCountryBases({
+      places: input.places,
+      days: input.days,
+      activity: input.activity,
+      anchor: { lat: input.center.lat, lon: input.center.lon, radiusKm: input.radiusKm },
+      waypoints: input.waypoints,
     });
-    if (!pick) break;
-    bases.push({ name: pick.name, lat: pick.lat, lon: pick.lon, id: pick.id });
+    if (multi) return stagesOfBases(multi, prof);
   }
-  if (!bases.length) return [];
-  // Ordre le plus court entre les bases (plus proche voisin depuis la plus à l'ouest/sud de l'axe).
-  const axis = mainAxis(bases);
-  const ordered = [bases.reduce((a, b) => (along(axis, b) < along(axis, a) ? b : a))];
-  const rest = bases.filter((b) => b !== ordered[0]);
-  while (rest.length) {
-    const cur = ordered[ordered.length - 1];
-    rest.sort((a, b) => distanceKm(cur, a) - distanceKm(cur, b) || (a.name < b.name ? -1 : 1));
-    ordered.push(rest.shift()!);
-  }
-  const per = input.days / ordered.length;
-  return Array.from({ length: input.days }, (_, i) => {
-    const b = ordered[Math.min(ordered.length - 1, Math.floor(i / per))];
-    const prev = i > 0 ? ordered[Math.min(ordered.length - 1, Math.floor((i - 1) / per))] : null;
-    const moved = prev != null && prev !== b;
-    return {
-      day: i + 1,
-      name: b.name,
-      lat: b.lat,
-      lon: b.lon,
-      move: moved ? prof.move : 'aucun',
-      note: i === 0 ? (ordered.length > 1 ? 'Première base du séjour.' : 'Base du séjour.') : null,
-      placeId: b.id,
-    };
+  const pool = input.places.filter((p) => p.kind !== 'camp' && p.kind !== 'hut');
+  const wanted = input.waypoints?.[0];
+  const pick = wanted
+    ? null
+    : best(pool, (p) => {
+        const fromCenter = distanceKm(input.center, p) / Math.max(1, input.radiusKm);
+        if (fromCenter > 1.1) return -Infinity;
+        // La plus proche du centre. Dans un grand lieu naturel, le centre de
+        // l'emprise ne dit rien (Dolomites : près de Belluno, en plaine) : il
+        // pèse moins, et en montagne l'altitude compte (Canazei, pas Brugnàch).
+        const mountain = MOUNTAIN_BASE.has(input.activity) ? altitudeBonus(p.eleM) : 0;
+        return kindScore(p, prof, input.nights) + mountain - (input.natural ? 1 : 3) * fromCenter;
+      });
+  const base = wanted ? { name: wanted.name, lat: wanted.lat, lon: wanted.lon, id: null } : pick ? { name: pick.name, lat: pick.lat, lon: pick.lon, id: pick.id } : null;
+  if (!base) return [];
+  return Array.from({ length: input.days }, (_, i) => ({
+    day: i + 1,
+    name: base.name,
+    lat: base.lat,
+    lon: base.lon,
+    move: 'aucun' as StageMove,
+    note: i === 0 ? 'Base du séjour.' : null,
+    placeId: base.id,
+  }));
+}
+
+/** Les jours d'un séjour à bases multiples : un changement de base, dit, le premier jour de chaque base. */
+function stagesOfBases(plan: CountryBasesPlan, prof: Profile): PlannedStage[] {
+  // À pied ou à vélo, le trajet entre deux bases n'est ni une marche ni une étape de vélo : on le dit.
+  const byVehicle = prof.move === 'marche' || prof.move === 'velo' ? ' en véhicule' : '';
+  const stages: PlannedStage[] = [];
+  plan.bases.forEach((b, k) => {
+    for (let d = 0; d < b.days; d += 1) {
+      const first = d === 0;
+      stages.push({
+        day: stages.length + 1,
+        name: b.name,
+        lat: b.lat,
+        lon: b.lon,
+        move: first && k > 0 ? plan.move : 'aucun',
+        note:
+          first && k === 0
+            ? plan.bases.length > 1
+              ? 'Première base du séjour.'
+              : 'Base du séjour.'
+            : first
+              ? `Changement de base${byVehicle} (environ ${b.legKm} km à vol d’oiseau).`
+              : null,
+        placeId: b.placeId,
+      });
+    }
   });
+  return stages;
 }
 
 /** Itinéraire itinérant (trek, vélo, road trip) : un lieu réel par soir, choisi par calcul. */

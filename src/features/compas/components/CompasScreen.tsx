@@ -29,6 +29,8 @@ import type { CompasData } from '../server/getCompasData';
 import { KitCard, NousCard, OuCard, ResaCard, VerdictCard } from './CompasCards';
 import { CompasMap } from './CompasMap';
 import { CompasAccessory } from './CompasAccessory';
+import { DecisionCapsule } from './CompasDecision';
+import { planDecisionApply } from '../engine/decisionApply';
 import { ALL_LAYERS, parseLayers, type LayerState } from '../engine/mapLayers';
 import { poiLabel, type RoutePoi } from '../engine/routePois';
 import { mergeStagePois } from '../engine/stagePois';
@@ -767,6 +769,8 @@ export function CompasScreen({
   ctlRef.current = ctl;
 
   const decision = model.nextDecision;
+  // Ce que « Appliquer » ferait, calculé par le moteur ; null : la décision demande un choix, « Voir » seulement.
+  const decisionApply = useMemo(() => planDecisionApply(model, data.canEdit), [model, data.canEdit]);
   const followDecision = () => {
     if (!decision) return;
     const target = DECISION_FLOWS[decision.flow] ?? {
@@ -968,19 +972,15 @@ export function CompasScreen({
         }}
       >
         {decision && !mapBig && (
-          <button type="button" className="cp-decision cp-glass" onClick={followDecision}>
-            <span
-              className="cp-decision__i"
-              data-tone={model.verdict.level === 'bloque' ? 'bad' : undefined}
-            >
-              <Icon name="compass" size={17} />
-            </span>
-            <span className="cp-decision__t">
-              <b>{decision.label}</b>
-              <span>{decision.detail}</span>
-            </span>
-            <Icon name="chevron-right" size={14} />
-          </button>
+          <DecisionCapsule
+            ctl={ctl}
+            decision={decision}
+            apply={decisionApply}
+            blocked={model.verdict.level === 'bloque'}
+            withAccessory={model.route.stepsCount > 0 && layers.profil}
+            inert={stack.length > 0}
+            onView={followDecision}
+          />
         )}
         {model.route.stepsCount > 0 && layers.profil && (
           <CompasAccessory

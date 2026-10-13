@@ -333,6 +333,11 @@ const SPEED_KMH: Record<string, number> = {
 };
 const PER_DAY_KM: Record<Pace, number> = { tranquille: 12, normal: 16, soutenu: 22 };
 
+/** Vitesse moyenne type d'une activité (km/h, pauses comprises), null quand aucune n'est connue. */
+export function activitySpeedKmh(activity: string | null | undefined): number | null {
+  return activity != null && Object.hasOwn(SPEED_KMH, activity) ? SPEED_KMH[activity] : null;
+}
+
 /**
  * Distance que le projet appelle : la distance dite, sinon la durée × la
  * vitesse de l'activité (sortie), sinon jours × étape type selon rythme et

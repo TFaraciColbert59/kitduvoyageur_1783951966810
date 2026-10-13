@@ -2,6 +2,9 @@ import React from 'react';
 import ENTRY_DATA from '@/features/compas/data/entryRequirements.meta.json';
 import CURRENCIES_META from '@/features/compas/data/countryCurrencies.meta.json';
 import FUEL_META from '@/features/compas/data/fuelPrices.meta.json';
+import ICP_META from '@/features/compas/data/icpPriceLevels.meta.json';
+import { frenchDay } from '@/features/compas/engine/entry';
+import { tollSources } from '@/features/compas/engine/tolls';
 
 /**
  * Sources des données et licences (plan 5.3) : chaque service gratuit est
@@ -26,6 +29,17 @@ export interface DataSource {
 
 const CC_BY = 'https://creativecommons.org/licenses/by/4.0/';
 const GEOAPIFY = 'https://www.geoapify.com/';
+
+/**
+ * Les sources des péages et vignettes : prises dans la table elle-même (`engine/tolls.ts`), une fois chacune,
+ * avec le jour de lecture. Une source ajoutée à la table est créditée ici sans autre geste.
+ */
+const TOLL_PARTS: SourcePart[] = tollSources().flatMap((src, i): SourcePart[] => [
+  ...(i === 0 ? [] : [' ; ']),
+  `${src.name} : `,
+  ...src.refs.flatMap((ref, j): SourcePart[] => [...(j === 0 ? [] : [', ']), { text: ref.name, href: ref.url }]),
+  ` (lu le ${frenchDay(src.readOn) ?? src.readOn})`,
+]);
 
 export const DATA_SOURCES: DataSource[] = [
   {
@@ -145,6 +159,23 @@ export const DATA_SOURCES: DataSource[] = [
       ', Commission européenne (DG Énergie), licence ',
       { text: 'CC BY 4.0', href: CC_BY },
       ` ; prix du ${FUEL_META.pricesDate}, convertis en euros par litre et arrondis au millième. Hors de l’UE, aucune source gratuite : le prix est une estimation, dite comme telle.`,
+    ],
+  },
+  {
+    label: 'Péages et vignettes',
+    parts: [
+      'Tarifs officiels des vignettes (voiture) et des péages au kilomètre (barème moyen), à titre indicatif et à vérifier avant de partir : ',
+      ...TOLL_PARTS,
+      '. Un pays dont aucune source officielle n’a pu être lue reste « non chiffré », dit comme tel.',
+    ],
+  },
+  {
+    label: 'Niveaux de prix des repas',
+    parts: [
+      { text: 'The World Bank: ICP 2021', href: ICP_META.page },
+      ` (International Comparison Program), indice de niveau de prix (Monde = 100), série « Produits alimentaires et boissons non alcoolisées », année ${ICP_META.year}, mis à jour le ${frenchDay(ICP_META.lastUpdated) ?? ICP_META.lastUpdated}, lu le ${frenchDay(ICP_META.readOn) ?? ICP_META.readOn} (licence `,
+      { text: 'CC BY 4.0', href: ICP_META.licenceUrl },
+      '). Ramené à la France = 100 et arrondi par le Compas, pour les repas en autonomie ; les autres repas suivent le barème du Compas.',
     ],
   },
   {

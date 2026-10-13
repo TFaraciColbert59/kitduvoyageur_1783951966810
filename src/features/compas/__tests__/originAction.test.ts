@@ -320,6 +320,18 @@ describe('compasSetOriginAction', () => {
       expect((h.meta.compas as Record<string, unknown>).anchor).toMatchObject({ name: 'Vercors', lat: 45.19, lon: 5.72 });
     });
 
+    it('la destination garde l’étiquette OSM du lieu : Photon range une île sous « other », elle seule dit que c’en est une (plan 4.5)', async () => {
+      h.found = { Sardaigne: { ...at, name: 'Sardaigne', kind: 'other', landmark: true, osmTag: 'place=island', settlement: false, extent: [8.13, 41.31, 9.83, 38.86] } };
+      expect(await compasSetDestinationAction({ tripId: TRIP, tripSlug: 'x', place: 'Sardaigne' })).toEqual({ success: true });
+      expect((h.meta.compas as Record<string, unknown>).anchor).toMatchObject({ name: 'Sardaigne', kind: 'other', osmTag: 'place=island' });
+    });
+
+    it('un lieu sans étiquette OSM n’en range aucune (ancres d’avant comprises)', async () => {
+      h.found = { Annecy: { ...at, name: 'Annecy', kind: 'city', settlement: true } };
+      expect(await compasSetDestinationAction({ tripId: TRIP, tripSlug: 'x', place: 'Annecy' })).toEqual({ success: true });
+      expect((h.meta.compas as Record<string, unknown>).anchor).not.toHaveProperty('osmTag');
+    });
+
     it.each([
       ['sommet', { kind: 'other', landmark: true, osmTag: 'natural=peak' }],
       ['lac', { kind: 'water', landmark: true, osmTag: 'natural=water' }],

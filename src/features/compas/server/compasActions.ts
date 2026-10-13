@@ -167,6 +167,174 @@ export async function compasSetCarrierAction(
   }
 }
 
+/** Plus d'objets que n'en répartit un kit : au-delà, la demande est refusée. */
+const MAX_CARRIER_BATCH = 200;
+
+const carriersSchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  assignments: z
+    .array(z.object({ itemId: uuid, carrierId: uuid.nullable() }))
+    .min(1, 'Aucun objet à répartir')
+    .max(MAX_CARRIER_BATCH, 'Trop d’objets à répartir d’un coup')
+    .refine((list) => new Set(list.map((a) => a.itemId)).size === list.length, 'Un objet est en double'),
+  shared: z.boolean(),
+});
+
+/** Ce qui décide du porteur d'un objet : de quoi le remettre comme il était. */
+interface CarrierState {
+  id: string;
+  owner_id: string | null;
+  ownership: string | null;
+}
+
+/** Les ids regroupés par valeur de `key(id)` (ordre d'apparition conservé). */
+function groupIds<K>(ids: readonly string[], key: (id: string) => K): Map<K, string[]> {
+  const groups = new Map<K, string[]>();
+  for (const id of ids) {
+    const k = key(id);
+    groups.set(k, [...(groups.get(k) ?? []), id]);
+  }
+  return groups;
+}
+
+/**
+ * Remet les objets dans leur état d'avant. Une remise qui échoue n'arrête pas les autres (chaque groupe est
+ * tenté), et ce que la base n'a pas confirmé est RELU : un objet disparu, ou déjà dans son état d'avant
+ * (il n'avait pas été écrit), n'est pas « resté confié ». Rend les objets qui ont gardé leur nouveau porteur,
+ * et si la relecture a elle-même échoué (`verified: false`) tous ceux qu'on n'a pu confirmer.
+ */
+async function restoreCarriers(
+  supabase: Supa,
+  tripId: string,
+  states: readonly CarrierState[]
+): Promise<{ stuck: string[]; verified: boolean }> {
+  const byId = new Map(states.map((r) => [r.id, r]));
+  const unconfirmed: string[] = [];
+  const groups = groupIds([...byId.keys()], (id) => `${byId.get(id)?.owner_id ?? ''}|${byId.get(id)?.ownership ?? ''}`);
+  for (const ids of groups.values()) {
+    const before = byId.get(ids[0]) as CarrierState;
+    try {
+      const { data, error } = await supabase
+        .from('trip_items')
+        .update({ owner_id: before.owner_id, ownership: before.ownership, updated_at: new Date().toISOString() })
+        .eq('trip_id', tripId)
+        .in('id', ids)
+        .select('id');
+      const back = new Set(((error ? [] : data) ?? []).map((r: { id: string }) => r.id));
+      for (const id of ids) if (!back.has(id)) unconfirmed.push(id);
+    } catch (err) {
+      await reportServerError('compas.compasSetCarriersAction.restore', err);
+      unconfirmed.push(...ids);
+    }
+  }
+  if (unconfirmed.length === 0) return { stuck: [], verified: true };
+  try {
+    const { data, error } = await supabase
+      .from('trip_items')
+      .select('id, owner_id, ownership')
+      .eq('trip_id', tripId)
+      .in('id', unconfirmed);
+    if (error) return { stuck: unconfirmed, verified: false };
+    const now = new Map(((data ?? []) as CarrierState[]).map((r) => [r.id, r]));
+    const stuck = unconfirmed.filter((id) => {
+      const row = now.get(id);
+      const was = byId.get(id) as CarrierState;
+      return row != null && ((row.owner_id ?? null) !== (was.owner_id ?? null) || (row.ownership ?? null) !== (was.ownership ?? null));
+    });
+    return { stuck, verified: true };
+  } catch (err) {
+    await reportServerError('compas.compasSetCarriersAction.verify', err);
+    return { stuck: unconfirmed, verified: false };
+  }
+}
+
+/**
+ * Porteurs de plusieurs objets d'un coup (« Répartir le matériel commun »). Tout ou rien : la
+ * répartition entière arrive en UNE demande et s'écrit en entier, ou ne change rien. Mêmes garde-fous
+ * que `compasSetCarrierAction` (zod, session, droit d'édition, RLS, 0 ligne = échec). L'état d'avant
+ * de chaque objet est lu d'abord ; si une écriture échoue ou en touche moins que prévu, ce qui vient
+ * d'être écrit est remis tel qu'il était, et la remise est vérifiée ligne par ligne. Si elle échoue à
+ * son tour, la réponse le DIT (combien d'objets ont gardé leur nouveau porteur) au lieu de promettre un
+ * retour arrière.
+ */
+export async function compasSetCarriersAction(
+  input: z.input<typeof carriersSchema>
+): Promise<CompasActionResult> {
+  const parsed = carriersSchema.safeParse(input);
+  if (!parsed.success)
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Requête invalide' };
+  const { tripId, assignments, shared } = parsed.data;
+  /** Ce qui est écrit à coup sûr (la base l'a rendu), avec l'état d'avant : de quoi tout remettre. */
+  const written: CarrierState[] = [];
+  /**
+   * L'écriture en vol : peut-être faite, peut-être pas. Une erreur rendue par PostgREST ou une coupure ne
+   * disent pas si la base a écrit avant (réponse perdue) ; le groupe courant est donc remis lui aussi. La
+   * remise est idempotente : un objet qui n'a pas bougé reprend l'état qu'il avait.
+   */
+  let inFlight: CarrierState[] = [];
+  let supabase: Supa | null = null;
+  /** Échec : ce qui a été écrit (ou a pu l'être) est remis et vérifié ; la réponse dit la vérité si la remise échoue. */
+  const fail = async (message: string): Promise<CompasActionResult> => {
+    const toRestore = [...written, ...inFlight];
+    if (!supabase || toRestore.length === 0) return { success: false, error: message };
+    const { stuck, verified } = await restoreCarriers(supabase, tripId, toRestore);
+    if (stuck.length === 0) return { success: false, error: message };
+    await reportServerError(
+      'compas.compasSetCarriersAction.stuck',
+      new Error(`${stuck.length} objet(s) non remis : ${stuck.join(',')}`)
+    );
+    const many = stuck.length > 1;
+    return {
+      success: false,
+      error: `La répartition a échoué et n’a pas pu être entièrement annulée : ${stuck.length} objet${many ? 's ont' : ' a'} ${verified ? 'gardé' : 'pu garder'} ${many ? 'leur' : 'son'} nouveau porteur. Vérifie le kit.`,
+    };
+  };
+  try {
+    const auth = await requireEditor(tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? 'Accès refusé' };
+    supabase = auth.supabase;
+    const carriers = [...new Set(assignments.map((a) => a.carrierId).filter((c): c is string => c != null))];
+    if (carriers.length) {
+      const people = await tripPeople(auth.supabase, auth.trip);
+      if (carriers.some((c) => !people.has(c)))
+        return { success: false, error: 'Cette personne ne fait pas partie du voyage.' };
+    }
+    // L'état d'avant de CHAQUE objet, lu avant la première écriture : un objet absent du voyage (ou caché
+    // par la RLS) arrête tout, sans rien avoir écrit.
+    const ids = assignments.map((a) => a.itemId);
+    const { data: current, error: readError } = await auth.supabase
+      .from('trip_items')
+      .select('id, owner_id, ownership')
+      .eq('trip_id', tripId)
+      .in('id', ids);
+    const before = new Map(((current ?? []) as CarrierState[]).map((r) => [r.id, r]));
+    if (readError || before.size !== ids.length) return { success: false, error: 'Impossible de changer le porteur.' };
+    const target = new Map(assignments.map((a) => [a.itemId, a.carrierId]));
+    // Une écriture par porteur : tous ses objets en une seule requête.
+    for (const [carrierId, group] of groupIds(ids, (id) => target.get(id) ?? null)) {
+      inFlight = group.map((id) => before.get(id) as CarrierState);
+      const { data, error } = await auth.supabase
+        .from('trip_items')
+        .update({ owner_id: carrierId, ownership: shared ? 'shared' : 'personal', updated_at: new Date().toISOString() })
+        .eq('trip_id', tripId)
+        .in('id', group)
+        .select('id');
+      // Les lignes que la base dit avoir touchées sont notées AVANT de juger : une écriture partielle se remet
+      // aussi. Sur une erreur, `touched` est vide mais le groupe reste « en vol » (réponse peut-être perdue).
+      const touched = ((error ? [] : data) ?? []) as Array<{ id: string }>;
+      for (const row of touched) written.push(before.get(row.id) as CarrierState);
+      if (error || touched.length !== group.length) return await fail('Impossible de changer le porteur.');
+      inFlight = [];
+    }
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasSetCarriersAction', err);
+    return await fail('Erreur serveur');
+  }
+}
+
 /* ---------- Boutique ---------- */
 
 async function loadActiveProduct(
@@ -663,6 +831,8 @@ export async function compasSetDestinationAction(
             country: place.country,
             kind: place.kind,
             extent: place.extent,
+            // L'étiquette OSM (« place=island ») : Photon range une île sous « other », elle seule dit que c'en est une.
+            ...(place.osmTag ? { osmTag: place.osmTag.slice(0, 80) } : {}),
           };
         else delete c.anchor;
         return { ...m, compas: c };
