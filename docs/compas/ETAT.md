@@ -4,7 +4,7 @@
 > kit / budget / conseils → résultat final. Rien de P3 tant que P0/P1 ne passent pas P2.
 > « Fait » = prouvé de bout en bout sur la preview et contrôlé en base, pas « le code compile ».
 
-Mis à jour : 10 octobre 2026. **En production** (koosmoweb.fr) : lot A (PR #76,
+Mis à jour : 13 octobre 2026. **En production** (koosmoweb.fr) : lot A (PR #76,
 sécurité), lot B (PR #77, clés gratuites), lot C (PR #78, `195a47f` : rapport quotidien,
 sauvegarde, purges), lot D (PR #79, `153ddfc` : routage Geoapify puis Valhalla, estimation
 annoncée, OSRM démo et BRouter retirés), lots E et F (PR #80, `f5b5ac9` : référentiel des
@@ -71,6 +71,18 @@ Lot Z2 : légal 5.3 : mention IA (démarrage, étapes `aiProposed`, conseils, ve
 Lot Z3 : infra à 0 € : 1 cron Vercel quotidien (`/api/cron/daily`, 03:00 UTC) enchaîne 13 des 16 routes cron (rotation quotidienne hors vie privée, rien de concurrent après un délai dépassé ; `finalize-kit-attributions` à la main) ; suivi de préparation à intervalle croissant (plus de rafraîchissement fixe toutes les 4 s) ; `maxDuration` ≤ 300 gardé par test. **ACTIF seulement quand Tony crée `CRON_SECRET` dans Vercel (absent le 12 oct. : la route répond 401).** Migration `20261012100000_adventure_events_claim_lease.sql` (bail de 15 min sur la file d'événements RGPD, `consent.revoked` d'abord) à passer par Tony dans l'éditeur SQL.
 
 Lot Z4 : hygiène : CSS sombre du Compas retiré, 3 fichiers formatés, tests d'autorisation réels de `requireEditor` (34 tests ; la RLS est portée à la main, pgTAP reste à faire). Mesure eslint : 45 erreurs, 8 699 avertissements : `ignoreDuringBuilds` inchangé.
+
+PR #92 (lot R2) **fusionnée le 13 oct.** (`2cf3aa31`) après quatre relectures Codex traitées (îles validées contre leur contour, tarif de vignette hors période refusé, heures de passage notées gardées, fuseau par jour, répartition du matériel en une demande tout ou rien) ; deux constats P2 restants (candidats de l'IA hors contour, anciennes ancres sans `osmTag`) traités dans la PR #93.
+
+Vague 1 (PR #93, branche `claude/pr88-parallel-batches-lzhet2`, menée par sous-agents en worktrees, contrôlée et intégrée lot par lot) :
+- Lot AA : Nominatim public retiré du trafic (un seul client `nominatimJson`, LocationIQ avec la clé) ; Overpass private.coffee seul, une requête à la fois dans tout le site ; base d'un séjour sans lieu dit = la commune (`positionBase`).
+- Lot AB : pgTAP du Compas (154 assertions) ; `database-gates` autonome sur PostgreSQL 17 jetable, **vert sur GitHub le 13 oct.** ; E2E Compas hermétique (`e2e-compas` : Où → Préparer → résultat, vraie RLS, tiers rejoués). Les deux ne sont pas encore requis pour fusionner.
+- Lot AC : prises, tension et fréquence de 228 pays (Wikipédia, CC BY-SA) ; « Courant » et « Change » à la lecture selon la résidence du lecteur ; péages ES (SEITT, BOE) ; « par personne » multiplié par le groupe ; « quelques jours » = au moins 2, à préciser.
+- Lot AD : membres en lecture, Emprunter · Louer · Acheter, fiche et historique d'un objet, carte (pastilles, encart, fonds ArcGIS), mise en page dès 768 px (captures dans `preuves/`).
+- Lot AE : garder son essai en liant un e-mail (interrupteur `NEXT_PUBLIC_KEEP_TRIAL`, éteint) ; plafond IA du site par jour et compteurs illisibles = IA coupée en production ; rapports CSP collectés (`/api/csp-report`, migration appliquée en production le 13 oct.).
+- Lot AF : mot de passe oublié réparé (le lien menait à une page qui n'échangeait pas le code) ; onglet « Qui » en lecture, renvoi `/hub/groupe`.
+- Lot AG : import des refuges, cabanes, campings et points d'eau prêt (`geo_pois`, Overpass par tuiles, mesure : ≤ 24 Mo pour Alpes et France), **rien en base** tant que `places_geo` n'est pas retiré.
+- Base (13 oct.) : 431 Mo ; bail des événements RGPD et collecte CSP appliqués ; `search_path` de `legacy_loyalty_level_for` verrouillé ; conseiller Supabase relu (rien de nouveau). **En attente de Tony** : purges planifiées (`20261008190000`, corrigée) et retrait de `places_geo` (−232 Mo) dans le SQL Editor, le connecteur demandant une confirmation qu'il n'affiche pas.
 
 **À faire par Tony** (rien d'autre ne bloque) :
 1. SQL Editor : `supabase/migrations/20261008190000_base_scheduled_purges.sql` (purges
