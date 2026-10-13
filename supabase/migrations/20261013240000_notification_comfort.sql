@@ -90,9 +90,3 @@ DROP TRIGGER IF EXISTS notifications_group_repetitive ON public.notifications;
 CREATE TRIGGER notifications_group_repetitive
   BEFORE INSERT ON public.notifications
   FOR EACH ROW EXECUTE FUNCTION public.group_repetitive_notifications();
-
--- Hygiène des droits (règle A-214, `anon_grants_hardening` test 1) : une fonction de trigger
--- n'est jamais exécutable directement ; elle gardait l'EXECUTE par défaut de PUBLIC (donc
--- d'anon). Un trigger s'exécute sous le rôle propriétaire : rien ne change à son déclenchement.
--- Ajouté le 13 oct. avant toute application en production (version absente du registre).
-REVOKE ALL ON FUNCTION public.group_repetitive_notifications() FROM PUBLIC, anon, authenticated;

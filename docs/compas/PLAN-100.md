@@ -716,7 +716,7 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 
 - [~] OSM `tourism=alpine_hut/wilderness_hut/camp_site`, `amenity=drinking_water`,
       import par pays (Overpass hors Vercel, en série, une fois par mois). **Lot AG (prêt, rien en base)** :
-      table `geo_pois` (migration `20261014090000_geo_pois.sql`, lecture serveur seule), script
+      table `geo_pois` (migration `20261014093000_geo_pois.sql`, lecture serveur seule), script
       `scripts/geo/import_geo_pois.ts` (Overpass private.coffee par tuiles, en série, upsert idempotent,
       `--dry-run`) : refuges, cabanes, campings, abris de montagne, eau potable, sources (OSM, ODbL). Mesuré
       sur un quart du Vercors : 1 250 lignes, 0,25 Mo (210 octets par ligne) ; Alpes ≤ 72 000 lignes
