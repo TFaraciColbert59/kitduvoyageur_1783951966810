@@ -43,6 +43,15 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
 
   const loadStories = useCallback(async () => {
     const supabase = createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      // Visiteur : le rail affiche uniquement l'invitation à se connecter.
+      setStories([]);
+      return;
+    }
+
     const { data, error } = await supabase
       .from('post_stories')
       .select('id, author_id, image_url, caption, created_at')
