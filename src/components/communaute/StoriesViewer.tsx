@@ -9,6 +9,10 @@ export interface StorySlide {
   image: string;
   caption?: string;
   storyId?: string;
+  /** Stories V2 : type de média (défaut image). */
+  mediaType?: 'image' | 'video';
+  /** Durée annoncée (vidéo) — la progression réelle utilise le média. */
+  durationMs?: number;
 }
 
 export interface StoryUser {
@@ -27,10 +31,18 @@ const TAP_MS = 350;
 /**
  * Visionneur de stories plein écran, gestes façon Instagram :
  * - tape à gauche/droite = story précédente/suivante
- * - swipe horizontal = navigation
- * - swipe vers le bas = fermeture (le contenu suit le doigt)
- * - maintien = pause de l'avance automatique
- * - Échap / flèches clavier = fermer / naviguer
+ * - swipe horizontal = navigation ; swipe vers le bas = fermeture
+ * - maintien = pause ; Espace = pause/lecture ; Échap = fermer
+ *
+ * Fiabilité (Stories V2, phase 02) :
+ * - un seul arbitre d'avancement (`advancingRef`) : fin de vidéo et timer ne
+ *   peuvent pas déclencher deux passages ;
+ * - progression pilotée par requestAnimationFrame (photos) et timeupdate
+ *   (vidéos) : le mode « réduire les animations » n'empêche plus la lecture ;
+ * - pause automatique : maintien, Espace, onglet masqué, buffering, erreur
+ *   média, overlay de reprise ; reprise au même point ;
+ * - média cassé → « Média indisponible » + Ignorer (jamais d'écran blanc) ;
+ * - vidéo : playsinline, muet au démarrage (préférence session), bouton son.
  */
 export default function StoriesViewer({
   users,
@@ -52,17 +64,29 @@ export default function StoriesViewer({
   const [userIndex, setUserIndex] = useState(startUser);
   const [slideIndex, setSlideIndex] = useState(0);
   const [holding, setHolding] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  const [hiddenTab, setHiddenTab] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [buffering, setBuffering] = useState(false);
+  const [mediaError, setMediaError] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const [needsTap, setNeedsTap] = useState(false);
   const [dragY, setDragY] = useState(0);
   const [dragOpacity, setDragOpacity] = useState(1);
   const dragRef = useRef({ active: false, startX: 0, startY: 0, startT: 0 });
   const viewerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const progressRef = useRef(0);
+  const advancingRef = useRef(false);
 
   const user = users[userIndex];
   const slide = user?.slides[slideIndex];
+  const isVideo = slide?.mediaType === 'video';
+  const paused = holding || pinned || hiddenTab || mediaError || needsTap;
 
   const next = useCallback(() => {
-    if (!users.length) return;
+    if (!users.length || advancingRef.current) return;
+    advancingRef.current = true;
     if (slideIndex < user.slides.length - 1) {
       setSlideIndex((i) => i + 1);
     } else if (userIndex < users.length - 1) {
@@ -83,19 +107,25 @@ export default function StoriesViewer({
     }
   }, [slideIndex, userIndex, users]);
 
-  /* Clavier + verrou du scroll du fond + préférence de mouvement */
+  /* Clavier + onglet masqué + verrou du scroll du fond */
   useEffect(() => {
-    setReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
       else if (e.key === 'ArrowRight') next();
       else if (e.key === 'ArrowLeft') prev();
+      else if (e.key === ' ') {
+        e.preventDefault();
+        setPinned((p) => !p);
+      }
     };
+    const onVis = () => setHiddenTab(document.hidden);
     window.addEventListener('keydown', onKey);
+    document.addEventListener('visibilitychange', onVis);
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       window.removeEventListener('keydown', onKey);
+      document.removeEventListener('visibilitychange', onVis);
       document.body.style.overflow = prevOverflow;
     };
   }, [next, prev, onClose]);
@@ -106,6 +136,79 @@ export default function StoriesViewer({
     viewerRef.current?.focus();
     return () => previous?.focus?.();
   }, []);
+
+  /* Réinitialisation progression + verrou à chaque slide */
+  useEffect(() => {
+    advancingRef.current = false;
+    progressRef.current = 0;
+    setProgress(0);
+    setMediaError(false);
+    setBuffering(false);
+    setNeedsTap(false);
+  }, [userIndex, slideIndex]);
+
+  /* Photo : progression requestAnimationFrame (pausable au point exact) */
+  useEffect(() => {
+    if (!slide || isVideo || paused) return;
+    let raf = 0;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = now - last;
+      last = now;
+      const value = Math.min(1, progressRef.current + dt / STORY_DURATION_MS);
+      progressRef.current = value;
+      setProgress(value);
+      if (value >= 1) {
+        next();
+        return;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [slide, isVideo, paused, next, userIndex, slideIndex]);
+
+  /* Vidéo : lecture/pause selon l'état (autoplay refusé → bouton de reprise) */
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !isVideo) return;
+    if (paused) {
+      video.pause();
+    } else {
+      video.play().catch(() => setNeedsTap(true));
+    }
+  }, [paused, isVideo, userIndex, slideIndex]);
+
+  /* Préférence de son (session uniquement, jamais de surprise sonore) */
+  useEffect(() => {
+    try {
+      setMuted(sessionStorage.getItem('lkv.stories.muted') !== '0');
+    } catch {
+      /* sessionStorage indisponible */
+    }
+  }, []);
+  const toggleMute = () => {
+    const nextMuted = !muted;
+    setMuted(nextMuted);
+    try {
+      sessionStorage.setItem('lkv.stories.muted', nextMuted ? '1' : '0');
+    } catch {
+      /* ignoré */
+    }
+  };
+
+  /* Préchargement de la prochaine image (jamais les vidéos) */
+  useEffect(() => {
+    if (!user) return;
+    const nextSlide =
+      slideIndex < user.slides.length - 1
+        ? user.slides[slideIndex + 1]
+        : users[userIndex + 1]?.slides[0];
+    if (nextSlide && nextSlide.mediaType !== 'video') {
+      const img = new Image();
+      img.src = nextSlide.image;
+    }
+  }, [user, slideIndex, userIndex, users]);
 
   const handleTabTrap = (event: React.KeyboardEvent) => {
     if (event.key !== 'Tab') return;
@@ -193,13 +296,42 @@ export default function StoriesViewer({
       }}
     >
       <div className="absolute inset-0" style={{ transform: `translateY(${dragY}px)` }}>
-        <img
-          key={`${userIndex}-${slideIndex}`}
-          src={slide.image}
-          alt={`Story de ${user.name}`}
-          draggable={false}
-          className="h-full w-full object-cover"
-        />
+        {isVideo ? (
+          <video
+            key={`${userIndex}-${slideIndex}`}
+            ref={videoRef}
+            src={slide.image}
+            playsInline
+            muted={muted}
+            autoPlay
+            preload="auto"
+            className="h-full w-full object-cover"
+            onTimeUpdate={(e) => {
+              const v = e.currentTarget;
+              if (v.duration > 0) {
+                const value = Math.min(1, v.currentTime / v.duration);
+                progressRef.current = value;
+                setProgress(value);
+              }
+            }}
+            onWaiting={() => setBuffering(true)}
+            onPlaying={() => {
+              setBuffering(false);
+              setNeedsTap(false);
+            }}
+            onEnded={next}
+            onError={() => setMediaError(true)}
+          />
+        ) : (
+          <img
+            key={`${userIndex}-${slideIndex}`}
+            src={slide.image}
+            alt={`Story de ${user.name}`}
+            draggable={false}
+            className="h-full w-full object-cover"
+            onError={() => setMediaError(true)}
+          />
+        )}
 
         {/* Voiles de lisibilité */}
         <div
@@ -221,16 +353,12 @@ export default function StoriesViewer({
               key={`${userIndex}-${i}`}
               className="relative h-[3px] flex-1 overflow-hidden rounded-full bg-white/30"
             >
-              {i === slideIndex && !reducedMotion && (
+              {i < slideIndex && <span className="absolute inset-y-0 left-0 w-full bg-white" />}
+              {i === slideIndex && (
                 <span
-                  key={`fill-${userIndex}-${slideIndex}`}
-                  className="lkv-story-progress-fill absolute inset-y-0 left-0 w-full origin-left bg-white"
-                  style={{ animationPlayState: holding ? 'paused' : 'running' }}
-                  onAnimationEnd={next}
+                  className="absolute inset-y-0 left-0 bg-white"
+                  style={{ width: `${Math.round(progress * 100)}%` }}
                 />
-              )}
-              {i < slideIndex && (
-                <span className="absolute inset-y-0 left-0 w-full bg-white" />
               )}
             </span>
           ))}
@@ -324,9 +452,73 @@ export default function StoriesViewer({
           </span>
         </div>
 
+        {/* Buffering vidéo : pastille discrète, la progression est gelée par
+            l'absence de timeupdate. */}
+        {isVideo && buffering && !mediaError && (
+          <span
+            className="absolute left-1/2 top-1/2 z-[var(--z-sticky)] flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 animate-pulse items-center justify-center rounded-full bg-black/50 text-[length:var(--lkv-text-caption-2)] text-white backdrop-blur-md"
+            aria-live="polite"
+          >
+            …
+          </span>
+        )}
+
+        {/* Autoplay refusé : reprise explicite au tap */}
+        {needsTap && !mediaError && (
+          <button
+            type="button"
+            aria-label="Lancer la lecture"
+            className="absolute inset-0 z-[var(--z-sticky)] flex items-center justify-center bg-black/40"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              setNeedsTap(false);
+            }}
+          >
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20 backdrop-blur-md">
+              <Icon name="play" size={28} color="var(--lkv-text-inverted)" />
+            </span>
+          </button>
+        )}
+
+        {/* Média cassé : jamais d'écran blanc */}
+        {mediaError && (
+          <div className="absolute inset-0 z-[var(--z-sticky)] flex flex-col items-center justify-center gap-[var(--space-3)] bg-black/75 p-[var(--space-6)] text-center">
+            <Icon name="image-off" size={28} color="var(--lkv-text-inverted)" />
+            <p className="text-[length:var(--lkv-text-body-sm)] text-white">Média indisponible</p>
+            <button
+              type="button"
+              className="rounded-full bg-white/15 px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-semibold text-white backdrop-blur-md"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                next();
+              }}
+            >
+              Ignorer
+            </button>
+          </div>
+        )}
+
+        {/* Son (vidéo uniquement) — jamais de surprise sonore */}
+        {isVideo && !mediaError && (
+          <button
+            type="button"
+            aria-label={muted ? 'Activer le son' : 'Couper le son'}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleMute();
+            }}
+            className="absolute bottom-[max(var(--space-8),calc(var(--safe-bottom)+var(--space-6)))] right-[var(--space-4)] z-[var(--z-sticky)] flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md"
+          >
+            <Icon name={muted ? 'volume-x' : 'volume-2'} size={18} color="var(--lkv-text-inverted)" />
+          </button>
+        )}
+
         {/* Légende */}
         {slide.caption && (
-          <p className="absolute inset-x-0 bottom-0 z-[var(--z-sticky)] px-[var(--space-4)] pb-[max(var(--space-8),calc(var(--safe-bottom)+var(--space-6)))] text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-snug)] text-white">
+          <p className="absolute inset-x-0 bottom-0 z-[var(--z-sticky)] px-[var(--space-4)] pb-[max(var(--space-8),calc(var(--safe-bottom)+var(--space-6)))] pr-[64px] text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-snug)] text-white">
             <strong>{user.name}</strong> {slide.caption}
           </p>
         )}
