@@ -30,14 +30,15 @@ Légende : `[x]` fait (preuve) · `[ ]` à faire · `[~]` en cours · `🔒` blo
 | Données (référentiel géographique) | 46 % (6/13) | 100 % | 3 |
 | Moteur (itinéraire, budget, papiers, kit, temps) | 75 % (27/36) | 100 % | 4 |
 | Interface, accessibilité, légal (français) | 86 % (24/28) | 100 % | 5 |
-| Monde (langues, formats, voyageur non français) | 0 % (0/12) | 100 % | 6 |
+| Monde (langues, formats, voyageur non français) | gelé (⚖️ Tony, 13 oct.) | — | 6 |
 | Validation et lancement | 0 % (0/8) | 100 % | 7 |
 | Après stabilisation (P3) | — | 100 % | 8 |
 | Dette et hygiène | 33 % (2/6) | 100 % | 9 |
 
 Mesuré le 13 octobre : cases cochées avec preuve sur cases du volet (une grande case compte comme une
-petite). **Global : 64 %** (125/194, hors phase 0 faite et phase 8 gelée) ; 72 % en comptant pour moitié
-les cases en cours. Le 8 octobre, ce tableau donnait des estimations, pas des comptes.
+petite). **Global : 69 %** (125/182, hors phase 0 faite et phases 6 et 8 gelées) ; 77 % en comptant
+pour moitié les cases en cours. Avant le gel de la phase 6 (autres langues, décision de Tony du 13 oct.) :
+64 % (125/194). Le 8 octobre, ce tableau donnait des estimations, pas des comptes.
 
 **100 % veut dire** : chaque case de ce fichier est cochée avec sa preuve, la phase 7
 passe (jeux de validation en production, contrôlés en base) et aucun constat
@@ -1314,6 +1315,10 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 ---
 
 ## Phase 6 — Monde (langues, formats, voyageur non français)
+
+> ⚖️ **Gelée le 13 octobre (décision de Tony : « oublie les autres langues pour l'instant »).**
+> Rien de cette phase n'est commencé ; elle ne compte plus dans le tableau de bord. Le lancement
+> francophone (phase 7) ne l'attend pas ; le lancement mondial, si.
 
 ### 6.1 Langues de l'interface
 
