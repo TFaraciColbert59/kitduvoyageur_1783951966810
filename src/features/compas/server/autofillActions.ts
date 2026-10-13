@@ -21,7 +21,7 @@ import { haversineKm } from '@/features/adventure-prep/engine/routing';
 import { generateTripContextualKit } from '@/features/trips/engine/contextualKitEngine';
 import type { TripItem } from '@/features/trips/types/trip.types';
 import { acclimatisationNote, checkSleepingProfile, sleepNightsOf } from '../engine/acclimatisation';
-import { lonOrFilter, splitLonRange } from '../engine/longitude';
+import { lonDelta, lonOrFilter, splitLonRange } from '../engine/longitude';
 import { readCompasMeta } from '../engine/meta';
 import {
   NIGHT_LABEL,
@@ -507,6 +507,71 @@ async function islandMassif(opts: {
   };
 }
 
+/** Un voyage « de X à Y » à pied ou à vélo, si le départ dit est à portée des jours du voyage. */
+function pointToPointRide(opts: {
+  origin: { name: string; lat: number; lon: number } | null;
+  anchor: Anchor;
+  activity: string;
+  days: number;
+  wishes: string[];
+}): { origin: { name: string; lat: number; lon: number }; km: number } | null {
+  const { origin, anchor, activity, days } = opts;
+  if (!origin || days < 2 || !opts.wishes.some((w) => /^de\s.+\s(?:à|a|jusqu['’]à)\s.+$/i.test(w.trim()))) return null;
+  const prof = profileFor(activity);
+  if (prof.move !== 'marche' && prof.move !== 'velo') return null;
+  const km = distanceKm(origin, anchor);
+  // Assez loin pour être un voyage, assez près pour les jours dits (journée la plus longue du barème).
+  if (km < 15 || km > days * prof.dayKm[2] * prof.crow * 1.1) return null;
+  return { origin, km };
+}
+
+/**
+ * D'un lieu dit à la destination (« traversée des Alpes à vélo de Genève à Nice ») : la zone couvre
+ * les deux, l'itinéraire part du premier et finit au second, à des journées qui y mènent le dernier
+ * soir (13 oct. : la traversée partait de Menton vers l'est, sans jamais passer par Genève).
+ */
+async function pointToPointStages(opts: {
+  origin: { name: string; lat: number; lon: number };
+  km: number;
+  anchor: Anchor;
+  activity: string;
+  days: number;
+  nights: string | null;
+  terrain: string | null;
+  deadline: number;
+}): Promise<{ stages: StagePlace[]; note: string } | { fallback: string }> {
+  const { origin, anchor, activity, days, km } = opts;
+  const prof = profileFor(activity);
+  const center = { lat: (origin.lat + anchor.lat) / 2, lon: origin.lon + lonDelta(origin.lon, anchor.lon) / 2 };
+  const radiusKm = Math.round(km / 2 + 25);
+  const diag: string[] = [];
+  const found = await lookupAreaPlaces({ center, radiusKm, activity }, opts.deadline, diag);
+  if (!found) return { fallback: `lieux entre les deux indisponibles${diag.length ? ` : ${diag.join(', ')}` : ''}` };
+  // Frontières traversées (Genève → Nice) : tous les lieux de la zone restent.
+  let places = found;
+  if ((prof.move === 'marche' || (prof.move === 'velo' && opts.terrain === 'montagne')) && places.length <= 3000)
+    places = keepHighlands(await withReliefElevations(places));
+  // La journée qui arrive le dernier soir, dans les bornes du barème de l'activité.
+  const perDay = Math.min(prof.dayKm[2], Math.max(prof.dayKm[0] * 0.5, km / prof.crow / days));
+  const plan = planItinerary({
+    days,
+    activity,
+    center,
+    radiusKm,
+    places,
+    shape: 'traverse',
+    startAt: origin,
+    endAt: { name: anchor.name, lat: anchor.lat, lon: anchor.lon },
+    targetKmPerDay: Math.round(perDay),
+    nights: opts.nights,
+  });
+  if (!plan) return { fallback: `trop peu de lieux où dormir entre ${origin.name} et ${anchor.name} (${places.length} trouvés)` };
+  return {
+    stages: plan.stages.map((st) => ({ day: st.day, name: st.name, lat: st.lat, lon: st.lon, move: st.move, note: st.note })),
+    note: `Itinéraire de ${origin.name} à ${anchor.name} construit sur des lieux réels de la carte (${plan.distinct} lieu${plan.distinct > 1 ? 'x' : ''} où dormir, environ ${Math.round(perDay)} km par jour).`,
+  };
+}
+
 /**
  * Itinéraire déterministe : lieux RÉELS de la zone (OpenStreetMap) choisis par
  * calcul (distance du jour selon l'activité, forme, altitude). `wide` quand la
@@ -525,6 +590,8 @@ async function plannedStages(opts: {
   pace?: string | null;
   /** Terrain dit : « montagne » à vélo (VTT) garde les hauteurs et des journées courtes. */
   terrain?: string | null;
+  /** Lieu de départ dit (« de Genève à Nice ») : départ de l'itinéraire si la forme « de X à Y » est voulue. */
+  origin?: { name: string; lat: number; lon: number } | null;
   deadline: number;
   /** Notes du préremplissage : un repli y est dit (descente de rivière impossible). */
   notes?: string[];
@@ -558,6 +625,13 @@ async function plannedStages(opts: {
         !line ? `tracé de « ${anchor.name} » introuvable sur la carte` : !near ? 'aucun lieu trouvé le long du tronçon' : 'aucun village au bord de l’eau sur le tronçon'
       }) : séjour sur l’eau depuis une base.`
     );
+  }
+  // « de Genève à Nice », « de Chamonix à Zermatt » : à pied ou à vélo, d'un lieu dit à la destination.
+  const ride = pointToPointRide({ origin: opts.origin ?? null, anchor, activity, days, wishes: opts.wishes });
+  if (ride) {
+    const done = await pointToPointStages({ ...ride, anchor, activity, days, nights: opts.nights, terrain: opts.terrain ?? null, deadline: opts.deadline });
+    if ('stages' in done) return done;
+    opts.notes?.push(`Itinéraire de ${ride.origin.name} à ${anchor.name} impossible (${done.fallback}) : préparé autour de ${anchor.name}.`);
   }
   // Grande île (Sardaigne, Corse, Crète, Sicile…) à pied ou à vélo : l'île n'est pas « un pays » (la porte
   // de taille plus bas l'enverrait à l'IA, dont les étapes sont acceptées en voiture sans limite) ;
@@ -1400,6 +1474,7 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
             nights: ctx.nights.value ?? null,
             pace: ctx.pace.value,
             terrain: ctx.terrain.value,
+            origin: originOf(compasMeta(meta).origin),
             // Passe unique (270 s) : l'itinéraire a le temps d'essayer toutes les
             // cartes (Photon, Overpass, Geoapify) même après une compréhension lente.
             deadline: startedAt + (phase === 'all' ? 120_000 : 30_000),

@@ -463,6 +463,17 @@ describe('Phrases tirées au hasard (20 parcours) : lecture sans IA', () => {
     expect(parseIntentRules('marche 10 km en bord de mer en Normandie', TODAY)).toContainEqual({ type: 'set_duration', days: 1, hours: null });
     expect(read('séjour en bord de mer en Vendée').act).toBe('beach');
   });
+  it('« de X à Y » : départ X, destination Y, la forme du voyage en envie (13 oct. : Genève → Nice)', () => {
+    const rules = parseIntentRules('traversée des Alpes à vélo en 12 jours de Genève à Nice', TODAY);
+    expect(rules).toContainEqual({ type: 'set_origin', place: 'Genève' });
+    expect(rules).toContainEqual({ type: 'set_destination', place: 'Nice' });
+    expect(rules.filter((a) => a.type === 'wish').map((a) => (a as { label: string }).label)).toEqual(['de Genève à Nice', 'traversée des Alpes']);
+    expect(read('rando 5 jours de Chamonix à Zermatt')).toMatchObject({ dest: 'Zermatt', wishes: ['de Chamonix à Zermatt'] });
+    // « depuis Lyon » reste un départ de trajet, sans forme « de X à Y ».
+    expect(read('rando 3 jours dans le Vercors depuis Lyon')).toMatchObject({ dest: 'Vercors', wishes: [] });
+    // Des dates « du 3 au 10 juin » ne sont pas des lieux.
+    expect(parseIntentRules('du 3 au 10 juin dans le Vercors', TODAY).some((a) => a.type === 'set_origin')).toBe(false);
+  });
   it('le VTT se fait en montagne (terrain dit)', () => {
     expect(parseIntentRules('3 jours de VTT dans les Vosges en septembre', TODAY)).toContainEqual({ type: 'set_terrain', terrain: 'montagne' });
     expect(parseIntentRules('3 jours de vélo sur la Loire', TODAY).some((a) => a.type === 'set_terrain')).toBe(false);

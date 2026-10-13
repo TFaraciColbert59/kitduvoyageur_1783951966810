@@ -1130,6 +1130,35 @@ export function parseIntentRules(text: string, today: string): CompasIntentActio
     }
   }
 
+  /* D'un lieu à un autre : « de Genève à Nice », « de Chamonix à Zermatt ». Le premier est le départ
+     de l'itinéraire, le second la destination ; « de X à Y » reste une envie (forme du voyage). Une
+     destination déjà lue (« traversée des Alpes ») devient une envie (13 oct. : la traversée partait
+     de Menton vers l'est, sans jamais passer par Genève). */
+  const fromTo = /(?:^|\s)de\s+(\p{Lu}[\p{L}'’-]+(?:[\s-]\p{Lu}[\p{L}'’-]+)*)\s+(?:à|a|jusqu['’]à)\s+(\p{Lu}[\p{L}'’-]+(?:[\s-]\p{Lu}[\p{L}'’-]+)*)/u.exec(src);
+  if (fromTo && !notAPlace(fromTo[1]) && !notAPlace(fromTo[2]) && !out.some((a) => a.type === 'set_origin')) {
+    const from = clean(fromTo[1], 50);
+    const to = clean(fromTo[2], 50);
+    const said = out.findIndex((a) => a.type === 'set_destination');
+    const removed = said >= 0 ? out.splice(said, 1)[0] : null;
+    // « dans le Jura de Gex à Pontarlier » : la destination lue avait avalé « de Gex ».
+    const before =
+      removed?.type === 'set_destination'
+        ? { ...removed, place: removed.place.replace(new RegExp(`\\s+de\\s+${from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'u'), '') }
+        : removed;
+    out.push({ type: 'set_origin', place: from });
+    out.push({ type: 'set_destination', place: to });
+    out.push({ type: 'wish', label: `de ${from} à ${to}` });
+    // Gardée en envie sauf si elle est déjà dite (« traversée des Alpes » plus loin dans la phrase).
+    if (
+      before?.type === 'set_destination' &&
+      plainOf(before.place) !== plainOf(to) &&
+      plainOf(before.place) !== plainOf(from) &&
+      !plainOf(src).replace(/^.*?\bde\s+\S+\s+(?:a|jusqu'a)\s+\S+/, '').includes(`traversee des ${plainOf(before.place)}`) &&
+      !/\b(?:traversee|tour) (?:de la |des |du |de l'|d')/.test(plainOf(src))
+    )
+      out.push({ type: 'wish', label: before.place });
+  }
+
   /* Sentier célèbre sans lieu dit (« GR20 en 12 jours ») : sa région. */
   if (!out.some((a) => a.type === 'set_destination')) {
     const known = FAMOUS_TRAILS.find(([re]) => re.test(plain));

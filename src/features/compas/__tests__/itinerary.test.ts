@@ -66,6 +66,27 @@ describe('planItinerary — trek en traversée', () => {
     expect(b.stages).toEqual(a.stages);
   });
 
+  it('« de X à Y » : part de X, finit à Y, et y reste les jours en trop (13 oct. : Genève → Nice)', () => {
+    const west = places.find((p) => p.name === 'Lieu 0-1')!;
+    const east = places.find((p) => p.name === 'Lieu 12-1')!;
+    // 60 km d'ouest en est, 7 jours : arrivée avant le dernier soir, puis sur place.
+    const plan = planItinerary({
+      ...input,
+      startAt: { name: west.name, lat: west.lat, lon: west.lon },
+      endAt: { name: east.name, lat: east.lat, lon: east.lon },
+    })!;
+    expect(plan.start?.name).toBe('Lieu 0-1');
+    const last = plan.stages[plan.stages.length - 1];
+    expect(distanceKm(last, east)).toBeLessThan(3);
+    const arrivedAt = plan.stages.findIndex((st) => distanceKm(st, east) < 3);
+    for (const st of plan.stages.slice(arrivedAt + 1)) {
+      expect(st.move).toBe('aucun');
+      expect(st.note).toBe('Arrivée : journée sur place.');
+    }
+    // Jamais au-delà de l'arrivée.
+    for (const st of plan.stages) expect(st.lon).toBeLessThanOrEqual(east.lon + 1e-9);
+  });
+
   it('passe par une étape voulue', () => {
     const want = places.find((p) => p.name === 'Lieu 8-0')!;
     const plan = planItinerary({ ...input, waypoints: [{ name: 'Étape voulue', lat: want.lat, lon: want.lon }] })!;

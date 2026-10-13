@@ -71,6 +71,12 @@ export interface ItineraryInput {
    * zone (Brielle → Schagen) sans jamais passer par Amsterdam.
    */
   startAt?: { name: string; lat: number; lon: number } | null;
+  /**
+   * Lieu d'arrivée d'un voyage « de X à Y » : la dernière étape visée (après les étapes voulues) ;
+   * atteint avant le dernier soir, on y reste les jours qui restent (13 oct. : la traversée « de
+   * Genève à Nice » continuait au-delà de la destination).
+   */
+  endAt?: { name: string; lat: number; lon: number } | null;
 }
 
 export interface PlannedStage {
@@ -370,6 +376,10 @@ function planMoving(
     probe = pending.shift()!;
     orderedWays.push(probe as { name: string; lat: number; lon: number });
   }
+  // Arrivée d'un voyage « de X à Y » : toujours la dernière étape visée.
+  const endAt = input.endAt && distanceKm(input.endAt, start) > crowMin ? input.endAt : null;
+  if (endAt) orderedWays.push(endAt);
+  let arrived = false;
 
   // Chaque jour finit ailleurs : le jour 1 part du point de départ (dit en note),
   // une boucle finit le dernier jour au départ.
@@ -407,6 +417,10 @@ function planMoving(
       stages.push({ day, name: cur.name, lat: cur.lat, lon: cur.lon, move: 'aucun', note: 'Journée d’acclimatation (au-dessus de 2 500 m) : une nuit de plus à la même altitude, comme le conseille la commission médicale de l’UIAA.', placeId: cur.id });
       highStreak = 0;
       restedAt = cur.id;
+      continue;
+    }
+    if (arrived) {
+      stages.push({ day, name: cur.name, lat: cur.lat, lon: cur.lon, move: 'aucun', note: 'Arrivée : journée sur place.', placeId: cur.id });
       continue;
     }
     const goal = orderedWays[0] ?? null;
@@ -531,6 +545,7 @@ function planMoving(
       const at = best(inZone, (p) => (used.has(p.id) ? -Infinity : -distanceKm(goal, p)));
       next = at && distanceKm(goal, at) <= 3 ? at : { id: `w:${goal.name}`, name: goal.name, lat: goal.lat, lon: goal.lon, kind: 'village', population: null, eleM: null };
       orderedWays.shift();
+      if (goal === endAt) arrived = true;
     }
     if (!next) {
       stages.push({ day, name: cur.name, lat: cur.lat, lon: cur.lon, move: 'aucun', note: 'Journée sur place : aucun lieu où dormir à distance d’une étape.', placeId: cur.id });
