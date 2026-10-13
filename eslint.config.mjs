@@ -23,6 +23,9 @@ const config = [
       // not be edited ») : la référence triple-slash vers .next/types/routes.d.ts y est
       // injectée par Next et réécrite à chaque exécution.
       'next-env.d.ts',
+      // Copies de travail des sous-agents (git worktree, non versionnées) : sans cet ignore,
+      // `npx eslint .` lancé à la racine linte aussi chaque copie.
+      '.claude/worktrees/**',
     ],
   },
   ...compat.extends('next/core-web-vitals', 'next/typescript'),

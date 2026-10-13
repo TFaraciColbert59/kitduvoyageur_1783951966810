@@ -1208,6 +1208,12 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
 - [x] Manques : Emprunter · Louer · Acheter complet ; appui long : fiche, historique. **Lot AD** :
       `engine/acquire.ts`, `CompasItemHistory.tsx`, `server/itemHistoryActions.ts` (session, zod ; prêts,
       voyages passés et commandes lus sous RLS : prêteur ou emprunteur, voyages lisibles, ses commandes).
+      **Lot AH** (constats Codex, PR #93) : un objet emprunté est DISPONIBLE (`trip_items.borrowed_from`,
+      migration `20261014073000`, RLS inchangée, pgTAP `compas_trip_items_borrowed_rls` 21 tests verts ;
+      « Emprunté à <prénom> », annulable, `compasBorrowItemAction` : zod, personne du voyage, jamais
+      soi-même) ; une location ne passe jamais par le panier (`isCartable`, règle unique écran + serveur ;
+      « Location à réserver », renvoi `/location` ; `in_cart` refusé par le serveur pour une location,
+      lignes déjà écrites relues « à acquérir »). Migration à appliquer en production avec la PR.
 - [x] Carte : style des pastilles et de l'encart ; fonds Relief et Satellite gratuits. **Lot AD** :
       pastilles départ / arrivée / numéros, encart, fonds Relief, Clair et Satellite par ArcGIS Location
       Platform (même branchement que `/explorer`, `engine/mapStyle.ts`, `CompasMap.tsx`).
