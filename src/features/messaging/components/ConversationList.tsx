@@ -18,6 +18,10 @@ interface ConversationListProps {
   onReportConversation?: (conv: Conversation) => void;
   currentUserId?: string;
   loading: boolean;
+  /** A-084 : ouvrir une conversation ciblée sur un message trouvé. */
+  onSelectMessageResult?: (conversationId: string, messageId: string) => void;
+  /** A-084 : démarrer une discussion avec une personne trouvée. */
+  onStartDirect?: (userId: string) => void;
 }
 
 const TABS = [
@@ -66,12 +70,48 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   onReportConversation,
   currentUserId,
   loading,
+  onSelectMessageResult,
+  onStartDirect,
 }) => {
   const { haptic } = useHapticFeedback();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [activeTab, setActiveTab] = useState<TabId>('all');
   const [longPressConv, setLongPressConv] = useState<Conversation | null>(null);
+  // A-084 : recherches transverses (messages bornés par RLS, personnes publiques).
+  const [messageResults, setMessageResults] = useState<
+    Array<{ id: string; conversation_id: string; content: string; created_at: string }>
+  >([]);
+  const [peopleResults, setPeopleResults] = useState<
+    Array<{ id: string; full_name: string; avatar_url?: string | null }>
+  >([]);
+
+  useEffect(() => {
+    const query = debouncedSearch.trim();
+    if (query.length < 2) {
+      setMessageResults([]);
+      setPeopleResults([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      const excludeIds = conversations
+        .map((c) => c.other_member?.id)
+        .filter((id): id is string => Boolean(id));
+      const [messages, people] = await Promise.all([
+        messagingService.searchMessages(query),
+        messagingService.searchPeople(query, excludeIds),
+      ]);
+      if (!cancelled) {
+        setMessageResults(messages);
+        setPeopleResults(people);
+      }
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [debouncedSearch, conversations]);
 
   // Action rapide via glissement (swipe) d'une conversation.
   const handleSwipeAction = async (conv: Conversation, action: SwipeAction) => {
@@ -183,6 +223,63 @@ export const ConversationList: React.FC<ConversationListProps> = ({
 
       {/* Liste */}
       <div className="custom-scrollbar flex-1 space-y-[var(--space-2)] overflow-y-auto overscroll-contain px-[var(--space-3)] pb-[var(--space-3)] pt-[var(--space-3)] [-webkit-overflow-scrolling:touch] md:px-[var(--space-4)]">
+        {/* A-084 — résultats de recherche transverses : personnes + messages. */}
+        {debouncedSearch.trim().length >= 2 && (peopleResults.length > 0 || messageResults.length > 0) && (
+          <div className="space-y-[var(--space-2)] pb-[var(--space-2)]">
+            {peopleResults.length > 0 && (
+              <div className="space-y-[var(--space-1)]">
+                <p className="px-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
+                  Personnes
+                </p>
+                {peopleResults.map((person) => (
+                  <button
+                    key={person.id}
+                    type="button"
+                    onClick={() => onStartDirect?.(person.id)}
+                    className="flex w-full items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] px-[var(--space-2)] py-[var(--space-2)] text-left transition-colors hover:bg-[color:var(--card-tint-strong)]"
+                  >
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
+                      {person.full_name.charAt(0)}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
+                        {person.full_name}
+                      </span>
+                      <span className="block text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                        Démarrer une discussion
+                      </span>
+                    </span>
+                    <Icon name="send" size={14} className="shrink-0 text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {messageResults.length > 0 && (
+              <div className="space-y-[var(--space-1)]">
+                <p className="px-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
+                  Messages
+                </p>
+                {messageResults.map((result) => (
+                  <button
+                    key={result.id}
+                    type="button"
+                    onClick={() => onSelectMessageResult?.(result.conversation_id, result.id)}
+                    className="block w-full rounded-[var(--lkv-radius-md)] px-[var(--space-2)] py-[var(--space-2)] text-left transition-colors hover:bg-[color:var(--card-tint-strong)]"
+                  >
+                    <span className="block truncate text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-secondary)]">
+                      {result.content.length > 90 ? `${result.content.slice(0, 90)}…` : result.content}
+                    </span>
+                    <span className="mt-0.5 block text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                      {new Date(result.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {loading ? (
           <ConversationListSkeleton />
         ) : filteredConversations.length === 0 ? (

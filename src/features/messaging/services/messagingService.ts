@@ -872,6 +872,73 @@ export const messagingService = {
     return fileName;
   },
 
+  /**
+   * A-084 — recherche plein texte dans les messages. La RLS ne laisse voir
+   * que les conversations dont l'appelant est membre (aucun extrait d'un
+   * groupe quitté ou jamais rejoint).
+   */
+  async searchMessages(
+    query: string,
+    limit = 30
+  ): Promise<
+    Array<{
+      id: string;
+      conversation_id: string;
+      content: string;
+      message_type: string;
+      created_at: string;
+      sender_id: string;
+    }>
+  > {
+    const cleaned = query.replace(/[%_*\\]/g, ' ').trim();
+    if (cleaned.length < 2) return [];
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('messages')
+      .select('id, conversation_id, content, message_type, created_at, sender_id')
+      .ilike('content', `%${cleaned}%`)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) {
+      console.error('Recherche de messages refusée —', error.message);
+      return [];
+    }
+    return (data ?? []) as Array<{
+      id: string;
+      conversation_id: string;
+      content: string;
+      message_type: string;
+      created_at: string;
+      sender_id: string;
+    }>;
+  },
+
+  /**
+   * A-084 — rechercher des personnes par nom (vue publique), pour démarrer
+   * une nouvelle discussion depuis la recherche.
+   */
+  async searchPeople(
+    query: string,
+    excludeIds: string[] = [],
+    limit = 6
+  ): Promise<Array<{ id: string; full_name: string; avatar_url: string | null }>> {
+    const cleaned = query.replace(/[%_*\\]/g, ' ').trim();
+    if (cleaned.length < 2) return [];
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('public_profiles')
+      .select('id, full_name, avatar_url')
+      .ilike('full_name', `%${cleaned}%`)
+      .limit(limit);
+    if (error) {
+      console.error('Recherche de profils refusée —', error.message);
+      return [];
+    }
+    return ((data ?? []) as Array<{ id: string; full_name: string | null; avatar_url: string | null }>)
+      .filter((row) => row.full_name && !excludeIds.includes(row.id))
+      .map((row) => ({ id: row.id, full_name: row.full_name as string, avatar_url: row.avatar_url }));
+  },
+
   async markAsRead(conversationId: string, userId: string): Promise<void> {
     const supabase = createClient();
     await supabase

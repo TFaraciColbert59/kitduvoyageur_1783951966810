@@ -22,6 +22,7 @@ interface MessageListProps {
   hasMore?: boolean;
   loadingEarlier?: boolean;
   onLoadEarlier?: () => void;
+  focusMessageId?: string | null;
 }
 
 export const MessageListSkeleton = () => (
@@ -83,6 +84,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   hasMore = false,
   loadingEarlier = false,
   onLoadEarlier,
+  focusMessageId = null,
 }) => {
   const { haptic } = useHapticFeedback();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -151,6 +153,14 @@ export const MessageList: React.FC<MessageListProps> = ({
       }, 1500);
     }
   };
+
+  // A-084 : résultat de recherche — amener au message exact dès qu'il est là.
+  useEffect(() => {
+    if (!focusMessageId) return;
+    const timer = window.setTimeout(() => handleScrollToMessage(focusMessageId), 300);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- ciblage ponctuel d'un message
+  }, [focusMessageId, messages.length]);
 
   return (
     <div

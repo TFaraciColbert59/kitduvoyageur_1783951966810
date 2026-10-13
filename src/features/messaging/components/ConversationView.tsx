@@ -33,6 +33,7 @@ interface ConversationViewProps {
   currentUserProfile?: UserProfileSummary | null;
   onBack?: () => void;
   onRefreshConversations?: () => void;
+  focusMessageId?: string | null;
 }
 
 export const ConversationView: React.FC<ConversationViewProps> = ({
@@ -41,6 +42,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
   currentUserProfile,
   onBack,
   onRefreshConversations,
+  focusMessageId = null,
 }) => {
   const { haptic } = useHapticFeedback();
   const router = useRouter();
@@ -372,6 +374,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
         hasMore={hasMore}
         loadingEarlier={loadingEarlier}
         onLoadEarlier={loadEarlier}
+        focusMessageId={focusMessageId}
       />
 
       {error && (
