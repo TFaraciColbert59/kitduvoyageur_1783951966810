@@ -42,6 +42,11 @@ export interface OpenFreeMapBasemapOptions {
   beforeLayerId: string;
   /** Appelé une seule fois, au repli sur ArcGIS. */
   onFallback?: (failure: BasemapFailure) => void;
+  /**
+   * Appelé une seule fois, quand le style est posé : le fond peut alors remplacer le raster
+   * ArcGIS, gardé visible pendant le chargement (constat Codex, PR #94).
+   */
+  onReady?: () => void;
   styleUrl?: string;
   /** Délai de lecture du style (8 s par défaut). */
   timeoutMs?: number;
@@ -87,6 +92,7 @@ export function createOpenFreeMapBasemap(
   const {
     beforeLayerId,
     onFallback,
+    onReady,
     styleUrl = OPENFREEMAP_STYLE_URL,
     timeoutMs = 8_000,
     fetchStyle = fetchJson,
@@ -211,6 +217,7 @@ export function createOpenFreeMapBasemap(
       return;
     }
     status = wanted ? 'visible' : 'hidden';
+    onReady?.();
   };
 
   return {

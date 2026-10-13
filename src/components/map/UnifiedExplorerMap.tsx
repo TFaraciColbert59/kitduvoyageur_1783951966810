@@ -409,6 +409,8 @@ export default function UnifiedExplorerMap({
   // Fond « Plan » (osm) : OpenFreeMap tant qu'il répond, puis ArcGIS après un repli (une seule fois).
   const basemapRef = useRef<OpenFreeMapBasemap | null>(null);
   const [standardProvider, setStandardProvider] = useState<BasemapProvider>('openfreemap');
+  // Passe à vrai quand le style OpenFreeMap est posé : jusque-là, le raster ArcGIS reste affiché.
+  const [openFreeMapLoaded, setOpenFreeMapLoaded] = useState(false);
   const poiPopupRef2 = useRef(poiPopup);
   poiPopupRef2.current = poiPopup;
   const badgeClickRef = useRef(onStepBadgeClick);
@@ -702,6 +704,9 @@ export default function UnifiedExplorerMap({
         // Fond « Plan » d'OpenFreeMap : posé sous les fonds ArcGIS, au premier affichage du mode.
         basemapRef.current = createOpenFreeMapBasemap(instance, {
           beforeLayerId: 'atlas-tile-topo',
+          onReady: () => {
+            if (!cancelled) setOpenFreeMapLoaded(true);
+          },
           onFallback: () => {
             if (!cancelled) setStandardProvider('arcgis');
           },
@@ -1329,22 +1334,24 @@ export default function UnifiedExplorerMap({
   }, [memberPositions, ready]);
 
   // ── Fond de carte (topo / osm / satellite) ──────────────────────────────────
-  // Le « Plan » (osm) vient d'OpenFreeMap ; son raster ArcGIS ne s'affiche qu'après un repli.
+  // Le « Plan » (osm) vient d'OpenFreeMap. Son raster ArcGIS reste affiché tant que le style
+  // OpenFreeMap n'est pas posé (connexion lente, panne avant repli), puis après un repli.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
     const basemap = basemapRef.current;
-    const openFreeMap = tileMode === 'osm' && basemap != null && basemap.status !== 'fallback';
+    const wantOpenFreeMap = tileMode === 'osm' && basemap != null && basemap.status !== 'fallback';
+    if (wantOpenFreeMap) basemap.show();
+    else basemap?.hide();
+    const openFreeMapShown = wantOpenFreeMap && basemap.status === 'visible';
     for (const mode of TILE_MODES) {
       const layerId = `atlas-tile-${mode}`;
       if (map.getLayer(layerId)) {
-        const visible = mode === tileMode && !(mode === 'osm' && openFreeMap);
+        const visible = mode === tileMode && !(mode === 'osm' && openFreeMapShown);
         map.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none');
       }
     }
-    if (openFreeMap) basemap.show();
-    else basemap?.hide();
-  }, [tileMode, ready, standardProvider]);
+  }, [tileMode, ready, standardProvider, openFreeMapLoaded]);
 
   // ── Contrôles glass ─────────────────────────────────────────────────────────
   const animateOptions = useCallback(

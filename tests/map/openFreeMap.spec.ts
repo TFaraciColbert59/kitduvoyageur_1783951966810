@@ -135,16 +135,18 @@ function setup(
   const fake = fakeMap();
   const fetchStyle = vi.fn(options.fetchStyle ?? (async () => libertyLike()));
   const onFallback = vi.fn();
+  const onReady = vi.fn();
   const warn = vi.fn();
   const basemap = createOpenFreeMapBasemap(fake.map, {
     beforeLayerId: 'atlas-tile-topo',
     fetchStyle,
     onFallback,
+    onReady,
     warn,
     tileErrorLimit: options.tileErrorLimit,
     timeoutMs: options.timeoutMs,
   });
-  return { ...fake, basemap, fetchStyle, onFallback, warn };
+  return { ...fake, basemap, fetchStyle, onFallback, onReady, warn };
 }
 
 describe('choix du fond par mode', () => {
@@ -344,6 +346,29 @@ describe('fond OpenFreeMap sur la carte', () => {
     expect(order.indexOf('ofm-background')).toBeGreaterThan(order.indexOf('atlas-background'));
   });
 
+  it('« prêt » est dit une fois, quand le style est posé (la carte garde le raster jusque-là)', async () => {
+    const { basemap, onReady } = setup();
+    basemap.show();
+    expect(basemap.status).toBe('loading');
+    expect(onReady).not.toHaveBeenCalled();
+    await vi.waitFor(() => expect(basemap.status).toBe('visible'));
+    expect(onReady).toHaveBeenCalledTimes(1);
+    basemap.hide();
+    basemap.show();
+    expect(onReady).toHaveBeenCalledTimes(1);
+  });
+
+  it('style en panne : jamais « prêt », seulement le repli', async () => {
+    const { basemap, onReady, onFallback } = setup({
+      fetchStyle: async () => {
+        throw new Error('HTTP 503');
+      },
+    });
+    basemap.show();
+    await vi.waitFor(() => expect(onFallback).toHaveBeenCalledTimes(1));
+    expect(onReady).not.toHaveBeenCalled();
+  });
+
   it('masquer puis réafficher ne relit rien', async () => {
     const { basemap, fetchStyle, ofmLayers } = setup();
     basemap.show();
@@ -538,12 +563,17 @@ describe('branchement dans la carte du site', () => {
     expect(component).toMatch(/basemapRef\.current\?\.dispose\(\);[\s\S]{0,120}map\.remove\(\)/);
   });
 
-  it('le raster ArcGIS « standard » ne s’affiche que si OpenFreeMap est en repli ; le fond suit le mode', () => {
+  it('le raster ArcGIS « standard » reste affiché tant qu’OpenFreeMap n’est pas posé, et après un repli', () => {
     expect(component).toMatch(
-      /const openFreeMap = tileMode === 'osm' && basemap != null && basemap\.status !== 'fallback'/
+      /const wantOpenFreeMap = tileMode === 'osm' && basemap != null && basemap\.status !== 'fallback'/
     );
-    expect(component).toMatch(/mode === tileMode && !\(mode === 'osm' && openFreeMap\)/);
-    expect(component).toMatch(/if \(openFreeMap\) basemap\.show\(\);\s*else basemap\?\.hide\(\)/);
+    expect(component).toMatch(/if \(wantOpenFreeMap\) basemap\.show\(\);\s*else basemap\?\.hide\(\)/);
+    // Masqué seulement quand le style OpenFreeMap est réellement posé (pas pendant le chargement).
+    expect(component).toMatch(/const openFreeMapShown = wantOpenFreeMap && basemap\.status === 'visible'/);
+    expect(component).toMatch(/mode === tileMode && !\(mode === 'osm' && openFreeMapShown\)/);
+    // Le fond posé relance l'effet (onReady → état), sans attendre un autre changement de mode.
+    expect(component).toMatch(/onReady: \(\) => \{\s*if \(!cancelled\) setOpenFreeMapLoaded\(true\)/);
+    expect(component).toMatch(/\[tileMode, ready, standardProvider, openFreeMapLoaded\]/);
   });
 
   it('la pastille dit le fond réellement affiché', () => {

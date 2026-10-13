@@ -220,7 +220,18 @@ export function matchTrips(items, results, rows, { skewMs = DEFAULT_SKEW_SECONDS
       const item = items.find((it) => said.startsWith(plain(it.phrase)));
       if (item) {
         const mine = entries.filter((e) => e.itemId === item.id);
-        target = mine.length ? mine[mine.length - 1] : null;
+        // Demande rejouée : chaque voyage va à la tentative dont la fenêtre l'a vu naître
+        // (constat Codex, PR #94) ; sans heure lisible, la dernière tentative.
+        const inWindow =
+          row.created_ms == null
+            ? []
+            : mine.filter(
+                (e) =>
+                  e.start != null &&
+                  e.start - skewMs <= row.created_ms &&
+                  (e.end == null || row.created_ms <= e.end + skewMs)
+              );
+        target = inWindow[inWindow.length - 1] ?? mine[mine.length - 1] ?? null;
       }
     }
     if (!target && row.created_ms != null) {

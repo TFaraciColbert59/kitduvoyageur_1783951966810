@@ -87,7 +87,7 @@ export function DepartureBlock({ ctl }: { ctl: CompasCtl }) {
           </label>
           <button
             type="submit"
-            className="cp-ibtn cp-glass"
+            className="cp-ibtn cp-ibtn--tap cp-glass"
             aria-label={said ? 'Remplacer le départ' : 'Partir de cette ville'}
             disabled={!edit || draft.trim().length < 2}
           >

@@ -378,6 +378,12 @@ describe('lecture seule', () => {
 });
 
 describe('accessibilité du bloc Départ', () => {
+  it('le bouton qui pose le départ offre une cible de 44 px (cp-ibtn--tap)', async () => {
+    const sheet = await openDeparture(dataWith({ source: 'aucun' } as Departure));
+    const submit = block(sheet).querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(submit.className).toContain('cp-ibtn--tap');
+  });
+
   it.each([
     ['dit', { source: 'dit', name: 'Lyon' } as Departure],
     ['domicile', { source: 'domicile' } as Departure],

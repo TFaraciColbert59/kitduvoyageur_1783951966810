@@ -223,6 +223,31 @@ describe('appariement demande ↔ voyage', () => {
     expect(m.perItem.get('s01')?.row?.trip_id).toBe('retry');
   });
 
+  it('demande rejouée, phrase de départ gardée par les deux voyages : chacun à sa tentative', () => {
+    const phrase = items[0].phrase;
+    const first = {
+      i: 1,
+      id: 's01',
+      say: phrase,
+      seconds: 30,
+      startedAt: '2026-10-14T12:00:00.000Z',
+      endedAt: '2026-10-14T12:00:40.000Z',
+    };
+    const again = { ...first, startedAt: '2026-10-14T13:00:00.000Z', endedAt: '2026-10-14T13:00:40.000Z' };
+    const older = normaliseRow({
+      trip_id: 'ancien',
+      created_at: '2026-10-14 12:00:05+00',
+      start_say_pending: phrase,
+    });
+    const newer = normaliseRow({
+      trip_id: 'nouveau',
+      created_at: '2026-10-14 13:00:05+00',
+      start_say_pending: phrase,
+    });
+    const m = matchTrips(items, [first, again], [newer, older]);
+    expect(m.perItem.get('s01')?.row?.trip_id).toBe('nouveau');
+  });
+
   it('retrouve la demande par son rang ou sa phrase quand l’identifiant manque (ancien journal)', () => {
     const old = [
       {
