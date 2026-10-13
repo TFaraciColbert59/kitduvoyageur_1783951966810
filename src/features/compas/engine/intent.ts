@@ -150,6 +150,27 @@ export interface IntentContext {
 }
 
 export const MAX_TRIP_DAYS = 30;
+
+type BudgetAction = Extract<CompasIntentAction, { type: 'set_budget' }>;
+
+/**
+ * Une enveloppe dite dans une autre devise, ramenée à celle du voyage au taux lu par le serveur :
+ * le montant et la devise changent, le montant dit et le taux restent dans `said`, et TOUT le reste
+ * de l'action est gardé (« par personne » compris : il se multiplie ensuite par le groupe, sur le
+ * montant converti ; constat Codex, PR #93).
+ */
+export function budgetConverted(
+  action: BudgetAction,
+  tripCurrency: string,
+  converted: { amount: number; date: string; source: string }
+): BudgetAction {
+  return {
+    ...action,
+    amount: Math.max(1, Math.round(converted.amount)),
+    currency: tripCurrency,
+    said: { amount: action.amount, currency: action.currency ?? tripCurrency, date: converted.date, source: converted.source },
+  };
+}
 const MAX_AHEAD_DAYS = 540;
 
 /* ---------- Normalisation ---------- */

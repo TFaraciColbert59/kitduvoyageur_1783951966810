@@ -42,6 +42,7 @@ import {
   validateActions,
   type CompasIntentAction,
   type CompasProposal,
+  budgetConverted,
 } from '../engine/intent';
 import { planKitApply, type MyKit } from '../engine/kitApply';
 import { precisionActions } from '../engine/request';
@@ -1757,12 +1758,7 @@ async function budgetInTripCurrency(action: CompasIntentAction, tripCurrency: st
   const rates = Object.fromEntries(await Promise.all(codes.map(async (c) => [c, await getEurRate(c)] as const)));
   const converted = convertBetween(action.amount, action.currency, tripCurrency, rates);
   if (!converted) return action;
-  return {
-    type: 'set_budget',
-    amount: Math.max(1, Math.round(converted.amount)),
-    currency: tripCurrency,
-    said: { amount: action.amount, currency: action.currency, date: converted.date, source: converted.source },
-  };
+  return budgetConverted(action, tripCurrency, converted);
 }
 
 /* ---------- Verdict expliqué par l'IA ---------- */

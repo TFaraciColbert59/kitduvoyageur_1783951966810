@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   actionLabel,
+  budgetConverted,
   groundingIssue,
   parseIntentRules,
   planApplication,
@@ -140,6 +141,15 @@ describe('validateActions — le montant par personne est multiplié par le grou
     expect(flat(p.label)).toMatch(
       /^Enveloppe : 184 € \(46 € par personne × 4 personnes ; 50 \$\S* par personne, taux du .*8 oct\., Frankfurter \(banques centrales\)\)$/
     );
+  });
+
+  it('la conversion serveur garde « par personne » : 50 USD par personne à 4 = environ 184 € (constat Codex)', () => {
+    const dit: CompasIntentAction = { type: 'set_budget', amount: 50, currency: 'USD', perPerson: true };
+    const converti = budgetConverted(dit, 'EUR', { amount: 46.2, date: '2026-10-08', source: 'Frankfurter (banques centrales)' });
+    expect(converti).toMatchObject({ amount: 46, currency: 'EUR', perPerson: true, said: { amount: 50, currency: 'USD' } });
+    const p = proposal([{ type: 'set_party_size', count: 4 }, converti]);
+    expect(p.ok).toBe(true);
+    expect(p.action).toMatchObject({ amount: 184, groupOf: 4 });
   });
 
   it('un montant qui n’est pas par personne n’est jamais multiplié', () => {
