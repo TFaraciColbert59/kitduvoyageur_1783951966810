@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createElement } from 'react';
+import Link from 'next/link';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Card } from '@/components/ui';
 
@@ -11,7 +12,7 @@ describe('Card surface contract', () => {
     expect(html).toContain('<h2 id="title">Voyage</h2>');
   });
   it('does not put a decorative hover surface with a nested link in the tab order', () => {
-    const html = renderToStaticMarkup(<Card variant="interactive"><a href="/voyages">Voyage</a></Card>);
+    const html = renderToStaticMarkup(<Card variant="interactive"><Link href="/voyages">Voyage</Link></Card>);
     expect(html).not.toContain('tabindex="0"');
     expect(html).not.toContain('role="button"');
   });

@@ -9,6 +9,22 @@ const compat = new FlatCompat({ baseDirectory: __dirname });
 
 /** @type {import('eslint').Linter.Config[]} */
 const config = [
+  {
+    name: 'lkdv/generated-and-vendored',
+    // Ignores globaux (objet sans autre clé) : uniquement du code NON écrit à la main.
+    // Tout le reste du dépôt reste linté, y compris scripts/ et tests/.
+    ignores: [
+      // Bundle minifié (esbuild, 3 Mo, identifiants mangés) du plugin Obsidian tiers
+      // « Claudian » v2.1.4 (Yishen Tu), copié tel quel dans le coffre de documentation.
+      // Code de tiers livré compilé : 26 erreurs « no-this-alias / display-name » qui ne
+      // sont corrigeables que dans les sources amont, pas ici.
+      'docs/.obsidian/.obsidian/plugins/**',
+      // Généré par Next.js à chaque `next dev` / `next build` (en-tête « This file should
+      // not be edited ») : la référence triple-slash vers .next/types/routes.d.ts y est
+      // injectée par Next et réécrite à chaque exécution.
+      'next-env.d.ts',
+    ],
+  },
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
   {
     rules: {
