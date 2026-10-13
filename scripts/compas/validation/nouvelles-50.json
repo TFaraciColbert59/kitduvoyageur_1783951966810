@@ -1,0 +1,252 @@
+[
+  {
+    "id": "n01",
+    "phrase": "rando 5 jours en Corse sur le GR20 depuis Lyon",
+    "expect": { "country": "FR", "activity": ["hiking", "trekking"], "days": 5, "origin": "Lyon" }
+  },
+  {
+    "id": "n02",
+    "phrase": "rando en refuge dans la Vanoise, 4 jours à 2",
+    "expect": { "country": "FR", "activity": ["hiking", "trekking"], "days": 4, "party": 2, "origin": null, "nights": "refuge" }
+  },
+  {
+    "id": "n03",
+    "phrase": "un week-end de rando avec mon chien autour de Bourg en Bresse",
+    "expect": { "country": "FR", "activity": ["hiking", "trekking"], "days": 2, "origin": null }
+  },
+  {
+    "id": "n04",
+    "phrase": "randonnée en famille de 5 dans les Vosges, 3 jours",
+    "expect": { "country": "FR", "activity": ["hiking", "trekking"], "days": 3, "party": 5, "origin": null }
+  },
+  {
+    "id": "n05",
+    "phrase": "quelques jours de rando en Écosse, budget 600 €",
+    "expect": { "country": "GB", "activity": ["hiking", "trekking"], "days": [2, 10], "origin": null, "budget": { "amount": 600, "currency": "EUR" } }
+  },
+  {
+    "id": "n06",
+    "phrase": "5 jours à vélo le long de la Loire depuis Nantes",
+    "expect": { "country": "FR", "activity": "cycling", "days": 5, "origin": "Nantes", "linearRoute": true }
+  },
+  {
+    "id": "n07",
+    "phrase": "à vélo autour du lac de Constance du 02/11 au 06/11",
+    "expect": { "country": ["DE", "CH", "AT"], "activity": "cycling", "days": 5, "origin": null, "startMonthDay": "11-02" }
+  },
+  {
+    "id": "n08",
+    "phrase": "3 jours à vélo à Belle-Île, sans voiture, depuis Rennes",
+    "expect": { "country": "FR", "activity": "cycling", "days": 3, "origin": "Rennes", "carFree": true }
+  },
+  {
+    "id": "n09",
+    "phrase": "voyage à vélo en Hollande, 5 jours, 500 € à 2",
+    "expect": { "country": "NL", "activity": "cycling", "days": 5, "party": 2, "origin": null, "budget": { "amount": 500, "currency": "EUR" } }
+  },
+  {
+    "id": "n10",
+    "phrase": "week-end vélo sur l'île d'Yeu",
+    "expect": { "country": "FR", "activity": "cycling", "days": 2, "origin": null }
+  },
+  {
+    "id": "n11",
+    "phrase": "canoë sur la Loire, 4 jours, départ dans 3 semaines",
+    "expect": { "country": "FR", "activity": "water", "days": 4, "origin": null, "startOffsetDays": [19, 23], "linearRoute": true }
+  },
+  {
+    "id": "n12",
+    "phrase": "canoë dans les gorges du Verdon, un week-end en famille de 5",
+    "expect": { "country": "FR", "activity": "water", "days": 2, "party": 5, "origin": null }
+  },
+  {
+    "id": "n13",
+    "phrase": "kayak de mer dans l'archipel des Glénan, 3 jours",
+    "expect": { "country": "FR", "activity": "water", "days": 3, "origin": null }
+  },
+  {
+    "id": "n14",
+    "phrase": "descente du Lot en canoë, 3 jours, 2 adultes 2 enfants",
+    "expect": { "country": "FR", "activity": "water", "days": 3, "party": 4, "origin": null, "linearRoute": true }
+  },
+  {
+    "id": "n15",
+    "phrase": "canoë-camping sur l'Allier, 3 jours depuis Lyon",
+    "expect": { "country": "FR", "activity": "water", "days": 3, "origin": "Lyon", "linearRoute": true }
+  },
+  {
+    "id": "n16",
+    "phrase": "ascension du Gran Paradiso, 3 jours, en refuge",
+    "expect": { "country": "IT", "activity": ["mountaineering", "hiking", "trekking"], "days": 3, "origin": null, "nights": "refuge" }
+  },
+  {
+    "id": "n17",
+    "phrase": "alpinisme à Zermatt, 4 jours depuis Genève",
+    "expect": { "country": ["CH", "IT"], "activity": "mountaineering", "days": 4, "origin": "Genève" }
+  },
+  {
+    "id": "n18",
+    "phrase": "week-end alpinisme dans les Écrins au départ de Bourg en Bresse",
+    "expect": { "country": "FR", "activity": "mountaineering", "days": 2, "origin": "Bourg en Bresse" }
+  },
+  {
+    "id": "n19",
+    "phrase": "alpinisme au Grossglockner en Autriche, 3 jours",
+    "expect": { "country": "AT", "activity": "mountaineering", "days": 3, "origin": null }
+  },
+  {
+    "id": "n20",
+    "phrase": "2 jours d'alpinisme au Piz Bernina en refuge, à 2",
+    "expect": { "country": ["CH", "IT"], "activity": "mountaineering", "days": 2, "party": 2, "origin": null, "nights": "refuge" }
+  },
+  {
+    "id": "n21",
+    "phrase": "ski de rando dans les Écrins, 5 jours en refuge",
+    "expect": { "country": "FR", "activity": "ski", "days": 5, "origin": null, "nights": "refuge" }
+  },
+  {
+    "id": "n22",
+    "phrase": "week-end ski de rando en Haute Maurienne depuis Lyon",
+    "expect": { "country": "FR", "activity": "ski", "days": 2, "origin": "Lyon" }
+  },
+  {
+    "id": "n23",
+    "phrase": "ski de randonnée aux Alpes de Lyngen en Norvège, 6 jours",
+    "expect": { "country": "NO", "activity": "ski", "days": 6, "origin": null }
+  },
+  {
+    "id": "n24",
+    "phrase": "ski de rando dans les Alpes juliennes en Slovénie du 20/12 au 27/12",
+    "expect": { "country": "SI", "activity": "ski", "days": 8, "origin": null, "startMonthDay": "12-20" }
+  },
+  {
+    "id": "n25",
+    "phrase": "ski de rando dans l'Oberland bernois, 3 jours, 500 €",
+    "expect": { "country": "CH", "activity": "ski", "days": 3, "origin": null, "budget": { "amount": 500, "currency": "EUR" } }
+  },
+  {
+    "id": "n26",
+    "phrase": "raquettes dans le Cantal, un week-end avec le chien",
+    "expect": { "country": "FR", "activity": ["ski", "hiking"], "days": 2, "origin": null }
+  },
+  {
+    "id": "n27",
+    "phrase": "3 jours de raquettes en Chartreuse",
+    "expect": { "country": "FR", "activity": ["ski", "hiking"], "days": 3, "origin": null }
+  },
+  {
+    "id": "n28",
+    "phrase": "raquettes au Grand Colombier au départ de Bourg en Bresse, dans 3 semaines",
+    "expect": { "country": "FR", "activity": ["ski", "hiking"], "origin": "Bourg en Bresse", "startOffsetDays": [19, 23] }
+  },
+  {
+    "id": "n29",
+    "phrase": "week-end raquettes en famille de 5 au Sancy",
+    "expect": { "country": "FR", "activity": ["ski", "hiking"], "days": 2, "party": 5, "origin": null }
+  },
+  {
+    "id": "n30",
+    "phrase": "raquettes en Laponie finlandaise, 5 jours à 2",
+    "expect": { "country": ["FI", "SE", "NO"], "activity": ["ski", "hiking"], "days": 5, "party": 2, "origin": null }
+  },
+  {
+    "id": "n31",
+    "phrase": "road trip en Corse, 7 jours, 2 adultes 2 enfants",
+    "expect": { "country": "FR", "activity": "roadtrip", "days": 7, "party": 4, "origin": null }
+  },
+  {
+    "id": "n32",
+    "phrase": "road trip en Toscane et en Ombrie, 8 jours depuis Lyon",
+    "expect": { "country": "IT", "activity": "roadtrip", "days": 8, "origin": "Lyon" }
+  },
+  {
+    "id": "n33",
+    "phrase": "road trip dans les Highlands, 5 jours à 3, 500 € par personne",
+    "expect": { "country": "GB", "activity": "roadtrip", "days": 5, "party": 3, "origin": null, "perPersonBudget": true, "budget": { "amount": 500, "currency": "EUR" } }
+  },
+  {
+    "id": "n34",
+    "phrase": "road trip en Algarve, quelques jours",
+    "expect": { "country": "PT", "activity": "roadtrip", "days": [2, 10], "origin": null }
+  },
+  {
+    "id": "n35",
+    "phrase": "road trip en Bretagne depuis Neuilly sur Seine, un week-end",
+    "expect": { "country": "FR", "activity": "roadtrip", "days": 2, "origin": "Neuilly sur Seine" }
+  },
+  {
+    "id": "n36",
+    "phrase": "city break à La Roche sur Yon, un week-end",
+    "expect": { "country": "FR", "activity": ["citytrip", "cultural"], "days": 2, "origin": null }
+  },
+  {
+    "id": "n37",
+    "phrase": "city break à Lisbonne sans voiture, 4 jours, 2 adultes 2 enfants",
+    "expect": { "country": "PT", "activity": ["citytrip", "cultural"], "days": 4, "party": 4, "origin": null, "carFree": true }
+  },
+  {
+    "id": "n38",
+    "phrase": "city break à Neuilly sur Seine, un week-end",
+    "expect": { "country": "FR", "activity": ["citytrip", "cultural"], "days": 2, "origin": null }
+  },
+  {
+    "id": "n39",
+    "phrase": "city break à Prague du 12/11 au 15/11",
+    "expect": { "country": "CZ", "activity": ["citytrip", "cultural"], "days": 4, "origin": null, "startMonthDay": "11-12" }
+  },
+  {
+    "id": "n40",
+    "phrase": "city break à Amsterdam depuis Lyon, 3 jours, 500 €",
+    "expect": { "country": "NL", "activity": ["citytrip", "cultural"], "days": 3, "origin": "Lyon", "budget": { "amount": 500, "currency": "EUR" } }
+  },
+  {
+    "id": "n41",
+    "phrase": "escalade à Céüse, 4 jours en famille de 5",
+    "expect": { "country": "FR", "activity": "climbing", "days": 4, "party": 5, "origin": null }
+  },
+  {
+    "id": "n42",
+    "phrase": "escalade en bloc à Fontainebleau, un week-end, au départ de Paris",
+    "expect": { "country": "FR", "activity": "climbing", "days": 2, "origin": "Paris" }
+  },
+  {
+    "id": "n43",
+    "phrase": "escalade à Siurana en Catalogne, 6 jours",
+    "expect": { "country": "ES", "activity": "climbing", "days": 6, "origin": null }
+  },
+  {
+    "id": "n44",
+    "phrase": "escalade à Finale Ligure, quelques jours",
+    "expect": { "country": "IT", "activity": "climbing", "days": [2, 10], "origin": null }
+  },
+  {
+    "id": "n45",
+    "phrase": "escalade dans les calanques de Marseille, 3 jours, avec le chien",
+    "expect": { "country": "FR", "activity": "climbing", "days": 3, "origin": null }
+  },
+  {
+    "id": "n46",
+    "phrase": "bivouac un week-end dans les Vosges, 50 USD par personne, à 4",
+    "expect": { "country": "FR", "activity": "bivouac", "days": 2, "party": 4, "origin": null, "nights": "bivouac", "perPersonBudget": true, "budget": { "amount": 50, "currency": "USD" } }
+  },
+  {
+    "id": "n47",
+    "phrase": "rando et bivouac à Ouessant, 2 jours",
+    "expect": { "country": "FR", "activity": ["hiking", "bivouac"], "days": 2, "origin": null }
+  },
+  {
+    "id": "n48",
+    "phrase": "bivouac dans le Jotunheimen, 5 jours",
+    "expect": { "country": "NO", "activity": "bivouac", "days": 5, "origin": null }
+  },
+  {
+    "id": "n49",
+    "phrase": "bivouac en Islande, 6 jours à 2",
+    "expect": { "country": "IS", "activity": "bivouac", "days": 6, "party": 2, "origin": null }
+  },
+  {
+    "id": "n50",
+    "phrase": "bivouac dans le Queyras, 4 jours, sans voiture, depuis Lyon",
+    "expect": { "country": "FR", "activity": "bivouac", "days": 4, "origin": "Lyon", "carFree": true }
+  }
+]
