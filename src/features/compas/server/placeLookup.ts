@@ -1,5 +1,6 @@
 import 'server-only';
 import { createHash } from 'node:crypto';
+import { parseIslandContour, type IslandContour } from '../engine/islands';
 import { aliasMatches, distanceKm, homonymsFarApart, nameCore, parseNominatim, parsePhoton, isNotablePlace, pickDestination, pickNatural, type CompasPlace } from '../engine/places';
 import { cached, coordKey } from './sharedCache';
 import { geoapifyReverse, geoapifySearch } from './geoapify';
@@ -71,11 +72,11 @@ async function fetchJson(url: string, headers: Record<string, string>): Promise<
 const NOMINATIM_UA = appUserAgent('Compas, preparation de voyage');
 let nominatimChain: Promise<unknown> = Promise.resolve();
 /**
- * Une requête Nominatim, une à la fois. Avec la clé LocationIQ (même moteur,
- * usage commercial autorisé), elle part chez LocationIQ (2 requêtes/s) ; sans,
+ * Une requête Nominatim, une à la fois, qui rend les lignes brutes (au format `jsonv2`). Avec la clé
+ * LocationIQ (même moteur, usage commercial autorisé), elle part chez LocationIQ (2 requêtes/s) ; sans,
  * chez Nominatim (1 requête/s, trafic d'application déconseillé).
  */
-function nominatimQueued(url: string): Promise<CompasPlace[] | null> {
+function nominatimRows(url: string): Promise<Array<Record<string, unknown>> | null> {
   const key = locationIqKey();
   const viaLocationIq = key ? locationIqUrl(url, key) : null;
   const run = nominatimChain.then(async () => {
@@ -90,10 +91,16 @@ function nominatimQueued(url: string): Promise<CompasPlace[] | null> {
     await new Promise((r) => setTimeout(r, viaLocationIq ? 550 : 1100));
     if (payload == null) return null;
     // La recherche renvoie une liste, le géocodage inverse un seul lieu.
-    return parseNominatim(viaLocationIq ? normalizeLocationIq(payload) : Array.isArray(payload) ? payload : [payload]);
+    return viaLocationIq
+      ? normalizeLocationIq(payload)
+      : ((Array.isArray(payload) ? payload : [payload]) as Array<Record<string, unknown>>);
   });
   nominatimChain = run.catch(() => null);
   return run;
+}
+/** Les lieux d'une requête Nominatim (voir `nominatimRows`). */
+function nominatimQueued(url: string): Promise<CompasPlace[] | null> {
+  return nominatimRows(url).then((rows) => (rows == null ? null : parseNominatim(rows)));
 }
 function nominatim(query: string, limit: number): Promise<CompasPlace[] | null> {
   return nominatimQueued(
@@ -285,4 +292,44 @@ export async function lookupNatural(name: string, countryCode: string | null, ri
     return list && list.length ? list : null;
   });
   return pickNatural(found ?? [], q, countryCode, rivers);
+}
+
+/** Le contour d'une île change à peine : une lecture est partagée un mois. */
+const ISLAND_CONTOUR_TTL_S = 30 * 86_400;
+
+/**
+ * Le CONTOUR d'une île (polygone OpenStreetMap, une requête Nominatim ou LocationIQ avec
+ * `polygon_geojson=1`, simplifié par la carte) : l'île de ce nom (`place=island`) dont le centre est le
+ * plus proche de `near`, à moins de son demi-diamètre. Sert à valider les lieux de l'île : près du
+ * continent du même pays (Eubée, Sicile), l'emprise de la carte englobe des lieux qui n'y sont pas.
+ * Service muet, île non décrite par un polygone ou sans île de ce nom près de `near` : null (jamais un
+ * contour deviné, ni un cercle).
+ */
+export async function lookupIslandContour(island: {
+  name: string;
+  near: { lat: number; lon: number };
+  halfExtentKm: number;
+}): Promise<IslandContour | null> {
+  const name = island.name.trim().slice(0, 80);
+  if (!name) return null;
+  const key = `v1:island:${coordKey(island.near.lat, island.near.lon, 1)}:${queryKey(name)}`;
+  return cached('place', key, ISLAND_CONTOUR_TTL_S, async () => {
+    const rows = await nominatimRows(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name)}&format=jsonv2&polygon_geojson=1&polygon_threshold=0.003&limit=8&accept-language=fr`
+    );
+    if (!rows) return null;
+    let best: { km: number; contour: IslandContour } | null = null;
+    for (const r of rows) {
+      if (r.category !== 'place' || !/^(island|islet)$/.test(String(r.type))) continue;
+      const lat = Number(r.lat);
+      const lon = Number(r.lon);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+      const km = distanceKm(island.near, { lat, lon });
+      // Une île homonyme à l'autre bout du monde n'est pas celle-ci.
+      if (km > Math.max(island.halfExtentKm, 30)) continue;
+      const contour = parseIslandContour(r.geojson);
+      if (contour && (!best || km < best.km)) best = { km, contour };
+    }
+    return best?.contour ?? null;
+  });
 }

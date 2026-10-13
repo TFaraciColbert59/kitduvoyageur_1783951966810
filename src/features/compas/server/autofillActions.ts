@@ -64,7 +64,7 @@ import { readTraveller } from './traveller';
 import { adaptationText, expectedKm, pickCatalogRoute, resolveProjectContext } from '../engine/projectContext';
 import { bestPeriod, monthName, needsDryNormals } from '../engine/period';
 import { partsText, retryParts, staleParts, unionParts, untouchedSince, type AutofillPart, type ProjectBasis } from '../engine/dependencies';
-import { lookupDestination, lookupMassif, lookupNatural, lookupReverse, lookupRiver, stageAliasCandidates, stageCandidates } from './placeLookup';
+import { lookupDestination, lookupIslandContour, lookupMassif, lookupNatural, lookupReverse, lookupRiver, stageAliasCandidates, stageCandidates } from './placeLookup';
 import { lookupAreaPlaces, lookupRiverLine, lookupStagePois, readCachedStagePois } from './stagePoiLookup';
 import { carFreeOf, carFreeStages, carFreeStagesNote, transitSignal } from '../engine/carFree';
 import { buildTrack, simplifyLine, trackKey, type LngLat } from '../engine/track';
@@ -113,7 +113,7 @@ import { after } from 'next/server';
 import { bareAdminName, destinationRadiusKm, distanceKm, isAdminName, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, type CompasPlace } from '../engine/places';
 import { unifyStageNames, untangleStages } from '../engine/stageOrder';
 import { COUNTRY_SCALE_KM, WIDE_STAY_FROM_DAYS, keepCountry } from '../engine/countryBases';
-import { isIslandAnchor, isLargeIsland, pickIslandZone } from '../engine/islands';
+import { isIslandAnchor, isLargeIsland, onIslandContour, pickIslandZone } from '../engine/islands';
 import { travellerToday } from '../engine/zone';
 import { getClimateNormals, getPrecipNormals } from './weather';
 import { aiSuggestion, essentialAdvice, orderNotes, repeatsRule } from '../engine/advice';
@@ -426,8 +426,10 @@ function halfExtentOf(extent: Anchor['extent']): number | null {
 /**
  * Grande île à pied (PLAN-100 4.5) : le massif de l'île, pas l'île entière ni son centre. Les lieux habités
  * de l'île (carte ou référentiel) reçoivent leur altitude et `pickIslandZone` choisit la zone où ils sont
- * le plus haut ; un lieu de l'île dit par la personne (« Supramonte ») prime. `reason` quand rien n'est
- * choisi (la zone reste alors celle du centre de l'île, dite).
+ * le plus haut ; un lieu de l'île dit par la personne (« Supramonte ») prime. Les lieux sont validés contre
+ * le CONTOUR de l'île (carte) : près du continent du même pays (Eubée, Sicile), l'emprise rectangulaire
+ * englobe des lieux du continent, parfois plus hauts. Sans contour, rien n'est choisi. `reason` quand rien
+ * n'est choisi (la zone reste alors celle du centre de l'île, dite).
  */
 async function islandMassif(opts: {
   anchor: Anchor;
@@ -438,6 +440,9 @@ async function islandMassif(opts: {
 }): Promise<{ anchor: Anchor; note: string } | { reason: string }> {
   const { anchor, activity, days } = opts;
   const halfExtentKm = halfExtentOf(anchor.extent) ?? 0;
+  // Le contour d'abord : sans lui, aucun lieu ne peut être dit « de l'île » (et on s'épargne la lecture des lieux).
+  const contour = await lookupIslandContour({ name: anchor.name, near: anchor, halfExtentKm }).catch(() => null);
+  if (!contour) return { reason: 'contour de l’île introuvable sur la carte' };
   const found = await lookupAreaPlaces(
     { center: anchor, radiusKm: Math.min(halfExtentKm, 400), extent: anchor.extent ?? null, activity: SETTLEMENTS_LOOKUP_ACTIVITY },
     opts.deadline
@@ -451,12 +456,13 @@ async function islandMassif(opts: {
     if (LOOP_WISH.test(w) || wantsTraverse([w])) continue;
     const candidates = await stageCandidates(w, { countryCode: anchor.countryCode, country: anchor.country }, anchor).catch(() => []);
     const hit = pickPlace(
-      candidates.filter((c) => c.settlement || c.landmark),
+      // Un lieu dit homonyme sur le continent n'est pas celui de l'île : seuls ceux du contour comptent.
+      candidates.filter((c) => (c.settlement || c.landmark) && onIslandContour(contour, c)),
       { near: anchor, maxKm: halfExtentKm * 1.1 + 5, query: w, strict: true }
     );
     if (hit) near = { name: stageTitleFor(w, hit.name), lat: hit.lat, lon: hit.lon };
   }
-  const zone = pickIslandZone({ places, island: { lat: anchor.lat, lon: anchor.lon, halfExtentKm }, activity, days, near });
+  const zone = pickIslandZone({ places, island: { lat: anchor.lat, lon: anchor.lon, halfExtentKm }, contour, activity, days, near });
   if (!zone) return { reason: 'altitudes des lieux de l’île introuvables' };
   const km = Math.round(zone.radiusKm);
   const note =
