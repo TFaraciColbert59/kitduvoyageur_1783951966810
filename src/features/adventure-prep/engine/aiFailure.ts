@@ -39,6 +39,8 @@ const MESSAGES: Record<AIFailureReason, string> = {
     "Les quotas d’assistant du jour sont épuisés. Ton parcours a été construit par le moteur par règles, et il est complet. Ils repartent demain.",
   ia_eteinte:
     "L’assistant est éteint sur ce site. Ton parcours a été construit par le moteur par règles, et il est complet.",
+  compteur_illisible:
+    "Le compteur d’usage de l’assistant est illisible : par prudence, il est coupé le temps que ça revienne. Ton parcours a été construit par le moteur par règles, et il est complet.",
   provider_indisponible:
     "Le service d’assistant ne répond pas. Ton parcours a été construit par le moteur par règles, et il est complet : tu peux continuer à tout ajuster à la main.",
   reponse_invalide:

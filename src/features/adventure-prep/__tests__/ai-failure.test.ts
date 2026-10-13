@@ -5,6 +5,7 @@ import type { AIFailureReason } from '@/lib/ai/providers/types';
 const TOUTES: AIFailureReason[] = [
   'delai_depasse',
   'quota_epuise',
+  'compteur_illisible',
   'provider_indisponible',
   'reponse_invalide',
 ];
@@ -21,6 +22,7 @@ describe('reessai sur delai — AF-01 a AF-04', () => {
   it('AF-01: ne retente QUE sur delai depasse', () => {
     expect(shouldRetryAfterFailure('delai_depasse')).toBe(true);
     expect(shouldRetryAfterFailure('quota_epuise')).toBe(false);
+    expect(shouldRetryAfterFailure('compteur_illisible')).toBe(false);
     expect(shouldRetryAfterFailure('provider_indisponible')).toBe(false);
     expect(shouldRetryAfterFailure('reponse_invalide')).toBe(false);
   });

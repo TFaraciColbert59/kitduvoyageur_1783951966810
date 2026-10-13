@@ -124,7 +124,11 @@ const nextConfig = {
           },
           // P0-5 (C-10) — CSP en Report-Only (une semaine d'observation des
           // rapports avant le mode bloquant ; nonce à poser sur les scripts
-          // inline JSON-LD avant le durcissement).
+          // inline JSON-LD avant le durcissement). Plan 2.11 : les rapports
+          // partaient vers /api/telemetry/hub, qui les refusait (400, sans
+          // idempotency-key) ; ils vont à /api/csp-report (table app_errors,
+          // lecture : csp_report_summary(7)). Ne pas passer en mode appliqué
+          // sans une semaine de rapports lue.
           {
             key: 'Content-Security-Policy-Report-Only',
             value: [
@@ -136,7 +140,7 @@ const nextConfig = {
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com https://va.vercel-scripts.com https://*.arcgis.com https://hcaptcha.com https://*.hcaptcha.com https://api.stripe.com",
               "frame-src https://js.stripe.com https://hcaptcha.com https://*.hcaptcha.com",
               "worker-src 'self' blob:",
-              "report-uri /api/telemetry/hub",
+              "report-uri /api/csp-report",
             ].join('; '),
           },
         ],

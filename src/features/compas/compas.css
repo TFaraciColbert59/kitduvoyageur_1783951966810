@@ -377,6 +377,25 @@
 }
 /* Mesures */
 
+.cp-trial {
+  margin: 0;
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 0.78125rem;
+  line-height: 1.4;
+  color: var(--cp-ink2);
+}
+.cp-trial a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-weight: 600;
+  color: var(--cp-ink);
+  text-decoration: underline;
+}
+.compas[data-map='big'] .cp-trial {
+  display: none;
+}
 .cp-note {
   margin: 0;
   font-size: 0.78125rem;

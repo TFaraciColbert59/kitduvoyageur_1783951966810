@@ -1,6 +1,6 @@
 import 'server-only';
 import { z } from 'zod';
-import { aiEnabled } from './aiMode';
+import { aiCountersMustBeReadable, aiEnabled } from './aiMode';
 import { providerChain, modelNameFor } from './providers';
 import { raceProviders, HEDGE_MS } from './providers/providerRace';
 import { getCached, setCached } from './responseStore';
@@ -19,7 +19,9 @@ import type { AIRequest, AIResponse, AIFailureReason } from './providers/types';
  *   (0) IA éteinte (`AI_MODE=off`, plan 1.7) → fallback, aucun appel
  *   (3) quota (tier + plafond feature du registre) → dépassé = fallback
  *   (3 bis) plafond du site par jour (`AI_DAILY_CAP`, 2 000) → fallback ;
- *       compteur en panne = refus (fail-closed : l'IA n'est jamais due)
+ *       compteur en panne = refus (fail-closed : l'IA n'est jamais due), dit
+ *       `compteur_illisible` (et non « quota épuisé »). Vaut aussi pour le
+ *       quota par personne en production (plan 2.5).
  *   (4) provider complet → setCached + retour
  *   (5) tout échec (429/5xx/timeout/noop) → fallbackResponse du registre.
  *
@@ -36,12 +38,28 @@ export function aiDailyCap(env: Record<string, string | undefined> = process.env
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : 2000;
 }
 
-async function siteAllowsAi(): Promise<boolean> {
+/**
+ * Plafond du site : `ok`, `plafond` (atteint : « quota épuisé ») ou `illisible` (compteur en panne,
+ * injoignable, ou — en production — sans compteur partagé : fail-closed, l'IA ne répond pas).
+ * Clé du jour (UTC) : le plafond repart à zéro avec le jour, comme `ai_usage_daily`.
+ */
+export type SiteCapVerdict = 'ok' | 'plafond' | 'illisible';
+
+export async function siteAiVerdict(now: Date = new Date()): Promise<SiteCapVerdict> {
   try {
-    const r = await rateLimit({ key: 'ai:site:day', limit: aiDailyCap(), windowMs: 86_400_000, failMode: 'closed' });
-    return r.allowed;
+    const r = await rateLimit({
+      key: `ai:site:day:${now.toISOString().slice(0, 10)}`,
+      limit: aiDailyCap(),
+      windowMs: 86_400_000,
+      failMode: 'closed',
+    });
+    if (r.outcome === 'unavailable') return 'illisible';
+    if (!r.allowed) return 'plafond';
+    // Compteur de secours en mémoire (ni Upstash ni Postgres) : par instance, il ne plafonne rien.
+    if (r.backend === 'memory' && aiCountersMustBeReadable()) return 'illisible';
+    return 'ok';
   } catch {
-    return false;
+    return 'illisible';
   }
 }
 
@@ -94,7 +112,15 @@ export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
 
   // (3) Quota : tier (20/100) + plafond feature du registre.
   if (req.userId) {
-    const allowed = await consumeQuota(req.userId, req.quotaTier ?? req.tier, req.feature, spec.maxPerUserPerDay);
+    let counterUnreadable = false;
+    const allowed = await consumeQuota(req.userId, req.quotaTier ?? req.tier, req.feature, spec.maxPerUserPerDay, {
+      onUnreadable: () => {
+        counterUnreadable = true;
+      },
+    });
+    if (!allowed && counterUnreadable) {
+      return { ...(await spec.fallbackResponse(req)), failureReason: 'compteur_illisible' as AIFailureReason };
+    }
     if (!allowed) {
       // La cause est attachee ICI : sans elle, l'appelant ne peut pas
       // distinguer un quota epuise d'une panne, et afficher les deux comme une
@@ -104,9 +130,16 @@ export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
   }
 
   // (3 bis) Plafond du site : une rafale (ou un abus) ne vide pas l'offre gratuite.
-  if (!(await siteAllowsAi())) {
-    console.warn('[askAI] plafond du site atteint pour', req.feature);
-    return { ...(await spec.fallbackResponse(req)), failureReason: 'quota_epuise' as AIFailureReason };
+  const site = await siteAiVerdict();
+  if (site !== 'ok') {
+    console.warn(
+      site === 'plafond' ? '[askAI] plafond du site atteint pour' : '[askAI] compteur du site illisible, IA coupée pour',
+      req.feature
+    );
+    return {
+      ...(await spec.fallbackResponse(req)),
+      failureReason: (site === 'plafond' ? 'quota_epuise' : 'compteur_illisible') as AIFailureReason,
+    };
   }
 
   // (4) Provider — reasoning borné par le registre (crucial pour le quota :free).
