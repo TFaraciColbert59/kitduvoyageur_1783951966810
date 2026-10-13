@@ -114,11 +114,12 @@ SELECT is(
   '9. direct_pair_key canonique (least:greatest) pour C-A'
 );
 
--- 10. Pas de discussion dupliquée après trois appels (vue superuser : la RLS
---     ne laisse voir à C que ses propres discussions).
+-- 10. Pas de discussion dupliquée après trois appels (périmètre du test :
+--     seules les paires de ces comptes comptent).
 RESET ROLE;
 SELECT is(
-  (SELECT count(*)::int FROM public.conversations WHERE type = 'direct'),
+  (SELECT count(*)::int FROM public.conversations
+    WHERE type = 'direct' AND direct_pair_key LIKE '%a0020000%'),
   2,
   '10. Aucune duplication : trois appels → deux discussions distinctes'
 );
