@@ -117,3 +117,85 @@ Option Pro (25 $ par mois, 8 Go inclus) : tous les lieux habités du monde (~4,7
   `python3 -I scripts/geo/prep_geo_places.py <dossier> geo_places.tsv` et
   `npx tsx scripts/geo/import_geo_places.ts geo_places.tsv` (clé de service dans
   l'environnement ; upsert idempotent sur `geoname_id`).
+
+### Import 3.4 préparé : refuges, cabanes, campings, points d'eau (lot AG, 13 octobre)
+
+**Rien n'est écrit en base** (431 Mo, `places_geo` à retirer d'abord). Prêt, en fichiers :
+
+- `supabase/migrations/20261013090000_geo_pois.sql` (**à ne pas appliquer** avant le retrait de
+  `places_geo`) : `geo_pois` (identifiant OSM `n123`/`w456`/`r789`, nature, nom, position, altitude,
+  gardé `yes|no|seasonal`, places, eau potable), `geo_pois_coverage` (tuiles importées en entier),
+  `geo_pois_around` (lecture autour d'une étape + « zone couverte ? »), `geo_pois_finish_tile` (fin
+  d'une tuile : absences comptées, retrait à la deuxième de suite). Validée sur un PostgreSQL local
+  (16 assertions pgTAP : `supabase/tests/database/compas_geo_pois.test.sql`). **Lecture réservée à la
+  clé de service** (RLS sans politique) : servir au public une base de lieux OSM impose de la proposer
+  sous ODbL, ici seul le serveur du Compas la lit. (À noter : `geo_places` a, elle, une lecture
+  publique ; à resserrer si l'on veut tenir la règle « pas exposé comme base » de `SERVICES-GRATUITS.md`.)
+- `scripts/geo/import_geo_pois.ts` : Overpass private.coffee, **tuile par tuile, une requête à la
+  fois** (file commune `src/lib/overpass.ts`), upsert idempotent, une transaction par tuile. **Défaut =
+  essai qui n'écrit rien** (`--dry-run`) ; `--apply` écrit et demande `SUPABASE_DB_URL` ; refuse
+  d'écrire si la base dépasse `--max-db-mb` (250) ; une tuile coupée ou muette n'écrit rien et n'est
+  pas marquée couverte.
+- Lecture par le Compas : `referentialPoisAround` (`server/geoPois.ts`) dans `lookupStagePois`,
+  derrière l'interrupteur **`COMPAS_GEO_POIS=1`** (éteint par défaut : aucun appel à la base, rien ne
+  change). Allumé : une étape dont la boîte est couverte lit refuges, campings et eau dans la table
+  et **n'en redemande plus à Overpass** (qui garde restaurants, commerces, soins, transports…) ; une
+  zone non importée, une base muette ou une réponse inattendue : Overpass donne tout, comme avant.
+- `.github/workflows/geo-pois-monthly.yml` (plan 3.9) : le 5 de chaque mois, 03 h 17 UTC ; **inerte**
+  tant que le secret `SUPABASE_DB_URL` ET la variable `GEO_POIS_IMPORT=on` n'existent pas.
+
+**Source choisie : Overpass private.coffee, par tuiles, en série** (trois raisons). (1) Son usage
+commercial est écrit (« including commercial use »), c'est déjà le seul serveur du site et la file
+unique s'applique telle quelle ; Geofabrik demanderait de télécharger la France entière (environ 4,5 Go)
+et un outil `osmium` pour en tirer quelques dizaines de milliers de points. (2) Les tuiles donnent
+la notion de « zone importée », dont le Compas a besoin pour savoir quand Overpass reste le
+secours. (3) Un massif se mesure en 4 requêtes (Vercors, tuiles de 0,5°), les Alpes tiennent en 72 tuiles de 1° et la France en 176, une fois par mois. Limite
+dite : private.coffee est un service bénévole, saturé par moments (voir plus bas) ; le repli, si les
+504 durent, est Geofabrik + `osmium tags-filter` (même licence), sans changer la table.
+
+**Ce qui est importé, ce qui est écarté** (rien d'inventé : un champ absent d'OSM reste null) :
+`tourism=alpine_hut|wilderness_hut|camp_site`, `amenity=drinking_water`, `amenity=shelter` (formes de
+montagne seulement : `basic_hut`, `lean_to`, `weather_shelter`, `rock_shelter` ; sans forme, seulement
+avec une altitude ; jamais arrêts de bus, pique-nique, gazebos), `natural=spring` (nommées ou
+`drinking_water=yes` seulement). Écartés et comptés : privé (`access=private|no`), abandonné
+(`disused`, `abandoned`, `ruins`), **eau dite non potable** (un « point d'eau » proposé à un randonneur
+est buvable ou inconnu, jamais déconseillé). Un nom commun (« Refuge ») n'est pas un nom (null, la ligne
+reste). « Gardé » n'est lu que dans `staffed`, jamais déduit du type.
+
+**Mesure de place (extrapolation honnête, méthode dite).**
+Les comptes viennent de **taginfo Geofabrik** (extraits « France » et « Alps », données du 12 octobre
+2026), donc d'OSM entier, sans charger Overpass ; ce sont des **bornes hautes** (avant le retrait des
+objets privés, abandonnés, ou en double). Les proportions (nom, altitude, capacité) servent à fabriquer
+72 011 lignes d'essai, **mesurées sur un PostgreSQL local** (pas la base de production), insérées par
+lots de 1 000 comme l'import : **209 octets par ligne, index compris** (14,3 Mo ; 12,8 Mo après un
+`REINDEX`), contre 211 octets par ligne mesurés en production pour `geo_places`.
+
+| Zone (extrait Geofabrik) | refuges + cabanes | campings | eau + sources | abris | lignes (borne haute) | place à 209 o/ligne |
+|---|---|---|---|---|---|---|
+| Alpes (arc alpin) | 5 779 | 3 275 | 58 856 | ≤ 4 093 | **≤ 72 000** | **≤ 14,4 Mo** (11,5 à 17) |
+| France métropolitaine | 1 846 | 9 287 | 31 879 | ≤ 5 576 | **≤ 48 600** | **≤ 9,7 Mo** (7,8 à 11,6) |
+| Les deux (la somme compte deux fois les Alpes françaises) | | | | | ≤ 120 600 | ≤ 24 Mo |
+
+Deux choses à retenir : l'**eau est 80 % des lignes** (54 459 points d'eau potable dans les Alpes) ;
+et la boîte `alpes` du script est un rectangle (5 à 17° E, 43,5 à 48,5° N), **plus large que l'arc
+alpin** : elle contient des plaines (Pô, Bavière), donc plus de lignes que 72 000 (non mesuré). Les
+limites : la garde `--max-db-mb` coupe l'écriture au-dessus du plafond, et `REINDEX TABLE geo_pois`
+reprend environ 10 %.
+
+**Place** : base à 431 Mo, moins `places_geo` (232 Mo) = environ 199 Mo ; plus 24 Mo au pire pour 3.4
+= environ 223 Mo, **sous les 250 Mo** exigés avant les imports 3.3 à 3.7. 3.4 tient dans la marge, mais
+elle dépasse la ligne « refuges et cabanes, 12 Mo » du tableau du §3 (qui ne comptait pas les points
+d'eau) ; le total prévu (base d'environ 300 Mo) reste sous les 400 Mo visés par le plan 1.1.
+
+**À faire par Tony, dans l'ordre**
+1. Supprimer `places_geo` (`drop table public.places_geo;`, SQL Editor) ; vérifier base ≤ 250 Mo.
+2. Appliquer `20261013090000_geo_pois.sql` (SQL Editor) ; poser le secret GitHub `SUPABASE_DB_URL`
+   (Session pooler, celui des sauvegardes).
+3. Prévenir l'opérateur de private.coffee (support@private.coffee) d'un import mensuel en série.
+4. Premier essai : Actions › « Refuges et points d'eau » › Run workflow, zone `vercors`, base ≤ 250 ;
+   puis zone `alpes`, puis `france`. Contrôler en base : `select subtype, count(*) from geo_pois group by 1`.
+5. Poser la variable `GEO_POIS_IMPORT=on` (rejeu mensuel) ; poser `COMPAS_GEO_POIS=1` dans Vercel
+   quand la table est remplie. Preuve : une préparation Vercors dont les journaux ne montrent plus
+   de requête Overpass pour les refuges.
+6. Mentions légales : « © contributeurs OpenStreetMap, ODbL » (déjà affichée) ; la base dérivée n'est pas
+   publiée.

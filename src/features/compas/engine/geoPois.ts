@@ -43,7 +43,7 @@ export interface GeoPoiRow {
   staffed: 'yes' | 'no' | 'seasonal' | null;
   /** Places (`beds` pour un refuge, sinon `capacity`), telles que saisies dans OSM ; null sinon. */
   capacity: number | null;
-  /** Eau bue sans risque : vrai/faux seulement si OSM le dit (`drinking_water`) ou pour `amenity=drinking_water` ; sinon null. */
+  /** Eau potable : true si OSM le dit (`drinking_water=yes`) ou pour `amenity=drinking_water` ; null si OSM ne dit rien. Jamais false : l'eau dite non potable n'est pas importée. */
   potable: boolean | null;
 }
 
@@ -83,6 +83,7 @@ export type DropReason =
   | 'prive'
   | 'abandonne'
   | 'abri_non_montagne'
+  | 'eau_non_potable'
   | 'source_sans_nom_ni_potabilite'
   | 'doublon';
 
@@ -94,7 +95,7 @@ export interface ParsedGeoPois {
   elements: number;
 }
 
-/** Formes d'abri de montagne gardées ; un abri sans forme n'est gardé que s'il a un nom ou une altitude. */
+/** Formes d'abri de montagne gardées ; un abri sans forme n'est gardé que s'il a une altitude (un nom seul ne suffit pas : arrêts de bus, préaux). */
 const SHELTER_KEPT = new Set(['basic_hut', 'lean_to', 'weather_shelter', 'rock_shelter']);
 
 /** Altitude en mètres (« 1 234 » écrit « 1234 », « 3000 ft » converti) ; null si illisible ou hors de la Terre. */
@@ -181,13 +182,19 @@ export function parseGeoPois(payload: unknown): ParsedGeoPois {
     const ele = parseElevationM(tags.ele);
     if (subtype === 'shelter') {
       const kind = (tags.shelter_type || '').toLowerCase();
-      const keep = kind ? SHELTER_KEPT.has(kind) : name != null || ele != null;
+      const keep = kind ? SHELTER_KEPT.has(kind) : ele != null;
       if (!keep) {
         drop('abri_non_montagne');
         continue;
       }
     }
     const potable = potableOf(subtype, tags);
+    // Eau dite non potable : jamais importée. `RoutePoi` n'a pas de drapeau « potable » ; un
+    // « point d'eau » proposé à un randonneur doit être buvable ou inconnu, jamais déconseillé.
+    if (potable === false) {
+      drop('eau_non_potable');
+      continue;
+    }
     if (subtype === 'spring' && name == null && potable !== true) {
       drop('source_sans_nom_ni_potabilite');
       continue;
@@ -226,11 +233,11 @@ export function summarizeGeoPois(rows: readonly GeoPoiRow[]): {
   withEle: number;
   withCapacity: number;
   staffed: { yes: number; no: number; seasonal: number; inconnu: number };
-  potable: { oui: number; non: number; inconnu: number };
+  potable: { oui: number; inconnu: number };
 } {
   const bySubtype: Record<string, number> = {};
   const staffed = { yes: 0, no: 0, seasonal: 0, inconnu: 0 };
-  const potable = { oui: 0, non: 0, inconnu: 0 };
+  const potable = { oui: 0, inconnu: 0 };
   let named = 0;
   let withEle = 0;
   let withCapacity = 0;
@@ -240,7 +247,7 @@ export function summarizeGeoPois(rows: readonly GeoPoiRow[]): {
     if (r.ele_m != null) withEle += 1;
     if (r.capacity != null) withCapacity += 1;
     if (r.subtype === 'alpine_hut' || r.subtype === 'wilderness_hut' || r.subtype === 'camp_site') staffed[r.staffed ?? 'inconnu'] += 1;
-    if (r.subtype === 'drinking_water' || r.subtype === 'spring') potable[r.potable == null ? 'inconnu' : r.potable ? 'oui' : 'non'] += 1;
+    if (r.subtype === 'drinking_water' || r.subtype === 'spring') potable[r.potable ? 'oui' : 'inconnu'] += 1;
   }
   return { bySubtype, named, withEle, withCapacity, staffed, potable };
 }
@@ -283,10 +290,13 @@ export function geoPoiTiles(box: BBox, step = 1): BBox[] {
  * alignements moyens de 3 octets, pointeur de ligne 4 octets, ligne arrondie à
  * 8 ; index de la clé (en-tête 8 + texte aligné + pointeur 4, remplissage 90 %)
  * et index GiST du point (28 octets, remplissage 75 %). Multiplié par
- * `ESTIMATE_CALIBRATION` : 1,2, rapport de la taille mesurée de `geo_places`
- * (74 Mo pour 367 747 lieux) à ce même modèle. Ordre de grandeur à ± 30 %.
+ * `ESTIMATE_CALIBRATION` : 1,35, rapport MESURÉ (PostgreSQL local, 72 011 lignes
+ * insérées par lots de 1 000 comme l'import : 209 octets par ligne, index compris)
+ * à ce même modèle (156). Pour mémoire, `geo_places` en production :
+ * 74 Mo pour 367 747 lieux, 211 octets par ligne. Ordre de grandeur à ± 20 %
+ * (un `REINDEX` après l'import reprend environ 10 %).
  */
-export const ESTIMATE_CALIBRATION = 1.2;
+export const ESTIMATE_CALIBRATION = 1.35;
 
 export function estimateRowBytes(row: GeoPoiRow): number {
   const text = (v: string | null) => (v == null ? 0 : 1 + new TextEncoder().encode(v).length);

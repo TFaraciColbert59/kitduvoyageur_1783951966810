@@ -91,7 +91,7 @@ describe('Refuges, campings et points d’eau : lecture d’OpenStreetMap (plan 
         { type: 'node', id: 1, lat: 45, lon: 5, tags: { tourism: 'camp_site', name: 'Camping privé', access: 'private' } },
         { type: 'node', id: 2, lat: 45, lon: 5, tags: { tourism: 'alpine_hut', name: 'Ruine', abandoned: 'yes' } },
         { type: 'node', id: 3, lat: 45, lon: 5, tags: { amenity: 'shelter', shelter_type: 'picnic_shelter' } },
-        { type: 'node', id: 4, lat: 45, lon: 5, tags: { amenity: 'shelter' } },
+        { type: 'node', id: 4, lat: 45, lon: 5, tags: { amenity: 'shelter', name: 'Arrêt Mairie' } },
         { type: 'node', id: 5, lat: 45, lon: 5, tags: { natural: 'spring' } },
         { type: 'node', id: 6, lat: 45, lon: 5, tags: { amenity: 'bench' } },
         { type: 'node', id: 7, tags: { tourism: 'camp_site' } },
@@ -113,18 +113,20 @@ describe('Refuges, campings et points d’eau : lecture d’OpenStreetMap (plan 
     expect(rows[0]).toMatchObject({ osm_id: 'n8', capacity: null });
   });
 
-  it('abris : les formes de montagne passent, un abri sans forme seulement s’il a un nom ou une altitude', () => {
-    const { rows } = parseGeoPois({
+  it('abris : les formes de montagne passent, un abri sans forme seulement s’il a une altitude (un nom seul ne suffit pas)', () => {
+    const { rows, dropped } = parseGeoPois({
       elements: [
         { type: 'node', id: 21, lat: 45, lon: 5, tags: { amenity: 'shelter', shelter_type: 'basic_hut' } },
         { type: 'node', id: 22, lat: 45, lon: 5, tags: { amenity: 'shelter', name: 'Abri du Berger' } },
         { type: 'node', id: 23, lat: 45, lon: 5, tags: { amenity: 'shelter', ele: '1800' } },
+        { type: 'node', id: 24, lat: 45, lon: 5, tags: { amenity: 'shelter', shelter_type: 'gazebo', ele: '1800' } },
       ],
     });
-    expect(rows.map((r) => r.osm_id)).toEqual(['n21', 'n22', 'n23']);
+    expect(rows.map((r) => r.osm_id)).toEqual(['n21', 'n23']);
+    expect(dropped.abri_non_montagne).toBe(2);
   });
 
-  it('eau : potable seulement si OSM le dit (point d’eau potable par défaut, source seulement avec drinking_water)', () => {
+  it('eau : potable si OSM le dit, sinon inconnu ; l’eau dite non potable n’est jamais importée', () => {
     const { rows, dropped } = parseGeoPois({
       elements: [
         { type: 'node', id: 31, lat: 45, lon: 5, tags: { amenity: 'drinking_water' } },
@@ -135,8 +137,8 @@ describe('Refuges, campings et points d’eau : lecture d’OpenStreetMap (plan 
       ],
     });
     const potable = Object.fromEntries(rows.map((r) => [r.osm_id, r.potable]));
-    expect(potable).toEqual({ n31: true, n32: false, n33: null, n34: true });
-    expect(dropped.source_sans_nom_ni_potabilite).toBe(1);
+    expect(potable).toEqual({ n31: true, n33: null, n34: true });
+    expect(dropped).toEqual({ eau_non_potable: 2 });
   });
 
   it('altitude et nombre : unités lues, tout le reste est illisible (null)', () => {
@@ -172,7 +174,7 @@ describe('Refuges, campings et points d’eau : lecture d’OpenStreetMap (plan 
     expect(s.withEle).toBe(2);
     expect(s.withCapacity).toBe(1);
     expect(s.staffed).toEqual({ yes: 1, no: 0, seasonal: 0, inconnu: 1 });
-    expect(s.potable).toEqual({ oui: 1, non: 0, inconnu: 1 });
+    expect(s.potable).toEqual({ oui: 1, inconnu: 1 });
   });
 });
 

@@ -28,7 +28,8 @@ create table if not exists public.geo_pois (
   staffed text check (staffed in ('yes', 'no', 'seasonal')),
   -- Places (`beds` d'un refuge, sinon `capacity`), telles que saisies dans OSM ; null sinon.
   capacity smallint check (capacity between 1 and 9999),
-  -- Eau potable : vrai/faux seulement si OSM le dit (ou `amenity=drinking_water`) ; null : inconnu.
+  -- Eau potable : vrai si OSM le dit (`drinking_water=yes`, ou `amenity=drinking_water`) ; null : OSM ne dit
+  -- rien. Jamais faux : l'eau dite non potable n'est pas importée (un « point d'eau » doit être buvable ou inconnu).
   potable boolean,
   -- Dernier import où l'objet était dans OSM, et nombre d'imports consécutifs où il manquait
   -- (retiré à deux : un objet absent une fois peut venir d'une réponse tronquée).
