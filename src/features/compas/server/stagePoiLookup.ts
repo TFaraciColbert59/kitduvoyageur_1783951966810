@@ -10,6 +10,8 @@ import {
 import type { RoutePoi } from '../engine/routePois';
 import { geoapifyArea, geoapifyAvailable } from './geoapify';
 import { referentialAreaPlaces } from './geoPlaces';
+import { referentialPoisAround } from './geoPois';
+import { GEO_POI_CATEGORIES } from '../engine/geoPois';
 import { photonSlot } from '@/lib/siteSlot';
 import { mergeReferential, referentialEnough } from '../engine/geoPlaces';
 import {
@@ -91,12 +93,19 @@ const keyOf = (place: StagePoint) => `pois:v2:${coordKey(place.lat, place.lon, 3
 /** Points autour d'UN lieu, partagés une semaine (même village, tous les voyages). */
 async function poisAround(place: StagePoint, deadline: number): Promise<RoutePoi[] | null> {
   return cached<RoutePoi[] | null>('place', keyOf(place), TTL_S, async () => {
-    const payload = await overpass(buildOverpassQuery(place), deadline);
+    // Refuges, campings et points d'eau : le référentiel d'abord (plan 3.4, interrupteur
+    // `COMPAS_GEO_POIS`, éteint par défaut). Null = éteint, base muette ou zone non importée :
+    // Overpass donne alors tout, comme avant.
+    const ref = await referentialPoisAround(place);
+    const payload = await overpass(buildOverpassQuery(place, undefined, undefined, ref ? GEO_POI_CATEGORIES : undefined), deadline);
     if (!overpassUsable(payload)) {
       if (payload) console.warn('[compas] points autour : réponse coupée', (payload as { remark?: unknown }).remark);
       return null; // jamais gardé : on réessaiera
     }
-    return parseOverpass(payload, [place]);
+    const found = parseOverpass(payload, [place]);
+    if (!ref) return found;
+    const refIds = new Set(ref.map((p) => p.id));
+    return [...ref, ...found.filter((p) => !GEO_POI_CATEGORIES.has(p.category) && !refIds.has(p.id))];
   });
 }
 
