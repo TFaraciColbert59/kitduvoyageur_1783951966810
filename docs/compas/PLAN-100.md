@@ -25,15 +25,19 @@ Légende : `[x]` fait (preuve) · `[ ]` à faire · `[~]` en cours · `🔒` blo
 
 | Volet | Aujourd'hui | Cible | Phases |
 |---|---|---|---|
-| Socle (services, hébergement, base) | 20 % | 100 % | 1 |
-| Fiabilité et sécurité | 45 % | 100 % | 2 |
-| Données (référentiel géographique) | 15 % | 100 % | 3 |
-| Moteur (itinéraire, budget, papiers, kit, temps) | 45 % | 100 % | 4 |
-| Interface, accessibilité, légal (français) | 75 % | 100 % | 5 |
-| Monde (langues, formats, voyageur non français) | 10 % | 100 % | 6 |
-| Validation et lancement | 30 % | 100 % | 7 |
+| Socle (services, hébergement, base) | 60 % (26/43) | 100 % | 1 |
+| Fiabilité et sécurité | 81 % (39/48) | 100 % | 2 |
+| Données (référentiel géographique) | 46 % (6/13) | 100 % | 3 |
+| Moteur (itinéraire, budget, papiers, kit, temps) | 75 % (27/36) | 100 % | 4 |
+| Interface, accessibilité, légal (français) | 86 % (24/28) | 100 % | 5 |
+| Monde (langues, formats, voyageur non français) | 0 % (0/12) | 100 % | 6 |
+| Validation et lancement | 0 % (0/8) | 100 % | 7 |
 | Après stabilisation (P3) | — | 100 % | 8 |
-| Dette et hygiène | — | 100 % | 9 |
+| Dette et hygiène | 17 % (1/6) | 100 % | 9 |
+
+Mesuré le 13 octobre : cases cochées avec preuve sur cases du volet (une grande case compte comme une
+petite). **Global : 63 %** (123/194, hors phase 0 faite et phase 8 gelée) ; 71 % en comptant pour moitié
+les cases en cours. Le 8 octobre, ce tableau donnait des estimations, pas des comptes.
 
 **100 % veut dire** : chaque case de ce fichier est cochée avec sa preuve, la phase 7
 passe (jeux de validation en production, contrôlés en base) et aucun constat
