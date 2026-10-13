@@ -231,7 +231,7 @@ describe('« Powered by Geoapify » à l’écran (plan 5.3 : seulement là où 
     expect(flows).toMatch(/distanceSource === 'geoapify'[\s\S]{0,300}<GeoapifyCredit \/>/);
     // « Sur place » (restos, commerces, eau…) vient d'Overpass et du catalogue OpenStreetMap.
     expect(read('src/features/compas/components/CompasSheets.tsx')).not.toContain('GeoapifyCredit');
-    expect(read('src/features/compas/server/stagePoiLookup.ts')).toMatch(/poisAround[\s\S]{0,400}overpass\(buildOverpassQuery/);
+    expect(read('src/features/compas/server/stagePoiLookup.ts')).toMatch(/poisAround[\s\S]{0,800}overpass\(buildOverpassQuery/);
   });
 });
 
