@@ -1,9 +1,10 @@
 /**
  * Carte du Compas : fond de carte, pastilles d'étape et encart du point touché (fonctions pures).
  *
- * Fonds : ArcGIS Location Platform, déjà branchés sur `/explorer` (`components/map/engine/createMapStyle`,
- * clé publique restreinte aux domaines du site, « Powered by Esri » et mention des données visibles sur
- * la carte). Le Compas réutilise ce branchement : aucun autre fournisseur, aucune autre clé.
+ * Fonds : ceux de `/explorer`, que le Compas réutilise sans autre branchement. Relief et Satellite :
+ * ArcGIS Location Platform (`components/map/engine/createMapStyle`, clé publique restreinte aux domaines
+ * du site, « Powered by Esri » et mention des données visibles sur la carte). Clair : OpenFreeMap, sans
+ * clé (`components/map/engine/openFreeMap`, plan 1.6), avec repli sur l'ArcGIS « standard ».
  * Pastilles et encart : la maquette (D = départ en sage, A = arrivée en vert forêt, numéros en blanc cerclé).
  */
 import { formatKm } from './format';

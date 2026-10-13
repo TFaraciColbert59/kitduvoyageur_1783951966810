@@ -37,6 +37,31 @@ interface Expected {
 
 const EXPECTED: Expected[] = [
   {
+    // https://openfreemap.org/ (« Attribution is required », lue le 2026-10-13) : « OpenFreeMap © OpenMapTiles Data from
+    // OpenStreetMap » ; Esri : « Powered by Esri » et les données (plan 1.6, `docs/compas/SERVICES-GRATUITS.md`).
+    label: 'Cartes',
+    says: [
+      'Powered by Esri',
+      'ArcGIS Location Platform',
+      'OpenFreeMap © OpenMapTiles Data from OpenStreetMap',
+      'fond « Plan » des cartes de l’Explorer et du Compas',
+    ],
+    links: {
+      'contributeurs OpenStreetMap': 'https://www.openstreetmap.org/copyright',
+      'Powered by Esri': 'https://www.esri.com/',
+      OpenFreeMap: 'https://openfreemap.org/',
+      '© OpenMapTiles': 'https://www.openmaptiles.org/',
+      OpenStreetMap: 'https://www.openstreetmap.org/copyright',
+    },
+    uses: [
+      { file: 'src/components/map/engine/createMapStyle.ts', pattern: /static-map-tiles-api\.arcgis\.com/ },
+      { file: 'src/components/map/engine/openFreeMap.ts', pattern: /tiles\.openfreemap\.org\/styles\/liberty/ },
+      // Le texte exigé est celui que la carte affiche.
+      { file: 'src/components/map/engine/openFreeMap.ts', pattern: /'OpenFreeMap © OpenMapTiles Data from OpenStreetMap'/ },
+      { file: 'src/components/map/UnifiedExplorerMap.tsx', pattern: /createOpenFreeMapBasemap\(/ },
+    ],
+  },
+  {
     // https://meteoalarm.org/en/live/page/terms-and-conditions, § 5 (relu le 2026-10-11)
     label: 'Alertes météo officielles',
     says: [

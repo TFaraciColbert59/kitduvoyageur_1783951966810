@@ -254,17 +254,61 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       Module mort `lib/offline/tiles.ts` (OpenTopoMap) retiré. Garde
       `tests/map/leafletTiles.spec.ts` : aucune URL de fond non autorisée hors du repli
       de développement.
-- [ ] Fond standard : **OpenFreeMap** (vecteur, sans clé ni limite, commercial
-      autorisé) via MapLibre (ou extension MapLibre de Leaflet) ; attribution
-      « OpenFreeMap © OpenMapTiles Data from OpenStreetMap ». Prévoir un repli : il peut
-      s'arrêter sans préavis.
+- [~] Fond standard : **OpenFreeMap** (vecteur, sans clé ni limite, commercial
+      autorisé), lot AJ (13 oct.). **Fait** : la carte MapLibre (un seul composant,
+      `UnifiedExplorerMap` : Explorer, Compas « Clair », globe du hub) affiche son mode
+      « Plan » avec le style `https://tiles.openfreemap.org/styles/liberty` ; relief
+      (`arcgis/outdoor`) et satellite (`World_Imagery`) restent chez ArcGIS. Style choisi
+      parmi `liberty`, `bright`, `positron` (lus le 13 oct.) : l'ancien standard
+      `open/osm-style` est un plan colorié façon OpenStreetMap ; `liberty` a le même sol
+      beige, les parcs verts, l'eau bleue (111 couches), `bright` les mêmes (119),
+      `positron` est tout gris. **Conditions lues le 13 oct. 2026** sur
+      [openfreemap.org](https://openfreemap.org/) (« Is commercial usage allowed? Yes. »,
+      « there are no limits on the number of map views or requests », « no API keys, and no
+      cookies », « Attribution is required » : « OpenFreeMap © OpenMapTiles Data from
+      OpenStreetMap ») et [openfreemap.org/tos](https://openfreemap.org/tos/) (version du
+      9 sept. 2026 : « may discontinue it at any time without notice » ; interdit de
+      « collect data from the service in automated ways without permission » : aucun
+      téléchargement en masse, aucun cache hors ligne ajouté). Le style est lu par le site
+      (zod, toute adresse doit rester chez `tiles.openfreemap.org`), ses sources et
+      couches sont ajoutées sous les rasters ArcGIS avec le préfixe `ofm-` (un `setStyle`
+      effacerait les couches `atlas-*` des sentiers, pays et points) ; rien n'est demandé
+      à OpenFreeMap avant le premier choix du mode « Plan ». **Repli unique** sur l'ArcGIS
+      « standard » (`atlas-osm`, déjà dans le style) si le style est injoignable, illisible
+      ou trop lent (8 s), si la source (TileJSON) est en erreur, ou à la troisième tuile
+      perdue (un 404 ne compte pas) : couches et sources retirées, un seul avertissement
+      en console, pas de nouvelle tentative, `onFallback` appelé une fois. Pastille
+      d'attribution repliable (« OpenFreeMap © OpenMapTiles · OpenStreetMap ⓘ », dépliée :
+      le texte exact) quand OpenFreeMap est affiché, sinon « Powered by Esri ».
+      `connect-src` du CSP : `https://tiles.openfreemap.org` (seule ligne touchée ;
+      `img-src` autorise déjà `https:`, `worker-src` ne concerne pas les tuiles). Mentions
+      légales (« Cartes ») et politique de confidentialité (destinataire « OpenFreeMap
+      (Hyperknot Software) », mise à jour au 13 oct.). **Cartes Leaflet** (Explorer
+      historique, carte interactive, carnet, hub, départ, groupes) : **restent sur l'ArcGIS
+      « standard »** ; OpenFreeMap ne sert que des tuiles vectorielles et Leaflet ne les lit
+      pas avec les dépendances du site (le greffon `maplibre-gl-leaflet` n'y est pas ; en
+      écrire un ouvrirait un contexte WebGL par petite carte). Fichiers :
+      `components/map/engine/openFreeMap.ts` (choix, lecture zod, politique de repli),
+      `openFreeMapBasemap.ts` (pose et retrait sur la carte), `UnifiedExplorerMap.tsx`,
+      `next.config.mjs`, `mentions-legales/DataSources.tsx`, `PrivacyPolicySections.tsx`.
+      Tests : `tests/map/openFreeMap.spec.ts` (choix par mode, lecture du style, repli
+      exactement une fois, attribution, branchement), garde `tests/map/leafletTiles.spec.ts`
+      (hôtes autorisés, CSP, Leaflet inchangé), `dataSources.test.tsx` et
+      `privacyPolicy.test.tsx`. Les trois vrais styles ont aussi été lus et fusionnés avec
+      celui du site puis validés par le validateur de la spécification MapLibre (0 erreur ;
+      essai ponctuel, non versionné). **Reste** : preuve en production (tuiles
+      `tiles.openfreemap.org` en 200 sur `/explorer` et `/compas` en mode Plan, plus aucune
+      requête `open/osm-style` hors repli), le chargement réel ne pouvant pas se tester hors
+      ligne ; aucune surveillance d'une source qui ne répondrait jamais (seuls les
+      évènements `error` et le délai du style déclenchent le repli).
 - [~] Relief, standard et satellite : **ArcGIS Location Platform** gratuit (2 M tuiles
       et 1 000 sessions par mois, commercial autorisé avec clé ; coupé au-delà) ; compte
       et clé créés par Tony (8 oct.) ; `arcgis/outdoor` (relief), `open/osm-style`
       (standard), `World_Imagery` (satellite) ; « Powered by Esri » sur la carte (mention
       complète dépliable) et dans les mentions. **Prouvé en production le 8 oct.** :
       10 tuiles `static-map-tiles-api.arcgis.com` en 200 sur `/explorer`, plus aucune
-      tuile sans clé. Reste : compteur de sessions.
+      tuile sans clé. Depuis le lot AJ, le standard d'ArcGIS ne sert plus qu'au repli de
+      la carte MapLibre et aux cartes Leaflet. Reste : compteur de sessions.
 
 ### 1.7 IA à 0 €
 
