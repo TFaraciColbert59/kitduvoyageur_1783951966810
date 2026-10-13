@@ -5,6 +5,7 @@ import { Button, Card } from '@/components/ui';
 import Icon from '@/components/ui/AppIcon';
 import { lkvAlert } from '@/components/ui/dialogs';
 import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
+import { storyMediaUrl } from '@/lib/stories/media';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import StoriesViewer, { type StoryUser } from './StoriesViewer';
@@ -12,7 +13,8 @@ import StoriesViewer, { type StoryUser } from './StoriesViewer';
 type StoryRow = {
   id: string;
   author_id: string;
-  image_url: string;
+  image_url: string | null;
+  storage_path: string | null;
   caption: string | null;
   created_at: string;
 };
@@ -26,9 +28,11 @@ function storyTimeLabel(iso: string): string {
 }
 
 /**
- * F-027 — stories RÉELLES : publication (photo 24 h), lecture des stories non
- * expirées, signalement et blocage depuis le visionneur. Plus aucun exemple
- * local : ce qui s'affiche a été publié par un membre.
+ * F-027 + Stories V2 (phase 01) — stories RÉELLES : publication privée
+ * (bucket `stories-private`, 24 h), lecture des stories autorisées, signalement
+ * et blocage depuis le visionneur. Plus aucun exemple local : ce qui s'affiche
+ * a été publié par un membre. Les anciennes stories (URL publique) restent
+ * affichées telles quelles.
  */
 export default function CommunityStoriesBar({ currentUser }: { currentUser?: any }) {
   const [stories, setStories] = useState<StoryRow[]>([]);
@@ -40,6 +44,9 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingPreview, setPendingPreview] = useState<string | null>(null);
   const [captionDraft, setCaptionDraft] = useState('');
+  // Idempotence de publication : stable pour une même sélection de fichier,
+  // réutilisé si l'utilisateur relance après un échec réseau.
+  const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadStories = useCallback(async () => {
@@ -54,24 +61,37 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
     }
 
     // A-143 : auto-nettoyage des stories expirées de la personne connectée —
-    // la ligne part, et l'objet du bucket avec elle (pas de cron requis).
+    // la ligne part, et l'objet avec elle (bucket privé V2 ou legacy
+    // carnet-media) — pas de cron requis à ce stade.
     try {
       const { data: expiredMine } = await supabase
         .from('post_stories')
-        .select('id, image_url')
+        .select('id, image_url, storage_bucket, storage_path')
         .eq('author_id', session.user.id)
         .lt('expires_at', new Date().toISOString());
       if (expiredMine && expiredMine.length > 0) {
-        const paths = expiredMine
-          .map((row) => {
-            const url = (row as { image_url?: string }).image_url || '';
-            const marker = '/carnet-media/';
-            const index = url.indexOf(marker);
-            return index >= 0 ? url.slice(index + marker.length) : null;
-          })
-          .filter((path): path is string => Boolean(path));
-        if (paths.length > 0) {
-          await supabase.storage.from('carnet-media').remove(paths);
+        const privatePaths: string[] = [];
+        const legacyPaths: string[] = [];
+        for (const row of expiredMine) {
+          const r = row as {
+            image_url?: string | null;
+            storage_bucket?: string | null;
+            storage_path?: string | null;
+          };
+          if (r.storage_path && r.storage_bucket === 'stories-private') {
+            privatePaths.push(r.storage_path);
+            continue;
+          }
+          const url = r.image_url || '';
+          const marker = '/carnet-media/';
+          const index = url.indexOf(marker);
+          if (index >= 0) legacyPaths.push(url.slice(index + marker.length));
+        }
+        if (privatePaths.length > 0) {
+          await supabase.storage.from('stories-private').remove(privatePaths);
+        }
+        if (legacyPaths.length > 0) {
+          await supabase.storage.from('carnet-media').remove(legacyPaths);
         }
         await supabase
           .from('post_stories')
@@ -84,7 +104,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
 
     const { data, error } = await supabase
       .from('post_stories')
-      .select('id, author_id, image_url, caption, created_at')
+      .select('id, author_id, image_url, storage_path, caption, created_at')
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: true })
       .limit(200);
@@ -128,16 +148,26 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
 
     const users: StoryUser[] = [];
     for (const [authorId, rows] of byAuthor) {
+      // Normalisation média : privé → /api/stories/:id/media (contrôlé),
+      // legacy → URL publique conservée. Une ligne sans média lisible est
+      // ignorée plutôt que d'afficher un slide vide.
+      const slides = rows
+        .map((row) => {
+          const image = storyMediaUrl(row);
+          return image
+            ? { image, caption: row.caption ?? undefined, storyId: row.id }
+            : null;
+        })
+        .filter(
+          (slide): slide is { image: string; caption?: string; storyId: string } => slide !== null
+        );
+      if (slides.length === 0) continue;
       users.push({
         id: authorId,
         name: authors[authorId]?.name || 'Voyageur',
         avatarUrl: authors[authorId]?.avatar_url,
         time: storyTimeLabel(rows[rows.length - 1].created_at),
-        slides: rows.map((row) => ({
-          image: row.image_url,
-          caption: row.caption ?? undefined,
-          storyId: row.id,
-        })),
+        slides,
       });
     }
 
@@ -173,6 +203,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
     setPendingFile(file);
     setPendingPreview(URL.createObjectURL(file));
     setCaptionDraft('');
+    setPendingRequestId(crypto.randomUUID());
   };
 
   const cancelPending = () => {
@@ -180,6 +211,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
     setPendingFile(null);
     setPendingPreview(null);
     setCaptionDraft('');
+    setPendingRequestId(null);
   };
 
   const publishPendingStory = async () => {
@@ -187,27 +219,45 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
     setUploading(true);
     try {
       const supabase = createClient();
-      const ext = (pendingFile.name.split('.').pop() || 'jpg').toLowerCase();
+      // Stories V2 (P0) : média PRIVÉ — id stable + chemin {uid}/{storyId}/…,
+      // idempotence par client_request_id (rejouable après un échec réseau).
+      const storyId = crypto.randomUUID();
+      const requestId = pendingRequestId ?? crypto.randomUUID();
       // A-096 : la story publiée ne conserve pas les métadonnées EXIF/GPS.
       const cleanedFile = await stripImageMetadata(pendingFile);
-      const path = `stories/${currentUser.id}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const contentType = cleanedFile.type || 'image/jpeg';
+      const ext = contentType === 'image/jpeg'
+        ? 'jpg'
+        : (pendingFile.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = `${currentUser.id}/${storyId}/${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('carnet-media')
-        .upload(path, cleanedFile, { cacheControl: '3600', upsert: false });
+        .from('stories-private')
+        .upload(path, cleanedFile, { cacheControl: '3600', upsert: false, contentType });
       if (uploadError) throw new Error(uploadError.message);
 
-      const { data: urlData } = supabase.storage.from('carnet-media').getPublicUrl(path);
-      const publicUrl = urlData?.publicUrl;
-      if (!publicUrl) throw new Error('URL publique introuvable');
-
       const { error: insertError } = await supabase.from('post_stories').insert({
+        id: storyId,
         author_id: currentUser.id,
-        image_url: publicUrl,
+        image_url: null,
+        storage_bucket: 'stories-private',
+        storage_path: path,
+        media_type: 'image',
+        mime_type: contentType,
+        status: 'ready',
+        client_request_id: requestId,
         caption: captionDraft.trim() ? captionDraft.trim().slice(0, 280) : null,
         visibility: 'public',
       });
-      if (insertError) throw new Error(insertError.message);
+      if (insertError) {
+        // La ligne n'existe pas : retirer l'objet orphelin avant de rendre la main.
+        try {
+          await supabase.storage.from('stories-private').remove([path]);
+        } catch {
+          /* l'objet orphelin sera purgé côté serveur */
+        }
+        throw new Error(insertError.message);
+      }
 
       cancelPending();
       await loadStories();
@@ -260,10 +310,10 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
   const handleDelete = async (slide: { storyId?: string }) => {
     if (!slide.storyId || !currentUser?.id) return;
     const supabase = createClient();
-    // Récupérer l'URL avant suppression pour retirer aussi l'objet du bucket.
+    // Récupérer la référence média avant suppression (objet + bucket).
     const { data: row } = await supabase
       .from('post_stories')
-      .select('image_url')
+      .select('image_url, storage_bucket, storage_path')
       .eq('id', slide.storyId)
       .maybeSingle();
     const { error } = await supabase
@@ -275,15 +325,25 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
       lkvAlert('La story n’a pas pu être retirée.');
       return;
     }
-    const url = row?.image_url || '';
-    const marker = '/carnet-media/';
-    const index = url.indexOf(marker);
-    if (index >= 0) {
-      try {
-        await supabase.storage.from('carnet-media').remove([url.slice(index + marker.length)]);
-      } catch {
-        /* la ligne est retirée : l'objet orphelin sera purgé plus tard */
+    const r = row as {
+      image_url?: string | null;
+      storage_bucket?: string | null;
+      storage_path?: string | null;
+    } | null;
+    try {
+      if (r?.storage_path && r.storage_bucket) {
+        await supabase.storage.from(r.storage_bucket).remove([r.storage_path]);
+      } else if (r?.image_url) {
+        const marker = '/carnet-media/';
+        const index = r.image_url.indexOf(marker);
+        if (index >= 0) {
+          await supabase.storage
+            .from('carnet-media')
+            .remove([r.image_url.slice(index + marker.length)]);
+        }
       }
+    } catch {
+      /* la ligne est retirée : l'objet orphelin sera purgé plus tard */
     }
     setViewerStart(null);
     await loadStories();
@@ -431,6 +491,9 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
                 className="mt-1 w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none"
               />
             </label>
+            <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+              Visible par la communauté — 24 h. Média privé, servi uniquement aux personnes autorisées.
+            </p>
             <div className="flex justify-end gap-[var(--space-2)]">
               <Button type="button" variant="ghost" size="sm" onClick={cancelPending} disabled={uploading}>
                 Annuler
